@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/cluster.sgml,v 1.25 2003/03/25 16:15:39 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/cluster.sgml,v 1.26 2003/04/15 13:25:08 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -8,89 +8,27 @@ PostgreSQL documentation
   <refentrytitle id="sql-cluster-title">CLUSTER</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
+
  <refnamediv>
-  <refname>
-   CLUSTER
-  </refname>
-  <refpurpose>
-   cluster a table according to an index
-  </refpurpose>
+  <refname>CLUSTER</refname>
+  <refpurpose>cluster a table according to an index</refpurpose>
  </refnamediv>
+
  <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>1999-07-20</date>
-  </refsynopsisdivinfo>
-  <synopsis>
+<synopsis>
 CLUSTER <replaceable class="PARAMETER">indexname</replaceable> ON <replaceable class="PARAMETER">tablename</replaceable>
 CLUSTER <replaceable class="PARAMETER">tablename</replaceable>
 CLUSTER
-  </synopsis>
-
-  <refsect2 id="R2-SQL-CLUSTER-1">
-   <refsect2info>
-    <date>1998-09-08</date>
-   </refsect2info>
-   <title>
-    Inputs
-   </title>
-   <para>
-   </para>
-   <variablelist>
-    <varlistentry>
-     <term><replaceable class="PARAMETER">indexname</replaceable></term>
-     <listitem>
-      <para>
-       The name of an index.
-      </para>
-     </listitem>
-    </varlistentry>
-    <varlistentry>
-     <term><replaceable class="PARAMETER">table</replaceable></term>
-     <listitem>
-      <para>
-       The name (possibly schema-qualified) of a table.
-      </para>
-     </listitem>
-    </varlistentry>
-   </variablelist>
-  </refsect2>
-
-  <refsect2 id="R2-SQL-CLUSTER-2">
-   <refsect2info>
-    <date>1998-09-08</date>
-   </refsect2info>
-   <title>
-    Outputs
-   </title>
-   <para>
-
-    <variablelist>
-     <varlistentry>
-      <term><computeroutput>
-CLUSTER
-       </computeroutput></term>
-      <listitem>
-       <para>
-	The clustering was done successfully.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
+</synopsis>
  </refsynopsisdiv>
 
- <refsect1 id="R1-SQL-CLUSTER-1">
-  <refsect1info>
-   <date>1998-09-08</date>
-  </refsect1info>
-  <title>
-   Description
-  </title>
+ <refsect1>
+  <title>Description</title>
+
   <para>
    <command>CLUSTER</command> instructs <productname>PostgreSQL</productname> 
    to cluster the table specified
-   by <replaceable class="parameter">table</replaceable>
+   by <replaceable class="parameter">tablename</replaceable>
    based on the index specified by
    <replaceable class="parameter">indexname</replaceable>. The index must
    already have been defined on 
@@ -102,19 +40,19 @@ CLUSTER
    based on the index information. Clustering is a one-time operation:
    when the table is subsequently updated, the changes are
    not clustered.  That is, no attempt is made to store new or
-   updated tuples according to their index order.  If one wishes, one can
-   periodically re-cluster by issuing the command again.
+   updated rows according to their index order.  If one wishes, one can
+   periodically recluster by issuing the command again.
   </para>
 
   <para>
    When a table is clustered, <productname>PostgreSQL</productname>
    remembers on which index it was clustered.  The form
    <command>CLUSTER <replaceable class="parameter">tablename</replaceable></command>,
-   re-clusters the table on the same index that it was clustered before.
+   reclusters the table on the same index that it was clustered before.
   </para>
 
   <para>
-   <command>CLUSTER</command> without any parameter re-clusters all the tables
+   <command>CLUSTER</command> without any parameter reclusters all the tables
    in the
    current database that the calling user owns, or all tables if called
    by a superuser.  (Never-clustered tables are not included.)  This
@@ -129,33 +67,62 @@ CLUSTER
    table until the <command>CLUSTER</command> is finished. See
    <xref linkend="explicit-locking"> for more information on database locking.
   </para>
+ </refsect1>
 
-  <refsect2 id="R2-SQL-CLUSTER-3">
-   <refsect2info>
-    <date>1998-09-08</date>
-   </refsect2info>
-   <title>
-    Notes
-   </title>
+ <refsect1>
+  <title>Parameter</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><replaceable class="PARAMETER">indexname</replaceable></term>
+    <listitem>
+     <para>
+      The name of an index.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="PARAMETER">tablename</replaceable></term>
+    <listitem>
+     <para>
+      The name (possibly schema-qualified) of a table.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Diagnostics</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><computeroutput>CLUSTER</computeroutput></term>
+    <listitem>
+     <para>
+      The clustering was done successfully.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Notes</title>
 
    <para>
     In cases where you are accessing single rows randomly
-    within a table, the actual order of the data in the heap
+    within a table, the actual order of the data in the
     table is unimportant. However, if you tend to access some
     data more than others, and there is an index that groups
     them together, you will benefit from using <command>CLUSTER</command>.
-   </para>
-
-   <para> 
-    Another place where <command>CLUSTER</command> is helpful is in
-    cases where you use an
-    index to pull out several rows from a table. If you are
-    requesting a range of indexed values from a table, or a
+    If you are requesting a range of indexed values from a table, or a
     single indexed value that has multiple rows that match,
     <command>CLUSTER</command> will help because once the index identifies the
     heap page for the first row that matches, all other rows
     that match are probably already on the same heap page,
-    saving disk accesses and speeding up the query.
+    and so you save disk accesses and speed up the query.
    </para>
 
    <para>
@@ -167,22 +134,16 @@ CLUSTER
    </para>
 
    <para>
-    <command>CLUSTER</command> preserves <command>GRANT</command>,
-    inheritance, index, foreign key, and other ancillary information
-    about the table.
-   </para>
-
-   <para>
     Because <command>CLUSTER</command> remembers the clustering information,
     one can cluster the tables one wants clustered manually the first time, and
     setup a timed event similar to <command>VACUUM</command> so that the tables
-    are periodically re-clustered.
+    are periodically reclustered.
    </para>
 
    <para>
-    Because the optimizer records statistics about the ordering of tables, it
+    Because the planner records statistics about the ordering of tables, it
     is advisable to run <command>ANALYZE</command> on the newly clustered
-    table.  Otherwise, the optimizer may make poor choices of query plans.
+    table.  Otherwise, the planner may make poor choices of query plans.
    </para>
 
    <para>
@@ -196,68 +157,57 @@ CLUSTER
     but the majority of a big table will not fit in the cache.)
     The other way to cluster a table is to use
 
-    <programlisting>
-SELECT <replaceable class="parameter">columnlist</replaceable> INTO TABLE <replaceable class="parameter">newtable</replaceable>
-     FROM <replaceable class="parameter">table</replaceable> ORDER BY <replaceable class="parameter">columnlist</replaceable>
-    </programlisting>
+<programlisting>
+CREATE TABLE <replaceable class="parameter">newtable</replaceable> AS
+    SELECT <replaceable class="parameter">columnlist</replaceable> FROM <replaceable class="parameter">table</replaceable> ORDER BY <replaceable class="parameter">columnlist</replaceable>;
+</programlisting>
 
     which uses the <productname>PostgreSQL</productname> sorting code in 
-    the ORDER BY clause to create the desired order; this is usually much
+    the <literal>ORDER BY</literal> clause to create the desired order; this is usually much
     faster than an index scan for
     unordered data. You then drop the old table, use
-    <command>ALTER TABLE...RENAME</command>
+    <command>ALTER TABLE ... RENAME</command>
     to rename <replaceable class="parameter">newtable</replaceable> to the old name, and
     recreate the table's indexes. However, this approach does not preserve
     OIDs, constraints, foreign key relationships, granted privileges, and
     other ancillary properties of the table --- all such items must be
     manually recreated.
    </para>
-
-  </refsect2>
  </refsect1>
 
- <refsect1 id="R1-SQL-CLUSTER-2">
-  <title>
-   Usage
-  </title>
+ <refsect1>
+  <title>Examples</title>
+
   <para>
-   Cluster the <literal>employees</literal> relation on the basis of
-   its ID attribute:
-  </para>
-  <programlisting>
+   Cluster the table <literal>employees</literal> on the basis of
+   its index <literal>emp_ind</literal>:
+<programlisting>
 CLUSTER emp_ind ON emp;
-  </programlisting>
+</programlisting>
+  </para>
+
   <para>
    Cluster the <literal>employees</literal> relation using the same
    index that was used before:
-  </para>
-  <programlisting>
+<programlisting>
 CLUSTER emp;
-  </programlisting>
+</programlisting>
+  </para>
+
   <para>
    Cluster all the tables on the database that have previously been clustered:
-  </para>
-  <programlisting>
+<programlisting>
 CLUSTER;
-  </programlisting>
+</programlisting>
+  </para>
  </refsect1>
 
- <refsect1 id="R1-SQL-CLUSTER-3">
-  <title>
-   Compatibility
-  </title>
+ <refsect1>
+  <title>Compatibility</title>
 
-  <refsect2 id="R2-SQL-CLUSTER-4">
-   <refsect2info>
-    <date>1998-09-08</date>
-   </refsect2info>
-   <title>
-    SQL92
-   </title>
-   <para>
-    There is no <command>CLUSTER</command> statement in SQL92.
-   </para>
-  </refsect2>
+  <para>
+   There is no <command>CLUSTER</command> statement in the SQL standard.
+  </para>
  </refsect1>
 
  <refsect1>

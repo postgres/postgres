@@ -1,162 +1,117 @@
 <!--
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_trigger.sgml,v 1.4 2003/04/15 13:25:08 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-ALTERTRIGGER">
  <refmeta>
-  <refentrytitle id="sql-altertrigger-title">
-   ALTER TRIGGER
-  </refentrytitle>
+  <refentrytitle id="sql-altertrigger-title">ALTER TRIGGER</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
+
  <refnamediv>
-  <refname>
-   ALTER TRIGGER
-  </refname>
-  <refpurpose>
-   change the definition of a trigger
-  </refpurpose>
+  <refname>ALTER TRIGGER</refname>
+  <refpurpose>change the definition of a trigger</refpurpose>
  </refnamediv>
+
  <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>2002-04-19</date>
-  </refsynopsisdivinfo>
-  <synopsis>
+<synopsis>
 ALTER TRIGGER <replaceable class="PARAMETER">trigger</replaceable> ON <replaceable class="PARAMETER">table</replaceable>
     RENAME TO <replaceable class="PARAMETER">newname</replaceable>
-  </synopsis>
-
-  <refsect2 id="R2-SQL-ALTERTRIGGER-1">
-   <refsect2info>
-    <date>2002-04-19</date>
-   </refsect2info>
-   <title>
-    Inputs
-   </title>
-   <para>
-    <variablelist>
-
-     <varlistentry>
-      <term><replaceable class="PARAMETER"> trigger </replaceable></term>
-      <listitem>
-       <para>
-	The name of an existing trigger to alter.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><replaceable class="PARAMETER"> table </replaceable></term>
-      <listitem>
-       <para>
-	The name of the table on which this trigger acts.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><replaceable class="PARAMETER"> newname </replaceable></term>
-      <listitem>
-       <para>
-	New name for the existing trigger.
-       </para>
-      </listitem>
-     </varlistentry>
-
-    </variablelist>
-   </para>
-  </refsect2>
-
-  <refsect2 id="R2-SQL-ALTERTRIGGER-2">
-   <refsect2info>
-    <date>2002-04-19</date>
-   </refsect2info>
-   <title>
-    Outputs
-   </title>
-   <para>
-
-    <variablelist>
-     <varlistentry>
-      <term><computeroutput>ALTER TRIGGER</computeroutput></term>
-      <listitem>
-       <para>
-	Message returned from trigger renaming.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><computeroutput>ERROR</computeroutput></term>
-      <listitem>
-       <para>
-	Message returned if trigger is not available, or new name is a duplicate of another existing trigger on the table.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
+</synopsis>
  </refsynopsisdiv>
 
- <refsect1 id="R1-SQL-ALTERTRIGGER-1">
-  <refsect1info>
-   <date>2002-04-19</date>
-  </refsect1info>
-  <title>
-   Description
-  </title>
+ <refsect1>
+  <title>Description</title>
+
   <para>
-   <command>ALTER TRIGGER</command> changes the definition of an existing trigger.
-   The <literal>RENAME</literal> clause causes the name of a trigger on the given table
-   to change without otherwise changing the trigger definition.
+   <command>ALTER TRIGGER</command> changes properties of an existing
+   trigger.  The <literal>RENAME</literal> clause changes the name of
+   the given trigger without otherwise changing the trigger
+   definition.
   </para>
 
   <para>
-   You must own the table on which the trigger acts in order to change its properties.
+   You must own the table on which the trigger acts to be allowed to change its properties.
   </para>
-
-  <refsect2 id="R2-SQL-ALTERTRIGGER-3">
-   <refsect2info>
-    <date>2002-04-19</date>
-   </refsect2info>
-   <title>
-    Notes
-   </title>
-   <para>
-    Refer to <command>CREATE TRIGGER</command> for a further description
-    of valid arguments.
-   </para>
-  </refsect2>
  </refsect1>
 
- <refsect1 id="R1-SQL-ALTERTRIGGER-2">
-  <title>
-   Usage
-  </title>
+ <refsect1>
+  <title>Parameter</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><replaceable class="PARAMETER">trigger</replaceable></term>
+    <listitem>
+     <para>
+      The name of an existing trigger to alter.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="PARAMETER">table</replaceable></term>
+    <listitem>
+     <para>
+      The name of the table on which this trigger acts.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="PARAMETER">newname</replaceable></term>
+    <listitem>
+     <para>
+      The new name for the trigger.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Diagnostics</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><computeroutput>ALTER TRIGGER</computeroutput></term>
+    <listitem>
+     <para>
+      Message returned if successful.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><computeroutput>ERROR</computeroutput></term>
+    <listitem>
+     <para>
+      If the trigger does not exist, or the new name is a duplicate of
+      another existing trigger on the table.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Examples</title>
+
   <para>
    To rename an existing trigger:
-   <programlisting>
+<programlisting>
 ALTER TRIGGER emp_stamp ON emp RENAME TO emp_track_chgs;
-   </programlisting>
+</programlisting>
   </para>
  </refsect1>
 
- <refsect1 id="R1-SQL-ALTERTRIGGER-3">
-  <title>
-   Compatibility
-  </title>
+ <refsect1>
+  <title>Compatibility</title>
 
-  <refsect2 id="R2-SQL-ALTERTRIGGER-4">
-   <refsect2info>
-    <date>2002-04-19</date>
-   </refsect2info>
-   <title>SQL92</title>
-   <para>
-    <command>ALTER TRIGGER</command> is a <productname>PostgreSQL</>
-    extension of SQL92.
-   </para>
-  </refsect2>
+  <para>
+   <command>ALTER TRIGGER</command> is a <productname>PostgreSQL</>
+   extension of the SQL standard.
+  </para>
  </refsect1>
 </refentry>
 

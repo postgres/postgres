@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/commit.sgml,v 1.14 2002/04/21 19:02:39 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/commit.sgml,v 1.15 2003/04/15 13:25:08 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -8,141 +8,96 @@ PostgreSQL documentation
   <refentrytitle id="SQL-COMMIT-TITLE">COMMIT</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
+
  <refnamediv>
-  <refname>
-   COMMIT
-  </refname>
-  <refpurpose>
-   commit the current transaction
-  </refpurpose>
+  <refname>COMMIT</refname>
+  <refpurpose>commit the current transaction</refpurpose>
  </refnamediv>  
   
  <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>1999-07-20</date>
-  </refsynopsisdivinfo>
-  <synopsis>
+<synopsis>
 COMMIT [ WORK | TRANSACTION ]
-  </synopsis>
-  
-  <refsect2 id="R2-SQL-COMMIT-1">
-   <refsect2info>
-    <date>1998-09-08</date>
-   </refsect2info>
-   <title>
-    Inputs
-   </title>
-   <para>
-
-    <variablelist>
-     <varlistentry>
-      <term>WORK</term>
-      <term>TRANSACTION</term>
-      <listitem>
-       <para>
-	Optional keywords. They have no effect.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
-   
-  <refsect2 id="R2-SQL-COMMIT-2">
-   <refsect2info>
-    <date>1998-09-08</date>
-   </refsect2info>
-   <title>
-    Outputs
-   </title>
-   <para>
-
-    <variablelist>
-     <varlistentry>
-      <term><computeroutput>
-COMMIT
-       </computeroutput></term>
-      <listitem>
-       <para>
-	Message returned if the transaction is successfully committed.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><computeroutput>
-WARNING:  COMMIT: no transaction in progress
-       </computeroutput></term>
-      <listitem>
-       <para>
-	If there is no transaction in progress.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
+</synopsis>
  </refsynopsisdiv>
   
- <refsect1 id="R1-SQL-COMMIT-1">
-  <refsect1info>
-   <date>1998-09-08</date>
-  </refsect1info>
-  <title>
-   Description
-  </title>
+ <refsect1>
+  <title>Description</title>
+
   <para>
    <command>COMMIT</command> commits the current transaction. All
    changes made by the transaction become visible to others
    and are guaranteed to be durable if a crash occurs.
   </para>
+ </refsect1>
   
-  <refsect2 id="R2-SQL-COMMIT-3">
-   <refsect2info>
-    <date>1998-09-08</date>
-   </refsect2info>
-   <title>
-    Notes
-   </title>
-   <para>
-    The keywords WORK and TRANSACTION are noise and can be omitted.
-   </para>
+ <refsect1>
+  <title>Parameters</title>
 
-   <para>
-    Use <xref linkend="SQL-ROLLBACK" endterm="SQL-ROLLBACK-TITLE">
-    to abort a transaction.
-   </para>
-  </refsect2>
+  <variablelist>
+   <varlistentry>
+    <term><literal>WORK</literal></term>
+    <term><literal>TRANSACTION</literal></term>
+    <listitem>
+     <para>
+      Optional key words. They have no effect.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+   
+ <refsect1>
+  <title>Diagnostics</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><computeroutput>COMMIT</computeroutput></term>
+    <listitem>
+     <para>
+      Message returned if the transaction was successfully committed.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><computeroutput>WARNING:  COMMIT: no transaction in progress</computeroutput></term>
+    <listitem>
+     <para>
+      Message if there is no transaction in progress.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
  </refsect1>
 
- <refsect1 id="R1-SQL-COMMIT-2">
-  <title>
-   Usage
-  </title>
+ <refsect1>
+  <title>Notes</title>
+
   <para>
-   To make all changes permanent:
-   <programlisting>
-COMMIT WORK;
-   </programlisting>
+   Use <xref linkend="SQL-ROLLBACK" endterm="SQL-ROLLBACK-TITLE"> to
+   abort a transaction.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Examples</title>
+
+  <para>
+   To commit the current transaction and make all changes permanent:
+<programlisting>
+COMMIT;
+</programlisting>
   </para>
  </refsect1>
  
- <refsect1 id="R1-SQL-COMMIT-3">
-  <title>
-   Compatibility
-  </title>
+ <refsect1>
+  <title>Compatibility</title>
   
-  <refsect2 id="R2-SQL-COMMIT-4">
-   <refsect2info>
-    <date>1998-09-08</date>
-   </refsect2info>
-   <title>
-    SQL92
-   </title>
-   <para>
-    <acronym>SQL92</acronym> only specifies the two forms <literal>COMMIT</literal>
-    and <literal>COMMIT WORK</literal>. Otherwise full compatibility.
-   </para>
-  </refsect2>
+  <para>
+   The SQL standard only specifies the two forms
+   <literal>COMMIT</literal> and <literal>COMMIT
+   WORK</literal>. Otherwise, this command is fully conforming.
+  </para>
  </refsect1>
 </refentry>
 

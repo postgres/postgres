@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/close.sgml,v 1.13 2002/05/18 15:44:47 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/close.sgml,v 1.14 2003/04/15 13:25:08 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -8,144 +8,104 @@ PostgreSQL documentation
   <refentrytitle id="SQL-CLOSE-TITLE">CLOSE</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
+
  <refnamediv>
-  <refname>
-   CLOSE
-  </refname>
-  <refpurpose>
-   close a cursor
-  </refpurpose>
+  <refname>CLOSE</refname>
+  <refpurpose>close a cursor</refpurpose>
  </refnamediv>
+
  <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>1999-07-20</date>
-  </refsynopsisdivinfo>
-  <synopsis>
+<synopsis>
 CLOSE <replaceable class="PARAMETER">cursor</replaceable>
-  </synopsis>
-  
-  <refsect2 id="R2-SQL-CLOSE-1">
-   <refsect2info>
-    <date>1998-09-08</date>
-   </refsect2info>
-   <title>
-    Inputs
-   </title>
-   <para>
-
-    <variablelist>
-     <varlistentry>
-      <term><replaceable class="PARAMETER">cursor</replaceable></term>
-      <listitem>
-       <para>
-	The name of an open cursor to close.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
-  
-  <refsect2 id="R2-SQL-CLOSE-2">
-   <refsect2info>
-    <date>1998-09-08</date>
-   </refsect2info>
-   <title>
-    Outputs
-   </title>
-   <para>
-
-    <variablelist>
-     <varlistentry>
-      <term><computeroutput>
-CLOSE CURSOR
-       </computeroutput></term>
-      <listitem>
-       <para>
-	Message returned if the cursor is successfully closed.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><computeroutput>
-WARNING:  PerformPortalClose: portal "<replaceable class="PARAMETER">cursor</replaceable>" not found
-       </computeroutput></term>
-      <listitem>
-       <para>
-	This warning is given if
-	<replaceable class="PARAMETER">cursor</replaceable> is not
-	declared or has already been closed.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
+</synopsis>
  </refsynopsisdiv>
 
- <refsect1 id="R1-SQL-CLOSE-1">
-  <refsect1info>
-   <date>1998-09-08</date>
-  </refsect1info>
-  <title>
-   Description
-  </title>
+ <refsect1>
+  <title>Description</title>
+
   <para>
    <command>CLOSE</command> frees the resources associated with an open cursor.
    After the cursor is closed, no subsequent operations
    are allowed on it. A cursor should be closed when it is
    no longer needed.
   </para>
+
   <para>
-   An implicit close is executed for every open cursor when a
-   transaction is terminated by <command>COMMIT</command>
- or <command>ROLLBACK</command>.
+   Every open cursor is implicitly closed when a transaction is
+   terminated by <command>COMMIT</command> or
+   <command>ROLLBACK</command>.
   </para>
+ </refsect1>
   
-  <refsect2 id="R2-SQL-CLOSE-3">
-   <refsect2info>
-    <date>1998-09-08</date>
-   </refsect2info>
-   <title>
-    Notes
-   </title>
-   <para>
-    <productname>PostgreSQL</productname> does not have
-    an explicit <command>OPEN</command> cursor statement;
-    a cursor is considered open when it is declared.
-    Use the <command>DECLARE</command> statement to declare a cursor.
-   </para>
-  </refsect2>
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><replaceable class="PARAMETER">cursor</replaceable></term>
+    <listitem>
+     <para>
+      The name of an open cursor to close.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+  
+ <refsect1>
+  <title>Diagnostics</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><computeroutput>CLOSE CURSOR</computeroutput></term>
+    <listitem>
+     <para>
+      Message returned if the cursor is successfully closed.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><computeroutput>WARNING:  PerformPortalClose: portal "<replaceable class="PARAMETER">cursor</replaceable>" not found</computeroutput></term>
+    <listitem>
+     <para>
+      This warning is given if <replaceable
+      class="PARAMETER">cursor</replaceable> is not declared or has
+      already been closed.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
  </refsect1>
 
- <refsect1 id="R1-SQL-CLOSE-2">
-  <title>
-   Usage
-  </title>
+ <refsect1>
+  <title>Notes</title>
+
+  <para>
+   <productname>PostgreSQL</productname> does not have an explicit
+   <command>OPEN</command> cursor statement; a cursor is considered
+   open when it is declared.  Use the <command>DECLARE</command>
+   statement to declare a cursor.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Examples</title>
+
   <para>
    Close the cursor <literal>liahona</literal>:
-  </para>
-  <programlisting>
+<programlisting>
 CLOSE liahona;
-  </programlisting>
+</programlisting>
+  </para>
  </refsect1>
  
- <refsect1 id="R1-SQL-CLOSE-3">
-  <title>
-   Compatibility
-  </title>
+ <refsect1>
+  <title>Compatibility</title>
   
-  <refsect2 id="R2-SQL-CLOSE-4">
-   <refsect2info>
-    <date>1998-09-08</date>
-   </refsect2info>
-   <title>
-    SQL92
-   </title>
-   <para>
-    <command>CLOSE</command> is fully compatible with SQL92.
-   </para>
-  </refsect2>
+  <para>
+   <command>CLOSE</command> is fully conforming with the SQL standard.
+  </para>
  </refsect1>
 </refentry>
 

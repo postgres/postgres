@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_database.sgml,v 1.5 2003/03/25 16:15:38 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_database.sgml,v 1.6 2003/04/15 13:25:08 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -32,18 +32,18 @@ ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> RESET <replacea
    value becomes the session default value.
    The database-specific default
    overrides whatever setting is present in <filename>postgresql.conf</>
-   or has been received from the postmaster.
+   or has been received from the <command>postmaster</command> command line.
   </para>
 
   <para>
-   Only a superuser or the database owner can change the session defaults for a
+   Only the database owner or a superuser can change the session defaults for a
    database.
   </para>
+ </refsect1>
 
-  <refsect2>
-   <title>Parameters</title>
+ <refsect1>
+  <title>Parameters</title>
 
-   <para>
     <variablelist>
      <varlistentry>
       <term><replaceable class="PARAMETER">name</replaceable></term>
@@ -77,14 +77,11 @@ ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> RESET <replacea
       </listitem>
      </varlistentry>
     </variablelist>
-   </para>
-  </refsect2>
  </refsect1>
 
  <refsect1>
   <title>Diagnostics</title>
 
-  <para>
    <variablelist>
     <varlistentry>
      <term><computeroutput>ALTER DATABASE</computeroutput></term>
@@ -105,7 +102,6 @@ ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> RESET <replacea
      </listitem>
     </varlistentry>
    </variablelist>
-  </para>
  </refsect1>
 
  <refsect1>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/comment.sgml,v 1.20 2002/07/12 18:43:12 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/comment.sgml,v 1.21 2003/04/15 13:25:08 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -8,21 +8,16 @@ PostgreSQL documentation
   <refentrytitle id="SQL-COMMENT-TITLE">COMMENT</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
+
  <refnamediv>
-  <refname>
-   COMMENT
-  </refname>
-  <refpurpose>
-   define or change the comment of an object
-  </refpurpose>
+  <refname>COMMENT</refname>
+  <refpurpose>define or change the comment of an object</refpurpose>
  </refnamediv>
+
  <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>1999-07-20</date>
-  </refsynopsisdivinfo>
-  <synopsis>
+<synopsis>
 COMMENT ON
-[
+{
   TABLE <replaceable class="PARAMETER">object_name</replaceable> |
   COLUMN <replaceable class="PARAMETER">table_name</replaceable>.<replaceable class="PARAMETER">column_name</replaceable> |
   AGGREGATE <replaceable class="PARAMETER">agg_name</replaceable> (<replaceable class="PARAMETER">agg_type</replaceable>) |
@@ -38,83 +33,21 @@ COMMENT ON
   TRIGGER <replaceable class="PARAMETER">trigger_name</replaceable> ON <replaceable class="PARAMETER">table_name</replaceable> |
   TYPE <replaceable class="PARAMETER">object_name</replaceable> |
   VIEW <replaceable class="PARAMETER">object_name</replaceable>
-] IS <replaceable class="PARAMETER">'text'</replaceable>
-  </synopsis>
-
-  <refsect2 id="R2-SQL-COMMENT-1">
-   <refsect2info>
-    <date>1999-10-25</date>
-   </refsect2info>
-   <title>
-    Inputs
-   </title>
-   <para>
-
-    <variablelist>
-     <varlistentry>
-      <term><replaceable class="PARAMETER">object_name,
-      table_name.column_name, agg_name, constraint_name, func_name, op, rule_name, trigger_name</replaceable></term>
-      <listitem>
-       <para>
-	The name of the object to be be commented.  Names of tables,
-	aggregates, domains, functions, indexes, operators, sequences, types,
-	and views
-	may be schema-qualified.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><replaceable class="PARAMETER">text</replaceable></term>
-      <listitem>
-       <para>
-	The comment to add.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
-
-  <refsect2 id="R2-SQL-COMMENT-2">
-   <refsect2info>
-    <date>1998-09-08</date>
-   </refsect2info>
-   <title>
-    Outputs
-   </title>
-   <para>
-
-    <variablelist>
-     <varlistentry>
-      <term><computeroutput>
-COMMENT
-       </computeroutput></term>
-      <listitem>
-       <para>
-	Message returned if the table is successfully commented.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
+} IS <replaceable class="PARAMETER">'text'</replaceable>
+</synopsis>
  </refsynopsisdiv>
 
- <refsect1 id="R1-SQL-COMMENT-1">
-  <refsect1info>
-   <date>1998-10-25</date>
-  </refsect1info>
-  <title>
-   Description
-  </title>
+ <refsect1>
+  <title>Description</title>
+
   <para>
    <command>COMMENT</command> stores a comment about a database object.
     Comments can be
-    easily retrieved with <command>psql</command>'s
-    <command>\dd</command>, <command>\d+</command>, or <command>\l+</command>
-    commands.  Other user interfaces to retrieve comments can be built atop
-    the same built-in functions that <command>psql</command> uses, namely
-    <function>obj_description()</> and <function>col_description()</>.
+    easily retrieved with the <application>psql</application> commands
+    <command>\dd</command>, <command>\d+</command>, and <command>\l+</command>.
+    Other user interfaces to retrieve comments can be built atop
+    the same built-in functions that <application>psql</application> uses, namely
+    <function>obj_description</> and <function>col_description</>.
   </para>
 
   <para>
@@ -124,75 +57,114 @@ COMMENT
     string.
     Comments are automatically dropped when the object is dropped.
   </para>
-
-  <note>
-  <para>
-    There is presently no security mechanism
-    for comments: any user connected to a database can see all the comments
-    for objects in that database (although only superusers can change
-    comments for objects that they don't own).  Therefore, don't put
-    security-critical information in comments.
-  </para>
-  </note>
  </refsect1>
 
- <refsect1 id="R1-SQL-COMMENT-2">
-  <title>
-   Usage
-  </title>
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><replaceable class="parameter">object_name</replaceable></term>
+    <term><replaceable class="parameter">table_name.column_name</replaceable></term>
+    <term><replaceable class="parameter">aggname</replaceable></term>
+    <term><replaceable class="parameter">constraint_name</replaceable></term>
+    <term><replaceable class="parameter">func_name</replaceable></term>
+    <term><replaceable class="parameter">op</replaceable></term>
+    <term><replaceable class="parameter">rule_name</replaceable></term>
+    <term><replaceable class="parameter">trigger_name</replaceable></term>
+    <listitem>
+     <para>
+      The name of the object to be be commented.  Names of tables,
+      aggregates, domains, functions, indexes, operators, sequences,
+      types, and views may be schema-qualified.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">text</replaceable></term>
+    <listitem>
+     <para>
+      The new comment.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Diagnostics</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><computeroutput>COMMENT</computeroutput></term>
+    <listitem>
+     <para>
+      Message returned if the comment was successfully changed.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Notes</title>
+
+  <para>
+   There is presently no security mechanism for comments: any user
+   connected to a database can see all the comments for objects in
+   that database (although only superusers can change comments for
+   objects that they don't own).  Therefore, don't put
+   security-critical information in comments.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Examples</title>
+
   <para>
    Attach a comment to the table <literal>mytable</literal>:
 
-   <programlisting>
+<programlisting>
 COMMENT ON TABLE mytable IS 'This is my table.';
-   </programlisting>
+</programlisting>
 
    Remove it again:
 
-   <programlisting>
+<programlisting>
 COMMENT ON TABLE mytable IS NULL;
-   </programlisting>
+</programlisting>
   </para>
 
   <para>
    Some more examples:
 
-   <programlisting>
+<programlisting>
 COMMENT ON AGGREGATE my_aggregate (double precision) IS 'Computes sample variance';
-COMMENT ON COLUMN my_table.my_field IS 'Employee ID number';
+COMMENT ON COLUMN my_table.my_column IS 'Employee ID number';
 COMMENT ON DATABASE my_database IS 'Development Database';
 COMMENT ON DOMAIN my_domain IS 'Email Address Domain';
 COMMENT ON FUNCTION my_function (timestamp) IS 'Returns Roman Numeral';
-COMMENT ON INDEX my_index IS 'Enforces uniqueness on employee id';
+COMMENT ON INDEX my_index IS 'Enforces uniqueness on employee ID';
 COMMENT ON OPERATOR ^ (text, text) IS 'Performs intersection of two texts';
 COMMENT ON OPERATOR ^ (NONE, text) IS 'This is a prefix operator on text';
-COMMENT ON RULE my_rule ON my_table IS 'Logs UPDATES of employee records';
+COMMENT ON RULE my_rule ON my_table IS 'Logs updates of employee records';
 COMMENT ON SCHEMA my_schema IS 'Departmental data';
 COMMENT ON SEQUENCE my_sequence IS 'Used to generate primary keys';
 COMMENT ON TABLE my_schema.my_table IS 'Employee Information';
-COMMENT ON TRIGGER my_trigger ON my_table IS 'Used for R.I.';
-COMMENT ON TYPE complex IS 'Complex Number datatype';
+COMMENT ON TRIGGER my_trigger ON my_table IS 'Used for RI';
+COMMENT ON TYPE complex IS 'Complex number data type';
 COMMENT ON VIEW my_view IS 'View of departmental costs';
-   </programlisting>
+</programlisting>
   </para>
  </refsect1>
 
- <refsect1 id="R1-SQL-COMMENT-3">
-  <title>
-   Compatibility
-  </title>
+ <refsect1>
+  <title>Compatibility</title>
 
-  <refsect2 id="R2-SQL-COMMENT-4">
-   <refsect2info>
-    <date>1998-09-08</date>
-   </refsect2info>
-   <title>
-    SQL92
-   </title>
-   <para>
-    There is no <command>COMMENT</command> in <acronym>SQL92</acronym>.
-   </para>
-  </refsect2>
+  <para>
+   There is no <command>COMMENT</command> command in the SQL standard.
+  </para>
  </refsect1>
 </refentry>
 

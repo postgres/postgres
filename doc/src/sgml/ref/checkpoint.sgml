@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/checkpoint.sgml,v 1.8 2003/03/25 16:15:39 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/checkpoint.sgml,v 1.9 2003/04/15 13:25:08 petere Exp $ -->
 
 <refentry id="sql-checkpoint">
  <refmeta>
@@ -24,8 +24,8 @@ CHECKPOINT
    Write-Ahead Logging (WAL) puts a checkpoint in the transaction log
    every so often. (To adjust the automatic checkpoint interval, see
    the run-time
-   configuration options <parameter>CHECKPOINT_SEGMENTS</parameter>
-   and <parameter>CHECKPOINT_TIMEOUT</parameter>.)
+   configuration options <varname>checkpoint_segments</varname>
+   and <varname>checkpoint_timeout</varname>.)
    The <command>CHECKPOINT</command> command forces an immediate checkpoint
    when the command is issued, without waiting for a scheduled checkpoint.
   </para>

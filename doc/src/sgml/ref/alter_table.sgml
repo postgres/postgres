@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.58 2003/03/25 16:15:38 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.59 2003/04/15 13:25:08 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -8,19 +8,14 @@ PostgreSQL documentation
   <refentrytitle id="sql-altertable-title">ALTER TABLE</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
+
  <refnamediv>
-  <refname>
-   ALTER TABLE
-  </refname>
-  <refpurpose>
-   change the definition of a table
-  </refpurpose>
+  <refname>ALTER TABLE</refname>
+  <refpurpose>change the definition of a table</refpurpose>
  </refnamediv>
+
  <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>1999-07-20</date>
-  </refsynopsisdivinfo>
-  <synopsis>
+<synopsis>
 ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ * ]
     ADD [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> <replaceable class="PARAMETER">type</replaceable> [ <replaceable class="PARAMETER">column_constraint</replaceable> [ ... ] ]
 ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ * ]
@@ -48,179 +43,19 @@ ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
     OWNER TO <replaceable class="PARAMETER">new_owner</replaceable> 
 ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
 	CLUSTER ON <replaceable class="PARAMETER">index_name</replaceable>
-  </synopsis>
-
-  <refsect2 id="R2-SQL-ALTERTABLE-1">
-   <refsect2info>
-    <date>1998-04-15</date>
-   </refsect2info>
-   <title>
-    Inputs
-   </title>
-   <para>
-    <variablelist>
-
-     <varlistentry>
-      <term><replaceable class="PARAMETER"> table </replaceable></term>
-      <listitem>
-       <para>
-	The name (possibly schema-qualified) of an existing table to
-	alter. If <literal>ONLY</> is specified, only that table is
-	altered. If <literal>ONLY</> is not specified, the table and all
-	its descendant tables (if any) are updated. <literal>*</> can be
-	appended to the table name to indicate that descendant tables are
-	to be scanned, but in the current version, this is the default
-	behavior.  (In releases before 7.1, <literal>ONLY</> was the
-	default behavior.)  The default can be altered by changing the
-	<option>SQL_INHERITANCE</option> configuration option.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><replaceable class="PARAMETER"> column </replaceable></term>
-      <listitem>
-       <para>
-	Name of a new or existing column.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><replaceable class="PARAMETER"> type </replaceable></term>
-      <listitem>
-       <para>
-	Type of the new column.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><replaceable class="PARAMETER"> new_column </replaceable></term>
-      <listitem>
-       <para>
-	New name for an existing column.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><replaceable class="PARAMETER"> new_table </replaceable></term>
-      <listitem>
-       <para>
-	New name for the table.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><replaceable class="PARAMETER"> table_constraint </replaceable></term>
-      <listitem>
-       <para>
-	New table constraint for the table.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><replaceable class="PARAMETER"> constraint_name </replaceable></term>
-      <listitem>
-       <para>
-	Name of an existing constraint to drop.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><replaceable class="PARAMETER">new_owner </replaceable></term>
-      <listitem>
-       <para>
-	The user name of the new owner of the table.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><replaceable class="PARAMETER"> index_name </replaceable></term>
-      <listitem>
-       <para>
-	The index name on which the table should be marked for clustering.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>CASCADE</term>
-      <listitem>
-       <para>
-        Automatically drop objects that depend on the dropped column
-	or constraint (for example, views referencing the column).
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>RESTRICT</term>
-      <listitem>
-       <para>
-        Refuse to drop the column or constraint if there are any dependent
-	objects. This is the default behavior.
-       </para>
-      </listitem>
-     </varlistentry>
-
-    </variablelist>
-   </para>
-  </refsect2>
-
-  <refsect2 id="R2-SQL-ALTERTABLE-2">
-   <refsect2info>
-    <date>1998-04-15</date>
-   </refsect2info>
-   <title>
-    Outputs
-   </title>
-   <para>
-
-    <variablelist>
-     <varlistentry>
-      <term><computeroutput>ALTER TABLE</computeroutput></term>
-      <listitem>
-       <para>
-	Message returned from column or table renaming.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><computeroutput>ERROR</computeroutput></term>
-      <listitem>
-       <para>
-	Message returned if table or column is not available.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
+</synopsis>
  </refsynopsisdiv>
 
- <refsect1 id="R1-SQL-ALTERTABLE-1">
-  <refsect1info>
-   <date>1998-04-15</date>
-  </refsect1info>
-  <title>
-   Description
-  </title>
+ <refsect1>
+  <title>Description</title>
+
   <para>
    <command>ALTER TABLE</command> changes the definition of an existing table.
-   There are several sub-forms:
-  </para>
+   There are several subforms:
 
   <variablelist>
-
    <varlistentry>
-    <term>ADD COLUMN</term>
+    <term><literal>ADD COLUMN</literal></term>
     <listitem>
      <para>
       This form adds a new column to the table using the same syntax as
@@ -230,45 +65,45 @@ ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
    </varlistentry>
 
    <varlistentry>
-    <term>DROP COLUMN</term>
+    <term><literal>DROP COLUMN</literal></term>
     <listitem>
      <para>
-      This form drops a column from a table.  Note that indexes and
+      This form drops a column from a table.  Indexes and
       table constraints involving the column will be automatically
       dropped as well.  You will need to say <literal>CASCADE</> if
-      anything outside the table depends on the column --- for example,
-      foreign key references, views, etc.
+      anything outside the table depends on the column, for example,
+      foreign key references or views.
      </para>
     </listitem>
    </varlistentry>
 
    <varlistentry>
-    <term>SET/DROP DEFAULT</term>
+    <term><literal>SET</literal>/<literal>DROP DEFAULT</literal></term>
     <listitem>
      <para>
-      These forms set or remove the default value for a column. Note
-      that defaults only apply to subsequent <command>INSERT</command>
+      These forms set or remove the default value for a column.
+      The default values only apply to subsequent <command>INSERT</command>
       commands; they do not cause rows already in the table to change.
       Defaults may also be created for views, in which case they are
       inserted into <command>INSERT</> statements on the view before
-      the view's ON INSERT rule is applied.
+      the view's <literal>ON INSERT</literal> rule is applied.
      </para>
     </listitem>
    </varlistentry>
 
    <varlistentry>
-    <term>SET/DROP NOT NULL</term>
+    <term><literal>SET</literal>/<literal>DROP NOT NULL</literal></term>
     <listitem>
      <para>
-      These forms change whether a column is marked to allow NULL
-      values or to reject NULL values.  You may only <literal>SET NOT NULL</>
-      when the table contains no null values in the column.
+      These forms change whether a column is marked to allow null
+      values or to reject null values.  You can only use <literal>SET
+      NOT NULL</> when the column contains no null values.
      </para>
     </listitem>
    </varlistentry>
 
    <varlistentry>
-    <term>SET STATISTICS</term>
+    <term><literal>SET STATISTICS</literal></term>
     <listitem>
      <para>
       This form
@@ -281,39 +116,40 @@ ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
    </varlistentry>
 
    <varlistentry>
-    <term>SET STORAGE</term>
+    <term><literal>SET STORAGE</literal></term>
     <listitem>
      <para>
       This form sets the storage mode for a column. This controls whether this
       column is held inline or in a supplementary table, and whether the data
       should be compressed or not. <literal>PLAIN</literal> must be used
-      for fixed-length values such as <literal>INTEGER</literal> and is
+      for fixed-length values such as <type>integer</type> and is
       inline, uncompressed. <literal>MAIN</literal> is for inline,
       compressible data. <literal>EXTERNAL</literal> is for external,
-      uncompressed data and <literal>EXTENDED</literal> is for external,
+      uncompressed data, and <literal>EXTENDED</literal> is for external,
       compressed data.  <literal>EXTENDED</literal> is the default for all
-      data types that support it.  The use of <literal>EXTERNAL</literal> will
-      make substring operations on a TEXT column faster, at the penalty of
+      data types that support it.  The use of <literal>EXTERNAL</literal> will, for example,
+      make substring operations on a <type>text</type> column faster, at the penalty of
       increased storage space.
      </para>
     </listitem>
    </varlistentry>
 
    <varlistentry>
-    <term>SET WITHOUT OIDS</term>
+    <term><literal>SET WITHOUT OIDS</literal></term>
     <listitem>
      <para>
-      Removes the <literal>OID</literal> column from the the table.  Removing (setting without)
-      oids from a table also do not occur immediately.  The space an <literal>OID</literal>
-      uses will be reclaimed when the tuple is updated.  Without updating the tuple, both the
-      space and the value of the <literal>OID</literal> are maintained indefinitely.  This is
-      semantically similar to the <literal>DROP COLUMN</literal> process.
+      This form removes the <literal>oid</literal> column from the
+      table.  Removing OIDs from a table does not occur immediately.
+      The space that the OID uses will be reclaimed when the row is
+      updated.  Without updating the row, both the space and the value
+      of the OID are kept indefinitely.  This is semantically similar
+      to the <literal>DROP COLUMN</literal> process.
      </para>
     </listitem>
    </varlistentry>
 
    <varlistentry>
-    <term>RENAME</term>
+    <term><literal>RENAME</literal></term>
     <listitem>
      <para>
       The <literal>RENAME</literal> forms change the name of a table
@@ -324,7 +160,7 @@ ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
    </varlistentry>
 
    <varlistentry>
-    <term>ADD <replaceable class="PARAMETER">table_constraint</replaceable></term>
+    <term><literal>ADD <replaceable class="PARAMETER">table_constraint</replaceable></literal></term>
     <listitem>
      <para>
       This form adds a new constraint to a table using the same syntax as
@@ -334,7 +170,7 @@ ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
    </varlistentry>
 
    <varlistentry>
-    <term>DROP CONSTRAINT</term>
+    <term><literal>DROP CONSTRAINT</literal></term>
     <listitem>
      <para>
       This form drops constraints on a table.
@@ -346,17 +182,17 @@ ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
    </varlistentry>
 
    <varlistentry>
-    <term>OWNER</term>
+    <term><literal>OWNER</literal></term>
     <listitem>
      <para>
-      This form changes the owner of the table, index, sequence or view to the
+      This form changes the owner of the table, index, sequence, or view to the
       specified user.
      </para>
     </listitem>
    </varlistentry>
 
    <varlistentry>
-    <term>CLUSTER</term>
+    <term><literal>CLUSTER</literal></term>
     <listitem>
      <para>
       This form marks a table for future <xref linkend="SQL-CLUSTER" endterm="sql-cluster-title">
@@ -366,27 +202,166 @@ ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
    </varlistentry>
 
   </variablelist>
+  </para>
 
   <para>
    You must own the table to use <command>ALTER TABLE</>; except for
    <command>ALTER TABLE OWNER</>, which may only be executed by a superuser.
   </para>
+ </refsect1>
 
-  <refsect2 id="R2-SQL-ALTERTABLE-3">
-   <refsect2info>
-    <date>1998-04-15</date>
-   </refsect2info>
-   <title>
-    Notes
-</title>
+ <refsect1>
+  <title>Parameters</title>
+
+    <variablelist>
+
+     <varlistentry>
+      <term><replaceable class="PARAMETER">table</replaceable></term>
+      <listitem>
+       <para>
+	The name (possibly schema-qualified) of an existing table to
+	alter. If <literal>ONLY</> is specified, only that table is
+	altered. If <literal>ONLY</> is not specified, the table and all
+	its descendant tables (if any) are updated. <literal>*</> can be
+	appended to the table name to indicate that descendant tables are
+	to be altered, but in the current version, this is the default
+	behavior.  (In releases before 7.1, <literal>ONLY</> was the
+	default behavior.  The default can be altered by changing the
+	configuration parameter <varname>sql_inheritance</varname>.)
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="PARAMETER">column</replaceable></term>
+      <listitem>
+       <para>
+	Name of a new or existing column.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="PARAMETER">type</replaceable></term>
+      <listitem>
+       <para>
+	Data type of the new column.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="PARAMETER">new_column</replaceable></term>
+      <listitem>
+       <para>
+	New name for an existing column.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="PARAMETER">new_table</replaceable></term>
+      <listitem>
+       <para>
+	New name for the table.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="PARAMETER">table_constraint</replaceable></term>
+      <listitem>
+       <para>
+	New table constraint for the table.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="PARAMETER">constraint_name</replaceable></term>
+      <listitem>
+       <para>
+	Name of an existing constraint to drop.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="PARAMETER">new_owner</replaceable></term>
+      <listitem>
+       <para>
+	The user name of the new owner of the table.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="PARAMETER">index_name</replaceable></term>
+      <listitem>
+       <para>
+	The index name on which the table should be marked for clustering.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>CASCADE</literal></term>
+      <listitem>
+       <para>
+        Automatically drop objects that depend on the dropped column
+	or constraint (for example, views referencing the column).
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>RESTRICT</literal></term>
+      <listitem>
+       <para>
+        Refuse to drop the column or constraint if there are any dependent
+	objects. This is the default behavior.
+       </para>
+      </listitem>
+     </varlistentry>
+
+    </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Diagnostics</title>
+
+    <variablelist>
+     <varlistentry>
+      <term><computeroutput>ALTER TABLE</computeroutput></term>
+      <listitem>
+       <para>
+	Message returned if successful.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><computeroutput>ERROR</computeroutput></term>
+      <listitem>
+       <para>
+	Message returned if table or column does not exist.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Notes</title>
+
    <para>
-    The keyword <literal>COLUMN</literal> is noise and can be omitted.
+    The key word <literal>COLUMN</literal> is noise and can be omitted.
    </para>
 
    <para>
     In the current implementation of <literal>ADD COLUMN</literal>,
-    default and NOT NULL clauses for the new column are not supported.
-    The new column always comes into being with all values NULL.
+    default and <literal>NOT NULL</> clauses for the new column are not supported.
+    The new column always comes into being with all values null.
     You can use the <literal>SET DEFAULT</literal> form
     of <command>ALTER TABLE</command> to set the default afterward.
     (You may also want to update the already existing rows to the
@@ -397,25 +372,25 @@ ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
    </para>
 
    <para>
-    The <literal>DROP COLUMN</literal> command does not physically remove
+    The <literal>DROP COLUMN</literal> form does not physically remove
     the column, but simply makes it invisible to SQL operations.  Subsequent
-    inserts and updates of the table will store a NULL for the column.
+    insert and update operations in the table will store a null value for the column.
     Thus, dropping a column is quick but it will not immediately reduce the
     on-disk size of your table, as the space occupied 
     by the dropped column is not reclaimed.  The space will be
     reclaimed over time as existing rows are updated.
     To reclaim the space at once, do a dummy <command>UPDATE</> of all rows
     and then vacuum, as in:
-     <programlisting>
+<programlisting>
 UPDATE table SET col = col;
 VACUUM FULL table;
-    </programlisting>
+</programlisting>
    </para>
 
    <para>
-    If a table has any descendant tables, it is not permitted to ADD
-    or RENAME a column in the parent table without doing the same to
-    the descendants --- that is, <command>ALTER TABLE ONLY</command>
+    If a table has any descendant tables, it is not permitted to add
+    or rename a column in the parent table without doing the same to
+    the descendants.  That is, <command>ALTER TABLE ONLY</command>
     will be rejected.  This ensures that the descendants always have
     columns matching the parent.
    </para>
@@ -431,126 +406,115 @@ VACUUM FULL table;
    </para>
 
    <para>
-    Changing any  part  of  the schema of a system
-    catalog is not permitted.
+    Changing any part of a system catalog table is not permitted.
    </para>
 
    <para>
     Refer to <command>CREATE TABLE</command> for a further description
-    of valid arguments. <xref linkend="ddl"> has further information on
+    of valid parameters. <xref linkend="ddl"> has further information on
     inheritance.
    </para>
-  </refsect2>
  </refsect1>
 
- <refsect1 id="R1-SQL-ALTERTABLE-2">
-  <title>
-   Usage
-  </title>
+ <refsect1>
+  <title>Examples</title>
+
   <para>
    To add a column of type <type>varchar</type> to a table:
-   <programlisting>
-ALTER TABLE distributors ADD COLUMN address VARCHAR(30);
-   </programlisting>
+<programlisting>
+ALTER TABLE distributors ADD COLUMN address varchar(30);
+</programlisting>
   </para>
 
   <para>
    To drop a column from a table:
-   <programlisting>
+<programlisting>
 ALTER TABLE distributors DROP COLUMN address RESTRICT;
-   </programlisting>
+</programlisting>
   </para>
 
   <para>
    To rename an existing column:
-   <programlisting>
+<programlisting>
 ALTER TABLE distributors RENAME COLUMN address TO city;
-   </programlisting>
+</programlisting>
   </para>
 
   <para>
    To rename an existing table:
-   <programlisting>
+<programlisting>
 ALTER TABLE distributors RENAME TO suppliers;
-   </programlisting>
+</programlisting>
   </para>
 
   <para>
-   To add a NOT NULL constraint to a column:
-   <programlisting>
+   To add a not-null constraint to a column:
+<programlisting>
 ALTER TABLE distributors ALTER COLUMN street SET NOT NULL;
-   </programlisting>
-   To remove a NOT NULL constraint from a column:
-   <programlisting>
+</programlisting>
+   To remove a not-null constraint from a column:
+<programlisting>
 ALTER TABLE distributors ALTER COLUMN street DROP NOT NULL;
-   </programlisting>
+</programlisting>
   </para>
 
   <para> 
    To add a check constraint to a table:
-   <programlisting>
+<programlisting>
 ALTER TABLE distributors ADD CONSTRAINT zipchk CHECK (char_length(zipcode) = 5);
-   </programlisting>
+</programlisting>
   </para>
 
   <para> 
    To remove a check constraint from a table and all its children:
-   <programlisting>
+<programlisting>
 ALTER TABLE distributors DROP CONSTRAINT zipchk;
-   </programlisting>
+</programlisting>
   </para>
 
   <para> 
    To add a foreign key constraint to a table:
-   <programlisting>
-ALTER TABLE distributors ADD CONSTRAINT distfk FOREIGN KEY (address) REFERENCES addresses(address) MATCH FULL;
-   </programlisting>
+<programlisting>
+ALTER TABLE distributors ADD CONSTRAINT distfk FOREIGN KEY (address) REFERENCES addresses (address) MATCH FULL;
+</programlisting>
   </para>
 
   <para> 
    To add a (multicolumn) unique constraint to a table:
-   <programlisting>
+<programlisting>
 ALTER TABLE distributors ADD CONSTRAINT dist_id_zipcode_key UNIQUE (dist_id, zipcode);
-   </programlisting>
+</programlisting>
   </para>
 
   <para> 
    To add an automatically named primary key constraint to a table, noting
    that a table can only ever have one primary key:
-   <programlisting>
+<programlisting>
 ALTER TABLE distributors ADD PRIMARY KEY (dist_id);
-   </programlisting>
+</programlisting>
   </para>
  </refsect1>
 
- <refsect1 id="R1-SQL-ALTERTABLE-3">
-  <title>
-   Compatibility
-  </title>
+ <refsect1>
+  <title>Compatibility</title>
 
-  <refsect2 id="R2-SQL-ALTERTABLE-4">
-   <refsect2info>
-    <date>1998-04-15</date>
-   </refsect2info>
-   <title>SQL92</title>
-    <para>
-     The <literal>ADD COLUMN</literal> form is compliant with the exception that
-     it does not support defaults and NOT NULL constraints, as explained above.
-     The <literal>ALTER COLUMN</literal> form is in full compliance.
-    </para>
+  <para>
+   The <literal>ADD COLUMN</literal> form conforms with the SQL
+   standard, with the exception that it does not support defaults and
+   not-null constraints, as explained above.  The <literal>ALTER
+   COLUMN</literal> form is in full conformance.
+  </para>
 
-   <para>
-    The clauses to rename tables, columns, indexes, and sequences are
-    <productname>PostgreSQL</productname> extensions from SQL92.
-   </para>
+  <para>
+   The clauses to rename tables, columns, indexes, views, and sequences are
+   <productname>PostgreSQL</productname> extensions of the SQL standard.
+  </para>
 
-   <para>
-    <command>ALTER TABLE DROP COLUMN</> can be used to drop the only column
-    of a table, leaving a zero-column table.  This is an extension from SQL92,
-    which disallows zero-column tables.
-   </para>
- 
-  </refsect2>
+  <para>
+   <command>ALTER TABLE DROP COLUMN</> can be used to drop the only
+   column of a table, leaving a zero-column table.  This is an
+   extension of SQL, which disallows zero-column tables.
+  </para>
  </refsect1>
 </refentry>
 

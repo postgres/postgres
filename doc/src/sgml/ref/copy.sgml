@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/copy.sgml,v 1.41 2003/03/27 16:51:27 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/copy.sgml,v 1.42 2003/04/15 13:25:08 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -8,186 +8,35 @@ PostgreSQL documentation
   <refentrytitle id="sql-copy-title">COPY</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
+
  <refnamediv>
-  <refname>
-   COPY
-  </refname>
-  <refpurpose>
-   copy data between files and tables
-  </refpurpose>
+  <refname>COPY</refname>
+  <refpurpose>copy data between files and tables</refpurpose>
  </refnamediv>
+
  <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>1999-12-11</date>
-  </refsynopsisdivinfo>
-  <synopsis>
+<synopsis>
 COPY <replaceable class="parameter">table</replaceable> [ ( <replaceable class="parameter">column</replaceable> [, ...] ) ]
-    FROM { '<replaceable class="parameter">filename</replaceable>' | <filename>stdin</filename> }
+    FROM { '<replaceable class="parameter">filename</replaceable>' | STDIN }
     [ [ WITH ] 
           [ BINARY ] 
           [ OIDS ]
           [ DELIMITER [ AS ] '<replaceable class="parameter">delimiter</replaceable>' ]
           [ NULL [ AS ] '<replaceable class="parameter">null string</replaceable>' ] ]
+
 COPY <replaceable class="parameter">table</replaceable> [ ( <replaceable class="parameter">column</replaceable> [, ...] ) ]
-    TO { '<replaceable class="parameter">filename</replaceable>' | <filename>stdout</filename> }
+    TO { '<replaceable class="parameter">filename</replaceable>' | STDOUT }
     [ [ WITH ] 
           [ BINARY ]
           [ OIDS ]
           [ DELIMITER [ AS ] '<replaceable class="parameter">delimiter</replaceable>' ]
           [ NULL [ AS ] '<replaceable class="parameter">null string</replaceable>' ] ]
-  </synopsis>
-  
-  <refsect2 id="R2-SQL-COPY-1">
-   <refsect2info>
-    <date>1998-09-08</date>
-   </refsect2info>
-   <title>
-    Inputs
-   </title>
-   <para>
-
-    <variablelist>
-     <varlistentry>
-      <term><replaceable class="parameter">table</replaceable></term>
-      <listitem>
-       <para>
-	The name (possibly schema-qualified) of an existing table.
-       </para>
-      </listitem>
-     </varlistentry>
-     
-     <varlistentry>
-      <term><replaceable class="parameter">column</replaceable></term>
-      <listitem>
-       <para>
-	An optional list of columns to be copied.  If no column list is
-	specified, all columns will be used.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><replaceable class="parameter">filename</replaceable></term>
-      <listitem>
-       <para>
-	The absolute Unix path name of the input or output file.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><filename>stdin</filename></term>
-      <listitem>
-       <para>
-	Specifies that input comes from the client application.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><filename>stdout</filename></term>
-      <listitem>
-       <para>
-	Specifies that output goes to the client application.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>BINARY</term>
-      <listitem>
-       <para>
-	Changes the behavior of field formatting, forcing all data to be
-	stored or read in binary format rather than as text. You can not
-	specify <option>DELIMITER</option> or <option>NULL</option>
-	in binary mode.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>OIDS</term>
-      <listitem>
-       <para>
-	Specifies copying the internal object id (OID) for each row.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><replaceable class="parameter">delimiter</replaceable></term>
-      <listitem>
-       <para>
-	The single character that separates fields within each row (line) of the file.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><replaceable class="parameter">null string</replaceable></term>
-      <listitem>
-       <para>
-        The string that represents a NULL value. The default is
-        <quote><literal>\N</literal></quote> (backslash-N). You might
-        prefer an empty string, for example.
-       </para>
-       <note>
-        <para>
-         On a <command>COPY FROM</command>, any data item that matches
-         this string will be stored as a NULL value, so you should
-         make sure that you use the same string as you used with
-         <command>COPY TO</command>.
-        </para>
-       </note>
-      </listitem>
-     </varlistentry>
-
-    </variablelist>
-   </para>
-  </refsect2>
-  
-  <refsect2 id="R2-SQL-COPY-2">
-   <refsect2info>
-    <date>1998-09-08</date>
-   </refsect2info>
-   <title>
-    Outputs
-   </title>
-   <para>
-
-    <variablelist>
-     <varlistentry>
-      <term><computeroutput>
-COPY
-       </computeroutput></term>
-      <listitem>
-       <para>
-	The copy completed successfully.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><computeroutput>
-ERROR: <replaceable>reason</replaceable>
-       </computeroutput></term>
-      <listitem>
-       <para>
-	The copy failed for the reason stated in the error message.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
+</synopsis>
  </refsynopsisdiv>
  
- <refsect1 id="R1-SQL-COPY-1">
-  <refsect1info>
-   <date>2001-01-02</date>
-  </refsect1info>
-  <title>
-   Description
-  </title>
+ <refsect1>
+  <title>Description</title>
+
   <para>
    <command>COPY</command> moves data between
    <productname>PostgreSQL</productname> tables and standard file-system
@@ -207,61 +56,186 @@ ERROR: <replaceable>reason</replaceable>
 
   <para>
    <command>COPY</command> with a file name instructs the
-   <productname>PostgreSQL</productname> backend to directly read from
-   or write to a file. The file must be accessible to the backend and
-   the name must be specified from the viewpoint of the backend. When
-   <filename>stdin</filename> or <filename>stdout</filename> is
+   <productname>PostgreSQL</productname> server to directly read from
+   or write to a file. The file must be accessible to the server and
+   the name must be specified from the viewpoint of the server. When
+   <literal>STDIN</literal> or <literal>STDOUT</literal> is
    specified, data is transmitted via the connection between the
-   client frontend and the backend.
-    
-    <tip>
-     <para>
-      Do not confuse <command>COPY</command> with the
-      <application>psql</application> instruction
-      <command>\copy</command>. <command>\copy</command> invokes
-      <command>COPY FROM stdin</command> or <command>COPY TO
-      stdout</command>, and then fetches/stores the data in a file
-      accessible to the <application>psql</application> client. Thus,
-      file accessibility and access rights depend on the client rather
-      than the backend when <command>\copy</command> is used.
-     </para>
-    </tip>
-   </para>
+   client and the server.
+  </para>
+ </refsect1>
+  
+ <refsect1>
+  <title>Parameters</title>
 
-  <refsect2 id="R2-SQL-COPY-3">
-   <refsect2info>
-    <date>2001-01-02</date>
-   </refsect2info>
-   <title>
-    Notes
-   </title>
+  <variablelist>
+   <varlistentry>
+    <term><replaceable class="parameter">table</replaceable></term>
+    <listitem>
+     <para>
+      The name (possibly schema-qualified) of an existing table.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">column</replaceable></term>
+     <listitem>
+     <para>
+      An optional list of columns to be copied.  If no column list is
+      specified, all columns will be used.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">filename</replaceable></term>
+    <listitem>
+     <para>
+      The absolute path name of the input or output file.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>STDIN</literal></term>
+    <listitem>
+     <para>
+      Specifies that input comes from the client application.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>STDOUT</literal></term>
+    <listitem>
+     <para>
+      Specifies that output goes to the client application.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>BINARY</literal></term>
+    <listitem>
+     <para>
+      Forces all data to be stored or read in binary format rather
+      than as text. You cannot specify the <option>DELIMITER</option>
+      or <option>NULL</option> options in binary mode.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>OIDS</literal></term>
+    <listitem>
+     <para>
+      Specifies copying the OID for each row.  (An error is raised if
+      <literal>OIDS</literal> is specified for a table that does not
+      have OIDs.)
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">delimiter</replaceable></term>
+    <listitem>
+     <para>
+      The single character that separates columns within each row
+      (line) of the file.  The default is a tab character.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">null string</replaceable></term>
+    <listitem>
+     <para>
+      The string that represents a null value. The default is
+      <literal>\N</literal> (backslash-N). You might prefer an empty
+      string, for example.
+     </para>
+
+     <note>
+      <para>
+       On a <command>COPY FROM</command>, any data item that matches
+       this string will be stored as a null value, so you should make
+       sure that you use the same string as you used with
+       <command>COPY TO</command>.
+      </para>
+     </note>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+  
+ <refsect1>
+  <title>Diagnostics</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><computeroutput>COPY</computeroutput></term>
+    <listitem>
+     <para>
+      The copy operation completed successfully.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Notes</title>
+
    <para>
     <command>COPY</command> can only be used with plain tables, not
     with views.
    </para>
 
    <para>
-    The BINARY keyword will force all data to be
+    The <literal>BINARY</literal> key word will force all data to be
     stored/read as binary format rather than as text.  It is
-    somewhat faster than the normal copy command, but a binary copy
+    somewhat faster than the normal text mode, but a binary format
     file is not portable across machine architectures.
-    </para>
-
-    <para>
-    By default, a text copy uses a tab ("\t") character as a delimiter
-    between fields. The field delimiter may be changed to any other
-    single character with the keyword <option>DELIMITER</option>. Characters
-	in data fields that happen to match the delimiter character will be
-    backslash quoted.
    </para>
-   
+
    <para>
-    You must have <firstterm>select privilege</firstterm> on any table
+    You must have select privilege on any table
     whose values are read by <command>COPY TO</command>, and
-    <firstterm>insert privilege</firstterm> on a table into which values
-    are being inserted by <command>COPY FROM</command>. The backend also
-    needs appropriate Unix permissions for any file read or written by
-    <command>COPY</command>.
+    insert privilege on a table into which values
+    are being inserted by <command>COPY FROM</command>.
+   </para>
+
+   <para>
+    Files named in a <command>COPY</command> command are read or written
+    directly by the server, not by the client application. Therefore,
+    they must reside on or be accessible to the database server machine,
+    not the client. They must be accessible to and readable or writable
+    by the <application>PostgreSQL</application> user (the user ID the
+    server runs as), not the client. <command>COPY</command> naming a
+    file is only allowed to database superusers, since it allows reading
+    or writing any file that the server has privileges to access.
+   </para>
+
+   <para>
+    Do not confuse <command>COPY</command> with the
+    <application>psql</application> instruction
+    <command>\copy</command>. <command>\copy</command> invokes
+    <command>COPY FROM STDIN</command> or <command>COPY TO
+    STDOUT</command>, and then fetches/stores the data in a file
+    accessible to the <application>psql</application> client. Thus,
+    file accessibility and access rights depend on the client rather
+    than the server when <command>\copy</command> is used.
+   </para>
+
+   <para>
+    It is recommended that the file name used in <command>COPY</command>
+    always be specified as an absolute path. This is enforced by the
+    server in the case of <command>COPY TO</command>, but for
+    <command>COPY FROM</command> you do have the option of reading from
+    a file specified by a relative path. The path will be interpreted
+    relative to the working directory of the server process (somewhere below
+    the data directory), not the client's working directory.
    </para>
 
    <para>
@@ -272,87 +246,52 @@ ERROR: <replaceable>reason</replaceable>
    <para>
     <command>COPY</command> stops operation at the first error. This
     should not lead to problems in the event of a <command>COPY
-    TO</command>, but the target relation will already have received
+    TO</command>, but the target table will already have received
     earlier rows in a <command>COPY FROM</command>. These rows will not
     be visible or accessible, but they still occupy disk space. This may
     amount to a considerable amount of wasted disk space if the failure
     happened well into a large copy operation. You may wish to invoke
     <command>VACUUM</command> to recover the wasted space.
    </para>
-
-   <para>
-    Files named in a <command>COPY</command> command are read or written
-    directly by the backend, not by the client application. Therefore,
-    they must reside on or be accessible to the database server machine,
-    not the client. They must be accessible to and readable or writable
-    by the <application>PostgreSQL</application> user (the user ID the
-    server runs as), not the client. <command>COPY</command> naming a
-    file is only allowed to database superusers, since it allows reading
-    or writing any file that the backend has privileges to access.
-    
-    <tip>
-     <para>
-      The
-      <application>psql</application> instruction <command>\copy</command>
-      reads or writes files on the client machine with the client's
-      permissions, so it is not restricted to superusers.
-     </para>
-    </tip>
-   </para>
-
-   <para>
-    It is recommended that the file name used in <command>COPY</command>
-    always be specified as an absolute path. This is enforced by the
-    backend in the case of <command>COPY TO</command>, but for
-    <command>COPY FROM</command> you do have the option of reading from
-    a file specified by a relative path. The path will be interpreted
-    relative to the backend's working directory (somewhere below
-    <filename>$PGDATA</filename>), not the client's working directory.
-   </para>
-  </refsect2>
  </refsect1>
  
- <refsect1 id="R1-SQL-COPY-2">
-  <refsect1info>
-   <date>2001-01-02</date>
-  </refsect1info>
+ <refsect1>
   <title>File Formats</title>
+
   <refsect2>
-   <refsect2info>
-    <date>2002-02-12</date>
-   </refsect2info>
    <title>Text Format</title>
+
    <para>
-    When <command>COPY</command> is used without the BINARY option,
-    the file read or written is a text file with one line per table row.
-    Columns (attributes) in a row are separated by the delimiter character.
-    The attribute values themselves are strings generated by the
+    When <command>COPY</command> is used without the <literal>BINARY</literal> option,
+    the data read or written is a text file with one line per table row.
+    Columns in a row are separated by the delimiter character.
+    The column values themselves are strings generated by the
     output function, or acceptable to the input function, of each
     attribute's data type.  The specified null-value string is used in
-    place of attributes that are NULL.
+    place of columns that are null.
     <command>COPY FROM</command> will raise an error if any line of the
     input file contains more or fewer columns than are expected.
+    If <literal>OIDS</literal> is specified, the OID is read or written as the first column,
+    preceding the user data columns.
    </para>
-   <para>
-    If OIDS is specified, the OID is read or written as the first column,
-    preceding the user data columns.  (An error is raised if OIDS is
-    specified for a table that does not have OIDs.)
-   </para>
+
    <para>
     End of data can be represented by a single line containing just
     backslash-period (<literal>\.</>).  An end-of-data marker is
-    not necessary when reading from a Unix file, since the end of file
+    not necessary when reading from a file, since the end of file
     serves perfectly well; but an end marker must be provided when copying
     data to or from a client application.
    </para>
+
    <para>
     Backslash characters (<literal>\</>) may be used in the
     <command>COPY</command> data to quote data characters that might
     otherwise be taken as row or column delimiters. In particular, the
     following characters <emphasis>must</> be preceded by a backslash if
-    they appear as part of an attribute value: backslash itself,
+    they appear as part of a column value: backslash itself,
     newline, and the current delimiter character.
    </para>
+
    <para>
     The following special backslash sequences are recognized by
     <command>COPY FROM</command>:
@@ -404,47 +343,44 @@ ERROR: <replaceable>reason</replaceable>
     backslash sequence, but it does use the other sequences listed above
     for those control characters.
    </para>
+
    <para>
     Never put a backslash before a data character <literal>N</> or period
     (<literal>.</>). Such pairs will be mistaken for the default null string
     or the end-of-data marker, respectively.  Any other backslashed character
     that is not mentioned in the above table will be taken to represent itself.
    </para>
+
    <para>
     It is strongly recommended that applications generating COPY data convert
     data newlines and carriage returns to the <literal>\n</> and
-    <literal>\r</> sequences respectively.  At present
-    (<productname>PostgreSQL</productname> 7.2 and older versions) it is
+    <literal>\r</> sequences respectively.  At present it is
     possible to represent a data carriage return without any special quoting,
     and to represent a data newline by a backslash and newline.  However,
     these representations will not be accepted by default in future releases.
    </para>
+
    <para>
     Note that the end of each row is marked by a Unix-style newline
-    ("\n").  Presently, <command>COPY FROM</command> will not behave as
+    (<quote><literal>\n</></>).  Presently, <command>COPY FROM</command> will not behave as
     desired if given a file containing DOS- or Mac-style newlines.
     This is expected to change in future releases.
    </para>
   </refsect2>
 
   <refsect2>
-   <refsect2info>
-    <date>2001-01-02</date>
-   </refsect2info>
    <title>Binary Format</title>
+
    <para>
     The file format used for <command>COPY BINARY</command> changed in
-    <application>PostgreSQL</application> v7.1. The new format consists
-    of a file header, zero or more tuples, and a file trailer.
+    <application>PostgreSQL</application> 7.1. The new format consists
+    of a file header, zero or more tuples containing the row data, and
+    a file trailer.
    </para>
 
    <refsect3>
-    <refsect3info>
-     <date>2001-01-02</date>
-    </refsect3info>
-    <title>
-     File Header
-    </title>
+    <title>File Header</title>
+
     <para>
      The file header consists of 24 bytes of fixed fields, followed
      by a variable-length header extension area.  The fixed fields are:
@@ -454,11 +390,11 @@ ERROR: <replaceable>reason</replaceable>
       <term>Signature</term>
       <listitem>
        <para>
-12-byte sequence <literal>PGBCOPY\n\377\r\n\0</> --- note that the null
+12-byte sequence <literal>PGBCOPY\n\377\r\n\0</> --- note that the zero byte
 is a required part of the signature.  (The signature is designed to allow
 easy identification of files that have been munged by a non-8-bit-clean
 transfer.  This signature will be changed by newline-translation
-filters, dropped nulls, dropped high bits, or parity changes.)
+filters, dropped zero bytes, dropped high bits, or parity changes.)
        </para>
       </listitem>
      </varlistentry>
@@ -467,7 +403,7 @@ filters, dropped nulls, dropped high bits, or parity changes.)
       <term>Integer layout field</term>
       <listitem>
        <para>
-int32 constant 0x01020304 in source's byte order. Potentially, a reader
+32-bit integer constant 0x01020304 in source's byte order. Potentially, a reader
 could engage in byte-flipping of subsequent fields if the wrong byte
 order is detected here.
        </para>
@@ -478,7 +414,7 @@ order is detected here.
       <term>Flags field</term>
       <listitem>
        <para>
-int32 bit mask to denote important aspects of the file format. Bits are
+32-bit integer bit mask to denote important aspects of the file format. Bits are
 numbered from 0 (<acronym>LSB</>) to 31 (<acronym>MSB</>) --- note that this field is stored
 with source's endianness, as are all subsequent integer fields. Bits
 16-31 are reserved to denote critical file format issues; a reader
@@ -491,7 +427,7 @@ only one flag bit is defined, and the rest must be zero:
           <term>Bit 16</term>
           <listitem>
            <para>
-            if 1, OIDs are included in the dump; if 0, not
+            if 1, OIDs are included in the data; if 0, not
            </para>
           </listitem>
          </varlistentry>
@@ -504,8 +440,8 @@ only one flag bit is defined, and the rest must be zero:
       <term>Header extension area length</term>
       <listitem>
        <para>
-int32 length in bytes of remainder of header, not including self.  In
-the initial version this will be zero, and the first tuple follows
+32-bit integer, length in bytes of remainder of header, not including self.
+Currently, this is zero, and the first tuple follows
 immediately.  Future changes to the format might allow additional data
 to be present in the header.  A reader should silently skip over any header
 extension data it does not know what to do with.
@@ -531,17 +467,12 @@ is left for a later release.
    </refsect3>
 
    <refsect3>
-    <refsect3info>
-     <date>2001-01-02</date>
-    </refsect3info>
-    <title>
-     Tuples
-    </title>
+    <title>Tuples</title>
     <para>
-Each tuple begins with an int16 count of the number of fields in the
+Each tuple begins with a 16-bit integer count of the number of fields in the
 tuple.  (Presently, all tuples in a table will have the same count, but
 that might not always be true.)  Then, repeated for each field in the
-tuple, there is an int16 <structfield>typlen</> word possibly followed by field data.
+tuple, there is a 16-bit integer <structfield>typlen</> word possibly followed by field data.
 The <structfield>typlen</> field is interpreted thus:
 
     <variablelist>
@@ -549,7 +480,7 @@ The <structfield>typlen</> field is interpreted thus:
       <term>Zero</term>
       <listitem>
        <para>
-	Field is NULL.  No data follows.
+	Field is null.  No data follows.
        </para>
       </listitem>
      </varlistentry>
@@ -558,7 +489,7 @@ The <structfield>typlen</> field is interpreted thus:
       <term>&gt; 0</term>
       <listitem>
        <para>
-        Field is a fixed-length data type.  Exactly N
+        Field is a fixed-length data type.  Exactly that many
 	bytes of data follow the <structfield>typlen</> word.
        </para>
       </listitem>
@@ -570,7 +501,7 @@ The <structfield>typlen</> field is interpreted thus:
        <para>
 	Field is a <literal>varlena</> data type.  The next four
 	bytes are the <literal>varlena</> header, which contains
-	the total value length including itself.
+	the total value length including the header itself.
        </para>
       </listitem>
      </varlistentry>
@@ -587,7 +518,7 @@ The <structfield>typlen</> field is interpreted thus:
     </para>
 
     <para>
-For non-NULL fields, the reader can check that the <structfield>typlen</> matches the
+For nonnull fields, the reader can check that the <structfield>typlen</> matches the
 expected <structfield>typlen</> for the destination column.  This provides a simple
 but very useful check that the data is as expected.
     </para>
@@ -602,23 +533,19 @@ you from moving a binary file across machines).
     </para>
 
     <para>
-If OIDs are included in the dump, the OID field immediately follows the
+If OIDs are included in the file, the OID field immediately follows the
 field-count word.  It is a normal field except that it's not included
 in the field-count.  In particular it has a <structfield>typlen</> --- this will allow
-handling of 4-byte vs 8-byte OIDs without too much pain, and will allow
-OIDs to be shown as NULL if that ever proves desirable.
+handling of 4-byte vs. 8-byte OIDs without too much pain, and will allow
+OIDs to be shown as null if that ever proves desirable.
     </para>
    </refsect3>
 
    <refsect3>
-    <refsect3info>
-     <date>2001-01-02</date>
-    </refsect3info>
-    <title>
-     File Trailer
-    </title>
+    <title>File Trailer</title>
+
     <para>
-     The file trailer consists of an int16 word containing -1.  This is
+     The file trailer consists of an 16-bit integer word containing -1.  This is
      easily distinguished from a tuple's field-count word.
     </para>
 
@@ -631,48 +558,47 @@ OIDs to be shown as NULL if that ever proves desirable.
   </refsect2>
  </refsect1>
  
- <refsect1 id="R1-SQL-COPY-3">
-  <title>
-   Usage
-  </title>
+ <refsect1>
+  <title>Examples</title>
+
   <para>
-   The following example copies a table to standard output,
-   using a vertical bar (|) as the field delimiter:
+   The following example copies a table to the client
+   using the vertical bar (<literal>|</literal>) as the field delimiter:
+<programlisting>
+COPY country TO STDOUT WITH DELIMITER '|';
+</programlisting>
   </para>
-  <programlisting>
-COPY country TO <filename>stdout</filename> WITH DELIMITER '|';
-  </programlisting>
+
   <para>
-   To copy data from a Unix file into the <literal>country</> table:
-  </para>
-  <programlisting>
+   To copy data from a file into the <literal>country</> table:
+<programlisting>
 COPY country FROM '/usr1/proj/bray/sql/country_data';
-  </programlisting>
+</programlisting>
+  </para>
+
   <para>
    Here is a sample of data suitable for copying into a table from
-   <filename>stdin</filename> (so it has the termination sequence on the
+   <literal>STDIN</literal> (so it must have the termination sequence on the
    last line):
-  </para>
-  <programlisting>
+<programlisting>
 AF      AFGHANISTAN
 AL      ALBANIA
 DZ      ALGERIA
 ZM      ZAMBIA
 ZW      ZIMBABWE
 \.
-  </programlisting>
-  <para>
-   Note that the white space on each line is actually a TAB.
+</programlisting>
+   Note that the white space on each line is actually a tab character.
   </para>
+
   <para>
    The following is the same data, output in binary format on a
    Linux/i586 machine. The data is shown after filtering through the
-   Unix utility <command>od -c</command>. The table has three fields;
-   the first is <type>char(2)</type>, the second is <type>text</type>,
-   and the third is <type>integer</type>. All the rows have a null value
-   in the third field.
-  </para>
-  <programlisting>
+   Unix utility <command>od -c</command>. The table has three columns;
+   the first has type <type>char(2)</type>, the second has type <type>text</type>,
+   and the third has type <type>integer</type>. All the rows have a null value
+   in the third column.
+<programlisting>
 0000000   P   G   B   C   O   P   Y  \n 377  \r  \n  \0 004 003 002 001
 0000020  \0  \0  \0  \0  \0  \0  \0  \0 003  \0 377 377 006  \0  \0  \0
 0000040   A   F 377 377 017  \0  \0  \0   A   F   G   H   A   N   I   S
@@ -683,38 +609,33 @@ ZW      ZIMBABWE
 0000160   M 377 377  \n  \0  \0  \0   Z   A   M   B   I   A  \0  \0 003
 0000200  \0 377 377 006  \0  \0  \0   Z   W 377 377  \f  \0  \0  \0   Z
 0000220   I   M   B   A   B   W   E  \0  \0 377 377
-  </programlisting>
+</programlisting>
+  </para>
  </refsect1>
  
- <refsect1 id="R1-SQL-COPY-6">
-  <title>
-   Compatibility
-  </title>
+ <refsect1>
+  <title>Compatibility</title>
   
-  <refsect2 id="R2-SQL-COPY-4">
-   <refsect2info>
-    <date>1998-09-08</date>
-   </refsect2info>
-   <title>
-    SQL92
-   </title>
-   <para>
-    There is no <command>COPY</command> statement in SQL92.
-   </para>
-   <para>
-    The following syntax was used by pre-7.3 applications and is still supported:
-    <synopsis>
-    COPY [ BINARY ] <replaceable class="parameter">table</replaceable> [ WITH OIDS ]
-        FROM { '<replaceable class="parameter">filename</replaceable>' | <filename>stdin</filename> }
-        [ [USING] DELIMITERS '<replaceable class="parameter">delimiter</replaceable>' ]
-        [ WITH NULL AS '<replaceable class="parameter">null string</replaceable>' ]
-    COPY [ BINARY ] <replaceable class="parameter">table</replaceable> [ WITH OIDS ]
-        TO { '<replaceable class="parameter">filename</replaceable>' | <filename>stdout</filename> }
-        [ [USING] DELIMITERS '<replaceable class="parameter">delimiter</replaceable>' ]
-        [ WITH NULL AS '<replaceable class="parameter">null string</replaceable>' ]
-    </synopsis>
-   </para>
-  </refsect2>
+  <para>
+   There is no <command>COPY</command> statement in the SQL standard.
+  </para>
+
+  <para>
+   The following syntax was used before PostgreSQL version 7.3 and is
+   still supported:
+
+<synopsis>
+COPY [ BINARY ] <replaceable class="parameter">table</replaceable> [ WITH OIDS ]
+    FROM { '<replaceable class="parameter">filename</replaceable>' | STDIN }
+    [ [USING] DELIMITERS '<replaceable class="parameter">delimiter</replaceable>' ]
+    [ WITH NULL AS '<replaceable class="parameter">null string</replaceable>' ]
+
+COPY [ BINARY ] <replaceable class="parameter">table</replaceable> [ WITH OIDS ]
+    TO { '<replaceable class="parameter">filename</replaceable>' | STDOUT }
+    [ [USING] DELIMITERS '<replaceable class="parameter">delimiter</replaceable>' ]
+    [ WITH NULL AS '<replaceable class="parameter">null string</replaceable>' ]
+</synopsis>
+  </para>
  </refsect1>
 </refentry>
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_group.sgml,v 1.8 2002/04/21 19:02:39 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_group.sgml,v 1.9 2003/04/15 13:25:08 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -8,92 +8,29 @@ PostgreSQL documentation
   <refentrytitle id="SQL-ALTERGROUP-title">ALTER GROUP</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
+
  <refnamediv>
-  <refname>
-   ALTER GROUP
-  </refname>
-  <refpurpose>
-   add users to a group or remove users from a group
-  </refpurpose>
+  <refname>ALTER GROUP</refname>
+  <refpurpose>add users to a group or remove users from a group</refpurpose>
  </refnamediv>
+
  <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>2000-01-14</date>
-  </refsynopsisdivinfo>
-  <synopsis>
-ALTER GROUP <replaceable class="PARAMETER">name</replaceable> ADD USER <replaceable class="PARAMETER">username</replaceable> [, ... ]
-ALTER GROUP <replaceable class="PARAMETER">name</replaceable> DROP USER <replaceable class="PARAMETER">username</replaceable> [, ... ]
-  </synopsis>
-
-  <refsect2 id="R2-SQL-ALTERGROUP-1">
-   <refsect2info>
-    <date>2000-01-14</date>
-   </refsect2info>
-   <title>
-    Inputs
-   </title>
-
-   <para>
-    <variablelist>
-     <varlistentry>
-      <term><replaceable class="PARAMETER">name</replaceable></term>
-      <listitem>
-       <para>
-	The name of the group to modify.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><replaceable class="PARAMETER">username</replaceable></term>
-      <listitem>
-       <para>
-        Users which are to be added or removed from the group. The user
-        names must exist.
-       </para>
-      </listitem>
-     </varlistentry>
-
-    </variablelist>
-   </para>
-  </refsect2>
-    
-  <refsect2 id="R2-SQL-ALTERGROUP-2">
-   <refsect2info>
-    <date>2000-01-14</date>
-   </refsect2info>
-   <title>
-    Outputs
-   </title>
-   <para>
-    <variablelist>
-     <varlistentry>
-      <term><computeroutput>ALTER GROUP</computeroutput></term>
-      <listitem>
-       <para>
-	Message returned if the alteration was successful.
-       </para>
-      </listitem>
-     </varlistentry>
-     
-    </variablelist>
-   </para>
-  </refsect2>
+<synopsis>
+ALTER GROUP <replaceable class="PARAMETER">groupname</replaceable> ADD USER <replaceable class="PARAMETER">username</replaceable> [, ... ]
+ALTER GROUP <replaceable class="PARAMETER">groupname</replaceable> DROP USER <replaceable class="PARAMETER">username</replaceable> [, ... ]
+</synopsis>
  </refsynopsisdiv>
 
- <refsect1 id="R1-SQL-ALTERGROUP-1">
-  <refsect1info>
-   <date>2000-01-14</date>
-  </refsect1info>
-  <title>
-   Description
-  </title>
+ <refsect1>
+  <title>Description</title>
+
   <para>
    <command>ALTER GROUP</command> is used to add or remove users from a
    group. Only database superusers can use this command.
    Adding a user to a group does not create the user. Similarly, removing
    a user from a group does not drop the user itself.
   </para>
+
   <para>
    Use <xref linkend="SQL-CREATEGROUP" endterm="SQL-CREATEGROUP-title">
    to create a new group and <xref linkend="SQL-DROPGROUP"
@@ -101,10 +38,48 @@ ALTER GROUP <replaceable class="PARAMETER">name</replaceable> DROP USER <replace
   </para>
  </refsect1>
 
- <refsect1 id="R1-SQL-ALTERGROUP-2">
-  <title>
-   Usage
-  </title>
+ <refsect1>
+  <title>Parameter</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><replaceable class="PARAMETER">groupname</replaceable></term>
+    <listitem>
+     <para>
+      The name of the group to modify.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="PARAMETER">username</replaceable></term>
+    <listitem>
+     <para>
+      Users which are to be added or removed from the group. The users
+      must exist.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Diagnostics</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><computeroutput>ALTER GROUP</computeroutput></term>
+    <listitem>
+     <para>
+      Message returned if the alteration was successful.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Examples</title>
   <para>
    Add users to a group:
 
@@ -121,24 +96,13 @@ ALTER GROUP workers DROP USER beth;
   </para>
  </refsect1>
 
- <refsect1 id="R1-SQL-ALTERGROUP-3">
-  <title>
-   Compatibility
-  </title>
+ <refsect1>
+  <title>Compatibility</title>
     
-  <refsect2 id="R2-SQL-ALTERGROUP-4">
-   <refsect2info>
-    <date>2000-01-14</date>
-   </refsect2info>
-   <title>
-    SQL92
-   </title>
-   <para>
-    There is no <command>ALTER GROUP</command> statement in
-    <acronym>SQL92</acronym>. The concept of roles is
-    similar.
-   </para>
-  </refsect2>
+  <para>
+   There is no <command>ALTER GROUP</command> statement in the SQL
+   standard. The concept of roles is similar.
+  </para>
  </refsect1>
 </refentry>
 

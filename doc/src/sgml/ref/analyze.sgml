@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/analyze.sgml,v 1.11 2003/03/25 16:15:39 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/analyze.sgml,v 1.12 2003/04/15 13:25:08 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -8,97 +8,24 @@ PostgreSQL documentation
   <refentrytitle id="sql-analyze-title">ANALYZE</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
+
  <refnamediv>
-  <refname>
-   ANALYZE
-  </refname>
-  <refpurpose>
-   collect statistics about a database
-  </refpurpose>
+  <refname>ANALYZE</refname>
+  <refpurpose>collect statistics about a database</refpurpose>
  </refnamediv>
+
  <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>2001-05-04</date>
-  </refsynopsisdivinfo>
-  <synopsis>
+<synopsis>
 ANALYZE [ VERBOSE ] [ <replaceable class="PARAMETER">table</replaceable> [ (<replaceable class="PARAMETER">column</replaceable> [, ...] ) ] ]
-  </synopsis>
-
-  <refsect2 id="R2-SQL-ANALYZE-1">
-   <refsect2info>
-    <date>2001-05-04</date>
-   </refsect2info>
-   <title>
-    Inputs
-   </title>
-
-   <para>
-    <variablelist>
-     <varlistentry>
-      <term>VERBOSE</term>
-      <listitem>
-       <para>
-	Enables display of progress messages.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><replaceable class="PARAMETER">table</replaceable></term>
-      <listitem>
-       <para>
-	The name (possibly schema-qualified) of a specific table to
-	analyze. Defaults to all tables in the current database.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><replaceable class="PARAMETER">column</replaceable></term>
-      <listitem>
-       <para>
-	The name of a specific column to analyze. Defaults to all columns.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
-
-  <refsect2 id="R2-SQL-ANALYZE-2">
-   <refsect2info>
-    <date>2001-05-04</date>
-   </refsect2info>
-   <title>
-    Outputs
-   </title>
-   <para>
-
-    <variablelist>
-     <varlistentry>
-      <term><computeroutput>
-<returnvalue>ANALYZE</returnvalue>
-       </computeroutput></term>
-      <listitem>
-       <para>
-	The command is complete.
-       </para>
-      </listitem>
-     </varlistentry>
-
-    </variablelist>
-   </para>
-  </refsect2>
+</synopsis>
  </refsynopsisdiv>
 
- <refsect1 id="R1-SQL-ANALYZE-1">
-  <refsect1info>
-   <date>2001-05-04</date>
-  </refsect1info>
-  <title>
-   Description
-  </title>
+ <refsect1>
+  <title>Description</title>
+
   <para>
    <command>ANALYZE</command> collects statistics about the contents of
-   <productname>PostgreSQL</productname> tables, and stores the results in
+   tables in the database, and stores the results in
    the system table <literal>pg_statistic</literal>.  Subsequently,
    the query planner uses the statistics to help determine the most efficient
    execution plans for queries.
@@ -108,16 +35,61 @@ ANALYZE [ VERBOSE ] [ <replaceable class="PARAMETER">table</replaceable> [ (<rep
    With no parameter, <command>ANALYZE</command> examines every table in the
    current database.  With a parameter, <command>ANALYZE</command> examines
    only that table.  It is further possible to give a list of column names,
-   in which case only the statistics for those columns are updated.
+   in which case only the statistics for those columns are collected.
   </para>
+ </refsect1>
 
-  <refsect2 id="R2-SQL-ANALYZE-3">
-   <refsect2info>
-    <date>2001-05-04</date>
-   </refsect2info>
-   <title>
-    Notes
-   </title>
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><literal>VERBOSE</literal></term>
+    <listitem>
+     <para>
+      Enables display of progress messages.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="PARAMETER">table</replaceable></term>
+    <listitem>
+     <para>
+      The name (possibly schema-qualified) of a specific table to
+      analyze. Defaults to all tables in the current database.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="PARAMETER">column</replaceable></term>
+    <listitem>
+     <para>
+      The name of a specific column to analyze. Defaults to all columns.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Diagnostics</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><computeroutput>ANALYZE</computeroutput></term>
+    <listitem>
+     <para>
+      The command is complete.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Notes</title>
 
   <para>
    It is a good idea to run <command>ANALYZE</command> periodically, or
@@ -138,7 +110,7 @@ ANALYZE [ VERBOSE ] [ <replaceable class="PARAMETER">table</replaceable> [ (<rep
   <para>
    For large tables, <command>ANALYZE</command> takes a random sample of the
    table contents, rather than examining every row.  This allows even very
-   large tables to be analyzed in a small amount of time.  Note however
+   large tables to be analyzed in a small amount of time.  Note, however,
    that the statistics are only approximate, and will change slightly each
    time <command>ANALYZE</command> is run, even if the actual table contents
    did not change.  This may result in small changes in the planner's
@@ -159,7 +131,7 @@ ANALYZE [ VERBOSE ] [ <replaceable class="PARAMETER">table</replaceable> [ (<rep
    The extent of analysis can be controlled by adjusting the
    <literal>default_statistics_target</> parameter variable, or on a
    column-by-column basis by setting the per-column
-   statistics target with <command>ALTER TABLE ALTER COLUMN SET
+   statistics target with <command>ALTER TABLE ... ALTER COLUMN ... SET
    STATISTICS</command> (see
    <xref linkend="sql-altertable" endterm="sql-altertable-title">).  The
    target value sets the maximum number of entries in the most-common-value
@@ -170,7 +142,7 @@ ANALYZE [ VERBOSE ] [ <replaceable class="PARAMETER">table</replaceable> [ (<rep
    in <literal>pg_statistic</literal>.
    In particular, setting the statistics target to zero disables collection of
    statistics for that column.  It may be useful to do that for columns that
-   are never used as part of the WHERE, GROUP BY, or ORDER BY clauses of
+   are never used as part of the <literal>WHERE</>, <literal>GROUP BY</>, or <literal>ORDER BY</> clauses of
    queries, since the planner will have no use for statistics on such columns.
   </para>
 
@@ -180,26 +152,14 @@ ANALYZE [ VERBOSE ] [ <replaceable class="PARAMETER">table</replaceable> [ (<rep
    the target causes a proportional increase in the time and space needed
    to do <command>ANALYZE</command>.
   </para>
-
-  </refsect2>
  </refsect1>
 
- <refsect1 id="R1-SQL-ANALYZE-3">
-  <title>
-   Compatibility
-  </title>
+ <refsect1>
+  <title>Compatibility</title>
 
-  <refsect2 id="R2-SQL-ANALYZE-4">
-   <refsect2info>
-    <date>2001-05-04</date>
-   </refsect2info>
-   <title>
-    SQL92
-   </title>
-   <para>
-    There is no <command>ANALYZE</command> statement in <acronym>SQL92</acronym>.
-   </para>
-  </refsect2>
+  <para>
+   There is no <command>ANALYZE</command> statement in the SQL standard.
+  </para>
  </refsect1>
 </refentry>
 

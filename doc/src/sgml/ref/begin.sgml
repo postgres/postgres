@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/begin.sgml,v 1.22 2003/03/25 16:15:39 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/begin.sgml,v 1.23 2003/04/15 13:25:08 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -8,218 +8,137 @@ PostgreSQL documentation
   <refentrytitle id="SQL-BEGIN-TITLE">BEGIN</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
+
  <refnamediv>
-  <refname>
-   BEGIN
-  </refname>
-  <refpurpose>
-   start a transaction block
-  </refpurpose>
-  
-  </refnamediv>
+  <refname>BEGIN</refname>
+  <refpurpose>start a transaction block</refpurpose>
+ </refnamediv>
+
  <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>1999-07-20</date>
-  </refsynopsisdivinfo>
-  <synopsis>
+<synopsis>
 BEGIN [ WORK | TRANSACTION ]
-  </synopsis>
-  
-  <refsect2 id="R2-SQL-BEGIN-1">
-   <refsect2info>
-    <date>1999-06-11</date>
-   </refsect2info>
-   <title>
-    Inputs
-   </title>
-   <para>
-
-    <variablelist>
-     <varlistentry>
-      <term>WORK</term>
-      <term>TRANSACTION</term>
-      <listitem>
-       <para>
-	Optional keywords. They have no effect.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
-  
-  <refsect2 id="R2-SQL-BEGIN-2">
-   <refsect2info>
-    <date>1999-06-11</date>
-   </refsect2info>
-   <title>
-    Outputs
-   </title>
-
-   <para>
-    <variablelist>
-     <varlistentry>
-      <term><computeroutput>
-BEGIN
-       </computeroutput></term>
-      <listitem>
-       <para>
-	This signifies that a new transaction has been started.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><computeroutput>
-WARNING:  BEGIN: already a transaction in progress
-       </computeroutput></term>
-      <listitem>
-       <para>
-	This indicates that a transaction was already in progress.
-	The current transaction is not affected.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
+</synopsis>
  </refsynopsisdiv>
  
- <refsect1 id="R1-SQL-BEGIN-1">
-  <refsect1info>
-   <date>1999-06-11</date>
-  </refsect1info>
-  <title>
-   Description
-  </title>
+ <refsect1>
+  <title>Description</title>
 
   <para>
-   By default, <productname>PostgreSQL</productname> executes transactions
-   in <firstterm>unchained mode</firstterm>
-   (also known as <quote>autocommit</quote> in other database
-   systems).
-   In other words, each user statement is executed in its own transaction
-   and a commit is implicitly performed at the end of the statement
-   (if execution was successful, otherwise a rollback is done).
-   <command>BEGIN</command> initiates a user transaction in chained mode,
-   i.e., all user statements after <command>BEGIN</command> command will
-   be executed in a single transaction until an explicit 
-   <xref linkend="sql-commit" endterm="sql-commit-title"> or
-   <xref linkend="sql-rollback" endterm="sql-rollback-title">.
-   Statements are executed more quickly in chained mode,
-   because transaction start/commit requires significant CPU and disk 
-   activity. Execution of multiple statements inside a transaction
-   is also useful to ensure consistency when changing several
-   related tables: other clients will be unable to see the intermediate
-   states wherein not all the related updates have been done.
+   By default, <productname>PostgreSQL</productname> executes
+   transactions in <quote>autocommit</quote> mode, that is, each
+   statement is executed in its own transaction and a commit is
+   implicitly performed at the end of the statement (if execution was
+   successful, otherwise a rollback is done).
+   <command>BEGIN</command> initiates a transaction block, that is,
+   all statements after <command>BEGIN</command> command will be
+   executed in a single transaction until an explicit <xref
+   linkend="sql-commit" endterm="sql-commit-title"> or <xref
+   linkend="sql-rollback" endterm="sql-rollback-title">.  Statements
+   are executed more quickly in a transaction block, because
+   transaction start/commit requires significant CPU and disk
+   activity. Execution of multiple statements inside a transaction is
+   also useful to ensure consistency when changing several related
+   tables: other sessions will be unable to see the intermediate states
+   wherein not all the related updates have been done.
   </para>
-
-  <para>
-   The default transaction isolation level in
-   <productname>PostgreSQL</productname>
-   is READ COMMITTED, wherein each query inside the transaction sees changes
-   committed before that query begins execution. So, you have to use 
-   <command>SET TRANSACTION ISOLATION LEVEL SERIALIZABLE</command>
-   just after <command>BEGIN</command> if you need more rigorous transaction
-   isolation.  (Alternatively, you can change the default transaction
-   isolation level; see <xref linkend="runtime-config"> for details.)
-   In SERIALIZABLE mode queries will see only changes committed before
-   the entire
-   transaction began (actually, before execution of the first <acronym>DML</> statement
-   in the transaction).
-  </para>
-
-  <para>
-   Transactions have the standard <acronym>ACID</acronym>
-   (atomic, consistent, isolatable, and durable) properties.
-  </para>
+ </refsect1>
   
-  <refsect2 id="R2-SQL-BEGIN-3">
-   <refsect2info>
-    <date>1999-06-11</date>
-   </refsect2info>
-   <title>
-    Notes
-   </title>
-   <para>
-    <xref linkend="sql-start-transaction"
-    endterm="sql-start-transaction-title"> has the same functionality
-    as <command>BEGIN</>.
-   </para>
-   
-   <para>
-    Use <xref linkend="SQL-COMMIT" endterm="SQL-COMMIT-TITLE">
-    or
-    <xref linkend="SQL-ROLLBACK" endterm="SQL-ROLLBACK-TITLE">
-    to terminate a transaction.
-   </para>
+ <refsect1>
+  <title>Parameters</title>
 
-   <para>
-    Refer to <xref linkend="sql-lock" endterm="sql-lock-title">
-    for further information
-    about locking tables inside a transaction.
-   </para>
+  <variablelist>
+   <varlistentry>
+    <term><literal>WORK</literal></term>
+    <term><literal>TRANSACTION</literal></term>
+    <listitem>
+     <para>
+      Optional key words. They have no effect.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+  
+ <refsect1>
+  <title>Diagnostics</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><computeroutput>BEGIN</computeroutput></term>
+    <listitem>
+     <para>
+      This signifies that a new transaction has been started.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><computeroutput>WARNING:  BEGIN: already a transaction in progress</computeroutput></term>
+    <listitem>
+     <para>
+      This indicates that a transaction was already in progress.  The
+      current transaction is not affected.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+  
+ <refsect1>
+  <title>Notes</title>
+
+  <para>
+   <xref linkend="sql-start-transaction"
+   endterm="sql-start-transaction-title"> has the same functionality
+   as <command>BEGIN</>.
+  </para>
    
-   <para>
-    If you turn <varname>autocommit</> mode off, then <command>BEGIN</>
-    is not required: any SQL command automatically starts a transaction.
-   </para>
-  </refsect2>
+  <para>
+   Use <xref linkend="SQL-COMMIT" endterm="SQL-COMMIT-TITLE"> or
+   <xref linkend="SQL-ROLLBACK" endterm="SQL-ROLLBACK-TITLE">
+   to terminate a transaction.
+  </para>
+   
+  <para>
+   If you turn the configuration parameter <varname>autocommit</> off,
+   then <command>BEGIN</> is not required: any SQL command
+   automatically starts a transaction.
+  </para>
  </refsect1>
 
- <refsect1 id="R1-SQL-BEGIN-2">
-  <title>
-   Usage
-  </title>
+ <refsect1>
+  <title>Examples</title>
 
   <para>
-   To begin a user transaction:
+   To begin a transaction block:
 
-  <programlisting>
-BEGIN WORK;
-  </programlisting>
+<programlisting>
+BEGIN;
+</programlisting>
   </para>
  </refsect1>
  
- <refsect1 id="R1-SQL-BEGIN-3">
-  <title>
-   Compatibility
-  </title>
+ <refsect1>
+  <title>Compatibility</title>
 
-  <refsect2 id="R2-SQL-BEGIN-4">
-     <refsect2info>
-    <date>1999-06-11</date>
-   </refsect2info>
-   <title>
-    SQL92
-   </title>
+  <para>
+   <command>BEGIN</command> is a <productname>PostgreSQL</productname>
+   language extension.  There is no explicit <command>BEGIN</command>
+   command in the SQL standard; transaction initiation is
+   always implicit and it terminates either with a
+   <command>COMMIT</command> or <command>ROLLBACK</command> statement.
+  </para>
 
-   <para>
-    <command>BEGIN</command>
-    is a <productname>PostgreSQL</productname> language extension.
-    There is no explicit <command>BEGIN</command>
-    command in <acronym>SQL92</acronym>;
-    transaction initiation is always implicit and it terminates either 
-    with a <command>COMMIT</command> or <command>ROLLBACK</command> statement.
+  <para>
+   Other relational database systems may offer an autocommit feature
+   as a convenience.
+  </para>
 
-    <note>
-     <para>
-      Many relational database systems offer an autocommit feature as a
-      convenience.
-     </para>
-    </note>
-   </para>
-
-   <para>
-    Incidentally, the <literal>BEGIN</literal> keyword is used for a different
-    purpose in embedded SQL. You are advised to be careful about the transaction
-    semantics when porting database applications.
-   </para>
-
-   <para>
-    <acronym>SQL92</acronym> also requires SERIALIZABLE to be the default
-    transaction isolation level.
-   </para>
-  </refsect2>
+  <para>
+   Incidentally, the <literal>BEGIN</literal> key word is used for a
+   different purpose in embedded SQL. You are advised to be careful
+   about the transaction semantics when porting database applications.
+  </para>
  </refsect1>
 </refentry>
  

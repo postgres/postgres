@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_user.sgml,v 1.26 2003/03/25 16:15:39 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_user.sgml,v 1.27 2003/04/15 13:25:08 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -20,7 +20,7 @@ ALTER USER <replaceable class="PARAMETER">username</replaceable> [ [ WITH ] <rep
 
 where <replaceable class="PARAMETER">option</replaceable> can be:
 
-      [ ENCRYPTED | UNENCRYPTED ] PASSWORD '<replaceable class="PARAMETER">password</replaceable>' 
+    [ ENCRYPTED | UNENCRYPTED ] PASSWORD '<replaceable class="PARAMETER">password</replaceable>' 
     | CREATEDB | NOCREATEDB
     | CREATEUSER | NOCREATEUSER 
     | VALID UNTIL '<replaceable class="PARAMETER">abstime</replaceable>'
@@ -42,8 +42,8 @@ ALTER USER <replaceable class="PARAMETER">username</replaceable> RESET <replacea
   <para>
    The first variant of this command in the synopsis changes certain
    global user privileges and authentication settings.  (See below for
-   details.)  Only a database superuser can change privileges and
-   password expiration with this command.  Ordinary users can only
+   details.)  Only a database superuser can change these privileges and
+   the password expiration with this command.  Ordinary users can only
    change their own password.
   </para>
 
@@ -52,15 +52,15 @@ ALTER USER <replaceable class="PARAMETER">username</replaceable> RESET <replacea
    a specified configuration variable.  Whenever the user subsequently
    starts a new session, the specified value becomes the session default,
    overriding whatever setting is present in <filename>postgresql.conf</>
-   or has been received from the postmaster.
+   or has been received from the <command>postmaster</command> command line.
    Ordinary users can change their own session defaults.
    Superusers can change anyone's session defaults.
   </para>
+ </refsect1>
 
-  <refsect2>
-   <title>Parameters</title>
+ <refsect1>
+  <title>Parameters</title>
 
-   <para>
     <variablelist>
      <varlistentry>
       <term><replaceable class="PARAMETER">username</replaceable></term>
@@ -99,8 +99,8 @@ ALTER USER <replaceable class="PARAMETER">username</replaceable> RESET <replacea
       <listitem>
        <para>
 	These clauses define a user's ability to create databases.  If
-	<literal>CREATEDB</literal> is specified, the user being
-	defined will be allowed to create his own databases. Using
+	<literal>CREATEDB</literal> is specified, the user
+	will be allowed to create his own databases. Using
 	<literal>NOCREATEDB</literal> will deny a user the ability to
 	create databases.
        </para>
@@ -125,7 +125,7 @@ ALTER USER <replaceable class="PARAMETER">username</replaceable> RESET <replacea
        <para>
 	The date (and, optionally, the time)
 	at which this user's password is to expire.  To set the password
-	never to expire, use 'infinity'.
+	never to expire, use <literal>'infinity'</>.
        </para>
       </listitem>
      </varlistentry>
@@ -152,14 +152,11 @@ ALTER USER <replaceable class="PARAMETER">username</replaceable> RESET <replacea
       </listitem>
      </varlistentry>
     </variablelist>
-   </para>
-  </refsect2>
  </refsect1>
 
  <refsect1>
   <title>Diagnostics</title>
 
-  <para>
    <variablelist>
     <varlistentry>
      <term><computeroutput>ALTER USER</computeroutput></term>
@@ -175,12 +172,11 @@ ALTER USER <replaceable class="PARAMETER">username</replaceable> RESET <replacea
      <listitem>
       <para>
        Error message returned if the specified user is not known to
-       the database.
+       the database system.
       </para>
      </listitem>
     </varlistentry>
    </variablelist>
-  </para>
  </refsect1>
 
  <refsect1>
@@ -226,10 +222,10 @@ ALTER USER manuel VALID UNTIL 'Jan 31 2030';
 
   <para>
    Change a user's valid until date, specifying that his
-   authorization should expire at midday on 4th May 1998 using
+   authorization should expire at midday on 4th May 2005 using
    the time zone which is one hour ahead of <acronym>UTC</>:
 <programlisting>
-ALTER USER chris VALID UNTIL 'May 4 12:00:00 1998 +1';
+ALTER USER chris VALID UNTIL 'May 4 12:00:00 2005 +1';
 </programlisting>
   </para>
 
