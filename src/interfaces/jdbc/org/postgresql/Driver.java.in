@@ -27,6 +27,14 @@ import org.postgresql.util.PSQLException;
 public class Driver implements java.sql.Driver
 {
 
+  protected static final int DEBUG=0;
+  protected static final int INFO = 1;
+  protected static final int WARN = 2;
+  protected static final int ERROR = 3;
+  protected static final int FATAL = 4;
+
+  private static int logLevel= DEBUG;
+
   static
   {
     try {
@@ -85,21 +93,21 @@ public class Driver implements java.sql.Driver
    * database.
    *
    * <p>The java.util.Properties argument can be used to pass arbitrary
-   * string tag/value pairs as connection arguments.  
+   * string tag/value pairs as connection arguments.
    *
    * user - (optional) The user to connect as
    * password - (optional) The password for the user
-   * charSet - (optional) The character set to be used for converting 
-   *   to/from the database to unicode.  If multibyte is enabled on the 
+   * charSet - (optional) The character set to be used for converting
+   *   to/from the database to unicode.  If multibyte is enabled on the
    *   server then the character set of the database is used as the default,
    *   otherwise the jvm character encoding is used as the default.
    * compatible - This is used to toggle
    *   between different functionality as it changes across different releases
-   *   of the jdbc driver code.  The values here are versions of the jdbc 
-   *   client and not server versions.  For example in 7.1 get/setBytes 
-   *   worked on LargeObject values, in 7.2 these methods were changed 
-   *   to work on bytea values.  This change in functionality could 
-   *   be disabled by setting the compatible level to be "7.1", in 
+   *   of the jdbc driver code.  The values here are versions of the jdbc
+   *   client and not server versions.  For example in 7.1 get/setBytes
+   *   worked on LargeObject values, in 7.2 these methods were changed
+   *   to work on bytea values.  This change in functionality could
+   *   be disabled by setting the compatible level to be "7.1", in
    *   which case the driver will revert to the 7.1 functionality.
    *
    * <p>Normally, at least
@@ -126,19 +134,25 @@ public class Driver implements java.sql.Driver
   public java.sql.Connection connect(String url, Properties info) throws SQLException
   {
     if((props = parseURL(url,info))==null)
+    {
+      Driver.debug("Error in url" + url);
       return null;
-
+    }
     try {
+        Driver.debug("connect " + url);
+
 	org.postgresql.Connection con = (org.postgresql.Connection)(Class.forName("@JDBCCONNECTCLASS@").newInstance());
 	con.openConnection (host(), port(), props, database(), url, this);
 	return (java.sql.Connection)con;
     } catch(ClassNotFoundException ex) {
+        Driver.debug("error",ex);
 	throw new PSQLException("postgresql.jvm.version",ex);
     } catch(PSQLException ex1) {
 	// re-throw the exception, otherwise it will be caught next, and a
 	// org.postgresql.unusual error will be returned instead.
 	throw ex1;
     } catch(Exception ex2) {
+        Driver.debug("error",ex2);
 	throw new PSQLException("postgresql.unusual",ex2);
     }
   }
@@ -391,6 +405,106 @@ public class Driver implements java.sql.Driver
     public static SQLException notImplemented()
     {
 	return new PSQLException("postgresql.unimplemented");
+    }
+    /**
+     * logging message at the debug level
+     * messages will be printed if the logging level is less or equal to DEBUG
+     */
+    public static void debug(String msg)
+    {
+      if (logLevel <= DEBUG){
+        DriverManager.println(msg);
+      }
+    }
+    /**
+     * logging message at the debug level
+     * messages will be printed if the logging level is less or equal to DEBUG
+     */
+    public static void debug(String msg, Exception ex)
+    {
+      if (logLevel <= DEBUG){
+        DriverManager.println(msg + ex != null?ex.getMessage():"null Exception");
+      }
+    }
+    /**
+     * logging message at info level
+     * messages will be printed if the logging level is less or equal to INFO
+     */
+    public static void info(String msg)
+    {
+      if (logLevel <= INFO){
+        DriverManager.println(msg);
+      }
+    }
+    /**
+     * logging message at info level
+     * messages will be printed if the logging level is less or equal to INFO
+     */
+    public static void info(String msg, Exception ex)
+    {
+      if (logLevel <= INFO){
+        DriverManager.println(msg + ex != null?ex.getMessage():"null Exception");
+      }
+    }
+    /**
+     * logging message at warn level
+     * messages will be printed if the logging level is less or equal to WARN
+     */
+    public static void warn(String msg)
+    {
+      if (logLevel <= WARN){
+        DriverManager.println(msg);
+      }
+    }
+    /**
+     * logging message at warn level
+     * messages will be printed if the logging level is less or equal to WARN
+     */
+    public static void warn(String msg, Exception ex)
+    {
+      if (logLevel <= WARN){
+        DriverManager.println(msg + ex != null?ex.getMessage():"null Exception");
+      }
+    }
+    /**
+     * logging message at error level
+     * messages will be printed if the logging level is less or equal to ERROR
+     */
+    public static void error(String msg)
+    {
+      if (logLevel <= ERROR){
+        DriverManager.println(msg);
+      }
+    }
+    /**
+     * logging message at error level
+     * messages will be printed if the logging level is less or equal to ERROR
+     */
+    public static void error(String msg, Exception ex)
+    {
+      if (logLevel <= ERROR){
+        DriverManager.println(msg + ex != null?ex.getMessage():"null Exception");
+      }
+    }
+    /**
+     * logging message at fatal level
+     * messages will be printed if the logging level is less or equal to FATAL
+     */
+    public static void fatal(String msg)
+    {
+      if (logLevel <= FATAL){
+        DriverManager.println(msg);
+      }
+    }
+    /**
+     * logging message at fatal level
+     * messages will be printed if the logging level is less or equal to FATAL
+     */
+    public static void fatal(String msg, Exception ex)
+    {
+      if (logLevel <= FATAL){
+        DriverManager.println(msg + ex != null?ex.getMessage():"null Exception");
+      }
     }
 }
 
