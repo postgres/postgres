@@ -27,6 +27,7 @@
  */
 
 #include <Python.h>
+#include <postgres.h>
 #include <libpq-fe.h>
 #include <libpq/libpq-fs.h>
 #include <stdio.h>
@@ -492,9 +493,9 @@ pgsource_oidstatus(pgsourceobject * self, PyObject * args)
 	}
 
 	/* retrieves oid status */
-	oid = 0;
-	if ((status = PQoidStatus(self->last_result)))
-		oid = atol(status);
+	if ((oid = PQoidValue(self->last_result)) == InvalidOid)
+		oid = 0;
+
 	return PyInt_FromLong(oid);
 }
 
@@ -2125,7 +2126,7 @@ pg_query(pgobject * self, PyObject * args)
 	/* checks result status */
 	if ((status = PQresultStatus(result)) != PGRES_TUPLES_OK)
 	{
-		const char *str;
+		Oid		oid;
 
 		PQclear(result);
 
@@ -2140,14 +2141,14 @@ pg_query(pgobject * self, PyObject * args)
 				PyErr_SetString(PGError, PQerrorMessage(self->cnx));
 				break;
 			case PGRES_COMMAND_OK:	/* could be an INSERT */
-				if (*(str = PQoidStatus(result)) == 0)	/* nope */
+				if ((oid = PQoidValue(result)) == InvalidOid)	/* nope */
 				{
 					Py_INCREF(Py_None);
 					return Py_None;
 				}
 
 				/* otherwise, return the oid */
-				return PyInt_FromLong(strtol(str, NULL, 10));
+				return PyInt_FromLong(oid);
 
 			case PGRES_COPY_OUT:	/* no data will be received */
 			case PGRES_COPY_IN:
