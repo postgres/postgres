@@ -36,12 +36,6 @@ putenv(char *name)
 	environ[size] = NULL;
 }
 
-char	   *
-strdup(const char *string)
-{
-	return strcpy(malloc(strlen(string) + 1), string);
-}
-
 #ifndef _POSIX_SOURCE
 int
 sigaddset(int *set, int signo)

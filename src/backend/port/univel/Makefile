@@ -4,7 +4,7 @@
 #    Makefile for port/univel
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/port/univel/Attic/Makefile,v 1.1 1997/03/25 07:54:31 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/port/univel/Attic/Makefile,v 1.2 1997/12/19 02:56:35 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -16,7 +16,7 @@ INCLUDE_OPT = -I../.. \
 
 CFLAGS+=$(INCLUDE_OPT)
 
-OBJS = port.o #tas.o
+OBJS = #tas.o
 
 all: SUBSYS.o
 

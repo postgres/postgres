@@ -1,3 +1,4 @@
+
 /*-------------------------------------------------------------------------
  *
  * strdup.c--
@@ -7,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/ultrix4/Attic/strdup.c,v 1.4 1997/09/08 02:27:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/Attic/strdup.c,v 1.1 1997/12/19 02:56:17 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
