@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/pl/Makefile,v 1.6 2000/03/27 22:39:13 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/pl/Makefile,v 1.7 2000/04/11 17:42:28 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -20,10 +20,11 @@ include $(SRCDIR)/Makefile.global
 ifeq ($(USE_TCL), true)
 	$(MAKE) -C tcl $@
 endif
-ifeq ($(USE_PERL), true)
-	-$(MAKE) $(MFLAGS) plperl/Makefile
-	-$(MAKE) $(MFLAGS) -C plperl $@
-endif
+# does't work bjm 2000-04-11
+#ifeq ($(USE_PERL), true)
+#	-$(MAKE) $(MFLAGS) plperl/Makefile
+#	-$(MAKE) $(MFLAGS) -C plperl $@
+#endif
 
 plperl/Makefile: plperl/Makefile.PL
 	cd plperl && $(PERL) Makefile.PL POLLUTE=1
