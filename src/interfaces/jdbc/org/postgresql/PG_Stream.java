@@ -23,6 +23,7 @@ public class PG_Stream
   private Socket connection;
   private InputStream pg_input;
   private BufferedOutputStream pg_output;
+  private byte[] byte_buf = new byte[8*1024];
 
     BytePoolDim1 bytePoolDim1 = new BytePoolDim1();
     BytePoolDim2 bytePoolDim2 = new BytePoolDim2();
@@ -200,72 +201,45 @@ public class PG_Stream
   }
 
   /**
-   * Receives a null-terminated string from the backend.  Maximum of
-   * maxsiz bytes - if we don't see a null, then we assume something
-   * has gone wrong.
+   * Receives a null-terminated string from the backend.  If we don't see a
+   * null, then we assume something has gone wrong.
    *
-   * @param maxsiz maximum length of string
-   * @return string from back end
-   * @exception SQLException if an I/O error occurs
-   */
-  public String ReceiveString(int maxsiz) throws SQLException
-  {
-    byte[] rst = bytePoolDim1.allocByte(maxsiz);
-    return ReceiveString(rst, maxsiz, null);
-  }
-
-  /**
-   * Receives a null-terminated string from the backend.  Maximum of
-   * maxsiz bytes - if we don't see a null, then we assume something
-   * has gone wrong.
-   *
-   * @param maxsiz maximum length of string
-   * @param encoding the charset encoding to use.
-   * @param maxsiz maximum length of string in bytes
-   * @return string from back end
-   * @exception SQLException if an I/O error occurs
-   */
-  public String ReceiveString(int maxsiz, String encoding) throws SQLException
-  {
-    byte[] rst = bytePoolDim1.allocByte(maxsiz);
-    return ReceiveString(rst, maxsiz, encoding);
-  }
-
-  /**
-   * Receives a null-terminated string from the backend.  Maximum of
-   * maxsiz bytes - if we don't see a null, then we assume something
-   * has gone wrong.
-   *
-   * @param rst byte array to read the String into. rst.length must
-   *        equal to or greater than maxsize.
-   * @param maxsiz maximum length of string in bytes
    * @param encoding the charset encoding to use.
    * @return string from back end
-   * @exception SQLException if an I/O error occurs
+   * @exception SQLException if an I/O error occurs, or end of file
    */
-  public String ReceiveString(byte rst[], int maxsiz, String encoding)
+  public String ReceiveString(String encoding)
       throws SQLException
   {
     int s = 0;
-
-    try
-      {
-	while (s < maxsiz)
-	  {
+    byte[] rst = byte_buf;
+    try {
+      int buflen = rst.length;
+      boolean done = false;
+      while (!done) {
+        while (s < buflen) {
 	    int c = pg_input.read();
 	    if (c < 0)
 	      throw new PSQLException("postgresql.stream.eof");
  	    else if (c == 0) {
  		rst[s] = 0;
+            done = true;
  		break;
- 	    } else
+          } else {
 	      rst[s++] = (byte)c;
 	  }
-	if (s >= maxsiz)
-	  throw new PSQLException("postgresql.stream.toomuch");
+          if (s >= buflen) { // Grow the buffer
+            buflen = (int)(buflen*2); // 100% bigger
+            byte[] newrst = new byte[buflen];
+            System.arraycopy(rst, 0, newrst, 0, s);
+            rst = newrst;
+          }
+        }
+      }
       } catch (IOException e) {
 	throw new PSQLException("postgresql.stream.ioerror",e);
       }
+
       String v = null;
       if (encoding == null)
           v = new String(rst, 0, s);

@@ -89,7 +89,7 @@ public class Fastpath
     //DriverManager.println("ReceiveChar() = "+in+" '"+((char)in)+"'");
     //if(in!='V') {
     //if(in=='E')
-    //throw new SQLException(stream.ReceiveString(4096));
+    //throw new SQLException(stream.ReceiveString(conn.getEncoding()));
     //throw new SQLException("Fastpath: expected 'V' from backend, got "+((char)in));
     //}
     
@@ -123,12 +123,12 @@ public class Fastpath
 	  //------------------------------
 	  // Error message returned
 	case 'E':
-	  throw new PSQLException("postgresql.fp.error",stream.ReceiveString(4096));
+          throw new PSQLException("postgresql.fp.error",stream.ReceiveString(conn.getEncoding()));
 	  
 	  //------------------------------
 	  // Notice from backend
 	case 'N':
-	  conn.addWarning(stream.ReceiveString(4096));
+          conn.addWarning(stream.ReceiveString(conn.getEncoding()));
 	  break;
 	  
 	  //------------------------------
