@@ -615,7 +615,7 @@ ac_config_sub=$ac_aux_dir/config.sub
 ac_configure=$ac_aux_dir/configure # This should be Cygnus configure.
 
 
-VERSION='7.2rc2'
+VERSION='7.2'
 
 cat >> confdefs.h <<EOF
 #define PG_VERSION "$VERSION"
@@ -1481,7 +1481,7 @@ else
   if { (eval echo configure:1482: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; }; then
     for file in conftest.*; do
       case $file in
-      *.c | *.C | *.o | *.obj) ;;
+      *.c | *.o | *.obj) ;;
       *) ac_cv_exeext=`echo $file | sed -e s/conftest//` ;;
       esac
     done
