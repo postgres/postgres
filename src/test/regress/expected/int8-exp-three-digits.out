@@ -273,7 +273,7 @@ SELECT '' AS to_char_15, to_char(q2, 'S 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 . 9 9 9'
             | - 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 . 0 0 0
 (5 rows)
 
-SELECT '' AS to_char_16, to_char(q2, '99999 text 9999 "9999" 999 "\\"text between quote marks\\"" 9999') FROM INT8_TBL;
+SELECT '' AS to_char_16, to_char(q2, '99999 "text" 9999 "9999" 999 "\\"text between quote marks\\"" 9999') FROM INT8_TBL;
  to_char_16 |                          to_char                          
 ------------+-----------------------------------------------------------
             |       text      9999     "text between quote marks"   456
