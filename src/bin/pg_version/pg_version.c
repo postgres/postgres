@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/pg_version/Attic/pg_version.c,v 1.1.1.1 1996/07/09 06:22:14 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/pg_version/Attic/pg_version.c,v 1.2 1996/07/31 02:19:23 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,5 +31,5 @@ elog() {}
 
 GetDataHome()
 {
-	return(NULL);
+	return(0);
 }

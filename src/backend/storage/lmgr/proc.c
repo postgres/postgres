@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.3 1996/07/25 19:45:31 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.4 1996/07/31 02:19:09 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@
  *      This is so that we can support more backends. (system-wide semaphore
  *      sets run out pretty fast.)                -ay 4/95
  *
- * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.3 1996/07/25 19:45:31 scrappy Exp $
+ * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.4 1996/07/31 02:19:09 scrappy Exp $
  */
 #include <sys/time.h>
 #ifndef WIN32
@@ -96,7 +96,7 @@ static void ProcKill(int exitStatus, int pid);
 static void ProcGetNewSemKeyAndNum(IPCKey *key, int *semNum);
 static void ProcFreeSem(IpcSemaphoreKey semKey, int semNum);
 #if defined(PORTNAME_linux)
-extern int HandleDeadLock(int);
+extern void HandleDeadLock(int);
 #else
 extern int HandleDeadLock(void);
 #endif
@@ -628,10 +628,11 @@ ProcAddLock(SHM_QUEUE *elem)
  * up my semaphore.
  * --------------------
  */
-int
 #if defined(PORTNAME_linux)
+void 
 HandleDeadLock(int i)
 #else
+int 
 HandleDeadLock()
 #endif
 {
