@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.88 2002/02/10 22:56:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.89 2002/03/02 21:39:29 momjian Exp $
  *
  * NOTES:
  *
@@ -270,7 +270,7 @@ tryAgain:
 	{
 		int			save_errno = errno;
 
-		DO_DB(elog(DEBUG, "BasicOpenFile: not enough descs, retry, er= %d",
+		DO_DB(elog(LOG, "BasicOpenFile: not enough descs, retry, er= %d",
 				   errno));
 		errno = 0;
 		if (ReleaseLruFile())
@@ -304,7 +304,7 @@ pg_nofile(void)
 #else
 			no_files = (long) max_files_per_process;
 #endif
-			elog(DEBUG, "pg_nofile: sysconf(_SC_OPEN_MAX) failed; using %ld",
+			elog(LOG, "pg_nofile: sysconf(_SC_OPEN_MAX) failed; using %ld",
 				 no_files);
 		}
 #else							/* !HAVE_SYSCONF */
@@ -353,7 +353,7 @@ _dump_lru(void)
 		sprintf(buf + strlen(buf), "%d ", mru);
 	}
 	sprintf(buf + strlen(buf), "LEAST");
-	elog(DEBUG, buf);
+	elog(LOG, buf);
 }
 #endif   /* FDDEBUG */
 
@@ -364,7 +364,7 @@ Delete(File file)
 
 	Assert(file != 0);
 
-	DO_DB(elog(DEBUG, "Delete %d (%s)",
+	DO_DB(elog(LOG, "Delete %d (%s)",
 			   file, VfdCache[file].fileName));
 	DO_DB(_dump_lru());
 
@@ -383,7 +383,7 @@ LruDelete(File file)
 
 	Assert(file != 0);
 
-	DO_DB(elog(DEBUG, "LruDelete %d (%s)",
+	DO_DB(elog(LOG, "LruDelete %d (%s)",
 			   file, VfdCache[file].fileName));
 
 	vfdP = &VfdCache[file];
@@ -399,14 +399,14 @@ LruDelete(File file)
 	if (vfdP->fdstate & FD_DIRTY)
 	{
 		if (pg_fsync(vfdP->fd))
-			elog(DEBUG, "LruDelete: failed to fsync %s: %m",
+			elog(LOG, "LruDelete: failed to fsync %s: %m",
 				 vfdP->fileName);
 		vfdP->fdstate &= ~FD_DIRTY;
 	}
 
 	/* close the file */
 	if (close(vfdP->fd))
-		elog(DEBUG, "LruDelete: failed to close %s: %m",
+		elog(LOG, "LruDelete: failed to close %s: %m",
 			 vfdP->fileName);
 
 	--nfile;
@@ -420,7 +420,7 @@ Insert(File file)
 
 	Assert(file != 0);
 
-	DO_DB(elog(DEBUG, "Insert %d (%s)",
+	DO_DB(elog(LOG, "Insert %d (%s)",
 			   file, VfdCache[file].fileName));
 	DO_DB(_dump_lru());
 
@@ -441,7 +441,7 @@ LruInsert(File file)
 
 	Assert(file != 0);
 
-	DO_DB(elog(DEBUG, "LruInsert %d (%s)",
+	DO_DB(elog(LOG, "LruInsert %d (%s)",
 			   file, VfdCache[file].fileName));
 
 	vfdP = &VfdCache[file];
@@ -463,12 +463,12 @@ LruInsert(File file)
 								 vfdP->fileMode);
 		if (vfdP->fd < 0)
 		{
-			DO_DB(elog(DEBUG, "RE_OPEN FAILED: %d", errno));
+			DO_DB(elog(LOG, "RE_OPEN FAILED: %d", errno));
 			return vfdP->fd;
 		}
 		else
 		{
-			DO_DB(elog(DEBUG, "RE_OPEN SUCCESS"));
+			DO_DB(elog(LOG, "RE_OPEN SUCCESS"));
 			++nfile;
 		}
 
@@ -494,7 +494,7 @@ LruInsert(File file)
 static bool
 ReleaseLruFile(void)
 {
-	DO_DB(elog(DEBUG, "ReleaseLruFile. Opened %d", nfile));
+	DO_DB(elog(LOG, "ReleaseLruFile. Opened %d", nfile));
 
 	if (nfile > 0)
 	{
@@ -515,7 +515,7 @@ AllocateVfd(void)
 	Index		i;
 	File		file;
 
-	DO_DB(elog(DEBUG, "AllocateVfd. Size %d", SizeVfdCache));
+	DO_DB(elog(LOG, "AllocateVfd. Size %d", SizeVfdCache));
 
 	if (SizeVfdCache == 0)
 	{
@@ -587,7 +587,7 @@ FreeVfd(File file)
 {
 	Vfd		   *vfdP = &VfdCache[file];
 
-	DO_DB(elog(DEBUG, "FreeVfd: %d (%s)",
+	DO_DB(elog(LOG, "FreeVfd: %d (%s)",
 			   file, vfdP->fileName ? vfdP->fileName : ""));
 
 	if (vfdP->fileName != NULL)
@@ -637,7 +637,7 @@ FileAccess(File file)
 {
 	int			returnValue;
 
-	DO_DB(elog(DEBUG, "FileAccess %d (%s)",
+	DO_DB(elog(LOG, "FileAccess %d (%s)",
 			   file, VfdCache[file].fileName));
 
 	/*
@@ -691,7 +691,7 @@ fileNameOpenFile(FileName fileName,
 	if (fileName == NULL)
 		elog(ERROR, "fileNameOpenFile: NULL fname");
 
-	DO_DB(elog(DEBUG, "fileNameOpenFile: %s %x %o",
+	DO_DB(elog(LOG, "fileNameOpenFile: %s %x %o",
 			   fileName, fileFlags, fileMode));
 
 	file = AllocateVfd();
@@ -711,7 +711,7 @@ fileNameOpenFile(FileName fileName,
 		return -1;
 	}
 	++nfile;
-	DO_DB(elog(DEBUG, "fileNameOpenFile: success %d",
+	DO_DB(elog(LOG, "fileNameOpenFile: success %d",
 			   vfdP->fd));
 
 	Insert(file);
@@ -830,7 +830,7 @@ FileClose(File file)
 
 	Assert(FileIsValid(file));
 
-	DO_DB(elog(DEBUG, "FileClose: %d (%s)",
+	DO_DB(elog(LOG, "FileClose: %d (%s)",
 			   file, VfdCache[file].fileName));
 
 	vfdP = &VfdCache[file];
@@ -844,14 +844,14 @@ FileClose(File file)
 		if (vfdP->fdstate & FD_DIRTY)
 		{
 			if (pg_fsync(vfdP->fd))
-				elog(DEBUG, "FileClose: failed to fsync %s: %m",
+				elog(LOG, "FileClose: failed to fsync %s: %m",
 					 vfdP->fileName);
 			vfdP->fdstate &= ~FD_DIRTY;
 		}
 
 		/* close the file */
 		if (close(vfdP->fd))
-			elog(DEBUG, "FileClose: failed to close %s: %m",
+			elog(LOG, "FileClose: failed to close %s: %m",
 				 vfdP->fileName);
 
 		--nfile;
@@ -866,7 +866,7 @@ FileClose(File file)
 		/* reset flag so that die() interrupt won't cause problems */
 		vfdP->fdstate &= ~FD_TEMPORARY;
 		if (unlink(vfdP->fileName))
-			elog(DEBUG, "FileClose: failed to unlink %s: %m",
+			elog(LOG, "FileClose: failed to unlink %s: %m",
 				 vfdP->fileName);
 	}
 
@@ -884,7 +884,7 @@ FileUnlink(File file)
 {
 	Assert(FileIsValid(file));
 
-	DO_DB(elog(DEBUG, "FileUnlink: %d (%s)",
+	DO_DB(elog(LOG, "FileUnlink: %d (%s)",
 			   file, VfdCache[file].fileName));
 
 	/* force FileClose to delete it */
@@ -900,7 +900,7 @@ FileRead(File file, char *buffer, int amount)
 
 	Assert(FileIsValid(file));
 
-	DO_DB(elog(DEBUG, "FileRead: %d (%s) %ld %d %p",
+	DO_DB(elog(LOG, "FileRead: %d (%s) %ld %d %p",
 			   file, VfdCache[file].fileName,
 			   VfdCache[file].seekPos, amount, buffer));
 
@@ -921,7 +921,7 @@ FileWrite(File file, char *buffer, int amount)
 
 	Assert(FileIsValid(file));
 
-	DO_DB(elog(DEBUG, "FileWrite: %d (%s) %ld %d %p",
+	DO_DB(elog(LOG, "FileWrite: %d (%s) %ld %d %p",
 			   file, VfdCache[file].fileName,
 			   VfdCache[file].seekPos, amount, buffer));
 
@@ -947,7 +947,7 @@ FileSeek(File file, long offset, int whence)
 {
 	Assert(FileIsValid(file));
 
-	DO_DB(elog(DEBUG, "FileSeek: %d (%s) %ld %ld %d",
+	DO_DB(elog(LOG, "FileSeek: %d (%s) %ld %ld %d",
 			   file, VfdCache[file].fileName,
 			   VfdCache[file].seekPos, offset, whence));
 
@@ -1005,7 +1005,7 @@ long
 FileTell(File file)
 {
 	Assert(FileIsValid(file));
-	DO_DB(elog(DEBUG, "FileTell %d (%s)",
+	DO_DB(elog(LOG, "FileTell %d (%s)",
 			   file, VfdCache[file].fileName));
 	return VfdCache[file].seekPos;
 }
@@ -1018,7 +1018,7 @@ FileTruncate(File file, long offset)
 
 	Assert(FileIsValid(file));
 
-	DO_DB(elog(DEBUG, "FileTruncate %d (%s)",
+	DO_DB(elog(LOG, "FileTruncate %d (%s)",
 			   file, VfdCache[file].fileName));
 
 	FileSync(file);
@@ -1117,7 +1117,7 @@ FileMarkDirty(File file)
 {
 	Assert(FileIsValid(file));
 
-	DO_DB(elog(DEBUG, "FileMarkDirty: %d (%s)",
+	DO_DB(elog(LOG, "FileMarkDirty: %d (%s)",
 			   file, VfdCache[file].fileName));
 
 	VfdCache[file].fdstate |= FD_DIRTY;
@@ -1147,7 +1147,7 @@ AllocateFile(char *name, char *mode)
 {
 	FILE	   *file;
 
-	DO_DB(elog(DEBUG, "AllocateFile: Allocated %d", numAllocatedFiles));
+	DO_DB(elog(LOG, "AllocateFile: Allocated %d", numAllocatedFiles));
 
 	if (numAllocatedFiles >= MAX_ALLOCATED_FILES)
 		elog(ERROR, "AllocateFile: too many private FDs demanded");
@@ -1164,7 +1164,7 @@ TryAgain:
 	{
 		int			save_errno = errno;
 
-		DO_DB(elog(DEBUG, "AllocateFile: not enough descs, retry, er= %d",
+		DO_DB(elog(LOG, "AllocateFile: not enough descs, retry, er= %d",
 				   errno));
 		errno = 0;
 		if (ReleaseLruFile())
@@ -1180,7 +1180,7 @@ FreeFile(FILE *file)
 {
 	int			i;
 
-	DO_DB(elog(DEBUG, "FreeFile: Allocated %d", numAllocatedFiles));
+	DO_DB(elog(LOG, "FreeFile: Allocated %d", numAllocatedFiles));
 
 	/* Remove file from list of allocated files, if it's present */
 	for (i = numAllocatedFiles; --i >= 0;)

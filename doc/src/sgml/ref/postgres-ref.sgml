@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/postgres-ref.sgml,v 1.23 2001/12/08 03:24:38 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/postgres-ref.sgml,v 1.24 2002/03/02 21:39:16 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -141,8 +141,10 @@ PostgreSQL documentation
     <para>
      The options <option>-A</option>, <option>-B</option>,
      <option>-c</option>, <option>-d</option>, <option>-D</option>,
-     <option>-F</option>, and <option>--name</> have the same meanings as
-     for the <xref linkend="app-postmaster">.
+     <option>-F</option>, and <option>--name</> have the same meanings
+     as the <xref linkend="app-postmaster"> except that
+     <option>-d</option> <literal>0</> prevents the debugging level of
+     the postmaster from being propogated to the backend.
     </para>
 
     <variablelist>

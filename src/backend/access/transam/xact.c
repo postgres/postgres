@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.115 2001/11/01 06:17:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.116 2002/03/02 21:39:19 momjian Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -1606,7 +1606,7 @@ xact_redo(XLogRecPtr lsn, XLogRecord *record)
 		/* SHOULD REMOVE FILES OF ALL FAILED-TO-BE-CREATED RELATIONS */
 	}
 	else
-		elog(STOP, "xact_redo: unknown op code %u", info);
+		elog(PANIC, "xact_redo: unknown op code %u", info);
 }
 
 void
@@ -1615,9 +1615,9 @@ xact_undo(XLogRecPtr lsn, XLogRecord *record)
 	uint8		info = record->xl_info & ~XLR_INFO_MASK;
 
 	if (info == XLOG_XACT_COMMIT)		/* shouldn't be called by XLOG */
-		elog(STOP, "xact_undo: can't undo committed xaction");
+		elog(PANIC, "xact_undo: can't undo committed xaction");
 	else if (info != XLOG_XACT_ABORT)
-		elog(STOP, "xact_redo: unknown op code %u", info);
+		elog(PANIC, "xact_redo: unknown op code %u", info);
 }
 
 void
@@ -1652,7 +1652,7 @@ void
 {
 #ifdef XLOG_II
 	if (_RollbackFunc != NULL)
-		elog(STOP, "XactPushRollback: already installed");
+		elog(PANIC, "XactPushRollback: already installed");
 #endif
 
 	_RollbackFunc = func;

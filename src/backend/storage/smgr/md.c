@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.89 2001/10/28 06:25:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.90 2002/03/02 21:39:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -571,7 +571,7 @@ mdblindwrt(RelFileNode rnode,
 
 	if (lseek(fd, seekpos, SEEK_SET) != seekpos)
 	{
-		elog(DEBUG, "mdblindwrt: lseek(%ld) failed: %m", seekpos);
+		elog(LOG, "mdblindwrt: lseek(%ld) failed: %m", seekpos);
 		close(fd);
 		return SM_FAIL;
 	}
@@ -585,13 +585,13 @@ mdblindwrt(RelFileNode rnode,
 		/* if write didn't set errno, assume problem is no disk space */
 		if (errno == 0)
 			errno = ENOSPC;
-		elog(DEBUG, "mdblindwrt: write() failed: %m");
+		elog(LOG, "mdblindwrt: write() failed: %m");
 		status = SM_FAIL;
 	}
 
 	if (close(fd) < 0)
 	{
-		elog(DEBUG, "mdblindwrt: close() failed: %m");
+		elog(LOG, "mdblindwrt: close() failed: %m");
 		status = SM_FAIL;
 	}
 
@@ -1085,7 +1085,7 @@ _mdfd_blind_getseg(RelFileNode rnode, BlockNumber blkno)
 	/* call fd.c to allow other FDs to be closed if needed */
 	fd = BasicOpenFile(path, O_RDWR | PG_BINARY, 0600);
 	if (fd < 0)
-		elog(DEBUG, "_mdfd_blind_getseg: couldn't open %s: %m", path);
+		elog(LOG, "_mdfd_blind_getseg: couldn't open %s: %m", path);
 
 	pfree(path);
 

@@ -31,7 +31,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.49 2002/01/24 19:31:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.50 2002/03/02 21:39:35 momjian Exp $
  *
  **********************************************************************/
 
@@ -1268,7 +1268,7 @@ pltcl_elog(ClientData cdata, Tcl_Interp *interp,
 	else if (strcmp(argv[1], "FATAL") == 0)
 		level = FATAL;
 	else if (strcmp(argv[1], "DEBUG") == 0)
-		level = DEBUG;
+		level = DEBUG1;
 	else
 	{
 		Tcl_AppendResult(interp, "Unknown elog level '", argv[1],

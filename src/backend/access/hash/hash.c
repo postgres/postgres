@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.53 2001/10/25 05:49:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.54 2002/03/02 21:39:16 momjian Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -468,13 +468,13 @@ hashbulkdelete(PG_FUNCTION_ARGS)
 void
 hash_redo(XLogRecPtr lsn, XLogRecord *record)
 {
-	elog(STOP, "hash_redo: unimplemented");
+	elog(PANIC, "hash_redo: unimplemented");
 }
 
 void
 hash_undo(XLogRecPtr lsn, XLogRecord *record)
 {
-	elog(STOP, "hash_undo: unimplemented");
+	elog(PANIC, "hash_undo: unimplemented");
 }
 
 void

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.54 2002/02/18 23:11:07 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.55 2002/03/02 21:39:22 momjian Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -66,11 +66,11 @@ dumpacl(Acl *acl)
 	int			i;
 	AclItem    *aip;
 
-	elog(DEBUG, "acl size = %d, # acls = %d",
+	elog(LOG, "acl size = %d, # acls = %d",
 		 ACL_SIZE(acl), ACL_NUM(acl));
 	aip = ACL_DAT(acl);
 	for (i = 0; i < ACL_NUM(acl); ++i)
-		elog(DEBUG, "	acl[%d]: %s", i,
+		elog(LOG, "	acl[%d]: %s", i,
 			 DatumGetCString(DirectFunctionCall1(aclitemout,
 											 PointerGetDatum(aip + i))));
 }
@@ -291,7 +291,7 @@ find_function_with_arglist(char *name, List *arguments)
 	Oid		argoids[FUNC_MAX_ARGS];
 	int		i;
 	int16	argcount;
- 
+
 	MemSet(argoids, 0, FUNC_MAX_ARGS * sizeof(Oid));
 	argcount = length(arguments);
 	if (argcount > FUNC_MAX_ARGS)
@@ -302,9 +302,9 @@ find_function_with_arglist(char *name, List *arguments)
 	{
 		TypeName   *t = (TypeName *) lfirst(arguments);
 		char       *typnam = TypeNameToInternalName(t);
- 
+
 		arguments = lnext(arguments);
- 
+
 		if (strcmp(typnam, "opaque") == 0)
 			argoids[i] = InvalidOid;
 		else
@@ -327,7 +327,7 @@ find_function_with_arglist(char *name, List *arguments)
 		func_error(NULL, name, argcount, argoids, NULL);
 
 	return oid;
-} 
+}
 
 
 static void
@@ -658,7 +658,7 @@ aclcheck(Acl *acl, AclId id, AclIdType idtype, AclMode mode)
 	 */
 	if (!acl)
 	{
-		elog(DEBUG, "aclcheck: null ACL, returning OK");
+		elog(LOG, "aclcheck: null ACL, returning OK");
 		return ACLCHECK_OK;
 	}
 
@@ -673,7 +673,7 @@ aclcheck(Acl *acl, AclId id, AclIdType idtype, AclMode mode)
 	 */
 	if (num < 1)
 	{
-		elog(DEBUG, "aclcheck: zero-length ACL, returning OK");
+		elog(LOG, "aclcheck: zero-length ACL, returning OK");
 		return ACLCHECK_OK;
 	}
 
@@ -686,7 +686,7 @@ aclcheck(Acl *acl, AclId id, AclIdType idtype, AclMode mode)
 	if (aidat->ai_mode & mode)
 	{
 #ifdef ACLDEBUG
-		elog(DEBUG, "aclcheck: using world=%d", aidat->ai_mode);
+		elog(LOG, "aclcheck: using world=%d", aidat->ai_mode);
 #endif
 		return ACLCHECK_OK;
 	}
@@ -702,7 +702,7 @@ aclcheck(Acl *acl, AclId id, AclIdType idtype, AclMode mode)
 				if (aip->ai_id == id)
 				{
 #ifdef ACLDEBUG
-					elog(DEBUG, "aclcheck: found user %u/%d",
+					elog(LOG, "aclcheck: found user %u/%d",
 						 aip->ai_id, aip->ai_mode);
 #endif
 					if (aip->ai_mode & mode)
@@ -719,7 +719,7 @@ aclcheck(Acl *acl, AclId id, AclIdType idtype, AclMode mode)
 					if (in_group(id, aip->ai_id))
 					{
 #ifdef ACLDEBUG
-						elog(DEBUG, "aclcheck: found group %u/%d",
+						elog(LOG, "aclcheck: found group %u/%d",
 							 aip->ai_id, aip->ai_mode);
 #endif
 						return ACLCHECK_OK;
@@ -740,7 +740,7 @@ aclcheck(Acl *acl, AclId id, AclIdType idtype, AclMode mode)
 				if (aip->ai_id == id)
 				{
 #ifdef ACLDEBUG
-					elog(DEBUG, "aclcheck: found group %u/%d",
+					elog(LOG, "aclcheck: found group %u/%d",
 						 aip->ai_id, aip->ai_mode);
 #endif
 					if (aip->ai_mode & mode)
@@ -798,7 +798,7 @@ pg_aclcheck(char *relname, Oid userid, AclMode mode)
 		!((Form_pg_shadow) GETSTRUCT(tuple))->usecatupd)
 	{
 #ifdef ACLDEBUG
-		elog(DEBUG, "pg_aclcheck: catalog update to \"%s\": permission denied",
+		elog(LOG, "pg_aclcheck: catalog update to \"%s\": permission denied",
 			 relname);
 #endif
 		ReleaseSysCache(tuple);
@@ -811,7 +811,7 @@ pg_aclcheck(char *relname, Oid userid, AclMode mode)
 	if (((Form_pg_shadow) GETSTRUCT(tuple))->usesuper)
 	{
 #ifdef ACLDEBUG
-		elog(DEBUG, "pg_aclcheck: \"%s\" is superuser",
+		elog(LOG, "pg_aclcheck: \"%s\" is superuser",
 			 usename);
 #endif
 		ReleaseSysCache(tuple);
@@ -888,7 +888,7 @@ pg_ownercheck(Oid userid,
 	if (((Form_pg_shadow) GETSTRUCT(tuple))->usesuper)
 	{
 #ifdef ACLDEBUG
-		elog(DEBUG, "pg_ownercheck: user \"%s\" is superuser",
+		elog(LOG, "pg_ownercheck: user \"%s\" is superuser",
 			 usename);
 #endif
 		ReleaseSysCache(tuple);
@@ -950,7 +950,7 @@ pg_oper_ownercheck(Oid userid, Oid oprid)
 	if (((Form_pg_shadow) GETSTRUCT(tuple))->usesuper)
 	{
 #ifdef ACLDEBUG
-		elog(DEBUG, "pg_ownercheck: user \"%s\" is superuser",
+		elog(LOG, "pg_ownercheck: user \"%s\" is superuser",
 			 usename);
 #endif
 		ReleaseSysCache(tuple);
@@ -1001,7 +1001,7 @@ pg_func_ownercheck(Oid userid,
 	if (((Form_pg_shadow) GETSTRUCT(tuple))->usesuper)
 	{
 #ifdef ACLDEBUG
-		elog(DEBUG, "pg_ownercheck: user \"%s\" is superuser",
+		elog(LOG, "pg_ownercheck: user \"%s\" is superuser",
 			 usename);
 #endif
 		ReleaseSysCache(tuple);
@@ -1053,7 +1053,7 @@ pg_aggr_ownercheck(Oid userid,
 	if (((Form_pg_shadow) GETSTRUCT(tuple))->usesuper)
 	{
 #ifdef ACLDEBUG
-		elog(DEBUG, "pg_aggr_ownercheck: user \"%s\" is superuser",
+		elog(LOG, "pg_aggr_ownercheck: user \"%s\" is superuser",
 			 usename);
 #endif
 		ReleaseSysCache(tuple);

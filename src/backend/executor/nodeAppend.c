@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAppend.c,v 1.43 2001/10/25 05:49:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAppend.c,v 1.44 2002/03/02 21:39:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -290,7 +290,7 @@ ExecProcAppend(Append *node)
 	subnode = (Plan *) nth(whichplan, appendplans);
 
 	if (subnode == NULL)
-		elog(DEBUG, "ExecProcAppend: subnode is NULL");
+		elog(LOG, "ExecProcAppend: subnode is NULL");
 
 	/*
 	 * get a tuple from the subplan

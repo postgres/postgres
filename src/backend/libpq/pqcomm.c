@@ -29,7 +29,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqcomm.c,v 1.126 2001/12/04 20:57:22 tgl Exp $
+ *	$Id: pqcomm.c,v 1.127 2002/03/02 21:39:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -507,15 +507,15 @@ pq_recvbuf(void)
 			 * Careful: an elog() that tries to write to the client
 			 * would cause recursion to here, leading to stack overflow
 			 * and core dump!  This message must go *only* to the postmaster
-			 * log.  elog(DEBUG) is presently safe.
+			 * log.  elog(LOG) is presently safe.
 			 */
-			elog(DEBUG, "pq_recvbuf: recv() failed: %m");
+			elog(LOG, "pq_recvbuf: recv() failed: %m");
 			return EOF;
 		}
 		if (r == 0)
 		{
 			/* as above, only write to postmaster log */
-			elog(DEBUG, "pq_recvbuf: unexpected EOF on client connection");
+			elog(LOG, "pq_recvbuf: unexpected EOF on client connection");
 			return EOF;
 		}
 		/* r contains number of bytes read, so just incr length */
@@ -680,7 +680,7 @@ pq_flush(void)
 			 * Careful: an elog() that tries to write to the client
 			 * would cause recursion to here, leading to stack overflow
 			 * and core dump!  This message must go *only* to the postmaster
-			 * log.  elog(DEBUG) is presently safe.
+			 * log.  elog(LOG) is presently safe.
 			 *
 			 * If a client disconnects while we're in the midst of output,
 			 * we might write quite a bit of data before we get to a safe
@@ -689,7 +689,7 @@ pq_flush(void)
 			if (errno != last_reported_send_errno)
 			{
 				last_reported_send_errno = errno;
-				elog(DEBUG, "pq_flush: send() failed: %m");
+				elog(LOG, "pq_flush: send() failed: %m");
 			}
 
 			/*
@@ -723,7 +723,7 @@ pq_eof(void)
 	if (res < 0)
 	{
 		/* can log to postmaster log only */
-		elog(DEBUG, "pq_eof: recv() failed: %m");
+		elog(LOG, "pq_eof: recv() failed: %m");
 		return EOF;
 	}
 	if (res == 0)

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipci.c,v 1.45 2001/11/04 19:55:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipci.c,v 1.46 2002/03/02 21:39:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,8 +65,7 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int maxBackends)
 	/* might as well round it off to a multiple of a typical page size */
 	size += 8192 - (size % 8192);
 
-	if (DebugLvl > 1)
-		fprintf(stderr, "invoking IpcMemoryCreate(size=%d)\n", size);
+	elog(DEBUG2, "invoking IpcMemoryCreate(size=%d)", size);
 
 	/*
 	 * Create the shmem segment

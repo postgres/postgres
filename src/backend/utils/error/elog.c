@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.91 2001/11/05 17:46:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.92 2002/03/02 21:39:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,6 +37,16 @@
 #ifdef MULTIBYTE
 #include "mb/pg_wchar.h"
 #endif
+
+#define DEFAULT_SERVER_MIN_MESSAGES_STR "notice"
+int			server_min_messages;
+char	   *server_min_messages_str = NULL;
+const char	server_min_messages_str_default[] = DEFAULT_SERVER_MIN_MESSAGES_STR;
+
+#define DEFAULT_CLIENT_MIN_MESSAGES_STR "info"
+int			client_min_messages;
+char	   *client_min_messages_str = NULL;
+const char	client_min_messages_str_default[] = DEFAULT_CLIENT_MIN_MESSAGES_STR;
 
 #ifdef ENABLE_SYSLOG
 /*
@@ -109,7 +119,7 @@ elog(int lev, const char *fmt,...)
 	 * Note that we use malloc() not palloc() because we want to retain
 	 * control if we run out of memory.  palloc() would recursively call
 	 * elog(ERROR), which would be all right except if we are working on a
-	 * FATAL or REALLYFATAL error.	We'd lose track of the fatal condition
+	 * FATAL or PANIC error.	We'd lose track of the fatal condition
 	 * and report a mere ERROR to outer loop, which would be a Bad Thing.
 	 * So, we substitute an appropriate message in-place, without
 	 * downgrading the level if it's above ERROR.
@@ -127,9 +137,46 @@ elog(int lev, const char *fmt,...)
 	const char *cp;
 	char	   *bp;
 	size_t		space_needed;
+	bool		output_to_server = false;
+	bool		output_to_client = false;
 
 	/* size of the prefix needed for timestamp and pid, if enabled */
 	size_t		timestamp_size;
+
+	/* Check for old elog calls.  Codes were renumbered in 7.3. 2002-02-24 */
+	if (lev < DEBUG5)
+		elog(FATAL, "Pre-7.3 object file made an elog() call.  Recompile.");
+
+	if (Use_syslog <= 1 || whereToSendOutput == Debug)
+	{
+		if (lev == LOG)
+		{
+			if (server_min_messages == LOG)
+				output_to_server = true;
+			else if (server_min_messages < FATAL)
+				output_to_server = true;
+		}
+		/* lev != LOG */
+		else
+		{
+			if (server_min_messages == LOG)
+			{
+				if (lev >= FATAL)
+					output_to_server = true;
+			}
+			/* Neither is LOG */
+			else if (lev >= server_min_messages)
+				output_to_server = true;
+		}
+	}
+
+	if (lev >= client_min_messages && whereToSendOutput == Remote)
+		output_to_client = true;
+
+	/* optimization to prevent work for messages that would never be output */
+	if (lev < ERROR && Use_syslog < 1 &&
+		output_to_server == false && output_to_client == false)
+		return;
 
 	/* Save error str before calling any function that might change errno */
 	errorstr = useful_strerror(errno);
@@ -142,13 +189,13 @@ elog(int lev, const char *fmt,...)
 		lev = FATAL;
 
 	/*
-	 * If we are inside a critical section, all errors become REALLYFATAL
+	 * If we are inside a critical section, all errors become PANIC
 	 * errors.	See miscadmin.h.
 	 */
 	if (lev == ERROR || lev == FATAL)
 	{
 		if (CritSectionCount > 0)
-			lev = REALLYFATAL;
+			lev = PANIC;
 	}
 
 	prefix = elog_message_prefix(lev);
@@ -167,12 +214,15 @@ elog(int lev, const char *fmt,...)
 	 * vsnprintf won't know what to do with %m).  To keep space
 	 * calculation simple, we only allow one %m.
 	 */
-	space_needed = timestamp_size + strlen(prefix)
-		+ strlen(fmt) + strlen(errorstr) + 1;
+	space_needed = timestamp_size + strlen(prefix) +
+				   strlen(fmt) + strlen(errorstr) + 1;
 
 	if (copy_lineno)
 	{
-		/* translator: This string will be truncated at 31 characters. */
+		/*
+		 * Prints the failure line of the COPY.  Wow, what a hack!  bjm
+		 * Translators:  Error message will be truncated at 31 characters.
+		 */
 		snprintf(copylineno_buf, 32, gettext("copy: line %d, "), copy_lineno);
 		space_needed += strlen(copylineno_buf);
 	}
@@ -184,7 +234,7 @@ elog(int lev, const char *fmt,...)
 		{
 			/* We're up against it, convert to out-of-memory error */
 			fmt_buf = fmt_fixedbuf;
-			if (lev != FATAL && lev != REALLYFATAL)
+			if (lev != FATAL && lev != PANIC)
 			{
 				lev = ERROR;
 				prefix = elog_message_prefix(lev);
@@ -213,7 +263,7 @@ elog(int lev, const char *fmt,...)
 	if (copy_lineno)
 	{
 		strcat(fmt_buf, copylineno_buf);
-		if (lev == ERROR || lev == FATAL || lev == REALLYFATAL)
+		if (lev == ERROR || lev == FATAL || lev == PANIC)
 			copy_lineno = 0;
 	}
 
@@ -281,7 +331,7 @@ elog(int lev, const char *fmt,...)
 		{
 			/* We're up against it, convert to out-of-memory error */
 			msg_buf = msg_fixedbuf;
-			if (lev != FATAL && lev != REALLYFATAL)
+			if (lev != FATAL && lev != PANIC)
 			{
 				lev = ERROR;
 				prefix = elog_message_prefix(lev);
@@ -309,8 +359,16 @@ elog(int lev, const char *fmt,...)
 
 		switch (lev)
 		{
-			case DEBUG:
+			case DEBUG1:
+			case DEBUG2:
+			case DEBUG3:
+			case DEBUG4:
+			case DEBUG5:
 				syslog_level = LOG_DEBUG;
+				break;
+			case LOG:
+			case INFO:
+				syslog_level = LOG_INFO;
 				break;
 			case NOTICE:
 				syslog_level = LOG_NOTICE;
@@ -321,7 +379,7 @@ elog(int lev, const char *fmt,...)
 			case FATAL:
 				syslog_level = LOG_ERR;
 				break;
-			case REALLYFATAL:
+			case PANIC:
 			default:
 				syslog_level = LOG_CRIT;
 				break;
@@ -334,11 +392,12 @@ elog(int lev, const char *fmt,...)
 	/* syslog doesn't want a trailing newline, but other destinations do */
 	strcat(msg_buf, "\n");
 
-	/* write to terminal */
-	if (Use_syslog <= 1 || whereToSendOutput == Debug)
+	/* Write to server logs or server terminal */
+	if (output_to_server)
 		write(2, msg_buf, strlen(msg_buf));
 
-	if (lev > DEBUG && whereToSendOutput == Remote)
+	/* Should we output to the client too? */
+	if (output_to_client)
 	{
 		/* Send IPC message to the front-end program */
 		MemoryContext oldcxt;
@@ -351,7 +410,7 @@ elog(int lev, const char *fmt,...)
 		 */
 		oldcxt = MemoryContextSwitchTo(ErrorContext);
 
-		if (lev == NOTICE)
+		if (lev <= NOTICE)
 			/* exclude the timestamp from msg sent to frontend */
 			send_notice_to_frontend(msg_buf + timestamp_size);
 		else
@@ -414,7 +473,7 @@ elog(int lev, const char *fmt,...)
 		 * Guard against infinite loop from elog() during error recovery.
 		 */
 		if (InError)
-			elog(REALLYFATAL, "elog: error during error recovery, giving up!");
+			elog(PANIC, "elog: error during error recovery, giving up!");
 		InError = true;
 
 		/*
@@ -423,7 +482,7 @@ elog(int lev, const char *fmt,...)
 		siglongjmp(Warn_restart, 1);
 	}
 
-	if (lev == FATAL || lev == REALLYFATAL)
+	if (lev == FATAL || lev == PANIC)
 	{
 		/*
 		 * Serious crash time. Postmaster will observe nonzero process
@@ -673,10 +732,10 @@ send_message_to_frontend(int type, const char *msg)
 {
 	StringInfoData buf;
 
-	AssertArg(type == NOTICE || type == ERROR);
+	AssertArg(type <= ERROR);
 
 	pq_beginmessage(&buf);
-	pq_sendbyte(&buf, type == NOTICE ? 'N' : 'E');
+	pq_sendbyte(&buf, type != ERROR ? 'N' : 'E'); /* N is INFO or NOTICE */
 	pq_sendstring(&buf, msg);
 	pq_endmessage(&buf);
 
@@ -731,8 +790,18 @@ elog_message_prefix(int lev)
 
 	switch (lev)
 	{
-		case DEBUG:
+		case DEBUG1:
+		case DEBUG2:
+		case DEBUG3:
+		case DEBUG4:
+		case DEBUG5:
 			prefix = gettext("DEBUG:  ");
+			break;
+		case LOG:
+			prefix = gettext("LOG:  ");
+			break;
+		case INFO:
+			prefix = gettext("INFO:  ");
 			break;
 		case NOTICE:
 			prefix = gettext("NOTICE:  ");
@@ -741,13 +810,112 @@ elog_message_prefix(int lev)
 			prefix = gettext("ERROR:  ");
 			break;
 		case FATAL:
-			prefix = gettext("FATAL 1:  ");
+			prefix = gettext("FATAL:  ");
 			break;
-		case REALLYFATAL:
-			prefix = gettext("FATAL 2:  ");
+		case PANIC:
+			prefix = gettext("PANIC:  ");
 			break;
 	}
 
 	Assert(prefix != NULL);
 	return prefix;
 }
+
+
+/*
+ * GUC support routines
+ */
+
+bool
+check_server_min_messages(const char *lev)
+{
+	if (strcasecmp(lev, "debug") == 0 ||
+		strcasecmp(lev, "debug1") == 0 ||
+		strcasecmp(lev, "debug2") == 0 ||
+		strcasecmp(lev, "debub3") == 0 ||
+		strcasecmp(lev, "debug4") == 0 ||
+		strcasecmp(lev, "debug5") == 0 ||
+		strcasecmp(lev, "log") == 0 ||
+		strcasecmp(lev, "info") == 0 ||
+		strcasecmp(lev, "notice") == 0 ||
+		strcasecmp(lev, "error") == 0 ||
+		strcasecmp(lev, "fatal") == 0 ||
+		strcasecmp(lev, "panic") == 0)
+		return true;
+	return false;
+}
+
+void
+assign_server_min_messages(const char *lev)
+{
+	if (strcasecmp(lev, "debug1") == 0)
+		server_min_messages = DEBUG1;
+	else if (strcasecmp(lev, "debug2") == 0)
+		server_min_messages = DEBUG2;
+	else if (strcasecmp(lev, "debug3") == 0)
+		server_min_messages = DEBUG3;
+	else if (strcasecmp(lev, "debug4") == 0)
+		server_min_messages = DEBUG4;
+	else if (strcasecmp(lev, "debug5") == 0)
+		server_min_messages = DEBUG5;
+	else if (strcasecmp(lev, "log") == 0)
+		server_min_messages = LOG;
+	else if (strcasecmp(lev, "info") == 0)
+		server_min_messages = INFO;
+	else if (strcasecmp(lev, "notice") == 0)
+		server_min_messages = NOTICE;
+	else if (strcasecmp(lev, "error") == 0)
+		server_min_messages = ERROR;
+	else if (strcasecmp(lev, "fatal") == 0)
+		server_min_messages = FATAL;
+	else if (strcasecmp(lev, "panic") == 0)
+		server_min_messages = PANIC;
+	else
+		/* Can't get here unless guc.c screwed up */
+		elog(ERROR, "bogus server_min_messages %s", lev);
+}
+
+bool
+check_client_min_messages(const char *lev)
+{
+	if (strcasecmp(lev, "debug") == 0 ||
+		strcasecmp(lev, "debug1") == 0 ||
+		strcasecmp(lev, "debug2") == 0 ||
+		strcasecmp(lev, "debug3") == 0 ||
+		strcasecmp(lev, "debug4") == 0 ||
+		strcasecmp(lev, "debug5") == 0 ||
+		strcasecmp(lev, "log") == 0 ||
+		strcasecmp(lev, "info") == 0 ||
+		strcasecmp(lev, "notice") == 0 ||
+		strcasecmp(lev, "error") == 0)
+		return true;
+	return false;
+}
+
+void
+assign_client_min_messages(const char *lev)
+{
+	if (strcasecmp(lev, "debug1") == 0)
+		client_min_messages = DEBUG1;
+	else if (strcasecmp(lev, "debug2") == 0)
+		client_min_messages = DEBUG2;
+	else if (strcasecmp(lev, "debug3") == 0)
+		client_min_messages = DEBUG3;
+	else if (strcasecmp(lev, "debug4") == 0)
+		client_min_messages = DEBUG4;
+	else if (strcasecmp(lev, "debug5") == 0)
+		client_min_messages = DEBUG5;
+	else if (strcasecmp(lev, "log") == 0)
+		client_min_messages = LOG;
+	else if (strcasecmp(lev, "info") == 0)
+		client_min_messages = INFO;
+	else if (strcasecmp(lev, "notice") == 0)
+		client_min_messages = NOTICE;
+	else if (strcasecmp(lev, "error") == 0)
+		client_min_messages = ERROR;
+	else
+		/* Can't get here unless guc.c screwed up */
+		elog(ERROR, "bogus client_min_messages %s", lev);
+}
+
+

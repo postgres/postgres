@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lwlock.c,v 1.8 2002/01/07 16:33:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lwlock.c,v 1.9 2002/03/02 21:39:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,7 +68,7 @@ inline static void
 PRINT_LWDEBUG(const char *where, LWLockId lockid, const volatile LWLock *lock)
 {
 	if (Trace_lwlocks)
-		elog(DEBUG, "%s(%d): excl %d shared %d head %p rOK %d",
+		elog(LOG, "%s(%d): excl %d shared %d head %p rOK %d",
 			 where, (int) lockid,
 			 (int) lock->exclusive, lock->shared, lock->head,
 			 (int) lock->releaseOK);
@@ -78,8 +78,7 @@ inline static void
 LOG_LWDEBUG(const char *where, LWLockId lockid, const char *msg)
 {
 	if (Trace_lwlocks)
-		elog(DEBUG, "%s(%d): %s",
-			 where, (int) lockid, msg);
+		elog(LOG, "%s(%d): %s", where, (int) lockid, msg);
 }
 
 #else							/* not LOCK_DEBUG */

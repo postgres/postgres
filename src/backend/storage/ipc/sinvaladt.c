@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.43 2001/11/05 17:46:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.44 2002/03/02 21:39:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -119,7 +119,7 @@ SIBackendInit(SISeg *segP)
 	MyBackendId = (stateP - &segP->procState[0]) + 1;
 
 #ifdef	INVALIDDEBUG
-	elog(DEBUG, "SIBackendInit: backend id %d", MyBackendId);
+	elog(LOG, "SIBackendInit: backend id %d", MyBackendId);
 #endif   /* INVALIDDEBUG */
 
 	/* mark myself active, with all extant messages already read */
@@ -218,8 +218,7 @@ SIInsertDataEntry(SISeg *segP, SharedInvalidationMessage *data)
 	if (numMsgs == (MAXNUMMESSAGES * 70 / 100) &&
 		IsUnderPostmaster)
 	{
-		if (DebugLvl >= 1)
-			elog(DEBUG, "SIInsertDataEntry: table is 70%% full, signaling postmaster");
+		elog(DEBUG1, "SIInsertDataEntry: table is 70%% full, signaling postmaster");
 		SendPostmasterSignal(PMSIGNAL_WAKEN_CHILDREN);
 	}
 

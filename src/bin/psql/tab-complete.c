@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.41 2001/11/05 17:46:31 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.42 2002/03/02 21:39:34 momjian Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -229,6 +229,8 @@ psql_completion(char *text, int start, int end)
 		"ksqo",
 		"geqo",
 		"fsync",
+		"server_min_messages",
+		"client_min_messages",
 		"debug_assertions",
 		"debug_print_query",
 		"debug_print_parse",
@@ -252,7 +254,6 @@ psql_completion(char *text, int start, int end)
 		"geqo_random_seed",
 		"sort_mem",
 		"vacuum_mem",
-		"debug_level",
 		"max_expr_depth",
 		"commit_delay",
 		"commit_siblings",

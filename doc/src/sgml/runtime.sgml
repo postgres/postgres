@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.104 2002/03/01 22:45:05 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.105 2002/03/02 21:39:15 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -814,6 +814,38 @@ env PGOPTIONS='-c geqo=off' psql
    <para>
     <variablelist>
      <varlistentry>
+      <term><varname>SERVER_MIN_MESSAGES</varname> (<type>string</type>)</term>
+      <listitem>
+       <para>
+        This controls how much detail is written to the server logs. The
+        default is <literal>NOTICE</>. Valid values are <literal>DEBUG5</>,
+        <literal>DEBUG4</>, <literal>DEBUG3</>, <literal>DEBUG2</>,
+        <literal>DEBUG1</>, <literal>INFO</>, <literal>NOTICE</>,
+        <literal>ERROR</>, <literal>LOG</>, <literal>FATAL</>,
+        <literal>PANIC</>. Later values send less detail to the logs.
+        <literal>LOG</> has a different precedence here than in
+        <literal>CLIENT_MIN_MESSAGES</>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>CLIENT_MIN_MESSAGES</varname> (<type>string</type>)</term>
+      <listitem>
+       <para>
+        This controls how much detail is written to the client. The
+        default is <literal>INFO</>. Valid values are
+        <literal>DEBUG5</>, <literal>DEBUG4</>, <literal>DEBUG3</>,
+        <literal>DEBUG2</>, <literal>DEBUG1</>, <literal>LOG</>,
+        <literal>INFO</>, <literal>NOTICE</>, <literal>ERROR</>,
+        <literal>FATAL</>, <literal>PANIC</>. Later values send less
+        information to the user. literal>LOG</> has a different
+        precedence here than in <literal>SERVER_MIN_MESSAGES</>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><varname>DEBUG_ASSERTIONS</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
@@ -825,19 +857,6 @@ env PGOPTIONS='-c geqo=off' psql
 	<literal>--enable-cassert</literal>).  Note that
 	<literal>DEBUG_ASSERTIONS</literal> defaults to on if <productname>PostgreSQL</productname>
 	has been built this way.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><varname>DEBUG_LEVEL</varname> (<type>integer</type>)</term>
-      <listitem>
-       <para>
-        The higher this value is set, the more
-        <quote>debugging</quote> output of various sorts is generated
-        in the server log during operation. This option is 0 by
-        default, which means no debugging output. Values up to about 4
-        currently make sense.
        </para>
       </listitem>
      </varlistentry>

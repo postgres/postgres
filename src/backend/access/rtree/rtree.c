@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.69 2002/01/15 22:14:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.70 2002/03/02 21:39:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1345,13 +1345,13 @@ _rtdump(Relation r)
 void
 rtree_redo(XLogRecPtr lsn, XLogRecord *record)
 {
-	elog(STOP, "rtree_redo: unimplemented");
+	elog(PANIC, "rtree_redo: unimplemented");
 }
 
 void
 rtree_undo(XLogRecPtr lsn, XLogRecord *record)
 {
-	elog(STOP, "rtree_undo: unimplemented");
+	elog(PANIC, "rtree_undo: unimplemented");
 }
 
 void

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/Attic/findbe.c,v 1.26 2002/02/08 16:30:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/Attic/findbe.c,v 1.27 2002/03/02 21:39:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,17 +61,13 @@ ValidateBinary(char *path)
 	 */
 	if (stat(path, &buf) < 0)
 	{
-		if (DebugLvl > 1)
-			fprintf(stderr, "ValidateBinary: can't stat \"%s\"\n",
-					path);
+		elog(DEBUG2, "ValidateBinary: can't stat \"%s\"", path);
 		return -1;
 	}
 
 	if ((buf.st_mode & S_IFMT) != S_IFREG)
 	{
-		if (DebugLvl > 1)
-			fprintf(stderr, "ValidateBinary: \"%s\" is not a regular file\n",
-					path);
+		elog(DEBUG2, "ValidateBinary: \"%s\" is not a regular file", path);
 		return -1;
 	}
 
@@ -92,9 +88,8 @@ ValidateBinary(char *path)
 	{
 		is_r = buf.st_mode & S_IRUSR;
 		is_x = buf.st_mode & S_IXUSR;
-		if (DebugLvl > 1 && !(is_r && is_x))
-			fprintf(stderr, "ValidateBinary: \"%s\" is not user read/execute\n",
-					path);
+		if (!(is_r && is_x))
+			elog(DEBUG2, "ValidateBinary: \"%s\" is not user read/execute", path);
 		return is_x ? (is_r ? 0 : -2) : -1;
 	}
 	pwp = getpwuid(euid);
@@ -119,17 +114,17 @@ ValidateBinary(char *path)
 		{
 			is_r = buf.st_mode & S_IRGRP;
 			is_x = buf.st_mode & S_IXGRP;
-			if (DebugLvl > 1 && !(is_r && is_x))
-				fprintf(stderr, "ValidateBinary: \"%s\" is not group read/execute\n",
-						path);
+			if (!(is_r && is_x))
+				elog(DEBUG2, "ValidateBinary: \"%s\" is not group read/execute",
+					path);
 			return is_x ? (is_r ? 0 : -2) : -1;
 		}
 	}
 	is_r = buf.st_mode & S_IROTH;
 	is_x = buf.st_mode & S_IXOTH;
-	if (DebugLvl > 1 && !(is_r && is_x))
-		fprintf(stderr, "ValidateBinary: \"%s\" is not other read/execute\n",
-				path);
+	if (!(is_r && is_x))
+		elog(DEBUG2, "ValidateBinary: \"%s\" is not other read/execute",
+			path);
 	return is_x ? (is_r ? 0 : -2) : -1;
 }
 
@@ -177,9 +172,7 @@ FindExec(char *full_path, const char *argv0, const char *binary_name)
 		if (ValidateBinary(buf) == 0)
 		{
 			strncpy(full_path, buf, MAXPGPATH);
-			if (DebugLvl)
-				fprintf(stderr, "FindExec: found \"%s\" using argv[0]\n",
-						full_path);
+			elog(DEBUG1, "FindExec: found \"%s\" using argv[0]", full_path);
 			return 0;
 		}
 		fprintf(stderr, "FindExec: invalid binary \"%s\"\n",
@@ -193,8 +186,7 @@ FindExec(char *full_path, const char *argv0, const char *binary_name)
 	 */
 	if ((p = getenv("PATH")) && *p)
 	{
-		if (DebugLvl)
-			fprintf(stderr, "FindExec: searching PATH ...\n");
+		elog(DEBUG1, "FindExec: searching PATH ...");
 		path = strdup(p);		/* make a modifiable copy */
 		for (startp = path, endp = strchr(path, ':');
 			 startp && *startp;
@@ -215,9 +207,8 @@ FindExec(char *full_path, const char *argv0, const char *binary_name)
 			{
 				case 0: /* found ok */
 					strncpy(full_path, buf, MAXPGPATH);
-					if (DebugLvl)
-						fprintf(stderr, "FindExec: found \"%s\" using PATH\n",
-								full_path);
+					elog(DEBUG1, "FindExec: found \"%s\" using PATH",
+						full_path);
 					free(path);
 					return 0;
 				case -1:		/* wasn't even a candidate, keep looking */

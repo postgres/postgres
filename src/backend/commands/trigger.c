@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.102 2002/02/19 20:11:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.103 2002/03/02 21:39:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -368,7 +368,7 @@ DropTrigger(DropTrigStmt *stmt)
 		elog(ERROR, "DropTrigger: there is no trigger %s on relation %s",
 			 stmt->trigname, stmt->relname);
 	if (tgfound > 1)
-		elog(NOTICE, "DropTrigger: found (and deleted) %d triggers %s on relation %s",
+		elog(INFO, "DropTrigger: found (and deleted) %d triggers %s on relation %s",
 			 tgfound, stmt->trigname, stmt->relname);
 
 	/*
@@ -489,7 +489,7 @@ RelationRemoveTriggers(Relation rel)
 		stmt.relname = pstrdup(RelationGetRelationName(refrel));
 		heap_close(refrel, NoLock);
 
-		elog(NOTICE, "DROP TABLE implicitly drops referential integrity trigger from table \"%s\"", stmt.relname);
+		elog(INFO, "DROP TABLE implicitly drops referential integrity trigger from table \"%s\"", stmt.relname);
 
 		DropTrigger(&stmt);
 

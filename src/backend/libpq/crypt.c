@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/libpq/crypt.c,v 1.42 2001/11/05 17:46:25 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/libpq/crypt.c,v 1.43 2002/03/02 21:39:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,7 +65,7 @@ crypt_openpwdfile(void)
 	pwdfile = AllocateFile(filename, "r");
 
 	if (pwdfile == NULL && errno != ENOENT)
-		elog(DEBUG, "could not open %s: %m", filename);
+		elog(LOG, "could not open %s: %m", filename);
 
 	pfree(filename);
 

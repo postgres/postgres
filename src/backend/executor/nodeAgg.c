@@ -46,7 +46,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.78 2001/10/25 05:49:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.79 2002/03/02 21:39:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -757,7 +757,7 @@ ExecInitAgg(Agg *node, EState *estate, Plan *parent)
 		 * So, just make a debug note, and force numaggs positive so that
 		 * palloc()s below don't choke.
 		 */
-		elog(DEBUG, "ExecInitAgg: could not find any aggregate functions");
+		elog(LOG, "ExecInitAgg: could not find any aggregate functions");
 		numaggs = 1;
 	}
 

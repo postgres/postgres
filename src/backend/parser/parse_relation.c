@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.60 2001/11/05 17:46:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.61 2002/03/02 21:39:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1041,7 +1041,7 @@ warnAutoRange(ParseState *pstate, char *refname)
 		}
 	}
 	if (foundInFromCl)
-		elog(NOTICE, "Adding missing FROM-clause entry%s for table \"%s\"",
+		elog(INFO, "Adding missing FROM-clause entry%s for table \"%s\"",
 			 pstate->parentParseState != NULL ? " in subquery" : "",
 			 refname);
 }

@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.87 2002/01/06 00:37:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.88 2002/03/02 21:39:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -776,7 +776,7 @@ _bt_restore_page(Page page, char *from, int len)
 		itemsz = MAXALIGN(itemsz);
 		if (PageAddItem(page, (Item) from, itemsz,
 					  FirstOffsetNumber, LP_USED) == InvalidOffsetNumber)
-			elog(STOP, "_bt_restore_page: can't add item to page");
+			elog(PANIC, "_bt_restore_page: can't add item to page");
 		from += itemsz;
 	}
 }
@@ -799,10 +799,10 @@ btree_xlog_delete(bool redo, XLogRecPtr lsn, XLogRecord *record)
 	buffer = XLogReadBuffer(false, reln,
 						ItemPointerGetBlockNumber(&(xlrec->target.tid)));
 	if (!BufferIsValid(buffer))
-		elog(STOP, "btree_delete_redo: block unfound");
+		elog(PANIC, "btree_delete_redo: block unfound");
 	page = (Page) BufferGetPage(buffer);
 	if (PageIsNew((PageHeader) page))
-		elog(STOP, "btree_delete_redo: uninitialized page");
+		elog(PANIC, "btree_delete_redo: uninitialized page");
 
 	if (XLByteLE(lsn, PageGetLSN(page)))
 	{
@@ -838,10 +838,10 @@ btree_xlog_insert(bool redo, XLogRecPtr lsn, XLogRecord *record)
 	buffer = XLogReadBuffer(false, reln,
 						ItemPointerGetBlockNumber(&(xlrec->target.tid)));
 	if (!BufferIsValid(buffer))
-		elog(STOP, "btree_insert_%sdo: block unfound", (redo) ? "re" : "un");
+		elog(PANIC, "btree_insert_%sdo: block unfound", (redo) ? "re" : "un");
 	page = (Page) BufferGetPage(buffer);
 	if (PageIsNew((PageHeader) page))
-		elog(STOP, "btree_insert_%sdo: uninitialized page", (redo) ? "re" : "un");
+		elog(PANIC, "btree_insert_%sdo: uninitialized page", (redo) ? "re" : "un");
 	pageop = (BTPageOpaque) PageGetSpecialPointer(page);
 
 	if (redo)
@@ -855,7 +855,7 @@ btree_xlog_insert(bool redo, XLogRecPtr lsn, XLogRecord *record)
 						record->xl_len - SizeOfBtreeInsert,
 						ItemPointerGetOffsetNumber(&(xlrec->target.tid)),
 						LP_USED) == InvalidOffsetNumber)
-			elog(STOP, "btree_insert_redo: failed to add item");
+			elog(PANIC, "btree_insert_redo: failed to add item");
 
 		PageSetLSN(page, lsn);
 		PageSetSUI(page, ThisStartUpID);
@@ -864,7 +864,7 @@ btree_xlog_insert(bool redo, XLogRecPtr lsn, XLogRecord *record)
 	else
 	{
 		if (XLByteLT(PageGetLSN(page), lsn))
-			elog(STOP, "btree_insert_undo: bad page LSN");
+			elog(PANIC, "btree_insert_undo: bad page LSN");
 
 		if (!P_ISLEAF(pageop))
 		{
@@ -872,7 +872,7 @@ btree_xlog_insert(bool redo, XLogRecPtr lsn, XLogRecord *record)
 			return;
 		}
 
-		elog(STOP, "btree_insert_undo: unimplemented");
+		elog(PANIC, "btree_insert_undo: unimplemented");
 	}
 
 	return;
@@ -899,13 +899,13 @@ btree_xlog_split(bool redo, bool onleft, XLogRecPtr lsn, XLogRecord *record)
 		BlockIdGetBlockNumber(&(xlrec->otherblk));
 	buffer = XLogReadBuffer(false, reln, blkno);
 	if (!BufferIsValid(buffer))
-		elog(STOP, "btree_split_%s: lost left sibling", op);
+		elog(PANIC, "btree_split_%s: lost left sibling", op);
 
 	page = (Page) BufferGetPage(buffer);
 	if (redo)
 		_bt_pageinit(page, BufferGetPageSize(buffer));
 	else if (PageIsNew((PageHeader) page))
-		elog(STOP, "btree_split_undo: uninitialized left sibling");
+		elog(PANIC, "btree_split_undo: uninitialized left sibling");
 	pageop = (BTPageOpaque) PageGetSpecialPointer(page);
 
 	if (redo)
@@ -928,8 +928,8 @@ btree_xlog_split(bool redo, bool onleft, XLogRecPtr lsn, XLogRecord *record)
 /* undo */
 	{
 		if (XLByteLT(PageGetLSN(page), lsn))
-			elog(STOP, "btree_split_undo: bad left sibling LSN");
-		elog(STOP, "btree_split_undo: unimplemented");
+			elog(PANIC, "btree_split_undo: bad left sibling LSN");
+		elog(PANIC, "btree_split_undo: unimplemented");
 	}
 
 	/* Right (new) sibling */
@@ -937,13 +937,13 @@ btree_xlog_split(bool redo, bool onleft, XLogRecPtr lsn, XLogRecord *record)
 		ItemPointerGetBlockNumber(&(xlrec->target.tid));
 	buffer = XLogReadBuffer((redo) ? true : false, reln, blkno);
 	if (!BufferIsValid(buffer))
-		elog(STOP, "btree_split_%s: lost right sibling", op);
+		elog(PANIC, "btree_split_%s: lost right sibling", op);
 
 	page = (Page) BufferGetPage(buffer);
 	if (redo)
 		_bt_pageinit(page, BufferGetPageSize(buffer));
 	else if (PageIsNew((PageHeader) page))
-		elog(STOP, "btree_split_undo: uninitialized right sibling");
+		elog(PANIC, "btree_split_undo: uninitialized right sibling");
 	pageop = (BTPageOpaque) PageGetSpecialPointer(page);
 
 	if (redo)
@@ -967,8 +967,8 @@ btree_xlog_split(bool redo, bool onleft, XLogRecPtr lsn, XLogRecord *record)
 /* undo */
 	{
 		if (XLByteLT(PageGetLSN(page), lsn))
-			elog(STOP, "btree_split_undo: bad right sibling LSN");
-		elog(STOP, "btree_split_undo: unimplemented");
+			elog(PANIC, "btree_split_undo: bad right sibling LSN");
+		elog(PANIC, "btree_split_undo: unimplemented");
 	}
 
 	if (!redo || (record->xl_info & XLR_BKP_BLOCK_1))
@@ -981,11 +981,11 @@ btree_xlog_split(bool redo, bool onleft, XLogRecPtr lsn, XLogRecord *record)
 
 	buffer = XLogReadBuffer(false, reln, blkno);
 	if (!BufferIsValid(buffer))
-		elog(STOP, "btree_split_redo: lost next right page");
+		elog(PANIC, "btree_split_redo: lost next right page");
 
 	page = (Page) BufferGetPage(buffer);
 	if (PageIsNew((PageHeader) page))
-		elog(STOP, "btree_split_redo: uninitialized next right page");
+		elog(PANIC, "btree_split_redo: uninitialized next right page");
 
 	if (XLByteLE(lsn, PageGetLSN(page)))
 	{
@@ -1022,10 +1022,10 @@ btree_xlog_newroot(bool redo, XLogRecPtr lsn, XLogRecord *record)
 		return;
 	buffer = XLogReadBuffer(true, reln, BlockIdGetBlockNumber(&(xlrec->rootblk)));
 	if (!BufferIsValid(buffer))
-		elog(STOP, "btree_newroot_redo: no root page");
+		elog(PANIC, "btree_newroot_redo: no root page");
 	metabuf = XLogReadBuffer(false, reln, BTREE_METAPAGE);
 	if (!BufferIsValid(buffer))
-		elog(STOP, "btree_newroot_redo: no metapage");
+		elog(PANIC, "btree_newroot_redo: no metapage");
 	page = (Page) BufferGetPage(buffer);
 	_bt_pageinit(page, BufferGetPageSize(buffer));
 	pageop = (BTPageOpaque) PageGetSpecialPointer(page);
@@ -1079,7 +1079,7 @@ btree_redo(XLogRecPtr lsn, XLogRecord *record)
 	else if (info == XLOG_BTREE_NEWROOT)
 		btree_xlog_newroot(true, lsn, record);
 	else
-		elog(STOP, "btree_redo: unknown op code %u", info);
+		elog(PANIC, "btree_redo: unknown op code %u", info);
 }
 
 void
@@ -1099,7 +1099,7 @@ btree_undo(XLogRecPtr lsn, XLogRecord *record)
 	else if (info == XLOG_BTREE_NEWROOT)
 		btree_xlog_newroot(false, lsn, record);
 	else
-		elog(STOP, "btree_undo: unknown op code %u", info);
+		elog(PANIC, "btree_undo: unknown op code %u", info);
 }
 
 static void

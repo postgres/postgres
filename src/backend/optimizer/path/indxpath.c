@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.112 2001/10/25 05:49:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.113 2002/03/02 21:39:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1299,7 +1299,7 @@ pred_test_simple_clause(Expr *predicate, Node *clause)
 	if (!HeapTupleIsValid(tuple))
 	{
 		/* this probably shouldn't fail? */
-		elog(DEBUG, "pred_test_simple_clause: unknown test_op");
+		elog(LOG, "pred_test_simple_clause: unknown test_op");
 		return false;
 	}
 	aform = (Form_pg_amop) GETSTRUCT(tuple);
@@ -1327,7 +1327,7 @@ pred_test_simple_clause(Expr *predicate, Node *clause)
 
 	if (isNull)
 	{
-		elog(DEBUG, "pred_test_simple_clause: null test result");
+		elog(LOG, "pred_test_simple_clause: null test result");
 		return false;
 	}
 	return DatumGetBool(test_result);

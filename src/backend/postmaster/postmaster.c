@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.268 2002/03/02 20:46:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.269 2002/03/02 21:39:28 momjian Exp $
  *
  * NOTES
  *
@@ -436,13 +436,15 @@ PostmasterMain(int argc, char *argv[])
 				potential_DataDir = optarg;
 				break;
 			case 'd':
-
-				/*
-				 * Turn on debugging for the postmaster and the backend
-				 * servers descended from it.
-				 */
-				SetConfigOption("debug_level", optarg, PGC_POSTMASTER, PGC_S_ARGV);
+			{
+				/* Turn on debugging for the postmaster. */
+				char *debugstr = palloc(strlen("debug") + strlen(optarg) + 1);
+				sprintf(debugstr, "debug%s", optarg);
+				/* We use PGC_S_SESSION because we will reset in backend */
+				SetConfigOption("server_min_messages", debugstr, PGC_POSTMASTER, PGC_S_SESSION);
+				pfree(debugstr);
 				break;
+			}
 			case 'F':
 				SetConfigOption("fsync", "false", PGC_POSTMASTER, PGC_S_ARGV);
 				break;
@@ -580,17 +582,15 @@ PostmasterMain(int argc, char *argv[])
 #endif
 
 	/* For debugging: display postmaster environment */
-	if (DebugLvl > 2)
 	{
 		extern char **environ;
 		char	  **p;
 
-		fprintf(stderr, "%s: PostmasterMain: initial environ dump:\n",
-				progname);
-		fprintf(stderr, "-----------------------------------------\n");
+		elog(DEBUG2, "%s: PostmasterMain: initial environ dump:",	progname);
+		elog(DEBUG2, "-----------------------------------------");
 		for (p = environ; *p; ++p)
-			fprintf(stderr, "\t%s\n", *p);
-		fprintf(stderr, "-----------------------------------------\n");
+			elog(DEBUG2, "\t%s", *p);
+		elog(DEBUG2, "-----------------------------------------");
 	}
 
 	/*
@@ -932,7 +932,7 @@ ServerLoop(void)
 			PG_SETMASK(&BlockSig);
 			if (errno == EINTR || errno == EWOULDBLOCK)
 				continue;
-			elog(DEBUG, "ServerLoop: select failed: %m");
+			elog(LOG, "ServerLoop: select failed: %m");
 			return STATUS_ERROR;
 		}
 
@@ -1058,7 +1058,7 @@ ProcessStartupPacket(Port *port, bool SSLdone)
 
 	if (pq_getbytes((char *) &len, 4) == EOF)
 	{
-		elog(DEBUG, "incomplete startup packet");
+		elog(LOG, "incomplete startup packet");
 		return STATUS_ERROR;
 	}
 
@@ -1072,7 +1072,7 @@ ProcessStartupPacket(Port *port, bool SSLdone)
 
 	if (pq_getbytes(buf, len) == EOF)
 	{
-		elog(DEBUG, "incomplete startup packet");
+		elog(LOG, "incomplete startup packet");
 		return STATUS_ERROR;
 	}
 
@@ -1105,7 +1105,7 @@ ProcessStartupPacket(Port *port, bool SSLdone)
 #endif
 		if (send(port->sock, &SSLok, 1, 0) != 1)
 		{
-			elog(DEBUG, "failed to send SSL negotiation response: %s",
+			elog(LOG, "failed to send SSL negotiation response: %s",
 				 strerror(errno));
 			return STATUS_ERROR;	/* close the connection */
 		}
@@ -1117,7 +1117,7 @@ ProcessStartupPacket(Port *port, bool SSLdone)
 				!SSL_set_fd(port->ssl, port->sock) ||
 				SSL_accept(port->ssl) <= 0)
 			{
-				elog(DEBUG, "failed to initialize SSL connection: %s (%m)",
+				elog(LOG, "failed to initialize SSL connection: %s (%m)",
 					 SSLerrmessage());
 				return STATUS_ERROR;
 			}
@@ -1215,8 +1215,7 @@ processCancelRequest(Port *port, void *pkt)
 
 	if (backendPID == CheckPointPID)
 	{
-		if (DebugLvl)
-			elog(DEBUG, "processCancelRequest: CheckPointPID in cancel request for process %d", backendPID);
+		elog(DEBUG1, "processCancelRequest: CheckPointPID in cancel request for process %d", backendPID);
 		return;
 	}
 
@@ -1230,25 +1229,20 @@ processCancelRequest(Port *port, void *pkt)
 			if (bp->cancel_key == cancelAuthCode)
 			{
 				/* Found a match; signal that backend to cancel current op */
-				if (DebugLvl)
-					elog(DEBUG, "processing cancel request: sending SIGINT to process %d",
-						 backendPID);
+				elog(DEBUG1, "processing cancel request: sending SIGINT to process %d",
+					 backendPID);
 				kill(bp->pid, SIGINT);
 			}
 			else
-			{
 				/* Right PID, wrong key: no way, Jose */
-				if (DebugLvl)
-					elog(DEBUG, "bad key in cancel request for process %d",
-						 backendPID);
-			}
+				elog(DEBUG1, "bad key in cancel request for process %d",
+					backendPID);
 			return;
 		}
 	}
 
 	/* No matching backend */
-	if (DebugLvl)
-		elog(DEBUG, "bad pid in cancel request for process %d", backendPID);
+	elog(DEBUG1, "bad pid in cancel request for process %d", backendPID);
 }
 
 /*
@@ -1291,7 +1285,7 @@ ConnCreate(int serverFd)
 
 	if (!(port = (Port *) calloc(1, sizeof(Port))))
 	{
-		elog(DEBUG, "ConnCreate: malloc failed");
+		elog(LOG, "ConnCreate: malloc failed");
 		SignalChildren(SIGQUIT);
 		ExitPostmaster(1);
 	}
@@ -1412,8 +1406,7 @@ pmdie(SIGNAL_ARGS)
 
 	PG_SETMASK(&BlockSig);
 
-	if (DebugLvl >= 1)
-		elog(DEBUG, "pmdie %d", postgres_signal_arg);
+	elog(DEBUG1, "pmdie %d", postgres_signal_arg);
 
 	switch (postgres_signal_arg)
 	{
@@ -1427,7 +1420,7 @@ pmdie(SIGNAL_ARGS)
 			if (Shutdown >= SmartShutdown)
 				break;
 			Shutdown = SmartShutdown;
-			elog(DEBUG, "smart shutdown request");
+			elog(LOG, "smart shutdown request");
 			if (DLGetHead(BackendList)) /* let reaper() handle this */
 				break;
 
@@ -1439,7 +1432,7 @@ pmdie(SIGNAL_ARGS)
 				break;
 			if (ShutdownPID > 0)
 			{
-				elog(REALLYFATAL, "shutdown process %d already running",
+				elog(PANIC, "shutdown process %d already running",
 					 (int) ShutdownPID);
 				abort();
 			}
@@ -1457,13 +1450,13 @@ pmdie(SIGNAL_ARGS)
 			 */
 			if (Shutdown >= FastShutdown)
 				break;
-			elog(DEBUG, "fast shutdown request");
+			elog(LOG, "fast shutdown request");
 			if (DLGetHead(BackendList)) /* let reaper() handle this */
 			{
 				Shutdown = FastShutdown;
 				if (!FatalError)
 				{
-					elog(DEBUG, "aborting any active transactions");
+					elog(LOG, "aborting any active transactions");
 					SignalChildren(SIGTERM);
 				}
 				break;
@@ -1483,7 +1476,7 @@ pmdie(SIGNAL_ARGS)
 				break;
 			if (ShutdownPID > 0)
 			{
-				elog(REALLYFATAL, "shutdown process %d already running",
+				elog(PANIC, "shutdown process %d already running",
 					 (int) ShutdownPID);
 				abort();
 			}
@@ -1499,7 +1492,7 @@ pmdie(SIGNAL_ARGS)
 			 * abort all children with SIGQUIT and exit without attempt to
 			 * properly shutdown data base system.
 			 */
-			elog(DEBUG, "immediate shutdown request");
+			elog(LOG, "immediate shutdown request");
 			if (ShutdownPID > 0)
 				kill(ShutdownPID, SIGQUIT);
 			if (StartupPID > 0)
@@ -1534,8 +1527,7 @@ reaper(SIGNAL_ARGS)
 
 	PG_SETMASK(&BlockSig);
 
-	if (DebugLvl)
-		elog(DEBUG, "reaping dead processes");
+	elog(DEBUG1, "reaping dead processes");
 #ifdef HAVE_WAITPID
 	while ((pid = waitpid(-1, &status, WNOHANG)) > 0)
 	{
@@ -1578,7 +1570,7 @@ reaper(SIGNAL_ARGS)
 			{
 				LogChildExit(gettext("startup process"),
 							 pid, exitstatus);
-				elog(DEBUG, "aborting startup due to startup process failure");
+				elog(LOG, "aborting startup due to startup process failure");
 				ExitPostmaster(1);
 			}
 			StartupPID = 0;
@@ -1587,7 +1579,7 @@ reaper(SIGNAL_ARGS)
 			{
 				if (ShutdownPID > 0)
 				{
-					elog(STOP, "startup process %d died while shutdown process %d already running",
+					elog(PANIC, "startup process %d died while shutdown process %d already running",
 						 pid, (int) ShutdownPID);
 					abort();
 				}
@@ -1619,7 +1611,7 @@ reaper(SIGNAL_ARGS)
 		 */
 		if (DLGetHead(BackendList) || StartupPID > 0 || ShutdownPID > 0)
 			goto reaper_done;
-		elog(DEBUG, "all server processes terminated; reinitializing shared memory and semaphores");
+		elog(LOG, "all server processes terminated; reinitializing shared memory and semaphores");
 
 		shmem_exit(0);
 		reset_shared(PostPortNumber);
@@ -1657,8 +1649,7 @@ CleanupProc(int pid,
 			   *next;
 	Backend    *bp;
 
-	if (DebugLvl)
-		LogChildExit(gettext("child process"), pid, exitstatus);
+	LogChildExit(gettext("child process"), pid, exitstatus);
 
 	/*
 	 * If a backend dies in an ugly way (i.e. exit status not 0) then we
@@ -1704,7 +1695,7 @@ CleanupProc(int pid,
 	if (!FatalError)
 	{
 		LogChildExit(gettext("server process"), pid, exitstatus);
-		elog(DEBUG, "terminating any other active server processes");
+		elog(LOG, "terminating any other active server processes");
 	}
 
 	curr = DLGetHead(BackendList);
@@ -1725,10 +1716,8 @@ CleanupProc(int pid,
 			 */
 			if (!FatalError)
 			{
-				if (DebugLvl)
-					elog(DEBUG, "CleanupProc: sending %s to process %d",
-						 (SendStop ? "SIGSTOP" : "SIGQUIT"),
-						 (int) bp->pid);
+				elog(DEBUG1, "CleanupProc: sending %s to process %d",
+					 (SendStop ? "SIGSTOP" : "SIGQUIT"), (int) bp->pid);
 				kill(bp->pid, (SendStop ? SIGSTOP : SIGQUIT));
 			}
 		}
@@ -1771,13 +1760,13 @@ LogChildExit(const char *procname, int pid, int exitstatus)
 	 * describing a child process, such as "server process"
 	 */
 	if (WIFEXITED(exitstatus))
-		elog(DEBUG, "%s (pid %d) exited with exit code %d",
+		elog(LOG, "%s (pid %d) exited with exit code %d",
 			 procname, pid, WEXITSTATUS(exitstatus));
 	else if (WIFSIGNALED(exitstatus))
-		elog(DEBUG, "%s (pid %d) was terminated by signal %d",
+		elog(LOG, "%s (pid %d) was terminated by signal %d",
 			 procname, pid, WTERMSIG(exitstatus));
 	else
-		elog(DEBUG, "%s (pid %d) exited with unexpected status %d",
+		elog(LOG, "%s (pid %d) exited with unexpected status %d",
 			 procname, pid, exitstatus);
 }
 
@@ -1799,10 +1788,8 @@ SignalChildren(int signal)
 
 		if (bp->pid != MyProcPid)
 		{
-			if (DebugLvl >= 1)
-				elog(DEBUG, "SignalChildren: sending signal %d to process %d",
-					 signal, (int) bp->pid);
-
+			elog(DEBUG1, "SignalChildren: sending signal %d to process %d",
+				 signal, (int) bp->pid);
 			kill(bp->pid, signal);
 		}
 
@@ -1838,7 +1825,7 @@ BackendStartup(Port *port)
 	bn = (Backend *) malloc(sizeof(Backend));
 	if (!bn)
 	{
-		elog(DEBUG, "out of memory; connection startup aborted");
+		elog(LOG, "out of memory; connection startup aborted");
 		return STATUS_ERROR;
 	}
 
@@ -1887,7 +1874,7 @@ BackendStartup(Port *port)
 		status = DoBackend(port);
 		if (status != 0)
 		{
-			elog(DEBUG, "connection startup failed");
+			elog(LOG, "connection startup failed");
 			proc_exit(status);
 		}
 		else
@@ -1904,16 +1891,15 @@ BackendStartup(Port *port)
 		beos_backend_startup_failed();
 #endif
 		free(bn);
-		elog(DEBUG, "connection startup failed (fork failure): %s",
+		elog(LOG, "connection startup failed (fork failure): %s",
 			 strerror(save_errno));
 		report_fork_failure_to_client(port, save_errno);
 		return STATUS_ERROR;
 	}
 
 	/* in parent, normal */
-	if (DebugLvl >= 1)
-		elog(DEBUG, "BackendStartup: forked pid=%d socket=%d",
-			 (int) pid, port->sock);
+	elog(DEBUG1, "BackendStartup: forked pid=%d socket=%d", (int) pid,
+		port->sock);
 
 	/*
 	 * Everything's been successful, it's safe to add this backend to our
@@ -2007,7 +1993,6 @@ DoBackend(Port *port)
 	char	   *remote_host;
 	char	   *av[ARGV_SIZE * 2];
 	int			ac = 0;
-	char		debugbuf[ARGV_SIZE];
 	char		protobuf[ARGV_SIZE];
 	char		dbbuf[ARGV_SIZE];
 	char		optbuf[ARGV_SIZE];
@@ -2151,7 +2136,7 @@ DoBackend(Port *port)
 	PG_SETMASK(&BlockSig);
 
 	if (Log_connections)
-		elog(DEBUG, "connection: host=%s user=%s database=%s",
+		elog(LOG, "connection: host=%s user=%s database=%s",
 			 remote_host, port->user, port->database);
 
 	/*
@@ -2173,19 +2158,6 @@ DoBackend(Port *port)
 	 */
 
 	av[ac++] = "postgres";
-
-	/*
-	 * Pass the requested debugging level along to the backend. Level one
-	 * debugging in the postmaster traces postmaster connection activity,
-	 * and levels two and higher are passed along to the backend.  This
-	 * allows us to watch only the postmaster or the postmaster and the
-	 * backend.
-	 */
-	if (DebugLvl > 1)
-	{
-		sprintf(debugbuf, "-d%d", DebugLvl);
-		av[ac++] = debugbuf;
-	}
 
 	/*
 	 * Pass any backend switches specified with -o in the postmaster's own
@@ -2244,14 +2216,10 @@ DoBackend(Port *port)
 	/*
 	 * Debug: print arguments being passed to backend
 	 */
-	if (DebugLvl > 1)
-	{
-		fprintf(stderr, "%s child[%d]: starting with (",
-				progname, MyProcPid);
-		for (i = 0; i < ac; ++i)
-			fprintf(stderr, "%s ", av[i]);
-		fprintf(stderr, ")\n");
-	}
+	elog(DEBUG2, "%s child[%d]: starting with (", progname, MyProcPid);
+	for (i = 0; i < ac; ++i)
+		elog(DEBUG2, "%s ", av[i]);
+	elog(DEBUG2, ")\n");
 
 	return (PostgresMain(ac, av, port->user));
 }
@@ -2584,8 +2552,6 @@ SSDataBase(int xlop)
 		/* Set up command-line arguments for subprocess */
 		av[ac++] = "postgres";
 
-		av[ac++] = "-d";
-
 		sprintf(nbbuf, "-B%d", NBuffers);
 		av[ac++] = nbbuf;
 
@@ -2614,16 +2580,16 @@ SSDataBase(int xlop)
 		switch (xlop)
 		{
 			case BS_XLOG_STARTUP:
-				elog(DEBUG, "could not launch startup process (fork failure): %s",
+				elog(LOG, "could not launch startup process (fork failure): %s",
 					 strerror(errno));
 				break;
 			case BS_XLOG_CHECKPOINT:
-				elog(DEBUG, "could not launch checkpoint process (fork failure): %s",
+				elog(LOG, "could not launch checkpoint process (fork failure): %s",
 					 strerror(errno));
 				break;
 			case BS_XLOG_SHUTDOWN:
 			default:
-				elog(DEBUG, "could not launch shutdown process (fork failure): %s",
+				elog(LOG, "could not launch shutdown process (fork failure): %s",
 					 strerror(errno));
 				break;
 		}
@@ -2646,7 +2612,7 @@ SSDataBase(int xlop)
 	{
 		if (!(bn = (Backend *) malloc(sizeof(Backend))))
 		{
-			elog(DEBUG, "CheckPointDataBase: malloc failed");
+			elog(LOG, "CheckPointDataBase: malloc failed");
 			ExitPostmaster(1);
 		}
 

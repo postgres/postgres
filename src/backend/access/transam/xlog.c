@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.87 2002/02/18 05:44:45 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.88 2002/03/02 21:39:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -489,7 +489,7 @@ XLogInsert(RmgrId rmid, uint8 info, XLogRecData *rdata)
 	if (info & XLR_INFO_MASK)
 	{
 		if ((info & XLR_INFO_MASK) != XLOG_NO_TRAN)
-			elog(STOP, "XLogInsert: invalid info mask %02X",
+			elog(PANIC, "XLogInsert: invalid info mask %02X",
 				 (info & XLR_INFO_MASK));
 		no_tran = true;
 		info &= ~XLR_INFO_MASK;
@@ -594,7 +594,7 @@ begin:;
 				}
 			}
 			if (i >= XLR_MAX_BKP_BLOCKS)
-				elog(STOP, "XLogInsert: can backup %d blocks at most",
+				elog(PANIC, "XLogInsert: can backup %d blocks at most",
 					 XLR_MAX_BKP_BLOCKS);
 		}
 		/* Break out of loop when rdt points to last list item */
@@ -612,7 +612,7 @@ begin:;
 	 * also remove the check for xl_len == 0 in ReadRecord, below.
 	 */
 	if (len == 0 || len > MAXLOGRECSZ)
-		elog(STOP, "XLogInsert: invalid record length %u", len);
+		elog(PANIC, "XLogInsert: invalid record length %u", len);
 
 	START_CRIT_SECTION();
 
@@ -769,7 +769,7 @@ begin:;
 			strcat(buf, " - ");
 			RmgrTable[record->xl_rmid].rm_desc(buf, record->xl_info, rdata->data);
 		}
-		elog(DEBUG, "%s", buf);
+		elog(LOG, "%s", buf);
 	}
 
 	/* Record begin of record in appropriate places */
@@ -1010,7 +1010,7 @@ XLogWrite(XLogwrtRqst WriteRqst)
 		 * AdvanceXLInsertBuffer.
 		 */
 		if (!XLByteLT(LogwrtResult.Write, XLogCtl->xlblocks[Write->curridx]))
-			elog(STOP, "XLogWrite: write request %X/%X is past end of log %X/%X",
+			elog(PANIC, "XLogWrite: write request %X/%X is past end of log %X/%X",
 				 LogwrtResult.Write.xlogid, LogwrtResult.Write.xrecoff,
 				 XLogCtl->xlblocks[Write->curridx].xlogid,
 				 XLogCtl->xlblocks[Write->curridx].xrecoff);
@@ -1027,7 +1027,7 @@ XLogWrite(XLogwrtRqst WriteRqst)
 			if (openLogFile >= 0)
 			{
 				if (close(openLogFile) != 0)
-					elog(STOP, "close of log file %u, segment %u failed: %m",
+					elog(PANIC, "close of log file %u, segment %u failed: %m",
 						 openLogId, openLogSeg);
 				openLogFile = -1;
 			}
@@ -1066,7 +1066,7 @@ XLogWrite(XLogwrtRqst WriteRqst)
 					 (uint32) CheckPointSegments))
 				{
 					if (XLOG_DEBUG)
-						elog(DEBUG, "XLogWrite: time for a checkpoint, signaling postmaster");
+						elog(LOG, "XLogWrite: time for a checkpoint, signaling postmaster");
 					SendPostmasterSignal(PMSIGNAL_DO_CHECKPOINT);
 				}
 			}
@@ -1085,7 +1085,7 @@ XLogWrite(XLogwrtRqst WriteRqst)
 		{
 			openLogOff = (LogwrtResult.Write.xrecoff - BLCKSZ) % XLogSegSize;
 			if (lseek(openLogFile, (off_t) openLogOff, SEEK_SET) < 0)
-				elog(STOP, "lseek of log file %u, segment %u, offset %u failed: %m",
+				elog(PANIC, "lseek of log file %u, segment %u, offset %u failed: %m",
 					 openLogId, openLogSeg, openLogOff);
 		}
 
@@ -1097,7 +1097,7 @@ XLogWrite(XLogwrtRqst WriteRqst)
 			/* if write didn't set errno, assume problem is no disk space */
 			if (errno == 0)
 				errno = ENOSPC;
-			elog(STOP, "write of log file %u, segment %u, offset %u failed: %m",
+			elog(PANIC, "write of log file %u, segment %u, offset %u failed: %m",
 				 openLogId, openLogSeg, openLogOff);
 		}
 		openLogOff += BLCKSZ;
@@ -1141,7 +1141,7 @@ XLogWrite(XLogwrtRqst WriteRqst)
 			 !XLByteInPrevSeg(LogwrtResult.Write, openLogId, openLogSeg))
 			{
 				if (close(openLogFile) != 0)
-					elog(STOP, "close of log file %u, segment %u failed: %m",
+					elog(PANIC, "close of log file %u, segment %u failed: %m",
 						 openLogId, openLogSeg);
 				openLogFile = -1;
 			}
@@ -1193,7 +1193,7 @@ XLogFlush(XLogRecPtr record)
 
 	if (XLOG_DEBUG)
 	{
-		elog(DEBUG, "XLogFlush%s%s: request %X/%X; write %X/%X; flush %X/%X\n",
+		elog(LOG, "XLogFlush%s%s: request %X/%X; write %X/%X; flush %X/%X\n",
 			 (IsBootstrapProcessingMode()) ? "(bootstrap)" : "",
 			 (InRedo) ? "(redo)" : "",
 			 record.xlogid, record.xrecoff,
@@ -1273,7 +1273,7 @@ XLogFlush(XLogRecPtr record)
 	 * problem; most likely, the requested flush point is past end of XLOG.
 	 * This has been seen to occur when a disk page has a corrupted LSN.
 	 *
-	 * Formerly we treated this as a STOP condition, but that hurts the
+	 * Formerly we treated this as a PANIC condition, but that hurts the
 	 * system's robustness rather than helping it: we do not want to take
 	 * down the whole system due to corruption on one data page.  In
 	 * particular, if the bad page is encountered again during recovery then
@@ -1286,7 +1286,7 @@ XLogFlush(XLogRecPtr record)
 	 * The current approach is to ERROR under normal conditions, but only
 	 * NOTICE during recovery, so that the system can be brought up even if
 	 * there's a corrupt LSN.  Note that for calls from xact.c, the ERROR
-	 * will be promoted to STOP since xact.c calls this routine inside a
+	 * will be promoted to PANIC since xact.c calls this routine inside a
 	 * critical section.  However, calls from bufmgr.c are not within
 	 * critical sections and so we will not force a restart for a bad LSN
 	 * on a data page.
@@ -1336,7 +1336,7 @@ XLogFileInit(uint32 log, uint32 seg,
 		if (fd < 0)
 		{
 			if (errno != ENOENT)
-				elog(STOP, "open of %s (log file %u, segment %u) failed: %m",
+				elog(PANIC, "open of %s (log file %u, segment %u) failed: %m",
 					 path, log, seg);
 		}
 		else
@@ -1358,7 +1358,7 @@ XLogFileInit(uint32 log, uint32 seg,
 	fd = BasicOpenFile(tmppath, O_RDWR | O_CREAT | O_EXCL | PG_BINARY,
 					   S_IRUSR | S_IWUSR);
 	if (fd < 0)
-		elog(STOP, "creation of file %s failed: %m", tmppath);
+		elog(PANIC, "creation of file %s failed: %m", tmppath);
 
 	/*
 	 * Zero-fill the file.	We have to do this the hard way to ensure that
@@ -1385,12 +1385,12 @@ XLogFileInit(uint32 log, uint32 seg,
 			/* if write didn't set errno, assume problem is no disk space */
 			errno = save_errno ? save_errno : ENOSPC;
 
-			elog(STOP, "ZeroFill failed to write %s: %m", tmppath);
+			elog(PANIC, "ZeroFill failed to write %s: %m", tmppath);
 		}
 	}
 
 	if (pg_fsync(fd) != 0)
-		elog(STOP, "fsync of file %s failed: %m", tmppath);
+		elog(PANIC, "fsync of file %s failed: %m", tmppath);
 
 	close(fd);
 
@@ -1417,7 +1417,7 @@ XLogFileInit(uint32 log, uint32 seg,
 	fd = BasicOpenFile(path, O_RDWR | PG_BINARY | XLOG_SYNC_BIT,
 					   S_IRUSR | S_IWUSR);
 	if (fd < 0)
-		elog(STOP, "open of %s (log file %u, segment %u) failed: %m",
+		elog(PANIC, "open of %s (log file %u, segment %u) failed: %m",
 			 path, log, seg);
 
 	return (fd);
@@ -1495,12 +1495,12 @@ InstallXLogFileSegment(uint32 log, uint32 seg, char *tmppath,
 	 */
 #ifndef __BEOS__
 	if (link(tmppath, path) < 0)
-		elog(STOP, "link from %s to %s (initialization of log file %u, segment %u) failed: %m",
+		elog(PANIC, "link from %s to %s (initialization of log file %u, segment %u) failed: %m",
 			 tmppath, path, log, seg);
 	unlink(tmppath);
 #else
 	if (rename(tmppath, path) < 0)
-		elog(STOP, "rename from %s to %s (initialization of log file %u, segment %u) failed: %m",
+		elog(PANIC, "rename from %s to %s (initialization of log file %u, segment %u) failed: %m",
 			 tmppath, path, log, seg);
 #endif
 
@@ -1531,7 +1531,7 @@ XLogFileOpen(uint32 log, uint32 seg, bool econt)
 				 path, log, seg);
 			return (fd);
 		}
-		elog(STOP, "open of %s (log file %u, segment %u) failed: %m",
+		elog(PANIC, "open of %s (log file %u, segment %u) failed: %m",
 			 path, log, seg);
 	}
 
@@ -1592,7 +1592,7 @@ MoveOfflineLogs(uint32 log, uint32 seg, XLogRecPtr endptr)
 
 	xldir = opendir(XLogDir);
 	if (xldir == NULL)
-		elog(STOP, "could not open transaction log directory (%s): %m",
+		elog(PANIC, "could not open transaction log directory (%s): %m",
 			 XLogDir);
 
 	sprintf(lastoff, "%08X%08X", log, seg);
@@ -1638,7 +1638,7 @@ MoveOfflineLogs(uint32 log, uint32 seg, XLogRecPtr endptr)
 		errno = 0;
 	}
 	if (errno)
-		elog(STOP, "could not read transaction log directory (%s): %m",
+		elog(PANIC, "could not read transaction log directory (%s): %m",
 			 XLogDir);
 	closedir(xldir);
 }
@@ -1749,8 +1749,8 @@ RecordIsValid(XLogRecord *record, XLogRecPtr recptr, int emode)
  * If RecPtr is not NULL, try to read a record at that position.  Otherwise
  * try to read a record just after the last one previously read.
  *
- * If no valid record is available, returns NULL, or fails if emode is STOP.
- * (emode must be either STOP or LOG.)
+ * If no valid record is available, returns NULL, or fails if emode is PANIC.
+ * (emode must be either PANIC or LOG.)
  *
  * buffer is a workspace at least _INTL_MAXLOGRECSZ bytes long.  It is needed
  * to reassemble a record that crosses block boundaries.  Note that on
@@ -1802,7 +1802,7 @@ ReadRecord(XLogRecPtr *RecPtr, int emode, char *buffer)
 		tmpRecPtr.xrecoff += SizeOfXLogPHD;
 	}
 	else if (!XRecOffIsValid(RecPtr->xrecoff))
-		elog(STOP, "ReadRecord: invalid record offset at %X/%X",
+		elog(PANIC, "ReadRecord: invalid record offset at %X/%X",
 			 RecPtr->xlogid, RecPtr->xrecoff);
 
 	if (readFile >= 0 && !XLByteInSeg(*RecPtr, readId, readSeg))
@@ -2083,11 +2083,11 @@ WriteControlFile(void)
 #ifdef USE_LOCALE
 	localeptr = setlocale(LC_COLLATE, NULL);
 	if (!localeptr)
-		elog(STOP, "invalid LC_COLLATE setting");
+		elog(PANIC, "invalid LC_COLLATE setting");
 	StrNCpy(ControlFile->lc_collate, localeptr, LOCALE_NAME_BUFLEN);
 	localeptr = setlocale(LC_CTYPE, NULL);
 	if (!localeptr)
-		elog(STOP, "invalid LC_CTYPE setting");
+		elog(PANIC, "invalid LC_CTYPE setting");
 	StrNCpy(ControlFile->lc_ctype, localeptr, LOCALE_NAME_BUFLEN);
 
 	/*
@@ -2122,7 +2122,7 @@ WriteControlFile(void)
 	 * specific error than "couldn't read pg_control".
 	 */
 	if (sizeof(ControlFileData) > BLCKSZ)
-		elog(STOP, "sizeof(ControlFileData) is larger than BLCKSZ; fix either one");
+		elog(PANIC, "sizeof(ControlFileData) is larger than BLCKSZ; fix either one");
 
 	memset(buffer, 0, BLCKSZ);
 	memcpy(buffer, ControlFile, sizeof(ControlFileData));
@@ -2130,7 +2130,7 @@ WriteControlFile(void)
 	fd = BasicOpenFile(ControlFilePath, O_RDWR | O_CREAT | O_EXCL | PG_BINARY,
 					   S_IRUSR | S_IWUSR);
 	if (fd < 0)
-		elog(STOP, "WriteControlFile: could not create control file (%s): %m",
+		elog(PANIC, "WriteControlFile: could not create control file (%s): %m",
 			 ControlFilePath);
 
 	errno = 0;
@@ -2139,11 +2139,11 @@ WriteControlFile(void)
 		/* if write didn't set errno, assume problem is no disk space */
 		if (errno == 0)
 			errno = ENOSPC;
-		elog(STOP, "WriteControlFile: write to control file failed: %m");
+		elog(PANIC, "WriteControlFile: write to control file failed: %m");
 	}
 
 	if (pg_fsync(fd) != 0)
-		elog(STOP, "WriteControlFile: fsync of control file failed: %m");
+		elog(PANIC, "WriteControlFile: fsync of control file failed: %m");
 
 	close(fd);
 }
@@ -2159,10 +2159,10 @@ ReadControlFile(void)
 	 */
 	fd = BasicOpenFile(ControlFilePath, O_RDWR | PG_BINARY, S_IRUSR | S_IWUSR);
 	if (fd < 0)
-		elog(STOP, "could not open control file (%s): %m", ControlFilePath);
+		elog(PANIC, "could not open control file (%s): %m", ControlFilePath);
 
 	if (read(fd, ControlFile, sizeof(ControlFileData)) != sizeof(ControlFileData))
-		elog(STOP, "read from control file failed: %m");
+		elog(PANIC, "read from control file failed: %m");
 
 	close(fd);
 
@@ -2173,7 +2173,7 @@ ReadControlFile(void)
 	 * more enlightening than complaining about wrong CRC.
 	 */
 	if (ControlFile->pg_control_version != PG_CONTROL_VERSION)
-		elog(STOP,
+		elog(PANIC,
 			 "The database cluster was initialized with PG_CONTROL_VERSION %d,\n"
 			 "\tbut the server was compiled with PG_CONTROL_VERSION %d.\n"
 			 "\tIt looks like you need to initdb.",
@@ -2187,7 +2187,7 @@ ReadControlFile(void)
 	FIN_CRC64(crc);
 
 	if (!EQ_CRC64(crc, ControlFile->crc))
-		elog(STOP, "invalid checksum in control file");
+		elog(PANIC, "invalid checksum in control file");
 
 	/*
 	 * Do compatibility checking immediately.  We do this here for 2
@@ -2202,32 +2202,32 @@ ReadControlFile(void)
 	 * compatibility items because they can affect sort order of indexes.)
 	 */
 	if (ControlFile->catalog_version_no != CATALOG_VERSION_NO)
-		elog(STOP,
+		elog(PANIC,
 			 "The database cluster was initialized with CATALOG_VERSION_NO %d,\n"
 		   "\tbut the backend was compiled with CATALOG_VERSION_NO %d.\n"
 			 "\tIt looks like you need to initdb.",
 			 ControlFile->catalog_version_no, CATALOG_VERSION_NO);
 	if (ControlFile->blcksz != BLCKSZ)
-		elog(STOP,
+		elog(PANIC,
 			 "The database cluster was initialized with BLCKSZ %d,\n"
 			 "\tbut the backend was compiled with BLCKSZ %d.\n"
 			 "\tIt looks like you need to initdb.",
 			 ControlFile->blcksz, BLCKSZ);
 	if (ControlFile->relseg_size != RELSEG_SIZE)
-		elog(STOP,
+		elog(PANIC,
 			 "The database cluster was initialized with RELSEG_SIZE %d,\n"
 			 "\tbut the backend was compiled with RELSEG_SIZE %d.\n"
 			 "\tIt looks like you need to initdb.",
 			 ControlFile->relseg_size, RELSEG_SIZE);
 #ifdef USE_LOCALE
 	if (setlocale(LC_COLLATE, ControlFile->lc_collate) == NULL)
-		elog(STOP,
+		elog(PANIC,
 		   "The database cluster was initialized with LC_COLLATE '%s',\n"
 			 "\twhich is not recognized by setlocale().\n"
 			 "\tIt looks like you need to initdb.",
 			 ControlFile->lc_collate);
 	if (setlocale(LC_CTYPE, ControlFile->lc_ctype) == NULL)
-		elog(STOP,
+		elog(PANIC,
 			 "The database cluster was initialized with LC_CTYPE '%s',\n"
 			 "\twhich is not recognized by setlocale().\n"
 			 "\tIt looks like you need to initdb.",
@@ -2235,7 +2235,7 @@ ReadControlFile(void)
 #else							/* not USE_LOCALE */
 	if (strcmp(ControlFile->lc_collate, "C") != 0 ||
 		strcmp(ControlFile->lc_ctype, "C") != 0)
-		elog(STOP,
+		elog(PANIC,
 		"The database cluster was initialized with LC_COLLATE '%s' and\n"
 			 "\tLC_CTYPE '%s', but the server was compiled without locale support.\n"
 			 "\tIt looks like you need to initdb or recompile.",
@@ -2256,7 +2256,7 @@ UpdateControlFile(void)
 
 	fd = BasicOpenFile(ControlFilePath, O_RDWR | PG_BINARY, S_IRUSR | S_IWUSR);
 	if (fd < 0)
-		elog(STOP, "could not open control file (%s): %m", ControlFilePath);
+		elog(PANIC, "could not open control file (%s): %m", ControlFilePath);
 
 	errno = 0;
 	if (write(fd, ControlFile, sizeof(ControlFileData)) != sizeof(ControlFileData))
@@ -2264,11 +2264,11 @@ UpdateControlFile(void)
 		/* if write didn't set errno, assume problem is no disk space */
 		if (errno == 0)
 			errno = ENOSPC;
-		elog(STOP, "write to control file failed: %m");
+		elog(PANIC, "write to control file failed: %m");
 	}
 
 	if (pg_fsync(fd) != 0)
-		elog(STOP, "fsync of control file failed: %m");
+		elog(PANIC, "fsync of control file failed: %m");
 
 	close(fd);
 }
@@ -2408,11 +2408,11 @@ BootStrapXLOG(void)
 		/* if write didn't set errno, assume problem is no disk space */
 		if (errno == 0)
 			errno = ENOSPC;
-		elog(STOP, "BootStrapXLOG failed to write log file: %m");
+		elog(PANIC, "BootStrapXLOG failed to write log file: %m");
 	}
 
 	if (pg_fsync(openLogFile) != 0)
-		elog(STOP, "BootStrapXLOG failed to fsync log file: %m");
+		elog(PANIC, "BootStrapXLOG failed to fsync log file: %m");
 
 	close(openLogFile);
 	openLogFile = -1;
@@ -2478,7 +2478,7 @@ StartupXLOG(void)
 		ControlFile->state < DB_SHUTDOWNED ||
 		ControlFile->state > DB_IN_PRODUCTION ||
 		!XRecOffIsValid(ControlFile->checkPoint.xrecoff))
-		elog(STOP, "control file context is broken");
+		elog(PANIC, "control file context is broken");
 
 	if (ControlFile->state == DB_SHUTDOWNED)
 		elog(LOG, "database system was shut down at %s",
@@ -2517,7 +2517,7 @@ StartupXLOG(void)
 			InRecovery = true;	/* force recovery even if SHUTDOWNED */
 		}
 		else
-			elog(STOP, "unable to locate a valid checkpoint record");
+			elog(PANIC, "unable to locate a valid checkpoint record");
 	}
 	LastRec = RecPtr = checkPointLoc;
 	memcpy(&checkPoint, XLogRecGetData(record), sizeof(CheckPoint));
@@ -2530,7 +2530,7 @@ StartupXLOG(void)
 	elog(LOG, "next transaction id: %u; next oid: %u",
 		 checkPoint.nextXid, checkPoint.nextOid);
 	if (!TransactionIdIsNormal(checkPoint.nextXid))
-		elog(STOP, "invalid next transaction id");
+		elog(PANIC, "invalid next transaction id");
 
 	ShmemVariableCache->nextXid = checkPoint.nextXid;
 	ShmemVariableCache->nextOid = checkPoint.nextOid;
@@ -2541,7 +2541,7 @@ StartupXLOG(void)
 		XLogCtl->RedoRecPtr = checkPoint.redo;
 
 	if (XLByteLT(RecPtr, checkPoint.redo))
-		elog(STOP, "invalid redo in checkpoint record");
+		elog(PANIC, "invalid redo in checkpoint record");
 	if (checkPoint.undo.xrecoff == 0)
 		checkPoint.undo = RecPtr;
 
@@ -2549,7 +2549,7 @@ StartupXLOG(void)
 		XLByteLT(checkPoint.redo, RecPtr))
 	{
 		if (wasShutdown)
-			elog(STOP, "invalid redo/undo record in shutdown checkpoint");
+			elog(PANIC, "invalid redo/undo record in shutdown checkpoint");
 		InRecovery = true;
 	}
 	else if (ControlFile->state != DB_SHUTDOWNED)
@@ -2568,7 +2568,7 @@ StartupXLOG(void)
 
 		/* Is REDO required ? */
 		if (XLByteLT(checkPoint.redo, RecPtr))
-			record = ReadRecord(&(checkPoint.redo), STOP, buffer);
+			record = ReadRecord(&(checkPoint.redo), PANIC, buffer);
 		else
 		{
 			/* read past CheckPoint record */
@@ -2600,7 +2600,7 @@ StartupXLOG(void)
 					strcat(buf, " - ");
 					RmgrTable[record->xl_rmid].rm_desc(buf,
 								record->xl_info, XLogRecGetData(record));
-					elog(DEBUG, "%s", buf);
+					elog(LOG, "%s", buf);
 				}
 
 				if (record->xl_info & XLR_BKP_BLOCK_MASK)
@@ -2622,7 +2622,7 @@ StartupXLOG(void)
 	 * Init xlog buffer cache using the block containing the last valid
 	 * record from the previous incarnation.
 	 */
-	record = ReadRecord(&LastRec, STOP, buffer);
+	record = ReadRecord(&LastRec, PANIC, buffer);
 	EndOfLog = EndRecPtr;
 	XLByteToPrevSeg(EndOfLog, openLogId, openLogSeg);
 	openLogFile = XLogFileOpen(openLogId, openLogSeg, false);
@@ -2701,7 +2701,7 @@ StartupXLOG(void)
 				 RecPtr.xlogid, RecPtr.xrecoff);
 			do
 			{
-				record = ReadRecord(&RecPtr, STOP, buffer);
+				record = ReadRecord(&RecPtr, PANIC, buffer);
 				if (TransactionIdIsValid(record->xl_xid) &&
 					!TransactionIdDidCommit(record->xl_xid))
 					RmgrTable[record->xl_rmid].rm_undo(EndRecPtr, record);
@@ -2995,7 +2995,7 @@ CreateCheckPoint(bool shutdown)
 	checkPoint.undo = GetUndoRecPtr();
 
 	if (shutdown && checkPoint.undo.xrecoff != 0)
-		elog(STOP, "active transaction while database system is shutting down");
+		elog(PANIC, "active transaction while database system is shutting down");
 #endif
 
 	/*
@@ -3043,7 +3043,7 @@ CreateCheckPoint(bool shutdown)
 	 * recptr = end of actual checkpoint record.
 	 */
 	if (shutdown && !XLByteEQ(checkPoint.redo, ProcLastRecPtr))
-		elog(STOP, "concurrent transaction log activity while database system is shutting down");
+		elog(PANIC, "concurrent transaction log activity while database system is shutting down");
 
 	/*
 	 * Select point at which we can truncate the log, which we base on the
@@ -3297,12 +3297,12 @@ assign_xlog_sync_method(const char *method)
 		if (openLogFile >= 0)
 		{
 			if (pg_fsync(openLogFile) != 0)
-				elog(STOP, "fsync of log file %u, segment %u failed: %m",
+				elog(PANIC, "fsync of log file %u, segment %u failed: %m",
 					 openLogId, openLogSeg);
 			if (open_sync_bit != new_sync_bit)
 			{
 				if (close(openLogFile) != 0)
-					elog(STOP, "close of log file %u, segment %u failed: %m",
+					elog(PANIC, "close of log file %u, segment %u failed: %m",
 						 openLogId, openLogSeg);
 				openLogFile = -1;
 			}
@@ -3323,13 +3323,13 @@ issue_xlog_fsync(void)
 	{
 		case SYNC_METHOD_FSYNC:
 			if (pg_fsync(openLogFile) != 0)
-				elog(STOP, "fsync of log file %u, segment %u failed: %m",
+				elog(PANIC, "fsync of log file %u, segment %u failed: %m",
 					 openLogId, openLogSeg);
 			break;
 #ifdef HAVE_FDATASYNC
 		case SYNC_METHOD_FDATASYNC:
 			if (pg_fdatasync(openLogFile) != 0)
-				elog(STOP, "fdatasync of log file %u, segment %u failed: %m",
+				elog(PANIC, "fdatasync of log file %u, segment %u failed: %m",
 					 openLogId, openLogSeg);
 			break;
 #endif
@@ -3337,7 +3337,7 @@ issue_xlog_fsync(void)
 			/* write synced it already */
 			break;
 		default:
-			elog(STOP, "bogus wal_sync_method %d", sync_method);
+			elog(PANIC, "bogus wal_sync_method %d", sync_method);
 			break;
 	}
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.26 2002/02/18 16:04:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.27 2002/03/02 21:39:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -105,8 +105,7 @@ typedef struct
 #define swapInt(a,b)	do {int _tmp; _tmp=a; a=b; b=_tmp;} while(0)
 #define swapDatum(a,b)	do {Datum _tmp; _tmp=a; a=b; b=_tmp;} while(0)
 
-
-static int	MESSAGE_LEVEL;
+static int elevel = -1;
 
 /* context information for compare_scalars() */
 static FmgrInfo *datumCmpFn;
@@ -151,10 +150,10 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 	HeapTuple	tuple;
 
 	if (vacstmt->verbose)
-		MESSAGE_LEVEL = NOTICE;
+		elevel = INFO;
 	else
-		MESSAGE_LEVEL = DEBUG;
-
+		elevel = DEBUG1;
+		
 	/*
 	 * Begin a transaction for analyzing this relation.
 	 *
@@ -214,7 +213,7 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 		return;
 	}
 
-	elog(MESSAGE_LEVEL, "Analyzing %s", RelationGetRelationName(onerel));
+	elog(elevel, "Analyzing %s", RelationGetRelationName(onerel));
 
 	/*
 	 * Determine which columns to analyze

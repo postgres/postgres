@@ -27,7 +27,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.150 2002/02/27 19:34:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.151 2002/03/02 21:39:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1095,7 +1095,7 @@ lnext:	;
 				break;
 
 			default:
-				elog(DEBUG, "ExecutePlan: unknown operation in queryDesc");
+				elog(LOG, "ExecutePlan: unknown operation in queryDesc");
 				result = NULL;
 				break;
 		}

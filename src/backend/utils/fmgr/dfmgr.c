@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.54 2001/10/25 05:49:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.55 2002/03/02 21:39:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -399,8 +399,7 @@ find_in_dynamic_libpath(const char *basename)
 		sprintf(full, "%s/%s", mangled, basename);
 		pfree(mangled);
 
-		if (DebugLvl > 1)
-			elog(DEBUG, "find_in_dynamic_libpath: trying %s", full);
+		elog(DEBUG2, "find_in_dynamic_libpath: trying %s", full);
 
 		if (file_exists(full))
 			return full;

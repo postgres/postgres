@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.99 2002/02/18 23:11:31 petere Exp $
+ * $Id: miscadmin.h,v 1.100 2002/03/02 21:39:34 momjian Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to
@@ -128,8 +128,6 @@ extern char pg_pathname[];
 extern DLLIMPORT Oid MyDatabaseId;
 
 extern bool IsUnderPostmaster;
-
-extern int	DebugLvl;
 
 /* Date/Time Configuration
  *

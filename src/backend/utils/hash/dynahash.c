@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.40 2001/10/28 06:25:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.41 2002/03/02 21:39:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -933,7 +933,7 @@ hash_corrupted(HTAB *hashp)
 	 * systemwide restart.	Otherwise, just shut down this one backend.
 	 */
 	if (hashp->isshared)
-		elog(STOP, "Hash table '%s' corrupted", hashp->tabname);
+		elog(PANIC, "Hash table '%s' corrupted", hashp->tabname);
 	else
 		elog(FATAL, "Hash table '%s' corrupted", hashp->tabname);
 }

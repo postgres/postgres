@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_main.c,v 1.29 2001/10/25 05:49:31 momjian Exp $
+ * $Id: geqo_main.c,v 1.30 2002/03/02 21:39:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -120,30 +120,30 @@ geqo(Query *root, int number_of_rels, List *initial_rels)
 	daddy = alloc_chromo(pool->string_length);
 
 #if defined (ERX)
-	elog(DEBUG, "geqo_main: using edge recombination crossover [ERX]");
+	elog(LOG, "geqo_main: using edge recombination crossover [ERX]");
 /* allocate edge table memory */
 	edge_table = alloc_edge_table(pool->string_length);
 #elif defined(PMX)
-	elog(DEBUG, "geqo_main: using partially matched crossover [PMX]");
+	elog(LOG, "geqo_main: using partially matched crossover [PMX]");
 /* allocate chromosome kid memory */
 	kid = alloc_chromo(pool->string_length);
 #elif defined(CX)
-	elog(DEBUG, "geqo_main: using cycle crossover [CX]");
+	elog(LOG, "geqo_main: using cycle crossover [CX]");
 /* allocate city table memory */
 	kid = alloc_chromo(pool->string_length);
 	city_table = alloc_city_table(pool->string_length);
 #elif defined(PX)
-	elog(DEBUG, "geqo_main: using position crossover [PX]");
+	elog(LOG, "geqo_main: using position crossover [PX]");
 /* allocate city table memory */
 	kid = alloc_chromo(pool->string_length);
 	city_table = alloc_city_table(pool->string_length);
 #elif defined(OX1)
-	elog(DEBUG, "geqo_main: using order crossover [OX1]");
+	elog(LOG, "geqo_main: using order crossover [OX1]");
 /* allocate city table memory */
 	kid = alloc_chromo(pool->string_length);
 	city_table = alloc_city_table(pool->string_length);
 #elif defined(OX2)
-	elog(DEBUG, "geqo_main: using order crossover [OX2]");
+	elog(LOG, "geqo_main: using order crossover [OX2]");
 /* allocate city table memory */
 	kid = alloc_chromo(pool->string_length);
 	city_table = alloc_city_table(pool->string_length);
@@ -214,18 +214,18 @@ geqo(Query *root, int number_of_rels, List *initial_rels)
 
 #if defined(ERX) && defined(GEQO_DEBUG)
 	if (edge_failures != 0)
-		elog(DEBUG, "[GEQO] failures: %d, average: %d",
+		elog(LOG, "[GEQO] failures: %d, average: %d",
 			 edge_failures, (int) generation / edge_failures);
 	else
-		elog(DEBUG, "[GEQO] No edge failures detected.");
+		elog(LOG, "[GEQO] No edge failures detected.");
 #endif
 
 
 #if defined(CX) && defined(GEQO_DEBUG)
 	if (mutations != 0)
-		elog(DEBUG, "[GEQO] mutations: %d, generations: %d", mutations, generation);
+		elog(LOG, "[GEQO] mutations: %d, generations: %d", mutations, generation);
 	else
-		elog(DEBUG, "[GEQO] No mutations processed.");
+		elog(LOG, "[GEQO] No mutations processed.");
 #endif
 
 

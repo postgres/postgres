@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.58 2002/02/23 01:31:35 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.59 2002/03/02 21:39:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -295,7 +295,7 @@ show_datestyle(void)
 	strcat(buf, ((EuroDates) ? "European" : "US (NonEuropean)"));
 	strcat(buf, " conventions");
 
-	elog(NOTICE, buf, NULL);
+	elog(INFO, buf, NULL);
 
 	return TRUE;
 }
@@ -482,9 +482,9 @@ show_timezone(void)
 		tzn = getenv("TZ");
 
 	if (tzn != NULL)
-		elog(NOTICE, "Time zone is '%s'", tzn);
+		elog(INFO, "Time zone is '%s'", tzn);
 	else
-		elog(NOTICE, "Time zone is unset");
+		elog(INFO, "Time zone is unset");
 
 	return TRUE;
 }	/* show_timezone() */
@@ -576,9 +576,9 @@ show_XactIsoLevel(void)
 {
 
 	if (XactIsoLevel == XACT_SERIALIZABLE)
-		elog(NOTICE, "TRANSACTION ISOLATION LEVEL is SERIALIZABLE");
+		elog(INFO, "TRANSACTION ISOLATION LEVEL is SERIALIZABLE");
 	else
-		elog(NOTICE, "TRANSACTION ISOLATION LEVEL is READ COMMITTED");
+		elog(INFO, "TRANSACTION ISOLATION LEVEL is READ COMMITTED");
 	return TRUE;
 }
 
@@ -623,7 +623,7 @@ parse_random_seed(List *args)
 static bool
 show_random_seed(void)
 {
-	elog(NOTICE, "Seed for random number generator is unavailable");
+	elog(INFO, "Seed for random number generator is unavailable");
 	return (TRUE);
 }
 
@@ -690,7 +690,7 @@ parse_client_encoding(List *args)
 static bool
 show_client_encoding(void)
 {
-	elog(NOTICE, "Current client encoding is '%s'",
+	elog(INFO, "Current client encoding is '%s'",
 		 pg_get_client_encoding_name());
 	return TRUE;
 }
@@ -727,21 +727,21 @@ set_default_client_encoding(void)
 static bool
 parse_server_encoding(List *args)
 {
-	elog(NOTICE, "SET SERVER_ENCODING is not supported");
+	elog(INFO, "SET SERVER_ENCODING is not supported");
 	return TRUE;
 }
 
 static bool
 show_server_encoding(void)
 {
-	elog(NOTICE, "Current server encoding is '%s'", GetDatabaseEncodingName());
+	elog(INFO, "Current server encoding is '%s'", GetDatabaseEncodingName());
 	return TRUE;
 }
 
 static bool
 reset_server_encoding(void)
 {
-	elog(NOTICE, "RESET SERVER_ENCODING is not supported");
+	elog(INFO, "RESET SERVER_ENCODING is not supported");
 	return TRUE;
 }
 
@@ -814,7 +814,7 @@ GetPGVariable(const char *name)
 	{
 		const char *val = GetConfigOption(name);
 
-		elog(NOTICE, "%s is %s", name, val);
+		elog(INFO, "%s is %s", name, val);
 	}
 }
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.156 2002/02/27 19:34:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.157 2002/03/02 21:39:22 momjian Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -1501,8 +1501,7 @@ AlterTableDropConstraint(const char *relationName,
 			 constrName);
 	/* Otherwise if more than one constraint deleted, notify */
 	else if (deleted > 1)
-		elog(NOTICE, "Multiple constraints dropped");
-
+		elog(INFO, "Multiple constraints dropped");
 }
 
 

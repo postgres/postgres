@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.68 2002/02/26 22:47:04 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.69 2002/03/02 21:39:23 momjian Exp $
  *
  */
 
@@ -59,7 +59,7 @@ ExplainQuery(Query *query, bool verbose, bool analyze, CommandDest dest)
 	/* rewriter will not cope with utility statements */
 	if (query->commandType == CMD_UTILITY)
 	{
-		elog(NOTICE, "Utility statements have no plan structure");
+		elog(INFO, "Utility statements have no plan structure");
 		return;
 	}
 
@@ -69,7 +69,7 @@ ExplainQuery(Query *query, bool verbose, bool analyze, CommandDest dest)
 	/* In the case of an INSTEAD NOTHING, tell at least that */
 	if (rewritten == NIL)
 	{
-		elog(NOTICE, "Query rewrites to nothing");
+		elog(INFO, "Query rewrites to nothing");
 		return;
 	}
 
@@ -94,9 +94,9 @@ ExplainOneQuery(Query *query, bool verbose, bool analyze, CommandDest dest)
 	if (query->commandType == CMD_UTILITY)
 	{
 		if (query->utilityStmt && IsA(query->utilityStmt, NotifyStmt))
-			elog(NOTICE, "QUERY PLAN:\n\nNOTIFY\n");
+			elog(INFO, "QUERY PLAN:\n\nNOTIFY\n");
 		else
-			elog(NOTICE, "QUERY PLAN:\n\nUTILITY\n");
+			elog(INFO, "QUERY PLAN:\n\nUTILITY\n");
 		return;
 	}
 
@@ -152,7 +152,7 @@ ExplainOneQuery(Query *query, bool verbose, bool analyze, CommandDest dest)
 		s = nodeToString(plan);
 		if (s)
 		{
-			elog(NOTICE, "QUERY DUMP:\n\n%s", s);
+			elog(INFO, "QUERY DUMP:\n\n%s", s);
 			pfree(s);
 		}
 	}
@@ -165,7 +165,7 @@ ExplainOneQuery(Query *query, bool verbose, bool analyze, CommandDest dest)
 		if (analyze)
 			appendStringInfo(str, "Total runtime: %.2f msec\n",
 							 1000.0 * totaltime);
-		elog(NOTICE, "QUERY PLAN:\n\n%s", str->data);
+		elog(INFO, "QUERY PLAN:\n\n%s", str->data);
 		pfree(str->data);
 		pfree(str);
 	}

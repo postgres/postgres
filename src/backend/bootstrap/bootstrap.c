@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.121 2002/02/23 01:31:34 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.122 2002/03/02 21:39:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -140,8 +140,6 @@ Form_pg_attribute attrtypes[MAXATTR];	/* points to attribute info */
 static Datum values[MAXATTR];	/* corresponding attribute values */
 int			numattr;			/* number of attributes for cur. rel */
 
-int			DebugMode;
-
 static MemoryContext nogc = NULL;		/* special no-gc mem context */
 
 extern int	optind;
@@ -188,8 +186,8 @@ usage(void)
 {
 	fprintf(stderr,
 			gettext("Usage:\n"
-	"  postgres -boot [-d] [-D datadir] [-F] [-o file] [-x num] dbname\n"
-					"  -d               debug mode\n"
+	"  postgres -boot [-d level] [-D datadir] [-F] [-o file] [-x num] dbname\n"
+					"  -d 1-5           debug mode\n"
 					"  -D datadir       data directory\n"
 					"  -F               turn off fsync\n"
 					"  -o file          send debug output to file\n"
@@ -258,9 +256,17 @@ BootstrapMain(int argc, char *argv[])
 				potential_DataDir = optarg;
 				break;
 			case 'd':
-				DebugMode = true;		/* print out debugging info while
-										 * parsing */
+			{
+				/* Turn on debugging for the postmaster. */
+				char *debugstr = palloc(strlen("debug") + strlen(optarg) + 1);
+				sprintf(debugstr, "debug%s", optarg);
+				/* We use PGC_S_SESSION because we will reset in backend */
+				SetConfigOption("server_min_messages", debugstr, PGC_POSTMASTER, PGC_S_ARGV);
+				SetConfigOption("client_min_messages", debugstr, PGC_POSTMASTER, PGC_S_ARGV);
+				pfree(debugstr);
 				break;
+			}
+			break;
 			case 'F':
 				SetConfigOption("fsync", "false", PGC_POSTMASTER, PGC_S_ARGV);
 				break;
@@ -392,7 +398,7 @@ BootstrapMain(int argc, char *argv[])
 			proc_exit(0);		/* done */
 
 		default:
-			elog(STOP, "Unsupported XLOG op %d", xlogop);
+			elog(PANIC, "Unsupported XLOG op %d", xlogop);
 			proc_exit(0);
 	}
 
@@ -495,9 +501,8 @@ boot_openrel(char *relname)
 	if (reldesc != NULL)
 		closerel(NULL);
 
-	if (DebugMode)
-		elog(DEBUG, "open relation %s, attrsize %d", relname ? relname : "(null)",
-			 (int) ATTRIBUTE_TUPLE_SIZE);
+	elog(DEBUG3, "open relation %s, attrsize %d", relname ? relname : "(null)",
+		 (int) ATTRIBUTE_TUPLE_SIZE);
 
 	reldesc = heap_openr(relname, NoLock);
 	numattr = reldesc->rd_rel->relnatts;
@@ -521,14 +526,12 @@ boot_openrel(char *relname)
 		else
 			attrtypes[i]->attisset = false;
 
-		if (DebugMode)
 		{
 			Form_pg_attribute at = attrtypes[i];
 
-			elog(DEBUG, "create attribute %d name %s len %d num %d type %u",
+			elog(DEBUG3, "create attribute %d name %s len %d num %d type %u",
 				 i, NameStr(at->attname), at->attlen, at->attnum,
-				 at->atttypid
-				);
+				 at->atttypid);
 		}
 	}
 }
@@ -558,8 +561,7 @@ closerel(char *name)
 		elog(ERROR, "no open relation to close");
 	else
 	{
-		if (DebugMode)
-			elog(DEBUG, "close relation %s", relname ? relname : "(null)");
+		elog(DEBUG3, "close relation %s", relname ? relname : "(null)");
 		heap_close(reldesc, NoLock);
 		reldesc = (Relation) NULL;
 	}
@@ -583,7 +585,7 @@ DefineAttr(char *name, char *type, int attnum)
 
 	if (reldesc != NULL)
 	{
-		elog(DEBUG, "warning: no open relations allowed with 'create' command");
+		elog(LOG, "warning: no open relations allowed with 'create' command");
 		closerel(relname);
 	}
 
@@ -594,8 +596,7 @@ DefineAttr(char *name, char *type, int attnum)
 	{
 		attrtypes[attnum]->atttypid = Ap->am_oid;
 		namestrcpy(&attrtypes[attnum]->attname, name);
-		if (DebugMode)
-			elog(DEBUG, "column %s %s", NameStr(attrtypes[attnum]->attname), type);
+		elog(DEBUG3, "column %s %s", NameStr(attrtypes[attnum]->attname), type);
 		attrtypes[attnum]->attnum = 1 + attnum; /* fillatt */
 		attlen = attrtypes[attnum]->attlen = Ap->am_typ.typlen;
 		attrtypes[attnum]->attbyval = Ap->am_typ.typbyval;
@@ -606,8 +607,7 @@ DefineAttr(char *name, char *type, int attnum)
 	{
 		attrtypes[attnum]->atttypid = Procid[typeoid].oid;
 		namestrcpy(&attrtypes[attnum]->attname, name);
-		if (DebugMode)
-			elog(DEBUG, "column %s %s", NameStr(attrtypes[attnum]->attname), type);
+		elog(DEBUG3, "column %s %s", NameStr(attrtypes[attnum]->attname), type);
 		attrtypes[attnum]->attnum = 1 + attnum; /* fillatt */
 		attlen = attrtypes[attnum]->attlen = Procid[typeoid].len;
 		attrtypes[attnum]->attstorage = 'p';
@@ -655,8 +655,7 @@ InsertOneTuple(Oid objectid)
 	TupleDesc	tupDesc;
 	int			i;
 
-	if (DebugMode)
-		elog(DEBUG, "inserting row oid %u, %d columns", objectid, numattr);
+	elog(DEBUG3, "inserting row oid %u, %d columns", objectid, numattr);
 
 	tupDesc = CreateTupleDesc(numattr, attrtypes);
 	tuple = heap_formtuple(tupDesc, values, Blanks);
@@ -666,8 +665,7 @@ InsertOneTuple(Oid objectid)
 		tuple->t_data->t_oid = objectid;
 	heap_insert(reldesc, tuple);
 	heap_freetuple(tuple);
-	if (DebugMode)
-		elog(DEBUG, "row inserted");
+	elog(DEBUG3, "row inserted");
 
 	/*
 	 * Reset blanks for next tuple
@@ -689,15 +687,13 @@ InsertOneValue(char *value, int i)
 
 	AssertArg(i >= 0 || i < MAXATTR);
 
-	if (DebugMode)
-		elog(DEBUG, "inserting column %d value '%s'", i, value);
+	elog(DEBUG3, "inserting column %d value '%s'", i, value);
 
 	if (Typ != (struct typmap **) NULL)
 	{
 		struct typmap *ap;
 
-		if (DebugMode)
-			elog(DEBUG, "Typ != NULL");
+		elog(DEBUG3, "Typ != NULL");
 		app = Typ;
 		while (*app && (*app)->am_oid != reldesc->rd_att->attrs[i]->atttypid)
 			++app;
@@ -715,8 +711,7 @@ InsertOneValue(char *value, int i)
 											   values[i],
 									ObjectIdGetDatum(ap->am_typ.typelem),
 											   Int32GetDatum(-1)));
-		if (DebugMode)
-			elog(DEBUG, " -> %s", prt);
+		elog(DEBUG3, " -> %s", prt);
 		pfree(prt);
 	}
 	else
@@ -728,8 +723,7 @@ InsertOneValue(char *value, int i)
 		}
 		if (typeindex >= n_types)
 			elog(ERROR, "type oid %u not found", attrtypes[i]->atttypid);
-		if (DebugMode)
-			elog(DEBUG, "Typ == NULL, typeindex = %u", typeindex);
+		elog(DEBUG3, "Typ == NULL, typeindex = %u", typeindex);
 		values[i] = OidFunctionCall3(Procid[typeindex].inproc,
 									 CStringGetDatum(value),
 								ObjectIdGetDatum(Procid[typeindex].elem),
@@ -738,12 +732,10 @@ InsertOneValue(char *value, int i)
 											   values[i],
 								ObjectIdGetDatum(Procid[typeindex].elem),
 											   Int32GetDatum(-1)));
-		if (DebugMode)
-			elog(DEBUG, " -> %s", prt);
+		elog(DEBUG3, " -> %s", prt);
 		pfree(prt);
 	}
-	if (DebugMode)
-		elog(DEBUG, "inserted");
+	elog(DEBUG3, "inserted");
 }
 
 /* ----------------
@@ -753,8 +745,7 @@ InsertOneValue(char *value, int i)
 void
 InsertOneNull(int i)
 {
-	if (DebugMode)
-		elog(DEBUG, "inserting column %d NULL", i);
+	elog(DEBUG3, "inserting column %d NULL", i);
 	Assert(i >= 0 || i < MAXATTR);
 	values[i] = PointerGetDatum(NULL);
 	Blanks[i] = 'n';
@@ -841,8 +832,7 @@ gettype(char *type)
 			if (strncmp(type, Procid[i].name, NAMEDATALEN) == 0)
 				return i;
 		}
-		if (DebugMode)
-			elog(DEBUG, "external type: %s", type);
+		elog(DEBUG3, "external type: %s", type);
 		rel = heap_openr(TypeRelationName, NoLock);
 		scan = heap_beginscan(rel, 0, SnapshotNow, 0, (ScanKey) NULL);
 		i = 0;

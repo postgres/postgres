@@ -4,7 +4,7 @@
  * Support for grand unified configuration scheme, including SET
  * command, configuration file, and command line options.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.60 2002/03/01 22:45:16 petere Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.61 2002/03/02 21:39:34 momjian Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -39,6 +39,7 @@
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/datetime.h"
+#include "utils/elog.h"
 #include "pgstat.h"
 
 
@@ -432,11 +433,6 @@ static struct config_int
 		1000, 25, INT_MAX, NULL, NULL
 	},
 
-	{
-		"debug_level", PGC_USERSET, PGC_S_DEFAULT, &DebugLvl,
-		0, 0, 16, NULL, NULL
-	},
-
 #ifdef LOCK_DEBUG
 	{
 		"trace_lock_oidmin", PGC_SUSET, PGC_S_DEFAULT, &Trace_lock_oidmin,
@@ -557,6 +553,12 @@ static struct config_string
 			ConfigureNamesString[] =
 {
 	{
+		"client_min_messages", PGC_USERSET, PGC_S_DEFAULT, &client_min_messages_str,
+		client_min_messages_str_default, check_client_min_messages,
+		assign_client_min_messages
+	},
+
+	{
 		"default_transaction_isolation", PGC_USERSET, PGC_S_DEFAULT, &default_iso_level_string,
 		"read committed", check_defaultxactisolevel, assign_defaultxactisolevel
 	},
@@ -569,6 +571,12 @@ static struct config_string
 	{
 		"krb_server_keyfile", PGC_POSTMASTER, PGC_S_DEFAULT, &pg_krb_server_keyfile,
 		PG_KRB_SRVTAB, NULL, NULL
+	},
+
+	{
+		"server_min_messages", PGC_USERSET, PGC_S_DEFAULT, &server_min_messages_str,
+		server_min_messages_str_default, check_server_min_messages,
+		assign_server_min_messages
 	},
 
 #ifdef ENABLE_SYSLOG
@@ -886,7 +894,7 @@ set_config_option(const char *name, const char *value,
 	bool		makeDefault;
 
 	if (context == PGC_SIGHUP)
-		elevel = DEBUG;
+		elevel = DEBUG1;
 	else if (guc_session_init)
 		elevel = NOTICE;
 	else
@@ -901,9 +909,8 @@ set_config_option(const char *name, const char *value,
 
 	if (record->source > source)
 	{
-		if (DebugLvl > 1)
-			elog(DEBUG, "setting %s refused because previous source is higher",
-				 name);
+		elog(DEBUG2, "setting %s refused because previous source is higher",
+			name);
 		return false;
 	}
 	makeDefault = source < PGC_S_SESSION;

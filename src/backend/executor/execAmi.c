@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: execAmi.c,v 1.61 2002/02/19 20:11:13 tgl Exp $
+ *	$Id: execAmi.c,v 1.62 2002/03/02 21:39:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -201,7 +201,7 @@ ExecMarkPos(Plan *node)
 
 		default:
 			/* don't make hard error unless caller asks to restore... */
-			elog(DEBUG, "ExecMarkPos: node type %d not supported",
+			elog(LOG, "ExecMarkPos: node type %d not supported",
 				 nodeTag(node));
 			break;
 	}

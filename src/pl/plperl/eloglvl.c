@@ -13,7 +13,7 @@
 int
 elog_DEBUG(void)
 {
-	return DEBUG;
+	return LOG;
 }
 
 int

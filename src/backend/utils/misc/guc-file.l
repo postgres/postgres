@@ -4,7 +4,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc-file.l,v 1.10 2002/02/23 01:31:36 petere Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc-file.l,v 1.11 2002/03/02 21:39:33 momjian Exp $
  */
 
 %{
@@ -137,7 +137,7 @@ ProcessConfigFile(GucContext context)
 	Assert(context == PGC_POSTMASTER || context == PGC_BACKEND 
 		|| context == PGC_SIGHUP);
 	Assert(DataDir);
-	elevel = (context == PGC_SIGHUP) ? DEBUG : ERROR;
+	elevel = (context == PGC_SIGHUP) ? DEBUG3 : ERROR;
 
 	/*
 	 * Open file

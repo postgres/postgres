@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.67 2002/02/18 23:11:22 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.68 2002/03/02 21:39:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -122,7 +122,7 @@ aclparse(const char *s, AclItem *aip, unsigned *modechg)
 	Assert(s && aip && modechg);
 
 #ifdef ACLDEBUG
-	elog(DEBUG, "aclparse: input = '%s'", s);
+	elog(LOG, "aclparse: input = '%s'", s);
 #endif
 	aip->ai_idtype = ACL_IDTYPE_UID;
 	s = getid(s, name);
@@ -204,7 +204,7 @@ aclparse(const char *s, AclItem *aip, unsigned *modechg)
 	}
 
 #ifdef ACLDEBUG
-	elog(DEBUG, "aclparse: correctly read [%x %d %x], modechg=%x",
+	elog(LOG, "aclparse: correctly read [%x %d %x], modechg=%x",
 		 aip->ai_idtype, aip->ai_id, aip->ai_mode, *modechg);
 #endif
 	return s;

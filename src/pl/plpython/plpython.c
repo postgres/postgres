@@ -29,7 +29,7 @@
  * MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	$Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.13 2001/11/16 18:04:31 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.14 2002/03/02 21:39:35 momjian Exp $
  *
  *********************************************************************
  */
@@ -407,7 +407,7 @@ plpython_call_handler(PG_FUNCTION_ARGS)
 		}
 		else
 			PLy_restart_in_progress += 1;
-		if (proc) 
+		if (proc)
 		{
 			Py_DECREF(proc->me);
 		}
@@ -2501,7 +2501,7 @@ PLy_init_plpy(void)
  *  New RExec methods
  */
 
-PyObject* 
+PyObject*
 PLy_r_open(PyObject *self, PyObject* args)
 {
 	PyErr_SetString(PyExc_IOError, "can't open files in restricted mode");
@@ -2559,7 +2559,7 @@ PLy_init_safe_interp(void)
 	rexec_dict = ((PyClassObject*)rexec)->cl_dict;
 
 	/*
-	 * tweak the list of permitted modules, posix and sys functions 
+	 * tweak the list of permitted modules, posix and sys functions
 	 */
 	PyDict_SetItemString(rexec_dict, "ok_builtin_modules", PLy_importable_modules);
 	PyDict_SetItemString(rexec_dict, "ok_posix_names",     PLy_ok_posix_names);
@@ -2596,7 +2596,7 @@ populate_methods(PyObject *klass, PyMethodDef *methods)
 
 	for ( ; methods->ml_name; ++methods) {
 
-		/* get a wrapper for the built-in function */   
+		/* get a wrapper for the built-in function */
 		PyObject *func = PyCFunction_New(methods, NULL);
 		PyObject *meth;
 		int status;
@@ -2604,14 +2604,14 @@ populate_methods(PyObject *klass, PyMethodDef *methods)
 		if (!func)
 			return -1;
 
-		/* turn the function into an unbound method */  
+		/* turn the function into an unbound method */
 		if (!(meth = PyMethod_New(func, NULL, klass))) {
 			Py_DECREF(func);
 			return -1;
 		}
 
 		/* add method to dictionary */
-		status = PyDict_SetItemString( ((PyClassObject*)klass)->cl_dict, 
+		status = PyDict_SetItemString( ((PyClassObject*)klass)->cl_dict,
 						methods->ml_name, meth);
 		Py_DECREF(meth);
 		Py_DECREF(func);
@@ -2632,7 +2632,7 @@ static PyObject *PLy_log(int, PyObject *, PyObject *);
 PyObject *
 PLy_debug(PyObject * self, PyObject * args)
 {
-	return PLy_log(DEBUG, self, args);
+	return PLy_log(LOG, self, args);
 }
 
 PyObject *
@@ -2690,7 +2690,7 @@ PLy_log(volatile int level, PyObject * self, PyObject * args)
 	}
 
 	/*
-	 * ok, this is a NOTICE, or DEBUG message
+	 * ok, this is a NOTICE, or LOG message
 	 *
 	 * but just in case DON'T long jump out of the interpreter!
 	 */
@@ -2732,9 +2732,9 @@ PLy_log(volatile int level, PyObject * self, PyObject * args)
 
 char *PLy_procedure_name(PLyProcedure *proc)
 {
-        if ( proc == NULL )
-	        return "<unknown procedure>";
-        return proc->proname;
+		if ( proc == NULL )
+			return "<unknown procedure>";
+		return proc->proname;
 }
 
 /* output a python traceback/exception via the postgresql elog

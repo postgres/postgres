@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/format_type.c,v 1.23 2001/11/19 19:51:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/format_type.c,v 1.24 2002/03/02 21:39:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -294,7 +294,7 @@ format_type_internal(Oid type_oid, int32 typemod,
 						fieldstr = "";
 						break;
 					default:
-						elog(DEBUG, "Invalid INTERVAL typmod 0x%x", typemod);
+						elog(LOG, "Invalid INTERVAL typmod 0x%x", typemod);
 						fieldstr = "";
 						break;
 				}

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.104 2001/11/05 17:46:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.105 2002/03/02 21:39:29 momjian Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -107,7 +107,7 @@ inline static void
 LOCK_PRINT(const char *where, const LOCK *lock, LOCKMODE type)
 {
 	if (LOCK_DEBUG_ENABLED(lock))
-		elog(DEBUG,
+		elog(LOG,
 			 "%s: lock(%lx) tbl(%d) rel(%u) db(%u) obj(%u) grantMask(%x) "
 			 "req(%d,%d,%d,%d,%d,%d,%d)=%d "
 			 "grant(%d,%d,%d,%d,%d,%d,%d)=%d wait(%d) type(%s)",
@@ -133,7 +133,7 @@ HOLDER_PRINT(const char *where, const HOLDER *holderP)
 	  && (((LOCK *) MAKE_PTR(holderP->tag.lock))->tag.relId >= (Oid) Trace_lock_oidmin))
 		|| (Trace_lock_table && (((LOCK *) MAKE_PTR(holderP->tag.lock))->tag.relId == Trace_lock_table))
 		)
-		elog(DEBUG,
+		elog(LOG,
 			 "%s: holder(%lx) lock(%lx) tbl(%d) proc(%lx) xid(%u) hold(%d,%d,%d,%d,%d,%d,%d)=%d",
 			 where, MAKE_OFFSET(holderP), holderP->tag.lock,
 			 HOLDER_LOCKMETHOD(*(holderP)),
@@ -461,7 +461,7 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 
 #ifdef LOCK_DEBUG
 	if (lockmethod == USER_LOCKMETHOD && Trace_userlocks)
-		elog(DEBUG, "LockAcquire: user lock [%u] %s",
+		elog(LOG, "LockAcquire: user lock [%u] %s",
 			 locktag->objId.blkno, lock_mode_names[lockmode]);
 #endif
 
@@ -582,7 +582,7 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 			{
 				if (i >= (int) lockmode)
 					break;		/* safe: we have a lock >= req level */
-				elog(DEBUG, "Deadlock risk: raising lock level"
+				elog(LOG, "Deadlock risk: raising lock level"
 					 " from %s to %s on object %u/%u/%u",
 					 lock_mode_names[i], lock_mode_names[lockmode],
 				 lock->tag.relId, lock->tag.dbId, lock->tag.objId.blkno);
@@ -1000,7 +1000,7 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 
 #ifdef LOCK_DEBUG
 	if (lockmethod == USER_LOCKMETHOD && Trace_userlocks)
-		elog(DEBUG, "LockRelease: user lock tag [%u] %d", locktag->objId.blkno, lockmode);
+		elog(LOG, "LockRelease: user lock tag [%u] %d", locktag->objId.blkno, lockmode);
 #endif
 
 	/* ???????? This must be changed when short term locks will be used */
@@ -1196,7 +1196,7 @@ LockReleaseAll(LOCKMETHOD lockmethod, PROC *proc,
 
 #ifdef LOCK_DEBUG
 	if (lockmethod == USER_LOCKMETHOD ? Trace_userlocks : Trace_locks)
-		elog(DEBUG, "LockReleaseAll: lockmethod=%d, pid=%d",
+		elog(LOG, "LockReleaseAll: lockmethod=%d, pid=%d",
 			 lockmethod, proc->pid);
 #endif
 
@@ -1341,7 +1341,7 @@ next_item:
 
 #ifdef LOCK_DEBUG
 	if (lockmethod == USER_LOCKMETHOD ? Trace_userlocks : Trace_locks)
-		elog(DEBUG, "LockReleaseAll: done");
+		elog(LOG, "LockReleaseAll: done");
 #endif
 
 	return TRUE;
@@ -1460,7 +1460,7 @@ DumpAllLocks(void)
 			LOCK_PRINT("DumpAllLocks", lock, 0);
 		}
 		else
-			elog(DEBUG, "DumpAllLocks: holder->tag.lock = NULL");
+			elog(LOG, "DumpAllLocks: holder->tag.lock = NULL");
 	}
 }
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.120 2001/11/10 23:51:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.121 2002/03/02 21:39:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -443,7 +443,7 @@ BufferAlloc(Relation reln,
 				 */
 				if (buf->flags & BM_JUST_DIRTIED)
 				{
-					elog(STOP, "BufferAlloc: content of block %u (%u/%u) changed while flushing",
+					elog(PANIC, "BufferAlloc: content of block %u (%u/%u) changed while flushing",
 						 buf->tag.blockNum,
 						 buf->tag.rnode.tblNode, buf->tag.rnode.relNode);
 				}
@@ -804,7 +804,7 @@ BufferSync()
 		}
 
 		if (status == SM_FAIL)	/* disk failure ?! */
-			elog(STOP, "BufferSync: cannot write %u for %u/%u",
+			elog(PANIC, "BufferSync: cannot write %u for %u/%u",
 				 bufHdr->tag.blockNum,
 				 bufHdr->tag.rnode.tblNode, bufHdr->tag.rnode.relNode);
 
@@ -1371,7 +1371,7 @@ PrintBufferDescs()
 		LWLockAcquire(BufMgrLock, LW_EXCLUSIVE);
 		for (i = 0; i < NBuffers; ++i, ++buf)
 		{
-			elog(DEBUG, "[%02d] (freeNext=%d, freePrev=%d, rel=%u/%u, \
+			elog(LOG, "[%02d] (freeNext=%d, freePrev=%d, rel=%u/%u, \
 blockNum=%u, flags=0x%x, refcount=%d %ld)",
 				 i, buf->freeNext, buf->freePrev,
 				 buf->tag.rnode.tblNode, buf->tag.rnode.relNode,
@@ -1566,7 +1566,7 @@ FlushRelationBuffers(Relation rel, BlockNumber firstDelBlock)
 									   (char *) MAKE_PTR(bufHdr->data));
 
 					if (status == SM_FAIL)		/* disk failure ?! */
-						elog(STOP, "FlushRelationBuffers: cannot write %u for %u/%u",
+						elog(PANIC, "FlushRelationBuffers: cannot write %u for %u/%u",
 							 bufHdr->tag.blockNum,
 							 bufHdr->tag.rnode.tblNode,
 							 bufHdr->tag.rnode.relNode);

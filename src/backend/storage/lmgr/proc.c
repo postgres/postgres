@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.117 2001/12/28 18:16:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.118 2002/03/02 21:39:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -211,7 +211,7 @@ InitProcess(void)
 	 * we are a backend, we inherit this by fork() from the postmaster).
 	 */
 	if (procglobal == NULL)
-		elog(STOP, "InitProcess: Proc Header uninitialized");
+		elog(PANIC, "InitProcess: Proc Header uninitialized");
 
 	if (MyProc != NULL)
 		elog(ERROR, "InitProcess: you already exist");
@@ -300,7 +300,7 @@ InitDummyProcess(void)
 	 * inherit this by fork() from the postmaster).
 	 */
 	if (ProcGlobal == NULL || DummyProc == NULL)
-		elog(STOP, "InitDummyProcess: Proc Header uninitialized");
+		elog(PANIC, "InitDummyProcess: Proc Header uninitialized");
 
 	if (MyProc != NULL)
 		elog(ERROR, "InitDummyProcess: you already exist");

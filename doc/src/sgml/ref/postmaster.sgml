@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.26 2001/12/08 03:24:38 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.27 2002/03/02 21:39:16 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -127,9 +127,8 @@ PostgreSQL documentation
       <listitem>
        <para>
         Sets the debug level.  The higher this value is set, the more
-        debugging output is written to the server log.  The default is
-        0, which means no debugging.  Values up to 4 are useful; higher
-	numbers produce no additional output.
+        debugging output is written to the server log.  Values are from
+	1 to 5.
        </para>
       </listitem>
      </varlistentry>

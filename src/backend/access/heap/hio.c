@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Id: hio.c,v 1.43 2001/10/25 05:49:21 momjian Exp $
+ *	  $Id: hio.c,v 1.44 2002/03/02 21:39:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,7 +50,7 @@ RelationPutHeapTuple(Relation relation,
 						 tuple->t_len, InvalidOffsetNumber, LP_USED);
 
 	if (offnum == InvalidOffsetNumber)
-		elog(STOP, "RelationPutHeapTuple: failed to add tuple");
+		elog(PANIC, "RelationPutHeapTuple: failed to add tuple");
 
 	/* Update tuple->t_self to the actual position where it was stored */
 	ItemPointerSet(&(tuple->t_self), BufferGetBlockNumber(buffer), offnum);
@@ -270,7 +270,7 @@ RelationGetBufferForTuple(Relation relation, Size len,
 	if (len > PageGetFreeSpace(pageHeader))
 	{
 		/* We should not get here given the test at the top */
-		elog(STOP, "Tuple is too big: size %lu", (unsigned long) len);
+		elog(PANIC, "Tuple is too big: size %lu", (unsigned long) len);
 	}
 
 	/*

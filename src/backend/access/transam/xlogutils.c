@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlogutils.c,v 1.21 2001/10/25 05:49:22 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlogutils.c,v 1.22 2002/03/02 21:39:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -249,7 +249,7 @@ _xl_remove_hash_entry(XLogRelDesc *rdesc)
 	hentry = (XLogRelCacheEntry *) hash_search(_xlrelcache,
 				  (void *) &(rdesc->reldata.rd_node), HASH_REMOVE, NULL);
 	if (hentry == NULL)
-		elog(STOP, "_xl_remove_hash_entry: file was not found in cache");
+		elog(PANIC, "_xl_remove_hash_entry: file was not found in cache");
 
 	if (rdesc->reldata.rd_fd >= 0)
 		smgrclose(DEFAULT_SMGR, &(rdesc->reldata));
@@ -346,10 +346,10 @@ XLogOpenRelation(bool redo, RmgrId rmid, RelFileNode rnode)
 			hash_search(_xlrelcache, (void *) &rnode, HASH_ENTER, &found);
 
 		if (hentry == NULL)
-			elog(STOP, "XLogOpenRelation: out of memory for cache");
+			elog(PANIC, "XLogOpenRelation: out of memory for cache");
 
 		if (found)
-			elog(STOP, "XLogOpenRelation: file found on insert into cache");
+			elog(PANIC, "XLogOpenRelation: file found on insert into cache");
 
 		hentry->rdesc = res;
 

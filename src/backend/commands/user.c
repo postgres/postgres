@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.91 2002/03/01 22:45:08 petere Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.92 2002/03/02 21:39:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -547,7 +547,7 @@ AlterUser(AlterUserStmt *stmt)
 
 	/* changes to the flat password file cannot be rolled back */
 	if (IsTransactionBlock() && password)
-		elog(NOTICE, "ALTER USER: password changes cannot be rolled back");
+		elog(INFO, "ALTER USER: password changes cannot be rolled back");
 
 	/*
 	 * Scan the pg_shadow relation to be certain the user exists. Note we
@@ -785,7 +785,7 @@ DropUser(DropUserStmt *stmt)
 		elog(ERROR, "DROP USER: permission denied");
 
 	if (IsTransactionBlock())
-		elog(NOTICE, "DROP USER cannot be rolled back completely");
+		elog(INFO, "DROP USER cannot be rolled back completely");
 
 	/*
 	 * Scan the pg_shadow relation to find the usesysid of the user to be

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.39 2001/09/29 04:02:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.40 2002/03/02 21:39:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,8 +54,7 @@ static void
 do_start()
 {
 	StartTransactionCommand();
-	if (DebugMode)
-		elog(DEBUG, "start transaction");
+	elog(DEBUG3, "start transaction");
 }
 
 
@@ -63,8 +62,7 @@ static void
 do_end()
 {
 	CommitTransactionCommand();
-	if (DebugMode)
-		elog(DEBUG, "commit transaction");
+	elog(DEBUG3, "commit transaction");
 	if (isatty(0))
 	{
 		printf("bootstrap> ");
@@ -154,15 +152,12 @@ Boot_CreateStmt:
 				{
 					do_start();
 					numattr = 0;
-					if (DebugMode)
-					{
-						if ($2)
-							elog(DEBUG, "creating bootstrap relation %s...",
-								 LexIDStr($4));
-						else
-							elog(DEBUG, "creating relation %s...",
-								 LexIDStr($4));
-					}
+					if ($2)
+						elog(DEBUG3, "creating bootstrap relation %s...",
+							 LexIDStr($4));
+					else
+						elog(DEBUG3, "creating relation %s...",
+							 LexIDStr($4));
 				}
 		  boot_typelist
 				{
@@ -179,7 +174,7 @@ Boot_CreateStmt:
 
 						if (reldesc)
 						{
-							elog(DEBUG, "create bootstrap: warning, open relation exists, closing first");
+							elog(DEBUG3, "create bootstrap: warning, open relation exists, closing first");
 							closerel(NULL);
 						}
 
@@ -187,8 +182,7 @@ Boot_CreateStmt:
 						reldesc = heap_create(LexIDStr($4), tupdesc,
 											  false, true, true);
 						reldesc->rd_rel->relhasoids = ! ($3);
-						if (DebugMode)
-							elog(DEBUG, "bootstrap relation created");
+						elog(DEBUG3, "bootstrap relation created");
 					}
 					else
 					{
@@ -202,8 +196,7 @@ Boot_CreateStmt:
 													  ! ($3),
 													  false,
 													  true);
-						if (DebugMode)
-							elog(DEBUG, "relation created with oid %u", id);
+						elog(DEBUG3, "relation created with oid %u", id);
 					}
 					do_end();
 				}
@@ -213,13 +206,10 @@ Boot_InsertStmt:
 		  INSERT_TUPLE optoideq
 				{
 					do_start();
-					if (DebugMode)
-					{
-						if ($2)
-							elog(DEBUG, "inserting row with oid %u...", $2);
-						else
-							elog(DEBUG, "inserting row...");
-					}
+					if ($2)
+						elog(DEBUG3, "inserting row with oid %u...", $2);
+					else
+						elog(DEBUG3, "inserting row...");
 					num_columns_read = 0;
 				}
 		  LPAREN  boot_tuplelist RPAREN

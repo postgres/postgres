@@ -31,7 +31,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuumlazy.c,v 1.11 2002/01/06 00:37:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuumlazy.c,v 1.12 2002/03/02 21:39:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,7 +92,7 @@ typedef struct LVRelStats
 } LVRelStats;
 
 
-static int	MESSAGE_LEVEL;		/* message level */
+static int elevel = -1;
 
 static TransactionId OldestXmin;
 static TransactionId FreezeLimit;
@@ -138,12 +138,11 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 	bool		hasindex;
 	BlockNumber possibly_freeable;
 
-	/* initialize */
 	if (vacstmt->verbose)
-		MESSAGE_LEVEL = NOTICE;
+		elevel = INFO;
 	else
-		MESSAGE_LEVEL = DEBUG;
-
+		elevel = DEBUG1;
+		
 	vacuum_set_xid_limits(vacstmt, onerel->rd_rel->relisshared,
 						  &OldestXmin, &FreezeLimit);
 
@@ -208,7 +207,7 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 	vac_init_rusage(&ru0);
 
 	relname = RelationGetRelationName(onerel);
-	elog(MESSAGE_LEVEL, "--Relation %s--", relname);
+	elog(elevel, "--Relation %s--", relname);
 
 	empty_pages = changed_pages = 0;
 	num_tuples = tups_vacuumed = nkeep = nunused = 0;
@@ -430,7 +429,7 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			lazy_scan_index(Irel[i], vacrelstats);
 	}
 
-	elog(MESSAGE_LEVEL, "Pages %u: Changed %u, Empty %u; \
+	elog(elevel, "Pages %u: Changed %u, Empty %u; \
 Tup %.0f: Vac %.0f, Keep %.0f, UnUsed %.0f.\n\tTotal %s",
 		 nblocks, changed_pages, empty_pages,
 		 num_tuples, tups_vacuumed, nkeep, nunused,
@@ -481,8 +480,7 @@ lazy_vacuum_heap(Relation onerel, LVRelStats *vacrelstats)
 		npages++;
 	}
 
-	elog(MESSAGE_LEVEL, "Removed %d tuples in %d pages.\n\t%s",
-		 tupindex, npages,
+	elog(elevel, "Removed %d tuples in %d pages.\n\t%s", tupindex, npages,
 		 vac_show_rusage(&ru0));
 }
 
@@ -589,7 +587,7 @@ lazy_scan_index(Relation indrel, LVRelStats *vacrelstats)
 						stats->num_pages, stats->num_index_tuples,
 						false);
 
-	elog(MESSAGE_LEVEL, "Index %s: Pages %u; Tuples %.0f.\n\t%s",
+	elog(elevel, "Index %s: Pages %u; Tuples %.0f.\n\t%s",
 		 RelationGetRelationName(indrel),
 		 stats->num_pages, stats->num_index_tuples,
 		 vac_show_rusage(&ru0));
@@ -636,7 +634,7 @@ lazy_vacuum_index(Relation indrel, LVRelStats *vacrelstats)
 							stats->num_pages, stats->num_index_tuples,
 							false);
 
-		elog(MESSAGE_LEVEL, "Index %s: Pages %u; Tuples %.0f: Deleted %.0f.\n\t%s",
+		elog(elevel, "Index %s: Pages %u; Tuples %.0f: Deleted %.0f.\n\t%s",
 			 RelationGetRelationName(indrel), stats->num_pages,
 			 stats->num_index_tuples, stats->tuples_removed,
 			 vac_show_rusage(&ru0));
@@ -746,9 +744,8 @@ lazy_truncate_heap(Relation onerel, LVRelStats *vacrelstats)
 	 * We keep the exclusive lock until commit (perhaps not necessary)?
 	 */
 
-	elog(MESSAGE_LEVEL, "Truncated %u --> %u pages.\n\t%s",
-		 old_rel_pages, new_rel_pages,
-		 vac_show_rusage(&ru0));
+	elog(elevel, "Truncated %u --> %u pages.\n\t%s", old_rel_pages,
+		new_rel_pages, vac_show_rusage(&ru0));
 }
 
 /*

@@ -3,7 +3,7 @@
 * geqo_erx.c
 *	 edge recombination crossover [ER]
 *
-* $Id: geqo_erx.c,v 1.16 2001/10/25 05:49:31 momjian Exp $
+* $Id: geqo_erx.c,v 1.17 2002/03/02 21:39:26 momjian Exp $
 *
 *-------------------------------------------------------------------------
 */
@@ -419,7 +419,7 @@ edge_failure(Gene *gene, int index, Edge *edge_table, int num_gene)
 			}
 		}
 
-		elog(DEBUG, "edge_failure(1): no edge found via random decision and total_edges == 4");
+		elog(LOG, "edge_failure(1): no edge found via random decision and total_edges == 4");
 	}
 
 	else
@@ -444,7 +444,7 @@ edge_failure(Gene *gene, int index, Edge *edge_table, int num_gene)
 			}
 		}
 
-		elog(DEBUG, "edge_failure(2): no edge found via random decision and remainig edges");
+		elog(LOG, "edge_failure(2): no edge found via random decision and remainig edges");
 	}
 
 	/*
@@ -462,7 +462,7 @@ edge_failure(Gene *gene, int index, Edge *edge_table, int num_gene)
 			if (edge_table[i].unused_edges >= 0)
 				return (Gene) i;
 
-		elog(DEBUG, "edge_failure(3): no edge found via looking for the last ununsed point");
+		elog(LOG, "edge_failure(3): no edge found via looking for the last ununsed point");
 	}
 
 

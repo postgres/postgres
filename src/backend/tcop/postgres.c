@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.251 2002/03/01 22:45:13 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.252 2002/03/02 21:39:31 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -370,7 +370,7 @@ pg_parse_query(char *query_string, Oid *typev, int nargs)
 	List	   *raw_parsetree_list;
 
 	if (Debug_print_query)
-		elog(DEBUG, "query: %s", query_string);
+		elog(LOG, "query: %s", query_string);
 
 	if (Show_parser_stats)
 		ResetUsage();
@@ -429,11 +429,11 @@ pg_analyze_and_rewrite(Node *parsetree)
 		{
 			if (Debug_pretty_print)
 			{
-				elog(DEBUG, "parse tree:");
+				elog(LOG, "parse tree:");
 				nodeDisplay(querytree);
 			}
 			else
-				elog(DEBUG, "parse tree: %s", nodeToString(querytree));
+				elog(LOG, "parse tree: %s", nodeToString(querytree));
 		}
 
 		if (querytree->commandType == CMD_UTILITY)
@@ -473,7 +473,7 @@ pg_analyze_and_rewrite(Node *parsetree)
 	{
 		if (Debug_pretty_print)
 		{
-			elog(DEBUG, "rewritten parse tree:");
+			elog(LOG, "rewritten parse tree:");
 			foreach(list_item, querytree_list)
 			{
 				querytree = (Query *) lfirst(list_item);
@@ -483,11 +483,11 @@ pg_analyze_and_rewrite(Node *parsetree)
 		}
 		else
 		{
-			elog(DEBUG, "rewritten parse tree:");
+			elog(LOG, "rewritten parse tree:");
 			foreach(list_item, querytree_list)
 			{
 				querytree = (Query *) lfirst(list_item);
-				elog(DEBUG, "%s", nodeToString(querytree));
+				elog(LOG, "%s", nodeToString(querytree));
 			}
 		}
 	}
@@ -541,11 +541,11 @@ pg_plan_query(Query *querytree)
 	{
 		if (Debug_pretty_print)
 		{
-			elog(DEBUG, "plan:");
+			elog(LOG, "plan:");
 			nodeDisplay(plan);
 		}
 		else
-			elog(DEBUG, "plan: %s", nodeToString(plan));
+			elog(LOG, "plan: %s", nodeToString(plan));
 	}
 
 	return plan;
@@ -759,9 +759,8 @@ pg_exec_query_string(char *query_string,		/* string to execute */
 				 * process utility functions (create, destroy, etc..)
 				 */
 				if (Debug_print_query)
-					elog(DEBUG, "ProcessUtility: %s", query_string);
-				else if (DebugLvl > 1)
-					elog(DEBUG, "ProcessUtility");
+					elog(LOG, "ProcessUtility: %s", query_string);
+				else elog(DEBUG2, "ProcessUtility");
 
 				if (querytree->originalQuery)
 				{
@@ -805,8 +804,7 @@ pg_exec_query_string(char *query_string,		/* string to execute */
 				}
 				else
 				{
-					if (DebugLvl > 1)
-						elog(DEBUG, "ProcessQuery");
+					elog(DEBUG2, "ProcessQuery");
 
 					if (querytree->originalQuery)
 					{
@@ -916,8 +914,7 @@ pg_exec_query_string(char *query_string,		/* string to execute */
 static void
 start_xact_command(void)
 {
-	if (DebugLvl >= 1)
-		elog(DEBUG, "StartTransactionCommand");
+	elog(DEBUG1, "StartTransactionCommand");
 	StartTransactionCommand();
 }
 
@@ -928,8 +925,7 @@ finish_xact_command(void)
 	DeferredTriggerEndQuery();
 
 	/* Now commit the command */
-	if (DebugLvl >= 1)
-		elog(DEBUG, "CommitTransactionCommand");
+	elog(DEBUG1, "CommitTransactionCommand");
 
 	CommitTransactionCommand();
 
@@ -1130,7 +1126,7 @@ usage(char *progname)
 #endif
 	printf("  -B NBUFFERS     number of shared buffers (default %d)\n", DEF_NBUFFERS);
 	printf("  -c NAME=VALUE   set run-time parameter\n");
-	printf("  -d 1-5          debugging level\n");
+	printf("  -d 1-5,0        debugging level (0 is off)\n");
 	printf("  -D DATADIR      database directory\n");
 	printf("  -e              use European date format\n");
 	printf("  -E              echo query before execution\n");
@@ -1281,17 +1277,37 @@ PostgresMain(int argc, char *argv[], const char *username)
 				break;
 
 			case 'd':			/* debug level */
-				SetConfigOption("debug_level", optarg, ctx, gucsource);
-				if (DebugLvl >= 1)
-					SetConfigOption("log_connections", "true", ctx, gucsource);
-				if (DebugLvl >= 2)
-					SetConfigOption("debug_print_query", "true", ctx, gucsource);
-				if (DebugLvl >= 3)
-					SetConfigOption("debug_print_parse", "true", ctx, gucsource);
-				if (DebugLvl >= 4)
-					SetConfigOption("debug_print_plan", "true", ctx, gucsource);
-				if (DebugLvl >= 5)
-					SetConfigOption("debug_print_rewritten", "true", ctx, gucsource);
+				{
+					/* Set server debugging level. */
+					if (atoi(optarg) != 0)
+					{
+						char *debugstr = palloc(strlen("debug") + strlen(optarg) + 1);
+
+						sprintf(debugstr, "debug%s", optarg);
+						SetConfigOption("server_min_messages", debugstr, ctx, gucsource);
+						pfree(debugstr);
+						/*
+						 * -d is not the same as setting client_min_messages
+						 * because it enables other output options.
+						 */
+						if (atoi(optarg) >= 1)
+							SetConfigOption("log_connections", "true", ctx, gucsource);
+						if (atoi(optarg) >= 2)
+							SetConfigOption("debug_print_query", "true", ctx, gucsource);
+						if (atoi(optarg) >= 3)
+							SetConfigOption("debug_print_parse", "true", ctx, gucsource);
+						if (atoi(optarg) >= 4)
+							SetConfigOption("debug_print_plan", "true", ctx, gucsource);
+						if (atoi(optarg) >= 5)
+							SetConfigOption("debug_print_rewritten", "true", ctx, gucsource);
+					}
+					else
+						/*
+						 *	-d 0 allows user to prevent postmaster debug from
+						 *	propogating to backend.
+						 */
+						SetConfigOption("server_min_messages", "notice", PGC_POSTMASTER, PGC_S_ARGV);
+				}
 				break;
 
 			case 'E':
@@ -1682,8 +1698,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	 * putting it inside InitPostgres() instead.  In particular, anything
 	 * that involves database access should be there, not here.
 	 */
-	if (DebugLvl > 1)
-		elog(DEBUG, "InitPostgres");
+	elog(DEBUG2, "InitPostgres");
 	InitPostgres(DBName, username);
 
 	SetProcessingMode(NormalProcessing);
@@ -1707,7 +1722,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.251 $ $Date: 2002/03/01 22:45:13 $\n");
+		puts("$Revision: 1.252 $ $Date: 2002/03/02 21:39:31 $\n");
 	}
 
 	/*
@@ -1765,8 +1780,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 		MemoryContextSwitchTo(ErrorContext);
 
 		/* Do the recovery */
-		if (DebugLvl >= 1)
-			elog(DEBUG, "AbortCurrentTransaction");
+		elog(DEBUG1, "AbortCurrentTransaction");
 		AbortCurrentTransaction();
 
 		/*
@@ -2086,7 +2100,7 @@ ShowUsage(const char *title)
 	if (str.data[str.len-1] == '\n')
 		str.data[--str.len] = '\0';
 
-	elog(DEBUG, "%s\n%s", title, str.data);
+	elog(LOG, "%s\n%s", title, str.data);
 
 	pfree(str.data);
 }
@@ -2108,10 +2122,10 @@ assertTest(int val)
 	if (assert_enabled)
 	{
 		/* val != 0 should be trapped by previous Assert */
-		elog(NOTICE, "Assert test successfull (val = %d)", val);
+		elog(INFO, "Assert test successfull (val = %d)", val);
 	}
 	else
-		elog(NOTICE, "Assert checking is disabled (val = %d)", val);
+		elog(INFO, "Assert checking is disabled (val = %d)", val);
 
 	return val;
 }
@@ -2383,7 +2397,7 @@ CreateCommandTag(Node *parsetree)
 			break;
 
 		default:
-			elog(DEBUG, "CreateCommandTag: unknown parse node type %d",
+			elog(LOG, "CreateCommandTag: unknown parse node type %d",
 				 nodeTag(parsetree));
 			tag = "???";
 			break;

@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.104 2002/03/01 04:09:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.105 2002/03/02 21:39:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3169,7 +3169,7 @@ locale_is_like_safe(void)
 		return (bool) result;
 	localeptr = setlocale(LC_COLLATE, NULL);
 	if (!localeptr)
-		elog(STOP, "Invalid LC_COLLATE setting");
+		elog(PANIC, "Invalid LC_COLLATE setting");
 
 	/*
 	 * Currently we accept only "C" and "POSIX" (do any systems still

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.83 2002/03/01 22:45:15 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.84 2002/03/02 21:39:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -817,13 +817,13 @@ RecordSharedMemoryInLockFile(IpcMemoryKey shmKey, IpcMemoryId shmId)
 	fd = open(directoryLockFile, O_RDWR | PG_BINARY, 0);
 	if (fd < 0)
 	{
-		elog(DEBUG, "Failed to rewrite %s: %m", directoryLockFile);
+		elog(LOG, "Failed to rewrite %s: %m", directoryLockFile);
 		return;
 	}
 	len = read(fd, buffer, sizeof(buffer) - 100);
 	if (len <= 0)
 	{
-		elog(DEBUG, "Failed to read %s: %m", directoryLockFile);
+		elog(LOG, "Failed to read %s: %m", directoryLockFile);
 		close(fd);
 		return;
 	}
@@ -836,7 +836,7 @@ RecordSharedMemoryInLockFile(IpcMemoryKey shmKey, IpcMemoryId shmId)
 	if (ptr == NULL ||
 		(ptr = strchr(ptr + 1, '\n')) == NULL)
 	{
-		elog(DEBUG, "Bogus data in %s", directoryLockFile);
+		elog(LOG, "Bogus data in %s", directoryLockFile);
 		close(fd);
 		return;
 	}
@@ -861,7 +861,7 @@ RecordSharedMemoryInLockFile(IpcMemoryKey shmKey, IpcMemoryId shmId)
 		/* if write didn't set errno, assume problem is no disk space */
 		if (errno == 0)
 			errno = ENOSPC;
-		elog(DEBUG, "Failed to write %s: %m", directoryLockFile);
+		elog(LOG, "Failed to write %s: %m", directoryLockFile);
 		close(fd);
 		return;
 	}

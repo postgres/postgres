@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.54 2001/10/25 05:49:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.55 2002/03/02 21:39:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -582,7 +582,7 @@ smgrsync()
 		if (smgrsw[i].smgr_sync)
 		{
 			if ((*(smgrsw[i].smgr_sync)) () == SM_FAIL)
-				elog(STOP, "storage sync failed on %s: %m",
+				elog(PANIC, "storage sync failed on %s: %m",
 					 DatumGetCString(DirectFunctionCall1(smgrout,
 													 Int16GetDatum(i))));
 		}

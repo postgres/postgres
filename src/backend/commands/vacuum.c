@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.214 2002/02/19 20:11:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.215 2002/03/02 21:39:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -108,7 +108,7 @@ typedef struct VRelStats
 
 static MemoryContext vac_context = NULL;
 
-static int	MESSAGE_LEVEL;		/* message level */
+static int elevel = -1;
 
 static TransactionId OldestXmin;
 static TransactionId FreezeLimit;
@@ -192,10 +192,10 @@ vacuum(VacuumStmt *vacstmt)
 	pgstat_vacuum_tabstat();
 
 	if (vacstmt->verbose)
-		MESSAGE_LEVEL = NOTICE;
+		elevel = INFO;
 	else
-		MESSAGE_LEVEL = DEBUG;
-
+		elevel = DEBUG1;
+		
 	/*
 	 * Create special memory context for cross-transaction storage.
 	 *
@@ -964,7 +964,7 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 	vac_init_rusage(&ru0);
 
 	relname = RelationGetRelationName(onerel);
-	elog(MESSAGE_LEVEL, "--Relation %s--", relname);
+	elog(elevel, "--Relation %s--", relname);
 
 	empty_pages = new_pages = changed_pages = empty_end_pages = 0;
 	num_tuples = tups_vacuumed = nkeep = nunused = 0;
@@ -1275,7 +1275,7 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 		pfree(vtlinks);
 	}
 
-	elog(MESSAGE_LEVEL, "Pages %u: Changed %u, reaped %u, Empty %u, New %u; \
+	elog(elevel, "Pages %u: Changed %u, reaped %u, Empty %u, New %u; \
 Tup %.0f: Vac %.0f, Keep/VTL %.0f/%u, UnUsed %.0f, MinLen %lu, MaxLen %lu; \
 Re-using: Free/Avail. Space %.0f/%.0f; EndEmpty/Avail. Pages %u/%u.\n\t%s",
 		 nblocks, changed_pages, vacuum_pages->num_pages, empty_pages,
@@ -1849,7 +1849,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 										 InvalidOffsetNumber, LP_USED);
 					if (newoff == InvalidOffsetNumber)
 					{
-						elog(STOP, "moving chain: failed to add item with len = %lu to page %u",
+						elog(PANIC, "moving chain: failed to add item with len = %lu to page %u",
 						  (unsigned long) tuple_len, destvacpage->blkno);
 					}
 					newitemid = PageGetItemId(ToPage, newoff);
@@ -1972,7 +1972,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 								 InvalidOffsetNumber, LP_USED);
 			if (newoff == InvalidOffsetNumber)
 			{
-				elog(STOP, "failed to add item with len = %lu to page %u (free space %lu, nusd %u, noff %u)",
+				elog(PANIC, "failed to add item with len = %lu to page %u (free space %lu, nusd %u, noff %u)",
 					 (unsigned long) tuple_len,
 					 cur_page->blkno, (unsigned long) cur_page->free,
 					 cur_page->offsets_used, cur_page->offsets_free);
@@ -2197,7 +2197,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 	}
 	Assert(num_moved == checked_moved);
 
-	elog(MESSAGE_LEVEL, "Rel %s: Pages: %u --> %u; Tuple(s) moved: %u.\n\t%s",
+	elog(elevel, "Rel %s: Pages: %u --> %u; Tuple(s) moved: %u.\n\t%s",
 		 RelationGetRelationName(onerel),
 		 nblocks, blkno, num_moved,
 		 vac_show_rusage(&ru0));
@@ -2369,7 +2369,7 @@ vacuum_heap(VRelStats *vacrelstats, Relation onerel, VacPageList vacuum_pages)
 	/* truncate relation if there are some empty end-pages */
 	if (vacuum_pages->empty_end_pages > 0)
 	{
-		elog(MESSAGE_LEVEL, "Rel %s: Pages: %u --> %u.",
+		elog(elevel, "Rel %s: Pages: %u --> %u.",
 			 RelationGetRelationName(onerel),
 			 vacrelstats->rel_pages, relblocks);
 		relblocks = smgrtruncate(DEFAULT_SMGR, onerel, relblocks);
@@ -2443,7 +2443,7 @@ scan_index(Relation indrel, double num_tuples)
 						stats->num_pages, stats->num_index_tuples,
 						false);
 
-	elog(MESSAGE_LEVEL, "Index %s: Pages %u; Tuples %.0f.\n\t%s",
+	elog(elevel, "Index %s: Pages %u; Tuples %.0f.\n\t%s",
 		 RelationGetRelationName(indrel),
 		 stats->num_pages, stats->num_index_tuples,
 		 vac_show_rusage(&ru0));
@@ -2497,7 +2497,7 @@ vacuum_index(VacPageList vacpagelist, Relation indrel,
 						stats->num_pages, stats->num_index_tuples,
 						false);
 
-	elog(MESSAGE_LEVEL, "Index %s: Pages %u; Tuples %.0f: Deleted %.0f.\n\t%s",
+	elog(elevel, "Index %s: Pages %u; Tuples %.0f: Deleted %.0f.\n\t%s",
 		 RelationGetRelationName(indrel), stats->num_pages,
 		 stats->num_index_tuples - keep_tuples, stats->tuples_removed,
 		 vac_show_rusage(&ru0));

@@ -2340,7 +2340,7 @@ DROP TABLE TEMP_TIMESTAMP;
 --
 SET DateStyle TO 'US,Postgres';
 SHOW DateStyle;
-NOTICE:  DateStyle is Postgres with US (NonEuropean) conventions
+INFO:  DateStyle is Postgres with US (NonEuropean) conventions
 SELECT '' AS "64", d1 AS us_postgres FROM TIMESTAMP_TBL;
  64 |         us_postgres         
 ----+-----------------------------
@@ -2506,7 +2506,7 @@ SELECT '' AS seven, f1 AS us_iso FROM ABSTIME_TBL;
 
 SET DateStyle TO 'US,SQL';
 SHOW DateStyle;
-NOTICE:  DateStyle is SQL with US (NonEuropean) conventions
+INFO:  DateStyle is SQL with US (NonEuropean) conventions
 SELECT '' AS "64", d1 AS us_sql FROM TIMESTAMP_TBL;
  64 |         us_sql         
 ----+------------------------
@@ -2590,7 +2590,7 @@ SELECT '' AS seven, f1 AS us_sql FROM ABSTIME_TBL;
 
 SET DateStyle TO 'European,Postgres';
 SHOW DateStyle;
-NOTICE:  DateStyle is Postgres with European conventions
+INFO:  DateStyle is Postgres with European conventions
 INSERT INTO TIMESTAMP_TBL VALUES('13/06/1957');
 SELECT count(*) as one FROM TIMESTAMP_TBL WHERE d1 = 'Jun 13 1957';
  one 
@@ -2682,7 +2682,7 @@ SELECT '' AS seven, f1 AS european_postgres FROM ABSTIME_TBL;
 
 SET DateStyle TO 'European,ISO';
 SHOW DateStyle;
-NOTICE:  DateStyle is ISO with European conventions
+INFO:  DateStyle is ISO with European conventions
 SELECT '' AS "65", d1 AS european_iso FROM TIMESTAMP_TBL;
  65 |      european_iso      
 ----+------------------------
@@ -2767,7 +2767,7 @@ SELECT '' AS seven, f1 AS european_iso FROM ABSTIME_TBL;
 
 SET DateStyle TO 'European,SQL';
 SHOW DateStyle;
-NOTICE:  DateStyle is SQL with European conventions
+INFO:  DateStyle is SQL with European conventions
 SELECT '' AS "65", d1 AS european_sql FROM TIMESTAMP_TBL;
  65 |      european_sql      
 ----+------------------------

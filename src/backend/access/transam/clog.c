@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/clog.c,v 1.7 2001/10/28 06:25:42 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/clog.c,v 1.8 2002/03/02 21:39:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -544,19 +544,19 @@ CLOGPhysicalReadPage(int pageno, int slotno)
 	if (fd < 0)
 	{
 		if (errno != ENOENT || !InRecovery)
-			elog(STOP, "open of %s failed: %m", path);
-		elog(DEBUG, "clog file %s doesn't exist, reading as zeroes", path);
+			elog(PANIC, "open of %s failed: %m", path);
+		elog(LOG, "clog file %s doesn't exist, reading as zeroes", path);
 		MemSet(ClogCtl->page_buffer[slotno], 0, CLOG_BLCKSZ);
 		return;
 	}
 
 	if (lseek(fd, (off_t) offset, SEEK_SET) < 0)
-		elog(STOP, "lseek of clog file %u, offset %u failed: %m",
+		elog(PANIC, "lseek of clog file %u, offset %u failed: %m",
 			 segno, offset);
 
 	errno = 0;
 	if (read(fd, ClogCtl->page_buffer[slotno], CLOG_BLCKSZ) != CLOG_BLCKSZ)
-		elog(STOP, "read of clog file %u, offset %u failed: %m",
+		elog(PANIC, "read of clog file %u, offset %u failed: %m",
 			 segno, offset);
 
 	close(fd);
@@ -596,15 +596,15 @@ CLOGPhysicalWritePage(int pageno, int slotno)
 	if (fd < 0)
 	{
 		if (errno != ENOENT)
-			elog(STOP, "open of %s failed: %m", path);
+			elog(PANIC, "open of %s failed: %m", path);
 		fd = BasicOpenFile(path, O_RDWR | O_CREAT | O_EXCL | PG_BINARY,
 						   S_IRUSR | S_IWUSR);
 		if (fd < 0)
-			elog(STOP, "creation of file %s failed: %m", path);
+			elog(PANIC, "creation of file %s failed: %m", path);
 	}
 
 	if (lseek(fd, (off_t) offset, SEEK_SET) < 0)
-		elog(STOP, "lseek of clog file %u, offset %u failed: %m",
+		elog(PANIC, "lseek of clog file %u, offset %u failed: %m",
 			 segno, offset);
 
 	errno = 0;
@@ -613,7 +613,7 @@ CLOGPhysicalWritePage(int pageno, int slotno)
 		/* if write didn't set errno, assume problem is no disk space */
 		if (errno == 0)
 			errno = ENOSPC;
-		elog(STOP, "write of clog file %u, offset %u failed: %m",
+		elog(PANIC, "write of clog file %u, offset %u failed: %m",
 			 segno, offset);
 	}
 
@@ -887,7 +887,7 @@ ScanCLOGDirectory(int cutoffPage, bool doDeletions)
 
 	cldir = opendir(ClogDir);
 	if (cldir == NULL)
-		elog(STOP, "could not open transaction-commit log directory (%s): %m",
+		elog(PANIC, "could not open transaction-commit log directory (%s): %m",
 			 ClogDir);
 
 	errno = 0;
@@ -912,7 +912,7 @@ ScanCLOGDirectory(int cutoffPage, bool doDeletions)
 		errno = 0;
 	}
 	if (errno)
-		elog(STOP, "could not read transaction-commit log directory (%s): %m",
+		elog(PANIC, "could not read transaction-commit log directory (%s): %m",
 			 ClogDir);
 	closedir(cldir);
 
