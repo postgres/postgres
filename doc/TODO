@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Dec  3 17:10:42 EST 2002
+Last updated:		Wed Dec  4 13:23:41 EST 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -168,6 +168,7 @@ Commands
 	o ALTER TABLE ADD COLUMN column SERIAL doesn't create sequence because
           of the item above
 	o Add ALTER TABLE tab SET WITHOUT OIDS
+	* Add ALTER SEQUENCE to modify min/max/increment/cache/cycle values
 
 * CLUSTER
 	o Automatically maintain clustering on a table
