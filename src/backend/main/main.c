@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.40 2001/01/24 19:42:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.41 2001/02/06 17:00:01 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,7 +109,10 @@ main(int argc, char *argv[])
 	 * be temporarily disabled there...
 	*/
 #ifndef __BEOS__
-	if (geteuid() == 0)
+	if (!(argc > 1
+		  && ( strcmp(argv[1], "--help")==0 || strcmp(argv[1], "-?")==0
+			   || strcmp(argv[1], "--version")==0 || strcmp(argv[1], "-V")==0 ))
+		&& (geteuid() == 0) )
 	{
 		fprintf(stderr, "%s", NOROOTEXEC);
 		exit(1);
