@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq.h,v 1.44 2001/03/22 04:00:48 momjian Exp $
+ * $Id: libpq.h,v 1.45 2001/08/07 10:44:16 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,6 +65,7 @@ extern int	pq_getstring(StringInfo s);
 extern int	pq_peekbyte(void);
 extern int	pq_putbytes(const char *s, size_t len);
 extern int	pq_flush(void);
+extern int	pq_eof(void);
 extern int	pq_putmessage(char msgtype, const char *s, size_t len);
 extern void pq_startcopyout(void);
 extern void pq_endcopyout(bool errorAbort);

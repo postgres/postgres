@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.55 2001/08/01 23:25:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.56 2001/08/07 10:44:13 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -554,7 +554,7 @@ recv_and_check_password_packet(Port *port)
 	int32		len;
 	int			result;
 
-	if (pq_getint(&len, 4) == EOF)
+	if (pq_eof() == EOF || pq_getint(&len, 4) == EOF)
 		return STATUS_ERROR;	/* client didn't want to send password */
 	initStringInfo(&buf);
 	pq_getstr(&buf);

@@ -29,7 +29,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqcomm.c,v 1.119 2001/08/05 01:22:16 tgl Exp $
+ *	$Id: pqcomm.c,v 1.120 2001/08/07 10:44:15 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -692,6 +692,26 @@ pq_flush(void)
 	}
 	PqSendPointer = 0;
 	return 0;
+}
+
+
+/*
+ * Return EOF if the connection has been broken, else 0.
+ */
+int
+pq_eof(void)
+{
+	char x;
+	int res;
+
+	res = recv(MyProcPort->sock, &x, 1, MSG_PEEK);
+
+	if (res == -1)
+		fprintf(stderr, "pq_eof: recv() failed: %s\n", strerror(errno));
+	else if (res == 0)
+		return EOF;
+	else
+		return 0;
 }
 
 
