@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.221 2001/11/05 17:46:32 momjian Exp $
+ * $Id: pg_proc.h,v 1.222 2002/01/12 04:38:31 thomas Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -1458,9 +1458,9 @@ DESCR("age of a transaction ID, in transactions before current transaction");
 
 DATA(insert OID = 1188 (  timestamptz_mi   PGUID 12 f t t t 2 f 1186 "1184 1184" 100 0 0 100  timestamp_mi - ));
 DESCR("subtract");
-DATA(insert OID = 1189 (  timestamptz_pl_span PGUID 12 f t t t 2 f 1184 "1184 1186" 100 0 0 100  timestamp_pl_span - ));
+DATA(insert OID = 1189 (  timestamptz_pl_span PGUID 12 f t t t 2 f 1184 "1184 1186" 100 0 0 100  timestamptz_pl_span - ));
 DESCR("plus");
-DATA(insert OID = 1190 (  timestamptz_mi_span PGUID 12 f t t t 2 f 1184 "1184 1186" 100 0 0 100  timestamp_mi_span - ));
+DATA(insert OID = 1190 (  timestamptz_mi_span PGUID 12 f t t t 2 f 1184 "1184 1186" 100 0 0 100  timestamptz_mi_span - ));
 DESCR("minus");
 DATA(insert OID = 1191 (  timestamptz		PGUID 12 f t f t 1 f 1184 "25" 100 0 0 100	text_timestamptz - ));
 DESCR("convert text to timestamp with time zone");

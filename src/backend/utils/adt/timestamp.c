@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.61 2001/12/29 18:31:31 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.62 2002/01/12 04:38:27 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1290,7 +1290,7 @@ timestamp_mi_span(PG_FUNCTION_ARGS)
 }
 
 
-/* timestamp_pl_span()
+/* timestamptz_pl_span()
  * Add a interval to a timestamp with time zone data type.
  * Note that interval has provisions for qualitative year/month
  *	units, so try to do the right thing with them.
@@ -1371,7 +1371,7 @@ timestamptz_mi_span(PG_FUNCTION_ARGS)
 	tspan.month = -span->month;
 	tspan.time = -span->time;
 
-	return DirectFunctionCall2(timestamp_pl_span,
+	return DirectFunctionCall2(timestamptz_pl_span,
 							   TimestampGetDatum(timestamp),
 							   PointerGetDatum(&tspan));
 }
