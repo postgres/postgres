@@ -59,7 +59,7 @@ do
 
 	if createdb -help|grep encoding >/dev/null
 	then
-		echo "create database with encoding='`pg_encoding $ENCODING`' $DATABASE;"
+		echo "create database $DATABASE with encoding='`pg_encoding $ENCODING`';"
 	else
 		echo "create database $DATABASE;"
 	fi
