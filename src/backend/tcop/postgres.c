@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.175 2000/09/06 14:15:21 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.176 2000/10/02 19:42:53 petere Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1284,7 +1284,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 		/*
 		 * Register clean up proc.
 		 */
-		on_proc_exit(UnlinkPidFile, NULL);
+		on_proc_exit(UnlinkPidFile, 0);
 
 		BaseInit();
 		snprintf(XLogDir, MAXPGPATH, "%s/pg_xlog", DataDir);
@@ -1376,7 +1376,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 	reset_client_encoding();
 #endif
 
-	on_shmem_exit(remove_all_temp_relations, NULL);
+	on_shmem_exit(remove_all_temp_relations, 0);
 
 	/*
 	 * Send this backend's cancellation info to the frontend.
@@ -1397,7 +1397,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.175 $ $Date: 2000/09/06 14:15:21 $\n");
+		puts("$Revision: 1.176 $ $Date: 2000/10/02 19:42:53 $\n");
 	}
 
 	/*

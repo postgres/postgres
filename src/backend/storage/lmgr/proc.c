@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.79 2000/08/29 09:36:44 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.80 2000/10/02 19:42:48 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,8 +47,10 @@
  *		This is so that we can support more backends. (system-wide semaphore
  *		sets run out pretty fast.)				  -ay 4/95
  *
- * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.79 2000/08/29 09:36:44 petere Exp $
+ * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.80 2000/10/02 19:42:48 petere Exp $
  */
+#include "postgres.h"
+
 #include <sys/time.h>
 #include <unistd.h>
 #include <signal.h>
@@ -59,7 +61,6 @@
 #include <sys/sem.h>
 #endif
 
-#include "postgres.h"
 #include "miscadmin.h"
 
 
@@ -140,7 +141,7 @@ InitProcGlobal(IPCKey key, int maxBackends)
 		 * Arrange to delete semas on exit --- set this up now so that we
 		 * will clean up if pre-allocation fails...
 		 */
-		on_shmem_exit(ProcFreeAllSemaphores, NULL);
+		on_shmem_exit(ProcFreeAllSemaphores, 0);
 
 		/*
 		 * Pre-create the semaphores for the first maxBackends processes,
@@ -306,7 +307,7 @@ InitProcess(IPCKey key)
 	MyProc->errType = NO_ERROR;
 	SHMQueueElemInit(&(MyProc->links));
 
-	on_shmem_exit(ProcKill, (caddr_t) MyProcPid);
+	on_shmem_exit(ProcKill, (Datum) MyProcPid);
 }
 
 /* -----------------------

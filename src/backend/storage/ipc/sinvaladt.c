@@ -8,14 +8,14 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.32 2000/05/31 00:28:29 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.33 2000/10/02 19:42:48 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
+#include "postgres.h"
+
 #include <signal.h>
 #include <unistd.h>
-
-#include "postgres.h"
 
 #include "miscadmin.h"
 #include "storage/backendid.h"
@@ -189,7 +189,7 @@ SIBackendInit(SISeg *segP)
 	stateP->procStruct = MAKE_OFFSET(MyProc);
 
 	/* register exit routine to mark my entry inactive at exit */
-	on_shmem_exit(CleanupInvalidationState, (caddr_t) segP);
+	on_shmem_exit(CleanupInvalidationState, PointerGetDatum(segP));
 
 	return 1;
 }

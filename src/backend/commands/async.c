@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.68 2000/08/29 09:36:39 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.69 2000/10/02 19:42:45 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,13 +70,13 @@
  *-------------------------------------------------------------------------
  */
 
+#include "postgres.h"
+
 #include <unistd.h>
 #include <signal.h>
 #include <errno.h>
 #include <sys/types.h>
 #include <netinet/in.h>
-
-#include "postgres.h"
 
 #include "access/heapam.h"
 #include "catalog/catname.h"
@@ -255,7 +255,7 @@ Async_Listen(char *relname, int pid)
 	 */
 	if (!unlistenExitRegistered)
 	{
-		if (on_shmem_exit(Async_UnlistenOnExit, (caddr_t) NULL) < 0)
+		if (on_shmem_exit(Async_UnlistenOnExit, 0) < 0)
 			elog(NOTICE, "Async_Listen: out of shmem_exit slots");
 		unlistenExitRegistered = 1;
 	}
@@ -373,7 +373,7 @@ Async_UnlistenAll()
  *--------------------------------------------------------------
  */
 static void
-Async_UnlistenOnExit()
+Async_UnlistenOnExit(void)
 {
 
 	/*

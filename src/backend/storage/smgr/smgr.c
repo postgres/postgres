@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.37 2000/06/19 23:37:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.38 2000/10/02 19:42:52 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -112,7 +112,7 @@ smgrinit()
 	}
 
 	/* register the shutdown proc */
-	on_proc_exit(smgrshutdown, NULL);
+	on_proc_exit(smgrshutdown, 0);
 
 	return SM_SUCCESS;
 }

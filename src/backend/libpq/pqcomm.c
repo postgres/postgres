@@ -29,7 +29,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqcomm.c,v 1.101 2000/09/27 15:17:54 petere Exp $
+ *	$Id: pqcomm.c,v 1.102 2000/10/02 19:42:46 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -260,7 +260,7 @@ StreamServerPort(int family, unsigned short portName, int *fdP)
 
 	if (family == AF_UNIX)
 	{
-		on_proc_exit(StreamDoUnlink, NULL);
+		on_proc_exit(StreamDoUnlink, 0);
 
 		/*
 		 * Open the socket file and get an advisory lock on it. The

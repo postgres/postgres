@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.63 2000/08/27 21:48:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.64 2000/10/02 19:42:47 petere Exp $
  *
  * NOTES:
  *
@@ -38,6 +38,8 @@
  *-------------------------------------------------------------------------
  */
 
+#include "postgres.h"
+
 #include <sys/types.h>
 #include <sys/file.h>
 #include <sys/param.h>
@@ -46,7 +48,6 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#include "postgres.h"
 #include "miscadmin.h"
 #include "storage/fd.h"
 
@@ -472,7 +473,7 @@ AllocateVfd(void)
 		 * register proc-exit call to ensure temp files are dropped at
 		 * exit
 		 */
-		on_proc_exit(AtEOXact_Files, NULL);
+		on_proc_exit(AtEOXact_Files, 0);
 	}
 
 	if (VfdCache[0].nextFree == 0)

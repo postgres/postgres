@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.66 2000/09/19 18:17:57 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.67 2000/10/02 19:42:54 petere Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -232,7 +232,7 @@ InitPostgres(const char *dbname, const char *username)
 
 #ifndef XLOG
 	if (!TransactionFlushEnabled())
-		on_shmem_exit(FlushBufferPool, (caddr_t) NULL);
+		on_shmem_exit(FlushBufferPool, 0);
 #endif
 
 	SetDatabaseName(dbname);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.49 2000/07/22 14:49:01 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.50 2000/10/02 19:42:48 petere Exp $
  *
  * NOTES
  *
@@ -25,11 +25,11 @@
  *
  *-------------------------------------------------------------------------
  */
+#include "postgres.h"
+
 #include <sys/types.h>
 #include <sys/file.h>
 #include <errno.h>
-
-#include "postgres.h"
 
 #include "storage/ipc.h"
 #include "storage/s_lock.h"
@@ -65,7 +65,7 @@ static void IpcMemoryDetach(int status, char *shmaddr);
 static struct ONEXIT
 {
 	void		(*function) ();
-	caddr_t		arg;
+	Datum		arg;
 }			on_proc_exit_list[MAX_ON_EXITS], on_shmem_exit_list[MAX_ON_EXITS];
 
 static int	on_proc_exit_index,
@@ -182,7 +182,7 @@ shmem_exit(int code)
  * ----------------------------------------------------------------
  */
 int
-			on_proc_exit(void (*function) (), caddr_t arg)
+on_proc_exit(void (*function) (), Datum arg)
 {
 	if (on_proc_exit_index >= MAX_ON_EXITS)
 		return -1;
@@ -203,7 +203,7 @@ int
  * ----------------------------------------------------------------
  */
 int
-			on_shmem_exit(void (*function) (), caddr_t arg)
+on_shmem_exit(void (*function) (), Datum arg)
 {
 	if (on_shmem_exit_index >= MAX_ON_EXITS)
 		return -1;
@@ -234,8 +234,7 @@ on_exit_reset(void)
 /*																			*/
 /****************************************************************************/
 static void
-IPCPrivateSemaphoreKill(int status,
-						int semId)		/* caddr_t */
+IPCPrivateSemaphoreKill(int status, int semId)
 {
 	union semun semun;
 	semun.val = 0;		/* unused */
@@ -251,8 +250,7 @@ IPCPrivateSemaphoreKill(int status,
 /*																			*/
 /****************************************************************************/
 static void
-IPCPrivateMemoryKill(int status,
-					 int shmId) /* caddr_t */
+IPCPrivateMemoryKill(int status, int shmId)
 {
 	if (UsePrivateMemory)
 	{
@@ -343,7 +341,7 @@ IpcSemaphoreCreate(IpcSemaphoreKey semKey,
 		}
 
 		if (removeOnExit)
-			on_shmem_exit(IPCPrivateSemaphoreKill, (caddr_t) semId);
+			on_shmem_exit(IPCPrivateSemaphoreKill, (Datum)semId);
 	}
 
 #ifdef DEBUG_IPC
@@ -565,7 +563,7 @@ IpcMemoryCreate(IpcMemoryKey memKey, uint32 size, int permission)
 	}
 
 	/* if (memKey == PrivateIPCKey) */
-	on_shmem_exit(IPCPrivateMemoryKill, (caddr_t) shmid);
+	on_shmem_exit(IPCPrivateMemoryKill, (Datum) shmid);
 
 	return shmid;
 }
@@ -629,7 +627,7 @@ IpcMemoryAttach(IpcMemoryId memId)
 	}
 
 	if (!UsePrivateMemory)
-		on_shmem_exit(IpcMemoryDetach, (caddr_t) memAddress);
+		on_shmem_exit(IpcMemoryDetach, PointerGetDatum(memAddress));
 
 	return (char *) memAddress;
 }

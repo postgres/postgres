@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.166 2000/09/06 19:54:46 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.167 2000/10/02 19:42:46 petere Exp $
  *
  * NOTES
  *
@@ -628,7 +628,7 @@ PostmasterMain(int argc, char *argv[])
 		/*
 		 * register clean up proc
 		 */
-		on_proc_exit(UnlinkPidFile, NULL);
+		on_proc_exit(UnlinkPidFile, 0);
 	}
 
 	/*
@@ -727,7 +727,7 @@ pmdaemonize(int argc, char *argv[])
 	/*
 	 * register clean up proc
 	 */
-	on_proc_exit(UnlinkPidFile, NULL);
+	on_proc_exit(UnlinkPidFile, 0);
 }
 
 
