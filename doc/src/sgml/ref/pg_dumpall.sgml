@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.37 2003/03/18 00:02:11 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.38 2003/03/24 14:32:51 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -18,7 +18,7 @@ PostgreSQL documentation
  <refsynopsisdiv>
   <cmdsynopsis>
    <command>pg_dumpall</command>
-   <arg rep="repeat"><replaceable>options</replaceable></arg>
+   <arg rep="repeat"><replaceable>option</replaceable></arg>
   </cmdsynopsis>
  </refsynopsisdiv>
 
@@ -63,8 +63,8 @@ PostgreSQL documentation
   </para>
 
   <para>
-  <application>pg_dumpall</application> might need to connect several
-  times to the <productname>PostgreSQL</productname> server, asking for
+  <application>pg_dumpall</application> needs to connect several
+  times to the <productname>PostgreSQL</productname> server and might be asking for
   a password each time. It is convenient to have a
   <filename>$HOME/.pgpass</> file in such cases.
   </para>
@@ -96,7 +96,7 @@ PostgreSQL documentation
        <para>
 	Dump data as <command>INSERT</command> commands (rather
 	than <command>COPY</command>). This will make restoration very
-	slow, but it makes the output more portable to other RDBMS
+	slow, but it makes the output more portable to other SQL database
 	packages.
        </para>
       </listitem>
@@ -184,10 +184,10 @@ PostgreSQL documentation
       <listitem>
        <para>
 	Specifies the host name of the machine on which the database
-	server is running.  If host begins with a slash, it is used as
-	the directory for the Unix domain socket.  The default is
-	taken from the <envar>PGHOST</envar> environment variable, if
-	set, else a Unix domain socket connection is attempted.
+	server is running.  If the value begins with a slash, it is
+	used as the directory for the Unix domain socket.  The default
+	is taken from the <envar>PGHOST</envar> environment variable,
+	if set, else a Unix domain socket connection is attempted.
        </para>
       </listitem>
      </varlistentry>
@@ -196,9 +196,10 @@ PostgreSQL documentation
       <term>-p <replaceable>port</replaceable></term>
       <listitem>
        <para>
-        The port number on which the server is listening.  Defaults to
-        the <envar>PGPORT</envar> environment variable, if set, or a
-        compiled-in default.
+	Specifies the TCP port or local Unix domain socket file
+	extension on which the server is listening for connections.
+	Defaults to the <envar>PGPORT</envar> environment variable, if
+	set, or a compiled-in default.
        </para>
       </listitem>
      </varlistentry>
@@ -237,7 +238,7 @@ PostgreSQL documentation
 
     <listitem>
      <para>
-      Default connection parameters.
+      Default connection parameters
      </para>
     </listitem>
    </varlistentry>
@@ -255,17 +256,9 @@ PostgreSQL documentation
   </para>
 
   <para>
-   <application>pg_dumpall</application> will need to connect several
-   times to the <productname>PostgreSQL</productname> server.  If password
-   authentication is configured, it will ask for a password each time. In
-   that case it would be convenient to set up a <filename>.pgpass</> 
-   password file.
-  </para>
-
-  <para>
    Once restored, it is wise to run <command>ANALYZE</> on each
    database so the optimizer has useful statistics. You
-   can also run <command>vacuumdb -a -z</> to <command>ANALYZE</> all
+   can also run <command>vacuumdb -a -z</> to analyze all
    databases.
   </para>
 

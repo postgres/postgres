@@ -1,17 +1,14 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.20 2002/11/11 20:14:03 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.21 2003/03/24 14:32:50 petere Exp $
 -->
 
 <chapter id="maintenance">
  <title>Routine Database Maintenance Tasks</title>
 
- <sect1 id="maintenance-general">
-  <title>General Discussion</Title>
-
   <para>
    There are a few routine maintenance chores that must be performed on
    a regular basis to keep a <productname>PostgreSQL</productname>
-   installation running smoothly.  The tasks discussed here are repetitive
+   server running smoothly.  The tasks discussed here are repetitive
    in nature and can easily be automated using standard Unix tools such
    as <application>cron</application> scripts.  But it is the database
    administrator's responsibility to set up appropriate scripts, and to
@@ -22,7 +19,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.20 2002/11/11 20:14:03
    One obvious maintenance task is creation of backup copies of the data on a
    regular schedule.  Without a recent backup, you have no chance of recovery
    after a catastrophe (disk failure, fire, mistakenly dropping a critical
-   table, etc).  The backup and recovery mechanisms available in
+   table, etc.).  The backup and recovery mechanisms available in
    <productname>PostgreSQL</productname> are discussed at length in
    <xref linkend="backup">.
   </para>
@@ -44,8 +41,6 @@ $Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.20 2002/11/11 20:14:03
    these tasks will go far towards ensuring a pleasant and productive
    experience with the system.
   </para>
-
- </sect1>
 
  <sect1 id="routine-vacuuming">
   <title>Routine Vacuuming</title>
@@ -75,8 +70,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.20 2002/11/11 20:14:03
      </listitem>
     </orderedlist>
 
-   The frequency and scope of <command>VACUUM</>s performed for each of
-   these reasons will vary depending on the needs of each installation.
+   The frequency and scope of the <command>VACUUM</> operations performed for each of
+   these reasons will vary depending on the needs of each site.
    Therefore, database administrators must understand these issues and
    develop an appropriate maintenance strategy.  This section concentrates
    on explaining the high-level issues; for details about command syntax
@@ -86,7 +81,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.20 2002/11/11 20:14:03
   <para>
    Beginning in <productname>PostgreSQL</productname> 7.2, the standard form
    of <command>VACUUM</> can run in parallel with normal database operations
-   (selects, inserts, updates, deletes, but not changes to table schemas).
+   (selects, inserts, updates, deletes, but not changes to table definitions).
    Routine vacuuming is therefore not nearly as intrusive as it was in prior
    releases, and it's not as critical to try to schedule it at low-usage
    times of day.
@@ -131,8 +126,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.20 2002/11/11 20:14:03
     return disk space to the operating system.  If you need to return disk
     space to the operating system you can use <command>VACUUM FULL</> ---
     but what's the point of releasing disk space that will only have to be
-    allocated again soon?  Moderately frequent standard <command>VACUUM</>s
-    are a better approach than infrequent <command>VACUUM FULL</>s for
+    allocated again soon?  Moderately frequent standard <command>VACUUM</> runs
+    are a better approach than infrequent <command>VACUUM FULL</> runs for
     maintaining heavily-updated tables.
    </para>
 
@@ -140,7 +135,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.20 2002/11/11 20:14:03
     Recommended practice for most sites is to schedule a database-wide
     <command>VACUUM</> once a day at a low-usage time of day, supplemented
     by more frequent vacuuming of heavily-updated tables if necessary.
-    (If you have multiple databases in an installation, don't forget to
+    (If you have multiple databases in a cluster, don't forget to
     vacuum each one; the <filename>vacuumdb</> script may be helpful.)
     Use plain <command>VACUUM</>, not <command>VACUUM FULL</>, for routine
     vacuuming for space recovery.
@@ -233,11 +228,11 @@ $Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.20 2002/11/11 20:14:03
 
    <para>
     <productname>PostgreSQL</productname>'s MVCC transaction semantics
-    depend on being able to compare transaction ID (<firstterm>XID</>)
-    numbers: a tuple with an insertion XID newer than the current
+    depend on being able to compare transaction ID (<acronym>XID</>)
+    numbers: a tuple with an insertion XID greater than the current
     transaction's XID is <quote>in the future</> and should not be visible
     to the current transaction.  But since transaction IDs have limited size
-    (32 bits at this writing) an installation that runs for a long time (more
+    (32 bits at this writing) a cluster that runs for a long time (more
     than 4 billion transactions) will suffer <firstterm>transaction ID
     wraparound</>: the XID counter wraps around to zero, and all of a sudden
     transactions that were in the past appear to be in the future --- which
@@ -251,7 +246,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.20 2002/11/11 20:14:03
     against XID wraparound was to re-<command>initdb</> at least every 4
     billion transactions. This of course was not very satisfactory for
     high-traffic sites, so a better solution has been devised. The new
-    approach allows an installation to remain up indefinitely, without
+    approach allows a server to remain up indefinitely, without
     <command>initdb</> or any sort of restart. The price is this
     maintenance requirement: <emphasis>every table in the database must
     be vacuumed at least once every billion transactions</emphasis>.
@@ -293,9 +288,9 @@ $Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.20 2002/11/11 20:14:03
     <command>VACUUM</>'s normal policy is to reassign <literal>FrozenXID</>
     to any tuple with a normal XID more than one billion transactions in the
     past.  This policy preserves the original insertion XID until it is not
-    likely to be of interest anymore (in fact, most tuples will probably
-    live and die without ever being <quote>frozen</>).  With this policy,
-    the maximum safe interval between <command>VACUUM</>s of any table
+    likely to be of interest anymore.  (In fact, most tuples will probably
+    live and die without ever being <quote>frozen</>.)  With this policy,
+    the maximum safe interval between <command>VACUUM</> runs on any table
     is exactly one billion transactions: if you wait longer, it's possible
     that a tuple that was not quite old enough to be reassigned last time
     is now more than two billion transactions old and has wrapped around
@@ -304,13 +299,13 @@ $Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.20 2002/11/11 20:14:03
    </para>
 
    <para>
-    Since periodic <command>VACUUM</>s are needed anyway for the reasons
+    Since periodic <command>VACUUM</> runs are needed anyway for the reasons
     described earlier, it's unlikely that any table would not be vacuumed
     for as long as a billion transactions.  But to help administrators ensure
     this constraint is met, <command>VACUUM</> stores transaction ID
-    statistics in the system table <filename>pg_database</>.  In particular,
-    the <filename>datfrozenxid</> field of a database's
-    <filename>pg_database</> row is updated at the completion of any
+    statistics in the system table <literal>pg_database</>.  In particular,
+    the <literal>datfrozenxid</> column of a database's
+    <literal>pg_database</> row is updated at the completion of any
     database-wide vacuum operation (i.e., <command>VACUUM</> that does not
     name a specific table).  The value stored in this field is the freeze
     cutoff XID that was used by that <command>VACUUM</> command.  All normal
@@ -334,11 +329,11 @@ SELECT datname, age(datfrozenxid) FROM pg_database;
     database at least once every half-a-billion (500 million) transactions,
     so as to provide plenty of safety margin.  To help meet this rule,
     each database-wide <command>VACUUM</> automatically delivers a warning
-    if there are any <filename>pg_database</> entries showing an
+    if there are any <literal>pg_database</> entries showing an
     <literal>age</> of more than 1.5 billion transactions, for example:
 
 <programlisting>
-play=# vacuum;
+play=# VACUUM;
 WARNING:  Some databases have not been vacuumed in 1613770184 transactions.
         Better vacuum them within 533713463 transactions,
         or you may have a wraparound failure.
@@ -355,13 +350,13 @@ VACUUM
     database will be frozen. Hence, as long as the database is not
     modified in any way, it will not need subsequent vacuuming to avoid
     transaction ID wraparound problems. This technique is used by
-    <filename>initdb</> to prepare the <filename>template0</> database.
+    <command>initdb</> to prepare the <literal>template0</> database.
     It should also be used to prepare any user-created databases that
     are to be marked <literal>datallowconn</> = <literal>false</> in
-    <filename>pg_database</>, since there isn't any convenient way to
+    <literal>pg_database</>, since there isn't any convenient way to
     vacuum a database that you can't connect to. Note that
     <command>VACUUM</command>'s automatic warning message about
-    unvacuumed databases will ignore <filename>pg_database</> entries
+    unvacuumed databases will ignore <literal>pg_database</> entries
     with <literal>datallowconn</> = <literal>false</>, so as to avoid
     giving false warnings about these databases; therefore it's up to
     you to ensure that such databases are frozen correctly.
@@ -415,9 +410,9 @@ VACUUM
   </para>
 
   <para>
-   If you simply direct the postmaster's <systemitem>stderr</> into a
+   If you simply direct the <systemitem>stderr</> of the <command>postmaster</command> into a
    file, the only way to truncate the log file is to stop and restart
-   the postmaster. This may be OK for development setups but you won't
+   the <command>postmaster</command>. This may be OK for development setups but you won't
    want to run a production server that way.
   </para>
 
@@ -425,7 +420,7 @@ VACUUM
    The simplest production-grade approach to managing log output is to
    send it all to <application>syslog</> and let
    <application>syslog</> deal with file rotation. To do this, set
-   <literal>syslog</> to 2 (log to <application>syslog</> only) in
+   the configurations parameter <literal>syslog</> to 2 (to log to <application>syslog</> only) in
    <filename>postgresql.conf</>. Then you can send a
    <literal>SIGHUP</literal> signal to the <application>syslog</>
    daemon whenever you want to force it to start writing a new log
@@ -436,18 +431,18 @@ VACUUM
    On many systems, however, <application>syslog</> is not very reliable, particularly
    with large log messages; it may truncate or drop messages just when
    you need them the most. You may find it more useful to pipe the
-   <application>postmaster</>'s <systemitem>stderr</> to some type of
-   log rotation script. If you start the postmaster with
-   <application>pg_ctl</>, then the postmaster's <systemitem>stderr</>
+   <systemitem>stderr</> of the <command>postmaster</> to some type of
+   log rotation program. If you start the server with
+   <command>pg_ctl</>, then the <systemitem>stderr</> of the <command>postmaster</command>
    is already redirected to <systemitem>stdout</>, so you just need a
    pipe command:
    
-<screen>
-<userinput>pg_ctl start | logrotate</userinput>
-</screen>
+<programlisting>
+pg_ctl start | logrotate
+</programlisting>
 
    The <productname>PostgreSQL</> distribution doesn't include a suitable
-   log rotation program, but there are many available on the net;
+   log rotation program, but there are many available on the Internet;
    one is included in the Apache distribution, for example.
   </para>
  </sect1>

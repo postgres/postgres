@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pgtksh.sgml,v 1.6 2003/01/19 00:13:31 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pgtksh.sgml,v 1.7 2003/03/24 14:32:51 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -20,7 +20,7 @@ PostgreSQL documentation
  <refsynopsisdiv>
   <cmdsynopsis>
    <command>pgtksh</command>
-   <arg><replaceable>filename</replaceable> <arg rep="repeat"><replaceable>arguments</replaceable></arg></arg>
+   <arg><replaceable>filename</replaceable> <arg rep="repeat"><replaceable>argument</replaceable></arg></arg>
   </cmdsynopsis>
  </refsynopsisdiv>
 

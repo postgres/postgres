@@ -54,7 +54,7 @@
     <term><filename>interfaces\libpq\Release\libpqdll.lib</filename></term>
     <listitem>
      <para>
-      Import library to link your program to <filename>libpq.dll</filename>
+      Import library to link your programs to <filename>libpq.dll</filename>
      </para>
     </listitem>
    </varlistentry>
@@ -98,7 +98,7 @@
  </para>
 
  <para>
-  To use the libraries, you must add the
+  To use the library, you must add the
   <filename>libpqdll.lib</filename> file to your project.  (In Visual
   C++, just right-click on the project and choose to add it.)
  </para>

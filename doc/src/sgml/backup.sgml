@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/backup.sgml,v 2.25 2003/03/18 00:02:11 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/backup.sgml,v 2.26 2003/03/24 14:32:50 petere Exp $
 -->
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -110,7 +110,7 @@ psql <replaceable class="parameter">dbname</replaceable> &lt; <replaceable class
     <application>psql</> (e.g., with <literal>createdb -T template0
     <replaceable class="parameter">dbname</></literal>).
     <application>psql</> supports similar options to <application>pg_dump</> 
-    for controlling the database server location and the user names. See
+    for controlling the database server location and the user name. See
     its reference page for more information.
    </para>
 
@@ -135,7 +135,7 @@ psql <replaceable class="parameter">dbname</replaceable> &lt; <replaceable class
    <para>
     The ability of <application>pg_dump</> and <application>psql</> to
     write to or read from pipes makes it possible to dump a database
-    directly from one server to another, for example
+    directly from one server to another; for example:
 <programlisting>
 pg_dump -h <replaceable>host1</> <replaceable>dbname</> | psql -h <replaceable>host2</> <replaceable>dbname</>
 </programlisting>
@@ -179,27 +179,19 @@ pg_dumpall &gt; <replaceable>outfile</>
   <sect2 id="backup-dump-large">
    <title>Large Databases</title>
 
-   <note>
-    <title>Acknowledgement</title>
-    <para>
-     Originally written by Hannu Krosing
-     (<email>hannu@trust.ee</email>) on 1999-06-19
-    </para>
-   </note>
-
    <para>
     Since <productname>PostgreSQL</productname> allows tables larger
     than the maximum file size on your system, it can be problematic
-    to dump the table to a file, since the resulting file will likely
+    to dump such a table to a file, since the resulting file will likely
     be larger than the maximum size allowed by your system. As
-    <application>pg_dump</> writes to the standard output, you can
-    just use standard *nix tools to work around this possible problem.
+    <application>pg_dump</> can write to the standard output, you can
+    just use standard Unix tools to work around this possible problem.
    </para>
 
    <formalpara>
     <title>Use compressed dumps.</title>
     <para>
-     Use your favorite compression program, for example
+     You can use your favorite compression program, for example
      <application>gzip</application>.
 
 <programlisting>
@@ -222,9 +214,10 @@ cat <replaceable class="parameter">filename</replaceable>.gz | gunzip | psql <re
    </formalpara>
 
    <formalpara>
-    <title>Use <application>split</>.</title>
+    <title>Use <command>split</>.</title>
     <para>
-     This allows you to split the output into pieces that are
+     The <command>split</command> command
+     allows you to split the output into pieces that are
      acceptable in size to the underlying file system. For example, to
      make chunks of 1 megabyte:
 
@@ -338,7 +331,7 @@ tar -cf backup.tar /usr/local/pgsql/data
 
     <listitem>
      <para>
-      If you have dug into the details of the file system layout you
+      If you have dug into the details of the file system layout of the data you
       may be tempted to try to back up or restore only certain
       individual tables or databases from their respective files or
       directories. This will <emphasis>not</> work because the
@@ -348,7 +341,7 @@ tar -cf backup.tar /usr/local/pgsql/data
       all transactions. A table file is only usable with this
       information. Of course it is also impossible to restore only a
       table and the associated <filename>pg_clog</filename> data
-      because that will render all other tables in the database
+      because that would render all other tables in the database
       cluster useless.
      </para>
     </listitem>
@@ -381,7 +374,7 @@ tar -cf backup.tar /usr/local/pgsql/data
    server, using <application>pg_dump</>. (There are checks in place
    that prevent you from doing the wrong thing, so no harm can be done
    by confusing these things.) The precise installation procedure is
-   not subject of this section, these details are in <xref linkend="installation">.
+   not subject of this section; these details are in <xref linkend="installation">.
   </para>
 
   <para>
@@ -393,7 +386,7 @@ tar -cf backup.tar /usr/local/pgsql/data
 pg_dumpall -p 5432 | psql -d template1 -p 6543
 </programlisting>
 
-   to transfer your data, or use an intermediate file if you want.
+   to transfer your data.  Or use an intermediate file if you want.
    Then you can shut down the old server and start the new server at
    the port the old one was running at. You should make sure that the
    database is not updated after you run <application>pg_dumpall</>,
@@ -413,7 +406,7 @@ pg_dumpall -p 5432 | psql -d template1 -p 6543
 pg_dumpall > backup
 pg_ctl stop
 mv /usr/local/pgsql /usr/local/pgsql.old
-cd /usr/src/postgresql-&version;
+cd ~/postgresql-&version;
 gmake install
 initdb -D /usr/local/pgsql/data
 postmaster -D /usr/local/pgsql/data

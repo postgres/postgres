@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/monitoring.sgml,v 1.17 2003/03/20 18:51:16 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/monitoring.sgml,v 1.18 2003/03/24 14:32:50 petere Exp $
 -->
 
 <chapter id="monitoring">
@@ -14,7 +14,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/monitoring.sgml,v 1.17 2003/03/20 18:51:16 
   <para>
    Several tools are available for monitoring database activity and
    analyzing performance.  Most of this chapter is devoted to describing
-   <productname>PostgreSQL</productname>'s <firstterm>statistics collector</>,
+   <productname>PostgreSQL</productname>'s statistics collector,
    but one should not neglect regular Unix monitoring programs such as
    <command>ps</> and <command>top</>.  Also, once one has identified a
    poorly-performing query, further investigation may be needed using
@@ -50,7 +50,7 @@ postgres  1016  0.1  2.4  6532 3080 pts/1    SN   13:19   0:00 postgres: tgl reg
    (The appropriate invocation of <command>ps</> varies across different
    platforms, as do the details of what is shown.  This example is from a
    recent Linux system.)  The first process listed here is the
-   <firstterm>postmaster</>, the master server process.  The command arguments
+   <application>postmaster</>, the master server process.  The command arguments
    shown for it are the same ones given when it was launched.  The next two
    processes implement the statistics collector, which will be described in
    detail in the next section.  (These will not be present if you have set
@@ -67,7 +67,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
   The activity may be <literal>idle</> (i.e., waiting for a client command),
   <literal>idle in transaction</> (waiting for client inside a <command>BEGIN</> block),
   or a command type name such as <literal>SELECT</>.  Also,
-  <literal>waiting</> is attached if the server is presently waiting
+  <literal>waiting</> is attached if the server process is presently waiting
   on a lock held by another server process.  In the above example we can infer
   that process 1003 is waiting for process 1016 to complete its transaction and
   thereby release some lock or other.
@@ -77,22 +77,19 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
   <para>
   <productname>Solaris</productname> requires special handling. You must
   use <command>/usr/ucb/ps</command>, rather than
-  <command>/bin/ps</command>. You also must use two <command>w</command>
+  <command>/bin/ps</command>. You also must use two <option>w</option>
   flags, not just one. In addition, your original invocation of the
-  <application>postmaster</application> must have a shorter
+  <command>postmaster</command> command must have a shorter
   <command>ps</command> status display than that provided by each
-  backend.   If you fail to do all three things, the <command>ps</>
-  output for each backend will be the original <application>postmaster</>
+  server process.  If you fail to do all three things, the <command>ps</>
+  output for each server process will be the original <command>postmaster</>
   command line.
   </para>
   </tip>
-
-
-
  </sect1>
 
  <sect1 id="monitoring-stats">
-  <title>Statistics Collector</Title>
+  <title>The Statistics Collector</Title>
 
   <indexterm zone="monitoring-stats">
    <primary>statistics</primary>
@@ -103,7 +100,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
    is a subsystem that supports collection and reporting of information about
    server activity.  Presently, the collector can count accesses to tables
    and indexes in both disk-block and individual-row terms.  It also supports
-   determining the exact query currently being executed by other server
+   determining the exact command currently being executed by other server
    processes.
   </para>
 
@@ -113,13 +110,13 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
   <para>
    Since collection of statistics adds some overhead to query execution,
    the system can be configured to collect or not collect information.
-   This is controlled by configuration variables that are normally set in
-   <filename>postgresql.conf</> (see <xref linkend="runtime-config"> for
-   details about setting configuration variables).
+   This is controlled by configuration parameters that are normally set in
+   <filename>postgresql.conf</>.  (See <xref linkend="runtime-config"> for
+   details about setting configuration parameters.)
   </para>
 
   <para>
-   The variable <varname>STATS_START_COLLECTOR</varname> must be set to
+   The parameter <varname>stats_start_collector</varname> must be set to
    <literal>true</> for the statistics collector to
    be launched at all.  This is the default and recommended setting,
    but it may be turned off if you have no interest in statistics and
@@ -129,32 +126,32 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
   </para>
 
   <para>
-   The variables <varname>STATS_COMMAND_STRING</varname>,
-   <varname>STATS_BLOCK_LEVEL</varname>,
-   and <varname>STATS_ROW_LEVEL</varname> control how much information is
-   actually sent to the collector, and thus determine how much run-time
+   The parameters <varname>stats_command_string</varname>,
+   <varname>stats_block_level</varname>,
+   and <varname>stats_row_level</varname> control how much information is
+   actually sent to the collector and thus determine how much run-time
    overhead occurs.  These respectively determine whether a server process
    sends its current command string, disk-block-level access statistics, and
-   row-level access statistics to the collector.  Normally these variables are
+   row-level access statistics to the collector.  Normally these parameters are
    set in <filename>postgresql.conf</> so that they apply to all server
-   processes, but it is possible to turn them on or off in individual server
-   processes using the <command>SET</> command.  (To prevent ordinary users
+   processes, but it is possible to turn them on or off in individual sessions
+   using the <command>SET</> command.  (To prevent ordinary users
    from hiding their activity from the administrator, only superusers are
-   allowed to change these variables with <command>SET</>.)
+   allowed to change these parameters with <command>SET</>.)
   </para>
 
-   <important>
+   <note>
     <para>
-     Since the variables <varname>STATS_COMMAND_STRING</varname>,
-     <varname>STATS_BLOCK_LEVEL</varname>, and
-     <varname>STATS_ROW_LEVEL</varname> default to <literal>false</>,
+     Since the parameters <varname>stats_command_string</varname>,
+     <varname>stats_block_level</varname>, and
+     <varname>stats_row_level</varname> default to <literal>false</>,
      very few statistics are collected in the default
      configuration. Enabling one or more of these configuration
      variables will significantly enhance the amount of useful data
      produced by the statistics collector, at the expense of
      additional run-time overhead.
     </para>
-   </important>
+   </note>
 
  </sect2>
 
@@ -181,7 +178,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
   <para>
    Another important point is that when a server process is asked to display
    any of these statistics, it first fetches the most recent totals emitted by
-   the collector process.  It then continues to use this snapshot for all
+   the collector process and then continues to use this snapshot for all
    statistical views and functions until the end of its current transaction.
    So the statistics will appear not to change as long as you continue the
    current transaction.
@@ -209,9 +206,9 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry>One row per server process, showing process
       <acronym>ID</>, database, user, current query, and the time at
       which the current query began execution. The columns that report
-      data on the current query are only available if the
-      <varname>STATS_COMMAND_STRING</varname> configuration option has
-      been enabled. Furthermore, these columns can only be accessed by
+      data on the current query are only available if the parameter
+      <varname>stats_command_string</varname> has been turned on.
+      Furthermore, these columns can only be accessed by
       superusers; or when the user examining the view is the same as the user
       in the row; for others it reads as null.  (Note that because of the 
       collector's reporting delay, current query will only be up-to-date for 
@@ -220,7 +217,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
 
      <row>
       <entry><structname>pg_stat_database</></entry>
-      <entry>One row per database, showing number of active backends,
+      <entry>One row per database, showing the number of active backend server processes,
       total transactions committed and total rolled back in that database,
       total disk blocks read, and total number of buffer hits (i.e., block
       read requests avoided by finding the block already in buffer cache).
@@ -232,7 +229,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry>For each table in the current database, total numbers of
       sequential and index scans, total numbers of tuples returned by
       each type of scan, and totals of tuple insertions, updates,
-      and deletes.</entry>
+      and deletions.</entry>
      </row>
 
      <row>
@@ -360,12 +357,12 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
    queries that use the same underlying statistics access functions as
    these standard views do.  These functions are listed in <xref
    linkend="monitoring-stats-funcs-table">.  The per-database access
-   functions accept a database OID to identify which database to
-   report on.  The per-table and per-index functions accept a table or
-   index OID (note that only tables and indexes in the current
-   database can be seen with these functions).  The per-backend access
-   functions accept a backend ID number, which ranges from one to the
-   number of currently active backends.
+   functions take a database OID as argument to identify which database to
+   report on.  The per-table and per-index functions take a table or
+   index OID.  (Note that only tables and indexes in the current
+   database can be seen with these functions.)  The per-backend access
+   functions take a backend ID number, which ranges from one to the
+   number of currently active backend processes.
   </para>
 
   <table id="monitoring-stats-funcs-table">
@@ -382,15 +379,15 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
 
     <tbody>
      <row>
-      <entry><function>pg_stat_get_db_numbackends</function>(<type>oid</type>)</entry>
+      <entry><literal><function>pg_stat_get_db_numbackends</function>(<type>oid</type>)</literal></entry>
       <entry><type>integer</type></entry>
       <entry>
-       Number of active backends in database
+       Number of active backend processes for database
       </entry>
      </row>
 
      <row>
-      <entry><function>pg_stat_get_db_xact_commit</function>(<type>oid</type>)</entry>
+      <entry><literal><function>pg_stat_get_db_xact_commit</function>(<type>oid</type>)</literal></entry>
       <entry><type>bigint</type></entry>
       <entry>
        Transactions committed in database
@@ -398,7 +395,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
      </row>
 
      <row>
-      <entry><function>pg_stat_get_db_xact_rollback</function>(<type>oid</type>)</entry>
+      <entry><literal><function>pg_stat_get_db_xact_rollback</function>(<type>oid</type>)</literal></entry>
       <entry><type>bigint</type></entry>
       <entry>
        Transactions rolled back in database
@@ -406,7 +403,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
      </row>
 
      <row>
-      <entry><function>pg_stat_get_db_blocks_fetched</function>(<type>oid</type>)</entry>
+      <entry><literal><function>pg_stat_get_db_blocks_fetched</function>(<type>oid</type>)</literal></entry>
       <entry><type>bigint</type></entry>
       <entry>
        Number of disk block fetch requests for database
@@ -414,7 +411,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
      </row>
 
      <row>
-      <entry><function>pg_stat_get_db_blocks_hit</function>(<type>oid</type>)</entry>
+      <entry><literal><function>pg_stat_get_db_blocks_hit</function>(<type>oid</type>)</literal></entry>
       <entry><type>bigint</type></entry>
       <entry>
        Number of disk block fetch requests found in cache for database
@@ -422,7 +419,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
      </row>
 
      <row>
-      <entry><function>pg_stat_get_numscans</function>(<type>oid</type>)</entry>
+      <entry><literal><function>pg_stat_get_numscans</function>(<type>oid</type>)</literal></entry>
       <entry><type>bigint</type></entry>
       <entry>
        Number of sequential scans done when argument is a table,
@@ -431,7 +428,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
      </row>
 
      <row>
-      <entry><function>pg_stat_get_tuples_returned</function>(<type>oid</type>)</entry>
+      <entry><literal><function>pg_stat_get_tuples_returned</function>(<type>oid</type>)</literal></entry>
       <entry><type>bigint</type></entry>
       <entry>
        Number of tuples read by sequential scans when argument is a table,
@@ -440,7 +437,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
      </row>
 
      <row>
-      <entry><function>pg_stat_get_tuples_fetched</function>(<type>oid</type>)</entry>
+      <entry><literal><function>pg_stat_get_tuples_fetched</function>(<type>oid</type>)</literal></entry>
       <entry><type>bigint</type></entry>
       <entry>
        Number of valid (unexpired) table tuples fetched by sequential scans
@@ -450,7 +447,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
      </row>
 
      <row>
-      <entry><function>pg_stat_get_tuples_inserted</function>(<type>oid</type>)</entry>
+      <entry><literal><function>pg_stat_get_tuples_inserted</function>(<type>oid</type>)</literal></entry>
       <entry><type>bigint</type></entry>
       <entry>
        Number of tuples inserted into table
@@ -458,7 +455,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
      </row>
 
      <row>
-      <entry><function>pg_stat_get_tuples_updated</function>(<type>oid</type>)</entry>
+      <entry><literal><function>pg_stat_get_tuples_updated</function>(<type>oid</type>)</literal></entry>
       <entry><type>bigint</type></entry>
       <entry>
        Number of tuples updated in table
@@ -466,7 +463,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
      </row>
 
      <row>
-      <entry><function>pg_stat_get_tuples_deleted</function>(<type>oid</type>)</entry>
+      <entry><literal><function>pg_stat_get_tuples_deleted</function>(<type>oid</type>)</literal></entry>
       <entry><type>bigint</type></entry>
       <entry>
        Number of tuples deleted from table
@@ -474,7 +471,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
      </row>
 
      <row>
-      <entry><function>pg_stat_get_blocks_fetched</function>(<type>oid</type>)</entry>
+      <entry><literal><function>pg_stat_get_blocks_fetched</function>(<type>oid</type>)</literal></entry>
       <entry><type>bigint</type></entry>
       <entry>
        Number of disk block fetch requests for table or index
@@ -482,7 +479,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
      </row>
 
      <row>
-      <entry><function>pg_stat_get_blocks_hit</function>(<type>oid</type>)</entry>
+      <entry><literal><function>pg_stat_get_blocks_hit</function>(<type>oid</type>)</literal></entry>
       <entry><type>bigint</type></entry>
       <entry>
        Number of disk block requests found in cache for table or index
@@ -490,69 +487,71 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
      </row>
 
      <row>
-      <entry><function>pg_stat_get_backend_idset</function>()</entry>
+      <entry><literal><function>pg_stat_get_backend_idset</function>()</literal></entry>
       <entry><type>set of integer</type></entry>
       <entry>
-       Set of currently active backend IDs (from 1 to N where N is the
-       number of active backends).  See usage example below
+       Set of currently active backend process IDs (from 1 to the
+       number of active backend processes).  See usage example in the text.
       </entry>
      </row>
 
      <row>
-      <entry><function>pg_backend_pid</function>()</entry>
+      <entry><literal><function>pg_backend_pid</function>()</literal></entry>
       <entry><type>integer</type></entry>
       <entry>
-       Process ID of the attached backend
+       Process ID of the backend process attached to the current session
       </entry>
      </row>
 
      <row>
-      <entry><function>pg_stat_get_backend_pid</function>(<type>integer</type>)</entry>
+      <entry><literal><function>pg_stat_get_backend_pid</function>(<type>integer</type>)</literal></entry>
       <entry><type>integer</type></entry>
       <entry>
-       Process ID of all backend processes
+       Process ID of the given backend process
       </entry>
      </row>
 
      <row>
-      <entry><function>pg_stat_get_backend_dbid</function>(<type>integer</type>)</entry>
+      <entry><literal><function>pg_stat_get_backend_dbid</function>(<type>integer</type>)</literal></entry>
       <entry><type>oid</type></entry>
       <entry>
-       Database ID of backend process
+       Database ID of the given backend process
       </entry>
      </row>
 
      <row>
-      <entry><function>pg_stat_get_backend_userid</function>(<type>integer</type>)</entry>
+      <entry><literal><function>pg_stat_get_backend_userid</function>(<type>integer</type>)</literal></entry>
       <entry><type>oid</type></entry>
       <entry>
-       User ID of backend process
+       User ID of the given backend process
       </entry>
      </row>
 
      <row>
-      <entry><function>pg_stat_get_backend_activity</function>(<type>integer</type>)</entry>
+      <entry><literal><function>pg_stat_get_backend_activity</function>(<type>integer</type>)</literal></entry>
       <entry><type>text</type></entry>
       <entry>
-       Current query of backend process (NULL if caller is not
-       superuser, or is the same user as that of the backend being queried,
-       or <varname>STATS_COMMAND_STRING</varname> is not enabled)
+       Active command of the given backend process (null if the
+       current user is not a superuser nor the same user as that of
+       the session being queried, or
+       <varname>stats_command_string</varname> is not on)
       </entry>
      </row>
 
      <row>
-      <entry><function>pg_stat_get_backend_activity_start</function>(<type>integer</type>)</entry>
+      <entry><literal><function>pg_stat_get_backend_activity_start</function>(<type>integer</type>)</literal></entry>
       <entry><type>text</type></entry>
       <entry>
-       The time at which the specified backend's currently executing query was
-       initiated (NULL if caller is not superuser, or
-       <varname>STATS_COMMAND_STRING</varname> is not enabled)
+       The time at which the specified backend process' currently
+       executing query was started (null if the current user is not a
+       superuser, or <varname>stats_command_string</varname> is not
+       on)
       </entry>
      </row>
 
 
      <row>
-      <entry><function>pg_stat_reset</function>()</entry>
+      <entry><literal><function>pg_stat_reset</function>()</literal></entry>
       <entry><type>boolean</type></entry>
       <entry>
        Reset all currently collected statistics
@@ -564,8 +563,8 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
 
    <note>
     <para>
-     <literal>blocks_fetched</literal> minus
-     <literal>blocks_hit</literal> gives the number of kernel
+     <function>pg_stat_get_db_blocks_fetched</function> minus
+     <function>pg_stat_get_db_blocks_hit</function> gives the number of kernel
      <function>read()</> calls issued for the table, index, or
      database; but the actual number of physical reads is usually
      lower due to kernel-level buffering.
@@ -574,13 +573,13 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
 
   <para>
    The function <function>pg_stat_get_backend_idset</function> provides
-   a convenient way to generate one row for each active backend.  For
-   example, to show the <acronym>PID</>s and current queries of all backends:
+   a convenient way to generate one row for each active backend process.  For
+   example, to show the <acronym>PID</>s and current queries of all backend processes:
 
 <programlisting>
-SELECT pg_stat_get_backend_pid(S.backendid) AS procpid,
-       pg_stat_get_backend_activity(S.backendid) AS current_query
-FROM (SELECT pg_stat_get_backend_idset() AS backendid) AS S;
+SELECT pg_stat_get_backend_pid(s.backendid) AS procpid,
+       pg_stat_get_backend_activity(s.backendid) AS current_query
+    FROM (SELECT pg_stat_get_backend_idset() AS backendid) AS s;
 </programlisting>
   </para>
 
@@ -592,7 +591,7 @@ FROM (SELECT pg_stat_get_backend_idset() AS backendid) AS S;
 
   <para>
    Another useful tool for monitoring database activity is the
-   <literal>pg_locks</literal> system catalog. This allows the
+   <literal>pg_locks</literal> system table.  It allows the
    database administrator to view information about the outstanding
    locks in the lock manager. For example, this capability can be used
    to:
@@ -609,7 +608,7 @@ FROM (SELECT pg_stat_get_backend_idset() AS backendid) AS S;
 
     <listitem>
      <para>
-      View the relation in the current database with the most
+      Determine the relation in the current database with the most
       ungranted locks (which might be a source of contention among
       database clients).
      </para>
@@ -636,7 +635,7 @@ FROM (SELECT pg_stat_get_backend_idset() AS backendid) AS S;
     view produces a consistent set of results, while not blocking
     normal lock manager operations longer than necessary.  Nonetheless
     there could be some impact on database performance if this view is
-    examined often.
+    read often.
    </para>
   </note>
 
@@ -646,7 +645,7 @@ FROM (SELECT pg_stat_get_backend_idset() AS backendid) AS S;
    <literal>pg_locks</literal> view contains one row per lockable
    object and requested lock mode.  Thus, the same lockable object may
    appear many times, if multiple transactions are holding or waiting
-   for locks on it.  A lockable object is either a relation or a
+   for locks on it.  A lockable object is either a relation (e.g., a table) or a
    transaction ID.  (Note that this view includes only table-level
    locks, not row-level ones.  If a transaction is waiting for a
    row-level lock, it will appear in the view as waiting for the
@@ -654,13 +653,13 @@ FROM (SELECT pg_stat_get_backend_idset() AS backendid) AS S;
   </para>
 
   <table id="monitoring-locks-table">
-   <title>Lock Status System View</title>
+   <title><literal>pg_locks</literal> Columns</title>
 
    <tgroup cols="3">
     <thead>
      <row>
       <entry>Column Name</entry>
-      <entry>Type</entry>
+      <entry>Data Type</entry>
       <entry>Description</entry>
      </row>
     </thead>
@@ -671,7 +670,7 @@ FROM (SELECT pg_stat_get_backend_idset() AS backendid) AS S;
       <entry><type>oid</type></entry>
       <entry>
        The OID of the locked relation, or null if the lockable object
-       is a transaction ID. This column can be joined with the
+       is a transaction ID. This column can be joined with the column <literal>oid</> of the
        <literal>pg_class</literal> system catalog to get more
        information on the locked relation.  Note however that this
        will only work for relations in the current database (those for
@@ -687,7 +686,7 @@ FROM (SELECT pg_stat_get_backend_idset() AS backendid) AS S;
        The OID of the database in which the locked relation exists, or
        null if the lockable object is a transaction ID.  If the lock
        is on a globally-shared table, this field will be zero. This
-       column can be joined with the <literal>pg_database</literal>
+       column can be joined with the column <literal>oid</> of the <literal>pg_database</literal>
        system catalog to get more information on the locked object's
        database.
       </entry>
@@ -712,11 +711,11 @@ FROM (SELECT pg_stat_get_backend_idset() AS backendid) AS S;
       <entry><type>integer</type></entry>
       <entry>
        The process ID of the <productname>PostgreSQL</productname>
-       backend belonging to the session that has acquired or is
+       server process belonging to the session that has acquired or is
        attempting to acquire the lock. If you have enabled the
-       statistics collector, this column can be joined with the
+       statistics collector, this column can be joined with the column
        <literal>pg_stat_activity</literal> view to get more
-       information on the backend holding or waiting to hold the
+       information on the session holding or waiting to hold the
        lock.
       </entry>
      </row>
@@ -740,8 +739,8 @@ FROM (SELECT pg_stat_get_backend_idset() AS backendid) AS S;
        False indicates that this session is currently waiting to
        acquire this lock, which implies that some other session is
        holding a conflicting lock mode on the same lockable object.
-       This backend will sleep until the other lock is released (or a
-       deadlock situation is detected). A single backend can be
+       The waiting session will sleep until the other lock is released (or a
+       deadlock situation is detected). A single session can be
        waiting to acquire at most one lock at a time.
       </entry>
      </row>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.58 2003/03/18 17:05:01 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.59 2003/03/24 14:32:51 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -21,7 +21,7 @@ PostgreSQL documentation
  <refsynopsisdiv>
   <cmdsynopsis>
    <command>pg_dump</command>
-   <arg rep="repeat"><replaceable>options</replaceable></arg>
+   <arg rep="repeat"><replaceable>option</replaceable></arg>
    <arg><replaceable>dbname</replaceable></arg>
   </cmdsynopsis>
  </refsynopsisdiv>
@@ -55,14 +55,6 @@ PostgreSQL documentation
   </para>
 
   <para>
-   <application>pg_dump</application> will save the information necessary to
-   re-generate all user-defined types, functions, tables, indexes,
-   aggregates, and operators.  In addition, all the data is copied out
-   in text format so that it can be readily copied in again, as well
-   as imported into tools for editing.
-  </para>
-
-  <para>
    When used with one of the archive file formats and combined with
    <application>pg_restore</application>, <application>pg_dump</application> provides a
    flexible archival and 
@@ -73,14 +65,14 @@ PostgreSQL documentation
    The most flexible output file format is the <quote>custom</quote>
    format (<option>-Fc</option>). It allows for selection and
    reordering of all archived items, and is compressed by default. The
-   <filename>tar</filename> format (<option>-Ft</option>) is not
+   <application>tar</application> format (<option>-Ft</option>) is not
    compressed and it is not possible to reorder data when loading, but
    it is otherwise quite flexible; moreover, it can be manipulated with
-   other tools such as <filename>tar</filename>.
+   other tools such as <command>tar</command>.
   </para>
 
   <para>
-   While running <command>pg_dump</command>, one should examine the
+   While running <application>pg_dump</application>, one should examine the
    output for any warnings (printed on standard error), especially in
    light of the limitations listed below.
   </para>
@@ -198,7 +190,7 @@ PostgreSQL documentation
 	<replaceable>table</replaceable>
 	(<replaceable>column</replaceable>, ...) VALUES
 	...</literal>).  This will make restoration very slow,
-	but it is necessary if you desire to rearrange column ordering.
+	but it is necessary if you desire to rearrange the column ordering.
        </para>
       </listitem>
      </varlistentry>
@@ -224,7 +216,7 @@ PostgreSQL documentation
 
        <variablelist>
         <varlistentry>
-         <term>p</term>
+         <term><literal>p</></term>
          <listitem>
           <para>
            Output a plain-text <acronym>SQL</acronym> script file (default)
@@ -233,10 +225,10 @@ PostgreSQL documentation
         </varlistentry>
 
         <varlistentry>
-         <term>t</term>
+         <term><literal>t</></term>
          <listitem>
           <para>
-         Output a <filename>tar</filename> archive suitable for input into 
+         Output a <command>tar</command> archive suitable for input into 
          <application>pg_restore</application>. Using this archive format 
          allows reordering and/or exclusion of schema elements 
          at the time the database is restored. It is also possible to limit 
@@ -246,7 +238,7 @@ PostgreSQL documentation
         </varlistentry>
 
         <varlistentry>
-         <term>c</term>
+         <term><literal>c</></term>
          <listitem>
           <para>
          Output a custom archive suitable for input into 
@@ -514,8 +506,9 @@ PostgreSQL documentation
       <term><option>--compress=<replaceable class="parameter">0..9</replaceable></option></term>
       <listitem>
        <para>
-	Specify the compression level to use in archive formats that support 
-      compression (currently only the custom archive format supports compression).
+	Specify the compression level to use in archive formats that
+	support compression.  (Currently only the custom archive
+	format supports compression.)
        </para>
       </listitem>
      </varlistentry>
@@ -531,9 +524,11 @@ PostgreSQL documentation
       <term><option>--host=<replaceable class="parameter">host</replaceable></option></term>
       <listitem>
        <para>
-	Specifies the host name of the machine on which the server is
-	running.  If the host name begins with a slash, it is used as the
-	directory for the Unix domain socket.
+        Specifies the host name of the machine on which the server is
+        running.  If the value begins with a slash, it is used as the
+        directory for the Unix domain socket. The default is taken
+        from the <envar>PGHOST</envar> environment variable, if set,
+        else a Unix domain socket connection is attempted.
        </para>
       </listitem>
      </varlistentry>
@@ -543,11 +538,10 @@ PostgreSQL documentation
       <term><option>--port=<replaceable class="parameter">port</replaceable></option></term>
       <listitem>
        <para>
-	Specifies the Internet TCP/IP port or local Unix domain socket file 
-	extension on which the server
-	is listening for connections.  The port number defaults to 5432,
-	or the value of the <envar>PGPORT</envar>
-	environment variable (if set).
+	Specifies the TCP port or local Unix domain socket file
+	extension on which the server is listening for connections.
+	Defaults to the <envar>PGPORT</envar> environment variable, if
+	set, or a compiled-in default.
        </para>
       </listitem>
      </varlistentry>
@@ -596,42 +590,13 @@ PostgreSQL documentation
  <refsect1 id="app-pgdump-diagnostics">
   <title>Diagnostics</title>
 
-  <msgset>
-   <msgentry>
-    <msg>
-     <msgmain>
-      <msgtext>
-<screen>
-Connection to database 'template1' failed.
-connectDBStart() -- connect() failed: No such file or directory
-        Is the postmaster running locally
-        and accepting connections on Unix socket '/tmp/.s.PGSQL.5432'?
-</screen>
-      </msgtext>
-     </msgmain> 
-    </msg>
-
-    <msgexplan>
-       <para>
-	<application>pg_dump</application> could not connect to the
-	PostgreSQL server on the specified host and port.  If you see this
-	message, ensure that the server is running on the proper host and
-	that you have specified the proper port.
-       </para>
-    </msgexplan>
-   </msgentry>
-
-  </msgset>
-
-   <note>
-    <para>
-     <application>pg_dump</application> internally executes
-     <command>SELECT</command> statements. If you have problems running
-     <application>pg_dump</application>,
-     make sure you are able to select information from the database using, for
-     example, <xref linkend="app-psql">.
-    </para>
-   </note>
+  <para>
+   <application>pg_dump</application> internally executes
+   <command>SELECT</command> statements. If you have problems running
+   <application>pg_dump</application>, make sure you are able to
+   select information from the database using, for example, <xref
+   linkend="app-psql">.
+  </para>
  </refsect1>
 
 
@@ -639,11 +604,11 @@ connectDBStart() -- connect() failed: No such file or directory
   <title>Notes</title>
 
   <para>
-   If your installation has any local additions to the template1 database,
+   If your database cluster has any local additions to the <literal>template1</> database,
    be careful to restore the output of <application>pg_dump</application> into a
    truly empty database; otherwise you are likely to get errors due to
    duplicate definitions of the added objects.  To make an empty database
-   without any local additions, copy from template0 not template1,
+   without any local additions, copy from <literal>template0</> not <literal>template1</>,
    for example:
 <programlisting>
 CREATE DATABASE foo WITH TEMPLATE template0;
@@ -657,17 +622,20 @@ CREATE DATABASE foo WITH TEMPLATE template0;
     <listitem>
      <para>
       When dumping a single table or as plain text, <application>pg_dump</application> 
-      does not handle large objects. Large objects must be dumped in their
-      entirety using one of the binary archive formats.
+      does not handle large objects. Large objects must be dumped with the
+      entire database using one of the non-text archive formats.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      When doing a data-only dump, <application>pg_dump</application> emits queries
-      to disable triggers on user tables before inserting the data and queries to
-      re-enable them after the data has been inserted.  If the restore is stopped
-      in the middle, the system catalogs may be left in the wrong state.
+      When a data-only dump is chosen and the option
+      <option>--disable-triggers</> is used,
+      <application>pg_dump</application> emits commands to disable
+      triggers on user tables before inserting the data and commands
+      to re-enable them after the data has been inserted.  If the
+      restore is stopped in the middle, the system catalogs may be
+      left in the wrong state.
      </para>
     </listitem>
 
@@ -732,9 +700,9 @@ CREATE DATABASE foo WITH TEMPLATE template0;
 
   <para>
    The <application>pg_dump</application> utility first appeared in
-   <application>Postgres95</application> release <literal>0.02</literal>.  The
+   <application>Postgres95</application> release 0.02.  The
    non-plain-text output formats were introduced in
-   <application>PostgreSQL</application> release <literal>7.1</literal>.
+   <application>PostgreSQL</application> release 7.1.
   </para>
  </refsect1>
 

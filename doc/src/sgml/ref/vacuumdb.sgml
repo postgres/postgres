@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuumdb.sgml,v 1.27 2002/10/11 23:03:48 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuumdb.sgml,v 1.28 2003/03/24 14:32:51 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -18,12 +18,12 @@ PostgreSQL documentation
  <refsynopsisdiv>
   <cmdsynopsis>
    <command>vacuumdb</command>
-   <arg rep="repeat"><replaceable>connection-options</replaceable></arg>
+   <arg rep="repeat"><replaceable>connection-option</replaceable></arg>
    <group><arg>--full</arg><arg>-f</arg></group>
    <group><arg>--verbose</arg><arg>-v</arg></group>
    <group><arg>--analyze</arg><arg>-z</arg></group>
-   <arg>--table | -t '<replaceable>table</replaceable>
-    <arg>( <replaceable class="parameter">column</replaceable> [,...] )</arg>'
+   <arg>--table | -t <replaceable>table</replaceable>
+    <arg>( <replaceable class="parameter">column</replaceable> [,...] )</arg>
    </arg>
    <arg><replaceable>dbname</replaceable></arg>
    <sbr>
@@ -79,6 +79,16 @@ PostgreSQL documentation
     
     <variablelist>
      <varlistentry>
+      <term><option>-a</option></term>
+      <term><option>--all</option></term>
+      <listitem>
+       <para>
+	Vacuum all databases.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option><optional>-d</> <replaceable class="parameter">dbname</replaceable></option></term>
       <term><option><optional>--dbname</> <replaceable class="parameter">dbname</replaceable></option></term>
       <listitem>
@@ -92,17 +102,6 @@ PostgreSQL documentation
        </para>
       </listitem>
      </varlistentry>
-
-     <varlistentry>
-      <term><option>-a</option></term>
-      <term><option>--all</option></term>
-      <listitem>
-       <para>
-	Vacuum all databases.
-       </para>
-      </listitem>
-     </varlistentry>
-
 
      <varlistentry>
       <term><option>-e</></term>
@@ -146,8 +145,8 @@ PostgreSQL documentation
        </para>
        <tip>
         <para>
-         If you specify columns to vacuum, you probably have to escape the parentheses
-         from the shell.
+         If you specify columns, you probably have to escape the parentheses
+         from the shell.  (See examples below.)
         </para>
        </tip>
       </listitem>
@@ -187,7 +186,7 @@ PostgreSQL documentation
        <para>
 	Specifies the host name of the machine on which the 
 	server
-	is running.  If host begins with a slash, it is used 
+	is running.  If the value begins with a slash, it is used 
 	as the directory for the Unix domain socket.
        </para>
       </listitem>
@@ -198,7 +197,7 @@ PostgreSQL documentation
       <term><option>--port <replaceable class="parameter">port</replaceable></></term>
       <listitem>
        <para>
-	Specifies the Internet TCP/IP port or local Unix domain socket file 
+	Specifies the TCP port or local Unix domain socket file 
 	extension on which the server
 	is listening for connections.
        </para>
@@ -272,7 +271,7 @@ PostgreSQL documentation
 
     <listitem>
      <para>
-      Default connection parameters.
+      Default connection parameters
      </para>
     </listitem>
    </varlistentry>

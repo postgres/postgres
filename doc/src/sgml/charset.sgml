@@ -1,18 +1,13 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/charset.sgml,v 2.32 2003/03/13 01:30:26 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/charset.sgml,v 2.33 2003/03/24 14:32:50 petere Exp $ -->
 
 <chapter id="charset">
  <title>Localization</>
 
- <abstract>
-  <para>
-   Describes the available localization features from the point of
-   view of the administrator.
-  </para>
- </abstract>
-
-  <para>
-   <productname>PostgreSQL</productname> supports localization with
-   three approaches:
+ <para>
+  This chapter describes the available localization features from the
+  point of view of the administrator.
+  <productname>PostgreSQL</productname> supports localization with
+  three approaches:
 
    <itemizedlist>
     <listitem>
@@ -25,20 +20,17 @@
 
     <listitem>
      <para>
-      Using explicit multiple-byte character sets defined in the
-      <productname>PostgreSQL</productname> server to support languages
-      that require more characters than will fit into a single byte,
-      and to provide character set recoding between client and server.
-      The number of supported character sets is fixed at the time the
-      server is compiled, and internal operations such as string
-      comparisons require expansion of each character into a 32-bit
-      word.
+      Providing a number of different character sets defined in the
+      <productname>PostgreSQL</productname> server, including
+      multiple-byte character sets, to support storing text in all
+      kinds of languages, and providing character set recoding between
+      client and server.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Single byte character recoding provides a more light-weight
+      Single-byte character recoding provides a more light-weight
       solution for users of multiple, yet single-byte character sets.
      </para>
     </listitem>
@@ -55,7 +47,7 @@
    <firstterm>Locale</> support refers to an application respecting
    cultural preferences regarding alphabets, sorting, number
    formatting, etc.  <productname>PostgreSQL</> uses the standard ISO
-   C and <acronym>POSIX</acronym>-like locale facilities provided by the server operating
+   C and <acronym>POSIX</acronym> locale facilities provided by the server operating
    system.  For additional information refer to the documentation of your
    system.
   </para>
@@ -92,7 +84,7 @@ initdb --locale=sv_SE
 
    <para>
     Occasionally it is useful to mix rules from several locales, e.g.,
-    use U.S. collation rules but Spanish messages.  To support that, a
+    use English collation rules but Spanish messages.  To support that, a
     set of locale subcategories exist that control only a certain
     aspect of the localization rules.
 
@@ -154,7 +146,7 @@ initdb --locale=sv_SE
 
    <para>
     The other locale categories can be changed as desired whenever the
-    server is started by setting the run-time configuration variables
+    server is running by setting the run-time configuration variables
     that have the same name as the locale categories (see <xref
     linkend="runtime-config"> for details).  The defaults that are
     chosen by <command>initdb</command> are actually only written into
@@ -190,16 +182,15 @@ initdb --locale=sv_SE
      variable <envar>LANGUAGE</envar> which overrides all other locale
      settings for the purpose of setting the language of messages.  If
      in doubt, please refer to the documentation of your operating
-     system, in particular the
-     <citerefentry><refentrytitle>gettext</><manvolnum>3</></> manual
-     page, for more information.
+     system, in particular the documentation about
+     <application>gettext</>, for more information.
     </para>
    </note>
 
    <para>
     To enable messages translated to the user's preferred language,
-    the <option>--enable-nls</option> option must be used.  This
-    option is independent of the other locale support.
+    <acronym>NLS</acronym> must have been enabled at build time.  This
+    choice is independent of the other locale support.
    </para>
   </sect2>
 
@@ -212,7 +203,7 @@ initdb --locale=sv_SE
     <itemizedlist>
      <listitem>
       <para>
-       Sort order in <command>ORDER BY</> queries.
+       Sort order in queries using <command>ORDER BY</>
        <indexterm><primary>ORDER BY</></>
       </para>
      </listitem>
@@ -234,7 +225,7 @@ initdb --locale=sv_SE
 
    <para>
     The only severe drawback of using the locale support in
-    <productname>PostgreSQL</> is its speed.  So use locale only if you
+    <productname>PostgreSQL</> is its speed.  So use locales only if you
     actually need it.  It should be noted in particular that selecting
     a non-C locale disables index optimizations for <literal>LIKE</> and
     <literal>~</> operators, which can make a huge difference in the
@@ -247,49 +238,28 @@ initdb --locale=sv_SE
 
    <para>
     If locale support doesn't work in spite of the explanation above,
-    check that the locale support in your operating system is correctly configured.
-    To check whether a given locale is installed and functional you
-    can use <application>Perl</>, for example.  Perl has also support
-    for locales and if a locale is broken <command>perl -v</> will
-    complain something like this:
-<screen>
-<prompt>$</> <userinput>export LC_CTYPE='not_exist'</>
-<prompt>$</> <userinput>perl -v</>
-<computeroutput>
-perl: warning: Setting locale failed.
-perl: warning: Please check that your locale settings:
-LC_ALL = (unset),
-LC_CTYPE = "not_exist",
-LANG = (unset)
-are supported and installed on your system.
-perl: warning: Falling back to the standard locale ("C").
-</computeroutput>
-</screen>
+    check that the locale support in your operating system is
+    correctly configured.  To check what locales are installed on your
+    system, you may use the command <literal>locale -a</literal> if
+    your operating system provides it.
    </para>
 
    <para>
-    Check that your locale files are in the right location.  Possible
-    locations include: <filename>/usr/lib/locale</filename> (<systemitem class="osname">Linux</>,
-    <systemitem class="osname">Solaris</>), <filename>/usr/share/locale</filename> (<systemitem class="osname">Linux</>),
-    <filename>/usr/lib/nls/loc</filename> (<systemitem class="osname">DUX 4.0</>).  Check the locale
-    man page of your system if you are not sure.
+    Check that <productname>PostgreSQL</> is actually using the locale
+    that you think it is.  <envar>LC_COLLATE</> and <envar>LC_CTYPE</>
+    settings are determined at <command>initdb</> time and cannot be
+    changed without repeating <command>initdb</>.  Other locale
+    settings including <envar>LC_MESSAGES</> and <envar>LC_MONETARY</>
+    are initially determined by the environment the server is started
+    in.  You can check the <envar>LC_COLLATE</> and <envar>LC_CTYPE</>
+    settings of a database with the utility program
+    <command>pg_controldata</>.
    </para>
 
    <para>
-    Check that <productname>PostgreSQL</> is actually using the locale that
-    you think it is.  <envar>LC_COLLATE</> and <envar>LC_CTYPE</> settings are
-    determined at <application>initdb</> time and cannot be changed without
-    repeating <application>initdb</>.  Other locale settings including
-    <envar>LC_MESSAGES</> and <envar>LC_MONETARY</> are determined by the 
-    environment the postmaster is started in, and can be changed with a simple
-    postmaster restart.  You can check the <envar>LC_COLLATE</> and
-    <envar>LC_CTYPE</> settings of
-    a database with the <filename>contrib/pg_controldata</> utility program.
-   </para>
-
-   <para>
-    The directory <filename>src/test/locale</> contains a test suite
-    for <productname>PostgreSQL</>'s locale support.
+    The directory <filename>src/test/locale</> in the source
+    distribution contains a test suite for
+    <productname>PostgreSQL</>'s locale support.
    </para>
 
    <para>
@@ -297,9 +267,9 @@ perl: warning: Falling back to the standard locale ("C").
     text of the error message will obviously have problems when the
     server's messages are in a different language.  If you create such
     an application you need to devise a plan to cope with this
-    situation.  The embedded SQL interface (<application>ecpg</>) is
+    situation.  The embedded SQL interface (<application>ECPG</>) is
     also affected by this problem.  It is currently recommended that
-    servers interfacing with <application>ecpg</> applications be
+    servers interfacing with <application>ECPG</> applications be
     configured to send messages in English.
    </para>
 
@@ -316,58 +286,41 @@ perl: warning: Falling back to the standard locale ("C").
  </sect1>
 
 
-  <sect1 id="multibyte">
-   <title>Multibyte Support</title>
+ <sect1 id="multibyte">
+  <title>Character Set Support</title>
 
-  <indexterm zone="multibyte"><primary>multibyte</></>
+  <indexterm zone="multibyte"><primary>character set</></>
 
-   <note>
-    <title>Author</title>
-
-    <para>
-     Tatsuo Ishii (<email>ishii@postgresql.org</email>),
-     last updated 2002-07-24.
-     Check <ulink
-      url="http://www.sra.co.jp/people/t-ishii/PostgreSQL/">Tatsuo's
-      web site</ulink> for more information.
-    </para>
-   </note>
-
-   <para>
-    Multibyte (<acronym>MB</acronym>) support is intended to allow
-    <productname>PostgreSQL</productname> to handle
-    multiple-byte character sets such as <acronym>EUC</> (Extended Unix Code), Unicode, and
-    Mule internal code. With <acronym>MB</acronym> enabled you can use multibyte
-    character sets in regular expressions (regexp), LIKE, and some
-    other functions. The default
-    encoding system is selected while initializing your
-    <productname>PostgreSQL</productname> installation using
-    <application>initdb</application>. Note that this can be
-    overridden when you create a database using
-    <application>createdb</application> or by using the SQL command
-    <command>CREATE DATABASE</>. So you can have multiple databases each with
-    a different encoding system. Note that <acronym>MB</acronym> can
-    handle single byte characters sets such as ISO-8859-1.
-   </para>
-
-    <para>
-    Multibyte support is enabled by default since
-    <productname>PostgreSQL</> version 7.3.
-    </para>
+  <para>
+   The character set support in <productname>PostgreSQL</productname>
+   allows you to store text in a variety of character sets, including
+   single-byte character sets such as the ISO 8859 series and
+   multiple-byte character sets such as <acronym>EUC</> (Extended Unix
+   Code), Unicode, and Mule internal code.  All character sets can be
+   used transparently throughout the server.  (If you use extension
+   functions from other sources, it depends on whether they wrote
+   their code correctly.)  The default character set is selected while
+   initializing your <productname>PostgreSQL</productname> database
+   cluster using <command>initdb</>.  It can be overridden when you
+   create a database using <command>createdb</command> or by using the
+   SQL command <command>CREATE DATABASE</>. So you can have multiple
+   databases each with a different character set.
+  </para>
 
    <sect2>
-    <title>Supported character set encodings</title>
+    <title>Supported Character Sets</title>
 
     <para>
-    Following encoding can be used as database encoding.
+     <xref linkend="charset-table"> shows the character sets available
+     for use in the server.
+    </para>
 
-     <table tocentry="1">
-      <title>Character Set Encodings</title>
-      <titleabbrev>Encodings</titleabbrev>
+     <table id="charset-table">
+      <title>Server Character Sets</title>
       <tgroup cols="2">
        <thead>
 	<row>
-	 <entry>Encoding</entry>
+	 <entry>Name</entry>
 	 <entry>Description</entry>
 	</row>
        </thead>
@@ -406,59 +359,59 @@ perl: warning: Falling back to the standard locale ("C").
 	</row>
 	<row>
 	 <entry><literal>LATIN1</literal></entry>
-	 <entry>ISO 8859-1 <acronym>ECMA</>-94 Latin Alphabet No.1</entry>
+	 <entry>ISO 8859-1/<acronym>ECMA</> 94 (Latin alphabet no.1)</entry>
 	</row>
 	<row>
 	 <entry><literal>LATIN2</literal></entry>
-	 <entry>ISO 8859-2 <acronym>ECMA</>-94 Latin Alphabet No.2</entry>
+	 <entry>ISO 8859-2/<acronym>ECMA</> 94 (Latin alphabet no.2)</entry>
 	</row>
 	<row>
 	 <entry><literal>LATIN3</literal></entry>
-	 <entry>ISO 8859-3 <acronym>ECMA</>-94 Latin Alphabet No.3</entry>
+	 <entry>ISO 8859-3/<acronym>ECMA</> 94 (Latin alphabet no.3)</entry>
 	</row>
 	<row>
 	 <entry><literal>LATIN4</literal></entry>
-	 <entry>ISO 8859-4 <acronym>ECMA</>-94 Latin Alphabet No.4</entry>
+	 <entry>ISO 8859-4/<acronym>ECMA</> 94 (Latin alphabet no.4)</entry>
 	</row>
 	<row>
 	 <entry><literal>LATIN5</literal></entry>
-	 <entry>ISO 8859-9 <acronym>ECMA</>-128 Latin Alphabet No.5</entry>
+	 <entry>ISO 8859-9/<acronym>ECMA</> 128 (Latin alphabet no.5)</entry>
 	</row>
 	<row>
 	 <entry><literal>LATIN6</literal></entry>
-	 <entry>ISO 8859-10 <acronym>ECMA</>-144 Latin Alphabet No.6</entry>
+	 <entry>ISO 8859-10/<acronym>ECMA</> 144 (Latin alphabet no.6)</entry>
 	</row>
 	<row>
 	 <entry><literal>LATIN7</literal></entry>
-	 <entry>ISO 8859-13 Latin Alphabet No.7</entry>
+	 <entry>ISO 8859-13 (Latin alphabet no.7)</entry>
 	</row>
 	<row>
 	 <entry><literal>LATIN8</literal></entry>
-	 <entry>ISO 8859-14 Latin Alphabet No.8</entry>
+	 <entry>ISO 8859-14 (Latin alphabet no.8)</entry>
 	</row>
 	<row>
 	 <entry><literal>LATIN9</literal></entry>
-	 <entry>ISO 8859-15 Latin Alphabet No.9</entry>
+	 <entry>ISO 8859-15 (Latin alphabet no.9)</entry>
 	</row>
 	<row>
 	 <entry><literal>LATIN10</literal></entry>
-	 <entry>ISO 8859-16 <acronym>ASRO</> SR 14111 Latin Alphabet No.10</entry>
+	 <entry>ISO 8859-16/<acronym>ASRO</> SR 14111 (Latin alphabet no.10)</entry>
 	</row>
 	<row>
 	 <entry><literal>ISO-8859-5</literal></entry>
-	 <entry><acronym>ECMA</>-113 Latin/Cyrillic</entry>
+	 <entry>ISO 8859-5/<acronym>ECMA</> 113 (Latin/Cyrillic)</entry>
 	</row>
 	<row>
 	 <entry><literal>ISO-8859-6</literal></entry>
-	 <entry><acronym>ECMA</>-114 Latin/Arabic</entry>
+	 <entry>ISO 8859-6/<acronym>ECMA</> 114 (Latin/Arabic)</entry>
 	</row>
 	<row>
 	 <entry><literal>ISO-8859-7</literal></entry>
-	 <entry><acronym>ECMA</>-118 Latin/Greek</entry>
+	 <entry>ISO 8859-7/<acronym>ECMA</> 118 (Latin/Greek)</entry>
 	</row>
 	<row>
 	 <entry><literal>ISO-8859-8</literal></entry>
-	 <entry><acronym>ECMA</>-121 Latin/Hebrew</entry>
+	 <entry>ISO 8859-8/<acronym>ECMA</> 121 (Latin/Hebrew)</entry>
 	</row>
 	<row>
 	 <entry><literal>KOI8</literal></entry>
@@ -474,78 +427,76 @@ perl: warning: Falling back to the standard locale ("C").
 	</row>
 	<row>
 	 <entry><literal>WIN1256</literal></entry>
-	 <entry>Arabic Windows CP1256</entry>
+	 <entry>Windows CP1256 (Arabic)</entry>
 	</row>
 	<row>
 	 <entry><literal>TCVN</literal></entry>
-	 <entry>Vietnamese <acronym>TCVN</>-5712 (Windows CP1258)</entry>
+	 <entry><acronym>TCVN</>-5712/Windows CP1258 (Vietnamese)</entry>
 	</row>
 	<row>
 	 <entry><literal>WIN874</literal></entry>
-	 <entry>Thai Windows CP874</entry>
+	 <entry>Windows CP874 (Thai)</entry>
 	</row>
        </tbody>
       </tgroup>
      </table>
-    </para>
 
     <important>
      <para>
-      Before <productname>PostgreSQL</>7.2, <literal>LATIN5</> mistakenly
-      meant ISO 8859-5.  From 7.2 on,
-      <literal>LATIN5</> means ISO 8859-9. If you have a <literal>LATIN5</>
-      database created on 7.1 or earlier and want to migrate to 7.2 (or
-      later), you should be very careful about this change.
+      Before <productname>PostgreSQL</> 7.2, <literal>LATIN5</>
+      mistakenly meant ISO 8859-5.  From 7.2 on, <literal>LATIN5</>
+      means ISO 8859-9. If you have a <literal>LATIN5</> database
+      created on 7.1 or earlier and want to migrate to 7.2 or later,
+      you should be very careful about this change.
      </para>
     </important>
 
-    <important>
      <para>
-      Not all <acronym>API</>s supports all the encodings listed above. For example, the
+      Not all <acronym>API</>s support all the listed character sets. For example, the
       <productname>PostgreSQL</>
       JDBC driver does not support <literal>MULE_INTERNAL</>, <literal>LATIN6</>,
       <literal>LATIN8</>, and <literal>LATIN10</>.
      </para>
-    </important>
     </sect2>
     
    <sect2>
-    <title>Setting the Encoding</title>
+    <title>Setting the Character Set</title>
 
     <para>
-     <application>initdb</application> defines the default encoding
-     for a <productname>PostgreSQL</productname> installation. For example:
+     <command>initdb</> defines the default character set
+     for a <productname>PostgreSQL</productname> cluster. For example,
 
 <screen>
 initdb -E EUC_JP
 </screen>
 
-     sets the default encoding to <literal>EUC_JP</literal> (Extended Unix Code for Japanese).
-     Note that you can use <option>--encoding</option> instead of <option>-E</option> if you prefer
-     to type longer option strings. 
+     sets the default character set (encoding) to
+     <literal>EUC_JP</literal> (Extended Unix Code for Japanese).  You
+     can use <option>--encoding</option> instead of
+     <option>-E</option> if you prefer to type longer option strings.
      If no <option>-E</> or <option>--encoding</option> option is
-     given, SQL_ASCII is used.
+     given, <literal>SQL_ASCII</> is used.
     </para>
 
     <para>
-     You can create a database with a different encoding:
+     You can create a database with a different character set:
 
 <screen>
 createdb -E EUC_KR korean
 </screen>
 
-     will create a database named <database>korean</database> with <literal>EUC_KR</literal> encoding.
-     Another way to accomplish this is to use a SQL command:
+     This will create a database named <literal>korean</literal> that
+     uses the character set <literal>EUC_KR</literal>.  Another way to
+     accomplish this is to use this SQL command:
 
 <programlisting>
-CREATE DATABASE korean WITH ENCODING = 'EUC_KR';
+CREATE DATABASE korean WITH ENCODING 'EUC_KR';
 </programlisting>
 
-     The encoding for a database is represented as an
-     <firstterm>encoding column</firstterm>  in the
-     <literal>pg_database</literal> system catalog.
-     You can see that by using the <option>-l</option> option or the
-     <command>\l</command> command of <command>psql</command>.
+     The encoding for a database is stored in the system catalog
+     <literal>pg_database</literal>.  You can see that by using the
+     <option>-l</option> option or the <command>\l</command> command
+     of <command>psql</command>.
 
 <screen>
 $ <userinput>psql -l</userinput>
@@ -567,27 +518,26 @@ $ <userinput>psql -l</userinput>
    </sect2>
 
    <sect2>
-    <title>Automatic encoding conversion between server and
-     client</title>
+    <title>Automatic Character Set Conversion Between Server and Client</title>
 
     <para>
-     <productname>PostgreSQL</productname> supports an automatic
-     encoding conversion between server and client for some
-     encodings. The conversion info is stored in <literal>pg_conversion</> system
-     catalog. You can create a new conversion by using <command>CREATE
-     CONVERSION</command>. <productname>PostgreSQL</> comes with some predefined
-     conversions. They are listed in <xref
+     <productname>PostgreSQL</productname> supports automatic
+     character set conversion between server and client for certain
+     character sets. The conversion information is stored in the
+     <literal>pg_conversion</> system catalog. You can create a new
+     conversion by using the SQL command <command>CREATE
+     CONVERSION</command>. <productname>PostgreSQL</> comes with some
+     predefined conversions. They are listed in <xref
      linkend="multibyte-translation-table">.
     </para>
 
-     <table tocentry="1" id="multibyte-translation-table">
-      <title>Client/Server Character Set Encodings</title>
-      <titleabbrev>Communication Encodings</titleabbrev>
+     <table id="multibyte-translation-table">
+      <title>Client/Server Character Set Conversions</title>
       <tgroup cols="2">
        <thead>
 	<row>
-	 <entry>Server Encoding</entry>
-	 <entry>Available Client Encodings</entry>
+	 <entry>Server Character Set</entry>
+	 <entry>Available Client Character Sets</entry>
 	</row>
        </thead>
        <tbody>
@@ -784,10 +734,10 @@ $ <userinput>psql -l</userinput>
      </table>
 
     <para>
-     To enable the automatic encoding translation, you have to tell
-     <productname>PostgreSQL</productname> the encoding you would like
-     to use in the client. There are
-     several ways to accomplish this.
+     To enable the automatic character set conversion, you have to
+     tell <productname>PostgreSQL</productname> the character set
+     (encoding) you would like to use in the client. There are several
+     ways to accomplish this:
 
      <itemizedlist>
       <listitem>
@@ -811,17 +761,17 @@ $ <userinput>psql -l</userinput>
 	<function>PQsetClientEncoding()</function> for its purpose.
 
 <synopsis>
-int PQsetClientEncoding(PGconn *<replaceable>conn</replaceable>, const char *<replaceable>encoding</replaceable>)
+int PQsetClientEncoding(PGconn *<replaceable>conn</replaceable>, const char *<replaceable>encoding</replaceable>);
 </synopsis>
 
 	where <replaceable>conn</replaceable> is a connection to the server,
-	and <replaceable>encoding</replaceable> is an encoding you
-	want to use. If it successfully sets the encoding, it returns 0,
-	otherwise -1. The current encoding for this connection can be shown by
+	and <replaceable>encoding</replaceable> is the encoding you
+	want to use. If the function successfully sets the encoding, it returns 0,
+	otherwise -1. The current encoding for this connection can be determined by
 	using:
 
 <synopsis>
-int PQclientEncoding(const PGconn *<replaceable>conn</replaceable>)
+int PQclientEncoding(const PGconn *<replaceable>conn</replaceable>);
 </synopsis>
 
 	Note that it returns the encoding ID, not a symbolic string
@@ -829,7 +779,7 @@ int PQclientEncoding(const PGconn *<replaceable>conn</replaceable>)
 	can use:
 
 <synopsis>
-char *pg_encoding_to_char(int <replaceable>encoding_id</replaceable>)
+char *pg_encoding_to_char(int <replaceable>encoding_id</replaceable>);
 </synopsis>
        </para>
       </listitem>
@@ -841,13 +791,13 @@ char *pg_encoding_to_char(int <replaceable>encoding_id</replaceable>)
 	Setting the client encoding can be done with this SQL command:
 
 <programlisting>
-SET CLIENT_ENCODING TO 'encoding';
+SET CLIENT_ENCODING TO '<replaceable>value</>';
 </programlisting>
 
-	Also you can use the SQL92 syntax <literal>SET NAMES</literal> for this purpose:
+	Also you can use the more standard SQL syntax <literal>SET NAMES</literal> for this purpose:
 
 <programlisting>
-SET NAMES 'encoding';
+SET NAMES '<replaceable>value</>';
 </programlisting>
 
 	To query the current client encoding:
@@ -877,7 +827,7 @@ RESET CLIENT_ENCODING;
 
       <listitem>
       <para>
-      Using client_encoding variable.
+       Using the configuration variable <varname>client_encoding</varname>.
 
       If the <varname>client_encoding</> variable in <filename>postgresql.conf</> is set, that
       client encoding is automatically selected when a connection to the
@@ -888,26 +838,19 @@ RESET CLIENT_ENCODING;
 
      </itemizedlist>
     </para>
-   </sect2>
-
-   <sect2>
-    <title>What happens if the translation is not possible?</title>
 
     <para>
-     Suppose you choose <literal>EUC_JP</literal> for the server
-     and <literal>LATIN1</literal> for the client,
-     then some Japanese characters cannot be translated into <literal>LATIN1</literal>. In
-     this case, a letter that cannot be represented in the <literal>LATIN1</literal> character set
-     would be transformed as:
-
-<synopsis>
-(HEXA DECIMAL)
-</synopsis>
+     If the conversion of a particular character is not possible --
+     suppose you chose <literal>EUC_JP</literal> for the server and
+     <literal>LATIN1</literal> for the client, then some Japanese
+     characters cannot be converted to <literal>LATIN1</literal> -- it
+     is transformed to its hexadecimal byte values in parentheses,
+     e.g., <literal>(826C)</literal>.
     </para>
    </sect2>
 
    <sect2>
-    <title>References</title>
+    <title>Further Reading</title>
 
     <para>
      These are good sources to start learning about various kinds of encoding
@@ -949,209 +892,11 @@ RESET CLIENT_ENCODING;
     </para>
    </sect2>
 
-   <sect2>
-    <title>History</title>
-
-<literallayout class="monospaced">
-Dec 7, 2000
-	* An automatic encoding translation between Unicode and other
-	  encodings are implemented
-	* Changes above will appear in 7.1
-
-May 20, 2000
-	* SJIS UDC (NEC selection IBM kanji) support contributed
-	  by Eiji Tokuya
-	* Changes above will appear in 7.0.1
-
-Mar 22, 2000
-	* Add new libpq functions PQsetClientEncoding, PQclientEncoding
-	* ./configure --with-mb=EUC_JP
-	  now deprecated. use 
-	  ./configure --enable-multibyte=EUC_JP
-	  instead
-  	* Add SQL_ASCII regression test case
-	* Add SJIS User Defined Character (UDC) support
-	* All of above will appear in 7.0
-
-July 11, 1999
-	* Add support for WIN1250 (Windows Czech) as a client encoding
-	  (contributed by Pavel Behal)
-	* fix some compiler warnings (contributed by Tomoaki Nishiyama)
-
-Mar 23, 1999
-	* Add support for KOI8(KOI8-R), WIN(CP1251), ALT(CP866)
-	  (thanks Oleg Broytmann for testing)
-	* Fix problem with MB and locale
-
-Jan 26, 1999
-	* Add support for Big5 for frontend encoding
-	  (you need to create a database with EUC_TW to use Big5)
-	* Add regression test case for EUC_TW
-	  (contributed by Jonah Kuo <email>jonahkuo@mail.ttn.com.tw</email>)
-
-Dec 15, 1998
-	* Bugs related to SQL_ASCII support fixed
-
-Nov 5, 1998
-	* 6.4 release. In this version, pg_database has "encoding"
-	  column that represents the database encoding
-
-Jul 22, 1998
-	* determine encoding at initdb/createdb rather than compile time
-	* support for PGCLIENTENCODING when issuing COPY command
-	* support for SQL92 syntax "SET NAMES"
-	* support for LATIN2-5
-	* add UNICODE regression test case
-	* new test suite for MB
-	* clean up source files
-
-Jun 5, 1998
-	* add support for the encoding translation between the backend
-	  and the frontend
-	* new command SET CLIENT_ENCODING etc. added
-	* add support for LATIN1 character set
-	* enhance 8-bit cleanliness
-
-April 21, 1998 some enhancements/fixes
-	* character_length(), position(), substring() are now aware of 
-	  multi-byte characters
-	* add octet_length()
-	* add --with-mb option to configure
-	* new regression tests for EUC_KR
-  	  (contributed by Soonmyung Hong)
-	* add some test cases to the EUC_JP regression test
-	* fix problem in regress/regress.sh in case of System V
-	* fix toupper(), tolower() to handle 8bit chars
-
-Mar 25, 1998 MB PL2 is incorporated into <productname>PostgreSQL</> 6.3.1
-
-Mar 10, 1998 PL2 released
-	* add regression test for EUC_JP, EUC_CN and MULE_INTERNAL
-	* add an English document (this file)
-	* fix problems concerning 8-bit single byte characters
-
-Mar 1, 1998 PL1 released
-</literallayout>
-   </sect2>
-
-   <sect2>
-    <title>WIN1250 on Windows/ODBC</title>
-
-    <para>
-<!--
-[Here is a good documentation explaining how to use WIN1250 on
-Windows/ODBC from Pavel Behal]
-
-Version: 0.91 for PgSQL 6.5
-Author: Pavel Behal
-Revised by: Tatsuo Ishii
-Email: behal@opf.slu.cz
-License: The Same as <productname>PostgreSQL</>
-
-Sorry for my Eglish and C code, I'm not native :-)
-
-!!!!!!!!!!!!!!!!!!!!!!!!! NO WARRANTY !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
--->
-
-     The WIN1250 character set on Windows client platforms can be used
-     with <productname>PostgreSQL</productname> with locale support
-     enabled.
-    </para>
-
-    <para>
-     The following should be kept in mind:
-
-     <itemizedlist>
-      <listitem>
-       <para>
-	Success depends on proper system locales. This has been tested
-	with <systemitem class="osname">Red Hat 6.0</> and <systemitem
-	class="osname">Slackware 3.6</>, with the
-        <literal>cs_CZ.iso8859-2</literal> locale.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-	Never try to set the server's database encoding to WIN1250.
-	Always use LATIN2 instead since there is no WIN1250 locale
-	in Unix.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-	The WIN1250 encoding is usable only for Windows ODBC clients. The
-	characters are recoded on the fly, to be displayed and stored
-	back properly.
-       </para>
-      </listitem>
-     </itemizedlist>
-    </para>
-
-    <procedure>
-     <title>WIN1250 on Windows/ODBC</title>
-     <step>
-      <para>
-       Compile <productname>PostgreSQL</productname> with locale enabled
-       and the server-side encoding set to <literal>LATIN2</literal>.
-      </para>
-     </step>
-
-     <step>
-      <para>
-       Set up your installation. Do not forget to create locale
-       variables in your environment. For example (this may
-       not be correct for <emphasis>your</emphasis> environment):
-
-<programlisting>
-LC_ALL=cs_CZ.ISO8859-2
-</programlisting>
-      </para>
-     </step>
-
-     <step>
-      <para>
-       You have to start the server with locales set!
-      </para>
-     </step>
-
-     <step>
-      <para>
-       Try it with the Czech language, and have it sort on a query.
-      </para>
-     </step>
-
-     <step>
-      <para>
-       Install ODBC driver for <productname>PostgreSQL</productname> on your Windows machine.
-      </para>
-     </step>
-
-     <step>
-      <para>
-       Set up your data source properly. Include this line in your ODBC
-       configuration dialog in the field <guilabel>Connect Settings</guilabel>:
-
-<programlisting>
-SET CLIENT_ENCODING = 'WIN1250';
-</programlisting>
-      </para>
-     </step>
-
-     <step>
-      <para>
-       Now try it again, but in Windows with ODBC.
-      </para>
-     </step>
-    </procedure>
-   </sect2>
   </sect1>
 
 
  <sect1 id="recode">
-  <title>Single-byte character set recoding</>
-<!-- formerly in README.charsets, by Josef Balatka, <balatka@email.cz> -->
+  <title>Single-Byte Character Set Recoding</>
 
   <para>
    You can set up this feature with the <option>--enable-recode</> option
@@ -1163,57 +908,57 @@ SET CLIENT_ENCODING = 'WIN1250';
 
   <para>
    This method uses a file <filename>charset.conf</> file located in
-   the database directory (<envar>PGDATA</>).  It's a typical
-   configuration text file where spaces and newlines separate items
-   and records and # specifies comments.  Three keywords with the
+   the data directory for configuration.  It's a typical
+   configuration text file where spaces and newlines separate fields
+   and records and <literal>#</> starts a comment.  Three key words with the
    following syntax are recognized here:
 <synopsis>
-BaseCharset      <replaceable>server_charset</>
-RecodeTable      <replaceable>from_charset</> <replaceable>to_charset</> <replaceable>file_name</>
-HostCharset      <replaceable>host_spec</>    <replaceable>host_charset</>
+BaseCharset <replaceable>server_charset</>
+RecodeTable <replaceable>from_charset</> <replaceable>to_charset</> <replaceable>file_name</>
+HostCharset <replaceable>host_spec</>    <replaceable>host_charset</>
 </synopsis>
   </para>
 
   <para>
-   <token>BaseCharset</> defines the encoding of the database server.
+   <token>BaseCharset</> defines the character set of the database server.
    All character set names are only used for mapping inside of
    <filename>charset.conf</> so you can freely use typing-friendly
    names.
   </para>
 
   <para>
-   <token>RecodeTable</> records specify translation tables between
+   <token>RecodeTable</> records specify conversion tables between
    server and client.  The file name is relative to the
-   <envar>PGDATA</> directory.  The table file format is very
-   simple. There are no keywords and characters are represented by a
-   pair of decimal or hexadecimal (0x prefixed) values on single
+   data directory.  The table file format is very
+   simple. There are no key words, and character mappings are represented by a
+   pair of decimal or hexadecimal (prefixed by <literal>0x</>) values on single
    lines:
 <synopsis>
-<replaceable>char_value</>   <replaceable>translated_char_value</>
+<replaceable>char_value</>   <replaceable>converted_char_value</>
 </synopsis>
+   In the <filename>src/data/</> directory in the source distribution you can find an
+   example <filename>charset.conf</> and a few recoding tables.
   </para>
 
   <para>
    <token>HostCharset</> records define the client character set by IP
    address. You can use a single IP address, an IP mask range starting
-   from the given address or an IP interval (e.g., 127.0.0.1,
-   192.168.1.100/24, 192.168.1.20-192.168.1.40).
+   from the given address or an IP interval (e.g., <literal>127.0.0.1</>,
+   <literal>192.168.1.100/24</>, <literal>192.168.1.20-192.168.1.40</>).
   </para>
 
   <para>
-   The <filename>charset.conf</> file is always processed up to the
-   end, so you can easily specify exceptions from the previous
-   rules. In the <filename>src/data/</> directory you will find an
-   example <filename>charset.conf</> and a few recoding tables.
+   The <filename>charset.conf</> file is always processed to the
+   end, so you can easily specify exceptions from preceding rules.
   </para>
 
   <para>
-   As this solution is based on the client's IP address and character
-   set mapping there are obviously some restrictions as well. You
-   cannot use different encodings on the same host at the same
-   time. It is also inconvenient when you boot your client hosts into
-   multiple operating systems.  Nevertheless, when these restrictions are
-   not limiting and you do not need multibyte characters then it is a
+   As this solution is based on the client's IP address there are
+   obviously some restrictions as well. You cannot use different
+   character sets on the same host at the same time. It is also
+   inconvenient when you boot your client hosts into multiple
+   operating systems.  Nevertheless, when these restrictions are not
+   limiting and you do not need multibyte characters then it is a
    simple and effective solution.
   </para>
  </sect1>

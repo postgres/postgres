@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_ctl-ref.sgml,v 1.20 2003/03/20 17:37:46 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_ctl-ref.sgml,v 1.21 2003/03/24 14:32:51 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -69,17 +69,17 @@ PostgreSQL documentation
   <title>Description</title>
   <para>
    <application>pg_ctl</application> is a utility for starting,
-   stopping, or restarting <xref linkend="app-postmaster">, the
-   <productname>PostgreSQL</productname> backend server, or displaying
-   the status of a running postmaster.  Although the postmaster can be
-   started manually, <application>pg_ctl</application> encapsulates
-   tasks such as redirecting log output and properly detaching from the
-   terminal and process group. It also provides convenient options for
+   stopping, or restarting the <productname>PostgreSQL</productname>
+   backend server (<xref linkend="app-postmaster">), or displaying the
+   status of a running server.  Although the server can be started
+   manually, <application>pg_ctl</application> encapsulates tasks such
+   as redirecting log output and properly detaching from the terminal
+   and process group. It also provides convenient options for
    controlled shutdown.
   </para>
 
   <para>
-   In <option>start</option> mode, a new postmaster is launched.  The
+   In <option>start</option> mode, a new server is launched.  The
    server is started in the background, and standard input is attached to
    <filename>/dev/null</filename>.  The standard output and standard
    error are either appended to a log file (if the <option>-l</option>
@@ -87,42 +87,45 @@ PostgreSQL documentation
    standard output (not standard error).  If no log file is chosen, the 
    standard output of <application>pg_ctl</application> should be redirected 
    to a file or piped to another process, for example a log rotating program,
-   otherwise the postmaster will write its output to the controlling
+   otherwise <command>postmaster</command> will write its output to the controlling
    terminal (from the background) and will not leave the shell's
    process group.
   </para>
 
   <para>
-   In <option>stop</option> mode, the postmaster that is running in
+   In <option>stop</option> mode, the server that is running in
    the specified data directory is shut down.  Three different
    shutdown methods can be selected with the <option>-m</option>
    option: <quote>Smart</quote> mode waits for all the clients to
    disconnect.  This is the default.  <quote>Fast</quote> mode does
    not wait for clients to disconnect.  All active transactions are
    rolled back and clients are forcibly disconnected, then the
-   database is shut down.  <quote>Immediate</quote> mode will abort
+   server is shut down.  <quote>Immediate</quote> mode will abort
    all server processes without a clean shutdown.  This will lead to 
    a recovery run on restart.
   </para>
 
   <para>
    <option>restart</option> mode effectively executes a stop followed
-   by a start.  This allows the changing of postmaster command line
-   options.
+   by a start.  This allows changing the <command>postmaster</command>
+   command-line options.
   </para>
 
   <para>
-   <option>reload</option> mode simply sends the postmaster a <systemitem>SIGHUP</> signal,
-   causing it to reread its configuration files
-   (<filename>postgresql.conf</filename>, <filename>pg_hba.conf</filename>,
-   etc.).  This allows changing of configuration-file options that do not
-   require a complete restart to take effect.
+   <option>reload</option> mode simply sends the
+   <command>postmaster</command> process a <systemitem>SIGHUP</>
+   signal, causing it to reread its configuration files
+   (<filename>postgresql.conf</filename>,
+   <filename>pg_hba.conf</filename>, etc.).  This allows changing of
+   configuration-file options that do not require a complete restart
+   to take effect.
   </para>
 
   <para>
-   <option>status</option> mode checks whether a postmaster is running. 
-   If it is, the <acronym>PID</acronym> and the command line
-   options that were used to invoke it are displayed.
+   <option>status</option> mode checks whether a server is running in
+   the specified data directory. If it is, the <acronym>PID</acronym>
+   and the command line options that were used to invoke it are
+   displayed.
   </para>
  </refsect1>
 
@@ -133,7 +136,7 @@ PostgreSQL documentation
 
     <variablelist>
      <varlistentry>
-      <term>-D <replaceable class="parameter">datadir</replaceable></term>
+      <term><option>-D <replaceable class="parameter">datadir</replaceable></option></term>
       <listitem>
        <para>
 	Specifies the file system location of the database files.  If
@@ -144,7 +147,7 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-l <replaceable class="parameter">filename</replaceable></term>
+      <term><option>-l <replaceable class="parameter">filename</replaceable></option></term>
       <listitem>
        <para>
         Append the server log output to
@@ -156,7 +159,7 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-m <replaceable class="parameter">mode</replaceable></term>
+      <term><option>-m <replaceable class="parameter">mode</replaceable></option></term>
       <listitem>
        <para>
 	Specifies the shutdown mode.  <replaceable>mode</replaceable>
@@ -168,35 +171,35 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-o <replaceable class="parameter">options</replaceable></term>
+      <term><option>-o <replaceable class="parameter">options</replaceable></option></term>
       <listitem>
        <para>
-        Specifies options to be passed directly to
-	<application>postmaster</application>.
+        Specifies options to be passed directly to the
+        <command>postmaster</command> command.
        </para>
        <para>
-	The parameters are usually surrounded by single or double
+	The options are usually surrounded by single or double
 	quotes to ensure that they are passed through as a group.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term>-p <replaceable class="parameter">path</replaceable></term>
+      <term><option>-p <replaceable class="parameter">path</replaceable></option></term>
       <listitem>
        <para>
 	Specifies the location of the <filename>postmaster</filename>
-	executable.  By default the postmaster is taken from the same
+	executable.  By default the <filename>postmaster</filename> executable is taken from the same
 	directory as <command>pg_ctl</command>, or failing that, the hard-wired
 	installation directory.  It is not necessary to use this
 	option unless you are doing something unusual and get errors
-	that the postmaster was not found.
+	that the <filename>postmaster</filename> executable was not found.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term>-s</term>
+      <term><option>-s</option></term>
       <listitem>
        <para>
         Only print errors, no informational messages.
@@ -205,7 +208,7 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-w</term>
+      <term><option>-w</option></term>
       <listitem>
        <para>
 	Wait for the start or shutdown to complete.  Times out after
@@ -224,7 +227,7 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-W</term>
+      <term><option>-W</option></term>
       <listitem>
        <para>
         Do not wait for start or shutdown to complete.  This is the
@@ -276,9 +279,10 @@ PostgreSQL documentation
     <term><filename>postmaster.pid</filename></term>
 
     <listitem>
-     <para>The existence of this file in the data directory is used to help 
-           <application>pg_ctl</application> determine if the server is 
-           currently running or not.
+     <para>
+      The existence of this file in the data directory is used to help
+      <application>pg_ctl</application> determine if the server is
+      currently running or not.
      </para>
     </listitem>
    </varlistentry>
@@ -287,11 +291,12 @@ PostgreSQL documentation
     <term><filename>postmaster.opts.default</filename></term>
 
     <listitem>
-     <para>If this file exists in the data directory, 
-      <application>pg_ctl</application> (in <option>start</option> mode) 
-      will pass the contents of the file as options to the 
-      <application>postmaster</application>, unless overridden 
-      by the <option>-o</option> option.
+     <para>
+      If this file exists in the data directory,
+      <application>pg_ctl</application> (in <option>start</option>
+      mode) will pass the contents of the file as options to the
+      <command>postmaster</command> command, unless overridden by the
+      <option>-o</option> option.
      </para>
     </listitem>
    </varlistentry>
@@ -314,10 +319,10 @@ PostgreSQL documentation
     <term><filename>postgresql.conf</filename></term>
 
     <listitem>
-     <para>This file, located in the data directory, is parsed to 
-      find the proper port to send to the 
-      <application>psql</application> when the <option>-w</option> 
-      is given in <option>start</option> mode.      
+     <para>
+      This file, located in the data directory, is parsed to find the
+      proper port to use with <application>psql</application> when the
+      <option>-w</option> is given in <option>start</option> mode.
      </para>
     </listitem>
    </varlistentry>
@@ -332,7 +337,7 @@ PostgreSQL documentation
   <para>
    Waiting for complete start is not a well-defined operation and may
    fail if access control is set up so that a local client cannot
-   connect without manual interaction (e.g. password authentication).
+   connect without manual interaction (e.g., password authentication).
   </para>
  </refsect1>
 
@@ -341,25 +346,25 @@ PostgreSQL documentation
   <title>Examples</title>
 
   <refsect2 id="R2-APP-PGCTL-3">
-   <title>Starting the postmaster</title>
+   <title>Starting the Server</title>
 
    <para>
-    To start up a <application>postmaster</application>:
+    To start up a server:
 <screen>
 <prompt>$</prompt> <userinput>pg_ctl start</userinput>
 </screen>
    </para>
 
    <para>
-    An example of starting the <application>postmaster</application>,
-    blocking until the postmaster comes up is:
+    An example of starting the server, blocking until the server has
+    come up is:
 <screen>
 <prompt>$</prompt> <userinput>pg_ctl -w start</userinput>
 </screen>
    </para>
 
    <para>
-    For a <application>postmaster</application> using port 5433, and
+    For a server using port 5433, and
     running without <function>fsync</function>, use:
 <screen>
 <prompt>$</prompt> <userinput>pg_ctl -o "-F -p 5433" start</userinput>
@@ -368,32 +373,32 @@ PostgreSQL documentation
   </refsect2>
 
   <refsect2 id="R2-APP-PGCTL-4">
-   <title>Stopping the postmaster</title>
+   <title>Stopping the Server</title>
    <para>
 <screen>
 <prompt>$</prompt> <userinput>pg_ctl stop</userinput>
 </screen>
-    stops the postmaster. Using the <option>-m</option> switch allows one
+    stops the server. Using the <option>-m</option> switch allows one
     to control <emphasis>how</emphasis> the backend shuts down.
    </para>
   </refsect2>
 
   <refsect2 id="R2-APP-PGCTL-5">
-   <title>Restarting the postmaster</title>
+   <title>Restarting the Server</title>
 
    <para>
-    This is almost equivalent to stopping the
-    <application>postmaster</application> and starting it again
+    Restarting the server is almost equivalent to stopping the
+    server and starting it again
     except that <command>pg_ctl</command> saves and reuses the command line options that
     were passed to the previously running instance.  To restart
-    the <application>postmaster</application> in the simplest form:
+    the server in the simplest form, use:
 <screen>
 <prompt>$</prompt> <userinput>pg_ctl restart</userinput>
 </screen>
    </para>
 
    <para>
-    To restart <application>postmaster</application>,
+    To restart server,
     waiting for it to shut down and to come up:
 <screen>
 <prompt>$</prompt> <userinput>pg_ctl -w restart</userinput>
@@ -409,7 +414,7 @@ PostgreSQL documentation
   </refsect2>
 
   <refsect2 id="R2-APP-PGCTL-6">
-   <title>Showing postmaster status</title>
+   <title>Showing the Server Status</title>
 
    <para>
     Here is a sample status output from

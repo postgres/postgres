@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/createuser.sgml,v 1.31 2003/03/18 22:19:46 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/createuser.sgml,v 1.32 2003/03/24 14:32:51 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -18,7 +18,7 @@ PostgreSQL documentation
  <refsynopsisdiv>
   <cmdsynopsis>
    <command>createuser</command>
-   <arg rep="repeat"><replaceable>options</replaceable></arg>
+   <arg rep="repeat"><replaceable>option</replaceable></arg>
    <arg><replaceable>username</replaceable></arg>
   </cmdsynopsis>
  </refsynopsisdiv>
@@ -78,7 +78,7 @@ PostgreSQL documentation
       <listitem>
        <para>
 	The new user is allowed to create other users.
-	(Note: Actually, this makes the new user a <firstterm>superuser</>.
+	(Note: Actually, this makes the new user a <emphasis>superuser</>.
 	The option is poorly named.)
        </para>
       </listitem>
@@ -120,7 +120,7 @@ PostgreSQL documentation
       <term><option>--echo</></term>
       <listitem>
        <para>
-        Echo the queries that <application>createuser</application> generates
+        Echo the commands that <application>createuser</application> generates
 	and sends to the server.
        </para>
       </listitem>
@@ -138,8 +138,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>-i <replaceable class="parameter">uid</replaceable></></term>
-      <term><option>--sysid <replaceable class="parameter">uid</replaceable></></term>
+      <term><option>-i <replaceable class="parameter">number</replaceable></></term>
+      <term><option>--sysid <replaceable class="parameter">number</replaceable></></term>
       <listitem>
        <para>
        Allows you to pick a non-default user ID for the new user. This is not
@@ -200,7 +200,7 @@ PostgreSQL documentation
        <para>
 	Specifies the host name of the machine on which the 
 	server
-	is running.  If host begins with a slash, it is used 
+	is running.  If the value begins with a slash, it is used 
 	as the directory for the Unix domain socket.
        </para>
       </listitem>
@@ -211,7 +211,7 @@ PostgreSQL documentation
       <term><option>--port <replaceable class="parameter">port</replaceable></></term>
       <listitem>
        <para>
-	Specifies the Internet TCP/IP port or local Unix domain socket file 
+	Specifies the TCP port or local Unix domain socket file 
 	extension on which the server
 	is listening for connections.
        </para>
@@ -311,7 +311,7 @@ PostgreSQL documentation
    <para>
     To create the same user <literal>joe</literal> using the
     server on host <literal>eden</>, port 5000, avoiding the prompts and
-    taking a look at the underlying query:
+    taking a look at the underlying command:
 <screen>
 <prompt>$ </prompt><userinput>createuser -p 5000 -h eden -D -A -e joe</userinput>
 <computeroutput>CREATE USER "joe" NOCREATEDB NOCREATEUSER</computeroutput>

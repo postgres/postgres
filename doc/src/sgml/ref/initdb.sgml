@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/initdb.sgml,v 1.24 2003/01/19 00:13:29 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/initdb.sgml,v 1.25 2003/03/24 14:32:51 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -18,7 +18,7 @@ PostgreSQL documentation
  <refsynopsisdiv>
   <cmdsynopsis>
    <command>initdb</command>
-   <arg rep="repeat">options</arg>
+   <arg rep="repeat"><replaceable>option</></arg>
    <group choice="plain">
     <arg>--pgdata </arg>
     <arg>-D </arg>
@@ -33,17 +33,17 @@ PostgreSQL documentation
   </title>
   <para>
    <command>initdb</command> creates a new
-   <productname>PostgreSQL</productname> database cluster (or database
-   system).  A database cluster is a collection of databases that are
-   managed by a single server instance.
+   <productname>PostgreSQL</productname> database cluster.  A database
+   cluster is a collection of databases that are managed by a single
+   server instance.
   </para>
 
   <para>
-   Creating a database system consists of creating the directories in which
+   Creating a database cluster consists of creating the directories in which
    the database data will live, generating the shared catalog tables 
    (tables that belong to the whole cluster rather than to any particular
    database), and creating the <literal>template1</literal>
-   database.  When you create a new database, everything in the
+   database.  When you later create a new database, everything in the
    <literal>template1</literal> database is copied.
    It contains catalog tables filled in for things like the
    built-in types.
@@ -99,7 +99,7 @@ PostgreSQL documentation
       <term><option>--pgdata=<replaceable class="parameter">directory</replaceable></option></term>
       <listitem>
        <para>
-        This option specifies the directory where the database system
+        This option specifies the directory where the database cluster
         should be stored. This is the only information required by
         <command>initdb</command>, but you can avoid writing it by
         setting the <envar>PGDATA</envar> environment variable, which
@@ -117,9 +117,7 @@ PostgreSQL documentation
        <para>
         Selects the encoding of the template database. This will also
         be the default encoding of any database you create later, unless you
-        override it there. To use the encoding feature, you must
-        have enabled it at build time, at which time you also select the default
-        for this option.
+        override it there.  The default is <literal>SQL_ASCII</literal>.
        </para>
       </listitem>
      </varlistentry>
@@ -205,7 +203,7 @@ PostgreSQL documentation
       <listitem>
        <para>
         Specifies where <command>initdb</command> should find
-        its input files to initialize the database system.  This is
+        its input files to initialize the database cluster.  This is
         normally not necessary.  You will be told if you need to
         specify their location explicitly.
        </para>
@@ -219,7 +217,7 @@ PostgreSQL documentation
        <para>
 	By default, when <command>initdb</command>
 	determines that an error prevented it from completely creating the database
-	system, it removes any files it may have created before discovering
+	cluster, it removes any files it may have created before discovering
 	that it can't finish the job. This option inhibits tidying-up and is
 	thus useful for debugging.
        </para>
@@ -239,7 +237,7 @@ PostgreSQL documentation
 
     <listitem>
      <para>
-      Specifies the directory where the database system is to be
+      Specifies the directory where the database cluster is to be
       stored; may be overridden using the <option>-D</option> option.
      </para>
     </listitem>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.34 2003/01/19 00:13:31 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.35 2003/03/24 14:32:51 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -41,33 +41,33 @@ PostgreSQL documentation
   <title>Description</title>
 
   <para>
-   <application>postmaster</application> is the
+   <command>postmaster</command> is the
    <productname>PostgreSQL</productname> multiuser database server.
    In order for a client application to access a database it connects
    (over a network or locally) to a running
-   <application>postmaster</application>.  The
-   <application>postmaster</application> then starts a separate server
+   <command>postmaster</command>.  The
+   <command>postmaster</command> then starts a separate server
    process (<quote><xref linkend="app-postgres"></quote>) to handle
-   the connection.  The <application>postmaster</application> also
+   the connection.  The <command>postmaster</command> also
    manages the communication among server processes.
   </para>
 
   <para>
-   By default the <application>postmaster</application> starts in the
-   foreground and prints log messages to the standard output.  In
-   practical applications the <application>postmaster</application>
+   By default the <command>postmaster</command> starts in the
+   foreground and prints log messages to the standard error stream.  In
+   practical applications the <command>postmaster</command>
    should be started as a background process, perhaps at boot time.
   </para>
 
   <para>
-   One <application>postmaster</application> always manages the data
+   One <command>postmaster</command> always manages the data
    from exactly one database cluster.  A database cluster is a
    collection of databases that is stored at a common file system
-   location.  When the postmaster starts it needs to know the location
+   location.  When the <command>postmaster</command> starts it needs to know the location
    of the database cluster files (<quote>data area</quote>).  This is
    done with the <option>-D</option> invocation option or the
    <envar>PGDATA</envar> environment variable; there is no default.
-   More than one postmaster process can run on a system at one time,
+   More than one <command>postmaster</command> process can run on a system at one time,
    as long as they use different data areas and different
    communication ports (see below).  A data area is created with <xref
    linkend="app-initdb">.
@@ -78,17 +78,17 @@ PostgreSQL documentation
   <title>Options</title>
 
    <para>
-    <application>postmaster</application> accepts the following
+    <command>postmaster</command> accepts the following
     command line arguments.  For a detailed discussion of the options
     consult the &cite-admin;.  You can also save typing most of these
     options by setting up a configuration file.
     
     <variablelist>
      <varlistentry>
-      <term>-A 0|1</term>
+      <term><option>-A 0|1</option></term>
       <listitem>
        <para>
-        Enables run-time assert checks, which is a debugging aid to
+        Enables run-time assertion checks, which is a debugging aid to
         detect programming mistakes.  This is only available if it was
         enabled during compilation.  If so, the default is on.
        </para>
@@ -96,7 +96,7 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-B <replaceable class="parameter">nbuffers</replaceable></term>
+      <term><option>-B <replaceable class="parameter">nbuffers</replaceable></option></term>
       <listitem>
        <para>
 	Sets the number of shared buffers for use by the server
@@ -107,7 +107,7 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-c <replaceable>name</replaceable>=<replaceable>value</replaceable></term>
+      <term><option>-c <replaceable>name</replaceable>=<replaceable>value</replaceable></option></term>
       <listitem>
        <para>
         Sets a named run-time parameter. Consult the &cite-admin; for
@@ -120,7 +120,7 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-d <replaceable>debug-level</replaceable></term>
+      <term><option>-d <replaceable>debug-level</replaceable></option></term>
       <listitem>
        <para>
         Sets the debug level.  The higher this value is set, the more
@@ -131,7 +131,7 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-D <replaceable class="parameter">datadir</replaceable></term>
+      <term><option>-D <replaceable class="parameter">datadir</replaceable></option></term>
       <listitem>
        <para>
 	Specifies the file system location of the data directory.  See
@@ -141,12 +141,12 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-F</term>
+      <term><option>-F</option></term>
       <listitem>
        <para>
         Disables <function>fsync</function> calls for performance
         improvement, at the risk of data corruption in event of a
-        system crash.  This parameter corresponds to setting
+        system crash.  This option corresponds to setting
         <literal>fsync=false</> in <filename>postgresql.conf</>. Read the detailed
         documentation before using this!
        </para>
@@ -158,11 +158,11 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-h <replaceable class="parameter">hostname</replaceable></term>
+      <term><option>-h <replaceable class="parameter">hostname</replaceable></option></term>
       <listitem>
        <para>
-	Specifies the TCP/IP host name or address on which the
-	<application>postmaster</application> is to listen for
+	Specifies the IP host name or address on which the
+	<command>postmaster</command> is to listen for
 	connections from client applications.  Defaults to
 	listening on all configured addresses (including
         <systemitem class="systemname">localhost</systemitem>).
@@ -171,7 +171,7 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-i</term>
+      <term><option>-i</option></term>
       <listitem>
        <para>
         Allows clients to connect via TCP/IP (Internet domain)
@@ -180,18 +180,18 @@ PostgreSQL documentation
         to setting <literal>tcpip_socket=true</> in <filename>postgresql.conf</>.
        </para>
        <para>
-        <option>--tcpip_socket=false</option> has the opposite
+        <option>--tcpip-socket=false</option> has the opposite
         effect of this option.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term>-k <replaceable class="parameter">directory</replaceable></term>
+      <term><option>-k <replaceable class="parameter">directory</replaceable></option></term>
       <listitem>
        <para>
 	Specifies the directory of the Unix-domain socket on which the
-	<application>postmaster</application> is to listen for
+	<command>postmaster</command> is to listen for
 	connections from client applications.  The default is normally
 	<filename>/tmp</filename>, but can be changed at build time.
        </para>
@@ -199,7 +199,7 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-l</term>
+      <term><option>-l</option></term>
       <listitem>
        <para>
 	Enables secure connections using SSL.  The <option>-i</option>
@@ -210,11 +210,11 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-N <replaceable class="parameter">max-connections</replaceable></term>
+      <term><option>-N <replaceable class="parameter">max-connections</replaceable></option></term>
       <listitem>
        <para>
 	Sets the maximum number of client connections that this
-	<application>postmaster</application> will accept.  By
+	<command>postmaster</command> will accept.  By
 	default, this value is 32, but it can be set as high as your
 	system will support.  (Note that
 	<option>-B</option> is required to be at least twice
@@ -226,13 +226,13 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-o <replaceable class="parameter">extra-options</replaceable></term>
+      <term><option>-o <replaceable class="parameter">extra-options</replaceable></option></term>
       <listitem>
        <para>
 	The command line-style options specified in <replaceable
 	class="parameter">extra-options</replaceable> are passed to
-	all backend server processes started by this
-	<application>postmaster</application>.  See <xref
+	all server processes started by this
+	<command>postmaster</command>.  See <xref
 	linkend="app-postgres"> for possibilities.  If the option
 	string contains any spaces, the entire string must be quoted.
        </para>
@@ -240,11 +240,11 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-p <replaceable class="parameter">port</replaceable></term>
+      <term><option>-p <replaceable class="parameter">port</replaceable></option></term>
       <listitem>
        <para>
 	Specifies the TCP/IP port or local Unix domain socket file
-	extension on which the <application>postmaster</application>
+	extension on which the <command>postmaster</command>
 	is to listen for connections from client applications.
 	Defaults to the value of the <envar>PGPORT</envar> environment
 	variable, or if <envar>PGPORT</envar> is not set, then
@@ -257,10 +257,10 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-S</term>
+      <term><option>-S</option></term>
       <listitem>
        <para>
-	Specifies that the <application>postmaster</application>
+	Specifies that the <command>postmaster</command>
 	process should start up in silent mode.  That is, it will
 	disassociate from the user's (controlling) terminal, start its
 	own process group, and redirect its standard output and
@@ -270,17 +270,17 @@ PostgreSQL documentation
         Using this switch discards all logging output, which is
 	probably not what you want, since it makes it very difficult
 	to troubleshoot problems.  See below for a better way to start
-	the <application>postmaster</application> in the background.
+	the <command>postmaster</command> in the background.
        </para>
        <para>
-        <option>--silent_mode=false</option> has the opposite effect
+        <option>--silent-mode=false</option> has the opposite effect
         of this option.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term>--<replaceable>name</replaceable>=<replaceable>value</replaceable></term>
+      <term><option>--<replaceable>name</replaceable>=<replaceable>value</replaceable></option></term>
       <listitem>
        <para>
         Sets a named run-time parameter; a shorter form of
@@ -294,17 +294,18 @@ PostgreSQL documentation
 
    <para>
     Two additional command line options are available for debugging
-    problems that cause a backend to die abnormally.  These options
-    control the behavior of the <application>postmaster</application>
-    in this situation, and <emphasis>neither option is intended for
-    use in ordinary operation</emphasis>.
+    problems that cause a server process to die abnormally.  The
+    ordinary strategy in this situation is to notify all other server
+    processes that they must terminate and then reinitialize the
+    shared memory and semaphores.  This is because an errant server
+    process could have corrupted some shared state before terminating.
+    These options select alternative behaviors of the
+    <command>postmaster</command> in this situation.
+    <emphasis>Neither option is intended for use in ordinary
+    operation.</emphasis>
    </para>
 
    <para>
-    The ordinary strategy for this situation is to notify all other
-    backends that they must terminate and then reinitialize the shared
-    memory and semaphores.  This is because an errant backend could
-    have corrupted some shared state before terminating.
    </para>
 
    <para>
@@ -312,10 +313,10 @@ PostgreSQL documentation
 
     <variablelist>
      <varlistentry>
-      <term>-n</term>
+      <term><option>-n</option></term>
       <listitem>
        <para>
-	<application>postmaster</application>
+	<command>postmaster</command>
 	will not reinitialize shared data structures.  A knowledgeable system
 	programmer can then use a debugger
 	to examine shared memory and semaphore state.
@@ -324,14 +325,14 @@ PostgreSQL documentation
     </varlistentry>
 
     <varlistentry>
-      <term>-s</term>
+      <term><option>-s</option></term>
       <listitem>
        <para>
-	<application>postmaster</application>
-	will stop all other backend processes by sending the signal
+	<command>postmaster</command>
+	will stop all other server processes by sending the signal
 	<literal>SIGSTOP</literal>,
 	but will not cause them to terminate.  This permits system programmers
-	to collect core dumps from all backend processes by hand.
+	to collect core dumps from all server processes by hand.
        </para>
       </listitem>
      </varlistentry>
@@ -367,7 +368,7 @@ PostgreSQL documentation
    </varlistentry>
 
    <varlistentry>
-    <term><envar>PGDATASTYLE</envar></term>
+    <term><envar>PGDATESTYLE</envar></term>
 
     <listitem>
      <para>
@@ -418,22 +419,17 @@ PostgreSQL documentation
 
     <variablelist>
      <varlistentry>
-      <term><computeroutput>
-semget: No space left on device
-       </computeroutput></term>
+      <term><computeroutput>semget: No space left on device</computeroutput></term>
       <listitem>
        <para>
-	If you see this message, you should run the
-	<application>ipcclean</application>
-	command.  After doing so, try starting
-	<application>postmaster</application>
-	again.  If this still doesn't work, you probably need to configure
-	your kernel for shared memory and semaphores as described in the
-	installation notes.  If you run multiple instances of
-	<application>postmaster</application>
+	If you see this message, you probably need to configure
+	your kernel for shared memory and semaphores as described in the &cite-admin;.
+	If you run multiple instances of
+	<command>postmaster</command>
 	on a single host, or have a kernel with particularly small shared memory
 	and/or semaphore limits, you may have to reconfigure your kernel to increase
 	its shared memory or semaphore parameters.
+       </para>
 
 	<tip>
 	 <para>
@@ -444,18 +440,15 @@ semget: No space left on device
 	  consumption.
 	 </para>
 	</tip>
-       </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><computeroutput>
-StreamServerPort: cannot bind to port
-       </computeroutput></term>
+      <term><computeroutput>StreamServerPort: cannot bind to port</computeroutput></term>
       <listitem>
        <para>
 	If you see this message, you should make certain that there is no
-	other <application>postmaster</application>
+	other <command>postmaster</command>
 	process already running on the same port number.  The easiest way to
 	determine this is by using the command
 <screen>
@@ -471,18 +464,18 @@ StreamServerPort: cannot bind to port
        <para>
 	If you 
 	are sure that no other
-	<application>postmaster</application>
+	<command>postmaster</command>
 	processes are running and you still get this error, try specifying a
 	different port using the
 	<literal>-p</literal>
 	option.  You may also get this error if you terminate the
-	<application>postmaster</application>
+	<command>postmaster</command>
 	and immediately restart it using the same port; in this case, you must
 	simply wait a few seconds until the operating system closes the port
 	before trying again.  Finally, you may get this error if you specify
 	a port number that your operating system considers to be reserved.
 	For example, many versions of Unix consider port numbers under 1024 to
-	be <firstterm>trusted</firstterm>
+	be <quote>trusted</quote>
 	and only permit the Unix superuser to access them.
        </para>
       </listitem>
@@ -497,14 +490,14 @@ StreamServerPort: cannot bind to port
   <para>
    If at all possible, <emphasis>do not</emphasis> use
    <literal>SIGKILL</literal> to kill the
-   <application>postmaster</application>.  This will prevent
-   <application>postmaster</application> from freeing the system
+   <command>postmaster</command>.  This will prevent
+   <command>postmaster</command> from freeing the system
    resources (e.g., shared memory and semaphores) that it holds before
    terminating.
   </para>
 
   <para>
-   To terminate the <application>postmaster</application> normally,
+   To terminate the <command>postmaster</command> normally,
    the signals <literal>SIGTERM</literal>, <literal>SIGINT</literal>,
    or <literal>SIGQUIT</literal> can be used.  The first will wait for
    all clients to terminate before quitting, the second will
@@ -515,7 +508,7 @@ StreamServerPort: cannot bind to port
 
   <para>
    The utility command <xref linkend="app-pg-ctl"> can be used to
-   start and shut down the <application>postmaster</application>
+   start and shut down the <command>postmaster</command>
    safely and comfortably.
   </para>
 
@@ -532,7 +525,7 @@ StreamServerPort: cannot bind to port
  <refsect1 id="app-postmaster-examples">
   <title>Examples</title>
   <para>
-   To start <application>postmaster</application> in the background
+   To start <command>postmaster</command> in the background
    using default values, type:
 
 <screen>
@@ -541,14 +534,14 @@ StreamServerPort: cannot bind to port
   </para>
 
   <para>
-   To start <application>postmaster</application> with a specific
+   To start <command>postmaster</command> with a specific
    port:
 <screen>
 <prompt>$</prompt> <userinput>postmaster -p 1234</userinput>
 </screen>
-   This command will start up <application>postmaster</application>
+   This command will start up <command>postmaster</command>
    communicating through the port 1234. In order to connect to this
-   <application>postmaster</application> using <application>psql</>, you would need to
+   <command>postmaster</command> using <application>psql</>, you would need to
    run it as
 <screen>
 <prompt>$</prompt> <userinput>psql -p 1234</userinput>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/createdb.sgml,v 1.31 2003/03/18 22:19:46 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/createdb.sgml,v 1.32 2003/03/24 14:32:51 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -18,7 +18,7 @@ PostgreSQL documentation
  <refsynopsisdiv>
   <cmdsynopsis>
    <command>createdb</command>
-   <arg rep="repeat"><replaceable>options</replaceable></arg>
+   <arg rep="repeat"><replaceable>option</replaceable></arg>
    <arg><replaceable>dbname</replaceable></arg>
    <arg><replaceable>description</replaceable></arg>
   </cmdsynopsis>
@@ -47,7 +47,7 @@ PostgreSQL documentation
    endterm="SQL-CREATEDATABASE-title">.  Thus, there is nothing
    special about creating databases via this or other methods.  This
    means that a database server must be running at the targeted
-   port. Also, any default settings and environment variables used by
+   host. Also, any default settings and environment variables used by
    the <application>libpq</application> front-end library will apply.
   </para>
  </refsect1>
@@ -65,7 +65,7 @@ PostgreSQL documentation
       <listitem>
        <para>
 	Specifies the name of the database to be created.  The name must be
-	unique among all <productname>PostgreSQL</productname> databases in this installation.
+	unique among all <productname>PostgreSQL</productname> databases in this cluster.
         The default is to create a database with the same name as the
         current system user.
        </para>
@@ -98,7 +98,7 @@ PostgreSQL documentation
       <term><option>--echo</></term>
       <listitem>
        <para>
-        Echo the queries that <application>createdb</application> generates
+        Echo the commands that <application>createdb</application> generates
 	and sends to the server.
        </para>
       </listitem>
@@ -166,7 +166,7 @@ PostgreSQL documentation
       <listitem>
        <para>
 	Specifies the host name of the machine on which the 
-	server is running.  If host begins with a slash, it is used 
+	server is running.  If the value begins with a slash, it is used 
 	as the directory for the Unix domain socket.
        </para>
       </listitem>
@@ -177,7 +177,7 @@ PostgreSQL documentation
       <term><option>--port <replaceable class="parameter">port</replaceable></></term>
       <listitem>
        <para>
-	Specifies the Internet TCP/IP port or the local Unix domain socket file 
+	Specifies the TCP port or the local Unix domain socket file 
 	extension on which the server is listening for connections.
        </para>
       </listitem>
@@ -296,7 +296,7 @@ PostgreSQL documentation
     To create the database <literal>demo</literal> using the
     server on host <literal>eden</>, port 5000, using the
     <literal>LATIN1</literal> encoding scheme with a look at the
-    underlying query:
+    underlying command:
 <screen>
 <prompt>$ </prompt><userinput>createdb -p 5000 -h eden -E LATIN1 -e demo</userinput>
 <computeroutput>CREATE DATABASE "demo" WITH ENCODING = 'LATIN1'</computeroutput>

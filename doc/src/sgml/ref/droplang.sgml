@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/droplang.sgml,v 1.22 2003/03/18 22:19:46 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/droplang.sgml,v 1.23 2003/03/24 14:32:51 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -18,12 +18,12 @@ PostgreSQL documentation
  <refsynopsisdiv>
   <cmdsynopsis>
    <command>droplang</command>
-   <arg rep="repeat"><replaceable>connection-options</replaceable></arg>
+   <arg rep="repeat"><replaceable>connection-option</replaceable></arg>
    <arg choice="plain"><replaceable>langname</replaceable></arg>
    <arg><replaceable>dbname</replaceable></arg>
    <sbr>
    <command>droplang</command>
-   <arg rep="repeat"><replaceable>connection-options</replaceable></arg>
+   <arg rep="repeat"><replaceable>connection-option</replaceable></arg>
    <group choice="plain"><arg>--list</arg><arg>-l</arg></group>
    <arg choice="plain"><replaceable>dbname</replaceable></arg>
   </cmdsynopsis>
@@ -85,7 +85,7 @@ PostgreSQL documentation
       <term><option>--echo</></term>
       <listitem>
        <para>
-        Displays SQL commands as they are executed.
+        Display SQL commands as they are executed.
        </para>
       </listitem>
      </varlistentry>
@@ -95,8 +95,7 @@ PostgreSQL documentation
       <term><option>--list</></term>
       <listitem>
        <para>
-        Shows a list of already installed languages in the target database
-        (which must be specified).
+        Show a list of already installed languages in the target database.
        </para>
       </listitem>
      </varlistentry>
@@ -171,7 +170,7 @@ PostgreSQL documentation
 
     <listitem>
      <para>
-      Default connection parameters.
+      Default connection parameters
      </para>
     </listitem>
    </varlistentry>
@@ -204,7 +203,7 @@ PostgreSQL documentation
   <title>Examples</title>
 
    <para>
-    To remove <literal>pltcl</literal>:
+    To remove the language <literal>pltcl</literal>:
 <screen>
 <prompt>$ </prompt><userinput>droplang pltcl dbname</userinput>
 </screen>

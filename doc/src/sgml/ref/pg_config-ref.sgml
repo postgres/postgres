@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_config-ref.sgml,v 1.13 2003/01/19 00:13:29 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_config-ref.sgml,v 1.14 2003/03/24 14:32:51 petere Exp $ -->
 
 <refentry id="app-pgconfig">
  <refmeta>
@@ -50,7 +50,7 @@
      <listitem>
       <para>
        Print the location of user executables. Use this, for example, to find
-       the <application>psql</> program. This is normally also the location
+       the <command>psql</> program. This is normally also the location
        where the <filename>pg_config</> program resides.       
       </para>
      </listitem>
@@ -130,10 +130,10 @@
   <title>Notes</title>
 
   <para>
-   The option <option>--includedir-server</option> is new in
+   The option <option>--includedir-server</option> was new in
    <productname>PostgreSQL</> 7.2.  In prior releases, the server include files were
    installed in the same location as the client headers, which could
-   be queried with the <option>--includedir</option>.  To make your
+   be queried with the option <option>--includedir</option>.  To make your
    package handle both cases, try the newer option first and test the
    exit status to see whether it succeeded.
   </para>

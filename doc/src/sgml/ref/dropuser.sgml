@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/dropuser.sgml,v 1.23 2003/03/18 22:19:46 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/dropuser.sgml,v 1.24 2003/03/24 14:32:51 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -18,7 +18,7 @@ PostgreSQL documentation
  <refsynopsisdiv>
   <cmdsynopsis>
    <command>dropuser</command>
-   <arg rep="repeat"><replaceable>options</replaceable></arg>
+   <arg rep="repeat"><replaceable>option</replaceable></arg>
    <arg><replaceable>username</replaceable></arg>
   </cmdsynopsis>
  </refsynopsisdiv>
@@ -31,8 +31,8 @@ PostgreSQL documentation
    <application>dropuser</application> removes an existing
    <productname>PostgreSQL</productname> user
    <emphasis>and</emphasis> the databases which that user owned.
-   Only users with <literal>usesuper</literal> set in
-   the <literal>pg_shadow</literal> table can destroy 
+   Only superusers (users with <literal>usesuper</literal> set in
+   the <literal>pg_shadow</literal> table) can destroy 
    <productname>PostgreSQL</productname> users.
   </para>
 
@@ -61,7 +61,6 @@ PostgreSQL documentation
       <listitem>
        <para>
 	Specifies the name of the <productname>PostgreSQL</productname> user to be removed. 
-	This name must exist in the <productname>PostgreSQL</productname> installation.
 	You will be prompted for a name if none is specified on the command line.
        </para>
       </listitem>
@@ -72,7 +71,7 @@ PostgreSQL documentation
       <term><option>--echo</></term>
       <listitem>
        <para>
-        Echo the queries that <application>dropuser</application> generates
+        Echo the commands that <application>dropuser</application> generates
 	and sends to the server.
        </para>
       </listitem>
@@ -112,7 +111,7 @@ PostgreSQL documentation
        <para>
 	Specifies the host name of the machine on which the 
 	server
-	is running.  If host begins with a slash, it is used 
+	is running.  If the value begins with a slash, it is used 
 	as the directory for the Unix domain socket.
        </para>
       </listitem>
@@ -123,7 +122,7 @@ PostgreSQL documentation
       <term><option>--port <replaceable class="parameter">port</replaceable></></term>
       <listitem>
        <para>
-	Specifies the Internet TCP/IP port or local Unix domain socket file 
+	Specifies the TCP port or local Unix domain socket file 
 	extension on which the server
 	is listening for connections.
        </para>
@@ -219,9 +218,9 @@ PostgreSQL documentation
    </para>
 
    <para>
-    To remove user <literal>joe</literal> using the postmaster on host
+    To remove user <literal>joe</literal> using the server on host
     <literal>eden</literal>, port 5000, with verification and a peek at the underlying
-    query:
+    command:
 <screen>
 <prompt>$ </prompt><userinput>dropuser -p 5000 -h eden -i -e joe</userinput>
 <computeroutput>User "joe" and any owned databases will be permanently deleted.

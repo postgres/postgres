@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/diskusage.sgml,v 1.8 2002/11/15 03:11:16 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/diskusage.sgml,v 1.9 2003/03/24 14:32:50 petere Exp $
 -->
 
 <chapter id="diskusage">
@@ -33,32 +33,32 @@ $Header: /cvsroot/pgsql/doc/src/sgml/diskusage.sgml,v 1.8 2002/11/15 03:11:16 mo
   <para>
    You can monitor disk space from three places: from
    <application>psql</> using <command>VACUUM</> information, from
-   <application>psql</> using <filename>contrib/dbsize</>, and from
-   the command line using <application>contrib/oid2name</>. Using
-   <application>psql</> on a recently vacuumed (or analyzed) database,
+   <application>psql</> using the tools in <filename>contrib/dbsize</>, and from
+   the command line using the tools in <filename>contrib/oid2name</>. Using
+   <application>psql</> on a recently vacuumed or analyzed database,
    you can issue queries to see the disk usage of any table:
 <programlisting>
-play=# SELECT relfilenode, relpages
-play-# FROM pg_class
-play-# WHERE relname = 'customer';
+SELECT relfilenode, relpages FROM pg_class WHERE relname = 'customer';
+
  relfilenode | relpages 
 -------------+----------
        16806 |       60
 (1 row)
 </programlisting>
+   Each page is typically 8 kilobytes. (Remember, <literal>relpages</>
+   is only updated by <command>VACUUM</> and <command>ANALYZE</>.)
   </para>
 
-  <para>   
-   Each page is typically 8 kilobytes. (Remember, <literal>relpages</>
-   is only updated by <command>VACUUM</> and <command>ANALYZE</>.) To
-   show the space used by <acronym>TOAST</> tables, use a query based on
-   the heap relfilenode shown above:
+  <para>
+   To show the space used by <acronym>TOAST</> tables, use a query
+   like the following, substituting the <literal>relfilenode</literal>
+   number of the heap (determined by the query above):
 <programlisting>
-play=# SELECT relname, relpages
-play-# FROM pg_class
-play-# WHERE relname = 'pg_toast_16806' OR
-play-#       relname = 'pg_toast_16806_index'
-play-# ORDER BY relname;
+SELECT relname, relpages
+    FROM pg_class
+    WHERE relname = 'pg_toast_16806' OR relname = 'pg_toast_16806_index'
+    ORDER BY relname;
+
        relname        | relpages 
 ----------------------+----------
  pg_toast_16806       |        0
@@ -67,14 +67,15 @@ play-# ORDER BY relname;
   </para>
 
   <para>
-   You can easily display index usage too:
+   You can easily display index sizes, too:
 <programlisting>
-play=# SELECT c2.relname, c2.relpages
-play-# FROM pg_class c, pg_class c2, pg_index i
-play-# WHERE c.relname = 'customer' AND
-play-#       c.oid = i.indrelid AND
-play-#       c2.oid = i.indexrelid
-play-# ORDER BY c2.relname;
+SELECT c2.relname, c2.relpages
+    FROM pg_class c, pg_class c2, pg_index i
+    WHERE c.relname = 'customer'
+        AND c.oid = i.indrelid
+        AND c2.oid = i.indexrelid
+        ORDER BY c2.relname;
+
        relname        | relpages 
 ----------------------+----------
  customer_id_indexdex |       26
@@ -82,11 +83,11 @@ play-# ORDER BY c2.relname;
   </para>
 
   <para>
-   It is easy to find your largest files using <application>psql</>:
+   It is easy to find your largest tables and indexes using this
+   information:
 <programlisting>
-play=# SELECT relname, relpages
-play-# FROM pg_class
-play-# ORDER BY relpages DESC;
+SELECT relname, relpages FROM pg_class ORDER BY relpages DESC;
+
        relname        | relpages 
 ----------------------+----------
  bigtable             |     3290
@@ -97,12 +98,12 @@ play-# ORDER BY relpages DESC;
   <para>
    <filename>contrib/dbsize</> loads functions into your database that allow
    you to find the size of a table or database from inside
-   <application>psql</> without the need for <command>VACUUM/ANALYZE.</>
+   <application>psql</> without the need for <command>VACUUM</> or <command>ANALYZE</>.
   </para>
 
   <para>
    You can also use <filename>contrib/oid2name</> to show disk usage. See
-   <filename>README.oid2name</> for examples. It includes a script that
+   <filename>README.oid2name</> in that directory for examples. It includes a script that
    shows disk usage for each database.
   </para>
  </sect1>
@@ -114,7 +115,7 @@ play-# ORDER BY relpages DESC;
    The most important disk monitoring task of a database administrator
    is to make sure the disk doesn't grow full.  A filled data disk may
    result in subsequent corruption of database indexes, but not of the
-   fundamental data tables. If the WAL files are on the same disk (as
+   tables themselves. If the WAL files are on the same disk (as
    is the case for a default configuration) then a filled disk during
    database initialization may result in corrupted or incomplete WAL
    files. This failure condition is detected and the database server
@@ -129,8 +130,8 @@ play-# ORDER BY relpages DESC;
    information of such a setup; a restore would put everything back in
    one place.  To avoid running out of disk space, you can place the
    WAL files or individual databases in other locations while creating
-   them.  See the <application>initdb</> documentation and <xref
-   linkend="manage-ag-alternate-locs"> for more information.
+   them.  See the <command>initdb</> documentation and <xref
+   linkend="manage-ag-alternate-locs"> for more information about that.
   </para>
 
   <tip>

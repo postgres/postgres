@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/initlocation.sgml,v 1.18 2003/01/19 00:13:29 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/initlocation.sgml,v 1.19 2003/03/24 14:32:51 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -47,9 +47,9 @@ PostgreSQL documentation
 <screen>
 <prompt>$ </prompt><userinput>export PGDATA2=/opt/postgres/data</userinput>
 </screen>
-    Stop and start postmaster so it sees the <envar>PGDATA2</envar>
+    Stop and start <command>postmaster</> so it sees the <envar>PGDATA2</envar>
     environment variable.  The system must be configured so the
-    postmaster sees <envar>PGDATA2</envar> every time it starts.  Finally:
+    <command>postmaster</> sees <envar>PGDATA2</envar> every time it starts.  Finally:
 <screen>
 <prompt>$</prompt> <userinput>initlocation PGDATA2</userinput>
 <prompt>$</prompt> <userinput>createdb -D PGDATA2 testdb</userinput>

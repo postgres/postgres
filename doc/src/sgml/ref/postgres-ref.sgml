@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/postgres-ref.sgml,v 1.30 2003/01/19 00:13:31 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/postgres-ref.sgml,v 1.31 2003/03/24 14:32:51 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -62,7 +62,7 @@ PostgreSQL documentation
     <arg>-t<group choice="plain"><arg>pa</arg><arg>pl</arg><arg>ex</arg></group></arg>
    </group>
    <arg>-S <replaceable>sort-mem</replaceable></arg>
-   <arg>-v <replaceable>protocol-version</replaceable></arg>
+   <arg>-v <replaceable>protocol</replaceable></arg>
    <arg>-W <replaceable>seconds</replaceable></arg>
    <arg>--<replaceable>name</replaceable>=<replaceable>value</replaceable></arg>
   </cmdsynopsis>
@@ -72,7 +72,7 @@ PostgreSQL documentation
   <title>Description</title>
 
   <para>
-   The <filename>postgres</filename> executable is the actual
+   The <command>postgres</command> executable is the actual
    <productname>PostgreSQL</productname> server process that processes
    queries.  It is normally not called directly; instead a <xref
    linkend="app-postmaster"> multiuser server is started.
@@ -80,7 +80,7 @@ PostgreSQL documentation
 
   <para>
    The second form above is how
-   <application>postgres</application> is invoked by the <xref
+   <command>postgres</command> is invoked by the <xref
    linkend="app-postmaster"> (only
    conceptually, since both <filename>postmaster</filename> and
    <filename>postgres</filename> are in fact the same program); it
@@ -94,15 +94,15 @@ PostgreSQL documentation
    When invoked in interactive mode from the shell, the user can enter
    queries and the results will be printed to the screen, but in a
    form that is more useful for developers than end users.  But note
-   that running a single-user backend is not truly suitable for
+   that running a single-user server is not truly suitable for
    debugging the server since no realistic interprocess communication
    and locking will happen.
   </para>
 
   <para>
-   When running a stand-alone backend, the session user will be set to
+   When running a stand-alone server, the session user will be set to
    the user with ID 1.  This user does not actually have to exist, so
-   a stand-alone backend can be used to manually recover from certain
+   a stand-alone server can be used to manually recover from certain
    kinds of accidental damage to the system catalogs.  Implicit
    superuser powers are granted to the user with ID 1 in stand-alone
    mode.
@@ -113,11 +113,11 @@ PostgreSQL documentation
   <title>Options</title>
 
    <para>
-    When <application>postgres</application> is started by a <xref
+    When <command>postgres</command> is started by a <xref
     linkend="app-postmaster"> then it
     inherits all options set by the latter.  Additionally,
-    <application>postgres</application>-specific options can be passed
-    from the <application>postmaster</application> with the
+    <command>postgres</command>-specific options can be passed
+    from the <command>postmaster</command> with the
     <option>-o</option> switch.
    </para>
 
@@ -129,7 +129,7 @@ PostgreSQL documentation
     variable <envar>PGOPTIONS</envar> is set, then
     <application>libpq</>-based clients will pass that string to the
     server, which will interpret it as
-    <application>postgres</application> command-line options.
+    <command>postgres</command> command-line options.
    </para>
 
    <refsect2>
@@ -138,10 +138,10 @@ PostgreSQL documentation
     <para>
      The options <option>-A</option>, <option>-B</option>,
      <option>-c</option>, <option>-d</option>, <option>-D</option>,
-     <option>-F</option>, and <option>--name</> have the same meanings
+     <option>-F</option>, and <option>--<replaceable>name</></option> have the same meanings
      as the <xref linkend="app-postmaster"> except that
-     <option>-d</option> <literal>0</> prevents the debugging level of
-     the postmaster from being propagated to the backend.
+     <literal>-d 0</> prevents the server log level of
+     the <command>postmaster</> from being propagated to <command>postgres</>.
     </para>
 
     <variablelist>
@@ -162,12 +162,12 @@ PostgreSQL documentation
       <term><option>-o</option> <replaceable class="parameter">filename</replaceable></term>
       <listitem>
        <para>
-	Sends all debugging and error output to 
+	Send all server log output to 
 	<replaceable class="parameter">filename</replaceable>.
-	If the backend is running under the
-	<application>postmaster</application>, this option is ignored,
+	If <command>postgres</command> is running under the
+	<command>postmaster</command>, this option is ignored,
 	and the <systemitem>stderr</> inherited from the
-	<application>postmaster</application> is used.
+	<command>postmaster</command> is used.
        </para>
       </listitem>
      </varlistentry>
@@ -176,7 +176,7 @@ PostgreSQL documentation
       <term><option>-P</option></term>
       <listitem>
        <para>
-	Ignore system indexes while scanning/updating system tuples. The
+	Ignore system indexes while scanning/updating system tables. The
 	<command>REINDEX</command> command for system tables/indexes
 	requires this option to be used.
        </para>
@@ -187,7 +187,7 @@ PostgreSQL documentation
       <term><option>-s</option></term>
       <listitem>
        <para>
-	Print time information and other statistics at the end of each query.
+	Print time information and other statistics at the end of each command.
 	This is useful for benchmarking or for use in tuning the number of
 	buffers.
        </para>
@@ -200,7 +200,7 @@ PostgreSQL documentation
        <para>
 	Specifies the amount of memory to be used by internal sorts and hashes
 	before resorting to temporary disk files.  The value is specified in
-	kilobytes, and defaults to 512 kilobytes.  Note that for a complex query,
+	kilobytes, and defaults to 1024.  Note that for a complex query,
 	several sorts and/or hashes might be running in parallel, and each one
 	will be allowed to use as much as
 	<replaceable class="parameter">sort-mem</replaceable> kilobytes
@@ -230,7 +230,7 @@ PostgreSQL documentation
       <term><option>-E</option></term>
       <listitem>
        <para>
-	Echo all queries.
+	Echo all commands.
        </para>
       </listitem>
      </varlistentry>
@@ -239,7 +239,7 @@ PostgreSQL documentation
       <term><option>-N</option></term>
       <listitem>
        <para>
-	Disables use of newline as a query delimiter.
+	Disables use of newline as a statement delimiter.
        </para>
       </listitem>
      </varlistentry>
@@ -268,6 +268,7 @@ PostgreSQL documentation
 	disable sequential and index scans respectively, while
 	<literal>n</literal>, <literal>m</literal>, and <literal>h</literal>
 	disable nested-loop, merge and hash joins respectively.
+       </para>
 	
 	<note>
 	 <para>
@@ -277,7 +278,6 @@ PostgreSQL documentation
 	  plan types if it has any other alternative.
 	 </para>
 	</note>
-       </para>
       </listitem>
      </varlistentry>
 
@@ -295,7 +295,7 @@ PostgreSQL documentation
       <listitem>
        <para>
 	Allows the structure of system tables to be modified.  This is
-	used by <application>initdb</application>.
+	used by <command>initdb</command>.
        </para>
       </listitem>
      </varlistentry>
@@ -304,9 +304,8 @@ PostgreSQL documentation
       <term><option>-p</option> <replaceable class="parameter">database</replaceable></term>
       <listitem>
        <para>
-	Indicates that this server has been started by a
-	<application>postmaster</application> and makes different
-	assumptions about buffer pool management, file descriptors,
+	Indicates that this process has been started by a
+	<command>postmaster</command> and specifies the database to use.
 	etc.
        </para>
       </listitem>
@@ -339,7 +338,7 @@ PostgreSQL documentation
        <para>
 	As soon as this option is encountered, the process sleeps for
 	the specified amount of seconds.  This gives developers time
-	to attach a debugger to the backend process.
+	to attach a debugger to the server process.
        </para>
       </listitem>
      </varlistentry>
@@ -375,10 +374,10 @@ PostgreSQL documentation
 
   <para>
    To stop a running query use the <literal>SIGINT</literal> signal. To
-   tell <application>postgres</application> to reread the config file,
+   tell <command>postgres</command> to reread the configuration file,
    use a <literal>SIGHUP</literal> signal. The
-   <application>postmaster</application> uses <literal>SIGTERM</literal>
-   to tell a postgres process to quit normally and
+   <command>postmaster</command> uses <literal>SIGTERM</literal>
+   to tell a <command>postgres</command> process to quit normally and
    <literal>SIGQUIT</literal> to terminate without the normal cleanup.
    These <emphasis>should not</emphasis> be used by users.
   </para>
@@ -389,17 +388,17 @@ PostgreSQL documentation
   <title>Usage</title>
 
    <para>
-    Start a stand-alone backend with a command like
+    Start a stand-alone server with a command like
 <screen>
-<userinput>postgres -D $PGDATA <replaceable>other-options</> my_database</userinput>
+<userinput>postgres -D /usr/local/pgsql/data <replaceable>other-options</> my_database</userinput>
 </screen>
-    Provide the correct path to the database area with <option>-D</>, or
+    Provide the correct path to the database directory with <option>-D</>, or
     make sure that the environment variable <envar>PGDATA</> is set.
     Also specify the name of the particular database you want to work in.
    </para>
 
    <para>
-    Normally, the stand-alone backend treats newline as the command
+    Normally, the stand-alone server treats newline as the command
     entry terminator; there is no intelligence about semicolons,
     as there is in <application>psql</>.  To continue a command
     across multiple lines, you must type backslash just before each
@@ -408,9 +407,9 @@ PostgreSQL documentation
 
    <para>
     But if you use the <option>-N</> command line switch, then newline does
-    not terminate command entry.  The backend will read the standard input
+    not terminate command entry.  In this case, the server will read the standard input
     until the end-of-file (<acronym>EOF</>) marker, then
-    process the input as a single query string.  Backslash-newline is not
+    process the input as a single command string.  Backslash-newline is not
     treated specially in this case.
    </para>
 
@@ -422,7 +421,7 @@ PostgreSQL documentation
    </para>
 
    <para>
-    Note that the stand-alone backend does not provide sophisticated
+    Note that the stand-alone server does not provide sophisticated
     line-editing features (no command history, for example).
    </para>
 

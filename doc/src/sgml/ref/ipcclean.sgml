@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/ipcclean.sgml,v 1.7 2002/04/21 19:02:39 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/ipcclean.sgml,v 1.8 2003/03/24 14:32:51 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -36,12 +36,10 @@ PostgreSQL documentation
   <para>
    Only the database administrator should execute this program as it
    can cause bizarre behavior (i.e., crashes) if run during multiuser
-   execution.  If this command is executed while a
-   <application>postmaster</application> is running, the shared memory
-   and semaphores allocated by the
-   <application>postmaster</application> will be deleted.  This will
-   result in a general failure of the backend servers started by that
-   <application>postmaster</application>.
+   execution.  If this command is executed while a server is running,
+   the shared memory and semaphores allocated by that server will be
+   deleted, which would have rather severe consequences for that
+   server.
   </para>
  </refsect1>
 
@@ -51,14 +49,14 @@ PostgreSQL documentation
   <para>
    This script is a hack, but in the many years since it was written,
    no one has come up with an equally effective and portable solution.
-   Since the <application>postmaster</application> can now clean up by
+   Since the <command>postmaster</command> can now clean up by
    itself, it is unlikely that <command>ipcclean</command> will be
    improved upon in the future.
   </para>
 
   <para>
    The script makes assumption about the format of output of the
-   <application>ipcs</application>
+   <command>ipcs</command>
    utility which may not be true across different operating systems.
    Therefore, it may not work on your particular OS.
   </para>

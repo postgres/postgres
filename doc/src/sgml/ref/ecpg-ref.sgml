@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/ecpg-ref.sgml,v 1.24 2003/01/19 00:13:29 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/ecpg-ref.sgml,v 1.25 2003/03/24 14:32:51 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -66,7 +66,7 @@ PostgreSQL documentation
      <term><option>-c</option></term>
      <listitem>
       <para>
-       Automatically generate C code from SQL code.  Currently, this
+       Automatically generate certain C code from SQL code.  Currently, this
        works for <literal>EXEC SQL TYPE</literal>.
       </para>
      </listitem>
@@ -101,7 +101,7 @@ PostgreSQL documentation
      <term><option>-o <replaceable>filename</replaceable></option></term>
      <listitem>
       <para>
-       Specifies that <application>ecpg</application> should write all
+       Specifies that <command>ecpg</command> should write all
        its output to the given <replaceable>filename</replaceable>.
       </para>
      </listitem>
@@ -111,9 +111,9 @@ PostgreSQL documentation
      <term><option>-t</option></term>
      <listitem>
       <para>
-       Turn on autocommit of transactions. In this mode, each query is
+       Turn on autocommit of transactions. In this mode, each SQL command is
        automatically committed unless it is inside an explicit
-       transaction block. In the default mode, queries are committed
+       transaction block. In the default mode, commands are committed
        only when <command>EXEC SQL COMMIT</command> is issued.
       </para>
      </listitem>
@@ -130,7 +130,7 @@ PostgreSQL documentation
     </varlistentry>
 
     <varlistentry>
-     <term><option>---help</option></term>
+     <term><option>--help</option></term>
      <listitem>
       <para>
        Show a brief summary of the command usage, then exit.
@@ -165,7 +165,7 @@ PostgreSQL documentation
   <para>
    Programs using C code with embedded SQL have to be linked against
    the <filename>libecpg</filename> library, for example using the
-   flags <literal>-L/usr/local/pgsql/lib -lecpg</literal>.
+   linker options <literal>-L/usr/local/pgsql/lib -lecpg</literal>.
   </para>
 
   <para>

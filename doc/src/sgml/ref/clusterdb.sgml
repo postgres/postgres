@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/clusterdb.sgml,v 1.8 2003/03/20 18:53:18 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/clusterdb.sgml,v 1.9 2003/03/24 14:32:51 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -18,12 +18,12 @@ PostgreSQL documentation
  <refsynopsisdiv>
   <cmdsynopsis>
    <command>clusterdb</command>
-   <arg rep="repeat"><replaceable>connection-options</replaceable></arg>
+   <arg rep="repeat"><replaceable>connection-option</replaceable></arg>
    <arg>--table | -t <replaceable>table</replaceable> </arg>
    <arg><replaceable>dbname</replaceable></arg>
    <sbr>
    <command>clusterdb</command>
-   <arg rep="repeat"><replaceable>connection-options</replaceable></arg>
+   <arg rep="repeat"><replaceable>connection-option</replaceable></arg>
    <group><arg>--all</arg><arg>-a</arg></group>
   </cmdsynopsis>
  </refsynopsisdiv>
@@ -114,7 +114,7 @@ PostgreSQL documentation
       <term><option>--table <replaceable class="parameter">table</replaceable></></term>
       <listitem>
        <para>
-	Clusters <replaceable class="parameter">table</replaceable> only.
+	Cluster <replaceable class="parameter">table</replaceable> only.
        </para>
       </listitem>
      </varlistentry>
@@ -134,7 +134,7 @@ PostgreSQL documentation
        <para>
 	Specifies the host name of the machine on which the 
 	server
-	is running.  If host begins with a slash, it is used 
+	is running.  If the value begins with a slash, it is used 
 	as the directory for the Unix domain socket.
        </para>
       </listitem>
@@ -145,7 +145,7 @@ PostgreSQL documentation
       <term><option>--port <replaceable class="parameter">port</replaceable></></term>
       <listitem>
        <para>
-	Specifies the Internet TCP/IP port or local Unix domain socket file 
+	Specifies the TCP port or local Unix domain socket file 
 	extension on which the server
 	is listening for connections.
        </para>
@@ -219,7 +219,7 @@ PostgreSQL documentation
 
     <listitem>
      <para>
-      Default connection parameters.
+      Default connection parameters
      </para>
     </listitem>
    </varlistentry>

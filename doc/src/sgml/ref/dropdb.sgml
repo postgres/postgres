@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/dropdb.sgml,v 1.20 2003/03/18 22:19:46 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/dropdb.sgml,v 1.21 2003/03/24 14:32:51 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -18,7 +18,7 @@ PostgreSQL documentation
  <refsynopsisdiv>
   <cmdsynopsis>
    <command>dropdb</command>
-   <arg rep="repeat"><replaceable>options</replaceable></arg>
+   <arg rep="repeat"><replaceable>option</replaceable></arg>
    <arg choice="plain"><replaceable>dbname</replaceable></arg>
   </cmdsynopsis>
  </refsynopsisdiv>
@@ -57,9 +57,7 @@ PostgreSQL documentation
       <term><replaceable class="parameter">dbname</replaceable></term>
       <listitem>
        <para>
-	Specifies the name of the database to be removed.  The database
-	must be one of the existing <productname>PostgreSQL</productname> databases
-	in this installation.
+	Specifies the name of the database to be removed.
        </para>
       </listitem>
      </varlistentry>
@@ -69,7 +67,7 @@ PostgreSQL documentation
       <term><option>--echo</></term>
       <listitem>
        <para>
-        Echo the queries that <application>dropdb</application> generates
+        Echo the commands that <application>dropdb</application> generates
 	and sends to the server.
        </para>
       </listitem>
@@ -109,7 +107,7 @@ PostgreSQL documentation
        <para>
 	Specifies the host name of the machine on which the 
 	server
-	is running.  If host begins with a slash, it is used 
+	is running.  If the value begins with a slash, it is used 
 	as the directory for the Unix domain socket.
        </para>
       </listitem>
@@ -120,7 +118,7 @@ PostgreSQL documentation
       <term><option>--port <replaceable class="parameter">port</replaceable></></term>
       <listitem>
        <para>
-	Specifies the Internet TCP/IP port or local Unix domain socket file 
+	Specifies the TCP port or local Unix domain socket file 
 	extension on which the server
 	is listening for connections.
        </para>
@@ -212,7 +210,7 @@ PostgreSQL documentation
    <para>
     To destroy the database <literal>demo</literal> using the
     server on host <literal>eden</literal>, port 5000, with verification and a peek
-    at the underlying query:
+    at the underlying command:
 <screen>
 <prompt>$ </prompt><userinput>dropdb -p 5000 -h eden -i -e demo</userinput>
 <computeroutput>Database "demo" will be permanently deleted.
