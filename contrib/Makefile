@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/contrib/Makefile,v 1.44 2003/06/30 20:02:53 tgl Exp $
+# $Header: /cvsroot/pgsql/contrib/Makefile,v 1.45 2003/07/24 16:54:58 tgl Exp $
 
 subdir = contrib
 top_builddir = ..
@@ -39,6 +39,7 @@ WANTED_DIRS = \
 		tablefunc	\
 		tips		\
 		tsearch		\
+		tsearch2	\
 		userlock	\
 		vacuumlo
 

@@ -199,6 +199,11 @@ tools -
 	by Massimo Dal Zotto <dz@cs.unitn.it>
 
 tsearch -
+	Full-text-index support using GiST (obsolete version)
+	by Teodor Sigaev <teodor@stack.net> and Oleg Bartunov
+	<oleg@sai.msu.su>.
+
+tsearch2 -
 	Full-text-index support using GiST
 	by Teodor Sigaev <teodor@stack.net> and Oleg Bartunov
 	<oleg@sai.msu.su>.
