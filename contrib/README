@@ -48,9 +48,9 @@ fulltextindex -
 	by Maarten Boekhold <maartenb@dutepp0.et.tudelft.nl>
 
 init.d - 
-	Scripts for starting and stopping the PostgreSQL server on
-	a non-Linux systems
-	by Ryan Kirkpatrick <pgsql@rkirkpat.net>
+	
+	Init.d-style scripts for starting and stopping the PostgreSQL
+	server by Ryan Kirkpatrick <pgsql@rkirkpat.net>
 	
 intarray -
 	Index support for arrays of int4, using GiST
