@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.18 1997/08/21 01:32:04 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.19 1997/08/22 14:10:26 vadim Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -419,6 +419,9 @@ ConstructTupleDescriptor(Oid heapoid,
 	
 	((AttributeTupleForm) to)->attnum = i+1;
 	((AttributeTupleForm) to)->attcacheoff = -1;
+	
+	((AttributeTupleForm) to)->attnotnull = false;
+	((AttributeTupleForm) to)->atthasdef = false;
 
 	/* if the keytype is defined, we need to change the tuple form's
 	   atttypid & attlen field to match that of the key's type */

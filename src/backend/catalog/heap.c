@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.21 1997/08/22 02:58:51 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.22 1997/08/22 14:10:24 vadim Exp $
  *
  * INTERFACE ROUTINES
  *	heap_creatr()		- Create an uncataloged heap relation
@@ -50,6 +50,7 @@
 #include <utils/builtins.h>
 #include <utils/mcxt.h>
 #include <utils/relcache.h>
+#include <nodes/plannodes.h>
 #ifndef HAVE_MEMMOVE
 # include <regex/utils.h>
 #else
@@ -68,8 +69,7 @@ static void RelationRemoveInheritance(Relation relation);
 static void RemoveFromTempRelList(Relation r);
 static void addNewRelationType(char *typeName, Oid new_rel_oid);
 static void StoreConstraints (Relation rel);
-static void StoreAttrDefault (Relation rel, AttrDefault *attrdef);
-static void StoreRelCheck (Relation rel, ConstrCheck *check);
+static void RemoveConstraints (Relation rel);
 
 
 /* ----------------------------------------------------------------
@@ -371,8 +371,10 @@ heap_creatr(char *name,
  *
  *	6) AddPgRelationTuple() is called to register the
  *	   relation itself in the catalogs.
+ *	
+ *	7) StoreConstraints is called ()	- vadim 08/22/97
  *
- *	7) the relations are closed and the new relation's oid
+ *	8) the relations are closed and the new relation's oid
  *	   is returned.
  *
  * old comments:
@@ -847,7 +849,8 @@ heap_create(char relname[],
  *	4)  remove pg_class tuple
  *	5)  remove pg_attribute tuples
  *	6)  remove pg_type tuples
- *	7)  unlink relation
+ *	7)  RemoveConstraints ()
+ *	8)  unlink relation
  *
  * old comments
  *	Except for vital relations, removes relation from
@@ -1327,6 +1330,8 @@ heap_destroy(char *relname)
      * Does nothing!!! Flushing moved below.	- vadim 06/04/97
     RelationIdInvalidateRelationCacheByRelationId(rdesc->rd_id);
      */
+    
+    RemoveConstraints (rdesc);
 
     /* ----------------
      *	unlink the relation and finish up.
@@ -1468,30 +1473,6 @@ DestroyTempRels(void)
     tempRels = NULL;
 }
 
-static void 
-StoreConstraints (Relation rel)
-{
-    TupleConstr *constr = rel->rd_att->constr;
-    int i;
-    
-    if ( !constr )
-    	return;
-    
-    if ( constr->num_defval > 0 )
-    {
-    	for (i = 0; i < constr->num_defval; i++)
-    	    StoreAttrDefault (rel, &(constr->defval[i]));
-    }
-    
-    if ( constr->num_check > 0 )
-    {
-    	for (i = 0; i < constr->num_check; i++)
-    	    StoreRelCheck (rel, &(constr->check[i]));
-    }
-    
-    return;
-}
-
 extern List *flatten_tlist(List *tlist);
 extern List *pg_plan(char *query_string, Oid *typev, int nargs,                
                      QueryTreeList **queryListP, CommandDest dest);            
@@ -1520,12 +1501,14 @@ StoreAttrDefault (Relation rel, AttrDefault *attrdef)
 start:;
     sprintf (str, "select %s%s from %.*s", attrdef->adsrc, cast,
     		NAMEDATALEN, rel->rd_rel->relname.data);
+    setheapoverride(true);
     planTree_list = (List*) pg_plan (str, NULL, 0, &queryTree_list, None);
+    setheapoverride(false);
     query = (Query*) (queryTree_list->qtrees[0]);
     
     if ( length (query->rtable) > 1 || 
     		flatten_tlist (query->targetList) != NIL )
-    	elog (WARN, "AttributeDefault: cannot use attribute(s)");
+    	elog (WARN, "DEFAULT: cannot use attribute(s)");
     te = (TargetEntry *) lfirst (query->targetList);
     resdom = te->resdom;
     expr = te->expr;
@@ -1535,13 +1518,13 @@ start:;
     	if ( ((Const*)expr)->consttype != atp->atttypid )
     	{
     	    if ( *cast != 0 )
-    	    	elog (WARN, "AttributeDefault: casting failed - const type mismatched");
+    	    	elog (WARN, "DEFAULT: const type mismatched");
     	    sprintf (cast, ":: %s", get_id_typname (atp->atttypid));
     	    goto start;
     	}
     }
     else if ( exprType (expr) != atp->atttypid )
-    	elog (WARN, "AttributeDefault: type mismatched");
+    	elog (WARN, "DEFAULT: type mismatched");
     
     adbin = nodeToString (expr);
     oldcxt = MemoryContextSwitchTo ((MemoryContext) CacheCxt);
@@ -1560,6 +1543,7 @@ start:;
     heap_insert (adrel, tuple);
     CatalogIndexInsert (idescs, Num_pg_attrdef_indices, adrel, tuple);
     CatalogCloseIndices (Num_pg_attrdef_indices, idescs);
+    heap_close (adrel);
     
     pfree (DatumGetPointer(values[Anum_pg_attrdef_adbin - 1]));
     pfree (DatumGetPointer(values[Anum_pg_attrdef_adsrc - 1]));
@@ -1570,6 +1554,153 @@ start:;
 static void 
 StoreRelCheck (Relation rel, ConstrCheck *check)
 {
+    char str[MAX_PARSE_BUFFER];
+    QueryTreeList *queryTree_list;
+    Query *query;
+    List *planTree_list;
+    Plan *plan;
+    List *qual;
+    char *ccbin;
+    MemoryContext oldcxt;
+    Relation rcrel;
+    Relation idescs[Num_pg_relcheck_indices];
+    HeapTuple tuple;
+    Datum values[4];
+    char nulls[4] = {' ', ' ', ' ', ' '};
+    extern GlobalMemory	CacheCxt;
+    
+    sprintf (str, "select 1 from %.*s where %s", 
+    		NAMEDATALEN, rel->rd_rel->relname.data, check->ccsrc);
+    setheapoverride(true);
+    planTree_list = (List*) pg_plan (str, NULL, 0, &queryTree_list, None);
+    setheapoverride(false);
+    query = (Query*) (queryTree_list->qtrees[0]);
+    
+    if ( length (query->rtable) > 1 )
+    	elog (WARN, "CHECK: only relation %.*s can be referenced",
+    		NAMEDATALEN, rel->rd_rel->relname.data);
+    
+    plan = (Plan*) lfirst(planTree_list);
+    qual = plan->qual;
+    
+    ccbin = nodeToString (qual);
+    oldcxt = MemoryContextSwitchTo ((MemoryContext) CacheCxt);
+    check->ccbin = (char*) palloc (strlen (ccbin) + 1);
+    strcpy (check->ccbin, ccbin);
+    (void) MemoryContextSwitchTo (oldcxt);
+    pfree (ccbin);
+    
+    values[Anum_pg_relcheck_rcrelid - 1] = rel->rd_id;
+    values[Anum_pg_relcheck_rcname - 1] = PointerGetDatum (namein (check->ccname));
+    values[Anum_pg_relcheck_rcbin - 1] = PointerGetDatum (textin (check->ccbin));
+    values[Anum_pg_relcheck_rcsrc - 1] = PointerGetDatum (textin (check->ccsrc));
+    rcrel = heap_openr (RelCheckRelationName);
+    tuple = heap_formtuple (rcrel->rd_att, values, nulls);
+    CatalogOpenIndices (Num_pg_relcheck_indices, Name_pg_relcheck_indices, idescs);
+    heap_insert (rcrel, tuple);
+    CatalogIndexInsert (idescs, Num_pg_relcheck_indices, rcrel, tuple);
+    CatalogCloseIndices (Num_pg_relcheck_indices, idescs);
+    heap_close (rcrel);
+    
+    pfree (DatumGetPointer(values[Anum_pg_relcheck_rcname - 1]));
+    pfree (DatumGetPointer(values[Anum_pg_relcheck_rcbin - 1]));
+    pfree (DatumGetPointer(values[Anum_pg_relcheck_rcsrc - 1]));
+    pfree (tuple);
 
+    return;
+}
+
+static void 
+StoreConstraints (Relation rel)
+{
+    TupleConstr *constr = rel->rd_att->constr;
+    int i;
+    
+    if ( !constr )
+    	return;
+    
+    if ( constr->num_defval > 0 )
+    {
+    	for (i = 0; i < constr->num_defval; i++)
+    	    StoreAttrDefault (rel, &(constr->defval[i]));
+    }
+    
+    if ( constr->num_check > 0 )
+    {
+    	for (i = 0; i < constr->num_check; i++)
+    	    StoreRelCheck (rel, &(constr->check[i]));
+    }
+    
+    return;
+}
+
+static void 
+RemoveAttrDefault (Relation rel)
+{
+    Relation		adrel;
+    HeapScanDesc	adscan;
+    ScanKeyData	        key;
+    HeapTuple		tup;
+    
+    adrel = heap_openr (AttrDefaultRelationName);
+    
+    ScanKeyEntryInitialize(&key, 0, Anum_pg_attrdef_adrelid,
+			   ObjectIdEqualRegProcedure, rel->rd_id);
+    
+    RelationSetLockForWrite (adrel);
+    
+    adscan = heap_beginscan(adrel, 0, NowTimeQual, 1, &key);
+    
+    while (tup = heap_getnext (adscan, 0, (Buffer *)NULL), PointerIsValid(tup))
+	heap_delete (adrel, &tup->t_ctid);
+    
+    heap_endscan (adscan);
+    
+    RelationUnsetLockForWrite (adrel);
+    heap_close (adrel);
+
+}
+
+static void 
+RemoveRelCheck (Relation rel)
+{
+    Relation		rcrel;
+    HeapScanDesc	rcscan;
+    ScanKeyData	        key;
+    HeapTuple		tup;
+    
+    rcrel = heap_openr (RelCheckRelationName);
+    
+    ScanKeyEntryInitialize(&key, 0, Anum_pg_relcheck_rcrelid,
+			   ObjectIdEqualRegProcedure, rel->rd_id);
+    
+    RelationSetLockForWrite (rcrel);
+    
+    rcscan = heap_beginscan(rcrel, 0, NowTimeQual, 1, &key);
+    
+    while (tup = heap_getnext (rcscan, 0, (Buffer *)NULL), PointerIsValid(tup))
+	heap_delete (rcrel, &tup->t_ctid);
+    
+    heap_endscan (rcscan);
+    
+    RelationUnsetLockForWrite (rcrel);
+    heap_close (rcrel);
+
+}
+
+static void 
+RemoveConstraints (Relation rel)
+{
+    TupleConstr *constr = rel->rd_att->constr;
+    
+    if ( !constr )
+    	return;
+    
+    if ( constr->num_defval > 0 )
+    	RemoveAttrDefault (rel);
+    
+    if ( constr->num_check > 0 )
+    	RemoveRelCheck (rel);
+    
     return;
 }
