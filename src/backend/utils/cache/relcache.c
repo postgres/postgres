@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.78 1999/11/17 23:51:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.79 1999/11/18 13:56:28 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,6 +36,7 @@
 
 #include "postgres.h"
 
+#include "utils/builtins.h"
 #include "access/genam.h"
 #include "access/heapam.h"
 #include "access/istrat.h"
@@ -53,7 +54,6 @@
 #include "lib/hasht.h"
 #include "miscadmin.h"
 #include "storage/smgr.h"
-#include "utils/builtins.h"
 #include "utils/catcache.h"
 #include "utils/relcache.h"
 #include "utils/temprel.h"
@@ -679,8 +679,8 @@ RelationBuildRuleLock(Relation relation)
 							 Anum_pg_rewrite_ev_qual, pg_rewrite_tupdesc,
 										  &isnull);
 
-		ruleaction = PointerGetDatum(textout((struct varlena *) DatumGetPointer(ruleaction)));
-		rule_evqual_string = PointerGetDatum(textout((struct varlena *) DatumGetPointer(rule_evqual_string)));
+		ruleaction = PointerGetDatum(lztextout((lztext *) DatumGetPointer(ruleaction)));
+		rule_evqual_string = PointerGetDatum(lztextout((lztext *) DatumGetPointer(rule_evqual_string)));
 
 		rule->actions = (List *) stringToNode(DatumGetPointer(ruleaction));
 		rule->qual = (Node *) stringToNode(DatumGetPointer(rule_evqual_string));

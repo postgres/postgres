@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteRemove.c,v 1.31 1999/11/07 23:08:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteRemove.c,v 1.32 1999/11/18 13:56:27 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,6 +15,7 @@
 
 #include "postgres.h"
 
+#include "utils/builtins.h"
 #include "access/heapam.h"
 #include "catalog/catname.h"
 #include "catalog/pg_rewrite.h"

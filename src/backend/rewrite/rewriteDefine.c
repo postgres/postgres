@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.39 1999/11/07 23:08:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.40 1999/11/18 13:56:27 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,13 +15,13 @@
 #include "postgres.h"
 
 #include "access/heapam.h"
+#include "utils/builtins.h"
 #include "catalog/pg_rewrite.h"
 #include "lib/stringinfo.h"
 #include "parser/parse_relation.h"
 #include "rewrite/rewriteDefine.h"
 #include "rewrite/rewriteSupport.h"
 #include "tcop/tcopprot.h"
-#include "utils/builtins.h"
 
 Oid			LastOidProcessed = InvalidOid;
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.39 1999/11/16 04:13:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.40 1999/11/18 13:56:29 wieck Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -19,6 +19,7 @@
  */
 #include "postgres.h"
 
+#include "utils/builtins.h"
 #include "access/heapam.h"
 #include "catalog/catname.h"
 #include "catalog/pg_aggregate.h"

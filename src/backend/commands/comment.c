@@ -11,6 +11,7 @@
 
 #include "postgres.h"
 
+#include "utils/builtins.h"
 #include "access/heapam.h"
 #include "catalog/catname.h"
 #include "catalog/indexing.h"
@@ -27,7 +28,6 @@
 #include "miscadmin.h"
 #include "rewrite/rewriteRemove.h"
 #include "utils/acl.h"
-#include "utils/builtins.h"
 #include "utils/syscache.h"
 
 #include "../backend/parser/parse.h"
