@@ -391,31 +391,43 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 		if (columnIndex < 1 || columnIndex > fields.length)
 			throw new PSQLException("postgresql.res.colrange");
 
-		//If the data is already binary then just return it
-		if (binaryCursor)
+		wasNullFlag = (this_row[columnIndex - 1] == null);
+		if (!wasNullFlag)
+		{
+		    if (binaryCursor)
+		    {
+			//If the data is already binary then just return it
 			return this_row[columnIndex - 1];
-
-		if (connection.haveMinimumCompatibleVersion("7.2"))
-		{
+		    }
+		    else if (connection.haveMinimumCompatibleVersion("7.2"))
+		    {
 			//Version 7.2 supports the bytea datatype for byte arrays
-			return PGbytea.toBytes(getString(columnIndex));
-		}
-		else
-		{
-			//Version 7.1 and earlier supports LargeObjects for byte arrays
-			wasNullFlag = (this_row[columnIndex - 1] == null);
-			// Handle OID's as BLOBS
-			if (!wasNullFlag)
+			if (fields[columnIndex - 1].getPGType().equals("bytea"))
 			{
-				if ( fields[columnIndex - 1].getOID() == 26)
-				{
-					LargeObjectManager lom = connection.getLargeObjectAPI();
-					LargeObject lob = lom.open(getInt(columnIndex));
-					byte buf[] = lob.read(lob.size());
-					lob.close();
-					return buf;
-				}
+			    return PGbytea.toBytes(getString(columnIndex));
 			}
+			else
+			{
+			    return this_row[columnIndex - 1];
+			}
+		    }
+		    else
+		    {
+			//Version 7.1 and earlier supports LargeObjects for byte arrays
+			// Handle OID's as BLOBS
+			if ( fields[columnIndex - 1].getOID() == 26)
+			{
+			    LargeObjectManager lom = connection.getLargeObjectAPI();
+			    LargeObject lob = lom.open(getInt(columnIndex));
+			    byte buf[] = lob.read(lob.size());
+			    lob.close();
+			    return buf;
+			}
+			else
+			{
+			    return this_row[columnIndex - 1];
+			}
+		    }
 		}
 		return null;
 	}
