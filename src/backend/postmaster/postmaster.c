@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.324 2003/05/08 18:33:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.325 2003/05/08 20:43:07 momjian Exp $
  *
  * NOTES
  *
@@ -1572,11 +1572,11 @@ SIGHUP_handler(SIGNAL_ARGS)
 	if (Shutdown <= SmartShutdown)
 	{
 		elog(LOG, "Received SIGHUP, reloading configuration files");
-		SignalChildren(SIGHUP);
 		ProcessConfigFile(PGC_SIGHUP);
 #ifdef EXEC_BACKEND
 		write_nondefault_variables(PGC_SIGHUP);
 #endif
+		SignalChildren(SIGHUP);
 		load_hba();
 		load_ident();
 	}
