@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/plpython.sgml,v 1.17 2003/06/30 18:31:41 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/plpython.sgml,v 1.18 2003/07/01 13:52:29 tgl Exp $ -->
 
 <chapter id="plpython">
  <title>PL/Python - Python Procedural Language</title>
@@ -90,18 +90,13 @@ def __plpython_procedure_myfunc_23456():
    available to all Python functions within a session.  Use with care.
   </para>
 
-<!-- NOT CORRECT ANYMORE, IS IT?
-
   <para>
-   Each function gets its own restricted execution object in the
+   Each function gets its own execution environment in the
    Python interpreter, so that global data and function arguments from
    <function>myfunc</function> are not available to
    <function>myfunc2</function>.  The exception is the data in the
    <varname>GD</varname> dictionary, as mentioned above.
   </para>
-
--->
-
  </sect1>
 
  <sect1 id="plpython-trigger">
