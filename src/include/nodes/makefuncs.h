@@ -6,17 +6,15 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: makefuncs.h,v 1.1 1996/08/28 01:57:33 scrappy Exp $
+ * $Id: makefuncs.h,v 1.2 1996/11/06 09:21:42 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef MAKEFUNC_H
 #define MAKEFUNC_H
 
-#include "access/attnum.h"
-#include "catalog/pg_operator.h"
-#include "utils/fcache.h"
-#include "nodes/primnodes.h"
+#include <nodes/primnodes.h>
+#include <utils/fcache.h>
 
 extern Oper *makeOper(Oid opno,
 		      Oid opid,
