@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.122 1999/10/06 22:44:25 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.123 1999/10/08 02:16:22 vadim Exp $
  *
  * NOTES
  *
@@ -169,10 +169,12 @@ static int	MaxBackends = DEF_MAXBACKENDS;
   * semaphores, even if you never actually use that many backends.
   */
 
-static int	NextBackendTag = MAXINT;	/* XXX why count down not up? */
-static char *progname = (char *) NULL;
-static char **real_argv;
-static int	real_argc;
+static int		NextBackendTag = MAXINT;	/* XXX why count down not up? */
+static char	   *progname = (char *) NULL;
+static char	  **real_argv;
+static int		real_argc;
+
+static time_t	tnow;
 
 /*
  * Default Values
@@ -1208,6 +1210,9 @@ pmdie(SIGNAL_ARGS)
 			if (Shutdown >= SmartShutdown)
 				return;
 			Shutdown = SmartShutdown;
+			tnow = time(NULL);
+			fprintf(stderr, "Smart Shutdown request at %s", ctime(&tnow));
+			fflush(stderr);
 			if (DLGetHead(BackendList))			/* let reaper() handle this */
 				return;
 			/*
@@ -1230,11 +1235,18 @@ pmdie(SIGNAL_ARGS)
 			 */
 			if (Shutdown >= FastShutdown)
 				return;
+			tnow = time(NULL);
+			fprintf(stderr, "Fast Shutdown request at %s", ctime(&tnow));
+			fflush(stderr);
 			if (DLGetHead(BackendList))			/* let reaper() handle this */
 			{
 				Shutdown = FastShutdown;
 				if (!FatalError)
+				{
+					fprintf(stderr, "Aborting any active transaction...\n");
+					fflush(stderr);
 					SignalChildren(SIGTERM);
+				}
 				return;
 			}
 			if (Shutdown > NoShutdown)
@@ -1261,6 +1273,9 @@ pmdie(SIGNAL_ARGS)
 			 * abort all children with SIGUSR1 and exit without
 			 * attempt to properly shutdown data base system.
 			 */
+			tnow = time(NULL);
+			fprintf(stderr, "Immediate Shutdown request at %s", ctime(&tnow));
+			fflush(stderr);
 			if (ShutdownPID > 0)
 				kill(ShutdownPID, SIGQUIT);
 			else if (StartupPID > 0)
@@ -1308,7 +1323,11 @@ reaper(SIGNAL_ARGS)
 			if (pid != ShutdownPID)
 				abort();
 			if (exitstatus != 0)
-				abort();
+			{
+				fprintf(stderr, "Shutdown failed - abort\n");
+				fflush(stderr);
+				proc_exit(1);
+			}
 			proc_exit(0);
 		}
 		if (StartupPID > 0)
@@ -1316,7 +1335,11 @@ reaper(SIGNAL_ARGS)
 			if (pid != StartupPID)
 				abort();
 			if (exitstatus != 0)
-				abort();
+			{
+				fprintf(stderr, "Startup failed - abort\n");
+				fflush(stderr);
+				proc_exit(1);
+			}
 			StartupPID = 0;
 			FatalError = false;
 			if (Shutdown > NoShutdown)
@@ -1341,9 +1364,11 @@ reaper(SIGNAL_ARGS)
 			return;
 		if (StartupPID > 0 || ShutdownPID > 0)
 			return;
-		if (DebugLvl)
-			fprintf(stderr, "%s: CleanupProc: reinitializing shared memory and semaphores\n",
-					progname);
+		tnow = time(NULL);
+		fprintf(stderr, "Server processes were terminated at %s"
+						"Reinitializing shared memory and semaphores\n",
+						ctime(&tnow));
+		fflush(stderr);
 		shmem_exit(0);
 		reset_shared(PostPortName);
 		StartupPID = StartupDataBase();
@@ -1410,6 +1435,14 @@ CleanupProc(int pid,
 		return;
 	}
 
+	if (!FatalError)
+	{
+		tnow = time(NULL);
+		fprintf(stderr, "Server process (pid %d) exited with status %d at %s"
+						"Terminating any active server processes...\n",
+						pid, exitstatus, ctime(&tnow));
+		fflush(stderr);
+	}
 	FatalError = true;
 	curr = DLGetHead(BackendList);
 	while (curr)
