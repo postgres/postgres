@@ -1,5 +1,5 @@
 # Macros that test various C library quirks
-# $PostgreSQL: pgsql/config/c-library.m4,v 1.25 2004/03/20 15:39:27 momjian Exp $
+# $PostgreSQL: pgsql/config/c-library.m4,v 1.26 2004/06/07 22:39:44 momjian Exp $
 
 
 # PGAC_VAR_INT_TIMEZONE
@@ -94,6 +94,23 @@ if test x"$pgac_func_getpwuid_r_5arg" = xyes ; then
   AC_DEFINE(GETPWUID_R_5ARG,, [Define to 1 if getpwuid_r() takes a 5th argument.])
 fi
 ])# PGAC_FUNC_GETPWUID_R_5ARG
+
+
+# PGAC_FUNC_STRERROR_R_INT
+# ---------------------------
+# Check if strerror_r() returns an int (SUSv3) rather than a char * (GNU libc)
+# If so, define STRERROR_R_INT
+AC_DEFUN([PGAC_FUNC_STRERROR_R_INT],
+[AC_CACHE_CHECK(whether strerror_r returns int,
+pgac_func_strerror_r_int,
+[AC_TRY_COMPILE([#include <string.h>],
+[int strerror_r(int, char *, size_t);],
+[pgac_func_strerror_r_int=yes],
+[pgac_func_strerror_r_int=no])])
+if test x"$pgac_func_strerror_r_int" = xyes ; then
+  AC_DEFINE(STRERROR_R_INT,, [Define to 1 if strerror_r() returns a int.])
+fi
+])# PGAC_FUNC_STRERROR_R_INT
 
 
 # PGAC_UNION_SEMUN
