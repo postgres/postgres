@@ -3,7 +3,7 @@
  *
  * Copyright 2000-2002 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.69 2002/09/22 20:44:22 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.70 2002/10/15 02:24:16 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -91,7 +91,7 @@ describeAggregates(const char *pattern, bool verbose)
 
 	appendPQExpBuffer(&buf, "ORDER BY 1, 2, 3;");
 
-	res = PSQLexec(buf.data);
+	res = PSQLexec(buf.data, false);
 	termPQExpBuffer(&buf);
 	if (!res)
 		return false;
@@ -161,7 +161,7 @@ describeFunctions(const char *pattern, bool verbose)
 
 	appendPQExpBuffer(&buf, "ORDER BY 2, 3, 1, 4;");
 
-	res = PSQLexec(buf.data);
+	res = PSQLexec(buf.data, false);
 	termPQExpBuffer(&buf);
 	if (!res)
 		return false;
@@ -229,7 +229,7 @@ describeTypes(const char *pattern, bool verbose)
 
 	appendPQExpBuffer(&buf, "ORDER BY 1, 2;");
 
-	res = PSQLexec(buf.data);
+	res = PSQLexec(buf.data, false);
 	termPQExpBuffer(&buf);
 	if (!res)
 		return false;
@@ -276,7 +276,7 @@ describeOperators(const char *pattern)
 
 	appendPQExpBuffer(&buf, "ORDER BY 1, 2, 3, 4;");
 
-	res = PSQLexec(buf.data);
+	res = PSQLexec(buf.data, false);
 	termPQExpBuffer(&buf);
 	if (!res)
 		return false;
@@ -321,7 +321,7 @@ listAllDbs(bool verbose)
 		  "\n  LEFT JOIN pg_catalog.pg_user u ON d.datdba = u.usesysid\n"
 					  "ORDER BY 1;");
 
-	res = PSQLexec(buf.data);
+	res = PSQLexec(buf.data, false);
 	termPQExpBuffer(&buf);
 	if (!res)
 		return false;
@@ -374,7 +374,7 @@ permissionsList(const char *pattern)
 
 	appendPQExpBuffer(&buf, "ORDER BY 1, 2;");
 
-	res = PSQLexec(buf.data);
+	res = PSQLexec(buf.data, false);
 	if (!res)
 	{
 		termPQExpBuffer(&buf);
@@ -532,7 +532,7 @@ objectDescription(const char *pattern)
 
 	appendPQExpBuffer(&buf, "ORDER BY 1, 2, 3;");
 
-	res = PSQLexec(buf.data);
+	res = PSQLexec(buf.data, false);
 	termPQExpBuffer(&buf);
 	if (!res)
 		return false;
@@ -576,7 +576,7 @@ describeTableDetails(const char *pattern, bool verbose)
 
 	appendPQExpBuffer(&buf, "ORDER BY 2, 3;");
 
-	res = PSQLexec(buf.data);
+	res = PSQLexec(buf.data, false);
 	termPQExpBuffer(&buf);
 	if (!res)
 		return false;
@@ -655,7 +655,7 @@ describeOneTableDetails(const char *schemaname,
 	 "SELECT relhasindex, relkind, relchecks, reltriggers, relhasrules\n"
 					  "FROM pg_catalog.pg_class WHERE oid = '%s'",
 					  oid);
-	res = PSQLexec(buf.data);
+	res = PSQLexec(buf.data, false);
 	if (!res)
 		goto error_return;
 
@@ -711,7 +711,7 @@ describeOneTableDetails(const char *schemaname,
 		appendPQExpBuffer(&buf, " AND a.attrelid = i.indexrelid");
 	appendPQExpBuffer(&buf, "\nORDER BY a.attnum");
 
-	res = PSQLexec(buf.data);
+	res = PSQLexec(buf.data, false);
 	if (!res)
 		goto error_return;
 
@@ -721,7 +721,7 @@ describeOneTableDetails(const char *schemaname,
 		PGresult   *result;
 
 		printfPQExpBuffer(&buf, "SELECT pg_catalog.pg_get_viewdef('%s'::pg_catalog.oid)", oid);
-		result = PSQLexec(buf.data);
+		result = PSQLexec(buf.data, false);
 		if (!result)
 			goto error_return;
 
@@ -763,7 +763,7 @@ describeOneTableDetails(const char *schemaname,
 							   "WHERE d.adrelid = '%s' AND d.adnum = %s",
 								  oid, PQgetvalue(res, i, 4));
 
-				result = PSQLexec(buf.data);
+				result = PSQLexec(buf.data, false);
 
 				if (cells[i * cols + 2][0])
 					strcat(cells[i * cols + 2], " ");
@@ -830,7 +830,7 @@ describeOneTableDetails(const char *schemaname,
 						  "AND i.indrelid = c2.oid",
 						  oid);
 
-		result = PSQLexec(buf.data);
+		result = PSQLexec(buf.data, false);
 		if (!result)
 			goto error_return;
 		else if (PQntuples(result) != 1)
@@ -886,7 +886,7 @@ describeOneTableDetails(const char *schemaname,
 							  "FROM pg_catalog.pg_rewrite r\n"
 				   "WHERE r.ev_class = '%s' AND r.rulename != '_RETURN'",
 							  oid);
-			result = PSQLexec(buf.data);
+			result = PSQLexec(buf.data, false);
 			if (!result)
 				goto error_return;
 			else
@@ -944,7 +944,7 @@ describeOneTableDetails(const char *schemaname,
 							  "WHERE c.oid = '%s' AND c.oid = i.indrelid AND i.indexrelid = c2.oid\n"
 							  "ORDER BY i.indisprimary DESC, i.indisunique DESC, c2.relname",
 							  oid);
-			result1 = PSQLexec(buf.data);
+			result1 = PSQLexec(buf.data, false);
 			if (!result1)
 				goto error_return;
 			else
@@ -959,7 +959,7 @@ describeOneTableDetails(const char *schemaname,
 							  "FROM pg_catalog.pg_constraint r\n"
 						   "WHERE r.conrelid = '%s' AND r.contype = 'c'",
 							  oid);
-			result2 = PSQLexec(buf.data);
+			result2 = PSQLexec(buf.data, false);
 			if (!result2)
 				goto error_return;
 			else
@@ -974,7 +974,7 @@ describeOneTableDetails(const char *schemaname,
 							  "FROM pg_catalog.pg_rewrite r\n"
 							  "WHERE r.ev_class = '%s'",
 							  oid);
-			result3 = PSQLexec(buf.data);
+			result3 = PSQLexec(buf.data, false);
 			if (!result3)
 				goto error_return;
 			else
@@ -994,7 +994,7 @@ describeOneTableDetails(const char *schemaname,
 							  "   JOIN pg_catalog.pg_constraint c ON (d.refclassid = c.tableoid AND d.refobjid = c.oid) "
 							  "   WHERE d.classid = t.tableoid AND d.objid = t.oid AND d.deptype = 'i' AND c.contype = 'f'))",
 							  oid);
-			result4 = PSQLexec(buf.data);
+			result4 = PSQLexec(buf.data, false);
 			if (!result4)
 				goto error_return;
 			else
@@ -1010,7 +1010,7 @@ describeOneTableDetails(const char *schemaname,
 							  "FROM pg_catalog.pg_constraint r\n"
 						   "WHERE r.conrelid = '%s' AND r.contype = 'f'",
 							  oid);
-			result5 = PSQLexec(buf.data);
+			result5 = PSQLexec(buf.data, false);
 			if (!result5)
 				goto error_return;
 			else
@@ -1206,7 +1206,7 @@ describeUsers(const char *pattern)
 
 	appendPQExpBuffer(&buf, "ORDER BY 1;");
 
-	res = PSQLexec(buf.data);
+	res = PSQLexec(buf.data, false);
 	termPQExpBuffer(&buf);
 	if (!res)
 		return false;
@@ -1312,7 +1312,7 @@ listTables(const char *tabtypes, const char *pattern, bool verbose)
 
 	appendPQExpBuffer(&buf, "ORDER BY 1,2;");
 
-	res = PSQLexec(buf.data);
+	res = PSQLexec(buf.data, false);
 	termPQExpBuffer(&buf);
 	if (!res)
 		return false;
@@ -1374,7 +1374,7 @@ listDomains(const char *pattern)
 
 	appendPQExpBuffer(&buf, "ORDER BY 1, 2;");
 
-	res = PSQLexec(buf.data);
+	res = PSQLexec(buf.data, false);
 	termPQExpBuffer(&buf);
 	if (!res)
 		return false;

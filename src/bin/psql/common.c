@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.46 2002/10/03 17:09:41 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.47 2002/10/15 02:24:16 tgl Exp $
  */
 #include "postgres_fe.h"
 
@@ -204,12 +204,19 @@ handle_sigint(SIGNAL_ARGS)
  *
  * This is the way to send "backdoor" queries (those not directly entered
  * by the user). It is subject to -E but not -e.
+ *
+ * If the given querystring generates multiple PGresults, normally the last
+ * one is returned to the caller.  However, if ignore_command_ok is TRUE,
+ * then PGresults with status PGRES_COMMAND_OK are ignored.  This is intended
+ * mainly to allow locutions such as "begin; select ...; commit".
  */
 PGresult *
-PSQLexec(const char *query)
+PSQLexec(const char *query, bool ignore_command_ok)
 {
-	PGresult   *res;
+	PGresult   *res = NULL;
+	PGresult   *newres;
 	const char *var;
+	ExecStatusType rstatus;
 
 	if (!pset.db)
 	{
@@ -230,18 +237,31 @@ PSQLexec(const char *query)
 		return NULL;
 
 	cancelConn = pset.db;
-	res = PQexec(pset.db, query);
-	if (PQresultStatus(res) == PGRES_COPY_IN)
-		copy_in_state = true;
+	if (PQsendQuery(pset.db, query))
+	{
+		while ((newres = PQgetResult(pset.db)) != NULL)
+		{
+			if (ignore_command_ok &&
+				PQresultStatus(newres) == PGRES_COMMAND_OK)
+			{
+				PQclear(newres);
+				continue;
+			}
+			PQclear(res);
+			res = newres;
+		}
+	}
+	rstatus = PQresultStatus(res);
 	/* keep cancel connection for copy out state */
-	if (PQresultStatus(res) != PGRES_COPY_OUT)
+	if (rstatus != PGRES_COPY_OUT)
 		cancelConn = NULL;
+	if (rstatus == PGRES_COPY_IN)
+		copy_in_state = true;
 
-	if (res && (PQresultStatus(res) == PGRES_COMMAND_OK ||
-				PQresultStatus(res) == PGRES_TUPLES_OK ||
-				PQresultStatus(res) == PGRES_COPY_IN ||
-				PQresultStatus(res) == PGRES_COPY_OUT)
-		)
+	if (res && (rstatus == PGRES_COMMAND_OK ||
+				rstatus == PGRES_TUPLES_OK ||
+				rstatus == PGRES_COPY_IN ||
+				rstatus == PGRES_COPY_OUT))
 		return res;
 	else
 	{

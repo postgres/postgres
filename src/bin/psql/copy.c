@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/copy.c,v 1.26 2002/10/03 17:09:41 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/copy.c,v 1.27 2002/10/15 02:24:16 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "copy.h"
@@ -324,7 +324,7 @@ do_copy(const char *args)
 		return false;
 	}
 
-	result = PSQLexec(query.data);
+	result = PSQLexec(query.data, false);
 	termPQExpBuffer(&query);
 
 	switch (PQresultStatus(result))

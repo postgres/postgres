@@ -3,7 +3,7 @@
  *
  * Copyright 2000-2002 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/large_obj.c,v 1.22 2002/10/03 17:09:41 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/large_obj.c,v 1.23 2002/10/15 02:24:16 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "large_obj.h"
@@ -53,7 +53,7 @@ handle_transaction(void)
 	notice[0] = '\0';
 	old_notice_hook = PQsetNoticeProcessor(pset.db, _my_notice_handler, NULL);
 
-	res = PSQLexec(commit ? "COMMIT" : "ROLLBACK");
+	res = PSQLexec(commit ? "COMMIT" : "ROLLBACK", false);
 	if (!res)
 		return false;
 
@@ -104,7 +104,7 @@ do_lo_export(const char *loid_arg, const char *filename_arg)
 		if (!handle_transaction())
 			return false;
 
-		if (!(res = PSQLexec("BEGIN")))
+		if (!(res = PSQLexec("BEGIN", false)))
 			return false;
 
 		PQclear(res);
@@ -125,7 +125,7 @@ do_lo_export(const char *loid_arg, const char *filename_arg)
 
 	if (own_transaction)
 	{
-		if (!(res = PSQLexec("COMMIT")))
+		if (!(res = PSQLexec("COMMIT", false)))
 		{
 			res = PQexec(pset.db, "ROLLBACK");
 			PQclear(res);
@@ -171,7 +171,7 @@ do_lo_import(const char *filename_arg, const char *comment_arg)
 		if (!handle_transaction())
 			return false;
 
-		if (!(res = PSQLexec("BEGIN")))
+		if (!(res = PSQLexec("BEGIN", false)))
 			return false;
 
 		PQclear(res);
@@ -222,7 +222,7 @@ do_lo_import(const char *filename_arg, const char *comment_arg)
 		}
 		strcpy(bufptr, "')");
 
-		if (!(res = PSQLexec(cmdbuf)))
+		if (!(res = PSQLexec(cmdbuf, false)))
 		{
 			if (own_transaction)
 			{
@@ -239,7 +239,7 @@ do_lo_import(const char *filename_arg, const char *comment_arg)
 
 	if (own_transaction)
 	{
-		if (!(res = PSQLexec("COMMIT")))
+		if (!(res = PSQLexec("COMMIT", false)))
 		{
 			res = PQexec(pset.db, "ROLLBACK");
 			PQclear(res);
@@ -288,7 +288,7 @@ do_lo_unlink(const char *loid_arg)
 		if (!handle_transaction())
 			return false;
 
-		if (!(res = PSQLexec("BEGIN")))
+		if (!(res = PSQLexec("BEGIN", false)))
 			return false;
 
 		PQclear(res);
@@ -314,7 +314,7 @@ do_lo_unlink(const char *loid_arg)
 		sprintf(buf, "DELETE FROM pg_catalog.pg_description WHERE objoid = '%u' "
 				"AND classoid = 'pg_catalog.pg_largeobject'::regclass",
 				loid);
-		if (!(res = PSQLexec(buf)))
+		if (!(res = PSQLexec(buf, false)))
 		{
 			if (own_transaction)
 			{
@@ -327,7 +327,7 @@ do_lo_unlink(const char *loid_arg)
 
 	if (own_transaction)
 	{
-		if (!(res = PSQLexec("COMMIT")))
+		if (!(res = PSQLexec("COMMIT", false)))
 		{
 			res = PQexec(pset.db, "ROLLBACK");
 			PQclear(res);
@@ -362,7 +362,7 @@ do_lo_list(void)
 			 "ORDER BY \"ID\"",
 			 gettext("Description"));
 
-	res = PSQLexec(buf);
+	res = PSQLexec(buf, false);
 	if (!res)
 		return false;
 
