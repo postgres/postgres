@@ -1,5 +1,5 @@
 /*
- * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.24 1998/03/30 17:26:20 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.25 1998/04/07 18:13:08 momjian Exp $
  */
 
 #include <float.h>				/* faked on sunos */
@@ -25,7 +25,7 @@ extern Point *interpt_pp(PATH *p1, PATH *p2);
 extern void regress_lseg_construct(LSEG *lseg, Point *pt1, Point *pt2);
 extern char overpaid(TUPLE tuple);
 extern int	boxarea(BOX *box);
-extern char *reverse_name(char *string);
+extern char *reverse_c16(char *string);
 
 /*
 ** Distance from a point to a path
@@ -276,7 +276,7 @@ BOX		   *box;
 }
 
 char *
-reverse_name(string)
+reverse_c16(string)
 char	   *string;
 {
 	int			i;
@@ -285,7 +285,7 @@ char	   *string;
 
 	if (!(new_string = palloc(16)))
 	{
-		fprintf(stderr, "reverse_name: palloc failed\n");
+		fprintf(stderr, "reverse_c16: palloc failed\n");
 		return (NULL);
 	}
 	MemSet(new_string, 0, 16);

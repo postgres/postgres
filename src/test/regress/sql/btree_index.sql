@@ -16,16 +16,16 @@ SELECT b.*
    WHERE b.seqno = 4500;
 
 SELECT b.*
-   FROM bt_name_heap b
-   WHERE b.seqno < '1'::name;
+   FROM bt_c16_heap b
+   WHERE b.seqno < '1'::char16;
 
 SELECT b.*
-   FROM bt_name_heap b
-   WHERE b.seqno >= '9999'::name;
+   FROM bt_c16_heap b
+   WHERE b.seqno >= '9999'::char16;
 
 SELECT b.*
-   FROM bt_name_heap b
-   WHERE b.seqno = '4500'::name;
+   FROM bt_c16_heap b
+   WHERE b.seqno = '4500'::char16;
 
 SELECT b.*
    FROM bt_txt_heap b

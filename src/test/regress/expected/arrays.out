@@ -42,7 +42,7 @@ x
 QUERY: SELECT *
    FROM arrtest
    WHERE arrtest.a[1] < 5 and
-         arrtest.c = '{"foobar"}'::_name;
+         arrtest.c = '{"foobar"}'::_char16;
 a|b|c|d|e
 -+-+-+-+-
 (0 rows)

@@ -7,7 +7,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.38 1998/03/30 17:22:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.39 1998/04/07 18:10:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,70 +16,88 @@
 #include <stdio.h>
 #include <signal.h>
 #include <setjmp.h>
-#include <string.h>
 
 #define BOOTSTRAP_INCLUDE		/* mask out stuff in tcop/tcopprot.h */
 
 #include "postgres.h"
 
-#include "miscadmin.h"
-#include "fmgr.h"
-
+#include "catalog/pg_attribute.h"
 #include "access/attnum.h"
-#include "access/funcindex.h"
-#include "access/genam.h"
-#include "access/heapam.h"
-#include "access/htup.h"
-#include "access/itup.h"
-#include "access/relscan.h"
-#include "access/sdir.h"
+#include "nodes/pg_list.h"
+#include "access/tupdesc.h"
+#include "storage/fd.h"
+#include "catalog/pg_am.h"
+#include "catalog/pg_class.h"
+#include "nodes/nodes.h"
+#include "rewrite/prs2lock.h"
 #include "access/skey.h"
 #include "access/strat.h"
-#include "access/tupdesc.h"
-#include "access/xact.h"
-#include "bootstrap/bootstrap.h"
-#include "catalog/catname.h"
-#include "catalog/index.h"
-#include "catalog/pg_am.h"
-#include "catalog/pg_attribute.h"
-#include "catalog/pg_class.h"
-#include "catalog/pg_type.h"
-#include "executor/execdesc.h"
-#include "executor/hashjoin.h"
-#include "executor/tuptable.h"
-#include "libpq/pqsignal.h"
-#include "nodes/execnodes.h"
-#include "nodes/memnodes.h"
-#include "nodes/nodes.h"
-#include "nodes/params.h"
-#include "nodes/parsenodes.h"
-#include "nodes/plannodes.h"
-#include "nodes/pg_list.h"
-#include "nodes/primnodes.h"
-#include "rewrite/prs2lock.h"
-#include "storage/block.h"
-#include "storage/buf.h"
-#include "storage/fd.h"
-#include "storage/ipc.h"
-#include "storage/itemptr.h"
-#include "storage/lock.h"
-#include "storage/off.h"
-#include "storage/shmem.h"
-#include "storage/spin.h"
-#include "tcop/dest.h"
-#include "tcop/tcopprot.h"
-#include "utils/builtins.h"
-#include "utils/geo_decls.h"
-#include "utils/hsearch.h"
-#include "utils/lsyscache.h"
-#include "utils/mcxt.h"
-#include "utils/nabstime.h"
-#include "utils/portal.h"
 #include "utils/rel.h"
+#include "libpq/pqsignal.h"
+
+#include "storage/block.h"
+#include "storage/off.h"
+#include "storage/itemptr.h"
+#include "utils/nabstime.h"
+#include "access/htup.h"
+#include "storage/buf.h"
+#include "access/relscan.h"
+#include "access/heapam.h"
+
+#include "fmgr.h"
+
+#include "access/funcindex.h"
+
+#include "nodes/memnodes.h"
+
+#include "miscadmin.h"
+
+#include "catalog/pg_type.h"
+
+#include "access/itup.h"
+#include "bootstrap/bootstrap.h"
+
+#include "tcop/tcopprot.h"
+
+#include "storage/ipc.h"
+#include "storage/spin.h"
+#include "utils/hsearch.h"
+#include "storage/shmem.h"
+#include "storage/lock.h"
+
+#include "access/xact.h"
 
 #ifndef HAVE_MEMMOVE
 #include "regex/utils.h"
 #endif
+#include <string.h>
+
+#include "nodes/primnodes.h"
+#include "nodes/parsenodes.h"
+#include "nodes/params.h"
+#include "access/sdir.h"
+#include "executor/hashjoin.h"
+#include "executor/tuptable.h"
+#include "nodes/execnodes.h"
+#include "nodes/plannodes.h"
+#include "tcop/dest.h"
+#include "executor/execdesc.h"
+#include "utils/portal.h"
+
+#include "utils/mcxt.h"
+
+#include "catalog/catname.h"
+
+#include "utils/geo_decls.h"
+#include "utils/builtins.h"
+
+#include "catalog/index.h"
+
+#include "access/genam.h"
+
+#include "utils/lsyscache.h"
+
+#include "utils/palloc.h"
 
 #define ALLOC(t, c)		(t *)calloc((unsigned)(c), sizeof(t))
 #define FIRST_TYPE_OID 16		/* OID of the first type */
@@ -143,7 +161,7 @@ static struct typinfo Procid[] = {
 	{"bytea", 17, 0, -1, F_BYTEAIN, F_BYTEAOUT},
 	{"char", 18, 0, 1, F_CHARIN, F_CHAROUT},
 	{"name", 19, 0, NAMEDATALEN, F_NAMEIN, F_NAMEOUT},
-	{"dummy", 20, 0, 16, 0, 0},
+	{"char16", 20, 0, 16, F_CHAR16IN, F_CHAR16OUT},
 /*	  { "dt",		  20,	 0,  4, F_DTIN,			F_DTOUT}, */
 	{"int2", 21, 0, 2, F_INT2IN, F_INT2OUT},
 	{"int28", 22, 0, 16, F_INT28IN, F_INT28OUT},

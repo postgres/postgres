@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_operator.h,v 1.28 1998/03/30 17:25:19 momjian Exp $
+ * $Id: pg_operator.h,v 1.29 1998/04/07 18:12:22 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -102,6 +102,7 @@ DATA(insert OID = 96 (	"="		   PGUID 0 b t t  23  23  16  96 518 97 97 int4eq eq
 DATA(insert OID = 97 (	"<"		   PGUID 0 b t f  23  23  16 521 525 0 0 int4lt intltsel intltjoinsel ));
 DATA(insert OID = 98 (	"="		   PGUID 0 b t t  25  25  16  98 531 664 664 texteq eqsel eqjoinsel ));
 
+DATA(insert OID = 1267 (  "="		 PGUID 0 b t t	20	20	16	1267 644 645 645 char16eq eqsel eqjoinsel ));
 DATA(insert OID = 329 (  "="	   PGUID 0 b t t  1000	1000  16  329 0  0	0 array_eq eqsel eqjoinsel ));
 DATA(insert OID = 349 (  "="	   PGUID 0 b t t  1001	1001  16  349 0  0	0 array_eq eqsel eqjoinsel ));
 DATA(insert OID = 374 (  "="	   PGUID 0 b t t  1002	1002  16  374 0  0	0 array_eq eqsel eqjoinsel ));
@@ -134,6 +135,27 @@ DATA(insert OID = 398 (  "="	   PGUID 0 b t t  1025	1025  16  398 0  0	0 array_e
 DATA(insert OID = 399 (  "="	   PGUID 0 b t t  1026	1026  16  399 0  0	0 array_eq eqsel eqjoinsel ));
 DATA(insert OID = 400 (  "="	   PGUID 0 b t t  1027	1027  16  400 0  0	0 array_eq eqsel eqjoinsel ));
 DATA(insert OID = 401 (  "="	   PGUID 0 b t t  1034	1034  16  401 0  0	0 array_eq eqsel eqjoinsel ));
+
+DATA(insert OID = 412 (  "="	   PGUID 0 b t t  409  409	16	412 415 418 418 char2eq eqsel eqjoinsel ));
+DATA(insert OID = 413 (  "="	   PGUID 0 b t t  410  410	16	413 416 419 419 char4eq eqsel eqjoinsel ));
+DATA(insert OID = 414 (  "="	   PGUID 0 b t t  411  411	16	414 417 420 420 char8eq eqsel eqjoinsel ));
+
+DATA(insert OID = 415 (  "<>"	   PGUID 0 b t f  409  409	16 415 412	0 0 char2ne neqsel neqjoinsel ));
+DATA(insert OID = 416 (  "<>"	   PGUID 0 b t f  410  410	16 416 413	0 0 char4ne neqsel neqjoinsel ));
+DATA(insert OID = 417 (  "<>"	   PGUID 0 b t f  411  411	16 417 414	0 0 char8ne neqsel neqjoinsel ));
+DATA(insert OID = 418 (  "<"	   PGUID 0 b t f  409  409	16 460 463	0 0 char2lt intltsel intltjoinsel ));
+DATA(insert OID = 419 (  "<"	   PGUID 0 b t f  410  410	16 461 464	0 0 char4lt intltsel intltjoinsel ));
+DATA(insert OID = 420 (  "<"	   PGUID 0 b t f  411  411	16 462 465	0 0 char8lt intltsel intltjoinsel ));
+
+DATA(insert OID = 457 (  "<="	   PGUID 0 b t f  409  409	16 463 460	0 0 char2le intltsel intltjoinsel ));
+DATA(insert OID = 458 (  "<="	   PGUID 0 b t f  410  410	16 464 461	0 0 char4le intltsel intltjoinsel ));
+DATA(insert OID = 459 (  "<="	   PGUID 0 b t f  411  411	16 465 462	0 0 char8le intltsel intltjoinsel ));
+DATA(insert OID = 460 (  ">"	   PGUID 0 b t f  409  409	16 418 457	0 0 char2gt intltsel intltjoinsel ));
+DATA(insert OID = 461 (  ">"	   PGUID 0 b t f  410  410	16 419 458	0 0 char4gt intltsel intltjoinsel ));
+DATA(insert OID = 462 (  ">"	   PGUID 0 b t f  411  411	16 420 459	0 0 char8gt intltsel intltjoinsel ));
+DATA(insert OID = 463 (  ">="	   PGUID 0 b t f  409  409	16 457 418	0 0 char2ge intltsel intltjoinsel ));
+DATA(insert OID = 464 (  ">="	   PGUID 0 b t f  410  410	16 458 418	0 0 char4ge intltsel intltjoinsel ));
+DATA(insert OID = 465 (  ">="	   PGUID 0 b t f  411  411	16 459 420	0 0 char8ge intltsel intltjoinsel ));
 
 DATA(insert OID = 485 (  "<<"	   PGUID 0 b t f 604 604  16   0   0   0   0 poly_left intltsel intltjoinsel ));
 DATA(insert OID = 486 (  "&<"	   PGUID 0 b t f 604 604  16   0   0   0   0 poly_overleft intltsel intltjoinsel ));
@@ -297,6 +319,15 @@ DATA(insert OID = 640 (  "!~"	   PGUID 0 b t f  19  25  16 0 639	0 0 nameregexne
 DATA(insert OID = 641 (  "~"	   PGUID 0 b t f  25  25  16 0 642	0 0 textregexeq eqsel eqjoinsel ));
 DATA(insert OID = 642 (  "!~"	   PGUID 0 b t f  25  25  16 0 641	0 0 textregexne eqsel eqjoinsel ));
 DATA(insert OID = 643 (  "<>"	   PGUID 0 b t f  19  19  16 643 93 0 0 namene neqsel neqjoinsel ));
+DATA(insert OID = 644 (  "<>"	   PGUID 0 b t f  20  20  16 644 1267 0 0 char16ne neqsel neqjoinsel ));
+DATA(insert OID = 645 (  "<"	   PGUID 0 b t f  20  20  16 647 648  0 0 char16lt intltsel intltjoinsel ));
+DATA(insert OID = 646 (  "<="	   PGUID 0 b t f  20  20  16 648 647  0 0 char16le intltsel intltjoinsel ));
+DATA(insert OID = 647 (  ">"	   PGUID 0 b t f  20  20  16 645 646  0 0 char16gt intltsel intltjoinsel ));
+DATA(insert OID = 648 (  ">="	   PGUID 0 b t f  20  20  16 646 645  0 0 char16ge intltsel intltjoinsel ));
+DATA(insert OID = 649 (  "~"	   PGUID 0 b t f  20  25  16 0 650	0 0 char16regexeq intltsel intltjoinsel ));
+DATA(insert OID = 650 (  "!~"	   PGUID 0 b t f  20  25  16 650 0	0 0 char16regexne intltsel intltjoinsel ));
+DATA(insert OID = 651 (  "~~"	   PGUID 0 b t f  20  25  16 0 651	0 0 char16like eqsel eqjoinsel ));
+DATA(insert OID = 652 (  "!~~"	   PGUID 0 b t f  20  25  16 651 0	0 0 char16nlike neqsel neqjoinsel ));
 DATA(insert OID = 654 (  "||"	   PGUID 0 b t f  25  25  25   0 0	0 0 textcat - - ));
 
 DATA(insert OID = 660 (  "<"	   PGUID 0 b t f  19  19  16 662 663  0 0 namelt intltsel intltjoinsel ));
@@ -321,6 +352,9 @@ DATA(insert OID = 678 (  "="	   PGUID 0 b t f  911  911	16 678 681	0 0 oidnameeq
 DATA(insert OID = 679 (  ">="	   PGUID 0 b t f  911  911	16 677 676	0 0 oidnamege intltsel intltjoinsel ));
 DATA(insert OID = 680 (  ">"	   PGUID 0 b t f  911  911	16 676 677	0 0 oidnamegt intltsel intltjoinsel ));
 DATA(insert OID = 681 (  "<>"	   PGUID 0 b t f  911  911	16 681 678	0 0 oidnamene intltsel intltjoinsel ));
+
+DATA(insert OID = 697 (  "~"	   PGUID 0 b t f  411  25  16 0 698  0 0 char8regexeq eqsel eqjoinsel ));
+DATA(insert OID = 698 (  "!~"	   PGUID 0 b t f  411  25  16 0 697  0 0 char8regexne neqsel neqjoinsel ));
 
 DATA(insert OID = 706 (  "<->"	   PGUID 0 b t f 603 603 701 706   0  0  0 box_distance intltsel intltjoinsel ));
 DATA(insert OID = 707 (  "<->"	   PGUID 0 b t f 602 602 701 707   0  0  0 path_distance intltsel intltjoinsel ));
@@ -378,6 +412,11 @@ DATA(insert OID = 832 (  "="	   PGUID 0 b t f  810  810	16 832 835	0 0 oidint2eq
 DATA(insert OID = 833 (  ">="	   PGUID 0 b t f  810  810	16 831 830	0 0 oidint2ge intltsel intltjoinsel ));
 DATA(insert OID = 834 (  ">"	   PGUID 0 b t f  810  810	16 830 831	0 0 oidint2gt intltsel intltjoinsel ));
 DATA(insert OID = 835 (  "<>"	   PGUID 0 b t f  810  810	16 835 832	0 0 oidint2ne intltsel intltjoinsel ));
+
+DATA(insert OID = 839 (  "~"	   PGUID 0 b t f  409  25  16 0 841  0 0 char2regexeq eqsel eqjoinsel ));
+DATA(insert OID = 841 (  "!~"	   PGUID 0 b t f  409  25  16 0 839  0 0 char2regexne neqsel neqjoinsel ));
+DATA(insert OID = 840 (  "~"	   PGUID 0 b t f  410  25  16 0 842  0 0 char4regexeq eqsel eqjoinsel ));
+DATA(insert OID = 842 (  "!~"	   PGUID 0 b t f  410  25  16 0 840  0 0 char4regexne neqsel neqjoinsel ));
 
 DATA(insert OID = 843 (  "*"	   PGUID 0 b t f  790  700	790 845   0   0   0 cash_mul_flt4 - - ));
 DATA(insert OID = 844 (  "/"	   PGUID 0 b t f  790  700	790   0   0   0   0 cash_div_flt4 - - ));
@@ -487,6 +526,12 @@ DATA(insert OID = 1136 (  "="		PGUID 0 b t t 23 26 16 1137 0 0 0 int4eqoid eqsel
 DATA(insert OID = 1137 (  "="		PGUID 0 b t t 26 23 16 1136 0 0 0 oideqint4 eqsel eqjoinsel ));
 
 /* LIKE hacks by Keith Parks. */
+DATA(insert OID = 1201 (  "~~"	  PGUID 0 b t f  409  25  16 0 1202 0 0 char2like eqsel eqjoinsel ));
+DATA(insert OID = 1202 (  "!~~"   PGUID 0 b t f  409  25  16 0 1201 0 0 char2nlike neqsel neqjoinsel ));
+DATA(insert OID = 1203 (  "~~"	  PGUID 0 b t f  410  25  16 0 1204 0 0 char4like eqsel eqjoinsel ));
+DATA(insert OID = 1204 (  "!~~"   PGUID 0 b t f  410  25  16 0 1203 0 0 char4nlike neqsel neqjoinsel ));
+DATA(insert OID = 1205 (  "~~"	  PGUID 0 b t f  411  25  16 0 1206 0 0 char8like eqsel eqjoinsel ));
+DATA(insert OID = 1206 (  "!~~"   PGUID 0 b t f  411  25  16 0 1205 0 0 char8nlike neqsel neqjoinsel ));
 DATA(insert OID = 1207 (  "~~"	  PGUID 0 b t f  19   25  16 0 1208 0 0 namelike eqsel eqjoinsel ));
 DATA(insert OID = 1208 (  "!~~"   PGUID 0 b t f  19   25  16 0 1207 0 0 namenlike neqsel neqjoinsel ));
 DATA(insert OID = 1209 (  "~~"	  PGUID 0 b t f  25   25  16 0 1210 0 0 textlike eqsel eqjoinsel ));
@@ -497,10 +542,18 @@ DATA(insert OID = 1213 (  "~~"	  PGUID 0 b t f  1043 25  16 0 1214 0 0 textlike 
 DATA(insert OID = 1214 (  "!~~"   PGUID 0 b t f  1043 25  16 0 1213 0 0 textnlike neqsel neqjoinsel ));
 
 /* case-insensitive LIKE hacks */
+DATA(insert OID = 1220 (  "~*"		 PGUID 0 b t f	409  25  16 0 1221	0 0 char2icregexeq eqsel eqjoinsel ));
+DATA(insert OID = 1221 (  "!~*"		 PGUID 0 b t f	409  25  16 0 1220	0 0 char2icregexne neqsel neqjoinsel ));
+DATA(insert OID = 1222 (  "~*"		 PGUID 0 b t f	410  25  16 0 1223	0 0 char4icregexeq eqsel eqjoinsel ));
+DATA(insert OID = 1223 (  "!~*"		 PGUID 0 b t f	410  25  16 0 1222	0 0 char4icregexne neqsel neqjoinsel ));
+DATA(insert OID = 1224 (  "~*"		 PGUID 0 b t f	411  25  16 0 1225	0 0 char8icregexeq eqsel eqjoinsel ));
+DATA(insert OID = 1225 (  "!~*"		 PGUID 0 b t f	411  25  16 0 1224	0 0 char8icregexne neqsel neqjoinsel ));
 DATA(insert OID = 1226 (  "~*"		 PGUID 0 b t f	19	25	16 0 1227  0 0 nameicregexeq eqsel eqjoinsel ));
 DATA(insert OID = 1227 (  "!~*"		 PGUID 0 b t f	19	25	16 0 1226  0 0 nameicregexne neqsel neqjoinsel ));
 DATA(insert OID = 1228 (  "~*"		 PGUID 0 b t f	25	25	16 0 1229  0 0 texticregexeq eqsel eqjoinsel ));
 DATA(insert OID = 1229 (  "!~*"		 PGUID 0 b t f	25	25	16 0 1228  0 0 texticregexne eqsel eqjoinsel ));
+DATA(insert OID = 1230 (  "~*"		 PGUID 0 b t f	20	25	16 0 1231  0 0 char16icregexeq eqsel eqjoinsel ));
+DATA(insert OID = 1231 (  "!~*"		 PGUID 0 b t f	20	25	16 0 1230  0 0 char16icregexne neqsel neqjoinsel ));
 DATA(insert OID = 1232 (  "~*"		PGUID 0 b t f  1043  25  16 0 1233	0 0 texticregexeq eqsel eqjoinsel ));
 DATA(insert OID = 1233 ( "!~*"		PGUID 0 b t f  1043  25  16 0 1232	0 0 texticregexne neqsel neqjoinsel ));
 DATA(insert OID = 1234 (  "~*"		PGUID 0 b t f  1042  25  16 0 1235	0 0 texticregexeq eqsel eqjoinsel ));

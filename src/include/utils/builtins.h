@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.38 1998/03/30 17:25:38 momjian Exp $
+ * $Id: builtins.h,v 1.39 1998/04/07 18:12:35 momjian Exp $
  *
  * NOTES
  *	  This should normally only be included by fmgr.h.
@@ -43,6 +43,8 @@ extern int32 charin(char *ch);
 extern char *charout(int32 ch);
 extern int32 cidin(char *s);
 extern char *cidout(int32 c);
+extern char *char16in(char *s);
+extern char *char16out(char *s);
 extern bool chareq(int8 arg1, int8 arg2);
 extern bool charne(int8 arg1, int8 arg2);
 extern bool charlt(int8 arg1, int8 arg2);
@@ -54,6 +56,39 @@ extern int8 charmi(int8 arg1, int8 arg2);
 extern int8 charmul(int8 arg1, int8 arg2);
 extern int8 chardiv(int8 arg1, int8 arg2);
 extern bool cideq(int8 arg1, int8 arg2);
+extern bool char16eq(char *arg1, char *arg2);
+extern bool char16ne(char *arg1, char *arg2);
+extern bool char16lt(char *arg1, char *arg2);
+extern bool char16le(char *arg1, char *arg2);
+extern bool char16gt(char *arg1, char *arg2);
+extern bool char16ge(char *arg1, char *arg2);
+extern uint16 char2in(char *s);
+extern char *char2out(uint16 s);
+extern bool char2eq(uint16 a, uint16 b);
+extern bool char2ne(uint16 a, uint16 b);
+extern bool char2lt(uint16 a, uint16 b);
+extern bool char2le(uint16 a, uint16 b);
+extern bool char2gt(uint16 a, uint16 b);
+extern bool char2ge(uint16 a, uint16 b);
+extern int32 char2cmp(uint16 a, uint16 b);
+extern uint32 char4in(char *s);
+extern char *char4out(uint32 s);
+extern bool char4eq(uint32 a, uint32 b);
+extern bool char4ne(uint32 a, uint32 b);
+extern bool char4lt(uint32 a, uint32 b);
+extern bool char4le(uint32 a, uint32 b);
+extern bool char4gt(uint32 a, uint32 b);
+extern bool char4ge(uint32 a, uint32 b);
+extern int32 char4cmp(uint32 a, uint32 b);
+extern char *char8in(char *s);
+extern char *char8out(char *s);
+extern bool char8eq(char *arg1, char *arg2);
+extern bool char8ne(char *arg1, char *arg2);
+extern bool char8lt(char *arg1, char *arg2);
+extern bool char8le(char *arg1, char *arg2);
+extern bool char8gt(char *arg1, char *arg2);
+extern bool char8ge(char *arg1, char *arg2);
+extern int32 char8cmp(char *arg1, char *arg2);
 
 /* int.c */
 extern int32 int2in(char *num);
@@ -162,6 +197,10 @@ extern int32 btfloat8cmp(float64 a, float64 b);
 extern int32 btoidcmp(Oid a, Oid b);
 extern int32 btabstimecmp(AbsoluteTime a, AbsoluteTime b);
 extern int32 btcharcmp(char a, char b);
+extern int32 btchar2cmp(uint16 a, uint16 b);
+extern int32 btchar4cmp(uint32 a, uint32 b);
+extern int32 btchar8cmp(char *a, char *b);
+extern int32 btchar16cmp(char *a, char *b);
 extern int32 btnamecmp(NameData *a, NameData *b);
 extern int32 bttextcmp(struct varlena * a, struct varlena * b);
 
@@ -335,10 +374,26 @@ extern text *oid_text(Oid arg1);
 extern Oid	text_oid(text *arg1);
 
 /* regexp.c */
+extern bool char2regexeq(uint16 arg1, struct varlena * p);
+extern bool char2regexne(uint16 arg1, struct varlena * p);
+extern bool char4regexeq(uint32 arg1, struct varlena * p);
+extern bool char4regexne(uint32 arg1, struct varlena * p);
+extern bool char8regexeq(char *s, struct varlena * p);
+extern bool char8regexne(char *s, struct varlena * p);
+extern bool char16regexeq(char *s, struct varlena * p);
+extern bool char16regexne(char *s, struct varlena * p);
 extern bool nameregexeq(NameData *n, struct varlena * p);
 extern bool nameregexne(NameData *s, struct varlena * p);
 extern bool textregexeq(struct varlena * s, struct varlena * p);
 extern bool textregexne(struct varlena * s, struct varlena * p);
+extern bool char2icregexeq(uint16 arg1, struct varlena * p);
+extern bool char2icregexne(uint16 arg1, struct varlena * p);
+extern bool char4icregexeq(uint32 arg1, struct varlena * p);
+extern bool char4icregexne(uint32 arg1, struct varlena * p);
+extern bool char8icregexeq(char *s, struct varlena * p);
+extern bool char8icregexne(char *s, struct varlena * p);
+extern bool char16icregexeq(char *s, struct varlena * p);
+extern bool char16icregexne(char *s, struct varlena * p);
 extern bool nameicregexeq(NameData *s, struct varlena * p);
 extern bool nameicregexne(NameData *s, struct varlena * p);
 extern bool texticregexeq(struct varlena * s, struct varlena * p);
@@ -469,6 +524,14 @@ extern TimeADT *datetime_time(DateTime *datetime);
 extern int32 int42reltime(int32 timevalue);
 
 /* like.c */
+extern bool char2like(uint16 arg1, struct varlena * p);
+extern bool char2nlike(uint16 arg1, struct varlena * p);
+extern bool char4like(uint32 arg1, struct varlena * p);
+extern bool char4nlike(uint32 arg1, struct varlena * p);
+extern bool char8like(char *s, struct varlena * p);
+extern bool char8nlike(char *s, struct varlena * p);
+extern bool char16like(char *s, struct varlena * p);
+extern bool char16nlike(char *s, struct varlena * p);
 extern bool namelike(NameData *n, struct varlena * p);
 extern bool namenlike(NameData *s, struct varlena * p);
 extern bool textlike(struct varlena * s, struct varlena * p);

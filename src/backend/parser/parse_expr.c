@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.25 1998/03/30 17:23:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.26 1998/04/07 18:10:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -530,7 +530,7 @@ parser_typecast2(Node *expr, Oid exprType, Type tp, int16 atttypmod)
 			sprintf(const_string, "%d",
 					(int) ((Const *) expr)->constvalue);
 			break;
-		case NAMEOID:			/* name */
+		case NAMEOID:			/* char16 */
 			const_string = (char *) palloc(256);
 			string_palloced = true;
 			sprintf(const_string, "%s",

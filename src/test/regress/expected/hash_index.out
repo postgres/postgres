@@ -11,15 +11,15 @@ seqno|random
 -----+------
 (0 rows)
 
-QUERY: SELECT hash_name_heap.*
-   WHERE hash_name_heap.random = '1505703298'::name;
+QUERY: SELECT hash_c16_heap.*
+   WHERE hash_c16_heap.random = '1505703298'::char16;
 seqno|    random
 -----+----------
  9838|1505703298
 (1 row)
 
-QUERY: SELECT hash_name_heap.*
-   WHERE hash_name_heap.random = '7777777'::name;
+QUERY: SELECT hash_c16_heap.*
+   WHERE hash_c16_heap.random = '7777777'::char16;
 seqno|random
 -----+------
 (0 rows)
@@ -72,23 +72,23 @@ i20000
  20000
 (1 row)
 
-QUERY: UPDATE hash_name_heap
-   SET random = '0123456789abcdef'::name
-   WHERE hash_name_heap.seqno = 6543;
+QUERY: UPDATE hash_c16_heap
+   SET random = '0123456789abcdef'::char16
+   WHERE hash_c16_heap.seqno = 6543;
 QUERY: SELECT h.seqno AS i6543, h.random AS c0_to_f
-   FROM hash_name_heap h
-   WHERE h.random = '0123456789abcdef'::name;
+   FROM hash_c16_heap h
+   WHERE h.random = '0123456789abcdef'::char16;
 i6543|c0_to_f         
 -----+----------------
  6543|0123456789abcdef
 (1 row)
 
-QUERY: UPDATE hash_name_heap
+QUERY: UPDATE hash_c16_heap
    SET seqno = 20000
-   WHERE hash_name_heap.random = '76652222'::name;
+   WHERE hash_c16_heap.random = '76652222'::char16;
 QUERY: SELECT h.seqno AS emptyset
-   FROM hash_name_heap h
-   WHERE h.random = '76652222'::name;
+   FROM hash_c16_heap h
+   WHERE h.random = '76652222'::char16;
 emptyset
 --------
 (0 rows)

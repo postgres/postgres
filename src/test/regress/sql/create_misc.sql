@@ -71,96 +71,96 @@ INSERT INTO b_star (class, b) VALUES ('b', 'bumble'::text);
 
 INSERT INTO b_star (class) VALUES ('b');
 
-INSERT INTO c_star (class, a, c) VALUES ('c', 5, 'hi mom'::name);
+INSERT INTO c_star (class, a, c) VALUES ('c', 5, 'hi mom'::char16);
 
 INSERT INTO c_star (class, a) VALUES ('c', 6);
 
-INSERT INTO c_star (class, c) VALUES ('c', 'hi paul'::name);
+INSERT INTO c_star (class, c) VALUES ('c', 'hi paul'::char16);
 
 INSERT INTO c_star (class) VALUES ('c');
 
 INSERT INTO d_star (class, a, b, c, d)
-   VALUES ('d', 7, 'grumble'::text, 'hi sunita'::name, '0.0'::float8);
+   VALUES ('d', 7, 'grumble'::text, 'hi sunita'::char16, '0.0'::float8);
 
 INSERT INTO d_star (class, a, b, c)
-   VALUES ('d', 8, 'stumble'::text, 'hi koko'::name);
+   VALUES ('d', 8, 'stumble'::text, 'hi koko'::char16);
 
 INSERT INTO d_star (class, a, b, d)
    VALUES ('d', 9, 'rumble'::text, '1.1'::float8);
 
 INSERT INTO d_star (class, a, c, d)
-   VALUES ('d', 10, 'hi kristin'::name, '10.01'::float8);
+   VALUES ('d', 10, 'hi kristin'::char16, '10.01'::float8);
 
 INSERT INTO d_star (class, b, c, d)
-   VALUES ('d', 'crumble'::text, 'hi boris'::name, '100.001'::float8);
+   VALUES ('d', 'crumble'::text, 'hi boris'::char16, '100.001'::float8);
 
 INSERT INTO d_star (class, a, b)
    VALUES ('d', 11, 'fumble'::text);
 
 INSERT INTO d_star (class, a, c)
-   VALUES ('d', 12, 'hi avi'::name);
+   VALUES ('d', 12, 'hi avi'::char16);
 
 INSERT INTO d_star (class, a, d)
    VALUES ('d', 13, '1000.0001'::float8);
 
 INSERT INTO d_star (class, b, c)
-   VALUES ('d', 'tumble'::text, 'hi andrew'::name);
+   VALUES ('d', 'tumble'::text, 'hi andrew'::char16);
 
 INSERT INTO d_star (class, b, d)
    VALUES ('d', 'humble'::text, '10000.00001'::float8);
 
 INSERT INTO d_star (class, c, d)
-   VALUES ('d', 'hi ginger'::name, '100000.000001'::float8);
+   VALUES ('d', 'hi ginger'::char16, '100000.000001'::float8);
 
 INSERT INTO d_star (class, a) VALUES ('d', 14);
 
 INSERT INTO d_star (class, b) VALUES ('d', 'jumble'::text);
 
-INSERT INTO d_star (class, c) VALUES ('d', 'hi jolly'::name);
+INSERT INTO d_star (class, c) VALUES ('d', 'hi jolly'::char16);
 
 INSERT INTO d_star (class, d) VALUES ('d', '1000000.0000001'::float8);
 
 INSERT INTO d_star (class) VALUES ('d');
 
 INSERT INTO e_star (class, a, c, e)
-   VALUES ('e', 15, 'hi carol'::name, '-1'::int2);
+   VALUES ('e', 15, 'hi carol'::char16, '-1'::int2);
 
 INSERT INTO e_star (class, a, c)
-   VALUES ('e', 16, 'hi bob'::name);
+   VALUES ('e', 16, 'hi bob'::char16);
 
 INSERT INTO e_star (class, a, e)
    VALUES ('e', 17, '-2'::int2);
 
 INSERT INTO e_star (class, c, e)
-   VALUES ('e', 'hi michelle'::name, '-3'::int2);
+   VALUES ('e', 'hi michelle'::char16, '-3'::int2);
 
 INSERT INTO e_star (class, a)
    VALUES ('e', 18);
 
 INSERT INTO e_star (class, c)
-   VALUES ('e', 'hi elisa'::name);
+   VALUES ('e', 'hi elisa'::char16);
 
 INSERT INTO e_star (class, e)
    VALUES ('e', '-4'::int2);
 
 INSERT INTO f_star (class, a, c, e, f)
-   VALUES ('f', 19, 'hi claire'::name, '-5'::int2, '(1,3),(2,4)'::polygon);
+   VALUES ('f', 19, 'hi claire'::char16, '-5'::int2, '(1,3),(2,4)'::polygon);
 
 INSERT INTO f_star (class, a, c, e)
-   VALUES ('f', 20, 'hi mike'::name, '-6'::int2);
+   VALUES ('f', 20, 'hi mike'::char16, '-6'::int2);
 
 INSERT INTO f_star (class, a, c, f)
-   VALUES ('f', 21, 'hi marcel'::name, '(11,44),(22,55),(33,66)'::polygon);
+   VALUES ('f', 21, 'hi marcel'::char16, '(11,44),(22,55),(33,66)'::polygon);
 
 INSERT INTO f_star (class, a, e, f)
    VALUES ('f', 22, '-7'::int2, '(111,555),(222,666),(333,777),(444,888)'::polygon);
 
 INSERT INTO f_star (class, c, e, f)
-   VALUES ('f', 'hi keith'::name, '-8'::int2, 
+   VALUES ('f', 'hi keith'::char16, '-8'::int2, 
 	   '(1111,3333),(2222,4444)'::polygon);
 
 INSERT INTO f_star (class, a, c)
-   VALUES ('f', 24, 'hi marc'::name);
+   VALUES ('f', 24, 'hi marc'::char16);
 
 INSERT INTO f_star (class, a, e)
    VALUES ('f', 25, '-9'::int2);
@@ -169,10 +169,10 @@ INSERT INTO f_star (class, a, f)
    VALUES ('f', 26, '(11111,33333),(22222,44444)'::polygon); 
 
 INSERT INTO f_star (class, c, e)
-   VALUES ('f', 'hi allison'::name, '-10'::int2);
+   VALUES ('f', 'hi allison'::char16, '-10'::int2);
 
 INSERT INTO f_star (class, c, f)
-   VALUES ('f', 'hi jeff'::name,
+   VALUES ('f', 'hi jeff'::char16,
            '(111111,333333),(222222,444444)'::polygon);
 
 INSERT INTO f_star (class, e, f)
@@ -180,7 +180,7 @@ INSERT INTO f_star (class, e, f)
 
 INSERT INTO f_star (class, a) VALUES ('f', 27);
 
-INSERT INTO f_star (class, c) VALUES ('f', 'hi carl'::name);
+INSERT INTO f_star (class, c) VALUES ('f', 'hi carl'::char16);
 
 INSERT INTO f_star (class, e) VALUES ('f', '-12'::int2);
 

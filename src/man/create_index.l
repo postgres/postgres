@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/create_index.l,v 1.9 1998/03/30 17:25:50 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/create_index.l,v 1.10 1998/04/07 18:12:52 momjian Exp $
 .TH "CREATE INDEX" SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
 create index - construct a secondary index
@@ -99,6 +99,26 @@ btree   |bpchar_ops |<=
 btree   |bpchar_ops |=       
 btree   |bpchar_ops |>       
 btree   |bpchar_ops |>=      
+btree   |char16_ops |<       
+btree   |char16_ops |<=      
+btree   |char16_ops |=       
+btree   |char16_ops |>       
+btree   |char16_ops |>=      
+btree   |char2_ops  |<       
+btree   |char2_ops  |<=      
+btree   |char2_ops  |=       
+btree   |char2_ops  |>       
+btree   |char2_ops  |>=      
+btree   |char4_ops  |<       
+btree   |char4_ops  |<=      
+btree   |char4_ops  |=       
+btree   |char4_ops  |>       
+btree   |char4_ops  |>=      
+btree   |char8_ops  |<       
+btree   |char8_ops  |<=      
+btree   |char8_ops  |=       
+btree   |char8_ops  |>       
+btree   |char8_ops  |>=      
 btree   |char_ops   |<       
 btree   |char_ops   |<=      
 btree   |char_ops   |=       
@@ -180,6 +200,10 @@ btree   |varchar_ops|=
 btree   |varchar_ops|>       
 btree   |varchar_ops|>=      
 hash    |bpchar_ops |=       
+hash    |char16_ops |=       
+hash    |char2_ops  |=       
+hash    |char4_ops  |=       
+hash    |char8_ops  |=       
 hash    |char_ops   |=       
 hash    |date_ops   |=       
 hash    |float4_ops |=       
@@ -230,7 +254,7 @@ The operator classes
 .IR oidint2_ops ,
 .IR oidint4_ops ,
 and
-.IR oidname_ops
+.IR oidchar16_ops
 represent the use of 
 .IR "functional indices"
 to simulate multi-key indices.
@@ -276,7 +300,7 @@ create index empindex on emp using btree (age int4_ops)
 --Create a btree index on employee name.
 --
 create index empname
-	on emp using btree (name name_ops)
+	on emp using btree (name char16_ops)
 .fi
 .nf
 --

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.37 1998/03/30 17:22:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.38 1998/04/07 18:09:44 momjian Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -317,7 +317,7 @@ TupleDescInitEntry(TupleDesc desc,
 	 *
 	 *	Note: in the special case of
 	 *
-	 *		create EMP (name = text, manager = EMP)
+	 *		create EMP (name = char16, manager = EMP)
 	 *
 	 *	RelationNameCreateHeapRelation() calls BuildDesc() which
 	 *	calls this routine and since EMP does not exist yet, the

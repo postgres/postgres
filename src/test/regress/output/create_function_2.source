@@ -33,8 +33,8 @@ QUERY: CREATE FUNCTION interpt_pp(path, path)
    RETURNS point
    AS '_OBJWD_/regress_DLSUFFIX_'
    LANGUAGE 'c';
-QUERY: CREATE FUNCTION reverse_name(name)
-   RETURNS name
+QUERY: CREATE FUNCTION reverse_c16(char16)
+   RETURNS char16
    AS '_OBJWD_/regress_DLSUFFIX_'
    LANGUAGE 'c';
 QUERY: LOAD '_OBJWD_/regress_DLSUFFIX_';

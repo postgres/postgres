@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.28 1998/03/30 17:23:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.29 1998/04/07 18:10:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -547,7 +547,7 @@ GetAttributeByNum(TupleTableSlot *slot,
 	return (char *) retval;
 }
 
-/* XXX name for catalogs */
+/* XXX char16 name for catalogs */
 #ifdef NOT_USED
 char *
 att_by_num(TupleTableSlot *slot,
@@ -608,7 +608,7 @@ GetAttributeByName(TupleTableSlot *slot, char *attname, bool *isNull)
 	return (char *) retval;
 }
 
-/* XXX name for catalogs */
+/* XXX char16 name for catalogs */
 #ifdef NOT_USED
 char *
 att_by_name(TupleTableSlot *slot, char *attname, bool *isNull)

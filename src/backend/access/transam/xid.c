@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/Attic/xid.c,v 1.13 1998/03/30 17:22:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/Attic/xid.c,v 1.14 1998/04/07 18:10:01 momjian Exp $
  *
  * OLD COMMENTS
  * XXX WARNING
@@ -30,14 +30,14 @@ extern TransactionId DisabledTransactionId;
 extern TransactionId AmiTransactionId;
 extern TransactionId FirstTransactionId;
 
-/* XXX name for catalogs */
+/* XXX char16 name for catalogs */
 TransactionId
 xidin(char *representation)
 {
 	return (atol(representation));
 }
 
-/* XXX name for catalogs */
+/* XXX char16 name for catalogs */
 char *
 xidout(TransactionId transactionId)
 {

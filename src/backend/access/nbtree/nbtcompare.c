@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtcompare.c,v 1.14 1998/03/30 17:22:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtcompare.c,v 1.15 1998/04/07 18:09:51 momjian Exp $
  *
  *	NOTES
  *		These functions are stored in pg_amproc.  For each operator class
@@ -99,6 +99,30 @@ int32
 btcharcmp(char a, char b)
 {
 	return ((int32) ((uint8) a - (uint8) b));
+}
+
+int32
+btchar2cmp(uint16 a, uint16 b)
+{
+	return (strncmp((char *) &a, (char *) &b, 2));
+}
+
+int32
+btchar4cmp(uint32 a, uint32 b)
+{
+	return (strncmp((char *) &a, (char *) &b, 4));
+}
+
+int32
+btchar8cmp(char *a, char *b)
+{
+	return (strncmp(a, b, 8));
+}
+
+int32
+btchar16cmp(char *a, char *b)
+{
+	return (strncmp(a, b, 16));
 }
 
 int32

@@ -672,6 +672,8 @@ do
 -Tcat_t \
 -Tcc_t \
 -Tchar \
+-Tchar16 \
+-Tchar8 \
 -TcharPP \
 -Tclock_t \
 -Tclockid_t \

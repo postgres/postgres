@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.14 1998/03/30 17:23:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.15 1998/04/07 18:11:18 momjian Exp $
  *
  * NOTES
  *	  This cruft is the server side of PQfn.
@@ -44,7 +44,7 @@
  *	  The previous implementation would assume (1) that any value of
  *	  length <= 4 bytes was passed-by-value, and that any other value
  *	  was a struct varlena (by-reference).	There was NO way to pass a
- *	  fixed-length by-reference argument (like name) or a struct
+ *	  fixed-length by-reference argument (like char16) or a struct
  *	  varlena of size <= 4 bytes.
  *
  *	  The new implementation checks the catalogs to determine whether

@@ -34,7 +34,7 @@ COPY real_city FROM '_OBJWD_/data/real_city.data';
 
 COPY hash_i4_heap FROM '_OBJWD_/data/hash.data';
 
-COPY hash_name_heap FROM '_OBJWD_/data/hash.data';
+COPY hash_c16_heap FROM '_OBJWD_/data/hash.data';
 
 COPY hash_txt_heap FROM '_OBJWD_/data/hash.data';
 
@@ -49,7 +49,7 @@ COPY hash_f8_heap FROM '_OBJWD_/data/hash.data';
 
 COPY bt_i4_heap FROM '_OBJWD_/data/desc.data';
 
-COPY bt_name_heap FROM '_OBJWD_/data/hash.data';
+COPY bt_c16_heap FROM '_OBJWD_/data/hash.data';
 
 COPY bt_txt_heap FROM '_OBJWD_/data/desc.data';
 
