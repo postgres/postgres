@@ -1,5 +1,3 @@
-#include <stdio.h>
-
 exec sql include header_test;
 
 exec sql type c is char reference;

@@ -758,7 +758,7 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 %type  <str>    res_target_list res_target_el res_target_list2
 %type  <str>    res_target_el2 opt_id relation_name database_name
 %type  <str>    access_method attr_name class index_name name func_name
-%type  <str>    file_name recipe_name AexprConst ParamNo TypeId
+%type  <str>    file_name AexprConst ParamNo TypeId
 %type  <str>	in_expr_nodes not_in_expr_nodes a_expr b_expr
 %type  <str> 	opt_indirection expr_list extract_list extract_arg
 %type  <str>	position_list position_expr substr_list substr_from
@@ -787,7 +787,7 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 %type  <str>	RuleActionBlock RuleActionMulti join_list
 %type  <str>    RuleStmt opt_column opt_name oper_argtypes
 %type  <str>    MathOp RemoveFuncStmt aggr_argtype for_update_clause
-%type  <str>    RemoveAggrStmt remove_type RemoveStmt ExtendStmt RecipeStmt
+%type  <str>    RemoveAggrStmt remove_type RemoveStmt ExtendStmt
 %type  <str>    RemoveOperStmt RenameStmt all_Op user_valid_clause
 %type  <str>    VariableSetStmt var_value zone_value VariableShowStmt
 %type  <str>    VariableResetStmt AddAttrStmt alter_clause DropUserStmt
@@ -874,7 +874,6 @@ stmt:  AddAttrStmt			{ output_statement($1, 0); }
 		| UnlistenStmt		{ output_statement($1, 0); }
 		| LockStmt		{ output_statement($1, 0); }
 		| ProcedureStmt		{ output_statement($1, 0); }
- 		| RecipeStmt		{ output_statement($1, 0); }
 		| RemoveAggrStmt	{ output_statement($1, 0); }
 		| RemoveOperStmt	{ output_statement($1, 0); }
 		| RemoveFuncStmt	{ output_statement($1, 0); }
@@ -2149,13 +2148,13 @@ ExtendStmt:  EXTEND INDEX index_name where_clause
  *				execute recipe <recipeName>
  *
  *****************************************************************************/
-
+/* NOT USED
 RecipeStmt:  EXECUTE RECIPE recipe_name
 				{
 					$$ = cat2_str(make1_str("execute recipe"), $3);
 				}
 		;
-
+*/
 /*****************************************************************************
  *
  *		QUERY:
@@ -4295,7 +4294,7 @@ name:					ColId			{ $$ = $1; };
 func_name:				ColId			{ $$ = $1; };
 
 file_name:				Sconst			{ $$ = $1; };
-recipe_name:			ident			{ $$ = $1; };
+/* NOT USED recipe_name:			ident			{ $$ = $1; };*/
 
 /* Constants
  * Include TRUE/FALSE for SQL3 support. - thomas 1997-10-24
@@ -4414,7 +4413,7 @@ ColId:  ident					{ $$ = $1; }
 		| PRIVILEGES			{ $$ = make1_str("privileges"); }
 		| PROCEDURAL			{ $$ = make1_str("procedural"); }
 		| READ				{ $$ = make1_str("read"); }
-		| RECIPE			{ $$ = make1_str("recipe"); }
+/* NOT USED		| RECIPE			{ $$ = make1_str("recipe"); } */
 		| RELATIVE			{ $$ = make1_str("relative"); }
 		| RENAME			{ $$ = make1_str("rename"); }
 		| RETURNS			{ $$ = make1_str("returns"); }

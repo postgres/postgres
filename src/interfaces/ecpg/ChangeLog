@@ -502,5 +502,13 @@ Thu Mar  4 19:49:28 CET 1999
 Sat Mar  6 14:06:07 CET 1999
 
 	- Replaced placeholder ';;' by '?' since this is what standard says.
+
+Mon Mar  8 17:07:14 CET 1999
+
+	- Corrected include directives to not include backend stuff.
+
+Tue Mar  9 17:26:28 CET 1999
+
+	- Synced preproc.y with gram.y.
 	- Set library version to 3.0.0
 	- Set ecpg version to 2.6.0

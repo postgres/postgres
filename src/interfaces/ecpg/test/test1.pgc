@@ -1,5 +1,3 @@
-#include <stdio.h>
-
 exec sql whenever sqlerror sqlprint;
 
 exec sql include sqlca;
