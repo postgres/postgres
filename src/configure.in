@@ -259,7 +259,8 @@ dnl AC_SUBST(HAVECXX)
 dnl ****************************************************************
 HAVECXX='HAVE_Cplusplus=false'
 AC_SUBST(HAVECXX)
-AC_PATH_PROGS(INSTALL, ginstall installbsd bsdinst scoinst install, NONE, /usr/ucb:$PATH)
+INSTALLPATH="/usr/ucb:$PATH"
+AC_PATH_PROGS(INSTALL, ginstall installbsd bsdinst scoinst install, NONE, $INSTALLPATH)
 if test $INSTALL = "NONE"
 then
    echo "- No Install Script found - aborting."
