@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.52 2003/08/04 02:40:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.52.4.1 2003/12/08 18:20:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -161,7 +161,8 @@ make_base_rel(Query *root, int relid)
 		case RTE_SUBQUERY:
 		case RTE_FUNCTION:
 			/* Subquery or function --- need only set up attr range */
-			rel->min_attr = 1;
+			/* Note: 0 is included in range to support whole-row Vars */
+			rel->min_attr = 0;
 			rel->max_attr = length(rte->eref->colnames);
 			break;
 		default:
@@ -170,18 +171,11 @@ make_base_rel(Query *root, int relid)
 			break;
 	}
 
-	if (rel->max_attr >= rel->min_attr)
-	{
-		rel->attr_needed = (Relids *)
-			palloc0((rel->max_attr - rel->min_attr + 1) * sizeof(Relids));
-		rel->attr_widths = (int32 *)
-			palloc0((rel->max_attr - rel->min_attr + 1) * sizeof(int32));
-	}
-	else
-	{
-		rel->attr_needed = NULL;
-		rel->attr_widths = NULL;
-	}
+	Assert(rel->max_attr >= rel->min_attr);
+	rel->attr_needed = (Relids *)
+		palloc0((rel->max_attr - rel->min_attr + 1) * sizeof(Relids));
+	rel->attr_widths = (int32 *)
+		palloc0((rel->max_attr - rel->min_attr + 1) * sizeof(int32));
 
 	return rel;
 }
