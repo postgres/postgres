@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.219 2001/08/10 18:57:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.220 2001/08/10 22:50:09 tgl Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -4698,7 +4698,7 @@ setMaxOid(Archive *fout)
 		write_msg(NULL, "could not insert into pgdump_oid table: %s", PQerrorMessage(g_conn));
 		exit_nicely();
 	}
-	max_oid = atooid(PQoidStatus(res));
+	max_oid = PQoidValue(res);
 	if (max_oid == 0)
 	{
 		write_msg(NULL, "inserted invalid oid\n");

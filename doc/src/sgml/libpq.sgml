@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.65 2001/08/10 14:42:47 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.66 2001/08/10 22:50:09 tgl Exp $
 -->
 
  <chapter id="libpq">
@@ -1073,8 +1073,9 @@ char * PQcmdTuples(const PGresult *res);
 <listitem>
 <para>
 <function>PQoidValue</function>
-          Returns the object id of  the  tuple
-          inserted,  if  the <acronym>SQL</acronym> command was an INSERT.
+          Returns the object id of the tuple inserted, if the
+	  <acronym>SQL</acronym> command was an INSERT
+	  that inserted exactly one row into a table that has OIDs.
           Otherwise, returns <literal>InvalidOid</literal>.
 <synopsis>
 Oid PQoidValue(const PGresult *res);
@@ -1088,9 +1089,11 @@ Oid PQoidValue(const PGresult *res);
 <listitem>
 <para>
 <function>PQoidStatus</function>
-          Returns a string with the object id of  the  tuple
-          inserted,  if  the <acronym>SQL</acronym> command was an INSERT.
-          Otherwise, returns an empty string.
+          Returns a string with the object id of the tuple inserted, if the
+	  <acronym>SQL</acronym> command was an INSERT.
+	  (The string will be "0" if the INSERT did not insert exactly one
+	  row, or if the target table does not have OIDs.)  If the command
+	  was not an INSERT, returns an empty string.
 <synopsis>
 char * PQoidStatus(const PGresult *res);
 </synopsis>
