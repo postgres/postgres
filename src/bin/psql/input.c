@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/input.c,v 1.16 2001/02/27 08:13:27 ishii Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/input.c,v 1.17 2001/09/11 23:08:07 petere Exp $
  */
 #include "postgres_fe.h"
 #include "input.h"
@@ -24,6 +24,13 @@ static bool useReadline;
 #ifdef USE_HISTORY
 static bool useHistory;
 
+#endif
+
+#ifdef HAVE_ATEXIT
+static void	finishInput(void);
+#else
+/* designed for use with on_exit() */
+static void	finishInput(int, void*);
 #endif
 
 
@@ -154,7 +161,7 @@ initializeInput(int flags)
 #ifdef HAVE_ATEXIT
 	atexit(finishInput);
 #else
-	on_exit(finishInput);
+	on_exit(finishInput, NULL);
 #endif
 }
 
@@ -182,8 +189,12 @@ saveHistory(char *fname)
 
 
 
-void
+static void
+#ifdef HAVE_ATEXIT
 finishInput(void)
+#else
+finishInput(int exitstatus, void *arg)
+#endif
 {
 #ifdef USE_HISTORY
 	if (useHistory)
