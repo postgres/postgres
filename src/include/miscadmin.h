@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.146 2004/01/26 22:51:56 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.147 2004/01/26 22:54:57 momjian Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to
@@ -109,12 +109,8 @@ do { \
 #else
 #define PG_USLEEP(_usec) \
 do { \
-	Sleep((_usec) < 500 ? 1 : ((_usec)+500)/ 1000); \
+	Sleep(_usec < 500) ? 1 : (_usec+500)/ 1000); \
 } while(0)
-#endif
-
-#ifdef WIN32
-#define ftruncate(a,b)	chsize(a,b)
 #endif
 
 /*****************************************************************************
@@ -136,7 +132,6 @@ extern void ClosePostmasterPorts(bool pgstat_too);
 /*
  * from utils/init/globals.c
  */
-extern pid_t PostmasterPid;
 extern bool IsPostmasterEnvironment;
 extern bool IsUnderPostmaster;
 

@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.360 2004/01/26 22:51:55 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.361 2004/01/26 22:54:56 momjian Exp $
  *
  * NOTES
  *
@@ -140,11 +140,6 @@ typedef struct bkend
 } Backend;
 
 static Dllist *BackendList;
-
-#ifdef EXEC_BACKEND
-#define NUM_BACKENDARRAY_ELEMS (2*MaxBackends)
-static Backend *ShmemBackendArray;
-#endif
 
 /* The socket number we are listening for connections on */
 int			PostPortNumber;
@@ -304,14 +299,6 @@ __attribute__((format(printf, 1, 2)));
 #ifdef EXEC_BACKEND
 #ifdef WIN32
 pid_t win32_forkexec(const char* path, char *argv[]);
-
-static void  win32_AddChild(pid_t pid, HANDLE handle);
-static void  win32_RemoveChild(pid_t pid);
-static pid_t win32_waitpid(int *exitstatus);
-
-static pid_t  *win32_childPIDArray;
-static HANDLE *win32_childHNDArray;
-static unsigned long win32_numChildren = 0;
 #endif
 
 static pid_t Backend_forkexec(Port *port);
@@ -319,11 +306,6 @@ static pid_t Backend_forkexec(Port *port);
 static unsigned long tmpBackendFileNum = 0;
 void read_backend_variables(unsigned long id, Port *port);
 static bool write_backend_variables(Port *port);
-
-size_t 		ShmemBackendArraySize(void);
-void 		ShmemBackendArrayAllocation(void);
-static void	ShmemBackendArrayAdd(Backend *bn);
-static void ShmemBackendArrayRemove(pid_t pid);
 #endif
 
 #define StartupDataBase()		SSDataBase(BS_XLOG_STARTUP)
@@ -448,7 +430,7 @@ PostmasterMain(int argc, char *argv[])
 	 */
 	umask((mode_t) 0077);
 
-	MyProcPid = PostmasterPid = getpid();
+	MyProcPid = getpid();
 
 	/*
 	 * Fire up essential subsystems: memory management
@@ -842,21 +824,6 @@ PostmasterMain(int argc, char *argv[])
 	 * Initialize the list of active backends.
 	 */
 	BackendList = DLNewList();
-
-#ifdef WIN32
-	/*
-	 * Initialize the child pid/HANDLE arrays
-	 */
-	/* FIXME: [fork/exec] Ideally, we would resize these arrays with changes
-	 *  in MaxBackends, but this'll do as a first order solution.
-	 */
-	win32_childPIDArray = (HANDLE*)malloc(NUM_BACKENDARRAY_ELEMS*sizeof(pid_t));
-	win32_childHNDArray = (HANDLE*)malloc(NUM_BACKENDARRAY_ELEMS*sizeof(HANDLE));
-	if (!win32_childPIDArray || !win32_childHNDArray)
-		ereport(LOG,
-				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of memory")));
-#endif
 
 	/*
 	 * Record postmaster options.  We delay this till now to avoid
@@ -1290,7 +1257,11 @@ ProcessStartupPacket(Port *port, bool SSLdone)
 
 	if (proto == CANCEL_REQUEST_CODE)
 	{
+#ifdef EXEC_BACKEND
+		abort(); /* FIXME: [fork/exec] Whoops. Not handled... yet */
+#else
 		processCancelRequest(port, buf);
+#endif
 		return 127;				/* XXX */
 	}
 
@@ -1523,12 +1494,8 @@ processCancelRequest(Port *port, void *pkt)
 	CancelRequestPacket *canc = (CancelRequestPacket *) pkt;
 	int			backendPID;
 	long		cancelAuthCode;
-	Backend    *bp;
-#ifndef EXEC_BACKEND
 	Dlelem	   *curr;
-#else
-	int i;
-#endif
+	Backend    *bp;
 
 	backendPID = (int) ntohl(canc->backendPID);
 	cancelAuthCode = (long) ntohl(canc->cancelAuthCode);
@@ -1547,17 +1514,16 @@ processCancelRequest(Port *port, void *pkt)
 								 backendPID)));
 		return;
 	}
+#ifdef EXEC_BACKEND
+	else
+		AttachSharedMemoryAndSemaphores();
+#endif
 
 	/* See if we have a matching backend */
-#ifndef EXEC_BACKEND
+
 	for (curr = DLGetHead(BackendList); curr; curr = DLGetSucc(curr))
 	{
 		bp = (Backend *) DLE_VAL(curr);
-#else
-	for (i = 0; i < NUM_BACKENDARRAY_ELEMS; i++)
-	{
-		bp = (Backend*) &ShmemBackendArray[i];
-#endif
 		if (bp->pid == backendPID)
 		{
 			if (bp->cancel_key == cancelAuthCode)
@@ -1880,12 +1846,14 @@ reaper(SIGNAL_ARGS)
 {
 	int			save_errno = errno;
 
+#ifdef WIN32
+#warning fix waidpid for Win32
+#else
 #ifdef HAVE_WAITPID
 	int			status;			/* backend exit status */
+
 #else
-#ifndef WIN32
 	union wait	status;			/* backend exit status */
-#endif
 #endif
 	int			exitstatus;
 	int			pid;			/* process id of dead backend */
@@ -1899,21 +1867,9 @@ reaper(SIGNAL_ARGS)
 	{
 		exitstatus = status;
 #else
-#ifndef WIN32
 	while ((pid = wait3(&status, WNOHANG, NULL)) > 0)
 	{
 		exitstatus = status.w_status;
-#else
-	while ((pid = win32_waitpid(&exitstatus)) > 0)
-	{
-		/*
-		 * We need to do this here, and not in CleanupProc, since this
-		 * is to be called on all children when we are done with them.
-		 * Could move to LogChildExit, but that seems like asking for
-		 * future trouble...
-		 */
-		win32_RemoveChild(pid);
-#endif
 #endif
 
 		/*
@@ -2001,6 +1957,7 @@ reaper(SIGNAL_ARGS)
 		CleanupProc(pid, exitstatus);
 
 	}							/* loop over pending child-death reports */
+#endif
 
 	if (FatalError)
 	{
@@ -2065,9 +2022,6 @@ CleanupProc(int pid,
 			bp = (Backend *) DLE_VAL(curr);
 			if (bp->pid == pid)
 			{
-#ifdef EXEC_BACKEND
-				ShmemBackendArrayRemove(bp->pid);
-#endif
 				DLRemove(curr);
 				free(bp);
 				DLFreeElem(curr);
@@ -2138,9 +2092,6 @@ CleanupProc(int pid,
 			/*
 			 * Found entry for freshly-dead backend, so remove it.
 			 */
-#ifdef EXEC_BACKEND
-			ShmemBackendArrayRemove(bp->pid);
-#endif
 			DLRemove(curr);
 			free(bp);
 			DLFreeElem(curr);
@@ -2345,9 +2296,6 @@ BackendStartup(Port *port)
 	 */
 	bn->pid = pid;
 	bn->cancel_key = MyCancelKey;
-#ifdef EXEC_BACKEND
-	ShmemBackendArrayAdd(bn);
-#endif
 	DLAddHead(BackendList, DLNewElem(bn));
 
 	return STATUS_OK;
@@ -2694,9 +2642,6 @@ SubPostmasterMain(int argc, char* argv[])
 	memset((void*)&port, 0, sizeof(Port));
 	Assert(argc == 2);
 
-	/* Do this sooner rather than later... */
-	IsUnderPostmaster = true;	/* we are a postmaster subprocess now */
-
 	/* Setup global context */
 	MemoryContextInit();
 	InitializeGUCOptions();
@@ -2715,9 +2660,6 @@ SubPostmasterMain(int argc, char* argv[])
 	load_ident();
 	load_user();
 	load_group();
-
-	/* Attach process to shared segments */
-	AttachSharedMemoryAndSemaphores();
 
 	/* Run backend */
 	proc_exit(BackendRun(&port));
@@ -3187,9 +3129,6 @@ SSDataBase(int xlop)
 
 		bn->pid = pid;
 		bn->cancel_key = PostmasterRandom();
-#ifdef EXEC_BACKEND
-		ShmemBackendArrayAdd(bn);
-#endif
 		DLAddHead(BackendList, DLNewElem(bn));
 
 		/*
@@ -3339,7 +3278,6 @@ write_backend_variables(Port *port)
 	write_var(ShmemIndexLock,fp);
 	write_var(ShmemVariableCache,fp);
 	write_var(ShmemIndexAlloc,fp);
-	write_var(ShmemBackendArray,fp);
 
 	write_var(LWLockArray,fp);
 	write_var(ProcStructLock,fp);
@@ -3347,7 +3285,6 @@ write_backend_variables(Port *port)
 
 	write_var(PreAuthDelay,fp);
 	write_var(debug_flag,fp);
-	write_var(PostmasterPid,fp);
 
 	/* Release file */
 	if (FreeFile(fp))
@@ -3401,7 +3338,6 @@ read_backend_variables(unsigned long id, Port *port)
 	read_var(ShmemIndexLock,fp);
 	read_var(ShmemVariableCache,fp);
 	read_var(ShmemIndexAlloc,fp);
-	read_var(ShmemBackendArray,fp);
 
 	read_var(LWLockArray,fp);
 	read_var(ProcStructLock,fp);
@@ -3409,7 +3345,6 @@ read_backend_variables(unsigned long id, Port *port)
 
 	read_var(PreAuthDelay,fp);
 	read_var(debug_flag,fp);
-	read_var(PostmasterPid,fp);
 
 	/* Release file */
 	FreeFile(fp);
@@ -3417,55 +3352,6 @@ read_backend_variables(unsigned long id, Port *port)
 		ereport(WARNING,
 				(errcode_for_file_access(),
 				 errmsg("could not remove file \"%s\": %m", filename)));
-}
-
-
-size_t ShmemBackendArraySize(void)
-{
-	return (NUM_BACKENDARRAY_ELEMS*sizeof(Backend));
-}
-
-void ShmemBackendArrayAllocation(void)
-{
-	size_t size = ShmemBackendArraySize();
-	ShmemBackendArray = (Backend*)ShmemAlloc(size);
-	memset(ShmemBackendArray, 0, size);
-}
-
-static void ShmemBackendArrayAdd(Backend *bn)
-{
-	int i;
-	for (i = 0; i < NUM_BACKENDARRAY_ELEMS; i++)
-	{
-		/* Find an empty slot */
-		if (ShmemBackendArray[i].pid == 0)
-		{
-			ShmemBackendArray[i] = *bn;
-			return;
-		}
-	}
-
-	/* FIXME: [fork/exec] some sort of error */
-	abort();
-}
-
-static void ShmemBackendArrayRemove(pid_t pid)
-{
-	int i;
-	for (i = 0; i < NUM_BACKENDARRAY_ELEMS; i++)
-	{
-		if (ShmemBackendArray[i].pid == pid)
-		{
-			/* Mark the slot as empty */
-			ShmemBackendArray[i].pid = 0;
-			return;
-		}
-	}
-
-	/* Something stronger than WARNING here? */
-	ereport(WARNING,
-			(errmsg_internal("unable to find backend entry with pid %d",
-							 pid)));
 }
 
 #endif
@@ -3507,111 +3393,14 @@ pid_t win32_forkexec(const char* path, char *argv[])
 		return -1;
 	}
 
-	if (!IsUnderPostmaster)
-		/* We are the Postmaster creating a child... */
-		win32_AddChild(pi.dwProcessId,pi.hProcess);
-	else
-		CloseHandle(pi.hProcess);
+	/*
+	   FIXME: [fork/exec] we might need to keep the following handle/s,
+	   depending on how we implement signalling.
+	*/
+	CloseHandle(pi.hProcess);
 	CloseHandle(pi.hThread);
 
 	return pi.dwProcessId;
-}
-
-/*
- * Note: The following three functions must not be interrupted (eg. by signals).
- *  As the Postgres Win32 signalling architecture (currently) requires polling,
- *  or APC checking functions which aren't used here, this is not an issue.
- *
- *  We keep two separate arrays, instead of a single array of pid/HANDLE structs,
- *  to avoid having to re-create a handle array for WaitForMultipleObjects on
- *  each call to win32_waitpid.
- */
-
-static void win32_AddChild(pid_t pid, HANDLE handle)
-{
-	Assert(win32_childPIDArray && win32_childHNDArray);
-	if (win32_numChildren < NUM_BACKENDARRAY_ELEMS)
-	{
-		win32_childPIDArray[win32_numChildren] = pid;
-		win32_childHNDArray[win32_numChildren] = handle;
-		++win32_numChildren;
-	}
-	else
-		/* FIXME: [fork/exec] some sort of error */
-		abort();
-}
-
-static void win32_RemoveChild(pid_t pid)
-{
-	int i;
-	Assert(win32_childPIDArray && win32_childHNDArray);
-
-	for (i = 0; i < win32_numChildren; i++)
-	{
-		if (win32_childPIDArray[i] == pid)
-		{
-			CloseHandle(win32_childHNDArray[i]);
-
-			/* Swap last entry into the "removed" one */
-			--win32_numChildren;
-			win32_childPIDArray[win32_numChildren] = win32_childPIDArray[i];
-			win32_childHNDArray[win32_numChildren] = win32_childHNDArray[i];
-			return;
-		}
-	}
-
-	/* Something stronger than WARNING here? */
-	ereport(WARNING,
-			(errmsg_internal("unable to find child entry with pid %d",
-							 pid)));
-}
-
-static pid_t win32_waitpid(int *exitstatus)
-{
-	Assert(win32_childPIDArray && win32_childHNDArray);
-	elog(DEBUG3,"waiting on %d children",win32_numChildren);
-
-	if (win32_numChildren > 0)
-	{
-		/*
-		 * Note: Do NOT use WaitForMultipleObjectsEx, as we don't
-		 * want to run queued APCs here.
-		 */
-		int index;
-		DWORD exitCode;
-		DWORD ret = WaitForMultipleObjects(win32_numChildren,win32_childHNDArray,FALSE,0);
-
-		switch (ret)
-		{
-			case WAIT_FAILED:
-				ereport(ERROR,
-						(errmsg_internal("failed to wait on %d children",
-										 win32_numChildren)));
-				/* Fall through to WAIT_TIMEOUTs return */
-
-			case WAIT_TIMEOUT:
-				/* No children have finished */
-				return -1;
-
-			default:
-				/* Get the exit code, and return the PID of, the respective process */
-				index = ret-WAIT_OBJECT_0;
-				Assert(index >= 0 && index < win32_numChildren);
-				if (!GetExitCodeProcess(win32_childHNDArray[index],&exitCode))
-					/*
-					 * If we get this far, this should never happen, but, then again...
-					 * No choice other than to assume a catastrophic failure.
-					 */
-					ereport(FATAL,
-							(errmsg_internal("failed to get exit code for child %d",
-											 win32_childPIDArray[index])));
-				*exitstatus = (int)exitCode;
-				return win32_childPIDArray[index];
-		}
-	}
-
-	/* No children */
-	return -1;
 }
 
 #endif

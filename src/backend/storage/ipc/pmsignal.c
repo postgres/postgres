@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/pmsignal.c,v 1.9 2004/01/26 22:51:56 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/pmsignal.c,v 1.10 2004/01/26 22:54:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,8 +63,8 @@ SendPostmasterSignal(PMSignalReason reason)
 		return;
 	/* Atomically set the proper flag */
 	PMSignalFlags[reason] = true;
-	/* Send signal to postmaster */
-	kill(PostmasterPid, SIGUSR1);
+	/* Send signal to postmaster (assume it is our direct parent) */
+	kill(getppid(), SIGUSR1);
 }
 
 /*

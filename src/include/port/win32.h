@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.14 2004/01/26 22:51:56 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.15 2004/01/26 22:54:58 momjian Exp $ */
 
 /* undefine and redefine after #include */
 #undef mkdir
@@ -15,7 +15,7 @@
 #define NOFILE		  100
 
 /* defines for dynamic linking on Win32 platform */
-#if defined(__CYGWIN__) || defined(__MINGW32__)
+#ifdef __CYGWIN__
 
 #if __GNUC__ && ! defined (__declspec)
 #error You need egcs 1.1 or newer for compiling!
@@ -27,7 +27,7 @@
 #define DLLIMPORT __declspec (dllimport)
 #endif
 
-#elif defined(WIN32) && defined(_MSC_VER)		/* not CYGWIN or MingW */
+#elif defined(WIN32) && defined(_MSC_VER)		/* not CYGWIN */
 
 #if defined(_DLL)
 #define DLLIMPORT __declspec (dllexport)
@@ -35,7 +35,7 @@
 #define DLLIMPORT __declspec (dllimport)
 #endif
 
-#else							/* not CYGWIN, not MSVC, not MingW */
+#else							/* not CYGWIN, not MSVC */
 
 #define DLLIMPORT
 #endif
