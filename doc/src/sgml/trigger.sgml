@@ -1,3 +1,7 @@
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/trigger.sgml,v 1.19 2001/12/04 02:07:11 tgl Exp $
+-->
+
  <chapter id="triggers">
   <title>Triggers</title>
 
@@ -451,7 +455,7 @@ PG_FUNCTION_INFO_V1(trigf);
 Datum
 trigf(PG_FUNCTION_ARGS)
 {
-	TriggerData *trigdata = (TriggerData *) fcinfo->context;
+	TriggerData    *trigdata = (TriggerData *) fcinfo->context;
 	TupleDesc	tupdesc;
 	HeapTuple	rettuple;
 	char		*when;
@@ -490,8 +494,12 @@ trigf(PG_FUNCTION_ARGS)
 	
 	if (ret < 0)
 		elog(NOTICE, "trigf (fired %s): SPI_exec returned %d", when, ret);
-	
-	i = SPI_getbinval(SPI_tuptable->vals[0], SPI_tuptable->tupdesc, 1, &amp;isnull);
+
+	/* count(*) returns int8 as of PG 7.2, so be careful to convert */
+	i = (int) DatumGetInt64(SPI_getbinval(SPI_tuptable->vals[0],
+					      SPI_tuptable->tupdesc,
+					      1,
+					      &amp;isnull));
 	
 	elog (NOTICE, "trigf (fired %s): there are %d tuples in ttest", when, i);
 	
@@ -499,7 +507,7 @@ trigf(PG_FUNCTION_ARGS)
 	
 	if (checknull)
 	{
-		i = SPI_getbinval(rettuple, tupdesc, 1, &amp;isnull);
+		(void) SPI_getbinval(rettuple, tupdesc, 1, &amp;isnull);
 		if (isnull)
 			rettuple = NULL;
 	}
