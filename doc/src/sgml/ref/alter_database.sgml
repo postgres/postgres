@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_database.sgml,v 1.13 2004/07/05 02:34:43 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_database.sgml,v 1.14 2005/01/04 00:39:53 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -25,7 +25,7 @@ ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> RESET <replacea
 
 ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> RENAME TO <replaceable>newname</replaceable>
 
-ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> OWNER TO <replaceable>new_owner</replaceable>
+ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> OWNER TO <replaceable>newowner</replaceable>
 </synopsis>
  </refsynopsisdiv>
 
@@ -33,12 +33,12 @@ ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> OWNER TO <repla
   <title>Description</title>
 
   <para>
-   <command>ALTER DATABASE</command> is used to change the attributes
+   <command>ALTER DATABASE</command> changes the attributes
    of a database.
   </para>
 
   <para>
-   The first two forms change the session default of a run-time
+   The first two forms change the session default for a run-time
    configuration variable for a <productname>PostgreSQL</productname>
    database. Whenever a new session is subsequently started in that
    database, the specified value becomes the session default value.
@@ -46,12 +46,14 @@ ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> OWNER TO <repla
    in <filename>postgresql.conf</> or has been received from the
    <command>postmaster</command> command line.  Only the database
    owner or a superuser can change the session defaults for a
-   database.
+   database.  Certain variables cannot be set this way, or can only be
+   set by a superuser.
   </para>
 
   <para>
    The third form changes the name of the database.  Only the database
-   owner can rename a database, and only if he has the
+   owner or a superuser can rename a database; non-superuser owners must
+   also have the
    <literal>CREATEDB</literal> privilege.  The current database cannot
    be renamed.  (Connect to a different database if you need to do
    that.)
@@ -71,7 +73,7 @@ ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> OWNER TO <repla
       <term><replaceable class="PARAMETER">name</replaceable></term>
       <listitem>
        <para>
-	The name of the database whose session defaults are to be altered.
+        The name of the database whose attributes are to be altered.
        </para>
       </listitem>
      </varlistentry>
@@ -81,14 +83,13 @@ ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> OWNER TO <repla
       <term><replaceable>value</replaceable></term>
       <listitem>
        <para>
-        Set the session default for this database of the specified
-        configuration parameter to the given value.  If
+        Set this database's session default for the specified configuration
+        parameter to the given value.  If
         <replaceable>value</replaceable> is <literal>DEFAULT</literal>
         or, equivalently, <literal>RESET</literal> is used, the
-        database-specific variable setting is removed and the system-wide
-	default
+        database-specific setting is removed, so the system-wide default
         setting will be inherited in new sessions.  Use <literal>RESET
-        ALL</literal> to clear all settings.
+        ALL</literal> to clear all database-specific settings.
        </para>
 
        <para>
@@ -107,6 +108,15 @@ ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> OWNER TO <repla
      </para>
     </listitem>
    </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">newowner</replaceable></term>
+    <listitem>
+     <para>
+      The new owner of the database.
+     </para>
+    </listitem>
+   </varlistentry>
   </variablelist>
  </refsect1>
 
@@ -114,9 +124,10 @@ ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> OWNER TO <repla
   <title>Notes</title>
 
   <para>
-   Using <xref linkend="sql-alteruser" endterm="sql-alteruser-title">,
-   it is also possible to tie a session default to a specific user
-   rather than a database.  User-specific settings override database-specific
+   It is also possible to tie a session default to a specific user
+   rather than to a database; see
+   <xref linkend="sql-alteruser" endterm="sql-alteruser-title">.
+   User-specific settings override database-specific
    ones if there is a conflict.
   </para>
  </refsect1>
@@ -147,7 +158,6 @@ ALTER DATABASE test SET enable_indexscan TO off;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-alteruser" endterm="sql-alteruser-title"></member>
    <member><xref linkend="sql-createdatabase" endterm="sql-createdatabase-title"></member>
    <member><xref linkend="sql-dropdatabase" endterm="sql-dropdatabase-title"></member>
    <member><xref linkend="sql-set" endterm="sql-set-title"></member>

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/close.sgml,v 1.21 2004/06/17 12:41:02 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/close.sgml,v 1.22 2005/01/04 00:39:53 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -72,7 +72,8 @@ CLOSE <replaceable class="PARAMETER">name</replaceable>
   <para>
    <productname>PostgreSQL</productname> does not have an explicit
    <command>OPEN</command> cursor statement; a cursor is considered
-   open when it is declared.  Use the <command>DECLARE</command>
+   open when it is declared.  Use the
+   <xref linkend="sql-declare" endterm="sql-declare-title">
    statement to declare a cursor.
   </para>
  </refsect1>
@@ -94,6 +95,16 @@ CLOSE liahona;
   <para>
    <command>CLOSE</command> is fully conforming with the SQL standard.
   </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-declare" endterm="sql-declare-title"></member>
+   <member><xref linkend="sql-fetch" endterm="sql-fetch-title"></member>
+   <member><xref linkend="sql-move" endterm="sql-move-title"></member>
+  </simplelist>
  </refsect1>
 </refentry>
 

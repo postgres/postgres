@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_aggregate.sgml,v 1.30 2004/04/21 21:52:41 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_aggregate.sgml,v 1.31 2005/01/04 00:39:53 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -233,7 +233,7 @@ CREATE AGGREGATE <replaceable class="PARAMETER">name</replaceable> (
   <para>
    <command>CREATE AGGREGATE</command> is a
    <productname>PostgreSQL</productname> language extension.  The SQL
-   standard does not provide for user-defined aggregate function.
+   standard does not provide for user-defined aggregate functions.
   </para>
  </refsect1>
 

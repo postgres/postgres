@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_language.sgml,v 1.38 2003/11/29 19:51:38 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_language.sgml,v 1.39 2005/01/04 00:39:53 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -41,7 +41,7 @@ CREATE [ TRUSTED ] [ PROCEDURAL ] LANGUAGE <replaceable class="parameter">name</
   <para>
    <command>CREATE LANGUAGE</command> effectively associates the
    language name with a call handler that is responsible for executing
-   functions written in the language.  Refer to <xref linkend="xfunc">
+   functions written in the language.  Refer to <xref linkend="xplang">
    for more information about language call handlers.
   </para>
 
@@ -187,11 +187,6 @@ CREATE [ TRUSTED ] [ PROCEDURAL ] LANGUAGE <replaceable class="parameter">name</
   </para>
 
   <para>
-   The definition of a procedural language cannot be changed once it
-   has been created, with the exception of the privileges.
-  </para>
-
-  <para>
    To be able to use a procedural language, a user must be granted the
    <literal>USAGE</literal> privilege.  The
    <command>createlang</command> program automatically grants
@@ -233,8 +228,8 @@ CREATE LANGUAGE plsample
    <member><xref linkend="sql-droplanguage" endterm="sql-droplanguage-title"></member>
    <member><xref linkend="sql-grant" endterm="sql-grant-title"></member>
    <member><xref linkend="sql-revoke" endterm="sql-revoke-title"></member>
-   <member><xref linkend="app-createlang"></member>
-   <member><xref linkend="app-droplang"></member>
+   <member><xref linkend="app-createlang" endterm="app-createlang-title"></member>
+   <member><xref linkend="app-droplang" endterm="app-droplang-title"></member>
   </simplelist>
  </refsect1>
 </refentry>

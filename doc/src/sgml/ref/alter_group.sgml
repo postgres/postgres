@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_group.sgml,v 1.14 2003/11/29 19:51:38 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_group.sgml,v 1.15 2005/01/04 00:39:53 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -31,11 +31,12 @@ ALTER GROUP <replaceable class="PARAMETER">groupname</replaceable> RENAME TO <re
   <title>Description</title>
 
   <para>
-   <command>ALTER GROUP</command> is used to change a user group.  The
-   first two variants add or remove users from a group. Only database
-   superusers can use this command.  Adding a user to a group does not
-   create the user. Similarly, removing a user from a group does not
-   drop the user itself.
+   <command>ALTER GROUP</command> changes the attributes of a user group.
+  </para>
+
+  <para>
+   The first two variants add users to a group or remove them from a group.
+   Only database superusers can use this command.
   </para>
 
   <para>
@@ -61,8 +62,9 @@ ALTER GROUP <replaceable class="PARAMETER">groupname</replaceable> RENAME TO <re
     <term><replaceable class="PARAMETER">username</replaceable></term>
     <listitem>
      <para>
-      Users which are to be added or removed from the group. The users
-      must exist.
+      Users that are to be added to or removed from the group. The users
+      must already exist; <command>ALTER GROUP</> does not create or
+      drop users.
      </para>
     </listitem>
    </varlistentry>

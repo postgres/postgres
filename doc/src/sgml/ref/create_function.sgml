@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.63 2004/11/27 21:27:07 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.64 2005/01/04 00:39:53 tgl Exp $
 -->
 
 <refentry id="SQL-CREATEFUNCTION">
@@ -62,8 +62,8 @@ CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable>
 
   <para>
    If you drop and then recreate a function, the new function is not
-   the same entity as the old; you will break existing rules, views,
-   triggers, etc. that referred to the old function.  Use
+   the same entity as the old; you will have to drop existing rules, views,
+   triggers, etc. that refer to the old function.  Use
    <command>CREATE OR REPLACE FUNCTION</command> to change a function
    definition without breaking objects that refer to the function.
   </para>
@@ -106,22 +106,22 @@ CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable>
      <listitem>
       <para>
        The data type(s) of the function's arguments (optionally 
-       schema-qualified), if any. The argument types may be base, complex, or 
-       domains, or copy the type of an existing column.
-      </para>
-      <para>
-       The type of a column is referenced by writing
-       <literal><replaceable
-       class="parameter">tablename</replaceable>.<replaceable
-       class="parameter">columnname</replaceable>%TYPE</literal>;
-       using this can sometimes help make a function independent from
-       changes to the definition of a table.
+       schema-qualified), if any. The argument types may be base, composite,
+       or domain types, or may reference the type of a table column.
       </para>
       <para>
        Depending on the implementation language it may also be allowed
        to specify <quote>pseudotypes</> such as <type>cstring</>.
        Pseudotypes indicate that the actual argument type is either
        incompletely specified, or outside the set of ordinary SQL data types.
+      </para>
+      <para>
+       The type of a column is referenced by writing
+       <literal><replaceable
+       class="parameter">tablename</replaceable>.<replaceable
+       class="parameter">columnname</replaceable>%TYPE</literal>.
+       Using this feature can sometimes help make a function independent of
+       changes to the definition of a table.
       </para>
      </listitem>
     </varlistentry>
@@ -132,17 +132,21 @@ CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable>
      <listitem>
       <para>
        The return data type (optionally schema-qualified). The return type 
-       may be a base type, complex type, or a domain,
-       or may be specified to copy the type of an existing column. See the description
-       under <literal>argtype</literal> above on how to reference the type
-       of an existing column.
-      </para>
-      <para>
+       may be a base, composite, or domain type,
+       or may reference the type of a table column.
        Depending on the implementation language it may also be allowed
        to specify <quote>pseudotypes</> such as <type>cstring</>.
+      </para>
+      <para>
        The <literal>SETOF</literal>
        modifier indicates that the function will return a set of
        items, rather than a single item.
+      </para>
+      <para>
+       The type of a column is referenced by writing
+       <literal><replaceable
+       class="parameter">tablename</replaceable>.<replaceable
+       class="parameter">columnname</replaceable>%TYPE</literal>.
       </para>
      </listitem>
     </varlistentry>
@@ -155,8 +159,7 @@ CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable>
        The name of the language that the function is implemented in.
        May be <literal>SQL</literal>, <literal>C</literal>,
        <literal>internal</literal>, or the name of a user-defined
-       procedural language.  (See also <xref linkend="app-createlang"
-       endterm="app-createlang-title">.)  For backward compatibility,
+       procedural language.  For backward compatibility,
        the name may be enclosed by single quotes.
       </para>
      </listitem>
@@ -303,7 +306,7 @@ CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable>
         <term><literal>isStrict</></term>
         <listitem>
          <para>
-          Equivalent to <literal>STRICT</literal> or <literal>RETURNS NULL ON NULL INPUT</literal>
+          Equivalent to <literal>STRICT</literal> or <literal>RETURNS NULL ON NULL INPUT</literal>.
          </para>
         </listitem>
        </varlistentry>
@@ -394,7 +397,7 @@ CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable>
    information and examples, see <xref linkend="xfunc">.
 <programlisting>
 CREATE FUNCTION add(integer, integer) RETURNS integer
-    AS $$select $1 + $2;$$
+    AS 'select $1 + $2;'
     LANGUAGE SQL
     IMMUTABLE
     RETURNS NULL ON NULL INPUT;
@@ -406,10 +409,11 @@ CREATE FUNCTION add(integer, integer) RETURNS integer
    <application>PL/pgSQL</application>:
 
 <programlisting>
-CREATE OR REPLACE FUNCTION increment(i integer) RETURNS integer AS '
+CREATE OR REPLACE FUNCTION increment(i integer) RETURNS integer AS $$
         BEGIN
                 RETURN i + 1;
-        END;' LANGUAGE plpgsql;
+        END;
+$$ LANGUAGE plpgsql;
 </programlisting>
   </para>
  </refsect1>
@@ -427,17 +431,17 @@ CREATE OR REPLACE FUNCTION increment(i integer) RETURNS integer AS '
  </refsect1>
 
 
- <refsect1 id="sql-createfunction-seealso">
+ <refsect1>
   <title>See Also</title>
 
-  <para>
-   <xref linkend="sql-alterfunction" endterm="sql-alterfunction-title">,
-   <xref linkend="sql-dropfunction" endterm="sql-dropfunction-title">,
-   <xref linkend="sql-grant" endterm="sql-grant-title">,
-   <xref linkend="sql-load" endterm="sql-load-title">,
-   <xref linkend="sql-revoke" endterm="sql-revoke-title">,
-   <xref linkend="app-createlang">
-  </para>
+  <simplelist type="inline">
+   <member><xref linkend="sql-alterfunction" endterm="sql-alterfunction-title"></member>
+   <member><xref linkend="sql-dropfunction" endterm="sql-dropfunction-title"></member>
+   <member><xref linkend="sql-grant" endterm="sql-grant-title"></member>
+   <member><xref linkend="sql-load" endterm="sql-load-title"></member>
+   <member><xref linkend="sql-revoke" endterm="sql-revoke-title"></member>
+   <member><xref linkend="app-createlang" endterm="app-createlang-title"></member>
+  </simplelist>
  </refsect1>
 
 </refentry>

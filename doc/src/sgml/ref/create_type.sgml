@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_type.sgml,v 1.53 2004/11/27 21:27:07 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_type.sgml,v 1.54 2005/01/04 00:39:53 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -45,7 +45,7 @@ CREATE TYPE <replaceable class="parameter">name</replaceable> (
 
   <para>
    <command>CREATE TYPE</command> registers a new data type for use in
-   the current data base.  The user who defines a type becomes its
+   the current database.  The user who defines a type becomes its
    owner.
   </para>
 
@@ -68,7 +68,8 @@ CREATE TYPE <replaceable class="parameter">name</replaceable> (
    This is essentially the same as the row type
    of a table, but using <command>CREATE TYPE</command> avoids the need to
    create an actual table when all that is wanted is to define a type.
-   A stand-alone composite type is useful as the return type of a function.
+   A stand-alone composite type is useful as the argument or return type of a
+   function.
   </para>
   </refsect2>
 
@@ -104,7 +105,8 @@ CREATE TYPE <replaceable class="parameter">name</replaceable> (
    The first argument is the input text as a C string, the second
    argument is the element type's OID in case this is an array type
    (or the type's own OID for a composite type),
-   and the third is the <literal>typmod</> of the destination column, if known.
+   and the third is the <literal>typmod</> of the destination column, if known
+   (-1 will be passed if not).
    The input function should return a value of the data type itself.
    The output function may be
    declared as taking one argument of the new data type,  or as taking
@@ -470,6 +472,7 @@ CREATE TYPE <replaceable class="parameter">name</replaceable> (
    a function definition:
 <programlisting>
 CREATE TYPE compfoo AS (f1 int, f2 text);
+
 CREATE FUNCTION getfoo() RETURNS SETOF compfoo AS $$
     SELECT fooid, fooname FROM foo
 $$ LANGUAGE SQL;
@@ -525,7 +528,7 @@ CREATE TABLE big_objs (
 
   <para>
    More examples, including suitable input and output functions, are
-   in <xref linkend="extend">.
+   in <xref linkend="xtypes">.
   </para>
  </refsect1>
 

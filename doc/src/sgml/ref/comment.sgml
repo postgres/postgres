@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/comment.sgml,v 1.25 2003/11/29 19:51:38 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/comment.sgml,v 1.26 2005/01/04 00:39:53 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -51,12 +51,6 @@ COMMENT ON
 
   <para>
    <command>COMMENT</command> stores a comment about a database object.
-    Comments can be
-    easily retrieved with the <application>psql</application> commands
-    <command>\dd</command>, <command>\d+</command>, and <command>\l+</command>.
-    Other user interfaces to retrieve comments can be built atop
-    the same built-in functions that <application>psql</application> uses, namely
-    <function>obj_description</> and <function>col_description</>.
   </para>
 
   <para>
@@ -65,6 +59,16 @@ COMMENT ON
     To remove a comment, write <literal>NULL</literal> in place of the text
     string.
     Comments are automatically dropped when the object is dropped.
+  </para>
+
+  <para>
+    Comments can be
+    easily retrieved with the <application>psql</application> commands
+    <command>\dd</command>, <command>\d+</command>, and <command>\l+</command>.
+    Other user interfaces to retrieve comments can be built atop
+    the same built-in functions that <application>psql</application> uses, namely
+    <function>obj_description</> and <function>col_description</>
+    (see <xref linkend="functions-info-comment-table">).
   </para>
  </refsect1>
 
@@ -141,7 +145,8 @@ COMMENT ON
     <term><replaceable class="parameter">text</replaceable></term>
     <listitem>
      <para>
-      The new comment.
+      The new comment, written as a string literal; or <literal>NULL</>
+      to drop the comment.
      </para>
     </listitem>
    </varlistentry>

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/insert.sgml,v 1.27 2004/06/09 19:08:13 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/insert.sgml,v 1.28 2005/01/04 00:39:53 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -29,20 +29,29 @@ INSERT INTO <replaceable class="PARAMETER">table</replaceable> [ ( <replaceable 
   <title>Description</title>
 
   <para>
-   <command>INSERT</command> allows one to insert new rows into a
-   table. One can insert
-   a single row at a time or several rows as a result of a query.
+   <command>INSERT</command> inserts new rows into a table.
+   One can insert a single row specified by value expressions,
+   or several rows as a result of a query.
   </para>
 
   <para>
-   The columns in the target list may be listed in any order.
-   Each column not present in the target list will be inserted
-   using a default value, either its declared default value
-   or null.
+   The target column names may be listed in any order.  If no list of
+   column names is given at all, the default is all the columns of the
+   table in their declared order; or the first <replaceable>N</> column
+   names, if there are only <replaceable>N</> columns supplied by the
+   <literal>VALUES</> clause or <replaceable>query</>.  The values
+   supplied by the <literal>VALUES</> clause or <replaceable>query</> are
+   associated with the explicit or implicit column list left-to-right.
   </para>
 
   <para>
-   If the expression for each column is not of the correct data type,
+   Each column not present in the explicit or implicit column list will be
+   filled with a default value, either its declared default value
+   or null if there is none.
+  </para>
+
+  <para>
+   If the expression for any column is not of the correct data type,
    automatic type conversion will be attempted.
   </para>
 
@@ -93,7 +102,7 @@ INSERT INTO <replaceable class="PARAMETER">table</replaceable> [ ( <replaceable 
     <term><replaceable class="PARAMETER">expression</replaceable></term>
     <listitem>
      <para>
-      An expression or value to assign to <replaceable
+      An expression or value to assign to the corresponding <replaceable
       class="PARAMETER">column</replaceable>.
      </para>
     </listitem>
@@ -103,7 +112,8 @@ INSERT INTO <replaceable class="PARAMETER">table</replaceable> [ ( <replaceable 
     <term><literal>DEFAULT</literal></term>
     <listitem>
      <para>
-      This column will be filled with its default value.
+      The corresponding <replaceable>column</replaceable> will be filled with
+      its default value.
      </para>
     </listitem>
    </varlistentry>
@@ -152,8 +162,8 @@ INSERT INTO films VALUES
   </para>
 
   <para>
-   In this second example, the last column <literal>len</literal> is
-   omitted and therefore it will have the default value of null:
+   In this second example, the <literal>len</literal> column is
+   omitted and therefore it will have the default value:
 
 <programlisting>
 INSERT INTO films (code, title, did, date_prod, kind)
@@ -174,7 +184,7 @@ INSERT INTO films (code, title, did, date_prod, kind)
   </para>
 
   <para>
-   This examples inserts several rows into table
+   This example inserts several rows into table
    <literal>films</literal> from table <literal>tmp</literal>:
 
 <programlisting>
@@ -200,7 +210,13 @@ INSERT INTO tictactoe (game, board)
   <title>Compatibility</title>
 
   <para>
-   <command>INSERT</command> conforms fully to the SQL standard.
+   <command>INSERT</command> conforms to the SQL standard.  The case in
+   which a column name list is omitted, but not all the columns are
+   filled from the <literal>VALUES</> clause or <replaceable>query</>,
+   is disallowed by the standard.
+  </para>
+
+  <para>
    Possible limitations of the <replaceable
    class="PARAMETER">query</replaceable> clause are documented under
    <xref linkend="sql-select" endterm="sql-select-title">.

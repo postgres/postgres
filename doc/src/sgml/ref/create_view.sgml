@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_view.sgml,v 1.28 2003/11/29 19:51:38 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_view.sgml,v 1.29 2005/01/04 00:39:53 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -165,7 +165,7 @@ CREATE VIEW <replaceable class="parameter">name</replaceable> [ ( <replaceable c
       <term><literal>CHECK OPTION</literal></term>
       <listitem>
        <para>
-        This option is to do with updatable views.  All
+        This option has to do with updatable views.  All
         <command>INSERT</> and <command>UPDATE</> commands on the view
         will be checked to ensure data satisfy the view-defining
         condition (that is, the new data would be visible through the
@@ -200,6 +200,14 @@ CREATE VIEW <replaceable class="parameter">name</replaceable> [ ( <replaceable c
    <command>CREATE OR REPLACE VIEW</command> is a
    <productname>PostgreSQL</productname> language extension.
   </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-dropview" endterm="sql-dropview-title"></member>
+  </simplelist>
  </refsect1>
 </refentry>
 

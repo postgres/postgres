@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/declare.sgml,v 1.32 2004/11/15 06:32:15 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/declare.sgml,v 1.33 2005/01/04 00:39:53 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -286,6 +286,16 @@ DECLARE liahona CURSOR FOR SELECT * FROM films;
    Binary cursors are a <productname>PostgreSQL</productname>
    extension.
   </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-close" endterm="sql-close-title"></member>
+   <member><xref linkend="sql-fetch" endterm="sql-fetch-title"></member>
+   <member><xref linkend="sql-move" endterm="sql-move-title"></member>
+  </simplelist>
  </refsect1>
 </refentry>
 

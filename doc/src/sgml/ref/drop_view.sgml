@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_view.sgml,v 1.20 2003/11/29 19:51:38 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_view.sgml,v 1.21 2005/01/04 00:39:53 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -83,7 +83,8 @@ DROP VIEW kinds;
   <title>Compatibility</title>
 
   <para>
-   This command conforms to the SQL standard.
+   This command conforms to the SQL standard, except that the standard only
+   allows one view to be dropped per command. 
   </para>
  </refsect1>
 

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_user.sgml,v 1.34 2004/12/13 18:05:10 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_user.sgml,v 1.35 2005/01/04 00:39:53 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -24,9 +24,9 @@ ALTER USER <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <replace
 
 where <replaceable class="PARAMETER">option</replaceable> can be:
 
-    [ ENCRYPTED | UNENCRYPTED ] PASSWORD '<replaceable class="PARAMETER">password</replaceable>' 
-    | CREATEDB | NOCREATEDB
+    CREATEDB | NOCREATEDB
     | CREATEUSER | NOCREATEUSER 
+    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD '<replaceable class="PARAMETER">password</replaceable>' 
     | VALID UNTIL '<replaceable class="PARAMETER">abstime</replaceable>'
 
 ALTER USER <replaceable class="PARAMETER">name</replaceable> RENAME TO <replaceable>newname</replaceable>
@@ -40,22 +40,21 @@ ALTER USER <replaceable class="PARAMETER">name</replaceable> RESET <replaceable>
   <title>Description</title>
 
   <para>
-   <command>ALTER USER</command> is used to change the attributes of a
+   <command>ALTER USER</command> changes the attributes of a
    <productname>PostgreSQL</productname> user account.  Attributes not
    mentioned in the command retain their previous settings.
   </para>
 
   <para>
-   The first variant of this command in the synopsis changes certain
-   global user privileges and authentication settings.  (See below for
-   details.)  Only a database superuser can change these privileges and
-   the password expiration with this command.  Ordinary users can only
-   change their own password.
+   The first variant of this command listed in the synopsis changes certain
+   per-user privileges and authentication settings.  (See below for
+   details.)  Database superusers can change any of these settings for any
+   user.  Ordinary users can only change their own password.
   </para>
 
   <para>
    The second variant changes the name of the user.  Only a database
-   superuser can rename user accounts.  The session user cannot be
+   superuser can rename user accounts.  The current session user cannot be
    renamed.  (Connect as a different user if you need to do that.)
    Because <literal>MD5</>-encrypted passwords use the user name as
    cryptographic salt, renaming a user clears their <literal>MD5</>
@@ -70,6 +69,8 @@ ALTER USER <replaceable class="PARAMETER">name</replaceable> RESET <replaceable>
    or has been received from the <command>postmaster</command> command line.
    Ordinary users can change their own session defaults.
    Superusers can change anyone's session defaults.
+   Certain variables cannot be set this way, or can only be
+   set by a superuser.
   </para>
  </refsect1>
 
@@ -81,29 +82,7 @@ ALTER USER <replaceable class="PARAMETER">name</replaceable> RESET <replaceable>
       <term><replaceable class="PARAMETER">name</replaceable></term>
       <listitem>
        <para>
-	The name of the user whose attributes are to be altered.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><replaceable class="PARAMETER">password</replaceable></term>
-      <listitem>
-       <para>
-	The new password to be used for this account.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><literal>ENCRYPTED</literal></term>
-      <term><literal>UNENCRYPTED</literal></term>
-      <listitem>
-       <para>
-	These key words control whether the password is stored
-	encrypted in <literal>pg_shadow</>.  (See
-	<xref linkend="SQL-CREATEUSER" endterm="SQL-CREATEUSER-title">
-	for more information about this choice.)
+        The name of the user whose attributes are to be altered.
        </para>
       </listitem>
      </varlistentry>
@@ -113,11 +92,12 @@ ALTER USER <replaceable class="PARAMETER">name</replaceable> RESET <replaceable>
       <term><literal>NOCREATEDB</literal></term>
       <listitem>
        <para>
-	These clauses define a user's ability to create databases.  If
-	<literal>CREATEDB</literal> is specified, the user
-	will be allowed to create his own databases. Using
-	<literal>NOCREATEDB</literal> will deny a user the ability to
-	create databases.
+        These clauses define a user's ability to create databases.  If
+        <literal>CREATEDB</literal> is specified, the user
+        will be allowed to create his own databases. Using
+        <literal>NOCREATEDB</literal> will deny a user the ability to
+        create databases.  (If the user is also a superuser, then this
+        setting has no real effect.)
        </para>
       </listitem>
      </varlistentry>
@@ -127,9 +107,31 @@ ALTER USER <replaceable class="PARAMETER">name</replaceable> RESET <replaceable>
       <term><literal>NOCREATEUSER</literal></term>
       <listitem>
        <para>
-	These clauses determine whether a user will be permitted to
-	create new users himself. This option will also make the user
-	a superuser who can override all access restrictions.
+        These clauses determine whether a user will be permitted to
+        create new users himself. <literal>CREATEUSER</literal> will also make
+        the user a superuser, who can override all access restrictions.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="PARAMETER">password</replaceable></term>
+      <listitem>
+       <para>
+        The new password to be used for this account.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>ENCRYPTED</literal></term>
+      <term><literal>UNENCRYPTED</literal></term>
+      <listitem>
+       <para>
+        These key words control whether the password is stored
+        encrypted in <literal>pg_shadow</>.  (See
+        <xref linkend="SQL-CREATEUSER" endterm="SQL-CREATEUSER-title">
+        for more information about this choice.)
        </para>
       </listitem>
      </varlistentry>
@@ -138,9 +140,9 @@ ALTER USER <replaceable class="PARAMETER">name</replaceable> RESET <replaceable>
       <term><replaceable class="PARAMETER">abstime</replaceable></term>
       <listitem>
        <para>
-	The date (and, optionally, the time)
-	at which this user's password is to expire.  To set the password
-	never to expire, use <literal>'infinity'</>.
+        The date (and, optionally, the time)
+        at which this user's password is to expire.  To set the password
+        never to expire, use <literal>'infinity'</>.
        </para>
       </listitem>
      </varlistentry>
@@ -149,7 +151,7 @@ ALTER USER <replaceable class="PARAMETER">name</replaceable> RESET <replaceable>
       <term><replaceable>newname</replaceable></term>
       <listitem>
        <para>
-	The new name of the user.
+        The new name of the user.
        </para>
       </listitem>
      </varlistentry>
@@ -163,9 +165,9 @@ ALTER USER <replaceable class="PARAMETER">name</replaceable> RESET <replaceable>
         parameter to the given value.  If
         <replaceable>value</replaceable> is <literal>DEFAULT</literal>
         or, equivalently, <literal>RESET</literal> is used, the
-        user-specific variable setting is removed and the user will
+        user-specific variable setting is removed, so the user will
         inherit the system-wide default setting in new sessions.  Use
-        <literal>RESET ALL</literal> to clear all settings.
+        <literal>RESET ALL</literal> to clear all user-specific settings.
        </para>
 
        <para>
@@ -194,9 +196,18 @@ ALTER USER <replaceable class="PARAMETER">name</replaceable> RESET <replaceable>
   </para>
 
   <para>
-   Using <xref linkend="sql-alterdatabase"
-   endterm="sql-alterdatabase-title">, it is also possible to tie a
-   session default to a specific database rather than a user.
+   The <literal>VALID UNTIL</> clause defines an expiration time for a
+   password only, not for the user account <foreignphrase>per se</>.  In
+   particular, the expiration time is not enforced when logging in using
+   a non-password-based authentication method.
+  </para>
+
+  <para>
+   It is also possible to tie a
+   session default to a specific database rather than to a user; see
+   <xref linkend="sql-alterdatabase" endterm="sql-alterdatabase-title">.
+   User-specific settings override database-specific
+   ones if there is a conflict.
   </para>
  </refsect1>
 
@@ -204,7 +215,7 @@ ALTER USER <replaceable class="PARAMETER">name</replaceable> RESET <replaceable>
   <title>Examples</title>
 
   <para>
-   Change a user password:
+   Change a user's password:
 
 <programlisting>
 ALTER USER davide WITH PASSWORD 'hu8jmn3';
@@ -212,7 +223,7 @@ ALTER USER davide WITH PASSWORD 'hu8jmn3';
   </para>
 
   <para>
-   Change a user's valid until date:
+   Change the expiration date of the user's password:
 
 <programlisting>
 ALTER USER manuel VALID UNTIL 'Jan 31 2030';
@@ -220,8 +231,8 @@ ALTER USER manuel VALID UNTIL 'Jan 31 2030';
   </para>
 
   <para>
-   Change a user's valid until date, specifying that his
-   authorization should expire at midday on 4th May 2005 using
+   Change a password expiration date, specifying that the password
+   should expire at midday on 4th May 2005 using
    the time zone which is one hour ahead of <acronym>UTC</>:
 <programlisting>
 ALTER USER chris VALID UNTIL 'May 4 12:00:00 2005 +1';
@@ -229,7 +240,7 @@ ALTER USER chris VALID UNTIL 'May 4 12:00:00 2005 +1';
   </para>
 
   <para>
-   Make a user valid forever:
+   Make a password valid forever:
 <programlisting>
 ALTER USER fred VALID UNTIL 'infinity';
 </programlisting>

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_index.sgml,v 1.50 2004/11/05 19:15:51 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_index.sgml,v 1.51 2005/01/04 00:39:53 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -74,13 +74,7 @@ CREATE [ UNIQUE ] INDEX <replaceable class="parameter">name</replaceable> ON <re
     can improve performance by creating an index on just that portion.
     Another possible application is to use <literal>WHERE</literal> with
     <literal>UNIQUE</literal> to enforce uniqueness over a subset of a
-    table.
-  </para>
-
-  <para>
-   Indexes are not used for <literal>IS NULL</> clauses by default.
-   The best way to use indexes in such cases is to create a partial index
-   using an <literal>IS NULL</> comparison.
+    table.  See <xref linkend="indexes-partial"> for more discussion.
   </para>
 
   <para>
@@ -211,7 +205,7 @@ CREATE [ UNIQUE ] INDEX <replaceable class="parameter">name</replaceable> ON <re
   <para>
    See <xref linkend="indexes"> for information about when indexes can
    be used, when they are not used, and in which particular situations
-   can be useful.
+   they can be useful.
   </para>
 
   <para>
@@ -242,6 +236,12 @@ CREATE [ UNIQUE ] INDEX <replaceable class="parameter">name</replaceable> ON <re
   <para>
    Use <xref linkend="sql-dropindex" endterm="sql-dropindex-title">
    to remove an index.
+  </para>
+
+  <para>
+   Indexes are not used for <literal>IS NULL</> clauses by default.
+   The best way to use indexes in such cases is to create a partial index
+   using an <literal>IS NULL</> predicate.
   </para>
  </refsect1>
 
@@ -292,6 +292,15 @@ SELECT * FROM points
    <productname>PostgreSQL</productname> language extension.  There
    are no provisions for indexes in the SQL standard.
   </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-alterindex" endterm="sql-alterindex-title"></member>
+   <member><xref linkend="sql-dropindex" endterm="sql-dropindex-title"></member>
+  </simplelist>
  </refsect1>
 </refentry>
 

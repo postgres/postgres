@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_user.sgml,v 1.33 2004/03/09 16:57:47 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_user.sgml,v 1.34 2005/01/04 00:39:53 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -25,10 +25,10 @@ CREATE USER <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <replac
 where <replaceable class="PARAMETER">option</replaceable> can be:
     
       SYSID <replaceable class="PARAMETER">uid</replaceable> 
-    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD '<replaceable class="PARAMETER">password</replaceable>'
     | CREATEDB | NOCREATEDB
     | CREATEUSER | NOCREATEUSER
     | IN GROUP <replaceable class="PARAMETER">groupname</replaceable> [, ...]
+    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD '<replaceable class="PARAMETER">password</replaceable>'
     | VALID UNTIL '<replaceable class="PARAMETER">abstime</replaceable>' 
 </synopsis>
  </refsynopsisdiv>
@@ -54,7 +54,7 @@ where <replaceable class="PARAMETER">option</replaceable> can be:
       <term><replaceable class="parameter">name</replaceable></term>
       <listitem>
        <para>
-	The name of the user.
+        The name of the new user.
        </para>
       </listitem>
      </varlistentry>
@@ -64,14 +64,53 @@ where <replaceable class="PARAMETER">option</replaceable> can be:
       <listitem>
        <para>
         The <literal>SYSID</literal> clause can be used to choose the
-        <productname>PostgreSQL</productname> user ID of the user that
-        is being created. This is not normally not necessary, but may
+        <productname>PostgreSQL</productname> user ID of the new user.
+        This is normally not necessary, but may
         be useful if you need to recreate the owner of an orphaned
         object.
        </para>
        <para>
         If this is not specified, the highest assigned user ID plus one
-	(with a minimum of 100) will be used as default.
+        (with a minimum of 100) will be used as default.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>CREATEDB</></term>
+      <term><literal>NOCREATEDB</></term>
+      <listitem>
+       <para>
+        These clauses define a user's ability to create databases.  If
+        <literal>CREATEDB</literal> is specified, the user being
+        defined will be allowed to create his own databases. Using
+        <literal>NOCREATEDB</literal> will deny a user the ability to
+        create databases. If not specified,
+        <literal>NOCREATEDB</literal> is the default.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>CREATEUSER</literal></term>
+      <term><literal>NOCREATEUSER</literal></term>
+      <listitem>
+       <para>
+        These clauses determine whether a user will be permitted to
+        create new users himself. <literal>CREATEUSER</literal> will also make
+        the user a superuser, who can override all access restrictions.
+        If not specified,
+        <literal>NOCREATEUSER</literal> is the default.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="parameter">groupname</replaceable></term>
+      <listitem>
+       <para>
+        A name of an existing group into which to insert the user as a new
+        member. Multiple group names may be listed.
        </para>
       </listitem>
      </varlistentry>
@@ -95,16 +134,16 @@ where <replaceable class="PARAMETER">option</replaceable> can be:
       <term><literal>UNENCRYPTED</></term>
       <listitem>
        <para>
-	These key words control whether the password is stored
-	encrypted in the system catalogs.  (If neither is specified,
-	the default behavior is determined by the configuration
-	parameter <xref linkend="guc-password-encryption">.)  If the
-	presented password string is already in MD5-encrypted format,
-	then it is stored encrypted as-is, regardless of whether
-	<literal>ENCRYPTED</> or <literal>UNENCRYPTED</> is specified
-	(since the system cannot decrypt the specified encrypted
-	password string).  This allows reloading of encrypted
-	passwords during dump/restore.
+        These key words control whether the password is stored
+        encrypted in the system catalogs.  (If neither is specified,
+        the default behavior is determined by the configuration
+        parameter <xref linkend="guc-password-encryption">.)  If the
+        presented password string is already in MD5-encrypted format,
+        then it is stored encrypted as-is, regardless of whether
+        <literal>ENCRYPTED</> or <literal>UNENCRYPTED</> is specified
+        (since the system cannot decrypt the specified encrypted
+        password string).  This allows reloading of encrypted
+        passwords during dump/restore.
        </para>
 
        <para>
@@ -116,51 +155,12 @@ where <replaceable class="PARAMETER">option</replaceable> can be:
      </varlistentry>
 
      <varlistentry>
-      <term><literal>CREATEDB</></term>
-      <term><literal>NOCREATEDB</></term>
-      <listitem>
-       <para>
-	These clauses define a user's ability to create databases.  If
-	<literal>CREATEDB</literal> is specified, the user being
-	defined will be allowed to create his own databases. Using
-	<literal>NOCREATEDB</literal> will deny a user the ability to
-	create databases. If this clause is omitted,
-	<literal>NOCREATEDB</literal> is used by default.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><literal>CREATEUSER</literal></term>
-      <term><literal>NOCREATEUSER</literal></term>
-      <listitem>
-       <para>
-	These clauses determine whether a user will be permitted to
-	create new users himself. This option will also make the user
-	a superuser who can override all access restrictions.
-	Omitting this clause will set the user's value of this
-	attribute to be <literal>NOCREATEUSER</literal>.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><replaceable class="parameter">groupname</replaceable></term>
-      <listitem>
-       <para>
-	A name of a group into which to insert the user as a new member.
-	Multiple group names may be listed.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
       <term><replaceable class="parameter">abstime</replaceable></term>
       <listitem>
        <para>
-	The <literal>VALID UNTIL</literal> clause sets an absolute
-	time after which the user's password is no longer valid.  If
-	this clause is omitted the login will be valid for all time.
+        The <literal>VALID UNTIL</literal> clause sets an absolute
+        time after which the user's password is no longer valid.  If
+        this clause is omitted the password will be valid for all time.
        </para>
       </listitem>
      </varlistentry>
@@ -183,6 +183,13 @@ where <replaceable class="PARAMETER">option</replaceable> can be:
    linkend="APP-CREATEUSER" endterm="APP-CREATEUSER-title"> that has
    the same functionality as <command>CREATE USER</command> (in fact, it calls this
    command) but can be run from the command shell.
+  </para>
+
+  <para>
+   The <literal>VALID UNTIL</> clause defines an expiration time for a
+   password only, not for the user account <foreignphrase>per se</>.  In
+   particular, the expiration time is not enforced when logging in using
+   a non-password-based authentication method.
   </para>
  </refsect1>
 

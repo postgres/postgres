@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/checkpoint.sgml,v 1.12 2004/03/09 16:57:47 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/checkpoint.sgml,v 1.13 2005/01/04 00:39:53 tgl Exp $ -->
 
 <refentry id="sql-checkpoint">
  <refmeta>
@@ -37,7 +37,7 @@ CHECKPOINT
   <para>
    A checkpoint is a point in the transaction log sequence at which
    all data files have been updated to reflect the information in the
-   log.  All data files will be flushed to disk.  Refer to the
+   log.  All data files will be flushed to disk.  Refer to
    <xref linkend="wal"> for more information about the WAL system.
   </para>
 

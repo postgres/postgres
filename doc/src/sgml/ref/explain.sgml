@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/explain.sgml,v 1.34 2004/09/30 04:23:27 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/explain.sgml,v 1.35 2005/01/04 00:39:53 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -41,9 +41,9 @@ EXPLAIN [ ANALYZE ] [ VERBOSE ] <replaceable class="parameter">statement</replac
    This command displays the execution plan that the
    <productname>PostgreSQL</productname> planner generates for the
    supplied statement.  The execution plan shows how the table(s)
-   referenced by the statement will be scanned---by plain sequential scan,
-   index scan, etc.---and if multiple tables are referenced, what join
-   algorithms will be used to bring together the required row from
+   referenced by the statement will be scanned &mdash; by plain sequential scan,
+   index scan, etc. &mdash; and if multiple tables are referenced, what join
+   algorithms will be used to bring together the required rows from
    each input table.
   </para>
 
@@ -108,7 +108,7 @@ ROLLBACK;
      <para>
       Show the full internal representation of the plan tree, rather
       than just a summary.  Usually this option is only useful for
-      debugging <productname>PostgreSQL</productname>.  The
+      specialized debugging purposes.  The
       <literal>VERBOSE</literal> output is either pretty-printed or
       not, depending on the setting of the <xref
       linkend="guc-explain-pretty-print"> configuration parameter.
@@ -247,6 +247,14 @@ EXPLAIN ANALYZE EXECUTE query(100, 200);
   <para>
    There is no <command>EXPLAIN</command> statement defined in the SQL standard.
   </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-analyze" endterm="sql-analyze-title"></member>
+  </simplelist>
  </refsect1>
 </refentry>
 

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_table_as.sgml,v 1.26 2004/12/13 18:05:10 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_table_as.sgml,v 1.27 2005/01/04 00:39:53 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -20,7 +20,8 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable>table_name</replaceable> [ (<replaceable>column_name</replaceable> [, ...] ) ] [ [ WITH | WITHOUT ] OIDS ]
+CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable>table_name</replaceable>
+    [ (<replaceable>column_name</replaceable> [, ...] ) ] [ [ WITH | WITHOUT ] OIDS ]
     AS <replaceable>query</replaceable>
 </synopsis>
  </refsynopsisdiv>
@@ -91,9 +92,9 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable>table_name
      <para>
       The name of a column in the new table.  If column names are not
       provided, they are taken from the output column names of the
-      query.  If the table is created out of an
-      <command>EXECUTE</command> command, a column name list can
-      currently not be specified.
+      query.  If the table is created from an
+      <command>EXECUTE</command> command, a column name list cannot be
+      specified.
      </para>
     </listitem>
    </varlistentry>
@@ -105,7 +106,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable>table_name
       <para>
        This optional clause specifies whether the table created by
        <command>CREATE TABLE AS</command> should include OIDs. If
-       neither form of this clause if specified, the value of the
+       neither form of this clause is specified, the value of the
        <xref linkend="guc-default-with-oids"> configuration parameter is
        used.
       </para>
@@ -143,12 +144,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable>table_name
   <para>
    Prior to <productname>PostgreSQL</productname> 8.0, <command>CREATE
    TABLE AS</command> always included OIDs in the table it
-   produced. Furthermore, these OIDs were newly generated: they were
-   distinct from the OIDs of any of the rows in the source tables of
-   the <command>SELECT</command> or <command>EXECUTE</command>
-   statement. Therefore, if <command>CREATE TABLE AS</command> was
-   frequently executed, the OID counter would be rapidly
-   incremented. As of <productname>PostgresSQL</productname> 8.0,
+   produced.  As of <productname>PostgresSQL</productname> 8.0,
    the <command>CREATE TABLE AS</command> command allows the user to
    explicitly specify whether OIDs should be included. If the
    presence of OIDs is not explicitly specified,

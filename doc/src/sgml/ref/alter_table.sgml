@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.74 2004/10/22 17:20:04 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.75 2005/01/04 00:39:53 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -129,7 +129,8 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
       <xref linkend="sql-analyze" endterm="sql-analyze-title"> operations.
       The target can be set in the range 0 to 1000; alternatively, set it
       to -1 to revert to using the system default statistics
-      target. For more information on the use of statistics by the
+      target (<xref linkend="guc-default-statistics-target">).
+      For more information on the use of statistics by the
       <productname>PostgreSQL</productname> query planner, refer to
       <xref linkend="planner-stats">.
      </para>
@@ -153,9 +154,9 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
       compressible data. <literal>EXTERNAL</literal> is for external,
       uncompressed data, and <literal>EXTENDED</literal> is for external,
       compressed data.  <literal>EXTENDED</literal> is the default for all
-      data types that support it.  The use of <literal>EXTERNAL</literal> will, for example,
-      make substring operations on a <type>text</type> column faster, at the penalty of
-      increased storage space.
+      data types that support it.  Use of <literal>EXTERNAL</literal> will
+      make substring operations on <type>text</type> and <type>bytea</type>
+      columns faster, at the penalty of increased storage space.
      </para>
     </listitem>
    </varlistentry>
@@ -285,15 +286,15 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
       <term><replaceable class="PARAMETER">name</replaceable></term>
       <listitem>
        <para>
-	The name (possibly schema-qualified) of an existing table to
-	alter. If <literal>ONLY</> is specified, only that table is
-	altered. If <literal>ONLY</> is not specified, the table and all
-	its descendant tables (if any) are updated. <literal>*</> can be
-	appended to the table name to indicate that descendant tables are
-	to be altered, but in the current version, this is the default
-	behavior.  (In releases before 7.1, <literal>ONLY</> was the
-	default behavior.  The default can be altered by changing the
-	configuration parameter <xref linkend="guc-sql-inheritance">.)
+        The name (possibly schema-qualified) of an existing table to
+        alter. If <literal>ONLY</> is specified, only that table is
+        altered. If <literal>ONLY</> is not specified, the table and all
+        its descendant tables (if any) are updated. <literal>*</> can be
+        appended to the table name to indicate that descendant tables are
+        to be altered, but in the current version, this is the default
+        behavior.  (In releases before 7.1, <literal>ONLY</> was the
+        default behavior.  The default can be altered by changing the
+        configuration parameter <xref linkend="guc-sql-inheritance">.)
        </para>
       </listitem>
      </varlistentry>
@@ -302,7 +303,7 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
       <term><replaceable class="PARAMETER">column</replaceable></term>
       <listitem>
        <para>
-	Name of a new or existing column.
+        Name of a new or existing column.
        </para>
       </listitem>
      </varlistentry>
@@ -311,7 +312,7 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
       <term><replaceable class="PARAMETER">new_column</replaceable></term>
       <listitem>
        <para>
-	New name for an existing column.
+        New name for an existing column.
        </para>
       </listitem>
      </varlistentry>
@@ -320,7 +321,7 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
       <term><replaceable class="PARAMETER">new_name</replaceable></term>
       <listitem>
        <para>
-	New name for the table.
+        New name for the table.
        </para>
       </listitem>
      </varlistentry>
@@ -329,8 +330,8 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
       <term><replaceable class="PARAMETER">type</replaceable></term>
       <listitem>
        <para>
-	Data type of the new column, or new data type for an existing
-	column.
+        Data type of the new column, or new data type for an existing
+        column.
        </para>
       </listitem>
      </varlistentry>
@@ -339,7 +340,7 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
       <term><replaceable class="PARAMETER">table_constraint</replaceable></term>
       <listitem>
        <para>
-	New table constraint for the table.
+        New table constraint for the table.
        </para>
       </listitem>
      </varlistentry>
@@ -348,7 +349,7 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
       <term><replaceable class="PARAMETER">constraint_name</replaceable></term>
       <listitem>
        <para>
-	Name of an existing constraint to drop.
+        Name of an existing constraint to drop.
        </para>
       </listitem>
      </varlistentry>
@@ -358,7 +359,7 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
       <listitem>
        <para>
         Automatically drop objects that depend on the dropped column
-	or constraint (for example, views referencing the column).
+        or constraint (for example, views referencing the column).
        </para>
       </listitem>
      </varlistentry>
@@ -368,7 +369,7 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
       <listitem>
        <para>
         Refuse to drop the column or constraint if there are any dependent
-	objects. This is the default behavior.
+        objects. This is the default behavior.
        </para>
       </listitem>
      </varlistentry>
@@ -377,7 +378,7 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
       <term><replaceable class="PARAMETER">index_name</replaceable></term>
       <listitem>
        <para>
-	The index name on which the table should be marked for clustering.
+        The index name on which the table should be marked for clustering.
        </para>
       </listitem>
      </varlistentry>
@@ -386,7 +387,7 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
       <term><replaceable class="PARAMETER">new_owner</replaceable></term>
       <listitem>
        <para>
-	The user name of the new owner of the table.
+        The user name of the new owner of the table.
        </para>
       </listitem>
      </varlistentry>
@@ -395,7 +396,7 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
       <term><replaceable class="PARAMETER">tablespace_name</replaceable></term>
       <listitem>
        <para>
-	The tablespace name to which the table will be moved.
+        The tablespace name to which the table will be moved.
        </para>
       </listitem>
      </varlistentry>
@@ -472,7 +473,8 @@ ALTER TABLE table ALTER COLUMN anycol TYPE anytype;
     though a <literal>USING</literal> clause is supplied.  In such cases,
     drop the default with <literal>DROP DEFAULT</>, perform the <literal>ALTER
     TYPE</>, and then use <literal>SET DEFAULT</> to add a suitable new
-    default.
+    default.  Similar considerations apply to indexes and constraints involving
+    the column.
    </para>
 
    <para>
@@ -593,7 +595,7 @@ ALTER TABLE distributors ADD PRIMARY KEY (dist_id);
   </para>
 
   <para> 
-	To move a table to a different tablespace:
+        To move a table to a different tablespace:
 <programlisting>
 ALTER TABLE distributors SET TABLESPACE fasttablespace;
 </programlisting>

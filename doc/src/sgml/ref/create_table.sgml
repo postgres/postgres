@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.88 2004/12/13 18:05:10 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.89 2005/01/04 00:39:53 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -82,12 +82,7 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
   </para>
 
   <para>
-   A table cannot have more than 1600 columns.  (In practice, the
-   effective limit is lower because of tuple-length constraints).
-  </para>
-
-  <para>
-   The optional constraint clauses specify constraints (or tests) that
+   The optional constraint clauses specify constraints (tests) that
    new or updated rows must satisfy for an insert or update operation
    to succeed.  A constraint is an SQL object that helps define the
    set of valid values in the table in various ways.
@@ -99,7 +94,7 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
    column definition.  A table constraint definition is not tied to a
    particular column, and it can encompass more than one column.
    Every column constraint can also be written as a table constraint;
-   a column constraint is only a notational convenience if the
+   a column constraint is only a notational convenience for use when the
    constraint only affects one column.
   </para>
  </refsect1>
@@ -156,7 +151,7 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
     <listitem>
      <para>
       The data type of the column. This may include array
-      specifiers. For more information on the data types included with
+      specifiers. For more information on the data types supported by
       <productname>PostgreSQL</productname>, refer to <xref
       linkend="datatype">.
      </para>
@@ -180,29 +175,6 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
       The default expression will be used in any insert operation that
       does not specify a value for the column.  If there is no default
       for a column, then the default is null.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term><literal>LIKE <replaceable>parent_table</replaceable> [ { INCLUDING | EXCLUDING } DEFAULTS ]</literal></term>
-    <listitem>
-     <para>
-      The <literal>LIKE</literal> clause specifies a table from which
-      the new table automatically copies all column names, their data types,
-      and their not-null constraints.
-     </para>
-     <para>
-      Unlike <literal>INHERITS</literal>, the new table and original table
-      are completely decoupled after creation is complete.  Changes to the
-      original table will not be applied to the new table, and it is not
-      possible to include data of the new table in scans of the original
-      table.
-     </para>
-     <para>
-      Default expressions for the copied column definitions will only be
-      included if <literal>INCLUDING DEFAULTS</literal> is specified.  The
-      default is to exclude default expressions.
      </para>
     </listitem>
    </varlistentry>
@@ -259,6 +231,30 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
    </varlistentry>
 
    <varlistentry>
+    <term><literal>LIKE <replaceable>parent_table</replaceable> [ { INCLUDING | EXCLUDING } DEFAULTS ]</literal></term>
+    <listitem>
+     <para>
+      The <literal>LIKE</literal> clause specifies a table from which
+      the new table automatically copies all column names, their data types,
+      and their not-null constraints.
+     </para>
+     <para>
+      Unlike <literal>INHERITS</literal>, the new table and original table
+      are completely decoupled after creation is complete.  Changes to the
+      original table will not be applied to the new table, and it is not
+      possible to include data of the new table in scans of the original
+      table.
+     </para>
+     <para>
+      Default expressions for the copied column definitions will only be
+      copied if <literal>INCLUDING DEFAULTS</literal> is specified.  The
+      default behavior is to exclude default expressions, resulting in
+      all columns of the new table having null defaults.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
     <term><literal>WITH OIDS</></term>
     <term><literal>WITHOUT OIDS</></term>
     <listitem>
@@ -274,15 +270,15 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
      </para>
 
      <para>
-      If <literal>WITHOUT OIDS</literal> is specified or implied, this
-      means that the generation of OIDs for this table will be
-      supressed. This is generally considered worthwhile, since it
+      If <literal>WITHOUT OIDS</literal> is specified or implied, the new
+      table does not store OIDs and no OID will be assigned for a row inserted
+      into it. This is generally considered worthwhile, since it
       will reduce OID consumption and thereby postpone the wraparound
       of the 32-bit OID counter. Once the counter wraps around, OIDs
       can no longer be assumed to be unique, which makes them
       considerably less useful. In addition, excluding OIDs from a
-      table reduces the space required on disk to storage the table by
-      4 bytes per row, leading to increased performance.
+      table reduces the space required to store the table on disk by
+      4 bytes per row (on most machines), slightly improving performance.
      </para>
 
      <para>
@@ -319,7 +315,7 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
      </para>
 
      <para>
-      This clause is only available for compatibility with
+      This clause is only provided for compatibility with
       non-standard SQL databases.  Its use is discouraged in new
       applications.
      </para>
@@ -333,7 +329,7 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
     <listitem>
      <para>
       The <literal>UNIQUE</literal> constraint specifies that a
-      group of one or more distinct columns of a table may contain
+      group of one or more columns of a table may contain
       only unique values. The behavior of the unique table constraint
       is the same as that for column constraints, with the additional
       capability to span multiple columns.
@@ -450,9 +446,9 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
       clause specifies the action to perform when a referenced column
       in the referenced table is being updated to a new value. If the
       row is updated, but the referenced column is not actually
-      changed, no action is done. Referential actions apart from the
-      check of <literal>NO ACTION</literal> can not be deferred even if
-      the constraint is deferrable. There are the following possible
+      changed, no action is done. Referential actions other than the
+      <literal>NO ACTION</literal> check cannot be deferred, even if
+      the constraint is declared deferrable. There are the following possible
       actions for each clause:
 
       <variablelist>
@@ -476,7 +472,7 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
           Produce an error indicating that the deletion or update
           would create a foreign key constraint violation.
           This is the same as <literal>NO ACTION</literal> except that
-	  the check is not deferrable.
+          the check is not deferrable.
          </para>
         </listitem>
        </varlistentry>
@@ -633,13 +629,11 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
  <refsect1 id="SQL-CREATETABLE-notes">
   <title>Notes</title>
 
-  <itemizedlist>
-   <listitem>
     <para>
      Using OIDs in new applications is not recommended: where
      possible, using a <literal>SERIAL</literal> or other sequence
      generator as the table's primary key is preferred. However, if
-     your application does make use of OIDs to identify specific rows
+     your application does make use of OIDs to identify specific
      rows of a table, it is recommended to create a unique constraint
      on the <structfield>oid</> column of that table, to ensure that
      OIDs in the table will indeed uniquely identify rows even after
@@ -656,26 +650,26 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
       unique data key, it is difficult to identify specific rows.
      </para>
     </tip>
-   </listitem>
 
-   <listitem>
     <para>
      <productname>PostgreSQL</productname> automatically creates an
      index for each unique constraint and primary key constraint to
-     enforce the uniqueness.  Thus, it is not necessary to create an
-     explicit index for primary key columns.  (See <xref
+     enforce uniqueness.  Thus, it is not necessary to create an
+     index explicitly for primary key columns.  (See <xref
      linkend="sql-createindex" endterm="sql-createindex-title"> for more information.)
     </para>
-   </listitem>
 
-   <listitem>
     <para>
      Unique constraints and primary keys are not inherited in the
      current implementation.  This makes the combination of
      inheritance and unique constraints rather dysfunctional.
     </para>
-   </listitem>
-  </itemizedlist>
+
+  <para>
+   A table cannot have more than 1600 columns.  (In practice, the
+   effective limit is lower because of tuple-length constraints.)
+  </para>
+
  </refsect1>
 
 
@@ -778,7 +772,7 @@ CREATE TABLE films (
    Define a primary key constraint for table
    <structname>distributors</>.  The following two examples are
    equivalent, the first using the table constraint syntax, the second
-   the column constraint notation.
+   the column constraint syntax.
 
 <programlisting>
 CREATE TABLE distributors (

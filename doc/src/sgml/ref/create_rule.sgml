@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.44 2004/03/09 19:30:21 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.45 2005/01/04 00:39:53 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -82,10 +82,10 @@ CREATE [ OR REPLACE ] RULE <replaceable class="parameter">name</replaceable> AS 
    attempts to perform the update action, because it thinks it might
    end up trying to perform the action on the dummy table of the view
    in some cases.  If you want to handle all the useful cases in
-   conditional rules, you can; just add an unconditional <literal>DO
+   conditional rules, add an unconditional <literal>DO
    INSTEAD NOTHING</literal> rule to ensure that the system
    understands it will never be called on to update the dummy table.
-   Then make the conditional rules not <literal>INSTEAD</literal>; in
+   Then make the conditional rules non-<literal>INSTEAD</literal>; in
    the cases where they are applied, they add to the default
    <literal>INSTEAD NOTHING</literal> action.
   </para>
@@ -213,12 +213,12 @@ CREATE [ OR REPLACE ] RULE <replaceable class="parameter">name</replaceable> AS 
 CREATE RULE "_RETURN" AS
     ON SELECT TO t1
     DO INSTEAD 
-	SELECT * FROM t2;
+        SELECT * FROM t2;
 
 CREATE RULE "_RETURN" AS
     ON SELECT TO t2
     DO INSTEAD 
-	SELECT * FROM t1;
+        SELECT * FROM t1;
 
 SELECT * FROM t1;
 </programlisting>

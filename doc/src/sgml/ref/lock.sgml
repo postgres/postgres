@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/lock.sgml,v 1.44 2004/11/15 06:32:15 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/lock.sgml,v 1.45 2005/01/04 00:39:53 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -50,7 +50,7 @@ where <replaceable class="PARAMETER">lockmode</replaceable> is one of:
    restrictive lock mode possible. <command>LOCK TABLE</command>
    provides for cases when you might need more restrictive locking.
    For example, suppose an application runs a transaction at the
-   isolation level read committed and needs to ensure that data in a
+   Read Committed isolation level and needs to ensure that data in a
    table remains stable for the duration of the transaction. To
    achieve this you could obtain <literal>SHARE</> lock mode over the
    table before querying. This will prevent concurrent data changes
@@ -66,14 +66,14 @@ where <replaceable class="PARAMETER">lockmode</replaceable> is one of:
   </para>
 
   <para>
-   To achieve a similar effect when running a transaction at the
-   isolation level serializable, you have to execute the <command>LOCK
-   TABLE</> statement before executing any data modification
-   statement.  A serializable transaction's view of data will be
-   frozen when its first data modification statement begins.  A later
-   <command>LOCK TABLE</> will still prevent concurrent writes &mdash; but it
-   won't ensure that what the transaction reads corresponds to the
-   latest committed values.
+   To achieve a similar effect when running a transaction at the Serializable
+   isolation level, you have to execute the <command>LOCK TABLE</> statement
+   before executing any <command>SELECT</> or data modification statement.
+   A serializable transaction's view of data will be frozen when its first
+   <command>SELECT</> or data modification statement begins.  A <command>LOCK
+   TABLE</> later in the transaction will still prevent concurrent writes
+   &mdash; but it won't ensure that what the transaction reads corresponds to
+   the latest committed values.
   </para>
   
   <para>
@@ -140,8 +140,8 @@ where <replaceable class="PARAMETER">lockmode</replaceable> is one of:
     <listitem>
      <para>
       Specifies that <command>LOCK TABLE</command> should not wait for
-      any conflicting locks to be released: if the specified lock
-      cannot be immediately acquired without waiting, the transaction
+      any conflicting locks to be released: if the specified lock(s)
+      cannot be acquired immediately without waiting, the transaction
       is aborted.
      </para>
     </listitem>
@@ -219,7 +219,7 @@ COMMIT WORK;
 
  <refsect1>
   <title>Compatibility</title>
-	  
+
   <para>
    There is no <command>LOCK TABLE</command> in the SQL standard,
    which instead uses <command>SET TRANSACTION</command> to specify

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_domain.sgml,v 1.19 2004/08/08 02:05:32 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_domain.sgml,v 1.20 2005/01/04 00:39:53 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -63,7 +63,7 @@ where <replaceable class="PARAMETER">constraint</replaceable> is:
       <term><replaceable class="parameter">name</replaceable></term>
       <listitem>
        <para>
-	The name (optionally schema-qualified) of a domain to be created.
+        The name (optionally schema-qualified) of a domain to be created.
        </para>
       </listitem>
      </varlistentry>
@@ -73,7 +73,7 @@ where <replaceable class="PARAMETER">constraint</replaceable> is:
       <listitem>
        <para>
         The underlying data type of the domain. This may include array
-	specifiers.
+        specifiers.
        </para>
       </listitem>
      </varlistentry>
@@ -196,6 +196,7 @@ CREATE TABLE us_snail_addy (
   <title>See Also</title>
 
   <simplelist type="inline">
+   <member><xref linkend="sql-alterdomain" endterm="sql-alterdomain-title"></member>
    <member><xref linkend="sql-dropdomain" endterm="sql-dropdomain-title"></member>
   </simplelist>
  </refsect1>

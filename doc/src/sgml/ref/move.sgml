@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/move.sgml,v 1.28 2004/06/17 12:41:02 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/move.sgml,v 1.29 2005/01/04 00:39:53 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -86,10 +86,20 @@ COMMIT WORK;
 
  <refsect1>
   <title>Compatibility</title>
-	
+
   <para>
    There is no <command>MOVE</command> statement in the SQL standard.
   </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-close" endterm="sql-close-title"></member>
+   <member><xref linkend="sql-declare" endterm="sql-declare-title"></member>
+   <member><xref linkend="sql-fetch" endterm="sql-fetch-title"></member>
+  </simplelist>
  </refsect1>
 </refentry>
 

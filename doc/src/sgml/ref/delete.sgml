@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/delete.sgml,v 1.20 2003/11/29 19:51:38 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/delete.sgml,v 1.21 2005/01/04 00:39:53 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -37,14 +37,14 @@ DELETE FROM [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ WHERE 
    <tip>
     <para>
      <xref linkend="sql-truncate" endterm="sql-truncate-title"> is a
-     <productname>PostgreSQL</productname> extension which provides a
+     <productname>PostgreSQL</productname> extension that provides a
      faster mechanism to remove all rows from a table.
     </para>
    </tip>
 
   <para>
    By default, <command>DELETE</command> will delete rows in the
-   specified table and all its subtables. If you wish to only delete
+   specified table and all its subtables. If you wish to delete only
    from the specific table mentioned, you must use the
    <literal>ONLY</literal> clause.
   </para>

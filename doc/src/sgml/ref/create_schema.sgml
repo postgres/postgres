@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_schema.sgml,v 1.16 2004/11/05 19:15:51 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_schema.sgml,v 1.17 2005/01/04 00:39:53 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -29,7 +29,7 @@ CREATE SCHEMA AUTHORIZATION <replaceable class="parameter">username</replaceable
   <title>Description</title>
 
   <para>
-   <command>CREATE SCHEMA</command> will enter a new schema
+   <command>CREATE SCHEMA</command> enters a new schema
    into the current database.
    The schema name must be distinct from the name of any existing schema
    in the current database.
@@ -41,8 +41,9 @@ CREATE SCHEMA AUTHORIZATION <replaceable class="parameter">username</replaceable
    whose names may duplicate those of other objects existing in other
    schemas.  Named objects are accessed either by <quote>qualifying</>
    their names with the schema name as a prefix, or by setting a search
-   path that includes the desired schema(s).  Unqualified objects are
-   created in the current schema (the one at the front of the search path,
+   path that includes the desired schema(s).  A <literal>CREATE</> command
+   specifying an unqualified object name creates the object
+   in the current schema (the one at the front of the search path,
    which can be determined with the function <function>current_schema</function>).
   </para>
 

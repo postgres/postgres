@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/notify.sgml,v 1.26 2003/11/29 19:51:39 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/notify.sgml,v 1.27 2005/01/04 00:39:53 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -35,6 +35,15 @@ NOTIFY <replaceable class="PARAMETER">name</replaceable>
   </para>
 
   <para>
+   <command>NOTIFY</command> provides a simple form of signal or
+   interprocess communication mechanism for a collection of processes
+   accessing the same <productname>PostgreSQL</productname> database.
+   Higher-level mechanisms can be built by using tables in the database to
+   pass additional data (beyond a mere notification name) from notifier to
+   listener(s).
+  </para>
+
+  <para>
    The information passed to the client for a notification event includes the notification
    name and the notifying session's server process <acronym>PID</>.  It is up to the
    database designer to define the notification names that will be used in a given
@@ -48,15 +57,6 @@ NOTIFY <replaceable class="PARAMETER">name</replaceable>
    the <command>NOTIFY</command> and <command>LISTEN</command> commands.  For
    example, a database designer could use several different notification names
    to signal different sorts of changes to a single table.
-  </para>
-
-  <para>
-   <command>NOTIFY</command> provides a simple form of signal or
-   interprocess communication mechanism for a collection of processes
-   accessing the same <productname>PostgreSQL</productname> database.
-   Higher-level mechanisms can be built by using tables in the database to
-   pass additional data (beyond a mere notification name) from notifier to
-   listener(s).
   </para>
 
   <para>
@@ -79,7 +79,8 @@ NOTIFY <replaceable class="PARAMETER">name</replaceable>
    the notification event will not be delivered to its connected client until just
    after the transaction is completed (either committed or aborted).  Again, the
    reasoning is that if a notification were delivered within a transaction that was
-   later aborted, one would want the notification to be undone somehow---but
+   later aborted, one would want the notification to be undone somehow &mdash;
+   but
    the server cannot <quote>take back</quote> a notification once it has sent it to the client.
    So notification events are only delivered between transactions.  The upshot of this
    is that applications using <command>NOTIFY</command> for real-time signaling

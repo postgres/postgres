@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_table.sgml,v 1.21 2003/11/29 19:51:38 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_table.sgml,v 1.22 2005/01/04 00:39:53 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -36,9 +36,10 @@ DROP TABLE <replaceable class="PARAMETER">name</replaceable> [, ...] [ CASCADE |
   <para>
    <command>DROP TABLE</command> always removes any indexes, rules,
    triggers, and constraints that exist for the target table.
-   However, to drop a table that is referenced by a foreign-key
+   However, to drop a table that is referenced by a view or a foreign-key
    constraint of another table, <literal>CASCADE</> must be
-   specified. (<literal>CASCADE</> will remove the foreign-key
+   specified. (<literal>CASCADE</> will remove a dependent view entirely,
+   but in the foreign-key case it will only remove the foreign-key
    constraint, not the other table entirely.)
   </para>
  </refsect1>
@@ -95,7 +96,8 @@ DROP TABLE films, distributors;
   <title>Compatibility</title>
 
   <para>
-   This command conforms to the SQL standard.
+   This command conforms to the SQL standard, except that the standard only
+   allows one table to be dropped per command. 
   </para>
  </refsect1>
 

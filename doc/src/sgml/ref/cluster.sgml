@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/cluster.sgml,v 1.34 2004/11/15 06:32:15 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/cluster.sgml,v 1.35 2005/01/04 00:39:53 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -184,7 +184,7 @@ CLUSTER emp;
   </para>
 
   <para>
-   Cluster all the tables on the database that have previously been clustered:
+   Cluster all tables in the database that have previously been clustered:
 <programlisting>
 CLUSTER;
 </programlisting>
