@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon May 14 16:29:55 EDT 2001
+Last updated:		Wed May 16 16:18:15 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -19,8 +19,8 @@ RELIABILITY
 PARSER
 
 * SELECT pg_class FROM pg_class generates strange error
-* Alter TABLE ADD COLUMN does not honor DEFAULT or add CONSTRAINT
-* Unique index on base column not honored on inserts from inherited table
+* ALTER TABLE ADD COLUMN does not honor DEFAULT or add CONSTRAINT
+* UNIQUE INDEX on base column not honored on inserts from inherited table
   INSERT INTO inherit_table (unique_index_col) VALUES (dup) should fail
   [inheritance] 
 
