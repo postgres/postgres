@@ -2,7 +2,7 @@
 TODO list for PostgreSQL
 ========================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Thu Dec  2 21:23:52 EST 2004
+Last updated:		Fri Dec  3 12:07:45 EST 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -822,6 +822,7 @@ Optimizer / Executor
 
   This would be beneficial when there are few distinct values.
 
+* ANALYZE should record a pg_statistic entry for an all-NULL column
 
 Miscellaneous
 =============
