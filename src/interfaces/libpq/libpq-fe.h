@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.16 1996/12/26 23:27:16 bryanh Exp $
+ * $Id: libpq-fe.h,v 1.17 1997/01/06 10:11:11 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -273,7 +273,7 @@ extern int pqGetc(FILE* stream, FILE *debug);
 extern int pqGetInt(int* result, int bytes, FILE* stream, FILE *debug );
 /* put a n-byte integer into the stream */
 /* returns 0 if successful */
-extern int pqPutInt(int n, int bytes, FILE* stream, FILE *debug );
+extern int pqPutInt(const int n, int bytes, FILE* stream, FILE *debug );
 extern void pqFlush(FILE* stream, FILE* debug);
 
 /* === in fe-lobj.c === */
