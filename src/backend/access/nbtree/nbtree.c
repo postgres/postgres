@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.14 1997/02/18 17:13:42 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.15 1997/02/22 10:04:14 vadim Exp $
  *
  * NOTES
  *    This file contains only the public interface routines.
@@ -143,7 +143,7 @@ btbuild(Relation heap,
     nhtups = nitups = 0;
     
     if (usefast) {
-	spool = _bt_spoolinit(index, 7);
+	spool = _bt_spoolinit(index, 7, isunique);
 	res = (InsertIndexResult) NULL;
     }
 

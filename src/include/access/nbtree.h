@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nbtree.h,v 1.8 1997/02/18 17:14:10 momjian Exp $
+ * $Id: nbtree.h,v 1.9 1997/02/22 10:08:27 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -278,7 +278,7 @@ extern BTItem _bt_formitem(IndexTuple itup);
 /*
  * prototypes for functions in nbtsort.c
  */
-extern void *_bt_spoolinit(Relation index, int ntapes);
+extern void *_bt_spoolinit(Relation index, int ntapes, bool isunique);
 extern void *_bt_pagestate(Relation index, int flags, int level, bool doupper);
 extern BTItem _bt_minitem(Page opage, BlockNumber oblkno, int atend);
 extern BTItem _bt_buildadd(Relation index, void *pstate, BTItem bti, int flags);

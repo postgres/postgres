@@ -5,7 +5,7 @@
  *
  *
  * IDENTIFICATION
- *    $Id: nbtsort.c,v 1.10 1997/02/14 22:47:19 momjian Exp $
+ *    $Id: nbtsort.c,v 1.11 1997/02/22 10:04:16 vadim Exp $
  *
  * NOTES
  *
@@ -81,6 +81,43 @@ extern int NDirectFileRead;
 extern int NDirectFileWrite;
 extern char *mktemp(char *template);
 
+/*
+ * this is what we use to shovel BTItems in and out of memory.  it's
+ * bigger than a standard block because we are doing a lot of strictly
+ * sequential i/o.  this is obviously something of a tradeoff since we
+ * are potentially reading a bunch of zeroes off of disk in many
+ * cases.
+ *
+ * BTItems are packed in and DOUBLEALIGN'd.
+ *
+ * the fd should not be going out to disk, strictly speaking, but it's
+ * the only thing like that so i'm not going to worry about wasting a
+ * few bytes.
+ */
+typedef struct {
+    int		bttb_magic;	/* magic number */
+    int		bttb_fd;	/* file descriptor */
+    int		bttb_top;	/* top of free space within bttb_data */
+    short	bttb_ntup;	/* number of tuples in this block */
+    short	bttb_eor;	/* End-Of-Run marker */
+    char	bttb_data[TAPEBLCKSZ - 2 * sizeof(double)];
+} BTTapeBlock;
+
+/*
+ * this structure holds the bookkeeping for a simple balanced multiway
+ * merge.  (polyphase merging is hairier than i want to get into right
+ * now, and i don't see why i have to care how many "tapes" i use
+ * right now.  though if psort was in a condition that i could hack it
+ * to do this, you bet i would.)
+ */
+typedef struct {
+    int		bts_ntapes;
+    int		bts_tape;
+    BTTapeBlock	**bts_itape;	/* input tape blocks */
+    BTTapeBlock	**bts_otape;	/* output tape blocks */
+    bool	isunique;
+} BTSpool;
+
 /*-------------------------------------------------------------------------
  * sorting comparison routine - returns {-1,0,1} depending on whether
  * the key in the left BTItem is {<,=,>} the key in the right BTItem.
@@ -105,11 +142,13 @@ typedef struct {
 } BTSortKey;
 
 static Relation _bt_sortrel;
+static BTSpool * _bt_inspool;
 
 static void
-_bt_isortcmpinit(Relation index)
+_bt_isortcmpinit(Relation index, BTSpool *spool)
 {
     _bt_sortrel = index;
+    _bt_inspool = spool;
 }
 
 static int
@@ -128,6 +167,11 @@ _bt_isortcmp(BTSortKey *k1, BTSortKey *k2)
     } else if (_bt_invokestrat(_bt_sortrel, 1, BTGreaterStrategyNumber,
 			       k2->btsk_datum, k1->btsk_datum)) {
 	return(-1);	/* 1 < 2 */
+    }
+    if ( _bt_inspool->isunique )
+    {
+    	_bt_spooldestroy ((void*)_bt_inspool);
+    	elog (WARN, "Cannot insert a duplicate key into a unique index.");
     }
     return(0);		/* 1 = 2 */
 }
@@ -159,7 +203,6 @@ _bt_setsortkey(Relation index, BTItem bti, BTSortKey *sk)
  * XXX these probably ought to be generic library functions.
  *-------------------------------------------------------------------------
  */
-
 typedef struct {
     int		btpqe_tape;	/* tape identifier */
     BTSortKey	btpqe_item;	/* pointer to BTItem in tape buffer */
@@ -255,29 +298,6 @@ _bt_pqadd(BTPriQueue *q, BTPriQueueElem *e)
 #define	EMPTYTAPE(tape) \
     ((tape)->bttb_ntup <= 0)
 #define	BTTAPEMAGIC	0x19660226
-
-/*
- * this is what we use to shovel BTItems in and out of memory.  it's
- * bigger than a standard block because we are doing a lot of strictly
- * sequential i/o.  this is obviously something of a tradeoff since we
- * are potentially reading a bunch of zeroes off of disk in many
- * cases.
- *
- * BTItems are packed in and DOUBLEALIGN'd.
- *
- * the fd should not be going out to disk, strictly speaking, but it's
- * the only thing like that so i'm not going to worry about wasting a
- * few bytes.
- */
-typedef struct {
-    int		bttb_magic;	/* magic number */
-    int		bttb_fd;	/* file descriptor */
-    int		bttb_top;	/* top of free space within bttb_data */
-    short	bttb_ntup;	/* number of tuples in this block */
-    short	bttb_eor;	/* End-Of-Run marker */
-    char	bttb_data[TAPEBLCKSZ - 2 * sizeof(double)];
-} BTTapeBlock;
-
 
 /*
  * reset the tape header for its next use without doing anything to
@@ -456,25 +476,11 @@ _bt_tapeadd(BTTapeBlock *tape, BTItem item, int itemsz)
  */
 
 /*
- * this structure holds the bookkeeping for a simple balanced multiway
- * merge.  (polyphase merging is hairier than i want to get into right
- * now, and i don't see why i have to care how many "tapes" i use
- * right now.  though if psort was in a condition that i could hack it
- * to do this, you bet i would.)
- */
-typedef struct {
-    int		bts_ntapes;
-    int		bts_tape;
-    BTTapeBlock	**bts_itape;	/* input tape blocks */
-    BTTapeBlock	**bts_otape;	/* output tape blocks */
-} BTSpool;
-
-/*
  * create and initialize a spool structure, including the underlying
  * files.
  */
 void *
-_bt_spoolinit(Relation index, int ntapes)
+_bt_spoolinit(Relation index, int ntapes, bool isunique)
 {
     BTSpool *btspool = (BTSpool *) palloc(sizeof(BTSpool));
     int i;
@@ -486,6 +492,7 @@ _bt_spoolinit(Relation index, int ntapes)
     (void) memset((char *) btspool, 0, sizeof(BTSpool));
     btspool->bts_ntapes = ntapes;
     btspool->bts_tape = 0;
+    btspool->isunique = isunique;
 
     btspool->bts_itape =
 	(BTTapeBlock **) palloc(sizeof(BTTapeBlock *) * ntapes);
@@ -504,7 +511,7 @@ _bt_spoolinit(Relation index, int ntapes)
     }
     pfree((void *) fname);
 
-    _bt_isortcmpinit(index);
+    _bt_isortcmpinit(index, btspool);
 
     return((void *) btspool);
 }
@@ -597,6 +604,8 @@ _bt_spool(Relation index, BTItem btitem, void *spool)
     BTTapeBlock *itape;
     Size itemsz;
 
+    _bt_isortcmpinit (index, btspool);
+
     itape = btspool->bts_itape[btspool->bts_tape];
     itemsz = BTITEMSZ(btitem);
     itemsz = DOUBLEALIGN(itemsz);
@@ -633,7 +642,6 @@ _bt_spool(Relation index, BTItem btitem, void *spool)
 	    /*
 	     * qsort the pointer array.
 	     */
-	    _bt_isortcmpinit(index);
 	    qsort((void *) parray, itape->bttb_ntup, sizeof(BTSortKey),
 		  (int (*)(const void *,const void *))_bt_isortcmp);
 	}
@@ -1298,5 +1306,6 @@ _bt_upperbuild(Relation index)
 void
 _bt_leafbuild(Relation index, void *spool)
 {
+    _bt_isortcmpinit (index, (BTSpool *) spool);
     _bt_merge(index, (BTSpool *) spool);
 }
