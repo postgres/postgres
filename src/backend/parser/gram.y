@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.119 1999/12/10 03:55:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.120 1999/12/10 05:17:13 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -246,7 +246,7 @@ static Node *doNegate(Node *n);
 %type <str>		TypeId
 
 %type <node>	TableConstraint
-%type <list>	ColPrimaryKey, ColQualList, ColQualifier
+%type <list>	ColPrimaryKey, ColQualifier
 %type <node>	ColConstraint, ColConstraintElem
 %type <ival>	key_actions, key_action, key_reference
 %type <str>		key_match
@@ -939,24 +939,14 @@ columnDef:  ColId Typename ColQualifier
 				}
 		;
 
-ColQualifier:  ColQualList						{ $$ = $1; }
-			| /*EMPTY*/							{ $$ = NULL; }
-		;
-
-ColQualList:  ColQualList ColConstraint
+ColQualifier:  ColQualifier ColConstraint
 				{
 					if ($2 != NULL)
 						$$ = lappend($1, $2);
 					else
 						$$ = $1;
 				}
-			| ColConstraint
-				{
-					if ($1 != NULL)
-						$$ = lcons($1, NIL);
-					else
-						$$ = NULL;
-				}
+			| /*EMPTY*/							{ $$ = NULL; }
 		;
 
 ColPrimaryKey:  PRIMARY KEY
