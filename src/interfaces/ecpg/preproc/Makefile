@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.101 2004/04/25 20:57:32 momjian Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.102 2004/04/26 17:40:48 momjian Exp $
 
 subdir = src/interfaces/ecpg/preproc
 top_builddir = ../../../..
@@ -26,7 +26,7 @@ OBJS=preproc.o type.o ecpg.o ecpg_keywords.o output.o\
 all: submake-libpgport ecpg
 
 ecpg: $(OBJS)
-	$(CC) $(CFLAGS) $(LDFLAGS) $^ $(LIBS) $(PTHREAD_LIBS) -o $@
+	$(CC) $(CFLAGS) $(LDFLAGS) $^ $(LIBS) $(PTHREAD_LIBS) -o $@$(X)
 
 # pgc is compiled as part of preproc
 preproc.o: $(srcdir)/pgc.c

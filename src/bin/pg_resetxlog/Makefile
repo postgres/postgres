@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1998-2002, PostgreSQL Global Development Group
 #
-# $PostgreSQL: pgsql/src/bin/pg_resetxlog/Makefile,v 1.6 2004/03/05 01:11:04 momjian Exp $
+# $PostgreSQL: pgsql/src/bin/pg_resetxlog/Makefile,v 1.7 2004/04/26 17:40:48 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -20,7 +20,7 @@ OBJS= pg_resetxlog.o pg_crc.o \
 all: submake-libpgport pg_resetxlog
 
 pg_resetxlog: $(OBJS)
-	$(CC) $(CFLAGS) $^ $(LDFLAGS) $(LIBS) -o $@
+	$(CC) $(CFLAGS) $^ $(LDFLAGS) $(LIBS) -o $@$(X)
 
 dirmod.c: % : $(top_srcdir)/src/port/%
 	rm -f $@ && $(LN_S) $< .

@@ -5,7 +5,7 @@
 # Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/bin/scripts/Makefile,v 1.25 2003/11/29 19:52:07 pgsql Exp $
+# $PostgreSQL: pgsql/src/bin/scripts/Makefile,v 1.26 2004/04/26 17:40:48 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -20,7 +20,7 @@ override CPPFLAGS := -I$(top_srcdir)/src/bin/pg_dump -I$(top_srcdir)/src/bin/psq
 all: submake-libpq submake-backend $(PROGRAMS)
 
 %: %.o
-	$(CC) $(CFLAGS) $^ $(libpq) $(LDFLAGS) $(LIBS) -o $@
+	$(CC) $(CFLAGS) $^ $(libpq) $(LDFLAGS) $(LIBS) -o $@$(X)
 
 createdb: createdb.o common.o dumputils.o $(top_builddir)/src/backend/parser/keywords.o
 createlang: createlang.o common.o print.o mbprint.o
