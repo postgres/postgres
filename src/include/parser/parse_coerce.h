@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_coerce.h,v 1.24 2000/10/05 19:11:38 tgl Exp $
+ * $Id: parse_coerce.h,v 1.25 2000/11/17 19:57:48 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,7 @@ typedef enum CATEGORY
 	UNKNOWN_TYPE,
 	BOOLEAN_TYPE,
 	STRING_TYPE,
+	BITSTRING_TYPE,
 	NUMERIC_TYPE,
 	DATETIME_TYPE,
 	TIMESPAN_TYPE,

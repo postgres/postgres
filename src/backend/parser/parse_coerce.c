@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.49 2000/11/16 22:30:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.50 2000/11/17 19:57:47 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -458,7 +458,7 @@ TypeCategory(Oid inType)
 			 */
 		case (ZPBITOID):
 		case (VARBITOID):
-			result = STRING_TYPE;
+			result = BITSTRING_TYPE;
 			break;
 
 		case (OIDOID):
@@ -541,6 +541,10 @@ PreferredType(CATEGORY category, Oid type)
 
 		case (STRING_TYPE):
 			result = TEXTOID;
+			break;
+
+		case (BITSTRING_TYPE):
+			result = VARBITOID;
 			break;
 
 		case (NUMERIC_TYPE):
