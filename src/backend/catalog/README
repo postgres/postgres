@@ -1,4 +1,4 @@
-$Header: /cvsroot/pgsql/src/backend/catalog/README,v 1.6 2002/04/15 23:46:13 momjian Exp $
+$Header: /cvsroot/pgsql/src/backend/catalog/README,v 1.7 2002/04/27 21:24:33 tgl Exp $
 
 This directory contains .c files that manipulate the system catalogs;
 src/include/catalog contains the .h files that define the structure
@@ -69,15 +69,14 @@ manually create appropriate entries for them in the pre-loaded contents of
 pg_class, pg_attribute, and pg_type.  You'll also need to add code to function
 heap_create() in heap.c to force the correct OID to be assigned when the table
 is first referenced.  (It's near the top of the function with the comment
-beginning in 'Real ugly stuff'.)  Avoid making new catalogs be bootstrap
+beginning in "Real ugly stuff".)  Avoid making new catalogs be bootstrap
 catalogs if at all possible; generally, only tables that must be written to
 in order to create a table should be bootstrapped.
 
 - Certain BOOTSTRAP tables must be at the start of the Makefile
-POSTGRES_BKI_SRCS variable, as these will not be created through standard
-function means, but will be written directly to disk.  That's how pg_class is
-created without depending on functions which depend on the existence of
-pg_class.  The list of files this currently includes is:
+POSTGRES_BKI_SRCS variable, as these will not be created through the standard
+heap_create_with_catalog process, because it needs these tables to exist
+already.  The list of files this currently includes is:
 	pg_proc.h pg_type.h pg_attribute.h pg_class.h
 Also, indexing.h must be last, since the indexes can't be created until all
 the tables are in place.  There are reputedly some other order dependencies

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: catalog.h,v 1.23 2002/04/12 20:38:30 tgl Exp $
+ * $Id: catalog.h,v 1.24 2002/04/27 21:24:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,6 @@ extern bool IsSystemNamespace(Oid namespaceId);
 extern bool IsToastNamespace(Oid namespaceId);
 
 extern bool IsReservedName(const char *name);
-extern bool IsSharedSystemRelationName(const char *relname);
 
 extern Oid	newoid(void);
 

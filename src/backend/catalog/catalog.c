@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/catalog.c,v 1.45 2002/04/12 20:38:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/catalog.c,v 1.46 2002/04/27 21:24:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -175,29 +175,6 @@ IsReservedName(const char *name)
 	return (name[0] == 'p' &&
 			name[1] == 'g' &&
 			name[2] == '_');
-}
-
-/*
- * IsSharedSystemRelationName
- *		True iff name is the name of a shared system catalog relation.
- *
- *		Note: This function assumes that this is a system relation
- *		in the first place.  If that is not known, check the namespace
- *		(with IsSystemNamespace) before calling this function.
- */
-bool
-IsSharedSystemRelationName(const char *relname)
-{
-	int			i;
-
-	i = 0;
-	while (SharedSystemRelationNames[i] != NULL)
-	{
-		if (strcmp(SharedSystemRelationNames[i], relname) == 0)
-			return TRUE;
-		i++;
-	}
-	return FALSE;
 }
 
 

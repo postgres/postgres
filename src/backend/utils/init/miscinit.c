@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.86 2002/04/04 04:25:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.87 2002/04/27 21:24:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -612,9 +612,8 @@ InitializeSessionUserId(const char *username)
 							Anum_pg_shadow_useconfig, &isnull);
 	if (!isnull)
 	{
-		ArrayType *a;
+		ArrayType *a = DatumGetArrayTypeP(datum);
 
-		a = (ArrayType *) pg_detoast_datum((struct varlena *)datum);
 		ProcessGUCArray(a, PGC_S_USER);
 	}
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bootstrap.h,v 1.28 2002/03/26 19:16:20 tgl Exp $
+ * $Id: bootstrap.h,v 1.29 2002/04/27 21:24:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,7 +31,7 @@ typedef struct hashnode
 } hashnode;
 
 
-extern Relation reldesc;
+extern Relation boot_reldesc;
 extern Form_pg_attribute attrtypes[MAXATTR];
 extern int	numattr;
 extern int	BootstrapMain(int ac, char *av[]);

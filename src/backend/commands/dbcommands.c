@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.87 2002/04/21 00:26:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.88 2002/04/27 21:24:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -475,11 +475,14 @@ AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
 		elog(ERROR, "permission denied");
 
 	MemSet(repl_repl, ' ', sizeof(repl_repl));
-
 	repl_repl[Anum_pg_database_datconfig-1] = 'r';
+
 	if (strcmp(stmt->variable, "all")==0 && stmt->value == NULL)
+	{
 		/* RESET ALL */
 		repl_null[Anum_pg_database_datconfig-1] = 'n';
+		repl_val[Anum_pg_database_datconfig-1] = (Datum) 0;
+	}
 	else
 	{
 		Datum datum;
@@ -491,16 +494,12 @@ AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
 		datum = heap_getattr(tuple, Anum_pg_database_datconfig,
 							 RelationGetDescr(rel), &isnull);
 
+		a = isnull ? ((ArrayType *) NULL) : DatumGetArrayTypeP(datum);
+
 		if (valuestr)
-			a = GUCArrayAdd(isnull
-							? NULL
-							: (ArrayType *) pg_detoast_datum((struct varlena *)datum),
-							stmt->variable, valuestr);
+			a = GUCArrayAdd(a, stmt->variable, valuestr);
 		else
-			a = GUCArrayDelete(isnull
-							   ? NULL
-							   : (ArrayType *) pg_detoast_datum((struct varlena *)datum),
-							   stmt->variable);
+			a = GUCArrayDelete(a, stmt->variable);
 
 		repl_val[Anum_pg_database_datconfig-1] = PointerGetDatum(a);
 	}
@@ -546,8 +545,6 @@ get_db_info(const char *name, Oid *dbIdP, int4 *ownerIdP,
 	if (gottuple)
 	{
 		Form_pg_database dbform = (Form_pg_database) GETSTRUCT(tuple);
-		text	   *tmptext;
-		bool		isnull;
 
 		/* oid of the database */
 		if (dbIdP)
@@ -573,16 +570,21 @@ get_db_info(const char *name, Oid *dbIdP, int4 *ownerIdP,
 		/* database path (as registered in pg_database) */
 		if (dbpath)
 		{
-			tmptext = DatumGetTextP(heap_getattr(tuple,
-												 Anum_pg_database_datpath,
-											  RelationGetDescr(relation),
-												 &isnull));
+			Datum		datum;
+			bool		isnull;
+
+			datum = heap_getattr(tuple,
+								 Anum_pg_database_datpath,
+								 RelationGetDescr(relation),
+								 &isnull);
 			if (!isnull)
 			{
-				Assert(VARSIZE(tmptext) - VARHDRSZ < MAXPGPATH);
+				text	   *pathtext = DatumGetTextP(datum);
+				int			pathlen = VARSIZE(pathtext) - VARHDRSZ;
 
-				strncpy(dbpath, VARDATA(tmptext), VARSIZE(tmptext) - VARHDRSZ);
-				*(dbpath + VARSIZE(tmptext) - VARHDRSZ) = '\0';
+				Assert(pathlen >= 0 && pathlen < MAXPGPATH);
+				strncpy(dbpath, VARDATA(pathtext), pathlen);
+				*(dbpath + pathlen) = '\0';
 			}
 			else
 				strcpy(dbpath, "");

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.196 2002/04/12 20:38:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.197 2002/04/27 21:24:33 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -210,11 +210,12 @@ Relation
 heap_create(const char *relname,
 			Oid relnamespace,
 			TupleDesc tupDesc,
+			bool shared_relation,
 			bool storage_create,
 			bool allow_system_table_mods)
 {
 	Oid			relid;
-	Oid			dbid = MyDatabaseId;
+	Oid			dbid = shared_relation ? InvalidOid : MyDatabaseId;
 	bool		nailme = false;
 	RelFileNode	rnode;
 	Relation	rel;
@@ -225,16 +226,15 @@ heap_create(const char *relname,
 	if (!allow_system_table_mods &&
 		(IsSystemNamespace(relnamespace) || IsToastNamespace(relnamespace)) &&
 		IsNormalProcessingMode())
-		elog(ERROR, "invalid relation \"%s\"; "
+		elog(ERROR, "cannot create %s.%s: "
 			 "system catalog modifications are currently disallowed",
-			 relname);
+			 get_namespace_name(relnamespace), relname);
 
 	/*
 	 * Real ugly stuff to assign the proper relid in the relation
 	 * descriptor follows.	Note that only "bootstrapped" relations whose
-	 * OIDs are hard-coded in pg_class.h need be listed here.  We also
-	 * have to take special care for those rels that should be nailed
-	 * in cache and/or are shared across databases.
+	 * OIDs are hard-coded in pg_class.h should be listed here.  We also
+	 * have to recognize those rels that must be nailed in cache.
 	 */
 	if (IsSystemNamespace(relnamespace))
 	{
@@ -260,24 +260,19 @@ heap_create(const char *relname,
 		}
 		else if (strcmp(ShadowRelationName, relname) == 0)
 		{
-			dbid = InvalidOid;
 			relid = RelOid_pg_shadow;
 		}
 		else if (strcmp(GroupRelationName, relname) == 0)
 		{
-			dbid = InvalidOid;
 			relid = RelOid_pg_group;
 		}
 		else if (strcmp(DatabaseRelationName, relname) == 0)
 		{
-			dbid = InvalidOid;
 			relid = RelOid_pg_database;
 		}
 		else
 		{
 			relid = newoid();
-			if (IsSharedSystemRelationName(relname))
-				dbid = InvalidOid;
 		}
 	}
 	else
@@ -651,6 +646,7 @@ heap_create_with_catalog(const char *relname,
 						 Oid relnamespace,
 						 TupleDesc tupdesc,
 						 char relkind,
+						 bool shared_relation,
 						 bool relhasoids,
 						 bool allow_system_table_mods)
 {
@@ -678,8 +674,12 @@ heap_create_with_catalog(const char *relname,
 	 * necessary anymore, but we may as well avoid the cycles of creating
 	 * and deleting the file in case we fail.)
 	 */
-	new_rel_desc = heap_create(relname, relnamespace, tupdesc,
-							   false, allow_system_table_mods);
+	new_rel_desc = heap_create(relname,
+							   relnamespace,
+							   tupdesc,
+							   shared_relation,
+							   false,
+							   allow_system_table_mods);
 
 	/* Fetch the relation OID assigned by heap_create */
 	new_rel_oid = new_rel_desc->rd_att->attrs[0]->attrelid;

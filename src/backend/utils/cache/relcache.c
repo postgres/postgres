@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.162 2002/04/19 16:36:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.163 2002/04/27 21:24:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1319,7 +1319,10 @@ LookupOpclassInfo(Oid operatorClassOid,
  *		The relation descriptor is built just from the supplied parameters,
  *		without actually looking at any system table entries.  We cheat
  *		quite a lot since we only need to work for a few basic system
- *		catalogs...
+ *		catalogs.
+ *
+ * formrdesc is currently used for: pg_class, pg_attribute, pg_proc,
+ * and pg_type (see RelationCacheInitialize).
  *
  * Note that these catalogs can't have constraints, default values,
  * rules, or triggers, since we don't cope with any of that.
@@ -1374,9 +1377,10 @@ formrdesc(const char *relationName,
 	/*
 	 * It's important to distinguish between shared and non-shared
 	 * relations, even at bootstrap time, to make sure we know where they
-	 * are stored.
+	 * are stored.  At present, all relations that formrdesc is used for
+	 * are not shared.
 	 */
-	relation->rd_rel->relisshared = IsSharedSystemRelationName(relationName);
+	relation->rd_rel->relisshared = false;
 
 	relation->rd_rel->relpages = 1;
 	relation->rd_rel->reltuples = 1;
@@ -1434,15 +1438,8 @@ formrdesc(const char *relationName,
 	/* In bootstrap mode, we have no indexes */
 	if (!IsBootstrapProcessingMode())
 	{
-		/*
-		 * This list is incomplete, but it only has to work for the set of
-		 * rels that formrdesc is used for ...
-		 */
-		if (strcmp(relationName, RelationRelationName) == 0 ||
-			strcmp(relationName, AttributeRelationName) == 0 ||
-			strcmp(relationName, ProcedureRelationName) == 0 ||
-			strcmp(relationName, TypeRelationName) == 0)
-			relation->rd_rel->relhasindex = true;
+		/* Otherwise, all the rels formrdesc is used for have indexes */
+		relation->rd_rel->relhasindex = true;
 	}
 
 	/*

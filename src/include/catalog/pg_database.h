@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_database.h,v 1.23 2002/04/21 00:26:43 tgl Exp $
+ * $Id: pg_database.h,v 1.24 2002/04/27 21:24:34 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -31,7 +31,7 @@
  *		typedef struct FormData_pg_database
  * ----------------
  */
-CATALOG(pg_database) BOOTSTRAP
+CATALOG(pg_database) BOOTSTRAP BKI_SHARED_RELATION
 {
 	NameData	datname;		/* database name */
 	int4		datdba;			/* sysid of owner */

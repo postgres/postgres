@@ -1,15 +1,15 @@
 %{
 /*-------------------------------------------------------------------------
  *
- * backendparse.y
- *	  yacc parser grammer for the "backend" initialization program.
+ * bootparse.y
+ *	  yacc parser grammar for the "backend" initialization program.
  *
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.45 2002/04/17 20:57:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.46 2002/04/27 21:24:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,8 +88,9 @@ int num_columns_read = 0;
 
 %type <list>  boot_index_params
 %type <ielem> boot_index_param
-%type <ival> boot_const boot_ident
-%type <ival> optbootstrap optwithoutoids boot_tuple boot_tuplelist
+%type <ival>  boot_const boot_ident
+%type <ival>  optbootstrap optsharedrelation optwithoutoids
+%type <ival>  boot_tuple boot_tuplelist
 %type <oidval> optoideq
 
 %token <ival> CONST ID
@@ -97,7 +98,7 @@ int num_columns_read = 0;
 %token STRING XDEFINE
 %token XDECLARE INDEX ON USING XBUILD INDICES UNIQUE
 %token COMMA EQUALS LPAREN RPAREN
-%token OBJ_ID XBOOTSTRAP XWITHOUT_OIDS NULLVAL
+%token OBJ_ID XBOOTSTRAP XSHARED_RELATION XWITHOUT_OIDS NULLVAL
 %start TopLevel
 
 %nonassoc low
@@ -150,16 +151,14 @@ Boot_CloseStmt:
 		;
 
 Boot_CreateStmt:
-		  XCREATE optbootstrap optwithoutoids boot_ident LPAREN
+		  XCREATE optbootstrap optsharedrelation optwithoutoids boot_ident LPAREN
 				{
 					do_start();
 					numattr = 0;
-					if ($2)
-						elog(DEBUG3, "creating bootstrap relation %s...",
-							 LexIDStr($4));
-					else
-						elog(DEBUG3, "creating relation %s...",
-							 LexIDStr($4));
+					elog(DEBUG3, "creating%s%s relation %s...",
+						 $2 ? " bootstrap" : "",
+						 $3 ? " shared" : "",
+						 LexIDStr($5));
 				}
 		  boot_typelist
 				{
@@ -171,21 +170,22 @@ Boot_CreateStmt:
 
 					if ($2)
 					{
-						extern Relation reldesc;
 						TupleDesc tupdesc;
 
-						if (reldesc)
+						if (boot_reldesc)
 						{
 							elog(DEBUG3, "create bootstrap: warning, open relation exists, closing first");
 							closerel(NULL);
 						}
 
 						tupdesc = CreateTupleDesc(numattr, attrtypes);
-						reldesc = heap_create(LexIDStr($4),
-											  PG_CATALOG_NAMESPACE,
-											  tupdesc,
-											  true, true);
-						reldesc->rd_rel->relhasoids = ! ($3);
+						boot_reldesc = heap_create(LexIDStr($5),
+												   PG_CATALOG_NAMESPACE,
+												   tupdesc,
+												   $3,
+												   true,
+												   true);
+						boot_reldesc->rd_rel->relhasoids = ! ($4);
 						elog(DEBUG3, "bootstrap relation created");
 					}
 					else
@@ -194,11 +194,12 @@ Boot_CreateStmt:
 						TupleDesc tupdesc;
 
 						tupdesc = CreateTupleDesc(numattr,attrtypes);
-						id = heap_create_with_catalog(LexIDStr($4),
+						id = heap_create_with_catalog(LexIDStr($5),
 													  PG_CATALOG_NAMESPACE,
 													  tupdesc,
 													  RELKIND_RELATION,
-													  ! ($3),
+													  $3,
+													  ! ($4),
 													  true);
 						elog(DEBUG3, "relation created with oid %u", id);
 					}
@@ -221,7 +222,7 @@ Boot_InsertStmt:
 					if (num_columns_read != numattr)
 						elog(ERROR, "incorrect number of columns in row (expected %d, got %d)",
 							 numattr, num_columns_read);
-					if (reldesc == (Relation)NULL)
+					if (boot_reldesc == (Relation) NULL)
 					{
 						elog(ERROR, "relation not open");
 						err_out();
@@ -281,6 +282,11 @@ boot_index_param:
 optbootstrap:
 			XBOOTSTRAP	{ $$ = 1; }
 		|				{ $$ = 0; }
+		;
+
+optsharedrelation:
+			XSHARED_RELATION	{ $$ = 1; }
+		|						{ $$ = 0; }
 		;
 
 optwithoutoids:

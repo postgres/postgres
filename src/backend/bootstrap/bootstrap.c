@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.126 2002/04/25 02:56:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.127 2002/04/27 21:24:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,6 +59,9 @@ static void cleanup(void);
  *		global variables
  * ----------------
  */
+
+Relation	boot_reldesc;		/* current relation descriptor */
+
 /*
  * In the lexical analyzer, we need to get the reference number quickly from
  * the string, and the string from the reference number.  Thus we have
@@ -500,20 +503,20 @@ boot_openrel(char *relname)
 		heap_close(rel, NoLock);
 	}
 
-	if (reldesc != NULL)
+	if (boot_reldesc != NULL)
 		closerel(NULL);
 
 	elog(DEBUG3, "open relation %s, attrsize %d", relname ? relname : "(null)",
 		 (int) ATTRIBUTE_TUPLE_SIZE);
 
-	reldesc = heap_openr(relname, NoLock);
-	numattr = reldesc->rd_rel->relnatts;
+	boot_reldesc = heap_openr(relname, NoLock);
+	numattr = boot_reldesc->rd_rel->relnatts;
 	for (i = 0; i < numattr; i++)
 	{
 		if (attrtypes[i] == NULL)
 			attrtypes[i] = AllocateAttribute();
 		memmove((char *) attrtypes[i],
-				(char *) reldesc->rd_att->attrs[i],
+				(char *) boot_reldesc->rd_att->attrs[i],
 				ATTRIBUTE_TUPLE_SIZE);
 
 		/* Some old pg_attribute tuples might not have attisset. */
@@ -523,8 +526,9 @@ boot_openrel(char *relname)
 		 * defined yet.
 		 */
 		if (namestrcmp(&attrtypes[i]->attname, "attisset") == 0)
-			attrtypes[i]->attisset = get_attisset(RelationGetRelid(reldesc),
-										 NameStr(attrtypes[i]->attname));
+			attrtypes[i]->attisset =
+				get_attisset(RelationGetRelid(boot_reldesc),
+							 NameStr(attrtypes[i]->attname));
 		else
 			attrtypes[i]->attisset = false;
 
@@ -547,9 +551,9 @@ closerel(char *name)
 {
 	if (name)
 	{
-		if (reldesc)
+		if (boot_reldesc)
 		{
-			if (strcmp(RelationGetRelationName(reldesc), name) != 0)
+			if (strcmp(RelationGetRelationName(boot_reldesc), name) != 0)
 				elog(ERROR, "closerel: close of '%s' when '%s' was expected",
 					 name, relname ? relname : "(null)");
 		}
@@ -559,13 +563,13 @@ closerel(char *name)
 
 	}
 
-	if (reldesc == NULL)
+	if (boot_reldesc == NULL)
 		elog(ERROR, "no open relation to close");
 	else
 	{
 		elog(DEBUG3, "close relation %s", relname ? relname : "(null)");
-		heap_close(reldesc, NoLock);
-		reldesc = (Relation) NULL;
+		heap_close(boot_reldesc, NoLock);
+		boot_reldesc = (Relation) NULL;
 	}
 }
 
@@ -585,7 +589,7 @@ DefineAttr(char *name, char *type, int attnum)
 	int			attlen;
 	Oid			typeoid;
 
-	if (reldesc != NULL)
+	if (boot_reldesc != NULL)
 	{
 		elog(LOG, "warning: no open relations allowed with 'create' command");
 		closerel(relname);
@@ -674,7 +678,7 @@ InsertOneTuple(Oid objectid)
 
 	if (objectid != (Oid) 0)
 		tuple->t_data->t_oid = objectid;
-	heap_insert(reldesc, tuple);
+	heap_insert(boot_reldesc, tuple);
 	heap_freetuple(tuple);
 	elog(DEBUG3, "row inserted");
 
@@ -706,13 +710,13 @@ InsertOneValue(char *value, int i)
 
 		elog(DEBUG3, "Typ != NULL");
 		app = Typ;
-		while (*app && (*app)->am_oid != reldesc->rd_att->attrs[i]->atttypid)
+		while (*app && (*app)->am_oid != boot_reldesc->rd_att->attrs[i]->atttypid)
 			++app;
 		ap = *app;
 		if (ap == NULL)
 		{
 			elog(FATAL, "unable to find atttypid %u in Typ list",
-				 reldesc->rd_att->attrs[i]->atttypid);
+				 boot_reldesc->rd_att->attrs[i]->atttypid);
 		}
 		values[i] = OidFunctionCall3(ap->am_typ.typinput,
 									 CStringGetDatum(value),
@@ -806,8 +810,8 @@ cleanup()
 		elog(FATAL, "Memory manager fault: cleanup called twice.\n");
 		proc_exit(1);
 	}
-	if (reldesc != (Relation) NULL)
-		heap_close(reldesc, NoLock);
+	if (boot_reldesc != (Relation) NULL)
+		heap_close(boot_reldesc, NoLock);
 	CommitTransactionCommand();
 	proc_exit(Warnings);
 }

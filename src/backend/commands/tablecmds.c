@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.11 2002/04/27 03:45:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.12 2002/04/27 21:24:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -200,6 +200,7 @@ DefineRelation(CreateStmt *stmt, char relkind)
 										  namespaceId,
 										  descriptor,
 										  relkind,
+										  false,
 										  stmt->hasoids || parentHasOids,
 										  allowSystemTableMods);
 
@@ -2840,6 +2841,7 @@ AlterTableCreateToastTable(Oid relOid, bool silent)
 	HeapTuple	reltup;
 	HeapTupleData classtuple;
 	TupleDesc	tupdesc;
+	bool		shared_relation;
 	Relation	class_rel;
 	Buffer		buffer;
 	Relation	ridescs[Num_pg_class_indices];
@@ -2856,12 +2858,26 @@ AlterTableCreateToastTable(Oid relOid, bool silent)
 	 */
 	rel = heap_open(relOid, AccessExclusiveLock);
 
+	/* Check permissions */
 	if (rel->rd_rel->relkind != RELKIND_RELATION)
 		elog(ERROR, "ALTER TABLE: relation \"%s\" is not a table",
 			 RelationGetRelationName(rel));
 
 	if (!pg_class_ownercheck(relOid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, RelationGetRelationName(rel));
+
+	/*
+	 * Toast table is shared if and only if its parent is.
+	 *
+	 * We cannot allow toasting a shared relation after initdb (because
+	 * there's no way to mark it toasted in other databases' pg_class).
+	 * Unfortunately we can't distinguish initdb from a manually started
+	 * standalone backend.  However, we can at least prevent this mistake
+	 * under normal multi-user operation.
+	 */
+	shared_relation = rel->rd_rel->relisshared;
+	if (shared_relation && IsUnderPostmaster)
+		elog(ERROR, "Shared relations cannot be toasted after initdb");
 
 	/*
 	 * lock the pg_class tuple for update (is that really needed?)
@@ -2962,6 +2978,7 @@ AlterTableCreateToastTable(Oid relOid, bool silent)
 										   PG_TOAST_NAMESPACE,
 										   tupdesc,
 										   RELKIND_TOASTVALUE,
+										   shared_relation,
 										   false,
 										   true);
 

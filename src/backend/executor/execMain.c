@@ -27,7 +27,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.159 2002/04/27 03:45:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.160 2002/04/27 21:24:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -733,6 +733,7 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 											 namespaceId,
 											 tupdesc,
 											 RELKIND_RELATION,
+											 false,
 											 true,
 											 allowSystemTableMods);
 

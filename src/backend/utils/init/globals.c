@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.63 2002/03/02 21:39:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.64 2002/04/27 21:24:34 tgl Exp $
  *
  * NOTES
  *	  Globals used all over the place should be declared here and not
@@ -18,14 +18,6 @@
  */
 #include "postgres.h"
 
-#include <fcntl.h>
-#include <sys/file.h>
-#include <sys/types.h>
-#include <math.h>
-#include <unistd.h>
-
-#include "catalog/catname.h"
-#include "catalog/indexing.h"
 #include "libpq/pqcomm.h"
 #include "miscadmin.h"
 #include "storage/backendid.h"
@@ -47,13 +39,10 @@ struct Port *MyProcPort;
 long		MyCancelKey;
 
 char	   *DataDir = NULL;
-
  /*
   * The PGDATA directory user says to use, or defaults to via environment
   * variable.  NULL if no option given and no environment variable set
   */
-
-Relation	reldesc;			/* current relation descriptor */
 
 char		OutputFileName[MAXPGPATH];
 
@@ -85,27 +74,3 @@ bool		allowSystemTableMods = false;
 int			SortMem = 512;
 int			VacuumMem = 8192;
 int			NBuffers = DEF_NBUFFERS;
-
-
-/* ----------------
- * List of relations that are shared across all databases in an installation.
- *
- * This used to be binary-searched, requiring that it be kept in sorted order.
- * We just do a linear search now so there's no requirement that the list
- * be ordered.	The list is so small it shouldn't make much difference.
- * make sure the list is null-terminated
- *				- jolly 8/19/95
- * ----------------
- */
-char	   *SharedSystemRelationNames[] = {
-	DatabaseRelationName,
-	DatabaseNameIndex,
-	DatabaseOidIndex,
-	GroupRelationName,
-	GroupNameIndex,
-	GroupSysidIndex,
-	ShadowRelationName,
-	ShadowNameIndex,
-	ShadowSysidIndex,
-	NULL
-};

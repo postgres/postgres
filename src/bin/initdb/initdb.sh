@@ -27,7 +27,7 @@
 # Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.151 2002/04/21 00:26:43 tgl Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.152 2002/04/27 21:24:34 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -658,10 +658,13 @@ $ECHO_N "enabling unlimited row size for system tables... "$ECHO_C
 
 "$PGPATH"/postgres $PGSQL_OPT template1 >/dev/null <<EOF
 ALTER TABLE pg_attrdef CREATE TOAST TABLE;
+ALTER TABLE pg_database CREATE TOAST TABLE;
 ALTER TABLE pg_description CREATE TOAST TABLE;
+ALTER TABLE pg_group CREATE TOAST TABLE;
 ALTER TABLE pg_proc CREATE TOAST TABLE;
 ALTER TABLE pg_relcheck CREATE TOAST TABLE;
 ALTER TABLE pg_rewrite CREATE TOAST TABLE;
+ALTER TABLE pg_shadow CREATE TOAST TABLE;
 ALTER TABLE pg_statistic CREATE TOAST TABLE;
 EOF
 if [ "$?" -ne 0 ]; then

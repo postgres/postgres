@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1995, Regents of the University of California
  *
- * $Id: postgres.h,v 1.56 2001/11/05 17:46:31 momjian Exp $
+ * $Id: postgres.h,v 1.57 2002/04/27 21:24:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -597,7 +597,7 @@ extern int	assertTest(int val);
 #define CATALOG(x)	typedef struct CppConcat(FormData_,x)
 
 #define BOOTSTRAP
-
+#define BKI_SHARED_RELATION
 #define BKI_WITHOUT_OIDS
 
 /* these need to expand into some harmless, repeatable declaration */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.176 2002/04/12 20:38:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.177 2002/04/27 21:24:34 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -67,7 +67,6 @@ static TupleDesc BuildFuncTupleDesc(Oid funcOid,
 static TupleDesc ConstructTupleDescriptor(Relation heapRelation,
 						 int numatts, AttrNumber *attNums,
 						 Oid *classObjectId);
-static void ConstructIndexReldesc(Relation indexRelation, Oid amoid);
 static void UpdateRelationRelation(Relation indexRelation);
 static void InitializeAttributeOids(Relation indexRelation,
 						int numatts, Oid indexoid);
@@ -306,26 +305,6 @@ ConstructTupleDescriptor(Relation heapRelation,
 }
 
 /* ----------------------------------------------------------------
- *		ConstructIndexReldesc
- * ----------------------------------------------------------------
- */
-static void
-ConstructIndexReldesc(Relation indexRelation, Oid amoid)
-{
-	/*
-	 * Set up some additional fields of the index' pg_class entry. In
-	 * particular, initialize knowledge of whether the index is shared.
-	 */
-	indexRelation->rd_rel->relowner = GetUserId();
-	indexRelation->rd_rel->relam = amoid;
-	indexRelation->rd_rel->relisshared =
-		IsSystemNamespace(RelationGetNamespace(indexRelation)) &&
-		IsSharedSystemRelationName(RelationGetRelationName(indexRelation));
-	indexRelation->rd_rel->relkind = RELKIND_INDEX;
-	indexRelation->rd_rel->relhasoids = false;
-}
-
-/* ----------------------------------------------------------------
  *		UpdateRelationRelation
  * ----------------------------------------------------------------
  */
@@ -561,6 +540,7 @@ index_create(Oid heapRelationId,
 	Relation	heapRelation;
 	Relation	indexRelation;
 	TupleDesc	indexTupDesc;
+	bool		shared_relation;
 	Oid			namespaceId;
 	Oid			indexoid;
 
@@ -571,7 +551,12 @@ index_create(Oid heapRelationId,
 	 */
 	heapRelation = heap_open(heapRelationId, ShareLock);
 
+	/*
+	 * The index will be in the same namespace as its parent table,
+	 * and is shared across databases if and only if the parent is.
+	 */
 	namespaceId = RelationGetNamespace(heapRelation);
+	shared_relation = heapRelation->rd_rel->relisshared;
 
 	/*
 	 * check parameters
@@ -584,6 +569,16 @@ index_create(Oid heapRelationId,
 		IsSystemRelation(heapRelation) &&
 		IsNormalProcessingMode())
 		elog(ERROR, "User-defined indexes on system catalogs are not supported");
+
+	/*
+	 * We cannot allow indexing a shared relation after initdb (because
+	 * there's no way to make the entry in other databases' pg_class).
+	 * Unfortunately we can't distinguish initdb from a manually started
+	 * standalone backend.  However, we can at least prevent this mistake
+	 * under normal multi-user operation.
+	 */
+	if (shared_relation && IsUnderPostmaster)
+		elog(ERROR, "Shared indexes cannot be created after initdb");
 
 	if (get_relname_relid(indexRelationName, namespaceId))
 		elog(ERROR, "index named \"%s\" already exists",
@@ -607,6 +602,7 @@ index_create(Oid heapRelationId,
 	indexRelation = heap_create(indexRelationName,
 								namespaceId,
 								indexTupDesc,
+								shared_relation,
 								false,
 								allow_system_table_mods);
 	indexoid = RelationGetRelid(indexRelation);
@@ -619,16 +615,18 @@ index_create(Oid heapRelationId,
 	LockRelation(indexRelation, AccessExclusiveLock);
 
 	/*
-	 * construct the index relation descriptor
+	 * Fill in fields of the index's pg_class entry that are not set
+	 * correctly by heap_create.
 	 *
-	 * XXX should have a proper way to create cataloged relations
+	 * XXX should have a cleaner way to create cataloged indexes
 	 */
-	ConstructIndexReldesc(indexRelation, accessMethodObjectId);
+	indexRelation->rd_rel->relowner = GetUserId();
+	indexRelation->rd_rel->relam = accessMethodObjectId;
+	indexRelation->rd_rel->relkind = RELKIND_INDEX;
+	indexRelation->rd_rel->relhasoids = false;
 
-	/* ----------------
-	 *	  add index to catalogs
-	 *	  (append RELATION tuple)
-	 * ----------------
+	/*
+	 * store index's pg_class entry
 	 */
 	UpdateRelationRelation(indexRelation);
 

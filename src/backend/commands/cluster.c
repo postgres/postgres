@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.78 2002/04/15 05:22:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.79 2002/04/27 21:24:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -152,6 +152,7 @@ copy_heap(Oid OIDOldHeap, const char *NewName)
 										  RelationGetNamespace(OldHeap),
 										  tupdesc,
 										  OldHeap->rd_rel->relkind,
+										  OldHeap->rd_rel->relisshared,
 										  OldHeap->rd_rel->relhasoids,
 										  allowSystemTableMods);
 

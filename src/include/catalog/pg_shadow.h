@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_shadow.h,v 1.19 2002/04/11 05:32:03 petere Exp $
+ * $Id: pg_shadow.h,v 1.20 2002/04/27 21:24:34 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -29,7 +29,7 @@
  *		typedef struct FormData_pg_shadow
  * ----------------
  */
-CATALOG(pg_shadow) BOOTSTRAP BKI_WITHOUT_OIDS
+CATALOG(pg_shadow) BOOTSTRAP BKI_SHARED_RELATION BKI_WITHOUT_OIDS
 {
 	NameData	usename;
 	int4		usesysid;
@@ -37,8 +37,9 @@ CATALOG(pg_shadow) BOOTSTRAP BKI_WITHOUT_OIDS
 	bool		usetrace;
 	bool		usesuper;		/* read this field via superuser() only */
 	bool		usecatupd;
+	/* remaining fields may be null; use heap_getattr to read them! */
 	text		passwd;
-	int4		valuntil;
+	int4		valuntil;		/* actually abstime */
 	text		useconfig[1];
 } FormData_pg_shadow;
 

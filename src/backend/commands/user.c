@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.98 2002/04/27 15:30:07 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.99 2002/04/27 21:24:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,7 +40,10 @@
 extern bool Password_encryption;
 
 static void CheckPgUserAclNotNull(void);
-
+static void UpdateGroupMembership(Relation group_rel, HeapTuple group_tuple,
+								  List *members);
+static IdList *IdListToArray(List *members);
+static List *IdArrayToList(IdList *oldarray);
 
 
 /*
@@ -151,16 +154,11 @@ write_group_file(Relation urel, Relation grel)
 		bool		first_user = true;
 
 		datum = heap_getattr(tuple, Anum_pg_group_groname, dsc, &isnull);
-		if (isnull)
-			continue;			/* ignore NULL groupnames */
-		groname = NameStr(*DatumGetName(datum));
-
-		grolist_datum = heap_getattr(tuple, Anum_pg_group_grolist, dsc, &isnull);
-		/* Ignore NULL group lists */
+		/* ignore NULL groupnames --- shouldn't happen */
 		if (isnull)
 			continue;
+		groname = NameStr(*DatumGetName(datum));
 
-		grolist_p = DatumGetIdListP(grolist_datum);
 		/*
 		 * Check for illegal characters in the group name.
 		 */
@@ -171,8 +169,15 @@ write_group_file(Relation urel, Relation grel)
 			continue;
 		}
 
+		grolist_datum = heap_getattr(tuple, Anum_pg_group_grolist, dsc, &isnull);
+		/* Ignore NULL group lists */
+		if (isnull)
+			continue;
+
 		/* be sure the IdList is not toasted */
-		/* scan it */
+		grolist_p = DatumGetIdListP(grolist_datum);
+
+		/* scan grolist */
 		num = IDLIST_NUM(grolist_p);
 		aidp = IDLIST_DAT(grolist_p);
 		for (i = 0; i < num; ++i)
@@ -290,8 +295,9 @@ write_user_file(Relation urel)
 		int			i;
 
 		datum = heap_getattr(tuple, Anum_pg_shadow_usename, dsc, &isnull);
+		/* ignore NULL usernames (shouldn't happen) */
 		if (isnull)
-			continue;			/* ignore NULL usernames */
+			continue;
 		usename = NameStr(*DatumGetName(datum));
 
 		datum = heap_getattr(tuple, Anum_pg_shadow_passwd, dsc, &isnull);
@@ -516,24 +522,19 @@ CreateUser(CreateUserStmt *stmt)
 	while (!user_exists && !sysid_exists &&
 		   HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
 	{
-		Datum		datum;
-		bool		null;
+		Form_pg_shadow shadow_form = (Form_pg_shadow) GETSTRUCT(tuple);
+		int32		this_sysid;
 
-		datum = heap_getattr(tuple, Anum_pg_shadow_usename,
-							 pg_shadow_dsc, &null);
-		Assert(!null);
-		user_exists = (strcmp(NameStr(*DatumGetName(datum)), stmt->user) == 0);
+		user_exists = (strcmp(NameStr(shadow_form->usename), stmt->user) == 0);
 
-		datum = heap_getattr(tuple, Anum_pg_shadow_usesysid,
-							 pg_shadow_dsc, &null);
-		Assert(!null);
+		this_sysid = shadow_form->usesysid;
 		if (havesysid)			/* customized id wanted */
-			sysid_exists = (DatumGetInt32(datum) == sysid);
+			sysid_exists = (this_sysid == sysid);
 		else
 		{
 			/* pick 1 + max */
-			if (DatumGetInt32(datum) > max_id)
-				max_id = DatumGetInt32(datum);
+			if (this_sysid > max_id)
+				max_id = this_sysid;
 		}
 	}
 	heap_endscan(scan);
@@ -551,10 +552,12 @@ CreateUser(CreateUserStmt *stmt)
 	/*
 	 * Build a tuple to insert
 	 */
+	MemSet(new_record, 0, sizeof(new_record));
+	MemSet(new_record_nulls, ' ', sizeof(new_record_nulls));
+
 	new_record[Anum_pg_shadow_usename - 1] =
 		DirectFunctionCall1(namein, CStringGetDatum(stmt->user));
 	new_record[Anum_pg_shadow_usesysid - 1] = Int32GetDatum(sysid);
-
 	AssertState(BoolIsValid(createdb));
 	new_record[Anum_pg_shadow_usecreatedb - 1] = BoolGetDatum(createdb);
 	new_record[Anum_pg_shadow_usetrace - 1] = BoolGetDatum(false);
@@ -577,20 +580,14 @@ CreateUser(CreateUserStmt *stmt)
 				DirectFunctionCall1(textin, CStringGetDatum(encrypted_password));
 		}
 	}
+	else
+		new_record_nulls[Anum_pg_shadow_passwd - 1] = 'n';
+
 	if (validUntil)
 		new_record[Anum_pg_shadow_valuntil - 1] =
 			DirectFunctionCall1(nabstimein, CStringGetDatum(validUntil));
-
-	new_record_nulls[Anum_pg_shadow_usename - 1] = ' ';
-	new_record_nulls[Anum_pg_shadow_usesysid - 1] = ' ';
-
-	new_record_nulls[Anum_pg_shadow_usecreatedb - 1] = ' ';
-	new_record_nulls[Anum_pg_shadow_usetrace - 1] = ' ';
-	new_record_nulls[Anum_pg_shadow_usesuper - 1] = ' ';
-	new_record_nulls[Anum_pg_shadow_usecatupd - 1] = ' ';
-
-	new_record_nulls[Anum_pg_shadow_passwd - 1] = password ? ' ' : 'n';
-	new_record_nulls[Anum_pg_shadow_valuntil - 1] = validUntil ? ' ' : 'n';
+	else
+		new_record_nulls[Anum_pg_shadow_valuntil - 1] = 'n';
 
 	new_record_nulls[Anum_pg_shadow_useconfig - 1] = 'n';
 
@@ -651,11 +648,11 @@ AlterUser(AlterUserStmt *stmt)
 {
 	Datum		new_record[Natts_pg_shadow];
 	char		new_record_nulls[Natts_pg_shadow];
+	char		new_record_repl[Natts_pg_shadow];
 	Relation	pg_shadow_rel;
 	TupleDesc	pg_shadow_dsc;
 	HeapTuple	tuple,
 				new_tuple;
-	bool		null;
 	List	   *option;
 	char	   *password = NULL;	/* PostgreSQL user password */
 	bool		encrypt_password = Password_encryption; /* encrypt password? */
@@ -749,32 +746,22 @@ AlterUser(AlterUserStmt *stmt)
 		elog(ERROR, "ALTER USER: user \"%s\" does not exist", stmt->user);
 
 	/*
-	 * Build a tuple to update, perusing the information just obtained
+	 * Build an updated tuple, perusing the information just obtained
 	 */
+	MemSet(new_record, 0, sizeof(new_record));
+	MemSet(new_record_nulls, ' ', sizeof(new_record_nulls));
+	MemSet(new_record_repl, ' ', sizeof(new_record_repl));
+
 	new_record[Anum_pg_shadow_usename - 1] = DirectFunctionCall1(namein,
 											CStringGetDatum(stmt->user));
-	new_record_nulls[Anum_pg_shadow_usename - 1] = ' ';
-
-	/* sysid - leave as is */
-	new_record[Anum_pg_shadow_usesysid - 1] = heap_getattr(tuple, Anum_pg_shadow_usesysid, pg_shadow_dsc, &null);
-	new_record_nulls[Anum_pg_shadow_usesysid - 1] = null ? 'n' : ' ';
+	new_record_repl[Anum_pg_shadow_usename - 1] = 'r';
 
 	/* createdb */
-	if (createdb < 0)
-	{
-		/* don't change */
-		new_record[Anum_pg_shadow_usecreatedb - 1] = heap_getattr(tuple, Anum_pg_shadow_usecreatedb, pg_shadow_dsc, &null);
-		new_record_nulls[Anum_pg_shadow_usecreatedb - 1] = null ? 'n' : ' ';
-	}
-	else
+	if (createdb >= 0)
 	{
 		new_record[Anum_pg_shadow_usecreatedb - 1] = BoolGetDatum(createdb > 0);
-		new_record_nulls[Anum_pg_shadow_usecreatedb - 1] = ' ';
+		new_record_repl[Anum_pg_shadow_usecreatedb - 1] = 'r';
 	}
-
-	/* trace - leave as is */
-	new_record[Anum_pg_shadow_usetrace - 1] = heap_getattr(tuple, Anum_pg_shadow_usetrace, pg_shadow_dsc, &null);
-	new_record_nulls[Anum_pg_shadow_usetrace - 1] = null ? 'n' : ' ';
 
 	/*
 	 * createuser (superuser) and catupd
@@ -784,22 +771,13 @@ AlterUser(AlterUserStmt *stmt)
 	 * with a situation where no existing superuser can alter the
 	 * catalogs, including pg_shadow!
 	 */
-	if (createuser < 0)
-	{
-		/* don't change */
-		new_record[Anum_pg_shadow_usesuper - 1] = heap_getattr(tuple, Anum_pg_shadow_usesuper, pg_shadow_dsc, &null);
-		new_record_nulls[Anum_pg_shadow_usesuper - 1] = null ? 'n' : ' ';
-
-		new_record[Anum_pg_shadow_usecatupd - 1] = heap_getattr(tuple, Anum_pg_shadow_usecatupd, pg_shadow_dsc, &null);
-		new_record_nulls[Anum_pg_shadow_usecatupd - 1] = null ? 'n' : ' ';
-	}
-	else
+	if (createuser >= 0)
 	{
 		new_record[Anum_pg_shadow_usesuper - 1] = BoolGetDatum(createuser > 0);
-		new_record_nulls[Anum_pg_shadow_usesuper - 1] = ' ';
+		new_record_repl[Anum_pg_shadow_usesuper - 1] = 'r';
 
 		new_record[Anum_pg_shadow_usecatupd - 1] = BoolGetDatum(createuser > 0);
-		new_record_nulls[Anum_pg_shadow_usecatupd - 1] = ' ';
+		new_record_repl[Anum_pg_shadow_usecatupd - 1] = 'r';
 	}
 
 	/* password */
@@ -816,14 +794,7 @@ AlterUser(AlterUserStmt *stmt)
 			new_record[Anum_pg_shadow_passwd - 1] =
 				DirectFunctionCall1(textin, CStringGetDatum(encrypted_password));
 		}
-		new_record_nulls[Anum_pg_shadow_passwd - 1] = ' ';
-	}
-	else
-	{
-		/* leave as is */
-		new_record[Anum_pg_shadow_passwd - 1] =
-			heap_getattr(tuple, Anum_pg_shadow_passwd, pg_shadow_dsc, &null);
-		new_record_nulls[Anum_pg_shadow_passwd - 1] = null ? 'n' : ' ';
+		new_record_repl[Anum_pg_shadow_passwd - 1] = 'r';
 	}
 
 	/* valid until */
@@ -831,22 +802,11 @@ AlterUser(AlterUserStmt *stmt)
 	{
 		new_record[Anum_pg_shadow_valuntil - 1] =
 			DirectFunctionCall1(nabstimein, CStringGetDatum(validUntil));
-		new_record_nulls[Anum_pg_shadow_valuntil - 1] = ' ';
-	}
-	else
-	{
-		/* leave as is */
-		new_record[Anum_pg_shadow_valuntil - 1] =
-			heap_getattr(tuple, Anum_pg_shadow_valuntil, pg_shadow_dsc, &null);
-		new_record_nulls[Anum_pg_shadow_valuntil - 1] = null ? 'n' : ' ';
+		new_record_repl[Anum_pg_shadow_valuntil - 1] = 'r';
 	}
 
-	/* leave useconfig as is */
-	new_record[Anum_pg_shadow_useconfig - 1] =
-		heap_getattr(tuple, Anum_pg_shadow_useconfig, pg_shadow_dsc, &null);
-	new_record_nulls[Anum_pg_shadow_useconfig - 1] = null ? 'n' : ' ';
-
-	new_tuple = heap_formtuple(pg_shadow_dsc, new_record, new_record_nulls);
+	new_tuple = heap_modifytuple(tuple, pg_shadow_rel, new_record,
+								 new_record_nulls, new_record_repl);
 	simple_heap_update(pg_shadow_rel, &tuple->t_self, new_tuple);
 
 	/* Update indexes */
@@ -876,7 +836,6 @@ AlterUser(AlterUserStmt *stmt)
 }
 
 
-
 /*
  * ALTER USER ... SET
  */
@@ -896,6 +855,10 @@ AlterUserSet(AlterUserSetStmt *stmt)
 				? ((A_Const *) lfirst(stmt->value))->val.val.str
 				: NULL);
 
+	/*
+	 * RowExclusiveLock is sufficient, because we don't need to update
+	 * the flat password file.
+	 */
 	rel = heap_openr(ShadowRelationName, RowExclusiveLock);
 	oldtuple = SearchSysCache(SHADOWNAME,
 							  PointerGetDatum(stmt->user),
@@ -925,16 +888,12 @@ AlterUserSet(AlterUserSetStmt *stmt)
 		datum = SysCacheGetAttr(SHADOWNAME, oldtuple,
 								Anum_pg_shadow_useconfig, &isnull);
 
+		array = isnull ? ((ArrayType *) NULL) : DatumGetArrayTypeP(datum);
+
 		if (valuestr)
-			array = GUCArrayAdd(isnull
-							? NULL
-							: (ArrayType *) pg_detoast_datum((struct varlena *)datum),
-							stmt->variable, valuestr);
+			array = GUCArrayAdd(array, stmt->variable, valuestr);
 		else
-			array = GUCArrayDelete(isnull
-							   ? NULL
-							   : (ArrayType *) pg_detoast_datum((struct varlena *)datum),
-							   stmt->variable);
+			array = GUCArrayDelete(array, stmt->variable);
 
 		repl_val[Anum_pg_shadow_useconfig-1] = PointerGetDatum(array);
 	}
@@ -982,16 +941,14 @@ DropUser(DropUserStmt *stmt)
 
 	foreach(item, stmt->users)
 	{
+		const char *user = strVal(lfirst(item));
 		HeapTuple	tuple,
 					tmp_tuple;
 		Relation	pg_rel;
 		TupleDesc	pg_dsc;
 		ScanKeyData scankey;
 		HeapScanDesc scan;
-		Datum		datum;
-		bool		null;
 		int32		usesysid;
-		const char *user = strVal(lfirst(item));
 
 		tuple = SearchSysCache(SHADOWNAME,
 							   PointerGetDatum(user),
@@ -1000,7 +957,7 @@ DropUser(DropUserStmt *stmt)
 			elog(ERROR, "DROP USER: user \"%s\" does not exist%s", user,
 				 (length(stmt->users) > 1) ? " (no users removed)" : "");
 
-		usesysid = DatumGetInt32(heap_getattr(tuple, Anum_pg_shadow_usesysid, pg_shadow_dsc, &null));
+		usesysid = ((Form_pg_shadow) GETSTRUCT(tuple))->usesysid;
 
 		if (usesysid == GetUserId())
 			elog(ERROR, "current user cannot be dropped");
@@ -1028,10 +985,7 @@ DropUser(DropUserStmt *stmt)
 		{
 			char	   *dbname;
 
-			datum = heap_getattr(tmp_tuple, Anum_pg_database_datname,
-								 pg_dsc, &null);
-			Assert(!null);
-			dbname = NameStr(*DatumGetName(datum));
+			dbname = NameStr(((Form_pg_database) GETSTRUCT(tmp_tuple))->datname);
 			elog(ERROR, "DROP USER: user \"%s\" owns database \"%s\", cannot be removed%s",
 				 user, dbname,
 				 (length(stmt->users) > 1) ? " (no users removed)" : "");
@@ -1066,8 +1020,7 @@ DropUser(DropUserStmt *stmt)
 			AlterGroupStmt ags;
 
 			/* the group name from which to try to drop the user: */
-			datum = heap_getattr(tmp_tuple, Anum_pg_group_groname, pg_dsc, &null);
-			ags.name = DatumGetCString(DirectFunctionCall1(nameout, datum));
+			ags.name = pstrdup(NameStr(((Form_pg_group) GETSTRUCT(tmp_tuple))->groname));
 			ags.action = -1;
 			ags.listUsers = makeList1(makeInteger(usesysid));
 			AlterGroup(&ags, "DROP USER");
@@ -1202,24 +1155,19 @@ CreateGroup(CreateGroupStmt *stmt)
 	while (!group_exists && !sysid_exists &&
 		   HeapTupleIsValid(tuple = heap_getnext(scan, false)))
 	{
-		Datum		datum;
-		bool		null;
+		Form_pg_group group_form = (Form_pg_group) GETSTRUCT(tuple);
+		int32		this_sysid;
 
-		datum = heap_getattr(tuple, Anum_pg_group_groname,
-							 pg_group_dsc, &null);
-		Assert(!null);
-		group_exists = (strcmp(NameStr(*DatumGetName(datum)), stmt->name) == 0);
+		group_exists = (strcmp(NameStr(group_form->groname), stmt->name) == 0);
 
-		datum = heap_getattr(tuple, Anum_pg_group_grosysid,
-							 pg_group_dsc, &null);
-		Assert(!null);
+		this_sysid = group_form->grosysid;
 		if (havesysid)			/* customized id wanted */
-			sysid_exists = (DatumGetInt32(datum) == sysid);
+			sysid_exists = (this_sysid == sysid);
 		else
 		{
 			/* pick 1 + max */
-			if (DatumGetInt32(datum) > max_id)
-				max_id = DatumGetInt32(datum);
+			if (this_sysid > max_id)
+				max_id = this_sysid;
 		}
 	}
 	heap_endscan(scan);
@@ -1231,44 +1179,30 @@ CreateGroup(CreateGroupStmt *stmt)
 		elog(ERROR, "CREATE GROUP: group sysid %d is already assigned",
 			 sysid);
 
+	if (!havesysid)
+		sysid = max_id + 1;
+
 	/*
 	 * Translate the given user names to ids
 	 */
 	foreach(item, userElts)
 	{
 		const char *groupuser = strVal(lfirst(item));
-		Value	   *v;
+		int32		userid = get_usesysid(groupuser);
 
-		v = makeInteger(get_usesysid(groupuser));
-		if (!member(v, newlist))
-			newlist = lappend(newlist, v);
+		if (!intMember(userid, newlist))
+			newlist = lappendi(newlist, userid);
 	}
 
 	/* build an array to insert */
 	if (newlist)
-	{
-		int			i;
-
-		userarray = palloc(ARR_OVERHEAD(1) + length(newlist) * sizeof(int32));
-		userarray->size = ARR_OVERHEAD(1) + length(newlist) * sizeof(int32);
-		userarray->flags = 0;
-		ARR_NDIM(userarray) = 1;	/* one dimensional array */
-		ARR_LBOUND(userarray)[0] = 1;	/* axis starts at one */
-		ARR_DIMS(userarray)[0] = length(newlist);		/* axis is this long */
-		/* fill the array */
-		i = 0;
-		foreach(item, newlist)
-			((int *) ARR_DATA_PTR(userarray))[i++] = intVal(lfirst(item));
-	}
+		userarray = IdListToArray(newlist);
 	else
 		userarray = NULL;
 
 	/*
 	 * Form a tuple to insert
 	 */
-	if (!havesysid)
-		sysid = max_id + 1;
-
 	new_record[Anum_pg_group_groname - 1] =
 		DirectFunctionCall1(namein, CStringGetDatum(stmt->name));
 	new_record[Anum_pg_group_grosysid - 1] = Int32GetDatum(sysid);
@@ -1318,6 +1252,11 @@ AlterGroup(AlterGroupStmt *stmt, const char *tag)
 	Relation	pg_group_rel;
 	TupleDesc	pg_group_dsc;
 	HeapTuple	group_tuple;
+	IdList	   *oldarray;
+	Datum		datum;
+	bool		null;
+	List	   *newlist,
+			   *item;
 
 	/*
 	 * Make sure the user can do this.
@@ -1337,6 +1276,14 @@ AlterGroup(AlterGroupStmt *stmt, const char *tag)
 	if (!HeapTupleIsValid(group_tuple))
 		elog(ERROR, "%s: group \"%s\" does not exist", tag, stmt->name);
 
+	/* Fetch old group membership. */
+	datum = heap_getattr(group_tuple, Anum_pg_group_grolist,
+						 pg_group_dsc, &null);
+	oldarray = null ? ((IdList *) NULL) : DatumGetIdListP(datum);
+
+	/* initialize list with old array contents */
+	newlist = IdArrayToList(oldarray);
+
 	/*
 	 * Now decide what to do.
 	 */
@@ -1345,49 +1292,18 @@ AlterGroup(AlterGroupStmt *stmt, const char *tag)
 	if (stmt->action == +1)		/* add users, might also be invoked by
 								 * create user */
 	{
-		Datum		new_record[Natts_pg_group];
-		char		new_record_nulls[Natts_pg_group];
-		ArrayType  *newarray,
-				   *oldarray;
-		List	   *newlist = NIL,
-				   *item;
-		HeapTuple	tuple;
-		bool		null = false;
-		Datum		datum = heap_getattr(group_tuple, Anum_pg_group_grolist, pg_group_dsc, &null);
-		int			i;
-
-		oldarray = (ArrayType *) datum;
-		Assert(null || ARR_NDIM(oldarray) == 1);
-		/* first add the old array to the hitherto empty list */
-		if (!null)
-			for (i = ARR_LBOUND(oldarray)[0]; i < ARR_LBOUND(oldarray)[0] + ARR_DIMS(oldarray)[0]; i++)
-			{
-				int			index,
-							arrval;
-				Value	   *v;
-				bool		valueNull;
-
-				index = i;
-				arrval = DatumGetInt32(array_ref(oldarray, 1, &index, true /* by value */ ,
-											sizeof(int), 0, &valueNull));
-				v = makeInteger(arrval);
-				/* filter out duplicates */
-				if (!member(v, newlist))
-					newlist = lappend(newlist, v);
-			}
-
 		/*
-		 * now convert the to be added usernames to sysids and add them to
+		 * convert the to be added usernames to sysids and add them to
 		 * the list
 		 */
 		foreach(item, stmt->listUsers)
 		{
-			Value	   *v;
+			int32	sysid;
 
 			if (strcmp(tag, "ALTER GROUP") == 0)
 			{
 				/* Get the uid of the proposed user to add. */
-				v = makeInteger(get_usesysid(strVal(lfirst(item))));
+				sysid = get_usesysid(strVal(lfirst(item)));
 			}
 			else if (strcmp(tag, "CREATE USER") == 0)
 			{
@@ -1395,16 +1311,16 @@ AlterGroup(AlterGroupStmt *stmt, const char *tag)
 				 * in this case we already know the uid and it wouldn't be
 				 * in the cache anyway yet
 				 */
-				v = lfirst(item);
+				sysid = intVal(lfirst(item));
 			}
 			else
 			{
 				elog(ERROR, "AlterGroup: unknown tag %s", tag);
-				v = NULL;		/* keep compiler quiet */
+				sysid = 0;		/* keep compiler quiet */
 			}
 
-			if (!member(v, newlist))
-				newlist = lappend(newlist, v);
+			if (!intMember(sysid, newlist))
+				newlist = lappendi(newlist, sysid);
 			else
 				/*
 				 * we silently assume here that this error will only come
@@ -1414,147 +1330,47 @@ AlterGroup(AlterGroupStmt *stmt, const char *tag)
 					 tag, strVal(lfirst(item)), stmt->name);
 		}
 
-		newarray = palloc(ARR_OVERHEAD(1) + length(newlist) * sizeof(int32));
-		newarray->size = ARR_OVERHEAD(1) + length(newlist) * sizeof(int32);
-		newarray->flags = 0;
-		ARR_NDIM(newarray) = 1; /* one dimensional array */
-		ARR_LBOUND(newarray)[0] = 1;	/* axis starts at one */
-		ARR_DIMS(newarray)[0] = length(newlist);		/* axis is this long */
-		/* fill the array */
-		i = 0;
-		foreach(item, newlist)
-			((int *) ARR_DATA_PTR(newarray))[i++] = intVal(lfirst(item));
-
-		/*
-		 * Form a tuple with the new array and write it back.
-		 */
-		new_record[Anum_pg_group_groname - 1] =
-			DirectFunctionCall1(namein, CStringGetDatum(stmt->name));
-		new_record_nulls[Anum_pg_group_groname - 1] = ' ';
-		new_record[Anum_pg_group_grosysid - 1] = heap_getattr(group_tuple, Anum_pg_group_grosysid, pg_group_dsc, &null);
-		new_record_nulls[Anum_pg_group_grosysid - 1] = null ? 'n' : ' ';
-		new_record[Anum_pg_group_grolist - 1] = PointerGetDatum(newarray);
-		new_record_nulls[Anum_pg_group_grolist - 1] = newarray ? ' ' : 'n';
-
-		tuple = heap_formtuple(pg_group_dsc, new_record, new_record_nulls);
-		simple_heap_update(pg_group_rel, &group_tuple->t_self, tuple);
-
-		/* Update indexes */
-		if (RelationGetForm(pg_group_rel)->relhasindex)
-		{
-			Relation	idescs[Num_pg_group_indices];
-
-			CatalogOpenIndices(Num_pg_group_indices,
-							   Name_pg_group_indices, idescs);
-			CatalogIndexInsert(idescs, Num_pg_group_indices, pg_group_rel,
-							   tuple);
-			CatalogCloseIndices(Num_pg_group_indices, idescs);
-		}
+		/* Do the update */
+		UpdateGroupMembership(pg_group_rel, group_tuple, newlist);
 	}							/* endif alter group add user */
 
 	else if (stmt->action == -1)	/* drop users from group */
 	{
-		Datum		datum;
-		bool		null;
 		bool		is_dropuser = strcmp(tag, "DROP USER") == 0;
 
-		datum = heap_getattr(group_tuple, Anum_pg_group_grolist, pg_group_dsc, &null);
-		if (null)
+		if (newlist == NIL)
 		{
 			if (!is_dropuser)
 				elog(WARNING, "ALTER GROUP: group \"%s\" does not have any members", stmt->name);
 		}
 		else
 		{
-			HeapTuple	tuple;
-			Datum		new_record[Natts_pg_group];
-			char		new_record_nulls[Natts_pg_group];
-			ArrayType  *oldarray,
-					   *newarray;
-			List	   *newlist = NIL,
-					   *item;
-			int			i;
-
-			oldarray = (ArrayType *) datum;
-			Assert(ARR_NDIM(oldarray) == 1);
-			/* first add the old array to the hitherto empty list */
-			for (i = ARR_LBOUND(oldarray)[0]; i < ARR_LBOUND(oldarray)[0] + ARR_DIMS(oldarray)[0]; i++)
-			{
-				int			index,
-							arrval;
-				Value	   *v;
-				bool		valueNull;
-
-				index = i;
-				arrval = DatumGetInt32(array_ref(oldarray, 1, &index, true /* by value */ ,
-											sizeof(int), 0, &valueNull));
-				v = makeInteger(arrval);
-				/* filter out duplicates */
-				if (!member(v, newlist))
-					newlist = lappend(newlist, v);
-			}
-
 			/*
-			 * now convert the to be dropped usernames to sysids and
+			 * convert the to be dropped usernames to sysids and
 			 * remove them from the list
 			 */
 			foreach(item, stmt->listUsers)
 			{
-				Value	   *v;
+				int32		sysid;
 
 				if (!is_dropuser)
 				{
 					/* Get the uid of the proposed user to drop. */
-					v = makeInteger(get_usesysid(strVal(lfirst(item))));
+					sysid = get_usesysid(strVal(lfirst(item)));
 				}
 				else
 				{
 					/* for dropuser we already know the uid */
-					v = lfirst(item);
+					sysid = intVal(lfirst(item));
 				}
-				if (member(v, newlist))
-					newlist = LispRemove(v, newlist);
+				if (intMember(sysid, newlist))
+					newlist = lremovei(sysid, newlist);
 				else if (!is_dropuser)
 					elog(WARNING, "ALTER GROUP: user \"%s\" is not in group \"%s\"", strVal(lfirst(item)), stmt->name);
 			}
 
-			newarray = palloc(ARR_OVERHEAD(1) + length(newlist) * sizeof(int32));
-			newarray->size = ARR_OVERHEAD(1) + length(newlist) * sizeof(int32);
-			newarray->flags = 0;
-			ARR_NDIM(newarray) = 1;		/* one dimensional array */
-			ARR_LBOUND(newarray)[0] = 1;		/* axis starts at one */
-			ARR_DIMS(newarray)[0] = length(newlist);	/* axis is this long */
-			/* fill the array */
-			i = 0;
-			foreach(item, newlist)
-				((int *) ARR_DATA_PTR(newarray))[i++] = intVal(lfirst(item));
-
-			/*
-			 * Insert the new tuple with the updated user list
-			 */
-			new_record[Anum_pg_group_groname - 1] =
-				DirectFunctionCall1(namein, CStringGetDatum(stmt->name));
-			new_record_nulls[Anum_pg_group_groname - 1] = ' ';
-			new_record[Anum_pg_group_grosysid - 1] = heap_getattr(group_tuple, Anum_pg_group_grosysid, pg_group_dsc, &null);
-			new_record_nulls[Anum_pg_group_grosysid - 1] = null ? 'n' : ' ';
-			new_record[Anum_pg_group_grolist - 1] = PointerGetDatum(newarray);
-			new_record_nulls[Anum_pg_group_grolist - 1] = newarray ? ' ' : 'n';
-
-			tuple = heap_formtuple(pg_group_dsc, new_record, new_record_nulls);
-			simple_heap_update(pg_group_rel, &group_tuple->t_self, tuple);
-
-			/* Update indexes */
-			if (RelationGetForm(pg_group_rel)->relhasindex)
-			{
-				Relation	idescs[Num_pg_group_indices];
-
-				CatalogOpenIndices(Num_pg_group_indices,
-								   Name_pg_group_indices, idescs);
-				CatalogIndexInsert(idescs, Num_pg_group_indices, pg_group_rel,
-								   tuple);
-				CatalogCloseIndices(Num_pg_group_indices, idescs);
-			}
-
+			/* Do the update */
+			UpdateGroupMembership(pg_group_rel, group_tuple, newlist);
 		}						/* endif group not null */
 	}							/* endif alter group drop user */
 
@@ -1571,6 +1387,107 @@ AlterGroup(AlterGroupStmt *stmt, const char *tag)
 	update_pg_pwd_and_pg_group(NULL);
 }
 
+/*
+ * Subroutine for AlterGroup: given a pg_group tuple and a desired new
+ * membership (expressed as an integer list), form and write an updated tuple.
+ * The pg_group relation must be open and locked already.
+ */
+static void
+UpdateGroupMembership(Relation group_rel, HeapTuple group_tuple,
+					  List *members)
+{
+	IdList	   *newarray;
+	Datum		new_record[Natts_pg_group];
+	char		new_record_nulls[Natts_pg_group];
+	char		new_record_repl[Natts_pg_group];
+	HeapTuple	tuple;
+
+	newarray = IdListToArray(members);
+
+	/*
+	 * Form an updated tuple with the new array and write it back.
+	 */
+	MemSet(new_record, 0, sizeof(new_record));
+	MemSet(new_record_nulls, ' ', sizeof(new_record_nulls));
+	MemSet(new_record_repl, ' ', sizeof(new_record_repl));
+
+	new_record[Anum_pg_group_grolist - 1] = PointerGetDatum(newarray);
+	new_record_repl[Anum_pg_group_grolist - 1] = 'r';
+
+	tuple = heap_modifytuple(group_tuple, group_rel,
+							 new_record, new_record_nulls, new_record_repl);
+
+	simple_heap_update(group_rel, &group_tuple->t_self, tuple);
+
+	/* Update indexes */
+	if (RelationGetForm(group_rel)->relhasindex)
+	{
+		Relation	idescs[Num_pg_group_indices];
+
+		CatalogOpenIndices(Num_pg_group_indices,
+						   Name_pg_group_indices, idescs);
+		CatalogIndexInsert(idescs, Num_pg_group_indices, group_rel,
+						   tuple);
+		CatalogCloseIndices(Num_pg_group_indices, idescs);
+	}
+}
+
+
+/*
+ * Convert an integer list of sysids to an array.
+ */
+static IdList *
+IdListToArray(List *members)
+{
+	int			nmembers = length(members);
+	IdList	   *newarray;
+	List	   *item;
+	int			i;
+
+	newarray = palloc(ARR_OVERHEAD(1) + nmembers * sizeof(int32));
+	newarray->size = ARR_OVERHEAD(1) + nmembers * sizeof(int32);
+	newarray->flags = 0;
+	ARR_NDIM(newarray) = 1;		/* one dimensional array */
+	ARR_LBOUND(newarray)[0] = 1;	/* axis starts at one */
+	ARR_DIMS(newarray)[0] = nmembers; /* axis is this long */
+	i = 0;
+	foreach(item, members)
+	{
+		((int *) ARR_DATA_PTR(newarray))[i++] = lfirsti(item);
+	}
+
+	return newarray;
+}
+
+/*
+ * Convert an array of sysids to an integer list.
+ */
+static List *
+IdArrayToList(IdList *oldarray)
+{
+	List	   *newlist = NIL;
+	int			hibound,
+				i;
+
+	if (oldarray == NULL)
+		return NIL;
+
+	Assert(ARR_NDIM(oldarray) == 1);
+
+	hibound = ARR_DIMS(oldarray)[0];
+
+	for (i = 0; i < hibound; i++)
+	{
+		int32		sysid;
+
+		sysid = ((int *) ARR_DATA_PTR(oldarray))[i];
+		/* filter out any duplicates --- probably a waste of time */
+		if (!intMember(sysid, newlist))
+			newlist = lappendi(newlist, sysid);
+	}
+
+	return newlist;
+}
 
 
 /*
@@ -1580,10 +1497,7 @@ void
 DropGroup(DropGroupStmt *stmt)
 {
 	Relation	pg_group_rel;
-	HeapScanDesc scan;
 	HeapTuple	tuple;
-	TupleDesc	pg_group_dsc;
-	bool		gro_exists = false;
 
 	/*
 	 * Make sure the user can do this.
@@ -1592,33 +1506,17 @@ DropGroup(DropGroupStmt *stmt)
 		elog(ERROR, "DROP GROUP: permission denied");
 
 	/*
-	 * Scan the pg_group table and delete all matching groups.
+	 * Drop the group.
 	 */
 	pg_group_rel = heap_openr(GroupRelationName, ExclusiveLock);
-	pg_group_dsc = RelationGetDescr(pg_group_rel);
-	scan = heap_beginscan(pg_group_rel, false, SnapshotNow, 0, NULL);
 
-	while (HeapTupleIsValid(tuple = heap_getnext(scan, false)))
-	{
-		Datum		datum;
-		bool		null;
-
-		datum = heap_getattr(tuple, Anum_pg_group_groname,
-							 pg_group_dsc, &null);
-		if (!null && strcmp(NameStr(*DatumGetName(datum)), stmt->name) == 0)
-		{
-			gro_exists = true;
-			simple_heap_delete(pg_group_rel, &tuple->t_self);
-		}
-	}
-
-	heap_endscan(scan);
-
-	/*
-	 * Did we find any?
-	 */
-	if (!gro_exists)
+	tuple = SearchSysCacheCopy(GRONAME,
+							   PointerGetDatum(stmt->name),
+							   0, 0, 0);
+	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "DROP GROUP: group \"%s\" does not exist", stmt->name);
+
+	simple_heap_delete(pg_group_rel, &tuple->t_self);
 
 	heap_close(pg_group_rel, NoLock);
 
