@@ -660,7 +660,7 @@ fi
 ## Header files
 ##
 dnl sys/socket.h and sys/types.h are required by AC_FUNC_ACCEPT_ARGTYPES
-AC_CHECK_HEADERS([crypt.h dld.h endian.h fp_class.h getopt.h ieeefp.h netinet/tcp.h pwd.h sys/pstat.h sys/select.h sys/socket.h sys/types.h sys/un.h termios.h])
+AC_CHECK_HEADERS([crypt.h dld.h endian.h fp_class.h getopt.h ieeefp.h netinet/tcp.h pwd.h sys/ipc.h sys/pstat.h sys/select.h sys/sem.h sys/socket.h sys/un.h sys/types.h sys/un.h termios.h kernel/OS.h kernel/image.h SupportDefs.h)])
 
 AC_CHECK_HEADERS([readline/readline.h readline.h], [break])
 AC_CHECK_HEADERS([readline/history.h history.h], [break])
