@@ -730,3 +730,10 @@ Fri Dec  3 16:35:07 CET 1999
 
 	- Fixed memory leak in ecpglib.
 	- Set library version to 3.0.8.
+
+Wed Dec  8 08:26:13 CET 1999
+
+	- Synced preproc.y with gram.y.
+	- Clean up error handling.
+        - Set ecpg version to 2.6.11.
+

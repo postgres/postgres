@@ -3,11 +3,11 @@ include $(SRCDIR)/Makefile.global
 
 MAJOR_VERSION=2
 MINOR_VERSION=6
-PATCHLEVEL=10
+PATCHLEVEL=11
 
 CFLAGS+=-I../include -DMAJOR_VERSION=$(MAJOR_VERSION) \
 	-DMINOR_VERSION=$(MINOR_VERSION) -DPATCHLEVEL=$(PATCHLEVEL) \
-	-DINCLUDE_PATH=\"$(HEADERDIR)\"
+	-DINCLUDE_PATH=\"$(HEADERDIR)\" -g
 
 OBJ=preproc.o pgc.o type.o ecpg.o ecpg_keywords.o \
     keywords.o c_keywords.o ../lib/typename.o

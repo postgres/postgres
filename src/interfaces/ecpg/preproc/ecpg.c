@@ -12,7 +12,7 @@
 #include "extern.h"
 
 struct _include_path *include_paths;
-int			autocommit = 0;
+int		ret_value = OK, autocommit = 0;
 struct cursor *cur = NULL;
 struct typedefs *types = NULL;
 
@@ -215,5 +215,5 @@ main(int argc, char *const argv[])
 			free(input_filename);
 		}
 	}
-	return OK;
+	return ret_value;
 }

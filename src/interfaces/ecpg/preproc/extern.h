@@ -5,8 +5,9 @@
 /* variables */
 
 extern int	braces_open,
-			autocommit,
-			struct_level;
+		autocommit,
+		ret_value,
+		struct_level;
 extern char *yytext,
 			errortext[128];
 extern int	yylineno,

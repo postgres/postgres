@@ -10,6 +10,9 @@ DESCRIPTOR statement will be ignored.
 If a NOTICE message is given by the backend it should not be printed to
 stderr. Instead it should be listed as a warning.
 
+The error handling has to be improved by adding additional error-rules to
+the parser.
+
 it would be nice to be able to use :var[:index] as cvariable
 
 support for dynamic SQL with unknown number of variables with DESCRIPTORS

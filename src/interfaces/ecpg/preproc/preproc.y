@@ -34,6 +34,30 @@ struct variable no_indicator = {"no_indicator", &ecpg_no_indicator, 0, NULL};
 
 struct ECPGtype ecpg_query = {ECPGt_char_variable, 0L, {NULL}};
 
+enum errortype {ET_WARN, ET_ERROR, ET_FATAL};
+
+/*
+ * Handle parsing errors and warnings
+ */
+static void
+mmerror(enum errortype type, char * error)
+{
+
+    switch(type)
+    {
+	case ET_WARN: 
+		fprintf(stderr, "%s:%d: WARNING: %s\n", input_filename, yylineno, error); 
+		break;
+	case ET_ERROR:
+		fprintf(stderr, "%s:%d: ERROR: %s\n", input_filename, yylineno, error);
+		ret_value = PARSE_ERROR;
+		break;
+	case ET_FATAL:
+		fprintf(stderr, "%s:%d: ERROR: %s\n", input_filename, yylineno, error);
+		exit(PARSE_ERROR);
+    }
+}
+
 /*
  * Handle the filename and line numbering.
  */
@@ -193,13 +217,13 @@ find_struct(char * name, char *next)
 	if (p->type->typ != ECPGt_struct && p->type->typ != ECPGt_union)
         {
                 sprintf(errortext, "variable %s is not a pointer", name);
-                yyerror (errortext);
+                mmerror(ET_FATAL, errortext);
         }
 
 	if (p->type->u.element->typ  != ECPGt_struct && p->type->u.element->typ != ECPGt_union)
         {
                 sprintf(errortext, "variable %s is not a pointer to a structure or a union", name);
-                yyerror (errortext);
+                mmerror(ET_FATAL, errortext);
         }
 
 	/* restore the name, we will need it later on */
@@ -213,7 +237,7 @@ find_struct(char * name, char *next)
 	if (p->type->typ != ECPGt_struct && p->type->typ != ECPGt_union)
 	{
 		sprintf(errortext, "variable %s is neither a structure nor a union", name);
-		yyerror (errortext);
+		mmerror(ET_FATAL, errortext);
 	}
 
 	/* restore the name, we will need it later on */
@@ -255,7 +279,7 @@ find_variable(char * name)
     if (p == NULL)
     {
 	sprintf(errortext, "The variable %s is not declared", name);
-	yyerror(errortext);
+	mmerror(ET_FATAL, errortext);
     }
 
     return(p);
@@ -370,7 +394,7 @@ check_indicator(struct ECPGtype *var)
 			check_indicator(var->u.element);
 			break;
 		default: 
-			yyerror ("indicator variable must be integer type");
+			mmerror(ET_ERROR, "indicator variable must be integer type");
 			break;
 	}
 }
@@ -562,7 +586,7 @@ get_typedef(char *name)
 	if (!this)
 	{
 		sprintf(errortext, "invalid datatype '%s'", name);
-		yyerror(errortext);
+		mmerror(ET_FATAL, errortext);
 	}
 
 	return(this);
@@ -574,7 +598,7 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 	if (type_index >= 0) 
 	{
 		if (*length >= 0)
-                      	yyerror("No multi-dimensional array support");
+                      	mmerror(ET_FATAL, "No multi-dimensional array support");
 
 		*length = type_index;
 	}
@@ -582,7 +606,7 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 	if (type_dimension >= 0)
 	{
 		if (*dimension >= 0 && *length >= 0)
-			yyerror("No multi-dimensional array support");
+			mmerror(ET_FATAL, "No multi-dimensional array support");
 
 		if (*dimension >= 0)
 			*length = *dimension;
@@ -591,7 +615,7 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 	}
 
 	if (*length >= 0 && *dimension >= 0 && pointer)
-		yyerror("No multi-dimensional array support");
+		mmerror(ET_FATAL, "No multi-dimensional array support");
 
 	switch (type_enum)
 	{
@@ -605,7 +629,7 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 	        }
 
                 if (*length >= 0)
-                   yyerror("No multi-dimensional array support for structures");
+                   mmerror(ET_FATAL, "No multi-dimensional array support for structures");
 
                 break;
            case ECPGt_varchar:
@@ -643,7 +667,7 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 	        }
 
                 if (*length >= 0)
-                   yyerror("No multi-dimensional array support for simple data types");
+                   mmerror(ET_FATAL, "No multi-dimensional array support for simple data types");
 
                 break;
 	}
@@ -735,7 +759,7 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
                 NEW,  NOCREATEDB, NOCREATEUSER, NONE, NOTHING, NOTIFY, NOTNULL,
 		OFFSET, OIDS, OPERATOR, PASSWORD, PROCEDURAL,
                 RENAME, RESET, RETURNS, ROW, RULE,
-                SERIAL, SEQUENCE, SETOF, SHARE, SHOW, START, STATEMENT, STDIN, STDOUT,
+                SEQUENCE, SERIAL, SETOF, SHARE, SHOW, START, STATEMENT, STDIN, STDOUT, SYSID
 		TRUNCATE, TRUSTED,
                 UNLISTEN, UNTIL, VACUUM, VALID, VERBOSE, VERSION
 
@@ -812,7 +836,7 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 %type  <str>    def_elem def_list definition def_name def_type DefineStmt
 %type  <str>    opt_instead event event_object RuleActionList opt_using
 %type  <str>	RuleActionStmtOrEmpty RuleActionMulti join_list func_as
-%type  <str>    RuleStmt opt_column opt_name oper_argtypes
+%type  <str>    RuleStmt opt_column opt_name oper_argtypes sysid_clause
 %type  <str>    MathOp RemoveFuncStmt aggr_argtype for_update_clause
 %type  <str>    RemoveAggrStmt remove_type RemoveStmt ExtendStmt
 %type  <str>    RemoveOperStmt RenameStmt all_Op user_valid_clause
@@ -834,10 +858,11 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 %type  <str>    select_offset_value table_list using_expr join_expr
 %type  <str>	using_list from_expr table_expr join_clause join_type
 %type  <str>	join_qual update_list join_clause join_clause_with_union
-%type  <str>	opt_level opt_lock lock_type OptConstrTrigDeferrable,
-%type  <str>    OptConstrTrigInitdeferred OptConstrFromTable comment_op
+%type  <str>	opt_level opt_lock lock_type,
+%type  <str>    OptConstrFromTable comment_op ConstraintAttributeSpec
 %type  <str>    constraints_set_list constraints_set_namelist comment_fn
 %type  <str>	constraints_set_mode comment_type comment_cl comment_ag
+%type  <str>	ConstraintDeferrabilitySpec ConstraintTimeSpec 
 
 %type  <str>	ECPGWhenever ECPGConnect connection_target ECPGOpen
 %type  <str>	indicator ECPGExecute ECPGPrepare ecpg_using
@@ -936,7 +961,7 @@ stmt:  AddAttrStmt			{ output_statement($1, 0); }
 		| ConstraintsSetStmt	{ output_statement($1, 0); }
 		| ECPGConnect		{
 						if (connection)
-							yyerror("no at option for connect statement.\n");
+							mmerror(ET_ERROR, "no at option for connect statement.\n");
 
 						fprintf(yyout, "{ ECPGconnect(__LINE__, %s, %d);", $1, autocommit);
 						whenever_action(2);
@@ -947,7 +972,7 @@ stmt:  AddAttrStmt			{ output_statement($1, 0); }
 					}
 		| ECPGDeallocate	{
 						if (connection)
-							yyerror("no at option for connect statement.\n");
+							mmerror(ET_ERROR, "no at option for connect statement.\n");
 
 						fputc('{', yyout);
 						fputs($1, yyout);
@@ -959,7 +984,7 @@ stmt:  AddAttrStmt			{ output_statement($1, 0); }
 					}
 		| ECPGDisconnect	{
 						if (connection)
-							yyerror("no at option for disconnect statement.\n");
+							mmerror(ET_ERROR, "no at option for disconnect statement.\n");
 
 						fprintf(yyout, "{ ECPGdisconnect(__LINE__, \"%s\");", $1); 
 						whenever_action(2);
@@ -969,7 +994,7 @@ stmt:  AddAttrStmt			{ output_statement($1, 0); }
 						output_statement($1, 0);
 					}
 		| ECPGFree		{
-                        fprintf(yyout, "{ ECPGdeallocate(__LINE__, \"%s\");", $1); 
+						fprintf(yyout, "{ ECPGdeallocate(__LINE__, %s, \"%s\");", connection ? connection : "NULL", $1); 
 						whenever_action(2);
 						free($1);
 					}
@@ -985,7 +1010,7 @@ stmt:  AddAttrStmt			{ output_statement($1, 0); }
 						if (ptr == NULL)
 						{
 							sprintf(errortext, "trying to open undeclared cursor %s\n", $1);
-							yyerror(errortext);
+							mmerror(ET_ERROR, errortext);
 						}
                   
 						fprintf(yyout, "{ ECPGdo(__LINE__, %s, \"%s\",", ptr->connection ? ptr->connection : "NULL", ptr->command);
@@ -1000,7 +1025,7 @@ stmt:  AddAttrStmt			{ output_statement($1, 0); }
 					}
 		| ECPGPrepare		{
 						if (connection)
-							yyerror("no at option for set connection statement.\n");
+							mmerror(ET_ERROR, "no at option for set connection statement.\n");
 
 						fprintf(yyout, "{ ECPGprepare(__LINE__, %s);", $1); 
 						whenever_action(2);
@@ -1014,7 +1039,7 @@ stmt:  AddAttrStmt			{ output_statement($1, 0); }
 					}
 		| ECPGSetConnection     {
 						if (connection)
-							yyerror("no at option for set connection statement.\n");
+							mmerror(ET_ERROR, "no at option for set connection statement.\n");
 
 						fprintf(yyout, "{ ECPGsetconn(__LINE__, %s);", $1);
 						whenever_action(2);
@@ -1022,19 +1047,19 @@ stmt:  AddAttrStmt			{ output_statement($1, 0); }
 					}
 		| ECPGTypedef		{
 						if (connection)
-							yyerror("no at option for typedef statement.\n");
+							mmerror(ET_ERROR, "no at option for typedef statement.\n");
 
 						output_simple_statement($1);
 					}
 		| ECPGVar		{
 						if (connection)
-							yyerror("no at option for var statement.\n");
+							mmerror(ET_ERROR, "no at option for var statement.\n");
 
 						output_simple_statement($1);
 					}
 		| ECPGWhenever		{
 						if (connection)
-							yyerror("no at option for whenever statement.\n");
+							mmerror(ET_ERROR, "no at option for whenever statement.\n");
 
 						output_simple_statement($1);
 					}
@@ -1052,11 +1077,18 @@ stmt:  AddAttrStmt			{ output_statement($1, 0); }
  *
  *****************************************************************************/
 
-CreateUserStmt:  CREATE USER UserId user_passwd_clause user_createdb_clause
-			user_createuser_clause user_group_clause user_valid_clause
+CreateUserStmt: CREATE USER UserId
+		user_createdb_clause user_createuser_clause user_group_clause
+		user_valid_clause
 				{
-					$$ = cat3_str(cat5_str(make1_str("create user"), $3, $4, $5, $6), $7, $8);
+					$$ = cat2_str(cat5_str(make1_str("create user"), $3, $4, $5, $6), $7);
 				}
+		| CREATE USER UserId WITH sysid_clause user_passwd_clause
+		user_createdb_clause user_createuser_clause user_group_clause
+		user_valid_clause
+		{
+					$$ = cat5_str(cat5_str(make1_str("create user"), $3, make1_str("with"), $5, $6), $7, $8, $9, $10);
+		}
 		;
 
 /*****************************************************************************
@@ -1066,10 +1098,16 @@ CreateUserStmt:  CREATE USER UserId user_passwd_clause user_createdb_clause
  *
  *****************************************************************************/
 
-AlterUserStmt:  ALTER USER UserId user_passwd_clause user_createdb_clause
-			user_createuser_clause user_group_clause user_valid_clause
+AlterUserStmt:  ALTER USER UserId user_createdb_clause
+		user_createuser_clause user_group_clause user_valid_clause
 				{
-					$$ = cat3_str(cat5_str(make1_str("alter user"), $3, $4, $5, $6), $7, $8);
+					$$ = cat2_str(cat5_str(make1_str("alter user"), $3, $4, $5, $6), $7);
+				}
+		|ALTER USER UserId WITH sysid_clause user_passwd_clause
+		user_createdb_clause user_createuser_clause user_group_clause
+		user_valid_clause
+				{
+					$$ = cat5_str(cat5_str(make1_str("alter user"), $3, make1_str("with"), $5, $6), $7, $8, $9, $10);
 				}
 		;
 
@@ -1086,9 +1124,13 @@ DropUserStmt:  DROP USER UserId
 				}
 		;
 
-user_passwd_clause:  WITH PASSWORD UserId	{ $$ = cat2_str(make1_str("with password") , $3); }
-			| /*EMPTY*/		{ $$ = EMPTY; }
+user_passwd_clause:  PASSWORD UserId	{ $$ = cat2_str(make1_str("password") , $2); }
+			| /*EMPTY*/	{ $$ = EMPTY; }
 		;
+
+sysid_clause:	SYSID Iconst		{ $$ = cat2_str(make1_str("sysid"), $2); }
+			| /*EMPTY*/     { $$ = EMPTY; }
+                ;
 
 user_createdb_clause:  CREATEDB
 				{
@@ -1122,7 +1164,14 @@ user_group_list:  user_group_list ',' UserId
 				}
 		;
 
-user_group_clause:  IN GROUP user_group_list	{ $$ = cat2_str(make1_str("in group"), $3); }
+user_group_clause:  IN GROUP user_group_list
+			{
+				/* the backend doesn't actually process this,
+                                 * so an warning message is probably fairer */
+				mmerror(ET_WARN, "IN GROUP is not implemented");
+
+				$$ = cat2_str(make1_str("in group"), $3); 
+			}
 			| /*EMPTY*/		{ $$ = EMPTY; }
 		;
 
@@ -1160,7 +1209,7 @@ VariableSetStmt:  SET ColId TO var_value
 #ifdef MULTIBYTE
 					$$ = cat2_str(make1_str("set names"), $3);
 #else
-                                        yyerror("SET NAMES is not supported");
+                                        mmerror(ET_ERROR, "SET NAMES is not supported");
 #endif
                                 }
                 ;
@@ -1266,13 +1315,13 @@ alter_clause:  ADD opt_column columnDef
 					$$ = make3_str(make1_str("add("), $3, make1_str(")"));
 				}
 			| DROP opt_column ColId
-				{	yyerror("ALTER TABLE/DROP COLUMN not yet implemented"); }
+				{	mmerror(ET_ERROR, "ALTER TABLE/DROP COLUMN not yet implemented"); }
 			| ALTER opt_column ColId SET DEFAULT a_expr
-				{	yyerror("ALTER TABLE/ALTER COLUMN/SET DEFAULT not yet implemented"); }
+				{	mmerror(ET_ERROR, "ALTER TABLE/ALTER COLUMN/SET DEFAULT not yet implemented"); }
 			| ALTER opt_column ColId DROP DEFAULT
-				{	yyerror("ALTER TABLE/ALTER COLUMN/DROP DEFAULT not yet implemented"); }
+				{	mmerror(ET_ERROR, "ALTER TABLE/ALTER COLUMN/DROP DEFAULT not yet implemented"); }
 			| ADD ConstraintElem
-				{	yyerror("ALTER TABLE/ADD CONSTRAINT not yet implemented"); }
+				{	mmerror(ET_ERROR, "ALTER TABLE/ADD CONSTRAINT not yet implemented"); }
 		;
 
 /*****************************************************************************
@@ -1365,7 +1414,7 @@ OptTempType:	  TEMP		{ $$ = make1_str("temp"); }
 
 OptTempScope:  GLOBAL
                {
-                    yyerror("GLOBAL TEMPORARY TABLE is not currently supported");
+                    mmerror(ET_ERROR, "GLOBAL TEMPORARY TABLE is not currently supported");
                     $$ = make1_str("global");
                }
              | LOCAL { $$ = make1_str("local"); }
@@ -1466,8 +1515,7 @@ ColConstraintElem:  CHECK '(' a_expr ')'
 				}
 			| REFERENCES ColId opt_column_list key_match key_actions
 				{
-					fprintf(stderr, "CREATE TABLE/FOREIGN KEY clause ignored; not yet implemented");
-					$$ = EMPTY;
+					$$ = cat5_str(make1_str("references"), $2, $3, $4, $5);
 				}
 		;
 
@@ -1497,19 +1545,29 @@ ConstraintElem:  CHECK '(' a_expr ')'
 				}
 		| FOREIGN KEY '(' columnList ')' REFERENCES ColId opt_column_list key_match key_actions
 				{
-					fprintf(stderr, "CREATE TABLE/FOREIGN KEY clause ignored; not yet implemented");
-					$$ = "";
+					$$ = cat3_str(cat5_str(make1_str("foreign key("), $4, make1_str(") references"), $7, $8), $9, $10);
 				}
 		;
 
-key_match:  MATCH FULL					{ $$ = make1_str("match full"); }
-		| MATCH PARTIAL					{ $$ = make1_str("match partial"); }
-		| /*EMPTY*/					{ $$ = EMPTY; }
+key_match:  MATCH FULL
+		{
+			 $$ = make1_str("match full");
+		}
+		| MATCH PARTIAL		
+		{
+			mmerror(ET_WARN, "FOREIGN KEY match type PARTIAL not implemented yet");
+			$$ = make1_str("match partial");
+		}
+		| /*EMPTY*/
+		{
+			mmerror(ET_WARN, "FOREIGN KEY match type UNSPECIFIED not implemented yet");
+			$$ = EMPTY;
+		}
 		;
 
-key_actions:  key_action key_action		{ $$ = cat2_str($1, $2); }
-		| key_action					{ $$ = $1; }
-		| /*EMPTY*/					{ $$ = EMPTY; }
+key_actions:  key_action key_action	{ $$ = cat2_str($1, $2); }
+		| key_action		{ $$ = $1; }
+		| /*EMPTY*/		{ $$ = EMPTY; }
 		;
 
 key_action:  ON DELETE key_reference	{ $$ = cat2_str(make1_str("on delete"), $3); }
@@ -1517,6 +1575,7 @@ key_action:  ON DELETE key_reference	{ $$ = cat2_str(make1_str("on delete"), $3)
 		;
 
 key_reference:  NO ACTION	{ $$ = make1_str("no action"); }
+		| RESTRICT	{ $$ = make1_str("restrict"); }
 		| CASCADE	{ $$ = make1_str("cascade"); }
 		| SET DEFAULT	{ $$ = make1_str("set default"); }
 		| SET NULL_P	{ $$ = make1_str("set null"); }
@@ -1534,7 +1593,7 @@ OptInherit:  INHERITS '(' relation_name_list ')' { $$ = make3_str(make1_str("inh
 CreateAsStmt:  CREATE OptTemp TABLE relation_name OptCreateAs AS SelectStmt
 		{
 			if (FoundInto == 1)
-				yyerror("CREATE TABLE/AS SELECT may not specify INTO");
+				mmerror(ET_ERROR, "CREATE TABLE/AS SELECT may not specify INTO");
 
 			$$ = cat5_str(cat3_str(make1_str("create"), $2, make1_str("table")), $4, $5, make1_str("as"), $7); 
 		}
@@ -1659,11 +1718,11 @@ CreateTrigStmt:  CREATE TRIGGER name TriggerActionTime TriggerEvents ON
 				}
 	|	CREATE CONSTRAINT TRIGGER name AFTER TriggerOneEvent ON
                                 relation_name OptConstrFromTable
-                                OptConstrTrigDeferrable OptConstrTrigInitdeferred
+				ConstraintAttributeSpec
                                 FOR EACH ROW EXECUTE PROCEDURE
 				name '(' TriggerFuncArgs ')'
 				{
-					$$ = cat2_str(cat5_str(cat5_str(cat5_str(make1_str("create constraint trigger"), $4, make1_str("after"), $6, make1_str("on")), $8, $9, $10, $11), make1_str("for each row execute procedure"), $17, make1_str("("), $19), make1_str(")"));
+					$$ = cat5_str(cat5_str(cat5_str(make1_str("create constraint trigger"), $4, make1_str("after"), $6, make1_str("on")), $8, $9, $10, make1_str("for each row execute procedure")), $16, make1_str("("), $18, make1_str(")"));
 				}
 		;
 
@@ -1734,34 +1793,47 @@ OptConstrFromTable:                     /* Empty */
                                 }
                 ;
 
-OptConstrTrigDeferrable:        /* Empty */
+ConstraintAttributeSpec: /* Empty */
+		{	$$ = EMPTY; }
+	| ConstraintDeferrabilitySpec
+                { 	$$ = $1; }
+	| ConstraintDeferrabilitySpec ConstraintTimeSpec
+		{
+			if (strcmp($1, "deferrable") != 0 && strcmp($2, "initially deferrable") == 0 )
+				mmerror(ET_ERROR, "INITIALLY DEFERRED constraint must be DEFERRABLE");
+
+                	$$ = cat2_str($1, $2);
+		}
+	| ConstraintTimeSpec
+		{ 	$$ = $1; }
+	| ConstraintTimeSpec ConstraintDeferrabilitySpec
+		{
+			if (strcmp($2, "deferrable") != 0 && strcmp($1, "initially deferrable") == 0 )
+				mmerror(ET_ERROR, "INITIALLY DEFERRED constraint must be DEFERRABLE");
+
+                	$$ = cat2_str($1, $2);
+		}
+	;
+
+ConstraintDeferrabilitySpec: NOT DEFERRABLE
                                 {
-                                        $$ = EMPTY;
+                                        $$ = make1_str("not deferrable");
                                 }
                 | DEFERRABLE
                                 {
                                         $$ = make1_str("deferrable");
                                 }
-                | NOT DEFERRABLE
-                                {
-                                        $$ = make1_str("not deferrable");
-                                }
                 ;
 
-OptConstrTrigInitdeferred:      /* Empty */
+ConstraintTimeSpec: INITIALLY IMMEDIATE
                                 {
-                                        $$ = EMPTY;
+                                        $$ = make1_str("initially immediate");
                                 }
                 | INITIALLY DEFERRED
                                 {
                                         $$ = make1_str("initially deferrable");
                                 }
-                | INITIALLY IMMEDIATE
-                                {
-                                        $$ = make1_str("initially immediate");
-                                }
                 ;
-
 
 DropTrigStmt:  DROP TRIGGER name ON relation_name
 				{
@@ -1869,8 +1941,8 @@ TruncateStmt:  TRUNCATE TABLE relation_name
 
 FetchStmt:	FETCH opt_direction fetch_how_many opt_portal_name INTO into_list
 				{
-					if (strncmp($2, "relative", strlen("relative")) == 0 && atol($3) == 0L)
-						yyerror("FETCH/RELATIVE at current position is not supported");
+					if (strcmp($2, "relative") == 0 && atol($3) == 0L)
+						mmerror(ET_ERROR, "FETCH/RELATIVE at current position is not supported");
 
 					$$ = cat4_str(make1_str("fetch"), $2, $3, $4);
 				}
@@ -1885,7 +1957,7 @@ opt_direction:	FORWARD		{ $$ = make1_str("forward"); }
 		| RELATIVE      { $$ = make1_str("relative"); }
                 | ABSOLUTE
  				{
-					fprintf(stderr, "FETCH/ABSOLUTE not supported, using RELATIVE");
+					mmerror(ET_WARN, "FETCH/ABSOLUTE not supported, backend will use RELATIVE");
 					$$ = make1_str("absolute");
 				}
 		| /*EMPTY*/	{ $$ = EMPTY; /* default */ }
@@ -2041,7 +2113,7 @@ grantee:  PUBLIC
 
 opt_with_grant:  WITH GRANT OPTION
 				{
-					yyerror("WITH GRANT OPTION is not supported.  Only relation owners can set privileges");
+					mmerror(ET_ERROR, "WITH GRANT OPTION is not supported.  Only relation owners can set privileges");
 				 }
 		| /*EMPTY*/ 
 		;
@@ -2257,7 +2329,7 @@ RemoveOperStmt:  DROP OPERATOR all_Op '(' oper_argtypes ')'
 
 oper_argtypes:	name
 				{
-				   yyerror("parser: argument type missing (use NONE for unary operators)");
+				   mmerror(ET_ERROR, "parser: argument type missing (use NONE for unary operators)");
 				}
 		| name ',' name
 				{ $$ = cat3_str($1, make1_str(","), $3); }
@@ -2446,10 +2518,10 @@ LoadStmt:  LOAD file_name
 CreatedbStmt:  CREATE DATABASE database_name WITH opt_database1 opt_database2
 				{
 					if (strlen($5) == 0 || strlen($6) == 0) 
-						yyerror("CREATE DATABASE WITH requires at least an option");
+						mmerror(ET_ERROR, "CREATE DATABASE WITH requires at least an option");
 #ifndef MULTIBYTE
 					if (strlen($6) != 0)
-						yyerror("WITH ENCODING is not supported");
+						mmerror(ET_ERROR, "WITH ENCODING is not supported");
 #endif
 					$$ = cat5_str(make1_str("create database"), $3, make1_str("with"), $5, $6);
 				}
@@ -2519,7 +2591,7 @@ VacuumStmt:  VACUUM opt_verbose opt_analyze
 		| VACUUM opt_verbose opt_analyze relation_name opt_va_list
 				{
 					if ( strlen($5) > 0 && strlen($4) == 0 )
-						yyerror("parser: syntax error at or near \"(\"");
+						mmerror(ET_ERROR, "parser: syntax error at or near \"(\"");
 					$$ = cat5_str(make1_str("vacuum"), $2, $3, $4, $5);
 				}
 		;
@@ -2704,7 +2776,7 @@ CursorStmt:  DECLARE name opt_cursor CURSOR FOR
 						{
 						        /* re-definition is a bug */
 							sprintf(errortext, "cursor %s already defined", $2);
-							yyerror(errortext);
+							mmerror(ET_ERROR, errortext);
 				                }
         				}
                         
@@ -2748,7 +2820,7 @@ opt_cursor:  BINARY             	{ $$ = make1_str("binary"); }
 SelectStmt:      select_clause sort_clause for_update_clause opt_select_limit
 				{
 					if (strlen($3) > 0 && ForUpdateNotAllowed != 0)
-							yyerror("FOR UPDATE is not allowed in this context");
+							mmerror(ET_ERROR, "FOR UPDATE is not allowed in this context");
 
 					ForUpdateNotAllowed = 0;
 					$$ = cat4_str($1, $2, $3, $4);
@@ -2967,7 +3039,7 @@ table_expr:  relation_expr AS ColLabel
 join_clause_with_union:  join_clause
                                 {       $$ = $1; }
                 | table_expr UNION JOIN table_expr
-                                {       yyerror("UNION JOIN not yet implemented"); }
+                                {       mmerror(ET_ERROR, "UNION JOIN not yet implemented"); }
                 ;
 
 join_clause:  table_expr join_list
@@ -3009,22 +3081,22 @@ join_expr:  join_type JOIN table_expr join_qual
 join_type:  FULL join_outer
                                 {
                                         $$ = cat2_str(make1_str("full"), $2);
-                                        fprintf(stderr,"FULL OUTER JOIN not yet implemented\n");
+					mmerror(ET_WARN, "FULL OUTER JOIN not yet implemented");
                                 }
                 | LEFT join_outer
                                 {
                                         $$ = cat2_str(make1_str("left"), $2);
-                                        fprintf(stderr,"LEFT OUTER JOIN not yet implemented\n");
+					mmerror(ET_WARN, "LEFT OUTER JOIN not yet implemented");
                                 }
                 | RIGHT join_outer
                                 {
                                         $$ = cat2_str(make1_str("right"), $2);
-                                        fprintf(stderr,"RIGHT OUTER JOIN not yet implemented\n");
+					mmerror(ET_WARN, "RIGHT OUTER JOIN not yet implemented");
                                 }
                 | OUTER_P
                                 {
                                         $$ = make1_str("outer");
-                                        fprintf(stderr,"OUTER JOIN not yet implemented\n");
+					mmerror(ET_WARN, "OUTER JOIN not yet implemented");
                                 }
                 | INNER_P
                                 {
@@ -3214,9 +3286,9 @@ numeric:  FLOAT
 opt_float:  '(' Iconst ')'
 				{
 					if (atol($2) < 1)
-						yyerror("precision for FLOAT must be at least 1");
+						mmerror(ET_ERROR, "precision for FLOAT must be at least 1");
 					else if (atol($2) >= 16)
-						yyerror("precision for FLOAT must be less than 16");
+						mmerror(ET_ERROR, "precision for FLOAT must be less than 16");
 					$$ = make3_str(make1_str("("), $2, make1_str(")"));
 				}
 		| /*EMPTY*/
@@ -3229,11 +3301,11 @@ opt_numeric:  '(' Iconst ',' Iconst ')'
 				{
 					if (atol($2) < 1 || atol($2) > NUMERIC_MAX_PRECISION) {
 						sprintf(errortext, "NUMERIC precision %s must be between 1 and %d", $2, NUMERIC_MAX_PRECISION);
-						yyerror(errortext);
+						mmerror(ET_ERROR, errortext);
 					}
 					if (atol($4) < 0 || atol($4) > atol($2)) {
 						sprintf(errortext, "NUMERIC scale %s must be between 0 and precision %s", $4, $2);
-						yyerror(errortext);
+						mmerror(ET_ERROR, errortext);
 					}
 					$$ = cat3_str(make2_str(make1_str("("), $2), make1_str(","), make2_str($4, make1_str(")")));
 				}
@@ -3241,7 +3313,7 @@ opt_numeric:  '(' Iconst ',' Iconst ')'
 				{
 					if (atol($2) < 1 || atol($2) > NUMERIC_MAX_PRECISION) {
 						sprintf(errortext, "NUMERIC precision %s must be between 1 and %d", $2, NUMERIC_MAX_PRECISION);
-						yyerror(errortext);
+						mmerror(ET_ERROR, errortext);
 					}
 					$$ = make3_str(make1_str("("), $2, make1_str(")"));
 				}
@@ -3255,11 +3327,11 @@ opt_decimal:  '(' Iconst ',' Iconst ')'
 				{
 					if (atol($2) < 1 || atol($2) > NUMERIC_MAX_PRECISION) {
 						sprintf(errortext, "NUMERIC precision %s must be between 1 and %d", $2, NUMERIC_MAX_PRECISION);
-						yyerror(errortext);
+						mmerror(ET_ERROR, errortext);
 					}
 					if (atol($4) < 0 || atol($4) > atol($2)) {
 						sprintf(errortext, "NUMERIC scale %s must be between 0 and precision %s", $4, $2);
-						yyerror(errortext);
+						mmerror(ET_ERROR, errortext);
 					}
 					$$ = cat3_str(make2_str(make1_str("("), $2), make1_str(","), make2_str($4, make1_str(")")));
 				}
@@ -3267,7 +3339,7 @@ opt_decimal:  '(' Iconst ',' Iconst ')'
 				{
 					if (atol($2) < 1 || atol($2) > NUMERIC_MAX_PRECISION) {
 						sprintf(errortext, "NUMERIC precision %s must be between 1 and %d", $2, NUMERIC_MAX_PRECISION);
-						yyerror(errortext);
+						mmerror(ET_ERROR, errortext);
 					}
 					$$ = make3_str(make1_str("("), $2, make1_str(")"));
 				}
@@ -3284,14 +3356,16 @@ opt_decimal:  '(' Iconst ',' Iconst ')'
 Character:  character '(' Iconst ')'
 				{
 					if (strncasecmp($1, "char", strlen("char")) && strncasecmp($1, "varchar", strlen("varchar")))
-						yyerror("internal parsing error; unrecognized character type");
-					if (atol($3) < 1) {
+						mmerror(ET_ERROR, "internal parsing error; unrecognized character type");
+					if (atol($3) < 1)
+					{
 						sprintf(errortext, "length for '%s' type must be at least 1",$1);
-						yyerror(errortext);
+						mmerror(ET_ERROR, errortext);
 					}
-					else if (atol($3) > MaxAttrSize) {
+					else if (atol($3) > MaxAttrSize)
+					{
 						sprintf(errortext, "length for type '%s' cannot exceed %ld", $1, MaxAttrSize);
-						yyerror(errortext);
+						mmerror(ET_ERROR, errortext);
 					}
 
 					$$ = cat2_str($1, make3_str(make1_str("("), $3, make1_str(")")));
@@ -3304,8 +3378,11 @@ Character:  character '(' Iconst ')'
 
 character:  CHARACTER opt_varying opt_charset opt_collate
 				{
-					if (strlen($4) > 0) 
-						fprintf(stderr, "COLLATE %s not yet implemented",$4);
+					if (strlen($4) > 0)
+					{
+						sprintf(errortext, "COLLATE %s not yet implemented", $4);
+						mmerror(ET_WARN, errortext);
+					}
 
 					$$ = cat4_str(make1_str("character"), $2, $3, $4);
 				}
@@ -3678,7 +3755,11 @@ com_expr:  attr
 		| CURRENT_TIME '(' Iconst ')'
 				{
 					if (atol($3) != 0)
-						fprintf(stderr,"CURRENT_TIME(%s) precision not implemented; zero used instead", $3);
+					{
+						sprintf(errortext, "CURRENT_TIME(%s) precision not implemented; backend will use zero instead", $3);
+						mmerror(ET_WARN, errortext);
+					}
+
 					$$ = make1_str("current_time");
 				}
 		| CURRENT_TIMESTAMP
@@ -3686,7 +3767,11 @@ com_expr:  attr
 		| CURRENT_TIMESTAMP '(' Iconst ')'
 				{
 					if (atol($3) != 0)
-						fprintf(stderr,"CURRENT_TIMESTAMP(%s) precision not implemented; zero used instead",$3);
+					{
+						sprintf(errortext, "CURRENT_TIMESTAMP(%s) precision not implemented; backend will use zero instead", $3);
+						mmerror(ET_WARN, errortext);
+					}
+
 					$$ = make1_str("current_timestamp");
 				}
 		| CURRENT_USER
@@ -3824,7 +3909,7 @@ case_expr:  CASE case_arg when_clause_list case_default END_TRANS
                                 {
 					$$ = cat5_str(make1_str("nullif("), $3, make1_str(","), $5, make1_str(")"));
 
-					fprintf(stderr, "NULLIF() not yet fully implemented");
+					mmerror(ET_WARN, "NULLIF() not yet fully implemented");
                                 }
                 | COALESCE '(' expr_list ')'
                                 {
@@ -3936,7 +4021,7 @@ relation_name:	SpecialRuleRelation
 					if (strcmp(LogRelationName, $1) == 0
 					   || strcmp(VariableRelationName, $1) == 0) {
 						sprintf(errortext, make1_str("%s cannot be accessed by users"),$1);
-						yyerror(errortext);
+						mmerror(ET_ERROR, errortext);
 					}
 					else
 						$$ = $1;
@@ -4107,6 +4192,7 @@ ColId:  ident					{ $$ = $1; }
 		| STATEMENT			{ $$ = make1_str("statement"); }
 		| STDIN                         { $$ = make1_str("stdin"); }
 		| STDOUT                        { $$ = make1_str("stdout"); }
+		| SYSID                         { $$ = make1_str("sysid"); }
 		| TIME				{ $$ = make1_str("time"); }
 		| TIMESTAMP			{ $$ = make1_str("timestamp"); }
 		| TIMEZONE_HOUR                 { $$ = make1_str("timezone_hour"); }
@@ -4204,14 +4290,14 @@ SpecialRuleRelation:  CURRENT
 					if (QueryIsRule)
 						$$ = make1_str("current");
 					else
-						yyerror("CURRENT used in non-rule query");
+						mmerror(ET_ERROR, "CURRENT used in non-rule query");
 				}
 		| NEW
 				{
 					if (QueryIsRule)
 						$$ = make1_str("new");
 					else
-						yyerror("NEW used in non-rule query");
+						mmerror(ET_ERROR, "NEW used in non-rule query");
 				}
 		;
 
@@ -4242,7 +4328,7 @@ connection_target: database_name opt_server opt_port
 		  if (strlen($2) > 0 && *($2) != '@')
 		  {
 		    sprintf(errortext, "parse error at or near '%s'", $2);
-		    yyerror(errortext);
+		    mmerror(ET_ERROR, errortext);
 		  }
 
 		  $$ = make5_str(make1_str("\""), $1, $2, $3, make1_str("\""));
@@ -4250,22 +4336,22 @@ connection_target: database_name opt_server opt_port
         |  db_prefix server opt_port '/' database_name opt_options
                 {
 		  /* new style: <tcp|unix>:postgresql://server[:port][/dbname] */
-                  if (strncmp($2, "://", 3) != 0)
+                  if (strncmp($2, "://", strlen("://")) != 0)
 		  {
 		    sprintf(errortext, "parse error at or near '%s'", $2);
-		    yyerror(errortext);
+		    mmerror(ET_ERROR, errortext);
 		  }
 
-		  if (strncmp($1, "unix", 4) == 0 && strncmp($2 + 3, "localhost", 9) != 0)
+		  if (strncmp($1, "unix", strlen("unix")) == 0 && strncmp($2 + strlen("://"), "localhost", strlen("localhost")) != 0)
 		  {
 		    sprintf(errortext, "unix domain sockets only work on 'localhost' but not on '%9.9s'", $2);
-                    yyerror(errortext);
+                    mmerror(ET_ERROR, errortext);
 		  }
 
-		  if (strncmp($1, "unix", 4) != 0 && strncmp($1, "tcp", 3) != 0)
+		  if (strncmp($1, "unix", strlen("unix")) != 0 && strncmp($1, "tcp", strlen("tcp")) != 0)
 		  {
 		    sprintf(errortext, "only protocols 'tcp' and 'unix' are supported");
-                    yyerror(errortext);
+                    mmerror(ET_ERROR, errortext);
 		  }
 	
 		  $$ = make4_str(make5_str(make1_str("\""), $1, $2, $3, make1_str("/")), $5, $6, make1_str("\""));
@@ -4287,13 +4373,13 @@ db_prefix: ident cvariable
 		  if (strcmp($2, "postgresql") != 0 && strcmp($2, "postgres") != 0)
 		  {
 		    sprintf(errortext, "parse error at or near '%s'", $2);
-		    yyerror(errortext);	
+		    mmerror(ET_ERROR, errortext);	
 		  }
 
 		  if (strcmp($1, "tcp") != 0 && strcmp($1, "unix") != 0)
 		  {
 		    sprintf(errortext, "Illegal connection type %s", $1);
-		    yyerror(errortext);
+		    mmerror(ET_ERROR, errortext);
 		  }
 
 		  $$ = make3_str($1, make1_str(":"), $2);
@@ -4304,7 +4390,7 @@ server: Op server_name
 		  if (strcmp($1, "@") != 0 && strcmp($1, "://") != 0)
 		  {
 		    sprintf(errortext, "parse error at or near '%s'", $1);
-		    yyerror(errortext);
+		    mmerror(ET_ERROR, errortext);
 		  }
 
 		  $$ = make2_str($1, $2);
@@ -4369,7 +4455,7 @@ char_variable: cvariable
                                 $$ = make2_str($1, make1_str(".arr"));
                                 break;
                             default:
-                                yyerror("invalid datatype");
+                                mmerror(ET_ERROR, "invalid datatype");
                                 break;
                         }
 		}
@@ -4377,12 +4463,12 @@ char_variable: cvariable
 opt_options: Op ColId
 		{
 			if (strlen($1) == 0)
-				yyerror("parse error");
+				mmerror(ET_ERROR, "parse error");
 				
 			if (strcmp($1, "?") != 0)
 			{
 				sprintf(errortext, "parse error at or near %s", $1);
-				yyerror(errortext);
+				mmerror(ET_ERROR, errortext);
 			}
 			
 			$$ = make2_str(make1_str("?"), $2);
@@ -4404,7 +4490,7 @@ ECPGCursorStmt:  DECLARE name opt_cursor CURSOR FOR ident
 						{
 						        /* re-definition is a bug */
 							sprintf(errortext, "cursor %s already defined", $2);
-							yyerror(errortext);
+							mmerror(ET_ERROR, errortext);
 				                }
         				}
 
@@ -4561,7 +4647,7 @@ s_struct : S_STRUCT opt_symbol
         {
             struct_member_list[struct_level++] = NULL;
             if (struct_level >= STRUCT_DEPTH)
-                 yyerror("Too many levels in nested structure definition");
+                 mmerror(ET_ERROR, "Too many levels in nested structure definition");
 	    $$ = cat2_str(make1_str("struct"), $2);
 	}
 
@@ -4569,7 +4655,7 @@ s_union : S_UNION opt_symbol
         {
             struct_member_list[struct_level++] = NULL;
             if (struct_level >= STRUCT_DEPTH)
-                 yyerror("Too many levels in nested structure definition");
+                 mmerror(ET_ERROR, "Too many levels in nested structure definition");
 	    $$ = cat2_str(make1_str("union"), $2);
 	}
 
@@ -4639,7 +4725,7 @@ variable: opt_pointer symbol opt_array_bounds opt_initializer
 			       sprintf(ascii_len, "%d", length);
 
                                if (length == 0)
-				   yyerror ("pointer to varchar are not implemented");
+				   mmerror(ET_ERROR, "pointer to varchar are not implemented");
 
 			       if (dimension == 0)
 				   $$ = make4_str(make5_str(mm_strdup(actual_storage[struct_level]), make1_str(" struct varchar_"), mm_strdup($2), make1_str(" { int len; char arr["), mm_strdup(ascii_len)), make1_str("]; } *"), mm_strdup($2), $4);
@@ -4752,7 +4838,7 @@ ECPGOpen: SQL_OPEN name ecpg_using {
 
 ecpg_using: /* empty */		{ $$ = EMPTY; }
 	| USING variablelist	{
-					/* yyerror ("open cursor with variables not implemented yet"); */
+					/* mmerror ("open cursor with variables not implemented yet"); */
 					$$ = EMPTY;
 				}
 
@@ -4774,8 +4860,8 @@ ECPGPrepare: SQL_PREPARE ident FROM execstring
 
 ECPGRelease: TransactionStmt SQL_RELEASE
 	{
-		if (strncmp($1, "begin", 5) == 0)
-                        yyerror("RELEASE does not make sense when beginning a transaction");
+		if (strcmp($1, "begin") == 0)
+                        mmerror(ET_ERROR, "RELEASE does not make sense when beginning a transaction");
 
 		fprintf(yyout, "ECPGtrans(__LINE__, %s, \"%s\");",
 				connection ? connection : "NULL", $1);
@@ -4824,7 +4910,7 @@ ECPGTypedef: TYPE_P symbol IS ctype opt_type_array_bounds opt_reference
 			{
 			        /* re-definition is a bug */
 				sprintf(errortext, "type %s already defined", $2);
-				yyerror(errortext);
+				mmerror(ET_ERROR, errortext);
 	                }
 		}
 
@@ -4846,7 +4932,7 @@ ECPGTypedef: TYPE_P symbol IS ctype opt_type_array_bounds opt_reference
 		    $4.type_enum != ECPGt_char &&
 	            $4.type_enum != ECPGt_unsigned_char &&
 		    this->type->type_index >= 0)
-                            yyerror("No multi-dimensional array support for simple data types");
+                            mmerror(ET_ERROR, "No multi-dimensional array support for simple data types");
 
         	types = this;
 
@@ -4982,7 +5068,7 @@ ctype: CHAR
 	{
 		struct_member_list[struct_level++] = NULL;
 		if (struct_level >= STRUCT_DEPTH)
-        		yyerror("Too many levels in nested structure definition");
+        		mmerror(ET_ERROR, "Too many levels in nested structure definition");
 	} '{' sql_variable_declarations '}'
 	{
 		ECPGfree_struct_member(struct_member_list[struct_level--]);
@@ -4995,7 +5081,7 @@ ctype: CHAR
 	{
 		struct_member_list[struct_level++] = NULL;
 		if (struct_level >= STRUCT_DEPTH)
-        		yyerror("Too many levels in nested structure definition");
+        		mmerror(ET_ERROR, "Too many levels in nested structure definition");
 	} '{' sql_variable_declarations '}'
 	{
 		ECPGfree_struct_member(struct_member_list[struct_level--]);
@@ -5097,7 +5183,7 @@ sql_variable: opt_pointer symbol opt_array_bounds
                                break;
                            default:
 			       if (length >= 0)
-                	            yyerror("No multi-dimensional array support for simple data types");
+                	            mmerror(ET_ERROR, "No multi-dimensional array support for simple data types");
 
                                if (dimension < 0)
                                    type = ECPGmake_simple_type(actual_type[struct_level].type_enum, 1);
@@ -5153,7 +5239,7 @@ ECPGVar: SQL_VAR symbol IS ctype opt_type_array_bounds opt_reference
 			break;
 		   default:
 			if (length >= 0)
-                	    yyerror("No multi-dimensional array support for simple data types");
+                	    mmerror(ET_ERROR, "No multi-dimensional array support for simple data types");
 
                         if (dimension < 0)
                             type = ECPGmake_simple_type($4.type_enum, 1);
@@ -5444,6 +5530,5 @@ blockend : '}' {
 
 void yyerror(char * error)
 {
-    fprintf(stderr, "%s:%d: %s\n", input_filename, yylineno, error);
-    exit(PARSE_ERROR);
+	mmerror(ET_ERROR, error);
 }
