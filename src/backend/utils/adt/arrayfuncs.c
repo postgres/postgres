@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.76 2002/03/16 22:47:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.77 2002/03/20 19:41:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -907,10 +907,10 @@ array_get_slice(ArrayType *array,
 	 * with an empty slice, return NULL (should it be an empty array
 	 * instead?)
 	 */
-	if (ndim != nSubscripts || ndim <= 0 || ndim > MAXDIM)
+	if (ndim < nSubscripts || ndim <= 0 || ndim > MAXDIM)
 		RETURN_NULL(ArrayType *);
 
-	for (i = 0; i < ndim; i++)
+	for (i = 0; i < nSubscripts; i++)
 	{
 		if (lowerIndx[i] < lb[i])
 			lowerIndx[i] = lb[i];
@@ -919,8 +919,16 @@ array_get_slice(ArrayType *array,
 		if (lowerIndx[i] > upperIndx[i])
 			RETURN_NULL(ArrayType *);
 	}
+	/* fill any missing subscript positions with full array range */
+	for (; i < ndim; i++)
+	{
+		lowerIndx[i] = lb[i];
+		upperIndx[i] = dim[i] + lb[i] - 1;
+		if (lowerIndx[i] > upperIndx[i])
+			RETURN_NULL(ArrayType *);
+	}
 
-	mda_get_range(nSubscripts, span, lowerIndx, upperIndx);
+	mda_get_range(ndim, span, lowerIndx, upperIndx);
 
 	bytes = array_slice_size(ndim, dim, lb, arraydataptr,
 							 elmlen, lowerIndx, upperIndx);
@@ -1120,6 +1128,9 @@ array_set(ArrayType *array,
  *		  A new array is returned, just like the old except for the
  *		  modified range.
  *
+ * NOTE: we assume it is OK to scribble on the provided index arrays
+ * lowerIndx[] and upperIndx[].  These are generally just temporaries.
+ *
  * NOTE: For assignments, we throw an error for silly subscripts etc,
  * rather than returning a NULL as the fetch operations do.  The reasoning
  * is that returning a NULL would cause the user's whole array to be replaced
@@ -1172,7 +1183,7 @@ array_set_slice(ArrayType *array,
 	/* note: we assume srcArray contains no toasted elements */
 
 	ndim = ARR_NDIM(array);
-	if (ndim != nSubscripts || ndim <= 0 || ndim > MAXDIM)
+	if (ndim < nSubscripts || ndim <= 0 || ndim > MAXDIM)
 		elog(ERROR, "Invalid array subscripts");
 
 	/* copy dim/lb since we may modify them */
@@ -1185,7 +1196,7 @@ array_set_slice(ArrayType *array,
 	 * extend the array as long as no hole is created. An empty slice is
 	 * an error, too.
 	 */
-	for (i = 0; i < ndim; i++)
+	for (i = 0; i < nSubscripts; i++)
 	{
 		if (lowerIndx[i] > upperIndx[i])
 			elog(ERROR, "Invalid array subscripts");
@@ -1206,6 +1217,14 @@ array_set_slice(ArrayType *array,
 			else
 				elog(ERROR, "Invalid array subscripts");
 		}
+	}
+	/* fill any missing subscript positions with full array range */
+	for (; i < ndim; i++)
+	{
+		lowerIndx[i] = lb[i];
+		upperIndx[i] = dim[i] + lb[i] - 1;
+		if (lowerIndx[i] > upperIndx[i])
+			elog(ERROR, "Invalid array subscripts");
 	}
 
 	/*
