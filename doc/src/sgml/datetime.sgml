@@ -1,8 +1,11 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.5 1999/10/12 13:57:04 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.6 2000/02/02 16:21:06 thomas Exp $
 Date/time details
 
 $Log: datetime.sgml,v $
+Revision 2.6  2000/02/02 16:21:06  thomas
+Add detailed information on Australian time zones.
+
 Revision 2.5  1999/10/12 13:57:04  thomas
 Sequence of date interpretation not quite right.
 
@@ -422,185 +425,220 @@ Finish initial markup of cvs.sgml, and include it in the programmer's guide
      </tbody>
     </tgroup>
    </table>
-   <note>
-    <para>
-     If the compiler option USE_AUSTRALIAN_RULES is set 
-     then <literal>EST</literal> refers to Australia Eastern Std Time,
-     which has an offset of +10:00 hours from UTC.
-    </para>
-
-    <para>
-     Australian time zones and their naming variants
-     account for fully one quarter of all time zones in the 
-     <productname>Postgres</productname> time zone lookup table.
-    </para>
-   </note>
   </para>
 
-  <procedure>
+  <sect2>
+   <title>Australian Time Zones</title>
+
+   <para>
+    Australian time zones and their naming variants
+    account for fully one quarter of all time zones in the 
+    <productname>Postgres</productname> time zone lookup table.
+    There are two naming conflicts with common time zones defined
+    in the United States, <literal>CST</literal> and <literal>EST</literal>.
+   </para>
+
+   <para>
+    If the compiler option USE_AUSTRALIAN_RULES is set 
+    then <literal>CST</literal> and <literal>EST</literal> will be
+    interpreted using Australian conventions.
+
+    <table tocentry="1">
+     <title><productname>Postgres</productname> Australian Time Zones</title>
+     <titleabbrev>Australian Time Zones</titleabbrev>
+     <tgroup cols="3">
+      <thead>
+       <row>
+	<entry>Time Zone</entry>
+	<entry>Offset from UTC</entry>
+	<entry>Description</entry>
+       </row>
+      </thead>
+      <tbody>
+       <row>
+	<entry>CST</entry>
+	<entry>+10:30</entry>
+	<entry>Australian Central Standard Time</entry>
+       </row>
+       <row>
+	<entry>EST</entry>
+	<entry>+10:00</entry>
+	<entry>Australian Eastern Standard Time</entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+   </para>
+  </sect2>
+
+  <sect2>
    <title>Date/Time Input Interpretation</title>
 
    <para>
     The date/time types are all decoded using a common set of routines.
    </para>
 
-   <step>
-    <para>
-     Break the input string into tokens and categorize each token as
-     a string, time, time zone, or number.
-    </para>
+   <procedure>
+    <title>Date/Time Input Interpretation</title>
 
-    <substeps>
-     <step>
-      <para>
-       If the token contains a colon (":"), this is a time string.
-      </para>
-     </step>
+    <step>
+     <para>
+      Break the input string into tokens and categorize each token as
+      a string, time, time zone, or number.
+     </para>
 
-     <step>
-      <para>
-       If the token contains a dash ("-"), slash ("/"), or dot ("."),
-       this is a date string which may have a text month.
-      </para>
-     </step>
+     <substeps>
+      <step>
+       <para>
+	If the token contains a colon (":"), this is a time string.
+       </para>
+      </step>
 
-     <step>
-      <para>
-       If the token is numeric only, then it is either a single field
-       or an ISO-8601 concatenated date (e.g. "19990113" for January 13, 1999)
-       or time (e.g. 141516 for 14:15:16).
-      </para>
-     </step>
-     <step>
-      <para>
-       If the token starts with a plus ("+") or minus ("-"),
-       then it is either a time zone or a special field.
-      </para>
-     </step>
-    </substeps>
-   </step>
+      <step>
+       <para>
+	If the token contains a dash ("-"), slash ("/"), or dot ("."),
+	this is a date string which may have a text month.
+       </para>
+      </step>
 
-   <step>
-    <para>
-     If the token is a text string, match up with possible strings.
-    </para>
+      <step>
+       <para>
+	If the token is numeric only, then it is either a single field
+	or an ISO-8601 concatenated date (e.g. "19990113" for January 13, 1999)
+	or time (e.g. 141516 for 14:15:16).
+       </para>
+      </step>
+      <step>
+       <para>
+	If the token starts with a plus ("+") or minus ("-"),
+	then it is either a time zone or a special field.
+       </para>
+      </step>
+     </substeps>
+    </step>
+
+    <step>
+     <para>
+      If the token is a text string, match up with possible strings.
+     </para>
+     
+     <substeps>
+      <step>
+       <para>
+	Do a binary-search table lookup for the token
+	as either a special string (e.g. <literal>today</literal>),
+	day (e.g. <literal>Thursday</literal>),
+	month (e.g. <literal>January</literal>),
+	or noise word (e.g. <literal>on</literal>).
+       </para>
+       <para>
+	Set field values and bit mask for fields.
+	For example, set year, month, day for <literal>today</literal>, 
+	and additionally hour, minute, second for <literal>now</literal>.
+       </para>
+      </step>
+      
+      <step>
+       <para>
+	If not found, do a similar binary-search table lookup to match
+	the token with a time zone.
+       </para>
+      </step>
+
+      <step>
+       <para>
+	If not found, throw an error.
+       </para>
+      </step>
+     </substeps>
+    </step>
     
-    <substeps>
-     <step>
-      <para>
-       Do a binary-search table lookup for the token
-       as either a special string (e.g. <literal>today</literal>),
-       day (e.g. <literal>Thursday</literal>),
-       month (e.g. <literal>January</literal>),
-       or noise word (e.g. <literal>on</literal>).
-      </para>
-      <para>
-       Set field values and bit mask for fields.
-       For example, set year, month, day for <literal>today</literal>, 
-       and additionally hour, minute, second for <literal>now</literal>.
-      </para>
-     </step>
-     
-     <step>
-      <para>
-       If not found, do a similar binary-search table lookup to match
-       the token with a time zone.
-      </para>
-     </step>
+    <step>
+     <para>
+      The token is a number or number field.
+     </para>
 
-     <step>
-      <para>
-       If not found, throw an error.
-      </para>
-     </step>
-    </substeps>
-   </step>
-   
-   <step>
-    <para>
-     The token is a number or number field.
-    </para>
+     <substeps>
+      <step>
+       <para>
+	If there are more than 4 digits, 
+	and if no other date fields have been previously read, then interpret 
+	as a "concatenated date" (e.g. <literal>19990118</literal>). 8
+	and 6 digits are interpreted as year, month, and day, while 7
+	and 5 digits are interpreted as year, day of year, respectively.
+       </para>
+      </step>
 
-    <substeps>
-     <step>
-      <para>
-       If there are more than 4 digits, 
-       and if no other date fields have been previously read, then interpret 
-       as a "concatenated date" (e.g. <literal>19990118</literal>). 8
-       and 6 digits are interpreted as year, month, and day, while 7
-       and 5 digits are interpreted as year, day of year, respectively.
-      </para>
-     </step>
+      <step>
+       <para>
+	If the token is three digits
+	and a year has already been decoded, then interpret as day of year.
+       </para>
+      </step>
+      
+      <step>
+       <para>
+	If longer than two digits, then interpret as a year.
+       </para>
+      </step>
 
-     <step>
-      <para>
-       If the token is three digits
-       and a year has already been decoded, then interpret as day of year.
-      </para>
-     </step>
-     
-     <step>
-      <para>
-       If longer than two digits, then interpret as a year.
-      </para>
-     </step>
+      <step>
+       <para>
+	If in European date mode, and if the day field has not yet been read,
+	and if the value is less than or equal to 31, then interpret as a day.
+       </para>
+      </step>
 
-     <step>
-      <para>
-       If in European date mode, and if the day field has not yet been read,
-       and if the value is less than or equal to 31, then interpret as a day.
-      </para>
-     </step>
+      <step>
+       <para>
+	If the month field has not yet been read,
+	and if the value is less than or equal to 12, then interpret as a month.
+       </para>
+      </step>
 
-     <step>
-      <para>
-       If the month field has not yet been read,
-       and if the value is less than or equal to 12, then interpret as a month.
-      </para>
-     </step>
+      <step>
+       <para>
+	If the day field has not yet been read,
+	and if the value is less than or equal to 31, then interpret as a day.
+       </para>
+      </step>
 
-     <step>
-      <para>
-       If the day field has not yet been read,
-       and if the value is less than or equal to 31, then interpret as a day.
-      </para>
-     </step>
+      <step>
+       <para>
+	Otherwise, interpret as a year.
+       </para>
+      </step>
+     </substeps>
+    </step>
 
-     <step>
-      <para>
-       Otherwise, interpret as a year.
-      </para>
-     </step>
-    </substeps>
-   </step>
+    <step>
+     <para>
+      If BC has been specified, negate the year and offset by one for
+      internal storage
+      (there is no year zero in the Gregorian calendar, so numerically
+      1BC becomes year zero).
+     </para>
+    </step>
 
-   <step>
-    <para>
-     If BC has been specified, negate the year and offset by one for
-     internal storage
-     (there is no year zero in the Gregorian calendar, so numerically
-     1BC becomes year zero).
-    </para>
-   </step>
+    <step>
+     <para>
+      If BC was not specified, and if the year field was two digits in length, then
+      adjust the year to 4 digits. If the field was less than 70, then add 2000;
+      otherwise, add 1900.
 
-   <step>
-    <para>
-     If BC was not specified, and if the year field was two digits in length, then
-     adjust the year to 4 digits. If the field was less than 70, then add 2000;
-     otherwise, add 1900.
-
-     <tip>
-      <para>
-       Gregorian years 1-99AD may be entered by using 4 digits with leading
-       zeros (e.g. 0099 is 99AD). Three digits are also accepted as a
-       year under most circumstances, though depending on position the
-       numeric string may
-       be interpreted as doy instead.
-      </para>
-     </tip>
-    </para>
-   </step>
-  </procedure>
+      <tip>
+       <para>
+	Gregorian years 1-99AD may be entered by using 4 digits with leading
+	zeros (e.g. 0099 is 99AD). Three digits are also accepted as a
+	year under most circumstances, though depending on position the
+	numeric string may
+	be interpreted as doy instead.
+       </para>
+      </tip>
+     </para>
+    </step>
+   </procedure>
+  </sect2>
  </sect1>
 
  <sect1>
