@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.17 1996/08/10 05:02:53 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.18 1996/08/14 04:56:48 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -988,6 +988,10 @@ MainLoop(PsqlSettings *settings, FILE *source)
   bool querySent = 0;
   bool interactive;
   READ_ROUTINE GetNextLine;
+  bool connected = 1;  
+    /* We are connected to the backend (last time we looked) */
+  bool eof = 0;
+    /* We've reached the end of our command input. */
 
   interactive = ((source == stdin) && !settings->notty);
 #define PROMPT "=> "
@@ -1012,9 +1016,13 @@ MainLoop(PsqlSettings *settings, FILE *source)
   query[0] = '\0';
   
   /* main loop for getting queries and executing them */
-  while ((line = GetNextLine(settings->prompt, source)) != NULL)
-    {
-	exitStatus = 0;
+  while (connected && !eof) {
+    line = GetNextLine(settings->prompt, source);
+    if (line == NULL) {   /* No more input.  Time to quit */
+      printf("EOF\n");  /* Goes on prompt line */
+      eof = 1;
+    } else {
+      exitStatus = 0;
       line = rightTrim(line); /* remove whitespaces on the right, incl. \n's */
 
       if (line[0] == '\0') {
@@ -1099,11 +1107,16 @@ MainLoop(PsqlSettings *settings, FILE *source)
 
 	  exitStatus = SendQuery(settings, query);
           querySent = 1;
+          if (PQstatus(settings->db) == CONNECTION_BAD) {
+            connected = 0;
+            fprintf(stderr, "We have lost the connection to the backend, so "
+                    "further processing is impossible.  Terminating.\n");
+          }
 	}
-      
-       free(line); /* free storage malloc'd by GetNextLine */
-    } /* while */
-    return exitStatus;
+      free(line); /* free storage malloc'd by GetNextLine */
+    }      
+  } /* while */
+  return exitStatus;
 } 
 
 int

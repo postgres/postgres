@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.15 1996/08/13 01:34:27 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.16 1996/08/14 04:56:55 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -387,17 +387,26 @@ PQexec(PGconn* conn, const char* query)
 
   /* check to see if the query string is too long */
   if (strlen(query) > MAX_MESSAGE_LEN) {
-    sprintf(conn->errorMessage, "PQexec() -- query is too long.  Maximum length is %d\n", MAX_MESSAGE_LEN -2 );
+    sprintf(conn->errorMessage, "PQexec() -- query is too long.  "
+            "Maximum length is %d\n", MAX_MESSAGE_LEN -2 );
     return NULL;
   }
 
+  /* Don't try to send if we know there's no live connection. */
+  if (conn->status != CONNECTION_OK) {
+    sprintf(conn->errorMessage, "PQexec() -- There is no connection "
+            "to the backend.\n");
+    return NULL;
+  }
+  
   /* the frontend-backend protocol uses 'Q' to designate queries */
   sprintf(buffer,"Q%s",query);
 
   /* send the query to the backend; */
   if (pqPuts(buffer,pfout, pfdebug) == 1) {
       (void) sprintf(conn->errorMessage,
-		     "PQexec() -- while sending query:  %s\n-- fprintf to Pfout failed: errno=%d\n%s\n",
+		     "PQexec() -- while sending query:  %s\n"
+                     "-- fprintf to Pfout failed: errno=%d\n%s\n",
 		     query, errno,strerror(errno));
       return NULL;
     }
@@ -414,7 +423,12 @@ PQexec(PGconn* conn, const char* query)
     if (id == EOF) {
       /* hmm,  no response from the backend-end, that's bad */
       (void) sprintf(conn->errorMessage,
-		     "PQexec() -- No response from backend\n");
+		     "PQexec() -- Request was sent to backend, but backend "
+                     "closed the channel before "
+                     "responding.  This probably means the backend "
+                     "terminated abnormally before or while processing "
+                     "the request.\n");
+      conn->status = CONNECTION_BAD;  /* No more connection to backend */
       return (PGresult*)NULL;
     }
 
