@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.57 1998/10/13 20:44:40 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.57.2.1 1998/11/29 01:48:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -108,6 +108,9 @@ pq_init(int fd)
  *
  *	 used for debugging libpq
  */
+
+#if 0							/* not used anymore */
+
 static int
 pq_getc(FILE *fin)
 {
@@ -118,6 +121,8 @@ pq_getc(FILE *fin)
 		putc(c, Pfdebug);
 	return c;
 }
+
+#endif
 
 /* --------------------------------
  *		pq_gettty - return the name of the tty in the given buffer
@@ -181,15 +186,9 @@ pq_flush()
 int
 pq_getstr(char *s, int maxlen)
 {
-	int			c = '\0';
-
+	int			c;
 #ifdef MULTIBYTE
-	unsigned char *p,
-			   *ps;
-	int			len;
-
-	ps = s;
-	len = maxlen;
+	char	   *p;
 #endif
 
 	if (Pfin == (FILE *) NULL)
@@ -198,27 +197,15 @@ pq_getstr(char *s, int maxlen)
 		return EOF;
 	}
 
-	while (maxlen-- && (c = pq_getc(Pfin)) != EOF && c)
-		*s++ = c;
-	*s = '\0';
+	c = pqGetString(s, maxlen, Pfin);
 
 #ifdef MULTIBYTE
-	p = pg_client_to_server(ps, len);
-	if (ps != p)
-	{							/* actual conversion has been done? */
-		strcpy(ps, p);
-	}
+	p = (char*) pg_client_to_server((unsigned char *) s, maxlen);
+	if (s != p)					/* actual conversion has been done? */
+		strcpy(s, p);
 #endif
 
-	/* -----------------
-	 *	   If EOF reached let caller know.
-	 *	   (This will only happen if we hit EOF before the string
-	 *	   delimiter is reached.)
-	 * -----------------
-	 */
-	if (c == EOF)
-		return EOF;
-	return !EOF;
+	return c;
 }
 
 /*
