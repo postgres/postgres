@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.94 2002/11/15 03:09:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.95 2002/11/18 17:12:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -728,7 +728,7 @@ cluster(ClusterStmt *stmt)
 						*rvs;
 
 		/*
-		 * We cannot run CLUSTER ALL inside a user transaction block; if we were inside
+		 * We cannot run CLUSTER inside a user transaction block; if we were inside
 		 * a transaction, then our commit- and start-transaction-command calls
 		 * would not have the intended effect!
 		 */

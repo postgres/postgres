@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/cluster.sgml,v 1.21 2002/11/15 03:09:35 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/cluster.sgml,v 1.22 2002/11/18 17:12:06 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -23,7 +23,7 @@ PostgreSQL documentation
   <synopsis>
 CLUSTER <replaceable class="PARAMETER">indexname</replaceable> ON <replaceable class="PARAMETER">tablename</replaceable>
 CLUSTER <replaceable class="PARAMETER">tablename</replaceable>
-CLUSTER ALL
+CLUSTER
   </synopsis>
 
   <refsect2 id="R2-SQL-CLUSTER-1">
@@ -114,8 +114,8 @@ CLUSTER
   </para>
 
   <para>
-   In calls to <command>CLUSTER ALL</command>, all the tables in the database
-   that the calling user owns are clustered using the saved information.  This
+   A simple <command>CLUSTER</command> clusters all the tables in the database
+   that the calling user owns and uses the saved cluster information.  This
    form of <command>CLUSTER</command> cannot be called from inside a
    transaction or function.
   </para>
@@ -225,7 +225,7 @@ CLUSTER emp;
    Cluster all the tables on the database that have previously been clustered:
   </para>
   <programlisting>
-CLUSTER ALL;
+CLUSTER;
   </programlisting>
  </refsect1>
 
