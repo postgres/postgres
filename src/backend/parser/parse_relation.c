@@ -8,13 +8,14 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.43 2000/06/12 19:40:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.44 2000/06/20 01:41:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <ctype.h>
 
 #include "postgres.h"
+
 #include "access/heapam.h"
 #include "access/htup.h"
 #include "catalog/pg_type.h"
@@ -27,43 +28,39 @@
 #include "utils/lsyscache.h"
 
 
+/*
+ * Information defining the "system" attributes of every relation.
+ */
 static struct
 {
-	char	   *field;
-	int			code;
+	char	   *attrname;		/* name of system attribute */
+	int			attrnum;		/* its attribute number (always < 0) */
+	Oid			attrtype;		/* its type id */
 }			special_attr[] =
 
 {
 	{
-		"ctid", SelfItemPointerAttributeNumber
+		"ctid", SelfItemPointerAttributeNumber, TIDOID
 	},
 	{
-		"oid", ObjectIdAttributeNumber
+		"oid", ObjectIdAttributeNumber, OIDOID
 	},
 	{
-		"xmin", MinTransactionIdAttributeNumber
+		"xmin", MinTransactionIdAttributeNumber, XIDOID
 	},
 	{
-		"cmin", MinCommandIdAttributeNumber
+		"cmin", MinCommandIdAttributeNumber, CIDOID
 	},
 	{
-		"xmax", MaxTransactionIdAttributeNumber
+		"xmax", MaxTransactionIdAttributeNumber, XIDOID
 	},
 	{
-		"cmax", MaxCommandIdAttributeNumber
+		"cmax", MaxCommandIdAttributeNumber, CIDOID
 	},
 };
 
-#define SPECIALS ((int) (sizeof(special_attr)/sizeof(*special_attr)))
+#define SPECIALS ((int) (sizeof(special_attr)/sizeof(special_attr[0])))
 
-static char *attnum_type[SPECIALS] = {
-	"tid",
-	"oid",
-	"xid",
-	"cid",
-	"xid",
-	"cid",
-};
 
 #ifdef NOT_USED
 /* refnameRangeTableEntries()
@@ -459,8 +456,8 @@ specialAttNum(char *a)
 	int			i;
 
 	for (i = 0; i < SPECIALS; i++)
-		if (!strcmp(special_attr[i].field, a))
-			return special_attr[i].code;
+		if (strcmp(special_attr[i].attrname, a) == 0)
+			return special_attr[i].attrnum;
 
 	return InvalidAttrNumber;
 }
@@ -485,10 +482,8 @@ attnameIsSet(Relation rd, char *name)
 	/* First check if this is a system attribute */
 	for (i = 0; i < SPECIALS; i++)
 	{
-		if (!strcmp(special_attr[i].field, name))
-		{
+		if (strcmp(special_attr[i].attrname, name) == 0)
 			return false;		/* no sys attr is a set */
-		}
 	}
 	return get_attisset(RelationGetRelid(rd), name);
 }
@@ -516,13 +511,21 @@ attnumAttNelems(Relation rd, int attid)
 Oid
 attnumTypeId(Relation rd, int attid)
 {
-
 	if (attid < 0)
-		return typeTypeId(typenameType(attnum_type[-attid - 1]));
+	{
+		int			i;
+
+		for (i = 0; i < SPECIALS; i++)
+		{
+			if (special_attr[i].attrnum == attid)
+				return special_attr[i].attrtype;
+		}
+		/* negative but not a valid system attr? */
+		elog(ERROR, "attnumTypeId: bogus attribute number %d", attid);
+	}
 
 	/*
-	 * -1 because varattno (where attid comes from) returns one more than
-	 * index
+	 * -1 because attid is 1-based
 	 */
 	return rd->rd_att->attrs[attid - 1]->atttypid;
 }
