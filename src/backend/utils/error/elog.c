@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.78 2001/01/21 00:59:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.79 2001/01/22 23:28:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,10 +42,6 @@
 #endif
 
 extern int	errno;
-
-#ifdef HAVE_SYS_NERR
-extern int sys_nerr;
-#endif
 
 extern CommandDest whereToSendOutput;
 
@@ -139,14 +135,7 @@ elog(int lev, const char *fmt, ...)
 		return;					/* ignore debug msgs if noplace to send */
 
 	/* Save error str before calling any function that might change errno */
-	if (errno >= 0
-#ifdef HAVE_SYS_NERR
-		&& errno <= sys_nerr
-#endif
-		)
-		errorstr = strerror(errno);
-	else
-		errorstr = NULL;
+	errorstr = strerror(errno);
 	/*
 	 * Some strerror()s return an empty string for out-of-range errno.
 	 * This is ANSI C spec compliant, but not exactly useful.

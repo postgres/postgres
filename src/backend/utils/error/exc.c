@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/exc.c,v 1.34 2001/01/21 00:59:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/exc.c,v 1.35 2001/01/22 23:28:52 tgl Exp $
  *
  * NOTE
  *	  XXX this code needs improvement--check for state violations and
@@ -25,10 +25,6 @@
 #include "utils/exc.h"
 
 extern int	errno;
-
-#ifdef HAVE_SYS_NERR
-extern int sys_nerr;
-#endif
 
 
 static void ExcUnCaught(Exception *excP, ExcDetail detail, ExcData data,
@@ -115,14 +111,7 @@ ExcPrint(Exception *excP,
 #endif
 
 	/* Save error str before calling any function that might change errno */
-	if (errno >= 0
-#ifdef HAVE_SYS_NERR
-		&& errno <= sys_nerr
-#endif
-		)
-		errorstr = strerror(errno);
-	else
-		errorstr = NULL;
+	errorstr = strerror(errno);
 	/*
 	 * Some strerror()s return an empty string for out-of-range errno.
 	 * This is ANSI C spec compliant, but not exactly useful.
