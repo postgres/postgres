@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.142 2004/01/06 23:15:22 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.143 2004/01/09 21:08:50 momjian Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to
@@ -75,34 +75,40 @@ extern volatile uint32 CritSectionCount;
 extern void ProcessInterrupts(void);
 
 #define CHECK_FOR_INTERRUPTS() \
-	do { \
-		if (InterruptPending) \
-			ProcessInterrupts(); \
-	} while(0)
+do { \
+	if (InterruptPending) \
+		ProcessInterrupts(); \
+} while(0)
 
 #define HOLD_INTERRUPTS()  (InterruptHoldoffCount++)
 
 #define RESUME_INTERRUPTS() \
-	do { \
-		Assert(InterruptHoldoffCount > 0); \
-		InterruptHoldoffCount--; \
-	} while(0)
+do { \
+	Assert(InterruptHoldoffCount > 0); \
+	InterruptHoldoffCount--; \
+} while(0)
 
 #define START_CRIT_SECTION()  (CritSectionCount++)
 
 #define END_CRIT_SECTION() \
-	do { \
-		Assert(CritSectionCount > 0); \
-		CritSectionCount--; \
-	} while(0)
+do { \
+	Assert(CritSectionCount > 0); \
+	CritSectionCount--; \
+} while(0)
 
-#define PG_DELAY(_msec) \
-{ \
+#define PG_USLEEP(_usec) \
+do { \
+#ifndef WIN32
+	/* This will overflow on systems with 32-bit ints for > ~2000 secs */ \
 	struct timeval delay; \
-	delay.tv_sec = (_msec) / 1000; \
-	delay.tv_usec = ((_msec) % 1000) * 1000; \
+	\
+	delay.tv_sec = (_usec) / 1000000; \
+	delay.tv_usec = ((_usec) % 1000000); \
 	(void) select(0, NULL, NULL, NULL, &delay); \
-}
+#else
+	Sleep(_usec < 500) ? 1 : (_usec+500)/ 1000);
+#endif
+} while(0)
 
 /*****************************************************************************
  *	  globals.h --															 *
