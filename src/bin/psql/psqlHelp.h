@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: psqlHelp.h,v 1.69 1999/06/03 20:42:17 momjian Exp $
+ * $Id: psqlHelp.h,v 1.70 1999/06/04 04:28:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -284,7 +284,7 @@ static struct _helpStruct QL_HELP[] = {
 		"exclusive lock a table inside a transaction",
 	"\
 \tLOCK [TABLE] class_name \n\
-\t[[IN] [ROW|ACCESS] [SHARE|EXCLUSIVE] MODE];"},
+\t[IN [ROW|ACCESS] [SHARE|EXCLUSIVE] | [SHARE ROW EXCLUSIVE] MODE];"},
 	{"move",
 		"move an cursor position",
 	"\

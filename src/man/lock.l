@@ -1,12 +1,14 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/lock.l,v 1.7 1999/06/04 04:16:11 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/lock.l,v 1.8 1999/06/04 04:28:54 momjian Exp $
 .TH FETCH SQL 01/23/93 PostgreSQL PostgreSQL
 .SH NAME
 lock - exclusive lock a table
 .SH SYNOPSIS
 .nf
-\fBlock\fR [\fBtable\fR] classname [IN [ROW|ACCESS] [SHARE|EXCLUSIVE] MODE]
+\fBlock\fR [\fBtable\fR] classname
+[\fBin\fR [\fBrow\fR|\fBaccess\fR] [\fBshare\fR|\fBexclusive\fR] |
+[\fBshare row exclusive\fR] \fBmode\fR]
 .fi
 .SH DESCRIPTION
 By default,
