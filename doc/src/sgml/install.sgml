@@ -4,7 +4,7 @@
   <Abstract>
    <Para>
     Complete installation instructions for 
-    <ProductName>Postgres</ProductName> v6.5.1.
+    <ProductName>Postgres</ProductName> v6.5.3.
    </Para>
   </Abstract>
 
@@ -170,8 +170,8 @@ remaining steps in the installation will happen in this account.
 <Step Performance="required">
 <Para>
 Ftp file 
-<ulink url="ftp://ftp.postgresql.org/pub/postgresql-v6.5.1.tar.gz">
- <filename>ftp://ftp.postgresql.org/pub/postgresql-v6.5.1.tar.gz</filename></ulink>
+<ulink url="ftp://ftp.postgresql.org/pub/postgresql-v6.5.3.tar.gz">
+ <filename>ftp://ftp.postgresql.org/pub/postgresql-v6.5.3.tar.gz</filename></ulink>
  from the Internet.  Store it in your home directory.
 </Para>
 </Step>
@@ -275,7 +275,7 @@ from the new distribution:
 
 <ProgramListing>
 $ cd
-$ gunzip -c postgresql-v6.5.1.tar.gz \
+$ gunzip -c postgresql-v6.5.3.tar.gz \
     | tar xvf - src/bin/pg_dump/pg_dumpall
 $ chmod a+x src/bin/pg_dump/pg_dumpall
 $ src/bin/pg_dump/pg_dumpall > db.out
@@ -418,7 +418,7 @@ $ exit
  Unzip and untar the new source file.  Type
 <ProgramListing>
 $ cd /usr/src/pgsql
-$ gunzip -c ~/postgresql-v6.5.1.tar.gz | tar xvf -
+$ gunzip -c ~/postgresql-v6.5.3.tar.gz | tar xvf -
 </ProgramListing>
 </Para>
 </Step>
@@ -1001,7 +1001,7 @@ For example,
 <listitem>
 <Para>
      For a i686/Linux-ELF platform, no tests failed since this is the
-     v6.5.1 regression testing reference platform.
+     v6.5.3 regression testing reference platform.
 </Para>
 </listitem>
 
@@ -1115,7 +1115,7 @@ $ rm -rf /usr/src/pgsql_6_5
 $ rm -rf /usr/local/pgsql_6_5
 # Also delete old database directory tree if it is not in
 #  /usr/local/pgsql_6_5/data
-$ rm ~/postgresql-v6.5.1.tar.gz
+$ rm ~/postgresql-v6.5.3.tar.gz
 </ProgramListing>
 </Para>
 </Step>
@@ -1162,7 +1162,7 @@ $ lpr -l -s -r manpage.hp
 <itemizedlist>
 <listitem>
 <para>
-The version of <ProductName>Postgres</ProductName> (v6.5.1, 6.5, beta 990318, etc.).
+The version of <ProductName>Postgres</ProductName> (v6.5.3, 6.5, beta 990318, etc.).
 </para>
 </listitem>
 
