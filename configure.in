@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.388 2004/12/02 15:32:50 momjian Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.389 2004/12/02 21:41:12 tgl Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -716,32 +716,38 @@ AC_CHECK_HEADERS(netinet/tcp.h, [], [],
 
 if expr x"$pgac_cv_check_readline" : 'x-lreadline' >/dev/null ; then
   AC_CHECK_HEADERS(readline/readline.h, [],
-                   [AC_CHECK_HEADERS(readline.h, [],
-                                [AC_MSG_ERROR([readline header not found
+        [AC_CHECK_HEADERS(readline.h, [],
+                [AC_MSG_ERROR([readline header not found
 If you have readline already installed, see config.log for details on the
 failure.  It is possible the compiler isn't looking in the proper directory.
 Use --without-readline to disable readline support.])])])
   AC_CHECK_HEADERS(readline/history.h, [],
-                   [AC_CHECK_HEADERS(history.h, [],
-                                [AC_MSG_ERROR([history header not found
+        [AC_CHECK_HEADERS(history.h, [],
+                [AC_MSG_ERROR([history header not found
 If you have readline already installed, see config.log for details on the
 failure.  It is possible the compiler isn't looking in the proper directory.
 Use --without-readline to disable readline support.])])])
 fi
 
 if expr x"$pgac_cv_check_readline" : 'x-ledit' >/dev/null ; then
+# Some installations of libedit usurp /usr/include/readline/, which seems
+# bad practice, since in combined installations readline will have its headers
+# there.  We might have to resort to AC_EGREP checks to make sure we found
+# the proper header...
   AC_CHECK_HEADERS(editline/readline.h, [],
-                   [AC_CHECK_HEADERS(readline.h, [],
-                                [AC_MSG_ERROR([readline header not found
+        [AC_CHECK_HEADERS(readline.h, [],
+                [AC_CHECK_HEADERS(readline/readline.h, [],
+                        [AC_MSG_ERROR([readline header not found
 If you have libedit already installed, see config.log for details on the
 failure.  It is possible the compiler isn't looking in the proper directory.
-Use --without-readline to disable libedit support.])])])
+Use --without-readline to disable libedit support.])])])])
   AC_CHECK_HEADERS(editline/history.h, [],
-                   [AC_CHECK_HEADERS(history.h, [],
-                                [AC_MSG_ERROR([history header not found
+        [AC_CHECK_HEADERS(history.h, [],
+                [AC_CHECK_HEADERS(readline/history.h, [],
+                        [AC_MSG_ERROR([history header not found
 If you have libedit already installed, see config.log for details on the
 failure.  It is possible the compiler isn't looking in the proper directory.
-Use --without-readline to disable libedit support.])])])
+Use --without-readline to disable libedit support.])])])])
 fi
 
 if test "$with_zlib" = yes; then
