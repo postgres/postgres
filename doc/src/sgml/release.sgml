@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.273 2004/07/31 04:22:46 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.274 2004/07/31 07:11:07 tgl Exp $
 -->
 
 <appendix id="release">
@@ -10,7 +10,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.273 2004/07/31 04:22:46 momjian
 
   <note>
    <title>Release date</title>
-   <simpara>2003-??-??, current as of 2004-07-22</simpara>
+   <simpara>2004-??-??, current as of 2004-07-22</simpara>
   </note>
 
   <sect2>
@@ -874,6 +874,8 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.273 2004/07/31 04:22:46 momjian
     <listitem>
      <para>
       Warn that primary/foreign key mismatch requires costly lookup.
+     </para>
+    </listitem>
    </itemizedlist>
   </sect3>
 
