@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/posix_sema.c,v 1.2 2002/05/05 01:03:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/posix_sema.c,v 1.3 2002/05/05 16:01:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,8 +72,14 @@ PosixSemaphoreCreate(void)
 
 		mySem = sem_open(semname, O_CREAT | O_EXCL,
 						 (mode_t) IPCProtection, (unsigned) 1);
+
+#ifdef SEM_FAILED
 		if (mySem != (sem_t *) SEM_FAILED)
 			break;
+#else
+		if (mySem != (sem_t *) (-1))
+			break;
+#endif
 
 		/* Loop if error indicates a collision */
 		if (errno == EEXIST || errno == EACCES || errno == EINTR)
@@ -82,7 +88,7 @@ PosixSemaphoreCreate(void)
 		/*
 		 * Else complain and abort
 		 */
-		fprintf(stderr, "PosixSemaphoreCreate: sem_open(%s) failed: %s\n",
+		fprintf(stderr, "PosixSemaphoreCreate: sem_open(\"%s\") failed: %s\n",
 				semname, strerror(errno));
 		proc_exit(1);
 	}
