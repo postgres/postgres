@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/problems.sgml,v 2.14 2003/04/13 09:56:00 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/problems.sgml,v 2.15 2003/08/10 01:19:18 tgl Exp $
 -->
 
 <sect1 id="bug-reporting">
@@ -167,6 +167,16 @@ $Header: /cvsroot/pgsql/doc/src/sgml/problems.sgml,v 2.14 2003/04/13 09:56:00 pe
       it might not happen on our platform. The easiest thing is to copy the output
       from the terminal, if possible.
      </para>
+     <note>
+      <para>
+       If you are reporting an error message, please obtain the most verbose
+       form of the message.  In <application>psql</>, say <literal>\set
+       VERBOSITY verbose</> beforehand.  If you are extracting the message
+       from the server log, set the run-time parameter
+       <varname>log_error_verbosity</> to <literal>verbose</> so that all
+       details are logged.
+      </para>
+     </note>
      <note>
       <para>
        In case of fatal errors, the error message reported by the client might
