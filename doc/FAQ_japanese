@@ -1,9 +1,9 @@
 PostgreSQL(ポストグレス・キュー・エル)についてよくある質問とその解答(FAQ)
 
-原文最終更新日: Thu Aug 22 19:20:40 EDT 2002
+原文最終更新日: Sun Oct 13 23:15:09 EDT 2002
 
 現在の維持管理者: Bruce Momjian (pgman@candle.pha.pa.us)
-Maintainer of Japanese Translation: Jun Kuwamura (juk@postgresql.jp)
+Maintainer of Japanese Translation: Jun Kuwamura (juk@PostgreSQL.jp)
 
 この文書の最新版は http://www.PostgreSQL.org/docs/faq-english.html で見ることが
 できます。
@@ -19,19 +19,19 @@ docs/faq.html
         日本語版のこの文書は 本家 "User's Lounge" の "Collection of FAQs" の
         "Japanese" という見出しのところにあります。また、以下のサイトにも
         あります。
-                http://www.postgresql.jp/subcommittee/jpugdoc/
+                http://www.PostgreSQL.jp/subcommittee/jpugdoc/
                 http://www.rccm.co.jp/~juk/pgsql/
                 http://www.linux.or.jp/JF/
 
-        この和訳についてお気づきの点は(juk@postgresql.jp)までメールでお寄せ下さい。
+        この和訳についてお気づきの点は(juk@PostgreSQL.jp)までメールでお寄せ下さい。
 
-                                                2002年08月25日    桑村 潤
+                                                2002年10月16日    桑村 潤
 ]
 
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
                                  一般的な質問                                  
-
+                                                                               
 1.1) PostgreSQLとは何ですか？何と読みますか？
 1.2) PostgreSQLの著作権はどうなってますか？
 1.3) PostgreSQLの動作するUnixプラットホームは？
@@ -49,15 +49,15 @@ docs/faq.html
 1.15) PostgreSQLを資金面で援助するにはどうすればよいですか？
 
                          ユーザー・クライアントの質問                          
-
+                                                                               
 2.1) PostgreSQL の ODBC ドライバーはありますか？
 2.2) PostgreSQL を Web ページと連携させるにはどんなツールがありますか？
 2.3) PostgreSQL にグラフィカル・ユーザインターフェースはありますか？レポートジ
 ェネレータや埋め込み問い合わせ言語インターフェースはありますか？
-2.4) PostgreSQL と通信するにはどんな言語が使えますか？
+2.4) どのような言語で PostgreSQL と通信できすか？
 
                                  管理上の質問                                  
-
+                                                                               
 3.1) どのようにすれば /usr/local/pgsql 以外の場所にインストールできますか？
 3.2) postmaster を走らせると、 Bad System Call とかコア・ダンプしたとのメッセー
 ジが出ます。なぜですか？
@@ -70,13 +70,12 @@ docs/faq.html
 いですか？
 3.7) どのようなデバグ機能が使えますか？
 3.8) 接続しようとするときに 'Sorry, too many clients' が出るのはなぜですか？
-3.9) 自分のデータベース・ディレクトリにある pg_sorttemp.XXX ファイルは何ですか
-？
+3.9) pgsql_tmp ディレクトリの中には何がありますか？
 3.10) PostgreSQLのメジャーリリースをアップデートするのにダンプとリストアをしな
 くてはならないのはなぜですか？
 
                                  操作上の質問                                  
-
+                                                                               
 4.1) バイナリ・カーソルと通常カーソルとの違いは何ですか？
 4.2) 最初の数ロウのみを select するにはどうしますか？
 4.3) テーブルやその他の情報のリストを psql で見るにはどうしますか？
@@ -118,9 +117,11 @@ docs/faq.html
 4.25) 関数で複数のロウまたはカラムを返すにはどうしますか？
 4.26) なぜ、PL/PgSQL 関数の中から一時テーブルを確実に create/drop することがで
 きないのでしょうか？
+4.27) どのようなリプリケーションオプションを利用できますか?
+4.28) どのような暗号化オプションを利用できますか?
 
                         PostgreSQLの拡張についての質問                         
-
+                                                                               
 5.1) 自分で書いたユーザ定義関数を psql の中で実行するとコア・ダンプしてしまうの
 はなぜですか？
 5.2) PostgreSQL 用に書いたちょっと素敵な新しい型や関数を提供してプロジェクトに
@@ -131,8 +132,8 @@ docs/faq.html
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
                                  一般的な質問                                  
-
-1.1) PostgreSQL とは何ですか？
+                                                                               
+1.1) PostgreSQL とは何ですか？何と読みますか？
 
 Post-Gres-Q-L.(ポスト - グレス - キュー - エル) と発音します。
 
@@ -142,10 +143,10 @@ PostgreSQL は次世代 DBMS 研究用のプロトタイプであった POSTGRES データベース管理
 張した SQL のサブセットに置き換えています。PostgreSQL は無料で完全なソースを利
 用できます。
 
-PostgreSQL の開発は、PostgreSQL 開発メーリングリストに参加しているインターネッ
-ト上の開発者チームですべて行なわれています。現在の座長は Marc G. Fournier ( 
-scrappy@PostgreSQL.org )です。(以下に参加の仕方があります。)現在、このチームが
-PostgreSQL 開発のすべての面倒をみています。
+PostgreSQL の開発は、PostgreSQL 開発メーリングリストに参加している開発者達のチ
+ームですべて行なわれています。現在の座長は Marc G. Fournier (
+scrappy@PostgreSQL.org )です。(下記の1.6節に参加の仕方があります。)現在、このチ
+ームが PostgreSQL 開発のすべての面倒をみています。
 
 Postgres95-1.01 の中心的な開発者は Andrew Yu と Jolly Chen でしたが、その他大勢
 の人々がこのコードの移植、テスト、デバグ、および、改良に参加しました。
@@ -186,7 +187,6 @@ BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
 PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS ON AN "AS IS" BASIS, AND
 THE UNIVERSITY OF CALIFORNIA HAS NO OBLIGATIONS TO PROVIDE MAINTENANCE,
 SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-
         POSTGRESQL データベース管理システム
 
         部分的著作権 (c) 1996-2002, PostgreSQL国際開発チーム
@@ -221,9 +221,6 @@ SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 1.3) PostgreSQL の動作環境は？
 
-著者らは PostgreSQL のコンパイルとテストを次のプラットホーム上で行ないました。
-(これらのうちのいくつかはコンパイルに gcc が必要です)：
-
 一般的に、最近のUnix互換プラットホームならばPostgreSQLをはしらせられるはずです
 。リリースの時点で実際にテストを行なったことの報告がなされたプラットホームにつ
 いてはインストール手引書に列挙してあります。
@@ -232,21 +229,22 @@ SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 クライアント
 
-MS Windows プラットホーム上で、libpq C ライブラリ、psql、それとその他のインター
-フェースはコンパイル可能で、バイナリーが走ります。この場合、クライアントを MS
-Windows 上で走らせて、TCP/IP 経由でサポートされている Unix プラットホーム上で走
-るサーバと通信します。
+MS Windows プラットホーム上で走せるために、libpq C ライブラリ、psql、その他のイ
+ンターフェース、および、クライアントアプリケーションをコンパイルすることは可能
+です。この場合、クライアントを MS Windows 上で走らせて、TCP/IP 経由でサポートさ
+れている Unix プラットホーム上で走るサーバと通信します。
 
-Win32 libpq ライブラリと psql を作るために、win31.mak が配布に含まれてます。
+Win32 libpq ライブラリと psql を作るために、win32.mak が配布に含まれてます。
 PostgreSQLは ODBC クライアントとも通信できます。
 
 サーバ
 
 現在、Cygnus Unix/NT 移植ライブラリの Cygwin を使って、PostgreSQL データベース
 サーバは Windows NT と Win2k 上で稼働しています。配布に含まれるpgsql/doc/
-FAQ_MSWINあるいはウェブサイトにある MS Windows FAQ をご覧下さい。Microsoft の素
-のプラットホームに移植する計画はありません。
+FAQ_MSWIN、あるいは、http://www.PostgreSQL.org/docs/faq-mswin.htmlにある MS
+Windows FAQ をご覧下さい。
 
+MS Win NT/2000/XP ネイティブ版への移植が現在進行中です。
 
 [訳注：
 
@@ -263,29 +261,24 @@ Win32ネイティーブ版(Win32 Native version)
 
 1.5) PostgreSQL はどこから入手できますか？
 
-PostgreSQL の元の anonymous ftp サイトです：
-   
-   
- ・ ftp://ftp.PostgreSQL.org/pub/
-
+PostgreSQL の大元の anonymous ftp サイトは ftp://ftp.PostgreSQL.org/pub/ です。
 ミラーサイトについては、我々のメイン Web ページをご覧下さい。
     [訳注:
 
         以下は日本のミラーサイトです:
 
-       Japan: ftp://mirror.nucba.ac.jp/mirror/postgresql/pub/
-       Japan: ftp://ring.ip-kyoto.ad.jp/pub/misc/db/postgresql/
-       Japan: ftp://ring.crl.go.jp/pub/misc/db/postgresql/
-       Japan: ftp://ring.saitama-u.ac.jp/pub/misc/db/postgresql/
-       Japan: ftp://ring.astem.or.jp/pub/misc/db/postgresql/
-       Japan: ftp://ring.exp.fujixerox.co.jp/pub/misc/db/postgresql/
-       Japan: ftp://ring.jah.ne.jp/pub/misc/db/postgresql/
-       Japan: ftp://ring.etl.go.jp.jp/pub/misc/db/postgresql/
-       Japan: ftp://ring.asahi-net.or.jp/pub/misc/db/postgresql/
-       Japan: ftp://ring.so-net.ne.jp/pub/misc/db/postgresql/
-       Japan: ftp://ring.aist.go.jp/pub/misc/db/postgresql/
+       Japan: ftp://mirror.nucba.ac.jp/mirror/PostgreSQL/pub/
+       Japan: ftp://ring.ip-kyoto.ad.jp/pub/misc/db/PostgreSQL/
+       Japan: ftp://ring.crl.go.jp/pub/misc/db/PostgreSQL/
+       Japan: ftp://ring.saitama-u.ac.jp/pub/misc/db/PostgreSQL/
+       Japan: ftp://ring.astem.or.jp/pub/misc/db/PostgreSQL/
+       Japan: ftp://ring.exp.fujixerox.co.jp/pub/misc/db/PostgreSQL/
+       Japan: ftp://ring.jah.ne.jp/pub/misc/db/PostgreSQL/
+       Japan: ftp://ring.etl.go.jp.jp/pub/misc/db/PostgreSQL/
+       Japan: ftp://ring.asahi-net.or.jp/pub/misc/db/PostgreSQL/
+       Japan: ftp://ring.so-net.ne.jp/pub/misc/db/PostgreSQL/
+       Japan: ftp://ring.aist.go.jp/pub/misc/db/PostgreSQL/
     ]
-
 
 1.6) サポートはどこで受けられますか？
 
@@ -311,16 +304,11 @@ pgsql-general-request@PostgreSQL.org へ送って下さい。
 
 開発者の議論のためのメーリングリストも利用できます。このリストへの参加は電子メ
 ールの本文に：
-
         subscribe
         end
-
 と書いて、pgsql-hackers-request@PostgreSQL.orgへ電子メールを送って下さい。
 
-PostgreSQL についてもっと詳しく知りたければ、次の postgreSQL WWWホームページか
-らたどれます：
-   
-    http://www.PostgreSQL.org
+http://www.PostgreSQL.org
 
 EFNet に #PostgreSQL という IRC チャンネルもあります。 UNIX コマンドでirc -c '#
 PostgreSQL' "$USER" irc.phoenix.net を使います。
@@ -330,7 +318,7 @@ PostgreSQL' "$USER" irc.phoenix.net を使います。
         JPUG は非営利組織で、PostgreSQLを利用する人達の相互協力の場です。
         正会員の会費は無料ですが、協賛会員の会費と会員の積極的な貢献が会の運営を助けています。
         詳しくは、JPUG のWeb サイト:
-                http://www.postgresql.jp/
+                http://www.PostgreSQL.jp/
         をご覧ください。会員登録も可能となっています。
           1990年代中ごろより、ポストグレスの日本語メーリング・リストを石井 達夫さんが主催しています。詳細は、
                 http://www.sra.co.jp/people/t-ishii/PostgreSQL/ML/info.html
@@ -340,18 +328,18 @@ PostgreSQL' "$USER" irc.phoenix.net を使います。
         ]
 
 
-商用サポート会社のリストはhttp://www.postgresql.org/users-lounge/
+商用サポート会社のリストはhttp://www.PostgreSQL.org/users-lounge/
 commercial-support.htmlにあります。
+
     [訳注:
          日本では、SRA Inc. オープンシステム事業部 にて商用サポートが行なわれています。
         ミラクル・リナックス株式会社 で "Miracle Linux for PostgreSQL" の販売とサポートが
         開始されました。
     ]
 
-
 1.7) 最新版はどれですか
 
-PostgreSQL の最新版はバージョン 7.2.2 です。
+PostgreSQL の最新版はバージョン 7.2.3 です。
 
 我々は、4カ月毎にメジャーリリースを行なうことを計画しています。
 
@@ -375,8 +363,11 @@ docs/awbook.html
         にて翻訳されました。
     ]
 および、 http://www.commandprompt.com/ppbook/ です。購入可能な書籍の目録は、
-http://www.postgresql.org/books/ にあります。 PostgreSQL 技術情報記事も、http:/
-/techdocs.postgresql.org/ にあります。
+http://www.jp.PostgreSQL.org/books/ にあります。 PostgreSQL 技術情報記事も、
+http://techdocs.PostgreSQL.org/ にあります。
+
+[訳注: 和訳文書は、日本ポストグレスユーザー会のhttp://www.postgresql.jp/
+document/ をごらん下さい。 ]
 
 psql も、型、演算子、関数、集約、その他の情報をお見せする、いくつかの素晴らしい
 \d コマンドを持ちます。
@@ -433,21 +424,23 @@ McGraw-Hill のようなのもあります。
 1.12) 開発チームにはどのように参加しますか？
 
 まず最初(１番目)に、最新のソースをダウンロードし、我々の Web サイトか配布に含ま
-れている PostgreSQL Developersの文書を読みます。２番目に、pgsql-hackers と
+れているPostgreSQL Developersの文書を読みます。２番目に、pgsql-hackers と
 pgsql-patches メーリング・リストを購読(subscribe)します。３番目に、高品質のパッ
-チをpgsql-patchesに発信します。およそ十人ちょっとの人達が、PostgreSQL CVSアーカ
-イブにコミットする権限を持っています。そのそれぞれの人達が沢山の高品質なパッチ
-を発信するので、現在コミッターとなっている人達はそれに追い付くのが大変ですが、
-我々は彼らがコミットしたパッチは高品質であると確信しています。
+チをpgsql-patchesに発信します。
+
+およそ十人ちょっとの人達が、PostgreSQL CVSアーカイブにコミットする権限を持って
+います。そのそれぞれの人達が沢山の高品質なパッチを発信するので、現在コミッター
+となっている人達はそれに追い付くのが大変ですが、我々は彼らがコミットしたパッチ
+は高品質であると確信しています。
 
 1.13) バグレポートはどのように発信しますか？
 
-バグを報告する仕方についてのガイドラインと方向づけがあるPostgreSQL BugTool (バ
-グツール)のページを訪れてみて下さい。
+http://www.PostgreSQL.org/bugs/bugs.phpPostgreSQL BugTool (バグツール)のページ
+を訪れてみて下さい。バグレポートを提出する仕方についての手引と指針があります。
 
-その前に http://postgreSQL.orgにある最新の FAQ をチェックして下さい。
+その前に http://PostgreSQL.orgにある最新の FAQ をチェックして下さい。
 
-それと同時に ftp サイト ftp://ftp.postgreSQL.org/pub/で、もっと新しいバージョン
+それと同時に ftp サイト ftp://ftp.PostgreSQL.org/pub/で、もっと新しいバージョン
 の PostgreSQL あるいはパッチをさがしてみて下さい。
 
 1.14) 他のDBMSのと比べてPostgreSQLはどうなのですか？
@@ -457,28 +450,25 @@ pgsql-patches メーリング・リストを購読(subscribe)します。３番目に、高品質のパッ
 
 機能(Features)
     PostgreSQLは、トランザクション、副問い合わせ、トリガー、ビュー、外部キー整
-    合性参照、および、洗練されたロック機構など、大規模商用 DBMSが持つ機能をほと
+    合性参照、および、洗練されたロック機構など、大規模商用DBMSが持つ機能をほと
     んど持っています。さらに PostgreSQLは、ユーザ定義型、継承、ルール、それから
     、ロック競合を縮小するマルチバージョン同時性制御など、商用DBMSも持ち合わせ
     ないような機能をいくつか持ち合わせています。
    
-   
 性能(Performance)
     PostgreSQLは他の商用あるいはオープンソースのデータベースと互角の性能も持ち
-    ます。ある面ではより早かったり、ほかの面ではより遅かったりします。 MySQLな
-    どの特化型データベース・システムにくらべて、PostgreSQLの挿入／更新が遅いの
-    は、トランザクションによるオーバーヘッドがあるからです。もちろん、MySQLには
-    上記のFeaturesの節に示すような機能はまったくありません。我々は、PostgreSQL
-    に柔軟性と機能性を組み込みながらも、絶えず、プロファイラーに掛けたりソース
-    コードを解析したりして、性能の改善を続けています。PostgreSQL と MySQL とを
-    比較している面白い Web ページが http://openacs.org/why-not-mysql.html にあ
-    ります。
-   
+    ます。ある面ではより早かったり、ほかの面ではより遅かったりします。MySQLなど
+    の特化型データベース・システムにくらべて、PostgreSQLの挿入／更新が遅いのは
+    、トランザクションによるオーバーヘッドがあるからです。もちろん、MySQLには上
+    記のFeaturesの節に示すような機能はまったくありません。我々は、PostgreSQLに
+    柔軟性と機能性を組み込みながらも、絶えず、プロファイラーに掛けたりソースコ
+    ードを解析したりして、性能の改善を続けています。PostgreSQL と MySQL とを比
+    較している面白い Web ページがhttp://openacs.org/why-not-mysql.htmlにありま
+    す。
     PostgreSQLは、Unixプロセスを起動することによりユーザー接続を操作します。複
     数のバックエンド・プロセスが情報をロックしながらデータ・バッファーを共有し
     ます。マルチCPUでは、簡単に複数のバックエンドをそれぞれのCPUで走らせること
     ができます。
-   
    
 信頼性(Reliability)
     我々は、DBMSの信頼性が高くなくてはその価値が無いことを理解してます。十分テ
@@ -487,23 +477,25 @@ pgsql-patches メーリング・リストを購読(subscribe)します。３番目に、高品質のパッ
     のリリースの履歴が、製品版として安定した堅固なリリースであることを物語って
     います。この分野では、他のデータベースと比べても遜色がないことに自信を持っ
     ています。
+   
 サポート(Support)
     我々のメーリングリストは、遭遇するいかなる問題についても解決への手助けをし
-    てくれる、開発者やユーザの大きな集まりを提供しています。我々は問題の解決を
-    保証することはできませんが、商用データベースであっても常に解決されるわけで
-    はありません。開発者や、ユーザ・コミュニティ、マニュアル類、それに、ソース
-    コードなどへ直接アクセスできることよって、 PostgreSQLのサポートは、他のDBMS
-    サポートよりも優れたものとなっています。御要望に答えて、事柄毎の商用サポー
-    トなどもあります（サポートFAQ項目をご覧下さい）。
+    てくれる、開発者やユーザの大きな集まりへの接点を提供しています。我々は問題
+    の解決を保証することはできませんが、商用データベースであっても常に解決され
+    るわけではありません。開発者や、ユーザ・コミュニティ、マニュアル類、それに
+    、ソースコードなどへ直接アクセスできることよって、PostgreSQLのサポートは、
+    他のDBMSサポートよりも優れたものとなっています。御要望に答えて、事柄毎の商
+    用サポートなどもあります（FAQ1.6節をご覧下さい）。
+   
 価格(Price)
     PostgreSQLの利用は、商用でも非商用でも、すべて無料です。上記に示してあるBSD
     スタイルの使用許諾に外れない限り、PostgreSQLのコードを制限無しで商品に組み
     込むことができます。
    
-   
+
 1.15) PostgreSQLを資金面で援助するにはどうすればよいですか？
 
-PostgreSQLは、我々が6年前に始めたとき以来、最高クラスの基盤を持っています。これ
+PostgreSQLは、我々が始めた 1996年以来、最高クラスの情報基盤を持っています。これ
 はすべて、Marc Fournieさんのおかげで、彼はこの基盤を何年にもわたって創造し管理
 してきました。
 
@@ -512,17 +504,17 @@ PostgreSQLは、我々が6年前に始めたとき以来、最高クラスの基盤を持っています。これ
 
 もちろん、この基盤は安いものではありません。維持し続けるためには毎月あるいは一
 時の経費がかかります。もし、あなたやあなたの会社に、こうした努力のための資金を
-助けるために施すことができるようでしたら、 https://store.pgsql.com/shopping/
-index.php?id=1 から寄付をお願いします。
+助けるために施すことができるようでしたら、https://store.pgsql.com/shopping/から
+寄付をお願いします。
 
-また、Webページには PostgreSQL,Inc とありますが、そこの"義援 (contributions)"ア
+また、Webページには PostgreSQL,Inc とありますが、そこの"義援(contributions)"ア
 イテムは PostgreSQL プロジェクトをサポートするためだけのためで、決して特定の会
-社のための資金のためではありません。もし、手形 (check)の方が都合がよければ連絡
-先の住所へお送り下さい。
-
+社のための資金のためではありません。もし、手形(check)の方が都合がよければ連絡先
+の住所へお送り下さい。
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-                         ユーザー・クライアントの質問                          
 
+                         ユーザー・クライアントの質問                          
+                                                                               
 2.1) PostgreSQL のための ODBC ドライバーはありますか？
 
 PsqlODBC と OpenLink ODBC の二つの ODBC ドライバーが利用可能です。
@@ -552,8 +544,6 @@ Programmer's Guide の ODBC の章もご覧ください。
 データベースを裏に持つ Web ページについての素晴らしい紹介が、
 http://www.webreview.comにあります。
 
-http://www.phone.net/home/mwm/hotlist/にも、もう一つあります。
-
 Web への拡張のためには、PHP が卓越したインターフェースとなっています。http://
 www.php.net/にあります。
     [訳注:
@@ -570,10 +560,12 @@ www.php.net/にあります。
                 ftp://night.fminn.nagano.nagano.jp/php4/
         を用意して下さってます。
           本家の方で国際化のMLも立ち上がっています。
+        PHP-4.2 からマルチバイト拡張文字列として採り入れられました。
     ]
 
 
-処理が複雑な場合、多くの人は Perl インターフェースと CGI.pm を使います。
+処理が複雑な場合、多くの人は Perl インターフェースと CGI.pm か mod_perl を使い
+ます。
     [訳注:
         WDB は、Web から DataBase への Perl の Interface です。
         wdb-p95 へのリンクは切れてしまっています。おそらく、Perl DBI 経由で DBD::Pg の利用が可能と思われます。
@@ -588,14 +580,14 @@ www.php.net/にあります。
 2.3) PostgreSQL にグラフィカル・ユーザインターフェースはありますか？レポートジ
 ェネレータや埋め込み問い合わせ言語インターフェースはありますか？
 
-pgaccess と呼ばれる素晴らしいグラフィカル・ユーザ・インターフェースがあり、この
-配布と共に出荷されます。Pgaccess にはレポート・ジェネレータもあります。Web ペー
-ジはhttp://www.flex.ro/pgaccessです。
+PgAccess と呼ばれる素晴らしいグラフィカル・ユーザ・インターフェースがあり、この
+配布と共に出荷されます。PgAccess にはレポート・ジェネレータもあります。Web ペー
+ジはhttp://www.pgaccess.org/です。
 
 ecpg という C 言語のための埋め込み SQL 問い合わせ言語インターフェースもあります
 。
 
-2.4) PostgreSQL と通信するにはどんな言語が使えますか？
+2.4) どのような言語で PostgreSQL と通信できすか？
 
 以下のものがあります:
    
@@ -604,19 +596,19 @@ ecpg という C 言語のための埋め込み SQL 問い合わせ言語インターフェースもあります
  ・ C++ (libpq++)
  ・ 埋め込みC (ecpg)
  ・ Java (jdbc)
- ・ Perl (perl5)
+ ・ Perl (DBD::Pg and perl5)
  ・ ODBC (odbc)
  ・ Python (PyGreSQL)
  ・ TCL (libpgtcl)
  ・ C Easy API (libpgeasy)
- ・ 埋め込みHTML (PHP from http://www.php.net)
+ ・ PHP ('pg_' 関数群、 Pear::DB)
 
-その他の利用可能なインターフェースは http://www.postgresql.org/interfaces.html
+その他の利用可能なインターフェースは http://www.PostgreSQL.org/interfaces.html
 にあります。
     [訳注：
         rubyの作者であるまつもと ゆきひろ(matz@ZetaBITS.COM)さんと、まつもと えいじ(ematsu@pfu.co.jp)さんが
         ruby の PostgreSQL インターフェースを作りました。現在の維持管理は斉藤 登さんがしています。
-                http://webclub.kcom.ne.jp/mb/noborus/ruby/
+                http://www.postgresql.jp/interfaces/ruby/
         PgBash は 境田 雅明 さんが作った bash の PostgreSQL インターフェースです。
                 http://www.psn.co.jp/PostgreSQL/pgbash/
         Bashコマンドラインでpostgres に問い合わせできます。
@@ -629,7 +621,7 @@ ecpg という C 言語のための埋め込み SQL 問い合わせ言語インターフェースもあります
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
                                  管理上の質問                                  
-
+                                                                               
 3.1) どのようにすれば /usr/local/pgsql 以外の場所にインストールできますか？
 
 簡単な方法は、 configure を走らせるときに --prefix オプションを指定することです
@@ -749,7 +741,7 @@ Postmaster は更に詳細な情報を報告するための -d オプションを持ちます。その -d オ
 、デバッガでプロセスにアタッチして、ブレークポイントを設定し、開始から順を追っ
 て見てゆくことができます。
 
-postgreSQL プログラムには、デバグと性能測定にとても役に立つ -sや -Aや -t 等のオ
+PostgreSQL プログラムには、デバグと性能測定にとても役に立つ -sや -Aや -t 等のオ
 プションがあります。
 
 何という関数がどのくらい実行時間を食っているかを見るために、プロファイリング（
@@ -765,7 +757,7 @@ postmasterが同時始動できるバックエンドプロセスに対する制限数を増やす必要があり
 ます。
 
 既定の最大プロセスは32プロセスです。-Nに適切な値を引数にしてpostmasterを再起動
-するか、postgresql.conf を修正することによって、その値を増やすことができます。
+するか、PostgreSQL.conf を修正することによって、その値を増やすことができます。
 。既定の構成では-Nは最大1024まで設定できます。もし、もっと必要であればinclude/
 config.hの中のMAXBACKENDSを増加させ、再構築します。もし、望むならconfigureの
 --with-maxbackends切替を使って、-Nの既定値を構成時に設定できます。
@@ -784,7 +776,7 @@ config.hの中のMAXBACKENDSを増加させ、再構築します。もし、望むならconfigureの
 には、include/storage/sinvaladt.hの中のMaxBackendId定数を修正した後に再構築が必
 要でした。
 
-3.9) 自分のデータベース・ディレクトリにある pg_sorttemp.XXXファイルは何ですか？
+3.9) pgsql_tmp ディレクトリの中には何がありますか？
 
 問い合わせ実行モジュールによって生成された一時的なファイルです。例えば、もし 
 ORDER BY 句を満たすためにバックエンドの -S パラメータで許可した値よりも大きなス
@@ -792,8 +784,8 @@ ORDER BY 句を満たすためにバックエンドの -S パラメータで許可した値よりも大きなス
 ルがいくつか生成されます。
 
 一時的なファイルは自動的に消し去られるはずですが、もし、ソートの途中でバックエ
-ンドがクラッシュしてしまうとそうはなりません。そのときバックエンドがひとつも走
-ってなければ、pg_tempNNN.NNファイルを消しても大丈夫です。
+ンドがクラッシュしてしまうとそうはなりません。postmasterの停止とリスタートでこ
+れらのファイルはディレクトリから消しさられます。
     [訳注：
          SYSLOGD 経由でログを出力するには、まず、configure を --enable-syslog 
         付きで走らせた後、コンパイルとインストールを行ないます。
@@ -801,7 +793,7 @@ ORDER BY 句を満たすためにバックエンドの -S パラメータで許可した値よりも大きなス
         syslogd に HUP シグナルを送って初期化しておきます。そして、
         $PGDATA/pg_options に syslog=2 を加えて、 postmaster を -S 
         オプション付きにてサーバモードで起動します。(バージョン 7.1 からは 
-        pg_options は postgresql.conf になっています。)
+        pg_options は PostgreSQL.conf になっています。)
     ]
 
 
@@ -810,10 +802,11 @@ ORDER BY 句を満たすためにバックエンドの -S パラメータで許可した値よりも大きなス
 
 PostgreSQLチームはマイナーリリースでは小さな変更しか行ないませんので、7.2 から
 7.2.1 へのアップグレードにはダンプとリストアの必要はありません。しかし、メジャ
-ーリリースでは、システムテーブルやデータファイルの内部フォーマットの変更をしば
-しば行ないます。これらの変更はたいてい複雑で、そのため我々はデータファイルのた
-めの後方互換性を維持することができません。ダンプは汎用フォーマットでデータを出
-力し、それを新しい内部フォーマットを使って読み込むことができます。
+ーリリース(たとえば、7.2から7.3へのような)では、システムテーブルやデータファイ
+ルの内部フォーマットの変更をしばしば行ないます。これらの変更はたいてい複雑で、
+そのため我々はデータファイルのための後方互換性を維持することができません。ダン
+プは汎用フォーマットでデータを出力し、それを新しい内部フォーマットに読み込むこ
+とができます。
 
 同一リリースではディスク上でのフォーマットに変更はないので、アップグレードには
 ダンプ／リストアではなく、pg_upgrade スクリプトを使うことができます。リリースノ
@@ -821,7 +814,7 @@ PostgreSQLチームはマイナーリリースでは小さな変更しか行ないませんので、7.2 から
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
                                  操作上の質問                                  
-
+                                                                               
 4.1) バイナリ・カーソルと通常カーソルとの厳密な違いは何ですか？
 
 詳述は、オンラインマニュアルで DECLARE を見て下さい。
@@ -832,10 +825,10 @@ PostgreSQLチームはマイナーリリースでは小さな変更しか行ないませんので、7.2 から
 てみて下さい。
 
 たとえ、欲しいのは最初の数ロウだけでも、すべての問い合わせを評価しなくてはなら
-ないかもしれません。ORDER BY を持った問い合わせを考えてみて下さい。もし、ORDER
-BYに合ったインデックスがあるとすると PostgreSQLは要求された最初の数ロウだけで評
-価できるかもしれませんが、でなれば、PostgreSQL は意図したロウが生成されるまです
-べてのロウを評価しなければならないかもしれません。
+ないかもしれません。ORDER BY を持った問い合わせを使うことを考えてみて下さい。も
+し、ORDER BYに合ったインデックスがあるとすると PostgreSQLは要求された最初の数ロ
+ウだけで評価できるかもしれませんが、でなれば、PostgreSQL は意図したロウが生成さ
+れるまですべてのロウを評価しなければならないかもしれません。
 
 4.3) テーブルやその他の情報のリストを psql で見るにはどうしますか？
 
@@ -846,7 +839,8 @@ psqlのソースコードとして書かれた pgsql/src/bin/psql/describe.c ファイルを読むこ
 
 4.4) テーブルからカラムの削除はどのようにしますか？
 
-ALTER TABLE DROP COLUMN はサポートしていませんが、その代わりにこうします:
+この機能は、ALTER TABLE DROP COLUMN としてリリース7.3 から加えられました。それ
+までのバージョンでは、その代わりにこうします:
         BEGIN;
         LOCK TABLE old_table;
         SELECT ...  -- 削除したいカラム以外のカラムをすべて選択します。
@@ -860,7 +854,7 @@ ALTER TABLE DROP COLUMN はサポートしていませんが、その代わりにこうします:
 4.5) ロウ、テーブル、データベースの最大サイズは？
 
 制限は以下のとおりです。
-データベースの最大サイズ?       制限無し (500GB のデータベースも存在します)
+データベースの最大サイズ?       制限無し (1 TB のデータベースも存在します)
 テーブルの最大サイズ?           16TB
 ロウの最大サイズ?               1.6TB
 フィールドの最大サイズ?         1GB
@@ -949,7 +943,7 @@ psql にはいろいろなバックスラッシュ・コマンドがあり、こうした情報を表示します。
     SELECT col
     FROM tab
     ORDER BY col [ DESC ]
-    LIMIT 1
+    LIMIT 1;
 
 LIKE あるいは ~ のようなワイルドカード演算子は特別な環境でしか使えません：
    
@@ -960,8 +954,8 @@ LIKE あるいは ~ のようなワイルドカード演算子は特別な環境でしか使えません：
      □ ~ (正規表現) パターンは^.で始まらなければならない
    
  ・ 検索文字列を文字クラスから始めることはできません。たとえば、[a-e]。
- ・ ILIKE や ~* のように大文字小文字を区別しない検索は使えません。そのかわり、
-    このFAQで後述する関数のインデックスが使えます。
+ ・ ILIKE や ~* のような大文字と小文字を区別しない検索は使えません。そのかわり
+    、このFAQの4.12節で説明する関数のインデックスが使えます。
  ・ initdb においては、デフォルトでCロケールが使われなくてはなりません。
 
 [訳注：強制的にインデックスを使うには SET enable_seqscan = off を実行します。 ]
@@ -1025,11 +1019,10 @@ GEQO モジュールは、沢山のテーブルを結合するときに、遺伝的アルゴリズム(GA)で問合
 大文字と小文字を区別しない等値比較次のように表現できる：
     SELECT *
     FROM tab
-    WHERE lower(col) = 'abc'
-    
+    WHERE lower(col) = 'abc';
 標準インデックスでは使われず、しかしながら、もし関数インデックスを作ったならそ
 れが使われるでしょう。
-   CREATE INDEX tabindex on tab (lower(col));
+   CREATE INDEX tabindex ON tab (lower(col));
    
         WHERE lower(textfield) LIKE lower(pattern)
 
@@ -1043,8 +1036,8 @@ GEQO モジュールは、沢山のテーブルを結合するときに、遺伝的アルゴリズム(GA)で問合
 Type            Internal Name   Notes
 --------------------------------------------------
 "char"          char            1 character
-CHAR(#)         bpchar          指定された固定長となるように空白が詰められる
-VARCHAR(#)      varchar         最大長のサイズを指定する、詰め物無し
+CHAR(n)         bpchar          指定された固定長となるように空白が詰められる
+VARCHAR(n)      varchar         最大長のサイズを指定する、詰め物無し
 TEXT            text            長さに上限の無いテキスト
 BYTEA           bytea           可変長のバイト配列(null-byte safe)
 
@@ -1057,9 +1050,9 @@ BYTEA           bytea           可変長のバイト配列(null-byte safe)
 れたり複数ロウに渡って保存されたりして、ディスク上の空間は思ったより小さくなり
 ます。
 
-CHAR()はいつも長さが同じ文字列を保存するのに最適です。VARCHAR() は可変長の文字
-列を保存するのに最適ですが、保存できる文字列の長さに制限があります。TEXT は長さ
-に制限の無い文字列の保存ためのもので、最大1ギガバイトです。 BYTEAは、部分的に
+CHAR(n)はいつも長さが同じ文字列を保存するのに最適です。VARCHAR(n) は可変長の文
+字列を保存するのに最適ですが、保存できる文字列の長さに制限があります。TEXT は長
+さに制限の無い文字列の保存ためのもので、最大1ギガバイトです。 BYTEAは、部分的に
 NULL のバイトを含むバイナリデータを保存するためのものです。
 
 4.15.1) 通番(serial)／自動増分フィールドはどのようにつくりますか？
@@ -1090,9 +1083,9 @@ Numbering Rowsの章にありあます。
 
 ひとつの方法は、nextval() 関数を使ってその値を挿入する前(before)に SEQUENCE オ
 ブジェクトから次の SERIAL 値を取り出し、それから実際に挿入をすることです。
-4.16.1 の例で使ったテーブルを使うとすると、Perl では次のようになります。
-        new_id = output of "SELECT nextval('person_id_seq')"
-        INSERT INTO person (id, name) VALUES (new_id, 'Blaise Pascal');
+4.15.1 のテーブルの例を使うとすると、疑似言語ではこのようになります。
+        new_id = execute("SELECT nextval('person_id_seq')");
+        execute("INSERT INTO person (id, name) VALUES (new_id, 'Blaise Pascal')");
 そうして、new_id に保存した新しい値を他の問い合わせに(たとえば、person テーブル
 に対する外部キー(foreign key)のように)使うとよいでしょう。自動的に作られた
 SEQUENCEオブジェクトの名前は、<table>_<serialcolumn>_seq のようになり、このうち
@@ -1100,8 +1093,8 @@ SEQUENCEオブジェクトの名前は、<table>_<serialcolumn>_seq のようになり、このうち
 
 あるいは、与えられたSERIAL値を、それが既定値として挿入された後で(after)、
 currval() 関数を使って取り出すこともできます。たとえば、
-        INSERT INTO person (name) VALUES ('Blaise Pascal');
-        new_id = currval('person_id_seq');
+        execute("INSERT INTO person (name) VALUES ('Blaise Pascal')");
+        new_id = execute("SELECT currval('person_id_seq')");
 最後に、INSERT文から返るOIDを使って、既定値をみつけることもできますが、しかし、
 これは最も移植性の低いやり方でしょう。PerlのDBIで Edmund Mergl の作った DBD::Pg
 モジュールを使えば、$sth->execute() の後に $sth->{pg_oid_status} を経由してその
@@ -1110,7 +1103,7 @@ OID 値を使えるようにすることはできます。
 4.15.3) 他のユーザとの競合状態を避けるためには、currval() と nextval() は使わな
 いほうがよいのでしょうか？
 
-それはありません。Currval() は、すべてのユーザではありませんが、あなたのバック
+それはありません。currval() は、すべてのユーザではありませんが、あなたのバック
 エンドに与えられた現在の値を返します。
 
 4.15.4) トランザクションが中断したときにもういちどシーケンス番号が使われないの
@@ -1124,7 +1117,7 @@ OID 値を使えるようにすることはできます。
 
 OID とは一意のロウID に対する PostgreSQL の答えです。PostgreSQL の中でつくられ
 るすべてのロウは一意の OID を得ます。initdb で発生される OID はすべて 16384
-(backend/access/transam.h から)より小さな値です。initdb 後のすべての OID (ユー
+(include/access/transam.h から)より小さな値です。initdb 後のすべての OID (ユー
 ザ作成)はそれ以上の値になります。既定では、これらすべての OIDは一つのデーブルや
 データベース内に留まらず、PostgreSQL インストレーション全体の中で一意です。
 
@@ -1166,8 +1159,8 @@ TID は特定の物理ロウをそのブロックとオフセット値で識別するために使われます。TID
  ・ ポータル(portal), カーソル(cursor)
  ・ 領域変数(range variable)、テーブル名(table name)、テーブル別名(table alias)
 
-一般的なデータベース用語のリストは： http://www.comptechnews.com/~reaster/
-dbdesign.html で見つけられます。
+一般的なデータベース用語のリストは：http://hea-www.harvard.edu/MST/simul/
+software/docs/pkgs/pgsql/glossary/glossary.html で見つけられます。
 
 4.18) エラーメッセージ "ERROR: Memory exhausted in AllocSetAlloc()"が出るのはな
 ぜですか？
@@ -1187,7 +1180,7 @@ dbdesign.html で見つけられます。
 
 4.19) どのバージョンの PostgreSQL を走らせているかを調べるにはどうしますか？
 
-psql から select version(); をタイプします。
+psql から SELECT version(); をタイプします。
 
 4.20) ラージ・オブジェクトの操作でinvalid large obj descriptor を受け取りました
 。なぜでしょうか？
@@ -1213,26 +1206,28 @@ CURRENT_TIMESTAMPを使います:
 4.22) なぜ、INを使う副問い合わせがとても遅いのですか？
 
 現在、外部問い合わせの各ロウについて副問い合わせの結果を順番にスキャンすること
-により、副問い合わせを外部問い合わせに結合しています。当面はINをEXISTSで置き換
-えることです：
+により、副問い合わせを外部問い合わせに結合しています。もし、副問い合わせが数行
+しか返さず、外部問い合わせが沢山の行を返すなら、当面はINをEXISTSで置き換えるこ
+とです：
         SELECT *
         FROM tab
-        WHERE col1 IN (SELECT col2 FROM TAB2)
+        WHERE col1 IN (SELECT subcol FROM subtab)
 を、置き換えて：
         SELECT *
         FROM tab
-        WHERE EXISTS (SELECT col2 FROM TAB2 WHERE col1 = col2)
-とします。この制限は将来のリリースで直したいと思っています。
+        WHERE EXISTS (SELECT subcol FROM subtab WHERE subcol = col)
+とします。これが手っ取り早いですが、subcolは索引付きカラムであるべきです。この
+制限は将来のリリースで直したいと思っています。
 
 4.23) 外部結合(outer join)はどのように実現しますか?
 
 PostgreSQL は SQL 標準構文を使う外部結合(アウタージョイン)をサポートします。こ
 こに 2つの例題があります。
-SELECT *
- FROM t1 LEFT OUTER JOIN t2 ON (t1.col = t2.col);
+        SELECT *
+        FROM t1 LEFT OUTER JOIN t2 ON (t1.col = t2.col);
 あるいは
-SELECT *
- FROM t1 LEFT OUTER JOIN t2 USING (col);
+        SELECT *
+        FROM t1 LEFT OUTER JOIN t2 USING (col);
 これらの象徴的な問い合わせでは t1.col を t2.col と結合して、t1 の結合されなかっ
 たロウ(t2 と一致しなかったロウ)も返しています。RIGHT 結合は t2 の結合されなかっ
 たロウを加えるでしょう。FULL 結合は、一致したロウに t1 と t2 からは結合されなか
@@ -1243,7 +1238,7 @@ NOT IN を使ってシミュレートできます。たとえば、tab1 と tab2 を結合するときは、
         SELECT tab1.col1, tab2.col2
         FROM tab1, tab2
         WHERE tab1.col1 = tab2.col1
-UNION ALL
+        UNION ALL
         SELECT tab1.col1, NULL
         FROM tab1
         WHERE tab1.col1 NOT IN (SELECT tab2.col1 FROM tab2)
@@ -1251,19 +1246,19 @@ UNION ALL
 
 4.24) 複数のデータベースを使う問い合わせはどのようにすればできますか？
 
-現行(current)を除いて、データベースへの問い合わせ方法はありません。というのも
-PostgreSQLがデータベース仕様のシステムカタログを読み込むためで、そこには、たと
-えそのふりをするだけにしろ、データベースを越えて問い合わせをするすべがありませ
-ん。
+現行のデータベース以外への問い合わせ方法はありません。というのもPostgreSQLがデ
+ータベース仕様のシステムカタログを読み込むためで、そこには、たとえそのふりをす
+るだけにしろ、データベースを越えて問い合わせをするすべがありません。
 
-もちろん、クライアントは同時に異なる複数のデータベースへ接続してそこにある情報
-をマージすることはできます。
+/contrib/dblink はデータベース間(cross-database)の問い合わせを関数呼出しにより
+許します。もちろん、クライアントは同時に接続を別のデータベースへも張らなくては
+ならず、結果をクライアント側でマージしなくてはなりません。
 
 4.25) 関数で複数のロウまたはカラムを返すにはどうしますか？
 
 もし、PL/pgSQL 関数でrefcursorsを使うと結果の組を返すことができます。 http://
-developer.postgresql.org/docs/postgres/plpgsql-cursors.html の 23.7.3.3 節をご
-覧下さい。
+www.PostgreSQL.org/idocs/index.php?plpgsql-cursors.html の 23.7.3.3 節をご覧下
+さい。
 
 4.26)なぜ、PL/PgSQL 関数の中から一時テーブルを確実に create/drop することができ
 ないのでしょうか？
@@ -1275,9 +1270,37 @@ PL/PgSQL は関数の内容をキャッシュし、その不幸な副作用のため、もし PL/PgSQL 関数
 時テーブルアクセスのために使うことです。これで、毎回クエリーのパースし直しを起
 こすでしょう。
 
+4.27) どのようなリプリケーションオプションを利用できますか?
+
+マスター／スレーブのリプリケーションオプションがいくつか利用可能です。これらの
+オプションではマスターのみがデータベースを変更でき、スレーブはデータベースを読
+むだけです。 http://gborg.PostgreSQL.org/genpage?replication_research の最後に
+それらを一覧にしてあります。マルチ-マスターのリプリケーションによるソリューショ
+ンは http://gborg.PostgreSQL.org/project/pgreplication/projdisplay.php にて作業
+が進められています。
+[訳注
+    JPUG 分散トランザクション開発分科会では、永安悟史さんを中心に２相
+    コミットの実装を行なっています。
+        http://www.postgresql.jp/subcommittee/dt/index.html
+        http://www.snaga.org/jpug-dt/
+
+    三谷篤さんによる双方向リプリケーションPGReplicate
+        http://www.csra.co.jp/~mitani/jpug/pgreplicate/
+]
+
+4.28) どのような暗号化オプションを利用できますか?
+
+ ・ /contrib/pgcrypto SQL問い合わせの中で使うための沢山の暗号化を含みます。
+ ・ クライアントからサーバーへの転送をを暗号化する唯一の方法はpg_hba.confの中で
+    hostsslを使うことによります。
+ ・ バージョン7.3 ではデータベースユーザのパスワードは保存される時に自動的に暗
+    号化されます。それより前のバージョンではpostgresql.conf中で
+    PASSWORD_ENCRYPTIONを有効にする必要があります。
+ ・ サーバーは暗号化ファイルシステムを使って走ることもできます。
+
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
                         PostgreSQLの拡張についての質問                         
-
+                                                                               
 5.1) 自分で書いたユーザ定義関数を psql の中で実行するとコア・ダンプしてしまうの
 はなぜですか？
 
@@ -1307,8 +1330,8 @@ PL/PgSQL は関数の内容をキャッシュし、その不幸な副作用のため、もし PL/PgSQL 関数
 [訳注：
   日本語版の製作については以下の通りです。
 
-  最終更新日:   2002年08月25日
-  翻訳者:       桑村 潤 (Jun Kuwamura <juk@postgresql.jp>)
+  最終更新日:   2002年10月18日
+  翻訳者:       桑村 潤 (Jun Kuwamura <juk@PostgreSQL.jp>)
 
   このFAQの和訳の作成にあたり協力をしてくださった方々(敬称は略させていただきます):
 
@@ -1335,9 +1358,9 @@ Atsushi SUGAWARA <asugawar at f3.dion.ne.jp>)
 
   日本語版のこの文書は、以下からもたどれます。
         http://www.rccm.co.jp/~juk/pgsql/(FAQ和訳 PostgreSQL についてよくある質問)
-        http://www.postgresql.jp/subcommittee/jpugdoc/JPUG文書・書籍関連分科会
+        http://www.PostgreSQL.jp/subcommittee/jpugdoc/JPUG文書・書籍関連分科会
         http://www.linux.or.jp/JF/Linux JFプロジェクト
         http://www.sra.co.jp/people/t-ishii/PostgreSQL/doc-jp/
 
-  なお、この和訳に関するご意見は(juk@postgresql.jp)までお寄せ下さい。
+  なお、この和訳に関するご意見は(juk@PostgreSQL.jp)までお寄せ下さい。
 ]
