@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.86 1998/06/09 17:13:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.87 1998/06/09 17:36:28 momjian Exp $
  *
  * NOTES
  *
@@ -345,8 +345,8 @@ PostmasterMain(int argc, char *argv[])
 	real_argc = argc;
 
 	/* don't process any dummy args we placed at the end for status display */
-	for (nonblank_argc = argc; argc > 0; nonblank_argc--)
-		if (argv[argc-1] != NULL && argv[argc-1][0] != '\0')
+	for (nonblank_argc = argc; nonblank_argc > 0; nonblank_argc--)
+		if (argv[nonblank_argc-1] != NULL && argv[nonblank_argc-1][0] != '\0')
 			break;
 
 	/*
