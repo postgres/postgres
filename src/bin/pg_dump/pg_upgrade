@@ -3,7 +3,7 @@
 # pg_upgrade: update a database without needing a full dump/reload cycle.
 # CAUTION: read the manual page before trying to use this!
 
-# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_upgrade,v 1.17 2001/08/25 18:52:42 tgl Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_upgrade,v 1.18 2002/01/09 16:00:46 momjian Exp $
 #
 # NOTE: we must be sure to update the version-checking code a few dozen lines
 # below for each new PostgreSQL release.
@@ -49,13 +49,13 @@ then	echo "You must rename your old data directory to $OLDDIR and run initdb." 1
 	exit 1
 fi
 
-if [ ! -d "./data/base/template1" ]
+if [ ! -d "./data/base/1" ]
 then	echo "Cannot find database template1 in ./data/base." 1>&2
 	echo "Are you running $0 as the postgres superuser?" 1>&2
 	exit 1
 fi
 
-if [ ! -d "./$OLDDIR/base/template1" ]
+if [ ! -d "./$OLDDIR/base/1" ]
 then	echo "There is no database template1 in ./$OLDDIR/base." 1>&2
 	exit 1
 fi
@@ -78,9 +78,9 @@ SRCVERSION=`cat ./$OLDDIR/PG_VERSION`
 # This code will need to be updated/reviewed for each new PostgreSQL release.
 
 # MYVERSION is the expected output database version
-MYVERSION="7.0"
+MYVERSION="7.1"
 
-if [ "$DESTVERSION" != "$MYVERSION" ]
+if [ "$DESTVERSION" != "$MYVERSION" -a "$DESTVERSION" != "$SRCVERSION" ]
 then	echo "$0 is for PostgreSQL version $MYVERSION, but ./data/PG_VERSION contains $DESTVERSION." 1>&2
 	echo "Did you run initdb for version $MYVERSION?" 1>&2
 	exit 1
@@ -93,7 +93,7 @@ fi
 # looks uglier but is more flexible.
 
 case "$SRCVERSION" in
-#    7.0) ;;
+#    7.2) ;;
     *)	echo "Sorry, `basename $0` cannot upgrade database version $SRCVERSION to $DESTVERSION." 1>&2
 	echo "The on-disk structure of tables has changed." 1>&2
 	echo "You will need to dump and restore using pg_dump." 1>&2
@@ -114,9 +114,9 @@ cat $INPUT | awk '	{
 					while (getline $0 > 0 && $0 != "\\.")
 						;
 				else	print $0;
-			}' >$TMPFILE
+			}' > $TMPFILE
 
-psql "template1" <$TMPFILE
+psql "template1" < $TMPFILE
 
 if [ $? -ne 0 ]
 then	echo "There were errors in the input script $INPUT.
@@ -143,9 +143,9 @@ cat $INPUT | awk 'BEGIN	{ print "VACUUM;" }
 					 $2 != "-" &&
 					 $2 != "template1")
 					printf "\\connect %s\nVACUUM;\n", $2;
-			}' >$TMPFILE
+			}' > $TMPFILE
 
-psql "template1" <$TMPFILE
+psql "template1" < $TMPFILE
 
 if [ $? -ne 0 ]
 then	echo "There were errors in the vacuuming step.
@@ -153,26 +153,84 @@ $0 aborted." 1>&2
 	exit 1
 fi
 
+# should be pretty small file
+pg_dumpall -s > $TMPFILE 2>/dev/null
+
+# flush buffers to disk
+pg_ctl stop
+
 echo "Commit fixes complete, moving data files..."
 
-for DIR in data/base/*
+cat "$INPUT" | while read LINE
 do
-	BASEDIR="`basename $DIR`"
-	if [ -d "$DIR" -a \
-	     -d "$OLDDIR/base/$BASEDIR" -a \( "$BASEDIR" != "template1" \) ]
-	then	for FILE in $OLDDIR/base/$BASEDIR/*
-		do
-			BASEFILE="`basename $FILE`"
-			if [ `expr "$BASEFILE" : "pg_"` -ne 3 -a \
-				"$BASEFILE" != "PG_VERSION" ]
-			then	mv -f $FILE $DIR
-			fi
-		done
+	if /bin/echo "$LINE" | grep -q "^\\\\connect "
+	then	OLDDB="$DB"
+		DB="`/bin/echo \"$LINE\" | cut -d' ' -f2`"
+		if [ "$DB" = "-" ]
+		then	DB="$OLDDB"
+		fi
+		if [ "$DB" = "template1" -o "$DB" = "template0" ]
+		then	DB=""
+		fi
+	fi
+	if echo "$LINE" | grep -q "^-- TOC Entry ID [0-9]* (OID "
+	then	OID="`echo \"$LINE\" | cut -d' ' -f7 | tr -d ')'`"
+	fi
+	if echo "$LINE" | grep -q "^-- Name: [^ ]* Type: TABLE "
+	then	TABLE="`echo \"$LINE\" | cut -d' ' -f3`"
+		# skip system tables
+		if [ "`echo \"$TABLE\" | cut -c 1-3`" = "pg_" ]
+		then	TABLE=""
+		fi
+	fi
+	if [ "$DB" -a "$OID" -a "$TABLE" ]
+	then
+		NEWOID=`awk -F' ' '
+				BEGIN 	{ newdb=""; newoid=""; 
+					  newtable=""; ret=0;}
+				$1 == "\\\\connect" && $2 != "-" {newdb=$2;}
+				$0 ~ /^-- TOC Entry ID [0-9]* .OID / \
+					{ newoid = substr($7, 1, length($7)-1);}
+				{print $0 >> "/tmp/x";
+				print $3 >> "/tmp/x";
+				print newdb," ", newoid >> "/tmp/x"}
+				$0 ~ /^-- Name: [^ ]* Type: TABLE / && \
+				newdb == "'"$DB"'" && \
+				$3 == "'"$TABLE"'" \
+					{ ret=newoid; exit}
+				END { print ret;}' $TMPFILE`
+		if [ "$NEWOID" -eq 0 ]
+		then	echo "Move of database $DB, OID $OID, table $TABLE failed.\nNew oid not found;  exiting" 1>&2
+			exit 1
+		fi
+		# We use stars so we don't have to worry about database oids
+ 		if [ `ls "$OLDDIR"/base/*/"$OID" | wc -l` -eq 0 ]
+		then	echo "Move of database $DB, OID $OID, table $TABLE failed.\nFile not found;  exiting" 1>&2
+			exit 1
+		fi
+  		if [ `ls "$OLDDIR"/base/*/"$OID" | wc -l` -gt 1 ]
+		then	echo "Move of database $DB, OID $OID, table $TABLE failed.\nToo many found;  exiting" 1>&2
+			exit 1
+		fi
+		if [ `ls data/base/*/"$NEWOID" | wc -l` -eq 0 ]
+		then	echo "Move of database $DB, OID $OID, table $TABLE to $NEWOID failed.\nFile not found;  exiting" 1>&2
+			exit 1
+		fi
+		if [ `ls data/base/*/"$NEWOID" | wc -l` -gt 1 ]
+		then	echo "Move of database $DB, OID $OID, table $TABLE to $NEWOID failed.\nToo many found;  exiting" 1>&2
+			exit 1
+		fi
+		mv -f "$OLDDIR"/base/*/"$OID" data/base/*/"$NEWOID"
+		if [ "$?" -ne 0 ]
+		then	echo "Move of database $DB, OID $OID, table $TABLE \n to $NEWOID failed.;  exiting" 1>&2
+			exit 1
+		fi
+		TABLE=""
 	fi
 done
 
+rm -r data/pg_clog
 mv -f $OLDDIR/pg_clog data
-mv -f $OLDDIR/pg_variable data
 
 echo "You must stop/start the postmaster before doing anything else."
 echo "You may remove the $OLDDIR directory with 'rm -r $OLDDIR'."
