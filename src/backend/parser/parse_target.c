@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.129 2005/01/13 17:19:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.130 2005/03/26 06:28:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,7 @@
 
 #include "commands/dbcommands.h"
 #include "miscadmin.h"
+#include "nodes/bitmapset.h"
 #include "nodes/makefuncs.h"
 #include "parser/parsetree.h"
 #include "parser/parse_coerce.h"
@@ -630,7 +631,8 @@ checkInsertTargets(ParseState *pstate, List *cols, List **attrnos)
 		/*
 		 * Do initial validation of user-supplied INSERT column list.
 		 */
-		List	   *wholecols = NIL;
+		Bitmapset  *wholecols = NULL;
+		Bitmapset  *partialcols = NULL;
 		ListCell   *tl;
 
 		foreach(tl, cols)
@@ -649,21 +651,23 @@ checkInsertTargets(ParseState *pstate, List *cols, List **attrnos)
 			if (col->indirection == NIL)
 			{
 				/* whole column; must not have any other assignment */
-				if (list_member_int(*attrnos, attrno))
+				if (bms_is_member(attrno, wholecols) ||
+					bms_is_member(attrno, partialcols))
 					ereport(ERROR,
 							(errcode(ERRCODE_DUPLICATE_COLUMN),
 						 errmsg("column \"%s\" specified more than once",
 								name)));
-				wholecols = lappend_int(wholecols, attrno);
+				wholecols = bms_add_member(wholecols, attrno);
 			}
 			else
 			{
 				/* partial column; must not have any whole assignment */
-				if (list_member_int(wholecols, attrno))
+				if (bms_is_member(attrno, wholecols))
 					ereport(ERROR,
 							(errcode(ERRCODE_DUPLICATE_COLUMN),
 						 errmsg("column \"%s\" specified more than once",
 								name)));
+				partialcols = bms_add_member(partialcols, attrno);
 			}
 
 			*attrnos = lappend_int(*attrnos, attrno);
