@@ -180,7 +180,9 @@ ODBC
 	updatable cursors (Hiroshi)
 	Most configure options on setable via DSN (Hiroshi)
 	multibyte, performance fixes (Hiroshi)
-
+ECPG
+	EXECUTE ... INTO ...    implemented
+	multiple row descriptor support (e.g. CARDINALITY)
 
 Source Code
 -----------
