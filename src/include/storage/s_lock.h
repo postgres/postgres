@@ -66,7 +66,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	  $PostgreSQL: pgsql/src/include/storage/s_lock.h,v 1.128 2004/08/30 22:49:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/include/storage/s_lock.h,v 1.129 2004/09/02 17:10:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -539,6 +539,18 @@ tas(volatile slock_t *lock)
 #define S_LOCK_FREE(lock)	(*TAS_ACTIVE_WORD(lock) != 0)
 
 #endif	 /* __hppa || __hppa__ */
+
+
+#if defined(__hpux) && defined(__ia64) && !defined(__GNUC__)
+
+#define HAS_TEST_AND_SET
+
+typedef unsigned int slock_t;
+
+#include <ia64/sys/inline.h>
+#define TAS(lock) _Asm_xchg(_SZ_W, lock, 1, _LDHINT_NONE)
+
+#endif	/* HPUX on IA64, non gcc */
 
 
 #if defined(__QNX__) && defined(__WATCOMC__)
