@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.96 2002/07/01 06:56:10 meskes Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.97 2002/07/20 08:24:18 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -89,14 +89,14 @@ static struct _if_value
  * We use exclusive states for quoted strings, extended comments,
  * and to eliminate parsing troubles for numeric strings.
  * Exclusive states:
- *	<xbit> bit string literal
+ *	<xb> bit string literal
  *	<xc> extended C-style comments - thomas 1997-07-12
  *	<xd> delimited identifiers (double-quoted identifiers) - thomas 1997-10-27
  *	<xh> hexadecimal numeric string - thomas 1997-11-16
  *	<xq> quoted strings - thomas 1997-07-30
  */
 
-%x xbit
+%x xb
 %x xc
 %x xd
 %x xdc
@@ -108,10 +108,10 @@ static struct _if_value
 
 /* Bit string
  */
-xbitstart		[bB]{quote}
-xbitstop		{quote}
-xbitinside		[^']*
-xbitcat			{quote}{whitespace_with_newline}{quote}
+xbstart			[bB]{quote}
+xbstop			{quote}
+xbinside		[^']*
+xbcat			{quote}{whitespace_with_newline}{quote}
 
 /* Hexadecimal number
  */
@@ -119,6 +119,10 @@ xhstart			[xX]{quote}
 xhstop			{quote}
 xhinside		[^']+
 xhcat			{quote}{whitespace_with_newline}{quote}
+
+/* National character
+ */
+xnstart                        [nN]{quote}
 
 /* C version of hex number
  */
@@ -318,13 +322,13 @@ cppline			{space}*#(.*\\{space})*.*
 
 <xc><<EOF>>			{ mmerror(PARSE_ERROR, ET_ERROR, "Unterminated /* comment"); }
 
-<SQL>{xbitstart}	{
+<SQL>{xbstart}	{
 						token_start = yytext;
-						BEGIN(xbit);
+						BEGIN(xb);
 						startlit();
 						addlitchar('b');
 					}
-<xbit>{xbitstop}	{
+<xb>{xbstop}	{
 						BEGIN(SQL);
 						if (literalbuf[strspn(literalbuf, "01") + 1] != '\0')
 							mmerror(PARSE_ERROR, ET_ERROR, "invalid bit string input.");
@@ -333,10 +337,10 @@ cppline			{space}*#(.*\\{space})*.*
 					}
 
 <xh>{xhinside}	|
-<xbit>{xbitinside}	{ addlit(yytext, yyleng); }
+<xb>{xbinside}	{ addlit(yytext, yyleng); }
 <xh>{xhcat}		|
-<xbit>{xbitcat}		{ /* ignore */ }
-<xbit><<EOF>>		{ mmerror(PARSE_ERROR, ET_ERROR, "Unterminated bit string"); }
+<xb>{xbcat}		{ /* ignore */ }
+<xb><<EOF>>		{ mmerror(PARSE_ERROR, ET_ERROR, "Unterminated bit string"); }
 
 <SQL>{xhstart}		{
 						token_start = yytext;
@@ -362,7 +366,15 @@ cppline			{space}*#(.*\\{space})*.*
 					}
 
 <xh><<EOF>>			{ mmerror(PARSE_ERROR, ET_ERROR, "Unterminated hexadecimal integer"); }
-
+<SQL>{xnstart}              {
+				/* National character.
+				 * Need to remember type info to flow it forward into the parser.
+		                 * Not yet implemented. - thomas 2002-06-17
+		                 */
+			        token_start = yytext;
+				BEGIN(xq);
+				startlit();
+			}
 <C,SQL>{xqstart}	{
 						token_start = yytext;
 						state_before = YYSTATE;
@@ -372,7 +384,6 @@ cppline			{space}*#(.*\\{space})*.*
 <xq>{xqstop}		{
 						BEGIN(state_before);
 						yylval.str = mm_strdup(literalbuf);
-						printf("MM: %s\n", yylval.str);
 						return SCONST;
 					}
 <xq>{xqdouble}		{ addlitchar('\''); }
@@ -580,7 +591,7 @@ cppline			{space}*#(.*\\{space})*.*
 						 */
 						if (ptr == NULL)
 						{
-							yylval.str = mm_strdup( yytext);
+							yylval.str = mm_strdup(yytext);
 							return IDENT;
 						}
 					}

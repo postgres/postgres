@@ -1270,6 +1270,12 @@ Mon Jun 17 15:23:51 CEST 2002
 
 	- Fixed parser bug in pgc.l. Octal numbers in single quotes are now
 	  correctly handled.
+
+Sat Jul 20 10:09:58 CEST 2002
+	
+        - Synced preproc.y with gram.y.
+        - Synced pgc.l with scan.l.
+	- Synced keywords.c.
 	- Set ecpg version to 2.10.0.
 	- Set library version to 3.4.0.
 
