@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.95 2001/07/12 18:02:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.96 2001/07/16 19:07:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -893,19 +893,6 @@ _equalCommentStmt(CommentStmt *a, CommentStmt *b)
 	if (!equal(a->objlist, b->objlist))
 		return false;
 	if (!equalstr(a->comment, b->comment))
-		return false;
-
-	return true;
-}
-
-static bool
-_equalExtendStmt(ExtendStmt *a, ExtendStmt *b)
-{
-	if (!equalstr(a->idxname, b->idxname))
-		return false;
-	if (!equal(a->whereClause, b->whereClause))
-		return false;
-	if (!equal(a->rangetable, b->rangetable))
 		return false;
 
 	return true;
@@ -1939,9 +1926,6 @@ equal(void *a, void *b)
 			break;
 		case T_CommentStmt:
 			retval = _equalCommentStmt(a, b);
-			break;
-		case T_ExtendStmt:
-			retval = _equalExtendStmt(a, b);
 			break;
 		case T_FetchStmt:
 			retval = _equalFetchStmt(a, b);

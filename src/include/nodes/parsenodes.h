@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.135 2001/07/12 18:03:00 tgl Exp $
+ * $Id: parsenodes.h,v 1.136 2001/07/16 19:07:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -464,19 +464,6 @@ typedef struct CommentStmt
 	List	   *objlist;		/* Arguments for VAL objects */
 	char	   *comment;		/* The comment to insert */
 } CommentStmt;
-
-/* ----------------------
- *		Extend Index Statement
- * ----------------------
- */
-typedef struct ExtendStmt
-{
-	NodeTag		type;
-	char	   *idxname;		/* name of the index */
-	Node	   *whereClause;	/* qualifications */
-	List	   *rangetable;		/* range table, filled in by
-								 * transformStmt() */
-} ExtendStmt;
 
 /* ----------------------
  *		Begin Recipe Statement

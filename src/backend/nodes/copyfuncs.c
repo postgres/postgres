@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.147 2001/07/12 18:02:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.148 2001/07/16 19:07:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2037,18 +2037,6 @@ _copyCommentStmt(CommentStmt *from)
 	return newnode;
 }
 
-static ExtendStmt *
-_copyExtendStmt(ExtendStmt *from)
-{
-	ExtendStmt *newnode = makeNode(ExtendStmt);
-
-	newnode->idxname = pstrdup(from->idxname);
-	Node_Copy(from, newnode, whereClause);
-	Node_Copy(from, newnode, rangetable);
-
-	return newnode;
-}
-
 static FetchStmt *
 _copyFetchStmt(FetchStmt *from)
 {
@@ -2795,9 +2783,6 @@ copyObject(void *from)
 			break;
 		case T_CommentStmt:
 			retval = _copyCommentStmt(from);
-			break;
-		case T_ExtendStmt:
-			retval = _copyExtendStmt(from);
 			break;
 		case T_FetchStmt:
 			retval = _copyFetchStmt(from);

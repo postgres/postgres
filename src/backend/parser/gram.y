@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.237 2001/07/16 05:06:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.238 2001/07/16 19:07:40 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2468,7 +2468,6 @@ opt_class:  class
 		| USING class							{ $$ = $2; }
 		| /*EMPTY*/								{ $$ = NULL; }
 		;
-
 
 /*****************************************************************************
  *
