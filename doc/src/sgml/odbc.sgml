@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/odbc.sgml,v 1.16 2000/08/29 20:02:07 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/odbc.sgml,v 1.17 2000/09/18 20:11:37 petere Exp $
 -->
 
  <chapter id="odbc">
@@ -70,18 +70,154 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/odbc.sgml,v 1.16 2000/08/29 20:02:07 
     same calls and the back end data source would look the same (to the Windows
     app).
    </para>
+  </sect1>
 
-<!--
+  <sect1>
+   <title>Installation</title>
+
    <para>
-    <ulink url="http://www.insightdist.com/">Insight Distributors</ulink> 
-    provides active and ongoing
-    support for the core <productname>psqlODBC</productname> distribution. 
-    They provide a
-    <ulink url="http://www.insightdist.com/psqlodbc/"><acronym>FAQ</acronym></ulink>,
-    ongoing development on the code base, and actively participate on the 
-    <ulink url="mailto:interfaces@postgresql.org">interfaces mailing list</ulink>.
+    The first thing to note about the <productname>psqlODBC</> driver
+    (or any <acronym>ODBC</> driver) is that there must exist a
+    <firstterm>driver manager</> on the system where the
+    <acronym>ODBC</> driver is to be used. There exists a free
+    <acronym>ODBC</> driver for Unix called <productname>iODBC</>
+    which can be obtained via <ulink
+    url="http://www.iodbc.org">http://www.iodbc.org</ulink>.
+    Instructions for installing <productname>iODBC</> are contained in
+    the <productname>iODBC</> distribution. Having said that, any
+    driver manager that you can find for your platform should support
+    the <productname>psqlODBC</> driver, or any other <acronym>ODBC</>
+    driver for that matter.
    </para>
--->
+
+   <para>
+    To install <productname>psqlODBC</> you simply need to supply the
+    <option>--enable-odbc</> option to the <filename>configure</> script when you are
+    building the entire <productname>PostgreSQL</> distribution. The library
+    and header files will then automatically be built and installed with the
+    rest of the programs. If you forget that option or want to build the ODBC
+    driver later you can change into the directory <filename>src/interfaces/odbc</>
+    and do <literal>make</> and <literal>make install</> there.
+   </para>
+
+   <para>
+    The installation-wide configuration file <filename>odbcinst.ini</> will be
+    installed into the directory <filename>/usr/local/pgsql/etc/</>, or equivalent,
+    depending on what <option>--prefix</> and/or <option>--sysconfdir</> options
+    you supplied to <filename>configure</>. Since this file can also be shared
+    between different <acronym>ODBC</> drivers you can also install it in a shared
+    location. To do that, override the location of this file with the
+    <option>--with-odbcinst</> option.
+   </para>
+
+   <para>
+    Additionally, you should install the ODBC catalog extensions.  That will
+    provide a number of functions mandated by the ODBC standard that are not
+    supplied by <productname>PostgreSQL</> by default. The file
+    <filename>/usr/local/pgsql/share/odbc.sql</> (in the default installation layout)
+    contains the appropriate definitions, which you can install as follows:
+<programlisting>
+psql -d template1 -f <replaceable>LOCATION</>/odbc.sql
+</programlisting>
+    where specifying <literal>template1</literal> as the target
+    database will ensure that all subsequent new databases will
+    have these same definitions.
+   </para>
+
+   <sect2>
+    <title>Supported Platforms</title>
+    <para>
+     <productname>psqlODBC</productname> has been built and tested
+     on <productname>Linux</productname>. There have been reports of success
+     with FreeBSD and with Solaris. There are no known restrictions
+     on the basic code for other platforms which already support
+     <productname>Postgres</productname>.
+    </para>
+   </sect2>
+  </sect1>
+
+  <sect1>
+   <title>Configuration Files</title>
+
+   <para>
+    <filename>~/.odbc.ini</filename> contains user-specified access information 
+    for the <productname>psqlODBC</productname> driver. 
+    The file uses conventions typical for <productname>Windows</productname> 
+    Registry files, but despite this restriction can be made to work.
+   </para>
+
+   <para>
+    The <filename>.odbc.ini</filename> file has three required sections. 
+    The first is <literal>[ODBC Data Sources]</literal>
+    which is a list of arbitrary names and descriptions for each database 
+    you wish to access. The second required section is the 
+    Data Source Specification and there will be one of these sections
+    for each database. 
+    Each section must be labeled with the name given in 
+    <literal>[ODBC Data Sources]</literal> and must contain the following entries: 
+
+    <programlisting>
+Driver = <replaceable>prefix</replaceable>/lib/libpsqlodbc.so
+Database=<replaceable>DatabaseName</replaceable>
+Servername=localhost
+Port=5432
+    </programlisting>
+
+    <tip>
+     <para>
+      Remember that the <productname>Postgres</productname> database name is
+      usually a single word, without path names of any sort. 
+      The <productname>Postgres</productname> server manages the actual access
+      to the database, and you need only specify the name from the client.
+     </para>
+    </tip>
+
+    Other entries may be inserted to control the format of the display. 
+    The third required section is <literal>[ODBC]</literal> 
+    which must contain the <literal>InstallDir</literal> keyword 
+    and which may contain other options.
+   </para>
+
+   <para>
+    Here is an example <filename>.odbc.ini</filename> file, 
+    showing access information for three databases:
+
+    <programlisting>
+[ODBC Data Sources]
+DataEntry = Read/Write Database
+QueryOnly = Read-only Database
+Test = Debugging Database
+Default = Postgres Stripped
+
+[DataEntry]
+ReadOnly = 0
+Servername = localhost
+Database = Sales
+
+[QueryOnly]
+ReadOnly = 1
+Servername = localhost
+Database = Sales
+
+[Test]
+Debug = 1
+CommLog = 1
+ReadOnly = 0
+Servername = localhost
+Username = tgl
+Password = "no$way"
+Port = 5432
+Database = test
+
+[Default]
+Servername = localhost
+Database = tgl
+Driver = /opt/postgres/current/lib/libpsqlodbc.so
+
+[ODBC]
+InstallDir = /opt/applix/axdata/axshlib
+    </programlisting>
+   </para>
   </sect1>
 
   <sect1>
@@ -165,490 +301,19 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/odbc.sgml,v 1.16 2000/08/29 20:02:07 
    </sect2>
   </sect1>
 
+
   <sect1>
-   <title>Unix Installation</title>
+   <title>ApplixWare</title>
 
    <para>
     <productname>ApplixWare</productname> has an 
     <acronym>ODBC</acronym> database interface
     supported on at least some platforms. 
-    <productname>ApplixWare</productname> v4.4.2 has been
-    demonstrated under Linux with <productname>Postgres</productname> v7.0 
+    <productname>ApplixWare</productname> 4.4.2 has been
+    demonstrated under Linux with <productname>Postgres</productname> 7.0 
     using the <productname>psqlODBC</productname>
     driver contained in the <productname>Postgres</productname> distribution.
    </para>
-
-   <sect2>
-    <title>Building the Driver</title>
-
-    <para>
-     The first thing
-     to note about the <productname>psqlODBC</productname> driver
-     (or any <acronym>ODBC</acronym> driver) is that there must
-     exist a driver manager on the system where
-     the <acronym>ODBC</acronym> driver is to be
-     used. There exists a freeware <acronym>ODBC</acronym> driver for Unix
-     called <productname>iodbc</productname> which
-     can be obtained from various locations on the Net, including at
-     <ulink url="http://www.as220.org/FreeODBC/iodbc-2.12.shar.Z">AS200</ulink>. 
-     Instructions for installing <productname>iodbc</productname>
-     are beyond the scope of this
-     document, but there is a <filename>README</filename>
-     that can be found inside the <productname>iodbc</productname> compressed
-     .shar file that should explain how to get it up and running.
-    </para>
-
-    <para>
-     Having said that, any driver manager that you can find for your platform
-     should support the <productname>psqlODBC</productname> driver
-     or any <acronym>ODBC</acronym> driver.
-    </para>
-
-    <para>
-     The Unix configuration files for <productname>psqlODBC</productname>
-     have recently been extensively
-     reworked to allow for easy building on supported platforms as
-     well as to allow for support of other Unix platforms in the future.
-     The new configuration and build files for the driver should make it
-     a simple process to build the driver on the supported platforms. Currently
-     these include Linux and FreeBSD but we are hoping other users will
-     contribute the necessary information to quickly expand the number of
-     platforms for which the driver can be built.
-    </para>
-
-    <para>
-     There are actually two separate methods to build the driver depending on
-     how you received it and these differences come down to only where and how to
-     run <application>configure</application> and <application>make</application>. 
-     The driver can be built in a standalone, client-only installation, or can be 
-     built as a part of the main <productname>Postgres</productname> distribution.
-     The standalone installation is convenient if you have <acronym>ODBC</acronym>
-     client applications on multiple, heterogeneous platforms. The integrated
-     installation is convenient when the target client is the same as the
-     server, or when the client and server have similar runtime configurations.
-    </para>
-
-    <para>
-     Specifically if you have received the <productname>psqlODBC</productname>
-     driver as part of the <productname>Postgres</productname> distribution
-     (from now on referred to as an "integrated" build) then you will
-     configure and make the <acronym>ODBC</acronym> driver
-     from the top level source directory
-     of the <productname>Postgres</productname> distribution
-     along with the rest of its libraries.
-     If you received the driver as a standalone package than you will run
-     configure and make from the directory in which you unpacked the
-     driver source.
-    </para>
-
-    <procedure>
-     <title>Integrated Installation</title>
-
-     <para>
-      This installation procedure is appropriate for an integrated installation.
-     </para>
-
-     <step performance="required">
-      <para>
-       Specify the <option>--with-odbc</option>
-       command-line argument for <application>src/configure</application>:
-
-       <programlisting>
-% ./configure --with-odbc
-% make
-       </programlisting>
-      </para>
-     </step>
-
-     <step performance="required">
-      <para>
-       Rebuild the <productname>Postgres</productname> distribution:
-
-       <programlisting>
-% make install
-       </programlisting>
-      </para>
-     </step>
-
-     <step performance="optional">
-      <para>
-       Install the ODBC catalog extensions available in
-       <filename>PGROOT/contrib/odbc/odbc.sql</filename>:
-
-       <programlisting>
-% psql -e template1 &lt; $PGROOT/contrib/odbc/odbc.sql
-       </programlisting>
-
-       where specifying <literal>template1</literal> as the target
-       database will ensure that all subsequent new databases will
-       have these same definitions.
-      </para>
-     </step>
-    </procedure>
-
-    <para>
-     Once configured, the <acronym>ODBC</acronym> driver will be built and installed
-     into the areas defined for the other components of the
-     <productname>Postgres</productname> system. The installation-wide
-     <acronym>ODBC</acronym> configuration file will be placed into
-     the top directory of the Postgres target tree (<envar>POSTGRESDIR</envar>).
-     This can be overridden from the <application>make</application> command-line
-     as
-     <programlisting>
-% make ODBCINST=<replaceable>filename</replaceable> install
-     </programlisting>
-    </para>
-
-    <procedure>
-     <title>Pre-v6.4 Integrated Installation</title>
-
-     <para>
-      If you have a <productname>Postgres</productname> installation older than
-      v6.4, you have the original source tree available, 
-      and you want to use the newest version of the <acronym>ODBC</acronym>
-      driver, then you may want to try this form of installation.
-     </para>
-
-     <step performance="required">
-      <para>
-       Copy the output tar file to your target system and unpack it into a 
-       clean directory.
-      </para>
-     </step>
-     <step performance="required">
-      <para>
-       From the directory containing the
-       sources, type:
-
-       <programlisting>
-% ./configure
-% make
-% make POSTGRESDIR=<replaceable class="parameter">PostgresTopDir</replaceable> install
-       </programlisting>
-      </para>
-     </step>
-
-     <step performance="optional">
-      <para>
-       If you would like to install components into different trees, 
-       then you can specify various destinations explicitly:
-
-       <programlisting>
-% make BINDIR=bindir  LIBDIR=libdir  HEADERDIR=headerdir ODBCINST=instfile install
-       </programlisting>
-      </para>
-     </step>
-    </procedure>
-
-    <procedure>
-     <title>Standalone Installation</title>
-
-     <para>
-      A standalone installation is not integrated with or built on the normal
-      <productname>Postgres</productname> distribution. It should be best suited
-      for building the <acronym>ODBC</acronym> driver for multiple, heterogeneous
-      clients who do not have a locally-installed <productname>Postgres</productname>
-      source tree.
-     </para>
-
-     <para>
-      The default location for libraries and headers 
-      for the standalone installation is <filename>/usr/local/lib</filename>
-      and <filename>/usr/local/include/iodbc</filename>, respectively.
-      There is another system wide configuration file that gets installed
-      as <filename>/share/odbcinst.ini</filename> (if <filename>/share</filename>
-      exists) or as <filename>/etc/odbcinst.ini</filename>
-      (if <filename>/share</filename> does not exist).
-     </para>
-
-     <note>
-      <para>
-       Installation of files into <filename>/share</filename>
-       or <filename>/etc</filename> requires system root privileges.
-       Most installation steps for <productname>Postgres</productname> do not
-       have this requirement, and you can choose another destination which
-       is writable by your non-root <productname>Postgres</productname> superuser
-       account instead.
-      </para>
-     </note>
-
-     <step performance="required">
-      <para>
-       The standalone installation distribution can be built from the
-       <productname>Postgres</productname> distribution or may be obtained from 
-       <ulink url="http://www.insightdist.com/psqlodbc">Insight Distributors</ulink>,
-       the current maintainers of the non-Unix sources.
-      </para>
-
-      <para>
-       Copy the zip
-       or gzipped tarfile to an empty directory. If using the zip package
-       unzip it with the command 
-       <programlisting>
-% unzip -a <replaceable>packagename</replaceable>
-       </programlisting>
-
-       The <option>-a</option> option
-       is necessary to get rid of <acronym>DOS</acronym> 
-       CR/LF pairs in the source files.
-      </para>
-
-      <para>
-       If you have the gzipped tar package than simply run
-
-       <programlisting>
-% tar -xzf <replaceable>packagename</replaceable>
-       </programlisting>
-      </para>
-
-      <substeps>
-
-       <step performance="optional">
-	<para>
-	 To create a tar file for a complete standalone installation
-	 from the main <productname>Postgres</productname> source tree:
-	</para>
-       </step>
-      </substeps>
-     </step>
-     <step performance="required">
-      <para>
-       Configure the main <productname>Postgres</productname> distribution.
-      </para>
-     </step>
-     <step performance="required">
-      <para>
-       Create the tar file:
-
-       <programlisting>
-% cd interfaces/odbc
-% make standalone
-       </programlisting>
-      </para>
-     </step>
-
-     <step performance="required">
-      <para>
-       Copy the output tar file to your target system. Be sure to transfer as
-       a binary file if using <application>ftp</application>.
-      </para>
-     </step>
-
-     <step performance="required">
-      <para>
-       Unpack the tar file into a clean
-       directory.
-      </para>
-     </step>
-
-     <step performance="required">
-      <para>
-       Configure the standalone installation:
-
-       <programlisting>
-% ./configure
-       </programlisting>
-      </para>
-
-      <para>
-       The configuration can be done with options:
-
-       <programlisting>
-% ./configure --prefix=<replaceable>rootdir</replaceable> --with-odbc=<replaceable>inidir</replaceable>
-       </programlisting>
-
-       where <option>--prefix</option> installs the libraries and headers in
-       the directories <filename><replaceable>rootdir</replaceable>/lib</filename> and
-       <filename><replaceable>rootdir</replaceable>/include/iodbc</filename>, and
-       <option>--with-odbc</option> installs <filename>odbcinst.ini</filename> in the
-       specified directory.
-      </para>
-
-      <para>
-       Note that both of these options can also be used from the integrated build
-       but be aware that <emphasis>when used in the integrated build</emphasis>
-       <option>--prefix</option> will also apply to the rest of
-       your <productname>Postgres</productname> installation.
-       <option>--with-odbc</option> applies only to the configuration file
-       <filename>odbcinst.ini</filename>.
-      </para>
-     </step>
-
-     <step performance="required">
-      <para>
-       Compile and link the source code:
-
-       <programlisting>
-% make ODBCINST=<replaceable>instdir</replaceable>
-       </programlisting>
-      </para>
-
-      <para>
-       You can also override the default location for installation on the
-       'make' command line. This only applies to the installation of the
-       library and header files. Since the driver needs to know the location
-       of the odbcinst.ini file attempting to override the enviroment variable
-       that specifies its installation directory will probably cause you
-       headaches. It is safest simply to allow the driver to install the
-       odbcinst.ini file in the default directory or the directory you specified
-       on the './configure' command line with --with-odbc.
-      </para>
-     </step>
-
-     <!--
-     This doesn't currently work - thomas 1998-10-19
-    <tip>
-    <para>
-    <envar>ODBCINST</envar> can be specified during configuration or during
-     the compilation. It is not necessary to do so in both steps.
-    </tip>
-     -->
-
-     <step performance="required">
-      <para>
-       Install the source code:
-
-       <programlisting>
-% make POSTGRESDIR=<replaceable>targettree</replaceable> install
-       </programlisting>
-      </para>
-
-      <para>
-       To override the library and header installation directories separately
-       you need to pass the correct installation variables on the
-       <literal>make install</literal> command line. These variables are
-       <envar>LIBDIR</envar>, <envar>HEADERDIR</envar>
-       and <envar>ODBCINST</envar>.
-       Overriding <envar>POSTGRESDIR</envar> on the make command line will cause
-       <envar>LIBDIR</envar> and <envar>HEADERDIR</envar>
-       to be rooted at the new directory you specify. 
-       <envar>ODBCINST</envar> is independent of <envar>POSTGRESDIR</envar>.
-      </para>
-
-      <para>
-       Here is how you would specify the various destinations explicitly:
-
-       <programlisting>
-% make BINDIR=<replaceable>bindir</replaceable> LIBDIR=<replaceable>libdir</replaceable> HEADERDIR=<replaceable>headerdir</replaceable> install
-       </programlisting>
-      </para>
-
-      <para>
-       For example, typing
-
-       <programlisting>
-% make POSTGRESDIR=/opt/psqlodbc install
-       </programlisting>
-
-       (after you've used
-       <application>./configure</application> and <application>make</application>)
-       will cause the libraries and headers to be installed in the directories
-       <filename>/opt/psqlodbc/lib</filename>
-       and <filename>/opt/psqlodbc/include/iodbc</filename> respectively.
-      </para>
-
-      <para>
-       The command
-
-       <programlisting>
-% make POSTGRESDIR=/opt/psqlodbc HEADERDIR=/usr/local install
-       </programlisting>
-
-       should cause the libraries to be installed in /opt/psqlodbc/lib and
-       the headers in /usr/local/include/iodbc. If this doesn't work as
-       expected please contact one of the maintainers.
-      </para>
-     </step>
-    </procedure>
-   </sect2>
-  </sect1>
-
-  <sect1>
-   <title>Configuration Files</title>
-
-   <para>
-    <filename>~/.odbc.ini</filename> contains user-specified access information 
-    for the <productname>psqlODBC</productname> driver. 
-    The file uses conventions typical for <productname>Windows</productname> 
-    Registry files, but despite this restriction can be made to work.
-   </para>
-
-   <para>
-    The <filename>.odbc.ini</filename> file has three required sections. 
-    The first is <literal>[ODBC Data Sources]</literal>
-    which is a list of arbitrary names and descriptions for each database 
-    you wish to access. The second required section is the 
-    Data Source Specification and there will be one of these sections
-    for each database. 
-    Each section must be labeled with the name given in 
-    <literal>[ODBC Data Sources]</literal> and must contain the following entries: 
-
-    <programlisting>
-Driver = <replaceable>POSTGRESDIR</replaceable>/lib/libpsqlodbc.so
-Database=<replaceable>DatabaseName</replaceable>
-Servername=localhost
-Port=5432
-    </programlisting>
-
-    <tip>
-     <para>
-      Remember that the <productname>Postgres</productname> database name is
-      usually a single word, without path names of any sort. 
-      The <productname>Postgres</productname> server manages the actual access
-      to the database, and you need only specify the name from the client.
-     </para>
-    </tip>
-
-    Other entries may be inserted to control the format of the display. 
-    The third required section is <literal>[ODBC]</literal> 
-    which must contain the <literal>InstallDir</literal> keyword 
-    and which may contain other options.
-   </para>
-
-   <para>
-    Here is an example <filename>.odbc.ini</filename> file, 
-    showing access information for three databases:
-
-    <programlisting>
-[ODBC Data Sources]
-DataEntry = Read/Write Database
-QueryOnly = Read-only Database
-Test = Debugging Database
-Default = Postgres Stripped
-
-[DataEntry]
-ReadOnly = 0
-Servername = localhost
-Database = Sales
-
-[QueryOnly]
-ReadOnly = 1
-Servername = localhost
-Database = Sales
-
-[Test]
-Debug = 1
-CommLog = 1
-ReadOnly = 0
-Servername = localhost
-Username = tgl
-Password = "no$way"
-Port = 5432
-Database = test
-
-[Default]
-Servername = localhost
-Database = tgl
-Driver = /opt/postgres/current/lib/libpsqlodbc.so
-
-[ODBC]
-InstallDir = /opt/applix/axdata/axshlib
-    </programlisting>
-   </para>
-  </sect1>
-
-  <sect1>
-   <title>ApplixWare</title>
 
    <sect2>
     <title>Configuration</title>
@@ -1089,17 +754,7 @@ endmacro
      </caution>
     </para>
    </sect2>
-   <sect2>
-    <title>Supported Platforms</title>
 
-    <para>
-     <productname>psqlODBC</productname> has been built and tested
-     on <productname>Linux</productname>. There have been reports of success
-     with FreeBSD and with Solaris. There are no known restrictions
-     on the basic code for other platforms which already support
-     <productname>Postgres</productname>.
-    </para>
-   </sect2>
   </sect1>
  </chapter>
 

@@ -1,81 +1,109 @@
+The PostgreSQL contrib tree
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
- The PostgreSQL contrib tree
- ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+This subtree contains tools, modules, and examples that are not
+maintained as part of the core PostgreSQL system, mainly because
+they only address a limited audience or are too inelegant to be
+sold as an official feature.  That, however, does not preclude
+their usefulness.
 
-	FIXME:
-		odbc
-		spi/preprocessor
-		tools		
+Each subdirectory contains a README file with information about the
+module.  Most items can be built with `gmake all' and installed
+with `gmake install' in the usual fashion, after you have run the
+`configure' script in the top-level directory.  Some directories
+supply new user-defined functions, operators, or types.  After you
+have installed the files you need to register the new entities in
+the database system by running the commands in the supplied .sql
+file.  For example,
 
- - the contrib contain is in the "Contrib.index" 	
+	$ psql -d dbname -f module.sql
 
- - in each directory must be Makefile, possible Makefile template
-   is below this text,
-
---------
-#
-# $Header: /cvsroot/pgsql/contrib/README,v 1.19 2000/06/19 13:52:59 momjian Exp $
-#
-
-TOPDIR=../..
-
-include ../Makefile.global
-
-NAME	= some_name
-
-PROGRAM	= 
-OBJS	= $(NAME).o
-DOCS	= $(NAME).doc
-SQLS	= $(NAME).sql
-BINS	=
-EXAMPLES=
-MODS	= $(NAME)$(DLSUFFIX)
-
-CFLAGS += -I. $(CFLAGS_SL)
-
-OTHER_CLEAN = $(SQLS)
-
-all: $(MODS) $(SQLS)
-
-%.sql: %.sql.in
-	$(SED) "s|MODULE_PATHNAME|$(CONTRIB_MODDIR)/$@|" < $< > $@
+See the PostgreSQL documentation for more information about this
+procedure.
 
 
-install: install_doc install_sql install_mod install_bin install_example
+Index:
+------
 
-install_doc:
-	for inst_file in $(DOCS); do \
-		$(INSTALL) $(INSTL_LIB_OPTS) $$inst_file $(CONTRIB_DOCDIR); \
-	done
+array -
+	Array iterator functions
+	by Massimo Dal Zotto <dz@cs.unitn.it>
 
-install_sql:
-	for inst_file in $(SQLS); do \
-		$(INSTALL) $(INSTL_LIB_OPTS) $$inst_file $(CONTRIB_SQLDIR); \
-	done
+earthdistance -
+	Operator for computing earth distance for two points
+	by Hal Snyder <hal@vailsys.com>
 
-install_mod:
-	for inst_file in $(MODS); do \
-		$(INSTALL) $(INSTL_SHLIB_OPTS) $$inst_file $(CONTRIB_MODDIR); \
-	done
+findoidjoins -
+	Finds the joins used by oid columns by examining the actual
+	values in the oid columns and row oids.
+	by Bruce Momjian <pgman@candle.pha.pa.us>
 
-install_bin:
-	for inst_file in $(BINS); do \
-		$(INSTALL) $(INSTL_EXE_OPTS) $$inst_file $(CONTRIB_BINDIR); \
-	done
+fulltextindex -
+	Full text indexing using triggers
+	by Maarten Boekhold <maartenb@dutepp0.et.tudelft.nl>
 
-install_example:
-	for inst_file in $(EXAMPLES); do \
-		$(INSTALL) $(INSTL_LIB_OPTS) $$inst_file $(CONTRIB_EXAMPLESDIR); \
-	done
+isbn_issn -
+	PostgreSQL type extensions for ISBN (books) and ISSN (serials)
+	by Garrett A. Wollman <wollman@khavrinen.lcs.mit.edu>
 
-depend dep:
-	$(CC) -MM -MG $(CFLAGS) *.c > depend
+linux -
+	Scripts for starting and stopping the PostgreSQL server on
+	a Linux system
+	by Thomas Lockhart <lockhart@alumni.caltech.edu>
 
-clean:
-	$(RM) *~ $(OBJS) $(MODS) $(PROGRAM) depend $(OTHER_CLEAN) core log
+lo -
+	Large Object maintenance
+	by Peter Mount <peter@retep.org.uk> 
 
-ifeq (depend,$(wildcard depend))
-include depend
-endif
------------
-  
+mSQL-interface -
+	mSQL API translation library
+	by Aldrin Leal <aldrin@americasnet.com>
+
+mac -
+	Support functions for MAC address types
+	by Lawrence E. Rosenman <ler@lerctr.org>
+
+miscutil -
+	PostgreSQL assert checking and various utility functions
+	by Massimo Dal Zotto <dz@cs.unitn.it>
+
+noupdate -
+	trigger to prevent updates on single columns
+
+pgbench -
+	TPC-B like benchmarking tool
+	by Tatsuo Ishii <t-ishii@sra.co.jp>
+
+pg_dumplo -
+	Dump large objects
+	by Karel Zak <zakkr@zf.jcu.cz>
+
+soundex -
+	Soundex function
+
+spi -
+	Various trigger functions, examples for using SPI.
+
+string -
+	C-like input/output conversion routines for strings
+	by Massimo Dal Zotto <dz@cs.unitn.it>
+
+tips/apache_logging -
+	Getting Apache to log to PostgreSQL
+	by Terry Mackintosh <terry@terrym.com>
+
+tools -
+	Assorted developer tools
+	by Massimo Dal Zotto <dz@cs.unitn.it>
+
+unixdate -
+	Conversions from integer to datetime
+	by Thomas Lockhart <lockhart@alumni.caltech.edu>
+
+userlock -
+	User locks
+	by Massimo Dal Zotto <dz@cs.unitn.it>
+
+vacuumlo -
+	Remove orphaned large objects
+	by Peter T Mount <peter@retep.org.uk>

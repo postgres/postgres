@@ -1,16 +1,11 @@
--- ODBC.sql
---
+-- PostgreSQL catalog extensions for ODBC compliance
+-- $Header: /cvsroot/pgsql/src/interfaces/odbc/Attic/odbc.sql,v 1.1 2000/09/18 20:11:37 petere Exp $
 
---
--- Character string manipulation
---
 
---
--- Extensions for ODBC compliance in v7.0.
 -- In the current driver, ODBC functions must map directly into a
 -- Postgres function. So in some cases we must create a compatible
 -- function.
---
+
 
 -- truncate on the left
 CREATE FUNCTION ltrunc(text, integer)
@@ -142,4 +137,3 @@ CREATE FUNCTION odbc_user()
     RETURNS text
     AS 'SELECT CAST(USER AS text)'
     LANGUAGE 'SQL';
-

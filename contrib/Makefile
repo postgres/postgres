@@ -1,12 +1,8 @@
-#
-# The PostgreSQL contrib tree Makefile
-#
-# $Header: /cvsroot/pgsql/contrib/Makefile,v 1.7 2000/07/16 14:50:29 petere Exp $
-#
+# $Header: /cvsroot/pgsql/contrib/Makefile,v 1.8 2000/09/18 20:11:34 petere Exp $
 
 subdir = contrib
 top_builddir = ..
-include ../src/Makefile.global
+include $(top_builddir)/src/Makefile.global
 
 WANTED_DIRS =	array		\
 		earthdistance	\
@@ -16,6 +12,7 @@ WANTED_DIRS =	array		\
 		linux		\
 		lo		\
 		mSQL-interface	\
+		mac		\
 		miscutil	\
 		noupdate	\
 		pg_dumplo	\
@@ -27,19 +24,10 @@ WANTED_DIRS =	array		\
 		unixdate	\
 		userlock	\
 		vacuumlo	
-	#	odbc
 
 all install installdirs uninstall clean distclean maintainer-clean:
 	for dir in $(WANTED_DIRS); do \
 	    if [ -e $$dir/Makefile ]; then \
-		$(MAKE) -C $$dir $@ ; \
+		$(MAKE) -C $$dir $@; \
 	    fi; \
 	done
-
-install:
-	for dir in $(WANTED_DIRS); do \
-	    if [ -e $$dir/Makefile ]; then \
-		$(MAKE) -C $$dir $@ ; \
-	    fi; \
-	done
-	$(INSTALL_DATA) Contrib.index $(docdir)/contrib

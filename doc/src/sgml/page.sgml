@@ -21,9 +21,6 @@ is assumed to contain 8 bits.  In addition, the term
 refers to data which is stored in <productname>Postgres</productname> classes.
 </para>
 
-<sect1>
-<title>Page Structure</title>
-
 <para>
 The following table shows how pages in both normal <productname>Postgres</productname> classes
  and <productname>Postgres</productname> index
@@ -176,50 +173,5 @@ itemPointerData
 which points to the next piece and the piece itself.  The last piece
 is handled normally.
 </para>
-</sect1>
 
-<sect1>
-<title>Files</title>
-
-<para>
-<variablelist>
-<varlistentry>
-<term>
-<filename>data/</filename>
-</term>
-<listitem>
-<para>
-Location of shared (global) database files.
-</para>
-</listitem>
-</varlistentry>
-
-<varlistentry>
-<term>
-<filename>data/base/</filename>
-</term>
-<listitem>
-<para>
-Location of local database files.
-</para>
-</listitem>
-</varlistentry>
-
-</variablelist>
-</para>
-</sect1>
-
-<sect1>
-<title>Bugs</title>
-
-<para>
-The page format may change in the future to provide more efficient
-access to large objects.
-</para>
-
-<para>
-This section contains insufficient detail to be of any assistance in
-writing a new access method.
-</para>
-</sect1>
 </chapter>

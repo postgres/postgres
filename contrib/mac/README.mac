@@ -1,0 +1,8 @@
+This directory contains tools to create a mapping table from MAC
+addresses (e.g., Ethernet hardware addresses) to human-readable
+manufacturer strings.  The `createoui' script builds the table
+structure, `updateoui' obtains the current official mapping table
+from the web site of the IEEE, converts it, and stores it in the
+database, `dropoui' removes everything.  Use the --help option to
+get more usage information from the respective script.  All three
+use the psql program; any extra arguments will be passed to psql.

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.15 2000/08/23 05:59:01 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.16 2000/09/18 20:11:36 petere Exp $
 -->
 
  <chapter>
@@ -31,9 +31,9 @@ $Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.15 2000/08/23 05:59:01 thomas
   <para>
    This describes an embedded <acronym>SQL</acronym> in <acronym>C</acronym> 
    package for <productname>Postgres</productname>.
-
    It is written by <ulink url="mailto:linus@epact.se">Linus Tolke</ulink>
    and <ulink url="mailto:meskes@debian.org">Michael Meskes</ulink>.
+   The package is installed with the <productname>Postgres</> distribution.
 
    <note>
     <para>
@@ -500,17 +500,6 @@ struct sqlca
       </listitem>
      </varlistentry>
     </variablelist>
-   </para>
-  </sect1>
-
-  <sect1>
-   <title>Installation</title>
-
-   <para>
-    Since version 0.5 <application>ecpg</application> is distributed 
-    together with <productname>Postgres</productname>. So you
-    should get your precompiler, libraries and header files compiled and
-    installed by default as a part of your installation.
    </para>
   </sect1>
 
