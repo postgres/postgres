@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.78 1998/05/29 17:00:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.79 1998/05/29 17:10:07 momjian Exp $
  *
  * NOTES
  *
@@ -208,13 +208,13 @@ static void pmdie(SIGNAL_ARGS);
 static void reaper(SIGNAL_ARGS);
 static void dumpstatus(SIGNAL_ARGS);
 static void CleanupProc(int pid, int exitstatus);
-static int	DoBackend(Port *port);
+static int DoBackend(Port *port);
 static void ExitPostmaster(int status);
 static void usage(const char *);
-static int	ServerLoop(void);
-static int	BackendStartup(Port *port);
+static int ServerLoop(void);
+static int BackendStartup(Port *port);
 static void readStartupPacket(char *arg, PacketLen len, char *pkt);
-static int	initMasks(fd_set *rmask, fd_set *wmask);
+static int initMasks(fd_set *rmask, fd_set *wmask);
 static void RandomSalt(char *salt);
 
 #ifdef CYR_RECODE
