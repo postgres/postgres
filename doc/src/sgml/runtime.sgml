@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.274 2004/08/08 19:42:56 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.275 2004/08/08 20:17:33 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -626,7 +626,7 @@ SET ENABLE_SEQSCAN TO OFF;
        <para>
          Specifies the TCP/IP address(es) on which the server is
          to listen for connections from client applications.  
-         The value takes the form of a space-separated list of host names
+         The value takes the form of a comma-separated list of host names
          and/or numeric IP addresses.  The special entry <literal>*</>
          corresponds to all available IP interfaces.
          If the list is empty, the server does not listen on any IP interface

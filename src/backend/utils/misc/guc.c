@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.229 2004/08/08 15:37:06 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.230 2004/08/08 20:17:36 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -1740,8 +1740,9 @@ static struct config_string ConfigureNamesString[] =
 
 	{
 		{"listen_addresses", PGC_POSTMASTER, CONN_AUTH_SETTINGS,
-			gettext_noop("Sets the host name or IP addresses to listen to."),
-			NULL
+			gettext_noop("Sets the host name or IP address(es) to listen to."),
+			NULL,
+			GUC_LIST_INPUT
 		},
 		&ListenAddresses,
 		"localhost", NULL, NULL

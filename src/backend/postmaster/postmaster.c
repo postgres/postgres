@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.420 2004/08/05 23:32:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.421 2004/08/08 20:17:34 tgl Exp $
  *
  * NOTES
  *
@@ -113,6 +113,7 @@
 #include "storage/bufmgr.h"
 #include "access/xlog.h"
 #include "tcop/tcopprot.h"
+#include "utils/builtins.h"
 #include "utils/guc.h"
 #include "utils/memutils.h"
 #include "utils/ps_status.h"
@@ -698,23 +699,26 @@ PostmasterMain(int argc, char *argv[])
 
 	if (ListenAddresses)
 	{
-		char	   *curhost,
-				   *endptr;
-		char		c;
+		char *rawstring;
+		List *elemlist;
+		ListCell *l;
 
-		curhost = ListenAddresses;
-		for (;;)
+		/* Need a modifiable copy of ListenAddresses */
+		rawstring = pstrdup(ListenAddresses);
+
+		/* Parse string into list of identifiers */
+		if (!SplitIdentifierString(rawstring, ',', &elemlist)) 
 		{
-			/* ignore whitespace */
-			while (isspace((unsigned char) *curhost))
-				curhost++;
-			if (*curhost == '\0')
-				break;
-			endptr = curhost;
-			while (*endptr != '\0' && !isspace((unsigned char) *endptr))
-				endptr++;
-			c = *endptr;
-			*endptr = '\0';
+			/* syntax error in list */
+			ereport(FATAL,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("invalid list syntax for \"listen_addresses\"")));
+		}
+
+		foreach(l, elemlist)
+		{
+			char *curhost = (char *) lfirst(l);
+
 			if (strcmp(curhost, "*") == 0)
 				status = StreamServerPort(AF_UNSPEC, NULL,
 										  (unsigned short) PostPortNumber,
@@ -729,12 +733,10 @@ PostmasterMain(int argc, char *argv[])
 				ereport(WARNING,
 					 (errmsg("could not create listen socket for \"%s\"",
 							 curhost)));
-			*endptr = c;
-			if (c != '\0')
-				curhost = endptr + 1;
-			else
-				break;
 		}
+
+		list_free(elemlist);
+		pfree(rawstring);
 	}
 
 #ifdef USE_RENDEZVOUS
