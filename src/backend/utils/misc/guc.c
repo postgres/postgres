@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.236 2004/08/31 04:53:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.237 2004/08/31 19:28:51 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -1848,6 +1848,10 @@ static int	guc_name_compare(const char *namea, const char *nameb);
 static void push_old_value(struct config_generic * gconf);
 static void ReportGUCOption(struct config_generic * record);
 static char *_ShowOption(struct config_generic * record);
+static bool check_userlimit_privilege(struct config_generic *record,
+									  GucSource source, int elevel);
+static bool check_userlimit_override(struct config_generic *record,
+									 GucSource source);
 
 
 /*
@@ -2034,7 +2038,7 @@ static bool
 is_custom_class(const char *name, int dotPos)
 {
 	/*
-	 * The assign_custom_variable_classes has made sure no empty
+	 * assign_custom_variable_classes() has made sure no empty
 	 * identifiers or whitespace exists in the variable
 	 */
 	bool		result = false;
@@ -3233,22 +3237,14 @@ set_config_option(const char *name, const char *value,
 						if (newval < conf->reset_val)
 						{
 							/* Limit non-superuser changes */
-							if (source > PGC_S_UNPRIVILEGED && !superuser())
-							{
-								ereport(elevel,
-								(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-								 errmsg("permission denied to set parameter \"%s\"",
-										name),
-								 errhint("must be superuser to change this value to false")));
+							if (!check_userlimit_privilege(record, source,
+														   elevel))
 								return false;
-							}
 						}
 						if (newval > *conf->variable)
 						{
 							/* Allow change if admin should override */
-							if (source < PGC_S_UNPRIVILEGED &&
-								record->source > PGC_S_UNPRIVILEGED &&
-								!superuser())
+							if (check_userlimit_override(record, source))
 								changeVal = changeValOrig;
 						}
 					}
@@ -3338,30 +3334,25 @@ set_config_option(const char *name, const char *value,
 					}
 					if (record->context == PGC_USERLIMIT)
 					{
-						/* handle log_min_duration_statement, -1=disable */
-						if ((newval != -1 && conf->reset_val != -1 &&
-							 newval > conf->reset_val) ||		/* increase duration */
-							(newval == -1 && conf->reset_val != -1))	/* turn off */
+						/*
+						 * handle log_min_duration_statement: if it's enabled
+						 * then either turning it off or increasing it
+						 * requires privileges.
+						 */
+						if (conf->reset_val != -1 &&
+							(newval == -1 || newval > conf->reset_val))
 						{
 							/* Limit non-superuser changes */
-							if (source > PGC_S_UNPRIVILEGED && !superuser())
-							{
-								ereport(elevel,
-								(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-								 errmsg("permission denied to set parameter \"%s\"",
-										name),
-								 errhint("Must be superuser to increase this value or turn it off.")));
+							if (!check_userlimit_privilege(record, source,
+														   elevel))
 								return false;
-							}
 						}
-						/* Allow change if admin should override */
-						if ((newval != -1 && *conf->variable != -1 &&
-							 newval < *conf->variable) ||		/* decrease duration */
-							(newval != -1 && *conf->variable == -1))	/* turn on */
+						/* Admin override includes turning on or decreasing */
+						if (newval != -1 &&
+							(*conf->variable == -1 || newval < *conf->variable))
 						{
-							if (source < PGC_S_UNPRIVILEGED &&
-								record->source > PGC_S_UNPRIVILEGED &&
-								!superuser())
+							/* Allow change if admin should override */
+							if (check_userlimit_override(record, source))
 								changeVal = changeValOrig;
 						}
 					}
@@ -3450,23 +3441,21 @@ set_config_option(const char *name, const char *value,
 						return false;
 					}
 					if (record->context == PGC_USERLIMIT)
-						/* No REAL PGC_USERLIMIT */
 					{
-						/* Limit non-superuser changes */
-						if (source > PGC_S_UNPRIVILEGED && !superuser())
+						/* No REAL PGC_USERLIMIT at present */
+						if (newval < conf->reset_val)
 						{
-							ereport(elevel,
-								(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-								 errmsg("permission denied to set parameter \"%s\"",
-										name),
-								 errhint("Must be superuser to increase this value or turn it off.")));
-							return false;
+							/* Limit non-superuser changes */
+							if (!check_userlimit_privilege(record, source,
+														   elevel))
+								return false;
 						}
-						/* Allow change if admin should override */
-						if (source < PGC_S_UNPRIVILEGED &&
-							record->source > PGC_S_UNPRIVILEGED &&
-							!superuser())
-							changeVal = false;
+						if (newval > *conf->variable)
+						{
+							/* Allow change if admin should override */
+							if (check_userlimit_override(record, source))
+								changeVal = changeValOrig;
+						}
 					}
 				}
 				else
@@ -3559,27 +3548,17 @@ set_config_option(const char *name, const char *value,
 						(*var_hook) (&var_value, *conf->variable, true,
 									 source);
 
-						/* Limit non-superuser changes */
 						if (new_value > reset_value)
 						{
 							/* Limit non-superuser changes */
-							if (source > PGC_S_UNPRIVILEGED && !superuser())
-							{
-								ereport(elevel,
-								(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-								 errmsg("permission denied to set parameter \"%s\"",
-										name),
-								 errhint("Must be superuser to increase this value.")));
+							if (!check_userlimit_privilege(record, source,
+														   elevel))
 								return false;
-							}
 						}
-
-						/* Allow change if admin should override */
 						if (new_value < var_value)
 						{
-							if (source < PGC_S_UNPRIVILEGED &&
-								record->source > PGC_S_UNPRIVILEGED &&
-								!superuser())
+							/* Allow change if admin should override */
+							if (check_userlimit_override(record, source))
 								changeVal = changeValOrig;
 						}
 					}
@@ -3702,6 +3681,71 @@ set_config_option(const char *name, const char *value,
 	return true;
 }
 
+/*
+ * Check whether we should allow a USERLIMIT parameter to be set
+ *
+ * This is invoked only when the desired new setting is "less" than the
+ * old and so appropriate privileges are needed.  If the setting should
+ * be disallowed, either throw an error (in interactive case) or return false.
+ */
+static bool
+check_userlimit_privilege(struct config_generic *record, GucSource source,
+						  int elevel)
+{
+	/* Allow if trusted source (e.g., config file) */
+	if (source < PGC_S_UNPRIVILEGED)
+		return true;
+	/*
+	 * Allow if superuser.  We can only check this inside a transaction,
+	 * though, so assume not-superuser otherwise.  (In practice this means
+	 * that settings coming from PGOPTIONS will be treated as non-superuser)
+	 */
+	if (IsTransactionState() && superuser())
+		return true;
+
+	ereport(elevel,
+			(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+			 errmsg("permission denied to set parameter \"%s\"",
+					record->name),
+			 (record->vartype == PGC_BOOL) ?
+			 errhint("Must be superuser to change this value to false.")
+			 : ((record->vartype == PGC_INT) ?
+				errhint("Must be superuser to increase this value or turn it off.")
+				: errhint("Must be superuser to increase this value."))));
+	return false;
+}
+
+/*
+ * Check whether we should allow a USERLIMIT parameter to be overridden
+ *
+ * This is invoked when the desired new setting is "greater" than the
+ * old; if the old setting was unprivileged and the new one is privileged,
+ * we should apply it, even though the normal rule would be not to.
+ */
+static bool
+check_userlimit_override(struct config_generic *record, GucSource source)
+{
+	/* Unprivileged source never gets to override this way */
+	if (source > PGC_S_UNPRIVILEGED)
+		return false;
+	/* If existing setting is from privileged source, keep it */
+	if (record->source < PGC_S_UNPRIVILEGED)
+		return false;
+	/*
+	 * If user is a superuser, he gets to keep his setting.  We can't check
+	 * this unless inside a transaction, though.  XXX in practice that
+	 * restriction means this code is essentially worthless, because the
+	 * result will depend on whether we happen to be inside a transaction
+	 * block when SIGHUP arrives.  Dike out until we can think of something
+	 * that actually works.
+	 */
+#ifdef NOT_USED
+	if (IsTransactionState() && superuser())
+		return false;
+#endif
+	/* Otherwise override */
+	return true;
+}
 
 
 /*
@@ -5450,22 +5494,19 @@ assign_custom_variable_classes(const char *newval, bool doit, GucSource source)
 			 * Syntax error due to token following space after token or
 			 * non alpha numeric character
 			 */
-			pfree(buf.data);
-			ereport(WARNING,
+			ereport(LOG,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("illegal syntax for custom_variable_classes \"%s\"", newval)));
+					 errmsg("invalid syntax for custom_variable_classes: \"%s\"", newval)));
+			pfree(buf.data);
 			return NULL;
 		}
 		symLen++;
 		appendStringInfoChar(&buf, (char) c);
 	}
 
+	/* Remove stray ',' at end */
 	if (symLen == 0 && buf.len > 0)
-
-		/*
-		 * Remove stray ',' at end
-		 */
-		buf.data[--buf.len] = 0;
+		buf.data[--buf.len] = '\0';
 
 	if (buf.len == 0)
 		newval = NULL;
@@ -5479,39 +5520,32 @@ assign_custom_variable_classes(const char *newval, bool doit, GucSource source)
 static bool
 assign_stage_log_stats(bool newval, bool doit, GucSource source)
 {
-	if (newval)
+	if (newval && log_statement_stats)
 	{
-		if (log_statement_stats)
-		{
-			if (doit)
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("cannot enable parameter when \"log_statement_stats\" is true.")));
-			else
-				return false;
-		}
-		return true;
+		if (source >= PGC_S_INTERACTIVE)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("cannot enable parameter when \"log_statement_stats\" is true")));
+		else
+			return false;
 	}
 	return true;
 }
 
-
 static bool
 assign_log_stats(bool newval, bool doit, GucSource source)
 {
-	if (newval)
+	if (newval &&
+		(log_parser_stats || log_planner_stats || log_executor_stats))
 	{
-		if (log_parser_stats || log_planner_stats || log_executor_stats)
-		{
-			if (doit)
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("cannot enable \"log_statement_stats\" when \"log_parser_stats\",\n"
-								"\"log_planner_stats\", or \"log_executor_stats\" is true.")));
-			else
-				return false;
-		}
-		return true;
+		if (source >= PGC_S_INTERACTIVE)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("cannot enable \"log_statement_stats\" when "
+							"\"log_parser_stats\", \"log_planner_stats\", "
+							"or \"log_executor_stats\" is true")));
+		else
+			return false;
 	}
 	return true;
 }
@@ -5534,7 +5568,6 @@ assign_transaction_read_only(bool newval, bool doit, GucSource source)
 static const char *
 assign_canonical_path(const char *newval, bool doit, GucSource source)
 {
-
 	if (doit)
 	{
 		/* We have to create a new pointer to force the change */
