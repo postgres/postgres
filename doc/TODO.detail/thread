@@ -1493,3 +1493,2447 @@ TIP 3: if posting/reading through Usenet, please send an appropriate
 subscribe-nomail command to majordomo@postgresql.org so that your
 message can get through to the mailing list cleanly
 
+From pgsql-hackers-owner+M33671@postgresql.org Fri Jan  3 10:27:00 2003
+Return-path: <pgsql-hackers-owner+M33671@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id h03FQwl07124
+	for <pgman@candle.pha.pa.us>; Fri, 3 Jan 2003 10:26:58 -0500 (EST)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP
+	id EDEBC4764DE; Fri,  3 Jan 2003 10:26:53 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP
+	id 31554476422; Fri,  3 Jan 2003 10:25:46 -0500 (EST)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP id 69252476286
+	for <pgsql-hackers@postgresql.org>; Fri,  3 Jan 2003 10:25:29 -0500 (EST)
+Received: from www.pspl.co.in (www.pspl.co.in [202.54.11.65])
+	by postgresql.org (Postfix) with ESMTP id 98F754764C3
+	for <pgsql-hackers@postgresql.org>; Fri,  3 Jan 2003 10:23:52 -0500 (EST)
+Received: (from root@localhost)
+	by www.pspl.co.in (8.11.6/8.11.6) id h03FNtK17518
+	for <pgsql-hackers@postgresql.org>; Fri, 3 Jan 2003 20:53:55 +0530
+Received: from daithan.itnranet.pspl.co.in (daithan.intranet.pspl.co.in [192.168.7.161])
+	by www.pspl.co.in (8.11.6/8.11.0) with ESMTP id h03FNsf17512
+	for <pgsql-hackers@postgresql.org>; Fri, 3 Jan 2003 20:53:54 +0530
+From: Shridhar Daithankar <shridhar_daithankar@persistent.co.in>
+To: PGHackers <pgsql-hackers@postgresql.org>
+Subject: [HACKERS] Threads
+Date: Fri, 3 Jan 2003 20:54:11 +0530
+User-Agent: KMail/1.4.3
+MIME-Version: 1.0
+Content-Type: Multipart/Mixed;
+  boundary="------------Boundary-00=_BG9530ZI94UNRKSGBVL5"
+Message-ID: <200301032054.11125.shridhar_daithankar@persistent.co.in>
+X-Virus-Scanned: by AMaViS new-20020517
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by AMaViS new-20020517
+Status: OR
+
+--------------Boundary-00=_BG9530ZI94UNRKSGBVL5
+Content-Type: text/plain;
+  charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
+
+Hi all,
+
+I am sure, many of you would like to delete this message before reading, ho=
+ld=20
+on. :-)
+
+There is much talk about threading on this list and the idea is always=20
+deferred for want of robust thread models across all supported platforms an=
+d=20
+feasibility of gains v/s efforts required.
+
+I think threads are useful in difference situations namely parallelising=20
+blocking conditions and using multiple CPUs.
+
+Attached is a framework that I ported to C from a C++ server I have written=
+.=20
+It has threadpool and threads implementation based on pthreads.
+
+This code expects minimum pthreads implementation and does not assume anyth=
+ing=20
+on threads part (e.g kernel threads or not etc.)
+
+I request hackers on this list to take a look at it. It should be easily=20
+pluggable in any source code and is released without any strings for any us=
+e.
+
+This framework allows to plug-in the worker function and argument on the fl=
+y.=20
+The threads created are sleeping by default and can be woken up s and when=
+=20
+required.
+
+I propose to use it incrementally in postgresql. Let's start with I/O. When=
+ a=20
+block of data is being read, rather than blocking for read, we can set up=
+=20
+creator-consumer link between two threads That we way can utilize that I/O=
+=20
+time in a overlapped fashion.
+
+Further threads can be useful when the server has more CPUs. It can spread =
+CPU=20
+intensive work to different threads such as index creation or sorting. This=
+=20
+way we can utilise idle CPU which we can not as of now.
+
+There are many advantages that I can see.
+
+1)Threads can be optionally turned on/off depending upon the configuration.=
+ So=20
+we can entirely keep existing functionality and convert them one-by-one to=
+=20
+threaded application.
+
+2)For each functionality we can have two code branches, one that do not use=
+=20
+threads i.e. current code base and one that can use threads. Agreed the=20
+binary will be bit bloated but that would give enormous flexibility. If we=
+=20
+find a thread implementation buggy, we simply switch it off either in=20
+compilation or inconfiguration.
+
+3) Not much efforts should be required to plug code into this model. The id=
+ea=20
+of using threads is to assign exclusive work to each thread. So that should=
+=20
+not require much of a locking.
+
+In case of using multiple CPUs, separate functions need be written that can=
+=20
+handle the things in a thread-safe fashion. Also a merger function would be=
+=20
+required which would merge results of worker threads. That would be totally=
+=20
+additional.
+
+I would say two threads per CPU per back-end should be a reasonable default=
+ as=20
+that would cover I/O blocking well. Of course unless threading is turned of=
+f=20
+in build or in configuration.
+
+Please note that I have tested the code in C++ and my C is rusty. Quite lik=
+ely=20
+there are bugs in the code. I will stress test the code on monday but I wou=
+ld=20
+like to seek an opinion on this as soon as possible. ( Hey but it compiles=
+=20
+clean..)
+
+If required I can post example usage of this code, but I don't think that=
+=20
+should be necessary.:-)
+
+Bye
+ Shridhar
+
+--------------Boundary-00=_BG9530ZI94UNRKSGBVL5
+Content-Type: text/x-chdr;
+  charset="us-ascii";
+  name="thread.h"
+Content-Transfer-Encoding: 7bit
+Content-Disposition: attachment; filename="thread.h"
+
+#define _REENTRANT
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <pthread.h>
+#include <unistd.h>
+
+
+//typedefs
+typedef void* (*function)(void *);
+typedef void* argtype;
+
+typedef struct
+{
+ pthread_mutex_t lock;
+ pthread_cond_t cond;
+
+ unsigned short freeCount,n,count;
+ void *pool;
+
+} threadPool;
+
+typedef struct
+{
+ pthread_t t;
+ pthread_attr_t tattr;
+ pthread_mutex_t lock;
+ pthread_cond_t cond;
+
+ argtype arg;
+ function f;
+
+ unsigned short quit;
+ threadPool *p;
+
+} thread;
+
+/*Thread functions*/
+void initThread(thread **t,threadPool *pool);
+void deleteThread(thread **t);
+void stop(thread *thr);
+
+void wakeForWork(thread *thr,function func,argtype a);
+
+argtype runner(void *ptr);
+
+/*thread pool functions*/
+void initPool(threadPool **pool,unsigned short numthreads);
+void deletePool(threadPool **p);
+
+void putThread(threadPool *p,thread *t);
+thread	*getThread(threadPool *p);
+
+
+
+
+
+
+--------------Boundary-00=_BG9530ZI94UNRKSGBVL5
+Content-Type: text/x-csrc;
+  charset="us-ascii";
+  name="thread.c"
+Content-Transfer-Encoding: 7bit
+Content-Disposition: attachment; filename="thread.c"
+
+#include "thread.h"
+
+void initThread(thread **t,threadPool *pool)
+{
+ thread *thr=(thread *)malloc(sizeof(thread));
+
+ if(!thr)
+ {
+  fprintf(stderr,"\nCan not allocate memory for thread. Quitting...\n");
+  exit(1);
+ }
+
+ *t=thr;
+
+ pthread_attr_init(&(thr->tattr));
+ pthread_mutex_init(&(thr->lock), NULL);
+ pthread_cond_init(&(thr->cond), NULL);
+
+ pthread_attr_setdetachstate(&(thr->tattr),PTHREAD_CREATE_DETACHED);
+
+ thr->quit=0;
+ thr->p=pool;
+
+ //Create the thread
+ int ret=pthread_create(&(thr->t),&(thr->tattr),runner,(void *)thr);
+
+ if(ret!=0)
+ {
+  fprintf(stderr,"\nCan not create thread. Quitting...\n");
+  exit(1);
+ }
+}
+
+void deleteThread(thread **t)
+{
+ thread *thr=*t;
+
+ if(!t) return;
+
+ stop(thr);
+
+ pthread_attr_destroy(&(thr->tattr));
+ pthread_cond_destroy(&(thr->cond));
+ pthread_mutex_destroy(&(thr->lock));
+
+ free(thr);
+}
+
+void stop(thread *thr)
+{
+ unsigned short i;
+ thr->quit=1;
+
+ pthread_cond_signal(&(thr->cond));
+
+ for(i=0;thr->quit && i<10;i++)
+ {
+   if(i>=10)
+   {
+	pthread_kill(thr->t,9);
+	break;
+   }
+   usleep(400);
+  }
+}
+
+void wakeForWork(thread *thr,function func,argtype a)
+{
+ thr->f=func;
+ thr->arg=a;
+
+ pthread_cond_signal(&(thr->cond));
+}
+
+argtype runner(void* arg)
+{
+ thread *ptr=(thread *)arg;
+
+ while(1)
+ {
+  pthread_mutex_lock(&(ptr->lock));
+
+  if(ptr->p)
+   putThread(ptr->p,ptr);
+
+  pthread_cond_wait(&(ptr->cond),&(ptr->lock));
+
+  if(ptr->quit) break;
+
+  ptr->f((void *)ptr->arg);
+
+  pthread_mutex_unlock(&(ptr->lock));
+ }
+
+ ptr->quit=0;
+
+ return NULL;
+}
+
+
+void initPool(threadPool **pool,unsigned short numthreads)
+{
+ thread **thr;
+ threadPool *p=(threadPool *)malloc(sizeof(threadPool));
+
+ if(!p)
+ {
+  fprintf(stderr,"Can not get memory to create threadpool. Quitting\n");
+  exit(1);
+ }
+ 
+ if(!pool)
+ {
+  free(p);
+  return;
+ }
+
+ *pool=p;
+
+ pthread_mutex_init(&(p->lock), NULL);
+ pthread_cond_init(&(p->cond), NULL);
+
+ p->n=numthreads;
+ p->freeCount=0;
+ p->n=numthreads;
+
+ thr=(thread **)malloc(numthreads*sizeof(thread *));
+
+ if(!thr)
+ {
+  fprintf(stderr,"Can not get memory to create pool of threads. Quitting\n");
+  exit(1);
+ }
+
+ p->pool=(void *)thr;
+
+}
+
+void deletePool(threadPool **pool)
+{
+ threadPool *p=(threadPool *)pool;
+
+ if(!pool) return;
+
+ thread **thr=(thread **)p->pool;
+ unsigned short i;
+
+ for(i=0;i<p->n;i++) stop(thr[i]);
+
+ free(p->pool);
+
+ pthread_cond_destroy(&(p->cond));
+ pthread_mutex_destroy(&(p->lock));
+
+ free(p);
+
+}
+
+void putThread(threadPool *p,thread *t)
+{
+ unsigned short i;
+ thread **pool;
+
+ if(!p || !t) return;
+
+ pool=(thread **)p->pool;
+
+ pthread_mutex_lock(&(p->lock));
+
+ i=p->freeCount;
+ pool[(p->freeCount)++]=t;
+
+ if(i<=0)pthread_cond_signal(&(p->cond));
+
+ pthread_mutex_unlock(&(p->lock));
+
+}
+
+thread *getThread(threadPool *p)
+{
+ thread *t,**t1;
+
+ if(!p) return NULL;
+
+ t1=(thread **)p->pool;
+
+ pthread_mutex_lock(&(p->lock));
+
+ if((p->freeCount)<=0)pthread_cond_wait(&(p->cond),&(p->lock));
+
+ t=t1[--(p->freeCount)];
+
+ pthread_mutex_unlock(&(p->lock));
+
+ return t;
+
+}
+
+--------------Boundary-00=_BG9530ZI94UNRKSGBVL5
+Content-Type: text/plain
+Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
+MIME-Version: 1.0
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 6: Have you searched our list archives?
+
+http://archives.postgresql.org
+
+--------------Boundary-00=_BG9530ZI94UNRKSGBVL5--
+
+
+From pgsql-hackers-owner+M33682@postgresql.org Fri Jan  3 15:43:54 2003
+Return-path: <pgsql-hackers-owner+M33682@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id h03Khhl06938
+	for <pgman@candle.pha.pa.us>; Fri, 3 Jan 2003 15:43:45 -0500 (EST)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP
+	id DF70F476EA6; Fri,  3 Jan 2003 15:43:34 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP
+	id 95BA8476514; Fri,  3 Jan 2003 15:43:26 -0500 (EST)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP id 71F4E475DBC
+	for <pgsql-hackers@postgresql.org>; Fri,  3 Jan 2003 15:43:14 -0500 (EST)
+Received: from snoopy.mohawksoft.com (h0030f1382639.ne.client2.attbi.com [24.60.194.163])
+	by postgresql.org (Postfix) with ESMTP id ACE5B475DAD
+	for <pgsql-hackers@postgresql.org>; Fri,  3 Jan 2003 15:43:13 -0500 (EST)
+Received: from mohawksoft.com (snoopy.mohawksoft.com [127.0.0.1])
+	by snoopy.mohawksoft.com (8.11.6/8.11.6) with ESMTP id h03KlMs24421;
+	Fri, 3 Jan 2003 15:47:27 -0500
+Message-ID: <3E15F6DA.8000209@mohawksoft.com>
+Date: Fri, 03 Jan 2003 15:47:22 -0500
+From: mlw <pgsql@mohawksoft.com>
+User-Agent: Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.0.1) Gecko/20020823 Netscape/7.0
+X-Accept-Language: en-us, en
+MIME-Version: 1.0
+To: Shridhar Daithankar <shridhar_daithankar@persistent.co.in>
+cc: PGHackers <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Threads
+References: <200301032054.11125.shridhar_daithankar@persistent.co.in>
+Content-Type: text/plain; charset=us-ascii; format=flowed
+Content-Transfer-Encoding: 7bit
+X-Virus-Scanned: by AMaViS new-20020517
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by AMaViS new-20020517
+Status: OR
+
+Please no threading threads!!!
+
+Has anyone calculated the interval and period of "PostgreSQL needs 
+threads" posts?
+
+The *ONLY* advantage threading has over multiple processes is the time 
+and resources used in creating new processes.
+
+That being said, I admit that creating a threaded program is easier than 
+one with multiple processes, but PostgreSQL is already there and working.
+
+Drawbacks to a threaded model:
+
+(1) One thread screws up, the whole process dies. In a multiple process 
+application this is not too much of an issue.
+
+(2) Heap fragmentation. In a long uptime application, such as a 
+database, heap fragmentation is an important consideration. With 
+multiple processes, each process manages its own heap and what ever 
+fragmentation that exists goes away when the connection is closed.  A 
+threaded server is far more vulnerable because the heap has to manage 
+many threads and the heap has to stay active and unfragmented in 
+perpetuity. This is why Windows applications usually end up using 2G of 
+memory after 3 months of use. (Well, this AND memory leaks)
+
+(3) Stack space. In a threaded application they are more limits to stack 
+usage. I'm not sure, but I bet PostgreSQL would have a problem with a 
+fixed size stack, I know the old ODBC driver did.
+
+(4) Lock Contention. The various single points of access in a process 
+have to be serialized for multiple threads. heap allocation, 
+deallocation, etc all have to be managed. In a multple process model, 
+these resources would be separated by process contexts.
+
+(5) Lastly, why bother? Seriously? Process creation time is an issue 
+true, but its an issue with threads as well, just not as bad. Anyone who 
+is looking for performance should be using a connection pooling 
+mechanism as is done in things like PHP.
+
+I have done both threaded and process servers. The threaded servers are 
+easier to write. The process based severs are more robust. From an 
+operational point of view, a "select foo from bar where x > y" will take 
+he same amount of time.
+
+
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 6: Have you searched our list archives?
+
+http://archives.postgresql.org
+
+From pgsql-hackers-owner+M33684@postgresql.org Fri Jan  3 15:56:48 2003
+Return-path: <pgsql-hackers-owner+M33684@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id h03Kufl08003
+	for <pgman@candle.pha.pa.us>; Fri, 3 Jan 2003 15:56:43 -0500 (EST)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP
+	id D0392477118; Fri,  3 Jan 2003 15:56:31 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP
+	id 31FDC475461; Fri,  3 Jan 2003 15:55:26 -0500 (EST)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP id BD892477147
+	for <pgsql-hackers@postgresql.org>; Fri,  3 Jan 2003 15:55:09 -0500 (EST)
+Received: from voyager.corporate.connx.com (unknown [209.20.248.131])
+	by postgresql.org (Postfix) with ESMTP id 7EE644771A0
+	for <pgsql-hackers@postgresql.org>; Fri,  3 Jan 2003 15:52:47 -0500 (EST)
+content-class: urn:content-classes:message
+Subject: Re: [HACKERS] Threads
+MIME-Version: 1.0
+Content-Type: text/plain;
+	charset="us-ascii"
+Date: Fri, 3 Jan 2003 12:52:48 -0800
+X-MimeOLE: Produced By Microsoft Exchange V6.0.6249.0
+Message-ID: <D90A5A6C612A39408103E6ECDD77B829408A20@voyager.corporate.connx.com>
+Thread-Topic: [HACKERS] Threads
+Thread-Index: AcKzaMsucwBFaOikSjKML8BqvR/gCAAACDPA
+From: "Dann Corbit" <DCorbit@connx.com>
+To: "PGHackers" <pgsql-hackers@postgresql.org>
+X-Virus-Scanned: by AMaViS new-20020517
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by AMaViS new-20020517
+Content-Transfer-Encoding: 8bit
+X-MIME-Autoconverted: from quoted-printable to 8bit by candle.pha.pa.us id h03Kufl08003
+Status: OR
+
+> -----Original Message-----
+> From: mlw [mailto:pgsql@mohawksoft.com] 
+> Sent: Friday, January 03, 2003 12:47 PM
+> To: Shridhar Daithankar
+> Cc: PGHackers
+> Subject: Re: [HACKERS] Threads
+> 
+> 
+> Please no threading threads!!!
+> 
+> Has anyone calculated the interval and period of "PostgreSQL needs 
+> threads" posts?
+> 
+> The *ONLY* advantage threading has over multiple processes is 
+> the time 
+> and resources used in creating new processes.
+
+Threading is absurdly easier to do portably than fork().
+
+Will you fork() successfully on MVS, VMS, OS/2, Win32?
+
+On some operating systems, thread creation is absurdly faster than
+process creation (many orders of magnitude).
+ 
+> That being said, I admit that creating a threaded program is 
+> easier than 
+> one with multiple processes, but PostgreSQL is already there 
+> and working.
+> 
+> Drawbacks to a threaded model:
+> 
+> (1) One thread screws up, the whole process dies. In a 
+> multiple process 
+> application this is not too much of an issue.
+
+If you use C++ you can try/catch and nothing bad happens to anything but
+the naughty thread.
+ 
+> (2) Heap fragmentation. In a long uptime application, such as a 
+> database, heap fragmentation is an important consideration. With 
+> multiple processes, each process manages its own heap and what ever 
+> fragmentation that exists goes away when the connection is closed.  A 
+> threaded server is far more vulnerable because the heap has to manage 
+> many threads and the heap has to stay active and unfragmented in 
+> perpetuity. This is why Windows applications usually end up 
+> using 2G of 
+> memory after 3 months of use. (Well, this AND memory leaks)
+
+Poorly written applications leak memory.  Fragmentation is a legitimate
+concern.
+ 
+> (3) Stack space. In a threaded application they are more 
+> limits to stack 
+> usage. I'm not sure, but I bet PostgreSQL would have a problem with a 
+> fixed size stack, I know the old ODBC driver did.
+
+A single server with 20 threads will consume less total free store
+memory and automatic memory than 20 servers.  You have to decide how
+much stack to give a thread, that's true.
+ 
+> (4) Lock Contention. The various single points of access in a process 
+> have to be serialized for multiple threads. heap allocation, 
+> deallocation, etc all have to be managed. In a multple process model, 
+> these resources would be separated by process contexts.
+
+Semaphores are more complicated than critical sections.  If anything, a
+shared memory approach is more problematic and fragile, especially when
+porting to multiple operating systems.
+ 
+> (5) Lastly, why bother? Seriously? Process creation time is an issue 
+> true, but its an issue with threads as well, just not as bad. 
+> Anyone who 
+> is looking for performance should be using a connection pooling 
+> mechanism as is done in things like PHP.
+> 
+> I have done both threaded and process servers. The threaded 
+> servers are 
+> easier to write. The process based severs are more robust. From an 
+> operational point of view, a "select foo from bar where x > 
+> y" will take 
+> he same amount of time.
+
+Probably true.  I think a better solution is a server that can start
+threads or processes or both.  But that's neither here nor there and I'm
+certainly not volunteering to write it.
+
+Here is a solution to the dilemma.  Make the one who suggests the
+feature be the first volunteer on the team that writes it.
+
+Is it a FAQ?  If not, it ought to be.
+
+---------------------------(end of broadcast)---------------------------
+TIP 3: if posting/reading through Usenet, please send an appropriate
+subscribe-nomail command to majordomo@postgresql.org so that your
+message can get through to the mailing list cleanly
+
+From pgsql-hackers-owner+M33685@postgresql.org Fri Jan  3 16:35:02 2003
+Return-path: <pgsql-hackers-owner+M33685@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id h03LYsl11402
+	for <pgman@candle.pha.pa.us>; Fri, 3 Jan 2003 16:34:56 -0500 (EST)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP
+	id 0F09B477168; Fri,  3 Jan 2003 16:34:48 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP
+	id C1A9C477132; Fri,  3 Jan 2003 16:34:39 -0500 (EST)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP id D830847630B
+	for <pgsql-hackers@postgresql.org>; Fri,  3 Jan 2003 16:34:25 -0500 (EST)
+Received: from CopelandConsulting.Net (dsl-24293-ld.customer.centurytel.net [209.142.135.135])
+	by postgresql.org (Postfix) with ESMTP id 025DD476417
+	for <pgsql-hackers@postgresql.org>; Fri,  3 Jan 2003 16:34:24 -0500 (EST)
+Received: from [192.168.1.2] (mouse.copelandconsulting.net [192.168.1.2])
+	by CopelandConsulting.Net (8.10.1/8.10.1) with ESMTP id h03LY2700731;
+	Fri, 3 Jan 2003 15:34:03 -0600 (CST)
+X-Trade-Id: <CCC.Fri, 3 Jan 2003 15:34:03 -0600 (CST).Fri, 3 Jan 2003 15:34:03 -0600 (CST).200301032134.h03LY2700731.h03LY2700731@CopelandConsulting.Net.
+Subject: Re: [HACKERS] Threads
+From: Greg Copeland <greg@CopelandConsulting.Net>
+To: mlw <pgsql@mohawksoft.com>
+cc: Shridhar Daithankar <shridhar_daithankar@persistent.co.in>,
+   PGHackers <pgsql-hackers@postgresql.org>
+In-Reply-To: <3E15F6DA.8000209@mohawksoft.com>
+References: <200301032054.11125.shridhar_daithankar@persistent.co.in>
+  <3E15F6DA.8000209@mohawksoft.com>
+Content-Type: text/plain
+Organization: Copeland Computer Consulting
+Message-ID: <1041629649.15933.135.camel@mouse.copelandconsulting.net>
+MIME-Version: 1.0
+X-Mailer: Ximian Evolution 1.2.0 
+Date: 03 Jan 2003 15:34:10 -0600
+Content-Transfer-Encoding: 7bit
+X-Virus-Scanned: by AMaViS new-20020517
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by AMaViS new-20020517
+Status: OR
+
+On Fri, 2003-01-03 at 14:47, mlw wrote:
+> Please no threading threads!!!
+> 
+
+Ya, I'm very pro threads but I've long since been sold on no threads for
+PostgreSQL.  AIO on the other hand... ;)
+
+Your summary so accurately addresses the issue it should be a whole FAQ
+entry on threads and PostgreSQL.  :)
+
+
+> Drawbacks to a threaded model:
+> 
+> (1) One thread screws up, the whole process dies. In a multiple process 
+> application this is not too much of an issue.
+> 
+> (2) Heap fragmentation. In a long uptime application, such as a 
+> database, heap fragmentation is an important consideration. With 
+> multiple processes, each process manages its own heap and what ever 
+> fragmentation that exists goes away when the connection is closed.  A 
+> threaded server is far more vulnerable because the heap has to manage 
+> many threads and the heap has to stay active and unfragmented in 
+> perpetuity. This is why Windows applications usually end up using 2G of 
+> memory after 3 months of use. (Well, this AND memory leaks)
+
+
+These are things that can't be stressed enough.  IMO, these are some of
+the many reasons why applications running on MS platforms tend to have
+much lower application and system up times (that and resources leaks
+which are inherent to the platform).
+
+BTW, if you do much in the way of threaded coding, there is libHorde
+which is a heap library for heavily threaded, memory hungry
+applications.  It excels in performance, reduces heap lock contention
+(maintains multiple heaps in a very thread smart manner), and goes a
+long way toward reducing heap fragmentation which is common for heavily
+memory based, threaded applications.
+
+
+> (3) Stack space. In a threaded application they are more limits to stack 
+> usage. I'm not sure, but I bet PostgreSQL would have a problem with a 
+> fixed size stack, I know the old ODBC driver did.
+> 
+
+Most modern thread implementations use a page guard on the stack to
+determine if it needs to grow or not.  Generally speaking, for most
+modern platforms which support threading, stack considerations rarely
+become an issue.
+
+
+> (5) Lastly, why bother? Seriously? Process creation time is an issue 
+> true, but its an issue with threads as well, just not as bad. Anyone who 
+> is looking for performance should be using a connection pooling 
+> mechanism as is done in things like PHP.
+> 
+> I have done both threaded and process servers. The threaded servers are 
+> easier to write. The process based severs are more robust. From an 
+> operational point of view, a "select foo from bar where x > y" will take 
+> he same amount of time.
+> 
+
+I agree with this, however, using threads does open the door for things
+like splitting queries and sorts across multiple CPUs.  Something the
+current process model, which was previously agreed on, would not be able
+to address because of cost.
+
+Example: "select foo from bar where x > y order by foo ;", could be run
+on multiple CPUs if the sort were large enough to justify.
+
+After it's all said and done, I do agree that threading just doesn't
+seem like a good fit for PostgreSQL.
+
+-- 
+Greg Copeland <greg@copelandconsulting.net>
+Copeland Computer Consulting
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 4: Don't 'kill -9' the postmaster
+
+From pgsql-hackers-owner+M33686@postgresql.org Fri Jan  3 16:47:20 2003
+Return-path: <pgsql-hackers-owner+M33686@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id h03LlBl12502
+	for <pgman@candle.pha.pa.us>; Fri, 3 Jan 2003 16:47:12 -0500 (EST)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP
+	id 6873147621D; Fri,  3 Jan 2003 16:47:06 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP
+	id 97466477133; Fri,  3 Jan 2003 16:46:41 -0500 (EST)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP id E25BB477152
+	for <pgsql-hackers@postgresql.org>; Fri,  3 Jan 2003 16:46:24 -0500 (EST)
+Received: from CopelandConsulting.Net (dsl-24293-ld.customer.centurytel.net [209.142.135.135])
+	by postgresql.org (Postfix) with ESMTP id 84A87477157
+	for <pgsql-hackers@postgresql.org>; Fri,  3 Jan 2003 16:45:21 -0500 (EST)
+Received: from [192.168.1.2] (mouse.copelandconsulting.net [192.168.1.2])
+	by CopelandConsulting.Net (8.10.1/8.10.1) with ESMTP id h03LjC712426;
+	Fri, 3 Jan 2003 15:45:13 -0600 (CST)
+X-Trade-Id: <CCC.Fri, 3 Jan 2003 15:45:13 -0600 (CST).Fri, 3 Jan 2003 15:45:13 -0600 (CST).200301032145.h03LjC712426.h03LjC712426@CopelandConsulting.Net.
+Subject: Re: [HACKERS] Threads
+From: Greg Copeland <greg@CopelandConsulting.Net>
+To: Dann Corbit <DCorbit@connx.com>
+cc: PGHackers <pgsql-hackers@postgresql.org>
+In-Reply-To: <D90A5A6C612A39408103E6ECDD77B829408A20@voyager.corporate.connx.com>
+References:  <D90A5A6C612A39408103E6ECDD77B829408A20@voyager.corporate.connx.com>
+Content-Type: text/plain
+Organization: Copeland Computer Consulting
+Message-ID: <1041630319.15927.146.camel@mouse.copelandconsulting.net>
+MIME-Version: 1.0
+X-Mailer: Ximian Evolution 1.2.0 
+Date: 03 Jan 2003 15:45:20 -0600
+Content-Transfer-Encoding: 7bit
+X-Virus-Scanned: by AMaViS new-20020517
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by AMaViS new-20020517
+Status: OR
+
+On Fri, 2003-01-03 at 14:52, Dann Corbit wrote:
+> > -----Original Message-----
+> > (1) One thread screws up, the whole process dies. In a 
+> > multiple process 
+> > application this is not too much of an issue.
+> 
+> If you use C++ you can try/catch and nothing bad happens to anything but
+> the naughty thread.
+
+That doesn't protect against the type of issues he's talking about. 
+Invalid pointer reference is a very common snafu which really hoses
+threaded applications.  Not to mention resource leaks AND LOCKED
+resources which are inherently an issue on Win32.
+
+Besides, it's doubtful that PostgreSQL is going to be rewritten in C++
+so bringing up try/catch is pretty much an invalid argument.
+
+>  
+> > (2) Heap fragmentation. In a long uptime application, such as a 
+> > database, heap fragmentation is an important consideration. With 
+> > multiple processes, each process manages its own heap and what ever 
+> > fragmentation that exists goes away when the connection is closed.  A 
+> > threaded server is far more vulnerable because the heap has to manage 
+> > many threads and the heap has to stay active and unfragmented in 
+> > perpetuity. This is why Windows applications usually end up 
+> > using 2G of 
+> > memory after 3 months of use. (Well, this AND memory leaks)
+> 
+> Poorly written applications leak memory.  Fragmentation is a legitimate
+> concern.
+
+And well written applications which attempt to safely handle segfaults,
+etc., often leak memory and lock resources like crazy.  On Win32,
+depending on the nature of the resources, once this happens, even
+process termination will not free/unlock the resources.
+
+> > (4) Lock Contention. The various single points of access in a process 
+> > have to be serialized for multiple threads. heap allocation, 
+> > deallocation, etc all have to be managed. In a multple process model, 
+> > these resources would be separated by process contexts.
+> 
+> Semaphores are more complicated than critical sections.  If anything, a
+> shared memory approach is more problematic and fragile, especially when
+> porting to multiple operating systems.
+
+And critical sections lead to low performance on SMP systems for Win32
+platforms.  No task can switch on ANY CPU for the duration of the
+critical section.  It's highly recommend by MS as the majority of Win32
+applications expect uniprocessor systems and they are VERY fast.  As
+soon as multiple processors come into the mix, critical sections become
+a HORRIBLE idea if any soft of scalability is desired.
+
+
+> Is it a FAQ?  If not, it ought to be.
+
+I agree.  I think mlw's list of reasons should be added to a faq.  It
+terse yet says it all!
+
+
+-- 
+Greg Copeland <greg@copelandconsulting.net>
+Copeland Computer Consulting
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 2: you can get off all lists at once with the unregister command
+    (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
+
+From pgsql-hackers-owner+M33703@postgresql.org Fri Jan  3 20:41:10 2003
+Return-path: <pgsql-hackers-owner+M33703@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id h041f9l05824
+	for <pgman@candle.pha.pa.us>; Fri, 3 Jan 2003 20:41:09 -0500 (EST)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP
+	id 7F5764764C8; Fri,  3 Jan 2003 20:41:04 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP
+	id BE24547606D; Fri,  3 Jan 2003 20:38:53 -0500 (EST)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP id 4D50D476165
+	for <pgsql-hackers@postgresql.org>; Fri,  3 Jan 2003 20:38:39 -0500 (EST)
+Received: from sss.pgh.pa.us (unknown [192.204.191.242])
+	by postgresql.org (Postfix) with ESMTP id 20C8547659F
+	for <pgsql-hackers@postgresql.org>; Fri,  3 Jan 2003 20:34:10 -0500 (EST)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.12.6/8.12.6) with ESMTP id h041Y20U023764;
+	Fri, 3 Jan 2003 20:34:03 -0500 (EST)
+To: "Serguei Mokhov" <mokhov@cs.concordia.ca>
+cc: "Greg Copeland" <greg@CopelandConsulting.Net>,
+   "Dann Corbit" <DCorbit@connx.com>,
+   "PGHackers" <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Threads 
+In-Reply-To: <004101c2b37b$0f261ae0$0301a8c0@gunnymede.lan> 
+References: <D90A5A6C612A39408103E6ECDD77B829408A20@voyager.corporate.connx.com> <1041630319.15927.146.camel@mouse.copelandconsulting.net> <004101c2b37b$0f261ae0$0301a8c0@gunnymede.lan>
+Comments: In-reply-to "Serguei Mokhov" <mokhov@cs.concordia.ca>
+	message dated "Fri, 03 Jan 2003 17:54:20 -0500"
+Date: Fri, 03 Jan 2003 20:34:02 -0500
+Message-ID: <23763.1041644042@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+X-Virus-Scanned: by AMaViS new-20020517
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by AMaViS new-20020517
+Status: OR
+
+"Serguei Mokhov" <mokhov@cs.concordia.ca> writes:
+>>> (1) One thread screws up, the whole process dies. In a 
+>>> multiple process application this is not too much of an issue.
+
+> (1) is an issue only for user-level threads.
+
+Uh, what other kind of thread have you got in mind here?
+
+I suppose the lack-of-cross-thread-protection issue would go away if
+our objective was only to use threads for internal parallelism in each
+backend instance (ie, you still have one process per connection, but
+internally it would use multiple threads to process subqueries in
+parallel).
+
+Of course that gives up the hope of faster connection startup that has
+always been touted as a major reason to want Postgres to be threaded...
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 5: Have you checked our extensive FAQ?
+
+http://www.postgresql.org/users-lounge/docs/faq.html
+
+From pgsql-hackers-owner+M33706@postgresql.org Fri Jan  3 21:16:55 2003
+Return-path: <pgsql-hackers-owner+M33706@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id h042Gsl08584
+	for <pgman@candle.pha.pa.us>; Fri, 3 Jan 2003 21:16:54 -0500 (EST)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP
+	id 8F2EB475E22; Fri,  3 Jan 2003 21:16:49 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP
+	id 72017475FDA; Fri,  3 Jan 2003 21:15:21 -0500 (EST)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP id EA790476242
+	for <pgsql-hackers@postgresql.org>; Fri,  3 Jan 2003 21:15:00 -0500 (EST)
+Received: from CopelandConsulting.Net (dsl-24293-ld.customer.centurytel.net [209.142.135.135])
+	by postgresql.org (Postfix) with ESMTP id BB7A0475D0D
+	for <pgsql-hackers@postgresql.org>; Fri,  3 Jan 2003 21:11:20 -0500 (EST)
+Received: from [192.168.1.2] (mouse.copelandconsulting.net [192.168.1.2])
+	by CopelandConsulting.Net (8.10.1/8.10.1) with ESMTP id h042B8729407;
+	Fri, 3 Jan 2003 20:11:08 -0600 (CST)
+X-Trade-Id: <CCC.Fri, 3 Jan 2003 20:11:08 -0600 (CST).Fri, 3 Jan 2003 20:11:08 -0600 (CST).200301040211.h042B8729407.h042B8729407@CopelandConsulting.Net.
+Subject: Re: [HACKERS] Threads
+From: Greg Copeland <greg@CopelandConsulting.Net>
+To: Tom Lane <tgl@sss.pgh.pa.us>
+cc: Serguei Mokhov <mokhov@cs.concordia.ca>, Dann Corbit <DCorbit@connx.com>,
+   PGHackers <pgsql-hackers@postgresql.org>
+In-Reply-To: <23763.1041644042@sss.pgh.pa.us>
+References:  <D90A5A6C612A39408103E6ECDD77B829408A20@voyager.corporate.connx.com>
+  <1041630319.15927.146.camel@mouse.copelandconsulting.net>
+  <004101c2b37b$0f261ae0$0301a8c0@gunnymede.lan>
+  <23763.1041644042@sss.pgh.pa.us>
+Content-Type: text/plain
+Organization: Copeland Computer Consulting
+Message-ID: <1041646276.15927.202.camel@mouse.copelandconsulting.net>
+MIME-Version: 1.0
+X-Mailer: Ximian Evolution 1.2.0 
+Date: 03 Jan 2003 20:11:17 -0600
+Content-Transfer-Encoding: 7bit
+X-Virus-Scanned: by AMaViS new-20020517
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by AMaViS new-20020517
+Status: OR
+
+On Fri, 2003-01-03 at 19:34, Tom Lane wrote:
+> "Serguei Mokhov" <mokhov@cs.concordia.ca> writes:
+> >>> (1) One thread screws up, the whole process dies. In a 
+> >>> multiple process application this is not too much of an issue.
+> 
+> > (1) is an issue only for user-level threads.
+> 
+
+
+Umm.  No.  User or system level threads, the statement is true.  If a
+thread kills over, the process goes with it.  Furthermore, on Win32
+platforms, it opens a whole can of worms no matter how you care to
+address it.
+
+> Uh, what other kind of thread have you got in mind here?
+> 
+> I suppose the lack-of-cross-thread-protection issue would go away if
+> our objective was only to use threads for internal parallelism in each
+> backend instance (ie, you still have one process per connection, but
+> internally it would use multiple threads to process subqueries in
+> parallel).
+> 
+
+Several have previously spoken about a hybrid approach (ala Apache). 
+IIRC, it was never ruled out but it was simply stated that no one had
+the energy to put into such a concept.
+
+> Of course that gives up the hope of faster connection startup that has
+> always been touted as a major reason to want Postgres to be threaded...
+> 
+> 			regards, tom lane
+
+Faster startup, should never be the primary reason as there are many
+ways to address that issue already.  Connection pooling and caching are
+by far, the most common way to address this issue.  Not only that, but
+by definition, it's almost an oxymoron.  If you really need high
+performance, you shouldn't be using transient connections, no matter how
+fast they are.  This, in turn, brings you back to persistent connections
+or connection pools/caches.
+
+
+-- 
+Greg Copeland <greg@copelandconsulting.net>
+Copeland Computer Consulting
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 4: Don't 'kill -9' the postmaster
+
+From pgsql-hackers-owner+M33709@postgresql.org Fri Jan  3 22:39:26 2003
+Return-path: <pgsql-hackers-owner+M33709@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id h043dOl13614
+	for <pgman@candle.pha.pa.us>; Fri, 3 Jan 2003 22:39:25 -0500 (EST)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP
+	id CA13B47621C; Fri,  3 Jan 2003 22:39:20 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP
+	id 8DE1D475DFF; Fri,  3 Jan 2003 22:39:04 -0500 (EST)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP id 15AA1475AFF
+	for <pgsql-hackers@postgresql.org>; Fri,  3 Jan 2003 22:39:00 -0500 (EST)
+Received: from CopelandConsulting.Net (dsl-24293-ld.customer.centurytel.net [209.142.135.135])
+	by postgresql.org (Postfix) with ESMTP id 19D8F475ADD
+	for <pgsql-hackers@postgresql.org>; Fri,  3 Jan 2003 22:38:59 -0500 (EST)
+Received: from [192.168.1.2] (mouse.copelandconsulting.net [192.168.1.2])
+	by CopelandConsulting.Net (8.10.1/8.10.1) with ESMTP id h043ca714568;
+	Fri, 3 Jan 2003 21:38:36 -0600 (CST)
+X-Trade-Id: <CCC.Fri, 3 Jan 2003 21:38:36 -0600 (CST).Fri, 3 Jan 2003 21:38:36 -0600 (CST).200301040338.h043ca714568.h043ca714568@CopelandConsulting.Net.
+Subject: Re: [HACKERS] Threads
+From: Greg Copeland <greg@CopelandConsulting.Net>
+To: mlw <pgsql@mohawksoft.com>
+cc: Tom Lane <tgl@sss.pgh.pa.us>, Serguei Mokhov <mokhov@cs.concordia.ca>,
+   Dann Corbit <DCorbit@connx.com>, PGHackers <pgsql-hackers@postgresql.org>
+In-Reply-To: <3E16575C.1030805@mohawksoft.com>
+References:  <D90A5A6C612A39408103E6ECDD77B829408A20@voyager.corporate.connx.com>
+  <1041630319.15927.146.camel@mouse.copelandconsulting.net>
+  <004101c2b37b$0f261ae0$0301a8c0@gunnymede.lan>
+  <23763.1041644042@sss.pgh.pa.us>
+  <1041646276.15927.202.camel@mouse.copelandconsulting.net>
+  <3E16575C.1030805@mohawksoft.com>
+Content-Type: text/plain
+Organization: Copeland Computer Consulting
+Message-ID: <1041651525.15927.207.camel@mouse.copelandconsulting.net>
+MIME-Version: 1.0
+X-Mailer: Ximian Evolution 1.2.0 
+Date: 03 Jan 2003 21:38:46 -0600
+Content-Transfer-Encoding: 7bit
+X-Virus-Scanned: by AMaViS new-20020517
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by AMaViS new-20020517
+Status: OR
+
+On Fri, 2003-01-03 at 21:39, mlw wrote:
+> Connection time should *never* be in the critical path. There, I've
+> said it!! People who complain about connection time are barking up the
+> wrong tree. Regardless of the methodology, EVERY OS has issues with
+> thread creation, process creation, the memory allocation, and system
+> manipulation  required to manage it. Under load this is ALWAYS slower.
+> 
+> I think that if there is ever a choice, "do I make startup time
+> faster?" or "Do I make PostgreSQL not need a dump/restore for upgrade"
+> the upgrade problem has a much higher impact to real PostgreSQL sites.
+
+
+Exactly.  Trying to speed up something that shouldn't be in the critical
+path is exactly what I'm talking about.
+
+I completely agree with you!
+
+
+-- 
+Greg Copeland <greg@copelandconsulting.net>
+Copeland Computer Consulting
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 4: Don't 'kill -9' the postmaster
+
+From pgsql-hackers-owner+M33708@postgresql.org Fri Jan  3 22:35:26 2003
+Return-path: <pgsql-hackers-owner+M33708@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id h043ZOl13418
+	for <pgman@candle.pha.pa.us>; Fri, 3 Jan 2003 22:35:25 -0500 (EST)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP
+	id 2277B475FDA; Fri,  3 Jan 2003 22:35:21 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP
+	id DA681475E18; Fri,  3 Jan 2003 22:35:12 -0500 (EST)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP id 8254047595A
+	for <pgsql-hackers@postgresql.org>; Fri,  3 Jan 2003 22:34:58 -0500 (EST)
+Received: from snoopy.mohawksoft.com (h0030f1382639.ne.client2.attbi.com [24.60.194.163])
+	by postgresql.org (Postfix) with ESMTP id A4D60475921
+	for <pgsql-hackers@postgresql.org>; Fri,  3 Jan 2003 22:34:57 -0500 (EST)
+Received: from mohawksoft.com (snoopy.mohawksoft.com [127.0.0.1])
+	by snoopy.mohawksoft.com (8.11.6/8.11.6) with ESMTP id h043d8s26180;
+	Fri, 3 Jan 2003 22:39:09 -0500
+Message-ID: <3E16575C.1030805@mohawksoft.com>
+Date: Fri, 03 Jan 2003 22:39:08 -0500
+From: mlw <pgsql@mohawksoft.com>
+User-Agent: Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.0.1) Gecko/20020823 Netscape/7.0
+X-Accept-Language: en-us, en
+MIME-Version: 1.0
+To: Greg Copeland <greg@CopelandConsulting.Net>
+cc: Tom Lane <tgl@sss.pgh.pa.us>, Serguei Mokhov <mokhov@cs.concordia.ca>,
+   Dann Corbit <DCorbit@connx.com>, PGHackers <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Threads
+References: <D90A5A6C612A39408103E6ECDD77B829408A20@voyager.corporate.connx.com>	 <1041630319.15927.146.camel@mouse.copelandconsulting.net>	 <004101c2b37b$0f261ae0$0301a8c0@gunnymede.lan>	 <23763.1041644042@sss.pgh.pa.us> <1041646276.15927.202.camel@mouse.copelandconsulting.net>
+Content-Type: multipart/alternative;
+	boundary="------------030005060103020905060907"
+X-Virus-Scanned: by AMaViS new-20020517
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by AMaViS new-20020517
+Status: OR
+
+--------------030005060103020905060907
+Content-Type: text/plain; charset=us-ascii; format=flowed
+Content-Transfer-Encoding: 7bit
+
+
+
+Greg Copeland wrote:
+
+>  
+>
+>>Of course that gives up the hope of faster connection startup that has
+>>always been touted as a major reason to want Postgres to be threaded...
+>>
+>>			regards, tom lane
+>>    
+>>
+>
+>Faster startup, should never be the primary reason as there are many
+>ways to address that issue already.  Connection pooling and caching are
+>by far, the most common way to address this issue.  Not only that, but
+>by definition, it's almost an oxymoron.  If you really need high
+>performance, you shouldn't be using transient connections, no matter how
+>fast they are.  This, in turn, brings you back to persistent connections
+>or connection pools/caches.
+>
+Connection time should *never* be in the critical path. There, I've said 
+it!! People who complain about connection time are barking up the wrong 
+tree. Regardless of the methodology, EVERY OS has issues with thread 
+creation, process creation, the memory allocation, and system 
+manipulation  required to manage it. Under load this is ALWAYS slower.
+
+I think that if there is ever a choice, "do I make startup time faster?" 
+or "Do I make PostgreSQL not need a dump/restore for upgrade" the 
+upgrade problem has a much higher impact to real PostgreSQL sites.
+
+--------------030005060103020905060907
+Content-Type: text/html; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <title></title>
+</head>
+<body>
+<br>
+<br>
+Greg Copeland wrote:<br>
+<blockquote type="cite"
+ cite="mid1041646276.15927.202.camel@mouse.copelandconsulting.net">
+  <pre wrap="">
+  </pre>
+  <blockquote type="cite">
+    <pre wrap="">Of course that gives up the hope of faster connection startup that has
+always been touted as a major reason to want Postgres to be threaded...
+
+			regards, tom lane
+    </pre>
+  </blockquote>
+  <pre wrap=""><!---->
+Faster startup, should never be the primary reason as there are many
+ways to address that issue already.  Connection pooling and caching are
+by far, the most common way to address this issue.  Not only that, but
+by definition, it's almost an oxymoron.  If you really need high
+performance, you shouldn't be using transient connections, no matter how
+fast they are.  This, in turn, brings you back to persistent connections
+or connection pools/caches.</pre>
+</blockquote>
+Connection time should *never* be in the critical path. There, I've said
+it!! People who complain about connection time are barking up the wrong tree.
+Regardless of the methodology, EVERY OS has issues with thread creation,
+process creation, the memory allocation, and system manipulation &nbsp;required
+to manage it. Under load this is ALWAYS slower. <br>
+<br>
+I think that if there is ever a choice, "do I make startup time faster?"
+or "Do I make PostgreSQL not need a dump/restore for upgrade" the upgrade
+problem has a much higher impact to real PostgreSQL sites.<br>
+</body>
+</html>
+
+--------------030005060103020905060907--
+
+
+From pgsql-hackers-owner+M33713@postgresql.org Sat Jan  4 00:34:04 2003
+Return-path: <pgsql-hackers-owner+M33713@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id h045Y2l23520
+	for <pgman@candle.pha.pa.us>; Sat, 4 Jan 2003 00:34:02 -0500 (EST)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP
+	id BCA39476226; Sat,  4 Jan 2003 00:33:56 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP
+	id 1B030475F09; Sat,  4 Jan 2003 00:33:47 -0500 (EST)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP id A42D847595A
+	for <pgsql-hackers@postgresql.org>; Sat,  4 Jan 2003 00:33:37 -0500 (EST)
+Received: from houston.familyhealth.com.au (unknown [203.59.48.253])
+	by postgresql.org (Postfix) with ESMTP id C14B4475921
+	for <pgsql-hackers@postgresql.org>; Sat,  4 Jan 2003 00:33:35 -0500 (EST)
+Received: from localhost (chriskl@localhost)
+	by houston.familyhealth.com.au (8.11.6/8.11.6) with ESMTP id h045XKt36362;
+	Sat, 4 Jan 2003 13:33:23 +0800 (WST)
+	(envelope-from chriskl@familyhealth.com.au)
+Date: Sat, 4 Jan 2003 13:33:20 +0800 (WST)
+From: Christopher Kings-Lynne <chriskl@familyhealth.com.au>
+To: mlw <pgsql@mohawksoft.com>
+cc: Shridhar Daithankar <shridhar_daithankar@persistent.co.in>,
+   PGHackers <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Threads
+In-Reply-To: <3E15F6DA.8000209@mohawksoft.com>
+Message-ID: <20030104133226.N36192-100000@houston.familyhealth.com.au>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+X-Virus-Scanned: by AMaViS new-20020517
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by AMaViS new-20020517
+Status: OR
+
+Also remember that in even well developed OS's like FreeBSD, all a
+process's threads will execute only on one CPU.  This might change in
+FreeBSD 5.0, but still a threaded app (such as MySQL) cannot use mutliple
+CPUs on a FreeBSD system.
+
+Chris
+
+On Fri, 3 Jan 2003, mlw wrote:
+
+> Please no threading threads!!!
+>
+> Has anyone calculated the interval and period of "PostgreSQL needs
+> threads" posts?
+>
+> The *ONLY* advantage threading has over multiple processes is the time
+> and resources used in creating new processes.
+>
+> That being said, I admit that creating a threaded program is easier than
+> one with multiple processes, but PostgreSQL is already there and working.
+>
+> Drawbacks to a threaded model:
+>
+> (1) One thread screws up, the whole process dies. In a multiple process
+> application this is not too much of an issue.
+>
+> (2) Heap fragmentation. In a long uptime application, such as a
+> database, heap fragmentation is an important consideration. With
+> multiple processes, each process manages its own heap and what ever
+> fragmentation that exists goes away when the connection is closed.  A
+> threaded server is far more vulnerable because the heap has to manage
+> many threads and the heap has to stay active and unfragmented in
+> perpetuity. This is why Windows applications usually end up using 2G of
+> memory after 3 months of use. (Well, this AND memory leaks)
+>
+> (3) Stack space. In a threaded application they are more limits to stack
+> usage. I'm not sure, but I bet PostgreSQL would have a problem with a
+> fixed size stack, I know the old ODBC driver did.
+>
+> (4) Lock Contention. The various single points of access in a process
+> have to be serialized for multiple threads. heap allocation,
+> deallocation, etc all have to be managed. In a multple process model,
+> these resources would be separated by process contexts.
+>
+> (5) Lastly, why bother? Seriously? Process creation time is an issue
+> true, but its an issue with threads as well, just not as bad. Anyone who
+> is looking for performance should be using a connection pooling
+> mechanism as is done in things like PHP.
+>
+> I have done both threaded and process servers. The threaded servers are
+> easier to write. The process based severs are more robust. From an
+> operational point of view, a "select foo from bar where x > y" will take
+> he same amount of time.
+>
+>
+>
+>
+> ---------------------------(end of broadcast)---------------------------
+> TIP 6: Have you searched our list archives?
+>
+> http://archives.postgresql.org
+>
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 3: if posting/reading through Usenet, please send an appropriate
+subscribe-nomail command to majordomo@postgresql.org so that your
+message can get through to the mailing list cleanly
+
+From pgsql-hackers-owner+M33723@postgresql.org Sat Jan  4 13:21:52 2003
+Return-path: <pgsql-hackers-owner+M33723@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id h04ILpl25640
+	for <pgman@candle.pha.pa.us>; Sat, 4 Jan 2003 13:21:51 -0500 (EST)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP
+	id A5E5D4764F0; Sat,  4 Jan 2003 13:21:50 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP
+	id B8D94476021; Sat,  4 Jan 2003 13:21:37 -0500 (EST)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP id 7FDFE475CE7
+	for <pgsql-hackers@postgresql.org>; Sat,  4 Jan 2003 13:21:28 -0500 (EST)
+Received: from CopelandConsulting.Net (dsl-24293-ld.customer.centurytel.net [209.142.135.135])
+	by postgresql.org (Postfix) with ESMTP id 71C47474E42
+	for <pgsql-hackers@postgresql.org>; Sat,  4 Jan 2003 13:21:27 -0500 (EST)
+Received: from [192.168.1.2] (mouse.copelandconsulting.net [192.168.1.2])
+	by CopelandConsulting.Net (8.10.1/8.10.1) with ESMTP id h04ILF721061;
+	Sat, 4 Jan 2003 12:21:15 -0600 (CST)
+X-Trade-Id: <CCC.Sat, 4 Jan 2003 12:21:15 -0600 (CST).Sat, 4 Jan 2003 12:21:15 -0600 (CST).200301041821.h04ILF721061.h04ILF721061@CopelandConsulting.Net.
+Subject: Re: [HACKERS] Threads
+From: Greg Copeland <greg@CopelandConsulting.Net>
+To: kar@kakidata.dk
+cc: PGHackers <pgsql-hackers@postgresql.org>
+In-Reply-To: <200301041359.35715.kar@kakidata.dk>
+References:  <D90A5A6C612A39408103E6ECDD77B829408A20@voyager.corporate.connx.com>
+  <23763.1041644042@sss.pgh.pa.us>
+  <1041646276.15927.202.camel@mouse.copelandconsulting.net>
+  <200301041359.35715.kar@kakidata.dk>
+Content-Type: text/plain
+Organization: Copeland Computer Consulting
+Message-ID: <1041704480.15927.224.camel@mouse.copelandconsulting.net>
+MIME-Version: 1.0
+X-Mailer: Ximian Evolution 1.2.0 
+Date: 04 Jan 2003 12:21:20 -0600
+Content-Transfer-Encoding: 7bit
+X-Virus-Scanned: by AMaViS new-20020517
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by AMaViS new-20020517
+Status: OR
+
+On Sat, 2003-01-04 at 06:59, Kaare Rasmussen wrote:
+> > Umm.  No.  User or system level threads, the statement is true.  If a
+> > thread kills over, the process goes with it.  Furthermore, on Win32
+> 
+> Hm. This is a database system. If one of the backend processes dies 
+> unexpectedly, I'm not sure I would trust the consistency and state of the 
+> others.
+> 
+> Or maybe I'm just being chicken.
+
+I'd call that being wise.  That's the problem with using threads. 
+Should a thread do something naughty, the state of the entire process is
+in question.  This is true regardless if it is a user mode, kernel mode,
+or hybrid thread implementation.  That's the power of using the process
+model that is currently in use.  Should it do something naughty, we
+bitch and complain politely, throw our hands in the air and exit.  We no
+longer have to worry about the state and validity of that backend.  This
+creates a huge systemic reliability surplus.
+
+This is also why the concept of a hybrid thread/process implementation
+keeps coming to the surface on the list.  If you maintain the process
+model and only use threads for things that ONLY relate to the single
+process (single session/connection), should a thread cause a problem,
+you can still throw you hands in the air and exit just as is done now
+without causing problems for, or questioning the validity of, other
+backends.
+
+The cool thing about such a concept is that it still opens the door for
+things like parallel sorts and queries as it relates to a single
+backend.
+
+
+-- 
+Greg Copeland <greg@copelandconsulting.net>
+Copeland Computer Consulting
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 1: subscribe and unsubscribe commands go to majordomo@postgresql.org
+
+From pgsql-hackers-owner+M33819@postgresql.org Mon Jan  6 02:41:01 2003
+Return-path: <pgsql-hackers-owner+M33819@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id h067exi23864
+	for <pgman@candle.pha.pa.us>; Mon, 6 Jan 2003 02:40:59 -0500 (EST)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP
+	id CCD564763B7; Mon,  6 Jan 2003 02:40:56 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP
+	id 4A6574762E0; Mon,  6 Jan 2003 02:40:54 -0500 (EST)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP id 2C31947606A
+	for <pgsql-hackers@postgresql.org>; Mon,  6 Jan 2003 02:40:50 -0500 (EST)
+Received: from datafix.CS.Berkeley.EDU (datafix.CS.Berkeley.EDU [128.32.37.185])
+	by postgresql.org (Postfix) with ESMTP id 8D7AF47603D
+	for <pgsql-hackers@postgresql.org>; Mon,  6 Jan 2003 02:40:49 -0500 (EST)
+Received: (from sailesh@localhost)
+	by datafix.CS.Berkeley.EDU (8.11.6/8.11.6) id h067ac532006;
+	Sun, 5 Jan 2003 23:36:38 -0800
+X-Authentication-Warning: datafix.CS.Berkeley.EDU: sailesh set sender to sailesh@cs.berkeley.edu using -f
+Reply-To: sailesh@cs.berkeley.edu
+X-URL: http://www.cs.berkeley.edu/~sailesh
+X-Attribution: Sailesh
+To: Shridhar Daithankar <shridhar_daithankar@persistent.co.in>
+cc: PGHackers <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Threads
+References: <200301032054.11125.shridhar_daithankar@persistent.co.in>
+	<3E1605B8.5060403@priefert.com>
+	<200301061202.43247.shridhar_daithankar@persistent.co.in>
+From: Sailesh Krishnamurthy <sailesh@cs.berkeley.edu>
+Date: 05 Jan 2003 23:36:38 -0800
+In-Reply-To: <200301061202.43247.shridhar_daithankar@persistent.co.in>
+Message-ID: <m3znqeivax.fsf@datafix.CS.Berkeley.EDU>
+Lines: 50
+User-Agent: Gnus/5.0808 (Gnus v5.8.8) XEmacs/21.1 (Cuyahoga Valley)
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+X-Virus-Scanned: by AMaViS new-20020517
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by AMaViS new-20020517
+Status: OR
+
+>>>>> "Shridhar" == Shridhar Daithankar <shridhar_daithankar@persistent.co.in> writes:
+
+    Shridhar> On Saturday 04 January 2003 03:20 am, you wrote:
+    >> >I am sure, many of you would like to delete this message
+    >> before reading, > hold on. :-)
+    >> 
+    >> I'm afraid most posters did not read the message.  Those who
+    >> replied
+    >> 
+    >> "Why bother?" did not address your challenge:
+
+    Shridhar> Our challenges may be..;-)
+
+Not having threading does reduce some of the freedom we've been having
+in our work. But then we have ripped the process model a fair bit and
+we have the freedom of an entirely new process to deal with data
+streams entering the system and we're experimenting with threading for
+asynchronous I/O there.
+
+However, in general I agree with the spirit of the previous messages
+in this thread that threading isn't the main issue for PG.
+
+One thing that I missed so far in the threading thread. Context
+switches are (IMHO) far cheaper between threads, because you save TLB
+flushes. Whether this makes a real difference in a data intensive
+application, I don't know. I wonder how easy it is to measure the x86
+counters to see TLB flushes/misses.
+
+In a database system, even if one process dies, I'd be very chary of
+trusting it. So I am not too swayed by the fact that a
+process-per-connection gets you better isolation. 
+
+BTW, many commercial database systems also use per-process models on
+Unix. However they are very aggressive with connection sharing and
+reuse - even to the point of reusing the same process for multiple
+active connections .. maybe at transaction boundaries. Good when a
+connection is maintained for a long duaration with short-lived
+transactions separated by fair amouns of time. 
+
+Moreover, in db2 for instance, the same code base is used for both
+per-thread and per-process models - in other words, the entire code is
+MT-safe, and the scheduling mechanism is treated as a policy (Win32 is
+MT, and some Unices MP). AFAICT though, postgres code, such as perhaps
+the memory contexts is not MT-safe (of course the bufferpool/shmem
+accesses are safe). 
+
+-- 
+Pip-pip
+Sailesh
+http://www.cs.berkeley.edu/~sailesh
+
+---------------------------(end of broadcast)---------------------------
+TIP 6: Have you searched our list archives?
+
+http://archives.postgresql.org
+
+From pgsql-hackers-owner+M33822@postgresql.org Mon Jan  6 06:23:29 2003
+Return-path: <pgsql-hackers-owner+M33822@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id h06BNSi17987
+	for <pgman@candle.pha.pa.us>; Mon, 6 Jan 2003 06:23:28 -0500 (EST)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP
+	id A1204476260; Mon,  6 Jan 2003 06:23:21 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP
+	id 0B78D476060; Mon,  6 Jan 2003 06:23:19 -0500 (EST)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP id 50277475BA0
+	for <pgsql-hackers@postgresql.org>; Mon,  6 Jan 2003 06:23:14 -0500 (EST)
+Received: from mail.gne.de (mail.gne.de [213.83.0.2])
+	by postgresql.org (Postfix) with ESMTP id 27B244758E6
+	for <pgsql-hackers@postgresql.org>; Mon,  6 Jan 2003 06:23:13 -0500 (EST)
+Received: from DO5GNE-MTA by mail.gne.de
+	with Novell_GroupWise; Mon, 06 Jan 2003 12:23:02 +0100
+Message-ID: <se197526.086@mail.gne.de>
+X-Mailer: Novell GroupWise Internet Agent 6.0.2
+Date: Mon, 06 Jan 2003 12:22:57 +0100
+From: "Ulrich Neumann" <U_Neumann@gne.de>
+To: "<PGHackers" <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Threads
+MIME-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+X-Guinevere: 1.1.14 ; GNE Grebe Neumann Gl
+X-Virus-Scanned: by AMaViS new-20020517
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by AMaViS new-20020517
+Status: OR
+
+Hello all,
+
+it's very interesting to see the discussion of "threads" again.
+
+I've portet PostgreSQL to a "thread-per-connection" model based on
+pthreads
+and it is functional. Most of the work was finding all the static
+globals in the sourcefiles
+and swapping them between threads and freeing memory if a thread
+terminates.
+(PostgreSQL isn't written very clean in the aspects of memory
+handling).
+
+My version of the thread-based PostgreSQL is not very efficient at the
+moment because
+I haven't done any optimisation of the code to better support threads
+and I'm using just a
+simple semaphore to control switching of data but this could be a
+starting point for
+others who want to see this code. If this direction will be taken
+seriously I'm very willing
+to help.
+
+If someone is interested in the code I can send a zip file to everyone
+who wants.
+
+Ulrich
+----------------------------------
+  This e-mail is virus scanned
+  Diese e-mail ist virusgeprueft
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 5: Have you checked our extensive FAQ?
+
+http://www.postgresql.org/users-lounge/docs/faq.html
+
+From pgsql-hackers-owner+M33824@postgresql.org Mon Jan  6 07:49:46 2003
+Return-path: <pgsql-hackers-owner+M33824@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id h06Cnii03541
+	for <pgman@candle.pha.pa.us>; Mon, 6 Jan 2003 07:49:44 -0500 (EST)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP
+	id C409E476778; Mon,  6 Jan 2003 07:49:36 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP
+	id 617C04768C8; Mon,  6 Jan 2003 07:49:01 -0500 (EST)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP id EA9284768AA
+	for <pgsql-hackers@postgresql.org>; Mon,  6 Jan 2003 07:48:56 -0500 (EST)
+Received: from CopelandConsulting.Net (dsl-24293-ld.customer.centurytel.net [209.142.135.135])
+	by postgresql.org (Postfix) with ESMTP id 2DB74476191
+	for <pgsql-hackers@postgresql.org>; Mon,  6 Jan 2003 07:48:41 -0500 (EST)
+Received: from [192.168.1.2] (mouse.copelandconsulting.net [192.168.1.2])
+	by CopelandConsulting.Net (8.10.1/8.10.1) with ESMTP id h06CmL702059;
+	Mon, 6 Jan 2003 06:48:21 -0600 (CST)
+X-Trade-Id: <CCC.Mon, 6 Jan 2003 06:48:21 -0600 (CST).Mon, 6 Jan 2003 06:48:21 -0600 (CST).200301061248.h06CmL702059.h06CmL702059@CopelandConsulting.Net.
+Subject: Re: [HACKERS] Threads
+From: Greg Copeland <greg@CopelandConsulting.Net>
+To: shridhar_daithankar@persistent.co.in
+cc: "<PGHackers" <pgsql-hackers@postgresql.org>
+In-Reply-To: <3E19B78B.25689.15BFFE@localhost>
+References: <3E19B78B.25689.15BFFE@localhost>
+Content-Type: text/plain
+Organization: Copeland Computer Consulting
+Message-ID: <1041857302.17321.49.camel@mouse.copelandconsulting.net>
+MIME-Version: 1.0
+X-Mailer: Ximian Evolution 1.2.0 
+Date: 06 Jan 2003 06:48:23 -0600
+Content-Transfer-Encoding: 7bit
+X-Virus-Scanned: by AMaViS new-20020517
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by AMaViS new-20020517
+Status: OR
+
+On Mon, 2003-01-06 at 05:36, Shridhar Daithankar wrote:
+> On 6 Jan 2003 at 12:22, Ulrich Neumann wrote:
+> 
+> > Hello all,
+> > If someone is interested in the code I can send a zip file to everyone
+> > who wants.
+> 
+> I suggest you preserver your work. The reason I suggested thread are mainly two 
+> folds.
+> 
+> 1) Get I/O time used fuitfully
+
+
+AIO may address this without the need for integrated threading. 
+Arguably, from the long thread that last appeared on the topic of AIO,
+some hold that AIO doesn't even offer anything beyond the current
+implementation.  As such, it's highly doubtful that integrated threading
+is going to offer anything beyond what a sound AIO implementation can
+achieve.
+
+
+> 2) Use multiple CPU better.
+> 
+
+
+Multiple processes tend to universally support multiple CPUs better than
+does threading.  On some platforms, the level of threading support is
+currently only user mode implementations which means no additional CPU
+use.  Furthermore, some platforms where user-mode threads are defacto,
+they don't even allow for scheduling bias resulting is less work being
+accomplished within the same time interval (work slice must be divided
+between n-threads within the process, all of which run on a single CPU).
+
+
+> It will not require as much code cleaning as your efforts might had. However 
+> your work will be very useful if somebody decides to use thread in any fashion 
+> in core postgresql.
+> 
+> I was hoping for bit more optimistic response given that what I suggested was 
+> totally optional at any point of time but very important from performance 
+> point. Besides the change would have been gradual as required..
+> 
+
+
+Speaking for my self, I probably would of been more excited if the
+offered framework had addressed several issues.  The short list is:
+
+o Code needs to be more robust.  It shouldn't be calling exit directly
+as, I believe, it should be allowing for PostgreSQL to clean up some. 
+Correct me as needed.  I would of also expected the code of adopted
+PostgreSQL's semantics and mechanisms as needed (error reporting, etc). 
+I do understand it was an initial attempt to simply get something in
+front of some eyes and have something to talk about.  Just the same, I
+was expecting something that we could actually pull the trigger with.
+
+o Code isn't very portable.  Looked fairly okay for pthread platforms,
+however, there is new emphasis on the Win32 platform.  I think it would
+be a mistake to introduce something as significant as threading without
+addressing Win32 from the get-go.
+
+o I would desire a more highly abstracted/portable interface which
+allows for different threading and synchronization primitives to be
+used.  Current implementation is tightly coupled to pthreads. 
+Furthermore, on platforms such as Solaris, I would hope it would easily
+allow for plugging in its native threading primitives which are touted
+to be much more efficient than pthreads on said platform.
+
+o Code is not commented.  I would hope that adding new code for
+something as important as threading would be commented.
+
+o Code is fairly trivial and does not address other primitives
+(semaphores, mutexs, conditions, TSS, etc) portably which would be
+required for anything but the most trivial of threaded work.  This is
+especially true in such an application where data IS the application. 
+As such, you must reasonably assume that threads need some form of
+portable serialization primitives, not to mention mechanisms for
+non-trivial communication.
+
+o Does not address issues such as thread signaling or status reporting.
+
+o Pool interface is rather simplistic.  Does not currently support
+concepts such as wake pool, stop pool, pool status, assigning a pool to
+work, etc.  In fact, it's not altogether obvious what the capabilities
+intent is of the current pool implementation.
+
+o Doesn't seem to address any form of thread communication facilities
+(mailboxes, queues, etc).
+
+
+There are probably other things that I can find if I spend more than
+just a couple of minutes looking at the code.  Honestly, I love threads
+but I can see that the current code offering is not much more than a
+token in its current form.  No offense meant.
+
+After it's all said and done, I'd have to see a lot more meat before I'd
+be convinced that threading is ready for PostgreSQL; from both a social
+and technological perspective.
+
+
+Regards,
+
+-- 
+Greg Copeland <greg@copelandconsulting.net>
+Copeland Computer Consulting
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 2: you can get off all lists at once with the unregister command
+    (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
+
+From pgsql-hackers-owner+M33899@postgresql.org Tue Jan  7 03:00:25 2003
+Return-path: <pgsql-hackers-owner+M33899@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id h0780Mi00624
+	for <pgman@candle.pha.pa.us>; Tue, 7 Jan 2003 03:00:23 -0500 (EST)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP
+	id 46FA747687C; Tue,  7 Jan 2003 03:00:21 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP
+	id 69717475F25; Tue,  7 Jan 2003 03:00:13 -0500 (EST)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP id 5323E475F39
+	for <pgsql-hackers@postgresql.org>; Tue,  7 Jan 2003 03:00:01 -0500 (EST)
+Received: from www.pspl.co.in (www.pspl.co.in [202.54.11.65])
+	by postgresql.org (Postfix) with ESMTP id 351DD475EE1
+	for <pgsql-hackers@postgresql.org>; Tue,  7 Jan 2003 02:59:58 -0500 (EST)
+Received: (from root@localhost)
+	by www.pspl.co.in (8.11.6/8.11.6) id h077xvs03265
+	for <pgsql-hackers@postgresql.org>; Tue, 7 Jan 2003 13:29:57 +0530
+Received: from daithan (daithan.intranet.pspl.co.in [192.168.7.161])
+	by www.pspl.co.in (8.11.6/8.11.0) with ESMTP id h077xvr03260
+	for <pgsql-hackers@postgresql.org>; Tue, 7 Jan 2003 13:29:57 +0530
+From: "Shridhar Daithankar" <shridhar_daithankar@persistent.co.in>
+To: "<PGHackers" <pgsql-hackers@postgresql.org>
+Date: Tue, 07 Jan 2003 13:30:05 +0530
+MIME-Version: 1.0
+Subject: Re: [HACKERS] Threads
+Reply-To: shridhar_daithankar@persistent.co.in
+Message-ID: <3E1AD65D.10112.192793@localhost>
+References: <3E19B78B.25689.15BFFE@localhost>
+In-Reply-To: <1041857302.17321.49.camel@mouse.copelandconsulting.net>
+X-Mailer: Pegasus Mail for Windows (v4.02)
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7BIT
+Content-Description: Mail message body
+X-Virus-Scanned: by AMaViS new-20020517
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by AMaViS new-20020517
+Status: OR
+
+On 6 Jan 2003 at 6:48, Greg Copeland wrote:
+> > 1) Get I/O time used fuitfully
+> AIO may address this without the need for integrated threading. 
+> Arguably, from the long thread that last appeared on the topic of AIO,
+> some hold that AIO doesn't even offer anything beyond the current
+> implementation.  As such, it's highly doubtful that integrated threading
+> is going to offer anything beyond what a sound AIO implementation can
+> achieve.
+
+Either way, a complete aio or threading implementation is not available on 
+major platforms that postgresql runs. Linux definitely does not have one, last 
+I checked.
+
+If postgresql is not using aio or threading, we should start using one of them, 
+is what I feel. What do you say?
+
+> > 2) Use multiple CPU better.
+> Multiple processes tend to universally support multiple CPUs better than
+> does threading.  On some platforms, the level of threading support is
+> currently only user mode implementations which means no additional CPU
+> use.  Furthermore, some platforms where user-mode threads are defacto,
+> they don't even allow for scheduling bias resulting is less work being
+> accomplished within the same time interval (work slice must be divided
+> between n-threads within the process, all of which run on a single CPU).
+
+The frame-work I have posted, threading is optional at build and should be a 
+configuration option if it gets integrated. So for the platforms that can not 
+spread threads across multiple CPUs, it can simply be turned off..
+
+> Speaking for my self, I probably would of been more excited if the
+> offered framework had addressed several issues.  The short list is:
+> 
+> o Code needs to be more robust.  It shouldn't be calling exit directly
+> as, I believe, it should be allowing for PostgreSQL to clean up some. 
+> Correct me as needed.  I would of also expected the code of adopted
+> PostgreSQL's semantics and mechanisms as needed (error reporting, etc). 
+> I do understand it was an initial attempt to simply get something in
+> front of some eyes and have something to talk about.  Just the same, I
+> was expecting something that we could actually pull the trigger with.
+
+That could be done.
+
+> 
+> o Code isn't very portable.  Looked fairly okay for pthread platforms,
+> however, there is new emphasis on the Win32 platform.  I think it would
+> be a mistake to introduce something as significant as threading without
+> addressing Win32 from the get-go.
+
+If you search for "pthread" in thread.c, there are not many instances. Same 
+goes for thread.h. From what I understand windows threading, it would be less 
+than 10 minutes job to #ifdef the pthread related part on either file.
+
+It is just that I have not played with windows threading and nor I am inclined 
+to...;-)
+
+> 
+> o I would desire a more highly abstracted/portable interface which
+> allows for different threading and synchronization primitives to be
+> used.  Current implementation is tightly coupled to pthreads. 
+> Furthermore, on platforms such as Solaris, I would hope it would easily
+> allow for plugging in its native threading primitives which are touted
+> to be much more efficient than pthreads on said platform.
+
+Same as above. If there can be two cases separated with #ifdef, there can be 
+more.. But what is important is to have a thread that can be woken up as and 
+when required with any function desired. That is the basic idea.
+
+> o Code is not commented.  I would hope that adding new code for
+> something as important as threading would be commented.
+
+Agreed. 
+ 
+> o Code is fairly trivial and does not address other primitives
+> (semaphores, mutexs, conditions, TSS, etc) portably which would be
+> required for anything but the most trivial of threaded work.  This is
+> especially true in such an application where data IS the application. 
+> As such, you must reasonably assume that threads need some form of
+> portable serialization primitives, not to mention mechanisms for
+> non-trivial communication.
+
+I don't get this. Probably I should post a working example. It is not threads 
+responsibility to make a function thread safe which is changed on the fly. The 
+function has to make sure that it is thread safe. That is altogether different 
+effort..
+ 
+> o Does not address issues such as thread signaling or status reporting.
+
+>From what I learnt from pthreads on linux, I would not mix threads and signals. 
+One can easily add code in runner function that disables any signals for thread 
+while the thread starts running. This would leave original signal handling 
+mechanism in place.
+
+As far as status reporting is concerned, the thread sould be initiated while 
+back-end starts and terminated with backend termination. What is about status 
+reporting?
+ 
+> o Pool interface is rather simplistic.  Does not currently support
+> concepts such as wake pool, stop pool, pool status, assigning a pool to
+> work, etc.  In fact, it's not altogether obvious what the capabilities
+> intent is of the current pool implementation.
+
+Could you please elaborate? I am using same interface in c++ for a server 
+application and never faced a problem like that..;-)
+
+ 
+> o Doesn't seem to address any form of thread communication facilities
+> (mailboxes, queues, etc).
+
+Not part of this abstraction of threading mechanism. Intentionally left out to 
+keep things clean.
+
+> There are probably other things that I can find if I spend more than
+> just a couple of minutes looking at the code.  Honestly, I love threads
+> but I can see that the current code offering is not much more than a
+> token in its current form.  No offense meant.
+
+None taken. Point is it is useful and that is enough for me. If you could 
+elaborate examples for any problems you see, I can probably modify it. (Code 
+documentation is what I will do now)
+
+> After it's all said and done, I'd have to see a lot more meat before I'd
+> be convinced that threading is ready for PostgreSQL; from both a social
+> and technological perspective.
+
+Tell me about it..
+
+ 
+Bye
+ Shridhar
+
+--
+What's this script do?    unzip ; touch ; finger ; mount ; gasp ; yes ; umount 
+; sleepHint for the answer: not everything is computer-oriented. Sometimes 
+you'rein a sleeping bag, camping out.(Contributed by Frans van der Zande.)
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 4: Don't 'kill -9' the postmaster
+
+From pgsql-hackers-owner+M33921@postgresql.org Tue Jan  7 11:10:53 2003
+Return-path: <pgsql-hackers-owner+M33921@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id h07GApX13277
+	for <pgman@candle.pha.pa.us>; Tue, 7 Jan 2003 11:10:51 -0500 (EST)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP
+	id 5BDC0477200; Tue,  7 Jan 2003 11:06:58 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP
+	id 9EE41477268; Tue,  7 Jan 2003 11:06:40 -0500 (EST)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP id ACEA5477260
+	for <pgsql-hackers@postgresql.org>; Tue,  7 Jan 2003 11:06:35 -0500 (EST)
+Received: from CopelandConsulting.Net (dsl-24293-ld.customer.centurytel.net [209.142.135.135])
+	by postgresql.org (Postfix) with ESMTP id 78B51477165
+	for <pgsql-hackers@postgresql.org>; Tue,  7 Jan 2003 11:06:28 -0500 (EST)
+Received: from [192.168.1.2] (mouse.copelandconsulting.net [192.168.1.2])
+	by CopelandConsulting.Net (8.10.1/8.10.1) with ESMTP id h07G68711510;
+	Tue, 7 Jan 2003 10:06:09 -0600 (CST)
+X-Trade-Id: <CCC.Tue, 7 Jan 2003 10:06:09 -0600 (CST).Tue, 7 Jan 2003 10:06:09 -0600 (CST).200301071606.h07G68711510.h07G68711510@CopelandConsulting.Net.
+Subject: Re: [HACKERS] Threads
+From: Greg Copeland <greg@CopelandConsulting.Net>
+To: shridhar_daithankar@persistent.co.in
+cc: "<PGHackers" <pgsql-hackers@postgresql.org>
+In-Reply-To: <3E1AD65D.10112.192793@localhost>
+References: <3E19B78B.25689.15BFFE@localhost>
+  <3E1AD65D.10112.192793@localhost>
+Content-Type: text/plain
+Organization: Copeland Computer Consulting
+Message-ID: <1041955572.17639.148.camel@mouse.copelandconsulting.net>
+MIME-Version: 1.0
+X-Mailer: Ximian Evolution 1.2.0 
+Date: 07 Jan 2003 10:06:12 -0600
+Content-Transfer-Encoding: 7bit
+X-Virus-Scanned: by AMaViS new-20020517
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by AMaViS new-20020517
+Status: OR
+
+On Tue, 2003-01-07 at 02:00, Shridhar Daithankar wrote:
+> On 6 Jan 2003 at 6:48, Greg Copeland wrote:
+> > > 1) Get I/O time used fuitfully
+> > AIO may address this without the need for integrated threading. 
+> > Arguably, from the long thread that last appeared on the topic of AIO,
+> > some hold that AIO doesn't even offer anything beyond the current
+> > implementation.  As such, it's highly doubtful that integrated threading
+> > is going to offer anything beyond what a sound AIO implementation can
+> > achieve.
+> 
+> Either way, a complete aio or threading implementation is not available on 
+> major platforms that postgresql runs. Linux definitely does not have one, last 
+> I checked.
+> 
+
+There are two or three significant AIO implementation efforts currently
+underway for Linux.  One such implementation is available from the Red
+Hat Server Edition (IIRC) and has been available for some time now.  I
+believe Oracle is using it.  SGI also has an effort and I forget where
+the other one comes from.  Nonetheless, I believe it's going to be a
+hard fought battle to get AIO implemented simply because I don't think
+anyone, yet, can truly argue a case on the gain vs effort.
+
+> If postgresql is not using aio or threading, we should start using one of them, 
+> is what I feel. What do you say?
+> 
+
+I did originally say that I'd like to see an AIO implementation.  Then
+again, I don't current have a position to stand other than simply saying
+it *might* perform better.  ;)  Not exactly a position that's going to
+win the masses over.  
+
+> > was expecting something that we could actually pull the trigger with.
+> 
+> That could be done.
+> 
+
+I'm sure it can, but that's probably the easiest item to address.
+
+> > 
+> > o Code isn't very portable.  Looked fairly okay for pthread platforms,
+> > however, there is new emphasis on the Win32 platform.  I think it would
+> > be a mistake to introduce something as significant as threading without
+> > addressing Win32 from the get-go.
+> 
+> If you search for "pthread" in thread.c, there are not many instances. Same 
+> goes for thread.h. From what I understand windows threading, it would be less 
+> than 10 minutes job to #ifdef the pthread related part on either file.
+> 
+> It is just that I have not played with windows threading and nor I am inclined 
+> to...;-)
+> 
+
+Well, the method above is going to create a semi-ugly mess.  I've
+written thread abstraction layers which cover OS/2, NT, and pthreads. 
+Each have subtle distinction.  What really needs to be done is the
+creation of another abstraction layer which your current code would sit
+on top of.  That way, everything contained within is clear and easy to
+read.  The big bonus is that as additional threading implementations
+need to be added, only the "low-level" abstraction stuff needs to
+modified.  Done properly, each thread implementation would be it's own
+module requiring little #if clutter.
+
+As you can see, that's a fair amount of work and far from where the code
+currently is.
+
+> > 
+> > o I would desire a more highly abstracted/portable interface which
+> > allows for different threading and synchronization primitives to be
+> > used.  Current implementation is tightly coupled to pthreads. 
+> > Furthermore, on platforms such as Solaris, I would hope it would easily
+> > allow for plugging in its native threading primitives which are touted
+> > to be much more efficient than pthreads on said platform.
+> 
+> Same as above. If there can be two cases separated with #ifdef, there can be 
+> more.. But what is important is to have a thread that can be woken up as and 
+> when required with any function desired. That is the basic idea.
+> 
+
+Again, there's a lot of work in creating a well formed abstraction layer
+for all of the mechanics that are required.  Furthermore, different
+thread implementations have slightly different semantics which further
+complicates things.  Worse, some types of primitives are simply not
+available with some thread implementations.  That means those platforms
+require it to be written from the primitives that are available on the
+platform.  Yet more work.
+
+
+> > o Code is fairly trivial and does not address other primitives
+> > (semaphores, mutexs, conditions, TSS, etc) portably which would be
+> > required for anything but the most trivial of threaded work.  This is
+> > especially true in such an application where data IS the application. 
+> > As such, you must reasonably assume that threads need some form of
+> > portable serialization primitives, not to mention mechanisms for
+> > non-trivial communication.
+> 
+> I don't get this. Probably I should post a working example. It is not threads 
+> responsibility to make a function thread safe which is changed on the fly. The 
+> function has to make sure that it is thread safe. That is altogether different 
+> effort..
+
+
+You're right, it's not the thread's responsibility, however, it is the
+threading toolkit's.  In this case, you're offering to be the toolkit
+which functions across two platforms, just for starters.  Reasonably,
+you should expect a third to quickly follow.
+
+>  
+> > o Does not address issues such as thread signaling or status reporting.
+> 
+> >From what I learnt from pthreads on linux, I would not mix threads and signals. 
+> One can easily add code in runner function that disables any signals for thread 
+> while the thread starts running. This would leave original signal handling 
+> mechanism in place.
+> 
+> As far as status reporting is concerned, the thread sould be initiated while 
+> back-end starts and terminated with backend termination. What is about status 
+> reporting?
+>  
+> > o Pool interface is rather simplistic.  Does not currently support
+> > concepts such as wake pool, stop pool, pool status, assigning a pool to
+> > work, etc.  In fact, it's not altogether obvious what the capabilities
+> > intent is of the current pool implementation.
+> 
+> Could you please elaborate? I am using same interface in c++ for a server 
+> application and never faced a problem like that..;-)
+> 
+>  
+> > o Doesn't seem to address any form of thread communication facilities
+> > (mailboxes, queues, etc).
+> 
+> Not part of this abstraction of threading mechanism. Intentionally left out to 
+> keep things clean.
+> 
+> > There are probably other things that I can find if I spend more than
+> > just a couple of minutes looking at the code.  Honestly, I love threads
+> > but I can see that the current code offering is not much more than a
+> > token in its current form.  No offense meant.
+> 
+> None taken. Point is it is useful and that is enough for me. If you could 
+> elaborate examples for any problems you see, I can probably modify it. (Code 
+> documentation is what I will do now)
+> 
+> > After it's all said and done, I'd have to see a lot more meat before I'd
+> > be convinced that threading is ready for PostgreSQL; from both a social
+> > and technological perspective.
+> 
+> Tell me about it..
+> 
+
+Long story short, if PostgreSQL is to use threads, it shouldn't be
+handicapped by having a very limited subset of functionality.  With the
+code that has been currently submitted, I don't believe you could even 
+effectively implement a parallel sort.
+
+To get an idea of the types of things that would be needed, check out
+the ACE Toolkit.  There are a couple of other fairly popular toolkits as
+well.  Nonetheless, it's a significant effort and the current code is a
+long ways off from being usable.
+
+
+-- 
+Greg Copeland <greg@copelandconsulting.net>
+Copeland Computer Consulting
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 5: Have you checked our extensive FAQ?
+
+http://www.postgresql.org/users-lounge/docs/faq.html
+
+From pgsql-hackers-owner+M33944@postgresql.org Tue Jan  7 13:22:04 2003
+Return-path: <pgsql-hackers-owner+M33944@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id h07IM2X05350
+	for <pgman@candle.pha.pa.us>; Tue, 7 Jan 2003 13:22:02 -0500 (EST)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP
+	id 544EF476AC1; Tue,  7 Jan 2003 13:22:05 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP
+	id 341134761E8; Tue,  7 Jan 2003 13:21:55 -0500 (EST)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP id 48974475ADE
+	for <pgsql-hackers@postgresql.org>; Tue,  7 Jan 2003 13:21:50 -0500 (EST)
+Received: from sabre.velocet.net (sabre.velocet.net [216.138.209.205])
+	by postgresql.org (Postfix) with ESMTP id B8D40475AD7
+	for <pgsql-hackers@postgresql.org>; Tue,  7 Jan 2003 13:21:49 -0500 (EST)
+Received: from stark.dyndns.tv (H162.C233.tor.velocet.net [216.138.233.162])
+	by sabre.velocet.net (Postfix) with ESMTP
+	id 887681382B9; Tue,  7 Jan 2003 13:21:48 -0500 (EST)
+Received: from localhost
+	([127.0.0.1] helo=stark.dyndns.tv ident=foobar)
+	by stark.dyndns.tv with smtp (Exim 3.36 #1 (Debian))
+	id 18VyMF-0002zN-00; Tue, 07 Jan 2003 13:21:47 -0500
+To: Greg Copeland <greg@CopelandConsulting.Net>
+cc: kar@kakidata.dk, PGHackers <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Threads
+References: <D90A5A6C612A39408103E6ECDD77B829408A20@voyager.corporate.connx.com>
+	<23763.1041644042@sss.pgh.pa.us>
+	<1041646276.15927.202.camel@mouse.copelandconsulting.net>
+	<200301041359.35715.kar@kakidata.dk>
+	<1041704480.15927.224.camel@mouse.copelandconsulting.net>
+In-Reply-To: <1041704480.15927.224.camel@mouse.copelandconsulting.net>
+From: Greg Stark <gsstark@mit.edu>
+Organization: The Emacs Conspiracy; member since 1992
+Date: 07 Jan 2003 13:21:47 -0500
+Message-ID: <87isx0izwk.fsf@stark.dyndns.tv>
+Lines: 43
+User-Agent: Gnus/5.09 (Gnus v5.9.0) Emacs/21.2
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+X-Virus-Scanned: by AMaViS new-20020517
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by AMaViS new-20020517
+Status: OR
+
+
+Greg Copeland <greg@CopelandConsulting.Net> writes:
+
+> That's the power of using the process model that is currently in use. Should
+> it do something naughty, we bitch and complain politely, throw our hands in
+> the air and exit. We no longer have to worry about the state and validity of
+> that backend.
+
+You missed the point of his post. If one process in your database does
+something nasty you damn well should worry about the state of and validity of
+the entire database, not just that one backend.
+
+Are you really sure you caught the problem before it screwed up the data in
+shared memory? On disk?
+
+
+This whole topic is in need of some serious FUD-dispelling and careful
+analysis. Here's a more calm explanation of the situation on this particular
+point. Perhaps I'll follow up with something on IO concurrency later.
+
+The point in consideration here is really memory isolation. Threads by default
+have zero isolation between threads. They can all access each other's memory
+even including their stack. Most of that memory is in fact only needed by a
+single thread. 
+
+Processes by default have complete memory isolation. However postgres actually
+weakens that by doing a lot of work in a shared memory pool. That memory gets
+exactly the same protection as it would get in a threaded model, which is to
+say none.
+
+So the reality is that if you have a bug most likely you've only corrupted the
+local data which can be easily cleaned up either way. In the thread model
+there's also the unlikely but scary risk that you've damaged other threads'
+memory. And in either case there's the possibility that you've damaged the
+shared pool which is unrecoverable.
+
+In theory minimising the one case of corrupting other threads' local data
+shouldn't make a big difference to the risk in the case of an assertion
+failure. I'm not sure in practice if that's true though. Processes probably
+reduce the temptation to do work in the shared area too.
+
+--
+greg
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 2: you can get off all lists at once with the unregister command
+    (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
+
+From pgsql-hackers-owner+M33945@postgresql.org Tue Jan  7 13:48:12 2003
+Return-path: <pgsql-hackers-owner+M33945@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id h07Im8X15155
+	for <pgman@candle.pha.pa.us>; Tue, 7 Jan 2003 13:48:08 -0500 (EST)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP
+	id BF0454773D3; Tue,  7 Jan 2003 13:43:10 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP
+	id 781634773A6; Tue,  7 Jan 2003 13:43:03 -0500 (EST)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP id 28074477390
+	for <pgsql-hackers@postgresql.org>; Tue,  7 Jan 2003 13:42:59 -0500 (EST)
+Received: from CopelandConsulting.Net (dsl-24293-ld.customer.centurytel.net [209.142.135.135])
+	by postgresql.org (Postfix) with ESMTP id 1392B476682
+	for <pgsql-hackers@postgresql.org>; Tue,  7 Jan 2003 13:42:42 -0500 (EST)
+Received: from [192.168.1.2] (mouse.copelandconsulting.net [192.168.1.2])
+	by CopelandConsulting.Net (8.10.1/8.10.1) with ESMTP id h07IgS715128;
+	Tue, 7 Jan 2003 12:42:28 -0600 (CST)
+X-Trade-Id: <CCC.Tue, 7 Jan 2003 12:42:28 -0600 (CST).Tue, 7 Jan 2003 12:42:28 -0600 (CST).200301071842.h07IgS715128.h07IgS715128@CopelandConsulting.Net.
+Subject: Re: [HACKERS] Threads
+From: Greg Copeland <greg@CopelandConsulting.Net>
+To: Greg Stark <gsstark@mit.edu>
+cc: kar@kakidata.dk, PGHackers <pgsql-hackers@postgresql.org>
+In-Reply-To: <87isx0izwk.fsf@stark.dyndns.tv>
+References:  <D90A5A6C612A39408103E6ECDD77B829408A20@voyager.corporate.connx.com>
+  <23763.1041644042@sss.pgh.pa.us>
+  <1041646276.15927.202.camel@mouse.copelandconsulting.net>
+  <200301041359.35715.kar@kakidata.dk>
+  <1041704480.15927.224.camel@mouse.copelandconsulting.net>
+  <87isx0izwk.fsf@stark.dyndns.tv>
+Content-Type: text/plain
+Organization: Copeland Computer Consulting
+Message-ID: <1041964952.29180.10.camel@mouse.copelandconsulting.net>
+MIME-Version: 1.0
+X-Mailer: Ximian Evolution 1.2.0 
+Date: 07 Jan 2003 12:42:33 -0600
+Content-Transfer-Encoding: 7bit
+X-Virus-Scanned: by AMaViS new-20020517
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by AMaViS new-20020517
+Status: OR
+
+On Tue, 2003-01-07 at 12:21, Greg Stark wrote:
+> Greg Copeland <greg@CopelandConsulting.Net> writes:
+> 
+> > That's the power of using the process model that is currently in use. Should
+> > it do something naughty, we bitch and complain politely, throw our hands in
+> > the air and exit. We no longer have to worry about the state and validity of
+> > that backend.
+> 
+> You missed the point of his post. If one process in your database does
+> something nasty you damn well should worry about the state of and validity of
+> the entire database, not just that one backend.
+> 
+
+I can assure you I did not miss the point.  No idea why you're
+continuing to spell it out.  In this case, it appears the quotation is
+being taken out of context or it was originally stated in an improper
+context.
+
+> Are you really sure you caught the problem before it screwed up the data in
+> shared memory? On disk?
+> 
+> 
+> This whole topic is in need of some serious FUD-dispelling and careful
+> analysis. Here's a more calm explanation of the situation on this particular
+> point. Perhaps I'll follow up with something on IO concurrency later.
+> 
+
+
+Hmmm.  Not sure what needs to be dispelled since I've not seen any FUD.
+
+
+> The point in consideration here is really memory isolation. Threads by default
+> have zero isolation between threads. They can all access each other's memory
+> even including their stack. Most of that memory is in fact only needed by a
+> single thread. 
+> 
+
+Again, this has been covered already.
+
+
+> Processes by default have complete memory isolation. However postgres actually
+> weakens that by doing a lot of work in a shared memory pool. That memory gets
+> exactly the same protection as it would get in a threaded model, which is to
+> say none.
+> 
+
+Again, this has all been covered, more or less.  You're comments seem to
+imply that you did not fully read what has been said on the topic thus
+far or that you misunderstood something that was said.  Of course, it's
+also possible that I may of said something out of it's proper context
+which may be confusing you.
+
+I think it's safe to say I don't have any further comment unless
+something new is being brought to the table.  Should there be something
+new to cover, I'm happy to talk about it.  At this point, however, it
+appears that it's been beat to death already.
+
+
+-- 
+Greg Copeland <greg@copelandconsulting.net>
+Copeland Computer Consulting
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 3: if posting/reading through Usenet, please send an appropriate
+subscribe-nomail command to majordomo@postgresql.org so that your
+message can get through to the mailing list cleanly
+
+From pgsql-hackers-owner+M33946@postgresql.org Tue Jan  7 14:02:33 2003
+Return-path: <pgsql-hackers-owner+M33946@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id h07J2TX22478
+	for <pgman@candle.pha.pa.us>; Tue, 7 Jan 2003 14:02:30 -0500 (EST)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP
+	id 6A905477204; Tue,  7 Jan 2003 14:02:32 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP
+	id 3546E476688; Tue,  7 Jan 2003 14:02:21 -0500 (EST)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP id E3CC44760BD
+	for <pgsql-hackers@postgresql.org>; Tue,  7 Jan 2003 14:02:14 -0500 (EST)
+Received: from sss.pgh.pa.us (unknown [192.204.191.242])
+	by postgresql.org (Postfix) with ESMTP id 3D8FA475AD7
+	for <pgsql-hackers@postgresql.org>; Tue,  7 Jan 2003 14:02:14 -0500 (EST)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.12.6/8.12.6) with ESMTP id h07J1s0U019750;
+	Tue, 7 Jan 2003 14:01:54 -0500 (EST)
+To: Greg Stark <gsstark@mit.edu>
+cc: Greg Copeland <greg@CopelandConsulting.Net>, kar@kakidata.dk,
+   PGHackers <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Threads 
+In-Reply-To: <87isx0izwk.fsf@stark.dyndns.tv> 
+References: <D90A5A6C612A39408103E6ECDD77B829408A20@voyager.corporate.connx.com> <23763.1041644042@sss.pgh.pa.us> <1041646276.15927.202.camel@mouse.copelandconsulting.net> <200301041359.35715.kar@kakidata.dk> <1041704480.15927.224.camel@mouse.copelandconsulting.net> <87isx0izwk.fsf@stark.dyndns.tv>
+Comments: In-reply-to Greg Stark <gsstark@mit.edu>
+	message dated "07 Jan 2003 13:21:47 -0500"
+Date: Tue, 07 Jan 2003 14:01:53 -0500
+Message-ID: <19749.1041966113@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+X-Virus-Scanned: by AMaViS new-20020517
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by AMaViS new-20020517
+Status: OR
+
+Greg Stark <gsstark@mit.edu> writes:
+> You missed the point of his post. If one process in your database does
+> something nasty you damn well should worry about the state of and validity of
+> the entire database, not just that one backend.
+
+Right.  And in fact we do blow away all the processes when any one of
+them crashes or panics.  Nonetheless, memory isolation between processes
+is a Good Thing, because it reduces the chances that a process gone
+wrong will cause damage via other processes before they can be shut
+down.
+
+Here is a simple example of a scenario where that isolation buys us
+something: suppose that we have a bug that tromps on memory starting at
+some point X until it falls off the sbrk boundary and dumps core.
+(There are plenty of ways to make that happen, such as miscalculating
+the length of a memcpy or memset operation as -1.)  Such a bug causes
+no serious damage in isolation, because the process suffering the
+failure will be in a tight data-copying or data-zeroing loop until it
+gets the SIGSEGV exception.  It won't do anything bad based on all the
+data structures it has clobbered during its march to the end of memory.
+
+However, put that same bug in a multithreading context, and it becomes
+entirely possible that some other thread will be dispatched and will
+try to make use of already-clobbered data structures before the ultimate
+SIGSEGV exception happens.  Now you have the potential for unlimited
+trouble.
+
+In general, isolation buys you some safety anytime there is a delay
+between the occurrence of a failure and its detection.
+
+> Processes by default have complete memory isolation. However postgres
+> actually weakens that by doing a lot of work in a shared memory
+> pool. That memory gets exactly the same protection as it would get in
+> a threaded model, which is to say none.
+
+Yes.  We try to minimize the risk by keeping the shared memory pool
+relatively small and not doing more than we have to in it.  (For
+example, this was one of the arguments against creating a shared plan
+cache.)  It's also very helpful that in most platforms, shared memory
+is not address-wise contiguous to normal memory; thus for example a
+process caught in a memset death march will hit a SIGSEGV before it
+gets to the shared memory block.
+
+It's interesting to note that this can be made into an argument for
+not making shared_buffers very large: the larger the fraction of your
+address space that the shared buffers occupy, the larger the chance
+that a wild store will overwrite something you'd wish it didn't.
+I can't recall anyone having made that point during our many discussions
+of appropriate shared_buffer sizing.
+
+> So the reality is that if you have a bug most likely you've only corrupted the
+> local data which can be easily cleaned up either way. In the thread model
+> there's also the unlikely but scary risk that you've damaged other threads'
+> memory. And in either case there's the possibility that you've damaged the
+> shared pool which is unrecoverable.
+
+In a thread model, *most* of the accessible memory space would be shared
+with other threads, at least potentially.  So I think you're wrong to
+categorize the second case as unlikely.
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 6: Have you searched our list archives?
+
+http://archives.postgresql.org
+
