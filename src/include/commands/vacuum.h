@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: vacuum.h,v 1.30 2000/05/29 17:06:15 momjian Exp $
+ * $Id: vacuum.h,v 1.31 2000/05/29 17:40:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -133,6 +133,7 @@ extern bool VacuumRunning;
 
 extern void vc_abort(void);
 extern void vacuum(char *vacrel, bool verbose, bool analyze, List *anal_cols);
+extern void analyze_rel(Oid relid, List *anal_cols2, int MESSAGE_LEVEL);
 
 #define ATTNVALS_SCALE	1000000000		/* XXX so it can act as a float4 */
 

@@ -1,4 +1,6 @@
 :
+# report which files have extra includes
+
 trap "rm -f /tmp/$$.c /tmp/$$.o /tmp/$$ /tmp/$$a /tmp/$$b" 0 1 2 3 15
 find . \( -name CVS -a -prune \) -o -type f -print | 
 grep -v '\./postgres.h' |
