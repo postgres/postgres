@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq.h,v 1.1 1996/08/28 07:23:01 scrappy Exp $
+ * $Id: libpq.h,v 1.2 1996/10/20 21:51:45 scrappy Exp $
  *
  * NOTES
  *    This file contains definitions for structures and
@@ -18,21 +18,6 @@
  */
 #ifndef LIBPQ_H
 #define LIBPQ_H
-
-#include <stdio.h>
-#include <string.h>
-#include <sys/types.h>
-#ifdef WIN32
-#include <winsock.h>
-#else
-#include <netinet/in.h>
-#endif /* WIN32 */
-
-#include "lib/dllist.h"
-#include "utils/exc.h"
-#include "postgres.h"
-
-#include "libpq/pqcomm.h"
 
 /* ----------------
  * PQArgBlock --
