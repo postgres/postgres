@@ -3,7 +3,7 @@
  * 1996-06-05 by Arthur David Olson (arthur_david_olson@nih.gov).
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/localtime.c,v 1.8 2004/08/29 05:07:02 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/localtime.c,v 1.9 2004/11/01 21:34:44 tgl Exp $
  */
 
 /*
@@ -1059,6 +1059,100 @@ timesub(const pg_time_t *timep, const long offset,
 	tmp->tm_gmtoff = offset;
 }
 
+/*
+ * Find the next DST transition time at or after the given time
+ *
+ * *timep is the input value, the other parameters are output values.
+ *
+ * When the function result is 1, *boundary is set to the time_t
+ * representation of the next DST transition time at or after *timep,
+ * *before_gmtoff and *before_isdst are set to the GMT offset and isdst
+ * state prevailing just before that boundary, and *after_gmtoff and
+ * *after_isdst are set to the state prevailing just after that boundary.
+ *
+ * When the function result is 0, there is no known DST transition at or
+ * after *timep, but *before_gmtoff and *before_isdst indicate the GMT
+ * offset and isdst state prevailing at *timep.  (This would occur in
+ * DST-less time zones, for example.)
+ *
+ * A function result of -1 indicates failure (this case does not actually
+ * occur in our current implementation).
+ */
+int
+pg_next_dst_boundary(const pg_time_t *timep,
+					 long int *before_gmtoff,
+					 int *before_isdst,
+					 pg_time_t *boundary,
+					 long int *after_gmtoff,
+					 int *after_isdst)
+{
+	register struct state *sp;
+	register const struct ttinfo *ttisp;
+	int i;
+	int j;
+	const pg_time_t t = *timep;
+
+	sp = lclptr;
+	if (sp->timecnt == 0)
+	{
+		/* non-DST zone, use lowest-numbered standard type */
+		i = 0;
+		while (sp->ttis[i].tt_isdst)
+			if (++i >= sp->typecnt)
+			{
+				i = 0;
+				break;
+			}
+		ttisp = &sp->ttis[i];
+		*before_gmtoff = ttisp->tt_gmtoff;
+		*before_isdst = ttisp->tt_isdst;
+		return 0;
+	}
+	if (t > sp->ats[sp->timecnt - 1])
+	{
+		/* No known transition >= t, so use last known segment's type */
+		i = sp->types[sp->timecnt - 1];
+		ttisp = &sp->ttis[i];
+		*before_gmtoff = ttisp->tt_gmtoff;
+		*before_isdst = ttisp->tt_isdst;
+		return 0;
+	}
+	if (t <= sp->ats[0])
+	{
+		/* For "before", use lowest-numbered standard type */
+		i = 0;
+		while (sp->ttis[i].tt_isdst)
+			if (++i >= sp->typecnt)
+			{
+				i = 0;
+				break;
+			}
+		ttisp = &sp->ttis[i];
+		*before_gmtoff = ttisp->tt_gmtoff;
+		*before_isdst = ttisp->tt_isdst;
+		*boundary = sp->ats[0];
+		/* And for "after", use the first segment's type */
+		i = sp->types[0];
+		ttisp = &sp->ttis[i];
+		*after_gmtoff = ttisp->tt_gmtoff;
+		*after_isdst = ttisp->tt_isdst;
+		return 1;
+	}
+	/* Else search to find the containing segment */
+	for (i = 1; i < sp->timecnt; ++i)
+		if (t <= sp->ats[i])
+			break;
+	j = sp->types[i - 1];
+	ttisp = &sp->ttis[j];
+	*before_gmtoff = ttisp->tt_gmtoff;
+	*before_isdst = ttisp->tt_isdst;
+	*boundary = sp->ats[i];
+	j = sp->types[i];
+	ttisp = &sp->ttis[j];
+	*after_gmtoff = ttisp->tt_gmtoff;
+	*after_isdst = ttisp->tt_isdst;
+	return 1;
+}
 
 /*
  * Return the name of the current timezone

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.134 2004/08/30 02:54:39 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.135 2004/11/01 21:34:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1576,24 +1576,25 @@ DecodeDateTime(char **field, int *ftype, int nf,
  * tm_isdst field accordingly, and return the actual timezone offset.
  *
  * Note: it might seem that we should use mktime() for this, but bitter
- * experience teaches otherwise.  In particular, mktime() is generally
- * incapable of coping reasonably with "impossible" times within a
- * spring-forward DST transition.  Typical implementations of mktime()
- * turn out to be loops around localtime() anyway, so they're not even
- * any faster than this code.
+ * experience teaches otherwise.  This code is much faster than most versions
+ * of mktime(), anyway.
  */
 int
 DetermineLocalTimeZone(struct pg_tm * tm)
 {
-	int			tz;
-	int date   ,
+	int			date,
 				sec;
 	pg_time_t	day,
-				mysec,
-				locsec,
-				delta1,
-				delta2;
-	struct pg_tm *tx;
+				mytime,
+				prevtime,
+				boundary,
+				beforetime,
+				aftertime;
+	long int	before_gmtoff,
+				after_gmtoff;
+	int			before_isdst,
+				after_isdst;
+	int			res;
 
 	if (HasCTZSet)
 	{
@@ -1615,82 +1616,71 @@ DetermineLocalTimeZone(struct pg_tm * tm)
 	if (day / 86400 != date)
 		goto overflow;
 	sec = tm->tm_sec + (tm->tm_min + tm->tm_hour * 60) * 60;
-	mysec = day + sec;
-	/* since sec >= 0, overflow could only be from +day to -mysec */
-	if (mysec < 0 && day > 0)
+	mytime = day + sec;
+	/* since sec >= 0, overflow could only be from +day to -mytime */
+	if (mytime < 0 && day > 0)
 		goto overflow;
 
 	/*
-	 * Use pg_localtime to convert that pg_time_t to broken-down time, and
-	 * reassemble to get a representation of local time.  (We could get
-	 * overflow of a few hours in the result, but the delta calculation
-	 * should still work.)
+	 * Find the DST time boundary just before or following the target time.
+	 * We assume that all zones have GMT offsets less than 24 hours, and
+	 * that DST boundaries can't be closer together than 48 hours, so
+	 * backing up 24 hours and finding the "next" boundary will work.
 	 */
-	tx = pg_localtime(&mysec);
-	if (!tx)
-		goto overflow;			/* probably can't happen */
-	day = date2j(tx->tm_year + 1900, tx->tm_mon + 1, tx->tm_mday) -
-		UNIX_EPOCH_JDATE;
-	locsec = tx->tm_sec + (tx->tm_min + (day * 24 + tx->tm_hour) * 60) * 60;
-
-	/*
-	 * The local time offset corresponding to that GMT time is now
-	 * computable as mysec - locsec.
-	 */
-	delta1 = mysec - locsec;
-
-	/*
-	 * However, if that GMT time and the local time we are actually
-	 * interested in are on opposite sides of a daylight-savings-time
-	 * transition, then this is not the time offset we want.  So, adjust
-	 * the pg_time_t to be what we think the GMT time corresponding to our
-	 * target local time is, and repeat the pg_localtime() call and delta
-	 * calculation.
-	 *
-	 * We have to watch out for overflow while adjusting the pg_time_t.
-	 */
-	if ((delta1 < 0) ? (mysec < 0 && (mysec + delta1) > 0) :
-		(mysec > 0 && (mysec + delta1) < 0))
+	prevtime = mytime - (24 * 60 * 60);
+	if (mytime < 0 && prevtime > 0)
 		goto overflow;
-	mysec += delta1;
-	tx = pg_localtime(&mysec);
-	if (!tx)
-		goto overflow;			/* probably can't happen */
-	day = date2j(tx->tm_year + 1900, tx->tm_mon + 1, tx->tm_mday) -
-		UNIX_EPOCH_JDATE;
-	locsec = tx->tm_sec + (tx->tm_min + (day * 24 + tx->tm_hour) * 60) * 60;
-	delta2 = mysec - locsec;
 
-	/*
-	 * We may have to do it again to get the correct delta.
-	 *
-	 * It might seem we should just loop until we get the same delta twice in
-	 * a row, but if we've been given an "impossible" local time (in the
-	 * gap during a spring-forward transition) we'd never get out of the
-	 * loop.  The behavior we want is that "impossible" times are taken as
-	 * standard time, and also that ambiguous times (during a fall-back
-	 * transition) are taken as standard time. Therefore, we bias the code
-	 * to prefer the standard-time solution.
-	 */
-	if (delta2 != delta1 && tx->tm_isdst != 0)
+	res = pg_next_dst_boundary(&prevtime,
+							   &before_gmtoff, &before_isdst,
+							   &boundary,
+							   &after_gmtoff, &after_isdst);
+	if (res < 0)
+		goto overflow;			/* failure? */
+
+	if (res == 0)
 	{
-		delta2 -= delta1;
-		if ((delta2 < 0) ? (mysec < 0 && (mysec + delta2) > 0) :
-			(mysec > 0 && (mysec + delta2) < 0))
-			goto overflow;
-		mysec += delta2;
-		tx = pg_localtime(&mysec);
-		if (!tx)
-			goto overflow;		/* probably can't happen */
-		day = date2j(tx->tm_year + 1900, tx->tm_mon + 1, tx->tm_mday) -
-			UNIX_EPOCH_JDATE;
-		locsec = tx->tm_sec + (tx->tm_min + (day * 24 + tx->tm_hour) * 60) * 60;
-		delta2 = mysec - locsec;
+		/* Non-DST zone, life is simple */
+		tm->tm_isdst = before_isdst;
+		return - (int) before_gmtoff;
 	}
-	tm->tm_isdst = tx->tm_isdst;
-	tz = (int) delta2;
 
-	return tz;
+	/*
+	 * Form the candidate pg_time_t values with local-time adjustment
+	 */
+	beforetime = mytime - before_gmtoff;
+	if ((before_gmtoff > 0) ? (mytime < 0 && beforetime > 0) :
+		(mytime > 0 && beforetime < 0))
+		goto overflow;
+	aftertime = mytime - after_gmtoff;
+	if ((after_gmtoff > 0) ? (mytime < 0 && aftertime > 0) :
+		(mytime > 0 && aftertime < 0))
+		goto overflow;
+
+	/*
+	 * If both before or both after the boundary time, we know what to do
+	 */
+	if (beforetime <= boundary && aftertime < boundary)
+	{
+		tm->tm_isdst = before_isdst;
+		return - (int) before_gmtoff;
+	}
+	if (beforetime > boundary && aftertime >= boundary)
+	{
+		tm->tm_isdst = after_isdst;
+		return - (int) after_gmtoff;
+	}
+	/*
+	 * It's an invalid or ambiguous time due to timezone transition.
+	 * Prefer the standard-time interpretation.
+	 */
+	if (after_isdst == 0)
+	{
+		tm->tm_isdst = after_isdst;
+		return - (int) after_gmtoff;
+	}
+	tm->tm_isdst = before_isdst;
+	return - (int) before_gmtoff;
 
 overflow:
 	/* Given date is out of range, so assume UTC */

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/include/pgtime.h,v 1.4 2004/08/29 05:06:55 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/include/pgtime.h,v 1.5 2004/11/01 21:34:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,12 +37,19 @@ struct pg_tm
 	const char *tm_zone;
 };
 
-extern struct pg_tm *pg_localtime(const pg_time_t *);
-extern struct pg_tm *pg_gmtime(const pg_time_t *);
-extern bool pg_tzset(const char *tzname);
+extern struct pg_tm *pg_localtime(const pg_time_t *timep);
+extern struct pg_tm *pg_gmtime(const pg_time_t *timep);
+extern int	pg_next_dst_boundary(const pg_time_t *timep,
+								 long int *before_gmtoff,
+								 int *before_isdst,
+								 pg_time_t *boundary,
+								 long int *after_gmtoff,
+								 int *after_isdst);
 extern size_t pg_strftime(char *s, size_t max, const char *format,
 			const struct pg_tm * tm);
+
 extern void pg_timezone_initialize(void);
+extern bool pg_tzset(const char *tzname);
 extern bool tz_acceptable(void);
 extern const char *select_default_timezone(void);
 extern const char *pg_get_current_timezone(void);
