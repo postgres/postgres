@@ -3,7 +3,7 @@
 -- * Trigger procedures and functions for the patchfield
 -- * test of PL/pgSQL
 -- * 
--- * $Header: /cvsroot/pgsql/src/pl/plpgsql/test/Attic/triggers.sql,v 1.1 1998/08/24 19:16:27 momjian Exp $
+-- * $Header: /cvsroot/pgsql/src/pl/plpgsql/test/Attic/triggers.sql,v 1.2 2000/10/22 23:25:11 tgl Exp $
 -- * 
 -- ************************************************************
 
@@ -603,7 +603,7 @@ begin
     if mytype = ''PS'' then
         select into rec * from PSlot where slotname = myname;
 	if not found then
-	    raise exception ''% does not exists'', myname;
+	    raise exception ''% does not exist'', myname;
 	end if;
 	if rec.backlink != blname then
 	    update PSlot set backlink = blname where slotname = myname;
@@ -613,7 +613,7 @@ begin
     if mytype = ''WS'' then
         select into rec * from WSlot where slotname = myname;
 	if not found then
-	    raise exception ''% does not exists'', myname;
+	    raise exception ''% does not exist'', myname;
 	end if;
 	if rec.backlink != blname then
 	    update WSlot set backlink = blname where slotname = myname;
@@ -623,7 +623,7 @@ begin
     if mytype = ''PL'' then
         select into rec * from PLine where slotname = myname;
 	if not found then
-	    raise exception ''% does not exists'', myname;
+	    raise exception ''% does not exist'', myname;
 	end if;
 	if rec.backlink != blname then
 	    update PLine set backlink = blname where slotname = myname;
@@ -771,7 +771,7 @@ begin
     if mytype = ''PS'' then
         select into rec * from PSlot where slotname = myname;
 	if not found then
-	    raise exception ''% does not exists'', myname;
+	    raise exception ''% does not exist'', myname;
 	end if;
 	if rec.slotlink != blname then
 	    update PSlot set slotlink = blname where slotname = myname;
@@ -781,7 +781,7 @@ begin
     if mytype = ''WS'' then
         select into rec * from WSlot where slotname = myname;
 	if not found then
-	    raise exception ''% does not exists'', myname;
+	    raise exception ''% does not exist'', myname;
 	end if;
 	if rec.slotlink != blname then
 	    update WSlot set slotlink = blname where slotname = myname;
@@ -791,7 +791,7 @@ begin
     if mytype = ''IF'' then
         select into rec * from IFace where slotname = myname;
 	if not found then
-	    raise exception ''% does not exists'', myname;
+	    raise exception ''% does not exist'', myname;
 	end if;
 	if rec.slotlink != blname then
 	    update IFace set slotlink = blname where slotname = myname;
@@ -801,7 +801,7 @@ begin
     if mytype = ''HS'' then
         select into rec * from HSlot where slotname = myname;
 	if not found then
-	    raise exception ''% does not exists'', myname;
+	    raise exception ''% does not exist'', myname;
 	end if;
 	if rec.slotlink != blname then
 	    update HSlot set slotlink = blname where slotname = myname;
@@ -811,7 +811,7 @@ begin
     if mytype = ''PH'' then
         select into rec * from PHone where slotname = myname;
 	if not found then
-	    raise exception ''% does not exists'', myname;
+	    raise exception ''% does not exist'', myname;
 	end if;
 	if rec.slotlink != blname then
 	    update PHone set slotlink = blname where slotname = myname;

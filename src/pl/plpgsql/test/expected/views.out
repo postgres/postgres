@@ -1,4 +1,4 @@
-QUERY: create function pslot_backlink_view(bpchar)
+create function pslot_backlink_view(bpchar)
 returns text as '
 <<outer>>
 declare
@@ -38,7 +38,7 @@ begin
     return rec.backlink;
 end;
 ' language 'plpgsql';
-QUERY: create function pslot_slotlink_view(bpchar)
+create function pslot_slotlink_view(bpchar)
 returns text as '
 declare
     psrec	record;
@@ -69,7 +69,7 @@ begin
     return psrec.slotlink;
 end;
 ' language 'plpgsql';
-QUERY: create function wslot_slotlink_view(bpchar)
+create function wslot_slotlink_view(bpchar)
 returns text as '
 declare
     rec		record;
@@ -114,7 +114,7 @@ begin
     return rec.slotlink;
 end;
 ' language 'plpgsql';
-QUERY: create view Pfield_v1 as select PF.pfname, PF.slotname,
+create view Pfield_v1 as select PF.pfname, PF.slotname,
 	pslot_backlink_view(PF.slotname) as backside,
 	pslot_slotlink_view(PF.slotname) as patch
     from PSlot PF;

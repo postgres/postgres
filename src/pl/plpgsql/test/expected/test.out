@@ -1,473 +1,473 @@
-QUERY: insert into Room values ('001', 'Entrance');
-QUERY: insert into Room values ('002', 'Office');
-QUERY: insert into Room values ('003', 'Office');
-QUERY: insert into Room values ('004', 'Technical');
-QUERY: insert into Room values ('101', 'Office');
-QUERY: insert into Room values ('102', 'Conference');
-QUERY: insert into Room values ('103', 'Restroom');
-QUERY: insert into Room values ('104', 'Technical');
-QUERY: insert into Room values ('105', 'Office');
-QUERY: insert into Room values ('106', 'Office');
-QUERY: insert into WSlot values ('WS.001.1a', '001', '', '');
-QUERY: insert into WSlot values ('WS.001.1b', '001', '', '');
-QUERY: insert into WSlot values ('WS.001.2a', '001', '', '');
-QUERY: insert into WSlot values ('WS.001.2b', '001', '', '');
-QUERY: insert into WSlot values ('WS.001.3a', '001', '', '');
-QUERY: insert into WSlot values ('WS.001.3b', '001', '', '');
-QUERY: insert into WSlot values ('WS.002.1a', '002', '', '');
-QUERY: insert into WSlot values ('WS.002.1b', '002', '', '');
-QUERY: insert into WSlot values ('WS.002.2a', '002', '', '');
-QUERY: insert into WSlot values ('WS.002.2b', '002', '', '');
-QUERY: insert into WSlot values ('WS.002.3a', '002', '', '');
-QUERY: insert into WSlot values ('WS.002.3b', '002', '', '');
-QUERY: insert into WSlot values ('WS.003.1a', '003', '', '');
-QUERY: insert into WSlot values ('WS.003.1b', '003', '', '');
-QUERY: insert into WSlot values ('WS.003.2a', '003', '', '');
-QUERY: insert into WSlot values ('WS.003.2b', '003', '', '');
-QUERY: insert into WSlot values ('WS.003.3a', '003', '', '');
-QUERY: insert into WSlot values ('WS.003.3b', '003', '', '');
-QUERY: insert into WSlot values ('WS.101.1a', '101', '', '');
-QUERY: insert into WSlot values ('WS.101.1b', '101', '', '');
-QUERY: insert into WSlot values ('WS.101.2a', '101', '', '');
-QUERY: insert into WSlot values ('WS.101.2b', '101', '', '');
-QUERY: insert into WSlot values ('WS.101.3a', '101', '', '');
-QUERY: insert into WSlot values ('WS.101.3b', '101', '', '');
-QUERY: insert into WSlot values ('WS.102.1a', '102', '', '');
-QUERY: insert into WSlot values ('WS.102.1b', '102', '', '');
-QUERY: insert into WSlot values ('WS.102.2a', '102', '', '');
-QUERY: insert into WSlot values ('WS.102.2b', '102', '', '');
-QUERY: insert into WSlot values ('WS.102.3a', '102', '', '');
-QUERY: insert into WSlot values ('WS.102.3b', '102', '', '');
-QUERY: insert into WSlot values ('WS.105.1a', '105', '', '');
-QUERY: insert into WSlot values ('WS.105.1b', '105', '', '');
-QUERY: insert into WSlot values ('WS.105.2a', '105', '', '');
-QUERY: insert into WSlot values ('WS.105.2b', '105', '', '');
-QUERY: insert into WSlot values ('WS.105.3a', '105', '', '');
-QUERY: insert into WSlot values ('WS.105.3b', '105', '', '');
-QUERY: insert into WSlot values ('WS.106.1a', '106', '', '');
-QUERY: insert into WSlot values ('WS.106.1b', '106', '', '');
-QUERY: insert into WSlot values ('WS.106.2a', '106', '', '');
-QUERY: insert into WSlot values ('WS.106.2b', '106', '', '');
-QUERY: insert into WSlot values ('WS.106.3a', '106', '', '');
-QUERY: insert into WSlot values ('WS.106.3b', '106', '', '');
-QUERY: insert into PField values ('PF0_1', 'Wallslots basement');
-QUERY: insert into PSlot values ('PS.base.a1', 'PF0_1', '', '');
-QUERY: insert into PSlot values ('PS.base.a2', 'PF0_1', '', '');
-QUERY: insert into PSlot values ('PS.base.a3', 'PF0_1', '', '');
-QUERY: insert into PSlot values ('PS.base.a4', 'PF0_1', '', '');
-QUERY: insert into PSlot values ('PS.base.a5', 'PF0_1', '', '');
-QUERY: insert into PSlot values ('PS.base.a6', 'PF0_1', '', '');
-QUERY: insert into PSlot values ('PS.base.b1', 'PF0_1', '', 'WS.002.1a');
-QUERY: insert into PSlot values ('PS.base.b2', 'PF0_1', '', 'WS.002.1b');
-QUERY: insert into PSlot values ('PS.base.b3', 'PF0_1', '', 'WS.002.2a');
-QUERY: insert into PSlot values ('PS.base.b4', 'PF0_1', '', 'WS.002.2b');
-QUERY: insert into PSlot values ('PS.base.b5', 'PF0_1', '', 'WS.002.3a');
-QUERY: insert into PSlot values ('PS.base.b6', 'PF0_1', '', 'WS.002.3b');
-QUERY: insert into PSlot values ('PS.base.c1', 'PF0_1', '', 'WS.003.1a');
-QUERY: insert into PSlot values ('PS.base.c2', 'PF0_1', '', 'WS.003.1b');
-QUERY: insert into PSlot values ('PS.base.c3', 'PF0_1', '', 'WS.003.2a');
-QUERY: insert into PSlot values ('PS.base.c4', 'PF0_1', '', 'WS.003.2b');
-QUERY: insert into PSlot values ('PS.base.c5', 'PF0_1', '', 'WS.003.3a');
-QUERY: insert into PSlot values ('PS.base.c6', 'PF0_1', '', 'WS.003.3b');
-QUERY: insert into PField values ('PF0_X', 'Phonelines basement');
-QUERY: insert into PSlot values ('PS.base.ta1', 'PF0_X', '', '');
-QUERY: insert into PSlot values ('PS.base.ta2', 'PF0_X', '', '');
-QUERY: insert into PSlot values ('PS.base.ta3', 'PF0_X', '', '');
-QUERY: insert into PSlot values ('PS.base.ta4', 'PF0_X', '', '');
-QUERY: insert into PSlot values ('PS.base.ta5', 'PF0_X', '', '');
-QUERY: insert into PSlot values ('PS.base.ta6', 'PF0_X', '', '');
-QUERY: insert into PSlot values ('PS.base.tb1', 'PF0_X', '', '');
-QUERY: insert into PSlot values ('PS.base.tb2', 'PF0_X', '', '');
-QUERY: insert into PSlot values ('PS.base.tb3', 'PF0_X', '', '');
-QUERY: insert into PSlot values ('PS.base.tb4', 'PF0_X', '', '');
-QUERY: insert into PSlot values ('PS.base.tb5', 'PF0_X', '', '');
-QUERY: insert into PSlot values ('PS.base.tb6', 'PF0_X', '', '');
-QUERY: insert into PField values ('PF1_1', 'Wallslots 1st floor');
-QUERY: insert into PSlot values ('PS.1st.a1', 'PF1_1', '', 'WS.101.1a');
-QUERY: insert into PSlot values ('PS.1st.a2', 'PF1_1', '', 'WS.101.1b');
-QUERY: insert into PSlot values ('PS.1st.a3', 'PF1_1', '', 'WS.101.2a');
-QUERY: insert into PSlot values ('PS.1st.a4', 'PF1_1', '', 'WS.101.2b');
-QUERY: insert into PSlot values ('PS.1st.a5', 'PF1_1', '', 'WS.101.3a');
-QUERY: insert into PSlot values ('PS.1st.a6', 'PF1_1', '', 'WS.101.3b');
-QUERY: insert into PSlot values ('PS.1st.b1', 'PF1_1', '', 'WS.102.1a');
-QUERY: insert into PSlot values ('PS.1st.b2', 'PF1_1', '', 'WS.102.1b');
-QUERY: insert into PSlot values ('PS.1st.b3', 'PF1_1', '', 'WS.102.2a');
-QUERY: insert into PSlot values ('PS.1st.b4', 'PF1_1', '', 'WS.102.2b');
-QUERY: insert into PSlot values ('PS.1st.b5', 'PF1_1', '', 'WS.102.3a');
-QUERY: insert into PSlot values ('PS.1st.b6', 'PF1_1', '', 'WS.102.3b');
-QUERY: insert into PSlot values ('PS.1st.c1', 'PF1_1', '', 'WS.105.1a');
-QUERY: insert into PSlot values ('PS.1st.c2', 'PF1_1', '', 'WS.105.1b');
-QUERY: insert into PSlot values ('PS.1st.c3', 'PF1_1', '', 'WS.105.2a');
-QUERY: insert into PSlot values ('PS.1st.c4', 'PF1_1', '', 'WS.105.2b');
-QUERY: insert into PSlot values ('PS.1st.c5', 'PF1_1', '', 'WS.105.3a');
-QUERY: insert into PSlot values ('PS.1st.c6', 'PF1_1', '', 'WS.105.3b');
-QUERY: insert into PSlot values ('PS.1st.d1', 'PF1_1', '', 'WS.106.1a');
-QUERY: insert into PSlot values ('PS.1st.d2', 'PF1_1', '', 'WS.106.1b');
-QUERY: insert into PSlot values ('PS.1st.d3', 'PF1_1', '', 'WS.106.2a');
-QUERY: insert into PSlot values ('PS.1st.d4', 'PF1_1', '', 'WS.106.2b');
-QUERY: insert into PSlot values ('PS.1st.d5', 'PF1_1', '', 'WS.106.3a');
-QUERY: insert into PSlot values ('PS.1st.d6', 'PF1_1', '', 'WS.106.3b');
-QUERY: update PSlot set backlink = 'WS.001.1a' where slotname = 'PS.base.a1';
-QUERY: update PSlot set backlink = 'WS.001.1b' where slotname = 'PS.base.a3';
-QUERY: select * from WSlot where roomno = '001' order by slotname;
-slotname            |  roomno|            slotlink|backlink            
---------------------+--------+--------------------+--------------------
-WS.001.1a           |001     |                    |PS.base.a1          
-WS.001.1b           |001     |                    |PS.base.a3          
-WS.001.2a           |001     |                    |                    
-WS.001.2b           |001     |                    |                    
-WS.001.3a           |001     |                    |                    
-WS.001.3b           |001     |                    |                    
+insert into Room values ('001', 'Entrance');
+insert into Room values ('002', 'Office');
+insert into Room values ('003', 'Office');
+insert into Room values ('004', 'Technical');
+insert into Room values ('101', 'Office');
+insert into Room values ('102', 'Conference');
+insert into Room values ('103', 'Restroom');
+insert into Room values ('104', 'Technical');
+insert into Room values ('105', 'Office');
+insert into Room values ('106', 'Office');
+insert into WSlot values ('WS.001.1a', '001', '', '');
+insert into WSlot values ('WS.001.1b', '001', '', '');
+insert into WSlot values ('WS.001.2a', '001', '', '');
+insert into WSlot values ('WS.001.2b', '001', '', '');
+insert into WSlot values ('WS.001.3a', '001', '', '');
+insert into WSlot values ('WS.001.3b', '001', '', '');
+insert into WSlot values ('WS.002.1a', '002', '', '');
+insert into WSlot values ('WS.002.1b', '002', '', '');
+insert into WSlot values ('WS.002.2a', '002', '', '');
+insert into WSlot values ('WS.002.2b', '002', '', '');
+insert into WSlot values ('WS.002.3a', '002', '', '');
+insert into WSlot values ('WS.002.3b', '002', '', '');
+insert into WSlot values ('WS.003.1a', '003', '', '');
+insert into WSlot values ('WS.003.1b', '003', '', '');
+insert into WSlot values ('WS.003.2a', '003', '', '');
+insert into WSlot values ('WS.003.2b', '003', '', '');
+insert into WSlot values ('WS.003.3a', '003', '', '');
+insert into WSlot values ('WS.003.3b', '003', '', '');
+insert into WSlot values ('WS.101.1a', '101', '', '');
+insert into WSlot values ('WS.101.1b', '101', '', '');
+insert into WSlot values ('WS.101.2a', '101', '', '');
+insert into WSlot values ('WS.101.2b', '101', '', '');
+insert into WSlot values ('WS.101.3a', '101', '', '');
+insert into WSlot values ('WS.101.3b', '101', '', '');
+insert into WSlot values ('WS.102.1a', '102', '', '');
+insert into WSlot values ('WS.102.1b', '102', '', '');
+insert into WSlot values ('WS.102.2a', '102', '', '');
+insert into WSlot values ('WS.102.2b', '102', '', '');
+insert into WSlot values ('WS.102.3a', '102', '', '');
+insert into WSlot values ('WS.102.3b', '102', '', '');
+insert into WSlot values ('WS.105.1a', '105', '', '');
+insert into WSlot values ('WS.105.1b', '105', '', '');
+insert into WSlot values ('WS.105.2a', '105', '', '');
+insert into WSlot values ('WS.105.2b', '105', '', '');
+insert into WSlot values ('WS.105.3a', '105', '', '');
+insert into WSlot values ('WS.105.3b', '105', '', '');
+insert into WSlot values ('WS.106.1a', '106', '', '');
+insert into WSlot values ('WS.106.1b', '106', '', '');
+insert into WSlot values ('WS.106.2a', '106', '', '');
+insert into WSlot values ('WS.106.2b', '106', '', '');
+insert into WSlot values ('WS.106.3a', '106', '', '');
+insert into WSlot values ('WS.106.3b', '106', '', '');
+insert into PField values ('PF0_1', 'Wallslots basement');
+insert into PSlot values ('PS.base.a1', 'PF0_1', '', '');
+insert into PSlot values ('PS.base.a2', 'PF0_1', '', '');
+insert into PSlot values ('PS.base.a3', 'PF0_1', '', '');
+insert into PSlot values ('PS.base.a4', 'PF0_1', '', '');
+insert into PSlot values ('PS.base.a5', 'PF0_1', '', '');
+insert into PSlot values ('PS.base.a6', 'PF0_1', '', '');
+insert into PSlot values ('PS.base.b1', 'PF0_1', '', 'WS.002.1a');
+insert into PSlot values ('PS.base.b2', 'PF0_1', '', 'WS.002.1b');
+insert into PSlot values ('PS.base.b3', 'PF0_1', '', 'WS.002.2a');
+insert into PSlot values ('PS.base.b4', 'PF0_1', '', 'WS.002.2b');
+insert into PSlot values ('PS.base.b5', 'PF0_1', '', 'WS.002.3a');
+insert into PSlot values ('PS.base.b6', 'PF0_1', '', 'WS.002.3b');
+insert into PSlot values ('PS.base.c1', 'PF0_1', '', 'WS.003.1a');
+insert into PSlot values ('PS.base.c2', 'PF0_1', '', 'WS.003.1b');
+insert into PSlot values ('PS.base.c3', 'PF0_1', '', 'WS.003.2a');
+insert into PSlot values ('PS.base.c4', 'PF0_1', '', 'WS.003.2b');
+insert into PSlot values ('PS.base.c5', 'PF0_1', '', 'WS.003.3a');
+insert into PSlot values ('PS.base.c6', 'PF0_1', '', 'WS.003.3b');
+insert into PField values ('PF0_X', 'Phonelines basement');
+insert into PSlot values ('PS.base.ta1', 'PF0_X', '', '');
+insert into PSlot values ('PS.base.ta2', 'PF0_X', '', '');
+insert into PSlot values ('PS.base.ta3', 'PF0_X', '', '');
+insert into PSlot values ('PS.base.ta4', 'PF0_X', '', '');
+insert into PSlot values ('PS.base.ta5', 'PF0_X', '', '');
+insert into PSlot values ('PS.base.ta6', 'PF0_X', '', '');
+insert into PSlot values ('PS.base.tb1', 'PF0_X', '', '');
+insert into PSlot values ('PS.base.tb2', 'PF0_X', '', '');
+insert into PSlot values ('PS.base.tb3', 'PF0_X', '', '');
+insert into PSlot values ('PS.base.tb4', 'PF0_X', '', '');
+insert into PSlot values ('PS.base.tb5', 'PF0_X', '', '');
+insert into PSlot values ('PS.base.tb6', 'PF0_X', '', '');
+insert into PField values ('PF1_1', 'Wallslots 1st floor');
+insert into PSlot values ('PS.1st.a1', 'PF1_1', '', 'WS.101.1a');
+insert into PSlot values ('PS.1st.a2', 'PF1_1', '', 'WS.101.1b');
+insert into PSlot values ('PS.1st.a3', 'PF1_1', '', 'WS.101.2a');
+insert into PSlot values ('PS.1st.a4', 'PF1_1', '', 'WS.101.2b');
+insert into PSlot values ('PS.1st.a5', 'PF1_1', '', 'WS.101.3a');
+insert into PSlot values ('PS.1st.a6', 'PF1_1', '', 'WS.101.3b');
+insert into PSlot values ('PS.1st.b1', 'PF1_1', '', 'WS.102.1a');
+insert into PSlot values ('PS.1st.b2', 'PF1_1', '', 'WS.102.1b');
+insert into PSlot values ('PS.1st.b3', 'PF1_1', '', 'WS.102.2a');
+insert into PSlot values ('PS.1st.b4', 'PF1_1', '', 'WS.102.2b');
+insert into PSlot values ('PS.1st.b5', 'PF1_1', '', 'WS.102.3a');
+insert into PSlot values ('PS.1st.b6', 'PF1_1', '', 'WS.102.3b');
+insert into PSlot values ('PS.1st.c1', 'PF1_1', '', 'WS.105.1a');
+insert into PSlot values ('PS.1st.c2', 'PF1_1', '', 'WS.105.1b');
+insert into PSlot values ('PS.1st.c3', 'PF1_1', '', 'WS.105.2a');
+insert into PSlot values ('PS.1st.c4', 'PF1_1', '', 'WS.105.2b');
+insert into PSlot values ('PS.1st.c5', 'PF1_1', '', 'WS.105.3a');
+insert into PSlot values ('PS.1st.c6', 'PF1_1', '', 'WS.105.3b');
+insert into PSlot values ('PS.1st.d1', 'PF1_1', '', 'WS.106.1a');
+insert into PSlot values ('PS.1st.d2', 'PF1_1', '', 'WS.106.1b');
+insert into PSlot values ('PS.1st.d3', 'PF1_1', '', 'WS.106.2a');
+insert into PSlot values ('PS.1st.d4', 'PF1_1', '', 'WS.106.2b');
+insert into PSlot values ('PS.1st.d5', 'PF1_1', '', 'WS.106.3a');
+insert into PSlot values ('PS.1st.d6', 'PF1_1', '', 'WS.106.3b');
+update PSlot set backlink = 'WS.001.1a' where slotname = 'PS.base.a1';
+update PSlot set backlink = 'WS.001.1b' where slotname = 'PS.base.a3';
+select * from WSlot where roomno = '001' order by slotname;
+       slotname       |  roomno  |       slotlink       |       backlink       
+----------------------+----------+----------------------+----------------------
+ WS.001.1a            | 001      |                      | PS.base.a1          
+ WS.001.1b            | 001      |                      | PS.base.a3          
+ WS.001.2a            | 001      |                      |                     
+ WS.001.2b            | 001      |                      |                     
+ WS.001.3a            | 001      |                      |                     
+ WS.001.3b            | 001      |                      |                     
 (6 rows)
 
-QUERY: select * from PSlot where slotname ~ 'PS.base.a' order by slotname;
-slotname            |pfname|            slotlink|backlink            
---------------------+------+--------------------+--------------------
-PS.base.a1          |PF0_1 |                    |WS.001.1a           
-PS.base.a2          |PF0_1 |                    |                    
-PS.base.a3          |PF0_1 |                    |WS.001.1b           
-PS.base.a4          |PF0_1 |                    |                    
-PS.base.a5          |PF0_1 |                    |                    
-PS.base.a6          |PF0_1 |                    |                    
+select * from PSlot where slotname ~ 'PS.base.a' order by slotname;
+       slotname       | pfname |       slotlink       |       backlink       
+----------------------+--------+----------------------+----------------------
+ PS.base.a1           | PF0_1  |                      | WS.001.1a           
+ PS.base.a2           | PF0_1  |                      |                     
+ PS.base.a3           | PF0_1  |                      | WS.001.1b           
+ PS.base.a4           | PF0_1  |                      |                     
+ PS.base.a5           | PF0_1  |                      |                     
+ PS.base.a6           | PF0_1  |                      |                     
 (6 rows)
 
-QUERY: update PSlot set backlink = 'WS.001.2a' where slotname = 'PS.base.a3';
-QUERY: select * from WSlot where roomno = '001' order by slotname;
-slotname            |  roomno|            slotlink|backlink            
---------------------+--------+--------------------+--------------------
-WS.001.1a           |001     |                    |PS.base.a1          
-WS.001.1b           |001     |                    |                    
-WS.001.2a           |001     |                    |PS.base.a3          
-WS.001.2b           |001     |                    |                    
-WS.001.3a           |001     |                    |                    
-WS.001.3b           |001     |                    |                    
+update PSlot set backlink = 'WS.001.2a' where slotname = 'PS.base.a3';
+select * from WSlot where roomno = '001' order by slotname;
+       slotname       |  roomno  |       slotlink       |       backlink       
+----------------------+----------+----------------------+----------------------
+ WS.001.1a            | 001      |                      | PS.base.a1          
+ WS.001.1b            | 001      |                      |                     
+ WS.001.2a            | 001      |                      | PS.base.a3          
+ WS.001.2b            | 001      |                      |                     
+ WS.001.3a            | 001      |                      |                     
+ WS.001.3b            | 001      |                      |                     
 (6 rows)
 
-QUERY: select * from PSlot where slotname ~ 'PS.base.a' order by slotname;
-slotname            |pfname|            slotlink|backlink            
---------------------+------+--------------------+--------------------
-PS.base.a1          |PF0_1 |                    |WS.001.1a           
-PS.base.a2          |PF0_1 |                    |                    
-PS.base.a3          |PF0_1 |                    |WS.001.2a           
-PS.base.a4          |PF0_1 |                    |                    
-PS.base.a5          |PF0_1 |                    |                    
-PS.base.a6          |PF0_1 |                    |                    
+select * from PSlot where slotname ~ 'PS.base.a' order by slotname;
+       slotname       | pfname |       slotlink       |       backlink       
+----------------------+--------+----------------------+----------------------
+ PS.base.a1           | PF0_1  |                      | WS.001.1a           
+ PS.base.a2           | PF0_1  |                      |                     
+ PS.base.a3           | PF0_1  |                      | WS.001.2a           
+ PS.base.a4           | PF0_1  |                      |                     
+ PS.base.a5           | PF0_1  |                      |                     
+ PS.base.a6           | PF0_1  |                      |                     
 (6 rows)
 
-QUERY: update PSlot set backlink = 'WS.001.1b' where slotname = 'PS.base.a2';
-QUERY: select * from WSlot where roomno = '001' order by slotname;
-slotname            |  roomno|            slotlink|backlink            
---------------------+--------+--------------------+--------------------
-WS.001.1a           |001     |                    |PS.base.a1          
-WS.001.1b           |001     |                    |PS.base.a2          
-WS.001.2a           |001     |                    |PS.base.a3          
-WS.001.2b           |001     |                    |                    
-WS.001.3a           |001     |                    |                    
-WS.001.3b           |001     |                    |                    
+update PSlot set backlink = 'WS.001.1b' where slotname = 'PS.base.a2';
+select * from WSlot where roomno = '001' order by slotname;
+       slotname       |  roomno  |       slotlink       |       backlink       
+----------------------+----------+----------------------+----------------------
+ WS.001.1a            | 001      |                      | PS.base.a1          
+ WS.001.1b            | 001      |                      | PS.base.a2          
+ WS.001.2a            | 001      |                      | PS.base.a3          
+ WS.001.2b            | 001      |                      |                     
+ WS.001.3a            | 001      |                      |                     
+ WS.001.3b            | 001      |                      |                     
 (6 rows)
 
-QUERY: select * from PSlot where slotname ~ 'PS.base.a' order by slotname;
-slotname            |pfname|            slotlink|backlink            
---------------------+------+--------------------+--------------------
-PS.base.a1          |PF0_1 |                    |WS.001.1a           
-PS.base.a2          |PF0_1 |                    |WS.001.1b           
-PS.base.a3          |PF0_1 |                    |WS.001.2a           
-PS.base.a4          |PF0_1 |                    |                    
-PS.base.a5          |PF0_1 |                    |                    
-PS.base.a6          |PF0_1 |                    |                    
+select * from PSlot where slotname ~ 'PS.base.a' order by slotname;
+       slotname       | pfname |       slotlink       |       backlink       
+----------------------+--------+----------------------+----------------------
+ PS.base.a1           | PF0_1  |                      | WS.001.1a           
+ PS.base.a2           | PF0_1  |                      | WS.001.1b           
+ PS.base.a3           | PF0_1  |                      | WS.001.2a           
+ PS.base.a4           | PF0_1  |                      |                     
+ PS.base.a5           | PF0_1  |                      |                     
+ PS.base.a6           | PF0_1  |                      |                     
 (6 rows)
 
-QUERY: update WSlot set backlink = 'PS.base.a4' where slotname = 'WS.001.2b';
-QUERY: update WSlot set backlink = 'PS.base.a6' where slotname = 'WS.001.3a';
-QUERY: select * from WSlot where roomno = '001' order by slotname;
-slotname            |  roomno|            slotlink|backlink            
---------------------+--------+--------------------+--------------------
-WS.001.1a           |001     |                    |PS.base.a1          
-WS.001.1b           |001     |                    |PS.base.a2          
-WS.001.2a           |001     |                    |PS.base.a3          
-WS.001.2b           |001     |                    |PS.base.a4          
-WS.001.3a           |001     |                    |PS.base.a6          
-WS.001.3b           |001     |                    |                    
+update WSlot set backlink = 'PS.base.a4' where slotname = 'WS.001.2b';
+update WSlot set backlink = 'PS.base.a6' where slotname = 'WS.001.3a';
+select * from WSlot where roomno = '001' order by slotname;
+       slotname       |  roomno  |       slotlink       |       backlink       
+----------------------+----------+----------------------+----------------------
+ WS.001.1a            | 001      |                      | PS.base.a1          
+ WS.001.1b            | 001      |                      | PS.base.a2          
+ WS.001.2a            | 001      |                      | PS.base.a3          
+ WS.001.2b            | 001      |                      | PS.base.a4          
+ WS.001.3a            | 001      |                      | PS.base.a6          
+ WS.001.3b            | 001      |                      |                     
 (6 rows)
 
-QUERY: select * from PSlot where slotname ~ 'PS.base.a' order by slotname;
-slotname            |pfname|            slotlink|backlink            
---------------------+------+--------------------+--------------------
-PS.base.a1          |PF0_1 |                    |WS.001.1a           
-PS.base.a2          |PF0_1 |                    |WS.001.1b           
-PS.base.a3          |PF0_1 |                    |WS.001.2a           
-PS.base.a4          |PF0_1 |                    |WS.001.2b           
-PS.base.a5          |PF0_1 |                    |                    
-PS.base.a6          |PF0_1 |                    |WS.001.3a           
+select * from PSlot where slotname ~ 'PS.base.a' order by slotname;
+       slotname       | pfname |       slotlink       |       backlink       
+----------------------+--------+----------------------+----------------------
+ PS.base.a1           | PF0_1  |                      | WS.001.1a           
+ PS.base.a2           | PF0_1  |                      | WS.001.1b           
+ PS.base.a3           | PF0_1  |                      | WS.001.2a           
+ PS.base.a4           | PF0_1  |                      | WS.001.2b           
+ PS.base.a5           | PF0_1  |                      |                     
+ PS.base.a6           | PF0_1  |                      | WS.001.3a           
 (6 rows)
 
-QUERY: update WSlot set backlink = 'PS.base.a6' where slotname = 'WS.001.3b';
-QUERY: select * from WSlot where roomno = '001' order by slotname;
-slotname            |  roomno|            slotlink|backlink            
---------------------+--------+--------------------+--------------------
-WS.001.1a           |001     |                    |PS.base.a1          
-WS.001.1b           |001     |                    |PS.base.a2          
-WS.001.2a           |001     |                    |PS.base.a3          
-WS.001.2b           |001     |                    |PS.base.a4          
-WS.001.3a           |001     |                    |                    
-WS.001.3b           |001     |                    |PS.base.a6          
+update WSlot set backlink = 'PS.base.a6' where slotname = 'WS.001.3b';
+select * from WSlot where roomno = '001' order by slotname;
+       slotname       |  roomno  |       slotlink       |       backlink       
+----------------------+----------+----------------------+----------------------
+ WS.001.1a            | 001      |                      | PS.base.a1          
+ WS.001.1b            | 001      |                      | PS.base.a2          
+ WS.001.2a            | 001      |                      | PS.base.a3          
+ WS.001.2b            | 001      |                      | PS.base.a4          
+ WS.001.3a            | 001      |                      |                     
+ WS.001.3b            | 001      |                      | PS.base.a6          
 (6 rows)
 
-QUERY: select * from PSlot where slotname ~ 'PS.base.a' order by slotname;
-slotname            |pfname|            slotlink|backlink            
---------------------+------+--------------------+--------------------
-PS.base.a1          |PF0_1 |                    |WS.001.1a           
-PS.base.a2          |PF0_1 |                    |WS.001.1b           
-PS.base.a3          |PF0_1 |                    |WS.001.2a           
-PS.base.a4          |PF0_1 |                    |WS.001.2b           
-PS.base.a5          |PF0_1 |                    |                    
-PS.base.a6          |PF0_1 |                    |WS.001.3b           
+select * from PSlot where slotname ~ 'PS.base.a' order by slotname;
+       slotname       | pfname |       slotlink       |       backlink       
+----------------------+--------+----------------------+----------------------
+ PS.base.a1           | PF0_1  |                      | WS.001.1a           
+ PS.base.a2           | PF0_1  |                      | WS.001.1b           
+ PS.base.a3           | PF0_1  |                      | WS.001.2a           
+ PS.base.a4           | PF0_1  |                      | WS.001.2b           
+ PS.base.a5           | PF0_1  |                      |                     
+ PS.base.a6           | PF0_1  |                      | WS.001.3b           
 (6 rows)
 
-QUERY: update WSlot set backlink = 'PS.base.a5' where slotname = 'WS.001.3a';
-QUERY: select * from WSlot where roomno = '001' order by slotname;
-slotname            |  roomno|            slotlink|backlink            
---------------------+--------+--------------------+--------------------
-WS.001.1a           |001     |                    |PS.base.a1          
-WS.001.1b           |001     |                    |PS.base.a2          
-WS.001.2a           |001     |                    |PS.base.a3          
-WS.001.2b           |001     |                    |PS.base.a4          
-WS.001.3a           |001     |                    |PS.base.a5          
-WS.001.3b           |001     |                    |PS.base.a6          
+update WSlot set backlink = 'PS.base.a5' where slotname = 'WS.001.3a';
+select * from WSlot where roomno = '001' order by slotname;
+       slotname       |  roomno  |       slotlink       |       backlink       
+----------------------+----------+----------------------+----------------------
+ WS.001.1a            | 001      |                      | PS.base.a1          
+ WS.001.1b            | 001      |                      | PS.base.a2          
+ WS.001.2a            | 001      |                      | PS.base.a3          
+ WS.001.2b            | 001      |                      | PS.base.a4          
+ WS.001.3a            | 001      |                      | PS.base.a5          
+ WS.001.3b            | 001      |                      | PS.base.a6          
 (6 rows)
 
-QUERY: select * from PSlot where slotname ~ 'PS.base.a' order by slotname;
-slotname            |pfname|            slotlink|backlink            
---------------------+------+--------------------+--------------------
-PS.base.a1          |PF0_1 |                    |WS.001.1a           
-PS.base.a2          |PF0_1 |                    |WS.001.1b           
-PS.base.a3          |PF0_1 |                    |WS.001.2a           
-PS.base.a4          |PF0_1 |                    |WS.001.2b           
-PS.base.a5          |PF0_1 |                    |WS.001.3a           
-PS.base.a6          |PF0_1 |                    |WS.001.3b           
+select * from PSlot where slotname ~ 'PS.base.a' order by slotname;
+       slotname       | pfname |       slotlink       |       backlink       
+----------------------+--------+----------------------+----------------------
+ PS.base.a1           | PF0_1  |                      | WS.001.1a           
+ PS.base.a2           | PF0_1  |                      | WS.001.1b           
+ PS.base.a3           | PF0_1  |                      | WS.001.2a           
+ PS.base.a4           | PF0_1  |                      | WS.001.2b           
+ PS.base.a5           | PF0_1  |                      | WS.001.3a           
+ PS.base.a6           | PF0_1  |                      | WS.001.3b           
 (6 rows)
 
-QUERY: insert into PField values ('PF1_2', 'Phonelines 1st floor');
-QUERY: insert into PSlot values ('PS.1st.ta1', 'PF1_2', '', '');
-QUERY: insert into PSlot values ('PS.1st.ta2', 'PF1_2', '', '');
-QUERY: insert into PSlot values ('PS.1st.ta3', 'PF1_2', '', '');
-QUERY: insert into PSlot values ('PS.1st.ta4', 'PF1_2', '', '');
-QUERY: insert into PSlot values ('PS.1st.ta5', 'PF1_2', '', '');
-QUERY: insert into PSlot values ('PS.1st.ta6', 'PF1_2', '', '');
-QUERY: insert into PSlot values ('PS.1st.tb1', 'PF1_2', '', '');
-QUERY: insert into PSlot values ('PS.1st.tb2', 'PF1_2', '', '');
-QUERY: insert into PSlot values ('PS.1st.tb3', 'PF1_2', '', '');
-QUERY: insert into PSlot values ('PS.1st.tb4', 'PF1_2', '', '');
-QUERY: insert into PSlot values ('PS.1st.tb5', 'PF1_2', '', '');
-QUERY: insert into PSlot values ('PS.1st.tb6', 'PF1_2', '', '');
-QUERY: update PField set name = 'PF0_2' where name = 'PF0_X';
-QUERY: select * from PSlot order by slotname;
-slotname            |pfname|            slotlink|backlink            
---------------------+------+--------------------+--------------------
-PS.1st.a1           |PF1_1 |                    |WS.101.1a           
-PS.1st.a2           |PF1_1 |                    |WS.101.1b           
-PS.1st.a3           |PF1_1 |                    |WS.101.2a           
-PS.1st.a4           |PF1_1 |                    |WS.101.2b           
-PS.1st.a5           |PF1_1 |                    |WS.101.3a           
-PS.1st.a6           |PF1_1 |                    |WS.101.3b           
-PS.1st.b1           |PF1_1 |                    |WS.102.1a           
-PS.1st.b2           |PF1_1 |                    |WS.102.1b           
-PS.1st.b3           |PF1_1 |                    |WS.102.2a           
-PS.1st.b4           |PF1_1 |                    |WS.102.2b           
-PS.1st.b5           |PF1_1 |                    |WS.102.3a           
-PS.1st.b6           |PF1_1 |                    |WS.102.3b           
-PS.1st.c1           |PF1_1 |                    |WS.105.1a           
-PS.1st.c2           |PF1_1 |                    |WS.105.1b           
-PS.1st.c3           |PF1_1 |                    |WS.105.2a           
-PS.1st.c4           |PF1_1 |                    |WS.105.2b           
-PS.1st.c5           |PF1_1 |                    |WS.105.3a           
-PS.1st.c6           |PF1_1 |                    |WS.105.3b           
-PS.1st.d1           |PF1_1 |                    |WS.106.1a           
-PS.1st.d2           |PF1_1 |                    |WS.106.1b           
-PS.1st.d3           |PF1_1 |                    |WS.106.2a           
-PS.1st.d4           |PF1_1 |                    |WS.106.2b           
-PS.1st.d5           |PF1_1 |                    |WS.106.3a           
-PS.1st.d6           |PF1_1 |                    |WS.106.3b           
-PS.1st.ta1          |PF1_2 |                    |                    
-PS.1st.ta2          |PF1_2 |                    |                    
-PS.1st.ta3          |PF1_2 |                    |                    
-PS.1st.ta4          |PF1_2 |                    |                    
-PS.1st.ta5          |PF1_2 |                    |                    
-PS.1st.ta6          |PF1_2 |                    |                    
-PS.1st.tb1          |PF1_2 |                    |                    
-PS.1st.tb2          |PF1_2 |                    |                    
-PS.1st.tb3          |PF1_2 |                    |                    
-PS.1st.tb4          |PF1_2 |                    |                    
-PS.1st.tb5          |PF1_2 |                    |                    
-PS.1st.tb6          |PF1_2 |                    |                    
-PS.base.a1          |PF0_1 |                    |WS.001.1a           
-PS.base.a2          |PF0_1 |                    |WS.001.1b           
-PS.base.a3          |PF0_1 |                    |WS.001.2a           
-PS.base.a4          |PF0_1 |                    |WS.001.2b           
-PS.base.a5          |PF0_1 |                    |WS.001.3a           
-PS.base.a6          |PF0_1 |                    |WS.001.3b           
-PS.base.b1          |PF0_1 |                    |WS.002.1a           
-PS.base.b2          |PF0_1 |                    |WS.002.1b           
-PS.base.b3          |PF0_1 |                    |WS.002.2a           
-PS.base.b4          |PF0_1 |                    |WS.002.2b           
-PS.base.b5          |PF0_1 |                    |WS.002.3a           
-PS.base.b6          |PF0_1 |                    |WS.002.3b           
-PS.base.c1          |PF0_1 |                    |WS.003.1a           
-PS.base.c2          |PF0_1 |                    |WS.003.1b           
-PS.base.c3          |PF0_1 |                    |WS.003.2a           
-PS.base.c4          |PF0_1 |                    |WS.003.2b           
-PS.base.c5          |PF0_1 |                    |WS.003.3a           
-PS.base.c6          |PF0_1 |                    |WS.003.3b           
-PS.base.ta1         |PF0_2 |                    |                    
-PS.base.ta2         |PF0_2 |                    |                    
-PS.base.ta3         |PF0_2 |                    |                    
-PS.base.ta4         |PF0_2 |                    |                    
-PS.base.ta5         |PF0_2 |                    |                    
-PS.base.ta6         |PF0_2 |                    |                    
-PS.base.tb1         |PF0_2 |                    |                    
-PS.base.tb2         |PF0_2 |                    |                    
-PS.base.tb3         |PF0_2 |                    |                    
-PS.base.tb4         |PF0_2 |                    |                    
-PS.base.tb5         |PF0_2 |                    |                    
-PS.base.tb6         |PF0_2 |                    |                    
+insert into PField values ('PF1_2', 'Phonelines 1st floor');
+insert into PSlot values ('PS.1st.ta1', 'PF1_2', '', '');
+insert into PSlot values ('PS.1st.ta2', 'PF1_2', '', '');
+insert into PSlot values ('PS.1st.ta3', 'PF1_2', '', '');
+insert into PSlot values ('PS.1st.ta4', 'PF1_2', '', '');
+insert into PSlot values ('PS.1st.ta5', 'PF1_2', '', '');
+insert into PSlot values ('PS.1st.ta6', 'PF1_2', '', '');
+insert into PSlot values ('PS.1st.tb1', 'PF1_2', '', '');
+insert into PSlot values ('PS.1st.tb2', 'PF1_2', '', '');
+insert into PSlot values ('PS.1st.tb3', 'PF1_2', '', '');
+insert into PSlot values ('PS.1st.tb4', 'PF1_2', '', '');
+insert into PSlot values ('PS.1st.tb5', 'PF1_2', '', '');
+insert into PSlot values ('PS.1st.tb6', 'PF1_2', '', '');
+update PField set name = 'PF0_2' where name = 'PF0_X';
+select * from PSlot order by slotname;
+       slotname       | pfname |       slotlink       |       backlink       
+----------------------+--------+----------------------+----------------------
+ PS.1st.a1            | PF1_1  |                      | WS.101.1a           
+ PS.1st.a2            | PF1_1  |                      | WS.101.1b           
+ PS.1st.a3            | PF1_1  |                      | WS.101.2a           
+ PS.1st.a4            | PF1_1  |                      | WS.101.2b           
+ PS.1st.a5            | PF1_1  |                      | WS.101.3a           
+ PS.1st.a6            | PF1_1  |                      | WS.101.3b           
+ PS.1st.b1            | PF1_1  |                      | WS.102.1a           
+ PS.1st.b2            | PF1_1  |                      | WS.102.1b           
+ PS.1st.b3            | PF1_1  |                      | WS.102.2a           
+ PS.1st.b4            | PF1_1  |                      | WS.102.2b           
+ PS.1st.b5            | PF1_1  |                      | WS.102.3a           
+ PS.1st.b6            | PF1_1  |                      | WS.102.3b           
+ PS.1st.c1            | PF1_1  |                      | WS.105.1a           
+ PS.1st.c2            | PF1_1  |                      | WS.105.1b           
+ PS.1st.c3            | PF1_1  |                      | WS.105.2a           
+ PS.1st.c4            | PF1_1  |                      | WS.105.2b           
+ PS.1st.c5            | PF1_1  |                      | WS.105.3a           
+ PS.1st.c6            | PF1_1  |                      | WS.105.3b           
+ PS.1st.d1            | PF1_1  |                      | WS.106.1a           
+ PS.1st.d2            | PF1_1  |                      | WS.106.1b           
+ PS.1st.d3            | PF1_1  |                      | WS.106.2a           
+ PS.1st.d4            | PF1_1  |                      | WS.106.2b           
+ PS.1st.d5            | PF1_1  |                      | WS.106.3a           
+ PS.1st.d6            | PF1_1  |                      | WS.106.3b           
+ PS.1st.ta1           | PF1_2  |                      |                     
+ PS.1st.ta2           | PF1_2  |                      |                     
+ PS.1st.ta3           | PF1_2  |                      |                     
+ PS.1st.ta4           | PF1_2  |                      |                     
+ PS.1st.ta5           | PF1_2  |                      |                     
+ PS.1st.ta6           | PF1_2  |                      |                     
+ PS.1st.tb1           | PF1_2  |                      |                     
+ PS.1st.tb2           | PF1_2  |                      |                     
+ PS.1st.tb3           | PF1_2  |                      |                     
+ PS.1st.tb4           | PF1_2  |                      |                     
+ PS.1st.tb5           | PF1_2  |                      |                     
+ PS.1st.tb6           | PF1_2  |                      |                     
+ PS.base.a1           | PF0_1  |                      | WS.001.1a           
+ PS.base.a2           | PF0_1  |                      | WS.001.1b           
+ PS.base.a3           | PF0_1  |                      | WS.001.2a           
+ PS.base.a4           | PF0_1  |                      | WS.001.2b           
+ PS.base.a5           | PF0_1  |                      | WS.001.3a           
+ PS.base.a6           | PF0_1  |                      | WS.001.3b           
+ PS.base.b1           | PF0_1  |                      | WS.002.1a           
+ PS.base.b2           | PF0_1  |                      | WS.002.1b           
+ PS.base.b3           | PF0_1  |                      | WS.002.2a           
+ PS.base.b4           | PF0_1  |                      | WS.002.2b           
+ PS.base.b5           | PF0_1  |                      | WS.002.3a           
+ PS.base.b6           | PF0_1  |                      | WS.002.3b           
+ PS.base.c1           | PF0_1  |                      | WS.003.1a           
+ PS.base.c2           | PF0_1  |                      | WS.003.1b           
+ PS.base.c3           | PF0_1  |                      | WS.003.2a           
+ PS.base.c4           | PF0_1  |                      | WS.003.2b           
+ PS.base.c5           | PF0_1  |                      | WS.003.3a           
+ PS.base.c6           | PF0_1  |                      | WS.003.3b           
+ PS.base.ta1          | PF0_2  |                      |                     
+ PS.base.ta2          | PF0_2  |                      |                     
+ PS.base.ta3          | PF0_2  |                      |                     
+ PS.base.ta4          | PF0_2  |                      |                     
+ PS.base.ta5          | PF0_2  |                      |                     
+ PS.base.ta6          | PF0_2  |                      |                     
+ PS.base.tb1          | PF0_2  |                      |                     
+ PS.base.tb2          | PF0_2  |                      |                     
+ PS.base.tb3          | PF0_2  |                      |                     
+ PS.base.tb4          | PF0_2  |                      |                     
+ PS.base.tb5          | PF0_2  |                      |                     
+ PS.base.tb6          | PF0_2  |                      |                     
 (66 rows)
 
-QUERY: select * from WSlot order by slotname;
-slotname            |  roomno|            slotlink|backlink            
---------------------+--------+--------------------+--------------------
-WS.001.1a           |001     |                    |PS.base.a1          
-WS.001.1b           |001     |                    |PS.base.a2          
-WS.001.2a           |001     |                    |PS.base.a3          
-WS.001.2b           |001     |                    |PS.base.a4          
-WS.001.3a           |001     |                    |PS.base.a5          
-WS.001.3b           |001     |                    |PS.base.a6          
-WS.002.1a           |002     |                    |PS.base.b1          
-WS.002.1b           |002     |                    |PS.base.b2          
-WS.002.2a           |002     |                    |PS.base.b3          
-WS.002.2b           |002     |                    |PS.base.b4          
-WS.002.3a           |002     |                    |PS.base.b5          
-WS.002.3b           |002     |                    |PS.base.b6          
-WS.003.1a           |003     |                    |PS.base.c1          
-WS.003.1b           |003     |                    |PS.base.c2          
-WS.003.2a           |003     |                    |PS.base.c3          
-WS.003.2b           |003     |                    |PS.base.c4          
-WS.003.3a           |003     |                    |PS.base.c5          
-WS.003.3b           |003     |                    |PS.base.c6          
-WS.101.1a           |101     |                    |PS.1st.a1           
-WS.101.1b           |101     |                    |PS.1st.a2           
-WS.101.2a           |101     |                    |PS.1st.a3           
-WS.101.2b           |101     |                    |PS.1st.a4           
-WS.101.3a           |101     |                    |PS.1st.a5           
-WS.101.3b           |101     |                    |PS.1st.a6           
-WS.102.1a           |102     |                    |PS.1st.b1           
-WS.102.1b           |102     |                    |PS.1st.b2           
-WS.102.2a           |102     |                    |PS.1st.b3           
-WS.102.2b           |102     |                    |PS.1st.b4           
-WS.102.3a           |102     |                    |PS.1st.b5           
-WS.102.3b           |102     |                    |PS.1st.b6           
-WS.105.1a           |105     |                    |PS.1st.c1           
-WS.105.1b           |105     |                    |PS.1st.c2           
-WS.105.2a           |105     |                    |PS.1st.c3           
-WS.105.2b           |105     |                    |PS.1st.c4           
-WS.105.3a           |105     |                    |PS.1st.c5           
-WS.105.3b           |105     |                    |PS.1st.c6           
-WS.106.1a           |106     |                    |PS.1st.d1           
-WS.106.1b           |106     |                    |PS.1st.d2           
-WS.106.2a           |106     |                    |PS.1st.d3           
-WS.106.2b           |106     |                    |PS.1st.d4           
-WS.106.3a           |106     |                    |PS.1st.d5           
-WS.106.3b           |106     |                    |PS.1st.d6           
+select * from WSlot order by slotname;
+       slotname       |  roomno  |       slotlink       |       backlink       
+----------------------+----------+----------------------+----------------------
+ WS.001.1a            | 001      |                      | PS.base.a1          
+ WS.001.1b            | 001      |                      | PS.base.a2          
+ WS.001.2a            | 001      |                      | PS.base.a3          
+ WS.001.2b            | 001      |                      | PS.base.a4          
+ WS.001.3a            | 001      |                      | PS.base.a5          
+ WS.001.3b            | 001      |                      | PS.base.a6          
+ WS.002.1a            | 002      |                      | PS.base.b1          
+ WS.002.1b            | 002      |                      | PS.base.b2          
+ WS.002.2a            | 002      |                      | PS.base.b3          
+ WS.002.2b            | 002      |                      | PS.base.b4          
+ WS.002.3a            | 002      |                      | PS.base.b5          
+ WS.002.3b            | 002      |                      | PS.base.b6          
+ WS.003.1a            | 003      |                      | PS.base.c1          
+ WS.003.1b            | 003      |                      | PS.base.c2          
+ WS.003.2a            | 003      |                      | PS.base.c3          
+ WS.003.2b            | 003      |                      | PS.base.c4          
+ WS.003.3a            | 003      |                      | PS.base.c5          
+ WS.003.3b            | 003      |                      | PS.base.c6          
+ WS.101.1a            | 101      |                      | PS.1st.a1           
+ WS.101.1b            | 101      |                      | PS.1st.a2           
+ WS.101.2a            | 101      |                      | PS.1st.a3           
+ WS.101.2b            | 101      |                      | PS.1st.a4           
+ WS.101.3a            | 101      |                      | PS.1st.a5           
+ WS.101.3b            | 101      |                      | PS.1st.a6           
+ WS.102.1a            | 102      |                      | PS.1st.b1           
+ WS.102.1b            | 102      |                      | PS.1st.b2           
+ WS.102.2a            | 102      |                      | PS.1st.b3           
+ WS.102.2b            | 102      |                      | PS.1st.b4           
+ WS.102.3a            | 102      |                      | PS.1st.b5           
+ WS.102.3b            | 102      |                      | PS.1st.b6           
+ WS.105.1a            | 105      |                      | PS.1st.c1           
+ WS.105.1b            | 105      |                      | PS.1st.c2           
+ WS.105.2a            | 105      |                      | PS.1st.c3           
+ WS.105.2b            | 105      |                      | PS.1st.c4           
+ WS.105.3a            | 105      |                      | PS.1st.c5           
+ WS.105.3b            | 105      |                      | PS.1st.c6           
+ WS.106.1a            | 106      |                      | PS.1st.d1           
+ WS.106.1b            | 106      |                      | PS.1st.d2           
+ WS.106.2a            | 106      |                      | PS.1st.d3           
+ WS.106.2b            | 106      |                      | PS.1st.d4           
+ WS.106.3a            | 106      |                      | PS.1st.d5           
+ WS.106.3b            | 106      |                      | PS.1st.d6           
 (42 rows)
 
-QUERY: insert into PLine values ('PL.001', '-0', 'Central call', 'PS.base.ta1');
-QUERY: insert into PLine values ('PL.002', '-101', '', 'PS.base.ta2');
-QUERY: insert into PLine values ('PL.003', '-102', '', 'PS.base.ta3');
-QUERY: insert into PLine values ('PL.004', '-103', '', 'PS.base.ta5');
-QUERY: insert into PLine values ('PL.005', '-104', '', 'PS.base.ta6');
-QUERY: insert into PLine values ('PL.006', '-106', '', 'PS.base.tb2');
-QUERY: insert into PLine values ('PL.007', '-108', '', 'PS.base.tb3');
-QUERY: insert into PLine values ('PL.008', '-109', '', 'PS.base.tb4');
-QUERY: insert into PLine values ('PL.009', '-121', '', 'PS.base.tb5');
-QUERY: insert into PLine values ('PL.010', '-122', '', 'PS.base.tb6');
-QUERY: insert into PLine values ('PL.015', '-134', '', 'PS.1st.ta1');
-QUERY: insert into PLine values ('PL.016', '-137', '', 'PS.1st.ta3');
-QUERY: insert into PLine values ('PL.017', '-139', '', 'PS.1st.ta4');
-QUERY: insert into PLine values ('PL.018', '-362', '', 'PS.1st.tb1');
-QUERY: insert into PLine values ('PL.019', '-363', '', 'PS.1st.tb2');
-QUERY: insert into PLine values ('PL.020', '-364', '', 'PS.1st.tb3');
-QUERY: insert into PLine values ('PL.021', '-365', '', 'PS.1st.tb5');
-QUERY: insert into PLine values ('PL.022', '-367', '', 'PS.1st.tb6');
-QUERY: insert into PLine values ('PL.028', '-501', 'Fax entrance', 'PS.base.ta2');
-QUERY: insert into PLine values ('PL.029', '-502', 'Fax 1st floor', 'PS.1st.ta1');
-QUERY: insert into PHone values ('PH.hc001', 'Hicom standard', 'WS.001.1a');
-QUERY: update PSlot set slotlink = 'PS.base.ta1' where slotname = 'PS.base.a1';
-QUERY: insert into PHone values ('PH.hc002', 'Hicom standard', 'WS.002.1a');
-QUERY: update PSlot set slotlink = 'PS.base.ta5' where slotname = 'PS.base.b1';
-QUERY: insert into PHone values ('PH.hc003', 'Hicom standard', 'WS.002.2a');
-QUERY: update PSlot set slotlink = 'PS.base.tb2' where slotname = 'PS.base.b3';
-QUERY: insert into PHone values ('PH.fax001', 'Canon fax', 'WS.001.2a');
-QUERY: update PSlot set slotlink = 'PS.base.ta2' where slotname = 'PS.base.a3';
-QUERY: insert into Hub values ('base.hub1', 'Patchfield PF0_1 hub', 16);
-QUERY: insert into System values ('orion', 'PC');
-QUERY: insert into IFace values ('IF', 'orion', 'eth0', 'WS.002.1b');
-QUERY: update PSlot set slotlink = 'HS.base.hub1.1' where slotname = 'PS.base.b2';
-QUERY: select * from PField_v1 where pfname = 'PF0_1' order by slotname;
-pfname|slotname            |backside                                                |patch                                        
-------+--------------------+--------------------------------------------------------+---------------------------------------------
-PF0_1 |PS.base.a1          |WS.001.1a in room 001 -> Phone PH.hc001 (Hicom standard)|PS.base.ta1 -> Phone line -0 (Central call)  
-PF0_1 |PS.base.a2          |WS.001.1b in room 001 -> -                              |-                                            
-PF0_1 |PS.base.a3          |WS.001.2a in room 001 -> Phone PH.fax001 (Canon fax)    |PS.base.ta2 -> Phone line -501 (Fax entrance)
-PF0_1 |PS.base.a4          |WS.001.2b in room 001 -> -                              |-                                            
-PF0_1 |PS.base.a5          |WS.001.3a in room 001 -> -                              |-                                            
-PF0_1 |PS.base.a6          |WS.001.3b in room 001 -> -                              |-                                            
-PF0_1 |PS.base.b1          |WS.002.1a in room 002 -> Phone PH.hc002 (Hicom standard)|PS.base.ta5 -> Phone line -103               
-PF0_1 |PS.base.b2          |WS.002.1b in room 002 -> orion IF eth0 (PC)             |Patchfield PF0_1 hub slot 1                  
-PF0_1 |PS.base.b3          |WS.002.2a in room 002 -> Phone PH.hc003 (Hicom standard)|PS.base.tb2 -> Phone line -106               
-PF0_1 |PS.base.b4          |WS.002.2b in room 002 -> -                              |-                                            
-PF0_1 |PS.base.b5          |WS.002.3a in room 002 -> -                              |-                                            
-PF0_1 |PS.base.b6          |WS.002.3b in room 002 -> -                              |-                                            
-PF0_1 |PS.base.c1          |WS.003.1a in room 003 -> -                              |-                                            
-PF0_1 |PS.base.c2          |WS.003.1b in room 003 -> -                              |-                                            
-PF0_1 |PS.base.c3          |WS.003.2a in room 003 -> -                              |-                                            
-PF0_1 |PS.base.c4          |WS.003.2b in room 003 -> -                              |-                                            
-PF0_1 |PS.base.c5          |WS.003.3a in room 003 -> -                              |-                                            
-PF0_1 |PS.base.c6          |WS.003.3b in room 003 -> -                              |-                                            
+insert into PLine values ('PL.001', '-0', 'Central call', 'PS.base.ta1');
+insert into PLine values ('PL.002', '-101', '', 'PS.base.ta2');
+insert into PLine values ('PL.003', '-102', '', 'PS.base.ta3');
+insert into PLine values ('PL.004', '-103', '', 'PS.base.ta5');
+insert into PLine values ('PL.005', '-104', '', 'PS.base.ta6');
+insert into PLine values ('PL.006', '-106', '', 'PS.base.tb2');
+insert into PLine values ('PL.007', '-108', '', 'PS.base.tb3');
+insert into PLine values ('PL.008', '-109', '', 'PS.base.tb4');
+insert into PLine values ('PL.009', '-121', '', 'PS.base.tb5');
+insert into PLine values ('PL.010', '-122', '', 'PS.base.tb6');
+insert into PLine values ('PL.015', '-134', '', 'PS.1st.ta1');
+insert into PLine values ('PL.016', '-137', '', 'PS.1st.ta3');
+insert into PLine values ('PL.017', '-139', '', 'PS.1st.ta4');
+insert into PLine values ('PL.018', '-362', '', 'PS.1st.tb1');
+insert into PLine values ('PL.019', '-363', '', 'PS.1st.tb2');
+insert into PLine values ('PL.020', '-364', '', 'PS.1st.tb3');
+insert into PLine values ('PL.021', '-365', '', 'PS.1st.tb5');
+insert into PLine values ('PL.022', '-367', '', 'PS.1st.tb6');
+insert into PLine values ('PL.028', '-501', 'Fax entrance', 'PS.base.ta2');
+insert into PLine values ('PL.029', '-502', 'Fax 1st floor', 'PS.1st.ta1');
+insert into PHone values ('PH.hc001', 'Hicom standard', 'WS.001.1a');
+update PSlot set slotlink = 'PS.base.ta1' where slotname = 'PS.base.a1';
+insert into PHone values ('PH.hc002', 'Hicom standard', 'WS.002.1a');
+update PSlot set slotlink = 'PS.base.ta5' where slotname = 'PS.base.b1';
+insert into PHone values ('PH.hc003', 'Hicom standard', 'WS.002.2a');
+update PSlot set slotlink = 'PS.base.tb2' where slotname = 'PS.base.b3';
+insert into PHone values ('PH.fax001', 'Canon fax', 'WS.001.2a');
+update PSlot set slotlink = 'PS.base.ta2' where slotname = 'PS.base.a3';
+insert into Hub values ('base.hub1', 'Patchfield PF0_1 hub', 16);
+insert into System values ('orion', 'PC');
+insert into IFace values ('IF', 'orion', 'eth0', 'WS.002.1b');
+update PSlot set slotlink = 'HS.base.hub1.1' where slotname = 'PS.base.b2';
+select * from PField_v1 where pfname = 'PF0_1' order by slotname;
+ pfname |       slotname       |                         backside                         |                     patch                     
+--------+----------------------+----------------------------------------------------------+-----------------------------------------------
+ PF0_1  | PS.base.a1           | WS.001.1a in room 001 -> Phone PH.hc001 (Hicom standard) | PS.base.ta1 -> Phone line -0 (Central call)
+ PF0_1  | PS.base.a2           | WS.001.1b in room 001 -> -                               | -
+ PF0_1  | PS.base.a3           | WS.001.2a in room 001 -> Phone PH.fax001 (Canon fax)     | PS.base.ta2 -> Phone line -501 (Fax entrance)
+ PF0_1  | PS.base.a4           | WS.001.2b in room 001 -> -                               | -
+ PF0_1  | PS.base.a5           | WS.001.3a in room 001 -> -                               | -
+ PF0_1  | PS.base.a6           | WS.001.3b in room 001 -> -                               | -
+ PF0_1  | PS.base.b1           | WS.002.1a in room 002 -> Phone PH.hc002 (Hicom standard) | PS.base.ta5 -> Phone line -103
+ PF0_1  | PS.base.b2           | WS.002.1b in room 002 -> orion IF eth0 (PC)              | Patchfield PF0_1 hub slot 1
+ PF0_1  | PS.base.b3           | WS.002.2a in room 002 -> Phone PH.hc003 (Hicom standard) | PS.base.tb2 -> Phone line -106
+ PF0_1  | PS.base.b4           | WS.002.2b in room 002 -> -                               | -
+ PF0_1  | PS.base.b5           | WS.002.3a in room 002 -> -                               | -
+ PF0_1  | PS.base.b6           | WS.002.3b in room 002 -> -                               | -
+ PF0_1  | PS.base.c1           | WS.003.1a in room 003 -> -                               | -
+ PF0_1  | PS.base.c2           | WS.003.1b in room 003 -> -                               | -
+ PF0_1  | PS.base.c3           | WS.003.2a in room 003 -> -                               | -
+ PF0_1  | PS.base.c4           | WS.003.2b in room 003 -> -                               | -
+ PF0_1  | PS.base.c5           | WS.003.3a in room 003 -> -                               | -
+ PF0_1  | PS.base.c6           | WS.003.3b in room 003 -> -                               | -
 (18 rows)
 
-QUERY: select * from PField_v1 where pfname = 'PF0_2' order by slotname;
-pfname|slotname            |backside                      |patch                                                                 
-------+--------------------+------------------------------+----------------------------------------------------------------------
-PF0_2 |PS.base.ta1         |Phone line -0 (Central call)  |PS.base.a1 -> WS.001.1a in room 001 -> Phone PH.hc001 (Hicom standard)
-PF0_2 |PS.base.ta2         |Phone line -501 (Fax entrance)|PS.base.a3 -> WS.001.2a in room 001 -> Phone PH.fax001 (Canon fax)    
-PF0_2 |PS.base.ta3         |Phone line -102               |-                                                                     
-PF0_2 |PS.base.ta4         |-                             |-                                                                     
-PF0_2 |PS.base.ta5         |Phone line -103               |PS.base.b1 -> WS.002.1a in room 002 -> Phone PH.hc002 (Hicom standard)
-PF0_2 |PS.base.ta6         |Phone line -104               |-                                                                     
-PF0_2 |PS.base.tb1         |-                             |-                                                                     
-PF0_2 |PS.base.tb2         |Phone line -106               |PS.base.b3 -> WS.002.2a in room 002 -> Phone PH.hc003 (Hicom standard)
-PF0_2 |PS.base.tb3         |Phone line -108               |-                                                                     
-PF0_2 |PS.base.tb4         |Phone line -109               |-                                                                     
-PF0_2 |PS.base.tb5         |Phone line -121               |-                                                                     
-PF0_2 |PS.base.tb6         |Phone line -122               |-                                                                     
+select * from PField_v1 where pfname = 'PF0_2' order by slotname;
+ pfname |       slotname       |            backside            |                                 patch                                  
+--------+----------------------+--------------------------------+------------------------------------------------------------------------
+ PF0_2  | PS.base.ta1          | Phone line -0 (Central call)   | PS.base.a1 -> WS.001.1a in room 001 -> Phone PH.hc001 (Hicom standard)
+ PF0_2  | PS.base.ta2          | Phone line -501 (Fax entrance) | PS.base.a3 -> WS.001.2a in room 001 -> Phone PH.fax001 (Canon fax)
+ PF0_2  | PS.base.ta3          | Phone line -102                | -
+ PF0_2  | PS.base.ta4          | -                              | -
+ PF0_2  | PS.base.ta5          | Phone line -103                | PS.base.b1 -> WS.002.1a in room 002 -> Phone PH.hc002 (Hicom standard)
+ PF0_2  | PS.base.ta6          | Phone line -104                | -
+ PF0_2  | PS.base.tb1          | -                              | -
+ PF0_2  | PS.base.tb2          | Phone line -106                | PS.base.b3 -> WS.002.2a in room 002 -> Phone PH.hc003 (Hicom standard)
+ PF0_2  | PS.base.tb3          | Phone line -108                | -
+ PF0_2  | PS.base.tb4          | Phone line -109                | -
+ PF0_2  | PS.base.tb5          | Phone line -121                | -
+ PF0_2  | PS.base.tb6          | Phone line -122                | -
 (12 rows)
 
-QUERY: insert into PField values ('PF1_1', 'should fail due to unique index');
-ERROR:  Cannot insert a duplicate key into a unique index
-QUERY: update PSlot set backlink = 'WS.not.there' where slotname = 'PS.base.a1';
-ERROR:  WS.not.there         does not exists
-QUERY: update PSlot set backlink = 'XX.illegal' where slotname = 'PS.base.a1';
-ERROR:  illegal backlink beginning with XX
-QUERY: update PSlot set slotlink = 'PS.not.there' where slotname = 'PS.base.a1';
-ERROR:  PS.not.there         does not exists
-QUERY: update PSlot set slotlink = 'XX.illegal' where slotname = 'PS.base.a1';
-ERROR:  illegal slotlink beginning with XX
-QUERY: insert into HSlot values ('HS', 'base.hub1', 1, '');
-ERROR:  Cannot insert a duplicate key into a unique index
-QUERY: insert into HSlot values ('HS', 'base.hub1', 20, '');
-ERROR:  no manual manipulation of HSlot
-QUERY: delete from HSlot;
-ERROR:  no manual manipulation of HSlot
-QUERY: insert into IFace values ('IF', 'notthere', 'eth0', '');
-ERROR:  system "notthere" does not exist
-QUERY: insert into IFace values ('IF', 'orion', 'ethernet_interface_name_too_long', '');
-ERROR:  IFace slotname "IF.orion.ethernet_interface_name_too_long" too long (20 char max)
+insert into PField values ('PF1_1', 'should fail due to unique index');
+psql:test.sql:263: ERROR:  Cannot insert a duplicate key into unique index pfield_name
+update PSlot set backlink = 'WS.not.there' where slotname = 'PS.base.a1';
+psql:test.sql:264: ERROR:  WS.not.there         does not exist
+update PSlot set backlink = 'XX.illegal' where slotname = 'PS.base.a1';
+psql:test.sql:265: ERROR:  illegal backlink beginning with XX
+update PSlot set slotlink = 'PS.not.there' where slotname = 'PS.base.a1';
+psql:test.sql:266: ERROR:  PS.not.there         does not exist
+update PSlot set slotlink = 'XX.illegal' where slotname = 'PS.base.a1';
+psql:test.sql:267: ERROR:  illegal slotlink beginning with XX
+insert into HSlot values ('HS', 'base.hub1', 1, '');
+psql:test.sql:268: ERROR:  Cannot insert a duplicate key into unique index hslot_name
+insert into HSlot values ('HS', 'base.hub1', 20, '');
+psql:test.sql:269: ERROR:  no manual manipulation of HSlot
+delete from HSlot;
+psql:test.sql:270: ERROR:  no manual manipulation of HSlot
+insert into IFace values ('IF', 'notthere', 'eth0', '');
+psql:test.sql:271: ERROR:  system "notthere" does not exist
+insert into IFace values ('IF', 'orion', 'ethernet_interface_name_too_long', '');
+psql:test.sql:272: ERROR:  IFace slotname "IF.orion.ethernet_interface_name_too_long" too long (20 char max)

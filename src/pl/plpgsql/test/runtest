@@ -3,17 +3,17 @@
 DB=plpgsql_test
 export DB
 
-FRONTEND="psql -n -e -q"
+FRONTEND="psql -e -q -X"
 export FRONTEND
 
 echo "*** destroy old $DB database ***"
-destroydb $DB
+dropdb $DB
 
 echo "*** create new $DB database ***"
 createdb $DB
 
 echo "*** install PL/pgSQL ***"
-$FRONTEND -f mklang.sql -d $DB >/dev/null 2>&1
+createlang plpgsql $DB
 
 echo "*** create tables ***"
 $FRONTEND -f tables.sql -d $DB >output/tables.out 2>&1

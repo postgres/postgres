@@ -1,4 +1,4 @@
-QUERY: create function tg_room_au() returns opaque as '
+create function tg_room_au() returns opaque as '
 begin
     if new.roomno != old.roomno then
         update WSlot set roomno = new.roomno where roomno = old.roomno;
@@ -6,17 +6,17 @@ begin
     return new;
 end;
 ' language 'plpgsql';
-QUERY: create trigger tg_room_au after update
+create trigger tg_room_au after update
     on Room for each row execute procedure tg_room_au();
-QUERY: create function tg_room_ad() returns opaque as '
+create function tg_room_ad() returns opaque as '
 begin
     delete from WSlot where roomno = old.roomno;
     return old;
 end;
 ' language 'plpgsql';
-QUERY: create trigger tg_room_ad after delete
+create trigger tg_room_ad after delete
     on Room for each row execute procedure tg_room_ad();
-QUERY: create function tg_wslot_biu() returns opaque as '
+create function tg_wslot_biu() returns opaque as '
 begin
     if count(*) = 0 from Room where roomno = new.roomno then
         raise exception ''Room % does not exist'', new.roomno;
@@ -24,9 +24,9 @@ begin
     return new;
 end;
 ' language 'plpgsql';
-QUERY: create trigger tg_wslot_biu before insert or update
+create trigger tg_wslot_biu before insert or update
     on WSlot for each row execute procedure tg_wslot_biu();
-QUERY: create function tg_pfield_au() returns opaque as '
+create function tg_pfield_au() returns opaque as '
 begin
     if new.name != old.name then
         update PSlot set pfname = new.name where pfname = old.name;
@@ -34,17 +34,17 @@ begin
     return new;
 end;
 ' language 'plpgsql';
-QUERY: create trigger tg_pfield_au after update
+create trigger tg_pfield_au after update
     on PField for each row execute procedure tg_pfield_au();
-QUERY: create function tg_pfield_ad() returns opaque as '
+create function tg_pfield_ad() returns opaque as '
 begin
     delete from PSlot where pfname = old.name;
     return old;
 end;
 ' language 'plpgsql';
-QUERY: create trigger tg_pfield_ad after delete
+create trigger tg_pfield_ad after delete
     on PField for each row execute procedure tg_pfield_ad();
-QUERY: create function tg_pslot_biu() returns opaque as '
+create function tg_pslot_biu() returns opaque as '
 declare
     pfrec	record;
     rename new to ps;
@@ -56,9 +56,9 @@ begin
     return ps;
 end;
 ' language 'plpgsql';
-QUERY: create trigger tg_pslot_biu before insert or update
+create trigger tg_pslot_biu before insert or update
     on PSlot for each row execute procedure tg_pslot_biu();
-QUERY: create function tg_system_au() returns opaque as '
+create function tg_system_au() returns opaque as '
 begin
     if new.name != old.name then
         update IFace set sysname = new.name where sysname = old.name;
@@ -66,9 +66,9 @@ begin
     return new;
 end;
 ' language 'plpgsql';
-QUERY: create trigger tg_system_au after update
+create trigger tg_system_au after update
     on System for each row execute procedure tg_system_au();
-QUERY: create function tg_iface_biu() returns opaque as '
+create function tg_iface_biu() returns opaque as '
 declare
     sname	text;
     sysrec	record;
@@ -87,9 +87,9 @@ begin
     return new;
 end;
 ' language 'plpgsql';
-QUERY: create trigger tg_iface_biu before insert or update
+create trigger tg_iface_biu before insert or update
     on IFace for each row execute procedure tg_iface_biu();
-QUERY: create function tg_hub_a() returns opaque as '
+create function tg_hub_a() returns opaque as '
 declare
     hname	text;
     dummy	integer;
@@ -111,9 +111,9 @@ begin
     end if;
 end;
 ' language 'plpgsql';
-QUERY: create trigger tg_hub_a after insert or update or delete
+create trigger tg_hub_a after insert or update or delete
     on Hub for each row execute procedure tg_hub_a();
-QUERY: create function tg_hub_adjustslots(bpchar, integer, integer)
+create function tg_hub_adjustslots(bpchar, integer, integer)
 returns integer as '
 declare
     hname	alias for $1;
@@ -134,7 +134,7 @@ begin
     return 0;
 end;
 ' language 'plpgsql';
-QUERY: create function tg_hslot_biu() returns opaque as '
+create function tg_hslot_biu() returns opaque as '
 declare
     sname	text;
     xname	HSlot.slotname%TYPE;
@@ -164,9 +164,9 @@ begin
     return new;
 end;
 ' language 'plpgsql';
-QUERY: create trigger tg_hslot_biu before insert or update
+create trigger tg_hslot_biu before insert or update
     on HSlot for each row execute procedure tg_hslot_biu();
-QUERY: create function tg_hslot_bd() returns opaque as '
+create function tg_hslot_bd() returns opaque as '
 declare
     hubrec	record;
 begin
@@ -180,9 +180,9 @@ begin
     raise exception ''no manual manipulation of HSlot'';
 end;
 ' language 'plpgsql';
-QUERY: create trigger tg_hslot_bd before delete
+create trigger tg_hslot_bd before delete
     on HSlot for each row execute procedure tg_hslot_bd();
-QUERY: create function tg_chkslotname() returns opaque as '
+create function tg_chkslotname() returns opaque as '
 begin
     if substr(new.slotname, 1, 2) != tg_argv[0] then
         raise exception ''slotname must begin with %'', tg_argv[0];
@@ -190,17 +190,17 @@ begin
     return new;
 end;
 ' language 'plpgsql';
-QUERY: create trigger tg_chkslotname before insert
+create trigger tg_chkslotname before insert
     on PSlot for each row execute procedure tg_chkslotname('PS');
-QUERY: create trigger tg_chkslotname before insert
+create trigger tg_chkslotname before insert
     on WSlot for each row execute procedure tg_chkslotname('WS');
-QUERY: create trigger tg_chkslotname before insert
+create trigger tg_chkslotname before insert
     on PLine for each row execute procedure tg_chkslotname('PL');
-QUERY: create trigger tg_chkslotname before insert
+create trigger tg_chkslotname before insert
     on IFace for each row execute procedure tg_chkslotname('IF');
-QUERY: create trigger tg_chkslotname before insert
+create trigger tg_chkslotname before insert
     on PHone for each row execute procedure tg_chkslotname('PH');
-QUERY: create function tg_chkslotlink() returns opaque as '
+create function tg_chkslotlink() returns opaque as '
 begin
     if new.slotlink isnull then
         new.slotlink := '''';
@@ -208,17 +208,17 @@ begin
     return new;
 end;
 ' language 'plpgsql';
-QUERY: create trigger tg_chkslotlink before insert or update
+create trigger tg_chkslotlink before insert or update
     on PSlot for each row execute procedure tg_chkslotlink();
-QUERY: create trigger tg_chkslotlink before insert or update
+create trigger tg_chkslotlink before insert or update
     on WSlot for each row execute procedure tg_chkslotlink();
-QUERY: create trigger tg_chkslotlink before insert or update
+create trigger tg_chkslotlink before insert or update
     on IFace for each row execute procedure tg_chkslotlink();
-QUERY: create trigger tg_chkslotlink before insert or update
+create trigger tg_chkslotlink before insert or update
     on HSlot for each row execute procedure tg_chkslotlink();
-QUERY: create trigger tg_chkslotlink before insert or update
+create trigger tg_chkslotlink before insert or update
     on PHone for each row execute procedure tg_chkslotlink();
-QUERY: create function tg_chkbacklink() returns opaque as '
+create function tg_chkbacklink() returns opaque as '
 begin
     if new.backlink isnull then
         new.backlink := '''';
@@ -226,13 +226,13 @@ begin
     return new;
 end;
 ' language 'plpgsql';
-QUERY: create trigger tg_chkbacklink before insert or update
+create trigger tg_chkbacklink before insert or update
     on PSlot for each row execute procedure tg_chkbacklink();
-QUERY: create trigger tg_chkbacklink before insert or update
+create trigger tg_chkbacklink before insert or update
     on WSlot for each row execute procedure tg_chkbacklink();
-QUERY: create trigger tg_chkbacklink before insert or update
+create trigger tg_chkbacklink before insert or update
     on PLine for each row execute procedure tg_chkbacklink();
-QUERY: create function tg_pslot_bu() returns opaque as '
+create function tg_pslot_bu() returns opaque as '
 begin
     if new.slotname != old.slotname then
         delete from PSlot where slotname = old.slotname;
@@ -252,9 +252,9 @@ begin
     return new;
 end;
 ' language 'plpgsql';
-QUERY: create trigger tg_pslot_bu before update
+create trigger tg_pslot_bu before update
     on PSlot for each row execute procedure tg_pslot_bu();
-QUERY: create function tg_wslot_bu() returns opaque as '
+create function tg_wslot_bu() returns opaque as '
 begin
     if new.slotname != old.slotname then
         delete from WSlot where slotname = old.slotname;
@@ -274,9 +274,9 @@ begin
     return new;
 end;
 ' language 'plpgsql';
-QUERY: create trigger tg_wslot_bu before update
+create trigger tg_wslot_bu before update
     on WSlot for each row execute procedure tg_Wslot_bu();
-QUERY: create function tg_pline_bu() returns opaque as '
+create function tg_pline_bu() returns opaque as '
 begin
     if new.slotname != old.slotname then
         delete from PLine where slotname = old.slotname;
@@ -296,9 +296,9 @@ begin
     return new;
 end;
 ' language 'plpgsql';
-QUERY: create trigger tg_pline_bu before update
+create trigger tg_pline_bu before update
     on PLine for each row execute procedure tg_pline_bu();
-QUERY: create function tg_iface_bu() returns opaque as '
+create function tg_iface_bu() returns opaque as '
 begin
     if new.slotname != old.slotname then
         delete from IFace where slotname = old.slotname;
@@ -318,9 +318,9 @@ begin
     return new;
 end;
 ' language 'plpgsql';
-QUERY: create trigger tg_iface_bu before update
+create trigger tg_iface_bu before update
     on IFace for each row execute procedure tg_iface_bu();
-QUERY: create function tg_hslot_bu() returns opaque as '
+create function tg_hslot_bu() returns opaque as '
 begin
     if new.slotname != old.slotname or new.hubname != old.hubname then
         delete from HSlot where slotname = old.slotname;
@@ -340,9 +340,9 @@ begin
     return new;
 end;
 ' language 'plpgsql';
-QUERY: create trigger tg_hslot_bu before update
+create trigger tg_hslot_bu before update
     on HSlot for each row execute procedure tg_hslot_bu();
-QUERY: create function tg_phone_bu() returns opaque as '
+create function tg_phone_bu() returns opaque as '
 begin
     if new.slotname != old.slotname then
         delete from PHone where slotname = old.slotname;
@@ -360,9 +360,9 @@ begin
     return new;
 end;
 ' language 'plpgsql';
-QUERY: create trigger tg_phone_bu before update
+create trigger tg_phone_bu before update
     on PHone for each row execute procedure tg_phone_bu();
-QUERY: create function tg_backlink_a() returns opaque as '
+create function tg_backlink_a() returns opaque as '
 declare
     dummy	integer;
 begin
@@ -395,13 +395,13 @@ begin
     end if;
 end;
 ' language 'plpgsql';
-QUERY: create trigger tg_backlink_a after insert or update or delete
+create trigger tg_backlink_a after insert or update or delete
     on PSlot for each row execute procedure tg_backlink_a('PS');
-QUERY: create trigger tg_backlink_a after insert or update or delete
+create trigger tg_backlink_a after insert or update or delete
     on WSlot for each row execute procedure tg_backlink_a('WS');
-QUERY: create trigger tg_backlink_a after insert or update or delete
+create trigger tg_backlink_a after insert or update or delete
     on PLine for each row execute procedure tg_backlink_a('PL');
-QUERY: create function tg_backlink_set(bpchar, bpchar)
+create function tg_backlink_set(bpchar, bpchar)
 returns integer as '
 declare
     myname	alias for $1;
@@ -413,17 +413,17 @@ begin
     mytype := substr(myname, 1, 2);
     link := mytype || substr(blname, 1, 2);
     if link = ''PLPL'' then
-        raise exception
+        raise exception 
 		''backlink between two phone lines does not make sense'';
     end if;
     if link in (''PLWS'', ''WSPL'') then
-        raise exception
+        raise exception 
 		''direct link of phone line to wall slot not permitted'';
     end if;
     if mytype = ''PS'' then
         select into rec * from PSlot where slotname = myname;
 	if not found then
-	    raise exception ''% does not exists'', myname;
+	    raise exception ''% does not exist'', myname;
 	end if;
 	if rec.backlink != blname then
 	    update PSlot set backlink = blname where slotname = myname;
@@ -433,7 +433,7 @@ begin
     if mytype = ''WS'' then
         select into rec * from WSlot where slotname = myname;
 	if not found then
-	    raise exception ''% does not exists'', myname;
+	    raise exception ''% does not exist'', myname;
 	end if;
 	if rec.backlink != blname then
 	    update WSlot set backlink = blname where slotname = myname;
@@ -443,7 +443,7 @@ begin
     if mytype = ''PL'' then
         select into rec * from PLine where slotname = myname;
 	if not found then
-	    raise exception ''% does not exists'', myname;
+	    raise exception ''% does not exist'', myname;
 	end if;
 	if rec.backlink != blname then
 	    update PLine set backlink = blname where slotname = myname;
@@ -453,7 +453,7 @@ begin
     raise exception ''illegal backlink beginning with %'', mytype;
 end;
 ' language 'plpgsql';
-QUERY: create function tg_backlink_unset(bpchar, bpchar)
+create function tg_backlink_unset(bpchar, bpchar)
 returns integer as '
 declare
     myname	alias for $1;
@@ -494,7 +494,7 @@ begin
     end if;
 end;
 ' language 'plpgsql';
-QUERY: create function tg_slotlink_a() returns opaque as '
+create function tg_slotlink_a() returns opaque as '
 declare
     dummy	integer;
 begin
@@ -527,17 +527,17 @@ begin
     end if;
 end;
 ' language 'plpgsql';
-QUERY: create trigger tg_slotlink_a after insert or update or delete
+create trigger tg_slotlink_a after insert or update or delete
     on PSlot for each row execute procedure tg_slotlink_a('PS');
-QUERY: create trigger tg_slotlink_a after insert or update or delete
+create trigger tg_slotlink_a after insert or update or delete
     on WSlot for each row execute procedure tg_slotlink_a('WS');
-QUERY: create trigger tg_slotlink_a after insert or update or delete
+create trigger tg_slotlink_a after insert or update or delete
     on IFace for each row execute procedure tg_slotlink_a('IF');
-QUERY: create trigger tg_slotlink_a after insert or update or delete
+create trigger tg_slotlink_a after insert or update or delete
     on HSlot for each row execute procedure tg_slotlink_a('HS');
-QUERY: create trigger tg_slotlink_a after insert or update or delete
+create trigger tg_slotlink_a after insert or update or delete
     on PHone for each row execute procedure tg_slotlink_a('PH');
-QUERY: create function tg_slotlink_set(bpchar, bpchar)
+create function tg_slotlink_set(bpchar, bpchar)
 returns integer as '
 declare
     myname	alias for $1;
@@ -549,25 +549,25 @@ begin
     mytype := substr(myname, 1, 2);
     link := mytype || substr(blname, 1, 2);
     if link = ''PHPH'' then
-        raise exception
+        raise exception 
 		''slotlink between two phones does not make sense'';
     end if;
     if link in (''PHHS'', ''HSPH'') then
-        raise exception
+        raise exception 
 		''link of phone to hub does not make sense'';
     end if;
     if link in (''PHIF'', ''IFPH'') then
-        raise exception
+        raise exception 
 		''link of phone to hub does not make sense'';
     end if;
     if link in (''PSWS'', ''WSPS'') then
-        raise exception
+        raise exception 
 		''slotlink from patchslot to wallslot not permitted'';
     end if;
     if mytype = ''PS'' then
         select into rec * from PSlot where slotname = myname;
 	if not found then
-	    raise exception ''% does not exists'', myname;
+	    raise exception ''% does not exist'', myname;
 	end if;
 	if rec.slotlink != blname then
 	    update PSlot set slotlink = blname where slotname = myname;
@@ -577,7 +577,7 @@ begin
     if mytype = ''WS'' then
         select into rec * from WSlot where slotname = myname;
 	if not found then
-	    raise exception ''% does not exists'', myname;
+	    raise exception ''% does not exist'', myname;
 	end if;
 	if rec.slotlink != blname then
 	    update WSlot set slotlink = blname where slotname = myname;
@@ -587,7 +587,7 @@ begin
     if mytype = ''IF'' then
         select into rec * from IFace where slotname = myname;
 	if not found then
-	    raise exception ''% does not exists'', myname;
+	    raise exception ''% does not exist'', myname;
 	end if;
 	if rec.slotlink != blname then
 	    update IFace set slotlink = blname where slotname = myname;
@@ -597,7 +597,7 @@ begin
     if mytype = ''HS'' then
         select into rec * from HSlot where slotname = myname;
 	if not found then
-	    raise exception ''% does not exists'', myname;
+	    raise exception ''% does not exist'', myname;
 	end if;
 	if rec.slotlink != blname then
 	    update HSlot set slotlink = blname where slotname = myname;
@@ -607,7 +607,7 @@ begin
     if mytype = ''PH'' then
         select into rec * from PHone where slotname = myname;
 	if not found then
-	    raise exception ''% does not exists'', myname;
+	    raise exception ''% does not exist'', myname;
 	end if;
 	if rec.slotlink != blname then
 	    update PHone set slotlink = blname where slotname = myname;
@@ -617,7 +617,7 @@ begin
     raise exception ''illegal slotlink beginning with %'', mytype;
 end;
 ' language 'plpgsql';
-QUERY: create function tg_slotlink_unset(bpchar, bpchar)
+create function tg_slotlink_unset(bpchar, bpchar)
 returns integer as '
 declare
     myname	alias for $1;
