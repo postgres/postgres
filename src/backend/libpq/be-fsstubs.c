@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.16 1997/10/25 01:09:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.17 1997/12/08 04:42:45 momjian Exp $
  *
  * NOTES
  *	  This should be moved to a more appropriate place.  It is here
@@ -227,9 +227,9 @@ loread(int fd, int len)
 	struct varlena *retval;
 	int			totalread = 0;
 
-	retval = (struct varlena *) palloc(sizeof(int32) + len);
+	retval = (struct varlena *) palloc(VARHDRSZ + len);
 	totalread = lo_read(fd, VARDATA(retval), len);
-	VARSIZE(retval) = totalread + sizeof(int32);
+	VARSIZE(retval) = totalread + VARHDRSZ;
 
 	return retval;
 }
@@ -240,7 +240,7 @@ lowrite(int fd, struct varlena * wbuf)
 	int			totalwritten;
 	int			bytestowrite;
 
-	bytestowrite = VARSIZE(wbuf) - sizeof(int32);
+	bytestowrite = VARSIZE(wbuf) - VARHDRSZ;
 	totalwritten = lo_write(fd, VARDATA(wbuf), bytestowrite);
 	return totalwritten;
 }

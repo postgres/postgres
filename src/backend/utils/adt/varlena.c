@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.23 1997/12/06 22:57:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.24 1997/12/08 04:42:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,7 +59,7 @@ byteain(char *inputText)
 				elog(WARN, "Bad input string for type bytea");
 		}
 	tp = inputText;
-	byte += sizeof(int32);		/* varlena? */
+	byte += VARHDRSZ;
 	result = (struct varlena *) palloc(byte);
 	result->vl_len = byte;		/* varlena? */
 	rp = result->vl_dat;
@@ -88,11 +88,11 @@ shove_bytes(unsigned char *stuff, int len)
 {
 	struct varlena *result;
 
-	result = (struct varlena *) palloc(len + sizeof(int32));
+	result = (struct varlena *) palloc(len + VARHDRSZ);
 	result->vl_len = len;
 	memmove(result->vl_dat,
-			stuff + sizeof(int32),
-			len - sizeof(int32));
+			stuff + VARHDRSZ,
+			len - VARHDRSZ);
 	return (result);
 }
 
@@ -126,7 +126,7 @@ byteaout(struct varlena * vlena)
 	}
 	vp = vlena->vl_dat;
 	len = 1;					/* empty string has 1 char */
-	for (i = vlena->vl_len - sizeof(int32); i != 0; i--, vp++)	/* varlena? */
+	for (i = vlena->vl_len - VARHDRSZ; i != 0; i--, vp++)
 		if (*vp == '\\')
 			len += 2;
 		else if (isascii(*vp) && isprint(*vp))
@@ -135,7 +135,7 @@ byteaout(struct varlena * vlena)
 			len += VARHDRSZ;
 	rp = result = (char *) palloc(len);
 	vp = vlena->vl_dat;
-	for (i = vlena->vl_len - sizeof(int32); i != 0; i--)		/* varlena? */
+	for (i = vlena->vl_len - VARHDRSZ; i != 0; i--)
 		if (*vp == '\\')
 		{
 			vp++;
