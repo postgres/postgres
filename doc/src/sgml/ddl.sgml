@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ddl.sgml,v 1.19 2003/09/12 22:17:22 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ddl.sgml,v 1.20 2003/10/28 20:18:09 tgl Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -1728,7 +1728,7 @@ SELECT 3 OPERATOR(pg_catalog.+) 4;
    </indexterm>
 
    <para>
-    By default, users cannot see the objects in schemas they do not
+    By default, users cannot access any objects in schemas they do not
     own.  To allow that, the owner of the schema needs to grant the
     <literal>USAGE</literal> privilege on the schema.  To allow users
     to make use of the objects in the schema, additional privileges
