@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.67 1997/11/15 20:57:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.68 1997/11/17 16:37:24 thomas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -153,7 +153,9 @@ static Node *makeIndexable(char *opname, Node *lexpr, Node *rexpr);
 
 %type <list>	union_clause, select_list
 %type <list>	join_list
-%type <sortgroupby>		join_using
+%type <sortgroupby>
+				join_using
+%type <boolean>	opt_union
 
 %type <node>	position_expr
 %type <list>	extract_list, position_list
@@ -1130,7 +1132,7 @@ FetchStmt:	FETCH opt_direction fetch_how_many opt_portal_name
 					n->direction = $2;
 					n->howMany = $3;
 					n->portalname = $4;
-					n->ismove = true;
+					n->ismove = TRUE;
 					$$ = (Node *)n;
 				}
 		;
@@ -2097,27 +2099,27 @@ RetrieveStmt:  SELECT opt_unique res_target_list2
 				}
 		;
 
-union_clause:  UNION select_list				{ $$ = $2; }
+union_clause:  UNION opt_union select_list		{ $$ = $3; }
 		| /*EMPTY*/								{ $$ = NIL; }
 		;
 
-select_list:  select_list UNION SubSelect
-				{ $$ = lappend($1, $3); }
+select_list:  select_list UNION opt_union SubSelect
+				{ $$ = lappend($1, $4); }
 		| SubSelect
 				{ $$ = lcons($1, NIL); }
 		;
 
 SubSelect:	SELECT opt_unique res_target_list2
-			 result from_clause where_clause
+			 from_clause where_clause
 			 group_clause having_clause
 				{
 					SubSelect *n = makeNode(SubSelect);
 					n->unique = $2;
 					n->targetList = $3;
-					n->fromClause = $5;
-					n->whereClause = $6;
-					n->groupClause = $7;
-					n->havingClause = $8;
+					n->fromClause = $4;
+					n->whereClause = $5;
+					n->groupClause = $6;
+					n->havingClause = $7;
 					$$ = (Node *)n;
 				}
 		;
@@ -2128,9 +2130,14 @@ result:  INTO TABLE relation_name
 				{  $$ = NULL;  }
 		;
 
+opt_union:  ALL									{ $$ = TRUE; }
+		| /*EMPTY*/								{ $$ = FALSE; }
+		;
+
 opt_unique:  DISTINCT							{ $$ = "*"; }
 		| DISTINCT ON ColId						{ $$ = $3; }
-		| /*EMPTY*/								{ $$ = NULL;}
+		| ALL									{ $$ = NULL; }
+		| /*EMPTY*/								{ $$ = NULL; }
 		;
 
 sort_clause:  ORDER BY sortby_list				{ $$ = $3; }
@@ -3414,6 +3421,14 @@ AexprConst:  Iconst
 					A_Const *n = makeNode(A_Const);
 					n->val.type = T_String;
 					n->val.val.str = $1;
+					$$ = (Node *)n;
+				}
+		| Typename Sconst
+				{
+					A_Const *n = makeNode(A_Const);
+					n->typename = $1;
+					n->val.type = T_String;
+					n->val.val.str = $2;
 					$$ = (Node *)n;
 				}
 		| ParamNo
