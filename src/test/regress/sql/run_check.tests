@@ -1,0 +1,132 @@
+# ----------
+# The first group of parallel test
+# ----------
+parallel	group1
+	test	boolean
+	test	char
+	test	name
+	test	varchar
+	test	text
+	test	int2
+	test	int4
+	test	int8
+	test	oid
+	test	float4
+	test	float8
+endparallel
+
+test	strings		# Depends on things setup during char, varchar and text.
+
+# ----------
+# The second group of parallel test
+# ----------
+parallel	group2
+	test	numerology
+	test	point
+ 	test	lseg
+ 	test	box
+ 	test	path
+ 	test	polygon
+ 	test	circle
+ 	test	timespan
+ 	test	datetime
+ 	test	reltime
+	test	tinterval
+	test	inet
+	test	comments
+	test	oidjoins
+	test	type_sanity
+	test	opr_sanity
+endparallel
+
+test	abstime		# Depends on the reltime test
+test	horology	# Depends on timespan, datetime, reltime and abstime
+test	geometry	# Depends on point, lseg, box, path, polygon and circle
+
+# ----------
+# These four each depend on the previous one
+# ----------
+test	create_function_1
+test	create_type
+test	create_table
+test	create_function_2
+
+# ----------
+# Load huge amounts of data
+# We should split the data files into single files and then
+# execute two copy tests parallel, to check that copy itself
+# is concurrent safe.
+# ----------
+test	copy
+
+# ----------
+# The third group of parallel test
+# ----------
+parallel	group3
+	test	constraints
+	test	triggers
+	test	create_misc
+	test	create_aggregate
+	test	create_operator
+	test	create_index
+endparallel
+
+test	create_view		# Depends on the above
+
+# ----------
+# sanity_check does a vacuum, affecting the sort order of SELECT *
+# results. So it should not run parallel to other tests.
+# ----------
+test	sanity_check
+
+# ----------
+# Believe it or not, select creates a table, subsequent
+# tests need.
+# ----------
+test	errors
+test	select
+
+# ----------
+# The fourth group of parallel test
+# ----------
+parallel	group4
+	test	select_into
+	test	select_distinct
+	test	select_distinct_on
+	test	select_implicit
+	test	select_having
+	test	subselect
+	test	union
+	test	case
+	test	join
+	test	aggregates
+	test	transactions
+	test	random
+	test	portals
+	test	arrays
+	test	btree_index
+	test	hash_index
+endparallel
+
+test	misc
+
+# ----------
+# The fifth group of parallel test
+# ----------
+parallel	group5
+	test	select_views
+	test	alter_table
+	test	portals_p2
+	test	rules
+endparallel
+
+# ----------
+# The sixth group of parallel test
+# ----------
+parallel	group6
+	test	limit
+	test	plpgsql		# Cannot run concurrently to rules
+	test	temp
+	test	numeric
+endparallel
+

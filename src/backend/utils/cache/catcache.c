@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.51 1999/11/07 23:08:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.52 1999/11/19 18:51:48 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -983,11 +983,23 @@ SearchSysCache(struct catcache * cache,
 	 * ----------------
 	 */
 
+	/* ----------
+	 * It is definitely insufficient. While modifying the regression
+	 * test to run independent tests concurrently it happened, that
+	 * this code fails VERY often. ISTM that 'cache' points into
+	 * shared memory, but that 'busy' means this backend is loading
+	 * a new entry. So when another backend has set busy, this one
+	 * think's it detected a recursion.
+	 *
+	 * Need's a smarter detection mechanism - Jan
+	 *
 	if (cache->busy)
 	{
 		elog(ERROR, "SearchSysCache: recursive use of cache %d", cache->id);
 	}
 	cache->busy = true;
+	 * ----------
+	 */
 
 	/* ----------------
 	 *	open the relation associated with the cache

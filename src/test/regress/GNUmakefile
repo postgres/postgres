@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/test/regress/GNUmakefile,v 1.19 1999/06/28 18:40:34 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/test/regress/GNUmakefile,v 1.20 1999/11/19 18:51:48 wieck Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -91,6 +91,38 @@ else
 endif
 	@echo "ACTUAL RESULTS OF REGRESSION TEST ARE NOW IN FILE regress.out"
 
+#
+# run the parallel test suite
+#
+runcheck:	$(INFILES)
+ifneq ($(PORTNAME), win)
+	MULTIBYTE=$(MULTIBYTE);export MULTIBYTE; \
+	$(SHELL) ./run_check.sh $(PORTNAME)
+else
+	MULTIBYTE=$(MULTIBYTE);export MULTIBYTE; \
+	./run_check.sh $(PORTNAME)
+endif
+	@echo "ACTUAL RESULTS OF REGRESSION TEST ARE NOW IN FILES run_check.out"
+	@echo "AND regress.out"
+	@echo ""
+	@echo "To run the optional big test(s) too, type 'make bigcheck'"
+	@echo "These big tests can take over an hour to complete"
+	@echo "These actually are: $(EXTRA_TESTS)"
+
+#
+# run the test including the huge extra tests
+#
+bigcheck: $(INFILES) 
+ifneq ($(PORTNAME), win)
+	MULTIBYTE=$(MULTIBYTE);export MULTIBYTE; \
+	$(SHELL) ./run_check.sh $(PORTNAME) $(EXTRA_TESTS)
+else
+	MULTIBYTE=$(MULTIBYTE);export MULTIBYTE; \
+	./run_check.sh $(PORTNAME) $(EXTRA_TESTS)
+endif
+	@echo "ACTUAL RESULTS OF REGRESSION TEST ARE NOW IN FILES run_check.out"
+	@echo "AND regress.out"
+
 clean:
 	rm -f $(INFILES) regress.out regress.o regression.diffs
 ifeq ($(PORTNAME), win)
@@ -100,3 +132,4 @@ endif
 	$(MAKE) -C expected clean
 	$(MAKE) -C results clean
 	$(MAKE) -C ../../../contrib/spi clean
+	rm -rf tmp_check

@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/regress.sh,v 1.31 1999/07/09 17:57:46 momjian Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/regress.sh,v 1.32 1999/11/19 18:51:49 wieck Exp $
 #
 if [ $# -eq 0 ]
 then
@@ -76,7 +76,13 @@ fi
 
 echo "=============== running regression queries...         ================="
 echo "" > regression.diffs
-for i in `cat sql/tests` $mbtests $extratests
+
+stdtests=`awk '
+$1=="test"	{ print $2; }
+			{}
+' < sql/run_check.tests`
+
+for i in $stdtests $mbtests $extratests
 do
 	$ECHO_N "${i} .. " $ECHO_C
 	$FRONTEND regression < sql/${i}.sql > results/${i}.out 2>&1

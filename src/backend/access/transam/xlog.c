@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.7 1999/10/25 03:07:42 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.8 1999/11/19 18:51:47 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1253,15 +1253,15 @@ tryAgain:
 	{
 		fd = errno;
 		if (!ReleaseDataFile())
-			elog(STOP, "Open(cntlfile) failed: %d (and no one data file can be closed)", 
-						fd);
+			elog(STOP, "Open(\"%s\") failed: %d (and no one data file can be closed)", 
+						ControlFilePath, fd);
 		goto tryAgain;
 	}
 	if (fd < 0)
-		elog(STOP, "Open(cntlfile) failed: %d", errno);
+		elog(STOP, "Open(\"%s\") failed: %d", ControlFilePath, errno);
 
 	if (read(fd, ControlFile, BLCKSZ) != BLCKSZ)
-		elog(STOP, "Read(cntlfile) failed: %d", errno);
+		elog(STOP, "Read(\"%s\") failed: %d", ControlFilePath, errno);
 
 	close(fd);
 
