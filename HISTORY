@@ -37,9 +37,14 @@ several languages.
 Migration to 7.2
 
    A dump/restore using pg_dump is required for those wishing to migrate
-   data from any previous release.  The SELECT ... LIMIT 10,20 syntax will
-   be removed in 7.3.  You should change your queries to use LIMIT 10
-   OFFSET 20.  Also, pg_hba.conf only loads on SIGHUP now.
+   data from any previous release. In this release, comparisons using "=
+   NULL" will always return false. Previous releases automatically
+   transformed this syntax to "IS NULL", which is the standards-
+   compliant way to do NULL comparisons. The old behavior can be
+   re-enabled using a postgresql.conf parameter. The SELECT ... LIMIT
+   #,# syntax will be removed in 7.3. You should change your queries to
+   use separate LIMIT and OFFSET clauses, e.g. LIMIT 10 OFFSET 20. Also,
+   pg_hba.conf now only loads on SIGHUP.
 
 
 
