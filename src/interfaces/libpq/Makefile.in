@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Attic/Makefile.in,v 1.8 1998/02/27 02:40:59 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Attic/Makefile.in,v 1.9 1998/03/20 04:07:02 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -57,6 +57,12 @@ ifeq ($(PORTNAME), univel)
   install-shlib-dep := install-shlib
   shlib := libpq.so.1
   LDFLAGS_SL = -G -z text
+  CFLAGS += $(CFLAGS_SL)
+endif
+ifeq ($(PORTNAME), hpux)
+  install-shlib-dep := install-shlib
+  shlib := libpq.sl
+  LDFLAGS_SL = -b
   CFLAGS += $(CFLAGS_SL)
 endif
 
