@@ -32,7 +32,6 @@
 /*
  * External declarations
  */
-extern Datum show_all_settings(PG_FUNCTION_ARGS);
 extern Datum normal_rand(PG_FUNCTION_ARGS);
 extern Datum crosstab(PG_FUNCTION_ARGS);
 

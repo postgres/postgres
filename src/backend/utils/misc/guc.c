@@ -5,7 +5,7 @@
  * command, configuration file, and command line options.
  * See src/backend/utils/misc/README for more information.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.81 2002/08/14 23:02:59 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.82 2002/08/15 02:51:26 momjian Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -29,6 +29,7 @@
 #include "commands/vacuum.h"
 #include "executor/executor.h"
 #include "fmgr.h"
+#include "funcapi.h"
 #include "libpq/auth.h"
 #include "libpq/pqcomm.h"
 #include "mb/pg_wchar.h"
@@ -2401,6 +2402,117 @@ show_config_by_name(PG_FUNCTION_ARGS)
 
 	/* return it */
 	PG_RETURN_TEXT_P(result_text);
+}
+
+/*
+ * show_all_settings - equiv to SHOW ALL command but implemented as
+ * a Table Function.
+ */
+Datum
+show_all_settings(PG_FUNCTION_ARGS)
+{
+	FuncCallContext	   *funcctx;
+	TupleDesc			tupdesc;
+	int					call_cntr;
+	int					max_calls;
+	TupleTableSlot	   *slot;
+	AttInMetadata	   *attinmeta;
+
+	/* stuff done only on the first call of the function */
+ 	if(SRF_IS_FIRSTCALL())
+ 	{
+		/* create a function context for cross-call persistence */
+ 		funcctx = SRF_FIRSTCALL_INIT();
+
+		/* need a tuple descriptor representing two TEXT columns */
+		tupdesc = CreateTemplateTupleDesc(2, WITHOUTOID);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "name",
+						   TEXTOID, -1, 0, false);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "setting",
+						   TEXTOID, -1, 0, false);
+
+		/* allocate a slot for a tuple with this tupdesc */
+		slot = TupleDescGetSlot(tupdesc);
+
+		/* assign slot to function context */
+		funcctx->slot = slot;
+
+		/*
+		 * Generate attribute metadata needed later to produce tuples from raw
+		 * C strings
+		 */
+		attinmeta = TupleDescGetAttInMetadata(tupdesc);
+		funcctx->attinmeta = attinmeta;
+
+		/* total number of tuples to be returned */
+		funcctx->max_calls = GetNumConfigOptions();
+    }
+
+	/* stuff done on every call of the function */
+ 	funcctx = SRF_PERCALL_SETUP();
+
+	call_cntr = funcctx->call_cntr;
+	max_calls = funcctx->max_calls;
+	slot = funcctx->slot;
+	attinmeta = funcctx->attinmeta;
+
+ 	if (call_cntr < max_calls)	/* do when there is more left to send */
+ 	{
+		char	   **values;
+		char	   *varname;
+		char	   *varval;
+		bool		noshow;
+		HeapTuple	tuple;
+		Datum		result;
+
+		/*
+		 * Get the next visible GUC variable name and value
+		 */
+		do
+		{
+			varval = GetConfigOptionByNum(call_cntr, (const char **) &varname, &noshow);
+			if (noshow)
+			{
+				/* varval is a palloc'd copy, so free it */
+				if (varval != NULL)
+					pfree(varval);
+
+				/* bump the counter and get the next config setting */
+				call_cntr = ++funcctx->call_cntr;
+
+				/* make sure we haven't gone too far now */
+				if (call_cntr >= max_calls)
+			 		SRF_RETURN_DONE(funcctx);
+			}
+		} while (noshow);
+
+		/*
+		 * Prepare a values array for storage in our slot.
+		 * This should be an array of C strings which will
+		 * be processed later by the appropriate "in" functions.
+		 */
+		values = (char **) palloc(2 * sizeof(char *));
+		values[0] = pstrdup(varname);
+		values[1] = varval;	/* varval is already a palloc'd copy */
+
+		/* build a tuple */
+		tuple = BuildTupleFromCStrings(attinmeta, values);
+
+		/* make the tuple into a datum */
+		result = TupleGetDatum(slot, tuple);
+
+		/* Clean up */
+		pfree(values[0]);
+		if (varval != NULL)
+			pfree(values[1]);
+		pfree(values);
+
+ 		SRF_RETURN_NEXT(funcctx, result);
+ 	}
+ 	else	/* do when there is no more left */
+ 	{
+ 		SRF_RETURN_DONE(funcctx);
+ 	}
 }
 
 static char *

@@ -46,9 +46,6 @@ Installation:
 
   installs following functions into database template1:
 
-    show_all_settings()
-      - returns the same information as SHOW ALL, but as a query result
-
     normal_rand(int numvals, float8 mean, float8 stddev, int seed)
       - returns a set of normally distributed float8 values
 
@@ -58,45 +55,12 @@ Installation:
         but you can create additional crosstab functions per the instructions
         in the documentation below.
 
+    crosstab(text sql, N int)
+      - returns a set of row_name plus N category value columns
+      - requires anonymous composite type syntax in the FROM clause. See
+        the instructions in the documentation below.
+
 Documentation
-==================================================================
-Name
-
-show_all_settings() - returns the same information as SHOW ALL,
-       but as a query result.
-
-Synopsis
-
-show_all_settings()
-
-Inputs
-
-  none
-
-Outputs
-
-  Returns setof tablefunc_config_settings which is defined by:
-    CREATE VIEW tablefunc_config_settings AS
-    SELECT
-      ''::TEXT AS name,
-      ''::TEXT AS setting;
-
-Example usage
-
-  test=# select * from show_all_settings();
-             name              |                setting
--------------------------------+---------------------------------------
- australian_timezones          | off
- authentication_timeout        | 60
- checkpoint_segments           | 3
-    .
-    .
-    .
- wal_debug                     | 0
- wal_files                     | 0
- wal_sync_method               | fdatasync
-(94 rows)
-
 ==================================================================
 Name
 
@@ -260,6 +224,99 @@ select * from crosstab3(
    from ct
    where rowclass = ''group1''
    and (attribute = ''att2'' or attribute = ''att3'') order by 1,2;');
+
+ row_name | category_1 | category_2 | category_3
+----------+------------+------------+------------
+ test1    | val2       | val3       |
+ test2    | val6       | val7       |
+(2 rows)
+
+==================================================================
+Name
+
+crosstab(text, int) - returns a set of row_name
+                      plus N category value columns
+
+Synopsis
+
+crosstab(text sql, int N)
+
+Inputs
+
+  sql
+
+    A SQL statement which produces the source set of data. The SQL statement
+    must return one row_name column, one category column, and one value
+    column.
+
+    e.g. provided sql must produce a set something like:
+
+             row_name    cat    value
+            ----------+-------+-------
+              row1      cat1    val1
+              row1      cat2    val2
+              row1      cat3    val3
+              row1      cat4    val4
+              row2      cat1    val5
+              row2      cat2    val6
+              row2      cat3    val7
+              row2      cat4    val8
+
+  N
+
+    number of category value columns
+
+Outputs
+
+  Returns setof record, which must defined with a column definition
+  in the FROM clause of the SELECT statement, e.g.:
+
+    SELECT *
+    FROM crosstab(sql, 2) AS ct(row_name text, category_1 text, category_2 text);
+
+    the example crosstab function produces a set something like:
+                      <== values  columns ==>
+           row_name   category_1   category_2
+           ---------+------------+------------
+             row1        val1         val2
+             row2        val5         val6
+
+Notes
+
+  1. The sql result must be ordered by 1,2.
+
+  2. The number of values columns is determined at run-time. The 
+     column definition provided in the FROM clause must provide for
+     N + 1 columns of the proper data types.
+
+  3. Missing values (i.e. not enough adjacent rows of same row_name to
+     fill the number of result values columns) are filled in with nulls.
+
+  4. Extra values (i.e. too many adjacent rows of same row_name to fill
+     the number of result values columns) are skipped.
+
+  5. Rows with all nulls in the values columns are skipped.
+
+
+Example usage
+
+create table ct(id serial, rowclass text, rowid text, attribute text, value text);
+insert into ct(rowclass, rowid, attribute, value) values('group1','test1','att1','val1');
+insert into ct(rowclass, rowid, attribute, value) values('group1','test1','att2','val2');
+insert into ct(rowclass, rowid, attribute, value) values('group1','test1','att3','val3');
+insert into ct(rowclass, rowid, attribute, value) values('group1','test1','att4','val4');
+insert into ct(rowclass, rowid, attribute, value) values('group1','test2','att1','val5');
+insert into ct(rowclass, rowid, attribute, value) values('group1','test2','att2','val6');
+insert into ct(rowclass, rowid, attribute, value) values('group1','test2','att3','val7');
+insert into ct(rowclass, rowid, attribute, value) values('group1','test2','att4','val8');
+
+SELECT *
+FROM crosstab(
+  'select rowid, attribute, value
+   from ct
+   where rowclass = ''group1''
+   and (attribute = ''att2'' or attribute = ''att3'') order by 1,2;', 3)
+AS ct(row_name text, category_1 text, category_2 text, category_3 text);
 
  row_name | category_1 | category_2 | category_3
 ----------+------------+------------+------------

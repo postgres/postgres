@@ -1,12 +1,3 @@
-CREATE VIEW tablefunc_config_settings AS
-  SELECT
-    ''::TEXT AS name,
-    ''::TEXT AS setting;
-
-CREATE OR REPLACE FUNCTION show_all_settings()
-  RETURNS setof tablefunc_config_settings
-  AS 'MODULE_PATHNAME','show_all_settings' LANGUAGE 'c' STABLE STRICT;
-
 CREATE OR REPLACE FUNCTION normal_rand(int4, float8, float8, int4)
   RETURNS setof float8
   AS 'MODULE_PATHNAME','normal_rand' LANGUAGE 'c' VOLATILE STRICT;
@@ -44,3 +35,6 @@ CREATE OR REPLACE FUNCTION crosstab4(text)
   RETURNS setof tablefunc_crosstab_4
   AS 'MODULE_PATHNAME','crosstab' LANGUAGE 'c' STABLE STRICT;
 
+CREATE OR REPLACE FUNCTION crosstab(text,int)
+  RETURNS setof record
+  AS 'MODULE_PATHNAME','crosstab' LANGUAGE 'c' STABLE STRICT;

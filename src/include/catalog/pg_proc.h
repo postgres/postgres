@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.253 2002/08/09 16:45:15 tgl Exp $
+ * $Id: pg_proc.h,v 1.254 2002/08/15 02:51:27 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2885,6 +2885,8 @@ DATA(insert OID = 2077 (  current_setting	PGNSP PGUID 12 f f t f s 1 25 "25" sho
 DESCR("SHOW X as a function");
 DATA(insert OID = 2078 (  set_config		PGNSP PGUID 12 f f f f v 3 25 "25 25 16" set_config_by_name - _null_ ));
 DESCR("SET X as a function");
+DATA(insert OID = 2084 (  pg_show_all_settings	PGNSP PGUID 12 f f t t s 0 2249 "" show_all_settings - _null_ ));
+DESCR("SHOW ALL as a function");
 
 DATA(insert OID = 2079 (  pg_table_is_visible		PGNSP PGUID 12 f f t f s 1 16 "26"  pg_table_is_visible - _null_ ));
 DESCR("is table visible in search path?");

@@ -27,7 +27,7 @@
 # Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.165 2002/08/08 19:39:05 tgl Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.166 2002/08/15 02:51:26 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -1014,6 +1014,21 @@ CREATE VIEW pg_stat_database AS \
                     pg_stat_get_db_blocks_hit(D.oid) AS blks_read, \
             pg_stat_get_db_blocks_hit(D.oid) AS blks_hit \
     FROM pg_database D;
+
+CREATE VIEW pg_settings AS \
+    SELECT \
+            A.name, \
+            A.setting \
+    FROM pg_show_all_settings() AS A(name text, setting text);
+
+CREATE RULE pg_settings_u AS \
+    ON UPDATE TO pg_settings \
+    WHERE new.name = old.name DO \
+    SELECT set_config(old.name, new.setting, 'f');
+
+CREATE RULE pg_settings_n AS \
+    ON UPDATE TO pg_settings \
+    DO INSTEAD NOTHING;
 
 EOF
 if [ "$?" -ne 0 ]; then

@@ -44,4 +44,6 @@ select * from crosstab2('select rowid, attribute, value from ct where rowclass =
 select * from crosstab3('select rowid, attribute, value from ct where rowclass = ''group2'' order by 1,2;');
 select * from crosstab4('select rowid, attribute, value from ct where rowclass = ''group2'' order by 1,2;');
 
-
+select * from crosstab('select rowid, attribute, value from ct where rowclass = ''group1'' order by 1,2;', 2) as c(rowid text, att1 text, att2 text);
+select * from crosstab('select rowid, attribute, value from ct where rowclass = ''group1'' order by 1,2;', 3) as c(rowid text, att1 text, att2 text, att3 text);
+select * from crosstab('select rowid, attribute, value from ct where rowclass = ''group1'' order by 1,2;', 4) as c(rowid text, att1 text, att2 text, att3 text, att4 text);

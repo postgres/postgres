@@ -35,11 +35,13 @@
 #include "executor/spi.h" 
 #include "utils/builtins.h"
 #include "utils/guc.h"
+#include "utils/lsyscache.h"
 
 #include "tablefunc.h"
 
 static bool compatTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2);
 static void get_normal_pair(float8 *x1, float8 *x2);
+static TupleDesc make_crosstab_tupledesc(TupleDesc spi_tupdesc, int num_catagories);
 
 typedef struct
 {
@@ -65,118 +67,6 @@ typedef struct
 			var_ = NULL; \
 		} \
 	} while (0)
-
-/*
- * show_all_settings - equiv to SHOW ALL command but implemented as
- * a Table Function.
- */
-PG_FUNCTION_INFO_V1(show_all_settings);
-Datum
-show_all_settings(PG_FUNCTION_ARGS)
-{
-	FuncCallContext	   *funcctx;
-	TupleDesc			tupdesc;
-	int					call_cntr;
-	int					max_calls;
-	TupleTableSlot	   *slot;
-	AttInMetadata	   *attinmeta;
-
-	/* stuff done only on the first call of the function */
- 	if(SRF_IS_FIRSTCALL())
- 	{
-		Oid 		foid = fcinfo->flinfo->fn_oid;
-		Oid 		functypeid;
-
-		/* create a function context for cross-call persistence */
- 		funcctx = SRF_FIRSTCALL_INIT();
-
-		/* get the typeid that represents our return type */
-		functypeid = foidGetTypeId(foid);
-
-		/* Build a tuple description for a funcrelid tuple */
-		tupdesc = TypeGetTupleDesc(functypeid, NIL);
-
-		/* allocate a slot for a tuple with this tupdesc */
-		slot = TupleDescGetSlot(tupdesc);
-
-		/* assign slot to function context */
-		funcctx->slot = slot;
-
-		/*
-		 * Generate attribute metadata needed later to produce tuples from raw
-		 * C strings
-		 */
-		attinmeta = TupleDescGetAttInMetadata(tupdesc);
-		funcctx->attinmeta = attinmeta;
-
-		/* total number of tuples to be returned */
-		funcctx->max_calls = GetNumConfigOptions();
-    }
-
-	/* stuff done on every call of the function */
- 	funcctx = SRF_PERCALL_SETUP();
-
-	call_cntr = funcctx->call_cntr;
-	max_calls = funcctx->max_calls;
-	slot = funcctx->slot;
-	attinmeta = funcctx->attinmeta;
-
- 	if (call_cntr < max_calls)	/* do when there is more left to send */
- 	{
-		char	   **values;
-		char	   *varname;
-		char	   *varval;
-		bool		noshow;
-		HeapTuple	tuple;
-		Datum		result;
-
-		/*
-		 * Get the next visible GUC variable name and value
-		 */
-		do
-		{
-			varval = GetConfigOptionByNum(call_cntr, (const char **) &varname, &noshow);
-			if (noshow)
-			{
-				/* varval is a palloc'd copy, so free it */
-				xpfree(varval);
-
-				/* bump the counter and get the next config setting */
-				call_cntr = ++funcctx->call_cntr;
-
-				/* make sure we haven't gone too far now */
-				if (call_cntr >= max_calls)
-			 		SRF_RETURN_DONE(funcctx);
-			}
-		} while (noshow);
-
-		/*
-		 * Prepare a values array for storage in our slot.
-		 * This should be an array of C strings which will
-		 * be processed later by the appropriate "in" functions.
-		 */
-		values = (char **) palloc(2 * sizeof(char *));
-		values[0] = pstrdup(varname);
-		values[1] = varval;	/* varval is already a palloc'd copy */
-
-		/* build a tuple */
-		tuple = BuildTupleFromCStrings(attinmeta, values);
-
-		/* make the tuple into a datum */
-		result = TupleGetDatum(slot, tuple);
-
-		/* Clean up */
-		xpfree(values[0]);
-		xpfree(values[1]);
-		xpfree(values);
-
- 		SRF_RETURN_NEXT(funcctx, result);
- 	}
- 	else	/* do when there is no more left */
- 	{
- 		SRF_RETURN_DONE(funcctx);
- 	}
-}
 
 /*
  * normal_rand - return requested number of random values
@@ -368,7 +258,7 @@ crosstab(PG_FUNCTION_ARGS)
 	int					max_calls;
 	TupleTableSlot	   *slot;
 	AttInMetadata	   *attinmeta;
-	SPITupleTable	   *spi_tuptable;
+	SPITupleTable	   *spi_tuptable = NULL;
 	TupleDesc			spi_tupdesc;
 	char			   *lastrowid;
 	crosstab_fctx	   *fctx;
@@ -378,34 +268,20 @@ crosstab(PG_FUNCTION_ARGS)
 	/* stuff done only on the first call of the function */
  	if(SRF_IS_FIRSTCALL())
  	{
-		char	   *sql = GET_STR(PG_GETARG_TEXT_P(0));
-		Oid 		foid = fcinfo->flinfo->fn_oid;
-		Oid 		functypeid;
-		TupleDesc	tupdesc;
-		int			ret;
-		int			proc;
+		char		   *sql = GET_STR(PG_GETARG_TEXT_P(0));
+		Oid 			funcid = fcinfo->flinfo->fn_oid;
+		Oid 			functypeid;
+		char			functyptype;
+		TupleDesc		tupdesc = NULL;
+		int				ret;
+		int				proc;
+		MemoryContext	oldcontext;
 
 		/* create a function context for cross-call persistence */
  		funcctx = SRF_FIRSTCALL_INIT();
 
-		/* get the typeid that represents our return type */
-		functypeid = foidGetTypeId(foid);
-
-		/* Build a tuple description for a funcrelid tuple */
-		tupdesc = TypeGetTupleDesc(functypeid, NIL);
-
-		/* allocate a slot for a tuple with this tupdesc */
-		slot = TupleDescGetSlot(tupdesc);
-
-		/* assign slot to function context */
-		funcctx->slot = slot;
-
-		/*
-		 * Generate attribute metadata needed later to produce tuples from raw
-		 * C strings
-		 */
-		attinmeta = TupleDescGetAttInMetadata(tupdesc);
-		funcctx->attinmeta = attinmeta;
+		/* SPI switches context on us, so save it first */
+		oldcontext = CurrentMemoryContext;
 
 		/* Connect to SPI manager */
 		if ((ret = SPI_connect()) < 0)
@@ -424,7 +300,7 @@ crosstab(PG_FUNCTION_ARGS)
 			/*
 			 * The provided SQL query must always return three columns.
 			 *
-			 * 1. rowid		the label or identifier for each row in the final
+			 * 1. rowname	the label or identifier for each row in the final
 			 *				result
 			 * 2. category	the label or identifier for each column in the
 			 *				final result
@@ -433,35 +309,78 @@ crosstab(PG_FUNCTION_ARGS)
 			if (spi_tupdesc->natts != 3)
 				elog(ERROR, "crosstab: provided SQL must return 3 columns;"
 								" a rowid, a category, and a values column");
-
-			/*
-			 * Check that return tupdesc is compatible with the one we got
-			 * from ret_relname, at least based on number and type of
-			 * attributes
-			 */
-			if (!compatTupleDescs(tupdesc, spi_tupdesc))
-				elog(ERROR, "crosstab: return and sql tuple descriptions are"
-										" incompatible");
-
-			/* allocate memory for user context */
-			fctx = (crosstab_fctx *) palloc(sizeof(crosstab_fctx));
-
-			/*
-			 * OK, we have data, and it seems to be valid, so save it
-			 * for use across calls
-			 */
-			fctx->spi_tuptable = spi_tuptable;
-			fctx->lastrowid = NULL;
-			funcctx->user_fctx = fctx;
-
-			/* total number of tuples to be returned */
-			funcctx->max_calls = proc;
 		}
 		else
 		{
 			/* no qualifying tuples */
-			funcctx->max_calls = 0;
+			SPI_finish();
+	 		SRF_RETURN_DONE(funcctx);
 		}
+
+		/* back to the original memory context */
+		MemoryContextSwitchTo(oldcontext);
+
+		/* get the typeid that represents our return type */
+		functypeid = get_func_rettype(funcid);
+
+		/* check typtype to see if we have a predetermined return type */
+		functyptype = get_typtype(functypeid);
+		
+		if (functyptype == 'c')
+		{
+			/* Build a tuple description for a functypeid tuple */
+			tupdesc = TypeGetTupleDesc(functypeid, NIL);
+		}
+		else if (functyptype == 'p' && functypeid == RECORDOID)
+		{
+			if (fcinfo->nargs != 2)
+				elog(ERROR, "Wrong number of arguments specified for function");
+			else
+			{
+				int	num_catagories = PG_GETARG_INT32(1);
+
+				tupdesc = make_crosstab_tupledesc(spi_tupdesc, num_catagories);
+			}
+		}
+		else if (functyptype == 'b')
+			elog(ERROR, "Invalid kind of return type specified for function");
+		else
+			elog(ERROR, "Unknown kind of return type specified for function");
+
+		/*
+		 * Check that return tupdesc is compatible with the one we got
+		 * from ret_relname, at least based on number and type of
+		 * attributes
+		 */
+		if (!compatTupleDescs(tupdesc, spi_tupdesc))
+			elog(ERROR, "crosstab: return and sql tuple descriptions are"
+									" incompatible");
+
+		/* allocate a slot for a tuple with this tupdesc */
+		slot = TupleDescGetSlot(tupdesc);
+
+		/* assign slot to function context */
+		funcctx->slot = slot;
+
+		/*
+		 * Generate attribute metadata needed later to produce tuples from raw
+		 * C strings
+		 */
+		attinmeta = TupleDescGetAttInMetadata(tupdesc);
+		funcctx->attinmeta = attinmeta;
+
+		/* allocate memory for user context */
+		fctx = (crosstab_fctx *) palloc(sizeof(crosstab_fctx));
+
+		/*
+		 * Save spi data for use across calls
+		 */
+		fctx->spi_tuptable = spi_tuptable;
+		fctx->lastrowid = NULL;
+		funcctx->user_fctx = fctx;
+
+		/* total number of tuples to be returned */
+		funcctx->max_calls = proc;
     }
 
 	/* stuff done on every call of the function */
@@ -662,3 +581,51 @@ compatTupleDescs(TupleDesc ret_tupdesc, TupleDesc sql_tupdesc)
 	/* OK, the two tupdescs are compatible for our purposes */
 	return true;
 }
+
+static TupleDesc
+make_crosstab_tupledesc(TupleDesc spi_tupdesc, int num_catagories)
+{
+	Form_pg_attribute	sql_attr;
+	Oid					sql_atttypid;
+	TupleDesc			tupdesc;
+	int					natts;
+	AttrNumber			attnum;
+	char				attname[NAMEDATALEN];
+	int					i;
+
+	/*
+	 * We need to build a tuple description with one column
+	 * for the rowname, and num_catagories columns for the values.
+	 * Each must be of the same type as the corresponding
+	 * spi result input column.
+	 */
+	natts = num_catagories + 1;
+	tupdesc = CreateTemplateTupleDesc(natts, WITHOUTOID);
+
+	/* first the rowname column */
+	attnum = 1;
+
+	sql_attr = spi_tupdesc->attrs[0];
+	sql_atttypid = sql_attr->atttypid;
+
+	strcpy(attname, "rowname");
+
+	TupleDescInitEntry(tupdesc, attnum, attname, sql_atttypid,
+					   -1, 0, false);
+
+	/* now the catagory values columns */
+	sql_attr = spi_tupdesc->attrs[2];
+	sql_atttypid = sql_attr->atttypid;
+
+	for (i = 0; i < num_catagories; i++)
+	{
+		attnum++;
+
+		sprintf(attname, "category_%d", i + 1);
+		TupleDescInitEntry(tupdesc, attnum, attname, sql_atttypid,
+						   -1, 0, false);
+	}
+
+	return tupdesc;
+}
+

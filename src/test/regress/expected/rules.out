@@ -1269,6 +1269,7 @@ SELECT viewname, definition FROM pg_views ORDER BY viewname;
  iexit                    | SELECT ih.name, ih.thepath, interpt_pp(ih.thepath, r.thepath) AS exit FROM ihighway ih, ramp r WHERE (ih.thepath ## r.thepath);
  pg_indexes               | SELECT n.nspname AS schemaname, c.relname AS tablename, i.relname AS indexname, pg_get_indexdef(i.oid) AS indexdef FROM (((pg_index x JOIN pg_class c ON ((c.oid = x.indrelid))) JOIN pg_class i ON ((i.oid = x.indexrelid))) LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace))) WHERE ((c.relkind = 'r'::"char") AND (i.relkind = 'i'::"char"));
  pg_rules                 | SELECT n.nspname AS schemaname, c.relname AS tablename, r.rulename, pg_get_ruledef(r.oid) AS definition FROM ((pg_rewrite r JOIN pg_class c ON ((c.oid = r.ev_class))) LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace))) WHERE (r.rulename <> '_RETURN'::name);
+ pg_settings              | SELECT a.name, a.setting FROM pg_show_all_settings() a;
  pg_stat_activity         | SELECT d.oid AS datid, d.datname, pg_stat_get_backend_pid(s.backendid) AS procpid, pg_stat_get_backend_userid(s.backendid) AS usesysid, u.usename, pg_stat_get_backend_activity(s.backendid) AS current_query FROM pg_database d, (SELECT pg_stat_get_backend_idset() AS backendid) s, pg_shadow u WHERE ((pg_stat_get_backend_dbid(s.backendid) = d.oid) AND (pg_stat_get_backend_userid(s.backendid) = u.usesysid));
  pg_stat_all_indexes      | SELECT c.oid AS relid, i.oid AS indexrelid, n.nspname AS schemaname, c.relname, i.relname AS indexrelname, pg_stat_get_numscans(i.oid) AS idx_scan, pg_stat_get_tuples_returned(i.oid) AS idx_tup_read, pg_stat_get_tuples_fetched(i.oid) AS idx_tup_fetch FROM (((pg_class c JOIN pg_index x ON ((c.oid = x.indrelid))) JOIN pg_class i ON ((i.oid = x.indexrelid))) LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace))) WHERE (c.relkind = 'r'::"char");
  pg_stat_all_tables       | SELECT c.oid AS relid, n.nspname AS schemaname, c.relname, pg_stat_get_numscans(c.oid) AS seq_scan, pg_stat_get_tuples_returned(c.oid) AS seq_tup_read, sum(pg_stat_get_numscans(i.indexrelid)) AS idx_scan, sum(pg_stat_get_tuples_fetched(i.indexrelid)) AS idx_tup_fetch, pg_stat_get_tuples_inserted(c.oid) AS n_tup_ins, pg_stat_get_tuples_updated(c.oid) AS n_tup_upd, pg_stat_get_tuples_deleted(c.oid) AS n_tup_del FROM ((pg_class c LEFT JOIN pg_index i ON ((c.oid = i.indrelid))) LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace))) WHERE (c.relkind = 'r'::"char") GROUP BY c.oid, n.nspname, c.relname;
@@ -1304,12 +1305,14 @@ SELECT viewname, definition FROM pg_views ORDER BY viewname;
  shoelace_obsolete        | SELECT shoelace.sl_name, shoelace.sl_avail, shoelace.sl_color, shoelace.sl_len, shoelace.sl_unit, shoelace.sl_len_cm FROM shoelace WHERE (NOT (EXISTS (SELECT shoe.shoename FROM shoe WHERE (shoe.slcolor = shoelace.sl_color))));
  street                   | SELECT r.name, r.thepath, c.cname FROM ONLY road r, real_city c WHERE (c.outline ## r.thepath);
  toyemp                   | SELECT emp.name, emp.age, emp."location", (12 * emp.salary) AS annualsal FROM emp;
-(38 rows)
+(39 rows)
 
 SELECT tablename, rulename, definition FROM pg_rules 
 	ORDER BY tablename, rulename;
    tablename   |    rulename     |                                                                                                                                  definition                                                                                                                                   
 ---------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ pg_settings   | pg_settings_n   | CREATE RULE pg_settings_n AS ON UPDATE TO pg_settings DO INSTEAD NOTHING;
+ pg_settings   | pg_settings_u   | CREATE RULE pg_settings_u AS ON UPDATE TO pg_settings WHERE (new.name = old.name) DO SELECT set_config(old.name, new.setting, 'f'::boolean) AS set_config;
  rtest_emp     | rtest_emp_del   | CREATE RULE rtest_emp_del AS ON DELETE TO rtest_emp DO INSERT INTO rtest_emplog (ename, who, "action", newsal, oldsal) VALUES (old.ename, "current_user"(), 'fired     '::bpchar, '$0.00'::money, old.salary);
  rtest_emp     | rtest_emp_ins   | CREATE RULE rtest_emp_ins AS ON INSERT TO rtest_emp DO INSERT INTO rtest_emplog (ename, who, "action", newsal, oldsal) VALUES (new.ename, "current_user"(), 'hired     '::bpchar, new.salary, '$0.00'::money);
  rtest_emp     | rtest_emp_upd   | CREATE RULE rtest_emp_upd AS ON UPDATE TO rtest_emp WHERE (new.salary <> old.salary) DO INSERT INTO rtest_emplog (ename, who, "action", newsal, oldsal) VALUES (new.ename, "current_user"(), 'honored   '::bpchar, new.salary, old.salary);
@@ -1337,5 +1340,5 @@ SELECT tablename, rulename, definition FROM pg_rules
  shoelace      | shoelace_upd    | CREATE RULE shoelace_upd AS ON UPDATE TO shoelace DO INSTEAD UPDATE shoelace_data SET sl_name = new.sl_name, sl_avail = new.sl_avail, sl_color = new.sl_color, sl_len = new.sl_len, sl_unit = new.sl_unit WHERE (shoelace_data.sl_name = old.sl_name);
  shoelace_data | log_shoelace    | CREATE RULE log_shoelace AS ON UPDATE TO shoelace_data WHERE (new.sl_avail <> old.sl_avail) DO INSERT INTO shoelace_log (sl_name, sl_avail, log_who, log_when) VALUES (new.sl_name, new.sl_avail, 'Al Bundy'::name, 'Thu Jan 01 00:00:00 1970'::timestamp without time zone);
  shoelace_ok   | shoelace_ok_ins | CREATE RULE shoelace_ok_ins AS ON INSERT TO shoelace_ok DO INSTEAD UPDATE shoelace SET sl_avail = (shoelace.sl_avail + new.ok_quant) WHERE (shoelace.sl_name = new.ok_name);
-(27 rows)
+(29 rows)
 
