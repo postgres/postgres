@@ -3,7 +3,7 @@
  *			  out of it's tuple
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.17 1999/05/25 22:42:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.18 1999/06/02 11:52:28 wieck Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1367,7 +1367,7 @@ get_rule_expr(QryHier *qh, int rt_index, Node *node, bool varprefix)
 				else
 				{
 					if (!strcmp(rte->refname, "*CURRENT*"))
-						strcat(buf, "current.");
+						strcat(buf, "old.");
 					else
 					{
 						if (strcmp(rte->relname, rte->refname) != 0)
