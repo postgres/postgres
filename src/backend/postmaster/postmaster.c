@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.66 1997/12/11 17:03:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.67 1997/12/15 22:03:59 momjian Exp $
  *
  * NOTES
  *
@@ -663,6 +663,7 @@ ServerLoop(void)
 				 * the connection id out of the packet so we know who the
 				 * packet is from.
 				 */
+receive_again:
 				status = PacketReceive(port, &port->buf, NON_BLOCKING);
 				switch (status)
 				{
@@ -686,7 +687,7 @@ ServerLoop(void)
 						    break;
 
 						  /* port->nBytes = 0; */
-						    continue;
+						  	goto receive_again;
 						} else {
 							int			CSstatus;		/* Completion status of
 														 * ConnStartup */
