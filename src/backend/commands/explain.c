@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.20 1998/07/15 14:54:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.21 1998/08/04 04:50:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,7 @@ typedef struct ExplainState
 {
 	/* options */
 	bool		printCost;		/* print cost */
-	bool		printNodes;		/* do nodeToString() instead */
+	bool		printNodes;		/* do pprint() instead */
 	/* other states */
 	List	   *rtable;			/* range table */
 } ExplainState;
@@ -81,7 +81,7 @@ ExplainQuery(Query *query, bool verbose, CommandDest dest)
 	es->rtable = query->rtable;
 
 	if (es->printNodes)
-		s = nodeToString(plan);
+		s = pprint(plan);
 
 	if (es->printCost)
 	{
