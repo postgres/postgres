@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/c.h,v 1.178 2004/12/31 22:03:18 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/c.h,v 1.179 2005/02/15 01:03:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -96,6 +96,12 @@
 #else
 #define gettext(x) (x)
 #endif
+
+/*
+ *	These strings are to be translation via xgettext.  We can't
+ *	call gettext() because it is located in variable initialization and
+ *	a function call can not be used.
+ */
 #define gettext_noop(x) (x)
 
 
