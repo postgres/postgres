@@ -55,6 +55,10 @@ fulltextindex -
 	Full text indexing using triggers
 	by Maarten Boekhold <maartenb@dutepp0.et.tudelft.nl>
 
+fuzzystrmatch -
+	Levenshtein and Metaphone fuzzy string matching
+	by Joe Conway <joseph.conway@home.com>
+
 intarray -
 	Index support for arrays of int4, using GiST
 	by Teodor Sigaev <teodor@stack.net> and Oleg Bartunov

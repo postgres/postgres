@@ -1,0 +1,5 @@
+CREATE FUNCTION levenshtein (text,text) RETURNS int
+  AS 'MODULE_PATHNAME','levenshtein' LANGUAGE 'c' with (iscachable, isstrict);
+
+CREATE FUNCTION metaphone (text,int) RETURNS text
+  AS 'MODULE_PATHNAME','metaphone' LANGUAGE 'c' with (iscachable, isstrict);
