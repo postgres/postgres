@@ -32,6 +32,11 @@ typedef unsigned int slock_t;
 
 #define HAS_TEST_AND_SET
 
+#elif defined(__arm__)
+typedef unsigned char slock_t
+
+#define HAS_TEST_AND_SET
+
 #endif
 
 #if defined(__GLIBC__) && (__GLIBC__ >= 2)
