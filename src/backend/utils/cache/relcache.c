@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.168 2002/07/20 05:16:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.169 2002/08/02 22:36:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1968,34 +1968,61 @@ RelationCacheInvalidate(void)
 }
 
 /*
- * RelationCacheAbort
+ * AtEOXactRelationCache
  *
- *	Clean up the relcache at transaction abort.
+ *	Clean up the relcache at transaction commit or abort.
  *
- *	What we need to do here is reset relcache entry ref counts to
- *	their normal not-in-a-transaction state.  A ref count may be
+ *	During transaction abort, we must reset relcache entry ref counts
+ *	to their normal not-in-a-transaction state.  A ref count may be
  *	too high because some routine was exited by elog() between
  *	incrementing and decrementing the count.
  *
- *	XXX Maybe we should do this at transaction commit, too, in case
- *	someone forgets to decrement a refcount in a non-error path?
+ *	During commit, we should not have to do this, but it's useful to
+ *	check that the counts are correct to catch missed relcache closes.
+ *	Since that's basically a debugging thing, only pay the cost when
+ *	assert checking is enabled.
+ *
+ *	In bootstrap mode, forget the debugging checks --- the bootstrap code
+ *	expects relations to stay open across start/commit transaction calls.
  */
 void
-RelationCacheAbort(void)
+AtEOXactRelationCache(bool commit)
 {
 	HASH_SEQ_STATUS status;
 	RelIdCacheEnt *idhentry;
+
+#ifdef USE_ASSERT_CHECKING
+	if (commit && IsBootstrapProcessingMode())
+		return;
+#else
+	if (commit)
+		return;
+#endif
 
 	hash_seq_init(&status, RelationIdCache);
 
 	while ((idhentry = (RelIdCacheEnt *) hash_seq_search(&status)) != NULL)
 	{
 		Relation	relation = idhentry->reldesc;
+		int			expected_refcnt;
 
-		if (relation->rd_isnailed)
-			RelationSetReferenceCount(relation, 1);
+		expected_refcnt = relation->rd_isnailed ? 1 : 0;
+
+		if (commit)
+		{
+			if (relation->rd_refcnt != expected_refcnt)
+			{
+				elog(WARNING, "Relcache reference leak: relation \"%s\" has refcnt %d instead of %d",
+					 RelationGetRelationName(relation),
+					 relation->rd_refcnt, expected_refcnt);
+				RelationSetReferenceCount(relation, expected_refcnt);
+			}
+		}
 		else
-			RelationSetReferenceCount(relation, 0);
+		{
+			/* abort case, just reset it quietly */
+			RelationSetReferenceCount(relation, expected_refcnt);
+		}
 	}
 }
 

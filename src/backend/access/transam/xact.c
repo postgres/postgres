@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.128 2002/06/20 20:29:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.129 2002/08/02 22:36:05 tgl Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -615,6 +615,8 @@ RecordTransactionCommit(void)
 static void
 AtCommit_Cache(void)
 {
+	/* Check for relcache reference-count leaks */
+	AtEOXactRelationCache(true);
 	/*
 	 * Make catalog changes visible to all backends.
 	 */
@@ -741,7 +743,7 @@ RecordTransactionAbort(void)
 static void
 AtAbort_Cache(void)
 {
-	RelationCacheAbort();
+	AtEOXactRelationCache(false);
 	AtEOXactInvalidationMessages(false);
 }
 

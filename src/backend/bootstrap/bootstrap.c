@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.134 2002/08/02 18:15:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.135 2002/08/02 22:36:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -550,7 +550,6 @@ closerel(char *name)
 		else
 			elog(ERROR, "closerel: close of '%s' before any relation was opened",
 				 name);
-
 	}
 
 	if (boot_reldesc == NULL)
@@ -822,8 +821,8 @@ cleanup()
 		elog(FATAL, "Memory manager fault: cleanup called twice.\n");
 		proc_exit(1);
 	}
-	if (boot_reldesc != (Relation) NULL)
-		heap_close(boot_reldesc, NoLock);
+	if (boot_reldesc != NULL)
+		closerel(NULL);
 	CommitTransactionCommand();
 	proc_exit(Warnings);
 }
