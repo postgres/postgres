@@ -98,19 +98,20 @@ public class Array implements java.sql.Array
 				if ( chars[i] == '\\' )
 					//escape character that we need to skip
 					i++;
-				if ( chars[i] == '{' )
+				else if (!insideString && chars[i] == '{' )
 				{
 					if ( foundOpen )  // Only supports 1-D arrays for now
 						throw org.postgresql.Driver.notImplemented();
 					foundOpen = true;
 					continue;
 				}
-				if ( chars[i] == '"' )
+				else if (chars[i] == '"')
 				{
 					insideString = !insideString;
 					continue;
 				}
-				if ( (!insideString && chars[i] == ',') || chars[i] == '}' || i == chars.length - 1)
+				else if (!insideString && (chars[i] == ',' || chars[i] == '}') || 
+							i == chars.length - 1)
 				{
 					if ( chars[i] != '"' && chars[i] != '}' && chars[i] != ',' )
 						sbuf.append(chars[i]);
