@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sun Dec  1 16:20:39 EST 2002
+Last updated:		Sun Dec  1 16:27:51 EST 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -174,7 +174,6 @@ Commands
 	o Allow CLUSTER to cluster all tables, remove clusterdb
 
 * COPY
-	o Allow psql \copy to specify column names
 	o Allow dump/load of CSV format
 	o Allow COPY to report error lines and continue;  optionally
 	  allow error codes to be specified; requires savepoints or can
@@ -196,7 +195,6 @@ Commands
 	  RULE cases (Philip)
 
 * SHOW/SET
-	o Add SET REAL_FORMAT and SET DOUBLE_PRECISION_FORMAT using printf args
 	o Add SET PERFORMANCE_TIPS option to suggest INDEX, VACUUM, VACUUM
 	  ANALYZE, and CLUSTER
 	o Add SET SCHEMA
