@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqcomm.h,v 1.64 2002/06/20 20:29:49 momjian Exp $
+ * $Id: pqcomm.h,v 1.65 2002/08/12 14:35:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,7 +54,7 @@ typedef union SockAddr
 /* Configure the UNIX socket location for the well known port. */
 
 #define UNIXSOCK_PATH(sun,port,defpath) \
-		sprintf((sun).sun_path, "%s/.s.PGSQL.%d", \
+		snprintf((sun).sun_path, sizeof((sun).sun_path), "%s/.s.PGSQL.%d", \
 				((defpath) && *(defpath) != '\0') ? (defpath) : \
 				DEFAULT_PGSOCKET_DIR, \
 				(port))
