@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.269 2002/07/04 03:04:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.270 2002/07/04 15:35:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -104,7 +104,7 @@ static void dumpTableACL(Archive *fout, TableInfo *tbinfo);
 static void dumpFuncACL(Archive *fout, FuncInfo *finfo);
 static void dumpAggACL(Archive *fout, AggInfo *finfo);
 static void dumpACL(Archive *fout, const char *type, const char *name,
-					const char *name_noquotes, const char *nspname,
+					const char *tag, const char *nspname,
 					const char *usename, const char *acl, const char *objoid);
 
 static void dumpTriggers(Archive *fout, TableInfo *tblinfo, int numTables);
@@ -3362,15 +3362,15 @@ format_function_signature(FuncInfo *finfo, bool honor_quotes)
 static void
 dumpFuncACL(Archive *fout, FuncInfo *finfo)
 {
-	char *funcsig, *funcsig_noquotes;
+	char *funcsig, *funcsig_tag;
 
 	funcsig = format_function_signature(finfo, true);
-	funcsig_noquotes = format_function_signature(finfo, false);
-	dumpACL(fout, "FUNCTION", funcsig, funcsig_noquotes,
+	funcsig_tag = format_function_signature(finfo, false);
+	dumpACL(fout, "FUNCTION", funcsig, funcsig_tag,
 			finfo->pronamespace->nspname,
 			finfo->usename, finfo->proacl, finfo->oid);
 	free(funcsig);
-	free(funcsig_noquotes);
+	free(funcsig_tag);
 }
 
 
@@ -3387,7 +3387,7 @@ dumpOneFunc(Archive *fout, FuncInfo *finfo)
 	PQExpBuffer asPart = createPQExpBuffer();
 	PGresult   *res = NULL;
 	char	   *funcsig = NULL;
-	char	   *funcsig_noquotes = NULL;
+	char	   *funcsig_tag = NULL;
 	int			ntups;
 	char	   *proretset;
 	char	   *prosrc;
@@ -3496,7 +3496,7 @@ dumpOneFunc(Archive *fout, FuncInfo *finfo)
 	}
 
 	funcsig = format_function_signature(finfo, true);
-	funcsig_noquotes = format_function_signature(finfo, false);
+	funcsig_tag = format_function_signature(finfo, false);
 
 	/* DROP must be fully qualified in case same name appears in pg_catalog */
 	appendPQExpBuffer(delqry, "DROP FUNCTION %s.%s;\n",
@@ -3539,7 +3539,7 @@ dumpOneFunc(Archive *fout, FuncInfo *finfo)
 
 	appendPQExpBuffer(q, ";\n");
 
-	ArchiveEntry(fout, finfo->oid, funcsig_noquotes,
+	ArchiveEntry(fout, finfo->oid, funcsig_tag,
 				 finfo->pronamespace->nspname,
 				 finfo->usename, "FUNCTION", NULL,
 				 q->data, delqry->data,
@@ -3561,7 +3561,7 @@ done:
 	destroyPQExpBuffer(delqry);
 	destroyPQExpBuffer(asPart);
 	free(funcsig);
-	free(funcsig_noquotes);
+	free(funcsig_tag);
 }
 
 /*
@@ -3988,15 +3988,15 @@ format_aggregate_signature(AggInfo *agginfo, Archive *fout, bool honor_quotes)
 static void
 dumpAggACL(Archive *fout, AggInfo *finfo)
 {
-	char *aggsig, *aggsig_noquotes;
+	char *aggsig, *aggsig_tag;
 
 	aggsig = format_aggregate_signature(finfo, fout, true);
-	aggsig_noquotes = format_aggregate_signature(finfo, fout, false);
-	dumpACL(fout, "FUNCTION", aggsig, aggsig_noquotes,
+	aggsig_tag = format_aggregate_signature(finfo, fout, false);
+	dumpACL(fout, "FUNCTION", aggsig, aggsig_tag,
 			finfo->aggnamespace->nspname,
 			finfo->usename, finfo->aggacl, finfo->oid);
 	free(aggsig);
-	free(aggsig_noquotes);
+	free(aggsig_tag);
 }
 
 
@@ -4012,7 +4012,7 @@ dumpOneAgg(Archive *fout, AggInfo *agginfo)
 	PQExpBuffer delq = createPQExpBuffer();
 	PQExpBuffer details = createPQExpBuffer();
 	char	   *aggsig;
-	char	   *aggsig_noquotes;
+	char	   *aggsig_tag;
 	PGresult   *res;
 	int			ntups;
 	int			i_aggtransfn;
@@ -4103,7 +4103,7 @@ dumpOneAgg(Archive *fout, AggInfo *agginfo)
 	convertok = (PQgetvalue(res, 0, i_convertok)[0] == 't');
 
 	aggsig = format_aggregate_signature(agginfo, g_fout, true);
- 	aggsig_noquotes = format_aggregate_signature(agginfo, g_fout, false);
+ 	aggsig_tag = format_aggregate_signature(agginfo, g_fout, false);
 
 	if (!convertok)
 	{
@@ -4112,7 +4112,7 @@ dumpOneAgg(Archive *fout, AggInfo *agginfo)
 
 		appendPQExpBuffer(q, "-- WARNING: aggregate function %s could not be dumped correctly for this database version; ignored\n",
 						  aggsig);
-		ArchiveEntry(fout, agginfo->oid, aggsig_noquotes,
+		ArchiveEntry(fout, agginfo->oid, aggsig_tag,
 					 agginfo->aggnamespace->nspname, agginfo->usename,
 					 "WARNING", NULL,
 					 q->data, "" /* Del */ ,
@@ -4171,7 +4171,7 @@ dumpOneAgg(Archive *fout, AggInfo *agginfo)
 					  fmtId(agginfo->aggname, force_quotes),
 					  details->data);
 
-	ArchiveEntry(fout, agginfo->oid, aggsig_noquotes,
+	ArchiveEntry(fout, agginfo->oid, aggsig_tag,
 				 agginfo->aggnamespace->nspname, agginfo->usename,
 				 "AGGREGATE", NULL,
 				 q->data, delq->data,
@@ -4197,7 +4197,7 @@ dumpOneAgg(Archive *fout, AggInfo *agginfo)
 	destroyPQExpBuffer(delq);
 	destroyPQExpBuffer(details);
 	free(aggsig);
-	free(aggsig_noquotes);
+	free(aggsig_tag);
 }
 
 
@@ -4296,7 +4296,7 @@ GetPrivileges(Archive *AH, const char *s, const char *type)
  */
 static void
 dumpACL(Archive *fout, const char *type, const char *name,
-		const char *name_noquotes, const char *nspname, const char *usename,
+		const char *tag, const char *nspname, const char *usename,
 		const char *acls, const char *objoid)
 {
 	char	   *aclbuf,
@@ -4410,7 +4410,7 @@ dumpACL(Archive *fout, const char *type, const char *name,
 		appendPQExpBuffer(sql, "%s;\n", fmtId(usename, force_quotes));
 	}
 
-	ArchiveEntry(fout, objoid, name_noquotes, nspname, usename ? usename : "",
+	ArchiveEntry(fout, objoid, tag, nspname, usename ? usename : "",
 				 "ACL", NULL, sql->data, "", NULL, NULL, NULL);
 
 	free(aclbuf);

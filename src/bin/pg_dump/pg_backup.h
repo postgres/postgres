@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup.h,v 1.19 2002/05/10 22:36:26 tgl Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup.h,v 1.20 2002/07/04 15:35:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -133,7 +133,7 @@ PGconn *ConnectDatabase(Archive *AH,
 
 
 /* Called to add a TOC entry */
-extern void ArchiveEntry(Archive *AHX, const char *oid, const char *name,
+extern void ArchiveEntry(Archive *AHX, const char *oid, const char *tag,
 						 const char *namespace, const char *owner,
 						 const char *desc, const char *((*deps)[]),
 						 const char *defn, const char *dropStmt,

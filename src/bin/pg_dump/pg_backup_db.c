@@ -5,7 +5,7 @@
  *	Implements the basic DB functions used by the archiver.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.33 2002/05/29 01:38:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.34 2002/07/04 15:35:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -714,7 +714,7 @@ FixupBlobRefs(ArchiveHandle *AH, TocEntry *te)
 				n;
 	char	   *attr;
 
-	if (strcmp(te->name, BLOB_XREF_TABLE) == 0)
+	if (strcmp(te->tag, BLOB_XREF_TABLE) == 0)
 		return;
 
 	tblName = createPQExpBuffer();
@@ -724,7 +724,7 @@ FixupBlobRefs(ArchiveHandle *AH, TocEntry *te)
 		appendPQExpBuffer(tblName, "%s.",
 						  fmtId(te->namespace, false));
 	appendPQExpBuffer(tblName, "%s",
-					  fmtId(te->name, false));
+					  fmtId(te->tag, false));
 
 	appendPQExpBuffer(tblQry,
 					  "SELECT a.attname FROM "
@@ -736,12 +736,12 @@ FixupBlobRefs(ArchiveHandle *AH, TocEntry *te)
 	res = PQexec(AH->blobConnection, tblQry->data);
 	if (!res)
 		die_horribly(AH, modulename, "could not find oid columns of table \"%s\": %s",
-					 te->name, PQerrorMessage(AH->connection));
+					 te->tag, PQerrorMessage(AH->connection));
 
 	if ((n = PQntuples(res)) == 0)
 	{
 		/* nothing to do */
-		ahlog(AH, 1, "no OID type columns in table %s\n", te->name);
+		ahlog(AH, 1, "no OID type columns in table %s\n", te->tag);
 	}
 
 	for (i = 0; i < n; i++)
@@ -749,7 +749,7 @@ FixupBlobRefs(ArchiveHandle *AH, TocEntry *te)
 		attr = PQgetvalue(res, i, 0);
 
 		ahlog(AH, 1, "fixing large object cross-references for %s.%s\n",
-			  te->name, attr);
+			  te->tag, attr);
 
 		resetPQExpBuffer(tblQry);
 
@@ -770,12 +770,12 @@ FixupBlobRefs(ArchiveHandle *AH, TocEntry *te)
 		if (!uRes)
 			die_horribly(AH, modulename,
 					"could not update column \"%s\" of table \"%s\": %s",
-					attr, te->name, PQerrorMessage(AH->blobConnection));
+					attr, te->tag, PQerrorMessage(AH->blobConnection));
 
 		if (PQresultStatus(uRes) != PGRES_COMMAND_OK)
 			die_horribly(AH, modulename,
 				"error while updating column \"%s\" of table \"%s\": %s",
-					attr, te->name, PQerrorMessage(AH->blobConnection));
+					attr, te->tag, PQerrorMessage(AH->blobConnection));
 
 		PQclear(uRes);
 	}

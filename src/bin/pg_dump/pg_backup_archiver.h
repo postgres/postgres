@@ -17,7 +17,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.43 2002/05/10 22:36:26 tgl Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.44 2002/07/04 15:35:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -245,7 +245,7 @@ typedef struct _tocEntry
 	int			id;
 	int			hadDumper;		/* Archiver was passed a dumper routine
 								 * (used in restore) */
-	char	   *name;
+	char	   *tag;				/* index tag */
 	char	   *namespace;		/* null or empty string if not in a schema */
 	char	   *owner;
 	char	   *desc;

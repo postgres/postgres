@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.23 2002/05/29 01:38:56 tgl Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.24 2002/07/04 15:35:07 momjian Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *
@@ -157,7 +157,7 @@ InitArchiveFmt_Tar(ArchiveHandle *AH)
 	ctx = (lclContext *) malloc(sizeof(lclContext));
 	AH->formatData = (void *) ctx;
 	ctx->filePos = 0;
-	
+
 	/* Initialize LO buffering */
 	AH->lo_buf_size = LOBBUFSIZE;
 	AH->lo_buf = (void *)malloc(LOBBUFSIZE);
@@ -643,7 +643,7 @@ _PrintTocData(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt)
 		if (tmpCopy[pos1] == '"')
 			pos1 += 2;
 
-		pos1 += strlen(te->name);
+		pos1 += strlen(te->tag);
 
 		for (pos2 = pos1; pos2 < strlen(tmpCopy); pos2++)
 			if (strncmp(&tmpCopy[pos2], "from stdin", 10) == 0)
@@ -1119,7 +1119,7 @@ _tarGetHeader(ArchiveHandle *AH, TAR_MEMBER *th)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
 	char		h[512];
-	char		name[100];
+	char		tag[100];
 	int			sum,
 				chk;
 	int			len;
@@ -1170,19 +1170,19 @@ _tarGetHeader(ArchiveHandle *AH, TAR_MEMBER *th)
 		}
 	}
 
-	sscanf(&h[0], "%99s", &name[0]);
+	sscanf(&h[0], "%99s", &tag[0]);
 	sscanf(&h[124], "%12o", &len);
 	sscanf(&h[148], "%8o", &sum);
 
-	ahlog(AH, 3, "TOC Entry %s at %d (length %d, checksum %d)\n", &name[0], hPos, len, sum);
+	ahlog(AH, 3, "TOC Entry %s at %d (length %d, checksum %d)\n", &tag[0], hPos, len, sum);
 
 	if (chk != sum)
 		die_horribly(AH, modulename,
 					 "corrupt tar header found in %s "
 		"(expected %d (%o), computed %d (%o)) file position %ld (%lx)\n",
-					 &name[0], sum, sum, chk, chk, ftell(ctx->tarFH), ftell(ctx->tarFH));
+					 &tag[0], sum, sum, chk, chk, ftell(ctx->tarFH), ftell(ctx->tarFH));
 
-	th->targetFile = strdup(name);
+	th->targetFile = strdup(tag);
 	th->fileLen = len;
 
 	return 1;
@@ -1224,7 +1224,7 @@ _tarWriteHeader(TAR_MEMBER *th)
 	/* sprintf(&h[156], "%c", LF_NORMAL); */
 	sprintf(&h[156], "0");
 
-	/* Link name 100 (NULL) */
+	/* Link tag 100 (NULL) */
 
 	/* Magic 8 */
 	sprintf(&h[257], "ustar  ");

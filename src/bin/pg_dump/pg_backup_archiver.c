@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.51 2002/07/04 03:04:54 momjian Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.52 2002/07/04 15:35:07 momjian Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *
@@ -266,7 +266,7 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 			if (((reqs & REQ_SCHEMA) != 0) && te->dropStmt)
 			{
 				/* We want the schema */
-				ahlog(AH, 1, "dropping %s %s\n", te->desc, te->name);
+				ahlog(AH, 1, "dropping %s %s\n", te->desc, te->tag);
 				/* Select owner and schema as necessary */
 				_reconnectAsOwner(AH, NULL, te);
 				_selectOutputSchema(AH, te->namespace);
@@ -300,15 +300,15 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 
 		if ((reqs & REQ_SCHEMA) != 0)	/* We want the schema */
 		{
-			ahlog(AH, 1, "creating %s %s\n", te->desc, te->name);
+			ahlog(AH, 1, "creating %s %s\n", te->desc, te->tag);
 			_printTocEntry(AH, te, ropt, false);
 			defnDumped = true;
 
 			/* If we created a DB, connect to it... */
 			if (strcmp(te->desc, "DATABASE") == 0)
 			{
-				ahlog(AH, 1, "connecting to new database %s as user %s\n", te->name, te->owner);
-				_reconnectAsUser(AH, te->name, te->owner);
+				ahlog(AH, 1, "connecting to new database %s as user %s\n", te->tag, te->owner);
+				_reconnectAsUser(AH, te->tag, te->owner);
 			}
 		}
 
@@ -366,7 +366,7 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 						_reconnectAsOwner(AH, NULL, te);
 						_selectOutputSchema(AH, te->namespace);
 
-						ahlog(AH, 1, "restoring data for table %s\n", te->name);
+						ahlog(AH, 1, "restoring data for table %s\n", te->tag);
 
 						/*
 						 * If we have a copy statement, use it. As of
@@ -391,7 +391,7 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 			else if (!defnDumped)
 			{
 				/* If we haven't already dumped the defn part, do so now */
-				ahlog(AH, 1, "executing %s %s\n", te->desc, te->name);
+				ahlog(AH, 1, "executing %s %s\n", te->desc, te->tag);
 				_printTocEntry(AH, te, ropt, false);
 			}
 		}
@@ -415,18 +415,18 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 			if (strcmp(te->desc, "TABLE DATA") == 0)
 			{
 
-				ahlog(AH, 2, "checking whether we loaded %s\n", te->name);
+				ahlog(AH, 2, "checking whether we loaded %s\n", te->tag);
 
 				reqs = _tocEntryRequired(te, ropt);
 
 				if ((reqs & REQ_DATA) != 0)		/* We loaded the data */
 				{
-					ahlog(AH, 1, "fixing up large object cross-reference for %s\n", te->name);
+					ahlog(AH, 1, "fixing up large object cross-reference for %s\n", te->tag);
 					FixupBlobRefs(AH, te);
 				}
 			}
 			else
-				ahlog(AH, 2, "ignoring large object cross-references for %s %s\n", te->desc, te->name);
+				ahlog(AH, 2, "ignoring large object cross-references for %s %s\n", te->desc, te->tag);
 
 			te = te->next;
 		}
@@ -529,10 +529,10 @@ _disableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te, RestoreOptions *rop
 	 * Just update the AFFECTED table, if known.  Otherwise update all
 	 * non-system tables.
 	 */
-	if (te && te->name && strlen(te->name) > 0)
+	if (te && te->tag && strlen(te->tag) > 0)
 		ahprintf(AH, "UPDATE pg_catalog.pg_class SET reltriggers = 0 "
 				 "WHERE oid = '%s'::pg_catalog.regclass;\n\n",
-				 fmtId(te->name, false));
+				 fmtId(te->tag, false));
 	else
 		ahprintf(AH, "UPDATE pg_catalog.pg_class SET reltriggers = 0 FROM pg_catalog.pg_namespace "
 				 "WHERE relnamespace = pg_namespace.oid AND nspname !~ '^pg_';\n\n");
@@ -596,11 +596,11 @@ _enableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt
 	 * Just update the AFFECTED table, if known.  Otherwise update all
 	 * non-system tables.
 	 */
-	if (te && te->name && strlen(te->name) > 0)
+	if (te && te->tag && strlen(te->tag) > 0)
 		ahprintf(AH, "UPDATE pg_catalog.pg_class SET reltriggers = "
 				 "(SELECT pg_catalog.count(*) FROM pg_catalog.pg_trigger where pg_class.oid = tgrelid) "
 				 "WHERE oid = '%s'::pg_catalog.regclass;\n\n",
-				 fmtId(te->name, false));
+				 fmtId(te->tag, false));
 	else
 		ahprintf(AH, "UPDATE pg_catalog.pg_class SET reltriggers = "
 				 "(SELECT pg_catalog.count(*) FROM pg_catalog.pg_trigger where pg_class.oid = tgrelid) "
@@ -647,7 +647,7 @@ WriteData(Archive *AHX, const void *data, int dLen)
 
 /* Public */
 void
-ArchiveEntry(Archive *AHX, const char *oid, const char *name,
+ArchiveEntry(Archive *AHX, const char *oid, const char *tag,
 			 const char *namespace, const char *owner,
 			 const char *desc, const char *((*deps)[]),
 			 const char *defn, const char *dropStmt,
@@ -671,7 +671,7 @@ ArchiveEntry(Archive *AHX, const char *oid, const char *name,
 
 	newToc->id = AH->lastID;
 
-	newToc->name = strdup(name);
+	newToc->tag = strdup(tag);
 	newToc->namespace = namespace ? strdup(namespace) : NULL;
 	newToc->owner = strdup(owner);
 	newToc->desc = strdup(desc);
@@ -738,7 +738,7 @@ PrintTOCSummary(Archive *AHX, RestoreOptions *ropt)
 	while (te != AH->toc)
 	{
 		if (_tocEntryRequired(te, ropt) != 0)
-			ahprintf(AH, "%d; %d %s %s %s\n", te->id, te->oidVal, te->desc, te->name, te->owner);
+			ahprintf(AH, "%d; %d %s %s %s\n", te->id, te->oidVal, te->desc, te->tag, te->owner);
 		te = te->next;
 	}
 
@@ -1795,7 +1795,7 @@ WriteToc(ArchiveHandle *AH)
 		WriteInt(AH, te->dataDumper ? 1 : 0);
 		WriteStr(AH, te->oid);
 
-		WriteStr(AH, te->name);
+		WriteStr(AH, te->tag);
 		WriteStr(AH, te->desc);
 		WriteStr(AH, te->defn);
 		WriteStr(AH, te->dropStmt);
@@ -1844,7 +1844,7 @@ ReadToc(ArchiveHandle *AH)
 		te->oid = ReadStr(AH);
 		te->oidVal = atooid(te->oid);
 
-		te->name = ReadStr(AH);
+		te->tag = ReadStr(AH);
 		te->desc = ReadStr(AH);
 		te->defn = ReadStr(AH);
 		te->dropStmt = ReadStr(AH);
@@ -1874,7 +1874,7 @@ ReadToc(ArchiveHandle *AH)
 #if 0
 				if ((*deps)[depIdx])
 					write_msg(modulename, "read dependency for %s -> %s\n",
-							  te->name, (*deps)[depIdx]);
+							  te->tag, (*deps)[depIdx]);
 #endif
 			} while ((*deps)[depIdx++] != NULL);
 
@@ -1892,7 +1892,7 @@ ReadToc(ArchiveHandle *AH)
 		if (AH->ReadExtraTocPtr)
 			(*AH->ReadExtraTocPtr) (AH, te);
 
-		ahlog(AH, 3, "read TOC entry %d (id %d) for %s %s\n", i, te->id, te->desc, te->name);
+		ahlog(AH, 3, "read TOC entry %d (id %d) for %s %s\n", i, te->id, te->desc, te->tag);
 
 		te->prev = AH->toc->prev;
 		AH->toc->prev->next = te;
@@ -1920,28 +1920,28 @@ _tocEntryRequired(TocEntry *te, RestoreOptions *ropt)
 		{
 			if (!ropt->selTable)
 				return 0;
-			if (ropt->tableNames && strcmp(ropt->tableNames, te->name) != 0)
+			if (ropt->tableNames && strcmp(ropt->tableNames, te->tag) != 0)
 				return 0;
 		}
 		else if (strcmp(te->desc, "INDEX") == 0)
 		{
 			if (!ropt->selIndex)
 				return 0;
-			if (ropt->indexNames && strcmp(ropt->indexNames, te->name) != 0)
+			if (ropt->indexNames && strcmp(ropt->indexNames, te->tag) != 0)
 				return 0;
 		}
 		else if (strcmp(te->desc, "FUNCTION") == 0)
 		{
 			if (!ropt->selFunction)
 				return 0;
-			if (ropt->functionNames && strcmp(ropt->functionNames, te->name) != 0)
+			if (ropt->functionNames && strcmp(ropt->functionNames, te->tag) != 0)
 				return 0;
 		}
 		else if (strcmp(te->desc, "TRIGGER") == 0)
 		{
 			if (!ropt->selTrigger)
 				return 0;
-			if (ropt->triggerNames && strcmp(ropt->triggerNames, te->name) != 0)
+			if (ropt->triggerNames && strcmp(ropt->triggerNames, te->tag) != 0)
 				return 0;
 		}
 		else
@@ -1965,10 +1965,10 @@ _tocEntryRequired(TocEntry *te, RestoreOptions *ropt)
 	}
 
 	/*
-	 * Special case: <Init> type with <Max OID> name; this is part of a
+	 * Special case: <Init> type with <Max OID> tag; this is part of a
 	 * DATA restore even though it has SQL.
 	 */
-	if ((strcmp(te->desc, "<Init>") == 0) && (strcmp(te->name, "Max OID") == 0))
+	if ((strcmp(te->desc, "<Init>") == 0) && (strcmp(te->tag, "Max OID") == 0))
 		res = REQ_DATA;
 
 	/* Mask it if we only want schema */
@@ -2221,7 +2221,7 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isDat
 		pfx = "";
 
 	ahprintf(AH, "--\n-- %sTOC Entry ID %d (OID %s)\n--\n-- Name: %s Type: %s Schema: %s Owner: %s\n",
-			 pfx, te->id, te->oid, te->name, te->desc,
+			 pfx, te->id, te->oid, te->tag, te->desc,
 			 te->namespace ? te->namespace : "-",
 			 te->owner);
 	if (AH->PrintExtraTocPtr !=NULL)
