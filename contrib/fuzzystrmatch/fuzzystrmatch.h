@@ -51,31 +51,42 @@
 #include "utils/builtins.h"
 
 
-#define MAX_LEVENSHTEIN_STRLEN		255
-#define MAX_METAPHONE_STRLEN		255
-
-typedef struct dynmatrix
-{
-	int		   value;
-} dynmat;
-
 
 /*
  * External declarations
  */
 extern Datum levenshtein(PG_FUNCTION_ARGS);
 extern Datum metaphone(PG_FUNCTION_ARGS);
+extern Datum soundex(PG_FUNCTION_ARGS);
 
 /*
- * Internal declarations
+ * Soundex
  */
+static void _soundex(const char *instr, char *outstr);
+
+#define SOUNDEX_LEN 4
+#define _textin(str) DirectFunctionCall1(textin, CStringGetDatum(str))
+#define _textout(str) DatumGetPointer(DirectFunctionCall1(textout, PointerGetDatum(str)))
+
+/*									ABCDEFGHIJKLMNOPQRSTUVWXYZ */
+static const char *soundex_table = "01230120022455012623010202";
+
+#define soundex_code(letter) soundex_table[toupper((unsigned char) (letter)) - 'A']
 
 
-
+/*
+ * Levenshtein
+ */
 #define STRLEN(p) strlen(p)
 #define CHAREQ(p1, p2) (*(p1) == *(p2))
 #define NextChar(p) ((p)++)
+#define MAX_LEVENSHTEIN_STRLEN		255
 
+
+/*
+ * Metaphone
+ */
+#define MAX_METAPHONE_STRLEN		255
 
 /* 
  * Original code by Michael G Schwern starts here.

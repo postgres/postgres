@@ -20,6 +20,11 @@
  * Metaphone was originally created by Lawrence Philips and presented in article
  * in "Computer Language" December 1990 issue.
  *
+ * soundex()
+ * -----------
+ * Folded existing soundex contrib into this one. Renamed text_soundex() (C function)
+ * to soundex() for consistency.
+ *
  * Permission to use, copy, modify, and distribute this software and its
  * documentation for any purpose, without fee, and without a written agreement
  * is hereby granted, provided that the above copyright notice and this
@@ -40,11 +45,14 @@
  */
 
 
-Version 0.1 (3 August, 2001):
+Version 0.2 (7 August, 2001):
   Functions to calculate the degree to which two strings match in a "fuzzy" way
   Tested under Linux (Red Hat 6.2 and 7.0) and PostgreSQL 7.2devel
 
 Release Notes:
+
+  Version 0.2
+    - folded soundex contrib into this one
 
   Version 0.1
     - initial release    

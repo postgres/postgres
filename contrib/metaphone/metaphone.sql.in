@@ -1,3 +1,0 @@
-CREATE FUNCTION text_soundex(text) RETURNS text
-  AS '@MODULE_FILENAME@', 'text_metaphone' LANGUAGE 'C';
-

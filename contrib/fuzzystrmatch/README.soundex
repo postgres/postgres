@@ -1,0 +1,62 @@
+NOTE: Modified August 07, 2001 by Joe Conway. Updated for accuracy
+	after combining soundex code into the fuzzystrmatch contrib
+---------------------------------------------------------------------
+The Soundex system is a method of matching similar sounding names
+(or any words) to the same code.  It was initially used by the
+United States Census in 1880, 1900, and 1910, but it has little use
+beyond English names (or the English pronunciation of names), and
+it is not a linguistic tool.
+
+The following are some usage examples:
+
+SELECT soundex('hello world!');
+
+CREATE TABLE s (nm text)\g
+
+insert into s values ('john')\g
+insert into s values ('joan')\g
+insert into s values ('wobbly')\g
+
+select * from s
+where soundex(nm) = soundex('john')\g
+
+select nm from s a, s b
+where soundex(a.nm) = soundex(b.nm)
+and a.oid <> b.oid\g
+
+CREATE FUNCTION text_sx_eq(text, text) RETURNS bool AS
+'select soundex($1) = soundex($2)'
+LANGUAGE 'sql'\g
+
+CREATE FUNCTION text_sx_lt(text,text) RETURNS bool AS
+'select soundex($1) < soundex($2)'
+LANGUAGE 'sql'\g
+
+CREATE FUNCTION text_sx_gt(text,text) RETURNS bool AS
+'select soundex($1) > soundex($2)'
+LANGUAGE 'sql';
+
+CREATE FUNCTION text_sx_le(text,text) RETURNS bool AS
+'select soundex($1) <= soundex($2)'
+LANGUAGE 'sql';
+
+CREATE FUNCTION text_sx_ge(text,text) RETURNS bool AS
+'select soundex($1) >= soundex($2)'
+LANGUAGE 'sql';
+
+CREATE FUNCTION text_sx_ne(text,text) RETURNS bool AS
+'select soundex($1) <> soundex($2)'
+LANGUAGE 'sql';
+
+DROP OPERATOR #= (text,text)\g
+
+CREATE OPERATOR #= (leftarg=text, rightarg=text, procedure=text_sx_eq,
+commutator=text_sx_eq)\g
+
+SELECT *
+FROM s
+WHERE text_sx_eq(nm,'john')\g
+
+SELECT *
+from s
+where s.nm #= 'john';

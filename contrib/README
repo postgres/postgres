@@ -57,7 +57,7 @@ fulltextindex -
 
 fuzzystrmatch -
 	Levenshtein and Metaphone fuzzy string matching
-	by Joe Conway <joseph.conway@home.com>
+	by Joe Conway <joseph.conway@home.com>, Joel Burton <jburton@scw.org>
 
 intarray -
 	Index support for arrays of int4, using GiST
@@ -86,7 +86,6 @@ mac -
 
 metaphone -
 	Improved Soundex function
-	by Joel Burton <jburton@scw.org>
 
 miscutil -
 	PostgreSQL assert checking and various utility functions
@@ -148,9 +147,6 @@ rtree_gist -
 seg -
 	Confidence-interval datatype (GiST indexing example)
 	by Gene Selkov, Jr. <selkovjr@mcs.anl.gov>
-
-soundex -
-	Soundex function
 
 spi -
 	Various trigger functions, examples for using SPI.

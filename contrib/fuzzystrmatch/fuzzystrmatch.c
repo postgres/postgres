@@ -629,3 +629,71 @@ int _metaphone (
 	
 	return(META_SUCCESS);
 } /* END metaphone */
+
+
+/*
+ * SQL function: soundex(text) returns text
+ */
+PG_FUNCTION_INFO_V1(soundex);
+
+Datum
+soundex(PG_FUNCTION_ARGS)
+{
+	char		outstr[SOUNDEX_LEN + 1];
+	char	   *arg;
+
+	arg = _textout(PG_GETARG_TEXT_P(0));
+
+	_soundex(arg, outstr);
+
+	PG_RETURN_TEXT_P(_textin(outstr));
+}
+
+static void
+_soundex(const char *instr, char *outstr)
+{
+	int			count;
+
+	AssertArg(instr);
+	AssertArg(outstr);
+
+	outstr[SOUNDEX_LEN] = '\0';
+
+	/* Skip leading non-alphabetic characters */
+	while (!isalpha((unsigned char) instr[0]) && instr[0])
+		++instr;
+
+	/* No string left */
+	if (!instr[0])
+	{
+		outstr[0] = (char) 0;
+		return;
+	}
+
+	/* Take the first letter as is */
+	*outstr++ = (char) toupper((unsigned char) *instr++);
+
+	count = 1;
+	while (*instr && count < SOUNDEX_LEN)
+	{
+		if (isalpha((unsigned char) *instr) &&
+			soundex_code(*instr) != soundex_code(*(instr - 1)))
+		{
+			*outstr = soundex_code(instr[0]);
+			if (*outstr != '0')
+			{
+				++outstr;
+				++count;
+			}
+		}
+		++instr;
+	}
+
+	/* Fill with 0's */
+	while (count < SOUNDEX_LEN)
+	{
+		*outstr = '0';
+		++outstr;
+		++count;
+	}
+}
