@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.38 1999/05/22 04:12:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.39 1999/05/23 21:42:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,16 +32,12 @@
 
 
 static List *ExpandAllTables(ParseState *pstate);
-char *FigureColname(Node *expr, Node *resval);
-
+static char *FigureColname(Node *expr, Node *resval);
 static Node *SizeTargetExpr(ParseState *pstate,
 			   Node *expr,
 			   Oid attrtype,
 			   int32 attrtypmod);
 
-static TargetEntry *
-MakeTargetEntryCase(ParseState *pstate,
-					ResTarget *res);
 
 /* MakeTargetEntryIdent()
  * Transforms an Ident Node to a Target Entry
@@ -66,8 +62,13 @@ MakeTargetEntryIdent(ParseState *pstate,
 	Oid			attrtype_target;
 	TargetEntry *tent = makeNode(TargetEntry);
 
-	if (pstate->p_is_insert)
+	if (pstate->p_is_insert && !resjunk)
 	{
+		/* Assign column name of destination column to the new TLE.
+		 * XXX this is probably WRONG in INSERT ... SELECT case,
+		 * since handling of GROUP BY and so forth probably should use
+		 * the source table's names not the destination's names.
+		 */
 		if (pstate->p_insert_columns != NIL)
 		{
 			Ident	   *id = lfirst(pstate->p_insert_columns);
@@ -79,7 +80,7 @@ MakeTargetEntryIdent(ParseState *pstate,
 			elog(ERROR, "INSERT has more expressions than target columns");
 	}
 
-	if (pstate->p_is_insert || pstate->p_is_update)
+	if ((pstate->p_is_insert || pstate->p_is_update) && !resjunk)
 	{
 		Oid			attrtype_id;
 		int			resdomno_id,
@@ -208,7 +209,7 @@ MakeTargetEntryExpr(ParseState *pstate,
 		type_mod = -1;
 
 	/* Process target columns that will be receiving results */
-	if (pstate->p_is_insert || pstate->p_is_update)
+	if ((pstate->p_is_insert || pstate->p_is_update) && !resjunk)
 	{
 
 		/*
@@ -870,7 +871,7 @@ ExpandAllTables(ParseState *pstate)
  *	  list, we have to guess.
  *
  */
-char *
+static char *
 FigureColname(Node *expr, Node *resval)
 {
 	switch (nodeTag(expr))
