@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Sun Jun 23 17:16:13 EDT 2002
+   Last updated: Mon Jun 24 21:45:50 EDT 2002
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -743,13 +743,14 @@
    using an index with ORDER BY and LIMIT:
     SELECT col
     FROM tab
-    ORDER BY col
+    ORDER BY col [ DESC ]
     LIMIT 1
 
    When using wild-card operators such as LIKE or ~, indexes can only be
-   used if the beginning of the search is anchored to the start of the
-   string. Therefore, to use indexes, LIKE patterns must not start with
-   %, and ~(regular expression) patterns must start with ^.
+   used if the default C local is used during initdb and the beginning of
+   the search is anchored to the start of the string. Therefore, to use
+   indexes, LIKE patterns must not start with %, and ~(regular
+   expression) patterns must start with ^.
    
     4.9) How do I see how the query optimizer is evaluating my query?
     

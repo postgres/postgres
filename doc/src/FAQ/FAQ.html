@@ -14,7 +14,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Sun Jun 23 17:16:13 EDT 2002</P>
+    <P>Last updated: Mon Jun 24 21:45:50 EDT 2002</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -946,12 +946,13 @@
 <PRE>
     SELECT col
     FROM tab
-    ORDER BY col
+    ORDER BY col [ DESC ]
     LIMIT 1
 </PRE>
 
     <P>When using wild-card operators such as <SMALL>LIKE</SMALL> or
-    <I>~</I>, indexes can only be used if the beginning of the search
+    <I>~</I>, indexes can only be used if the default C local is used
+during initdb and the beginning of the search
     is anchored to the start of the string. Therefore, to use indexes,
     <SMALL>LIKE</SMALL> patterns must not start with <I>%</I>, and
     <I>~</I>(regular expression) patterns must start with <I>^</I>.</P>
