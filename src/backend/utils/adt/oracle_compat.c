@@ -1,7 +1,7 @@
 /*
  *	Edmund Mergl <E.Mergl@bawue.de>
  *
- *	$Header: /cvsroot/pgsql/src/backend/utils/adt/oracle_compat.c,v 1.33 2001/09/22 03:26:30 ishii Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/oracle_compat.c,v 1.34 2001/09/22 03:30:39 ishii Exp $
  *
  */
 
@@ -381,7 +381,6 @@ btrim(PG_FUNCTION_ARGS)
 		m -= str_len;
 	}
 	pfree(mp);
-
 #else
 	while (m > 0)
 	{
@@ -652,7 +651,6 @@ rtrim(PG_FUNCTION_ARGS)
 		m -= str_len;
 	}
 	pfree(mp);
-
 #else
 	while (m > 0)
 	{
