@@ -31,7 +31,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/tcl/pltcl.c,v 1.81 2004/01/06 23:55:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/tcl/pltcl.c,v 1.82 2004/01/24 23:06:29 tgl Exp $
  *
  **********************************************************************/
 
@@ -695,11 +695,15 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 	pfree(stroid);
 
 	/* A list of attribute names for argument TG_relatts */
-	/* note: we deliberately include dropped atts here */
 	Tcl_DStringAppendElement(&tcl_trigtup, "");
 	for (i = 0; i < tupdesc->natts; i++)
-		Tcl_DStringAppendElement(&tcl_trigtup,
-								 NameStr(tupdesc->attrs[i]->attname));
+	{
+		if (tupdesc->attrs[i]->attisdropped)
+			Tcl_DStringAppendElement(&tcl_trigtup, "");
+		else
+			Tcl_DStringAppendElement(&tcl_trigtup,
+									 NameStr(tupdesc->attrs[i]->attname));
+	}
 	Tcl_DStringAppendElement(&tcl_cmd, Tcl_DStringValue(&tcl_trigtup));
 	Tcl_DStringFree(&tcl_trigtup);
 	Tcl_DStringInit(&tcl_trigtup);
@@ -881,9 +885,10 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 		siglongjmp(Warn_restart, 1);
 	}
 
-	i = 0;
-	while (i < ret_numvals)
+	for (i = 0; i < ret_numvals; i += 2)
 	{
+		CONST84 char *ret_name = ret_values[i];
+		CONST84 char *ret_value = ret_values[i + 1];
 		int			attnum;
 		HeapTuple	typeTup;
 		Oid			typinput;
@@ -891,24 +896,25 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 		FmgrInfo	finfo;
 
 		/************************************************************
-		 * Ignore pseudo elements with a dot name
+		 * Ignore ".tupno" pseudo elements (see pltcl_set_tuple_values)
 		 ************************************************************/
-		if (*(ret_values[i]) == '.')
-		{
-			i += 2;
+		if (strcmp(ret_name, ".tupno") == 0)
 			continue;
-		}
 
 		/************************************************************
 		 * Get the attribute number
 		 ************************************************************/
-		attnum = SPI_fnumber(tupdesc, ret_values[i++]);
+		attnum = SPI_fnumber(tupdesc, ret_name);
 		if (attnum == SPI_ERROR_NOATTRIBUTE)
-			elog(ERROR, "invalid attribute \"%s\"",
-				 ret_values[--i]);
+			elog(ERROR, "invalid attribute \"%s\"", ret_name);
 		if (attnum <= 0)
-			elog(ERROR, "cannot set system attribute \"%s\"",
-				 ret_values[--i]);
+			elog(ERROR, "cannot set system attribute \"%s\"", ret_name);
+
+		/************************************************************
+		 * Ignore dropped columns
+		 ************************************************************/
+		if (tupdesc->attrs[attnum - 1]->attisdropped)
+			continue;
 
 		/************************************************************
 		 * Lookup the attribute type in the syscache
@@ -932,7 +938,7 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 		UTF_BEGIN;
 		modvalues[attnum - 1] =
 			FunctionCall3(&finfo,
-						  CStringGetDatum(UTF_U2E(ret_values[i++])),
+						  CStringGetDatum(UTF_U2E(ret_value)),
 						  ObjectIdGetDatum(typelem),
 				   Int32GetDatum(tupdesc->attrs[attnum - 1]->atttypmod));
 		UTF_END;
