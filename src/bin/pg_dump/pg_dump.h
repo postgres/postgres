@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_dump.h,v 1.88 2002/06/20 20:29:41 momjian Exp $
+ * $Id: pg_dump.h,v 1.89 2002/07/02 05:49:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -156,11 +156,6 @@ extern char g_comment_end[10];
 
 extern char g_opaque_type[10];	/* name for the opaque type */
 
-/* pg_dump is really two programs in one
-	one version works with postgres v4r2
-	and the other works with postgreSQL
-	the common routines are declared here
-*/
 /*
  *	common utility functions
  */

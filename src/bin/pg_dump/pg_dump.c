@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.267 2002/06/20 20:29:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.268 2002/07/02 05:49:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -967,10 +967,10 @@ dumpClasses_nodumpData(Archive *fout, char *oid, void *dctxv)
 		write_msg(NULL, "SQL command to dump the contents of table \"%s\" failed: PQendcopy() failed.\n", classname);
 		write_msg(NULL, "Error message from server: %s", PQerrorMessage(g_conn));
 		write_msg(NULL, "The command was: %s\n", q->data);
-		PQclear(res);
 		exit_nicely();
 	}
 
+	PQclear(res);
 	destroyPQExpBuffer(q);
 	return 1;
 }
@@ -4757,6 +4757,15 @@ dumpOneTable(Archive *fout, TableInfo *tbinfo, TableInfo *g_tblinfo)
 
 	/* Dump Table Comments */
 	dumpTableComment(fout, tbinfo, reltypename, commentDeps);
+
+	if (commentDeps)
+	{
+		for (j = 0; (*commentDeps)[j] != NULL; j++)
+		{
+			free((void *) (*commentDeps)[j]);
+		}
+		free(commentDeps);
+	}
 
 	destroyPQExpBuffer(query);
 	destroyPQExpBuffer(q);

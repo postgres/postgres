@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.49 2002/05/29 01:49:57 tgl Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.50 2002/07/02 05:49:51 momjian Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *
@@ -2371,7 +2371,7 @@ _SortToc(ArchiveHandle *AH, TocSortCompareFn fn)
 	/* Sort it, but ignore the header entries */
 	qsort(&(tea[1]), AH->tocCount, sizeof(TocEntry *), fn);
 
-	/* Rebuild list: this works becuase we have headers at each end */
+	/* Rebuild list: this works because we have headers at each end */
 	for (i = 1; i <= AH->tocCount; i++)
 	{
 		tea[i]->next = tea[i + 1];
