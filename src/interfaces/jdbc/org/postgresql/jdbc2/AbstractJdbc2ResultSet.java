@@ -15,7 +15,7 @@ import org.postgresql.util.PGbytea;
 import org.postgresql.util.PSQLException;
 
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2ResultSet.java,v 1.10.2.3 2003/03/14 05:38:36 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2ResultSet.java,v 1.10.2.4 2003/03/25 01:57:03 davec Exp $
  * This class defines methods of the jdbc2 specification.  This class extends
  * org.postgresql.jdbc1.AbstractJdbc1ResultSet which provides the jdbc1
  * methods.  The real Statement class (for jdbc2) is org.postgresql.jdbc2.Jdbc2ResultSet
@@ -1071,7 +1071,8 @@ public abstract class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.Abstra
 				rows.setElementAt( rowBuffer, current_row );
 				if ( Driver.logDebug )
 					Driver.debug("done updates");
-
+				// make sure next one doesn't see remnants of this one
+				clearRowBuffer();
 				doingUpdates = false;
 			}
 			catch (Exception e)
