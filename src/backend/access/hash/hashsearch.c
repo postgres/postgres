@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashsearch.c,v 1.32 2003/09/02 02:18:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashsearch.c,v 1.33 2003/09/02 18:13:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,17 +34,21 @@ _hash_search(Relation rel,
 	BlockNumber blkno;
 	Bucket		bucket;
 
-	if (scankey == NULL)
+	if (scankey == NULL ||
+		(scankey[0].sk_flags & SK_ISNULL))
 	{
 		/*
 		 * If the scankey is empty, all tuples will satisfy the
 		 * scan so we start the scan at the first bucket (bucket 0).
+		 *
+		 * If the scankey is NULL, no tuples will satisfy the search;
+		 * this should have been checked already, but arbitrarily return
+		 * bucket zero.
 		 */
 		bucket = 0;
 	}
 	else
 	{
-		Assert(!(scankey[0].sk_flags & SK_ISNULL));
 		bucket = _hash_call(rel, metap, scankey[0].sk_argument);
 	}
 
@@ -96,7 +100,7 @@ _hash_next(IndexScanDesc scan, ScanDirection dir)
 	current = &(scan->currentItemData);
 	offnum = ItemPointerGetOffsetNumber(current);
 	page = BufferGetPage(buf);
-	_hash_checkpage(page, LH_BUCKET_PAGE | LH_OVERFLOW_PAGE);
+	_hash_checkpage(rel, page, LH_BUCKET_PAGE | LH_OVERFLOW_PAGE);
 	hitem = (HashItem) PageGetItem(page, PageGetItemId(page, offnum));
 	itup = &hitem->hash_itup;
 	scan->xs_ctup.t_self = itup->t_tid;
@@ -117,7 +121,7 @@ _hash_readnext(Relation rel,
 	{
 		*bufp = _hash_getbuf(rel, blkno, HASH_READ);
 		*pagep = BufferGetPage(*bufp);
-		_hash_checkpage(*pagep, LH_OVERFLOW_PAGE);
+		_hash_checkpage(rel, *pagep, LH_OVERFLOW_PAGE);
 		*opaquep = (HashPageOpaque) PageGetSpecialPointer(*pagep);
 		Assert(!PageIsEmpty(*pagep));
 	}
@@ -136,7 +140,7 @@ _hash_readprev(Relation rel,
 	{
 		*bufp = _hash_getbuf(rel, blkno, HASH_READ);
 		*pagep = BufferGetPage(*bufp);
-		_hash_checkpage(*pagep, LH_BUCKET_PAGE | LH_OVERFLOW_PAGE);
+		_hash_checkpage(rel, *pagep, LH_BUCKET_PAGE | LH_OVERFLOW_PAGE);
 		*opaquep = (HashPageOpaque) PageGetSpecialPointer(*pagep);
 		if (PageIsEmpty(*pagep))
 		{
@@ -177,7 +181,7 @@ _hash_first(IndexScanDesc scan, ScanDirection dir)
 
 	metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_READ);
 	metap = (HashMetaPage) BufferGetPage(metabuf);
-	_hash_checkpage((Page) metap, LH_META_PAGE);
+	_hash_checkpage(rel, (Page) metap, LH_META_PAGE);
 
 	/*
 	 * XXX -- The attribute number stored in the scan key is the attno in
@@ -188,7 +192,7 @@ _hash_first(IndexScanDesc scan, ScanDirection dir)
 	/* find the correct bucket page and load it into buf */
 	_hash_search(rel, 1, scan->keyData, &buf, metap);
 	page = BufferGetPage(buf);
-	_hash_checkpage(page, LH_BUCKET_PAGE);
+	_hash_checkpage(rel, page, LH_BUCKET_PAGE);
 	opaque = (HashPageOpaque) PageGetSpecialPointer(page);
 
 	/*
@@ -235,7 +239,7 @@ _hash_first(IndexScanDesc scan, ScanDirection dir)
 	current = &(scan->currentItemData);
 	offnum = ItemPointerGetOffsetNumber(current);
 	page = BufferGetPage(buf);
-	_hash_checkpage(page, LH_BUCKET_PAGE | LH_OVERFLOW_PAGE);
+	_hash_checkpage(rel, page, LH_BUCKET_PAGE | LH_OVERFLOW_PAGE);
 	hitem = (HashItem) PageGetItem(page, PageGetItemId(page, offnum));
 	itup = &hitem->hash_itup;
 	scan->xs_ctup.t_self = itup->t_tid;
@@ -279,11 +283,11 @@ _hash_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir, Buffer metabuf)
 	allbuckets = (scan->numberOfKeys < 1);
 
 	metap = (HashMetaPage) BufferGetPage(metabuf);
-	_hash_checkpage((Page) metap, LH_META_PAGE);
+	_hash_checkpage(rel, (Page) metap, LH_META_PAGE);
 
 	buf = *bufP;
 	page = BufferGetPage(buf);
-	_hash_checkpage(page, LH_BUCKET_PAGE | LH_OVERFLOW_PAGE);
+	_hash_checkpage(rel, page, LH_BUCKET_PAGE | LH_OVERFLOW_PAGE);
 	opaque = (HashPageOpaque) PageGetSpecialPointer(page);
 
 	/*
@@ -336,7 +340,7 @@ _hash_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir, Buffer metabuf)
 							blkno = BUCKET_TO_BLKNO(metap, bucket);
 							buf = _hash_getbuf(rel, blkno, HASH_READ);
 							page = BufferGetPage(buf);
-							_hash_checkpage(page, LH_BUCKET_PAGE);
+							_hash_checkpage(rel, page, LH_BUCKET_PAGE);
 							opaque = (HashPageOpaque) PageGetSpecialPointer(page);
 							Assert(opaque->hasho_bucket == bucket);
 							while (PageIsEmpty(page) &&
@@ -386,7 +390,7 @@ _hash_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir, Buffer metabuf)
 							blkno = BUCKET_TO_BLKNO(metap, bucket);
 							buf = _hash_getbuf(rel, blkno, HASH_READ);
 							page = BufferGetPage(buf);
-							_hash_checkpage(page, LH_BUCKET_PAGE);
+							_hash_checkpage(rel, page, LH_BUCKET_PAGE);
 							opaque = (HashPageOpaque) PageGetSpecialPointer(page);
 							Assert(opaque->hasho_bucket == bucket);
 							while (BlockNumberIsValid(opaque->hasho_nextblkno))

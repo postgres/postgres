@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashutil.c,v 1.34 2003/09/02 02:18:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashutil.c,v 1.35 2003/09/02 18:13:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -143,10 +143,33 @@ _hash_log2(uint32 num)
  * _hash_checkpage -- sanity checks on the format of all hash pages
  */
 void
-_hash_checkpage(Page page, int flags)
+_hash_checkpage(Relation rel, Page page, int flags)
 {
-#ifdef USE_ASSERT_CHECKING
 	Assert(page);
+	/*
+	 * When checking the metapage, always verify magic number and version.
+	 */
+	if (flags == LH_META_PAGE)
+	{
+		HashMetaPage metap = (HashMetaPage) page;
+
+		if (metap->hashm_magic != HASH_MAGIC)
+			ereport(ERROR,
+					(errcode(ERRCODE_INDEX_CORRUPTED),
+					 errmsg("index \"%s\" is not a hash index",
+							RelationGetRelationName(rel))));
+
+		if (metap->hashm_version != HASH_VERSION)
+			ereport(ERROR,
+					(errcode(ERRCODE_INDEX_CORRUPTED),
+					 errmsg("index \"%s\" has wrong hash version, please REINDEX it",
+							RelationGetRelationName(rel))));
+	}
+
+	/*
+	 * These other checks are for debugging purposes only.
+	 */
+#ifdef USE_ASSERT_CHECKING
 	Assert(((PageHeader) (page))->pd_lower >= SizeOfPageHeaderData);
 	Assert(((PageHeader) (page))->pd_upper <=
 		   (BLCKSZ - MAXALIGN(sizeof(HashPageOpaqueData))));

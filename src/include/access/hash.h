@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hash.h,v 1.51 2003/09/02 02:18:38 tgl Exp $
+ * $Id: hash.h,v 1.52 2003/09/02 18:13:32 tgl Exp $
  *
  * NOTES
  *		modeled after Margo Seltzer's hash implementation for unix.
@@ -51,14 +51,23 @@ typedef uint32 Bucket;
 
 typedef struct HashPageOpaqueData
 {
-	bits16		hasho_flag;		/* page type code, see above */
-	Bucket		hasho_bucket;	/* bucket number this pg belongs to */
-	bits16		hasho_oaddr;	/* no longer used; delete someday */
-	BlockNumber hasho_nextblkno;	/* next ovfl blkno */
 	BlockNumber hasho_prevblkno;	/* previous ovfl (or bucket) blkno */
+	BlockNumber hasho_nextblkno;	/* next ovfl blkno */
+	Bucket		hasho_bucket;	/* bucket number this pg belongs to */
+	uint16		hasho_flag;		/* page type code, see above */
+	uint16		hasho_filler;	/* available for future use */
+	/*
+	 * We presently set hasho_filler to HASHO_FILL (0x1234); this is for
+	 * the convenience of pg_filedump, which otherwise would have a hard
+	 * time telling HashPageOpaqueData from BTPageOpaqueData.  If we ever
+	 * need that space for some other purpose, pg_filedump will have to
+	 * find another way.
+	 */
 } HashPageOpaqueData;
 
 typedef HashPageOpaqueData *HashPageOpaque;
+
+#define HASHO_FILL		0x1234
 
 /*
  *	ScanOpaqueData is used to remember which buffers we're currently
@@ -81,7 +90,7 @@ typedef HashScanOpaqueData *HashScanOpaque;
 #define HASH_METAPAGE	0		/* metapage is always block 0 */
 
 #define HASH_MAGIC		0x6440640
-#define HASH_VERSION	0
+#define HASH_VERSION	1		/* new for Pg 7.4 */
 
 /*
  * Spares[] holds the number of overflow pages currently allocated at or
@@ -99,25 +108,24 @@ typedef HashScanOpaqueData *HashScanOpaque;
  *
  * The limitation on the size of spares[] comes from the fact that there's
  * no point in having more than 2^32 buckets with only uint32 hashcodes.
- * There is no particularly good reason for bitmaps[] to be the same size,
- * but we're stuck with that until we want to force an initdb.  (With 8K
- * block size, 32 bitmaps limit us to 8 Gb of overflow space...)
+ * There is no particular upper limit on the size of mapp[], other than
+ * needing to fit into the metapage.  (With 8K block size, 128 bitmaps
+ * limit us to 64 Gb of overflow space...)
  */
 #define HASH_MAX_SPLITPOINTS		32
-#define HASH_MAX_BITMAPS			32
+#define HASH_MAX_BITMAPS			128
 
 typedef struct HashMetaPageData
 {
 	PageHeaderData hashm_phdr;	/* pad for page header (do not use) */
 	uint32		hashm_magic;	/* magic no. for hash tables */
 	uint32		hashm_version;	/* version ID */
-	uint32		hashm_ntuples;	/* number of tuples stored in the table */
+	double		hashm_ntuples;	/* number of tuples stored in the table */
 	uint16		hashm_ffactor;	/* target fill factor (tuples/bucket) */
-	uint16		hashm_bsize;	/* index page size (bytes) - must be a power
-								 * of 2 */
-	uint16		hashm_bshift;	/* log2(bsize) */
-	uint16		hashm_bmsize;	/* bitmap array size (bytes) - must be
-								 * exactly half of hashm_bsize */
+	uint16		hashm_bsize;	/* index page size (bytes) */
+	uint16		hashm_bmsize;	/* bitmap array size (bytes) - must be a
+								 * power of 2 */
+	uint16		hashm_bmshift;	/* log2(bitmap array size in BITS) */
 	uint32		hashm_maxbucket;	/* ID of maximum bucket in use */
 	uint32		hashm_highmask; /* mask to modulo into entire table */
 	uint32		hashm_lowmask;	/* mask to modulo into lower half of table */
@@ -125,10 +133,10 @@ typedef struct HashMetaPageData
 								 * allocated */
 	uint32		hashm_firstfree;	/* lowest-number free ovflpage (bit#) */
 	uint32		hashm_nmaps;	/* number of bitmap pages */
+	RegProcedure hashm_procid;	/* hash procedure id from pg_proc */
 	uint32		hashm_spares[HASH_MAX_SPLITPOINTS];	/* spare pages before
 													 * each splitpoint */
 	BlockNumber hashm_mapp[HASH_MAX_BITMAPS];	/* blknos of ovfl bitmaps */
-	RegProcedure hashm_procid;	/* hash procedure id from pg_proc */
 } HashMetaPageData;
 
 typedef HashMetaPageData *HashMetaPage;
@@ -151,16 +159,12 @@ typedef HashItemData *HashItem;
  * Bitmap pages do not contain tuples.	They do contain the standard
  * page headers and trailers; however, everything in between is a
  * giant bit array.  The number of bits that fit on a page obviously
- * depends on the page size and the header/trailer overhead.  In the
- * present implementation, we use exactly half of a page for bitmap,
- * so that we have a power-of-2 bits per page.
- *
- * The fact that the metapage has separate bsize and bmsize fields,
- * but only one bshift field, is a design error that ought to be fixed.
+ * depends on the page size and the header/trailer overhead.  We require
+ * the number of bits per page to be a power of 2.
  */
 #define BMPGSZ_BYTE(metap)		((metap)->hashm_bmsize)
 #define BMPGSZ_BIT(metap)		((metap)->hashm_bmsize << BYTE_TO_BIT)
-#define BMPG_SHIFT(metap)		((metap)->hashm_bshift - 1 + BYTE_TO_BIT)
+#define BMPG_SHIFT(metap)		((metap)->hashm_bmshift)
 #define BMPG_MASK(metap)		(BMPGSZ_BIT(metap) - 1)
 #define HashPageGetBitmap(pg) \
 	((uint32 *) (((char *) (pg)) + MAXALIGN(sizeof(PageHeaderData))))
@@ -254,7 +258,6 @@ extern void _hash_wrtnorelbuf(Buffer buf);
 extern void _hash_chgbufaccess(Relation rel, Buffer buf, int from_access,
 				   int to_access);
 extern void _hash_pageinit(Page page, Size size);
-extern void _hash_pagedel(Relation rel, ItemPointer tid);
 extern void _hash_expandtable(Relation rel, Buffer metabuf);
 
 /* hashscan.c */
@@ -278,7 +281,7 @@ extern bool _hash_checkqual(IndexScanDesc scan, IndexTuple itup);
 extern HashItem _hash_formitem(IndexTuple itup);
 extern Bucket _hash_call(Relation rel, HashMetaPage metap, Datum key);
 extern uint32 _hash_log2(uint32 num);
-extern void _hash_checkpage(Page page, int flags);
+extern void _hash_checkpage(Relation rel, Page page, int flags);
 
 /* hash.c */
 extern void hash_redo(XLogRecPtr lsn, XLogRecord *record);

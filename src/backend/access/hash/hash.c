@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.66 2003/09/02 02:18:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.67 2003/09/02 18:13:29 tgl Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -449,9 +449,7 @@ hashbulkdelete(PG_FUNCTION_ARGS)
 	BlockNumber num_pages;
 	double		tuples_removed;
 	double		num_index_tuples;
-	uint32		deleted_tuples;
-	uint32		tuples_remaining;
-	uint32		orig_ntuples;
+	double		orig_ntuples;
 	Bucket		orig_maxbucket;
 	Bucket		cur_maxbucket;
 	Bucket		cur_bucket;
@@ -459,15 +457,8 @@ hashbulkdelete(PG_FUNCTION_ARGS)
 	HashMetaPage metap;
 	HashMetaPageData local_metapage;
 
-	/*
-	 * keep track of counts in both float form (to return) and integer form
-	 * (to update hashm_ntuples).  It'd be better to make hashm_ntuples a
-	 * double, but that will have to wait for an initdb.
-	 */
 	tuples_removed = 0;
 	num_index_tuples = 0;
-	deleted_tuples = 0;
-	tuples_remaining = 0;
 
 	/*
 	 * Read the metapage to fetch original bucket and tuple counts.  Also,
@@ -479,7 +470,7 @@ hashbulkdelete(PG_FUNCTION_ARGS)
 	 */
 	metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_READ);
 	metap = (HashMetaPage) BufferGetPage(metabuf);
-	_hash_checkpage((Page) metap, LH_META_PAGE);
+	_hash_checkpage(rel, (Page) metap, LH_META_PAGE);
 	orig_maxbucket = metap->hashm_maxbucket;
 	orig_ntuples = metap->hashm_ntuples;
 	memcpy(&local_metapage, metap, sizeof(local_metapage));
@@ -514,7 +505,7 @@ loop_top:
 
 			buf = _hash_getbuf(rel, blkno, HASH_WRITE);
 			page = BufferGetPage(buf);
-			_hash_checkpage(page, LH_BUCKET_PAGE | LH_OVERFLOW_PAGE);
+			_hash_checkpage(rel, page, LH_BUCKET_PAGE | LH_OVERFLOW_PAGE);
 			opaque = (HashPageOpaque) PageGetSpecialPointer(page);
 			Assert(opaque->hasho_bucket == cur_bucket);
 
@@ -546,14 +537,12 @@ loop_top:
 					maxoffno = OffsetNumberPrev(maxoffno);
 
 					tuples_removed += 1;
-					deleted_tuples += 1;
 				}
 				else
 				{
 					offno = OffsetNumberNext(offno);
 
 					num_index_tuples += 1;
-					tuples_remaining += 1;
 				}
 			}
 
@@ -584,7 +573,7 @@ loop_top:
 	/* Write-lock metapage and check for split since we started */
 	metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_WRITE);
 	metap = (HashMetaPage) BufferGetPage(metabuf);
-	_hash_checkpage((Page) metap, LH_META_PAGE);
+	_hash_checkpage(rel, (Page) metap, LH_META_PAGE);
 
 	if (cur_maxbucket != metap->hashm_maxbucket)
 	{
@@ -604,7 +593,7 @@ loop_top:
 		 * No one has split or inserted anything since start of scan,
 		 * so believe our count as gospel.
 		 */
-		metap->hashm_ntuples = tuples_remaining;
+		metap->hashm_ntuples = num_index_tuples;
 	}
 	else
 	{
@@ -613,8 +602,8 @@ loop_top:
 		 * double-scanned tuples in split buckets.  Proceed by
 		 * dead-reckoning.
 		 */
-		if (metap->hashm_ntuples > deleted_tuples)
-			metap->hashm_ntuples -= deleted_tuples;
+		if (metap->hashm_ntuples > tuples_removed)
+			metap->hashm_ntuples -= tuples_removed;
 		else
 			metap->hashm_ntuples = 0;
 		num_index_tuples = metap->hashm_ntuples;

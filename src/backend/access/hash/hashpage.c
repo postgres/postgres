@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashpage.c,v 1.40 2003/09/02 02:18:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashpage.c,v 1.41 2003/09/02 18:13:31 tgl Exp $
  *
  * NOTES
  *	  Postgres hash pages look like ordinary relation pages.  The opaque
@@ -98,11 +98,11 @@ _hash_metapinit(Relation rel)
 	_hash_pageinit(pg, BufferGetPageSize(metabuf));
 
 	pageopaque = (HashPageOpaque) PageGetSpecialPointer(pg);
-	pageopaque->hasho_oaddr = 0;
 	pageopaque->hasho_prevblkno = InvalidBlockNumber;
 	pageopaque->hasho_nextblkno = InvalidBlockNumber;
-	pageopaque->hasho_flag = LH_META_PAGE;
 	pageopaque->hasho_bucket = -1;
+	pageopaque->hasho_flag = LH_META_PAGE;
+	pageopaque->hasho_filler = HASHO_FILL;
 
 	metap = (HashMetaPage) pg;
 
@@ -112,14 +112,17 @@ _hash_metapinit(Relation rel)
 	metap->hashm_nmaps = 0;
 	metap->hashm_ffactor = DEFAULT_FFACTOR;
 	metap->hashm_bsize = BufferGetPageSize(metabuf);
-	metap->hashm_bshift = _hash_log2(metap->hashm_bsize);
-	/* page size must be power of 2 */
-	Assert(metap->hashm_bsize == (1 << metap->hashm_bshift));
-	/* bitmap size is half of page size, to keep it also power of 2 */
-	metap->hashm_bmsize = (metap->hashm_bsize >> 1);
-	Assert(metap->hashm_bsize >= metap->hashm_bmsize +
-		   MAXALIGN(sizeof(PageHeaderData)) +
-		   MAXALIGN(sizeof(HashPageOpaqueData)));
+	/* find largest bitmap array size that will fit in page size */
+	for (i = _hash_log2(metap->hashm_bsize); i > 0; --i)
+	{
+		if ((1 << i) <= (metap->hashm_bsize -
+						 (MAXALIGN(sizeof(PageHeaderData)) +
+						  MAXALIGN(sizeof(HashPageOpaqueData)))))
+			break;
+	}
+	Assert(i > 0);
+	metap->hashm_bmsize = 1 << i;
+	metap->hashm_bmshift = i + BYTE_TO_BIT;
 	Assert((1 << BMPG_SHIFT(metap)) == (BMPG_MASK(metap) + 1));
 
 	metap->hashm_procid = index_getprocid(rel, 1, HASHPROC);
@@ -147,11 +150,11 @@ _hash_metapinit(Relation rel)
 		pg = BufferGetPage(buf);
 		_hash_pageinit(pg, BufferGetPageSize(buf));
 		pageopaque = (HashPageOpaque) PageGetSpecialPointer(pg);
-		pageopaque->hasho_oaddr = 0;
 		pageopaque->hasho_prevblkno = InvalidBlockNumber;
 		pageopaque->hasho_nextblkno = InvalidBlockNumber;
-		pageopaque->hasho_flag = LH_BUCKET_PAGE;
 		pageopaque->hasho_bucket = i;
+		pageopaque->hasho_flag = LH_BUCKET_PAGE;
+		pageopaque->hasho_filler = HASHO_FILL;
 		_hash_wrtbuf(rel, buf);
 	}
 
@@ -344,49 +347,6 @@ _hash_unsetpagelock(Relation rel,
 }
 
 /*
- * Delete a hash index item.
- *
- * It is safe to delete an item after acquiring a regular WRITE lock on
- * the page, because no other backend can hold a READ lock on the page,
- * and that means no other backend currently has an indexscan stopped on
- * any item of the item being deleted.	Our own backend might have such
- * an indexscan (in fact *will*, since that's how VACUUM found the item
- * in the first place), but _hash_adjscans will fix the scan position.
- */
-void
-_hash_pagedel(Relation rel, ItemPointer tid)
-{
-	Buffer		buf;
-	Buffer		metabuf;
-	Page		page;
-	BlockNumber blkno;
-	OffsetNumber offno;
-	HashMetaPage metap;
-	HashPageOpaque opaque;
-
-	blkno = ItemPointerGetBlockNumber(tid);
-	offno = ItemPointerGetOffsetNumber(tid);
-
-	buf = _hash_getbuf(rel, blkno, HASH_WRITE);
-	page = BufferGetPage(buf);
-	_hash_checkpage(page, LH_BUCKET_PAGE | LH_OVERFLOW_PAGE);
-	opaque = (HashPageOpaque) PageGetSpecialPointer(page);
-
-	PageIndexTupleDelete(page, offno);
-
-	if (PageIsEmpty(page) && (opaque->hasho_flag & LH_OVERFLOW_PAGE))
-		_hash_freeovflpage(rel, buf);
-	else
-		_hash_wrtbuf(rel, buf);
-
-	metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_WRITE);
-	metap = (HashMetaPage) BufferGetPage(metabuf);
-	_hash_checkpage((Page) metap, LH_META_PAGE);
-	metap->hashm_ntuples--;
-	_hash_wrtbuf(rel, metabuf);
-}
-
-/*
  * Expand the hash table by creating one new bucket.
  */
 void
@@ -398,7 +358,7 @@ _hash_expandtable(Relation rel, Buffer metabuf)
 	uint32		spare_ndx;
 
 	metap = (HashMetaPage) BufferGetPage(metabuf);
-	_hash_checkpage((Page) metap, LH_META_PAGE);
+	_hash_checkpage(rel, (Page) metap, LH_META_PAGE);
 
 	_hash_chgbufaccess(rel, metabuf, HASH_READ, HASH_WRITE);
 
@@ -474,7 +434,7 @@ _hash_splitbucket(Relation rel,
 	TupleDesc	itupdesc = RelationGetDescr(rel);
 
 	metap = (HashMetaPage) BufferGetPage(metabuf);
-	_hash_checkpage((Page) metap, LH_META_PAGE);
+	_hash_checkpage(rel, (Page) metap, LH_META_PAGE);
 
 	/* get the buffers & pages */
 	start_oblkno = BUCKET_TO_BLKNO(metap, obucket);
@@ -491,9 +451,9 @@ _hash_splitbucket(Relation rel,
 	nopaque = (HashPageOpaque) PageGetSpecialPointer(npage);
 	nopaque->hasho_prevblkno = InvalidBlockNumber;
 	nopaque->hasho_nextblkno = InvalidBlockNumber;
-	nopaque->hasho_flag = LH_BUCKET_PAGE;
-	nopaque->hasho_oaddr = 0;
 	nopaque->hasho_bucket = nbucket;
+	nopaque->hasho_flag = LH_BUCKET_PAGE;
+	nopaque->hasho_filler = HASHO_FILL;
 	_hash_wrtnorelbuf(nbuf);
 
 	/*
@@ -503,7 +463,7 @@ _hash_splitbucket(Relation rel,
 	 * XXX we should only need this once, if we are careful to preserve the
 	 * invariant that overflow pages are never empty.
 	 */
-	_hash_checkpage(opage, LH_BUCKET_PAGE);
+	_hash_checkpage(rel, opage, LH_BUCKET_PAGE);
 	oopaque = (HashPageOpaque) PageGetSpecialPointer(opage);
 	if (PageIsEmpty(opage))
 	{
@@ -521,7 +481,7 @@ _hash_splitbucket(Relation rel,
 		}
 		obuf = _hash_getbuf(rel, oblkno, HASH_WRITE);
 		opage = BufferGetPage(obuf);
-		_hash_checkpage(opage, LH_OVERFLOW_PAGE);
+		_hash_checkpage(rel, opage, LH_OVERFLOW_PAGE);
 		if (PageIsEmpty(opage))
 			elog(ERROR, "empty hash overflow page %u", oblkno);
 		oopaque = (HashPageOpaque) PageGetSpecialPointer(opage);
@@ -556,7 +516,7 @@ _hash_splitbucket(Relation rel,
 				_hash_wrtbuf(rel, obuf);
 				obuf = _hash_getbuf(rel, oblkno, HASH_WRITE);
 				opage = BufferGetPage(obuf);
-				_hash_checkpage(opage, LH_OVERFLOW_PAGE);
+				_hash_checkpage(rel, opage, LH_OVERFLOW_PAGE);
 				oopaque = (HashPageOpaque) PageGetSpecialPointer(opage);
 				/* we're guaranteed that an ovfl page has at least 1 tuple */
 				if (PageIsEmpty(opage))
@@ -606,7 +566,7 @@ _hash_splitbucket(Relation rel,
 				_hash_wrtbuf(rel, nbuf);
 				nbuf = ovflbuf;
 				npage = BufferGetPage(nbuf);
-				_hash_checkpage(npage, LH_BUCKET_PAGE | LH_OVERFLOW_PAGE);
+				_hash_checkpage(rel, npage, LH_BUCKET_PAGE | LH_OVERFLOW_PAGE);
 			}
 
 			noffnum = OffsetNumberNext(PageGetMaxOffsetNumber(npage));
@@ -653,7 +613,7 @@ _hash_splitbucket(Relation rel,
 				 */
 				obuf = _hash_getbuf(rel, oblkno, HASH_WRITE);
 				opage = BufferGetPage(obuf);
-				_hash_checkpage(opage, LH_OVERFLOW_PAGE);
+				_hash_checkpage(rel, opage, LH_OVERFLOW_PAGE);
 				oopaque = (HashPageOpaque) PageGetSpecialPointer(opage);
 				if (PageIsEmpty(opage))
 					elog(ERROR, "empty hash overflow page %u", oblkno);

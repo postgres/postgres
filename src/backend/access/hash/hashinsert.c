@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashinsert.c,v 1.28 2003/09/01 20:26:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashinsert.c,v 1.29 2003/09/02 18:13:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,7 +43,7 @@ _hash_doinsert(Relation rel, HashItem hitem)
 
 	metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_READ);
 	metap = (HashMetaPage) BufferGetPage(metabuf);
-	_hash_checkpage((Page) metap, LH_META_PAGE);
+	_hash_checkpage(rel, (Page) metap, LH_META_PAGE);
 
 	/* we need a scan key to do our search, so build one */
 	itup = &(hitem->hash_itup);
@@ -57,7 +57,7 @@ _hash_doinsert(Relation rel, HashItem hitem)
 	 */
 	_hash_search(rel, natts, itup_scankey, &buf, metap);
 	page = BufferGetPage(buf);
-	_hash_checkpage(page, LH_BUCKET_PAGE);
+	_hash_checkpage(rel, page, LH_BUCKET_PAGE);
 
 	/*
 	 * trade in our read lock for a write lock so that we can do the
@@ -120,10 +120,10 @@ _hash_insertonpg(Relation rel,
 	Bucket		bucket;
 
 	metap = (HashMetaPage) BufferGetPage(metabuf);
-	_hash_checkpage((Page) metap, LH_META_PAGE);
+	_hash_checkpage(rel, (Page) metap, LH_META_PAGE);
 
 	page = BufferGetPage(buf);
-	_hash_checkpage(page, LH_BUCKET_PAGE | LH_OVERFLOW_PAGE);
+	_hash_checkpage(rel, page, LH_BUCKET_PAGE | LH_OVERFLOW_PAGE);
 	pageopaque = (HashPageOpaque) PageGetSpecialPointer(page);
 	bucket = pageopaque->hasho_bucket;
 
@@ -166,7 +166,7 @@ _hash_insertonpg(Relation rel,
 				elog(ERROR, "hash item too large");
 			}
 		}
-		_hash_checkpage(page, LH_OVERFLOW_PAGE);
+		_hash_checkpage(rel, page, LH_OVERFLOW_PAGE);
 		pageopaque = (HashPageOpaque) PageGetSpecialPointer(page);
 		Assert(pageopaque->hasho_bucket == bucket);
 	}
@@ -195,7 +195,7 @@ _hash_insertonpg(Relation rel,
 
 	if (do_expand ||
 		(metap->hashm_ntuples / (metap->hashm_maxbucket + 1))
-		> metap->hashm_ffactor)
+		> (double) metap->hashm_ffactor)
 		_hash_expandtable(rel, metabuf);
 	_hash_relbuf(rel, metabuf, HASH_READ);
 	return res;
@@ -220,7 +220,7 @@ _hash_pgaddtup(Relation rel,
 	Page		page;
 
 	page = BufferGetPage(buf);
-	_hash_checkpage(page, LH_BUCKET_PAGE | LH_OVERFLOW_PAGE);
+	_hash_checkpage(rel, page, LH_BUCKET_PAGE | LH_OVERFLOW_PAGE);
 
 	itup_off = OffsetNumberNext(PageGetMaxOffsetNumber(page));
 	if (PageAddItem(page, (Item) hitem, itemsize, itup_off, LP_USED)
