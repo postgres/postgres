@@ -1,0 +1,57 @@
+#-------------------------------------------------------------------------
+#
+# postgres.mk.sparc_solaris--
+#    SUN SPARC/solaris specific rules and variables
+#
+# Copyright (c) 1994-5, Regents of the University of California
+#
+#    $Id: postgres.mk.i386_solaris,v 1.1 1996/07/20 08:36:33 scrappy Exp $
+#
+#-------------------------------------------------------------------------
+ifndef MK_PORT
+MK_PORT=	i386_solaris
+
+# cc won't work!
+CC=		gcc
+
+#
+# for postgres.mk
+#
+CFLAGS_BE+= -DUSE_POSIX_SIGNALS
+
+# RANLIB is not used on solaris
+RANLIB=touch
+
+INSTALL=/usr/ucb/install
+
+#
+# Random things that must be passed everywhere to enable 
+# everything to compile.  :-/
+#
+# The extra -I flag is to scoop up extra BSD-emulating headers.
+CFLAGS_BE+= -DSYSV_DIRENT -I$(POSTGRESDIR)/src/backend/port/sparc_solaris
+LDADD_BE+= -lsocket -lnsl
+
+LD_ADD+= $(LDADD_BE)
+
+#
+# for postgres.user.mk
+#
+ifeq ($(CC), cc)
+CFLAGS_SL=	-K PIC
+else
+CFLAGS_SL=	-fPIC
+endif
+
+SLSUFF=		.so
+
+%.so: %.o
+	$(LD) -G -Bdynamic -o $(objdir)/$(@F) $(objdir)/$(<F)
+
+#
+# for postgres.shell.mk
+#
+DASH_N=''
+BACKSLASH_C='\\\\c'
+
+endif

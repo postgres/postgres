@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.7 1996/07/20 07:57:49 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.8 1996/07/20 08:34:08 scrappy Exp $
 #
 # NOTES
 #    This is seen by any Makefiles that include mk/postgres.mk. To
@@ -35,6 +35,7 @@
 #  The name of the port.  Valid choices are:
 #	alpha		-	DEC Alpha AXP on OSF/1 2.0
 #	hpux		-	HP PA-RISC on HP-UX 9.0
+#	i386_solaris	-	i386 Solaris
 #	sparc_solaris	-	SUN SPARC on Solaris 2.4
 #	sparc		-	SUN SPARC on SunOS 4.1.3
 #	ultrix4		-	DEC MIPS on Ultrix 4.4

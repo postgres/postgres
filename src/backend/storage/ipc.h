@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: ipc.h,v 1.1.1.1 1996/07/09 06:21:52 scrappy Exp $
+ * $Id: ipc.h,v 1.2 1996/07/20 08:35:24 scrappy Exp $
  *
  * NOTES
  *    This file is very architecture-specific.  This stuff should actually
@@ -30,14 +30,15 @@
  * atomic test-and-set instruction).  However, we have only written
  * spinlock code for the architectures listed.
  */
-#if defined(PORTNAME_aix) || \
+#if (defined(PORTNAME_aix) || \
     defined(PORTNAME_alpha) || \
     defined(PORTNAME_hpux) || \
     defined(PORTNAME_irix5) || \
     defined(PORTNAME_next) || \
     defined(PORTNAME_sparc) || \
     defined(PORTNAME_sparc_solaris) || \
-    (defined(__i386__) && defined(__GNUC__))
+    (defined(__i386__) && defined(__GNUC__))) && \
+    !defined(PORTNAME_i386_solaris)
 #define HAS_TEST_AND_SET
 #endif
 

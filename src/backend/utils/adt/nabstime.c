@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.1.1.1 1996/07/09 06:22:04 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.2 1996/07/20 08:36:19 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -295,7 +295,7 @@ tryabsdate(char *fields[], int nf, struct tm *tm, int *tzp)
     defined(PORTNAME_aix) || \
     defined(PORTNAME_irix5) || \
     defined(WIN32) || \
-	defined(PORTNAME_sparc_solaris)
+	defined(PORTNAME_sparc_solaris) || defined(PORTNAME_i386_solaris)
 	    tzset();
 #ifndef WIN32
     *tzp = timezone / 60;		/* this is an X/Open-ism */
