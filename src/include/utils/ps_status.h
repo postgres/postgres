@@ -20,6 +20,7 @@ extern char Ps_status_buffer[];
 #define PS_INIT_STATUS(argc, argv, execname, username, hostname, dbname) \
         do { \
                 sprintf(Ps_status_buffer, "%s %s %s %s", execname, hostname, username, dbname); \
+	 			setproctitle("%s", Ps_status_buffer); \
         } while (0)
 
 #define PS_CLEAR_STATUS() \
