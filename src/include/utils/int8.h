@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: int8.h,v 1.35 2002/09/18 21:35:25 tgl Exp $
+ * $Id: int8.h,v 1.36 2002/10/25 22:08:44 tgl Exp $
  *
  * NOTES
  * These data types are supported on all 64-bit architectures, and may
@@ -22,12 +22,6 @@
 
 #include "fmgr.h"
 
-
-/* this should be set in pg_config.h, but just in case it wasn't: */
-#ifndef INT64_FORMAT
-#warning "Broken pg_config.h should have defined INT64_FORMAT"
-#define INT64_FORMAT "%ld"
-#endif
 
 extern bool scanint8(const char *str, bool errorOK, int64 *result);
 
