@@ -30,9 +30,9 @@ static EPlan *find_plan(char *ident, EPlan ** eplan, int *nplans);
  *			 references existing tuple in "primary" table.
  * Though it's called without args You have to specify referenced
  * table/keys while creating trigger:  key field names in triggered table,
- * referenced table name, referenced key field names:
+ * referenced table name, referenced key field names,type of action [automatic|dependent]:
  * EXECUTE PROCEDURE
- * check_primary_key ('Fkey1', 'Fkey2', 'Ptable', 'Pkey1', 'Pkey2').
+ * check_primary_key ('Fkey1', 'Fkey2', 'Ptable', 'Pkey1', 'Pkey2','[automatic|dependent]').
  */
 
 HeapTuple						/* have to return HeapTuple to Executor */
@@ -41,9 +41,10 @@ check_primary_key()
 	Trigger    *trigger;		/* to get trigger name */
 	int			nargs;			/* # of args specified in CREATE TRIGGER */
 	char	  **args;			/* arguments: column names and table name */
-	int			nkeys;			/* # of key columns (= nargs / 2) */
+	int			nkeys;			/* # of key columns (= (nargs-1) / 2) */
 	Datum	   *kvals;			/* key values */
 	char	   *relname;		/* referenced relation name */
+	char	   *action;             /* action on insert or update*/
 	Relation	rel;			/* triggered relation */
 	HeapTuple	tuple = NULL;	/* tuple to return */
 	TupleDesc	tupdesc;		/* tuple description */
@@ -84,10 +85,14 @@ check_primary_key()
 	nargs = trigger->tgnargs;
 	args = trigger->tgargs;
 
-	if (nargs % 2 != 1)			/* odd number of arguments! */
-		elog(ERROR, "check_primary_key: odd number of arguments should be specified");
+	if ((nargs-1) % 2 != 1)			/* odd number of arguments! */
+		elog(ERROR, "check_primary_key: even number of arguments should be specified");
 
-	nkeys = nargs / 2;
+	nkeys = (nargs-1) / 2;
+	action=args[nargs -1];
+	if (strcmp(action,"automatic") && strcmp(action,"dependent"))
+		elog(ERROR,"check_primary_key: unknown action");
+	nargs=nargs-1;
 	relname = args[nkeys];
 	rel = CurrentTriggerData->tg_relation;
 	tupdesc = rel->rd_att;
@@ -198,9 +203,62 @@ check_primary_key()
 	/*
 	 * If there are no tuples returned by SELECT then ...
 	 */
-	if (SPI_processed == 0)
+	if (SPI_processed == 0 && strcmp(action,"dependent")==0)
 		elog(ERROR, "%s: tuple references non-existing key in %s",
 			 trigger->tgname, relname);
+	else if (strcmp(action,"automatic")==0) 
+	{
+		/* insert tuple in parent with only primary keys */
+		/* prepare plan */
+		void	   *pplan;
+		char		sql[8192];
+
+		/*
+		 * Construct query:INSERT INTO relname (Pkey1[,Pkey2]*) values ($1,$2..); 
+		 */
+		sprintf(sql, "insert into %s ( ", relname);
+		for (i = 0; i < nkeys; i++)
+		{
+			sprintf(sql + strlen(sql), "%s%s ", args[i + nkeys + 1],(i<nkeys-1) ? ",":"");
+		}
+		sprintf(sql+strlen(sql),") values (");
+		for (i=0;i<nkeys; i++)
+		{
+			sprintf(sql+strlen(sql),"$%d%s ",i+1,(i<nkeys-1) ? ",":"");
+		} 
+		sprintf(sql+strlen(sql),")");
+
+		/* Prepare plan for query */
+		pplan = SPI_prepare(sql, nkeys, argtypes);
+		if (pplan == NULL)
+			elog(ERROR, "check_primary_key: SPI_prepare returned %d", SPI_result);
+
+		/*
+		 * Remember that SPI_prepare places plan in current memory context
+		 * - so, we have to save plan in Top memory context for latter
+		 * use.
+		 */
+		pplan = SPI_saveplan(pplan);
+		if (pplan == NULL)
+			elog(ERROR, "check_primary_key: SPI_saveplan returned %d", SPI_result);
+		plan->splan = (void **) malloc(sizeof(void *));
+		*(plan->splan) = pplan;
+		plan->nplans = 1;
+	/*
+	 * Ok, execute prepared plan.
+	 */
+	ret = SPI_execp(*(plan->splan), kvals, NULL, 1);
+	/* we have no NULLs - so we pass   ^^^^   here */
+
+	if (ret < 0)
+		elog(ERROR, "check_primary_key: SPI_execp returned %d", ret);
+
+	/*
+	 * If there are no tuples returned by INSERT then ...
+	 */
+	if (SPI_processed == 0)
+		elog(ERROR, "error: can't enter automatically in %s",relname);
+	}
 
 	SPI_finish();
 
