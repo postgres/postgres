@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.13 1998/02/01 19:43:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.14 1998/02/01 22:20:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -252,14 +252,14 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 					lfirst(llist) = transformExpr(pstate, lfirst(llist), precedence);
 			
 				if (length(sublink->lefthand) !=
-					length(sublink->subselect->targetList))
+					length(((Query *)sublink->subselect)->targetList))
 					elog(ERROR,"Subselect has too many or too few fields.");
 					
 				if (sublink->subLinkType != EXISTS_SUBLINK)
 				{
 					char *op = lfirst(sublink->oper);
 					List *left_expr = sublink->lefthand;
-					List *right_expr = sublink->subselect->targetList;
+					List *right_expr = ((Query *)sublink->subselect)->targetList;
 					List *elist;
 
 					sublink->oper = NIL;

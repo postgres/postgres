@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/psort.c,v 1.35 1998/01/31 04:39:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/psort.c,v 1.36 1998/02/01 22:20:47 momjian Exp $
  *
  * NOTES
  *		Sorts the first relation into the second relation.
@@ -1090,7 +1090,7 @@ static int
 _psort_cmp (HeapTuple *ltup, HeapTuple *rtup)
 {
     register Datum	lattr, rattr;
-    int		nkey = 0;
+    int		nkey;
     int		result = 0;
     bool	isnull1, isnull2;
     
@@ -1119,7 +1119,6 @@ _psort_cmp (HeapTuple *ltup, HeapTuple *rtup)
 		}
 		else if (!(result = -(long) (*fmgr_faddr(&PsortKeys[nkey].sk_func)) (lattr, rattr)))
 		    result = (long) (*fmgr_faddr(&PsortKeys[nkey].sk_func)) (rattr, lattr);
-		nkey++;
     }
     return (result);
 }
