@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.115 2004/11/20 22:12:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.116 2004/12/01 19:57:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,6 @@
 
 #include <ctype.h>
 #include <math.h>
-#include <errno.h>
 #include <float.h>
 #include <limits.h>
 
@@ -2352,25 +2351,25 @@ timestamp_age(PG_FUNCTION_ARGS)
 			tm->tm_year = -tm->tm_year;
 		}
 
-		if (tm->tm_sec < 0)
+		while (tm->tm_sec < 0)
 		{
 			tm->tm_sec += 60;
 			tm->tm_min--;
 		}
 
-		if (tm->tm_min < 0)
+		while (tm->tm_min < 0)
 		{
 			tm->tm_min += 60;
 			tm->tm_hour--;
 		}
 
-		if (tm->tm_hour < 0)
+		while (tm->tm_hour < 0)
 		{
 			tm->tm_hour += 24;
 			tm->tm_mday--;
 		}
 
-		if (tm->tm_mday < 0)
+		while (tm->tm_mday < 0)
 		{
 			if (dt1 < dt2)
 			{
@@ -2384,7 +2383,7 @@ timestamp_age(PG_FUNCTION_ARGS)
 			}
 		}
 
-		if (tm->tm_mon < 0)
+		while (tm->tm_mon < 0)
 		{
 			tm->tm_mon += 12;
 			tm->tm_year--;
@@ -2437,11 +2436,14 @@ timestamptz_age(PG_FUNCTION_ARGS)
 			   *tm1 = &tt1;
 	struct pg_tm tt2,
 			   *tm2 = &tt2;
+	int			tz1;
+	int			tz2;
+	char	   *tzn;
 
 	result = (Interval *) palloc(sizeof(Interval));
 
-	if ((timestamp2tm(dt1, NULL, tm1, &fsec1, NULL) == 0)
-		&& (timestamp2tm(dt2, NULL, tm2, &fsec2, NULL) == 0))
+	if ((timestamp2tm(dt1, &tz1, tm1, &fsec1, &tzn) == 0)
+		&& (timestamp2tm(dt2, &tz2, tm2, &fsec2, &tzn) == 0))
 	{
 		fsec = (fsec1 - fsec2);
 		tm->tm_sec = (tm1->tm_sec - tm2->tm_sec);
@@ -2463,25 +2465,25 @@ timestamptz_age(PG_FUNCTION_ARGS)
 			tm->tm_year = -tm->tm_year;
 		}
 
-		if (tm->tm_sec < 0)
+		while (tm->tm_sec < 0)
 		{
 			tm->tm_sec += 60;
 			tm->tm_min--;
 		}
 
-		if (tm->tm_min < 0)
+		while (tm->tm_min < 0)
 		{
 			tm->tm_min += 60;
 			tm->tm_hour--;
 		}
 
-		if (tm->tm_hour < 0)
+		while (tm->tm_hour < 0)
 		{
 			tm->tm_hour += 24;
 			tm->tm_mday--;
 		}
 
-		if (tm->tm_mday < 0)
+		while (tm->tm_mday < 0)
 		{
 			if (dt1 < dt2)
 			{
@@ -2495,11 +2497,15 @@ timestamptz_age(PG_FUNCTION_ARGS)
 			}
 		}
 
-		if (tm->tm_mon < 0)
+		while (tm->tm_mon < 0)
 		{
 			tm->tm_mon += 12;
 			tm->tm_year--;
 		}
+
+		/*
+		 * Note: we deliberately ignore any difference between tz1 and tz2.
+		 */
 
 		/* recover sign if necessary... */
 		if (dt1 < dt2)
