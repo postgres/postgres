@@ -32,7 +32,7 @@ gets_interactive(const char *prompt)
 
 #ifdef USE_READLINE
 	if (useReadline)
-		s = readline(prompt);
+		s = readline((char *) prompt);
 	else
 	{
 #endif
@@ -135,7 +135,7 @@ saveHistory(const char *fname)
 #ifdef USE_HISTORY
 	if (useHistory)
 	{
-		if (write_history(fname) != 0)
+		if (write_history((char *) fname) != 0)
 		{
 			perror(fname);
 			return false;
