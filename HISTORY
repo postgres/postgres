@@ -15,9 +15,10 @@ With WAL, only one log file must be flushed to disk, greatly improving
 performance.  If you have been using -F in previous releases to disable
 disk flushes, you may want to consider discontinuing its use.
 
-	TOAST - Previous releases had an 8k (or 32k) row length limit.
-This limit made storage of long text fields difficult.  With TOAST, long
-rows of any length can be stored with good performance.
+	TOAST - Previous releases had a compiled-in row length limit,
+typically 8k - 32k. This limit made storage of long text fields
+difficult.  With TOAST, long rows of any length can be stored with good
+performance.
 
 	Outer Joins - We now support outer joins.  The UNION/NOT IN
 workaround for outer joins is no longer required.  We use the SQL92
@@ -73,13 +74,13 @@ Allow UNION/INTERSECT/EXCEPT to be used with ALL, subqueries, views,
 Fix parser failures during aborted transactions (Tom)
 Allow temporary relations to properly clean up indexes (Bruce)
 Fix VACUUM problem with moving rows in same page (Tom)
-Modify pg_dump so it dumps only user-defined items, not system-defined (Philip)
+Modify pg_dump to better handle user-defined items in template1 (Philip)
 Allow LIMIT in VIEW (Tom)
 Require cursor FETCH to honor LIMIT (Tom)
 Allow PRIMARY/FOREIGN Key definitions on inherited columns (Stephan)
 Allow ORDER BY, LIMIT in sub-selects (Tom)
 Allow UNION in CREATE RULE (Tom)
-Make DROP TABLE rollback-able (Tom)
+Make ALTER/DROP TABLE rollback-able (Vadim, Tom)
 Store initdb collation in pg_control so collation cannot be changed (Tom)
 Fix INSERT...SELECT with rules (Tom)
 Fix FOR UPDATE inside views and subselects (Tom)
@@ -151,7 +152,6 @@ Allow postmaster to listen on a specific IP address (David J. MacKenzie)
 Allow socket path name to be specified in hostname by using leading slash
     (David J. MacKenzie)
 Allow CREATE DATABASE to specify template database (Tom)
-New template0 database that contains no user additions(Tom)
 
 Types
 -----
@@ -161,6 +161,7 @@ Allow BIGINT as synonym for INT8 (Peter E)
 New int2 and int8 comparison operators (Tom)
 New BIT and BIT VARYING types (Adriaan Joubert, Tom)
 CHAR() no longer faster than VARCHAR() because of TOAST (Tom)
+New GIST seg/cube examples (Gene Selkov)
 
 Performance
 -----------
@@ -179,7 +180,7 @@ SGI portability fixes (David Kaelbling)
 New configure --enable-syslog option (Marc)
 New BSDI README (Bruce)
 configure script moved to top level, not /src (Peter E)
-Makefile/configuration/compilation cleanups (Peter E)
+Makefile/configuration/compilation overhaul (Peter E)
 New configure --with-python option (Peter E)
 Solaris cleanups (Peter E)
 Overhaul /contrib Makefiles (Karel)
@@ -196,10 +197,13 @@ New BeOS port (David Reid, Cyril Velter)
 Add proofreader's changes to docs (Addison-Wesley, Bruce)
 New Alpha spinlock code (Adriaan Joubert, Compaq)
 Unixware port overhaul (Peter E)
-New Darwin/Mac OSX port (Bruce Hartzler)
+New Darwin/Mac OSX port (Peter Bierman, Bruce Hartzler)
 New FreeBSD Alpha port (Alfred)
 Overhaul shared memory segments (Tom)
 Add IBM S/390 support (Neale Ferguson)
+Moved macmanuf to /contrib (Larry Rosenman)
+Syslog improvements (Larry Rosenman)
+New template0 database that contains no user additions(Tom)
 
 
 
