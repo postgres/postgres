@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.30 1999/02/11 17:21:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.31 1999/02/11 21:05:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,7 +29,7 @@
 
 #include "parser/parsetree.h"	/* for getrelid() */
 
-static Path *better_path(Path *new_path, List *unique_paths, bool *isNew);
+static Path *better_path(Path *new_path, List *unique_paths, bool *is_new);
 
 
 /*****************************************************************************
@@ -173,11 +173,14 @@ better_path(Path *new_path, List *unique_paths, bool *is_new)
 			printf("newpath\n");
 			pprint(new_path->pathkeys);
 			if (path->pathkeys && new_path->pathkeys &&
-				length(lfirst(path->pathkeys)) >= 2 &&
-				length(lfirst(path->pathkeys)) < length(lfirst(new_path->pathkeys)))
+				length(lfirst(path->pathkeys)) >= 2/* &&
+				length(lfirst(path->pathkeys)) <
+				length(lfirst(new_path->pathkeys))*/)
 				sleep(0); /* set breakpoint here */
 		}
-		if (!pathorder_match(new_path->pathorder, path->pathorder, &better_sort))
+		if (!pathorder_match(new_path->pathorder, path->pathorder,
+			&better_sort) ||
+			better_sort != 0)
 		{
 			printf("oldord\n");
 			pprint(path->pathorder);
@@ -186,43 +189,43 @@ better_path(Path *new_path, List *unique_paths, bool *is_new)
 		}
 #endif
 
-		if (pathkeys_match(new_path->pathkeys, path->pathkeys, &better_key))
+		if (pathkeys_match(new_path->pathkeys, path->pathkeys,
+			&better_key) &&
+			pathorder_match(new_path->pathorder, path->pathorder,
+			&better_sort))
 		{
-			if (pathorder_match(new_path->pathorder, path->pathorder, &better_sort))
+			/*
+			 * Replace pathkeys that match exactly, (1,2), (1,2).
+			 * Replace pathkeys (1,2) with (1,2,3) if the latter is not
+			 * more expensive and replace unordered path with ordered
+			 * path if it is not more expensive.  Favor sorted keys
+			 * over unsorted keys in the same way.
+			 */
+							/* same keys, and new is cheaper, use it */
+		    if ((better_key == 0 && better_sort == 0 &&
+				 new_path->path_cost < path->path_cost) ||
+
+							/* new is better, and cheaper, use it */
+				(((better_key == 1 && better_sort != 2) ||
+				  (better_key != 2 && better_sort == 1)) &&
+				  new_path->path_cost <= path->path_cost))
 			{
-				/*
-				 * Replace pathkeys that match exactly, (1,2), (1,2).
-				 * Replace pathkeys (1,2) with (1,2,3) if the latter is not
-				 * more expensive and replace unordered path with ordered
-				 * path if it is not more expensive.  Favor sorted keys
-				 * over unsorted keys in the same way.
-				 */
-								/* same keys, and new is cheaper, use it */
-			    if ((better_key == 0 && better_sort == 0 &&
-					 new_path->path_cost <  path->path_cost) ||
+				*is_new = false;
+				return new_path;
+			}
 
-								/* new is better, and cheaper, use it */
-					(((better_key == 1 && better_sort != 2) ||
-					  (better_key != 2 && better_sort == 1)) &&
-					  new_path->path_cost <= path->path_cost))
-				{
-					*is_new = false;
-					return new_path;
-				}
+							/* same keys, new is more expensive, stop */
+		    else if
+				((better_key == 0 && better_sort == 0 &&
+				  new_path->path_cost >= path->path_cost) ||
 
-								/* same keys, new is more expensive, stop */
-			    else if
-					((better_key == 0 && better_sort == 0 &&
-					  new_path->path_cost >= path->path_cost) ||
-
-								/* old is better, and less expensive, stop */
-					(((better_key == 2 && better_sort != 1) ||
-					  (better_key != 1 && better_sort == 2)) &&
-					  new_path->path_cost >= path->path_cost))
-				{
-					*is_new = false;
-					return NULL;
-				}
+							/* old is better, and less expensive, stop */
+				(((better_key == 2 && better_sort != 1) ||
+				  (better_key != 1 && better_sort == 2)) &&
+				  new_path->path_cost >= path->path_cost))
+			{
+				*is_new = false;
+				return NULL;
 			}
 		}
 	}
