@@ -1,5 +1,7 @@
+CFLAGS="$CFLAGS -pipe"
+
 case $host_cpu in
-  alpha*)   CFLAGS="-O";;
+  alpha*)   CFLAGS="$CFLAGS -O";;
 esac
 
 THREAD_SUPPORT=yes

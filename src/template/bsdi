@@ -1,4 +1,4 @@
-CFLAGS='-O2 -pipe'
+CFLAGS="$CFLAGS -pipe"
 
 case $host_cpu in
   i?86)  CFLAGS="$CFLAGS -m486";;
