@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.64 2003/01/19 00:13:31 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.65 2003/03/20 19:00:01 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -46,6 +46,11 @@ where <replaceable class="PARAMETER">from_item</replaceable> can be:
 <replaceable class="PARAMETER">table_function_name</replaceable> ( [ <replaceable class="parameter">argument</replaceable> [, ...] ] )
     AS ( <replaceable class="PARAMETER">column_definition_list</replaceable> )
 |
+<!-- 
+   FIXME: this syntax is incorrect if the join type is an INNER or
+   OUTER join (in which case one of NATURAL, ON ..., or USING ... is
+   mandatory, not optional). What's the best way to fix this?
+-->
 <replaceable class="PARAMETER">from_item</replaceable> [ NATURAL ] <replaceable class="PARAMETER">join_type</replaceable> <replaceable class="PARAMETER">from_item</replaceable>
     [ ON <replaceable class="PARAMETER">join_condition</replaceable> | USING ( <replaceable class="PARAMETER">join_column_list</replaceable> ) ]
   </synopsis>
