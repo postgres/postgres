@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.27 2000/03/01 21:09:58 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.28 2000/03/18 22:48:29 petere Exp $
  */
 #include "postgres.h"
 
@@ -357,7 +357,10 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 			case 'c':
 				options->action_string = optarg;
 				if (optarg[0] == '\\')
+				{
 					options->action = ACT_SINGLE_SLASH;
+					options->action_string++;
+				}
 				else
 					options->action = ACT_SINGLE_QUERY;
 				break;

@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.24 2000/03/01 21:09:58 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.25 2000/03/18 22:48:29 petere Exp $
  */
 #include "postgres.h"
 #include "command.h"
@@ -149,11 +149,13 @@ HandleSlashCmds(const char *line,
 	if (continue_parse && *continue_parse && *(continue_parse + 1) == '\\')
 		continue_parse += 2;
 
-
-    if (continue_parse)
-        *end_of_cmd = line + (continue_parse - my_line);
-    else
-        *end_of_cmd = line + strlen(line);
+    if (end_of_cmd)
+    {
+        if (continue_parse)
+            *end_of_cmd = line + (continue_parse - my_line);
+        else
+            *end_of_cmd = line + strlen(line);
+    }
 
 	free(my_line);
 
