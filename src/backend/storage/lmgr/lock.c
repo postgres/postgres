@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.46 1999/03/06 21:17:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.47 1999/04/30 02:04:50 momjian Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -820,13 +820,17 @@ LockResolveConflicts(LOCKMETHOD lockmethod,
 		/* ------------------------
 		 * If someone with a greater priority is waiting for the lock,
 		 * do not continue and share the lock, even if we can.	bjm
+		 * Don't do this if the process already has some locks, because
+		 * this could hold up other people waiting on our locks, causing
+		 * a priority inversion.  bjm
 		 * ------------------------
 		 */
 		int			myprio = LockMethodTable[lockmethod]->ctl->prio[lockmode];
 		PROC_QUEUE *waitQueue = &(lock->waitProcs);
 		PROC	   *topproc = (PROC *) MAKE_PTR(waitQueue->links.prev);
 
-		if (waitQueue->size && topproc->prio > myprio)
+		if (SHMQueueEmpty(lockQueue) && waitQueue->size &&
+			topproc->prio > myprio)
 		{
 			XID_PRINT("LockResolveConflicts: higher priority proc waiting",
 					  result);
@@ -1595,7 +1599,7 @@ DeadLockCheck(SHM_QUEUE *lockQueue, LOCK *findlock, bool skip_check)
 		 *
 		 * The lock we are waiting for is already in MyProc->lockQueue so we
 		 * need to skip it here.  We are trying to find it in someone
-		 * else's lockQueue.
+		 * else's lockQueue.   bjm
 		 */
 		if (lock == findlock && !skip_check)
 			return true;
@@ -1625,7 +1629,7 @@ DeadLockCheck(SHM_QUEUE *lockQueue, LOCK *findlock, bool skip_check)
 					 *
 					 * Basically, the test is, "Do we both hold some lock on
 					 * findlock, and we are both waiting in the lock
-					 * queue?"
+					 * queue?"   bjm
 					 */
 
 					Assert(skip_check);
@@ -1672,7 +1676,7 @@ DeadLockCheck(SHM_QUEUE *lockQueue, LOCK *findlock, bool skip_check)
 						 * hold locks and are waiting. Now we check for
 						 * cases where we have two or more tables in a
 						 * deadlock.  We do this by continuing to search
-						 * for someone holding a lock
+						 * for someone holding a lock       bjm
 						 */
 						if (DeadLockCheck(&(proc->lockQueue), findlock, false))
 							return true;

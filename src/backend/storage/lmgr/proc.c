@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.52 1999/03/28 20:32:26 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.53 1999/04/30 02:04:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@
  *		This is so that we can support more backends. (system-wide semaphore
  *		sets run out pretty fast.)				  -ay 4/95
  *
- * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.52 1999/03/28 20:32:26 vadim Exp $
+ * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.53 1999/04/30 02:04:51 momjian Exp $
  */
 #include <sys/time.h>
 #include <unistd.h>
@@ -516,8 +516,7 @@ ProcSleep(PROC_QUEUE *waitQueue,/* lock->waitProcs */
 	 * In a full queue, we would have a reader holding a lock, then a writer
 	 * gets the lock, then a bunch of readers, made up of readers who
 	 * could not share the first readlock because a writer was waiting,
-	 * and new readers arriving while the writer had the lock.
-	 *
+	 * and new readers arriving while the writer had the lock.  bjm
 	 */
 	proc = (PROC *) MAKE_PTR(waitQueue->links.prev);
 

@@ -4,7 +4,7 @@
 <Abstract>
 <Para>
 Complete installation instructions for 
-<ProductName>Postgres</ProductName> v6.4.
+<ProductName>Postgres</ProductName> v6.5.
 </Para>
 </Abstract>
 
@@ -167,8 +167,8 @@ remaining steps in the installation will happen in this account.
 <Step Performance="required">
 <Para>
 Ftp file 
-<ulink url="ftp://ftp.postgresql.org/pub/postgresql-v6.4.tar.gz">
- <filename>ftp://ftp.postgresql.org/pub/postgresql-v6.4.tar.gz</filename></ulink>
+<ulink url="ftp://ftp.postgresql.org/pub/postgresql-v6.5.tar.gz">
+ <filename>ftp://ftp.postgresql.org/pub/postgresql-v6.5.tar.gz</filename></ulink>
  from the Internet.  Store it in your home directory.
 </Para>
 </Step>
@@ -268,7 +268,7 @@ from the new distribution:
 
 <ProgramListing>
 $ cd
-$ gunzip -c postgresql-v6.4.tar.gz \
+$ gunzip -c postgresql-v6.5.tar.gz \
     | tar xvf - src/bin/pg_dump/pg_dumpall
 $ chmod a+x src/bin/pg_dump/pg_dumpall
 $ src/bin/pg_dump/pg_dumpall -z > db.out
@@ -411,7 +411,7 @@ $ exit
  Unzip and untar the new source file.  Type
 <ProgramListing>
 $ cd /usr/src/pgsql
-$ gunzip -c ~/postgresql-v6.4.tar.gz | tar xvf -
+$ gunzip -c ~/postgresql-v6.5.tar.gz | tar xvf -
 </ProgramListing>
 </Para>
 </Step>
@@ -989,17 +989,7 @@ For example,
 <listitem>
 <Para>
      For a i686/Linux-ELF platform, no tests failed since this is the
-     v6.4 regression testing reference platform.
-</Para>
-</listitem>
-
-<listitem>
-<Para>
-     For the SPARC/Linux-ELF platform, using the 970525 beta version of
-     <ProductName>Postgres</ProductName> v6.2 the following tests "failed":
-     float8 and geometry "failed" due to minor precision differences in
-     floating point numbers.  select_views produces massively different output,
-     but the differences are due to minor floating point differences.
+     v6.5 regression testing reference platform.
 </Para>
 </listitem>
 
@@ -1109,11 +1099,11 @@ VACUUM;
 <Para>
  Clean up after yourself.  Type
 <ProgramListing>
-$ rm -rf /usr/src/pgsql_6_0
-$ rm -rf /usr/local/pgsql_6_0
+$ rm -rf /usr/src/pgsql_6_5
+$ rm -rf /usr/local/pgsql_6_5
 # Also delete old database directory tree if it is not in
-#  /usr/local/pgsql_6_0/data
-$ rm ~/postgresql-v6.2.1.tar.gz
+#  /usr/local/pgsql_6_5/data
+$ rm ~/postgresql-v6.5.tar.gz
 </ProgramListing>
 </Para>
 </Step>
@@ -1160,7 +1150,7 @@ $ lpr -l -s -r manpage.hp
 <itemizedlist>
 <listitem>
 <para>
-The version of <ProductName>Postgres</ProductName> (v6.4, 6.3.2, beta 981014, etc.).
+The version of <ProductName>Postgres</ProductName> (v6.5, 6.4.2, beta 981014, etc.).
 </para>
 </listitem>
 
