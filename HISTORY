@@ -28,12 +28,10 @@
    
                                   Changes
                                       
-   Fix a core dump of COPY TO when client/server encodings don't match (T
-   om)
-   Allow pg_dump to work with pre-7.2 servers (Tom)
+   Fix a core dump of COPY TO when client/server encodings don't match (Tom)
+   Allow pg_dump to work with pre-7.2 servers (Philip)
    /contrib/adddepend fixes (Tom)
-   Fix problem with deletion of per-user/per-database config settings (To
-   m)
+   Fix problem with deletion of per-user/per-database config settings (Tom)
    /contrib/vacuumlo fix (Tom)
    Allow 'password' encryption even when pg_shadow contains MD5 passwords
     (Bruce)

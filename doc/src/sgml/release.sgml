@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.172 2002/12/18 19:01:25 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.173 2002/12/20 00:24:00 momjian Exp $
 -->
 
 <appendix id="release">
@@ -68,7 +68,7 @@ extra_float_digits option allows pg_dump to dump float data accurately
     <para>
 <literallayout>
 Fix a core dump of COPY TO when client/server encodings don't match (Tom)
-Allow pg_dump to work with pre-7.2 servers (Tom)
+Allow pg_dump to work with pre-7.2 servers (Philip)
 /contrib/adddepend fixes (Tom)
 Fix problem with deletion of per-user/per-database config settings (Tom)
 /contrib/vacuumlo fix (Tom)
