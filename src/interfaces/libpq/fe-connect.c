@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.264 2003/11/29 19:52:11 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.265 2003/12/19 21:50:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2367,7 +2367,7 @@ parseServiceInfo(PQconninfoOption *options, PQExpBuffer errorMessage)
 {
 	char	   *service = conninfo_getval(options, "service");
 	char	   *serviceFile = SYSCONFDIR "/pg_service.conf";
-	int			group_found = 0;
+	bool		group_found = false;
 	int			linenr = 0,
 				i;
 
@@ -2431,9 +2431,9 @@ parseServiceInfo(PQconninfoOption *options, PQExpBuffer errorMessage)
 
 				if (strncmp(line + 1, service, strlen(service)) == 0 &&
 					line[strlen(service) + 1] == ']')
-					group_found = 1;
+					group_found = true;
 				else
-					group_found = 0;
+					group_found = false;
 			}
 			else
 			{
@@ -2445,7 +2445,7 @@ parseServiceInfo(PQconninfoOption *options, PQExpBuffer errorMessage)
 					 */
 					char	   *key,
 							   *val;
-					int			found_keyword;
+					bool		found_keyword;
 
 					key = line;
 					val = strchr(line, '=');
@@ -2461,31 +2461,17 @@ parseServiceInfo(PQconninfoOption *options, PQExpBuffer errorMessage)
 					*val++ = '\0';
 
 					/*
-					 * If not already set, set the database name to the
-					 * name of the service
-					 */
-					for (i = 0; options[i].keyword; i++)
-					{
-						if (strcmp(options[i].keyword, "dbname") == 0)
-						{
-							if (options[i].val == NULL)
-								options[i].val = strdup(service);
-							break;
-						}
-					}
-
-					/*
 					 * Set the parameter --- but don't override any
 					 * previous explicit setting.
 					 */
-					found_keyword = 0;
+					found_keyword = false;
 					for (i = 0; options[i].keyword; i++)
 					{
 						if (strcmp(options[i].keyword, key) == 0)
 						{
 							if (options[i].val == NULL)
 								options[i].val = strdup(val);
-							found_keyword = 1;
+							found_keyword = true;
 							break;
 						}
 					}
