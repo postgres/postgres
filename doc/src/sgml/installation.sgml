@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.177 2003/11/02 12:57:48 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.178 2003/11/04 09:55:38 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -333,7 +333,7 @@ JAVACMD=$JAVA_HOME/bin/java
   <para>
    The <productname>PostgreSQL</> &version; sources can be obtained by
    anonymous FTP from <ulink
-   url="ftp://ftp.postgresql.org/pub/postgresql-&version;.tar.gz"></ulink>.
+   url="ftp://ftp.postgresql.org/pub/source/v&version;/postgresql-&version;.tar.gz"></ulink>.
    Use a mirror if possible. After you have obtained the file, unpack it:
 <screen>
 <userinput>gunzip postgresql-&version;.tar.gz</userinput>
@@ -637,7 +637,7 @@ JAVACMD=$JAVA_HOME/bin/java
      <note>
       <para>
        Care has been taken to make it possible to install
-	<productname>PostgreSQL</> 
+        <productname>PostgreSQL</> 
        into shared installation locations (such as
        <filename>/usr/local/include</filename>) without interfering
        with the namespace of the rest of the system.  First, the
@@ -674,7 +674,7 @@ JAVACMD=$JAVA_HOME/bin/java
          directories that will be added to the list the compiler
          searches for header files. If you have optional packages
          (such as GNU <application>Readline</>) installed in a non-standard
-	 location,
+         location,
          you have to use this option and probably also the corresponding
          <option>--with-libraries</> option.
         </para>
@@ -732,8 +732,8 @@ JAVACMD=$JAVA_HOME/bin/java
          be changed later on, but if you specify it here then both
          server and clients will have the same default compiled in,
          which can be very convenient.  Usually the only good reason
-	 to select a non-default value is if you intend to run multiple
-	 <productname>PostgreSQL</> servers on the same machine.
+         to select a non-default value is if you intend to run multiple
+         <productname>PostgreSQL</> servers on the same machine.
         </para>
        </listitem>
       </varlistentry>
@@ -873,8 +873,8 @@ JAVACMD=$JAVA_HOME/bin/java
        <term><option>--with-pam</option></term>
        <listitem>
         <para>
-	 Build with <acronym>PAM</><indexterm><primary>PAM</></>
-	 (Pluggable Authentication Modules) support.
+         Build with <acronym>PAM</><indexterm><primary>PAM</></>
+         (Pluggable Authentication Modules) support.
         </para>
        </listitem>
       </varlistentry>
@@ -894,7 +894,7 @@ JAVACMD=$JAVA_HOME/bin/java
        <term><option>--with-rendezvous</option></term>
        <listitem>
         <para>
-	 Build with Rendezvous support.
+         Build with Rendezvous support.
         </para>
        </listitem>
       </varlistentry>
@@ -903,10 +903,11 @@ JAVACMD=$JAVA_HOME/bin/java
        <term><option>--disable-spinlocks</option></term>
        <listitem>
         <para>
-         Allows source builds to succeed without CPU spinlock support.
-         Lack of spinlock support will produce poor performance.
-         This option is to be used only by platforms lacking
-         spinlock support.
+         Allow the builds to succeed even if PostgreSQL has no CPU
+         spinlock support for the platform.  The lack of spinlock
+         support will result in poor performance; therefore, this
+         option should only be used if the build aborts and informs
+         you that the platform lacks spinlock support.
         </para>
        </listitem>
       </varlistentry>
@@ -915,9 +916,10 @@ JAVACMD=$JAVA_HOME/bin/java
        <term><option>--enable-thread-safety</option></term>
        <listitem>
         <para>
-	 Allow separate threads in <application>libpq</application>
-	 and <application>ECPG</application> programs to safely
-	 control their private connection handles.
+         Make the client libraries thread-safe.  This allows
+         concurrent threads in <application>libpq</application> and
+         <application>ECPG</application> programs to safely control
+         their private connection handles.
         </para>
        </listitem>
       </varlistentry>
@@ -941,13 +943,13 @@ JAVACMD=$JAVA_HOME/bin/java
          Compiles all programs and libraries with debugging symbols.
          This means that you can run the programs through a debugger
          to analyze problems. This enlarges the size of the installed
-	 executables considerably, and on non-GCC compilers it usually
-	 also disables compiler optimization, causing slowdowns. However,
-	 having the symbols available is extremely helpful for dealing
-	 with any problems that may arise.  Currently, this option is
-	 recommended for production installations only if you use GCC.
-	 But you should always have it on if you are doing development work
-	 or running a beta version.
+         executables considerably, and on non-GCC compilers it usually
+         also disables compiler optimization, causing slowdowns. However,
+         having the symbols available is extremely helpful for dealing
+         with any problems that may arise.  Currently, this option is
+         recommended for production installations only if you use GCC.
+         But you should always have it on if you are doing development work
+         or running a beta version.
         </para>
        </listitem>
       </varlistentry>
@@ -956,16 +958,16 @@ JAVACMD=$JAVA_HOME/bin/java
        <term><option>--enable-cassert</option></term>
        <listitem>
         <para>
-	 Enables <firstterm>assertion</> checks in the server, which test for
-	 many <quote>can't happen</> conditions.  This is invaluable for
-	 code development purposes, but the tests slow things down a little.
-	 Also, having the tests turned on won't necessarily enhance the
-	 stability of your server!  The assertion checks are not categorized
-	 for severity, and so what might be a relatively harmless bug will
-	 still lead to server restarts if it triggers an assertion
-	 failure.  Currently, this option is not recommended for
+         Enables <firstterm>assertion</> checks in the server, which test for
+         many <quote>can't happen</> conditions.  This is invaluable for
+         code development purposes, but the tests slow things down a little.
+         Also, having the tests turned on won't necessarily enhance the
+         stability of your server!  The assertion checks are not categorized
+         for severity, and so what might be a relatively harmless bug will
+         still lead to server restarts if it triggers an assertion
+         failure.  Currently, this option is not recommended for
          production use, but you should have it on for development work
-	 or when running a beta version.
+         or when running a beta version.
         </para>
        </listitem>
       </varlistentry>
@@ -974,12 +976,12 @@ JAVACMD=$JAVA_HOME/bin/java
        <term><option>--enable-depend</option></term>
        <listitem>
         <para>
-	 Enables automatic dependency tracking.  With this option, the
-	 makefiles are set up so that all affected object files will
-	 be rebuilt when any header file is changed.  This is useful
-	 if you are doing development work, but is just wasted overhead
-	 if you intend only to compile once and install.  At present,
-	 this option will work only if you use GCC.
+         Enables automatic dependency tracking.  With this option, the
+         makefiles are set up so that all affected object files will
+         be rebuilt when any header file is changed.  This is useful
+         if you are doing development work, but is just wasted overhead
+         if you intend only to compile once and install.  At present,
+         this option will work only if you use GCC.
         </para>
        </listitem>
       </varlistentry>
@@ -1040,8 +1042,6 @@ All of PostgreSQL is successfully made. Ready to install.
 <userinput>gmake check</userinput>
 </screen>
     (This won't work as root; do it as an unprivileged user.)
-    It is possible that some tests fail, due to differences in error
-    message wording or floating point results.
     <![%standalone-include[The file
     <filename>src/test/regress/README</> and the
     documentation contain]]>
@@ -1155,28 +1155,6 @@ All of PostgreSQL is successfully made. Ready to install.
 
  <sect1 id="install-post">
   <title>Post-Installation Setup</title>
-
-  <sect2>
-   <title>Tuning</title>
-
-   <indexterm>
-    <primary>tuning</primary>
-   </indexterm>
-
-   <para>
-    By default, <productname>PostgreSQL</> is configured to run on minimal
-    hardware.  This allows it to start up with almost any hardware
-    configuration. However, the default configuration is not designed for
-    optimum performance. To achieve optimum performance, several server
-    variables must be adjusted, the two most common being
-    <varname>shared_buffers</varname> and <varname> sort_mem</varname>
-    mentioned in <![%standalone-include[the documentation]]>
-    <![%standalone-ignore[<xref linkend="runtime-config-resource-memory">]]>.
-    Other parameters in <![%standalone-include[the documentation]]>
-    <![%standalone-ignore[<xref linkend="runtime-config-resource">]]>
-    also affect performance.
-   </para>
-  </sect2>
 
   <sect2>
    <title>Shared Libraries</title>
@@ -1458,39 +1436,28 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
 
     <listitem>
      <para>
-      Run the regression tests against the installed server (using the
-      sequential test method). If you didn't run the tests before
-      installation, you should definitely do it now. This is also
-      explained in the documentation.
+      Run the regression tests against the installed server (using
+      <command>gmake installcheck</command>). If you didn't run the
+      tests before installation, you should definitely do it now. This
+      is also explained in the documentation.
      </para>
     </listitem>
 
+    <listitem>
+     <para>
+      By default, <productname>PostgreSQL</> is configured to run on
+      minimal hardware.  This allows it to start up with almost any
+      hardware configuration. The default configuration is, however,
+      not designed for optimum performance. To achieve optimum
+      performance, several server parameters must be adjusted, the two
+      most common being <varname>shared_buffers</varname> and
+      <varname> sort_mem</varname> mentioned in the documentation.
+      Other parameters mentioned in the documentation also affect
+      performance.
+     </para>
+    </listitem>
    </itemizedlist>
   </para>
-
-<!-- do we still ship this? -->
-<!--
-  <para>
-   The documentation is also available in Postscript format. If you
-   have a Postscript printer, or have your machine already set up to
-   accept Postscript files using a print filter, then to print, the
-   documentation simply type
-<programlisting>
-cd /usr/local/pgsql/doc
-gunzip -c postgres.ps.gz | lpr
-</programlisting>
-   Here is how you might do it if you have <productname>Ghostscript</>
-   installed on your system and are writing to a Laserjet printer.
-<programlisting>
-gunzip -c postgres.ps.gz \
-    | gs -sDEVICE=laserjet -r300 -q -dNOPAUSE -sOutputFile=- \
-    | lpr
-</programlisting>
-   Printer setups can vary wildly from system to system. If in doubt,
-   consult your manuals or your local expert.
-  </para>
--->
-
  </sect1>
 ]]>
 
@@ -1519,194 +1486,186 @@ gunzip -c postgres.ps.gz \
      <tgroup cols="5">
       <thead>
        <row>
-	<entry><acronym>OS</acronym></entry>
-	<entry>Processor</entry>
-	<entry>Version</entry>
-	<entry>Reported</entry>
-	<entry>Remarks</entry>
+        <entry><acronym>OS</acronym></entry>
+        <entry>Processor</entry>
+        <entry>Version</entry>
+        <entry>Reported</entry>
+        <entry>Remarks</entry>
        </row>
       </thead>
       <tbody>
        <row>
-	<entry><systemitem class="osname">AIX</></entry>
-	<entry><systemitem>RS6000</></entry>
-	<entry>7.4</entry>
-	<entry>2003-10-25,
-	  Hans-J&uuml;rgen Sch&ouml;nig (<email>hs@cybertec.at</email>)</entry>
+        <entry><systemitem class="osname">AIX</></entry>
+        <entry><systemitem>RS6000</></entry>
+        <entry>7.4</entry>
+        <entry>2003-10-25,
+          Hans-J&uuml;rgen Sch&ouml;nig (<email>hs@cybertec.at</email>)</entry>
         <entry>see also <filename>doc/FAQ_AIX</filename></entry>
        </row>
        <row>
-	<entry><systemitem class="osname">BSD/OS</></entry>
-	<entry><systemitem>x86</></entry>
-	<entry>7.4</entry>
-	<entry>2003-10-24,
-	 Bruce Momjian (<email>pgman@candle.pha.pa.us</email>)</entry>
+        <entry><systemitem class="osname">BSD/OS</></entry>
+        <entry><systemitem>x86</></entry>
+        <entry>7.4</entry>
+        <entry>2003-10-24,
+         Bruce Momjian (<email>pgman@candle.pha.pa.us</email>)</entry>
         <entry>4.3</entry>
        </row>
        <row>
-	<entry><systemitem class="osname">FreeBSD</></entry>
-	<entry><systemitem>Alpha</></entry>
-	<entry>7.4</entry>
-	<entry>2003-10-25,
-	 Peter Eisentraut (<email>peter_e@gmx.net</email>)</entry>
+        <entry><systemitem class="osname">FreeBSD</></entry>
+        <entry><systemitem>Alpha</></entry>
+        <entry>7.4</entry>
+        <entry>2003-10-25,
+         Peter Eisentraut (<email>peter_e@gmx.net</email>)</entry>
         <entry>4.8</entry>
        </row>
        <row>
-	<entry><systemitem class="osname">FreeBSD</></entry>
-	<entry><systemitem>x86</></entry>
-	<entry>7.4</entry>
-	<entry>2003-10-24,
-	 Peter Eisentraut (<email>peter_e@gmx.net</email>)</entry>
+        <entry><systemitem class="osname">FreeBSD</></entry>
+        <entry><systemitem>x86</></entry>
+        <entry>7.4</entry>
+        <entry>2003-10-24,
+         Peter Eisentraut (<email>peter_e@gmx.net</email>)</entry>
         <entry>4.9</entry>
        </row>
        <row>
-	<entry><systemitem class="osname">HP-UX</></entry>
-	<entry><systemitem>PA-RISC</></entry>
-	<entry>7.4</entry>
+        <entry><systemitem class="osname">HP-UX</></entry>
+        <entry><systemitem>PA-RISC</></entry>
+        <entry>7.4</entry>
         <entry>2003-10-31,
-	 10.20 Tom Lane (<email>tgl@sss.pgh.pa.us</email>)
+         10.20 Tom Lane (<email>tgl@sss.pgh.pa.us</email>)
         </entry>
         <entry><command>gcc</> and <command>cc</>; see also <filename>doc/FAQ_HPUX</filename></entry>
        </row>
        <row>
-	<entry><systemitem class="osname">IRIX</></entry>
-	<entry><systemitem>MIPS</></entry>
-	<entry>7.3</entry>
-	<entry>2002-10-27,
-	 Ian Barwick (<email>barwick@gmx.net</email>)</entry>
-	<entry>Irix64 Komma 6.5</entry>
+        <entry><systemitem class="osname">IRIX</></entry>
+        <entry><systemitem>MIPS</></entry>
+        <entry>7.3</entry>
+        <entry>2002-10-27,
+         Ian Barwick (<email>barwick@gmx.net</email>)</entry>
+        <entry>Irix64 Komma 6.5</entry>
        </row>
        <row>
-	<entry><systemitem class="osname">Linux</></entry>
-	<entry><systemitem>Alpha</></entry>
-	<entry>7.4</entry>
-	<entry>2003-10-25,
-	 No&egrave;l K&ouml;the (<email>noel@debian.org</email>)</entry>
-	<entry>2.4</entry>
+        <entry><systemitem class="osname">Linux</></entry>
+        <entry><systemitem>Alpha</></entry>
+        <entry>7.4</entry>
+        <entry>2003-10-25,
+         No&egrave;l K&ouml;the (<email>noel@debian.org</email>)</entry>
+        <entry>2.4</entry>
        </row>
        <row>
-	<entry><systemitem class="osname">Linux</></entry>
-	<entry><systemitem>arm41</></entry>
-	<entry>7.4</entry>
-	<entry>2003-10-25,
-	 No&egrave;l K&ouml;the (<email>noel@debian.org</email>)</entry>
-	<entry>2.4</entry>
+        <entry><systemitem class="osname">Linux</></entry>
+        <entry><systemitem>arm41</></entry>
+        <entry>7.4</entry>
+        <entry>2003-10-25,
+         No&egrave;l K&ouml;the (<email>noel@debian.org</email>)</entry>
+        <entry>2.4</entry>
        </row>
        <row>
-	<entry><systemitem class="osname">Linux</></entry>
-	<entry><systemitem>Itanium</></entry>
-	<entry>7.4</entry>
-	<entry>2003-10-25,
-	 No&egrave;l K&ouml;the (<email>noel@debian.org</email>)</entry>
-	<entry>2.4</entry>
+        <entry><systemitem class="osname">Linux</></entry>
+        <entry><systemitem>Itanium</></entry>
+        <entry>7.4</entry>
+        <entry>2003-10-25,
+         No&egrave;l K&ouml;the (<email>noel@debian.org</email>)</entry>
+        <entry>2.4</entry>
        </row>
        <row>
-	<entry><systemitem class="osname">Linux</></entry>
-	<entry><systemitem>m68k</></entry>
-	<entry>7.4</entry>
-	<entry>2003-10-25,
-	 No&egrave;l K&ouml;the (<email>noel@debian.org</email>)</entry>
-	<entry>2.4</entry>
+        <entry><systemitem class="osname">Linux</></entry>
+        <entry><systemitem>m68k</></entry>
+        <entry>7.4</entry>
+        <entry>2003-10-25,
+         No&egrave;l K&ouml;the (<email>noel@debian.org</email>)</entry>
+        <entry>2.4</entry>
        </row>
        <row>
-	<entry><systemitem class="osname">Linux</></entry>
-	<entry><systemitem>MIPS</></entry>
-	<entry>7.4</entry>
-	<entry>2003-10-25,
-	 No&egrave;l K&ouml;the (<email>noel@debian.org</email>)</entry>
-	<entry>2.4</entry>
+        <entry><systemitem class="osname">Linux</></entry>
+        <entry><systemitem>MIPS</></entry>
+        <entry>7.4</entry>
+        <entry>2003-10-25,
+         No&egrave;l K&ouml;the (<email>noel@debian.org</email>)</entry>
+        <entry>2.4</entry>
        </row>
        <row>
-	<entry><systemitem class="osname">Linux</></entry>
-	<entry><systemitem>Opteron</></entry>
-	<entry>7.4</entry>
-	<entry>2003-11-01,
-	 Jani Averbach (<email>jaa@cc.jyu.fi</email>)</entry>
-	<entry>2.6</entry>
+        <entry><systemitem class="osname">Linux</></entry>
+        <entry><systemitem>Opteron</></entry>
+        <entry>7.4</entry>
+        <entry>2003-11-01,
+         Jani Averbach (<email>jaa@cc.jyu.fi</email>)</entry>
+        <entry>2.6</entry>
        </row>
        <row>
-	<entry><systemitem class="osname">Linux</></entry>
-	<entry><systemitem>PlayStation 2</></entry>
-	<entry>7.3</entry>
-	<entry>2002-11-19,
-	 Permaine Cheung <email>pcheung@redhat.com</email>)</entry>
-	<entry><literal>#undef HAS_TEST_AND_SET</>, remove <type>slock_t</> <literal>typedef</></entry>
+        <entry><systemitem class="osname">Linux</></entry>
+        <entry><systemitem>PPC</></entry>
+        <entry>7.4</entry>
+        <entry>2003-10-25,
+         No&egrave;l K&ouml;the (<email>noel@debian.org</email>)</entry>
+        <entry></entry>
        </row>
        <row>
-	<entry><systemitem class="osname">Linux</></entry>
-	<entry><systemitem>PPC</></entry>
-	<entry>7.4</entry>
-	<entry>2003-10-25,
-	 No&egrave;l K&ouml;the (<email>noel@debian.org</email>)</entry>
-	<entry></entry>
+        <entry><systemitem class="osname">Linux</></entry>
+        <entry><systemitem>S/390</></entry>
+        <entry>7.4</entry>
+        <entry>2003-10-25,
+         No&egrave;l K&ouml;the (<email>noel@debian.org</email>)</entry>
+        <entry>2.4</entry>
        </row>
        <row>
-	<entry><systemitem class="osname">Linux</></entry>
-	<entry><systemitem>S/390</></entry>
-	<entry>7.4</entry>
-	<entry>2003-10-25,
-	 No&egrave;l K&ouml;the (<email>noel@debian.org</email>)</entry>
-	<entry>2.4</entry>
+        <entry><systemitem class="osname">Linux</></entry>
+        <entry><systemitem>Sparc</></entry>
+        <entry>7.4</entry>
+        <entry>2003-10-24, 
+         Peter Eisentraut (<email>peter_e@gmx.net</email>)</entry>
+        <entry>2.4, 32-bit</entry>
        </row>
        <row>
-	<entry><systemitem class="osname">Linux</></entry>
-	<entry><systemitem>Sparc</></entry>
-	<entry>7.4</entry>
-	<entry>2003-10-24, 
-	 Peter Eisentraut (<email>peter_e@gmx.net</email>)</entry>
-	<entry>2.4, 32-bit</entry>
+        <entry><systemitem class="osname">Linux</></entry>
+        <entry><systemitem>x86</></entry>
+        <entry>7.4</entry>
+        <entry>2003-10-24,
+         Peter Eisentraut (<email>peter_e@gmx.net</email>)</entry>
+        <entry>2.4</entry>
        </row>
        <row>
-	<entry><systemitem class="osname">Linux</></entry>
-	<entry><systemitem>x86</></entry>
-	<entry>7.4</entry>
-	<entry>2003-10-24,
-	 Peter Eisentraut (<email>peter_e@gmx.net</email>)</entry>
-	<entry>2.4</entry>
+        <entry><systemitem class="osname">MacOS X</></entry>
+        <entry><systemitem>PPC</></entry>
+        <entry>7.4</entry>
+        <entry>2003-10-24,
+         10.2.8, Adam Witney (<email>awitney@sghms.ac.uk</email>),
+         10.3, Marko Karppinen (<email>marko@karppinen.fi</email>)</entry>
+        <entry></entry>
        </row>
        <row>
-	<entry><systemitem class="osname">MacOS X</></entry>
-	<entry><systemitem>PPC</></entry>
-	<entry>7.4</entry>
-	<entry>2003-10-24,
-	 10.2.8, Adam Witney (<email>awitney@sghms.ac.uk</email>),
-	 10.3, Marko Karppinen (<email>marko@karppinen.fi</email>)</entry>
-	<entry></entry>
+        <entry><systemitem class="osname">NetBSD</></entry>
+        <entry><systemitem>arm32</></entry>
+        <entry>7.3</entry>
+        <entry>2002-11-19,
+         Patrick Welche (<email>prlw1@newn.cam.ac.uk</email>)</entry>
+        <entry>1.6</entry>
        </row>
        <row>
-	<entry><systemitem class="osname">NetBSD</></entry>
-	<entry><systemitem>arm32</></entry>
-	<entry>7.3</entry>
-	<entry>2002-11-19,
-	 Patrick Welche (<email>prlw1@newn.cam.ac.uk</email>)</entry>
-	<entry>1.6</entry>
+        <entry><systemitem class="osname">NetBSD</></entry>
+        <entry><systemitem>x86</></entry>
+        <entry>7.4</entry>
+        <entry>2003-10-24,
+         Peter Eisentraut (<email>peter_e@gmx.net</email>)</entry>
+        <entry>1.6</entry>
        </row>
        <row>
-	<entry><systemitem class="osname">NetBSD</></entry>
-	<entry><systemitem>x86</></entry>
-	<entry>7.4</entry>
-	<entry>2003-10-24,
-	 Peter Eisentraut (<email>peter_e@gmx.net</email>)</entry>
-	<entry>1.6</entry>
-       </row>
-       <row>
-	<entry><systemitem class="osname">OpenBSD</></entry>
-	<entry><systemitem>Sparc</></entry>
-	<entry>7.4</entry>
-	<entry>2003-11-01,
-	 Peter Eisentraut (<email>peter_e@gmx.net</email>)</entry>
+        <entry><systemitem class="osname">OpenBSD</></entry>
+        <entry><systemitem>Sparc</></entry>
+        <entry>7.4</entry>
+        <entry>2003-11-01,
+         Peter Eisentraut (<email>peter_e@gmx.net</email>)</entry>
         <entry>3.4</entry>
        </row>
        <row>
-	<entry><systemitem class="osname">OpenBSD</></entry>
-	<entry><systemitem>x86</></entry>
-	<entry>7.4</entry>
-	<entry>2003-10-24,
-	 Peter Eisentraut (<email>peter_e@gmx.net</email>)</entry>
+        <entry><systemitem class="osname">OpenBSD</></entry>
+        <entry><systemitem>x86</></entry>
+        <entry>7.4</entry>
+        <entry>2003-10-24,
+         Peter Eisentraut (<email>peter_e@gmx.net</email>)</entry>
         <entry>3.2</entry>
        </row>
        <row>
-        <entry><systemitem class="osname">SCO OpenServer 5</></entry>
+        <entry><systemitem class="osname">SCO OpenServer</></entry>
         <entry><systemitem>x86</></entry>
         <entry>7.3.1</entry>
         <entry>2002-12-11, 
@@ -1714,45 +1673,45 @@ gunzip -c postgres.ps.gz \
         <entry>5.0.4, <command>gcc</>;  see also <filename>doc/FAQ_SCO</filename></entry>
        </row>
        <row>
-	<entry><systemitem class="osname">Solaris</></entry>
-	<entry><systemitem>Sparc</></entry>
-	<entry>7.4</entry>
-	<entry>2003-10-26,
-	 Christopher Browne (<email>cbbrowne@libertyrms.info</email>)</entry>
-	<entry>2.8; see also <filename>doc/FAQ_Solaris</filename></entry>
+        <entry><systemitem class="osname">Solaris</></entry>
+        <entry><systemitem>Sparc</></entry>
+        <entry>7.4</entry>
+        <entry>2003-10-26,
+         Christopher Browne (<email>cbbrowne@libertyrms.info</email>)</entry>
+        <entry>2.8; see also <filename>doc/FAQ_Solaris</filename></entry>
        </row>
        <row>
-	<entry><systemitem class="osname">Solaris</></entry>
-	<entry><systemitem>x86</></entry>
-	<entry>7.4</entry>
-	<entry>2003-10-26,
-	 Kurt Roeckx (<email>Q@ping.be</email>)</entry>
-	<entry>2.6 see also <filename>doc/FAQ_Solaris</filename></entry>
+        <entry><systemitem class="osname">Solaris</></entry>
+        <entry><systemitem>x86</></entry>
+        <entry>7.4</entry>
+        <entry>2003-10-26,
+         Kurt Roeckx (<email>Q@ping.be</email>)</entry>
+        <entry>2.6 see also <filename>doc/FAQ_Solaris</filename></entry>
        </row>
        <row>
-	<entry><systemitem class="osname">Tru64 UNIX</></entry>
-	<entry><systemitem>Alpha</></entry>
-	<entry>7.4</entry>
-	<entry>2003-10-25,
-	 5.1b Peter Eisentraut (<email>peter_e@gmx.net</email>),
-	 4.0g Alessio Bragadini (<email>alessio@albourne.com</email>)</entry>
+        <entry><systemitem class="osname">Tru64 UNIX</></entry>
+        <entry><systemitem>Alpha</></entry>
+        <entry>7.4</entry>
+        <entry>2003-10-25,
+         5.1b Peter Eisentraut (<email>peter_e@gmx.net</email>),
+         4.0g Alessio Bragadini (<email>alessio@albourne.com</email>)</entry>
         <entry></entry>
        </row>
        <row>
-	<entry><systemitem class="osname">UnixWare</></entry>
-	<entry><systemitem>x86</></entry>
-	<entry>7.3</entry>
-	<entry>2002-11-01,
-	 7.1.3 Larry Rosenman (<email>ler@lerctr.org</email>),
-	 7.1.1 and 7.1.2(8.0.0) Olivier Prenant (<email>ohp@pyrenet.fr</email>)</entry>
-	<entry>see also <filename>doc/FAQ_SCO</filename></entry>
+        <entry><systemitem class="osname">UnixWare</></entry>
+        <entry><systemitem>x86</></entry>
+        <entry>7.3</entry>
+        <entry>2002-11-01,
+         7.1.3 Larry Rosenman (<email>ler@lerctr.org</email>),
+         7.1.1 and 7.1.2(8.0.0) Olivier Prenant (<email>ohp@pyrenet.fr</email>)</entry>
+        <entry>see also <filename>doc/FAQ_SCO</filename></entry>
        </row>
        <row>
-	<entry><systemitem class="osname">Windows with <application>Cygwin</application></></entry>
-	<entry><systemitem>x86</></entry>
-	<entry>7.4</entry>
-	<entry>2003-10-24,
-	 Peter Eisentraut (<email>peter_e@gmx.net</email>)</entry>
+        <entry><systemitem class="osname">Windows with <application>Cygwin</application></></entry>
+        <entry><systemitem>x86</></entry>
+        <entry>7.4</entry>
+        <entry>2003-10-24,
+         Peter Eisentraut (<email>peter_e@gmx.net</email>)</entry>
         <entry>see <filename>doc/FAQ_MSWIN</filename></entry>
        </row>
        <row>
@@ -1803,6 +1762,26 @@ gunzip -c postgres.ps.gz \
       <entry>2001-11-29,
        Cyril Velter (<email>cyril.velter@libertysurf.fr</email>)</entry>
       <entry>needs updates to semaphore code</entry>
+     </row>
+     <row>
+      <entry><systemitem class="osname">Linux</></entry>
+      <entry><systemitem>PlayStation 2</></entry>
+      <entry>7.4</entry>
+      <entry>2003-11-02,
+       Peter Eisentraut <email>peter_e@gmx.net</email>)</entry>
+      <entry>
+       needs new <filename>config.guess</filename>,
+       <option>--disable-spinlock</option>, <literal>#undef
+       HAS_TEST_AND_SET</>, disable <function>tas_dummy()</>
+      </entry>
+     </row>
+     <row>
+      <entry><systemitem class="osname">Linux</></entry>
+      <entry><systemitem>PA-RISC</></entry>
+      <entry>7.4</entry>
+      <entry>2003-10-25,
+       No&egrave;l K&ouml;the (<email>noel@debian.org</email>)</entry>
+      <entry>needs <option>--disable-spinlock</option>, otherwise OK</entry>
      </row>
      <row>
       <entry><systemitem class="osname">NetBSD</></entry>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/monitoring.sgml,v 1.23 2003/11/01 01:56:29 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/monitoring.sgml,v 1.24 2003/11/04 09:55:38 petere Exp $
 -->
 
 <chapter id="monitoring">
@@ -367,12 +367,13 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
    queries that use the same underlying statistics access functions as
    these standard views do.  These functions are listed in <xref
    linkend="monitoring-stats-funcs-table">.  The per-database access
-   functions take a database OID as argument to identify which database to
-   report on.  The per-table and per-index functions take a table or
-   index OID.  (Note that only tables and indexes in the current
-   database can be seen with these functions.)  The per-backend access
-   functions take a backend ID number, which ranges from one to the
-   number of currently active backend processes.
+   functions take a database OID as argument to identify which
+   database to report on.  The per-table and per-index functions take
+   a table or index OID.  (Note that only tables and indexes in the
+   current database can be seen with these functions.)  The
+   per-backend process access functions take a backend process ID
+   number, which ranges from one to the number of currently active
+   backend processes.
   </para>
 
   <table id="monitoring-stats-funcs-table">

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.39 2003/10/17 22:38:20 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.40 2003/11/04 09:55:38 petere Exp $
 -->
 
  <chapter id="mvcc">
@@ -770,22 +770,17 @@ UPDATE accounts SET balance = balance - 100.00 WHERE acctnum = 22222;
 
    <para>
     To ensure the current validity of a row and protect it against
-    concurrent updates one must use <command>SELECT FOR UPDATE</command> or
-    an appropriate <command>LOCK TABLE</command> statement.
-    (<command>SELECT FOR UPDATE</command> locks just the returned rows against
-    concurrent updates, while <command>LOCK TABLE</command> locks the
-    whole table.)
-    This should be taken into account when porting applications to
+    concurrent updates one must use <command>SELECT FOR
+    UPDATE</command> or an appropriate <command>LOCK TABLE</command>
+    statement.  (<command>SELECT FOR UPDATE</command> locks just the
+    returned rows against concurrent updates, while <command>LOCK
+    TABLE</command> locks the whole table.)  This should be taken into
+    account when porting applications to
     <productname>PostgreSQL</productname> from other environments.
-
-    <note>
-     <para>
-      Before version 6.5 <productname>PostgreSQL</productname> used
-      read locks, and so the above consideration is also the case when
-      upgrading from <productname>PostgreSQL</productname> versions
-      prior to 6.5.
-     </para>
-    </note>
+    (Before version 6.5 <productname>PostgreSQL</productname> used
+    read locks, and so this above consideration is also relevant when
+    upgrading from <productname>PostgreSQL</productname> versions
+    prior to 6.5.)
    </para>
 
    <para>

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ddl.sgml,v 1.21 2003/11/01 01:56:29 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ddl.sgml,v 1.22 2003/11/04 09:55:38 petere Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -318,12 +318,12 @@ DROP TABLE products;
    </para>
 
    <para>
-    Transaction identifiers are also 32-bit quantities.  In a long-lived
-    database it is possible for transaction IDs to wrap around.  This
-    is not a fatal problem given appropriate maintenance procedures;
-    see <xref linkend="maintenance"> for details.  However, it is
-    unwise to depend on uniqueness of transaction IDs over the long term
-    (more than one billion transactions).
+    Transaction identifiers are also 32-bit quantities.  In a
+    long-lived database it is possible for transaction IDs to wrap
+    around.  This is not a fatal problem given appropriate maintenance
+    procedures; see <xref linkend="maintenance"> for details.  It is
+    unwise, however, to depend on the uniqueness of transaction IDs
+    over the long term (more than one billion transactions).
    </para>
 
    <para>

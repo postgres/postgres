@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/regress.sgml,v 1.35 2003/11/02 21:56:14 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/regress.sgml,v 1.36 2003/11/04 09:55:38 petere Exp $ -->
 
  <chapter id="regress">
   <title id="regress-title">Regression Tests</title>
@@ -60,7 +60,6 @@ gmake check
    linkend="regress-evaluation"> below for more.
   </para>
 
-  <note>
    <para>
     Because this test method runs a temporary server, it will not work
     when you are the root user (since the server will not start as root).
@@ -82,9 +81,7 @@ gmake check
    <para>
     Alternatively, run the tests after installation.
    </para>
-  </note>
 
-  <tip>
    <para>
     The parallel regression test starts quite a few processes under your
     user ID.  Presently, the maximum concurrency is twenty parallel test
@@ -101,9 +98,7 @@ gmake MAX_CONNECTIONS=10 check
 </screen>
     runs no more than ten tests concurrently.
    </para>
-  </tip>
 
-  <tip>
    <para>
     On some systems, the default Bourne-compatible shell
     (<filename>/bin/sh</filename>) gets confused when it has to manage
@@ -116,7 +111,6 @@ gmake SHELL=/bin/ksh check
     If no non-broken shell is available, you may be able to work around the
     problem by limiting the number of connections, as shown above.
    </para>
-  </tip>
 
   <para>
    To run the tests after installation<![%standalone-ignore;[ (see <xref linkend="installation">)]]>,
@@ -223,9 +217,9 @@ gmake installcheck
 
     <note>
      <para>
-      Because USA daylight-saving rules are used, this problem always
+      Because USA daylight-saving time rules are used, this problem always
       occurs on the first Sunday of April, the last Sunday of October,
-      and their following Mondays, regardless of when daylight-saving
+      and their following Mondays, regardless of when daylight-saving time
       is in effect where you live.  Also note that the problem appears or
       disappears at midnight Pacific time (UTC-7 or UTC-8), not midnight
       your local time.  Thus the failure may appear late on Saturday or

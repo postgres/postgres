@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.65 2003/09/23 22:48:53 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.66 2003/11/04 09:55:39 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -177,7 +177,7 @@ PostgreSQL documentation
 	Dump data as <command>INSERT</command> commands (rather
 	than <command>COPY</command>). This will make restoration very
 	slow, but it makes the archives more portable to other SQL database
-	packages.
+	management systems.
        </para>
       </listitem>
      </varlistentry>

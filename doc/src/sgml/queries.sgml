@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/queries.sgml,v 1.25 2003/11/01 01:56:29 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/queries.sgml,v 1.26 2003/11/04 09:55:38 petere Exp $ -->
 
 <chapter id="queries">
  <title>Queries</title>
@@ -105,7 +105,7 @@ SELECT random();
   </para>
 	
   <sect2 id="queries-from">
-   <title>The FROM Clause</title>
+   <title>The <literal>FROM</literal> Clause</title>
  
    <para>
     The <literal>FROM</> clause derives a table from one or more other
@@ -670,7 +670,7 @@ SELECT *
   </sect2>
 
   <sect2 id="queries-where">
-   <title>The WHERE Clause</title>
+   <title>The <literal>WHERE</literal> Clause</title>
 
    <indexterm zone="queries-where">
     <primary>WHERE</primary>
@@ -716,7 +716,7 @@ FROM a NATURAL JOIN b WHERE b.val &gt; 5
 </programlisting>
      Which one of these you use is mainly a matter of style.  The
      <literal>JOIN</> syntax in the <literal>FROM</> clause is
-     probably not as portable to other SQL database products.  For
+     probably not as portable to other SQL database management systems.  For
      outer joins there is no choice in any case: they must be done in
      the <literal>FROM</> clause.  An <literal>ON</>/<literal>USING</>
      clause of an outer join is <emphasis>not</> equivalent to a
@@ -758,7 +758,7 @@ SELECT ... FROM fdt WHERE EXISTS (SELECT c1 FROM t2 WHERE c2 > fdt.c1)
 
 
   <sect2 id="queries-group">
-   <title>The GROUP BY and HAVING Clauses</title>
+   <title>The <literal>GROUP BY</literal> and <literal>HAVING</literal> Clauses</title>
 
    <indexterm zone="queries-group">
     <primary>GROUP BY</primary>
@@ -1040,7 +1040,7 @@ SELECT a AS value, b + c AS sum FROM ...
   </sect2>
 
   <sect2 id="queries-distinct">
-   <title>DISTINCT</title>
+   <title><literal>DISTINCT</literal></title>
 
    <indexterm zone="queries-distinct">
     <primary>DISTINCT</primary>
@@ -1264,7 +1264,7 @@ SELECT a AS b FROM table1 ORDER BY a;
 
 
  <sect1 id="queries-limit">
-  <title>LIMIT and OFFSET</title>
+  <title><literal>LIMIT</literal> and <literal>OFFSET</literal></title>
 
   <indexterm zone="queries-limit">
    <primary>LIMIT</primary>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.20 2003/09/20 20:12:04 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.21 2003/11/04 09:55:38 petere Exp $
 -->
 
 <appendix id="features">
@@ -30,7 +30,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.20 2003/09/20 20:12:04 tg
 
  <para>
   <acronym>SQL92</acronym> defined three feature sets for conformance:
-  Entry, Intermediate, and Full. Most database products claiming
+  Entry, Intermediate, and Full. Most database management systems claiming
   <acronym>SQL</acronym> standard conformance were conforming at only
   the Entry level, since the entire set of features in the
   Intermediate and Full levels was either too voluminous or in

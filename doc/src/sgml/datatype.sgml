@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.128 2003/11/01 01:56:29 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.129 2003/11/04 09:55:38 petere Exp $
 -->
 
  <chapter id="datatype">
@@ -917,10 +917,10 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (
 
    <para>
     In addition, <productname>PostgreSQL</productname> provides the
-    <type>text</type> type, which stores strings of any
-    length.  Although the type <type>text</type> is not in the
-    <acronym>SQL</acronym> standard, several other SQL database products
-    have it as well.
+    <type>text</type> type, which stores strings of any length.
+    Although the type <type>text</type> is not in the
+    <acronym>SQL</acronym> standard, several other SQL database
+    management systems have it as well.
    </para>
 
    <para>
@@ -1464,7 +1464,7 @@ SELECT b, char_length(b) FROM test2;
         </row>
         <row>
          <entry>1999-01-08</entry>
-         <entry>ISO-8601, January 8 in any mode
+         <entry>ISO 8601, January 8 in any mode
          (recommended format)</entry>
         </row>
         <row>
@@ -1486,11 +1486,11 @@ SELECT b, char_length(b) FROM test2;
         </row>
         <row>
          <entry>19990108</entry>
-         <entry>ISO-8601; January 8, 1999 in any mode</entry>
+         <entry>ISO 8601; January 8, 1999 in any mode</entry>
         </row>
         <row>
          <entry>990108</entry>
-         <entry>ISO-8601; January 8, 1999 in any mode</entry>
+         <entry>ISO 8601; January 8, 1999 in any mode</entry>
         </row>
         <row>
          <entry>1999.008</entry>

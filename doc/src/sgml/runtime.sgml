@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.215 2003/11/01 01:56:29 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.216 2003/11/04 09:55:38 petere Exp $
 -->
 
 <Chapter Id="runtime">
@@ -174,7 +174,7 @@ $ <userinput>postmaster -D /usr/local/pgsql/data</userinput>
    To start the <command>postmaster</command> in the
    background, use the usual shell syntax:
 <screen>
-$ <userinput>postmaster -D /usr/local/pgsql/data &gt; logfile 2&gt;&amp;1 &amp;</userinput>
+$ <userinput>postmaster -D /usr/local/pgsql/data &gt;logfile 2&gt;&amp;1 &amp;</userinput>
 </screen>
    It is an important to store the server's <systemitem>stdout</> and
    <systemitem>stderr</> output somewhere, as shown above. It will help
@@ -344,7 +344,7 @@ FATAL:  could not create TCP/IP listen socket
      A message like
 <screen>
 FATAL:  could not create shared memory segment: Invalid argument
-DETAIL:  Failed syscall was shmget(key=5440001, size=4011376640, 03600).
+DETAIL:  Failed system call was shmget(key=5440001, size=4011376640, 03600).
 </screen>
      probably means your kernel's limit on the size of shared memory is
      smaller than the work area <productname>PostgreSQL</productname>
@@ -363,7 +363,7 @@ DETAIL:  Failed syscall was shmget(key=5440001, size=4011376640, 03600).
      An error like
 <screen>
 FATAL:  could not create semaphores: No space left on device
-DETAIL:  Failed syscall was semget(5440126, 17, 03600).
+DETAIL:  Failed system call was semget(5440126, 17, 03600).
 </screen>
      does <emphasis>not</emphasis> mean you've run out of disk
      space. It means your kernel's limit on the number of <systemitem
@@ -1119,8 +1119,8 @@ SET ENABLE_SEQSCAN TO OFF;
        </para>
       </listitem>
      </varlistentry>
-        	
-        	
+                
+                
      <varlistentry>
       <term><varname>commit_delay</varname> (<type>integer</type>)</term>
       <listitem>
@@ -1572,7 +1572,7 @@ SET ENABLE_SEQSCAN TO OFF;
       <listitem>
        <para>
         Controls which message levels are written to the server log.
-	Valid values are <literal>DEBUG5</>, <literal>DEBUG4</>,
+        Valid values are <literal>DEBUG5</>, <literal>DEBUG4</>,
         <literal>DEBUG3</>, <literal>DEBUG2</>, <literal>DEBUG1</>,
         <literal>INFO</>, <literal>NOTICE</>, <literal>WARNING</>,
         <literal>ERROR</>, <literal>LOG</>, <literal>FATAL</>, and
@@ -1591,9 +1591,9 @@ SET ENABLE_SEQSCAN TO OFF;
       <listitem>
        <para>
         Controls the amount of detail written in the server log for each
-	message that is logged.  Valid values are <literal>TERSE</>,
-	<literal>DEFAULT</>, and <literal>VERBOSE</>, each adding more
-	fields to displayed messages.
+        message that is logged.  Valid values are <literal>TERSE</>,
+        <literal>DEFAULT</>, and <literal>VERBOSE</>, each adding more
+        fields to displayed messages.
        </para>
       </listitem>
      </varlistentry>
@@ -1660,7 +1660,7 @@ SET ENABLE_SEQSCAN TO OFF;
 
        <para>
         Here is a list of the various message severity levels used in
-	these settings:
+        these settings:
         <variablelist>
          <varlistentry>
           <term><literal>DEBUG[1-5]</literal></term>
@@ -2028,9 +2028,9 @@ SET ENABLE_SEQSCAN TO OFF;
       <listitem>
        <para>
         This parameter is normally true.  When set false, it disables
-	validation of the function body string in <command>CREATE FUNCTION</>.
-	Disabling validation is occasionally useful to avoid problems such as
-	forward references when restoring function definitions from a dump.
+        validation of the function body string in <command>CREATE FUNCTION</>.
+        Disabling validation is occasionally useful to avoid problems such as
+        forward references when restoring function definitions from a dump.
        </para>
       </listitem>
      </varlistentry>
@@ -2100,15 +2100,15 @@ SET ENABLE_SEQSCAN TO OFF;
        <para>
         Sets the display format for date and time values, as well as
         the rules for interpreting ambiguous date input values.
-	For historical reasons, this variable contains two independent
-	components: the output format specification (<literal>ISO</>,
-	<literal>Postgres</>, <literal>SQL</>, or <literal>German</>) and
-	the date field order specification (<literal>DMY</>, <literal>MDY</>,
-	or <literal>YMD</>).  These can be set separately or together.
-	The keywords <literal>Euro</> and <literal>European</> are synonyms
-	for <literal>DMY</>; the keywords <literal>US</>, <literal>NonEuro</>,
-	and <literal>NonEuropean</> are synonyms for <literal>MDY</>.
-	See <xref linkend="datatype-datetime"> for more information.  The
+        For historical reasons, this variable contains two independent
+        components: the output format specification (<literal>ISO</>,
+        <literal>Postgres</>, <literal>SQL</>, or <literal>German</>) and
+        the date field order specification (<literal>DMY</>, <literal>MDY</>,
+        or <literal>YMD</>).  These can be set separately or together.
+        The keywords <literal>Euro</> and <literal>European</> are synonyms
+        for <literal>DMY</>; the keywords <literal>US</>, <literal>NonEuro</>,
+        and <literal>NonEuropean</> are synonyms for <literal>MDY</>.
+        See <xref linkend="datatype-datetime"> for more information.  The
         default is <literal>ISO, MDY</>.
        </para>
       </listitem>
@@ -2390,13 +2390,13 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
       <listitem>
        <para>
         When <literal>true</>, tables that are referenced by a query will be
-	automatically added to the <literal>FROM</> clause if not already
-	present.  The default is <literal>true</> for compatibility with
-	previous releases of <productname>PostgreSQL</>.  However, this
-	behavior is not SQL-standard, and many people dislike it because it
-	can mask mistakes.  Set to <literal>false</> for the SQL-standard
-	behavior of rejecting references to tables that are not listed in
-	<literal>FROM</>.
+        automatically added to the <literal>FROM</> clause if not already
+        present.  The default is <literal>true</> for compatibility with
+        previous releases of <productname>PostgreSQL</>.  However, this
+        behavior is not SQL-standard, and many people dislike it because it
+        can mask mistakes.  Set to <literal>false</> for the SQL-standard
+        behavior of rejecting references to tables that are not listed in
+        <literal>FROM</>.
        </para>
       </listitem>
      </varlistentry>
@@ -2521,10 +2521,10 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
       <listitem>
        <para>
         If nonzero, a delay of this many seconds occurs just after a new
-	server process is forked, before it conducts the authentication
-	process.  This is intended to give an opportunity to attach to the
-	server process with a debugger to trace down misbehavior in
-	authentication.
+        server process is forked, before it conducts the authentication
+        process.  This is intended to give an opportunity to attach to the
+        server process with a debugger to trace down misbehavior in
+        authentication.
        </para>
       </listitem>
      </varlistentry>
@@ -2993,9 +2993,10 @@ options         SEMMAP=256
         <literal>option</literal> singular.)
        </para>
        <para>
-        You might also want to use the <command>sysctl</> setting to
-        lock shared memory into RAM and prevent it from being paged out
-        to swap, e.g. <literal>kern.ipc.shm_use_phys</>.
+        You might also want to configure your kernel to lock shared
+        memory into RAM and prevent it from being paged out to swap.
+        Use the <command>sysctl</> setting
+        <literal>kern.ipc.shm_use_phys</>.
        </para>
       </listitem>
      </varlistentry>
@@ -3058,65 +3059,6 @@ kernel.shmmax = 134217728
         you want to see for yourself look in
         <filename>/usr/src/linux/include/asm-<replaceable>xxx</>/shmpara
         m.h</> and <filename>/usr/src/linux/include/linux/sem.h</>.
-       </para>
-
-       <para>
-	Linux kernel version 2.4.* has poor default memory overcommit 
-	behavior, which can result in the postmaster being killed by the 
-	kernel due to memory demands by another process if the system 
-	runs out of memory.
-	</para>
-
-       <para>
-	The symptom of this occurring is a kernel message looking like 
-	this (consult your system documentation and configuration on 
-	where to look for such a message):
-<programlisting>
- Out of Memory: Killed process 12345 (postmaster). 
-</programlisting>
-	</para>
-
-       <para>
-	To avoid this situation, run <productname>PostgreSQL</productname> 
-	on a machine where you 
-	can be sure that other processes will not run the machine out 
-	of memory. If your kernel supports strict and/or paranoid modes 
-	of overcommit handling, you can also relieve this problem by 
-	altering the system's default behaviour. This can be determined 
-	by examining the function <function>vm_enough_memory</>
-	in the file <filename>mm/mmap.c</> in the kernel source. 
-	If this file reveals that strict and/or paranoid modes are 
-	supported by your kernel, turn one of these modes on by using
-<programlisting>
-sysctl -w vm.overcommit_memory=2
-</programlisting>
-	 for strict mode or
-<programlisting>
-sysctl -w vm.overcommit_memory=3
-</programlisting>
-	for paranoid mode, or placing an equivalent entry in 
-	<filename>/etc/sysctl.conf</>.
-	</para>
-
-       <note>
-	<para>
-	 Warning: using these settings in a kernel which does not support 
-	 these modes will almost certainly increase the danger of the 
-	 kernel killing the postmaster, rather than reducing it. 
-	 If in any doubt, consult a kernel expert or your kernel vendor.
-	</para>
-       </note>
-
-       <para>
-	These modes are expected to be supported in all 2.6 and later 
-	kernels. Some vendor 2.4 kernels may also support these modes. 
-	However, it is known that some vendor documents suggest that 
-	they support them while examination of the kernel source reveals 
-	that they do not.
-	</para>
-
-       <para>
-        Note, you will need enough swap space to cover all your memory needs.
        </para>
       </listitem>
      </varlistentry>
@@ -3319,6 +3261,71 @@ default:\
    </para>
   </sect2>
 
+  <sect2>
+   <title>Linux Memory Overcommit</title>
+
+   <para>
+    Linux kernels of version 2.4.* have a poor default memory
+    overcommit behavior, which can result in the PostgreSQL server
+    (<filename>postmaster</filename> process) being killed by the
+    kernel if the memory demands of another process cause the system
+    to run out of memory.
+   </para>
+
+   <para>
+    If this happens, you will see a kernel message looking like this
+    (consult your system documentation and configuration on where to
+    look for such a message):
+<programlisting>
+Out of Memory: Killed process 12345 (postmaster). 
+</programlisting>
+    And, of course, you will find that your database server has
+    disappeared.
+   </para>
+
+   <para>
+    To avoid this situation, run <productname>PostgreSQL</productname>
+    on a machine where you can be sure that other processes will not
+    run the machine out of memory. If your kernel supports the strict
+    and/or paranoid modes of overcommit handling, you can also relieve
+    this problem by altering the system's default behaviour. This can
+    be determined by examining the function
+    <function>vm_enough_memory</> in the file <filename>mm/mmap.c</>
+    in the kernel source. If this file reveals that the strict and/or
+    paranoid modes are supported by your kernel, turn one of these
+    modes on by using
+<programlisting>
+sysctl -w vm.overcommit_memory=2
+</programlisting>
+    for strict mode, or
+<programlisting>
+sysctl -w vm.overcommit_memory=3
+</programlisting>
+    for paranoid mode, or placing an equivalent entry in
+    <filename>/etc/sysctl.conf</>.
+   </para>
+
+   <caution>
+    <para>
+     Using these settings in a kernel which does not support these
+     modes will almost certainly increase the danger of the kernel
+     killing the database server, rather than reducing it. If in any
+     doubt, consult a kernel expert or your kernel vendor.
+    </para>
+   </caution>
+
+   <para>
+    These modes are expected to be supported in all 2.6 and later
+    kernels. Some vendor 2.4 kernels may also support these modes. It
+    is, however, known that some vendor documents suggest that they
+    support them while examination of the kernel source reveals that
+    they do not.
+   </para>
+
+   <para>
+    Note, you will need enough swap space to cover all your memory needs.
+   </para>
+  </sect2>
  </sect1>
 
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/typeconv.sgml,v 1.36 2003/11/01 01:56:29 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/typeconv.sgml,v 1.37 2003/11/04 09:55:39 petere Exp $
 -->
 
 <chapter Id="typeconv">
@@ -794,13 +794,14 @@ padding spaces.
 </indexterm>
 
 <para>
-SQL <literal>UNION</> constructs must match up possibly dissimilar types to
-become a single result set.  The resolution algorithm is applied separately
-to each output column of a union query.  The <literal>INTERSECT</> and
-<literal>EXCEPT</> constructs resolve dissimilar types in the same way as
-<literal>UNION</>.
-A <literal>CASE</> construct uses the identical algorithm to match up its
-component expressions and select a result data type, as does <literal>ARRAY</>.
+SQL <literal>UNION</> constructs must match up possibly dissimilar
+types to become a single result set.  The resolution algorithm is
+applied separately to each output column of a union query.  The
+<literal>INTERSECT</> and <literal>EXCEPT</> constructs resolve
+dissimilar types in the same way as <literal>UNION</>.  The
+<literal>CASE</> and <literal>ARRAY</> constructs use the identical
+algorithm to match up their component expressions and select a result
+data type.
 </para>
 
 <procedure>

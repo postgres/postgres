@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/array.sgml,v 1.32 2003/11/01 01:56:28 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/array.sgml,v 1.33 2003/11/04 09:55:38 petere Exp $ -->
 
 <sect1 id="arrays">
  <title>Arrays</title>
@@ -76,13 +76,45 @@ CREATE TABLE tictactoe (
  <sect2>
   <title>Array Value Input</title>
 
- <para>
-  Now we can show some <command>INSERT</command> statements.  To write an array
-  value as a literal constant, we enclose the element values within curly
-  braces and separate them by commas.  (If you know C, this is not unlike the
-  C syntax for initializing structures.)  We may put double quotes around any
-  element value, and must do so if it contains commas or curly braces.
-  (More details appear below.)
+  <indexterm>
+   <primary>array</primary>
+   <secondary>constant</secondary>
+  </indexterm>
+
+  <para>
+   To write an array value as a literal constant, enclose the element
+   values within curly braces and separate them by commas.  (If you
+   know C, this is not unlike the C syntax for initializing
+   structures.)  You may put double quotes around any element value,
+   and must do so if it contains commas or curly braces.  (More
+   details appear below.)  Thus, the general format of an array
+   constant is the following:
+<synopsis>
+'{ <replaceable>val1</replaceable> <replaceable>delim</replaceable> <replaceable>val2</replaceable> <replaceable>delim</replaceable> ... }'
+</synopsis>
+   where <replaceable>delim</replaceable> is the delimiter character
+   for the type, as recorded in its <literal>pg_type</literal> entry.
+   (For all built-in types, this is the comma character
+   <quote><literal>,</literal></>.)  Each
+   <replaceable>val</replaceable> is either a constant of the array
+   element type, or a subarray.  An example of an array constant is
+<programlisting>
+'{{1,2,3},{4,5,6},{7,8,9}}'
+</programlisting>
+   This constant is a two-dimensional, 3-by-3 array consisting of
+   three subarrays of integers.
+  </para>
+
+  <para>
+   (These kinds of array constants are actually only a special case of
+   the generic type constants discussed in <xref
+   linkend="sql-syntax-constants-generic">.  The constant is initially
+   treated as a string and passed to the array input conversion
+   routine.  An explicit type specification might be necessary.)
+  </para>
+
+  <para>
+   Now we can show some <command>INSERT</command> statements.
 
 <programlisting>
 INSERT INTO sal_emp
@@ -95,14 +127,15 @@ INSERT INTO sal_emp
     '{20000, 25000, 25000, 25000}',
     '{{"talk", "consult"}, {"meeting"}}');
 </programlisting>
- </para>
+  </para>
 
- <para>
-  A limitation of the present array implementation is that individual
-  elements of an array cannot be SQL null values.  The entire array can be set
-  to null, but you can't have an array with some elements null and some
-  not.
- </para>
+  <para>
+   A limitation of the present array implementation is that individual
+   elements of an array cannot be SQL null values.  The entire array
+   can be set to null, but you can't have an array with some elements
+   null and some not.
+  </para>
+
  <para>
   This can lead to surprising results. For example, the result of the
   previous two inserts looks like this:

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/backup.sgml,v 2.30 2003/08/31 17:32:18 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/backup.sgml,v 2.31 2003/11/04 09:55:38 petere Exp $
 -->
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -155,8 +155,9 @@ pg_dump -h <replaceable>host1</> <replaceable>dbname</> | psql -h <replaceable>h
 
    <tip>
     <para>
-    Restore performance can be improved by increasing <literal>SORT_MEM</>
-    (see <xref linkend="runtime-config-resource-memory">).
+    Restore performance can be improved by increasing the
+    configuration parameter <varname>sort_mem</varname> (see <xref
+    linkend="runtime-config-resource-memory">).
     </para>
    </tip>
   </sect2>
@@ -333,12 +334,9 @@ tar -cf backup.tar /usr/local/pgsql/data
       going on. For this reason it is also not advisable to trust file
       systems that claim to support <quote>consistent
       snapshots</quote>. Information about stopping the server can be
-      found in <xref linkend="postmaster-shutdown">.
-     </para>
-
-     <para>
-      Needless to say that you also need to shut down the server
-      before restoring the data.
+      found in <xref linkend="postmaster-shutdown">.  Needless to say
+      that you also need to shut down the server before restoring the
+      data.
      </para>
     </listitem>
 
@@ -362,7 +360,18 @@ tar -cf backup.tar /usr/local/pgsql/data
   </para>
 
   <para>
-   Also note that the file system backup will not necessarily be
+   An alternative file-system backup approach is to make a
+   <quote>consistent snapshot</quote> of the data directory, if the
+   file system supports that functionality.  Such a snapshot will save
+   the database files in a state where the database server was not
+   properly shut down; therefore, when you start the database server
+   on this backed up directory, it will think the server had crashed
+   and replay the WAL log.  This is not a problem, just be aware of
+   it.
+  </para>
+
+  <para>
+   Note that the file system backup will not necessarily be
    smaller than an SQL dump. On the contrary, it will most likely be
    larger. (<application>pg_dump</application> does not need to dump
    the contents of indexes for example, just the commands to recreate
@@ -372,7 +381,7 @@ tar -cf backup.tar /usr/local/pgsql/data
  </sect1>
 
  <sect1 id="migration">
-  <title>Migration between releases</title>
+  <title>Migration Between Releases</title>
 
   <indexterm zone="migration">
    <primary>upgrading</primary>
@@ -385,17 +394,20 @@ tar -cf backup.tar /usr/local/pgsql/data
 
   <para>
    As a general rule, the internal data storage format is subject to
-   change between releases of <productname>PostgreSQL</>. This does not
-   apply to different <quote>patch levels</quote>, these always have
-   compatible storage formats. For example, releases 7.0.1, 7.1.2, and
-   7.2 are not compatible, whereas 7.1.1 and 7.1.2 are. When you
-   update between compatible versions, then you can simply reuse the
-   data area in disk by the new executables. Otherwise you need to
+   change between major releases of <productname>PostgreSQL</> (where
+   the number after the first dot changes). This does not apply to
+   different minor releases under the same major release (where the
+   number of the second dot changes); these always have compatible
+   storage formats. For example, releases 7.0.1, 7.1.2, and 7.2 are
+   not compatible, whereas 7.1.1 and 7.1.2 are. When you update
+   between compatible versions, then you can simply reuse the data
+   area in disk by the new executables. Otherwise you need to
    <quote>back up</> your data and <quote>restore</> it on the new
    server, using <application>pg_dump</>. (There are checks in place
    that prevent you from doing the wrong thing, so no harm can be done
    by confusing these things.) The precise installation procedure is
-   not subject of this section; these details are in <xref linkend="installation">.
+   not subject of this section; these details are in <xref
+   linkend="installation">.
   </para>
 
   <para>

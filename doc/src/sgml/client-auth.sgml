@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.59 2003/09/13 16:43:38 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.60 2003/11/04 09:55:38 petere Exp $
 -->
 
 <chapter id="client-authentication">
@@ -85,13 +85,13 @@ $Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.59 2003/09/13 16:43:38
   <para>
    A record may have one of the seven formats
 <synopsis>
-local   <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>authentication-method</replaceable>  <optional><replaceable>authentication-option</replaceable></optional>
-host    <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>  <replaceable>IP-mask</replaceable>  <replaceable>authentication-method</replaceable>  <optional><replaceable>authentication-option</replaceable></optional>
-hostssl  <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>  <replaceable>IP-mask</replaceable>  <replaceable>authentication-method</replaceable>  <optional><replaceable>authentication-option</replaceable></optional>
+local      <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>authentication-method</replaceable>  <optional><replaceable>authentication-option</replaceable></optional>
+host       <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>  <replaceable>IP-mask</replaceable>  <replaceable>authentication-method</replaceable>  <optional><replaceable>authentication-option</replaceable></optional>
+hostssl    <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>  <replaceable>IP-mask</replaceable>  <replaceable>authentication-method</replaceable>  <optional><replaceable>authentication-option</replaceable></optional>
 hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>  <replaceable>IP-mask</replaceable>  <replaceable>authentication-method</replaceable>  <optional><replaceable>authentication-option</replaceable></optional>
-host    <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>/<replaceable>CIDR-mask</replaceable>  <replaceable>authentication-method</replaceable>  <optional><replaceable>authentication-option</replaceable></optional>
-hostssl  <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>/<replaceable>CIDR-mask</replaceable>  <replaceable>authentication-method</replaceable>  <optional><replaceable>authentication-option</replaceable></optional>
-hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>/<replaceable>CIDR-mask</replaceable>  <replaceable>authentication-method</replaceable>  <optional><replaceable>authentication-option</replaceable></optional>
+host       <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>/<replaceable>IP-masklen</replaceable>  <replaceable>authentication-method</replaceable>  <optional><replaceable>authentication-option</replaceable></optional>
+hostssl    <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>/<replaceable>IP-masklen</replaceable>  <replaceable>authentication-method</replaceable>  <optional><replaceable>authentication-option</replaceable></optional>
+hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>/<replaceable>IP-masklen</replaceable>  <replaceable>authentication-method</replaceable>  <optional><replaceable>authentication-option</replaceable></optional>
 </synopsis>
    The meaning of the fields is as follows:
 
@@ -220,25 +220,26 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
     </varlistentry>
 
     <varlistentry>
-     <term><replaceable>CIDR-mask</replaceable></term>
+     <term><replaceable>IP-masklen</replaceable></term>
      <listitem>
       <para>
-        This field may be used as an alternative to the 
-        <replaceable>IP-mask</replaceable> notation.  It is an
-	integer specifying the number of high-order bits 
-        to set in the mask.  The number must
-        be between 0 and 32 (in the case of an IPv4 address) or 128
-        (in the case of an IPv6 address) inclusive. 0 will match any
-        address, while 32/128 will match only the exact host specified.
-        The same matching logic is used as for a dotted notation
-        <replaceable>IP-Mask</replaceable>.
+       This field may be used as an alternative to the
+       <replaceable>IP-mask</replaceable> notation.  It is an integer
+       specifying the number of high-order bits to set in the mask.
+       The number must be between 0 and 32 (in the case of an IPv4
+       address) or 128 (in the case of an IPv6 address) inclusive. 0
+       will match any address, while 32 (or 128, respectively) will
+       match only the exact host specified.  The same matching logic
+       is used as for a dotted notation
+       <replaceable>IP-mask</replaceable>.
       </para>
 
       <para>
-        There must be no white space between the <replaceable>IP-address</replaceable>
-        and the <literal>/</literal> or the <literal>/</literal> and the
-        <replaceable>CIDR-mask</replaceable>, or the file will not be parsed 
-        correctly.
+       There must be no white space between the
+       <replaceable>IP-address</replaceable> and the
+       <literal>/</literal> or the <literal>/</literal> and the
+       <replaceable>IP-masklen</replaceable>, or the file will not be
+       parsed correctly.
       </para>
 
       <para>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.177 2003/11/01 01:56:29 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.178 2003/11/04 09:55:38 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -29,10 +29,10 @@ PostgreSQL documentation
    the functions and operators described in this chapter, with the
    exception of the most trivial arithmetic and comparison operators
    and some explicitly marked functions, are not specified by the
-   <acronym>SQL</acronym>
-   standard. Some of the extended functionality is present in other
-   <acronym>SQL</acronym> implementations, and in many cases this
-   functionality is compatible and consistent between various products.
+   <acronym>SQL</acronym> standard. Some of the extended functionality
+   is present in other <acronym>SQL</acronym> database management
+   systems, and in many cases this functionality is compatible and
+   consistent between the various implementations.
   </para>
 
 
@@ -7176,7 +7176,7 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
   </sect1>
 
  <sect1 id="functions-array">
-  <title>Array Functions</title>
+  <title>Array Functions and Operators</title>
 
   <para>
    <xref linkend="array-operators-table"> shows the operators
@@ -7578,22 +7578,23 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
 
   <note>
    <para>
-    Users accustomed to working with other RDBMS products may be
-    surprised by the performance characteristics of certain aggregate
-    functions in <productname>PostgreSQL</productname> when the
-    aggregate is applied to the entire table (in other words, no
-    <literal>WHERE</literal> clause is specified). In particular,
-    a query like
+    Users accustomed to working with other SQL database management
+    systems may be surprised by the performance characteristics of
+    certain aggregate functions in
+    <productname>PostgreSQL</productname> when the aggregate is
+    applied to the entire table (in other words, no
+    <literal>WHERE</literal> clause is specified). In particular, a
+    query like
 <programlisting>
 SELECT min(col) FROM sometable;
 </programlisting>
-   will be executed by <productname>PostgreSQL</productname> using a
-   sequential scan of the entire table. Other database systems may
-   optimize queries of this form to use an index on the column, if one
-   is available. Similarly, the aggregate functions
-   <function>max()</function> and <function>count()</function> always
-   require a sequential scan if applied to the entire table in
-   <productname>PostgreSQL</productname>.
+    will be executed by <productname>PostgreSQL</productname> using a
+    sequential scan of the entire table. Other database systems may
+    optimize queries of this form to use an index on the column, if
+    one is available. Similarly, the aggregate functions
+    <function>max()</function> and <function>count()</function> always
+    require a sequential scan if applied to the entire table in
+    <productname>PostgreSQL</productname>.
    </para>
 
    <para>
@@ -7602,8 +7603,8 @@ SELECT min(col) FROM sometable;
     queries. Since <function>min()</function>,
     <function>max()</function>, and <function>count()</function> are
     defined using a generic API for aggregate functions, there is no
-    provision for <quote>special-casing</quote> the execution of these
-    functions under certain circumstances.
+    provision for special-casing the execution of these functions
+    under certain circumstances.
    </para>
 
    <para>

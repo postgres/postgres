@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.85 2003/11/01 01:56:29 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.86 2003/11/04 09:55:39 petere Exp $
 -->
 
 <chapter id="sql-syntax">
@@ -196,20 +196,16 @@ UPDATE "my_table" SET "a" = 5;
     unquoted names are always folded to lower case.  For example, the
     identifiers <literal>FOO</literal>, <literal>foo</literal>, and
     <literal>"foo"</literal> are considered the same by
-    <productname>PostgreSQL</productname>, but <literal>"Foo"</literal>
-    and <literal>"FOO"</literal> are different from these three and
-    each other.
-    <footnote>
-     <para>
-      The folding of unquoted names to lower case in <productname>PostgreSQL</>
-      is incompatible with the SQL standard, which says that unquoted
-      names should be folded to upper case.  Thus, <literal>foo</literal>
-      should be equivalent to <literal>"FOO"</literal> not
-      <literal>"foo"</literal> according to the standard.  If you want to
-      write portable applications you are advised to always quote a particular
-      name or never quote it.
-     </para>
-    </footnote>
+    <productname>PostgreSQL</productname>, but
+    <literal>"Foo"</literal> and <literal>"FOO"</literal> are
+    different from these three and each other.  (The folding of
+    unquoted names to lower case in <productname>PostgreSQL</> is
+    incompatible with the SQL standard, which says that unquoted names
+    should be folded to upper case.  Thus, <literal>foo</literal>
+    should be equivalent to <literal>"FOO"</literal> not
+    <literal>"foo"</literal> according to the standard.  If you want
+    to write portable applications you are advised to always quote a
+    particular name or never quote it.
    </para>
   </sect2>
 
@@ -260,10 +256,12 @@ UPDATE "my_table" SET "a" = 5;
      form feed, <literal>\n</literal> is a newline,
      <literal>\r</literal> is a carriage return, <literal>\t</literal>
      is a tab, and <literal>\<replaceable>xxx</replaceable></literal>,
-     where <replaceable>xxx</replaceable> is an octal number, is the
-     character with the corresponding ASCII code.  Any other character
-     following a backslash is taken literally.  Thus, to include a
-     backslash in a string constant, type two backslashes.
+     where <replaceable>xxx</replaceable> is an octal number, is a
+     byte with the corresponding code.  (It is your responsibility
+     that the byte sequences you create are valid characters in the
+     server character set encoding.)  Any other character following a
+     backslash is taken literally.  Thus, to include a backslash in a
+     string constant, type two backslashes.
     </para>
 
     <para>
@@ -440,43 +438,7 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
      or <literal>CAST()</literal> to specify the type of an array constant.
     </para>
    </sect3>
-
-   <sect3>
-    <title>Array constants</title>
-
-    <indexterm>
-     <primary>array</primary>
-     <secondary>constant</secondary>
-    </indexterm>
-
-    <para>
-     The general format of an array constant is the following:
-<synopsis>
-'{ <replaceable>val1</replaceable> <replaceable>delim</replaceable> <replaceable>val2</replaceable> <replaceable>delim</replaceable> ... }'
-</synopsis>
-     where <replaceable>delim</replaceable> is the delimiter character
-     for the type, as recorded in its <literal>pg_type</literal>
-     entry.  (For all built-in types, this is the comma character
-     <quote><literal>,</literal></>.)  Each <replaceable>val</replaceable> is either a constant
-     of the array element type, or a subarray.  An example of an
-     array constant is
-<programlisting>
-'{{1,2,3},{4,5,6},{7,8,9}}'
-</programlisting>
-     This constant is a two-dimensional, 3-by-3 array consisting of three
-     subarrays of integers.  For more information see <xref linkend="arrays">.
-    </para>
-
-    <para>
-     (Array constants are actually only a special case of the generic
-     type constants discussed in the previous section.  The constant
-     is initially treated as a string and passed to the array input
-     conversion routine.  An explicit type specification might be
-     necessary.)
-    </para>
-   </sect3>
   </sect2>
-
 
   <sect2 id="sql-syntax-operators">
    <title>Operators</title>
@@ -622,7 +584,7 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
     A comment is an arbitrary sequence of characters beginning with
     double dashes and extending to the end of the line, e.g.:
 <programlisting>
--- This is a standard SQL92 comment
+-- This is a standard SQL comment
 </programlisting>
    </para>
 
@@ -635,7 +597,7 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
 </programlisting>
     where the comment begins with <literal>/*</literal> and extends to
     the matching occurrence of <literal>*/</literal>. These block
-    comments nest, as specified in SQL99 but unlike C, so that one can
+    comments nest, as specified in the SQL standard but unlike C, so that one can
     comment out larger blocks of code that may contain existing block
     comments.
    </para>
@@ -1267,7 +1229,7 @@ CAST ( <replaceable>expression</replaceable> AS <replaceable>type</replaceable> 
     there is no error; the scalar result is taken to be null.)
     The subquery can refer to variables from the surrounding query,
     which will act as constants during any one evaluation of the subquery.
-    See also <xref linkend="functions-subquery">.
+    See also <xref linkend="functions-subquery"> for other expressions involving subqueries.
    </para>
 
    <para>
@@ -1289,7 +1251,7 @@ SELECT name, (SELECT max(pop) FROM cities WHERE cities.state = states.name)
    </indexterm>
 
    <para>
-    An <firstterm>array constructor</> is an expression that builds an
+    An array constructor is an expression that builds an
     array value from values for its member elements.  A simple array
     constructor 
     consists of the key word <literal>ARRAY</literal>, a left square bracket
@@ -1337,11 +1299,11 @@ SELECT ARRAY[[1,2],[3,4]];
     an array of the proper kind, not only a sub-<literal>ARRAY</> construct.
     For example:
 <programlisting>
-create table arr(f1 int[], f2 int[]);
-CREATE TABLE
-insert into arr values (ARRAY[[1,2],[3,4]],ARRAY[[5,6],[7,8]]);
-INSERT 2635544 1
-select ARRAY[f1, f2, '{{9,10},{11,12}}'::int[]] from arr;
+CREATE TABLE arr(f1 int[], f2 int[]);
+
+INSERT INTO arr VALUES (ARRAY[[1,2],[3,4]], ARRAY[[5,6],[7,8]]);
+
+SELECT ARRAY[f1, f2, '{{9,10},{11,12}}'::int[]] FROM arr;
                      array
 ------------------------------------------------
  {{{1,2},{3,4}},{{5,6},{7,8}},{{9,10},{11,12}}}
@@ -1361,10 +1323,10 @@ SELECT ARRAY(SELECT oid FROM pg_proc WHERE proname LIKE 'bytea%');
  {2011,1954,1948,1952,1951,1244,1950,2005,1949,1953,2006,31}
 (1 row)
 </programlisting>
-  The subquery must return a single column. The
-  resulting one-dimensional array will have an element for each row in the
-  subquery result, with an element type matching that of the subquery's
-  output column.
+   The subquery must return a single column. The resulting
+   one-dimensional array will have an element for each row in the
+   subquery result, with an element type matching that of the
+   subquery's output column.
   </para>
 
   <para>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.41 2003/11/02 12:58:39 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.42 2003/11/04 09:55:39 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -112,7 +112,7 @@ PostgreSQL documentation
 	Dump data as <command>INSERT</command> commands (rather
 	than <command>COPY</command>). This will make restoration very
 	slow, but it makes the output more portable to other SQL database
-	packages.
+	management systems.
        </para>
       </listitem>
      </varlistentry>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.27 2003/11/01 01:56:29 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.28 2003/11/04 09:55:38 petere Exp $
 -->
 
 <chapter id="maintenance">
@@ -40,10 +40,10 @@ $Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.27 2003/11/01 01:56:29
   </para>
 
   <para>
-   <productname>PostgreSQL</productname> is low-maintenance compared to
-   some other database products.  Nonetheless, appropriate attention to
-   these tasks will go far towards ensuring a pleasant and productive
-   experience with the system.
+   <productname>PostgreSQL</productname> is low-maintenance compared
+   to some other database management systems.  Nonetheless,
+   appropriate attention to these tasks will go far towards ensuring a
+   pleasant and productive experience with the system.
   </para>
 
  <sect1 id="routine-vacuuming">

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.59 2003/10/23 13:58:43 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.60 2003/11/04 09:55:38 petere Exp $
 -->
 
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook V3.1//EN" [
@@ -84,7 +84,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.59 2003/10/23 13:58:43 tg
    </para>
 
    <para>
-    Readers of this book should know how to connect to a
+    Readers of this part should know how to connect to a
     <productname>PostgreSQL</> database and issue
     <acronym>SQL</acronym> commands.  Readers that are unfamiliar with
     these issues are encouraged to read <xref linkend="tutorial">

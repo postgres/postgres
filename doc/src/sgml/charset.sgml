@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/charset.sgml,v 2.39 2003/09/11 18:30:38 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/charset.sgml,v 2.40 2003/11/04 09:55:38 petere Exp $ -->
 
 <chapter id="charset">
  <title>Localization</>
@@ -248,12 +248,9 @@ initdb --locale=sv_SE
    <para>
     Client applications that handle server-side errors by parsing the
     text of the error message will obviously have problems when the
-    server's messages are in a different language.  If you create such
-    an application you need to devise a plan to cope with this
-    situation.  The embedded SQL interface (<application>ECPG</>) is
-    also affected by this problem.  It is currently recommended that
-    servers interfacing with <application>ECPG</> applications be
-    configured to send messages in English.
+    server's messages are in a different language.  Authors of such
+    applications are advised to make use of the error code scheme
+    instead.
    </para>
 
    <para>
@@ -430,7 +427,7 @@ initdb --locale=sv_SE
       mistakenly meant ISO 8859-5.  From 7.2 on, <literal>LATIN5</>
       means ISO 8859-9. If you have a <literal>LATIN5</> database
       created on 7.1 or earlier and want to migrate to 7.2 or later,
-      you should be very careful about this change.
+      you should be careful about this change.
      </para>
     </important>
 
