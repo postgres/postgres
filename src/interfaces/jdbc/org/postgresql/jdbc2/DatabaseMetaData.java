@@ -15,7 +15,7 @@ import org.postgresql.util.PSQLException;
 /*
  * This class provides information about the database as a whole.
  *
- * $Id: DatabaseMetaData.java,v 1.50 2002/03/05 02:14:08 davec Exp $
+ * $Id: DatabaseMetaData.java,v 1.51 2002/03/05 03:02:52 davec Exp $
  *
  * <p>Many of the methods here return lists of information in ResultSets.  You
  * can use the normal ResultSet methods such as getString and getInt to
@@ -1832,7 +1832,14 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 			switch (r.getBytes(3)[0])
 			{
 				case (byte) 'r':
-					relKind = "TABLE";
+					if ( r.getString(1).startsWith("pg_") )
+					{
+						relKind = "SYSTEM TABLE";
+					}
+					else
+					{
+						relKind = "TABLE";
+					}
 					break;
 				case (byte) 'i':
 					relKind = "INDEX";
