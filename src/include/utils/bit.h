@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bit.h,v 1.7 2000/01/26 05:58:37 momjian Exp $
+ * $Id: bit.h,v 1.8 2000/08/20 19:31:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,8 +16,6 @@
 
 typedef bits8 *BitArray;
 typedef uint32 BitIndex;
-
-#define BitsPerByte		8
 
 /*
  * BitArraySetBit
