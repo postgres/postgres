@@ -10,6 +10,7 @@
 #include "extern.h"
 #include "numeric.h"
 #include "pgtypes_error.h"
+#include "decimal.h"
 
 #define Max(x, y)               ((x) > (y) ? (x) : (y))
 #define Min(x, y)               ((x) < (y) ? (x) : (y))
@@ -1040,9 +1041,6 @@ select_div_scale(NumericVar *var1, NumericVar *var2, int *rscale)
 	 * NUMERIC_MIN_SIG_DIGITS significant digits, so that numeric gives a
 	 * result no less accurate than float8; but use a scale not less than
 	 * either input's display scale.
-	 *
-	 * The result scale is NUMERIC_EXTRA_DIGITS more than the display scale,
-	 * to provide some guard digits in the calculation.
 	 */
 
 	/* Get the actual (normalized) weight and first digit of each input */
@@ -1087,19 +1085,11 @@ select_div_scale(NumericVar *var1, NumericVar *var2, int *rscale)
 	res_dscale = Min(res_dscale, NUMERIC_MAX_DISPLAY_SCALE);
 
 	/* Select result scale */
-	*rscale = res_rscale = res_dscale + NUMERIC_EXTRA_DIGITS;
+	*rscale = res_rscale = res_dscale + 4;
 
 	return res_dscale;
 }
 
-
-/* ----------
- * div_var() -
- *
- *	Division on variable level.  Accuracy of result is determined by
- *	global_rscale.
- * ----------
- */
 int
 PGTYPESnumeric_div(NumericVar *var1, NumericVar *var2, NumericVar *result)
 {

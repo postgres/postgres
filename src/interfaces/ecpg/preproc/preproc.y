@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.213 2003/03/20 15:56:50 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.214 2003/03/21 14:17:47 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -374,12 +374,12 @@ make_name(void)
 %type  <str>	ECPGWhenever ECPGConnect connection_target ECPGOpen
 %type  <str>	indicator ECPGExecute ECPGPrepare opt_ecpg_using ecpg_into
 %type  <str>	storage_declaration storage_clause opt_initializer c_anything
-%type  <str>	variable_list variable c_thing c_term
+%type  <str>	variable_list variable c_thing c_term ECPGKeywords_vanames
 %type  <str>	opt_pointer ECPGDisconnect dis_name storage_modifier
 %type  <str>	ECPGRelease execstring server_name ECPGVarDeclaration
 %type  <str>	connection_object opt_server opt_port c_stuff c_stuff_item
 %type  <str>	user_name opt_user char_variable ora_user ident opt_reference
-%type  <str>	var_type_declarations quoted_ident_stringvar
+%type  <str>	var_type_declarations quoted_ident_stringvar ECPGKeywords_rest
 %type  <str>	db_prefix server opt_options opt_connection_name c_list
 %type  <str>	ECPGSetConnection ECPGTypedef c_args ECPGKeywords
 %type  <str>	enum_type civar civarind ECPGCursorStmt ECPGDeallocate
@@ -389,7 +389,7 @@ make_name(void)
 %type  <str>	s_union union_type ECPGSetAutocommit on_off
 %type  <str>	ECPGAllocateDescr ECPGDeallocateDescr symbol opt_symbol
 %type  <str>	ECPGGetDescriptorHeader ECPGColLabel single_var_declaration
-%type  <str>	reserved_keyword unreserved_keyword
+%type  <str>	reserved_keyword unreserved_keyword ecpg_interval
 %type  <str>	col_name_keyword func_name_keyword precision opt_scale
 %type  <str>	ECPGTypeName variablelist ECPGColLabelCommon
 
@@ -4176,9 +4176,18 @@ opt_scale:	',' NumConst	{ $$ = $2; }
 		| /* EMPTY */	{ $$ = EMPTY; }
 		;
 
+ecpg_interval:	opt_interval	{ $$ = $1; }
+		| YEAR_P TO MINUTE_P	{ $$ = make_str("year to minute"); }
+		| DAY_P TO DAY_P	{ $$ = make_str("day to day"); }
+		| MONTH_P TO MONTH_P	{ $$ = make_str("month to month"); }
+		;
+
 single_vt_type: common_type
-		| ECPGColLabelCommon
+		| ECPGColLabelCommon ecpg_interval
 		{
+			if (strlen($2) != 0 && strcmp ($1, "datetime") != 0 && strcmp ($1, "interval") != 0)
+				mmerror (PARSE_ERROR, ET_ERROR, "Interval specification not allowed here ");
+			
 			/*
 			 * Check for type names that the SQL grammar treats as
 			 * unreserved keywords
@@ -4239,6 +4248,22 @@ single_vt_type: common_type
 				$$.type_index = -1;
 				$$.type_sizeof = NULL;
 			}
+			else if (strcmp($1, "datetime") == 0)
+			{
+				$$.type_enum = ECPGt_timestamp;
+				$$.type_str = make_str("Timestamp");
+				$$.type_dimension = -1;
+				$$.type_index = -1;
+				$$.type_sizeof = NULL;
+			}
+			else if (strcmp($1, "interval") == 0)
+			{
+				$$.type_enum = ECPGt_timestamp;
+				$$.type_str = make_str("Timestamp");
+				$$.type_dimension = -1;
+				$$.type_index = -1;
+				$$.type_sizeof = NULL;
+			}
 			else
 			{
 				/* this is for typedef'ed types */
@@ -4291,7 +4316,7 @@ type_declaration: S_TYPEDEF
 		/* an initializer specified */
 		initializer = 0;
 	}
-	var_type opt_pointer ECPGColLabel opt_array_bounds ';'
+	var_type opt_pointer ECPGColLabelCommon opt_array_bounds ';'
 	{
 		/* add entry to list */
 		struct typedefs *ptr, *this;
@@ -4434,8 +4459,11 @@ common_type: simple_type
 		;
 
 var_type:	common_type
-		| ECPGColLabel
+		| ECPGColLabel ecpg_interval
 		{
+			if (strlen($2) != 0 && strcmp ($1, "datetime") != 0 && strcmp ($1, "interval") != 0)
+				mmerror (PARSE_ERROR, ET_ERROR, "Interval specification not allowed here ");
+			
 			/*
 			 * Check for type names that the SQL grammar treats as
 			 * unreserved keywords
@@ -4489,6 +4517,22 @@ var_type:	common_type
 				$$.type_sizeof = NULL;
 			}
 			else if (strcmp($1, "timestamp") == 0)
+			{
+				$$.type_enum = ECPGt_timestamp;
+				$$.type_str = make_str("Timestamp");
+				$$.type_dimension = -1;
+				$$.type_index = -1;
+				$$.type_sizeof = NULL;
+			}
+			else if (strcmp($1, "interval") == 0)
+			{
+				$$.type_enum = ECPGt_timestamp;
+				$$.type_str = make_str("Timestamp");
+				$$.type_dimension = -1;
+				$$.type_index = -1;
+				$$.type_sizeof = NULL;
+			}
+			else if (strcmp($1, "datetime") == 0)
 			{
 				$$.type_enum = ECPGt_timestamp;
 				$$.type_str = make_str("Timestamp");
@@ -4622,7 +4666,7 @@ variable_list: variable
 			{ $$ = cat_str(3, $1, make_str(","), $3); }
 		;
 
-variable: opt_pointer ECPGColLabel opt_array_bounds opt_initializer
+variable: opt_pointer ECPGColLabelCommon opt_array_bounds opt_initializer
 		{
 			struct ECPGtype * type;
 			int dimension = $3.index1; /* dimension of array */
@@ -5173,16 +5217,18 @@ action : SQL_CONTINUE
 /* some other stuff for ecpg */
 
 /* additional unreserved keywords */
-ECPGKeywords:  SQL_BREAK		{ $$ = make_str("break"); }
+ECPGKeywords: ECPGKeywords_vanames	{ $$ = $1; }
+		| ECPGKeywords_rest 	{ $$ = $1; }
+		;
+
+ECPGKeywords_vanames:  SQL_BREAK		{ $$ = make_str("break"); }
 		| SQL_CALL				{ $$ = make_str("call"); }
 		| SQL_CARDINALITY		{ $$ = make_str("cardinality"); }
-		| SQL_CONNECT			{ $$ = make_str("connect"); }
 		| SQL_CONTINUE			{ $$ = make_str("continue"); }
 		| SQL_COUNT				{ $$ = make_str("count"); }
 		| SQL_DATA				{ $$ = make_str("data"); }
 		| SQL_DATETIME_INTERVAL_CODE	{ $$ = make_str("datetime_interval_code"); }
 		| SQL_DATETIME_INTERVAL_PRECISION	{ $$ = make_str("datetime_interval_precision"); }
-		| SQL_DISCONNECT		{ $$ = make_str("disconnect"); }
 		| SQL_FOUND				{ $$ = make_str("found"); }
 		| SQL_GO				{ $$ = make_str("go"); }
 		| SQL_GOTO				{ $$ = make_str("goto"); }
@@ -5193,7 +5239,6 @@ ECPGKeywords:  SQL_BREAK		{ $$ = make_str("break"); }
 		| SQL_NAME				{ $$ = make_str("name"); }
 		| SQL_NULLABLE			{ $$ = make_str("nullable"); }
 		| SQL_OCTET_LENGTH		{ $$ = make_str("octet_length"); }
-		| SQL_OPEN				{ $$ = make_str("open"); }
 		| SQL_RELEASE			{ $$ = make_str("release"); }
 		| SQL_RETURNED_LENGTH		{ $$ = make_str("returned_length"); }
 		| SQL_RETURNED_OCTET_LENGTH { $$ = make_str("returned_octet_length"); }
@@ -5203,6 +5248,11 @@ ECPGKeywords:  SQL_BREAK		{ $$ = make_str("break"); }
 		| SQL_SQLPRINT			{ $$ = make_str("sqlprint"); }
 		| SQL_SQLWARNING		{ $$ = make_str("sqlwarning"); }
 		| SQL_STOP				{ $$ = make_str("stop"); }
+		;
+		
+ECPGKeywords_rest:  SQL_CONNECT			{ $$ = make_str("connect"); }
+		| SQL_DISCONNECT		{ $$ = make_str("disconnect"); }
+		| SQL_OPEN				{ $$ = make_str("open"); }
 		| SQL_VAR				{ $$ = make_str("var"); }
 		| SQL_WHENEVER			{ $$ = make_str("whenever"); }
 		;
@@ -5272,12 +5322,13 @@ ColLabel:  ECPGColLabel					{ $$ = $1; }
 ECPGColLabelCommon:  ident                              { $$ = $1; }
                 | col_name_keyword                      { $$ = $1; }
                 | func_name_keyword                     { $$ = $1; }
+		| ECPGKeywords_vanames			{ $$ = $1; }
                 ;
 		
 ECPGColLabel:  ECPGColLabelCommon			{ $$ = $1; }
 		| unreserved_keyword			{ $$ = $1; }
 		| reserved_keyword			{ $$ = $1; }
-		| ECPGKeywords				{ $$ = $1; }
+		| ECPGKeywords_rest			{ $$ = $1; }
 		;
 
 /*

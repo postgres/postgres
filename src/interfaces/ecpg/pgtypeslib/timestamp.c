@@ -13,6 +13,7 @@
 #include "extern.h"
 #include "pgtypes_error.h"
 #include "pgtypes_timestamp.h"
+#include "datetime.h"
 
 #ifdef HAVE_INT64_TIMESTAMP
 static int64
@@ -352,5 +353,41 @@ PGTYPEStimestamp_ttoa(Timestamp tstamp)
 		return NULL;
 	}
         return pgtypes_strdup(buf);
+}
+
+void
+dtcurrent (Timestamp *ts)
+{
+	return;
+}
+
+int
+dtcvasc (char *str, Timestamp *ts)
+{
+	return 0;
+}
+
+int
+dtsub (Timestamp *ts1, Timestamp *ts2, Timestamp *iv)
+{
+	return 0;
+}
+
+int
+dttoasc (Timestamp *ts, char *output)
+{
+	return 0;
+}
+
+int
+dttofmtasc (Timestamp *ts, char *output, int str_len, char *fmtstr)
+{
+	return 0;
+}
+
+int
+intoasc(Timestamp *i, char *str)
+{
+	return 0;
 }
 

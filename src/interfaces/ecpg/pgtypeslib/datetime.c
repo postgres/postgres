@@ -9,6 +9,7 @@
 #include "extern.h"
 #include "pgtypes_error.h"
 #include "pgtypes_date.h"
+#include "ecpg_informix.h"
 
 Date
 PGTYPESdate_atod(char *str, char **endptr)
@@ -101,5 +102,47 @@ int
 PGTYPESdate_day(Date dDate)
 {
 	return j2day(dDate);
+}
+
+int
+rdatestr (Date d, char *str)
+{
+	return 0;
+}
+
+void
+rtoday (Date *d)
+{
+	return;
+}
+
+int
+rjulmdy (Date d, short mdy[3])
+{
+	return 0;
+}
+
+int
+rdefmtdate (Date *d, char *fmt, char *str)
+{
+	return 0;
+}
+
+int
+rfmtdate (Date d, char *fmt, char *str)
+{
+	return 0;
+}
+
+int
+rmdyjul (short mdy[3], Date *d)
+{
+	return 0;
+}
+
+int
+rstrdate (char *str, Date *d)
+{
+	return 0;
 }
 

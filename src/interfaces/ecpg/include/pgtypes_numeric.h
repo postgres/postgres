@@ -30,19 +30,4 @@ int PGTYPESnumeric_ntod(NumericVar *, double *);
 int PGTYPESnumeric_ntoi(NumericVar *, int *);
 int PGTYPESnumeric_ntol(NumericVar *, long *);
 
-int decadd(NumericVar *, NumericVar *, NumericVar *);
-int deccmp(NumericVar *, NumericVar *);
-void deccopy(NumericVar *, NumericVar *);
-int deccvasc(char *, int, NumericVar *);
-int deccvdbl(double, NumericVar *);
-int deccvint(int, NumericVar *);
-int deccvlong(long, NumericVar *);
-int decdiv(NumericVar *, NumericVar *, NumericVar *);
-int decmul(NumericVar *, NumericVar *, NumericVar *);
-int decsub(NumericVar *, NumericVar *, NumericVar *);
-int dectoasc(NumericVar *, char *, int, int);
-int dectodbl(NumericVar *, double *);
-int dectoint(NumericVar *, int *);
-int dectolong(NumericVar *, long *);
-
 #endif /* PGTYPES_NUMERIC */
