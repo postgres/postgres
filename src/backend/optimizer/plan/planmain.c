@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.25 1998/08/10 02:26:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.26 1998/08/10 04:49:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -276,6 +276,7 @@ subplanner(Query *root,
 	 * the exhaustive path search.
 	 */
 	init_join_info(root->base_rel_list);
+
 	final_rel_list = find_paths(root, root->base_rel_list);
 
 	if (final_rel_list)
