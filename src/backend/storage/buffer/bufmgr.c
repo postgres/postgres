@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.66 1999/11/16 04:13:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.67 1999/11/22 01:19:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1056,8 +1056,13 @@ BufferSync()
 
 
 /*
- * WaitIO -- Block until the IO_IN_PROGRESS flag on 'buf'
- *		is cleared.  Because IO_IN_PROGRESS conflicts are
+ * WaitIO -- Block until the IO_IN_PROGRESS flag on 'buf' is cleared.
+ *
+ * Should be entered with buffer manager spinlock held; releases it before
+ * waiting and re-acquires it afterwards.
+ *
+ * OLD NOTES:
+ *		Because IO_IN_PROGRESS conflicts are
  *		expected to be rare, there is only one BufferIO
  *		lock in the entire system.	All processes block
  *		on this semaphore when they try to use a buffer
@@ -1069,15 +1074,13 @@ BufferSync()
  *		is simple, but efficient enough if WaitIO is
  *		rarely called by multiple processes simultaneously.
  *
- *	ProcSleep atomically releases the spinlock and goes to
- *		sleep.
- *
- *	Note: there is an easy fix if the queue becomes long.
- *		save the id of the buffer we are waiting for in
- *		the queue structure.  That way signal can figure
- *		out which proc to wake up.
+ * NEW NOTES:
+ *		The above is true only on machines without test-and-set
+ *		semaphores (which we hope are few, these days).  On better
+ *		hardware, each buffer has a spinlock that we can wait on.
  */
 #ifdef HAS_TEST_AND_SET
+
 static void
 WaitIO(BufferDesc *buf, SPINLOCK spinlock)
 {
@@ -1087,7 +1090,8 @@ WaitIO(BufferDesc *buf, SPINLOCK spinlock)
 	SpinAcquire(spinlock);
 }
 
-#else							/* HAS_TEST_AND_SET */
+#else							/* !HAS_TEST_AND_SET */
+
 IpcSemaphoreId WaitIOSemId;
 IpcSemaphoreId WaitCLSemId;
 
@@ -1387,7 +1391,11 @@ RelationGetNumberOfBlocks(Relation relation)
  *
  *		this function unmarks all the dirty pages of a relation
  *		in the buffer pool so that at the end of transaction
- *		these pages will not be flushed.
+ *		these pages will not be flushed.  This is used when the
+ *		relation is about to be deleted.  We assume that the caller
+ *		holds an exclusive lock on the relation, which should assure
+ *		that no new buffers will be acquired for the rel meanwhile.
+ *
  *		XXX currently it sequentially searches the buffer pool, should be
  *		changed to more clever ways of searching.
  * --------------------------------------------------------------------
@@ -1395,8 +1403,9 @@ RelationGetNumberOfBlocks(Relation relation)
 void
 ReleaseRelationBuffers(Relation rel)
 {
+	Oid			relid = RelationGetRelid(rel);
+	bool		holding = false;
 	int			i;
-	int			holding = 0;
 	BufferDesc *buf;
 
 	if (rel->rd_myxactonly)
@@ -1404,9 +1413,8 @@ ReleaseRelationBuffers(Relation rel)
 		for (i = 0; i < NLocBuffer; i++)
 		{
 			buf = &LocalBufferDescriptors[i];
-			if ((buf->flags & BM_DIRTY) &&
-				(buf->tag.relId.relId == RelationGetRelid(rel)))
-				buf->flags &= ~BM_DIRTY;
+			if (buf->tag.relId.relId == relid)
+				buf->flags &= ~ ( BM_DIRTY | BM_JUST_DIRTIED);
 		}
 		return;
 	}
@@ -1417,21 +1425,47 @@ ReleaseRelationBuffers(Relation rel)
 		if (!holding)
 		{
 			SpinAcquire(BufMgrLock);
-			holding = 1;
+			holding = true;
 		}
-		if ((buf->flags & BM_DIRTY) &&
-			(buf->tag.relId.dbId == MyDatabaseId) &&
-			(buf->tag.relId.relId == RelationGetRelid(rel)))
+	recheck:
+		if (buf->tag.relId.dbId == MyDatabaseId &&
+			buf->tag.relId.relId == relid)
 		{
-			buf->flags &= ~BM_DIRTY;
+			/*
+			 * If there is I/O in progress, better wait till it's done;
+			 * don't want to delete the relation out from under someone
+			 * who's just trying to flush the buffer!
+			 */
+			if (buf->flags & BM_IO_IN_PROGRESS)
+			{
+				WaitIO(buf, BufMgrLock);
+				/* By now, the buffer very possibly belongs to some other
+				 * rel, so check again before proceeding.
+				 */
+				goto recheck;
+			}
+			/* Now we can do what we came for */
+			buf->flags &= ~ ( BM_DIRTY | BM_JUST_DIRTIED);
+			CommitInfoNeedsSave[i - 1] = 0;
+			/*
+			 * Release any refcount we may have.
+			 *
+			 * This is very probably dead code, and if it isn't then it's
+			 * probably wrong.  I added the Assert to find out --- tgl 11/99.
+			 */
 			if (!(buf->flags & BM_FREE))
 			{
+				/* Assert checks that buffer will actually get freed! */
+				Assert(PrivateRefCount[i - 1] == 1 &&
+					   buf->refcount == 1);
+				/* ReleaseBuffer expects we do not hold the lock at entry */
 				SpinRelease(BufMgrLock);
-				holding = 0;
+				holding = false;
 				ReleaseBuffer(i);
 			}
 		}
 	}
+
 	if (holding)
 		SpinRelease(BufMgrLock);
 }
