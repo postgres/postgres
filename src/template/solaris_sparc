@@ -1,0 +1,10 @@
+AROPT=crs
+DLSUFFIX=.so
+
+if test "$GCC" = yes ; then
+  CFLAGS=
+  SHARED_LIB=-fPIC
+else
+  CFLAGS='-Xa -v -D__sparc__ -D__sun__'
+  SHARED_LIB=-KPIC
+fi

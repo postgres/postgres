@@ -1,8 +1,4 @@
-AROPT:crs
-CFLAGS:
-LIBS:-lsocket -lnsl
-SHARED_LIB:-fpic
-ALL:
-SRCH_INC:
-SRCH_LIB:
-DLSUFFIX:.so
+AROPT=crs
+CFLAGS=
+SHARED_LIB=-fpic
+DLSUFFIX=.so

@@ -1,8 +1,5 @@
-AROPT:crs
-CFLAGS:-v -O -K i486,host,inline,loop_unroll -Dsvr4
-SHARED_LIB:-K PIC
-SRCH_INC:
-SRCH_LIB:
-DLSUFFIX:.so
-CC:cc
-LIBS:-lc89 
+AROPT=crs
+CFLAGS='-v -O -K i486,host,inline,loop_unroll -Dsvr4'
+SHARED_LIB='-K PIC'
+DLSUFFIX=.so
+LIBS=-lc89 

@@ -1,0 +1,22 @@
+AROPT=cq
+CFLAGS='-O2 -pipe'
+
+case $host_cpu in
+  i?86)  CFLAGS="$CFLAGS -m486";;
+esac
+
+case $host_os in
+  bsdi2.0) CFLAGS="$CFLAGS -DPRE_BSDI_2_1";;
+esac
+
+case $host_os in
+  bsdi2.0 | bsdi2.1 | bsdi3)
+    SHARED_LIB=
+    DLSUFFIX=.o
+    CC=gcc2
+    ;;
+  bsdi4)
+    SHARED_LIB=-fpic
+    DLSUFFIX=.so
+    ;;
+esac

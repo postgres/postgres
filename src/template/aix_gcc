@@ -1,9 +1,0 @@
-AROPT:crs
-CFLAGS:-pipe
-CXXFLAGS:-pipe
-SHARED_LIB:-lc
-ALL:
-SRCH_INC:
-SRCH_LIB:
-DLSUFFIX:.so
-CC:gcc

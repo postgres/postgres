@@ -1,8 +1,0 @@
-AROPT:cq
-CFLAGS:-O2 -m486 -pipe
-SHARED_LIB:-fpic
-ALL:
-SRCH_INC:
-SRCH_LIB:
-DLSUFFIX:.so
-CC:gcc

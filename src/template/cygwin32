@@ -1,8 +1,0 @@
-AROPT:crs
-CFLAGS:-O2
-SHARED_LIB:
-ALL:
-SRCH_INC:/usr/local/include
-SRCH_LIB:/usr/local/lib
-DLSUFFIX:.dll
-LIBS:-lcygipc

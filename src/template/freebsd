@@ -1,6 +1,4 @@
-AROPT:cq
-SHARED_LIB:-fpic -DPIC
-CFLAGS:-O2 -m486 -pipe
-SRCH_INC:
-SRCH_LIB:
-DLSUFFIX:.so
+AROPT=cq
+SHARED_LIB='-fpic -DPIC'
+CFLAGS='-O2 -m486 -pipe'
+DLSUFFIX=.so

@@ -27,206 +27,134 @@ AC_DEFINE_UNQUOTED(PG_VERSION, "$VERSION")
 
 AC_CANONICAL_HOST
 
-tas_file=dummy.s
-case "$host_os" in
+template=
+AC_MSG_CHECKING([which template to use])
+
+# check if --with-template was given
+if test x"${with_template+set}" = xset ; then
+  case $with_template in
+    yes|no) AC_MSG_ERROR([You must supply an argument to the --with-template option.]);;
+    list)   echo; ls "$srcdir/src/template"; exit;;
+    *)      if test -f "$srcdir/src/template/$with_template" ; then
+              template=$with_template
+            else
+              AC_MSG_ERROR([\`$with_template' is not a valid template name. Use \`list' for a list.])
+            fi;;
+  esac
+
+else # --with-template not given
+
+case $host_os in
+     aix*) template=aix ;;
+    bsdi*) template=bsdi ;;
+  cygwin*) template=win ;;
+    dgux*) template=dgux ;;
+ freebsd*) template=freebsd ;;
+    hpux*) template=hpux ;;
+    irix*) template=irix5 ;;
+   linux*) template=linux ;;
+  netbsd*) template=netbsd ;;
+nextstep*) template=nextstep ;;
+ openbsd*) template=openbsd ;;
+     osf*) template=osf ;;
+     qnx*) template=qnx4 ;;
+     sco*) template=sco ;;
  solaris*)
-	case "$host_cpu" in
-	  sparc) os=solaris_sparc need_tas=yes tas_file=solaris_sparc.s ;;
-	   i386) os=solaris_i386 need_tas=yes tas_file=solaris_i386.s ;;
+	case $host_cpu in
+	  sparc) template=solaris_sparc ;;
+	   i?86) template=solaris_i386 ;;
 	esac ;;
-   sunos*) os=sunos4 need_tas=no ;;
-     beos) os=beos need_tas=no ;;
-     aux*) os=aux need_tas=no ;;
-   linux*) os=linux need_tas=no ;;
-    bsdi*) os=bsdi need_tas=no ;;
- freebsd1*|freebsd2*) os=freebsd need_tas=no ;;
- freebsd*) os=freebsd need_tas=no elf=yes ;;
-  netbsd*) os=netbsd need_tas=no ;;
-  openbsd*) os=bsd need_tas=no ;;
-    dgux*) os=dgux need_tas=no ;;
-     aix*) os=aix need_tas=no ;;
-nextstep*) os=nextstep need_tas=no ;;
-  ultrix*) os=ultrix4 need_tas=no ;;
-    irix*) os=irix5 need_tas=no ;;
-    hpux*) os=hpux need_tas=yes tas_file=hpux.s ;;
-     osf*) os=alpha need_tas=no ;;
-     sco*) os=sco need_tas=no ;;
- machten*) os=machten need_tas=no ;;
-  cygwin*) os=win need_tas=no ;;
+   sunos*) template=sunos4 ;;
  sysv4.2*)
-       case "$host_vendor" in
-	       univel) os=univel need_tas=no ;;
-		    *) os=unknown need_tas=no ;;
-       esac ;;
-   sysv4*) os=svr4 need_tas=no ;;
-   sysv5uw*) os=unixware need_tas=no ;;
-   unixware*) os=unixware need_tas=no ;;
-    qnx*) os=qnx4 need_tas=no ;;
-*) echo ""
-   echo "*************************************************************"
-   echo "configure does not currently recognize your operating system,"
-   echo "therefore you must do a manual configuration of:"
-   echo "$host_os"
-   echo "Please contact scrappy@hub.org to see about rectifying this, "
-   echo "including the above 'checking host system type...' line "
-   echo "*************************************************************"
-   echo ""
-   exit;;
+        case $host_vendor in
+          univel) template=univel ;;
+        esac ;;
+   sysv4*) template=svr4 ;;
+ sysv5uw*) template=unixware ;;
+  ultrix*) template=ultrix4 ;;
 esac
 
-PORTNAME=${os}
-CPU=${host_cpu}
-AC_LINK_FILES(src/backend/port/dynloader/${os}.c, src/backend/port/dynloader.c)
-AC_LINK_FILES(src/backend/port/dynloader/${os}.h, src/include/dynloader.h)
-AC_LINK_FILES(src/include/port/${os}.h, src/include/os.h)
-AC_LINK_FILES(src/makefiles/Makefile.${os}, src/Makefile.port)
+  if test x"$template" = x"" ; then
+    AC_MSG_ERROR([
+*******************************************************************
+PostgreSQL has apparently not been ported to your platform yet.
+To try a manual configuration, look info the src/template directory
+for a similar platform and use the \`--with-template=' option.
 
-if test "X$need_tas" = "Xyes"
-then
-	AC_LINK_FILES(src/backend/port/tas/${tas_file}, src/backend/port/tas.s)
-	TAS=tas.o
-	AC_SUBST(TAS)
-fi
-
-dnl this part selects the template from the ones in the template directory.
-
-AC_MSG_CHECKING(setting template to)
-AC_ARG_WITH(template,
-    [  --with-template=TEMPLATE
-                          use operating system template file 
-                              see template directory],
-    [  TEMPLATE=$withval ],
-    [
-
-# lowercase $host
-host="`echo $host | tr 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' 'abcdefghijklmnopqrstuvwxyz'`"
-
-# First, try for a template exactly matching $host
-if test -f "src/template/$host"
-then TEMPLATE="$host"
-else
-    # Scan template/.similar for a rule that tells us which template to use.
-    # The format of each line of the file is
-    #           hostnamepattern=templatefilename
-    # where the hostnamepattern is evaluated per the rules of expr(1) ---
-    # namely, it is a standard regular expression with an implicit ^ at the
-    # start.  If multiple lines match, we will end up using the last match.
-    #
-    # The tempfile hackery is needed because some shells will run the loop
-    # inside a subshell, whereupon shell variables set therein aren't seen
-    # outside the loop :-(
-    TMPFILE="guesses.$$"
-    cat /dev/null > $TMPFILE
-    while read LINE
-    do
-	SIMHOST=`expr "$LINE" : '\(.*\)='`
-	MATCH=`expr "$host" : "$SIMHOST"`
-	if test "$MATCH" != 0
-	then
-	    echo "$LINE" | sed 's/^.*=//' > $TMPFILE
-	fi
-    done <src/template/.similar
-    GUESS=`cat $TMPFILE`
-    rm -f $TMPFILE
-    if test "$GUESS"
-    then TEMPLATE="$GUESS"
-    else
-	# Last chance ... maybe uname -s will match an entry.
-	TEMPLATE=`uname -s | tr 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' 'abcdefghijklmnopqrstuvwxyz'`
-    fi
-fi
-    ])
-AC_MSG_RESULT($TEMPLATE)
-
-export TEMPLATE
-if test ! -f "src/template/$TEMPLATE"; then
-	echo ""
-	echo "$TEMPLATE does not exist"
-	echo ""
-	echo "Available Templates (select one using --with-template):"
-	echo ""
-	ls src/template
-	echo ""
-	exit
-fi
-
-dnl Read the selected template file.
-dnl For reasons of backwards compatibility, lines of the form
-dnl     IDENTIFIER: something
-dnl should be treated as variable assignments.  However, we also want to
-dnl allow other shell commands in the template file (in case the file
-dnl needs to make conditional tests, etc).  So, generate a temp file with
-dnl the IDENTIFIER: lines translated, then source it.
-
-[
-rm -f conftest.sh
-sed 's/^\([A-Za-z_]*\):\(.*\)$/\1="\2"/' "src/template/$TEMPLATE" >conftest.sh
-. ./conftest.sh
-rm -f conftest.sh
-]
-
-dnl
-dnl Add non-standard directories to the include path
-dnl
-AC_ARG_WITH(includes, [  --with-includes=DIRS    add non-standard include paths],
-[if test x"$withval" = x"yes" || test x"$withval" = x"no" ; then
-  AC_MSG_ERROR([You must supply an argument to the --with-includes option.])
-fi])
-
-# SRCH_INC comes from the template file
-ac_save_IFS=$IFS
-IFS=':'
-for dir in $with_includes $SRCH_INC; do
-  if test -d "$dir"; then
-    INCLUDES="$INCLUDES -I$dir"
-  else
-    AC_MSG_WARN([*** Include directory $dir does not exist.])
+Please also contact <pgsql-ports@postgresql.org> to see about
+rectifying this.  Include the above \`checking host system type...'
+line.
+*******************************************************************
+])
   fi
-done
-IFS=$ac_save_IFS
-AC_SUBST(INCLUDES)
 
+fi # --with-template not given
 
-dnl
-dnl Add non-standard directories to the library search path
-dnl
-AC_ARG_WITH(libraries,
-    [  --with-libraries=DIRS   look for additional libraries in DIRS],
-    [
-	case "$withval" in
-	"" | y | ye | yes | n | no)
-	    AC_MSG_ERROR([*** You must supply an argument to the --with-libraries option.])
-	  ;;
-	esac
-	LIBRARY_DIRS="$withval"
-    ])
+AC_MSG_RESULT([$template])
 
-AC_ARG_WITH(libs,
-    [  --with-libs=DIRS        alternate spelling of --with-libraries],
-    [
-	case "$withval" in
-	"" | y | ye | yes | n | no)
-	    AC_MSG_ERROR([*** You must supply an argument to the --with-libs option.])
-	  ;;
-	esac
-	LIBRARY_DIRS="$withval"
-    ])
+PORTNAME=$template
+CPU=$host_cpu
+AC_SUBST(PORTNAME)
+AC_SUBST(CPU)
 
-dnl LIBRARY_DIRS comes from command line, SRCH_LIB from template file.
-dnl Each can name one or more directories.
-if test "$LIBRARY_DIRS" -o "$SRCH_LIB"; then
-	for dir in $LIBRARY_DIRS $SRCH_LIB; do
-		if test -d "$dir"; then
-			PGSQL_LDFLAGS="$PGSQL_LDFLAGS -L$dir"
-		else
-			AC_MSG_WARN([*** Library directory $dir does not exist.])
-		fi
-	done
+AC_LINK_FILES([src/backend/port/dynloader/${template}.c], [src/backend/port/dynloader.c])
+AC_LINK_FILES([src/backend/port/dynloader/${template}.h], [src/include/dynloader.h])
+AC_LINK_FILES([src/include/port/${template}.h], [src/include/os.h])
+AC_LINK_FILES([src/makefiles/Makefile.${template}], [src/Makefile.port])
+
+# Pick right test-and-set (TAS) code. Most platforms have inline
+# assembler code in their port include file, so we just use a dummy
+# file here.
+tas_file=dummy.s
+need_tas=no
+case $template in
+  hpux)           need_tas=yes; tas_file=hpux.s ;;
+  solaris_sparc)  need_tas=yes; tas_file=solaris_sparc.s ;;
+  solaris_i386)   need_tas=yes; tas_file=solaris_i386.s ;;
+esac
+
+if test "$need_tas" = yes ; then
+  AC_LINK_FILES([src/backend/port/tas/${tas_file}], [src/backend/port/tas.s])
+  TAS=tas.o
 fi
+AC_SUBST(TAS)
+
+
 
 ##
 ## Command line options
 ##
+
+
+#
+# Add non-standard directories to the include path
+#
+AC_ARG_WITH(includes, [  --with-includes=DIRS    look for additional header files in DIRS],
+[
+  case $withval in
+    yes | no) AC_MSG_ERROR([You must supply an argument to the --with-includes option.]);;
+  esac
+])
+
+
+#
+# Add non-standard directories to the library search path
+#
+AC_ARG_WITH(libraries, [  --with-libraries=DIRS   look for additional libraries in DIRS],
+[
+  case $withval in
+    yes | no) AC_MSG_ERROR([You must supply an argument to the --with-libraries option.]);;
+  esac
+  LIBRARY_DIRS=$withval
+])
+
+AC_ARG_WITH(libs,      [  --with-libs=DIRS        alternative spelling of --with-libraries],
+[
+  case $withval in
+    yes | no) AC_MSG_ERROR([You must supply an argument to the --with-libs option.]);;
+  esac
+  LIBRARY_DIRS=$withval
+])
 
 
 #
@@ -236,7 +164,7 @@ AC_MSG_CHECKING([whether to build with locale support])
 AC_ARG_ENABLE(locale, [  --enable-locale         enable locale support],
 [if test x"$enable_locale" != x"no" ; then
   enable_locale=yes
-  AC_DEFINE(USE_LOCALE, [], [Set to 1 if you want LOCALE support (--enable-locale)])
+  AC_DEFINE(USE_LOCALE, 1, [Set to 1 if you want LOCALE support (--enable-locale)])
 fi],
 [enable_locale=no])
 AC_MSG_RESULT([$enable_locale])
@@ -249,7 +177,7 @@ AC_MSG_CHECKING([whether to build with Cyrillic recode support])
 AC_ARG_ENABLE(recode, [  --enable-recode         enable cyrillic recode support],
 [if test x"$enable_recode" != x"no" ; then
   enable_recode=yes
-  AC_DEFINE(CYR_RECODE, [], [Set to 1 if you want cyrillic recode support (--enable-recode)])
+  AC_DEFINE(CYR_RECODE, 1, [Set to 1 if you want cyrillic recode support (--enable-recode)])
 fi],
 [enable_recode=no])
 AC_MSG_RESULT([$enable_recode])
@@ -281,7 +209,7 @@ Or do not specify an argument to the option to use the default.]) ;;
 AC_SUBST(MULTIBYTE)
 
 if test "$enable_multibyte" = yes ; then
-  AC_DEFINE(MULTIBYTE, [], [Set to 1 if you want to use multibyte characters (--enable-multibyte)])
+  AC_DEFINE(MULTIBYTE, 1, [Set to 1 if you want to use multibyte characters (--enable-multibyte)])
   AC_MSG_RESULT([yes, default $MULTIBYTE])
 else
   AC_MSG_RESULT(no)
@@ -319,10 +247,12 @@ AC_DEFINE_UNQUOTED(DEF_MAXBACKENDS, [$with_maxbackends], [The default soft limit
 
 
 #
+# C compiler
+#
+
 # For historical reasons you can also use --with-CC to specify the C compiler
 # to use, although the standard way to do this is to set the CC environment
 # variable.
-#
 if test "${with_CC+set}" = set; then
   case $with_CC in
     yes | no)   AC_MSG_ERROR([You must supply an argument to the --with-CC option.]);;
@@ -330,24 +260,81 @@ if test "${with_CC+set}" = set; then
   esac
 fi
 
+# On AIX, default compiler to xlc.
+if test "$template" = aix && test -z "$CC" ; then CC=xlc; fi
 
-#
-# C compiler
-#
 AC_PROG_CC
+# Read the template
+. "$srcdir/src/template/$template" || exit
+echo "using CFLAGS=$CFLAGS"
+# Check if the compiler still works with the template settings
+AC_PROG_CC_WORKS
 AC_PROG_CPP
 AC_PROG_GCC_TRADITIONAL
-AC_SUBST(GCC)
 
-#
+AC_SUBST(GCC)
+AC_SUBST(AROPT)
+AC_SUBST(SHARED_LIB)
+AC_SUBST(DLSUFFIX)
+AC_SUBST(DL_LIB)
+
 # Create compiler version string
-#
 if test x"$GCC" = x"yes" ; then
   cc_string="GCC `${CC} --version`"
 else
   cc_string=$CC
 fi
 AC_DEFINE_UNQUOTED(PG_VERSION_STR, ["PostgreSQL $VERSION on $host, compiled by $cc_string"], [A canonical string containing the version number, platform, and C compiler])
+
+
+# --enable-debug adds -g to compiler flags
+# --disable-debug will forcefully remove it
+AC_MSG_CHECKING(setting debug compiler flag)
+AC_ARG_ENABLE(debug, [  --enable-debug          build with debugging symbols (-g)],
+[
+  case $enableval in
+    yes)  CFLAGS="$CFLAGS -g"
+          AC_MSG_RESULT(yes)
+          ;;
+    *)    CFLAGS=`echo "$CFLAGS" | sed -e 's/ -g/ /g' -e 's/^-g//'`
+          AC_MSG_RESULT(no)
+          ;;
+  esac
+],
+[AC_MSG_RESULT(using default)])
+
+
+#
+# Include directories
+#
+ac_save_IFS=$IFS
+IFS=':'
+# SRCH_INC comes from the template file
+for dir in $with_includes $SRCH_INC; do
+  if test -d "$dir"; then
+    INCLUDES="$INCLUDES -I$dir"
+  else
+    AC_MSG_WARN([*** Include directory $dir does not exist.])
+  fi
+done
+IFS=$ac_save_IFS
+AC_SUBST(INCLUDES)
+
+
+#
+# Library directories
+#
+ac_save_IFS=$IFS
+IFS=':'
+# LIBRARY_DIRS comes from command line, SRCH_LIB from template file.
+for dir in $LIBRARY_DIRS $SRCH_LIB; do
+  if test -d "$dir"; then
+    PGSQL_LDFLAGS="$PGSQL_LDFLAGS -L$dir"
+  else
+    AC_MSG_WARN([*** Library directory $dir does not exist.])
+  fi
+done
+IFS=$ac_save_IFS
 
 
 
@@ -364,9 +351,9 @@ AC_ARG_WITH(
    ],
    [ USE_TCL=; USE_TK=; AC_MSG_RESULT(disabled) ]
 )
+AC_SUBST(USE_TCL)
+AC_SUBST(USE_TK)
 
-export USE_TCL
-export USE_TK
 
 dnl We see if the path to the TCL/TK configuration scripts is specified.
 dnl This will override the use of tclsh to find the paths to search.
@@ -632,62 +619,26 @@ AC_ARG_ENABLE(
    AC_MSG_RESULT(disabled)
 )
 
-CPPFLAGS="$CPPFLAGS $INCLUDES"
-echo "- setting CPPFLAGS=$CPPFLAGS"
-
-LDFLAGS="$LDFLAGS $PGSQL_LDFLAGS"
-echo "- setting LDFLAGS=$LDFLAGS"
-
-dnl --enable-debug adds -g to compiler flags
-dnl --disable-debug will forcefully remove it
-AC_MSG_CHECKING(setting debug compiler flag)
-AC_ARG_ENABLE(
-    debug,
-    [  --enable-debug          build with debugging symbols (-g) ],
-    [
-        case "$enableval" in
-	y | ye | yes)
-            CFLAGS="$CFLAGS -g"
-            AC_MSG_RESULT(enabled)
-            ;;
-        *)
-            CFLAGS=`echo "$CFLAGS" | sed -e 's/ -g/ /g' | sed -e 's/^-g//'`
-            AC_MSG_RESULT(disabled)
-            ;;
-        esac            
-   ],
-   AC_MSG_RESULT(using default)
-)
 
 # Assume system is ELF if it predefines __ELF__ as 1,
-# otherwise believe "elf" setting from check of host_os above.
+# otherwise believe host_os based default.
+case $host_os in
+  freebsd1*|freebsd2*) elf=yes;;
+esac
+
 AC_EGREP_CPP(yes,
 [#if __ELF__
   yes
 #endif
 ],
-	ELF_SYS=true,
-[if test "X$elf" = "Xyes"
-then
-	ELF_SYS=true
+[ELF_SYS=true],
+[if test "X$elf" = "Xyes" ; then
+  ELF_SYS=true
 else
-	ELF_SYS=
-fi
-])
-
+  ELF_SYS=
+fi])
 AC_SUBST(ELF_SYS)
-AC_SUBST(PORTNAME)
-AC_SUBST(CPU)
-AC_SUBST(SRCDIR)
-AC_SUBST(LDFLAGS)
-AC_SUBST(AROPT)
-AC_SUBST(SHARED_LIB)
-AC_SUBST(CFLAGS)
-AC_SUBST(DLSUFFIX)
-AC_SUBST(DL_LIB)
-AC_SUBST(USE_TCL)
-AC_SUBST(USE_TK)
-AC_SUBST(WISH)
+
 
 
 dnl
@@ -709,6 +660,13 @@ else
 fi],
 [AC_MSG_RESULT(no)])
 AC_SUBST(with_CXX)
+
+
+CPPFLAGS="$CPPFLAGS $INCLUDES"
+LDFLAGS="$LDFLAGS $PGSQL_LDFLAGS"
+
+echo "using CPPFLAGS=$CPPFLAGS"
+echo "using LDFLAGS=$LDFLAGS"
 
 
 # Figure out how to invoke "install" and what install options to use.
@@ -858,19 +816,22 @@ PGAC_VAR_INT_TIMEZONE
 AC_FUNC_ACCEPT_ARGTYPES
 PGAC_FUNC_GETTIMEOFDAY_1ARG
 
-AC_MSG_CHECKING(for fcntl(F_SETLK))
-if test "$os" != linux ; then
-AC_TRY_LINK([#include <stdio.h>
-#include <fcntl.h>],
-	    [struct flock lck;
-	     lck.l_whence = SEEK_SET; lck.l_start = lck.l_len = 0;
-	     lck.l_type = F_WRLCK;
-	     fcntl(0, F_SETLK, &lck);],
-	    [AC_DEFINE(HAVE_FCNTL_SETLK) AC_MSG_RESULT(yes)],
-	    AC_MSG_RESULT(no))
-else
-  AC_MSG_RESULT([broken on Linux])
-fi
+AC_MSG_CHECKING([for fcntl(F_SETLK)])
+case $host_os in
+  linux*)       AC_MSG_RESULT([broken on Linux]) ;;
+  *)
+AC_TRY_LINK(
+[#include <stdio.h>
+#include <fcntl.h>
+],
+[struct flock lck;
+lck.l_whence = SEEK_SET; lck.l_start = lck.l_len = 0;
+lck.l_type = F_WRLCK;
+fcntl(0, F_SETLK, &lck);],
+[AC_DEFINE(HAVE_FCNTL_SETLK) AC_MSG_RESULT(yes)],
+[AC_MSG_RESULT(no)])
+        ;;
+esac
 
 AC_CHECK_FUNCS([fcvt getopt_long memmove pstat setproctitle setsid sigprocmask sysconf waitpid])
 
@@ -976,7 +937,7 @@ AC_CHECK_FUNC(cbrt,
 # On HPUX 9, rint() is not in regular libm.a but in /lib/pa1.1/libm.a;
 # this hackery with HPUXMATHLIB allows us to cope.
 HPUXMATHLIB=""
-case "$host_cpu" in
+case $host_cpu in
   hppa1.1) 
 	if [[ -r /lib/pa1.1/libm.a ]] ; then
 	    HPUXMATHLIB="-L /lib/pa1.1 -lm"
@@ -1244,6 +1205,7 @@ then
 		AC_PATH_PROG(WISH, wish)
 	fi
 fi
+AC_SUBST(WISH)
 
 USE_X=$USE_TK
 

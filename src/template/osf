@@ -1,17 +1,21 @@
-AROPT:crs
+AROPT=crs
+
 # NOFIXADE disallows unaligned access.
 #   on Ultrix and OSF/1 it invokes an explicit syscall.
 #   on HP-UX it turns off certain compiler options.
 # This is defined here because a bunch of clients include tmp/c.h,
 # which is where the work is done on HP-UX.  It only affects the
 # backend on Ultrix and OSF/1.
-CC:cc
-CFLAGS:-D__alpha__ -DNOFIXADE -std -O4 -Olimit 2000
-LDFLAGS='-rpath $(LIBDIR)'
-SHARED_LIB:
-ALL:
-SRCH_INC:
-SRCH_LIB:
-DLSUFFIX:.so
-CCC:cxx
-CXXFLAGS:-D__alpha__ -DNOFIXADE -O4 -Olimit 2000
+
+if test "$GCC" = yes ; then
+  CFLAGS='-D__alpha__ -DNOFIXADE'
+  CCC=g++
+else
+  CFLAGS='-D__alpha__ -DNOFIXADE -std -O4 -Olimit 2000'
+  LDFLAGS='-rpath $(libdir)'
+  CCC=cxx
+  CXXFLAGS='-D__alpha__ -DNOFIXADE -O4 -Olimit 2000'
+fi
+
+DLSUFFIX=.so
+SHARED_LIB=

@@ -1,7 +1,0 @@
-AROPT:crs
-CFLAGS:-O2 -mips2
-SHARED_LIB:-fpic
-ALL:
-SRCH_INC:
-SRCH_LIB:
-DLSUFFIX:.so

@@ -1,8 +1,0 @@
-AROPT:crs
-CFLAGS:-qmaxmem=16384 -qhalt=w -qsrcmsg -qlanglvl=extended -qlonglong
-SHARED_LIB:-lc
-ALL:
-SRCH_INC:
-SRCH_LIB:
-DLSUFFIX:.so
-CC:xlc

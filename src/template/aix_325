@@ -1,8 +1,0 @@
-AROPT:crs
-CFLAGS:-qchars=signed -qmaxmem=8192 -qhalt=w -qsrcmsg
-SHARED_LIB:-e _nostart -lc
-ALL:
-SRCH_INC:
-SRCH_LIB:
-DLSUFFIX:.so
-CC:xlc
