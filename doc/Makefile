@@ -8,11 +8,11 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/doc/Makefile,v 1.6 1998/04/06 01:35:16 momjian Exp $
+#    $Header: /cvsroot/pgsql/doc/Makefile,v 1.7 1998/04/17 03:58:11 thomas Exp $
 #
 #----------------------------------------------------------------------------
 
-PGDOCS= unpacked
+PGDOCS= $(POSTGRESDIR)/doc
 SRCDIR= ../src
 
 TAR= tar
@@ -38,12 +38,15 @@ MODULES= admin postgres programmer tutorial user
 TARGETS= $(MODULES:%=%.html)
 
 .PRECIOUS: postgres.tex postgres.dvi
-.PHONY: install all clean distclean
+.PHONY: beforeinstall install all clean distclean
+
+beforeinstall::
+	if [ ! -d $(PGDOCS) ]; then mkdir $(PGDOCS); fi
 
 install::
 	$(MAKE) all
 
-all:: $(MODULES)
+all:: beforeinstall $(MODULES)
 
 clean::
 	rm -rf $(MODULES)
@@ -66,6 +69,6 @@ distclean::
 %:	%.tar.gz
 	rm -rf ./$@ $(PGDOCS)/$*
 	if test ! -d $(PGDOCS)/$* ; then mkdir $(PGDOCS)/$* ; fi
-	$(TAR) zxf $< -C $(PGDOCS)/$*
+	zcat $< | $(TAR) xf - -C $(PGDOCS)/$*
 #	touch ./$*
 
