@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.72 2001/03/22 03:59:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.72.2.1 2001/07/31 18:39:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -125,11 +125,17 @@ set_base_rel_pathlists(Query *root)
 			 * Non-pushed-down clauses will get evaluated as qpquals of
 			 * the SubqueryScan node.
 			 *
+			 * We can't push down into subqueries with LIMIT or DISTINCT ON
+			 * clauses, either.
+			 *
 			 * XXX Are there any cases where we want to make a policy
 			 * decision not to push down, because it'd result in a worse
 			 * plan?
 			 */
-			if (rte->subquery->setOperations == NULL)
+			if (rte->subquery->setOperations == NULL &&
+				rte->subquery->limitOffset == NULL &&
+				rte->subquery->limitCount == NULL &&
+				!has_distinct_on_clause(rte->subquery))
 			{
 				/* OK to consider pushing down individual quals */
 				List	   *upperrestrictlist = NIL;
