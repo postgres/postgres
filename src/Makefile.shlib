@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.73 2003/11/29 19:51:39 pgsql Exp $
+#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.74 2003/12/01 22:23:06 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -201,6 +201,10 @@ ifeq ($(PORTNAME), cygwin)
   shlib			:= $(NAME)$(DLSUFFIX)
 endif
 
+ifeq ($(PORTNAME), win32)
+  shlib			:= lib$(NAME)$(DLSUFFIX)
+endif
+
 ifeq ($(PORTNAME), beos)
   shlib			:= lib$(NAME)$(DLSUFFIX)
   LINK.shared		= $(LD) -nostart
@@ -229,6 +233,7 @@ all-static-lib: lib$(NAME).a
 all-shared-lib: $(shlib)
 
 ifneq ($(PORTNAME), cygwin)
+ifneq ($(PORTNAME), win32)
 
 ifndef LORDER
 MK_NO_LORDER := true
@@ -242,12 +247,14 @@ else
 endif
 	$(RANLIB) $@
 
+endif # not win32
 endif # not cygwin
 
 ifeq ($(enable_shared), yes)
 
 ifneq ($(PORTNAME), beos)
 ifneq ($(PORTNAME), cygwin)
+ifneq ($(PORTNAME), win32)
 ifneq ($(PORTNAME), aix)
 
 # Normal case
@@ -272,6 +279,16 @@ $(shlib): lib$(NAME).a
 	$(COMPILER) $(LDFLAGS_SL) -o $@ $< $(LDFLAGS) $(SHLIB_LINK) -Wl,-bI:$(top_builddir)/src/backend/$(POSTGRES_IMP) -Wl,-bE:lib$(NAME)$(EXPSUFF)
 	
 endif # PORTNAME == aix
+
+else # PORTNAME == win32
+
+# win32 case
+$(shlib) lib$(NAME).a: $(OBJS)
+	$(DLLTOOL) --export-all --output-def $(NAME).def $(OBJS)
+	$(DLLWRAP) -o $(shlib) --dllname $(shlib) --def $(NAME).def $(OBJS) $(SHLIB_LINK)
+	$(DLLTOOL) --dllname $(shlib) --def $(NAME).def --output-lib lib$(NAME).a
+
+endif # PORTNAME == win32
 
 else # PORTNAME == cygwin
 
@@ -316,6 +333,7 @@ ifeq ($(enable_shared), yes)
 install-lib-shared: $(shlib)
 	$(INSTALL_SHLIB) $< $(DESTDIR)$(libdir)/$(shlib)
 ifneq ($(PORTNAME), cygwin)
+ifneq ($(PORTNAME), win32)
 ifneq ($(shlib), lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION))
 	cd $(DESTDIR)$(libdir) && \
 	rm -f lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION) && \
@@ -327,6 +345,7 @@ ifneq ($(shlib), lib$(NAME)$(DLSUFFIX))
 	$(LN_S) $(shlib) lib$(NAME)$(DLSUFFIX)
 endif
 
+endif # not win32
 endif # not cygwin
 endif # enable_shared
 
@@ -359,5 +378,9 @@ ifdef EXPSUFF
 endif
 endif
 ifeq ($(PORTNAME), cygwin)
+	rm -f $(NAME).dll $(NAME).def
+endif
+
+ifeq ($(PORTNAME), win32)
 	rm -f $(NAME).dll $(NAME).def
 endif
