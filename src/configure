@@ -5490,7 +5490,7 @@ ice_save_CFLAGS="$CFLAGS"
 ice_save_CPPFLAGS="$CPPFLAGS"
 ice_save_LDFLAGS="$LDFLAGS"
 
-CPPFLAGS="$CPPFLAGS $X_CFLAGS -I$TCL_INCDIR"
+CPPFLAGS="$CPPFLAGS $X_CFLAGS"
 
 TK_INCDIR=no
 ac_safe=`echo "tk.h" | sed 'y%./+-%__p_%'`
