@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.345 2002/07/18 16:47:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.346 2002/07/18 17:14:19 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -235,7 +235,7 @@ static void doNegateFloat(Value *v);
 
 %type <list>	extract_list, overlay_list, position_list
 %type <list>	substr_list, trim_list
-%type <ival>	opt_interval, opt_symmetry
+%type <ival>	opt_interval
 %type <node>	overlay_placing, substr_from, substr_for
 
 %type <boolean> opt_instead, opt_cursor
@@ -320,7 +320,7 @@ static void doNegateFloat(Value *v);
 /* ordinary key words in alphabetical order */
 %token <keyword> ABORT_TRANS, ABSOLUTE, ACCESS, ACTION, ADD, AFTER,
 	AGGREGATE, ALL, ALTER, ANALYSE, ANALYZE, AND, ANY, AS, ASC,
-	ASSERTION, ASSIGNMENT, ASYMMETRIC, AT, AUTHORIZATION,
+	ASSERTION, ASSIGNMENT, AT, AUTHORIZATION,
 
 	BACKWARD, BEFORE, BEGIN_TRANS, BETWEEN, BIGINT, BINARY, BIT, BOTH,
 	BOOLEAN, BY,
@@ -379,7 +379,7 @@ static void doNegateFloat(Value *v);
 	SERIALIZABLE, SESSION, SESSION_USER, SET, SETOF, SHARE,
 	SHOW, SIMILAR, SIMPLE, SMALLINT, SOME, STABLE, START, STATEMENT,
 	STATISTICS, STDIN, STDOUT, STORAGE, STRICT, SUBSTRING,
-	SYMMETRIC, SYSID,
+	SYSID,
 
 	TABLE, TEMP, TEMPLATE, TEMPORARY, THEN, TIME, TIMESTAMP,
 	TO, TOAST, TRAILING, TRANSACTION, TREAT, TRIGGER, TRIM, TRUE_P,
@@ -5485,25 +5485,17 @@ a_expr:		c_expr									{ $$ = $1; }
 				}
 			| a_expr IS DISTINCT FROM a_expr			%prec DISTINCT
 				{ $$ = (Node *) makeSimpleA_Expr(DISTINCT, "=", $1, $5); }
-			| a_expr BETWEEN opt_symmetry b_expr AND b_expr			%prec BETWEEN
+			| a_expr BETWEEN b_expr AND b_expr			%prec BETWEEN
 				{
-					BetweenExpr *n = makeNode(BetweenExpr);
-					n->expr = $1;
-					n->symmetric = $3;
-					n->lexpr = $4;
-					n->rexpr = $6;
-					n->not = false;
-					$$ = (Node *)n;
+					$$ = (Node *) makeA_Expr(AND, NIL,
+						(Node *) makeSimpleA_Expr(OP, ">=", $1, $3),
+						(Node *) makeSimpleA_Expr(OP, "<=", $1, $5));
 				}
-			| a_expr NOT BETWEEN opt_symmetry b_expr AND b_expr		%prec BETWEEN
+			| a_expr NOT BETWEEN b_expr AND b_expr		%prec BETWEEN
 				{
-					BetweenExpr *n = makeNode(BetweenExpr);
-					n->expr = $1;
-					n->symmetric = $4;
-					n->lexpr = $5;
-					n->rexpr = $7;
-					n->not = true;
-					$$ = (Node *)n;
+					$$ = (Node *) makeA_Expr(OR, NIL,
+						(Node *) makeSimpleA_Expr(OP, "<", $1, $4),
+						(Node *) makeSimpleA_Expr(OP, ">", $1, $6));
 				}
 			| a_expr IN_P in_expr
 				{
@@ -5573,11 +5565,6 @@ a_expr:		c_expr									{ $$ = $1; }
 				}
 			| r_expr
 				{ $$ = $1; }
-		;
-
-opt_symmetry:     SYMMETRIC			{ $$ = TRUE; }
-		| ASYMMETRIC				{ $$ = FALSE; }
-		| /* EMPTY */				{ $$ = FALSE; }
 		;
 
 /*
@@ -6917,7 +6904,6 @@ reserved_keyword:
 			| ANY
 			| AS
 			| ASC
-			| ASYMMETRIC
 			| BOTH
 			| CASE
 			| CAST
@@ -6968,7 +6954,6 @@ reserved_keyword:
 			| SELECT
 			| SESSION_USER
 			| SOME
-			| SYMMETRIC
 			| TABLE
 			| THEN
 			| TO

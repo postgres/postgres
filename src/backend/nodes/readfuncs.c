@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.125 2002/07/18 04:41:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.126 2002/07/18 17:14:19 momjian Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -877,53 +877,6 @@ _readCaseWhen(void)
 	local_node->expr = nodeRead(true);
 	token = pg_strtok(&length); /* eat :then */
 	local_node->result = nodeRead(true);
-
-	return local_node;
-}
-
-static BetweenExpr *
-_readBetweenExpr(void)
-{
-	BetweenExpr *local_node;
-	char	   *token;
-	int			length;
-
-	local_node = makeNode(BetweenExpr);
-
-	token = pg_strtok(&length); /* eat :expr */
-	local_node->expr = nodeRead(true);
-
-	token = pg_strtok(&length); /* eat :not */
-	token = pg_strtok(&length);	/* get not */
-	local_node->not = strtobool(token);
-
-	token = pg_strtok(&length); /* eat :symmetric */
-	token = pg_strtok(&length); /* get symmetric */
-	local_node->symmetric = strtobool(token);
-
-	token = pg_strtok(&length); /* eat :lexpr */
-	local_node->lexpr = nodeRead(true);
-
-	token = pg_strtok(&length); /* eat :rexpr */
-	local_node->rexpr = nodeRead(true);
-
-	token = pg_strtok(&length); /* eat :gthan */
-	local_node->gthan = nodeRead(true);
-
-	token = pg_strtok(&length); /* eat :lthan */
-	local_node->lthan = nodeRead(true);
-
-	token = pg_strtok(&length); /* eat :typeid */
-	token = pg_strtok(&length); /* get typeid */
-	local_node->typeId = atooid(token);
-
-	token = pg_strtok(&length); /* eat :typelen */
-	token = pg_strtok(&length); /* get typelen */
-	local_node->typeLen = atoui(token);
-
-	token = pg_strtok(&length); /* eat :typebyval */
-	token = pg_strtok(&length); /* get typebyval */
-	local_node->typeByVal = strtobool(token);
 
 	return local_node;
 }
@@ -2179,8 +2132,6 @@ parsePlanString(void)
 		return_value = _readNullTest();
 	else if (length == 11 && strncmp(token, "BOOLEANTEST", length) == 0)
 		return_value = _readBooleanTest();
-	else if (length == 11 && strncmp(token, "BETWEENEXPR", length) == 0)
-		return_value = _readBetweenExpr();
 	else
 		elog(ERROR, "badly formatted planstring \"%.10s\"...", token);
 

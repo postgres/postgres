@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: makefuncs.h,v 1.38 2002/07/18 04:41:45 momjian Exp $
+ * $Id: makefuncs.h,v 1.39 2002/07/18 17:14:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,6 +57,5 @@ extern RelabelType *makeRelabelType(Node *arg, Oid rtype, int32 rtypmod);
 extern RangeVar *makeRangeVar(char *schemaname, char *relname);
 
 extern TypeName *makeTypeName(char *typnam);
-extern TypeName *makeQualifiedTypeName(List *lst);
 
 #endif   /* MAKEFUNC_H */

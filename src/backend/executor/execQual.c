@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.98 2002/07/18 04:41:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.99 2002/07/18 17:14:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,9 +38,6 @@
 #include "executor/execdebug.h"
 #include "executor/functions.h"
 #include "executor/nodeSubplan.h"
-#include "nodes/makefuncs.h"
-#include "parser/parse.h"
-#include "parser/parse_expr.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/fcache.h"
@@ -65,8 +62,6 @@ static Datum ExecEvalAnd(Expr *andExpr, ExprContext *econtext, bool *isNull);
 static Datum ExecEvalOr(Expr *orExpr, ExprContext *econtext, bool *isNull);
 static Datum ExecEvalCase(CaseExpr *caseExpr, ExprContext *econtext,
 			 bool *isNull, ExprDoneCond *isDone);
-static Datum ExecEvalBetweenExpr(BetweenExpr *btest, ExprContext *econtext,
-				 bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalNullTest(NullTest *ntest, ExprContext *econtext,
 				 bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalBooleanTest(BooleanTest *btest, ExprContext *econtext,
@@ -1194,104 +1189,6 @@ ExecEvalCase(CaseExpr *caseExpr, ExprContext *econtext,
 }
 
 /* ----------------------------------------------------------------
- *		ExecEvalBetweenExpr
- *
- *		Evaluate a BetweenExpr node.  Result is
- *		a boolean.  If any of the three expression
- *		parameters are NULL, result is NULL.
- * ----------------------------------------------------------------
- */
-static Datum
-ExecEvalBetweenExpr(BetweenExpr *btest,
-				 ExprContext *econtext,
-				 bool *isNull,
-				 ExprDoneCond *isDone)
-{
-	Datum		expr_result;
-	Datum		lexpr_result;
-	Datum		rexpr_result;
-	bool		result = FALSE;
-	Node	   *expr_const;
-	Node	   *lexpr_const;
-	Node	   *rexpr_const;	
-
-	/* Evaluate subexpressons and Auto-return if we find a NULL */
-	expr_result = ExecEvalExpr(btest->expr, econtext, isNull, isDone);
-	if (*isNull)
-		return (Datum) 0;
-
-	lexpr_result = ExecEvalExpr(btest->lexpr, econtext, isNull, isDone);
-	if (*isNull)
-		return (Datum) 0;
-
-	rexpr_result = ExecEvalExpr(btest->rexpr, econtext, isNull, isDone);
-	if (*isNull)
-		return (Datum) 0;
-
-	/*
-	 * Make a Constant out of our newly found Datums
-	 * Types were coerced during transformExpr to be common
-	 */
-	expr_const = (Node *) makeConst(btest->typeId, btest->typeLen,
-						   expr_result, false,
-						   btest->typeByVal, false, true);
-
-	lexpr_const = (Node *) makeConst(btest->typeId, btest->typeLen,
-							lexpr_result, false,
-							btest->typeByVal, false, true);
-
-	rexpr_const = (Node *) makeConst(btest->typeId, btest->typeLen,
-							rexpr_result, false,
-							btest->typeByVal, false, true);
-
-	/*
-	 * Test the between case which for the straight forward method.
-	 * expr >= lexpr and expr <= rexpr
-	 *
-	 * Of course, can't use makeA_Expr here without requiring another
-	 * transform, so we've already prepared a gthan and lthan operator
-	 * set in the parsing stage.
-	 */
-	btest->gthan->args = makeList2(expr_const, lexpr_const);
-	if (DatumGetBool(ExecEvalExpr((Node *) btest->gthan,
-								  econtext,
-								  isNull, isDone)))
-	{
-		btest->lthan->args = makeList2(expr_const, rexpr_const);
-		result = DatumGetBool(ExecEvalExpr((Node *) btest->lthan,
-										   econtext,
-										   isNull, isDone));
-	}
-
-	/*
-	 * If this is a symmetric BETWEEN, we win a second try with the operators
-	 * reversed. (a >= min(b,c) and a <= max(b,c))
-	 */
-	if (!result && btest->symmetric)
-	{
-		btest->gthan->args = makeList2(expr_const, rexpr_const);
-		if (DatumGetBool(ExecEvalExpr((Node *) btest->gthan,
-									   econtext,
-									   isNull, isDone)))
-		{
-			btest->lthan->args = makeList2(expr_const, lexpr_const);
-			result = DatumGetBool(ExecEvalExpr((Node *) btest->lthan,
-											   econtext,
-											   isNull, isDone));
-		}
-	}
-
-	/* Apply NOT as necessary */
-	if (btest->not)
-		result = !result;
-
-	/* We're not returning a null */
-	*isNull = false;
-
-	return (BoolGetDatum(result));
-}
-
-/* ----------------------------------------------------------------
  *		ExecEvalNullTest
  *
  *		Evaluate a NullTest node.
@@ -1627,12 +1524,6 @@ ExecEvalExpr(Node *expression,
 									isNull,
 									isDone);
 			break;
-		case T_BetweenExpr:
-			retDatum = ExecEvalBetweenExpr((BetweenExpr *) expression,
-										econtext,
-										isNull,
-										isDone);
-			break;
 		case T_NullTest:
 			retDatum = ExecEvalNullTest((NullTest *) expression,
 										econtext,
@@ -1645,6 +1536,7 @@ ExecEvalExpr(Node *expression,
 										   isNull,
 										   isDone);
 			break;
+
 		default:
 			elog(ERROR, "ExecEvalExpr: unknown expression type %d",
 				 nodeTag(expression));
