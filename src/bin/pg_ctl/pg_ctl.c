@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.27 2004/08/28 22:04:01 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.28 2004/08/28 23:26:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -938,12 +938,18 @@ static void WINAPI pgwin32_ServiceHandler(DWORD request)
 	{
 		case SERVICE_CONTROL_STOP:
 		case SERVICE_CONTROL_SHUTDOWN:
+			/* 
+			 * We only need a short wait hint here as it just needs to wait for
+			 * the next checkpoint. They occur every 5 seconds during shutdown
+			 */
+			status.dwWaitHint = 10000; 
 			pgwin32_SetServiceStatus(SERVICE_STOP_PENDING);
 			SetEvent(shutdownEvent);
 			return;
 
 		case SERVICE_CONTROL_PAUSE:
 			/* Win32 config reloading */
+			status.dwWaitHint = 5000;
 			kill(postmasterPID,SIGHUP);
 			return;
 
@@ -964,9 +970,9 @@ static void WINAPI pgwin32_ServiceMain(DWORD argc, LPTSTR *argv)
 	/* Initialize variables */
 	status.dwWin32ExitCode	= S_OK;
 	status.dwCheckPoint		= 0;
-	status.dwWaitHint		= 0;
+	status.dwWaitHint		= 60000;
 	status.dwServiceType	= SERVICE_WIN32_OWN_PROCESS;
-	status.dwControlsAccepted			= SERVICE_ACCEPT_STOP|SERVICE_ACCEPT_PAUSE_CONTINUE;
+	status.dwControlsAccepted			= SERVICE_ACCEPT_STOP|SERVICE_ACCEPT_SHUTDOWN|SERVICE_ACCEPT_PAUSE_CONTINUE;
 	status.dwServiceSpecificExitCode	= 0;
 	status.dwCurrentState = SERVICE_START_PENDING;
 
@@ -1000,7 +1006,15 @@ static void WINAPI pgwin32_ServiceMain(DWORD argc, LPTSTR *argv)
 	{
 		case WAIT_OBJECT_0: /* shutdown event */
 			kill(postmasterPID,SIGINT);
-			WaitForSingleObject(postmasterProcess,INFINITE);
+		
+			/* 
+			 * Increment the checkpoint and try again
+			 * Abort after 12 checkpoints as the postmaster has probably hung 
+			 */
+			while (WaitForSingleObject(postmasterProcess,5000) == WAIT_TIMEOUT && status.dwCheckPoint < 12)
+			{
+				status.dwCheckPoint++;
+			}
 			break;
 
 		case (WAIT_OBJECT_0+1): /* postmaster went down */
