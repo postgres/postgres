@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Jun  6 11:56:04 EDT 2003
+Last updated:		Fri Jun  6 15:46:15 EDT 2003
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -196,7 +196,8 @@ Commands
 	o Allow COPY to report error lines and continue;  optionally
 	  allow error codes to be specified; requires savepoints or can
 	  not be run in a multi-statement transaction
-	o Allow copy to understand \x as hex
+	o Allow COPY to understand \x as hex
+	o Have COPY return number of rows loaded/unloaded
 
 * CURSOR
 	o Allow BINARY option to SELECT, just like DECLARE
