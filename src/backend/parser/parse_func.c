@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.46 1999/05/25 16:10:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.47 1999/06/17 22:21:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -82,8 +82,6 @@ static int	agg_get_candidates(char *aggname, Oid typeId, CandidateList *candidat
 static Oid	agg_select_candidate(Oid typeid, CandidateList candidates);
 
 #define ISCOMPLEX(type) (typeidTypeRelid(type) ? true : false)
-
-#define MAXFARGS 8				/* max # args to a c or postquel function */
 
 typedef struct _SuperQE
 {
@@ -241,9 +239,9 @@ Node *
 ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 				  int *curr_resno, int precedence)
 {
-	Oid			rettype = (Oid) 0;
-	Oid			argrelid = (Oid) 0;
-	Oid			funcid = (Oid) 0;
+	Oid			rettype = InvalidOid;
+	Oid			argrelid = InvalidOid;
+	Oid			funcid = InvalidOid;
 	List	   *i = NIL;
 	Node	   *first_arg = NULL;
 	char	   *relname = NULL;
@@ -252,12 +250,12 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 	Oid			relid;
 	int			nargs;
 	Func	   *funcnode;
-	Oid			oid_array[8];
+	Oid			oid_array[MAXFARGS];
 	Oid		   *true_oid_array;
 	Node	   *retval;
 	bool		retset;
 	bool		attisset = false;
-	Oid			toid = (Oid) 0;
+	Oid			toid = InvalidOid;
 	Expr	   *expr;
 
 	if (fargs)
@@ -425,7 +423,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 	 * transform relation name arguments into varnodes of the appropriate
 	 * form.
 	 */
-	MemSet(&oid_array[0], 0, 8 * sizeof(Oid));
+	MemSet(oid_array, 0, MAXFARGS * sizeof(Oid));
 
 	nargs = 0;
 	foreach(i, fargs)
@@ -476,6 +474,14 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 			else
 				toid = exprType(pair);
 		}
+
+		/* Most of the rest of the parser just assumes that functions do not
+		 * have more than MAXFARGS parameters.  We have to test here to protect
+		 * against array overruns, etc.
+		 */
+		if (nargs >= MAXFARGS)
+			elog(ERROR, "Cannot pass more than %d arguments to a function",
+				 MAXFARGS);
 
 		oid_array[nargs++] = toid;
 	}
@@ -638,7 +644,7 @@ static Oid
 funcid_get_rettype(Oid funcid)
 {
 	HeapTuple	func_tuple = NULL;
-	Oid			funcrettype = (Oid) 0;
+	Oid			funcrettype = InvalidOid;
 
 	func_tuple = SearchSysCacheTuple(PROOID,
 									 ObjectIdGetDatum(funcid),
@@ -701,8 +707,8 @@ func_get_candidates(char *funcname, int nargs)
 					current_candidate = (CandidateList)
 						palloc(sizeof(struct _CandidateList));
 					current_candidate->args = (Oid *)
-						palloc(8 * sizeof(Oid));
-					MemSet(current_candidate->args, 0, 8 * sizeof(Oid));
+						palloc(MAXFARGS * sizeof(Oid));
+					MemSet(current_candidate->args, 0, MAXFARGS * sizeof(Oid));
 					for (i = 0; i < nargs; i++)
 						current_candidate->args[i] = pgProcP->proargtypes[i];
 
@@ -1337,7 +1343,7 @@ setup_tlist(char *attname, Oid relid)
 						 type_mod,
 						 get_attname(relid, attno),
 						 0,
-						 (Oid) 0,
+						 InvalidOid,
 						 false);
 	varnode = makeVar(-1, attno, typeid, type_mod, 0, -1, attno);
 
@@ -1362,7 +1368,7 @@ setup_base_tlist(Oid typeid)
 						 -1,
 						 "<noname>",
 						 0,
-						 (Oid) 0,
+						 InvalidOid,
 						 false);
 	varnode = makeVar(-1, 1, typeid, -1, 0, -1, 1);
 	tle = makeTargetEntry(resnode, (Node *) varnode);

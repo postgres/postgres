@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_func.h,v 1.15 1999/05/25 16:14:27 momjian Exp $
+ * $Id: parse_func.h,v 1.16 1999/06/17 22:21:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,9 @@
 #include <nodes/primnodes.h>
 #include <parser/parse_func.h>
 #include <parser/parse_node.h>
+
+
+#define MAXFARGS 8				/* max # args to a c or postquel function */
 
 /*
  *	This structure is used to explore the inheritance hierarchy above
@@ -47,7 +50,7 @@ extern Node *ParseNestedFuncOrColumn(ParseState *pstate, Attr *attr,
 extern Node *ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 				  int *curr_resno, int precedence);
 
-extern void
-			func_error(char *caller, char *funcname, int nargs, Oid *argtypes, char *msg);
+extern void func_error(char *caller, char *funcname,
+					   int nargs, Oid *argtypes, char *msg);
 
 #endif	 /* PARSE_FUNC_H */
