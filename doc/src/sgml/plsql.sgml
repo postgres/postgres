@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.6 2000/05/16 19:29:43 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.7 2000/05/16 21:16:12 momjian Exp $
 -->
 
  <chapter>
@@ -299,7 +299,7 @@ RENAME <replaceable>oldname</replaceable> TO <replaceable>newname</replaceable>;
     <para>
      Using the <replaceable>class.field</replaceable>%TYPE
      causes PL/pgSQL to lookup the attributes definitions at the
-     first call to the funciton during the lifetime of a backend.
+     first call to the function during the lifetime of a backend.
      Have a table with a char(20) attribute and some PL/pgSQL functions
      that deal with it's content in local variables. Now someone
      decides that char(20) isn't enough, dumps the table, drops it,
