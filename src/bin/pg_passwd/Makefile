@@ -1,13 +1,21 @@
-# $Header: /cvsroot/pgsql/src/bin/pg_passwd/Attic/Makefile,v 1.13 2000/11/30 20:36:12 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_passwd/Attic/Makefile,v 1.14 2001/05/12 19:49:47 petere Exp $
 
 subdir = src/bin/pg_passwd
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
+OBJS = pg_passwd.o
+ifdef STRDUP
+OBJS += $(top_builddir)/src/utils/strdup.o
+endif
+
 all: pg_passwd
 
-pg_passwd: pg_passwd.o
+pg_passwd: $(OBJS)
 	$(CC) $(CFLAGS) $(LDFLAGS) $^ $(LIBS) -o $@
+
+$(top_builddir)/src/utils/strdup.o:
+	$(MAKE) -C $(top_builddir)/src/utils strdup.o
 
 install: all installdirs
 	$(INSTALL_PROGRAM) pg_passwd$(X) $(DESTDIR)$(bindir)/pg_passwd$(X)

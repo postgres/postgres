@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.75 2001/05/11 01:46:33 momjian Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.76 2001/05/12 19:49:48 petere Exp $
 
 subdir = src/interfaces/ecpg/preproc
 top_builddir = ../../../..
@@ -25,6 +25,12 @@ $(top_builddir)/src/backend/port/snprintf.o:
 	$(MAKE) -C $(top_builddir)/src/backend/port snprintf.o
 endif
 
+ifdef STRDUP
+OBJS+=$(top_builddir)/src/utils/strdup.o
+
+$(top_builddir)/src/utils/strdup.o:
+	$(MAKE) -C $(top_builddir)/src/utils strdup.o
+endif
 
 ecpg: $(OBJS)
 	$(CC) $(CFLAGS) $(LDFLAGS) $^ $(LIBS) -o $@
