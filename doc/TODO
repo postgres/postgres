@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sat Nov 17 14:29:01 EST 2001
+Last updated:		Sat Nov 17 14:52:59 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -162,6 +162,7 @@ COMMANDS
 * Allow LIMIT/OFFSET to use expressions
 * Allow PL/PgSQL's RAISE function to take expressions
 * Change PL/PgSQL to use palloc() instead of malloc()
+* Add untrusted version of plpython
 * -Allow GRANT/REVOKE to handle multiple user/group names
 * -Allow CREATEUSER/CREATEDB ordering in CREATE/ALTER USER (Vince)
 * Disallow TRUNCATE on tables that are involved in referential constraints
