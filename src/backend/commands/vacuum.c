@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.273 2004/02/10 03:42:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.274 2004/02/12 05:39:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1178,6 +1178,14 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 						Assert(tuple.t_data->t_infomask & HEAP_XMIN_COMMITTED);
 						pgchanged = true;
 					}
+
+					/*
+					 * Other checks...
+					 */
+					if (onerel->rd_rel->relhasoids &&
+						!OidIsValid(HeapTupleGetOid(&tuple)))
+						elog(WARNING, "relation \"%s\" TID %u/%u: OID is invalid",
+							 relname, blkno, offnum);
 					break;
 				case HEAPTUPLE_RECENTLY_DEAD:
 
@@ -1243,14 +1251,6 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 			/* check for hint-bit update by HeapTupleSatisfiesVacuum */
 			if (sv_infomask != tuple.t_data->t_infomask)
 				pgchanged = true;
-
-			/*
-			 * Other checks...
-			 */
-			if (onerel->rd_rel->relhasoids &&
-				!OidIsValid(HeapTupleGetOid(&tuple)))
-				elog(WARNING, "relation \"%s\" TID %u/%u: OID is invalid",
-					 relname, blkno, offnum);
 
 			if (tupgone)
 			{
