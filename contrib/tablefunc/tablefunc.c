@@ -1366,10 +1366,10 @@ validateConnectbyTupleDesc(TupleDesc tupdesc, bool show_branch)
 		elog(ERROR, "Query-specified return tuple not valid for Connectby: "
 			 "third column must be type %s", format_type_be(INT4OID));
 
-	/* check that the type of the forth column is TEXT if applicable */
+	/* check that the type of the fourth column is TEXT if applicable */
 	if (show_branch && tupdesc->attrs[3]->atttypid != TEXTOID)
 		elog(ERROR, "Query-specified return tuple not valid for Connectby: "
-			 "third column must be type %s", format_type_be(TEXTOID));
+			 "fourth column must be type %s", format_type_be(TEXTOID));
 
 	/* OK, the tupdesc is valid for our purposes */
 }
