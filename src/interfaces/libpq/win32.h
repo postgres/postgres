@@ -16,7 +16,7 @@
 #define _strnicmp(a,b,c) strnicmp(a,b,c)
 #define _errno errno
 #else
-#define open(a,b,c) _open(a,b,c)
+/* open provided elsewhere */
 #define close(a) _close(a)
 #define read(a,b,c) _read(a,b,c)
 #define write(a,b,c) _write(a,b,c)
