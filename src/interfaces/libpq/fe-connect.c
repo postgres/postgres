@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.2 1996/07/12 04:53:57 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.3 1996/07/19 07:00:56 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -114,20 +114,23 @@ PQsetdb(char *pghost, char* pgport, char* pgoptions, char* pgtty, char* dbName)
     } else
 	conn->pgoptions = strdup(pgoptions);
 
-    if (!dbName || dbName[0] == '\0') {
-	char errorMessage[ERROR_MSG_LENGTH];
-	if (!(tmp = getenv("PGDATABASE")) &&
-	    !(tmp = fe_getauthname(errorMessage))) {
-	    sprintf(conn->errorMessage,
-		    "FATAL: PQsetdb: Unable to determine a database name!\n");
-/*	    pqdebug("%s", conn->errorMessage); */
-	    conn->dbName = NULL;
-	    return conn;
-	}
+    if (((tmp = dbName) && (dbName[0] != '\0')) ||
+	((tmp = getenv("PGDATABASE"))))
 	conn->dbName = strdup(tmp);
-    } else
-	conn->dbName = strdup(dbName);
-
+    else {
+      char errorMessage[ERROR_MSG_LENGTH];
+      if (tmp = fe_getauthname(errorMessage)) {
+	conn->dbName = strdup(tmp);
+	free(tmp);
+      }
+      else {
+	sprintf(conn->errorMessage,
+		"FATAL: PQsetdb: Unable to determine a database name!\n");
+/*	pqdebug("%s", conn->errorMessage); */
+	conn->dbName = NULL;
+	return conn;
+      }
+    }
     conn->status = connectDB(conn);
     return conn;
 }
@@ -164,8 +167,9 @@ connectDB(PGconn *conn)
     user = fe_getauthname(conn->errorMessage);
     if (!user)
 	goto connect_errReturn;
-    strncpy(startup.database,conn->dbName,sizeof(startup.database));
     strncpy(startup.user,user,sizeof(startup.user));
+    free(user);
+    strncpy(startup.database,conn->dbName,sizeof(startup.database));
     strncpy(startup.tty,conn->pgtty,sizeof(startup.tty));
     if (conn->pgoptions) {
 	strncpy(startup.options,conn->pgoptions, sizeof(startup.options));
