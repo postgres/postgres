@@ -71,10 +71,10 @@ fi
 
 cat <<EOT
 **************************************************************
-	PostreSQL v6.2 Installation Program
+	PostreSQL v6.3 Installation Program
 
 Welcome to the new improved PostgreSQL installation program.
-This configuration program is for version 6.2 of the
+This configuration program is for version 6.3 of the
 PostgreSQL software.
 
 EOT
