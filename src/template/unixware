@@ -1,12 +1,14 @@
 if test "$GCC" = yes; then
   CFLAGS=-O2
+  THREAD_CFLAGS="-pthread"
 else
 # the -Kno_host is temporary for a bug in the compiler.  See -hackers
 # discussion on 7-8/Aug/2003.
 # when the 7.1.3UP3 or later compiler is out, we can do a version check.
   CFLAGS='-O -Kinline,no_host'
+  THREAD_CFLAGS="-K pthread"
 fi
 
 SUPPORTS_THREADS=yes
-THREAD_CFLAGS="-D_REENTRANT -K pthread"
+THREAD_CFLAGS += -D_REENTRANT
 NEED_REENTRANT_FUNC_NAMES=yes
