@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.56 2000/03/18 18:03:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.57 2000/03/30 11:41:40 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -279,10 +279,10 @@ cppline			{space}*#(.*\\{line_end})*.*
 
 {xcstart}		{
 				state_before = YYSTATE;
-				ECHO;
 	 			BEGIN(xc);
 				/* Put back any characters past slash-star; see above */
 				yyless(2);
+				fputs("/*", yyout);
 			}
 
 <xc>{xcstop}	{ ECHO; BEGIN(state_before); }
@@ -354,12 +354,12 @@ cppline			{space}*#(.*\\{line_end})*.*
 
 <xq><<EOF>> 	 	        { mmerror(ET_ERROR, "Unterminated quoted string"); }
 
-{xdstart}			{
+<SQL>{xdstart}			{
 					state_before = YYSTATE;
 					BEGIN(xd);
 					startlit();
 				}
-<xd>{xdstop}			{
+<xd,xdc>{xdstop}			{
 					BEGIN(state_before);
 					yylval.str = mm_strdup(literalbuf);
 					return CSTRING;
@@ -367,7 +367,15 @@ cppline			{space}*#(.*\\{line_end})*.*
 <xd>{xdinside}			{
 					addlit(yytext, yyleng);
 				}
-<xd><<EOF>> 	 	        { mmerror(ET_ERROR, "Unterminated quoted identifier"); }
+<xd,xdc><<EOF>> 	 	        { mmerror(ET_ERROR, "Unterminated quoted identifier"); }
+{xdstart}			{
+					state_before = YYSTATE;
+					BEGIN(xdc);
+					startlit();
+				}
+<xdc>{xdcinside}		{
+ 					addlit(yytext, yyleng);
+				}
 <SQL>{typecast}			{ 	return TYPECAST; }
 <SQL>{self}			{ /* 
 				   * We may find a ';' inside a structure

@@ -200,7 +200,7 @@ make_name(void)
                 PARTIAL, POSITION, PRECISION, PRIMARY, PRIOR, PRIVILEGES, PROCEDURE, PUBLIC,
                 READ, REFERENCES, RELATIVE, REVOKE, RIGHT, ROLLBACK,
                 SCROLL, SECOND_P, SELECT, SESSION_USER, SET, SUBSTRING,
-                TABLE, TEMP, TEMPORARY, THEN, TIME, TIMESTAMP, TIMEZONE_HOUR,
+                TABLE, TEMPORARY, THEN, TIME, TIMESTAMP, TIMEZONE_HOUR,
 		TIMEZONE_MINUTE, TO, TRAILING, TRANSACTION, TRIM, TRUE_P,
                 UNION, UNIQUE, UPDATE, USER, USING,
                 VALUES, VARCHAR, VARYING, VIEW,
@@ -235,7 +235,7 @@ make_name(void)
 		OFFSET, OIDS, OPERATOR, PASSWORD, PROCEDURAL,
                 REINDEX, RENAME, RESET, RETURNS, ROW, RULE,
                 SEQUENCE, SERIAL, SETOF, SHARE, SHOW, START, STATEMENT, STDIN, STDOUT, SYSID
-		TRUNCATE, TRUSTED,
+		TEMP, TRUNCATE, TRUSTED,
                 UNLISTEN, UNTIL, VACUUM, VALID, VERBOSE, VERSION
 
 /* Special keywords, not in the query language - see the "lex" file */
@@ -284,7 +284,7 @@ make_name(void)
 %type  <str>    target_list target_el update_target_list alias_clause
 %type  <str>    update_target_el opt_id relation_name database_name
 %type  <str>    access_method attr_name class index_name name func_name
-%type  <str>    file_name AexprConst ParamNo TypeId c_expr
+%type  <str>    file_name AexprConst ParamNo c_expr
 %type  <str>	in_expr_nodes a_expr b_expr TruncateStmt CommentStmt
 %type  <str> 	opt_indirection expr_list extract_list extract_arg
 %type  <str>	position_list substr_list substr_from alter_column_action
@@ -292,7 +292,7 @@ make_name(void)
 %type  <str>	Typename SimpleTypename Generic Numeric generic opt_float opt_numeric
 %type  <str> 	opt_decimal Character character opt_varying opt_charset
 %type  <str>	opt_collate Datetime datetime opt_timezone opt_interval
-%type  <str>	numeric row_expr row_descriptor row_list
+%type  <str>	row_expr row_descriptor row_list
 %type  <str>	SelectStmt SubSelect result OptTemp ConstraintAttributeSpec
 %type  <str>	opt_table opt_all sort_clause sortby_list ConstraintAttr 
 %type  <str>	sortby OptUseOp opt_inh_star relation_name_list name_list
@@ -303,10 +303,10 @@ make_name(void)
 %type  <str>    NotifyStmt columnElem copy_dirn UnlistenStmt copy_null
 %type  <str>    copy_delimiter ListenStmt CopyStmt copy_file_name opt_binary
 %type  <str>    opt_with_copy FetchStmt direction fetch_how_many from_in
-%type  <str>    ClosePortalStmt DropStmt VacuumStmt opt_verbose
+%type  <str>    ClosePortalStmt DropStmt VacuumStmt opt_verbose func_arg
 %type  <str>    opt_analyze opt_va_list va_list ExplainStmt index_params
 %type  <str>    index_list func_index index_elem opt_type opt_class access_method_clause
-%type  <str>    index_opt_unique IndexStmt set_opt func_return def_rest
+%type  <str>    index_opt_unique IndexStmt func_return def_rest
 %type  <str>    func_args_list func_args opt_with ProcedureStmt def_arg
 %type  <str>    def_elem def_list definition def_name def_type DefineStmt
 %type  <str>    opt_instead event event_object RuleActionList opt_using
@@ -1841,22 +1841,23 @@ RecipeStmt:  EXECUTE RECIPE recipe_name
  *
  *		QUERY:
  *				define function <fname>
- *					   (language = <lang>, returntype = <typename>
- *						[, arch_pct = <percentage | pre-defined>]
+ *                                              [(<type-1> { , <type-n>})]
+ *                                              returns <type-r>
+ *                                              as <filename or code in language as appropriate>
+ *                                              language <lang> [with
+ *                                              [  arch_pct = <percentage | pre-defined>]
  *						[, disk_pct = <percentage | pre-defined>]
  *						[, byte_pct = <percentage | pre-defined>]
  *						[, perbyte_cpu = <int | pre-defined>]
  *						[, percall_cpu = <int | pre-defined>]
- *						[, iscachable])
- *						[arg is (<type-1> { , <type-n>})]
- *						as <filename or code in language as appropriate>
+ *						[, iscachable]
  *
  *****************************************************************************/
 
 ProcedureStmt:	CREATE FUNCTION func_name func_args
-			 RETURNS func_return opt_with AS func_as LANGUAGE Sconst
+			 RETURNS func_return AS func_as LANGUAGE Sconst opt_with
 				{
-					$$ = cat_str(10, make_str("create function"), $3, $4, make_str("returns"), $6, $7, make_str("as"), $9, make_str("language"), $11);
+					$$ = cat_str(10, make_str("create function"), $3, $4, make_str("returns"), $6, make_str("as"), $8, make_str("language"), $10, $11);
 				}
 
 opt_with:  WITH definition			{ $$ = cat2_str(make_str("with"), $2); }
@@ -1867,24 +1868,45 @@ func_args:  '(' func_args_list ')'		{ $$ = cat_str(3, make_str("("), $2, make_st
 		| '(' ')'			{ $$ = make_str("()"); }
 		;
 
-func_args_list:  TypeId				{ $$ = $1; }
-		| func_args_list ',' TypeId
+func_args_list:  func_arg				{ $$ = $1; }
+		| func_args_list ',' func_arg
 				{	$$ = cat_str(3, $1, make_str(","), $3); }
 		;
+
+/* Would be nice to use the full Typename production for these fields,
+ * but that one sometimes dives into the catalogs looking for valid types.
+ * Arguments like "opaque" are valid when defining functions,
+ * so that won't work here. The only thing we give up is array notation,
+ * which isn't meaningful in this context anyway.
+ * - thomas 2000-03-25
+ */
+func_arg:  SimpleTypename
+                               {
+                                       /* We can catch over-specified arguments here if we want to,
+                                        * but for now better to silently swallow typmod, etc.
+                                        * - thomas 2000-03-22
+                                        */
+                                       $$ = $1;
+                               }
+               ;
 
 func_as: Sconst				{ $$ = $1; }
 		| Sconst ',' Sconst	{ $$ = cat_str(3, $1, make_str(","), $3); }
 
-func_return:  set_opt TypeId
+func_return:  SimpleTypename
 				{
-					$$ = cat2_str($1, $2);
+                                       /* We can catch over-specified arguments here if we want to,
+                                        * but for now better to silently swallow typmod, etc.
+                                        * - thomas 2000-03-22
+                                        */
+                                       $$ = $1;
+                                }
+		| SETOF SimpleTypename
+				{
+
+					$$ = cat2_str(make_str("setof"), $2);
 				}
 		;
-
-set_opt:  SETOF					{ $$ = make_str("setof"); }
-		| /*EMPTY*/			{ $$ = EMPTY; }
-		;
-
 
 /*****************************************************************************
  *
@@ -2984,16 +3006,6 @@ Numeric:  FLOAT opt_float
 				}
 		;
 
-numeric:  FLOAT
-				{	$$ = make_str("float"); }
-		| DOUBLE PRECISION
-				{	$$ = make_str("double precision"); }
-		| DECIMAL
-				{	$$ = make_str("decimal"); }
-		| NUMERIC
-				{	$$ = make_str("numeric"); }
-		;
-
 opt_float:  '(' Iconst ')'
 				{
 					if (atol($2) < 1)
@@ -3839,20 +3851,6 @@ Sconst:  SCONST                                 {
 						}
 UserId:  ident                                  { $$ = $1;};
 
-/* Column and type identifier
- * Does not include explicit datetime types
- *  since these must be decoupled in Typename syntax.
- * Use ColId for most identifiers. - thomas 1997-10-21
- */
-TypeId:  ColId
-			{	$$ = $1; }
-		| numeric
-			{	$$ = $1; }
-		| bit
-			{	$$ = $1; }
-		| character
-			{	$$ = $1; }
-		;
 /* Column identifier
  * Include date/time keywords as SQL92 extension.
  * Include TYPE as a SQL92 unreserved keyword. - thomas 1997-10-05
@@ -4889,8 +4887,12 @@ ECPGTypeName:	  SQL_BOOL		{ $$ = make_str("bool"); }
 		| SQL_SIGNED		{ $$ = make_str("signed"); }
 		| SQL_UNSIGNED		{ $$ = make_str("unsigned"); }
 		| DOUBLE		{ $$ = make_str("double"); }
+		;
 
-ECPGLabelTypeName:	 FLOAT		{ $$ = make_str("float"); }
+ECPGLabelTypeName:	  CHAR			{ $$ = make_str("char"); }
+			| FLOAT		{ $$ = make_str("float"); }
+			| UNION		{ $$ = make_str("union"); }
+			| VARCHAR	{ $$ = make_str("varchar"); }
 			| ECPGTypeName	{ $$ = $1; }
 		;
 
@@ -4907,34 +4909,50 @@ ECPGColId:  /* to be used instead of ColId */
 	| ABSOLUTE			{ $$ = make_str("absolute"); }
 	| ACCESS			{ $$ = make_str("access"); }
 	| ACTION			{ $$ = make_str("action"); }
+	| ADD				{ $$ = make_str("add"); }
 	| AFTER				{ $$ = make_str("after"); }
 	| AGGREGATE			{ $$ = make_str("aggregate"); }
+	| ALTER				{ $$ = make_str("alter"); }
 	| BACKWARD			{ $$ = make_str("backward"); }
 	| BEFORE			{ $$ = make_str("before"); }
+	| BEGIN_TRANS			{ $$ = make_str("begin"); }
+	| BETWEEN			{ $$ = make_str("between"); }
 	| CACHE				{ $$ = make_str("cache"); }
+	| CASCADE			{ $$ = make_str("cascade"); }
+	| CLOSE				{ $$ = make_str("close"); }
 	| COMMENT			{ $$ = make_str("comment"); } 
+	| COMMIT			{ $$ = make_str("commit"); }
 	| COMMITTED			{ $$ = make_str("committed"); }
 	| CONSTRAINTS			{ $$ = make_str("constraints"); }
 	| CREATEDB			{ $$ = make_str("createdb"); }
 	| CREATEUSER			{ $$ = make_str("createuser"); }
 	| CYCLE				{ $$ = make_str("cycle"); }
 	| DATABASE			{ $$ = make_str("database"); }
+	| DECLARE			{ $$ = make_str("declare"); }
 	| DEFERRED			{ $$ = make_str("deferred"); }
+	| DELETE			{ $$ = make_str("delete"); }
 	| DELIMITERS			{ $$ = make_str("delimiters"); }
+	| DROP				{ $$ = make_str("drop"); }
 	| EACH				{ $$ = make_str("each"); }
 	| ENCODING			{ $$ = make_str("encoding"); }
 	| EXCLUSIVE			{ $$ = make_str("exclusive"); }
+	| EXECUTE			{ $$ = make_str("execute"); }
+	| FETCH				{ $$ = make_str("fetch"); }
 	| FORCE				{ $$ = make_str("force"); }
 	| FORWARD			{ $$ = make_str("forward"); }
 	| FUNCTION			{ $$ = make_str("function"); }
+	| GRANT				{ $$ = make_str("grant"); }
 	| HANDLER			{ $$ = make_str("handler"); }
 	| IMMEDIATE			{ $$ = make_str("immediate"); }
+	| IN				{ $$ = make_str("in"); }
 	| INCREMENT			{ $$ = make_str("increment"); }
 	| INDEX				{ $$ = make_str("index"); }
 	| INHERITS			{ $$ = make_str("inherits"); }
 	| INSENSITIVE			{ $$ = make_str("insensitive"); }
+	| INSERT			{ $$ = make_str("insert"); }
 	| INSTEAD			{ $$ = make_str("instead"); }
 	| INTERVAL			{ $$ = make_str("interval"); }
+	| IS				{ $$ = make_str("is"); }
 	| ISNULL			{ $$ = make_str("isnull"); }
 	| ISOLATION			{ $$ = make_str("isolation"); }
 	| KEY				{ $$ = make_str("key"); }
@@ -4946,10 +4964,14 @@ ECPGColId:  /* to be used instead of ColId */
 	| MAXVALUE			{ $$ = make_str("maxvalue"); }
 	| MINVALUE			{ $$ = make_str("minvalue"); }
 	| MODE				{ $$ = make_str("mode"); }
+	| NAMES				{ $$ = make_str("names"); }
+	| NATIONAL			{ $$ = make_str("national"); }
 	| NEXT				{ $$ = make_str("next"); }
+	| NO				{ $$ = make_str("no"); }
 	| NOCREATEDB			{ $$ = make_str("nocreatedb"); }
 	| NOCREATEUSER			{ $$ = make_str("nocreateuser"); }
 	| NOTHING			{ $$ = make_str("nothing"); }
+	| NOTIFY			{ $$ = make_str("notify"); }
 	| NOTNULL			{ $$ = make_str("notnull"); }
 	| OF				{ $$ = make_str("of"); }
 	| OIDS				{ $$ = make_str("oids"); }
@@ -4957,22 +4979,27 @@ ECPGColId:  /* to be used instead of ColId */
 	| OPERATOR			{ $$ = make_str("operator"); }
 	| OPTION			{ $$ = make_str("option"); }
 	| OVERLAPS			{ $$ = make_str("overlaps"); }
+	| PARTIAL			{ $$ = make_str("partial"); }
 	| PASSWORD			{ $$ = make_str("password"); }
 	| PENDANT			{ $$ = make_str("pendant"); }
 	| PRIOR				{ $$ = make_str("prior"); }
 	| PRIVILEGES			{ $$ = make_str("privileges"); }
 	| PROCEDURAL			{ $$ = make_str("procedural"); }
 	| READ				{ $$ = make_str("read"); }
+	| REINDEX			{ $$ = make_str("reindex"); }
 	| RELATIVE			{ $$ = make_str("relative"); }
 	| RENAME			{ $$ = make_str("rename"); }
 	| RESTRICT			{ $$ = make_str("restrict"); }
 	| RETURNS			{ $$ = make_str("returns"); }
+	| REVOKE			{ $$ = make_str("revoke"); }
+	| ROLLBACK			{ $$ = make_str("rollback"); }
 	| ROW				{ $$ = make_str("row"); }
 	| RULE				{ $$ = make_str("rule"); }
 	| SCROLL			{ $$ = make_str("scroll"); }
 	| SEQUENCE                      { $$ = make_str("sequence"); }
 	| SERIAL			{ $$ = make_str("serial"); }
 	| SERIALIZABLE			{ $$ = make_str("serializable"); }
+	| SET				{ $$ = make_str("set"); }
 	| SHARE				{ $$ = make_str("share"); }
 	| START				{ $$ = make_str("start"); }
 	| STATEMENT			{ $$ = make_str("statement"); }
@@ -4989,60 +5016,117 @@ ECPGColId:  /* to be used instead of ColId */
 	| TRUNCATE			{ $$ = make_str("truncate"); }
 	| TRUSTED			{ $$ = make_str("trusted"); }
 	| TYPE_P			{ $$ = make_str("type"); }
+	| UNLISTEN			{ $$ = make_str("unlisten"); }
+	| UNTIL				{ $$ = make_str("until"); }
+	| UPDATE			{ $$ = make_str("update"); }
 	| VALID				{ $$ = make_str("valid"); }
+	| VALUES			{ $$ = make_str("values"); }
+	| VARYING			{ $$ = make_str("varying"); }
 	| VERSION			{ $$ = make_str("version"); }
+	| VIEW				{ $$ = make_str("view"); }
+	| WITH				{ $$ = make_str("with"); }
+	| WORK				{ $$ = make_str("work"); }
 	| ZONE				{ $$ = make_str("zone"); }
 	;
 
 ECPGColLabel:  ECPGColId		{ $$ = $1; }
 		| ABORT_TRANS           { $$ = make_str("abort"); }
+		| ALL			{ $$ = make_str("all"); }
 		| ANALYZE               { $$ = make_str("analyze"); }
+		| ANY			{ $$ = make_str("any"); }
+		| ASC			{ $$ = make_str("asc"); }
 		| BINARY                { $$ = make_str("binary"); }
 		| BIT	                { $$ = make_str("bit"); }
+		| BOTH			{ $$ = make_str("both"); }
 		| CASE                  { $$ = make_str("case"); }
+		| CAST			{ $$ = make_str("cast"); }
 		| CHARACTER             { $$ = make_str("character"); }
+		| CHECK			{ $$ = make_str("check"); }
 		| CLUSTER		{ $$ = make_str("cluster"); }
 		| COALESCE              { $$ = make_str("coalesce"); }
+		| COLLATE		{ $$ = make_str("collate"); }
+		| COLUMN		{ $$ = make_str("column"); }
 		| CONSTRAINT		{ $$ = make_str("constraint"); }
 		| COPY			{ $$ = make_str("copy"); }
+		| CROSS			{ $$ = make_str("cross"); }
 		| CURRENT		{ $$ = make_str("current"); }
+		| CURRENT_DATE		{ $$ = make_str("current_date"); }
+		| CURRENT_TIME		{ $$ = make_str("current_time"); }
+		| CURRENT_TIMESTAMP	{ $$ = make_str("current_timestamp"); }
 		| CURRENT_USER		{ $$ = make_str("current_user"); }
 		| DEC			{ $$ = make_str("dec"); }
 		| DECIMAL		{ $$ = make_str("decimal"); }
+		| DEFAULT		{ $$ = make_str("default"); }
 		| DEFERRABLE		{ $$ = make_str("deferrable"); }
+		| DESC			{ $$ = make_str("desc"); }
+		| DISTINCT		{ $$ = make_str("distinct"); }
 		| DO			{ $$ = make_str("do"); }
 		| ELSE                  { $$ = make_str("else"); }
 		| END_TRANS             { $$ = make_str("end"); }
+		| EXCEPT		{ $$ = make_str("except"); }
+		| EXISTS		{ $$ = make_str("exists"); }
 		| EXPLAIN		{ $$ = make_str("explain"); }
 		| EXTEND		{ $$ = make_str("extend"); }
+		| EXTRACT		{ $$ = make_str("extract"); }
 		| FALSE_P		{ $$ = make_str("false"); }
+		| FOR			{ $$ = make_str("for"); }
 		| FOREIGN		{ $$ = make_str("foreign"); }
+		| FROM			{ $$ = make_str("from"); }
+		| FULL			{ $$ = make_str("full"); }
 		| GLOBAL		{ $$ = make_str("global"); }
 		| GROUP			{ $$ = make_str("group"); }
+		| HAVING		{ $$ = make_str("having"); }
 		| INITIALLY		{ $$ = make_str("initially"); }
+		| INNER_P		{ $$ = make_str("inner"); }
+		| INTERSECT		{ $$ = make_str("intersect"); }
+		| INTO			{ $$ = make_str("into"); }
+		| JOIN			{ $$ = make_str("join"); }
+		| LEADING		{ $$ = make_str("leading"); }
+		| LEFT			{ $$ = make_str("left"); }
+		| LIKE			{ $$ = make_str("like"); }
 		| LISTEN		{ $$ = make_str("listen"); }
 		| LOAD			{ $$ = make_str("load"); }
 		| LOCK_P		{ $$ = make_str("lock"); }
 		| MOVE			{ $$ = make_str("move"); }
+		| NATURAL		{ $$ = make_str("natural"); }
+		| NCHAR			{ $$ = make_str("nchar"); }
 		| NEW			{ $$ = make_str("new"); }
 		| NONE			{ $$ = make_str("none"); }
+		| NOT			{ $$ = make_str("not"); }
 		| NULLIF                { $$ = make_str("nullif"); }
+		| NULL_P		{ $$ = make_str("null"); }
 		| NUMERIC               { $$ = make_str("numeric"); }
+		| OFFSET		{ $$ = make_str("offset"); }
+		| ON			{ $$ = make_str("on"); }
+		| OR			{ $$ = make_str("or"); }
 		| ORDER			{ $$ = make_str("order"); }
+		| OUTER_P		{ $$ = make_str("outer"); }
 		| POSITION		{ $$ = make_str("position"); }
 		| PRECISION		{ $$ = make_str("precision"); }
+		| PRIMARY		{ $$ = make_str("primary"); }
+		| PROCEDURE		{ $$ = make_str("procedure"); }
+		| PUBLIC		{ $$ = make_str("public"); }
+		| REFERENCES		{ $$ = make_str("references"); }
 		| RESET			{ $$ = make_str("reset"); }
+		| RIGHT			{ $$ = make_str("right"); }
+		| SELECT		{ $$ = make_str("select"); }
 		| SESSION_USER		{ $$ = make_str("session_user"); }
 		| SETOF			{ $$ = make_str("setof"); }
 		| SHOW			{ $$ = make_str("show"); }
+		| SUBSTRING		{ $$ = make_str("substring"); }
 		| TABLE			{ $$ = make_str("table"); }
 		| THEN                  { $$ = make_str("then"); }
+		| TO			{ $$ = make_str("to"); }
 		| TRANSACTION		{ $$ = make_str("transaction"); }
+		| TRIM			{ $$ = make_str("trim"); }
 		| TRUE_P		{ $$ = make_str("true"); }
+		| UNIQUE		{ $$ = make_str("unique"); }
 		| USER			{ $$ = make_str("user"); }
+		| USING			{ $$ = make_str("using"); }
 		| VACUUM		{ $$ = make_str("vacuum"); }
 		| VERBOSE		{ $$ = make_str("verbose"); }
 		| WHEN                  { $$ = make_str("when"); }
+		| WHERE			{ $$ = make_str("where"); }
 		;
 
 into_list : coutputvariable | into_list ',' coutputvariable;

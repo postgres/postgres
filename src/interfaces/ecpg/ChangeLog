@@ -875,5 +875,14 @@ Sun Mar 19 11:03:13 CET 2000
 Thu Mar 23 08:13:39 CET 2000
 
 	- Synced preproc.y and keyword.c.
+
+Wed Mar 29 09:03:26 CEST 2000
+
+	- Fixed string parsing bug in pgc.l.
+
+Thu Mar 30 11:11:13 CEST 2000
+
+	- Synced preproc.y with gram.y.
+	- Fixed comment parsing bug.
 	- Set library version to 3.1.0.
 	- Set ecpg version to 2.7.0.
