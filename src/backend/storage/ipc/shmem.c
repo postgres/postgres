@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.20 1998/06/15 19:29:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.21 1998/06/23 16:04:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -511,7 +511,6 @@ ShmemInitStruct(char *name, unsigned long size, bool *foundPtr)
 
 			*foundPtr = FALSE;
 			return ((long *) ShmemAlloc(size));
-
 		}
 		else
 		{

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/spin.c,v 1.12 1998/06/23 15:35:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/spin.c,v 1.13 1998/06/23 16:04:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,7 +62,6 @@ InitSpinLocks(int init, IPCKey key)
 
 #ifdef STABLE_MEMORY_STORAGE
 	extern SPINLOCK MMCacheLock;
-
 #endif
 
 	/* These six spinlocks have fixed location is shmem */
