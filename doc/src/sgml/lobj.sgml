@@ -100,11 +100,9 @@
 
     <para>
      The routine
-
-     <synopsis>
+<synopsis>
 Oid lo_creat(PGconn *<replaceable class="parameter">conn</replaceable>, int <replaceable class="parameter">mode</replaceable>)
-     </synopsis>
-
+</synopsis>
      creates a new large  object.  
      <replaceable class="parameter">mode</replaceable>  is  a  bitmask
      describing  several  different  attributes  of  the new
@@ -132,10 +130,10 @@ inv_oid = lo_creat(INV_READ|INV_WRITE|INV_ARCHIVE);
     <title>Importing a Large Object</title>
 
     <para>
-     To import a Unix file as a large object, call
-     <synopsis>
-Oid lo_import(PGconn *<replaceable class="parameter">conn</replaceable>, text *<replaceable class="parameter">filename</replaceable>)
-     </synopsis>
+     To import a <acronym>UNIX</acronym> file as a large object, call
+<synopsis>
+Oid lo_import(PGconn *<replaceable class="parameter">conn</replaceable>, const char *<replaceable class="parameter">filename</replaceable>)
+</synopsis>
     <replaceable class="parameter">filename</replaceable> 
      specifies the  <acronym>Unix</acronym>  pathname  of
      the file to be imported as a large object.
@@ -147,13 +145,13 @@ Oid lo_import(PGconn *<replaceable class="parameter">conn</replaceable>, text *<
 
     <para>
      To export a large object
-     into <acronym>Unix</acronym> file, call
-     <synopsis>
-int lo_export(PGconn *<replaceable class="parameter">conn</replaceable>, Oid <replaceable class="parameter">lobjId</replaceable>, text *<replaceable class="parameter">filename</replaceable>)
-     </synopsis>
+     into <acronym>UNIX</acronym> file, call
+<synopsis>
+int lo_export(PGconn *<replaceable class="parameter">conn</replaceable>, Oid <replaceable class="parameter">lobjId</replaceable>, const char *<replaceable class="parameter">filename</replaceable>)
+</synopsis>
      The lobjId argument specifies  the  Oid  of  the  large
      object  to  export  and the filename argument specifies
-     the <acronym>Unix</acronym> pathname of the file.
+     the <acronym>UNIX</acronym> pathname of the file.
     </para>
    </sect2>
 
@@ -162,16 +160,18 @@ int lo_export(PGconn *<replaceable class="parameter">conn</replaceable>, Oid <re
 
     <para>
      To open an existing large object, call
-<programlisting>
-int lo_open(PGconn *conn, Oid lobjId, int mode, ...)
-</programlisting>
+<synopsis>
+int lo_open(PGconn *conn, Oid lobjId, int mode)
+</synopsis>
      The lobjId argument specifies  the  Oid  of  the  large
      object  to  open.   The  mode  bits control whether the
      object is opened  for  reading  INV_READ),  writing  or
      both.
      A  large  object cannot be opened before it is created.
-     lo_open returns a large object descriptor for later use
-     in  lo_read, lo_write, lo_lseek, lo_tell, and lo_close.
+     <function>lo_open</function> returns a large object descriptor
+     for later use in <function>lo_read</function>, <function>lo_write</function>,
+     <function>lo_lseek</function>, <function>lo_tell</function>, and
+     <function>lo_close</function>.
 </para>
 </sect2>
 
@@ -181,11 +181,26 @@ int lo_open(PGconn *conn, Oid lobjId, int mode, ...)
 <para>
      The routine
 <programlisting>
-int lo_write(PGconn *conn, int fd, char *buf, int len)
+int lo_write(PGconn *conn, int fd, const char *buf, size_t len)
 </programlisting>
      writes len bytes from buf to large object fd.   The  fd
-     argument must have been returned by a previous lo_open.
+     argument must have been returned by a previous <function>lo_open</function>.
      The number of bytes actually written is  returned.   In
+     the event of an error, the return value is negative.
+</para>
+</sect2>
+
+<sect2>
+<title>Reading Data from a Large Object</title>
+
+<para>
+     The routine
+<programlisting>
+int lo_read(PGconn *conn, int fd, char *buf, size_t len)
+</programlisting>
+     reads len bytes from large object fd into byf. The  fd
+     argument must have been returned by a previous <function>lo_open</function>.
+     The number of bytes actually read is returned. In
      the event of an error, the return value is negative.
 </para>
 </sect2>
@@ -201,8 +216,8 @@ int lo_lseek(PGconn *conn, int fd, int offset, int whence)
 </programlisting>
      This routine moves the current location pointer for the
      large object described by fd to the new location specified 
-     by offset.  The valid values  for  .i  whence  are
-     SEEK_SET SEEK_CUR and SEEK_END.
+     by offset.  The valid values for whence are
+     SEEK_SET, SEEK_CUR, and SEEK_END.
 </para>
 </sect2>
 
@@ -215,8 +230,8 @@ int lo_lseek(PGconn *conn, int fd, int offset, int whence)
 int lo_close(PGconn *conn, int fd)
 </programlisting>
      where  fd  is  a  large  object  descriptor returned by
-     lo_open.  On success, <acronym>lo_close</acronym> returns zero.  On error,
-     the return value is negative.
+     <function>lo_open</function>.  On success, <function>lo_close</function>
+      returns zero.  On error, the return value is negative.
 </para>
 </sect2>
 </sect1>
