@@ -22,7 +22,11 @@ CFLAGS_BE+= -DUSE_POSIX_SIGNALS
 # RANLIB is not used on IRIX 5
 RANLIB=touch
 
-INSTALL=/usr/bin/X11/bsdinst
+INSTALL=/sbin/bsdinst
+
+INSTLOPTS=      -m 444
+INSTL_EXE_OPTS= -m 555
+INSTL_LIB_OPTS= -m 664
 
 #
 # Random things that must be passed everywhere to enable 
