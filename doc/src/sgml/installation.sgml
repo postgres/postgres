@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.75 2002/04/03 05:39:28 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.76 2002/04/10 16:45:25 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -981,6 +981,19 @@ All of PostgreSQL is successfully made. Ready to install.
     step as root. Alternatively, you could create the target
     directories in advance and arrange for appropriate permissions to
     be granted.
+   </para>
+
+   <para>
+    You can use <literal>gmake install-strip</literal> instead of
+    <literal>gmake install</literal> to strip the executable files and
+    libraries as they are installed.  This will save some space.  If
+    you built with debugging support, stripping will effectively
+    remove the debugging support, so it should only be done if
+    debugging is no longer needed.  <literal>install-strip</literal>
+    tries to do a reasonable job saving space, but it does not have
+    perfect knowledge of how to strip every unneeded byte from an
+    executable file, so if you want to save all the disk space you
+    possibly can, you will have to do manual work.
    </para>
 
    <para>

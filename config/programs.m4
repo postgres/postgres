@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/config/programs.m4,v 1.8 2002/03/29 17:32:54 petere Exp $
+# $Header: /cvsroot/pgsql/config/programs.m4,v 1.9 2002/04/10 16:45:24 petere Exp $
 
 
 # PGAC_PATH_FLEX
@@ -144,3 +144,28 @@ dnl FIXME: We should probably check for version >=0.10.36.
   AC_DEFINE_UNQUOTED(LOCALEDIR, ["$exp_localedir"],
                      [location of locale files])
 ])# PGAC_CHECK_GETTEXT
+
+
+
+# PGAC_CHECK_STRIP
+# ----------------
+# Check for a 'strip' program, and figure out if that program can
+# strip libraries.
+
+AC_DEFUN([PGAC_CHECK_STRIP],
+[
+  AC_CHECK_TOOL(STRIP, strip, :)
+
+  AC_MSG_CHECKING([whether it is possible to strip libraries])
+  if test x"$STRIP" != x"" && "$STRIP" -V 2>&1 | grep "GNU strip" >/dev/null; then
+    STRIP_STATIC_LIB="$STRIP -x"
+    STRIP_SHARED_LIB="$STRIP --strip-unneeded"
+    AC_MSG_RESULT(yes)
+  else
+    STRIP_STATIC_LIB=:
+    STRIP_SHARED_LIB=:
+    AC_MSG_RESULT(no)
+  fi
+  AC_SUBST(STRIP_STATIC_LIB)
+  AC_SUBST(STRIP_SHARED_LIB)
+])# PGAC_CHECK_STRIP
