@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.202 2004/05/14 21:42:27 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.203 2004/05/19 23:56:38 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -5662,12 +5662,12 @@ SELECT TIMESTAMP 'now';
        </row>
        <row>
 	<entry> <literal>&amp;&lt;</literal> </entry>
-	<entry>Overlaps or is left of?</entry>
+	<entry>Does not extend to the right of?</entry>
 	<entry><literal>box '((0,0),(1,1))' &amp;&lt; box '((0,0),(2,2))'</literal></entry>
        </row>
        <row>
 	<entry> <literal>&amp;&gt;</literal> </entry>
-	<entry>Overlaps or is right of?</entry>
+	<entry>Does not extend to the left of?</entry>
 	<entry><literal>box '((0,0),(3,3))' &amp;&gt; box '((0,0),(2,2))'</literal></entry>
        </row>
        <row>
