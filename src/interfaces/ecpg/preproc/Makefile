@@ -1,4 +1,3 @@
-# Generated automatically from Makefile.in by configure.
 SRCDIR= ../../..
 include $(SRCDIR)/Makefile.global
 
@@ -6,7 +5,7 @@ MAJOR_VERSION=1
 MINOR_VERSION=0
 PATCHLEVEL=0
 
-CFLAGS=-I../include -O2 -g -Wall -DMAJOR_VERSION=$(MAJOR_VERSION) -DMINOR_VERSION=$(MINOR_VERSION) -DPATCHLEVEL=$(PATCHLEVEL)
+CFLAGS=-I../include -Wall -DMAJOR_VERSION=$(MAJOR_VERSION) -DMINOR_VERSION=$(MINOR_VERSION) -DPATCHLEVEL=$(PATCHLEVEL)
 
 all:: ecpg
 
@@ -21,7 +20,7 @@ uninstall:
 
 # Rule that really do something.
 ecpg: y.tab.o pgc.o type.o ecpg.o ../lib/typename.o
-	$(CC) -g -O2 -Wall -o ecpg y.tab.o pgc.o type.o ecpg.o ../lib/typename.o $(LEXLIB)
+	$(CC) -Wall -o ecpg y.tab.o pgc.o type.o ecpg.o ../lib/typename.o $(LEXLIB)
 
 y.tab.h y.tab.c: preproc.y
 	$(YACC) $(YFLAGS) $<
