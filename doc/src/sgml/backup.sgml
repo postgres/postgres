@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.48 2004/09/30 10:30:10 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.49 2004/11/08 18:01:28 tgl Exp $
 -->
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -416,7 +416,7 @@ tar -cf backup.tar /usr/local/pgsql/data
      Since we can string together an indefinitely long sequence of WAL files
      for replay, continuous backup can be had simply by continuing to archive
      the WAL files.  This is particularly valuable for large databases, where
-     making a full backup may take an unreasonable amount of time.
+     it may not be convenient to take a full backup frequently.
     </para>
    </listitem>
    <listitem>
@@ -443,7 +443,7 @@ tar -cf backup.tar /usr/local/pgsql/data
   <para>
    As with the plain filesystem-backup technique, this method can only
    support restoration of an entire database cluster, not a subset.
-   Also, it requires a lot of archival storage: the base backup is bulky,
+   Also, it requires a lot of archival storage: the base backup may be bulky,
    and a busy system will generate many megabytes of WAL traffic that
    have to be archived.  Still, it is the preferred backup technique in
    many situations where high reliability is needed.
@@ -503,10 +503,11 @@ tar -cf backup.tar /usr/local/pgsql/data
     character in the command.  The simplest useful command is something
     like
 <programlisting>
-archive_command = 'cp %p /mnt/server/archivedir/%f'	
+archive_command = 'cp -i %p /mnt/server/archivedir/%f &lt;/dev/null'
 </programlisting>
     which will copy archivable WAL segments to the directory
-    <literal>/mnt/server/archivedir</>.
+    <filename>/mnt/server/archivedir</>.  (This is an example, not a 
+    recommendation, and may not work on all platforms.)
    </para>
 
    <para>
@@ -522,18 +523,53 @@ archive_command = 'cp %p /mnt/server/archivedir/%f'
     It is important that the archive command return zero exit status if and
     only if it succeeded.  Upon getting a zero result,
     <productname>PostgreSQL</> will assume that the WAL segment file has been
-    successfully archived, and it may be overwritten with new data very
-    soon thereafter.  However, a nonzero status tells
+    successfully archived, and will remove or recycle it.
+    However, a nonzero status tells
     <productname>PostgreSQL</> that the file was not archived; it will try
     again periodically until it succeeds.
    </para>
 
    <para>
+    The archive command should generally be designed to refuse to overwrite
+    any pre-existing archive file.  This is an important safety feature to
+    preserve the integrity of your archive in case of administrator error
+    (such as sending the output of two different servers to the same archive
+    directory).
+    It is advisable to test your proposed archive command to ensure that it
+    indeed does not overwrite an existing file, <emphasis>and that it returns
+    nonzero status in this case</>.  We have found that <literal>cp -i</> does
+    this correctly on some platforms but not others.  If the chosen command
+    does not itself handle this case correctly, you should add a command
+    to test for pre-existence of the archive file.  For example, something
+    like
+<programlisting>
+archive_command = 'test ! -f .../%f &amp;&amp; cp %p .../%f'
+</programlisting>
+    works correctly on most Unix variants.
+   </para>
+
+   <para>
+    While designing your archiving setup, consider what will happen if
+    the archive command fails repeatedly because some aspect requires 
+    operator intervention or the archive runs out of space. For example, this
+    could occur if you write to tape without an autochanger; when the tape 
+    fills, nothing further can be archived until the tape is swapped.
+    You should ensure that any error condition or request to a human operator
+    is reported appropriately so that the situation can be 
+    resolved relatively quickly. The <filename>pg_xlog/</> directory will
+    continue to fill with WAL segment files until the situation is resolved.
+   </para>
+
+   <para>
     Speed of the archiving command is not important, so long as it can keep up
-    with the average rate at which your server generates WAL data.  It is okay
-    if the archiving process falls a little behind (or even a lot behind, if
-    you don't mind the <literal>pg_xlog/</> directory filling up with
-    not-yet-archived segment files).
+    with the average rate at which your server generates WAL data.  Normal
+    operation continues even if the archiving process falls a little behind.
+    If archiving falls significantly behind, this will increase the amount of
+    data that would be lost in the event of a disaster. It will also mean that
+    the <filename>pg_xlog/</> directory will contain large numbers of
+    not-yet-archived segment files, which could eventually exceed available
+    disk space. You are advised to monitor the archiving process to ensure that
+    it is working as you intend.
    </para>
 
    <para>
@@ -545,11 +581,11 @@ archive_command = 'cp %p /mnt/server/archivedir/%f'
     before a WAL segment file is completely filled and ready to archive.
     One possible way to handle this is to set up a <application>cron</> job
     that periodically (once a minute, perhaps) identifies the current WAL
-    segment file and saves it someplace safe.  The combination of the archived
-    WAL segments and the saved current segment will then be enough to ensure
-    you can always restore to within a minute of current time.  This behavior
-    is not presently built into <productname>PostgreSQL</> because we did not
-    want to complicate the definition of the <xref
+    segment file and saves it someplace safe.  Then the combination of the
+    archived WAL segments and the saved current segment will be enough to
+    ensure you can always restore to within a minute of current time.  This
+    behavior is not presently built into <productname>PostgreSQL</> because
+    we did not want to complicate the definition of the <xref
     linkend="guc-archive-command"> by requiring it to keep track of
     successively archived, but different, copies of the same WAL file.
     The <xref linkend="guc-archive-command"> is only invoked on finished
@@ -622,7 +658,7 @@ SELECT pg_stop_backup();
 
    <para>
     Be certain that your backup dump includes all of the files underneath
-    the database cluster directory (e.g., <literal>/usr/local/pgsql/data</>).
+    the database cluster directory (e.g., <filename>/usr/local/pgsql/data</>).
     If you are using tablespaces that do not reside underneath this directory,
     be careful to include them as well (and be sure that your backup dump
     archives symbolic links as links, otherwise the restore will mess up
@@ -631,10 +667,10 @@ SELECT pg_stop_backup();
 
    <para>
     You may, however, omit from the backup dump the files within the
-    <literal>pg_xlog/</> subdirectory of the cluster directory.  This
+    <filename>pg_xlog/</> subdirectory of the cluster directory.  This
     slight complication is worthwhile because it reduces the risk
     of mistakes when restoring.  This is easy to arrange if
-    <literal>pg_xlog/</> is a symbolic link pointing to someplace outside
+    <filename>pg_xlog/</> is a symbolic link pointing to someplace outside
     the cluster directory, which is a common setup anyway for performance
     reasons.
    </para>
@@ -706,7 +742,7 @@ SELECT pg_stop_backup();
      under the cluster data directory and under the root directories of any
      tablespaces you are using.
      (If there are recent, unarchived WAL segment files in
-     <literal>pg_xlog/</> that you want to use during restore, move these aside
+     <filename>pg_xlog/</> that you want to use during restore, move these aside
      instead of removing them.)
     </para>
    </listitem>
@@ -715,32 +751,32 @@ SELECT pg_stop_backup();
      Restore the database files from your backup dump.  Be careful that they
      are restored with the right ownership (the database system user, not
      root!) and with the right permissions.  If you are using tablespaces,
-     you may want to verify that the symbolic links in <literal>pg_tblspc/</>
+     you may want to verify that the symbolic links in <filename>pg_tblspc/</>
      were correctly restored.
     </para>
    </listitem>
    <listitem>
     <para>
-     Remove any files present in <literal>pg_xlog/</>; these came from the
+     Remove any files present in <filename>pg_xlog/</>; these came from the
      backup dump and are therefore probably obsolete rather than current.
-     If you didn't archive <literal>pg_xlog/</> at all, then re-create it,
+     If you didn't archive <filename>pg_xlog/</> at all, then re-create it,
      and be sure to re-create the subdirectory
-    <literal>pg_xlog/archive_status/</> as well.
+    <filename>pg_xlog/archive_status/</> as well.
     </para>
    </listitem>
    <listitem>
     <para>
      If you had unarchived WAL segment files that you saved aside in step 1,
-     copy them into <literal>pg_xlog/</>.  (It's best to copy them, not move
+     copy them into <filename>pg_xlog/</>.  (It's best to copy them, not move
      them back in, so that you still have the unmodified files if the worst
      happens and you have to start over.)
     </para>
    </listitem>
    <listitem>
     <para>
-     Create a recovery command file <literal>recovery.conf</> in the cluster
+     Create a recovery command file <filename>recovery.conf</> in the cluster
      data directory, as discussed below.  You may also want to temporarily
-     modify <literal>pg_hba.conf</> to prevent ordinary users from connecting
+     modify <filename>pg_hba.conf</> to prevent ordinary users from connecting
      until you are sure the recovery has worked.
     </para>
    </listitem>
@@ -749,7 +785,7 @@ SELECT pg_stop_backup();
      Start the postmaster.  The postmaster will go into recovery mode and
      proceed to read through the archived WAL files it needs.  Upon completion
      of the recovery process, the postmaster will rename
-     <literal>recovery.conf</> to <literal>recovery.done</> (to prevent
+     <filename>recovery.conf</> to <filename>recovery.done</> (to prevent
      accidentally re-entering recovery mode in case of a crash later) and then
      commence normal database operations.
     </para>
@@ -758,7 +794,7 @@ SELECT pg_stop_backup();
     <para>
      Inspect the contents of the database to ensure you have recovered to
      where you want to be.  If not, return to step 1.  If all is well,
-     let in your users by restoring <literal>pg_hba.conf</> to normal.
+     let in your users by restoring <filename>pg_hba.conf</> to normal.
     </para>
    </listitem>
   </orderedlist>
@@ -767,10 +803,10 @@ SELECT pg_stop_backup();
    <para>
     The key part of all this is to set up a recovery command file
     that describes how you want to recover and how far the recovery
-    should run.  You can use <literal>recovery.conf.sample</> (normally
-    installed in the installation <literal>share/</> directory) as a
+    should run.  You can use <filename>recovery.conf.sample</> (normally
+    installed in the installation <filename>share/</> directory) as a
     prototype.  The one thing that you absolutely must specify in
-    <literal>recovery.conf</> is the <literal>restore_command</>,
+    <filename>recovery.conf</> is the <literal>restore_command</>,
     which tells how to get back archived WAL file segments.  Like
     the <literal>archive_command</>, this is a shell command string.
     It may contain <literal>%f</>,
@@ -783,7 +819,7 @@ SELECT pg_stop_backup();
 restore_command = 'cp /mnt/server/archivedir/%f %p'
 </programlisting>
     which will copy previously archived WAL segments from the directory
-    <literal>/mnt/server/archivedir</>.  You could of course use something
+    <filename>/mnt/server/archivedir</>.  You could of course use something
     much more complicated, perhaps even a shell script that requests the
     operator to mount an appropriate tape.
    </para>
@@ -799,10 +835,10 @@ restore_command = 'cp /mnt/server/archivedir/%f %p'
 
    <para>
     WAL segments that cannot be found in the archive will be sought in
-    <literal>pg_xlog/</>; this allows use of recent un-archived segments.
+    <filename>pg_xlog/</>; this allows use of recent un-archived segments.
     However segments that are available from the archive will be used in
-    preference to files in <literal>pg_xlog/</>.  The system will not
-    overwrite the existing contents of <literal>pg_xlog/</> when retrieving
+    preference to files in <filename>pg_xlog/</>.  The system will not
+    overwrite the existing contents of <filename>pg_xlog/</> when retrieving
     archived files.
    </para>
 
@@ -812,13 +848,11 @@ restore_command = 'cp /mnt/server/archivedir/%f %p'
     get given the available WAL segments).  But if you want to recover to
     some previous point in time (say, right before the junior DBA dropped your
     main transaction table), just specify the required stopping point in
-    <literal>recovery.conf</>.  You can specify the stop point either by
-    date/time or completion of a specific transaction ID.  The stop
-    specification can be inclusive or exclusive.  As of this writing 
+    <filename>recovery.conf</>.  You can specify the stop point, known as the
+    <quote>recovery target</>, either by date/time or by completion of a
+    specific transaction ID.  As of this writing 
     only the date/time option is very usable, since there are no tools 
-    to help you identify which transaction ID to use.  Keep in mind 
-    that while transaction IDs are asigned sequentially at transaction 
-    start, transactions can complete in a different numeric order.
+    to help you identify with any accuracy which transaction ID to use.  
    </para>
    <para>
     Note that the stop point must be after the ending time of the backup
@@ -827,6 +861,123 @@ restore_command = 'cp /mnt/server/archivedir/%f %p'
     recover to such a time, you must go back to your previous base backup
     and roll forward from there.)
    </para>
+
+    <sect3 id="recovery-config-settings">
+     <title>Recovery Settings</title>
+
+       <para>
+        These settings can only be made in the 
+        <filename>recovery.conf</filename> file, and apply only for the
+        duration of the recovery. They must be reset for any subsequent 
+        recovery you wish to perform. They cannot be changed once recovery 
+        has begun.
+       </para>
+
+     <variablelist>
+
+     <varlistentry id="restore-command" xreflabel="restore_command">
+      <term><varname>restore_command</varname> (<type>string</type>)</term>
+      <listitem>
+       <para>
+        The shell command to execute to retrieve an archived segment of
+        the WAL file series. This parameter is required.
+        Any <literal>%f</> in the string is
+        replaced by the name of the file to retrieve from the archive,
+        and any <literal>%p</> is replaced by the absolute path to copy
+        it to on the server.
+        Write <literal>%%</> to embed an actual <literal>%</> character
+        in the command. 
+       </para>
+       <para>
+        It is important for the command to return a zero exit status only if
+        it succeeds.  The command <emphasis>will</> be asked for file names
+        that are not present in the archive; 
+        it must return nonzero when so asked.
+        Examples:
+<programlisting>
+restore_command = 'cp /mnt/server/archivedir/%f "%p"'
+restore_command = 'copy /mnt/server/archivedir/%f "%p"'  # Windows
+</programlisting>
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="recovery-target-time" xreflabel="recovery_target_time">
+      <term><varname>recovery_target_time</varname> 
+           (<type>timestamp</type>)
+      </term>
+      <listitem>
+       <para>
+        This parameter specifies the timestamp up to which recovery
+        will proceed.
+        At most one of <varname>recovery_target_time</> and
+        <xref linkend="recovery-target-xid"> can be specified.
+        The default is to recover to the end of the WAL log.
+        The precise stopping point is also influenced by 
+        <xref linkend="recovery-target-inclusive">.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="recovery-target-xid" xreflabel="recovery_target_xid">
+      <term><varname>recovery_target_xid</varname> (<type>string</type>)</term>
+      <listitem>
+       <para>
+        This parameter specifies the transaction ID up to which recovery
+        will proceed. Keep in mind 
+        that while transaction IDs are assigned sequentially at transaction 
+        start, transactions can complete in a different numeric order.
+        The transactions that will be recovered are those that committed
+        before (and optionally including) the specified one.
+        At most one of <varname>recovery_target_xid</> and
+        <xref linkend="recovery-target-time"> can be specified.
+        The default is to recover to the end of the WAL log.
+        The precise stopping point is also influenced by 
+        <xref linkend="recovery-target-inclusive">.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="recovery-target-inclusive" 
+                   xreflabel="recovery_target_inclusive">
+      <term><varname>recovery_target_inclusive</varname> 
+        (<type>boolean</type>)
+      </term>
+      <listitem>
+       <para>
+        Specifies whether we stop just after the specified recovery target
+        (<literal>true</literal>), or just before the recovery target 
+        (<literal>false</literal>).
+        Applies to both <xref linkend="recovery-target-time">
+        and <xref linkend="recovery-target-xid">, whichever one is
+        specified for this recovery.  This indicates whether transactions
+        having exactly the target commit time or ID, respectively, will
+        be included in the recovery.  Default is <literal>true</>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="recovery-target-timeline" 
+                   xreflabel="recovery_target_timeline">
+      <term><varname>recovery_target_timeline</varname> 
+        (<type>string</type>)
+      </term>
+      <listitem>
+       <para>
+        Specifies recovering into a particular timeline.  The default is
+        to recover along the same timeline that was current when the
+        base backup was taken.  You would only need to set this parameter
+        in complex re-recovery situations, where you need to return to
+        a state that itself was reached after a point-in-time recovery.
+        See <xref linkend="backup-timelines"> for discussion.
+       </para>
+      </listitem>
+     </varlistentry>
+
+   </variablelist>
+
+   </sect3>
+
   </sect2>
 
   <sect2 id="backup-timelines">
@@ -892,7 +1043,7 @@ restore_command = 'cp /mnt/server/archivedir/%f %p'
     that was current when the base backup was taken.  If you want to recover
     into some child timeline (that is, you want to return to some state that
     was itself generated after a recovery attempt), you need to specify the
-    target timeline in <literal>recovery.conf</>.  You cannot recover into
+    target timeline in <filename>recovery.conf</>.  You cannot recover into
     timelines that branched off earlier than the base backup.
    </para>
   </sect2>
