@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.94 1997/09/12 21:58:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.95 1997/09/13 13:03:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -103,9 +103,9 @@ static void handleCopyOut(PGresult *res, bool quiet, FILE *copystream);
 static void
 handleCopyIn(PGresult *res, const bool mustprompt,
 			 FILE *copystream);
-static int	tableList(PsqlSettings *ps, bool deep_tablelist, char info_type);
-static int	tableDesc(PsqlSettings *ps, char *table);
-static int	rightsList(PsqlSettings *ps);
+static int	tableList(PsqlSettings *pset, bool deep_tablelist, char info_type);
+static int	tableDesc(PsqlSettings *pset, char *table);
+static int	rightsList(PsqlSettings *pset);
 static void prompt_for_password(char *username, char *password);
 static char *
 make_connect_string(char *host, char *port, char *dbname,
@@ -114,15 +114,15 @@ make_connect_string(char *host, char *port, char *dbname,
 static char *gets_noreadline(char *prompt, FILE *source);
 static char *gets_readline(char *prompt, FILE *source);
 static char *gets_fromFile(char *prompt, FILE *source);
-static int	listAllDbs(PsqlSettings *settings);
+static int	listAllDbs(PsqlSettings *pset);
 static void
-SendQuery(bool *success_p, PsqlSettings *settings, const char *query,
+SendQuery(bool *success_p, PsqlSettings *pset, const char *query,
 		  const bool copy_in, const bool copy_out, FILE *copystream);
 static int
-HandleSlashCmds(PsqlSettings *settings,
+HandleSlashCmds(PsqlSettings *pset,
 				char *line,
 				char *query);
-static int	MainLoop(PsqlSettings *settings, FILE *source);
+static int	MainLoop(PsqlSettings *pset, FILE *source);
 
 /* probably should move this into libpq */
 void
@@ -131,7 +131,7 @@ PQprint(FILE *fp,
 		PQprintOpt *po
 );
 
-static FILE *setFout(PsqlSettings *ps, char *fname);
+static FILE *setFout(PsqlSettings *pset, char *fname);
 
 /*
  * usage print out usage for command line arguments
@@ -175,13 +175,13 @@ on(bool f)
 }
 
 static void
-slashUsage(PsqlSettings *ps)
+slashUsage(PsqlSettings *pset)
 {
 	int			usePipe = 0;
 	char	   *pagerenv;
 	FILE	   *fout;
 
-	if (ps->notty == 0 &&
+	if (pset->notty == 0 &&
 		(pagerenv = getenv("PAGER")) &&
 		(pagerenv[0] != '\0') &&
 		(fout = popen(pagerenv, "w")))
@@ -193,30 +193,30 @@ slashUsage(PsqlSettings *ps)
 		fout = stdout;
 
 	fprintf(fout, " \\?           -- help\n");
-	fprintf(fout, " \\a           -- toggle field-alignment (currenty %s)\n", on(ps->opt.align));
-	fprintf(fout, " \\C [<captn>] -- set html3 caption (currently '%s')\n", ps->opt.caption ? ps->opt.caption : "");
-	fprintf(fout, " \\connect <dbname|-> <user> -- connect to new database (currently '%s')\n", PQdb(ps->db));
+	fprintf(fout, " \\a           -- toggle field-alignment (currenty %s)\n", on(pset->opt.align));
+	fprintf(fout, " \\C [<captn>] -- set html3 caption (currently '%s')\n", pset->opt.caption ? pset->opt.caption : "");
+	fprintf(fout, " \\connect <dbname|-> <user> -- connect to new database (currently '%s')\n", PQdb(pset->db));
 	fprintf(fout, " \\copy table {from | to} <fname>\n");
 	fprintf(fout, " \\d [<table>] -- list tables and indices in database or columns in <table>, * for all\n");
 	fprintf(fout, " \\di          -- list only indices in database\n");
 	fprintf(fout, " \\ds          -- list only sequences in database\n");
 	fprintf(fout, " \\dt          -- list only tables in database\n");
 	fprintf(fout, " \\e [<fname>] -- edit the current query buffer or <fname>, \\E execute too\n");
-	fprintf(fout, " \\f [<sep>]   -- change field separater (currently '%s')\n", ps->opt.fieldSep);
+	fprintf(fout, " \\f [<sep>]   -- change field separater (currently '%s')\n", pset->opt.fieldSep);
 	fprintf(fout, " \\g [<fname>] [|<cmd>] -- send query to backend [and results in <fname> or pipe]\n");
 	fprintf(fout, " \\h [<cmd>]   -- help on syntax of sql commands, * for all commands\n");
-	fprintf(fout, " \\H           -- toggle html3 output (currently %s)\n", on(ps->opt.html3));
+	fprintf(fout, " \\H           -- toggle html3 output (currently %s)\n", on(pset->opt.html3));
 	fprintf(fout, " \\i <fname>   -- read and execute queries from filename\n");
 	fprintf(fout, " \\l           -- list all databases\n");
-	fprintf(fout, " \\m           -- toggle monitor-like table display (currently %s)\n", on(ps->opt.standard));
+	fprintf(fout, " \\m           -- toggle monitor-like table display (currently %s)\n", on(pset->opt.standard));
 	fprintf(fout, " \\o [<fname>] [|<cmd>] -- send all query results to stdout, <fname>, or pipe\n");
 	fprintf(fout, " \\p           -- print the current query buffer\n");
 	fprintf(fout, " \\q           -- quit\n");
 	fprintf(fout, " \\r           -- reset(clear) the query buffer\n");
 	fprintf(fout, " \\s [<fname>] -- print history or save it in <fname>\n");
-	fprintf(fout, " \\t           -- toggle table headings and row count (currently %s)\n", on(ps->opt.header));
-	fprintf(fout, " \\T [<html>]  -- set html3.0 <table ...> options (currently '%s')\n", ps->opt.tableOpt ? ps->opt.tableOpt : "");
-	fprintf(fout, " \\x           -- toggle expanded output (currently %s)\n", on(ps->opt.expanded));
+	fprintf(fout, " \\t           -- toggle table headings and row count (currently %s)\n", on(pset->opt.header));
+	fprintf(fout, " \\T [<html>]  -- set html3.0 <table ...> options (currently '%s')\n", pset->opt.tableOpt ? pset->opt.tableOpt : "");
+	fprintf(fout, " \\x           -- toggle expanded output (currently %s)\n", on(pset->opt.expanded));
 	fprintf(fout, " \\z           -- list current grant/revoke permissions\n");
 	fprintf(fout, " \\! [<cmd>]   -- shell escape or command\n");
 
@@ -228,20 +228,20 @@ slashUsage(PsqlSettings *ps)
 }
 
 static PGresult *
-PSQLexec(PsqlSettings *ps, char *query)
+PSQLexec(PsqlSettings *pset, char *query)
 {
 	PGresult   *res;
 
-	res = PQexec(ps->db, query);
+	res = PQexec(pset->db, query);
 	if (!res)
-		fputs(PQerrorMessage(ps->db), stderr);
+		fputs(PQerrorMessage(pset->db), stderr);
 	else
 	{
 		if (PQresultStatus(res) == PGRES_COMMAND_OK ||
 			PQresultStatus(res) == PGRES_TUPLES_OK)
 			return res;
-		if (!ps->quiet)
-			fputs(PQerrorMessage(ps->db), stderr);
+		if (!pset->quiet)
+			fputs(PQerrorMessage(pset->db), stderr);
 		PQclear(res);
 	}
 	return NULL;
@@ -256,18 +256,18 @@ PSQLexec(PsqlSettings *ps, char *query)
  */
 
 static int
-listAllDbs(PsqlSettings *ps)
+listAllDbs(PsqlSettings *pset)
 {
 	PGresult   *results;
 	char	   *query = "select * from pg_database;";
 
-	if (!(results = PSQLexec(ps, query)))
+	if (!(results = PSQLexec(pset, query)))
 		return 1;
 	else
 	{
-		PQprint(ps->queryFout,
+		PQprint(pset->queryFout,
 				results,
-				&ps->opt);
+				&pset->opt);
 		PQclear(results);
 		return 0;
 	}
@@ -278,7 +278,7 @@ listAllDbs(PsqlSettings *ps)
  *
  */
 int
-tableList(PsqlSettings *ps, bool deep_tablelist, char info_type)
+tableList(PsqlSettings *pset, bool deep_tablelist, char info_type)
 {
 	char		listbuf[256];
 	int			nColumns;
@@ -316,7 +316,7 @@ tableList(PsqlSettings *ps, bool deep_tablelist, char info_type)
 	 */
 	strcat(listbuf, "  and usesysid = relowner");
 	strcat(listbuf, "  ORDER BY relname ");
-	if (!(res = PSQLexec(ps, listbuf)))
+	if (!(res = PSQLexec(pset, listbuf)))
 		return -1;
 	/* first, print out the attribute names */
 	nColumns = PQntuples(res);
@@ -343,7 +343,7 @@ tableList(PsqlSettings *ps, bool deep_tablelist, char info_type)
 			PQclear(res);		/* PURIFY */
 			for (i = 0; i < nColumns; i++)
 			{
-				tableDesc(ps, table[i]);
+				tableDesc(pset, table[i]);
 			}
 			free(table);
 		}
@@ -351,7 +351,7 @@ tableList(PsqlSettings *ps, bool deep_tablelist, char info_type)
 		{
 			/* Display the information */
 
-			printf("\nDatabase    = %s\n", PQdb(ps->db));
+			printf("\nDatabase    = %s\n", PQdb(pset->db));
 			printf(" +------------------+----------------------------------+----------+\n");
 			printf(" |  Owner           |             Relation             |   Type   |\n");
 			printf(" +------------------+----------------------------------+----------+\n");
@@ -405,7 +405,7 @@ tableList(PsqlSettings *ps, bool deep_tablelist, char info_type)
  *
  */
 int
-rightsList(PsqlSettings *ps)
+rightsList(PsqlSettings *pset)
 {
 	char		listbuf[256];
 	int			nColumns;
@@ -421,7 +421,7 @@ rightsList(PsqlSettings *ps)
 	strcat(listbuf, "  and relname !~ '^xin[vx][0-9]+'");
 	strcat(listbuf, "  and usesysid = relowner");
 	strcat(listbuf, "  ORDER BY relname ");
-	if (!(res = PSQLexec(ps, listbuf)))
+	if (!(res = PSQLexec(pset, listbuf)))
 		return -1;
 
 	nColumns = PQntuples(res);
@@ -429,7 +429,7 @@ rightsList(PsqlSettings *ps)
 	{
 		/* Display the information */
 
-		printf("\nDatabase    = %s\n", PQdb(ps->db));
+		printf("\nDatabase    = %s\n", PQdb(pset->db));
 		printf(" +------------------+----------------------------------------------------+\n");
 		printf(" |  Relation        |             Grant/Revoke Permissions               |\n");
 		printf(" +------------------+----------------------------------------------------+\n");
@@ -460,7 +460,7 @@ rightsList(PsqlSettings *ps)
  *
  */
 int
-tableDesc(PsqlSettings *ps, char *table)
+tableDesc(PsqlSettings *pset, char *table)
 {
 	char		descbuf[256];
 	int			nColumns;
@@ -486,7 +486,7 @@ tableDesc(PsqlSettings *ps, char *table)
 	strcat(descbuf, "    and a.attrelid = c.oid ");
 	strcat(descbuf, "    and a.atttypid = t.oid ");
 	strcat(descbuf, "  ORDER BY attnum ");
-	if (!(res = PSQLexec(ps, descbuf)))
+	if (!(res = PSQLexec(pset, descbuf)))
 		return -1;
 	/* first, print out the attribute names */
 	nColumns = PQntuples(res);
@@ -630,23 +630,23 @@ gets_fromFile(char *prompt, FILE *source)
  * the query executed successfully returns *success_p = 0 otherwise
  */
 static void
-SendQuery(bool *success_p, PsqlSettings *settings, const char *query,
+SendQuery(bool *success_p, PsqlSettings *pset, const char *query,
 		  const bool copy_in, const bool copy_out, FILE *copystream)
 {
 
 	PGresult   *results;
 	PGnotify   *notify;
 
-	if (settings->singleStep)
+	if (pset->singleStep)
 		fprintf(stdout, "\n**************************************"
 				"*****************************************\n");
 
-	if (settings->echoQuery || settings->singleStep)
+	if (pset->echoQuery || pset->singleStep)
 	{
 		fprintf(stderr, "QUERY: %s\n", query);
 		fflush(stderr);
 	}
-	if (settings->singleStep)
+	if (pset->singleStep)
 	{
 		fprintf(stdout, "\n**************************************"
 				"*****************************************\n");
@@ -654,10 +654,10 @@ SendQuery(bool *success_p, PsqlSettings *settings, const char *query,
 		printf("\npress return to continue ..\n");
 		gets_fromFile("", stdin);
 	}
-	results = PQexec(settings->db, query);
+	results = PQexec(pset->db, query);
 	if (results == NULL)
 	{
-		fprintf(stderr, "%s", PQerrorMessage(settings->db));
+		fprintf(stderr, "%s", PQerrorMessage(pset->db));
 		*success_p = false;
 	}
 	else
@@ -665,13 +665,13 @@ SendQuery(bool *success_p, PsqlSettings *settings, const char *query,
 		switch (PQresultStatus(results))
 		{
 			case PGRES_TUPLES_OK:
-				if (settings->gfname)
+				if (pset->gfname)
 				{
-					PsqlSettings ps = *settings;
+					PsqlSettings settings_copy = *pset;
 					FILE	   *fp;
 
-					ps.queryFout = stdout;
-					fp = setFout(&ps, settings->gfname);
+					settings_copy.queryFout = stdout;
+					fp = setFout(&settings_copy, pset->gfname);
 					if (!fp || fp == stdout)
 					{
 						*success_p = false;
@@ -681,22 +681,22 @@ SendQuery(bool *success_p, PsqlSettings *settings, const char *query,
 						*success_p = true;
 					PQprint(fp,
 							results,
-							&(settings->opt));
-					if (ps.pipe)
+							&pset->opt);
+					if (settings_copy.pipe)
 						pclose(fp);
 					else
 						fclose(fp);
-					free(settings->gfname);
-					settings->gfname = NULL;
+					free(pset->gfname);
+					pset->gfname = NULL;
 					break;
 				}
 				else
 				{
 					*success_p = true;
-					PQprint(settings->queryFout,
+					PQprint(pset->queryFout,
 							results,
-							&(settings->opt));
-					fflush(settings->queryFout);
+							&(pset->opt));
+					fflush(pset->queryFout);
 				}
 				break;
 			case PGRES_EMPTY_QUERY:
@@ -704,21 +704,21 @@ SendQuery(bool *success_p, PsqlSettings *settings, const char *query,
 				break;
 			case PGRES_COMMAND_OK:
 				*success_p = true;
-				if (!settings->quiet)
+				if (!pset->quiet)
 					printf("%s\n", PQcmdStatus(results));
 				break;
 			case PGRES_COPY_OUT:
 				*success_p = true;
 				if (copy_out)
 				{
-					handleCopyOut(results, settings->quiet, copystream);
+					handleCopyOut(results, pset->quiet, copystream);
 				}
 				else
 				{
-					if (!settings->quiet)
+					if (!pset->quiet)
 						printf("Copy command returns...\n");
 
-					handleCopyOut(results, settings->quiet, stdout);
+					handleCopyOut(results, pset->quiet, stdout);
 				}
 				break;
 			case PGRES_COPY_IN:
@@ -726,17 +726,17 @@ SendQuery(bool *success_p, PsqlSettings *settings, const char *query,
 				if (copy_in)
 					handleCopyIn(results, false, copystream);
 				else
-					handleCopyIn(results, !settings->quiet, stdin);
+					handleCopyIn(results, !pset->quiet, stdin);
 				break;
 			case PGRES_NONFATAL_ERROR:
 			case PGRES_FATAL_ERROR:
 			case PGRES_BAD_RESPONSE:
 				*success_p = false;
-				fprintf(stderr, "%s", PQerrorMessage(settings->db));
+				fprintf(stderr, "%s", PQerrorMessage(pset->db));
 				break;
 		}
 
-		if (PQstatus(settings->db) == CONNECTION_BAD)
+		if (PQstatus(pset->db) == CONNECTION_BAD)
 		{
 			fprintf(stderr,
 					"We have lost the connection to the backend, so "
@@ -745,7 +745,7 @@ SendQuery(bool *success_p, PsqlSettings *settings, const char *query,
 			exit(2);			/* we are out'ta here */
 		}
 		/* check for asynchronous returns */
-		notify = PQnotifies(settings->db);
+		notify = PQnotifies(pset->db);
 		if (notify)
 		{
 			fprintf(stderr,
@@ -781,10 +781,10 @@ editFile(char *fname)
 }
 
 static bool
-toggle(PsqlSettings *settings, bool *sw, char *msg)
+toggle(PsqlSettings *pset, bool *sw, char *msg)
 {
 	*sw = !*sw;
-	if (!settings->quiet)
+	if (!pset->quiet)
 		printf("turned %s %s\n", on(*sw), msg);
 	return *sw;
 }
@@ -931,7 +931,7 @@ parse_slash_copy(const char *args, char *table, const int table_len,
 
 
 static void
-do_copy(const char *args, PsqlSettings *settings)
+do_copy(const char *args, PsqlSettings *pset)
 {
 	/*---------------------------------------------------------------------------
 	  Execute a \copy command (frontend copy).	We have to open a file, then
@@ -988,9 +988,9 @@ do_copy(const char *args, PsqlSettings *settings)
 		{
 			bool		success;/* The query succeeded at the backend */
 
-			SendQuery(&success, settings, query, from, !from, copystream);
+			SendQuery(&success, pset, query, from, !from, copystream);
 			fclose(copystream);
-			if (!settings->quiet)
+			if (!pset->quiet)
 			{
 				if (success)
 					printf("Successfully copied.\n");
@@ -1005,15 +1005,15 @@ do_copy(const char *args, PsqlSettings *settings)
 static void
 do_connect(const char *new_dbname,
 		   const char *new_user,
-		   PsqlSettings *settings)
+		   PsqlSettings *pset)
 {
 	if (!new_dbname)
 		fprintf(stderr, "\\connect must be followed by a database name\n");
-	else if (new_user != NULL && settings.getPassword)
+	else if (new_user != NULL && pset->getPassword)
 		fprintf(stderr, "You can't specify a username when using passwords.\n");
 	else
 	{
-		PGconn	   *olddb = settings->db;
+		PGconn	   *olddb = pset->db;
 		static char *userenv = NULL;
 		char	   *old_userenv = NULL;
 		const char *dbparam;
@@ -1041,9 +1041,9 @@ do_connect(const char *new_dbname,
 		else
 			dbparam = PQdb(olddb);
 
-		settings->db = PQsetdb(PQhost(olddb), PQport(olddb),
+		pset->db = PQsetdb(PQhost(olddb), PQport(olddb),
 							   NULL, NULL, dbparam);
-		if (!settings->quiet)
+		if (!pset->quiet)
 		{
 			if (!new_user)
 				printf("connecting to new database: %s\n", dbparam);
@@ -1054,18 +1054,18 @@ do_connect(const char *new_dbname,
 					   dbparam, new_user);
 		}
 
-		if (PQstatus(settings->db) == CONNECTION_BAD)
+		if (PQstatus(pset->db) == CONNECTION_BAD)
 		{
-			fprintf(stderr, "%s\n", PQerrorMessage(settings->db));
+			fprintf(stderr, "%s\n", PQerrorMessage(pset->db));
 			fprintf(stderr, "Could not connect to new database. exiting\n");
 			exit(2);
 		}
 		else
 		{
 			PQfinish(olddb);
-			free(settings->prompt);
-			settings->prompt = malloc(strlen(PQdb(settings->db)) + 10);
-			sprintf(settings->prompt, "%s%s", PQdb(settings->db), PROMPT);
+			free(pset->prompt);
+			pset->prompt = malloc(strlen(PQdb(pset->db)) + 10);
+			sprintf(pset->prompt, "%s%s", PQdb(pset->db), PROMPT);
 		}
 	}
 }
@@ -1157,7 +1157,7 @@ do_edit(const char *filename_arg, char *query, int *status_p)
 
 
 static void
-do_help(PsqlSettings *ps, const char *topic)
+do_help(PsqlSettings *pset, const char *topic)
 {
 
 	if (!topic)
@@ -1202,7 +1202,7 @@ do_help(PsqlSettings *ps, const char *topic)
 		FILE	   *fout;
 
 		if (strcmp(topic, "*") == 0 &&
-			(ps->notty == 0) &&
+			(pset->notty == 0) &&
 			(pagerenv = getenv("PAGER")) &&
 			(pagerenv[0] != '\0') &&
 			(fout = popen(pagerenv, "w")))
@@ -1284,7 +1284,7 @@ do_shell(const char *command)
  *	3 - new query supplied by edit
  */
 static int
-HandleSlashCmds(PsqlSettings *settings,
+HandleSlashCmds(PsqlSettings *pset,
 				char *line,
 				char *query)
 {
@@ -1343,15 +1343,15 @@ HandleSlashCmds(PsqlSettings *settings,
 	switch (cmd[0])
 	{
 		case 'a':				/* toggles to align fields on output */
-			toggle(settings, &settings->opt.align, "field alignment");
+			toggle(pset, &pset->opt.align, "field alignment");
 			break;
 		case 'C':				/* define new caption */
-			if (settings->opt.caption)
+			if (pset->opt.caption)
 			{
-				free(settings->opt.caption);
-				settings->opt.caption = NULL;
+				free(pset->opt.caption);
+				pset->opt.caption = NULL;
 			}
-			if (optarg && !(settings->opt.caption = strdup(optarg)))
+			if (optarg && !(pset->opt.caption = strdup(optarg)))
 			{
 				perror("malloc");
 				exit(CMD_TERMINATE);
@@ -1360,7 +1360,7 @@ HandleSlashCmds(PsqlSettings *settings,
 		case 'c':
 			{
 				if (strncmp(cmd, "copy ", strlen("copy ")) == 0)
-					do_copy(optarg2, settings);
+					do_copy(optarg2, pset);
 				else if (strncmp(cmd, "connect ", strlen("connect ")) == 0 ||
 				  strcmp(cmd, "connect") == 0 /* issue error message */ )
 				{
@@ -1379,7 +1379,7 @@ HandleSlashCmds(PsqlSettings *settings,
 							*(optarg2 + blank_loc2) = '\0';
 						}
 					}
-					do_connect(optarg2, optarg3, settings);
+					do_connect(optarg2, optarg3, pset);
 				}
 				else
 				{
@@ -1398,7 +1398,7 @@ HandleSlashCmds(PsqlSettings *settings,
 							*(optarg + blank_loc2) = '\0';
 						}
 					}
-					do_connect(optarg, optarg3, settings);
+					do_connect(optarg, optarg3, pset);
 				}
 			}
 			break;
@@ -1406,28 +1406,28 @@ HandleSlashCmds(PsqlSettings *settings,
 								 * table */
 			if (strncmp(cmd, "dt", 2) == 0)
 			{					/* only tables */
-				tableList(settings, 0, 't');
+				tableList(pset, 0, 't');
 			}
 			else if (strncmp(cmd, "di", 2) == 0)
 			{					/* only indices */
-				tableList(settings, 0, 'i');
+				tableList(pset, 0, 'i');
 			}
 			else if (strncmp(cmd, "ds", 2) == 0)
 			{					/* only sequences */
-				tableList(settings, 0, 'S');
+				tableList(pset, 0, 'S');
 			}
 			else if (!optarg)
 			{					/* show tables, sequences and indices */
-				tableList(settings, 0, 'b');
+				tableList(pset, 0, 'b');
 			}
 			else if (strcmp(optarg, "*") == 0)
 			{					/* show everything */
-				if (tableList(settings, 0, 'b') == 0)
-					tableList(settings, 1, 'b');
+				if (tableList(pset, 0, 'b') == 0)
+					tableList(pset, 1, 'b');
 			}
 			else
 			{					/* describe the specified table */
-				tableDesc(settings, optarg);
+				tableDesc(pset, optarg);
 			}
 			break;
 		case 'e':				/* edit */
@@ -1468,12 +1468,12 @@ HandleSlashCmds(PsqlSettings *settings,
 				}
 				if (st2.st_mtime == st.st_mtime)
 				{
-					if (!settings->quiet)
+					if (!pset->quiet)
 						fprintf(stderr, "warning: %s not modified. query not executed\n", lastfile);
 					fclose(fd);
 					break;
 				}
-				MainLoop(settings, fd);
+				MainLoop(pset, fd);
 				fclose(fd);
 				break;
 			}
@@ -1483,21 +1483,21 @@ HandleSlashCmds(PsqlSettings *settings,
 
 				if (optarg)
 					fs = optarg;
-				if (settings->opt.fieldSep)
-					free(settings->opt.fieldSep);
-				if (!(settings->opt.fieldSep = strdup(fs)))
+				if (pset->opt.fieldSep)
+					free(pset->opt.fieldSep);
+				if (!(pset->opt.fieldSep = strdup(fs)))
 				{
 					perror("malloc");
 					exit(CMD_TERMINATE);
 				}
-				if (!settings->quiet)
-					printf("field separator changed to '%s'\n", settings->opt.fieldSep);
+				if (!pset->quiet)
+					printf("field separator changed to '%s'\n", pset->opt.fieldSep);
 				break;
 			}
 		case 'g':				/* \g means send query */
 			if (!optarg)
-				settings->gfname = NULL;
-			else if (!(settings->gfname = strdup(optarg)))
+				pset->gfname = NULL;
+			else if (!(pset->gfname = strdup(optarg)))
 			{
 				perror("malloc");
 				exit(CMD_TERMINATE);
@@ -1506,7 +1506,7 @@ HandleSlashCmds(PsqlSettings *settings,
 			break;
 		case 'h':				/* help */
 			{
-				do_help(settings, optarg);
+				do_help(pset, optarg);
 				break;
 			}
 		case 'i':				/* \i is include file */
@@ -1523,19 +1523,19 @@ HandleSlashCmds(PsqlSettings *settings,
 					fprintf(stderr, "file named %s could not be opened\n", optarg);
 					break;
 				}
-				MainLoop(settings, fd);
+				MainLoop(pset, fd);
 				fclose(fd);
 				break;
 			}
 		case 'l':				/* \l is list database */
-			listAllDbs(settings);
+			listAllDbs(pset);
 			break;
 		case 'H':
-			if (toggle(settings, &settings->opt.html3, "HTML3.0 tabular output"))
-				settings->opt.standard = 0;
+			if (toggle(pset, &pset->opt.html3, "HTML3.0 tabular output"))
+				pset->opt.standard = 0;
 			break;
 		case 'o':
-			setFout(settings, optarg);
+			setFout(pset, optarg);
 			break;
 		case 'p':
 			if (query)
@@ -1549,7 +1549,7 @@ HandleSlashCmds(PsqlSettings *settings,
 			break;
 		case 'r':				/* reset(clear) the buffer */
 			query[0] = '\0';
-			if (!settings->quiet)
+			if (!pset->quiet)
 				printf("buffer reset(cleared)\n");
 			break;
 		case 's':				/* \s is save history to a file */
@@ -1561,51 +1561,51 @@ HandleSlashCmds(PsqlSettings *settings,
 #endif
 			break;
 		case 'm':				/* monitor like type-setting */
-			if (toggle(settings, &settings->opt.standard, "standard SQL separaters and padding"))
+			if (toggle(pset, &pset->opt.standard, "standard SQL separaters and padding"))
 			{
-				settings->opt.html3 = settings->opt.expanded = 0;
-				settings->opt.align = settings->opt.header = 1;
-				if (settings->opt.fieldSep)
-					free(settings->opt.fieldSep);
-				settings->opt.fieldSep = strdup("|");
-				if (!settings->quiet)
-					printf("field separator changed to '%s'\n", settings->opt.fieldSep);
+				pset->opt.html3 = pset->opt.expanded = 0;
+				pset->opt.align = pset->opt.header = 1;
+				if (pset->opt.fieldSep)
+					free(pset->opt.fieldSep);
+				pset->opt.fieldSep = strdup("|");
+				if (!pset->quiet)
+					printf("field separator changed to '%s'\n", pset->opt.fieldSep);
 			}
 			else
 			{
-				if (settings->opt.fieldSep)
-					free(settings->opt.fieldSep);
-				settings->opt.fieldSep = strdup(DEFAULT_FIELD_SEP);
-				if (!settings->quiet)
-					printf("field separator changed to '%s'\n", settings->opt.fieldSep);
+				if (pset->opt.fieldSep)
+					free(pset->opt.fieldSep);
+				pset->opt.fieldSep = strdup(DEFAULT_FIELD_SEP);
+				if (!pset->quiet)
+					printf("field separator changed to '%s'\n", pset->opt.fieldSep);
 			}
 			break;
 		case 'z':				/* list table rights (grant/revoke) */
-			rightsList(settings);
+			rightsList(pset);
 			break;
 		case 't':				/* toggle headers */
-			toggle(settings, &settings->opt.header, "output headings and row count");
+			toggle(pset, &pset->opt.header, "output headings and row count");
 			break;
 		case 'T':				/* define html <table ...> option */
-			if (settings->opt.tableOpt)
-				free(settings->opt.tableOpt);
+			if (pset->opt.tableOpt)
+				free(pset->opt.tableOpt);
 			if (!optarg)
-				settings->opt.tableOpt = NULL;
-			else if (!(settings->opt.tableOpt = strdup(optarg)))
+				pset->opt.tableOpt = NULL;
+			else if (!(pset->opt.tableOpt = strdup(optarg)))
 			{
 				perror("malloc");
 				exit(CMD_TERMINATE);
 			}
 			break;
 		case 'x':
-			toggle(settings, &settings->opt.expanded, "expanded table representation");
+			toggle(pset, &pset->opt.expanded, "expanded table representation");
 			break;
 		case '!':
 			do_shell(optarg);
 			break;
 		default:
 		case '?':				/* \? is help */
-			slashUsage(settings);
+			slashUsage(pset);
 			break;
 	}
 	free(cmd);
@@ -1622,7 +1622,7 @@ HandleSlashCmds(PsqlSettings *settings,
  */
 
 static int
-MainLoop(PsqlSettings *settings, FILE *source)
+MainLoop(PsqlSettings *pset, FILE *source)
 {
 	char	   *line;			/* line of input */
 	char	   *xcomment;		/* start of extended comment */
@@ -1652,18 +1652,18 @@ MainLoop(PsqlSettings *settings, FILE *source)
 	int			paren_level;
 	char	   *query_start;
 
-	interactive = ((source == stdin) && !settings->notty);
+	interactive = ((source == stdin) && !pset->notty);
 	if (interactive)
 	{
-		if (settings->prompt)
-			free(settings->prompt);
-		settings->prompt =
-			malloc(strlen(PQdb(settings->db)) + strlen(PROMPT) + 1);
-		if (settings->quiet)
-			settings->prompt[0] = '\0';
+		if (pset->prompt)
+			free(pset->prompt);
+		pset->prompt =
+			malloc(strlen(PQdb(pset->db)) + strlen(PROMPT) + 1);
+		if (pset->quiet)
+			pset->prompt[0] = '\0';
 		else
-			sprintf(settings->prompt, "%s%s", PQdb(settings->db), PROMPT);
-		if (settings->useReadline)
+			sprintf(pset->prompt, "%s%s", PQdb(pset->db), PROMPT);
+		if (pset->useReadline)
 		{
 #ifdef HAVE_HISTORY
 			using_history();
@@ -1703,20 +1703,20 @@ MainLoop(PsqlSettings *settings, FILE *source)
 		}
 		else
 		{
-			if (interactive && !settings->quiet)
+			if (interactive && !pset->quiet)
 			{
 				if (in_quote)
-					settings->prompt[strlen(settings->prompt) - 3] = PROMPT_QUOTE;
+					pset->prompt[strlen(pset->prompt) - 3] = PROMPT_QUOTE;
 				else if (xcomment != NULL)
-					settings->prompt[strlen(settings->prompt) - 3] = PROMPT_COMMENT;
+					pset->prompt[strlen(pset->prompt) - 3] = PROMPT_COMMENT;
 				else if (query[0] != '\0' && !querySent)
-					settings->prompt[strlen(settings->prompt) - 3] = PROMPT_CONTINUE;
+					pset->prompt[strlen(pset->prompt) - 3] = PROMPT_CONTINUE;
 				else
-					settings->prompt[strlen(settings->prompt) - 3] = PROMPT_READY;
+					pset->prompt[strlen(pset->prompt) - 3] = PROMPT_READY;
 			}
-			line = GetNextLine(settings->prompt, source);
+			line = GetNextLine(pset->prompt, source);
 #ifdef HAVE_HISTORY
-			if (interactive && settings->useReadline && line != NULL)
+			if (interactive && pset->useReadline && line != NULL)
 				add_history(line);		/* save non-empty lines in history */
 #endif
 		}
@@ -1741,7 +1741,7 @@ MainLoop(PsqlSettings *settings, FILE *source)
 
 		if (line == NULL)
 		{						/* No more input.  Time to quit */
-			if (!settings->quiet)
+			if (!pset->quiet)
 				printf("EOF\n");/* Goes on prompt line */
 			eof = true;
 		}
@@ -1751,7 +1751,7 @@ MainLoop(PsqlSettings *settings, FILE *source)
 			line = rightTrim(line);
 
 			/* echo back if input is from file */
-			if (!interactive && !settings->singleStep && !settings->quiet)
+			if (!interactive && !pset->singleStep && !pset->quiet)
 				fprintf(stderr, "%s\n", line);
 
 			/* nothing on line after trimming? then ignore */
@@ -1763,9 +1763,9 @@ MainLoop(PsqlSettings *settings, FILE *source)
 
 			len = strlen(line);
 
-			if (settings->singleLineMode)
+			if (pset->singleLineMode)
 			{
-				SendQuery(&success, settings, line, false, false, 0);
+				SendQuery(&success, pset, line, false, false, 0);
 				successResult &= success;
 				querySent = true;
 
@@ -1835,7 +1835,7 @@ MainLoop(PsqlSettings *settings, FILE *source)
 							 (line[i] == '/' && line[i + 1] == '/'))
 					{
 						/* print comment at top of query */
-						if (settings->singleStep)
+						if (pset->singleStep)
 							fprintf(stdout, "%s\n", line + i);
 						line[i] = '\0'; /* remove comment */
 						break;
@@ -1862,7 +1862,7 @@ MainLoop(PsqlSettings *settings, FILE *source)
 							else
 								strcpy(query, query_start);
 						}
-						SendQuery(&success, settings, query, false, false, 0);
+						SendQuery(&success, pset, query, false, false, 0);
 						successResult &= success;
 						line[i + 1] = hold_char;
 						query_start = line + i + 1;
@@ -1891,7 +1891,7 @@ MainLoop(PsqlSettings *settings, FILE *source)
 			slashCmdStatus = CMD_UNKNOWN;
 			if (!in_quote && query_start[0] == '\\')
 			{
-				slashCmdStatus = HandleSlashCmds(settings,
+				slashCmdStatus = HandleSlashCmds(pset,
 												 query_start,
 												 query);
 				if (slashCmdStatus == CMD_SKIP_LINE)
@@ -1938,11 +1938,11 @@ MainLoop(PsqlSettings *settings, FILE *source)
 #if FALSE
 				if (!querySent)
 				{
-					SendQuery(&success, settings, query, false, false, 0);
+					SendQuery(&success, pset, query, false, false, 0);
 					successResult &= success;
 				}
 #else
-				SendQuery(&success, settings, query, false, false, 0);
+				SendQuery(&success, pset, query, false, false, 0);
 				successResult &= success;
 #endif
 				querySent = true;
@@ -2263,18 +2263,18 @@ handleCopyIn(PGresult *res, const bool mustprompt, FILE *copystream)
  */
 
 static FILE *
-setFout(PsqlSettings *ps, char *fname)
+setFout(PsqlSettings *pset, char *fname)
 {
-	if (ps->queryFout && ps->queryFout != stdout)
+	if (pset->queryFout && pset->queryFout != stdout)
 	{
-		if (ps->pipe)
-			pclose(ps->queryFout);
+		if (pset->pipe)
+			pclose(pset->queryFout);
 		else
-			fclose(ps->queryFout);
+			fclose(pset->queryFout);
 	}
 	if (!fname)
 	{
-		ps->queryFout = stdout;
+		pset->queryFout = stdout;
 		pqsignal(SIGPIPE, SIG_DFL);
 	}
 	else
@@ -2282,22 +2282,22 @@ setFout(PsqlSettings *ps, char *fname)
 		if (*fname == '|')
 		{
 			pqsignal(SIGPIPE, SIG_IGN);
-			ps->queryFout = popen(fname + 1, "w");
-			ps->pipe = 1;
+			pset->queryFout = popen(fname + 1, "w");
+			pset->pipe = 1;
 		}
 		else
 		{
-			ps->queryFout = fopen(fname, "w");
+			pset->queryFout = fopen(fname, "w");
 			pqsignal(SIGPIPE, SIG_DFL);
-			ps->pipe = 0;
+			pset->pipe = 0;
 		}
-		if (!ps->queryFout)
+		if (!pset->queryFout)
 		{
 			perror(fname);
-			ps->queryFout = stdout;
+			pset->queryFout = stdout;
 		}
 	}
-	return ps->queryFout;
+	return pset->queryFout;
 }
 
 static void
