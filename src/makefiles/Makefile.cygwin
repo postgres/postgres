@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/makefiles/Makefile.cygwin,v 1.4 2004/01/19 21:20:06 tgl Exp $
+# $PostgreSQL: pgsql/src/makefiles/Makefile.cygwin,v 1.5 2004/10/27 19:14:07 momjian Exp $
 DLLTOOL= dlltool
 DLLWRAP= dllwrap
 BE_DLLLIBS= -L$(top_builddir)/src/backend -lpostgres
@@ -21,6 +21,10 @@ ifneq (,$(findstring backend,$(subdir)))
 ifeq (,$(findstring conversion_procs,$(subdir)))
 override CPPFLAGS+= -DBUILDING_DLL
 endif
+endif
+
+ifneq (,$(findstring timezone,$(subdir)))
+override CPPFLAGS+= -DBUILDING_DLL
 endif
 
 ifneq (,$(findstring ecpg/ecpglib,$(subdir)))
