@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.101 2004/05/28 16:17:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.102 2004/05/28 16:37:11 tgl Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -1355,9 +1355,10 @@ pg_namespace_aclmask(Oid nsp_oid, AclId userid,
 	 *
 	 * This may seem redundant given the check in InitTempTableNamespace,
 	 * but it really isn't since current user ID may have changed since then.
-	 * The upshot of this behavior is that a SECURITY INVOKER function can
+	 * The upshot of this behavior is that a SECURITY DEFINER function can
 	 * create temp tables that can then be accessed (if permission is granted)
-	 * by code that doesn't have permissions to create temp tables.
+	 * by code in the same session that doesn't have permissions to create
+	 * temp tables.
 	 *
 	 * XXX Would it be safe to ereport a special error message as
 	 * InitTempTableNamespace does?  Returning zero here means we'll get a
