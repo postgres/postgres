@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/manage-ag.sgml,v 2.36 2004/11/05 19:15:49 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/manage-ag.sgml,v 2.37 2004/12/02 19:28:48 tgl Exp $
 -->
 
 <chapter id="managing-databases">
@@ -240,8 +240,7 @@ createdb -T template0 <replaceable>dbname</>
 
   <para>
    After preparing a template database, or making any changes to one,
-   it is a good idea to perform
-   <command>VACUUM FREEZE</> or <command>VACUUM FULL FREEZE</> in that
+   it is a good idea to perform <command>VACUUM FREEZE</> in that
    database.  If this is done when there are no other open transactions
    in the same database, then it is guaranteed that all rows in the
    database are <quote>frozen</> and will not be subject to transaction

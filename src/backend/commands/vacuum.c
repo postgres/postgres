@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.296 2004/12/01 19:00:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.297 2004/12/02 19:28:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -264,6 +264,27 @@ vacuum(VacuumStmt *vacstmt)
 	}
 	else
 		in_outer_xact = IsInTransactionChain((void *) vacstmt);
+
+	/*
+	 * Disallow the combination VACUUM FULL FREEZE; although it would mostly
+	 * work, VACUUM FULL's ability to move tuples around means that it is
+	 * injecting its own XID into tuple visibility checks.  We'd have to
+	 * guarantee that every moved tuple is properly marked XMIN_COMMITTED or
+	 * XMIN_INVALID before the end of the operation.  There are corner cases
+	 * where this does not happen, and getting rid of them all seems hard
+	 * (not to mention fragile to maintain).  On the whole it's not worth it
+	 * compared to telling people to use two operations.  See pgsql-hackers
+	 * discussion of 27-Nov-2004, and comments below for update_hint_bits().
+	 *
+	 * Note: this is enforced here, and not in the grammar, since (a) we can
+	 * give a better error message, and (b) we might want to allow it again
+	 * someday.
+	 */
+	if (vacstmt->vacuum && vacstmt->full && vacstmt->freeze)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("VACUUM FULL FREEZE is not supported"),
+				 errhint("Use VACUUM FULL, then VACUUM FREEZE.")));
 
 	/*
 	 * Send info about dead objects to the statistics collector
@@ -1346,8 +1367,7 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 					do_shrinking = false;
 					break;
 				default:
-					/* unexpected HeapTupleSatisfiesVacuum result */
-					Assert(false);
+					elog(ERROR, "unexpected HeapTupleSatisfiesVacuum result");
 					break;
 			}
 
@@ -1530,9 +1550,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 			VacPageList vacuum_pages, VacPageList fraged_pages,
 			int nindexes, Relation *Irel)
 {
-#ifdef	USE_ASSERT_CHECKING
 	TransactionId myXID = GetCurrentTransactionId();
-#endif
 	Buffer		dst_buffer = InvalidBuffer;
 	BlockNumber nblocks,
 				blkno;
@@ -1702,36 +1720,30 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 			 */
 			if (!(tuple.t_data->t_infomask & HEAP_XMIN_COMMITTED))
 			{
+				if (tuple.t_data->t_infomask & HEAP_MOVED_IN)
+					elog(ERROR, "HEAP_MOVED_IN was not expected");
+				if (!(tuple.t_data->t_infomask & HEAP_MOVED_OFF))
+					elog(ERROR, "HEAP_MOVED_OFF was expected");
+
 				/*
-				 * There cannot be another concurrently running VACUUM. If
-				 * the tuple had been moved in by a previous VACUUM, the
-				 * visibility check would have set XMIN_COMMITTED.	If the
-				 * tuple had been moved in by the currently running
-				 * VACUUM, the loop would have been terminated.  We had
-				 * elog(ERROR, ...) here, but as we are testing for a
-				 * can't-happen condition, Assert() seems more
-				 * appropriate.
+				 * MOVED_OFF by another VACUUM would have caused the
+				 * visibility check to set XMIN_COMMITTED or XMIN_INVALID.
 				 */
-				Assert(!(tuple.t_data->t_infomask & HEAP_MOVED_IN));
+				if (HeapTupleHeaderGetXvac(tuple.t_data) != myXID)
+					elog(ERROR, "invalid XVAC in tuple header");
 
 				/*
 				 * If this (chain) tuple is moved by me already then I
 				 * have to check is it in vacpage or not - i.e. is it
 				 * moved while cleaning this page or some previous one.
 				 */
-				Assert(tuple.t_data->t_infomask & HEAP_MOVED_OFF);
-
-				/*
-				 * MOVED_OFF by another VACUUM would have caused the
-				 * visibility check to set XMIN_COMMITTED or XMIN_INVALID.
-				 */
-				Assert(HeapTupleHeaderGetXvac(tuple.t_data) == myXID);
 
 				/* Can't we Assert(keep_tuples > 0) here? */
 				if (keep_tuples == 0)
 					continue;
-				if (chain_tuple_moved)	/* some chains was moved while */
-				{				/* cleaning this page */
+				if (chain_tuple_moved)
+				{
+					/* some chains were moved while cleaning this page */
 					Assert(vacpage->offsets_free > 0);
 					for (i = 0; i < vacpage->offsets_free; i++)
 					{
@@ -2133,15 +2145,19 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 					continue;
 
 				/*
-				 * * See comments in the walk-along-page loop above, why
-				 * we * have Asserts here instead of if (...) elog(ERROR).
+				 * See comments in the walk-along-page loop above about
+				 * why only MOVED_OFF tuples should be found here.
 				 */
-				Assert(!(htup->t_infomask & HEAP_MOVED_IN));
-				Assert(htup->t_infomask & HEAP_MOVED_OFF);
-				Assert(HeapTupleHeaderGetXvac(htup) == myXID);
+				if (htup->t_infomask & HEAP_MOVED_IN)
+					elog(ERROR, "HEAP_MOVED_IN was not expected");
+				if (!(htup->t_infomask & HEAP_MOVED_OFF))
+					elog(ERROR, "HEAP_MOVED_OFF was expected");
+				if (HeapTupleHeaderGetXvac(htup) != myXID)
+					elog(ERROR, "invalid XVAC in tuple header");
+
 				if (chain_tuple_moved)
 				{
-					/* some chains was moved while cleaning this page */
+					/* some chains were moved while cleaning this page */
 					Assert(vacpage->offsets_free > 0);
 					for (i = 0; i < vacpage->offsets_free; i++)
 					{
@@ -2294,7 +2310,13 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 							 vacrelstats->rel_tuples, keep_tuples);
 		}
 
-		/* clean moved tuples from last page in Nvacpagelist list */
+		/*
+		 * Clean moved-off tuples from last page in Nvacpagelist list.
+		 *
+		 * We need only do this in this one page, because higher-numbered
+		 * pages are going to be truncated from the relation entirely.
+		 * But see comments for update_hint_bits().
+		 */
 		if (vacpage->blkno == (blkno - 1) &&
 			vacpage->offsets_free > 0)
 		{
@@ -2324,16 +2346,18 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 					continue;
 
 				/*
-				 * * See comments in the walk-along-page loop above, why
-				 * we * have Asserts here instead of if (...) elog(ERROR).
+				 * See comments in the walk-along-page loop above about
+				 * why only MOVED_OFF tuples should be found here.
 				 */
-				Assert(!(htup->t_infomask & HEAP_MOVED_IN));
-				Assert(htup->t_infomask & HEAP_MOVED_OFF);
-				Assert(HeapTupleHeaderGetXvac(htup) == myXID);
+				if (htup->t_infomask & HEAP_MOVED_IN)
+					elog(ERROR, "HEAP_MOVED_IN was not expected");
+				if (!(htup->t_infomask & HEAP_MOVED_OFF))
+					elog(ERROR, "HEAP_MOVED_OFF was expected");
+				if (HeapTupleHeaderGetXvac(htup) != myXID)
+					elog(ERROR, "invalid XVAC in tuple header");
 
 				itemid->lp_flags &= ~LP_USED;
 				num_tuples++;
-
 			}
 			Assert(vacpage->offsets_free == num_tuples);
 
@@ -2644,20 +2668,36 @@ move_plain_tuple(Relation rel,
 /*
  *	update_hint_bits() -- update hint bits in destination pages
  *
- * Scan all the pages that we moved tuples onto and update tuple
- * status bits.  This is not really necessary, but will save time for
- * future transactions examining these tuples.
+ * Scan all the pages that we moved tuples onto and update tuple status bits.
+ * This is normally not really necessary, but it will save time for future
+ * transactions examining these tuples.
  *
- * XXX NOTICE that this code fails to clear HEAP_MOVED_OFF tuples from
- * pages that were move source pages but not move dest pages.  One
- * also wonders whether it wouldn't be better to skip this step and
- * let the tuple status updates happen someplace that's not holding an
- * exclusive lock on the relation.
+ * This pass guarantees that all HEAP_MOVED_IN tuples are marked as
+ * XMIN_COMMITTED, so that future tqual tests won't need to check their XVAC.
+ *
+ * BUT NOTICE that this code fails to clear HEAP_MOVED_OFF tuples from
+ * pages that were move source pages but not move dest pages.  The bulk
+ * of the move source pages will be physically truncated from the relation,
+ * and the last page remaining in the rel will be fixed separately in
+ * repair_frag(), so the only cases where a MOVED_OFF tuple won't get its
+ * hint bits updated are tuples that are moved as part of a chain and were
+ * on pages that were not either move destinations nor at the end of the rel.
+ * To completely ensure that no MOVED_OFF tuples remain unmarked, we'd have
+ * to remember and revisit those pages too.
+ *
+ * Because of this omission, VACUUM FULL FREEZE is not a safe combination;
+ * it's possible that the VACUUM's own XID remains exposed as something that
+ * tqual tests would need to check.
+ *
+ * For the non-freeze case, one wonders whether it wouldn't be better to skip
+ * this work entirely, and let the tuple status updates happen someplace
+ * that's not holding an exclusive lock on the relation.
  */
 static void
 update_hint_bits(Relation rel, VacPageList fraged_pages, int num_fraged_pages,
 				 BlockNumber last_move_dest_block, int num_moved)
 {
+	TransactionId myXID = GetCurrentTransactionId();
 	int			checked_moved = 0;
 	int			i;
 	VacPage    *curpage;
@@ -2696,12 +2736,13 @@ update_hint_bits(Relation rel, VacPageList fraged_pages, int num_fraged_pages,
 				continue;
 
 			/*
-			 * See comments in the walk-along-page loop above, why we have
-			 * Asserts here instead of if (...) elog(ERROR).  The
-			 * difference here is that we may see MOVED_IN.
+			 * Here we may see either MOVED_OFF or MOVED_IN tuples.
 			 */
-			Assert(htup->t_infomask & HEAP_MOVED);
-			Assert(HeapTupleHeaderGetXvac(htup) == GetCurrentTransactionId());
+			if (!(htup->t_infomask & HEAP_MOVED))
+				elog(ERROR, "HEAP_MOVED_OFF/HEAP_MOVED_IN was expected");
+			if (HeapTupleHeaderGetXvac(htup) != myXID)
+				elog(ERROR, "invalid XVAC in tuple header");
+
 			if (htup->t_infomask & HEAP_MOVED_IN)
 			{
 				htup->t_infomask |= HEAP_XMIN_COMMITTED;
