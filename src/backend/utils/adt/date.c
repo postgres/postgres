@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.73.2.6 2003/07/24 00:21:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.73.2.7 2003/07/24 04:38:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -321,7 +321,7 @@ timestamp_date(PG_FUNCTION_ARGS)
 	DateADT		result;
 	struct tm	tt,
 			   *tm = &tt;
-	double		fsec;
+	fsec_t		fsec;
 
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		PG_RETURN_NULL();
