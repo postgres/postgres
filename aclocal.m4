@@ -1,152 +1,70 @@
-dnl aclocal.m4 generated automatically by aclocal 1.4
-
-dnl Copyright (C) 1994, 1995-8, 1999 Free Software Foundation, Inc.
-dnl This file is free software; the Free Software Foundation
-dnl gives unlimited permission to copy and/or distribute it,
-dnl with or without modifications, as long as this notice is preserved.
-
-dnl This program is distributed in the hope that it will be useful,
-dnl but WITHOUT ANY WARRANTY, to the extent permitted by law; without
-dnl even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-dnl PARTICULAR PURPOSE.
-
-#
-# Autoconf macros for configuring the build of Python extension modules
-#
-# $Header: /cvsroot/pgsql/aclocal.m4,v 1.2 2000/06/11 11:39:45 petere Exp $
-#
-
-# PGAC_PROG_PYTHON
-# ----------------
-# Look for Python and set the output variable `PYTHON'
-# to `python' if found, empty otherwise.
-AC_DEFUN([PGAC_PROG_PYTHON],
-[AC_CHECK_PROG(PYTHON, python, python)])
+# $Header: /cvsroot/pgsql/aclocal.m4,v 1.3 2000/06/14 18:17:24 petere Exp $
+# This comes from the official Autoconf macro archive at
+# <http://research.cys.de/autoconf-archive/>
+# (I removed the $ before the Id CVS keyword below.)
 
 
-# PGAC_PATH_PYTHONDIR
-# -------------------
-# Finds the names of various install dirs and helper files
-# necessary to build a Python extension module.
-#
-# It would be nice if we could check whether the current setup allows
-# the build of the shared module. Future project.
-AC_DEFUN([PGAC_PATH_PYTHONDIR],
-[AC_REQUIRE([PGAC_PROG_PYTHON])
-[if test "${PYTHON+set}" = set ; then
-  python_version=`${PYTHON} -c "import sys; print sys.version[:3]"`
-  python_prefix=`${PYTHON} -c "import sys; print sys.prefix"`
-  python_execprefix=`${PYTHON} -c "import sys; print sys.exec_prefix"`
-  python_configdir="${python_execprefix}/lib/python${python_version}/config"
-  python_moduledir="${python_prefix}/lib/python${python_version}"
-  python_extmakefile="${python_configdir}/Makefile.pre.in"]
+dnl @synopsis AC_FUNC_ACCEPT_ARGTYPES
+dnl
+dnl Checks the data types of the three arguments to accept(). Results are
+dnl placed into the symbols ACCEPT_TYPE_ARG[123], consistent with the
+dnl following example:
+dnl
+dnl       #define ACCEPT_TYPE_ARG1 int
+dnl       #define ACCEPT_TYPE_ARG2 struct sockaddr *
+dnl       #define ACCEPT_TYPE_ARG3 socklen_t
+dnl
+dnl This macro requires AC_CHECK_HEADERS to have already verified the
+dnl presence or absence of sys/types.h and sys/socket.h.
+dnl
+dnl NOTE: This is just a modified version of the AC_FUNC_SELECT_ARGTYPES
+dnl macro. Credit for that one goes to David MacKenzie et. al.
+dnl
+dnl @version Id: ac_func_accept_argtypes.m4,v 1.1 1999/12/03 11:29:29 simons Exp $
+dnl @author Daniel Richard G. <skunk@mit.edu>
+dnl
 
-  AC_MSG_CHECKING(for Python extension makefile)
-  if test -f "${python_extmakefile}" ; then
-    AC_MSG_RESULT(found)
-  else
-    AC_MSG_RESULT(no)
-    AC_MSG_ERROR(
-[The Python extension makefile was expected at \`${python_extmakefile}\'
-but does not exist. This means the Python module cannot be built automatically.])
-  fi
+# PostgreSQL local changes: In the original version ACCEPT_TYPE_ARG3
+# is a pointer type. That's kind of useless because then you can't
+# use the macro to define a corresponding variable. We also make the
+# reasonable(?) assumption that you can use arg3 for getsocktype etc.
+# as well (i.e., anywhere POSIX.2 has socklen_t).
 
-  AC_SUBST(python_version)
-  AC_SUBST(python_prefix)
-  AC_SUBST(python_execprefix)
-  AC_SUBST(python_configdir)
-  AC_SUBST(python_moduledir)
-  AC_SUBST(python_extmakefile)
-else
-  AC_MSG_ERROR([Python not found])
-fi])# PGAC_PATH_PYTHONDIR
-
-# Macros to detect certain C++ features
-# $Header: /cvsroot/pgsql/aclocal.m4,v 1.2 2000/06/11 11:39:45 petere Exp $
-
-
-# PGAC_CLASS_STRING
-# -----------------
-# Look for class `string'. First look for the <string> header. If this
-# is found a <string> header then it's probably safe to assume that
-# class string exists.  If not, check to make sure that <string.h>
-# defines class `string'.
-AC_DEFUN([PGAC_CLASS_STRING],
-[AC_LANG_SAVE
-AC_LANG_CPLUSPLUS
-AC_CHECK_HEADER(string,
-  [AC_DEFINE(HAVE_CXX_STRING_HEADER)])
-
-if test x"$ac_cv_header_string" != xyes ; then
-  AC_CACHE_CHECK([for class string in <string.h>],
-    [pgac_cv_class_string_in_string_h],
-    [AC_TRY_COMPILE([#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-],
-      [string foo = "test"],
-      [pgac_cv_class_string_in_string_h=yes],
-      [pgac_cv_class_string_in_string_h=no])])
-
-  if test x"$pgac_cv_class_string_in_string_h" != xyes ; then
-    AC_MSG_ERROR([neither <string> nor <string.h> seem to define the C++ class \`string\'])
-  fi
-fi
-AC_LANG_RESTORE])# PGAC_CLASS_STRING
-
-
-# PGAC_CXX_NAMESPACE_STD
-# ----------------------
-# Check whether the C++ compiler understands `using namespace std'.
-#
-# Note 1: On at least some compilers, it will not work until you've
-# included a header that mentions namespace std. Thus, include the
-# usual suspects before trying it.
-#
-# Note 2: This test does not actually reveal whether the C++ compiler
-# properly understands namespaces in all generality. (GNU C++ 2.8.1
-# is one that doesn't.) However, we don't care.
-AC_DEFUN([PGAC_CXX_NAMESPACE_STD],
-[AC_REQUIRE([PGAC_CLASS_STRING])
-AC_CACHE_CHECK([for namespace std in C++],
-pgac_cv_cxx_namespace_std,
-[
-AC_LANG_SAVE
-AC_LANG_CPLUSPLUS
-AC_TRY_COMPILE(
-[#include <stdio.h>
-#include <stdlib.h>
-#ifdef HAVE_CXX_STRING_HEADER
-#include <string>
+AC_DEFUN(AC_FUNC_ACCEPT_ARGTYPES,
+[AC_MSG_CHECKING([types of arguments for accept()])
+ AC_CACHE_VAL(ac_cv_func_accept_arg1,dnl
+ [AC_CACHE_VAL(ac_cv_func_accept_arg2,dnl
+  [AC_CACHE_VAL(ac_cv_func_accept_arg3,dnl
+   [for ac_cv_func_accept_arg1 in 'int' 'unsigned int'; do
+     for ac_cv_func_accept_arg2 in 'struct sockaddr *' 'void *'; do
+      for ac_cv_func_accept_arg3 in 'socklen_t' 'size_t' 'unsigned int' 'int'; do
+       AC_TRY_COMPILE(dnl
+[#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
 #endif
-using namespace std;
-], [],
-[pgac_cv_cxx_namespace_std=yes],
-[pgac_cv_cxx_namespace_std=no])
-AC_LANG_RESTORE])
-
-if test $pgac_cv_cxx_namespace_std = yes ; then
-    AC_DEFINE(HAVE_NAMESPACE_STD, 1, [Define to 1 if the C++ compiler understands `using namespace std'])
-fi])# PGAC_CXX_NAMESPACE_STD
-
-dnl AM_MISSING_PROG(NAME, PROGRAM, DIRECTORY)
-dnl The program must properly implement --version.
-AC_DEFUN(AM_MISSING_PROG,
-[AC_MSG_CHECKING(for working $2)
-# Run test in a subshell; some versions of sh will print an error if
-# an executable is not found, even if stderr is redirected.
-# Redirect stdin to placate older versions of autoconf.  Sigh.
-if ($2 --version) < /dev/null > /dev/null 2>&1; then
-   $1=$2
-   AC_MSG_RESULT(found)
-else
-   $1="$3/missing $2"
-   AC_MSG_RESULT(missing)
-fi
-AC_SUBST($1)])
-
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
+extern accept ($ac_cv_func_accept_arg1, $ac_cv_func_accept_arg2, $ac_cv_func_accept_arg3 *);],,dnl
+        [ac_not_found=no ; break 3], ac_not_found=yes)
+      done
+     done
+    done
+   ])dnl AC_CACHE_VAL
+  ])dnl AC_CACHE_VAL
+ ])dnl AC_CACHE_VAL
+ if test "$ac_not_found" = yes; then
+  ac_cv_func_accept_arg1=int
+  ac_cv_func_accept_arg2='struct sockaddr *'
+  ac_cv_func_accept_arg3='socklen_t'
+ fi
+ AC_MSG_RESULT([$ac_cv_func_accept_arg1, $ac_cv_func_accept_arg2, $ac_cv_func_accept_arg3 *])
+ AC_DEFINE_UNQUOTED(ACCEPT_TYPE_ARG1,$ac_cv_func_accept_arg1)
+ AC_DEFINE_UNQUOTED(ACCEPT_TYPE_ARG2,$ac_cv_func_accept_arg2)
+ AC_DEFINE_UNQUOTED(ACCEPT_TYPE_ARG3,$ac_cv_func_accept_arg3)
+])
 # Macros to detect C compiler features
-# $Header: /cvsroot/pgsql/aclocal.m4,v 1.2 2000/06/11 11:39:45 petere Exp $
+# $Header: /cvsroot/pgsql/aclocal.m4,v 1.3 2000/06/14 18:17:24 petere Exp $
 
 
 # PGAC_C_SIGNED
@@ -265,75 +183,8 @@ AC_DEFINE_UNQUOTED(AC_TYPE_NAME, $AC_CV_NAME, [The alignment requirement of a `]
 undefine([AC_TYPE_NAME])dnl
 undefine([AC_CV_NAME])dnl
 ])# PGAC_CHECK_ALIGNOF
-
-# $Header: /cvsroot/pgsql/aclocal.m4,v 1.2 2000/06/11 11:39:45 petere Exp $
-# This comes from the official Autoconf macro archive at
-# <http://research.cys.de/autoconf-archive/>
-# (I removed the $ before the Id CVS keyword below.)
-
-
-dnl @synopsis AC_FUNC_ACCEPT_ARGTYPES
-dnl
-dnl Checks the data types of the three arguments to accept(). Results are
-dnl placed into the symbols ACCEPT_TYPE_ARG[123], consistent with the
-dnl following example:
-dnl
-dnl       #define ACCEPT_TYPE_ARG1 int
-dnl       #define ACCEPT_TYPE_ARG2 struct sockaddr *
-dnl       #define ACCEPT_TYPE_ARG3 socklen_t
-dnl
-dnl This macro requires AC_CHECK_HEADERS to have already verified the
-dnl presence or absence of sys/types.h and sys/socket.h.
-dnl
-dnl NOTE: This is just a modified version of the AC_FUNC_SELECT_ARGTYPES
-dnl macro. Credit for that one goes to David MacKenzie et. al.
-dnl
-dnl @version Id: ac_func_accept_argtypes.m4,v 1.1 1999/12/03 11:29:29 simons Exp $
-dnl @author Daniel Richard G. <skunk@mit.edu>
-dnl
-
-# PostgreSQL local changes: In the original version ACCEPT_TYPE_ARG3
-# is a pointer type. That's kind of useless because then you can't
-# use the macro to define a corresponding variable. We also make the
-# reasonable(?) assumption that you can use arg3 for getsocktype etc.
-# as well (i.e., anywhere POSIX.2 has socklen_t).
-
-AC_DEFUN(AC_FUNC_ACCEPT_ARGTYPES,
-[AC_MSG_CHECKING([types of arguments for accept()])
- AC_CACHE_VAL(ac_cv_func_accept_arg1,dnl
- [AC_CACHE_VAL(ac_cv_func_accept_arg2,dnl
-  [AC_CACHE_VAL(ac_cv_func_accept_arg3,dnl
-   [for ac_cv_func_accept_arg1 in 'int' 'unsigned int'; do
-     for ac_cv_func_accept_arg2 in 'struct sockaddr *' 'void *'; do
-      for ac_cv_func_accept_arg3 in 'socklen_t' 'size_t' 'unsigned int' 'int'; do
-       AC_TRY_COMPILE(dnl
-[#ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
-#endif
-#ifdef HAVE_SYS_SOCKET_H
-#include <sys/socket.h>
-#endif
-extern accept ($ac_cv_func_accept_arg1, $ac_cv_func_accept_arg2, $ac_cv_func_accept_arg3 *);],,dnl
-        [ac_not_found=no ; break 3], ac_not_found=yes)
-      done
-     done
-    done
-   ])dnl AC_CACHE_VAL
-  ])dnl AC_CACHE_VAL
- ])dnl AC_CACHE_VAL
- if test "$ac_not_found" = yes; then
-  ac_cv_func_accept_arg1=int
-  ac_cv_func_accept_arg2='struct sockaddr *'
-  ac_cv_func_accept_arg3='socklen_t'
- fi
- AC_MSG_RESULT([$ac_cv_func_accept_arg1, $ac_cv_func_accept_arg2, $ac_cv_func_accept_arg3 *])
- AC_DEFINE_UNQUOTED(ACCEPT_TYPE_ARG1,$ac_cv_func_accept_arg1)
- AC_DEFINE_UNQUOTED(ACCEPT_TYPE_ARG2,$ac_cv_func_accept_arg2)
- AC_DEFINE_UNQUOTED(ACCEPT_TYPE_ARG3,$ac_cv_func_accept_arg3)
-])
-
 # Macros that test various C library quirks
-# $Header: /cvsroot/pgsql/aclocal.m4,v 1.2 2000/06/11 11:39:45 petere Exp $
+# $Header: /cvsroot/pgsql/aclocal.m4,v 1.3 2000/06/14 18:17:24 petere Exp $
 
 
 # PGAC_VAR_INT_TIMEZONE
@@ -411,4 +262,120 @@ if test x"$pgac_cv_func_posix_signals" = xyes ; then
 fi
 HAVE_POSIX_SIGNALS=$pgac_cv_func_posix_signals
 AC_SUBST(HAVE_POSIX_SIGNALS)])# PGAC_FUNC_POSIX_SIGNALS
+# Macros to detect certain C++ features
+# $Header: /cvsroot/pgsql/aclocal.m4,v 1.3 2000/06/14 18:17:24 petere Exp $
 
+
+# PGAC_CLASS_STRING
+# -----------------
+# Look for class `string'. First look for the <string> header. If this
+# is found a <string> header then it's probably safe to assume that
+# class string exists.  If not, check to make sure that <string.h>
+# defines class `string'.
+AC_DEFUN([PGAC_CLASS_STRING],
+[AC_LANG_SAVE
+AC_LANG_CPLUSPLUS
+AC_CHECK_HEADER(string,
+  [AC_DEFINE(HAVE_CXX_STRING_HEADER)])
+
+if test x"$ac_cv_header_string" != xyes ; then
+  AC_CACHE_CHECK([for class string in <string.h>],
+    [pgac_cv_class_string_in_string_h],
+    [AC_TRY_COMPILE([#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+],
+      [string foo = "test"],
+      [pgac_cv_class_string_in_string_h=yes],
+      [pgac_cv_class_string_in_string_h=no])])
+
+  if test x"$pgac_cv_class_string_in_string_h" != xyes ; then
+    AC_MSG_ERROR([neither <string> nor <string.h> seem to define the C++ class \`string\'])
+  fi
+fi
+AC_LANG_RESTORE])# PGAC_CLASS_STRING
+
+
+# PGAC_CXX_NAMESPACE_STD
+# ----------------------
+# Check whether the C++ compiler understands `using namespace std'.
+#
+# Note 1: On at least some compilers, it will not work until you've
+# included a header that mentions namespace std. Thus, include the
+# usual suspects before trying it.
+#
+# Note 2: This test does not actually reveal whether the C++ compiler
+# properly understands namespaces in all generality. (GNU C++ 2.8.1
+# is one that doesn't.) However, we don't care.
+AC_DEFUN([PGAC_CXX_NAMESPACE_STD],
+[AC_REQUIRE([PGAC_CLASS_STRING])
+AC_CACHE_CHECK([for namespace std in C++],
+pgac_cv_cxx_namespace_std,
+[
+AC_LANG_SAVE
+AC_LANG_CPLUSPLUS
+AC_TRY_COMPILE(
+[#include <stdio.h>
+#include <stdlib.h>
+#ifdef HAVE_CXX_STRING_HEADER
+#include <string>
+#endif
+using namespace std;
+], [],
+[pgac_cv_cxx_namespace_std=yes],
+[pgac_cv_cxx_namespace_std=no])
+AC_LANG_RESTORE])
+
+if test $pgac_cv_cxx_namespace_std = yes ; then
+    AC_DEFINE(HAVE_NAMESPACE_STD, 1, [Define to 1 if the C++ compiler understands `using namespace std'])
+fi])# PGAC_CXX_NAMESPACE_STD
+#
+# Autoconf macros for configuring the build of Python extension modules
+#
+# $Header: /cvsroot/pgsql/aclocal.m4,v 1.3 2000/06/14 18:17:24 petere Exp $
+#
+
+# PGAC_PROG_PYTHON
+# ----------------
+# Look for Python and set the output variable `PYTHON'
+# to `python' if found, empty otherwise.
+AC_DEFUN([PGAC_PROG_PYTHON],
+[AC_CHECK_PROG(PYTHON, python, python)])
+
+
+# PGAC_PATH_PYTHONDIR
+# -------------------
+# Finds the names of various install dirs and helper files
+# necessary to build a Python extension module.
+#
+# It would be nice if we could check whether the current setup allows
+# the build of the shared module. Future project.
+AC_DEFUN([PGAC_PATH_PYTHONDIR],
+[AC_REQUIRE([PGAC_PROG_PYTHON])
+[if test "${PYTHON+set}" = set ; then
+  python_version=`${PYTHON} -c "import sys; print sys.version[:3]"`
+  python_prefix=`${PYTHON} -c "import sys; print sys.prefix"`
+  python_execprefix=`${PYTHON} -c "import sys; print sys.exec_prefix"`
+  python_configdir="${python_execprefix}/lib/python${python_version}/config"
+  python_moduledir="${python_prefix}/lib/python${python_version}"
+  python_extmakefile="${python_configdir}/Makefile.pre.in"]
+
+  AC_MSG_CHECKING(for Python extension makefile)
+  if test -f "${python_extmakefile}" ; then
+    AC_MSG_RESULT(found)
+  else
+    AC_MSG_RESULT(no)
+    AC_MSG_ERROR(
+[The Python extension makefile was expected at \`${python_extmakefile}\'
+but does not exist. This means the Python module cannot be built automatically.])
+  fi
+
+  AC_SUBST(python_version)
+  AC_SUBST(python_prefix)
+  AC_SUBST(python_execprefix)
+  AC_SUBST(python_configdir)
+  AC_SUBST(python_moduledir)
+  AC_SUBST(python_extmakefile)
+else
+  AC_MSG_ERROR([Python not found])
+fi])# PGAC_PATH_PYTHONDIR

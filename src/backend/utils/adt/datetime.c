@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.49 2000/06/08 22:37:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.50 2000/06/14 18:17:42 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -425,16 +425,16 @@ ParseDateTime(char *timestr, char *lowstr,
 		field[nf] = lp;
 
 		/* leading digit? then date or time */
-		if (isdigit(*cp) || (*cp == '.'))
+		if (isdigit((int) *cp) || (*cp == '.'))
 		{
 			*lp++ = *cp++;
-			while (isdigit(*cp))
+			while (isdigit((int) *cp))
 				*lp++ = *cp++;
 			/* time field? */
 			if (*cp == ':')
 			{
 				ftype[nf] = DTK_TIME;
-				while (isdigit(*cp) || (*cp == ':') || (*cp == '.'))
+				while (isdigit((int) *cp) || (*cp == ':') || (*cp == '.'))
 					*lp++ = *cp++;
 
 			}
@@ -442,7 +442,7 @@ ParseDateTime(char *timestr, char *lowstr,
 			else if ((*cp == '-') || (*cp == '/') || (*cp == '.'))
 			{
 				ftype[nf] = DTK_DATE;
-				while (isalnum(*cp) || (*cp == '-') || (*cp == '/') || (*cp == '.'))
+				while (isalnum((int) *cp) || (*cp == '-') || (*cp == '/') || (*cp == '.'))
 					*lp++ = tolower(*cp++);
 
 			}
@@ -460,11 +460,11 @@ ParseDateTime(char *timestr, char *lowstr,
 		 * text? then date string, month, day of week, special, or
 		 * timezone
 		 */
-		else if (isalpha(*cp))
+		else if (isalpha((int) *cp))
 		{
 			ftype[nf] = DTK_STRING;
 			*lp++ = tolower(*cp++);
-			while (isalpha(*cp))
+			while (isalpha((int) *cp))
 				*lp++ = tolower(*cp++);
 
 			/*
@@ -493,13 +493,13 @@ ParseDateTime(char *timestr, char *lowstr,
 #endif
 
 				ftype[nf] = DTK_DATE;
-				while (isdigit(*cp) || (*cp == '-') || (*cp == '/') || (*cp == '.'))
+				while (isdigit((int) *cp) || (*cp == '-') || (*cp == '/') || (*cp == '.'))
 					*lp++ = tolower(*cp++);
 			}
 
 			/* skip leading spaces */
 		}
-		else if (isspace(*cp))
+		else if (isspace((int) *cp))
 		{
 			cp++;
 			continue;
@@ -510,23 +510,23 @@ ParseDateTime(char *timestr, char *lowstr,
 		{
 			*lp++ = *cp++;
 			/* soak up leading whitespace */
-			while (isspace(*cp))
+			while (isspace((int) *cp))
 				cp++;
 			/* numeric timezone? */
-			if (isdigit(*cp))
+			if (isdigit((int) *cp))
 			{
 				ftype[nf] = DTK_TZ;
 				*lp++ = *cp++;
-				while (isdigit(*cp) || (*cp == ':'))
+				while (isdigit((int) *cp) || (*cp == ':'))
 					*lp++ = *cp++;
 
 				/* special? */
 			}
-			else if (isalpha(*cp))
+			else if (isalpha((int) *cp))
 			{
 				ftype[nf] = DTK_SPECIAL;
 				*lp++ = tolower(*cp++);
-				while (isalpha(*cp))
+				while (isalpha((int) *cp))
 					*lp++ = tolower(*cp++);
 
 				/* otherwise something wrong... */
@@ -536,7 +536,7 @@ ParseDateTime(char *timestr, char *lowstr,
 
 			/* ignore punctuation but use as delimiter */
 		}
-		else if (ispunct(*cp))
+		else if (ispunct((int) *cp))
 		{
 			cp++;
 			continue;
@@ -654,7 +654,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 					 * PST)
 					 */
 					if ((i > 0) && ((fmask & DTK_M(TZ)) != 0)
-						&& (ftype[i - 1] == DTK_TZ) && (isalpha(*field[i - 1])))
+						&& (ftype[i - 1] == DTK_TZ) && (isalpha((int) *field[i - 1])))
 					{
 						*tzp -= tz;
 						tmask = 0;
@@ -999,7 +999,7 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 					 * PST)
 					 */
 					if ((i > 0) && ((fmask & DTK_M(TZ)) != 0)
-						&& (ftype[i - 1] == DTK_TZ) && (isalpha(*field[i - 1])))
+						&& (ftype[i - 1] == DTK_TZ) && (isalpha((int) *field[i - 1])))
 					{
 						*tzp -= tz;
 						tmask = 0;
@@ -1189,18 +1189,18 @@ DecodeDate(char *str, int fmask, int *tmask, struct tm * tm)
 	while ((*str != '\0') && (nf < MAXDATEFIELDS))
 	{
 		/* skip field separators */
-		while (!isalnum(*str))
+		while (!isalnum((int) *str))
 			str++;
 
 		field[nf] = str;
-		if (isdigit(*str))
+		if (isdigit((int) *str))
 		{
-			while (isdigit(*str))
+			while (isdigit((int) *str))
 				str++;
 		}
-		else if (isalpha(*str))
+		else if (isalpha((int) *str))
 		{
-			while (isalpha(*str))
+			while (isalpha((int) *str))
 				str++;
 		}
 
@@ -1220,7 +1220,7 @@ DecodeDate(char *str, int fmask, int *tmask, struct tm * tm)
 	/* look first for text fields, since that will be unambiguous month */
 	for (i = 0; i < nf; i++)
 	{
-		if (isalpha(*field[i]))
+		if (isalpha((int) *field[i]))
 		{
 			type = DecodeSpecial(i, field[i], &val);
 			if (type == IGNORE)
@@ -1583,7 +1583,7 @@ DecodePosixTimezone(char *str, int *tzp)
 	char		delim;
 
 	cp = str;
-	while ((*cp != '\0') && isalpha(*cp))
+	while ((*cp != '\0') && isalpha((int) *cp))
 		cp++;
 
 	if (DecodeTimezone(cp, &tz) != 0)

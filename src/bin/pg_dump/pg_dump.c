@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.151 2000/06/10 03:53:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.152 2000/06/14 18:17:50 petere Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -699,8 +699,8 @@ main(int argc, char **argv)
 					else
 					{
 						for (i = 0; tablename[i]; i++)
-							if (isascii((unsigned char) tablename[i]) &&
-								isupper(tablename[i]))
+							if (isascii((int) tablename[i]) &&
+								isupper((int) tablename[i]))
 								tablename[i] = tolower(tablename[i]);
 					}
 				}

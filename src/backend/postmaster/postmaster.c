@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.147 2000/06/06 16:04:29 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.148 2000/06/14 18:17:38 petere Exp $
  *
  * NOTES
  *
@@ -1801,12 +1801,12 @@ split_opts(char **argv, int *argcp, char *s)
 {
 	while (s && *s)
 	{
-		while (isspace(*s))
+		while (isspace((int) *s))
 			++s;
 		if (*s == '\0')
 			break;
 		argv[(*argcp)++] = s;
-		while (*s && !isspace(*s))
+		while (*s && !isspace((int) *s))
 			++s;
 		if (*s)
 			*s++ = '\0';

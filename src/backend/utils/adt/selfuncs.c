@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.71 2000/06/14 05:24:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.72 2000/06/14 18:17:45 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1383,7 +1383,7 @@ regex_fixed_prefix(char *patt, bool case_insensitive,
 			patt[pos] == '(' ||
 			patt[pos] == '[' ||
 			patt[pos] == '$' ||
-			(case_insensitive && isalpha(patt[pos])))
+			(case_insensitive && isalpha((int) patt[pos])))
 			break;
 		/*
 		 * Check for quantifiers.  Except for +, this means the preceding

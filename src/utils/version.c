@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/utils/Attic/version.c,v 1.16 2000/06/02 15:57:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/utils/Attic/version.c,v 1.17 2000/06/14 18:18:01 petere Exp $
  *
  *	STANDALONE CODE - do not use error routines as this code is not linked
  *	with any...
@@ -76,7 +76,7 @@ ValidatePgVersion(const char *path, char **reason_p)
 	{
 		nread = read(fd, version, sizeof(version) - 1);
 		if (nread < 4 ||
-			!isdigit(version[0]) ||
+			!isdigit((int)version[0]) ||
 			version[nread - 1] != '\n')
 		{
 			*reason_p = malloc(100 + strlen(full_path));

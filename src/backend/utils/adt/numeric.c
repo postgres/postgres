@@ -5,7 +5,7 @@
  *
  *	1998 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.29 2000/06/13 07:35:07 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.30 2000/06/14 18:17:44 petere Exp $
  *
  * ----------
  */
@@ -2084,7 +2084,7 @@ set_var_from_str(char *str, NumericVar *dest)
 
 	while (*cp)
 	{
-		if (!isspace(*cp))
+		if (!isspace((int) *cp))
 			break;
 		cp++;
 	}
@@ -2113,12 +2113,12 @@ set_var_from_str(char *str, NumericVar *dest)
 		cp++;
 	}
 
-	if (!isdigit(*cp))
+	if (!isdigit((int) *cp))
 		elog(ERROR, "Bad numeric input format '%s'", str);
 
 	while (*cp)
 	{
-		if (isdigit(*cp))
+		if (isdigit((int) *cp))
 		{
 			dest->digits[i++] = *cp++ - '0';
 			if (!have_dp)
@@ -2161,7 +2161,7 @@ set_var_from_str(char *str, NumericVar *dest)
 	/* Should be nothing left but spaces */
 	while (*cp)
 	{
-		if (!isspace(*cp))
+		if (!isspace((int) *cp))
 			elog(ERROR, "Bad numeric input format '%s'", str);
 		cp++;
 	}

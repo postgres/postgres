@@ -16,7 +16,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$Id: inet_net_pton.c,v 1.10 1999/07/17 20:17:56 momjian Exp $";
+static const char rcsid[] = "$Id: inet_net_pton.c,v 1.11 2000/06/14 18:17:44 petere Exp $";
 
 #endif
 
@@ -105,7 +105,7 @@ inet_cidr_pton_ipv4(const char *src, u_char *dst, size_t size)
 
 	ch = *src++;
 	if (ch == '0' && (src[0] == 'x' || src[0] == 'X')
-		&& isascii(src[1]) && isxdigit(src[1]))
+		&& isascii((int) src[1]) && isxdigit((int) src[1]))
 	{
 		/* Hexadecimal: Eat nybble string. */
 		if (size <= 0)
@@ -170,7 +170,7 @@ inet_cidr_pton_ipv4(const char *src, u_char *dst, size_t size)
 		goto enoent;
 
 	bits = -1;
-	if (ch == '/' && isascii(src[0]) && isdigit(src[0]) && dst > odst)
+	if (ch == '/' && isascii((int) src[0]) && isdigit((int) src[0]) && dst > odst)
 	{
 		/* CIDR width specifier.  Nothing can follow it. */
 		ch = *src++;			/* Skip over the /. */
@@ -284,7 +284,7 @@ inet_net_pton_ipv4(const char *src, u_char *dst)
 
 	/* Get the prefix length if any. */
 	bits = -1;
-	if (ch == '/' && isascii(src[0]) && isdigit(src[0]) && dst > odst)
+	if (ch == '/' && isascii((int) src[0]) && isdigit((int) src[0]) && dst > odst)
 	{
 		/* CIDR width specifier.  Nothing can follow it. */
 		ch = *src++;			/* Skip over the /. */

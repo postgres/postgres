@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.71 2000/06/01 22:21:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.72 2000/06/14 18:17:37 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -446,8 +446,8 @@ other			.
 					ScanKeyword		*keyword;
 
 					for(i = 0; yytext[i]; i++)
-						if (isascii((unsigned char)yytext[i]) &&
-							isupper(yytext[i]))
+						if (isascii((int) yytext[i]) &&
+							isupper((int) yytext[i]))
 							yytext[i] = tolower(yytext[i]);
 					if (i >= NAMEDATALEN)
                     {

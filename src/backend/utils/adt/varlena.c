@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.59 2000/06/13 07:35:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.60 2000/06/14 18:17:45 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,9 +57,9 @@ byteain(char *inputText)
 		{
 			if (*tp == '\\')
 				tp++;
-			else if (!isdigit(*tp++) ||
-					 !isdigit(*tp++) ||
-					 !isdigit(*tp++))
+			else if (!isdigit((int) *tp++) ||
+					 !isdigit((int) *tp++) ||
+					 !isdigit((int) *tp++))
 				elog(ERROR, "Bad input string for type bytea");
 		}
 	tp = inputText;
@@ -111,7 +111,7 @@ byteaout(bytea *vlena)
 	for (i = vlena->vl_len - VARHDRSZ; i != 0; i--, vp++)
 		if (*vp == '\\')
 			len += 2;
-		else if (isascii(*vp) && isprint(*vp))
+		else if (isascii((int) *vp) && isprint((int) *vp))
 			len++;
 		else
 			len += VARHDRSZ;
@@ -124,7 +124,7 @@ byteaout(bytea *vlena)
 			*rp++ = '\\';
 			*rp++ = '\\';
 		}
-		else if (isascii(*vp) && isprint(*vp))
+		else if (isascii((int) *vp) && isprint((int) *vp))
 			*rp++ = *vp++;
 		else
 		{

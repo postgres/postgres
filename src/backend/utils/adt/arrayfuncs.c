@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.58 2000/06/14 05:24:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.59 2000/06/14 18:17:42 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -121,7 +121,7 @@ array_in(PG_FUNCTION_ARGS)
 	done = false;
 	for (ndim = 0; !done;)
 	{
-		while (isspace(*p))
+		while (isspace((int) *p))
 			p++;
 		if (*p == '[')
 		{
@@ -134,7 +134,7 @@ array_in(PG_FUNCTION_ARGS)
 				lBound[ndim] = atoi(p);
 				p = r + 1;
 			}
-			for (q = p; isdigit(*q); q++);
+			for (q = p; isdigit((int) *q); q++);
 			if (*q != ']')
 				elog(ERROR, "array_in: missing ']' in array declaration");
 			*q = '\0';
@@ -163,12 +163,12 @@ array_in(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-		while (isspace(*p))
+		while (isspace((int) *p))
 			p++;
 		if (strncmp(p, ASSGN, strlen(ASSGN)))
 			elog(ERROR, "array_in: missing assignment operator");
 		p += strlen(ASSGN);
-		while (isspace(*p))
+		while (isspace((int) *p))
 			p++;
 	}
 
@@ -321,7 +321,7 @@ _ArrayCount(char *str, int *dim, int typdelim)
 		temp[ndim - 1]++;
 		q++;
 		if (!eoArray)
-			while (isspace(*q))
+			while (isspace((int) *q))
 				q++;
 	}
 	for (i = 0; i < ndim; ++i)
@@ -452,7 +452,7 @@ _ReadArrayStr(char *arrayStr,
 			/*
 			 * if not at the end of the array skip white space
 			 */
-			while (isspace(*q))
+			while (isspace((int) *q))
 			{
 				p++;
 				q++;

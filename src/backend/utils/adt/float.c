@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.60 2000/06/13 07:35:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.61 2000/06/14 18:17:42 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,6 +62,11 @@
 #ifdef HAVE_VALUES_H
 #include <values.h>
 #endif
+#endif
+
+/* for finite() on Solaris */
+#ifdef HAVE_IEEEFP_H
+# include <ieeefp.h>
 #endif
 
 #include "fmgr.h"

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.95 2000/05/25 19:09:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.96 2000/06/14 18:17:58 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1955,8 +1955,8 @@ PQfnumber(const PGresult *res, const char *field_name)
 	}
 	else
 		for (i = 0; field_case[i]; i++)
-			if (isascii((unsigned char) field_case[i]) &&
-				isupper(field_case[i]))
+			if (isascii((int) field_case[i]) &&
+				isupper((int) field_case[i]))
 				field_case[i] = tolower(field_case[i]);
 
 	for (i = 0; i < res->numAttributes; i++)

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.37 2000/06/05 07:28:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.38 2000/06/14 18:17:44 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,12 +88,12 @@ int2vectorin(PG_FUNCTION_ARGS)
 	{
 		if (sscanf(intString, "%hd", &result[slot]) != 1)
 			break;
-		while (*intString && isspace(*intString))
+		while (*intString && isspace((int) *intString))
 			intString++;
-		while (*intString && !isspace(*intString))
+		while (*intString && !isspace((int) *intString))
 			intString++;
 	}
-	while (*intString && isspace(*intString))
+	while (*intString && isspace((int) *intString))
 		intString++;
 	if (*intString)
 		elog(ERROR, "int2vector value has too many values");

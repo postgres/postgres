@@ -9,7 +9,7 @@
  * workings can be found in the book "Software Solutions in C" by
  * Dale Schumacher, Academic Press, ISBN: 0-12-632360-7.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.38 2000/06/13 07:35:03 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.39 2000/06/14 18:17:42 petere Exp $
  */
 
 #include <limits.h>
@@ -115,7 +115,7 @@ cash_in(const char *str)
 
 	/* we need to add all sorts of checking here.  For now just */
 	/* strip all leading whitespace and any leading currency symbol */
-	while (isspace(*s))
+	while (isspace((int) *s))
 		s++;
 	if (strncmp(s, csymbol, strlen(csymbol)) == 0)
 		s += strlen(csymbol);
@@ -147,7 +147,7 @@ cash_in(const char *str)
 	printf("cashin- string is '%s'\n", s);
 #endif
 
-	while (isspace(*s))
+	while (isspace((int) *s))
 		s++;
 	if (strncmp(s, csymbol, strlen(csymbol)) == 0)
 		s += strlen(csymbol);
@@ -160,7 +160,7 @@ cash_in(const char *str)
 	{
 		/* we look for digits as int4 as we have less */
 		/* than the required number of decimal places */
-		if (isdigit(*s) && dec < fpoint)
+		if (isdigit((int) *s) && dec < fpoint)
 		{
 			value = (value * 10) + *s - '0';
 
@@ -182,7 +182,7 @@ cash_in(const char *str)
 		else
 		{
 			/* round off */
-			if (isdigit(*s) && *s >= '5')
+			if (isdigit((int) *s) && *s >= '5')
 				value++;
 
 			/* adjust for less than required decimal places */
@@ -193,7 +193,7 @@ cash_in(const char *str)
 		}
 	}
 
-	while (isspace(*s) || *s == '0' || *s == ')')
+	while (isspace((int) *s) || *s == '0' || *s == ')')
 		s++;
 
 	if (*s != '\0')

@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.12 2000/06/13 07:35:04 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.13 2000/06/14 18:17:42 petere Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2000, PostgreSQL, Inc
@@ -1192,7 +1192,7 @@ DCH_processor(FormatNode *node, char *inout, int flag)
 				 */
 				if (isspace(n->character) && IS_FX == 0)
 				{
-					while (*s != '\0' && isspace(*(s + 1)))
+					while (*s != '\0' && isspace((int) *(s + 1)))
 						++s;
 				}
 			}

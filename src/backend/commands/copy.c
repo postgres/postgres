@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.112 2000/06/05 17:07:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.113 2000/06/14 18:17:25 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -325,7 +325,7 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
 				elog(ERROR, "COPY command, running in backend with "
 					 "effective uid %d, could not open file '%s' for "
 					 "reading.  Errno = %s (%d).",
-					 geteuid(), filename, strerror(errno), errno);
+					 (int) geteuid(), filename, strerror(errno), errno);
 		}
 		CopyFrom(rel, binary, oids, fp, delim, null_print);
 	}
@@ -358,7 +358,7 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
 				elog(ERROR, "COPY command, running in backend with "
 					 "effective uid %d, could not open file '%s' for "
 					 "writing.  Errno = %s (%d).",
-					 geteuid(), filename, strerror(errno), errno);
+					 (int) geteuid(), filename, strerror(errno), errno);
 		}
 		CopyTo(rel, binary, oids, fp, delim, null_print);
 	}

@@ -606,8 +606,6 @@ AC_SUBST(INSTL_SHLIB_OPTS)
 AC_SUBST(INSTL_EXE_OPTS)
 
 AC_PROG_AWK
-AM_MISSING_PROG(AUTOCONF, autoconf, [\${SHELL} \${top_srcdir}/config])
-AM_MISSING_PROG(ACLOCAL, aclocal, [\${SHELL} \${top_srcdir}/config])
 
 AC_PROG_LEX
 if test "$LEX" = "flex"; then
