@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.163 2003/07/31 22:17:11 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.164 2003/08/04 14:00:13 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -161,6 +161,14 @@ PostgreSQL documentation
       </tbody>
      </tgroup>
     </informaltable>
+   </para>
+
+   <para>
+    The operators <literal>AND</literal> and <literal>OR</literal> are
+    commutative, that is, you can switch the left and right operand
+    without affecting the result.  But see <xref
+    linkend="syntax-express-eval"> for more information about the
+    order of evaluation of subexpressions.
    </para>
   </sect1>
 

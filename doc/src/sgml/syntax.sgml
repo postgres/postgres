@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.79 2003/06/19 23:22:40 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.80 2003/08/04 14:00:14 petere Exp $
 -->
 
 <chapter id="sql-syntax">
@@ -1216,7 +1216,7 @@ SELECT name, (SELECT max(pop) FROM cities WHERE cities.state = states.name)
    </para>
   </sect2>
 
-  <sect2>
+  <sect2 id="syntax-express-eval">
    <title>Expression Evaluation</title>
 
    <para>
