@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.18 1996/10/29 21:51:13 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.19 1996/10/30 00:36:59 bryanh Exp $
  *
  * NOTES
  *
@@ -667,7 +667,6 @@ send_error_reply(Port *port, const char *errormsg)
       /* The literal reply string we put into the socket.  This is a pointer
          to storage we malloc.
          */
-    char reply[201];
     const struct linger linger_parm = {true, LINGER_TIME};
     /* A parameter for setsockopt() that tells it to have close() block for
        a while waiting for the frontend to read its outstanding messages.
