@@ -1,0 +1,5 @@
+To get a list of keywords compared to SQL'92, take the keywords out of
+backend/parser/keywords.c and tools/SQL_keywords.
+
+Then run sdif with the PostgreSQL keyword file first, then the SQL'92
+keywords.
