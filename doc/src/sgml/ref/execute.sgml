@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/execute.sgml,v 1.10 2004/04/22 11:46:22 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/execute.sgml,v 1.11 2004/09/20 00:04:19 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -104,6 +104,15 @@ EXECUTE <replaceable class="PARAMETER">plan_name</replaceable> [ (<replaceable c
    <command>EXECUTE</command> statement also uses a somewhat different
    syntax.
   </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-deallocate" endterm="sql-deallocate-title"></member>
+   <member><xref linkend="sql-prepare" endterm="sql-prepare-title"></member>
+  </simplelist>
  </refsect1>
 </refentry>
 

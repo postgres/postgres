@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_trigger.sgml,v 1.18 2003/11/29 19:51:38 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_trigger.sgml,v 1.19 2004/09/20 00:04:19 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -51,8 +51,8 @@ DROP TRIGGER <replaceable class="PARAMETER">name</replaceable> ON <replaceable c
     <term><replaceable class="PARAMETER">table</replaceable></term>
     <listitem>
      <para>
-      The name (optionally schema-qualified) of a table for which the
-      trigger is defined.
+      The name (optionally schema-qualified) of the table for which
+      the trigger is defined.
      </para>
     </listitem>
    </varlistentry>

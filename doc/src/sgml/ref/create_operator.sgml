@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_operator.sgml,v 1.42 2004/06/25 21:55:50 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_operator.sgml,v 1.43 2004/09/20 00:04:19 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -262,9 +262,11 @@ COMMUTATOR = OPERATOR(myschema.===) ,
   </para>
 
   <para>
-   Use <command>DROP OPERATOR</command> to delete user-defined
-   operators from a database.  Use <command>ALTER OPERATOR</command>
-   to modify operators in a database.
+   Use <xref linkend="sql-dropoperator"
+   endterm="sql-dropoperator-title"> to delete user-defined operators
+   from a database.  Use <xref linkend="sql-alteroperator"
+   endterm="sql-alteroperator-title"> to modify operators in a
+   database.
   </para>
  </refsect1>
   

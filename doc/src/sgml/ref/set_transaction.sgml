@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/set_transaction.sgml,v 1.21 2004/08/14 22:17:08 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/set_transaction.sgml,v 1.22 2004/09/20 00:04:19 neilc Exp $ -->
 <refentry id="SQL-SET-TRANSACTION">
  <refmeta>
   <refentrytitle id="SQL-SET-TRANSACTION-TITLE">SET TRANSACTION</refentrytitle>
@@ -30,13 +30,13 @@ where <replaceable class="parameter">transaction_mode</replaceable> is one of:
   <title>Description</title>
 
   <para>
-   The <command>SET TRANSACTION</command> command sets the transaction
+   The <command>SET TRANSACTION</command> command sets the
    characteristics of the current transaction. It has no effect on any
    subsequent transactions.  <command>SET SESSION
    CHARACTERISTICS</command> sets the default transaction
    characteristics for subsequent transactions of a session.  These
-   defaults can be overridden by <command>SET TRANSACTION</command> for an
-   individual transaction.
+   defaults can be overridden by <command>SET TRANSACTION</command>
+   for an individual transaction.
   </para>
 
   <para>

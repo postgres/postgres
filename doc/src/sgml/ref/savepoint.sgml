@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/savepoint.sgml,v 1.2 2004/08/12 19:12:21 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/savepoint.sgml,v 1.3 2004/09/20 00:04:19 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -126,10 +126,10 @@ COMMIT;
 
   <simplelist type="inline">
    <member><xref linkend="sql-begin" endterm="sql-begin-title"></member>
+   <member><xref linkend="sql-commit" endterm="sql-commit-title"></member>
+   <member><xref linkend="sql-release-savepoint" endterm="sql-release-savepoint-title"></member>
    <member><xref linkend="sql-rollback" endterm="sql-rollback-title"></member>
    <member><xref linkend="sql-rollback-to" endterm="sql-rollback-to-title"></member>
-   <member><xref linkend="sql-release-savepoint" endterm="sql-release-savepoint-title"></member>
-   <member><xref linkend="sql-commit" endterm="sql-commit-title"></member>
   </simplelist>
  </refsect1>
 </refentry>

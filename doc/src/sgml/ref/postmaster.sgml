@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.51 2004/07/11 00:18:41 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.52 2004/09/20 00:04:19 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -84,7 +84,7 @@ PostgreSQL documentation
    point to a directory containing only configuration files:
    <filename>postgresql.conf</>, <filename>pg_hba.conf</>, and
    <filename>pg_ident.conf</>. You can then set
-   <filename>postgresql.conf</>'s <varname>pgdata</> to point to the
+   <filename>postgresql.conf</>'s <varname>pgdata</> variable to point to the
    data directory. You can also point just to the server configuration file
    like <filename>postgresql.conf</> and set its variables to point to the
    other configuration files and the data directory.
@@ -164,8 +164,8 @@ PostgreSQL documentation
       <term><option>-F</option></term>
       <listitem>
        <para>
-        Disables <function>fsync</function> calls for performance
-        improvement, at the risk of data corruption in event of a
+        Disables <function>fsync</function> calls for improved
+        performance, at the risk of data corruption in the event of a
         system crash.  Specifying this option is equivalent to
         disabling the <xref linkend="guc-fsync"> configuration
         parameter. Read the detailed documentation before using this!

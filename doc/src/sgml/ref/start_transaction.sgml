@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/start_transaction.sgml,v 1.13 2004/08/12 21:00:23 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/start_transaction.sgml,v 1.14 2004/09/20 00:04:19 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -85,8 +85,8 @@ where <replaceable class="parameter">transaction_mode</replaceable> is one of:
    <member><xref linkend="sql-begin" endterm="sql-begin-title"></member>
    <member><xref linkend="sql-commit" endterm="sql-commit-title"></member>
    <member><xref linkend="sql-rollback" endterm="sql-rollback-title"></member>
-   <member><xref linkend="sql-set-transaction" endterm="sql-set-transaction-title"></member>
    <member><xref linkend="sql-savepoint" endterm="sql-savepoint-title"></member>
+   <member><xref linkend="sql-set-transaction" endterm="sql-set-transaction-title"></member>
   </simplelist>
  </refsect1>
 </refentry>
