@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: user.c,v 1.52 2000/04/12 17:14:59 momjian Exp $
+ * $Id: user.c,v 1.53 2000/05/04 20:06:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,6 +56,7 @@ write_password_file(Relation rel)
 			   *tempname;
 	int			bufsize;
 	FILE	   *fp;
+	int			flagfd;
 	mode_t		oumask;
 	HeapScanDesc scan;
 	HeapTuple	tuple;
@@ -75,7 +76,7 @@ write_password_file(Relation rel)
 	fp = AllocateFile(tempname, "w");
 	umask(oumask);
 	if (fp == NULL)
-		elog(ERROR, "%s: %s", tempname, strerror(errno));
+		elog(ERROR, "%s: %m", tempname);
 
 	/* read table */
 	scan = heap_beginscan(rel, false, SnapshotSelf, 0, NULL);
@@ -129,29 +130,38 @@ write_password_file(Relation rel)
 				null_v ? "\\N" : nabstimeout((AbsoluteTime) datum_v)	/* this is how the
 																		 * parser wants it */
 			);
-		if (ferror(fp))
-			elog(ERROR, "%s: %s", tempname, strerror(errno));
-		fflush(fp);
 	}
 	heap_endscan(scan);
+
+	fflush(fp);
+	if (ferror(fp))
+		elog(ERROR, "%s: %m", tempname);
 	FreeFile(fp);
 
 	/*
 	 * And rename the temp file to its final name, deleting the old
 	 * pg_pwd.
 	 */
-	rename(tempname, filename);
+	if (rename(tempname, filename))
+		elog(ERROR, "rename %s to %s: %m", tempname, filename);
+
+	pfree((void *) tempname);
+	pfree((void *) filename);
 
 	/*
 	 * Create a flag file the postmaster will detect the next time it
 	 * tries to authenticate a user.  The postmaster will know to reload
-	 * the pg_pwd file contents.
+	 * the pg_pwd file contents.  Note: we used to elog(ERROR) if the
+	 * creat() call failed, but it's a little silly to abort the transaction
+	 * at this point, so let's just make it a NOTICE.
 	 */
 	filename = crypt_getpwdreloadfilename();
-	if (creat(filename, S_IRUSR | S_IWUSR) == -1)
-		elog(ERROR, "%s: %s", filename, strerror(errno));
-
-	pfree((void *) tempname);
+	flagfd = creat(filename, S_IRUSR | S_IWUSR);
+	if (flagfd == -1)
+		elog(NOTICE, "%s: %m", filename);
+	else
+		close(flagfd);
+	pfree((void *) filename);
 }
 
 
