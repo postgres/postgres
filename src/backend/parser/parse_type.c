@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * parse_type.h
+ * parse_type.c
  *		handle type operations for parser
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.8 1998/02/27 19:44:51 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.9 1998/05/09 23:29:54 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,10 +15,16 @@
 #include "postgres.h"
 #include "fmgr.h"
 
+#include "nodes/nodes.h"
+#include "nodes/parsenodes.h"
+#include "nodes/primnodes.h"
+#include "parser/parse_node.h"
+
 #include "catalog/pg_type.h"
 #include "parser/parse_target.h"
 #include "parser/parse_type.h"
 #include "utils/syscache.h"
+
 
 /* check to see if a type id is valid,
  * returns true if it is. By using this call before calling

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.74 1998/03/31 23:31:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.75 1998/05/09 23:29:52 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,6 +30,9 @@
 #include "parser/parse_target.h"
 #include "utils/builtins.h"
 #include "utils/mcxt.h"
+#ifdef PARSEDEBUG
+#include "nodes/print.h"
+#endif
 
 static Query *transformStmt(ParseState *pstate, Node *stmt);
 static Query *transformDeleteStmt(ParseState *pstate, DeleteStmt *stmt);
@@ -65,6 +68,10 @@ parse_analyze(List *pl, ParseState *parentParseState)
 
 	while (pl != NIL)
 	{
+#ifdef PARSEDEBUG
+		elog(DEBUG,"parse tree from yacc:\n---\n%s\n---\n", nodeToString(lfirst(pl)));
+#endif
+
 		pstate = make_parsestate(parentParseState);
 		result->qtrees[i++] = transformStmt(pstate, lfirst(pl));
 		if (pstate->p_target_relation != NULL)

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.27 1998/04/26 04:06:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.28 1998/05/09 23:29:53 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -301,12 +301,14 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 				result = (Node *) expr;
 				break;
 			}
-/* These nodes do _not_ come from the original parse tree.
- * They result from parser transformation in this phase.
+
+/* These nodes do _not_ come from the original parse tree,
+ *  but result from parser transformation in this phase.
  * At least one construct (BETWEEN/AND) puts the same nodes
- *  into two branches of the parse tree. Hence, some nodes
- *  are transformed twice. These nodes come from transforming
- *  a function call. Let's try just passing them through...
+ *  into two branches of the parse tree; hence, some nodes
+ *  are transformed twice.
+ * These cases below come from transforming function calls.
+ * Let's try just passing them through...
  * - thomas 1998-03-14
  */
 		case T_Expr:
@@ -506,6 +508,10 @@ parser_typecast(Value *expr, TypeName *typename, int16 atttypmod)
 	return (Node *) adt;
 }
 
+
+/* parser_typecast2()
+ * Convert (only) constants to specified type.
+ */
 Node *
 parser_typecast2(Node *expr, Oid exprType, Type tp, int16 atttypmod)
 {

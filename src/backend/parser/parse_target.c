@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.11 1998/02/26 04:33:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.12 1998/05/09 23:29:54 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,6 +26,13 @@
 #include "parser/parse_target.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
+#include "utils/syscache.h"
+
+extern
+bool can_coerce_type(int nargs, Oid *input_typeids, Oid *func_typeids);
+
+extern
+Node *coerce_type(ParseState *pstate, Node *node, Oid inputTypeId, Oid targetTypeId);
 
 static List *expandAllTables(ParseState *pstate);
 static char *figureColname(Node *expr, Node *resval);
@@ -34,6 +41,16 @@ make_targetlist_expr(ParseState *pstate,
 					 char *colname,
 					 Node *expr,
 					 List *arrayRef);
+Node *
+size_target_expr(ParseState *pstate,
+				 Node *expr,
+				 Oid attrtype,
+				 int16 attrtypmod);
+Node *
+coerce_target_expr(ParseState *pstate,
+				   Node *expr,
+				   Oid type_id,
+				   Oid attrtype);
 
 /*
  * transformTargetList -
@@ -110,8 +127,7 @@ transformTargetList(ParseState *pstate, List *targetlist)
 						Relation	rd;
 						Value	   *constval;
 
-						if (exprType(expr) != UNKNOWNOID ||
-							!IsA(expr, Const))
+						if (exprType(expr) != UNKNOWNOID || !IsA(expr, Const))
 							elog(ERROR, "yyparse: string constant expected");
 
 						val = (char *) textout((struct varlena *)
@@ -123,15 +139,15 @@ transformTargetList(ParseState *pstate, List *targetlist)
 
 							aind->uidx = transformExpr(pstate, aind->uidx, EXPR_COLUMN_FIRST);
 							if (!IsA(aind->uidx, Const))
-								elog(ERROR,
-									 "Array Index for Append should be a constant");
+								elog(ERROR, "Array Index for Append should be a constant");
+
 							uindx[i] = ((Const *) aind->uidx)->constvalue;
 							if (aind->lidx != NULL)
 							{
 								aind->lidx = transformExpr(pstate, aind->lidx, EXPR_COLUMN_FIRST);
 								if (!IsA(aind->lidx, Const))
-									elog(ERROR,
-										 "Array Index for Append should be a constant");
+									elog(ERROR, "Array Index for Append should be a constant");
+
 								lindx[i] = ((Const *) aind->lidx)->constvalue;
 							}
 							else
@@ -140,6 +156,7 @@ transformTargetList(ParseState *pstate, List *targetlist)
 							}
 							if (lindx[i] > uindx[i])
 								elog(ERROR, "yyparse: lower index cannot be greater than upper index");
+
 							sprintf(str, "[%d:%d]", lindx[i], uindx[i]);
 							str += strlen(str);
 							i++;
@@ -151,11 +168,12 @@ transformTargetList(ParseState *pstate, List *targetlist)
 						ndims = attnumAttNelems(rd, resdomno);
 						if (i != ndims)
 							elog(ERROR, "yyparse: array dimensions do not match");
+
 						constval = makeNode(Value);
 						constval->type = T_String;
 						constval->val.str = save_str;
 						tent = make_targetlist_expr(pstate, res->name,
-										   (Node *) make_const(constval),
+													(Node *) make_const(constval),
 													NULL);
 						pfree(save_str);
 					}
@@ -300,8 +318,7 @@ transformTargetList(ParseState *pstate, List *targetlist)
 				}
 			default:
 				/* internal error */
-				elog(ERROR,
-					 "internal error: do not know how to transform targetlist");
+				elog(ERROR, "internal error: do not know how to transform targetlist");
 				break;
 		}
 
@@ -321,11 +338,125 @@ transformTargetList(ParseState *pstate, List *targetlist)
 }
 
 
-/*
- * make_targetlist_expr -
- *	  make a TargetEntry from an expression
+Node *
+coerce_target_expr(ParseState *pstate,
+				   Node *expr,
+				   Oid type_id,
+				   Oid attrtype)
+{
+	if (can_coerce_type(1, &type_id, &attrtype))
+	{
+#ifdef PARSEDEBUG
+printf("parse_target: coerce type from %s to %s\n",
+ typeidTypeName(type_id), typeidTypeName(attrtype));
+#endif
+		expr = coerce_type(pstate, expr, type_id, attrtype);
+	}
+
+#ifndef DISABLE_STRING_HACKS
+	/* string hacks to get transparent conversions w/o explicit conversions */
+	else if ((attrtype == BPCHAROID) || (attrtype == VARCHAROID))
+	{
+		Oid text_id = TEXTOID;
+#ifdef PARSEDEBUG
+printf("parse_target: try coercing from %s to %s via text\n",
+ typeidTypeName(type_id), typeidTypeName(attrtype));
+#endif
+		if (type_id == TEXTOID)
+		{
+		}
+		else if (can_coerce_type(1, &type_id, &text_id))
+		{
+			expr = coerce_type(pstate, expr, type_id, text_id);
+		}
+		else
+		{
+			expr = NULL;
+		}
+	}
+#endif
+
+	else
+	{
+		expr = NULL;
+	}
+
+	return expr;
+} /* coerce_target_expr() */
+
+
+/* size_target_expr()
+ * Apparently going to a fixed-length string?
+ * Then explicitly size for storage...
+ */
+Node *
+size_target_expr(ParseState *pstate,
+				 Node *expr,
+				 Oid attrtype,
+				 int16 attrtypmod)
+{
+	int			i;
+	HeapTuple	ftup;
+	char	   *funcname;
+	Oid			oid_array[8];
+
+	FuncCall   *func;
+	A_Const	   *cons;
+
+#ifdef PARSEDEBUG
+printf("parse_target: ensure target fits storage\n");
+#endif
+	funcname = typeidTypeName(attrtype);
+	oid_array[0] = attrtype;
+	oid_array[1] = INT4OID;
+	for (i = 2; i < 8; i++) oid_array[i] = InvalidOid;
+
+#ifdef PARSEDEBUG
+printf("parse_target: look for conversion function %s(%s,%s)\n",
+ funcname, typeidTypeName(attrtype), typeidTypeName(INT4OID));
+#endif
+
+	/* attempt to find with arguments exactly as specified... */
+	ftup = SearchSysCacheTuple(PRONAME,
+							   PointerGetDatum(funcname),
+							   Int32GetDatum(2),
+							   PointerGetDatum(oid_array),
+							   0);
+
+	if (HeapTupleIsValid(ftup))
+	{
+#ifdef PARSEDEBUG
+printf("parse_target: found conversion function for sizing\n");
+#endif
+		func = makeNode(FuncCall);
+		func->funcname = funcname;
+
+		cons = makeNode(A_Const);
+		cons->val.type = T_Integer;
+		cons->val.val.ival = attrtypmod;
+		func->args = lappend( lcons(expr,NIL), cons);
+
+		expr = transformExpr(pstate, (Node *) func, EXPR_COLUMN_FIRST);
+	}
+#ifdef PARSEDEBUG
+	else
+	{
+printf("parse_target: no conversion function for sizing\n");
+	}
+#endif
+
+	return expr;
+} /* size_target_expr() */
+
+
+/* make_targetlist_expr()
+ * Make a TargetEntry from an expression
  *
  * arrayRef is a list of transformed A_Indices
+ *
+ * For type mismatches between expressions and targets, use the same
+ *  techniques as for function and operator type coersion.
+ * - thomas 1998-05-08
  */
 static TargetEntry *
 make_targetlist_expr(ParseState *pstate,
@@ -355,7 +486,6 @@ make_targetlist_expr(ParseState *pstate,
 	/* Processes target columns that will be receiving results */
 	if (pstate->p_is_insert || pstate->p_is_update)
 	{
-
 		/*
 		 * insert or update query -- insert, update work only on one
 		 * relation, so multiple occurence of same resdomno is bogus
@@ -368,91 +498,47 @@ make_targetlist_expr(ParseState *pstate,
 		if ((arrayRef != NIL) && (lfirst(arrayRef) == NIL))
 			attrtype = GetArrayElementType(attrtype);
 		attrtypmod = rd->rd_att->attrs[resdomno - 1]->atttypmod;
-#if 0
-		if (Input_is_string && Typecast_ok)
-		{
-			Datum		val;
 
-			if (type_id == typeTypeId(type("unknown")))
-			{
-				val = (Datum) textout((struct varlena *)
-									  ((Const) lnext(expr))->constvalue);
-			}
-			else
-			{
-				val = ((Const) lnext(expr))->constvalue;
-			}
-			if (attrisset)
-			{
-				lnext(expr) = makeConst(attrtype,
-										attrlen,
-										val,
-										false,
-										true,
-										true,	/* is set */
-										false);
-			}
-			else
-			{
-				lnext(expr) =
-					makeConst(attrtype,
-							  attrlen,
-							  (Datum) fmgr(typeidInfunc(attrtype),
-									   val, typeidTypElem(attrtype), -1),
-							  false,
-							  true /* Maybe correct-- 80% chance */ ,
-							  false,	/* is not a set */
-							  false);
-			}
-		}
-		else if ((Typecast_ok) && (attrtype != type_id))
+		/* Check for InvalidOid since that seems to indicate a NULL constant... */
+		if (type_id != InvalidOid)
 		{
-			lnext(expr) =
-				parser_typecast2(expr, typeidType(attrtype));
-		}
-		else if (attrtype != type_id)
-		{
-			if ((attrtype == INT2OID) && (type_id == INT4OID))
-				lfirst(expr) = lispInteger(INT2OID);	/* handle CASHOID too */
-			else if ((attrtype == FLOAT4OID) && (type_id == FLOAT8OID))
-				lfirst(expr) = lispInteger(FLOAT4OID);
-			else
-				elog(ERROR, "unequal type in tlist : %s \n", colname);
-		}
+			/* Mismatch on types? then try to coerce to target...  */
+			if (attrtype != type_id)
+			{
+				Oid typelem;
 
-		Input_is_string = false;
-		Input_is_integer = false;
-		Typecast_ok = true;
-#endif
-
-		if (attrtype != type_id)
-		{
-			if (IsA(expr, Const))
-			{
-				/* try to cast the constant */
 				if (arrayRef && !(((A_Indices *) lfirst(arrayRef))->lidx))
 				{
-					/* updating a single item */
-					Oid			typelem = typeidTypElem(attrtype);
-
-					expr = (Node *) parser_typecast2(expr,
-													 type_id,
-													 typeidType(typelem),
-													 attrtypmod);
+					typelem = typeidTypElem(attrtype);
 				}
 				else
-					expr = (Node *) parser_typecast2(expr,
-													 type_id,
-													 typeidType(attrtype),
-													 attrtypmod);
+				{
+					typelem = attrtype;
+				}
+
+				expr = coerce_target_expr(pstate, expr, type_id, typelem);
+
+				if (!HeapTupleIsValid(expr))
+				{
+					elog(ERROR, "parser: attribute '%s' is of type '%s'"
+						 " but expression is of type '%s'"
+						 "\n\tYou will need to rewrite or cast the expression",
+						 colname,
+						 typeidTypeName(attrtype),
+						 typeidTypeName(type_id));
+				}
 			}
-			else
+
+#ifdef PARSEDEBUG
+printf("parse_target: attrtypmod is %d\n", (int4) attrtypmod);
+#endif
+
+			/* Apparently going to a fixed-length string?
+			 * Then explicitly size for storage...
+			 */
+			if (attrtypmod > 0)
 			{
-				/* currently, we can't handle casting of expressions */
-				elog(ERROR, "parser: attribute '%s' is of type '%s' but expression is of type '%s'",
-					 colname,
-					 typeidTypeName(attrtype),
-					 typeidTypeName(type_id));
+				expr = size_target_expr(pstate, expr, attrtype, attrtypmod);
 			}
 		}
 
@@ -467,8 +553,8 @@ make_targetlist_expr(ParseState *pstate,
 			att->relname = pstrdup(RelationGetRelationName(rd)->data);
 			att->attrs = lcons(makeString(colname), NIL);
 			target_expr = (Expr *) ParseNestedFuncOrColumn(pstate, att,
-												   &pstate->p_last_resno,
-													  EXPR_COLUMN_FIRST);
+														   &pstate->p_last_resno,
+														   EXPR_COLUMN_FIRST);
 			while (ar != NIL)
 			{
 				A_Indices  *ind = lfirst(ar);
@@ -514,7 +600,8 @@ make_targetlist_expr(ParseState *pstate,
 	tent->expr = expr;
 
 	return tent;
-}
+} /* make_targetlist_expr() */
+
 
 /*
  * makeTargetNames -
@@ -564,7 +651,7 @@ makeTargetNames(ParseState *pstate, List *cols)
 			attnameAttNum(pstate->p_target_relation, name);
 			foreach(nxt, lnext(tl))
 				if (!strcmp(name, ((Ident *) lfirst(nxt))->name))
-				elog(ERROR, "Attribute '%s' should be specified only once", name);
+					elog(ERROR, "Attribute '%s' should be specified only once", name);
 		}
 	}
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.14 1998/02/26 04:33:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.15 1998/05/09 23:29:53 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,7 +39,7 @@ make_operand(char *opname,
 /*
  * make_parsestate() --
  *	  allocate and initialize a new ParseState.
- *	the CALLERS is responsible for freeing the ParseState* returned
+ *	the CALLER is responsible for freeing the ParseState* returned
  *
  */
 
@@ -57,6 +57,15 @@ make_parsestate(ParseState *parentParseState)
 	return (pstate);
 }
 
+
+extern
+Node *
+coerce_type(ParseState *pstate, Node *node, Oid inputTypeId, Oid targetTypeId);
+
+
+/* make_operand()
+ * Ensure argument type match by forcing conversion of constants.
+ */
 static Node *
 make_operand(char *opname,
 			 Node *tree,
@@ -65,35 +74,33 @@ make_operand(char *opname,
 {
 	Node	   *result;
 	Type		true_type;
+#if FALSE
 	Datum		val;
 	Oid			infunc;
+#endif
 
+#ifdef PARSEDEBUG
+printf("make_operand: constructing operand for '%s' %s->%s\n",
+ opname, typeidTypeName(orig_typeId), typeidTypeName(true_typeId));
+#endif
 	if (tree != NULL)
 	{
 		result = tree;
 		true_type = typeidType(true_typeId);
 		disallow_setop(opname, true_type, result);
-		if (true_typeId != orig_typeId)
-		{						/* must coerce */
-			Const	   *con = (Const *) result;
 
-			Assert(nodeTag(result) == T_Const);
-			val = (Datum) textout((struct varlena *)
-								  con->constvalue);
-			infunc = typeidInfunc(true_typeId);
-			con = makeNode(Const);
-			con->consttype = true_typeId;
-			con->constlen = typeLen(true_type);
-			con->constvalue = (Datum) fmgr(infunc,
-										   val,
-										   typeidTypElem(true_typeId),
-										   -1 /* for varchar() type */ );
-			con->constisnull = false;
-			con->constbyval = true;
-			con->constisset = false;
-			result = (Node *) con;
+		/* must coerce? */
+		if (true_typeId != orig_typeId)
+		{
+#ifdef PARSEDEBUG
+printf("make_operand: try to convert node from %s to %s\n",
+ typeidTypeName(orig_typeId), typeidTypeName(true_typeId));
+#endif
+			result = coerce_type(NULL, tree, orig_typeId, true_typeId);
 		}
 	}
+
+	/* otherwise, this is a NULL value */
 	else
 	{
 		Const	   *con = makeNode(Const);
@@ -108,7 +115,7 @@ make_operand(char *opname,
 	}
 
 	return result;
-}
+} /* make_operand() */
 
 
 static void
@@ -119,13 +126,49 @@ disallow_setop(char *op, Type optype, Node *operand)
 
 	if (nodeTag(operand) == T_Iter)
 	{
-		elog(NOTICE, "An operand to the '%s' operator returns a set of %s,",
-			 op, typeTypeName(optype));
-		elog(ERROR, "but '%s' takes single values, not sets.",
-			 op);
+		elog(ERROR, "An operand to the '%s' operator returns a set of %s,"
+			 "\n\tbut '%s' takes single values, not sets.",
+			 op, typeTypeName(optype), op);
 	}
 }
 
+
+/* CoerceType()
+ * Try to force type of node.
+ */
+Oid CoerceType(Oid typeId, Node *node);
+
+Oid
+CoerceType(Oid typeId, Node *node)
+{
+	switch (nodeTag(node))
+	{
+		case T_Const:
+			{
+				Const	   *con = (Const *) node;
+			
+#ifdef PARSEDEBUG
+printf( "Convert node %d to text\n", nodeTag(node));
+#endif
+
+				typeId = TEXTOID;
+				con->consttype = typeId;
+			}
+			break;
+
+		default:
+			break;
+	}
+	return typeId;
+} /* CoerceType() */
+
+
+/* make_op()
+ * Operator construction.
+ *
+ * Transform operator expression ensuring type compatibility.
+ * This is where some type conversion happens.
+ */
 Expr *
 make_op(char *opname, Node *ltree, Node *rtree)
 {
@@ -138,10 +181,9 @@ make_op(char *opname, Node *ltree, Node *rtree)
 			   *right;
 	Expr	   *result;
 
+	/* right operator? */
 	if (rtree == NULL)
 	{
-
-		/* right operator */
 		ltypeId = (ltree == NULL) ? UNKNOWNOID : exprType(ltree);
 		temp = right_oper(opname, ltypeId);
 		opform = (OperatorTupleForm) GETSTRUCT(temp);
@@ -149,25 +191,29 @@ make_op(char *opname, Node *ltree, Node *rtree)
 		right = NULL;
 
 	}
+
+	/* left operator? */
 	else if (ltree == NULL)
 	{
-
-		/* left operator */
 		rtypeId = (rtree == NULL) ? UNKNOWNOID : exprType(rtree);
 		temp = left_oper(opname, rtypeId);
+#ifdef PARSEDEBUG
+printf("make_op: returned from left_oper() with structure at %p\n", (void *)temp);
+#endif
 		opform = (OperatorTupleForm) GETSTRUCT(temp);
+#ifdef PARSEDEBUG
+printf("make_op: calling make_operand()\n");
+#endif
 		right = make_operand(opname, rtree, rtypeId, opform->oprright);
 		left = NULL;
 
 	}
+
+	/* otherwise, binary operator */
 	else
 	{
-		char	   *outstr;
-		Oid			infunc,
-					outfunc;
-		Type		newtype;
 
-#define CONVERTABLE_TYPE(t) (	(t) == INT2OID || \
+#define CONVERTIBLE_TYPE(t) (	(t) == INT2OID || \
 								(t) == INT4OID || \
 								(t) == OIDOID || \
 								(t) == FLOAT4OID || \
@@ -178,12 +224,32 @@ make_op(char *opname, Node *ltree, Node *rtree)
 		ltypeId = (ltree == NULL) ? UNKNOWNOID : exprType(ltree);
 		rtypeId = (rtree == NULL) ? UNKNOWNOID : exprType(rtree);
 
+#if FALSE
+		/* Both operands of unknown type?
+		 * Then they are strings and we should force at least one to text
+		 * - thomas 1998-03-16
+		 */
+		ltypeId = exprType(ltree);
+		rtypeId = exprType(rtree);
+
+		if ((ltypeId == UNKNOWNOID)
+		 && (rtypeId == UNKNOWNOID))
+		{
+#ifdef PARSEDEBUG
+printf( "Convert left-hand constant to text for node %d\n", nodeTag(ltree));
+#endif
+
+			ltypeId = CoerceType(TEXTOID, ltree);
+		}
+#endif
+
+#if FALSE
 		/*
 		 * convert constant when using a const of a numeric type and a
 		 * non-const of another numeric type
 		 */
-		if (CONVERTABLE_TYPE(ltypeId) && nodeTag(ltree) != T_Const &&
-			CONVERTABLE_TYPE(rtypeId) && nodeTag(rtree) == T_Const &&
+		if (CONVERTIBLE_TYPE(ltypeId) && nodeTag(ltree) != T_Const &&
+			CONVERTIBLE_TYPE(rtypeId) && nodeTag(rtree) == T_Const &&
 			!((Const *) rtree)->constiscast)
 		{
 			outfunc = typeidOutfunc(rtypeId);
@@ -197,8 +263,8 @@ make_op(char *opname, Node *ltree, Node *rtree)
 			((Const *) rtree)->constbyval = typeByVal(newtype);
 		}
 
-		if (CONVERTABLE_TYPE(rtypeId) && nodeTag(rtree) != T_Const &&
-			CONVERTABLE_TYPE(ltypeId) && nodeTag(ltree) == T_Const &&
+		if (CONVERTIBLE_TYPE(rtypeId) && nodeTag(rtree) != T_Const &&
+			CONVERTIBLE_TYPE(ltypeId) && nodeTag(ltree) == T_Const &&
 			!((Const *) ltree)->constiscast)
 		{
 			outfunc = typeidOutfunc(ltypeId);
@@ -211,6 +277,7 @@ make_op(char *opname, Node *ltree, Node *rtree)
 			((Const *) ltree)->constlen = typeLen(newtype);
 			((Const *) ltree)->constbyval = typeByVal(newtype);
 		}
+#endif
 
 		temp = oper(opname, ltypeId, rtypeId, false);
 		opform = (OperatorTupleForm) GETSTRUCT(temp);
@@ -219,8 +286,8 @@ make_op(char *opname, Node *ltree, Node *rtree)
 	}
 
 	newop = makeOper(oprid(temp),		/* opno */
-					 InvalidOid,/* opid */
-					 opform->oprresult, /* operator result type */
+					 InvalidOid,		/* opid */
+					 opform->oprresult,	/* operator result type */
 					 0,
 					 NULL);
 
@@ -238,6 +305,7 @@ make_op(char *opname, Node *ltree, Node *rtree)
 
 	return result;
 }
+
 
 Var *
 make_var(ParseState *pstate, Oid relid, char *refname,
@@ -356,6 +424,9 @@ make_array_ref(Node *expr,
 	return aref;
 }
 
+
+/* make_array_set()
+ */
 ArrayRef   *
 make_array_set(Expr *target_expr,
 			   List *upperIndexpr,
@@ -406,10 +477,12 @@ make_array_set(Expr *target_expr,
 	aref->refexpr = (Node *) target_expr;
 	aref->refassgnexpr = (Node *) expr;
 
-	if (lowerIndexpr == NIL)	/* accessing a single array element */
+	/* accessing a single array element? */
+	if (lowerIndexpr == NIL)
 		reftype = aref->refelemtype;
+
+	/* otherwise, request to set a part of the array, by another array */
 	else
-/* request to set a part of the array, by another array */
 		reftype = typearray;
 
 	aref->refelemtype = reftype;
