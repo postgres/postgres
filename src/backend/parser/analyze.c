@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.6 1996/10/13 04:25:42 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.7 1996/10/14 03:53:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -831,6 +831,8 @@ makeRangeTable(ParseState *pstate, char *relname, List *frmList)
 	pstate->p_rtable = lappend(pstate->p_rtable, ent);
     }
     x = RangeTablePosn(pstate->p_rtable, relname);
+    if (pstate->p_current_rel != NULL)
+        heap_close(pstate->p_current_rel);
     pstate->p_current_rel = heap_openr(VarnoGetRelname(pstate,x));
     if (pstate->p_current_rel == NULL)
 	elog(WARN,"invalid relation name");
