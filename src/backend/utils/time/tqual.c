@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.45 2001/12/19 17:18:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.46 2002/01/11 20:07:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -742,7 +742,21 @@ HeapTupleSatisfiesVacuum(HeapTupleHeader tuple, TransactionId OldestXmin)
 
 	if (tuple->t_infomask & HEAP_MARKED_FOR_UPDATE)
 	{
-		/* "deleting" xact really only marked it for update */
+		/*
+		 * "Deleting" xact really only marked it for update, so the tuple
+		 * is live in any case.  However, we must make sure that either
+		 * XMAX_COMMITTED or XMAX_INVALID gets set once the xact is gone;
+		 * otherwise it is unsafe to recycle CLOG status after vacuuming.
+		 */
+		if (!(tuple->t_infomask & HEAP_XMAX_COMMITTED))
+		{
+			if (TransactionIdIsInProgress(tuple->t_xmax))
+				return HEAPTUPLE_LIVE;
+			if (TransactionIdDidCommit(tuple->t_xmax))
+				tuple->t_infomask |= HEAP_XMAX_COMMITTED;
+			else				/* it's either aborted or crashed */
+				tuple->t_infomask |= HEAP_XMAX_INVALID;
+		}
 		return HEAPTUPLE_LIVE;
 	}
 
