@@ -1,12 +1,6 @@
  <chapter id="release">
   <title>Release Notes</title>
 
- <chapter id="release">
-  <title>Release Notes</title>
-
- <chapter id="release">
-  <title>Release Notes</title>
-
 <sect1>
 <title>Release 6.5.3</title>
 <!--
@@ -101,7 +95,7 @@ This is to re-use space on index pages freed by vacuum(Vadim)
 document -x for pg_dump(Bruce)
 Fix for unary operators in rule deparser(Tom)
 Comment out FileUnlink of excess segments during mdtruncate()(Tom)
-Irix linking fix from Yu Cao <yucao@falcon.kla-tencor.com>
+Irix linking fix from Yu Cao &gt;yucao@falcon.kla-tencor.com&lt;
 Repair logic error in LIKE: should not return LIKE_ABORT
    when reach end of pattern before end of text(Tom)
 Repair incorrect cleanup of heap memory allocation during transaction abort(Tom)
@@ -1636,7 +1630,7 @@ Fix very old bug which made tuples changed/inserted by a commnd
 Fix for SELECT null, 'fail' FROM pg_am (Patrick)
 SELECT NULL as EMPTY_FIELD now allowed(Patrick)
 Remove un-needed signal stuff from contrib/pginterface
-Fix OR (where x &lt;&gt; 1 or x isnull didn't return tuples with x NULL) (Vadim)
+Fix OR (where x != 1 or x isnull didn't return tuples with x NULL) (Vadim)
 Fix time_cmp function (Vadim)
 Fix handling of functions with non-attribute first argument in 
 	WHERE clauses (Vadim)
