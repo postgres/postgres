@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_table_as.sgml,v 1.22 2004/08/04 21:33:42 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_table_as.sgml,v 1.23 2004/08/24 00:06:51 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -11,7 +11,7 @@ PostgreSQL documentation
 
  <refnamediv>
   <refname>CREATE TABLE AS</refname>
-  <refpurpose>create a new table from the results of a query</refpurpose>
+  <refpurpose>define a new table from the results of a query</refpurpose>
  </refnamediv>
 
  <indexterm zone="sql-createtableas">

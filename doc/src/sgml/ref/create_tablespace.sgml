@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_tablespace.sgml,v 1.3 2004/08/02 04:25:37 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_tablespace.sgml,v 1.4 2004/08/24 00:06:51 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -34,8 +34,8 @@ CREATE TABLESPACE <replaceable class="parameter">tablespacename</replaceable> [ 
   </para>
 
   <para>
-   A tablespace allows superusers to define an alternative location on the
-   file system where the data files representing database objects
+   A tablespace allows superusers to define an alternative location on
+   the file system where the data files containing database objects
    (such as tables and indexes) may reside.
   </para>
 

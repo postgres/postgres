@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_sequence.sgml,v 1.7 2003/11/29 19:51:38 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_sequence.sgml,v 1.8 2004/08/24 00:06:51 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -14,7 +14,7 @@ PostgreSQL documentation
    ALTER SEQUENCE
   </refname>
   <refpurpose>
-   alter the definition of a sequence generator
+   change the definition of a sequence generator
   </refpurpose>
  </refnamediv> 
 

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.85 2004/07/30 12:26:39 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.86 2004/08/24 00:06:50 neilc Exp $
 -->
 
  <sect1 id="xfunc">
@@ -1618,17 +1618,18 @@ concat_text(PG_FUNCTION_ARGS)
    </indexterm>
 
    <para>
-    If you are thinking about distributing your PostgreSQL extension
-    modules, setting up a portable build system for them can be fairly
-    difficult.  Therefore the PostgreSQL installation provides a build
+    If you are thinking about distributing your
+    <productname>PostgreSQL</> extension modules, setting up a
+    portable build system for them can be fairly difficult.  Therefore
+    the <productname>PostgreSQL</> installation provides a build
     infrastructure for extensions, called <acronym>PGXS</acronym>, so
     that simple extension modules can be built simply against an
     already installed server.  Note that this infrastructure is not
     intended to be a universal build system framework that can be used
-    to build all software interfacing to PostgreSQL; it simply
-    automates common build rules for simple server extension modules.
-    For more complicated packages, you need to write your own build
-    system.
+    to build all software interfacing to <productname>PostgreSQL</>;
+    it simply automates common build rules for simple server extension
+    modules.  For more complicated packages, you need to write your
+    own build system.
    </para>
 
    <para>
@@ -1807,14 +1808,13 @@ include $(PGXS)
     <title>Composite-Type Arguments in C-Language Functions</title>
 
     <para>
-     Composite types do not  have  a  fixed  layout  like  C
-     structures.   Instances of a composite type may contain
-     null fields.  In addition,  composite  types  that  are
-     part  of  an  inheritance  hierarchy may have different
-     fields than other members of the same inheritance hierarchy.    
-     Therefore,  <productname>PostgreSQL</productname>  provides  
-     a function interface for accessing fields of composite types  
-     from C.
+     Composite types do not have a fixed layout like C structures.
+     Instances of a composite type may contain null fields.  In
+     addition, composite types that are part of an inheritance
+     hierarchy may have different fields than other members of the
+     same inheritance hierarchy.  Therefore,
+     <productname>PostgreSQL</productname> provides a function
+     interface for accessing fields of composite types from C.
     </para>
 
     <para>

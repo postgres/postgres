@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/errcodes.sgml,v 1.7 2004/07/31 23:04:54 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/errcodes.sgml,v 1.8 2004/08/24 00:06:50 neilc Exp $ -->
 
 <appendix id="errcodes-appendix">
  <title><productname>PostgreSQL</productname> Error Codes</title>
@@ -1133,7 +1133,7 @@
 
 <row>
 <entry>Class 58</entry>
-<entry>System Error (errors external to PostgreSQL itself)</entry>
+<entry>System Error (errors external to <productname>PostgreSQL</> itself)</entry>
 </row>
 
 <row>

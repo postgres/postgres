@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.120 2004/08/14 23:49:07 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.121 2004/08/24 00:06:51 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -771,7 +771,7 @@ testdb=>
         <listitem>
         <para>
         Shows the copyright and distribution terms of
-        <application>PostgreSQL</application>.
+        <productname>PostgreSQL</productname>.
         </para>
         </listitem>
       </varlistentry>

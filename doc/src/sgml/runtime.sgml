@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.278 2004/08/16 02:12:29 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.279 2004/08/24 00:06:50 neilc Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1206,17 +1206,16 @@ SET ENABLE_SEQSCAN TO OFF;
        <listitem>
         <para>
          Specifies the delay between activity rounds for the
-         background writer.  In each round the writer issues writes for some
-         number of dirty buffers (controllable by the following parameters).
-         The selected buffers will always be the
-         least recently used ones among the currently dirty buffers.
-         It then sleeps for <varname>bgwriter_delay</varname> milliseconds,
-         and repeats.
-         Note that on many systems, the effective resolution
-         of sleep delays is 10 milliseconds; setting
-         <varname>bgwriter_delay</varname> to a value that is
-         not a multiple of 10 may have the same results as setting it
-         to the next higher multiple of 10.
+         background writer.  In each round the writer issues writes
+         for some number of dirty buffers (controllable by the
+         following parameters).  The selected buffers will always be
+         the least recently used ones among the currently dirty
+         buffers.  It then sleeps for <varname>bgwriter_delay</>
+         milliseconds, and repeats.  The default value is 200. Note
+         that on many systems, the effective resolution of sleep
+         delays is 10 milliseconds; setting <varname>bgwriter_delay</>
+         to a value that is not a multiple of 10 may have the same
+         results as setting it to the next higher multiple of 10.
          This option can only be set at server start or in the
          <filename>postgresql.conf</filename> file.
         </para>
@@ -1227,10 +1226,10 @@ SET ENABLE_SEQSCAN TO OFF;
        <term><varname>bgwriter_percent</varname> (<type>integer</type>)</term>
        <listitem>
         <para>
-         In each round, no more than this percentage of the currently dirty
-         buffers will be written (rounding up any fraction to the next whole
-         number of buffers).
-         This option can only be set at server start or in the
+         In each round, no more than this percentage of the currently
+         dirty buffers will be written (rounding up any fraction to
+         the next whole number of buffers).  The default value is
+         1. This option can only be set at server start or in the
          <filename>postgresql.conf</filename> file.
         </para>
        </listitem>
@@ -1240,8 +1239,9 @@ SET ENABLE_SEQSCAN TO OFF;
        <term><varname>bgwriter_maxpages</varname> (<type>integer</type>)</term>
        <listitem>
         <para>
-         In each round, no more than this many dirty buffers will be written.
-         This option can only be set at server start or in the
+         In each round, no more than this many dirty buffers will be
+         written. The default value is 100. This option can only be
+         set at server start or in the
          <filename>postgresql.conf</filename> file.
         </para>
        </listitem>
@@ -1250,9 +1250,10 @@ SET ENABLE_SEQSCAN TO OFF;
 
      <para>
       Smaller values of <varname>bgwriter_percent</varname> and
-      <varname>bgwriter_maxpages</varname> reduce the extra I/O load caused by
-      the background writer, but leave more work to be done at checkpoint
-      time.  To reduce load spikes at checkpoints, increase the values.
+      <varname>bgwriter_maxpages</varname> reduce the extra I/O load
+      caused by the background writer, but leave more work to be done
+      at checkpoint time.  To reduce load spikes at checkpoints,
+      increase the values.
      </para>
     </sect3>
 
@@ -1448,7 +1449,7 @@ SET ENABLE_SEQSCAN TO OFF;
        </para>
        <para>
         It is important for the command to return a zero exit status only if
-	it succeeds.  Examples:
+        it succeeds.  Examples:
 <programlisting>
 archive_command = 'cp "%p" /mnt/server/archivedir/"%f"'
 archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Win32
@@ -1880,14 +1881,14 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Win32
       <term><varname>log_destination</varname> (<type>string</type>)</term>
       <listitem>
        <para>
-	<productname>PostgreSQL</productname> supports several methods
-	 for logging server messages, including
-	 <systemitem>stderr</systemitem> and
-	 <systemitem>syslog</systemitem>. On Windows, 
-	 <systemitem>eventlog</systemitem> is also supported. Set this
-	 option to a list of desired log destinations separated by
-	 commas. The default is to log to <systemitem>stderr</systemitem> 
-	 only.
+        <productname>PostgreSQL</productname> supports several methods
+         for logging server messages, including
+         <systemitem>stderr</systemitem> and
+         <systemitem>syslog</systemitem>. On Windows, 
+         <systemitem>eventlog</systemitem> is also supported. Set this
+         option to a list of desired log destinations separated by
+         commas. The default is to log to <systemitem>stderr</systemitem> 
+         only.
          This option can only be set at server start or in the
          <filename>postgresql.conf</filename> configuration file.
        </para>
@@ -1898,14 +1899,14 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Win32
       <term><varname>redirect_stderr</varname> (<type>boolean</type>)</term>
        <listitem>
         <para>
-	  This option allows messages sent to <application>stderr</> to be
-	  captured and redirected into log files.
-	  This option, in combination with logging to <application>stderr</>,
-	  is often more useful than
-	  logging to <application>syslog</>, since some types of messages
-	  may not appear in <application>syslog</> output (a common example
-	  is dynamic-linker failure messages).
-	  This option can only be set at server start.
+          This option allows messages sent to <application>stderr</> to be
+          captured and redirected into log files.
+          This option, in combination with logging to <application>stderr</>,
+          is often more useful than
+          logging to <application>syslog</>, since some types of messages
+          may not appear in <application>syslog</> output (a common example
+          is dynamic-linker failure messages).
+          This option can only be set at server start.
         </para>
        </listitem>
      </varlistentry>
@@ -1914,10 +1915,10 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Win32
       <term><varname>log_directory</varname> (<type>string</type>)</term>
        <listitem>
         <para>
-	  When <varname>redirect_stderr</> is enabled, this option
+          When <varname>redirect_stderr</> is enabled, this option
           determines the directory in which log files will be created.
-	  It may be specified as an absolute path, or relative to the
-	  cluster data directory.
+          It may be specified as an absolute path, or relative to the
+          cluster data directory.
          This option can only be set at server start or in the
          <filename>postgresql.conf</filename> configuration file.
         </para>
@@ -1928,10 +1929,10 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Win32
       <term><varname>log_filename_prefix</varname> (<type>string</type>)</term>
        <listitem>
         <para>
-	  When <varname>redirect_stderr</> is enabled, this option
+          When <varname>redirect_stderr</> is enabled, this option
           sets the prefix of the file names of the created log files.
-	  The postmaster PID and the current time are appended to this
-	  prefix to form an exact log file name.
+          The postmaster PID and the current time are appended to this
+          prefix to form an exact log file name.
          This option can only be set at server start or in the
          <filename>postgresql.conf</filename> configuration file.
         </para>
@@ -1942,11 +1943,11 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Win32
       <term><varname>log_rotation_age</varname> (<type>integer</type>)</term>
        <listitem>
         <para>
-	  When <varname>redirect_stderr</> is enabled, this option
-	  determines the maximum lifetime of an individual log file.
-	  After this many minutes have elapsed, a new log file will
-	  be created.  Set to zero to disable time-based creation of
-	  new log files.
+          When <varname>redirect_stderr</> is enabled, this option
+          determines the maximum lifetime of an individual log file.
+          After this many minutes have elapsed, a new log file will
+          be created.  Set to zero to disable time-based creation of
+          new log files.
          This option can only be set at server start or in the
          <filename>postgresql.conf</filename> configuration file.
         </para>
@@ -1957,11 +1958,11 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Win32
       <term><varname>log_rotation_size</varname> (<type>integer</type>)</term>
        <listitem>
         <para>
-	  When <varname>redirect_stderr</> is enabled, this option
-	  determines the maximum size of an individual log file.
-	  After this many kilobytes have been emitted into a log file,
-	  a new log file will be created.  Set to zero to disable size-based
-	  creation of new log files.
+          When <varname>redirect_stderr</> is enabled, this option
+          determines the maximum size of an individual log file.
+          After this many kilobytes have been emitted into a log file,
+          a new log file will be created.  Set to zero to disable size-based
+          creation of new log files.
          This option can only be set at server start or in the
          <filename>postgresql.conf</filename> configuration file.
         </para>
@@ -1981,7 +1982,7 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Win32
           the default is <literal>LOCAL0</>. See also the
           documentation of your system's
           <application>syslog</application> daemon.
-	  This option can only be set at server start.
+          This option can only be set at server start.
         </para>
        </listitem>
      </varlistentry>
@@ -1995,7 +1996,7 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Win32
          <productname>PostgreSQL</productname> messages in
          <application>syslog</application> logs. The default is
          <literal>postgres</literal>.
-	  This option can only be set at server start.
+          This option can only be set at server start.
         </para>
        </listitem>
       </varlistentry>
@@ -2107,9 +2108,9 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Win32
         terminals are disassociated (same effect as
         <command>postmaster</>'s <option>-S</option> option).
         The server's standard output and standard error are redirected
-	to <literal>/dev/null</>, so any messages sent to them will be lost.
-	Unless <application>syslog</> logging is selected or
-	<varname>redirect_stderr</> is enabled, using this option
+        to <literal>/dev/null</>, so any messages sent to them will be lost.
+        Unless <application>syslog</> logging is selected or
+        <varname>redirect_stderr</> is enabled, using this option
         is discouraged because it makes it impossible to see error messages.
        </para>
       </listitem>
@@ -2271,95 +2272,95 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Win32
       <term><varname>log_line_prefix</varname> (<type>string</type>)</term>
       <listitem>
        <para>
-	 This is a <function>printf</>-style string that is output at the
-	 beginning of each log line. The default is an empty string.
-	 Each recognized escape is replaced as outlined 
-	 below - anything else that looks like an escape is ignored. Other
-	 characters are copied straight to the log line. Some escapes are
-	 only recognised by session processes, and do not apply to
-	 background processes such as the postmaster. <application>Syslog</>
+         This is a <function>printf</>-style string that is output at the
+         beginning of each log line. The default is an empty string.
+         Each recognized escape is replaced as outlined 
+         below - anything else that looks like an escape is ignored. Other
+         characters are copied straight to the log line. Some escapes are
+         only recognised by session processes, and do not apply to
+         background processes such as the postmaster. <application>Syslog</>
          produces its own 
-	 timestamp and process ID information, so you probably do not want to
-	 use those escapes if you are using <application>syslog</>.
-	 This option can only be set at server start or in the
+         timestamp and process ID information, so you probably do not want to
+         use those escapes if you are using <application>syslog</>.
+         This option can only be set at server start or in the
          <filename>postgresql.conf</filename> configuration file.
 
-	 <informaltable>
-	  <tgroup cols="3">
-	   <thead>
-	    <row>
-	     <entry>Escape</entry>
-	     <entry>Effect</entry>
-	     <entry>Session only</entry>
-	     </row>
-	    </thead>
-	   <tbody>
-	    <row>
-	     <entry><literal>%u</literal></entry>
-	     <entry>User Name</entry>
-	     <entry>Yes</entry>
-	    </row>
-	    <row>
-	     <entry><literal>%d</literal></entry>
-	     <entry>Database Name</entry>
-	     <entry>Yes</entry>
-	    </row>
-	    <row>
-	     <entry><literal>%r</literal></entry>
-	     <entry>Remote Hostname or IP address, and Remote Port</entry>
-	     <entry>Yes</entry>
-	    </row>
-	    <row>
-	     <entry><literal>%p</literal></entry>
-	     <entry>Process ID</entry>
-	     <entry>No</entry>
-	    </row>
-	    <row>
-	     <entry><literal>%t</literal></entry>
-	     <entry>Timestamp</entry>
-	     <entry>No</entry>
-	    </row>
-	    <row>
-	     <entry><literal>%i</literal></entry>
-	     <entry>Command Tag. This is the command which generated the log
-	      line.</entry>
-	     <entry>Yes</entry>
-	    </row>
-	    <row>
-	     <entry><literal>%c</literal></entry>
-	     <entry>Session ID. A unique identifier for each session.
-	     It is 2 4-byte hexadecimal numbers (without leading zeros) 
+         <informaltable>
+          <tgroup cols="3">
+           <thead>
+            <row>
+             <entry>Escape</entry>
+             <entry>Effect</entry>
+             <entry>Session only</entry>
+             </row>
+            </thead>
+           <tbody>
+            <row>
+             <entry><literal>%u</literal></entry>
+             <entry>User Name</entry>
+             <entry>Yes</entry>
+            </row>
+            <row>
+             <entry><literal>%d</literal></entry>
+             <entry>Database Name</entry>
+             <entry>Yes</entry>
+            </row>
+            <row>
+             <entry><literal>%r</literal></entry>
+             <entry>Remote Hostname or IP address, and Remote Port</entry>
+             <entry>Yes</entry>
+            </row>
+            <row>
+             <entry><literal>%p</literal></entry>
+             <entry>Process ID</entry>
+             <entry>No</entry>
+            </row>
+            <row>
+             <entry><literal>%t</literal></entry>
+             <entry>Timestamp</entry>
+             <entry>No</entry>
+            </row>
+            <row>
+             <entry><literal>%i</literal></entry>
+             <entry>Command Tag. This is the command which generated the log
+              line.</entry>
+             <entry>Yes</entry>
+            </row>
+            <row>
+             <entry><literal>%c</literal></entry>
+             <entry>Session ID. A unique identifier for each session.
+             It is 2 4-byte hexadecimal numbers (without leading zeros) 
              separated by a dot. The numbers
-	     are the Session Start Time and the Process ID, so this can also
-	     be used as a space saving way of printing these items.</entry>
-	     <entry>Yes</entry>
-	    </row>
-	    <row>
-	     <entry><literal>%l</literal></entry>
-	     <entry>Number of the log line for each process,
-	      starting at 1</entry>
-	     <entry>No</entry>
-	    </row>
-	    <row>
-	     <entry><literal>%s</literal></entry>
-	     <entry>Session Start Timestamp</entry>
-	     <entry>Yes</entry>
-	    </row>
-	    <row>
-	     <entry><literal>%x</literal></entry>
-	     <entry>Does not produce any output, but tells non-session
-	     processes to stop at this point in the string. Ignored by
-	     session processes.</entry>
-	     <entry>No</entry>
-	    </row>
-	    <row>
-	     <entry><literal>%%</literal></entry>
-	     <entry>Literal <literal>%</></entry>
-	     <entry>No</entry>
-	    </row>
-	   </tbody>
-	  </tgroup>
-	 </informaltable>
+             are the Session Start Time and the Process ID, so this can also
+             be used as a space saving way of printing these items.</entry>
+             <entry>Yes</entry>
+            </row>
+            <row>
+             <entry><literal>%l</literal></entry>
+             <entry>Number of the log line for each process,
+              starting at 1</entry>
+             <entry>No</entry>
+            </row>
+            <row>
+             <entry><literal>%s</literal></entry>
+             <entry>Session Start Timestamp</entry>
+             <entry>Yes</entry>
+            </row>
+            <row>
+             <entry><literal>%x</literal></entry>
+             <entry>Does not produce any output, but tells non-session
+             processes to stop at this point in the string. Ignored by
+             session processes.</entry>
+             <entry>No</entry>
+            </row>
+            <row>
+             <entry><literal>%%</literal></entry>
+             <entry>Literal <literal>%</></entry>
+             <entry>No</entry>
+            </row>
+           </tbody>
+          </tgroup>
+         </informaltable>
        </para>
       </listitem>
      </varlistentry>
@@ -2861,7 +2862,7 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Win32
        <para>
         The value for <varname>dynamic_library_path</varname> has to be a
         list of absolute directory paths separated by colons (or semi-colons
-	on Windows).  If a list element starts
+        on Windows).  If a list element starts
         with the special string <literal>$libdir</literal>, the
         compiled-in <productname>PostgreSQL</productname> package
         library directory is substituted for <literal>$libdir</literal>. This
@@ -3138,8 +3139,8 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
       <listitem>
        <para>
         Shows the locale in which sorting of textual data is done.
-	See <xref linkend="locale"> for more information.
-	The value is determined when the database cluster is initialized.
+        See <xref linkend="locale"> for more information.
+        The value is determined when the database cluster is initialized.
        </para>
       </listitem>
      </varlistentry>
@@ -3149,10 +3150,10 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
       <listitem>
        <para>
         Shows the locale that determines character classifications.
-	See <xref linkend="locale"> for more information.
-	The value is determined when the database cluster is initialized.
-	Ordinarily this will be the same as <varname>lc_collate</varname>,
-	but for special applications it might be set differently.
+        See <xref linkend="locale"> for more information.
+        The value is determined when the database cluster is initialized.
+        Ordinarily this will be the same as <varname>lc_collate</varname>,
+        but for special applications it might be set differently.
        </para>
       </listitem>
      </varlistentry>
@@ -3240,7 +3241,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         variable is a variable not normally known
         to <productname>PostgreSQL</productname> proper but used by some
         add-on module.  Such variables must have names consisting of a class
-	name, a dot, and a variable name.  <varname>custom_variable_classes</>
+        name, a dot, and a variable name.  <varname>custom_variable_classes</>
         specifies all the class names in use in a particular installation.
         This option can only be set at server start or in the
         <filename>postgresql.conf</filename> configuration file.

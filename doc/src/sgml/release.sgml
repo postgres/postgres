@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.287 2004/08/21 03:25:34 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.288 2004/08/24 00:06:50 neilc Exp $
 -->
 
 <appendix id="release">
@@ -27,77 +27,80 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.287 2004/08/21 03:25:34 momjian
 
       <listitem>
        <para>
-        This is the first PostgreSQL release to natively run on Microsoft
-        Windows as a server. It can run as a Windows service. This release
-	supports NT-based Windows releases like Win2000, XP, Win2003.
-        Older releases like Windows 95, 98, and ME are not supported because
-	these operating systems do not have the infrastructure to
-	support PostgreSQL.  A separate installer project has been created 
-        to ease installation on Windows: 
+        This is the first <productname>PostgreSQL</productname>
+        release to natively run on Microsoft Windows as a server. It
+        can run as a Windows service. This release supports NT-based
+        Windows releases like Win2000, XP, Win2003.  Older releases
+        like Windows 95, 98, and ME are not supported because these
+        operating systems do not have the infrastructure to support
+        <productname>PostgreSQL</productname>.  A separate installer
+        project has been created to ease installation on Windows:
         <ulink url="http://pgfoundry.org/projects/pginstaller">
-	http://pgfoundry.org/projects/pginstaller</ulink>.
+        http://pgfoundry.org/projects/pginstaller</ulink>.
        </para>
        <para>
         Previous releases required the Unix emulation toolkit Cygwin for
-        Win32 server support. PostgreSQL has always supported clients on Win32.
+        Win32 server support. <productname>PostgreSQL</productname>
+        has always supported clients on Win32.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
       <term>
-       Savepoints Improve Transaction Control
+       Savepoints
       </term>
 
       <listitem>
        <para>
         Savepoints allow specific parts of a transaction to be aborted
         without affecting the remainder of the transaction. Prior
-        releases had no such capability; there was no way to recover from
-        a statement failure within a transaction except by aborting the whole
-	transaction. This feature is valuable
-        for application writers who require error recovery within a
-	complex transaction.
+        releases had no such capability; there was no way to recover
+        from a statement failure within a transaction except by
+        aborting the whole transaction. This feature is valuable for
+        application writers who require error recovery within a
+        complex transaction.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
       <term>
-       Point-In-Time Recovery Increases Reliability
+       Point-In-Time Recovery
       </term>
 
       <listitem>
        <para>
-        Though PostgreSQL is very reliable, in previous releases there
-        was no way to recover from disk drive failure except to restore
-        from a previous backup or use a standby replication server.
-	Point-in-time recovery allows continuous backup of the server.
-	You can recover either to the point of failure or to some
-	transaction in the past.
+        Though <productname>PostgreSQL</productname> is very reliable,
+        in previous releases there was no way to recover from disk
+        drive failure except to restore from a previous backup or use
+        a standby replication server.  Point-in-time recovery allows
+        continuous backup of the server.  You can recover either to
+        the point of failure or to some transaction in the past.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
       <term>
-       Tablespaces Simplify Disk Layout
+       Tablespaces
       </term>
 
       <listitem>
        <para>
-        Tablespaces allow administrators
-        to select the file systems used for storage of databases,
-        schemas, tables, or indexes. This improves performance and
-        control over disk space usage. Prior releases used
-        <literal>initlocation</> and manual symlink management for such tasks.
+        Tablespaces allow administrators to select the file systems
+        used for storage of databases, schemas, tables, or
+        indexes. This improves performance and control over disk space
+        usage. Prior releases used <application>initlocation</> and
+        manual symlink management for such tasks.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
       <term>
-       Improved Buffer Management, CHECKPOINT, VACUUM
+       Improved Buffer Management, <command>CHECKPOINT</command>,
+       <command>VACUUM</command>
       </term>
 
       <listitem>
@@ -117,7 +120,8 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.287 2004/08/21 03:25:34 momjian
 
       <listitem>
        <para>
-        A column's data type can now be changed with ALTER TABLE.
+        A column's data type can now be changed with <command>ALTER
+        TABLE</command>.
        </para>
       </listitem>
      </varlistentry>
@@ -130,22 +134,22 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.287 2004/08/21 03:25:34 momjian
       <listitem>
        <para>
         A new version of the <application>plperl</> server-side language now
-	supports a persistent shared storage area, triggers, returning records
-	and arrays of records, and SPI calls to access the database.
+        supports a persistent shared storage area, triggers, returning records
+        and arrays of records, and SPI calls to access the database.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
       <term>
-       COPY Handles Comma-Separated-Value Files
+        CSV support in <command>COPY</command>
       </term>
 
       <listitem>
        <para>
-        COPY can now read and write comma-separated-value (CSV) files. It
-        has the flexibility to interpret non-standard quoting and
-        separation characters too.
+        <command>COPY</command> can now read and write
+        comma-separated-value (CSV) files. It has the flexibility to
+        interpret non-standard quoting and separation characters too.
        </para>
       </listitem>
      </varlistentry>
@@ -181,9 +185,10 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.287 2004/08/21 03:25:34 momjian
      <listitem>
       <para>
        Server configuration parameters <varname>SortMem</> and
-       <varname>VacuumMem</> have been renamed to <varname>work_mem</> and
-       <varname>maintenance_work_mem</> to better reflect their use. The
-       original names are still supported in SET and SHOW.
+       <varname>VacuumMem</> have been renamed to <varname>work_mem</>
+       and <varname>maintenance_work_mem</> to better reflect their
+       use. The original names are still supported in
+       <command>SET</command> and <command>SHOW</command>.
       </para>
      </listitem>
 
@@ -246,8 +251,9 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.287 2004/08/21 03:25:34 momjian
 
      <listitem>
       <para>
-       The server now warns of empty strings passed to oid/float4/float8
-       data types. In the next major release, doing this will generate an
+       The server now warns of empty strings passed to
+       <type>oid</type>/<type>float4</type>/<type>float8</type> data
+       types. In the next major release, doing this will generate an
        error.
       </para>
      </listitem>
@@ -292,8 +298,8 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.287 2004/08/21 03:25:34 momjian
 
      <listitem>
       <para>
-       EXECUTE now returns a completion tag that matches the executed
-       statement.
+       <command>EXECUTE</command> now returns a completion tag that
+       matches the executed statement.
       </para>
      </listitem>
 
@@ -307,8 +313,8 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.287 2004/08/21 03:25:34 momjian
 
      <listitem>
       <para>
-       Now that tablespaces have been implemented, initlocation has been
-       removed.
+       Now that tablespaces have been implemented,
+       <application>initlocation</> has been removed.
       </para>
      </listitem>
 
@@ -321,15 +327,43 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.287 2004/08/21 03:25:34 momjian
        ignored as well as leading whitespace (which has always been ignored).
       </para>
      </listitem>
-
-     <listitem>
-      <para>
-       The 8.1 release will remove the function <literal>to_char(interval)
-       </literal>.
-      </para>
-     </listitem>
     </itemizedlist>
    </para>
+  </sect2>
+
+  <sect2>
+   <title>Deprecated Features</title>
+
+   <para>
+    Some aspects of <productname>PostgreSQL</productname>'s behavior
+    have been determined to be suboptimal. For the sake of backward
+    compatibility these have not been removed in 8.0, but they are
+    considered deprecated and will be removed in the next major
+    release.
+    </para>
+
+   <itemizedlist>
+    <listitem>
+     <para>
+      The 8.1 release will remove the function
+       <literal>to_char(interval)</literal>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      By default, tables in <productname>PostgreSQL</productname> 8.0
+      and earlier are created with OIDs. In the next release, this
+      will <emphasis>not</emphasis> be the case: to create a table
+      that contains OIDs, the <literal>WITH OIDS</literal> clause must
+      be specified or the <varname>default_with_oids</varname>
+      configuration parameter must be enabled. Users are encouraged to
+      explicitely specify <literal>WITH OIDS</literal> if their tables
+      require OIDs for compatibility with future releases of
+      <productname>PostgreSQL</productname>.
+     </para>
+    </listitem>
+   </itemizedlist>
   </sect2>
 
   <sect2>
@@ -396,10 +430,11 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.287 2004/08/21 03:25:34 momjian
       Add ability to prolong vacuum to reduce performance impact (Jan)
      </para>
      <para>
-      On busy systems, VACUUM performs many I/O requests which can hurt
-      performance for other users. This release allows you to slow down
-      VACUUM to reduce its impact on other users, though this increases the
-      total duration of VACUUM.
+      On busy systems, <command>VACUUM</command> performs many I/O
+      requests which can hurt performance for other users. This
+      release allows you to slow down <command>VACUUM</command> to
+      reduce its impact on other users, though this increases the
+      total duration of <command>VACUUM</command>.
      </para>
     </listitem>
 
@@ -469,7 +504,8 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.287 2004/08/21 03:25:34 momjian
 
     <listitem>
      <para>
-      Add type-specific ANALYZE statistics capability (Mark Cave-Ayland)
+      Add type-specific <command>ANALYZE</command> statistics
+      capability (Mark Cave-Ayland)
      </para>
      <para>
       This feature allows more flexibility in generating statistics
@@ -479,7 +515,8 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.287 2004/08/21 03:25:34 momjian
 
     <listitem>
      <para>
-      Allow collection of ANALYZE statistics for expression indexes (Tom)
+      Allow collection of <command>ANALYZE</command> statistics for
+      expression indexes (Tom)
      </para>
      <para>
       Expression indexes (also called functional indexes) allow users to
@@ -493,7 +530,8 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.287 2004/08/21 03:25:34 momjian
 
     <listitem>
      <para>
-      New two-stage sampling method for ANALYZE (Manfred Koizar)
+      New two-stage sampling method for <command>ANALYZE</command>
+      (Manfred Koizar)
      </para>
      <para>
       This gives better statistics for asymmetric data distributions.
@@ -502,11 +540,11 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.287 2004/08/21 03:25:34 momjian
 
     <listitem>
      <para>
-      Speed up TRUNCATE (Tom)
+      Speed up <command>TRUNCATE</command> (Tom)
      </para>
      <para>
       This buys back some of the performance loss observed in 7.4, while still
-      keeping TRUNCATE transaction-safe.
+      keeping <command>TRUNCATE</command> transaction-safe.
      </para>
     </listitem>
 
@@ -671,23 +709,27 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.287 2004/08/21 03:25:34 momjian
 
     <listitem>
      <para>
-      Allow DECLARE CURSOR to take parameters (Oliver Jowett)
+      Allow <command>DECLARE CURSOR</command> to take parameters
+      (Oliver Jowett)
      </para>
      <para>
-      It is now useful to issue DECLARE CURSOR in a Parse message with
-      parameters.  The parameter values sent at Bind time will be substituted
-      into the execution of the cursor's query.
+      It is now useful to issue <command>DECLARE CURSOR</command> in a
+      Parse message with parameters.  The parameter values sent at
+      Bind time will be substituted into the execution of the cursor's
+      query.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Fix hash joins and aggregates of INET and CIDR data types (Tom)
+      Fix hash joins and aggregates of <type>inet</type> and
+      <type>cidr</type> data types (Tom)
      </para>
      <para>
-      Release 7.4 handled hashing of mixed INET and CIDR values incorrectly.
-      (This bug did not exist in prior releases because they wouldn't try
-      to hash either datatype.)
+      Release 7.4 handled hashing of mixed <type>inet</type> and
+      <type>cidr</type> values incorrectly.  (This bug did not exist
+      in prior releases because they wouldn't try to hash either
+      datatype.)
      </para>
     </listitem>
 
@@ -719,8 +761,9 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.287 2004/08/21 03:25:34 momjian
 
     <listitem>
      <para>
-      Allow BEGIN WORK to specify transaction isolation levels like START
-      TRANSACTION (Bruce)
+      Allow <command>BEGIN WORK</command> to specify transaction
+      isolation levels like <command>START TRANSACTION</command> does
+      (Bruce)
      </para>
     </listitem>
 
@@ -824,12 +867,13 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.287 2004/08/21 03:25:34 momjian
 
     <listitem>
      <para>
-      Change EXECUTE to return a completion tag matching the executed statement
-      (Kris Jurka)
+      Change <command>EXECUTE</command> to return a completion tag
+      matching the executed statement (Kris Jurka)
      </para>
      <para>
-      Previous releases return an EXECUTE tag for any EXECUTE call. In
-      this release, the tag returned will reflect the command executed.
+      Previous releases return an <command>EXECUTE</command> tag for
+      any <command>EXECUTE</command> call. In this release, the tag
+      returned will reflect the command executed.
      </para>
     </listitem>
 
@@ -864,14 +908,15 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.287 2004/08/21 03:25:34 momjian
       control whether tables are created with OIDs by default (Neil)
      </para>
      <para>
-      This allows administrators to default all CREATE TABLE commands to
-      create tables without OID columns.
+      This allows administrators to default all <command>CREATE
+      TABLE</command> commands to create tables without OID columns.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Add WITH / WITHOUT OIDS clause to CREATE TABLE AS (Neil)
+      Add WITH / WITHOUT OIDS clause to <command>CREATE TABLE
+      AS</command> (Neil)
      </para>
     </listitem>
 
@@ -911,7 +956,8 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.287 2004/08/21 03:25:34 momjian
 
     <listitem>
      <para>
-      Allow multiple ALTER actions in a single ALTER TABLE command (Rod)
+      Allow multiple ALTER actions in a single <command>ALTER
+      TABLE</command> command (Rod)
      </para>
      <para>
       This is particularly useful for ALTER commands that rewrite the
@@ -923,7 +969,8 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.287 2004/08/21 03:25:34 momjian
 
     <listitem>
      <para>
-      Allow ALTER TABLE to add SERIAL columns (Tom)
+      Allow <command>ALTER TABLE</command> to add <type>serial</type>
+      columns (Tom)
      </para>
      <para>
       This is related to the new capability of adding defaults for new
@@ -996,13 +1043,15 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.287 2004/08/21 03:25:34 momjian
 
     <listitem>
      <para>
-      Allow CREATE SCHEMA to create triggers, indexes, and sequences (Neil)
+      Allow <command>CREATE SCHEMA</command> to create triggers,
+      indexes, and sequences (Neil)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Add ALSO keyword to CREATE RULE (Fabien Coelho)
+      Add ALSO keyword to <command>CREATE RULE</command> (Fabien
+      Coelho)
      </para>
      <para>
       This allows ALSO to be added to rule creation to contrast it with
@@ -1012,23 +1061,25 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.287 2004/08/21 03:25:34 momjian
 
     <listitem>
      <para>
-      Add NOWAIT option to LOCK command (Tatsuo)
+      Add NOWAIT option to <command>LOCK</command> (Tatsuo)
      </para>
      <para>
-      This allows the LOCK command to fail if it would have to wait for
-      the requested lock.
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      Allow COPY to read and write comma-separated-value (CSV) files (Andrew, Bruce)
+      This allows the <command>LOCK</command> command to fail if it
+      would have to wait for the requested lock.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Generate error if the COPY delimiter and NULL string conflict (Bruce)
+      Allow <command>COPY</command> to read and write
+      comma-separated-value (CSV) files (Andrew, Bruce)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Generate error if the <command>COPY</command> delimiter and NULL
+      string conflict (Bruce)
      </para>
     </listitem>
 
@@ -1040,7 +1091,8 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.287 2004/08/21 03:25:34 momjian
 
     <listitem>
      <para>
-      Avoid locking conflict between CREATE INDEX and CHECKPOINT (Tom)
+      Avoid locking conflict between <command>CREATE INDEX</command>
+      and <command>CHECKPOINT</command> (Tom)
      </para>
      <para>
       In 7.3 and 7.4, a long-running btree index build could block concurrent
@@ -1051,14 +1103,16 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.287 2004/08/21 03:25:34 momjian
 
     <listitem>
      <para>
-      Database-wide ANALYZE does not hold locks across tables (Tom)
+      Database-wide <command>ANALYZE</command> does not hold locks
+      across tables (Tom)
      </para>
      <para>
-      This reduces the potential for deadlocks against other backends that
-      want exclusive locks on tables.  To get the benefit of this change,
-      do not execute database-wide ANALYZE inside a transaction block
-      (BEGIN block); it must be able to commit and start a new transaction
-      for each table.
+      This reduces the potential for deadlocks against other backends
+      that want exclusive locks on tables.  To get the benefit of this
+      change, do not execute database-wide <command>ANALYZE</command>
+      inside a transaction block (<command>BEGIN</command> block); it
+      must be able to commit and start a new transaction for each
+      table.
      </para>
     </listitem>
 
@@ -1067,11 +1121,12 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.287 2004/08/21 03:25:34 momjian
       Erase MD5 user passwords when a user is renamed (Bruce)
      </para>
      <para>
-      PostgreSQL uses the user name as salt when encrypting passwords
-      via MD5. When a user name is changed, their salt no longer matches
-      the stored MD5 password, so the stored password becomes useless.
-      In this release a notice is generated and the password
-      is cleared.  A new password must then be assigned.
+      <productname>PostgreSQL</productname> uses the user name as salt
+      when encrypting passwords via MD5. When a user name is changed,
+      their salt no longer matches the stored MD5 password, so the
+      stored password becomes useless.  In this release a notice is
+      generated and the password is cleared.  A new password must then
+      be assigned.
      </para>
     </listitem>
 
@@ -1127,7 +1182,8 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.287 2004/08/21 03:25:34 momjian
       Reject non-rectangular array literals as erroneous (Joe)
      </para>
      <para>
-      Formerly, array_in would silently build a surprising result.
+      Formerly, <literal>array_in</literal> would silently build a
+      surprising result.
      </para>
     </listitem>
 
@@ -1174,11 +1230,11 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.287 2004/08/21 03:25:34 momjian
 
     <listitem>
      <para>
-      Change factorial function to return NUMERIC (Gavin)
+      Change factorial function to return <type>numeric</type> (Gavin)
      </para>
      <para>
-      Returning NUMERIC allows the factorial function to work for a wider
-      range of input values.
+      Returning <type>numeric</type> allows the factorial function to
+      work for a wider range of input values.
      </para>
     </listitem>
 
@@ -1217,7 +1273,8 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.287 2004/08/21 03:25:34 momjian
 
     <listitem>
      <para>
-      Better support for IEEE Infinity and NaN values in float4, float8 (Neil)
+      Better support for IEEE Infinity and NaN values in
+      <type>float4</type>, <type>float8</type> (Neil)
      </para>
      <para>
       These should now work on all platforms that support IEEE-compliant
@@ -1448,7 +1505,8 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.287 2004/08/21 03:25:34 momjian
 
     <listitem>
      <para>
-      Make psql \copy match COPY command syntax fully (Tom)
+      Make psql \copy match <command>COPY</command> command syntax
+      fully (Tom)
      </para>
     </listitem>
 
@@ -1460,7 +1518,8 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.287 2004/08/21 03:25:34 momjian
 
     <listitem>
      <para>
-      Add CLUSTER information to psql \d display (Bruce)
+      Add <command>CLUSTER</command> information to psql \d display
+      (Bruce)
      </para>
     </listitem>
 
@@ -1478,7 +1537,8 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.287 2004/08/21 03:25:34 momjian
 
     <listitem>
      <para>
-      Add global psql config file, psqlrc.sample (Bruce)
+      Add global psql config file, <filename>psqlrc.sample</filename>
+      (Bruce)
      </para>
      <para>
       This allows a central file where global psql startup commands can
@@ -1594,8 +1654,8 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.287 2004/08/21 03:25:34 momjian
 
     <listitem>
      <para>
-      Allow PQoidValue(), PQcmdTuples(), and PQoidStatus() to work
-      on EXECUTE commands (Neil)
+      Allow PQoidValue(), PQcmdTuples(), and PQoidStatus() to work on
+      <command>EXECUTE</command> commands (Neil)
      </para>
     </listitem>
 
@@ -1665,10 +1725,11 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.287 2004/08/21 03:25:34 momjian
       New "PostgreSQL" CVS tag (Marc)
      </para>
      <para>
-      This was done to make it easier for organizations to manage their own
-      copies of the PostgreSQL CVS repository.  File version stamps from the
-      master repository will not get munged by checking into or out of
-      a copied repository.
+      This was done to make it easier for organizations to manage
+      their own copies of the <productname>PostgreSQL</productname>
+      CVS repository.  File version stamps from the master repository
+      will not get munged by checking into or out of a copied
+      repository.
      </para>
     </listitem>
 
@@ -1880,7 +1941,8 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.287 2004/08/21 03:25:34 momjian
 
     <listitem>
      <para>
-      New /contrib/trgm, trigram matching for PostgreSQL (Teodor)
+      New /contrib/trgm, trigram matching for
+      <productname>PostgreSQL</productname> (Teodor)
      </para>
     </listitem>
 
@@ -2037,7 +2099,7 @@ names from outer query levels.
 <para>
   This fixes a difficult-to-exploit security hole.
 </para></listitem>
-<listitem><para>Avoid locking conflict between ANALYZE and LISTEN/NOTIFY</para></listitem>
+<listitem><para>Avoid locking conflict between <command>ANALYZE</command> and <command>LISTEN</command>/<command>NOTIFY</command></para></listitem>
 <listitem><para>Numerous translation updates (various contributors)</para></listitem>
 </itemizedlist>
 

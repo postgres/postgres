@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/release_savepoint.sgml,v 1.1 2004/08/12 19:12:21 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/release_savepoint.sgml,v 1.2 2004/08/24 00:06:51 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -77,7 +77,7 @@ RELEASE [ SAVEPOINT ] <replaceable>savepoint_name</replaceable>
 
   <para>
    It is not possible to release a savepoint when the transaction is in
-   aborted state.
+   an aborted state.
   </para>
 
   <para>
@@ -108,9 +108,11 @@ COMMIT;
   <title>Compatibility</title>
   
   <para>
-   The SQL2003 standard specifies that the keyword SAVEPOINT is mandatory.
-   <productname>PostgreSQL</productname> allows the SAVEPOINT keyword to be
-   omitted. Otherwise, this command is fully conforming.
+   The SQL2003 standard specifies that the keyword
+   <literal>SAVEPOINT</literal> is mandatory.
+   <productname>PostgreSQL</productname> allows the
+   <literal>SAVEPOINT</literal> keyword to be omitted. Otherwise, this
+   command is fully conforming.
   </para>
  </refsect1>
 
