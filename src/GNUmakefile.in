@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/GNUmakefile.in,v 1.44 1999/10/12 14:46:26 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/GNUmakefile.in,v 1.45 1999/10/31 11:50:02 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -91,6 +91,7 @@ distclean: clean
 		backend/utils/Gen_fmgrtab.sh \
 		bin/pg_dump/Makefile \
 		bin/pg_version/Makefile \
+		bin/pgaccess/Makefile \
 		bin/psql/Makefile \
 		bin/pgtclsh/mkMakefile.tcldefs.sh \
 		bin/pgtclsh/mkMakefile.tkdefs.sh \

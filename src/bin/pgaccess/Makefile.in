@@ -1,0 +1,31 @@
+#-------------------------------------------------------------------------
+#
+# Makefile
+#    Makefile for pgaccess
+#
+# Copyright (c) 1994, Regents of the University of California
+#
+# IDENTIFICATION
+#    $Header: /cvsroot/pgsql/src/bin/pgaccess/Attic/Makefile.in,v 1.1 1999/10/31 11:50:03 momjian Exp $
+#
+#-------------------------------------------------------------------------
+
+SRCDIR= ../..
+include $(SRCDIR)/Makefile.global
+
+all: pgaccess
+
+pgaccess: pgaccess.sh
+	sed -e 's/__wish__/@wish@/' 			\
+	sed -e 's/__POSTGRESDIR__/$(POSTGRESDIR)/' 	\
+			pgaccess.sh > pgaccess
+
+install:
+	$(INSTALL) $(INSTL_EXE_OPTS) pgaccess $(BINDIR)/pgaccess
+	$(INSTALL) $(INSTL_EXE_OPTS) main.tcl $(POSTGRESDIR)/pgaccess
+	$(INSTALL) $(INSTL_EXE_OPTS) lib/* $(POSTGRESDIR)/pgaccess/lib
+#	$(INSTALL) $(INSTL_EXE_OPTS) lib/help/* $(POSTGRESDIR)/pgaccess/lib/help
+#	$(INSTALL) $(INSTL_EXE_OPTS) lib/languages/* $(POSTGRESDIR)/pgaccess/lib/languages
+
+clean:
+	rm -f pgaccess
