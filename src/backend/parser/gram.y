@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.157 2000/03/15 05:31:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.158 2000/03/18 00:33:45 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -5490,6 +5490,8 @@ xlateSqlFunc(char *name)
 		return "char_length";
 	else if (!strcasecmp(name,"datetime"))
 		return "timestamp";
+	else if (!strcasecmp(name,"timespan"))
+		return "interval";
 	else
 		return name;
 } /* xlateSqlFunc() */
