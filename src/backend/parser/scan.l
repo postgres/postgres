@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.28 1997/11/14 15:43:27 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.29 1997/11/17 16:31:39 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,6 +71,8 @@ char literal[MAX_PARSE_BUFFER];
 	 * There are exclusive states for quoted strings, extended comments,
 	 *  and to eliminate parsing troubles for numeric strings.
 	 * Exclusive states:
+	 *  <xb> binary numeric string - thomas 1997-11-16
+	 *  <xh> hexadecimal numeric string - thomas 1997-11-16
 	 *  <xc> extended C-style comments - tgl 1997-07-12
 	 *  <xq> quoted strings - tgl 1997-07-30
 	 *  <xm> numeric strings with embedded minus sign - tgl 1997-09-05
@@ -83,8 +85,10 @@ char literal[MAX_PARSE_BUFFER];
 	 *	operator-like symbols. - thomas 1997-07-14
 	 */
 
+%x xb
 %x xc
 %x xd
+%x xh
 %x xq
 %x xm
 
@@ -96,6 +100,16 @@ xqinside		[^\\']*
 xqembedded		"\\'"
 xqliteral		[\\](.|\n)
 xqcat			{quote}{space}*\n{space}*{quote}
+
+xbstart			[bB]{quote}
+xbstop			{quote}
+xbinside		[^']*
+xbcat			{quote}{space}*\n{space}*{quote}
+
+xhstart			[xX]{quote}
+xhstop			{quote}
+xhinside		[^']*
+xhcat			{quote}{space}*\n{space}*{quote}
 
 dquote			\"
 xdstart			{dquote}
@@ -161,6 +175,48 @@ other			.
 <xc>{xcstop}	{ BEGIN(INITIAL); }
 
 <xc>{xcinside}	{ /* ignore */ }
+
+{xbstart}		{
+					BEGIN(xb);
+					llen = 0;
+					*literal = '\0';
+				}
+<xb>{xbstop}	{
+					char* endptr;
+
+					BEGIN(INITIAL);
+					errno = 0;
+					yylval.ival = strtol((char *)literal,&endptr,2);
+					if (*endptr != '\0' || errno == ERANGE)
+						elog(WARN,"Bad binary integer input '%s'",literal);
+					return (ICONST);
+				}
+<xh>{xhinside}	|
+<xb>{xbinside}	{
+					if ((llen+yyleng) > (MAX_PARSE_BUFFER - 1))
+						elog(WARN,"quoted string parse buffer of %d chars exceeded",MAX_PARSE_BUFFER);
+					memcpy(literal+llen, yytext, yyleng+1);
+					llen += yyleng;
+				}
+<xh>{xhcat}		|
+<xb>{xbcat}		{
+				}
+
+{xhstart}		{
+					BEGIN(xh);
+					llen = 0;
+					*literal = '\0';
+				}
+<xh>{xhstop}	{
+					char* endptr;
+
+					BEGIN(INITIAL);
+					errno = 0;
+					yylval.ival = strtol((char *)literal,&endptr,16);
+					if (*endptr != '\0' || errno == ERANGE)
+						elog(WARN,"Bad hexadecimal integer input '%s'",literal);
+					return (ICONST);
+				}
 
 {xqstart}		{
 					BEGIN(xq);
@@ -250,12 +306,18 @@ other			.
 				}
 
 {integer}/{space}*-{number}	{
+					char* endptr;
+
 					BEGIN(xm);
-					yylval.ival = atoi((char*)yytext);
+					errno = 0;
+					yylval.ival = strtol((char *)yytext,&endptr,10);
+					if (*endptr != '\0' || errno == ERANGE)
+						elog(WARN,"Bad integer input '%s'",yytext);
 					return (ICONST);
 				}
 {real}/{space}*-{number} {
 					char* endptr;
+
 					BEGIN(xm);
 					errno = 0;
 					yylval.dval = strtod(((char *)yytext),&endptr);
