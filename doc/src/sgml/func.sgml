@@ -1541,7 +1541,13 @@ Not defined by this name. Implements the intersection operator '#'
    <para>
     <firstterm>Aggregate functions</firstterm> allow the generation of simple
     statistics about the values of particular columns over the selected set
-    of rows. See also <xref linkend="sql" endterm="aggregates-tutorial"> and
+    of rows.
+    See also the chapter on aggregates in
+    <citetitle>The PostgreSQL Tutorial</citetitle>
+<!--
+    <xref linkend="sql" endterm="aggregates-tutorial">
+-->
+    and
     <xref linkend="syntax" endterm="aggregates-syntax">.
    </para>
 
