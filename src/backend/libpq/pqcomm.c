@@ -29,7 +29,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqcomm.c,v 1.110 2000/11/13 15:18:09 momjian Exp $
+ *	$Id: pqcomm.c,v 1.111 2000/11/13 21:31:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -255,8 +255,8 @@ StreamServerPort(int family, char *hostName, unsigned short portName,
 			if ((hp == NULL) || (hp->h_addrtype != AF_INET))
 			{
 				snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-					   "FATAL: StreamServerPort: gethostbyname(%s) failed: %s\n",
-					   hostName, hstrerror(h_errno));
+					   "FATAL: StreamServerPort: gethostbyname(%s) failed\n",
+							hostName);
 					   fputs(PQerrormsg, stderr);
 					   pqdebug("%s", PQerrormsg);
 				return STATUS_ERROR;
