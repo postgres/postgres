@@ -5,7 +5,7 @@
  * command, configuration file, and command line options.
  * See src/backend/utils/misc/README for more information.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.68 2002/05/17 01:19:18 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.69 2002/05/17 20:32:29 tgl Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -936,43 +936,33 @@ guc_var_compare(const void *a, const void *b)
 {
 	struct config_generic *confa = *(struct config_generic **) a;
 	struct config_generic *confb = *(struct config_generic **) b;
-	char		namea[NAMEDATALEN];
-	char		nameb[NAMEDATALEN];
-	int			len,
-				i;
+	const char *namea;
+	const char *nameb;
 
 	/*
 	 * The temptation to use strcasecmp() here must be resisted, because
 	 * the array ordering has to remain stable across setlocale() calls.
-	 * So, apply an ASCII-only downcasing to both names and use strcmp().
+	 * So, build our own with a simple ASCII-only downcasing.
 	 */
-	len = strlen(confa->name);
-	if (len >= NAMEDATALEN)
-		len = NAMEDATALEN-1;
-	for (i = 0; i < len; i++)
+	namea = confa->name;
+	nameb = confb->name;
+	while (*namea && *nameb)
 	{
-		char		ch = confa->name[i];
+		char		cha = *namea++;
+		char		chb = *nameb++;
 
-		if (ch >= 'A' && ch <= 'Z')
-			ch += 'a' - 'A';
-		namea[i] = ch;
+		if (cha >= 'A' && cha <= 'Z')
+			cha += 'a' - 'A';
+		if (chb >= 'A' && chb <= 'Z')
+			chb += 'a' - 'A';
+		if (cha != chb)
+			return cha - chb;
 	}
-	namea[len] = '\0';
-
-	len = strlen(confb->name);
-	if (len >= NAMEDATALEN)
-		len = NAMEDATALEN-1;
-	for (i = 0; i < len; i++)
-	{
-		char		ch = confb->name[i];
-
-		if (ch >= 'A' && ch <= 'Z')
-			ch += 'a' - 'A';
-		nameb[i] = ch;
-	}
-	nameb[len] = '\0';
-
-	return strcmp(namea, nameb);
+	if (*namea)
+		return 1;				/* a is longer */
+	if (*nameb)
+		return -1;				/* b is longer */
+	return 0;
 }
 
 
@@ -1212,17 +1202,8 @@ ResetAllOptions(void)
 					break;
 				}
 
-				str = strdup(conf->reset_val);
-				if (str == NULL)
-					elog(ERROR, "out of memory");
-
-				/*
-				 * Remember string in workspace, so that we can free it
-				 * and avoid a permanent memory leak if hook elogs.
-				 */
-				if (guc_string_workspace)
-					free(guc_string_workspace);
-				guc_string_workspace = str;
+				/* We need not strdup here */
+				str = conf->reset_val;
 
 				if (conf->assign_hook)
 				{
@@ -1233,13 +1214,10 @@ ResetAllOptions(void)
 						elog(ERROR, "Failed to reset %s", conf->gen.name);
 					else if (newstr != str)
 					{
-						free(str);
 						/* See notes in set_config_option about casting */
 						str = (char *) newstr;
 					}
 				}
-
-				guc_string_workspace = NULL;
 
 				SET_STRING_VARIABLE(conf, str);
 				SET_STRING_TENTATIVE_VAL(conf, str);
@@ -1619,8 +1597,13 @@ set_config_option(const char *name, const char *value,
 			break;
 	}
 
+	/* Should we report errors interactively? */
 	interactive = (source >= PGC_S_SESSION);
-	makeDefault = (source <= PGC_S_OVERRIDE) && (value != NULL);
+	/*
+	 * Should we set reset/session values?  (If so, the behavior is not
+	 * transactional.)
+	 */
+	makeDefault = DoIt && (source <= PGC_S_OVERRIDE) && (value != NULL);
 
 	/*
 	 * Ignore attempted set if overridden by previously processed setting.
@@ -1633,7 +1616,7 @@ set_config_option(const char *name, const char *value,
 	{
 		if (DoIt && !makeDefault)
 		{
-			elog(DEBUG2, "setting %s ignored because previous source is higher",
+			elog(DEBUG2, "%s: setting ignored because previous source is higher priority",
 				 name);
 			return true;
 		}
@@ -1867,6 +1850,11 @@ set_config_option(const char *name, const char *value,
 				}
 				else if (conf->reset_val)
 				{
+					/*
+					 * We could possibly avoid strdup here, but easier to
+					 * make this case work the same as the normal assignment
+					 * case.
+					 */
 					newval = strdup(conf->reset_val);
 					if (newval == NULL)
 					{
@@ -2429,10 +2417,12 @@ ProcessGUCArray(ArrayType *array, GucSource source)
 			continue;
 
 		s = DatumGetCString(DirectFunctionCall1(textout, d));
+
 		ParseLongOption(s, &name, &value);
 		if (!value)
 		{
 			elog(WARNING, "cannot parse setting \"%s\"", name);
+			free(name);
 			continue;
 		}
 
@@ -2442,6 +2432,10 @@ ProcessGUCArray(ArrayType *array, GucSource source)
 		 * checked when it was inserted.
 		 */
 		SetConfigOption(name, value, PGC_SUSET, source);
+
+		free(name);
+		if (value)
+			free(value);
 	}
 }
 
