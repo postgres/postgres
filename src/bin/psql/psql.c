@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.60 1997/05/21 03:12:02 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.61 1997/05/22 18:55:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1055,19 +1055,12 @@ HandleSlashCmds(PsqlSettings * settings,
      * assuming it's not a one-character command.  If it's a one-character
      * command, this is meaningless.
      */
-    char           *optarg3;
-    /*
-     * Pointer inside the second <cmd> string to the argument of the slash command
-     * assuming it's not a one-character command.  If it's a one-character
-     * command, this is meaningless.
-     */
     char           *cmd;
     /*
      * String: value of the slash command, less the slash and with escape
      * sequences decoded.
      */
     int             blank_loc;
-    int             blank_loc2;
     /* Offset within <cmd> of first blank */
 
     cmd = malloc(strlen(line));	/* unescaping better not make string grow. */
@@ -1089,19 +1082,10 @@ HandleSlashCmds(PsqlSettings * settings,
 	optarg = NULL;
 
     blank_loc = strcspn(cmd, " \t");
-    if (blank_loc == 0) {
+    if (blank_loc == 0)
 	optarg2 = NULL;
-	optarg3 = NULL;
-    } else {
+    else
 	optarg2 = cmd + blank_loc + strspn(cmd + blank_loc, " \t");
-    	blank_loc2 = strcspn(optarg2, " \t");
-    	if (blank_loc2 == 0 || *(optarg2 + blank_loc2) == '\0')
-	    optarg3 = NULL;
-	else {
-	    optarg3 = optarg2 + blank_loc2 + strspn(optarg2 + blank_loc2, " \t");
-	    *(optarg2 + blank_loc2) = '\0';
-	}
-    }
 		
     switch (cmd[0]) {
     case 'a':			/* toggles to align fields on output */
@@ -1124,8 +1108,20 @@ HandleSlashCmds(PsqlSettings * settings,
     case 'c':{
 	    if (strncmp(cmd, "copy ", strlen("copy ")) == 0)
 		do_copy(optarg2, settings);
-	    else if (strncmp(cmd, "connect ", strlen("connect ")) == 0)
+	    else if (strncmp(cmd, "connect ", strlen("connect ")) == 0) {
+		char           *optarg3;
+		int            blank_loc2;
+
+	    	blank_loc2 = strcspn(optarg2, " \t");
+		if (blank_loc2 == 0 || *(optarg2 + blank_loc2) == '\0')
+		    optarg3 = NULL;
+		else {
+	    	    optarg3 = optarg2 + blank_loc2 +
+					strspn(optarg2 + blank_loc2, " \t");
+		    *(optarg2 + blank_loc2) = '\0';
+		}
 		do_connect(optarg2, optarg3, settings);
+	    }
 	    else
 		do_connect(optarg, optarg2,  settings);
 	}
