@@ -464,7 +464,7 @@ rstrdate(char *str, date * d)
 	for (i=0,j=0; i < 10; i++ )
 	{
 		/* ignore non-digits */
-		if ( isdigit(str[i]) )
+		if ( isdigit((unsigned char) str[i]) )
 		{
 			
 			/* j only increments if it is a digit */
@@ -910,8 +910,8 @@ void
 rupshift(char *str)
 {
 	for (; *str != '\0'; str++)
-		if (islower(*str))
-			*str = toupper(*str);
+		if (islower((unsigned char) *str))
+			*str = toupper((unsigned char) *str);
 	return;
 }
 
