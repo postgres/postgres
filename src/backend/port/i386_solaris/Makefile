@@ -4,7 +4,7 @@
 #    Makefile for port/i386_solaris
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/port/i386_solaris/Attic/Makefile,v 1.2 1996/11/09 06:19:27 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/port/i386_solaris/Attic/Makefile,v 1.3 1997/12/19 13:28:06 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -16,7 +16,7 @@ INCLUDE_OPT = -I../.. \
 
 CFLAGS+=$(INCLUDE_OPT)
 
-OBJS = port.o tas.o
+OBJS = tas.o
 
 all: SUBSYS.o
 
