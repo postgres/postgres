@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.263.2.16 2004/06/17 11:52:59 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.263.2.17 2004/06/27 12:32:47 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -575,7 +575,7 @@ statement: ecpgstart opt_at stmt ';'	{ connection = NULL; }
 		| c_thing		{ fprintf(yyout, "%s", $1); free($1); }
 		| CPP_LINE		{ fprintf(yyout, "%s", $1); free($1); }
 		| '{'			{ braces_open++; fputs("{", yyout); }
-		| '}'			{ remove_variables(braces_open--); fputs("}", yyout); }
+		| '}'			{ remove_typedefs(braces_open); remove_variables(braces_open--); fputs("}", yyout); }
 		;
 
 opt_at: AT connection_target
@@ -4656,6 +4656,7 @@ type_declaration: S_TYPEDEF
 	        	/* initial definition */
 		        this->next = types;
 	        	this->name = $5;
+	        	this->brace_level = braces_open;
 			this->type = (struct this_type *) mm_alloc(sizeof(struct this_type));
 			this->type->type_enum = $3.type_enum;
 			this->type->type_str = mm_strdup($5);
@@ -4974,6 +4975,7 @@ struct_union_type_with_symbol: s_struct_union_symbol
                         /* initial definition */
                         this->next = types;
 			this->name = mm_strdup(su_type.type_str);
+			this->brace_level = braces_open;
                         this->type = (struct this_type *) mm_alloc(sizeof(struct this_type));
                         this->type->type_enum = su_type.type_enum;
                         this->type->type_str = mm_strdup(su_type.type_str);
@@ -5493,6 +5495,7 @@ ECPGTypedef: TYPE_P
 				/* initial definition */
 				this->next = types;
 				this->name = $3;
+				this->brace_level = braces_open;
 				this->type = (struct this_type *) mm_alloc(sizeof(struct this_type));
 				this->type->type_enum = $5.type_enum;
 				this->type->type_str = mm_strdup($3);
