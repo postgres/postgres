@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.58 2002/12/12 15:49:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.59 2002/12/12 20:35:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2737,7 +2737,7 @@ AlterTableAddCheckConstraint(Relation rel, Constraint *constr)
 	/*
 	 * Convert the A_EXPR in raw_expr into an EXPR
 	 */
-	expr = transformExpr(pstate, constr->raw_expr, NULL);
+	expr = transformExpr(pstate, constr->raw_expr);
 
 	/*
 	 * Make sure it yields a boolean result.

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.136 2002/12/12 15:49:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.137 2002/12/12 20:35:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,6 @@
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/params.h"
-#include "optimizer/clauses.h"
 #include "parser/analyze.h"
 #include "parser/gramparse.h"
 #include "parser/parse.h"
@@ -84,7 +83,7 @@ parse_expr_init(void)
  * input and output of transformExpr; see SubLink for example.
  */
 Node *
-transformExpr(ParseState *pstate, Node *expr, ConstraintTestValue *domVal)
+transformExpr(ParseState *pstate, Node *expr)
 {
 	Node	   *result = NULL;
 
@@ -152,7 +151,7 @@ transformExpr(ParseState *pstate, Node *expr, ConstraintTestValue *domVal)
 				ExprFieldSelect *efs = (ExprFieldSelect *) expr;
 				List	   *fields;
 
-				result = transformExpr(pstate, efs->arg, domVal);
+				result = transformExpr(pstate, efs->arg);
 				/* handle qualification, if any */
 				foreach(fields, efs->fields)
 				{
@@ -169,7 +168,7 @@ transformExpr(ParseState *pstate, Node *expr, ConstraintTestValue *domVal)
 		case T_TypeCast:
 			{
 				TypeCast   *tc = (TypeCast *) expr;
-				Node	   *arg = transformExpr(pstate, tc->arg, domVal);
+				Node	   *arg = transformExpr(pstate, tc->arg);
 
 				result = typecast_expression(arg, tc->typename);
 				break;
@@ -204,14 +203,14 @@ transformExpr(ParseState *pstate, Node *expr, ConstraintTestValue *domVal)
 									n->arg = (Expr *) a->lexpr;
 
 								result = transformExpr(pstate,
-													   (Node *) n, domVal);
+													   (Node *) n);
 							}
 							else
 							{
 								Node	   *lexpr = transformExpr(pstate,
-															   a->lexpr, domVal);
+																  a->lexpr);
 								Node	   *rexpr = transformExpr(pstate,
-															   a->rexpr, domVal);
+																  a->rexpr);
 
 								result = (Node *) make_op(a->name,
 														  lexpr,
@@ -222,9 +221,9 @@ transformExpr(ParseState *pstate, Node *expr, ConstraintTestValue *domVal)
 					case AND:
 						{
 							Node	   *lexpr = transformExpr(pstate,
-															  a->lexpr, domVal);
+															  a->lexpr);
 							Node	   *rexpr = transformExpr(pstate,
-															  a->rexpr, domVal);
+															  a->rexpr);
 
 							lexpr = coerce_to_boolean(lexpr, "AND");
 							rexpr = coerce_to_boolean(rexpr, "AND");
@@ -237,9 +236,9 @@ transformExpr(ParseState *pstate, Node *expr, ConstraintTestValue *domVal)
 					case OR:
 						{
 							Node	   *lexpr = transformExpr(pstate,
-															  a->lexpr, domVal);
+															  a->lexpr);
 							Node	   *rexpr = transformExpr(pstate,
-															  a->rexpr, domVal);
+															  a->rexpr);
 
 							lexpr = coerce_to_boolean(lexpr, "OR");
 							rexpr = coerce_to_boolean(rexpr, "OR");
@@ -252,7 +251,7 @@ transformExpr(ParseState *pstate, Node *expr, ConstraintTestValue *domVal)
 					case NOT:
 						{
 							Node	   *rexpr = transformExpr(pstate,
-															  a->rexpr, domVal);
+															  a->rexpr);
 
 							rexpr = coerce_to_boolean(rexpr, "NOT");
 
@@ -263,9 +262,9 @@ transformExpr(ParseState *pstate, Node *expr, ConstraintTestValue *domVal)
 					case DISTINCT:
 						{
 							Node	   *lexpr = transformExpr(pstate,
-															  a->lexpr, domVal);
+															  a->lexpr);
 							Node	   *rexpr = transformExpr(pstate,
-															  a->rexpr, domVal);
+															  a->rexpr);
 
 							result = (Node *) make_op(a->name,
 													  lexpr,
@@ -291,7 +290,7 @@ transformExpr(ParseState *pstate, Node *expr, ConstraintTestValue *domVal)
 							 * Will result in a boolean constant node.
 							 */
 							Node	   *lexpr = transformExpr(pstate,
-															  a->lexpr, domVal);
+															  a->lexpr);
 
 							ltype = exprType(lexpr);
 							foreach(telem, (List *) a->rexpr)
@@ -315,7 +314,7 @@ transformExpr(ParseState *pstate, Node *expr, ConstraintTestValue *domVal)
 							n->val.val.str = (matched ? "t" : "f");
 							n->typename = SystemTypeName("bool");
 
-							result = transformExpr(pstate, (Node *) n, domVal);
+							result = transformExpr(pstate, (Node *) n);
 						}
 						break;
 				}
@@ -329,7 +328,7 @@ transformExpr(ParseState *pstate, Node *expr, ConstraintTestValue *domVal)
 				/* transform the list of arguments */
 				foreach(args, fn->args)
 					lfirst(args) = transformExpr(pstate,
-												 (Node *) lfirst(args), domVal);
+												 (Node *) lfirst(args));
 				result = ParseFuncOrColumn(pstate,
 										   fn->funcname,
 										   fn->args,
@@ -403,7 +402,7 @@ transformExpr(ParseState *pstate, Node *expr, ConstraintTestValue *domVal)
 					List	   *elist;
 
 					foreach(elist, left_list)
-						lfirst(elist) = transformExpr(pstate, lfirst(elist), domVal);
+						lfirst(elist) = transformExpr(pstate, lfirst(elist));
 
 					Assert(IsA(sublink->oper, A_Expr));
 					op = ((A_Expr *) sublink->oper)->name;
@@ -507,7 +506,7 @@ transformExpr(ParseState *pstate, Node *expr, ConstraintTestValue *domVal)
 														 (Node *) c->arg,
 														 warg);
 					}
-					neww->expr = (Expr *) transformExpr(pstate, warg, domVal);
+					neww->expr = (Expr *) transformExpr(pstate, warg);
 
 					neww->expr = (Expr *) coerce_to_boolean((Node *) neww->expr,
 															"CASE/WHEN");
@@ -524,7 +523,7 @@ transformExpr(ParseState *pstate, Node *expr, ConstraintTestValue *domVal)
 						n->val.type = T_Null;
 						warg = (Node *) n;
 					}
-					neww->result = (Expr *) transformExpr(pstate, warg, domVal);
+					neww->result = (Expr *) transformExpr(pstate, warg);
 
 					newargs = lappend(newargs, neww);
 					typeids = lappendi(typeids, exprType((Node *) neww->result));
@@ -548,7 +547,7 @@ transformExpr(ParseState *pstate, Node *expr, ConstraintTestValue *domVal)
 					n->val.type = T_Null;
 					defresult = (Node *) n;
 				}
-				newc->defresult = (Expr *) transformExpr(pstate, defresult, domVal);
+				newc->defresult = (Expr *) transformExpr(pstate, defresult);
 
 				/*
 				 * Note: default result is considered the most significant
@@ -586,7 +585,7 @@ transformExpr(ParseState *pstate, Node *expr, ConstraintTestValue *domVal)
 			{
 				NullTest   *n = (NullTest *) expr;
 
-				n->arg = (Expr *) transformExpr(pstate, (Node *) n->arg, domVal);
+				n->arg = (Expr *) transformExpr(pstate, (Node *) n->arg);
 				/* the argument can be any type, so don't coerce it */
 				result = expr;
 				break;
@@ -623,26 +622,11 @@ transformExpr(ParseState *pstate, Node *expr, ConstraintTestValue *domVal)
 						clausename = NULL;		/* keep compiler quiet */
 				}
 
-				b->arg = (Expr *) transformExpr(pstate, (Node *) b->arg, domVal);
+				b->arg = (Expr *) transformExpr(pstate, (Node *) b->arg);
 
 				b->arg = (Expr *) coerce_to_boolean((Node *) b->arg, clausename);
 
 				result = expr;
-				break;
-			}
-
-		case T_DomainConstraintValue:
-			{
-				/*
-				 * If domVal is NULL, we are not translating an expression that
-				 * can use it
-				 */
-				if (domVal == NULL)
-					elog(ERROR, "VALUE is not allowed in expression for node %d",
-						 nodeTag(expr));
-
-				result = (Node *) copyObject(domVal);
-
 				break;
 			}
 
@@ -663,6 +647,7 @@ transformExpr(ParseState *pstate, Node *expr, ConstraintTestValue *domVal)
 		case T_FieldSelect:
 		case T_RelabelType:
 		case T_ConstraintTest:
+		case T_ConstraintTestValue:
 			{
 				result = (Node *) expr;
 				break;
@@ -700,6 +685,7 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 	int			numnames = length(cref->fields);
 	Node	   *node;
 	RangeVar   *rv;
+	int			levels_up;
 
 	/*----------
 	 * The allowed syntaxes are:
@@ -740,18 +726,30 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 				if (node == NULL)
 				{
 					/*
-					 * Not known as a column of any range-table entry, so
-					 * try to find the name as a relation ... but not if
+					 * Not known as a column of any range-table entry.
+					 *
+					 * Consider the possibility that it's VALUE in a domain
+					 * check expression.  (We handle VALUE as a name, not a
+					 * keyword, to avoid breaking a lot of applications that
+					 * have used VALUE as a column name in the past.)
+					 */
+					if (pstate->p_value_substitute != NULL &&
+						strcmp(name, "value") == 0)
+					{
+						node = (Node *) copyObject(pstate->p_value_substitute);
+						break;
+					}
+
+					/*
+					 * Try to find the name as a relation ... but not if
 					 * subscripts appear.  Note also that only relations
 					 * already entered into the rangetable will be
 					 * recognized.
 					 *
 					 * This is a hack for backwards compatibility with
-					 * PostQUEL- inspired syntax.  The preferred form now
+					 * PostQUEL-inspired syntax.  The preferred form now
 					 * is "rel.*".
 					 */
-					int			levels_up;
-
 					if (cref->indirection == NIL &&
 						refnameRangeTblEntry(pstate, NULL, name,
 											 &levels_up) != NULL)
@@ -1055,7 +1053,8 @@ exprTypmod(Node *expr)
 			break;
 		case T_ConstraintTest:
 			return exprTypmod((Node *) ((ConstraintTest *) expr)->arg);
-
+		case T_ConstraintTestValue:
+			return ((ConstraintTestValue *) expr)->typeMod;
 		default:
 			break;
 	}

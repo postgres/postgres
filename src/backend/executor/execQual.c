@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.117 2002/12/12 15:49:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.118 2002/12/12 20:35:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,8 +77,7 @@ static Datum ExecEvalConstraintTest(ConstraintTest *constraint,
 					   ExprContext *econtext,
 					   bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalConstraintTestValue(ConstraintTestValue *conVal,
-					   ExprContext *econtext,
-					   bool *isNull, ExprDoneCond *isDone);
+					   ExprContext *econtext, bool *isNull);
 
 
 /*----------
@@ -1554,23 +1553,6 @@ ExecEvalBooleanTest(BooleanTest *btest,
 }
 
 /*
- * ExecEvalConstraintTestValue
- *
- * Return the value stored by constraintTest.
- */
-static Datum
-ExecEvalConstraintTestValue(ConstraintTestValue *conVal, ExprContext *econtext,
-							bool *isNull, ExprDoneCond *isDone)
-{
-	/*
-	 * If the Datum hasn't been set, then it's ExecEvalConstraintTest
-	 * hasn't been called.
-	 */
-	*isNull = econtext->domainValue_isNull;
-	return econtext->domainValue_datum;
-}
-
-/*
  * ExecEvalConstraintTest
  *
  * Test the constraint against the data provided.  If the data fits
@@ -1585,6 +1567,9 @@ ExecEvalConstraintTest(ConstraintTest *constraint, ExprContext *econtext,
 
 	result = ExecEvalExpr((Node *) constraint->arg, econtext, isNull, isDone);
 
+	if (isDone && *isDone == ExprEndResult)
+		return result;			/* nothing to check */
+
 	switch (constraint->testtype)
 	{
 		case CONSTR_TEST_NOTNULL:
@@ -1595,16 +1580,32 @@ ExecEvalConstraintTest(ConstraintTest *constraint, ExprContext *econtext,
 		case CONSTR_TEST_CHECK:
 			{
 				Datum	conResult;
+				bool	conIsNull;
+				Datum	save_datum;
+				bool	save_isNull;
 
-				/* Var with attnum == UnassignedAttrNum uses the result */
+				/*
+				 * Set up value to be returned by ConstraintTestValue nodes.
+				 * We must save and restore prior setting of econtext's
+				 * domainValue fields, in case this node is itself within
+				 * a check expression for another domain.
+				 */
+				save_datum = econtext->domainValue_datum;
+				save_isNull = econtext->domainValue_isNull;
+
 				econtext->domainValue_datum = result;
 				econtext->domainValue_isNull = *isNull;
 
-				conResult = ExecEvalExpr((Node *) constraint->check_expr, econtext, isNull, isDone);
+				conResult = ExecEvalExpr((Node *) constraint->check_expr,
+										 econtext, &conIsNull, NULL);
 
-				if (!DatumGetBool(conResult))
+				if (!conIsNull &&
+					!DatumGetBool(conResult))
 					elog(ERROR, "ExecEvalConstraintTest: Domain %s constraint %s failed",
 						 constraint->domname, constraint->name);
+
+				econtext->domainValue_datum = save_datum;
+				econtext->domainValue_isNull = save_isNull;
 			}
 			break;
 		default:
@@ -1614,6 +1615,19 @@ ExecEvalConstraintTest(ConstraintTest *constraint, ExprContext *econtext,
 
 	/* If all has gone well (constraint did not fail) return the datum */
 	return result;
+}
+
+/*
+ * ExecEvalConstraintTestValue
+ *
+ * Return the value stored by constraintTest.
+ */
+static Datum
+ExecEvalConstraintTestValue(ConstraintTestValue *conVal, ExprContext *econtext,
+							bool *isNull)
+{
+	*isNull = econtext->domainValue_isNull;
+	return econtext->domainValue_datum;
 }
 
 /* ----------------------------------------------------------------
@@ -1811,9 +1825,8 @@ ExecEvalExpr(Node *expression,
 			break;
 		case T_ConstraintTestValue:
 			retDatum = ExecEvalConstraintTestValue((ConstraintTestValue *) expression,
-												  econtext,
-												  isNull,
-												  isDone);
+												   econtext,
+												   isNull);
 			break;
 		default:
 			elog(ERROR, "ExecEvalExpr: unknown expression type %d",

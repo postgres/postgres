@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.236 2002/12/12 15:49:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.237 2002/12/12 20:35:08 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1567,7 +1567,7 @@ AddRelationRawConstraints(Relation rel,
 		/*
 		 * Transform raw parsetree to executable expression.
 		 */
-		expr = transformExpr(pstate, cdef->raw_expr, NULL);
+		expr = transformExpr(pstate, cdef->raw_expr);
 
 		/*
 		 * Make sure it yields a boolean result.
@@ -1691,7 +1691,7 @@ cookDefault(ParseState *pstate,
 	/*
 	 * Transform raw parsetree to executable expression.
 	 */
-	expr = transformExpr(pstate, raw_default, NULL);
+	expr = transformExpr(pstate, raw_default);
 
 	/*
 	 * Make sure default expr does not refer to any vars.

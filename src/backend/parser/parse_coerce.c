@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.90 2002/12/12 15:49:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.91 2002/12/12 20:35:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -458,9 +458,8 @@ coerce_type_constraints(Node *arg, Oid typeId, CoercionForm cformat)
 			r->testtype = CONSTR_TEST_CHECK;
 			r->name = NameStr(c->conname);
 			r->domname = NameStr(typTup->typname);
-			r->check_expr =	stringToNode(MemoryContextStrdup(CacheMemoryContext,
-										 DatumGetCString(DirectFunctionCall1(textout,
-																			 val))));
+			r->check_expr =	stringToNode(DatumGetCString(DirectFunctionCall1(textout,
+																			 val)));
 
 			arg = (Node *) r;
 		}

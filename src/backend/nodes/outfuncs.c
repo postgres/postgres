@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.187 2002/12/12 15:49:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.188 2002/12/12 20:35:12 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -1300,12 +1300,6 @@ _outExprFieldSelect(StringInfo str, ExprFieldSelect *node)
 }
 
 static void
-_outDomainConstraintValue(StringInfo str, DomainConstraintValue *node)
-{
-	WRITE_NODE_TYPE("DOMAINCONSTRAINTVALUE");
-}
-
-static void
 _outConstraint(StringInfo str, Constraint *node)
 {
 	WRITE_NODE_TYPE("CONSTRAINT");
@@ -1636,9 +1630,6 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_ExprFieldSelect:
 				_outExprFieldSelect(str, obj);
-				break;
-			case T_DomainConstraintValue:
-				_outDomainConstraintValue(str, obj);
 				break;
 			case T_Constraint:
 				_outConstraint(str, obj);

@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: primnodes.h,v 1.72 2002/12/12 15:49:40 tgl Exp $
+ * $Id: primnodes.h,v 1.73 2002/12/12 20:35:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -599,15 +599,19 @@ typedef struct ConstraintTest
 } ConstraintTest;
 
 /*
- * Placeholder node for the value to be processed by a domains
- * check constraint.  This is effectively like a Param; could we use
- * a Param node instead?
+ * Placeholder node for the value to be processed by a domain's check
+ * constraint.  This is effectively like a Param, but can be implemented more
+ * simply since we need only one replacement value at a time.
+ *
+ * Note: the typeId/typeMod will be set from the domain's base type, not
+ * the domain itself.  This is because we shouldn't consider the value to
+ * be a member of the domain if we haven't yet checked its constraints.
  */
 typedef struct ConstraintTestValue
 {
 	Expr		xpr;
-	Oid			typeId;
-	int32		typeMod;
+	Oid			typeId;			/* type for substituted value */
+	int32		typeMod;		/* typemod for substituted value */
 } ConstraintTestValue;
 
 

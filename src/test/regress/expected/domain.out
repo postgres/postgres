@@ -115,7 +115,7 @@ INSERT INTO nulltest DEFAULT VALUES;
 ERROR:  Domain dnotnull does not allow NULL values
 INSERT INTO nulltest values ('a', 'b', 'c', 'd', 'c');  -- Good
 insert into nulltest values ('a', 'b', 'c', 'd', NULL);
-ERROR:  ExecEvalConstraintTest: Domain dcheck constraint $1 failed
+ERROR:  Domain dcheck does not allow NULL values
 insert into nulltest values ('a', 'b', 'c', 'd', 'a');
 ERROR:  ExecInsert: rejected due to CHECK constraint "nulltest_col5" on "nulltest"
 INSERT INTO nulltest values (NULL, 'b', 'c', 'd', 'd');
@@ -127,7 +127,7 @@ ERROR:  ExecInsert: Fail to add null value in not null attribute col3
 INSERT INTO nulltest values ('a', 'b', 'c', NULL, 'd'); -- Good
 -- Test copy
 COPY nulltest FROM stdin; --fail
-ERROR:  copy: line 1, ExecEvalConstraintTest: Domain dcheck constraint $1 failed
+ERROR:  copy: line 1, Domain dcheck does not allow NULL values
 lost synchronization with server, resetting connection
 SET autocommit TO 'on';
 -- Last row is bad

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.75 2002/12/12 15:49:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.76 2002/12/12 20:35:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -272,7 +272,7 @@ transformArraySubscripts(ParseState *pstate,
 		{
 			if (ai->lidx)
 			{
-				subexpr = transformExpr(pstate, ai->lidx, NULL);
+				subexpr = transformExpr(pstate, ai->lidx);
 				/* If it's not int4 already, try to coerce */
 				subexpr = coerce_to_target_type(subexpr, exprType(subexpr),
 												INT4OID, -1,
@@ -292,7 +292,7 @@ transformArraySubscripts(ParseState *pstate,
 			}
 			lowerIndexpr = lappend(lowerIndexpr, subexpr);
 		}
-		subexpr = transformExpr(pstate, ai->uidx, NULL);
+		subexpr = transformExpr(pstate, ai->uidx);
 		/* If it's not int4 already, try to coerce */
 		subexpr = coerce_to_target_type(subexpr, exprType(subexpr),
 										INT4OID, -1,

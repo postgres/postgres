@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.230 2002/12/12 15:49:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.231 2002/12/12 20:35:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1293,14 +1293,6 @@ _copyTypeName(TypeName *from)
 	COPY_SCALAR_FIELD(pct_type);
 	COPY_SCALAR_FIELD(typmod);
 	COPY_NODE_FIELD(arrayBounds);
-
-	return newnode;
-}
-
-static DomainConstraintValue *
-_copyDomainConstraintValue(DomainConstraintValue *from)
-{
-	DomainConstraintValue *newnode = makeNode(DomainConstraintValue);
 
 	return newnode;
 }
@@ -2762,9 +2754,6 @@ copyObject(void *from)
 			break;
 		case T_TypeCast:
 			retval = _copyTypeCast(from);
-			break;
-		case T_DomainConstraintValue:
-			retval = _copyDomainConstraintValue(from);
 			break;
 		case T_SortGroupBy:
 			retval = _copySortGroupBy(from);

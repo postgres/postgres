@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.387 2002/12/12 15:49:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.388 2002/12/12 20:35:13 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -393,7 +393,7 @@ static void doNegateFloat(Value *v);
 	UNENCRYPTED UNION UNIQUE UNKNOWN UNLISTEN UNTIL
 	UPDATE USAGE USER USING
 
-	VACUUM VALID VALIDATOR VALUE VALUES VARCHAR VARYING
+	VACUUM VALID VALIDATOR VALUES VARCHAR VARYING
 	VERBOSE VERSION VIEW VOLATILE
 
 	WHEN WHERE WITH WITHOUT WORK WRITE
@@ -6464,11 +6464,6 @@ c_expr:		columnref								{ $$ = (Node *) $1; }
 					n->subselect = $2;
 					$$ = (Node *)n;
 				}
-			| VALUE
-				{
-					DomainConstraintValue *n = makeNode(DomainConstraintValue);
-					$$ = (Node *)n;
-				}
 		;
 
 /*
@@ -7378,7 +7373,6 @@ reserved_keyword:
 			| UNIQUE
 			| USER
 			| USING
-			| VALUE
 			| WHEN
 			| WHERE
 		;

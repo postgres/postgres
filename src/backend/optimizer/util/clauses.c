@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.116 2002/12/12 15:49:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.117 2002/12/12 20:35:12 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2129,6 +2129,7 @@ expression_tree_walker(Node *node,
 		case T_Var:
 		case T_Const:
 		case T_Param:
+		case T_ConstraintTestValue:
 		case T_RangeTblRef:
 			/* primitive node types with no subnodes */
 			break;
@@ -2265,8 +2266,6 @@ expression_tree_walker(Node *node,
 			if (walker(((ConstraintTest *) node)->arg, context))
 				return true;
 			return walker(((ConstraintTest *) node)->check_expr, context);
-		case T_ConstraintTestValue:
-			break;
 		case T_TargetEntry:
 			return walker(((TargetEntry *) node)->expr, context);
 		case T_Query:
@@ -2474,6 +2473,7 @@ expression_tree_mutator(Node *node,
 		case T_Var:
 		case T_Const:
 		case T_Param:
+		case T_ConstraintTestValue:
 		case T_RangeTblRef:
 			/* primitive node types with no subnodes */
 			return (Node *) copyObject(node);
@@ -2648,15 +2648,6 @@ expression_tree_mutator(Node *node,
 				FLATCOPY(newnode, ctest, ConstraintTest);
 				MUTATE(newnode->arg, ctest->arg, Expr *);
 				MUTATE(newnode->check_expr, ctest->check_expr, Expr *);
-				return (Node *) newnode;
-			}
-			break;
-		case T_ConstraintTestValue:
-			{
-				ConstraintTestValue *ctest = (ConstraintTestValue *) node;
-				ConstraintTestValue *newnode;
-
-				FLATCOPY(newnode, ctest, ConstraintTestValue);
 				return (Node *) newnode;
 			}
 			break;

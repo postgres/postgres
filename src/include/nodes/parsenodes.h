@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.222 2002/12/12 15:49:40 tgl Exp $
+ * $Id: parsenodes.h,v 1.223 2002/12/12 20:35:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -274,15 +274,6 @@ typedef struct InsertDefault
 {
 	NodeTag		type;
 } InsertDefault;
-
-/*
- * Empty node used as raw-parse-tree representation of VALUE keyword
- * for domain check constraints.
- */
-typedef struct DomainConstraintValue
-{
-	NodeTag		type;
-} DomainConstraintValue;
 
 /*
  * SortGroupBy - for ORDER BY clause

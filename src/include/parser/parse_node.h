@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_node.h,v 1.32 2002/09/18 21:35:24 tgl Exp $
+ * $Id: parse_node.h,v 1.33 2002/12/12 20:35:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,6 +42,7 @@ typedef struct ParseState
 	List	   *p_namespace;	/* current lookup namespace (join items) */
 	int			p_last_resno;	/* last targetlist resno assigned */
 	List	   *p_forUpdate;	/* FOR UPDATE clause, if any (see gram.y) */
+	Node	   *p_value_substitute;	/* what to replace VALUE with, if any */
 	bool		p_hasAggs;
 	bool		p_hasSubLinks;
 	bool		p_is_insert;

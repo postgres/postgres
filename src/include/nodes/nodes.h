@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.130 2002/12/12 15:49:40 tgl Exp $
+ * $Id: nodes.h,v 1.131 2002/12/12 20:35:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -252,7 +252,6 @@ typedef enum NodeTag
 	T_FuncWithArgs,
 	T_PrivTarget,
 	T_InsertDefault,
-	T_DomainConstraintValue,
 	T_CreateOpClassItem,
 	T_CompositeTypeStmt,
 

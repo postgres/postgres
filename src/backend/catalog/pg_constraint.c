@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_constraint.c,v 1.11 2002/12/06 05:00:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_constraint.c,v 1.12 2002/12/12 20:35:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -439,18 +439,16 @@ RemoveConstraintById(Oid conId)
 	con = (Form_pg_constraint) GETSTRUCT(tup);
 
 	/*
-	 * If the constraint is for a relation, open and exclusive-lock
-	 * the relation it's for.
-	 *
-	 * If the constraint is for a domain, open and lock the pg_type entry
-	 * tye constraint is used on.
-	 *
-	 * XXX not clear what we should lock, if anything, for assert constraints.
+	 * Special processing depending on what the constraint is for.
 	 */
 	if (OidIsValid(con->conrelid))
 	{
 		Relation	rel;
 
+		/*
+		 * If the constraint is for a relation, open and exclusive-lock the
+		 * relation it's for.
+		 */
 		rel = heap_open(con->conrelid, AccessExclusiveLock);
 
 		/*
@@ -490,34 +488,14 @@ RemoveConstraintById(Oid conId)
 		/* Keep lock on constraint's rel until end of xact */
 		heap_close(rel, NoLock);
 	}
-	/* Lock the domain row in pg_type */
 	else if (OidIsValid(con->contypid))
 	{
-		Relation	typRel;
-		HeapTuple	typTup;
-		ScanKeyData typKey[1];
-		SysScanDesc typScan;
-		int			nkeys = 0;
-
-		typRel = heap_openr(TypeRelationName, RowExclusiveLock);
-
-		ScanKeyEntryInitialize(&typKey[nkeys++], 0x0,
-							   ObjectIdAttributeNumber, F_OIDEQ,
-							   ObjectIdGetDatum(con->contypid));
-
-		typScan = systable_beginscan(typRel, TypeOidIndex, true,
-									 SnapshotNow, nkeys, typKey);
-
-		typTup = systable_getnext(typScan);
-
-		if (!HeapTupleIsValid(typTup))
-			elog(ERROR, "RemoveConstraintById: Type %d does not exist",
-				 con->contypid);
-
-		systable_endscan(typScan);
-
-		/* Keep lock on domain type until end of xact */
-		heap_close(typRel, NoLock);
+		/*
+		 * XXX for now, do nothing special when dropping a domain constraint
+		 *
+		 * Probably there should be some form of locking on the domain type,
+		 * but we have no such concept at the moment.
+		 */
 	}
 	else
 	{

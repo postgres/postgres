@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_domain.sgml,v 1.8 2002/11/21 23:34:43 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_domain.sgml,v 1.9 2002/12/12 20:35:07 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -30,7 +30,7 @@ CREATE DOMAIN <replaceable class="parameter">domainname</replaceable> [AS] <repl
 where <replaceable class="PARAMETER">constraint</replaceable> is:
 
 [ CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> ]
-{ NOT NULL | NULL }
+{ NOT NULL | NULL | CHECK (<replaceable class="PARAMETER">expression</replaceable>) }
   </synopsis>
 
   <refsect2 id="R2-SQL-CREATEDOMAIN-1">
@@ -127,6 +127,25 @@ where <replaceable class="PARAMETER">constraint</replaceable> is:
        </para>
       </listitem>
      </varlistentry>
+
+   <varlistentry>
+    <term><literal>CHECK (<replaceable class="PARAMETER">expression</replaceable>)</literal></term>
+    <listitem>
+     <para>
+      <literal>CHECK</> clauses specify integrity constraints or tests
+      which values of the domain must satisfy.
+      Each constraint must be an expression
+      producing a Boolean result.  It should use the name <literal>VALUE</>
+      to refer to the value being tested.
+     </para>
+
+     <para>
+      Currently, <literal>CHECK</literal> expressions cannot contain
+      subselects nor refer to variables other than <literal>VALUE</>.
+     </para>
+
+    </listitem>
+   </varlistentry>
 
     </variablelist>
    </para>

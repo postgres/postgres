@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.22 2002/12/12 15:49:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.23 2002/12/12 20:35:12 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -562,14 +562,14 @@ DefineDomain(CreateDomainStmt *stmt)
 				break;
 
 			case CONSTR_NOTNULL:
-				if (nullDefined)
+				if (nullDefined && !typNotNull)
 					elog(ERROR, "CREATE DOMAIN has conflicting NULL / NOT NULL constraint");
 				typNotNull = true;
 				nullDefined = true;
 				break;
 
 			case CONSTR_NULL:
-				if (nullDefined)
+				if (nullDefined && typNotNull)
 					elog(ERROR, "CREATE DOMAIN has conflicting NULL / NOT NULL constraint");
 				typNotNull = false;
 				nullDefined = true;
@@ -644,14 +644,9 @@ DefineDomain(CreateDomainStmt *stmt)
 		switch (constr->contype)
 		{
 		  	case CONSTR_CHECK:
-				{
-					char   *junk;
-
-					/* Returns the cooked constraint which is not needed during creation */
-					junk = domainAddConstraint(domainoid, domainNamespace,
-											   basetypeoid, stmt->typename->typmod,
-											   constr, &counter, domainName);
-				}
+				domainAddConstraint(domainoid, domainNamespace,
+									basetypeoid, stmt->typename->typmod,
+									constr, &counter, domainName);
 		  		break;
 
 			/* Other constraint types were fully processed above */
@@ -1247,6 +1242,7 @@ AlterDomainAddConstraint(List *names, Node *newConstraint)
 	List   *rels;
 	List   *rt;
 	Form_pg_type	typTup;
+	ExprContext *econtext;
 	char   *ccbin;
 	Node   *expr;
 	int		counter = 0;
@@ -1261,7 +1257,7 @@ AlterDomainAddConstraint(List *names, Node *newConstraint)
 	/* Lock the type table */
 	rel = heap_openr(TypeRelationName, RowExclusiveLock);
 
-	/* Use LookupTypeName here so that shell types can be removed. */
+	/* Use LookupTypeName here so that shell types can be found. */
 	domainoid = LookupTypeName(typename);
 	if (!OidIsValid(domainoid))
 		elog(ERROR, "Type \"%s\" does not exist",
@@ -1328,10 +1324,10 @@ AlterDomainAddConstraint(List *names, Node *newConstraint)
 
 	/*
 	 * Since all other constraint types throw errors, this must be
-	 * a check constraint.
+	 * a check constraint.  First, process the constraint expression
+	 * and add an entry to pg_constraint.
 	 */
 
-	/* Returns the cooked constraint which is not needed during creation */
 	ccbin = domainAddConstraint(HeapTupleGetOid(tup), typTup->typnamespace,
 								typTup->typbasetype, typTup->typtypmod,
 								constr, &counter, NameStr(typTup->typname));
@@ -1342,38 +1338,30 @@ AlterDomainAddConstraint(List *names, Node *newConstraint)
 	 */
 	expr = stringToNode(ccbin);
 	fix_opfuncids(expr);
+
+	/* Make an expression context for ExecQual */
+	econtext = MakeExprContext(NULL, CurrentMemoryContext);
+
 	rels = get_rels_with_domain(domainoid);
 
 	foreach (rt, rels)
 	{
-		Relation	typrel;
+		relToCheck *rtc = (relToCheck *) lfirst(rt);
+		Relation	testrel;
+		TupleDesc	tupdesc;
 		HeapTuple	tuple;
 		HeapScanDesc scan;
-		TupleDesc	tupdesc;
-		ExprContext *econtext;
-		TupleTableSlot *slot;
-		relToCheck *rtc = (relToCheck *) lfirst(rt);
 
-		/* Lock relation */
-		typrel = heap_open(rtc->relOid, ExclusiveLock);
+		/* Lock relation against changes */
+		testrel = heap_open(rtc->relOid, ShareLock);
 
-		/* Test attributes */
-		tupdesc = RelationGetDescr(typrel);
-
-		/* Make tuple slot to hold tuples */
-		slot = MakeTupleTableSlot();
-		ExecSetSlotDescriptor(slot, RelationGetDescr(typrel), false);
-
-		/* Make an expression context for ExecQual */
-		econtext = MakeExprContext(slot, CurrentMemoryContext);
+		tupdesc = RelationGetDescr(testrel);
 
 		/* Scan through table */
-		scan = heap_beginscan(typrel, SnapshotNow, 0, NULL);
+		scan = heap_beginscan(testrel, SnapshotNow, 0, NULL);
 		while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 		{
 			int		i;
-
-			ExecStoreTuple(tuple, slot, InvalidBuffer, false);
 
 			/* Loop through each attribute of the tuple with a domain */
 			for (i = 0; i < rtc->natts; i++)
@@ -1381,22 +1369,15 @@ AlterDomainAddConstraint(List *names, Node *newConstraint)
 				Datum	d;
 				bool	isNull;
 				Datum   conResult;
-				ExprDoneCond   isDone;
 
 				d = heap_getattr(tuple, rtc->atts[i], tupdesc, &isNull);
-
-				if (isNull)
-					elog(ERROR, "ALTER DOMAIN: Relation \"%s\" Attribute \"%s\" "
-						 "contains NULL values",
-						 RelationGetRelationName(typrel),
-						 NameStr(*attnumAttName(typrel, rtc->atts[i])));
 
 				econtext->domainValue_datum = d;
 				econtext->domainValue_isNull = isNull;
 
-				conResult = ExecEvalExpr(expr, econtext, &isNull, &isDone);
+				conResult = ExecEvalExpr(expr, econtext, &isNull, NULL);
 
-				if (!DatumGetBool(conResult))
+				if (!isNull && !DatumGetBool(conResult))
 					elog(ERROR, "AlterDomainAddConstraint: Domain %s constraint %s failed",
 						 NameStr(typTup->typname), constr->name);
 			}
@@ -1406,12 +1387,11 @@ AlterDomainAddConstraint(List *names, Node *newConstraint)
 
 		heap_endscan(scan);
 
-		FreeExprContext(econtext);
-		pfree(slot);
-
-		/* Hold type lock */
-		heap_close(typrel, NoLock);
+		/* Hold relation lock till commit (XXX bad for concurrency) */
+		heap_close(testrel, NoLock);
 	}
+
+	FreeExprContext(econtext);
 
 	/* Clean up */
 	heap_close(rel, NoLock);
@@ -1524,11 +1504,12 @@ domainPermissionCheck(HeapTuple tup, TypeName *typename)
 
 
 /*
- * domainAddConstraint
+ * domainAddConstraint - code shared between CREATE and ALTER DOMAIN
  */
-char *
+static char *
 domainAddConstraint(Oid domainOid, Oid domainNamespace, Oid baseTypeOid,
-					int typMod, Constraint *constr, int *counter, char *domainName)
+					int typMod, Constraint *constr,
+					int *counter, char *domainName)
 {
 	Node	   *expr;
 	char	   *ccsrc;
@@ -1556,26 +1537,24 @@ domainAddConstraint(Oid domainOid, Oid domainNamespace, Oid baseTypeOid,
 											  counter);
 
 	/*
-	 * Convert the A_EXPR in raw_expr into an
-	 * EXPR
+	 * Convert the A_EXPR in raw_expr into an EXPR
 	 */
 	pstate = make_parsestate(NULL);
 
 	/*
-	 * We want to have the domain VALUE node type filled in so
-	 * that proper casting can occur.
+	 * Set up a ConstraintTestValue to represent the occurrence of VALUE
+	 * in the expression.  Note that it will appear to have the type of the
+	 * base type, not the domain.  This seems correct since within the
+	 * check expression, we should not assume the input value can be considered
+	 * a member of the domain.
 	 */
 	domVal = makeNode(ConstraintTestValue);
 	domVal->typeId = baseTypeOid;
 	domVal->typeMod = typMod;
 
-	expr = transformExpr(pstate, constr->raw_expr, domVal);
+	pstate->p_value_substitute = (Node *) domVal;
 
-	/*
-	 * Domains don't allow var clauses
-	 */
-	if (contain_var_clause(expr))
-		elog(ERROR, "cannot use column references in domain CHECK clause");
+	expr = transformExpr(pstate, constr->raw_expr);
 
 	/*
 	 * Make sure it yields a boolean result.
@@ -1588,6 +1567,13 @@ domainAddConstraint(Oid domainOid, Oid domainNamespace, Oid baseTypeOid,
 	 */
 	if (length(pstate->p_rtable) != 0)
 		elog(ERROR, "Relations cannot be referenced in domain CHECK constraint");
+
+	/*
+	 * Domains don't allow var clauses (this should be redundant with the
+	 * above check, but make it anyway)
+	 */
+	if (contain_var_clause(expr))
+		elog(ERROR, "cannot use column references in domain CHECK clause");
 
 	/*
 	 * No subplans or aggregates, either...
@@ -1618,7 +1604,9 @@ domainAddConstraint(Oid domainOid, Oid domainNamespace, Oid baseTypeOid,
 												   InvalidOid),
 							   false, false);
 
-	/* Write the constraint */
+	/*
+	 * Store the constraint in pg_constraint
+	 */
 	CreateConstraintEntry(constr->name,		/* Constraint Name */
 						  domainNamespace,	/* namespace */
 						  CONSTRAINT_CHECK,		/* Constraint Type */
@@ -1640,8 +1628,8 @@ domainAddConstraint(Oid domainOid, Oid domainNamespace, Oid baseTypeOid,
 						  ccsrc);	/* Source form check constraint */
 
 	/*
-	 * Return the constraint so the calling routine can perform any additional
-	 * required tests.
+	 * Return the compiled constraint expression so the calling routine can
+	 * perform any additional required tests.
 	 */
 	return ccbin;
 }

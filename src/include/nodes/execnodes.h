@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.82 2002/12/05 15:50:38 tgl Exp $
+ * $Id: execnodes.h,v 1.83 2002/12/12 20:35:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -82,7 +82,7 @@ typedef struct ExprContext_CB
  *	* ecxt_per_query_memory is a relatively long-lived context (such as
  *	  TransactionCommandContext); typically it's the same context the
  *	  ExprContext node itself is allocated in.	This context can be
- *	  used for purposes such as storing operator/function fcache nodes.
+ *	  used for purposes such as storing function call cache info.
  *	* ecxt_per_tuple_memory is a short-term context for expression results.
  *	  As the name suggests, it will typically be reset once per tuple,
  *	  before we begin to evaluate expressions for that tuple.  Each
@@ -112,10 +112,7 @@ typedef struct ExprContext
 	Datum	   *ecxt_aggvalues; /* precomputed values for Aggref nodes */
 	bool	   *ecxt_aggnulls;	/* null flags for Aggref nodes */
 
-	/*
-	 * Carry the domain value through the executor for application
-	 * in a domain constraint
-	 */
+	/* Value to substitute for ConstraintTestValue nodes in expression */
 	Datum		domainValue_datum;
 	bool		domainValue_isNull;
 

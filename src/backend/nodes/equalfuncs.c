@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.175 2002/12/12 15:49:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.176 2002/12/12 20:35:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -644,12 +644,6 @@ _equalFuncWithArgs(FuncWithArgs *a, FuncWithArgs *b)
 
 static bool
 _equalInsertDefault(InsertDefault *a, InsertDefault *b)
-{
-	return true;
-}
-
-static bool
-_equalDomainConstraintValue(DomainConstraintValue *a, DomainConstraintValue *b)
 {
 	return true;
 }
@@ -1930,9 +1924,6 @@ equal(void *a, void *b)
 			break;
 		case T_InsertDefault:
 			retval = _equalInsertDefault(a, b);
-			break;
-		case T_DomainConstraintValue:
-			retval = _equalDomainConstraintValue(a, b);
 			break;
 
 		default:

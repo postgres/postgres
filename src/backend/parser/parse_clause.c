@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.101 2002/12/12 15:49:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.102 2002/12/12 20:35:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -283,7 +283,7 @@ transformJoinUsingClause(ParseState *pstate, List *leftVars, List *rightVars)
 	 * transformJoinOnClause() does.  Just invoke transformExpr() to fix
 	 * up the operators, and we're done.
 	 */
-	result = transformExpr(pstate, result, NULL);
+	result = transformExpr(pstate, result);
 
 	result = coerce_to_boolean(result, "JOIN/USING");
 
@@ -317,7 +317,7 @@ transformJoinOnClause(ParseState *pstate, JoinExpr *j,
 	pstate->p_namespace = makeList2(j->larg, j->rarg);
 
 	/* This part is just like transformWhereClause() */
-	result = transformExpr(pstate, j->quals, NULL);
+	result = transformExpr(pstate, j->quals);
 
 	result = coerce_to_boolean(result, "JOIN/ON");
 
@@ -478,7 +478,7 @@ transformRangeFunction(ParseState *pstate, RangeFunction *r)
 	save_namespace = pstate->p_namespace;
 	pstate->p_namespace = NIL;
 
-	funcexpr = transformExpr(pstate, r->funccallnode, NULL);
+	funcexpr = transformExpr(pstate, r->funccallnode);
 
 	pstate->p_namespace = save_namespace;
 
@@ -950,7 +950,7 @@ transformWhereClause(ParseState *pstate, Node *clause)
 	if (clause == NULL)
 		return NULL;
 
-	qual = transformExpr(pstate, clause, NULL);
+	qual = transformExpr(pstate, clause);
 
 	qual = coerce_to_boolean(qual, "WHERE");
 
@@ -1093,7 +1093,7 @@ findTargetlistEntry(ParseState *pstate, Node *node, List *tlist, int clause)
 	 * willing to match a resjunk target here, though the above cases must
 	 * ignore resjunk targets.
 	 */
-	expr = transformExpr(pstate, node, NULL);
+	expr = transformExpr(pstate, node);
 
 	foreach(tl, tlist)
 	{
