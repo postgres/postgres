@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.34 1998/05/09 22:42:07 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.35 1998/05/29 13:33:58 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -759,3 +759,62 @@ byteaSetBit(text *v, int32 n, int32 newBit)
 
 	return (res);
 }
+
+
+/* text_name()
+ * Converts a text() type to a NameData type.
+ */
+NameData *
+text_name(text *s)
+{
+	NameData   *result;
+	int			len;
+
+	if (s == NULL)
+		return (NULL);
+
+	len = VARSIZE(s) - VARHDRSZ;
+	if (len > NAMEDATALEN) len = NAMEDATALEN;
+
+#ifdef STRINGDEBUG
+printf("text- convert string length %d (%d) ->%d\n",
+ VARSIZE(s)-VARHDRSZ, VARSIZE(s), len);
+#endif
+
+	result = palloc(NAMEDATALEN);
+	StrNCpy(result->data, VARDATA(s), NAMEDATALEN);
+
+	/* now null pad to full length... */
+	while (len < NAMEDATALEN) {
+		*(result->data + len) = '\0';
+		len++;
+	}
+
+	return (result);
+} /* text_name() */
+
+/* name_text()
+ * Converts a NameData type to a text type.
+ */
+text *
+name_text(NameData *s)
+{
+	text	   *result;
+	int			len;
+
+	if (s == NULL)
+		return (NULL);
+
+	len = strlen(s->data);
+
+#ifdef STRINGDEBUG
+printf("text- convert string length %d (%d) ->%d\n",
+ VARSIZE(s)-VARHDRSZ, VARSIZE(s), len);
+#endif
+
+	result = palloc(VARHDRSZ + len);
+	strncpy(VARDATA(result), s->data, len);
+	VARSIZE(result) = len + VARHDRSZ;
+
+	return (result);
+} /* name_text() */

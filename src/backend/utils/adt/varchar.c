@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.31 1998/05/09 22:42:07 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.32 1998/05/29 13:33:24 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -201,8 +201,7 @@ int32
 bpchar_char(char *s)
 {
 	return ((int32) *VARDATA(s));
-} /* char_bpchar() */
-
+} /* bpchar_char() */
 
 /* char_bpchar()
  * Convert char to bpchar(1).
@@ -219,6 +218,70 @@ char_bpchar(int32 c)
 
 	return result;
 } /* char_bpchar() */
+
+
+/* bpchar_name()
+ * Converts a bpchar() type to a NameData type.
+ */
+NameData *
+bpchar_name(char *s)
+{
+	NameData   *result;
+	int			len;
+
+	if (s == NULL)
+		return (NULL);
+
+	len = VARSIZE(s) - VARHDRSZ;
+	if (len > NAMEDATALEN) len = NAMEDATALEN;
+
+	while (len > 0) {
+		if (*(VARDATA(s)+len-1) != ' ') break;
+		len--;
+	}
+
+#ifdef STRINGDEBUG
+printf("bpchar- convert string length %d (%d) ->%d\n",
+ VARSIZE(s)-VARHDRSZ, VARSIZE(s), len);
+#endif
+
+	result = (NameData *) palloc(NAMEDATALEN);
+	StrNCpy(result->data, VARDATA(s), NAMEDATALEN);
+
+	/* now null pad to full length... */
+	while (len < NAMEDATALEN) {
+		*(result->data + len) = '\0';
+		len++;
+	}
+
+	return (result);
+} /* bpchar_name() */
+
+/* name_bpchar()
+ * Converts a NameData type to a bpchar type.
+ */
+char *
+name_bpchar(NameData *s)
+{
+	char	   *result;
+	int			len;
+
+	if (s == NULL)
+		return (NULL);
+
+	len = strlen(s->data);
+
+#ifdef STRINGDEBUG
+printf("bpchar- convert string length %d (%d) ->%d\n",
+ VARSIZE(s)-VARHDRSZ, VARSIZE(s), len);
+#endif
+
+	result = (char *) palloc(VARHDRSZ + len);
+	strncpy(VARDATA(result), s->data, len);
+	VARSIZE(result) = len + VARHDRSZ;
+
+	return (result);
+} /* name_bpchar() */
 
 
 /*****************************************************************************
