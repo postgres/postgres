@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/lobj.sgml,v 1.33 2003/11/29 19:51:37 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/lobj.sgml,v 1.34 2004/12/28 22:47:15 tgl Exp $
 -->
 
  <chapter id="largeObjects">
@@ -9,15 +9,11 @@ $PostgreSQL: pgsql/doc/src/sgml/lobj.sgml,v 1.33 2003/11/29 19:51:37 pgsql Exp $
   <indexterm><primary>BLOB</><see>large object</></>
 
    <para>
-    In <productname>PostgreSQL</productname> releases prior to 7.1,
-    the size of any row in the database could not exceed the size of a
-    data page.  Since the size of a data page is 8192 bytes (the
-    default, which can be raised up to 32768), the upper limit on the
-    size of a data value was relatively low. To support the storage of
-    larger atomic values, <productname>PostgreSQL</productname>
-    provided and continues to provide a large object interface.  This
-    interface provides file-oriented access to user data that is stored in
-    a special large-object structure.
+    <productname>PostgreSQL</productname> has a <firstterm>large object</>
+    facility, which provides stream-style access to user data that is stored
+    in a special large-object structure.  Streaming access is useful
+    when working with data values that are too large to manipulate
+    conveniently as a whole.
    </para>
 
    <para>
@@ -59,10 +55,13 @@ $PostgreSQL: pgsql/doc/src/sgml/lobj.sgml,v 1.33 2003/11/29 19:51:37 pgsql Exp $
     <indexterm><primary>sliced bread</><see>TOAST</></indexterm>
     <productname>PostgreSQL 7.1</productname> introduced a mechanism
     (nicknamed <quote><acronym>TOAST</acronym></quote>) that allows
-    data rows to be much larger than individual data pages.  This
-    makes the large object interface partially obsolete.  One
-    remaining advantage of the large object interface is that it allows values up
-    to 2 GB in size, whereas <acronym>TOAST</acronym> can only handle 1 GB.
+    data values to be much larger than single pages.  This
+    makes the large object facility partially obsolete.  One
+    remaining advantage of the large object facility is that it allows values
+    up to 2 GB in size, whereas <acronym>TOAST</acronym>ed fields can be at
+    most 1 GB.  Also, large objects can be manipulated piece-by-piece much more
+    easily than ordinary data fields, so the practical limits are considerably
+    different.
    </para>
 
   </sect1>
@@ -117,7 +116,7 @@ Oid lo_creat(PGconn *conn, int mode);
      creates a new large  object.  
      <replaceable class="parameter">mode</replaceable>  is  a  bit mask
      describing  several  different  attributes  of  the new
-     object.  The symbolic constants listed here are defined
+     object.  The symbolic constants used here are defined
      in the header file <filename>libpq/libpq-fs.h</filename>.
      The access type (read, write, or both) is controlled by
      or'ing together the bits <symbol>INV_READ</symbol>  and
@@ -149,6 +148,9 @@ Oid lo_import(PGconn *conn, const char *filename);
      specifies the operating system name of
      the file to be imported as a large object.
      The return value is the OID that was assigned to the new large object.
+     Note that the file is read by the client interface library, not by
+     the server; so it must exist in the client filesystem and be readable
+     by the client application.
     </para>
    </sect2>
 
@@ -164,7 +166,9 @@ int lo_export(PGconn *conn, Oid lobjId, const char *filename);
      <indexterm><primary>lo_export</></>
      The <parameter>lobjId</parameter> argument specifies  the  OID  of  the  large
      object  to  export  and the <parameter>filename</parameter> argument specifies
-     the operating system name name of the file.
+     the operating system name of the file.
+     Note that the file is written by the client interface library, not by
+     the server.
     </para>
    </sect2>
 
@@ -200,7 +204,7 @@ int lo_write(PGconn *conn, int fd, const char *buf, size_t len);
 </synopsis>
      <indexterm><primary>lo_write</></> writes
      <parameter>len</parameter> bytes from <parameter>buf</parameter>
-     to large object <parameter>fd</>.  The <parameter>fd</parameter>
+     to large object descriptor <parameter>fd</>.  The <parameter>fd</parameter>
      argument must have been returned by a previous
      <function>lo_open</function>.  The number of bytes actually
      written is returned.  In the event of an error, the return value
@@ -217,7 +221,7 @@ int lo_write(PGconn *conn, int fd, const char *buf, size_t len);
 int lo_read(PGconn *conn, int fd, char *buf, size_t len);
 </synopsis>
      <indexterm><primary>lo_read</></> reads
-     <parameter>len</parameter> bytes from large object
+     <parameter>len</parameter> bytes from large object descriptor
      <parameter>fd</parameter> into <parameter>buf</parameter>. The
      <parameter>fd</parameter> argument must have been returned by a
      previous <function>lo_open</function>.  The number of bytes
@@ -227,16 +231,16 @@ int lo_read(PGconn *conn, int fd, char *buf, size_t len);
 </sect2>
 
 <sect2>
-<title>Seeking on a Large Object</title>
+<title>Seeking in a Large Object</title>
 
 <para>
-     To change the current read or write location on a large
-     object, call
+     To change the current read or write location associated with a
+     large object descriptor, call
 <synopsis>
 int lo_lseek(PGconn *conn, int fd, int offset, int whence);
 </synopsis>
      <indexterm><primary>lo_lseek</></> This function moves the
-     current location pointer for the large object described by
+     current location pointer for the large object descriptor identified by
      <parameter>fd</> to the new location specified by
      <parameter>offset</>.  The valid values for <parameter>whence</>
      are <symbol>SEEK_SET</> (seek from object start),
@@ -250,7 +254,7 @@ int lo_lseek(PGconn *conn, int fd, int offset, int whence);
 <title>Obtaining the Seek Position of a Large Object</title>
 
 <para>
-     To obtain the current read or write location of a large object,
+     To obtain the current read or write location of a large object descriptor,
      call
 <synopsis>
 int lo_tell(PGconn *conn, int fd);
@@ -264,7 +268,7 @@ int lo_tell(PGconn *conn, int fd);
 <title>Closing a Large Object Descriptor</title>
 
 <para>
-     A large object may be closed by calling
+     A large object descriptor may be closed by calling
 <synopsis>
 int lo_close(PGconn *conn, int fd);
 </synopsis>

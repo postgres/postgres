@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.172 2004/12/20 18:15:05 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.173 2004/12/28 22:47:15 tgl Exp $
 -->
 
  <chapter id="libpq">
@@ -19,11 +19,19 @@ $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.172 2004/12/20 18:15:05 tgl Exp $
    <application>libpq</> is a set of library functions that allow
    client programs to pass queries to the <productname>PostgreSQL</>
    backend server and to receive the results of these queries.
+  </para>
+
+  <para>
    <application>libpq</> is also the underlying engine for several
    other <productname>PostgreSQL</> application interfaces, including
-   those written for C++, TCL, Perl, Python and <application>ECPG</>.
+   those written for C++, Perl, Python, Tcl and <application>ECPG</>.
    So some aspects of <application>libpq</>'s behavior will be
-   important to you if you use one of those packages.
+   important to you if you use one of those packages.  In particular,
+   <xref linkend="libpq-envars">,
+   <xref linkend="libpq-pgpass"> and
+   <xref linkend="libpq-ssl">
+   describe behavior that is visible to the user of any application
+   that uses <application>libpq</>.
   </para>
 
   <para>
@@ -49,7 +57,7 @@ $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.172 2004/12/20 18:15:05 tgl Exp $
    application program can have several backend connections open at
    one time.  (One reason to do that is to access more than one
    database.)  Each connection is represented by a
-   <structname>PGconn</><indexterm><primary>PGconn</></> object which
+   <structname>PGconn</><indexterm><primary>PGconn</></> object, which
    is obtained from the function <function>PQconnectdb</> or
    <function>PQsetdbLogin</>.  Note that these functions will always
    return a non-null object pointer, unless perhaps there is too
@@ -82,12 +90,12 @@ PGconn *PQconnectdb(const char *conninfo);
    can be empty to use all default parameters, or it can contain one or more
    parameter settings separated by whitespace.
    Each parameter setting is in the form <literal>keyword = value</literal>.
-   (To write an empty value or a value containing
+   Spaces around the equal sign are optional.
+   To write an empty value or a value containing
    spaces, surround it with single quotes, e.g.,
    <literal>keyword = 'a value'</literal>.
    Single quotes and backslashes within the value must be escaped with a
-   backslash, i.e., <literal>\'</literal> and <literal>\\</literal>.)
-   Spaces around the equal sign are optional.
+   backslash, i.e., <literal>\'</literal> and <literal>\\</literal>.
    </para>
 
    <para>
@@ -172,6 +180,8 @@ PGconn *PQconnectdb(const char *conninfo);
      <listitem>
      <para>
       <productname>PostgreSQL</productname> user name to connect as.
+      Defaults to be the same as the operating system name of the user
+      running the application.
      </para>
      </listitem>
     </varlistentry>
@@ -235,7 +245,7 @@ PGconn *PQconnectdb(const char *conninfo);
        If <productname>PostgreSQL</> is compiled without SSL support,
        using option <literal>require</> will cause an error, while
        options <literal>allow</> and <literal>prefer</> will be
-       tolerated but <application>libpq</> will be unable to negotiate
+       accepted but <application>libpq</> will not in fact attempt
        an <acronym>SSL</>
        connection.<indexterm><primary>SSL</><secondary
        sortas="libpq">with libpq</></indexterm>
@@ -273,8 +283,8 @@ PGconn *PQconnectdb(const char *conninfo);
       name in <filename>pg_service.conf</filename> that holds additional connection parameters.
       This allows applications to specify only a service name so connection parameters 
       can be centrally maintained.  See 
-      <filename><replaceable>PREFIX</>/share/pg_service.conf.sample</> for
-      information on how to set up the file.
+      <filename>share/pg_service.conf.sample</> in the installation
+      directory for information on how to set up the file.
      </para>
      </listitem>
     </varlistentry>
@@ -283,7 +293,7 @@ PGconn *PQconnectdb(const char *conninfo);
    If  any  parameter is unspecified, then the corresponding
    environment variable (see <xref linkend="libpq-envars">)
    is checked. If the  environment  variable is not set either,
-   then built-in defaults are used.
+   then the indicated built-in defaults are used.
    </para>
   </listitem>
  </varlistentry>
@@ -489,7 +499,7 @@ PostgresPollingStatusType PQconnectPoll(PGconn *conn);
     </variablelist>
 
     Note that, although these constants will remain (in order to maintain
-    compatibility), an application should never rely upon these appearing in a
+    compatibility), an application should never rely upon these occurring in a
     particular order, or at all, or on the status always being one of these
     documented values. An application might do something like this:
 <programlisting>
@@ -877,7 +887,8 @@ Pre-3.0-protocol servers do not report parameter settings, but
 <application>libpq</> includes logic to obtain values for
 <literal>server_version</> and <literal>client_encoding</> anyway.
 Applications are encouraged to use <function>PQparameterStatus</>
-rather than ad-hoc code to determine these values.  (Beware however
+rather than <foreignphrase>ad hoc</> code to determine these values.
+(Beware however
 that on a pre-3.0 connection, changing <literal>client_encoding</> via
 <command>SET</> after connection startup will not be reflected by
 <function>PQparameterStatus</>.)  For <literal>server_version</>,
@@ -905,8 +916,8 @@ Applications may wish to use this to determine whether certain features
 are supported.
 Currently, the possible values are 2 (2.0 protocol), 3 (3.0 protocol),
 or zero (connection bad).  This will not change after connection
-startup is complete, but it could theoretically change during a reset.
-The 3.0 protocol will normally be used when communicating with
+startup is complete, but it could theoretically change during a connection
+reset.  The 3.0 protocol will normally be used when communicating with
 <productname>PostgreSQL</> 7.4 or later servers; pre-7.4 servers support
 only protocol 2.0.  (Protocol 1.0 is obsolete and not supported by <application>libpq</application>.)
 </para>
@@ -950,7 +961,9 @@ char *PQerrorMessage(const PGconn *conn);
        <function>PQerrorMessage</function> result will
        include a trailing newline. The caller should not free the result 
        directly. It will be freed when the associated <structname>PGconn</> 
-       handle is passed to <function>PQfinish</function>.
+       handle is passed to <function>PQfinish</function>.  The result string
+       should not be expected to remain the same across operations on the
+       <literal>PGconn</> structure.
       </para>
      </listitem>
     </varlistentry>
@@ -1014,7 +1027,7 @@ SSL *PQgetssl(const PGconn *conn);
       </para>
       <para>
        You must define <symbol>USE_SSL</symbol> in order to get the
-       prototype for this function. Doing this will also 
+       correct prototype for this function. Doing this will also 
        automatically include <filename>ssl.h</filename> from <productname>OpenSSL</productname>.
       </para>
      </listitem>
@@ -1768,7 +1781,8 @@ exactly which table is referenced.
 <para>
  Returns the column number (within its table) of the column making up
  the specified query result column.
- Result column numbers start at 0.
+ Query-result column numbers start at 0, but table columns have nonzero
+ numbers.
 <synopsis>
 int PQftablecol(const PGresult *res,
                 int column_number);
@@ -2678,7 +2692,7 @@ server, using the functions described in this section.
 <listitem>
 <para>
           Creates a data structure containing the information needed to cancel
-	  a command issued through a particular database connection.
+          a command issued through a particular database connection.
 <synopsis>
 PGcancel *PQgetCancel(PGconn *conn);
 </synopsis>
@@ -3614,8 +3628,9 @@ information into simple client applications, for example.
 </indexterm>
 <envar>PGHOST</envar> sets the database server name.
 If this begins with a slash, it specifies Unix-domain communication
-rather than TCP/IP communication; the value is the name of the
-directory in which the socket file is stored (default <filename>/tmp</filename>).
+rather than TCP/IP communication; the value is then the name of the
+directory in which the socket file is stored (in a default installation
+setup this would be <filename>/tmp</filename>).
 </para>
 </listitem>
 <listitem>
@@ -3624,8 +3639,8 @@ directory in which the socket file is stored (default <filename>/tmp</filename>)
  <primary><envar>PGHOSTADDR</envar></primary>
 </indexterm>
 <envar>PGHOSTADDR</envar> specifies the numeric IP address of the database
-server.  This can be set instead of <envar>PGHOST</envar> to avoid DNS
-lookup overhead. See the documentation of
+server.  This can be set instead of or in addition to <envar>PGHOST</envar>
+to avoid DNS lookup overhead. See the documentation of
 these parameters, under <function>PQconnectdb</function> above, for details
 on their interaction.
 </para>
@@ -3666,7 +3681,7 @@ sets the user name used to connect to the database.
 <envar>PGPASSWORD</envar>
 sets the password used if the server demands password
 authentication.  This environment variable is deprecated for security
-reasons; consider migrating to use the <filename>$HOME/.pgpass</>
+reasons; instead consider using the <filename>$HOME/.pgpass</>
 file (see <xref linkend="libpq-pgpass">).
 </para>
 </listitem>
@@ -3718,9 +3733,9 @@ trying an <acronym>SSL</> connection; <literal>prefer</>
 connection, then if that fails, trying a regular non-<acronym>SSL</>
 connection; <literal>require</> will try only an <acronym>SSL</>
 connection. If <productname>PostgreSQL</> is compiled without SSL support,
-using option <literal>require</> will cause an error, and options
-<literal>allow</> and <literal>prefer</> will be tolerated but
-<application>libpq</> will be unable to negotiate an <acronym>SSL</>
+using option <literal>require</> will cause an error, while options
+<literal>allow</> and <literal>prefer</> will be accepted but
+<application>libpq</> will not in fact attempt an <acronym>SSL</>
 connection.
 </para>
 </listitem>
@@ -3758,7 +3773,9 @@ It is not recommended to set the timeout to less than 2 seconds.
 <para>
 The following environment variables can be used to specify default
 behavior for each <productname>PostgreSQL</productname> session.
-(See also the <command>ALTER USER</> and <command>ALTER DATABASE</>
+(See also the
+<xref linkend="sql-alteruser" endterm="sql-alteruser-title"> and
+<xref linkend="sql-alterdatabase" endterm="sql-alterdatabase-title">
 commands for ways to set default behavior on a per-user or per-database
 basis.)
 
@@ -3803,6 +3820,18 @@ sets the default mode for the genetic query optimizer.
 (Equivalent to <literal>SET geqo TO ...</literal>.)
 </para>
 </listitem>
+</itemizedlist>
+
+Refer to the <acronym>SQL</acronym> command 
+<xref linkend="sql-set" endterm="sql-set-title">
+for information on correct values for these environment variables.
+</para>
+
+<para>
+The following environment variables determine internal behavior of
+<application>libpq</application>; they override compiled-in defaults.
+
+<itemizedlist>
 <listitem>
 <para>
 <indexterm>
@@ -3818,13 +3847,11 @@ sets the directory containing the <filename>pg_service.conf</> file.
  <primary><envar>PGLOCALEDIR</envar></primary>
 </indexterm>
 <envar>PGLOCALEDIR</envar>
-sets the directory containing the <literal>locale</> files.
+sets the directory containing the <literal>locale</> files for message
+internationalization.
 </para>
 </listitem>
 </itemizedlist>
-
-Refer to the <acronym>SQL</acronym> command <command>SET</command>
-for information on correct values for these environment variables.
 </para>
 
 </sect1>
@@ -3910,7 +3937,7 @@ If the permissions are less strict than this, the file will be ignored.
 <para>
 <application>libpq</application> is reentrant and thread-safe if the
 <filename>configure</filename> command-line option
-<literal>--enable-thread-safety</> has been used when the
+<literal>--enable-thread-safety</> was used when the
 <productname>PostgreSQL</productname> distribution was built.  In
 addition, you might need to use additional compiler command-line
 options when you compile your application code.  Refer to your
@@ -3974,7 +4001,8 @@ your library might not match the library used to build the binaries.
   </indexterm>
 
   <para>
-   To build (i.e., compile and link) your <application>libpq</application> programs you need to
+   To build (i.e., compile and link) a program using
+   <application>libpq</application> you need to 
    do all of the following things:
 
    <itemizedlist>

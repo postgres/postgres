@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/external-projects.sgml,v 1.5 2004/12/13 18:05:08 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/external-projects.sgml,v 1.6 2004/12/28 22:47:15 tgl Exp $
 -->
 
  <chapter id="external-projects">
@@ -9,13 +9,26 @@ $PostgreSQL: pgsql/doc/src/sgml/external-projects.sgml,v 1.5 2004/12/13 18:05:08
    <productname>PostgreSQL</productname> is a complex software project,
    and managing it is difficult. We have found that many
    enhancements to <productname>PostgreSQL</productname> can be more
-   efficiently developed independently of the main project. They can
-   have their own developer teams, email lists, their own bug tracking,
-   and their own release schedule. While their independence makes
-   development easier, it makes user's jobs harder. They have to hunt
+   efficiently developed separately from the core project. Separate
+   projects can
+   have their own developer teams, email lists, bug tracking,
+   and release schedules. While their independence makes
+   development easier, it makes users' jobs harder. They have to hunt
    around looking for database enhancements to meet their needs.
-   This section outlines some of the more popular externally
+   This section describes some of the more popular externally
    developed enhancements and guides you on how to find them.
+  </para>
+
+  <para>
+   Many <productname>PostgreSQL</productname>-related projects are
+   hosted at either
+   <productname>GBorg</> at <ulink url="http://gborg.postgresql.org">
+   http://gborg.postgresql.org</ulink> or
+   <productname>pgFoundry</> at <ulink
+   url="http://pgfoundry.org">http://pgfoundry.org</ulink>.
+   There are other
+   <productname>PostgreSQL</productname>-related projects that are hosted
+   elsewhere, but you will have to do an Internet search to find them.
   </para>
 
  <sect1 id="interfaces">
@@ -36,11 +49,7 @@ $PostgreSQL: pgsql/doc/src/sgml/external-projects.sgml,v 1.5 2004/12/13 18:05:08
   </para>
 
   <para>
-   To use other interfaces, you have to do some searching. For example,
-   <productname>GBorg</> at <ulink url="http://gborg.postgresql.org">
-   http://gborg.postgresql.org</ulink> has over thirty interfaces listed
-   in its <literal>Drivers/Interfaces</> section. Some of the more
-   popular interfaces are:
+   Some of the more popular interfaces are:
 
    <variablelist>
     <varlistentry>
@@ -49,6 +58,15 @@ $PostgreSQL: pgsql/doc/src/sgml/external-projects.sgml,v 1.5 2004/12/13 18:05:08
       <para>
        This is the most common interface for <application>Windows</>
        applications.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>pgjdbc</term>
+     <listitem>
+      <para>
+       A <application>JDBC</> interface.
       </para>
      </listitem>
     </varlistentry>
@@ -64,19 +82,19 @@ $PostgreSQL: pgsql/doc/src/sgml/external-projects.sgml,v 1.5 2004/12/13 18:05:08
     </varlistentry>
 
     <varlistentry>
-     <term>libpq++</term>
+     <term>libpqxx</term>
      <listitem>
       <para>
-       An older <application>C++</> interface.
+       A newer <application>C++</> interface.
       </para>
      </listitem>
     </varlistentry>
 
     <varlistentry>
-     <term>libpqxx</term>
+     <term>libpq++</term>
      <listitem>
       <para>
-       A newer <application>C++</> interface.
+       An older <application>C++</> interface.
       </para>
      </listitem>
     </varlistentry>
@@ -102,10 +120,19 @@ $PostgreSQL: pgsql/doc/src/sgml/external-projects.sgml,v 1.5 2004/12/13 18:05:08
     </varlistentry>
 
     <varlistentry>
+     <term>pgtclng</term>
+     <listitem>
+      <para>
+       A newer version of the <application>Tcl</> interface.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
      <term>pgtcl</term>
      <listitem>
       <para>
-       The original version of the <application>TCL</> interface.
+       The original version of the <application>Tcl</> interface.
       </para>
      </listitem>
     </varlistentry>
@@ -119,34 +146,8 @@ $PostgreSQL: pgsql/doc/src/sgml/external-projects.sgml,v 1.5 2004/12/13 18:05:08
      </listitem>
     </varlistentry>
 
-    <varlistentry>
-     <term>pgjdbc</term>
-     <listitem>
-      <para>
-       A <application>JDBC</> interface.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-     <term>pgtclng</term>
-     <listitem>
-      <para>
-       A newer version of the <application>TCL</> interface.
-      </para>
-     </listitem>
-    </varlistentry>
-
    </variablelist>
    </para>
-
-  <para>
-   That section also contains several server-side languages that are
-   separate projects. <application>pgFoundry</> at <ulink
-   url="http://pgfoundry.org">http://pgfoundry.org</ulink> contains
-   even more projects. Other projects are not even hosted on these
-   servers and you will have to do an Internet search to find them.
-  </para>
 
  </sect1>
  
@@ -169,7 +170,7 @@ $PostgreSQL: pgsql/doc/src/sgml/external-projects.sgml,v 1.5 2004/12/13 18:05:08
    like <application>PostGIS</>. Even <application>PostgreSQL</>
    replication solutions are developed externally. For example,
    <application>Slony-I</> is a popular master/slave replication solution
-   that is developed independently from the main projects.
+   that is developed independently from the core project.
   </para>
 
   <para>

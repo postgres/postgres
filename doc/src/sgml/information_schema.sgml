@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/information_schema.sgml,v 1.19 2004/11/27 21:27:06 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/information_schema.sgml,v 1.20 2004/12/28 22:47:15 tgl Exp $ -->
 
 <chapter id="information-schema">
  <title>The Information Schema</title>
@@ -30,7 +30,7 @@
    exists in all databases.  The owner of this schema is the initial
    database user in the cluster, and that user naturally has all the
    privileges on this schema, including the ability to drop it (but
-   the space savings achieved by this are minuscule).
+   the space savings achieved by that are minuscule).
   </para>
 
   <para>
@@ -1003,7 +1003,7 @@
    function (as parameter or return type) and stores some information
    about how the data type is used in that instance (for example, the
    declared maximum length, if applicable).  Each data type
-   descriptors is assigned an arbitrary identifier that is unique
+   descriptor is assigned an arbitrary identifier that is unique
    among the data type descriptor identifiers assigned for one object
    (table, domain, function).  This view is probably not useful for
    applications, but it is used to define some other views in the
@@ -1735,7 +1735,7 @@ ORDER BY c.ordinal_position;
    in the current database that are restricted by some unique, primary
    key, or foreign key constraint.  Check constraints are not included
    in this view.  Only those columns are shown that are contained in a
-   table owned the current user.
+   table owned by the current user.
   </para>
 
   <table>
@@ -3320,7 +3320,7 @@ ORDER BY c.ordinal_position;
 
   <para>
    The table <literal>sql_packages</literal> contains information
-   about which features packages defined in the SQL standard are
+   about which feature packages defined in the SQL standard are
    supported by <productname>PostgreSQL</productname>.  Refer to <xref
    linkend="features"> for background information on feature packages.
   </para>
@@ -3888,7 +3888,7 @@ ORDER BY c.ordinal_position;
    incompatibilities with the SQL standard that affect the
    representation in the information schema.  First, trigger names are
    local to the table in <productname>PostgreSQL</productname>, rather
-   than independent schema objects.  Therefore there may be duplicate
+   than being independent schema objects.  Therefore there may be duplicate
    trigger names defined in one schema, as long as they belong to
    different tables.  (<literal>trigger_catalog</literal> and
    <literal>trigger_schema</literal> are really the values pertaining

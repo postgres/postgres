@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.59 2003/12/26 20:00:00 meskes Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.60 2004/12/28 22:47:15 tgl Exp $
 -->
 
 <chapter id="ecpg">
@@ -19,7 +19,7 @@ $PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.59 2003/12/26 20:00:00 meskes Exp 
  </para>
 
  <para>
-  Admittedly, this documentation is quite incomplete.  But since this
+  This documentation is quite incomplete.  But since this
   interface is standardized, additional information can be found in
   many resources about SQL.
  </para>
@@ -31,9 +31,9 @@ $PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.59 2003/12/26 20:00:00 meskes Exp 
    An embedded SQL program consists of code written in an ordinary
    programming language, in this case C, mixed with SQL commands in
    specially marked sections.  To build the program, the source code
-   is first passed to the embedded SQL preprocessor, which converts it
+   is first passed through the embedded SQL preprocessor, which converts it
    to an ordinary C program, and afterwards it can be processed by a C
-   compilation tool chain.
+   compiler.
   </para>
 
   <para>
@@ -53,7 +53,7 @@ $PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.59 2003/12/26 20:00:00 meskes Exp 
   </para>
 
   <para>
-   As indicated, programs written for the embedded
+   As already stated, programs written for the embedded
    <acronym>SQL</acronym> interface are normal C programs with special
    code inserted to perform database-related actions.  This special
    code always has the form
@@ -61,8 +61,8 @@ $PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.59 2003/12/26 20:00:00 meskes Exp 
 EXEC SQL ...;
 </programlisting>
    These statements syntactically take the place of a C statement.
-   Depending on the particular statement, they may appear in the
-   global context or within a function.  Embedded
+   Depending on the particular statement, they may appear at the
+   global level or within a function.  Embedded
    <acronym>SQL</acronym> statements follow the case-sensitivity rules
    of normal <acronym>SQL</acronym> code, and not those of C.
   </para>
@@ -326,9 +326,9 @@ EXEC SQL COMMIT;
   <para>
    In the default mode, statements are committed only when
    <command>EXEC SQL COMMIT</command> is issued. The embedded SQL
-   interface also supports autocommit of transactions (as known from
-   other interfaces) via the <option>-t</option> command-line option
-   to <command>ecpg</command> (see below) or via the <literal>EXEC SQL
+   interface also supports autocommit of transactions (similar to
+   <application>libpq</> behavior) via the <option>-t</option> command-line
+   option to <command>ecpg</command> (see below) or via the <literal>EXEC SQL
    SET AUTOCOMMIT TO ON</literal> statement. In autocommit mode, each
    command is automatically committed unless it is inside an explicit
    transaction block. This mode can be explicitly turned off using
@@ -448,7 +448,7 @@ char  foo[16], bar[16];
    <para>
     The declarations are also echoed to the output file as a normal C
     variables, so there's no need to declare them again.  Variables
-    that are not intended to be used with SQL commands can be declared
+    that are not intended to be used in SQL commands can be declared
     normally outside these special sections.
    </para>
 
@@ -553,7 +553,7 @@ do {
     second host variable specification to each host variable that
     contains data.  This second host variable is called the
     <firstterm>indicator</firstterm> and contains a flag that tells
-    whether the datums is null, in which case the value of the real
+    whether the datum is null, in which case the value of the real
     host variable is ignored.  Here is an example that handles the
     retrieval of null values correctly:
 <programlisting>
@@ -1043,7 +1043,7 @@ static void set_error_handler(void)
    <title>sqlca</title>
 
    <para>
-    For a more powerful error handling, the embedded SQL interface
+    For more powerful error handling, the embedded SQL interface
     provides a global variable with the name <varname>sqlca</varname>
     that has the following structure:
 <programlisting>
@@ -1064,7 +1064,7 @@ struct
 } sqlca;
 </programlisting>
     (In a multithreaded program, every thread automatically gets its
-    own copy of <varname>sqlca</varname>.  This works similar to the
+    own copy of <varname>sqlca</varname>.  This works similarly to the
     handling of the standard C global variable
     <varname>errno</varname>.)
    </para>
@@ -1132,7 +1132,7 @@ struct
    <para>
     The structure <varname>sqlca</varname> is not defined in the SQL
     standard, but is implemented in several other SQL database
-    systems.  The definitions are similar in the core, but if you want
+    systems.  The definitions are similar at the core, but if you want
     to write portable applications, then you should investigate the
     different implementations carefully.
    </para>
@@ -1539,7 +1539,7 @@ ecpg prog1.pgc
 <programlisting>
 cc -c prog1.c
 </programlisting>
-   The generated C source files include headers files from the
+   The generated C source files include header files from the
    <productname>PostgreSQL</> installation, so if you installed
    <productname>PostgreSQL</> in a location that is not searched by
    default, you have to add an option such as
@@ -1575,9 +1575,9 @@ ECPG = ecpg
   </para>
 
   <para>
-   <application>ecpg</application> is thread-safe if it is compiled using
-   the <option>--enable-thread-safety</> <filename>configure</filename>
-   command-line option.  (You might need to use other threading
+   The <application>ecpg</application> library is thread-safe if it is built
+   using the <option>--enable-thread-safety</> command-line option to
+   <filename>configure</filename>.  (You might need to use other threading
    command-line options to compile your client code.)
   </para>
  </sect1>
@@ -1621,7 +1621,7 @@ ECPG = ecpg
   <title>Internals</title>
 
   <para>
-   This section explain how <application>ECPG</application> works
+   This section explains how <application>ECPG</application> works
    internally. This information can occasionally be useful to help
    users understand how to use <application>ECPG</application>.
   </para>
