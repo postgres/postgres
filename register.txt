@@ -14,12 +14,12 @@ All of the mailing lists are currently archived and viewable at:
 
 	http://www.postgresql.org/mhonarc
 
-And, so that we have an idea of whose using what, please connect to the
+And, so that we have an idea of who is using what, please connect to the
 following registration URL:
 
 	http://www.postgresql.org/register.shtml
 
 
-Thank you for choosing PostgreSQL, the most advanced freeware database engine.
+Thank you for choosing PostgreSQL, the most advanced open source database engine.
 
 
