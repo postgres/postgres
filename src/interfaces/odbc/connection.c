@@ -112,6 +112,7 @@ PGAPI_Connect(
 	make_string(szDSN, cbDSN, ci->dsn);
 
 	/* get the values for the DSN from the registry */
+	memcpy(&ci->drivers, &globals, sizeof(globals));
 	getDSNinfo(ci, CONN_OVERWRITE);
 	logs_on_off(1, ci->drivers.debug, ci->drivers.commlog);
 	/* initialize pg_version from connInfo.protocol    */

@@ -27,6 +27,7 @@
 #define INTFUNC  __stdcall
 
 extern HINSTANCE NEAR s_hModule;	/* Saved module handle. */
+extern GLOBAL_VALUES	globals;
 
 /* Constants */
 #define MIN(x,y)	  ((x) < (y) ? (x) : (y))
@@ -217,6 +218,7 @@ ConfigDlgProc(HWND hdlg,
 			 */
 			/* override settings in ODBC.INI */
 
+			memcpy(&ci->drivers, &globals, sizeof(globals));
 			/* Get the rest of the common attributes */
 			getDSNinfo(ci, CONN_DONT_OVERWRITE);
 

@@ -421,7 +421,6 @@ getDSNinfo(ConnInfo *ci, char overwrite)
  *	If a driver keyword was present, then dont use a DSN and return.
  *	If DSN is null and no driver, then use the default datasource.
  */
-	memcpy(&ci->drivers, &globals, sizeof(globals));
 	if (DSN[0] == '\0')
 	{
 		if (ci->driver[0] != '\0')
