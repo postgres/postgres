@@ -30,6 +30,7 @@
 extern Datum nextval(PG_FUNCTION_ARGS);
 extern Datum currval(PG_FUNCTION_ARGS);
 extern Datum setval(PG_FUNCTION_ARGS);
+extern Datum setval_and_iscalled(PG_FUNCTION_ARGS);
 
 extern void DefineSequence(CreateSeqStmt *stmt);
 extern void CloseSequences(void);

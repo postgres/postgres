@@ -61,6 +61,7 @@ static SeqTable init_sequence(char *caller, char *name);
 static Form_pg_sequence read_info(char *caller, SeqTable elm, Buffer *buf);
 static void init_params(CreateSeqStmt *seq, Form_pg_sequence new);
 static int	get_param(DefElem *def);
+static void do_setval(char *seqname, int32 next, char iscalled);
 
 /*
  * DefineSequence
@@ -317,12 +318,9 @@ currval(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(result);
 }
 
-Datum
-setval(PG_FUNCTION_ARGS)
+static void 
+do_setval(char *seqname, int32 next, bool iscalled)
 {
-	text	   *seqin = PG_GETARG_TEXT_P(0);
-	int32		next = PG_GETARG_INT32(1);
-	char	   *seqname = get_seq_name(seqin);
 	SeqTable	elm;
 	Buffer		buf;
 	Form_pg_sequence seq;
@@ -356,7 +354,7 @@ setval(PG_FUNCTION_ARGS)
 
 	/* save info in sequence relation */
 	seq->last_value = next;		/* last fetched number */
-	seq->is_called = 't';
+	seq->is_called = iscalled ? 't' : 'f';
 
 	LockBuffer(buf, BUFFER_LOCK_UNLOCK);
 
@@ -364,6 +362,30 @@ setval(PG_FUNCTION_ARGS)
 		elog(ERROR, "%s.setval: WriteBuffer failed", seqname);
 
 	pfree(seqname);
+
+}
+
+Datum
+setval(PG_FUNCTION_ARGS)
+{
+	text	   *seqin = PG_GETARG_TEXT_P(0);
+	int32		next = PG_GETARG_INT32(1);
+	char	   *seqname = get_seq_name(seqin);
+
+	do_setval(seqname, next, true);
+
+	PG_RETURN_INT32(next);
+}
+
+Datum
+setval_and_iscalled(PG_FUNCTION_ARGS)
+{
+	text	   *seqin = PG_GETARG_TEXT_P(0);
+	int32		next = PG_GETARG_INT32(1);
+	bool		iscalled = PG_GETARG_BOOL(2);
+	char	   *seqname = get_seq_name(seqin);
+
+	do_setval(seqname, next, iscalled);
 
 	PG_RETURN_INT32(next);
 }
