@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.159 2004/02/12 15:06:56 wieck Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.160 2004/02/12 20:07:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -943,6 +943,7 @@ BufferBackgroundWriter(void)
 	for (;;)
 	{
 		int			n;
+		long		udelay;
 
 		/*
 		 * Call BufferSync() with instructions to keep just the
@@ -970,8 +971,23 @@ BufferBackgroundWriter(void)
 		/*
 		 * Nap for the configured time or sleep for 10 seconds if
 		 * there was nothing to do at all.
+		 *
+		 * On some platforms, signals won't interrupt the sleep.  To ensure
+		 * we respond reasonably promptly when the postmaster signals us,
+		 * break down the sleep into 1-second increments, and check for
+		 * interrupts after each nap.
 		 */
-		pg_usleep((n > 0) ? BgWriterDelay * 1000L : 10000000L);
+		udelay = ((n > 0) ? BgWriterDelay : 10000) * 1000L;
+		while (udelay > 1000000L)
+		{
+			pg_usleep(1000000L);
+			udelay -= 1000000L;
+			if (InterruptPending)
+				return;
+		}
+		pg_usleep(udelay);
+		if (InterruptPending)
+			return;
 	}
 }
 
