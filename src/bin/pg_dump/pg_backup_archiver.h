@@ -17,7 +17,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.45 2002/08/10 16:57:31 petere Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.46 2002/08/20 17:54:44 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,8 +48,8 @@ typedef struct _z_stream
 {
 	void	   *next_in;
 	void	   *next_out;
-	int			avail_in;
-	int			avail_out;
+	size_t		avail_in;
+	size_t		avail_out;
 } z_stream;
 typedef z_stream *z_streamp;
 #endif
@@ -86,7 +86,7 @@ typedef void (*ClosePtr) (struct _archiveHandle * AH);
 typedef void (*ArchiveEntryPtr) (struct _archiveHandle * AH, struct _tocEntry * te);
 
 typedef void (*StartDataPtr) (struct _archiveHandle * AH, struct _tocEntry * te);
-typedef int (*WriteDataPtr) (struct _archiveHandle * AH, const void *data, int dLen);
+typedef size_t (*WriteDataPtr) (struct _archiveHandle * AH, const void *data, size_t dLen);
 typedef void (*EndDataPtr) (struct _archiveHandle * AH, struct _tocEntry * te);
 
 typedef void (*StartBlobsPtr) (struct _archiveHandle * AH, struct _tocEntry * te);
@@ -96,15 +96,15 @@ typedef void (*EndBlobsPtr) (struct _archiveHandle * AH, struct _tocEntry * te);
 
 typedef int (*WriteBytePtr) (struct _archiveHandle * AH, const int i);
 typedef int (*ReadBytePtr) (struct _archiveHandle * AH);
-typedef int (*WriteBufPtr) (struct _archiveHandle * AH, const void *c, int len);
-typedef int (*ReadBufPtr) (struct _archiveHandle * AH, void *buf, int len);
+typedef size_t (*WriteBufPtr) (struct _archiveHandle * AH, const void *c, size_t len);
+typedef size_t (*ReadBufPtr) (struct _archiveHandle * AH, void *buf, size_t len);
 typedef void (*SaveArchivePtr) (struct _archiveHandle * AH);
 typedef void (*WriteExtraTocPtr) (struct _archiveHandle * AH, struct _tocEntry * te);
 typedef void (*ReadExtraTocPtr) (struct _archiveHandle * AH, struct _tocEntry * te);
 typedef void (*PrintExtraTocPtr) (struct _archiveHandle * AH, struct _tocEntry * te);
 typedef void (*PrintTocDataPtr) (struct _archiveHandle * AH, struct _tocEntry * te, RestoreOptions *ropt);
 
-typedef int (*CustomOutPtr) (struct _archiveHandle * AH, const void *buf, int len);
+typedef size_t (*CustomOutPtr) (struct _archiveHandle * AH, const void *buf, size_t len);
 
 typedef int (*TocSortCompareFn) (const void *te1, const void *te2);
 
@@ -147,7 +147,7 @@ typedef struct _archiveHandle
 
 	int			debugLevel;		/* Used for logging (currently only by
 								 * --verbose) */
-	int			intSize;		/* Size of an integer in the archive */
+	size_t		intSize;		/* Size of an integer in the archive */
 	ArchiveFormat format;		/* Archive format */
 
 	sqlparseInfo sqlparse;
@@ -163,9 +163,9 @@ typedef struct _archiveHandle
 								 * already */
 	char	   *lookahead;		/* Buffer used when reading header to
 								 * discover format */
-	int			lookaheadSize;	/* Size of allocated buffer */
-	int			lookaheadLen;	/* Length of data in lookahead */
-	int			lookaheadPos;	/* Current read position in lookahead
+	size_t		lookaheadSize;	/* Size of allocated buffer */
+	size_t		lookaheadLen;	/* Length of data in lookahead */
+	off_t		lookaheadPos;	/* Current read position in lookahead
 								 * buffer */
 
 	ArchiveEntryPtr ArchiveEntryPtr;	/* Called for each metadata object */
@@ -230,8 +230,8 @@ typedef struct _archiveHandle
 	RestoreOptions *ropt;		/* Used to check restore options in
 								 * ahwrite etc */
 	void                    *lo_buf;
-	int                     lo_buf_used;
-	int                     lo_buf_size;
+	size_t		lo_buf_used;
+	size_t		lo_buf_size;
 } ArchiveHandle;
 
 typedef struct _tocEntry
@@ -282,10 +282,10 @@ extern int	TocIDRequired(ArchiveHandle *AH, int id, RestoreOptions *ropt);
  * Mandatory routines for each supported format
  */
 
-extern int	WriteInt(ArchiveHandle *AH, int i);
+extern size_t	WriteInt(ArchiveHandle *AH, int i);
 extern int	ReadInt(ArchiveHandle *AH);
 extern char *ReadStr(ArchiveHandle *AH);
-extern int	WriteStr(ArchiveHandle *AH, const char *s);
+extern size_t	WriteStr(ArchiveHandle *AH, const char *s);
 
 extern void StartRestoreBlobs(ArchiveHandle *AH);
 extern void StartRestoreBlob(ArchiveHandle *AH, Oid oid);

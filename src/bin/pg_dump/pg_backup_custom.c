@@ -19,15 +19,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_custom.c,v 1.19 2002/05/29 01:38:56 tgl Exp $
- *
- * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
- *
- *	Initial version.
- *
- * Modifications - 04-Jan-2001 - pjw@rhyme.com.au
- *
- *	  - Check results of IO routines more carefully.
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_custom.c,v 1.20 2002/08/20 17:54:44 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,12 +36,12 @@
 
 static void _ArchiveEntry(ArchiveHandle *AH, TocEntry *te);
 static void _StartData(ArchiveHandle *AH, TocEntry *te);
-static int	_WriteData(ArchiveHandle *AH, const void *data, int dLen);
+static size_t	_WriteData(ArchiveHandle *AH, const void *data, size_t dLen);
 static void _EndData(ArchiveHandle *AH, TocEntry *te);
 static int	_WriteByte(ArchiveHandle *AH, const int i);
 static int	_ReadByte(ArchiveHandle *);
-static int	_WriteBuf(ArchiveHandle *AH, const void *buf, int len);
-static int	_ReadBuf(ArchiveHandle *AH, void *buf, int len);
+static size_t	_WriteBuf(ArchiveHandle *AH, const void *buf, size_t len);
+static size_t	_ReadBuf(ArchiveHandle *AH, void *buf, size_t len);
 static void _CloseArchive(ArchiveHandle *AH);
 static void _PrintTocData(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt);
 static void _WriteExtraToc(ArchiveHandle *AH, TocEntry *te);
@@ -79,16 +71,16 @@ typedef struct
 	z_streamp	zp;
 	char	   *zlibOut;
 	char	   *zlibIn;
-	int			inSize;
+	size_t		inSize;
 	int			hasSeek;
-	int			filePos;
-	int			dataStart;
+	off_t		filePos;
+	off_t		dataStart;
 } lclContext;
 
 typedef struct
 {
-	int			dataPos;
-	int			dataLen;
+	off_t		dataPos;
+	size_t		dataLen;
 } lclTocEntry;
 
 
@@ -99,7 +91,7 @@ typedef struct
 static void _readBlockHeader(ArchiveHandle *AH, int *type, int *id);
 static void _StartDataCompressor(ArchiveHandle *AH, TocEntry *te);
 static void _EndDataCompressor(ArchiveHandle *AH, TocEntry *te);
-static int	_getFilePos(ArchiveHandle *AH, lclContext *ctx);
+static off_t _getFilePos(ArchiveHandle *AH, lclContext *ctx);
 static int	_DoDeflate(ArchiveHandle *AH, lclContext *ctx, int flush);
 
 static char *modulename = gettext_noop("custom archiver");
@@ -156,8 +148,8 @@ InitArchiveFmt_Custom(ArchiveHandle *AH)
 	/* Initialize LO buffering */
 	AH->lo_buf_size = LOBBUFSIZE;
 	AH->lo_buf = (void *)malloc(LOBBUFSIZE);
-	if(AH->lo_buf == NULL)
-                die_horribly(AH, modulename, "out of memory\n");
+	if (AH->lo_buf == NULL)
+		die_horribly(AH, modulename, "out of memory\n");
 
 	/*
 	 * zlibOutSize is the buffer size we tell zlib it can output to.  We
@@ -188,7 +180,7 @@ InitArchiveFmt_Custom(ArchiveHandle *AH)
 		if (!AH->FH)
 			die_horribly(AH, modulename, "could not open archive file %s: %s\n", AH->fSpec, strerror(errno));
 
-		ctx->hasSeek = (fseek(AH->FH, 0, SEEK_CUR) == 0);
+		ctx->hasSeek = (fseeko(AH->FH, 0, SEEK_CUR) == 0);
 
 	}
 	else
@@ -201,7 +193,7 @@ InitArchiveFmt_Custom(ArchiveHandle *AH)
 		if (!AH->FH)
 			die_horribly(AH, modulename, "could not open archive file %s: %s\n", AH->fSpec, strerror(errno));
 
-		ctx->hasSeek = (fseek(AH->FH, 0, SEEK_CUR) == 0);
+		ctx->hasSeek = (fseeko(AH->FH, 0, SEEK_CUR) == 0);
 
 		ReadHead(AH);
 		ReadToc(AH);
@@ -285,7 +277,8 @@ _PrintExtraToc(ArchiveHandle *AH, TocEntry *te)
 {
 	lclTocEntry *ctx = (lclTocEntry *) te->formatData;
 
-	ahprintf(AH, "-- Data Pos: %d (Length %d)\n", ctx->dataPos, ctx->dataLen);
+	ahprintf(AH, "-- Data Pos: " INT64_FORMAT " (Length %lu)\n",
+			 (int64) ctx->dataPos, (unsigned long) ctx->dataLen);
 }
 
 /*
@@ -323,8 +316,8 @@ _StartData(ArchiveHandle *AH, TocEntry *te)
  * Mandatory.
  *
  */
-static int
-_WriteData(ArchiveHandle *AH, const void *data, int dLen)
+static size_t
+_WriteData(ArchiveHandle *AH, const void *data, size_t dLen)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
 	z_streamp	zp = ctx->zp;
@@ -334,7 +327,7 @@ _WriteData(ArchiveHandle *AH, const void *data, int dLen)
 
 	while (zp->avail_in != 0)
 	{
-		/* printf("Deflating %d bytes\n", dLen); */
+		/* printf("Deflating %lu bytes\n", (unsigned long) dLen); */
 		_DoDeflate(AH, ctx, 0);
 	}
 	return dLen;
@@ -486,7 +479,7 @@ _PrintTocData(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt)
 
 		/* Grab it */
 
-		if (fseek(AH->FH, tctx->dataPos, SEEK_SET) != 0)
+		if (fseeko(AH->FH, tctx->dataPos, SEEK_SET) != 0)
 			die_horribly(AH, modulename, "error during file seek: %s\n", strerror(errno));
 
 		_readBlockHeader(AH, &blkType, &id);
@@ -532,9 +525,9 @@ _PrintData(ArchiveHandle *AH)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
 	z_streamp	zp = ctx->zp;
-	int			blkLen;
+	size_t		blkLen;
 	char	   *in = ctx->zlibIn;
-	int			cnt;
+	size_t		cnt;
 
 #ifdef HAVE_LIBZ
 	int			res;
@@ -573,7 +566,9 @@ _PrintData(ArchiveHandle *AH)
 
 		cnt = fread(in, 1, blkLen, AH->FH);
 		if (cnt != blkLen)
-			die_horribly(AH, modulename, "could not read data block - expected %d, got %d\n", blkLen, cnt);
+			die_horribly(AH, modulename,
+						 "could not read data block - expected %lu, got %lu\n",
+						 (unsigned long) blkLen, (unsigned long) cnt);
 
 		ctx->filePos += blkLen;
 
@@ -683,9 +678,9 @@ static void
 _skipData(ArchiveHandle *AH)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
-	int			blkLen;
+	size_t		blkLen;
 	char	   *in = ctx->zlibIn;
-	int			cnt;
+	size_t		cnt;
 
 	blkLen = ReadInt(AH);
 	while (blkLen != 0)
@@ -699,7 +694,9 @@ _skipData(ArchiveHandle *AH)
 		}
 		cnt = fread(in, 1, blkLen, AH->FH);
 		if (cnt != blkLen)
-			die_horribly(AH, modulename, "could not read data block - expected %d, got %d\n", blkLen, cnt);
+			die_horribly(AH, modulename,
+						 "could not read data block - expected %lu, got %lu\n",
+						 (unsigned long) blkLen, (unsigned long) cnt);
 
 		ctx->filePos += blkLen;
 
@@ -761,16 +758,18 @@ _ReadByte(ArchiveHandle *AH)
  * These routines are only used to read & write headers & TOC.
  *
  */
-static int
-_WriteBuf(ArchiveHandle *AH, const void *buf, int len)
+static size_t
+_WriteBuf(ArchiveHandle *AH, const void *buf, size_t len)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
-	int			res;
+	size_t		res;
 
 	res = fwrite(buf, 1, len, AH->FH);
 
 	if (res != len)
-		die_horribly(AH, modulename, "write error in _WriteBuf (%d != %d)\n", res, len);
+		die_horribly(AH, modulename,
+					 "write error in _WriteBuf (%lu != %lu)\n",
+					 (unsigned long) res, (unsigned long) len);
 
 	ctx->filePos += res;
 	return res;
@@ -785,11 +784,11 @@ _WriteBuf(ArchiveHandle *AH, const void *buf, int len)
  * These routines are only used to read & write headers & TOC.
  *
  */
-static int
-_ReadBuf(ArchiveHandle *AH, void *buf, int len)
+static size_t
+_ReadBuf(ArchiveHandle *AH, void *buf, size_t len)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
-	int			res;
+	size_t		res;
 
 	res = fread(buf, 1, len, AH->FH);
 	ctx->filePos += res;
@@ -816,12 +815,12 @@ static void
 _CloseArchive(ArchiveHandle *AH)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
-	int			tpos;
+	off_t		tpos;
 
 	if (AH->mode == archModeWrite)
 	{
 		WriteHead(AH);
-		tpos = ftell(AH->FH);
+		tpos = ftello(AH->FH);
 		WriteToc(AH);
 		ctx->dataStart = _getFilePos(AH, ctx);
 		WriteDataChunks(AH);
@@ -834,7 +833,7 @@ _CloseArchive(ArchiveHandle *AH)
 		 */
 		if (ctx->hasSeek)
 		{
-			fseek(AH->FH, tpos, SEEK_SET);
+			fseeko(AH->FH, tpos, SEEK_SET);
 			WriteToc(AH);
 		}
 	}
@@ -853,14 +852,14 @@ _CloseArchive(ArchiveHandle *AH)
 /*
  * Get the current position in the archive file.
  */
-static int
+static off_t
 _getFilePos(ArchiveHandle *AH, lclContext *ctx)
 {
-	int			pos;
+	off_t		pos;
 
 	if (ctx->hasSeek)
 	{
-		pos = ftell(AH->FH);
+		pos = ftello(AH->FH);
 		if (pos != ctx->filePos)
 		{
 			write_msg(modulename, "WARNING: ftell mismatch with expected position -- ftell ignored\n");
@@ -957,8 +956,8 @@ _DoDeflate(ArchiveHandle *AH, lclContext *ctx, int flush)
 			if (zp->avail_out < zlibOutSize)
 			{
 				/*
-				 * printf("Wrote %d byte deflated chunk\n", zlibOutSize -
-				 * zp->avail_out);
+				 * printf("Wrote %lu byte deflated chunk\n", (unsigned long) (zlibOutSize -
+				 * zp->avail_out));
 				 */
 				WriteInt(AH, zlibOutSize - zp->avail_out);
 				if (fwrite(out, 1, zlibOutSize - zp->avail_out, AH->FH) != (zlibOutSize - zp->avail_out))

@@ -20,15 +20,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_files.c,v 1.16 2002/05/29 01:38:56 tgl Exp $
- *
- * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
- *
- *	Initial version.
- *
- * Modifications - 04-Jan-2001 - pjw@rhyme.com.au
- *
- *	  - Check results of IO routines more carefully.
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_files.c,v 1.17 2002/08/20 17:54:44 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,12 +30,12 @@
 
 static void _ArchiveEntry(ArchiveHandle *AH, TocEntry *te);
 static void _StartData(ArchiveHandle *AH, TocEntry *te);
-static int	_WriteData(ArchiveHandle *AH, const void *data, int dLen);
+static size_t	_WriteData(ArchiveHandle *AH, const void *data, size_t dLen);
 static void _EndData(ArchiveHandle *AH, TocEntry *te);
 static int	_WriteByte(ArchiveHandle *AH, const int i);
 static int	_ReadByte(ArchiveHandle *);
-static int	_WriteBuf(ArchiveHandle *AH, const void *buf, int len);
-static int	_ReadBuf(ArchiveHandle *AH, void *buf, int len);
+static size_t	_WriteBuf(ArchiveHandle *AH, const void *buf, size_t len);
+static size_t	_ReadBuf(ArchiveHandle *AH, void *buf, size_t len);
 static void _CloseArchive(ArchiveHandle *AH);
 static void _PrintTocData(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt);
 static void _WriteExtraToc(ArchiveHandle *AH, TocEntry *te);
@@ -60,7 +52,7 @@ static void _EndBlobs(ArchiveHandle *AH, TocEntry *te);
 typedef struct
 {
 	int			hasSeek;
-	int			filePos;
+	off_t		filePos;
 	FILE	   *blobToc;
 } lclContext;
 
@@ -116,8 +108,8 @@ InitArchiveFmt_Files(ArchiveHandle *AH)
 	/* Initialize LO buffering */
 	AH->lo_buf_size = LOBBUFSIZE;
 	AH->lo_buf = (void *)malloc(LOBBUFSIZE);
-	if(AH->lo_buf == NULL)
-                die_horribly(AH, modulename, "out of memory\n");
+	if (AH->lo_buf == NULL)
+		die_horribly(AH, modulename, "out of memory\n");
 
 	/*
 	 * Now open the TOC file
@@ -137,7 +129,7 @@ InitArchiveFmt_Files(ArchiveHandle *AH)
 		if (AH->FH == NULL)
 			die_horribly(NULL, modulename, "could not open output file: %s\n", strerror(errno));
 
-		ctx->hasSeek = (fseek(AH->FH, 0, SEEK_CUR) == 0);
+		ctx->hasSeek = (fseeko(AH->FH, 0, SEEK_CUR) == 0);
 
 		if (AH->compression < 0 || AH->compression > 9)
 			AH->compression = Z_DEFAULT_COMPRESSION;
@@ -155,7 +147,7 @@ InitArchiveFmt_Files(ArchiveHandle *AH)
 		if (AH->FH == NULL)
 			die_horribly(NULL, modulename, "could not open input file: %s\n", strerror(errno));
 
-		ctx->hasSeek = (fseek(AH->FH, 0, SEEK_CUR) == 0);
+		ctx->hasSeek = (fseeko(AH->FH, 0, SEEK_CUR) == 0);
 
 		ReadHead(AH);
 		ReadToc(AH);
@@ -255,8 +247,8 @@ _StartData(ArchiveHandle *AH, TocEntry *te)
 
 }
 
-static int
-_WriteData(ArchiveHandle *AH, const void *data, int dLen)
+static size_t
+_WriteData(ArchiveHandle *AH, const void *data, size_t dLen)
 {
 	lclTocEntry *tctx = (lclTocEntry *) AH->currToc->formatData;
 
@@ -284,7 +276,7 @@ static void
 _PrintFileData(ArchiveHandle *AH, char *filename, RestoreOptions *ropt)
 {
 	char		buf[4096];
-	int			cnt;
+	size_t		cnt;
 
 	if (!filename)
 		return;
@@ -332,8 +324,8 @@ _getBlobTocEntry(ArchiveHandle *AH, Oid *oid, char fname[K_STD_BUF_SIZE])
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
 	char		blobTe[K_STD_BUF_SIZE];
-	int			fpos;
-	int			eos;
+	size_t		fpos;
+	size_t		eos;
 
 	if (fgets(&blobTe[0], K_STD_BUF_SIZE - 1, ctx->blobToc) != NULL)
 	{
@@ -413,11 +405,11 @@ _ReadByte(ArchiveHandle *AH)
 	return res;
 }
 
-static int
-_WriteBuf(ArchiveHandle *AH, const void *buf, int len)
+static size_t
+_WriteBuf(ArchiveHandle *AH, const void *buf, size_t len)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
-	int			res;
+	size_t		res;
 
 	res = fwrite(buf, 1, len, AH->FH);
 	if (res != len)
@@ -427,11 +419,11 @@ _WriteBuf(ArchiveHandle *AH, const void *buf, int len)
 	return res;
 }
 
-static int
-_ReadBuf(ArchiveHandle *AH, void *buf, int len)
+static size_t
+_ReadBuf(ArchiveHandle *AH, void *buf, size_t len)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
-	int			res;
+	size_t		res;
 
 	res = fread(buf, 1, len, AH->FH);
 	ctx->filePos += res;

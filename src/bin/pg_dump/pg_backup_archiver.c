@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.54 2002/08/18 09:36:25 petere Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.55 2002/08/20 17:54:44 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -581,8 +581,8 @@ _enableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt
  */
 
 /* Public */
-int
-WriteData(Archive *AHX, const void *data, int dLen)
+size_t
+WriteData(Archive *AHX, const void *data, size_t dLen)
 {
 	ArchiveHandle *AH = (ArchiveHandle *) AHX;
 
@@ -646,7 +646,7 @@ ArchiveEntry(Archive *AHX, const char *oid, const char *tag,
 		(*AH->ArchiveEntryPtr) (AH, newToc);
 
 	/*
-	 * printf("New toc owned by '%s', oid %d\n", newToc->owner,
+	 * printf("New toc owned by '%s', oid %u\n", newToc->owner,
 	 * newToc->oidVal);
 	 */
 }
@@ -814,15 +814,15 @@ EndRestoreBlob(ArchiveHandle *AH, Oid oid)
 	if (AH->lo_buf_used > 0)
 	{
 		/* Write remaining bytes from the LO buffer */
-		int res;
+		size_t res;
 
 		res = lo_write(AH->connection, AH->loFd, (void *) AH->lo_buf, AH->lo_buf_used);
 
-		ahlog(AH, 5, "wrote remaining %d bytes of large object data (result = %d)\n",
-			  (int)AH->lo_buf_used, res);
+		ahlog(AH, 5, "wrote remaining %lu bytes of large object data (result = %lu)\n",
+			  (unsigned long) AH->lo_buf_used, (unsigned long) res);
 		if (res != AH->lo_buf_used)
-			die_horribly(AH, modulename, "could not write to large object (result: %d, expected: %d)\n",
-						 res, AH->lo_buf_used);
+			die_horribly(AH, modulename, "could not write to large object (result: %lu, expected: %lu)\n",
+						 (unsigned long) res, (unsigned long) AH->lo_buf_used);
 		AH->lo_buf_used = 0;
 	}
 
@@ -1202,31 +1202,35 @@ RestoringToDB(ArchiveHandle *AH)
 int
 ahwrite(const void *ptr, size_t size, size_t nmemb, ArchiveHandle *AH)
 {
-	int			res;
+	size_t		res;
 
 	if (AH->writingBlob)
 	{
-	        if(AH->lo_buf_used + size * nmemb > AH->lo_buf_size) {
-		  /* Split LO buffer */
-		  int remaining = AH->lo_buf_size - AH->lo_buf_used;
-		  int slack = nmemb * size - remaining;
+		if (AH->lo_buf_used + size * nmemb > AH->lo_buf_size)
+		{
+			/* Split LO buffer */
+			size_t remaining = AH->lo_buf_size - AH->lo_buf_used;
+			size_t slack = nmemb * size - remaining;
 
-		  memcpy((char *)AH->lo_buf + AH->lo_buf_used, ptr, remaining);
-		  res = lo_write(AH->connection, AH->loFd, AH->lo_buf, AH->lo_buf_size);
-		  ahlog(AH, 5, "wrote %d bytes of large object data (result = %d)\n",
-		  	        AH->lo_buf_size, res);
-		  if (res != AH->lo_buf_size)
-			die_horribly(AH, modulename, "could not write to large object (result: %d, expected: %d)\n",
-						 res, AH->lo_buf_size);
-	          memcpy(AH->lo_buf, (char *)ptr + remaining, slack);
-		  AH->lo_buf_used = slack;
-	       } else {
-	         /* LO Buffer is still large enough, buffer it */
-		 memcpy((char *)AH->lo_buf + AH->lo_buf_used, ptr, size * nmemb);
-		 AH->lo_buf_used += size * nmemb;
-	       }
+			memcpy((char *)AH->lo_buf + AH->lo_buf_used, ptr, remaining);
+			res = lo_write(AH->connection, AH->loFd, AH->lo_buf, AH->lo_buf_size);
+			ahlog(AH, 5, "wrote %lu bytes of large object data (result = %lu)\n",
+				  (unsigned long) AH->lo_buf_size, (unsigned long) res);
+			if (res != AH->lo_buf_size)
+				die_horribly(AH, modulename,
+							 "could not write to large object (result: %lu, expected: %lu)\n",
+							 (unsigned long) res, (unsigned long) AH->lo_buf_size);
+			memcpy(AH->lo_buf, (char *)ptr + remaining, slack);
+			AH->lo_buf_used = slack;
+		}
+		else
+		{
+			/* LO Buffer is still large enough, buffer it */
+			memcpy((char *)AH->lo_buf + AH->lo_buf_used, ptr, size * nmemb);
+			AH->lo_buf_used += size * nmemb;
+		}
 
-	       return size * nmemb;
+		return size * nmemb;
 	}
 	else if (AH->gzOut)
 	{
@@ -1255,8 +1259,8 @@ ahwrite(const void *ptr, size_t size, size_t nmemb, ArchiveHandle *AH)
 		{
 			res = fwrite((void *) ptr, size, nmemb, AH->OF);
 			if (res != nmemb)
-				die_horribly(AH, modulename, "could not write to output file (%d != %d)\n",
-							 res, (int) nmemb);
+				die_horribly(AH, modulename, "could not write to output file (%lu != %lu)\n",
+							 (unsigned long) res, (unsigned long) nmemb);
 			return res;
 		}
 	}
@@ -1376,7 +1380,7 @@ TocIDRequired(ArchiveHandle *AH, int id, RestoreOptions *ropt)
 	return _tocEntryRequired(te, ropt);
 }
 
-int
+size_t
 WriteInt(ArchiveHandle *AH, int i)
 {
 	int			b;
@@ -1434,10 +1438,10 @@ ReadInt(ArchiveHandle *AH)
 	return res;
 }
 
-int
+size_t
 WriteStr(ArchiveHandle *AH, const char *c)
 {
-	int			res;
+	size_t		res;
 
 	if (c)
 	{
@@ -1477,7 +1481,7 @@ _discoverArchiveFormat(ArchiveHandle *AH)
 {
 	FILE	   *fh;
 	char		sig[6];			/* More than enough */
-	int			cnt;
+	size_t		cnt;
 	int			wantClose = 0;
 
 #if 0
@@ -1510,7 +1514,8 @@ _discoverArchiveFormat(ArchiveHandle *AH)
 		if (ferror(fh))
 			die_horribly(AH, modulename, "could not read input file: %s\n", strerror(errno));
 		else
-			die_horribly(AH, modulename, "input file is too short (read %d, expected 5)\n", cnt);
+			die_horribly(AH, modulename, "input file is too short (read %lu, expected 5)\n",
+						 (unsigned long) cnt);
 	}
 
 	/* Save it, just in case we need it later */
@@ -1563,7 +1568,7 @@ _discoverArchiveFormat(ArchiveHandle *AH)
 	}
 
 	/* If we can't seek, then mark the header as read */
-	if (fseek(fh, 0, SEEK_SET) != 0)
+	if (fseeko(fh, 0, SEEK_SET) != 0)
 	{
 		/*
 		 * NOTE: Formats that use the looahead buffer can unset this in
@@ -1575,7 +1580,8 @@ _discoverArchiveFormat(ArchiveHandle *AH)
 		AH->lookaheadLen = 0;	/* Don't bother since we've reset the file */
 
 #if 0
-	write_msg(modulename, "read %d bytes into lookahead buffer\n", AH->lookaheadLen);
+	write_msg(modulename, "read %lu bytes into lookahead buffer\n",
+			  (unsigned long) AH->lookaheadLen);
 #endif
 
 	/* Close the file */
@@ -2305,7 +2311,8 @@ ReadHead(ArchiveHandle *AH)
 
 		AH->intSize = (*AH->ReadBytePtr) (AH);
 		if (AH->intSize > 32)
-			die_horribly(AH, modulename, "sanity check on integer size (%d) failed\n", AH->intSize);
+			die_horribly(AH, modulename, "sanity check on integer size (%lu) failed\n",
+						 (unsigned long) AH->intSize);
 
 		if (AH->intSize > sizeof(int))
 			write_msg(modulename, "WARNING: archive was made on a machine with larger integers, some operations may fail\n");
@@ -2368,7 +2375,7 @@ _SortToc(ArchiveHandle *AH, TocSortCompareFn fn)
 	for (i = 0; i <= AH->tocCount + 1; i++)
 	{
 		/*
-		 * printf("%d: %x (%x, %x) - %d\n", i, te, te->prev, te->next,
+		 * printf("%d: %x (%x, %x) - %u\n", i, te, te->prev, te->next,
 		 * te->oidVal);
 		 */
 		tea[i] = te;
@@ -2390,7 +2397,7 @@ _SortToc(ArchiveHandle *AH, TocSortCompareFn fn)
 	for (i = 0; i <= AH->tocCount + 1; i++)
 	{
 		/*
-		 * printf("%d: %x (%x, %x) - %d\n", i, te, te->prev, te->next,
+		 * printf("%d: %x (%x, %x) - %u\n", i, te, te->prev, te->next,
 		 * te->oidVal);
 		 */
 		te = te->next;
@@ -2410,7 +2417,7 @@ _tocSortCompareByOIDNum(const void *p1, const void *p2)
 	Oid			id2 = te2->maxOidVal;
 	int			cmpval;
 
-	/* printf("Comparing %d to %d\n", id1, id2); */
+	/* printf("Comparing %u to %u\n", id1, id2); */
 
 	cmpval = oidcmp(id1, id2);
 

@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup.h,v 1.21 2002/08/18 09:36:25 petere Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup.h,v 1.22 2002/08/20 17:54:44 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -144,7 +144,7 @@ extern void ArchiveEntry(Archive *AHX, const char *oid, const char *tag,
 						 DataDumperPtr dumpFn, void *dumpArg);
 
 /* Called to write *data* to the archive */
-extern int	WriteData(Archive *AH, const void *data, int dLen);
+extern size_t	WriteData(Archive *AH, const void *data, size_t dLen);
 
 /*
 extern int	StartBlobs(Archive* AH);

@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.287 2002/08/19 19:33:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.288 2002/08/20 17:54:44 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1302,7 +1302,7 @@ dumpBlobs(Archive *AH, char *junkOid, void *junkVal)
 	int			i;
 	int			loFd;
 	char		buf[loBufSize];
-	int			cnt;
+	size_t		cnt;
 	Oid			blobOid;
 
 	if (g_verbose)

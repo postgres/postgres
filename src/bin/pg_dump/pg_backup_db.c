@@ -5,7 +5,7 @@
  *	Implements the basic DB functions used by the archiver.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.37 2002/08/18 09:36:25 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.38 2002/08/20 17:54:44 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -14,7 +14,7 @@
 #include "pg_backup_archiver.h"
 #include "pg_backup_db.h"
 
-#include <unistd.h>				/* for getopt() */
+#include <unistd.h>
 #include <ctype.h>
 
 #ifdef HAVE_TERMIOS_H
@@ -347,7 +347,7 @@ _executeSqlCommand(ArchiveHandle *AH, PGconn *conn, PQExpBuffer qry, char *desc)
 static char *
 _sendCopyLine(ArchiveHandle *AH, char *qry, char *eos)
 {
-	int			loc;			/* Location of next newline */
+	size_t		loc;			/* Location of next newline */
 	int			pos = 0;		/* Current position */
 	int			sPos = 0;		/* Last pos of a slash char */
 	int			isEnd = 0;
@@ -549,7 +549,7 @@ _sendSQLLine(ArchiveHandle *AH, char *qry, char *eos)
 
 /* Convenience function to send one or more queries. Monitors result to handle COPY statements */
 int
-ExecuteSqlCommandBuf(ArchiveHandle *AH, void *qryv, int bufLen)
+ExecuteSqlCommandBuf(ArchiveHandle *AH, void *qryv, size_t bufLen)
 {
 	char	   *qry = (char *) qryv;
 	char	   *eos = qry + bufLen;
