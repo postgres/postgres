@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-fe.h,v 1.110 2004/10/16 03:26:43 momjian Exp $
+ * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-fe.h,v 1.111 2004/10/16 22:52:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -127,6 +127,8 @@ typedef struct pgNotify
 	char	   *relname;		/* notification condition name */
 	int			be_pid;			/* process ID of server process */
 	char	   *extra;			/* notification parameter */
+	/* Fields below here are private to libpq; apps should not use 'em */
+	struct pgNotify *next;		/* list link */
 } PGnotify;
 
 /* Function types for notice-handling callbacks */

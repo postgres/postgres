@@ -5,7 +5,7 @@
 # Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/interfaces/libpq/Makefile,v 1.119 2004/10/16 20:10:56 tgl Exp $
+# $PostgreSQL: pgsql/src/interfaces/libpq/Makefile,v 1.120 2004/10/16 22:52:49 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -28,7 +28,7 @@ LIBS := $(patsubst -lpgport,, $(LIBS))
 
 OBJS=	fe-auth.o fe-connect.o fe-exec.o fe-misc.o fe-print.o fe-lobj.o \
 	fe-protocol2.o fe-protocol3.o pqexpbuffer.o pqsignal.o fe-secure.o \
-	dllist.o md5.o ip.o wchar.o encnames.o noblock.o pgstrcasecmp.o thread.o \
+	md5.o ip.o wchar.o encnames.o noblock.o pgstrcasecmp.o thread.o \
 	$(filter crypt.o getaddrinfo.o inet_aton.o open.o snprintf.o strerror.o, $(LIBOBJS))
 
 ifeq ($(PORTNAME), win32)
@@ -71,9 +71,6 @@ crypt.c getaddrinfo.c inet_aton.c noblock.c pgstrcasecmp.c snprintf.c strerror.c
 	rm -f $@ && $(LN_S) $< .
 
 md5.c ip.c: % : $(backend_src)/libpq/%
-	rm -f $@ && $(LN_S) $< .
-
-dllist.c: $(backend_src)/lib/dllist.c
 	rm -f $@ && $(LN_S) $< .
 
 encnames.c wchar.c : % : $(backend_src)/utils/mb/%
@@ -137,7 +134,7 @@ uninstall: uninstall-lib
 	rm -f $(DESTDIR)$(includedir)/libpq-fe.h $(DESTDIR)$(includedir_internal)/libpq-int.h $(DESTDIR)$(includedir_internal)/pqexpbuffer.h
 
 clean distclean: clean-lib
-	rm -f $(OBJS) crypt.c getaddrinfo.c inet_aton.c noblock.c pgstrcasecmp.c snprintf.c strerror.c open.c thread.c dllist.c md5.c ip.c encnames.c wchar.c pthread.h
+	rm -f $(OBJS) crypt.c getaddrinfo.c inet_aton.c noblock.c pgstrcasecmp.c snprintf.c strerror.c open.c thread.c md5.c ip.c encnames.c wchar.c pthread.h
 
 maintainer-clean: distclean
 	rm -f $(srcdir)/libpqdll.def $(srcdir)/libpqddll.def $(srcdir)/blibpqdll.def

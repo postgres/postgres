@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.284 2004/08/29 05:07:00 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.285 2004/10/16 22:52:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1967,7 +1967,6 @@ makeEmptyPGconn(void)
 	conn->setenv_state = SETENV_STATE_IDLE;
 	conn->client_encoding = PG_SQL_ASCII;
 	conn->verbosity = PQERRORS_DEFAULT;
-	conn->notifyList = DLNewList();
 	conn->sock = -1;
 #ifdef USE_SSL
 	conn->allow_ssl_try = true;
@@ -2013,6 +2012,7 @@ makeEmptyPGconn(void)
 static void
 freePGconn(PGconn *conn)
 {
+	PGnotify   *notify;
 	pgParameterStatus *pstatus;
 
 	if (!conn)
@@ -2047,8 +2047,14 @@ freePGconn(PGconn *conn)
 	if (conn->sslmode)
 		free(conn->sslmode);
 	/* Note that conn->Pfdebug is not ours to close or free */
-	if (conn->notifyList)
-		DLFreeList(conn->notifyList);
+	notify = conn->notifyHead;
+	while (notify != NULL)
+	{
+		PGnotify *prev = notify;
+
+		notify = notify->next;
+		free(prev);
+	}
 	freeaddrinfo_all(conn->addrlist_family, conn->addrlist);
 	pstatus = conn->pstatus;
 	while (pstatus != NULL)

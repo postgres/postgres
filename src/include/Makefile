@@ -4,7 +4,7 @@
 #
 # 'make install' installs whole contents of src/include.
 #
-# $PostgreSQL: pgsql/src/include/Makefile,v 1.14 2004/10/07 16:23:28 momjian Exp $
+# $PostgreSQL: pgsql/src/include/Makefile,v 1.15 2004/10/16 22:52:39 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -33,7 +33,6 @@ install: all installdirs remove-old-headers
 	$(INSTALL_DATA) $(srcdir)/port.h         $(DESTDIR)$(includedir_internal)
 	$(INSTALL_DATA) $(srcdir)/postgres_fe.h  $(DESTDIR)$(includedir_internal)
 	$(INSTALL_DATA) $(srcdir)/libpq/pqcomm.h $(DESTDIR)$(includedir_internal)/libpq
-	$(INSTALL_DATA) $(srcdir)/lib/dllist.h   $(DESTDIR)$(includedir_internal)/lib
 # These headers are needed for server-side development
 	$(INSTALL_DATA) pg_config.h    $(DESTDIR)$(includedir_server)
 	$(INSTALL_DATA) pg_config_os.h $(DESTDIR)$(includedir_server)
@@ -71,7 +70,7 @@ remove-old-headers:
 
 uninstall:
 	rm -f $(addprefix $(DESTDIR)$(includedir)/, pg_config.h pg_config_os.h postgres_ext.h libpq/libpq-fs.h)
-	rm -f $(addprefix $(DESTDIR)$(includedir_internal)/, c.h postgres_fe.h lib/dllist.h libpq/pqcomm.h)
+	rm -f $(addprefix $(DESTDIR)$(includedir_internal)/, c.h postgres_fe.h libpq/pqcomm.h)
 # heuristic...
 	rm -rf $(addprefix $(DESTDIR)$(includedir_server)/, $(SUBDIRS) *.h)
 

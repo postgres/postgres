@@ -69,7 +69,6 @@ LIB32_OBJS= \
 	"$(INTDIR)\crypt.obj" \
 	"$(INTDIR)\noblock.obj" \
 	"$(INTDIR)\pgstrcasecmp.obj" \
-	"$(INTDIR)\dllist.obj" \
 	"$(INTDIR)\md5.obj" \
 	"$(INTDIR)\ip.obj" \
 	"$(INTDIR)\fe-auth.obj" \
@@ -100,7 +99,6 @@ CLEAN :
 	-@erase "$(INTDIR)\thread.obj"
 	-@erase "$(INTDIR)\inet_aton.obj"
 	-@erase "$(INTDIR)\crypt.obj"
-	-@erase "$(INTDIR)\dllist.obj"
 	-@erase "$(INTDIR)\md5.obj"
 	-@erase "$(INTDIR)\ip.obj"
 	-@erase "$(INTDIR)\fe-auth.obj"

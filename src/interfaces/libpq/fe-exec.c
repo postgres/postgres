@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-exec.c,v 1.162 2004/08/30 02:54:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-exec.c,v 1.163 2004/10/16 22:52:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1323,7 +1323,6 @@ PQexecFinish(PGconn *conn)
 PGnotify *
 PQnotifies(PGconn *conn)
 {
-	Dlelem	   *e;
 	PGnotify   *event;
 
 	if (!conn)
@@ -1332,12 +1331,14 @@ PQnotifies(PGconn *conn)
 	/* Parse any available data to see if we can extract NOTIFY messages. */
 	parseInput(conn);
 
-	/* RemHead returns NULL if list is empty */
-	e = DLRemHead(conn->notifyList);
-	if (!e)
-		return NULL;
-	event = (PGnotify *) DLE_VAL(e);
-	DLFreeElem(e);
+	event = conn->notifyHead;
+	if (event)
+	{
+		conn->notifyHead = event->next;
+		if (!conn->notifyHead)
+			conn->notifyTail = NULL;
+		event->next = NULL;		/* don't let app see the internal state */
+	}
 	return event;
 }
 

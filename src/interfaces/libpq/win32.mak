@@ -50,7 +50,6 @@ CLEAN :
 	-@erase "$(INTDIR)\inet_aton.obj"
 	-@erase "$(INTDIR)\crypt.obj"
 	-@erase "$(INTDIR)\noblock.obj"
-	-@erase "$(INTDIR)\dllist.obj"
 	-@erase "$(INTDIR)\md5.obj"
 	-@erase "$(INTDIR)\ip.obj"
 	-@erase "$(INTDIR)\fe-auth.obj"
@@ -117,7 +116,6 @@ LIB32_OBJS= \
 	"$(INTDIR)\inet_aton.obj" \
         "$(INTDIR)\crypt.obj" \
 	"$(INTDIR)\noblock.obj" \
-	"$(INTDIR)\dllist.obj" \
 	"$(INTDIR)\md5.obj" \
 	"$(INTDIR)\ip.obj" \
 	"$(INTDIR)\fe-auth.obj" \
@@ -191,12 +189,6 @@ LINK32_OBJS= \
     $(CPP) @<<
     $(CPP_PROJ) ..\..\port\noblock.c
 <<
-
-"$(INTDIR)\dllist.obj" : ..\..\backend\lib\dllist.c
-    $(CPP) @<<
-    $(CPP_PROJ) ..\..\backend\lib\dllist.c
-<<
-
 
 "$(INTDIR)\md5.obj" : ..\..\backend\libpq\md5.c
     $(CPP) @<<

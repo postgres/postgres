@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-protocol3.c,v 1.17 2004/10/12 21:54:45 petere Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-protocol3.c,v 1.18 2004/10/16 22:52:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -791,7 +791,12 @@ getNotify(PGconn *conn)
 		newNotify->extra = newNotify->relname + nmlen + 1;
 		strcpy(newNotify->extra, conn->workBuffer.data);
 		newNotify->be_pid = be_pid;
-		DLAddTail(conn->notifyList, DLNewElem(newNotify));
+		newNotify->next = NULL;
+		if (conn->notifyTail)
+			conn->notifyTail->next = newNotify;
+		else
+			conn->notifyHead = newNotify;
+		conn->notifyTail = newNotify;
 	}
 
 	free(svname);
