@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.6 1996/11/08 00:44:33 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.7 1996/11/30 18:06:03 momjian Exp $
  *
  * NOTES
  *    these routines moved here from commands/define.c and somewhat cleaned up.
@@ -530,7 +530,7 @@ OperatorDef(char *operatorName,
 			      0);
     
     if (!PointerIsValid(tup))
-	func_error("OperatorDef", procedureName, nargs, (int*)typeId);
+	func_error("OperatorDef", procedureName, nargs, typeId);
     
     values[ Anum_pg_operator_oprcode-1 ] =  ObjectIdGetDatum(tup->t_oid);
     values[ Anum_pg_operator_oprresult-1 ] =
@@ -554,7 +554,7 @@ OperatorDef(char *operatorName,
 				  ObjectIdGetDatum(typeId),
 				  0);
 	if (!HeapTupleIsValid(tup))
-	    func_error("OperatorDef", restrictionName, 5, (int*)typeId);
+	    func_error("OperatorDef", restrictionName, 5, typeId);
 	
 	values[ Anum_pg_operator_oprrest-1 ] = ObjectIdGetDatum(tup->t_oid);
     } else
@@ -578,7 +578,7 @@ OperatorDef(char *operatorName,
 				  Int32GetDatum(typeId),
 				  0);
 	if (!HeapTupleIsValid(tup))
-	    func_error("OperatorDef", joinName, 5, (int*)typeId);
+	    func_error("OperatorDef", joinName, 5, typeId);
 	
 	values[Anum_pg_operator_oprjoin-1] = ObjectIdGetDatum(tup->t_oid);
     } else

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/Attic/parse_query.c,v 1.9 1996/11/19 05:06:39 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/Attic/parse_query.c,v 1.10 1996/11/30 18:06:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -175,7 +175,8 @@ expandAll(ParseState *pstate, char *relname, char *refname, int *this_resno)
     List *te_tail = NIL, *te_head = NIL;
     Var *varnode;
     int varattno, maxattrs;
-    int type_id, type_len;
+    Oid type_id;
+    int type_len;
     RangeTblEntry *rte;
    
     rte = refnameRangeTableEntry(pstate->p_rtable, refname);
@@ -208,7 +209,7 @@ expandAll(ParseState *pstate, char *relname, char *refname, int *this_resno)
 	 * set itself is not. */
 	
 	te->resdom = makeResdom((AttrNumber) (*this_resno)++,
-				 (Oid)type_id,
+				 type_id,
 				 (Size)type_len,
 				 attrname,
 				 (Index)0,
@@ -290,8 +291,8 @@ disallow_setop(char *op, Type optype, Node *operand)
 static Node *
 make_operand(char *opname,
 	     Node *tree,
-	     int orig_typeId,
-	     int true_typeId)
+	     Oid orig_typeId,
+	     Oid true_typeId)
 {
     Node *result;
     Type true_type;
@@ -340,7 +341,7 @@ make_operand(char *opname,
 Expr *
 make_op(char *opname, Node *ltree, Node *rtree)
 {
-    int ltypeId, rtypeId;
+    Oid ltypeId, rtypeId;
     Operator temp;
     OperatorTupleForm opform;
     Oper *newop;
@@ -398,10 +399,11 @@ make_op(char *opname, Node *ltree, Node *rtree)
     return result;
 }
 
-int
+Oid
 find_atttype(Oid relid, char *attrname)
 {
-    int attid, vartype;
+    int attid;
+    Oid vartype;
     Relation rd;
     
     rd = heap_open(relid);
@@ -429,10 +431,11 @@ find_atttype(Oid relid, char *attrname)
 
 
 Var *
-make_var(ParseState *pstate, char *refname, char *attrname, int *type_id)
+make_var(ParseState *pstate, char *refname, char *attrname, Oid *type_id)
 {
     Var *varnode;
-    int vnum, attid, vartypeid;
+    int vnum, attid;
+    Oid vartypeid;
     Relation rd;
     RangeTblEntry *rte;
 
@@ -444,7 +447,7 @@ make_var(ParseState *pstate, char *refname, char *attrname, int *type_id)
 
     rd = heap_open(rte->relid);
 
-    attid =  nf_varattno(rd, (char *) attrname);
+    attid =  nf_varattno(rd, attrname);
     if (attid == InvalidAttrNumber) 
 	elog(WARN, "Invalid attribute %s\n", attrname);
     vartypeid = att_typeid(rd, attid);
@@ -473,15 +476,15 @@ ArrayRef *
 make_array_ref(Node *expr,
 	       List *indirection)
 {
-    Oid typearray;
-    HeapTuple type_tuple;
+    Oid           typearray;
+    HeapTuple     type_tuple;
     TypeTupleForm type_struct_array, type_struct_element;
-    ArrayRef *aref;
-    int reftype;
+    ArrayRef      *aref;
+    Oid           reftype;
     List *upperIndexpr=NIL;
     List *lowerIndexpr=NIL;
     
-    typearray = (Oid) exprType(expr);
+    typearray = exprType(expr);
     
     type_tuple = SearchSysCacheTuple(TYPOID, 
 				     ObjectIdGetDatum(typearray), 
@@ -548,12 +551,12 @@ make_array_set(Expr *target_expr,
 	       List *lowerIndexpr,
 	       Expr *expr)
 {
-    Oid typearray;
-    HeapTuple type_tuple;
+    Oid           typearray;
+    HeapTuple     type_tuple;
     TypeTupleForm type_struct_array;
     TypeTupleForm type_struct_element;
-    ArrayRef *aref;
-    int reftype;
+    ArrayRef      *aref;
+    Oid           reftype;
     
     typearray = exprType((Node*)target_expr);
     
@@ -717,7 +720,8 @@ void
 checkTargetTypes(ParseState *pstate, char *target_colname,
 					char *refname, char *colname)
 {
-    int attrtype_id, attrtype_target, resdomno_id, resdomno_target;
+    Oid attrtype_id, attrtype_target;
+    int resdomno_id, resdomno_target;
     Relation rd;
     RangeTblEntry *rte;
     

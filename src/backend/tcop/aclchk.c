@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/Attic/aclchk.c,v 1.4 1996/11/08 05:59:23 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/Attic/aclchk.c,v 1.5 1996/11/30 18:06:45 momjian Exp $
  *
  * NOTES
  *    See acl.h.
@@ -551,7 +551,7 @@ pg_func_ownercheck(char *usename,
 			      PointerGetDatum(arglist),
 			      0);
     if (!HeapTupleIsValid(htp))
-	func_error("pg_func_ownercheck", funcname, nargs, (int*)arglist);
+	func_error("pg_func_ownercheck", funcname, nargs, arglist);
 
     owner_id = ((Form_pg_proc) GETSTRUCT(htp))->proowner;
 	

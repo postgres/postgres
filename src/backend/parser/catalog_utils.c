@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/Attic/catalog_utils.c,v 1.11 1996/11/26 03:17:47 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/Attic/catalog_utils.c,v 1.12 1996/11/30 18:06:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -270,8 +270,8 @@ oprid(Operator op)
  */
 static int
 binary_oper_get_candidates(char *opname,
-			   int leftTypeId,
-			   int rightTypeId,
+			   Oid leftTypeId,
+			   Oid rightTypeId,
 			   CandidateList *candidates)
 {
     CandidateList 	current_candidate;
@@ -363,7 +363,7 @@ equivalentOpersAfterPromotion(CandidateList candidates)
 {
     CandidateList result;
     CandidateList promotedCandidates = NULL;
-    int leftarg, rightarg;
+    Oid leftarg, rightarg;
 
     for (result = candidates; result != NULL; result = result->next) {
 	CandidateList c;
@@ -419,8 +419,8 @@ equivalentOpersAfterPromotion(CandidateList candidates)
  *  try to choose a default pair
  */
 static CandidateList
-binary_oper_select_candidate(int arg1,
-			     int arg2,
+binary_oper_select_candidate(Oid arg1,
+			     Oid arg2,
 			     CandidateList candidates)
 {
     CandidateList result;
@@ -473,7 +473,7 @@ binary_oper_select_candidate(int arg1,
 /* Given operator, types of arg1, and arg2, return oper struct */
 /* arg1, arg2 --typeids */
 Operator
-oper(char *op, int arg1, int arg2)
+oper(char *op, Oid arg1, Oid arg2)
 {
     HeapTuple tup;
     CandidateList candidates;
@@ -542,7 +542,7 @@ oper(char *op, int arg1, int arg2)
  */
 static int
 unary_oper_get_candidates(char *op,
-			  int typeId,
+			  Oid typeId,
 			  CandidateList *candidates,
 			  char rightleft)
 {
@@ -606,7 +606,7 @@ unary_oper_get_candidates(char *op,
 /* Given unary right-side operator (operator on right), return oper struct */
 /* arg-- type id */
 Operator
-right_oper(char *op, int arg)
+right_oper(char *op, Oid arg)
 {
     HeapTuple tup;
     CandidateList candidates;
@@ -649,7 +649,7 @@ right_oper(char *op, int arg)
 /* Given unary left-side operator (operator on left), return oper struct */
 /* arg--type id */
 Operator
-left_oper(char *op, int arg)
+left_oper(char *op, Oid arg)
 {
     HeapTuple tup;
     CandidateList candidates;
@@ -1015,7 +1015,8 @@ func_select_candidate(int nargs,
     return (NULL);
 }
 
-static bool is_lowercase(char *string)
+static
+bool is_lowercase(char *string)
 {
     int i;
 
@@ -1028,7 +1029,8 @@ static bool is_lowercase(char *string)
     return true;
 }
 
-static void make_lowercase(char *string)
+static
+void make_lowercase(char *string)
 {
     int i;
 
@@ -1113,7 +1115,7 @@ func_get_detail(char *funcname,
 			     funcname);
 			elog(NOTICE, "that satisfies the given argument types. you will have to");
 			elog(NOTICE, "retype your query using explicit typecasts.");
-			func_error("func_get_detail", funcname, nargs, (int*)oid_array);
+			func_error("func_get_detail", funcname, nargs, oid_array);
 		    }
 		    else {
 			ftup = SearchSysCacheTuple(PRONAME, 
@@ -1158,7 +1160,7 @@ func_get_detail(char *funcname,
 		elog(WARN, "no such attribute or function \"%s\"",
 		     funcname);
 	}
-	func_error("func_get_detail", funcname, nargs, (int*)oid_array);
+	func_error("func_get_detail", funcname, nargs, oid_array);
 	}
     } else {
 	pform = (Form_pg_proc) GETSTRUCT(ftup);
@@ -1385,9 +1387,9 @@ genxprod(InhPaths *arginh, int nargs)
 
 /* Given a type id, returns the in-conversion function of the type */
 Oid
-typeid_get_retinfunc(int type_id)
+typeid_get_retinfunc(Oid type_id)
 {
-    HeapTuple     typeTuple;
+    HeapTuple       typeTuple;
     TypeTupleForm   type;
     Oid             infunc;
     typeTuple = SearchSysCacheTuple(TYPOID,
@@ -1395,7 +1397,7 @@ typeid_get_retinfunc(int type_id)
 				    0,0,0);
     if ( !HeapTupleIsValid ( typeTuple ))
 	elog(WARN,
-	     "typeid_get_retinfunc: Invalid type - oid = %d",
+	     "typeid_get_retinfunc: Invalid type - oid = %ud",
 	     type_id);
     
     type = (TypeTupleForm) GETSTRUCT(typeTuple);
@@ -1404,23 +1406,24 @@ typeid_get_retinfunc(int type_id)
 }
 
 Oid
-typeid_get_relid(int type_id)
+typeid_get_relid(Oid type_id)
 {
-    HeapTuple     typeTuple;
+    HeapTuple       typeTuple;
     TypeTupleForm   type;
     Oid             infunc;
     typeTuple = SearchSysCacheTuple(TYPOID,
 				    ObjectIdGetDatum(type_id),
 				    0,0,0);
     if ( !HeapTupleIsValid ( typeTuple ))
-	elog(WARN, "typeid_get_relid: Invalid type - oid = %d ", type_id);
+	elog(WARN, "typeid_get_relid: Invalid type - oid = %ud ", type_id);
     
     type = (TypeTupleForm) GETSTRUCT(typeTuple);
     infunc = type->typrelid;
     return(infunc);
 }
 
-Oid get_typrelid(Type typ)
+Oid
+get_typrelid(Type typ)
 {
     TypeTupleForm typtup;
     
@@ -1432,13 +1435,13 @@ Oid get_typrelid(Type typ)
 Oid
 get_typelem(Oid type_id)
 {
-    HeapTuple     typeTuple;
+    HeapTuple       typeTuple;
     TypeTupleForm   type;
     
     if (!(typeTuple = SearchSysCacheTuple(TYPOID,
 					  ObjectIdGetDatum(type_id),
 					  0,0,0))) {
-	elog (WARN , "type id lookup of %d failed", type_id);
+	elog (WARN , "type id lookup of %ud failed", type_id);
     }
     type = (TypeTupleForm) GETSTRUCT(typeTuple);
     
@@ -1448,8 +1451,8 @@ get_typelem(Oid type_id)
 char
 FindDelimiter(char *typename)
 {
-    char delim;
-    HeapTuple     typeTuple;
+    char            delim;
+    HeapTuple       typeTuple;
     TypeTupleForm   type;
     
     
@@ -1469,7 +1472,7 @@ FindDelimiter(char *typename)
  * is not found.
  */
 void
-op_error(char *op, int arg1, int arg2)
+op_error(char *op, Oid arg1, Oid arg2)
 {
     Type tp1 = NULL, tp2 = NULL;
 
@@ -1498,7 +1501,7 @@ op_error(char *op, int arg1, int arg2)
  * argument types
  */
 void
-func_error(char *caller, char *funcname, int nargs, int *argtypes)
+func_error(char *caller, char *funcname, int nargs, Oid *argtypes)
 {
     Type get_id_type();
     char p[(NAMEDATALEN+2)*MAXFMGRARGS], *ptr;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.4 1996/11/06 07:31:26 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.5 1996/11/30 18:06:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -417,7 +417,7 @@ TypeCreate(char *typeName,
 					  0);
 	    }
 	    if (!HeapTupleIsValid(tup)) {
-		func_error("TypeCreate", procname, 1, (int*)argList);
+		func_error("TypeCreate", procname, 1, argList);
 	    }
 	}
 	

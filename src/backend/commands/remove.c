@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.6 1996/11/06 08:21:38 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.7 1996/11/30 18:06:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -350,7 +350,7 @@ RemoveFunction(char *functionName, /* function name to be removed */
 			      Int32GetDatum(nargs),
 			      PointerGetDatum(argList),0);
     if (!HeapTupleIsValid(tup))
-	func_error("RemoveFunction", functionName, nargs, (int*)argList);
+	func_error("RemoveFunction", functionName, nargs, argList);
     
 #ifndef NO_SECURITY
     userName = GetPgUserName();
@@ -387,7 +387,7 @@ RemoveFunction(char *functionName, /* function name to be removed */
 	{	
 	    heap_endscan(scan);
 	    heap_close(relation);
-	    func_error("RemoveFunction", functionName,nargs, (int*)argList);
+	    func_error("RemoveFunction", functionName,nargs, argList);
 	}
     
     /* ok, function has been found */

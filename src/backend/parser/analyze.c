@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.17 1996/11/29 15:56:16 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.18 1996/11/30 18:06:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1233,7 +1233,8 @@ make_targetlist_expr(ParseState *pstate,
 		     Node *expr,
 		     List *arrayRef)
 {
-     int type_id, type_len, attrtype, attrlen;
+     Oid type_id, attrtype;
+     int type_len, attrlen;
      int resdomno;
      Relation rd;
      bool attrisset;
@@ -1244,7 +1245,7 @@ make_targetlist_expr(ParseState *pstate,
 	 elog(WARN, "make_targetlist_expr: invalid use of NULL expression");
 
      type_id = exprType(expr);
-     if (!type_id) {
+     if (type_id == InvalidOid) {
 	 type_len = 0;
      } else
      type_len = tlen(get_id_type(type_id));
@@ -1297,7 +1298,7 @@ make_targetlist_expr(ParseState *pstate,
 	       }
 	  } else if((Typecast_ok) && (attrtype != type_id)){
 	       lnext(expr) = 
-		    parser_typecast2(expr, get_id_type((long)attrtype));
+		    parser_typecast2(expr, get_id_type(attrtype));
 	  } else
 	       if (attrtype != type_id) {
 		    if ((attrtype == INT2OID) && (type_id == INT4OID))
@@ -1322,12 +1323,12 @@ make_targetlist_expr(ParseState *pstate,
 		      Oid typelem = get_typelem(attrtype);
 		      expr = (Node*)parser_typecast2(expr,
 						   type_id,
-						   get_id_type((long)typelem),
+						   get_id_type(typelem),
 					           attrlen);
 		  } else
 		  expr = (Node*)parser_typecast2(expr,
 						 type_id,
-						 get_id_type((long)attrtype),
+						 get_id_type(attrtype),
 						 attrlen);
 	      } else {
 		  /* currently, we can't handle casting of expressions */
@@ -1466,7 +1467,7 @@ any_ordering_op(int restype)
     Oid order_opid;
     
     order_op = oper("<",restype,restype);
-    order_opid = (Oid)oprid(order_op);
+    order_opid = oprid(order_op);
     
     return order_opid;
 }
@@ -1660,7 +1661,7 @@ make_arguments(int nargs,
 	 i<nargs;
 	 i++, current_fargs = lnext(current_fargs)) {
 
-	if (input_typeids[i] == UNKNOWNOID && function_typeids[i] != 0) {
+	if (input_typeids[i] == UNKNOWNOID && function_typeids[i] != InvalidOid) {
 	    lfirst(current_fargs) =
 		parser_typecast2(lfirst(current_fargs),
 				 input_typeids[i],
@@ -1877,7 +1878,8 @@ ParseComplexProjection(ParseState *pstate,
     return NULL;
 }
 		       
-static bool is_lowercase(char *string)
+static
+bool is_lowercase(char *string)
 {
     int i;
 
@@ -1890,7 +1892,8 @@ static bool is_lowercase(char *string)
     return true;
 }
 
-static void make_lowercase(char *string)
+static
+void make_lowercase(char *string)
 {
     int i;
 
@@ -1957,7 +1960,7 @@ ParseFunc(ParseState *pstate, char *funcname, List *fargs, int *curr_resno)
 	     * it is a set, treat it like a function and drop through.
 	     */
 	    if (get_attnum(relid, funcname) != InvalidAttrNumber) {
-		int dummyTypeId;
+		Oid dummyTypeId;
 
 		return
 		    ((Node*)make_var(pstate,
@@ -2022,7 +2025,7 @@ ParseFunc(ParseState *pstate, char *funcname, List *fargs, int *curr_resno)
 	    } else {
 		/* try one more time with lowercase --djm 8/17/96 */
 		if(!is_lowercase(funcname)) {
-		    char *lowercase_funcname = strdup(funcname);
+		    char *lowercase_funcname = pstrdup(funcname);
 
 		    make_lowercase(lowercase_funcname);
 		    if (strcmp(lowercase_funcname, "count") == 0)

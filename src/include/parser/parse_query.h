@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_query.h,v 1.6 1996/11/10 03:05:45 momjian Exp $
+ * $Id: parse_query.h,v 1.7 1996/11/30 18:07:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,9 +35,9 @@ extern TimeQual makeTimeRange(char *datestring1, char *datestring2,
 			      int timecode);
 extern Expr *make_op(char *opname, Node *ltree, Node *rtree);
 
-extern int find_atttype(Oid relid, char *attrname);
+extern Oid find_atttype(Oid relid, char *attrname);
 extern Var *make_var(ParseState *pstate, 
-		     char *relname, char *attrname, int *type_id);
+		     char *relname, char *attrname, Oid *type_id);
 extern ArrayRef *make_array_ref(Node *array, List *indirection);
 extern ArrayRef *make_array_set(Expr *target_expr, List *upperIndexpr,
 			 List *lowerIndexpr, Expr *expr);
@@ -49,7 +49,7 @@ extern Oid param_type(int t);
 /* parser.c (was ylib.c) */
 extern QueryTreeList *parser(char *str, Oid *typev, int nargs);
 extern Node *parser_typecast(Value *expr, TypeName *typename, int typlen);
-extern Node *parser_typecast2(Node *expr, int exprType, Type tp, int typlen);
+extern Node *parser_typecast2(Node *expr, Oid exprType, Type tp, int typlen);
 extern Aggreg *ParseAgg(char *aggname, Oid basetype, Node *target);
 extern void handleTargetColname(ParseState *pstate, char **resname,
 					char *refname, char *colname);
@@ -74,6 +74,6 @@ extern Oid *param_type_info;
 extern int pfunc_num_args;
 
 /* useful macros */
-#define ISCOMPLEX(type) (typeid_get_relid((Oid)type) ? true : false)
+#define ISCOMPLEX(type) (typeid_get_relid(type) ? true : false)
 
 #endif /* PARSE_QUERY_H */

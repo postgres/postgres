@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: catalog_utils.h,v 1.4 1996/11/04 12:12:47 scrappy Exp $
+ * $Id: catalog_utils.h,v 1.5 1996/11/30 18:06:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,9 +31,9 @@ extern bool tbyval(Type t);
 extern char *tname(Type t);
 extern int tbyvalue(Type t);
 extern Oid oprid(Operator op);
-extern Operator oper(char *op, int arg1, int arg2);
-extern Operator right_oper(char *op, int arg);
-extern Operator left_oper(char *op, int arg);
+extern Operator oper(char *op, Oid arg1, Oid arg2);
+extern Operator right_oper(char *op, Oid arg);
+extern Operator left_oper(char *op, Oid arg);
 extern int varattno(Relation rd, char *a);
 extern bool varisset(Relation rd, char *name);
 extern int nf_varattno(Relation rd, char *a);
@@ -45,12 +45,12 @@ extern Oid GetArrayElementType(Oid typearray);
 extern Oid funcid_get_rettype(Oid funcid);
 extern bool func_get_detail(char *funcname, int nargs, Oid *oid_array,
 	    Oid *funcid, Oid *rettype, bool *retset, Oid **true_typeids);
-extern Oid typeid_get_retinfunc(int type_id);
-extern Oid typeid_get_relid(int type_id);
+extern Oid typeid_get_retinfunc(Oid type_id);
+extern Oid typeid_get_relid(Oid type_id);
 extern Oid get_typrelid(Type typ);
 extern Oid get_typelem(Oid type_id);
 extern char FindDelimiter(char *typename);
-extern void op_error(char *op, int arg1, int arg2);
-extern void func_error(char *caller, char *funcname, int nargs, int *argtypes);
+extern void op_error(char *op, Oid arg1, Oid arg2);
+extern void func_error(char *caller, char *funcname, int nargs, Oid *argtypes);
 
 #endif	/* CATALOG_UTILS_H */
