@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.20 1998/02/26 04:30:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.21 1998/03/30 17:46:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -318,6 +318,7 @@ TypeCreate(char *typeName,
 	TupleDesc	tupDesc;
 
 	Oid			argList[8];
+	NameData	 	name;
 
 
 	static ScanKeyData typeKey[1] = {
@@ -387,7 +388,8 @@ TypeCreate(char *typeName,
 	 * ----------------
 	 */
 	i = 0;
-	values[i++] = PointerGetDatum(typeName);	/* 1 */
+	namestrcpy(&name,typeName);
+	values[i++] = NameGetDatum(&name);	/* 1 */
 	values[i++] = (Datum) GetUserId();	/* 2 */
 	values[i++] = (Datum) internalSize; /* 3 */
 	values[i++] = (Datum) externalSize; /* 4 */
