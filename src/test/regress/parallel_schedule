@@ -1,7 +1,7 @@
 # ----------
 # The first group of parallel test
 # ----------
-test: boolean char name varchar text int2 int4 int8 oid float4 float8 numeric
+test: boolean char name varchar text int2 int4 int8 oid float4 float8 bit numeric
 
 # Depends on things setup during char, varchar and text
 test: strings
