@@ -51,3 +51,31 @@
          |                  Yes
          |
    Fail with unknown
+
+Comments from Bear Giles:
+
+On a related note, I had mentioned this before but it's a subtle point 
+and I'm sure that it's slipped everyone's mind...
+
+ - if you need to have confidence in the identity of the database 
+server, e.g., you're storing sensitive information and you absolutely 
+must prevent any "man in the middle" attacks, use the SSL code I 
+provided with server-side certs.  To many users, the key issue is not 
+whether the data is encrypted, it's whether the other party can be 
+trusted to be who they claim to be.
+
+- if you just need confidentiality, but you don't need to verify the 
+identity of the database server (e.g., because you trust the IP address,
+but worry about packet sniffers), SSH tunnels are much easier to set up 
+and maintain than the embedded SSL code.  You can set up the database 
+server so it doesn't require a certificate (hell, you can hard code a 
+fallback certificate into the server!), *but that violates the common 
+practice of SSL-enabled servers.*  I cannot overemphasize this - every 
+other SSL-enabled server requires a certificate, and most provide 
+installation scripts to create a "snake oil" temporary certificate.  I 
+can't think of  any server (apache+mod_ssl, courier-imap, postfix(+tls),
+etc.) that uses anonymous servers.
+
+- if you don't need confidentiality, e.g., you're on a trusted network 
+segment, then use direct access to the server port.
+
