@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.211 2002/10/16 02:55:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.212 2002/10/16 04:38:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1076,7 +1076,7 @@ connectDBComplete(PGconn *conn)
 		finish_time = time(NULL) + timeout;
 	}
 
-	while (finish_time == -1 || time(NULL) >= finish_time)
+	while (finish_time == -1 || time(NULL) < finish_time)
 	{
 		/*
 		 * Wait, if necessary.	Note that the initial state (just after
