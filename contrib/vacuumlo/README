@@ -1,0 +1,38 @@
+$Header: /cvsroot/pgsql/contrib/vacuumlo/Attic/README,v 1.1 1999/04/10 16:48:04 peter Exp $
+
+This is a simple utility that will remove any orphaned large objects out of a
+PostgreSQL database.
+
+Compiling
+--------
+
+Simply run make. A single executable "vacuumlo" is created.
+
+Useage
+------
+
+vacuumlo [-v] database [db2 ... dbn]
+
+The -v flag outputs some progress messages to stdout.
+
+Method
+------
+
+First, it builds a temporary table which contains all of the oid's of the
+large objects in that database.
+
+It then scans through any columns in the database that are of type 'oid', and
+removes any entries from the temporary table.
+
+Finally, it runs through the first table, and removes from the second table, any
+oid's it finds. What is left are the orphans, and these are removed.
+
+I decided to place this in contrib as it needs further testing, but hopefully,
+this (or a variant of it) would make it into the backed as a "vacuum lo" command
+in a later release.
+
+Peter Mount <peter@retep.org.uk>
+http://www.retep.org.uk
+March 21 1999
+
+Committed April 10 1999 Peter
