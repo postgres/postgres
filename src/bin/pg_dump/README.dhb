@@ -1,3 +1,13 @@
+version 1.13.dhb.2 README
+---------------------------
+
+* Fixed dumpTable output to output lengths for char and varchar types!
+
+* Added single. quote to twin single quote expansion for 'insert' string
+  mode.
+
+version 1.13.dhb README
+-------------------------
  
 This is a modified version of the pg_dump.c program that is distributed with
 pg95 1.01.  Modifications include:

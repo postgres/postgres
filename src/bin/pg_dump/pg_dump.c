@@ -20,14 +20,20 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.2 1996/07/12 05:39:35 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.3 1996/07/22 08:36:59 scrappy Exp $
  *
- * Modifications - 6/10/96 - dave@bensoft.com
+ * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
  *   Applied 'insert string' patch from "Marc G. Fournier" <scrappy@ki.net>
  *   Added '-t table' option
  *   Added '-a' option
  *   Added '-da' option
+ *
+ * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
+ *
+ *   - Fixed dumpTable output to output lengths for char and varchar types!
+ *   - Added single. quote to twin single quote expansion for 'insert' string
+ *     mode.
  *
  *-------------------------------------------------------------------------
  */
@@ -66,6 +72,7 @@ char g_comment_end[10];
 static void
 usage(char* progname)
 {
+    fprintf(stderr, "%s - version 1.13.dhb.2\n\n",progname);
     fprintf(stderr, "usage:  %s [options] [dbname]\n",progname);
     fprintf(stderr, "\t -f filename \t\t script output filename\n");
     fprintf(stderr, "\t -d[a]       \t\t dump data as proper insert strings\n");
@@ -745,6 +752,7 @@ getTableAttrs(TableInfo* tblinfo, int numTables)
     char q[MAXQUERYLEN];
     int i_attname;
     int i_typname;
+    int i_attlen;
     PGresult *res;
     int ntups;
 
@@ -764,7 +772,7 @@ if (g_verbose)
 	    tblinfo[i].relname,
 	    g_comment_end);
 
-	sprintf(q,"SELECT a.attnum, a.attname, t.typname from pg_attribute a, pg_type t where a.attrelid = '%s'::oid and a.atttypid = t.oid and a.attnum > 0 order by attnum",tblinfo[i].oid);
+	sprintf(q,"SELECT a.attnum, a.attname, t.typname, a.attlen from pg_attribute a, pg_type t where a.attrelid = '%s'::oid and a.atttypid = t.oid and a.attnum > 0 order by attnum",tblinfo[i].oid);
 	res = PQexec(g_conn, q);
 	if (!res || 
 	    PQresultStatus(res) != PGRES_TUPLES_OK) {
@@ -776,16 +784,21 @@ if (g_verbose)
 
 	i_attname = PQfnumber(res,"attname");
 	i_typname = PQfnumber(res,"typname");
+	i_attlen  = PQfnumber(res,"attlen");
 
 	tblinfo[i].numatts = ntups;
 	tblinfo[i].attnames = (char**) malloc( ntups * sizeof(char*));
 	tblinfo[i].typnames = (char**) malloc( ntups * sizeof(char*));
+	tblinfo[i].attlen   = (int*) malloc(ntups * sizeof(int));
 	tblinfo[i].inhAttrs = (int*) malloc (ntups * sizeof(int));
 	tblinfo[i].parentRels = NULL;
 	tblinfo[i].numParents = 0;
 	for (j=0;j<ntups;j++) {
 	    tblinfo[i].attnames[j] = dupstr(PQgetvalue(res,j,i_attname));
 	    tblinfo[i].typnames[j] = dupstr(PQgetvalue(res,j,i_typname));
+	    tblinfo[i].attlen[j] = atoi(PQgetvalue(res,j,i_attlen));
+	    if (tblinfo[i].attlen[j] > 0) 
+	      tblinfo[i].attlen[j] = tblinfo[i].attlen[j] - 4;
 	    tblinfo[i].inhAttrs[j] = 0; /* this flag is set in flagInhAttrs()*/
 	}
 	PQclear(res);
@@ -1194,12 +1207,33 @@ void dumpTables(FILE* fout, TableInfo *tblinfo, int numTables,
 	    actual_atts = 0;
 	    for (j=0;j<tblinfo[i].numatts;j++) {
 	        if (tblinfo[i].inhAttrs[j] == 0) {
-		    sprintf(q, "%s%s%s %s",
-		   	    q,
-			    (actual_atts > 0) ? ", " : "",
-			    tblinfo[i].attnames[j],
-			    tblinfo[i].typnames[j]);
-		    actual_atts++;
+	        
+	            /* Show lengths on bpchar and varchar */
+	            if (!strcmp(tblinfo[i].typnames[j],"bpchar")) {
+		        sprintf(q, "%s%s%s char(%d)",
+		   	        q,
+			        (actual_atts > 0) ? ", " : "",
+			        tblinfo[i].attnames[j],
+			        tblinfo[i].attlen[j]);
+		        actual_atts++;
+	            }
+	            else if (!strcmp(tblinfo[i].typnames[j],"varchar")) {
+		        sprintf(q, "%s%s%s %s(%d)",
+		   	        q,
+			        (actual_atts > 0) ? ", " : "",
+			        tblinfo[i].attnames[j],
+			        tblinfo[i].typnames[j],
+			        tblinfo[i].attlen[j]);
+		        actual_atts++;
+	            }
+	            else {    
+		        sprintf(q, "%s%s%s %s",
+		   	        q,
+			        (actual_atts > 0) ? ", " : "",
+			        tblinfo[i].attnames[j],
+			        tblinfo[i].typnames[j]);
+		        actual_atts++;
+		    }
 	        }
 	    }
 
@@ -1309,6 +1343,8 @@ dumpClasses(TableInfo *tblinfo, int numTables, FILE *fout, char *onlytable)
     char query[255];
 #define COPYBUFSIZ	8192
     char copybuf[COPYBUFSIZ];
+    char expandbuf[COPYBUFSIZ];
+    char *expsrc,*expdest;
     char q[MAXQUERYLEN];
     PGresult *res;
     int i,j;
@@ -1397,7 +1433,21 @@ dumpClasses(TableInfo *tblinfo, int numTables, FILE *fout, char *onlytable)
 			        fprintf(fout, "%s", PQgetvalue(res,tuple,field));
 			        break;
 		            default:  
-			        fprintf(fout, "'%s'", PQgetvalue(res,tuple,field));
+		            
+		                /* Before outputing string value, expand all
+		                   single quotes to twin single quotes -
+		                   dhb - 6/11/96 */
+		                expsrc=PQgetvalue(res,tuple,field);
+		                expdest=expandbuf;
+		                while (*expsrc) {
+		                    *expdest++=*expsrc;
+		                    if (*expsrc == (char)0x27) /*sing. quote*/
+		                        *expdest++ = *expsrc;
+		                    expsrc++;
+		                }
+		                *expdest=*expsrc; /* null term. */
+		                
+			        fprintf(fout, "'%s'", expandbuf);
 			        break;
 		        }
 		        field++;

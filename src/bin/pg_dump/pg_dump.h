@@ -5,8 +5,13 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_dump.h,v 1.2 1996/07/12 05:39:39 scrappy Exp $
+ * $Id: pg_dump.h,v 1.3 1996/07/22 08:37:00 scrappy Exp $
  *
+ * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
+ *
+ *   - Fixed dumpTable output to output lengths for char and varchar types!
+ *   - Added single. quote to twin single quote expansion for 'insert' string
+ *     mode.
  *-------------------------------------------------------------------------
  */
 
@@ -65,6 +70,7 @@ typedef struct _tableInfo {
 			       this is needed because the SQL tables will
 			       not have the same order of attributes as
 			       the POSTQUEL tables */
+    int *attlen;	    /* attribute lengths */
            
 } TableInfo;
 

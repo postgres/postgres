@@ -7,7 +7,13 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.2 1996/07/12 05:39:33 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.3 1996/07/22 08:36:59 scrappy Exp $
+ *
+ * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
+ *
+ *   - Fixed dumpTable output to output lengths for char and varchar types!
+ *   - Added single. quote to twin single quote expansion for 'insert' string
+ *     mode.
  *
  *-------------------------------------------------------------------------
  */
@@ -40,7 +46,6 @@ dupstr(char *s)
   strcpy(result, s);
   return result;
 }
-
 
 /*
  * findTypeByOid 
