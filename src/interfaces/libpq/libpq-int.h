@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-int.h,v 1.33 2001/03/22 04:01:27 momjian Exp $
+ * $Id: libpq-int.h,v 1.34 2001/07/06 17:58:53 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -278,6 +278,7 @@ struct pg_conn
 	PQExpBufferData workBuffer; /* expansible string */
 
 	int			client_encoding;/* encoding id */
+	int			startup_complete;
 };
 
 /* String descriptions of the ExecStatusTypes.
@@ -313,6 +314,7 @@ extern void pqClearAsyncResult(PGconn *conn);
   * necessarily any error.
   */
 extern int	pqGetc(char *result, PGconn *conn);
+extern int	pqPutc(char c, PGconn *conn);
 extern int	pqGets(PQExpBuffer buf, PGconn *conn);
 extern int	pqPuts(const char *s, PGconn *conn);
 extern int	pqGetnchar(char *s, size_t len, PGconn *conn);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.101 2001/02/10 02:31:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.102 2001/07/06 17:58:53 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -556,8 +556,7 @@ PQsendQuery(PGconn *conn, const char *query)
 			return 0;
 		/* 'Q' == queries */
 		/* XXX: if we fail here we really ought to not block */
-		if (pqPutnchar("Q", 1, conn) ||
-			pqPuts(query, conn))
+		if (pqPutc('Q', conn) != 0 || pqPuts(query, conn) != 0)
 		{
 			handleSendFailure(conn);
 			return 0;
@@ -567,7 +566,7 @@ PQsendQuery(PGconn *conn, const char *query)
 		 * give the data a push, ignore the return value as ConsumeInput()
 		 * will do any aditional flushing if needed
 		 */
-		(void) pqFlush(conn);
+		pqFlush(conn);
 	}
 	else
 	{
@@ -575,9 +574,8 @@ PQsendQuery(PGconn *conn, const char *query)
 		/*
 		 * the frontend-backend protocol uses 'Q' to designate queries
 		 */
-		if (pqPutnchar("Q", 1, conn) ||
-			pqPuts(query, conn) ||
-			pqFlush(conn))
+		if (pqPutc('Q', conn) != 0 || pqPuts(query, conn) != 0 ||
+			pqFlush(conn) != 0)
 		{
 			handleSendFailure(conn);
 			return 0;
@@ -1655,9 +1653,9 @@ PQfn(PGconn *conn,
 		return NULL;
 	}
 
-	if (pqPuts("F ", conn) ||	/* function */
-		pqPutInt(fnid, 4, conn) ||		/* function id */
-		pqPutInt(nargs, 4, conn))		/* # of args */
+	if (pqPuts("F ", conn) != 0 ||	/* function */
+		pqPutInt(fnid, 4, conn) != 0 ||		/* function id */
+		pqPutInt(nargs, 4, conn) != 0)		/* # of args */
 	{
 		handleSendFailure(conn);
 		return NULL;

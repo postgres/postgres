@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.164 2001/03/31 23:14:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.165 2001/07/06 17:58:53 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1409,6 +1409,7 @@ keep_going:						/* We will come back to here until there
 				if (areq == AUTH_REQ_OK)
 				{
 					/* We are done with authentication exchange */
+					conn->startup_complete = TRUE;
 					conn->status = CONNECTION_AUTH_OK;
 
 					/*
@@ -1909,6 +1910,7 @@ makeEmptyPGconn(void)
 		freePGconn(conn);
 		conn = NULL;
 	}
+	conn->startup_complete = FALSE;
 	return conn;
 }
 
@@ -1972,7 +1974,9 @@ freePGconn(PGconn *conn)
 static void
 closePGconn(PGconn *conn)
 {
-	if (conn->sock >= 0)
+	/* Note that the protocol doesn't allow us to send Terminate
+       messages during the startup phase. */
+	if (conn->sock >= 0 && conn->startup_complete)
 	{
 
 		/*
@@ -1981,8 +1985,8 @@ closePGconn(PGconn *conn)
 		 * avoid getting SIGPIPE'd if the connection were already closed.
 		 * Now we rely on pqFlush to avoid the signal.
 		 */
-		(void) pqPuts("X", conn);
-		(void) pqFlush(conn);
+		pqPutc('X', conn);
+		pqFlush(conn);
 	}
 
 	/*

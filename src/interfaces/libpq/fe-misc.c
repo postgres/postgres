@@ -25,7 +25,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.49 2001/05/28 15:29:51 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.50 2001/07/06 17:58:53 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,6 +59,8 @@
 #define DONOTICE(conn,message) \
 	((*(conn)->noticeHook) ((conn)->noticeArg, (message)))
 
+static int pqPutBytes(const char *s, size_t nbytes, PGconn *conn);
+
 
 /* --------------------------------------------------------------------- */
 /* pqGetc:
@@ -78,6 +80,22 @@ pqGetc(char *result, PGconn *conn)
 
 	if (conn->Pfdebug)
 		fprintf(conn->Pfdebug, "From backend> %c\n", *result);
+
+	return 0;
+}
+
+
+/*
+ * write 1 char to the connection
+ */
+int
+pqPutc(char c, PGconn *conn)
+{
+	if (pqPutBytes(&c, 1, conn) == EOF)
+		return EOF;
+
+	if (conn->Pfdebug)
+		fprintf(conn->Pfdebug, "To backend> %c\n", c);
 
 	return 0;
 }
