@@ -66,7 +66,7 @@ extern GLOBAL_VALUES globals;
  */
 char *mapFuncs[][2] = {
 /*	{ "ASCII",       "ascii"      }, */
-	{ "CHAR",        "ichar"      },
+	{ "CHAR",        "chr"        },
 	{ "CONCAT",      "textcat"    },
 /*	{ "DIFFERENCE",  "difference" }, */
 /*	{ "INSERT",      "insert"     }, */
