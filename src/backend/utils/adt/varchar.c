@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.60.2.1 2000/07/07 21:29:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.60.2.2 2000/11/02 05:11:42 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,7 +79,17 @@ bpcharin(char *s, int dummy, int32 atttypmod)
 		atttypmod = len + VARHDRSZ;
 	}
 	else
+#ifdef MULTIBYTE
+	{
+		/*
+		 * truncate multi-byte string preserving multi-byte
+		 * boundary
+		 */
+		len = pg_mbcliplen(s, atttypmod - VARHDRSZ, atttypmod - VARHDRSZ);
+	}
+#else
 		len = atttypmod - VARHDRSZ;
+#endif
 
 	result = (char *) palloc(atttypmod);
 	VARSIZE(result) = atttypmod;
@@ -96,7 +106,11 @@ bpcharin(char *s, int dummy, int32 atttypmod)
 #endif
 
 	/* blank pad the string if necessary */
+#ifdef MULTIBYTE
+	for (; i < atttypmod - VARHDRSZ; i++)
+#else
 	for (; i < len; i++)
+#endif
 		*r++ = ' ';
 	return result;
 }
@@ -161,7 +175,7 @@ bpchar(char *s, int32 len)
 #ifdef MULTIBYTE
 
 	/*
-	 * truncate multi-byte string in a way not to break multi-byte
+	 * truncate multi-byte string preserving multi-byte
 	 * boundary
 	 */
 	if (VARSIZE(s) > len)
@@ -326,7 +340,14 @@ varcharin(char *s, int dummy, int32 atttypmod)
 
 	len = strlen(s) + VARHDRSZ;
 	if (atttypmod >= (int32) VARHDRSZ && len > atttypmod)
-		len = atttypmod;		/* clip the string at max length */
+	{
+		/* clip the string at max length */
+#ifdef MULTIBYTE
+		len = pg_mbcliplen(s, len - VARHDRSZ, atttypmod - VARHDRSZ) + VARHDRSZ;
+#else
+		len = atttypmod;
+#endif
+	}
 
 	result = (char *) palloc(len);
 	VARSIZE(result) = len;
@@ -388,7 +409,7 @@ varchar(char *s, int32 slen)
 #ifdef MULTIBYTE
 
 	/*
-	 * truncate multi-byte string in a way not to break multi-byte
+	 * truncate multi-byte string preserving the multi-byte
 	 * boundary
 	 */
 	len = pg_mbcliplen(VARDATA(s), slen - VARHDRSZ, slen - VARHDRSZ);
