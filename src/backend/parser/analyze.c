@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: analyze.c,v 1.94 1999/01/21 22:48:07 momjian Exp $
+ *  $Id: analyze.c,v 1.95 1999/01/25 12:01:05 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,8 @@ static Query *transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt);
 static Query *transformCursorStmt(ParseState *pstate, SelectStmt *stmt);
 static Query *transformCreateStmt(ParseState *pstate, CreateStmt *stmt);
 
-static void   transformForUpdate(Query *qry, List *forUpdate);
+static void		transformForUpdate(Query *qry, List *forUpdate);
+void			CheckSelectForUpdate(Query *qry);
 
 List	   *extras_before = NIL;
 List	   *extras_after = NIL;
@@ -1134,6 +1135,19 @@ Node *A_Expr_to_Expr(Node *ptr, bool *intersect_present)
   return result;  
 }
 
+void
+CheckSelectForUpdate(Query *qry)
+{
+	if (qry->unionClause != NULL)
+		elog(ERROR, "SELECT FOR UPDATE is not allowed with UNION/INTERSECT/EXCEPT clause");
+	if (qry->uniqueFlag != NULL)
+		elog(ERROR, "SELECT FOR UPDATE is not allowed with DISTINCT clause");
+	if (qry->groupClause != NULL)
+		elog(ERROR, "SELECT FOR UPDATE is not allowed with GROUP BY clause");
+	if (qry->hasAggs)
+		elog(ERROR, "SELECT FOR UPDATE is not allowed with AGGREGATE");
+}
+
 static void
 transformForUpdate(Query *qry, List *forUpdate)
 {
@@ -1141,6 +1155,8 @@ transformForUpdate(Query *qry, List *forUpdate)
 	RowMark	   *newrm;
 	List	   *l;
 	Index		i;
+
+	CheckSelectForUpdate(qry);
 
 	if (lfirst(forUpdate) == NULL)		/* all tables */
 	{

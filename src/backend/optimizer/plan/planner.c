@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.36 1999/01/18 00:09:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.37 1999/01/25 12:01:04 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,8 @@
 #include "nodes/plannodes.h"
 #include "nodes/parsenodes.h"
 #include "nodes/relation.h"
+#include "nodes/makefuncs.h"
+#include "catalog/pg_type.h"
 #include "parser/parse_expr.h"
 
 #include "utils/elog.h"
@@ -119,6 +121,8 @@ union_planner(Query *parse)
 	else if ((rt_index =
 			  first_inherit_rt_entry(rangetable)) != -1)
 	{
+		if (parse->rowMark != NULL)
+			elog(ERROR, "SELECT FOR UPDATE is not supported for inherit queries");
 		result_plan = (Plan *) plan_inherit_queries(parse, rt_index);
 		/* XXX do we need to do this? bjm 12/19/97 */
 		tlist = preprocess_targetlist(tlist,
@@ -148,17 +152,49 @@ union_planner(Query *parse)
 	   * a new entry and attaches it to the list 'new_tlist' (consisting of the 
 	   * VAR node and the RESDOM node as usual with tlists :-)  ) */
 	  if (parse->hasAggs)
-	    {
+	  {
 	      if (parse->havingQual != NULL)
-		{
-		  new_tlist = check_having_qual_for_vars(parse->havingQual,new_tlist);
-		}
-	    }
+		  {
+		  	new_tlist = check_having_qual_for_vars(parse->havingQual,new_tlist);
+		  }
+	  }
 	  
 	  new_tlist = preprocess_targetlist(new_tlist,
 					    parse->commandType,
 					    parse->resultRelation,
 					    parse->rtable);
+
+	  /* FOR UPDATE ... */
+	  if (parse->rowMark != NULL)
+	  {
+	  	List		   *l;
+		TargetEntry	   *ctid;
+		Resdom		   *resdom;
+		Var			   *var;
+		char		   *resname;
+
+		foreach (l, parse->rowMark)
+		{
+			if (!(((RowMark*)lfirst(l))->info & ROW_MARK_FOR_UPDATE))
+				continue;
+
+			resname = (char*) palloc(32);
+			sprintf(resname, "ctid%u", ((RowMark*)lfirst(l))->rti);
+			resdom = makeResdom(length(new_tlist) + 1,
+								TIDOID,
+								-1,
+								resname,
+								0,
+								0,
+								1);
+
+			var = makeVar(((RowMark*)lfirst(l))->rti, -1, TIDOID, 
+							-1, 0, ((RowMark*)lfirst(l))->rti, -1);
+
+			ctid = makeTargetEntry(resdom, (Node *) var);
+			new_tlist = lappend(new_tlist, ctid);
+		}
+	  }
 	  
 	  /* Here starts the original (pre having) code */
 	  tlist = preprocess_targetlist(tlist,
@@ -290,7 +326,7 @@ union_planner(Query *parse)
 		      pfree(vpm);		
 		  }
 	}		  
-		
+
 	/*
 	 * For now, before we hand back the plan, check to see if there is a
 	 * user-specified sort that needs to be done.  Eventually, this will

@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.62 1998/12/18 09:10:21 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.63 1999/01/25 12:01:03 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -363,6 +363,32 @@ ExecCheckPerms(CmdType operation,
 	}
 	if (!ok)
 		elog(ERROR, "%s: %s", rname.data, aclcheck_error_strings[aclcheck_result]);
+
+	if (parseTree->rowMark != NULL)
+	{
+		foreach(lp, parseTree->rowMark)
+		{
+			RowMark	   *rm = lfirst(lp);
+
+			if (!(rm->info & ROW_ACL_FOR_UPDATE))
+				continue;
+
+			relid = ((RangeTblEntry *)nth(rm->rti - 1, rangeTable))->relid;
+			htup = SearchSysCacheTuple(RELOID,
+								   ObjectIdGetDatum(relid),
+								   0, 0, 0);
+			if (!HeapTupleIsValid(htup))
+				elog(ERROR, "ExecCheckPerms: bogus RT relid: %d",
+					 relid);
+			StrNCpy(rname.data,
+					((Form_pg_class) GETSTRUCT(htup))->relname.data,
+					NAMEDATALEN);
+			ok = ((aclcheck_result = CHECK(ACL_WR)) == ACLCHECK_OK);
+			opstr = "write";
+			if (!ok)
+				elog(ERROR, "%s: %s", rname.data, aclcheck_error_strings[aclcheck_result]);
+		}
+	}
 }
 
 /* ===============================================================
@@ -372,6 +398,11 @@ ExecCheckPerms(CmdType operation,
  * ===============================================================
  */
 
+typedef struct execRowMark
+{
+	Relation	relation;
+	char		resname[32];
+} execRowMark;
 
 /* ----------------------------------------------------------------
  *		InitPlan
@@ -397,6 +428,10 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 	 */
 	rangeTable = parseTree->rtable;
 	resultRelation = parseTree->resultRelation;
+
+#ifndef NO_SECURITY
+	ExecCheckPerms(operation, resultRelation, rangeTable, parseTree);
+#endif
 
 	/******************
 	 *	initialize the node's execution state
@@ -468,9 +503,32 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 		estate->es_result_relation_info = NULL;
 	}
 
-#ifndef NO_SECURITY
-	ExecCheckPerms(operation, resultRelation, rangeTable, parseTree);
-#endif
+	/*
+	 * Have to lock relations selected for update
+	 */
+	estate->es_rowMark = NULL;
+	if (parseTree->rowMark != NULL)
+	{
+		Relation		relation;
+		Oid				relid;
+		RowMark		   *rm;
+		List		   *l;
+		execRowMark	   *erm;
+
+		foreach(l, parseTree->rowMark)
+		{
+			rm = lfirst(l);
+			relid = ((RangeTblEntry *)nth(rm->rti - 1, rangeTable))->relid;
+			relation = heap_open(relid);
+			LockRelation(relation, RowShareLock);
+			if (!(rm->info & ROW_MARK_FOR_UPDATE))
+				continue;
+			erm = (execRowMark*) palloc(sizeof(execRowMark));
+			erm->relation = relation;
+			sprintf(erm->resname, "ctid%u", rm->rti);
+			estate->es_rowMark = lappend(estate->es_rowMark, erm);
+		}
+	}
 
 	/******************
 	 *	  initialize the executor "tuple" table.
@@ -776,6 +834,49 @@ ExecutePlan(EState *estate,
 				tuple_ctid = *tupleid;	/* make sure we don't free the
 										 * ctid!! */
 				tupleid = &tuple_ctid;
+			}
+			else if (estate->es_rowMark != NULL)
+			{
+				List		   *l;
+				execRowMark	   *erm;
+				Buffer			buffer;
+				HeapTupleData	tuple;
+				int				test;
+
+				foreach (l, estate->es_rowMark)
+				{
+					erm = lfirst(l);
+					if (!ExecGetJunkAttribute(junkfilter,
+											  slot,
+											  erm->resname,
+											  &datum,
+											  &isNull))
+						elog(ERROR, "ExecutePlan: NO (junk) `%s' was found!", erm->resname);
+
+					if (isNull)
+						elog(ERROR, "ExecutePlan: (junk) `%s' is NULL!", erm->resname);
+
+					tuple.t_self = *((ItemPointer) DatumGetPointer(datum));
+					test = heap_mark4update(erm->relation, &tuple, &buffer);
+					ReleaseBuffer(buffer);
+					switch (test)
+					{
+						case HeapTupleSelfUpdated:
+						case HeapTupleMayBeUpdated:
+							break;
+
+						case HeapTupleUpdated:
+							if (XactIsoLevel == XACT_SERIALIZABLE)
+								elog(ERROR, "Can't serialize access due to concurrent update");
+							else
+								elog(ERROR, "Isolation level %u is not supported", XactIsoLevel);
+							return(NULL);
+
+						default:
+							elog(ERROR, "Unknown status %u from heap_mark4update", test);
+							return(NULL);
+					}
+				}
 			}
 
 			/******************

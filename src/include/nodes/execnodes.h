@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.20 1998/12/14 05:19:16 scrappy Exp $
+ * $Id: execnodes.h,v 1.21 1999/01/25 12:01:19 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -208,6 +208,7 @@ typedef struct EState
 	int		   *es_refcount;
 	uint32		es_processed;	/* # of tuples processed */
 	Oid			es_lastoid;		/* last oid processed (by INSERT) */
+	List	   *es_rowMark;		/* not good place, but there is no other */
 } EState;
 
 /* ----------------

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.48 1999/01/22 19:35:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.49 1999/01/25 12:01:13 vadim Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2798,19 +2798,8 @@ SelectStmt:	  select_w_o_sort sort_clause for_update_clause
 				  first_select->forUpdate = $3;
 				  $$ = (Node *)first_select;
 				}		
-				if (((SelectStmt *)$$)->forUpdate != NULL)
-				{
-					SelectStmt *n = (SelectStmt *)$$;
-
-					if (n->unionClause != NULL)
-						elog(ERROR, "SELECT FOR UPDATE is not allowed with UNION/INTERSECT/EXCEPT clause");
-					if (n->unique != NULL)
-						elog(ERROR, "SELECT FOR UPDATE is not allowed with DISTINCT clause");
-					if (n->groupClause != NULL)
-						elog(ERROR, "SELECT FOR UPDATE is not allowed with GROUP BY clause");
-					if (n->havingClause != NULL)
-						elog(ERROR, "SELECT FOR UPDATE is not allowed with HAVING clause");
-				}
+				if (((SelectStmt *)$$)->forUpdate != NULL && QueryIsRule)
+					elog(ERROR, "SELECT FOR UPDATE is not allowed in RULES");
 			}
 		;
 
