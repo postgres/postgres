@@ -45,7 +45,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.104 2003/02/09 00:30:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.105 2003/05/30 20:23:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1374,6 +1374,31 @@ ExecReScanAgg(AggState *node, ExprContext *exprCtxt)
 	ExprContext *econtext = node->ss.ps.ps_ExprContext;
 	int			aggno;
 
+	node->agg_done = false;
+
+	if (((Agg *) node->ss.ps.plan)->aggstrategy == AGG_HASHED)
+	{
+		/*
+		 * In the hashed case, if we haven't yet built the hash table
+		 * then we can just return; nothing done yet, so nothing to undo.
+		 * If subnode's chgParam is not NULL then it will be re-scanned by
+		 * ExecProcNode, else no reason to re-scan it at all.
+		 */
+		if (!node->table_filled)
+			return;
+
+		/*
+		 * If we do have the hash table and the subplan does not have any
+		 * parameter changes, then we can just rescan the existing hash
+		 * table; no need to build it again.
+		 */
+		if (((PlanState *) node)->lefttree->chgParam == NULL)
+		{
+			ResetTupleHashIterator(&node->hashiter);
+			return;
+		}
+	}
+
 	/* Make sure we have closed any open tuplesorts */
 	for (aggno = 0; aggno < node->numaggs; aggno++)
 	{
@@ -1384,19 +1409,23 @@ ExecReScanAgg(AggState *node, ExprContext *exprCtxt)
 		peraggstate->sortstate = NULL;
 	}
 
-	node->agg_done = false;
+	/* Release first tuple of group, if we have made a copy */
 	if (node->grp_firstTuple != NULL)
 	{
 		heap_freetuple(node->grp_firstTuple);
 		node->grp_firstTuple = NULL;
 	}
+
+	/* Forget current agg values */
 	MemSet(econtext->ecxt_aggvalues, 0, sizeof(Datum) * node->numaggs);
 	MemSet(econtext->ecxt_aggnulls, 0, sizeof(bool) * node->numaggs);
 
+	/* Release all temp storage */
 	MemoryContextReset(node->aggcontext);
 
 	if (((Agg *) node->ss.ps.plan)->aggstrategy == AGG_HASHED)
 	{
+		/* Rebuild an empty hash table */
 		build_hash_table(node);
 		node->table_filled = false;
 	}

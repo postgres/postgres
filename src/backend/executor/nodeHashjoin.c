@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.50 2003/05/05 17:57:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.51 2003/05/30 20:23:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,9 +56,7 @@ ExecHashJoin(HashJoinState *node)
 	HashJoinTable hashtable;
 	HeapTuple	curtuple;
 	TupleTableSlot *outerTupleSlot;
-	TupleTableSlot *innerTupleSlot;
 	int			i;
-	bool		hashPhaseDone;
 
 	/*
 	 * get information from HashJoin node
@@ -69,7 +67,6 @@ ExecHashJoin(HashJoinState *node)
 	otherqual = node->js.ps.qual;
 	hashNode = (HashState *) innerPlanState(node);
 	outerNode = outerPlanState(node);
-	hashPhaseDone = node->hj_hashdone;
 	dir = estate->es_direction;
 
 	/*
@@ -114,24 +111,20 @@ ExecHashJoin(HashJoinState *node)
 	/*
 	 * if this is the first call, build the hash table for inner relation
 	 */
-	if (!hashPhaseDone)
-	{							/* if the hash phase not completed */
-		if (hashtable == NULL)
-		{						/* if the hash table has not been created */
+	if (!node->hj_hashdone)
+	{
+		/*
+		 * create the hash table
+		 */
+		Assert(hashtable == NULL);
+		hashtable = ExecHashTableCreate((Hash *) hashNode->ps.plan);
+		node->hj_HashTable = hashtable;
 
-			/*
-			 * create the hash table
-			 */
-			hashtable = ExecHashTableCreate((Hash *) hashNode->ps.plan);
-			node->hj_HashTable = hashtable;
-
-			/*
-			 * execute the Hash node, to build the hash table
-			 */
-			hashNode->hashtable = hashtable;
-			innerTupleSlot = ExecProcNode((PlanState *) hashNode);
-		}
-		node->hj_hashdone = true;
+		/*
+		 * execute the Hash node, to build the hash table
+		 */
+		hashNode->hashtable = hashtable;
+		(void) ExecProcNode((PlanState *) hashNode);
 
 		/*
 		 * Open temp files for outer batches, if needed. Note that file
@@ -139,9 +132,9 @@ ExecHashJoin(HashJoinState *node)
 		 */
 		for (i = 0; i < hashtable->nbatch; i++)
 			hashtable->outerBatchFile[i] = BufFileCreateTemp(false);
+
+		node->hj_hashdone = true;
 	}
-	else if (hashtable == NULL)
-		return NULL;
 
 	/*
 	 * Now get an outer tuple and probe into the hash table for matches
@@ -159,11 +152,7 @@ ExecHashJoin(HashJoinState *node)
 													   node);
 			if (TupIsNull(outerTupleSlot))
 			{
-				/*
-				 * when the last batch runs out, clean up and exit
-				 */
-				ExecHashTableDestroy(hashtable);
-				node->hj_HashTable = NULL;
+				/* end of join */
 				return NULL;
 			}
 
@@ -410,8 +399,8 @@ ExecInitHashJoin(HashJoin *node, EState *estate)
 	 */
 
 	hjstate->hj_hashdone = false;
-
 	hjstate->hj_HashTable = (HashJoinTable) NULL;
+
 	hjstate->hj_CurBucketNo = 0;
 	hjstate->hj_CurTuple = (HashJoinTuple) NULL;
 
@@ -461,7 +450,7 @@ void
 ExecEndHashJoin(HashJoinState *node)
 {
 	/*
-	 * free hash table in case we end plan before all tuples are retrieved
+	 * Free hash table
 	 */
 	if (node->hj_HashTable)
 	{
@@ -682,21 +671,41 @@ ExecHashJoinSaveTuple(HeapTuple heapTuple,
 void
 ExecReScanHashJoin(HashJoinState *node, ExprContext *exprCtxt)
 {
+	/*
+	 * If we haven't yet built the hash table then we can just return;
+	 * nothing done yet, so nothing to undo.
+	 */
 	if (!node->hj_hashdone)
 		return;
-
-	node->hj_hashdone = false;
+	Assert(node->hj_HashTable != NULL);
 
 	/*
-	 * Unfortunately, currently we have to destroy hashtable in all
-	 * cases...
+	 * In a multi-batch join, we currently have to do rescans the hard way,
+	 * primarily because batch temp files may have already been released.
+	 * But if it's a single-batch join, and there is no parameter change
+	 * for the inner subnode, then we can just re-use the existing hash
+	 * table without rebuilding it.
 	 */
-	if (node->hj_HashTable)
+	if (node->hj_HashTable->nbatch == 0 &&
+		((PlanState *) node)->righttree->chgParam == NULL)
 	{
+		/* okay to reuse the hash table; needn't rescan inner, either */
+	}
+	else
+	{
+		/* must destroy and rebuild hash table */
+		node->hj_hashdone = false;
 		ExecHashTableDestroy(node->hj_HashTable);
 		node->hj_HashTable = NULL;
+		/*
+		 * if chgParam of subnode is not null then plan will be re-scanned
+		 * by first ExecProcNode.
+		 */
+		if (((PlanState *) node)->righttree->chgParam == NULL)
+			ExecReScan(((PlanState *) node)->righttree, exprCtxt);
 	}
 
+	/* Always reset intra-tuple state */
 	node->hj_CurBucketNo = 0;
 	node->hj_CurTuple = (HashJoinTuple) NULL;
 
@@ -706,11 +715,9 @@ ExecReScanHashJoin(HashJoinState *node, ExprContext *exprCtxt)
 	node->hj_MatchedOuter = false;
 
 	/*
-	 * if chgParam of subnodes is not null then plans will be re-scanned
+	 * if chgParam of subnode is not null then plan will be re-scanned
 	 * by first ExecProcNode.
 	 */
 	if (((PlanState *) node)->lefttree->chgParam == NULL)
 		ExecReScan(((PlanState *) node)->lefttree, exprCtxt);
-	if (((PlanState *) node)->righttree->chgParam == NULL)
-		ExecReScan(((PlanState *) node)->righttree, exprCtxt);
 }
