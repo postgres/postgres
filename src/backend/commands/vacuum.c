@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.282 2004/07/01 00:50:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.283 2004/07/20 22:56:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1525,7 +1525,9 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 			VacPageList vacuum_pages, VacPageList fraged_pages,
 			int nindexes, Relation *Irel)
 {
+#ifdef	USE_ASSERT_CHECKING
 	TransactionId myXID = GetCurrentTransactionId();
+#endif
 	Buffer		dst_buffer = InvalidBuffer;
 	BlockNumber nblocks,
 				blkno;
