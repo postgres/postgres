@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.55 1999/03/07 03:34:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.56 1999/04/19 16:00:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -212,6 +212,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"substring", SUBSTRING},
 	{"table", TABLE},
 	{"temp", TEMP},
+	{"temporary", TEMPORARY},
 	{"then", THEN},
 	{"time", TIME},
 	{"timestamp", TIMESTAMP},

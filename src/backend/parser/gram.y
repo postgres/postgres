@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.69 1999/03/22 05:07:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.70 1999/04/19 16:00:15 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -289,8 +289,8 @@ Oid	param_type(int t); /* used in parse_expr.c */
 		PARTIAL, POSITION, PRECISION, PRIMARY, PRIOR, PRIVILEGES, PROCEDURE, PUBLIC,
 		READ, REFERENCES, RELATIVE, REVOKE, RIGHT, ROLLBACK,
 		SCROLL, SECOND_P, SELECT, SET, SUBSTRING,
-		TABLE, TEMP, THEN, TIME, TIMESTAMP, TIMEZONE_HOUR, TIMEZONE_MINUTE,
-		TO, TRAILING, TRANSACTION, TRIM, TRUE_P,
+		TABLE, TEMP, TEMPORARY, THEN, TIME, TIMESTAMP, TIMEZONE_HOUR,
+		TIMEZONE_MINUTE, TO, TRAILING, TRANSACTION, TRIM, TRUE_P,
 		UNION, UNIQUE, UPDATE, USER, USING,
 		VALUES, VARCHAR, VARYING, VIEW,
 		WHEN, WHERE, WITH, WORK, YEAR_P, ZONE
@@ -767,7 +767,9 @@ CreateStmt:  CREATE OptTemp TABLE relation_name '(' OptTableElementList ')'
 				}
 		;
 
-OptTemp:  		TEMP						{ $$ = TRUE; }
+OptTemp:
+			TEMP							{ $$ = TRUE; }
+			| TEMPORARY						{ $$ = TRUE; }
 			| /*EMPTY*/						{ $$ = FALSE; }
 		;
 
