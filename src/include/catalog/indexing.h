@@ -7,14 +7,15 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: indexing.h,v 1.1 1996/08/28 01:56:29 scrappy Exp $
+ * $Id: indexing.h,v 1.2 1996/11/06 07:05:18 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef INDEXING_H
 #define INDEXING_H
 
-#include "utils/rel.h"
+#include <access/htup.h>
+#include <utils/rel.h>
 
 /*
  * Some definitions for indices on pg_attribute
