@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.62 2003/09/25 06:58:01 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.63 2003/10/20 17:25:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -431,13 +431,20 @@ typeidTypeRelid(Oid type_id)
 }
 
 /*
+ * error context callback for parse failure during parseTypeString()
+ */
+static void
+pts_error_callback(void *arg)
+{
+	const char *str = (const char *) arg;
+
+	errcontext("invalid type name \"%s\"", str);
+}
+
+/*
  * Given a string that is supposed to be a SQL-compatible type declaration,
  * such as "int4" or "integer" or "character varying(32)", parse
  * the string and convert it to a type OID and type modifier.
- *
- * This routine is not currently used by the main backend, but it is
- * exported for use by add-on modules such as plpgsql, in hopes of
- * centralizing parsing knowledge about SQL type declarations.
  */
 void
 parseTypeString(const char *str, Oid *type_id, int32 *typmod)
@@ -448,11 +455,26 @@ parseTypeString(const char *str, Oid *type_id, int32 *typmod)
 	ResTarget  *restarget;
 	TypeCast   *typecast;
 	TypeName   *typename;
+	ErrorContextCallback ptserrcontext;
+
+	/* make sure we give useful error for empty input */
+	if (strspn(str, " \t\n\r\f") == strlen(str))
+		goto fail;
 
 	initStringInfo(&buf);
-	appendStringInfo(&buf, "SELECT (NULL::%s)", str);
+	appendStringInfo(&buf, "SELECT NULL::%s", str);
+
+	/*
+	 * Setup error traceback support in case of ereport() during parse
+	 */
+	ptserrcontext.callback = pts_error_callback;
+	ptserrcontext.arg = (void *) str;
+	ptserrcontext.previous = error_context_stack;
+	error_context_stack = &ptserrcontext;
 
 	raw_parsetree_list = raw_parser(buf.data);
+
+	error_context_stack = ptserrcontext.previous;
 
 	/*
 	 * Make sure we got back exactly what we expected and no more;
