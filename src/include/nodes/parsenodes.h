@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.196 2002/07/30 16:55:45 momjian Exp $
+ * $Id: parsenodes.h,v 1.197 2002/08/04 04:31:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1387,13 +1387,14 @@ typedef struct UnlistenStmt
 } UnlistenStmt;
 
 /* ----------------------
- *		{Begin|Abort|End} Transaction Statement
+ *		{Begin|Commit|Rollback} Transaction Statement
  * ----------------------
  */
 typedef struct TransactionStmt
 {
 	NodeTag		type;
-	int			command;		/* BEGIN|END|ABORT */
+	int			command;		/* BEGIN_TRANS|START|COMMIT|ROLLBACK */
+	List	   *options;
 } TransactionStmt;
 
 /* ----------------------

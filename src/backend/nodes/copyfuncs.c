@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.198 2002/07/29 22:14:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.199 2002/08/04 04:31:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2226,6 +2226,7 @@ _copyTransactionStmt(TransactionStmt *from)
 	TransactionStmt *newnode = makeNode(TransactionStmt);
 
 	newnode->command = from->command;
+	Node_Copy(from, newnode, options);
 
 	return newnode;
 }

@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.145 2002/07/29 22:14:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.146 2002/08/04 04:31:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1054,6 +1054,8 @@ static bool
 _equalTransactionStmt(TransactionStmt *a, TransactionStmt *b)
 {
 	if (a->command != b->command)
+		return false;
+	if (!equal(a->options, b->options))
 		return false;
 
 	return true;

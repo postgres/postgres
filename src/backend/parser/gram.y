@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.352 2002/07/31 17:19:51 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.353 2002/08/04 04:31:44 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -195,7 +195,7 @@ static void doNegateFloat(Value *v);
 
 %type <str>		opt_id,	all_Op, MathOp, opt_name, SpecialRuleRelation
 
-%type <str>		opt_level, opt_encoding
+%type <str>		iso_level, opt_encoding
 %type <node>	grantee
 %type <list>	grantee_list
 %type <ival>	privilege
@@ -218,7 +218,7 @@ static void doNegateFloat(Value *v);
 				target_list, update_target_list, insert_column_list,
 				insert_target_list, def_list, opt_indirection,
 				group_clause, TriggerFuncArgs, select_limit,
-				opt_select_limit, opclass_item_list
+				opt_select_limit, opclass_item_list, trans_options
 
 %type <range>	into_clause, OptTempTableName
 
@@ -847,14 +847,14 @@ set_rest:  ColId TO var_list_or_default
 						n->args = makeList1($3);
 					$$ = n;
 				}
-			| TRANSACTION ISOLATION LEVEL opt_level opt_mode
+			| TRANSACTION ISOLATION LEVEL iso_level opt_mode
 				{
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->name = "TRANSACTION ISOLATION LEVEL";
 					n->args = makeList1(makeStringConst($4, NULL));
 					$$ = n;
 				}
-			| SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL opt_level
+			| SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL iso_level
 				{
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->name = "default_transaction_isolation";
@@ -902,7 +902,7 @@ var_value:	opt_boolean
 				{ $$ = makeAConst($1); }
 		;
 
-opt_level:	READ COMMITTED							{ $$ = "read committed"; }
+iso_level:	READ COMMITTED							{ $$ = "read committed"; }
 			| SERIALIZABLE							{ $$ = "serializable"; }
 		;
 
@@ -3445,67 +3445,60 @@ TransactionStmt:
 				{
 					TransactionStmt *n = makeNode(TransactionStmt);
 					n->command = ROLLBACK;
+					n->options = NIL;
 					$$ = (Node *)n;
 				}
 			| BEGIN_TRANS opt_trans
 				{
 					TransactionStmt *n = makeNode(TransactionStmt);
 					n->command = BEGIN_TRANS;
+					n->options = NIL;
+					$$ = (Node *)n;
+				}
+			| START TRANSACTION trans_options
+				{
+					TransactionStmt *n = makeNode(TransactionStmt);
+					n->command = START;
+					n->options = $3;
 					$$ = (Node *)n;
 				}
 			| COMMIT opt_trans
 				{
 					TransactionStmt *n = makeNode(TransactionStmt);
 					n->command = COMMIT;
-					$$ = (Node *)n;
-				}
-			| COMMIT opt_trans opt_chain
-				{
-					TransactionStmt *n = makeNode(TransactionStmt);
-					n->command = COMMIT;
+					n->options = NIL;
 					$$ = (Node *)n;
 				}
 			| END_TRANS opt_trans
 				{
 					TransactionStmt *n = makeNode(TransactionStmt);
 					n->command = COMMIT;
+					n->options = NIL;
 					$$ = (Node *)n;
 				}
 			| ROLLBACK opt_trans
 				{
 					TransactionStmt *n = makeNode(TransactionStmt);
 					n->command = ROLLBACK;
-					$$ = (Node *)n;
-				}
-			| ROLLBACK opt_trans opt_chain
-				{
-					TransactionStmt *n = makeNode(TransactionStmt);
-					n->command = ROLLBACK;
+					n->options = NIL;
 					$$ = (Node *)n;
 				}
 		;
+
+trans_options:	ISOLATION LEVEL iso_level
+									{ $$ = makeList1(makeStringConst($3, NULL)); }
+			 |	/* EMPTY */			{ $$ = NIL; }
+			 ;
 
 opt_trans:	WORK									{}
 			| TRANSACTION							{}
 			| /*EMPTY*/								{}
 		;
 
-opt_chain:	AND NO CHAIN							{}
-			| AND CHAIN
-				{
-					/* SQL99 asks that conforming dbs reject AND CHAIN
-					 * if they don't support it. So we can't just ignore it.
-					 * - thomas 2000-08-06
-					 */
-					elog(ERROR, "COMMIT/AND CHAIN not yet supported");
-				}
-		;
-
-
 /*****************************************************************************
  *
  *		QUERY:
- *				define view <viewname> '('target-list ')' [where <quals> ]
+ *				create view <viewname> '('target-list ')' AS <query>
  *
  *****************************************************************************/
 

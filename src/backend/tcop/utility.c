@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.167 2002/07/30 16:55:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.168 2002/08/04 04:31:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -203,6 +203,28 @@ ProcessUtility(Node *parsetree,
 				{
 					case BEGIN_TRANS:
 						BeginTransactionBlock();
+						break;
+
+					/*
+					 * START TRANSACTION, as defined by SQL99: Identical to BEGIN,
+					 * except that it takes a few additional options.
+					 */
+					case START:
+						{
+							BeginTransactionBlock();
+
+							/*
+							 * Currently, the only option that can be set is
+							 * the transaction isolation level by START
+							 * TRANSACTION.
+							 */
+							if (stmt->options)
+							{
+								SetPGVariable("TRANSACTION ISOLATION LEVEL",
+											  stmt->options,
+											  false);
+							}
+						}
 						break;
 
 					case COMMIT:
