@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.289 2002/09/02 02:47:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.290 2002/09/02 05:25:37 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -69,7 +69,7 @@
 extern int	optind;
 extern char *optarg;
 
-char	   *debug_query_string; /* used by pgmonitor */
+char	   *debug_query_string; /* for pgmonitor and log_min_error_statement*/
 
 /* Note: whereToSendOutput is initialized for the bootstrap/standalone case */
 CommandDest whereToSendOutput = Debug;
@@ -563,8 +563,8 @@ pg_exec_query_string(StringInfo query_string,		/* string to execute */
 	struct timezone tz;
 	struct timeval start_t, stop_t;
 	bool		save_Log_duration = Log_duration;
-	
-	debug_query_string = query_string->data;	/* used by pgmonitor */
+
+	debug_query_string = query_string->data;
 
 	/*
 	 *	We use save_Log_duration so setting Log_duration to true doesn't
@@ -871,8 +871,8 @@ pg_exec_query_string(StringInfo query_string,		/* string to execute */
 			(long int) stop_t.tv_sec - start_t.tv_sec,
 			(long int) stop_t.tv_usec - start_t.tv_usec);
 	}
-		
-	debug_query_string = NULL;	/* used by pgmonitor */
+
+	debug_query_string = NULL;
 }
 
 /*
@@ -1686,7 +1686,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.289 $ $Date: 2002/09/02 02:47:04 $\n");
+		puts("$Revision: 1.290 $ $Date: 2002/09/02 05:25:37 $\n");
 	}
 
 	/*
@@ -1733,7 +1733,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 		QueryCancelPending = false;
 		InterruptHoldoffCount = 1;
 		CritSectionCount = 0;	/* should be unnecessary, but... */
-		debug_query_string = NULL;		/* used by pgmonitor */
+		debug_query_string = NULL;
 
 		/*
 		 * Make sure we are in a valid memory context during recovery.
