@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.207 2004/06/13 19:56:49 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.208 2004/06/14 19:01:09 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -3909,7 +3909,7 @@ substring('foobar' from 'o(.)b')   <lineannotation>o</lineannotation>
        </row>
        <row>
 	<entry><literal><function>to_timestamp</function>(<type>text</type>, <type>text</type>)</literal></entry>
-	<entry><type>timestamp</type></entry>
+	<entry><type>timestamp with time zone</type></entry>
 	<entry>convert string to time stamp</entry>
 	<entry><literal>to_timestamp('05&nbsp;Dec&nbsp;2000', 'DD&nbsp;Mon&nbsp;YYYY')</literal></entry>
        </row>
