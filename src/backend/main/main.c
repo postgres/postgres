@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.38 2001/01/24 03:50:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.39 2001/01/24 05:24:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -159,6 +159,7 @@ main(int argc, char *argv[])
 		fprintf(stderr, "%s: invalid current euid", argv[0]);
 		exit(1);
 	}
+	/* Allocate new memory because later getpwuid() calls can overwrite it */
 	pw_name_persist = strdup(pw->pw_name);
 
 	exit(PostgresMain(argc, argv, argc, argv, pw_name_persist));
