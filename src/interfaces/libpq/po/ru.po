@@ -1,10 +1,10 @@
 # ru.po
 # LIBPQ Translated Messages into the Russian Language (KOI8-R)
 #
-# $PostgreSQL: pgsql/src/interfaces/libpq/po/ru.po,v 1.14 2004/09/27 20:26:03 petere Exp $
+# $PostgreSQL: pgsql/src/interfaces/libpq/po/ru.po,v 1.15 2004/10/03 20:20:31 petere Exp $
 #
 # ChangeLog:
-#   - March 27 - September 24, 2004: Updates for 8.0; <mokhov@cs.concordia.ca>
+#   - March 27 - September 28, 2004: Updates for 8.0; <mokhov@cs.concordia.ca>
 #   - July 24 - October 5, 2003: Updates for 7.4.*; <mokhov@cs.concordia.ca>
 #   - Januray 2, 2002: Completed SSL translation, Serguei A. Mokhov <mokhov@cs.concordia.ca>
 #   - October 12, 2002: Post-7.3beta2 fuzzy translation fixes, Serguei A. Mokhov <mokhov@cs.concordia.ca>
@@ -14,8 +14,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.0\n"
-"POT-Creation-Date: 2004-09-24 13:09+0100\n"
-"PO-Revision-Date: 2004-09-24 16:54-0500\n"
+"POT-Creation-Date: 2004-09-28 19:13+0100\n"
+"PO-Revision-Date: 2004-09-28 20:06-0500\n"
 "Last-Translator: Serguei A. Mokhov <mokhov@cs.concordia.ca>\n"
 "Language-Team: pgsql-rus <pgsql-rus@yahoogroups.com>\n"
 "MIME-Version: 1.0\n"
@@ -531,123 +531,122 @@ msgstr "%s:%s"
 msgid "PQgetline: not doing text COPY OUT\n"
 msgstr "PQgetline: не производится текстовый COPY OUT\n"
 
-#: fe-secure.c:262
+#: fe-secure.c:264
 #, c-format
 msgid "could not establish SSL connection: %s\n"
 msgstr "не получилось установить SSL-соединение: %s\n"
 
-#: fe-secure.c:328
-#: fe-secure.c:413
-#: fe-secure.c:1046
+#: fe-secure.c:330
+#: fe-secure.c:415
+#: fe-secure.c:1038
 #, c-format
 msgid "SSL SYSCALL error: %s\n"
 msgstr "ошибка SSL SYSCALL: %s\n"
 
-#: fe-secure.c:333
-#: fe-secure.c:418
-#: fe-secure.c:1050
+#: fe-secure.c:335
+#: fe-secure.c:420
+#: fe-secure.c:1042
 msgid "SSL SYSCALL error: EOF detected\n"
 msgstr "ошибка SSL SYSCALL: обнаружен конец файла (EOF)\n"
 
-#: fe-secure.c:345
-#: fe-secure.c:429
-#: fe-secure.c:1059
+#: fe-secure.c:347
+#: fe-secure.c:431
+#: fe-secure.c:1051
 #, c-format
 msgid "SSL error: %s\n"
 msgstr "ошибка SSL: %s\n"
 
-#: fe-secure.c:355
-#: fe-secure.c:439
-#: fe-secure.c:1067
+#: fe-secure.c:357
+#: fe-secure.c:441
+#: fe-secure.c:1059
 #, c-format
 msgid "unrecognized SSL error code: %d\n"
 msgstr "нераспознанный код ошибки SSL: %d\n"
 
-#: fe-secure.c:502
+#: fe-secure.c:504
 #, c-format
 msgid "error querying socket: %s\n"
 msgstr "ошибка при запросе сокета: %s\n"
 
-#: fe-secure.c:530
+#: fe-secure.c:532
 #, c-format
-msgid "could not get information about host (%s): %s\n"
-msgstr "невозможно было получить информацию о сервере (%s): %s\n"
+msgid "could not get information about host \"%s\": %s\n"
+msgstr "невозможно было получить информацию о хосте \"%s\": %s\n"
 
-#: fe-secure.c:549
+#: fe-secure.c:551
 msgid "unsupported protocol\n"
 msgstr "протокол не поддерживается\n"
 
-#: fe-secure.c:571
+#: fe-secure.c:573
 #, c-format
 msgid "server common name \"%s\" does not resolve to %ld.%ld.%ld.%ld\n"
 msgstr "имя сервера \"%s\" не транслируется в %ld.%ld.%ld.%ld\n"
 
-#: fe-secure.c:578
+#: fe-secure.c:580
 #, c-format
 msgid "server common name \"%s\" does not resolve to peer address\n"
 msgstr "обычное имя сервера \"%s\" не резолвится в адрес\n"
 
-#: fe-secure.c:761
+#: fe-secure.c:763
 msgid "could not get user information\n"
 msgstr "невозможно было получить информацию о пользователе\n"
 
-#: fe-secure.c:773
+#: fe-secure.c:775
 #, c-format
-msgid "could not open certificate (%s): %s\n"
-msgstr "не в состоянии открыть сертификат (%s): %s\n"
+msgid "could not open certificate file \"%s\": %s\n"
+msgstr "не в состоянии открыть файл сертификата \"%s\": %s\n"
 
-#: fe-secure.c:782
+#: fe-secure.c:784
 #, c-format
-msgid "could not read certificate (%s): %s\n"
-msgstr "не в состоянии считать сертификат (%s): %s\n"
+msgid "could not read certificate file \"%s\": %s\n"
+msgstr "не в состоянии считать файл сертификата \"%s\": %s\n"
 
-#: fe-secure.c:796
+#: fe-secure.c:798
 #, c-format
-msgid "certificate present, but not private key (%s)\n"
-msgstr "сертификат присутствует, но нет личного ключа (%s)\n"
+msgid "certificate present, but not private key file \"%s\"\n"
+msgstr "сертификат присутствует, но нет файла с личным ключом \"%s\"\n"
 
-#: fe-secure.c:805
+#: fe-secure.c:807
 #, c-format
-msgid "private key (%s) has wrong permissions\n"
-msgstr "не верные права для личного ключа (%s)\n"
+msgid "private key file \"%s\" has wrong permissions\n"
+msgstr "не верные права для файла личного ключа \"%s\"\n"
 
-#: fe-secure.c:812
+#: fe-secure.c:815
 #, c-format
-msgid "could not open private key file (%s): %s\n"
-msgstr "не получилось открыть файл личного ключа (%s): %s\n"
+msgid "could not open private key file \"%s\": %s\n"
+msgstr "не получилось открыть файл личного ключа \"%s\": %s\n"
 
-#: fe-secure.c:821
+#: fe-secure.c:824
 #, c-format
-msgid "private key (%s) changed during execution\n"
-msgstr "личный ключ (%s) поменялся во время исполнения\n"
+msgid "private key file \"%s\" changed during execution\n"
+msgstr "личный ключ \"%s\" поменялся во время исполнения\n"
 
-#: fe-secure.c:830
+#: fe-secure.c:833
 #, c-format
-msgid "could not read private key (%s): %s\n"
-msgstr "не получилось прочитать личный ключ (%s): %s\n"
+msgid "could not read private key file \"%s\": %s\n"
+msgstr "не получилось прочитать файд личного ключа \"%s\": %s\n"
 
-#: fe-secure.c:845
+#: fe-secure.c:848
 #, c-format
-msgid "certificate/private key mismatch (%s): %s\n"
-msgstr "сертификат/личный ключ не совпадают (%s): %s\n"
+msgid "certificate does not match private key file \"%s\": %s\n"
+msgstr "сертификат не совпадает с файлом личного ключа \"%s\": %s\n"
 
-#: fe-secure.c:929
+#: fe-secure.c:932
 #, c-format
 msgid "could not create SSL context: %s\n"
 msgstr "не получилось создать контекст SSL: %s\n"
 
-#: fe-secure.c:974
-#: fe-secure.c:984
+#: fe-secure.c:977
 #, c-format
-msgid "could not read root certificate list (%s): %s\n"
-msgstr "не получилось прочесть список корневых сертификатов (%s): %s\n"
+msgid "could not read root certificate file \"%s\": %s\n"
+msgstr "не получилось файл корневых сертификатов \"%s\": %s\n"
 
-#: fe-secure.c:1087
+#: fe-secure.c:1079
 #, c-format
 msgid "certificate could not be validated: %s\n"
 msgstr "не получилось проверить сертификат: %s\n"
 
-#: fe-secure.c:1101
+#: fe-secure.c:1093
 #, c-format
 msgid "certificate could not be obtained: %s\n"
 msgstr "не удалось получить сертификат: %s\n"
