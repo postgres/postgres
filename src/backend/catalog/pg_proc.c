@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.111 2004/01/06 23:55:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.112 2004/03/14 01:58:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,6 +44,7 @@ Datum		fmgr_sql_validator(PG_FUNCTION_ARGS);
 
 static Datum create_parameternames_array(int parameterCount,
 										 const char *parameterNames[]);
+static void sql_function_parse_error_callback(void *arg);
 
 
 /* ----------------------------------------------------------------
@@ -708,6 +709,7 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 	bool		isnull;
 	Datum		tmp;
 	char	   *prosrc;
+	ErrorContextCallback sqlerrcontext;
 	char		functyptype;
 	bool		haspolyarg;
 	int			i;
@@ -761,6 +763,16 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 		prosrc = DatumGetCString(DirectFunctionCall1(textout, tmp));
 
 		/*
+		 * Setup error traceback support for ereport().  This is mostly
+		 * so we can add context info that shows that a syntax-error
+		 * location is inside the function body, not out in CREATE FUNCTION.
+		 */
+		sqlerrcontext.callback = sql_function_parse_error_callback;
+		sqlerrcontext.arg = proc;
+		sqlerrcontext.previous = error_context_stack;
+		error_context_stack = &sqlerrcontext;
+
+		/*
 		 * We can't do full prechecking of the function definition if there
 		 * are any polymorphic input types, because actual datatypes of
 		 * expression results will be unresolvable.  The check will be done
@@ -778,9 +790,32 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 		}
 		else
 			querytree_list = pg_parse_query(prosrc);
+
+		error_context_stack = sqlerrcontext.previous;
 	}
 
 	ReleaseSysCache(tuple);
 
 	PG_RETURN_VOID();
+}
+
+/*
+ * error context callback to let us supply a context marker
+ */
+static void
+sql_function_parse_error_callback(void *arg)
+{
+	Form_pg_proc proc = (Form_pg_proc) arg;
+
+	/*
+	 * XXX it'd be really nice to adjust the syntax error position to
+	 * account for the offset from the start of the statement to the
+	 * function body string, not to mention any quoting characters in
+	 * the string, but I can't see any decent way to do that...
+	 *
+	 * In the meantime, put in a CONTEXT entry that can cue clients
+	 * not to trust the syntax error position completely.
+	 */
+	errcontext("SQL function \"%s\"",
+			   NameStr(proc->proname));
 }

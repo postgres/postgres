@@ -52,16 +52,20 @@ CREATE FUNCTION test1 (int) RETURNS int LANGUAGE sql
     AS 'SELECT ''not an integer'';';
 ERROR:  return type mismatch in function declared to return integer
 DETAIL:  Actual return type is "unknown".
+CONTEXT:  SQL function "test1"
 CREATE FUNCTION test1 (int) RETURNS int LANGUAGE sql
     AS 'not even SQL';
 ERROR:  syntax error at or near "not" at character 1
+CONTEXT:  SQL function "test1"
 CREATE FUNCTION test1 (int) RETURNS int LANGUAGE sql
     AS 'SELECT 1, 2, 3;';
 ERROR:  return type mismatch in function declared to return integer
 DETAIL:  Final SELECT must return exactly one column.
+CONTEXT:  SQL function "test1"
 CREATE FUNCTION test1 (int) RETURNS int LANGUAGE sql
     AS 'SELECT $2;';
 ERROR:  there is no parameter $2
+CONTEXT:  SQL function "test1"
 CREATE FUNCTION test1 (int) RETURNS int LANGUAGE sql
     AS 'a', 'b';
 ERROR:  only one AS item needed for language "sql"
