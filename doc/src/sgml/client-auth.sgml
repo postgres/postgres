@@ -1,4 +1,6 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.30 2001/11/28 20:49:09 petere Exp $ -->
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.31 2001/12/27 21:37:34 tgl Exp $
+-->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
@@ -437,8 +439,52 @@ local        all                                          md5  admins
  <sect1 id="auth-methods">
   <title>Authentication methods</title>
   <para>
-   The following describes the authentication methods in detail.
+   The following describes the authentication methods in more detail.
   </para>
+
+  <sect2 id="auth-trust">
+   <title>Trust authentication</title>
+
+   <para>
+    When <literal>trust</> authentication is specified,
+    <productname>PostgreSQL</productname> assumes that anyone who can
+    connect to the postmaster is authorized to access the database as
+    whatever database user he specifies (including the database superuser).
+    This method should only be used when there is adequate system-level
+    protection on connections to the postmaster port.
+   </para>
+
+   <para>
+    <literal>trust</> authentication is appropriate and very convenient
+    for local connections on a single-user workstation.  It is usually
+    <emphasis>not</> appropriate by itself on a multi-user machine.
+    However, you may be able to use <literal>trust</> even on a multi-user
+    machine, if you restrict access to the postmaster's socket file using
+    filesystem permissions.  To do this, set the parameter
+    <varname>unix_socket_permissions</varname> (and possibly
+    <varname>unix_socket_group</varname>) in <filename>postgresql.conf</>,
+    as described in <xref linkend="runtime-config-general">.  Or you could
+    set <varname>unix_socket_directory</varname> to place the socket file
+    in a suitably restricted directory.
+   </para>
+
+   <para>
+    Setting filesystem permissions only helps for Unix-socket connections.
+    Local TCP connections are not restricted by it; therefore, if you want
+    to use permissions for local security, remove the <literal>host ...
+    127.0.0.1 ...</> line from <filename>pg_hba.conf</>, or change it to a
+    non-<literal>trust</> authentication method.
+   </para>
+
+   <para>
+    <literal>trust</> authentication is only suitable for TCP connections
+    if you trust every user on every machine that is allowed to connect
+    to the postmaster by the <filename>pg_hba.conf</> lines that specify
+    <literal>trust</>.  It is seldom reasonable to use <literal>trust</>
+    for any TCP connections other than those from localhost (127.0.0.1).
+   </para>
+
+  </sect2>
 
   <sect2 id="auth-password">
    <title>Password authentication</title>
@@ -449,6 +495,18 @@ local        all                                          md5  admins
    <indexterm>
     <primary>MD5</>
    </indexterm>
+
+   <para>
+    Password-based authentication methods include <literal>md5</>,
+    <literal>crypt</>, and <literal>password</>.  These methods operate
+    similarly except for the way that the password is sent across the
+    connection.  If you are at all concerned about password <quote>sniffing</>
+    attacks then <literal>md5</> is preferred, with <literal>crypt</> a
+    second choice if you must support obsolete clients.  Plain
+    <literal>password</> should especially be avoided for connections over
+    the open Internet (unless you use SSL, SSH, or other communications
+    security wrappers around the connection).
+   </para>
 
    <para>
     <productname>PostgreSQL</productname> database passwords are separate from
@@ -652,7 +710,7 @@ local        all                                          md5  admins
     On systems supporting <symbol>SO_PEERCRED</symbol> requests for Unix-domain sockets,
     ident authentication can also be applied to local connections.  In this
     case, no security risk is added by using ident authentication; indeed
-    it is a preferable choice for such a system.
+    it is a preferable choice for local connections on such a system.
    </para>
 
    <para>

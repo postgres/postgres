@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.99 2001/11/28 20:49:10 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.100 2001/12/27 21:37:34 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -57,7 +57,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.99 2001/11/28 20:49:10 pet
    through a single instance of a running database server. After
    initialization, a database cluster will contain one database named
    <literal>template1</literal>. As the name suggests, this will be used
-   as a template for any subsequently created database; it should not be
+   as a template for subsequently created databases; it should not be
    used for actual work.
   </para>
 
@@ -65,7 +65,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.99 2001/11/28 20:49:10 pet
    In file system terms, a database cluster will be a single directory
    under which all data will be stored. We call this the <firstterm>data
    directory</firstterm> or <firstterm>data area</firstterm>. It is
-   completely up to you where you choose to store your data, there is no
+   completely up to you where you choose to store your data.  There is no
    default, although locations such as
    <filename>/usr/local/pgsql/data</filename> or
    <filename>/var/lib/pgsql/data</filename> are popular. To initialize a
@@ -76,7 +76,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.99 2001/11/28 20:49:10 pet
 <screen>
 <prompt>$</> <userinput>initdb -D /usr/local/pgsql/data</userinput>
 </screen>
-   Note that you must execute this command while being logged in to
+   Note that you must execute this command while being logged into
    the <productname>PostgreSQL</productname> user account, which is described in the previous
    section.
   </para>
@@ -113,22 +113,25 @@ postgres$ <userinput>initdb -D /usr/local/pgsql/data</userinput>
 
   <para>
    Because the data directory contains all the data stored in the
-   database it is essential that it be well secured from unauthorized
+   database, it is essential that it be well secured from unauthorized
    access. <command>initdb</command> therefore revokes access
    permissions from everyone but the <productname>PostgreSQL</productname> user account.
   </para>
 
   <para>
    However, while the directory contents are secure, the default
-   <filename>pg_hba.conf</filename> authentication of
-   <literal>trust</literal> allows any local user to become the
-   superuser and connect to the database. If you don't trust your local
-   users, we recommend you use the <command>initdb</command> option
+   <filename>pg_hba.conf</filename> authentication method of
+   <literal>trust</literal> allows any local user to connect to the database
+   and even become the database superuser. If you don't trust other local
+   users, we recommend you use <command>initdb</command>'s option
    <option>-W</option> or <option>--pwprompt</option> to assign a
-   password to the superuser and modify your
-   <filename>pg_hba.conf</filename> accordingly. (Another option:
-   Your operating system may support <literal>ident</literal> for
-   local connections.)
+   password to the database superuser.  After <command>initdb</command>,
+   modify <filename>pg_hba.conf</filename> to use <literal>md5</> or
+   <literal>password</>, instead of <literal>trust</>, authentication
+   <emphasis>before</> you first start the postmaster. (Other, possibly
+   more convenient approaches include using <literal>ident</literal>
+   authentication or filesystem permissions to restrict connections.  See
+   <xref linkend="client-authentication"> for more information.)
   </para>
 
   <para>
@@ -172,7 +175,7 @@ NOTICE:  Initializing database with en_US collation order.
 $ <userinput>postmaster -D /usr/local/pgsql/data</userinput>
 </screen>
    which will leave the server running in the foreground. This must
-   again be done while logged in to the <productname>PostgreSQL</productname> user account. Without
+   again be done while logged into the <productname>PostgreSQL</productname> user account. Without
    a <option>-D</option>, the server will try to use the data
    directory in the environment variable <envar>PGDATA</envar>; if
    neither of these works it will fail.
@@ -2287,7 +2290,7 @@ default:\
       <para>
       On <productname>Linux</productname>
       <filename>/proc/sys/fs/file-max</filename> determines the
-      maximum number of files that the kernel will allocate.  It can
+      maximum number of open files that the kernel will support.  It can
       be changed by writing a different number into the file or by
       adding an assignment in <filename>/etc/sysctl.conf</filename>.
       The maximum limit of files per process is fixed at the time the
@@ -2314,6 +2317,16 @@ default:\
     the system resources.  If you run many servers on a machine this
     is perhaps what you want, but on dedicated servers you may want to
     raise this limit.
+   </para>
+
+   <para>
+    On the other side of the coin, some systems allow individual
+    processes to open large numbers of files; if more than a few processes
+    do so then the system-wide limit can easily be exceeded.  If you find
+    this happening, and don't want to alter the system-wide limit, you
+    can set <productname>PostgreSQL</productname>'s
+    <varname>max_files_per_process</varname> configuration parameter
+    to limit its consumption of open files.
    </para>
   </sect2>
 
