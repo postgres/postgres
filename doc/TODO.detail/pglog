@@ -1,0 +1,2900 @@
+From aoki@postgres.Berkeley.EDU Sun Jun 22 19:31:06 1997
+Received: from renoir.op.net (root@renoir.op.net [206.84.208.4])
+	by candle.pha.pa.us (8.8.5/8.8.5) with ESMTP id TAA19488
+	for <maillist@candle.pha.pa.us>; Sun, 22 Jun 1997 19:31:03 -0400 (EDT)
+Received: from faerie.CS.Berkeley.EDU (faerie.CS.Berkeley.EDU [128.32.37.53]) by renoir.op.net ($ Revision: 1.12 $) with SMTP id TAA18795 for <maillist@candle.pha.pa.us>; Sun, 22 Jun 1997 19:18:06 -0400 (EDT)
+Received: from localhost.Berkeley.EDU (localhost.Berkeley.EDU [127.0.0.1]) by faerie.CS.Berkeley.EDU (8.6.10/8.6.3) with SMTP id QAA07816 for maillist@candle.pha.pa.us; Sun, 22 Jun 1997 16:16:44 -0700
+Message-Id: <199706222316.QAA07816@faerie.CS.Berkeley.EDU>
+X-Authentication-Warning: faerie.CS.Berkeley.EDU: Host localhost.Berkeley.EDU didn't use HELO protocol
+From: aoki@CS.Berkeley.EDU (Paul M. Aoki)
+To: Bruce Momjian <maillist@candle.pha.pa.us>
+Subject: Re: PostgreSQL psort() function performance 
+Reply-To: aoki@CS.Berkeley.EDU (Paul M. Aoki)
+In-reply-to: Your message of Sun, 22 Jun 1997 09:45:31 -0400 (EDT) 
+	     <199706221345.JAA11476@candle.pha.pa.us> 
+Date: Sun, 22 Jun 97 16:16:43 -0700
+Sender: aoki@postgres.Berkeley.EDU
+X-Mts: smtp
+Status: OR
+
+the mariposa distribution (http://mariposa.cs.berkeley.edu/) contains
+some hacks to nodeSort.c and psort.c that 
+	- make psort read directly from the executor node below it
+	(instead of an input relation)
+	- makes the Sort node read directly from the last set of psort runs
+	(instead of an output relation)
+speeds things up quite a bit.  kind of ruins psort for other purposes,
+though (which is why nbtsort.c exists).
+
+i'd merge these in first and see how far that gets you.
+--
+  Paul M. Aoki         | University of California at Berkeley
+  aoki@CS.Berkeley.EDU | Dept. of EECS, Computer Science Division #1776
+                       | Berkeley, CA 94720-1776
+
+From owner-pgsql-hackers@hub.org Mon Nov  3 09:31:04 1997
+Received: from renoir.op.net (root@renoir.op.net [206.84.208.4])
+	by candle.pha.pa.us (8.8.5/8.8.5) with ESMTP id JAA01676
+	for <maillist@candle.pha.pa.us>; Mon, 3 Nov 1997 09:31:02 -0500 (EST)
+Received: from hub.org (hub.org [209.47.148.200]) by renoir.op.net (o1/$ Revision: 1.14 $) with ESMTP id JAA07345 for <maillist@candle.pha.pa.us>; Mon, 3 Nov 1997 09:13:20 -0500 (EST)
+Received: from localhost (majordom@localhost) by hub.org (8.8.5/8.7.5) with SMTP id IAA13315; Mon, 3 Nov 1997 08:50:26 -0500 (EST)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Mon, 03 Nov 1997 08:48:07 -0500 (EST)
+Received: (from majordom@localhost) by hub.org (8.8.5/8.7.5) id IAA11722 for pgsql-hackers-outgoing; Mon, 3 Nov 1997 08:48:02 -0500 (EST)
+Received: from www.krasnet.ru (www.krasnet.ru [193.125.44.86]) by hub.org (8.8.5/8.7.5) with ESMTP id IAA11539 for <hackers@postgreSQL.org>; Mon, 3 Nov 1997 08:47:34 -0500 (EST)
+Received: from www.krasnet.ru (www.krasnet.ru [193.125.44.86]) by www.krasnet.ru (8.8.7/8.7.3) with SMTP id UAA19066; Mon, 3 Nov 1997 20:48:04 +0700 (KRS)
+Message-ID: <345DD614.345BF651@sable.krasnoyarsk.su>
+Date: Mon, 03 Nov 1997 20:48:04 +0700
+From: "Vadim B. Mikheev" <vadim@sable.krasnoyarsk.su>
+Organization: ITTS (Krasnoyarsk)
+X-Mailer: Mozilla 3.01 (X11; I; FreeBSD 2.2.5-RELEASE i386)
+MIME-Version: 1.0
+To: Marc Howard Zuckman <marc@fallon.classyad.com>
+CC: Bruce Momjian <maillist@candle.pha.pa.us>, hackers@postgreSQL.org
+Subject: Re: [HACKERS] PERFORMANCE and Good Bye, Time Travel!
+References: <Pine.LNX.3.95.971103090709.21917A-100000@fallon.classyad.com>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Sender: owner-hackers@hub.org
+Precedence: bulk
+Status: OR
+
+Marc Howard Zuckman wrote:
+> 
+> On Mon, 3 Nov 1997, Bruce Momjian wrote:
+> 
+> > With fsync off, I just did an insert of 1000 integers into a table
+> > containing a single int4 column and no indexes, and it completed in 2.3
+> > seconds.  This is on the new source tree..  That is 434 inserts/second.
+> > Pretty major performance, or 2.3 ms/insert.  This is on a idle PP200
+> > with UltraSCSI drives.
+> >
+> > With fsync on, the time goes to 51 seconds.  Wow, big difference.
+> 
+> If better alternative error recovery methods were available, perhaps
+> a facility to replay an interval transactions log from a prior dump,
+> it would be reasonable to run the backend without fsync and
+> take advantage of the performance gains.
+
+???
+
+> 
+> I don't know the answer, but I suspect that the commercial databases
+> don't "fsync" the way pgsql does.
+
+Could someone try 1000 int4 inserts using postgres and 
+some commercial database (on the same machine) ?
+
+Vadim
+
+
+From owner-pgsql-hackers@hub.org Mon Nov  3 09:01:02 1997
+Received: from renoir.op.net (root@renoir.op.net [206.84.208.4])
+	by candle.pha.pa.us (8.8.5/8.8.5) with ESMTP id JAA01183
+	for <maillist@candle.pha.pa.us>; Mon, 3 Nov 1997 09:01:00 -0500 (EST)
+Received: from hub.org (hub.org [209.47.148.200]) by renoir.op.net (o1/$ Revision: 1.14 $) with ESMTP id IAA06632 for <maillist@candle.pha.pa.us>; Mon, 3 Nov 1997 08:51:58 -0500 (EST)
+Received: from localhost (majordom@localhost) by hub.org (8.8.5/8.7.5) with SMTP id IAA05964; Mon, 3 Nov 1997 08:39:39 -0500 (EST)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Mon, 03 Nov 1997 08:37:32 -0500 (EST)
+Received: (from majordom@localhost) by hub.org (8.8.5/8.7.5) id IAA04729 for pgsql-hackers-outgoing; Mon, 3 Nov 1997 08:37:26 -0500 (EST)
+Received: from fallon.classyad.com (root@classyad.com [152.160.43.1]) by hub.org (8.8.5/8.7.5) with ESMTP id IAA04614 for <hackers@postgreSQL.org>; Mon, 3 Nov 1997 08:37:16 -0500 (EST)
+Received: from fallon.classyad.com (marc@fallon.classyad.com [152.160.43.1]) by fallon.classyad.com (8.8.5/8.7.3) with SMTP id JAA22108; Mon, 3 Nov 1997 09:11:09 -0500
+Date: Mon, 3 Nov 1997 09:11:09 -0500 (EST)
+From: Marc Howard Zuckman <marc@fallon.classyad.com>
+To: Bruce Momjian <maillist@candle.pha.pa.us>
+cc: "Vadim B. Mikheev" <vadim@sable.krasnoyarsk.su>, hackers@postgreSQL.org
+Subject: Re: [HACKERS] PERFORMANCE and Good Bye, Time Travel!
+In-Reply-To: <199711030513.AAA23474@candle.pha.pa.us>
+Message-ID: <Pine.LNX.3.95.971103090709.21917A-100000@fallon.classyad.com>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Sender: owner-hackers@hub.org
+Precedence: bulk
+Status: OR
+
+On Mon, 3 Nov 1997, Bruce Momjian wrote:
+
+> > 
+> > Removed...
+> > 
+> > Also, ItemPointerData t_chain (6 bytes) removed from HeapTupleHeader.
+> > CommandId is uint32 now (up to the 2^32 - 1 commands per transaction).
+> > DOUBLEALIGN(Sizeof(HeapTupleHeader)) is 40 bytes now.
+> > 
+> > 1000 inserts (into table with single int4 column, 1 insert per transaction) 
+> > takes 70 - 80 sec now (12.5 - 14 transactions/sec).
+> > This is hardware/OS limitation: 
+> > 
+> >     fd = open ("t", O_RDWR);
+> >     for (i = 1; i <= 1000; i++)
+> >     {
+> >         lseek(fd, 0, SEEK_END);
+> >         write(fd, buf, 56);
+> >         fsync(fd);
+> >     }
+> >     close (fd);
+> > 
+> > takes 33 - 39 sec and so it's not possible to be faster
+> > having 2 fsync-s per transaction.
+> > 
+> > The same test on 6.2.1: 92 - 107 sec
+> 
+> With fsync off, I just did an insert of 1000 integers into a table
+> containing a single int4 column and no indexes, and it completed in 2.3
+> seconds.  This is on the new source tree..  That is 434 inserts/second. 
+> Pretty major performance, or 2.3 ms/insert.  This is on a idle PP200
+> with UltraSCSI drives.
+> 
+> With fsync on, the time goes to 51 seconds.  Wow, big difference.
+
+If better alternative error recovery methods were available, perhaps
+a facility to replay an interval transactions log from a prior dump,
+it would be reasonable to run the backend without fsync and
+take advantage of the performance gains.
+
+I don't know the answer, but I suspect that the commercial databases
+don't "fsync" the way pgsql does.
+
+Marc Zuckman
+marc@fallon.classyad.com
+
+_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
+_     Visit The Home and Condo MarketPlace		      _
+_          http://www.ClassyAd.com			      _
+_							      _
+_  FREE basic property listings/advertisements and searches.  _
+_							      _
+_  Try our premium, yet inexpensive services for a real	      _
+_   selling or buying edge!				      _
+_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
+
+
+
+From owner-pgsql-hackers@hub.org Mon Nov  3 11:31:03 1997
+Received: from renoir.op.net (root@renoir.op.net [206.84.208.4])
+	by candle.pha.pa.us (8.8.5/8.8.5) with ESMTP id LAA04080
+	for <maillist@candle.pha.pa.us>; Mon, 3 Nov 1997 11:31:00 -0500 (EST)
+Received: from hub.org (hub.org [209.47.148.200]) by renoir.op.net (o1/$ Revision: 1.14 $) with ESMTP id LAA13680 for <maillist@candle.pha.pa.us>; Mon, 3 Nov 1997 11:21:30 -0500 (EST)
+Received: from localhost (majordom@localhost) by hub.org (8.8.5/8.7.5) with SMTP id LAA07566; Mon, 3 Nov 1997 11:04:52 -0500 (EST)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Mon, 03 Nov 1997 11:02:59 -0500 (EST)
+Received: (from majordom@localhost) by hub.org (8.8.5/8.7.5) id LAA07372 for pgsql-hackers-outgoing; Mon, 3 Nov 1997 11:02:52 -0500 (EST)
+Received: from candle.pha.pa.us (root@s3-03.ppp.op.net [206.84.210.195]) by hub.org (8.8.5/8.7.5) with ESMTP id LAA07196 for <hackers@postgreSQL.org>; Mon, 3 Nov 1997 11:02:22 -0500 (EST)
+Received: (from maillist@localhost)
+	by candle.pha.pa.us (8.8.5/8.8.5) id KAA02525;
+	Mon, 3 Nov 1997 10:42:03 -0500 (EST)
+From: Bruce Momjian <maillist@candle.pha.pa.us>
+Message-Id: <199711031542.KAA02525@candle.pha.pa.us>
+Subject: Re: [HACKERS] PERFORMANCE and Good Bye, Time Travel!
+To: vadim@sable.krasnoyarsk.su (Vadim B. Mikheev)
+Date: Mon, 3 Nov 1997 10:42:03 -0500 (EST)
+Cc: marc@fallon.classyad.com, hackers@postgreSQL.org
+In-Reply-To: <345DD614.345BF651@sable.krasnoyarsk.su> from "Vadim B. Mikheev" at Nov 3, 97 08:48:04 pm
+X-Mailer: ELM [version 2.4 PL25]
+MIME-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Sender: owner-hackers@hub.org
+Precedence: bulk
+Status: OR
+
+> > I don't know the answer, but I suspect that the commercial databases
+> > don't "fsync" the way pgsql does.
+> 
+> Could someone try 1000 int4 inserts using postgres and 
+> some commercial database (on the same machine) ?
+
+I have been thinking about this since seeing the performance change
+with/without fsync.
+
+Commerical databases usually do a log write every 5 or 15 minutes, and
+guarantee the logs will contain everything up to this time interval.
+
+Couldn't we have some such mechanism?  Usually they have raw space, so
+they can control when the data is hitting the disk.   Using a file
+system, some of it may be getting to the disk without our knowing it.
+
+What exactly is a scenario where lack of doing explicit fsync's will
+cause data corruption, rather than just lost data from the past few
+minutes?
+
+I think Vadim has gotten fsync's down to fsync'ing the modified data
+page, and pg_log.
+
+Let's suppose we did not fsync.  There could be cases where pg_log was
+fsync'ed by the OS, and some of the modified data pages are fyncs'ed by
+the OS, but not others.  This would leave us with a partial transaction.
+
+However, let's suppose we prevent pg_log from being fsync'ed somehow. 
+Then, because we have a no-overwrite database, we could keep control of
+this, and write of some data pages, but not others would not cause us
+problems because the pg_log would show all such transactions, which had
+not had all their modified data pages fsync'ed, as non-committed.
+
+Perhaps we can even set a flag in pg_log every five minutes to indicate
+whether all buffers for the page have been flushed?  That way we could
+not have to worry about preventing flushing of pg_log.
+
+Comments?
+
+-- 
+Bruce Momjian
+maillist@candle.pha.pa.us
+
+
+From owner-pgsql-hackers@hub.org Mon Nov  3 12:00:42 1997
+Received: from hub.org (hub.org [209.47.148.200])
+	by candle.pha.pa.us (8.8.5/8.8.5) with ESMTP id MAA04456
+	for <maillist@candle.pha.pa.us>; Mon, 3 Nov 1997 12:00:40 -0500 (EST)
+Received: from localhost (majordom@localhost) by hub.org (8.8.5/8.7.5) with SMTP id LAA26054; Mon, 3 Nov 1997 11:46:49 -0500 (EST)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Mon, 03 Nov 1997 11:46:33 -0500 (EST)
+Received: (from majordom@localhost) by hub.org (8.8.5/8.7.5) id LAA25932 for pgsql-hackers-outgoing; Mon, 3 Nov 1997 11:46:30 -0500 (EST)
+Received: from orion.SAPserv.Hamburg.dsh.de (polaris.sapserv.debis.de [53.2.131.8]) by hub.org (8.8.5/8.7.5) with SMTP id LAA25750 for <hackers@postgreSQL.org>; Mon, 3 Nov 1997 11:45:53 -0500 (EST)
+Received: by orion.SAPserv.Hamburg.dsh.de 
+	(Linux Smail3.1.29.1 #1)}
+	id m0xSPfE-000BGZC; Mon, 3 Nov 97 17:47 MET
+Message-Id: <m0xSPfE-000BGZC@orion.SAPserv.Hamburg.dsh.de>
+From: wieck@sapserv.debis.de
+Subject: Re: [HACKERS] PERFORMANCE and Good Bye, Time Travel!
+To: maillist@candle.pha.pa.us (Bruce Momjian)
+Date: Mon, 3 Nov 1997 17:47:43 +0100 (MET)
+Cc: vadim@sable.krasnoyarsk.su, marc@fallon.classyad.com,
+        hackers@postgreSQL.org
+Reply-To: wieck@sapserv.debis.de (Jan Wieck)
+In-Reply-To: <199711031542.KAA02525@candle.pha.pa.us> from "Bruce Momjian" at Nov 3, 97 10:42:03 am
+X-Mailer: ELM [version 2.4 PL25]
+MIME-Version: 1.0
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: 8bit
+Sender: owner-hackers@hub.org
+Precedence: bulk
+Status: OR
+
+>
+> > > I don't know the answer, but I suspect that the commercial databases
+> > > don't "fsync" the way pgsql does.
+> >
+> > Could someone try 1000 int4 inserts using postgres and
+> > some commercial database (on the same machine) ?
+>
+> I have been thinking about this since seeing the performance change
+> with/without fsync.
+>
+> Commerical databases usually do a log write every 5 or 15 minutes, and
+> guarantee the logs will contain everything up to this time interval.
+>
+
+    Without  fsync  PostgreSQL  would  only  loose data if the OS
+    crashes between the last write operation of a backend and the
+    next regular update sync. This is seldom but if it happens it
+    really hurts.
+
+    A database can omit fsync on data files (e.g. tablespaces) if
+    it  writes  a  redo  log. With that redo log, a backup can be
+    restored and than all transactions since the backup redone.
+
+    PostgreSQL doesn't write such a redo  log.  So  an  OS  crash
+    after  the fsync of pg_log could corrupt the database without
+    a chance to recover.
+
+    Isn't it time to get an (optional) redo log. I don't  exactly
+    know all the places where our datafiles can get modified, but
+    I hope this is only done  in  the  heap  access  methods  and
+    vacuum.  So these are the places from where the redo log data
+    comes from (plus transaction commit/rollback).
+
+
+Until later, Jan
+
+--
+#define OPINIONS "they are all mine - not those of debis or daimler-benz"
+
+#======================================================================#
+# It's easier to get forgiveness for being wrong than for being right. #
+# Let's break this rule - forgive me.                                  #
+#================================== wieck@sapserv.debis.de (Jan Wieck) #
+
+
+
+
+From owner-pgsql-hackers@hub.org Mon Nov  3 14:01:06 1997
+Received: from renoir.op.net (root@renoir.op.net [206.84.208.4])
+	by candle.pha.pa.us (8.8.5/8.8.5) with ESMTP id OAA06775
+	for <maillist@candle.pha.pa.us>; Mon, 3 Nov 1997 14:01:04 -0500 (EST)
+Received: from hub.org (hub.org [209.47.148.200]) by renoir.op.net (o1/$ Revision: 1.14 $) with ESMTP id NAA22235 for <maillist@candle.pha.pa.us>; Mon, 3 Nov 1997 13:43:15 -0500 (EST)
+Received: from localhost (majordom@localhost) by hub.org (8.8.5/8.7.5) with SMTP id NAA11482; Mon, 3 Nov 1997 13:32:40 -0500 (EST)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Mon, 03 Nov 1997 13:32:02 -0500 (EST)
+Received: (from majordom@localhost) by hub.org (8.8.5/8.7.5) id NAA11204 for pgsql-hackers-outgoing; Mon, 3 Nov 1997 13:31:58 -0500 (EST)
+Received: from candle.pha.pa.us (root@s3-03.ppp.op.net [206.84.210.195]) by hub.org (8.8.5/8.7.5) with ESMTP id NAA11119 for <hackers@postgreSQL.org>; Mon, 3 Nov 1997 13:31:44 -0500 (EST)
+Received: (from maillist@localhost)
+	by candle.pha.pa.us (8.8.5/8.8.5) id MAA05464;
+	Mon, 3 Nov 1997 12:59:01 -0500 (EST)
+From: Bruce Momjian <maillist@candle.pha.pa.us>
+Message-Id: <199711031759.MAA05464@candle.pha.pa.us>
+Subject: Re: [HACKERS] PERFORMANCE and Good Bye, Time Travel!
+To: wieck@sapserv.debis.de
+Date: Mon, 3 Nov 1997 12:59:01 -0500 (EST)
+Cc: vadim@sable.krasnoyarsk.su, marc@fallon.classyad.com,
+        hackers@postgreSQL.org
+In-Reply-To: <m0xSPfE-000BGZC@orion.SAPserv.Hamburg.dsh.de> from "wieck@sapserv.debis.de" at Nov 3, 97 05:47:43 pm
+X-Mailer: ELM [version 2.4 PL25]
+MIME-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Sender: owner-hackers@hub.org
+Precedence: bulk
+Status: OR
+
+> 
+> >
+> > > > I don't know the answer, but I suspect that the commercial databases
+> > > > don't "fsync" the way pgsql does.
+> > >
+> > > Could someone try 1000 int4 inserts using postgres and
+> > > some commercial database (on the same machine) ?
+> >
+> > I have been thinking about this since seeing the performance change
+> > with/without fsync.
+> >
+> > Commerical databases usually do a log write every 5 or 15 minutes, and
+> > guarantee the logs will contain everything up to this time interval.
+> >
+> 
+>     Without  fsync  PostgreSQL  would  only  loose data if the OS
+>     crashes between the last write operation of a backend and the
+>     next regular update sync. This is seldom but if it happens it
+>     really hurts.
+> 
+>     A database can omit fsync on data files (e.g. tablespaces) if
+>     it  writes  a  redo  log. With that redo log, a backup can be
+>     restored and than all transactions since the backup redone.
+> 
+>     PostgreSQL doesn't write such a redo  log.  So  an  OS  crash
+>     after  the fsync of pg_log could corrupt the database without
+>     a chance to recover.
+> 
+>     Isn't it time to get an (optional) redo log. I don't  exactly
+>     know all the places where our datafiles can get modified, but
+>     I hope this is only done  in  the  heap  access  methods  and
+>     vacuum.  So these are the places from where the redo log data
+>     comes from (plus transaction commit/rollback).
+> 
+
+Yes, but because we are a non-over-write database, I don't see why we
+can't just do this without a redo log.
+
+Every five minutes, we fsync() all dirty pages, mark all completed
+transactions as fsync'ed in pg_log, and fsync() pg_log.
+
+On postmaster startup, any transaction marked as completed, but not
+marked as fsync'ed gets marked as aborted.
+
+Of course, all vacuum operations would have to be fsync'ed.
+
+Comments?
+
+-- 
+Bruce Momjian
+maillist@candle.pha.pa.us
+
+
+From owner-pgsql-hackers@hub.org Mon Nov  3 16:46:01 1997
+Received: from renoir.op.net (root@renoir.op.net [206.84.208.4])
+	by candle.pha.pa.us (8.8.5/8.8.5) with ESMTP id QAA10292
+	for <maillist@candle.pha.pa.us>; Mon, 3 Nov 1997 16:45:59 -0500 (EST)
+Received: from hub.org (hub.org [209.47.148.200]) by renoir.op.net (o1/$ Revision: 1.14 $) with ESMTP id QAA02040 for <maillist@candle.pha.pa.us>; Mon, 3 Nov 1997 16:42:40 -0500 (EST)
+Received: from localhost (majordom@localhost) by hub.org (8.8.5/8.7.5) with SMTP id QAA17422; Mon, 3 Nov 1997 16:34:28 -0500 (EST)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Mon, 03 Nov 1997 16:34:10 -0500 (EST)
+Received: (from majordom@localhost) by hub.org (8.8.5/8.7.5) id QAA17210 for pgsql-hackers-outgoing; Mon, 3 Nov 1997 16:34:06 -0500 (EST)
+Received: from fallon.classyad.com (root@classyad.com [152.160.43.1]) by hub.org (8.8.5/8.7.5) with ESMTP id QAA16690 for <hackers@postgreSQL.org>; Mon, 3 Nov 1997 16:33:27 -0500 (EST)
+Received: from fallon.classyad.com (marc@fallon.classyad.com [152.160.43.1]) by fallon.classyad.com (8.8.5/8.7.3) with SMTP id RAA32498; Mon, 3 Nov 1997 17:33:42 -0500
+Date: Mon, 3 Nov 1997 17:33:42 -0500 (EST)
+From: Marc Howard Zuckman <marc@fallon.classyad.com>
+To: Bruce Momjian <maillist@candle.pha.pa.us>
+cc: wieck@sapserv.debis.de, vadim@sable.krasnoyarsk.su, hackers@postgreSQL.org
+Subject: Re: [HACKERS] PERFORMANCE and Good Bye, Time Travel!
+In-Reply-To: <199711031759.MAA05464@candle.pha.pa.us>
+Message-ID: <Pine.LNX.3.95.971103173129.32055B-100000@fallon.classyad.com>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Sender: owner-hackers@hub.org
+Precedence: bulk
+Status: OR
+
+On Mon, 3 Nov 1997, Bruce Momjian wrote:
+
+> > 
+> > >
+> > > > > I don't know the answer, but I suspect that the commercial databases
+> > > > > don't "fsync" the way pgsql does.
+> > > >
+> > > > Could someone try 1000 int4 inserts using postgres and
+> > > > some commercial database (on the same machine) ?
+> > >
+> > > I have been thinking about this since seeing the performance change
+> > > with/without fsync.
+> > >
+> > > Commerical databases usually do a log write every 5 or 15 minutes, and
+> > > guarantee the logs will contain everything up to this time interval.
+> > >
+> > 
+> >     Without  fsync  PostgreSQL  would  only  loose data if the OS
+> >     crashes between the last write operation of a backend and the
+> >     next regular update sync. This is seldom but if it happens it
+> >     really hurts.
+> > 
+> >     A database can omit fsync on data files (e.g. tablespaces) if
+> >     it  writes  a  redo  log. With that redo log, a backup can be
+> >     restored and than all transactions since the backup redone.
+> > 
+> >     PostgreSQL doesn't write such a redo  log.  So  an  OS  crash
+> >     after  the fsync of pg_log could corrupt the database without
+> >     a chance to recover.
+> > 
+> >     Isn't it time to get an (optional) redo log. I don't  exactly
+> >     know all the places where our datafiles can get modified, but
+> >     I hope this is only done  in  the  heap  access  methods  and
+> >     vacuum.  So these are the places from where the redo log data
+> >     comes from (plus transaction commit/rollback).
+> > 
+> 
+> Yes, but because we are a non-over-write database, I don't see why we
+> can't just do this without a redo log.
+
+Because if the hard drive is the reason for the failure (instead of 
+power out, OS bites dust, etc), the database won't be of much help.
+
+The redo log should be on a device different than the database.
+
+Marc Zuckman
+marc@fallon.classyad.com
+
+_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
+_     Visit The Home and Condo MarketPlace		      _
+_          http://www.ClassyAd.com			      _
+_							      _
+_  FREE basic property listings/advertisements and searches.  _
+_							      _
+_  Try our premium, yet inexpensive services for a real	      _
+_   selling or buying edge!				      _
+_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
+
+
+
+From maillist Mon Nov  3 22:59:31 1997
+Received: (from maillist@localhost)
+	by candle.pha.pa.us (8.8.5/8.8.5) id WAA16264;
+	Mon, 3 Nov 1997 22:59:31 -0500 (EST)
+From: Bruce Momjian <maillist>
+Message-Id: <199711040359.WAA16264@candle.pha.pa.us>
+Subject: Re: [HACKERS] PERFORMANCE and Good Bye, Time Travel!
+To: maillist@candle.pha.pa.us (Bruce Momjian)
+Date: Mon, 3 Nov 1997 22:59:30 -0500 (EST)
+Cc: vadim@sable.krasnoyarsk.su, marc@fallon.classyad.com,
+        hackers@postgreSQL.org
+In-Reply-To: <199711031542.KAA02525@candle.pha.pa.us> from "Bruce Momjian" at Nov 3, 97 10:42:03 am
+X-Mailer: ELM [version 2.4 PL25]
+MIME-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Status: OR
+
+> 
+> > > I don't know the answer, but I suspect that the commercial databases
+> > > don't "fsync" the way pgsql does.
+> > 
+> > Could someone try 1000 int4 inserts using postgres and 
+> > some commercial database (on the same machine) ?
+> 
+> I have been thinking about this since seeing the performance change
+> with/without fsync.
+> 
+> Commercial databases usually do a log write every 5 or 15 minutes, and
+> guarantee the logs will contain everything up to this time interval.
+> 
+> Couldn't we have some such mechanism?  Usually they have raw space, so
+> they can control when the data is hitting the disk.   Using a file
+> system, some of it may be getting to the disk without our knowing it.
+> 
+> What exactly is a scenario where lack of doing explicit fsync's will
+> cause data corruption, rather than just lost data from the past few
+> minutes?
+> 
+> I think Vadim has gotten fsync's down to fsync'ing the modified data
+> page, and pg_log.
+> 
+> Let's suppose we did not fsync.  There could be cases where pg_log was
+> fsync'ed by the OS, and some of the modified data pages are fyncs'ed by
+> the OS, but not others.  This would leave us with a partial transaction.
+> 
+> However, let's suppose we prevent pg_log from being fsync'ed somehow. 
+> Then, because we have a no-overwrite database, we could keep control of
+> this, and write of some data pages, but not others would not cause us
+> problems because the pg_log would show all such transactions, which had
+> not had all their modified data pages fsync'ed, as non-committed.
+> 
+> Perhaps we can even set a flag in pg_log every five minutes to indicate
+> whether all buffers for the page have been flushed?  That way we could
+> not have to worry about preventing flushing of pg_log.
+> 
+> Comments?
+
+OK, here is a more formal description of what I am suggesting.  It will
+give us commercial dbms reliability with no-fsync performance. 
+Commercial dbms's usually only give restore up to 5 minutes before the
+crash, and this is what I am suggesting.  If we can do this, we can
+remove the no-fsync option.
+
+First, lets suppose there exists a shared queue that is visible to all
+backends and the postmaster that allows transaction id's to be added to
+the queue.  We also add a bit to the pg_log record called 'been_synced'
+that is initially false.
+
+OK, once a backend starts a transaction, it puts a transaction id in
+pg_log.  Once the transaction is finished, it is marked as committed. 
+At the same time, we now put the transaction id on the shared queue.
+
+Every five minutes, or as defined by the administrator, the postmaster
+does a sync() call.  On my OS, anyone use can call sync, and I think
+this is typical.  update/pagecleaner does this every 30 seconds anyway,
+so it is no big deal for the postmaster to call it every 5 minutes.  The
+nice thing about this is that the OS does the syncing of all the dirty
+pages for us.  (An alarm() call can set up this 5 minute timing.)
+
+The postmaster then locks the shared transaction id queue, makes a copy
+of the entries in the queue, clears the queue, and unlocks the queue. 
+It does this so no one else modifies the queue while it is being
+cleared.
+
+The postmaster then goes through pg_log, and marks each transaction as
+'been_synced'.
+
+The postmaster also performs this on shutdown.
+
+On postmaster startup, all transactions are checked and any transaction
+that is marked as committed but not 'been_synced' is marked as not
+committed.  In this way, we prevent non-synced or partially synced
+transactions from being used.
+
+Of course, vacuum would have to do normal fsyncs because it is removing
+the transaction log.
+
+We need the shared transaction id queue because there is no way to find
+the newly committed transactions since the last sync.  A transaction
+can last for hours.
+
+-- 
+Bruce Momjian
+maillist@candle.pha.pa.us
+
+From owner-pgsql-hackers@hub.org Tue Nov  4 02:13:08 1997
+Received: from hub.org (hub.org [209.47.148.200])
+	by candle.pha.pa.us (8.8.5/8.8.5) with ESMTP id CAA17544
+	for <maillist@candle.pha.pa.us>; Tue, 4 Nov 1997 02:13:06 -0500 (EST)
+Received: from localhost (majordom@localhost) by hub.org (8.8.5/8.7.5) with SMTP id CAA14126; Tue, 4 Nov 1997 02:07:55 -0500 (EST)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Tue, 04 Nov 1997 02:04:59 -0500 (EST)
+Received: (from majordom@localhost) by hub.org (8.8.5/8.7.5) id CAA12859 for pgsql-hackers-outgoing; Tue, 4 Nov 1997 02:04:51 -0500 (EST)
+Received: from orion.SAPserv.Hamburg.dsh.de (polaris.sapserv.debis.de [53.2.131.8]) by hub.org (8.8.5/8.7.5) with SMTP id CAA12625 for <hackers@postgreSQL.org>; Tue, 4 Nov 1997 02:04:12 -0500 (EST)
+Received: by orion.SAPserv.Hamburg.dsh.de 
+	(Linux Smail3.1.29.1 #1)}
+	id m0xSd44-000BFQC; Tue, 4 Nov 97 08:06 MET
+Message-Id: <m0xSd44-000BFQC@orion.SAPserv.Hamburg.dsh.de>
+From: wieck@sapserv.debis.de
+Subject: Re: [HACKERS] PERFORMANCE and Good Bye, Time Travel!
+To: maillist@candle.pha.pa.us (Bruce Momjian)
+Date: Tue, 4 Nov 1997 08:06:16 +0100 (MET)
+Cc: maillist@candle.pha.pa.us, vadim@sable.krasnoyarsk.su,
+        marc@fallon.classyad.com, hackers@postgreSQL.org
+Reply-To: wieck@sapserv.debis.de (Jan Wieck)
+In-Reply-To: <199711040359.WAA16264@candle.pha.pa.us> from "Bruce Momjian" at Nov 3, 97 10:59:30 pm
+X-Mailer: ELM [version 2.4 PL25]
+MIME-Version: 1.0
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: 8bit
+Sender: owner-hackers@hub.org
+Precedence: bulk
+Status: OR
+
+> OK, here is a more formal description of what I am suggesting.  It will
+> give us commercial dbms reliability with no-fsync performance.
+> Commercial dbms's usually only give restore up to 5 minutes before the
+> crash, and this is what I am suggesting.  If we can do this, we can
+> remove the no-fsync option.
+
+    I'm not 100% sure but as far as I know Oracle, it can recover
+    up to the last committed transaction using  the  online  redo
+    logs.   And even if commercial dbms's aren't able to do that,
+    it should be our target.
+
+> [description about transaction queue]
+
+    This all  depends  on  the  fact  that  PostgreSQL  is  a  no
+    overwrite  dbms.  Otherwise the space of deleted tuples might
+    get overwritten by later transactions and the information  is
+    finally lost.
+
+    Another  issue:  All we up to now though of are crashes where
+    the database files are still usable after restart.  But  take
+    the  simple  case  of a write error. A new bad block or track
+    will get remapped (in some way) but the data in it  is  lost.
+    So  we  end  up  with  one or more totally corrupted database
+    files. And I don't trust mirrored  disks  farer  than  I  can
+    throw  them.  A  bug  in the OS or a memory failure (many new
+    PeeCee boards don't support parity and even with parity a two
+    bit  failure  is still the wrong data but with a valid parity
+    bit) can also currupt the data.
+
+    I still prefer redo logs. They should reside on  a  different
+    disk  and the possibility of loosing the database files along
+    with the redo log is very small.
+
+
+Until later, Jan
+
+--
+#define OPINIONS "they are all mine - not those of debis or daimler-benz"
+
+#======================================================================#
+# It's easier to get forgiveness for being wrong than for being right. #
+# Let's break this rule - forgive me.                                  #
+#================================== wieck@sapserv.debis.de (Jan Wieck) #
+
+
+
+
+From vadim@sable.krasnoyarsk.su Tue Nov  4 04:12:50 1997
+Received: from renoir.op.net (root@renoir.op.net [206.84.208.4])
+	by candle.pha.pa.us (8.8.5/8.8.5) with ESMTP id EAA18487
+	for <maillist@candle.pha.pa.us>; Tue, 4 Nov 1997 04:12:48 -0500 (EST)
+Received: from www.krasnet.ru (www.krasnet.ru [193.125.44.86]) by renoir.op.net (o1/$ Revision: 1.14 $) with ESMTP id EAA03152 for <maillist@candle.pha.pa.us>; Tue, 4 Nov 1997 04:12:06 -0500 (EST)
+Received: from www.krasnet.ru (www.krasnet.ru [193.125.44.86]) by www.krasnet.ru (8.8.7/8.7.3) with SMTP id QAA20591; Tue, 4 Nov 1997 16:14:06 +0700 (KRS)
+Sender: root@www.krasnet.ru
+Message-ID: <345EE75D.398A68D@sable.krasnoyarsk.su>
+Date: Tue, 04 Nov 1997 16:14:05 +0700
+From: "Vadim B. Mikheev" <vadim@sable.krasnoyarsk.su>
+Organization: ITTS (Krasnoyarsk)
+X-Mailer: Mozilla 3.01 (X11; I; FreeBSD 2.2.5-RELEASE i386)
+MIME-Version: 1.0
+To: Bruce Momjian <maillist@candle.pha.pa.us>
+CC: marc@fallon.classyad.com, hackers@postgreSQL.org
+Subject: Re: [HACKERS] PERFORMANCE and Good Bye, Time Travel!
+References: <199711040359.WAA16264@candle.pha.pa.us>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Status: OR
+
+Bruce Momjian wrote:
+> 
+> OK, here is a more formal description of what I am suggesting.  It will
+> give us commercial dbms reliability with no-fsync performance.
+> Commercial dbms's usually only give restore up to 5 minutes before the
+                                      ^^^^^^^^^^^^^^^^^^^^^^^
+I'm sure that this is not true!
+If on-line redo_file is damaged then you have
+single ability: restore your last backup.
+In all other cases database will be recovered up to the last
+committed transaction automatically!
+
+DBMS-s using WAL have to fsync only redo file on commit
+(and they do it!), non-overwriting systems have to
+fsync data files and transaction log. 
+
+We could optimize fsync-s for multi-user environment: do not
+fsync when we're ensured that our changes flushed to disk by
+another backend.
+
+> crash, and this is what I am suggesting.  If we can do this, we can
+> remove the no-fsync option.
+> 
+...
+> 
+> On postmaster startup, all transactions are checked and any transaction
+> that is marked as committed but not 'been_synced' is marked as not
+> committed.  In this way, we prevent non-synced or partially synced
+> transactions from being used.
+
+And what should users (ensured that their transaction are
+committed) do in this case ?
+
+Vadim
+
+From owner-pgsql-hackers@hub.org Tue Nov  4 04:21:04 1997
+Received: from hub.org (hub.org [209.47.148.200])
+	by candle.pha.pa.us (8.8.5/8.8.5) with ESMTP id EAA18536
+	for <maillist@candle.pha.pa.us>; Tue, 4 Nov 1997 04:21:01 -0500 (EST)
+Received: from localhost (majordom@localhost) by hub.org (8.8.5/8.7.5) with SMTP id EAA15551; Tue, 4 Nov 1997 04:15:15 -0500 (EST)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Tue, 04 Nov 1997 04:14:23 -0500 (EST)
+Received: (from majordom@localhost) by hub.org (8.8.5/8.7.5) id EAA14464 for pgsql-hackers-outgoing; Tue, 4 Nov 1997 04:14:18 -0500 (EST)
+Received: from www.krasnet.ru (www.krasnet.ru [193.125.44.86]) by hub.org (8.8.5/8.7.5) with ESMTP id EAA13437 for <hackers@postgreSQL.org>; Tue, 4 Nov 1997 04:13:33 -0500 (EST)
+Received: from www.krasnet.ru (www.krasnet.ru [193.125.44.86]) by www.krasnet.ru (8.8.7/8.7.3) with SMTP id QAA20591; Tue, 4 Nov 1997 16:14:06 +0700 (KRS)
+Message-ID: <345EE75D.398A68D@sable.krasnoyarsk.su>
+Date: Tue, 04 Nov 1997 16:14:05 +0700
+From: "Vadim B. Mikheev" <vadim@sable.krasnoyarsk.su>
+Organization: ITTS (Krasnoyarsk)
+X-Mailer: Mozilla 3.01 (X11; I; FreeBSD 2.2.5-RELEASE i386)
+MIME-Version: 1.0
+To: Bruce Momjian <maillist@candle.pha.pa.us>
+CC: marc@fallon.classyad.com, hackers@postgreSQL.org
+Subject: Re: [HACKERS] PERFORMANCE and Good Bye, Time Travel!
+References: <199711040359.WAA16264@candle.pha.pa.us>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Sender: owner-hackers@hub.org
+Precedence: bulk
+Status: OR
+
+Bruce Momjian wrote:
+> 
+> OK, here is a more formal description of what I am suggesting.  It will
+> give us commercial dbms reliability with no-fsync performance.
+> Commercial dbms's usually only give restore up to 5 minutes before the
+                                      ^^^^^^^^^^^^^^^^^^^^^^^
+I'm sure that this is not true!
+If on-line redo_file is damaged then you have
+single ability: restore your last backup.
+In all other cases database will be recovered up to the last
+committed transaction automatically!
+
+DBMS-s using WAL have to fsync only redo file on commit
+(and they do it!), non-overwriting systems have to
+fsync data files and transaction log. 
+
+We could optimize fsync-s for multi-user environment: do not
+fsync when we're ensured that our changes flushed to disk by
+another backend.
+
+> crash, and this is what I am suggesting.  If we can do this, we can
+> remove the no-fsync option.
+> 
+...
+> 
+> On postmaster startup, all transactions are checked and any transaction
+> that is marked as committed but not 'been_synced' is marked as not
+> committed.  In this way, we prevent non-synced or partially synced
+> transactions from being used.
+
+And what should users (ensured that their transaction are
+committed) do in this case ?
+
+Vadim
+
+
+From owner-pgsql-hackers@hub.org Tue Nov  4 06:43:00 1997
+Received: from hub.org (hub.org [209.47.148.200])
+	by candle.pha.pa.us (8.8.5/8.8.5) with ESMTP id GAA19743
+	for <maillist@candle.pha.pa.us>; Tue, 4 Nov 1997 06:42:57 -0500 (EST)
+Received: from localhost (majordom@localhost) by hub.org (8.8.5/8.7.5) with SMTP id GAA10352; Tue, 4 Nov 1997 06:36:08 -0500 (EST)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Tue, 04 Nov 1997 06:35:42 -0500 (EST)
+Received: (from majordom@localhost) by hub.org (8.8.5/8.7.5) id GAA10158 for pgsql-hackers-outgoing; Tue, 4 Nov 1997 06:35:37 -0500 (EST)
+Received: from candle.pha.pa.us (maillist@s3-03.ppp.op.net [206.84.210.195]) by hub.org (8.8.5/8.7.5) with ESMTP id GAA10096 for <hackers@postgreSQL.org>; Tue, 4 Nov 1997 06:35:27 -0500 (EST)
+Received: (from maillist@localhost)
+	by candle.pha.pa.us (8.8.5/8.8.5) id GAA19665;
+	Tue, 4 Nov 1997 06:35:10 -0500 (EST)
+From: Bruce Momjian <maillist@candle.pha.pa.us>
+Message-Id: <199711041135.GAA19665@candle.pha.pa.us>
+Subject: Re: [HACKERS] PERFORMANCE and Good Bye, Time Travel!
+To: wieck@sapserv.debis.de
+Date: Tue, 4 Nov 1997 06:35:10 -0500 (EST)
+Cc: hackers@postgreSQL.org (PostgreSQL-development)
+In-Reply-To: <m0xSd44-000BFQC@orion.SAPserv.Hamburg.dsh.de> from "wieck@sapserv.debis.de" at Nov 4, 97 08:06:16 am
+X-Mailer: ELM [version 2.4 PL25]
+MIME-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Sender: owner-hackers@hub.org
+Precedence: bulk
+Status: OR
+
+> 
+> > OK, here is a more formal description of what I am suggesting.  It will
+> > give us commercial dbms reliability with no-fsync performance.
+> > Commercial dbms's usually only give restore up to 5 minutes before the
+> > crash, and this is what I am suggesting.  If we can do this, we can
+> > remove the no-fsync option.
+> 
+>     I'm not 100% sure but as far as I know Oracle, it can recover
+>     up to the last committed transaction using  the  online  redo
+>     logs.   And even if commercial dbms's aren't able to do that,
+>     it should be our target.
+> 
+> > [description about transaction queue]
+> 
+>     This all  depends  on  the  fact  that  PostgreSQL  is  a  no
+>     overwrite  dbms.  Otherwise the space of deleted tuples might
+>     get overwritten by later transactions and the information  is
+>     finally lost.
+> 
+>     Another  issue:  All we up to now though of are crashes where
+>     the database files are still usable after restart.  But  take
+>     the  simple  case  of a write error. A new bad block or track
+>     will get remapped (in some way) but the data in it  is  lost.
+>     So  we  end  up  with  one or more totally corrupted database
+>     files. And I don't trust mirrored  disks  farer  than  I  can
+>     throw  them.  A  bug  in the OS or a memory failure (many new
+>     PeeCee boards don't support parity and even with parity a two
+>     bit  failure  is still the wrong data but with a valid parity
+>     bit) can also currupt the data.
+> 
+>     I still prefer redo logs. They should reside on  a  different
+>     disk  and the possibility of loosing the database files along
+>     with the redo log is very small.
+
+I have been thinking about re-do logs, and I think it is a good idea. 
+It would not be hard to have the queries spit out to a separate file
+configurable by the user.
+
+-- 
+Bruce Momjian
+maillist@candle.pha.pa.us
+
+
+From owner-pgsql-hackers@hub.org Tue Nov  4 07:31:01 1997
+Received: from renoir.op.net (root@renoir.op.net [206.84.208.4])
+	by candle.pha.pa.us (8.8.5/8.8.5) with ESMTP id HAA22051
+	for <maillist@candle.pha.pa.us>; Tue, 4 Nov 1997 07:30:59 -0500 (EST)
+Received: from hub.org (hub.org [209.47.148.200]) by renoir.op.net (o1/$ Revision: 1.14 $) with ESMTP id HAA07444 for <maillist@candle.pha.pa.us>; Tue, 4 Nov 1997 07:25:14 -0500 (EST)
+Received: from localhost (majordom@localhost) by hub.org (8.8.5/8.7.5) with SMTP id HAA08818; Tue, 4 Nov 1997 07:03:30 -0500 (EST)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Tue, 04 Nov 1997 07:02:44 -0500 (EST)
+Received: (from majordom@localhost) by hub.org (8.8.5/8.7.5) id HAA08418 for pgsql-hackers-outgoing; Tue, 4 Nov 1997 07:02:29 -0500 (EST)
+Received: from candle.pha.pa.us (root@s3-03.ppp.op.net [206.84.210.195]) by hub.org (8.8.5/8.7.5) with ESMTP id HAA08331 for <hackers@postgreSQL.org>; Tue, 4 Nov 1997 07:02:07 -0500 (EST)
+Received: (from maillist@localhost)
+	by candle.pha.pa.us (8.8.5/8.8.5) id GAA21484;
+	Tue, 4 Nov 1997 06:50:24 -0500 (EST)
+From: Bruce Momjian <maillist@candle.pha.pa.us>
+Message-Id: <199711041150.GAA21484@candle.pha.pa.us>
+Subject: Re: [HACKERS] PERFORMANCE and Good Bye, Time Travel!
+To: vadim@sable.krasnoyarsk.su (Vadim B. Mikheev)
+Date: Tue, 4 Nov 1997 06:50:24 -0500 (EST)
+Cc: marc@fallon.classyad.com, hackers@postgreSQL.org
+In-Reply-To: <345EE75D.398A68D@sable.krasnoyarsk.su> from "Vadim B. Mikheev" at Nov 4, 97 04:14:05 pm
+X-Mailer: ELM [version 2.4 PL25]
+MIME-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Sender: owner-hackers@hub.org
+Precedence: bulk
+Status: OR
+
+> 
+> Bruce Momjian wrote:
+> > 
+> > OK, here is a more formal description of what I am suggesting.  It will
+> > give us commercial dbms reliability with no-fsync performance.
+> > Commercial dbms's usually only give restore up to 5 minutes before the
+>                                       ^^^^^^^^^^^^^^^^^^^^^^^
+> I'm sure that this is not true!
+
+You may be right.  This five minute figure is when you restore from your
+previous backup, then restore from the log file.
+
+Can't we do something like sync every 5 seconds, rather than after every
+transaction?  It just seems like such overkill.
+
+Actually, I found a problem with my description.  Because pg_log is not
+fsync'ed, after a crash, pages with new transactions could have been
+flushed to disk, but not the pg_log table that contains the transaction
+ids.  The problem is that the new backend could assign a transaction id
+that is already in use.
+
+We could set a flag upon successful shutdown, and if it is not set on
+reboot, either do a vacuum to find the max transaction id, and
+invalidate all them not in pg_log as synced, or increase the next
+transaction id to some huge number and invalidate all them in between.
+
+
+> If on-line redo_file is damaged then you have
+> single ability: restore your last backup.
+> In all other cases database will be recovered up to the last
+> committed transaction automatically!
+> 
+> DBMS-s using WAL have to fsync only redo file on commit
+> (and they do it!), non-overwriting systems have to
+> fsync data files and transaction log. 
+> 
+> We could optimize fsync-s for multi-user environment: do not
+> fsync when we're ensured that our changes flushed to disk by
+> another backend.
+> 
+> > crash, and this is what I am suggesting.  If we can do this, we can
+> > remove the no-fsync option.
+> > 
+> ...
+> > 
+> > On postmaster startup, all transactions are checked and any transaction
+> > that is marked as committed but not 'been_synced' is marked as not
+> > committed.  In this way, we prevent non-synced or partially synced
+> > transactions from being used.
+> 
+> And what should users (ensured that their transaction are
+> committed) do in this case ?
+> 
+> Vadim
+> 
+> 
+
+
+-- 
+Bruce Momjian
+maillist@candle.pha.pa.us
+
+
+From wieck@sapserv.debis.de Tue Nov  4 07:01:00 1997
+Received: from renoir.op.net (root@renoir.op.net [206.84.208.4])
+	by candle.pha.pa.us (8.8.5/8.8.5) with ESMTP id HAA21697
+	for <maillist@candle.pha.pa.us>; Tue, 4 Nov 1997 07:00:58 -0500 (EST)
+From: wieck@sapserv.debis.de
+Received: from orion.SAPserv.Hamburg.dsh.de (polaris.sapserv.debis.de [53.2.131.8]) by renoir.op.net (o1/$ Revision: 1.14 $) with SMTP id GAA06401 for <maillist@candle.pha.pa.us>; Tue, 4 Nov 1997 06:48:25 -0500 (EST)
+Received: by orion.SAPserv.Hamburg.dsh.de 
+	(Linux Smail3.1.29.1 #1)}
+	id m0xShVQ-000BGZC; Tue, 4 Nov 97 12:50 MET
+Message-Id: <m0xShVQ-000BGZC@orion.SAPserv.Hamburg.dsh.de>
+Subject: Re: [HACKERS] PERFORMANCE and Good Bye, Time Travel!
+To: maillist@candle.pha.pa.us (Bruce Momjian)
+Date: Tue, 4 Nov 1997 12:50:45 +0100 (MET)
+Cc: wieck@sapserv.debis.de, hackers@postgreSQL.org
+Reply-To: wieck@sapserv.debis.de (Jan Wieck)
+In-Reply-To: <199711041135.GAA19665@candle.pha.pa.us> from "Bruce Momjian" at Nov 4, 97 06:35:10 am
+X-Mailer: ELM [version 2.4 PL25]
+MIME-Version: 1.0
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: 8bit
+Status: OR
+
+
+Bruce Momjian wrote:
+> I have been thinking about re-do logs, and I think it is a good idea.
+> It would not be hard to have the queries spit out to a separate file
+> configurable by the user.
+
+    This  way the recovery process will be very complicated. When
+    multiple  backends  run  concurrently,  there  are   multiple
+    transactions  active  at  the  same time. And what tuples are
+    affected by an update e.g. depends much on the timing.
+
+    I had something different in mind. The redo log contains  the
+    information  from  the  executor (e.g. the transactionId, the
+    tupleId and the new tuple values when calling  ExecReplace())
+    and  the information which transactions commit and which not.
+    When recovering,  those  operations  where  the  transactions
+    committed are again passed to the executors functions that do
+    the real updates with the values from the logfile.
+
+
+Until later, Jan
+
+--
+#define OPINIONS "they are all mine - not those of debis or daimler-benz"
+
+#======================================================================#
+# It's easier to get forgiveness for being wrong than for being right. #
+# Let's break this rule - forgive me.                                  #
+#================================== wieck@sapserv.debis.de (Jan Wieck) #
+
+
+
+From owner-pgsql-hackers@hub.org Tue Nov  4 07:30:59 1997
+Received: from renoir.op.net (root@renoir.op.net [206.84.208.4])
+	by candle.pha.pa.us (8.8.5/8.8.5) with ESMTP id HAA22048
+	for <maillist@candle.pha.pa.us>; Tue, 4 Nov 1997 07:30:57 -0500 (EST)
+Received: from hub.org (hub.org [209.47.148.200]) by renoir.op.net (o1/$ Revision: 1.14 $) with ESMTP id HAA07189 for <maillist@candle.pha.pa.us>; Tue, 4 Nov 1997 07:18:02 -0500 (EST)
+Received: from localhost (majordom@localhost) by hub.org (8.8.5/8.7.5) with SMTP id HAA08856; Tue, 4 Nov 1997 07:03:37 -0500 (EST)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Tue, 04 Nov 1997 07:03:03 -0500 (EST)
+Received: (from majordom@localhost) by hub.org (8.8.5/8.7.5) id HAA08487 for pgsql-hackers-outgoing; Tue, 4 Nov 1997 07:02:46 -0500 (EST)
+Received: from candle.pha.pa.us (maillist@s3-03.ppp.op.net [206.84.210.195]) by hub.org (8.8.5/8.7.5) with ESMTP id HAA08192 for <hackers@postgreSQL.org>; Tue, 4 Nov 1997 07:02:02 -0500 (EST)
+Received: (from maillist@localhost)
+	by candle.pha.pa.us (8.8.5/8.8.5) id HAA21653;
+	Tue, 4 Nov 1997 07:00:20 -0500 (EST)
+From: Bruce Momjian <maillist@candle.pha.pa.us>
+Message-Id: <199711041200.HAA21653@candle.pha.pa.us>
+Subject: Re: [HACKERS] PERFORMANCE and Good Bye, Time Travel!u
+To: vadim@sable.krasnoyarsk.su (Vadim B. Mikheev)
+Date: Tue, 4 Nov 1997 07:00:19 -0500 (EST)
+Cc: marc@fallon.classyad.com, hackers@postgreSQL.org
+In-Reply-To: <345EE75D.398A68D@sable.krasnoyarsk.su> from "Vadim B. Mikheev" at Nov 4, 97 04:14:05 pm
+X-Mailer: ELM [version 2.4 PL25]
+MIME-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Sender: owner-hackers@hub.org
+Precedence: bulk
+Status: OR
+
+> 
+> Bruce Momjian wrote:
+> > 
+> > OK, here is a more formal description of what I am suggesting.  It will
+> > give us commercial dbms reliability with no-fsync performance.
+> > Commercial dbms's usually only give restore up to 5 minutes before the
+>                                       ^^^^^^^^^^^^^^^^^^^^^^^
+> I'm sure that this is not true!
+> If on-line redo_file is damaged then you have
+> single ability: restore your last backup.
+> In all other cases database will be recovered up to the last
+> committed transaction automatically!
+
+I doubt commercial dbms's sync to disk after every transaction.  They
+pick a time, maybe five seconds, and see all dirty pages get flushed by
+then.
+
+What they do do is to make certain that you are restored to a consistent
+state, perhaps 15 seconds ago.
+
+-- 
+Bruce Momjian
+maillist@candle.pha.pa.us
+
+
+From vadim@sable.krasnoyarsk.su Tue Nov  4 07:32:45 1997
+Received: from www.krasnet.ru (www.krasnet.ru [193.125.44.86])
+	by candle.pha.pa.us (8.8.5/8.8.5) with ESMTP id HAA22066
+	for <maillist@candle.pha.pa.us>; Tue, 4 Nov 1997 07:32:35 -0500 (EST)
+Received: from www.krasnet.ru (www.krasnet.ru [193.125.44.86]) by www.krasnet.ru (8.8.7/8.7.3) with SMTP id TAA20889; Tue, 4 Nov 1997 19:35:12 +0700 (KRS)
+Sender: root@www.krasnet.ru
+Message-ID: <345F1680.60E33853@sable.krasnoyarsk.su>
+Date: Tue, 04 Nov 1997 19:35:12 +0700
+From: "Vadim B. Mikheev" <vadim@sable.krasnoyarsk.su>
+Organization: ITTS (Krasnoyarsk)
+X-Mailer: Mozilla 3.01 (X11; I; FreeBSD 2.2.5-RELEASE i386)
+MIME-Version: 1.0
+To: Jan Wieck <wieck@sapserv.debis.de>
+CC: Bruce Momjian <maillist@candle.pha.pa.us>, marc@fallon.classyad.com,
+        hackers@postgreSQL.org
+Subject: Re: [HACKERS] PERFORMANCE and Good Bye, Time Travel!
+References: <m0xSd44-000BFQC@orion.SAPserv.Hamburg.dsh.de>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Status: OR
+
+wieck@sapserv.debis.de wrote:
+> 
+>     I still prefer redo logs. They should reside on  a  different
+>     disk  and the possibility of loosing the database files along
+>     with the redo log is very small.
+
+Agreed. This way we could don't fsync data files and 
+fsync both redo and pg_log. This is much faster.
+
+Vadim
+
+From vadim@sable.krasnoyarsk.su Tue Nov  4 08:00:58 1997
+Received: from renoir.op.net (root@renoir.op.net [206.84.208.4])
+	by candle.pha.pa.us (8.8.5/8.8.5) with ESMTP id IAA22371
+	for <maillist@candle.pha.pa.us>; Tue, 4 Nov 1997 08:00:56 -0500 (EST)
+Received: from www.krasnet.ru (www.krasnet.ru [193.125.44.86]) by renoir.op.net (o1/$ Revision: 1.14 $) with ESMTP id HAA08540 for <maillist@candle.pha.pa.us>; Tue, 4 Nov 1997 07:57:25 -0500 (EST)
+Received: from www.krasnet.ru (www.krasnet.ru [193.125.44.86]) by www.krasnet.ru (8.8.7/8.7.3) with SMTP id TAA20935; Tue, 4 Nov 1997 19:59:46 +0700 (KRS)
+Sender: root@www.krasnet.ru
+Message-ID: <345F1C42.1F1A7590@sable.krasnoyarsk.su>
+Date: Tue, 04 Nov 1997 19:59:46 +0700
+From: "Vadim B. Mikheev" <vadim@sable.krasnoyarsk.su>
+Organization: ITTS (Krasnoyarsk)
+X-Mailer: Mozilla 3.01 (X11; I; FreeBSD 2.2.5-RELEASE i386)
+MIME-Version: 1.0
+To: Jan Wieck <wieck@sapserv.debis.de>
+CC: Bruce Momjian <maillist@candle.pha.pa.us>, hackers@postgreSQL.org
+Subject: Re: [HACKERS] PERFORMANCE and Good Bye, Time Travel!
+References: <m0xShVQ-000BGZC@orion.SAPserv.Hamburg.dsh.de>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Status: OR
+
+wieck@sapserv.debis.de wrote:
+> 
+> Bruce Momjian wrote:
+> > I have been thinking about re-do logs, and I think it is a good idea.
+> > It would not be hard to have the queries spit out to a separate file
+> > configurable by the user.
+> 
+>     This  way the recovery process will be very complicated. When
+>     multiple  backends  run  concurrently,  there  are   multiple
+>     transactions  active  at  the  same time. And what tuples are
+>     affected by an update e.g. depends much on the timing.
+> 
+>     I had something different in mind. The redo log contains  the
+>     information  from  the  executor (e.g. the transactionId, the
+>     tupleId and the new tuple values when calling  ExecReplace())
+>     and  the information which transactions commit and which not.
+>     When recovering,  those  operations  where  the  transactions
+>     committed are again passed to the executors functions that do
+>     the real updates with the values from the logfile.
+
+It seems that this is what Oracle does, but Sybase writes queries 
+(with transaction ids, of 'course, and before execution) and 
+begin, commit/abort events <-- this is better for non-overwriting
+system (shorter redo file), but, agreed, recovering is more complicated.
+
+Vadim
+
+From owner-pgsql-hackers@hub.org Tue Nov  4 22:35:45 1997
+Received: from renoir.op.net (root@renoir.op.net [206.84.208.4])
+	by candle.pha.pa.us (8.8.5/8.8.5) with ESMTP id WAA05060
+	for <maillist@candle.pha.pa.us>; Tue, 4 Nov 1997 22:35:43 -0500 (EST)
+Received: from hub.org (hub.org [209.47.148.200]) by renoir.op.net (o1/$ Revision: 1.14 $) with ESMTP id WAA26725 for <maillist@candle.pha.pa.us>; Tue, 4 Nov 1997 22:35:10 -0500 (EST)
+Received: from localhost (majordom@localhost) by hub.org (8.8.5/8.7.5) with SMTP id WAA27875; Tue, 4 Nov 1997 22:23:14 -0500 (EST)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Tue, 04 Nov 1997 22:20:55 -0500 (EST)
+Received: (from majordom@localhost) by hub.org (8.8.5/8.7.5) id WAA24162 for pgsql-hackers-outgoing; Tue, 4 Nov 1997 22:20:50 -0500 (EST)
+Received: from candle.pha.pa.us (maillist@s3-03.ppp.op.net [206.84.210.195]) by hub.org (8.8.5/8.7.5) with ESMTP id WAA22727 for <hackers@postgreSQL.org>; Tue, 4 Nov 1997 22:20:18 -0500 (EST)
+Received: (from maillist@localhost)
+	by candle.pha.pa.us (8.8.5/8.8.5) id WAA04674;
+	Tue, 4 Nov 1997 22:17:52 -0500 (EST)
+From: Bruce Momjian <maillist@candle.pha.pa.us>
+Message-Id: <199711050317.WAA04674@candle.pha.pa.us>
+Subject: Re: [HACKERS] PERFORMANCE and Good Bye, Time Travel!
+To: vadim@sable.krasnoyarsk.su (Vadim B. Mikheev)
+Date: Tue, 4 Nov 1997 22:17:52 -0500 (EST)
+Cc: marc@fallon.classyad.com, hackers@postgreSQL.org
+In-Reply-To: <345F14E7.28CC1042@sable.krasnoyarsk.su> from "Vadim B. Mikheev" at Nov 4, 97 07:28:23 pm
+X-Mailer: ELM [version 2.4 PL25]
+MIME-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Sender: owner-hackers@hub.org
+Precedence: bulk
+Status: OR
+
+> 
+> Bruce Momjian wrote:
+> > 
+> > >
+> > > Bruce Momjian wrote:
+> > > >
+> > > > OK, here is a more formal description of what I am suggesting.  It will
+> > > > give us commercial dbms reliability with no-fsync performance.
+> > > > Commercial dbms's usually only give restore up to 5 minutes before the
+> > >                                       ^^^^^^^^^^^^^^^^^^^^^^^
+> > > I'm sure that this is not true!
+> > 
+> > You may be right.  This five minute figure is when you restore from your
+> > previous backup, then restore from the log file.
+> > 
+> > Can't we do something like sync every 5 seconds, rather than after every
+> > transaction?  It just seems like such overkill.
+> 
+> Isn't -F and sync in crontab the same ?
+
+OK, let me again try to marshall some (any?) support for my suggestion.
+
+Informix version 5/7 has three levels of logging:  unbuffered
+logging(our normal fsync mode), buffered logging, and no logging(our no
+fsync mode).
+
+We don't have buffered logging.  Buffered logging guarantees you get put
+back to a consistent state after an os/server crash, usually to within
+30/90 seconds.  You do not have any partial transactions lying around,
+but you do have some transactions that you thought were done, but are
+not.
+
+This is faster then non-buffered logging, but not as fast as no logging.
+Guess what mode everyone uses?  The one we don't have, buffered logging!
+
+Unbuffered logging performance is terrible.  Non-buffered logging is
+used to load huge chunks of data during off-hours.
+
+The problem we have is that we fsync every transaction, which causes a
+9-times slowdown in performance on single-integer inserts.
+
+That is a pretty heavy cost.  But the alternative we give people is
+no-fsync mode, where we don't sync anything, and in a crash, you could
+come back with partially committed data in your database, if pg_log was
+sync'ed by the database, and only some of the data pages were sync'ed,
+so if any data was changing within 30 seconds of the crash, you have to
+restore your previous backup.
+
+We really need a middle solution, that gives better data integrity, for
+a smaller price.
+
+> 
+> > 
+> > Actually, I found a problem with my description.  Because pg_log is not
+> > fsync'ed, after a crash, pages with new transactions could have been
+> > flushed to disk, but not the pg_log table that contains the transaction
+> > ids.  The problem is that the new backend could assign a transaction id
+> > that is already in use.
+> 
+> Impossible. Backend flushes pg_variable after fetching nex 32 xids.
+
+My suggestion is that we don't need to flush pg_variable or pg_log that
+much.  My suggestion would speed up the test you do with 100 inserts
+inside a single transaction vs. 100 separate inserts.
+
+> > 
+> > We could set a flag upon successful shutdown, and if it is not set on
+> > reboot, either do a vacuum to find the max transaction id, and
+> > invalidate all them not in pg_log as synced, or increase the next
+> > transaction id to some huge number and invalidate all them in between.
+> >
+
+I have a fix for the problem stated above, and it doesn't require a
+vacuum.
+
+We decide to fsync pg_variable and pg_log every 10,000 transactions or
+oids.  Then if the database is brought up, and it was not brought down
+cleanly, you increment oid and transaction_id by 10,000, because you
+know you couldn't have gotten more than that.  All intermediate
+transactions that are not marked committed/synced are marked aborted.
+
+---------------------------------------------------------------------------
+
+The problem we have with the current system is that we sync by action,
+not by time interval.  If you are doing tons of inserts or updates, it
+is syncing after every one.  What people really want is something that
+will sync not after every action, but after every minute or five
+minutes, so when the system is busy, the syncing every minutes is just a
+small amount, and when the system is idle, no one cares if is syncs, and
+no one has to wait for the sync to complete.
+
+
+-- 
+Bruce Momjian
+maillist@candle.pha.pa.us
+
+
+From matti@algonet.se Wed Nov  5 11:02:33 1997
+Received: from smtp.algonet.se (tomei.algonet.se [194.213.74.114])
+	by candle.pha.pa.us (8.8.5/8.8.5) with SMTP id LAA02099
+	for <maillist@candle.pha.pa.us>; Wed, 5 Nov 1997 11:02:28 -0500 (EST)
+Received: (qmail 6685 invoked from network); 5 Nov 1997 17:01:06 +0100
+Received: from du228-6.ppp.algonet.se (HELO gamma) (root@195.100.6.228)
+  by tomei.algonet.se with SMTP; 5 Nov 1997 17:01:06 +0100
+Sender: root
+Message-ID: <34609871.27EED9D@algonet.se>
+Date: Wed, 05 Nov 1997 17:02:16 +0100
+From: Mattias Kregert <matti@algonet.se>
+Organization: Algonet ISP
+X-Mailer: Mozilla 3.0Gold (X11; I; Linux 2.0.29 i586)
+MIME-Version: 1.0
+To: Bruce Momjian <maillist@candle.pha.pa.us>
+CC: pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] PERFORMANCE and Good Bye, Time Travel!
+References: <199711050317.WAA04674@candle.pha.pa.us>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Status: OR
+
+Bruce Momjian wrote:
+>
+> We don't have buffered logging.  Buffered logging guarantees you get put
+> back to a consistent state after an os/server crash, usually to within
+> 30/90 seconds.  You do not have any partial transactions lying around,
+> but you do have some transactions that you thought were done, but are
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> not.
+  ^^^^
+> 
+> This is faster then non-buffered logging, but not as fast as no logging.
+> Guess what mode everyone uses?  The one we don't have, buffered logging!
+
+Ouch! I would *not* like to use "buffered logging".
+What's the point in having the wrong data in the database and not
+knowing what updates, inserts or deletes to do to get the correct data?
+
+That's irrecoverable loss of data. Not what *I* want. Do *you* want it?
+
+
+> We really need a middle solution, that gives better data integrity, for
+> a smaller price.
+
+What I would like to have is this:
+
+If a backend tells the frontend that a transaction has completed,
+then that transaction should absolutely not get lost in case of a crash.
+
+What is needed is a log of changes since the last backup. This
+log would preferrably reside on a remote machine or at least
+another disk. Then, if the power goes in the middle of a disk write,
+the disk explodes and the computer goes up in flames, you can
+install Postgresql on a new machine, restore the last backup and
+re-run the change log.
+
+
+> The problem we have with the current system is that we sync by action,
+> not by time interval.  If you are doing tons of inserts or updates, it
+> is syncing after every one.  What people really want is something that
+> will sync not after every action, but after every minute or five
+> minutes, so when the system is busy, the syncing every minutes is just a
+> small amount, and when the system is idle, no one cares if is syncs, and
+> no one has to wait for the sync to complete.
+
+Yes, but this would only be the first step on the way to better
+crash-recovery.
+
+/* m */
+
+From vadim@sable.krasnoyarsk.su Wed Nov  5 12:20:23 1997
+Received: from renoir.op.net (root@renoir.op.net [206.84.208.4])
+	by candle.pha.pa.us (8.8.5/8.8.5) with ESMTP id MAA05156
+	for <maillist@candle.pha.pa.us>; Wed, 5 Nov 1997 12:20:13 -0500 (EST)
+Received: from www.krasnet.ru (www.krasnet.ru [193.125.44.86]) by renoir.op.net (o1/$ Revision: 1.14 $) with ESMTP id LAA24123 for <maillist@candle.pha.pa.us>; Wed, 5 Nov 1997 11:44:49 -0500 (EST)
+Received: from www.krasnet.ru (www.krasnet.ru [193.125.44.86]) by www.krasnet.ru (8.8.7/8.7.3) with SMTP id XAA23062; Wed, 5 Nov 1997 23:48:52 +0700 (KRS)
+Sender: root@www.krasnet.ru
+Message-ID: <3460A374.41C67EA6@sable.krasnoyarsk.su>
+Date: Wed, 05 Nov 1997 23:48:52 +0700
+From: "Vadim B. Mikheev" <vadim@sable.krasnoyarsk.su>
+Organization: ITTS (Krasnoyarsk)
+X-Mailer: Mozilla 3.01 (X11; I; FreeBSD 2.2.5-RELEASE i386)
+MIME-Version: 1.0
+To: Bruce Momjian <maillist@candle.pha.pa.us>
+CC: marc@fallon.classyad.com, hackers@postgreSQL.org
+Subject: Re: [HACKERS] PERFORMANCE and Good Bye, Time Travel!
+References: <199711050317.WAA04674@candle.pha.pa.us>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Status: OR
+
+Bruce Momjian wrote:
+> 
+> OK, let me again try to marshall some (any?) support for my suggestion.
+> 
+> Informix version 5/7 has three levels of logging:  unbuffered
+> logging(our normal fsync mode), buffered logging, and no logging(our no
+> fsync mode).
+> 
+> We don't have buffered logging.  Buffered logging guarantees you get put
+> back to a consistent state after an os/server crash, usually to within
+> 30/90 seconds.  You do not have any partial transactions lying around,
+> but you do have some transactions that you thought were done, but are
+> not.
+> 
+> This is faster then non-buffered logging, but not as fast as no logging.
+> Guess what mode everyone uses?  The one we don't have, buffered logging!
+> 
+> Unbuffered logging performance is terrible.  Non-buffered logging is
+> used to load huge chunks of data during off-hours.
+> 
+> The problem we have is that we fsync every transaction, which causes a
+> 9-times slowdown in performance on single-integer inserts.
+> 
+> That is a pretty heavy cost.  But the alternative we give people is
+> no-fsync mode, where we don't sync anything, and in a crash, you could
+> come back with partially committed data in your database, if pg_log was
+> sync'ed by the database, and only some of the data pages were sync'ed,
+> so if any data was changing within 30 seconds of the crash, you have to
+> restore your previous backup.
+> 
+> We really need a middle solution, that gives better data integrity, for
+> a smaller price.
+
+There is no fsync synchronization currently.
+How could we be ensured that all modified data pages are flushed
+when we decided to flush pg_log ?
+If backend doesn't fsync data pages & pg_log at the commit time
+then when he must flush them (data first) ?
+
+This is what Oracle does:
+
+it uses dedicated DBWR process for writing/flushing modified 
+data pages and LGWR process for writing/flushing redo log
+(redo log is transaction log also). LGWR always flushes log pages 
+when committing, but durty data pages can be flushed _after_ transaction 
+commit when DBWR decides that it's time to do it (ala checkpoints interval).
+
+Using redo log we could implement buffered logging quite easy.
+We can even don't use dedicated processes (but flush redo before pg_log),
+though having LGWR could simplify things.
+
+Without redo log or without some fsync synchronization we can't implement
+buffered logging. BTW, shared system cache could help with
+fsync synchonization, but, imho, redo is better (and faster for
+un-buffered logging too).
+
+> > > Actually, I found a problem with my description.  Because pg_log is not
+> > > fsync'ed, after a crash, pages with new transactions could have been
+> > > flushed to disk, but not the pg_log table that contains the transaction
+> > > ids.  The problem is that the new backend could assign a transaction id
+> > > that is already in use.
+> >
+> > Impossible. Backend flushes pg_variable after fetching nex 32 xids.
+> 
+> My suggestion is that we don't need to flush pg_variable or pg_log that
+> much.  My suggestion would speed up the test you do with 100 inserts
+> inside a single transaction vs. 100 separate inserts.
+> 
+> > >
+> > > We could set a flag upon successful shutdown, and if it is not set on
+> > > reboot, either do a vacuum to find the max transaction id, and
+> > > invalidate all them not in pg_log as synced, or increase the next
+> > > transaction id to some huge number and invalidate all them in between.
+> > >
+> 
+> I have a fix for the problem stated above, and it doesn't require a
+> vacuum.
+> 
+> We decide to fsync pg_variable and pg_log every 10,000 transactions or
+> oids.  Then if the database is brought up, and it was not brought down
+> cleanly, you increment oid and transaction_id by 10,000, because you
+> know you couldn't have gotten more than that.  All intermediate
+> transactions that are not marked committed/synced are marked aborted.
+
+This is what I suppose to do by placing next available oid/xid
+in shmem: this allows pre-fetch much more than 32 ids at once
+without losing them when session closed.
+
+> The problem we have with the current system is that we sync by action,
+> not by time interval.  If you are doing tons of inserts or updates, it
+> is syncing after every one.  What people really want is something that
+> will sync not after every action, but after every minute or five
+> minutes, so when the system is busy, the syncing every minutes is just a
+> small amount, and when the system is idle, no one cares if is syncs, and
+> no one has to wait for the sync to complete.
+
+When I'm really doing tons of inserts/updates/deletes I use
+BEGIN/END. But it doesn't work for multi-user environment, of 'course.
+As for about what people really want, I remember that recently someone
+said in user list that if one want to have 10-20 inserts/sec then he
+should use mysql, but I got 25 inserts/sec on AIC-7880 & WD Enterprise
+when using one session, 32 inserts/sec with two sessions inserting
+in two different tables and only 20 inserts/sec with two sessions
+inserting in the same table. Imho, this difference between 20 and 32
+is more important thing to fix, and these results are not so bad
+in comparison with others.
+
+(BTW, we shouldn't forget about using raw devices to speed up things).
+
+Vadim
+
+From vadim@sable.krasnoyarsk.su Wed Nov  5 12:20:08 1997
+Received: from renoir.op.net (root@renoir.op.net [206.84.208.4])
+	by candle.pha.pa.us (8.8.5/8.8.5) with ESMTP id MAA05150
+	for <maillist@candle.pha.pa.us>; Wed, 5 Nov 1997 12:20:07 -0500 (EST)
+Received: from www.krasnet.ru (www.krasnet.ru [193.125.44.86]) by renoir.op.net (o1/$ Revision: 1.14 $) with ESMTP id LAA24889 for <maillist@candle.pha.pa.us>; Wed, 5 Nov 1997 11:59:27 -0500 (EST)
+Received: from www.krasnet.ru (www.krasnet.ru [193.125.44.86]) by www.krasnet.ru (8.8.7/8.7.3) with SMTP id AAA23096; Thu, 6 Nov 1997 00:03:19 +0700 (KRS)
+Sender: root@www.krasnet.ru
+Message-ID: <3460A6D7.167EB0E7@sable.krasnoyarsk.su>
+Date: Thu, 06 Nov 1997 00:03:19 +0700
+From: "Vadim B. Mikheev" <vadim@sable.krasnoyarsk.su>
+Organization: ITTS (Krasnoyarsk)
+X-Mailer: Mozilla 3.01 (X11; I; FreeBSD 2.2.5-RELEASE i386)
+MIME-Version: 1.0
+To: Mattias Kregert <matti@algonet.se>
+CC: Bruce Momjian <maillist@candle.pha.pa.us>, pgsql-hackers@postgreSQL.org
+Subject: Re: [HACKERS] PERFORMANCE and Good Bye, Time Travel!
+References: <199711050317.WAA04674@candle.pha.pa.us> <34609871.27EED9D@algonet.se>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Status: OR
+
+Mattias Kregert wrote:
+> 
+> Bruce Momjian wrote:
+> >
+> > We don't have buffered logging.  Buffered logging guarantees you get put
+> > back to a consistent state after an os/server crash, usually to within
+> > 30/90 seconds.  You do not have any partial transactions lying around,
+> > but you do have some transactions that you thought were done, but are
+>                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> > not.
+>   ^^^^
+> >
+> > This is faster then non-buffered logging, but not as fast as no logging.
+> > Guess what mode everyone uses?  The one we don't have, buffered logging!
+> 
+> Ouch! I would *not* like to use "buffered logging".
+
+And I.
+
+> What's the point in having the wrong data in the database and not
+> knowing what updates, inserts or deletes to do to get the correct data?
+> 
+> That's irrecoverable loss of data. Not what *I* want. Do *you* want it?
+> 
+> > We really need a middle solution, that gives better data integrity, for
+> > a smaller price.
+> 
+> What I would like to have is this:
+> 
+> If a backend tells the frontend that a transaction has completed,
+> then that transaction should absolutely not get lost in case of a crash.
+
+Agreed.
+
+> 
+> What is needed is a log of changes since the last backup. This
+> log would preferrably reside on a remote machine or at least
+> another disk. Then, if the power goes in the middle of a disk write,
+> the disk explodes and the computer goes up in flames, you can
+> install Postgresql on a new machine, restore the last backup and
+> re-run the change log.
+
+Yes. And as I already said - this will speed up things because
+redo flushing is faster than flushing NNN tables which can be
+unflushed for some interval.
+
+Vadim
+
+From owner-pgsql-hackers@hub.org Wed Nov  5 12:20:39 1997
+Received: from renoir.op.net (root@renoir.op.net [206.84.208.4])
+	by candle.pha.pa.us (8.8.5/8.8.5) with ESMTP id MAA05168
+	for <maillist@candle.pha.pa.us>; Wed, 5 Nov 1997 12:20:38 -0500 (EST)
+Received: from hub.org (hub.org [209.47.148.200]) by renoir.op.net (o1/$ Revision: 1.14 $) with ESMTP id MAA25888 for <maillist@candle.pha.pa.us>; Wed, 5 Nov 1997 12:14:14 -0500 (EST)
+Received: from localhost (majordom@localhost) by hub.org (8.8.5/8.7.5) with SMTP id MAA02259; Wed, 5 Nov 1997 12:02:33 -0500 (EST)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Wed, 05 Nov 1997 12:00:21 -0500 (EST)
+Received: (from majordom@localhost) by hub.org (8.8.5/8.7.5) id MAA00750 for pgsql-hackers-outgoing; Wed, 5 Nov 1997 12:00:10 -0500 (EST)
+Received: from www.krasnet.ru (www.krasnet.ru [193.125.44.86]) by hub.org (8.8.5/8.7.5) with ESMTP id LAA00598 for <pgsql-hackers@postgreSQL.org>; Wed, 5 Nov 1997 11:59:45 -0500 (EST)
+Received: from www.krasnet.ru (www.krasnet.ru [193.125.44.86]) by www.krasnet.ru (8.8.7/8.7.3) with SMTP id AAA23096; Thu, 6 Nov 1997 00:03:19 +0700 (KRS)
+Message-ID: <3460A6D7.167EB0E7@sable.krasnoyarsk.su>
+Date: Thu, 06 Nov 1997 00:03:19 +0700
+From: "Vadim B. Mikheev" <vadim@sable.krasnoyarsk.su>
+Organization: ITTS (Krasnoyarsk)
+X-Mailer: Mozilla 3.01 (X11; I; FreeBSD 2.2.5-RELEASE i386)
+MIME-Version: 1.0
+To: Mattias Kregert <matti@algonet.se>
+CC: Bruce Momjian <maillist@candle.pha.pa.us>, pgsql-hackers@postgreSQL.org
+Subject: Re: [HACKERS] PERFORMANCE and Good Bye, Time Travel!
+References: <199711050317.WAA04674@candle.pha.pa.us> <34609871.27EED9D@algonet.se>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Sender: owner-hackers@hub.org
+Precedence: bulk
+Status: OR
+
+Mattias Kregert wrote:
+> 
+> Bruce Momjian wrote:
+> >
+> > We don't have buffered logging.  Buffered logging guarantees you get put
+> > back to a consistent state after an os/server crash, usually to within
+> > 30/90 seconds.  You do not have any partial transactions lying around,
+> > but you do have some transactions that you thought were done, but are
+>                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> > not.
+>   ^^^^
+> >
+> > This is faster then non-buffered logging, but not as fast as no logging.
+> > Guess what mode everyone uses?  The one we don't have, buffered logging!
+> 
+> Ouch! I would *not* like to use "buffered logging".
+
+And I.
+
+> What's the point in having the wrong data in the database and not
+> knowing what updates, inserts or deletes to do to get the correct data?
+> 
+> That's irrecoverable loss of data. Not what *I* want. Do *you* want it?
+> 
+> > We really need a middle solution, that gives better data integrity, for
+> > a smaller price.
+> 
+> What I would like to have is this:
+> 
+> If a backend tells the frontend that a transaction has completed,
+> then that transaction should absolutely not get lost in case of a crash.
+
+Agreed.
+
+> 
+> What is needed is a log of changes since the last backup. This
+> log would preferrably reside on a remote machine or at least
+> another disk. Then, if the power goes in the middle of a disk write,
+> the disk explodes and the computer goes up in flames, you can
+> install Postgresql on a new machine, restore the last backup and
+> re-run the change log.
+
+Yes. And as I already said - this will speed up things because
+redo flushing is faster than flushing NNN tables which can be
+unflushed for some interval.
+
+Vadim
+
+
+From owner-pgsql-hackers@hub.org Wed Nov  5 14:01:02 1997
+Received: from renoir.op.net (root@renoir.op.net [206.84.208.4])
+	by candle.pha.pa.us (8.8.5/8.8.5) with ESMTP id OAA07017
+	for <maillist@candle.pha.pa.us>; Wed, 5 Nov 1997 14:00:59 -0500 (EST)
+Received: from hub.org (hub.org [209.47.148.200]) by renoir.op.net (o1/$ Revision: 1.14 $) with ESMTP id NAA01759 for <maillist@candle.pha.pa.us>; Wed, 5 Nov 1997 13:52:36 -0500 (EST)
+Received: from localhost (majordom@localhost) by hub.org (8.8.5/8.7.5) with SMTP id NAA03611; Wed, 5 Nov 1997 13:29:43 -0500 (EST)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Wed, 05 Nov 1997 13:27:48 -0500 (EST)
+Received: (from majordom@localhost) by hub.org (8.8.5/8.7.5) id NAA03291 for pgsql-hackers-outgoing; Wed, 5 Nov 1997 13:27:41 -0500 (EST)
+Received: from candle.pha.pa.us (root@s3-03.ppp.op.net [206.84.210.195]) by hub.org (8.8.5/8.7.5) with ESMTP id NAA02823 for <hackers@postgreSQL.org>; Wed, 5 Nov 1997 13:26:20 -0500 (EST)
+Received: (from maillist@localhost)
+	by candle.pha.pa.us (8.8.5/8.8.5) id NAA05863;
+	Wed, 5 Nov 1997 13:16:09 -0500 (EST)
+From: Bruce Momjian <maillist@candle.pha.pa.us>
+Message-Id: <199711051816.NAA05863@candle.pha.pa.us>
+Subject: Re: [HACKERS] PERFORMANCE and Good Bye, Time Travel!
+To: vadim@sable.krasnoyarsk.su (Vadim B. Mikheev)
+Date: Wed, 5 Nov 1997 13:16:09 -0500 (EST)
+Cc: marc@fallon.classyad.com, hackers@postgreSQL.org
+In-Reply-To: <3460A374.41C67EA6@sable.krasnoyarsk.su> from "Vadim B. Mikheev" at Nov 5, 97 11:48:52 pm
+X-Mailer: ELM [version 2.4 PL25]
+MIME-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Sender: owner-hackers@hub.org
+Precedence: bulk
+Status: OR
+
+> There is no fsync synchronization currently.
+> How could we be ensured that all modified data pages are flushed
+> when we decided to flush pg_log ?
+> If backend doesn't fsync data pages & pg_log at the commit time
+> then when he must flush them (data first) ?
+
+My idea was to have the backend do a 'sync' that causes the OS to sync
+all dirty pages, then mark all committed transactions on pg_log as
+'synced'.  Then sync pg_log.  That way, there is a clear system where we
+know everything is flushed to disk, and we mark the transactions as
+synced.
+
+The only time that synced flag is used, is when the database starts up,
+and it sees that the previous shutdown was not clean.
+
+What am I missing here?
+
+> 
+> This is what Oracle does:
+> 
+> it uses dedicated DBWR process for writing/flushing modified 
+> data pages and LGWR process for writing/flushing redo log
+> (redo log is transaction log also). LGWR always flushes log pages 
+> when committing, but durty data pages can be flushed _after_ transaction 
+> commit when DBWR decides that it's time to do it (ala checkpoints interval).
+> 
+> Using redo log we could implement buffered logging quite easy.
+> We can even don't use dedicated processes (but flush redo before pg_log),
+> though having LGWR could simplify things.
+> 
+> Without redo log or without some fsync synchronization we can't implement
+> buffered logging. BTW, shared system cache could help with
+> fsync synchonization, but, imho, redo is better (and faster for
+> un-buffered logging too).
+> 
+
+I suggested my solution because it is clean, does flushing in one
+central location(postmaster), and does quick restores.
+
+> > > > Actually, I found a problem with my description.  Because pg_log is not
+> > > > fsync'ed, after a crash, pages with new transactions could have been
+> > > > flushed to disk, but not the pg_log table that contains the transaction
+> > > > ids.  The problem is that the new backend could assign a transaction id
+> > > > that is already in use.
+> > >
+> > > Impossible. Backend flushes pg_variable after fetching nex 32 xids.
+> > 
+> > My suggestion is that we don't need to flush pg_variable or pg_log that
+> > much.  My suggestion would speed up the test you do with 100 inserts
+> > inside a single transaction vs. 100 separate inserts.
+> > 
+> > > >
+> > > > We could set a flag upon successful shutdown, and if it is not set on
+> > > > reboot, either do a vacuum to find the max transaction id, and
+> > > > invalidate all them not in pg_log as synced, or increase the next
+> > > > transaction id to some huge number and invalidate all them in between.
+> > > >
+> > 
+> > I have a fix for the problem stated above, and it doesn't require a
+> > vacuum.
+> > 
+> > We decide to fsync pg_variable and pg_log every 10,000 transactions or
+> > oids.  Then if the database is brought up, and it was not brought down
+> > cleanly, you increment oid and transaction_id by 10,000, because you
+> > know you couldn't have gotten more than that.  All intermediate
+> > transactions that are not marked committed/synced are marked aborted.
+> 
+> This is what I suppose to do by placing next available oid/xid
+> in shmem: this allows pre-fetch much more than 32 ids at once
+> without losing them when session closed.
+> 
+> > The problem we have with the current system is that we sync by action,
+> > not by time interval.  If you are doing tons of inserts or updates, it
+> > is syncing after every one.  What people really want is something that
+> > will sync not after every action, but after every minute or five
+> > minutes, so when the system is busy, the syncing every minutes is just a
+> > small amount, and when the system is idle, no one cares if is syncs, and
+> > no one has to wait for the sync to complete.
+> 
+> When I'm really doing tons of inserts/updates/deletes I use
+> BEGIN/END. But it doesn't work for multi-user environment, of 'course.
+> As for about what people really want, I remember that recently someone
+> said in user list that if one want to have 10-20 inserts/sec then he
+> should use mysql, but I got 25 inserts/sec on AIC-7880 & WD Enterprise
+> when using one session, 32 inserts/sec with two sessions inserting
+> in two different tables and only 20 inserts/sec with two sessions
+> inserting in the same table. Imho, this difference between 20 and 32
+> is more important thing to fix, and these results are not so bad
+> in comparison with others.
+> 
+> (BTW, we shouldn't forget about using raw devices to speed up things).
+> 
+> Vadim
+> 
+
+
+-- 
+Bruce Momjian
+maillist@candle.pha.pa.us
+
+
+From james@blarg.net Wed Nov  5 13:26:46 1997
+Received: from animal.blarg.net (mail@animal.blarg.net [206.114.144.1])
+	by candle.pha.pa.us (8.8.5/8.8.5) with ESMTP id NAA06130
+	for <maillist@candle.pha.pa.us>; Wed, 5 Nov 1997 13:26:26 -0500 (EST)
+Received: from animal.blarg.net (james@animal.blarg.net [206.114.144.1])
+          by animal.blarg.net (8.8.5/8.8.4) with SMTP
+          id KAA09775; Wed, 5 Nov 1997 10:26:10 -0800
+Date: Wed, 5 Nov 1997 10:26:10 -0800 (PST)
+From: "James A. Hillyerd" <james@blarg.net>
+To: Bruce Momjian <maillist@candle.pha.pa.us>
+cc: Mattias Kregert <matti@algonet.se>, pgsql-hackers@postgreSQL.org
+Subject: Re: [HACKERS] PERFORMANCE and Good Bye, Time Travel!
+In-Reply-To: <199711051615.LAA02260@candle.pha.pa.us>
+Message-ID: <Pine.LNX.3.95.971105102332.6252E-100000@animal.blarg.net>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Status: OR
+
+On Wed, 5 Nov 1997, Bruce Momjian wrote:
+> 
+> The strange thing I am hearing is that the people who use PostgreSQL are
+> more worried about data recovery from a crash than million-dollar
+> companies that use commercial databases.
+> 
+
+If I may throw in my 2 cents, I'd prefer to see that database in a
+consistent state, with the data being up to date as of 1 minute or
+less before the crash.  I'd rather have higher performance than up to the
+second data.
+
+-james
+
+[  James A. Hillyerd (JH2162) - james@blarg.net - Web Developer  ]
+[  http://www.blarg.net/~james/   http://www.hyperglyphics.com/  ]
+[ 1024/B11C3751 CA 1C B3 A9 07 2F 57 C9  91 F4 73 F2 19 A4 C5 88 ]
+
+
+From vadim@sable.krasnoyarsk.su Wed Nov  5 14:24:03 1997
+Received: from renoir.op.net (root@renoir.op.net [206.84.208.4])
+	by candle.pha.pa.us (8.8.5/8.8.5) with ESMTP id OAA07830
+	for <maillist@candle.pha.pa.us>; Wed, 5 Nov 1997 14:24:02 -0500 (EST)
+Received: from www.krasnet.ru (www.krasnet.ru [193.125.44.86]) by renoir.op.net (o1/$ Revision: 1.14 $) with ESMTP id OAA02778 for <maillist@candle.pha.pa.us>; Wed, 5 Nov 1997 14:13:45 -0500 (EST)
+Received: from www.krasnet.ru (www.krasnet.ru [193.125.44.86]) by www.krasnet.ru (8.8.7/8.7.3) with SMTP id CAA23376; Thu, 6 Nov 1997 02:17:51 +0700 (KRS)
+Sender: root@www.krasnet.ru
+Message-ID: <3460C65E.446B9B3D@sable.krasnoyarsk.su>
+Date: Thu, 06 Nov 1997 02:17:50 +0700
+From: "Vadim B. Mikheev" <vadim@sable.krasnoyarsk.su>
+Organization: ITTS (Krasnoyarsk)
+X-Mailer: Mozilla 3.01 (X11; I; FreeBSD 2.2.5-RELEASE i386)
+MIME-Version: 1.0
+To: Bruce Momjian <maillist@candle.pha.pa.us>
+CC: marc@fallon.classyad.com, hackers@postgreSQL.org
+Subject: Re: [HACKERS] PERFORMANCE and Good Bye, Time Travel!
+References: <199711051816.NAA05863@candle.pha.pa.us>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Status: OR
+
+Bruce Momjian wrote:
+> 
+> > There is no fsync synchronization currently.
+> > How could we be ensured that all modified data pages are flushed
+> > when we decided to flush pg_log ?
+> > If backend doesn't fsync data pages & pg_log at the commit time
+> > then when he must flush them (data first) ?
+> 
+> My idea was to have the backend do a 'sync' that causes the OS to sync
+> all dirty pages, then mark all committed transactions on pg_log as
+> 'synced'.  Then sync pg_log.  That way, there is a clear system where we
+> know everything is flushed to disk, and we mark the transactions as
+> synced.
+> 
+> The only time that synced flag is used, is when the database starts up,
+> and it sees that the previous shutdown was not clean.
+> 
+> What am I missing here?
+
+Ok, I see. But we can avoid 'synced' flag: we can make (just before
+sync-ing data pages) in-memory copies of "on-line" durty pg_log pages 
+to being written/fsynced and perform write/fsync from these copies
+without stopping new commits in "on-line" page(s) (nothing must go
+to disk from "on-line" log pages).
+
+Vadim
+
+From owner-pgsql-hackers@hub.org Wed Nov  5 14:32:25 1997
+Received: from hub.org (hub.org [209.47.148.200])
+	by candle.pha.pa.us (8.8.5/8.8.5) with ESMTP id OAA08101
+	for <maillist@candle.pha.pa.us>; Wed, 5 Nov 1997 14:32:21 -0500 (EST)
+Received: from localhost (majordom@localhost) by hub.org (8.8.5/8.7.5) with SMTP id OAA22970; Wed, 5 Nov 1997 14:26:47 -0500 (EST)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Wed, 05 Nov 1997 14:24:59 -0500 (EST)
+Received: (from majordom@localhost) by hub.org (8.8.5/8.7.5) id OAA22344 for pgsql-hackers-outgoing; Wed, 5 Nov 1997 14:24:56 -0500 (EST)
+Received: from candle.pha.pa.us (maillist@s3-03.ppp.op.net [206.84.210.195]) by hub.org (8.8.5/8.7.5) with ESMTP id OAA22319 for <hackers@postgreSQL.org>; Wed, 5 Nov 1997 14:24:38 -0500 (EST)
+Received: (from maillist@localhost)
+	by candle.pha.pa.us (8.8.5/8.8.5) id OAA07661;
+	Wed, 5 Nov 1997 14:22:46 -0500 (EST)
+From: Bruce Momjian <maillist@candle.pha.pa.us>
+Message-Id: <199711051922.OAA07661@candle.pha.pa.us>
+Subject: Re: [HACKERS] PERFORMANCE and Good Bye, Time Travel!
+To: vadim@sable.krasnoyarsk.su (Vadim B. Mikheev)
+Date: Wed, 5 Nov 1997 14:22:45 -0500 (EST)
+Cc: marc@fallon.classyad.com, hackers@postgreSQL.org
+In-Reply-To: <3460A374.41C67EA6@sable.krasnoyarsk.su> from "Vadim B. Mikheev" at Nov 5, 97 11:48:52 pm
+X-Mailer: ELM [version 2.4 PL25]
+MIME-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Sender: owner-hackers@hub.org
+Precedence: bulk
+Status: OR
+
+Just a clarification.  When I say the postmaster issues a sync, I mean
+sync(2), not fsync(2).
+
+The sync flushes all dirty pages on all file systems.  Ordinary users
+can issue this, and update usually does this every 30 seconds anyway.
+
+By using this, we let the kernel figure out which buffers are dirty.  We
+don't have to figure this out in the postmaster.
+
+Then we update the pg_log table to mark those transactions as synced. 
+On recovery from a crash, we mark the committed transactions as
+uncommitted if they do not have the synced flag.
+
+-- 
+Bruce Momjian
+maillist@candle.pha.pa.us
+
+
+From owner-pgsql-hackers@hub.org Wed Nov  5 15:11:07 1997
+Received: from hub.org (hub.org [209.47.148.200])
+	by candle.pha.pa.us (8.8.5/8.8.5) with ESMTP id PAA08751
+	for <maillist@candle.pha.pa.us>; Wed, 5 Nov 1997 15:10:59 -0500 (EST)
+Received: from localhost (majordom@localhost) by hub.org (8.8.5/8.7.5) with SMTP id PAA01986; Wed, 5 Nov 1997 15:01:24 -0500 (EST)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Wed, 05 Nov 1997 14:59:32 -0500 (EST)
+Received: (from majordom@localhost) by hub.org (8.8.5/8.7.5) id OAA01414 for pgsql-hackers-outgoing; Wed, 5 Nov 1997 14:59:28 -0500 (EST)
+Received: from candle.pha.pa.us (root@s3-03.ppp.op.net [206.84.210.195]) by hub.org (8.8.5/8.7.5) with ESMTP id OAA01403 for <hackers@postgreSQL.org>; Wed, 5 Nov 1997 14:59:14 -0500 (EST)
+Received: (from maillist@localhost)
+	by candle.pha.pa.us (8.8.5/8.8.5) id OAA08283;
+	Wed, 5 Nov 1997 14:53:55 -0500 (EST)
+From: Bruce Momjian <maillist@candle.pha.pa.us>
+Message-Id: <199711051953.OAA08283@candle.pha.pa.us>
+Subject: Re: [HACKERS] PERFORMANCE and Good Bye, Time Travel!
+To: vadim@sable.krasnoyarsk.su (Vadim B. Mikheev)
+Date: Wed, 5 Nov 1997 14:53:54 -0500 (EST)
+Cc: marc@fallon.classyad.com, hackers@postgreSQL.org
+In-Reply-To: <3460C65E.446B9B3D@sable.krasnoyarsk.su> from "Vadim B. Mikheev" at Nov 6, 97 02:17:50 am
+X-Mailer: ELM [version 2.4 PL25]
+MIME-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Sender: owner-hackers@hub.org
+Precedence: bulk
+Status: OR
+
+> > The only time that synced flag is used, is when the database starts up,
+> > and it sees that the previous shutdown was not clean.
+> > 
+> > What am I missing here?
+> 
+> Ok, I see. But we can avoid 'synced' flag: we can make (just before
+> sync-ing data pages) in-memory copies of "on-line" durty pg_log pages 
+> to being written/fsynced and perform write/fsync from these copies
+> without stopping new commits in "on-line" page(s) (nothing must go
+> to disk from "on-line" log pages).
+
+[Working late tonight?]
+
+OK, now I am lost.  We need the sync'ed flag so when we start the
+postmaster, and we see the database we not shut down properly, we use
+the flag to clear the commit flag from comitted transactions that were
+not sync'ed by the postmaster.
+
+In my opinion, we don't need any extra copies of pg_log, we can set
+those sync'ed flags while others are making changes, because before we
+did our sync, we gathered a list of committed transaction ids from the
+shared transaction id queue that I mentioned a while ago.
+
+We need this queue so we can find the newly-committed transactions that
+do not have a sync flag.  Another way we could do this would be to scan
+pg_log before we sync, getting all the committed transaction ids without
+sync flags.  No lock is needed on the table.  If we miss some new ones,
+we will get them next time we scan.  The problem I saw is that there is
+no way to see when to stop scanning the pg_log table for such
+transactions, so I thought each backend would have to put its newly
+committed transactions in a separate place.  Maybe I am wrong.
+
+This syncing method just seems so natural since we have pg_log.  That is
+why I keep bringing it up until people tell me I am stupid.
+
+This transaction commit/sync stuff is complicated, and takes a while to
+hash out in a group.
+
+---------------------------------------------------------------------------
+
+I just re-read your description, and I see what you are saying.  My idea
+has pg_log commit flag be real commit flags while the system is running,
+but on reboot after failure, we remove the commit flags on non-synced
+stuff before we start up.
+
+Your idea is to make pg_log commit flags only appear in in-memory copies
+of pg_log, and write the commit flags to disk only after the sync is
+done.
+
+Either way will work.  The question is, "Which is easier?"  The OS is
+going to sync pg_log on its own.  We would almost need a second copy of
+pg_log, one copy to be used on postmaster startup, and a second to be
+used by running backends, and the postmaster would make a copy of the
+running backend pg_log, sync the disks, and copy it to the boot copy.
+
+I don't see how the backend is going to figure out which pg_log pages
+were modified and need to be sent to the boot copy of pg_log.
+
+Now that I am thinking, here is a good idea.  Instead of a fancy
+transaction queue, what if we just have the backend record the lowest
+numbered transaction they commit in a shared memory area.  If the
+current transaction id they commit is greater than the minimum, then
+change nothing.  That way, the backend could copy all pg_log pages
+containing that minimum pg_log transaction id up to the most recent
+pg_log page, do the sync, and copy just those to the boot copy of
+pg_log.
+
+This eliminates the transaction id queue.
+
+The nice thing about the sync-flag in pg_log is that there is no copying
+by the backend.  But we would have to spin through the file to set those
+sync bits.  Your method just copies whole pages to the boot copy.
+
+---------------------------------------------------------------------------
+
+I don't want to force this idea on anyone, or annoy anyone.  I just
+think it needs to be considered.  The concepts are unusual, so once
+people get the full idea, if they don't like it, we can trash it.  I
+still think it holds promise.
+
+-- 
+Bruce Momjian
+maillist@candle.pha.pa.us
+
+
+From hotz@jpl.nasa.gov Wed Nov  5 15:30:18 1997
+Received: from hotzsun.jpl.nasa.gov (hotzsun.jpl.nasa.gov [137.79.51.138])
+	by candle.pha.pa.us (8.8.5/8.8.5) with ESMTP id PAA09500
+	for <maillist@candle.pha.pa.us>; Wed, 5 Nov 1997 15:30:16 -0500 (EST)
+Received: from [137.79.51.141] (hotzmac [137.79.51.141]) by hotzsun.jpl.nasa.gov (8.7.6/8.7.3) with SMTP id MAA10100; Wed, 5 Nov 1997 12:29:58 -0800 (PST)
+X-Sender: hotzmail@hotzsun.jpl.nasa.gov
+Message-Id: <v02140b02b0868294bbc1@[137.79.51.141]>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Date: Wed, 5 Nov 1997 12:29:58 -0800
+To: Bruce Momjian <maillist@candle.pha.pa.us>,
+        matti@algonet.se (Mattias Kregert)
+From: hotz@jpl.nasa.gov (Henry B. Hotz)
+Subject: Re: [HACKERS] My $.02, was: PERFORMANCE and Good Bye, Time Travel!
+Cc: pgsql-hackers@postgreSQL.org
+Status: OR
+
+At 11:15 AM 11/5/97, Bruce Momjian wrote:
+>The strange thing I am hearing is that the people who use PostgreSQL are
+>more worried about data recovery from a crash than million-dollar
+>companies that use commercial databases.
+>
+>I don't get it.
+
+I would run PG to make sure that committed transactions were really written
+to disk because that seems "correct" and I don't have the kind of
+performance requirements that would push me to do otherwise.
+
+That said, I can see a need for varying performance/crash-immunity
+tradeoffs, and at least *one* option in between "correct" and "unprotected"
+operation would seem desirable.
+
+Signature failed Preliminary Design Review.
+Feasibility of a new signature is currently being evaluated.
+h.b.hotz@jpl.nasa.gov, or hbhotz@oxy.edu
+
+
+
+From owner-pgsql-hackers@hub.org Thu Nov  6 15:51:23 1997
+Received: from hub.org (hub.org [209.47.148.200])
+	by candle.pha.pa.us (8.8.5/8.8.5) with ESMTP id PAA04634
+	for <maillist@candle.pha.pa.us>; Thu, 6 Nov 1997 15:51:08 -0500 (EST)
+Received: from localhost (majordom@localhost) by hub.org (8.8.5/8.7.5) with SMTP id PAA24783; Thu, 6 Nov 1997 15:36:47 -0500 (EST)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Thu, 06 Nov 1997 15:36:07 -0500 (EST)
+Received: (from majordom@localhost) by hub.org (8.8.5/8.7.5) id PAA24514 for pgsql-hackers-outgoing; Thu, 6 Nov 1997 15:36:02 -0500 (EST)
+Received: from guevara.bildbasen.kiruna.se (guevara.bildbasen.kiruna.se [193.45.225.110]) by hub.org (8.8.5/8.7.5) with SMTP id PAA24319 for <pgsql-hackers@postgreSQL.org>; Thu, 6 Nov 1997 15:35:32 -0500 (EST)
+Received: (qmail 9764 invoked by uid 129); 6 Nov 1997 20:34:35 -0000
+Date: 6 Nov 1997 20:34:35 -0000
+Message-ID: <19971106203435.9763.qmail@guevara.bildbasen.kiruna.se>
+From: Goran Thyni <goran@bildbasen.se>
+To: pgsql-hackers@postgreSQL.org
+In-reply-to: <34619E9E.622F563@algonet.se> (message from Mattias Kregert on
+	Thu, 06 Nov 1997 11:40:30 +0100)
+Subject: [HACKERS] Re: Performance vs. Crash Recovery
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-1
+Sender: owner-hackers@hub.org
+Precedence: bulk
+Status: OR
+
+
+I am getting quiet bored by this discussion,
+if someone has a strong opinion about how this
+should be done go ahead and make a test implementation
+then we have something to discuss.
+
+In the mean time, if you want best possible data protection
+mount you database disk sync:ed. This is safer than any scheme
+we could come up with.
+D*mned slow too, so everybody should be happy. :-)
+
+And I see no point implement a periodic sync in postmaster.
+All unices has cron, why not just use that.
+Or even a stupid 1-liner (ba)sh-script like:
+
+while true; do sleep 20; sync; done
+
+	best regards,
+-- 
+---------------------------------------------
+Göran Thyni, sysadm, JMS Bildbasen, Kiruna
+
+
+
+From vadim@sable.krasnoyarsk.su Thu Nov  6 23:31:41 1997
+Received: from www.krasnet.ru (www.krasnet.ru [193.125.44.86])
+	by candle.pha.pa.us (8.8.5/8.8.5) with ESMTP id XAA04723
+	for <maillist@candle.pha.pa.us>; Thu, 6 Nov 1997 23:31:21 -0500 (EST)
+Received: from www.krasnet.ru (www.krasnet.ru [193.125.44.86]) by www.krasnet.ru (8.8.7/8.7.3) with SMTP id LAA25438; Fri, 7 Nov 1997 11:36:25 +0700 (KRS)
+Sender: root@www.krasnet.ru
+Message-ID: <34629AC9.15FB7483@sable.krasnoyarsk.su>
+Date: Fri, 07 Nov 1997 11:36:25 +0700
+From: "Vadim B. Mikheev" <vadim@sable.krasnoyarsk.su>
+Organization: ITTS (Krasnoyarsk)
+X-Mailer: Mozilla 3.01 (X11; I; FreeBSD 2.2.5-RELEASE i386)
+MIME-Version: 1.0
+To: Bruce Momjian <maillist@candle.pha.pa.us>
+CC: marc@fallon.classyad.com, hackers@postgreSQL.org
+Subject: Re: [HACKERS] PERFORMANCE and Good Bye, Time Travel!
+References: <199711051953.OAA08283@candle.pha.pa.us>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Status: OR
+
+Bruce Momjian wrote:
+> 
+> > > The only time that synced flag is used, is when the database starts up,
+> > > and it sees that the previous shutdown was not clean.
+> > >
+> > > What am I missing here?
+> >
+> > Ok, I see. But we can avoid 'synced' flag: we can make (just before
+> > sync-ing data pages) in-memory copies of "on-line" durty pg_log pages
+> > to being written/fsynced and perform write/fsync from these copies
+> > without stopping new commits in "on-line" page(s) (nothing must go
+> > to disk from "on-line" log pages).
+> 
+> [Working late tonight?]
+
+[Yes]
+
+> I just re-read your description, and I see what you are saying.  My idea
+> has pg_log commit flag be real commit flags while the system is running,
+> but on reboot after failure, we remove the commit flags on non-synced
+> stuff before we start up.
+> 
+> Your idea is to make pg_log commit flags only appear in in-memory copies
+> of pg_log, and write the commit flags to disk only after the sync is
+> done.
+> 
+> Either way will work.  The question is, "Which is easier?"  The OS is
+> going to sync pg_log on its own.  We would almost need a second copy of
+> pg_log, one copy to be used on postmaster startup, and a second to be
+> used by running backends, and the postmaster would make a copy of the
+> running backend pg_log, sync the disks, and copy it to the boot copy.
+> 
+> I don't see how the backend is going to figure out which pg_log pages
+> were modified and need to be sent to the boot copy of pg_log.
+> 
+> Now that I am thinking, here is a good idea.  Instead of a fancy
+> transaction queue, what if we just have the backend record the lowest
+> numbered transaction they commit in a shared memory area.  If the
+> current transaction id they commit is greater than the minimum, then
+> change nothing.  That way, the backend could copy all pg_log pages
+> containing that minimum pg_log transaction id up to the most recent
+> pg_log page, do the sync, and copy just those to the boot copy of
+> pg_log.
+> 
+> This eliminates the transaction id queue.
+> 
+> The nice thing about the sync-flag in pg_log is that there is no copying
+> by the backend.  But we would have to spin through the file to set those
+> sync bits.  Your method just copies whole pages to the boot copy.
+
+   In my plans to re-design transaction system I supposed to keep in shmem
+two last pg_log pages. They are most often used and using ReadBuffer/WriteBuffer 
+to access them is not good idea. Also, we could use spinlock instead of
+lock manager to synchronize access to these pages (as I see in spin.c
+spinlock-s could be shared, but only exclusive ones are used) - spinlocks
+are faster. 
+   These two last pg_log pages are "online" ones. Race condition: when one or
+both of online pages becomes non-online ones, i.e. pg_log has to be expanded 
+when writing commit/abort of "big" xid. This is how we could handle this
+in "buffered" logging (delayed fsync) mode:
+
+   When backend want to write commit/abort status he acquires exclusive 
+OnLineLogLock. If xid belongs to online pages then backend writes status
+and releases spin. If xid is less than least xid on 1st online page then
+backend releases spin and does exactly the same what he does in normal mode:
+flush (write and fsync) all durty data files, lock pg_log for write, ReadBuffer, 
+update xid status, WriteBuffer, release write lock, flush pg_log.
+If xid is greater than max xid on 2nd online page then the simplest way is 
+just do sync(); sync() (two times), flush 1st or both online pages, 
+read new page(s) into online pages space, update xid status,
+release OnLineLogLock spin. We could try other ways but pg_log expanding
+is rare case (32K xids in one pg_log page)...
+   All what postmaster will have to do is:
+1. Get shared OnLineLogLock.
+2. Copy 2 x 8K data to private place.
+3. Release spinlock.
+4. sync(); sync(); (two times!)
+5. Flush online pages.
+
+We could use -F DELAY_TIME to turn fsync delayed mode ON.
+
+And, btw, having two bits for xact status we have only one unused
+status value (0x11) currently - I would like to use this for
+nested xactions and savepoints...
+
+> I don't want to force this idea on anyone, or annoy anyone.  I just
+> think it needs to be considered.  The concepts are unusual, so once
+> people get the full idea, if they don't like it, we can trash it.  I
+> still think it holds promise.
+
+Agreed.
+
+Vadim
+
+From owner-pgsql-hackers@hub.org Fri Nov  7 01:32:49 1997
+Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
+	by candle.pha.pa.us (8.8.5/8.8.5) with ESMTP id BAA07651
+	for <maillist@candle.pha.pa.us>; Fri, 7 Nov 1997 01:32:47 -0500 (EST)
+Received: from hub.org (hub.org [209.47.148.200]) by renoir.op.net (o1/$ Revision: 1.14 $) with ESMTP id XAA23328 for <maillist@candle.pha.pa.us>; Thu, 6 Nov 1997 23:46:08 -0500 (EST)
+Received: from localhost (majordom@localhost) by hub.org (8.8.5/8.7.5) with SMTP id XAA19565; Thu, 6 Nov 1997 23:38:55 -0500 (EST)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Thu, 06 Nov 1997 23:36:53 -0500 (EST)
+Received: (from majordom@localhost) by hub.org (8.8.5/8.7.5) id XAA18911 for pgsql-hackers-outgoing; Thu, 6 Nov 1997 23:36:44 -0500 (EST)
+Received: from www.krasnet.ru (www.krasnet.ru [193.125.44.86]) by hub.org (8.8.5/8.7.5) with ESMTP id XAA18779 for <pgsql-hackers@postgreSQL.org>; Thu, 6 Nov 1997 23:36:02 -0500 (EST)
+Received: from www.krasnet.ru (www.krasnet.ru [193.125.44.86]) by www.krasnet.ru (8.8.7/8.7.3) with SMTP id LAA25448; Fri, 7 Nov 1997 11:40:29 +0700 (KRS)
+Message-ID: <34629BBD.59E2B600@sable.krasnoyarsk.su>
+Date: Fri, 07 Nov 1997 11:40:29 +0700
+From: "Vadim B. Mikheev" <vadim@sable.krasnoyarsk.su>
+Organization: ITTS (Krasnoyarsk)
+X-Mailer: Mozilla 3.01 (X11; I; FreeBSD 2.2.5-RELEASE i386)
+MIME-Version: 1.0
+To: Bruce Momjian <maillist@candle.pha.pa.us>
+CC: Mattias Kregert <matti@algonet.se>, pgsql-hackers@postgreSQL.org
+Subject: Re: Sync:ing data and log (Was: Re: [HACKERS] PERFORMANCE and Good Bye, Time Travel!)
+References: <199711061810.NAA02118@candle.pha.pa.us>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Sender: owner-hackers@hub.org
+Precedence: bulk
+Status: OR
+
+Bruce Momjian wrote:
+> 
+> >
+> > Never use sync(). Use fsync(). Other processes should take care of their
+> > own syncing. If you use sync(), and you have a lot of disks, the sync
+> > can
+> > take half a minute if you are unlucky.
+> 
+> We could use fsync() but then the postmaster has to know what tables
+> have dirty buffers, and I don't think there is an easy way to do this.
+
+There is one way - shared system cache...
+
+Vadim
+
+
+From vadim@sable.krasnoyarsk.su Fri Nov  7 01:31:24 1997
+Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
+	by candle.pha.pa.us (8.8.5/8.8.5) with ESMTP id BAA07639
+	for <maillist@candle.pha.pa.us>; Fri, 7 Nov 1997 01:31:22 -0500 (EST)
+Received: from www.krasnet.ru (www.krasnet.ru [193.125.44.86]) by renoir.op.net (o1/$ Revision: 1.14 $) with ESMTP id XAA23094 for <maillist@candle.pha.pa.us>; Thu, 6 Nov 1997 23:39:00 -0500 (EST)
+Received: from www.krasnet.ru (www.krasnet.ru [193.125.44.86]) by www.krasnet.ru (8.8.7/8.7.3) with SMTP id LAA25457; Fri, 7 Nov 1997 11:43:52 +0700 (KRS)
+Sender: root@www.krasnet.ru
+Message-ID: <34629C87.3F54BC7E@sable.krasnoyarsk.su>
+Date: Fri, 07 Nov 1997 11:43:51 +0700
+From: "Vadim B. Mikheev" <vadim@sable.krasnoyarsk.su>
+Organization: ITTS (Krasnoyarsk)
+X-Mailer: Mozilla 3.01 (X11; I; FreeBSD 2.2.5-RELEASE i386)
+MIME-Version: 1.0
+To: Mattias Kregert <matti@algonet.se>
+CC: Bruce Momjian <maillist@candle.pha.pa.us>, pgsql-hackers@postgreSQL.org
+Subject: Re: Performance vs. Crash Recovery (Was: Re: [HACKERS] PERFORMANCE and Good Bye, Time Travel!)
+References: <199711051615.LAA02260@candle.pha.pa.us> <34619E9E.622F563@algonet.se>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Status: OR
+
+Mattias Kregert wrote:
+> 
+> > The strange thing I am hearing is that the people who use PostgreSQL are
+> > more worried about data recovery from a crash than million-dollar
+> > companies that use commercial databases.
+> >
+> > I don't get it.
+> 
+> Perhaps the million-dollar companies have more sophisticated hardware,
+> like big expensive disk arrays, big UPS:es and parallell backup
+> servers?
+> If so, the risk of harware failure is much smaller for them.
+
+More of that - Informix is more stable than postgres: elog(FATAL)
+occures sometime and in fsync delayed mode this will cause
+of losing xaction too, not onle hard/OS failure.
+
+Vadim
+
+From owner-pgsql-hackers@hub.org Fri Nov  7 01:31:26 1997
+Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
+	by candle.pha.pa.us (8.8.5/8.8.5) with ESMTP id BAA07642
+	for <maillist@candle.pha.pa.us>; Fri, 7 Nov 1997 01:31:24 -0500 (EST)
+Received: from hub.org (hub.org [209.47.148.200]) by renoir.op.net (o1/$ Revision: 1.14 $) with ESMTP id AAA24358 for <maillist@candle.pha.pa.us>; Fri, 7 Nov 1997 00:09:47 -0500 (EST)
+Received: from localhost (majordom@localhost) by hub.org (8.8.5/8.7.5) with SMTP id AAA00167; Fri, 7 Nov 1997 00:03:17 -0500 (EST)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Fri, 07 Nov 1997 00:01:26 -0500 (EST)
+Received: (from majordom@localhost) by hub.org (8.8.5/8.7.5) id AAA29427 for pgsql-hackers-outgoing; Fri, 7 Nov 1997 00:01:19 -0500 (EST)
+Received: from candle.pha.pa.us (root@s3-03.ppp.op.net [206.84.210.195]) by hub.org (8.8.5/8.7.5) with ESMTP id AAA29364 for <hackers@postgreSQL.org>; Fri, 7 Nov 1997 00:01:02 -0500 (EST)
+Received: (from maillist@localhost)
+	by candle.pha.pa.us (8.8.5/8.8.5) id XAA05565;
+	Thu, 6 Nov 1997 23:54:33 -0500 (EST)
+From: Bruce Momjian <maillist@candle.pha.pa.us>
+Message-Id: <199711070454.XAA05565@candle.pha.pa.us>
+Subject: Re: [HACKERS] PERFORMANCE and Good Bye, Time Travel!
+To: vadim@sable.krasnoyarsk.su (Vadim B. Mikheev)
+Date: Thu, 6 Nov 1997 23:54:33 -0500 (EST)
+Cc: marc@fallon.classyad.com, hackers@postgreSQL.org
+In-Reply-To: <34629AC9.15FB7483@sable.krasnoyarsk.su> from "Vadim B. Mikheev" at Nov 7, 97 11:36:25 am
+X-Mailer: ELM [version 2.4 PL25]
+MIME-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Sender: owner-hackers@hub.org
+Precedence: bulk
+Status: OR
+
+I was worried when you didn't respond to my last list of ideas.  I
+thought perhaps the idea was getting on your nerves.
+
+I haven't dropped the idea because:
+
+	1) it offers 2-9 times speedup in database modifications
+	2) this is how the big commercial system handle it, and I think
+	   we need to give users this option.
+	3) in the way I had it designed, it wouldn't take much work to
+	   do it.
+
+Anything that promises that much speedup, if it can be done easy, I say
+lets consider it, even if you loose 60 seconds of changes.
+
+
+>    In my plans to re-design transaction system I supposed to keep in shmem
+> two last pg_log pages. They are most often used and using ReadBuffer/WriteBuffer 
+> to access them is not good idea. Also, we could use spinlock instead of
+> lock manager to synchronize access to these pages (as I see in spin.c
+> spinlock-s could be shared, but only exclusive ones are used) - spinlocks
+> are faster. 
+
+Ah, so you already had the idea of having on-line pages in shared memory
+as part of a transaction system overhaul?  Right now, does each backend
+lock/read/write/unlock to get at pg_log?  Wow, that is bad.
+
+Perhaps mmap() would be a good idea.  My system has msync() to flush
+mmap()'ed pages to the underlying file.  You would still run fsync()
+after that.  This may give us the best of both worlds: a shared-memory
+area of variable size, and control of when it get flushed to disk.  Do
+other OS's have this?  I have a feeling OS's with unified buffer caches
+don't have this ability to determine when the underlying mmap'ed file
+gets sent to the underlying file and disk.
+
+
+>    These two last pg_log pages are "online" ones. Race condition: when one or
+> both of online pages becomes non-online ones, i.e. pg_log has to be expanded 
+> when writing commit/abort of "big" xid. This is how we could handle this
+> in "buffered" logging (delayed fsync) mode:
+> 
+>    When backend want to write commit/abort status he acquires exclusive 
+> OnLineLogLock. If xid belongs to online pages then backend writes status
+> and releases spin. If xid is less than least xid on 1st online page then
+> backend releases spin and does exactly the same what he does in normal mode:
+> flush (write and fsync) all durty data files, lock pg_log for write, ReadBuffer, 
+> update xid status, WriteBuffer, release write lock, flush pg_log.
+> If xid is greater than max xid on 2nd online page then the simplest way is 
+> just do sync(); sync() (two times), flush 1st or both online pages, 
+> read new page(s) into online pages space, update xid status,
+> release OnLineLogLock spin. We could try other ways but pg_log expanding
+> is rare case (32K xids in one pg_log page)...
+>    All what postmaster will have to do is:
+> 1. Get shared OnLineLogLock.
+> 2. Copy 2 x 8K data to private place.
+> 3. Release spinlock.
+> 4. sync(); sync(); (two times!)
+> 5. Flush online pages.
+> 
+> We could use -F DELAY_TIME to turn fsync delayed mode ON.
+> 
+> And, btw, having two bits for xact status we have only one unused
+> status value (0x11) currently - I would like to use this for
+> nested xactions and savepoints...
+
+I saw that.  By keeping two copies of pg_log, one in memory to be used
+by all backend, and another that hits the disk, it certainly will work.
+
+> 
+> > I don't want to force this idea on anyone, or annoy anyone.  I just
+> > think it needs to be considered.  The concepts are unusual, so once
+> > people get the full idea, if they don't like it, we can trash it.  I
+> > still think it holds promise.
+> 
+> Agreed.
+> 
+> Vadim
+> 
+
+
+-- 
+Bruce Momjian
+maillist@candle.pha.pa.us
+
+
+From owner-pgsql-hackers@hub.org Fri Nov  7 01:03:09 1997
+Received: from hub.org (hub.org [209.47.148.200])
+	by candle.pha.pa.us (8.8.5/8.8.5) with ESMTP id BAA07314
+	for <maillist@candle.pha.pa.us>; Fri, 7 Nov 1997 01:03:05 -0500 (EST)
+Received: from localhost (majordom@localhost) by hub.org (8.8.5/8.7.5) with SMTP id AAA07879; Fri, 7 Nov 1997 00:57:42 -0500 (EST)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Fri, 07 Nov 1997 00:55:52 -0500 (EST)
+Received: (from majordom@localhost) by hub.org (8.8.5/8.7.5) id AAA03918 for pgsql-hackers-outgoing; Fri, 7 Nov 1997 00:55:46 -0500 (EST)
+Received: from www.krasnet.ru (www.krasnet.ru [193.125.44.86]) by hub.org (8.8.5/8.7.5) with ESMTP id AAA02961 for <hackers@postgreSQL.org>; Fri, 7 Nov 1997 00:55:18 -0500 (EST)
+Received: from www.krasnet.ru (www.krasnet.ru [193.125.44.86]) by www.krasnet.ru (8.8.7/8.7.3) with SMTP id MAA25567; Fri, 7 Nov 1997 12:59:29 +0700 (KRS)
+Message-ID: <3462AE40.FF6D5DF@sable.krasnoyarsk.su>
+Date: Fri, 07 Nov 1997 12:59:28 +0700
+From: "Vadim B. Mikheev" <vadim@sable.krasnoyarsk.su>
+Organization: ITTS (Krasnoyarsk)
+X-Mailer: Mozilla 3.01 (X11; I; FreeBSD 2.2.5-RELEASE i386)
+MIME-Version: 1.0
+To: Bruce Momjian <maillist@candle.pha.pa.us>
+CC: marc@fallon.classyad.com, hackers@postgreSQL.org
+Subject: Re: [HACKERS] PERFORMANCE and Good Bye, Time Travel!
+References: <199711070454.XAA05565@candle.pha.pa.us>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Sender: owner-hackers@hub.org
+Precedence: bulk
+Status: OR
+
+Bruce Momjian wrote:
+> 
+> I was worried when you didn't respond to my last list of ideas.  I
+> thought perhaps the idea was getting on your nerves.
+
+No, I was (and, unfortunately, I still) busy...
+
+> 
+> I haven't dropped the idea because:
+> 
+>         1) it offers 2-9 times speedup in database modifications
+>         2) this is how the big commercial system handle it, and I think
+>            we need to give users this option.
+>         3) in the way I had it designed, it wouldn't take much work to
+>            do it.
+> 
+> Anything that promises that much speedup, if it can be done easy, I say
+> lets consider it, even if you loose 60 seconds of changes.
+
+I agreed with your un-buffered logging idea. This would be excellent
+feature for un-critical dbase usings (WWW, etc).
+
+> 
+> >    In my plans to re-design transaction system I supposed to keep in shmem
+> > two last pg_log pages. They are most often used and using ReadBuffer/WriteBuffer
+> > to access them is not good idea. Also, we could use spinlock instead of
+> > lock manager to synchronize access to these pages (as I see in spin.c
+> > spinlock-s could be shared, but only exclusive ones are used) - spinlocks
+> > are faster.
+> 
+> Ah, so you already had the idea of having on-line pages in shared memory
+> as part of a transaction system overhaul?  Right now, does each backend
+
+Yes. I hope to implement this in the next 1-2 weeks.
+
+> lock/read/write/unlock to get at pg_log?  Wow, that is bad.
+
+Yes, he does.
+
+> 
+> Perhaps mmap() would be a good idea.  My system has msync() to flush
+> mmap()'ed pages to the underlying file.  You would still run fsync()
+> after that.  This may give us the best of both worlds: a shared-memory
+                                                           ^^^^^^^^^^^^^
+> area of variable size, and control of when it get flushed to disk.  Do
+  ^^^^^^^^^^^^^^^^^^^^^
+I like it. FreeBSD supports 
+
+MAP_ANON    Map anonymous memory not associated with any specific file. 
+
+It would be nice to use mmap to get more "shared" memory, but I don't see 
+reasons to mmap any particular file to memory. Having two last pg_log pages 
+in memory + xact commit/abort writeback optimization (updation of commit/abort 
+xmin/xmax status in tuples by any scan - we already have this) reduce access 
+to "old" pg_log pages to zero.
+
+> other OS's have this?  I have a feeling OS's with unified buffer caches
+> don't have this ability to determine when the underlying mmap'ed file
+> gets sent to the underlying file and disk.
+> 
+> >    These two last pg_log pages are "online" ones. Race condition: when one or
+> > both of online pages becomes non-online ones, i.e. pg_log has to be expanded
+> > when writing commit/abort of "big" xid. This is how we could handle this
+> > in "buffered" logging (delayed fsync) mode:
+> >
+> >    When backend want to write commit/abort status he acquires exclusive
+> > OnLineLogLock. If xid belongs to online pages then backend writes status
+> > and releases spin. If xid is less than least xid on 1st online page then
+> > backend releases spin and does exactly the same what he does in normal mode:
+> > flush (write and fsync) all durty data files, lock pg_log for write, ReadBuffer,
+> > update xid status, WriteBuffer, release write lock, flush pg_log.
+> > If xid is greater than max xid on 2nd online page then the simplest way is
+> > just do sync(); sync() (two times), flush 1st or both online pages,
+> > read new page(s) into online pages space, update xid status,
+> > release OnLineLogLock spin. We could try other ways but pg_log expanding
+> > is rare case (32K xids in one pg_log page)...
+> >    All what postmaster will have to do is:
+> > 1. Get shared OnLineLogLock.
+> > 2. Copy 2 x 8K data to private place.
+> > 3. Release spinlock.
+> > 4. sync(); sync(); (two times!)
+> > 5. Flush online pages.
+> >
+> > We could use -F DELAY_TIME to turn fsync delayed mode ON.
+> >
+> > And, btw, having two bits for xact status we have only one unused
+> > status value (0x11) currently - I would like to use this for
+> > nested xactions and savepoints...
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+More about this: 0x11 could mean "this _child_ transaction is committed -
+you have to lookup in pg_xact_child to get parent xid and use pg_log again
+to get parent xact status". If parent committed then child xact status
+will be changed to 0x10 (committed) else - to 0x01 (aborted). Using this
+we could get xact nesting and savepoints by starting new child xaction
+inside running one...
+
+> 
+> I saw that.  By keeping two copies of pg_log, one in memory to be used
+                                        ^^^^^^
+                             Just two pg_log pages...
+
+> by all backend, and another that hits the disk, it certainly will work.
+
+Vadim
+
+
+From vadim@sable.krasnoyarsk.su Fri Nov  7 01:30:59 1997
+Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
+	by candle.pha.pa.us (8.8.5/8.8.5) with ESMTP id BAA07599
+	for <maillist@candle.pha.pa.us>; Fri, 7 Nov 1997 01:30:58 -0500 (EST)
+Received: from www.krasnet.ru (www.krasnet.ru [193.125.44.86]) by renoir.op.net (o1/$ Revision: 1.14 $) with ESMTP id BAA26793 for <maillist@candle.pha.pa.us>; Fri, 7 Nov 1997 01:12:33 -0500 (EST)
+Received: from www.krasnet.ru (www.krasnet.ru [193.125.44.86]) by www.krasnet.ru (8.8.7/8.7.3) with SMTP id NAA25592; Fri, 7 Nov 1997 13:16:39 +0700 (KRS)
+Sender: root@www.krasnet.ru
+Message-ID: <3462B247.ABD322C@sable.krasnoyarsk.su>
+Date: Fri, 07 Nov 1997 13:16:39 +0700
+From: "Vadim B. Mikheev" <vadim@sable.krasnoyarsk.su>
+Organization: ITTS (Krasnoyarsk)
+X-Mailer: Mozilla 3.01 (X11; I; FreeBSD 2.2.5-RELEASE i386)
+MIME-Version: 1.0
+To: Jan Wieck <wieck@sapserv.debis.de>
+CC: Bruce Momjian <maillist@candle.pha.pa.us>, hackers@postgreSQL.org
+Subject: Re: [HACKERS] PERFORMANCE and Good Bye, Time Travel!
+References: <m0xT9nq-000BFQC@orion.SAPserv.Hamburg.dsh.de>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Status: OR
+
+wieck@sapserv.debis.de wrote:
+> 
+> Bruce wrote:
+> >
+> > > > It seems that this is what Oracle does, but Sybase writes queries
+> > > > (with transaction ids, of 'course, and before execution) and
+> > > > begin, commit/abort events <-- this is better for non-overwriting
+> > > > system (shorter redo file), but, agreed, recovering is more complicated.
+> > > >
+> > > > Vadim
+> > > >
+> > >
+> > >     Writing  only  the queries (and only those that really modify
+> > >     data - no selects) would be much smarter and the  redo  files
+> > >     will  be  shorter. But it wouldn't fit for PostgreSQL as long
+> > >     as someone can submit a query like
+> > >
+> > >         DELETE FROM xxx WHERE oid = 59337;
+> >
+> > Interesting point.  Currently, an insert shows the OID as output in
+> > psql.  Perhaps we could do a little oid-manipulating to set the oid of
+> > the insert.
+> 
+>     Only for simple inserts, not on
+> 
+>         INSERT INTO xxx SELECT any_type_of_merge_join;
+
+I don't know how but Sybase handle this and IDENTITY (case of OIDs) too.
+But I don't object you, Jan, just because I havn't time to do
+"log queries" redo implementation and so I would like to have "log changes"
+redo at least. (Actually, "log changes" is good for my production dbase
+with 1 - 2 thousand updations per day).
+(BTW, "incrementing" backup could be implemented without redo - I have
+some thoughts about this, - but having additional recovering is good
+in any case).
+
+Vadim
+
+From owner-pgsql-hackers@hub.org Fri Nov  7 15:42:58 1997
+Received: from hub.org (hub.org [209.47.148.200])
+	by candle.pha.pa.us (8.8.5/8.8.5) with ESMTP id PAA22341
+	for <maillist@candle.pha.pa.us>; Fri, 7 Nov 1997 15:42:55 -0500 (EST)
+Received: from localhost (majordom@localhost) by hub.org (8.8.5/8.7.5) with SMTP id PAA02769; Fri, 7 Nov 1997 15:28:54 -0500 (EST)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Fri, 07 Nov 1997 15:24:00 -0500 (EST)
+Received: (from majordom@localhost) by hub.org (8.8.5/8.7.5) id PAA01318 for pgsql-hackers-outgoing; Fri, 7 Nov 1997 15:23:52 -0500 (EST)
+Received: from candle.pha.pa.us (maillist@s3-03.ppp.op.net [206.84.210.195]) by hub.org (8.8.5/8.7.5) with ESMTP id PAA00705 for <hackers@postgreSQL.org>; Fri, 7 Nov 1997 15:21:56 -0500 (EST)
+Received: (from maillist@localhost)
+	by candle.pha.pa.us (8.8.5/8.8.5) id PAA20010;
+	Fri, 7 Nov 1997 15:20:10 -0500 (EST)
+From: Bruce Momjian <maillist@candle.pha.pa.us>
+Message-Id: <199711072020.PAA20010@candle.pha.pa.us>
+Subject: Re: [HACKERS] PERFORMANCE and Good Bye, Time Travel!
+To: vadim@sable.krasnoyarsk.su (Vadim B. Mikheev)
+Date: Fri, 7 Nov 1997 15:20:10 -0500 (EST)
+Cc: marc@fallon.classyad.com, hackers@postgreSQL.org
+In-Reply-To: <3462AE40.FF6D5DF@sable.krasnoyarsk.su> from "Vadim B. Mikheev" at Nov 7, 97 12:59:28 pm
+X-Mailer: ELM [version 2.4 PL25]
+MIME-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Sender: owner-hackers@hub.org
+Precedence: bulk
+Status: OR
+
+> > Anything that promises that much speedup, if it can be done easy, I say
+> > lets consider it, even if you loose 60 seconds of changes.
+> 
+> I agreed with your un-buffered logging idea. This would be excellent
+> feature for un-critical dbase usings (WWW, etc).
+
+Actually, it is buffered logging.  We currently have unbuffered logging,
+I think.
+
+> > >    In my plans to re-design transaction system I supposed to keep in shmem
+> > > two last pg_log pages. They are most often used and using ReadBuffer/WriteBuffer
+> > > to access them is not good idea. Also, we could use spinlock instead of
+> > > lock manager to synchronize access to these pages (as I see in spin.c
+> > > spinlock-s could be shared, but only exclusive ones are used) - spinlocks
+> > > are faster.
+> > 
+> > Ah, so you already had the idea of having on-line pages in shared memory
+> > as part of a transaction system overhaul?  Right now, does each backend
+> 
+> Yes. I hope to implement this in the next 1-2 weeks.
+> 
+> > lock/read/write/unlock to get at pg_log?  Wow, that is bad.
+> 
+> Yes, he does.
+> 
+> > 
+> > Perhaps mmap() would be a good idea.  My system has msync() to flush
+> > mmap()'ed pages to the underlying file.  You would still run fsync()
+> > after that.  This may give us the best of both worlds: a shared-memory
+>                                                            ^^^^^^^^^^^^^
+> > area of variable size, and control of when it get flushed to disk.  Do
+>   ^^^^^^^^^^^^^^^^^^^^^
+> I like it. FreeBSD supports 
+> 
+> MAP_ANON    Map anonymous memory not associated with any specific file. 
+> 
+> It would be nice to use mmap to get more "shared" memory, but I don't see 
+> reasons to mmap any particular file to memory. Having two last pg_log pages 
+> in memory + xact commit/abort writeback optimization (updation of commit/abort 
+> xmin/xmax status in tuples by any scan - we already have this) reduce access 
+> to "old" pg_log pages to zero.
+
+I totally agree.  There is no advantage to mmap() vs. shared memory for
+us.  I thought if we could control when the mmap() gets flushed to disk,
+we could let the OS handle the syncing, but I doubt this is going to be
+portable.
+
+Though, we could mmap() pg_log, and that way backends would not have to
+read/write the blocks, and they could all see the same data.  But with
+the new scheme, they have most transaction ids in shared memory.
+
+Interesting you mention the scan updating the transaction status.  We
+would have a problem here.  It is possible a backend will update the
+commit status of a data page, and that data page will make it to disk,
+but if there is a crash before the update pg_log gets sync'ed, there
+would be a partial transaction in the system.
+
+I don't know any way that a backend would know the transaction has hit
+disk, and the data commit flag could be set.  You don't want to update
+the commit flag of the data page until entire transaction has been
+sync'ed.  The only way to do that would be to have a 'commit and synced'
+flag, but you want to save that for nested transactions.
+
+Another case this could come in handy is to allow reuse of superceeded
+data rows.  If the transaction is committed and synced, the row space
+could be reused by another transaction.
+
+> > other OS's have this?  I have a feeling OS's with unified buffer caches
+> > don't have this ability to determine when the underlying mmap'ed file
+> > gets sent to the underlying file and disk.
+> > 
+> > >    These two last pg_log pages are "online" ones. Race condition: when one or
+> > > both of online pages becomes non-online ones, i.e. pg_log has to be expanded
+> > > when writing commit/abort of "big" xid. This is how we could handle this
+> > > in "buffered" logging (delayed fsync) mode:
+> > >
+> > >    When backend want to write commit/abort status he acquires exclusive
+> > > OnLineLogLock. If xid belongs to online pages then backend writes status
+
+This confuses me.  Why does a backend need to lock pg_log to update a
+transaction status?
+
+> > > and releases spin. If xid is less than least xid on 1st online page then
+> > > backend releases spin and does exactly the same what he does in normal mode:
+> > > flush (write and fsync) all durty data files, lock pg_log for write, ReadBuffer,
+> > > update xid status, WriteBuffer, release write lock, flush pg_log.
+> > > If xid is greater than max xid on 2nd online page then the simplest way is
+> > > just do sync(); sync() (two times), flush 1st or both online pages,
+> > > read new page(s) into online pages space, update xid status,
+> > > release OnLineLogLock spin. We could try other ways but pg_log expanding
+> > > is rare case (32K xids in one pg_log page)...
+> > >    All what postmaster will have to do is:
+> > > 1. Get shared OnLineLogLock.
+> > > 2. Copy 2 x 8K data to private place.
+> > > 3. Release spinlock.
+> > > 4. sync(); sync(); (two times!)
+> > > 5. Flush online pages.
+
+Great.
+
+> > >
+> > > We could use -F DELAY_TIME to turn fsync delayed mode ON.
+> > >
+> > > And, btw, having two bits for xact status we have only one unused
+> > > status value (0x11) currently - I would like to use this for
+> > > nested xactions and savepoints...
+>     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> More about this: 0x11 could mean "this _child_ transaction is committed -
+> you have to lookup in pg_xact_child to get parent xid and use pg_log again
+> to get parent xact status". If parent committed then child xact status
+> will be changed to 0x10 (committed) else - to 0x01 (aborted). Using this
+> we could get xact nesting and savepoints by starting new child xaction
+> inside running one...
+
+OK.
+
+> 
+> > 
+> > I saw that.  By keeping two copies of pg_log, one in memory to be used
+>                                         ^^^^^^
+>                              Just two pg_log pages...
+
+Got it.
+
+
+-- 
+Bruce Momjian
+maillist@candle.pha.pa.us
+
+
+From owner-pgsql-hackers@hub.org Sun Nov  9 22:07:36 1997
+Received: from hub.org (hub.org [209.47.148.200])
+	by candle.pha.pa.us (8.8.5/8.8.5) with ESMTP id WAA04655
+	for <maillist@candle.pha.pa.us>; Sun, 9 Nov 1997 22:07:30 -0500 (EST)
+Received: from localhost (majordom@localhost) by hub.org (8.8.5/8.7.5) with SMTP id VAA07023; Sun, 9 Nov 1997 21:55:54 -0500 (EST)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Sun, 09 Nov 1997 21:52:20 -0500 (EST)
+Received: (from majordom@localhost) by hub.org (8.8.5/8.7.5) id VAA06174 for pgsql-hackers-outgoing; Sun, 9 Nov 1997 21:52:13 -0500 (EST)
+Received: from candle.pha.pa.us (maillist@s3-03.ppp.op.net [206.84.210.195]) by hub.org (8.8.5/8.7.5) with ESMTP id VAA06092 for <hackers@postgreSQL.org>; Sun, 9 Nov 1997 21:51:58 -0500 (EST)
+Received: (from maillist@localhost)
+	by candle.pha.pa.us (8.8.5/8.8.5) id VAA04150;
+	Sun, 9 Nov 1997 21:50:29 -0500 (EST)
+From: Bruce Momjian <maillist@candle.pha.pa.us>
+Message-Id: <199711100250.VAA04150@candle.pha.pa.us>
+Subject: Re: [HACKERS] PERFORMANCE and Good Bye, Time Travel! (fwd)
+To: vadim@sable.krasnoyarsk.su (Vadim B. Mikheev)
+Date: Sun, 9 Nov 1997 21:50:29 -0500 (EST)
+Cc: hackers@postgreSQL.org (PostgreSQL-development)
+X-Mailer: ELM [version 2.4 PL25]
+MIME-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Sender: owner-hackers@hub.org
+Precedence: bulk
+Status: OR
+
+Forwarded message:
+> > > Perhaps mmap() would be a good idea.  My system has msync() to flush
+> > > mmap()'ed pages to the underlying file.  You would still run fsync()
+> > > after that.  This may give us the best of both worlds: a shared-memory
+> >                                                            ^^^^^^^^^^^^^
+> > > area of variable size, and control of when it get flushed to disk.  Do
+> >   ^^^^^^^^^^^^^^^^^^^^^
+> > I like it. FreeBSD supports 
+> > 
+> > MAP_ANON    Map anonymous memory not associated with any specific file. 
+> > 
+> > It would be nice to use mmap to get more "shared" memory, but I don't see 
+> > reasons to mmap any particular file to memory. Having two last pg_log pages 
+> > in memory + xact commit/abort writeback optimization (updation of commit/abort 
+> > xmin/xmax status in tuples by any scan - we already have this) reduce access 
+> > to "old" pg_log pages to zero.
+> 
+> I totally agree.  There is no advantage to mmap() vs. shared memory for
+> us.  I thought if we could control when the mmap() gets flushed to disk,
+> we could let the OS handle the syncing, but I doubt this is going to be
+> portable.
+> 
+> Though, we could mmap() pg_log, and that way backends would not have to
+> read/write the blocks, and they could all see the same data.  But with
+> the new scheme, they have most transaction ids in shared memory.
+> 
+> Interesting you mention the scan updating the transaction status.  We
+> would have a problem here.  It is possible a backend will update the
+> commit status of a data page, and that data page will make it to disk,
+> but if there is a crash before the update pg_log gets sync'ed, there
+> would be a partial transaction in the system.
+> 
+> I don't know any way that a backend would know the transaction has hit
+> disk, and the data commit flag could be set.  You don't want to update
+> the commit flag of the data page until entire transaction has been
+> sync'ed.  The only way to do that would be to have a 'commit and synced'
+> flag, but you want to save that for nested transactions.
+> 
+> Another case this could come in handy is to allow reuse of superceeded
+> data rows.  If the transaction is committed and synced, the row space
+> could be reused by another transaction.
+> 
+
+I have been thinking about the mmap() issue, and it seems a natural for
+pg_log.  You can have every backend mmap() pg_log.  It becomes a dynamic
+shared memory area that is auto-initialized to the contents of pg_log,
+and all changes can be made by all backends.  No locking needed.  We can
+also flush the changes to the underlying file.  Under bsdi, you can also
+have the mmap area follow you across exec() calls, so each backend
+doesn't have to do anything.  I want to replace exec with fork also, so
+the stuff would be auto-loaded in the address space of each backend.
+
+This way, you don't have to have two on-line pages and move them around
+as pg_log grows.
+
+The only problem remains how to mark certain transactions as synced or
+force only synced transactions to hit the pg_log file itself, and data
+row commit status only should be updated for synced transactions.
+
+-- 
+Bruce Momjian
+maillist@candle.pha.pa.us
+
+
+From vadim@sable.krasnoyarsk.su Sun Nov  9 23:00:58 1997
+Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
+	by candle.pha.pa.us (8.8.5/8.8.5) with ESMTP id XAA05394
+	for <maillist@candle.pha.pa.us>; Sun, 9 Nov 1997 23:00:55 -0500 (EST)
+Received: from www.krasnet.ru (www.krasnet.ru [193.125.44.86]) by renoir.op.net (o1/$ Revision: 1.14 $) with ESMTP id WAA25139 for <maillist@candle.pha.pa.us>; Sun, 9 Nov 1997 22:42:33 -0500 (EST)
+Received: from www.krasnet.ru (www.krasnet.ru [193.125.44.86]) by www.krasnet.ru (8.8.7/8.7.3) with SMTP id KAA01845; Mon, 10 Nov 1997 10:49:25 +0700 (KRS)
+Sender: root@www.krasnet.ru
+Message-ID: <34668444.237C228A@sable.krasnoyarsk.su>
+Date: Mon, 10 Nov 1997 10:49:24 +0700
+From: "Vadim B. Mikheev" <vadim@sable.krasnoyarsk.su>
+Organization: ITTS (Krasnoyarsk)
+X-Mailer: Mozilla 3.01 (X11; I; FreeBSD 2.2.5-RELEASE i386)
+MIME-Version: 1.0
+To: Bruce Momjian <maillist@candle.pha.pa.us>
+CC: marc@fallon.classyad.com, hackers@postgreSQL.org
+Subject: Re: [HACKERS] PERFORMANCE and Good Bye, Time Travel!
+References: <199711072020.PAA20010@candle.pha.pa.us>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Status: OR
+
+Bruce Momjian wrote:
+> 
+> > > Anything that promises that much speedup, if it can be done easy, I say
+> > > lets consider it, even if you loose 60 seconds of changes.
+> >
+> > I agreed with your un-buffered logging idea. This would be excellent
+> > feature for un-critical dbase usings (WWW, etc).
+> 
+> Actually, it is buffered logging.  We currently have unbuffered logging,
+> I think.
+
+Sorry - mistyping.
+
+> 
+> Interesting you mention the scan updating the transaction status.  We
+> would have a problem here.  It is possible a backend will update the
+> commit status of a data page, and that data page will make it to disk,
+> but if there is a crash before the update pg_log gets sync'ed, there
+> would be a partial transaction in the system.
+
+You're right! Currently, only system relations can be affected by this:
+backend releases locks on user tables after syncing data and pg_log.
+I'll keep this in mind...
+
+> > > >    These two last pg_log pages are "online" ones. Race condition: when one or
+> > > > both of online pages becomes non-online ones, i.e. pg_log has to be expanded
+> > > > when writing commit/abort of "big" xid. This is how we could handle this
+> > > > in "buffered" logging (delayed fsync) mode:
+> > > >
+> > > >    When backend want to write commit/abort status he acquires exclusive
+> > > > OnLineLogLock. If xid belongs to online pages then backend writes status
+> 
+> This confuses me.  Why does a backend need to lock pg_log to update a
+> transaction status?
+
+What if two backends try to change xact statuses in the same byte ?
+
+Vadim
+
+From owner-pgsql-hackers@hub.org Sun Nov  9 23:59:50 1997
+Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
+	by candle.pha.pa.us (8.8.5/8.8.5) with ESMTP id XAA06523
+	for <maillist@candle.pha.pa.us>; Sun, 9 Nov 1997 23:59:48 -0500 (EST)
+Received: from hub.org (hub.org [209.47.148.200]) by renoir.op.net (o1/$ Revision: 1.14 $) with ESMTP id XAA27105 for <maillist@candle.pha.pa.us>; Sun, 9 Nov 1997 23:41:39 -0500 (EST)
+Received: from localhost (majordom@localhost) by hub.org (8.8.5/8.7.5) with SMTP id XAA08860; Sun, 9 Nov 1997 23:35:42 -0500 (EST)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Sun, 09 Nov 1997 23:31:50 -0500 (EST)
+Received: (from majordom@localhost) by hub.org (8.8.5/8.7.5) id XAA07962 for pgsql-hackers-outgoing; Sun, 9 Nov 1997 23:31:43 -0500 (EST)
+Received: from candle.pha.pa.us (root@s3-03.ppp.op.net [206.84.210.195]) by hub.org (8.8.5/8.7.5) with ESMTP id XAA07875 for <hackers@postgreSQL.org>; Sun, 9 Nov 1997 23:31:28 -0500 (EST)
+Received: (from maillist@localhost)
+	by candle.pha.pa.us (8.8.5/8.8.5) id XAA05566;
+	Sun, 9 Nov 1997 23:17:41 -0500 (EST)
+From: Bruce Momjian <maillist@candle.pha.pa.us>
+Message-Id: <199711100417.XAA05566@candle.pha.pa.us>
+Subject: Re: [HACKERS] PERFORMANCE and Good Bye, Time Travel!
+To: vadim@sable.krasnoyarsk.su (Vadim B. Mikheev)
+Date: Sun, 9 Nov 1997 23:17:41 -0500 (EST)
+Cc: marc@fallon.classyad.com, hackers@postgreSQL.org
+In-Reply-To: <34668444.237C228A@sable.krasnoyarsk.su> from "Vadim B. Mikheev" at Nov 10, 97 10:49:24 am
+X-Mailer: ELM [version 2.4 PL25]
+MIME-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Sender: owner-hackers@hub.org
+Precedence: bulk
+Status: OR
+
+> > > > >    These two last pg_log pages are "online" ones. Race condition: when one or
+> > > > > both of online pages becomes non-online ones, i.e. pg_log has to be expanded
+> > > > > when writing commit/abort of "big" xid. This is how we could handle this
+> > > > > in "buffered" logging (delayed fsync) mode:
+> > > > >
+> > > > >    When backend want to write commit/abort status he acquires exclusive
+> > > > > OnLineLogLock. If xid belongs to online pages then backend writes status
+> > 
+> > This confuses me.  Why does a backend need to lock pg_log to update a
+> > transaction status?
+> 
+> What if two backends try to change xact statuses in the same byte ?
+
+Ooo, you got me.  I so hoped to prevent locking.  It would be nice if:
+
+	*x |= 3;
+
+would be atomic, but I don't think it is.  Most RISC machines don't even
+have an OR against a memory address, I think.
+
+-- 
+Bruce Momjian
+maillist@candle.pha.pa.us
+
+

@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sun Oct 10 16:40:40 EDT 1999
+Last updated:		Sun Oct 17 21:06:50 EDT 1999
 
 Current maintainer:	Bruce Momjian (maillist@candle.pha.pa.us)
 
@@ -229,8 +229,8 @@ INDEXES
   a matching index [limit]
 * Improve LIMIT processing by using index to limit rows processed [limit]
 * Have optimizer take LIMIT into account when considering index scans [limit]
-* Make index creation use psort code, because it is now faster(Vadim)
-* Allow creation of sort temp tables > 1 Gig
+* -Make index creation use psort code, because it is now faster(Vadim)
+* -Allow creation of sort temp tables > 1 Gig
 * Create more system table indexes for faster cache lookups
 * fix indexscan() so it does leak memory by not requiring caller to free
 * Improve _bt_binsrch() to handle equal keys better, remove _bt_firsteq()(Tom)
