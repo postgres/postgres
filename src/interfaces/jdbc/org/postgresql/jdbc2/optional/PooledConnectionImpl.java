@@ -13,7 +13,7 @@ import java.lang.reflect.*;
  * @see ConnectionPool
  *
  * @author Aaron Mulder (ammulder@chariotsolutions.com)
- * @version $Revision: 1.2 $
+ * @version $Revision: 1.3 $
  */
 public class PooledConnectionImpl implements PooledConnection
 {
@@ -26,7 +26,7 @@ public class PooledConnectionImpl implements PooledConnection
 	 * Creates a new PooledConnection representing the specified physical
 	 * connection.
 	 */
-	PooledConnectionImpl(Connection con, boolean autoCommit)
+	protected PooledConnectionImpl(Connection con, boolean autoCommit)
 	{
 		this.con = con;
 		this.autoCommit = autoCommit;

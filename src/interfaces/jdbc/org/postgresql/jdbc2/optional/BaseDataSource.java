@@ -8,7 +8,7 @@ import java.sql.*;
  * Base class for data sources and related classes.
  *
  * @author Aaron Mulder (ammulder@chariotsolutions.com)
- * @version $Revision: 1.2 $
+ * @version $Revision: 1.3 $
  */
 public abstract class BaseDataSource implements Referenceable
 {
@@ -233,9 +233,18 @@ public abstract class BaseDataSource implements Referenceable
 		return "jdbc:postgresql://" + serverName + (portNumber == 0 ? "" : ":" + portNumber) + "/" + databaseName;
 	}
 
+    /**
+     * Generates a reference using the appropriate object factory.  This
+     * implementation uses the JDBC 2 optional package object factory.
+     */
+    protected Reference createReference()
+    {
+        return new Reference(getClass().getName(), PGObjectFactory.class.getName(), null);
+    }
+
 	public Reference getReference() throws NamingException
 	{
-		Reference ref = new Reference(getClass().getName(), PGObjectFactory.class.getName(), null);
+		Reference ref = createReference();
 		ref.add(new StringRefAddr("serverName", serverName));
 		if (portNumber != 0)
 		{

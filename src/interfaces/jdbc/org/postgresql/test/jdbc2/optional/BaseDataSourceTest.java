@@ -2,10 +2,11 @@ package org.postgresql.test.jdbc2.optional;
 
 import junit.framework.TestCase;
 import org.postgresql.test.TestUtil;
-import org.postgresql.jdbc2.optional.SimpleDataSource;
 import org.postgresql.jdbc2.optional.BaseDataSource;
 
 import java.sql.*;
+import java.util.*;
+import javax.naming.*;
 
 /**
  * Common tests for all the BaseDataSource implementations.  This is
@@ -15,10 +16,11 @@ import java.sql.*;
  * tests.
  *
  * @author Aaron Mulder (ammulder@chariotsolutions.com)
- * @version $Revision: 1.3 $
+ * @version $Revision: 1.4 $
  */
 public abstract class BaseDataSourceTest extends TestCase
 {
+    public static String DATA_SOURCE_JNDI = "BaseDataSource";
 	protected Connection con;
 	protected BaseDataSource bds;
 
@@ -60,7 +62,10 @@ public abstract class BaseDataSourceTest extends TestCase
 	 */
 	protected Connection getDataSourceConnection() throws SQLException
 	{
-		initializeDataSource();
+		if(bds == null)
+        {
+            initializeDataSource();
+        }
 		return bds.getConnection();
 	}
 
@@ -174,6 +179,21 @@ public abstract class BaseDataSourceTest extends TestCase
 		}
 	}
 
+    /**
+     * Uses the mini-JNDI implementation for testing purposes
+     */
+    protected InitialContext getInitialContext()
+    {
+        Hashtable env = new Hashtable();
+        env.put(Context.INITIAL_CONTEXT_FACTORY, "org.postgresql.test.util.MiniJndiContextFactory");
+        try {
+            return new InitialContext(env);
+        } catch(NamingException e) {
+            fail("Unable to create InitialContext: "+e.getMessage());
+            return null;
+        }
+    }
+
 	/**
 	 * Eventually, we must test stuffing the DataSource in JNDI and
 	 * then getting it back out and make sure it's still usable.  This
@@ -182,6 +202,26 @@ public abstract class BaseDataSourceTest extends TestCase
 	 */
 	public void testJndi()
 	{
-		// TODO: Put the DS in JNDI, retrieve it, and try some of this stuff again
-	}
+        initializeDataSource();
+        BaseDataSource oldbds = bds;
+        InitialContext ic = getInitialContext();
+        try {
+            ic.rebind(DATA_SOURCE_JNDI, bds);
+            bds = (BaseDataSource)ic.lookup(DATA_SOURCE_JNDI);
+            assertTrue("Got null looking up DataSource from JNDI!", bds != null);
+            compareJndiDataSource(oldbds, bds);
+        } catch (NamingException e) {
+            fail(e.getMessage());
+        }
+        oldbds = bds;
+        testUseConnection();
+        assertTrue("Test should not have changed DataSource ("+bds+" != "+oldbds+")!", bds == oldbds);
+    }
+
+    /**
+     * Check whether a DS was dereferenced from JNDI or recreated.
+     */
+    protected void compareJndiDataSource(BaseDataSource oldbds, BaseDataSource bds) {
+        assertTrue("DataSource was dereferenced, should have been serialized or recreated", bds != oldbds);
+    }
 }

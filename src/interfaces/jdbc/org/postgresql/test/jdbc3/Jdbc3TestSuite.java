@@ -1,10 +1,6 @@
 package org.postgresql.test.jdbc3;
 
 import junit.framework.TestSuite;
-import junit.framework.TestCase;
-import junit.framework.Test;
-
-import java.sql.*;
 
 /*
  * Executes all known tests for JDBC3
@@ -17,7 +13,11 @@ public class Jdbc3TestSuite extends TestSuite
 	 */
 	public static TestSuite suite()
 	{
-		//Currently there are no specific jdbc3 tests so just run the jdbc2 tests
-		return org.postgresql.test.jdbc2.Jdbc2TestSuite.suite();
+        TestSuite suite = new TestSuite();
+		suite.addTest(org.postgresql.test.jdbc2.Jdbc2TestSuite.suite());
+        suite.addTestSuite(Jdbc3SimpleDataSourceTest.class);
+        suite.addTestSuite(Jdbc3ConnectionPoolTest.class);
+        suite.addTestSuite(Jdbc3PoolingDataSourceTest.class);
+        return suite;
 	}
 }

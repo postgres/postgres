@@ -13,7 +13,7 @@ import java.util.Hashtable;
  * consistent.
  *
  * @author Aaron Mulder (ammulder@chariotsolutions.com)
- * @version $Revision: 1.2 $
+ * @version $Revision: 1.3 $
  */
 public class PGObjectFactory implements ObjectFactory
 {
@@ -81,7 +81,7 @@ public class PGObjectFactory implements ObjectFactory
 		return loadBaseDataSource(cp, ref);
 	}
 
-	private Object loadBaseDataSource(BaseDataSource ds, Reference ref)
+	protected Object loadBaseDataSource(BaseDataSource ds, Reference ref)
 	{
 		ds.setDatabaseName(getProperty(ref, "databaseName"));
 		ds.setPassword(getProperty(ref, "password"));
@@ -95,7 +95,7 @@ public class PGObjectFactory implements ObjectFactory
 		return ds;
 	}
 
-	private String getProperty(Reference ref, String s)
+    protected String getProperty(Reference ref, String s)
 	{
 		RefAddr addr = ref.get(s);
 		if (addr == null)

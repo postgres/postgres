@@ -33,7 +33,7 @@ import java.sql.SQLException;
  * <p>This implementation supports JDK 1.3 and higher.</p>
  *
  * @author Aaron Mulder (ammulder@chariotsolutions.com)
- * @version $Revision: 1.2 $
+ * @version $Revision: 1.3 $
  */
 public class PoolingDataSource extends BaseDataSource implements DataSource
 {
@@ -45,7 +45,7 @@ public class PoolingDataSource extends BaseDataSource implements DataSource
 	}
 
 	// Additional Data Source properties
-	private String dataSourceName;
+	protected String dataSourceName;  // Must be protected for subclasses to sync updates to it
 	private int initialConnections = 0;
 	private int maxConnections = 0;
 	// State variables
@@ -262,7 +262,7 @@ public class PoolingDataSource extends BaseDataSource implements DataSource
 	 * that number of connections will be created.	After this method is called,
 	 * the DataSource properties cannot be changed.  If you do not call this
 	 * explicitly, it will be called the first time you get a connection from the
-	 * Datasource.
+	 * DataSource.
 	 * @throws java.sql.SQLException
 	 *		   Occurs when the initialConnections is greater than zero, but the
 	 *		   DataSource is not able to create enough physical connections.
@@ -271,7 +271,7 @@ public class PoolingDataSource extends BaseDataSource implements DataSource
 	{
 		synchronized (lock)
 		{
-			source = new ConnectionPool();
+			source = createConnectionPool();
 			source.setDatabaseName(getDatabaseName());
 			source.setPassword(getPassword());
 			source.setPortNumber(getPortNumber());
@@ -284,6 +284,17 @@ public class PoolingDataSource extends BaseDataSource implements DataSource
 			initialized = true;
 		}
 	}
+
+    protected boolean isInitialized() {
+        return initialized;
+    }
+
+    /**
+     * Creates the appropriate ConnectionPool to use for this DataSource.
+     */
+    protected ConnectionPool createConnectionPool() {
+        return new ConnectionPool();
+    }
 
 	/**
 	 * Gets a <b>non-pooled</b> connection, unless the user and password are the
@@ -358,13 +369,17 @@ public class PoolingDataSource extends BaseDataSource implements DataSource
 			}
 			used = null;
 		}
-		synchronized (dataSources)
-		{
-			dataSources.remove(dataSourceName);
-		}
-	}
+        removeStoredDataSource();
+    }
 
-	/**
+    protected void removeStoredDataSource() {
+        synchronized (dataSources)
+        {
+            dataSources.remove(dataSourceName);
+        }
+    }
+
+    /**
 	 * Gets a connection from the pool.  Will get an available one if
 	 * present, or create a new one if under the max limit.  Will
 	 * block if all used and a new one would exceed the max.
