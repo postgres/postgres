@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.126 2004/07/11 00:18:43 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.127 2004/07/26 18:53:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1222,10 +1222,10 @@ load_ident(void)
  *	return false.
  */
 static bool
-interpret_ident_response(char *ident_response,
+interpret_ident_response(const char *ident_response,
 						 char *ident_user)
 {
-	char	   *cursor = ident_response;		/* Cursor into
+	const char   *cursor = ident_response;		/* Cursor into
 												 * *ident_response */
 
 	/*
@@ -1451,6 +1451,10 @@ ident_inet(const SockAddr remote_addr,
 
 	ident_response[rc] = '\0';
 	ident_return = interpret_ident_response(ident_response, ident_user);
+	if (!ident_return)
+		ereport(LOG,
+				(errmsg("invalidly formatted response from Ident server: \"%s\"",
+						ident_response)));
 
 ident_inet_done:
 	if (sock_fd >= 0)
@@ -1647,6 +1651,10 @@ authident(hbaPort *port)
 		default:
 			return STATUS_ERROR;
 	}
+
+	ereport(DEBUG1,
+			(errmsg("IDENT code identifies remote user as \"%s\"",
+					ident_user)));
 
 	if (check_ident_usermap(port->auth_arg, port->user_name, ident_user))
 		return STATUS_OK;
