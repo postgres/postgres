@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.102 2004/10/06 08:20:58 neilc Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.103 2004/10/08 11:24:19 neilc Exp $
  */
 #include "postgres_fe.h"
 
@@ -140,9 +140,13 @@ main(int argc, char *argv[])
 
 	SetVariable(pset.vars, "VERSION", PG_VERSION_STR);
 
-	/* Default values for variables that are used in noninteractive cases */
+	/* Default values for variables */
 	SetVariableBool(pset.vars, "AUTOCOMMIT");
 	SetVariable(pset.vars, "VERBOSITY", "default");
+	SetVariable(pset.vars, "PROMPT1", DEFAULT_PROMPT1);
+	SetVariable(pset.vars, "PROMPT2", DEFAULT_PROMPT2);
+	SetVariable(pset.vars, "PROMPT3", DEFAULT_PROMPT3);
+
 	pset.verbosity = PQERRORS_DEFAULT;
 
 	pset.notty = (!isatty(fileno(stdin)) || !isatty(fileno(stdout)));
@@ -299,11 +303,6 @@ main(int argc, char *argv[])
 			checkWin32Codepage();
 #endif
 		}
-
-		/* Default values for variables that are used in interactive case */
-		SetVariable(pset.vars, "PROMPT1", DEFAULT_PROMPT1);
-		SetVariable(pset.vars, "PROMPT2", DEFAULT_PROMPT2);
-		SetVariable(pset.vars, "PROMPT3", DEFAULT_PROMPT3);
 
 		if (!pset.notty)
 			initializeInput(options.no_readline ? 0 : 1);
