@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.40 1998/09/25 01:46:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.41 1998/09/25 15:51:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -147,14 +147,7 @@ bpchar(char *s, int32 len)
 	if ((len == -1) || (len == VARSIZE(s)))
 		return s;
 
-#ifdef MULTIBYTE
-	/* truncate multi-byte string in a way not to break
-	   multi-byte boundary */
-	rlen = pg_mbcliplen(VARDATA(s), len - VARHDRSZ, len - VARHDRSZ);
-	len = rlen + VARHDRSZ;
-#else
 	rlen = len - VARHDRSZ;
-#endif
 
 	if (rlen > 4096)
 		elog(ERROR, "bpchar: length of char() must be less than 4096");
@@ -167,7 +160,13 @@ bpchar(char *s, int32 len)
 	result = (char *) palloc(len);
 	VARSIZE(result) = len;
 	r = VARDATA(result);
+#ifdef MULTIBYTE
+	/* truncate multi-byte string in a way not to break
+	   multi-byte boundary */
+	slen = pg_mbcliplen(VARDATA(s), rlen, rlen);
+#else
 	slen = VARSIZE(s) - VARHDRSZ;
+#endif
 	s = VARDATA(s);
 
 #ifdef STRINGDEBUG
