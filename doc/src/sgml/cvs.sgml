@@ -1,9 +1,12 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/cvs.sgml,v 1.3 1999/03/30 15:25:56 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/cvs.sgml,v 1.4 1999/04/06 15:38:10 thomas Exp $
 CVS code repository
 Thomas Lockhart
 
 $Log: cvs.sgml,v $
+Revision 1.4  1999/04/06 15:38:10  thomas
+Start indenting markup. No text changes.
+
 Revision 1.3  1999/03/30 15:25:56  thomas
 Fix up small markup problems. Force omit-tags to nil so we have tag
  completion as required by the newest DocBook conventions.
@@ -29,29 +32,29 @@ Not yet included in a document (should go in the developer's doc?).
 <date>1998-12-01</date>
 </docinfo>
 
-<title>The <productname>Postgres</productname> <productname>CVS</productname> Repository</title>
+ <title>The <productname>Postgres</productname> <productname>CVS</productname> Repository</title>
 
-<para>
-The <productname>Postgres</productname> source code is stored and managed using the
-<productname>CVS</productname> code management system.
+ <para>
+  The <productname>Postgres</productname> source code is stored and managed using the
+  <productname>CVS</productname> code management system.
+ </para>
+
+ At least two options,
+ anonymous CVS and <productname>CVSup</productname>, 
+ are available to pull the <productname>CVS</productname> code tree from the 
+ <productname>Postgres</productname> server to your local machine.
 </para>
 
-At least two options,
-anonymous CVS and <productname>CVSup</productname>, 
-are available to pull the <productname>CVS</productname> code tree from the 
-<productname>Postgres</productname> server to your local machine.
-</para>
+ <sect1>
+  <title><productname>CVS</productname> Tree Organization</title>
 
-<sect1>
-<title><productname>CVS</productname> Tree Organization</title>
-
-<para>
-<note>
-<title>Author</title>
-<para>
-Written by <ulink url="mailto:scrappy@hub.org">Marc G. Fournier</ulink> on 1998-11-05.
-</note>
-</para>
+  <para>
+   <note>
+    <title>Author</title>
+    <para>
+     Written by <ulink url="mailto:scrappy@hub.org">Marc G. Fournier</ulink> on 1998-11-05.
+   </note>
+  </para>
 
 <para>
    The command <command>cvs checkout</command> has a flag, <option>-r</option>,
