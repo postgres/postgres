@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.56 1997/12/11 17:36:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.57 1997/12/16 15:57:00 thomas Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -854,6 +854,7 @@ PostgresMain(int argc, char *argv[])
 	Dlelem	   *curr;
 	int			status;
 
+	char	   *DBDate = NULL;
 	extern int	optind;
 	extern char *optarg;
 	extern short DebugLvl;
@@ -882,6 +883,10 @@ PostgresMain(int argc, char *argv[])
 	 *	parse command line arguments
 	 * ----------------
 	 */
+
+	/*
+	 * Set default values.
+	 */
 	flagC = flagQ = flagE = flagEu = ShowStats = 0;
 	ShowParserStats = ShowPlannerStats = ShowExecutorStats = 0;
 #ifdef LOCK_MGR_DEBUG
@@ -893,9 +898,33 @@ PostgresMain(int argc, char *argv[])
 	 * NULL means Unix-socket only
 	 */
 	hostName = getenv("PGHOST");
+	DataDir = getenv("PGDATA");
+	/*
+	 * Try to get initial values for date styles and formats.
+	 * Does not do a complete job, but should be good enough for backend.
+	 * Cannot call parse_date() since palloc/pfree memory is not set up yet.
+	 */
+	DBDate = getenv("PGDATESTYLE");
+	if (DBDate != NULL)
+	{
+		if (strcasecmp(DBDate, "ISO") == 0)
+			DateStyle = USE_ISO_DATES;
+		else if (strcasecmp(DBDate, "SQL") == 0)
+			DateStyle = USE_SQL_DATES;
+		else if (strcasecmp(DBDate, "POSTGRES") == 0)
+			DateStyle = USE_POSTGRES_DATES;
+		else if (strcasecmp(DBDate, "GERMAN") == 0)
+		{
+			DateStyle = USE_GERMAN_DATES;
+			EuroDates = TRUE;
+		}
 
-	DataDir = getenv("PGDATA"); /* default */
-	multiplexedBackend = false; /* default */
+		if (strcasecmp(DBDate, "NONEURO") == 0)
+			EuroDates = FALSE;
+		else if (strcasecmp(DBDate, "EURO") == 0)
+			EuroDates = TRUE;
+	}
+	multiplexedBackend = false;
 
 	while ((flag = getopt(argc, argv, "B:bCD:d:Eef:iK:Lm:MNo:P:pQS:st:x:F"))
 		   != EOF)
@@ -1343,7 +1372,7 @@ PostgresMain(int argc, char *argv[])
 	if (IsUnderPostmaster == false)
 	{
 		puts("\nPOSTGRES backend interactive interface");
-		puts("$Revision: 1.56 $ $Date: 1997/12/11 17:36:42 $");
+		puts("$Revision: 1.57 $ $Date: 1997/12/16 15:57:00 $");
 	}
 
 	/* ----------------
