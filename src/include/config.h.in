@@ -399,7 +399,7 @@ extern void srandom(unsigned int seed);
 #define DEADLOCK_CHECK_TIMER 1
 
 /*
- * This flag enables the use of idexes in plans generated for function
+ * This flag enables the use of indexes in plans generated for function
  * executions which normally are always executed with sequential scans.
  */
 #define INDEXSCAN_PATCH 

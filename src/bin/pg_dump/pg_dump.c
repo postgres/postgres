@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.106 1999/05/13 02:35:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.107 1999/05/15 22:18:50 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -194,7 +194,7 @@ isViewRule(char *relname)
 	if (!res ||
 		PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
-		fprintf(stderr, "BEGIN command failed\n");
+		fprintf(stderr, "BEGIN command failed.  Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
 		exit_nicely(g_conn);
 	}
 	PQclear(res);
@@ -208,7 +208,7 @@ isViewRule(char *relname)
 	if (!res ||
 		PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
-		fprintf(stderr, "isViewRule(): SELECT failed\n");
+		fprintf(stderr, "isViewRule(): SELECT failed.  Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
 		exit_nicely(g_conn);
 	}
 
@@ -306,12 +306,9 @@ dumpClasses_nodumpData(FILE *fout, const char *classname, const bool oids)
 					"Explanation from backend: '%s'.\n"
 					"The query was: '%s'.\n",
 					classname, PQerrorMessage(g_conn), query);
-			if (res)
-				PQclear(res);
+			PQclear(res);
 			exit_nicely(g_conn);
 		}
-		if (res)
-			PQclear(res);
 	}
 }
 
@@ -333,7 +330,7 @@ dumpClasses_dumpData(FILE *fout, const char *classname,
 	if (!res ||
 		PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
-		fprintf(stderr, "dumpClasses(): command failed\n");
+		fprintf(stderr, "dumpClasses(): command failed.  Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
 		exit_nicely(g_conn);
 	}
 	for (tuple = 0; tuple < PQntuples(res); tuple++)
@@ -771,7 +768,7 @@ getTypes(int *numTypes)
 	if (!res ||
 		PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
-		fprintf(stderr, "BEGIN command failed\n");
+		fprintf(stderr, "BEGIN command failed.  Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
 		exit_nicely(g_conn);
 	}
 	PQclear(res);
@@ -796,7 +793,7 @@ getTypes(int *numTypes)
 	if (!res ||
 		PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
-		fprintf(stderr, "getTypes(): SELECT failed\n");
+		fprintf(stderr, "getTypes(): SELECT failed.  Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
 		exit_nicely(g_conn);
 	}
 
@@ -904,7 +901,7 @@ getOperators(int *numOprs)
 	if (!res ||
 		PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
-		fprintf(stderr, "BEGIN command failed\n");
+		fprintf(stderr, "BEGIN command failed.  Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
 		exit_nicely(g_conn);
 	}
 	PQclear(res);
@@ -919,7 +916,7 @@ getOperators(int *numOprs)
 	if (!res ||
 		PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
-		fprintf(stderr, "getOperators(): SELECT failed\n");
+		fprintf(stderr, "getOperators(): SELECT failed.  Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
 		exit_nicely(g_conn);
 	}
 
@@ -1241,7 +1238,7 @@ getAggregates(int *numAggs)
 	if (!res ||
 		PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
-		fprintf(stderr, "BEGIN command failed\n");
+		fprintf(stderr, "BEGIN command failed.  Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
 		exit_nicely(g_conn);
 	}
 	PQclear(res);
@@ -1256,7 +1253,7 @@ getAggregates(int *numAggs)
 	if (!res ||
 		PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
-		fprintf(stderr, "getAggregates(): SELECT failed\n");
+		fprintf(stderr, "getAggregates(): SELECT failed.  Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
 		exit_nicely(g_conn);
 	}
 
@@ -1334,7 +1331,7 @@ getFuncs(int *numFuncs)
 	if (!res ||
 		PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
-		fprintf(stderr, "BEGIN command failed\n");
+		fprintf(stderr, "BEGIN command failed.  Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
 		exit_nicely(g_conn);
 	}
 	PQclear(res);
@@ -1350,7 +1347,7 @@ getFuncs(int *numFuncs)
 	if (!res ||
 		PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
-		fprintf(stderr, "getFuncs(): SELECT failed\n");
+		fprintf(stderr, "getFuncs(): SELECT failed.  Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
 		exit_nicely(g_conn);
 	}
 
@@ -1437,7 +1434,7 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 	if (!res ||
 		PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
-		fprintf(stderr, "BEGIN command failed\n");
+		fprintf(stderr, "BEGIN command failed.  Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
 		exit_nicely(g_conn);
 	}
 	PQclear(res);
@@ -1454,7 +1451,7 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 	if (!res ||
 		PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
-		fprintf(stderr, "getTables(): SELECT failed\n");
+		fprintf(stderr, "getTables(): SELECT failed.  Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
 		exit_nicely(g_conn);
 	}
 
@@ -1511,7 +1508,7 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 			if (!res2 ||
 				PQresultStatus(res2) != PGRES_TUPLES_OK)
 			{
-				fprintf(stderr, "getTables(): SELECT (for inherited CHECK) failed\n");
+				fprintf(stderr, "getTables(): SELECT (for inherited CHECK) failed.  Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
 				exit_nicely(g_conn);
 			}
 			ntups2 = PQntuples(res2);
@@ -1554,7 +1551,7 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 			if (!res2 ||
 				PQresultStatus(res2) != PGRES_TUPLES_OK)
 			{
-				fprintf(stderr, "getTables(): SELECT (for CHECK) failed\n");
+				fprintf(stderr, "getTables(): SELECT (for CHECK) failed.  Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
 				exit_nicely(g_conn);
 			}
 			ntups2 = PQntuples(res2);
@@ -1609,7 +1606,7 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 			if (!res2 ||
 				PQresultStatus(res2) != PGRES_TUPLES_OK)
 			{
-				fprintf(stderr, "getTables(): SELECT (for TRIGGER) failed\n");
+				fprintf(stderr, "getTables(): SELECT (for TRIGGER) failed.  Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
 				exit_nicely(g_conn);
 			}
 			ntups2 = PQntuples(res2);
@@ -1770,7 +1767,7 @@ getInherits(int *numInherits)
 	if (!res ||
 		PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
-		fprintf(stderr, "BEGIN command failed\n");
+		fprintf(stderr, "BEGIN command failed.  Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
 		exit_nicely(g_conn);
 	}
 	PQclear(res);
@@ -1781,7 +1778,7 @@ getInherits(int *numInherits)
 	if (!res ||
 		PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
-		fprintf(stderr, "getInherits(): SELECT failed\n");
+		fprintf(stderr, "getInherits(): SELECT failed.  Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
 		exit_nicely(g_conn);
 	}
 
@@ -1859,7 +1856,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 		if (!res ||
 			PQresultStatus(res) != PGRES_TUPLES_OK)
 		{
-			fprintf(stderr, "getTableAttrs(): SELECT failed\n");
+			fprintf(stderr, "getTableAttrs(): SELECT failed.  Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
 			exit_nicely(g_conn);
 		}
 
@@ -1905,7 +1902,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 				if (!res2 ||
 					PQresultStatus(res2) != PGRES_TUPLES_OK)
 				{
-					fprintf(stderr, "getTableAttrs(): SELECT (for DEFAULT) failed\n");
+					fprintf(stderr, "getTableAttrs(): SELECT (for DEFAULT) failed.  Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
 					exit_nicely(g_conn);
 				}
 				tblinfo[i].adef_expr[j] = strdup(PQgetvalue(res2, 0, PQfnumber(res2, "adsrc")));
@@ -1958,7 +1955,7 @@ getIndices(int *numIndices)
 	if (!res ||
 		PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
-		fprintf(stderr, "BEGIN command failed\n");
+		fprintf(stderr, "BEGIN command failed.  Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
 		exit_nicely(g_conn);
 	}
 	PQclear(res);
@@ -1977,7 +1974,7 @@ getIndices(int *numIndices)
 	if (!res ||
 		PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
-		fprintf(stderr, "getIndices(): SELECT failed\n");
+		fprintf(stderr, "getIndices(): SELECT failed.  Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
 		exit_nicely(g_conn);
 	}
 
@@ -2009,8 +2006,7 @@ getIndices(int *numIndices)
 	}
 	PQclear(res);
 	res = PQexec(g_conn, "end");
-	if (res)
-		PQclear(res);
+	PQclear(res);
 	return indinfo;
 }
 
@@ -2120,7 +2116,7 @@ dumpProcLangs(FILE *fout, FuncInfo *finfo, int numFuncs,
 	if (!res ||
 		PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
-		fprintf(stderr, "BEGIN command failed\n");
+		fprintf(stderr, "BEGIN command failed.  Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
 		exit_nicely(g_conn);
 	}
 
@@ -2131,7 +2127,7 @@ dumpProcLangs(FILE *fout, FuncInfo *finfo, int numFuncs,
 	if (!res ||
 		PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
-		fprintf(stderr, "dumpProcLangs(): SELECT failed\n");
+		fprintf(stderr, "dumpProcLangs(): SELECT failed.  Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
 		exit_nicely(g_conn);
 	}
 	ntups = PQntuples(res);
@@ -2243,7 +2239,7 @@ dumpOneFunc(FILE *fout, FuncInfo *finfo, int i,
 		if (!res ||
 			PQresultStatus(res) != PGRES_COMMAND_OK)
 		{
-			fprintf(stderr, "dumpOneFunc(): BEGIN command failed\n");
+			fprintf(stderr, "dumpOneFunc(): BEGIN command failed.  Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
 			exit_nicely(g_conn);
 		}
 		PQclear(res);
@@ -2255,7 +2251,7 @@ dumpOneFunc(FILE *fout, FuncInfo *finfo, int i,
 		if (!res ||
 			PQresultStatus(res) != PGRES_TUPLES_OK)
 		{
-			fprintf(stderr, "dumpOneFunc(): SELECT for procedural language failed\n");
+			fprintf(stderr, "dumpOneFunc(): SELECT for procedural language failed.  Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
 			exit_nicely(g_conn);
 		}
 		nlangs = PQntuples(res);
@@ -2873,7 +2869,7 @@ dumpIndices(FILE *fout, IndInfo *indinfo, int numIndices,
 			res = PQexec(g_conn, q);
 			if (!res || PQresultStatus(res) != PGRES_TUPLES_OK)
 			{
-				fprintf(stderr, "dumpIndices(): SELECT (funcname) failed\n");
+				fprintf(stderr, "dumpIndices(): SELECT (funcname) failed.  Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
 				exit_nicely(g_conn);
 			}
 			funcname = strdup(PQgetvalue(res, 0,
@@ -2894,7 +2890,7 @@ dumpIndices(FILE *fout, IndInfo *indinfo, int numIndices,
 			res = PQexec(g_conn, q);
 			if (!res || PQresultStatus(res) != PGRES_TUPLES_OK)
 			{
-				fprintf(stderr, "dumpIndices(): SELECT (classname) failed\n");
+				fprintf(stderr, "dumpIndices(): SELECT (classname) failed.  Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
 				exit_nicely(g_conn);
 			}
 			classname[nclass] = strdup(PQgetvalue(res, 0,
@@ -3059,7 +3055,7 @@ setMaxOid(FILE *fout)
 	if (!res ||
 		PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
-		fprintf(stderr, "Can not create pgdump_oid table\n");
+		fprintf(stderr, "Can not create pgdump_oid table.  Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
 		exit_nicely(g_conn);
 	}
 	PQclear(res);
@@ -3067,7 +3063,7 @@ setMaxOid(FILE *fout)
 	if (!res ||
 		PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
-		fprintf(stderr, "Can not insert into pgdump_oid table\n");
+		fprintf(stderr, "Can not insert into pgdump_oid table.  Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
 		exit_nicely(g_conn);
 	}
 	max_oid = atol(PQoidStatus(res));
@@ -3081,7 +3077,7 @@ setMaxOid(FILE *fout)
 	if (!res ||
 		PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
-		fprintf(stderr, "Can not drop pgdump_oid table\n");
+		fprintf(stderr, "Can not drop pgdump_oid table.  Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
 		exit_nicely(g_conn);
 	}
 	PQclear(res);
@@ -3114,7 +3110,7 @@ findLastBuiltinOid(void)
 	if (res == NULL ||
 		PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
-		fprintf(stderr, "pg_dump error in finding the template1 database\n");
+		fprintf(stderr, "pg_dump error in finding the template1 database.  Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
 		exit_nicely(g_conn);
 	}
 	ntups = PQntuples(res);
@@ -3187,7 +3183,7 @@ dumpSequence(FILE *fout, TableInfo tbinfo)
 	res = PQexec(g_conn, query);
 	if (!res || PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
-		fprintf(stderr, "dumpSequence(%s): SELECT failed\n", tbinfo.relname);
+		fprintf(stderr, "dumpSequence(%s): SELECT failed.  Explanation from backend: '%s'.\n", tbinfo.relname, PQerrorMessage(g_conn));
 		exit_nicely(g_conn);
 	}
 
@@ -3293,7 +3289,7 @@ dumpRules(FILE *fout, const char *tablename,
 		if (!res ||
 			PQresultStatus(res) != PGRES_COMMAND_OK)
 		{
-			fprintf(stderr, "BEGIN command failed\n");
+			fprintf(stderr, "BEGIN command failed.  Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
 			exit_nicely(g_conn);
 		}
 		PQclear(res);
@@ -3311,8 +3307,8 @@ dumpRules(FILE *fout, const char *tablename,
 		if (!res ||
 			PQresultStatus(res) != PGRES_TUPLES_OK)
 		{
-			fprintf(stderr, "dumpRules(): SELECT failed for table %s\n",
-					tblinfo[t].relname);
+			fprintf(stderr, "dumpRules(): SELECT failed for table %s.  Explanation from backend: '%s'.\n",
+					tblinfo[t].relname, PQerrorMessage(g_conn));
 			exit_nicely(g_conn);
 		}
 
