@@ -22,6 +22,8 @@ public class Field
   public int sql_type = -1;	// The entry in java.sql.Types for this field
   public String type_name = null;// The sql type name
 
+  private static Hashtable oidCache = new Hashtable();
+
   /**
    * Construct a field based on the information fed to it.
    *
@@ -105,6 +107,33 @@ public class Field
   }
 
   /**
+   * This returns the oid for a field of a given data type
+   * @param type_name PostgreSQL type name
+   * @return PostgreSQL oid value for a field of this type
+   */
+  public int getOID( String type_name ) throws SQLException
+  {
+	int oid = -1;
+	if(type_name != null) {
+		Integer oidValue = (Integer) oidCache.get( type_name );
+		if( oidValue != null ) 
+			oid = oidValue.intValue();
+		else {
+			// it's not in the cache, so perform a query, and add the result to the cache
+			ResultSet result = (org.postgresql.ResultSet)conn.ExecSQL("select oid from pg_type where typname='" 
+				+ type_name + "'");
+			if (result.getColumnCount() != 1 || result.getTupleCount() != 1)
+				throw new PSQLException("postgresql.unexpected");
+			result.next();
+			oid = Integer.parseInt(result.getString(1));
+			oidCache.put( type_name, new Integer(oid) );
+			result.close();
+		}
+	}
+	return oid;
+  }
+
+  /**
    * This table holds the org.postgresql names for the types supported.
    * Any types that map to Types.OTHER (eg POINT) don't go into this table.
    * They default automatically to Types.OTHER
@@ -126,7 +155,9 @@ public class Field
     "bool",
     "date",
     "time",
-    "abstime","timestamp"
+    "abstime","timestamp",
+	"_bool", "_char", "_int2", "_int4", "_text", "_oid", "_varchar", "_int8",
+	"_float4", "_float8", "_abstime", "_date", "_time", "_timestamp", "_numeric"
   };
 
   /**
@@ -149,7 +180,9 @@ public class Field
     Types.BIT,
     Types.DATE,
     Types.TIME,
-    Types.TIMESTAMP,Types.TIMESTAMP
+    Types.TIMESTAMP,Types.TIMESTAMP,
+	Types.ARRAY, Types.ARRAY, Types.ARRAY, Types.ARRAY, Types.ARRAY, Types.ARRAY, Types.ARRAY, Types.ARRAY,
+	Types.ARRAY, Types.ARRAY, Types.ARRAY, Types.ARRAY, Types.ARRAY, Types.ARRAY, Types.ARRAY
   };
 
   /**

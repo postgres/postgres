@@ -61,10 +61,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 {
   protected org.postgresql.jdbc2.Statement statement;
 
-  /**
-   * StringBuffer used by getTimestamp
-   */
-  private StringBuffer sbuf;
+  private StringBuffer sbuf = null;
 
   /**
    * Create a new ResultSet - Note that we create ResultSets to
@@ -185,14 +182,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
    */
   public boolean getBoolean(int columnIndex) throws SQLException
   {
-    String s = getString(columnIndex);
-
-    if (s != null)
-      {
-	int c = s.charAt(0);
-	return ((c == 't') || (c == 'T') || (c == '1'));
-      }
-    return false;		// SQL NULL
+	return toBoolean( getString(columnIndex) );
   }
 
   /**
@@ -250,18 +240,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
    */
   public int getInt(int columnIndex) throws SQLException
   {
-    String s = getFixedString(columnIndex);
-
-    if (s != null)
-      {
-	try
-	  {
-	    return Integer.parseInt(s);
-	  } catch (NumberFormatException e) {
-	    throw new PSQLException ("postgresql.res.badint",s);
-	  }
-      }
-    return 0;		// SQL NULL
+    return toInt( getFixedString(columnIndex) );
   }
 
   /**
@@ -273,18 +252,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
    */
   public long getLong(int columnIndex) throws SQLException
   {
-    String s = getFixedString(columnIndex);
-
-    if (s != null)
-      {
-	try
-	  {
-	    return Long.parseLong(s);
-	  } catch (NumberFormatException e) {
-	    throw new PSQLException ("postgresql.res.badlong",s);
-	  }
-      }
-    return 0;		// SQL NULL
+    return toLong( getFixedString(columnIndex) );
   }
 
   /**
@@ -296,18 +264,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
    */
   public float getFloat(int columnIndex) throws SQLException
   {
-    String s = getFixedString(columnIndex);
-
-    if (s != null)
-      {
-	try
-	  {
-	    return Float.valueOf(s).floatValue();
-	  } catch (NumberFormatException e) {
-	    throw new PSQLException ("postgresql.res.badfloat",s);
-	  }
-      }
-    return 0;		// SQL NULL
+    return toFloat( getFixedString(columnIndex) );
   }
 
   /**
@@ -319,18 +276,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
    */
   public double getDouble(int columnIndex) throws SQLException
   {
-    String s = getFixedString(columnIndex);
-
-    if (s != null)
-      {
-	try
-	  {
-	    return Double.valueOf(s).doubleValue();
-	  } catch (NumberFormatException e) {
-	    throw new PSQLException ("postgresql.res.baddouble",s);
-	  }
-      }
-    return 0;		// SQL NULL
+    return toDouble( getFixedString(columnIndex) );
   }
 
   /**
@@ -345,27 +291,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
    */
   public BigDecimal getBigDecimal(int columnIndex, int scale) throws SQLException
   {
-    String s = getFixedString(columnIndex);
-    BigDecimal val;
-
-    if (s != null)
-      {
-
-        try
-          {
-	    val = new BigDecimal(s);
-	  } catch (NumberFormatException e) {
-	    throw new PSQLException ("postgresql.res.badbigdec",s);
-	  }
-	if (scale==-1) return val;
-	  try
-	    {
-	      return val.setScale(scale);
-	    } catch (ArithmeticException e) {
-	      throw new PSQLException ("postgresql.res.badbigdec",s);
-	    }
-      }
-    return null;		// SQL NULL
+    return toBigDecimal( getFixedString(columnIndex), scale );
   }
 
   /**
@@ -412,16 +338,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
    */
   public java.sql.Date getDate(int columnIndex) throws SQLException
   {
-    String s = getString(columnIndex);
-    if(s==null)
-      return null;
-    // length == 10: SQL Date
-    // length >  10: SQL Timestamp, assumes PGDATESTYLE=ISO
-    try {
-      return java.sql.Date.valueOf((s.length() == 10) ? s : s.substring(0,10));
-    } catch (NumberFormatException e) {
-      throw new PSQLException("postgresql.res.baddate", s);
-    }
+    return toDate( getString(columnIndex) );
   }
 
   /**
@@ -434,17 +351,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
    */
   public Time getTime(int columnIndex) throws SQLException
   {
-    String s = getString(columnIndex);
-
-    if(s==null)
-      return null; // SQL NULL
-    // length == 8: SQL Time
-    // length >  8: SQL Timestamp
-    try {
-      return java.sql.Time.valueOf((s.length() == 8) ? s : s.substring(11,19));
-    } catch (NumberFormatException e) {
-      throw new PSQLException("postgresql.res.badtime",s);
-    }
+    return toTime( getString(columnIndex) );
   }
 
   /**
@@ -457,90 +364,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
    */
   public Timestamp getTimestamp(int columnIndex) throws SQLException
   {
-    String s = getString(columnIndex);
-    if(s==null)
-	return null;
-
-    boolean subsecond;
-    //if string contains a '.' we have fractional seconds
-    if (s.indexOf('.') == -1) {
-      subsecond = false;
-    } else {
-      subsecond = true;
-    }
-
-    //here we are modifying the string from ISO format to a format java can understand
-    //java expects timezone info as 'GMT-08:00' instead of '-08' in postgres ISO format
-    //and java expects three digits if fractional seconds are present instead of two for postgres
-    //so this code strips off timezone info and adds on the GMT+/-...
-    //as well as adds a third digit for partial seconds if necessary
-    synchronized(this) {
-      // We must be synchronized here incase more theads access the ResultSet
-      // bad practice but possible. Anyhow this is to protect sbuf and
-      // SimpleDateFormat objects
-
-      // First time?
-      if(sbuf==null)
-        sbuf = new StringBuffer();
-
-      sbuf.setLength(0);
-      sbuf.append(s);
-
-      //we are looking to see if the backend has appended on a timezone.
-      //currently postgresql will return +/-HH:MM or +/-HH for timezone offset
-      //(i.e. -06, or +06:30, note the expectation of the leading zero for the
-      //hours, and the use of the : for delimiter between hours and minutes)
-      //if the backend ISO format changes in the future this code will
-      //need to be changed as well
-      char sub = sbuf.charAt(sbuf.length()-3);
-      if (sub == '+' || sub == '-') {
-        //we have found timezone info of format +/-HH
-        sbuf.setLength(sbuf.length()-3);
-        if (subsecond)  {
-          sbuf.append('0').append("GMT").append(s.substring(s.length()-3)).append(":00");
-        } else {
-          sbuf.append("GMT").append(s.substring(s.length()-3)).append(":00");
-        }
-      } else if (sub == ':') {
-        //we may have found timezone info of format +/-HH:MM, or there is no
-        //timezone info at all and this is the : preceding the seconds
-        char sub2 = sbuf.charAt(sbuf.length()-5);
-        if (sub2 == '+' || sub2 == '-') {
-          //we have found timezone info of format +/-HH:MM
-          sbuf.setLength(sbuf.length()-5);
-          if (subsecond)  {
-            sbuf.append('0').append("GMT").append(s.substring(s.length()-5));
-          } else {
-            sbuf.append("GMT").append(s.substring(s.length()-5));
-          }
-        } else if (subsecond) {
-          sbuf.append('0');
-        }
-      } else if (subsecond) {
-        sbuf.append('0');
-      }
-
-      // could optimize this a tad to remove too many object creations...
-      SimpleDateFormat df = null;
-
-      if (sbuf.length()>23 && subsecond) {
-        df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSzzzzzzzzz");
-      } else if (sbuf.length()>23 && !subsecond) {
-        df = new SimpleDateFormat("yyyy-MM-dd HH:mm:sszzzzzzzzz");
-      } else if (sbuf.length()>10 && subsecond) {
-        df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
-      } else if (sbuf.length()>10 && !subsecond) {
-        df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-      } else {
-        df = new SimpleDateFormat("yyyy-MM-dd");
-      }
-
-      try {
-          return new Timestamp(df.parse(sbuf.toString()).getTime());
-      } catch(ParseException e) {
-          throw new PSQLException("postgresql.res.badtimestamp",new Integer(e.getErrorOffset()),s);
-      }
-    }
+    return toTimestamp( getString(columnIndex), this );
   }
 
   /**
@@ -960,14 +784,16 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 	return true;
     }
 
-    public Array getArray(String colName) throws SQLException
+    public java.sql.Array getArray(String colName) throws SQLException
     {
 	return getArray(findColumn(colName));
     }
 
-    public Array getArray(int i) throws SQLException
+    public java.sql.Array getArray(int i) throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+    	if (i < 1 || i > fields.length)
+      		throw new PSQLException("postgresql.res.colrange");
+		return (java.sql.Array) new org.postgresql.jdbc2.Array( connection, i, fields[i-1], this );
     }
 
     public java.math.BigDecimal getBigDecimal(int columnIndex) throws SQLException
@@ -1486,5 +1312,173 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
       this.statement=statement;
     }
 
+	//----------------- Formatting Methods -------------------
+
+	public static boolean toBoolean(String s)
+	{
+		if (s != null)
+		{
+			int c = s.charAt(0);
+			return ((c == 't') || (c == 'T'));
+		}
+		return false;		// SQL NULL
+	}
+
+	public static int toInt(String s) throws SQLException
+	{
+		if (s != null)
+		{
+			try
+			{
+				return Integer.parseInt(s);
+			} catch (NumberFormatException e) {
+				throw new PSQLException ("postgresql.res.badint",s);
+			}
+		}
+		return 0;		// SQL NULL
+	}
+
+	public static long toLong(String s) throws SQLException
+	{
+		if (s != null)
+		{
+			try
+			{
+				return Long.parseLong(s);
+			} catch (NumberFormatException e) {
+				throw new PSQLException ("postgresql.res.badlong",s);
+			}
+		}
+		return 0;		// SQL NULL
+	}
+
+	public static BigDecimal toBigDecimal(String s, int scale) throws SQLException
+	{
+		BigDecimal val;
+		if (s != null)
+		{
+			try
+			{
+				val = new BigDecimal(s);
+			} catch (NumberFormatException e) {
+				throw new PSQLException ("postgresql.res.badbigdec",s);
+			}
+			if (scale==-1) return val;
+			try
+			{
+				return val.setScale(scale);
+			} catch (ArithmeticException e) {
+				throw new PSQLException ("postgresql.res.badbigdec",s);
+			}
+		}
+		return null;		// SQL NULL
+	}
+
+	public static float toFloat(String s) throws SQLException
+	{
+		if (s != null)
+		{
+			try
+			{
+				return Float.valueOf(s).floatValue();
+			} catch (NumberFormatException e) {
+				throw new PSQLException ("postgresql.res.badfloat",s);
+			}
+		}
+		return 0;		// SQL NULL
+	}
+
+	public static double toDouble(String s) throws SQLException
+	{
+		if (s != null)
+		{
+			try
+			{
+				return Double.valueOf(s).doubleValue();
+			} catch (NumberFormatException e) {
+				throw new PSQLException ("postgresql.res.baddouble",s);
+			}
+		}
+		return 0;		// SQL NULL
+	}
+
+	public static java.sql.Date toDate(String s) throws SQLException
+	{
+		if(s==null)
+			return null;
+		return java.sql.Date.valueOf(s);
+	}
+
+	public static Time toTime(String s) throws SQLException
+	{
+		if(s==null)
+			return null; // SQL NULL
+		return java.sql.Time.valueOf(s);
+	}
+
+	public static Timestamp toTimestamp(String s, ResultSet resultSet) throws SQLException
+	{
+		if(s==null)
+			return null;
+
+		boolean subsecond;
+		//if string contains a '.' we have fractional seconds
+		if (s.indexOf('.') == -1) {
+			subsecond = false;
+		} else {
+			subsecond = true;
+		}
+
+		//here we are modifying the string from ISO format to a format java can understand
+		//java expects timezone info as 'GMT-08:00' instead of '-08' in postgres ISO format
+		//and java expects three digits if fractional seconds are present instead of two for postgres
+		//so this code strips off timezone info and adds on the GMT+/-...
+		//as well as adds a third digit for partial seconds if necessary
+		synchronized(resultSet) {
+			// We must be synchronized here incase more theads access the ResultSet
+			// bad practice but possible. Anyhow this is to protect sbuf and
+			// SimpleDateFormat objects
+
+			// First time?
+			if(resultSet.sbuf==null)
+				resultSet.sbuf = new StringBuffer();
+
+			resultSet.sbuf.setLength(0);
+			resultSet.sbuf.append(s);
+
+			char sub = resultSet.sbuf.charAt(resultSet.sbuf.length()-3);
+			if (sub == '+' || sub == '-') {
+				resultSet.sbuf.setLength(resultSet.sbuf.length()-3);
+				if (subsecond)  {
+					resultSet.sbuf.append('0').append("GMT").append(s.substring(s.length()-3)).append(":00");
+				} else {
+					resultSet.sbuf.append("GMT").append(s.substring(s.length()-3)).append(":00");
+				}
+			} else if (subsecond) {
+				resultSet.sbuf.append('0');
+			}
+
+			// could optimize this a tad to remove too many object creations...
+			SimpleDateFormat df = null;
+
+			if (resultSet.sbuf.length()>23 && subsecond) {
+				df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSzzzzzzzzz");
+			} else if (resultSet.sbuf.length()>23 && !subsecond) {
+				df = new SimpleDateFormat("yyyy-MM-dd HH:mm:sszzzzzzzzz");
+			} else if (resultSet.sbuf.length()>10 && subsecond) {
+				df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+			} else if (resultSet.sbuf.length()>10 && !subsecond) {
+				df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+			} else {
+				df = new SimpleDateFormat("yyyy-MM-dd");
+			}
+
+			try {
+				return new Timestamp(df.parse(resultSet.sbuf.toString()).getTime());
+			} catch(ParseException e) {
+				throw new PSQLException("postgresql.res.badtimestamp",new Integer(e.getErrorOffset()),s);
+			}
+		}
+	}
 }
 
