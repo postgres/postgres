@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.51 1999/07/16 22:17:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.52 1999/07/17 16:02:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -458,7 +458,7 @@ _bt_binsrch(Relation rel,
 	 * return the first equal key if one exists, else the last lesser key
 	 * if one exists, else the first slot on the page.
 	 *
-	 * For a partial-match search (srchtype == BT_DESCENT and natts < keysz)
+	 * For a partial-match search (srchtype == BT_DESCENT and natts > keysz)
 	 * return the last lesser key if one exists, else the first slot.
 	 *
 	 * Old comments:
