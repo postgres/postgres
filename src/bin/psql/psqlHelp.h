@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: psqlHelp.h,v 1.64 1999/06/03 18:18:42 momjian Exp $
+ * $Id: psqlHelp.h,v 1.65 1999/06/03 18:25:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -322,15 +322,19 @@ TIMEZONE|XACTISOLEVEL|CLIENT_ENCODING|SERVER_ENCODING"},
 		"set run-time environment",
 	"\
 \tSET DATESTYLE TO 'ISO'|'SQL'|'Postgres'|'European'|'US'|'NonEuropean'\n\
-set COST_HEAP TO #\n\
-set COST_INDEX TO #\n\
-set GEQO TO 'ON[=#]'|'OFF'\n\
-set KSQO TO 'ON'|'OFF'\n\
-set QUERY_LIMIT TO #\n\
-set TIMEZONE TO 'value'\n\
-set XACTISOLEVEL TO 'SERIALIZABLE'|'COMMITTED'\n\
-set CLIENT_ENCODING TO 'EUC_JP'|'SJIS'|'EUC_CN'|'EUC_KR'|'EUC_TW'|'BIG5'|'MULE_INTERNAL'|'LATIN1'|'LATIN2'|'LATIN3'|'LATIN4'|'LATIN5'|'KOI8|'WIN'|'ALT'\n\
-set SERVER_ENCODING TO 'EUC_JP'|'SJIS'|'EUC_CN'|'EUC_KR'|'EUC_TW'|'BIG5'|'MULE_INTERNAL'|'LATIN1'|'LATIN2'|'LATIN3'|'LATIN4'|'LATIN5'|'KOI8|'WIN'|'ALT'"},
+\tSET COST_HEAP TO #\n\
+\tSET COST_INDEX TO #\n\
+\tSET GEQO TO 'ON[=#]'|'OFF'\n\
+\tSET KSQO TO 'ON'|'OFF'\n\
+\tSET QUERY_LIMIT TO #\n\
+\tSET TIMEZONE TO 'value'\n\
+\tSET XACTISOLEVEL TO 'SERIALIZABLE'|'COMMITTED'\n\
+\tSET CLIENT_ENCODING TO 'EUC_JP'|'SJIS'|'EUC_CN'|'EUC_KR'|'EUC_TW'|\n\
+\t  'BIG5'|'MULE_INTERNAL'|'LATIN1'|'LATIN2'|'LATIN3'|'LATIN4'|'LATIN5'|\n\
+\t  'KOI8|'WIN'|'ALT'\n\
+\tSET SERVER_ENCODING TO 'EUC_JP'|'SJIS'|'EUC_CN'|'EUC_KR'|'EUC_TW'|\n\
+\t  'BIG5'|'MULE_INTERNAL'|'LATIN1'|'LATIN2'|'LATIN3'|'LATIN4'|'LATIN5'|\n\
+\t  'KOI8|'WIN'|'ALT'"},
 	{"show",
 		"show current run-time environment",
 	"\
