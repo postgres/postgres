@@ -1,7 +1,7 @@
 # German message translation file for "scripts".
 # Peter Eisentraut <peter_e@gmx.net>, 2003, 2004.
 #
-# $PostgreSQL: pgsql/src/bin/scripts/po/de.po,v 1.3 2004/10/22 16:05:02 petere Exp $
+# $PostgreSQL: pgsql/src/bin/scripts/po/de.po,v 1.4 2004/12/12 18:09:18 petere Exp $
 #
 # Use these quotes: »%s«
 #
@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2004-10-22 17:45+0200\n"
-"PO-Revision-Date: 2004-10-22 17:48+0200\n"
+"POT-Creation-Date: 2004-12-12 18:37+0100\n"
+"PO-Revision-Date: 2004-12-12 18:39+0100\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "MIME-Version: 1.0\n"
@@ -119,7 +119,8 @@ msgstr "  --help                       diese Hilfe anzeigen, dann beenden\n"
 #: createdb.c:228
 #, c-format
 msgid "  --version                    output version information, then exit\n"
-msgstr "  --version                    Versionsinformationen anzeigen, dann beenden\n"
+msgstr ""
+"  --version                    Versionsinformationen anzeigen, dann beenden\n"
 
 #: createdb.c:229 createuser.c:255 clusterdb.c:244 vacuumdb.c:273
 #, c-format
@@ -134,7 +135,9 @@ msgstr ""
 #, c-format
 msgid ""
 "  -h, --host=HOSTNAME          database server host or socket directory\n"
-msgstr "  -h, --host=HOSTNAME          Name des Datenbankservers oder Socket-Verzeichnis\n"
+msgstr ""
+"  -h, --host=HOSTNAME          Name des Datenbankservers oder Socket-"
+"Verzeichnis\n"
 
 #: createdb.c:231
 #, c-format
@@ -696,36 +699,46 @@ msgstr ""
 "Für weitere Information lesen Sie bitte die Beschreibung des\n"
 "SQL-Befehls VACUUM.\n"
 
-#: common.c:87 common.c:113
+#: common.c:33
+#, c-format
+msgid "%s: could not obtain information about current user: %s"
+msgstr "%s: konnte Informationen über aktuellen Benutzer nicht ermitteln: %s"
+
+#: common.c:44
+#, c-format
+msgid "%s: could not get current user name: %s"
+msgstr "%s: konnte aktuellen Benutzernamen nicht ermitteln: %s"
+
+#: common.c:89 common.c:115
 msgid "Password: "
 msgstr "Passwort: "
 
-#: common.c:100
+#: common.c:102
 #, c-format
 msgid "%s: could not connect to database %s\n"
 msgstr "%s: konnte nicht mit Datenbank %s verbinden\n"
 
-#: common.c:123
+#: common.c:125
 #, c-format
 msgid "%s: could not connect to database %s: %s"
 msgstr "%s: konnte nicht mit Datenbank %s verbinden: %s"
 
-#: common.c:147
+#: common.c:149
 #, c-format
 msgid "%s: query failed: %s"
 msgstr "%s: Anfrage fehlgeschlagen: %s"
 
-#: common.c:148
+#: common.c:150
 #, c-format
 msgid "%s: query was: %s\n"
 msgstr "%s: Anfrage war: %s\n"
 
 #. translator: Make sure the (y/n) prompts match the translation of this.
-#: common.c:162
+#: common.c:164
 msgid "y"
 msgstr "j"
 
 #. translator: Make sure the (y/n) prompts match the translation of this.
-#: common.c:164
+#: common.c:166
 msgid "n"
 msgstr "n"

@@ -1,14 +1,15 @@
 # German message translation file for pg_config
 # Peter Eisentraut <peter_e@gmx.net>, 2004.
 #
-# $PostgreSQL: pgsql/src/bin/pg_config/po/de.po,v 1.1 2004/10/18 22:19:15 petere Exp $
+# $PostgreSQL: pgsql/src/bin/pg_config/po/de.po,v 1.2 2004/12/12 18:09:14 petere Exp $
 #
 # Use these quotes: »%s«
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.0\n"
-"POT-Creation-Date: 2004-10-18 21:34+0200\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2004-12-12 18:25+0100\n"
 "PO-Revision-Date: 2004-10-18 21:35+0200\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: Peter Eisentraut <peter_e@gmx.net>\n"
@@ -28,6 +29,7 @@ msgstr ""
 "\n"
 
 #: pg_config.c:37
+#, c-format
 msgid "Usage:\n"
 msgstr "Benutzung:\n"
 
@@ -41,16 +43,19 @@ msgstr ""
 "\n"
 
 #: pg_config.c:39
+#, c-format
 msgid "Options:\n"
 msgstr "Optionen:\n"
 
 #: pg_config.c:40
+#, c-format
 msgid "  --bindir              show location of user executables\n"
 msgstr ""
 "  --bindir              zeige Installationsverzeichnis der "
 "Benutzerprogramme\n"
 
 #: pg_config.c:41
+#, c-format
 msgid ""
 "  --includedir          show location of C header files of the client\n"
 "                        interfaces\n"
@@ -60,6 +65,7 @@ msgstr ""
 "                        Client-Schnittstellen\n"
 
 #: pg_config.c:43
+#, c-format
 msgid ""
 "  --includedir-server   show location of C header files for the server\n"
 msgstr ""
@@ -68,22 +74,26 @@ msgstr ""
 "                        Servers\n"
 
 #: pg_config.c:44
+#, c-format
 msgid "  --libdir              show location of object code libraries\n"
 msgstr ""
 "  --libdir              zeige Installationsverzeichnis der "
 "Objektbibliotheken\n"
 
 #: pg_config.c:45
+#, c-format
 msgid "  --pkglibdir           show location of dynamically loadable modules\n"
 msgstr ""
 "  --pkglibdir           zeige Installationsverzeichnis der dynamisch\n"
 "                        ladbaren Module\n"
 
 #: pg_config.c:46
+#, c-format
 msgid "  --pgxs                show location of extension makefile\n"
 msgstr "  --pgxs                zeige Ort der Erweiterungs-Makefile\n"
 
 #: pg_config.c:47
+#, c-format
 msgid ""
 "  --configure           show options given to \"configure\" script when\n"
 "                        PostgreSQL was built\n"
@@ -92,10 +102,12 @@ msgstr ""
 "                        von PostgreSQL\n"
 
 #: pg_config.c:49
+#, c-format
 msgid "  --version             show the PostgreSQL version, then exit\n"
 msgstr "  --version             zeige PostgreSQL-Version und beende\n"
 
 #: pg_config.c:50
+#, c-format
 msgid ""
 "  --help                show this help, then exit\n"
 "\n"
@@ -104,6 +116,7 @@ msgstr ""
 "\n"
 
 #: pg_config.c:51
+#, c-format
 msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
 msgstr "Berichten Sie Fehler an <pgsql-bugs@postgresql.org>.\n"
 
@@ -130,3 +143,33 @@ msgstr "%s: ungültiges Argument: %s\n"
 #, c-format
 msgid "%s: could not find own executable\n"
 msgstr "%s: konnte eigene Programmdatei nicht finden\n"
+
+#: ../../port/exec.c:193 ../../port/exec.c:307 ../../port/exec.c:350
+#, c-format
+msgid "could not identify current directory: %s"
+msgstr "konnte aktuelles Verzeichnis nicht ermitteln: %s"
+
+#: ../../port/exec.c:323 ../../port/exec.c:359
+#, c-format
+msgid "could not change directory to \"%s\""
+msgstr "konnte nicht in Verzeichnis »%s« wechseln"
+
+#: ../../port/exec.c:338
+#, c-format
+msgid "could not read symbolic link \"%s\""
+msgstr "konnte symbolischen Link »%s« nicht lesen"
+
+#: ../../port/exec.c:569
+#, c-format
+msgid "child process exited with exit code %d"
+msgstr "Kindprozess hat mit Code %d beendet"
+
+#: ../../port/exec.c:572
+#, c-format
+msgid "child process was terminated by signal %d"
+msgstr "Kindprozess wurde von Signal %d beendet"
+
+#: ../../port/exec.c:575
+#, c-format
+msgid "child process exited with unrecognized status %d"
+msgstr "Kindprozess hat mit unbekanntem Status %d beendet"
