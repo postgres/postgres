@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Tue Jan 18 22:11:34 EST 2005
+   Last updated: Wed Jan 19 14:45:22 EST 2005
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -418,9 +418,9 @@
    These include PgAccess http://www.pgaccess.org), pgAdmin III
    (http://www.pgadmin.org, RHDB Admin (http://sources.redhat.com/rhdb/
    ), TORA (http://www.globecom.net/tora/, partly commercial), and Rekall
-   ( http://www.thekompany.com/products/rekall/, proprietary). There is
-   also PhpPgAdmin ( http://phppgadmin.sourceforge.net/ ), a web-based
-   interface to PostgreSQL.
+   ( http://www.rekallrevealed.org/). There is also PhpPgAdmin (
+   http://phppgadmin.sourceforge.net/ ), a web-based interface to
+   PostgreSQL.
    
    See http://techdocs.postgresql.org/guides/GUITools for a more detailed
    list.
