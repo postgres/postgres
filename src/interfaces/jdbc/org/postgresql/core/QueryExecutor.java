@@ -6,7 +6,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/core/Attic/QueryExecutor.java,v 1.20 2003/03/07 18:39:42 barry Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/core/Attic/QueryExecutor.java,v 1.21 2003/05/07 03:03:30 barry Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -148,7 +148,7 @@ public class QueryExecutor
 						int t = pgStream.ReceiveChar();
 						break;
 					case 'N':	// Error Notification
-						connection.addWarning(pgStream.ReceiveString(connection.getEncoding()));
+						statement.addWarning(pgStream.ReceiveString(connection.getEncoding()));
 						break;
 					case 'P':	// Portal Name
 						String pname = pgStream.ReceiveString(connection.getEncoding());

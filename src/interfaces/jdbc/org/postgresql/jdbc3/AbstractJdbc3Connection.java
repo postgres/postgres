@@ -2,7 +2,7 @@ package org.postgresql.jdbc3;
 
 import java.sql.*;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc3/Attic/AbstractJdbc3Connection.java,v 1.2 2002/09/06 21:23:06 momjian Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc3/Attic/AbstractJdbc3Connection.java,v 1.3 2003/05/07 03:03:30 barry Exp $
  * This class defines methods of the jdbc3 specification.  This class extends
  * org.postgresql.jdbc2.AbstractJdbc2Connection which provides the jdbc2
  * methods.  The real Connection class (for jdbc3) is org.postgresql.jdbc3.Jdbc3Connection
@@ -375,6 +375,82 @@ public abstract class AbstractJdbc3Connection extends org.postgresql.jdbc2.Abstr
 		throw org.postgresql.Driver.notImplemented();
 	}
 
+	/*
+	 * This implemetation uses the jdbc3Types array to support the jdbc3
+	 * datatypes.  Basically jdbc2 and jdbc3 are the same, except that
+	 * jdbc3 adds some
+	 */
+	public int getSQLType(String pgTypeName)
+	{
+		int sqlType = Types.OTHER; // default value
+		for (int i = 0;i < jdbc3Types.length;i++)
+		{
+			if (pgTypeName.equals(jdbc3Types[i]))
+			{
+				sqlType = jdbc3Typei[i];
+				break;
+			}
+		}
+		return sqlType;
+	}
+
+	/*
+	 * This table holds the org.postgresql names for the types supported.
+	 * Any types that map to Types.OTHER (eg POINT) don't go into this table.
+	 * They default automatically to Types.OTHER
+	 *
+	 * Note: This must be in the same order as below.
+	 *
+	 * Tip: keep these grouped together by the Types. value
+	 */
+	private static final String jdbc3Types[] = {
+				"int2",
+				"int4", "oid",
+				"int8",
+				"cash", "money",
+				"numeric",
+				"float4",
+				"float8",
+				"bpchar", "char", "char2", "char4", "char8", "char16",
+				"varchar", "text", "name", "filename",
+				"bytea",
+				"bool",
+				"date",
+				"time",
+				"abstime", "timestamp", "timestamptz",
+				"_bool", "_char", "_int2", "_int4", "_text",
+				"_oid", "_varchar", "_int8", "_float4", "_float8",
+				"_abstime", "_date", "_time", "_timestamp", "_numeric",
+				"_bytea"
+			};
+
+	/*
+	 * This table holds the JDBC type for each entry above.
+	 *
+	 * Note: This must be in the same order as above
+	 *
+	 * Tip: keep these grouped together by the Types. value
+	 */
+	private static final int jdbc3Typei[] = {
+			Types.SMALLINT,
+			Types.INTEGER, Types.INTEGER,
+			Types.BIGINT,
+			Types.DOUBLE, Types.DOUBLE,
+			Types.NUMERIC,
+			Types.REAL,
+			Types.DOUBLE,
+			Types.CHAR, Types.CHAR, Types.CHAR, Types.CHAR, Types.CHAR, Types.CHAR,
+			Types.VARCHAR, Types.VARCHAR, Types.VARCHAR, Types.VARCHAR,
+			Types.BINARY,
+			Types.BIT,
+			Types.DATE,
+			Types.TIME,
+			Types.TIMESTAMP, Types.TIMESTAMP, Types.TIMESTAMP,
+			Types.ARRAY, Types.ARRAY, Types.ARRAY, Types.ARRAY, Types.ARRAY,
+			Types.ARRAY, Types.ARRAY, Types.ARRAY, Types.ARRAY, Types.ARRAY,
+			Types.ARRAY, Types.ARRAY, Types.ARRAY, Types.ARRAY, Types.ARRAY,
+			Types.ARRAY
+	   };
 
 }
 
