@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varbit.c,v 1.10 2000/10/31 10:22:11 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varbit.c,v 1.11 2000/11/07 11:35:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1212,7 +1212,7 @@ bitposition(PG_FUNCTION_ARGS)
 				is_match = ((cmp ^ *p) & mask1) == 0;
 				if (!is_match)
 					break;
-				// Move on to the next byte
+				/* Move on to the next byte */
 				p++;
 				if (p == VARBITEND(arg)) {
 					mask2 = end_mask << (BITS_PER_BYTE - is);
