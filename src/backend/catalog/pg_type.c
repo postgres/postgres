@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.14 1997/11/25 21:58:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.15 1997/11/26 04:50:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -290,8 +290,8 @@ TypeCreate(char *typeName,
 		   char typDelim,
 		   char *inputProcedure,
 		   char *outputProcedure,
-		   char *sendProcedure,
 		   char *receiveProcedure,
+		   char *sendProcedure,
 		   char *elementTypeName,
 		   char *defaultTypeValue,		/* internal rep */
 		   bool passedByValue,

@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.25 1997/11/18 05:22:51 momjian Exp $
+ * $Id: pg_type.h,v 1.26 1997/11/26 04:50:47 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -378,8 +378,8 @@ TypeCreate(char *typeName,
 		   char typDelim,
 		   char *inputProcedure,
 		   char *outputProcedure,
-		   char *sendProcedure,
 		   char *receiveProcedure,
+		   char *sendProcedure,
 		   char *elementTypeName,
 		   char *defaultTypeValue,
 		   bool passedByValue, char alignment);

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.17 1997/10/28 14:54:46 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.18 1997/11/26 04:50:28 momjian Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -730,8 +730,8 @@ DefineType(char *typeName, List *parameters)
 			   delimiter,		/* array element delimiter */
 			   inputName,		/* input procedure */
 			   outputName,		/* output procedure */
-			   sendName,		/* send procedure */
 			   receiveName,		/* receive procedure */
+			   sendName,		/* send procedure */
 			   elemName,		/* element type name */
 			   defaultValue,	/* default type value */
 			   byValue,			/* passed by value */
@@ -752,8 +752,8 @@ DefineType(char *typeName, List *parameters)
 			   DEFAULT_TYPDELIM,/* array element delimiter */
 			   "array_in",		/* input procedure */
 			   "array_out",		/* output procedure */
-			   "array_out",		/* send procedure */
 			   "array_in",		/* receive procedure */
+			   "array_out",		/* send procedure */
 			   typeName,		/* element type name */
 			   defaultValue,	/* default type value */
 			   false,			/* never passed by value */
