@@ -383,7 +383,7 @@ public class PG_Stream
    */
   public void close() throws IOException
   {
-    pg_output.write("X\0".getBytes());
+    pg_output.write("X".getBytes());
     pg_output.flush();
     pg_output.close();
     pg_input.close();
@@ -391,4 +391,3 @@ public class PG_Stream
   }
 
 }
-
