@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/copy.sgml,v 1.9 1999/07/22 15:09:07 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/copy.sgml,v 1.10 1999/10/29 23:52:20 momjian Exp $
 Postgres documentation
 -->
 
@@ -25,10 +25,10 @@ Postgres documentation
   <synopsis>
 COPY [ BINARY ] <replaceable class="parameter">table</replaceable> [ WITH OIDS ]
     FROM { '<replaceable class="parameter">filename</replaceable>' | <filename>stdin</filename> }
-    [ USING DELIMITERS '<replaceable class="parameter">delimiter</replaceable>' ]
+    [ [USING] DELIMITERS '<replaceable class="parameter">delimiter</replaceable>' ]
 COPY [ BINARY ] <replaceable class="parameter">table</replaceable> [ WITH OIDS ]
     TO { '<replaceable class="parameter">filename</replaceable>' | <filename>stdout</filename> }
-    [ USING DELIMITERS '<replaceable class="parameter">delimiter</replaceable>' ]
+    [ [USING] DELIMITERS '<replaceable class="parameter">delimiter</replaceable>' ]
   </synopsis>
   
   <refsect2 id="R2-SQL-COPY-1">

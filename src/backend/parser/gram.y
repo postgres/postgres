@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.112 1999/10/29 23:44:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.113 1999/10/29 23:52:20 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -191,8 +191,8 @@ Oid	param_type(int t); /* used in parse_expr.c */
 %type <list>	substr_list, substr_from, substr_for, trim_list
 %type <list>	opt_interval
 
-%type <boolean> opt_inh_star, opt_binary, opt_instead, opt_with_copy,
-				index_opt_unique, opt_verbose, opt_analyze
+%type <boolean> opt_inh_star, opt_binary, opt_using, opt_instead,
+				opt_with_copy, index_opt_unique, opt_verbose, opt_analyze
 %type <boolean> opt_cursor
 
 %type <ival>	copy_dirn, def_type, opt_direction, remove_type,
@@ -802,8 +802,12 @@ opt_with_copy:	WITH OIDS						{ $$ = TRUE; }
 /*
  * the default copy delimiter is tab but the user can configure it
  */
-copy_delimiter:  USING DELIMITERS Sconst		{ $$ = $3; }
+copy_delimiter:  opt_using DELIMITERS Sconst	{ $$ = $3; }
 		| /*EMPTY*/								{ $$ = "\t"; }
+		;
+
+opt_using:	USING								{ $$ = TRUE; }
+		| /*EMPTY*/								{ $$ = TRUE; }
 		;
 
 

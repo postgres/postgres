@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: psqlHelp.h,v 1.79 1999/10/27 16:33:45 momjian Exp $
+ * $Id: psqlHelp.h,v 1.80 1999/10/29 23:52:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,7 +69,7 @@ static struct _helpStruct QL_HELP[] = {
 		"copy data to and from a table",
 	"\
 \tCOPY [BINARY] table_name [WITH OIDS]\n\
-\tTO|FROM filename|STDIN|STDOUT [USING DELIMITERS 'delim'];"},
+\tTO|FROM filename|STDIN|STDOUT [ [USING] DELIMITERS 'delim'];"},
 	{"create",
 		"Please be more specific:",
 	"\
