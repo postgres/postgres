@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.80 2003/07/15 19:19:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.81 2003/07/15 19:34:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -629,9 +629,9 @@ const char *
 show_XactIsoLevel(void)
 {
 	if (XactIsoLevel == XACT_SERIALIZABLE)
-		return "SERIALIZABLE";
+		return "serializable";
 	else
-		return "READ COMMITTED";
+		return "read committed";
 }
 
 
