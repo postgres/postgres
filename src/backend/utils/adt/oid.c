@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/oid.c,v 1.20 1998/09/22 20:28:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/oid.c,v 1.21 1998/10/29 18:07:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -124,6 +124,12 @@ bool
 oid8eq(Oid *arg1, Oid *arg2)
 {
 	return (bool) (memcmp(arg1, arg2, 8 * sizeof(Oid)) == 0);
+}
+
+bool
+oid8ne(Oid *arg1, Oid *arg2)
+{
+	return (bool) (memcmp(arg1, arg2, 8 * sizeof(Oid)) != 0);
 }
 
 bool

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.81 1998/10/22 20:40:49 momjian Exp $
+ * $Id: pg_proc.h,v 1.82 1998/10/29 18:07:06 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -913,6 +913,8 @@ DATA(insert OID = 669 (  varchar		   PGUID 11 f t f 2 f 1043 "1043 23" 100 0 0 1
 
 DATA(insert OID = 676 (  mktinterval	   PGUID 11 f t f 2 f 704 "702 702" 100 0 0 100 foo bar ));
 DESCR("convert to interval");
+DATA(insert OID = 619 (  oid8neq		   PGUID 11 f t f 2 f 16 "30 30" 100 0 0 100  foo bar ));
+DESCR("less-than");
 DATA(insert OID = 677 (  oid8lt			   PGUID 11 f t f 2 f 16 "30 30" 100 0 0 100  foo bar ));
 DESCR("less-than");
 DATA(insert OID = 678 (  oid8le			   PGUID 11 f t f 2 f 16 "30 30" 100 0 0 100  foo bar ));

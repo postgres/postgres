@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.68 1998/10/22 20:40:50 momjian Exp $
+ * $Id: builtins.h,v 1.69 1998/10/29 18:07:09 momjian Exp $
  *
  * NOTES
  *	  This should normally only be included by fmgr.h.
@@ -334,6 +334,7 @@ extern char *oidout(Oid o);
 extern bool oideq(Oid arg1, Oid arg2);
 extern bool oidne(Oid arg1, Oid arg2);
 extern bool oid8eq(Oid *arg1, Oid *arg2);
+extern bool oid8ne(Oid *arg1, Oid *arg2);
 extern bool oid8lt(Oid *arg1, Oid *arg2);
 extern bool oid8le(Oid *arg1, Oid *arg2);
 extern bool oid8ge(Oid *arg1, Oid *arg2);
