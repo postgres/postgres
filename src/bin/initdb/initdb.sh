@@ -23,7 +23,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.111 2000/11/06 22:18:09 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.112 2000/11/09 11:26:00 vadim Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -440,7 +440,7 @@ else
 fi
 
 BACKENDARGS="-boot -C -F -D$PGDATA $BACKEND_TALK_ARG"
-FIRSTRUN="-boot -x -C -F -D$PGDATA $BACKEND_TALK_ARG"
+FIRSTRUN="-boot -x1 -C -F -D$PGDATA $BACKEND_TALK_ARG"
 
 echo "Creating template database in $PGDATA/base/1"
 [ "$debug" = yes ] && echo "Running: $PGPATH/postgres $FIRSTRUN template1"

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.24 2000/11/05 22:50:19 vadim Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.25 2000/11/09 11:25:58 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,13 +42,13 @@ void		CreateCheckPoint(bool shutdown);
 
 char		XLogDir[MAXPGPATH];
 char		ControlFilePath[MAXPGPATH];
-uint32		XLOGbuffers = 0;
+int			XLOGbuffers = 0;
 XLogRecPtr	MyLastRecPtr = {0, 0};
 bool		StopIfError = false;
 bool		InRecovery = false;
 StartUpID	ThisStartUpID = 0;
 
-int			XLOG_DEBUG = 1;
+int			XLOG_DEBUG = 0;
 
 /* To read/update control file and create new log file */
 SPINLOCK	ControlFileLockId;
@@ -919,7 +919,7 @@ MoveOfflineLogs(char *archdir, uint32 _logId, uint32 _logSeg)
 		elog(LOG, "MoveOfflineLogs: %s %s", (archdir[0]) ? 
 			"archive" : "remove", xlde->d_name);
 		sprintf(path, "%s%c%s",	XLogDir, SEP_CHAR, xlde->d_name);
-		if (archdir[0] != 0)
+		if (archdir[0] == 0)
 			unlink(path);
 		errno = 0;
 	}
@@ -1641,9 +1641,14 @@ SetThisStartUpID(void)
 void
 ShutdownXLOG()
 {
-
+#ifdef XLOG
+	extern void CreateDummyCaches(void);
+#endif
 	elog(LOG, "Data Base System shutting down at %s", str_time(time(NULL)));
 
+#ifdef XLOG
+	CreateDummyCaches();
+#endif
 	CreateCheckPoint(true);
 
 	elog(LOG, "Data Base System shut down at %s", str_time(time(NULL)));

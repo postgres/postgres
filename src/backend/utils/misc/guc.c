@@ -4,7 +4,7 @@
  * Support for grand unified configuration scheme, including SET
  * command, configuration file, and command line options.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.15 2000/11/01 21:14:03 petere Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.16 2000/11/09 11:25:59 vadim Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -35,6 +35,10 @@
 
 /* XXX should be in a header file */
 extern bool Log_connections;
+
+extern int CheckPointTimeout;
+extern int XLOGbuffers;
+extern int XLOG_DEBUG;
 
 /*
  * Debugging options
@@ -256,6 +260,15 @@ ConfigureNamesInt[] =
 
 	{"unix_socket_permissions", PGC_POSTMASTER,         &Unix_socket_permissions,
 	 0777, 0000, 0777},
+
+	{"checkpoint_timeout", PGC_POSTMASTER,         &CheckPointTimeout,
+	 300, 30, 1800},
+
+	{"wal_buffers", PGC_POSTMASTER,         &XLOGbuffers,
+	 4, 4, INT_MAX},
+
+	{"wal_debug", PGC_POSTMASTER,         &XLOG_DEBUG,
+	 0, 0, 16},
 
     {NULL, 0, NULL, 0, 0, 0}
 };

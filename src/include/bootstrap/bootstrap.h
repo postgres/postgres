@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bootstrap.h,v 1.19 2000/07/14 22:17:54 tgl Exp $
+ * $Id: bootstrap.h,v 1.20 2000/11/09 11:26:00 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,5 +56,11 @@ extern void build_indices(void);
 
 extern int	Int_yylex(void);
 extern void Int_yyerror(const char *str);
+
+#define BS_XLOG_NOP			0
+#define BS_XLOG_BOOTSTRAP	1
+#define BS_XLOG_STARTUP		2
+#define BS_XLOG_CHECKPOINT	3
+#define BS_XLOG_SHUTDOWN	4
 
 #endif	 /* BOOTSTRAP_H */

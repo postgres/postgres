@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.97 2000/11/08 22:09:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.98 2000/11/09 11:25:58 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -220,7 +220,7 @@ BootstrapMain(int argc, char *argv[])
 	int			i;
 	char	   *dbName;
 	int			flag;
-	bool		xloginit = false;
+	int			xlogop = BS_XLOG_NOP;
 	char       *potential_DataDir = NULL;
 
 	extern int	optind;
@@ -260,7 +260,7 @@ BootstrapMain(int argc, char *argv[])
 		potential_DataDir = getenv("PGDATA"); /* Null if no PGDATA variable */
 	}
 
-	while ((flag = getopt(argc, argv, "D:dCQxpB:F")) != EOF)
+	while ((flag = getopt(argc, argv, "D:dCQx:pB:F")) != EOF)
 	{
 		switch (flag)
 		{
@@ -281,7 +281,7 @@ BootstrapMain(int argc, char *argv[])
 				Quiet = true;
 				break;
 			case 'x':
-				xloginit = true;
+				xlogop = atoi(optarg);
 				break;
 			case 'p':
 				/* indicates fork from postmaster */
@@ -339,39 +339,40 @@ BootstrapMain(int argc, char *argv[])
 	}
 
 	/*
-	 * Bootstrap under Postmaster means two things: (xloginit) ?
-	 * StartupXLOG : ShutdownXLOG
-	 *
-	 * If !under Postmaster and xloginit then BootStrapXLOG.
+	 * XLOG operations
 	 */
-	if (IsUnderPostmaster || xloginit)
+	if (xlogop != BS_XLOG_NOP)
 	{
 		snprintf(XLogDir, MAXPGPATH, "%s/pg_xlog", DataDir);
 		snprintf(ControlFilePath, MAXPGPATH, "%s/global/pg_control", DataDir);
+		if (xlogop == BS_XLOG_BOOTSTRAP)
+			BootStrapXLOG();
+		else
+		{
+			SetProcessingMode(NormalProcessing);
+			if (xlogop == BS_XLOG_STARTUP)
+				StartupXLOG();
+			else if (xlogop == BS_XLOG_CHECKPOINT)
+			{
+#ifdef XLOG
+				extern void CreateDummyCaches(void);
+				CreateDummyCaches();
+#endif
+				CreateCheckPoint(false);
+			}
+			else if (xlogop == BS_XLOG_SHUTDOWN)
+				ShutdownXLOG();
+			else
+				elog(STOP, "Unsupported XLOG op %d", xlogop);
+			proc_exit(0);
+		}
 	}
-
-	if (IsUnderPostmaster && xloginit)
-	{
-		SetProcessingMode(NormalProcessing);
-		StartupXLOG();
-		proc_exit(0);
-	}
-
-	if (!IsUnderPostmaster && xloginit)
-		BootStrapXLOG();
 
 	/*
 	 * backend initialization
 	 */
 	InitPostgres(dbName, NULL);
 	LockDisable(true);
-
-	if (IsUnderPostmaster && !xloginit)
-	{
-		SetProcessingMode(NormalProcessing);
-		ShutdownXLOG();
-		proc_exit(0);
-	}
 
 	for (i = 0; i < MAXATTR; i++)
 	{

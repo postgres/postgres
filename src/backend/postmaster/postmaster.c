@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.180 2000/11/08 17:57:46 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.181 2000/11/09 11:25:59 vadim Exp $
  *
  * NOTES
  *
@@ -78,7 +78,7 @@
 #include "utils/exc.h"
 #include "utils/guc.h"
 #include "utils/memutils.h"
-
+#include "bootstrap/bootstrap.h"
 
 #define INVALID_SOCK	(-1)
 #define ARGV_SIZE	64
@@ -197,8 +197,12 @@ bool NetServer = false;	/* listen on TCP/IP */
 bool EnableSSL = false;
 bool SilentMode = false;	/* silent mode (-S) */
 
-static pid_t StartupPID = 0,
-			ShutdownPID = 0;
+int				CheckPointTimeout = 300;
+
+static pid_t	StartupPID = 0,
+				ShutdownPID = 0,
+				CheckPointPID = 0;
+static time_t	checkpointed = 0;
 
 #define			NoShutdown		0
 #define			SmartShutdown	1
@@ -250,11 +254,11 @@ static void SignalChildren(SIGNAL_ARGS);
 static int	CountChildren(void);
 static bool CreateOptsFile(int argc, char *argv[]);
 
-extern int	BootstrapMain(int argc, char *argv[]);
-static pid_t SSDataBase(bool startup);
+static pid_t SSDataBase(int xlop);
 
-#define StartupDataBase()	SSDataBase(true)
-#define ShutdownDataBase()	SSDataBase(false)
+#define StartupDataBase()		SSDataBase(BS_XLOG_STARTUP)
+#define CheckPointDataBase()	SSDataBase(BS_XLOG_CHECKPOINT)
+#define ShutdownDataBase()		SSDataBase(BS_XLOG_SHUTDOWN)
 
 #ifdef USE_SSL
 static void InitSSL(void);
@@ -814,13 +818,27 @@ ServerLoop(void)
 
 	for (;;)
 	{
-		Port	   *port;
-		fd_set		rmask,
-					wmask;
-		struct timeval *timeout = (struct timeval *) NULL;
-#ifdef USE_SSL
-		struct timeval timeout_tv;
+		Port		   *port;
+		fd_set			rmask,
+						wmask;
+		struct timeval *timeout = NULL;
+		struct timeval	timeout_tv;
 
+		if (CheckPointPID == 0 && checkpointed)
+		{
+			time_t	now = time(NULL);
+
+			if (CheckPointTimeout + checkpointed > now)
+			{
+				timeout_tv.tv_sec = CheckPointTimeout + checkpointed - now;
+				timeout_tv.tv_usec = 0;
+				timeout = &timeout_tv;
+			}
+			else
+				CheckPointPID = CheckPointDataBase();
+		}
+
+#ifdef USE_SSL
 		/*
 		 * If we are using SSL, there may be input data already read and
 		 * pending in SSL's input buffers.  If so, check for additional
@@ -850,6 +868,7 @@ ServerLoop(void)
 
 		if (select(nSockets, &rmask, &wmask, (fd_set *) NULL, timeout) < 0)
 		{
+			PG_SETMASK(&BlockSig);
 			if (errno == EINTR || errno == EWOULDBLOCK)
 				continue;
 			fprintf(stderr, "%s: ServerLoop: select failed: %s\n",
@@ -1186,6 +1205,14 @@ processCancelRequest(Port *port, PacketLen len, void *pkt)
 	backendPID = (int) ntohl(canc->backendPID);
 	cancelAuthCode = (long) ntohl(canc->cancelAuthCode);
 
+	if (backendPID == CheckPointPID)
+	{
+		if (DebugLvl)
+			fprintf(stderr, "%s: processCancelRequest: CheckPointPID in cancel request for process %d\n",
+					progname, backendPID);
+		return STATUS_ERROR;
+	}
+
 	/* See if we have a matching backend */
 
 	for (curr = DLGetHead(BackendList); curr; curr = DLGetSucc(curr))
@@ -1480,6 +1507,9 @@ reaper(SIGNAL_ARGS)
 			 */
 			SetThisStartUpID();
 
+			CheckPointPID = 0;
+			checkpointed = time(NULL);
+
 			pqsignal(SIGCHLD, reaper);
 			return;
 		}
@@ -1563,7 +1593,13 @@ CleanupProc(int pid,
 			curr = DLGetSucc(curr);
 		}
 
-		ProcRemove(pid);
+		if (pid == CheckPointPID)
+		{
+			CheckPointPID = 0;
+			checkpointed = time(NULL);
+		}
+		else
+			ProcRemove(pid);
 
 		return;
 	}
@@ -1612,7 +1648,13 @@ CleanupProc(int pid,
 			 * only, couldn't we just sigpause?), so probably we'll remove
 			 * this call from here someday.  -- vadim 04-10-1999
 			 */
-			ProcRemove(pid);
+			if (pid == CheckPointPID)
+			{
+				CheckPointPID = 0;
+				checkpointed = 0;
+			}
+			else
+				ProcRemove(pid);
 
 			DLRemove(curr);
 			free(bp);
@@ -2090,6 +2132,8 @@ CountChildren(void)
 		if (bp->pid != mypid)
 			cnt++;
 	}
+	if (CheckPointPID != 0)
+		cnt--;
 	return cnt;
 }
 
@@ -2132,10 +2176,11 @@ InitSSL(void)
 #endif
 
 static pid_t
-SSDataBase(bool startup)
+SSDataBase(int xlop)
 {
 	pid_t		pid;
 	int			i;
+	Backend	   *bn;
 	static char ssEntry[4][2 * ARGV_SIZE];
 
 	for (i = 0; i < 4; ++i)
@@ -2159,6 +2204,7 @@ SSDataBase(bool startup)
 		int			ac = 0;
 		char		nbbuf[ARGV_SIZE];
 		char		dbbuf[ARGV_SIZE];
+		char		xlbuf[ARGV_SIZE];
 
 		/* Lose the postmaster's on-exit routines and port connections */
 		on_exit_reset();
@@ -2178,8 +2224,8 @@ SSDataBase(bool startup)
 		sprintf(nbbuf, "-B%u", NBuffers);
 		av[ac++] = nbbuf;
 
-		if (startup)
-			av[ac++] = "-x";
+		sprintf(xlbuf, "-x %d", xlop);
+		av[ac++] = xlbuf;
 
 		av[ac++] = "-p";
 
@@ -2206,11 +2252,27 @@ SSDataBase(bool startup)
 	if (pid < 0)
 	{
 		fprintf(stderr, "%s Data Base: fork failed: %s\n",
-				((startup) ? "Startup" : "Shutdown"), strerror(errno));
+				((xlop == BS_XLOG_STARTUP) ? "Startup" : 
+					((xlop == BS_XLOG_CHECKPOINT) ? "CheckPoint" :
+						"Shutdown")), strerror(errno));
 		ExitPostmaster(1);
 	}
 
 	NextBackendTag -= 1;
+
+	if (xlop != BS_XLOG_CHECKPOINT)
+		return(pid);
+
+	if (!(bn = (Backend *) calloc(1, sizeof(Backend))))
+	{
+		fprintf(stderr, "%s: CheckPointDataBase: malloc failed\n",
+				progname);
+		ExitPostmaster(1);
+	}
+
+	bn->pid = pid;
+	bn->cancel_key = 0;
+	DLAddHead(BackendList, DLNewElem(bn));
 
 	return (pid);
 }
