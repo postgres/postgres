@@ -11,7 +11,7 @@ import java.util.*;
 import org.postgresql.*;
 import org.postgresql.util.*;
 
-/*
+/**
  * A ResultSetMetaData object can be used to find out about the types and
  * properties of the columns in a ResultSet
  *
@@ -403,7 +403,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData
 		return getField(column).getPGType();
 	}
 
-	/*
+	/**
 	 * Is the column definitely not writable?  In reality, we would
 	 * have to check the GRANT/REVOKE stuff for this to be effective,
 	 * and I haven't really looked into that yet, so this will get
@@ -418,7 +418,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData
 		return false;
 	}
 
-	/*
+	/**
 	 * Is it possible for a write on the column to succeed?  Again, we
 	 * would in reality have to check the GRANT/REVOKE stuff, which
 	 * I haven't worked with as yet.  However, if it isn't ReadOnly, then
@@ -433,7 +433,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData
 		return !isReadOnly(column);
 	}
 
-	/*
+	/**
 	 * Will a write on this column definately succeed?	Hmmm...this
 	 * is a bad one, since the two preceding functions have not been
 	 * really defined.	I cannot tell is the short answer.	I thus
@@ -452,7 +452,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData
 	//	END OF PUBLIC INTERFACE
 	// ********************************************************
 
-	/*
+	/**
 	 * For several routines in this package, we need to convert
 	 * a columnIndex into a Field[] descriptor.  Rather than do
 	 * the same code several times, here it is.
@@ -533,6 +533,6 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData
        		default:
 	 		throw org.postgresql.Driver.notImplemented();
        }
-       
+   }       
 }
 
