@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.74 2003/09/16 17:59:02 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.75 2003/10/05 22:36:00 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -550,7 +550,7 @@ PrintQueryResults(PGresult *results,
 
 	/* Possible microtiming output */
 	if (pset.timing && success)
-		printf(gettext("Time: %.2f ms\n"), DIFF_MSEC(after, before));
+		printf(gettext("Time: %.3f ms\n"), DIFF_MSEC(after, before));
 
 	return success;
 }
