@@ -3,26 +3,30 @@
 
 <Abstract>
 <Para>
-Describes the built-in data types available in <ProductName>Postgres</ProductName>.
+Describes the built-in data types available in 
+<ProductName>Postgres</ProductName>.
 </Para>
 </Abstract>
 
 <Para>
-<ProductName>Postgres</ProductName> has a rich set of native data types available to users.
+<ProductName>Postgres</ProductName> has a rich set of native data 
+types available to users.
 Users may add new types to <ProductName>Postgres</ProductName> using the
 <Command>define type</Command>
 command described elsewhere.
 
 <Para>
-In the context of data types, the following sections will discuss SQL standards
-compliance, porting issues, and usage.
+In the context of data types, the following sections will discuss 
+<acronym>SQL</acronym> standards compliance, porting issues, and usage.
 
-Some <ProductName>Postgres</ProductName> types correspond directly to SQL92-compatible types. In other
-cases, data types defined by SQL92 syntax are mapped directly
+Some <ProductName>Postgres</ProductName> types correspond directly to 
+<acronym>SQL92</acronym>-compatible types. In other
+cases, data types defined by <acronym>SQL92</acronym> syntax are mapped directly
 into native <ProductName>Postgres</ProductName> types. 
 
 Many of the built-in types have obvious external formats. However, several
-types are either unique to <ProductName>Postgres</ProductName>, such as open and closed paths, or have
+types are either unique to <ProductName>Postgres</ProductName>, 
+such as open and closed paths, or have
 several possibilities for formats, such as date and time types.
 </Para>
 
@@ -95,6 +99,11 @@ several possibilities for formats, such as date and time types.
     <ENTRY>exact numeric for p == 9, s = 0</ENTRY>
   </ROW>
   <ROW>
+    <ENTRY>int8</ENTRY>
+    <ENTRY></ENTRY>
+    <ENTRY>signed 8-byte integer</ENTRY>
+  </ROW>
+  <ROW>
     <ENTRY>line</ENTRY>
     <ENTRY></ENTRY>
     <ENTRY>infinite line in 2D plane</ENTRY>
@@ -123,6 +132,11 @@ several possibilities for formats, such as date and time types.
     <ENTRY>polygon</ENTRY>
     <ENTRY></ENTRY>
     <ENTRY>closed geometric path in 2D plane</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>serial</ENTRY>
+    <ENTRY></ENTRY>
+    <ENTRY>unique id for indexing and cross-reference</ENTRY>
   </ROW>
   <ROW>
     <ENTRY>time</ENTRY>
@@ -188,14 +202,16 @@ several possibilities for formats, such as date and time types.
 </Para>
 
 <Para>
-<ProductName>Postgres</ProductName> has features at the forefront of ORDBMS development. In addition to
-SQL3 conformance, substantial portions of SQL92 are also supported.
-Although we strive for SQL92 compliance, there are some aspects of the standard
+<ProductName>Postgres</ProductName> has features at the forefront of 
+<acronym>ORDBMS</acronym> development. In addition to
+<acronym>SQL3</acronym> conformance, substantial portions 
+of <acronym>SQL92</acronym> are also supported.
+Although we strive for <acronym>SQL92</acronym> compliance, 
+there are some aspects of the standard
 which are ill considered and which should not live through subsequent standards.
-<ProductName>Postgres</ProductName> will not make great efforts to conform to these aspects;
-however, these
-tend to apply in little-used or obsure cases, and a typical user is not likely to
-run into them.
+<ProductName>Postgres</ProductName> will not make great efforts to 
+conform to these features; however, these tend to apply in little-used 
+or obsure cases, and a typical user is not likely to run into them.
 
 <Para>
 Most of the input and output functions corresponding to the
@@ -218,8 +234,9 @@ the original input.
 The original <ProductName>Postgres</ProductName> v4.2 code received from
 Berkeley rounded all double precision floating point results to six digits for
 output. Starting with v6.1, floating point numbers are allowed to retain
-most of the intrinsic precision of the type (typically 15 digits for doubles, 6 digits
-for 4-byte floats). Other types with underlying floating point fields (e.g. geometric
+most of the intrinsic precision of the type (typically 15 digits for doubles, 
+6 digits for 4-byte floats). 
+Other types with underlying floating point fields (e.g. geometric
 types) carry similar precision.
 </note>
 </Para>
@@ -246,6 +263,18 @@ floating point numbers.
 </THEAD>
 <TBODY>
   <ROW>
+    <ENTRY>float4</ENTRY>
+    <ENTRY>4 bytes</ENTRY>
+    <ENTRY>Variable-precision</ENTRY>
+    <ENTRY>6 decimal places</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>float8</ENTRY>
+    <ENTRY>8 bytes</ENTRY>
+    <ENTRY>Variable-precision</ENTRY>
+    <ENTRY>15 decimal places</ENTRY>
+  </ROW>
+  <ROW>
     <ENTRY>int2</ENTRY>
     <ENTRY>2 bytes</ENTRY>
     <ENTRY>Fixed-precision</ENTRY>
@@ -264,27 +293,64 @@ floating point numbers.
     <ENTRY>+/- &gt; 18 decimal places</ENTRY>
   </ROW>
   <ROW>
-    <ENTRY>float4</ENTRY>
+    <ENTRY>serial</ENTRY>
     <ENTRY>4 bytes</ENTRY>
-    <ENTRY>Variable-precision</ENTRY>
-    <ENTRY>6 decimal places</ENTRY>
-  </ROW>
-  <ROW>
-    <ENTRY>float8</ENTRY>
-    <ENTRY>8 bytes</ENTRY>
-    <ENTRY>Variable-precision</ENTRY>
-    <ENTRY>15 decimal places</ENTRY>
+    <ENTRY>Identifer or cross-reference</ENTRY>
+    <ENTRY>0 to +2147483647</ENTRY>
   </ROW>
 </TBODY>
 </TGROUP>
 </TABLE>
 </Para>
 
+<para>
+The numeric types have a full set of corresponding arithmetic operators and
+functions. Refer to <xref linkend="math-opers" endterm="math-opers"> 
+and <xref linkend="math-funcs" endterm="math-funcs"> for more information.
+
+<para>
+The <type>serial</type> type is a special-case type constructed by
+<productname>Postgres</productname> from other existing components.
+It is typically used to create unique identifiers for table entries.
+In the current implementation, specifying
+
+<programlisting>
+CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceable class="parameter">colname</replaceable> SERIAL);
+</programlisting>
+
+is equivalent to specifying:
+
+<programlisting>
+CREATE SEQUENCE <replaceable class="parameter">tablename</replaceable>_<replaceable class="parameter">colname</replaceable>_seq;
+CREATE TABLE <replaceable class="parameter">tablename</replaceable>
+    (<replaceable class="parameter">colname</replaceable> INT4 DEFAULT nextval('<replaceable class="parameter">tablename</replaceable>_<replaceable class="parameter">colname</replaceable>_seq');
+CREATE UNIQUE INDEX <replaceable class="parameter">tablename</replaceable>_<replaceable class="parameter">colname</replaceable>_key on <replaceable class="parameter">tablename</replaceable> (<replaceable class="parameter">colname</replaceable>);
+</programlisting>
+
+<caution>
+<para>
+The implicit sequence created for the <type>serial</type> type will
+<emphasis>not</emphasis> be automatically removed when the table is dropped.
+So, the following commands executed in order will likely fail:
+
+<programlisting>
+CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceable class="parameter">colname</replaceable> SERIAL);
+DROP TABLE <replaceable class="parameter">tablename</replaceable>;
+CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceable class="parameter">colname</replaceable> SERIAL);
+</programlisting>
+
+The sequence will remain in the database until explicitly dropped using
+<command>DROP SEQUENCE</command>.
+</caution>
+
 <Para>
-The <FirstTerm>exact numerics</FirstTerm> <Type>decimal</Type> and <Type>numeric</Type>
-have fully implemented syntax but currently (<ProductName>Postgres</ProductName> v6.3)
+The <FirstTerm>exact numerics</FirstTerm> <Type>decimal</Type> and 
+<Type>numeric</Type>
+have fully implemented syntax but currently 
+(<ProductName>Postgres</ProductName> v6.4)
  support only a small range of precision and/or range values.
-The <type>int8</type> type may not be available on all platforms.
+The <type>int8</type> type may not be available on all platforms since
+it relies on compiler support for this.
 </Para>
 
 </Sect1>
@@ -293,9 +359,12 @@ The <type>int8</type> type may not be available on all platforms.
 <Title>Monetary Type</Title>
 
 <Para>
-The <Type>money</Type> type supports US-style currency with fixed decimal point representation.
-If <ProductName>Postgres</ProductName> is compiled with USE_LOCALE then the money type
-should use the monetary conventions defined for locale(7).
+The <Type>money</Type> type supports US-style currency with 
+fixed decimal point representation.
+If <ProductName>Postgres</ProductName> is compiled with USE_LOCALE 
+then the money type
+should use the monetary conventions defined for
+ <citetitle>locale(7)</citetitle>.
 
 <Para>
 <TABLE TOCENTRY="1">
@@ -323,11 +392,12 @@ should use the monetary conventions defined for locale(7).
 </Para>
 
 <Para>
-The <FirstTerm>numeric</FirstTerm>
+<type>numeric</type>
 should eventually replace the money type. It has a
-fully implemented syntax but currently (<ProductName>Postgres</ProductName> v6.3)
- support only a small range of precision and/or range values and cannot substitute for
-the money type.
+fully implemented syntax but currently 
+(<ProductName>Postgres</ProductName> v6.4)
+ support only a small range of precision and/or range values 
+and cannot adequately substitute for the money type.
 </Para>
 
 </Sect1>
@@ -336,9 +406,11 @@ the money type.
 <Title>Character Types</Title>
 
 <Para>
-<Acronym>SQL92</Acronym> defines two primary character types: <Type>char</Type> and
-<Type>varchar</Type>. <ProductName>Postgres</ProductName> supports these types, in
-addition to the more general <Type>text</Type> type, which unlike <Type>varchar</Type>
+<Acronym>SQL92</Acronym> defines two primary character types:
+ <Type>char</Type> and <Type>varchar</Type>. 
+<ProductName>Postgres</ProductName> supports these types, in
+addition to the more general <Type>text</Type> type, 
+which unlike <Type>varchar</Type>
 does not require an upper
 limit to be declared on the size of the field.
 </Para>
@@ -360,13 +432,13 @@ limit to be declared on the size of the field.
   <ROW>
     <ENTRY>char</ENTRY>
     <ENTRY>1 byte</ENTRY>
-    <ENTRY>SQL92-compatible</ENTRY>
+    <ENTRY><acronym>SQL92</acronym>-compatible</ENTRY>
     <ENTRY>Single character</ENTRY>
   </ROW>
   <ROW>
     <ENTRY>char(n)</ENTRY>
     <ENTRY>(4+n) bytes</ENTRY>
-    <ENTRY>SQL92-compatible</ENTRY>
+    <ENTRY><acronym>SQL92</acronym>-compatible</ENTRY>
     <ENTRY>Fixed-length blank padded</ENTRY>
   </ROW>
   <ROW>
@@ -378,7 +450,7 @@ limit to be declared on the size of the field.
   <ROW>
     <ENTRY>varchar(n)</ENTRY>
     <ENTRY>(4+n) bytes</ENTRY>
-    <ENTRY>SQL92-compatible</ENTRY>
+    <ENTRY><acronym>SQL92</acronym>-compatible</ENTRY>
     <ENTRY>Variable-length with limit</ENTRY>
   </ROW>
 </TBODY>
@@ -387,10 +459,14 @@ limit to be declared on the size of the field.
 </Para>
 
 <Para>
-There is currently one other fixed-length character type. The <Type>name</Type> type
-only has one purpose and that is to provide <ProductName>Postgres</ProductName> with a
-special type to use for internal names.  It is not intended for use by the general user.
-It's length is currently defined as 32 chars but should be reference using NAMEDATALEN.
+There is one other fixed-length character type. 
+The <Type>name</Type> type
+only has one purpose and that is to provide 
+<ProductName>Postgres</ProductName> with a
+special type to use for internal names.  
+It is not intended for use by the general user.
+It's length is currently defined as 32 chars 
+but should be reference using NAMEDATALEN.
 This is set at compile time and may change in a future release.
 </Para>
 
@@ -423,10 +499,13 @@ This is set at compile time and may change in a future release.
 <Title>Date/Time Types</Title>
 
 <Para>
-There are two fundamental kinds of date and time measurements: clock time and time interval.
+There are two fundamental kinds of date and time measurements:
+ clock time and time interval.
 Both quantities have continuity and smoothness, as does time itself.
-<ProductName>Postgres</ProductName> supplies two primary user-oriented date and time types,
-<Type>datetime</Type> and timespan, as well as the related SQL92 types date and time.
+<ProductName>Postgres</ProductName> supplies two primary user-oriented 
+date and time types,
+<Type>datetime</Type> and timespan, as well as 
+the related <acronym>SQL92</acronym> types date and time.
 </Para>
 
 <Para>
@@ -458,7 +537,7 @@ for historical reasons.
   <ROW>
     <ENTRY>date</ENTRY>
     <ENTRY>4 bytes</ENTRY>
-    <ENTRY>SQL92 type</ENTRY>
+    <ENTRY><acronym>SQL92</acronym> type</ENTRY>
     <ENTRY>wide range</ENTRY>
   </ROW>
   <ROW>
@@ -470,7 +549,7 @@ for historical reasons.
   <ROW>
     <ENTRY>interval</ENTRY>
     <ENTRY>12 bytes</ENTRY>
-    <ENTRY>SQL92 type</ENTRY>
+    <ENTRY><acronym>SQL92</acronym> type</ENTRY>
     <ENTRY>equivalent to timespan</ENTRY>
   </ROW>
   <ROW>
@@ -482,7 +561,7 @@ for historical reasons.
   <ROW>
     <ENTRY>time</ENTRY>
     <ENTRY>4 bytes</ENTRY>
-    <ENTRY>SQL92 type</ENTRY>
+    <ENTRY><acronym>SQL92</acronym> type</ENTRY>
     <ENTRY>wide range</ENTRY>
   </ROW>
   <ROW>
@@ -494,7 +573,7 @@ for historical reasons.
   <ROW>
     <ENTRY>timestamp</ENTRY>
     <ENTRY>4 bytes</ENTRY>
-    <ENTRY>SQL92 type</ENTRY>
+    <ENTRY><acronym>SQL92</acronym> type</ENTRY>
     <ENTRY>limited range</ENTRY>
   </ROW>
 </TBODY>
@@ -525,19 +604,19 @@ for historical reasons.
   <ROW>
     <ENTRY>date</ENTRY>
     <ENTRY>4713 BC</ENTRY>
-    <ENTRY>no limit</ENTRY>
+    <ENTRY>32767 AD</ENTRY>
     <ENTRY>1 day</ENTRY>
   </ROW>
   <ROW>
     <ENTRY>datetime</ENTRY>
     <ENTRY>4713 BC</ENTRY>
-    <ENTRY>no limit</ENTRY>
+    <ENTRY>1465001 AD</ENTRY>
     <ENTRY>1 microsec to 14 digits</ENTRY>
   </ROW>
   <ROW>
     <ENTRY>interval</ENTRY>
-    <ENTRY>no limit</ENTRY>
-    <ENTRY>no limit</ENTRY>
+    <ENTRY>-178000000 years</ENTRY>
+    <ENTRY>178000000 years</ENTRY>
     <ENTRY>1 microsec</ENTRY>
   </ROW>
   <ROW>
@@ -554,8 +633,8 @@ for historical reasons.
   </ROW>
   <ROW>
     <ENTRY>timespan</ENTRY>
-    <ENTRY>no limit</ENTRY>
-    <ENTRY>no limit</ENTRY>
+    <ENTRY>-178000000 years</ENTRY>
+    <ENTRY>178000000 years</ENTRY>
     <ENTRY>1 microsec (14 digits)</ENTRY>
   </ROW>
   <ROW>
@@ -573,26 +652,33 @@ for historical reasons.
 <ProductName>Postgres</ProductName> endevours to be compatible with
 <Acronym>SQL92</Acronym> definitions for typical usage.
 The <Acronym>SQL92</Acronym> standard has an odd mix of date and
-time types and capabilities. For example, although the date type does not have an associated time zone, the
-time type can. The default time zone is specified as a constant offset from GMT/UTC;
- however, time zones in the real world can have no meaning unless associated with a
- date as well
+time types and capabilities. For example, although the date type 
+does not have an associated time zone, the
+time type can. The default time zone is specified as a constant offset 
+from GMT/UTC;
+ however, time zones in the real world can have no meaning unless 
+associated with a date as well
 as a time since the offset will vary through the year.
 
 <Para>
-To obviate these difficulties, <ProductName>Postgres</ProductName> associates time zones
- only with date and time
-types which contain both date and time, and assumes local time for any type containing only
-date or time. Further, time zone support is derived from the underlying operating system
-time zone capabilities, and hence can handle daylight savings time and other expected behavior.
+To address these difficulties, <ProductName>Postgres</ProductName> 
+associates time zones only with date and time
+types which contain both date and time,
+ and assumes local time for any type containing only
+date or time. Further, time zone support is derived from 
+the underlying operating system
+time zone capabilities, and hence can handle daylight savings time 
+and other expected behavior.
 
 <Para>
-In future releases, the number of date/time types will decrease, with the current
-implementation of <Type>datetime</Type> becoming <Type>timestamp</Type>, timespan becoming interval,
-and (possibly) abstime
-and reltime being deprecated in favor of <Type>timestamp</Type> and interval.
-The more arcane features
-of the date/time definitions from the <Acronym>SQL92</Acronym> standard are not likely to be pursued.
+In future releases, the number of date/time types will decrease, 
+with the current implementation of 
+<Type>datetime</Type> becoming <Type>timestamp</Type>, 
+<Type>timespan</Type> becoming <Type>interval</Type>,
+and (possibly) <Type>abstime</Type> and <Type>reltime</Type> 
+being deprecated in favor of <Type>timestamp</Type> and <Type>interval</Type>.
+The more arcane features of the date/time definitions from 
+the <Acronym>SQL92</Acronym> standard are not likely to be pursued.
 </Para>
 
 <Sect2>
@@ -600,7 +686,7 @@ of the date/time definitions from the <Acronym>SQL92</Acronym> standard are not 
 
 <Para>
 Output formats can be set to one of four styles: 
-ISO-8601, SQL (Ingres), traditional
+ISO-8601, <acronym>SQL</acronym> (Ingres), traditional
 Postgres, and German.
 
 <TABLE TOCENTRY="1">
@@ -621,7 +707,7 @@ Postgres, and German.
     <ENTRY>1997-12-17 07:37:16-08</ENTRY>
   </ROW>
   <ROW>
-    <ENTRY>SQL</ENTRY>
+    <ENTRY><acronym>SQL</acronym></ENTRY>
     <ENTRY>Traditional style</ENTRY>
     <ENTRY>12/17/1997 07:37:16.00 PST</ENTRY>
   </ROW>
@@ -641,8 +727,8 @@ Postgres, and German.
 </Para>
 
 <Para>
-The SQL style has European and non-European (US) variants, which determines whether
-month follows day or vica versa.
+The <acronym>SQL</acronym> style has European and non-European (US) variants, 
+which determines whether month follows day or vica versa.
 
 <TABLE TOCENTRY="1">
 <TITLE><ProductName>Postgres</ProductName> Date Order Conventions</TITLE>
@@ -682,12 +768,14 @@ There are several ways to affect the appearance of date/time types:
 <ItemizedList Mark="bullet" Spacing="compact">
 <ListItem>
 <Para>
-The PGDATESTYLE environment variable used by the backend directly on postmaster startup.
+The PGDATESTYLE environment variable used by the backend directly 
+on postmaster startup.
 </Para>
 </ListItem>
 <ListItem>
 <Para>
-The PGDATESTYLE environment variable used by the frontend libpq on session startup.
+The PGDATESTYLE environment variable used by the frontend libpq 
+on session startup.
 </Para>
 </ListItem>
 <ListItem>
@@ -698,8 +786,10 @@ SET DateStyle <Acronym>SQL</Acronym> command.
 </ItemizedList>
 
 <Para>
-For <ProductName>Postgres</ProductName> v6.3 (and earlier) the default date/time style is
-"non-European traditional Postgres". In future releases, the default may become ISO-8601, which alleviates
+For <ProductName>Postgres</ProductName> v6.4 (and earlier) 
+the default date/time style is
+"non-European traditional Postgres". 
+In future releases, the default may become ISO-8601, which alleviates
 date specification ambiguities and Y2K collation problems.
 </Para>
 
@@ -709,9 +799,11 @@ date specification ambiguities and Y2K collation problems.
 <Title>Time Zones</Title>
 
 <Para>
-<ProductName>Postgres</ProductName> obtains time zone support from the underlying operating system.
-All dates and times are stored internally in Universal Coordinated Time (UTC), alternately known as
-Greenwich Mean Time (GMT). Times are converted to local time on the database server before being
+<ProductName>Postgres</ProductName> obtains time zone support 
+from the underlying operating system.
+All dates and times are stored internally in Universal Coordinated Time (UTC),
+ alternately known as Greenwich Mean Time (GMT). 
+Times are converted to local time on the database server before being
 sent to the client frontend, hence by default are in the server time zone.
 
 <Para>
@@ -726,12 +818,14 @@ The TZ environment variable used by the backend directly
 </ListItem>
 <ListItem>
 <Para>
-The PGTZ environment variable set at the client used by libpq to send time zone information to the backend upon connection.
+The PGTZ environment variable set at the client used by libpq 
+to send time zone information to the backend upon connection.
 </Para>
 </ListItem>
 <ListItem>
 <Para>
-<Command>set timezone</Command> <Acronym>SQL</Acronym> sets the time zone for the session.
+The <Acronym>SQL</Acronym> command <Command>SET TIME ZONE</Command>
+sets the time zone for the session.
 </Para>
 </ListItem>
 </ItemizedList>
@@ -747,21 +841,25 @@ the time zone becomes GMT (on most systems anyway).
 
 <Para>
 General-use date and time is input using a wide range of
-styles, including ISO-compatible, SQL-compatible, traditional
-<ProductName>Postgres</ProductName> 
+styles, including ISO-compatible, <acronym>SQL</acronym>-compatible, 
+traditional <ProductName>Postgres</ProductName> 
 and other permutations of date and time. In cases where interpretation
-can be ambiguous (quite possible with many traditional styles of date specification)
-<ProductName>Postgres</ProductName> uses a style setting to resolve the ambiguity.
+can be ambiguous (quite possible with many traditional styles of date 
+specification) <ProductName>Postgres</ProductName> uses a style setting 
+to resolve the ambiguity.
 </Para>
 
 <Para>
 Most date and time types share code for data input. For those types
-the input can have any of a wide variety of styles. For numeric date representations,
-European and US conventions can differ, and the proper interpretation is obtained
+the input can have any of a wide variety of styles. For numeric date 
+representations,
+European and US conventions can differ, and the proper interpretation 
+is obtained
 by using the
 <Command>set datestyle</Command>
 command before entering data.
-Note that the style setting does not preclude use of various styles for input; it is
+Note that the style setting does not preclude use of various styles for input;
+ it is
 used primarily to determine the output style and to resolve ambiguities.
 </Para>
 
@@ -844,10 +942,11 @@ for it.  `epoch' means Jan 1 00:00:00 1970 GMT.
 
 <Para>
 General-use date and time is input using a wide range of
-styles, including ISO-compatible, SQL-compatible, traditional
+styles, including ISO-compatible, <acronym>SQL</acronym>-compatible, traditional
 <ProductName>Postgres</ProductName> (see section on "absolute time")
 and other permutations of date and time. Output styles can be ISO-compatible,
-SQL-compatible, or traditional <ProductName>Postgres</ProductName>, with the default set to be compatible
+<acronym>SQL</acronym>-compatible, or traditional 
+<ProductName>Postgres</ProductName>, with the default set to be compatible
 with <ProductName>Postgres</ProductName> v6.0.
 </Para>
 
@@ -881,13 +980,18 @@ translate time to the local time zone of the server.
 
 <Para>
 General-use time span is input using a wide range of
-syntaxes, including ISO-compatible, SQL-compatible, traditional
+syntaxes, including ISO-compatible, <acronym>SQL</acronym>-compatible, 
+traditional
 <ProductName>Postgres</ProductName> (see section on "relative time")
  and other permutations of time span. Output formats can be ISO-compatible,
-SQL-compatible, or traditional <ProductName>Postgres</ProductName>, with the default set to be <ProductName>Postgres</ProductName>-compatible.
+<acronym>SQL</acronym>-compatible, or traditional 
+<ProductName>Postgres</ProductName>, 
+with the default set to be <ProductName>Postgres</ProductName>-compatible.
 Months and years are a "qualitative" time interval, and are stored separately
-from the other "quantitative" time intervals such as day or hour. For date arithmetic,
-the qualitative time units are instantiated in the context of the relevant date or time.
+from the other "quantitative" time intervals such as day or hour. 
+For date arithmetic,
+the qualitative time units are instantiated in the context of the 
+relevant date or time.
 
 <Para>
 Time span is specified with the following syntax:
@@ -908,7 +1012,8 @@ where
 <Title>abstime</Title>
 
 <Para>
-Absolute time (abstime) is a limited-range (+/- 68 years) and limited-precision (1 sec)
+Absolute time (<type>abstime</type>) is a limited-range (+/- 68 years) and 
+limited-precision (1 sec)
 date data type. <Type>datetime</Type> may be preferred, since it
 covers a larger range with greater precision.
 
@@ -929,11 +1034,18 @@ where
 
 <Para>
 Valid dates are from Dec 13 20:45:53 1901 GMT to Jan 19 03:14:04
-2038 GMT.  As of Version 3.0, times are no longer read and written
+2038 GMT. 
+
+<note>
+<title>Historical Note</title>
+<para>
+As of Version 3.0, times are no longer read and written
 using Greenwich Mean Time; the input and output routines default to
 the local time zone.
+</note>
 
-All special values allowed for <Type>datetime</Type> are also allowed for "absolute time".
+All special values allowed for <Type>datetime</Type> are also 
+allowed for "absolute time".
 </Para>
 
 </Sect2>
@@ -945,15 +1057,20 @@ All special values allowed for <Type>datetime</Type> are also allowed for "absol
 Relative time <Type>reltime</Type> is a limited-range (+/- 68 years)
  and limited-precision (1 sec) time span data type.
 <Type>timespan</Type> should be preferred, since it
-covers a larger range with greater precision and, more importantly, can distinguish between
-relative units (months and years) and quantitative units (days, hours, etc). Instead, reltime
-must force months to be exactly 30 days, so time arithmetic does not always work as expected.
-For example, adding one reltime year to abstime today does not produce today's date one year from
+covers a larger range with greater precision and, more importantly, 
+can distinguish between
+relative units (months and years) and quantitative units (days, hours, etc). 
+Instead, reltime
+must force months to be exactly 30 days, so time arithmetic does not 
+always work as expected.
+For example, adding one reltime year to abstime today does not 
+produce today's date one year from
 now, but rather a date 360 days from today.
 </Para>
 
 <Para>
-<Type>reltime</Type> shares input and output routines with the other time span types.
+<Type>reltime</Type> shares input and output routines with the other 
+time span types.
 The section on <Type>timespan</Type> covers this in more detail.
 </Para>
 
@@ -966,12 +1083,14 @@ The section on <Type>timespan</Type> covers this in more detail.
 This is currently a limited-range absolute time which closely resembles the
 abstime
 data type. It shares the general input parser with the other date/time types.
-In future releases this type will absorb the capabilities of the <Type>datetime</Type> type
-and will move toward SQL92 compliance.
+In future releases this type will absorb the capabilities of the 
+<Type>datetime</Type> type
+and will move toward <acronym>SQL92</acronym> compliance.
 </Para>
 
 <Para>
-<Type>timestamp</Type> is specified using the same syntax as for <Type>datetime</Type>.
+<Type>timestamp</Type> is specified using the same syntax as for 
+<Type>datetime</Type>.
 </Para>
 </Sect2>
 
@@ -980,8 +1099,8 @@ and will move toward SQL92 compliance.
 
 <Para>
 <Type>interval</Type> is an <Acronym>SQL92</Acronym> data type which is
-currently mapped to the <Type>timespan</Type> <ProductName>Postgres</ProductName>
-data type.
+currently mapped to the <Type>timespan</Type> 
+<ProductName>Postgres</ProductName> data type.
 </Para>
 </Sect2>
 
@@ -1009,9 +1128,12 @@ Special abstime values such as
 <Para>
 <ProductName>Postgres</ProductName> supports <Type>bool</Type> as
 the <Acronym>SQL3</Acronym> boolean type.
-<Type>bool</Type> can have one of only two states: 'true' or 'false'. A third state, 'unknown', is not
-implemented and is not suggested in <Acronym>SQL3</Acronym>; <Acronym>NULL</Acronym> is an
-effective substitute. <Type>bool</Type> can be used in any boolean expression, and boolean expressions
+<Type>bool</Type> can have one of only two states: 'true' or 'false'. 
+A third state, 'unknown', is not
+implemented and is not suggested in <Acronym>SQL3</Acronym>; 
+<Acronym>NULL</Acronym> is an
+effective substitute. <Type>bool</Type> can be used in any boolean expression, 
+and boolean expressions
 always evaluate to a result compatible with this type.
 
 <Para>
@@ -1051,7 +1173,8 @@ always evaluate to a result compatible with this type.
 <Title>Geometric Types</Title>
 
 <Para>
-Geometric types represent two-dimensional spatial objects. The most fundamental type,
+Geometric types represent two-dimensional spatial objects. 
+The most fundamental type,
 the point, forms the basis for all of the other types.
 </Para>
 
@@ -1124,7 +1247,8 @@ the point, forms the basis for all of the other types.
 
 <Para>
 A rich set of functions and operators is available to perform various geometric
-operations such as scaling, translation, rotation, and determining intersections.
+operations such as scaling, translation, rotation, and determining 
+intersections.
 </Para>
 
 <Sect2>
@@ -1222,9 +1346,11 @@ where
 </ProgramListing>
 Paths are output using the first syntax.
 Note that <ProductName>Postgres</ProductName> versions prior to
-v6.1 used a format for paths which had a single leading parenthesis, a "closed" flag,
+v6.1 used a format for paths which had a single leading parenthesis, 
+a "closed" flag,
 an integer count of the number of points, then the list of points followed by a
-closing parenthesis. The built-in function <Function>upgradepath</Function> is supplied to convert
+closing parenthesis. 
+The built-in function <Function>upgradepath</Function> is supplied to convert
 paths dumped and reloaded from pre-v6.1 databases.
 </Para>
 </Sect2>
@@ -1234,9 +1360,8 @@ paths dumped and reloaded from pre-v6.1 databases.
 
 <Para>
 Polygons are represented by sets of points. Polygons should probably be
-considered 
-equivalent to closed paths, but are stored differently and have their own
-set of support routines.
+considered equivalent to closed paths, but are stored differently 
+and have their own set of support routines.
 </Para>
 
 <Para>
@@ -1254,7 +1379,8 @@ where
 Polygons are output using the first syntax.
 Note that <ProductName>Postgres</ProductName> versions prior to
 v6.1 used a format for polygons which had a single leading parenthesis, the list
-of x-axis coordinates, the list of y-axis coordinates, followed by a closing parenthesis.
+of x-axis coordinates, the list of y-axis coordinates, 
+followed by a closing parenthesis.
 The built-in function <Function>upgradepoly</Function> is supplied to convert
 polygons dumped and reloaded from pre-v6.1 databases.
 </Para>
