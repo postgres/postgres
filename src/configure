@@ -1407,7 +1407,7 @@ case "$host_os" in
 esac
 
 case "`basename $INSTALL`" in
- install|installbsd|scoinst)
+ install|installbsd|scoinst|install-sh)
 	INSTLOPTS="-c $INSTLOPTS"
 	INSTL_EXE_OPTS="-c $INSTL_EXE_OPTS"
 	INSTL_LIB_OPTS="-c $INSTL_LIB_OPTS"
