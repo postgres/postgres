@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.283 2004/09/23 13:15:57 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.284 2004/09/26 22:51:49 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -804,7 +804,7 @@ SET ENABLE_SEQSCAN TO OFF;
        <para>
         Enables <acronym>SSL</> connections. Please read
         <xref linkend="ssl-tcp"> before using this. The default
-        is off.
+        is off.  This parameter can only be set at server start.
        </para>
       </listitem>
      </varlistentry>
@@ -4324,8 +4324,8 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
    The server will listen for both standard and <acronym>SSL</>
    connections on the same TCP port, and will negotiate with any
    connecting client on whether to use <acronym>SSL</>. See <xref
-   linkend="auth-pg-hba-conf"> about how to force the server to
-   require use of <acronym>SSL</> for certain connections.
+   linkend="auth-pg-hba-conf"> about how to set up the server to
+   require use of <acronym>SSL</> for some or all connections.
   </para>
 
   <para>
@@ -4361,20 +4361,24 @@ chmod og-rwx server.key
 
   <para>
    If verification of client certificates is required, place the
-   certificates of the <acronym>CA</acronym> you wish to check for in
+   certificates of the <acronym>CA</acronym>(s) you wish to check for in
    the file <filename>root.crt</filename> in the data directory.  When
    present, a client certificate will be requested from the client
-   making the connection and it must have been signed by one of the
-   certificates present in <filename>root.crt</filename>.  If no
-   certificate is presented, the connection will be allowed to proceed
-   anway.
+   during SSL connection startup, and it must have been signed by one of the
+   certificates present in <filename>root.crt</filename>.
   </para>
 
   <para>
-   The <filename>root.crt</filename> file is always checked for, and
-   its absence will be noted through a message in the log.  This is
-   merely an informative message that client certificates will not be
-   requested.
+   When the <filename>root.crt</filename> file is not present, client
+   certificates will not be requested or checked.  In this mode, SSL
+   provides communication security but not authentication.
+  </para>
+
+  <para>
+   The files <filename>server.key</>, <filename>server.crt</>,
+   and <filename>root.crt</filename> are only examined during server
+   start; so you must restart the server to make changes in them take
+   effect.
   </para>
  </sect1>
 

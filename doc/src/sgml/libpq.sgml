@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.163 2004/09/23 13:31:09 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.164 2004/09/26 22:51:49 tgl Exp $
 -->
 
  <chapter id="libpq">
@@ -233,21 +233,12 @@ PGconn *PQconnectdb(const char *conninfo);
 
       <para>
        If <productname>PostgreSQL</> is compiled without SSL support,
-       using option <literal>require</> will cause an error, and
+       using option <literal>require</> will cause an error, while
        options <literal>allow</> and <literal>prefer</> will be
        tolerated but <application>libpq</> will be unable to negotiate
        an <acronym>SSL</>
        connection.<indexterm><primary>SSL</><secondary
        sortas="libpq">with libpq</></indexterm>
-      </para>
-
-      <para>
-       Please note that <acronym>SSL</> support in libpq covers
-       encryption only.  It will not verify the validity of the
-       certificate presented by the server that you are connecting to,
-       nor verify that the hostname matches that of the server's
-       certificate.  Additionally, there is no support for client
-       certificates.
       </para>
      </listitem>
     </varlistentry>
@@ -3687,6 +3678,41 @@ access to world or group; achieve this by the command
 If the permissions are less strict than this, the file will be ignored.
 </para>
 </sect1>
+
+
+<sect1 id="libpq-ssl">
+<title>SSL Support</title>
+
+<indexterm zone="libpq-ssl">
+ <primary>SSL</primary>
+</indexterm>
+
+  <para>
+   <productname>PostgreSQL</> has native support for using
+   <acronym>SSL</> connections to encrypt client/server communications
+   for increased security. See <xref linkend="ssl-tcp"> for details
+   about the server-side <acronym>SSL</> functionality.
+  </para>
+
+  <para>
+   If the server demands a client certificate, 
+   <application>libpq</application>
+   will send the certificate stored in file
+   <filename>.postgresql/postgresql.crt</> within the user's home directory.
+   A matching private key file <filename>.postgresql/postgresql.key</>
+   must also be present, and must not be world-readable.
+  </para>
+
+  <para>
+   If the file <filename>.postgresql/root.crt</> is present in the user's
+   home directory,
+   <application>libpq</application> will use the certificate list stored
+   therein to verify the server's certificate.  The SSL connection will
+   fail if the server does not present a certificate; therefore, to
+   use this feature the server must also have a <filename>root.crt</> file.
+  </para>
+</sect1>
+
 
 <sect1 id="libpq-threading">
 <title>Behavior in Threaded Programs</title>

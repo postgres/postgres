@@ -11,9 +11,11 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.51 2004/09/23 20:27:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.52 2004/09/26 22:51:49 tgl Exp $
  *
  * NOTES
+ *	  [ Most of these notes are wrong/obsolete, but perhaps not all ]
+ *
  *	  The client *requires* a valid server certificate.  Since
  *	  SSH tunnels provide anonymous confidentiality, the presumption
  *	  is that sites that want endpoint authentication will use the
@@ -527,7 +529,7 @@ verify_peer(PGconn *conn)
 	if (h == NULL)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-		libpq_gettext("could not get information about host (%s): %s\n"),
+		libpq_gettext("could not get information about host \"%s\": %s\n"),
 						  conn->peer_cn, hstrerror(h_errno));
 		return -1;
 	}
@@ -600,15 +602,15 @@ load_dh_file(int keylength)
 	struct passwd pwdstr;
 	struct passwd *pwd = NULL;
 	FILE	   *fp;
-	char		fnbuf[2048];
+	char		fnbuf[MAXPGPATH];
 	DH		   *dh = NULL;
 	int			codes;
 
-	if (pqGetpwuid(getuid(), &pwdstr, pwdbuf, sizeof(pwdbuf), &pwd) == 0)
+	if (pqGetpwuid(getuid(), &pwdstr, pwdbuf, sizeof(pwdbuf), &pwd) != 0)
 		return NULL;
 
 	/* attempt to open file.  It's not an error if it doesn't exist. */
-	snprintf(fnbuf, sizeof fnbuf, "%s/.postgresql/dh%d.pem",
+	snprintf(fnbuf, sizeof(fnbuf), "%s/.postgresql/dh%d.pem",
 			 pwd->pw_dir, keylength);
 
 	if ((fp = fopen(fnbuf, "r")) == NULL)
@@ -735,7 +737,7 @@ tmp_dh_cb(SSL *s, int is_export, int keylength)
  *	This callback is only called when the server wants a
  *	client cert.
  *
- *	Returns 1 on success, 0 on no data, -1 on error.
+ *	Must return 1 on success, 0 on no data or error.
  */
 static int
 client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
@@ -748,52 +750,52 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 	struct passwd *pwd = NULL;
 	struct stat buf,
 				buf2;
-	char		fnbuf[2048];
+	char		fnbuf[MAXPGPATH];
 	FILE	   *fp;
 	PGconn	   *conn = (PGconn *) SSL_get_app_data(ssl);
 	int			(*cb) () = NULL;	/* how to read user password */
 	char		sebuf[256];
 
 
-	if (pqGetpwuid(getuid(), &pwdstr, pwdbuf, sizeof(pwdbuf), &pwd) == 0)
+	if (pqGetpwuid(getuid(), &pwdstr, pwdbuf, sizeof(pwdbuf), &pwd) != 0)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
 					  libpq_gettext("could not get user information\n"));
-		return -1;
+		return 0;
 	}
 
 	/* read the user certificate */
-	snprintf(fnbuf, sizeof fnbuf, "%s/.postgresql/postgresql.crt",
+	snprintf(fnbuf, sizeof(fnbuf), "%s/.postgresql/postgresql.crt",
 			 pwd->pw_dir);
 	if (stat(fnbuf, &buf) == -1)
 		return 0;
 	if ((fp = fopen(fnbuf, "r")) == NULL)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-				  libpq_gettext("could not open certificate (%s): %s\n"),
+				  libpq_gettext("could not open certificate file \"%s\": %s\n"),
 						  fnbuf, pqStrerror(errno, sebuf, sizeof(sebuf)));
-		return -1;
+		return 0;
 	}
 	if (PEM_read_X509(fp, x509, NULL, NULL) == NULL)
 	{
 		char	   *err = SSLerrmessage();
 
 		printfPQExpBuffer(&conn->errorMessage,
-				  libpq_gettext("could not read certificate (%s): %s\n"),
+				  libpq_gettext("could not read certificate file \"%s\": %s\n"),
 						  fnbuf, err);
 		SSLerrfree(err);
 		fclose(fp);
-		return -1;
+		return 0;
 	}
 	fclose(fp);
 
 	/* read the user key */
-	snprintf(fnbuf, sizeof fnbuf, "%s/.postgresql/postgresql.key",
+	snprintf(fnbuf, sizeof(fnbuf), "%s/.postgresql/postgresql.key",
 			 pwd->pw_dir);
 	if (stat(fnbuf, &buf) == -1)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-		libpq_gettext("certificate present, but not private key (%s)\n"),
+		libpq_gettext("certificate present, but not private key file \"%s\"\n"),
 						  fnbuf);
 		X509_free(*x509);
 		return 0;
@@ -802,37 +804,38 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 		buf.st_uid != getuid())
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-		libpq_gettext("private key (%s) has wrong permissions\n"), fnbuf);
+		libpq_gettext("private key file \"%s\" has wrong permissions\n"),
+						  fnbuf);
 		X509_free(*x509);
-		return -1;
+		return 0;
 	}
 	if ((fp = fopen(fnbuf, "r")) == NULL)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-			 libpq_gettext("could not open private key file (%s): %s\n"),
+			 libpq_gettext("could not open private key file \"%s\": %s\n"),
 						  fnbuf, pqStrerror(errno, sebuf, sizeof(sebuf)));
 		X509_free(*x509);
-		return -1;
+		return 0;
 	}
 	if (fstat(fileno(fp), &buf2) == -1 ||
 		buf.st_dev != buf2.st_dev || buf.st_ino != buf2.st_ino)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("private key (%s) changed during execution\n"), fnbuf);
+						  libpq_gettext("private key file \"%s\" changed during execution\n"), fnbuf);
 		X509_free(*x509);
-		return -1;
+		return 0;
 	}
 	if (PEM_read_PrivateKey(fp, pkey, cb, NULL) == NULL)
 	{
 		char	   *err = SSLerrmessage();
 
 		printfPQExpBuffer(&conn->errorMessage,
-				  libpq_gettext("could not read private key (%s): %s\n"),
+				  libpq_gettext("could not read private key file \"%s\": %s\n"),
 						  fnbuf, err);
 		SSLerrfree(err);
 		X509_free(*x509);
 		fclose(fp);
-		return -1;
+		return 0;
 	}
 	fclose(fp);
 
@@ -842,12 +845,12 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 		char	   *err = SSLerrmessage();
 
 		printfPQExpBuffer(&conn->errorMessage,
-			libpq_gettext("certificate/private key mismatch (%s): %s\n"),
+			libpq_gettext("certificate does not match private key file \"%s\": %s\n"),
 						  fnbuf, err);
 		SSLerrfree(err);
 		X509_free(*x509);
 		EVP_PKEY_free(*pkey);
-		return -1;
+		return 0;
 	}
 
 	return 1;
@@ -952,45 +955,34 @@ initialize_SSL(PGconn *conn)
 	char		pwdbuf[BUFSIZ];
 	struct passwd pwdstr;
 	struct passwd *pwd = NULL;
-	char		fnbuf[2048];
+	char		fnbuf[MAXPGPATH];
 #endif
 
 	if (init_ssl_system(conn))
 		return -1;
 
 #ifndef WIN32
+	/* Set up to verify server cert, if root.crt is present */
 	if (pqGetpwuid(getuid(), &pwdstr, pwdbuf, sizeof(pwdbuf), &pwd) == 0)
 	{
-		snprintf(fnbuf, sizeof fnbuf, "%s/.postgresql/root.crt",
+		snprintf(fnbuf, sizeof(fnbuf), "%s/.postgresql/root.crt",
 				 pwd->pw_dir);
-		if (stat(fnbuf, &buf) == -1)
+		if (stat(fnbuf, &buf) == 0)
 		{
-			return 0;
-#ifdef NOT_USED
-			char		sebuf[256];
+			if (!SSL_CTX_load_verify_locations(SSL_context, fnbuf, NULL))
+			{
+				char	   *err = SSLerrmessage();
 
-			/* CLIENT CERTIFICATES NOT REQUIRED  bjm 2002-09-26 */
-			printfPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("could not read root certificate list (%s): %s\n"),
-						 fnbuf, pqStrerror(errno, sebuf, sizeof(sebuf)));
-			return -1;
-#endif
-		}
-		if (!SSL_CTX_load_verify_locations(SSL_context, fnbuf, 0))
-		{
-			char	   *err = SSLerrmessage();
+				printfPQExpBuffer(&conn->errorMessage,
+								  libpq_gettext("could not read root certificate file \"%s\": %s\n"),
+								  fnbuf, err);
+				SSLerrfree(err);
+				return -1;
+			}
 
-			printfPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("could not read root certificate list (%s): %s\n"),
-							  fnbuf, err);
-			SSLerrfree(err);
-			return -1;
+			SSL_CTX_set_verify(SSL_context, SSL_VERIFY_PEER, verify_cb);
 		}
 	}
-
-	SSL_CTX_set_verify(SSL_context,
-		   SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, verify_cb);
-	SSL_CTX_set_verify_depth(SSL_context, 1);
 
 	/* set up empheral DH keys */
 	SSL_CTX_set_tmp_dh_callback(SSL_context, tmp_dh_cb);

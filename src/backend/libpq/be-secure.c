@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.50 2004/09/23 20:27:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.51 2004/09/26 22:51:49 tgl Exp $
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database
@@ -117,7 +117,6 @@ static const char *SSLerrmessage(void);
  *	(total in both directions) before we require renegotiation.
  */
 #define RENEGOTIATION_LIMIT (512 * 1024 * 1024)
-#define CA_PATH NULL
 
 static SSL_CTX *SSL_context = NULL;
 #endif
@@ -412,12 +411,12 @@ static DH  *
 load_dh_file(int keylength)
 {
 	FILE	   *fp;
-	char		fnbuf[2048];
+	char		fnbuf[MAXPGPATH];
 	DH		   *dh = NULL;
 	int			codes;
 
 	/* attempt to open file.  It's not an error if it doesn't exist. */
-	snprintf(fnbuf, sizeof fnbuf, "%s/dh%d.pem", DataDir, keylength);
+	snprintf(fnbuf, sizeof(fnbuf), "%s/dh%d.pem", DataDir, keylength);
 	if ((fp = fopen(fnbuf, "r")) == NULL)
 		return NULL;
 
@@ -694,20 +693,26 @@ initialize_SSL(void)
 	if (SSL_CTX_set_cipher_list(SSL_context, "ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH") != 1)
 		elog(FATAL, "could not set the cipher list (no valid ciphers available)");
 
-	/* accept client certificates, but don't require them. */
+	/*
+	 * Require and check client certificates only if we have a root.crt file.
+	 */
 	snprintf(fnbuf, sizeof(fnbuf), "%s/root.crt", DataDir);
-	if (!SSL_CTX_load_verify_locations(SSL_context, fnbuf, CA_PATH))
+	if (!SSL_CTX_load_verify_locations(SSL_context, fnbuf, NULL))
 	{
 		/* Not fatal - we do not require client certificates */
 		ereport(LOG,
 				(errmsg("could not load root certificate file \"%s\": %s",
 						fnbuf, SSLerrmessage()),
 				 errdetail("Will not verify client certificates.")));
-		return 0;
 	}
-	SSL_CTX_set_verify(SSL_context,
-					   SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE,
-					   verify_cb);
+	else
+	{
+		SSL_CTX_set_verify(SSL_context,
+						   (SSL_VERIFY_PEER |
+							SSL_VERIFY_FAIL_IF_NO_PEER_CERT |
+							SSL_VERIFY_CLIENT_ONCE),
+						   verify_cb);
+	}
 
 	return 0;
 }
