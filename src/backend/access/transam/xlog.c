@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.84 2001/12/23 07:25:39 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.85 2001/12/28 18:16:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -617,10 +617,15 @@ begin:;
 	START_CRIT_SECTION();
 
 	/* update LogwrtResult before doing cache fill check */
-	SpinLockAcquire_NoHoldoff(&XLogCtl->info_lck);
-	LogwrtRqst = XLogCtl->LogwrtRqst;
-	LogwrtResult = XLogCtl->LogwrtResult;
-	SpinLockRelease_NoHoldoff(&XLogCtl->info_lck);
+	{
+		/* use volatile pointer to prevent code rearrangement */
+		volatile XLogCtlData *xlogctl = XLogCtl;
+
+		SpinLockAcquire_NoHoldoff(&xlogctl->info_lck);
+		LogwrtRqst = xlogctl->LogwrtRqst;
+		LogwrtResult = xlogctl->LogwrtResult;
+		SpinLockRelease_NoHoldoff(&xlogctl->info_lck);
+	}
 
 	/*
 	 * If cache is half filled then try to acquire write lock and do
@@ -838,16 +843,20 @@ begin:;
 
 	if (updrqst)
 	{
-		SpinLockAcquire_NoHoldoff(&XLogCtl->info_lck);
+		/* use volatile pointer to prevent code rearrangement */
+		volatile XLogCtlData *xlogctl = XLogCtl;
+
+		SpinLockAcquire_NoHoldoff(&xlogctl->info_lck);
 		/* advance global request to include new block(s) */
-		if (XLByteLT(XLogCtl->LogwrtRqst.Write, WriteRqst))
-			XLogCtl->LogwrtRqst.Write = WriteRqst;
+		if (XLByteLT(xlogctl->LogwrtRqst.Write, WriteRqst))
+			xlogctl->LogwrtRqst.Write = WriteRqst;
 		/* update local result copy while I have the chance */
-		LogwrtResult = XLogCtl->LogwrtResult;
-		SpinLockRelease_NoHoldoff(&XLogCtl->info_lck);
+		LogwrtResult = xlogctl->LogwrtResult;
+		SpinLockRelease_NoHoldoff(&xlogctl->info_lck);
 	}
 
 	END_CRIT_SECTION();
+
 	return (RecPtr);
 }
 
@@ -892,11 +901,16 @@ AdvanceXLInsertBuffer(void)
 		FinishedPageRqstPtr = XLogCtl->xlblocks[Insert->curridx];
 
 		/* Before waiting, get info_lck and update LogwrtResult */
-		SpinLockAcquire_NoHoldoff(&XLogCtl->info_lck);
-		if (XLByteLT(XLogCtl->LogwrtRqst.Write, FinishedPageRqstPtr))
-			XLogCtl->LogwrtRqst.Write = FinishedPageRqstPtr;
-		LogwrtResult = XLogCtl->LogwrtResult;
-		SpinLockRelease_NoHoldoff(&XLogCtl->info_lck);
+		{
+			/* use volatile pointer to prevent code rearrangement */
+			volatile XLogCtlData *xlogctl = XLogCtl;
+
+			SpinLockAcquire_NoHoldoff(&xlogctl->info_lck);
+			if (XLByteLT(xlogctl->LogwrtRqst.Write, FinishedPageRqstPtr))
+				xlogctl->LogwrtRqst.Write = FinishedPageRqstPtr;
+			LogwrtResult = xlogctl->LogwrtResult;
+			SpinLockRelease_NoHoldoff(&xlogctl->info_lck);
+		}
 
 		update_needed = false;	/* Did the shared-request update */
 
@@ -1149,13 +1163,18 @@ XLogWrite(XLogwrtRqst WriteRqst)
 	 * 'result' values.  This is not absolutely essential, but it saves
 	 * some code in a couple of places.
 	 */
-	SpinLockAcquire_NoHoldoff(&XLogCtl->info_lck);
-	XLogCtl->LogwrtResult = LogwrtResult;
-	if (XLByteLT(XLogCtl->LogwrtRqst.Write, LogwrtResult.Write))
-		XLogCtl->LogwrtRqst.Write = LogwrtResult.Write;
-	if (XLByteLT(XLogCtl->LogwrtRqst.Flush, LogwrtResult.Flush))
-		XLogCtl->LogwrtRqst.Flush = LogwrtResult.Flush;
-	SpinLockRelease_NoHoldoff(&XLogCtl->info_lck);
+	{
+		/* use volatile pointer to prevent code rearrangement */
+		volatile XLogCtlData *xlogctl = XLogCtl;
+
+		SpinLockAcquire_NoHoldoff(&xlogctl->info_lck);
+		xlogctl->LogwrtResult = LogwrtResult;
+		if (XLByteLT(xlogctl->LogwrtRqst.Write, LogwrtResult.Write))
+			xlogctl->LogwrtRqst.Write = LogwrtResult.Write;
+		if (XLByteLT(xlogctl->LogwrtRqst.Flush, LogwrtResult.Flush))
+			xlogctl->LogwrtRqst.Flush = LogwrtResult.Flush;
+		SpinLockRelease_NoHoldoff(&xlogctl->info_lck);
+	}
 
 	Write->LogwrtResult = LogwrtResult;
 }
@@ -1206,11 +1225,16 @@ XLogFlush(XLogRecPtr record)
 	WriteRqstPtr = record;
 
 	/* read LogwrtResult and update local state */
-	SpinLockAcquire_NoHoldoff(&XLogCtl->info_lck);
-	if (XLByteLT(WriteRqstPtr, XLogCtl->LogwrtRqst.Write))
-		WriteRqstPtr = XLogCtl->LogwrtRqst.Write;
-	LogwrtResult = XLogCtl->LogwrtResult;
-	SpinLockRelease_NoHoldoff(&XLogCtl->info_lck);
+	{
+		/* use volatile pointer to prevent code rearrangement */
+		volatile XLogCtlData *xlogctl = XLogCtl;
+
+		SpinLockAcquire_NoHoldoff(&xlogctl->info_lck);
+		if (XLByteLT(WriteRqstPtr, xlogctl->LogwrtRqst.Write))
+			WriteRqstPtr = xlogctl->LogwrtRqst.Write;
+		LogwrtResult = xlogctl->LogwrtResult;
+		SpinLockRelease_NoHoldoff(&xlogctl->info_lck);
+	}
 
 	/* done already? */
 	if (!XLByteLE(record, LogwrtResult.Flush))

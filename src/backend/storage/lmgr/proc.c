@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.116 2001/11/08 20:37:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.117 2001/12/28 18:16:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -203,12 +203,14 @@ void
 InitProcess(void)
 {
 	SHMEM_OFFSET myOffset;
+	/* use volatile pointer to prevent code rearrangement */
+	volatile PROC_HDR *procglobal = ProcGlobal;
 
 	/*
 	 * ProcGlobal should be set by a previous call to InitProcGlobal (if
 	 * we are a backend, we inherit this by fork() from the postmaster).
 	 */
-	if (ProcGlobal == NULL)
+	if (procglobal == NULL)
 		elog(STOP, "InitProcess: Proc Header uninitialized");
 
 	if (MyProc != NULL)
@@ -219,12 +221,12 @@ InitProcess(void)
 	 */
 	SpinLockAcquire(ProcStructLock);
 
-	myOffset = ProcGlobal->freeProcs;
+	myOffset = procglobal->freeProcs;
 
 	if (myOffset != INVALID_OFFSET)
 	{
 		MyProc = (PROC *) MAKE_PTR(myOffset);
-		ProcGlobal->freeProcs = MyProc->links.next;
+		procglobal->freeProcs = MyProc->links.next;
 		SpinLockRelease(ProcStructLock);
 	}
 	else
@@ -437,6 +439,9 @@ ProcReleaseLocks(bool isCommit)
 static void
 ProcKill(void)
 {
+	/* use volatile pointer to prevent code rearrangement */
+	volatile PROC_HDR *procglobal = ProcGlobal;
+
 	Assert(MyProc != NULL);
 
 	/* Release any LW locks I am holding */
@@ -463,8 +468,8 @@ ProcKill(void)
 		ProcFreeSem(MyProc->sem.semId, MyProc->sem.semNum);
 
 	/* Add PROC struct to freelist so space can be recycled in future */
-	MyProc->links.next = ProcGlobal->freeProcs;
-	ProcGlobal->freeProcs = MAKE_OFFSET(MyProc);
+	MyProc->links.next = procglobal->freeProcs;
+	procglobal->freeProcs = MAKE_OFFSET(MyProc);
 
 	/* PROC struct isn't mine anymore */
 	MyProc = NULL;
@@ -1044,10 +1049,12 @@ disable_sigalrm_interrupt(void)
 static void
 ProcGetNewSemIdAndNum(IpcSemaphoreId *semId, int *semNum)
 {
-	int			i;
-	int			semMapEntries = ProcGlobal->semMapEntries;
-	SEM_MAP_ENTRY *procSemMap = ProcGlobal->procSemMap;
+	/* use volatile pointer to prevent code rearrangement */
+	volatile PROC_HDR *procglobal = ProcGlobal;
+	int			semMapEntries = procglobal->semMapEntries;
+	volatile SEM_MAP_ENTRY *procSemMap = procglobal->procSemMap;
 	int32		fullmask = (1 << PROC_NSEMS_PER_SET) - 1;
+	int			i;
 
 	SpinLockAcquire(ProcStructLock);
 
