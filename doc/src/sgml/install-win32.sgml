@@ -20,8 +20,9 @@ manually in other cases.
 
 <Para>
 To build the libraries, change directory into the <filename>src</filename>
-directory, and type the command
+directory, and type the commands
 <programlisting>
+copy include\config.h.win32 include\config.h
 nmake /f win32.mak
 </programlisting>
 This assumes that you have <ProductName>Visual C++</ProductName> in your
