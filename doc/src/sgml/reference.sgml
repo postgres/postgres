@@ -1,13 +1,13 @@
 <!-- reference.sgml
 -
 - Postgres User's Reference documentation.
-- thomas 1998-03-14
+- thomas 1998-08-31
 -
 - -->
 <!doctype book      PUBLIC "-//Davenport//DTD DocBook V3.0//EN" [
 <!entity intro      SYSTEM "intro.sgml">
 
-<!entity % allfiles SYSTEM "allfiles.sgml">
+<!entity % allfiles SYSTEM "ref/allfiles.sgml">
 %allfiles;
 
 <!entity biblio     SYSTEM "biblio.sgml">
@@ -56,7 +56,7 @@
     </AuthorGroup>
 -->
  
-    <Date>(last updated 1998-04-18)</Date>
+    <Date>(last updated 1998-08-31)</Date>
     </BookBiblio>
 
 <LegalNotice>
