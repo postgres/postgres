@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/config/programs.m4,v 1.6 2001/08/06 15:46:44 petere Exp $
+# $Header: /cvsroot/pgsql/config/programs.m4,v 1.7 2001/08/28 14:59:11 petere Exp $
 
 
 # PGAC_PATH_FLEX
@@ -77,7 +77,8 @@ AC_SUBST(FLEXFLAGS)
 # Add the required flags to LIBS, define HAVE_LIBREADLINE.
 
 AC_DEFUN([PGAC_CHECK_READLINE],
-[AC_MSG_CHECKING([for readline])
+[AC_REQUIRE([AC_CANONICAL_HOST])
+AC_MSG_CHECKING([for readline])
 
 AC_CACHE_VAL([pgac_cv_check_readline],
 [pgac_cv_check_readline=no
@@ -85,7 +86,19 @@ for pgac_lib in "" " -ltermcap" " -lncurses" " -lcurses" ; do
   for pgac_rllib in -lreadline -ledit ; do
     pgac_save_LIBS=$LIBS
     LIBS="${pgac_rllib}${pgac_lib} $LIBS"
-    AC_TRY_LINK_FUNC([readline], [pgac_cv_check_readline="${pgac_rllib}${pgac_lib}"; break 2])
+    AC_TRY_LINK_FUNC([readline], [[
+      # NetBSD and OpenBSD have a broken linker that does not
+      # recognize dependent libraries
+      case $host_os in netbsd* | openbsd* )
+        case $pgac_lib in
+          *curses*) ;;
+          *) pgac_lib=" -lcurses" ;;
+        esac
+      esac
+
+      pgac_cv_check_readline="${pgac_rllib}${pgac_lib}"
+      break 2
+    ]])
     LIBS=$pgac_save_LIBS
   done
 done
