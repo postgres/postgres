@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Aug 14 13:45:01 EDT 2002
+Last updated:		Wed Aug 14 14:38:48 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -258,9 +258,9 @@ Commands
 	  without using PL/PgSQL EXECUTE, needs cache prevention/invalidation
         o Fix PL/pgSQL RENAME to work on variables other than OLD/NEW
 	o Improve PL/PgSQL exception handling
-	o Allow PL/PgSQL parameters to be specified by name and type during 
+	o Allow parameters to be specified by name and type during 
 	  definition
-	o Allow PL/PgSQL function parameters to be passed by name,
+	o Allow function parameters to be passed by name,
 	  get_employee_salary(emp_id => 12345, tax_year => 2001)
 	o Add PL/PgSQL packages
 	o Allow array declarations and other data types in PL/PgSQl DECLARE
