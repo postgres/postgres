@@ -8,7 +8,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	  $Id: stringinfo.c,v 1.22 1999/09/08 16:31:38 tgl Exp $
+ *	  $Id: stringinfo.c,v 1.23 1999/11/01 05:10:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -146,10 +146,9 @@ appendStringInfo(StringInfo str, const char *fmt,...)
 void
 appendStringInfoChar(StringInfo str, char ch)
 {
-	Assert(str != NULL);
-
 	/* Make more room if needed */
-	enlargeStringInfo(str, 1);
+	if (str->len + 1 >= str->maxlen)
+		enlargeStringInfo(str, 1);
 
 	/* OK, append the character */
 	str->data[str->len] = ch;
