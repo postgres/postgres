@@ -21,7 +21,7 @@ pgrename(const char *from, const char *to)
 			/* set errno? */
 			return -1;
 		Sleep(100);				/* ms */
-		if (loops == 10)
+		if (loops == 30)
 #ifndef FRONTEND
 			elog(LOG, "could not rename \"%s\" to \"%s\", continuing to try",
 				 from, to);
@@ -32,7 +32,7 @@ pgrename(const char *from, const char *to)
 		loops++;
 	}
 
-	if (loops > 10)
+	if (loops > 30)
 #ifndef FRONTEND
 		elog(LOG, "completed rename of \"%s\" to \"%s\"", from, to);
 #else
@@ -53,7 +53,7 @@ pgunlink(const char *path)
 			/* set errno? */
 			return -1;
 		Sleep(100);				/* ms */
-		if (loops == 10)
+		if (loops == 30)
 #ifndef FRONTEND
 			elog(LOG, "could not unlink \"%s\", continuing to try",
 				 path);
@@ -64,7 +64,7 @@ pgunlink(const char *path)
 		loops++;
 	}
 
-	if (loops > 10)
+	if (loops > 30)
 #ifndef FRONTEND
 		elog(LOG, "completed unlink of \"%s\"", path);
 #else
