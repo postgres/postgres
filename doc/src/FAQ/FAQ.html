@@ -14,7 +14,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Mon Mar 18 14:34:57 EST 2002</P>
+    <P>Last updated: Mon Apr  8 23:22:06 EDT 2002</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -137,6 +137,8 @@
      <A href="#4.23">4.23</A>) How do I perform an outer join?<BR>
      <A href="#4.24">4.24</A>) How do I perform queries using multiple
     databases?<BR>
+     <A href="#4.25">4.25</A>) How do I return multiple rows or columns
+     from a function?<BR>
      
 
     <H2 align="center">Extending PostgreSQL</H2>
@@ -1299,6 +1301,16 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     different databases and merge the information that way.</P>
     <HR>
 
+    <H4><A name="4.25">4.25</A>) How do I return multiple rows or columns
+     from a function?</H4>
+
+     <P>You can return result sets from PL/pgSQL functions using
+     <i>refcursors</i>. See <a
+     href="http://candle.pha.pa.us/main/writings/pgsql/sgml/plpgsql-cursors.html">
+     http://candle.pha.pa.us/main/writings/pgsql/sgml/plpgsql-cursors.html,</a>
+     section 23.7.3.3.</P>
+
+     
     <H2 align="center">Extending PostgreSQL</H2>
 
     <H4><A name="5.1">5.1</A>) I wrote a user-defined function. When I

@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Mon Mar 18 14:34:57 EST 2002
+   Last updated: Mon Apr 8 23:22:06 EDT 2002
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -91,6 +91,7 @@
    4.22) Why are my subqueries using IN so slow?
    4.23) How do I perform an outer join?
    4.24) How do I perform queries using multiple databases?
+   4.25) How do I return multiple rows or columns from a function?
    
                             Extending PostgreSQL
                                       
@@ -1016,6 +1017,13 @@ SELECT *
    Of course, a client can make simultaneous connections to different
    databases and merge the information that way.
      _________________________________________________________________
+   
+    4.25) How do I return multiple rows or columns from a function?
+    
+   You can return result sets from PL/pgSQL functions using refcursors.
+   See
+   http://candle.pha.pa.us/main/writings/pgsql/sgml/plpgsql-cursors.html,
+   section 23.7.3.3.
    
                             Extending PostgreSQL
                                       
