@@ -223,7 +223,7 @@ timestamp2tm(timestamp dt, int *tzp, struct tm * tm, fsec_t *fsec, char **tzn)
 #elif defined(HAVE_INT_TIMEZONE)
 			*tzp = ((tm->tm_isdst > 0) ? (TIMEZONE_GLOBAL - 3600) : TIMEZONE_GLOBAL);
 			if (tzn != NULL)
-				*tzn = tzname[(tm->tm_isdst > 0)];
+				*tzn = TZNAME_GLOBAL[(tm->tm_isdst > 0)];
 #endif
 
 #else							/* not (HAVE_TM_ZONE || HAVE_INT_TIMEZONE) */

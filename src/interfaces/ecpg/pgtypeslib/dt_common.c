@@ -1065,8 +1065,8 @@ abstime2tm(AbsoluteTime _time, int *tzp, struct tm * tm, char **tzn)
 			 * case it contains an error message, which doesn't fit in the
 			 * buffer
 			 */
-			StrNCpy(*tzn, tzname[tm->tm_isdst], MAXTZLEN + 1);
-			if (strlen(tzname[tm->tm_isdst]) > MAXTZLEN)
+			StrNCpy(*tzn, TZNAME_GLOBAL[tm->tm_isdst], MAXTZLEN + 1);
+			if (strlen(TZNAME_GLOBAL[tm->tm_isdst]) > MAXTZLEN)
 				tm->tm_isdst = -1;
 		}
 	}
