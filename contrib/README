@@ -72,6 +72,10 @@ mac -
 	Support functions for MAC address types
 	by Lawrence E. Rosenman <ler@lerctr.org>
 
+metaphone -
+	Improved Soundex function
+	by Joel Burton <jburton@scw.org>
+
 miscutil -
 	PostgreSQL assert checking and various utility functions
 	by Massimo Dal Zotto <dz@cs.unitn.it>

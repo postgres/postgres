@@ -56,7 +56,10 @@ LDFLAGS=--shared -Wl,-E -Wl,-soname,$@
 
 .PHONY: clean
 
-all: plpython.so 
+all:
+	@echo "Disabled until merged into our Makefile system, bjm 2001-05-09"
+
+disabled: plpython.so 
 
 plpython.o: plpython.c plpython.h
 	$(CC) $(CFLAGS) $(INCLUDES) -c -o $@ $<

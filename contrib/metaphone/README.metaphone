@@ -1,0 +1,79 @@
+This directory contains a module that implements the "Metaphone" code as
+a PostgreSQL user-defined function.  The Metaphone system is a method of
+matching similar sounding names (or any words) to the same code. 
+
+Metaphone was invented by Lawrence Philips as an improvement to the popular
+name-hashing routine, Soundex.
+
+This metaphone code is from Michael Kuhn, and is detailed at
+   http://aspell.sourceforge.net/metaphone/metaphone-kuhn.txt
+
+Code for this (including this help file!) was liberally borrowed from
+the soundex() module for PostgreSQL.
+
+There are two functions:
+  metaphone(text)       : returns hash of a name
+  metaphone(text,int)   : returns hash (maximum length of int) of name
+
+---
+
+To install it, first configure the main source tree, then run make;
+make install in this directory.  Finally, load the function definition
+with psql:
+
+    psql -f PREFIX/share/contrib/metaphone.sql
+
+The following are some usage examples:
+
+SELECT text_metaphone('hello world!');
+SELECT text_metaphone('hello world!', 4);
+
+CREATE TABLE s (nm text)\g
+
+insert into s values ('john')\g
+insert into s values ('joan')\g
+insert into s values ('wobbly')\g
+
+select * from s
+where text_metaphone(nm) = text_metaphone('john')\g
+
+select nm from s a, s b
+where text_metaphone(a.nm) = text_metaphone(b.nm)
+and a.oid <> b.oid\g
+
+CREATE FUNCTION text_mp_eq(text, text) RETURNS bool AS
+'select text_metaphone($1) = text_metaphone($2)'
+LANGUAGE 'sql'\g
+
+CREATE FUNCTION text_mp_lt(text,text) RETURNS bool AS
+'select text_metaphone($1) < text_metaphone($2)'
+LANGUAGE 'sql'\g
+
+CREATE FUNCTION text_mp_gt(text,text) RETURNS bool AS
+'select text_metaphone($1) > text_metaphone($2)'
+LANGUAGE 'sql';
+
+CREATE FUNCTION text_mp_le(text,text) RETURNS bool AS
+'select text_metaphone($1) <= text_metaphone($2)'
+LANGUAGE 'sql';
+
+CREATE FUNCTION text_mp_ge(text,text) RETURNS bool AS
+'select text_metaphone($1) >= text_metaphone($2)'
+LANGUAGE 'sql';
+
+CREATE FUNCTION text_mp_ne(text,text) RETURNS bool AS
+'select text_metaphone($1) <> text_metaphone($2)'
+LANGUAGE 'sql';
+
+DROP OPERATOR #= (text,text)\g
+
+CREATE OPERATOR #= (leftarg=text, rightarg=text, procedure=text_mp_eq,
+commutator=text_mp_eq)\g
+
+SELECT *
+FROM s
+WHERE text_mp_eq(nm,'pillsbury')\g
+
+SELECT *
+from s
+where s.nm #= 'pillsbury';

@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/contrib/Makefile,v 1.18 2001/03/14 00:57:43 tgl Exp $
+# $Header: /cvsroot/pgsql/contrib/Makefile,v 1.19 2001/05/09 23:00:44 momjian Exp $
 
 subdir = contrib
 top_builddir = ..
@@ -15,6 +15,7 @@ WANTED_DIRS = \
 		lo		\
 		mSQL-interface	\
 		mac		\
+		metaphone	\
 		miscutil	\
 		noupdate	\
 		oid2name	\
