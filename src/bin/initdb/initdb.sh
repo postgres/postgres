@@ -26,7 +26,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.13 1996/11/14 10:25:33 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.14 1996/11/22 04:33:34 bryanh Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -45,7 +45,7 @@ CMDNAME=`basename $0`
 # files that are part of Postgres).  The user-written program postconfig
 # outputs variable settings like "PGLIB=/usr/lib/whatever".  If it doesn't
 # output a PGLIB value, then there is no default and the user must
-# specify the pglib option.  Postconfig may not exist, in which case
+# specify the pglib option.  Postconfig may validly not exist, in which case
 # our invocation of it silently fails.
 
 # The x=x below is to satisfy export if postconfig returns nothing.
@@ -119,16 +119,6 @@ do
         shift
 done
 
-if [ "$debug" -eq 1 ]; then
-    BACKENDARGS="-boot -C -F -d"
-else
-    BACKENDARGS="-boot -C -F -Q"
-fi
-
-TEMPLATE=$PGLIB/local1_template1.bki.source
-GLOBAL=$PGLIB/global1.bki.source
-PG_HBA_SAMPLE=$PGLIB/pg_hba.conf.sample
-
 #-------------------------------------------------------------------------
 # Make sure he told us where to find the Postgres files.
 #-------------------------------------------------------------------------
@@ -153,6 +143,11 @@ if [ -z $PGDATA ]; then
     echo
     exit 20
 fi
+
+TEMPLATE=$PGLIB/local1_template1.bki.source
+GLOBAL=$PGLIB/global1.bki.source
+PG_HBA_SAMPLE=$PGLIB/pg_hba.conf.sample
+
 
 #-------------------------------------------------------------------------
 # Find the input files
@@ -249,6 +244,14 @@ fi
 rm -rf $PGDATA/base/template1
 mkdir $PGDATA/base/template1
 
+if [ "$debug" -eq 1 ]; then
+    BACKEND_TALK_ARG="-d"
+else
+    BACKEND_TALK_ARG="-Q"
+fi
+
+BACKENDARGS="-boot -C -F -D$PGDATA $BACKEND_TALK_ARG"
+
 echo "$CMDNAME: creating template database in $PGDATA/base/template1"
 echo "Running: postgres $BACKENDARGS template1"
 
@@ -336,5 +339,5 @@ echo
 if [ $debug -eq 0 ]; then
     echo "vacuuming template1"
 
-    echo "vacuum" | postgres -F -Q template1 > /dev/null
+    echo "vacuum" | postgres -F -Q -D$PGDATA template1 > /dev/null
 fi
