@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.30 1997/11/15 16:32:15 momjian Exp $
+ * $Id: builtins.h,v 1.31 1997/12/16 15:55:14 thomas Exp $
  *
  * NOTES
  *	  This should normally only be included by fmgr.h.
@@ -264,13 +264,6 @@ extern AbsoluteTime intervalend(TimeInterval i);
 extern int	isreltime(char *timestring);
 extern text *timeofday(void);
 
-/* dt.c */
-extern DateTime *datetime_in(char *str);
-extern char *datetime_out(DateTime *datetime);
-extern TimeSpan *timespan_in(char *str);
-extern char *timespan_out(TimeSpan *timespan);
-extern int	datetime2tm(DateTime dt, int *tzp, struct tm * tm, double *fsec, char **tzn);
-
 /* filename.c */
 extern char *filename_in(char *file);
 extern char *filename_out(char *s);
@@ -454,8 +447,6 @@ time_t		datetime_stamp(DateTime *datetime);
 /* varchar.c */
 extern char *bpcharin(char *s, int dummy, int typlen);
 extern char *bpcharout(char *s);
-extern char *varcharin(char *s, int dummy, int typlen);
-extern char *varcharout(char *s);
 extern bool bpchareq(char *arg1, char *arg2);
 extern bool bpcharne(char *arg1, char *arg2);
 extern bool bpcharlt(char *arg1, char *arg2);
@@ -463,6 +454,11 @@ extern bool bpcharle(char *arg1, char *arg2);
 extern bool bpchargt(char *arg1, char *arg2);
 extern bool bpcharge(char *arg1, char *arg2);
 extern int32 bpcharcmp(char *arg1, char *arg2);
+extern int32 bpcharlen(char *arg);
+extern uint32 hashbpchar(struct varlena * key);
+
+extern char *varcharin(char *s, int dummy, int typlen);
+extern char *varcharout(char *s);
 extern bool varchareq(char *arg1, char *arg2);
 extern bool varcharne(char *arg1, char *arg2);
 extern bool varcharlt(char *arg1, char *arg2);
@@ -470,22 +466,24 @@ extern bool varcharle(char *arg1, char *arg2);
 extern bool varchargt(char *arg1, char *arg2);
 extern bool varcharge(char *arg1, char *arg2);
 extern int32 varcharcmp(char *arg1, char *arg2);
-extern uint32 hashbpchar(struct varlena * key);
+extern int32 varcharlen(char *arg);
 extern uint32 hashvarchar(struct varlena * key);
 
 /* varlena.c */
-extern struct varlena *byteain(char *inputText);
-extern char *byteaout(struct varlena * vlena);
-extern struct varlena *textin(char *inputText);
-extern char *textout(struct varlena * vlena);
-extern text *textcat(text *t1, text *t2);
+extern text *textin(char *inputText);
+extern char *textout(struct varlena *vlena);
+extern text *textcat(text *arg1, text *arg2);
 extern bool texteq(struct varlena * arg1, struct varlena * arg2);
 extern bool textne(struct varlena * arg1, struct varlena * arg2);
 extern bool text_lt(struct varlena * arg1, struct varlena * arg2);
 extern bool text_le(struct varlena * arg1, struct varlena * arg2);
 extern bool text_gt(struct varlena * arg1, struct varlena * arg2);
 extern bool text_ge(struct varlena * arg1, struct varlena * arg2);
-extern int32 textpos(text *t1, text *t2);
+extern int32 textlen(text *arg);
+extern int32 textpos(text *arg1, text *arg2);
+
+extern struct varlena *byteain(char *inputText);
+extern char *byteaout(struct varlena *vlena);
 extern int32 byteaGetSize(struct varlena * v);
 extern int32 byteaGetByte(struct varlena * v, int32 n);
 extern int32 byteaGetBit(struct varlena * v, int32 n);

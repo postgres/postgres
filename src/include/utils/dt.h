@@ -8,7 +8,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dt.h,v 1.22 1997/11/17 16:39:58 thomas Exp $
+ * $Id: dt.h,v 1.23 1997/12/16 15:55:17 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -283,6 +283,7 @@ extern bool timespan_lt(TimeSpan *span1, TimeSpan *span2);
 extern bool timespan_le(TimeSpan *span1, TimeSpan *span2);
 extern bool timespan_ge(TimeSpan *span1, TimeSpan *span2);
 extern bool timespan_gt(TimeSpan *span1, TimeSpan *span2);
+extern bool timespan_finite(TimeSpan *span);
 extern int	timespan_cmp(TimeSpan *span1, TimeSpan *span2);
 extern TimeSpan *timespan_smaller(TimeSpan *span1, TimeSpan *span2);
 extern TimeSpan *timespan_larger(TimeSpan *span1, TimeSpan *span2);
@@ -309,6 +310,7 @@ extern TimeSpan *datetime_age(DateTime *dt1, DateTime *dt2);
 extern void GetCurrentTime(struct tm * tm);
 extern DateTime SetDateTime(DateTime datetime);
 extern int	tm2datetime(struct tm * tm, double fsec, int *tzp, DateTime *dt);
+extern int  datetime2tm(DateTime dt, int *tzp, struct tm * tm, double *fsec, char **tzn);
 
 extern void j2date(int jd, int *year, int *month, int *day);
 extern int	date2j(int year, int month, int day);
@@ -335,4 +337,4 @@ extern int	EncodeTimeOnly(struct tm * tm, double fsec, int style, char *str);
 extern int	EncodeDateTime(struct tm * tm, double fsec, int *tzp, char **tzn, int style, char *str);
 extern int	EncodeTimeSpan(struct tm * tm, double fsec, int style, char *str);
 
-#endif							/* DT_H */
+#endif /* DT_H */
