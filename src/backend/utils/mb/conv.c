@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conv.c,v 1.39 2002/07/18 02:02:30 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conv.c,v 1.40 2002/07/19 00:22:24 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,6 +33,7 @@ pg_print_bogus_char(unsigned char **mic, unsigned char **p)
 	*(*p)++ = ')';
 }
 
+#ifdef NOT_USED
 /*
  * EUC_KR ---> MIC
  */
@@ -145,7 +146,6 @@ mic2euc_cn(unsigned char *mic, unsigned char *p, int len)
 	*p = '\0';
 }
 
-#ifdef NOT_USED
 /*
  * GB18030 ---> MIC
  * Added by Bill Huang <bhuang@redhat.com>,<bill_huanghb@ybb.ne.jp>
@@ -235,7 +235,6 @@ mic2gb18030(unsigned char *mic, unsigned char *p, int len)
 	}
 	*p = '\0';
 }
-#endif
 
 /*
  * LATINn ---> MIC
@@ -685,6 +684,7 @@ mic2win1250(unsigned char *mic, unsigned char *p, int len)
 
 	mic2latin_with_table(mic, p, len, LC_ISO8859_2, iso88592_2_win1250);
 }
+#endif
 
 /*
  * comparison routine for bsearch()
