@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.40 2000/03/23 07:36:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.41 2000/04/08 19:29:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -328,6 +328,19 @@ TypeCategory(Oid inType)
 		case (VARCHAROID):
 		case (TEXTOID):
 		case (LZTEXTOID):
+			result = STRING_TYPE;
+			break;
+
+		/*
+		 * Kluge added 4/8/00 by tgl: treat the new BIT types as strings,
+		 * so that 'unknown' || 'unknown' continues to resolve as textcat
+		 * rather than generating an ambiguous-operator error.  Probably
+		 * BIT types should have their own type category, or maybe they
+		 * should be numeric?  Need a better way of handling unknown types
+		 * first.
+		 */
+		case (ZPBITOID):
+		case (VARBITOID):
 			result = STRING_TYPE;
 			break;
 
