@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.86 2004/10/16 03:26:43 momjian Exp $
+#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.87 2004/11/16 21:51:13 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -220,10 +220,12 @@ ifeq ($(PORTNAME), cygwin)
   shlib			= $(NAME)$(DLSUFFIX)
   # needed for /contrib modules, not sure why
   SHLIB_LINK		+= -lpgport
+  haslibarule   = yes
 endif
 
 ifeq ($(PORTNAME), win32)
   shlib			= lib$(NAME)$(DLSUFFIX)
+  haslibarule   = yes
 endif
 
 ifeq ($(PORTNAME), beos)
@@ -257,6 +259,7 @@ ifndef LORDER
 MK_NO_LORDER := true
 endif
 
+ifndef haslibarule
 lib$(NAME).a: $(OBJS)
 ifdef MK_NO_LORDER
 	$(LINK.static) $@ $^
@@ -264,6 +267,7 @@ else
 	$(LINK.static) $@ `$(LORDER) $^ | tsort`
 endif
 	$(RANLIB) $@
+endif #haslibarule
 
 ifeq ($(enable_shared), yes)
 
