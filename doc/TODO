@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Jun 20 12:46:20 EDT 2002
+Last updated:		Thu Jun 20 12:54:59 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -277,6 +277,7 @@ Clients
 	o Use cursors implicitly to avoid large results (see setCursorName())
         o Add support for CallableStatements
 	o Add LISTEN/NOTIFY support to the JDBC driver (Barry)
+	o Compile under jdk 1.4
 
 * ECPG
 	o Implement set descriptor, using descriptor
