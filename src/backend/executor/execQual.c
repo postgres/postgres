@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.148 2003/10/11 18:04:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.149 2003/10/12 23:19:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -699,7 +699,8 @@ ExecMakeFunctionResult(FuncExprState *fcache,
 	List	   *arguments = fcache->args;
 	Datum		result;
 	FunctionCallInfoData fcinfo;
-	ReturnSetInfo rsinfo;		/* for functions returning sets */
+	/* for functions returning sets, must be aligned as Node, so use makeNode */
+	ReturnSetInfo *rsinfo = makeNode(ReturnSetInfo);
 	ExprDoneCond argDone;
 	bool		hasSetArg;
 	int			i;
@@ -746,15 +747,15 @@ ExecMakeFunctionResult(FuncExprState *fcache,
 	 */
 	if (fcache->func.fn_retset)
 	{
-		fcinfo.resultinfo = (Node *) &rsinfo;
-		rsinfo.type = T_ReturnSetInfo;
-		rsinfo.econtext = econtext;
-		rsinfo.expectedDesc = NULL;
-		rsinfo.allowedModes = (int) SFRM_ValuePerCall;
-		rsinfo.returnMode = SFRM_ValuePerCall;
+		fcinfo.resultinfo = (Node *) rsinfo;
+		rsinfo->type = T_ReturnSetInfo;
+		rsinfo->econtext = econtext;
+		rsinfo->expectedDesc = NULL;
+		rsinfo->allowedModes = (int) SFRM_ValuePerCall;
+		rsinfo->returnMode = SFRM_ValuePerCall;
 		/* isDone is filled below */
-		rsinfo.setResult = NULL;
-		rsinfo.setDesc = NULL;
+		rsinfo->setResult = NULL;
+		rsinfo->setDesc = NULL;
 	}
 
 	/*
@@ -803,10 +804,10 @@ ExecMakeFunctionResult(FuncExprState *fcache,
 			if (callit)
 			{
 				fcinfo.isnull = false;
-				rsinfo.isDone = ExprSingleResult;
+				rsinfo->isDone = ExprSingleResult;
 				result = FunctionCallInvoke(&fcinfo);
 				*isNull = fcinfo.isnull;
-				*isDone = rsinfo.isDone;
+				*isDone = rsinfo->isDone;
 			}
 			else
 			{
@@ -903,7 +904,7 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 	TupleDesc	tupdesc = NULL;
 	Oid			funcrettype;
 	FunctionCallInfoData fcinfo;
-	ReturnSetInfo rsinfo;
+	ReturnSetInfo *rsinfo = makeNode(ReturnSetInfo); /* must be Node aligned */
 	MemoryContext callerContext;
 	MemoryContext oldcontext;
 	TupleTableSlot *slot;
@@ -992,15 +993,15 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 	 * doesn't actually get to see the resultinfo, but set it up anyway
 	 * because we use some of the fields as our own state variables.
 	 */
-	fcinfo.resultinfo = (Node *) &rsinfo;
-	rsinfo.type = T_ReturnSetInfo;
-	rsinfo.econtext = econtext;
-	rsinfo.expectedDesc = expectedDesc;
-	rsinfo.allowedModes = (int) (SFRM_ValuePerCall | SFRM_Materialize);
-	rsinfo.returnMode = SFRM_ValuePerCall;
+	fcinfo.resultinfo = (Node *) rsinfo;
+	rsinfo->type = T_ReturnSetInfo;
+	rsinfo->econtext = econtext;
+	rsinfo->expectedDesc = expectedDesc;
+	rsinfo->allowedModes = (int) (SFRM_ValuePerCall | SFRM_Materialize);
+	rsinfo->returnMode = SFRM_ValuePerCall;
 	/* isDone is filled below */
-	rsinfo.setResult = NULL;
-	rsinfo.setDesc = NULL;
+	rsinfo->setResult = NULL;
+	rsinfo->setDesc = NULL;
 
 	/*
 	 * Switch to short-lived context for calling the function or
@@ -1028,17 +1029,17 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 		if (direct_function_call)
 		{
 			fcinfo.isnull = false;
-			rsinfo.isDone = ExprSingleResult;
+			rsinfo->isDone = ExprSingleResult;
 			result = FunctionCallInvoke(&fcinfo);
 		}
 		else
 		{
 			result = ExecEvalExpr(funcexpr, econtext,
-								  &fcinfo.isnull, &rsinfo.isDone);
+								  &fcinfo.isnull, &rsinfo->isDone);
 		}
 
 		/* Which protocol does function want to use? */
-		if (rsinfo.returnMode == SFRM_ValuePerCall)
+		if (rsinfo->returnMode == SFRM_ValuePerCall)
 		{
 			/*
 			 * Check for end of result set.
@@ -1047,7 +1048,7 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 			 * tupdesc or tuplestore (since we can't get a tupdesc in the
 			 * function-returning-tuple case)
 			 */
-			if (rsinfo.isDone == ExprEndResult)
+			if (rsinfo->isDone == ExprEndResult)
 				break;
 
 			/*
@@ -1093,8 +1094,8 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 				}
 				tupstore = tuplestore_begin_heap(true, false, SortMem);
 				MemoryContextSwitchTo(oldcontext);
-				rsinfo.setResult = tupstore;
-				rsinfo.setDesc = tupdesc;
+				rsinfo->setResult = tupstore;
+				rsinfo->setDesc = tupdesc;
 			}
 
 			/*
@@ -1127,13 +1128,13 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 			/*
 			 * Are we done?
 			 */
-			if (rsinfo.isDone != ExprMultipleResult)
+			if (rsinfo->isDone != ExprMultipleResult)
 				break;
 		}
-		else if (rsinfo.returnMode == SFRM_Materialize)
+		else if (rsinfo->returnMode == SFRM_Materialize)
 		{
 			/* check we're on the same page as the function author */
-			if (!first_time || rsinfo.isDone != ExprSingleResult)
+			if (!first_time || rsinfo->isDone != ExprSingleResult)
 				ereport(ERROR,
 						(errcode(ERRCODE_E_R_I_E_SRF_PROTOCOL_VIOLATED),
 						 errmsg("table-function protocol for materialize mode was not followed")));
@@ -1144,7 +1145,7 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 			ereport(ERROR,
 					(errcode(ERRCODE_E_R_I_E_SRF_PROTOCOL_VIOLATED),
 					 errmsg("unrecognized table-function returnMode: %d",
-							(int) rsinfo.returnMode)));
+							(int) rsinfo->returnMode)));
 
 		first_time = false;
 	}
@@ -1152,8 +1153,8 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 	MemoryContextSwitchTo(callerContext);
 
 	/* The returned pointers are those in rsinfo */
-	*returnDesc = rsinfo.setDesc;
-	return rsinfo.setResult;
+	*returnDesc = rsinfo->setDesc;
+	return rsinfo->setResult;
 }
 
 
