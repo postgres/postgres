@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.58 2003/12/16 01:06:39 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.59 2003/12/26 20:00:00 meskes Exp $
 -->
 
 <chapter id="ecpg">
@@ -11,10 +11,11 @@ $PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.58 2003/12/16 01:06:39 momjian Exp
 
  <para>
   This chapter describes the embedded <acronym>SQL</acronym> package
-  for <productname>PostgreSQL</productname>. It works with
-  <acronym>C</acronym> and <acronym>C++</acronym>. It was written by
+  for <productname>PostgreSQL</productname>. It was written by
   Linus Tolke (<email>linus@epact.se</email>) and Michael Meskes
-  (<email>meskes@postgresql.org</email>).
+  (<email>meskes@postgresql.org</email>). Originally it was written to work with
+  <acronym>C</acronym>. It also works with <acronym>C++</acronym>, but
+  it does not recognize all <acronym>C++</acronym> constructs yet. 
  </para>
 
  <para>
