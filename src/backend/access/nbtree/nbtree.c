@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.99 2003/02/23 23:27:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.100 2003/02/24 00:57:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,6 +24,7 @@
 #include "catalog/index.h"
 #include "miscadmin.h"
 #include "storage/freespace.h"
+#include "storage/smgr.h"
 
 
 /* Working state for btbuild and its callback */
@@ -673,11 +674,10 @@ btbulkdelete(PG_FUNCTION_ARGS)
 	/* return statistics */
 	num_pages = RelationGetNumberOfBlocks(rel);
 
-	result = (IndexBulkDeleteResult *) palloc(sizeof(IndexBulkDeleteResult));
+	result = (IndexBulkDeleteResult *) palloc0(sizeof(IndexBulkDeleteResult));
 	result->num_pages = num_pages;
 	result->num_index_tuples = num_index_tuples;
 	result->tuples_removed = tuples_removed;
-	result->pages_free = 0;		/* not computed here */
 
 	PG_RETURN_POINTER(result);
 }
@@ -746,6 +746,12 @@ btvacuumcleanup(PG_FUNCTION_ARGS)
 				pageSpaces[nFreePages].avail = BLCKSZ-1;
 				nFreePages++;
 			}
+			pages_deleted++;
+		}
+		else if (P_ISDELETED(opaque))
+		{
+			/* Already deleted, but can't recycle yet */
+			pages_deleted++;
 		}
 		else if ((opaque->btpo_flags & BTP_HALF_DEAD) ||
 				 P_FIRSTDATAKEY(opaque) > PageGetMaxOffsetNumber(page))
@@ -758,7 +764,10 @@ btvacuumcleanup(PG_FUNCTION_ARGS)
 			oldcontext = MemoryContextSwitchTo(mycontext);
 
 			ndel = _bt_pagedel(rel, buf, info->vacuum_full);
-			pages_deleted += ndel;
+
+			/* count only this page, else may double-count parent */
+			if (ndel)
+				pages_deleted++;
 
 			/*
 			 * During VACUUM FULL it's okay to recycle deleted pages
@@ -787,6 +796,50 @@ btvacuumcleanup(PG_FUNCTION_ARGS)
 	}
 
 	/*
+	 * During VACUUM FULL, we truncate off any recyclable pages at the
+	 * end of the index.  In a normal vacuum it'd be unsafe to do this
+	 * except by acquiring exclusive lock on the index and then rechecking
+	 * all the pages; doesn't seem worth it.
+	 */
+	if (info->vacuum_full && nFreePages > 0)
+	{
+		BlockNumber	new_pages = num_pages;
+
+		while (nFreePages > 0 &&
+			   pageSpaces[nFreePages-1].blkno == new_pages-1)
+		{
+			new_pages--;
+			pages_deleted--;
+			nFreePages--;
+		}
+		if (new_pages != num_pages)
+		{
+			int			i;
+
+			/*
+			 * Okay to truncate.
+			 *
+			 * First, flush any shared buffers for the blocks we intend to
+			 * delete.  FlushRelationBuffers is a bit more than we need for
+			 * this, since it will also write out dirty buffers for blocks we
+			 * aren't deleting, but it's the closest thing in bufmgr's API.
+			 */
+			i = FlushRelationBuffers(rel, new_pages);
+			if (i < 0)
+				elog(ERROR, "btvacuumcleanup: FlushRelationBuffers returned %d",
+					 i);
+
+			/*
+			 * Do the physical truncation.
+			 */
+			new_pages = smgrtruncate(DEFAULT_SMGR, rel, new_pages);
+			rel->rd_nblocks = new_pages; /* update relcache immediately */
+			rel->rd_targblock = InvalidBlockNumber;
+			num_pages = new_pages;
+		}
+	}
+
+	/*
 	 * Update the shared Free Space Map with the info we now have about
 	 * free space in the index, discarding any old info the map may have.
 	 * We do not need to sort the page numbers; they're in order already.
@@ -797,13 +850,9 @@ btvacuumcleanup(PG_FUNCTION_ARGS)
 
 	MemoryContextDelete(mycontext);
 
-	if (pages_deleted > 0)
-		elog(info->message_level, "Index %s: %u pages, deleted %u; %u now free",
-			 RelationGetRelationName(rel),
-			 num_pages, pages_deleted, nFreePages);
-
 	/* update statistics */
 	stats->num_pages = num_pages;
+	stats->pages_deleted = pages_deleted;
 	stats->pages_free = nFreePages;
 
 	PG_RETURN_POINTER(stats);

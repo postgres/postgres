@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.249 2003/02/23 20:32:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.250 2003/02/24 00:57:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2626,9 +2626,10 @@ scan_index(Relation indrel, double num_tuples)
 						stats->num_pages, stats->num_index_tuples,
 						false);
 
-	elog(elevel, "Index %s: Pages %u, %u free; Tuples %.0f.\n\t%s",
+	elog(elevel, "Index %s: Pages %u, %u deleted, %u free; Tuples %.0f.\n\t%s",
 		 RelationGetRelationName(indrel),
-		 stats->num_pages, stats->pages_free, stats->num_index_tuples,
+		 stats->num_pages, stats->pages_deleted, stats->pages_free,
+		 stats->num_index_tuples,
 		 vac_show_rusage(&ru0));
 
 	/*
@@ -2687,9 +2688,9 @@ vacuum_index(VacPageList vacpagelist, Relation indrel,
 						stats->num_pages, stats->num_index_tuples,
 						false);
 
-	elog(elevel, "Index %s: Pages %u, %u free; Tuples %.0f: Deleted %.0f.\n\t%s",
+	elog(elevel, "Index %s: Pages %u, %u deleted, %u free; Tuples %.0f: Deleted %.0f.\n\t%s",
 		 RelationGetRelationName(indrel),
-		 stats->num_pages, stats->pages_free,
+		 stats->num_pages, stats->pages_deleted, stats->pages_free,
 		 stats->num_index_tuples - keep_tuples, stats->tuples_removed,
 		 vac_show_rusage(&ru0));
 

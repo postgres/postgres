@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: genam.h,v 1.38 2003/02/22 00:45:05 tgl Exp $
+ * $Id: genam.h,v 1.39 2003/02/24 00:57:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,8 @@ typedef struct IndexBulkDeleteResult
 	BlockNumber num_pages;		/* pages remaining in index */
 	double		num_index_tuples;		/* tuples remaining */
 	double		tuples_removed; /* # removed by bulk-delete operation */
-	BlockNumber	pages_free;		/* # unused pages in index */
+	BlockNumber	pages_deleted;	/* # unused pages in index */
+	BlockNumber	pages_free;		/* # pages available for reuse */
 } IndexBulkDeleteResult;
 
 /* Typedef for callback function to determine if a tuple is bulk-deletable */
