@@ -1,0 +1,181 @@
+<chapter id="page">
+
+<title>Page Files</title>
+
+<abstract>
+<para>
+A description of the database file default page format.
+</para>
+</abstract>
+
+<para>
+This section provides an overview of the page format used by <productname>Postgres</productname>
+classes.  User-defined access methods need not use this page format.
+
+<para>
+In the following explanation, a
+<firstterm>byte</firstterm>
+is assumed to contain 8 bits.  In addition, the term
+<firstterm>item</firstterm>
+refers to data which is stored in <productname>Postgres</productname> classes.
+
+<para>
+The following table shows how pages in both normal <productname>Postgres</productname> classes
+ and <productname>Postgres</productname> index
+classes (e.g., a B-tree index) are structured.
+
+<table tocentry="1">
+<title>Sample Page Layout</title>
+<titleabbrev>Page Layout</titleabbrev>
+<tgroup cols="1">
+<thead>
+<row>
+<entry>
+</entry>
+<entry>
+</entry>
+</row>
+</thead>
+<tbody>
+<row>
+<entry>
+itemPointerData
+</entry>
+<row>
+<entry>
+filler
+</entry>
+<row>
+<entry>
+itemData...
+</entry>
+<row>
+<entry>
+Unallocated Space
+</entry>
+<row>
+<entry>
+ItemContinuationData
+</entry>
+<row>
+<entry>
+Special Space
+</entry>
+<row>
+<entry>
+``ItemData 2''
+</entry>
+<row>
+<entry>
+``ItemData 1''
+</entry>
+<row>
+<entry>
+ItemIdData
+</entry>
+<row>
+<entry>
+PageHeaderData
+</entry>
+</tbody>
+</tgroup>
+</table>
+
+<!--
+.\" Running
+.\" .q .../bin/dumpbpages
+.\" or
+.\" .q .../src/support/dumpbpages
+.\" as the postgres superuser
+.\" with the file paths associated with
+.\" (heap or B-tree index) classes,
+.\" .q .../data/base/<database-name>/<class-name>,
+.\" will display the page structure used by the classes.
+.\" Specifying the
+.\" .q -r
+.\" flag will cause the classes to be
+.\" treated as heap classes and for more information to be displayed.
+-->
+
+<para>
+The first 8 bytes of each page consists of a page header
+(PageHeaderData).
+Within the header, the first three 2-byte integer fields
+(<firstterm>lower</firstterm>,
+<firstterm>upper</firstterm>,
+and
+<firstterm>special</firstterm>)
+represent byte offsets to the start of unallocated space, to the end
+of unallocated space, and to the start of <firstterm>special space</firstterm>.
+Special space is a region at the end of the page which is allocated at
+page initialization time and which contains information specific to an
+access method.  The last 2 bytes of the page header,
+<firstterm>opaque</firstterm>,
+encode the page size and information on the internal fragmentation of
+the page.  Page size is stored in each page because frames in the
+buffer pool may be subdivided into equal sized pages on a frame by
+frame basis within a class.  The internal fragmentation information is
+used to aid in determining when page reorganization should occur.
+
+<para>
+Following the page header are item identifiers
+(<firstterm>ItemIdData</firstterm>).
+New item identifiers are allocated from the first four bytes of
+unallocated space.  Because an item identifier is never moved until it
+is freed, its index may be used to indicate the location of an item on
+a page.  In fact, every pointer to an item
+(<firstterm>ItemPointer</firstterm>)
+created by <productname>Postgres</productname> consists of a frame number and an index of an item
+identifier.  An item identifier contains a byte-offset to the start of
+an item, its length in bytes, and a set of attribute bits which affect
+its interpretation.
+
+<para>
+The items themselves are stored in space allocated backwards from
+the end of unallocated space.  Usually, the items are not interpreted.
+However when the item is too long to be placed on a single page or
+when fragmentation of the item is desired, the item is divided and
+each piece is handled as distinct items in the following manner.  The
+first through the next to last piece are placed in an item
+continuation structure
+(<firstterm>ItemContinuationData</firstterm>).
+This structure contains
+itemPointerData
+which points to the next piece and the piece itself.  The last piece
+is handled normally.
+
+<sect1>
+<title>Files</title>
+
+<para>
+<variablelist>
+<varlistentry>
+<term>
+<filename>data/</filename>
+</term>
+<listitem>
+<para>
+Location of shared (global) database files.
+
+<varlistentry>
+<term>
+<filename>data/base/</filename>
+</term>
+<listitem>
+<para>
+Location of local database files.
+
+</variablelist>
+
+<sect1>
+<title>Bugs</title>
+
+<para>
+The page format may change in the future to provide more efficient
+access to large objects.
+
+<para>
+This section contains insufficient detail to be of any assistance in
+writing a new access method.
+
+</chapter>

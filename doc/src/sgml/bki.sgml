@@ -1,0 +1,348 @@
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/bki.sgml,v 1.1 1998/08/15 06:49:33 thomas Exp $
+
+Transcribed from the original bki.man.5 documentation
+- Thomas Lockhart 1998-08-03
+-->
+
+<chapter id="bki">
+<title>Backend Interface</title>
+
+<para>
+Backend Interface (<acronym>BKI</acronym>) files are scripts that are input 
+to the <productname>Postgres</productname>
+backend running in the special "bootstrap" mode that allows it to perform
+database functions without a database system already existing.  <acronym>BKI</acronym> files
+can therefore be used to create the database system in the first place.
+<application>initdb</application>
+uses <acronym>BKI</acronym> files to do just that: to create a database system.  However,
+<application>initdb</application>'s
+<acronym>BKI</acronym> files are generated internally.  It generates them using the files
+<filename>global1.bki.source</filename> and <filename>local1.template1.bki.source</filename>, which it finds in the
+<productname>Postgres</productname> "library" directory.  They get installed there as part of installing
+<productname>Postgres</productname>.  These .source files get build as part of the <productname>Postgres</productname> build
+process, by a build program called 
+  <application>genbki</application>.
+  <application>genbki</application>
+takes as input <productname>Postgres</productname> source files that double as
+  <application>genbki</application>
+input that builds tables and C header files that describe those
+tables.
+
+<para>
+Related information may be found in documentation for 
+<application>initdb</application>,
+<application>createdb</application>,
+and the <acronym>SQL</acronym> command <command>CREATE DATABASE</command>.
+
+<sect1>
+<title><acronym>BKI</acronym> File Format</title>
+
+<para>
+The <productname>Postgres</productname> backend interprets <acronym>BKI</acronym> files as described below.  This
+description will be easier to understand if the <filename>global1.bki.source</filename> file is
+at hand as an example.  (As explained above, this .source file isn't quite
+a <acronym>BKI</acronym> file, but you'll be able to guess what the resulting <acronym>BKI</acronym> file would be
+anyway).
+
+<para>
+Commands are composed of a command name followed by space separated
+arguments.  Arguments to a command which begin with a <quote>$</quote> are
+treated specially.  If <quote>$$</quote> are the first two characters, then
+the first <quote>$</quote> is ignored and the argument is then processed
+normally.  If the <quote>$</quote> is followed by space, then it is treated
+as a NULL
+value.  Otherwise, the characters following the <quote>$</quote> are
+interpreted as the name of a macro causing the argument to be replaced
+with the macro's value.  It is an error for this macro to be
+undefined.
+
+<para>
+Macros are defined using
+<programlisting>
+define macro macro_name = macro_value
+</programlisting>
+and are undefined using 
+<programlisting>
+undefine macro macro_name
+</programlisting>
+and redefined using the same syntax as define.
+
+<para>
+Lists of general commands and macro commands
+follow.
+
+<sect1>
+<title>General Commands</title>
+
+<variablelist>
+<varlistentry>
+<term>
+OPEN <replaceable class="parameter">classname</replaceable>
+</term>
+<listitem>
+<para>
+Open the class called
+<replaceable class="parameter">classname</replaceable>
+for further manipulation.
+
+<varlistentry>
+<term>
+CLOSE [<replaceable class="parameter">classname</replaceable>]
+</term>
+<listitem>
+<para>
+Close the open class called
+<replaceable class="parameter">classname</replaceable>.
+It is an error if 
+<replaceable class="parameter">classname</replaceable>
+is not already opened.   If no
+<replaceable class="parameter">classname</replaceable>
+is given, then the currently open class is closed.
+
+<varlistentry>
+<term>
+PRINT
+</term>
+<listitem>
+<para>
+Print the currently open class.
+
+<varlistentry>
+<term>
+INSERT [OID=<replaceable class="parameter">oid_value</replaceable>] (<replaceable class="parameter">value1</replaceable> <replaceable class="parameter">value2</replaceable> ...)
+</term>
+<listitem>
+<para>
+Insert a new instance to the open class using
+<replaceable class="parameter">value1</replaceable>,
+<replaceable class="parameter">value2</replaceable>,
+etc., for its attribute values and 
+<replaceable class="parameter">oid_value</replaceable>
+for its OID.  If
+<replaceable class="parameter">oid_value</replaceable>
+is not <quote>0</quote>, then this value will be used as the instance's
+object identifier.  Otherwise, it is an error.
+
+<varlistentry>
+<term>
+INSERT (<replaceable class="parameter">value1</replaceable> <replaceable class="parameter">value2</replaceable> ...)
+</term>
+<listitem>
+<para>
+As above, but the system generates a unique object identifier.
+
+<varlistentry>
+<term>
+CREATE <replaceable class="parameter">classname</replaceable> (<replaceable class="parameter">name1</replaceable> = <replaceable class="parameter">type1</replaceable> [,<replaceable class="parameter">name2</replaceable> = <replaceable class="parameter">type2</replaceable>[,...]])
+</term>
+<listitem>
+<para>
+Create a class named
+<replaceable class="parameter">classname</replaceable>
+with the attributes given in parentheses.
+
+<varlistentry>
+<term>
+OPEN (<replaceable class="parameter">name1</replaceable> = <replaceable class="parameter">type1</replaceable> [,<replaceable class="parameter">name2</replaceable> = <replaceable class="parameter">type2</replaceable>[,...]]) AS <replaceable class="parameter">classname</replaceable>
+</term>
+<listitem>
+<para>
+Open a class named
+<replaceable class="parameter">classname</replaceable>
+for writing but do not record its existence in the system catalogs.
+(This is primarily to aid in bootstrapping.)
+
+<varlistentry>
+<term>
+DESTROY <replaceable class="parameter">classname</replaceable>
+</term>
+<listitem>
+<para>
+Destroy the class named
+<replaceable class="parameter">classname</replaceable>.
+
+<varlistentry>
+<term>
+DEFINE INDEX <replaceable class="parameter">indexname</replaceable> ON <replaceable class="parameter">class_name</replaceable> USING <replaceable class="parameter">amname</replaceable>
+  (<replaceable class="parameter">opclass</replaceable> <replaceable class="parameter">attr</replaceable> | (<replaceable class="parameter">function</replaceable>(<replaceable class="parameter">attr</replaceable>))
+</term>
+<listitem>
+<para>
+Create an index named
+<replaceable class="parameter">indexname</replaceable>
+on the class named
+<replaceable class="parameter">classname</replaceable>
+using the
+<replaceable class="parameter">amname</replaceable>
+access method.  The fields to index are called
+<replaceable class="parameter">name1</replaceable>,
+<replaceable class="parameter">name2</replaceable>
+etc., and the operator collections to use are
+<replaceable class="parameter">collection_1</replaceable>,
+<replaceable class="parameter">collection_2</replaceable>
+etc., respectively.
+
+</varlistentry>
+</variablelist>
+
+<note>
+<para>
+This last sentence doesn't reference anything in the example. Should be changed to make sense. - Thomas 1998-08-04
+</note>
+
+<sect1>
+<title>Macro Commands</title>
+
+<para>
+<variablelist>
+<varlistentry>
+<term>
+DEFINE FUNCTION <replaceable class="parameter">macro_name</replaceable> AS <replaceable class="parameter">rettype</replaceable> <replaceable class="parameter">function_name</replaceable>(<replaceable class="parameter">args</replaceable>)
+</term>
+<listitem>
+<para>
+Define a function prototype for a function named
+<replaceable class="parameter">macro_name</replaceable>
+which has its value of type
+<replaceable class="parameter">rettype</replaceable>
+computed from the execution
+<replaceable class="parameter">function_name</replaceable>
+with the arguments
+<replaceable class="parameter">args</replaceable>
+declared in a C-like manner.
+
+<varlistentry>
+<term>
+DEFINE MACRO <replaceable class="parameter">macro_name</replaceable> FROM FILE <replaceable class="parameter">filename</replaceable>
+</term>
+<listitem>
+<para>
+Define a macro named
+<replaceable class="parameter">macro_name</replaceable>
+which has its value 
+read from the file called
+<replaceable class="parameter">filename</replaceable>.
+
+</varlistentry>
+</variablelist>
+
+<sect1>
+<title>Debugging Commands</title>
+
+<para>
+<note>
+<para>
+This section on debugging commands was commented-out in the original documentation. Thomas 1998-08-05
+</note>
+
+<variablelist>
+<varlistentry>
+<term>
+r
+</term>
+<listitem>
+<para>
+Randomly print the open class.
+
+<varlistentry>
+<term>
+m -1
+</term>
+<listitem>
+<para>
+Toggle display of time information.
+
+<varlistentry>
+<term>
+m 0
+</term>
+<listitem>
+<para>
+Set retrievals to now.
+
+<varlistentry>
+<term>
+m 1 Jan 1 01:00:00 1988
+</term>
+<listitem>
+<para>
+Set retrievals to snapshots of the specfied time.
+
+<varlistentry>
+<term>
+m 2 Jan 1 01:00:00 1988, Feb 1 01:00:00 1988
+</term>
+<listitem>
+<para>
+Set retrievals to ranges of the specified times.
+Either time may be replaced with space
+if an unbounded time range is desired.
+
+<varlistentry>
+<term>
+&amp;A <replaceable class="parameter">classname</replaceable> <replaceable class="parameter">natts</replaceable> <replaceable class="parameter">name1</replaceable> <replaceable class="parameter">type1</replaceable> <replaceable class="parameter">name2</replaceable> <replaceable class="parameter">type2</replaceable> <replaceable class="parameter">...</replaceable>
+</term>
+<listitem>
+<para>
+Add 
+<replaceable class="parameter">natts</replaceable>
+attributes named
+<replaceable class="parameter">name1</replaceable>,
+<replaceable class="parameter">name2</replaceable>,
+etc. of
+types
+<replaceable class="parameter">type1</replaceable>,
+<replaceable class="parameter">type2</replaceable>,
+etc. to the class
+<replaceable class="parameter">classname</replaceable>.
+
+<varlistentry>
+<term>
+&amp;RR <replaceable class="parameter">oldclassname</replaceable> <replaceable class="parameter">newclassname</replaceable>
+</term>
+<listitem>
+<para>
+Rename the
+<replaceable class="parameter">oldclassname</replaceable>
+class to
+<replaceable class="parameter">newclassname</replaceable>.
+
+<varlistentry>
+<term>
+&amp;RA	classname oldattname newattname
+<replaceable class="parameter">classname</replaceable>
+<replaceable class="parameter">oldattname</replaceable>
+<replaceable class="parameter">newattname</replaceable>
+</term>
+<listitem>
+<para>
+Rename the
+<replaceable class="parameter">oldattname</replaceable>
+attribute in the class named
+<replaceable class="parameter">classname</replaceable>
+to
+<replaceable class="parameter">newattname</replaceable>.
+
+</varlistentry>
+</variablelist>
+
+<sect1>
+<title>Example</title>
+
+<para>
+The following set of commands will create the <quote>pg_opclass</quote>
+class containing the
+<parameter>int_ops</parameter>
+collection as an object with an OID of
+<parameter>421</parameter>,
+print out the class, and then close it.
+<programlisting>
+create pg_opclass (opcname=name)
+open pg_opclass
+insert oid=421 (int_ops)
+print
+close pg_opclass
+</programlisting>
+
+</chapter>
