@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.25 1997/09/29 05:59:16 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.26 1997/10/25 05:34:07 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -369,7 +369,7 @@ ProcessUtility(Node *parsetree,
 						DefineOperator(stmt->defname,	/* operator name */
 									   stmt->definition);		/* rest */
 						break;
-					case P_TYPE:
+					case TYPE_P:
 						{
 							DefineType(stmt->defname, stmt->definition);
 						}
@@ -490,7 +490,7 @@ ProcessUtility(Node *parsetree,
 							RemoveRewriteRule(rulename);
 						}
 						break;
-					case P_TYPE:
+					case TYPE_P:
 #ifndef NO_SECURITY
 						/* XXX moved to remove.c */
 #endif
