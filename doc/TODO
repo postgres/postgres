@@ -1,7 +1,7 @@
 ====================================================
 TODO list (FAQ) for PostgreSQL
 ====================================================
-last updated:		Sun Jul 13 15:18:19 EDT 1997
+last updated:		Sun Jul 13 23:13:24 EDT 1997
 
 current maintainer:	Bruce Momjian (maillist@candle.pha.pa.us)
 
@@ -169,7 +169,7 @@ Changes in this release
 fix for SET with options (Thomas)
 allow pg_dump/pg_dumpall to preserve ownership of all tables/objects(Bruce)
 new psql \connect option allows changing usernames without chaning databases
-fix for initdb --debug option(Tatsuo)
+fix for initdb --debug option(Yoshihiko Ichikawa)
 lextest cleanup(Bruce)
 hash fixes(Vadim)
 fix date/time month boundary arithmetic(Thomas)
