@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.216 2004/12/24 18:11:16 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.217 2004/12/24 18:32:50 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -120,9 +120,17 @@ su - postgres
        <secondary>on Windows</secondary>
       </indexterm>
 
-      To build on <productname>Windows</> platforms see
-      <![%standalone-include[the documentation chapter "Installation on Windows"]]>
-      <![%standalone-ignore[<xref linkend="install-win32">]]>.
+      To build on <productname>NT</>-based versions of
+      <productname>Windows</> like Windows XP and 2003 see
+      <filename>doc/FAQ_MINGW</>. For earlier <productname>Windows</>
+      releases see <filename>doc/FAQ_CYGWIN</>.
+
+      To build <productname>Windows</> client-only interfaces using
+      tools like <productname>Visual C++</> and <productname>Borland
+      C++</> see
+      <![%standalone-include[the documentation chapter "Client-Only
+      Installation on Windows"]]> <![%standalone-ignore[<xref
+      linkend="install-win32">]]>.
      </para>
     </listitem>
    </itemizedlist>
