@@ -46,8 +46,8 @@ static char sccsid[] = "@(#)regfree.c	8.3 (Berkeley) 3/20/94";
 #include <stdlib.h>
 #include <regex.h>
 
-#include "utils.h"
-#include "regex2.h"
+#include "regex/utils.h"
+#include "regex/regex2.h"
 
 /*
  - regfree - free everything
