@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: xact.h,v 1.18 1998/12/15 12:46:47 vadim Exp $
+ * $Id: xact.h,v 1.19 1998/12/18 09:09:52 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,8 +36,9 @@ typedef struct TransactionStateData
 #define XACT_DIRTY_READ			0		/* not implemented */
 #define XACT_READ_COMMITTED		1
 #define XACT_REPEATABLE_READ	2		/* not implemented */
-#define XACT_SERIALIZED			3
+#define XACT_SERIALIZABLE		3
 
+extern int	DefaultXactIsoLevel;
 extern int	XactIsoLevel;
 
 /* ----------------

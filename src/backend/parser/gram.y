@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.39 1998/12/13 04:37:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.40 1998/12/18 09:10:32 vadim Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -45,6 +45,7 @@
 #include "catalog/catname.h"
 #include "utils/elog.h"
 #include "access/xact.h"
+#include "storage/lmgr.h"
 
 #ifdef MULTIBYTE
 #include "mb/pg_wchar.h"
@@ -132,6 +133,8 @@ Oid	param_type(int t); /* used in parse_expr.c */
 		CreateUserStmt, AlterUserStmt, DropUserStmt
 
 %type <str>	opt_database1, opt_database2, location, encoding
+
+%type <str>	opt_lmode
 
 %type <pboolean> user_createdb_clause, user_createuser_clause
 %type <str>   user_passwd_clause
@@ -269,8 +272,8 @@ Oid	param_type(int t); /* used in parse_expr.c */
 		ELSE, END_TRANS, EXECUTE, EXISTS, EXTRACT,
 		FALSE_P, FETCH, FLOAT, FOR, FOREIGN, FROM, FULL,
 		GRANT, GROUP, HAVING, HOUR_P,
-		IN, INNER_P, INSENSITIVE, INSERT, INTERVAL, INTO, IS,
-		JOIN, KEY, LANGUAGE, LEADING, LEFT, LIKE, LOCAL,
+		IN, INNER_P, INSENSITIVE, INSERT, INTERVAL, INTO, IS, ISOLATION,
+		JOIN, KEY, LANGUAGE, LEADING, LEFT, LEVEL, LIKE, LOCAL,
 		MATCH, MINUTE_P, MONTH_P, NAMES,
 		NATIONAL, NATURAL, NCHAR, NEXT, NO, NOT, NULLIF, NULL_P, NUMERIC,
 		OF, ON, ONLY, OPTION, OR, ORDER, OUTER_P,
@@ -539,6 +542,24 @@ VariableSetStmt:  SET ColId TO var_value
 					n->value = $4;
 					$$ = (Node *) n;
 				}
+		| SET TRANSACTION ISOLATION LEVEL READ ColId
+				{
+					VariableSetStmt *n = makeNode(VariableSetStmt);
+					n->name  = "XactIsoLevel";
+					n->value = $6;
+					if (strcasecmp(n->value, "COMMITTED"))
+						elog(ERROR,"parser: syntax error at or near \"%s\"", n->value);
+					$$ = (Node *) n;
+				}
+		| SET TRANSACTION ISOLATION LEVEL ColId
+				{
+					VariableSetStmt *n = makeNode(VariableSetStmt);
+					n->name  = "XactIsoLevel";
+					n->value = $5;
+					if (strcasecmp(n->value, "SERIALIZABLE"))
+						elog(ERROR,"parser: syntax error at or near \"%s\"", n->value);
+					$$ = (Node *) n;
+				}
 		| SET NAMES encoding
 				{
 #ifdef MB
@@ -573,6 +594,12 @@ VariableShowStmt:  SHOW ColId
 					n->name  = "timezone";
 					$$ = (Node *) n;
 				}
+		| SHOW TRANSACTION ISOLATION LEVEL
+				{
+					VariableShowStmt *n = makeNode(VariableShowStmt);
+					n->name  = "XactIsoLevel";
+					$$ = (Node *) n;
+				}
 		;
 
 VariableResetStmt:	RESET ColId
@@ -585,6 +612,12 @@ VariableResetStmt:	RESET ColId
 				{
 					VariableResetStmt *n = makeNode(VariableResetStmt);
 					n->name  = "timezone";
+					$$ = (Node *) n;
+				}
+		| RESET TRANSACTION ISOLATION LEVEL
+				{
+					VariableResetStmt *n = makeNode(VariableResetStmt);
+					n->name  = "XactIsoLevel";
 					$$ = (Node *) n;
 				}
 		;
@@ -2473,28 +2506,77 @@ DeleteStmt:  DELETE FROM relation_name
 				}
 		;
 
-/*
- *	Total hack to just lock a table inside a transaction.
- *	Is it worth making this a separate command, with
- *	its own node type and file.  I don't think so. bjm 1998/1/22
- */
-LockStmt:  LOCK_P opt_table relation_name
+LockStmt:	LOCK_P opt_table relation_name
 				{
-					DeleteStmt *n = makeNode(DeleteStmt);
-					A_Const *c = makeNode(A_Const);
-
-					c->val.type = T_String;
-					c->val.val.str = "f";
-					c->typename = makeNode(TypeName);
-					c->typename->name = xlateSqlType("bool");
-					c->typename->typmod = -1;
+					LockStmt *n = makeNode(LockStmt);
 
 					n->relname = $3;
-					n->whereClause = (Node *)c;
+					n->mode = AccessExclusiveLock;
+					$$ = (Node *)n;
+				}
+		|	LOCK_P opt_table relation_name IN opt_lmode ROW IDENT IDENT
+				{
+					LockStmt *n = makeNode(LockStmt);
+
+					n->relname = $3;
+					if (strcasecmp($8, "MODE"))
+						elog(ERROR,"parser: syntax error at or near \"%s\"", $8);
+					if ($5 != NULL)
+					{
+						if (strcasecmp($5, "SHARE"))
+							elog(ERROR,"parser: syntax error at or near \"%s\"", $5);
+						if (strcasecmp($7, "EXCLUSIVE"))
+							elog(ERROR,"parser: syntax error at or near \"%s\"", $7);
+						n->mode = ShareRowExclusiveLock;
+					}
+					else
+					{
+						if (strcasecmp($7, "SHARE") == 0)
+							n->mode = RowShareLock;
+						else if (strcasecmp($7, "EXCLUSIVE") == 0)
+							n->mode = RowExclusiveLock;
+						else
+							elog(ERROR,"parser: syntax error at or near \"%s\"", $7);
+					}
+					$$ = (Node *)n;
+				}
+		|	LOCK_P opt_table relation_name IN IDENT IDENT IDENT
+				{
+					LockStmt *n = makeNode(LockStmt);
+
+					n->relname = $3;
+					if (strcasecmp($7, "MODE"))
+						elog(ERROR,"parser: syntax error at or near \"%s\"", $7);
+					if (strcasecmp($5, "ACCESS"))
+						elog(ERROR,"parser: syntax error at or near \"%s\"", $5);
+					if (strcasecmp($6, "SHARE") == 0)
+						n->mode = AccessShareLock;
+					else if (strcasecmp($6, "EXCLUSIVE") == 0)
+						n->mode = AccessExclusiveLock;
+					else
+						elog(ERROR,"parser: syntax error at or near \"%s\"", $6);
+					$$ = (Node *)n;
+				}
+		|	LOCK_P opt_table relation_name IN IDENT IDENT
+				{
+					LockStmt *n = makeNode(LockStmt);
+
+					n->relname = $3;
+					if (strcasecmp($6, "MODE"))
+						elog(ERROR,"parser: syntax error at or near \"%s\"", $6);
+					if (strcasecmp($5, "SHARE") == 0)
+						n->mode = ShareLock;
+					else if (strcasecmp($5, "EXCLUSIVE") == 0)
+						n->mode = ExclusiveLock;
+					else
+						elog(ERROR,"parser: syntax error at or near \"%s\"", $5);
 					$$ = (Node *)n;
 				}
 		;
 
+opt_lmode:	IDENT		{ $$ = $1; }
+		| /*EMPTY*/		{ $$ = NULL; }
+		;
 
 /*****************************************************************************
  *

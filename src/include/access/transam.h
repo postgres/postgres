@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: transam.h,v 1.17 1998/12/16 11:52:10 vadim Exp $
+ * $Id: transam.h,v 1.18 1998/12/18 09:09:52 vadim Exp $
  *
  *	 NOTES
  *		Transaction System Version 101 now support proper oid
@@ -160,6 +160,7 @@ extern void TransBlockNumberSetXidStatus(Relation relation,
 /* in transam/varsup.c */
 extern void VariableRelationPutNextXid(TransactionId xid);
 extern void GetNewTransactionId(TransactionId *xid);
+extern void ReadNewTransactionId(TransactionId *xid);
 extern void GetNewObjectId(Oid *oid_return);
 extern void CheckMaxObjectId(Oid assigned_oid);
 

@@ -818,8 +818,8 @@ GetTupleForTrigger(EState *estate, ItemPointer tid, bool before)
 
 			case HeapTupleUpdated:
 				ReleaseBuffer(buffer);
-				if (XactIsoLevel == XACT_SERIALIZED)
-					elog(ERROR, "Serialize access failed due to concurrent update");
+				if (XactIsoLevel == XACT_SERIALIZABLE)
+					elog(ERROR, "Can't serialize access due to concurrent update");
 				else
 					elog(ERROR, "Isolation level %u is not supported", XactIsoLevel);
 				return(NULL);

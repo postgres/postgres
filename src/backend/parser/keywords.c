@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.49 1998/12/04 15:34:29 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.50 1998/12/18 09:10:34 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -124,12 +124,14 @@ static ScanKeyword ScanKeywords[] = {
 	{"into", INTO},
 	{"is", IS},
 	{"isnull", ISNULL},
+	{"isolation", ISOLATION},
 	{"join", JOIN},
 	{"key", KEY},
 	{"lancompiler", LANCOMPILER},
 	{"language", LANGUAGE},
 	{"leading", LEADING},
 	{"left", LEFT},
+	{"level", LEVEL},
 	{"like", LIKE},
 	{"listen", LISTEN},
 	{"load", LOAD},

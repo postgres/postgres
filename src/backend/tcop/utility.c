@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.50 1998/09/25 13:47:27 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.51 1998/12/18 09:10:36 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -758,6 +758,13 @@ ProcessUtility(Node *parsetree,
 			CHECK_IF_ABORTED();
 
 			RemoveUser(((DropUserStmt *) parsetree)->user);
+			break;
+
+		case T_LockStmt:
+			PS_SET_STATUS(commandTag = "LOCK TABLE");
+			CHECK_IF_ABORTED();
+
+			LockTableCommand((LockStmt *) parsetree);
 			break;
 
 

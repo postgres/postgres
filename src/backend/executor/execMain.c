@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.61 1998/12/16 11:53:45 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.62 1998/12/18 09:10:21 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1037,8 +1037,8 @@ ExecDelete(TupleTableSlot *slot,
 			break;
 
 		case HeapTupleUpdated:
-			if (XactIsoLevel == XACT_SERIALIZED)
-				elog(ERROR, "Serialize access failed due to concurrent update");
+			if (XactIsoLevel == XACT_SERIALIZABLE)
+				elog(ERROR, "Can't serialize access due to concurrent update");
 			else
 				elog(ERROR, "Isolation level %u is not supported", XactIsoLevel);
 			return;
@@ -1167,8 +1167,8 @@ ExecReplace(TupleTableSlot *slot,
 			break;
 
 		case HeapTupleUpdated:
-			if (XactIsoLevel == XACT_SERIALIZED)
-				elog(ERROR, "Serialize access failed due to concurrent update");
+			if (XactIsoLevel == XACT_SERIALIZABLE)
+				elog(ERROR, "Can't serialize access due to concurrent update");
 			else
 				elog(ERROR, "Isolation level %u is not supported", XactIsoLevel);
 			return;

@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tqual.h,v 1.17 1998/12/16 11:52:11 vadim Exp $
+ * $Id: tqual.h,v 1.18 1998/12/18 09:09:55 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,6 +31,7 @@ typedef SnapshotData *Snapshot;
 
 extern	Snapshot					SnapshotDirty;
 extern	Snapshot					QuerySnapshot;
+extern	Snapshot					SerializableSnapshot;
 
 #define IsSnapshotNow(snapshot)		((Snapshot) snapshot == SnapshotNow)
 #define IsSnapshotSelf(snapshot)	((Snapshot) snapshot == SnapshotSelf)
@@ -99,7 +100,7 @@ extern int		HeapTupleSatisfiesUpdate(HeapTuple tuple);
 
 extern void setheapoverride(bool on);
 
-extern Snapshot GetSnapshotData(void);
+extern Snapshot GetSnapshotData(bool serializable);
 extern void		SetQuerySnapshot(void);
 extern void		FreeXactSnapshot(void);
 

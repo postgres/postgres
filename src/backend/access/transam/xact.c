@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.27 1998/12/16 11:53:44 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.28 1998/12/18 09:10:18 vadim Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -194,7 +194,8 @@ TransactionStateData CurrentTransactionStateData = {
 TransactionState CurrentTransactionState =
 &CurrentTransactionStateData;
 
-int	XactIsoLevel = XACT_SERIALIZED;
+int	DefaultXactIsoLevel = XACT_SERIALIZABLE;
+int	XactIsoLevel;
 
 /* ----------------
  *		info returned when the system is disabled
@@ -798,6 +799,7 @@ StartTransaction()
 
 	TransactionIdFlushCache();
 	FreeXactSnapshot();
+	XactIsoLevel = DefaultXactIsoLevel;
 
 	/* ----------------
 	 *	Check the current transaction state.  If the transaction system

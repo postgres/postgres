@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.62 1998/12/04 15:34:44 thomas Exp $
+ * $Id: parsenodes.h,v 1.63 1998/12/18 09:09:54 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -574,6 +574,16 @@ typedef struct VariableResetStmt
 	char	   *name;
 } VariableResetStmt;
 
+/* ----------------------
+ *		LOCK Statement
+ * ----------------------
+ */
+typedef struct LockStmt
+{
+	NodeTag		type;
+	char	   *relname;		/* relation to lock */
+	int			mode;			/* lock mode */
+} LockStmt;
 
 /*****************************************************************************
  *		Optimizable Statements

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.17 1998/09/01 04:27:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.18 1998/12/18 09:10:17 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -307,6 +307,42 @@ GetNewTransactionId(TransactionId *xid)
 	TransactionIdStore(ShmemVariableCache->nextXid, xid);
 	TransactionIdAdd(&(ShmemVariableCache->nextXid), 1);
 	(ShmemVariableCache->xid_count)--;
+
+	SpinRelease(OidGenLockId);
+}
+
+/*
+ * Like GetNewTransactionId reads nextXid but don't fetch it.
+ */
+void
+ReadNewTransactionId(TransactionId *xid)
+{
+
+	/* ----------------
+	 *	during bootstrap initialization, we return the special
+	 *	bootstrap transaction id.
+	 * ----------------
+	 */
+	if (AMI_OVERRIDE)
+	{
+		TransactionIdStore(AmiTransactionId, xid);
+		return;
+	}
+
+	SpinAcquire(OidGenLockId);	/* not good for concurrency... */
+
+	if (ShmemVariableCache->xid_count == 0)
+	{
+		TransactionId nextid;
+
+		VariableRelationGetNextXid(&nextid);
+		TransactionIdStore(nextid, &(ShmemVariableCache->nextXid));
+		ShmemVariableCache->xid_count = VAR_XID_PREFETCH;
+		TransactionIdAdd(&nextid, VAR_XID_PREFETCH);
+		VariableRelationPutNextXid(nextid);
+	}
+
+	TransactionIdStore(ShmemVariableCache->nextXid, xid);
 
 	SpinRelease(OidGenLockId);
 }

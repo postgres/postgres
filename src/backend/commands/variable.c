@@ -2,7 +2,7 @@
  * Routines for handling of 'SET var TO',
  *	'SHOW var' and 'RESET var' statements.
  *
- * $Id: variable.c,v 1.17 1998/10/26 00:59:22 tgl Exp $
+ * $Id: variable.c,v 1.18 1998/12/18 09:10:20 vadim Exp $
  *
  */
 
@@ -15,6 +15,7 @@
 #include "commands/variable.h"
 #include "utils/builtins.h"
 #include "optimizer/internal.h"
+#include "access/xact.h"
 #ifdef MULTIBYTE
 #include "mb/pg_wchar.h"
 #endif
@@ -44,6 +45,9 @@ static bool parse_geqo(const char *);
 static bool show_ksqo(void);
 static bool reset_ksqo(void);
 static bool parse_ksqo(const char *);
+static bool show_XactIsoLevel(void);
+static bool reset_XactIsoLevel(void);
+static bool parse_XactIsoLevel(const char *);
 #ifdef QUERY_LIMIT
 static bool show_query_limit(void);
 static bool reset_query_limit(void);
@@ -669,6 +673,9 @@ struct VariableParsers
 	{
 		"ksqo", parse_ksqo, show_ksqo, reset_ksqo
 	},
+	{
+		"XactIsoLevel", parse_XactIsoLevel, show_XactIsoLevel, reset_XactIsoLevel
+	},
 #ifdef QUERY_LIMIT
 	{
 		"query_limit", parse_query_limit, show_query_limit, reset_query_limit
@@ -771,5 +778,60 @@ static bool
 reset_ksqo()
 {
 	_use_keyset_query_optimizer = false;
+	return TRUE;
+}
+
+/* SET TRANSACTION */
+
+static bool
+parse_XactIsoLevel(const char *value)
+{
+	
+	if (value == NULL)
+	{
+		reset_XactIsoLevel();
+		return TRUE;
+	}
+
+	if (SerializableSnapshot != NULL)
+	{
+		elog(ERROR, "SET TRANSACTION ISOLATION LEVEL must be called before any query");
+		return TRUE;
+	}
+
+
+	if (strcasecmp(value, "SERIALIZABLE") == 0)
+		XactIsoLevel = XACT_SERIALIZABLE;
+	else if (strcasecmp(value, "COMMITTED") == 0)
+		XactIsoLevel = XACT_READ_COMMITTED;
+	else
+		elog(ERROR, "Bad TRANSACTION ISOLATION LEVEL (%s)", value);
+
+	return TRUE;
+}
+
+static bool
+show_XactIsoLevel()
+{
+
+	if (XactIsoLevel == XACT_SERIALIZABLE)
+		elog(NOTICE, "TRANSACTION ISOLATION LEVEL is SERIALIZABLE");
+	else
+		elog(NOTICE, "TRANSACTION ISOLATION LEVEL is READ COMMITTED");
+	return TRUE;
+}
+
+static bool
+reset_XactIsoLevel()
+{
+	
+	if (SerializableSnapshot != NULL)
+	{
+		elog(ERROR, "SET TRANSACTION ISOLATION LEVEL must be called before any query");
+		return TRUE;
+	}
+
+	XactIsoLevel = DefaultXactIsoLevel;
+
 	return TRUE;
 }

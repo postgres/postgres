@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.34 1998/12/15 12:45:52 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.35 1998/12/18 09:10:18 vadim Exp $
  *
  * NOTES
  *	  The PortalExecutorHeapMemory crap needs to be eliminated
@@ -39,6 +39,7 @@
 #include "utils/mcxt.h"
 #include "utils/portal.h"
 #include "utils/syscache.h"
+#include "miscadmin.h"
 
 /* ----------------
  *		PortalExecutorHeapMemory stuff
@@ -491,4 +492,26 @@ PerformAddAttribute(char *relationName,
 
 	pfree(reltup);
 	heap_close(rel);
+}
+
+void
+LockTableCommand(LockStmt *lockstmt)
+{
+	Relation	rel;
+	int			aclresult;
+
+	rel = heap_openr(lockstmt->relname);
+	if (rel == NULL)
+		elog(ERROR, "LOCK TABLE: relation %s can't be openned", lockstmt->relname);
+
+	if (lockstmt->mode == AccessShareLock)
+		aclresult = pg_aclcheck(lockstmt->relname, GetPgUserName(), ACL_RD);
+	else
+		aclresult = pg_aclcheck(lockstmt->relname, GetPgUserName(), ACL_WR);
+
+	if (aclresult != ACLCHECK_OK)
+		elog(ERROR, "LOCK TABLE: permission denied");
+
+	LockRelation(rel, lockstmt->mode);
+
 }
