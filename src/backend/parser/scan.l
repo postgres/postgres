@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.55 1999/09/27 19:40:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.56 1999/09/27 21:02:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -151,7 +151,7 @@ typecast		"::"
 
 self			[,()\[\].;$\:\+\-\*\/\%\^\<\>\=\|]
 op_and_self		[\~\!\@\#\^\&\|\`\?\$\:\+\-\*\/\%\<\>\=]
-operator		{op_and_self}+
+operator	{op_and_self}|({op_and_self}+[\~\!\@\#\^\&\|\`\?\$\:\+\*\/\%\<\>\=])
 
 /* we do not allow unary minus in numbers. 
  * instead we pass it verbatim to parser. there it gets
