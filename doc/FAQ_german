@@ -4,11 +4,9 @@
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us).
    
    Deutsche Übersetzung von Ian Barwick (barwick@gmx.net).
-   Basiert teilweise auf einer Übersetzung von Karsten Schulz
-   (schulz@linux-systemhaus.de).
    
-   Letzte Aktualisierung der deutschen Übersetzung: Mo., den 21.10.2002,
-   23:00 CET
+   Letzte Aktualisierung der deutschen Übersetzung: So., den 15.12.2002,
+   18:00 CET
    
    Die aktuellste Version dieses Dokuments liegt auf der PostgreSQL
    Website:
@@ -44,8 +42,7 @@
    2.1) Gibt es ODBC-Treiber für PostgreSQL?
    2.2) Welche Werkzeuge gibt es, um Web-Seiten mit PostgreSQL zu
    verbinden?
-   2.3) Hat PostgreSQL eine grafische Benutzerschnittstelle? Einen
-   Report-Generator? Eine eingebaute Query-Schnittstelle?
+   2.3) Hat PostgreSQL eine grafische Benutzerschnittstelle?
    2.4) Welche Programmiersprachen können mit PostgreSQL kommunizieren?
    
                            Administrative Fragen
@@ -283,7 +280,7 @@
    
     1.7) Was ist die neueste Version von PostgreSQL?
     
-   Die neueste Version von PostgreSQL ist 7.2.3.
+   Die neueste Version von PostgreSQL ist 7.3.
    
    Wir planen alle 4 Monate eine neue Version herauszugeben.
    
@@ -444,11 +441,12 @@
     
    Es sind zwei ODBC-Treiber verfügbar: PsqlODBC und OpenLink ODBC.
    
-   PsqlODBC ist in der Distribution enthalten. Weitere Informationen
-   können unter ftp://ftp.PostgreSQL.org/pub/odbc/ abgerufen werden.
+   PsqlODBC kann von
+   http://gborg.postgresql.org/project/psqlodbc/projdisplay.php
+   heruntergeladen werden.
    
    OpenLink ODBC kann unter http://www.openlinksw.com geholt werden. Die
-   Software arbeitet mit dem Standard-ODBC-Client der Firma, so dass
+   Software arbeitet mit dem Standard-ODBC-Client dieser Firma, so dass
    PostgreSQL-ODBC auf jeder Client-Plattform zur Verfügung steht, die
    unterstützt wird (Win, Mac, Unix, VMS).
    
@@ -456,8 +454,6 @@
    kommerziellen Support benötigen, dennoch wird immer eine
    Freeware-Version verfügbar sein. Fragen dazu bitte an
    postgres95@openlink.co.uk.
-   
-   Bitte beachten Sie auch das Kapitel zu ODBC im Progammer's Guide.
    
     2.2) Welche Werkzeuge gibt es, um Web-Seiten mit PostgreSQL zu verbinden?
     
@@ -470,28 +466,32 @@
    Für komplexere Aufgaben bietet sich die Perl-Schnittstelle mit CGI.pm
    oder mod_perl.
    
-    2.3) Hat PostgreSQL eine grafische Benutzerschnittstelle? Einen
-    Report-Generator? Eine eingebaute Query-Schnittstelle?
+    2.3) Hat PostgreSQL eine grafische Benutzerschnittstelle?
     
-   Wir haben eine nette grafische Benutzerschnittstelle namens PgAccess,
-   der außerdem einen Reportgenerator enthält: http://www.pgaccess.org
-   
-   Die Distribution enthält außerdem ecpg, die eine eingebettete
-   SQL-Query-Schnittstelle für C zur Verfügung stellt.
+   Es gibt mehrere grafische Schnittstellen für PostgreSQL, darunter
+   PgAccess ( http://www.pgaccess.org), PgAdmin II
+   (http://www.pgadmin.org, nur für Win32), RHDB Admin
+   (http://sources.redhat.com/rhdb/ ) und Rekall (
+   http://www.thekompany.com/products/rekall/, proprietär). Es gibt
+   außerdem PHPPgAdmin ( http://phppgadmin.sourceforge.net/ ), eine
+   web-basierte Schnittstelle.
    
     2.4) Welche Programmiersprachen und Schnittstellen gibt es?
     
-   PostgreSQL bietet:
+   Die meisten gängigen Programmiersprachen bieten Schnittstellen für
+   PostgreSQL.
+   
+   Die folgenden Schnittstellen werden mit der PostgreSQL-Distribution
+   ausgeliefert:
      * C (libpq)
-     * C++ (libpq++)
      * Embedded C (ecpg)
      * Java (jdbc)
-     * Perl (perl5, DBD::Pg)
-     * ODBC (odbc)
      * Python (PyGreSQL)
      * TCL (libpgtcl)
-     * C Easy API (libpgeasy)
-     * PHP ('pg_' functions, Pear::DB)
+       
+   Weitere Schnittstellen für andere Sprachen können über
+   http://gborg.postgresql.org (Bereich Drivers/Interfaces) bezogen
+   werden.
      _________________________________________________________________
    
                            Administrative Fragen
@@ -1281,3 +1281,6 @@ BYTEA         bytea           Bytearray mit variabler Länge
    Verständnisfragen zum Inhalt der FAQ freue ich mich. Ich nehme auch
    allgemeine Fragen zu PostgreSQL gerne entgegen, kann aber leider keine
    zeitige Antwort garantieren.
+   
+   Diese Übersetzung basiert teilweise auf einer früheren Übersetzung von
+   Karsten Schulz (schulz@linux-systemhaus.de).
