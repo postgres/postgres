@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.74 2000/02/21 18:47:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.75 2000/02/21 18:49:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -453,7 +453,6 @@ BufferAlloc(Relation reln,
 		 */
 		Assert(buf->refcount == 0);
 		buf->refcount = 1;
-		Assert(PrivateRefCount[BufferDescriptorGetBuffer(buf) - 1] == 0);
 		PrivateRefCount[BufferDescriptorGetBuffer(buf) - 1] = 1;
 
 		if (buf->flags & BM_DIRTY)
@@ -543,7 +542,6 @@ BufferAlloc(Relation reln,
 				inProgress = FALSE;
 				buf->flags &= ~BM_IO_IN_PROGRESS;
 				TerminateBufferIO(buf);
-				Assert(PrivateRefCount[BufferDescriptorGetBuffer(buf)-1] == 1);
 				PrivateRefCount[BufferDescriptorGetBuffer(buf) - 1] = 0;
 				buf->refcount--;
 				buf = (BufferDesc *) NULL;
@@ -570,7 +568,6 @@ BufferAlloc(Relation reln,
 				{
 					TerminateBufferIO(buf);
 					/* give up the buffer since we don't need it any more */
-					Assert(PrivateRefCount[BufferDescriptorGetBuffer(buf)-1] == 1);
 					PrivateRefCount[BufferDescriptorGetBuffer(buf) - 1] = 0;
 					Assert(buf->refcount > 0);
 					buf->refcount--;
@@ -1472,16 +1469,8 @@ ReleaseRelationBuffers(Relation rel)
 			if (!(buf->flags & BM_FREE))
 			{
 				/* Assert checks that buffer will actually get freed! */
-				Assert(buf->refcount == 1);
-				if (PrivateRefCount[i - 1] <= 0)
-				{
-					fprintf(stderr, "Nonpositive PrivateRefCount on buffer for %s\n",
-							RelationGetRelationName(rel));
-					fflush(stderr);
-					* ((char *) 0) = 0;
-					abort();
-				}
-				Assert(PrivateRefCount[i - 1] == 1);
+				Assert(PrivateRefCount[i - 1] == 1 &&
+					   buf->refcount == 1);
 				/* ReleaseBuffer expects we do not hold the lock at entry */
 				SpinRelease(BufMgrLock);
 				holding = false;
