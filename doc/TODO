@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sun Nov 18 16:16:56 EST 2001
+Last updated:		Mon Nov 19 13:10:23 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -56,6 +56,7 @@ ADMIN
 * Remove behavior of postmaster -o after making postmaster/postgres
   flags unique
 * Allow usernames to be specified directly in pg_hba.conf (Bruce)
+* Add functions to return storage length of TOAST data values (Tom)
 
 TYPES
 
