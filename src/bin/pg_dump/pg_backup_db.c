@@ -5,7 +5,7 @@
  *	Implements the basic DB functions used by the archiver.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.54 2004/08/20 16:07:15 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.55 2004/08/20 20:00:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,6 +39,8 @@ static char *_sendCopyLine(ArchiveHandle *AH, char *qry, char *eos);
 
 static int _isIdentChar(char c);
 static int _isDQChar(char c, int atStart);
+
+#define DB_MAX_ERR_STMT 128
 
 static int
 _parse_version(ArchiveHandle *AH, const char *versionString)
@@ -302,6 +304,7 @@ static int
 _executeSqlCommand(ArchiveHandle *AH, PGconn *conn, PQExpBuffer qry, char *desc)
 {
 	PGresult   *res;
+	char	    errStmt[DB_MAX_ERR_STMT];
 
 	/* fprintf(stderr, "Executing: '%s'\n\n", qry->data); */
 	res = PQexec(conn, qry->data);
@@ -318,8 +321,18 @@ _executeSqlCommand(ArchiveHandle *AH, PGconn *conn, PQExpBuffer qry, char *desc)
 			AH->pgCopyIn = 1;
 		}
 		else
-			warn_or_die_horribly(AH, modulename, "%s: %s",
-								 desc, PQerrorMessage(AH->connection));
+		{
+			strncpy(errStmt, qry->data, DB_MAX_ERR_STMT);
+			if (errStmt[DB_MAX_ERR_STMT-1] != '\0') {
+				errStmt[DB_MAX_ERR_STMT-4] = '.';
+				errStmt[DB_MAX_ERR_STMT-3] = '.';
+				errStmt[DB_MAX_ERR_STMT-2] = '.';
+				errStmt[DB_MAX_ERR_STMT-1] = '\0';
+			}
+			warn_or_die_horribly(AH, modulename, "%s: %s    Command was: %s\n",
+						desc, PQerrorMessage(AH->connection),
+						errStmt);
+		}
 	}
 
 	PQclear(res);

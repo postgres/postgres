@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.93 2004/08/20 04:20:22 momjian Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.94 2004/08/20 20:00:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -137,6 +137,7 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 	bool		defnDumped;
 
 	AH->ropt = ropt;
+	AH->stage = STAGE_INITIALIZING;
 
 	/*
 	 * Check for nonsensical option combinations.
@@ -166,6 +167,8 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 		ConnectDatabase(AHX, ropt->dbname,
 						ropt->pghost, ropt->pgport, ropt->username,
 						ropt->requirePassword, ropt->ignoreVersion);
+		/* If we're talking to the DB directly, don't send comments since they obscure SQL when displaying errors */
+		AH->noTocComments = 1;
 	}
 
 	/*
@@ -211,12 +214,16 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 	 */
 	_doSetFixedOutputState(AH);
 
+	AH->stage = STAGE_PROCESSING;
+
 	/*
 	 * Drop the items at the start, in reverse order
 	 */
 	if (ropt->dropSchema)
 	{
 		te = AH->toc->prev;
+		AH->currentTE = te;
+
 		while (te != AH->toc)
 		{
 			reqs = _tocEntryRequired(te, ropt, false);
@@ -240,6 +247,8 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 	te = AH->toc->next;
 	while (te != AH->toc)
 	{
+		AH->currentTE = te;
+
 		/* Work out what, if anything, we want from this entry */
 		reqs = _tocEntryRequired(te, ropt, false);
 
@@ -375,6 +384,8 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 	te = AH->toc->next;
 	while (te != AH->toc)
 	{
+		AH->currentTE = te;
+
 		/* Work out what, if anything, we want from this entry */
 		reqs = _tocEntryRequired(te, ropt, true);
 
@@ -391,6 +402,8 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 	/*
 	 * Clean up & we're done.
 	 */
+	AH->stage = STAGE_FINALIZING;
+
 	if (ropt->filename || ropt->compression)
 		ResetOutput(AH, sav);
 
@@ -1227,6 +1240,39 @@ warn_or_die_horribly(ArchiveHandle *AH,
 					 const char *modulename, const char *fmt, ...)
 {
 	va_list ap;
+
+	switch(AH->stage) {
+
+		case STAGE_NONE:
+			/* Do nothing special */
+			break;
+
+		case STAGE_INITIALIZING:
+			if (AH->stage != AH->lastErrorStage) {
+				write_msg(modulename, "Error while INITIALIZING:\n");
+			}
+			break;
+
+		case STAGE_PROCESSING:
+			if (AH->stage != AH->lastErrorStage) {
+				write_msg(modulename, "Error while PROCESSING TOC:\n");
+			}
+			break;
+
+		case STAGE_FINALIZING:
+			if (AH->stage != AH->lastErrorStage) {
+				write_msg(modulename, "Error while FINALIZING:\n");
+			}
+			break;
+	}
+	if (AH->currentTE != NULL && AH->currentTE != AH->lastErrorTE) {
+		write_msg(modulename, "Error from TOC Entry %d; %u %u %s %s %s\n", AH->currentTE->dumpId,
+				 AH->currentTE->catalogId.tableoid, AH->currentTE->catalogId.oid,
+				 AH->currentTE->desc, AH->currentTE->tag, AH->currentTE->owner);
+	}
+	AH->lastErrorStage = AH->stage;
+	AH->lastErrorTE = AH->currentTE;
+
 	va_start(ap, fmt);
 	if (AH->public.exit_on_error)
 	{
@@ -2026,6 +2072,9 @@ _doSetFixedOutputState(ArchiveHandle *AH)
 	/* Make sure function checking is disabled */
 	ahprintf(AH, "SET check_function_bodies = false;\n");
 
+	/* Avoid annoying notices etc */
+	ahprintf(AH, "SET client_min_messages = warning;\n");
+
 	ahprintf(AH, "\n");
 }
 
@@ -2316,6 +2365,9 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isDat
 		if (strcmp(te->desc, "ACL") == 0)
 			return;
 	}
+
+	if (AH->noTocComments) 
+		return;
 
 	/*
 	 * Avoid dumping the public schema, as it will already be created ...
