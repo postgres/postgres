@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/stylesheet.dsl,v 1.26 2003/12/15 23:58:12 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/stylesheet.dsl,v 1.27 2004/06/29 20:44:34 petere Exp $ -->
 <!DOCTYPE style-sheet PUBLIC "-//James Clark//DTD DSSSL Style Sheet//EN" [
 
 <!-- must turn on one of these with -i on the jade command line -->
@@ -56,11 +56,14 @@
 (element envar ($mono-seq$))
 (element lineannotation ($italic-seq$))
 (element literal ($mono-seq$))
+(element option ($mono-seq$))
+(element parameter ($mono-seq$))
 (element structfield ($mono-seq$))
 (element structname ($mono-seq$))
 (element symbol ($mono-seq$))
 (element token ($mono-seq$))
 (element type ($mono-seq$))
+(element varname ($mono-seq$))
 (element (programlisting emphasis) ($bold-seq$)) ;; to highlight sections of code
 
 ;; Special support for Tcl synopses
