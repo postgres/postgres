@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.59 2000/01/31 04:35:51 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.60 2000/02/04 03:16:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -905,7 +905,7 @@ SearchSysCache(struct catcache * cache,
 	CatCTup    *nct;
 	CatCTup    *nct2;
 	Dlelem	   *elt;
-	HeapTuple	ntp = 0;
+	HeapTuple	ntp = NULL;
 
 	Relation	relation;
 	MemoryContext oldcxt;
@@ -1039,32 +1039,42 @@ SearchSysCache(struct catcache * cache,
 		 *	wieck - 10/18/1996
 		 * ----------
 		 */
+		HeapTuple	indextp;
+
 		MemoryContextSwitchTo(oldcxt);
 		Assert(cache->cc_iscanfunc);
 		switch (cache->cc_nkeys)
 		{
 			case 4:
-				ntp = cache->cc_iscanfunc(relation, v1, v2, v3, v4);
+				indextp = cache->cc_iscanfunc(relation, v1, v2, v3, v4);
 				break;
 			case 3:
-				ntp = cache->cc_iscanfunc(relation, v1, v2, v3);
+				indextp = cache->cc_iscanfunc(relation, v1, v2, v3);
 				break;
 			case 2:
-				ntp = cache->cc_iscanfunc(relation, v1, v2);
+				indextp = cache->cc_iscanfunc(relation, v1, v2);
 				break;
 			case 1:
-				ntp = cache->cc_iscanfunc(relation, v1);
+				indextp = cache->cc_iscanfunc(relation, v1);
+				break;
+			default:
+				indextp = NULL;
 				break;
 		}
 		/* ----------
 		 *	Back to Cache context. If we got a tuple copy it
-		 *	into our context.
-		 *	wieck - 10/18/1996
+		 *	into our context.   wieck - 10/18/1996
+		 *	And free the tuple that was allocated in the
+		 *	transaction's context.   tgl - 02/03/2000
 		 * ----------
 		 */
+		if (HeapTupleIsValid(indextp)) {
+			MemoryContextSwitchTo((MemoryContext) CacheCxt);
+			ntp = heap_copytuple(indextp);
+			MemoryContextSwitchTo(oldcxt);
+			heap_freetuple(indextp);
+		}
 		MemoryContextSwitchTo((MemoryContext) CacheCxt);
-		if (HeapTupleIsValid(ntp))
-			ntp = heap_copytuple(ntp);
 	}
 	else
 	{
@@ -1089,6 +1099,7 @@ SearchSysCache(struct catcache * cache,
 		{
 			CACHE1_elog(DEBUG, "SearchSysCache: found tuple");
 			ntp = heap_copytuple(ntp);
+			/* We should not free the result of heap_getnext... */
 		}
 
 		MemoryContextSwitchTo(oldcxt);
@@ -1101,8 +1112,8 @@ SearchSysCache(struct catcache * cache,
 	cache->busy = false;
 
 	/* ----------------
-	 *	scan is complete.  if tup is valid, we copy it and add the copy to
-	 *	the cache.
+	 *	scan is complete.  if tup is valid, we can add it to the cache.
+	 *	note we have already copied it into the cache memory context.
 	 * ----------------
 	 */
 	if (HeapTupleIsValid(ntp))
@@ -1168,6 +1179,7 @@ SearchSysCache(struct catcache * cache,
 	heap_close(relation, AccessShareLock);
 
 	MemoryContextSwitchTo(oldcxt);
+
 	return ntp;
 }
 
