@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.30 1997/12/20 00:22:04 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.31 1997/12/20 18:36:26 scrappy Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the 
@@ -276,9 +276,4 @@ endif
 
 ifdef PROFILE
    CFLAGS+= $(PROFILE)
-endif
-
-# Globally pass PORTNAME
-ifdef PORTNAME
-  CFLAGS+= -D$(PORTNAME)
 endif
