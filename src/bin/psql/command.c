@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.33 2000/05/12 00:54:53 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.34 2000/06/26 14:16:34 momjian Exp $
  */
 #include "postgres.h"
 #include "command.h"
@@ -1647,7 +1647,7 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 			popt->nullPrint = xstrdup(value);
 		}
 		if (!quiet)
-			printf("Null display is \"%s\".\n", popt->nullPrint ? popt->nullPrint : "");
+			printf("Null display is '%s'.\n", popt->nullPrint ? popt->nullPrint : "");
 	}
 
 	/* field separator for unaligned text */
