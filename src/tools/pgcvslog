@@ -7,7 +7,7 @@
 # no branches:	# cvs log -d '>1999-06-14 00:00:00 GMT' . > log
 #
 # pre and post-branch logs:
-# find . -name CVS -type d -exec touch'{}/Entries.Static' \;
+# find . -name CVS -type d -exec touch '{}/Entries.Static' \;
 # cvs log -d'2000-05-08 00:00:00 GMT<2000-05-29 00:00:00 GMT'
 # cvs log -d'>2000-05-29 00:00:00 GMT' -rREL7_0_PATCHES
 # find . -name CVS -type d -exec rm '{}/Entries.Static' \;
