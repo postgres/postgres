@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_aggregate.h,v 1.47 2004/12/31 22:03:24 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_aggregate.h,v 1.48 2005/01/28 17:35:53 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -18,6 +18,8 @@
  */
 #ifndef PG_AGGREGATE_H
 #define PG_AGGREGATE_H
+
+#include "nodes/pg_list.h"
 
 /* ----------------
  *		postgres.h contains the system type definitions and the
