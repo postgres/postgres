@@ -4,7 +4,7 @@
 #
 # 'make install' installs whole contents of src/include.
 #
-# $PostgreSQL: pgsql/src/include/Makefile,v 1.16 2004/11/03 07:38:08 neilc Exp $
+# $PostgreSQL: pgsql/src/include/Makefile,v 1.17 2004/11/09 06:23:50 neilc Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -21,7 +21,7 @@ SUBDIRS = access bootstrap catalog commands executor lib libpq mb \
 	nodes optimizer parser port regex rewrite storage tcop utils
 
 # Install all headers
-install: all installdirs remove-old-headers
+install: all installdirs
 # These headers are needed by the public headers of the interfaces.
 	$(INSTALL_DATA) $(srcdir)/postgres_ext.h   $(DESTDIR)$(includedir)
 	$(INSTALL_DATA) $(srcdir)/libpq/libpq-fs.h $(DESTDIR)$(includedir)/libpq
@@ -48,24 +48,6 @@ install: all installdirs remove-old-headers
 installdirs:
 	$(mkinstalldirs) $(DESTDIR)$(includedir)/libpq $(DESTDIR)$(includedir_internal)/libpq
 	$(mkinstalldirs) $(addprefix $(DESTDIR)$(includedir_server)/, $(SUBDIRS))
-
-
-# Pre-7.1 Postgres installed some headers that are no longer installed by
-# default.  If we see these headers in the target directory, zap them to
-# avoid cross-version compile problems.  However, don't zap them if they
-# match current sources (that means the user did install-all-headers).
-
-remove-old-headers:
-	for file in fmgr.h postgres.h access/attnum.h commands/trigger.h \
-		executor/spi.h utils/elog.h utils/geo_decls.h utils/mcxt.h \
-		utils/palloc.h; do \
-		if cmp -s $(srcdir)/$$file $(DESTDIR)$(includedir)/$$file 2>/dev/null; \
-		then \
-			: ; \
-		else \
-			rm -f $(DESTDIR)$(includedir)/$$file; \
-		fi ; \
-	done
 
 
 uninstall:
