@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.26 1999/02/11 14:59:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.27 1999/02/11 16:09:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -194,9 +194,9 @@ better_path(Path *new_path, List *unique_paths, bool *is_new)
 				 * Replace pathkeys that match exactly, (1,2), (1,2).
 				 * Replace pathkeys (1,2) with (1,2,3) if the latter is not
 				 * more expensive and replace unordered path with ordered
-				 * path if it is not more expensive.
+				 * path if it is not more expensive.  Favor sorted keys
+				 * over unsorted keys in the same way.
 				 */
-				 
 								/* same keys, and new is cheaper, use it */
 			    if ((longer_key == 0 && more_sort == 0 &&
 					new_path->path_cost <  path->path_cost) ||
