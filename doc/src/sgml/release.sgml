@@ -1,17 +1,6 @@
 <Chapter Id="release">
 <Title>Release Notes</Title>
 
-<Para>
-<Note>
-<Para>
-Should include the migration notes from <FileName>migration/</FileName>.
-</Para>
-</Note>
-
-The release notes have not yet been fully integrated into the new documentation.
-Check for plain text files in the top of the distribution directory tree
-and in the <FileName>migration/</FileName> directory for current information.
-
 <Sect1>
 <Title>Release 6.4</Title>
 
@@ -48,7 +37,7 @@ from breakage inadvertently introduced in v6.3.1.
 
 <listitem>
 <para>
-Correctly handles function calls at the left side of BETWEEN and LIKE clauses.
+Correctly handles function calls on the left side of BETWEEN and LIKE clauses.
 
 </itemizedlist>
 
