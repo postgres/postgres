@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/numutils.c,v 1.27 1998/09/12 16:04:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/numutils.c,v 1.28 1998/10/02 01:22:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,7 +50,7 @@
 int32
 pg_atoi(char *s, int size, int c)
 {
-	long		l;
+	long		l = 0;
 	char	   *badp = (char *) NULL;
 
 	Assert(s);

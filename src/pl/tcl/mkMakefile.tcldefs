@@ -5,12 +5,15 @@ else
     if [ -f /usr/lib/tclConfig.sh ]; then
 	echo "using tclConfig.sh from /usr/lib"
 	. /usr/lib/tclConfig.sh
+    elif [ -f /usr/contrib/lib/tclConfig.sh ]; then
+	echo "using tclConfig.sh from /usr/contrib/lib"
+	. /usr/contrib/lib/tclConfig.sh
     else
 	if [ -f /usr/local/lib/tclConfig.sh ]; then
 	    echo "using tclConfig.sh from /usr/local/lib"
 	    . /usr/local/lib/tclConfig.sh
 	else
-	    echo "tclConfig.sh not found in /usr/lib or /usr/local/lib"
+	    echo "tclConfig.sh not found in /usr/lib, /usr/contrib/lib, or /usr/local/lib"
 	    echo "I need this file! Please make a symbolic link to this file"
 	    echo "and start make again."
 	    exit 1
