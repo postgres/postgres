@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.47 2004/07/13 02:59:49 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.48 2004/08/20 04:20:22 momjian Exp $ -->
 
 <refentry id="APP-PGRESTORE">
  <refmeta>
@@ -125,6 +125,18 @@
         Connect to database <replaceable
         class="parameter">dbname</replaceable> and restore directly
         into the database.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-e</option></term>
+      <term><option>--exit-on-error</option></term>
+      <listitem>
+       <para>
+        Exit if an error is encountered while sending SQL commands to
+        the database. The default is to continue and to display a count of 
+        errors at the end of the restoration.
        </para>
       </listitem>
      </varlistentry>

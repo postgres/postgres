@@ -34,7 +34,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_restore.c,v 1.59 2004/07/13 03:00:17 momjian Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_restore.c,v 1.60 2004/08/20 04:20:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -90,6 +90,7 @@ main(int argc, char **argv)
 		{"create", 0, NULL, 'C'},
 		{"data-only", 0, NULL, 'a'},
 		{"dbname", 1, NULL, 'd'},
+		{"exit-on-error", 0, NULL, 'e'},
 		{"file", 1, NULL, 'f'},
 		{"format", 1, NULL, 'F'},
 		{"function", 1, NULL, 'P'},
@@ -141,7 +142,7 @@ main(int argc, char **argv)
 		}
 	}
 
-	while ((c = getopt_long(argc, argv, "acCd:f:F:h:iI:lL:Op:P:RsS:t:T:uU:vWxX:",
+	while ((c = getopt_long(argc, argv, "acCd:ef:F:h:iI:lL:Op:P:RsS:t:T:uU:vWxX:",
 							cmdopts, NULL)) != -1)
 	{
 		switch (c)
@@ -158,6 +159,9 @@ main(int argc, char **argv)
 				break;
 			case 'd':
 				opts->dbname = strdup(optarg);
+				break;
+			case 'e':
+				opts->exit_on_error = true;
 				break;
 			case 'f':			/* output file name */
 				opts->filename = strdup(optarg);
@@ -321,10 +325,10 @@ main(int argc, char **argv)
 	/* Let the archiver know how noisy to be */
 	AH->verbose = opts->verbose;
 
-	/* restore keeps submitting sql commands as "pg_restore ... | psql ... "
-	 * this behavior choice could be turned into an option.
+	/*
+	 *	Whether to keep submitting sql commands as "pg_restore ... | psql ... "
 	 */
-	AH->die_on_errors = false;
+	AH->exit_on_error = opts->exit_on_error;
 
 	if (opts->tocFile)
 		SortTocFromFile(AH, opts);
@@ -391,6 +395,7 @@ usage(const char *progname)
 	printf(_("  -p, --port=PORT          database server port number\n"));
 	printf(_("  -U, --username=NAME      connect as specified database user\n"));
 	printf(_("  -W, --password           force password prompt (should happen automatically)\n"));
+	printf(_("  -e, --exit-on-error      exit on error, default is to continue\n"));
 
 	printf(_("\nIf no input file name is supplied, then standard input is used.\n\n"));
 	printf(_("Report bugs to <pgsql-bugs@postgresql.org>.\n"));
