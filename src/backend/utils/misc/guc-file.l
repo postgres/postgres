@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2000-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/misc/guc-file.l,v 1.26 2004/10/08 01:36:35 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/misc/guc-file.l,v 1.27 2004/11/11 23:45:13 tgl Exp $
  */
 
 %{
@@ -203,25 +203,28 @@ ProcessConfigFile(GucContext context)
 				if (token != GUC_EOL)
 					goto parse_error;
 
-				item = palloc(sizeof *item);
-				item->name = opt_name;
-				item->value = opt_value;
-
 				if (strcmp(opt_name, "custom_variable_classes") == 0)
 				{
 					/*
 					 * This variable must be processed first as it controls
-					 * the validity of other variables; so prepend to
-					 * the list instead of appending.
+					 * the validity of other variables; so apply immediately.
 					 */
-					item->next = head;
-					head = item;
-					if (!tail)
-						tail = item;
+					if (!set_config_option(opt_name, opt_value, context,
+										   PGC_S_FILE, false, true))
+					{
+						pfree(opt_name);
+						pfree(opt_value);
+						goto cleanup_exit;
+					}
+					pfree(opt_name);
+					pfree(opt_value);
 				}
 				else
 				{
 					/* append to list */
+					item = palloc(sizeof *item);
+					item->name = opt_name;
+					item->value = opt_value;
 					item->next = NULL;
 					if (!head)
 						head = item;
