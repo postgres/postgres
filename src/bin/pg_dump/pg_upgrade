@@ -3,7 +3,7 @@
 # pg_upgrade: update a database without needing a full dump/reload cycle.
 # CAUTION: read the manual page before trying to use this!
 
-# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_upgrade,v 1.22 2002/01/10 04:58:19 momjian Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_upgrade,v 1.23 2002/01/11 00:27:42 momjian Exp $
 #
 # NOTE: we must be sure to update the version-checking code a few dozen lines
 # below for each new PostgreSQL release.
@@ -121,11 +121,33 @@ case "$SRC_VERSION" in
 	exit 1;;
 esac
 
+pg_resetxlog 2>/dev/null
+if [ "$?" -ne 1 ]
+then	echo "Unable to find pg_resetxlog in path.
+Install it from pgsql/contrib/pg_resetxlog and continue.;  exiting" 1>&2
+	exit 1
+fi
+
+if ! pg_resetxlog -x | grep -q XID
+then	echo "Old version of pg_resetxlog found in path.
+Install a newer version from pgsql/contrib/pg_resetxlog and continue.;  exiting" 1>&2
+	exit 1
+fi
+
+# We need a high XID number so there is 1 gig gap in XID numbers so the
+# moved-over rows can be frozen on next VACUUM.
+
+XID=`pg_resetxlog -n "$OLDDIR" | grep "NextXID" | awk -F'  *' '{print $4}'`
+if [ "$SRC_VERSION" = "7.1" -a "$XID" -gt 2000000000 ]
+then	echo "XID too high for $0.;  exiting" 1>&2
+	exit 1
+fi
 
 # Checking done.  Ready to proceed.
 
 # Execute the schema script to create everything, except modify any
 # sequences with int4 maximums if we are upgrading from 7.1.
+
 cat $SCHEMA | awk -F' ' '{
 				if ("'"$SRC_VERSION"'" == "7.1" &&
 				    $1 == "CREATE" &&
@@ -169,6 +191,7 @@ fi
 
 # Now vacuum each result database in case our transaction increase
 # causes all the XID's to be marked with the frozen XID.
+
 psql -d template1 -At -c "SELECT datname FROM pg_database" | while read DB
 do
 	echo "VACUUM;" | psql "$DB"
@@ -189,6 +212,7 @@ fi
 
 # we are done with SQL database access
 # shutdown forces buffers to disk
+
 pg_ctl stop
 if [ "$?" -ne 0 ]
 then	echo "Unable to stop database server.;  exiting" 1>&2
@@ -282,29 +306,30 @@ to $NEWOID failed.;  exiting" 1>&2
 	fi
 done
 
-# 7.1 has non-compressed log file format
-if [ "$SRC_VERSION" = "7.1" ]
-then
-	# pg_log is oid 1269 in 7.1
-	LOGSIZE=`ls -l "$OLDDIR"/global/1269 "$OLDDIR"/global/1269.* 2>/dev/null |
-	awk -F'  *' '
-		BEGIN 	{sum=0;}
-			{sum += $5;}
-		END	{print sum;}'`
 
-# check < 2gig
-
-# set max transaction id
-
-else
-	rm -r data/pg_clog &&
-	mv "$OLDDIR"/data/pg_clog data/pg_clog &&
-	mv "$OLDDIR"/data/global/pg_control data/global/pg_control
-	if [ "$?" -ne 0 ]
-	then	echo "Moving of transaction and control files failed.;  exiting" 1>&2
-		exit 1
-	fi
+# Set this so the next VACUUM sets the old row XID's as "frozen"
+pg_resetxlog -x "$XID" data
+if [ "$?" -ne 0 ]
+then	echo "Unable to set new XID.;  exiting" 1>&2
+	exit 1
 fi
+
+# set last checkpoint location from old database
+
+CHKPOINT=`pg_resetxlog -n "$OLDDIR" | grep "checkpoint location" | 
+	awk -F'  *' '{print $4}'`
+if [ "$CHKPOINT" = "" ]
+then	echo "Unable to get old checkpoint location.;  exiting" 1>&2
+	exit 1
+fi
+
+pg_resetxlog -l `echo "$CHKPOINT | tr '/' ' '` data
+if [ "$?" -ne 0 ]
+then	echo "Unable to set new checkpoint location.;  exiting" 1>&2
+	exit 1
+fi
+
+# Restart server with moved data
 
 pg_ctl start
 if [ "$?" -ne 0 ]
