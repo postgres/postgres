@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/tidpath.c,v 1.11 2002/09/05 00:43:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/tidpath.c,v 1.12 2002/11/24 21:52:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,7 +25,6 @@
 #include "parser/parse_coerce.h"
 #include "utils/lsyscache.h"
 
-static void create_tidscan_joinpaths(Query *root, RelOptInfo *rel);
 static List *TidqualFromRestrictinfo(List *relids, List *restrictinfo);
 static bool isEvaluable(int varno, Node *node);
 static Node *TidequalClause(int varno, Expr *node);
@@ -237,44 +236,6 @@ TidqualFromRestrictinfo(List *relids, List *restrictinfo)
 }
 
 /*
- * create_tidscan_joinpaths
- *	  Create innerjoin paths if there are suitable joinclauses.
- *
- * XXX does this actually work?
- */
-static void
-create_tidscan_joinpaths(Query *root, RelOptInfo *rel)
-{
-	List	   *rlst = NIL,
-			   *lst;
-
-	foreach(lst, rel->joininfo)
-	{
-		JoinInfo   *joininfo = (JoinInfo *) lfirst(lst);
-		List	   *restinfo,
-				   *tideval;
-
-		restinfo = joininfo->jinfo_restrictinfo;
-		tideval = TidqualFromRestrictinfo(rel->relids, restinfo);
-		if (length(tideval) == 1)
-		{
-			TidPath    *pathnode = makeNode(TidPath);
-
-			pathnode->path.pathtype = T_TidScan;
-			pathnode->path.parent = rel;
-			pathnode->path.pathkeys = NIL;
-			pathnode->tideval = tideval;
-			pathnode->unjoined_relids = joininfo->unjoined_relids;
-
-			cost_tidscan(&pathnode->path, root, rel, tideval);
-
-			rlst = lappend(rlst, pathnode);
-		}
-	}
-	rel->innerjoin = nconc(rel->innerjoin, rlst);
-}
-
-/*
  * create_tidscan_paths
  *	  Creates paths corresponding to tid direct scans of the given rel.
  *	  Candidate paths are added to the rel's pathlist (using add_path).
@@ -287,5 +248,4 @@ create_tidscan_paths(Query *root, RelOptInfo *rel)
 
 	if (tideval)
 		add_path(rel, (Path *) create_tidscan_path(root, rel, tideval));
-	create_tidscan_joinpaths(root, rel);
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.71 2002/09/04 20:31:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.72 2002/11/24 21:52:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,8 +42,6 @@ static void match_unsorted_inner(Query *root, RelOptInfo *joinrel,
 static void hash_inner_and_outer(Query *root, RelOptInfo *joinrel,
 					 RelOptInfo *outerrel, RelOptInfo *innerrel,
 					 List *restrictlist, JoinType jointype);
-static Path *best_innerjoin(List *join_paths, List *outer_relid,
-			   JoinType jointype);
 static List *select_mergejoin_clauses(RelOptInfo *joinrel,
 						 RelOptInfo *outerrel,
 						 RelOptInfo *innerrel,
@@ -351,8 +349,8 @@ match_unsorted_outer(Query *root,
 	 * Get the best innerjoin indexpath (if any) for this outer rel. It's
 	 * the same for all outer paths.
 	 */
-	bestinnerjoin = best_innerjoin(innerrel->innerjoin, outerrel->relids,
-								   jointype);
+	bestinnerjoin = best_inner_indexscan(root, innerrel,
+										 outerrel->relids, jointype);
 
 	foreach(i, outerrel->pathlist)
 	{
@@ -810,69 +808,6 @@ hash_inner_and_outer(Query *root,
 										  restrictlist,
 										  hashclauses));
 	}
-}
-
-/*
- * best_innerjoin
- *	  Find the cheapest index path that has already been identified by
- *	  indexable_joinclauses() as being a possible inner path for the given
- *	  outer relation(s) in a nestloop join.
- *
- * We compare indexpaths on total_cost only, assuming that they will all have
- * zero or negligible startup_cost.  We might have to think harder someday...
- *
- * 'join_paths' is a list of potential inner indexscan join paths
- * 'outer_relids' is the relid list of the outer join relation
- *
- * Returns the pathnode of the best path, or NULL if there's no
- * usable path.
- */
-static Path *
-best_innerjoin(List *join_paths, Relids outer_relids, JoinType jointype)
-{
-	Path	   *cheapest = (Path *) NULL;
-	bool		isouterjoin;
-	List	   *join_path;
-
-	/*
-	 * Nestloop only supports inner and left joins.
-	 */
-	switch (jointype)
-	{
-		case JOIN_INNER:
-			isouterjoin = false;
-			break;
-		case JOIN_LEFT:
-			isouterjoin = true;
-			break;
-		default:
-			return NULL;
-	}
-
-	foreach(join_path, join_paths)
-	{
-		IndexPath  *path = (IndexPath *) lfirst(join_path);
-
-		Assert(IsA(path, IndexPath));
-
-		/*
-		 * If processing an outer join, only use explicit join clauses in
-		 * the inner indexscan.  For inner joins we need not be so picky.
-		 */
-		if (isouterjoin && !path->alljoinquals)
-			continue;
-
-		/*
-		 * path->joinrelids is the set of base rels that must be part of
-		 * outer_relids in order to use this inner path, because those
-		 * rels are used in the index join quals of this inner path.
-		 */
-		if (is_subseti(path->joinrelids, outer_relids) &&
-			(cheapest == NULL ||
-			 compare_path_costs((Path *) path, cheapest, TOTAL_COST) < 0))
-			cheapest = (Path *) path;
-	}
-	return cheapest;
 }
 
 /*

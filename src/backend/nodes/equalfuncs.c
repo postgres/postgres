@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.166 2002/11/23 03:59:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.167 2002/11/24 21:52:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -429,10 +429,6 @@ _equalIndexPath(IndexPath *a, IndexPath *b)
 		return false;
 	if (a->indexscandir != b->indexscandir)
 		return false;
-	if (!equali(a->joinrelids, b->joinrelids))
-		return false;
-	if (a->alljoinquals != b->alljoinquals)
-		return false;
 
 	/*
 	 * Skip 'rows' because of possibility of floating-point roundoff
@@ -548,13 +544,11 @@ _equalRestrictInfo(RestrictInfo *a, RestrictInfo *b)
 		return false;
 
 	/*
-	 * We ignore eval_cost, this_selec, left/right_pathkey, and
-	 * left/right_bucketsize, since they may not be set yet, and should be
-	 * derivable from the clause anyway.  Probably it's not really
-	 * necessary to compare any of these remaining fields ...
+	 * We ignore subclauseindices, eval_cost, this_selec, left/right_pathkey,
+	 * and left/right_bucketsize, since they may not be set yet, and should be
+	 * derivable from the clause anyway.  Probably it's not really necessary
+	 * to compare any of these remaining fields ...
 	 */
-	if (!equal(a->subclauseindices, b->subclauseindices))
-		return false;
 	if (a->mergejoinoperator != b->mergejoinoperator)
 		return false;
 	if (a->left_sortop != b->left_sortop)
@@ -572,6 +566,18 @@ _equalJoinInfo(JoinInfo *a, JoinInfo *b)
 	if (!equali(a->unjoined_relids, b->unjoined_relids))
 		return false;
 	if (!equal(a->jinfo_restrictinfo, b->jinfo_restrictinfo))
+		return false;
+	return true;
+}
+
+static bool
+_equalInnerIndexscanInfo(InnerIndexscanInfo *a, InnerIndexscanInfo *b)
+{
+	if (!equali(a->other_relids, b->other_relids))
+		return false;
+	if (a->isouterjoin != b->isouterjoin)
+		return false;
+	if (!equal(a->best_innerpath, b->best_innerpath))
 		return false;
 	return true;
 }
@@ -2119,6 +2125,9 @@ equal(void *a, void *b)
 			break;
 		case T_JoinInfo:
 			retval = _equalJoinInfo(a, b);
+			break;
+		case T_InnerIndexscanInfo:
+			retval = _equalInnerIndexscanInfo(a, b);
 			break;
 		case T_TidPath:
 			retval = _equalTidPath(a, b);

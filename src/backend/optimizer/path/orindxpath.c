@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/orindxpath.c,v 1.47 2002/06/20 20:29:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/orindxpath.c,v 1.48 2002/11/24 21:52:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,9 +92,6 @@ create_or_index_paths(Query *root, RelOptInfo *rel)
 				/* We don't actually care what order the index scans in. */
 				pathnode->indexscandir = NoMovementScanDirection;
 
-				/* This isn't a nestloop innerjoin, so: */
-				pathnode->joinrelids = NIL;		/* no join clauses here */
-				pathnode->alljoinquals = false;
 				pathnode->rows = rel->rows;
 
 				best_or_subclause_indices(root,

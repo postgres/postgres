@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.180 2002/11/15 02:50:07 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.181 2002/11/24 21:52:13 tgl Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -1067,12 +1067,8 @@ _outIndexPath(StringInfo str, IndexPath *node)
 	appendStringInfo(str, " :indexqual ");
 	_outNode(str, node->indexqual);
 
-	appendStringInfo(str, " :indexscandir %d :joinrelids ",
-					 (int) node->indexscandir);
-	_outIntList(str, node->joinrelids);
-
-	appendStringInfo(str, " :alljoinquals %s :rows %.2f ",
-					 booltostr(node->alljoinquals),
+	appendStringInfo(str, " :indexscandir %d :rows %.2f ",
+					 (int) node->indexscandir,
 					 node->rows);
 }
 

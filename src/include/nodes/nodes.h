@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.123 2002/11/15 02:50:10 momjian Exp $
+ * $Id: nodes.h,v 1.124 2002/11/24 21:52:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -87,6 +87,7 @@ typedef enum NodeTag
 	T_RestrictInfo,
 	T_JoinInfo,
 	T_IndexOptInfo,
+	T_InnerIndexscanInfo,
 
 	/*
 	 * TAGS FOR EXECUTOR NODES (execnodes.h)

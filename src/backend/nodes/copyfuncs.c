@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.220 2002/11/23 03:59:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.221 2002/11/24 21:52:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1148,7 +1148,9 @@ _copyRelOptInfo(RelOptInfo *from)
 	newnode->baserestrictcost = from->baserestrictcost;
 	newnode->outerjoinset = listCopy(from->outerjoinset);
 	Node_Copy(from, newnode, joininfo);
-	Node_Copy(from, newnode, innerjoin);
+
+	newnode->index_outer_relids = listCopy(from->index_outer_relids);
+	Node_Copy(from, newnode, index_inner_paths);
 
 	return newnode;
 }
@@ -1199,6 +1201,9 @@ _copyIndexOptInfo(IndexOptInfo *from)
 	newnode->indproc = from->indproc;
 	Node_Copy(from, newnode, indpred);
 	newnode->unique = from->unique;
+
+	newnode->outer_relids = listCopy(from->outer_relids);
+	Node_Copy(from, newnode, inner_paths);
 
 	return newnode;
 }
@@ -1262,8 +1267,6 @@ _copyIndexPath(IndexPath *from)
 	Node_Copy(from, newnode, indexinfo);
 	Node_Copy(from, newnode, indexqual);
 	newnode->indexscandir = from->indexscandir;
-	newnode->joinrelids = listCopy(from->joinrelids);
-	newnode->alljoinquals = from->alljoinquals;
 	newnode->rows = from->rows;
 
 	return newnode;
@@ -1487,6 +1490,25 @@ _copyJoinInfo(JoinInfo *from)
 	 */
 	newnode->unjoined_relids = listCopy(from->unjoined_relids);
 	Node_Copy(from, newnode, jinfo_restrictinfo);
+
+	return newnode;
+}
+
+/* ----------------
+ *		_copyInnerIndexscanInfo
+ * ----------------
+ */
+static InnerIndexscanInfo *
+_copyInnerIndexscanInfo(InnerIndexscanInfo *from)
+{
+	InnerIndexscanInfo   *newnode = makeNode(InnerIndexscanInfo);
+
+	/*
+	 * copy remainder of node
+	 */
+	newnode->other_relids = listCopy(from->other_relids);
+	newnode->isouterjoin = from->isouterjoin;
+	Node_Copy(from, newnode, best_innerpath);
 
 	return newnode;
 }
@@ -2951,6 +2973,9 @@ copyObject(void *from)
 			break;
 		case T_IndexOptInfo:
 			retval = _copyIndexOptInfo(from);
+			break;
+		case T_InnerIndexscanInfo:
+			retval = _copyInnerIndexscanInfo(from);
 			break;
 
 			/*

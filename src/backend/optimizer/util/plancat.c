@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.74 2002/09/04 20:31:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.75 2002/11/24 21:52:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -171,6 +171,10 @@ find_secondary_indexes(Oid relationObjectId)
 				oprindex += indexRelation->rd_am->amstrategies;
 			}
 		}
+
+		/* initialize cached join info to empty */
+		info->outer_relids = NIL;
+		info->inner_paths = NIL;
 
 		index_close(indexRelation);
 

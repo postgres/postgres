@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.76 2002/11/19 23:21:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.77 2002/11/24 21:52:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -577,15 +577,12 @@ distribute_qual_to_rels(Query *root, Node *clause,
 		 * the relid list.	Set additional RestrictInfo fields for
 		 * joining.
 		 *
-		 * We don't bother setting the merge/hashjoin info if we're not going
-		 * to need it.	We do want to know about mergejoinable ops in any
-		 * potential equijoin clause (see later in this routine), and we
-		 * ignore enable_mergejoin if isouterjoin is true, because
-		 * mergejoin is the only implementation we have for full and right
-		 * outer joins.
+		 * We don't bother setting the hashjoin info if we're not going
+		 * to need it.	We do want to know about mergejoinable ops in all
+		 * cases, however, because we use mergejoinable ops for other
+		 * purposes such as detecting redundant clauses.
 		 */
-		if (enable_mergejoin || isouterjoin || can_be_equijoin)
-			check_mergejoinable(restrictinfo);
+		check_mergejoinable(restrictinfo);
 		if (enable_hashjoin)
 			check_hashjoinable(restrictinfo);
 

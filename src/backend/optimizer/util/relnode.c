@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.40 2002/10/12 22:24:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.41 2002/11/24 21:52:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,8 +17,8 @@
 #include "optimizer/cost.h"
 #include "optimizer/joininfo.h"
 #include "optimizer/pathnode.h"
-#include "optimizer/paths.h"
 #include "optimizer/plancat.h"
+#include "optimizer/restrictinfo.h"
 #include "optimizer/tlist.h"
 #include "parser/parsetree.h"
 
@@ -152,7 +152,8 @@ make_base_rel(Query *root, int relid)
 	rel->baserestrictcost = 0;
 	rel->outerjoinset = NIL;
 	rel->joininfo = NIL;
-	rel->innerjoin = NIL;
+	rel->index_outer_relids = NIL;
+	rel->index_inner_paths = NIL;
 
 	/* Check type of rtable entry */
 	switch (rte->rtekind)
@@ -365,7 +366,8 @@ build_join_rel(Query *root,
 	joinrel->baserestrictcost = 0;
 	joinrel->outerjoinset = NIL;
 	joinrel->joininfo = NIL;
-	joinrel->innerjoin = NIL;
+	joinrel->index_outer_relids = NIL;
+	joinrel->index_inner_paths = NIL;
 
 	/* Is there a join RTE matching this join? */
 	joinrterel = find_other_rel_for_join(root, joinrelids);
@@ -529,9 +531,8 @@ build_joinrel_restrictlist(Query *root,
 						   RelOptInfo *inner_rel,
 						   JoinType jointype)
 {
-	List	   *result = NIL;
+	List	   *result;
 	List	   *rlist;
-	List	   *item;
 
 	/*
 	 * Collect all the clauses that syntactically belong at this level.
@@ -549,59 +550,8 @@ build_joinrel_restrictlist(Query *root,
 	 * mergejoinable clause, it's possible that it is redundant with
 	 * previous clauses (see optimizer/README for discussion).	We detect
 	 * that case and omit the redundant clause from the result list.
-	 *
-	 * We can detect redundant mergejoinable clauses very cheaply by using
-	 * their left and right pathkeys, which uniquely identify the sets of
-	 * equijoined variables in question.  All the members of a pathkey set
-	 * that are in the left relation have already been forced to be equal;
-	 * likewise for those in the right relation.  So, we need to have only
-	 * one clause that checks equality between any set member on the left
-	 * and any member on the right; by transitivity, all the rest are then
-	 * equal.
-	 *
-	 * Weird special case: if we have two clauses that seem redundant
-	 * except one is pushed down into an outer join and the other isn't,
-	 * then they're not really redundant, because one constrains the
-	 * joined rows after addition of null fill rows, and the other doesn't.
 	 */
-	foreach(item, rlist)
-	{
-		RestrictInfo *rinfo = (RestrictInfo *) lfirst(item);
-
-		/* eliminate duplicates */
-		if (member(rinfo, result))
-			continue;
-
-		/* check for redundant merge clauses */
-		if (rinfo->mergejoinoperator != InvalidOid)
-		{
-			bool		redundant = false;
-			List	   *olditem;
-
-			cache_mergeclause_pathkeys(root, rinfo);
-
-			foreach(olditem, result)
-			{
-				RestrictInfo *oldrinfo = (RestrictInfo *) lfirst(olditem);
-
-				if (oldrinfo->mergejoinoperator != InvalidOid &&
-					rinfo->left_pathkey == oldrinfo->left_pathkey &&
-					rinfo->right_pathkey == oldrinfo->right_pathkey &&
-					(rinfo->ispusheddown == oldrinfo->ispusheddown ||
-					 !IS_OUTER_JOIN(jointype)))
-				{
-					redundant = true;
-					break;
-				}
-			}
-
-			if (redundant)
-				continue;
-		}
-
-		/* otherwise, add it to result list */
-		result = lappend(result, rinfo);
-	}
+	result = remove_redundant_join_clauses(root, rlist, jointype);
 
 	freeList(rlist);
 

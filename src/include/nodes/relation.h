@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relation.h,v 1.68 2002/11/06 00:00:44 tgl Exp $
+ * $Id: relation.h,v 1.69 2002/11/24 21:52:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -129,9 +129,11 @@ typedef enum CostSelector
  *					syntactically within the join.	Otherwise, unused.
  *		joininfo  - List of JoinInfo nodes, containing info about each join
  *					clause in which this relation participates
- *		innerjoin - List of Path nodes that represent indices that may be used
- *					as inner paths of nestloop joins. This field is non-null
- *					only for base rels, since join rels have no indices.
+ *		index_outer_relids - only used for base rels; list of outer relids
+ *					that participate in indexable joinclauses for this rel
+ *		index_inner_paths - only used for base rels; list of InnerIndexscanInfo
+ *					nodes showing best indexpaths for various subsets of
+ *					index_outer_relids.
  *
  * Note: Keeping a restrictinfo list in the RelOptInfo is useful only for
  * base rels, because for a join rel the set of clauses that are treated as
@@ -200,12 +202,17 @@ typedef struct RelOptInfo
 	Cost		baserestrictcost;		/* cost of evaluating the above */
 	Relids		outerjoinset;	/* integer list of base relids */
 	List	   *joininfo;		/* JoinInfo structures */
-	List	   *innerjoin;		/* potential indexscans for nestloop joins */
 
+	/* cached info about inner indexscan paths for relation: */
+	Relids		index_outer_relids;		/* other relids in indexable join
+										 * clauses */
+	List	   *index_inner_paths;		/* InnerIndexscanInfo nodes */
 	/*
-	 * innerjoin indexscans are not in the main pathlist because they are
-	 * not usable except in specific join contexts; we have to test before
-	 * seeing whether they can be used.
+	 * Inner indexscans are not in the main pathlist because they are
+	 * not usable except in specific join contexts.  We use the
+	 * index_inner_paths list just to avoid recomputing the best inner
+	 * indexscan repeatedly for similar outer relations.  See comments
+	 * for InnerIndexscanInfo.
 	 */
 } RelOptInfo;
 
@@ -216,20 +223,6 @@ typedef struct RelOptInfo
  *		Prior to Postgres 7.0, RelOptInfo was used to describe both relations
  *		and indexes, but that created confusion without actually doing anything
  *		useful.  So now we have a separate IndexOptInfo struct for indexes.
- *
- *		indexoid  - OID of the index relation itself
- *		pages	  - number of disk pages in index
- *		tuples	  - number of index tuples in index
- *		ncolumns  - number of columns in index
- *		nkeys	  - number of keys used by index (input columns)
- *		classlist - List of PG_OPCLASS OIDs for the index
- *		indexkeys - List of base-relation attribute numbers that are index keys
- *		ordering  - List of PG_OPERATOR OIDs which order the indexscan result
- *		relam	  - the OID of the pg_am of the index
- *		amcostestimate - OID of the relam's cost estimator
- *		indproc   - OID of the function if a functional index, else 0
- *		indpred   - index predicate if a partial index, else NULL
- *		unique	  - true if index is unique
  *
  *		ncolumns and nkeys are the same except for a functional index,
  *		wherein ncolumns is 1 (the single function output) while nkeys
@@ -249,22 +242,26 @@ typedef struct IndexOptInfo
 	Oid			indexoid;		/* OID of the index relation */
 
 	/* statistics from pg_class */
-	long		pages;
-	double		tuples;
+	long		pages;			/* number of disk pages in index */
+	double		tuples;			/* number of index tuples in index */
 
 	/* index descriptor information */
 	int			ncolumns;		/* number of columns in index */
 	int			nkeys;			/* number of keys used by index */
-	Oid		   *classlist;		/* AM operator classes for columns */
+	Oid		   *classlist;		/* OIDs of operator classes for columns */
 	int		   *indexkeys;		/* column numbers of index's keys */
 	Oid		   *ordering;		/* OIDs of sort operators for each column */
 	Oid			relam;			/* OID of the access method (in pg_am) */
 
 	RegProcedure amcostestimate;	/* OID of the access method's cost fcn */
 
-	Oid			indproc;		/* if a functional index */
-	List	   *indpred;		/* if a partial index */
-	bool		unique;			/* if a unique index */
+	Oid			indproc;		/* OID of func if functional index, else 0 */
+	List	   *indpred;		/* predicate if a partial index, else NIL */
+	bool		unique;			/* true if a unique index */
+
+	/* cached info about inner indexscan paths for index */
+	Relids		outer_relids;	/* other relids in usable join clauses */
+	List	   *inner_paths;	/* List of InnerIndexscanInfo nodes */
 } IndexOptInfo;
 
 
@@ -354,18 +351,9 @@ typedef struct Path
  * NoMovementScanDirection for an indexscan, but the planner wants to
  * distinguish ordered from unordered indexes for building pathkeys.)
  *
- * 'joinrelids' is only used in IndexPaths that are constructed for use
- * as the inner path of a nestloop join.  These paths have indexquals
- * that refer to values of other rels, so those other rels must be
- * included in the outer joinrel in order to make a usable join.
- *
- * 'alljoinquals' is also used only for inner paths of nestloop joins.
- * This flag is TRUE iff all the indexquals came from non-pushed-down
- * JOIN/ON conditions, which means the path is safe to use for an outer join.
- *
  * 'rows' is the estimated result tuple count for the indexscan.  This
  * is the same as path.parent->rows for a simple indexscan, but it is
- * different for a nestloop inner path, because the additional indexquals
+ * different for a nestloop inner scan, because the additional indexquals
  * coming from join clauses make the scan more selective than the parent
  * rel's restrict clauses alone would do.
  *----------
@@ -376,8 +364,6 @@ typedef struct IndexPath
 	List	   *indexinfo;
 	List	   *indexqual;
 	ScanDirection indexscandir;
-	Relids		joinrelids;		/* other rels mentioned in indexqual */
-	bool		alljoinquals;	/* all indexquals derived from JOIN conds? */
 	double		rows;			/* estimated number of result tuples */
 } IndexPath;
 
@@ -615,5 +601,43 @@ typedef struct JoinInfo
 	Relids		unjoined_relids;	/* some rels not yet part of my RelOptInfo */
 	List	   *jinfo_restrictinfo;		/* relevant RestrictInfos */
 } JoinInfo;
+
+/*
+ * Inner indexscan info.
+ *
+ * An inner indexscan is one that uses one or more joinclauses as index
+ * conditions (perhaps in addition to plain restriction clauses).  So it
+ * can only be used as the inner path of a nestloop join where the outer
+ * relation includes all other relids appearing in those joinclauses.
+ * The set of usable joinclauses, and thus the best inner indexscan,
+ * thus varies depending on which outer relation we consider; so we have
+ * to recompute the best such path for every join.  To avoid lots of
+ * redundant computation, we cache the results of such searches.  For
+ * each index we compute the set of possible otherrelids (all relids
+ * appearing in joinquals that could become indexquals for this index).
+ * Two outer relations whose relids have the same intersection with this
+ * set will have the same set of available joinclauses and thus the same
+ * best inner indexscan for that index.  Similarly, for each base relation,
+ * we form the union of the per-index otherrelids sets.  Two outer relations
+ * with the same intersection with that set will have the same best overall
+ * inner indexscan for the base relation.  We use lists of InnerIndexscanInfo
+ * nodes to cache the results of these searches at both the index and
+ * relation level.
+ *
+ * The search key also includes a bool showing whether the join being
+ * considered is an outer join.  Since we constrain the join order for
+ * outer joins, I believe that this bool can only have one possible value
+ * for any particular base relation; but store it anyway to avoid confusion.
+ */
+
+typedef struct InnerIndexscanInfo
+{
+	NodeTag		type;
+	/* The lookup key: */
+	Relids		other_relids;	/* a set of relevant other relids */
+	bool		isouterjoin;	/* true if join is outer */
+	/* Best path for this lookup key: */
+	Path	   *best_innerpath;	/* best inner indexscan, or NULL if none */
+} InnerIndexscanInfo;
 
 #endif   /* RELATION_H */
