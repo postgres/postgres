@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.24 2000/11/21 15:39:09 pjw Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.25 2000/11/22 01:41:13 momjian Exp $
 Postgres documentation
 -->
 
@@ -323,7 +323,7 @@ pg_dump [ -h <replaceable class="parameter">host</replaceable> ]
 	Specifies the hostname of the machine on which the 
 	<application>postmaster</application>
 	is running.  If host begins with a slash, it is used 
-	as the path to a unix domain socket.
+	as the directory for the unix domain socket.
        </para>
       </listitem>
      </varlistentry>

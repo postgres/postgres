@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.47 2000/11/14 01:53:37 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.48 2000/11/22 01:41:12 momjian Exp $
 -->
 
  <chapter id="libpq-chapter">
@@ -90,7 +90,7 @@ PGconn *PQconnectdb(const char *conninfo)
       Name of host to connect to. 
       Using this parameter causes a hostname look-up.  See hostaddr.
       If it begins with a slash, it is used
-      as the path to a unix domain socket.
+      as the directory for the unix domain socket.
      </para>
      </listitem>
     </varlistentry>
@@ -138,7 +138,7 @@ PGconn *PQconnectdb(const char *conninfo)
      <term><literal>unixsocket</literal></term>
      <listitem>
      <para>
-      Full path to Unix-domain socket file to connect to at the server host.
+      Directory for Unix-domain socket file.
      </para>
      </listitem>
     </varlistentry>
@@ -567,7 +567,7 @@ char *PQport(const PGconn *conn)
 <listitem>
 <para>
 <function>PQunixsocket</function>
-         Returns the name of the Unix-domain socket of the connection.
+         Returns the directory of the Unix-domain socket of the connection.
 <synopsis>
 char *PQunixsocket(const PGconn *conn)
 </synopsis>
@@ -1839,9 +1839,8 @@ application programs.
 <listitem>
 <para>
 <envar>PGHOST</envar> sets the default server name.
-If it beings with a slash, it is used as the path to a unix domain
+If it beings with a slash, it is used as the directory for the unix domain
 socket.
-Without a host name, libpq will connect using a local Unix domain socket.
 </para>
 </listitem>
 <listitem>

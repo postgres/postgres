@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.15 2000/11/14 18:11:31 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.16 2000/11/22 01:41:13 momjian Exp $
 Postgres documentation
 -->
 
@@ -188,13 +188,12 @@ Postgres documentation
       <term>-k <replaceable class="parameter">filename</replaceable></term>
       <listitem>
        <para>
-	Specifies the Unix domain socket file name on which the
+	Specifies the directory for Unix domain socket on which the
 	<application>postmaster</application> is to listen for
 	connections from client applications.  Defaults to the value
 	of the <envar>PGUNIXSOCKET</envar> environment variable, or if
 	<envar>PGUNIXSOCKET</envar> is not set, then defaults to a
-	file in <filename>/tmp</filename> constructed from the port
-	number.
+	file in <filename>/tmp</filename>.
        </para>
       </listitem>
      </varlistentry>

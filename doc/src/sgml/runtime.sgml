@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.37 2000/11/15 18:36:03 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.38 2000/11/22 01:41:12 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1063,13 +1063,12 @@ env PGOPTIONS='-c geqo=off' psql
       <term>UNIXSOCKET (<type>string</type>)</term>
       <listitem>
        <para>
-	Specifies the Unix domain socket file name on which the
+	Specifies the directory of the Unix domain socket on which the
 	<application>postmaster</application> is to listen for
 	connections from client applications.  Defaults to the value
 	of the <envar>PGUNIXSOCKET</envar> environment variable, or if
-	<envar>PGUNIXSOCKET</envar> is not set, then defaults to a
-	file in <filename>/tmp</filename> constructed from the port
-	number.
+	<envar>PGUNIXSOCKET</envar> is not set, then defaults to 
+        <filename>/tmp</filename>.
        </para>
       </listitem>
      </varlistentry>
