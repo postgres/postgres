@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/libpq.3,v 1.10 1997/11/14 15:41:30 thomas Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/libpq.3,v 1.11 1997/12/04 20:26:31 momjian Exp $
 .TH LIBPQ INTRO 03/12/94 PostgreSQL PostgreSQL
 .SH DESCRIPTION
 Libpq is the programmer's interface to Postgres.  Libpq is a set of
@@ -33,6 +33,8 @@ an application program:
 \(bu
 .B PGHOST
 sets the default server name.
+If it is set to a non-zero-length string, it causes TCP/IP
+communication to be used, rather than the default local Unix domain sockets.
 .sp
 \(bu
 .B PGOPTIONS
@@ -40,7 +42,8 @@ sets additional runtime options for the Postgres backend.
 .sp
 \(bu
 .B PGPORT
-sets the default port for communicating with the Postgres backend.
+sets the default port or local Unix domain socket file extension
+for communicating with the Postgres backend.
 .sp
 \(bu
 .B PGTTY
