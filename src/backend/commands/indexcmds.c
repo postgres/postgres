@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.48 2001/05/30 20:52:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.49 2001/05/31 18:16:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -120,13 +120,15 @@ DefineIndex(char *heapRelationName,
 	/*
 	 * XXX Hardwired hacks to check for limitations on supported index
 	 * types. We really ought to be learning this info from entries in the
-	 * pg_am table, instead of having it wired in here!
+	 * pg_am table, instead of having it wired-in here!
 	 */
 	if (unique && accessMethodId != BTREE_AM_OID)
 		elog(ERROR, "DefineIndex: unique indices are only available with the btree access method");
 
-	if (numberOfAttributes > 1 && accessMethodId != BTREE_AM_OID)
-		elog(ERROR, "DefineIndex: multi-column indices are only available with the btree access method");
+	if (numberOfAttributes > 1 &&
+		!( accessMethodId == BTREE_AM_OID ||
+		   accessMethodId == GIST_AM_OID))
+		elog(ERROR, "DefineIndex: multi-column indices are only available with the btree or GiST access methods");
 
 	/*
 	 * WITH clause reinstated to handle lossy indices. -- JMH, 7/22/96

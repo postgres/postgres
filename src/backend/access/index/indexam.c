@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.48 2001/03/22 06:16:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.49 2001/05/31 18:16:54 tgl Exp $
  *
  * INTERFACE ROUTINES
  *		index_open		- open an index relation by relationId
@@ -410,13 +410,13 @@ index_getprocid(Relation irel,
 				uint16 procnum)
 {
 	RegProcedure *loc;
-	int			natts;
+	int			nproc;
 
-	natts = irel->rd_rel->relnatts;
+	nproc = irel->rd_am->amsupport;
 
 	loc = irel->rd_support;
 
 	Assert(loc != NULL);
 
-	return loc[(natts * (procnum - 1)) + (attnum - 1)];
+	return loc[(nproc * (attnum - 1)) + (procnum - 1)];
 }

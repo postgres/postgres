@@ -34,11 +34,7 @@
 
 /* useful macros for accessing int4 arrays */
 #define ARRPTR(x)  ( (int4 *) ARR_DATA_PTR(x) )
-#ifdef PGSQL71
 #define ARRNELEMS(x)  ArrayGetNItems( ARR_NDIM(x), ARR_DIMS(x))
-#else
-#define ARRNELEMS(x)  getNitems( ARR_NDIM(x), ARR_DIMS(x))
-#endif
 
 #define ARRISNULL(x) ( (x) ? ( ( ARR_NDIM(x) == NDIM ) ? ( ( ARRNELEMS( x ) ) ? 0 : 1 ) : 1  ) : 1 )
 
@@ -228,14 +224,17 @@ g_int_consistent(GISTENTRY *entry,
 	switch (strategy)
 	{
 		case RTOverlapStrategyNumber:
-			retval = (bool) inner_int_overlap((ArrayType *) (entry->pred), query);
+			retval = inner_int_overlap((ArrayType *) DatumGetPointer(entry->key),
+									   query);
 			break;
 		case RTSameStrategyNumber:
 		case RTContainsStrategyNumber:
-			retval = (bool) inner_int_contains((ArrayType *) (entry->pred), query);
+			retval = inner_int_contains((ArrayType *) DatumGetPointer(entry->key),
+										query);
 			break;
 		case RTContainedByStrategyNumber:
-			retval = (bool) inner_int_overlap((ArrayType *) (entry->pred), query);
+			retval = inner_int_overlap((ArrayType *) DatumGetPointer(entry->key),
+									   query);
 			break;
 		default:
 			retval = FALSE;
@@ -265,14 +264,10 @@ g_int_compress(GISTENTRY *entry)
 
 	retval = palloc(sizeof(GISTENTRY));
 
-#ifdef PGSQL71
-	if (entry->pred)
-		r = (ArrayType *) PG_DETOAST_DATUM_COPY(entry->pred);
+	if (DatumGetPointer(entry->key) != NULL)
+		r = (ArrayType *) PG_DETOAST_DATUM_COPY(entry->key);
 	else
 		r = NULL;
-#else
-	r = copy_intArrayType((ArrayType *) entry->pred);
-#endif
 
 	if (ARRISNULL(r))
 	{
@@ -280,10 +275,10 @@ g_int_compress(GISTENTRY *entry)
 		elog(NOTICE, "COMP IN: NULL");
 #endif
 		if (r)
-			if ((char *) r != (char *) entry->pred)
+			if (r != (ArrayType *) DatumGetPointer(entry->key))
 				pfree(r);
 
-		gistentryinit(*retval, (char *) NULL, entry->rel, entry->page, entry->offset,
+		gistentryinit(*retval, (Datum) 0, entry->rel, entry->page, entry->offset,
 					  0, FALSE);
 		return (retval);
 	}
@@ -322,7 +317,8 @@ g_int_compress(GISTENTRY *entry)
 		r = resize_intArrayType(r, len);
 	}
 
-	gistentryinit(*retval, (char *) r, entry->rel, entry->page, entry->offset, VARSIZE(r), FALSE);
+	gistentryinit(*retval, PointerGetDatum(r),
+				  entry->rel, entry->page, entry->offset, VARSIZE(r), FALSE);
 
 	return (retval);
 }
@@ -340,25 +336,19 @@ g_int_decompress(GISTENTRY *entry)
 	int			i,
 				j;
 
-#ifdef PGSQL71
-	if (entry->pred)
-		in = (ArrayType *) PG_DETOAST_DATUM(entry->pred);
+	if (DatumGetPointer(entry->key) != NULL)
+		in = (ArrayType *) PG_DETOAST_DATUM(entry->key);
 	else
 		in = NULL;
-#else
-	in = (ArrayType *) entry->pred;
-#endif
 
 	if (entry->bytes < ARR_OVERHEAD(NDIM) || ARRISNULL(in))
 	{
 		retval = palloc(sizeof(GISTENTRY));
 
-#ifdef PGSQL71
 		if (in)
-			if ((char *) in != (char *) entry->pred)
+			if (in != (ArrayType *) DatumGetPointer(entry->key))
 				pfree(in);
-#endif
-		gistentryinit(*retval, (char *) NULL, entry->rel, entry->page, entry->offset, 0, FALSE);
+		gistentryinit(*retval, (Datum) 0, entry->rel, entry->page, entry->offset, 0, FALSE);
 #ifdef GIST_DEBUG
 		elog(NOTICE, "DECOMP IN: NULL");
 #endif
@@ -372,7 +362,7 @@ g_int_decompress(GISTENTRY *entry)
 	if (lenin < 2 * MAXNUMRANGE)
 	{							/* not comressed value */
 		/* sometimes strange bytesize */
-		gistentryinit(*entry, (char *) in, entry->rel, entry->page, entry->offset, VARSIZE(in), FALSE);
+		gistentryinit(*entry, PointerGetDatum(in), entry->rel, entry->page, entry->offset, VARSIZE(in), FALSE);
 		return (entry);
 	}
 
@@ -390,13 +380,11 @@ g_int_decompress(GISTENTRY *entry)
 			if ((!i) || *(dr - 1) != j)
 				*dr++ = j;
 
-#ifdef PGSQL71
-	if ((char *) in != (char *) entry->pred)
+	if (in != (ArrayType *) DatumGetPointer(entry->key))
 		pfree(in);
-#endif
 	retval = palloc(sizeof(GISTENTRY));
 
-	gistentryinit(*retval, (char *) r, entry->rel, entry->page, entry->offset, VARSIZE(r), FALSE);
+	gistentryinit(*retval, PointerGetDatum(r), entry->rel, entry->page, entry->offset, VARSIZE(r), FALSE);
 
 	return (retval);
 }
@@ -835,9 +823,6 @@ new_intArrayType(int num)
 	MemSet(r, 0, nbytes);
 	r->size = nbytes;
 	r->ndim = NDIM;
-#ifndef PGSQL71
-	SET_LO_FLAG(false, r);
-#endif
 	*((int *) ARR_DIMS(r)) = num;
 	*((int *) ARR_LBOUND(r)) = 1;
 
@@ -1056,14 +1041,10 @@ g_intbig_compress(GISTENTRY *entry)
 	ArrayType  *r,
 			   *in;
 
-#ifdef PGSQL71
-	if (entry->pred)
-		in = (ArrayType *) PG_DETOAST_DATUM(entry->pred);
+	if (DatumGetPointer(entry->key) != NULL)
+		in = (ArrayType *) PG_DETOAST_DATUM(entry->key);
 	else
 		in = NULL;
-#else
-	in = (ArrayType *) entry->pred;
-#endif
 
 	if (!entry->leafkey)
 		return entry;
@@ -1072,12 +1053,10 @@ g_intbig_compress(GISTENTRY *entry)
 
 	if (ARRISNULL(in))
 	{
-#ifdef PGSQL71
 		if (in)
-			if ((char *) in != (char *) entry->pred)
+			if (in != (ArrayType *) DatumGetPointer(entry->key))
 				pfree(in);
-#endif
-		gistentryinit(*retval, (char *) NULL, entry->rel, entry->page, entry->offset, 0, FALSE);
+		gistentryinit(*retval, (Datum) 0, entry->rel, entry->page, entry->offset, 0, FALSE);
 		return (retval);
 	}
 
@@ -1086,13 +1065,11 @@ g_intbig_compress(GISTENTRY *entry)
 			ARRPTR(in),
 			ARRNELEMS(in));
 
-	gistentryinit(*retval, (char *) r, entry->rel, entry->page, entry->offset, VARSIZE(r), FALSE);
+	gistentryinit(*retval, PointerGetDatum(r), entry->rel, entry->page, entry->offset, VARSIZE(r), FALSE);
 
-#ifdef PGSQL71
 	if (in)
-		if ((char *) in != (char *) entry->pred)
+		if (in != (ArrayType *) DatumGetPointer(entry->key))
 			pfree(in);
-#endif
 
 	return (retval);
 }
@@ -1100,20 +1077,18 @@ g_intbig_compress(GISTENTRY *entry)
 GISTENTRY  *
 g_intbig_decompress(GISTENTRY *entry)
 {
-#ifdef PGSQL71
 	ArrayType  *key;
 
-	key = (ArrayType *) PG_DETOAST_DATUM(entry->pred);
-	if ((char *) key != (char *) entry->pred)
+	key = (ArrayType *) PG_DETOAST_DATUM(entry->key);
+	if (key != (ArrayType *) DatumGetPointer(entry->key))
 	{
 		GISTENTRY  *retval;
 
 		retval = palloc(sizeof(GISTENTRY));
 
-		gistentryinit(*retval, (char *) key, entry->rel, entry->page, entry->offset, VARSIZE(key), FALSE);
+		gistentryinit(*retval, PointerGetDatum(key), entry->rel, entry->page, entry->offset, VARSIZE(key), FALSE);
 		return retval;
 	}
-#endif
 	return entry;
 }
 
@@ -1159,14 +1134,14 @@ g_intbig_consistent(GISTENTRY *entry, ArrayType *query, StrategyNumber strategy)
 	switch (strategy)
 	{
 		case RTOverlapStrategyNumber:
-			retval = (bool) _intbig_overlap((ArrayType *) (entry->pred), q);
+			retval = _intbig_overlap((ArrayType *) DatumGetPointer(entry->key), q);
 			break;
 		case RTSameStrategyNumber:
 		case RTContainsStrategyNumber:
-			retval = (bool) _intbig_contains((ArrayType *) (entry->pred), q);
+			retval = _intbig_contains((ArrayType *) DatumGetPointer(entry->key), q);
 			break;
 		case RTContainedByStrategyNumber:
-			retval = (bool) _intbig_overlap((ArrayType *) (entry->pred), q);
+			retval = _intbig_overlap((ArrayType *) DatumGetPointer(entry->key), q);
 			break;
 		default:
 			retval = FALSE;
@@ -1196,12 +1171,12 @@ _int_common_union(bytea *entryvec, int *sizep, formarray unionf)
 #endif
 
 	numranges = (VARSIZE(entryvec) - VARHDRSZ) / sizeof(GISTENTRY);
-	tmp = (ArrayType *) (((GISTENTRY *) (VARDATA(entryvec)))[0]).pred;
+	tmp = (ArrayType *) DatumGetPointer(((GISTENTRY *) VARDATA(entryvec))[0].key);
 
 	for (i = 1; i < numranges; i++)
 	{
 		out = (*unionf) (tmp, (ArrayType *)
-						 (((GISTENTRY *) (VARDATA(entryvec)))[i]).pred);
+						 DatumGetPointer(((GISTENTRY *) VARDATA(entryvec))[i].key));
 		if (i > 1 && tmp)
 			pfree(tmp);
 		tmp = out;
@@ -1232,18 +1207,19 @@ _int_common_penalty(GISTENTRY *origentry, GISTENTRY *newentry, float *result,
 					formarray unionf,
 					formfloat sizef)
 {
-	Datum		ud;
+	ArrayType  *ud;
 	float		tmp1,
 				tmp2;
 
 #ifdef GIST_DEBUG
 	elog(NOTICE, "penalty");
 #endif
-	ud = (Datum) (*unionf) ((ArrayType *) (origentry->pred), (ArrayType *) (newentry->pred));
-	(*sizef) ((ArrayType *) ud, &tmp1);
-	(*sizef) ((ArrayType *) (origentry->pred), &tmp2);
+	ud = (*unionf) ((ArrayType *) DatumGetPointer(origentry->key),
+					(ArrayType *) DatumGetPointer(newentry->key));
+	(*sizef) (ud, &tmp1);
+	(*sizef) ((ArrayType *) DatumGetPointer(origentry->key), &tmp2);
 	*result = tmp1 - tmp2;
-	pfree((char *) ud);
+	pfree(ud);
 
 #ifdef GIST_DEBUG
 	elog(NOTICE, "--penalty\t%g", *result);
@@ -1304,10 +1280,10 @@ _int_common_picksplit(bytea *entryvec,
 
 	for (i = FirstOffsetNumber; i < maxoff; i = OffsetNumberNext(i))
 	{
-		datum_alpha = (ArrayType *) (((GISTENTRY *) (VARDATA(entryvec)))[i].pred);
+		datum_alpha = (ArrayType *) DatumGetPointer(((GISTENTRY *) VARDATA(entryvec))[i].key);
 		for (j = OffsetNumberNext(i); j <= maxoff; j = OffsetNumberNext(j))
 		{
-			datum_beta = (ArrayType *) (((GISTENTRY *) (VARDATA(entryvec)))[j].pred);
+			datum_beta = (ArrayType *) DatumGetPointer(((GISTENTRY *) VARDATA(entryvec))[j].key);
 
 			/* compute the wasted space by unioning these guys */
 			/* size_waste = size_union - size_inter; */
@@ -1342,12 +1318,12 @@ _int_common_picksplit(bytea *entryvec,
 	right = v->spl_right;
 	v->spl_nright = 0;
 
-	datum_alpha = (ArrayType *) (((GISTENTRY *) (VARDATA(entryvec)))[seed_1].pred);
+	datum_alpha = (ArrayType *) DatumGetPointer(((GISTENTRY *) VARDATA(entryvec))[seed_1].key);
 	datum_l = copy_intArrayType(datum_alpha);
-	(*sizef) ((ArrayType *) datum_l, &size_l);
-	datum_beta = (ArrayType *) (((GISTENTRY *) (VARDATA(entryvec)))[seed_2].pred);
+	(*sizef) (datum_l, &size_l);
+	datum_beta = (ArrayType *) DatumGetPointer(((GISTENTRY *) VARDATA(entryvec))[seed_2].key);
 	datum_r = copy_intArrayType(datum_beta);
-	(*sizef) ((ArrayType *) datum_r, &size_r);
+	(*sizef) (datum_r, &size_r);
 
 	/*
 	 * Now split up the regions between the two seeds.	An important
@@ -1386,11 +1362,11 @@ _int_common_picksplit(bytea *entryvec,
 		}
 
 		/* okay, which page needs least enlargement? */
-		datum_alpha = (ArrayType *) (((GISTENTRY *) (VARDATA(entryvec)))[i].pred);
-		union_dl = (ArrayType *) (*unionf) (datum_l, datum_alpha);
-		union_dr = (ArrayType *) (*unionf) (datum_r, datum_alpha);
-		(*sizef) ((ArrayType *) union_dl, &size_alpha);
-		(*sizef) ((ArrayType *) union_dr, &size_beta);
+		datum_alpha = (ArrayType *) DatumGetPointer(((GISTENTRY *) VARDATA(entryvec))[i].key);
+		union_dl = (*unionf) (datum_l, datum_alpha);
+		union_dr = (*unionf) (datum_r, datum_alpha);
+		(*sizef) (union_dl, &size_alpha);
+		(*sizef) (union_dr, &size_beta);
 
 		/* pick which page to add it to */
 		if (size_alpha - size_l < size_beta - size_r + WISH_F(v->spl_nleft, v->spl_nright, coef))
@@ -1428,8 +1404,8 @@ _int_common_picksplit(bytea *entryvec,
 		*(right - 1) = InvalidOffsetNumber;
 	}
 
-	v->spl_ldatum = (char *) datum_l;
-	v->spl_rdatum = (char *) datum_r;
+	v->spl_ldatum = PointerGetDatum(datum_l);
+	v->spl_rdatum = PointerGetDatum(datum_r);
 
 #ifdef GIST_DEBUG
 	elog(NOTICE, "--------ENDpicksplit %d %d", v->spl_nleft, v->spl_nright);

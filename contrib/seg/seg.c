@@ -225,9 +225,9 @@ gseg_consistent(GISTENTRY *entry,
 	 * gseg_leaf_consistent
 	 */
 	if (GIST_LEAF(entry))
-		return (gseg_leaf_consistent((SEG *) (entry->pred), query, strategy));
+		return (gseg_leaf_consistent((SEG *) DatumGetPointer(entry->key), query, strategy));
 	else
-		return (gseg_internal_consistent((SEG *) (entry->pred), query, strategy));
+		return (gseg_internal_consistent((SEG *) DatumGetPointer(entry->key), query, strategy));
 }
 
 /*
@@ -247,22 +247,14 @@ gseg_union(bytea *entryvec, int *sizep)
 #endif
 
 	numranges = (VARSIZE(entryvec) - VARHDRSZ) / sizeof(GISTENTRY);
-	tmp = (SEG *) (((GISTENTRY *) (VARDATA(entryvec)))[0]).pred;
+	tmp = (SEG *) DatumGetPointer(((GISTENTRY *) VARDATA(entryvec))[0].key);
 	*sizep = sizeof(SEG);
 
 	for (i = 1; i < numranges; i++)
 	{
 		out = gseg_binary_union(tmp, (SEG *)
-						   (((GISTENTRY *) (VARDATA(entryvec)))[i]).pred,
+								DatumGetPointer(((GISTENTRY *) VARDATA(entryvec))[i].key),
 								sizep);
-#ifdef GIST_DEBUG
-
-		/*
-		 * fprintf(stderr, "\t%s ^ %s -> %s\n", seg_out(tmp), seg_out((SEG
-		 * *)(((GISTENTRY *)(VARDATA(entryvec)))[i]).pred), seg_out(out));
-		 */
-#endif
-
 		if (i > 1)
 			pfree(tmp);
 		tmp = out;
@@ -294,15 +286,16 @@ gseg_decompress(GISTENTRY *entry)
 float *
 gseg_penalty(GISTENTRY *origentry, GISTENTRY *newentry, float *result)
 {
-	Datum		ud;
+	SEG		   *ud;
 	float		tmp1,
 				tmp2;
 
-	ud = (Datum) seg_union((SEG *) (origentry->pred), (SEG *) (newentry->pred));
-	rt_seg_size((SEG *) ud, &tmp1);
-	rt_seg_size((SEG *) (origentry->pred), &tmp2);
+	ud = seg_union((SEG *) DatumGetPointer(origentry->key),
+				   (SEG *) DatumGetPointer(newentry->key));
+	rt_seg_size(ud, &tmp1);
+	rt_seg_size((SEG *) DatumGetPointer(origentry->key), &tmp2);
 	*result = tmp1 - tmp2;
-	pfree((char *) ud);
+	pfree(ud);
 
 #ifdef GIST_DEBUG
 	fprintf(stderr, "penalty\n");
@@ -362,16 +355,16 @@ gseg_picksplit(bytea *entryvec,
 
 	for (i = FirstOffsetNumber; i < maxoff; i = OffsetNumberNext(i))
 	{
-		datum_alpha = (SEG *) (((GISTENTRY *) (VARDATA(entryvec)))[i].pred);
+		datum_alpha = (SEG *) DatumGetPointer(((GISTENTRY *) VARDATA(entryvec))[i].key);
 		for (j = OffsetNumberNext(i); j <= maxoff; j = OffsetNumberNext(j))
 		{
-			datum_beta = (SEG *) (((GISTENTRY *) (VARDATA(entryvec)))[j].pred);
+			datum_beta = (SEG *) DatumGetPointer(((GISTENTRY *) VARDATA(entryvec))[j].key);
 
 			/* compute the wasted space by unioning these guys */
 			/* size_waste = size_union - size_inter; */
-			union_d = (SEG *) seg_union(datum_alpha, datum_beta);
+			union_d = seg_union(datum_alpha, datum_beta);
 			rt_seg_size(union_d, &size_union);
-			inter_d = (SEG *) seg_inter(datum_alpha, datum_beta);
+			inter_d = seg_inter(datum_alpha, datum_beta);
 			rt_seg_size(inter_d, &size_inter);
 			size_waste = size_union - size_inter;
 
@@ -400,12 +393,12 @@ gseg_picksplit(bytea *entryvec,
 	right = v->spl_right;
 	v->spl_nright = 0;
 
-	datum_alpha = (SEG *) (((GISTENTRY *) (VARDATA(entryvec)))[seed_1].pred);
-	datum_l = (SEG *) seg_union(datum_alpha, datum_alpha);
-	rt_seg_size((SEG *) datum_l, &size_l);
-	datum_beta = (SEG *) (((GISTENTRY *) (VARDATA(entryvec)))[seed_2].pred);;
-	datum_r = (SEG *) seg_union(datum_beta, datum_beta);
-	rt_seg_size((SEG *) datum_r, &size_r);
+	datum_alpha = (SEG *) DatumGetPointer(((GISTENTRY *) VARDATA(entryvec))[seed_1].key);
+	datum_l = seg_union(datum_alpha, datum_alpha);
+	rt_seg_size(datum_l, &size_l);
+	datum_beta = (SEG *) DatumGetPointer(((GISTENTRY *) VARDATA(entryvec))[seed_2].key);
+	datum_r = seg_union(datum_beta, datum_beta);
+	rt_seg_size(datum_r, &size_r);
 
 	/*
 	 * Now split up the regions between the two seeds.	An important
@@ -443,11 +436,11 @@ gseg_picksplit(bytea *entryvec,
 		}
 
 		/* okay, which page needs least enlargement? */
-		datum_alpha = (SEG *) (((GISTENTRY *) (VARDATA(entryvec)))[i].pred);
-		union_dl = (SEG *) seg_union(datum_l, datum_alpha);
-		union_dr = (SEG *) seg_union(datum_r, datum_alpha);
-		rt_seg_size((SEG *) union_dl, &size_alpha);
-		rt_seg_size((SEG *) union_dr, &size_beta);
+		datum_alpha = (SEG *) DatumGetPointer(((GISTENTRY *) VARDATA(entryvec))[i].key);
+		union_dl = seg_union(datum_l, datum_alpha);
+		union_dr = seg_union(datum_r, datum_alpha);
+		rt_seg_size(union_dl, &size_alpha);
+		rt_seg_size(union_dr, &size_beta);
 
 		/* pick which page to add it to */
 		if (size_alpha - size_l < size_beta - size_r)
@@ -471,8 +464,8 @@ gseg_picksplit(bytea *entryvec,
 	}
 	*left = *right = FirstOffsetNumber; /* sentinel value, see dosplit() */
 
-	v->spl_ldatum = (char *) datum_l;
-	v->spl_rdatum = (char *) datum_r;
+	v->spl_ldatum = PointerGetDatum(datum_l);
+	v->spl_rdatum = PointerGetDatum(datum_r);
 
 	return v;
 }

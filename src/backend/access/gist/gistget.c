@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gistget.c,v 1.27 2001/05/30 19:53:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gistget.c,v 1.28 2001/05/31 18:16:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -238,16 +238,21 @@ gistindex_keytest(IndexTuple tuple,
 	while (scanKeySize > 0)
 	{
 		datum = index_getattr(tuple,
-							  1,
+							  key[0].sk_attno,
 							  tupdesc,
 							  &isNull);
-		if (isNull || IndexTupleSize(tuple) == sizeof(IndexTupleData) )
+		if (isNull)
 		{
 			/* XXX eventually should check if SK_ISNULL */
 			return false;
 		}
 
-		gistdentryinit(giststate, &de, (char *) datum, r, p, offset,
+/* this code from backend/access/common/indexvalid.c. But why and what???
+		if (key[0].sk_flags & SK_ISNULL)
+			return false;
+*/
+		gistdentryinit(giststate, key[0].sk_attno-1, &de,
+					   datum, r, p, offset,
 					   IndexTupleSize(tuple) - sizeof(IndexTupleData),
 					   FALSE);
 
@@ -266,16 +271,16 @@ gistindex_keytest(IndexTuple tuple,
 								 ObjectIdGetDatum(key[0].sk_procedure));
 		}
 
-		if ( (char*)de.pred != (char*)datum )
-			if ( de.pred ) pfree( de.pred );
+		if ( de.key != datum )
+			if ( DatumGetPointer(de.key) != NULL )
+				pfree( DatumGetPointer(de.key) );
 
 		if (DatumGetBool(test) == !!(key[0].sk_flags & SK_NEGATE))
 			return false;
 
-		scanKeySize -= 1;
+		scanKeySize--;
 		key++;
 	}
-
 	return true;
 }
 
@@ -284,7 +289,7 @@ static OffsetNumber
 gistfindnext(IndexScanDesc s, Page p, OffsetNumber n, ScanDirection dir)
 {
 	OffsetNumber maxoff;
-	char	   *it;
+	IndexTuple	it;
 	GISTPageOpaque po;
 	GISTScanOpaque so;
 	GISTSTATE  *giststate;
@@ -307,8 +312,8 @@ gistfindnext(IndexScanDesc s, Page p, OffsetNumber n, ScanDirection dir)
 
 	while (n >= FirstOffsetNumber && n <= maxoff)
 	{
-		it = (char *) PageGetItem(p, PageGetItemId(p, n));
-		if (gistindex_keytest((IndexTuple) it,
+		it = (IndexTuple) PageGetItem(p, PageGetItemId(p, n));
+		if (gistindex_keytest(it,
 							  RelationGetDescr(s->relation),
 							  s->numberOfKeys, s->keyData, giststate,
 							  s->relation, p, n))

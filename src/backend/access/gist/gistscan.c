@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gistscan.c,v 1.34 2001/05/30 19:53:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gistscan.c,v 1.35 2001/05/31 18:16:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -122,7 +122,7 @@ gistrescan(PG_FUNCTION_ARGS)
 			s->keyData[i].sk_procedure
 				= RelationGetGISTStrategy(s->relation, s->keyData[i].sk_attno,
 										  s->keyData[i].sk_procedure);
-			s->keyData[i].sk_func = p->giststate->consistentFn;
+			s->keyData[i].sk_func = p->giststate->consistentFn[i];
 		}
 	}
 	else
@@ -153,7 +153,7 @@ gistrescan(PG_FUNCTION_ARGS)
 				s->keyData[i].sk_procedure
 					= RelationGetGISTStrategy(s->relation, s->keyData[i].sk_attno,
 											  s->keyData[i].sk_procedure);
-				s->keyData[i].sk_func = p->giststate->consistentFn;
+				s->keyData[i].sk_func = p->giststate->consistentFn[i];
 			}
 	}
 

@@ -45,7 +45,7 @@ NDBOX	   *g_cube_binary_union(NDBOX * r1, NDBOX * r2, int *sizep);
 bool	   *g_cube_same(NDBOX * b1, NDBOX * b2, bool *result);
 
 /*
-** R-tree suport functions
+** R-tree support functions
 */
 bool		cube_same(NDBOX * a, NDBOX * b);
 bool		cube_different(NDBOX * a, NDBOX * b);
@@ -168,13 +168,15 @@ g_cube_consistent(GISTENTRY *entry,
 {
 
 	/*
-	 * * if entry is not leaf, use g_cube_internal_consistent, * else use
+	 * if entry is not leaf, use g_cube_internal_consistent, else use
 	 * g_cube_leaf_consistent
 	 */
 	if (GIST_LEAF(entry))
-		return (g_cube_leaf_consistent((NDBOX *) (entry->pred), query, strategy));
+		return g_cube_leaf_consistent((NDBOX *) DatumGetPointer(entry->key),
+									  query, strategy);
 	else
-		return (g_cube_internal_consistent((NDBOX *) (entry->pred), query, strategy));
+		return g_cube_internal_consistent((NDBOX *) DatumGetPointer(entry->key),
+										  query, strategy);
 }
 
 
@@ -194,7 +196,7 @@ g_cube_union(bytea *entryvec, int *sizep)
 	 * fprintf(stderr, "union\n");
 	 */
 	numranges = (VARSIZE(entryvec) - VARHDRSZ) / sizeof(GISTENTRY);
-	tmp = (NDBOX *) (((GISTENTRY *) (VARDATA(entryvec)))[0]).pred;
+	tmp = (NDBOX *) DatumGetPointer((((GISTENTRY *) (VARDATA(entryvec)))[0]).key);
 
 	/*
 	 * sizep = sizeof(NDBOX); -- NDBOX has variable size
@@ -204,14 +206,8 @@ g_cube_union(bytea *entryvec, int *sizep)
 	for (i = 1; i < numranges; i++)
 	{
 		out = g_cube_binary_union(tmp, (NDBOX *)
-						   (((GISTENTRY *) (VARDATA(entryvec)))[i]).pred,
+								  DatumGetPointer((((GISTENTRY *) (VARDATA(entryvec)))[i]).key),
 								  sizep);
-
-		/*
-		 * fprintf(stderr, "\t%s ^ %s -> %s\n", cube_out(tmp),
-		 * cube_out((NDBOX *)(((GISTENTRY
-		 * *)(VARDATA(entryvec)))[i]).pred), cube_out(out));
-		 */
 		if (i > 1)
 			pfree(tmp);
 		tmp = out;
@@ -243,15 +239,16 @@ g_cube_decompress(GISTENTRY *entry)
 float *
 g_cube_penalty(GISTENTRY *origentry, GISTENTRY *newentry, float *result)
 {
-	Datum		ud;
+	NDBOX	   *ud;
 	float		tmp1,
 				tmp2;
 
-	ud = (Datum) cube_union((NDBOX *) (origentry->pred), (NDBOX *) (newentry->pred));
-	rt_cube_size((NDBOX *) ud, &tmp1);
-	rt_cube_size((NDBOX *) (origentry->pred), &tmp2);
+	ud = cube_union((NDBOX *) DatumGetPointer(origentry->key),
+					(NDBOX *) DatumGetPointer(newentry->key));
+	rt_cube_size(ud, &tmp1);
+	rt_cube_size((NDBOX *) DatumGetPointer(origentry->key), &tmp2);
 	*result = tmp1 - tmp2;
-	pfree((char *) ud);
+	pfree(ud);
 
 	/*
 	 * fprintf(stderr, "penalty\n"); fprintf(stderr, "\t%g\n", *result);
@@ -308,16 +305,16 @@ g_cube_picksplit(bytea *entryvec,
 
 	for (i = FirstOffsetNumber; i < maxoff; i = OffsetNumberNext(i))
 	{
-		datum_alpha = (NDBOX *) (((GISTENTRY *) (VARDATA(entryvec)))[i].pred);
+		datum_alpha = (NDBOX *) DatumGetPointer(((GISTENTRY *) (VARDATA(entryvec)))[i].key);
 		for (j = OffsetNumberNext(i); j <= maxoff; j = OffsetNumberNext(j))
 		{
-			datum_beta = (NDBOX *) (((GISTENTRY *) (VARDATA(entryvec)))[j].pred);
+			datum_beta = (NDBOX *) DatumGetPointer(((GISTENTRY *) (VARDATA(entryvec)))[j].key);
 
 			/* compute the wasted space by unioning these guys */
 			/* size_waste = size_union - size_inter; */
-			union_d = (NDBOX *) cube_union(datum_alpha, datum_beta);
+			union_d = cube_union(datum_alpha, datum_beta);
 			rt_cube_size(union_d, &size_union);
-			inter_d = (NDBOX *) cube_inter(datum_alpha, datum_beta);
+			inter_d = cube_inter(datum_alpha, datum_beta);
 			rt_cube_size(inter_d, &size_inter);
 			size_waste = size_union - size_inter;
 
@@ -346,12 +343,12 @@ g_cube_picksplit(bytea *entryvec,
 	right = v->spl_right;
 	v->spl_nright = 0;
 
-	datum_alpha = (NDBOX *) (((GISTENTRY *) (VARDATA(entryvec)))[seed_1].pred);
-	datum_l = (NDBOX *) cube_union(datum_alpha, datum_alpha);
-	rt_cube_size((NDBOX *) datum_l, &size_l);
-	datum_beta = (NDBOX *) (((GISTENTRY *) (VARDATA(entryvec)))[seed_2].pred);;
-	datum_r = (NDBOX *) cube_union(datum_beta, datum_beta);
-	rt_cube_size((NDBOX *) datum_r, &size_r);
+	datum_alpha = (NDBOX *) DatumGetPointer(((GISTENTRY *) (VARDATA(entryvec)))[seed_1].key);
+	datum_l = cube_union(datum_alpha, datum_alpha);
+	rt_cube_size(datum_l, &size_l);
+	datum_beta = (NDBOX *) DatumGetPointer(((GISTENTRY *) (VARDATA(entryvec)))[seed_2].key);
+	datum_r = cube_union(datum_beta, datum_beta);
+	rt_cube_size(datum_r, &size_r);
 
 	/*
 	 * Now split up the regions between the two seeds.	An important
@@ -389,11 +386,11 @@ g_cube_picksplit(bytea *entryvec,
 		}
 
 		/* okay, which page needs least enlargement? */
-		datum_alpha = (NDBOX *) (((GISTENTRY *) (VARDATA(entryvec)))[i].pred);
-		union_dl = (NDBOX *) cube_union(datum_l, datum_alpha);
-		union_dr = (NDBOX *) cube_union(datum_r, datum_alpha);
-		rt_cube_size((NDBOX *) union_dl, &size_alpha);
-		rt_cube_size((NDBOX *) union_dr, &size_beta);
+		datum_alpha = (NDBOX *) DatumGetPointer(((GISTENTRY *) (VARDATA(entryvec)))[i].key);
+		union_dl = cube_union(datum_l, datum_alpha);
+		union_dr = cube_union(datum_r, datum_alpha);
+		rt_cube_size(union_dl, &size_alpha);
+		rt_cube_size(union_dr, &size_beta);
 
 		/* pick which page to add it to */
 		if (size_alpha - size_l < size_beta - size_r)
@@ -417,8 +414,8 @@ g_cube_picksplit(bytea *entryvec,
 	}
 	*left = *right = FirstOffsetNumber; /* sentinel value, see dosplit() */
 
-	v->spl_ldatum = (char *) datum_l;
-	v->spl_rdatum = (char *) datum_r;
+	v->spl_ldatum = PointerGetDatum(datum_l);
+	v->spl_rdatum = PointerGetDatum(datum_r);
 
 	return v;
 }

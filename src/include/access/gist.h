@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: gist.h,v 1.27 2001/05/30 19:53:39 tgl Exp $
+ * $Id: gist.h,v 1.28 2001/05/31 18:16:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,13 +65,13 @@ typedef struct GISTSTACK
 
 typedef struct GISTSTATE
 {
-	FmgrInfo	consistentFn;
-	FmgrInfo	unionFn;
-	FmgrInfo	compressFn;
-	FmgrInfo	decompressFn;
-	FmgrInfo	penaltyFn;
-	FmgrInfo	picksplitFn;
-	FmgrInfo	equalFn;
+	FmgrInfo	consistentFn[INDEX_MAX_KEYS];
+	FmgrInfo	unionFn[INDEX_MAX_KEYS];
+	FmgrInfo	compressFn[INDEX_MAX_KEYS];
+	FmgrInfo	decompressFn[INDEX_MAX_KEYS];
+	FmgrInfo	penaltyFn[INDEX_MAX_KEYS];
+	FmgrInfo	picksplitFn[INDEX_MAX_KEYS];
+	FmgrInfo	equalFn[INDEX_MAX_KEYS];
 	bool		haskeytype;
 	bool		keytypbyval;
 } GISTSTATE;
@@ -121,21 +121,30 @@ typedef struct GIST_SPLITVEC
 {
 	OffsetNumber *spl_left;		/* array of entries that go left */
 	int			spl_nleft;		/* size of this array */
-	char	   *spl_ldatum;		/* Union of keys in spl_left */
+	Datum		spl_ldatum;		/* Union of keys in spl_left */
+	Datum		spl_lattr[INDEX_MAX_KEYS];  /* Union of subkeys in spl_left */
+	int	   spl_lattrsize[INDEX_MAX_KEYS];
+
 	OffsetNumber *spl_right;	/* array of entries that go right */
 	int			spl_nright;		/* size of the array */
-	char	   *spl_rdatum;		/* Union of keys in spl_right */
+	Datum		spl_rdatum;		/* Union of keys in spl_right */
+	Datum		spl_rattr[INDEX_MAX_KEYS];  /* Union of subkeys in spl_right */
+	int	   spl_rattrsize[INDEX_MAX_KEYS];
+
+	int 	*spl_idgrp;
+	int  	*spl_ngrp;		   /* number in each group */
+	char  	*spl_grpflag;		   /* flags of each group */
 } GIST_SPLITVEC;
 
 /*
- * An entry on a GiST node.  Contains the key (pred), as well as
+ * An entry on a GiST node.  Contains the key, as well as
  * its own location (rel,page,offset) which can supply the matching
- * pointer.  The size of the pred is in bytes, and leafkey is a flag to
+ * pointer.  The size of the key is in bytes, and leafkey is a flag to
  * tell us if the entry is in a leaf node.
  */
 typedef struct GISTENTRY
 {
-	char	   *pred;
+	Datum		key;
 	Relation	rel;
 	Page		page;
 	OffsetNumber offset;
@@ -146,43 +155,20 @@ typedef struct GISTENTRY
 /*
  * macro to initialize a GISTENTRY
  */
-#define gistentryinit(e, pr, r, pg, o, b, l)\
-   do {(e).pred = (pr); (e).rel = (r); (e).page = (pg); (e).offset = (o); (e).bytes = (b); (e).leafkey = (l);} while (0)
+#define gistentryinit(e, k, r, pg, o, b, l) \
+	do { (e).key = (k); (e).rel = (r); (e).page = (pg); \
+		 (e).offset = (o); (e).bytes = (b); (e).leafkey = (l); } while (0)
 
-/* defined in gist.c */
-#define TRLOWER(tr) (((tr)->bytes))
-#define TRUPPER(tr) (&((tr)->bytes[MAXALIGN(VARSIZE(TRLOWER(tr)))]))
-
-typedef struct txtrange
-{
-	int32		vl_len;
-	/*
-	 * flag: NINF means that lower is negative infinity; PINF means that *
-	 * upper is positive infinity.	0 means that both are numbers.
-	 */
-	int32		flag;
-	char		bytes[2];
-} TXTRANGE;
-
-typedef struct intrange
-{
-	int			lower;
-	int			upper;
-	/*
-	 * flag: NINF means that lower is negative infinity; PINF means that *
-	 * upper is positive infinity.	0 means that both are numbers.
-	 */
-	int			flag;
-} INTRANGE;
-
+/* gist.c */
 extern Datum gistbuild(PG_FUNCTION_ARGS);
 extern Datum gistinsert(PG_FUNCTION_ARGS);
 extern Datum gistdelete(PG_FUNCTION_ARGS);
 extern void _gistdump(Relation r);
 extern void gistfreestack(GISTSTACK *s);
 extern void initGISTstate(GISTSTATE *giststate, Relation index);
-extern void gistdentryinit(GISTSTATE *giststate, GISTENTRY *e, char *pr,
-			   Relation r, Page pg, OffsetNumber o, int b, bool l);
+extern void gistdentryinit(GISTSTATE *giststate, int nkey, GISTENTRY *e,
+						   Datum k, Relation r, Page pg, OffsetNumber o,
+						   int b, bool l);
 extern StrategyNumber RelationGetGISTStrategy(Relation, AttrNumber,
 											  RegProcedure);
 
