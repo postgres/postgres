@@ -1074,11 +1074,11 @@ OptTemp:  	TEMPORARY		{ $$ = make_str("temporary"); }
 		| LOCAL TEMPORARY	{ $$ = make_str("local temporary"); }
 		| LOCAL TEMP		{ $$ = make_str("local temp"); }
 		| GLOBAL TEMPORARY	{
-					  mmerror(ET_ERROR, "GLOBAL TEMPORARY TABLE is not currently supported");
+					  mmerror(ET_NOTICE, "Currently unsupported CREATE TABLE/GLOBAL TEMPORARY will be passed to backend");
 					  $$ = make_str("global temporary");
 					}
 		| GLOBAL TEMP		{
-					  mmerror(ET_ERROR, "GLOBAL TEMPORARY TABLE is not currently supported");
+					  mmerror(ET_NOTICE, "Currently unsupported CREATE TABLE/GLOBAL TEMP will be passed to backend");
 					  $$ = make_str("global temp");
 					}
 		| /*EMPTY*/		{ $$ = EMPTY; }
@@ -1103,8 +1103,8 @@ columnDef:  ColId Typename ColQualList opt_collate
 				{
 					if (strlen($4) > 0)
 					{
-						sprintf(errortext, "CREATE TABLE/COLLATE %s not yet implemented; clause ignored", $4);
-						mmerror(ET_NOTICE, errortext);
+ 						sprintf(errortext, "Currently unsupported CREATE TABLE/COLLATE %s will be passed to backend", $4);
+ 						mmerror(ET_NOTICE, errortext);
 					}
 					$$ = cat_str(4, $1, $2, $3, $4);
 				}
@@ -1219,7 +1219,7 @@ key_match:  MATCH FULL
 		}
 		| MATCH PARTIAL		
 		{
-			mmerror(ET_NOTICE, "FOREIGN KEY/MATCH PARTIAL not yet implemented");
+			mmerror(ET_NOTICE, "Currently unsupported FOREIGN KEY/MATCH PARTIAL will be passed to backend");
 			$$ = make_str("match partial");
 		}
 		| /*EMPTY*/
@@ -1614,7 +1614,7 @@ direction:	FORWARD		{ $$ = make_str("forward"); }
 		| BACKWARD	{ $$ = make_str("backward"); }
 		| RELATIVE      { $$ = make_str("relative"); }
                 | ABSOLUTE	{
-					mmerror(ET_NOTICE, "FETCH/ABSOLUTE not supported, backend will use RELATIVE");
+					mmerror(ET_NOTICE, "Currently unsupported FETCH/ABSOLUTE will be passed to backend, backend will use RELATIVE");
 					$$ = make_str("absolute");
 				}
 		;
@@ -1769,7 +1769,11 @@ grantee_list: grantee  				{ $$ = $1; }
 		| grantee_list ',' grantee 	{ $$ = cat_str(3, $1, make_str(","), $3); }
 		;
 
-opt_with_grant:  WITH GRANT OPTION { $$ = make_str("with grant option"); }
+opt_with_grant:  WITH GRANT OPTION
+                                {
+					mmerror(ET_NOTICE, "Currently unsupported GRANT/WITH GRANT OPTION will be passed to backend");
+					$$ = make_str("with grant option");
+				}
 		| /*EMPTY*/ { $$ = EMPTY; }
 		;
 
@@ -1919,14 +1923,14 @@ func_arg:  opt_arg func_type
 
 opt_arg:  IN    { $$ = make_str("in"); }
 	| OUT	{ 
-		  mmerror(ET_ERROR, "CREATE FUNCTION/OUT parameters are not supported");
+		  mmerror(ET_NOTICE, "Currently unsupported CREATE FUNCTION/OUT will be passed to backend");
 
 	 	  $$ = make_str("out");
 		}
 	| INOUT	{ 
-		  mmerror(ET_ERROR, "CREATE FUNCTION/INOUT parameters are not supported");
+		  mmerror(ET_NOTICE, "Currently unsupported CREATE FUNCTION/INOUT will be passed to backend");
 
-	 	  $$ = make_str("oinut");
+	 	  $$ = make_str("inout");
 		}
 	;
 
@@ -2164,7 +2168,7 @@ opt_trans: WORK 	{ $$ = ""; }
 
 opt_chain: AND NO CHAIN 	{ $$ = make_str("and no chain"); }
 	| AND CHAIN		{
-				  mmerror(ET_ERROR, "COMMIT/CHAIN not yet supported");
+				  mmerror(ET_NOTICE, "Currently unsupported COMMIT/CHAIN will be passed to backend");
 
 				  $$ = make_str("and chain");
 				}
@@ -2609,12 +2613,12 @@ OptTempTableName:  TEMPORARY opt_table relation_name
 			}
                        | GLOBAL TEMPORARY opt_table relation_name
                         {
-				mmerror(ET_ERROR, "GLOBAL TEMPORARY TABLE is not currently supported");
+				mmerror(ET_NOTICE, "Currently unsupported CREATE TABLE/GLOBAL TEMPORARY will be passed to backend");
 				$$ = cat_str(3, make_str("global temporary"), $3, $4);
                         }
                        | GLOBAL TEMP opt_table relation_name
                         {
-				mmerror(ET_ERROR, "GLOBAL TEMPORARY TABLE is not currently supported");
+				mmerror(ET_NOTICE, "Currently unsupported CREATE TABLE/GLOBAL TEMP will be passed to backend");
 				$$ = cat_str(3, make_str("global temp"), $3, $4);
                         }
                        | TABLE relation_name
