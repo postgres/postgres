@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.1.1.1 1996/07/09 06:21:49 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.2 1996/07/16 07:13:07 scrappy Exp $
  *
  * NOTES
  *
@@ -49,7 +49,7 @@
 #define MAXINT        INT_MAX
 #else
 #include <netdb.h>		/* for MAXHOSTNAMELEN on some */
-# if defined(PORTNAME_BSD44_derived) || defined(PORTNAME_bsdi)
+# if defined(PORTNAME_BSD44_derived) || defined(PORTNAME_bsdi) || defined(PORTNAME_bsdi_2_1)
 # include <machine/limits.h>
 # define MAXINT		INT_MAX
 # else

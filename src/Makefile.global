@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.3 1996/07/15 19:10:32 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.4 1996/07/16 07:12:10 scrappy Exp $
 #
 # NOTES
 #    This is seen by any Makefiles that include mk/postgres.mk. To
@@ -43,6 +43,7 @@
 #				"LINUX_ELF=1" in src/mk/port/postgres.mk.linux)
 #	BSD44_derived	-	OSs derived from 4.4-lite BSD (NetBSD, FreeBSD)
 #       bsdi            -       BSD/OS 2.0 and 2.01
+#       bsdi_2_1        -       BSD/OS 2.1
 #	aix		-	IBM on AIX 3.2.5
 #	irix5		-	SGI MIPS on IRIX 5.3
 #  Some hooks are provided for
