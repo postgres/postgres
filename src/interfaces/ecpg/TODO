@@ -5,10 +5,10 @@ section of the structure variable for ecpg to be able to understand it.
 
 Variable type bool has to be checked. I never used it so far.
 
-ecpg cannot use pointer variables except [unsigned] char *
-
-There is no exec sql type statement which is the SQL version of a typedef.
-
-There is no exec sql prepare statement.
-
-There is no SQLSTATE
+Missing statements:
+ - exec sql type
+ - exec sql define
+ - exec sql prepare
+ - exec sql allocate
+ - exqc sql free
+ - SQLSTATE

@@ -804,8 +804,10 @@ bool
 ECPGsetconn(int lineno, const char *connection_name)
 {
 	struct connection *con = all_connections;
+
+	ECPGlog("ECPGsetconn: setting actual connection to %s\n", connection_name);	
 	
-	for (; con && strcmp(connection_name, con->name) == 0; con=con->next);
+	for (; con && strcmp(connection_name, con->name) != 0; con=con->next);
 	if (con)
 	{
 		actual_connection = con;
@@ -883,7 +885,7 @@ ECPGdisconnect(int lineno, const char *connection_name)
 	}
 	else 
 	{
-		for (con = all_connections; con && strcmp(con->name, connection_name);con = con->next);
+		for (con = all_connections; con && strcmp(con->name, connection_name) != 0;con = con->next);
 		if (con == NULL)
 		{		
 			ECPGlog("disconnect: not connected to connection %s\n", connection_name);

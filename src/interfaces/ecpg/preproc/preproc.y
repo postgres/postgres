@@ -673,8 +673,8 @@ output_statement(char * stmt, int mode)
 %type  <str>	ECPGWhenever ECPGConnect connection_target ECPGOpen open_opts
 %type  <str>	indicator ECPGExecute c_expr variable_list dotext
 %type  <str>    storage_clause opt_initializer vartext c_anything blockstart
-%type  <str>    blockend variable_list variable var_anything sql_anything
-%type  <str>	opt_pointer ecpg_ident cvariable ECPGDisconnect dis_name
+%type  <str>    blockend variable_list variable var_anything do_anything
+%type  <str>	opt_pointer cvariable ECPGDisconnect dis_name
 %type  <str>	stmt symbol opt_symbol ECPGRelease execstring server_name
 %type  <str>	connection_object opt_server opt_port
 %type  <str>    user_name opt_user char_variable ora_user ident
@@ -762,7 +762,7 @@ stmt:  AddAttrStmt			{ output_statement($1, 0); }
 		| ECPGOpen		{ output_statement($1, 0); }
 		| ECPGRelease		{ /* output already done */ }
 		| ECPGSetConnection     {
-						fprintf(yyout, "ECPGsetcon(__LINE__, %s);", $1);
+						fprintf(yyout, "ECPGsetconn(__LINE__, %s);", $1);
 						whenever_action(0);
                                        		free($1);
 					}
@@ -4014,6 +4014,13 @@ connection_target: database_name opt_server opt_port
                 {
 		  $$ = $1;
 		}
+	| Sconst
+		{
+		  $$ = strdup($1);
+		  $$[0] = '\"';
+		  $$[strlen($$) - 1] = '\"';
+		  free($1);
+		}
 
 db_prefix: ident cvariable
                 {
@@ -4075,9 +4082,12 @@ ora_user: user_name
         		$$ = make3_str($1, make1_str(","), $3);
                 }
 
-user_name: UserId       { $$ = make3_str(make1_str("\""), $1, make1_str("\"")); }
+user_name: UserId       { if ($1[0] == '\"')
+				$$ = $1;
+			  else
+				$$ = make3_str(make1_str("\""), $1, make1_str("\""));
+			}
         | char_variable { $$ = $1; }
-        | CSTRING       { $$ = make3_str(make1_str("\""), $1, make1_str("\"")); }
         | SCONST        { $$ = make3_str(make1_str("\""), $1, make1_str("\"")); }
 
 char_variable: cvariable
@@ -4137,7 +4147,8 @@ connection_object: connection_target { $$ = $1; }
  */
 ECPGExecute : EXECUTE SQL_IMMEDIATE execstring { $$ = $3; };
 
-execstring: cvariable | CSTRING;
+execstring: cvariable |
+	CSTRING	 { $$ = make3_str(make1_str("\""), $1, make1_str("\"")); };
 
 /*
  * open is an open cursor, at the moment this has to be removed
@@ -4534,7 +4545,7 @@ into_list : coutputvariable | into_list ',' coutputvariable;
 ecpgstart: SQL_START { reset_variables();}
 
 dotext: /* empty */		{ $$ = make1_str(""); }
-	| dotext sql_anything	{ $$ = make2_str($1, $2); }
+	| dotext do_anything	{ $$ = make2_str($1, $2); }
 
 vartext: var_anything		{ $$ = $1; }
         | vartext var_anything { $$ = make2_str($1, $2); }
@@ -4559,16 +4570,15 @@ indicator: /* empty */			{ $$ = NULL; }
 	| SQL_INDICATOR name		{ check_indicator((find_variable($2))->type); $$ = $2; }
 
 ident: IDENT	{ $$ = make1_str($1); }
-
-ecpg_ident: ident	{ $$ = $1; }
-	| CSTRING	{ $$ = make3_str(make1_str("\""), $1, make1_str("\"")); }
+	| CSTRING	{ $$ = $1; }
 /*
  * C stuff
  */
 
-symbol: ecpg_ident	{ $$ = $1; }
+symbol: IDENT	{ $$ = make1_str($1); }
 
-c_anything:  ecpg_ident 	{ $$ = $1; }
+c_anything:  IDENT 	{ $$ = make1_str($1); }
+	| CSTRING	{ $$ = make3_str(make1_str("\""), $1, make1_str("\"")); }
 	| Iconst	{ $$ = $1; }
 	| FCONST	{ $$ = make_name(); }
 	| '*'			{ $$ = make1_str("*"); }
@@ -4597,12 +4607,14 @@ c_anything:  ecpg_ident 	{ $$ = $1; }
 	| '='		{ $$ = make1_str("="); }
 	| ','		{ $$ = make1_str(","); }
 
-sql_anything: ecpg_ident	{ $$ = $1; }
-	| Iconst	{ $$ = $1; }
+do_anything: IDENT	{ $$ = make1_str($1); }
+        | CSTRING       { $$ = make3_str(make1_str("\""), $1, make1_str("\""));}
+        | Iconst        { $$ = $1; }
 	| FCONST	{ $$ = make_name(); }
 	| ','		{ $$ = make1_str(","); }
 
-var_anything: ecpg_ident 	{ $$ = $1; }
+var_anything: IDENT 	{ $$ = make1_str($1); }
+	| CSTRING       { $$ = make3_str(make1_str("\""), $1, make1_str("\"")); }
 	| Iconst	{ $$ = $1; }
 	| FCONST	{ $$ = make_name(); }
 /*FIXME:	| ','		{ $$ = make1_str(","); }*/

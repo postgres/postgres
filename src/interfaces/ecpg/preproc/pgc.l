@@ -180,14 +180,11 @@ sql     [sS][qQ][lL]
 
 <xc>{xcstar}		{ /* ignore */ }
 {xcstart}		{
-				fprintf(stderr,"ys = %d %d\n", YYSTATE, before_comment);
 				before_comment = YYSTATE;
 	 			BEGIN(xc);
-				fprintf(stderr,"ys = %d %d\n", YYSTATE,
-before_comment);
 			}
 
-<xc>{xcstop}	{ fprintf(stderr,"ys = %d %d\n", YYSTATE, before_comment);BEGIN(before_comment); }
+<xc>{xcstop}	{ BEGIN(before_comment); }
 
 <xc>{xcinside}	{ /* ignore */ }
 

@@ -228,3 +228,8 @@ Mon May 18 10:33:58 CEST 1998
 	- Set version to 2.3.1
 	- Set library version to 2.2
 
+Tue May 19 11:49:34 CEST 1998
+
+	- Tested (and fixed) 'set connection'
+	- Fixed string notation in C
+	- Set version to 2.3.2
