@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.126 2003/02/03 21:15:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.127 2003/02/04 00:50:00 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -51,10 +51,9 @@ typedef struct
 
 static bool contain_agg_clause_walker(Node *node, void *context);
 static bool contain_distinct_agg_clause_walker(Node *node, void *context);
-static bool pull_agg_clause_walker(Node *node, List **listptr);
+static bool count_agg_clause_walker(Node *node, int *count);
 static bool expression_returns_set_walker(Node *node, void *context);
 static bool contain_subplans_walker(Node *node, void *context);
-static bool pull_subplans_walker(Node *node, List **listptr);
 static bool contain_mutable_functions_walker(Node *node, void *context);
 static bool contain_volatile_functions_walker(Node *node, void *context);
 static bool contain_nonstrict_functions_walker(Node *node, void *context);
@@ -373,31 +372,28 @@ contain_distinct_agg_clause_walker(Node *node, void *context)
 }
 
 /*
- * pull_agg_clause
- *	  Recursively pulls all Aggref nodes from an expression tree.
- *
- *	  Returns list of Aggref nodes found.  Note the nodes themselves are not
- *	  copied, only referenced.
+ * count_agg_clause
+ *	  Recursively count the Aggref nodes in an expression tree.
  *
  *	  Note: this also checks for nested aggregates, which are an error.
  */
-List *
-pull_agg_clause(Node *clause)
+int
+count_agg_clause(Node *clause)
 {
-	List	   *result = NIL;
+	int			result = 0;
 
-	pull_agg_clause_walker(clause, &result);
+	count_agg_clause_walker(clause, &result);
 	return result;
 }
 
 static bool
-pull_agg_clause_walker(Node *node, List **listptr)
+count_agg_clause_walker(Node *node, int *count)
 {
 	if (node == NULL)
 		return false;
 	if (IsA(node, Aggref))
 	{
-		*listptr = lappend(*listptr, node);
+		(*count)++;
 
 		/*
 		 * Complain if the aggregate's argument contains any aggregates;
@@ -411,8 +407,8 @@ pull_agg_clause_walker(Node *node, List **listptr)
 		 */
 		return false;
 	}
-	return expression_tree_walker(node, pull_agg_clause_walker,
-								  (void *) listptr);
+	return expression_tree_walker(node, count_agg_clause_walker,
+								  (void *) count);
 }
 
 
@@ -509,36 +505,6 @@ contain_subplans_walker(Node *node, void *context)
 		return true;			/* abort the tree traversal and return
 								 * true */
 	return expression_tree_walker(node, contain_subplans_walker, context);
-}
-
-/*
- * pull_subplans
- *	  Recursively pulls all subplans from an expression tree.
- *
- *	  Returns list of SubPlan nodes found.  Note the nodes themselves
- *	  are not copied, only referenced.
- */
-List *
-pull_subplans(Node *clause)
-{
-	List	   *result = NIL;
-
-	pull_subplans_walker(clause, &result);
-	return result;
-}
-
-static bool
-pull_subplans_walker(Node *node, List **listptr)
-{
-	if (node == NULL)
-		return false;
-	if (is_subplan(node))
-	{
-		*listptr = lappend(*listptr, node);
-		/* fall through to check args to subplan */
-	}
-	return expression_tree_walker(node, pull_subplans_walker,
-								  (void *) listptr);
 }
 
 

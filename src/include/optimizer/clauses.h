@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: clauses.h,v 1.61 2003/01/17 03:25:04 tgl Exp $
+ * $Id: clauses.h,v 1.62 2003/02/04 00:50:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,12 +46,11 @@ extern List *make_ands_implicit(Expr *clause);
 
 extern bool contain_agg_clause(Node *clause);
 extern bool contain_distinct_agg_clause(Node *clause);
-extern List *pull_agg_clause(Node *clause);
+extern int	count_agg_clause(Node *clause);
 
 extern bool expression_returns_set(Node *clause);
 
 extern bool contain_subplans(Node *clause);
-extern List *pull_subplans(Node *clause);
 
 extern bool contain_mutable_functions(Node *clause);
 extern bool contain_volatile_functions(Node *clause);

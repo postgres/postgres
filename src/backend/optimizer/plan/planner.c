@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.143 2003/02/03 15:07:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.144 2003/02/04 00:50:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -623,11 +623,14 @@ grouping_planner(Query *parse, double tuple_fraction)
 		 * Will need actual number of aggregates for estimating costs.
 		 * Also, it's possible that optimization has eliminated all
 		 * aggregates, and we may as well check for that here.
+		 *
+		 * Note: we do not attempt to detect duplicate aggregates here;
+		 * a somewhat-overestimated count is okay for our present purposes.
 		 */
 		if (parse->hasAggs)
 		{
-			numAggs = length(pull_agg_clause((Node *) tlist)) +
-				length(pull_agg_clause(parse->havingQual));
+			numAggs = count_agg_clause((Node *) tlist) +
+				count_agg_clause(parse->havingQual);
 			if (numAggs == 0)
 				parse->hasAggs = false;
 		}
