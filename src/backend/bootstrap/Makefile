@@ -4,7 +4,7 @@
 #    Makefile for the bootstrap module
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/bootstrap/Makefile,v 1.3 1996/11/09 06:17:44 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/bootstrap/Makefile,v 1.4 1996/11/14 07:33:20 bryanh Exp $
 #
 #
 # We must build bootparse.c and bootscanner.c with yacc and lex and sed,
@@ -18,18 +18,25 @@
 #
 #-------------------------------------------------------------------------
 
-SRCDIR = ../..
+SRCDIR= ../..
 include ../../Makefile.global
 
-INCLUDE_OPT = -I.. \
-              -I../port/$(PORTNAME) \
-              -I../../include
+INCLUDE_OPT= -I.. \
+             -I../port/$(PORTNAME) \
+             -I../../include
 
-CFLAGS += $(INCLUDE_OPT) -Wno-error
+CFLAGS+= $(INCLUDE_OPT) 
 
-BOOTYACCS = bootstrap_tokens.h bootparse.c
+ifeq ($(CC), gcc)
+# Until we figure out how to get rid of the warnings in this directory,
+# we must turn off any -Werror that is in CFLAGS now.  These options only
+# exist for the gcc compiler.
+CFLAGS+= -Wno-error
+endif
 
-OBJS = bootparse.o bootscanner.o bootstrap.o 
+BOOTYACCS= bootstrap_tokens.h bootparse.c
+
+OBJS= bootparse.o bootscanner.o bootstrap.o 
 
 all: SUBSYS.o
 
