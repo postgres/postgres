@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: datetime.h,v 1.12 2000/04/12 17:16:54 momjian Exp $
+ * $Id: datetime.h,v 1.13 2000/04/14 15:22:22 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,7 +56,7 @@
 #define DYEAR			"year"
 #define DDECADE			"decade"
 #define DCENTURY		"century"
-#define DMILLENIUM		"millenium"
+#define DMILLENNIUM		"millennium"
 #define DA_D			"ad"
 #define DB_C			"bc"
 #define DTIMEZONE		"timezone"
@@ -65,7 +65,7 @@
  * Fundamental time field definitions for parsing.
  *
  *	Meridian:  am, pm, or 24-hour style.
- *	Millenium: ad, bc
+ *	Millennium: ad, bc
  */
 
 #define AM		0
@@ -145,7 +145,7 @@
 #define DTK_YEAR		25
 #define DTK_DECADE		26
 #define DTK_CENTURY		27
-#define DTK_MILLENIUM	28
+#define DTK_MILLENNIUM	28
 #define DTK_MILLISEC	29
 #define DTK_MICROSEC	30
 
