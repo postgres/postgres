@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.77 2001/02/21 18:53:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.78 2001/04/02 08:17:24 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -335,13 +335,20 @@ cppline			{space}*#(.*\\{line_end})*.*
 					startlit();
 				}
 <xh>{xhstop}			{
+					long val;
 					char* endptr;
 
 					BEGIN(SQL);
 					errno = 0;
-					yylval.ival = strtol(literalbuf, &endptr, 16);
-					if (*endptr != '\0' || errno == ERANGE)
+					val = strtol(literalbuf, &endptr, 16);
+					if (*endptr != '\0' || errno == ERANGE
+#ifdef HAVE_LONG_INT_64  
+						/* if long > 32 bits, check for overflow of int4 */
+	                                        || val != (long) ((int32) val)
+#endif
+						)
 						mmerror(ET_ERROR, "Bad hexadecimal integer input");
+					yylval.ival = val;
 					return ICONST;
 				}
 
@@ -498,16 +505,23 @@ cppline			{space}*#(.*\\{line_end})*.*
 					return PARAM;
 				}
 <C,SQL>{integer}		{
+					long val;
 					char* endptr;
 
 					errno = 0;
-					yylval.ival = strtol((char *)yytext, &endptr,10);
-					if (*endptr != '\0' || errno == ERANGE)
+					val = strtol((char *)yytext, &endptr,10);
+					if (*endptr != '\0' || errno == ERANGE
+#ifdef HAVE_LONG_INT_64  
+						/* if long > 32 bits, check for overflow of int4 */
+	                                        || val != (long) ((int32) val)
+#endif
+						)
 					{
 						errno = 0;
 						yylval.str = mm_strdup((char*)yytext);
 						return FCONST;
 					}
+					yylval.ival = val;
 					return ICONST;
 				}
 <SQL>{ip}			{
