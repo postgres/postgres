@@ -7,7 +7,7 @@
  * Copyright (c) 2002-2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/funcapi.c,v 1.12 2003/11/29 19:52:01 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/funcapi.c,v 1.13 2003/12/19 00:02:11 joe Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,7 @@
 #include "catalog/pg_type.h"
 #include "utils/syscache.h"
 
+static void shutdown_MultiFuncCall(Datum arg);
 
 /*
  * init_MultiFuncCall
@@ -41,7 +42,10 @@ init_MultiFuncCall(PG_FUNCTION_ARGS)
 	{
 		/*
 		 * First call
-		 *
+		 */
+		ReturnSetInfo	   *rsi = (ReturnSetInfo *) fcinfo->resultinfo;
+
+		/*
 		 * Allocate suitably long-lived space and zero it
 		 */
 		retval = (FuncCallContext *)
@@ -63,6 +67,14 @@ init_MultiFuncCall(PG_FUNCTION_ARGS)
 		 * save the pointer for cross-call use
 		 */
 		fcinfo->flinfo->fn_extra = retval;
+
+		/*
+		 * Ensure we will get shut down cleanly if the exprcontext is not
+		 * run to completion.
+		 */
+		RegisterExprContextCallback(rsi->econtext,
+									shutdown_MultiFuncCall,
+									PointerGetDatum(fcinfo->flinfo));
 	}
 	else
 	{
@@ -108,8 +120,29 @@ per_MultiFuncCall(PG_FUNCTION_ARGS)
 void
 end_MultiFuncCall(PG_FUNCTION_ARGS, FuncCallContext *funcctx)
 {
-	/* unbind from fcinfo */
-	fcinfo->flinfo->fn_extra = NULL;
+	ReturnSetInfo	   *rsi = (ReturnSetInfo *) fcinfo->resultinfo;
+
+	/* Deregister the shutdown callback */
+	UnregisterExprContextCallback(rsi->econtext,
+								  shutdown_MultiFuncCall,
+								  PointerGetDatum(fcinfo->flinfo));
+
+	/* But use it to do the real work */
+	shutdown_MultiFuncCall(PointerGetDatum(fcinfo->flinfo));
+}
+
+/*
+ * shutdown_MultiFuncCall
+ * Shutdown function to clean up after init_MultiFuncCall
+ */
+static void
+shutdown_MultiFuncCall(Datum arg)
+{
+	FmgrInfo *flinfo = (FmgrInfo *) DatumGetPointer(arg);
+	FuncCallContext *funcctx = (FuncCallContext *) flinfo->fn_extra;
+
+	/* unbind from flinfo */
+	flinfo->fn_extra = NULL;
 
 	/*
 	 * Caller is responsible to free up memory for individual struct
