@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.115.2.3 2002/03/19 14:16:32 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.115.2.4 2002/03/25 20:58:40 momjian Exp $
 -->
 
 <appendix id="release">
@@ -48,6 +48,7 @@ contrib/btree_gist improvements (Teodor Sigaev)
 contrib/tsearch dictionary improvements, see README.tsearch for
   an additional installation step (Thomas T. Thai, Teodor Sigaev)
 Fix for array subscripts handling (Tom)
+Allow CREATE TABLE AS ... SELECT in PL/PgSQL (Tom)
      </programlisting>
     </para>
    </sect2>
