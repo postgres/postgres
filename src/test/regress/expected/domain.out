@@ -41,6 +41,7 @@ INSERT INTO basictest values ('88', 'haha', 'short', '123.1212');    -- Truncate
 COPY basictest (testvarchar) FROM stdin; -- fail
 ERROR:  copy: line 1, value too long for type character varying(5)
 lost synchronization with server, resetting connection
+SET autocommit TO 'on';
 COPY basictest (testvarchar) FROM stdin;
 select * from basictest;
  testint4 | testtext | testvarchar | testnumeric 
@@ -122,6 +123,7 @@ INSERT INTO nulltest values ('a', 'b', 'c', NULL); -- Good
 COPY nulltest FROM stdin; --fail
 ERROR:  copy: line 1, CopyFrom: Fail to add null value in not null attribute col3
 lost synchronization with server, resetting connection
+SET autocommit TO 'on';
 COPY nulltest FROM stdin;
 select * from nulltest;
  col1 | col2 | col3 | col4 

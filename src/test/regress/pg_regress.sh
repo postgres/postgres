@@ -1,5 +1,5 @@
 #! /bin/sh
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/pg_regress.sh,v 1.27 2002/09/04 18:04:57 petere Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/pg_regress.sh,v 1.28 2002/10/19 01:35:43 momjian Exp $
 
 me=`basename $0`
 : ${TMPDIR=/tmp}
@@ -420,7 +420,7 @@ fi
 # Set up SQL shell for the test.
 # ----------
 
-PSQL="$bindir/psql -a -q -X $psql_options"
+PSQL="$bindir/psql -q -X $psql_options"
 
 
 # ----------
@@ -473,7 +473,7 @@ fi
 # ----------
 
 message "dropping regression test user accounts"
-"$bindir/psql" $psql_options -c 'drop group regressgroup1; drop group regressgroup2; drop user regressuser1, regressuser2, regressuser3, regressuser4;' $dbname 2>/dev/null
+"$bindir/psql" $psql_options -c 'SET autocommit TO on;DROP GROUP regressgroup1; DROP GROUP regressgroup2; DROP USER regressuser1, regressuser2, regressuser3, regressuser4;' $dbname 2>/dev/null
 if [ $? -eq 2 ]; then
     echo "$me: could not drop user accounts"
     (exit 2); exit
@@ -545,12 +545,17 @@ do
         formatted=`echo $1 | awk '{printf "%-20.20s", $1;}'`
         $ECHO_N "test $formatted ... $ECHO_C"
 
-        $PSQL -d "$dbname" <"$inputdir/sql/$1.sql" >"$outputdir/results/$1.out" 2>&1
+	# use awk to properly output backslashes
+        (echo "SET autocommit TO 'on';"; awk 'BEGIN {printf "\\set ECHO all\n"}'; cat "$inputdir/sql/$1.sql") |
+        $PSQL -d "$dbname" >"$outputdir/results/$1.out" 2>&1
     else
         # Start a parallel group
         $ECHO_N "parallel group ($# tests): $ECHO_C"
         for name do
-            ( $PSQL -d $dbname <"$inputdir/sql/$name.sql" >"$outputdir/results/$name.out" 2>&1
+            ( 
+	      # use awk to properly output backslashes
+              (echo "SET autocommit TO 'on';"; awk 'BEGIN {printf "\\set ECHO all\n"}'; cat "$inputdir/sql/$name.sql") |
+	      $PSQL -d $dbname >"$outputdir/results/$name.out" 2>&1
               $ECHO_N " $name$ECHO_C"
             ) &
         done

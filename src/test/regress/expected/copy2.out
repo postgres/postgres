@@ -46,6 +46,7 @@ lost synchronization with server, resetting connection
 COPY x from stdin;
 ERROR:  copy: line 1, Extra data after last expected column
 lost synchronization with server, resetting connection
+SET autocommit TO 'on';
 -- various COPY options: delimiters, oids, NULL string
 COPY x (b, c, d, e) from stdin with oids delimiter ',' null 'x';
 -- check results of copy in

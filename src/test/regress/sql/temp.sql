@@ -44,6 +44,7 @@ CREATE TEMP TABLE temptest(col int);
 -- test temp table deletion
 
 \c regression
+SET autocommit TO 'on';
 
 SELECT * FROM temptest;
 

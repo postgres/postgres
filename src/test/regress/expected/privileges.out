@@ -220,6 +220,7 @@ ERROR:  atest2: permission denied
 -- privileges on functions, languages
 -- switch to superuser
 \c -
+SET autocommit TO 'on';
 REVOKE ALL PRIVILEGES ON LANGUAGE sql FROM PUBLIC;
 GRANT USAGE ON LANGUAGE sql TO regressuser1; -- ok
 GRANT USAGE ON LANGUAGE c TO PUBLIC; -- fail
@@ -270,6 +271,7 @@ SELECT testfunc1(5); -- ok
 DROP FUNCTION testfunc1(int); -- fail
 ERROR:  testfunc1: must be owner
 \c -
+SET autocommit TO 'on';
 DROP FUNCTION testfunc1(int); -- ok
 -- restore to sanity
 GRANT ALL PRIVILEGES ON LANGUAGE sql TO PUBLIC;
@@ -293,6 +295,7 @@ select has_table_privilege(1,'rule');
 ERROR:  pg_class_aclcheck: relation 1 not found
 -- superuser
 \c -
+SET autocommit TO 'on';
 select has_table_privilege(current_user,'pg_shadow','select');
  has_table_privilege 
 ---------------------
@@ -543,6 +546,7 @@ from (select oid from pg_class where relname = 'atest1') as t1;
 
 -- clean up
 \c regression
+SET autocommit TO 'on';
 DROP FUNCTION testfunc2(int);
 DROP FUNCTION testfunc4(boolean);
 DROP VIEW atestv1;
