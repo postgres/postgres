@@ -1,0 +1,921 @@
+From pgsql-hackers-owner+M215@postgresql.org Fri Nov  3 17:50:40 2000
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id RAA05273
+	for <pgman@candle.pha.pa.us>; Fri, 3 Nov 2000 17:50:39 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id eA3Mm1s26018;
+	Fri, 3 Nov 2000 17:48:01 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M215@postgresql.org)
+Received: from sss.pgh.pa.us (sss.pgh.pa.us [209.114.132.154])
+	by mail.postgresql.org (8.11.1/8.11.1) with ESMTP id eA3Mles25919
+	for <pgsql-hackers@postgreSQL.org>; Fri, 3 Nov 2000 17:47:40 -0500 (EST)
+	(envelope-from tgl@sss.pgh.pa.us)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.11.1/8.11.1) with ESMTP id eA3Mle508385
+	for <pgsql-hackers@postgreSQL.org>; Fri, 3 Nov 2000 17:47:40 -0500 (EST)
+To: pgsql-hackers@postgresql.org
+Subject: [HACKERS] Transaction ID wraparound: problem and proposed solution
+Date: Fri, 03 Nov 2000 17:47:40 -0500
+Message-ID: <8382.973291660@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: ORr
+
+We've expended a lot of worry and discussion in the past about what
+happens if the OID generator wraps around.  However, there is another
+4-byte counter in the system: the transaction ID (XID) generator.
+While OID wraparound is survivable, if XIDs wrap around then we really
+do have a Ragnarok scenario.  The tuple validity checks do ordered
+comparisons on XIDs, and will consider tuples with xmin > current xact
+to be invalid.  Result: after wraparound, your whole database would
+instantly vanish from view.
+
+The first thought that comes to mind is that XIDs should be promoted to
+eight bytes.  However there are several practical problems with this:
+* portability --- I don't believe long long int exists on all the
+platforms we support.
+* performance --- except on true 64-bit platforms, widening Datum to
+eight bytes would be a system-wide performance hit, which is a tad
+unpleasant to fix a scenario that's not yet been reported from the
+field.
+* disk space --- letting pg_log grow without bound isn't a pleasant
+prospect either.
+
+I believe it is possible to fix these problems without widening XID,
+by redefining XIDs in a way that allows for wraparound.  Here's my
+plan:
+
+1. Allow XIDs to range from 0 to WRAPLIMIT-1 (WRAPLIMIT is not
+necessarily 4G, see discussion below).  Ordered comparisons on XIDs
+are no longer simply "x < y", but need to be expressed as a macro.
+We consider x < y if (y - x) % WRAPLIMIT < WRAPLIMIT/2.
+This comparison will work as long as the range of interesting XIDs
+never exceeds WRAPLIMIT/2.  Essentially, we envision the actual value
+of XID as being the low-order bits of a logical XID that always
+increases, and we assume that no extant XID is more than WRAPLIMIT/2
+transactions old, so we needn't keep track of the high-order bits.
+
+2. To keep the system from having to deal with XIDs that are more than
+WRAPLIMIT/2 transactions old, VACUUM should "freeze" known-good old
+tuples.  To do this, we'll reserve a special XID, say 1, that is always
+considered committed and is always less than any ordinary XID.  (So the
+ordered-comparison macro is really a little more complicated than I said
+above.  Note that there is already a reserved XID just like this in the
+system, the "bootstrap" XID.  We could simply use the bootstrap XID, but
+it seems better to make another one.)  When VACUUM finds a tuple that
+is committed good and has xmin < XmaxRecent (the oldest XID that might
+be considered uncommitted by any open transaction), it will replace that
+tuple's xmin by the special always-good XID.  Therefore, as long as
+VACUUM is run on all tables in the installation more often than once per
+WRAPLIMIT/2 transactions, there will be no tuples with ordinary XIDs
+older than WRAPLIMIT/2.
+
+3. At wraparound, the XID counter has to be advanced to skip over the
+InvalidXID value (zero) and the reserved XIDs, so that no real transaction
+is generated with those XIDs.  No biggie here.
+
+4. With the wraparound behavior, pg_log will have a bounded size: it
+will never exceed WRAPLIMIT*2 bits = WRAPLIMIT/4 bytes.  Since we will
+recycle pg_log entries every WRAPLIMIT xacts, during transaction start
+the xact manager will have to take care to actively clear its pg_log
+entry to zeroes (I'm not sure if it does that already, or just assumes
+that new pg_log entries will start out zero).  As long as that happens
+before the xact makes any data changes, it's OK to recycle the entry.
+Note we are assuming that no tuples will remain in the database with
+xmin or xmax equal to that XID from a prior cycle of the universe.
+
+This scheme allows us to survive XID wraparound at the cost of slight
+additional complexity in ordered comparisons of XIDs (which is not a
+really performance-critical task AFAIK), and at the cost that the
+original insertion XIDs of all but recent tuples will be lost by
+VACUUM.  The system doesn't particularly care about that, but old XIDs
+do sometimes come in handy for debugging purposes.  A possible
+compromise is to overwrite only XIDs that are older than, say,
+WRAPLIMIT/4 instead of doing so as soon as possible.  This would mean
+the required VACUUM frequency is every WRAPLIMIT/4 xacts instead of
+every WRAPLIMIT/2 xacts.
+
+We have a straightforward tradeoff between the maximum size of pg_log
+(WRAPLIMIT/4 bytes) and the required frequency of VACUUM (at least
+every WRAPLIMIT/2 or WRAPLIMIT/4 transactions).  This could be made
+configurable in config.h for those who're intent on customization,
+but I'd be inclined to set the default value at WRAPLIMIT = 1G.
+
+Comments?  Vadim, is any of this about to be superseded by WAL?
+If not, I'd like to fix it for 7.1.
+
+			regards, tom lane
+
+From pgsql-hackers-owner+M232@postgresql.org Fri Nov  3 20:20:32 2000
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id UAA08863
+	for <pgman@candle.pha.pa.us>; Fri, 3 Nov 2000 20:20:31 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id eA41Jgs31567;
+	Fri, 3 Nov 2000 20:19:42 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M232@postgresql.org)
+Received: from thor.tht.net (thor.tht.net [209.47.145.4])
+	by mail.postgresql.org (8.11.1/8.11.1) with ESMTP id eA41CMs31023
+	for <pgsql-hackers@postgreSQL.org>; Fri, 3 Nov 2000 20:12:22 -0500 (EST)
+	(envelope-from tgl@sss.pgh.pa.us)
+Received: from sss.pgh.pa.us (sss.pgh.pa.us [209.114.132.154])
+	by thor.tht.net (8.9.3/8.9.3) with ESMTP id VAA14928
+	for <pgsql-hackers@postgreSQL.org>; Fri, 3 Nov 2000 21:13:08 GMT
+	(envelope-from tgl@sss.pgh.pa.us)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.11.1/8.11.1) with ESMTP id eA41CK508777;
+	Fri, 3 Nov 2000 20:12:21 -0500 (EST)
+To: "Mikheev, Vadim" <vmikheev@SECTORBASE.COM>
+cc: pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] Transaction ID wraparound: problem and proposed solution
+In-reply-to: <8F4C99C66D04D4118F580090272A7A234D3146@sectorbase1.sectorbase.com> 
+References: <8F4C99C66D04D4118F580090272A7A234D3146@sectorbase1.sectorbase.com>
+Comments: In-reply-to "Mikheev, Vadim" <vmikheev@SECTORBASE.COM>
+	message dated "Fri, 03 Nov 2000 16:24:38 -0800"
+Date: Fri, 03 Nov 2000 20:12:20 -0500
+Message-ID: <8774.973300340@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+"Mikheev, Vadim" <vmikheev@SECTORBASE.COM> writes:
+> So, we'll have to abort some long running transaction.
+
+Well, yes, some transaction that continues running while ~ 500 million
+other transactions come and go might give us trouble.  I wasn't really
+planning to worry about that case ;-)
+
+> Required frequency of *successful* vacuum over *all* tables.
+> We would have to remember something in pg_class/pg_database
+> and somehow force vacuum over "too-long-unvacuumed-tables"
+> *automatically*.
+
+I don't think this is a problem now; in practice you couldn't possibly
+go for half a billion transactions without vacuuming, I'd think.
+
+If your plans to eliminate regular vacuuming become reality, then this
+scheme might become less reliable, but at present I think there's plenty
+of safety margin.
+
+> If undo would be implemented then we could delete pg_log between
+> postmaster startups - startup counter is remembered in pages, so
+> seeing old startup id in a page we would know that there are only
+> long ago committed xactions (ie only visible changes) there
+> and avoid xid comparison. But ... there will be no undo in 7.1.
+> And I foresee problems with WAL based BAR implementation if we'll
+> follow proposed solution: redo restores original xmin/xmax - how
+> to "freeze" xids while restoring DB?
+
+So, we might eventually have a better answer from WAL, but not for 7.1.
+
+I think my idea is reasonably non-invasive and could be removed without
+much trouble once WAL offers a better way.  I'd really like to have some
+answer for 7.1, though.  The sort of numbers John Scott was quoting to
+me for Verizon's paging network throughput make it clear that we aren't
+going to survive at that level with a limit of 4G transactions per
+database reload.  Having to vacuum everything on at least a
+1G-transaction cycle is salable, dump/initdb/reload is not ...
+
+			regards, tom lane
+
+From pgsql-hackers-owner+M238@postgresql.org Fri Nov  3 21:30:14 2000
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id VAA12038
+	for <pgman@candle.pha.pa.us>; Fri, 3 Nov 2000 21:30:13 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id eA42TQs33780;
+	Fri, 3 Nov 2000 21:29:26 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M238@postgresql.org)
+Received: from sss.pgh.pa.us (sss.pgh.pa.us [209.114.132.154])
+	by mail.postgresql.org (8.11.1/8.11.1) with ESMTP id eA42TCs33632
+	for <pgsql-hackers@postgreSQL.org>; Fri, 3 Nov 2000 21:29:12 -0500 (EST)
+	(envelope-from tgl@sss.pgh.pa.us)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.11.1/8.11.1) with ESMTP id eA42T5509042;
+	Fri, 3 Nov 2000 21:29:05 -0500 (EST)
+To: Philip Warner <pjw@rhyme.com.au>
+cc: pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] Transaction ID wraparound: problem and proposed solution 
+In-reply-to: <3.0.5.32.20001104130922.045c3410@mail.rhyme.com.au> 
+References: <3.0.5.32.20001104130922.045c3410@mail.rhyme.com.au>
+Comments: In-reply-to Philip Warner <pjw@rhyme.com.au>
+	message dated "Sat, 04 Nov 2000 13:09:22 +1100"
+Date: Fri, 03 Nov 2000 21:29:04 -0500
+Message-ID: <9039.973304944@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Philip Warner <pjw@rhyme.com.au> writes:
+>> * disk space --- letting pg_log grow without bound isn't a pleasant
+>> prospect either.
+
+> Maybe this can be achieved by wrapping XID for the log file only.
+
+How's that going to improve matters?  pg_log is ground truth for XIDs;
+if you can't distinguish two XIDs in pg_log, there's no point in
+distinguishing them elsewhere.
+
+> Maybe I'm really missing the amount of XID manipulation, but I'd be
+> surprised if 16-byte XIDs would slow things down much.
+
+It's not so much XIDs themselves, as that I think we'd need to widen
+typedef Datum too, and that affects manipulations of *all* data types.
+
+In any case, the prospect of a multi-gigabyte, ever-growing pg_log file,
+with no way to recover the space short of dump/initdb/reload, is
+awfully unappetizing for a high-traffic installation...
+
+			regards, tom lane
+
+From pgsql-hackers-owner+M240@postgresql.org Fri Nov  3 21:42:30 2000
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id VAA13035
+	for <pgman@candle.pha.pa.us>; Fri, 3 Nov 2000 21:42:29 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id eA42fjs40619;
+	Fri, 3 Nov 2000 21:41:45 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M240@postgresql.org)
+Received: from hse-toronto-ppp119263.sympatico.ca (HSE-Toronto-ppp85465.sympatico.ca [216.209.18.18])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id eA42fXs40530
+	for <pgsql-hackers@postgreSQL.org>; Fri, 3 Nov 2000 21:41:33 -0500 (EST)
+	(envelope-from rbt@zort.on.ca)
+Received: (qmail 66996 invoked by uid 0); 4 Nov 2000 02:46:34 -0000
+Received: from unknown (HELO zort.on.ca) (rbt@10.0.0.100)
+  by hse-toronto-ppp85465.sympatico.ca with SMTP; 4 Nov 2000 02:46:34 -0000
+Message-ID: <3A037759.2D6A67E4@zort.on.ca>
+Date: Fri, 03 Nov 2000 21:41:29 -0500
+From: Rod Taylor <rbt@zort.on.ca>
+Organization: Zort
+X-Mailer: Mozilla 4.75 [en] (X11; U; FreeBSD 4.1.1-STABLE i386)
+X-Accept-Language: en
+MIME-Version: 1.0
+To: Tom Lane <tgl@sss.pgh.pa.us>
+CC: Philip Warner <pjw@rhyme.com.au>, pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] Transaction ID wraparound: problem and proposed solution
+References: <3.0.5.32.20001104130922.045c3410@mail.rhyme.com.au> <9039.973304944@sss.pgh.pa.us>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Tom Lane wrote:
+> 
+> Philip Warner <pjw@rhyme.com.au> writes:
+> >> * disk space --- letting pg_log grow without bound isn't a pleasant
+> >> prospect either.
+> 
+> > Maybe this can be achieved by wrapping XID for the log file only.
+> 
+> How's that going to improve matters?  pg_log is ground truth for XIDs;
+> if you can't distinguish two XIDs in pg_log, there's no point in
+> distinguishing them elsewhere.
+> 
+> > Maybe I'm really missing the amount of XID manipulation, but I'd be
+> > surprised if 16-byte XIDs would slow things down much.
+> 
+> It's not so much XIDs themselves, as that I think we'd need to widen
+> typedef Datum too, and that affects manipulations of *all* data types.
+> 
+> In any case, the prospect of a multi-gigabyte, ever-growing pg_log file,
+> with no way to recover the space short of dump/initdb/reload, is
+> awfully unappetizing for a high-traffic installation...
+
+Agreed completely.  I'd like to think I could have such an installation
+in the next year or so :)  
+
+To prevent a performance hit to those who don't want, is there a
+possibility of either a compile time option or 'auto-expanding' the
+width of the XID's and other items when it becomes appropriate?  Start
+with int4, when that limit is hit goto int8, and should -- quite
+unbelievibly so but there are multi-TB databases -- it be necessary jump
+to int12 or int16?   Be the first to support Exa-objects in an RDBMS. 
+Testing not necessary ;)
+
+Compiletime option would be appropriate however if theres a significant
+performance hit.
+
+I'm not much of a c coder (obviously), so I don't know of the
+limitations.  plpgsql is my friend that can do nearly anything :)
+
+Hmm... After reading the above I should have stuck with lurking.
+
+From pgsql-hackers-owner+M264@postgresql.org Sun Nov  5 01:07:08 2000
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id BAA29566
+	for <pgman@candle.pha.pa.us>; Sun, 5 Nov 2000 01:07:07 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id eA564Ks60463;
+	Sun, 5 Nov 2000 01:04:20 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M264@postgresql.org)
+Received: from gate1.sectorbase.com ([208.48.122.134])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id eA55sas57106
+	for <pgsql-hackers@postgreSQL.org>; Sun, 5 Nov 2000 00:54:36 -0500 (EST)
+	(envelope-from vmikheev@sectorbase.com)
+Received: from dune (unknown [208.48.122.182])
+	by gate1.sectorbase.com (Postfix) with SMTP
+	id 170DB2E806; Sat,  4 Nov 2000 21:53:56 -0800 (PST)
+Message-ID: <016601c046ed$db6819c0$b87a30d0@sectorbase.com>
+From: "Vadim Mikheev" <vmikheev@sectorbase.com>
+To: "Tom Lane" <tgl@sss.pgh.pa.us>
+Cc: <pgsql-hackers@postgresql.org>
+References: <8F4C99C66D04D4118F580090272A7A234D3146@sectorbase1.sectorbase.com> <8774.973300340@sss.pgh.pa.us>
+Subject: Re: [HACKERS] Transaction ID wraparound: problem and proposed solution
+Date: Sat, 4 Nov 2000 21:59:00 -0800
+MIME-Version: 1.0
+Content-Type: text/plain;
+	charset="windows-1251"
+Content-Transfer-Encoding: 7bit
+X-Priority: 3
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook Express 5.50.4133.2400
+X-MimeOLE: Produced By Microsoft MimeOLE V5.50.4133.2400
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+> > So, we'll have to abort some long running transaction.
+> 
+> Well, yes, some transaction that continues running while ~ 500 million
+> other transactions come and go might give us trouble.  I wasn't really
+> planning to worry about that case ;-)
+
+Agreed, I just don't like to rely on assumptions -:)
+
+> > Required frequency of *successful* vacuum over *all* tables.
+> > We would have to remember something in pg_class/pg_database
+> > and somehow force vacuum over "too-long-unvacuumed-tables"
+> > *automatically*.
+> 
+> I don't think this is a problem now; in practice you couldn't possibly
+> go for half a billion transactions without vacuuming, I'd think.
+
+Why not?
+And once again - assumptions are not good for transaction area.
+
+> If your plans to eliminate regular vacuuming become reality, then this
+> scheme might become less reliable, but at present I think there's plenty
+> of safety margin.
+>
+> > If undo would be implemented then we could delete pg_log between
+> > postmaster startups - startup counter is remembered in pages, so
+> > seeing old startup id in a page we would know that there are only
+> > long ago committed xactions (ie only visible changes) there
+> > and avoid xid comparison. But ... there will be no undo in 7.1.
+> > And I foresee problems with WAL based BAR implementation if we'll
+> > follow proposed solution: redo restores original xmin/xmax - how
+> > to "freeze" xids while restoring DB?
+> 
+> So, we might eventually have a better answer from WAL, but not for 7.1.
+> I think my idea is reasonably non-invasive and could be removed without
+> much trouble once WAL offers a better way.  I'd really like to have some
+> answer for 7.1, though.  The sort of numbers John Scott was quoting to
+> me for Verizon's paging network throughput make it clear that we aren't
+> going to survive at that level with a limit of 4G transactions per
+> database reload.  Having to vacuum everything on at least a
+> 1G-transaction cycle is salable, dump/initdb/reload is not ...
+
+Understandable. And probably we can get BAR too but require full
+backup every WRAPLIMIT/2 (or better /4) transactions.
+
+Vadim
+
+
+
+From vmikheev@sectorbase.com Sun Nov  5 03:55:31 2000
+Received: from gate1.sectorbase.com ([208.48.122.134])
+	by candle.pha.pa.us (8.9.0/8.9.0) with SMTP id DAA10570
+	for <pgman@candle.pha.pa.us>; Sun, 5 Nov 2000 03:55:30 -0500 (EST)
+Received: from dune (unknown [208.48.122.185])
+	by gate1.sectorbase.com (Postfix) with SMTP
+	id 5033D2E806; Sun,  5 Nov 2000 00:54:22 -0800 (PST)
+Message-ID: <01cf01c04707$10085aa0$b87a30d0@sectorbase.com>
+From: "Vadim Mikheev" <vmikheev@sectorbase.com>
+To: "Bruce Momjian" <pgman@candle.pha.pa.us>, "Tom Lane" <tgl@sss.pgh.pa.us>
+Cc: <pgsql-hackers@postgresql.org>
+References: <200011041843.NAA28411@candle.pha.pa.us>
+Subject: Re: [HACKERS] Transaction ID wraparound: problem and proposed solution
+Date: Sun, 5 Nov 2000 01:02:01 -0800
+MIME-Version: 1.0
+Content-Type: text/plain;
+	charset="iso-8859-1"
+Content-Transfer-Encoding: 7bit
+X-Priority: 3
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook Express 5.50.4133.2400
+X-MimeOLE: Produced By Microsoft MimeOLE V5.50.4133.2400
+Status: OR
+
+> One idea I had from this is actually truncating pg_log at some point if
+> we know all the tuples have the special committed xid.  It would prevent
+> the file from growing without bounds.
+
+Not truncating, but implementing pg_log as set of files - we could remove
+files for old xids.
+
+> Vadim, can you explain how WAL will make pg_log unnecessary someday?
+
+First, I mentioned only that having undo we could remove old pg_log after
+postmaster startup because of only committed changes would be in data
+files and they would be visible to new transactions (small changes in tqual
+will be required to take page' startup id into account) which would reuse xids.
+While changing a page first time in current startup, server would do exactly
+what Tom is going to do at vacuuming - just update xmin/xmax to "1" in all items
+(or setting some flag in t_infomask), - and change page' startup id to current.
+
+I understand that this is not complete solution for xids problem, I just wasn't
+going to solve it that time. Now after Tom' proposal I see how to reuse xids
+without vacuuming (but having undo): we will add XidWrapId (XWI) - xid wrap
+counter - to pages and set it when we change page. First time we do this for
+page with old XWI we'll mark old items (to know later that they were changed
+by xids with old XWI). Each time we change page we can mark old xmin/xmax
+with xid <= current xid as committed long ago (basing on xact TTL restrinctions).
+
+All above assumes that there will be no xids from aborted transactions in pages,
+so we need not lookup in pg_log to know is a xid committed/aborted, - there will
+be only xids from running or committed xactions there.
+
+And we need in undo for this.
+
+Vadim
+
+
+
+From pgsql-hackers-owner+M396@postgresql.org Tue Nov  7 20:57:16 2000
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id UAA17110
+	for <pgman@candle.pha.pa.us>; Tue, 7 Nov 2000 20:57:16 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id eA81vcs17073;
+	Tue, 7 Nov 2000 20:57:38 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M396@postgresql.org)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id eA81kos15436
+	for <pgsql-hackers@postgresql.org>; Tue, 7 Nov 2000 20:46:50 -0500 (EST)
+	(envelope-from pgsql-hackers-owner@postgresql.org)
+Received: from me.tm.ee (adsl895.estpak.ee [213.168.23.133])
+	by mail.postgresql.org (8.11.1/8.11.1) with ESMTP id eA5Esds15479
+	for <pgsql-hackers@postgresql.org>; Sun, 5 Nov 2000 09:54:40 -0500 (EST)
+	(envelope-from hannu@tm.ee)
+Received: from tm.ee (IDENT:hannu@localhost.localdomain [127.0.0.1])
+	by me.tm.ee (8.9.3/8.9.3) with ESMTP id PAA01401;
+	Sun, 5 Nov 2000 15:48:14 +0200
+Message-ID: <3A05651D.47B18E2F@tm.ee>
+Date: Sun, 05 Nov 2000 15:48:13 +0200
+From: Hannu Krosing <hannu@tm.ee>
+X-Mailer: Mozilla 4.72 [en] (X11; U; Linux 2.2.17 i686)
+X-Accept-Language: en
+MIME-Version: 1.0
+To: Tom Lane <tgl@sss.pgh.pa.us>
+CC: Philip Warner <pjw@rhyme.com.au>, pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] Transaction ID wraparound: problem and proposed solution
+References: <3.0.5.32.20001104130922.045c3410@mail.rhyme.com.au> <9039.973304944@sss.pgh.pa.us>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Tom Lane wrote:
+> 
+> Philip Warner <pjw@rhyme.com.au> writes:
+> >> * disk space --- letting pg_log grow without bound isn't a pleasant
+> >> prospect either.
+> 
+> > Maybe this can be achieved by wrapping XID for the log file only.
+> 
+> How's that going to improve matters?  pg_log is ground truth for XIDs;
+> if you can't distinguish two XIDs in pg_log, there's no point in
+> distinguishing them elsewhere.
+
+One simple way - start a new pg_log file at each wraparound and encode 
+the high 4 bytes in the filename (or in first four bytes of file)
+
+> > Maybe I'm really missing the amount of XID manipulation, but I'd be
+> > surprised if 16-byte XIDs would slow things down much.
+> 
+> It's not so much XIDs themselves, as that I think we'd need to widen
+> typedef Datum too, and that affects manipulations of *all* data types.
+
+Do you mean that each _field_ will take more space, not each _record_ ?
+
+> In any case, the prospect of a multi-gigabyte, ever-growing pg_log file,
+> with no way to recover the space short of dump/initdb/reload, is
+> awfully unappetizing for a high-traffic installation...
+
+The pg_log should be rotated anyway either with long xids or long-long
+xids.
+
+-----------
+Hannu
+
+From pgsql-hackers-owner+M284@postgresql.org Sun Nov  5 16:19:47 2000
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id QAA03570
+	for <pgman@candle.pha.pa.us>; Sun, 5 Nov 2000 16:19:46 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id eA5LKbs64176;
+	Sun, 5 Nov 2000 16:20:37 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M284@postgresql.org)
+Received: from me.tm.ee (adsl895.estpak.ee [213.168.23.133])
+	by mail.postgresql.org (8.11.1/8.11.1) with ESMTP id eA5LKCs64044
+	for <pgsql-hackers@postgresql.org>; Sun, 5 Nov 2000 16:20:12 -0500 (EST)
+	(envelope-from hannu@tm.ee)
+Received: from tm.ee (IDENT:hannu@localhost.localdomain [127.0.0.1])
+	by me.tm.ee (8.9.3/8.9.3) with ESMTP id WAA00997;
+	Sun, 5 Nov 2000 22:14:24 +0200
+Message-ID: <3A05BFA0.5187B713@tm.ee>
+Date: Sun, 05 Nov 2000 22:14:24 +0200
+From: Hannu Krosing <hannu@tm.ee>
+X-Mailer: Mozilla 4.72 [en] (X11; U; Linux 2.2.17 i686)
+X-Accept-Language: en
+MIME-Version: 1.0
+To: Peter Eisentraut <peter_e@gmx.net>
+CC: Tom Lane <tgl@sss.pgh.pa.us>, pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] Transaction ID wraparound: problem and proposed solution
+References: <Pine.LNX.4.21.0011051638470.780-100000@peter.localdomain>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Peter Eisentraut wrote:
+> 
+> Hannu Krosing writes:
+> 
+> > > The first thought that comes to mind is that XIDs should be promoted to
+> > > eight bytes.  However there are several practical problems with this:
+> > > * portability --- I don't believe long long int exists on all the
+> > > platforms we support.
+> >
+> > I suspect that gcc at least supports long long on all OS-s we support
+> 
+> Uh, we don't want to depend on gcc, do we?
+
+I suspect that we do on many platforms (like *BSD, Linux and Win32).
+
+What platforms we currently support don't have functional gcc ?
+
+> But we could make the XID a struct of two 4-byte integers, at the obvious
+> increase in storage size.
+
+And a (hopefully) small performance hit on operations when defined as
+macros,
+and some more for less data fitting in cache.
+
+what operations do we need to be defined ?
+
+will >, <, ==, !=, >=, <== and ++ be enough ?
+
+-------------
+Hannu
+
+From pgsql-hackers-owner+M325@postgresql.org Mon Nov  6 12:36:49 2000
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id MAA24746
+	for <pgman@candle.pha.pa.us>; Mon, 6 Nov 2000 12:36:49 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id eA6HWqs14206;
+	Mon, 6 Nov 2000 12:32:52 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M325@postgresql.org)
+Received: from granger.mail.mindspring.net (granger.mail.mindspring.net [207.69.200.148])
+	by mail.postgresql.org (8.11.1/8.11.1) with ESMTP id eA6HT2s13718
+	for <pgsql-hackers@postgresql.org>; Mon, 6 Nov 2000 12:29:02 -0500 (EST)
+	(envelope-from mhh@mindspring.com)
+Received: from jupiter (user-2inikn4.dialup.mindspring.com [165.121.82.228])
+	by granger.mail.mindspring.net (8.9.3/8.8.5) with SMTP id MAA07826;
+	Mon, 6 Nov 2000 12:28:37 -0500 (EST)
+From: Mark Hollomon <mhh@mindspring.com>
+Reply-To: mhh@mindspring.com
+Date: Mon, 6 Nov 2000 13:09:19 -0500
+X-Mailer: KMail [version 1.1.99]
+Content-Type: text/plain;
+  charset="iso-8859-1"
+Cc: pgsql-hackers@postgresql.org
+To: Tom Lane <tgl@sss.pgh.pa.us>
+References: <8382.973291660@sss.pgh.pa.us> <3A0567FF.37876138@tm.ee> <788.973447357@sss.pgh.pa.us>
+In-Reply-To: <788.973447357@sss.pgh.pa.us>
+Subject: Re: [HACKERS] Transaction ID wraparound: problem and proposed solution
+MIME-Version: 1.0
+Message-Id: <00110613091900.00324@jupiter>
+Content-Transfer-Encoding: 8bit
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+On Sunday 05 November 2000 13:02, Tom Lane wrote:
+> OK, 2^64 isn't mathematically unbounded, but let's see you buy a disk
+> that will hold it ;-).  My point is that if we want to think about
+> allowing >4G transactions, part of the answer has to be a way to recycle
+> pg_log space.  Otherwise it's still not really practical.
+
+I kind of like vadim's idea of segmenting pg_log. 
+
+Segments in which all the xacts have been commited could be deleted.
+
+-- 
+Mark Hollomon
+
+From pgsql-hackers-owner+M531@postgresql.org Fri Nov 10 15:06:07 2000
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id PAA23678
+	for <pgman@candle.pha.pa.us>; Fri, 10 Nov 2000 15:06:06 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id eAAK5fs44672;
+	Fri, 10 Nov 2000 15:05:41 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M531@postgresql.org)
+Received: from charybdis.zembu.com (charybdis.zembu.com [209.157.144.99])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id eAAK30s44361
+	for <pgsql-hackers@postgresql.org>; Fri, 10 Nov 2000 15:03:01 -0500 (EST)
+	(envelope-from ncm@zembu.com)
+Received: (qmail 15640 invoked from network); 10 Nov 2000 20:02:12 -0000
+Received: from store.z.zembu.com (192.168.1.142)
+  by charybdis.z.zembu.com with SMTP; 10 Nov 2000 20:02:12 -0000
+Received: from ncm by store.z.zembu.com with local (Exim 3.12 #1 (Debian))
+	id 13uKMX-0003rZ-00; Fri, 10 Nov 2000 12:01:25 -0800
+Date: Fri, 10 Nov 2000 12:01:25 -0800
+From: Nathan Myers <ncm@zembu.com>
+To: pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] Transaction ID wraparound: problem and proposed solution
+Message-ID: <20001110120125.Q8881@store.zembu.com>
+Reply-To: pgsql-hackers@postgresql.org
+References: <3.0.5.32.20001104130922.045c3410@mail.rhyme.com.au> <9039.973304944@sss.pgh.pa.us> <3A05651D.47B18E2F@tm.ee>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+User-Agent: Mutt/1.0.1i
+In-Reply-To: <3A05651D.47B18E2F@tm.ee>; from hannu@tm.ee on Sun, Nov 05, 2000 at 03:48:13PM +0200
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+On Sun, Nov 05, 2000 at 03:48:13PM +0200, Hannu Krosing wrote:
+> Tom Lane wrote:
+> > 
+> > Philip Warner <pjw@rhyme.com.au> writes:
+> > >> * disk space --- letting pg_log grow without bound isn't a pleasant
+> > >> prospect either.
+> > 
+> > > Maybe this can be achieved by wrapping XID for the log file only.
+> > 
+> > How's that going to improve matters?  pg_log is ground truth for XIDs;
+> > if you can't distinguish two XIDs in pg_log, there's no point in
+> > distinguishing them elsewhere.
+> 
+> One simple way - start a new pg_log file at each wraparound and encode 
+> the high 4 bytes in the filename (or in first four bytes of file)
+
+Proposal:
+
+Annotate each log file with the current XID value at the time the file 
+is created.  Before comparing any two XIDs, subtract that value from 
+each operand, using unsigned arithmetic. 
+
+At a sustained rate of 10,000 transactions/second, any pair of 32-bit 
+XIDs less than 2.5 days apart compare properly.
+
+Nathan Myers
+ncm@zembu.com
+
+
+From pgsql-hackers-owner+M229@postgresql.org Fri Nov  3 20:17:35 2000
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id UAA08743
+	for <pgman@candle.pha.pa.us>; Fri, 3 Nov 2000 20:17:35 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id eA415Hs30899;
+	Fri, 3 Nov 2000 20:05:22 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M229@postgresql.org)
+Received: from thor.tht.net (thor.tht.net [209.47.145.4])
+	by mail.postgresql.org (8.11.1/8.11.1) with ESMTP id eA40dns30224
+	for <pgsql-hackers@postgreSQL.org>; Fri, 3 Nov 2000 19:39:49 -0500 (EST)
+	(envelope-from vmikheev@SECTORBASE.COM)
+Received: from sectorbase2.sectorbase.com ([208.48.122.131])
+	by thor.tht.net (8.9.3/8.9.3) with SMTP id UAA14292
+	for <pgsql-hackers@postgreSQL.org>; Fri, 3 Nov 2000 20:40:31 GMT
+	(envelope-from vmikheev@SECTORBASE.COM)
+Received: by sectorbase2.sectorbase.com with Internet Mail Service (5.5.2650.21)
+	id <V8XQBFBG>; Fri, 3 Nov 2000 16:20:43 -0800
+Message-ID: <8F4C99C66D04D4118F580090272A7A234D3146@sectorbase1.sectorbase.com>
+From: "Mikheev, Vadim" <vmikheev@SECTORBASE.COM>
+To: "'Tom Lane'" <tgl@sss.pgh.pa.us>, pgsql-hackers@postgresql.org
+Subject: RE: [HACKERS] Transaction ID wraparound: problem and proposed sol
+	ution
+Date: Fri, 3 Nov 2000 16:24:38 -0800 
+MIME-Version: 1.0
+X-Mailer: Internet Mail Service (5.5.2650.21)
+Content-Type: text/plain;
+	charset="iso-8859-1"
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+> This comparison will work as long as the range of interesting XIDs
+> never exceeds WRAPLIMIT/2.  Essentially, we envision the actual value
+> of XID as being the low-order bits of a logical XID that always
+> increases, and we assume that no extant XID is more than WRAPLIMIT/2
+> transactions old, so we needn't keep track of the high-order bits.
+
+So, we'll have to abort some long running transaction.
+And before after-wrap XIDs will be close to aborted xid you'd better
+ensure that vacuum *successfully* run over all tables in database
+(and shared tables) aborted transaction could touch.
+
+> This scheme allows us to survive XID wraparound at the cost of slight
+> additional complexity in ordered comparisons of XIDs (which is not a
+> really performance-critical task AFAIK), and at the cost that the
+> original insertion XIDs of all but recent tuples will be lost by
+> VACUUM.  The system doesn't particularly care about that, but old XIDs
+> do sometimes come in handy for debugging purposes.  A possible
+
+I wouldn't care about this.
+
+> compromise is to overwrite only XIDs that are older than, say,
+> WRAPLIMIT/4 instead of doing so as soon as possible.  This would mean
+> the required VACUUM frequency is every WRAPLIMIT/4 xacts instead of
+> every WRAPLIMIT/2 xacts.
+> 
+> We have a straightforward tradeoff between the maximum size of pg_log
+> (WRAPLIMIT/4 bytes) and the required frequency of VACUUM (at least
+
+Required frequency of *successful* vacuum over *all* tables.
+We would have to remember something in pg_class/pg_database
+and somehow force vacuum over "too-long-unvacuumed-tables"
+*automatically*.
+
+> every WRAPLIMIT/2 or WRAPLIMIT/4 transactions).  This could be made
+> configurable in config.h for those who're intent on customization,
+> but I'd be inclined to set the default value at WRAPLIMIT = 1G.
+> 
+> Comments?  Vadim, is any of this about to be superseded by WAL?
+> If not, I'd like to fix it for 7.1.
+
+If undo would be implemented then we could delete pg_log between
+postmaster startups - startup counter is remembered in pages, so
+seeing old startup id in a page we would know that there are only
+long ago committed xactions (ie only visible changes) there
+and avoid xid comparison. But ... there will be no undo in 7.1.
+And I foresee problems with WAL based BAR implementation if we'll
+follow proposed solution: redo restores original xmin/xmax - how
+to "freeze" xids while restoring DB?
+
+(Sorry, I have to run away now... and have to think more about issue).
+
+Vadim
+
+From pgsql-hackers-owner+M335@postgresql.org Mon Nov  6 17:29:50 2000
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id RAA06780
+	for <pgman@candle.pha.pa.us>; Mon, 6 Nov 2000 17:29:49 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id eA6MSus41571;
+	Mon, 6 Nov 2000 17:28:56 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M335@postgresql.org)
+Received: from sectorbase2.sectorbase.com ([208.48.122.131])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id eA6MPUs41171
+	for <pgsql-hackers@postgresql.org>; Mon, 6 Nov 2000 17:25:30 -0500 (EST)
+	(envelope-from vmikheev@SECTORBASE.COM)
+Received: by sectorbase2.sectorbase.com with Internet Mail Service (5.5.2650.21)
+	id <V8XQBHD5>; Mon, 6 Nov 2000 14:08:12 -0800
+Message-ID: <8F4C99C66D04D4118F580090272A7A234D314A@sectorbase1.sectorbase.com>
+From: "Mikheev, Vadim" <vmikheev@SECTORBASE.COM>
+To: "'mhh@mindspring.com'" <mhh@mindspring.com>,
+        Tom Lane
+  <tgl@sss.pgh.pa.us>
+Cc: pgsql-hackers@postgresql.org
+Subject: RE: [HACKERS] Transaction ID wraparound: problem and proposed sol
+	ution
+Date: Mon, 6 Nov 2000 14:12:07 -0800 
+MIME-Version: 1.0
+X-Mailer: Internet Mail Service (5.5.2650.21)
+Content-Type: text/plain;
+	charset="iso-8859-1"
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+> > OK, 2^64 isn't mathematically unbounded, but let's see you 
+> > buy a disk that will hold it ;-).  My point is that if we want
+> > to think about allowing >4G transactions, part of the answer
+> > has to be a way to recycle pg_log space. Otherwise it's still
+> > not really practical.
+> 
+> I kind of like vadim's idea of segmenting pg_log. 
+> 
+> Segments in which all the xacts have been commited could be deleted.
+
+Without undo we have to ensure that all tables are vacuumed after
+all transactions related to a segment were committed/aborted.
+
+Vadim
+
+From pgsql-hackers-owner+M235@postgresql.org Fri Nov  3 21:11:00 2000
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id VAA10173
+	for <pgman@candle.pha.pa.us>; Fri, 3 Nov 2000 21:10:59 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id eA42A7s33061;
+	Fri, 3 Nov 2000 21:10:07 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M235@postgresql.org)
+Received: from acheron.rime.com.au (albatr.lnk.telstra.net [139.130.54.222])
+	by mail.postgresql.org (8.11.1/8.11.1) with ESMTP id eA429Ss32948
+	for <pgsql-hackers@postgreSQL.org>; Fri, 3 Nov 2000 21:09:28 -0500 (EST)
+	(envelope-from pjw@rhyme.com.au)
+Received: from oberon (Oberon.rime.com.au [203.8.195.100])
+	by acheron.rime.com.au (8.9.3/8.9.3) with SMTP id NAA13631;
+	Sat, 4 Nov 2000 13:08:54 +1100
+Message-Id: <3.0.5.32.20001104130922.045c3410@mail.rhyme.com.au>
+X-Sender: pjw@mail.rhyme.com.au
+X-Mailer: QUALCOMM Windows Eudora Pro Version 3.0.5 (32)
+Date: Sat, 04 Nov 2000 13:09:22 +1100
+To: Tom Lane <tgl@sss.pgh.pa.us>, pgsql-hackers@postgresql.org
+From: Philip Warner <pjw@rhyme.com.au>
+Subject: Re: [HACKERS] Transaction ID wraparound: problem and proposed
+  solution
+In-Reply-To: <8382.973291660@sss.pgh.pa.us>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+At 17:47 3/11/00 -0500, Tom Lane wrote:
+>* portability --- I don't believe long long int exists on all the
+>platforms we support.
+
+Are you sure of this, or is it just a 'last time I looked' statement. If
+the latter, it might be worth verifying.
+
+
+>* performance --- except on true 64-bit platforms, widening Datum to
+>eight bytes would be a system-wide performance hit, 
+
+Yes, OIDs are used a lot, but it's not that bad, is it? Are there many
+tight loops with thousands of OID-only operations? I'd guess it's only one
+more instruction & memory fetch.
+
+
+>* disk space --- letting pg_log grow without bound isn't a pleasant
+>prospect either.
+
+Maybe this can be achieved by wrapping XID for the log file only.
+
+
+>I believe it is possible to fix these problems without widening XID,
+>by redefining XIDs in a way that allows for wraparound.  Here's my
+>plan:
+
+It's a cute idea (elegant, even), but maybe we'd be running through hoops
+just for a minor performance gain (which may not exist, since we're adding
+extra comparisons via the macro) and for possible unsupported OSs. Perhaps
+OS's without 8 byte ints have to suffer a performance hit (ie. we declare a
+struct with appropriate macros).
+
+
+>are no longer simply "x < y", but need to be expressed as a macro.
+>We consider x < y if (y - x) % WRAPLIMIT < WRAPLIMIT/2.
+
+You mean you plan to limit PGSQL to only 1G concurrent transactions. Isn't
+that a bit short sighted? ;-}
+
+
+>2. To keep the system from having to deal with XIDs that are more than
+>WRAPLIMIT/2 transactions old, VACUUM should "freeze" known-good old
+>tuples. 
+
+This is a problem for me; it seems to enshrine VACUUM in perpetuity.
+
+
+>4. With the wraparound behavior, pg_log will have a bounded size: it
+>will never exceed WRAPLIMIT*2 bits = WRAPLIMIT/4 bytes.  Since we will
+>recycle pg_log entries every WRAPLIMIT xacts, during transaction start
+
+Is there any was we can use this recycling technique with 8-byte XIDs?
+
+Also, will there be a problem with backup programs that use XID to
+determine newer records and apply/reapply changes?
+
+
+>This scheme allows us to survive XID wraparound at the cost of slight
+>additional complexity in ordered comparisons of XIDs (which is not a
+>really performance-critical task AFAIK)
+
+Maybe I'm really missing the amount of XID manipulation, but I'd be
+surprised if 16-byte XIDs would slow things down much.
+
+
+----------------------------------------------------------------
+Philip Warner                    |     __---_____
+Albatross Consulting Pty. Ltd.   |----/       -  \
+(A.B.N. 75 008 659 498)          |          /(@)   ______---_
+Tel: (+61) 0500 83 82 81         |                 _________  \
+Fax: (+61) 0500 83 82 82         |                 ___________ |
+Http://www.rhyme.com.au          |                /           \|
+                                 |    --________--
+PGP key available upon request,  |  /
+and from pgp5.ai.mit.edu:11371   |/
+
