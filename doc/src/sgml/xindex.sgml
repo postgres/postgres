@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xindex.sgml,v 1.26 2002/06/21 03:25:53 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xindex.sgml,v 1.27 2002/07/30 05:24:56 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -13,132 +13,74 @@ PostgreSQL documentation
    The procedures described thus far let you define new types, new
    functions, and new operators. However, we cannot yet define a
    secondary index (such as a B-tree, R-tree, or hash access method)
-   over a new type or its operators.
-  </para>
-
-  <para>
-   Look back at
-   <xref linkend="EXTEND-CATALOGS">.
-   The right half shows the  catalogs  that we must modify in order to tell
-   <productname>PostgreSQL</productname> how to use a user-defined type and/or
-   user-defined  operators with an index (i.e., <filename>pg_am, pg_amop,
-    pg_amproc, pg_operator</filename> and <filename>pg_opclass</filename>).
-   Unfortunately, there is no simple command to do this.  We will demonstrate
-   how to modify these catalogs through a running example:  a  new  operator
+   over a new type, nor associate operators of a new type with secondary
+   indexes.
+   To do these things, we must define an <firstterm>operator class</>
+   for the new datatype.  We will describe operator classes in the
+   context of a running example:  a  new  operator
    class for the B-tree access method that stores and
    sorts complex numbers in ascending absolute value order.
-  </para>
- </sect1>
-
- <sect1 id="xindex-am">
-  <title>Access Methods</title>
-
-  <para>
-   The <filename>pg_am</filename> table contains one row for every
-   index access method.  Support for the heap access method is built
-   into <productname>PostgreSQL</productname>, but all other access
-   methods are described in <filename>pg_am</filename>.  The schema is
-   shown in <xref linkend="xindex-pgam-table">.
-
-   <table tocentry="1" id="xindex-pgam-table">
-    <title>Index Access Method Schema</title>
-
-    <tgroup cols="2">
-     <thead>
-      <row>
-       <entry>Column</entry>
-       <entry>Description</entry>
-      </row>
-     </thead>
-     <tbody>
-      <row>
-       <entry>amname</entry>
-       <entry>name of the access method</entry>
-      </row>
-      <row>
-       <entry>amowner</entry>
-       <entry>user ID of the owner (currently not used)</entry>
-      </row>
-      <row>
-       <entry>amstrategies</entry>
-       <entry>number of strategies for this access method (see below)</entry>
-      </row>
-      <row>
-       <entry>amsupport</entry>
-       <entry>number of support routines for this access method (see below)</entry>
-      </row>
-      <row>
-       <entry>amorderstrategy</entry>
-       <entry>zero if the index offers no sort order, otherwise the strategy
-        number of the strategy operator that describes the sort order</entry>
-      </row>
-      <row>
-       <entry>amcanunique</entry>
-       <entry>does AM support unique indexes?</entry>
-      </row>
-      <row>
-       <entry>amcanmulticol</entry>
-       <entry>does AM support multicolumn indexes?</entry>
-      </row>
-      <row>
-       <entry>amindexnulls</entry>
-       <entry>does AM support NULL index entries?</entry>
-      </row>
-      <row>
-       <entry>amconcurrent</entry>
-       <entry>does AM support concurrent updates?</entry>
-      </row>
-      <row>
-       <entry>amgettuple</entry>
-      </row>
-      <row>
-       <entry>aminsert</entry>
-      </row>
-      <row>
-       <entry>...</entry>
-       <entry>procedure  identifiers  for  interface routines to the access
-        method.  For example, regproc IDs for opening,  closing,  and
-        getting rows from the access method appear here.</entry>
-      </row>
-     </tbody>
-    </tgroup>
-   </table>
   </para>
 
   <note>
    <para>
-    An index AM that supports multiple columns (has
-    <structfield>amcanmulticol</structfield> true) <emphasis>must</>
-    support indexing nulls in columns after the first, because the planner
-    will assume the index can be used for queries on just the first
-    column(s).  For example, consider an index on (a,b) and a query
-    WHERE a = 4.  The system will assume the index can be used to scan for
-    rows with a = 4, which is wrong if the index omits rows where b is null.
-    However it is okay to omit rows where the first indexed column is null.
-    (GiST currently does so.)
-    <structfield>amindexnulls</structfield> should be set true only if the
-    index AM indexes all rows, including arbitrary combinations of nulls.
+    Prior to <productname>PostgreSQL</productname> release 7.3, it was
+    necesssary to make manual additions to
+    <classname>pg_amop</>, <classname>pg_amproc</>, and
+    <classname>pg_opclass</> in order to create a user-defined
+    operator class.  That approach is now deprecated in favor of
+    using <command>CREATE OPERATOR CLASS</>, which is a much simpler
+    and less error-prone way of creating the necessary catalog entries.
    </para>
   </note>
+ </sect1>
+
+ <sect1 id="xindex-am">
+  <title>Access Methods and Operator Classes</title>
 
   <para>
-   The <acronym>OID</acronym> of the row in
-   <filename>pg_am</filename> is used as a foreign key in a lot of other
-   tables.  You  do not  need to  add a new row to this table; all that
-   you are interested in is the <acronym>OID</acronym> of the access
-   method you want to extend:
+   The <classname>pg_am</classname> table contains one row for every
+   index access method.  Support for access to regular tables is
+   built into <productname>PostgreSQL</productname>, but all index access
+   methods are described in <classname>pg_am</classname>.  It is possible
+   to add a new index access method by defining the required interface
+   routines and then creating a row in <classname>pg_am</classname> ---
+   but that is far beyond the scope of this chapter.
+  </para>
 
-<screen>
-SELECT oid FROM pg_am WHERE amname = 'btree';
+  <para>
+   The routines for an index access method do not directly know anything
+   about the data types the access method will operate on.  Instead, an
+   <firstterm>operator class</> identifies the set of operations that the
+   access method needs to be able to use to work with a particular data type.
+   Operator classes are so called because one thing they specify is the set
+   of WHERE-clause operators that can be used with an index (ie, can be
+   converted into an indexscan qualification).  An operator class may also
+   specify some <firstterm>support procedures</> that are needed by the
+   internal operations of the index access method, but do not directly
+   correspond to any WHERE-clause operator that can be used with the index.
+  </para>
 
- oid
------
- 403
-(1 row)
-</screen>
+  <para>
+   It is possible to define multiple operator classes for the same
+   input datatype and index access method.  By doing this, multiple
+   sets of indexing semantics can be defined for a single datatype.
+   For example, a B-tree index requires a sort ordering to be defined
+   for each datatype it works on.
+   It might be useful for a complex-number datatype
+   to have one B-tree operator class that sorts the data by complex
+   absolute value, another that sorts by real part, and so on.
+   Typically one of the operator classes will be deemed most commonly
+   useful and will be marked as the default operator class for that
+   datatype and index access method.
+  </para>
 
-   We will use that query in a <literal>WHERE</literal>
-   clause later.
+  <para>
+   The same operator class name
+   can be used for several different access methods (for example, both B-tree
+   and hash access methods have operator classes named
+   <literal>oid_ops</literal>), but each such class is an independent
+   entity and must be defined separately.
   </para>
  </sect1>
 
@@ -146,44 +88,36 @@ SELECT oid FROM pg_am WHERE amname = 'btree';
   <title>Access Method Strategies</title>
 
   <para>
-   The <structfield>amstrategies</structfield> column exists to standardize
-   comparisons across data types.  For example, B-trees
-   impose a strict ordering on keys, lesser to greater.  Since
+   The operators associated with an operator class are identified by
+   <quote>strategy numbers</>, which serve to identify the semantics of
+   each operator within the context of its operator class.
+   For example, B-trees impose a strict ordering on keys, lesser to greater,
+   and so operators like <quote>less than</> and <quote>greater than or equal
+   to</> are interesting with respect to a B-tree.
+   Because
    <productname>PostgreSQL</productname> allows the user to define operators,
    <productname>PostgreSQL</productname> cannot look at the name of an operator
-   (e.g., <literal>&gt;</> or <literal>&lt;</>) and tell what kind of comparison it is.  In fact,
-   some  access methods don't impose any ordering at all.  For example,
-   R-trees express a rectangle-containment relationship,
-   whereas a hashed data structure expresses only bitwise similarity based
-   on the value of a hash function.  <productname>PostgreSQL</productname>
-   needs some consistent way of taking a qualification in your query,
-   looking at the operator, and then deciding if a usable index exists.  This
-   implies that <productname>PostgreSQL</productname> needs to know, for
-   example, that the  <literal>&lt;=</>  and  <literal>&gt;</> operators partition a
-   B-tree.  <productname>PostgreSQL</productname>
-   uses <firstterm>strategies</firstterm> to express these relationships  between
-   operators and the way they can be used to scan indexes.
+   (e.g., <literal>&gt;</> or <literal>&lt;</>) and tell what kind of
+   comparison it is.  Instead, the index access method defines a set of
+   <quote>strategies</>, which can be thought of as generalized operators.
+   Each operator class shows which actual operator corresponds to each
+   strategy for a particular datatype and interpretation of the index
+   semantics.
   </para>
 
   <para>
-   Defining a new set of strategies is beyond the scope of this
-   discussion, but we'll explain how B-tree strategies work because
-   you'll need to know that to add a new B-tree operator class. In the
-   <classname>pg_am</classname> table, the
-   <structfield>amstrategies</structfield> column sets the number of
-   strategies defined for this access method. For B-trees, this number
-   is 5.  The meanings of these strategies are shown in <xref
-   linkend="xindex-btree-table">.
+   B-tree indexes define 5 strategies, as shown in <xref
+   linkend="xindex-btree-strat-table">.
   </para>
 
-   <table tocentry="1" id="xindex-btree-table">
+   <table tocentry="1" id="xindex-btree-strat-table">
     <title>B-tree Strategies</title>
     <titleabbrev>B-tree</titleabbrev>
     <tgroup cols="2">
      <thead>
       <row>
        <entry>Operation</entry>
-       <entry>Index</entry>
+       <entry>Strategy Number</entry>
       </row>
      </thead>
      <tbody>
@@ -212,14 +146,101 @@ SELECT oid FROM pg_am WHERE amname = 'btree';
    </table>
 
   <para>
-   The idea is that you'll need to add operators corresponding to these strategies
-   to the <classname>pg_amop</classname> relation (see below).
-   The access method code can use these strategy numbers, regardless of data
-   type, to figure out how to partition the B-tree,
-   compute selectivity, and so on.  Don't worry about the details of adding
-   operators yet; just understand that there must be a set of these
-   operators for <type>int2</>, <type>int4</>, <type>oid</>, and all other
-   data types on which a B-tree can operate.
+   Hash indexes express only bitwise similarity, and so they define only 1
+   strategy, as shown in <xref linkend="xindex-hash-strat-table">.
+  </para>
+
+   <table tocentry="1" id="xindex-hash-strat-table">
+    <title>Hash Strategies</title>
+    <titleabbrev>Hash</titleabbrev>
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>Operation</entry>
+       <entry>Strategy Number</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry>equal</entry>
+       <entry>1</entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+  <para>
+   R-tree indexes express rectangle-containment relationships.
+   They define 8 strategies, as shown in <xref linkend="xindex-rtree-strat-table">.
+  </para>
+
+   <table tocentry="1" id="xindex-rtree-strat-table">
+    <title>R-tree Strategies</title>
+    <titleabbrev>R-tree</titleabbrev>
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>Operation</entry>
+       <entry>Strategy Number</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry>left of</entry>
+       <entry>1</entry>
+      </row>
+      <row>
+       <entry>left of or overlapping</entry>
+       <entry>2</entry>
+      </row>
+      <row>
+       <entry>overlapping</entry>
+       <entry>3</entry>
+      </row>
+      <row>
+       <entry>right of or overlapping</entry>
+       <entry>4</entry>
+      </row>
+      <row>
+       <entry>right of</entry>
+       <entry>5</entry>
+      </row>
+      <row>
+       <entry>same</entry>
+       <entry>6</entry>
+      </row>
+      <row>
+       <entry>contains</entry>
+       <entry>7</entry>
+      </row>
+      <row>
+       <entry>contained by</entry>
+       <entry>8</entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+  <para>
+   GiST indexes are even more flexible: they do not have a fixed set of
+   strategies at all.  Instead, the <quote>consistency</> support routine
+   of a particular GiST operator class interprets the strategy numbers
+   however it likes.
+  </para>
+
+  <para>
+   By the way, the <structfield>amorderstrategy</structfield> column
+   in <classname>pg_am</> tells whether
+   the access method supports ordered scan.  Zero means it doesn't; if it
+   does, <structfield>amorderstrategy</structfield> is the strategy
+   number that corresponds to the ordering operator.  For example, B-tree
+   has <structfield>amorderstrategy</structfield> = 1, which is its
+   <quote>less than</quote> strategy number.
+  </para>
+
+  <para>
+   In short, an operator class must specify a set of operators that express
+   each of these semantic ideas for the operator class's datatype.
   </para>
  </sect1>
 
@@ -227,9 +248,9 @@ SELECT oid FROM pg_am WHERE amname = 'btree';
   <title>Access Method Support Routines</title>
 
   <para>
-   Sometimes, strategies aren't enough information for the system to figure
-   out how to use an index.  Some access methods require additional support
-   routines in order to work. For example, the B-tree
+   Strategies aren't usually enough information for the system to figure
+   out how to use an index.  In practice, the access methods require
+   additional support routines in order to work. For example, the B-tree
    access method must be able to compare two keys and determine whether one
    is greater than, equal to, or less than the other.  Similarly, the
    R-tree access method must be able to compute
@@ -240,102 +261,156 @@ SELECT oid FROM pg_am WHERE amname = 'btree';
   </para>
 
   <para>
-   In order to manage diverse support routines consistently across all
-   <productname>PostgreSQL</productname> access methods,
-   <classname>pg_am</classname> includes a column called
-   <structfield>amsupport</structfield>.  This column records the
-   number of support routines used by an access method.  For B-trees,
-   this number is one: the routine to take two keys and return -1, 0,
+   Just as with operators, the operator class identifies which specific
+   functions should play each of these roles for a given datatype and
+   semantic interpretation.  The index access method specifies the set
+   of functions it needs, and the operator class identifies the correct
+   functions to use by assigning <quote>support function numbers</> to them.
+  </para>
+
+  <para>
+   B-trees require a single support function, as shown in <xref
+   linkend="xindex-btree-support-table">.
+  </para>
+
+   <table tocentry="1" id="xindex-btree-support-table">
+    <title>B-tree Support Functions</title>
+    <titleabbrev>B-tree</titleabbrev>
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>Operation</entry>
+       <entry>Support Number</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry>
+   Compare two keys and return -1, 0,
    or +1, depending on whether the first key is less than, equal to,
-   or greater than the second. (Strictly speaking, this routine can
-   return a negative number (&lt; 0), zero, or a non-zero positive
-   number (&gt; 0).)
-  </para>
+   or greater than the second. (Actually, this routine can
+   return any negative int32 value (&lt; 0), zero, or any non-zero positive
+   int32 value (&gt; 0).)
+       </entry>
+       <entry>1</entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
 
   <para>
-   The <structfield>amstrategies</structfield> entry in
-   <classname>pg_am</classname> is just the number of strategies
-   defined for the access method in question.  The operators for less
-   than, less equal, and so on don't appear in
-   <classname>pg_am</classname>.  Similarly,
-   <structfield>amsupport</structfield> is just the number of support
-   routines required by the access method.  The actual routines are
-   listed elsewhere.
+   Hash indexes likewise require one support function, as shown in <xref
+   linkend="xindex-hash-support-table">.
   </para>
+
+   <table tocentry="1" id="xindex-hash-support-table">
+    <title>Hash Support Functions</title>
+    <titleabbrev>Hash</titleabbrev>
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>Operation</entry>
+       <entry>Support Number</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry>compute the hash value for a key</entry>
+       <entry>1</entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
 
   <para>
-   By the way, the <structfield>amorderstrategy</structfield> column tells whether
-   the access method supports ordered scan.  Zero means it doesn't; if it
-   does, <structfield>amorderstrategy</structfield> is the number of the strategy
-   routine that corresponds to the ordering operator.  For example, B-tree
-   has <structfield>amorderstrategy</structfield> = 1, which is its
-   <quote>less than</quote> strategy number.
+   R-tree indexes require three support functions,
+   as shown in <xref linkend="xindex-rtree-support-table">.
   </para>
- </sect1>
 
- <sect1 id="xindex-opclass">
-  <title>Operator Classes</title>
+   <table tocentry="1" id="xindex-rtree-support-table">
+    <title>R-tree Support Functions</title>
+    <titleabbrev>R-tree</titleabbrev>
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>Operation</entry>
+       <entry>Support Number</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry>union</entry>
+       <entry>1</entry>
+      </row>
+      <row>
+       <entry>intersection</entry>
+       <entry>2</entry>
+      </row>
+      <row>
+       <entry>size</entry>
+       <entry>3</entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
 
   <para>
-   The next table of interest is <classname>pg_opclass</classname>.  This table
-   defines operator class names and input data types for each of the operator
-   classes supported by a given index access method.  The same class name
-   can be used for several different access methods (for example, both B-tree
-   and hash access methods have operator classes named
-   <literal>oid_ops</literal>), but a separate
-   <filename>pg_opclass</filename> row must appear for each access method.
-   The OID of the <classname>pg_opclass</classname> row is
-   used as a foreign 
-   key in other tables to associate specific operators and support routines
-   with the operator class.
+   GiST indexes require seven support functions,
+   as shown in <xref linkend="xindex-gist-support-table">.
   </para>
 
-  <para>
-   You need to add a row with your operator class name (for example,
-   <literal>complex_abs_ops</literal>) to
-   <classname>pg_opclass</classname>:
+   <table tocentry="1" id="xindex-gist-support-table">
+    <title>GiST Support Functions</title>
+    <titleabbrev>GiST</titleabbrev>
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>Operation</entry>
+       <entry>Support Number</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry>consistent</entry>
+       <entry>1</entry>
+      </row>
+      <row>
+       <entry>union</entry>
+       <entry>2</entry>
+      </row>
+      <row>
+       <entry>compress</entry>
+       <entry>3</entry>
+      </row>
+      <row>
+       <entry>decompress</entry>
+       <entry>4</entry>
+      </row>
+      <row>
+       <entry>penalty</entry>
+       <entry>5</entry>
+      </row>
+      <row>
+       <entry>picksplit</entry>
+       <entry>6</entry>
+      </row>
+      <row>
+       <entry>equal</entry>
+       <entry>7</entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
 
-<programlisting>
-INSERT INTO pg_opclass (opcamid, opcname, opcnamespace, opcowner, opcintype, opcdefault, opckeytype)
-    VALUES (
-        (SELECT oid FROM pg_am WHERE amname = 'btree'),
-        'complex_abs_ops',
-        (SELECT oid FROM pg_namespace WHERE nspname = 'pg_catalog'),
-        1,	-- UID of superuser is hardwired to 1 as of PG 7.3
-        (SELECT oid FROM pg_type WHERE typname = 'complex'),
-        true,
-        0);
-
-SELECT oid, *
-    FROM pg_opclass
-    WHERE opcname = 'complex_abs_ops';
-
-  oid   | opcamid |     opcname     | opcnamespace | opcowner | opcintype | opcdefault | opckeytype
---------+---------+-----------------+--------------+----------+-----------+------------+------------
- 277975 |     403 | complex_abs_ops |           11 |        1 |    277946 | t          |          0
-(1 row)
-</programlisting>
-
-   Note that the OID for your <classname>pg_opclass</classname> row will
-   be different!  Don't worry about this though.  We'll get this number
-   from the system later just like we got the OID of the type here.
-  </para>
-
-  <para>
-   The above example assumes that you want to make this new operator class the
-   default B-tree operator class for the <type>complex</type> data type.
-   If you don't, just set <structfield>opcdefault</structfield> to false instead.
-   <structfield>opckeytype</structfield> is not described here; it should always
-   be zero for B-tree operator classes.
-  </para>
  </sect1>
 
  <sect1 id="xindex-operators">
   <title>Creating the Operators and Support Routines</title>
 
   <para>
-   So now we have an access method and an operator  class.
-   We  still  need  a  set of operators.  The procedure for
+   Now that we have seen the ideas, here is the promised example
+   of creating a new operator class.  First, we need a set of operators.
+   The procedure for
    defining operators was discussed in <xref linkend="xoper">.
    For  the  <literal>complex_abs_ops</literal>  operator  class on B-trees,
    the operators we require are:
@@ -426,19 +501,12 @@ CREATE FUNCTION complex_abs_eq(complex, complex) RETURNS boolean
    In practice, all operators defined as index access method
    strategies must return type <type>boolean</type>, since they must
    appear at the top level of a <literal>WHERE</> clause to be used with an index.
-   (On the other hand, the support function returns whatever the
-   particular access method expects -- in this case, a signed
-   integer.)
+   (On the other hand, support functions return whatever the
+   particular access method expects -- in the case of the comparison
+   function for B-trees, a signed integer.)
   </para>
    </listitem>
   </itemizedlist>
-  </para>
-
-  <para>
-   The final routine in the file is the <quote>support routine</quote>
-   mentioned when we discussed the <structfield>amsupport</> column of the
-   <classname>pg_am</classname> table.  We will use this later on.  For
-   now, ignore it.
   </para>
 
   <para>
@@ -464,114 +532,111 @@ CREATE OPERATOR = (
   </para>
 
   <para>
-   The next step is to add entries for these operators to
-   the <classname>pg_amop</classname> relation.  To do this,
-   we'll need the OIDs of the operators we just
-   defined.  We'll look up the names of all the operators that take
-   two operands of type <type>complex</type>, and pick ours out:
-   
-<screen>
-SELECT o.oid AS opoid, o.oprname
-    INTO TEMP TABLE complex_ops_tmp
-    FROM pg_operator o, pg_type t
-    WHERE o.oprleft = t.oid and o.oprright = t.oid
-      and t.typname = 'complex';
-
- opoid  | oprname
---------+---------
- 277963 | +
- 277970 | &lt;
- 277971 | &lt;=
- 277972 | =
- 277973 | &gt;=
- 277974 | &gt;
-(6 rows)
-</screen>
-
-   (Again, some of your OID numbers will almost
-   certainly be different.)  The operators we are interested in are those
-   with OIDs 277970 through 277974.  The values you
-   get will probably be different, and you should substitute them for the
-   values below.  We will do this with a select statement.
-  </para>
-
-  <para>
-   Now we are ready to insert entries into <classname>pg_amop</classname> for
-   our new operator class.  These entries must associate the correct
-   B-tree strategy numbers with each of the operators we need.
-   The command to insert the less-than operator looks like:
-
-<programlisting>
-INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
-    SELECT opcl.oid, 1, false, c.opoid
-        FROM pg_opclass opcl, complex_ops_tmp c
-        WHERE
-            opcamid = (SELECT oid FROM pg_am WHERE amname = 'btree') AND
-            opcname = 'complex_abs_ops' AND
-            c.oprname = '&lt;';
-</programlisting>
-
-   Now do this for the other operators substituting for the <literal>1</> in the
-   second line above and the <literal>&lt;</> in the last line.  Note the order:
-   <quote>less than</> is 1, <quote>less than or equal</> is 2,
-   <quote>equal</> is 3, <quote>greater than or equal</quote> is 4, and
-   <quote>greater than</quote> is 5.
-  </para>
-
-  <para>
-   The field <filename>amopreqcheck</filename> is not discussed here; it
-   should always be false for B-tree operators.
-  </para>
-
-  <para>
-   The final step is the registration of the <quote>support routine</quote> previously
-   described in our discussion of <classname>pg_am</classname>.  The
-   OID of this support routine is stored in the
-   <classname>pg_amproc</classname> table, keyed by the operator class
-   OID and the support routine number.
-  </para>
-
-  <para>
-   First, we need to register the function in
-   <productname>PostgreSQL</productname> (recall that we put the
-   C code that implements this routine in the bottom of
-   the file in which we implemented the operator routines):
+   The next step is the registration of the comparison <quote>support
+   routine</quote> required by B-trees.  The C code that implements this
+   is in the same file that contains the operator procedures:
 
 <programlisting>
 CREATE FUNCTION complex_abs_cmp(complex, complex)
     RETURNS integer
     AS '<replaceable>PGROOT</replaceable>/src/tutorial/complex'
     LANGUAGE C;
-
-SELECT oid, proname FROM pg_proc
-    WHERE proname = 'complex_abs_cmp';
-
-  oid   |     proname
---------+-----------------
- 277997 | complex_abs_cmp
-(1 row)
 </programlisting>
-
-   (Again, your OID number will probably be different.)
   </para>
+ </sect1>
+
+ <sect1 id="xindex-opclass">
+  <title>Creating the Operator Class</title>
 
   <para>
-   We can add the new row as follows:
+   Now that we have the required operators and support routine,
+   we can finally create the operator class:
 
 <programlisting>
-INSERT INTO pg_amproc (amopclaid, amprocnum, amproc)
-    SELECT opcl.oid, 1, p.oid
-        FROM pg_opclass opcl, pg_proc p
-        WHERE
-            opcamid = (SELECT oid FROM pg_am WHERE amname = 'btree') AND
-            opcname = 'complex_abs_ops' AND
-            p.proname = 'complex_abs_cmp';
+CREATE OPERATOR CLASS complex_abs_ops
+    DEFAULT FOR TYPE complex USING btree AS
+        OPERATOR        1       < ,
+        OPERATOR        2       <= ,
+        OPERATOR        3       = ,
+        OPERATOR        4       >= ,
+        OPERATOR        5       > ,
+        FUNCTION        1       complex_abs_cmp(complex, complex);
 </programlisting>
   </para>
 
   <para>
    And we're done!  (Whew.)  It should now be possible to create
    and use B-tree indexes on <type>complex</type> columns.
+  </para>
+
+  <para>
+   We could have written the operator entries more verbosely, as in
+<programlisting>
+        OPERATOR        1       < (complex, complex) ,
+</programlisting>
+   but there is no need to do so when the operators take the same datatype
+   we are defining the operator class for.
+  </para>
+
+  <para>
+   The above example assumes that you want to make this new operator class the
+   default B-tree operator class for the <type>complex</type> data type.
+   If you don't, just leave out the word <literal>DEFAULT</>.
+  </para>
+ </sect1>
+
+ <sect1 id="xindex-opclass-features">
+  <title>Special Features of Operator Classes</title>
+
+  <para>
+   There are two special features of operator classes that we have
+   not discussed yet, mainly because they are not very useful
+   with the default B-tree index access method.
+  </para>
+
+  <para>
+   Normally, declaring an operator as a member of an operator class means
+   that the index access method can retrieve exactly the set of rows
+   that satisfy a WHERE condition using the operator.  For example,
+<programlisting>
+SELECT * FROM table WHERE integer_column < 4;
+</programlisting>
+   can be satisfied exactly by a B-tree index on the integer column.
+   But there are cases where an index is useful as an inexact guide to
+   the matching rows.  For example, if an R-tree index stores only
+   bounding boxes for objects, then it cannot exactly satisfy a WHERE
+   condition that tests overlap between nonrectangular objects such as
+   polygons.  Yet we could use the index to find objects whose bounding
+   box overlaps the bounding box of the target object, and then do the
+   exact overlap test only on the objects found by the index.  If this
+   scenario applies, the index is said to be <quote>lossy</> for the
+   operator, and we mark the <literal>OPERATOR</> clause in the
+   <command>CREATE OPERATOR CLASS</> command with <literal>RECHECK</>.
+   <literal>RECHECK</> is valid if the index is guaranteed to return
+   all the required tuples, plus perhaps some additional tuples, which
+   can be eliminated by performing the original operator comparison.
+  </para>
+
+  <para>
+   Consider again the situation where we are storing in the index only
+   the bounding box of a complex object such as a polygon.  In this
+   case there's not much value in storing the whole polygon in the index
+   entry --- we may as well store just a simpler object of type
+   <literal>box</>.  This situation is expressed by the <literal>STORAGE</>
+   option in <command>CREATE OPERATOR CLASS</>: we'd write something like
+
+<programlisting>
+CREATE OPERATOR CLASS polygon_ops
+    DEFAULT FOR TYPE polygon USING gist AS
+        ...
+        STORAGE box;
+</programlisting>
+
+   At present, only the GiST access method supports a
+   <literal>STORAGE</> type that's different from the column datatype.
+   The GiST <literal>compress</> and <literal>decompress</> support
+   routines must deal with datatype conversion when <literal>STORAGE</>
+   is used.
   </para>
  </sect1>
 

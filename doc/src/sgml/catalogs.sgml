@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.48 2002/07/24 19:11:06 petere Exp $
+ $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.49 2002/07/30 05:24:56 tgl Exp $
  -->
 
 <chapter id="catalogs">
@@ -21,7 +21,7 @@
    DATABASE</command> inserts a row into the
    <structname>pg_database</structname> catalog -- and actually
    creates the database on disk.)  There are some exceptions for
-   esoteric operations, such as adding index access methods.
+   especially esoteric operations, such as adding index access methods.
   </para>
 
   <table>
@@ -180,9 +180,7 @@
   </table>
 
   <para>
-   More detailed documentation of most catalogs follow below.  The
-   catalogs that relate to index access methods are explained in the
-   <citetitle>Programmer's Guide</citetitle>.
+   More detailed documentation of each catalog follows below.
   </para>
 
  </sect1>
@@ -263,6 +261,294 @@
    Guide</citetitle> for more information about writing aggregate
    functions and the meaning of the transition functions, etc.
   </para>
+
+ </sect1>
+
+
+ <sect1 id="catalog-pg-am">
+  <title>pg_am</title>
+
+  <para>
+   <structname>pg_am</structname> stores information about index access
+   methods.  There is one row for each index access method supported by
+   the system.
+  </para>
+
+  <table>
+   <title>pg_am Columns</title>
+
+   <tgroup cols=4>
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+    <tbody>
+
+     <row>
+      <entry>amname</entry>
+      <entry><type>name</type></entry>
+      <entry></entry>
+      <entry>name of the access method</entry>
+     </row>
+
+     <row>
+      <entry>amowner</entry>
+      <entry><type>int4</type></entry>
+      <entry>pg_shadow.usesysid</entry>
+      <entry>user ID of the owner (currently not used)</entry>
+     </row>
+
+     <row>
+      <entry>amstrategies</entry>
+      <entry><type>int2</type></entry>
+      <entry></entry>
+      <entry>number of operator strategies for this access method</entry>
+     </row>
+
+     <row>
+      <entry>amsupport</entry>
+      <entry><type>int2</type></entry>
+      <entry></entry>
+      <entry>number of support routines for this access method</entry>
+     </row>
+
+     <row>
+      <entry>amorderstrategy</entry>
+      <entry><type>int2</type></entry>
+      <entry></entry>
+      <entry>zero if the index offers no sort order, otherwise the strategy
+      number of the strategy operator that describes the sort order</entry>
+     </row>
+
+     <row>
+      <entry>amcanunique</entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>does AM support unique indexes?</entry>
+     </row>
+
+     <row>
+      <entry>amcanmulticol</entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>does AM support multicolumn indexes?</entry>
+     </row>
+
+     <row>
+      <entry>amindexnulls</entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>does AM support NULL index entries?</entry>
+     </row>
+
+     <row>
+      <entry>amconcurrent</entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>does AM support concurrent updates?</entry>
+     </row>
+
+     <row>
+      <entry>amgettuple</entry>
+      <entry><type>regproc</type></entry>
+      <entry>pg_proc.oid</entry>
+      <entry><quote>next valid tuple</quote> function</entry>
+     </row>
+
+     <row>
+      <entry>aminsert</entry>
+      <entry><type>regproc</type></entry>
+      <entry>pg_proc.oid</entry>
+      <entry><quote>insert this tuple</quote> function</entry>
+     </row>
+
+     <row>
+      <entry>ambeginscan</entry>
+      <entry><type>regproc</type></entry>
+      <entry>pg_proc.oid</entry>
+      <entry><quote>start new scan</quote> function</entry>
+     </row>
+
+     <row>
+      <entry>amrescan</entry>
+      <entry><type>regproc</type></entry>
+      <entry>pg_proc.oid</entry>
+      <entry><quote>restart this scan</quote> function</entry>
+     </row>
+
+     <row>
+      <entry>amendscan</entry>
+      <entry><type>regproc</type></entry>
+      <entry>pg_proc.oid</entry>
+      <entry><quote>end this scan</quote> function</entry>
+     </row>
+
+     <row>
+      <entry>ammarkpos</entry>
+      <entry><type>regproc</type></entry>
+      <entry>pg_proc.oid</entry>
+      <entry><quote>mark current scan position</quote> function</entry>
+     </row>
+
+     <row>
+      <entry>amrestrpos</entry>
+      <entry><type>regproc</type></entry>
+      <entry>pg_proc.oid</entry>
+      <entry><quote>restore marked scan position</quote> function</entry>
+     </row>
+
+     <row>
+      <entry>ambuild</entry>
+      <entry><type>regproc</type></entry>
+      <entry>pg_proc.oid</entry>
+      <entry><quote>build new index</quote> function</entry>
+     </row>
+
+     <row>
+      <entry>ambulkdelete</entry>
+      <entry><type>regproc</type></entry>
+      <entry>pg_proc.oid</entry>
+      <entry>bulk-delete function</entry>
+     </row>
+
+     <row>
+      <entry>amcostestimate</entry>
+      <entry><type>regproc</type></entry>
+      <entry>pg_proc.oid</entry>
+      <entry>estimate cost of an indexscan</entry>
+     </row>
+
+    </tbody>
+   </tgroup>
+  </table>
+
+   <para>
+    An index AM that supports multiple columns (has
+    <structfield>amcanmulticol</structfield> true) <emphasis>must</>
+    support indexing nulls in columns after the first, because the planner
+    will assume the index can be used for queries on just the first
+    column(s).  For example, consider an index on (a,b) and a query
+    WHERE a = 4.  The system will assume the index can be used to scan for
+    rows with a = 4, which is wrong if the index omits rows where b is null.
+    However it is okay to omit rows where the first indexed column is null.
+    (GiST currently does so.)
+    <structfield>amindexnulls</structfield> should be set true only if the
+    index AM indexes all rows, including arbitrary combinations of nulls.
+   </para>
+
+ </sect1>
+
+
+ <sect1 id="catalog-pg-amop">
+  <title>pg_amop</title>
+
+  <para>
+   <structname>pg_amop</structname> stores information about operators
+   associated with index access method operator classes.  There is one
+   row for each operator that is a member of an operator class.
+  </para>
+
+  <table>
+   <title>pg_amop Columns</title>
+
+   <tgroup cols=4>
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+    <tbody>
+
+     <row>
+      <entry>amopclaid</entry>
+      <entry><type>oid</type></entry>
+      <entry>pg_opclass.oid</entry>
+      <entry>the index opclass this entry is for</entry>
+     </row>
+
+     <row>
+      <entry>amopstrategy</entry>
+      <entry><type>int2</type></entry>
+      <entry></entry>
+      <entry>operator strategy number</entry>
+     </row>
+
+     <row>
+      <entry>amopreqcheck</entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>index hit must be rechecked</entry>
+     </row>
+
+     <row>
+      <entry>amopopr</entry>
+      <entry><type>oid</type></entry>
+      <entry>pg_operator.oid</entry>
+      <entry>the operator's pg_operator OID</entry>
+     </row>
+
+    </tbody>
+   </tgroup>
+  </table>
+
+ </sect1>
+
+
+ <sect1 id="catalog-pg-amproc">
+  <title>pg_amproc</title>
+
+  <para>
+   <structname>pg_amproc</structname> stores information about support
+   procedures
+   associated with index access method operator classes.  There is one
+   row for each support procedure belonging to an operator class.
+  </para>
+
+  <table>
+   <title>pg_amproc Columns</title>
+
+   <tgroup cols=4>
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+    <tbody>
+
+     <row>
+      <entry>amopclaid</entry>
+      <entry><type>oid</type></entry>
+      <entry>pg_opclass.oid</entry>
+      <entry>the index opclass this entry is for</entry>
+     </row>
+
+     <row>
+      <entry>amprocnum</entry>
+      <entry><type>int2</type></entry>
+      <entry></entry>
+      <entry>support procedure index</entry>
+     </row>
+
+     <row>
+      <entry>amproc</entry>
+      <entry><type>regproc</type></entry>
+      <entry>pg_proc.oid</entry>
+      <entry>OID of the proc</entry>
+     </row>
+
+    </tbody>
+   </tgroup>
+  </table>
 
  </sect1>
 
@@ -1919,6 +2205,104 @@
     </tbody>
    </tgroup>
   </table>
+
+ </sect1>
+
+
+ <sect1 id="catalog-pg-opclass">
+  <title>pg_opclass</title>
+
+  <para>
+   <structname>pg_opclass</structname> defines
+   index access method operator classes.  Each operator class defines
+   semantics for index columns of a particular datatype and a particular
+   index access method.  Note that there can be multiple operator classes
+   for a given datatype/access method combination, thus supporting multiple
+   behaviors.
+  </para>
+
+  <para>
+   Operator classes are described at length in the
+   <citetitle>Programmer's Guide</citetitle>.
+  </para>
+
+  <table>
+   <title>pg_opclass Columns</title>
+
+   <tgroup cols=4>
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+    <tbody>
+
+     <row>
+      <entry>opcamid</entry>
+      <entry><type>oid</type></entry>
+      <entry>pg_am.oid</entry>
+      <entry>index access method opclass is for</entry>
+     </row>
+
+     <row>
+      <entry>opcname</entry>
+      <entry><type>name</type></entry>
+      <entry></entry>
+      <entry>name of this opclass</entry>
+     </row>
+
+     <row>
+      <entry>opcnamespace</entry>
+      <entry><type>oid</type></entry>
+      <entry>pg_namespace.oid</entry>
+      <entry>namespace of this opclass</entry>
+     </row>
+
+     <row>
+      <entry>opcowner</entry>
+      <entry><type>int4</type></entry>
+      <entry>pg_shadow.usesysid</entry>
+      <entry>opclass owner</entry>
+     </row>
+
+     <row>
+      <entry>opcintype</entry>
+      <entry><type>oid</type></entry>
+      <entry>pg_type.oid</entry>
+      <entry>type of input data for opclass</entry>
+     </row>
+
+     <row>
+      <entry>opcdefault</entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>true if opclass is default for opcintype</entry>
+     </row>
+
+     <row>
+      <entry>opckeytype</entry>
+      <entry><type>oid</type></entry>
+      <entry>pg_type.oid</entry>
+      <entry>type of index data, or zero if same as opcintype</entry>
+     </row>
+
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   The majority of the information defining an operator class is actually
+   not in its <structname>pg_opclass</structname> row, but in the associated
+   rows in <structname>pg_amop</structname> and
+   <structname>pg_amproc</structname>.  Those rows are considered to be
+   part of the operator class definition --- this is not unlike the way
+   that a relation is defined by a single <structname>pg_class</structname>
+   row, plus associated rows in <structname>pg_attribute</structname> and
+   other tables.
+  </para>
 
  </sect1>
 

@@ -5,9 +5,10 @@
 --    use this new type.
 -- 
 --
--- Copyright (c) 1994, Regents of the University of California
+-- Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
+-- Portions Copyright (c) 1994, Regents of the University of California
 --
--- $Id: complex.source,v 1.12 2002/04/17 20:57:57 tgl Exp $
+-- $Header: /cvsroot/pgsql/src/tutorial/complex.source,v 1.13 2002/07/30 05:24:56 tgl Exp $
 --
 ---------------------------------------------------------------------------
 
@@ -46,13 +47,14 @@ CREATE FUNCTION complex_out(opaque)
 CREATE TYPE complex (
    internallength = 16, 
    input = complex_in,
-   output = complex_out
+   output = complex_out,
+   alignment = double
 );
 
 
 -----------------------------
 -- Using the new type:
---	user-defined types can be use like ordinary built-in types.
+--	user-defined types can be used like ordinary built-in types.
 -----------------------------
 
 -- eg. we can use it in a schema
@@ -62,7 +64,7 @@ CREATE TABLE test_complex (
 	b	complex
 );
 
--- data for user-defined type are just strings in the proper textual
+-- data for user-defined types are just strings in the proper textual
 -- representation. 
 
 INSERT INTO test_complex VALUES ('(1.0, 2.5)', '(4.2, 3.55 )');
@@ -74,7 +76,7 @@ SELECT * FROM test_complex;
 -- Creating an operator for the new type:
 --	Let's define an add operator for complex types. Since POSTGRES
 --	supports function overloading, we'll use + as the add operator.
---	(Operators can be reused with different number and types of 
+--	(Operator names can be reused with different numbers and types of 
 --	arguments.)
 -----------------------------
 
@@ -121,20 +123,11 @@ CREATE AGGREGATE complex_sum (
 SELECT complex_sum(a) FROM test_complex;
 
 
--------------------------------------------------------------------------------
---             ATTENTION!      ATTENTION!      ATTENTION!                    --
---  YOU MAY SKIP THE SECTION BELOW ON INTERFACING WITH INDICES. YOU DON'T    --
---  NEED THE FOLLOWING IF YOU DON'T USE INDICES WITH NEW DATA TYPES.         --
--------------------------------------------------------------------------------
-
-SELECT 'READ ABOVE!' AS STOP;
-
 -----------------------------
--- Interfacing New Types with Indices:
+-- Interfacing New Types with Indexes:
 --	We cannot define a secondary index (eg. a B-tree) over the new type
---	yet. We need to modify a few system catalogs to show POSTGRES how
---	to use the new type. Unfortunately, there is no simple command to
---	do this. Please bear with me.
+--	yet. We need to create all the required operators and support
+--      functions, then we can make the operator class.
 -----------------------------
 
 -- first, define the required operators
@@ -170,81 +163,20 @@ CREATE OPERATOR > (
    restrict = scalargtsel, join = scalargtjoinsel
 );
 
-INSERT INTO pg_opclass (opcamid, opcname, opcnamespace, opcowner, opcintype, opcdefault, opckeytype)
-    VALUES (
-        (SELECT oid FROM pg_am WHERE amname = 'btree'),
-        'complex_abs_ops',
-        (SELECT oid FROM pg_namespace WHERE nspname = 'pg_catalog'),
-        1,	-- UID of superuser is hardwired to 1 as of PG 7.3
-        (SELECT oid FROM pg_type WHERE typname = 'complex'),
-        true,
-        0);
-
-SELECT oid, *
-    FROM pg_opclass WHERE opcname = 'complex_abs_ops';
-
-SELECT o.oid AS opoid, o.oprname
-INTO TEMP TABLE complex_ops_tmp
-FROM pg_operator o, pg_type t
-WHERE o.oprleft = t.oid and o.oprright = t.oid
-   and t.typname = 'complex';
-
--- make sure we have the right operators
-SELECT * from complex_ops_tmp;
-
-INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
-   SELECT opcl.oid, 1, false, c.opoid
-   FROM pg_opclass opcl, complex_ops_tmp c
-   WHERE
-      opcamid = (SELECT oid FROM pg_am WHERE amname = 'btree')
-      and opcname = 'complex_abs_ops' 
-      and c.oprname = '<';
-
-INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
-   SELECT opcl.oid, 2, false, c.opoid
-   FROM pg_opclass opcl, complex_ops_tmp c
-   WHERE
-      opcamid = (SELECT oid FROM pg_am WHERE amname = 'btree')
-      and opcname = 'complex_abs_ops' 
-      and c.oprname = '<=';
-
-INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
-   SELECT opcl.oid, 3, false, c.opoid
-   FROM pg_opclass opcl, complex_ops_tmp c
-   WHERE
-      opcamid = (SELECT oid FROM pg_am WHERE amname = 'btree')
-      and opcname = 'complex_abs_ops' 
-      and c.oprname = '=';
-
-INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
-   SELECT opcl.oid, 4, false, c.opoid
-   FROM pg_opclass opcl, complex_ops_tmp c
-   WHERE
-      opcamid = (SELECT oid FROM pg_am WHERE amname = 'btree')
-      and opcname = 'complex_abs_ops' 
-      and c.oprname = '>=';
-
-INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
-   SELECT opcl.oid, 5, false, c.opoid
-   FROM pg_opclass opcl, complex_ops_tmp c
-   WHERE
-      opcamid = (SELECT oid FROM pg_am WHERE amname = 'btree')
-      and opcname = 'complex_abs_ops' 
-      and c.oprname = '>';
-
---
+-- create the support function too
 CREATE FUNCTION complex_abs_cmp(complex, complex) RETURNS int4
    AS '_OBJWD_/complex' LANGUAGE 'c';
 
-SELECT oid, proname FROM pg_proc WHERE proname = 'complex_abs_cmp';
+-- now we can make the operator class
+CREATE OPERATOR CLASS complex_abs_ops
+    DEFAULT FOR TYPE complex USING btree AS
+        OPERATOR        1       < ,
+        OPERATOR        2       <= ,
+        OPERATOR        3       = ,
+        OPERATOR        4       >= ,
+        OPERATOR        5       > ,
+        FUNCTION        1       complex_abs_cmp(complex, complex);
 
-INSERT INTO pg_amproc (amopclaid, amprocnum, amproc)
-   SELECT opcl.oid, 1, pro.oid
-   FROM pg_opclass opcl, pg_proc pro
-   WHERE
-      opcamid = (SELECT oid FROM pg_am WHERE amname = 'btree')
-      and opcname = 'complex_abs_ops'
-      and proname = 'complex_abs_cmp';
 
 -- now, we can define a btree index on complex types. First, let's populate
 -- the table. Note that postgres needs many more tuples to start using the
@@ -259,35 +191,8 @@ SELECT * from test_complex where a = '(56.0,-22.5)';
 SELECT * from test_complex where a < '(56.0,-22.5)';
 SELECT * from test_complex where a > '(56.0,-22.5)';
 
-DELETE FROM pg_amop WHERE
-   amopclaid = (SELECT oid FROM pg_opclass WHERE
-      opcamid = (SELECT oid FROM pg_am WHERE amname = 'btree')
-      and opcname = 'complex_abs_ops');
 
-DELETE FROM pg_amproc WHERE
-   amopclaid = (SELECT oid FROM pg_opclass WHERE
-      opcamid = (SELECT oid FROM pg_am WHERE amname = 'btree')
-      and opcname = 'complex_abs_ops');
-
-DELETE FROM pg_opclass WHERE
-      opcamid = (SELECT oid FROM pg_am WHERE amname = 'btree')
-      and opcname = 'complex_abs_ops';
-
-DROP FUNCTION complex_in(opaque);
+-- clean up the example
+DROP TABLE test_complex;
+DROP TYPE complex CASCADE;
 DROP FUNCTION complex_out(opaque);
-DROP FUNCTION complex_add(complex, complex);
-DROP FUNCTION complex_abs_lt(complex, complex);
-DROP FUNCTION complex_abs_le(complex, complex);
-DROP FUNCTION complex_abs_eq(complex, complex);
-DROP FUNCTION complex_abs_ge(complex, complex);
-DROP FUNCTION complex_abs_gt(complex, complex);
-DROP FUNCTION complex_abs_cmp(complex, complex);
-DROP OPERATOR + (complex, complex);
-DROP OPERATOR < (complex, complex);
-DROP OPERATOR <= (complex, complex);
-DROP OPERATOR = (complex, complex);
-DROP OPERATOR >= (complex, complex);
-DROP OPERATOR > (complex, complex);
-DROP AGGREGATE complex_sum (complex);
-DROP TYPE complex;
-DROP TABLE test_complex, complex_ops_tmp;
