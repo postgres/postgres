@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubplan.c,v 1.21 2000/01/26 05:56:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubplan.c,v 1.22 2000/03/09 05:15:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,8 +24,6 @@
 #include "executor/nodeSubplan.h"
 #include "tcop/pquery.h"
 
-/* should be exported by execMain.c */
-extern void ExecCheckPerms(CmdType op, int resRel, List *rtable, Query *q);
 
 /* ----------------------------------------------------------------
  *		ExecSubPlan(node)
@@ -253,8 +251,6 @@ bool
 ExecInitSubPlan(SubPlan *node, EState *estate, Plan *parent)
 {
 	EState	   *sp_estate = CreateExecutorState();
-
-	ExecCheckPerms(CMD_SELECT, 0, node->rtable, (Query *) NULL);
 
 	sp_estate->es_range_table = node->rtable;
 	sp_estate->es_param_list_info = estate->es_param_list_info;

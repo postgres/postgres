@@ -27,7 +27,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.109 2000/02/15 03:36:49 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.110 2000/03/09 05:15:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,9 +46,9 @@
 #include "utils/builtins.h"
 #include "utils/syscache.h"
 
-void ExecCheckPerms(CmdType operation, int resultRelation, List *rangeTable,
-			   Query *parseTree);
-
+/* XXX no points for style */
+extern TupleTableSlot *EvalPlanQual(EState *estate, Index rti,
+									ItemPointer tid);
 
 /* decls for local routines only used within this module */
 static TupleDesc InitPlan(CmdType operation,
@@ -72,12 +72,17 @@ static void ExecDelete(TupleTableSlot *slot, ItemPointer tupleid,
 		   EState *estate);
 static void ExecReplace(TupleTableSlot *slot, ItemPointer tupleid,
 			EState *estate);
-
-TupleTableSlot *EvalPlanQual(EState *estate, Index rti, ItemPointer tid);
 static TupleTableSlot *EvalPlanQualNext(EState *estate);
-
-
+static void ExecCheckQueryPerms(CmdType operation, Query *parseTree,
+								Plan *plan);
+static void ExecCheckPlanPerms(Plan *plan, CmdType operation,
+							   int resultRelation, bool resultIsScanned);
+static void ExecCheckRTPerms(List *rangeTable, CmdType operation,
+							 int resultRelation, bool resultIsScanned);
+static void ExecCheckRTEPerms(RangeTblEntry *rte, CmdType operation,
+							  bool isResultRelation, bool resultIsScanned);
 /* end of local decls */
+
 
 /* ----------------------------------------------------------------
  *		ExecutorStart
@@ -378,25 +383,170 @@ ExecutorEnd(QueryDesc *queryDesc, EState *estate)
 	}
 }
 
-void
-ExecCheckPerms(CmdType operation,
-			   int resultRelation,
-			   List *rangeTable,
-			   Query *parseTree)
+
+/*
+ * ExecCheckQueryPerms
+ *		Check access permissions for all relations referenced in a query.
+ */
+static void
+ExecCheckQueryPerms(CmdType operation, Query *parseTree, Plan *plan)
+{
+	List	   *rangeTable = parseTree->rtable;
+	int			resultRelation = parseTree->resultRelation;
+	bool		resultIsScanned = false;
+	List	   *lp;
+
+	/*
+	 * If we have a result relation, determine whether the result rel is
+	 * scanned or merely written.  If scanned, we will insist on read
+	 * permission as well as modify permission.
+	 */
+	if (resultRelation > 0)
+	{
+		List	   *qvars = pull_varnos(parseTree->qual);
+		List	   *tvars = pull_varnos((Node *) parseTree->targetList);
+
+		resultIsScanned = (intMember(resultRelation, qvars) ||
+						   intMember(resultRelation, tvars));
+		freeList(qvars);
+		freeList(tvars);
+	}
+
+	/*
+	 * Check RTEs in the query's primary rangetable.
+	 */
+	ExecCheckRTPerms(rangeTable, operation, resultRelation, resultIsScanned);
+
+	/*
+	 * Check SELECT FOR UPDATE access rights.
+	 */
+	foreach(lp, parseTree->rowMark)
+	{
+		RowMark    *rm = lfirst(lp);
+
+		if (!(rm->info & ROW_ACL_FOR_UPDATE))
+			continue;
+
+		ExecCheckRTEPerms(rt_fetch(rm->rti, rangeTable),
+						  CMD_UPDATE, true, false);
+	}
+
+	/*
+	 * Search for subplans and APPEND nodes to check their rangetables.
+	 */
+	ExecCheckPlanPerms(plan, operation, resultRelation, resultIsScanned);
+}
+
+/*
+ * ExecCheckPlanPerms
+ *		Recursively scan the plan tree to check access permissions in
+ *		subplans.
+ *
+ * We also need to look at the local rangetables in Append plan nodes,
+ * which is pretty bogus --- most likely, those tables should be mentioned
+ * in the query's main rangetable.  But at the moment, they're not.
+ */
+static void
+ExecCheckPlanPerms(Plan *plan, CmdType operation,
+				   int resultRelation, bool resultIsScanned)
+{
+	List	   *subp;
+
+	if (plan == NULL)
+		return;
+
+	/* Check subplans, which we assume are plain SELECT queries */
+
+	foreach(subp, plan->initPlan)
+	{
+		SubPlan	   *subplan = (SubPlan *) lfirst(subp);
+
+		ExecCheckRTPerms(subplan->rtable, CMD_SELECT, 0, false);
+		ExecCheckPlanPerms(subplan->plan, CMD_SELECT, 0, false);
+	}
+	foreach(subp, plan->subPlan)
+	{
+		SubPlan	   *subplan = (SubPlan *) lfirst(subp);
+
+		ExecCheckRTPerms(subplan->rtable, CMD_SELECT, 0, false);
+		ExecCheckPlanPerms(subplan->plan, CMD_SELECT, 0, false);
+	}
+
+	/* Check lower plan nodes */
+
+	ExecCheckPlanPerms(plan->lefttree, operation,
+					   resultRelation, resultIsScanned);
+	ExecCheckPlanPerms(plan->righttree, operation,
+					   resultRelation, resultIsScanned);
+
+	/* Do node-type-specific checks */
+
+	switch (nodeTag(plan))
+	{
+		case T_Append:
+		{
+			Append	   *app = (Append *) plan;
+			List	   *appendplans;
+
+			if (app->inheritrelid > 0)
+			{
+				/*
+				 * Append implements expansion of inheritance; all members
+				 * of inheritrtable list will be plugged into same RTE slot.
+				 * Therefore, they are either all result relations or none.
+				 */
+				List	   *rtable;
+
+				foreach(rtable, app->inheritrtable)
+				{
+					ExecCheckRTEPerms((RangeTblEntry *) lfirst(rtable),
+									  operation,
+									  (app->inheritrelid == resultRelation),
+									  resultIsScanned);
+				}
+			}
+			else
+			{
+				/* Append implements UNION, which must be a SELECT */
+				List	   *rtables;
+
+				foreach(rtables, app->unionrtables)
+				{
+					ExecCheckRTPerms((List *) lfirst(rtables),
+									 CMD_SELECT, 0, false);
+				}
+			}
+
+			/* Check appended plans */
+			foreach(appendplans, app->appendplans)
+			{
+				ExecCheckPlanPerms((Plan *) lfirst(appendplans),
+								   operation,
+								   resultRelation,
+								   resultIsScanned);
+			}
+			break;
+		}
+
+		default:
+			break;
+	}
+}
+
+/*
+ * ExecCheckRTPerms
+ *		Check access permissions for all relations listed in a range table.
+ *
+ * If resultRelation is not 0, it is the RT index of the relation to be
+ * treated as the result relation.  All other relations are assumed to be
+ * read-only for the query.
+ */
+static void
+ExecCheckRTPerms(List *rangeTable, CmdType operation,
+				 int resultRelation, bool resultIsScanned)
 {
 	int			rtindex = 0;
 	List	   *lp;
-	List	   *qvars,
-			   *tvars;
-	int32		ok = 1,
-				aclcheck_result = -1;
-	char	   *opstr;
-	char	   *relName = NULL;
-	char	   *userName;
-
-#define CHECK(MODE)		pg_aclcheck(relName, userName, MODE)
-
-	userName = GetPgUserName();
 
 	foreach(lp, rangeTable)
 	{
@@ -404,77 +554,85 @@ ExecCheckPerms(CmdType operation,
 
 		++rtindex;
 
-		if (rte->skipAcl)
-		{
-
-			/*
-			 * This happens if the access to this table is due to a view
-			 * query rewriting - the rewrite handler checked the
-			 * permissions against the view owner, so we just skip this
-			 * entry.
-			 */
-			continue;
-		}
-
-		relName = rte->relname;
-		if (rtindex == resultRelation)
-		{						/* this is the result relation */
-			qvars = pull_varnos(parseTree->qual);
-			tvars = pull_varnos((Node *) parseTree->targetList);
-			if (intMember(resultRelation, qvars) ||
-				intMember(resultRelation, tvars))
-			{
-				/* result relation is scanned */
-				ok = ((aclcheck_result = CHECK(ACL_RD)) == ACLCHECK_OK);
-				opstr = "read";
-				if (!ok)
-					break;
-			}
-			switch (operation)
-			{
-				case CMD_INSERT:
-					ok = ((aclcheck_result = CHECK(ACL_AP)) == ACLCHECK_OK) ||
-						((aclcheck_result = CHECK(ACL_WR)) == ACLCHECK_OK);
-					opstr = "append";
-					break;
-				case CMD_DELETE:
-				case CMD_UPDATE:
-					ok = ((aclcheck_result = CHECK(ACL_WR)) == ACLCHECK_OK);
-					opstr = "write";
-					break;
-				default:
-					elog(ERROR, "ExecCheckPerms: bogus operation %d",
-						 operation);
-			}
-		}
-		else
-		{
-			ok = ((aclcheck_result = CHECK(ACL_RD)) == ACLCHECK_OK);
-			opstr = "read";
-		}
-		if (!ok)
-			break;
-	}
-	if (!ok)
-		elog(ERROR, "%s: %s", relName, aclcheck_error_strings[aclcheck_result]);
-
-	if (parseTree != NULL && parseTree->rowMark != NULL)
-	{
-		foreach(lp, parseTree->rowMark)
-		{
-			RowMark    *rm = lfirst(lp);
-
-			if (!(rm->info & ROW_ACL_FOR_UPDATE))
-				continue;
-
-			relName = rt_fetch(rm->rti, rangeTable)->relname;
-			ok = ((aclcheck_result = CHECK(ACL_WR)) == ACLCHECK_OK);
-			opstr = "write";
-			if (!ok)
-				elog(ERROR, "%s: %s", relName, aclcheck_error_strings[aclcheck_result]);
-		}
+		ExecCheckRTEPerms(rte,
+						  operation,
+						  (rtindex == resultRelation),
+						  resultIsScanned);
 	}
 }
+
+/*
+ * ExecCheckRTEPerms
+ *		Check access permissions for a single RTE.
+ */
+static void
+ExecCheckRTEPerms(RangeTblEntry *rte, CmdType operation,
+				  bool isResultRelation, bool resultIsScanned)
+{
+	char	   *relName;
+	char	   *userName;
+	int32		aclcheck_result;
+
+	if (rte->skipAcl)
+	{
+		/*
+		 * This happens if the access to this table is due to a view
+		 * query rewriting - the rewrite handler already checked the
+		 * permissions against the view owner, so we just skip this entry.
+		 */
+		return;
+	}
+
+	relName = rte->relname;
+
+	/*
+	 * Note: GetPgUserName is presently fast enough that there's no harm
+	 * in calling it separately for each RTE.  If that stops being true,
+	 * we could call it once in ExecCheckQueryPerms and pass the userName
+	 * down from there.  But for now, no need for the extra clutter.
+	 */
+	userName = GetPgUserName();
+
+#define CHECK(MODE)		pg_aclcheck(relName, userName, MODE)
+
+	if (isResultRelation)
+	{
+		if (resultIsScanned)
+		{
+			aclcheck_result = CHECK(ACL_RD);
+			if (aclcheck_result != ACLCHECK_OK)
+				elog(ERROR, "%s: %s",
+					 relName, aclcheck_error_strings[aclcheck_result]);
+		}
+		switch (operation)
+		{
+			case CMD_INSERT:
+				/* Accept either APPEND or WRITE access for this */
+				aclcheck_result = CHECK(ACL_AP);
+				if (aclcheck_result != ACLCHECK_OK)
+					aclcheck_result = CHECK(ACL_WR);
+				break;
+			case CMD_DELETE:
+			case CMD_UPDATE:
+				aclcheck_result = CHECK(ACL_WR);
+				break;
+			default:
+				elog(ERROR, "ExecCheckRTEPerms: bogus operation %d",
+					 operation);
+				aclcheck_result = ACLCHECK_OK; /* keep compiler quiet */
+				break;
+		}
+	}
+	else
+	{
+		aclcheck_result = CHECK(ACL_RD);
+	}
+
+	if (aclcheck_result != ACLCHECK_OK)
+		elog(ERROR, "%s: %s",
+			 relName, aclcheck_error_strings[aclcheck_result]);
+}
+
 
 /* ===============================================================
  * ===============================================================
@@ -515,14 +673,17 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 	List	   *targetList;
 
 	/*
+	 * Do permissions checks.
+	 */
+#ifndef NO_SECURITY
+	ExecCheckQueryPerms(operation, parseTree, plan);
+#endif
+
+	/*
 	 * get information from query descriptor
 	 */
 	rangeTable = parseTree->rtable;
 	resultRelation = parseTree->resultRelation;
-
-#ifndef NO_SECURITY
-	ExecCheckPerms(operation, resultRelation, rangeTable, parseTree);
-#endif
 
 	/*
 	 * initialize the node's execution state
