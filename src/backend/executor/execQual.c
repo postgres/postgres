@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.48 1999/03/14 20:01:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.49 1999/03/19 22:31:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1598,8 +1598,11 @@ ExecTargetList(List *targetlist,
 	 *	free the nulls array if we allocated one..
 	 */
 	if (nodomains > 64)
+	{
 		pfree(null_head);
-
+		pfree(fjIsNull);
+	}
+	
 	return newTuple;
 }
 
