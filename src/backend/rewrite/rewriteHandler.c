@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.16 1998/06/15 19:29:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.17 1998/07/19 05:49:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -342,23 +342,41 @@ ApplyRetrieveRule(Query *parsetree,
 	OffsetVarNodes(rule_action->qual, rt_length);
 	OffsetVarNodes((Node *) rule_action->targetList, rt_length);
 	OffsetVarNodes(rule_qual, rt_length);
+	
+	OffsetVarNodes((Node *) rule_action->groupClause, rt_length);
+	OffsetVarNodes((Node *) rule_action->havingQual, rt_length);
+
 	ChangeVarNodes(rule_action->qual,
 				   PRS2_CURRENT_VARNO + rt_length, rt_index, 0);
 	ChangeVarNodes((Node *) rule_action->targetList,
 				   PRS2_CURRENT_VARNO + rt_length, rt_index, 0);
 	ChangeVarNodes(rule_qual, PRS2_CURRENT_VARNO + rt_length, rt_index, 0);
+
+	ChangeVarNodes((Node *) rule_action->groupClause,
+				   PRS2_CURRENT_VARNO + rt_length, rt_index, 0);
+	ChangeVarNodes((Node *) rule_action->havingQual,
+				   PRS2_CURRENT_VARNO + rt_length, rt_index, 0);
+
 	if (relation_level)
 	{
-		HandleViewRule(parsetree, rtable, rule_action->targetList, rt_index,
-					   modified);
+	  HandleViewRule(parsetree, rtable, rule_action->targetList, rt_index,
+			 modified);
 	}
 	else
 	{
-		HandleRIRAttributeRule(parsetree, rtable, rule_action->targetList,
-							   rt_index, rule->attrno, modified, &badsql);
+	  HandleRIRAttributeRule(parsetree, rtable, rule_action->targetList,
+				 rt_index, rule->attrno, modified, &badsql);
 	}
-	if (*modified && !badsql)
-		AddQual(parsetree, rule_action->qual);
+	if (*modified && !badsql) {
+	  AddQual(parsetree, rule_action->qual);
+	  /* This will only work if the query made to the view defined by the following
+	   * groupClause groups by the same attributes or does not use group at all! */
+	  if (parsetree->groupClause == NULL)
+	    parsetree->groupClause=rule_action->groupClause;
+	  AddHavingQual(parsetree, rule_action->havingQual);
+	  parsetree->hasAggs = (rule_action->hasAggs || parsetree->hasAggs);
+	  parsetree->hasSubLinks = (rule_action->hasSubLinks ||  parsetree->hasSubLinks);
+	}	
 }
 
 static List *
@@ -680,6 +698,8 @@ List *
 QueryRewrite(Query *parsetree)
 {
 	QueryRewriteSubLink(parsetree->qual);
+	QueryRewriteSubLink(parsetree->havingQual);
+
 	return QueryRewriteOne(parsetree);
 }
 
@@ -730,6 +750,8 @@ QueryRewriteSubLink(Node *node)
 				 * SubLink we don't process it as part of this loop.
 				 */
 				QueryRewriteSubLink((Node *) query->qual);
+				
+				QueryRewriteSubLink((Node *) query->havingQual);
 
 				ret = QueryRewriteOne(query);
 				if (!ret)

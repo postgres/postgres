@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.14 1998/06/15 19:29:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.15 1998/07/19 05:49:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,6 +55,14 @@ OffsetVarNodes(Node *node, int offset)
 				OffsetVarNodes(agg->target, offset);
 			}
 			break;
+		/* This has to be done to make queries using groupclauses work on views */
+	        case T_GroupClause:
+		        {
+			  GroupClause  *group = (GroupClause *) node;
+			  
+			  OffsetVarNodes((Node *)(group->entry), offset);			  
+			}
+		        break;
 		case T_Expr:
 			{
 				Expr	   *expr = (Expr *) node;
@@ -76,6 +84,22 @@ OffsetVarNodes(Node *node, int offset)
 
 				foreach(l, (List *) node)
 					OffsetVarNodes(lfirst(l), offset);
+			}
+			break;
+		case T_SubLink:
+			{
+				SubLink    *sublink = (SubLink *) node;
+
+				/* We also have to adapt the variables used in sublink->lefthand
+				 * and sublink->oper */
+				OffsetVarNodes((Node *)(sublink->lefthand), offset);
+
+				/* Make sure the first argument of sublink->oper points to the
+				 * same var as sublink->lefthand does otherwise we will
+				 * run into troubles using aggregates (aggno will not be
+				 * set correctly) */
+				lfirst(((Expr *) lfirst(sublink->oper))->args) = 
+				  lfirst(sublink->lefthand);
 			}
 			break;
 		default:
@@ -105,6 +129,16 @@ ChangeVarNodes(Node *node, int old_varno, int new_varno, int sublevels_up)
 				ChangeVarNodes(agg->target, old_varno, new_varno, sublevels_up);
 			}
 			break;
+		/* This has to be done to make queries using groupclauses work on views */
+	        case T_GroupClause:
+		        {
+			  GroupClause  *group = (GroupClause *) node;
+			  
+			  ChangeVarNodes((Node *)(group->entry),old_varno, new_varno, 
+					 sublevels_up);
+			}
+		        break;
+
 		case T_Expr:
 			{
 				Expr	   *expr = (Expr *) node;
@@ -122,6 +156,8 @@ ChangeVarNodes(Node *node, int old_varno, int new_varno, int sublevels_up)
 					var->varno = new_varno;
 					var->varnoold = new_varno;
 				}
+				if (var->varlevelsup > 0) OffsetVarNodes((Node *)var,3);
+				
 			}
 			break;
 		case T_List:
@@ -139,6 +175,18 @@ ChangeVarNodes(Node *node, int old_varno, int new_varno, int sublevels_up)
 
 				ChangeVarNodes((Node *) query->qual, old_varno, new_varno,
 							   sublevels_up + 1);
+
+				/* We also have to adapt the variables used in sublink->lefthand
+				 * and sublink->oper */
+				ChangeVarNodes((Node *) (sublink->lefthand), old_varno, new_varno,
+							   sublevels_up);
+				
+				/* Make sure the first argument of sublink->oper points to the
+				 * same var as sublink->lefthand does otherwise we will
+				 * run into troubles using aggregates (aggno will not be
+				 * set correctly */
+				/* lfirst(((Expr *) lfirst(sublink->oper))->args) = 
+				  lfirst(sublink->lefthand); */
 			}
 			break;
 		default:
@@ -164,6 +212,26 @@ AddQual(Query *parsetree, Node *qual)
 		parsetree->qual =
 			(Node *) make_andclause(makeList(parsetree->qual, copy, -1));
 }
+
+/* Adds the given havingQual to the one already contained in the parsetree just as
+ * AddQual does for the normal 'where' qual */
+void
+AddHavingQual(Query *parsetree, Node *havingQual)
+{
+  Node	   *copy, *old;
+
+	if (havingQual == NULL)
+		return;
+
+	copy = copyObject(havingQual);
+	old = parsetree->havingQual;
+	if (old == NULL)
+		parsetree->havingQual = copy;
+	else
+		parsetree->havingQual =
+			(Node *) make_andclause(makeList(parsetree->havingQual, copy, -1));
+}
+
 
 void
 AddNotQual(Query *parsetree, Node *qual)
@@ -485,9 +553,18 @@ nodeHandleViewRule(Node **nodePtr,
 				Aggreg	   *agg = (Aggreg *) node;
 
 				nodeHandleViewRule(&(agg->target), rtable, targetlist,
-								   rt_index, modified, sublevels_up);
+						   rt_index, modified, sublevels_up);
 			}
 			break;
+		/* This has to be done to make queries using groupclauses work on views */
+	        case T_GroupClause:
+		        {
+			  GroupClause  *group = (GroupClause *) node;
+			  
+			  nodeHandleViewRule((Node **) (&(group->entry)), rtable, targetlist,
+					     rt_index, modified, sublevels_up);
+			}
+		        break;
 		case T_Expr:
 			{
 				Expr	   *expr = (Expr *) node;
@@ -503,20 +580,40 @@ nodeHandleViewRule(Node **nodePtr,
 				int			this_varno = var->varno;
 				int			this_varlevelsup = var->varlevelsup;
 				Node	   *n;
-
+				
 				if (this_varno == rt_index &&
-					this_varlevelsup == sublevels_up)
-				{
-					n = FindMatchingTLEntry(targetlist,
-										 get_attname(getrelid(this_varno,
-															  rtable),
-													 var->varattno));
-					if (n == NULL)
-						*nodePtr = make_null(((Var *) node)->vartype);
-					else
-						*nodePtr = n;
-					*modified = TRUE;
-				}
+				    this_varlevelsup == sublevels_up)
+				  {				    
+				    n = FindMatchingTLEntry(targetlist,
+							    get_attname(getrelid(this_varno,
+										 rtable),
+									var->varattno));
+				    if (n == NULL)
+				      {
+					*nodePtr = make_null(((Var *) node)->vartype);
+				      }
+				    
+				    else
+				      /* This is a hack: The varlevelsup of the orignal
+                                       * variable and the new one should be the same.
+				       * Normally we adapt the node by changing a pointer
+				       * to point to a var contained in 'targetlist'. 
+				       * In the targetlist all varlevelsups are 0
+				       * so if we want to change it to the original value
+				       * we have to copy the node before! (Maybe this will
+				       * cause troubles with some sophisticated queries on
+				       * views?) */
+				      {
+					if(this_varlevelsup>0){
+					  *nodePtr = copyObject(n);
+					}
+					else {
+					  *nodePtr = n;
+					}
+					((Var *)*nodePtr)->varlevelsup = this_varlevelsup;
+				      }
+				    *modified = TRUE;
+				  }
 				break;
 			}
 		case T_List:
@@ -537,7 +634,20 @@ nodeHandleViewRule(Node **nodePtr,
 				Query	   *query = (Query *) sublink->subselect;
 
 				nodeHandleViewRule((Node **) &(query->qual), rtable, targetlist,
-								   rt_index, modified, sublevels_up + 1);
+						   rt_index, modified, sublevels_up + 1);
+				
+				/* We also have to adapt the variables used in sublink->lefthand
+				 * and sublink->oper */
+				nodeHandleViewRule((Node **) &(sublink->lefthand), rtable, 
+						 targetlist, rt_index, modified, sublevels_up);
+				
+				/* Make sure the first argument of sublink->oper points to the
+				 * same var as sublink->lefthand does otherwise we will
+				 * run into troubles using aggregates (aggno will not be
+				 * set correctly */				
+				pfree(lfirst(((Expr *) lfirst(sublink->oper))->args));
+				lfirst(((Expr *) lfirst(sublink->oper))->args) = 
+				  lfirst(sublink->lefthand);
 			}
 			break;
 		default:
@@ -553,9 +663,14 @@ HandleViewRule(Query *parsetree,
 			   int rt_index,
 			   int *modified)
 {
-
 	nodeHandleViewRule(&parsetree->qual, rtable, targetlist, rt_index,
 					   modified, 0);
 	nodeHandleViewRule((Node **) (&(parsetree->targetList)), rtable, targetlist,
 					   rt_index, modified, 0);
+        /* The variables in the havingQual and groupClause also have to be adapted */
+	nodeHandleViewRule(&parsetree->havingQual, rtable, targetlist, rt_index,
+					   modified, 0);
+	nodeHandleViewRule((Node **) (&(parsetree->groupClause)), rtable, targetlist, rt_index,
+					   modified, 0);
 }
+

@@ -109,15 +109,16 @@ ExecAgg(Agg *node)
 	bool		isNull = FALSE,
 				isNull1 = FALSE,
 				isNull2 = FALSE;
-
-
-	do { 
-
+	bool  qual_result;
+	
 
 	/* ---------------------
 	 *	get state info from node
 	 * ---------------------
 	 */
+
+	/* We loop retrieving groups until we find one matching node->plan.qual */
+	do { 
 
 	aggstate = node->aggstate;
 	if (aggstate->agg_done)
@@ -125,6 +126,7 @@ ExecAgg(Agg *node)
 
 	estate = node->plan.state;
 	econtext = aggstate->csstate.cstate.cs_ExprContext;
+
 	nagg = length(node->aggs);
 
 	aggregates = (Aggreg **) palloc(sizeof(Aggreg *) * nagg);
@@ -235,8 +237,7 @@ ExecAgg(Agg *node)
 			}
 		}
 	}
-	  
-
+	  	  
 	/* ----------------
 	 *	 for each tuple from the the outer plan, apply all the aggregates
 	 * ----------------
@@ -474,11 +475,6 @@ ExecAgg(Agg *node)
 	 *	slot and return it.
 	 * ----------------
 	 */
-
-	}
-	while((ExecQual(fix_opids(node->plan.qual),econtext)!=true) && 
-	      (node->plan.qual!=NULL));
-
 	 
 	ExecStoreTuple(oneTuple,
 				   aggstate->csstate.css_ScanTupleSlot,
@@ -488,8 +484,13 @@ ExecAgg(Agg *node)
 
 	resultSlot = ExecProject(projInfo, &isDone);
 
+	/* As long as the retrieved group does not match the qualifications it is ignored and
+	 * the next group is fetched */	
+	qual_result=ExecQual(fix_opids(node->plan.qual),econtext);
 	if (oneTuple)
-		pfree(oneTuple);
+	  pfree(oneTuple);
+	} 
+	while((node->plan.qual!=NULL) && (qual_result!=true));
 
 	return resultSlot;
 }

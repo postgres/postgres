@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: planmain.h,v 1.12 1998/04/15 15:29:57 momjian Exp $
+ * $Id: planmain.h,v 1.13 1998/07/19 05:49:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,6 +64,8 @@ extern void set_result_tlist_references(Result *resultNode);
 extern List *set_agg_tlist_references(Agg *aggNode);
 extern void set_agg_agglist_references(Agg *aggNode);
 extern void del_agg_tlist_references(List *tlist);
-extern List *check_having_qual_for_aggs(Node *clause, List *subplanTargetList);
+extern List *check_having_qual_for_aggs(Node *clause, 
+					List *subplanTargetList, List *groupClause);
+extern List *check_having_qual_for_vars(Node *clause, List *targetlist_so_far);
 
 #endif							/* PLANMAIN_H */

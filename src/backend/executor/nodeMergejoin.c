@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.16 1998/06/15 19:28:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.17 1998/07/19 05:49:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -365,7 +365,9 @@ CleanUpSort(Plan *plan)
 	{
 		Sort	   *sort = (Sort *) plan;
 
-		psort_end(sort);
+		/* This may need to be fixed or moved somewhere else, bjm */
+		/* psort_end(sort); */
+
 	}
 }
 

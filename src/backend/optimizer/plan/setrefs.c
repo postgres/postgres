@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.22 1998/06/15 19:28:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.23 1998/07/19 05:49:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -898,11 +898,138 @@ del_agg_clause(Node *clause)
 }
 
 
+/* check_having_qual_for_vars takes the the havingQual and the actual targetlist as arguments
+ * and recursively scans the havingQual for attributes that are not included in the targetlist
+ * yet. Attributes contained in the havingQual but not in the targetlist show up with queries
+ * like: 
+ * SELECT sid 
+ * FROM part
+ * GROUP BY sid
+ * HAVING MIN(pid) > 1;  (pid is used but never selected for!!!). 
+ * To be able to handle queries like that correctly we have to extend the actual targetlist
+ *  (which will be the one used for the GROUP node later on) by these attributes. */
 List *
-check_having_qual_for_aggs(Node *clause, List *subplanTargetList)
+check_having_qual_for_vars(Node *clause, List *targetlist_so_far)
 {
-	List	   *t;
+  List	   *t;
+
+
+  if (IsA(clause, Var))
+    {
+      RelOptInfo         tmp_rel;
+      
+
+      tmp_rel.targetlist = targetlist_so_far;
+      
+      /* 
+       * Ha! A Var node!
+       */
+
+      /* Check if the VAR is already contained in the targetlist */
+      if (tlist_member((Var *)clause, (List *)targetlist_so_far) == NULL)
+	{
+	  add_tl_element(&tmp_rel, (Var *)clause); 
+	} 
+	    
+      return tmp_rel.targetlist;
+    }
+  
+  else if (is_funcclause(clause) || not_clause(clause) || 
+	   or_clause(clause) || and_clause(clause))
+    {
+      
+      /*
+       * This is a function. Recursively call this routine for its
+       * arguments...
+       */
+      foreach(t, ((Expr *) clause)->args)
+	{
+	  targetlist_so_far = check_having_qual_for_vars(lfirst(t), targetlist_so_far);
+	}
+      return targetlist_so_far;
+    }
+  else if (IsA(clause, Aggreg))
+    {
+	  targetlist_so_far = 
+	    check_having_qual_for_vars(((Aggreg *) clause)->target, targetlist_so_far);
+	  return targetlist_so_far;
+    }
+  else if (IsA(clause, ArrayRef))
+    {
+      ArrayRef   *aref = (ArrayRef *) clause;
+      
+      /*
+       * This is an arrayref. Recursively call this routine for its
+       * expression and its index expression...
+       */
+      foreach(t, aref->refupperindexpr)
+	{
+	  targetlist_so_far = check_having_qual_for_vars(lfirst(t), targetlist_so_far);
+	}
+      foreach(t, aref->reflowerindexpr)
+	{
+	  targetlist_so_far = check_having_qual_for_vars(lfirst(t), targetlist_so_far);
+	}
+      targetlist_so_far = check_having_qual_for_vars(aref->refexpr, targetlist_so_far);
+      targetlist_so_far = check_having_qual_for_vars(aref->refassgnexpr, targetlist_so_far);
+      
+      return targetlist_so_far;
+    }
+  else if (is_opclause(clause))
+    {
+      
+      /*
+       * This is an operator. Recursively call this routine for both its
+       * left and right operands
+       */
+      Node	   *left = (Node *) get_leftop((Expr *) clause);
+      Node	   *right = (Node *) get_rightop((Expr *) clause);
+      
+      if (left != (Node *) NULL)
+	targetlist_so_far = check_having_qual_for_vars(left, targetlist_so_far);
+      if (right != (Node *) NULL)
+	targetlist_so_far = check_having_qual_for_vars(right, targetlist_so_far);
+      
+      return targetlist_so_far;
+    }
+  else if (IsA(clause, Param) || IsA(clause, Const))
+    {
+      /* do nothing! */
+      return targetlist_so_far;
+    }
+  /* If we get to a sublink, then we only have to check the lefthand side of the expression
+   * to see if there are any additional VARs */
+  else if (IsA(clause, SubLink))
+    {
+      foreach(t,((List *)((SubLink *)clause)->lefthand))
+	{
+	  targetlist_so_far = check_having_qual_for_vars(lfirst(t), targetlist_so_far);
+	}
+      return targetlist_so_far;
+    }
+  else
+    {
+      /*
+       * Ooops! we can not handle that!
+       */
+      elog(ERROR, "check_having_qual_for_vars: Can not handle this having_qual! %d\n",
+	   nodeTag(clause));
+      return NIL;
+    }
+}
+
+/* check_having_qual_for_aggs takes the havingQual, the targetlist and the groupClause  
+ * as arguments and scans the havingQual recursively for aggregates. If an aggregate is
+ * found it is attached to a list and returned by the function. (All the returned lists 
+ * are concenated to result_plan->aggs in planner.c:union_planner() */
+List *
+check_having_qual_for_aggs(Node *clause, List *subplanTargetList, List *groupClause)
+{
+	List	   *t, *l1;
 	List	   *agg_list = NIL;
+
+	int contained_in_group_clause = 0;
+	
 
 	if (IsA(clause, Var))
 	{
@@ -914,32 +1041,50 @@ check_having_qual_for_aggs(Node *clause, List *subplanTargetList)
 	  subplanVar = match_varid((Var *) clause, subplanTargetList);
 	  
 	  /*
-	   * Change the varno & varattno fields of the var node.
-	   *
-	   */
+	   * Change the varno & varattno fields of the var node to point to the resdom->resno
+	   * fields of the subplan (lefttree) 
+	   */	  
 	  ((Var *) clause)->varattno = subplanVar->resdom->resno;
+
 	  return NIL;
+
 	}
 	else if (is_funcclause(clause) || not_clause(clause) || 
 		 or_clause(clause) || and_clause(clause))
 	{
-
+	  int new_length=0, old_length=0;
+	  
 		/*
 		 * This is a function. Recursively call this routine for its
-		 * arguments...
+		 * arguments... (i.e. for AND, OR, ... clauses!)
 		 */
 		foreach(t, ((Expr *) clause)->args)
 		{
-			agg_list = nconc(agg_list,
-					   check_having_qual_for_aggs(lfirst(t), subplanTargetList));
+		  old_length=length((List *)agg_list);
+
+		  agg_list = nconc(agg_list,
+				   check_having_qual_for_aggs(lfirst(t), subplanTargetList,
+							      groupClause));
+
+		  /* The arguments of OR or AND clauses are comparisons or relations 
+		   * and because we are in the havingQual there must be at least one operand
+		   * using an aggregate function. If so, we will find it and the lenght of the
+		   * agg_list will be increased after the above call to 
+		   * check_having_qual_for_aggs. If there are no aggregates used, the query
+                   * could have been formulated using the 'where' clause */
+		  if(((new_length=length((List *)agg_list)) == old_length) || (new_length == 0))
+		    {
+		      elog(ERROR,"This could have been done in a where clause!!");
+		      return NIL;
+		    } 
 		}
 		return agg_list;
 	}
 	else if (IsA(clause, Aggreg))
 	{
 		return lcons(clause,
-		    check_having_qual_for_aggs(((Aggreg *) clause)->target, subplanTargetList));
-		
+		    check_having_qual_for_aggs(((Aggreg *) clause)->target, subplanTargetList,
+					       groupClause));		
 	}
 	else if (IsA(clause, ArrayRef))
 	{
@@ -952,17 +1097,21 @@ check_having_qual_for_aggs(Node *clause, List *subplanTargetList)
 		foreach(t, aref->refupperindexpr)
 		{
 			agg_list = nconc(agg_list,
-					 check_having_qual_for_aggs(lfirst(t), subplanTargetList));
+					 check_having_qual_for_aggs(lfirst(t), subplanTargetList,
+								    groupClause));
 		}
 		foreach(t, aref->reflowerindexpr)
 		{
 			agg_list = nconc(agg_list,
-					 check_having_qual_for_aggs(lfirst(t), subplanTargetList));
+					 check_having_qual_for_aggs(lfirst(t), subplanTargetList,
+								    groupClause));
 		}
 		agg_list = nconc(agg_list,
-				 check_having_qual_for_aggs(aref->refexpr, subplanTargetList));
+				 check_having_qual_for_aggs(aref->refexpr, subplanTargetList,
+							    groupClause));
 		agg_list = nconc(agg_list,
-				 check_having_qual_for_aggs(aref->refassgnexpr, subplanTargetList));
+				 check_having_qual_for_aggs(aref->refassgnexpr, subplanTargetList,
+							    groupClause));
 
 		return agg_list;
 	}
@@ -978,27 +1127,79 @@ check_having_qual_for_aggs(Node *clause, List *subplanTargetList)
 
 		if (left != (Node *) NULL)
 			agg_list = nconc(agg_list,
-					 check_having_qual_for_aggs(left, subplanTargetList));
+					 check_having_qual_for_aggs(left, subplanTargetList,
+								    groupClause));
 		if (right != (Node *) NULL)
 			agg_list = nconc(agg_list,
-					 check_having_qual_for_aggs(right, subplanTargetList));
+					 check_having_qual_for_aggs(right, subplanTargetList,
+								    groupClause));
 
 		return agg_list;
 	}
-	else if (IsA(clause, Param) ||IsA(clause, Const))
+	else if (IsA(clause, Param) || IsA(clause, Const))
 	{
 		/* do nothing! */
 		return NIL;
 	}
-	else
-	{
+	/* This is for Sublinks which show up as EXPR nodes. All the other EXPR nodes
+         * (funcclauses, and_clauses, or_clauses) were caught above */
+	else if (IsA(clause, Expr))
+	  {
+	    /* Only the lefthand side of the sublink has to be checked for aggregates
+             * to be attached to result_plan->aggs (see planner.c:union_planner() )
+	     */	    
+	    foreach(t,((List *)((SubLink *)((SubPlan *)
+		       ((Expr *)clause)->oper)->sublink)->lefthand)) 
+	      {
+		agg_list = 
+		  nconc(agg_list,
+			check_having_qual_for_aggs(lfirst(t), 
+						   subplanTargetList, groupClause));
+	      }
+	    
+		
+	    /* All arguments to the Sublink node are attributes from outside used within
+	     * the sublink. Here we have to check that only attributes that is grouped for
+	     * are used! */
+	    foreach(t,((Expr *)clause)->args) 
+	      {	
+		contained_in_group_clause = 0;
 
-		/*
-		 * Ooops! we can not handle that!
-		 */
-		elog(ERROR, "check_having_qual_for_aggs: Can not handle this having_qual!\n");
-		return NIL;
-	}
+		foreach(l1,groupClause)
+		  {
+		    if (tlist_member(lfirst(t),lcons(((GroupClause *)lfirst(l1))->entry,NIL)) != 
+			NULL)
+		      {
+			contained_in_group_clause=1;
+		      }
+		  }
+		
+		/* If the use of the attribute is allowed (i.e. it is in the groupClause)
+		 * we have to adjust the varnos and varattnos */
+		if (contained_in_group_clause)
+		  {
+		    agg_list = 
+		      nconc(agg_list,
+			    check_having_qual_for_aggs(lfirst(t), 
+						       subplanTargetList, groupClause));
+		  }
+		else
+		  {
+		    elog(ERROR,"You must group by the attribute used from outside!");
+		    return NIL;
+		  }		
+	      }
+	    return agg_list;
+	  }
+	else
+	  {
+	    /*
+	     * Ooops! we can not handle that!
+	     */
+	    elog(ERROR, "check_having_qual_for_aggs: Can not handle this having_qual! %d\n",
+		 nodeTag(clause));
+	    return NIL;
+	  }
 }
 
 

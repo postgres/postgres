@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.76 1998/05/29 13:39:30 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.77 1998/07/19 05:49:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -327,6 +327,9 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 	/* fix where clause */
 	qry->qual = transformWhereClause(pstate, stmt->whereClause);
 
+	/* The havingQual has a similar meaning as "qual" in the where statement. 
+	 * So we can easily use the code from the "where clause" with some additional
+         * traversals done in .../optimizer/plan/planner.c */
 	qry->havingQual = transformWhereClause(pstate, stmt->havingClause);
 
 	qry->hasSubLinks = pstate->p_hasSubLinks;
@@ -355,6 +358,15 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 	 */
 	qry->unionall = stmt->unionall;
 	qry->unionClause = transformUnionClause(stmt->unionClause, qry->targetList);
+
+	/* If there is a havingQual but there are no aggregates, then there is something wrong
+	 * with the query because having must contain aggregates in its expressions! 
+	 * Otherwise the query could have been formulated using the where clause. */
+	if((qry->hasAggs == false) && (qry->havingQual != NULL))
+	  {
+	    elog(ERROR,"This is not a valid having query!");
+	    return (Query *)NIL;
+	  }
 
 	return (Query *) qry;
 }
@@ -795,6 +807,9 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 
 	qry->qual = transformWhereClause(pstate, stmt->whereClause);
 
+	/* The havingQual has a similar meaning as "qual" in the where statement. 
+	 * So we can easily use the code from the "where clause" with some additional
+         * traversals done in .../optimizer/plan/planner.c */
 	qry->havingQual = transformWhereClause(pstate, stmt->havingClause);
 
 	qry->hasSubLinks = pstate->p_hasSubLinks;
@@ -819,6 +834,15 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 	 */
 	qry->unionall = stmt->unionall;
 	qry->unionClause = transformUnionClause(stmt->unionClause, qry->targetList);
+
+	/* If there is a havingQual but there are no aggregates, then there is something wrong
+	 * with the query because having must contain aggregates in its expressions! 
+	 * Otherwise the query could have been formulated using the where clause. */
+	if((qry->hasAggs == false) && (qry->havingQual != NULL))
+	  {
+	    elog(ERROR,"This is not a valid having query!");
+	    return (Query *)NIL;
+	  }
 
 	return (Query *) qry;
 }

@@ -404,8 +404,13 @@ SS_process_sublinks(Node *expr)
 		((Expr *) expr)->args = (List *)
 			SS_process_sublinks((Node *) ((Expr *) expr)->args);
 	else if (IsA(expr, SubLink))/* got it! */
-		expr = _make_subplan((SubLink *) expr);
+	  {
+	    lfirst(((Expr *) lfirst(((SubLink *)expr)->oper))->args) = 
+				  lfirst(((SubLink *)expr)->lefthand);
 
+	    expr = _make_subplan((SubLink *) expr);
+	  }
+	
 	return (expr);
 }
 
