@@ -8,13 +8,14 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.46 2000/04/12 17:15:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.47 2000/07/24 03:11:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <sys/types.h>
 
 #include "postgres.h"
+#include "catalog/pg_operator.h"
 #include "catalog/pg_type.h"
 #include "nodes/makefuncs.h"
 #include "optimizer/clauses.h"
@@ -25,6 +26,9 @@
 #include "optimizer/planmain.h"
 #include "optimizer/tlist.h"
 #include "optimizer/var.h"
+#include "parser/parse_expr.h"
+#include "parser/parse_oper.h"
+#include "parser/parse_type.h"
 #include "utils/lsyscache.h"
 
 
@@ -122,12 +126,12 @@ add_missing_rels_to_query(Query *root)
 	}
 }
 
+
 /*****************************************************************************
  *
  *	  QUALIFICATIONS
  *
  *****************************************************************************/
-
 
 
 /*
@@ -279,6 +283,113 @@ add_join_info_to_rels(Query *root, RestrictInfo *restrictinfo,
 										   joininfo->jinfo_restrictinfo);
 	}
 }
+
+/*
+ * process_implied_equality
+ *	  Check to see whether we already have a restrictinfo item that says
+ *	  item1 = item2, and create one if not.  This is a consequence of
+ *	  transitivity of mergejoin equality: if we have mergejoinable
+ *	  clauses A = B and B = C, we can deduce A = C (where = is an
+ *	  appropriate mergejoinable operator).
+ */
+void
+process_implied_equality(Query *root, Node *item1, Node *item2,
+						 Oid sortop1, Oid sortop2)
+{
+	Index		irel1;
+	Index		irel2;
+	RelOptInfo *rel1;
+	List	   *restrictlist;
+	List	   *itm;
+	Oid			ltype,
+				rtype;
+	Operator	eq_operator;
+	Form_pg_operator pgopform;
+	Expr	   *clause;
+
+	/*
+	 * Currently, since check_mergejoinable only accepts Var = Var clauses,
+	 * we should only see Var nodes here.  Would have to work a little
+	 * harder to locate the right rel(s) if more-general mergejoin clauses
+	 * were accepted.
+	 */
+	Assert(IsA(item1, Var));
+	irel1 = ((Var *) item1)->varno;
+	Assert(IsA(item2, Var));
+	irel2 = ((Var *) item2)->varno;
+	/*
+	 * If both vars belong to same rel, we need to look at that rel's
+	 * baserestrictinfo list.  If different rels, each will have a
+	 * joininfo node for the other, and we can scan either list.
+	 */
+	rel1 = get_base_rel(root, irel1);
+	if (irel1 == irel2)
+		restrictlist = rel1->baserestrictinfo;
+	else
+	{
+		JoinInfo   *joininfo = find_joininfo_node(rel1,
+												  lconsi(irel2, NIL));
+
+		restrictlist = joininfo->jinfo_restrictinfo;
+	}
+	/*
+	 * Scan to see if equality is already known.
+	 */
+	foreach(itm, restrictlist)
+	{
+		RestrictInfo *restrictinfo = (RestrictInfo *) lfirst(itm);
+		Node	   *left,
+				   *right;
+
+		if (restrictinfo->mergejoinoperator == InvalidOid)
+			continue;			/* ignore non-mergejoinable clauses */
+		/* We now know the restrictinfo clause is a binary opclause */
+		left = (Node *) get_leftop(restrictinfo->clause);
+		right = (Node *) get_rightop(restrictinfo->clause);
+		if ((equal(item1, left) && equal(item2, right)) ||
+			(equal(item2, left) && equal(item1, right)))
+			return;				/* found a matching clause */
+	}
+	/*
+	 * This equality is new information, so construct a clause
+	 * representing it to add to the query data structures.
+	 */
+	ltype = exprType(item1);
+	rtype = exprType(item2);
+	eq_operator = oper("=", ltype, rtype, true);
+	if (!HeapTupleIsValid(eq_operator))
+	{
+		/*
+		 * Would it be safe to just not add the equality to the query if
+		 * we have no suitable equality operator for the combination of
+		 * datatypes?  NO, because sortkey selection may screw up anyway.
+		 */
+		elog(ERROR, "Unable to identify an equality operator for types '%s' and '%s'",
+			 typeidTypeName(ltype), typeidTypeName(rtype));
+	}
+	pgopform = (Form_pg_operator) GETSTRUCT(eq_operator);
+	/*
+	 * Let's just make sure this appears to be a compatible operator.
+	 */
+	if (pgopform->oprlsortop != sortop1 ||
+		pgopform->oprrsortop != sortop2 ||
+		pgopform->oprresult != BOOLOID)
+		elog(ERROR, "Equality operator for types '%s' and '%s' should be mergejoinable, but isn't",
+			 typeidTypeName(ltype), typeidTypeName(rtype));
+
+	clause = makeNode(Expr);
+	clause->typeOid = BOOLOID;
+	clause->opType = OP_EXPR;
+	clause->oper = (Node *) makeOper(oprid(eq_operator), /* opno */
+									 InvalidOid, /* opid */
+									 BOOLOID, /* operator result type */
+									 0,
+									 NULL);
+	clause->args = lcons(item1, lcons(item2, NIL));
+
+	add_restrict_and_join_to_rel(root, (Node *) clause);
+}
+
 
 /*****************************************************************************
  *
