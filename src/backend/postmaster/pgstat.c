@@ -16,7 +16,7 @@
  *
  *	Copyright (c) 2001, PostgreSQL Global Development Group
  *
- *	$Header: /cvsroot/pgsql/src/backend/postmaster/pgstat.c,v 1.29 2002/09/25 20:31:40 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/postmaster/pgstat.c,v 1.30 2002/10/21 19:59:14 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -514,14 +514,6 @@ pgstat_vacuum_tabstat(void)
 	int			i;
 
 	if (pgStatSock < 0)
-		return 0;
-
-	/*
-	 * We don't vacuum inside of transaction blocks, because a possible
-	 * later rollback might reactivate objects we didn't find because of
-	 * earlier destruction in the xact.
-	 */
-	if (IsTransactionBlock())
 		return 0;
 
 	/*
