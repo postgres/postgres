@@ -1,8 +1,10 @@
-/* $Id: srandom.c,v 1.8 1999/07/16 03:13:08 momjian Exp $ */
+/* $Id: srandom.c,v 1.9 1999/07/16 23:09:45 tgl Exp $ */
 
 #include <stdlib.h>
 #include <math.h>
 #include <errno.h>
+
+#include "config.h"
 
 void
 srandom(unsigned int seed)
