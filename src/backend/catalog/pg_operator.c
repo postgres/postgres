@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.61 2001/08/10 15:49:39 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.62 2001/10/22 19:34:13 tgl Exp $
  *
  * NOTES
  *	  these routines moved here from commands/define.c and somewhat cleaned up.
@@ -41,11 +41,6 @@ static Oid OperatorGet(char *operatorName,
 			char *rightTypeName,
 			bool *defined);
 
-static Oid OperatorShellMakeWithOpenRelation(Relation pg_operator_desc,
-								  char *operatorName,
-								  Oid leftObjectId,
-								  Oid rightObjectId);
-
 static Oid OperatorShellMake(char *operatorName,
 				  char *leftTypeName,
 				  char *rightTypeName);
@@ -65,6 +60,65 @@ static void OperatorDef(char *operatorName,
 			char *rightSortName);
 
 static void OperatorUpd(Oid baseId, Oid commId, Oid negId);
+
+
+/*
+ * Check whether a proposed operator name is legal
+ *
+ * This had better match the behavior of parser/scan.l!
+ *
+ * We need this because the parser is not smart enough to check that
+ * the arguments of CREATE OPERATOR's COMMUTATOR, NEGATOR, etc clauses
+ * are operator names rather than some other lexical entity.
+ */
+static bool
+validOperatorName(const char *name)
+{
+	size_t	len = strlen(name);
+
+	/* Can't be empty or too long */
+	if (len == 0 || len >= NAMEDATALEN)
+		return false;
+
+	/* Can't contain any invalid characters */
+	/* Test string here should match op_chars in scan.l */
+	if (strspn(name, "~!@#^&|`?$+-*/%<>=") != len)
+		return false;
+
+	/* Can't contain slash-star or dash-dash (comment starts) */
+	if (strstr(name, "/*") || strstr(name, "--"))
+		return false;
+
+	/*
+	 * For SQL92 compatibility, '+' and '-' cannot be the
+	 * last char of a multi-char operator unless the operator
+	 * contains chars that are not in SQL92 operators.
+	 * The idea is to lex '=-' as two operators, but not
+	 * to forbid operator names like '?-' that could not be
+	 * sequences of SQL92 operators.
+	 */
+	if (len > 1 &&
+		(name[len-1] == '+' ||
+		 name[len-1] == '-'))
+	{
+		int		ic;
+
+		for (ic = len-2; ic >= 0; ic--)
+		{
+			if (strchr("~!@#^&|`?$%", name[ic]))
+				break;
+		}
+		if (ic < 0)
+			return false;		/* nope, not valid */
+	}
+
+	/* != isn't valid either, because parser will convert it to <> */
+	if (strcmp(name, "!=") == 0)
+		return false;
+
+	return true;
+}
+
 
 /* ----------------------------------------------------------------
  *		OperatorGetWithOpenRelation
@@ -157,7 +211,6 @@ OperatorGet(char *operatorName,
 			bool *defined)
 {
 	Relation	pg_operator_desc;
-
 	Oid			operatorObjectId;
 	Oid			leftObjectId = InvalidOid;
 	Oid			rightObjectId = InvalidOid;
@@ -215,23 +268,54 @@ OperatorGet(char *operatorName,
 }
 
 /* ----------------------------------------------------------------
- *		OperatorShellMakeWithOpenRelation
+ *		OperatorShellMake
  *
+ *		Specify operator name and left and right type names,
+ *		fill an operator struct with this info and NULL's,
+ *		call heap_insert and return the Oid to the caller.
  * ----------------------------------------------------------------
  */
 static Oid
-OperatorShellMakeWithOpenRelation(Relation pg_operator_desc,
-								  char *operatorName,
-								  Oid leftObjectId,
-								  Oid rightObjectId)
+OperatorShellMake(char *operatorName,
+				  char *leftTypeName,
+				  char *rightTypeName)
 {
+	Relation	pg_operator_desc;
+	Oid			operatorObjectId;
+	Oid			leftObjectId = InvalidOid;
+	Oid			rightObjectId = InvalidOid;
+	bool		leftDefined = false;
+	bool		rightDefined = false;
 	int			i;
 	HeapTuple	tup;
 	Datum		values[Natts_pg_operator];
 	char		nulls[Natts_pg_operator];
-	Oid			operatorObjectId;
 	NameData	oname;
 	TupleDesc	tupDesc;
+
+	/*
+	 * validate operator name
+	 */
+	if (!validOperatorName(operatorName))
+		elog(ERROR, "\"%s\" is not a valid operator name", operatorName);
+
+	/*
+	 * get the left and right type oid's for this operator
+	 */
+	if (leftTypeName)
+		leftObjectId = TypeGet(leftTypeName, &leftDefined);
+
+	if (rightTypeName)
+		rightObjectId = TypeGet(rightTypeName, &rightDefined);
+
+	if (!((OidIsValid(leftObjectId) && leftDefined) ||
+		  (OidIsValid(rightObjectId) && rightDefined)))
+		elog(ERROR, "OperatorShellMake: the operand types are not valid");
+
+	/*
+	 * open pg_operator
+	 */
+	pg_operator_desc = heap_openr(OperatorRelationName, RowExclusiveLock);
 
 	/*
 	 * initialize our *nulls and *values arrays
@@ -243,7 +327,7 @@ OperatorShellMakeWithOpenRelation(Relation pg_operator_desc,
 	}
 
 	/*
-	 * initialize *values with the operator name and input data types.
+	 * initialize values[] with the operator name and input data types.
 	 * Note that oprcode is set to InvalidOid, indicating it's a shell.
 	 */
 	i = 0;
@@ -270,12 +354,10 @@ OperatorShellMakeWithOpenRelation(Relation pg_operator_desc,
 	 */
 	tupDesc = pg_operator_desc->rd_att;
 
-	tup = heap_formtuple(tupDesc,
-						 values,
-						 nulls);
+	tup = heap_formtuple(tupDesc, values, nulls);
 
 	/*
-	 * insert our "shell" operator tuple and close the relation
+	 * insert our "shell" operator tuple
 	 */
 	heap_insert(pg_operator_desc, tup);
 	operatorObjectId = tup->t_data->t_oid;
@@ -289,62 +371,7 @@ OperatorShellMakeWithOpenRelation(Relation pg_operator_desc,
 		CatalogCloseIndices(Num_pg_operator_indices, idescs);
 	}
 
-	/*
-	 * free the tuple and return the operator oid
-	 */
 	heap_freetuple(tup);
-
-	return operatorObjectId;
-}
-
-/* ----------------------------------------------------------------
- *		OperatorShellMake
- *
- *		Specify operator name and left and right type names,
- *		fill an operator struct with this info and NULL's,
- *		call heap_insert and return the Oid
- *		to the caller.
- * ----------------------------------------------------------------
- */
-static Oid
-OperatorShellMake(char *operatorName,
-				  char *leftTypeName,
-				  char *rightTypeName)
-{
-	Relation	pg_operator_desc;
-	Oid			operatorObjectId;
-
-	Oid			leftObjectId = InvalidOid;
-	Oid			rightObjectId = InvalidOid;
-	bool		leftDefined = false;
-	bool		rightDefined = false;
-
-	/*
-	 * get the left and right type oid's for this operator
-	 */
-	if (leftTypeName)
-		leftObjectId = TypeGet(leftTypeName, &leftDefined);
-
-	if (rightTypeName)
-		rightObjectId = TypeGet(rightTypeName, &rightDefined);
-
-	if (!((OidIsValid(leftObjectId) && leftDefined) ||
-		  (OidIsValid(rightObjectId) && rightDefined)))
-		elog(ERROR, "OperatorShellMake: the operand types are not valid");
-
-	/*
-	 * open pg_operator
-	 */
-	pg_operator_desc = heap_openr(OperatorRelationName, RowExclusiveLock);
-
-	/*
-	 * add a "shell" operator tuple to the operator relation and recover
-	 * the shell tuple's oid.
-	 */
-	operatorObjectId = OperatorShellMakeWithOpenRelation(pg_operator_desc,
-														 operatorName,
-														 leftObjectId,
-														 rightObjectId);
 
 	/*
 	 * close the operator relation and return the oid.
@@ -483,6 +510,12 @@ OperatorDef(char *operatorName,
 	 * At this point, if operatorObjectId is not InvalidOid then we are
 	 * filling in a previously-created shell.
 	 */
+
+	/*
+	 * validate operator name
+	 */
+	if (!validOperatorName(operatorName))
+		elog(ERROR, "\"%s\" is not a valid operator name", operatorName);
 
 	/*
 	 * look up the operator data types.
