@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.36 2000/05/02 20:01:52 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.37 2000/06/18 21:24:51 petere Exp $
 -->
 
 <!doctype book PUBLIC "-//OASIS//DTD DocBook V3.1//EN" [
@@ -58,9 +58,9 @@ $Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.36 2000/05/02 20:01:52 th
 <!entity regress     SYSTEM "regress.sgml">
 <!entity release     SYSTEM "release.sgml">
 <!entity runtime     SYSTEM "runtime.sgml">
-<!entity security    SYSTEM "security.sgml">
+<!entity client-auth SYSTEM "client-auth.sgml">
+<!entity user-manag  SYSTEM "user-manag.sgml">
 <!entity start-ag    SYSTEM "start-ag.sgml">
-<!entity trouble     SYSTEM "trouble.sgml">
 
 <!-- programmer's guide -->
 <!entity arch-pg    SYSTEM "arch-pg.sgml">
@@ -100,10 +100,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.36 2000/05/02 20:01:52 th
 <!entity docguide   SYSTEM "docguide.sgml">
 <!entity geqo       SYSTEM "geqo.sgml">
 <!entity index      SYSTEM "index.sgml">
-<!entity options    SYSTEM "pg_options.sgml">
 <!entity page       SYSTEM "page.sgml">
 <!entity protocol   SYSTEM "protocol.sgml">
-<!entity signals    SYSTEM "signals.sgml">
 <!entity sources    SYSTEM "sources.sgml">
 ]>
 <!-- entity manpages SYSTEM "man/manpages.sgml" subdoc -->
@@ -225,10 +223,10 @@ Your name here...
    &install;
    &installw;
    &runtime;
-   &security;
+   &client-auth;
+   &user-manag;
    &start-ag;
    &manage-ag;
-   &trouble;
    &recovery;
    &regress;
    &release;
@@ -292,7 +290,6 @@ Your name here...
   </partintro>
    &sources;
    &arch-dev;
-   &options;
    &geqo;
 <!--
  This listing of Postgres catalogs is currently just a copy of the old
@@ -301,7 +298,6 @@ Your name here...
  &catalogs;
 -->
    &protocol;
-   &signals;
    &compiler;
    &bki;
    &page;

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/allfiles.sgml,v 1.18 2000/04/14 15:17:28 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/allfiles.sgml,v 1.19 2000/06/18 21:24:51 petere Exp $
 Postgres documentation
 Complete list of usable sgml source files in this directory.
 -->
@@ -98,6 +98,8 @@ Complete list of usable sgml source files in this directory.
 <!entity select             system "select.sgml">
 <!entity selectInto         system "select_into.sgml">
 <!entity set                system "set.sgml">
+<!entity setConstraints     system "set_constraints.sgml">
+<!entity setTransaction     system "set_transaction.sgml">
 <!entity show               system "show.sgml">
 <!entity truncate           system "truncate.sgml">
 <!entity unlisten           system "unlisten.sgml">

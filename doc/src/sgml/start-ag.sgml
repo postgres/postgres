@@ -1,27 +1,9 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/start-ag.sgml,v 1.10 2000/03/31 03:27:41 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/start-ag.sgml,v 1.11 2000/06/18 21:24:51 petere Exp $
 -	This file currently contains several small chapters.
 -	Each chapter should be split off into a separate source file...
 -	- thomas 1998-02-24
 -->
-
- <chapter id="newuser">
-  <title>Adding and Deleting Users</title>
-
-  <para>
-   <application>createuser</application> enables specific users to access
-   <productname>Postgres</productname>.  
-   <application>dropuser</application> removes  users  and
-   prevents them from accessing <productname>Postgres</productname>.
-  </para>
-
-  <para>
-   These commands only affect users with  respect  to  
-   <productname>Postgres</productname>;
-   they  have  no effect on a user's other privileges or status with regards
-   to the underlying  operating system.
-  </para>
- </chapter>
 
  <chapter id="disk">
   <title>Disk Management</title>

@@ -1,0 +1,93 @@
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/set_transaction.sgml,v 1.1 2000/06/18 21:24:54 petere Exp $ -->
+<refentry id="SQL-SET-TRANSACTION">
+ <refmeta>
+  <refentrytitle id="SQL-SET-TRANSACTION-title">SET TRANSACTION</refentrytitle>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+ <refnamediv>
+  <refname>SET TRANSACTION</refname>
+  <refpurpose>Set the characteristics of the current SQL-transaction</refpurpose>
+ </refnamediv>
+ <refsynopsisdiv>
+  <refsynopsisdivinfo>
+   <date>2000-06-01</date>
+  </refsynopsisdivinfo>
+  <synopsis>
+SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZABLE }
+  </synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   The <command>SET TRANSACTION</command> command sets the
+   characteristics for the current SQL-transaction. It has no effect
+   on any subsequent transactions. This command cannot be used after
+   the first DML statement (<command>SELECT</command>,
+   <command>INSERT</command>, <command>DELETE</command>,
+   <command>UPDATE</command>, <command>FETCH</command>,
+   <command>COPY</command>) of a transaction has been executed.
+  </para>
+
+  <para>
+   The isolation level of a transaction determines what data the
+   transaction can see when other transactions are running concurrently.
+
+   <variablelist>
+    <varlistentry>
+     <term>READ COMMITTED</term>
+     <listitem>
+      <para>
+       A statement can only see rows committed before it began. This
+       is the default.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>SERIALIZABLE</term>
+     <listitem>
+      <para>
+       The current transaction can only see rows committed before
+       first DML statement was executed in this transaction.
+      </para>
+      <tip>
+       <para>
+        Intuitively, serializable means that two concurrent
+        transactions will leave the database in the same state as if
+        the two has been executed strictly after one another in either
+        order.
+       </para>
+      </tip>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Compatibility</title>
+
+  <para>
+   SQL92, SQL99
+  </para>
+
+  <para>
+   SERIALIZABLE is the default level in <acronym>SQL</acronym>.
+   Postgres does not provide the isolation levels <option>READ
+   UNCOMMITTED</option> and <option>REPEATABLE READ</option>. Because
+   of multi-version concurrency control, the serializable level is not
+   truly serializable. See the <citetitle>User's Guide</citetitle> for
+   details.
+  </para>
+
+  <para>
+   In <acronym>SQL</acronym> there are two other transaction
+   characteristics that can be set with this command: whether the
+   transaction is read-only and the size of the diagnostics area.
+   Neither of these concepts are supported in Postgres.
+  </para>
+ </refsect1>
+</refentry>
+

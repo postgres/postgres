@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/programmer.sgml,v 1.26 2000/05/02 20:01:52 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/programmer.sgml,v 1.27 2000/06/18 21:24:51 petere Exp $
 
 Postgres Programmer's Guide.
 -->
@@ -50,10 +50,8 @@ Postgres Programmer's Guide.
 <!entity cvs        SYSTEM "cvs.sgml">
 <!entity docguide   SYSTEM "docguide.sgml">
 <!entity geqo       SYSTEM "geqo.sgml">
-<!entity options    SYSTEM "pg_options.sgml">
 <!entity page       SYSTEM "page.sgml">
 <!entity protocol   SYSTEM "protocol.sgml">
-<!entity signals    SYSTEM "signals.sgml">
 <!entity sources    SYSTEM "sources.sgml">
 ]>
 
@@ -165,7 +163,6 @@ Disable it until we put in some info.
  
  &sources;
  &arch-dev; 
- &options;
  &geqo;
 <!--
  This listing of Postgres catalogs is currently just a copy of the old
@@ -174,7 +171,6 @@ Disable it until we put in some info.
  &catalogs;
 -->
  &protocol;
- &signals;
  &compiler;
  &bki;
  &page;

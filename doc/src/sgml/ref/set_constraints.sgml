@@ -1,0 +1,53 @@
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/set_constraints.sgml,v 1.1 2000/06/18 21:24:54 petere Exp $ -->
+<refentry id="SQL-SET-CONSTRAINTS">
+ <refmeta>
+  <refentrytitle id="SQL-SET-CONSTRAINTS-title">SET CONSTRAINTS</refentrytitle>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+ <refnamediv>
+  <refname>SET CONSTRAINTS</refname>
+  <refpurpose>Set the constraint mode of the current SQL-transaction</refpurpose>
+ </refnamediv>
+ <refsynopsisdiv>
+  <refsynopsisdivinfo>
+   <date>2000-06-01</date>
+  </refsynopsisdivinfo>
+  <synopsis>
+SET CONSTRAINTS { ALL | <replaceable class="parameter">constraint</replaceable> [, ...] } { DEFERRED | IMMEDIATE }
+  </synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <command>SET CONSTRAINTS</command> sets the behavior of constraint
+   evaluation in the current transaction. In
+   <option>IMMEDIATE</option> mode, constraints are checked at the end
+   of each statement. In <option>DEFERRED</option> mode, constraints
+   are not checked until transaction commit.
+  </para>
+
+  <para>
+   Upon creation, a constraint is always give one of three
+   characteristics: <option>INITIALLY DEFERRED</option>,
+   <option>INITIALLY IMMEDIATE DEFERRABLE</option>, or
+   <option>INITIALLY IMMEDIATE NOT DEFERRABLE</option>. The third
+   class is not affected by the <command>SET CONSTRAINTS</command>
+   command.
+  </para>
+
+  <para>
+   Currently, only foreign key constraints are affected by this
+   setting. Check and unique constraints are always effectively
+   initially immediate not deferrable.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Compatibility</title>
+  <para>
+   SQL92, SQL99
+  </para>
+ </refsect1>
+</refentry>

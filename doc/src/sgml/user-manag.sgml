@@ -1,0 +1,202 @@
+<Chapter id="user-manag">
+ <title>Database User and Permission Management</title>
+
+ <para>
+  Managing database users and their privileges is in concept similar
+  to that of Unix operating systems, but then again not identical
+  enough to not warrant explanation.
+ </para>
+
+ <sect1>
+  <title>Database Users</title>
+
+  <para>
+   Database users are conceptually completely separate from any
+   operating system users. In practice it might be convenient to
+   maintain a correspondence, but this is not required. Database user
+   names are global across a database cluster installation (and not
+   per individual database). To create a user use the <command>CREATE
+   USER</command> SQL command:
+<synopsis>
+CREATE USER <replaceable>name</replaceable>
+</synopsis>
+   <replaceable>name</replaceable> follows the rules for SQL
+   identifiers: either unadorned without special characters, or
+   double-quoted. To remove an existing user, use the analog
+   <command>DROP USER</command> command.
+  </para>
+
+  <para>
+   For convenience, the shell scripts <filename>createuser</filename>
+   and <filename>dropuser</filename> are wrappers around these SQL
+   commands.
+  </para>
+
+  <para>
+   In order to bootstrap the database system, a freshly initialized
+   system always contains one predefined user. This user will have
+   the same name as the operating system user that initialized the
+   area (and is presumably being used as the user that runs the
+   server). Thus, often an initial user <quote>postgres</quote>
+   exists. In order to create more users you have to first connect as
+   this initial user.
+  </para>
+
+  <para>
+   The user name to use for a particular database connection is
+   indicated by the client that is initiating the connection request
+   in an application-specific fashion. For example, the
+   <command>psql</command> program uses the <option>-U</option>
+   command line option to indicate the user to connect as. The set of
+   database users a given client connection may connect as is
+   determined by the client authentication setup, as explained in
+   <xref linkend="client-authentication">. (Thus, a client is not
+   necessarily limited to connect as the user with the same name as
+   its operating system user in the same way a person is not
+   constrained in its login name by her real name.)
+  </para>
+
+  <sect2>
+   <title>User attributes</title>
+
+   <para>
+    A database user may have a number of attributes that define its
+    privileges and interact with the client authentication system.
+
+    <variablelist>
+     <varlistentry>
+      <term>superuser</term>
+      <listitem>
+       <para>
+        A database superuser bypasses all permission checks. Also,
+        only a superuser can create new users. To create a database
+        superuser, use <literal>CREATE USER name
+        CREATEUSER</literal>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>database creation</term>
+      <listitem>
+       <para>
+        A user must be explicitly given permission to create databases
+        (except for superusers, since those bypass all permission
+        checks). To create such a user, use <literal>CREATE USER name
+        CREATEDB</literal>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>password</term>
+      <listitem>
+       <para>
+        A password is only significant if password authentication is
+        used for client authentication. Database passwords a separate
+        from any operating system passwords. Specify a password upon
+        user creating as in <literal>CREATE USER name WITH PASSWORD
+        'string'</literal>.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+
+    See the reference pages for <command>CREATE USER</command> and
+    <command>ALTER USER</command> for details.
+   </para>
+  </sect2>
+ </sect1>
+
+ <sect1>
+  <title>Groups</title>
+
+  <para>
+   As in Unix, groups are a way of logically grouping users. To create
+   a group, use
+<synopsis>
+CREATE GROUP <replaceable>name</replaceable>
+</synopsis>
+   To add users to or remove users from a group, respectively, user
+<synopsis>
+ALTER GROUP <replaceable>name</replaceable> ADD USER <replaceable>uname1</replaceable>, ...
+ALTER GROUP <replaceable>name</replaceable> DROP USER <replaceable>uname1</replaceable>, ...
+</synopsis>
+  </para>
+ </sect1>
+
+ <sect1>
+  <title>Privileges</title>
+
+  <para>
+   When a database object is created, it is assigned an owner. The
+   owner is the user that executed the creation statement. There is
+   currenty no polished interface for changing the owner of a database
+   object. By default, only an owner (or a superuser) can do anything
+   with the object. In order to allow other users to use it,
+   <firstterm>privileges</firstterm> must be granted.
+  </para>
+
+  <para>
+   Currently, there are four different privileges: select (read),
+   insert (append), and update/delete (write), as well as
+   <literal>RULE</literal>, the permission to create a rewrite rule on
+   a table. The right to modify or destroy an object is always the
+   privilege of the owner only. To assign privileges, the
+   <command>GRANT</command> command is used. So, if
+   <literal>joe</literal> is an existing user, and
+   <literal>accounts</literal> is an existing table, write access can
+   be granted with
+<programlisting>
+GRANT UPDATE ON accounts TO joe;
+</programlisting>
+   The user executing this command must be the owner of the table. To
+   grant a privilege to a group, use
+<programlisting>
+GRANT SELECT ON accounts TO GROUP staff;
+</programlisting>
+   The special <quote>user</quote> name <literal>PUBLIC</literal> can
+   be used to grant a privilege to every user on the system. Using
+   <literal>ALL</literal> in place of a privilege specifies that all
+   privileges will be granted.
+  </para>
+
+  <para>
+   To revoke a privilege, use the fittingly named
+   <command>REVOKE</command> command:
+<programlisting>
+REVOKE ALL ON accounts FROM PUBLIC;
+</programlisting>
+   The set of privileges held by the table owner is always implicit
+   and is never revokable.
+  </para>
+ </sect1>
+
+ <sect1>
+  <title>Functions and Triggers</title>
+
+  <para>
+   Functions and triggers allow users to insert code into the backend
+   server that other users may execute without knowing it. Hence, both
+   mechanisms permit users to <firstterm>trojan horse</firstterm>
+   others with relative impunity. The only real protection is tight
+   control over who can define functions (e.g., write to relations
+   with SQL fields) and triggers. Audit trails and alerters on the
+   system catalogs <literal>pg_class</literal>,
+   <literal>pg_user</literal> and <literal>pg_group</literal> are also
+   possible.
+  </para>
+
+  <para>
+   Functions written in any language except SQL run inside the backend
+   server process with the operating systems permissions of the
+   database server daemon process. It is possible to change the
+   server's internal data structures from inside of trusted functions.
+   Hence, among many other things, such functions can circumvent any
+   system access controls. This is an inherent problem with
+   user-defined C functions.
+  </para>
+
+ </sect1>
+
+</Chapter>

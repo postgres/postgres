@@ -1,53 +1,32 @@
 <!--
-<<<<<<< set.sgml
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.44 2000/06/09 01:44:00 momjian Exp $
-=======
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.44 2000/06/09 01:44:00 momjian Exp $
->>>>>>> 1.43
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.45 2000/06/18 21:24:52 petere Exp $
 Postgres documentation
 -->
 
 <refentry id="SQL-SET">
  <refmeta>
-  <refentrytitle id="SQL-SET-TITLE">
-   SET
-  </refentrytitle>
+  <refentrytitle id="SQL-SET-TITLE">SET</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
  <refnamediv>
-  <refname>
-   SET
-  </refname>
-  <refpurpose>
-   Set run-time parameters for session
-  </refpurpose>
+  <refname>SET</refname>
+  <refpurpose>Set run-time parameters</refpurpose>
  </refnamediv>
  <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>1999-07-20</date>
-  </refsynopsisdivinfo>
   <synopsis>
 SET <replaceable class="PARAMETER">variable</replaceable> { TO | = } { <replaceable class="PARAMETER">value</replaceable> | '<replaceable class="PARAMETER">value</replaceable>' | DEFAULT }
-SET CONSTRAINTS {ALL | <replaceable class="parameter">constraintlist</replaceable>} <replaceable>mode</replaceable>
 SET TIME ZONE { '<replaceable class="PARAMETER">timezone</replaceable>' | LOCAL | DEFAULT }
-SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZABLE }
   </synopsis>
 
   <refsect2 id="R2-SQL-SET-1">
-   <refsect2info>
-    <date>1998-09-24</date>
-   </refsect2info>
-   <title>
-    Inputs
-   </title>
+   <title>Inputs</title>
    <para>
-		
     <variablelist>
      <varlistentry>
       <term><replaceable class="PARAMETER">variable</replaceable></term>
       <listitem>
        <para>
-	Settable global parameter.
+	A settable run-time parameter.
        </para>
       </listitem>
      </varlistentry>
@@ -64,147 +43,144 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZABLE }
      </varlistentry>
     </variablelist>
    </para>
+  </refsect2>
 
-   <para>
-    The possible variables and allowed values are:
-		
-    <variablelist>
-     <varlistentry>
-      <term>CLIENT_ENCODING | NAMES</term>
-      <listitem>
-       <para>
-	Sets the multi-byte client encoding. Parameters are:
-	
-	<variablelist>
-	 <varlistentry>
-	  <term><replaceable class="parameter">value</replaceable></term>
-	  <listitem>
-	   <para>
-	    Sets the multi-byte client encoding to
-	    <replaceable class="parameter">value</replaceable>.
-	    The specified encoding must be supported by the backend.
-	   </para>
-	  </listitem>
-	 </varlistentry>
-	</variablelist>
-       </para>
+ </refsynopsisdiv>
+ 
+ <refsect1 id="R1-SQL-SET-1">
+  <title>Description</title>
+  <para>
+   The <command>SET</command> command changes run-time configuration
+   parameters. The following parameters can be altered:
 
-       <para>
-	This option is only available if MULTIBYTE support was enabled
-	during the configure step of building Postgres.
-       </para>
-      </listitem>
-     </varlistentry>
+   <variablelist>
+    <varlistentry>
+     <term>CLIENT_ENCODING</term>
+     <term>NAMES</term>
+     <listitem>
+      <para>
+       Sets the multi-byte client encoding. The specified encoding
+       must be supported by the backend.
+      </para>
 
-     <varlistentry>
-      <term>DATESTYLE</term>
-      <listitem>
-       <para>
-	Set the date/time representation style. Affects the output format,
-	and in some cases it can affect the interpretation of input.
+      <para>
+       This option is only available if
+       <productname>Postgres</productname> is build with multibyte
+       support.
+      </para>
+     </listitem>
+    </varlistentry>
 
-	<variablelist>
-	 <varlistentry>
-	  <term>ISO</term>
-	  <listitem>
-	   <para>
-	    use ISO 8601-style dates and times
-	   </para>
-	  </listitem>
-	 </varlistentry>
-	 <varlistentry>
-	  <term>SQL</term>
-	  <listitem>
-	   <para>
-	    use Oracle/Ingres-style dates and times
-	   </para>
-	  </listitem>
-	 </varlistentry>
-	 <varlistentry>
-	  <term>Postgres</term>
-	  <listitem>
-	   <para>
-	    use traditional <productname>Postgres</productname> format
-	   </para>
-	  </listitem>
-	 </varlistentry>
-	 <varlistentry>
-	  <term>European</term>
-	  <listitem>
-	   <para>
-	    use <literal>dd/mm/yyyy</literal> for numeric date representations.
-	   </para>
-	  </listitem>
-	 </varlistentry>
-	 <varlistentry>
-	  <term>NonEuropean</term>
-	  <listitem>
-	   <para>
-	    use <literal>mm/dd/yyyy</literal> for numeric date representations.
-	   </para>
-	  </listitem>
-	 </varlistentry>
-	 <varlistentry>
-	  <term>German</term>
-	  <listitem>
-	   <para>
-	    use <literal>dd.mm.yyyy</literal> for numeric date representations.
-	   </para>
-	  </listitem>
-	 </varlistentry>
-	 <varlistentry>
-	  <term>US</term>
-	  <listitem>
-	   <para>
-	    same as <literal>NonEuropean</literal>
-	   </para>
-	  </listitem>
-	 </varlistentry>
-	 <varlistentry>
-	  <term>DEFAULT</term>
-	  <listitem>
-	   <para>
-	    restores the default values (<literal>ISO</literal>)
-	   </para>
-	  </listitem>
-	 </varlistentry>
-	</variablelist>
-       </para>
+    <varlistentry>
+     <term>DATESTYLE</term>
+     <listitem>
+      <para>
+       Choose the date/time representation style. Two separate
+       settings are made: the default date/time output and the
+       interpretation of ambiguous input.
+      </para>
 
-       <para>
-	Date format initialization may be done by:
-	<simplelist>
-	 <member>
-	  Setting the <envar>PGDATESTYLE</envar> environment variable.
-	  If PGDATESTYLE is set in the frontend environment of a client
-	  based on libpq, libpq will automatically set DATESTYLE to the
-	  value of PGDATESTYLE during connection startup.
-	 </member>
-	 <member>
-	  Running postmaster using the option <option>-o -e</option> to set
-	  dates to the <literal>European</literal> convention.
-	  Note that this affects only some combinations of date styles; for example
-	  the ISO style is not affected by this parameter.
-	 </member>
-	 <member>
-	  Changing variables in 
-	  <filename>src/backend/utils/init/globals.c</filename>.
-	 </member>
-	</simplelist>
-       </para>
-       <para>
-	The variables in <filename>globals.c</filename> which can be changed are:
-	<simplelist>
-	 <member>
-	  bool EuroDates = false | true
-	 </member>
-	 <member>
-	  int  DateStyle = USE_ISO_DATES | USE_POSTGRES_DATES | USE_SQL_DATES | USE_GERMAN_DATES
-	 </member>
-	</simplelist>
-       </para>
-      </listitem>
-     </varlistentry>
+      <para>
+       The following are date/time output styles:
+
+       <variablelist>
+	<varlistentry>
+	 <term>ISO</term>
+	 <listitem>
+	  <para>
+	   Use ISO 8601-style dates and times (<literal>YYYY-MM-DD
+	   HH:MM:SS</literal>). This is the default.
+          </para>
+	 </listitem>
+	</varlistentry>
+
+        <varlistentry>
+	 <term>SQL</term>
+	 <listitem>
+	  <para>
+	   Use Oracle/Ingres-style dates and times. Note that this
+	   style has nothing to do with SQL (which mandates ISO 8601
+	   style), the naming of this option is a historical accident.
+	  </para>
+	 </listitem>
+	</varlistentry>
+
+        <varlistentry>
+	 <term>Postgres</term>
+	 <listitem>
+	  <para>
+	   Use traditional <productname>Postgres</productname> format.
+	  </para>
+	 </listitem>
+	</varlistentry>
+
+        <varlistentry>
+	 <term>German</term>
+	 <listitem>
+	  <para>
+	   Use <literal>dd.mm.yyyy</literal> for numeric date representations.
+	  </para>
+	 </listitem>
+	</varlistentry>
+       </variablelist>
+      </para>
+
+      <para>
+       The following two options determine both a substyle of the
+       <quote>SQL</quote> and <quote>Postgres</quote> output formats
+       and the preferred interpretation of ambiguous date input.
+
+       <variablelist>
+	<varlistentry>
+	 <term>European</term>
+	 <listitem>
+	  <para>
+	   Use <literal>dd/mm/yyyy</literal> for numeric date representations.
+	  </para>
+	 </listitem>
+	</varlistentry>
+
+        <varlistentry>
+	 <term>NonEuropean</term>
+	 <term>US</term>
+	 <listitem>
+	  <para>
+	   Use <literal>mm/dd/yyyy</literal> for numeric date representations.
+	  </para>
+	 </listitem>
+	</varlistentry>
+       </variablelist>
+      </para>
+
+      <para>
+       A value for <command>SET DATESTYLE</command> can be one from
+       the first list (output styles), or one from the second list
+       (substyles), or one from each separated by a comma.
+      </para>
+
+      <para>
+       Date format initialization may be done by:
+       <simplelist>
+	<member>
+	 Setting the <envar>PGDATESTYLE</envar> environment variable.
+	 If PGDATESTYLE is set in the frontend environment of a client
+	 based on libpq, libpq will automatically set DATESTYLE to the
+	 value of PGDATESTYLE during connection startup.
+	</member>
+	<member>
+	 Running postmaster using the option <option>-o -e</option> to
+	 set dates to the <literal>European</literal> convention.
+	</member>
+       </simplelist>
+      </para>
+      <para>
+       The <option>DateStyle</option> option is really only intended
+       for porting applications. To format your date/time values to
+       choice, use the <function>to_char</function> family of
+       functions.
+      </para>
+     </listitem>
+    </varlistentry>
 
      <varlistentry>
       <term>SEED</term>
@@ -237,10 +213,6 @@ SELECT setseed(<replaceable>value</replaceable>);
 	</variablelist>
        </para>
 
-       <para>
-	This option is only available if MULTIBYTE support was enabled
-	during the configure step of building Postgres.
-       </para>
       </listitem>
      </varlistentry>
 
@@ -248,71 +220,13 @@ SELECT setseed(<replaceable>value</replaceable>);
       <term>SERVER_ENCODING</term>
       <listitem>
        <para>
-	Sets the multi-byte server encoding to:
-	
-	<variablelist>
-	 <varlistentry>
-	  <term><replaceable class="parameter">value</replaceable></term>
-	  <listitem>
-	   <para>
-	    The identifying value for the server encoding.
-	   </para>
-	  </listitem>
-	 </varlistentry>
-	</variablelist>
+	Sets the multi-byte server encoding.
        </para>
 
        <para>
-	This option is only available if MULTIBYTE support was enabled
-	during the configure step of building Postgres.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>CONSTRAINTS</term>
-      <listitem>
-       <para>
-	SET CONSTRAINTS affects the behavior of constraint evaluation
-	in the current transaction.
-	SET CONSTRAINTS, specified
-	in SQL3, has these allowed parameters:
-
-	<variablelist>
-	 <varlistentry>
-	  <term><replaceable class="parameter">constraintlist</replaceable></term>
-	  <listitem>
-	   <para>
-	    Comma separated list of deferrable constraint names.
-	   </para>
-	  </listitem>
-	 </varlistentry>
-
-	 <varlistentry>
-	  <term><replaceable class="parameter">mode</replaceable></term>
-	  <listitem>
-	   <para>
-	    The constraint mode. Allowed values are
-	    <option>DEFERRED</option> and <option>IMMEDIATE</option>.
-	   </para>
-	  </listitem>
-	 </varlistentry>
-	</variablelist>
-       </para>
-
-       <para>
-	In <option>IMMEDIATE</option> mode, foreign key constraints
-	are checked at the end of each query.
-       </para>
-
-       <para>
-	In <option>DEFERRED</option> mode, foreign key constraints
-	marked as <option>DEFERRABLE</option> are checked only at
-	transaction commit or  until its mode is explicitly set to 
-	<option>IMMEDIATE</option>.
-	This is actually only done for foreign  key
-	constraints,  so  it  does  not  apply  to  UNIQUE  or  other
-	constraints.
+	This option is only available if
+	<productname>Postgres</productname> was built with multibyte
+	support.
        </para>
       </listitem>
      </varlistentry>
@@ -323,8 +237,9 @@ SELECT setseed(<replaceable>value</replaceable>);
       <listitem>
        <para>
 	The possible values for timezone depends on your operating
-	system. For example on Linux /usr/lib/zoneinfo contains the
-	database of timezones.
+	system. For example, on Linux
+	<filename>/usr/share/zoneinfo</filename> contains the database
+	of time zones.
        </para>
        <para>
 	Here are some valid values for timezone:
@@ -334,7 +249,7 @@ SELECT setseed(<replaceable>value</replaceable>);
 	  <term>PST8PDT</term>
 	  <listitem>
 	   <para>
-	    set the timezone for California
+	    Set the time zone for California.
 	   </para>
 	  </listitem>
 	 </varlistentry>
@@ -342,7 +257,7 @@ SELECT setseed(<replaceable>value</replaceable>);
 	  <term>Portugal</term>
 	  <listitem>
 	   <para>
-	    set time zone for Portugal.
+	    Set time zone for Portugal.
 	   </para>
 	  </listitem>
 	 </varlistentry>
@@ -350,16 +265,17 @@ SELECT setseed(<replaceable>value</replaceable>);
 	  <term>'Europe/Rome'</term>
 	  <listitem>
 	   <para>
-	    set time zone for Italy.
+	    Set time zone for Italy.
 	   </para>
 	  </listitem>
 	 </varlistentry>
 	 <varlistentry>
-	  <term>DEFAULT</term>
+	  <term>LOCAL</term>
+          <term>DEFAULT</term>
 	  <listitem>
 	   <para>
-	    set time zone to your local timezone
-	    (value of the TZ environment variable).
+	    Set the time zone to your local time zone (the one that
+	    your operating system defaults to).
 	   </para>
 	  </listitem>
 	 </varlistentry>
@@ -370,12 +286,6 @@ SELECT setseed(<replaceable>value</replaceable>);
 	becomes GMT (on most systems anyway).
        </para>
        <para>
-	The second syntax shown above, allows one to set the timezone
-	with a syntax similar to SQL92 <command>SET TIME ZONE</command>.
-	The LOCAL keyword is just an alternate form
-	of DEFAULT for SQL92 compatibility.
-       </para>
-       <para>
         If the PGTZ environment variable is set in the frontend
 	environment of a client based on libpq, libpq will automatically
 	set TIMEZONE to the value of PGTZ during connection startup.
@@ -383,716 +293,112 @@ SELECT setseed(<replaceable>value</replaceable>);
       </listitem>
      </varlistentry>
 
-     <varlistentry>
-      <term>TRANSACTION ISOLATION LEVEL</term>
-      <listitem>
-       <para>
-	Sets the isolation level for the current transaction.
-	
-	<variablelist>
-	 <varlistentry>
-	  <term>READ COMMITTED</term>
-	  <listitem>
-	   <para>
-	    The current transaction queries read only rows committed
-	    before a query began. READ COMMITTED is the default.
-	   </para>
-
-	   <note>
-	   <para>
-	    <acronym>SQL92</acronym> standard requires 
-	    SERIALIZABLE to be the default isolation level.
-	   </para>
-	   </note>
-	  </listitem>
-	 </varlistentry>
-	 
-	 <varlistentry>
-	  <term>SERIALIZABLE</term>
-	  <listitem>
-	   <para>
-	    The current transaction queries read only rows committed
-	    before first DML statement 
-	    (<command>SELECT/INSERT/DELETE/UPDATE/FETCH/COPY_TO</command>)
-	    was executed in this transaction. 
-	   </para>
-	  </listitem>
-	 </varlistentry>
-	 
-	</variablelist>
-       </para>
-      </listitem>
-     </varlistentry>
     </variablelist>
    </para>
 
-   <para>
-    There are also several internal or optimization
-    parameters which can be specified
-    by the <command>SET</command> command:
-    
-    <variablelist>
-     <varlistentry>
-      <term>PG_OPTIONS</term>
-      <listitem>
-       <para>
-        Sets various backend parameters.
-       </para>
-      </listitem>
-     </varlistentry>
-    
-     <varlistentry>
-      <term>RANDOM_PAGE_COST</term>
-      <listitem>
-       <para>
-        Sets the optimizer's estimate of the cost of a nonsequentially
-	fetched disk page.  This is measured as a multiple of the cost
-	of a sequential page fetch.
-	
-	<variablelist>
-	 <varlistentry>
-	  <term><replaceable class="parameter">float8</replaceable></term>
-	  <listitem>
-	   <para>
-	    Set the cost of a random page access
-	    to the specified floating-point value.
-	   </para>
-	  </listitem>
-	 </varlistentry>
-	</variablelist>
-       </para>
-      </listitem>
-     </varlistentry>
-    
-     <varlistentry>
-      <term>CPU_TUPLE_COST</term>
-      <listitem>
-       <para>
-        Sets the optimizer's estimate of the cost of processing each
-	tuple during a query.  This is measured as a fraction of the cost
-	of a sequential page fetch.
-	
-	<variablelist>
-	 <varlistentry>
-	  <term><replaceable class="parameter">float8</replaceable></term>
-	  <listitem>
-	   <para>
-	    Set the cost of per-tuple CPU processing
-	    to the specified floating-point value.
-	   </para>
-	  </listitem>
-	 </varlistentry>
-	</variablelist>
-       </para>
-      </listitem>
-     </varlistentry>
-    
-     <varlistentry>
-      <term>CPU_INDEX_TUPLE_COST</term>
-      <listitem>
-       <para>
-        Sets the optimizer's estimate of the cost of processing each
-	index tuple during an index scan.  This is measured as a fraction
-	of the cost of a sequential page fetch.
-	
-	<variablelist>
-	 <varlistentry>
-	  <term><replaceable class="parameter">float8</replaceable></term>
-	  <listitem>
-	   <para>
-	    Set the cost of per-index-tuple CPU processing
-	    to the specified floating-point value.
-	   </para>
-	  </listitem>
-	 </varlistentry>
-	</variablelist>
-       </para>
-      </listitem>
-     </varlistentry>
-    
-     <varlistentry>
-      <term>CPU_OPERATOR_COST</term>
-      <listitem>
-       <para>
-        Sets the optimizer's estimate of the cost of processing each
-	operator in a WHERE clause.  This is measured as a fraction
-	of the cost of a sequential page fetch.
-	
-	<variablelist>
-	 <varlistentry>
-	  <term><replaceable class="parameter">float8</replaceable></term>
-	  <listitem>
-	   <para>
-	    Set the cost of per-operator CPU processing
-	    to the specified floating-point value.
-	   </para>
-	  </listitem>
-	 </varlistentry>
-	</variablelist>
-       </para>
-      </listitem>
-     </varlistentry>
-    
-     <varlistentry>
-      <term>EFFECTIVE_CACHE_SIZE</term>
-      <listitem>
-       <para>
-        Sets the optimizer's assumption about the effective size of the
-	disk cache (that is, the portion of the kernel's disk cache that
-	will be used for Postgres data files).  This is measured in disk
-	pages, which are normally 8Kb apiece.
-	
-	<variablelist>
-	 <varlistentry>
-	  <term><replaceable class="parameter">float8</replaceable></term>
-	  <listitem>
-	   <para>
-	    Set the assumed cache size
-	    to the specified floating-point value.
-	   </para>
-	  </listitem>
-	 </varlistentry>
-	</variablelist>
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>EXAMINE_SUBCLASS</term>
-      <listitem>
-       <para>
-       Changes the behaviour of SELECT so that it no longer automatically
-       examines sub-classes. (See SELECT). By default a SELECT on a table
-       will also return subclass tuples unless specifying ONLY tablename.
-       Setting this returns postgres to the traditional behaviour of
-       only returning subclasses when appending "*" to the tablename.
-	<variablelist>
-	 <varlistentry>
-	  <term>ON</term>
-	  <listitem>
-	   <para>
-       Returns SELECT to the behaviour of automatically returning
-       results from sub-classes.
-	   </para>
-	  </listitem>
-	 </varlistentry>
-	
-	 <varlistentry>
-	  <term>OFF</term>
-	  <listitem>
-	   <para>
-       Prevents SELECT from returning sub-classes unless the "*" follows the table name
-	   </para>
-	  </listitem>
-	 </varlistentry>
-	</variablelist>
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>ENABLE_SEQSCAN</term>
-      <listitem>
-       <para>
-        Enables or disables the planner's use of sequential scan plan types.
-	(It's not possible to suppress sequential scans entirely, but turning
-	this variable OFF discourages the planner from using one if there is
-	any other method available.)
-
-	<variablelist>
-	 <varlistentry>
-	  <term>ON</term>
-	  <listitem>
-	   <para>
-	    enables use of sequential scans (default setting).
-	   </para>
-	  </listitem>
-	 </varlistentry>
-	
-	 <varlistentry>
-	  <term>OFF</term>
-	  <listitem>
-	   <para>
-	    disables use of sequential scans.
-	   </para>
-	  </listitem>
-	 </varlistentry>
-	</variablelist>
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>ENABLE_INDEXSCAN</term>
-      <listitem>
-       <para>
-        Enables or disables the planner's use of index scan plan types.
-
-	<variablelist>
-	 <varlistentry>
-	  <term>ON</term>
-	  <listitem>
-	   <para>
-	    enables use of index scans (default setting).
-	   </para>
-	  </listitem>
-	 </varlistentry>
-	
-	 <varlistentry>
-	  <term>OFF</term>
-	  <listitem>
-	   <para>
-	    disables use of index scans.
-	   </para>
-	  </listitem>
-	 </varlistentry>
-	</variablelist>
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>ENABLE_TIDSCAN</term>
-      <listitem>
-       <para>
-        Enables or disables the planner's use of TID scan plan types.
-
-	<variablelist>
-	 <varlistentry>
-	  <term>ON</term>
-	  <listitem>
-	   <para>
-	    enables use of TID scans (default setting).
-	   </para>
-	  </listitem>
-	 </varlistentry>
-	
-	 <varlistentry>
-	  <term>OFF</term>
-	  <listitem>
-	   <para>
-	    disables use of TID scans.
-	   </para>
-	  </listitem>
-	 </varlistentry>
-	</variablelist>
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>ENABLE_SORT</term>
-      <listitem>
-       <para>
-        Enables or disables the planner's use of explicit sort steps.
-	(It's not possible to suppress explicit sorts entirely, but turning
-	this variable OFF discourages the planner from using one if there is
-	any other method available.)
-
-	<variablelist>
-	 <varlistentry>
-	  <term>ON</term>
-	  <listitem>
-	   <para>
-	    enables use of sorts (default setting).
-	   </para>
-	  </listitem>
-	 </varlistentry>
-	
-	 <varlistentry>
-	  <term>OFF</term>
-	  <listitem>
-	   <para>
-	    disables use of sorts.
-	   </para>
-	  </listitem>
-	 </varlistentry>
-	</variablelist>
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>ENABLE_NESTLOOP</term>
-      <listitem>
-       <para>
-        Enables or disables the planner's use of nested-loop join plans.
-	(It's not possible to suppress nested-loop joins entirely, but turning
-	this variable OFF discourages the planner from using one if there is
-	any other method available.)
-
-	<variablelist>
-	 <varlistentry>
-	  <term>ON</term>
-	  <listitem>
-	   <para>
-	    enables use of nested-loop joins (default setting).
-	   </para>
-	  </listitem>
-	 </varlistentry>
-	
-	 <varlistentry>
-	  <term>OFF</term>
-	  <listitem>
-	   <para>
-	    disables use of nested-loop joins.
-	   </para>
-	  </listitem>
-	 </varlistentry>
-	</variablelist>
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>ENABLE_MERGEJOIN</term>
-      <listitem>
-       <para>
-        Enables or disables the planner's use of mergejoin plans.
-
-	<variablelist>
-	 <varlistentry>
-	  <term>ON</term>
-	  <listitem>
-	   <para>
-	    enables use of merge joins (default setting).
-	   </para>
-	  </listitem>
-	 </varlistentry>
-	
-	 <varlistentry>
-	  <term>OFF</term>
-	  <listitem>
-	   <para>
-	    disables use of merge joins.
-	   </para>
-	  </listitem>
-	 </varlistentry>
-	</variablelist>
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>ENABLE_HASHJOIN</term>
-      <listitem>
-       <para>
-        Enables or disables the planner's use of hashjoin plans.
-
-	<variablelist>
-	 <varlistentry>
-	  <term>ON</term>
-	  <listitem>
-	   <para>
-	    enables use of hash joins (default setting).
-	   </para>
-	  </listitem>
-	 </varlistentry>
-	
-	 <varlistentry>
-	  <term>OFF</term>
-	  <listitem>
-	   <para>
-	    disables use of hash joins.
-	   </para>
-	  </listitem>
-	 </varlistentry>
-	</variablelist>
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>GEQO</term>
-      <listitem>
-       <para>
-	Sets the threshold for using the genetic optimizer algorithm.
-
-	<variablelist>
-	 <varlistentry>
-	  <term>ON</term>
-	  <listitem>
-	   <para>
-	    enables the genetic optimizer algorithm
-	    for statements with 11 or more tables.
-	    (This is also the DEFAULT setting.)
-	   </para>
-	  </listitem>
-	 </varlistentry>
-
-	 <varlistentry>
-	  <term>ON=<replaceable class="parameter">#</replaceable></term>
-	  <listitem>
-	   <para>
-	    Takes an integer argument to enable the genetic optimizer algorithm
-	    for statements with <replaceable class="parameter">#</replaceable>
-	    or more tables in the query.
-	   </para>
-	  </listitem>
-	 </varlistentry>
-
-	 <varlistentry>
-	  <term>OFF</term>
-	  <listitem>
-	   <para>
-	    disables the genetic optimizer algorithm.
-	   </para>
-	  </listitem>
-	 </varlistentry>
-	</variablelist>
-       </para>
-
-       <para>
-	See the chapter on GEQO in the Programmer's Guide
-	for more information about query optimization.
-       </para>
-       <para>
-        If the PGGEQO environment variable is set in the frontend
-	environment of a client based on libpq, libpq will automatically
-	set GEQO to the value of PGGEQO during connection startup.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>KSQO</term>
-      <listitem>
-       <para>
-	<firstterm>Key Set Query Optimizer</firstterm> causes the query
-	planner to convert queries whose WHERE clause contains many
-	OR'ed AND clauses (such as "WHERE (a=1 AND b=2) OR (a=2 AND b=3) ...")
-	into a UNION query.  This method can be faster than the default
-	implementation, but it doesn't necessarily give exactly the same
-	results, since UNION implicitly adds a SELECT DISTINCT clause to
-	eliminate identical output rows.  KSQO is commonly used when
-	working with products like <productname>MicroSoft
-	Access</productname>, which tend to generate queries of this form.
-
-	<variablelist>
-	 <varlistentry>
-	  <term>ON</term>
-	  <listitem>
-	   <para>
-	    enables this optimization.
-	   </para>
-	  </listitem>
-	 </varlistentry>
-	
-	 <varlistentry>
-	  <term>OFF</term>
-	  <listitem>
-	   <para>
-	    disables this optimization (default setting).
-	   </para>
-	  </listitem>
-	 </varlistentry>
-	 
-	 <varlistentry>
-	  <term>DEFAULT</term>
-	  <listitem>
-	   <para>
-	    Equivalent to specifying <command>SET KSQO=OFF</command>.
-	   </para>
-	  </listitem>
-	 </varlistentry>
-	</variablelist>
-       </para>
-
-       <para>
-        The KSQO algorithm used to be absolutely essential for queries
-	with many OR'ed AND clauses, but in Postgres 7.0 and later
-	the standard planner handles these queries fairly successfully.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>MAX_EXPR_DEPTH</term>
-      <listitem>
-       <para>
-        Sets the maximum expression nesting depth that the parser will
-	accept.  The default value is high enough for any normal query,
-	but you can raise it if you need to.  (But if you raise it too high,
-	you run the risk of backend crashes due to stack overflow.)
-
-	<variablelist>
-	 <varlistentry>
-	  <term><replaceable class="parameter">integer</replaceable></term>
-	  <listitem>
-	   <para>
-	    Maximum depth.
-	   </para>
-	  </listitem>
-	 </varlistentry>
-	</variablelist>
-       </para>
-      </listitem>
-     </varlistentry>
-
-    </variablelist>
-   </para>
-  </refsect2>
-
-  <refsect2 id="R2-SQL-SET-2">
-   <refsect2info>
-    <date>1998-09-24</date>
-   </refsect2info>
-   <title>
-    Outputs
-   </title>
-   <para>
-    
-    <variablelist>
-     <varlistentry>
-      <term><computeroutput>
-SET VARIABLE
-       </computeroutput></term>
-      <listitem>
-       <para>
-	Message returned if successful.
-       </para>
-      </listitem>
-     </varlistentry>
-     
-     <varlistentry>
-      <term><computeroutput>
-NOTICE:  Bad value for <replaceable class="parameter">variable</replaceable> (<replaceable class="parameter">value</replaceable>)
-       </computeroutput></term>
-      <listitem>
-       <para>
-	If the command fails to set the specified variable.
-       </para>
-      </listitem>
-     </varlistentry>
-     
-    </variablelist>
-   </para>
-  </refsect2>
- </refsynopsisdiv>
- 
- <refsect1 id="R1-SQL-SET-1">
-  <refsect1info>
-   <date>1998-09-24</date>
-  </refsect1info>
-  <title>
-   Description
-  </title>
   <para>
-   <command>SET</command> will modify configuration parameters for variable during
-   a session.
+   An extended list of other run-time parameters can be found in the
+   <citetitle>Administrator's Guide</citetitle>.
   </para>
+
   <para>
-   Current values can be obtained using <command>SHOW</command>, and values
-   can be restored to the defaults using <command>RESET</command>.
-   Parameters and values are case-insensitive. Note that the value
-   field is always specified as a string, so is enclosed in
-   single-quotes.
-  </para>
-  <para>
-   <command>SET TIME ZONE</command> changes the session's
-   default time zone offset.
-   An SQL-session always begins with an initial default time zone
-   offset.
-   The <command>SET TIME ZONE</command> statement is used to change the default
-   time zone offset for the current SQL session.
+   Use <xref linkend="SQL-SHOW" endterm="SQL-SHOW-title"> to show the
+   current setting of a parameters.
   </para>
   
-  <refsect2 id="R2-SQL-SET-3">
-   <refsect2info>
-    <date>1998-09-24</date>
-   </refsect2info>
-   <title>
-    Notes
-   </title>
-   <para>
-    The <command>SET <replaceable class="parameter">variable</replaceable></command>
-    statement is a <productname>Postgres</productname> language extension.
-   </para>
-   <para>
-    Refer to <command>SHOW</command> and <command>RESET</command> to 
-    display or reset the current values.
-   </para>
-  </refsect2>
  </refsect1>
- 
- <refsect1 id="R1-SQL-SET-2">
-  <title>
-   Usage
-  </title>
+
+ <refsect1>
+  <title>Diagnostics</title>
   <para>
-   Set the style of date to ISO (no quotes on the argument is required):
+    
+   <variablelist>
+    <varlistentry>
+     <term><computeroutput>SET VARIABLE</computeroutput></term>
+     <listitem>
+      <para>
+       Message returned if successful.
+      </para>
+     </listitem>
+    </varlistentry>
+     
+    <varlistentry>
+     <term><computeroutput>ERROR:  not a valid option name: <replaceable>name</replaceable></computeroutput></term>
+     <listitem>
+      <para>
+       The parameter you tried to set does not exist.
+      </para>
+     </listitem>
+    </varlistentry>
+     
+    <varlistentry>
+     <term><computeroutput>ERROR:  permission denied</computeroutput></term>
+     <listitem>
+      <para>
+       You must be a superuser to have access to certain settings.
+      </para>
+     </listitem>
+    </varlistentry>
+     
+    <varlistentry>
+     <term><computeroutput>ERROR:  <replaceable>name</replaceable> can only be set at startup</computeroutput></term>
+     <listitem>
+      <para>
+       Some parameters are fixed once the server is started.
+      </para>
+     </listitem>
+    </varlistentry>
+     
+   </variablelist>
+  </para>
+ </refsect1>
 
-   <programlisting>
-SET DATESTYLE TO ISO;
-   </programlisting>
-
-   Enable GEQO for queries with 4 or more tables (note the use of
-   single quotes to handle the equal sign inside the value argument):
-
-   <programlisting> 
-SET GEQO = 'ON=4';
-   </programlisting>
-
-   Set GEQO to default:
-
-   <programlisting> 
-SET GEQO = DEFAULT;
-   </programlisting>
+ 
+ <refsect1>
+  <title>Examples</title>
+  <para>
+   Set the style of date to traditional Postgres with European conventions:
+<screen>
+SET DATESTYLE TO Postgres,European;
+</screen>
 
    Set the timezone for Berkeley, California, using double quotes to
-   preserve the uppercase
-   attributes of the time zone specifier:
+   preserve the uppercase attributes of the time zone specifier (note
+   that the date/time format is ISO here):
 
-<programlisting> 
+<screen> 
 SET TIME ZONE "PST8PDT";
 SELECT CURRENT_TIMESTAMP AS today;
    
          today
 ------------------------
  1998-03-31 07:41:21-08
-</programlisting>
+</screen>
 
    Set the timezone for Italy (note the required single or double quotes to handle 
    the special characters):
 
-<programlisting> 
+<screen> 
 SET TIME ZONE 'Europe/Rome';
 SELECT CURRENT_TIMESTAMP AS today;
    
          today
 ------------------------
  1998-03-31 17:41:31+02
-</programlisting>
+</screen>
   </para>
  </refsect1>
 
  <refsect1 id="R1-SQL-SET-3">
-  <title>
-   Compatibility
-  </title>
-  
-  <refsect2 id="R2-SQL-SET-4">
-   <refsect2info>
-    <date>1998-09-24</date>
-   </refsect2info>
-   <title>
-    SQL92
-   </title>
-   <para>
-    There is no general
-    <command>SET <replaceable class="parameter">variable</replaceable></command>
-    in <acronym>SQL92</acronym> (with the exception of
-    <command>SET TRANSACTION ISOLATION LEVEL</command>).
+  <title>Compatibility</title>
 
-    The <acronym>SQL92</acronym> syntax for <command>SET TIME ZONE</command>
-    is slightly different,
-    allowing only a single integer value for time zone specification:
-    
-    <synopsis>
-SET TIME ZONE { interval_value_expression | LOCAL }
-    </synopsis>
-   </para>
-  </refsect2>
+  <para>
+   The second syntax shown above (<literal>SET TIME ZONE</literal>)
+   attempts to mimic <acronym>SQL92</acronym>. However, SQL allows
+   only numeric time zone offsets. All other parameter settings as
+   well as the first syntax shown above are a
+   <productname>Postgres</productname> extension.
+  </para>
  </refsect1>
 </refentry>
 

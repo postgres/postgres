@@ -1,48 +1,34 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/show.sgml,v 1.9 2000/04/08 02:39:02 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/show.sgml,v 1.10 2000/06/18 21:24:54 petere Exp $
 Postgres documentation
 -->
 
 <refentry id="SQL-SHOW">
  <refmeta>
-  <refentrytitle id="SQL-SHOW-TITLE">
-   SHOW
-  </refentrytitle>
+  <refentrytitle id="SQL-SHOW-TITLE">SHOW</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
  <refnamediv>
-  <refname>
-   SHOW
-  </refname>
-  <refpurpose>
-   Shows run-time parameters for session
-  </refpurpose>
+  <refname>SHOW</refname>
+  <refpurpose>Shows run-time parameters</refpurpose>
  </refnamediv>
  <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>1999-07-20</date>
-  </refsynopsisdivinfo>
   <synopsis>
-SHOW <replaceable class="PARAMETER">keyword</replaceable>
+SHOW <replaceable class="PARAMETER">name</replaceable>
   </synopsis>
 
   <refsect2 id="R2-SQL-SHOW-1">
-   <refsect2info>
-    <date>1998-09-24</date>
-   </refsect2info>
-   <title>
-    Inputs
-   </title>
+   <title>Inputs</title>
 
    <para>
     <variablelist>
      <varlistentry>
-      <term><replaceable class="PARAMETER">keyword</replaceable></term>
+      <term><replaceable class="PARAMETER">name</replaceable></term>
       <listitem>
        <para>
-	Refer to
+        The name of a run-time parameter. See
 	<xref linkend="sql-set-title" endterm="sql-set-title">
-	for more information on available variables.
+        for a list.
        </para>
       </listitem>
      </varlistentry>
@@ -50,41 +36,43 @@ SHOW <replaceable class="PARAMETER">keyword</replaceable>
    </para>
   </refsect2>
 
-  <refsect2 id="R2-SQL-SHOW-2">
-   <refsect2info>
-    <date>1998-09-24</date>
-   </refsect2info>
-   <title>
-    Outputs
-   </title>
+ </refsynopsisdiv>
+
+ <refsect1 id="R1-SQL-SHOW-1">
+  <title>Description</title>
+  <para>
+   <command>SHOW</command> will display the current setting of a
+   run-time parameter. These variables can be set using the
+   <command>SET</command> statement or are determined at server start.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Diagnostics</title>
 
    <para>
     <variablelist>
      <varlistentry>
-      <term><computeroutput>
-NOTICE: <replaceable class="PARAMETER">variable</replaceable> is <replaceable>value</replaceable>
-       </computeroutput></term>
+      <term><computeroutput>ERROR:  not a valid option name: <replaceable>name</replaceable></computeroutput></term>
       <listitem>
        <para>
-	Message returned if successful.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><computeroutput>
-NOTICE:  Unrecognized variable <replaceable>value</replaceable>
-       </computeroutput></term>
-      <listitem>
-       <para>
-	Message returned if <returnvalue>variable</returnvalue> does not exist.
+	Message returned if <replaceable>variable</replaceable> does
+	not stand for an existing parameter.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><computeroutput>
-NOTICE:  Time zone is unknown
-       </computeroutput></term>
+      <term><computeroutput>ERROR:  permission denied</computeroutput></term>
+      <listitem>
+       <para>
+        You must be a superuser to be allowed to see certain settings.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><computeroutput>NOTICE:  Time zone is unknown</computeroutput></term>
       <listitem>
        <para>
 	If the <envar>TZ</envar> or <envar>PGTZ</envar> environment
@@ -94,82 +82,35 @@ NOTICE:  Time zone is unknown
      </varlistentry>
     </variablelist>
    </para>
-  </refsect2>
- </refsynopsisdiv>
-
- <refsect1 id="R1-SQL-SHOW-1">
-  <refsect1info>
-   <date>1998-09-24</date>
-  </refsect1info>
-  <title>
-   Description
-  </title>
-  <para>
-   <command>SHOW</command> will display the current setting of a
-   run-time parameter during a session.
-  </para>
-  <para>
-   These variables can be set using the <command>SET</command> statement,
-   and
-   can be restored to the default values using the <command>RESET</command>
-   statement.
-   Parameters and values are case-insensitive.
-  </para>
-
-  <refsect2 id="R2-SQL-SHOW-3">
-   <refsect2info>
-    <date>1998-09-24</date>
-   </refsect2info>
-   <title>
-    Notes
-   </title>
-   <para>
-    See also
-    <xref linkend="sql-set-title" endterm="sql-set-title"> and
-    <xref linkend="sql-reset-title" endterm="sql-reset-title">
-    to manipulate variable values.
-   </para>
-  </refsect2>
  </refsect1>
 
  <refsect1 id="R1-SQL-SHOW-2">
-  <title>
-   Usage
-  </title>
+  <title>Examples</title>
   <para>
    Show the current <literal>DateStyle</literal> setting:
 
-   <programlisting>
+<screen>
 SHOW DateStyle;
 NOTICE:  DateStyle is ISO with US (NonEuropean) conventions
-   </programlisting>
+</screen>
   </para>
 
   <para>
    Show the current genetic optimizer (<literal>geqo</literal>) setting:
-   <programlisting>
+<screen>
 SHOW GEQO;
-NOTICE:  GEQO is ON beginning with 11 relations
-   </programlisting>
+NOTICE:  geqo = true
+</screen>
   </para>
  </refsect1>
 
  <refsect1 id="R1-SQL-SHOW-3">
-  <title>
-   Compatibility
-  </title>
+  <title>Compatibility</title>
 
-  <refsect2 id="R2-SQL-SHOW-4">
-   <refsect2info>
-    <date>1998-09-24</date>
-   </refsect2info>
-   <title>
-    SQL92
-   </title>
-   <para>
-    There is no <command>SHOW</command> defined in <acronym>SQL92</acronym>.
-   </para>
-  </refsect2>
+  <para>
+   The <command>SHOW</command> command is a
+   <productname>Postgres</productname> extension.
+  </para>
  </refsect1>
 </refentry>
 

@@ -1,47 +1,32 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/reset.sgml,v 1.8 2000/04/08 02:39:02 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/reset.sgml,v 1.9 2000/06/18 21:24:51 petere Exp $
 Postgres documentation
 -->
 
 <refentry id="SQL-RESET">
  <refmeta>
-  <refentrytitle id="SQL-RESET-TITLE">
-   RESET
-  </refentrytitle>
+  <refentrytitle id="SQL-RESET-TITLE">RESET</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
  <refnamediv>
-  <refname>
-   RESET
-  </refname>
-  <refpurpose>
-   Restores run-time parameters for session to default values
-  </refpurpose>
+  <refname>RESET</refname>
+  <refpurpose>Restores run-time parameters to default values</refpurpose>
  </refnamediv>
  <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>1999-07-20</date>
-  </refsynopsisdivinfo>
   <synopsis>
 RESET <replaceable class="PARAMETER">variable</replaceable>
   </synopsis>
 
   <refsect2 id="R2-SQL-RESET-1">
-   <refsect2info>
-    <date>1998-09-24</date>
-   </refsect2info>
-   <title>
-    Inputs
-   </title>
+   <title>Inputs</title>
    <para>		
     <variablelist>
      <varlistentry>
       <term><replaceable class="PARAMETER">variable</replaceable></term>
       <listitem>
        <para>
-	Refer to
-	<xref linkend="sql-set-title" endterm="sql-set-title">
-	for more information on available variables.
+	The name of a run-time parameter. See <xref
+	linkend="sql-set-title" endterm="sql-set-title"> for a list.
        </para>
       </listitem>
      </varlistentry>
@@ -49,107 +34,55 @@ RESET <replaceable class="PARAMETER">variable</replaceable>
    </para>
   </refsect2>
 
-  <refsect2 id="R2-SQL-RESET-2">
-   <refsect2info>
-    <date>1998-09-24</date>
-   </refsect2info>
-   <title>
-    Outputs
-   </title>
-   <para>
-
-    <variablelist>
-     <varlistentry>
-      <term><computeroutput>
-RESET VARIABLE
-       </computeroutput></term>
-      <listitem>
-       <para>
-	Message returned if 
-	<replaceable class="PARAMETER">variable</replaceable> is successfully reset
-	to its default value.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
  </refsynopsisdiv>
   
- <refsect1 id="R1-SQL-RESET-1">
-  <refsect1info>
-   <date>1998-09-24</date>
-  </refsect1info>
-  <title>
-   Description
-  </title>
+ <refsect1>
+  <title>Description</title>
   <para>
-   <command>RESET</command> restores variables to their
-   default values.
-   Refer to
+   <command>RESET</command> restores run-time parameters to their
+   default values. Refer to
    <xref linkend="sql-set-title" endterm="sql-set-title">
-   for details on allowed values and defaults.
-   <command>RESET</command> is an alternate form for
+   for details. <command>RESET</command> is an alternate form for
 
    <synopsis>
-SET <replaceable class="parameter">variable</replaceable> = DEFAULT
+SET <replaceable class="parameter">variable</replaceable> TO DEFAULT
    </synopsis>
   </para>
-
-  <refsect2 id="R2-SQL-RESET-3">
-   <refsect2info>
-    <date>1998-09-24</date>
-   </refsect2info>
-   <title>
-    Notes
-   </title>
-
-   <para>
-    See also
-    <xref linkend="sql-set-title" endterm="sql-set-title"> and
-    <xref linkend="sql-show-title" endterm="sql-show-title">
-    to manipulate variable values.
-   </para>
-  </refsect2>
  </refsect1>
-  
- <refsect1 id="R1-SQL-RESET-2">
-  <title>
-   Usage
-  </title>
+
+ <refsect1>
+  <title>Diagnostics</title>
+  <para>
+   See under the <xref linkend="sql-set-title"
+   endterm="sql-set-title"> command.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Examples</title>
   <para>
    Set DateStyle to its default value:
 
-   <programlisting>
+<screen>
 RESET DateStyle;
-   </programlisting>
+</screen>
   </para>
 
   <para>
    Set Geqo to its default value:
 
-   <programlisting>   
+<screen>   
 RESET GEQO;
-   </programlisting>
+</screen>
   </para>
  </refsect1>
 
- <refsect1 id="R1-SQL-RESET-3">
-  <title>
-   Compatibility
-  </title>
+ <refsect1>
+  <title>Compatibility</title>
 
-  <refsect2 id="R2-SQL-RESET-4">
-   <refsect2info>
-    <date>1998-09-24</date>
-   </refsect2info>
-   <title>
-    SQL92
-   </title>
-   <para>
-    There is no <command>RESET</command> in <acronym>SQL92</acronym>.
-   </para>
-  </refsect2>
+  <para>
+   <command>RESET</command> is a <productname>Postgres</productname> extension.
+  </para>
  </refsect1>
 </refentry>
 

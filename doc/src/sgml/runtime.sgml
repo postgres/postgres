@@ -1,641 +1,1127 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.10 2000/05/02 20:01:52 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.11 2000/06/18 21:24:51 petere Exp $
 -->
 
- <Chapter Id="runtime">
-  <Title>Runtime Environment</Title>
+<Chapter Id="runtime">
+ <Title>Server Runtime Environment</Title>
 
-  <Para>
-   This chapter outlines the interaction between <Productname>Postgres</Productname> and
-   the operating system.
+ <Para>
+  This chapter discusses how to set up and run the database server
+  and the interactions with the operating system.
+ </para>
+
+ <sect1 id="postgres-user">
+  <title>The Postgres user account</title>
+
+  <para>
+   As with any other server daemon that is connected to the world at
+   large, it is advisable to run Postgres under a separate user
+   account. This user account should only own the data itself that is
+   being managed by the server, and should not be shared with other
+   daemons. (Thus, using the user <quote>nobody</quote> is a bad
+   idea.) It is not advisable to install the executables as owned by
+   this user account because that runs the risk of user-defined
+   functions gone astray or any other exploits compromising the
+   executable programs.
   </para>
 
-  <sect1>
-   <title>Using <Productname>Postgres</Productname> from Unix</title>
+  <para>
+   To add a user account to your system, look for a command
+   <command>useradd</command> or <command>adduser</command>. The user
+   name <quote>postgres</quote> is often used but by no means
+   required.
+  </para>
+ </sect1>
 
+ <sect1 id="creating-cluster">
+  <title>Creating a database cluster</title>
+
+  <para>
+   Before you can do anything, you must initialize a database storage
+   area on disk. We call this a <firstterm>database
+   cluster</firstterm>. (<acronym>SQL</acronym> speaks of a catalog
+   cluster instead.) A database cluster is a collection of databases
+   that will be accessible through a single instance of a running
+   database server. After initialization, a database cluster will
+   contain one database named <literal>template1</literal>. As the
+   name suggests, this will be used as a template for any subsequently
+   created database; it should not be used for actual work.
+  </para>
+
+  <para>
+   In file system terms, a database cluster will be a single directory
+   under which all data will be stored. We call this the
+   <firstterm>data directory</firstterm> or <firstterm>data
+   area</firstterm>. It is completely up to you where you choose to
+   store your data, there is no default, although locations such as
+   <filename>/usr/local/pgsql/data</filename> or
+   <filename>/var/lib/pgsql/data</filename> are popular. To initialize
+   a database cluster, use the command <command>initdb</command>,
+   which is installed with <productname>PostgreSQL</productname>. The
+   desired file system location of your database system is indicated
+   by the <option>-D</option> option, for example
+<screen>
+&gt; <userinput>initdb -D /usr/local/pgsql/data</userinput>
+</screen>
+   Note that you must execute this command while being logged in to
+   the Postgres user account, which is described in the previous
+   section.
+  </para>
+
+  <tip>
    <para>
-    All <Productname>Postgres</Productname> commands that are executed 
-    directly from a Unix shell are
-    found in the directory <filename>.../bin</filename>.  Including this directory in
-    your search path will make executing the commands easier.
+    As an alternative to the <option>-D</option> option, you can set
+    the environment variable <envar>PGDATA</envar>.
    </para>
+  </tip>
 
-   <para>
-    A collection of system catalogs exist at each site.  These include a
-    class (<literal>pg_user</literal>) that contains an instance for each valid
-    <Productname>Postgres</Productname> user.  The instance specifies a set of
-    <Productname>Postgres</Productname> privileges, such as
-    the ability to act as <Productname>Postgres</Productname> super-user,
-    the ability to create/destroy
-    databases, and the ability to update the system catalogs.  A Unix
-    user cannot do anything with <Productname>Postgres</Productname> 
-    until an appropriate instance is
-    installed in this class.  Further information on the system catalogs
-    is available by running queries on the appropriate classes.
-   </para>
-  </sect1>
+  <para>
+   <command>initdb</command> will attempt to create the directory you
+   specify if it does not already exist. It is likely that it won't
+   have the permission to do so (if you followed our advice and
+   created an unprivileged account). In that case you can create the
+   directory yourself (as root) and transfer ownership of it or grant
+   write access to it. Here is how this might work:
+<screen>
+root# <userinput>mkdir /usr/local/pgsql/data</userinput>
+root# <userinput>chown postgres /usr/local/pgsql/data</userinput>
+root# <userinput>su postgres</userinput>
+postgres&gt; <userinput>initdb -D /usr/local/pgsql/data</userinput>
+</screen>
+  </para>
 
-  <sect1 Id="postmaster">
-   <Title>Starting <Application>postmaster</Application></Title>
+  <para>
+   <command>initdb</command> will refuse to run if the data directory
+   looks like it belongs to an already initialized installation.
+  </para>
 
-   <Para>
-    Nothing can happen to a database unless the
-    <Application>postmaster</Application>
-    process  is  running.  As the site administrator, there
-    are a number  of  things  you  should  remember  before
-    starting  the  <Application>postmaster</Application>.   
-    These are discussed in the installation and configuration sections
-    of this manual.
-    However, if <ProductName>Postgres</ProductName> has been installed by following 
-    the installation instructions exactly  as  written,  the  
-    following  simple  command is all you should
-    need to start the <Application>postmaster</Application>:
+  <para>
+   Because the data directory contains all the data stored in the
+   database it is essential that it be well secured from unauthorized
+   access. <command>initdb</command> therefore revokes access
+   permissions from everyone but the Postgres user account.
+  </para>
+ </sect1>
 
-    <ProgramListing>
-% postmaster
-    </ProgramListing>
-   </para>
+ <sect1 id="postmaster-start">
+  <title>Starting the database server</title>
 
-   <para>
-    The <Application>postmaster</Application> occasionally prints out  
-    messages  which
-    are  often helpful during troubleshooting.  If you wish
-    to view debugging messages from the <Application>postmaster</Application>, 
-    you can
-    start  it with the -d option and redirect the output to
-    the log file:
+  <para>
+   Before anyone can access the database you must start the database
+   server. The database server is called
+   <firstterm>postmaster</firstterm>.
+   The postmaster must know where to find the data it is supposed
+   to work on. This is done with the <option>-D</option> option. Thus,
+   the simplest way to start the server is, for example,
+<screen>
+&gt; <userinput>postmaster -D /usr/local/pgsql/data</userinput>
+</screen>
+   which will leave the server running in the foreground. This must
+   again be done while logged in to the Postgres user account. Without
+   a <option>-D</option>, the server will try to use the data
+   directory in the environment variable <envar>PGDATA</envar>; if
+   neither of these works it will fail.
+  </para>
 
-    <ProgramListing>
-% postmaster -d > pm.log 2>&1 &
-    </ProgramListing>
+  <para>
+   To start the <application>postmaster</application> in the
+   background, use the usual shell syntax:
+<screen>
+&gt; <userinput>postmaster -D /usr/local/pgsql/data &gt; logfile 1&gt;&amp;2 &amp;</userinput>
+</screen>
+   It is an extremely good idea to keep the server output around
+   somewhere, as indicated here. It will help both for auditing
+   purposes and to diagnose problems.
+  </para>
 
-    If you do not wish to see these messages, you can type
-    <ProgramListing>
-% postmaster -S
-    </ProgramListing>
-    and the <Application>postmaster</Application> will be "S"ilent.  
-    No ampersand ("&amp") is required in this case, since the postmaster
-    automatically detaches from the terminal when -S is specified.
-   </Para>
-  </sect1>
+  <para>
+   The postmaster also takes a number of other command line options.
+   For more information see the reference page and below under runtime
+   configuration. In particular, in order for the postmaster to accept
+   TCP/IP connections (rather than just Unix domain socket ones), you
+   must also specify the <option>-i</option> option.
+  </para>
 
-  <sect1 Id="pg-options">
-   <Title id="pg-options-title">Using pg_options</Title>
+  <para>
+   Normally, you will want to start the database server when the
+   computer boots up. This is not required; the
+   <productname>PostgreSQL</productname> server can be run
+   successfully from non-privileged accounts without root
+   intervention.
+  </para>
 
-   <Para>
-    <Note>
-     <Para>
-      Contributed by <ULink url="mailto:dz@cs.unitn.it">Massimo Dal Zotto</ULink>
-     </Para>
-    </Note>
-   </para>
-   <Para>
-    The optional file <filename>data/pg_options</filename> contains runtime
-    options used by the backend to control trace messages and other backend
-    tunable parameters.
-    The file is re-read by a backend
-    when it receives a SIGHUP signal, making thus possible to change run-time
-    options on the fly without needing to restart 
-    <productname>Postgres</productname>.
-    The options specified in this file may be debugging flags used by the trace
-    package (<filename>backend/utils/misc/trace.c</filename>) or numeric
-    parameters which can be used by the backend to control its behaviour.
-   </para>
+  <para>
+   Different systems have different conventions for starting up
+   daemons at boot time, so you are advised to familiarize yourself
+   with them. Many systems have a file
+   <filename>/etc/rc.local</filename> or
+   <filename>/etc/rc.d/rc.local</filename> which is almost certainly
+   no bad place to put such a command. Whatever you do, postmaster
+   must be run by the <productname>Postgres</productname> user account
+   <emphasis>and not by root</emphasis> or any other user. Therefore
+   you probably always want to form your command lines along the lines
+   of <literal>su -c '...' postgres</literal>, for example:
+<programlisting>
+nohup su -c 'postmaster -D /usr/local/pgsql/data > server.log 2>&1' postgres &
+</programlisting>
+   (using the program <application>nohup</application> to prevent the
+   server from dying when you log out).
+  </para>
 
-   <para>
-    All pg_options are initialized to zero at backend startup.
-    New or modified options will be read by all new backends when they are started.
-    To make effective any changes for all running backends we need to send a
-    SIGHUP to the postmaster. The signal will be automatically sent to all the
-    backends. We can also activate the changes only for a specific backend by
-    sending the SIGHUP directly to it.
-   </para>
-   <para>
-    pg_options can also be specified with the <option>-T</option> switch of 
-    <productname>Postgres</productname>:
+  <para>
+   Here are a few more operating system specific suggestions.
 
-    <programlisting>
-postgres <replaceable>options</replaceable> -T "verbose=2,query,hostlookup-"
-    </programlisting>
-   </para>
-
-   <Para>
-    The functions used for printing errors and debug messages can now make use
-    of the <citetitle>syslog(2)</citetitle> facility. Message printed to stdout
-    or stderr are prefixed by a timestamp containing also the backend pid:
-
-    <programlisting>
-#timestamp          #pid    #message
-980127.17:52:14.173 [29271] StartTransactionCommand
-980127.17:52:14.174 [29271] ProcessUtility: drop table t;
-980127.17:52:14.186 [29271] SIIncNumEntries: table is 70% full
-980127.17:52:14.186 [29286] Async_NotifyHandler
-980127.17:52:14.186 [29286] Waking up sleeping backend process
-980127.19:52:14.292 [29286] Async_NotifyFrontEnd
-980127.19:52:14.413 [29286] Async_NotifyFrontEnd done
-980127.19:52:14.466 [29286] Async_NotifyHandler done
-    </programlisting>
-   </para>
-   <para>
-    This format improves readability of the logs and allows people to understand
-    exactly which backend is doing what and at which time. It also makes
-    easier to write simple awk or perl scripts which monitor the log to
-    detect database errors or problem, or to compute transaction time statistics.
-   </para>
-   <para>
-    Messages printed to syslog use the log facility LOG_LOCAL0.
-    The use of syslog can be controlled with the syslog pg_option.
-    Unfortunately many functions call directly <function>printf()</function>
-    to print their messages to stdout or stderr and this output can't be
-    redirected to syslog or have timestamps in it. 
-    It would be advisable that all calls to printf would be replaced with the
-    PRINTF macro and output to stderr be changed to use EPRINTF instead so that
-    we can control all output in a uniform way.
-   </Para>
-
-   <para>
-    The format of the <filename>pg_options</filename> file is as follows:
-
-    <programlisting>
-# <replaceable>comment</replaceable>
-<replaceable>option</replaceable>=<replaceable class="parameter">integer_value</replaceable>  # set value for <replaceable>option</replaceable>
-<replaceable>option</replaceable>                # set <replaceable>option</replaceable> = 1
-<replaceable>option</replaceable>+               # set <replaceable>option</replaceable> = 1
-<replaceable>option</replaceable>-               # set <replaceable>option</replaceable> = 0
-    </programlisting>
-
-    Note that <replaceable class="parameter">keyword</replaceable> can also be
-    an abbreviation of the option name defined in
-    <filename>backend/utils/misc/trace.c</filename>.
-
-    <example>
-     <title>pg_options File</title>
-
+   <itemizedlist>
+    <listitem>
      <para>
-      For example my pg_options file contains the following values:
-
-      <programlisting>
-verbose=2
-query
-hostlookup
-showportnumber
-      </programlisting>
+      Edit the file <filename>rc.local</filename> on
+      <productname>NetBSD</productname> or file
+      <filename>rc2.d</filename> on <productname>Solaris</productname> to contain the
+      following single line:
+<programlisting>
+su postgres -c "/usr/local/pgsql/bin/postmaster -D /usr/local/pgsql/data"
+</programlisting>
      </para>
-    </example>
+    </listitem>
+
+    <listitem>
+     <para>
+      On <productname>FreeBSD</productname> edit
+      <filename>/usr/local/etc/rc.d/pgsql.sh</filename> to contain the
+      following lines and make it <literal>chmod 755</literal> and
+      <literal>chown root:bin</literal>.
+<programlisting>
+#!/bin/sh
+[ -x /usr/local/pgsql/bin/postmaster ] && {
+    su -l pgsql -c 'exec /usr/local/pgsql/bin/postmaster
+        -D/usr/local/pgsql/data
+        -S -o -F > /usr/local/pgsql/errlog' &
+    echo -n ' pgsql'
+}
+</programlisting>
+      You may put the line breaks as shown above. The shell is smart
+      enough to keep parsing beyond end-of-line if there is an
+      expression unfinished. The exec saves one layer of shell under
+      the postmaster process so the parent is init.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      On <productname>RedHat Linux</productname> add a file
+      <filename>/etc/rc.d/init.d/postgres.init</filename> 
+       which is based on the example in <filename>contrib/linux/</filename>.
+       Then make a softlink to this file from
+       <filename>/etc/rc.d/rc5.d/S98postgres.init</filename>.
+      </para>
+     </listitem>
+    </itemizedlist>
    </para>
 
-   <sect2>
-    <title>Recognized Options</title>
+   <para>
+    While the <application>postmaster</application> is running, it's
+    PID is in the file <filename>postmaster.pid</filename> in the data
+    directory. This is used as in interlock against multiple running
+    postmaster on the same data directory and can also be used for
+    shutting down the postmaster.
+   </para>
 
-    <Para>
-     The options currently defined are:
+   <para>
+    The shell script wrapper <application>pg_ctl</application> that
+    comes with <productname>Postgres</productname> can also be used to
+    control starting (and stopping!) of the database server in
+    intelligent fashion.
+   </para>
 
-     <variablelist>
-      <varlistentry>
-       <term>
-	all
-       </term>
-       <listitem>
-	<para>
-	 Global trace flag. Allowed values are:
-	</para>
+   <sect2 id="postmaster-start-failures">
+    <title>Server Startup Failures</title>
 
-       <variablelist>
-	<varlistentry>
-	 <term>
-	  0
-	 </term>
-	 <listitem>
-	  <para>
-	   Trace messages enabled individually
-	  </para>
-	 </listitem>
-	</varlistentry>
+    <para>
+     There are several common reasons for the postmaster to fail to
+     start up. Check the postmaster's log file, or start it by hand
+     (without redirecting standard output or standard error) to see
+     what complaint messages appear. Some of the possible error
+     messages are reasonably self-explanatory, but here are some that
+     are not.
+    </para>
 
-	<varlistentry>
-	 <term>
-	  1
-	 </term>
-	 <listitem>
-	  <para>
-	   Enable all trace messages
-	  </para>
-	 </listitem>
-	</varlistentry>
-	
-	<varlistentry>
-	 <term>
-	  -1
-	 </term>
-	 <listitem>
-	  <para>
-	   Disable all trace messages
-	  </para>
-	 </listitem>
-	</varlistentry>
+    <para>
+<screen>
+FATAL: StreamServerPort: bind() failed: Address already in use
+        Is another postmaster already running on that port?
+</screen>
+     This usually means just what it suggests: you accidentally
+     started a second postmaster on the same port where one is already
+     running. However, if the kernel error message is not
+     <computeroutput>Address already in use</computeroutput> or some
+     variant of that wording, there may be a different problem. For
+     example, trying to start a postmaster on a reserved port number
+     may draw something like
+<screen>
+&gt; <userinput>postmaster -i -p 666</userinput>
+FATAL: StreamServerPort: bind() failed: Permission denied
+        Is another postmaster already running on that port?
+</screen>
+    </para>
 
-       </variablelist>
-      </listitem>
-     </varlistentry>
+    <para>
+     A message like
+<screen>
+IpcMemoryCreate: shmget(5440001, 83918612, 01600) failed: Invalid argument
+FATAL 1:  ShmemCreate: cannot create region
+</screen>
+     probably means that your kernel's limit on the size of shared
+     memory areas is smaller than the buffer area that Postgres is
+     trying to create (83918612 bytes in this example). Or it could
+     mean that you don't have SysV-style shared memory support
+     configured into your kernel at all. As a temporary workaround,
+     you can try starting the postmaster with a smaller-than-normal
+     number of buffers (<option>-B</option> switch). You will
+     eventually want to reconfigure your kernel to increase the
+     allowed shared memory size, however. You may see this message
+     when trying to start multiple postmasters on the same machine, if
+     their total space requests exceed the kernel limit.
+    </para>
 
-     <varlistentry>
-      <term>
-       verbose
-      </term>
-      <listitem>
-       <para>
-	Verbosity flag. Allowed values are:
-       </para>
+    <para>
+     An error like
+<screen>
+IpcSemaphoreCreate: semget(5440026, 16, 0600) failed: No space left on device
+</screen>
+     does <emphasis>not</emphasis> mean that you've run out of disk
+     space; it means that your kernel's limit on the number of SysV
+     semaphores is smaller than the number
+     <productname>Postgres</productname> wants to create. As above,
+     you may be able to work around the problem by starting the
+     postmaster with a reduced number of backend processes
+     (<option>-N</option> switch), but you'll eventually want to
+     increase the kernel limit.
+    </para>
+   </sect2>
 
-       <variablelist>
-	<varlistentry>
-	 <term>
-	  0
-	 </term>
-	 <listitem>
-	  <para>
-	   No messages. This is the default.
-	  </para>
-	 </listitem>
-	</varlistentry>
+   <sect2 id="client-connection-problems">
+    <title>Client Connection Problems</title>
 
-	<varlistentry>
-	 <term>
-	  1
-	 </term>
-	 <listitem>
-	  <para>
-	   Print information messages.
-	  </para>
-	 </listitem>
-	</varlistentry>
+    <para>
+     Although the possible error conditions on the client side are
+     both virtually infinite and application dependent, a few of them
+     might be directly related to how the server was started up.
+     Conditions other than those shown below should be documented with
+     the respective client application.
+    </para>
 
-	<varlistentry>
-	 <term>
-	  2
-	 </term>
-	 <listitem>
-	  <para>
-	   Print more information messages.
-	  </para>
-	 </listitem>
-	</varlistentry>
+    <para>
+<screen>
+connectDB() -- connect() failed: Connection refused
+Is the postmaster running (with -i) at 'server.joe.com' and accepting connections on TCP/IP port '5432'?
+</screen>
+     This is the generic <quote>I couldn't find a server to talk
+     to</quote> failure. It looks like the above when TCP/IP
+     communication is attempted. A common mistake is to forget the
+     <option>-i</option> to the postmaster to allow TCP/IP
+     connections.
+    </para>
 
-       </variablelist>
-      </listitem>
-     </varlistentry>
+    <para>
+     Alternatively, you'll get this when attempting
+     Unix-socket communication to a local postmaster:
+<screen>
+connectDB() -- connect() failed: No such file or directory
+Is the postmaster running at 'localhost' and accepting connections on Unix socket '5432'?
+</screen>
+    </para>
 
-     <varlistentry>
-      <term>
-       query
-      </term>
-      <listitem>
-       <para>
-	Query trace flag. Allowed values are:
-       </para>
-
-       <variablelist>
-	<varlistentry>
-	 <term>
-	  0
-	 </term>
-	 <listitem>
-	  <para>
-	   Don't print query.
-	  </para>
-	 </listitem>
-	</varlistentry>
-
-	<varlistentry>
-	 <term>
-	  1
-	 </term>
-	 <listitem>
-	  <para>
-	   Print a condensed query in one line.
-	  </para>
-	 </listitem>
-	</varlistentry>
-
-	<varlistentry>
-	 <term>
-	  4
-	 </term>
-	 <listitem>
-	  <para>
-	   Print the full query.
-	  </para>
-	 </listitem>
-	</varlistentry>
-
-       </variablelist>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>
-       plan
-      </term>
-      <listitem>
-       <para>
-	Print query plan.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>
-       parse
-      </term>
-      <listitem>
-       <para>
-	Print parser output.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>
-       rewritten
-      </term>
-      <listitem>
-       <para>
-	Print rewritten query.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>
-       pretty_plan
-      </term>
-      <listitem>
-       <para>
-	Pretty-print query plan.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>
-       pretty_parse
-      </term>
-      <listitem>
-       <para>
-	Pretty-print parser output.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>
-       pretty_rewritten
-      </term>
-      <listitem>
-       <para>
-	Pretty-print rewritten query.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>
-       parserstats
-      </term>
-      <listitem>
-       <para>
-	Print parser statistics.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>
-       plannerstats
-      </term>
-      <listitem>
-       <para>
-	Print planner statistics.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>
-       executorstats
-      </term>
-      <listitem>
-       <para>
-	Print executor statistics.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>
-       shortlocks
-      </term>
-      <listitem>
-       <para>
-	Currently unused but needed to enable features in the future.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>
-       locks
-      </term>
-      <listitem>
-       <para>
-	Trace locks.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>
-       userlocks
-      </term>
-      <listitem>
-       <para>
-	Trace user locks.
-       </para>
-      </listitem>
-     </varlistentry>
-     
-     <varlistentry>
-      <term>
-       spinlocks
-      </term>
-      <listitem>
-       <para>
-	Trace spin locks.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>
-       notify
-      </term>
-      <listitem>
-       <para>
-	Trace notify functions.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>
-       malloc
-      </term>
-      <listitem>
-       <para>
-	Currently unused.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>
-       palloc
-      </term>
-      <listitem>
-       <para>
-	Currently unused.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>
-       lock_debug_oidmin
-      </term>
-      <listitem>
-       <para>
-	Minimum relation oid traced by locks.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>
-       lock_debug_relid
-      </term>
-      <listitem>
-       <para>
-	oid, if not zero, of relation traced by locks.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>
-       lock_read_priority
-      </term>
-      <listitem>
-       <para>
-	Currently unused.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>
-       deadlock_timeout
-      </term>
-      <listitem>
-       <para>
-	Deadlock check timer.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>
-       syslog
-      </term>
-      <listitem>
-       <para>
-	syslog flag. Allowed values are:
-       </para>
-
-       <variablelist>
-	<varlistentry>
-	 <term>
-	  0
-	 </term>
-	 <listitem>
-	  <para>
-	   Messages to stdout/stderr.
-	  </para>
-	 </listitem>
-	</varlistentry>
-
-	<varlistentry>
-	 <term>
-	  1
-	 </term>
-	 <listitem>
-	  <para>
-	   Messages to stdout/stderr and syslog.
-	  </para>
-	 </listitem>
-	</varlistentry>
-
-	<varlistentry>
-	 <term>
-	  2
-	 </term>
-	 <listitem>
-	  <para>
-	   Messages only to syslog.
-	  </para>
-	 </listitem>
-	</varlistentry>
-
-       </variablelist>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>
-       hostlookup
-      </term>
-      <listitem>
-       <para>
-	Enable hostname lookup in ps_status.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>
-       showportnumber
-      </term>
-      <listitem>
-       <para>
-	Show port number in ps_status.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>
-       nofsync
-      </term>
-      <listitem>
-       <para>
-	Disable fsync on a per-backend basis.
-       </para>
-      </listitem>
-     </varlistentry>
-
-    </variablelist>
+    <para>
+     The last line is useful in verifying that the client is trying to
+     connect where it is supposed to. If there is in fact no
+     postmaster running there, the kernel error message will typically
+     be either <computeroutput>Connection refused</computeroutput> or
+     <computeroutput>No such file or directory</computeroutput>, as
+     illustrated. (It is particularly important to realize that
+     <computeroutput>Connection refused</computeroutput> in this
+     context does <emphasis>not</emphasis> mean that the postmaster
+     got your connection request and rejected it -- that case will
+     produce a different message, as shown in <xref
+     linkend="client-authentication-problems">.) Other error messages
+     such as <computeroutput>Connection timed out</computeroutput> may
+     indicate more fundamental problems, like lack of network
+     connectivity.
     </para>
    </sect2>
   </sect1>
+
+  <sect1 Id="runtime-config">
+   <Title>Run-time configuration</Title>
+
+   <para>
+    There are a lot of configuration parameters that affect the
+    behavior of the database system in some way or other. Here we
+    describe how to set them and the following subsections will
+    discuss each of them.
+   </para>
+
+   <para>
+    All parameter names are case-insensitive. Every parameter takes a
+    value of one of the four types boolean, integer, floating point,
+    string as described below. Boolean values are
+    <literal>ON</literal>, <literal>OFF</literal>,
+    <literal>TRUE</literal>, <literal>FALSE</literal>,
+    <literal>YES</literal>, <literal>NO</literal>,
+    <literal>1</literal>, <literal>0</literal> (case-insensitive) or
+    any non-ambiguous prefix of these.
+   </para>
+
+   <para>
+    One way to set these options is to create a file
+    <filename>postgresql.conf</filename> in the data directory (e.g.,
+    <filename>/usr/local/pgsql/data</filename>). An example of how
+    this file could look like is this:
+<programlisting>
+# This is a comment
+log_connections = yes
+syslog = 2
+</programlisting>
+    As you see, options are one per line. The equal sign between name
+    and value is optional. White space is insignificant, blank lines
+    are ignored. Hash marks (<quote>#</quote>) introduce comments
+    anywhere.
+   </para>
+
+   <para>
+    The configuration file is reread whenever the postmaster receives
+    a SIGHUP signal. This signal is also propagated to all running
+    backend processes, so that running sessions get the new default.
+    Alternatively, you can send the signal to only one backend process
+    directly.
+   </para>
+
+   <para>
+    A second way to set these configuration parameters is to give them
+    as a command line option to the postmaster, such as
+<programlisting>
+postmaster --log-connections=yes --syslog=2
+</programlisting>
+    which would have the same effect as the previous example.
+   </para>
+
+   <para>
+    Occasionally it is also useful to give a command line option to
+    one particular backend session only. The environment variable
+    <envar>PGOPTIONS</envar> can be used for this purpose on the
+    client side:
+<programlisting>
+env PGOPTIONS='--geqo=off' psql
+</programlisting>
+    (This works for any client application, not just
+    <application>psql</application>.) Note that this won't work for
+    options that are necessarily fixed once the server is started,
+    such as the port number.
+   </para>
+
+   <para>
+    Finally, some options can be changed in individual SQL sessions
+    with the <command>SET</command> command, for example
+<screen>
+=&gt; <userinput>SET ENABLE_SEQSCAN TO OFF;</userinput>
+</screen>
+    See the SQL command language reference for details on the syntax.
+   </para>
+
+   <sect2 id="runtime-config-optimizer">
+    <title>Planner and Optimizer Tuning</title>
+
+   <para>
+    <variablelist>
+     <varlistentry>
+      <term>CPU_INDEX_TUPLE_COST (<type>floating point</type>)</term>
+      <listitem>
+       <para>
+        Sets the query optimizer's estimate of the cost of processing
+	each index tuple during an index scan. This is measured as a
+	fraction of the cost of a sequential page fetch.
+       </para>
+      </listitem>
+     </varlistentry>
+    
+     <varlistentry>
+      <term>CPU_OPERATOR_COST (<type>floating point</type>)</term>
+      <listitem>
+       <para>
+        Sets the optimizer's estimate of the cost of processing each
+	operator in a WHERE clause. This is measured as a fraction of
+	the cost of a sequential page fetch.
+       </para>
+      </listitem>
+     </varlistentry>
+    
+     <varlistentry>
+      <term>CPU_TUPLE_COST (<type>floating point</type>)</term>
+      <listitem>
+       <para>
+        Sets the query optimizer's estimate of the cost of processing
+	each tuple during a query. This is measured as a fraction of
+	the cost of a sequential page fetch.
+       </para>
+      </listitem>
+     </varlistentry>
+    
+     <varlistentry>
+      <term>EFFECTIVE_CACHE_SIZE (<type>floating point</type>)</term>
+      <listitem>
+       <para>
+        Sets the optimizer's assumption about the effective size of
+	the disk cache (that is, the portion of the kernel's disk
+	cache that will be used for
+	<productname>Postgres</productname> data files). This is
+	measured in disk pages, which are normally 8kB apiece.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>ENABLE_HASHJOIN (<type>boolean</type>)</term>
+      <listitem>
+       <para>
+        Enables or disables the query planner's use of hash-join plan
+        types. The default is on. This is mostly useful to debug the
+        query planner.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>ENABLE_INDEXSCAN (<type>boolean</type>)</term>
+      <listitem>
+       <para>
+        Enables or disables the query planner's use of index scan plan
+        types. The default is on. This is mostly useful to debug the
+        query planner.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>ENABLE_MERGEJOIN (<type>boolean</type>)</term>
+      <listitem>
+       <para>
+        Enables or disables the query planner's use of merge-join plan
+        types. The default is on. This is mostly useful to debug the
+        query planner.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>ENABLE_NESTLOOP (<type>boolean</type>)</term>
+      <listitem>
+       <para>
+        Enables or disables the query planner's use of nested-loop
+	join plans. It's not possible to suppress nested-loop joins
+	entirely, but turning this variable off discourages the
+	planner from using one if there is any other method available.
+	The default is on. This is mostly useful to debug the query
+	planner.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>ENABLE_SEQSCAN (<type>boolean</type>)</term>
+      <listitem>
+       <para>
+        Enables or disables the query planner's use of sequential scan
+	plan types. It's not possible to suppress sequential scans
+	entirely, but turning this variable off discourages the
+	planner from using one if there is any other method available.
+	The default is on. This is mostly useful to debug the query
+	planner.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>ENABLE_SORT (<type>boolean</type>)</term>
+      <listitem>
+       <para>
+        Enables or disables the query planner's use of explicit sort
+	steps. It's not possible to suppress explicit sorts entirely,
+	but turning this variable off discourages the planner from
+	using one if there is any other method available. The default
+	is on. This is mostly useful to debug the query planner.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>ENABLE_TIDSCAN (<type>boolean</type>)</term>
+      <listitem>
+       <para>
+        Enables or disables the query planner's use of TID scan plan
+        types. The default is on. This is mostly useful to debug the
+        query planner.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>GEQO (<type>boolean</type>)</term>
+      <listitem>
+       <para>
+        Enables or disables genetic query optimization, which is an
+        algorithm that attempts to do query planning without
+        exhaustive search. This is on by default. See also the various
+        other GEQO_ settings.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>GEQO_EFFORT (<type>integer</type>)</term>
+      <term>GEQO_GENERATIONS (<type>integer</type>)</term>
+      <term>GEQO_POOL_SIZE (<type>integer</type>)</term>
+      <term>GEQO_RANDOM_SEED (<type>integer</type>)</term>
+      <term>GEQO_SELECTION_BIAS (<type>floating point</type>)</term>
+      <listitem>
+       <para>
+        Various tuning parameters for the genetic query optimization
+        algorithm: The pool size is the number of individuals in one
+        population. Valid values are between 128 and 1024. If it is
+        set to 0 (the default) a pool size of 2^(QS+1), where QS
+        is the number of relations in the query, is taken. The effort
+        is used to calculate a default for generations. Valid values
+        are between 1 and 80, 40 being the default. Generations
+        specifies the number of iterations in the algorithm. The
+        number must be a positive integer. If 0 is specified then
+        Effort * Log2(PoolSize) is used. The run time of the algorithm
+        is roughly proportional to the sum of pool size and
+        generations. The selection bias is the selective pressure
+        within the population. Values can be from 1.50 to 2.00; the
+        latter is the default. The random seed can be set to get
+        reproduceable results from the algorithm. If it is set to -1
+        then the algorithm behaves non-deterministically.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>GEQO_RELS (<type>integer</type>)</term>
+      <listitem>
+       <para>
+        Only use genetic query optimization for queries with at least
+        this many relations involved. The default is 11. For less
+        relations it is probably more efficient to use the
+        deterministic, exhaustive planner.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>KSQO (<type>boolean</type>)</term>
+      <listitem>
+       <para>
+        The <firstterm>Key Set Query Optimizer</firstterm>
+        (<abbrev>KSQO</abbrev>) causes the query planner to convert
+        queries whose WHERE clause contains many OR'ed AND clauses
+        (such as <literal>WHERE (a=1 AND b=2) OR (a=2 AND b=3)
+        ...</literal>) into a UNION query. This method can be faster
+        than the default implementation, but it doesn't necessarily
+        give exactly the same results, since UNION implicitly adds a
+        SELECT DISTINCT clause to eliminate identical output rows.
+        KSQO is commonly used when working with products like
+        <productname>Microsoft Access</productname>, which tend to
+        generate queries of this form.
+       </para>
+
+       <para>
+        The KSQO algorithm used to be absolutely essential for queries
+        with many OR'ed AND clauses, but in
+        <productname>Postgres</productname> 7.0 and later the standard
+        planner handles these queries fairly successfully. Hence the
+        default is OFF.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>RANDOM_PAGE_COST (<type>floating point</type>)</term>
+      <listitem>
+       <para>
+        Sets the query optimizer's estimate of the cost of a
+	nonsequentially fetched disk page. This is measured as a
+	multiple of the cost of a sequential page fetch.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+
+   <note>
+    <para>
+     Unfortunately, there is no well-defined method of determining
+     ideal values for the family of <quote>COST</quote> variables that
+     were just described. You are encouraged to experiment and share
+     your findings.
+    </para>
+   </note>
+
+   </sect2>
+
+   <sect2 id="logging">
+    <title>Logging and Debugging</title>
+
+   <para>
+    <variablelist>
+     <varlistentry>
+      <term>DEBUG_LEVEL (<type>integer</type>)</term>
+      <listitem>
+       <para>
+        The higher this value is set, the more
+        <quote>debugging</quote> output of various sorts is generated
+        in the server log during operation. This option is 0 by
+        default, which means no debugging output. Values up to about 4
+        currently make sense.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>DEBUG_PRINT_PARSE (<type>boolean</type>)</term>
+      <term>DEBUG_PRINT_PLAN (<type>boolean</type>)</term>
+      <term>DEBUG_PRINT_REWRITTEN (<type>boolean</type>)</term>
+      <term>DEBUG_PRINT_QUERY (<type>boolean</type>)</term>
+      <term>DEBUG_PRETTY_PRINT (<type>boolean</type>)</term>
+      <listitem>
+       <para>
+        For any executed query, prints either the query, the parse
+        tree, the execution plan, or the query rewriter output to the
+        server log. <option>DEBUG_PRETTY_PRINT</option> selects are
+        nicer but longer output format.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>HOSTLOOKUP (<type>boolean</type>)</term>
+      <listitem>
+       <para>
+        By default, connection logs only show the IP address of the
+        connecting host. If you want it to show the host name you can
+        turn this on, but depending on your host name resolution setup
+        it might impose a non-negligible performance penalty. This
+        option can only be set at server start.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>LOG_CONNECTIONS (<type>boolean</type>)</term>
+      <listitem>
+       <para>
+        Prints a line informing about each successful connection to
+        the server log. This is off by default, although it is
+        probably very useful. This option can only be set at server
+        start.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>LOG_PID (<type>boolean</type>)</term>
+      <listitem>
+       <para>
+        Prefixes each server log message with the process id of the
+        backend process. This is useful to sort out which messages
+        pertain to which connection. The default is off.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>LOG_TIMESTAMP (<type>boolean</type>)</term>
+      <listitem>
+       <para>
+        Prefixes each server log message with a timestamp. The default
+        is off.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>SHOW_QUERY_STATS (<type>boolean</type>)</term>
+      <term>SHOW_PARSER_STATS (<type>boolean</type>)</term>
+      <term>SHOW_PLANNER_STATS (<type>boolean</type>)</term>
+      <term>SHOW_EXECUTOR_STATS (<type>boolean</type>)</term>
+      <listitem>
+       <para>
+        For each query, write performance statistics of the respective
+        module to the server log. This is a crude profiling
+        instrument.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>SHOWPORTNUMBER (<type>boolean</type>)</term>
+      <listitem>
+       <para>
+        Shows the port number of the connecting host in the connection
+        log messages. You could trace back the port number to find out
+        what user initiated the connection. Other than that it's
+        pretty useless and therefore off by default. This option can
+        only be set at server start.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>SYSLOG (<type>integer</type>)</term>
+      <listitem>
+       <para>
+        <productname>Postgres</productname> allows the use of
+        <application>syslog</application> for logging. If this option
+        is set to 1, messages go both to syslog and the standard
+        output. A setting of 2 sends output only to syslog. (Some
+        messages will still go to the standard output/error.) The
+        default is 0, which means syslog is off. This option must be
+        set at server start.
+       </para>
+       <para>
+        To use syslog, the build of
+        <productname>Postgres</productname> must be configured with
+        the <option>--enable-syslog</option> option.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>TRACE_NOTIFY (<type>boolean</type>)</term>
+      <listitem>
+       <para>
+        Generates a great amount of debugging output for the
+        <command>LISTEN</command> and <command>NOTIFY</command>
+        commands.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+   </sect2>
+
+   <sect2 id="runtime-config-general">
+    <title>General operation</title>
+
+   <para>
+    <variablelist>
+     <varlistentry>
+      <term>DEADLOCK_TIMEOUT (<type>integer</type>)</term>
+      <listitem>
+       <para>
+        <productname>Postgres</productname> assumes that if
+        transactions are stuck for this many milliseconds then a
+        deadlock has occurred. Although it is technically possible to
+        detect deadlocks <quote>properly</quote>, the present
+        optimistic approach is much more efficient in practice. If you get
+        too many deadlock detected messages when you provably did not
+        have one, you might want to try raising this value. The
+        default is 1000 (i.e., one second). This option can only be
+        set at server start.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>FSYNC (<type>boolean</type>)</term>
+      <listitem>
+       <para>
+        When this is on (default), an <function>fsync()</function>
+        call is done after each transaction. Turning this off
+        increases performance but an operating system crash or power
+        outage might cause data corruption. (Note that a crash of
+        <productname>Postgres</productname> itself is not affected.)
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>MAX_BACKENDS (<type>integer</type>)</term>
+      <listitem>
+       <para>
+        Determines how many concurrent connections the database server
+        will allow. The default is 32. Note that there is also a
+        compiled-in hard limit on this option, which is currently
+        1024. This parameter can only be set at server start.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>MAX_EXPR_DEPTH (<type>integer</type>)</term>
+      <listitem>
+       <para>
+        Sets the maximum expression nesting depth that the parser will
+	accept. The default value is high enough for any normal query,
+	but you can raise it if you need to. (But if you raise it too
+	high, you run the risk of backend crashes due to stack
+	overflow.)
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>NET_SERVER (<type>boolean</type>)</term>
+      <listitem>
+       <para>
+        If this is true, then the server will accept TCP/IP
+        connections. Otherwise only local Unix domain socket
+        connections are accepted. It is off by default. This option
+        can only be set at server start.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>PORT (<type>integer</type>)</term>
+      <listitem>
+       <para>
+        The TCP port the server listens on; 5432 by default. This
+        option can only be set at server start.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>SHMEM_BUFFERS (<type>integer</type>)</term>
+      <listitem>
+       <para>
+        Sets the number of shared memory buffers the database server
+        will use. The default is 64. Each buffer is typically 8192
+        bytes. This option can only be set at server start.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>SORT_MEM (<type>integer</type>)</term>
+      <listitem>
+       <para>
+	Specifies the amount of memory to be used by internal sorts
+	and hashes before resorting to temporary disk files. The value
+	is specified in kilobytes, and defaults to 512 kilobytes. Note
+	that for a complex query, several sorts and/or hashes might be
+	running in parallel, and each one will be allowed to use as
+	much memory as this value specifies before it starts to put
+	data into temporary files.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+   </sect2>
+
+   <sect2 id="runtime-config-short">
+    <title>Short options</title>
+   <para>
+    For convenience there are also single letter option switches
+    available for many parameters. They are described in the following
+    table.
+
+    <table>
+     <title>Short option key</title>
+     <tgroup cols="3">
+      <colspec colnum="3" align="center">
+      <thead>
+       <row>
+        <entry>Short option</entry>
+        <entry>Equivalent</entry>
+        <entry>Remark</entry>
+       </row>
+      </thead>
+      <tbody>
+       <row>
+        <entry>-B <replaceable>x</replaceable></entry>
+        <entry>shmem_buffers = <replaceable>x</replaceable></entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>-d <replaceable>x</replaceable></entry>
+        <entry>debug_level = <replaceable>x</replaceable></entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>-F</entry>
+        <entry>fsync = off</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>-i</entry>
+        <entry>net_server = on</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>-N <replaceable>x</replaceable></entry>
+        <entry>max_backends = <replaceable>x</replaceable></entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>-p <replaceable>x</replaceable></entry>
+        <entry>port = <replaceable>x</replaceable></entry>
+        <entry></entry>
+       </row>
+
+       <row>
+        <entry>-fi, -fh, -fm, -fn, -fs, -ft</entry>
+        <entry>enable_indexscan=off, enable_hashjoin=off,
+        enable_mergejoin=off, enable_nestloop=off, enable_seqscan=off,
+        enable_tidscan=off</entry>
+        <entry>*</entry>
+       </row>
+       <row>
+        <entry>-S <replaceable>x</replaceable></entry>
+        <entry>sort_mem = <replaceable>x</replaceable></entry>
+        <entry>*</entry>
+       </row>
+       <row>
+        <entry>-s</entry>
+        <entry>show_query_stats = on</entry>
+        <entry>*</entry>
+       </row>
+       <row>
+        <entry>-tpa, -tpl, -te</entry>
+        <entry>show_parser_stats=on, show_planner_stats=on, show_executor_stats=on</entry>
+        <entry>*</entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+    For historical reasons, options marked <quote>*</quote> must be
+    passed to the individual backend process via the
+    <option>-o</option> postmaster option, for example,
+<screen>
+&gt; <userinput>postmaster -o '-S 1024 -s'</userinput>
+</screen>
+    or via <envar>PGOPTIONS</envar> from the client side, as explained
+    above.
+   </para>
+
+   </sect2>
+ </sect1>
+
+ <sect1 id="postmaster-shutdown">
+  <title>Shutting down the server</title>
+
+  <para>
+   Depending on your needs, there are several ways to shut down the
+   database server when your work is done. The differentiation is
+   done by what signal you send to the server process.
+   <variablelist>
+    <varlistentry>
+     <term>SIGTERM</term>
+     <listitem>
+      <para>
+       After receiving SIGTERM, the postmaster disallows new
+       connections but lets active backend end their work and shuts
+       down only after all of them terminated (by client request).
+       This is the <firstterm>Smart Shutdown</firstterm>.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>SIGINT</term>
+     <listitem>
+      <para>
+       The postmaster disallows new connections, sends all active
+       backends SIGTERM (which will cause them to abort immediately),
+       waits for children to exit and shuts down the data base. This
+       is the <firstterm>Fast Shutdown</firstterm>.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>SIGQUIT</term>
+     <listitem>
+      <para>
+       This is the <firstterm>Immediate Shutdown</firstterm> which
+       will cause the postmaster to send a SIGUSR1 to all backends and
+       exit immediately (without properly shutting down the database
+       system). When WAL is implemented, this will lead to recovery on
+       startup. Right now it's not recommendable to use this option.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+
+   <caution>
+    <para>
+     If at all possible, do not use SIGKILL to shut down the
+     postmaster. This can cause data corruption and will prevent the
+     cleaning up of shared memory resources, which you will have to
+     do yourself in that case.
+    </para>
+   </caution>
+
+   The PID of the postmaster process can be found using the
+   <application>ps</application> program, or from the file
+   <filename>postmaster.pid</filename> in the data directory. So for
+   example, to do a fast shutdown:
+<screen>
+&gt; <userinput>kill -INT `cat /usr/local/pgsql/data/postmaster.pid`</userinput>
+</screen>
+  </para>
+  <para>
+   The program <application>pg_ctl</application> is a shell script
+   wrapper that provides a convenient interface to these functions.
+  </para>
+ </sect1>
+
+ <sect1>
+  <title>Secure TCP/IP Connection with SSH</title>
+
+  <note>
+   <title>Acknowledgement</title>
+   <para>
+    Idea taken from an email by Gene Selkov, Jr.
+    (<email>selkovjr@mcs.anl.gov</>) written on 1999-09-08 in response
+    to a question from Eric Marsden.
+   </para>
+  </note>
+
+  <para>
+   One can use <productname>ssh</productname> to encrypt the network
+   connection between clients and a
+   <productname>Postgres</productname> server. Done properly, this
+   should lead to an adequately secure network connection.
+  </para>
+
+  <para>
+   First make sure that an <productname>ssh</productname> server is
+   running properly on the same machine as
+   <productname>Postgres</productname> and that you can log in using
+   ssh as some user. Then you can establish a secure tunnel with a
+   command like this from the client machine:
+<programlisting>
+&gt; <userinput>ssh -L 3333:foo.com:5432 joe@foo.com</userinput>
+</programlisting>
+   The first number in the <option>-L</option> argument, 3333, is the
+   port number of your end of the tunnel; it can be chosen freely. The
+   second number, 5432, is the remote end of the tunnel -- the port
+   number your backend is using. The name or the address in between
+   the port numbers is the host with the database server you are going
+   to connect to. In order to connect to the database server using
+   this tunnel, you connect to port 3333 on the local machine:
+<programlisting>
+psql -h localhost -p 3333 template1
+</programlisting>
+   To the database server it will then look as though you are really
+   user <literal>joe@foo.com</literal> and it will use whatever
+   authentication procedure was set up for this user. In order for the
+   tunnel setup to succeed you must be allowed to connect via ssh as
+   joe@foo.com, just as if you had attempted to use ssh to set up a
+   terminal session.
+  </para>
+
+ </sect1>
 
 </Chapter>
 

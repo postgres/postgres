@@ -1,0 +1,502 @@
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.1 2000/06/18 21:24:51 petere Exp $ -->
+
+<chapter id="client-authentication">
+ <title>Client Authentication</title>
+
+ <para>
+  User names from the operating system and from a
+  <productname>Postgres</productname> database installation are
+  logically separate. When a client application connects, it specifies
+  which database user name it wants to connect as, similar to how one
+  logs into a Unix computer. Within the SQL environment the active
+  database user name determines various access privileges to database
+  objects -- see <xref linkend="user-manag"> for more information
+  about that. It is therefore obviously essential to restrict what
+  database user name a given client can connect as.
+ </para>
+
+ <para>
+  <firstterm>Authentication</firstterm> is the process by which the
+  database server establishes the identity of the client, and by
+  extension determines whether the client application (or the user
+  which runs the client application) is permitted to connect with the
+  user name that was requested.
+ </para>
+
+ <para>
+  <productname>Postgres</productname> offers client authentication by
+  (client) host and by database, with a number of different
+  authentication methods available.
+ </para>
+
+ <sect1 id="pg-hba.conf">
+  <title>The <filename>pg_hba.conf</filename> file</title>
+
+  <para>
+   Client authentication is controlled by the file
+   <filename>pg_hba.conf</filename> in the data directory, e.g.,
+   <filename>/usr/local/pgsql/data/pg_hba.conf</filename>. (HBA =
+   host-based authentication) A default file is installed when the
+   data area is initialized by <application>initdb</application>.
+  </para>
+
+  <para>
+   The general format of the <filename>pg_hba.conf</filename> file is
+   of a set of records, one per line. Blank lines and lines beginning
+   with a hash character (<quote>#</quote>) are ignored. A record is
+   made up of a number of fields which are separated by spaces and/or
+   tabs.
+  </para>
+
+  <para>
+   A record may have one of the two formats
+   <synopsis>
+local <replaceable>database</replaceable> <replaceable>authentication-method</replaceable> [ <replaceable>authentication-option</replaceable> ]
+host <replaceable>database</replaceable> <replaceable>IP-address</replaceable> <replaceable>IP-mask</replaceable> <replaceable>authentication-method</replaceable> [ <replaceable>authentication-option</replaceable> ]
+    </synopsis>
+   The meaning of the fields is as follows:
+
+   <variablelist>
+    <varlistentry>
+     <term><literal>local</literal></term>
+     <listitem>
+      <para>
+       This record pertains to connection attempts over Unix domain
+       sockets.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>host</literal></term>
+     <listitem>
+      <para>
+       This record pertains to connection attempts over TCP/IP
+       networks. Note that TCP/IP connections are completely disabled
+       unless the server is started with the <option>-i</option> or
+       the equivalent configuration parameter is set.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable>database</replaceable></term>
+     <listitem>
+      <para>
+       Specifies the database that this record applies to. The value
+       <literal>all</literal> specifies that it applies to all
+       databases.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable>IP address</replaceable></term>
+     <term><replaceable>IP mask</replaceable></term>
+     <listitem>
+      <para>
+       These two fields control to which hosts a
+       <literal>host</literal> record applies, based on their IP
+       address. (Of course IP addresses can be spoofed but this
+       consideration is beyond the scope of
+       <productname>Postgres</productname>.) The precise logic is that
+       <blockquote>
+        <informalfigure>
+         <programlisting>(<replaceable>actual-IP-address</replaceable> xor <replaceable>IP-address-field</replaceable>) and <replaceable>IP-mask-field</replaceable></programlisting>
+        </informalfigure>
+       </blockquote>
+       must be zero for the record to match.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable>authentication method</replaceable></term>
+     <listitem>
+      <para>
+       Specifies the method a user must use to authenticate themselves
+       when connecting to that database.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable>authentication option</replaceable></term>
+     <listitem>
+      <para>
+       This field is interpreted differently depending on the
+       authentication method.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+
+   The first record that matches a connection attempt is used. Note
+   that there is no <quote>fall-through</quote> or
+   <quote>backup</quote>, that is, if one record is chosen and the
+   authentication fails, the following records are not considered. If
+   no record matches, the access will be denied.
+  </para>
+
+  <para>
+   The <filename>pg_hba.conf</filename> file is re-read before each
+   connection attempt. It is therefore easily possible to modify
+   access permissions while the server is running.
+  </para>
+
+  <para>
+   An example of a <filename>pg_hba.conf</filename> file is shown in
+   <xref linkend="example-pg-hba.conf">. See below for details on the
+   different authentication methods.
+
+   <example id="example-pg-hba.conf">
+    <title>An example <filename>pg_hba.conf</filename> file</title>
+<programlisting>
+# Trust any connection via Unix domain sockets.
+local	trust
+# Trust any connection via TCP/IP from this machine.
+host	all	127.0.0.1	255.255.255.255		trust
+# We don't like this machine.
+host	all	192.168.0.10	255.255.255.0		reject
+# This machine can't encrypt so we ask for passwords in clear.
+host	all	192.168.0.3	255.255.255.0		password
+# The rest of this group of machines should provide encrypted passwords.
+host	all	192.168.0.0	255.255.255.0		crypt
+# Authenticate these networks using ident
+host    all     192.168.1.0     255.255.255.0           ident usermap
+host    all     192.168.2.0     255.255.255.0           ident othermap
+</programlisting>
+   </example>
+  </para>
+ </sect1>
+
+ <sect1 id="auth-methods">
+  <title>Authentication methods</title>
+  <para>
+   The following authentication methods are supported. They are
+   descibed in detail below.
+
+   <variablelist>
+    <varlistentry>
+     <term>trust</term>
+     <listitem>
+      <para>
+       The connection is allowed unconditionally. This method allows
+       any user that has login access to the client host to connect as
+       any user whatsoever. Use with care.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>reject</term>
+     <listitem>
+      <para>
+       The connection is rejected unconditionally. This is mostly
+       useful to <quote>filter out</quote> certain hosts from a group.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>password</term>
+     <listitem>
+      <para>
+       The client is required to supply a password for the connection
+       attempt which is required to match the password that was set up
+       for the user. (These passwords are separate from any operating
+       sytem password.)
+      </para>
+      <para>
+       An optional password file may be specified after the
+       <literal>password</literal> keyword to obtain the password from
+       that file rather than the pg_shadow system catalog.
+      </para>
+      <para>
+       The password is sent over the wire in clear text. For better
+       protection, use the <literal>crypt</literal> method.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>crypt</term>
+     <listitem>
+      <para>
+       Like the <literal>password</literal> method, but the password
+       is sent over the wire encrypted using a simple
+       challenge-response protocol. Note that this is still not
+       cryptographically secure but it protects against incidental
+       wire-sniffing. Interestingly enough, the
+       <literal>crypt</literal> does not support secondary password
+       files.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>krb4</term>
+     <listitem>
+      <para>
+       Kerberos V4 is used to authenticate the user. This is only
+       available for TCP/IP connections.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>krb5</term>
+     <listitem>
+      <para>
+       Kerberos V5 is used to authenticate the user. This is only
+       available for TCP/IP connections.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>ident</term>
+     <listitem>
+      <para>
+       The ident server on the client host is asked for the identity
+       of the connecting user. <productname>Postgres</productname>
+       then verifies whether the so identified operating system user
+       is allowed to connect as the database user that is requested.
+       The <replaceable>authentication option</replaceable> following
+       the <literal>ident</> keyword specifies the name of an
+       <firstterm>ident map</firstterm> that specifies which operating
+       system users equate with which database users. See below for
+       details.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+
+  <sect2>
+   <title>Password authentication</title>
+   <para>
+    Ordinarily, the password for each database user is stored in the
+    pg_shadow system catalog table. Passwords can be managed with the
+    query language commands <command>CREATE USER</command> and
+    <command>ALTER USER</command>, e.g., <userinput>CREATE USER foo
+    WITH PASSWORD 'secret';</userinput>. By default, that is, if no
+    password has explicitly been set up, the stored password is
+    <quote>NULL</quote> and password authentication will always fail
+    for that user.
+   </para>
+
+   <para>
+    Secondary password files can be used if a given set of passwords
+    should only apply to a particular database or set thereof.
+    Secondary password files have a format similar to the standard
+    Unix password file <filename>/etc/passwd</filename>, that is,
+    <synopsis>
+<replaceable>username</replaceable>:<replaceable>password</replaceable>
+    </synopsis>
+    Any extra colon separated fields following the password are
+    ignored. The password is expected to be encrypted using the
+    system's <function>crypt()</function> function. The utility
+    program <application>pg_passwd</application> that is installed
+    with <productname>Postgres</productname> can be used to manage
+    these password files.
+   </para>
+
+   <para>
+    Secondary password files can also be used to restrict certain
+    users from connecting to certain databases at all. This is
+    currently not possible to achieve using the normal password
+    mechanism (because users and passwords are global across all
+    databases). If a user is not listed in the applicable password
+    file the connection will be refused.
+   </para>
+
+   <para>
+    Note that using secondary password files means that one can no
+    longer use <command>ALTER USER</command> to change one's password.
+    It will still appear to work but the password one is actually
+    changing is not the password that the system will end up using.
+   </para>
+  </sect2>
+
+  <sect2>
+   <title>Kerberos authentication</title>
+
+   <para>
+    <productname>Kerberos</productname> is an industry-standard secure
+    authentication system suitable for distributed computing over a
+    public network. A description of the
+    <productname>Kerberos</productname> system is far beyond the scope
+    of this document; in all generality it can be quite complex. The
+    <ulink url="http://www.nrl.navy.mil/CCS/people/kenh/kerberos-faq.html">Kerberos <acronym>FAQ</></ulink>
+    can be a good starting point for exploration.
+   </para>
+
+   <para>
+    In order to use <productname>Kerberos</>, support for it must be
+    enable at build time. Both Kerberos 4 and 5 are supported.
+   </para>
+
+   <para>
+    <productname>Postgres</> should operate like a normal Kerberos
+    service. The name of the service principal is normally
+    <literal>postgres</literal>, unless it was changed during the
+    build. Make sure that your server keytab file is readable (and
+    preferrably only readable) by the Postgres server account (see
+    <xref linkend="postgres-user">). The location of the keytab file
+    is specified at build time. By default it is
+    <filename>/etc/srvtab</filename> in Kerberos 4 and
+    <filename>FILE:/usr/local/postgres/krb5.keytab</filename> in
+    Kerberos 5.
+   </para>
+<!-- Note from Peter E.: Some of the Kerberos usage information is
+still in config.sgml and some in doc/README.kerberos. It should be
+integrated here. -->
+  </sect2>
+
+  <sect2>
+   <title>Ident-based authentication</title>
+
+   <para>
+    The <quote>Identification Protocol</quote> is described in
+    <citetitle>RFC 1413</citetitle>. Virtually every Unix-like
+    operating systems ships with an ident server that listens on TCP
+    port 113 by default. The basic functionality of the ident server
+    is to answer questions like <quote>What user initiated the
+    connection that goes out of your port <replaceable>X</replaceable>
+    and connects to my port <replaceable>Y</replaceable>?</quote>.
+    Since both <replaceable>X</replaceable> and
+    <replaceable>Y</replaceable> are known,
+    <productname>Postgres</productname> could theoretically determine
+    the operating system user for any given connection this way.
+   </para>
+
+   <para>
+    The drawback of this procedure is that it depends on the integrity
+    of the client: if the client machine is untrusted or compromised
+    an attacker could run just about any program on port 113 and
+    return any user name he chooses. This authentication method is
+    therefore only appropriate for closed networks where each client
+    machine is under tight control and where the database and system
+    administrators operate in close contact. Heed the warning:
+    <blockquote>
+     <attribution>RFC 1413</attribution>
+     <para>
+      The Identification Protocol is not intended as an authorization
+      or access control protocol.
+     </para>
+    </blockquote>
+   </para>
+
+   <para>
+    When using ident-based authentication, after having determined the
+    operating system user that initiated the connection,
+    <productname>Postgres</productname> determines as what database
+    system user he may connect. This is controlled by the ident map
+    argument that follows the <literal>ident</> keyword in the
+    <filename>pg_hba.conf</filename> file. The simplest ident map is
+    <literal>sameuser</literal>, which allows any operating system
+    user to connect as the database user of the same name (if the
+    latter exists). Other maps must be created manually.
+   </para>
+
+   <para>
+    Ident maps are held in the file <filename>pg_ident.conf</filename>
+    in the data directory, which contains lines of the general form:
+<synopsis>
+<replaceable>map-name</> <replaceable>ident-username</> <replaceable>database-username</>
+</synopsis>
+    Comments and whitespace are handled in the usual way.
+    The <replaceable>map-name</> is an arbitrary name that will be
+    used to refer to this mapping in <filename>pg_hba.conf</filename>.
+    The other two fields specify which operating system user is
+    allowed to connect as which database user. The same
+    <replaceable>map-name</> can be used repeatedly to specify more
+    user-mappings. There is also no restriction regarding how many
+    database users a given operating system may correspond to and vice
+    versa.
+   </para>
+
+   <para>
+    A <filename>pg_ident.conf</filename> file that could be used in
+    conjunction with the <filename>pg_hba.conf</> file in <xref
+    linkend="example-pg-hba.conf"> is shown in <xref
+    linkend="example-pg-ident.conf">. In that example setup, anyone
+    logged in to a machine on the 192.168.1 network that does not have
+    the a user name joe, robert, or ann would not be granted access.
+    Unix user robert would only be allowed access when he tries to
+    connect as <quote>bob</quote>, not as <quote>robert</quote> or
+    anyone else. <quote>ann</quote> and <quote>joe</quote> would only
+    be allowed to connect <quote>as themselves</quote>. On the
+    192.168.2 network, however, a user <quote>ann</quote> would not be
+    allowed to connect at all, only the user <quote>bob</> can connect
+    as <quote>bob</> and some user <quote>karl</> can connect as
+    <quote>joe</> as well.
+   </para>
+
+   <example id="example-pg-ident.conf">
+    <title>An example <filename>pg_ident.conf</> file</title>
+<programlisting>
+usermap         joe     joe
+# bob has username robert on these machines
+usermap         robert  bob
+usermap         ann     ann
+
+othermap        joe     joe
+othermap        bob     bob
+othermap        karl    joe
+</programlisting>
+   </example>
+  </sect2>
+ </sect1>
+
+  <sect1 id="client-authentication-problems">
+   <title>Authentication problems</title>
+
+   <para>
+    Genuine authentication failures and related problems generally
+    manifest themselves through error messages like the following.
+   </para>
+
+   <para>
+<ProgramListing>
+No pg_hba.conf entry for host 123.123.123.123, user joeblow, database testdb
+</ProgramListing>
+    This is what you are most likely to get if you succeed in
+    contacting the server, but it doesn't want to talk to you. As the
+    message suggests, the server refused the connection request
+    because it found no authorizing entry in its <filename>pg_hba.conf</filename>
+    configuration file.
+   </para>
+
+   <para>
+<ProgramListing>
+Password authentication failed for user 'joeblow'
+</ProgramListing>
+    Messages like this indicate that you contacted the server, and
+    it's willing to talk to you, but not until you pass the
+    authorization method specified in the
+    <filename>pg_hba.conf</filename> file. Check the password you're
+    providing, or check your Kerberos or IDENT software if the
+    complaint mentions one of those authentication types.
+   </para>
+
+   <para>
+<ProgramListing>
+FATAL 1:  SetUserId: user 'joeblow' is not in 'pg_shadow'
+</ProgramListing>
+    This is the fancy way of saying that the user doesn't exist at all.
+   </para>
+
+   <para>
+<ProgramListing>
+FATAL 1:  Database testdb does not exist in pg_database
+</ProgramListing>
+    The database you're trying to connect to doesn't exist. Note that
+    if you don't specify a database name, it defaults to the database
+    user name, which may or may not be the right thing.
+   </para>
+  </sect1>
+
+ </chapter>
+

@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.14 2000/05/02 20:01:51 thomas Exp $
+#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.15 2000/06/18 21:24:51 petere Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -104,7 +104,7 @@ COMMANDS= abort.sgml alter_group.sgml alter_table.sgml alter_user.sgml \
 	insert.sgml listen.sgml load.sgml lock.sgml move.sgml \
 	notify.sgml \
 	reindex.sgml reset.sgml revoke.sgml rollback.sgml \
-	select.sgml select_into.sgml set.sgml show.sgml \
+	select.sgml select_into.sgml set.sgml set_constraints.sgml set_transaction.sgml show.sgml \
 	truncate.sgml unlisten.sgml update.sgml vacuum.sgml
 
 FUNCTIONS= current_date.sgml current_time.sgml current_timestamp.sgml current_user.sgml

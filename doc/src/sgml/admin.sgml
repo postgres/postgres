@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/admin.sgml,v 1.22 2000/05/02 20:01:51 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/admin.sgml,v 1.23 2000/06/18 21:24:51 petere Exp $
 
 Postgres Administrator's Guide.
 Derived from postgres.sgml.
@@ -27,7 +27,8 @@ Derived from postgres.sgml.
 <!entity regress   SYSTEM "regress.sgml">
 <!entity release   SYSTEM "release.sgml">
 <!entity runtime   SYSTEM "runtime.sgml">
-<!entity security  SYSTEM "security.sgml">
+<!entity client-auth SYSTEM "client-auth.sgml">
+<!entity user-manag SYSTEM "user-manag.sgml">
 <!entity start-ag  SYSTEM "start-ag.sgml">
 <!entity trouble   SYSTEM "trouble.sgml">
 
@@ -111,10 +112,10 @@ Your name here...
   &install;
   &installw;
   &runtime;
-  &security;
+  &client-auth;
+  &user-manag;
   &start-ag;
   &manage-ag;
-  &trouble;
   &recovery;
   &regress;
   &release;
