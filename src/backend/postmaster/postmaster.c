@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.330 2003/05/28 17:25:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.331 2003/05/28 19:36:28 tgl Exp $
  *
  * NOTES
  *
@@ -269,12 +269,11 @@ static void dummy_handler(SIGNAL_ARGS);
 static void CleanupProc(int pid, int exitstatus);
 static void LogChildExit(int lev, const char *procname,
 			 int pid, int exitstatus);
-static int	BackendFinalize(Port *port);
+static int	BackendFork(Port *port);
 void		ExitPostmaster(int status);
 static void usage(const char *);
 static int	ServerLoop(void);
 static int	BackendStartup(Port *port);
-static void BackendFork(Port *port, Backend *bn);
 static int	ProcessStartupPacket(Port *port, bool SSLdone);
 static void processCancelRequest(Port *port, void *pkt);
 static int	initMasks(fd_set *rmask, fd_set *wmask);
@@ -1240,7 +1239,7 @@ ProcessStartupPacket(Port *port, bool SSLdone)
 	 * Now fetch parameters out of startup packet and save them into the
 	 * Port structure.  All data structures attached to the Port struct
 	 * must be allocated in TopMemoryContext so that they won't disappear
-	 * when we pass them to PostgresMain (see BackendFinalize).  We need not worry
+	 * when we pass them to PostgresMain (see BackendFork).  We need not worry
 	 * about leaking this storage on failure, since we aren't in the postmaster
 	 * process anymore.
 	 */
@@ -2080,7 +2079,25 @@ BackendStartup(Port *port)
 	pid = fork();
 
 	if (pid == 0)				/* child */
-		BackendFork(port, bn);	/* never returns */
+	{
+		int			status;
+
+#ifdef LINUX_PROFILE
+		setitimer(ITIMER_PROF, &prof_itimer, NULL);
+#endif
+
+#ifdef __BEOS__
+		/* Specific beos backend startup actions */
+		beos_backend_startup();
+#endif
+		free(bn);
+
+		status = BackendFork(port);
+
+		if (status != 0)
+			elog(LOG, "connection startup failed");
+		proc_exit(status);
+	}
 
 	/* in parent, error */
 	if (pid < 0)
@@ -2111,32 +2128,6 @@ BackendStartup(Port *port)
 	DLAddHead(BackendList, DLNewElem(bn));
 
 	return STATUS_OK;
-}
-
-
-static void
-BackendFork(Port *port, Backend *bn)
-{
-	int			status;
-
-#ifdef LINUX_PROFILE
-	setitimer(ITIMER_PROF, &prof_itimer, NULL);
-#endif
-
-#ifdef __BEOS__
-	/* Specific beos backend startup actions */
-	beos_backend_startup();
-#endif
-	free(bn);
-
-	status = BackendFinalize(port);
-	if (status != 0)
-	{
-		elog(LOG, "connection startup failed");
-		proc_exit(status);
-	}
-	else
-		proc_exit(0);
 }
 
 /*
@@ -2195,7 +2186,7 @@ split_opts(char **argv, int *argcp, char *s)
 }
 
 /*
- * BackendFinalize -- perform authentication, and if successful, set up the
+ * BackendFork -- perform authentication, and if successful, set up the
  *		backend's argument list and invoke backend main().
  *
  * This used to perform an execv() but we no longer exec the backend;
@@ -2206,7 +2197,7 @@ split_opts(char **argv, int *argcp, char *s)
  *		If PostgresMain() fails, return status.
  */
 static int
-BackendFinalize(Port *port)
+BackendFork(Port *port)
 {
 	char	   *remote_host;
 	char	  **av;
@@ -2343,7 +2334,7 @@ BackendFinalize(Port *port)
 	 * indefinitely.  PreAuthDelay doesn't count against the time limit.
 	 */
 	if (!enable_sig_alarm(AuthenticationTimeout * 1000, false))
-		elog(FATAL, "BackendFinalize: Unable to set timer for auth timeout");
+		elog(FATAL, "BackendFork: Unable to set timer for auth timeout");
 
 	/*
 	 * Receive the startup packet (which might turn out to be a cancel
@@ -2372,7 +2363,7 @@ BackendFinalize(Port *port)
 	 * SIGTERM/SIGQUIT again until backend startup is complete.
 	 */
 	if (!disable_sig_alarm(false))
-		elog(FATAL, "BackendFinalize: Unable to disable timer for auth timeout");
+		elog(FATAL, "BackendFork: Unable to disable timer for auth timeout");
 	PG_SETMASK(&BlockSig);
 
 	if (Log_connections)
