@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.2 1996/07/15 19:22:17 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.3 1996/07/19 06:13:42 scrappy Exp $
  *
  * NOTES
  *    this is the "main" module of the postgres backend and
@@ -111,6 +111,7 @@ jmp_buf    Warn_restart;
 #else
 sigjmp_buf Warn_restart;
 #endif /*defined(WIN32) || defined(PORTNAME_next) */
+int InWarn;
 
 extern int	NBuffers;
 
@@ -1203,6 +1204,7 @@ PostgresMain(int argc, char *argv[])
 #else
     if (setjmp(Warn_restart) != 0) {
 #endif /* WIN32 */
+	InWarn = 1;
 
 	time(&tim);
 	
@@ -1213,6 +1215,7 @@ PostgresMain(int argc, char *argv[])
 	
 	AbortCurrentTransaction();
     }
+    InWarn = 0;
     
     /* ----------------
      *	POSTGRES main processing loop begins here
@@ -1220,7 +1223,7 @@ PostgresMain(int argc, char *argv[])
      */
     if (IsUnderPostmaster == false) {
 	puts("\nPOSTGRES backend interactive interface");
-	puts("$Revision: 1.2 $ $Date: 1996/07/15 19:22:17 $");
+	puts("$Revision: 1.3 $ $Date: 1996/07/19 06:13:42 $");
     }
     
     /* ----------------

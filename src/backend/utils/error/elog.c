@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.2 1996/07/16 07:13:47 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.3 1996/07/19 06:13:58 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -150,13 +150,16 @@ elog(int lev, char *fmt, ... )
 #endif /* !PG_STANDALONE */
     
     if (lev == WARN) {
+        extern int InWarn;
 	ProcReleaseSpins(NULL);	/* get rid of spinlocks we hold */
+        if (!InWarn) {
 #ifndef WIN32
-	kill(getpid(), 1);	/* abort to traffic cop */
-	pause();
+	    kill(getpid(), 1);	/* abort to traffic cop */
+	    pause();
 #else
-	longjmp(Warn_restart, 1);
+	    longjmp(Warn_restart, 1);
 #endif /* WIN32 */
+        }
 	/*
 	 * The pause(3) is just to avoid race conditions where the
 	 * thread of control on an MP system gets past here (i.e.,
