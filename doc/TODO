@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Aug 13 23:40:53 EDT 2002
+Last updated:		Wed Aug 14 00:57:54 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -202,6 +202,7 @@ Commands
 	o ALTER TABLE ADD COLUMN column DEFAULT should fill existing
 	  rows with DEFAULT value
 	o -Have ALTER TABLE OWNER change all dependant objects like indexes
+	o Add ALTER TABLE tab SET WITHOUT OIDS
 
 * CLUSTER
 	o Cluster all tables at once
