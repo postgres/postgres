@@ -16,7 +16,8 @@ case "$host_os" in
      aux*) os=aux need_tas=no ;;
    linux*) os=linux need_tas=no ;;
     bsdi*) os=bsdi need_tas=no ;;
- freebsd*|netbsd*|openbsd*) os=bsd need_tas=no ;;
+ freebsd*) os=freebsd need_tas=no ;;
+  netbsd*|openbsd*) os=bsd need_tas=no ;;
     dgux*) os=dgux need_tas=no ;;
      aix*) os=aix need_tas=no ;;
 nextstep*) os=nextstep need_tas=no ;;

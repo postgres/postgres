@@ -1,0 +1,9 @@
+%.so: %.o
+	$(LD) -x -r -o $<.obj $<
+	@echo building shared object $@
+	@rm -f $@.pic
+	@${AR} cq $@.pic `lorder $<.obj | tsort`
+	${RANLIB} $@.pic
+	@rm -f $@
+	$(LD) -x -Bshareable -Bforcearchive \
+	  -o $@ $@.pic
