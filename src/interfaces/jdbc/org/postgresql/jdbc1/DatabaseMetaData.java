@@ -1666,7 +1666,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     // Now take the pattern into account
     sql.append(") and relname like '");
     sql.append(tableNamePattern.toLowerCase());
-    sql.append("'");
+    sql.append("' order by relkind, relname");
     
     // Now run the query
     r = connection.ExecSQL(sql.toString());
