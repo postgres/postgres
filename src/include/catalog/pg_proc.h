@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.59 1998/05/29 13:36:31 thomas Exp $
+ * $Id: pg_proc.h,v 1.60 1998/06/13 20:27:10 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -1174,7 +1174,7 @@ DESCR("closest point to line segment on line");
 DATA(insert OID = 963 (  close_lb		   PGUID 11 f t f 2 f 600 "628 603" 100 0 10 100  foo bar ));
 DESCR("closest point to line on box");
 
-DATA(insert OID = 964 (  lo_unlink		   PGUID 11 f t f 1 f  23 "23" 100 0 0 100	foo bar ));
+DATA(insert OID = 964 (  lo_unlink		   PGUID 11 f t f 1 f  23 "26" 100 0 0 100	foo bar ));
 DESCR("large object unlink(delete)");
 DATA(insert OID = 972 (  regproctooid	   PGUID 11 f t f 1 f  26 "24" 100 0 0 100	foo bar ));
 DESCR("get oid for regproc");
