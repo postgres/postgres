@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.110 2001/08/25 18:52:43 tgl Exp $
+ * $Id: pg_type.h,v 1.111 2001/09/06 02:07:42 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -42,11 +42,16 @@ CATALOG(pg_type) BOOTSTRAP
 	int4		typowner;
 
 	/*
-	 * typlen is the number of bytes we use to represent a value of this
-	 * type, e.g. 4 for an int4.  But for a variable length type, typlen
-	 * is -1.
+	 * For a fixed-size type, typlen is the number of bytes we use to
+	 * represent a value of this type, e.g. 4 for an int4.  But for a
+	 * variable-length type, typlen is -1.
 	 */
 	int2		typlen;
+	/*
+	 * typprtlen was once intended to be the length of the external
+	 * representation of a datatype, with the same interpretation as for
+	 * typlen.  But it's currently unused.
+	 */
 	int2		typprtlen;
 
 	/*
@@ -66,8 +71,14 @@ CATALOG(pg_type) BOOTSTRAP
 	 * anyway?)
 	 */
 	char		typtype;
+
+	/*
+	 * If typisdefined is false, the entry is only a placeholder (forward
+	 * reference).  We know the type name, but not yet anything else about it.
+	 */
 	bool		typisdefined;
-	char		typdelim;
+
+	char		typdelim;		/* delimiter for arrays of this type */
 	Oid			typrelid;		/* 0 if not a class type */
 
 	/*
@@ -82,6 +93,10 @@ CATALOG(pg_type) BOOTSTRAP
 	 *	typelem != 0 and typlen < 0.
 	 */
 	Oid			typelem;
+
+	/*
+	 * I/O conversion procedures for the datatype.
+	 */
 	regproc		typinput;
 	regproc		typoutput;
 	regproc		typreceive;
@@ -123,6 +138,12 @@ CATALOG(pg_type) BOOTSTRAP
 	 */
 	char		typstorage;
 
+	/*
+	 * typdefault is NULL if the type has no associated default value.
+	 * If it's not NULL, it contains the external representation of the
+	 * type's default value --- this default is used whenever no per-column
+	 * default is specified for a column of the datatype.
+	 */
 	text		typdefault;		/* VARIABLE LENGTH FIELD */
 } FormData_pg_type;
 

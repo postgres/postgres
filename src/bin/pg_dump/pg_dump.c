@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.227 2001/08/27 20:33:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.228 2001/09/06 02:07:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1400,7 +1400,10 @@ getTypes(int *numTypes)
 		tinfo[i].typsend = strdup(PQgetvalue(res, i, i_typsend));
 		tinfo[i].typelem = strdup(PQgetvalue(res, i, i_typelem));
 		tinfo[i].typdelim = strdup(PQgetvalue(res, i, i_typdelim));
-		tinfo[i].typdefault = strdup(PQgetvalue(res, i, i_typdefault));
+		if (PQgetisnull(res, i, i_typdefault))
+			tinfo[i].typdefault = NULL;
+		else
+			tinfo[i].typdefault = strdup(PQgetvalue(res, i, i_typdefault));
 		tinfo[i].typrelid = strdup(PQgetvalue(res, i, i_typrelid));
 		tinfo[i].typalign = strdup(PQgetvalue(res, i, i_typalign));
 		tinfo[i].typstorage = strdup(PQgetvalue(res, i, i_typstorage));
@@ -3167,8 +3170,10 @@ dumpTypes(Archive *fout, FuncInfo *finfo, int numFuncs,
 						  "CREATE TYPE %s "
 						  "( internallength = %s, externallength = %s,",
 						  fmtId(tinfo[i].typname, force_quotes),
-						  tinfo[i].typlen,
-						  tinfo[i].typprtlen);
+						  (strcmp(tinfo[i].typlen, "-1") == 0) ?
+						  "variable" : tinfo[i].typlen,
+						  (strcmp(tinfo[i].typprtlen, "-1") == 0) ?
+						  "variable" : tinfo[i].typprtlen);
 		/* cannot combine these because fmtId uses static result area */
 		appendPQExpBuffer(q, " input = %s,",
 						  fmtId(tinfo[i].typinput, force_quotes));
@@ -3176,9 +3181,14 @@ dumpTypes(Archive *fout, FuncInfo *finfo, int numFuncs,
 						  fmtId(tinfo[i].typoutput, force_quotes));
 		appendPQExpBuffer(q, " send = %s,",
 						  fmtId(tinfo[i].typsend, force_quotes));
-		appendPQExpBuffer(q, " receive = %s, default = ",
+		appendPQExpBuffer(q, " receive = %s",
 						  fmtId(tinfo[i].typreceive, force_quotes));
-		formatStringLiteral(q, tinfo[i].typdefault, CONV_ALL);
+
+		if (tinfo[i].typdefault != NULL)
+		{
+			appendPQExpBuffer(q, ", default = ");
+			formatStringLiteral(q, tinfo[i].typdefault, CONV_ALL);
+		}
 
 		if (tinfo[i].isArray)
 		{

@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.22 2001/08/26 16:55:58 tgl Exp $
+ $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.23 2001/09/06 02:07:41 tgl Exp $
  -->
 
 <chapter id="catalogs">
@@ -243,7 +243,9 @@
       <entry></entry>
       <entry>
        The initial value of the transition state.  This is a text
-       field which will be cast to the type of aggtranstype.
+       field containing the initial value in its external string
+       representation.  If the field is NULL, the transition state
+       value starts out NULL.
       </entry>
      </row>
     </tbody>
@@ -2071,7 +2073,11 @@
       <entry>typdefault</entry>
       <entry><type>text</type></entry>
       <entry></entry>
-      <entry>???</entry>
+      <entry><para>
+       <structfield>typdefault</structfield> is NULL for types without a
+       default value.  If it's not NULL, it contains the external string
+       representation of the type's default value.
+      </para></entry>
      </row>
     </tbody>
    </tgroup>

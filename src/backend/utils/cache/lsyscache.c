@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.57 2001/08/21 16:36:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.58 2001/09/06 02:07:42 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -750,23 +750,20 @@ get_typstorage(Oid typid)
 /*
  * get_typdefault
  *
- *	  Given a type OID, return the typdefault field associated with that
- *	  type, or Datum(NULL) if there is no typdefault.  (This implies
- *	  that pass-by-value types can't have a default value that has
- *	  a representation of zero.  Not worth fixing now.)
- *	  The result points to palloc'd storage for non-pass-by-value types.
+ *	  Given a type OID, return the type's default value, if any.
+ *	  Returns FALSE if there is no default (effectively, default is NULL).
+ *	  The result points to palloc'd storage for pass-by-reference types.
  */
-Datum
-get_typdefault(Oid typid)
+bool
+get_typdefault(Oid typid, Datum *defaultValue)
 {
 	HeapTuple	typeTuple;
 	Form_pg_type type;
-	struct varlena *typDefault;
+	Oid			typinput,
+				typelem;
+	Datum		textDefaultVal;
 	bool		isNull;
-	int32		dataSize;
-	int32		typLen;
-	bool		typByVal;
-	Datum		returnValue;
+	char	   *strDefaultVal;
 
 	typeTuple = SearchSysCache(TYPEOID,
 							   ObjectIdGetDatum(typid),
@@ -777,66 +774,39 @@ get_typdefault(Oid typid)
 
 	type = (Form_pg_type) GETSTRUCT(typeTuple);
 
+	typinput = type->typinput;
+	typelem = type->typelem;
+
 	/*
-	 * First, see if there is a non-null typdefault field (usually there
-	 * isn't)
+	 * typdefault is potentially null, so don't try to access it as a struct
+	 * field. Must do it the hard way with SysCacheGetAttr.
 	 */
-	typDefault = (struct varlena *)
-		DatumGetPointer(SysCacheGetAttr(TYPEOID,
-										typeTuple,
-										Anum_pg_type_typdefault,
-										&isNull));
+	textDefaultVal = SysCacheGetAttr(TYPEOID,
+									 typeTuple,
+									 Anum_pg_type_typdefault,
+									 &isNull);
 
 	if (isNull)
 	{
 		ReleaseSysCache(typeTuple);
-		return PointerGetDatum(NULL);
+		*defaultValue = (Datum) 0;
+		return false;
 	}
 
-	/*
-	 * Otherwise, extract/copy the value.
-	 */
-	dataSize = VARSIZE(typDefault) - VARHDRSZ;
-	typLen = type->typlen;
-	typByVal = type->typbyval;
+	/* Convert text datum to C string */
+	strDefaultVal = DatumGetCString(DirectFunctionCall1(textout,
+														textDefaultVal));
 
-	if (typByVal)
-	{
-		if (dataSize == typLen)
-			returnValue = fetch_att(VARDATA(typDefault), typByVal, typLen);
-		else
-			returnValue = PointerGetDatum(NULL);
-	}
-	else if (typLen < 0)
-	{
-		/* variable-size type */
-		if (dataSize < 0)
-			returnValue = PointerGetDatum(NULL);
-		else
-		{
-			returnValue = PointerGetDatum(palloc(VARSIZE(typDefault)));
-			memcpy((char *) DatumGetPointer(returnValue),
-				   (char *) typDefault,
-				   (int) VARSIZE(typDefault));
-		}
-	}
-	else
-	{
-		/* fixed-size pass-by-ref type */
-		if (dataSize != typLen)
-			returnValue = PointerGetDatum(NULL);
-		else
-		{
-			returnValue = PointerGetDatum(palloc(dataSize));
-			memcpy((char *) DatumGetPointer(returnValue),
-				   VARDATA(typDefault),
-				   (int) dataSize);
-		}
-	}
+	/* Convert C string to a value of the given type */
+	*defaultValue = OidFunctionCall3(typinput,
+									 CStringGetDatum(strDefaultVal),
+									 ObjectIdGetDatum(typelem),
+									 Int32GetDatum(-1));
 
+	pfree(strDefaultVal);
 	ReleaseSysCache(typeTuple);
 
-	return returnValue;
+	return true;
 }
 
 /*

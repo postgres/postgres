@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.62 2001/08/10 15:49:39 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.63 2001/09/06 02:07:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,7 +51,7 @@ TypeGetWithOpenRelation(Relation pg_type_desc,
 	/*
 	 * initialize the scan key and begin a scan of pg_type
 	 */
-	ScanKeyEntryInitialize(typeKey,
+	ScanKeyEntryInitialize(&typeKey[0],
 						   0,
 						   Anum_pg_type_typname,
 						   F_NAMEEQ,
@@ -318,10 +318,18 @@ TypeCreate(char *typeName,
 	}
 
 	/*
-	 * XXX comment me
+	 * validate size specifications: either positive (fixed-length) or
+	 * -1 (variable-length).
 	 */
-	if (externalSize == 0)
-		externalSize = -1;		/* variable length */
+	if (! (internalSize > 0 || internalSize == -1))
+		elog(ERROR, "TypeCreate: invalid type internal size %d",
+			 internalSize);
+	if (! (externalSize > 0 || externalSize == -1))
+		elog(ERROR, "TypeCreate: invalid type external size %d",
+			 externalSize);
+
+	if (internalSize != -1 && storage != 'p')
+		elog(ERROR, "TypeCreate: fixed size types must have storage PLAIN");
 
 	/*
 	 * initialize arrays needed by FormHeapTuple
@@ -330,19 +338,8 @@ TypeCreate(char *typeName,
 	{
 		nulls[i] = ' ';
 		replaces[i] = 'r';
-		values[i] = (Datum) NULL;		/* redundant, but nice */
+		values[i] = (Datum) 0;
 	}
-
-	/*
-	 * XXX
-	 *
-	 * Do this so that user-defined types have size -1 instead of zero if
-	 * they are variable-length - this is so that everything else in the
-	 * backend works.
-	 */
-
-	if (internalSize == 0)
-		internalSize = -1;
 
 	/*
 	 * initialize the *values information
@@ -435,15 +432,19 @@ TypeCreate(char *typeName,
 	/*
 	 * initialize the default value for this type.
 	 */
-	values[i] = DirectFunctionCall1(textin,		/* 17 */
-			 CStringGetDatum(defaultTypeValue ? defaultTypeValue : "-"));
+	if (defaultTypeValue)
+		values[i] = DirectFunctionCall1(textin,
+										CStringGetDatum(defaultTypeValue));
+	else
+		nulls[i] = 'n';
+	i++;						/* 17 */
 
 	/*
 	 * open pg_type and begin a scan for the type name.
 	 */
 	pg_type_desc = heap_openr(TypeRelationName, RowExclusiveLock);
 
-	ScanKeyEntryInitialize(typeKey,
+	ScanKeyEntryInitialize(&typeKey[0],
 						   0,
 						   Anum_pg_type_typname,
 						   F_NAMEEQ,

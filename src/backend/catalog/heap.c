@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.175 2001/08/25 18:52:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.176 2001/09/06 02:07:42 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -657,7 +657,6 @@ AddNewRelationTuple(Relation pg_class_desc,
 static void
 AddNewRelationType(char *typeName, Oid new_rel_oid, Oid new_type_oid)
 {
-
 	/*
 	 * The sizes are set to oid size because it makes implementing sets
 	 * MUCH easier, and no one (we hope) uses these fields to figure out
@@ -666,24 +665,22 @@ AddNewRelationType(char *typeName, Oid new_rel_oid, Oid new_type_oid)
 	 * actually get is the oid of a tuple in the pg_proc catalog, so the
 	 * size of the "set" is the size of an oid. Similarly, byval being
 	 * true makes sets much easier, and it isn't used by anything else.
-	 *
-	 * XXX Note the assumption that OIDs are the same size as int4s.
 	 */
 	TypeCreate(typeName,		/* type name */
 			   new_type_oid,	/* preassigned oid for type */
 			   new_rel_oid,		/* relation oid */
 			   sizeof(Oid),		/* internal size */
-			   sizeof(Oid),		/* external size */
+			   -1,				/* external size */
 			   'c',				/* type-type (catalog) */
 			   ',',				/* default array delimiter */
-			   "int4in",		/* input procedure */
-			   "int4out",		/* output procedure */
-			   "int4in",		/* receive procedure */
-			   "int4out",		/* send procedure */
+			   "oidin",			/* input procedure */
+			   "oidout",		/* output procedure */
+			   "oidin",			/* receive procedure */
+			   "oidout",		/* send procedure */
 			   NULL,			/* array element type - irrelevant */
-			   "-",				/* default type value */
+			   NULL,			/* default type value - none */
 			   true,			/* passed by value */
-			   'i',				/* default alignment */
+			   'i',				/* default alignment - same as for OID */
 			   'p');			/* Not TOASTable */
 }
 

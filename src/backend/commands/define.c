@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.58 2001/08/03 20:47:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.59 2001/09/06 02:07:42 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -535,20 +535,20 @@ DefineAggregate(char *aggName, List *parameters)
 void
 DefineType(char *typeName, List *parameters)
 {
-	int16		internalLength = 0;		/* int2 */
-	int16		externalLength = 0;		/* int2 */
+	int16		internalLength = -1;		/* int2 */
+	int16		externalLength = -1;		/* int2 */
 	char	   *elemName = NULL;
 	char	   *inputName = NULL;
 	char	   *outputName = NULL;
 	char	   *sendName = NULL;
 	char	   *receiveName = NULL;
-	char	   *defaultValue = NULL;	/* Datum */
+	char	   *defaultValue = NULL;
 	bool		byValue = false;
 	char		delimiter = DEFAULT_TYPDELIM;
 	char	   *shadow_type;
 	List	   *pl;
 	char		alignment = 'i'; /* default alignment */
-	char		storage = 'p';	/* default storage in TOAST */
+	char		storage = 'p';	/* default TOAST storage method */
 
 	/*
 	 * Type names must be one character shorter than other names, allowing
@@ -556,10 +556,8 @@ DefineType(char *typeName, List *parameters)
 	 * "_".
 	 */
 	if (strlen(typeName) > (NAMEDATALEN - 2))
-	{
 		elog(ERROR, "DefineType: type names must be %d characters or less",
 			 NAMEDATALEN - 2);
-	}
 
 	foreach(pl, parameters)
 	{
@@ -645,9 +643,6 @@ DefineType(char *typeName, List *parameters)
 	if (outputName == NULL)
 		elog(ERROR, "Define: \"output\" unspecified");
 
-	if (internalLength != -1 && storage != 'p')
-		elog(ERROR, "Define: fixed size types must have storage PLAIN");
-
 	/*
 	 * now have TypeCreate do all the real work.
 	 */
@@ -674,6 +669,9 @@ DefineType(char *typeName, List *parameters)
 	 */
 	shadow_type = makeArrayTypeName(typeName);
 
+	/* alignment must be 'i' or 'd' for arrays */
+	alignment = (alignment == 'd') ? 'd' : 'i';
+
 	TypeCreate(shadow_type,		/* type name */
 			   InvalidOid,		/* preassigned type oid (not done here) */
 			   InvalidOid,		/* relation oid (n/a here) */
@@ -688,7 +686,7 @@ DefineType(char *typeName, List *parameters)
 			   typeName,		/* element type name */
 			   NULL,			/* never a default type value */
 			   false,			/* never passed by value */
-			   alignment,		/* NB: must be 'i' or 'd' for arrays... */
+			   alignment,		/* see above */
 			   'x');			/* ARRAY is always toastable */
 
 	pfree(shadow_type);

@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.42 2001/03/22 03:59:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.43 2001/09/06 02:07:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -192,45 +192,54 @@ expand_targetlist(List *tlist, int command_type,
 			{
 				case CMD_INSERT:
 					{
-						Datum		typedefault = get_typdefault(atttype);
-						int			typlen;
-						Const	   *temp_const;
+						bool		hasdefault;
+						Datum		typedefault;
+						int16		typlen;
+						bool		typbyval;
+						Const	   *def_const;
 
-#ifdef	_DROP_COLUMN_HACK__
-						if (COLUMN_IS_DROPPED(att_tup))
-							typedefault = PointerGetDatum(NULL);
-#endif	 /* _DROP_COLUMN_HACK__ */
-
-						if (typedefault == PointerGetDatum(NULL))
-							typlen = 0;
+						if (att_tup->attisset)
+						{
+							/*
+							 * Set attributes are represented as OIDs no
+							 * matter what the set element type is, and
+							 * the element type's default is irrelevant too.
+							 */
+							hasdefault = false;
+							typedefault = (Datum) 0;
+							typlen = sizeof(Oid);
+							typbyval = true;
+						}
 						else
 						{
-
-							/*
-							 * Since this is an append or replace, the
-							 * size of any set attribute is the size of
-							 * the OID used to represent it.
-							 */
-							if (att_tup->attisset)
-								typlen = get_typlen(OIDOID);
+#ifdef	_DROP_COLUMN_HACK__
+							if (COLUMN_IS_DROPPED(att_tup))
+							{
+								hasdefault = false;
+								typedefault = (Datum) 0;
+							}
 							else
-								typlen = get_typlen(atttype);
+#endif	 /* _DROP_COLUMN_HACK__ */
+								hasdefault = get_typdefault(atttype,
+															&typedefault);
+
+							get_typlenbyval(atttype, &typlen, &typbyval);
 						}
 
-						temp_const = makeConst(atttype,
-											   typlen,
-											   typedefault,
-								  (typedefault == PointerGetDatum(NULL)),
-											   false,
-											   false,	/* not a set */
-											   false);
+						def_const = makeConst(atttype,
+											  typlen,
+											  typedefault,
+											  !hasdefault,
+											  typbyval,
+											  false,	/* not a set */
+											  false);
 
 						new_tle = makeTargetEntry(makeResdom(attrno,
 															 atttype,
 															 -1,
 													   pstrdup(attrname),
 															 false),
-												  (Node *) temp_const);
+												  (Node *) def_const);
 						break;
 					}
 				case CMD_UPDATE:
