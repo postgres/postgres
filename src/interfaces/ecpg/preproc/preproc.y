@@ -775,7 +775,7 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 
 %type  <str>	Iconst Fconst Sconst TransactionStmt CreateStmt UserId
 %type  <str>	CreateAsElement OptCreateAs CreateAsList CreateAsStmt
-%type  <str>	OptInherit key_reference key_action
+%type  <str>	OptInherit key_reference key_action comment_text
 %type  <str>    key_match ColLabel SpecialRuleRelation
 %type  <str> 	ColId ColQualifier columnDef ColQualList
 %type  <str>    ColConstraint ColConstraintElem NumericOnly FloatOnly
@@ -827,16 +827,16 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 %type  <str>    ViewStmt LoadStmt CreatedbStmt opt_database1 opt_database2 location
 %type  <str>    DestroydbStmt ClusterStmt grantee RevokeStmt encoding
 %type  <str>	GrantStmt privileges operation_commalist operation
-%type  <str>	opt_cursor opt_lmode ConstraintsSetStmt
+%type  <str>	opt_cursor opt_lmode ConstraintsSetStmt comment_tg
 %type  <str>	case_expr when_clause_list case_default case_arg when_clause
 %type  <str>    select_clause opt_select_limit select_limit_value
 %type  <str>    select_offset_value table_list using_expr join_expr
 %type  <str>	using_list from_expr table_expr join_clause join_type
 %type  <str>	join_qual update_list join_clause join_clause_with_union
 %type  <str>	opt_level opt_lock lock_type OptConstrTrigDeferrable,
-%type  <str>    OptConstrTrigInitdeferred OptConstrFromTable
-%type  <str>    constraints_set_list constraints_set_namelist
-%type  <str>	constraints_set_mode
+%type  <str>    OptConstrTrigInitdeferred OptConstrFromTable comment_op
+%type  <str>    constraints_set_list constraints_set_namelist comment_fn
+%type  <str>	constraints_set_mode comment_type comment_cl comment_ag
 
 %type  <str>	ECPGWhenever ECPGConnect connection_target ECPGOpen opt_using
 %type  <str>	indicator ECPGExecute ecpg_expr ECPGPrepare
@@ -1895,21 +1895,65 @@ opt_portal_name:  IN name		{ $$ = cat2_str(make1_str("in"), $2); }
 
 /*****************************************************************************
  *
- *             QUERY:
- *                     comment on [ table <relname> | column <relname>.<attribu
- *                                is 'text'
+ *  The COMMENT ON statement can take different forms based upon the type of
+ *  the object associated with the comment. The form of the statement is:
+ *
+ *  COMMENT ON [ [ DATABASE | INDEX | RULE | SEQUENCE | TABLE | TYPE | VIEW ]
+ *               <objname> | AGGREGATE <aggname> <aggtype> | FUNCTION
+ *              <funcname> (arg1, arg2, ...) | OPERATOR <op>
+ *              (leftoperand_typ rightoperand_typ) | TRIGGER <triggername> ON
+ *              <relname> ] IS 'text'
  *
  *****************************************************************************/
-CommentStmt:    COMMENT ON COLUMN relation_name '.' attr_name IS Sconst
+CommentStmt:   COMMENT ON comment_type name IS comment_text
                         {
-				cat2_str(cat5_str(make1_str("comment on column"), $4, make1_str(","), $6, make1_str("is")), $8);
+                               $$ = cat5_str(make1_str("comment on"), $3, $4, make1_str("is"), $6);
                         }
-                | COMMENT ON TABLE relation_name IS Sconst
+               | COMMENT ON comment_cl relation_name '.' attr_name IS comment_text
+                        { 
+                               $$ = cat3_str(cat5_str(make1_str("comment on"), $3, $4, make1_str("."), $6), make1_str("is"), $8);
+			}
+                | COMMENT ON comment_ag name aggr_argtype IS comment_text
                         {
-                                cat4_str(make1_str("comment on table"), $4, make1_str("is"), $6);
+                                cat2_str(cat5_str(make1_str("comment on"), $3, $4, $5, make1_str("is")), $7);
+			}
+		| COMMENT ON comment_fn func_name func_args IS comment_text
+			{
+                                cat2_str(cat5_str(make1_str("comment on"), $3, $4, $5, make1_str("is")), $7);
+			}
+		| COMMENT ON comment_op all_Op '(' oper_argtypes ')' IS comment_text
+			{
+				cat3_str(cat5_str(make1_str("comment on"), $3, $4, make1_str("("), $6), make1_str(") is"), $9);
+			}
+		| COMMENT ON comment_tg name ON relation_name IS comment_text
+                        {
+                                cat3_str(cat5_str(make1_str("comment on"), $3, $4, make1_str("on"), $6), make1_str("is"), $8);
 			}
 			;
-			
+
+comment_type:  DATABASE 	{ $$ = make1_str("database"); }
+                | INDEX		{ $$ = make1_str("idnex"); }
+                | RULE		{ $$ = make1_str("rule"); }
+                | SEQUENCE	{ $$ = make1_str("sequence"); }
+                | TABLE		{ $$ = make1_str("table"); }
+                | TYPE_P	{ $$ = make1_str("type"); }
+                | VIEW		{ $$ = make1_str("view"); }
+		;
+
+comment_cl:    COLUMN		{ $$ = make1_str("column"); }
+
+comment_ag:    AGGREGATE	{ $$ = make1_str("aggregate"); }
+
+comment_fn:    FUNCTION		{ $$ = make1_str("function"); }
+
+comment_op:    OPERATOR		{ $$ = make1_str("operator"); }
+
+comment_tg:    TRIGGER		{ $$ = make1_str("trigger"); }
+
+comment_text:    Sconst		{ $$ = $1; }
+               | NULL_P		{ $$ = make1_str("null"); }
+               ;
+
 /*****************************************************************************
  *
  *		QUERY:
