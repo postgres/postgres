@@ -1,187 +1,151 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.22 2001/04/28 13:59:07 momjian Exp $
-Postgres documentation
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.23 2001/05/19 09:01:10 petere Exp $
 -->
 
 <refentry id="SQL-CREATEFUNCTION">
  <refmeta>
-  <refentrytitle id="sql-createfunction-title">
-   CREATE FUNCTION
-  </refentrytitle>
+  <refentrytitle>CREATE FUNCTION</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
+
  <refnamediv>
-  <refname>
-   CREATE FUNCTION
-  </refname>
-  <refpurpose>
-   Defines a new function
-  </refpurpose>
+  <refname>CREATE FUNCTION</refname>
+  <refpurpose>Defines a new function</refpurpose>
  </refnamediv>
+
  <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>2000-03-25</date>
-  </refsynopsisdivinfo>
-  <synopsis>
-CREATE FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceable class="parameter">ftype</replaceable> [, ...] ] )
-    RETURNS <replaceable class="parameter">rtype</replaceable>
-    AS <replaceable class="parameter">definition</replaceable>   
+<synopsis>
+CREATE FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceable class="parameter">argtype</replaceable> [, ...] ] )
+    RETURNS <replaceable class="parameter">rettype</replaceable>
+    AS '<replaceable class="parameter">definition</replaceable>'
     LANGUAGE '<replaceable class="parameter">langname</replaceable>'
     [ WITH ( <replaceable class="parameter">attribute</replaceable> [, ...] ) ]
-CREATE FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceable class="parameter">ftype</replaceable> [, ...] ] )
-    RETURNS <replaceable class="parameter">rtype</replaceable>
-    AS <replaceable class="parameter">obj_file</replaceable> , <replaceable class="parameter">link_symbol</replaceable>  
-    LANGUAGE 'langname'
+CREATE FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceable class="parameter">argtype</replaceable> [, ...] ] )
+    RETURNS <replaceable class="parameter">rettype</replaceable>
+    AS '<replaceable class="parameter">obj_file</replaceable>', '<replaceable class="parameter">link_symbol</replaceable>'
+    LANGUAGE '<replaceable class="parameter">langname</replaceable>'
     [ WITH ( <replaceable class="parameter">attribute</replaceable> [, ...] ) ]
-  </synopsis>
-  
-  <refsect2 id="R2-SQL-CREATEFUNCTION-1">
-   <refsect2info>
-    <date>2000-03-25</date>
-   </refsect2info>
-   <title>
-    Inputs
-   </title>
-   <para>
-
-    <variablelist>
-     <varlistentry>
-      <term><replaceable class="parameter">name</replaceable></term>
-      <listitem>
-       <para>
-	The name of a function to create.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><replaceable class="parameter">ftype</replaceable></term>
-      <listitem>
-       <para>
-	The data type(s) of the function's arguments, if any.
-	The input types may be base or complex types, or
-	<firstterm>opaque</firstterm>.
-	<literal>Opaque</literal> indicates that the function
-	accepts arguments of a non-SQL type such as <type>char *</type>.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><replaceable class="parameter">rtype</replaceable></term>
-      <listitem>
-       <para>
-	The return data type.
-	The output type may be specified as a base type, complex type, 
-	<option>setof type</option>,
-	or <option>opaque</option>.
-	The <option>setof</option>
-	modifier indicates that the function will return a set of items,
-	rather than a single item.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><replaceable class="parameter">attribute</replaceable></term>
-      <listitem>
-       <para>
-        An optional piece of information about the function, used for
-	optimization.  See below for details.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><replaceable class="parameter">definition</replaceable></term>
-      <listitem>
-       <para>
-	A string defining the function; the meaning depends on the language.
-	It may be an internal function name, the path to an object file,
-	an SQL query, or text in a procedural language.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><replaceable class="parameter">obj_file</replaceable> , <replaceable class="parameter">link_symbol</replaceable></term>
-      <listitem>
-       <para>
-	This form of the <command>AS</command> clause is used for
-	dynamically linked, C language functions when the function name in
-	the C language source code is not the same as the name of the SQL
-	function. The string <replaceable
-	class="parameter">obj_file</replaceable> is the name of the file
-	containing the dynamically loadable object, and <replaceable
-	class="parameter">link_symbol</replaceable> is the object's link
-	symbol, that is the name of the function in the C
-	language source code.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><replaceable class="parameter">langname</replaceable></term>
-      <listitem>
-       <para>
-	May be '<literal>sql</literal>',
-	'<literal>C</literal>', '<literal>internal</literal>',
-	or '<replaceable class="parameter">plname</replaceable>',
-	where '<replaceable class="parameter">plname</replaceable>'
-	is the name of a created procedural language. See
-	<xref linkend="sql-createlanguage" endterm="sql-createlanguage-title">
-	for details.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
-
-  <refsect2 id="R2-SQL-CREATEFUNCTION-2">
-   <refsect2info>
-    <date>2000-03-25</date>
-   </refsect2info>
-   <title>
-    Outputs
-   </title>
-   <para>
-
-    <variablelist>
-     <varlistentry>
-      <term><computeroutput>
-CREATE
-       </computeroutput></term>
-      <listitem>
-       <para>
-	This is returned if the command completes successfully.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
+</synopsis>
  </refsynopsisdiv>
+  
+ <refsect1 id="sql-createfunction-description">
+  <title>Description</title>
 
- <refsect1 id="R1-SQL-CREATEFUNCTION-1">
-  <refsect1info>
-   <date>2000-03-25</date>
-  </refsect1info>
-  <title>
-   Description
-  </title>
   <para>
-   <command>CREATE FUNCTION</command> allows a
-   <productname>Postgres</productname> user
-   to register a function
-   with the database. Subsequently, this user is considered the
-   owner of the function.
+   <command>CREATE FUNCTION</command> defines a new function.
+
+   <variablelist>
+    <title>Parameters</title>
+
+    <varlistentry>
+     <term><replaceable class="parameter">name</replaceable></term>
+
+     <listitem>
+      <para>
+       The name of a function to create.  The name need not be unique,
+       because functions may be overloaded, but functions with the
+       same name must have different argument types.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable class="parameter">argtype</replaceable></term>
+
+     <listitem>
+      <para>
+       The data type(s) of the function's arguments, if any.  The
+       input types may be base or complex types, or
+       <literal>opaque</literal>.  <literal>Opaque</literal> indicates
+       that the function accepts arguments of a non-SQL type such as
+       <type>char *</type>.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable class="parameter">rettype</replaceable></term>
+
+     <listitem>
+      <para>
+       The return data type.  The output type may be specified as a
+       base type, complex type, <literal>setof</literal> type, or
+       <literal>opaque</literal>.  The <literal>setof</literal>
+       modifier indicates that the function will return a set of
+       items, rather than a single item.  Functions with a declared
+       return type of <literal>opaque</literal> do not return a value.
+       These cannot be called directly; trigger functions make use of
+       this feature.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable class="parameter">definition</replaceable></term>
+
+     <listitem>
+      <para>
+       A string defining the function; the meaning depends on the
+       language.  It may be an internal function name, the path to an
+       object file, an SQL query, or text in a procedural language.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable class="parameter">obj_file</replaceable>, <replaceable class="parameter">link_symbol</replaceable></term>
+
+     <listitem>
+      <para>
+       This form of the <literal>AS</literal> clause is used for
+       dynamically linked C language functions when the function name
+       in the C language source code is not the same as the name of
+       the SQL function. The string <replaceable
+       class="parameter">obj_file</replaceable> is the name of the
+       file containing the dynamically loadable object, and
+       <replaceable class="parameter">link_symbol</replaceable> is the
+       object's link symbol, that is, the name of the function in the C
+       language source code.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable class="parameter">langname</replaceable></term>
+
+     <listitem>
+      <para>
+       May be '<literal>sql</literal>', '<literal>C</literal>',
+       '<literal>internal</literal>', or '<replaceable
+       class="parameter">plname</replaceable>', where '<replaceable
+       class="parameter">plname</replaceable>' is the name of a
+       created procedural language. See
+       <xref linkend="sql-createlanguage">
+       for details.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable class="parameter">attribute</replaceable></term>
+
+     <listitem>
+      <para>
+       An optional piece of information about the function, used for
+       optimization.  See below for details.
+      </para>
+     </listitem>
+    </varlistentry>
+
+   </variablelist>
   </para>
 
-  <refsect2 id="R2-SQL-CREATEFUNCTION-3">
-   <refsect2info>
-    <date>2000-08-24</date>
-   </refsect2info>
-   <title>
-    Function Attributes
-   </title>
+  <para>
+   The user that creates the function becomes the owner of the function.
+  </para>
 
-   <para>
-    The following items may appear in the WITH clause:
+  <para>
+    The following attributes may appear in the WITH clause:
 
     <variablelist>
      <varlistentry>
@@ -214,17 +178,12 @@ CREATE
       </listitem>
      </varlistentry>
     </variablelist>
-   </para>
+  </para>
 
-  </refsect2>
+ </refsect1>
 
-  <refsect2 id="R2-SQL-CREATEFUNCTION-4">
-   <refsect2info>
-    <date>2000-03-25</date>
-   </refsect2info>
-   <title>
-    Notes
-   </title>
+ <refsect1 id="sql-createfunction-notes">
+  <title>Notes</title>
 
    <para>
     Refer to the chapter in the
@@ -240,7 +199,7 @@ CREATE
    </para>
 
    <para>
-    The full <acronym>SQL92</acronym> type syntax is allowed for
+    The full <acronym>SQL</acronym> type syntax is allowed for
     input arguments and return value. However, some details of the
     type specification (e.g., the precision field for
     <type>numeric</type> types) are the responsibility of the
@@ -250,7 +209,7 @@ CREATE
    </para>
 
    <para>
-    <productname>Postgres</productname> allows function "overloading";
+    <productname>Postgres</productname> allows function <firstterm>overloading</firstterm>;
     that is, the same name can be used for several different functions
     so long as they have distinct argument types.  This facility must
     be used with caution for internal and C-language functions, however.    
@@ -275,38 +234,45 @@ CREATE
     C-language implementation of each overloaded SQL function.
    </para>
 
-  </refsect2>
+   <para>
+    When repeated <command>CREATE FUNCTION</command> calls refer to
+    the same object file, the file is only loaded once.  To unload and
+    reload the file (perhaps during development), use the <xref
+    linkend="sql-load"> command.
+   </para>
+
  </refsect1>
+
   
- <refsect1 id="R1-SQL-CREATEFUNCTION-2">
-  <title>
-   Usage
-  </title>
+ <refsect1 id="sql-createfunction-examples">
+  <title>Examples</title>
+
   <para>
    To create a simple SQL function:
 
-   <programlisting>
-CREATE FUNCTION one() RETURNS int4
-    AS 'SELECT 1 AS RESULT'
+<programlisting>
+CREATE FUNCTION one() RETURNS integer
+    AS 'SELECT 1 AS RESULT;'
     LANGUAGE 'sql';
-SELECT one() AS answer;
 
-    <computeroutput>
+SELECT one() AS answer;
+<computeroutput>
  answer 
 --------
       1
-    </computeroutput>
-   </programlisting>
+</computeroutput>
+</programlisting>
   </para>
 
   <para>
-   This example creates a C function by calling a routine from a user-created
-   shared library.  This particular routine calculates a check
-   digit and returns TRUE if the check digit in the function parameters
-   is correct. It is intended for use in a CHECK contraint.
-  </para>
-  <programlisting>
-CREATE FUNCTION ean_checkdigit(bpchar, bpchar) RETURNS boolean
+   The next example creates a C function by calling a routine from a
+   user-created shared library.  This particular routine calculates a
+   check digit and returns TRUE if the check digit in the function
+   parameters is correct.  It is intended for use in a CHECK
+   constraint.
+
+<programlisting>
+CREATE FUNCTION ean_checkdigit(char, char) RETURNS boolean
     AS '/usr1/proj/bray/sql/funcs.so' LANGUAGE 'c';
     
 CREATE TABLE product (
@@ -316,28 +282,28 @@ CREATE TABLE product (
     eancode   char(6) CHECK (eancode ~ '[0-9]{6}'),
     CONSTRAINT ean    CHECK (ean_checkdigit(eanprefix, eancode))
 );
-  </programlisting>
-
+</programlisting>
+  </para>
 
   <para>
    This example creates a function that does type conversion between the
    user-defined type complex, and the internal type point.  The
    function is implemented by a dynamically loaded object that was
-   compiled from C source. For <productname>Postgres</productname> to
-   find a type conversion function automatically, the sql function has
+   compiled from C source.  For <productname>PostgreSQL</productname> to
+   find a type conversion function automatically, the SQL function has
    to have the same name as the return type, and so overloading is
    unavoidable.  The function name is overloaded by using the second
    form of the <command>AS</command> clause in the SQL definition:
-  </para>
-  <programlisting>
+
+<programlisting>
 CREATE FUNCTION point(complex) RETURNS point
     AS '/home/bernie/pgsql/lib/complex.so', 'complex_to_point'
     LANGUAGE 'c';
-  </programlisting>
-  <para>
-  The C declaration of the function is:
-  </para>
-  <programlisting>
+</programlisting>
+
+  The C declaration of the function could be:
+
+<programlisting>
 Point * complex_to_point (Complex *z)
 {
 	Point *p;
@@ -348,58 +314,33 @@ Point * complex_to_point (Complex *z)
 		
 	return p;
 }
-  </programlisting>
-
-    
+</programlisting>
+  </para>    
  </refsect1>
+
  
- <refsect1 id="R1-SQL-CREATEFUNCTION-4">
-  <title>
-   Compatibility
-  </title>
+ <refsect1 id="sql-createfunction-compat">
+  <title>Compatibility</title>
 
-  <refsect2 id="R2-SQL-CREATEFUNCTION-5">
-   <refsect2info>
-    <date>2000-03-25</date>
-   </refsect2info>
-   <title>
-    SQL92
-   </title>
-
-   <para>
-    <command>CREATE FUNCTION</command> is
-    a <productname>Postgres</productname> language extension.
-   </para>
-  </refsect2>
-
-  <refsect2 id="R2-SQL-CREATEFUNCTION-6">
-   <refsect2info>
-    <date>2000-03-25</date>
-   </refsect2info>
-   <title>
-    SQL/PSM
-   </title>
-   <para>
-
-    <note>
-     <para>
-      PSM stands for Persistent Stored Modules. It is a procedural
-      language.  SQL/PSM is a standard to enable function extensibility.
-     </para>
-    </note>
-
-    SQL/PSM <command>CREATE FUNCTION</command> has the following syntax:
-    <synopsis>
-CREATE FUNCTION <replaceable class="parameter">name</replaceable>
-    ( [ [ IN | OUT | INOUT ] <replaceable class="parameter">type</replaceable> [, ...] ] )
-     RETURNS <replaceable class="parameter">rtype</replaceable>
-     LANGUAGE '<replaceable class="parameter">langname</replaceable>'
-     ESPECIFIC <replaceable class="parameter">routine</replaceable>
-     <replaceable class="parameter">SQL-statement</replaceable>
-    </synopsis>
-   </para>
-  </refsect2>
+  <para>
+   A <command>CREATE FUNCTION</command> command is defined in SQL99.
+   The <application>PostgreSQL</application> version is similar but
+   not compatible.  The attributes are not portable, neither are the
+   different available languages.
+  </para>
  </refsect1>
+
+
+ <refsect1 id="sql-createfunction-seealso">
+  <title>See Also</title>
+
+  <para>
+   <xref linkend="sql-dropfunction">,
+   <xref linkend="sql-load">,
+   <citetitle>PostgreSQL Programmer's Guide</citetitle>
+  </para>
+ </refsect1>
+
 </refentry>
 
 <!-- Keep this comment at the end of the file

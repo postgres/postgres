@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.31 2001/02/15 19:03:35 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.32 2001/05/19 09:01:10 petere Exp $
 -->
 
  <chapter id="xfunc">
@@ -29,14 +29,12 @@ $Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.31 2001/02/15 19:03:35 tgl E
     <listitem>
      <para>
       procedural language 
-      functions (functions written in, for example, PLTCL or PLSQL)
+      functions (functions written in, for example, PL/Tcl or PL/pgSQL)
      </para>
     </listitem>
     <listitem>
      <para>
-      programming  
-      language  functions  (functions  written in a compiled 
-      programming language such as <acronym>C</acronym>)
+      C language functions
      </para>
     </listitem>
    </itemizedlist>
@@ -371,16 +369,36 @@ SELECT clean_EMP();
   </sect1>
 
   <sect1 id="xfunc-c">
-   <title>Compiled (C) Language Functions</title>
+   <title>C Language Functions</title>
 
    <para>
-    Functions written in C can be compiled into dynamically loadable
-    objects (also called shared libraries), and used to implement user-defined
-    SQL functions.  The first time a user-defined function in a particular
+    User-defined functions can be written in C (or a language that can
+    be made compatible with C, such as C++).  Such functions are
+    compiled into dynamically loadable objects (also called shared
+    libraries) and are loaded by the server on demand.  This
+    distinguishes them from internal functions.
+   </para>
+
+   <para>
+    Two different calling conventions are currently used for C functions.
+    The newer "version 1" calling convention is indicated by writing
+    a <literal>PG_FUNCTION_INFO_V1()</literal> macro call for the function,
+    as illustrated below.  Lack of such a macro indicates an old-style
+    ("version 0") function.  The language name specified in CREATE FUNCTION
+    is 'C' in either case.  Old-style functions are now deprecated
+    because of portability problems and lack of functionality, but they
+    are still supported for compatibility reasons.
+   </para>
+
+  <sect2 id="xfunc-c-dynload">
+   <title>Dynamic Loading</title>
+
+   <para>
+    The first time a user-defined function in a particular
     loadable object file is called in a backend session,
     the dynamic loader loads that object file into memory so that the
     function can be called.  The <command>CREATE FUNCTION</command>
-    for a user-defined function must therefore specify two pieces of
+    for a user-defined C function must therefore specify two pieces of
     information for the function: the name of the loadable
     object file, and the C name (link symbol) of the specific function to call
     within that object file.  If the C name is not explicitly specified then
@@ -397,34 +415,81 @@ SELECT clean_EMP();
    </para>
 
    <para>
-    The string that specifies the object file (the first string in the AS
-    clause) should be the <emphasis>full path</emphasis> of the object
-    code file for the function, bracketed by single quote marks.  If a
-    link symbol is given in the AS clause, the link symbol should also be
-    bracketed by single quote marks, and should be exactly the
-    same as the name of the function in the C source code. On Unix systems
-    the command <command>nm</command> will print all of the link
-    symbols in a dynamically loadable object.
+    The following algorithm is used to locate the shared object file
+    based on the name given in the <command>CREATE FUNCTION</command>
+    command:
 
-    <note>
-     <para>
-      <productname>Postgres</productname> will not compile a function
-      automatically; it must be compiled before it is used in a CREATE
-      FUNCTION command.  See below for additional information.
-     </para>
-    </note>
+    <orderedlist>
+     <listitem>
+      <para>
+       If the name is an absolute file name, the given file is loaded.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       If the name starts with the string <literal>$libdir</literal>,
+       that part is replaced by the PostgreSQL library directory,
+       which is determined at build time.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       If the name does not contain a directory part, the file is
+       searched the path specified by the configuration variable
+       <varname>dynamic_library_path</varname>.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Otherwise (the file was not found in the path, or it contains a
+       non-absolute directory part), the dynamic loader will try to
+       take the name as given, which will most likely fail.  (It is
+       unreliable to depend on the current working directory.)
+      </para>
+     </listitem>
+    </orderedlist>
+
+    If this sequence does not work, the platform-specific shared
+    library file name extension (often <filename>.so</filename>) is
+    appended to the given name and this sequence is tried again.  If
+    that fails as well, the load will fail.
+   </para>
+
+   <note>
+    <para>
+     The user id the <application>PostgreSQL</application> server runs
+     as must be able to traverse the path to the file you intend to
+     load.  Making the file or a higher-level directory not readable
+     and/or not executable by the <quote>postgres</quote> user is a
+     common mistake.
+    </para>
+   </note>
+
+   <para>
+    In any case, the file name that is specified in the
+    <command>CREATE FUNCTION</command> command is recorded literally
+    in the system catalogs, so if the file needs to be loaded again
+    the same procedure is applied.
    </para>
 
    <para>
-    Two different calling conventions are currently used for C functions.
-    The newer "version 1" calling convention is indicated by writing
-    a <literal>PG_FUNCTION_INFO_V1()</literal> macro call for the function,
-    as illustrated below.  Lack of such a macro indicates an old-style
-    ("version 0") function.  The language name specified in CREATE FUNCTION
-    is 'C' in either case.  Old-style functions are now deprecated
-    because of portability problems and lack of functionality, but they
-    are still supported for compatibility reasons.
+    It is recommended to locate shared libraries either relative to
+    <literal>$libdir</literal> or through the dynamic library path.
+    This simplifies version upgrades if the new installation is at a
+    different location.
    </para>
+
+   <note>
+    <para>
+     <application>PostgreSQL</application> will not compile a function
+     automatically; it must be compiled before it is used in a CREATE
+     FUNCTION command.  See <xref linkend="dfunc"> for additional information.
+    </para>
+   </note>
+  </sect2>
 
    <sect2>
     <title>Base Types in C-Language Functions</title>

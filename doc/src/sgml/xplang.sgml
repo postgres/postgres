@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xplang.sgml,v 1.12 2001/02/09 02:20:52 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xplang.sgml,v 1.13 2001/05/19 09:01:10 petere Exp $
 -->
 
  <chapter id="xplang">
@@ -130,13 +130,13 @@ CREATE <optional>TRUSTED</optional> <optional>PROCEDURAL</optional> LANGUAGE '<r
 
 <programlisting>
 CREATE FUNCTION plpgsql_call_handler () RETURNS OPAQUE AS
-    '/usr/local/pgsql/lib/plpgsql.so' LANGUAGE 'C';
+    '$libdir/plpgsql' LANGUAGE 'C';
 </programlisting>
      </para>
     </step>
 
     <step performance="Required">
-    <para>
+     <para>
       The command
 <programlisting>
 CREATE TRUSTED PROCEDURAL LANGUAGE 'plpgsql'

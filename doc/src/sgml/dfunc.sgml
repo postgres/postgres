@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/dfunc.sgml,v 1.13 2001/01/20 20:59:28 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/dfunc.sgml,v 1.14 2001/05/19 09:01:10 petere Exp $
 -->
 
 <sect2 id="dfunc">
@@ -264,7 +264,7 @@ gcc -shared -o foo.so foo.o
   <productname>Postgres</productname>.  When specifying the file name
   to the <command>CREATE FUNCTION</command> command, one must give it
   the name of the shared library file (ending in
-  <filename>.so</filename>) rather than the simple object file.
+  <filename>.so</filename>) rather than the intermediate object file.
 
   <note>
    <para>
@@ -273,21 +273,8 @@ gcc -shared -o foo.so foo.o
    </para>
   </note>
 
-  Paths given to the <command>CREATE FUNCTION</command> command must
-  be absolute paths (i.e., start with <literal>/</literal>) that refer
-  to directories visible on the machine on which the
-  <productname>Postgres</productname> server is running.  Relative
-  paths do in fact work, but are relative to the directory where the
-  database resides (which is generally invisible to the frontend
-  application).  Obviously, it makes no sense to make the path
-  relative to the directory in which the user started the frontend
-  application, since the server could be running on a completely
-  different machine!  The user id the
-  <productname>Postgres</productname> server runs as must be able to
-  traverse the path given to the <command>CREATE FUNCTION</command>
-  command and be able to read the shared library file.  (Making the
-  file or a higher-level directory not readable and/or not executable
-  by the <quote>postgres</quote> user is a common mistake.)
+  Refer back to <xref linkend="xfunc-c-dynload"> about where the
+  server expects to find the shared library files.
  </para>
 
 <!--

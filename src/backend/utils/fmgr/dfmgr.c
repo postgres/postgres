@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.49 2001/05/17 17:44:18 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.50 2001/05/19 09:01:10 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,7 +51,7 @@ char * Dynamic_library_path;
 static bool file_exists(const char *name);
 static char * find_in_dynamic_libpath(const char * basename);
 static char * expand_dynamic_library_name(const char *name);
-
+static char * substitute_libpath_macro(const char * name);
 
 /*
  * Load the specified dynamic-link library file, and look for a function
@@ -210,7 +210,7 @@ file_exists(const char *name)
 	AssertArg(name != NULL);
 
 	if (stat(name, &st) == 0)
-		return true;
+		return S_ISDIR(st.st_mode) ? false : true;
 	else if (!(errno == ENOENT || errno == ENOTDIR || errno == EACCES))
 			elog(ERROR, "stat failed on %s: %s", name, strerror(errno));
 
@@ -234,15 +234,14 @@ file_exists(const char *name)
  * the name.  Else (no slash) try to expand using search path (see
  * find_in_dynamic_libpath below); if that works, return the fully
  * expanded file name.  If the previous failed, append DLSUFFIX and
- * try again.  If all fails, return NULL.  The return value is
- * palloc'ed.
+ * try again.  If all fails, return NULL.
  */
 static char *
 expand_dynamic_library_name(const char *name)
 {
 	bool have_slash;
 	char * new;
-	size_t len;
+	char * full;
 
 	AssertArg(name);
 
@@ -250,28 +249,23 @@ expand_dynamic_library_name(const char *name)
 
 	if (!have_slash)
 	{
-		char * full;
-
 		full = find_in_dynamic_libpath(name);
 		if (full)
 			return full;
 	}
 	else
 	{
-		if (file_exists(name))
-			return pstrdup(name);
+		full = substitute_libpath_macro(name);
+		if (file_exists(full))
+			return full;
 	}
 
-	len = strlen(name);
-
-	new = palloc(len + strlen(DLSUFFIX) + 1);
+	new = palloc(strlen(name)+ strlen(DLSUFFIX) + 1);
 	strcpy(new, name);
-	strcpy(new + len, DLSUFFIX);
+	strcat(new, DLSUFFIX);
 
 	if (!have_slash)
 	{
-		char * full;
-
 		full = find_in_dynamic_libpath(new);
 		pfree(new);
 		if (full)
@@ -279,13 +273,48 @@ expand_dynamic_library_name(const char *name)
 	}
 	else
 	{
-		if (file_exists(new))
-			return new;
+		full = substitute_libpath_macro(new);
+		if (file_exists(full))
+			return full;
 	}
 		
 	return NULL;
 }
 
+
+
+static char *
+substitute_libpath_macro(const char * name)
+{
+	size_t macroname_len;
+	char * replacement = NULL;
+
+	AssertArg(name != NULL);
+
+	if (strlen(name) == 0 || name[0] != '$')
+		return pstrdup(name);
+
+	macroname_len = strcspn(name + 1, "/") + 1;
+
+	if (strncmp(name, "$libdir", macroname_len)==0)
+		replacement = LIBDIR;
+	else
+		elog(ERROR, "invalid macro name in dynamic library path");
+
+	if (name[macroname_len] == '\0')
+		return replacement;
+	else
+	{
+		char * new;
+
+		new = palloc(strlen(replacement) + (strlen(name) - macroname_len) + 1);
+
+		strcpy(new, replacement);
+		strcat(new, name + macroname_len);
+
+		return new;
+	}
+}
 
 
 /*
@@ -312,55 +341,26 @@ find_in_dynamic_libpath(const char * basename)
 	baselen = strlen(basename);
 
 	do {
+		char * piece;
+		const char * mangled;
+
 		len = strcspn(p, ":");
 
 		if (len == 0)
 			elog(ERROR, "zero length dynamic_library_path component");
 
-		/* substitute special value */
-		if (p[0] == '$')
-		{
-			size_t varname_len = strcspn(p + 1, "/") + 1;
-			const char * replacement = NULL;
-			size_t repl_len;
+		piece = palloc(len + 1);
+		strncpy(piece, p, len);
+		piece[len] = '\0';
 
-			if (strncmp(p, "$libdir", varname_len)==0)
-				replacement = LIBDIR;
-			else
-				elog(ERROR, "invalid dynamic_library_path specification");
+		mangled = substitute_libpath_macro(piece);
 
-			repl_len = strlen(replacement);
+		/* only absolute paths */
+		if (mangled[0] != '/')
+			elog(ERROR, "dynamic_library_path component is not absolute");
 
-			if (p[varname_len] == '\0')
-			{
-				full = palloc(repl_len + 1 + baselen + 1);
-				snprintf(full, repl_len + 1 + baselen + 1,
-						 "%s/%s", replacement, basename);
-			}
-			else
-			{
-				full = palloc(repl_len + (len - varname_len) + 1 + baselen + 1);
-
-				strcpy(full, replacement);
-				strncat(full, p + varname_len, len - varname_len);
-				full[repl_len + (len - varname_len)] = '\0';
-				strcat(full, "/");
-				strcat(full, basename);
-			}
-		}
-
-		/* regular case */
-		else
-		{
-			/* only absolute paths */
-			if (p[0] != '/')
-				elog(ERROR, "dynamic_library_path component is not absolute");
-
-			full = palloc(len + 1 + baselen + 1);
-			strncpy(full, p, len);
-			full[len] = '/';
-			strcpy(full + len + 1, basename);
-		}
+		full = palloc(strlen(mangled) + 1 + baselen + 1);
+		sprintf(full, "%s/%s", mangled, basename);
 
 		if (DebugLvl > 1)
 			elog(DEBUG, "find_in_dynamic_libpath: trying %s", full);
@@ -368,6 +368,7 @@ find_in_dynamic_libpath(const char * basename)
 		if (file_exists(full))
 			return full;
 
+		pfree(piece);
 		pfree(full);
 		if (p[len] == '\0')
 			break;
