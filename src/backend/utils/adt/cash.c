@@ -9,7 +9,7 @@
  * workings can be found in the book "Software Solutions in C" by
  * Dale Schumacher, Academic Press, ISBN: 0-12-632360-7.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.53 2002/04/03 05:39:29 petere Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.54 2002/08/20 16:46:29 tgl Exp $
  */
 
 #include "postgres.h"
@@ -639,7 +639,7 @@ cash_words(PG_FUNCTION_ARGS)
 {
 	Cash		value = PG_GETARG_CASH(0);
 	unsigned int val;
-	char		buf[128];
+	char		buf[256];
 	char	   *p = buf;
 	Cash		m0;
 	Cash		m1;
