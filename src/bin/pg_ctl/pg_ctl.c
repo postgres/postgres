@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.23 2004/07/22 01:44:36 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.24 2004/07/29 16:11:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -359,7 +359,7 @@ test_postmaster_connection(void)
 			/* keep looking, maybe there is another -p */
 		}
 		/* Advance to next whitespace */
-		while (!isspace(*p))
+		while (*p && !isspace(*p))
 			p++;
 	}
 
