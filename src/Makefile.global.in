@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.171 2003/11/29 19:51:39 pgsql Exp $
+# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.172 2003/12/19 23:29:15 momjian Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -121,7 +121,6 @@ localedir := @localedir@
 #
 # Records the choice of the various --enable-xxx and --with-xxx options.
 
-with_threads	= @with_threads@
 with_java	= @with_java@
 with_perl	= @with_perl@
 with_python	= @with_python@
@@ -131,6 +130,7 @@ enable_shared	= @enable_shared@
 enable_rpath	= @enable_rpath@
 enable_nls	= @enable_nls@
 enable_debug	= @enable_debug@
+enable_thread_safety	= @enable_thread_safety@
 
 python_includespec	= @python_includespec@
 python_libspec		= @python_libspec@
