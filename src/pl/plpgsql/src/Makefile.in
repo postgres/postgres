@@ -4,7 +4,7 @@
 #    Makefile for the plpgsql shared object
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Attic/Makefile.in,v 1.4 1998/10/09 04:50:12 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Attic/Makefile.in,v 1.5 1998/10/09 16:57:07 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -79,7 +79,9 @@ endif
 #
 DLOBJ= plpgsql$(DLSUFFIX)
 
-OBJS=	pl_parse.o pl_handler.o pl_comp.o pl_exec.o pl_funcs.o
+OBJS=	plpgsql.o
+
+PLOBJS=	pl_parse.o pl_handler.o pl_comp.o pl_exec.o pl_funcs.o
 
 ALL=	$(DLOBJ)
 
@@ -87,6 +89,9 @@ ALL=	$(DLOBJ)
 # Build the shared object
 #
 all: $(ALL)
+
+$(OBJS):	$(PLOBJS)
+	$(LD) -r -o $(OBJS) $(PLOBJS)
 
 $(DLOBJ):	$(OBJS)
 

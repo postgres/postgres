@@ -8,5 +8,8 @@ else
     exit 1
 fi
 
-set | grep '^TCL' > Makefile.tcldefs
+for v in `set | grep '^TCL' | sed -e 's/=.*//'` ; do
+    echo $v = `eval "echo \\$$v"`
+done >Makefile.tcldefs
+
 exit 0

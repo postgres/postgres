@@ -3,7 +3,7 @@
  *			  procedural language (PL)
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.6 1998/09/01 04:40:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.7 1998/10/09 16:57:10 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -417,12 +417,6 @@ pltcl_call_handler(FmgrInfo *proinfo,
 
 	pltcl_call_level--;
 
-	/************************************************************
-	 * Disconnect from SPI manager
-	 ************************************************************/
-	if (SPI_finish() != SPI_OK_FINISH)
-		elog(ERROR, "pltcl: SPI_finish() failed");
-
 	return retval;
 }
 
@@ -730,6 +724,15 @@ pltcl_func_handler(FmgrInfo *proinfo,
 			pltcl_restart_in_progress = 0;
 		siglongjmp(Warn_restart, 1);
 	}
+
+	/************************************************************
+	 * Disconnect from SPI manager and then create the return
+	 * values datum (if the input function does a palloc for it
+	 * this must not be allocated in the SPI memory context
+	 * because SPI_finish would free it).
+	 ************************************************************/
+	if (SPI_finish() != SPI_OK_FINISH)
+		elog(ERROR, "pltcl: SPI_finish() failed");
 
 	retval = (Datum) (*fmgr_faddr(&prodesc->result_in_func))
 		(pltcl_safe_interp->result,
@@ -1051,8 +1054,12 @@ pltcl_trigger_handler(FmgrInfo *proinfo)
 	 * The return value from the procedure might be one of
 	 * the magic strings OK or SKIP or a list from array get
 	 ************************************************************/
-	if (strcmp(pltcl_safe_interp->result, "OK") == 0)
+	if (SPI_finish() != SPI_OK_FINISH)
+		elog(ERROR, "pltcl: SPI_finish() failed");
+
+	if (strcmp(pltcl_safe_interp->result, "OK") == 0) {
 		return rettup;
+	}
 	if (strcmp(pltcl_safe_interp->result, "SKIP") == 0)
 	{
 		return (HeapTuple) NULL;;
@@ -1309,7 +1316,7 @@ pltcl_SPI_exec(ClientData cdata, Tcl_Interp * interp,
 	int			loop_rc;
 	int			ntuples;
 	HeapTuple  *tuples;
-	TupleDesc	tupdesc;
+	TupleDesc	tupdesc = NULL;
 	sigjmp_buf	save_restart;
 
 	char	   *usage = "syntax error - 'SPI_exec "

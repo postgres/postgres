@@ -817,6 +817,11 @@ if test "$USE_TCL"; then
 				fi
 			fi
 		done
+		if test -z "$TCL_CONFIG_SH"; then
+			if test -d "$dir" -a -r "$dir/tclConfig.sh"; then
+				TCL_CONFIG_SH=$dir/tclConfig.sh
+			fi
+		fi
 	done
 	if test -z "$TCL_CONFIG_SH"; then
 		AC_MSG_RESULT(no)
