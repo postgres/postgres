@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/config/programs.m4,v 1.15 2004/09/02 15:39:55 tgl Exp $
+# $PostgreSQL: pgsql/config/programs.m4,v 1.16 2004/09/02 20:39:57 tgl Exp $
 
 
 # PGAC_PATH_FLEX
@@ -38,7 +38,7 @@ else
       fi
     done
   done
-  rm -f conftest.l
+  rm -f conftest.l lex.yy.c
   : ${pgac_cv_path_flex=no}
 fi
 ])[]dnl AC_CACHE_CHECK
