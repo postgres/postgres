@@ -70,7 +70,7 @@ SELECT '' AS three, f.f1, |/f.f1 AS sqrt_f1
    WHERE f.f1 > '0.0';
 
 -- take exp of ln(f.f1) 
-SELECT '' AS three, f.f1, : ( ; f.f1) AS exp_ln_f1
+SELECT '' AS three, f.f1, exp(ln(f.f1)) AS exp_ln_f1
    FROM FLOAT8_TBL f
    WHERE f.f1 > '0.0';
 
@@ -90,11 +90,11 @@ SELECT '' AS bad, f.f1 * '1e200' from FLOAT8_TBL f;
 
 SELECT '' AS bad, f.f1 ^ '1e200' from FLOAT8_TBL f;
 
-SELECT '' AS bad, (; (f.f1)) from FLOAT8_TBL f where f.f1 = '0.0' ;
+SELECT '' AS bad, ln(f.f1) from FLOAT8_TBL f where f.f1 = '0.0' ;
 
-SELECT '' AS bad, (; (f.f1)) from FLOAT8_TBL f where f.f1 < '0.0' ;
+SELECT '' AS bad, ln(f.f1) from FLOAT8_TBL f where f.f1 < '0.0' ;
 
-SELECT '' AS bad, : (f.f1) from FLOAT8_TBL f;
+SELECT '' AS bad, exp(f.f1) from FLOAT8_TBL f;
 
 SELECT '' AS bad, f.f1 / '0.0' from FLOAT8_TBL f;
 

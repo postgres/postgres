@@ -161,7 +161,7 @@ SELECT '' AS three, f.f1, |/f.f1 AS sqrt_f1
 (3 rows)
 
 -- take exp of ln(f.f1) 
-SELECT '' AS three, f.f1, : ( ; f.f1) AS exp_ln_f1
+SELECT '' AS three, f.f1, exp(ln(f.f1)) AS exp_ln_f1
    FROM FLOAT8_TBL f
    WHERE f.f1 > '0.0';
  three |          f1          |       exp_ln_f1       
@@ -199,11 +199,11 @@ SELECT '' AS bad, f.f1 * '1e200' from FLOAT8_TBL f;
 ERROR:  floating point exception! The last floating point operation either exceeded legal ranges or was a divide by zero
 SELECT '' AS bad, f.f1 ^ '1e200' from FLOAT8_TBL f;
 ERROR:  pow() result is out of range
-SELECT '' AS bad, (; (f.f1)) from FLOAT8_TBL f where f.f1 = '0.0' ;
+SELECT '' AS bad, ln(f.f1) from FLOAT8_TBL f where f.f1 = '0.0' ;
 ERROR:  can't take log of zero
-SELECT '' AS bad, (; (f.f1)) from FLOAT8_TBL f where f.f1 < '0.0' ;
+SELECT '' AS bad, ln(f.f1) from FLOAT8_TBL f where f.f1 < '0.0' ;
 ERROR:  can't take log of a negative number
-SELECT '' AS bad, : (f.f1) from FLOAT8_TBL f;
+SELECT '' AS bad, exp(f.f1) from FLOAT8_TBL f;
 ERROR:  exp() result is out of range
 SELECT '' AS bad, f.f1 / '0.0' from FLOAT8_TBL f;
 ERROR:  float8div: divide by zero error
