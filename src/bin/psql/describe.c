@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.47 2002/03/20 19:44:45 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.48 2002/04/05 11:52:38 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -692,12 +692,51 @@ describeTableDetails(const char *name, bool desc)
 	}
 	else if (view_def)
 	{
+		PGresult   *result = NULL;
+		int			rule_count = 0;
+		int			count_footers = 0;
+
+		/* count rules */
+		if (!error && tableinfo.hasrules)
+		{
+			sprintf(buf,
+					"SELECT r.rulename\n"
+					"FROM pg_rewrite r, pg_class c\n"
+					"WHERE c.relname='%s' AND c.oid = r.ev_class\n"
+					"AND r.rulename NOT LIKE '_RET%%'",
+					name);
+			result = PSQLexec(buf);
+			if (!result)
+				error = true;
+			else
+				rule_count = PQntuples(result);
+		}
+
 		/* Footer information about a view */
-		footers = xmalloc(2 * sizeof(*footers));
-		footers[0] = xmalloc(64 + strlen(view_def));
-		snprintf(footers[0], 64 + strlen(view_def),
+		footers = xmalloc((rule_count + 2) * sizeof(*footers));
+		footers[count_footers] = xmalloc(64 + strlen(view_def));
+		snprintf(footers[count_footers], 64 + strlen(view_def),
 				 _("View definition: %s"), view_def);
-		footers[1] = NULL;
+		count_footers++;
+
+		/* print rules */
+		for (i = 0; i < rule_count; i++)
+		{
+			char	   *s = _("Rules");
+
+			if (i == 0)
+				snprintf(buf, sizeof(buf), "%s: %s", s, PQgetvalue(result, i, 0));
+			else
+				snprintf(buf, sizeof(buf), "%*s  %s", (int) strlen(s), "", PQgetvalue(result, i, 0));
+			if (i < rule_count - 1)
+				strcat(buf, ",");
+
+			footers[count_footers++] = xstrdup(buf);
+		}
+		PQclear(result);
+
+		footers[count_footers] = NULL;
+
 	}
 	else if (tableinfo.relkind == 'r')
 	{
