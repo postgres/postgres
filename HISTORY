@@ -2,7 +2,7 @@
 
                                   Release 7.3
 
-     Release date: 2002-??-??
+     Release date: 2002-11-??
 
 Overview
 
@@ -67,7 +67,7 @@ Migration to version 7.3
    A dump/restore using "pg_dump" is required for those wishing to migrate
    data from any previous release.  If your application examines the
    system catalogs, additional changes will be required due to the
-   introduction of schemas in 7.3; for more information, see
+   introduction of schemas in 7.3; for more information, see:
 
 		http://www.ca.postgresql.org/docs/momjian/upgrade_tips_7.3
 
@@ -384,8 +384,8 @@ ECPG
 ====
 Fixed ecpg bug concerning octal numbers in single quotes (Michael)
 
-Misc. Interfaces
-================
+Miscellaneous Interfaces
+========================
 Move /interfaces/libpgeasy to http://gborg.postgresql.org (Marc, Bruce)
 Improve python (Elliot Lee, Andrew Johnson, Greg Copeland)
 Add libpgtcl connection close event (Gerhard Hintermayer)
