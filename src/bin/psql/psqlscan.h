@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/psqlscan.h,v 1.3 2004/08/29 05:06:54 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/psqlscan.h,v 1.4 2004/12/19 19:39:47 tgl Exp $
  */
 #ifndef PSQLSCAN_H
 #define PSQLSCAN_H
@@ -32,7 +32,8 @@ enum slash_option_type
 	OT_SQLID,					/* treat as SQL identifier */
 	OT_SQLIDHACK,				/* SQL identifier, but don't downcase */
 	OT_FILEPIPE,				/* it's a filename or pipe */
-	OT_WHOLE_LINE				/* just snarf the rest of the line */
+	OT_WHOLE_LINE,				/* just snarf the rest of the line */
+	OT_VERBATIM					/* literal (no backticks or variables) */
 };
 
 

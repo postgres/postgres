@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.137 2004/11/30 20:00:34 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.138 2004/12/19 19:39:47 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -127,13 +127,23 @@ HandleSlashCmds(PsqlScanState scan_state,
 		status = CMD_ERROR;
 	}
 
-	/* eat the rest of the options, if any */
-	while ((arg = psql_scan_slash_option(scan_state,
-										 OT_NORMAL, NULL, false)))
+	if (status != CMD_ERROR)
 	{
-		if (status != CMD_ERROR)
+		/* eat any remaining arguments after a valid command */
+		/* note we suppress evaluation of backticks here */
+		while ((arg = psql_scan_slash_option(scan_state,
+											 OT_VERBATIM, NULL, false)))
+		{
 			psql_error("\\%s: extra argument \"%s\" ignored\n", cmd, arg);
-		free(arg);
+			free(arg);
+		}
+	}
+	else
+	{
+		/* silently throw away rest of line after an erroneous command */
+		while ((arg = psql_scan_slash_option(scan_state,
+											 OT_WHOLE_LINE, NULL, false)))
+			free(arg);
 	}
 
 	/* if there is a trailing \\, swallow it */

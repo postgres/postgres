@@ -31,7 +31,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/psql/psqlscan.l,v 1.7 2004/08/29 04:13:02 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/psql/psqlscan.l,v 1.8 2004/12/19 19:39:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -723,24 +723,38 @@ other			.
 				}
 
 "`"				{
-					*option_quote = '`';
-					BEGIN(xslashbackquote);
+					if (option_type == OT_VERBATIM)
+					{
+						/* in verbatim mode, backquote is not special */
+						ECHO;
+						BEGIN(xslashdefaultarg);
+					}
+					else
+					{
+						*option_quote = '`';
+						BEGIN(xslashbackquote);
+					}
 				}
 
 :[A-Za-z0-9_]*	{
 					/* Possible psql variable substitution */
-					const char *value;
+					if (option_type == OT_VERBATIM)
+						ECHO;
+					else
+					{
+						const char *value;
 
-					value = GetVariable(pset.vars, yytext + 1);
+						value = GetVariable(pset.vars, yytext + 1);
 
-					/*
-					 * The variable value is just emitted without any
-					 * further examination.  This is consistent with the
-					 * pre-8.0 code behavior, if not with the way that
-					 * variables are handled outside backslash commands.
-					 */
-					if (value)
-						appendPQExpBufferStr(output_buf, value);
+						/*
+						 * The variable value is just emitted without any
+						 * further examination.  This is consistent with the
+						 * pre-8.0 code behavior, if not with the way that
+						 * variables are handled outside backslash commands.
+						 */
+						if (value)
+							appendPQExpBufferStr(output_buf, value);
+					}
 
 					*option_quote = ':';
 
