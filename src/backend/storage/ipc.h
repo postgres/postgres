@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: ipc.h,v 1.4 1996/07/26 20:39:04 scrappy Exp $
+ * $Id: ipc.h,v 1.5 1996/08/04 21:03:23 scrappy Exp $
  *
  * NOTES
  *    This file is very architecture-specific.  This stuff should actually
@@ -114,10 +114,13 @@ extern int S_LOCK_FREE(slock_t *lock);
  * cannot do so), we use System V semaphores.  We also use them for 
  * long locks.  For some reason union semun is never defined in the 
  * System V header files so we must do it ourselves.
+ *
+ * bsdi_2_1 does not need this
  */
 #if defined(sequent) || \
     defined(PORTNAME_aix) || \
     defined(PORTNAME_alpha) || \
+    defined(PORTNAME_bsdi) || \
     defined(PORTNAME_hpux) || \
     defined(PORTNAME_i386_solaris) || \
     defined(PORTNAME_sparc_solaris) || \
