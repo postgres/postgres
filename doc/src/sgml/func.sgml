@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.103 2002/06/15 20:03:51 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.104 2002/06/24 22:17:01 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -1079,6 +1079,32 @@ PostgreSQL documentation
        </entry>
        <entry><literal>pg_client_encoding()</literal></entry>
        <entry><literal>SQL_ASCII</literal></entry>
+      </row>
+
+      <row>
+       <entry><function>quote_ident</function>(<parameter>string</parameter> text)</entry>
+       <entry><type>text</type></entry>
+       <entry>
+        Returns the given string suitably quoted to be used as an identifier
+	in an SQL query string.
+	Quotes are added only if necessary (i.e., if the string contains
+	non-identifier characters or would be case-folded).
+	Embedded quotes are properly doubled.
+       </entry>
+       <entry><literal>quote_ident('Foo')</literal></entry>
+       <entry><literal>"Foo"</literal></entry>
+      </row>
+
+      <row>
+       <entry><function>quote_literal</function>(<parameter>string</parameter> text)</entry>
+       <entry><type>text</type></entry>
+       <entry>
+        Returns the given string suitably quoted to be used as a literal
+	in an SQL query string.
+	Embedded quotes and backslashes are properly doubled.
+       </entry>
+       <entry><literal>quote_literal('O\'Reilly')</literal></entry>
+       <entry><literal>'O''Reilly'</literal></entry>
       </row>
 
       <row>
