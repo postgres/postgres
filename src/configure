@@ -650,7 +650,7 @@ nextstep*) os=nextstep need_tas=no ;;
    sysv4*) os=svr4 need_tas=no ;;
    sysv5uw*) os=unixware need_tas=no ;;
    unixware*) os=unixware need_tas=no ;;
-    qnx4*) os=qnx4 need_tas=no ;;
+    qnx*) os=qnx4 need_tas=no ;;
 *) echo ""
    echo "*************************************************************"
    echo "configure does not currently recognize your operating system,"
