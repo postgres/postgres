@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.99 2000/09/12 04:30:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.100 2000/09/12 04:33:18 momjian Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -26,6 +26,7 @@
 #include "catalog/indexing.h"
 #include "catalog/pg_attrdef.h"
 #include "catalog/pg_opclass.h"
+#include "catalog/pg_rewrite.h"
 #include "commands/command.h"
 #include "executor/spi.h"
 #include "catalog/heap.h"
@@ -55,7 +56,8 @@
 
 
 static bool needs_toast_table(Relation rel);
-static bool is_view(char *relname, char *command);
+static bool is_viewr(char *relname);
+static bool is_view(Relation rel);
 
 
 
@@ -1100,7 +1102,7 @@ AlterTableAddConstraint(char *relationName,
 #endif
 
 	/* check to see if the table to be constrained is a view. */
-	if (is_view(relationName, "ALTER TABLE"))
+	if (is_viewr(relationName))
 		 elog(ERROR, "ALTER TABLE: Cannot add constraints to views.");
 		
 	switch (nodeTag(newConstraint))
@@ -1250,7 +1252,7 @@ AlterTableAddConstraint(char *relationName,
 				}
 
 				/* check to see if the referenced table is a view. */
-				if (is_view(fkconstraint->pktable_name, "ALTER TABLE"))
+				if (is_viewr(fkconstraint->pktable_name))
 				 elog(ERROR, "ALTER TABLE: Cannot add constraints to views.");
 
 				/*
@@ -1698,10 +1700,10 @@ LockTableCommand(LockStmt *lockstmt)
 	Relation	rel;
 	int			aclresult;
 
-	if (is_view(lockstmt->relname, "LOCK TABLE")) 
-			elog(ERROR, "LOCK TABLE: cannot lock a view");
-
 	rel = heap_openr(lockstmt->relname, NoLock);
+
+	if (is_view(rel)) 
+			elog(ERROR, "LOCK TABLE: cannot lock a view");
 
 	if (lockstmt->mode == AccessShareLock)
 		aclresult = pg_aclcheck(lockstmt->relname, GetUserId(), ACL_RD);
@@ -1719,26 +1721,63 @@ LockTableCommand(LockStmt *lockstmt)
 
 static
 bool
-is_view (char * relname, char *command)
+is_viewr(char *name)
 {
-	bool retval;
-	char rulequery[41+NAMEDATALEN]; 
-	void *qplan;
-	char nulls[1]="";
+	Relation rel = heap_openr(name, NoLock);
 
-	sprintf(rulequery, "select * from pg_views where viewname='%s'", relname);
-	if (SPI_connect()!=SPI_OK_CONNECT)
-		elog(ERROR, "%s: Unable to determine if %s is a view - SPI_connect failure..", command, relname);
-	qplan=SPI_prepare(rulequery, 0, NULL);
-	if (!qplan)
-		elog(ERROR, "%s: Unable to determine if %s is a view - SPI_prepare failure.", command, relname);
-	qplan=SPI_saveplan(qplan);
-	if (SPI_execp(qplan, NULL, nulls, 1)!=SPI_OK_SELECT) 
-		elog(ERROR, "%s: Unable to determine if %s is a view - SPI_execp failure.", command, relname);
+	bool retval = is_view(rel);
 
-	retval = (SPI_processed != 0);
-  if (SPI_finish() != SPI_OK_FINISH)
-	 elog(NOTICE, "SPI_finish() failed in %s", command);
+	heap_close(rel, NoLock);
 
+	return retval;
+}
+
+static
+bool
+is_view (Relation rel)
+{
+	Relation	RewriteRelation;
+	HeapScanDesc scanDesc;
+	ScanKeyData scanKeyData;
+	HeapTuple	tuple;
+	Form_pg_rewrite data;
+
+
+	bool retval = 0;
+
+	/*
+	 * Open the pg_rewrite relation.
+	 */
+	RewriteRelation = heap_openr(RewriteRelationName, RowExclusiveLock);
+
+	/*
+	 * Scan the RuleRelation ('pg_rewrite') for all the tuples that has
+	 * the same ev_class as the relation being checked.
+	 */
+	ScanKeyEntryInitialize(&scanKeyData,
+						   0,
+						   Anum_pg_rewrite_ev_class,
+						   F_OIDEQ,
+						   ObjectIdGetDatum(rel->rd_id));
+	scanDesc = heap_beginscan(RewriteRelation,
+							  0, SnapshotNow, 1, &scanKeyData);
+
+	while (HeapTupleIsValid(tuple = heap_getnext(scanDesc, 0)))
+	{
+		if (tuple->t_data != NULL) 
+		{
+			data = (Form_pg_rewrite) GETSTRUCT(tuple);
+			if (data->ev_type == '1')
+			{
+				retval = 1;
+				break;
+			}
+		}
+
+	}
+
+	heap_endscan(scanDesc);
+	heap_close(RewriteRelation, RowExclusiveLock);
+	
   return retval;
 }

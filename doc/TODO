@@ -35,7 +35,7 @@ VIEWS
 * Views containing aggregates sometimes fail(Jan)
 * Creating view and inheriting the view causes view* to show
   duplicates(inherit) 
-* Disallow LOCK on view
+* -Disallow LOCK on view(Mark Hollomon)
 
 MISC
 
