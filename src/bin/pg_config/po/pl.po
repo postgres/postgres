@@ -7,7 +7,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_config\n"
-"POT-Creation-Date: 2005-01-11 19:05+0000\n"
+"POT-Creation-Date: 2005-01-31 02:15+0000\n"
 "PO-Revision-Date: 2005-01-12 16:0+0100\n"
 "Last-Translator: toczek <xxxtoczekxxx@wp.pl>\n"
 "Language-Team:\n"
@@ -120,32 +120,47 @@ msgstr "%s: niepoprawny parametr: %s\n"
 msgid "%s: could not find own executable\n"
 msgstr "%s: nie mo¿na znale¼æ pliku wykonywalnego\n"
 
-#: ../../port/exec.c:193 ../../port/exec.c:306 ../../port/exec.c:349
+#: ../../port/exec.c:194 ../../port/exec.c:308 ../../port/exec.c:351
 #, c-format
 msgid "could not identify current directory: %s"
 msgstr "nie mo¿na zidentyfikowaæ bie¿±cego katalogu: %s"
 
-#: ../../port/exec.c:322 ../../port/exec.c:358
+#: ../../port/exec.c:213
+#, c-format
+msgid "invalid binary \"%s\""
+msgstr "b³êdna binarka \"%s\""
+
+#: ../../port/exec.c:262
+#, c-format
+msgid "could not read binary \"%s\""
+msgstr "nie mo¿na odczytaæ binarki \"%s\""
+
+#: ../../port/exec.c:269
+#, c-format
+msgid "could not find a \"%s\" to execute"
+msgstr "nie mo¿na znale¼æ \"%s\" aby wykonaæ"
+
+#: ../../port/exec.c:324 ../../port/exec.c:360
 #, c-format
 msgid "could not change directory to \"%s\""
 msgstr "nie mo¿na zmieniæ katalogu na \"%s\""
 
-#: ../../port/exec.c:337
+#: ../../port/exec.c:339
 #, c-format
 msgid "could not read symbolic link \"%s\""
 msgstr "nie mo¿na odczytaæ odwo³ania symbolicznego \"%s\""
 
-#: ../../port/exec.c:585
+#: ../../port/exec.c:587
 #, c-format
 msgid "child process exited with exit code %d"
 msgstr "proces potomny zakoñczyl dzia³anie z kodem %d"
 
-#: ../../port/exec.c:588
+#: ../../port/exec.c:590
 #, c-format
 msgid "child process was terminated by signal %d"
 msgstr "proces potomny zosta³ przerwany przez sygna³ %d"
 
-#: ../../port/exec.c:591
+#: ../../port/exec.c:593
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "proces potomny zakoñczy³ dzia³anie z nieznanym stanem %d"
