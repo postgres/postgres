@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tcopprot.h,v 1.13 1998/05/29 17:00:28 momjian Exp $
+ * $Id: tcopprot.h,v 1.14 1998/06/04 17:26:49 momjian Exp $
  *
  * OLD COMMENTS
  *	  This file was created so that other c files could get the two
@@ -25,10 +25,9 @@
 extern List *
 pg_parse_and_plan(char *query_string, Oid *typev, int nargs,
 				  QueryTreeList **queryListP, CommandDest dest);
-extern void pg_exec_query(char *query_string, char **argv, Oid *typev, int nargs);
+extern void pg_exec_query(char *query_string);
 extern void
-pg_exec_query_dest(char *query_string, char **argv, Oid *typev,
-				   int nargs, CommandDest dest);
+pg_exec_query_dest(char *query_string, CommandDest dest);
 
 #endif							/* BOOTSTRAP_HEADER */
 
@@ -37,7 +36,8 @@ extern void quickdie(SIGNAL_ARGS);
 extern void die(SIGNAL_ARGS);
 extern void FloatExceptionHandler(SIGNAL_ARGS);
 extern void CancelQuery(void);
-extern int PostgresMain(int argc, char *argv[]);
+extern int PostgresMain(int argc, char *argv[],
+						int real_argc, char *real_argv[]);
 extern void ResetUsage(void);
 extern void ShowUsage(void);
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.13 1998/04/27 04:05:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.14 1998/06/04 17:26:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -95,7 +95,7 @@ createdb(char *dbname, char *dbpath)
 	sprintf(buf, "insert into pg_database (datname, datdba, datpath)"
 			" values (\'%s\', \'%d\', \'%s\');", dbname, user_id, loc);
 
-	pg_exec_query(buf, (char **) NULL, (Oid *) NULL, 0);
+	pg_exec_query(buf);
 }
 
 void
@@ -133,7 +133,7 @@ destroydb(char *dbname)
 	 */
 	sprintf(buf, "delete from pg_database where pg_database.oid = \'%d\'::oid",
 			db_id);
-	pg_exec_query(buf, (char **) NULL, (Oid *) NULL, 0);
+	pg_exec_query(buf);
 
 	/*
 	 * remove the data directory. If the DELETE above failed, this will

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.79 1998/05/29 17:10:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.80 1998/06/04 17:26:41 momjian Exp $
  *
  * NOTES
  *
@@ -157,7 +157,8 @@ static IpcMemoryKey ipc_key;
 
 static int	NextBackendId = MAXINT;		/* XXX why? */
 static char *progname = (char *) NULL;
-static char **argv_name;
+static char **real_argv;
+static int  real_argc;
 
 /*
  * Default Values
@@ -296,10 +297,38 @@ PostmasterMain(int argc, char *argv[])
 	int			silentflag = 0;
 	bool		DataDirOK;		/* We have a usable PGDATA value */
 	char		hostbuf[MAXHOSTNAMELEN];
-
-	progname = argv[0];
-	argv_name = &argv[0];
+	int			nonblank_argc;
 	
+	/*
+	 *	We need three params so we can display status.  If we don't
+	 *	get them from the user, let's make them ourselves.
+	 */
+	if (argc < 4)
+	{
+		int i;
+		char *new_argv[5];
+
+		for (i=0; i < argc; i++)
+			new_argv[i] = argv[i];
+		for (; i < 4; i++)
+			new_argv[i] = "";
+		new_argv[4] = NULL;
+		execv(new_argv[0], new_argv);
+		perror("");
+		/* How did we get here, error! */
+		fprintf(stderr, "PostmasterMain execv failed on %s\n", argv[0]);
+		exit(1);
+	}
+	    
+	progname = argv[0];
+	real_argv = argv;
+	real_argc = argc;
+
+	/* don't process any dummy args we placed at the end for status display */
+	for (nonblank_argc = argc; argc > 0; nonblank_argc--)
+		if (argv[argc-1] != NULL && argv[argc-1][0] != '\0')
+			break;
+
 	/*
 	 * for security, no dir or file created can be group or other
 	 * accessible
@@ -316,7 +345,7 @@ PostmasterMain(int argc, char *argv[])
 	DataDir = getenv("PGDATA"); /* default value */
 
 	opterr = 0;
-	while ((opt = getopt(argc, argv, "a:B:b:D:dim:Mno:p:Ss")) != EOF)
+	while ((opt = getopt(nonblank_argc, argv, "a:B:b:D:dim:Mno:p:Ss")) != EOF)
 	{
 		switch (opt)
 		{
@@ -355,7 +384,7 @@ PostmasterMain(int argc, char *argv[])
 				 * Turn on debugging for the postmaster and the backend
 				 * servers descended from it.
 				 */
-				if ((optind < argc) && *argv[optind] != '-')
+				if ((optind < nonblank_argc) && *argv[optind] != '-')
 				{
 					DebugLvl = atoi(argv[optind]);
 					optind++;
@@ -1195,7 +1224,7 @@ DoBackend(Port *port)
 	 *	a big win.
 	 */
 	
-	*argv_name = Execfile;
+	real_argv[0] = Execfile;
 
 	/* Tell the backend it is being called from the postmaster */
 	av[ac++] = "-p";
@@ -1252,7 +1281,7 @@ DoBackend(Port *port)
 		fprintf(stderr, ")\n");
 	}
 
-    return(PostgresMain(ac, av));
+    return(PostgresMain(ac, av, real_argc, real_argv));
 }
 
 /*

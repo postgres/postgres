@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.19 1998/05/12 21:43:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.20 1998/06/04 17:26:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -102,5 +102,5 @@ main(int argc, char *argv[])
 		exit(BootstrapMain(argc - 1, argv + 1));		/* remove the -boot arg
 														 * from the command line */
 	else
-		exit(PostgresMain(argc, argv));
+		exit(PostgresMain(argc, argv, argc, argv));
 }

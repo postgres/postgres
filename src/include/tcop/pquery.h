@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pquery.h,v 1.9 1998/02/26 04:43:40 momjian Exp $
+ * $Id: pquery.h,v 1.10 1998/06/04 17:26:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,7 +29,6 @@ ProcessPortal(char *portalName, Query *parseTree,
 			  CommandDest dest);
 
 extern void
-ProcessQuery(Query *parsetree, Plan *plan, char *argv[],
-			 Oid *typev, int nargs, CommandDest dest);
+ProcessQuery(Query *parsetree, Plan *plan, CommandDest dest);
 
 #endif							/* pqueryIncluded */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.72 1998/05/29 17:00:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.73 1998/06/04 17:26:45 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -94,6 +94,7 @@ static bool DebugPrintRewrittenParsetree = false;
 
 /*static bool	EnableRewrite = true; , never changes why have it*/
 CommandDest whereToSendOutput;
+const char **ps_status;	/* this is our 'ps' status, argv[3] */
 
 #ifdef LOCK_MGR_DEBUG
 extern int	lockDebug;
@@ -594,16 +595,13 @@ pg_parse_and_plan(char *query_string,	/* string to execute */
  */
 
 void
-pg_exec_query(char *query_string, char **argv, Oid *typev, int nargs)
+pg_exec_query(char *query_string)
 {
-	pg_exec_query_dest(query_string, argv, typev, nargs, whereToSendOutput);
+	pg_exec_query_dest(query_string, whereToSendOutput);
 }
 
 void
 pg_exec_query_dest(char *query_string,	/* string to execute */
-				   char **argv, /* arguments */
-				   Oid *typev,	/* argument types */
-				   int nargs,	/* number of arguments */
 				   CommandDest dest)	/* where results should go */
 {
 	List	   *plan_list;
@@ -614,7 +612,7 @@ pg_exec_query_dest(char *query_string,	/* string to execute */
 	QueryTreeList *querytree_list;
 
 	/* plan the queries */
-	plan_list = pg_parse_and_plan(query_string, typev, nargs, &querytree_list, dest);
+	plan_list = pg_parse_and_plan(query_string, NULL, 0, &querytree_list, dest);
 
 	if (QueryCancel)
 		CancelQuery();
@@ -697,7 +695,7 @@ pg_exec_query_dest(char *query_string,	/* string to execute */
 					time(&tim);
 					printf("\tProcessQuery() at %s\n", ctime(&tim));
 				}
-				ProcessQuery(querytree, plan, argv, typev, nargs, dest);
+				ProcessQuery(querytree, plan, dest);
 			}
 
 			if (ShowExecutorStats)
@@ -827,7 +825,7 @@ usage(char *progname)
  * ----------------------------------------------------------------
  */
 int
-PostgresMain(int argc, char *argv[])
+PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 {
 	bool			flagC = false,
 					flagQ = false,
@@ -1231,6 +1229,25 @@ PostgresMain(int argc, char *argv[])
 	}
 
 	/* ----------------
+	 *	set process params for ps
+	 * ----------------
+	 */
+	if (IsUnderPostmaster)
+	{
+		int i;
+
+		Assert(real_argc >= 4);
+		real_argv[1] = userName;
+		real_argv[2] = DBName;
+		ps_status = (const char **)&real_argv[3];
+		*ps_status = "idle";
+		for (i = 4; i < real_argc; i++)
+			real_argv[i] = "";  /* blank them */
+	}
+	/* we just put a dummy here so we don't have to test everywhere */
+	else	ps_status = malloc(sizeof(char *));
+
+	/* ----------------
 	 *	initialize portal file descriptors
 	 * ----------------
 	 */
@@ -1297,7 +1314,7 @@ PostgresMain(int argc, char *argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface");
-		puts("$Revision: 1.72 $ $Date: 1998/05/29 17:00:15 $");
+		puts("$Revision: 1.73 $ $Date: 1998/06/04 17:26:45 $");
 	}
 
 	/* ----------------
@@ -1347,6 +1364,7 @@ PostgresMain(int argc, char *argv[])
 
 				StartTransactionCommand();
 				HandleFunctionRequest();
+				*ps_status = "idle";
 				break;
 
 				/* ----------------
@@ -1383,7 +1401,9 @@ PostgresMain(int argc, char *argv[])
 					}
 					StartTransactionCommand();
 
-					pg_exec_query(parser_input, (char **) NULL, (Oid *) NULL, 0);
+					pg_exec_query(parser_input);
+
+					*ps_status = "idle";
 
 					if (ShowStats)
 						ShowUsage();

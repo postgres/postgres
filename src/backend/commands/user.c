@@ -65,7 +65,7 @@ UpdatePgPwdFile(char *sql)
 	 * file to its final name.
 	 */
 	sprintf(sql, "copy %s to '%s' using delimiters %s", ShadowRelationName, tempname, CRYPT_PWD_FILE_SEPCHAR);
-	pg_exec_query(sql, (char **) NULL, (Oid *) NULL, 0);
+	pg_exec_query(sql);
 	rename(tempname, filename);
 	free((void *) tempname);
 
@@ -196,7 +196,7 @@ DefineUser(CreateUserStmt *stmt)
 	}
 	strcat(sql_end, ")");
 
-	pg_exec_query(sql, (char **) NULL, (Oid *) NULL, 0);
+	pg_exec_query(sql);
 
 	/*
 	 * Add the stuff here for groups.
@@ -328,7 +328,7 @@ AlterUser(AlterUserStmt *stmt)
 	{
 		sql_end += strlen(sql_end);
 		sprintf(sql_end, " where usename = '%s'", stmt->user);
-		pg_exec_query(sql, (char **) NULL, (Oid *) NULL, 0);
+		pg_exec_query(sql);
 	}
 
 	/* do the pg_group stuff here */
@@ -450,7 +450,7 @@ RemoveUser(char *user)
 		elog(NOTICE, "Dropping database %s", dbase[ndbase]);
 		sprintf(sql, "drop database %s", dbase[ndbase]);
 		free((void *) dbase[ndbase]);
-		pg_exec_query(sql, (char **) NULL, (Oid *) NULL, 0);
+		pg_exec_query(sql);
 	}
 	if (dbase)
 		free((void *) dbase);
@@ -477,7 +477,7 @@ RemoveUser(char *user)
 	 * Remove the user from the pg_shadow table
 	 */
 	sprintf(sql, "delete from %s where usename = '%s'", ShadowRelationName, user);
-	pg_exec_query(sql, (char **) NULL, (Oid *) NULL, 0);
+	pg_exec_query(sql);
 
 	UpdatePgPwdFile(sql);
 

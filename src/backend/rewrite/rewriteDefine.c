@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.14 1998/01/13 04:04:12 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.15 1998/06/04 17:26:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -135,7 +135,7 @@ InsertRule(char *rulname,
 			rulname, evtype, eventrel_oid, evslot_index, actionbuf,
 			qualbuf, is_instead);
 
-	pg_exec_query(rulebuf, (char **) NULL, (Oid *) NULL, 0);
+	pg_exec_query(rulebuf);
 
 	return (LastOidProcessed);
 }

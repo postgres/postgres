@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/_deadcode/Attic/version.c,v 1.11 1998/01/05 16:39:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/_deadcode/Attic/version.c,v 1.12 1998/06/04 17:26:38 momjian Exp $
  *
  * NOTES
  *	  At the point the version is defined, 2 physical relations are created
@@ -95,7 +95,7 @@ eval_as_new_xact(char *query)
 	 * CommitTransactionCommand(); StartTransactionCommand();
 	 */
 	CommandCounterIncrement();
-	pg_exec_query(query, (char **) NULL, (Oid *) NULL, 0);
+	pg_exec_query(query);
 }
 
 #endif
@@ -157,7 +157,7 @@ VersionCreate(char *vname, char *bname)
 	sprintf(query_buf, "SELECT * INTO TABLE %s from %s where 1 =2",
 			vname, bname);
 
-	pg_exec_query(query_buf, (char **) NULL, (Oid *) NULL, 0);
+	pg_exec_query(query_buf);
 
 	/*
 	 * Creating the ``v_added'' relation

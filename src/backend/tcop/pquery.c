@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.15 1998/02/26 04:36:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.16 1998/06/04 17:26:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,6 +40,8 @@
 
 static char *CreateOperationTag(int operationType);
 static void ProcessQueryDesc(QueryDesc *queryDesc);
+
+extern const char **ps_status;	/* from postgres.c */
 
 
 /* ----------------------------------------------------------------
@@ -226,7 +228,7 @@ ProcessQueryDesc(QueryDesc *queryDesc)
 	plan = queryDesc->plantree;
 
 	operation = queryDesc->operation;
-	tag = CreateOperationTag(operation);
+	*ps_status = tag = CreateOperationTag(operation);
 	dest = queryDesc->dest;
 
 	/* ----------------
@@ -358,9 +360,6 @@ ProcessQueryDesc(QueryDesc *queryDesc)
 void
 ProcessQuery(Query *parsetree,
 			 Plan *plan,
-			 char *argv[],
-			 Oid *typev,
-			 int nargs,
 			 CommandDest dest)
 {
 	QueryDesc  *queryDesc;
