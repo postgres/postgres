@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.6 2000/09/29 20:21:33 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.7 2000/11/29 20:15:59 petere Exp $
 -->
 
  <chapter id="extend">
@@ -107,7 +107,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.6 2000/09/29 20:21:33 peter
    </para>
   </sect1>
 
-  <sect1 id="system-catalogs">
+  <sect1 id="pg-system-catalogs">
    <title>About the <productname>Postgres</productname> System Catalogs</title>
 
    <para>

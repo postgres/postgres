@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/Attic/developer.sgml,v 1.2 2000/11/24 17:44:21 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/Attic/developer.sgml,v 1.3 2000/11/29 20:15:59 petere Exp $ -->
 <!-- PostgreSQL Developer's Guide -->
 
 <book id="developer">
@@ -17,17 +17,12 @@
  
  &sources;
  &arch-dev; 
- &geqo;
-<!--
- This listing of Postgres catalogs is currently just a copy of the old
- man page. It is not up to date and has not been marked up for DocBook.
- - thomas 2000-04-20
  &catalogs;
--->
  &protocol;
  &compiler;
  &bki;
  &page;
+ &geqo;
 <![%single-book;[
  &biblio;
 ]]>

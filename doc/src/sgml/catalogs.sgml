@@ -1,445 +1,1912 @@
-.\" This is -*-nroff-*-
-.\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.7 2000/07/17 03:04:40 tgl Exp $
-.TH "SYSTEM CATALOGS" INTRO 03/13/94 PostgreSQL PostgreSQL
-.SH "Section 7 - System Catalogs"
-.de LS
-.PP
-.if n .ta 5 +13 +13
-.if t .ta 0.5i +1.3i +1.3i
-.in 0
-.nf
-..
-.de LE
-.fi
-.in
-..
-.SH "DESCRIPTION"
-In this
-section we list each of the attributes of the system catalogs and
-define their meanings.
-.SH "CLASS/TYPE SYSTEM CATALOGS"
-These catalogs form the core of the extensibility system:
-.LS
-	\fBname\fP	\fBshared/local\fP	\fBdescription\fP
-	pg_aggregate	local	aggregate functions
-	pg_am	local	access methods
-	pg_amop	local	operators usable with specific access methods
-	pg_amproc	local	procedures used with specific access methods
-	pg_attribute	local	class attributes
-	pg_class	local	classes
-	pg_index	local	indices
-	pg_inherits	local	class inheritance hierarchy
-	pg_language	local	procedure implementation languages
-	pg_opclass	local	operator classes
-	pg_operator	local	query language operators
-	pg_proc	local	procedures (functions)
-	pg_type	local	data types
-.LE
-.SH "ENTITIES"
-These catalogs deal with identification of entities known throughout
-the site:
-.LS
-	\fBname\fP	\fBshared/local\fP	\fBdescription\fP
-	pg_database	shared	current databases
-	pg_group	shared	user groups
-	pg_shadow	shared	valid users
-.LE
-.SH "RULE SYSTEM CATALOGS"
-.LS
-	\fBname\fP	\fBshared/local\fP	\fBdescription\fP
-	pg_listener	local	processes waiting on alerters
-	pg_prs2plans	local	instance system procedures
-	pg_prs2rule	local	instance system rules
-	pg_prs2stub	local	instance system ``stubs''
-	pg_rewrite	local	rewrite system information
-.LE
-.SH "LARGE OBJECT CATALOGS"
-.PP
-These catalogs are specific to the Inversion file system and large
-objects in general:
-.LS
-	\fBname\fP	\fBshared/local\fP	\fBdescription\fP
-	pg_lobj	local	description of a large object
-	pg_naming	local	Inversion name space mapping
-	pg_platter	local	jukebox platter inventory
-	pg_plmap	local	jukebox platter extent map
-.LE
-.SH "INTERNAL CATALOGS"
-.PP
-These catalogs are internal classes that are not stored as normal
-heaps and cannot be accessed through normal means (attempting to do so
-causes an error).
-.LS
-	\fBname\fP	\fBshared/local\fP	\fBdescription\fP
-	pg_log	shared	transaction commit/rollback log
-	pg_magic	shared	magic constant
-	pg_time	shared	commit/rollback times
-	pg_variable	shared	special variable values
-.LE
-.PP
-There are several other classes defined with \*(lqpg_\*(rq names.
-Aside from those that end in \*(lqind\*(rq (secondary indices), these
-are all obsolete or otherwise deprecated.
-.SH "CLASS/TYPE SYSTEM CATALOGS"
-.PP
-The following catalogs relate to the class/type system.
-.nf M
-/*
- * aggregates
- *
- * see DEFINE AGGREGATE for an explanation of transition functions
- */
-pg_aggregate
-    NameData    aggname		/* aggregate name (e.g., "count") */
-    oid         aggowner	/* usesysid of creator */
-    regproc     aggtransfn	/* transition function */
-    regproc     aggfinalfn	/* final function */
-    oid         aggbasetype	/* type of data on which aggregate
-				   operates */
-    oid         aggtranstype	/* type of aggregate's transition
-				   (state) data */
-    oid         aggfinaltype	/* type of aggregate's final result */
-    text        agginitval	/* external format of initial state value */
-.fi
-.nf M
-pg_am
-    NameData    amname          /* access method name */
-    oid         amowner         /* usesysid of creator */
-    int2        amstrategies    /* total NUMBER of strategies by which
-                                   we can traverse/search this AM */
-    int2        amsupport       /* total NUMBER of support functions
-                                   that this AM uses */
-    int2        amorderstrategy /* if this AM has a sort order, the
-                                 * strategy number of the sort operator.
-                                 * Zero if AM is not ordered.
-                                 */
-    regproc     amgettuple      /* "next valid tuple" function */
-    regproc     aminsert        /* "insert this tuple" function */
-    regproc     amdelete        /* "delete this tuple" function */
-    regproc     amgetattr       /* - deprecated */
-    regproc     amsetlock       /* - deprecated */
-    regproc     amsettid        /* - deprecated */
-    regproc     amfreetuple     /* - deprecated */
-    regproc     ambeginscan     /* "start new scan" function */
-    regproc     amrescan        /* "restart this scan" function */
-    regproc     amendscan       /* "end this scan" function */
-    regproc     ammarkpos       /* "mark current scan position"
-                                   function */
-    regproc     amrestrpos      /* "restore marked scan position"
-                                   function */
-    regproc     amopen          /* - deprecated */
-    regproc     amclose         /* - deprecated */
-    regproc     ambuild         /* "build new index" function */
-    regproc     amcreate        /* - deprecated */
-    regproc     amdestroy       /* - deprecated */
-    regproc     amcostestimate  /* estimate cost of an indexscan */
+<!--
+ Documentation of the system catalogs, directed toward PostgreSQL developers
+ $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.8 2000/11/29 20:15:58 petere Exp $
+ -->
 
-.fi
-.nf M
-pg_amop
-    oid         amopid		/* access method with which this 
-				   operator be used */
-    oid         amopclaid	/* operator class with which this
-				   operator can be used */
-    oid         amopopr	/* the operator */
-    int2        amopstrategy	/* traversal/search strategy number
-				   to which this operator applies */
-.fi
-.nf M
-pg_amproc
-    oid         amid		/* access method with which this
-				   procedure is associated */
-    oid         amopclaid	/* operator class with which this
-				   operator can be used */
-    oid         amproc		/* the procedure */
-    int2        amprocnum	/* support function number to which
-				   this operator applies */
-.fi
-.nf M
-pg_class
-     NameData     relname	/* class name */
-     oid        relowner	/* usesysid of owner */
-     oid        relam	/* access method */
-     int4       relpages	/* # of 8KB pages */
-     int4       reltuples	/* # of instances */
-     abstime    relexpires	/* time after which instances are
-				   deleted from non-archival storage */
-     reltime    relpreserved	/* timespan after which instances are
-				   deleted from non-archival storage */
-     bool       relhasindex	/* does the class have a secondary
-				   index? */
-     bool       relisshared	/* is the class shared or local? */
-     char       relkind		/* type of relation:
-				   i=index
-				   r=relation (heap)
-				   s=special
-				   u=uncatalogued (temporary) */
-     char       relarch	/* archive mode:
-			   h=heavy
-			   l=light
-			   n=none */
-     int2       relnatts	/* current # of non-system
-				   attributes */
-     int2       relsmgr	/* storage manager:
-			   0=magnetic disk
-			   1=sony WORM jukebox
-			   2=main memory */
-     int2vector relkey		/* - unused */
-     oidvector  relkeyop	/* - unused */
-     bool       relhassubclass	/* does the class have a subclass?
-				    */
-     aclitem    relacl[1]	/* access control lists */
-.fi
-.nf M
-pg_attribute
-    oid         attrelid	/* class containing this attribute */
-    NameData      attname	/* attribute name */
-    oid         atttypid	/* attribute type */
-    oid         attdefrel	/* - deprecated */
-    int4        attnvals	/* - deprecated */
-    oid         atttyparg	/* - deprecated */
-    int2        attlen	/* attribute length, in bytes
-			   -1=variable */
-    int2        attnum	/* attribute number
-			   >0=user attribute
-			   <0=system attribute */
-    int2        attbound	/* - deprecated */
-    bool        attbyval	/* type passed by value? */
-    bool        attcanindex	/* - deprecated */
-    oid         attproc	/* - deprecated */
-    int4        attnelems	/* # of array dimensions */
-    int4        attcacheoff	/* cached offset into tuple */
-    bool        attisset	/* is attribute set-valued? */
-.fi
-.nf M
-pg_inherits
-    oid         inhrel	/* child class */
-    oid         inhparent	/* parent class */
-    int4        inhseqno	/* - deprecated */
-.fi
-.nf M
-    oid         indexrelid	/* oid of secondary index class */
-    oid         indrelid	/* oid of indexed heap class */
-    oid         indproc	/* function to compute index key from
-				   attribute(s) in heap
-				   0=not a functional index */
-    int2vector  indkey	/* attribute numbers of key 
-			   attribute(s) */
-    oidvector   indclass	/* opclass of each key */
-    bool        indisclustered	/* is the index clustered?
-				   - unused */
-    bool        indisarchived	/* is the index archival?
-				   - unused */
-    text        indpred	/* query plan for partial index 
-			   predicate */
-.fi
-.nf M
-pg_type
-    NameData      typname	/* type name */
-    oid         typowner	/* usesysid of owner */
-    int2        typlen	/* length in internal form
-			   -1=variable-length */
-    int2        typprtlen	/* length in external form */
-    bool        typbyval	/* type passed by value? */
-    char        typtype	/* kind of type:
-			   c=catalog (composite)
-			   b=base */
-    bool        typisdefined	/* defined or still a shell? */
-    char        typdelim	/* delimiter for array external form */
-    oid         typrelid	/* class (if composite) */
-    oid         typelem	/* type of each array element */
-    regproc     typinput	/* external-internal conversion
-				   function */ 
-    regproc     typoutput	/* internal-external conversion
-				   function */
-    regproc     typreceive	/* client-server conversion function */
-    regproc     typsend	/* server-client conversion function */
-    text        typdefault	/* default value */
-.fi
-.nf M
-pg_operator
-    NameData      oprname	/* operator name */
-    oid         oprowner	/* usesysid of owner */
-    int2        oprprec	/* - deprecated */
-    char        oprkind	/* kind of operator:
-			   b=binary
-			   l=left unary
-			   r=right unary */
-    bool        oprisleft	/* is operator left/right associative? */
-    bool        oprcanhash	/* is operator usable for hashjoin? */
-    oid         oprleft	/* left operand type */
-    oid         oprright	/* right operand type */
-    oid         oprresult	/* result type */
-    oid         oprcom	/* commutator operator */
-    oid         oprnegate	/* negator operator */
-    oid         oprlsortop	/* sort operator for left operand */
-    oid         oprrsortop	/* sort operator for right operand */
-    regproc     oprcode	/* function implementing this operator */
-    regproc     oprrest	/* function to calculate operator
-			   restriction selectivity */
-    regproc     oprjoin	/* function to calculate operator 
-			   join selectivity */
-.fi
-.nf M
-pg_opclass
-    NameData      opcname	/* operator class name */
-.fi
-.nf M
-pg_proc
-    NameData      proname	/* function name */
-    oid         proowner	/* usesysid of owner */
-    oid         prolang	/* function implementation language */
-    bool        proisinh	/* - deprecated */
-    bool        proistrusted	/* run in server or untrusted function
-				   process? */
-    bool        proiscachable	/* can the function return values be
-				   cached? */
-    int2        pronargs	/* # of arguments */
-    bool        proretset	/* does the function return a set?
-				   - unused */
-    oid         prorettype	/* return type */
-    oidvector   proargtypes	/* argument types */
-    int4        probyte_pct	/* % of argument size (in bytes) that
-				   needs to be examined in order to
-				   compute the function */ 
-    int4        properbyte_cpu	/* sensitivity of the function's
-				   running time to the size of its
-				   inputs */
-    int4        propercall_cpu	/* overhead of the function's
-				   invocation (regardless of input
-				   size) */
-    int4        prooutin_ratio	/* size of the function's output as a
-				   percentage of the size of the input */
-    text        prosrc	/* function definition:
-			   INTERNAL function: actual C name of function
-			   C function: currently, this field is unused
-			   SQL function: text of query(s)
-			   PL function: text in procedural language */
-    bytea       probin	/* path to object file (C functions only) */
-.fi
-.nf M
-pg_language
-    NameData      lanname	/* language name */
-    text        lancompiler	/* - deprecated */
-.fi
-.SH "ENTITIES"
-.nf M
-pg_database
-    NameData      datname		/* database name */
-    oid         datdba		/* usesysid of database administrator */
-    text        datpath		/* directory of database under
-				   $PGDATA */ 
-.fi
-.nf M
-pg_group
-    NameData      groname	/* group name */
-    int2        grosysid	/* group's UNIX group id */
-    int2        grolist[1]	/* list of usesysids of group members */
-.fi
-.nf M
-pg_shadow
-    NameData      usename		/* user's name */
-    int2        usesysid	/* user's UNIX user id */
-    bool        usecreatedb	/* can user create databases? */
-    bool        usetrace	/* can user set trace flags? */
-    bool        usesuper	/* can user be POSTGRES superuser? */
-    bool        usecatupd	/* can user update catalogs? */
-.fi
-.SH "RULE SYSTEM CATALOGS"
-.nf M
-pg_listener
-    NameData      relname	/* class for which asynchronous 
-			   notification is desired */
-    int4        listenerpid	/* process id of server corresponding
-				   to a frontend program waiting for
-				   asynchronous notification */
-    int4        notification	/* whether an event notification for
-				   this process id still pending */
+<chapter id="catalogs">
+ <title>System Catalogs</title>
 
-.fi
-.nf M
-pg_prs2rule
-    NameData      prs2name	/* rule name */
-    char        prs2eventtype	/* rule event type:
-				   R=retrieve
-				   U=update (replace)
-				   A=append
-				   D=delete */
-    oid         prs2eventrel	/* class to which event applies */
-    int2        prs2eventattr	/* attribute to which event applies */
-    float8      necessary	/* - deprecated */
-    float8      sufficient	/* - deprecated */
-    text        prs2text	/* text of original rule definition */
-.fi
-.nf M
-pg_prs2plans
-    oid         prs2ruleid	/* prs2rule instance for which this
-				   plan is used */
-    int2        prs2planno	/* plan number (one rule may invoke
-				   multiple plans) */
-    text        prs2code	/* external representation of the plan */
-.fi
-.nf M
-pg_prs2stub
-    oid         prs2relid	/* class to which this rule applies */
-    bool        prs2islast	/* is this the last stub fragment? */
-    int4        prs2no		/* stub fragment number */
-    stub        prs2stub	/* stub fragment */
-.fi
-.nf M
-pg_rewrite
-    NameData      rulename	/* rule name */
-    char        ev_type	/* event type:
-			   RETRIEVE, REPLACE, APPEND, DELETE
-			   codes are parser-dependent (!?) */
-    oid         ev_class	/* class to which this rule applies */
-    int2        ev_attr	/* attribute to which this rule applies */
-    bool        is_instead	/* is this an "instead" rule? */
-    text        ev_qual	/* qualification with which to modify
-			   (rewrite) the plan that triggered this
-			   rule */
-    text        action	/* parse tree of action */
-.fi
-.SH "LARGE OBJECT CATALOGS"
-.nf M
-pg_lobj
-    oid         ourid		/* 'ourid' from pg_naming that
-				   identifies this object in the
-				   Inversion file system namespace */
-    int4        objtype		/* storage type code:
-				   0=Inversion
-				   1=Unix
-				   2=External
-				   3=Jaquith */
-    bytea       object_descripto/* opaque object-handle structure */
-.fi
-.nf M
-pg_naming
-    NameData      filename	/* filename component */
-    oid         ourid		/* random oid used to identify this
-				   instance in other instances (can't
-				   use the actual oid for obscure
-				   reasons */
-    oid         parentid	/* pg_naming instance of parent
-				   Inversion file system directory */
-.fi
-.nf M
-pg_platter
-     NameData     plname		/* platter name */
-     int4       plstart		/* the highest OCCUPIED extent */
-.fi
-.nf M
-pg_plmap
-     oid        plid		/* platter (in pg_platter) on which
-				   this extent (of blocks) resides */
-     oid        pldbid		/* database of the class to which this
-				   extent (of blocks) belongs */
-     oid        plrelid		/* class to which this extend (of
-				   blocks) belongs */
-     int4       plblkno		/* starting block number within the
-				   class */ 
-     int4       ploffset	/* offset within the platter at which
-				   this extent begins */
-     int4       plextentsz	/* length of this extent */
-.fi
+ <section id="catalogs-overview">
+  <title>Overview</title>
+
+  <para>
+   The system catalogs are the place where a relational database
+   management system stores schema metadata, such as information about
+   tables and columns, and internal bookkeeping information.
+   <productname>PostgreSQL</productname>'s system catalogs are regular
+   tables.  You can drop and recreate the tables, add columns, insert
+   and update values, and severely mess up your system that way.
+   Normally one never has to change the system catalogs by hand, there
+   are always SQL commands to do that.  (For example, <command>CREATE
+   DATABASE</command> inserts a row into the
+   <structname>pg_database</structname> catalog -- and actually
+   creates the database on disk.)  There are some exceptions for
+   esoteric operations, such as adding index access methods.
+  </para>
+
+  <table>
+   <title>System Catalogs</title>
+
+   <tgroup cols="2">
+    <thead>
+     <row>
+      <entry>Catalog Name</entry>
+      <entry>Purpose</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry>pg_aggregate</entry>
+      <entry>aggregate functions</entry>
+     </row>
+
+     <row>
+      <entry>pg_am</entry>
+      <entry>index access methods</entry>
+     </row>
+
+     <row>
+      <entry>pg_amop</entry>
+      <entry>access method operators</entry>
+     </row>
+
+     <row>
+      <entry>pg_amproc</entry>
+      <entry>access method support procedures</entry>
+     </row>
+
+     <row>
+      <entry>pg_attrdef</entry>
+      <entry>column default values</entry>
+     </row>
+
+     <row>
+      <entry>pg_attribute</entry>
+      <entry>table columns (attributes, fields)</entry>
+     </row>
+
+     <row>
+      <entry>pg_class</entry>
+      <entry>tables, indexes, sequences (<quote>relations</quote>)</entry>
+     </row>
+
+     <row>
+      <entry>pg_database</entry>
+      <entry>databases</entry>
+     </row>
+
+     <row>
+      <entry>pg_description</entry>
+      <entry>descriptions or comments on database objects</entry>
+     </row>
+
+     <row>
+      <entry>pg_group</entry>
+      <entry>user groups</entry>
+     </row>
+
+     <row>
+      <entry>pg_index</entry>
+      <entry>additional index information</entry>
+     </row>
+
+     <row>
+      <entry>pg_inheritproc</entry>
+      <entry>(not used)</entry>
+     </row>
+
+     <row>
+      <entry>pg_inherits</entry>
+      <entry>table inheritance hierarchy</entry>
+     </row>
+
+     <row>
+      <entry>pg_ipl</entry>
+      <entry>(not used)</entry>
+     </row>
+
+     <row>
+      <entry>pg_language</entry>
+      <entry>languages for writing functions</entry>
+     </row>
+
+     <row>
+      <entry>pg_largeobject</entry>
+      <entry>large objects</entry>
+     </row>
+
+     <row>
+      <entry>pg_listener</entry>
+      <entry>asynchronous notification</entry>
+     </row>
+
+     <row>
+      <entry>pg_opclass</entry>
+      <entry>index access method operator classes</entry>
+     </row>
+
+     <row>
+      <entry>pg_operator</entry>
+      <entry>operators</entry>
+     </row>
+
+     <row>
+      <entry>pg_proc</entry>
+      <entry>functions and procedures</entry>
+     </row>
+
+     <row>
+      <entry>pg_relcheck</entry>
+      <entry>check constraints</entry>
+     </row>
+
+     <row>
+      <entry>pg_rewrite</entry>
+      <entry>query rewriter rules</entry>
+     </row>
+
+     <row>
+      <entry>pg_shadow</entry>
+      <entry>database users</entry>
+     </row>
+
+     <row>
+      <entry>pg_statistic</entry>
+      <entry>optimizer statistics</entry>
+     </row>
+
+     <row>
+      <entry>pg_trigger</entry>
+      <entry>triggers</entry>
+     </row>
+
+     <row>
+      <entry>pg_type</entry>
+      <entry>data types</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   More detailed documentation of most catalogs follow below.  The
+   catalogs that relate to index access methods are explained in the
+   <citetitle>Programmer's Guide</citetitle>.  Some catalogs don't
+   have any documentation, yet.
+  </para>
+
+ </section>
+
+
+ <section id="catalog-pg-aggregate">
+  <title>pg_aggregate</title>
+
+  <para>
+   <structname>pg_aggregate</structname> stores information about
+   aggregate functions.  An aggregate function is a function that
+   operates on a set of values (typically one column from each the row
+   that matches a query condition) and returns a single value computed
+   from all these values.  Typical aggregate functions are
+   <function>sum</function>, <function>count</function>, and
+   <function>max</function>.
+  </para>
+
+  <table>
+   <title>pg_aggregate Columns</title>
+
+   <tgroup cols=4>
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+    <tbody>
+     <row>
+      <entry>aggname</entry>
+      <entry><type>name</type></entry>
+      <entry></entry>
+      <entry>Name of the aggregate function</entry>
+     </row>
+     <row>
+      <entry>aggowner</entry>
+      <entry><type>int4</type></entry>
+      <entry>pg_shadow.usesysid</entry>
+      <entry>Owner (creator) of the aggregate function</entry>
+     </row>
+     <row>
+      <entry>aggtransfn</entry>
+      <entry><type>regproc</type> (function)</entry>
+      <entry></entry>
+      <entry>Transition function</entry>
+     </row>
+     <row>
+      <entry>aggfinalfn</entry>
+      <entry><type>regproc</type> (function)</entry>
+      <entry></entry>
+      <entry>Final function</entry>
+     </row>
+     <row>
+      <entry>aggbasetype</entry>
+      <entry><type>oid</type></entry>
+      <entry>pg_type.oid</entry>
+      <entry>The type on which this function operates when invoked from SQL</entry>
+     </row>
+     <row>
+      <entry>aggtranstype</entry>
+      <entry><type>oid</type></entry>
+      <entry>pg_type.oid</entry>
+      <entry>The type of the aggregate function's internal transition (state) data</entry>
+     </row>
+     <row>
+      <entry>aggfinaltype</entry>
+      <entry><type>oid</type></entry>
+      <entry>pg_type.oid</entry>
+      <entry>The type of the result</entry>
+     </row>
+     <row>
+      <entry>agginitval</entry>
+      <entry><type>text</type></entry>
+      <entry></entry>
+      <entry>
+       The initial value of the transition state.  This is a text
+       field which will be cast to the type of aggtranstype.
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   New aggregate functions are registered with the <command>CREATE
+   AGGREGATE</command> command.  See the <citetitle>Programmer's
+   Guide</citetitle> for more information about writing aggregate
+   functions and the meaning of the transition functions, etc.
+  </para>
+
+  <para>
+   An aggregate function is identified through name
+   <emphasis>and</emphasis> argument type.  Hence aggname and aggname
+   are the composite primary key.
+  </para>
+
+ </section>
+
+
+ <section id="catalog-pg-attrdef">
+  <title>pg_attrdef</title>
+
+  <para>
+   This catalog stores column default values.  The main information
+   about columns is stored in <structname>pg_attribute</structname>
+   (see below).  Only columns that explicitly specify a default value
+   (when the table is created or the column is added) will have an
+   entry here.
+  </para>
+
+  <table>
+   <title>pg_attrdef Columns</title>
+
+   <tgroup cols=4>
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry>adrelid</entry>
+      <entry><type>oid</type></entry>
+      <entry>pg_class.oid</entry>
+      <entry>The table this column belongs to</entry>
+     </row>
+
+     <row>
+      <entry>adnum</entry>
+      <entry><type>int2</type></entry>
+      <entry></entry>
+      <entry>
+       The number of the column; see
+       <structname>pg_attribute</structname>.<structfield>pg_attnum</structfield>
+      </entry>
+     </row>
+
+     <row>
+      <entry>adbin</entry>
+      <entry><type>text</type></entry>
+      <entry></entry>
+      <entry>An internal representation of the column default value</entry>
+     </row>
+
+     <row>
+      <entry>adsrc</entry>
+      <entry><type>text</type></entry>
+      <entry></entry>
+      <entry>A human-readable representation of the default value</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+ </section>
+
+
+ <section id="catalog-pg-attribute">
+  <title>pg_attribute</title>
+
+  <para>
+   <structname>pg_attribute</structname> stores information about
+   table columns.  There will be exactly one
+   <structname>pg_attribute</structname> row for every column in every
+   table in the database.  (There will also be attribute entries for
+   indexes and other objects.  See <structname>pg_class</structname>.)
+  </para>
+
+  <para>
+   The term attribute is equivalent to column and is used for
+   historical reasons.
+  </para>
+
+  <table>
+   <title>pg_attribute Columns</title>
+
+   <tgroup cols=4>
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry>attrelid</entry>
+      <entry><type>oid</type></entry>
+      <entry>pg_class.oid</entry>
+      <entry>The table this column belongs to</entry>
+     </row>
+
+     <row>
+      <entry>attname</entry>
+      <entry><type>name</type></entry>
+      <entry></entry>
+      <entry>Column name</entry>
+     </row>
+
+     <row>
+      <entry>atttypid</entry>
+      <entry><type>oid</type></entry>
+      <entry>pg_type.oid</entry>
+      <entry>The data type of this column</entry>
+     </row>
+
+     <row>
+      <entry>attdispersion</entry>
+      <entry><type>float4</type></entry>
+      <entry></entry>
+      <entry>
+       <structfield>attdispersion</structfield> is the dispersion
+       statistic of the column (0.0 to 1.0), or zero if the statistic
+       has not been calculated, or -1.0 if <command>VACUUM</command>
+       found that the column contains no duplicate entries (in which
+       case the dispersion should be taken as
+       1.0/<symbol>numberOfRows</symbol> for the current table size).
+       The -1.0 hack is useful because the number of rows may be
+       updated more often than
+       <structfield>attdispersion</structfield> is. We assume that the
+       column will retain its no-duplicate-entry property.
+      </entry>
+     </row>
+
+     <row>
+      <entry>attlen</entry>
+      <entry><type>int2</type></entry>
+      <entry></entry>
+      <entry>
+       This is a copy of the
+       <structname>pg_type</structname>.<structfield>typlen</structfield>
+       for this column's type.
+      </entry>
+     </row>
+
+     <row>
+      <entry>attnum</entry>
+      <entry><type>int2</type></entry>
+      <entry></entry>
+      <entry>
+       The number of the column.  Ordinary columns are numbered from 1
+       up.  System columns, such as <structfield>oid</structfield>,
+       have (arbitrary) negative numbers.
+      </entry>
+     </row>
+
+     <row>
+      <entry>attnelems</entry>
+      <entry><type>int4</type></entry>
+      <entry></entry>
+      <entry>Number of dimensions, if the column is an array</entry>
+     </row>
+
+     <row>
+      <entry>attcacheoff</entry>
+      <entry><type>int4</type></entry>
+      <entry></entry>
+      <entry>
+       Always -1 in storage, but when loaded into a tuple descriptor
+       in memory this may be updated cache the offset of the attribute
+       within the tuple.
+      </entry>
+     </row>
+
+     <row>
+      <entry>atttypmod</entry>
+      <entry><type>int4</type></entry>
+      <entry></entry>
+      <entry>
+       <structfield>atttypmod</structfield> records type-specific data
+       supplied at table creation time (for example, the maximum
+       length of a <type>varchar</type> column).  It is passed to
+       type-specific input and output functions as the third
+       argument. The value will generally be -1 for types that do not
+       need typmod.
+      </entry>
+     </row>
+
+     <row>
+      <entry>attbyval</entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>
+       A copy of
+       <structname>pg_type</structname>.<structfield>typbyval</structfield>
+       of this column's type
+      </entry>
+     </row>
+
+     <row>
+      <entry>attstorage</entry>
+      <entry><type>char</type></entry>
+      <entry></entry>
+      <entry>
+       A copy of
+       <structname>pg_type</structname>.<structfield>typstorage</structfield>
+       of this column's type
+      </entry>
+     </row>
+
+     <row>
+      <entry>attisset</entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>
+       If true, this attribute is a set.  In that case, what is really
+       stored in the attribute is the OID of a tuple in the
+       <structname>pg_proc</structname> catalog.  The
+       <structname>pg_proc</structname> tuple contains the query
+       string which defines this set - i.e., the query to run to get
+       the set.  So the <structfield>atttypid</structfield> (see
+       above) refers to the type returned by this query, but the
+       actual length of this attribute is the length (size) of an
+       <type>oid</type>.  --- At least this is the theory.  All this
+       is probably quite broken these days.
+      </entry>
+     </row>
+
+     <row>
+      <entry>attalign</entry>
+      <entry><type>char</type></entry>
+      <entry></entry>
+      <entry>
+       A copy of
+       <structname>pg_type</structname>.<structfield>typalign</structfield>
+       of this column's type
+      </entry>
+     </row>
+
+     <row>
+      <entry>attnotnull</entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>
+       This represents a NOT NULL constraint.  It is possible to
+       change this field to enable or disable the constraint.
+      </entry>
+     </row>
+
+     <row>
+      <entry>atthasdef</entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>
+       This column has a default value, in which case there will be a
+       corresponding entry in the <structname>pg_attrdef</structname>
+       catalog that actually defines the value.
+      </entry>
+     </row>
+
+    </tbody>
+   </tgroup>
+  </table>
+ </section>
+
+
+ <section id="catalog-pg-class">
+  <title>pg_class</title>
+
+  <para>
+   <structname>pg_class</structname> catalogues tables and mostly
+   everything else that has columns or is otherwise similar to a
+   table.  This includes indexes (but see
+   <structname>pg_index</structname>), sequences, views, and some
+   kinds of special relation kinds.  Below, when we mean all of these
+   kinds of objects we speak of <quote>relations</quote>.  Not all
+   fields are meaningful for all relation types.
+  </para>
+
+  <table>
+   <title>pg_class Columns</title>
+
+   <tgroup cols=4>
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry>relname</entry>
+      <entry><type>name</type></entry>
+      <entry></entry>
+      <entry>Name of the table, index, view, etc.</entry>
+     </row>
+
+     <row>
+      <entry>reltype</entry>
+      <entry><type>oid</type></entry>
+      <entry>pg_type.oid</entry>
+      <entry>
+       The data type that corresponds to this table (not functional,
+       only set for system tables)
+      </entry>
+     </row>
+
+     <row>
+      <entry>relowner</entry>
+      <entry><type>int4</type></entry>
+      <entry>pg_shadow.usesysid</entry>
+      <entry>Owner of the relation</entry>
+     </row>
+
+     <row>
+      <entry>relam</entry>
+      <entry><type>oid</type></entry>
+      <entry>pg_am.oid</entry>
+      <entry>If this is an index, the access method used (btree, hash, etc.)</entry>
+     </row>
+
+     <row>
+      <entry>relfilenode</entry>
+      <entry><type>oid</type></entry>
+      <entry></entry>
+      <entry>Name of the on-disk file of this relation</entry>
+     </row>
+
+     <row>
+      <entry>relpages</entry>
+      <entry><type>int4</type></entry>
+      <entry></entry>
+      <entry>
+       Size of the on-disk representation of this table in pages (size
+       <symbol>BLCKSZ</symbol>).  This is only an approximate value
+       which is calculated during vacuum.
+      </entry>
+     </row>
+
+     <row>
+      <entry>reltuples</entry>
+      <entry><type>int4</type></entry>
+      <entry></entry>
+      <entry>
+       Number of tuples in the table.  This is only an estimate used
+       by the planner, updated by <command>VACUUM</command>.
+      </entry>
+     </row>
+
+     <row>
+      <entry>reltoastrelid</entry>
+      <entry><type>oid</type></entry>
+      <entry>pg_class.oid</entry>
+      <entry>
+       Oid of the TOAST table associated with this table, 0 if none.
+       The TOAST table stores large attributes <quote>out of
+       line</quote> in a secondary table.
+      </entry>
+     </row>
+
+     <row>
+      <entry>reltoastidxid</entry>
+      <entry><type>oid</type></entry>
+      <entry>pg_class.oid</entry>
+      <entry>Oid of the index on the TOAST table for this table, 0 if none</entry>
+     </row>
+
+     <row>
+      <entry>relhasindex</entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>True if this is a table and it has at least one index</entry>
+     </row>
+
+     <row>
+      <entry>relisshared</entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>XXX (This is not what it seems to be.)</entry>
+     </row>
+
+     <row>
+      <entry>relkind</entry>
+      <entry><type>char</type></entry>
+      <entry></entry>
+      <entry>
+       'r' = ordinary table, 'i' = index, 'S' = sequence, 'v' = view,
+       's' = special, 't' = secondary TOAST table
+      </entry>
+     </row>
+
+     <row>
+      <entry>relnatts</entry>
+      <entry><type>int2</type></entry>
+      <entry></entry>
+      <entry>
+       Number of columns in the relation, besides system columns.
+       There must be this many corresponding entries in
+       <structname>pg_attribute</structname>.  See also
+       <structname>pg_attribute</structname>.<structfield>attnum</structfield>.
+      </entry>
+     </row>
+
+     <row>
+      <entry>relchecks</entry>
+      <entry><type>int2</type></entry>
+      <entry></entry>
+      <entry>
+       Number of check constraints on the table; see
+       <structname>pg_relcheck</structname> catalog
+      </entry>
+     </row>
+
+     <row>
+      <entry>reltriggers</entry>
+      <entry><type>int2</type></entry>
+      <entry></entry>
+      <entry>
+       Number of triggers on the table; see
+       <structname>pg_trigger</structname> catalog
+      </entry>
+     </row>
+
+     <row>
+      <entry>relukeys</entry>
+      <entry><type>int2</type></entry>
+      <entry></entry>
+      <entry>unused  (<emphasis>Not</emphasis> the number of unique keys or something.)</entry>
+     </row>
+
+     <row>
+      <entry>relfkeys</entry>
+      <entry><type>int2</type></entry>
+      <entry></entry>
+      <entry>Number foreign keys on the table</entry>
+     </row>
+
+     <row>
+      <entry>relhaspkey</entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>
+       unused  (No, this does not say whether the table has a primary
+       key.  It's really unused.)
+      </entry>
+     </row>
+
+     <row>
+      <entry>relhasrules</entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>Table has rules</entry>
+     </row>
+
+     <row>
+      <entry>relhassubclass</entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>At least one table inherits this one</entry>
+     </row>
+
+     <row>
+      <entry>relacl</entry>
+      <entry><type>aclitem[]</type></entry>
+      <entry></entry>
+      <entry>
+       Access permissions.  See the descriptions of
+       <command>GRANT</command> and <command>REVOKE</command> for
+       details.
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </section>
+
+
+ <section id="catalog-pg-database">
+  <title>pg_database</title>
+
+  <para>
+   The <structname>pg_database</structname> catalog stores information
+   about the available databases.  The
+   <structname>pg_database</structname> table is shared between all
+   databases of a cluster.  Databases are created with the
+   <command>CREATE DATABASE</command>.  Consult the
+   <citetitle>Administrator's Guide</citetitle> for details about the
+   meaning of some of the parameters.
+  </para>
+
+  <table>
+   <title>pg_database Columns</title>
+
+   <tgroup cols=4>
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry>datname</entry>
+      <entry><type>name</type></entry>
+      <entry></entry>
+      <entry>Database name</entry>
+     </row>
+
+     <row>
+      <entry>datdba</entry>
+      <entry><type>int4</type></entry>
+      <entry>pg_shadow.usesysid</entry>
+      <entry>Owner of the database, initially who created it</entry>
+     </row>
+
+     <row>
+      <entry>encoding</entry>
+      <entry><type>int4</type></entry>
+      <entry></entry>
+      <entry>Character/multibyte encoding for this database</entry>
+     </row>
+
+     <row>
+      <entry>datistemplate</entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>
+       If true then this database can be used in the
+       <quote>TEMPLATE</quote> clause of <command>CREATE
+       DATABASE</command> to create the new database as a clone of
+       this one.
+      </entry>
+     </row>
+
+     <row>
+      <entry>datallowconn</entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>
+       If false then no one can connect to this database.  This is
+       used to protect the template0 database from being altered.
+      </entry>
+     </row>
+
+     <row>
+      <entry>datlastsysoid</entry>
+      <entry><type>oid</type></entry>
+      <entry></entry>
+      <entry>
+       Last oid in existence after the database was created; useful
+       particularly to <application>pg_dump</application>
+      </entry>
+     </row>
+
+     <row>
+      <entry>datpath</entry>
+      <entry><type>text</type></entry>
+      <entry></entry>
+      <entry>
+       If the database is stored at an alternative location then this
+       records the location.  It's either an environment variable name
+       or an absolute path, depending how it was entered.
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </section>
+
+
+ <section id="catalog-pg-description">
+  <title>pg_description</title>
+
+  <para>
+   The pg_description table can store an optional description or
+   comment for each database object.  Descriptions can be manipulated
+   with the <command>COMMENT</command> command.  Client applications
+   can view the descriptions by joining with this table.  Many builtin
+   system objects have comments associated with them that are shown by
+   <application>psql</application>'s <literal>\d</literal> commands.
+  </para>
+
+  <table>
+   <title>pg_description Columns</title>
+
+   <tgroup cols=4>
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry>objoid</entry>
+      <entry><type>oid</type></entry>
+      <entry>any oid attribute</entry>
+      <entry>The oid of the object this description pertains to</entry>
+     </row>
+
+     <row>
+      <entry>description</entry>
+      <entry><type>text</type></entry>
+      <entry></entry>
+      <entry>Arbitrary text that serves as the description of this object.</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+ </section>
+
+
+ <section id="catalog-pg-group">
+  <title>pg_group</title>
+
+  <para>
+   This catalog defines groups and stores what users belong to what
+   groups.  Groups are created with the <command>CREATE
+   GROUP</command> command.  Consult the <citetitle>Administrator's
+   Guide</citetitle> for information about user permission management.
+  </para>
+
+  <table>
+   <title>pg_group Columns</title>
+
+   <tgroup cols=4>
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry>groname</entry>
+      <entry><type>name</type></entry>
+      <entry></entry>
+      <entry>Name of the group</entry>
+     </row>
+
+     <row>
+      <entry>grosysid</entry>
+      <entry><type>int4</type></entry>
+      <entry></entry>
+      <entry>An arbitrary number to identify this group</entry>
+     </row>
+
+     <row>
+      <entry>grolist</entry>
+      <entry><type>int4[]</type></entry>
+      <entry>pg_shadow.usesysid</entry>
+      <entry>An array containing the ids of the users in this group</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+ </section>
+
+
+ <section id="catalog-pg-index">
+  <title>pg_index</title>
+
+  <para>
+   <structname>pg_index</structname> contains part of the information
+   about indexes.  The rest is mostly in
+   <structname>pg_class</structname>.
+  </para>
+
+  <table>
+   <title>pg_index Columns</title>
+
+   <tgroup cols=4>
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry>indexrelid</entry>
+      <entry><type>oid</type></entry>
+      <entry>pg_class.oid</entry>
+      <entry>The oid of the pg_class entry for this index</entry>
+     </row>
+
+     <row>
+      <entry>indrelid</entry>
+      <entry><type>oid</type></entry>
+      <entry>pg_class.oid</entry>
+      <entry>The oid of the pg_class entry for the table this index is for</entry>
+     </row>
+
+     <row>
+      <entry>indproc</entry>
+      <entry><type>oid</type></entry>
+      <entry>pg_proc.oid</entry>
+      <entry>The registered procedure if this is a functional index</entry>
+     </row>
+
+     <row>
+      <entry>indkey</entry>
+      <entry><type>int2vector</type></entry>
+      <entry>pg_attribute.attnum</entry>
+      <entry>
+       This is an vector (array) of up to
+       <symbol>INDEX_MAX_KEYS</symbol> values that indicate which
+       table columns this index pertains to.  For example a value of
+       <literal>1 3</literal> would mean that the first and the third
+       column make up the index key.
+      </entry>
+     </row>
+
+     <row>
+      <entry>indclass</entry>
+      <entry><type>oidvector</type></entry>
+      <entry>pg_opclass.oid</entry>
+      <entry>
+       For each column in the index key this contains a reference to
+       the <quote>operator class</quote> to use.  See
+       <structname>pg_opclass</structname> for details.
+      </entry>
+     </row>
+
+     <row>
+      <entry>indisclustered</entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>unused</entry>
+     </row>
+
+     <row>
+      <entry>indislossy</entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>???</entry>
+     </row>
+
+     <row>
+      <entry>indisunique</entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>If true, this is a unique index.</entry>
+     </row>
+
+     <row>
+      <entry>indisprimary</entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>If true, this index is a unique index that represents the primary key of the table.</entry>
+     </row>
+
+     <row>
+      <entry>indreference</entry>
+      <entry><type>oid</type></entry>
+      <entry></entry>
+      <entry>unused</entry>
+     </row>
+
+     <row>
+      <entry>indpred</entry>
+      <entry><type>text</type></entry>
+      <entry></entry>
+      <entry>Query plan for partial index predicate (not functional)</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+ </section>
+
+
+ <section id="catalog-pg-inherits">
+  <title>pg_inherits</title>
+
+  <para>
+   This catalog records information about table inheritance hierarchies.
+  </para>
+
+  <table>
+   <title>pg_inherits Columns</title>
+
+   <tgroup cols=4>
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry>inhrelid</entry>
+      <entry><type>oid</type></entry>
+      <entry>pg_class.oid</entry>
+      <entry>
+       This is the reference to the subtable, that is, it records the
+       fact that the identified table is inherited from some other
+       table.
+      </entry>
+     </row>
+
+     <row>
+      <entry>inhparent</entry>
+      <entry><type>oid</type></entry>
+      <entry>pg_class.oid</entry>
+      <entry>
+       This is the reference to the parent table, from which the table
+       referenced by <structfield>inhrelid</structfield> inherited
+       from.
+      </entry>
+     </row>
+
+     <row>
+      <entry>inhseqno</entry>
+      <entry><type>int4</type></entry>
+      <entry></entry>
+      <entry>
+       If there is more than one subtable/parent pair (multiple
+       inheritance), this number tells the order in which the
+       inherited columns are to be arranged.  The count starts at 1.
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+ </section>
+
+
+ <section id="catalog-pg-language">
+  <title>pg_language</title>
+
+  <para>
+   <structname>pg_language</structname> registers call interfaces or
+   languages in which you can write functions or stored procedures.
+   See under <command>CREATE LANGUAGE</command> and in the
+   <citetitle>Programmer's Guide</citetitle> for more information
+   about language handlers.
+  </para>
+
+  <table>
+   <title>pg_language Columns</title>
+
+   <tgroup cols=4>
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry>lanname</entry>
+      <entry><type>name</type></entry>
+      <entry></entry>
+      <entry>Name of the language (to be specified when creating a function)</entry>
+     </row>
+
+     <row>
+      <entry>lanispl</entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>
+       This is false for internal languages (such as SQL) and true for
+       dynamically loaded language handler modules.  It essentially
+       means that, if it is true, the language may be dropped.
+      </entry>
+     </row>
+
+     <row>
+      <entry>lanpltrusted</entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>
+       This is a trusted language.  See under <command>CREATE
+       LANGUAGE</command> what this means.  If this is an internal
+       language (<structfield>lanispl</structfield> is false) then
+       this field is meaningless.
+      </entry>
+     </row>
+
+     <row>
+      <entry>lanplcallfoid</entry>
+      <entry><type>oid</type></entry>
+      <entry>pg_proc.oid</entry>
+      <entry>
+       For non-internal languages this references the language
+       handler, which is a special function that is responsible for
+       executing all functions that are written in the particular
+       language.
+      </entry>
+     </row>
+
+     <row>
+      <entry>lancompiler</entry>
+      <entry><type>text</type></entry>
+      <entry></entry>
+      <entry>not useful</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+ </section>
+
+
+ <section id="catalog-pg-operator">
+  <title>pg_operator</title>
+
+  <para>
+   See <command>CREATE OPERATOR</command> and the
+   <citetitle>Programmer's Guide</citetitle> for details on these
+   operator parameters.
+  </para>
+
+  <table>
+   <title>pg_operator Columns</title>
+
+   <tgroup cols=4>
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry>oprname</entry>
+      <entry><type>name</type></entry>
+      <entry></entry>
+      <entry>Name of the operator</entry>
+     </row>
+
+     <row>
+      <entry>oprowner</entry>
+      <entry><type>int4</type></entry>
+      <entry>pg_shadow.usesysid</entry>
+      <entry>Owner (creator) of the operator</entry>
+     </row>
+
+     <row>
+      <entry>oprprec</entry>
+      <entry><type>int2</type></entry>
+      <entry></entry>
+      <entry>unused</entry>
+     </row>
+
+     <row>
+      <entry>oprkind</entry>
+      <entry><type>char</type></entry>
+      <entry></entry>
+      <entry>
+       'b' = infix (<quote>both</quote>), 'l' = prefix
+       (<quote>left</quote>), 'r' = postfix (<quote>right</quote>)
+      </entry>
+     </row>
+
+     <row>
+      <entry>oprisleft</entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>unused</entry>
+     </row>
+
+     <row>
+      <entry>oprcanhash</entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>This operator supports hash joins.</entry>
+     </row>
+
+     <row>
+      <entry>oprleft</entry>
+      <entry><type>oid</type></entry>
+      <entry>pg_type.oid</entry>
+      <entry>Type of the left operand</entry>
+     </row>
+
+     <row>
+      <entry>oprright</entry>
+      <entry><type>oid</type></entry>
+      <entry>pg_type.oid</entry>
+      <entry>Type of the right operand</entry>
+     </row>
+
+     <row>
+      <entry>oprresult</entry>
+      <entry><type>oid</type></entry>
+      <entry>pg_type.oid</entry>
+      <entry>Type of the result</entry>
+     </row>
+
+     <row>
+      <entry>oprcom</entry>
+      <entry><type>oid</type></entry>
+      <entry>pg_operator.oid</entry>
+      <entry>Commutator of this operator, if any</entry>
+     </row>
+
+     <row>
+      <entry>oprnegate</entry>
+      <entry><type>oid</type></entry>
+      <entry>pg_operator.oid</entry>
+      <entry>Inverse of this operator, if any</entry>
+     </row>
+
+     <row>
+      <entry>oprlsortop</entry>
+      <entry><type>oid</type></entry>
+      <entry>pg_operator.oid</entry>
+      <entry>
+       If this operator supports merge joins, the operator that sorts
+       the type of the left-hand operand
+      </entry>
+     </row>
+
+     <row>
+      <entry>oprrsortop</entry>
+      <entry><type>oid</type></entry>
+      <entry>pg_operator.oid</entry>
+      <entry>
+       If this operator supports merge joins, the operator that sorts
+       the type of the left-hand operand
+      </entry>
+     </row>
+
+     <row>
+      <entry>oprcode</entry>
+      <entry><type>regproc</type></entry>
+      <entry></entry>
+      <entry>Function that implements this operator</entry>
+     </row>
+
+     <row>
+      <entry>oprrest</entry>
+      <entry><type>regproc</type></entry>
+      <entry></entry>
+      <entry>Restriction selectivity estimation function for this operator</entry>
+     </row>
+
+     <row>
+      <entry>oprjoin</entry>
+      <entry><type>regproc</type></entry>
+      <entry></entry>
+      <entry>Join selectivity estimation function for this operator</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+ </section>
+
+
+ <section id="catalog-pg-proc">
+  <title>pg_proc</title>
+
+  <para>
+   This catalog stores information about functions (or procedures).
+   The description of <command>CREATE FUNCTION</command> and the
+   <citetitle>Programmer's Guide</citetitle> contain more information
+   about the meaning of some fields.
+  </para>
+
+  <table>
+   <title>pg_proc Columns</title>
+
+   <tgroup cols=4>
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry>proname</entry>
+      <entry><type>name</type></entry>
+      <entry></entry>
+      <entry>Name of the function</entry>
+     </row>
+
+     <row>
+      <entry>proowner</entry>
+      <entry><type>int4</type></entry>
+      <entry>pg_shadow.usesysid</entry>
+      <entry>Owner (creator) of the function</entry>
+     </row>
+
+     <row>
+      <entry>prolang</entry>
+      <entry><type>oid</type></entry>
+      <entry>pg_language.oid</entry>
+      <entry>Implementation language or call interface of this function</entry>
+     </row>
+
+     <row>
+      <entry>proisinh</entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>unused</entry>
+     </row>
+
+     <row>
+      <entry>proistrusted</entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>not functional</entry>
+     </row>
+
+     <row>
+      <entry>proiscachable</entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>Function returns same result for same input values</entry>
+     </row>
+
+     <row>
+      <entry>proisstrict</entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>
+       Function returns null if any call argument is null.  In that
+       case the function won't actually be called at all.  Functions
+       that are not <quote>strict</quote> must be prepared to handle
+       null inputs.
+      </entry>
+     </row>
+
+     <row>
+      <entry>pronargs</entry>
+      <entry><type>int2</type></entry>
+      <entry></entry>
+      <entry>Number of arguments</entry>
+     </row>
+
+     <row>
+      <entry>proretset</entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>Function returns a set (probably not functional)</entry>
+     </row>
+
+     <row>
+      <entry>prorettype</entry>
+      <entry><type>oid</type></entry>
+      <entry>pg_type.oid</entry>
+      <entry>Data type of the return value (0 if the function does not return a value)</entry>
+     </row>
+
+     <row>
+      <entry>proargtypes</entry>
+      <entry><type>oidvector</type></entry>
+      <entry>pg_type.oid</entry>
+      <entry>A vector with the data types of the function arguments</entry>
+     </row>
+
+     <row>
+      <entry>probyte_pct</entry>
+      <entry><type>int4</type></entry>
+      <entry></entry>
+      <entry>dead code</entry>
+     </row>
+
+     <row>
+      <entry>properbyte_pct</entry>
+      <entry><type>int4</type></entry>
+      <entry></entry>
+      <entry>dead code</entry>
+     </row>
+
+     <row>
+      <entry>propercall_pct</entry>
+      <entry><type>int4</type></entry>
+      <entry></entry>
+      <entry>dead code</entry>
+     </row>
+
+     <row>
+      <entry>prooutin_ratio</entry>
+      <entry><type>int4</type></entry>
+      <entry></entry>
+      <entry>dead code</entry>
+     </row>
+
+     <row>
+      <entry>prosrc</entry>
+      <entry><type>text</type></entry>
+      <entry></entry>
+      <entry>
+       This tells the function handler how to invoke the function.  It
+       might be the actual source code of the function for interpreted
+       languages, a link symbol, a file name, or just about anything
+       else, depending the implementation language/call convention.
+      </entry>
+     </row>
+
+     <row>
+      <entry>probin</entry>
+      <entry><type>bytea</type></entry>
+      <entry></entry>
+      <entry>?</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+ </section>
+
+
+ <section id="catalog-pg-relcheck">
+  <title>pg_relcheck</title>
+
+  <para>
+   This system catalog stores CHECK constraints on tables.  (Column
+   constraints are not treated specially.  Every column constraint is
+   equivalent to some table constraint.)  See under <command>CREATE
+   TABLE</command> for more information.
+  </para>
+
+  <table>
+   <title>pg_relcheck Columns</title>
+
+   <tgroup cols=4>
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry>rcrelid</entry>
+      <entry><type>oid</type></entry>
+      <entry>pg_class.oid</entry>
+      <entry>The table this check constraint is on</entry>
+     </row>
+
+     <row>
+      <entry>rcname</entry>
+      <entry><type>name</type></entry>
+      <entry></entry>
+      <entry>Constraint name</entry>
+     </row>
+
+     <row>
+      <entry>rcbin</entry>
+      <entry><type>text</type></entry>
+      <entry></entry>
+      <entry>An internal representation of the constraint expression</entry>
+     </row>
+
+     <row>
+      <entry>rcsrc</entry>
+      <entry><type>text</type></entry>
+      <entry></entry>
+      <entry>A human-readable representation of the consraint expression</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <note>
+   <para>
+    <structname>pg_class</structname>.<structfield>relchecks</structfield>
+    needs to match up with the entries in this table.
+   </para>
+  </note>
+
+ </section>
+
+
+ <section id="catalog-pg-shadow">
+  <title>pg_shadow</title>
+
+  <para>
+   <structname>pg_shadow</structname> contains information about
+   database users.  The name stems from the fact that this table
+   should not be readable by the public since it contains passwords.
+   <structname>pg_user</structname> is a view on
+   <structname>pg_shadow</structname> that blanks out the password field.
+  </para>
+
+  <para>
+   The <citetitle>Administrator's Guide</citetitle> contains detailed
+   information about user and permission management.
+  </para>
+
+  <table>
+   <title>pg_shadow Columns</title>
+
+   <tgroup cols=4>
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry>usename</entry>
+      <entry><type>name</type></entry>
+      <entry></entry>
+      <entry>User name</entry>
+     </row>
+
+     <row>
+      <entry>usesysid</entry>
+      <entry><type>int4</type></entry>
+      <entry></entry>
+      <entry>User id (arbitrary number used to reference this user)</entry>
+     </row>
+
+     <row>
+      <entry>usecreatedb</entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>User may create databases</entry>
+     </row>
+
+     <row>
+      <entry>usetrace</entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>not used</entry>
+     </row>
+
+     <row>
+      <entry>usesuper</entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>User is a superuser</entry>
+     </row>
+
+     <row>
+      <entry>usecatupd</entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>
+       User may update system catalogs.  (Even a superuser may not do
+       this unless this attribute is true.)
+      </entry>
+     </row>
+
+     <row>
+      <entry>passwd</entry>
+      <entry><type>text</type></entry>
+      <entry></entry>
+      <entry>Password</entry>
+     </row>
+
+     <row>
+      <entry>valuntil</entry>
+      <entry><type>abstime</type></entry>
+      <entry></entry>
+      <entry>Account expiry time (only used for password authentication)</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+ </section>
+
+
+ <section id="catalog-pg-type">
+  <title>pg_type</title>
+
+  <table>
+   <title>pg_type Columns</title>
+
+   <tgroup cols=4>
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry>typname</entry>
+      <entry><type>name</type></entry>
+      <entry></entry>
+      <entry>Data type name</entry>
+     </row>
+
+     <row>
+      <entry>typowner</entry>
+      <entry><type>int4</type></entry>
+      <entry>pg_shadow.usesysid</entry>
+      <entry>Owner (creator) of the type</entry>
+     </row>
+
+     <row>
+      <entry>typlen</entry>
+      <entry><type>int2</type></entry>
+      <entry></entry>
+      <entry>Length of the storage representation of the type, -1 if variable length</entry>
+     </row>
+
+     <row>
+      <entry>typprtlen</entry>
+      <entry><type>int2</type></entry>
+      <entry></entry>
+      <entry>unused</entry>
+     </row>
+
+     <row>
+      <entry>typbyval</entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>
+       <structfield>typbyval</structfield> determines whether internal
+       routines pass a value of this type by value or by reference.
+       Only <type>char</type>, <type>short</type>, and
+       <type>int</type> equivalent items can be passed by value, so if
+       the type is not 1, 2, or 4 bytes long, Postgres does not have
+       the option of passing by value and so
+       <structfield>typbyval</structfield> had better be false.
+       Variable-length types are always passed by reference. Note that
+       <structfield>typbyval</structfield> can be false even if the
+       length would allow pass-by-value; this is currently true for
+       type <type>float4</type>, for example.
+      </entry>
+     </row>
+
+     <row>
+      <entry>typtype</entry>
+      <entry><type>char</type></entry>
+      <entry></entry>
+      <entry>
+       <structfield>typtype</structfield> is <literal>b</literal> for
+       a basic type and <literal>c</literal> for a catalog type (i.e.,
+       a table).  If <structfield>typtype</structfield> is
+       <literal>c</literal>, <structfield>typrelid</structfield> is
+       the OID of the type's entry in
+       <structname>pg_class</structname>.
+      </entry>
+     </row>
+
+     <row>
+      <entry>typisdefined</entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>???</entry>
+     </row>
+
+     <row>
+      <entry>typdelim</entry>
+      <entry><type>char</type></entry>
+      <entry></entry>
+      <entry>Character that separates two values of this type when parsing array input</entry>
+     </row>
+
+     <row>
+      <entry>typrelid</entry>
+      <entry><type>oid</type></entry>
+      <entry>pg_class.oid</entry>
+      <entry>
+       If this is a catalog type (see
+       <structfield>typtype</structfield>), then this field points to
+       the <structfield>pg_class</structfield> entry that defines the
+       corresponding table. A table could theoretically be used as a
+       composite data type, but this is not fully functional.
+      </entry>
+     </row>
+
+     <row>
+      <entry>typelem</entry>
+      <entry><type>oid</type></entry>
+      <entry>pg_type.oid</entry>
+      <entry>
+       If <structfield>typelem</structfield> is not 0 then it
+       identifies another row in <structname>pg_type</structname>.
+       The current type can then be subscripted like an array yielding
+       values of type <structfield>typelem</structfield>. A non-zero
+       <structfield>typelem</structfield> does not guarantee this type
+       to be a <quote>real</quote> array type; some ordinary
+       fixed-length types can also be subscripted (e.g.,
+       <type>oidvector</type>). Variable-length types can
+       <emphasis>not</emphasis> be turned into pseudo-arrays like
+       that. Hence, the way to determine whether a type is a
+       <quote>true</quote> array type is typelem != 0 and typlen < 0.
+      </entry>
+     </row>
+
+     <row>
+      <entry>typinput</entry>
+      <entry><type>regproc</type></entry>
+      <entry></entry>
+      <entry>Input function</entry>
+     </row>
+
+     <row>
+      <entry>typoutput</entry>
+      <entry><type>regproc</type></entry>
+      <entry></entry>
+      <entry>Output function</entry>
+     </row>
+
+     <row>
+      <entry>typreceive</entry>
+      <entry><type>regproc</type></entry>
+      <entry></entry>
+      <entry>unused</entry>
+     </row>
+
+     <row>
+      <entry>typsend</entry>
+      <entry><type>regproc</type></entry>
+      <entry></entry>
+      <entry>unused</entry>
+     </row>
+
+     <row>
+      <entry>typalign</entry>
+      <entry><type>char</type></entry>
+      <entry></entry>
+      <entry><para>
+
+       <structfield>typalign</structfield> is the alignment required
+       when storing a value of this type.  It applies to storage on
+       disk as well as most representations of the value inside
+       Postgres.  When multiple values are stored consecutively, such
+       as in the representation of a complete row on disk, padding is
+       inserted before a datum of this type so that it begins on the
+       specified boundary.  The alignment reference is the beginning
+       of the first datum in the sequence.
+      </para><para>
+       Possible values are:
+       <itemizedlist>
+        <listitem>
+         <para>'c' = CHAR alignment, ie no alignment needed.</para>
+        </listitem>
+        <listitem>
+         <para>'s' = SHORT alignment (2 bytes on most machines).</para>
+        </listitem>
+        <listitem>
+         <para>'i' = INT alignment (4 bytes on most machines).</para>
+        </listitem>
+        <listitem>
+         <para>'d' = DOUBLE alignment (8 bytes on many machines, but by no means all).</para>
+        </listitem>
+       </itemizedlist>
+      </para><note>
+       <para>
+        For types used in system tables, it is critical that the size
+        and alignment defined in <structname>pg_type</structname>
+        agree with the way that the compiler will lay out the field in
+        a struct representing a table row.
+       </para>
+      </note></entry>
+     </row>
+
+     <row>
+      <entry>typstorage</entry>
+      <entry><type>char</type></entry>
+      <entry></entry>
+      <entry><para>
+       <structfield>typstorage</structfield> tells for variable-length
+       types (those with <structfield>typlen</structfield> = -1) if
+       the type is prepared for toasting and what the default strategy
+       for attributes of this type should be.
+       Possible values are
+       <itemizedlist>
+        <listitem>
+         <para>'p': Value must always be stored plain.</para>
+        </listitem>
+        <listitem>
+         <para>
+          'e': Value can be stored in a <quote>secondary</quote>
+          relation (if relation has one, see
+          <structname>pg_class</structname>.<structfield>reltoastrelid</structfield>).
+         </para>
+        </listitem>
+        <listitem>
+         <para>'m': Value can be stored compressed inline.</para>
+        </listitem>
+        <listitem>
+         <para>'x': Value can be stored compressed inline or in <quote>secondary</quote>.</para>
+        </listitem>
+       </itemizedlist>
+       Note that 'm' fields can also be moved out to secondary
+       storage, but only as a last resort ('e' and 'x' fields are
+       moved first).
+      </para></entry>
+     </row>
+
+     <row>
+      <entry>typdefault</entry>
+      <entry><type>text</type></entry>
+      <entry></entry>
+      <entry>???</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+ </section>
+
+</chapter>
