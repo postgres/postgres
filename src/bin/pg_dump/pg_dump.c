@@ -20,7 +20,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.24 1997/02/13 08:31:27 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.25 1997/03/01 15:24:51 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -53,6 +53,7 @@
 
 #include "postgres.h"
 #include "access/htup.h"
+#include "catalog/pg_type.h"
 #include "libpq-fe.h"
 #ifndef HAVE_STRDUP
 #include "strdup.h"
@@ -282,15 +283,9 @@ dumpClasses_dumpData(FILE *fout, const char *classname,
                 fprintf(fout,"NULL");
             } else {
                 switch(PQftype(res,field)) {
-                  case 21: case 22: case 23: /* int types */
-                  case 810: case 910: /* oldint types */
-                  case 700: case 701: /* float types */
-                    fprintf(fout, "%s", 
-                            PQgetvalue(res,tuple,field));
-                    break;
-                  case 1005: case 1006: case 1007: /* _int types */
-                  case 1021: case 1022: /* _float types */
-                    fprintf(fout, "'%s'", 
+                  case INT2OID: case INT4OID: case OIDOID: /* int types */
+                  case FLOAT4OID: case FLOAT8OID: /* float types */
+                    fprintf(fout, "%s",
                             PQgetvalue(res,tuple,field));
                     break;
                   default: {
