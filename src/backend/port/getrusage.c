@@ -1,4 +1,4 @@
-/* $Id: getrusage.c,v 1.4 1998/02/01 00:02:59 scrappy Exp $ */
+/* $Id: getrusage.c,v 1.5 1998/02/11 19:10:57 momjian Exp $ */
 
 #include <math.h>               /* for pow() prototype */
 
@@ -15,7 +15,7 @@ int
 getrusage(int who, struct rusage * rusage)
 {
 	struct tms	tms;
-	register int tick_rate = CLK_TCK;	/* ticks per second */
+	int tick_rate = CLK_TCK;	/* ticks per second */
 	clock_t		u,
 				s;
 

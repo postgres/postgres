@@ -75,7 +75,7 @@ static void *findMain(void);
 void	   *
 dlopen(const char *path, int mode)
 {
-	register ModulePtr mp;
+	ModulePtr mp;
 	static void *mainModule;
 
 	/*
@@ -168,7 +168,7 @@ dlopen(const char *path, int mode)
 	 */
 	if (mode & RTLD_GLOBAL)
 	{
-		register ModulePtr mp1;
+		ModulePtr mp1;
 
 		for (mp1 = mp->next; mp1; mp1 = mp1->next)
 			if (loadbind(0, mp1->entry, mp->entry) == -1)
@@ -221,7 +221,7 @@ dlopen(const char *path, int mode)
 static void
 caterr(char *s)
 {
-	register char *p = s;
+	char *p = s;
 
 	while (*p >= '0' && *p <= '9')
 		p++;
@@ -258,9 +258,9 @@ caterr(char *s)
 void	   *
 dlsym(void *handle, const char *symbol)
 {
-	register ModulePtr mp = (ModulePtr) handle;
-	register ExportPtr ep;
-	register int i;
+	ModulePtr mp = (ModulePtr) handle;
+	ExportPtr ep;
+	int i;
 
 	/*
 	 * Could speed up the search, but I assume that one assigns the result
@@ -289,9 +289,9 @@ dlerror(void)
 int
 dlclose(void *handle)
 {
-	register ModulePtr mp = (ModulePtr) handle;
+	ModulePtr mp = (ModulePtr) handle;
 	int			result;
-	register ModulePtr mp1;
+	ModulePtr mp1;
 
 	if (--mp->refCnt > 0)
 		return 0;
@@ -311,8 +311,8 @@ dlclose(void *handle)
 	}
 	if (mp->exports)
 	{
-		register ExportPtr ep;
-		register int i;
+		ExportPtr ep;
+		int i;
 
 		for (ep = mp->exports, i = mp->nExports; i; i--, ep++)
 			if (ep->name)

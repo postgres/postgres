@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.33 1998/02/02 13:16:31 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.34 1998/02/11 19:11:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1197,7 +1197,7 @@ ResetBufferUsage()
 void
 ResetBufferPool()
 {
-	register int i;
+	int i;
 
 	for (i = 1; i <= NBuffers; i++)
 	{
@@ -1225,7 +1225,7 @@ ResetBufferPool()
 int
 BufferPoolCheckLeak()
 {
-	register int i;
+	int i;
 	int			error = 0;
 
 	for (i = 1; i <= NBuffers; i++)
@@ -1444,7 +1444,7 @@ BufferGetBlock(Buffer buffer)
 void
 ReleaseRelationBuffers(Relation rdesc)
 {
-	register int i;
+	int i;
 	int			holding = 0;
 	BufferDesc *buf;
 
@@ -1501,7 +1501,7 @@ ReleaseRelationBuffers(Relation rdesc)
 void
 DropBuffers(Oid dbid)
 {
-	register int i;
+	int i;
 	BufferDesc *buf;
 
 	SpinAcquire(BufMgrLock);
@@ -1587,7 +1587,7 @@ blockNum=%d, flags=0x%x, refcount=%d %d)\n",
 void
 BufferPoolBlowaway()
 {
-	register int i;
+	int i;
 
 	BufferSync();
 	for (i = 1; i <= NBuffers; i++)
@@ -1618,7 +1618,7 @@ BufferPoolBlowaway()
 int
 BlowawayRelationBuffers(Relation rdesc, BlockNumber block)
 {
-	register int	i;
+	int	i;
 	BufferDesc	   *buf;
 
 	if (rdesc->rd_islocal)

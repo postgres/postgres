@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/psort.c,v 1.36 1998/02/01 22:20:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/psort.c,v 1.37 1998/02/11 19:13:47 momjian Exp $
  *
  * NOTES
  *		Sorts the first relation into the second relation.
@@ -175,8 +175,8 @@ psort_begin(Sort * node, int nkeys, ScanKey key)
 static void
 inittapes(Sort * node)
 {
-	register int i;
-	register struct tape *tp;
+	int i;
+	struct tape *tp;
 
 	Assert(node != (Sort *) NULL);
 	Assert(PS(node) != (Psortstate *) NULL);
@@ -276,8 +276,8 @@ inittapes(Sort * node)
 static void
 initialrun(Sort * node)
 {
-	/* register struct tuple   *tup; */
-	register struct tape *tp;
+	/* struct tuple   *tup; */
+	struct tape *tp;
 	int			baseruns;		/* D:(a) */
 	int			extrapasses;	/* EOF */
 
@@ -433,7 +433,7 @@ createfirstrun(Sort *node)
 	
 	if ( LACKMEM (node) )	/* in-memory sort is impossible */
 	{
-    	register int t;
+    	int t;
 		
 		Assert (!foundeor);
 		inittapes(node);
@@ -466,8 +466,8 @@ createfirstrun(Sort *node)
 static bool
 createrun(Sort * node, FILE * file)
 {
-	register HeapTuple	lasttuple;
-	register HeapTuple	tup;
+	HeapTuple	lasttuple;
+	HeapTuple	tup;
 	TupleTableSlot	   *cr_slot;
 	HeapTuple		   *memtuples;
 	int					t_last = -1;
@@ -554,7 +554,7 @@ createrun(Sort * node, FILE * file)
 	/* put tuples for the next run into leftist tree */
 	if ( t_last >= 1 )
 	{
-		register int t;
+		int t;
 		
 		PsortTupDesc = PS(node)->treeContext.tupDesc;
 		PsortKeys = PS(node)->treeContext.scanKeys;
@@ -600,7 +600,7 @@ tuplecopy(HeapTuple tup)
 static FILE *
 mergeruns(Sort * node)
 {
-	register struct tape *tp;
+	struct tape *tp;
 
 	Assert(node != (Sort *) NULL);
 	Assert(PS(node) != (Psortstate *) NULL);
@@ -627,9 +627,9 @@ mergeruns(Sort * node)
 static void
 merge(Sort * node, struct tape * dest)
 {
-	register HeapTuple tup;
-	register struct tape *lasttp;		/* (TAPE[P]) */
-	register struct tape *tp;
+	HeapTuple tup;
+	struct tape *lasttp;		/* (TAPE[P]) */
+	struct tape *tp;
 	struct leftist *tuples;
 	FILE		   *destfile;
 	int				times;			/* runs left to merge */
@@ -734,8 +734,8 @@ merge(Sort * node, struct tape * dest)
 static void
 dumptuples(FILE * file, Sort * node)
 {
-	register struct leftist *tp;
-	register struct leftist *newp;
+	struct leftist *tp;
+	struct leftist *newp;
 	struct leftist **treep = &PS(node)->Tuples;
 	LeftistContext context = &PS(node)->treeContext;
 	HeapTuple	tup;
@@ -769,7 +769,7 @@ dumptuples(FILE * file, Sort * node)
 HeapTuple
 psort_grabtuple(Sort * node, bool * should_free)
 {
-	register HeapTuple	tup;
+	HeapTuple	tup;
 
 	Assert(node != (Sort *) NULL);
 	Assert(PS(node) != (Psortstate *) NULL);
@@ -920,7 +920,7 @@ psort_restorepos(Sort * node)
 void
 psort_end(Sort * node)
 {
-	register struct tape *tp;
+	struct tape *tp;
 
 	if (!node->cleaned)
 	{
@@ -978,7 +978,7 @@ static struct tapelst *Tapes = NULL;
 static FILE *
 gettape()
 {
-	register struct tapelst *tp;
+	struct tapelst *tp;
 	FILE	   *file;
 	static int	tapeinit = 0;
 	char	   *mktemp();
@@ -1020,8 +1020,8 @@ gettape()
 static void
 resettape(FILE * file)
 {
-	register struct tapelst *tp;
-	register int fd;
+	struct tapelst *tp;
+	int fd;
 
 	Assert(PointerIsValid(file));
 
@@ -1052,9 +1052,9 @@ resettape(FILE * file)
 static void
 destroytape(FILE * file)
 {
-	register struct tapelst *tp,
+	struct tapelst *tp,
 			   *tq;
-	register int fd;
+	int fd;
 
 	if ((tp = Tapes) == NULL)
 		elog(FATAL, "destroytape: tape not found");
@@ -1089,7 +1089,7 @@ destroytape(FILE * file)
 static int
 _psort_cmp (HeapTuple *ltup, HeapTuple *rtup)
 {
-    register Datum	lattr, rattr;
+    Datum	lattr, rattr;
     int		nkey;
     int		result = 0;
     bool	isnull1, isnull2;

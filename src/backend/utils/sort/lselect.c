@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/lselect.c,v 1.11 1998/01/31 04:39:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/lselect.c,v 1.12 1998/02/11 19:13:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,7 @@
 struct leftist *
 lmerge(struct leftist * pt, struct leftist * qt, LeftistContext context)
 {
-	register struct leftist *root,
+	struct leftist *root,
 			   *majorLeftist,
 			   *minorLeftist;
 	int			dist;
@@ -76,7 +76,7 @@ lmerge(struct leftist * pt, struct leftist * qt, LeftistContext context)
 static struct leftist *
 linsert(struct leftist * root, struct leftist * new1, LeftistContext context)
 {
-	register struct leftist *left,
+	struct leftist *left,
 			   *right;
 
 	if (!tuplecmp(root->lt_tuple, new1->lt_tuple, context))
@@ -129,7 +129,7 @@ gettuple(struct leftist ** treep,
 		 short *devnum,			/* device from which tuple came */
 		 LeftistContext context)
 {
-	register struct leftist *tp;
+	struct leftist *tp;
 	HeapTuple	tup;
 
 	tp = *treep;
@@ -159,8 +159,8 @@ puttuple(struct leftist ** treep,
 		 short devnum,
 		 LeftistContext context)
 {
-	register struct leftist *new1;
-	register struct leftist *tp;
+	struct leftist *new1;
+	struct leftist *tp;
 
 	new1 = (struct leftist *) palloc((unsigned) sizeof(struct leftist));
 	new1->lt_dist = 1;
@@ -186,7 +186,7 @@ puttuple(struct leftist ** treep,
 int
 tuplecmp(HeapTuple ltup, HeapTuple rtup, LeftistContext context)
 {
-	register Datum lattr,
+	Datum lattr,
 				rattr;
 	int			nkey = 0;
 	int			result = 0;

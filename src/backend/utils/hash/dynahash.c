@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.11 1997/09/18 20:22:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.12 1998/02/11 19:13:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -157,7 +157,7 @@ static long hash_accesses,
 HTAB	   *
 hash_create(int nelem, HASHCTL *info, int flags)
 {
-	register HHDR *hctl;
+	HHDR *hctl;
 	HTAB	   *hashp;
 
 
@@ -302,9 +302,9 @@ hdefault(HTAB *hashp)
 static int
 init_htab(HTAB *hashp, int nelem)
 {
-	register SEG_OFFSET *segp;
-	register int nbuckets;
-	register int nsegs;
+	SEG_OFFSET *segp;
+	int nbuckets;
+	int nsegs;
 	int			l2;
 	HHDR	   *hctl;
 
@@ -387,7 +387,7 @@ hash_destroy(HTAB *hashp)
 
 	if (hashp != NULL)
 	{
-		register SEG_OFFSET segNum;
+		SEG_OFFSET segNum;
 		SEGMENT		segp;
 		int			nsegs = hashp->hctl->nsegs;
 		int			j;
@@ -480,7 +480,7 @@ hash_search(HTAB *hashp,
 	long		segment_num;
 	long		segment_ndx;
 	SEGMENT		segp;
-	register ELEMENT *curr;
+	ELEMENT *curr;
 	HHDR	   *hctl;
 	BUCKET_INDEX currIndex;
 	BUCKET_INDEX *prevIndexPtr;
@@ -735,7 +735,7 @@ expand_table(HTAB *hashp)
 	ELEMENT    *chain;
 	BUCKET_INDEX *old,
 			   *newbi;
-	register BUCKET_INDEX chainIndex,
+	BUCKET_INDEX chainIndex,
 				nextIndex;
 
 #ifdef HASH_STATISTICS
@@ -811,7 +811,7 @@ expand_table(HTAB *hashp)
 static int
 dir_realloc(HTAB *hashp)
 {
-	register char *p;
+	char *p;
 	char	  **p_ptr;
 	long		old_dirsize;
 	long		new_dirsize;

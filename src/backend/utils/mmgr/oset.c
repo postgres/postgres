@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/Attic/oset.c,v 1.6 1997/09/08 21:49:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/Attic/oset.c,v 1.7 1998/02/11 19:13:17 momjian Exp $
  *
  * NOTE
  *	  XXX This is a preliminary implementation which lacks fail-fast
@@ -64,7 +64,7 @@ OrderedSetContains(OrderedSet set, OrderedElem elem)
 Pointer
 OrderedSetGetHead(OrderedSet set)
 {
-	register OrderedElem elem;
+	OrderedElem elem;
 
 	elem = set->head;
 	if (elem->next)
@@ -81,7 +81,7 @@ OrderedSetGetHead(OrderedSet set)
 Pointer
 OrderedSetGetTail(OrderedSet set)
 {
-	register OrderedElem elem;
+	OrderedElem elem;
 
 	elem = set->tail;
 	if (elem->prev)

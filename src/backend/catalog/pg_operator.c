@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.20 1998/01/15 19:42:30 pgsql Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.21 1998/02/11 19:10:11 momjian Exp $
  *
  * NOTES
  *	  these routines moved here from commands/define.c and somewhat cleaned up.
@@ -224,7 +224,7 @@ OperatorShellMakeWithOpenRelation(Relation pg_operator_desc,
 								  Oid leftObjectId,
 								  Oid rightObjectId)
 {
-	register int i;
+	int i;
 	HeapTuple	tup;
 	Datum		values[Natts_pg_operator];
 	char		nulls[Natts_pg_operator];
@@ -452,7 +452,7 @@ OperatorDef(char *operatorName,
 			char *leftSortName,
 			char *rightSortName)
 {
-	register	i,
+	int			i,
 				j;
 	Relation	pg_operator_desc;
 
@@ -767,7 +767,7 @@ OperatorDef(char *operatorName,
 static void
 OperatorUpd(Oid baseId, Oid commId, Oid negId)
 {
-	register	i;
+	int			i;
 	Relation	pg_operator_desc;
 	HeapScanDesc pg_operator_scan;
 	HeapTuple	tup;

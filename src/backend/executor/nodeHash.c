@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHash.c,v 1.17 1998/01/25 05:13:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHash.c,v 1.18 1998/02/11 19:10:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -780,9 +780,9 @@ ExecScanHashBucket(HashJoinState *hjstate,
 static int
 hashFunc(char *key, int len)
 {
-	register unsigned int h;
-	register int l;
-	register unsigned char *k;
+	unsigned int h;
+	int l;
+	unsigned char *k;
 
 	/*
 	 * If this is a variable length type, then 'k' points to a "struct

@@ -150,7 +150,7 @@ textnlike(struct varlena * s, struct varlena * p)
 }
 
 
-/*	$Revision: 1.10 $
+/*	$Revision: 1.11 $
 **	"like.c" A first attempt at a LIKE operator for Postgres95.
 **
 **	Originally written by Rich $alz, mirror!rs, Wed Nov 26 19:03:17 EST 1986.
@@ -185,9 +185,9 @@ textnlike(struct varlena * s, struct varlena * p)
 **	Match text and p, return LIKE_TRUE, LIKE_FALSE, or LIKE_ABORT.
 */
 static int
-DoMatch(register char *text, register char *p)
+DoMatch(char *text, char *p)
 {
-	register int matched;
+	int matched;
 
 	for (; *p; text ++, p++)
 	{

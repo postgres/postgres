@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.14 1998/01/15 19:44:41 pgsql Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.15 1998/02/11 19:10:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -103,7 +103,7 @@ relation_info(Query *root, Index relid,
 bool
 index_info(Query *root, bool first, int relid, IdxInfoRetval *info)
 {
-	register	i;
+	int			i;
 	HeapTuple	indexTuple,
 				amopTuple;
 	IndexTupleForm index;
@@ -514,7 +514,7 @@ IndexSelectivity(Oid indexrelid,
 				 float *idxPages,
 				 float *idxSelec)
 {
-	register	i,
+	int			i,
 				n;
 	HeapTuple	indexTuple,
 				amopTuple,

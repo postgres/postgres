@@ -1,4 +1,4 @@
-/* $Id: strcasecmp.c,v 1.2 1997/12/19 13:34:32 scrappy Exp $ */
+/* $Id: strcasecmp.c,v 1.3 1998/02/11 19:11:10 momjian Exp $ */
 
 /*
  * Copyright (c) 1987 Regents of the University of California.
@@ -63,7 +63,7 @@ static unsigned char charmap[] = {
 int
 strcasecmp(char *s1, char *s2)
 {
-	register unsigned char u1,
+	unsigned char u1,
 				u2;
 
 	for (;;)

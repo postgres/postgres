@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.25 1998/01/07 21:01:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.26 1998/02/11 19:09:30 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -791,7 +791,7 @@ heap_getnext(HeapScanDesc scandesc,
 			 int backw,
 			 Buffer *b)
 {
-	register HeapScanDesc sdesc = scandesc;
+	HeapScanDesc sdesc = scandesc;
 	Buffer		localb;
 
 	/* ----------------

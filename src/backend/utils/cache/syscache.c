@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.13 1998/01/31 04:38:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.14 1998/02/11 19:12:49 momjian Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -398,7 +398,7 @@ SearchSysCacheTuple(int cacheId,		/* cache selection code */
 					Datum key3,
 					Datum key4)
 {
-	register HeapTuple tp;
+	HeapTuple tp;
 
 	if (cacheId < 0 || cacheId >= SysCacheSize)
 	{

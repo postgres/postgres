@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.11 1998/01/06 19:42:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.12 1998/02/11 19:10:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,7 +64,7 @@ AggregateCreate(char *aggName,
 				char *agginitval1,
 				char *agginitval2)
 {
-	register	i;
+	int			i;
 	Relation	aggdesc;
 	HeapTuple	tup;
 	char		nulls[Natts_pg_aggregate];

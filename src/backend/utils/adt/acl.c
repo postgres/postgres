@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.23 1998/01/05 16:39:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.24 1998/02/11 19:12:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -242,7 +242,7 @@ aclitemin(char *s)
 char	   *
 aclitemout(AclItem *aip)
 {
-	register char *p;
+	char *p;
 	char	   *out;
 	HeapTuple	htp;
 	unsigned	i;

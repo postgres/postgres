@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.50 1998/01/07 18:46:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.51 1998/02/11 19:12:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4015,9 +4015,9 @@ DecodeUnits(int field, char *lowtoken, int *val)
 static datetkn *
 datebsearch(char *key, datetkn *base, unsigned int nel)
 {
-	register datetkn *last = base + nel - 1,
+	datetkn *last = base + nel - 1,
 			   *position;
-	register int result;
+	int result;
 
 	while (last >= base)
 	{

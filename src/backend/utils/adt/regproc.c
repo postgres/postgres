@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.13 1998/01/31 04:38:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.14 1998/02/11 19:12:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -160,8 +160,8 @@ oid8types(Oid (*oidArray)[])
 	HeapTuple	typetup;
 	text	   *result;
 	ScanKeyData key;
-	register int num;
-	register Oid *sp;
+	int num;
+	Oid *sp;
 
 	if (oidArray == NULL)
 	{

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.13 1998/01/31 05:31:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.14 1998/02/11 19:12:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -261,7 +261,7 @@ char	   *
 fmgr(Oid procedureId,...)
 {
 	va_list		pvar;
-	register	i;
+	int			i;
 	int			pronargs;
 	FmgrValues	values;
 	FmgrInfo	finfo;
@@ -299,7 +299,7 @@ char	   *
 fmgr_ptr(FmgrInfo *finfo, ...)
 {
 	va_list		pvar;
-	register	i;
+	int			i;
 	int			n_arguments;
 	FmgrInfo	local_finfo;
 	FmgrValues	values;

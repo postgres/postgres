@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.21 1998/01/15 19:45:28 pgsql Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.22 1998/02/11 19:12:47 momjian Exp $
  *
  * Notes:
  *		XXX This needs to use exception.h to handle recovery when
@@ -287,7 +287,7 @@ CatalogCacheSetId(CatCache *cacheInOutP, int id)
  * ----------------
  */
 static long
-comphash(long l, register char *v)
+comphash(long l, char *v)
 {
 	long		i;
 	NameData	n;
@@ -654,7 +654,7 @@ InitSysCache(char *relname,
 			 HeapTuple (*iScanfuncP) ())
 {
 	CatCache   *cp;
-	register int i;
+	int i;
 	MemoryContext oldcxt;
 
 	char	   *indname;

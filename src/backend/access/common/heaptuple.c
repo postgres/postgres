@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.35 1998/02/06 20:17:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.36 1998/02/11 19:09:21 momjian Exp $
  *
  * NOTES
  *	  The old interface functions have been converted to macros
@@ -43,12 +43,6 @@ long heap_sysoffset[] = {
 		offsetof(HeapTupleData, t_xmax),
 		offsetof(HeapTupleData, t_cmax)
 };
-
-/* this is so the sparcstation debugger works */
-
-#if !defined(NO_ASSERT_CHECKING) && defined(sparc) && defined(sunos4)
-#define register
-#endif							/* !NO_ASSERT_CHECKING && sparc && sunos4 */
 
 /* ----------------------------------------------------------------
  *						misc support routines
@@ -476,10 +470,10 @@ nocachegetattr(HeapTuple tup,
 		 * ----------------
 		 */
 		{
-			register int i = 0; /* current offset in bp */
-			register int mask;	/* bit in byte we're looking at */
-			register char n;	/* current byte in bp */
-			register int byte,
+			int i = 0; /* current offset in bp */
+			int mask;	/* bit in byte we're looking at */
+			char n;	/* current byte in bp */
+			int byte,
 						 finalbit;
 
 			byte = attnum >> 3;
@@ -523,7 +517,7 @@ nocachegetattr(HeapTuple tup,
 		}
 		else if (!HeapTupleAllFixed(tup))
 		{
-			register int j = 0;
+			int j = 0;
 
 			/*
 			 *	In for(), we make this <= and not < because we want to
@@ -542,8 +536,8 @@ nocachegetattr(HeapTuple tup,
 	 */
 	if (!slow)
 	{
-		register int j = 1;
-		register long off;
+		int j = 1;
+		long off;
 
 		/*
 		 * need to set cache for some atts
@@ -624,9 +618,9 @@ nocachegetattr(HeapTuple tup,
 	}
 	else
 	{
-		register bool usecache = true;
-		register int off = 0;
-		register int i;
+		bool usecache = true;
+		int off = 0;
+		int i;
 
 		/*
 		 * Now we know that we have to walk the tuple CAREFULLY.
@@ -999,7 +993,7 @@ heap_addheader(uint32 natts,	/* max domain index */
 			   int structlen,	/* its length */
 			   char *structure) /* pointer to the struct */
 {
-	register char *tp;			/* tuple data pointer */
+	char 		*tp;			/* tuple data pointer */
 	HeapTuple	tup;
 	long		len;
 	int			hoff;

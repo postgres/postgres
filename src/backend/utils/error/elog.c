@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.25 1998/01/25 05:14:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.26 1998/02/11 19:12:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,8 +45,8 @@ elog(int lev, const char *fmt,...)
 	va_list		ap;
 	char		buf[ELOG_MAXLEN],
 				line[ELOG_MAXLEN];
-	register char *bp;
-	register const char *cp;
+	char *bp;
+	const char *cp;
 	extern int	errno,
 				sys_nerr;
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.13 1998/01/06 19:42:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.14 1998/02/11 19:10:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,7 +55,7 @@ ProcedureCreate(char *procedureName,
 				List *argList,
 				CommandDest dest)
 {
-	register	i;
+	int			i;
 	Relation	rdesc;
 	HeapTuple	tup;
 	bool		defined;

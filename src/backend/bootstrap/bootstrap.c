@@ -7,7 +7,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.35 1998/02/07 06:10:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.36 1998/02/11 19:09:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -979,7 +979,7 @@ LexIDStr(int ident_num)
 static int
 CompHash(char *str, int len)
 {
-	register int result;
+	int result;
 
 	result = (NUM * str[0] + NUMSQR * str[len - 1] + NUMCUBE * str[(len - 1) / 2]);
 

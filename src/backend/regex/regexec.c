@@ -162,7 +162,7 @@ size_t		nmatch;
 regmatch_t	pmatch[];
 int			eflags;
 {
-	register struct re_guts *g = preg->re_g;
+	struct re_guts *g = preg->re_g;
 
 #ifdef REDEBUG
 #define  GOODFLAGS(f)	 (f)

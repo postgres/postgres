@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.21 1998/01/15 19:42:38 pgsql Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.22 1998/02/11 19:10:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -156,7 +156,7 @@ SingleOpOperatorRemove(Oid typeOid)
 	ItemPointerData itemPointerData;
 	Buffer		buffer;
 	static		attnums[3] = {7, 8, 9}; /* left, right, return */
-	register	i;
+	int			i;
 
 	ScanKeyEntryInitialize(&key[0],
 					   0, 0, ObjectIdEqualRegProcedure, (Datum) typeOid);

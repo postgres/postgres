@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.4 1998/01/31 04:38:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.5 1998/02/11 19:09:42 momjian Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -74,7 +74,7 @@ char	   *aclcheck_error_strings[] = {
 static
 dumpacl(Acl *acl)
 {
-	register unsigned i;
+	unsigned i;
 	AclItem    *aip;
 
 	elog(DEBUG, "acl size = %d, # acls = %d",
@@ -94,7 +94,7 @@ ChangeAcl(char *relname,
 		  AclItem *mod_aip,
 		  unsigned modechg)
 {
-	register unsigned i;
+	unsigned i;
 	Acl		   *old_acl = (Acl *) NULL,
 			   *new_acl;
 	Relation	relation;
@@ -283,8 +283,8 @@ in_group(AclId uid, AclId gid)
 static int32
 aclcheck(Acl *acl, AclId id, AclIdType idtype, AclMode mode)
 {
-	register unsigned i;
-	register AclItem *aip,
+	unsigned i;
+	AclItem *aip,
 			   *aidat;
 	unsigned	num,
 				found_group;

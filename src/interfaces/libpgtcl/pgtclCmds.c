@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.19 1997/11/21 19:12:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.20 1998/02/11 19:13:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,7 +41,7 @@
 static inline char *
 translate_escape(char *p, int isArray)
 {
-	register char c,
+	char c,
 			   *q,
 			   *s;
 
@@ -155,7 +155,7 @@ tcl_value(char *value)
 {
 	int			literal,
 				last;
-	register char *p;
+	char *p;
 
 	if (!value)
 	{

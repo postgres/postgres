@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.13 1998/01/07 18:46:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.14 1998/02/11 19:12:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,7 +80,7 @@ int2out(int16 sh)
 int16 *
 int28in(char *shs)
 {
-	register int16 (*result)[];
+	int16 (*result)[];
 	int			nums;
 
 	if (shs == NULL)
@@ -109,9 +109,9 @@ int28in(char *shs)
 char *
 int28out(int16 (*shs)[])
 {
-	register int num;
-	register int16 *sp;
-	register char *rp;
+	int num;
+	int16 *sp;
+	char *rp;
 	char	   *result;
 
 	if (shs == NULL)
@@ -145,7 +145,7 @@ int32 *
 int44in(char *input_string)
 {
 	int32	   *foo = (int32 *) palloc(4 * sizeof(int32));
-	register int i = 0;
+	int i = 0;
 
 	i = sscanf(input_string,
 			   "%d, %d, %d, %d",

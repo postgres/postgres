@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/chunk.c,v 1.14 1998/01/13 04:04:47 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/chunk.c,v 1.15 1998/02/11 19:12:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -191,7 +191,7 @@ _FindBestChunk(int size,
 		 * compute the number of page fetches for a given chunk size (d[])
 		 * and access pattern (A[][])
 		 */
-		register int i,
+		int i,
 					j,
 					nc;
 
@@ -224,7 +224,7 @@ _FindBestChunk(int size,
 static int
 get_next(int d[], int k, int C, int dmax[])
 {
-	register int i,
+	int i,
 				j,
 				temp;
 

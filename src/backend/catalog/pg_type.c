@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.18 1998/01/15 19:42:30 pgsql Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.19 1998/02/11 19:10:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -155,7 +155,7 @@ TypeGet(char *typeName,			/* name of type to be fetched */
 static Oid
 TypeShellMakeWithOpenRelation(Relation pg_type_desc, char *typeName)
 {
-	register int i;
+	int i;
 	HeapTuple	tup;
 	Datum		values[Natts_pg_type];
 	char		nulls[Natts_pg_type];
@@ -297,7 +297,7 @@ TypeCreate(char *typeName,
 		   bool passedByValue,
 		   char alignment)
 {
-	register	i,
+	int			i,
 				j;
 	Relation	pg_type_desc;
 	HeapScanDesc pg_type_scan;

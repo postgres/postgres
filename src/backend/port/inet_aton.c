@@ -1,4 +1,4 @@
-/* $Id: inet_aton.c,v 1.12 1998/01/23 19:13:14 scrappy Exp $
+/* $Id: inet_aton.c,v 1.13 1998/02/11 19:11:05 momjian Exp $
  *
  *	This inet_aton() function was taken from the GNU C library and
  *	incorporated into Postgres for those systems which do not have this
@@ -56,12 +56,12 @@
 int
 inet_aton(const char *cp, struct in_addr * addr)
 {
-	register unsigned int val;
-	register int base,
+	unsigned int val;
+	int base,
 				n;
-	register char c;
+	char c;
 	u_int		parts[4];
-	register u_int *pp = parts;
+	u_int *pp = parts;
 
 	for (;;)
 	{

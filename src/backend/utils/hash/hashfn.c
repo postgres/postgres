@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/hashfn.c,v 1.5 1997/09/08 02:31:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/hashfn.c,v 1.6 1998/02/11 19:13:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,7 +25,7 @@ long
 string_hash(char *key, int keysize)
 {
 	int			h;
-	register unsigned char *k = (unsigned char *) key;
+	unsigned char *k = (unsigned char *) key;
 
 	h = 0;
 
@@ -43,7 +43,7 @@ string_hash(char *key, int keysize)
 long
 tag_hash(int *key, int keysize)
 {
-	register long h = 0;
+	long h = 0;
 
 	/*
 	 * Convert tag to integer;	Use four byte chunks in a "jump table" to
@@ -130,10 +130,10 @@ tag_hash(int *key, int keysize)
 long
 disk_hash(char *key)
 {
-	register int n = 0;
-	register char *str = key;
-	register int len = strlen(key);
-	register int loop;
+	int n = 0;
+	char *str = key;
+	int len = strlen(key);
+	int loop;
 
 #define HASHC	n = *str++ + 65599 * n
 

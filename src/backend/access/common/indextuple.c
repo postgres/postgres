@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.26 1998/02/06 20:17:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.27 1998/02/11 19:09:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,7 +41,7 @@ index_formtuple(TupleDesc tupleDescriptor,
 				Datum value[],
 				char null[])
 {
-	register char *tp;			/* tuple pointer */
+	char *tp;			/* tuple pointer */
 	IndexTuple	tuple;			/* return tuple */
 	Size		size,
 				hoff;
@@ -137,10 +137,10 @@ nocache_index_getattr(IndexTuple tup,
 			 TupleDesc tupleDesc,
 			 bool *isnull)
 {
-	register char *tp;			/* ptr to att in tuple */
-	register char *bp = NULL;	/* ptr to att in tuple */
+	char *tp;			/* ptr to att in tuple */
+	char *bp = NULL;	/* ptr to att in tuple */
 	int			slow;			/* do we have to walk nulls? */
-	register int data_off;		/* tuple data offset */
+	int data_off;		/* tuple data offset */
 	AttributeTupleForm *att = tupleDesc->attrs;
 
 	/* ----------------
@@ -219,10 +219,10 @@ nocache_index_getattr(IndexTuple tup,
 		 * ----------------
 		 */
 		{
-			register int i = 0; /* current offset in bp */
-			register int mask;	/* bit in byte we're looking at */
-			register char n;	/* current byte in bp */
-			register int byte,
+			int i = 0; /* current offset in bp */
+			int mask;	/* bit in byte we're looking at */
+			char n;	/* current byte in bp */
+			int byte,
 						 finalbit;
 
 			byte = attnum >> 3;
@@ -265,7 +265,7 @@ nocache_index_getattr(IndexTuple tup,
 		}
 		else if (!IndexTupleAllFixed(tup))
 		{
-			register int j = 0;
+			int j = 0;
 
 			for (j = 0; j < attnum && !slow; j++)
 				if (att[j]->attlen < 1 && !VARLENA_FIXED_SIZE(att[j]))
@@ -281,8 +281,8 @@ nocache_index_getattr(IndexTuple tup,
 
 	if (!slow)
 	{
-		register int j = 1;
-		register long off;
+		int j = 1;
+		long off;
 
 		/*
 		 * need to set cache for some atts
@@ -346,9 +346,9 @@ nocache_index_getattr(IndexTuple tup,
 	}
 	else
 	{
-		register bool usecache = true;
-		register int off = 0;
-		register int i;
+		bool usecache = true;
+		int off = 0;
+		int i;
 
 		/*
 		 * Now we know that we have to walk the tuple CAREFULLY.

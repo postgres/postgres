@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/lib/Attic/qsort.c,v 1.4 1997/09/08 02:23:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/lib/Attic/qsort.c,v 1.5 1998/02/11 19:10:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -129,13 +129,13 @@ pg_qsort(void *bot,
 static void
 quick_sort(char *bot, int nmemb, int size, int (*compar) ())
 {
-	register int cnt;
-	register u_char ch;
-	register char *top,
+	int cnt;
+	u_char ch;
+	char *top,
 			   *mid,
 			   *t1,
 			   *t2;
-	register int n1,
+	int n1,
 				n2;
 	char	   *bsv;
 
@@ -277,9 +277,9 @@ swap:	SWAP(bot, replace);
 static void
 insertion_sort(char *bot, int nmemb, int size, int (*compar) ())
 {
-	register int cnt;
-	register u_char ch;
-	register char *s1,
+	int cnt;
+	u_char ch;
+	char *s1,
 			   *s2,
 			   *t1,
 			   *t2,

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.13 1998/01/07 21:05:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.14 1998/02/11 19:11:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -98,7 +98,7 @@ PageAddItem(Page page,
 			OffsetNumber offsetNumber,
 			ItemIdFlags flags)
 {
-	register	i;
+	int			i;
 	Size		alignedSize;
 	Offset		lower;
 	Offset		upper;

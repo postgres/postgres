@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.45 1998/02/07 06:10:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.46 1998/02/11 19:09:54 momjian Exp $
  *
  * INTERFACE ROUTINES
  *		heap_create()			- Create an uncataloged heap relation
@@ -171,7 +171,7 @@ Relation
 heap_create(char *name,
 			TupleDesc tupDesc)
 {
-	register unsigned i;
+	unsigned i;
 	Oid			relid;
 	Relation	rdesc;
 	int			len;

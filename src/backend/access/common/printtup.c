@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.25 1998/02/10 16:02:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.26 1998/02/11 19:09:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -176,7 +176,7 @@ showatts(char *name, TupleDesc tupleDesc)
 void
 debugtup(HeapTuple tuple, TupleDesc typeinfo)
 {
-	register int i;
+	int i;
 	Datum	    attr;
 	char	   *value;
 	bool		isnull;

@@ -1,5 +1,5 @@
 /*
- * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.21 1998/01/07 18:47:07 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.22 1998/02/11 19:14:04 momjian Exp $
  */
 
 #include <float.h>				/* faked on sunos */
@@ -279,7 +279,7 @@ char	   *
 reverse_c16(string)
 char	   *string;
 {
-	register	i;
+	int			i;
 	int			len;
 	char	   *new_string;
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/catalog.c,v 1.13 1998/01/16 23:19:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/catalog.c,v 1.14 1998/02/11 19:09:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -155,7 +155,7 @@ void
 fillatt(TupleDesc tupleDesc)
 {
 	AttributeTupleForm *attributeP;
-	register TypeTupleForm typp;
+	TypeTupleForm typp;
 	HeapTuple	tuple;
 	int			i;
 	int			natts = tupleDesc->natts;

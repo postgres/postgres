@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/oid.c,v 1.13 1998/01/07 18:46:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/oid.c,v 1.14 1998/02/11 19:12:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,7 +31,7 @@
 Oid	*
 oid8in(char *oidString)
 {
-	register Oid (*result)[];
+	Oid (*result)[];
 	int			nums;
 
 	if (oidString == NULL)
@@ -60,9 +60,9 @@ oid8in(char *oidString)
 char *
 oid8out(Oid (*oidArray)[])
 {
-	register int num;
-	register Oid *sp;
-	register char *rp;
+	int num;
+	Oid *sp;
+	char *rp;
 	char	   *result;
 
 	if (oidArray == NULL)
