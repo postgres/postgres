@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.189 2001/01/28 02:57:06 pjw Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.190 2001/01/28 03:47:49 pjw Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -2037,6 +2037,7 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 						tblinfo[i].relname,
 						g_comment_end);
 
+			/* XXXX: Use LOJ maybe - need to compare with subsequent query for non-inherited */
 			resetPQExpBuffer(query);
 			appendPQExpBuffer(query, "SELECT rcname from pg_relcheck, pg_inherits as i "
 							  "where rcrelid = '%s'::oid "
@@ -2141,13 +2142,14 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 			res2 = PQexec(g_conn, query->data);
 			if (!res2 || PQresultStatus(res2) != PGRES_TUPLES_OK)
 			{
-				fprintf(stderr, "getTables(): SELECT (for PRIMARY KEY) failed.  Explanation from backend: %s\n",
-						PQerrorMessage(g_conn));
+				fprintf(stderr, "getTables(): SELECT (for PRIMARY KEY) failed on table %s.  Explanation from backend: %s\n",
+						tblinfo[i].relname, PQerrorMessage(g_conn));
 				exit_nicely(g_conn);
 			}
 
 			if (PQntuples(res2) > 1) {
-				fprintf(stderr, "getTables(): SELECT (for PRIMARY KEY) produced more than one row.\n");
+				fprintf(stderr, "getTables(): SELECT (for PRIMARY KEY) produced more than one row on table %s.\n",
+						tblinfo[i].relname);
 				exit_nicely(g_conn);
 			}
 
@@ -2170,16 +2172,15 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 			resetPQExpBuffer(query);
 			appendPQExpBuffer(query,
 							  "SELECT c.relname "
-							  "FROM pg_index i, pg_class c "
+							  "FROM pg_index i LEFT OUTER JOIN pg_class c ON c.oid = i.indexrelid "
 							  "WHERE i.indrelid = %s"
-							  "AND   i.indisprimary "
-							  "AND   c.oid = i.indexrelid ",
+							  "AND   i.indisprimary ",
 							  tblinfo[i].oid);
 			res2 = PQexec(g_conn, query->data);
 			if (!res2 || PQresultStatus(res2) != PGRES_TUPLES_OK)
 			{
-				fprintf(stderr, "getTables(): SELECT (for PRIMARY KEY NAME) failed.  Explanation from backend: %s",
-						PQerrorMessage(g_conn));
+				fprintf(stderr, "getTables(): SELECT (for PRIMARY KEY NAME) failed for table %s.  Explanation from backend: %s",
+						tblinfo[i].relname, PQerrorMessage(g_conn));
 				exit_nicely(g_conn);
 			}
 
@@ -2187,9 +2188,19 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 			if (n != 1)
 			{
 				fprintf(stderr,
-						"getTables(): SELECT (for PRIMARY KEY NAME) failed. This is impossible but object with OID == %s have %d primary keys.\n",
+						"getTables(): SELECT (for PRIMARY KEY NAME) failed for table %s. "
+							"This is impossible but object with OID == %s have %d primary keys.\n",
+						tblinfo[i].relname,
 						tblinfo[i].oid,
 						n);
+				exit_nicely(g_conn);
+			}
+
+			/* Sanity check on LOJ */
+			if (PQgetisnull(res2, 0, 0))
+			{
+				fprintf(stderr,"getTables(): SELECT (for PRIMARY KEY NAME) on table %s returned NULL value.\n",
+						tblinfo[i].relname);
 				exit_nicely(g_conn);
 			}
 
@@ -2569,8 +2580,8 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 		resetPQExpBuffer(q);
 		appendPQExpBuffer(q, "SELECT a.oid as attoid, a.attnum, a.attname, t.typname, a.atttypmod, "
 						  "a.attnotnull, a.atthasdef, format_type(a.atttypid, a.atttypmod) as atttypedefn "
-						  "from pg_attribute a, pg_type t "
-				   "where a.attrelid = '%s'::oid and a.atttypid = t.oid "
+						  "from pg_attribute a LEFT OUTER JOIN pg_type t ON a.atttypid = t.oid "
+				   "where a.attrelid = '%s'::oid "
 						  "and a.attnum > 0 order by attnum",
 						  tblinfo[i].oid);
 		res = PQexec(g_conn, q->data);
@@ -2605,6 +2616,15 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 		tblinfo[i].numParents = 0;
 		for (j = 0; j < ntups; j++)
 		{
+
+			/* Sanity check on LOJ */
+			if (PQgetisnull(res, j, i_typname))
+			{
+				fprintf(stderr, "getTableAttrs(): SELECT produced NULL attribute type name for attr %d on table %s.\n",
+						j, tblinfo[i].relname);
+				exit_nicely(g_conn);
+			}
+
 			tblinfo[i].attoids[j] = strdup(PQgetvalue(res, j, i_attoid));
 			tblinfo[i].attnames[j] = strdup(PQgetvalue(res, j, i_attname));
 			tblinfo[i].atttypedefns[j] = strdup(PQgetvalue(res, j, i_atttypedefn));
@@ -2692,6 +2712,8 @@ getIndices(int *numIndices)
 	 * Notice we skip indices on system classes
 	 *
 	 * this is a 4-way join !!
+	 *
+	 * XXXX: Use LOJ
 	 */
 
 	appendPQExpBuffer(query,
@@ -4423,6 +4445,8 @@ dumpRules(Archive *fout, const char *tablename,
 		 * Get all rules defined for this table
 		 * We include pg_rules in the cross since it filters out
 		 * all view rules (pjw 15-Sep-2000).
+		 *
+		 * XXXX: Use LOJ here
 		 */
 		resetPQExpBuffer(query);
 		appendPQExpBuffer(query, "SELECT definition,"
