@@ -6,7 +6,7 @@
  * copyright (c) Oliver Elphick <olly@lfix.co.uk>, 2001;
  * licence: BSD
  *
- * $PostgreSQL: pgsql/src/bin/pg_controldata/pg_controldata.c,v 1.21 2005/02/22 04:39:00 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_controldata/pg_controldata.c,v 1.22 2005/03/29 03:01:32 tgl Exp $
  */
 #include "postgres.h"
 
@@ -170,7 +170,7 @@ main(int argc, char *argv[])
 	printf(_("Blocks per segment of large relation: %u\n"), ControlFile.relseg_size);
 	printf(_("Bytes per WAL segment:                %u\n"), ControlFile.xlog_seg_size);
 	printf(_("Maximum length of identifiers:        %u\n"), ControlFile.nameDataLen);
-	printf(_("Maximum number of function arguments: %u\n"), ControlFile.funcMaxArgs);
+	printf(_("Maximum columns in an index:          %u\n"), ControlFile.indexMaxKeys);
 	printf(_("Date/time type storage:               %s\n"),
 		   (ControlFile.enableIntTimes ? _("64-bit integers") : _("floating-point numbers")));
 	printf(_("Maximum length of locale name:        %u\n"), ControlFile.localeBuflen);

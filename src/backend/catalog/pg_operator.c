@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_operator.c,v 1.88 2005/01/27 23:23:51 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_operator.c,v 1.89 2005/03/29 03:01:30 tgl Exp $
  *
  * NOTES
  *	  these routines moved here from commands/define.c and somewhat cleaned up.
@@ -391,7 +391,7 @@ OperatorCreate(const char *operatorName,
 				restOid,
 				joinOid;
 	bool		selfCommutator = false;
-	Oid			typeId[FUNC_MAX_ARGS];
+	Oid			typeId[4];		/* only need up to 4 args here */
 	int			nargs;
 	NameData	oname;
 	TupleDesc	tupDesc;
@@ -454,7 +454,6 @@ OperatorCreate(const char *operatorName,
 	 * procedureName to place in "result" field. Do this before shells are
 	 * created so we don't have to worry about deleting them later.
 	 */
-	MemSet(typeId, 0, FUNC_MAX_ARGS * sizeof(Oid));
 	if (!OidIsValid(leftTypeId))
 	{
 		typeId[0] = rightTypeId;
@@ -479,7 +478,6 @@ OperatorCreate(const char *operatorName,
 	 */
 	if (restrictionName)
 	{
-		MemSet(typeId, 0, FUNC_MAX_ARGS * sizeof(Oid));
 		typeId[0] = INTERNALOID;	/* Query */
 		typeId[1] = OIDOID;		/* operator OID */
 		typeId[2] = INTERNALOID;	/* args list */
@@ -495,7 +493,6 @@ OperatorCreate(const char *operatorName,
 	 */
 	if (joinName)
 	{
-		MemSet(typeId, 0, FUNC_MAX_ARGS * sizeof(Oid));
 		typeId[0] = INTERNALOID;	/* Query */
 		typeId[1] = OIDOID;		/* operator OID */
 		typeId[2] = INTERNALOID;	/* args list */

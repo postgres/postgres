@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.67 2005/01/27 23:23:56 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.68 2005/03/29 03:01:30 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -854,7 +854,7 @@ RemoveDomain(List *names, DropBehavior behavior)
 static Oid
 findTypeInputFunction(List *procname, Oid typeOid)
 {
-	Oid			argList[FUNC_MAX_ARGS];
+	Oid			argList[3];
 	Oid			procOid;
 
 	/*
@@ -864,8 +864,6 @@ findTypeInputFunction(List *procname, Oid typeOid)
 	 * For backwards compatibility we allow OPAQUE in place of CSTRING; if we
 	 * see this, we issue a warning and fix up the pg_proc entry.
 	 */
-	MemSet(argList, 0, FUNC_MAX_ARGS * sizeof(Oid));
-
 	argList[0] = CSTRINGOID;
 
 	procOid = LookupFuncName(procname, 1, argList, true);
@@ -880,8 +878,6 @@ findTypeInputFunction(List *procname, Oid typeOid)
 		return procOid;
 
 	/* No luck, try it with OPAQUE */
-	MemSet(argList, 0, FUNC_MAX_ARGS * sizeof(Oid));
-
 	argList[0] = OPAQUEOID;
 
 	procOid = LookupFuncName(procname, 1, argList, true);
@@ -925,7 +921,7 @@ findTypeInputFunction(List *procname, Oid typeOid)
 static Oid
 findTypeOutputFunction(List *procname, Oid typeOid)
 {
-	Oid			argList[FUNC_MAX_ARGS];
+	Oid			argList[2];
 	Oid			procOid;
 
 	/*
@@ -936,8 +932,6 @@ findTypeOutputFunction(List *procname, Oid typeOid)
 	 * type name; if we see this, we issue a warning and fix up the
 	 * pg_proc entry.
 	 */
-	MemSet(argList, 0, FUNC_MAX_ARGS * sizeof(Oid));
-
 	argList[0] = typeOid;
 
 	procOid = LookupFuncName(procname, 1, argList, true);
@@ -951,8 +945,6 @@ findTypeOutputFunction(List *procname, Oid typeOid)
 		return procOid;
 
 	/* No luck, try it with OPAQUE */
-	MemSet(argList, 0, FUNC_MAX_ARGS * sizeof(Oid));
-
 	argList[0] = OPAQUEOID;
 
 	procOid = LookupFuncName(procname, 1, argList, true);
@@ -995,15 +987,13 @@ findTypeOutputFunction(List *procname, Oid typeOid)
 static Oid
 findTypeReceiveFunction(List *procname, Oid typeOid)
 {
-	Oid			argList[FUNC_MAX_ARGS];
+	Oid			argList[2];
 	Oid			procOid;
 
 	/*
 	 * Receive functions can take a single argument of type INTERNAL, or
 	 * two arguments (internal, oid).
 	 */
-	MemSet(argList, 0, FUNC_MAX_ARGS * sizeof(Oid));
-
 	argList[0] = INTERNALOID;
 
 	procOid = LookupFuncName(procname, 1, argList, true);
@@ -1027,15 +1017,13 @@ findTypeReceiveFunction(List *procname, Oid typeOid)
 static Oid
 findTypeSendFunction(List *procname, Oid typeOid)
 {
-	Oid			argList[FUNC_MAX_ARGS];
+	Oid			argList[2];
 	Oid			procOid;
 
 	/*
 	 * Send functions can take a single argument of the type, or two
 	 * arguments (data value, element OID).
 	 */
-	MemSet(argList, 0, FUNC_MAX_ARGS * sizeof(Oid));
-
 	argList[0] = typeOid;
 
 	procOid = LookupFuncName(procname, 1, argList, true);
@@ -1059,15 +1047,13 @@ findTypeSendFunction(List *procname, Oid typeOid)
 static Oid
 findTypeAnalyzeFunction(List *procname, Oid typeOid)
 {
-	Oid			argList[FUNC_MAX_ARGS];
+	Oid			argList[1];
 	Oid			procOid;
 
 	/*
 	 * Analyze functions always take one INTERNAL argument and return
 	 * bool.
 	 */
-	MemSet(argList, 0, FUNC_MAX_ARGS * sizeof(Oid));
-
 	argList[0] = INTERNALOID;
 
 	procOid = LookupFuncName(procname, 1, argList, true);

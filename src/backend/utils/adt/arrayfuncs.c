@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.118 2005/03/29 00:17:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.119 2005/03/29 03:01:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2577,9 +2577,8 @@ array_eq(PG_FUNCTION_ARGS)
 		/*
 		 * apply the operator to each pair of array elements.
 		 */
-		MemSet(&locfcinfo, 0, sizeof(locfcinfo));
-		locfcinfo.flinfo = &typentry->eq_opr_finfo;
-		locfcinfo.nargs = 2;
+		InitFunctionCallInfoData(locfcinfo, &typentry->eq_opr_finfo, 2,
+								 NULL, NULL);
 
 		/* Loop over source data */
 		for (i = 0; i < nitems1; i++)
@@ -2727,9 +2726,8 @@ array_cmp(FunctionCallInfo fcinfo)
 	/*
 	 * apply the operator to each pair of array elements.
 	 */
-	MemSet(&locfcinfo, 0, sizeof(locfcinfo));
-	locfcinfo.flinfo = &typentry->cmp_proc_finfo;
-	locfcinfo.nargs = 2;
+	InitFunctionCallInfoData(locfcinfo, &typentry->cmp_proc_finfo, 2,
+							 NULL, NULL);
 
 	/* Loop over source data */
 	min_nitems = Min(nitems1, nitems2);
@@ -3172,12 +3170,14 @@ array_type_length_coerce_internal(ArrayType *src,
 	 * We pass on the desttypmod and isExplicit flags whether or not the
 	 * function wants them.
 	 */
-	MemSet(&locfcinfo, 0, sizeof(locfcinfo));
-	locfcinfo.flinfo = &my_extra->coerce_finfo;
-	locfcinfo.nargs = 3;
+	InitFunctionCallInfoData(locfcinfo, &my_extra->coerce_finfo, 3,
+							 NULL, NULL);
 	locfcinfo.arg[0] = PointerGetDatum(src);
 	locfcinfo.arg[1] = Int32GetDatum(desttypmod);
 	locfcinfo.arg[2] = BoolGetDatum(isExplicit);
+	locfcinfo.argnull[0] = false;
+	locfcinfo.argnull[1] = false;
+	locfcinfo.argnull[2] = false;
 
 	return array_map(&locfcinfo, my_extra->srctype, my_extra->desttype,
 					 &my_extra->amstate);
@@ -3246,12 +3246,14 @@ array_length_coerce(PG_FUNCTION_ARGS)
 	 *
 	 * Note: we pass isExplicit whether or not the function wants it ...
 	 */
-	MemSet(&locfcinfo, 0, sizeof(locfcinfo));
-	locfcinfo.flinfo = &my_extra->coerce_finfo;
-	locfcinfo.nargs = 3;
+	InitFunctionCallInfoData(locfcinfo, &my_extra->coerce_finfo, 3,
+							 NULL, NULL);
 	locfcinfo.arg[0] = PointerGetDatum(v);
 	locfcinfo.arg[1] = Int32GetDatum(desttypmod);
 	locfcinfo.arg[2] = BoolGetDatum(isExplicit);
+	locfcinfo.argnull[0] = false;
+	locfcinfo.argnull[1] = false;
+	locfcinfo.argnull[2] = false;
 
 	return array_map(&locfcinfo, ARR_ELEMTYPE(v), ARR_ELEMTYPE(v),
 					 &my_extra->amstate);

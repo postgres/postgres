@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.182 2005/03/29 00:16:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.183 2005/03/29 03:01:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1179,10 +1179,7 @@ ExecCallTriggerFunc(TriggerData *trigdata,
 	/*
 	 * Call the function, passing no arguments but setting a context.
 	 */
-	MemSet(&fcinfo, 0, sizeof(fcinfo));
-
-	fcinfo.flinfo = finfo;
-	fcinfo.context = (Node *) trigdata;
+	InitFunctionCallInfoData(fcinfo, finfo, 0, (Node *) trigdata, NULL);
 
 	result = FunctionCallInvoke(&fcinfo);
 

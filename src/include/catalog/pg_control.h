@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_control.h,v 1.19 2004/12/31 22:03:24 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_control.h,v 1.20 2005/03/29 03:01:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -116,7 +116,7 @@ typedef struct ControlFileData
 	uint32		xlog_seg_size;	/* size of each WAL segment */
 
 	uint32		nameDataLen;	/* catalog name field width */
-	uint32		funcMaxArgs;	/* maximum number of function arguments */
+	uint32		indexMaxKeys;	/* max number of columns in an index */
 
 	/* flag indicating internal format of timestamp, interval, time */
 	uint32		enableIntTimes; /* int64 storage enabled? */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_aggregate.c,v 1.70 2005/01/27 23:42:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_aggregate.c,v 1.71 2005/03/29 03:01:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,7 +57,7 @@ AggregateCreate(const char *aggName,
 	Oid			finalfn = InvalidOid;	/* can be omitted */
 	Oid			rettype;
 	Oid			finaltype;
-	Oid			fnArgs[FUNC_MAX_ARGS];
+	Oid			fnArgs[2];		/* we only deal with 1- and 2-arg fns */
 	int			nargs_transfn;
 	Oid			procOid;
 	TupleDesc	tupDesc;
@@ -85,7 +85,6 @@ AggregateCreate(const char *aggName,
 			"transition type must have one of them as its base type.")));
 
 	/* handle transfn */
-	MemSet(fnArgs, 0, FUNC_MAX_ARGS * sizeof(Oid));
 	fnArgs[0] = aggTransType;
 	if (aggBaseType == ANYOID)
 		nargs_transfn = 1;
@@ -139,7 +138,6 @@ AggregateCreate(const char *aggName,
 	/* handle finalfn, if supplied */
 	if (aggfinalfnName)
 	{
-		MemSet(fnArgs, 0, FUNC_MAX_ARGS * sizeof(Oid));
 		fnArgs[0] = aggTransType;
 		finalfn = lookup_agg_function(aggfinalfnName, 1, fnArgs,
 									  &finaltype);
@@ -174,7 +172,6 @@ AggregateCreate(const char *aggName,
 	 * aggregate.  (This could fail if there's already a conflicting
 	 * entry.)
 	 */
-	MemSet(fnArgs, 0, FUNC_MAX_ARGS * sizeof(Oid));
 	fnArgs[0] = aggBaseType;
 
 	procOid = ProcedureCreate(aggName,

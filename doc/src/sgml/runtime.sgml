@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.311 2005/03/24 04:36:17 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.312 2005/03/29 03:01:29 tgl Exp $
 -->
 
 <chapter Id="runtime">
@@ -3774,7 +3774,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
        <para>
         Shows the maximum number of function arguments. It is determined by
         the value of <literal>FUNC_MAX_ARGS</> when building the server. The
-        default value is 32.
+        default value is 100.
        </para>
       </listitem>
      </varlistentry>

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/proclang.c,v 1.57 2005/02/14 06:17:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/proclang.c,v 1.58 2005/03/29 03:01:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,7 +44,7 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 	Oid			procOid,
 				valProcOid;
 	Oid			funcrettype;
-	Oid			typev[FUNC_MAX_ARGS];
+	Oid			funcargtypes[1];
 	NameData	langname;
 	char		nulls[Natts_pg_language];
 	Datum		values[Natts_pg_language];
@@ -80,8 +80,7 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 	 * Lookup the PL handler function and check that it is of the expected
 	 * return type
 	 */
-	MemSet(typev, 0, sizeof(typev));
-	procOid = LookupFuncName(stmt->plhandler, 0, typev, false);
+	procOid = LookupFuncName(stmt->plhandler, 0, funcargtypes, false);
 	funcrettype = get_func_rettype(procOid);
 	if (funcrettype != LANGUAGE_HANDLEROID)
 	{
@@ -108,8 +107,8 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 	/* validate the validator function */
 	if (stmt->plvalidator)
 	{
-		typev[0] = OIDOID;
-		valProcOid = LookupFuncName(stmt->plvalidator, 1, typev, false);
+		funcargtypes[0] = OIDOID;
+		valProcOid = LookupFuncName(stmt->plvalidator, 1, funcargtypes, false);
 		/* return value is ignored, so we don't check the type */
 	}
 	else

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/fastpath.c,v 1.78 2005/03/29 00:17:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/fastpath.c,v 1.79 2005/03/29 03:01:31 tgl Exp $
  *
  * NOTES
  *	  This cruft is the server side of PQfn.
@@ -216,7 +216,7 @@ fetch_fp_info(Oid func_id, struct fp_info * fip)
 	 * the struct fp_info across transactions anymore, but keep it
 	 * anyway.]
 	 */
-	MemSet((char *) fip, 0, sizeof(struct fp_info));
+	MemSet(fip, 0, sizeof(struct fp_info));
 	fip->funcid = InvalidOid;
 
 	fmgr_info(func_id, &fip->flinfo);
@@ -341,8 +341,7 @@ HandleFunctionRequest(StringInfo msgBuf)
 	/*
 	 * Prepare function call info block and insert arguments.
 	 */
-	MemSet(&fcinfo, 0, sizeof(fcinfo));
-	fcinfo.flinfo = &fip->flinfo;
+	InitFunctionCallInfoData(fcinfo, &fip->flinfo, 0, NULL, NULL);
 
 	if (PG_PROTOCOL_MAJOR(FrontendProtocol) >= 3)
 		rformat = parse_fcall_arguments(msgBuf, fip, &fcinfo);
@@ -443,6 +442,7 @@ parse_fcall_arguments(StringInfo msgBuf, struct fp_info * fip,
 			fcinfo->argnull[i] = true;
 			continue;
 		}
+		fcinfo->argnull[i] = false;
 		if (argsize < 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_PROTOCOL_VIOLATION),
@@ -566,6 +566,7 @@ parse_fcall_arguments_20(StringInfo msgBuf, struct fp_info * fip,
 			fcinfo->argnull[i] = true;
 			continue;
 		}
+		fcinfo->argnull[i] = false;
 		if (argsize < 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_PROTOCOL_VIOLATION),

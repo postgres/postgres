@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.175 2004/12/31 22:00:27 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.176 2005/03/29 03:01:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,8 +85,8 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	if (nargs > FUNC_MAX_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
-			   errmsg("cannot pass more than %d arguments to a function",
-					  FUNC_MAX_ARGS)));
+				 errmsg("cannot pass more than %d arguments to a function",
+						FUNC_MAX_ARGS)));
 
 	if (fargs)
 	{
@@ -123,8 +123,6 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	 * Okay, it's not a column projection, so it must really be a
 	 * function. Extract arg type info in preparation for function lookup.
 	 */
-	MemSet(actual_arg_types, 0, FUNC_MAX_ARGS * sizeof(Oid));
-
 	argn = 0;
 	foreach(l, fargs)
 	{
@@ -375,6 +373,13 @@ func_select_candidate(int nargs,
 				current_category;
 	bool		slot_has_preferred_type[FUNC_MAX_ARGS];
 	bool		resolved_unknowns;
+
+	/* protect local fixed-size arrays */
+	if (nargs > FUNC_MAX_ARGS)
+		ereport(ERROR,
+				(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
+				 errmsg("cannot pass more than %d arguments to a function",
+						FUNC_MAX_ARGS)));
 
 	/*
 	 * If any input types are domains, reduce them to their base types.
@@ -866,9 +871,13 @@ func_get_detail(List *funcname,
 static Oid **
 argtype_inherit(int nargs, Oid *argtypes)
 {
+	Oid		  **result;
 	Oid			relid;
 	int			i;
-	InhPaths	arginh[FUNC_MAX_ARGS];
+	InhPaths   *arginh;
+
+	/* Set up the vector of superclass information */
+	arginh = (InhPaths *) palloc(nargs * sizeof(InhPaths));
 
 	for (i = 0; i < nargs; i++)
 	{
@@ -882,8 +891,12 @@ argtype_inherit(int nargs, Oid *argtypes)
 		}
 	}
 
-	/* return an ordered cross-product of the classes involved */
-	return gen_cross_product(arginh, nargs);
+	/* Compute an ordered cross-product of the classes involved */
+	result = gen_cross_product(arginh, nargs);
+
+	pfree(arginh);
+
+	return result;
 }
 
 /*
@@ -993,7 +1006,7 @@ gen_cross_product(InhPaths *arginh, int nargs)
 	Oid		   *oneres;
 	int			i,
 				j;
-	int			cur[FUNC_MAX_ARGS];
+	int		   *cur;
 
 	/*
 	 * At each position we want to try the original datatype, plus each
@@ -1016,7 +1029,7 @@ gen_cross_product(InhPaths *arginh, int nargs)
 	 * generate the original input type at position i.	When cur[i] == k
 	 * for k > 0, generate its k'th supertype.
 	 */
-	MemSet(cur, 0, sizeof(cur));
+	cur = (int *) palloc0(nargs * sizeof(int));
 
 	for (;;)
 	{
@@ -1036,7 +1049,7 @@ gen_cross_product(InhPaths *arginh, int nargs)
 		cur[i] += 1;
 
 		/* Generate the proper output type-OID vector */
-		oneres = (Oid *) palloc0(FUNC_MAX_ARGS * sizeof(Oid));
+		oneres = (Oid *) palloc(nargs * sizeof(Oid));
 
 		for (i = 0; i < nargs; i++)
 		{
@@ -1053,6 +1066,8 @@ gen_cross_product(InhPaths *arginh, int nargs)
 	result[j++] = NULL;
 
 	Assert(j == nanswers);
+
+	pfree(cur);
 
 	return result;
 }
@@ -1380,7 +1395,6 @@ LookupFuncNameTypeNames(List *funcname, List *argtypes, bool noError)
 	int			i;
 	ListCell   *args_item;
 
-	MemSet(argoids, 0, FUNC_MAX_ARGS * sizeof(Oid));
 	argcount = list_length(argtypes);
 	if (argcount > FUNC_MAX_ARGS)
 		ereport(ERROR,

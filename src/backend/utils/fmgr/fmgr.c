@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.91 2005/03/29 00:17:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.92 2005/03/29 03:01:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -337,9 +337,9 @@ fmgr_info_C_lang(Oid functionId, FmgrInfo *finfo, HeapTuple procedureTuple)
 			/* Old style: need to use a handler */
 			finfo->fn_addr = fmgr_oldstyle;
 			fnextra = (Oldstyle_fnextra *)
-				MemoryContextAlloc(finfo->fn_mcxt, sizeof(Oldstyle_fnextra));
+				MemoryContextAllocZero(finfo->fn_mcxt,
+									   sizeof(Oldstyle_fnextra));
 			finfo->fn_extra = (void *) fnextra;
-			MemSet(fnextra, 0, sizeof(Oldstyle_fnextra));
 			fnextra->func = (func_ptr) user_fn;
 			for (i = 0; i < procedureStruct->pronargs; i++)
 			{
@@ -795,8 +795,8 @@ fmgr_security_definer(PG_FUNCTION_ARGS)
 
 	if (!fcinfo->flinfo->fn_extra)
 	{
-		fcache = MemoryContextAlloc(fcinfo->flinfo->fn_mcxt, sizeof(*fcache));
-		memset(fcache, 0, sizeof(*fcache));
+		fcache = MemoryContextAllocZero(fcinfo->flinfo->fn_mcxt,
+										sizeof(*fcache));
 
 		fmgr_info_cxt_security(fcinfo->flinfo->fn_oid, &fcache->flinfo,
 							   fcinfo->flinfo->fn_mcxt, true);
