@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sun Oct  7 23:23:28 EDT 2001
+Last updated:		Mon Oct  8 13:08:55 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -9,8 +9,7 @@ the PostgreSQL web site, http://www.PostgreSQL.org.
 
 A dash (-) marks changes that will appear in the upcoming 7.2 release.
 
-Bracketed items "[]" have more detailed information at
-http://www.postgresql.org/docs/todo.html.
+Bracketed items "[]" have more detailed.
 
 
 RELIABILITY
