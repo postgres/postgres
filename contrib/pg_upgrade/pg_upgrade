@@ -3,7 +3,7 @@
 # pg_upgrade: update a database without needing a full dump/reload cycle.
 # CAUTION: Read the manual page before trying to use this!
 
-# $Header: /cvsroot/pgsql/contrib/pg_upgrade/Attic/pg_upgrade,v 1.9 2002/01/15 05:41:55 momjian Exp $
+# $Header: /cvsroot/pgsql/contrib/pg_upgrade/Attic/pg_upgrade,v 1.10 2002/01/18 04:38:46 momjian Exp $
 #
 # To migrate this to newer versions of PostgreSQL:  
 #	1)  Update the version numbers at the top of the file
@@ -13,8 +13,12 @@
 
 #set -x
 
+# UPGRADE_VERSION is the expected old database version
+UPGRADE_VERSION="7.1"
+CUR_VERSION="7.2"
+
 # Set this to "Y" to enable this program
-ENABLE="N"
+ENABLE="Y"
 
 if [ "$ENABLE" != "Y" ]
 then
@@ -24,10 +28,6 @@ then
 	exit 1
 fi
 
-
-# UPGRADE_VERSION is the expected old database version
-UPGRADE_VERSION="7.1"
-CUR_VERSION="7.2"
 
 trap "rm -f /tmp/$$.*" 0 1 2 3 15
 
