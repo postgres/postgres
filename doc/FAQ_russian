@@ -1,7 +1,7 @@
 
                Otvety na chasto zadavaemye voprosy po PostgreSQL
                                        
-   Data poslednego obnovleniya: Pyatnica 30 Maya 22:24:56 EDT 2003
+   Data poslednego obnovleniya: Voskresen'e 5 Oktyabrya 10:25:21 EDT 2003
    
    Anglijskij variant soprovozhdaet: Bryus Mom'yan (Bruce Momjian)
    (pgman@candle.pha.pa.us)
@@ -221,7 +221,8 @@
    PostgreSQL, sportirovannyj special'no dlya MS Win NT/2000/XP v
    nastoyaschij moment nachal rabotat'. Podrobnosti tekuschego
    sostoyaniya PostgreSQL dlya Windows smotrite na
-   http://techdocs.postgresql.org/guides/Windows.
+   http://techdocs.postgresql.org/guides/Windows i
+   http://momjian.postgresql.org/main/writings/pgsql/win32.html.
    
    Takzhe suschestvuet versiya sportirovannaya pod Novell Netware 6 na
    http://forge.novell.com.
@@ -277,13 +278,13 @@
    Unix irc -c '#PostgreSQL' "$USER" irc.phoenix.net.
    
    Spisok kommercheskoj podderzhki kompanij dostupen na
-   http://www.ca.PostgreSQL.org/users-lounge/commercial-support.html.
+   http://techdocs.postgresql.org/companies.php.
    
     1.7) Kakaya poslednyaya versiya?
     
-   Poslednij vypusk PostgreSQL - `eto versiya 7.3.2.
+   Poslednij vypusk PostgreSQL - `eto versiya 7.3.4.
    
-   My planiruem vypuskat' novye versii kazhdye chetyre mesyaca.
+   My planiruem vypuskat' novye versii kazhdye 6-8 mesyacev.
    
     1.8) Kakaya dokumentaciya imeetsya v nalichii?
     
@@ -296,8 +297,8 @@
    http://www.PostgreSQL.org/docs/awbook.html i
    http://www.commandprompt.com/ppbook/. Spisok knig po PostgreSQL,
    kotorye mozhno kupit' dostupen po adresu
-   http://www.ca.PostgreSQL.org/books/. Krome togo, po adresu
-   http://techdocs.PostgreSQL.org/ vy mozhete najti kollekciyu
+   http://techdocs.postgresql.org/techdocs/bookreviews.php. Krome togo,
+   po adresu http://techdocs.PostgreSQL.org/ vy mozhete najti kollekciyu
    tehnicheskih statej posvyaschennyh PostgreSQL.
    
    psql imeet neskol'ko prekrasnyh komand \d dlya otobrazheniya
@@ -376,15 +377,20 @@
           PostgreSQL imeet proizvoditel'nost' shozhuyu s drugimi
           kommercheskimi SUBD i s SUBD s otkrytym ishodnym kodom, v
           kakih-to aspektah rabotaya bystree chem oni, v kakih-to
-          medlenee. V sravnenii s MySQL ili linejnymi SUBD, my medlenee
-          pri operaciyah vstavki/obnovleniya, potomu chto upravlyaem
-          tranzakciyami. I razumeetsya, MySQL ne imeet kakih-libo
+          medlenee. V sravnenii s MySQL ili linejnymi SUBD, my bystree,
+          kogda pol'zovatelej mnogo, a takzhe na kompleksnyh zaprosah i
+          chtenii/zapisi zagruzki zaprosa. MySQL bystree dlya prostyh
+          SELECT zaprosov, vypolnyaemyh nebol'shim kolichestvom
+          pol'zovatelej. I razumeetsya, MySQL ne imeet kakih-libo
           vozmozhnostej iz perechislenyh vyshe, v sekcii Vozmozhnosti. My
           delaem upor na nadezhnost' i rasshirennye vozmozhnosti, no my
           takzhe prodolzhaem uvelichivat' proizvoditel'nost' s kazhdym
           vypuskom. Suschestvuet interesnaya stranichka v Internet,
           sravnivayuschaya PostgreSQL i MySQL na
-          http://openacs.org/philosophy/why-not-mysql.html
+          http://openacs.org/philosophy/why-not-mysql.html. Takzhe, MySQL
+          - `eto kompaniya, kotoraya rasprostranyaet svoj produkt cherez
+          otkrytye ishodnye teksty, a ne soobschestvo razrabotchikov s
+          otkrytymi ishodnymi tekstami, kak PostgreSQL.
           
    Nadezhnost'
           My ponimali, chto nasha SUBD dolzhna byt' nadezhnoj ili ona
@@ -439,6 +445,10 @@
    PostgreSQL i ne peredaetsya kakoj-libo konkretnoj kompanii. Esli
    hotite, to mozhete `eto proverit', napisav pis'mo na kontaktnyj adres.
      _________________________________________________________________
+   
+   Esli u vas est' istorii po uspeshnomu primeneniyu PostgreSQL,
+   pozhalujsta, prisylajte ih na nash sajt propagandy
+   http://advocacy.postgresql.org.
    
                  Voprosy pol'zovatelej po klientskoj chasti
                                       
@@ -753,7 +763,7 @@ dalit'
     BEGIN;
     ALTER TABLE tab ADD COLUMN new_col new_data_type;
     UPDATE tab SET new_col = CAST(old_col AS new_data_type);
-    ALTER TABLE DROP COLUMN old_col;
+    ALTER TABLE tab DROP COLUMN old_col;
     COMMIT;
 
     4.5) Kakovy maksimal'nye razmery dlya zapisej, tablic i bazy dannyh?
@@ -761,7 +771,7 @@ dalit'
    Suschestvuyut sleduyuschie ogranicheniya:
     Maksimal'nyj razmer bazy?              neogranichen (suschestvuyut bazy na
 4 TB)
-    Maksimal'nyj razmer tablicy?           16 TB
+    Maksimal'nyj razmer tablicy?           32 TB
     Maksimal'nyj razmer zapisi?            1.6 TB
     Maksimal'nyj razmer polya?              1 GB
     Maksimal'noe kolichestvo zapisej v tablice?      neogranicheno
@@ -774,14 +784,14 @@ pa
    znacheniya perechislennye vyshe neopravdano bol'shie, mozhet
    postradat' proizvoditel'nost'.
    
-   Maksimal'nyj razmer tablicy v 16 TB ne trebuet chtoby operacionnaya
+   Maksimal'nyj razmer tablicy v 32 TB ne trebuet chtoby operacionnaya
    sistema podderzhivala fajly bol'shih razmerov. Bol'shie tablicy
    hranyatsya kak mnozhestvo fajlov razmerom v 1 GB, tak chto
    ogranicheniya, kotorye nakladyvaet fajlovaya sistema ne vazhny.
    
    Maksimal'nyj razmer tablicy i maksimal'noe kolichestvo kolonok mogut
-   byt' uvelicheny, esli razmer bloka po umolchaniyu budet uvelichen do
-   32k.
+   byt' uvelicheny v chetyre raza, esli razmer bloka po umolchaniyu budet
+   uvelichen do 32k.
    
     4.6) Kak mnogo diskovogo prostranstva v baze dannyh nuzhno dlya sohraneniya
     dannyh iz obychnogo tekstovogo fajla?
@@ -1026,9 +1036,10 @@ t' null-bajt bez opaski)
    I nakonec, vy mozhete ispol'zovat' znachenie OID, vozraschaemoe iz
    opertora INSERT chtoby uvidet' znachenie po umolchaniyu, chto
    predpolozhitel'no yavlyaetsya naimenee perenosimym na drugie platformy
-   resheniem. V Perl, ispol'zuya DBI s modulei Edmund Mergl'ya DBD::Pg,
-   znachenie oid stanovitsya dostupnym cherez $sth->{pg_oid_status} posle
-   $sth->execute().
+   resheniem, k tomu zhe znachenie oid budet urezat'sya, kogda ono
+   dostignet 4 milliardov. V Perl, ispol'zuya DBI s modulem Edmund
+   Mergl'ya DBD::Pg, znachenie oid stanovitsya dostupnym cherez
+   $sth->{pg_oid_status} posle $sth->execute().
    
     4.15.3) Ne mozhet li poluchit'sya tak, chto ispol'zovanie currval() i
     nextval() privedet k zaciklirovaniyu s drugimi pol'zovatelyami?
@@ -1245,8 +1256,14 @@ CREATE TABLE test (x int, modtime timestamp DEFAULT CURRENT_TIMESTAMP );
     
      * contrib/pgcrypto soderzhit mnogo funkcij shifrovaniya dlya
        ispol'zovaniya v SQL zaprosah.
-     * Est' tol'ko odin sposob shifrovaniya dannyh, peredavaemyh ot
-       klienta k serveru, cherez ispol'zovanie hostssl v pg_hba.conf.
+     * Dlya shifrovaniya peredavaemyh dannyh ot klienta k serveru, na
+       servere v fajle postgresql.conf, opciya ssl dolzhna byt'
+       ustanovlena v true, v fajle pg_hba.conf dolzhna byt'
+       sootvetstvuyuschaya zapis' host ili hostssl i na storone klienta
+       sslmode ne dolzhen byt' zapreschion cherez disable. (Zametim, chto
+       takzhe vozmozhno ispol'zovanie nezavisimyh vneshnih shifruyuschih
+       transportov, takih kak stunnel ili ssh, vmesto sobstvennyh SSL
+       soedinenij PostgreSQL).
      * Paroli pol'zovatelej k baze dannyh avtomaticheski shifruyutsya,
        pri sohranenii v versii 7.3. V predyduschih versiyah, vy dolzhny
        razreshit' opciyu PASSWORD_ENCRYPTION v postgresql.conf.
