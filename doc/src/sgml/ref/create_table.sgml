@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.63 2003/03/25 16:15:39 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.64 2003/04/14 15:24:46 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -826,24 +826,32 @@ CREATE TABLE distributors (
    <title>Temporary Tables</title>
 
    <para>
-    In addition to the local temporary table, SQL92 also defines a
-    <literal>CREATE GLOBAL TEMPORARY TABLE</literal> statement.
-    Global temporary tables are also visible to other sessions.
+    Although the syntax of <literal>CREATE TEMPORARY TABLE</literal>
+    resembles that of SQL92, the effect is not the same.  In the standard,
+    temporary tables are associated with modules; a temporary table is created
+    just once and automatically exists (starting with empty contents) in every
+    session that uses the module.
+    <productname>PostgreSQL</productname> does not have modules, and
+    requires each session to issue its own <literal>CREATE TEMPORARY
+    TABLE</literal> command for each temporary table to be used.
    </para>
 
-   <para>
-    For temporary tables, there is an optional <literal>ON COMMIT</literal> clause:
-<synopsis>
-CREATE { GLOBAL | LOCAL } TEMPORARY TABLE <replaceable class="parameter">table</replaceable> ( <replaceable class="parameter">...</replaceable> ) [ ON COMMIT { DELETE | PRESERVE } ROWS ] 
-</synopsis>
+   <note>
+    <para>
+     The spec-mandated behavior of temporary tables is widely ignored.
+     <productname>PostgreSQL</productname>'s behavior on this point is similar
+     to that of several other RDBMSs.
+    </para>
+   </note>
 
-    The <literal>ON COMMIT</literal> clause specifies whether or not
-    the temporary table should be emptied of rows whenever
-    <command>COMMIT</command> is executed. If the <literal>ON
-    COMMIT</> clause is omitted, SQL92 specifies that the default is
-    <literal>ON COMMIT DELETE ROWS</>.  However, the behavior of
-    <productname>PostgreSQL</productname> is always like <literal>ON
-    COMMIT PRESERVE ROWS</literal>.
+   <para>
+    The optional <literal>ON COMMIT</literal> clause for temporary tables
+    also resembles SQL92, but has some differences.
+    If the <literal>ON COMMIT</> clause is omitted, SQL92 specifies that the
+    default behavior is <literal>ON COMMIT DELETE ROWS</>.  However, the
+    default behavior in <productname>PostgreSQL</productname> is
+    <literal>ON COMMIT PRESERVE ROWS</literal>.  The <literal>ON COMMIT
+    DROP</literal> option does not exist in SQL92 at all.
    </para>
   </refsect2>
 
@@ -854,7 +862,7 @@ CREATE { GLOBAL | LOCAL } TEMPORARY TABLE <replaceable class="parameter">table</
     The <literal>NULL</> <quote>constraint</quote> (actually a
     non-constraint) is a <productname>PostgreSQL</productname>
     extension to SQL92 that is included for compatibility with some
-    other RDBMS (and for symmetry with the <literal>NOT
+    other RDBMSs (and for symmetry with the <literal>NOT
     NULL</literal> constraint).  Since it is the default for any
     column, its presence is simply noise.
    </para>
