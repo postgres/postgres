@@ -36,7 +36,7 @@
 #define ARRPTR(x)  ( (int4 *) ARR_DATA_PTR(x) )
 #define ARRNELEMS(x)  ArrayGetNItems( ARR_NDIM(x), ARR_DIMS(x))
 
-#define ARRISNULL(x) ( (x) ? ( ( ARR_NDIM(x) == NDIM ) ? ( ( ARRNELEMS( x ) ) ? 0 : 1 ) : ( ( ARR_NDIM(x) ) ? (elog(ERROR,"Array is not one-dimentional: %d dimentions", ARR_NDIM(x)),1) : 1 ) ) : 1 )
+#define ARRISNULL(x) ( (x) ? ( ( ARR_NDIM(x) == NDIM ) ? ( ( ARRNELEMS( x ) ) ? 0 : 1 ) : ( ( ARR_NDIM(x) ) ? (elog(ERROR,"Array is not one-dimensional: %d dimensions", ARR_NDIM(x)),1) : 1 ) ) : 1 )
 #define ARRISVOID(x) ( (x) ? ( ( ARR_NDIM(x) == NDIM ) ? ( ( ARRNELEMS( x ) ) ? 0 : 1 ) : 1  ) : 0 )
 
 #define SORT(x) \
