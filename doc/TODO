@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Oct 22 22:51:18 EDT 2001
+Last updated:		Mon Oct 22 22:52:02 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -155,7 +155,7 @@ COMMANDS
 * -Allow LOCK TABLE tab1, tab2, tab3 so all tables locked in unison [lock]
 * Allow RULE recompilation
 * Add BETWEEN ASYMMETRIC/SYMMETRIC
-* Remove LIMIT #,# and force use LIMIT and OFFSET clauses for 7.3 (Bruce)
+* Remove LIMIT #,# and force use LIMIT and OFFSET clauses in 7.3 (Bruce)
 * Allow LIMIT/OFFSET to use expressions
 * Allow PL/PgSQL's RAISE function to take expressions
 * Change PL/PgSQL to use palloc() instead of malloc()
