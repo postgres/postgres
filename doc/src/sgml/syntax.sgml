@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.21 2000/06/09 01:43:56 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.22 2000/06/20 18:04:18 momjian Exp $
 -->
 
  <chapter id="syntax">
@@ -747,7 +747,7 @@ sqrt(emp.salary)
    </sect2>
 
    <sect2>
-    <title>Aggregate Expressions</title>
+    <title id="aggregates-syntax">Aggregate Expressions</title>
 
     <para>
      An <firstterm>aggregate expression</firstterm> represents the application

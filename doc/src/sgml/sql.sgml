@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/sql.sgml,v 1.10 2000/06/14 13:10:48 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/sql.sgml,v 1.11 2000/06/20 18:04:18 momjian Exp $
 -->
 
  <chapter id="sql">
@@ -1032,7 +1032,7 @@ SELECT S.SNAME, P.PNAME
     </sect3>
 
     <sect3>
-     <title>Aggregate Operators</title>
+     <title id="aggregates-tutorial">Aggregate Operators</title>
 
      <para>
       <acronym>SQL</acronym> provides aggregate operators

@@ -1515,6 +1515,87 @@ Not defined by this name. Implements the intersection operator '#'
 
   </sect1>
 
+  <sect1>
+
+   <title id="aggregate-funcs">Aggregate Functions</title>
+
+   <note>
+    <title>Author</title>
+    <para>
+     Written by <ulink url="mailto:isaac@azartmedia.com">Isaac Wilcox</ulink>
+     on 2000-06-16.
+    </para>
+   </note>
+
+   <para>
+    <firstterm>Aggregate functions</firstterm> allow the generation of simple
+    statistics about the values of particular columns over the selected set
+    of rows. See also <xref linkend="sql" endterm="aggregates-tutorial"> and
+    <xref linkend="syntax" endterm="aggregates-syntax">.
+   </para>
+
+   <para>
+    <table tocentry="1">
+     <title>Aggregate Functions</title>
+     <tgroup cols="4">
+      <thead>
+       <row>
+        <entry>Function</entry>
+        <entry>Returns</entry>
+        <entry>Description</entry>
+        <entry>Example</entry>
+        <entry>Notes</entry>
+       </row>
+      </thead>
+      <tbody>
+       <row>
+        <entry>COUNT(*)</entry>
+        <entry>int4</entry>
+        <entry>Counts the selected rows.</entry>
+        <entry>COUNT(*)</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>COUNT(<replaceable class="parameter">column-name</replaceable>)</entry>
+        <entry>int4</entry>
+        <entry>Counts the selected rows for which the value of <replaceable class="parameter">column-name</replaceable> is not NULL.</entry>
+        <entry>COUNT(age)</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>SUM(<replaceable class="parameter">column-name</replaceable>)</entry>
+        <entry>Same as the data type of the column being summed.</entry>
+        <entry>Finds the total obtained by adding the values of <replaceable class="parameter">column-name</replaceable> across all selected rows.</entry>
+        <entry>SUM(hours)</entry>
+        <entry>Summation is supported on the following data types: int8, int4, int2, float4, float8, money, interval, numeric</entry>
+       </row>
+       <row>
+        <entry>MAX(<replaceable class="parameter">column-name</replaceable>)</entry>
+        <entry>Same as the data type of the column whose maximum value is sought.</entry>
+        <entry>The maximum value of <replaceable class="parameter">column-name</replaceable> across all selected rows.</entry>
+        <entry>MAX(age)</entry>
+        <entry>Finding the maximum value is supported on the following data types: int8, int4, int2, float4, float8, date, time, timetz, money, timestamp, interval, text, numeric.</entry>
+       </row>
+       <row>
+        <entry>MIN(<replaceable class="parameter">column-name</replaceable>)</entry>
+        <entry>same as the data type of the column whose minimum value is sought.</entry>
+        <entry>The minimum value of <replaceable class="parameter">column-name</replaceable> across all selected rows.</entry>
+        <entry>MIN(age)</entry>
+        <entry>Finding the minimum value is supported on the following data types: int8, int4, int2, float4, float8, date, time, timetz, money, timestamp, interval, text, numeric.</entry>
+       </row>
+       <row>
+        <entry>AVG(<replaceable class="parameter">column-name</replaceable>)</entry>
+        <entry>Same as the data type of the column being averaged.</entry>
+        <entry>The average (mean) of the values in the given column across all selected rows.</entry>
+        <entry>AVG(age)</entry>
+        <entry>Finding the mean value is supported on the following data types: int8, int4, int2, float4, float8, money, interval, numeric. Note that as the return type is the same as that of the data being averaged, using AVG() on discrete data will give a rounded result.</entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+   </para>
+  </sect1>
+
  </chapter>
 
 <!-- Keep this comment at the end of the file
