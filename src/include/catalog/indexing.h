@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: indexing.h,v 1.26 1999/11/01 02:29:26 momjian Exp $
+ * $Id: indexing.h,v 1.27 1999/11/01 04:00:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,15 +19,15 @@
 /*
  * Some definitions for indices on pg_attribute
  */
-#define Num_pg_amop_indices		2
-#define Num_pg_attr_indices		3
+#define Num_pg_amop_indices			2
+#define Num_pg_attr_indices			3
 #define Num_pg_index_indices		1
-#define Num_pg_proc_indices		2
-#define Num_pg_type_indices		2
-#define Num_pg_class_indices	2
-#define Num_pg_attrdef_indices	1
-#define Num_pg_relcheck_indices 1
-#define Num_pg_trigger_indices	3
+#define Num_pg_proc_indices			2
+#define Num_pg_type_indices			2
+#define Num_pg_class_indices		2
+#define Num_pg_attrdef_indices		1
+#define Num_pg_relcheck_indices 	1
+#define Num_pg_trigger_indices		3
 #define Num_pg_description_indices	1
 
 
@@ -36,22 +36,22 @@
  */
 #define AccessMethodOpidIndex		"pg_amop_opid_index"
 #define AccessMethodStrategyIndex	"pg_amop_strategy_index"
-#define AttributeNameIndex		"pg_attribute_relid_attnam_index"
-#define AttributeNumIndex		"pg_attribute_relid_attnum_index"
-#define IndexRelidIndex			"pg_index_indexrelid_index"
-#define AttributeRelidIndex		"pg_attribute_attrelid_index"
-#define ProcedureOidIndex		"pg_proc_oid_index"
-#define ProcedureNameIndex		"pg_proc_proname_narg_type_index"
-#define TypeOidIndex			"pg_type_oid_index"
-#define TypeNameIndex			"pg_type_typname_index"
-#define ClassOidIndex			"pg_class_oid_index"
-#define ClassNameIndex			"pg_class_relname_index"
-#define AttrDefaultIndex		"pg_attrdef_adrelid_index"
-#define RelCheckIndex			"pg_relcheck_rcrelid_index"
-#define TriggerRelidIndex		"pg_trigger_tgrelid_index"
-#define TriggerConstrNameIndex	"pg_trigger_tgconstrname_index"
-#define TriggerConstrRelidIndex	"pg_trigger_tgconstrrelid_index"
-#define DescriptionObjIndex		"pg_description_objoid_index"
+#define AttributeNameIndex			"pg_attribute_relid_attnam_index"
+#define AttributeNumIndex			"pg_attribute_relid_attnum_index"
+#define IndexRelidIndex				"pg_index_indexrelid_index"
+#define AttributeRelidIndex			"pg_attribute_attrelid_index"
+#define ProcedureOidIndex			"pg_proc_oid_index"
+#define ProcedureNameIndex			"pg_proc_proname_narg_type_index"
+#define TypeOidIndex				"pg_type_oid_index"
+#define TypeNameIndex				"pg_type_typname_index"
+#define ClassOidIndex				"pg_class_oid_index"
+#define ClassNameIndex				"pg_class_relname_index"
+#define AttrDefaultIndex			"pg_attrdef_adrelid_index"
+#define RelCheckIndex				"pg_relcheck_rcrelid_index"
+#define TriggerRelidIndex			"pg_trigger_tgrelid_index"
+#define TriggerConstrNameIndex		"pg_trigger_tgconstrname_index"
+#define TriggerConstrRelidIndex		"pg_trigger_tgconstrrelid_index"
+#define DescriptionObjIndex			"pg_description_objoid_index"
 
 extern char *Name_pg_amop_indices[];
 extern char *Name_pg_attr_indices[];
@@ -75,25 +75,23 @@ extern char *IndexedCatalogNames[];
 extern void CatalogOpenIndices(int nIndices, char **names, Relation *idescs);
 extern void CatalogCloseIndices(int nIndices, Relation *idescs);
 extern void CatalogIndexInsert(Relation *idescs,
-				   int nIndices,
-				   Relation heapRelation,
-				   HeapTuple heapTuple);
+					int nIndices,
+					Relation heapRelation,
+					HeapTuple heapTuple);
 extern bool CatalogHasIndex(char *catName, Oid catId);
 
 extern HeapTuple AccessMethodOpidIndexScan(Relation heapRelation,
-				Oid claid, Oid opopr, Oid opid);
+					Oid claid, Oid opopr, Oid opid);
 extern HeapTuple AccessMethodStrategyIndexScan(Relation heapRelation,
-				Oid opid, Oid claid, int2 opstrategy);
+					Oid opid, Oid claid, int2 opstrategy);
 extern HeapTuple AttributeNameIndexScan(Relation heapRelation,
-					   Oid relid,
-					   char *attname);
+					Oid relid, char *attname);
 extern HeapTuple AttributeNumIndexScan(Relation heapRelation,
-					  Oid relid,
-					  AttrNumber attnum);
+					Oid relid, AttrNumber attnum);
 extern HeapTuple IndexRelidIndexScan(Relation heapRelation, Oid relid);
 extern HeapTuple ProcedureOidIndexScan(Relation heapRelation, Oid procId);
 extern HeapTuple ProcedureNameIndexScan(Relation heapRelation,
-					   char *procName, int2 nargs, Oid *argTypes);
+					char *procName, int2 nargs, Oid *argTypes);
 extern HeapTuple TypeOidIndexScan(Relation heapRelation, Oid typeId);
 extern HeapTuple TypeNameIndexScan(Relation heapRelation, char *typeName);
 extern HeapTuple ClassNameIndexScan(Relation heapRelation, char *relName);
