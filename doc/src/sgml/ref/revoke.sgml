@@ -322,6 +322,7 @@ If user1 gives a privilege WITH GRANT OPTION to user2,
                     and user2 gives it to user3 then user1 can revoke
                     this privilege in cascade using the CASCADE keyword.
 
+<para>
 If user1 gives a privilege WITH GRANT OPTION to user2,
                     and user2 gives it to user3 then if user1 try revoke
                     this privilege it fails if he/she specify the RESTRICT
