@@ -83,11 +83,13 @@ BSD44_derived_dlsym(void *handle, const char *name)
 	void	   *vp;
 	char		buf[BUFSIZ];
 
+#ifndef __ELF__
 	if (*name != '_')
 	{
 		sprintf(buf, "_%s", name);
 		name = buf;
 	}
+#endif
 	if ((vp = dlsym(handle, (char *) name)) == (void *) NULL)
 		sprintf(error_message, "dlsym (%s) failed", name);
 	return vp;

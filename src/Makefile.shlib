@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.8 1999/04/30 02:04:49 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.9 1999/05/17 04:13:24 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -59,10 +59,11 @@ install-shlib-dep :=
 ifeq ($(PORTNAME), freebsd)
   ifdef BSD_SHLIB
     install-shlib-dep	:= install-shlib
-    shlib		:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
     ifdef ELF_SYSTEM
-      LDFLAGS_SL	:= -x -Bshareable
+      shlib		:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
+      LDFLAGS_SL	:= -x -shared -soname $(shlib)
     else
+      shlib		:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
       LDFLAGS_SL	:= -x -Bshareable -Bforcearchive
     endif
     CFLAGS		+= $(CFLAGS_SL)

@@ -20,8 +20,8 @@ case "$host_os" in
      aux*) os=aux need_tas=no ;;
    linux*) os=linux need_tas=no ;;
     bsdi*) os=bsdi need_tas=no ;;
- freebsd3*|freebsd4*) os=freebsd need_tas=no elf=yes ;;
  freebsd1*|freebsd2*) os=freebsd need_tas=no ;;
+ freebsd*) os=freebsd need_tas=no elf=yes ;;
   netbsd*)
 	os=bsd need_tas=no
 	case "$host_cpu" in
