@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/protocol.sgml,v 1.53 2004/08/16 02:12:29 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/protocol.sgml,v 1.54 2004/09/23 23:35:07 tgl Exp $ -->
 
 <chapter id="protocol">
  <title>Frontend/Backend Protocol</title>
@@ -747,7 +747,7 @@
     The possible
     responses to Execute are the same as those described above for queries
     issued via simple query protocol, except that Execute doesn't cause
-    ReadyForQuery to be issued.
+    ReadyForQuery or RowDescription to be issued.
    </para>
 
    <para>
