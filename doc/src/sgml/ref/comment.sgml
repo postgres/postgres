@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/comment.sgml,v 1.17 2002/04/21 19:02:39 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/comment.sgml,v 1.18 2002/04/23 02:07:15 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -44,11 +44,13 @@ COMMENT ON
 
     <variablelist>
      <varlistentry>
-      <term><replaceable class="PARAMETER">object_name, table_name,
-      column_name, agg_name, func_name, op, rule_name, trigger_name</replaceable></term>
+      <term><replaceable class="PARAMETER">object_name,
+      table_name.column_name, agg_name, func_name, op, rule_name, trigger_name</replaceable></term>
       <listitem>
        <para>
-	The name of the object to be be commented.
+	The name of the object to be be commented.  Names of tables,
+	indexes, sequences, views, types, domains, functions, aggregates,
+	and operators may be schema-qualified.
        </para>
       </listitem>
      </varlistentry>

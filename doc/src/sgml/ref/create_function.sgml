@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.36 2002/04/11 19:59:55 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.37 2002/04/23 02:07:15 tgl Exp $
 -->
 
 <refentry id="SQL-CREATEFUNCTION">
@@ -44,9 +44,14 @@ CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable>
 
      <listitem>
       <para>
-       The name of a function to create.  The name need not be unique,
-       because functions may be overloaded, but functions with the
-       same name must have different argument types.
+       The name of a function to create.  If a schema name is included,
+       then the function is created in the
+       specified schema.  Otherwise it is created in the current schema (the
+       one at the front of the search path; see <literal>CURRENT_SCHEMA()</>).
+       The name of the new function must not match any existing function
+       with the same argument types in the same schema.  However, functions of
+       different argument types may share a name (this is called
+       <firstterm>overloading</>).
       </para>
      </listitem>
     </varlistentry>
@@ -332,8 +337,9 @@ CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable>
   </title>
   <para>
    A function that has one parameter and is named the same as its output
-   datatype is considered to be a <firstterm>type coercion function</>:
-   it can be invoked to convert a value of its input datatype into a value
+   datatype (including the schema name) is considered to be a <firstterm>type
+   coercion function</>: it can be invoked to convert a value of its input
+   datatype into a value 
    of its output datatype.  For example,
 <programlisting>
 	SELECT CAST(42 AS text);

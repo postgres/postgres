@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_domain.sgml,v 1.4 2002/03/20 19:43:28 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_domain.sgml,v 1.5 2002/04/23 02:07:15 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -47,7 +47,7 @@ where <replaceable class="PARAMETER">constraint</replaceable> is:
       <term><replaceable class="parameter">domainname</replaceable></term>
       <listitem>
        <para>
-	The name of a domain to be created.
+	The name (optionally schema-qualified) of a domain to be created.
        </para>
       </listitem>
      </varlistentry>
@@ -56,7 +56,8 @@ where <replaceable class="PARAMETER">constraint</replaceable> is:
       <term><replaceable class="PARAMETER">data_type</replaceable></term>
       <listitem>
        <para>
-        The data type of the domain. This may include array specifiers.
+        The underlying data type of the domain. This may include array
+	specifiers.
         Refer to the <citetitle>User's Guide</citetitle> for further
         information about data types and arrays.
        </para>
@@ -167,12 +168,18 @@ CREATE DOMAIN
   </title>
 
   <para>
-   <command>CREATE DOMAIN</command>  allows  the user to register a new user data
-   domain with PostgreSQL for use in the current data base.   The
-   user  who  defines  a domain becomes its owner.
-   <replaceable class="parameter">domainname</replaceable> is
-   the name of the new type and must  be  unique  within  the
-   types and domains defined for this database.
+   <command>CREATE DOMAIN</command>  allows  the user to register a new
+   data domain with <productname>PostgreSQL</> for use in the
+   current data base.   The user  who  defines  a domain becomes its owner.
+  </para>
+
+  <para>
+   If a schema name is given (for example, <literal>CREATE DOMAIN
+   myschema.mydomain ...</>) then the domain is created in the
+   specified schema.  Otherwise it is created in the current schema (the one
+   at the front of the search path; see <literal>CURRENT_SCHEMA()</>).
+   The domain name must be unique among the types and domains existing
+   in its schema.
   </para>
 
   <para>

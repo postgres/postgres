@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/cluster.sgml,v 1.15 2002/04/21 19:02:39 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/cluster.sgml,v 1.16 2002/04/23 02:07:15 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -46,7 +46,7 @@ CLUSTER <replaceable class="PARAMETER">indexname</replaceable> ON <replaceable c
      <term><replaceable class="PARAMETER">table</replaceable></term>
      <listitem>
       <para>
-       The name of a table.
+       The name (possibly schema-qualified) of a table.
       </para>
      </listitem>
     </varlistentry>

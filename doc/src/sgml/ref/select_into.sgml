@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/select_into.sgml,v 1.17 2002/04/21 19:02:39 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/select_into.sgml,v 1.18 2002/04/23 02:07:16 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -60,13 +60,8 @@ where <replaceable class="PARAMETER">from_item</replaceable> can be:
      <term>TEMP</term>
      <listitem>
       <para>
-	If TEMPORARY or TEMP is specified,
-	the output table is created only within this session, and is
-	automatically dropped on session exit.
-	Existing permanent tables with the same name are not visible
-	(in this session) while the temporary table exists.
-	Any indexes created on a temporary table are automatically
-	temporary as well.
+       If specified, the table is created as a temporary table.
+       Refer to <xref linkend="sql-createtable"> for details.
       </para>
      </listitem>
     </varlistentry>
@@ -75,10 +70,7 @@ where <replaceable class="PARAMETER">from_item</replaceable> can be:
       <term><replaceable class="PARAMETER">new_table</replaceable></term>
       <listitem>
        <para>
-        The name of the new table to be created.
-	This table must not already exist.  However, a temporary table
-	can be created that has the same name as an existing permanent
-	table.
+        The name (optionally schema-qualified) of the table to be created.
        </para>
       </listitem>
      </varlistentry>

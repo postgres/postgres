@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_view.sgml,v 1.16 2002/04/21 19:02:39 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_view.sgml,v 1.17 2002/04/23 02:07:16 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -39,7 +39,7 @@ class="PARAMETER">column name list</replaceable> ) ] AS SELECT <replaceable clas
       <term><replaceable class="parameter">view</replaceable></term>
       <listitem>
        <para>
-	The name of a view to be created.
+	The name (optionally schema-qualified) of a view to be created.
        </para>
       </listitem>
      </varlistentry>
@@ -57,10 +57,11 @@ class="PARAMETER">column name list</replaceable> ) ] AS SELECT <replaceable clas
       <term><replaceable class="parameter">query</replaceable></term>
       <listitem>
        <para>
-	An SQL query which will provide the columns and rows of the view.
+	An SQL query (that is, a <command>SELECT</> statement)
+	which will provide the columns and rows of the view.
        </para>
        <para>
-	Refer to the SELECT statement for more information
+	Refer to <xref linkend="sql-select"> for more information
 	about valid arguments.
        </para>
       </listitem>
@@ -132,10 +133,19 @@ CREATE VIEW vista AS SELECT text 'Hello World'
    Description
   </title>
   <para>
-   <command>CREATE VIEW</command> will define a view of a table.
+   <command>CREATE VIEW</command> will define a view of a query.
    The view is not physically materialized. Instead, a query
-   rewrite retrieve rule is automatically generated to support
-   retrieve operations on views.
+   rewrite rule (an <literal>ON SELECT</> rule) is automatically generated to
+   support SELECT operations on views.
+  </para>
+
+  <para>
+   If a schema name is given (for example, <literal>CREATE VIEW
+   myschema.myview ...</>) then the view is created in the
+   specified schema.  Otherwise it is created in the current schema (the one
+   at the front of the search path; see <literal>CURRENT_SCHEMA()</>).
+   The view name must be distinct from the name of any other view, table,
+   sequence, or index in the same schema.
   </para>
 
   <refsect2 id="R2-SQL-CREATEVIEW-3">

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/lock.sgml,v 1.31 2002/04/21 19:02:39 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/lock.sgml,v 1.32 2002/04/23 02:07:16 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -45,7 +45,7 @@ where <replaceable class="PARAMETER">lockmode</replaceable> is one of:
       <term><replaceable class="PARAMETER">name</replaceable></term>
       <listitem>
        <para>
-	The name of an existing table to lock.
+	The name (optionally schema-qualified) of an existing table to lock.
        </para>
       </listitem>
      </varlistentry>

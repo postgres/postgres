@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/update.sgml,v 1.18 2001/12/08 03:24:39 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/update.sgml,v 1.19 2002/04/23 02:07:16 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -40,7 +40,7 @@ UPDATE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> SET <replacea
       <term><replaceable class="PARAMETER">table</replaceable></term>
       <listitem>
        <para>
-	The name of an existing table.
+	The name (optionally schema-qualified) of an existing table.
        </para>
       </listitem>
      </varlistentry>

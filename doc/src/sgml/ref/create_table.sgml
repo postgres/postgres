@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.53 2002/03/22 19:20:40 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.54 2002/04/23 02:07:16 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -55,16 +55,26 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
   </para>
 
   <para>
+   If a schema name is given (for example, <literal>CREATE TABLE
+   myschema.mytable ...</>) then the table is created in the
+   specified schema.  Otherwise it is created in the current schema (the one
+   at the front of the search path; see <literal>CURRENT_SCHEMA()</>).
+   TEMP tables exist in a special schema, so a schema name may not be
+   given when creating a TEMP table.
+   The table name must be distinct from the name of any other table,
+   sequence, index, or view in the same schema.
+  </para>
+
+  <para>
    <command>CREATE TABLE</command> also automatically creates a data
    type that represents the tuple type (structure type) corresponding
    to one row of the table.  Therefore, tables cannot have the same
-   name as any existing data type.
+   name as any existing data type in the same schema.
   </para>
 
   <para>
    A table cannot have more than 1600 columns.  (In practice, the
-   effective limit is lower because of tuple-length constraints).  A
-   table cannot have the same name as a system catalog table.
+   effective limit is lower because of tuple-length constraints).
   </para>
 
   <para>
@@ -97,8 +107,9 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
      <para>
       If specified, the table is created as a temporary table.
       Temporary tables are automatically dropped at the end of a
-      session.  Existing persistent tables with the same name are not
-      visible to the current session while the temporary table exists.
+      session.  Existing permanent tables with the same name are not
+      visible to the current session while the temporary table exists,
+      unless they are referenced with schema-qualified names.
       Any indexes created on a temporary table are automatically
       temporary as well.
      </para>
@@ -115,7 +126,7 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
     <term><replaceable class="PARAMETER">table_name</replaceable></term>
     <listitem>
      <para>
-      The name of the table to be created.
+      The name (optionally schema-qualified) of the table to be created.
      </para>
     </listitem>
    </varlistentry>

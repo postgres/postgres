@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/delete.sgml,v 1.15 2001/12/08 03:24:35 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/delete.sgml,v 1.16 2002/04/23 02:07:16 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -38,7 +38,7 @@ DELETE FROM [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ WHERE 
       <term><replaceable class="parameter">table</replaceable></term>
       <listitem>
        <para>
-	The name of an existing table.
+	The name (optionally schema-qualified) of an existing table.
        </para>
       </listitem>
      </varlistentry>

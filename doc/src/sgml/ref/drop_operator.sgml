@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_operator.sgml,v 1.14 2002/04/21 19:02:39 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_operator.sgml,v 1.15 2002/04/23 02:07:16 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -38,7 +38,7 @@ DROP OPERATOR <replaceable class="PARAMETER">id</replaceable> ( <replaceable cla
       <term><replaceable class="parameter">id</replaceable></term>
       <listitem>
        <para>
-	The identifier of an existing operator.
+	The identifier (optionally schema-qualified) of an existing operator.
        </para>
       </listitem>
      </varlistentry>
@@ -156,7 +156,7 @@ ERROR: RemoveOperator: right unary operator '<replaceable class="PARAMETER">oper
     for information on how to create operators.
    </para>
    <para>
-    It is the user's responsibility to remove any access methods and
+    It is the user's responsibility to remove any access method
     operator classes that rely on the deleted operator.
    </para>
   </refsect2>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_aggregate.sgml,v 1.18 2002/04/21 19:02:39 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_aggregate.sgml,v 1.19 2002/04/23 02:07:15 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -41,7 +41,8 @@ CREATE AGGREGATE <replaceable class="PARAMETER">name</replaceable> ( BASETYPE = 
       <term><replaceable class="PARAMETER">name</replaceable></term>
       <listitem>
        <para>
-	The name of an aggregate function to create.
+	The name (optionally schema-qualified) of an aggregate function to
+	create.
        </para>
       </listitem>
      </varlistentry>
@@ -164,11 +165,18 @@ CREATE
    can be used to provide the desired features.
   </para>
   <para>
+   If a schema name is given (for example, <literal>CREATE AGGREGATE
+   myschema.myagg ...</>) then the aggregate function is created in the
+   specified schema.  Otherwise it is created in the current schema (the one
+   at the front of the search path; see <literal>CURRENT_SCHEMA()</>).
+  </para>
+  <para>
    An  aggregate  function is identified by its name and input data type.
-   Two aggregates can have the same name if they operate on different
-   input types.  The
+   Two aggregates in the same schema can have the same name if they operate on
+   different input types.  The
    name and input data type of an aggregate must also be distinct from
-   the name and input data type of every ordinary function.
+   the name and input data type(s) of every ordinary function in the same
+   schema.
   </para>
   <para>
    An  aggregate function is made from one or two ordinary

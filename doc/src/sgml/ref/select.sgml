@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.53 2002/03/27 19:19:23 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.54 2002/04/23 02:07:16 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -119,12 +119,13 @@ where <replaceable class="PARAMETER">from_item</replaceable> can be:
       <term><replaceable class="PARAMETER">table_name</replaceable></term>
       <listitem>
        <para>
-	The name of an existing table or view.  If ONLY is specified, only that
-	table is scanned.  If ONLY is not specified, the table and all its
-	descendant tables (if any) are scanned.  * can be appended to the
-	table name to indicate that descendant tables are to be scanned,
-	but in the current version, this is the default behavior.
-	(In releases before 7.1, ONLY was the default behavior.)
+	The name (optionally schema-qualified) of an existing table or view.
+	If <literal>ONLY</> is specified, only that table is scanned.  If
+	<literal>ONLY</> is not specified, the table and all its descendant
+	tables (if any) are scanned.  <literal>*</> can be appended to the
+	table name to indicate that descendant tables are to be scanned, but
+	in the current version, this is the default behavior.  (In releases
+	before 7.1, <literal>ONLY</> was the default behavior.)
        </para>
       </listitem>
      </varlistentry>

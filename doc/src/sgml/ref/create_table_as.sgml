@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table_as.sgml,v 1.9 2001/12/08 03:24:35 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table_as.sgml,v 1.10 2002/04/23 02:07:16 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -42,8 +42,8 @@ CREATE [ [ LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable>table_name</replace
    creating a view, but it is really quite different: it creates a new
    table and evaluates the query just once to fill the new table
    initially.  The new table will not track subsequent changes to the
-   source tables of the query.  In contrast, a view re-evaluates the
-   underlying <command>SELECT</command> statements whenever it is
+   source tables of the query.  In contrast, a view re-evaluates its
+   defining <command>SELECT</command> statement whenever it is
    queried.
   </para>
  </refsect1>
@@ -57,15 +57,7 @@ CREATE [ [ LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable>table_name</replace
     <listitem>
      <para>
       If specified, the table is created as a temporary table.
-      Temporary tables are automatically dropped at the end of a
-      session.  Existing persistent tables with the same name are not
-      visible to the current session while the temporary table exists.
-      Any indexes created on a temporary table are automatically
-      temporary as well.
-     </para>
-
-     <para>
-      The <literal>LOCAL</literal> word is optional.
+      Refer to <xref linkend="sql-createtable"> for details.
      </para>
     </listitem>
    </varlistentry>
@@ -74,9 +66,7 @@ CREATE [ [ LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable>table_name</replace
     <term><replaceable>table_name</replaceable></term>
     <listitem>
      <para>
-      The name of the new table to be created.  This table must not
-      already exist.  However, a temporary table can be created that
-      has the same name as an existing permanent table.
+      The name (optionally schema-qualified) of the table to be created.
      </para>
     </listitem>
    </varlistentry>

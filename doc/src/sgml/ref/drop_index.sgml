@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_index.sgml,v 1.13 2002/04/21 19:02:39 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_index.sgml,v 1.14 2002/04/23 02:07:16 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -37,7 +37,7 @@ DROP INDEX <replaceable class="PARAMETER">index_name</replaceable> [, ...]
       <term><replaceable class="PARAMETER">index_name</replaceable></term>
       <listitem>
        <para>
-	The name of an index to remove.
+	The name (optionally schema-qualified) of an index to remove.
        </para>
       </listitem>
      </varlistentry>

@@ -1,5 +1,5 @@
 <!-- reference.sgml
-$Header: /cvsroot/pgsql/doc/src/sgml/reference.sgml,v 1.25 2002/04/04 04:25:44 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/reference.sgml,v 1.26 2002/04/23 02:07:15 tgl Exp $
 
 PostgreSQL Reference Manual
 -->
@@ -17,8 +17,8 @@ PostgreSQL Reference Manual
 
   <para>
    The entries in this <citetitle>Reference Manual</citetitle> are
-   meant to provide in reasonable length an authorative, complete, and
-   formal summary about the respective subjects.  More information
+   meant to provide in reasonable length an authoritative, complete, and
+   formal summary about their respective subjects.  More information
    about the use of <productname>PostgreSQL</productname>, in
    narrative, tutorial, or example form, may be found in other parts
    of the <productname>PostgreSQL</productname> documentation set.

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_function.sgml,v 1.18 2002/04/21 19:02:39 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_function.sgml,v 1.19 2002/04/23 02:07:16 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -37,7 +37,7 @@ DROP FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceable
       <term><replaceable class="parameter">name</replaceable></term>
       <listitem>
        <para>
-	The name of an existing function.
+	The name (optionally schema-qualified) of an existing function.
        </para>
       </listitem>
      </varlistentry>
@@ -45,7 +45,7 @@ DROP FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceable
       <term><replaceable class="parameter">type</replaceable></term>
       <listitem>
        <para>
-	The type of the function's parameters.
+	The type of a parameter of the function.
        </para>
       </listitem>
      </varlistentry>

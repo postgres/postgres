@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_type.sgml,v 1.15 2002/04/21 19:02:39 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_type.sgml,v 1.16 2002/04/23 02:07:16 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -37,7 +37,7 @@ DROP TYPE <replaceable class="PARAMETER">typename</replaceable> [, ...]
       <term><replaceable class="PARAMETER">typename</replaceable></term>
       <listitem>
        <para>
-	The name of an existing type.
+	The name (optionally schema-qualified) of an existing type.
        </para>
       </listitem>
      </varlistentry>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_view.sgml,v 1.12 2002/04/21 19:02:39 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_view.sgml,v 1.13 2002/04/23 02:07:16 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -38,7 +38,7 @@ DROP VIEW <replaceable class="PARAMETER">name</replaceable> [, ...]
       <term><replaceable class="PARAMETER">name</replaceable></term>
       <listitem>
        <para>
-	The name of an existing view.
+	The name (optionally schema-qualified) of an existing view.
        </para>
       </listitem>
      </varlistentry>
@@ -103,7 +103,7 @@ ERROR: view <replaceable class="parameter">name</replaceable> does not exist
     Notes
    </title>
    <para>
-    Refer to <command>CREATE VIEW</command>
+    Refer to <xref linkend="sql-createview">
     for information on how to create views.
    </para>
   </refsect2>
@@ -181,7 +181,7 @@ DROP VIEW <replaceable class="parameter">view</replaceable> { RESTRICT | CASCADE
     Notes
     </title>
     <para>
-     At present, to remove a referenced view from a
+     At present, to remove a referencing view from a
      <productname>PostgreSQL</productname> database, 
      you must drop it explicitly.
     </para>

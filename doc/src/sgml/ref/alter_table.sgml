@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.42 2002/04/21 19:02:39 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.43 2002/04/23 02:07:15 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -24,23 +24,22 @@ PostgreSQL documentation
 ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ * ]
     ADD [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> <replaceable class="PARAMETER">type</replaceable> [ <replaceable class="PARAMETER">column_constraint</replaceable> [ ... ] ]
 ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ * ]
-    ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> { SET DEFAULT <replaceable
-    class="PARAMETER">value</replaceable> | DROP DEFAULT }
+    ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> { SET DEFAULT <replaceable class="PARAMETER">value</replaceable> | DROP DEFAULT }
 ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ * ]
     ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> { SET | DROP } NOT NULL
 ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ * ]
     ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> SET STATISTICS <replaceable class="PARAMETER">integer</replaceable>
 ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ * ]
-    ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> SET STORAGE {PLAIN | EXTERNAL | EXTENDED | MAIN}
+    ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> SET STORAGE { PLAIN | EXTERNAL | EXTENDED | MAIN }
 ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ * ]
     RENAME [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> TO <replaceable
-    class="PARAMETER">newcolumn</replaceable>
+    class="PARAMETER">new_column</replaceable>
 ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
     RENAME TO <replaceable class="PARAMETER">new_table</replaceable>
 ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
     ADD <replaceable class="PARAMETER">table_constraint_definition</replaceable>
 ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> 
-	DROP CONSTRAINT <replaceable class="PARAMETER">constraint</replaceable> { RESTRICT | CASCADE }
+	DROP CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> { RESTRICT | CASCADE }
 ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
 	OWNER TO <replaceable class="PARAMETER">new_owner</replaceable> 
   </synopsis>
@@ -58,7 +57,7 @@ ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
       <term><replaceable class="PARAMETER"> table </replaceable></term>
       <listitem>
        <para>
-	The name of an existing table to alter.
+	The name (possibly schema-qualified) of an existing table to alter.
        </para>
       </listitem>
      </varlistentry>
@@ -82,7 +81,7 @@ ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER"> newcolumn </replaceable></term>
+      <term><replaceable class="PARAMETER"> new_column </replaceable></term>
       <listitem>
        <para>
 	New name for an existing column.
@@ -103,7 +102,16 @@ ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
       <term><replaceable class="PARAMETER"> table_constraint_definition </replaceable></term>
       <listitem>
        <para>
-	New table constraint for the table
+	New table constraint for the table.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="PARAMETER"> constraint_name </replaceable></term>
+      <listitem>
+       <para>
+	Name of an existing constraint to drop.
        </para>
       </listitem>
      </varlistentry>
@@ -162,44 +170,124 @@ ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
   </title>
   <para>
    <command>ALTER TABLE</command> changes the definition of an existing table.
-   The <literal>ADD COLUMN</literal> form adds a new column to the table
-   using the same syntax as <xref linkend="SQL-CREATETABLE" endterm="SQL-CREATETABLE-TITLE">.
-   The <literal>ALTER COLUMN SET/DROP DEFAULT</literal> forms
-   allow you to set or remove the default for the column. Note that defaults
-   only apply to subsequent <command>INSERT</command> commands; they do not
-   cause rows already in the table to change.
-   The <literal>ALTER COLUMN SET/DROP NOT NULL</literal> forms allow you to
-   change whether a column is marked to allow NULL values or to reject NULL
-   values.
-   The <literal>ALTER COLUMN SET STATISTICS</literal> form allows you to
-   set the statistics-gathering target for subsequent
-   <xref linkend="sql-analyze" endterm="sql-analyze-title"> operations.
-   The <literal>ALTER COLUMN SET STORAGE</literal> form allows the
-   column storage mode to be set. This controls whether this column is
-   held inline or in a supplementary table, and whether the data
-   should be compressed or not. <literal>PLAIN</literal> must be used
-   for fixed-length values such as <literal>INTEGER</literal> and is
-   inline, uncompressed. <literal>MAIN</literal> is for inline,
-   compressible data. <literal>EXTERNAL</literal> is for external,
-   uncompressed data and <literal>EXTENDED</literal> is for external,
-   compressed data. The use of <literal>EXTERNAL</literal> will make
-   substring operations on a column faster, at the penalty of
-   increased storage space.
-   The <literal>RENAME</literal> clause causes the name of a table,
-   column, index, sequence or view to change without changing any of the
-   data. The data will remain of the same type and size after the
-   command is executed.
-   The ADD <replaceable class="PARAMETER">table_constraint_definition</replaceable> clause 
-   adds a new constraint to the table using the same syntax as <xref
-   linkend="SQL-CREATETABLE" endterm="SQL-CREATETABLE-TITLE">. 
-   The DROP CONSTRAINT <replaceable class="PARAMETER">constraint</replaceable> clause 
-   drops all constraints on the table (and its children) that match <replaceable class="PARAMETER">constraint</replaceable>.
-   The OWNER clause changes the owner of the table, index, sequence or view to the
-   user <replaceable class="PARAMETER">new user</replaceable>.
+   There are several sub-forms:
   </para>
 
+  <variablelist>
+
+   <varlistentry>
+    <term>ADD COLUMN</term>
+    <listitem>
+     <para>
+      This form adds a new column to the table using the same syntax as
+      <xref linkend="SQL-CREATETABLE" endterm="SQL-CREATETABLE-TITLE">.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>SET/DROP DEFAULT</term>
+    <listitem>
+     <para>
+      These forms set or remove the default value for a column. Note
+      that defaults only apply to subsequent <command>INSERT</command>
+      commands; they do not cause rows already in the table to change.
+      Defaults may also be created for views, in which case they are
+      inserted into <command>INSERT</> statements on the view before
+      the view's ON INSERT rule is applied.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>SET/DROP NOT NULL</term>
+    <listitem>
+     <para>
+      These forms change whether a column is marked to allow NULL
+      values or to reject NULL values.  You may only <literal>SET NOT NULL</>
+      when the table contains no NULLs in the column.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>SET STATISTICS</term>
+    <listitem>
+     <para>
+      This form
+      sets the per-column statistics-gathering target for subsequent
+      <xref linkend="sql-analyze" endterm="sql-analyze-title"> operations.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>SET STORAGE</term>
+    <listitem>
+     <para>
+      This form sets the storage mode for a column. This controls whether this
+      column is held inline or in a supplementary table, and whether the data
+      should be compressed or not. <literal>PLAIN</literal> must be used
+      for fixed-length values such as <literal>INTEGER</literal> and is
+      inline, uncompressed. <literal>MAIN</literal> is for inline,
+      compressible data. <literal>EXTERNAL</literal> is for external,
+      uncompressed data and <literal>EXTENDED</literal> is for external,
+      compressed data.  <literal>EXTENDED</literal> is the default for all
+      datatypes that support it.  The use of <literal>EXTERNAL</literal> will
+      make substring operations on a TEXT column faster, at the penalty of
+      increased storage space.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>RENAME</term>
+    <listitem>
+     <para>
+      The <literal>RENAME</literal> forms change the name of  a table
+      (or an index, sequence, or view) or the name of an individual column in
+      a table. There is no effect on the stored data.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>ADD <replaceable class="PARAMETER">table_constraint_definition</replaceable></term>
+    <listitem>
+     <para>
+      This form adds a new constraint to a table using the same syntax as
+      <xref linkend="SQL-CREATETABLE" endterm="SQL-CREATETABLE-TITLE">. 
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>DROP CONSTRAINT</term>
+    <listitem>
+     <para>
+      This form drops constraints on a table (and its children).
+      Currently, constraints on tables are not required to have unique
+      names, so there may be more than one constraint matching the specified
+      name.  All such constraints will be dropped.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>OWNER</term>
+    <listitem>
+     <para>
+      This form changes the owner of the table, index, sequence or view to the
+      specified user.
+     </para>
+    </listitem>
+   </varlistentry>
+
+  </variablelist>
+
   <para>
-   You must own the table in order to change its schema.
+   You must own the table to use <command>ALTER TABLE</>; except for
+   <command>ALTER TABLE OWNER</>, which may only be executed by a superuser.
   </para>
 
   <refsect2 id="R2-SQL-ALTERTABLE-3">
@@ -216,16 +304,20 @@ ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
    <para>
     In the current implementation of <literal>ADD COLUMN</literal>,
     default and NOT NULL clauses for the new column are not supported.
+    The new column always comes into being with all values NULL.
     You can use the <literal>SET DEFAULT</literal> form
-    of <command>ALTER TABLE</command> to set the default later.
+    of <command>ALTER TABLE</command> to set the default afterwards.
     (You may also want to update the already existing rows to the
-    new default value, using <xref linkend="sql-update" endterm="sql-update-title">.)
+    new default value, using
+    <xref linkend="sql-update" endterm="sql-update-title">.)
+    If you want to mark the column non-null, use the <literal>SET NOT NULL</>
+    form after you've entered non-null values for the column in all rows.
    </para>
 
    <para>
     In DROP CONSTRAINT, the RESTRICT keyword is required, although
     dependencies are not yet checked.  The CASCADE option is unsupported.  
-    Currently DROP CONSTRAINT drops only CHECK constraints.
+    Currently DROP CONSTRAINT only handles CHECK constraints.
     To remove a PRIMARY or UNIQUE constraint, drop the 
     relevant index using the <xref linkend="SQL-DROPINDEX" endterm="sql-dropindex-title"> command.
     To remove FOREIGN KEY constraints you need to recreate
@@ -243,16 +335,15 @@ DROP TABLE temp;
    </para>
 
    <para>
-    You must own the table in order to change it.
     Changing any  part  of  the schema of a system
     catalog is not permitted.
-    The <citetitle>PostgreSQL User's Guide</citetitle> has further
-    information on inheritance.
    </para>
 
    <para>
     Refer to <command>CREATE TABLE</command> for a further description
     of valid arguments.
+    The <citetitle>PostgreSQL User's Guide</citetitle> has further
+    information on inheritance.
    </para>
   </refsect2>
  </refsect1>

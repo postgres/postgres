@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/insert.sgml,v 1.16 2001/12/08 03:24:37 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/insert.sgml,v 1.17 2002/04/23 02:07:16 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -37,7 +37,7 @@ INSERT INTO <replaceable class="PARAMETER">table</replaceable> [ ( <replaceable 
       <term><replaceable class="PARAMETER">table</replaceable></term>
       <listitem>
        <para>
-	The name of an existing table.
+	The name (optionally schema-qualified) of an existing table.
        </para>
       </listitem>
      </varlistentry>

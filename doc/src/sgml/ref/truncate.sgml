@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/truncate.sgml,v 1.6 2002/04/21 19:02:39 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/truncate.sgml,v 1.7 2002/04/23 02:07:16 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -38,7 +38,7 @@ TRUNCATE [ TABLE ] <replaceable class="PARAMETER">name</replaceable>
       <term><replaceable class="PARAMETER">name</replaceable></term>
       <listitem>
        <para>
-	The name of the table to be truncated.
+	The name (optionally schema-qualified) of the table to be truncated.
        </para>
       </listitem>
      </varlistentry>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_aggregate.sgml,v 1.16 2002/04/21 19:02:39 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_aggregate.sgml,v 1.17 2002/04/23 02:07:16 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -37,7 +37,7 @@ DROP AGGREGATE <replaceable class="PARAMETER">name</replaceable> ( <replaceable 
       <term><replaceable class="parameter">name</replaceable></term>
       <listitem>
        <para>
-	The name of an existing aggregate function.
+	The name (optionally schema-qualified) of an existing aggregate function.
        </para>
       </listitem>
      </varlistentry>
@@ -45,7 +45,7 @@ DROP AGGREGATE <replaceable class="PARAMETER">name</replaceable> ( <replaceable 
       <term><replaceable class="parameter">type</replaceable></term>
       <listitem>
        <para>
-	The input data type of an existing aggregate function,
+	The input data type of the aggregate function,
 	or <literal>*</literal> if the function accepts any input type.
 	(Refer to the <citetitle>PostgreSQL User's Guide</citetitle> for
 	further information about data types.)
@@ -101,7 +101,7 @@ ERROR: RemoveAggregate: aggregate '<replaceable class="parameter">name</replacea
    Description
   </title>
   <para>
-   <command>DROP AGGREGATE</command> will remove all references to an existing
+   <command>DROP AGGREGATE</command> will delete an existing
    aggregate definition. To execute this command the current
    user must be the owner of the aggregate.
   </para>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_type.sgml,v 1.27 2002/04/21 19:02:39 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_type.sgml,v 1.28 2002/04/23 02:07:16 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -48,7 +48,7 @@ CREATE TYPE <replaceable class="parameter">typename</replaceable> ( INPUT = <rep
       <term><replaceable class="parameter">typename</replaceable></term>
       <listitem>
        <para>
-	The name of a type to be created.
+	The name (optionally schema-qualified) of a type to be created.
        </para>
       </listitem>
      </varlistentry>
@@ -208,12 +208,18 @@ CREATE
   </title>
 
   <para>
-   <command>CREATE TYPE</command>  allows  the user to register a new user data
-   type with PostgreSQL for use in the current data base.   The
-   user  who  defines  a type becomes its owner.
-   <replaceable class="parameter">typename</replaceable> is
-   the name of the new type and must  be  unique  within  the
-   types defined for this database.
+   <command>CREATE TYPE</command>  allows  the user to register a new data
+   type with <productname>PostgreSQL</> for use in the current data base.
+   The user  who  defines  a type becomes its owner.
+  </para>
+
+  <para>
+   If a schema name is given then the type is created in the
+   specified schema.  Otherwise it is created in the current schema (the one
+   at the front of the search path; see <literal>CURRENT_SCHEMA()</>).
+   The type name must be distinct from the name of any existing type or
+   domain in the same schema.  (Because tables have associated datatypes,
+   type names also must not conflict with table names in the same schema.)
   </para>
 
   <para>
@@ -361,7 +367,7 @@ CREATE
     accessed like <literal>point[0]</> and <literal>point[1]</>.
     Note that
     this facility only works for fixed-length types whose internal form
-    is exactly a sequence of N identical fields.  A subscriptable
+    is exactly a sequence of N identical fixed-length fields.  A subscriptable
     variable-length type must have the generalized internal representation
     used by <literal>array_in</> and <literal>array_out</>.
     For historical reasons (i.e., this is clearly wrong but it's far too

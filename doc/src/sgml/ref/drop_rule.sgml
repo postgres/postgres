@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_rule.sgml,v 1.13 2002/04/21 19:02:39 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_rule.sgml,v 1.14 2002/04/23 02:07:16 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -45,7 +45,8 @@ DROP RULE <replaceable class="PARAMETER">name</replaceable> ON <replaceable clas
       <term><replaceable class="parameter">relation</replaceable></term>
       <listitem>
        <para>
-	The name of the relation the rule applies to.
+	The name (optionally schema-qualified) of the relation the rule
+	applies to.
        </para>
       </listitem>
      </varlistentry>

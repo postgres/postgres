@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_domain.sgml,v 1.4 2002/03/20 19:43:28 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_domain.sgml,v 1.5 2002/04/23 02:07:16 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -39,7 +39,7 @@ DROP DOMAIN <replaceable class="PARAMETER">domainname</replaceable> [, ...]  [ C
       <term><replaceable class="PARAMETER">domainname</replaceable></term>
       <listitem>
        <para>
-	The name of an existing domain.
+	The name (optionally schema-qualified) of an existing domain.
        </para>
       </listitem>
      </varlistentry>

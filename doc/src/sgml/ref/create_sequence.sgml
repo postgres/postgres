@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_sequence.sgml,v 1.26 2002/04/21 19:02:39 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_sequence.sgml,v 1.27 2002/04/23 02:07:16 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -43,7 +43,8 @@ CREATE [ TEMPORARY | TEMP ] SEQUENCE <replaceable class="parameter">seqname</rep
 	If specified, the sequence object is created only for this session,
 	and is automatically dropped on session exit.
 	Existing permanent sequences with the same name are not visible
-	(in this session) while the temporary sequence exists.
+	(in this session) while the temporary sequence exists, unless
+	they are referenced with schema-qualified names.
        </para>
       </listitem>
      </varlistentry>
@@ -52,7 +53,7 @@ CREATE [ TEMPORARY | TEMP ] SEQUENCE <replaceable class="parameter">seqname</rep
       <term><replaceable class="parameter">seqname</replaceable></term>
       <listitem>
        <para>
-	The name of a sequence to be created.
+	The name (optionally schema-qualified) of a sequence to be created.
        </para>
       </listitem>
      </varlistentry>
@@ -226,6 +227,16 @@ ERROR:  DefineSequence: MINVALUE (<replaceable class="parameter">min</replaceabl
    new single-row
    table with the name <replaceable class="parameter">seqname</replaceable>.
    The generator will be owned by the user issuing the command.
+  </para>
+
+  <para>
+   If a schema name is given then the sequence is created in the
+   specified schema.  Otherwise it is created in the current schema (the one
+   at the front of the search path; see <literal>CURRENT_SCHEMA()</>).
+   TEMP sequences exist in a special schema, so a schema name may not be
+   given when creating a TEMP sequence.
+   The sequence name must be distinct from the name of any other sequence,
+   table, index, or view in the same schema.
   </para>
 
   <para>

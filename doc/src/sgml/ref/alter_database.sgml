@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_database.sgml,v 1.1 2002/03/01 22:45:07 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_database.sgml,v 1.2 2002/04/23 02:07:15 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -28,15 +28,16 @@ ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> RESET <replacea
    <command>ALTER DATABASE</command> is used to change the session
    default of a run-time configuration variable for a
    <productname>PostgreSQL</productname> database. Whenever a new
-   session is subsequently started, <literal>SET
+   session is subsequently started in that database, <literal>SET
    <replaceable>variable</replaceable> TO
    <replaceable>value</replaceable></literal> is effectively executed
-   before the start of the session.
+   before the start of the session.  The database-specific default
+   overrides whatever setting is present in <filename>postgresql.conf</>
+   or has been received from the postmaster.
   </para>
 
   <para>
-   Only a database owner can change the session defaults for a
-   database.  Superusers can change the session defaults of any
+   Only a superuser or the database owner can change the session defaults for a
    database.
   </para>
 
@@ -113,7 +114,8 @@ ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> RESET <replacea
   <para>
    Using <xref linkend="sql-alteruser" endterm="sql-alteruser-title">,
    it is also possible to tie a session default to a specific user
-   rather than a database.
+   rather than a database.  User-specific settings override database-specific
+   ones if there is a conflict.
   </para>
  </refsect1>
 
