@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Jul  4 22:09:41 EDT 2002
+Last updated:		Thu Jul  4 22:10:04 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -260,7 +260,7 @@ Clients
   or multiple SELECTS to avoid bad system catalog entries
 * -Have pg_dump -C dump database location and encoding information
 * Allow psql \d to show foreign keys
-* -Allow psql \d to show temporary table structure
+* -Allow psql \d to show temporary table structure (Tom)
 * Allow psql to show transaction status if backend protocol changes made
 * Add XML interface:  psql, pg_dump, COPY, separate server (?)
 * Add config file check for $ODBCINI, $HOME/.odbc.ini, installpath/etc/odbc.ini
