@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/contrib/Makefile,v 1.12 2001/01/15 22:20:00 tgl Exp $
+# $Header: /cvsroot/pgsql/contrib/Makefile,v 1.13 2001/02/09 18:42:35 tgl Exp $
 
 subdir = contrib
 top_builddir = ..
@@ -12,7 +12,6 @@ WANTED_DIRS = \
 		fulltextindex	\
 		intarray	\
 		isbn_issn	\
-		linux		\
 		lo			\
 		mSQL-interface	\
 		mac			\
