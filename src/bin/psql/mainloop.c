@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.c,v 1.50 2002/09/04 20:31:36 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.c,v 1.51 2002/10/12 23:09:34 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "mainloop.h"
@@ -300,9 +300,13 @@ MainLoop(FILE *source)
 			/* in quote? */
 			if (in_quote)
 			{
-				/* end of quote */
-				if (line[i] == in_quote && bslash_count % 2 == 0)
-					in_quote = '\0';
+				/*
+				 * end of quote if matching non-backslashed character.
+				 * backslashes don't count for double quotes, though.
+				 */
+				if (line[i] == in_quote &&
+					(bslash_count % 2 == 0 || in_quote == '"'))
+					in_quote = 0;
 			}
 
 			/* in extended comment? */
@@ -330,11 +334,9 @@ MainLoop(FILE *source)
 				ADVANCE_1;
 			}
 
-			/* start of quote */
-			else if (!was_bslash &&
-					 (line[i] == '\'' || line[i] == '"'))
+			/* start of quote? */
+			else if (line[i] == '\'' || line[i] == '"')
 				in_quote = line[i];
-
 
 			/* single-line comment? truncate line */
 			else if (line[i] == '-' && line[i + thislen] == '-')
@@ -446,6 +448,7 @@ MainLoop(FILE *source)
 				/* remove the backslash */
 				memmove(line + i - prevlen, line + i, len - i + 1);
 				len--;
+				i--;
 			}
 
 			/* backslash command */
