@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.82 2000/11/14 18:37:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.83 2000/11/24 20:16:39 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1364,15 +1364,6 @@ _equalReindexStmt(ReindexStmt *a, ReindexStmt *b)
 }
 
 static bool
-_equalSetSessionStmt(SetSessionStmt *a, SetSessionStmt *b)
-{
-	if (!equal(a->args, b->args))
-		return false;
-
-	return true;
-}
-
-static bool
 _equalAExpr(A_Expr *a, A_Expr *b)
 {
 	if (a->oper != b->oper)
@@ -2036,9 +2027,6 @@ equal(void *a, void *b)
 			break;
 		case T_ReindexStmt:
 			retval = _equalReindexStmt(a, b);
-			break;
-		case T_SetSessionStmt:
-			retval = _equalSetSessionStmt(a, b);
 			break;
 		case T_CheckPointStmt:
 			retval = true;

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.209 2000/11/14 18:37:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.210 2000/11/24 20:16:39 petere Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -134,14 +134,11 @@ static void doNegateFloat(Value *v);
 		NotifyStmt, OptimizableStmt, ProcedureStmt, ReindexStmt,
 		RemoveAggrStmt, RemoveFuncStmt, RemoveOperStmt,
 		RenameStmt, RevokeStmt, RuleActionStmt, RuleActionStmtOrEmpty,
-		RuleStmt, SelectStmt, SetSessionStmt, TransactionStmt, TruncateStmt,
+		RuleStmt, SelectStmt, TransactionStmt, TruncateStmt,
 		UnlistenStmt, UpdateStmt, VacuumStmt, VariableResetStmt,
 		VariableSetStmt, VariableShowStmt, ViewStmt, CheckPointStmt
 
 %type <node>	select_no_parens, select_clause, simple_select
-
-%type <list>	SessionList
-%type <node>	SessionClause
 
 %type <node>    alter_column_action
 %type <ival>    drop_behavior
@@ -459,7 +456,6 @@ stmt :	AlterSchemaStmt
 		| RevokeStmt
 		| OptimizableStmt
 		| RuleStmt
-		| SetSessionStmt
 		| TransactionStmt
 		| ViewStmt
 		| LoadStmt
@@ -708,55 +704,6 @@ DropSchemaStmt:  DROP SCHEMA UserId
 
 /*****************************************************************************
  *
- * Manipulate a postgresql session
- *
- *
- *****************************************************************************/
-
-SetSessionStmt:  SET SESSION CHARACTERISTICS AS SessionList
-				{
-					SetSessionStmt *n = makeNode(SetSessionStmt);
-					n->args = $5;
-					$$ = (Node*)n;
-				}
-		;
-
-SessionList:  SessionList ',' SessionClause
-				{
-					$$ = lappend($1, $3);
-				}
-		| SessionClause
-				{
-					$$ = makeList1($1);
-				}
-		;
-
-SessionClause:  TRANSACTION COMMIT opt_boolean
-				{
-					VariableSetStmt *n = makeNode(VariableSetStmt);
-					n->name  = "autocommit";
-					n->value = $3;
-					$$ = (Node *) n;
-				}
-		| TIME ZONE zone_value
-				{
-					VariableSetStmt *n = makeNode(VariableSetStmt);
-					n->name  = "timezone";
-					n->value = $3;
-					$$ = (Node *) n;
-				}
-		| TRANSACTION ISOLATION LEVEL opt_level
-				{
-					VariableSetStmt *n = makeNode(VariableSetStmt);
-					n->name  = "DefaultXactIsoLevel";
-					n->value = $4;
-					$$ = (Node *) n;
-				}
-			;
-
-
-/*****************************************************************************
- *
  * Set PG internal variable
  *	  SET name TO 'var_value'
  * Include SQL92 syntax (thomas 1997-10-22):
@@ -790,6 +737,13 @@ VariableSetStmt:  SET ColId TO var_value
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->name  = "XactIsoLevel";
 					n->value = $5;
+					$$ = (Node *) n;
+				}
+        | SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL opt_level
+				{
+					VariableSetStmt *n = makeNode(VariableSetStmt);
+					n->name  = "DefaultXactIsoLevel";
+					n->value = $8;
 					$$ = (Node *) n;
 				}
 		| SET NAMES opt_encoding
@@ -5444,6 +5398,7 @@ TokenId:  ABSOLUTE						{ $$ = "absolute"; }
 		| CACHE							{ $$ = "cache"; }
 		| CASCADE						{ $$ = "cascade"; }
 		| CHAIN							{ $$ = "chain"; }
+		| CHARACTERISTICS				{ $$ = "characteristics"; }
 		| CHECKPOINT					{ $$ = "checkpoint"; }
 		| CLOSE							{ $$ = "close"; }
 		| COMMENT						{ $$ = "comment"; }

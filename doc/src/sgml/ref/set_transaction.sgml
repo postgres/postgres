@@ -1,19 +1,23 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/set_transaction.sgml,v 1.2 2000/07/14 15:27:14 thomas Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/set_transaction.sgml,v 1.3 2000/11/24 20:16:38 petere Exp $ -->
 <refentry id="SQL-SET-TRANSACTION">
+ <docinfo>
+  <date>2000-11-24</date>
+ </docinfo>
+
  <refmeta>
   <refentrytitle id="SQL-SET-TRANSACTION-TITLE">SET TRANSACTION</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
+
  <refnamediv>
   <refname>SET TRANSACTION</refname>
   <refpurpose>Set the characteristics of the current SQL-transaction</refpurpose>
  </refnamediv>
+
  <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>2000-06-01</date>
-  </refsynopsisdivinfo>
   <synopsis>
 SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZABLE }
+SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZABLE }
   </synopsis>
  </refsynopsisdiv>
 
@@ -21,13 +25,17 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZABLE }
   <title>Description</title>
 
   <para>
-   The <command>SET TRANSACTION</command> command sets the
-   characteristics for the current SQL-transaction. It has no effect
-   on any subsequent transactions. This command cannot be used after
-   the first DML statement (<command>SELECT</command>,
-   <command>INSERT</command>, <command>DELETE</command>,
-   <command>UPDATE</command>, <command>FETCH</command>,
-   <command>COPY</command>) of a transaction has been executed.
+   This command sets the transaction isolation level.  The
+   <command>SET TRANSACTION</command> command sets the characteristics
+   for the current SQL-transaction. It has no effect on any subsequent
+   transactions.  This command cannot be used after the first DML
+   statement (<command>SELECT</command>, <command>INSERT</command>,
+   <command>DELETE</command>, <command>UPDATE</command>,
+   <command>FETCH</command>, <command>COPY</command>) of a transaction
+   has been executed.  <command>SET SESSION CHARACTERISTICS</command>
+   sets the default transaction isolation level for each transaction
+   for a session.  <command>SET TRANSACTION</command> can override it
+   for an individual transaction.
   </para>
 
   <para>
@@ -83,7 +91,7 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZABLE }
 
    <para>
     In <acronym>SQL</acronym> there are two other transaction
-    characteristics that can be set with this command: whether the
+    characteristics that can be set with these commands: whether the
     transaction is read-only and the size of the diagnostics area.
     Neither of these concepts are supported in Postgres.
    </para>
