@@ -130,6 +130,12 @@ Differences for years outside the normal Unix range, e.g. 1968
 instead of 2105
 Can be ignored.
 
+rules:
+"ERROR:  Bad money external representation ..."
+if a value of type money is inserted in string representation e.g. as in
+"insert into rtest_emp values ('wiech', '5000.00');"
+Subject of further investigation.
+
 create_function_2, triggers, misc, plpgsql:
 Error messages due to the lack of shared library support.
 
@@ -147,7 +153,7 @@ Have fun!
 
 Andreas Kardos
 kardos@repas-aeg.de
-2000-02-28
+2000-04-04
 
 
 ---------------------------------------------------------------------------
