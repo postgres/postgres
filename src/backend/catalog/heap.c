@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.52 1998/07/12 23:41:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.53 1998/07/20 11:28:12 momjian Exp $
  *
  * INTERFACE ROUTINES
  *		heap_create()			- Create an uncataloged heap relation
@@ -178,7 +178,7 @@ heap_create(char *name,
 	int			len;
 	bool		nailme = false;
 	char	   *relname = name;
-	char		tempname[40];
+	char		tempname[NAMEDATALEN];
 	int			isTemp = 0;
 	int			natts = tupDesc->natts;
 
@@ -243,6 +243,7 @@ heap_create(char *name,
 		if (name[0] == '\0')
 		{
 			sprintf(tempname, "temp_%d", relid);
+			Assert(strlen(tempname) < NAMEDATALEN);
 			relname = tempname;
 			isTemp = 1;
 		}
