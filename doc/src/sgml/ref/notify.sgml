@@ -147,16 +147,16 @@ after the transaction is completed (either committed or aborted).  Again, the
 reasoning is that if a notify were delivered within a transaction that was
 later aborted, one would want the notification to be undone somehow --- but
 the backend cannot "take back" a notify once it has sent it to the frontend.
-So notify events are delivered only between transactions.  The upshot of this
+So notify events are only delivered between transactions.  The upshot of this
 is that applications using <command>NOTIFY</command> for real-time signaling
 should try to keep their transactions short.
 
 <para>
-<command>NOTIFY</command> behaves rather like Unix signals in one important
-respect: if the same notify name is signaled multiple times in quick
+<command>NOTIFY</command> behaves like Unix signals in one important
+respect: if the same condition name is signaled multiple times in quick
 succession, recipients may get only one notify event for several executions
 of <command>NOTIFY</command>.  So it is a bad idea to depend on the number
-of notifies received; instead use <command>NOTIFY</command> to wake up
+of notifies received.  Instead, use <command>NOTIFY</command> to wake up
 applications that need to pay attention to something, and use a database
 object (such as a sequence) to keep track of what happened or how many times
 it happened.
@@ -201,8 +201,8 @@ table name, even if syntactically valid as a name.  That is no longer required.
 
 <para>
 In <productname>Postgres</productname> releases prior to 6.4, the backend
-PID delivered in a notify message is always the PID of the frontend's own
-backend.  So it is not possible to distinguish one's own notifies from other
+PID delivered in a notify message was always the PID of the frontend's own
+backend.  So it was not possible to distinguish one's own notifies from other
 clients' notifies in those earlier releases.
 
 </REFSECT2>
