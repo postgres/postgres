@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.19 2000/04/08 02:44:55 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.20 2000/04/11 14:43:54 momjian Exp $
 Postgres documentation
 -->
 
@@ -450,7 +450,15 @@ CREATE TABLE distributors (
    <synopsis>
 [ CONSTRAINT <replaceable class="parameter">name</replaceable> ] { [
     NULL | NOT NULL ] | UNIQUE | PRIMARY KEY | CHECK <replaceable
-     class="parameter">constraint</replaceable> } [, ...]
+     class="parameter">constraint</replaceable> | REFERENCES 
+     <replaceable class="parameter">referenced table</replaceable>
+     (<replaceable class="parameter">referenced column</replaceable>)
+     [ MATCH <replaceable class="parameter">match type</replaceable> ]
+     [ ON DELETE <replaceable class="parameter">action</replaceable> ] 
+     [ ON UPDATE <replaceable class="parameter">action</replaceable> ]
+     [ [ NOT ] DEFERRABLE ] 
+     [ INITIALLY <replaceable class="parameter"> check time </replaceable> ] }
+    [, ...]
    </synopsis>
   </para>
 
@@ -900,7 +908,7 @@ ERROR: Cannot insert a duplicate key into a unique index.
      Only one PRIMARY KEY can be specified for a table.
     </para>
    </refsect3>
-   
+
    <refsect3 id="R3-SQL-PRIMARYKEY-3">
     <title>
      Notes
@@ -920,6 +928,278 @@ ERROR: Cannot insert a duplicate key into a unique index.
     </para>
    </refsect3>
   </refsect2>
+
+  <refsect2 id="R2-SQL-REFERENCES-1">
+   <refsect2info>
+    <date>2000-02-04</date>
+   </refsect2info>
+   <title>
+    REFERENCES Constraint
+   </title>
+   <synopsis>
+[ CONSTRAINT <replaceable class="parameter">name</replaceable> ] REFERENCES 
+<replaceable class="parameter">referenced table</replaceable> [ ( <replaceable class="parameter"> referenced column</replaceable> ) ] 
+[ MATCH <replaceable class="parameter">matchtype</replaceable> ]
+[ ON DELETE <replaceable class="parameter">action</replaceable> ] 
+[ ON UPDATE <replaceable class="parameter">action</replaceable> ]
+[ [ NOT ] DEFERRABLE ] 
+[ INITIALLY <replaceable class="parameter"> check time </replaceable> ]
+   </synopsis>
+   <para>
+    The REFERENCES constraint specifies a rule that a column
+    value is checked against the values of another column.
+    REFERENCES can also be specified as part of
+    a FOREIGN KEY table constraint.
+   </para>
+
+   <refsect3 id="R3-SQL-REFERENCES-1">
+    <title>Inputs</title>
+    <para>
+     <variablelist>
+      <varlistentry>
+       <term>CONSTRAINT <replaceable class="PARAMETER">name</replaceable></term>
+       <listitem>
+	<para>
+	 An arbitrary name for the constraint.
+	</para>
+       </listitem>
+      </varlistentry>
+      <varlistentry>
+       <term><replaceable class="parameter">referenced table</replaceable></term>
+       <listitem>
+        <para>
+         The table that contains the data to check against.
+        </para>
+       </listitem>
+      </varlistentry>
+      <varlistentry>
+       <term><replaceable class="parameter">referenced column</replaceable></term>
+       <listitem>
+        <para>
+         The column in the <replaceable class="parameter">referenced table</replaceable>
+         to check the data against.  If this is not specified, the PRIMARY KEY of the
+         <replaceable class="parameter">referenced table</replaceable> is used.
+        </para>
+       </listitem>
+      </varlistentry>
+      <varlistentry>
+       <term>MATCH <replaceable class="parameter">matchtype</replaceable></term>
+       <listitem>
+        <para>
+         The type of comparison to do between the table data.  There are three
+         types of matching, MATCH FULL, MATCH PARTIAL, and the unspecified match type
+         used if no match type is specified.
+        </para>
+       </listitem>
+      </varlistentry>
+      <varlistentry>
+       <term>ON DELETE <replaceable class="parameter">action</replaceable></term>
+       <listitem>
+        <para>
+	 The action to do when a referenced row in the referenced table is being
+         deleted.  There are the following actions.
+         <variablelist>
+          <varlistentry>
+           <term>CASCADE</term>
+           <listitem>
+            <para>
+             Delete any rows referencing the deleted row.
+            </para>
+           </listitem>
+          </varlistentry>
+          <varlistentry>
+           <term>RESTRICT</term>
+           <listitem>
+            <para>
+             Disallow deletion of rows being referenced.
+            </para>
+           </listitem>
+          </varlistentry>
+          <varlistentry>
+           <term>SET NULL</term>
+           <listitem>
+            <para>
+             Set the referencing column values to NULL.
+            </para>
+           </listitem>
+          </varlistentry>
+          <varlistentry>
+           <term>SET DEFAULT</term>
+           <listitem>
+            <para>
+             Set the referencing column values to their default value.
+            </para>
+           </listitem>
+          </varlistentry>
+          <varlistentry>
+           <term>NO ACTION</term>
+           <listitem>
+            <para>
+             Do nothing.
+            </para>
+           </listitem>
+          </varlistentry>
+         </variablelist>
+        </para>
+       </listitem>
+      </varlistentry>      
+      <varlistentry>
+       <term>ON UPDATE <replaceable class="parameter">action</replaceable></term>
+       <listitem>
+        <para>
+	 The action to do when a referenced column in the referenced table is being
+         updated to a new value.  If the row is updated, but the referenced column
+         is not changed, no action is done.  There are the following actions.
+         <variablelist>
+          <varlistentry>
+           <term>CASCADE</term>
+           <listitem>
+            <para>
+             Update the value of the referencing column to the new value of the
+             referenced column.
+            </para>
+           </listitem>
+          </varlistentry>
+          <varlistentry>
+           <term>RESTRICT</term>
+           <listitem>
+            <para>
+             Disallow update of row being referenced.
+            </para>
+           </listitem>
+          </varlistentry>
+          <varlistentry>
+           <term>SET NULL</term>
+           <listitem>
+            <para>
+             Set the referencing column values to NULL.
+            </para>
+           </listitem>
+          </varlistentry>
+          <varlistentry>
+           <term>SET DEFAULT</term>
+           <listitem>
+            <para>
+             Set the referencing column values to their default value.
+            </para>
+           </listitem>
+          </varlistentry>
+          <varlistentry>
+           <term>NO ACTION</term>
+           <listitem>
+            <para>
+             Do nothing.
+            </para>
+           </listitem>
+          </varlistentry>
+         </variablelist>
+        </para>
+       </listitem>
+      </varlistentry>
+      <varlistentry>
+       <term> [ NOT ] DEFERRABLE </term>
+       <listitem>
+        <para>
+         Tells the trigger manager whether this constraint may be 
+         deferred to the end of transaction.
+        </para>
+       </listitem>
+      </varlistentry>
+      <varlistentry>
+       <term>INITIALLY <replaceable class="parameter"> check time </replaceable></term>
+       <listitem>
+        <para>
+         <replaceable class="parameter">check time</replaceable> has two possible values 
+         which specify the default time to check the constraint.
+         <variablelist>
+          <varlistentry>
+           <term>DEFERRED</term>
+           <para>
+            Check this constraint at the end of the transaction.
+           </para>
+          </varlistentry>
+          <varlistentry>
+           <term>IMMEDIATE</term>
+           <para>
+            Check this constraint after each statement.
+           </para>
+          </varlistentry>
+         </variablelist>
+        </para>
+       </listitem>
+      </varlistentry>
+     </variablelist>
+    </para>
+   </refsect3>
+   
+
+   <refsect3 id="R3-SQL-REFERENCES-2">
+    <refsect3info>
+     <date>2000-02-04</date>
+    </refsect3info>
+    <title>
+     Outputs
+    </title>
+    <para>
+     <variablelist>
+      <varlistentry>
+       <term><replaceable>status</replaceable></term>
+       <listitem>
+	<para>
+	 <variablelist>
+	  <varlistentry>
+	   <term><computeroutput>
+ERROR:  <replaceable class="parameter">name</replaceable> referential integrity violation - key referenced from 
+<replaceable class="parameter">table</replaceable> not found in <replaceable class="parameter">referenced table</replaceable>
+	    </computeroutput></term>
+	   <listitem>
+	    <para>
+             This error occurs at runtime if one tries to insert a value
+             into a column which does not have a matching column in the
+             referenced table.
+	    </para>
+	   </listitem>
+	  </varlistentry>
+	 </variablelist>
+	</para>
+       </listitem>
+      </varlistentry>
+     </variablelist> 
+    </para>
+   </refsect3>
+
+   <refsect3 id="R3-SQL-REFERENCES-3">
+    <title>Description</title>
+    <para>
+     The REFERENCES column constraint specifies that a column of a
+     table must only contain values which match against values
+     in a referenced column of a referenced table.
+    </para>
+    <para>
+     A value added to this column are matched against the
+     values of the referenced table and referenced column using
+     the given match type.
+     In addition, when the referenced column data is changed,
+     actions are run upon this column's matching data.
+    </para>
+   </refsect3>
+
+   <refsect3 id="R3-SQL-REFERENCES-4">
+    <refsect3info>
+     <date>1998-09-11</date>
+    </refsect3info>
+    <title>
+     Notes
+    </title>
+    <para>
+     Currently <productname>Postgres</productname> only supports
+     MATCH FULL and an unspecified MATCH type.
+     In addition, the referenced columns are supposed to be
+     the columns of a UNIQUE constraint in the referenced table,
+     however <productname>Postgres</productname> does not
+     enforce this.
+    </para>
+   </refsect3>
  </refsect1>
  
  <refsect1 id="R1-SQL-TABLECONSTRAINT-1">
@@ -930,6 +1210,14 @@ ERROR: Cannot insert a duplicate key into a unique index.
    <synopsis>
 [ CONSTRAINT name ] { PRIMARY KEY |  UNIQUE } ( <replaceable class="parameter">column</replaceable> [, ...] )
 [ CONSTRAINT name ] CHECK ( <replaceable>constraint</replaceable> )
+[ CONSTRAINT name ] FOREIGN KEY ( <replaceable class="parameter">column</replaceable> [, ...] ) 
+                     REFERENCES <replaceable class="parameter">referenced table</replaceable>
+                      (<replaceable class="parameter">referenced column</replaceable> [, ...] )
+                      [ MATCH <match type> ] 
+                      [ ON DELETE <replaceable class="parameter">action</replaceable> ] 
+                      [ ON UPDATE <replaceable class="parameter">action</replaceable> ]
+                      [ [ NOT ] DEFERRABLE ] 
+                      [ INITIALLY <replaceable class="parameter"> check time </replaceable> ]
    </synopsis>
   </para>
   <refsect2 id="R2-SQL-TABLECONSTRAINT-1">
@@ -1174,7 +1462,271 @@ CREATE TABLE distributors (
      information.
     </para>
    </refsect3>
+  </refsect2>
 
+  <refsect2 id="R2-SQL-REFERENCES-1">
+   <refsect2info>
+    <date>2000-02-04</date>
+   </refsect2info>
+   <title>
+    REFERENCES Constraint
+   </title>
+   <synopsis>
+[ CONSTRAINT <replaceable class="parameter">name</replaceable> ] 
+FOREIGN KEY ( <replaceable class="parameter">column</replaceable> [, ...] ) REFERENCES 
+<replaceable class="parameter">referenced table</replaceable> [ ( <replaceable class="parameter">referenced column</replaceable> [, ...] ) ] 
+[ MATCH <replaceable class="parameter">matchtype</replaceable> ]
+[ ON DELETE <replaceable class="parameter">action</replaceable> ] 
+[ ON UPDATE <replaceable class="parameter">action</replaceable> ]
+[ [ NOT ] DEFERRABLE ] 
+[ INITIALLY <replaceable class="parameter"> check time </replaceable> ]
+   </synopsis>
+   <para>
+    The REFERENCES constraint specifies a rule that a column
+    value is checked against the values of another column.
+    REFERENCES can also be specified as part of
+    a FOREIGN KEY table constraint.
+   </para>
+
+   <refsect3 id="R3-SQL-REFERENCES-1">
+    <title>Inputs</title>
+    <para>
+     <variablelist>
+      <varlistentry>
+       <term>CONSTRAINT <replaceable class="PARAMETER">name</replaceable></term>
+       <listitem>
+	<para>
+	 An arbitrary name for the constraint.
+	</para>
+       </listitem>
+      </varlistentry>
+      <varlistentry>
+       <term><replaceable class="PARAMETER">column</replaceable> [, ...]</term>
+       <listitem>
+	<para>
+	 The names of one or more columns in the table.
+	</para>
+       </listitem>
+      </varlistentry>
+      <varlistentry>
+       <term><replaceable class="parameter">referenced table</replaceable></term>
+       <listitem>
+        <para>
+         The table that contains the data to check against.
+        </para>
+       </listitem>
+      </varlistentry>
+      <varlistentry>
+       <term><replaceable class="parameter">referenced column</replaceable> [, ...]</term>
+       <listitem>
+        <para>
+         One or more column in the <replaceable class="parameter">referenced table</replaceable>
+         to check the data against.  If this is not specified, the PRIMARY KEY of the
+         <replaceable class="parameter">referenced table</replaceable> is used.
+        </para>
+       </listitem>
+      </varlistentry>
+      <varlistentry>
+       <term>MATCH <replaceable class="parameter">matchtype</replaceable></term>
+       <listitem>
+        <para>
+         The type of comparison to do between the table data.  There are three
+         types of matching, MATCH FULL, MATCH PARTIAL, and the unspecified match type
+         used if no match type is specified. 
+        </para>
+       </listitem>
+      </varlistentry>
+      <varlistentry>
+       <term>ON DELETE <replaceable class="parameter">action</replaceable></term>
+       <listitem>
+        <para>
+	 The action to do when a referenced row in the referenced table is being
+         deleted.  There are the following actions.
+         <variablelist>
+          <varlistentry>
+           <term>CASCADE</term>
+           <listitem>
+            <para>
+             Delete any rows referencing the deleted row.
+            </para>
+           </listitem>
+          </varlistentry>
+          <varlistentry>
+           <term>RESTRICT</term>
+           <listitem>
+            <para>
+             Disallow deletion of rows being referenced.
+            </para>
+           </listitem>
+          </varlistentry>
+          <varlistentry>
+           <term>SET NULL</term>
+           <listitem>
+            <para>
+             Set the referencing column values to NULL.
+            </para>
+           </listitem>
+          </varlistentry>
+          <varlistentry>
+           <term>SET DEFAULT</term>
+           <listitem>
+            <para>
+             Set the referencing column values to their default value.
+            </para>
+           </listitem>
+          </varlistentry>
+          <varlistentry>
+           <term>NO ACTION</term>
+           <listitem>
+            <para>
+             Do nothing.
+            </para>
+           </listitem>
+          </varlistentry>
+         </variablelist>
+        </para>
+       </listitem>
+      </varlistentry>      
+      <varlistentry>
+       <term>ON UPDATE <replaceable class="parameter">action</replaceable></term>
+       <listitem>
+        <para>
+	 The action to do when a referenced column in the referenced table is being
+         updated to a new value.  If the row is updated, but the referenced column
+         is not changed, no action is done.  There are the following actions.
+         <variablelist>
+          <varlistentry>
+           <term>CASCADE</term>
+           <listitem>
+            <para>
+             Update the value of the referencing column to the new value of the
+             referenced column.
+            </para>
+           </listitem>
+          </varlistentry>
+          <varlistentry>
+           <term>RESTRICT</term>
+           <listitem>
+            <para>
+             Disallow update of row being referenced.
+            </para>
+           </listitem>
+          </varlistentry>
+          <varlistentry>
+           <term>SET NULL</term>
+           <listitem>
+            <para>
+             Set the referencing column values to NULL.
+            </para>
+           </listitem>
+          </varlistentry>
+          <varlistentry>
+           <term>SET DEFAULT</term>
+           <listitem>
+            <para>
+             Set the referencing column values to their default value.
+            </para>
+           </listitem>
+          </varlistentry>
+          <varlistentry>
+           <term>NO ACTION</term>
+           <listitem>
+            <para>
+             Do nothing.
+            </para>
+           </listitem>
+          </varlistentry>
+         </variablelist>
+        </para>
+       </listitem>
+      </varlistentry>
+      <varlistentry>
+       <term> [ NOT ] DEFERRABLE </term>
+       <listitem>
+        <para>
+         Tells the trigger manager whether this constraint may be 
+         deferred to the end of transaction.
+        </para>
+       </listitem>
+      </varlistentry>
+      <varlistentry>
+       <term>INITIALLY <replaceable class="parameter"> check time </replaceable></term>
+       <listitem>
+        <para>
+         <replaceable class="parameter">check time</replaceable> has two possible values 
+         which specify the default time to check the constraint.
+         <variablelist>
+          <varlistentry>
+           <term>DEFERRED</term>
+           <para>
+            Check this constraint at the end of the transaction.
+           </para>
+          </varlistentry>
+          <varlistentry>
+           <term>IMMEDIATE</term>
+           <para>
+            Check this constraint after each statement.
+           </para>
+          </varlistentry>
+         </variablelist>
+        </para>
+       </listitem>
+      </varlistentry>
+     </variablelist>
+    </para>
+   </refsect3>
+   <refsect3 id="R3-SQL-REFERENCES-2">
+    <refsect3info>
+     <date>2000-02-04</date>
+    </refsect3info>
+    <title>
+     Outputs
+    </title>
+    <para>
+     <variablelist>
+      <varlistentry>
+       <term><replaceable>status</replaceable></term>
+       <listitem>
+	<para>
+	 <variablelist>
+	  <varlistentry>
+	   <term><computeroutput>
+ERROR:  <replaceable class="parameter">name</replaceable> referential integrity violation - key referenced from 
+<replaceable class="parameter">table</replaceable> not found in <replaceable class="parameter">referenced table</replaceable>
+	    </computeroutput></term>
+	   <listitem>
+	    <para>
+             This error occurs at runtime if one tries to insert a value
+             into a column which does not have a matching column in the
+             referenced table.
+	    </para>
+	   </listitem>
+	  </varlistentry>
+	 </variablelist>
+	</para>
+       </listitem>
+      </varlistentry>
+     </variablelist> 
+    </para>
+   </refsect3>
+   <refsect3>
+    <title>Description</title>
+    <para>
+     The FOREIGN KEY constraint specifies a rule that a group of one
+     or more distinct columns of a table are related to a group
+     of distinct columns in the referenced table.
+    </para>
+
+    <para>
+     The FOREIGN KEY table constraint is similar to that for column constraints,
+     with the additional capability of encompassing multiple columns.
+    </para>
+    <para>
+     Refer to the section on the FOREIGN KEY column constraint for more
+     information.
+    </para>
+   </refsect3>
+   
   </refsect2>
 
  </refsect1>

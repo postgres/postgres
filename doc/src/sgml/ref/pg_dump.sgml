@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.16 2000/04/04 05:22:45 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.17 2000/04/11 14:43:54 momjian Exp $
 Postgres documentation
 -->
 
@@ -362,6 +362,16 @@ dumpSequence(<replaceable class="parameter">table</replaceable>): SELECT failed
       Large objects are ignored and must be dealt with manually. 
      </para>
     </listitem>
+
+    <listitem>
+     <para>
+      When doing a data only dump, <application>pg_dump</application> emits queries
+      to disable triggers on user tables before inserting the data and queries to
+      reenable them after the data has been inserted.  If the restore is stopped
+      in the middle, the system catalogs may be left in the wrong state.
+     </para>
+    </listitem>
+
    </itemizedlist>
   </para>
  </refsect1>

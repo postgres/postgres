@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.11 2000/03/27 17:14:42 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.12 2000/04/11 14:43:54 momjian Exp $
 Postgres documentation
 -->
 
@@ -34,6 +34,8 @@ ALTER TABLE <replaceable class="PARAMETER">table</replaceable> [ * ]
     class="PARAMETER">newcolumn</replaceable>
 ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
     RENAME TO <replaceable class="PARAMETER">newtable</replaceable>
+ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
+    ADD <replaceable class="PARAMETER">table constraint definition</replaceable>
   </synopsis>
 
   <refsect2 id="R2-SQL-ALTERTABLE-1">
@@ -86,6 +88,15 @@ ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
       <listitem>
        <para>
 	New name for the table.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="PARAMETER"> table constraint definition </replaceable></term>
+      <listitem>
+       <para>
+	New table constraint for the table
        </para>
       </listitem>
      </varlistentry>
@@ -144,6 +155,9 @@ ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
    the affected table. Thus, the table or column will
    remain of the same type and size after this command is
    executed.
+   The ADD <replaceable class="PARAMETER">table constraint definition</replaceable> clause 
+   adds a new constraint to the table using the same syntax as <xref
+   linkend="SQL-CREATETABLE" endterm="SQL-CREATETABLE-title">. 
   </para>
 
   <para>
@@ -189,6 +203,16 @@ SELECT <replaceable>NewColumn</replaceable> FROM <replaceable>SuperClass</replac
    </para>
 
    <para>
+    In the current implementation, only FOREIGN KEY constraints can
+    be added to a table.  To create or remove a unique constraint, create 
+    a unique index (see <xref linkend="SQL-CREATEINDEX" 
+    endterm="SQL-CREATEINDEX-title">).  To add check constraints
+    you need to recreate and reload the table, using other 
+    parameters to the <xref linkend="SQL-CREATETABLE" 
+    endterm="SQL-CREATETABLE-title"> command.
+   </para>
+
+   <para>
     You must own the class in order to change its schema.
     Renaming any  part  of  the schema of a system
     catalog is not permitted.
@@ -227,6 +251,13 @@ ALTER TABLE distributors RENAME COLUMN address TO city;
 ALTER TABLE distributors RENAME TO suppliers;
    </programlisting>
   </para>
+
+  <para> 
+   To add a foreign key constraint to a table:
+   <programlisting>
+ALTER TABLE distributors ADD CONSTRAINT distfk FOREIGN KEY (address) REFERENCES addresses(address) MATCH FULL
+   </programlisting>
+  </para>
  </refsect1>
 
  <refsect1 id="R1-SQL-ALTERTABLE-3">
@@ -253,17 +284,15 @@ ALTER TABLE distributors RENAME TO suppliers;
      <varlistentry>
       <term>
        <synopsis>
-ALTER TABLE <replaceable class="PARAMETER">table</replaceable> ADD <replaceable class="PARAMETER">table constraint definition</replaceable>
 ALTER TABLE <replaceable class="PARAMETER">table</replaceable> DROP CONSTRAINT <replaceable class="PARAMETER">constraint</replaceable> { RESTRICT | CASCADE }
       </synopsis>
      </term>
      <listitem>
       <para>
-       Adds or removes a table constraint (such as a check constraint,
-       unique constraint, or foreign key constraint). To create
-       or remove a unique constraint, create or drop a unique index,
-       respectively (see <xref linkend="SQL-CREATEINDEX" endterm="SQL-CREATEINDEX-title">).
-       To change other kinds of constraints you need to recreate
+       Removes a table constraint (such as a check constraint,
+       unique constraint, or foreign key constraint). To 
+       remove a unique constraint, drop a unique index,
+       To remove other kinds of constraints you need to recreate
        and reload the table, using other parameters to the
        <xref linkend="SQL-CREATETABLE" endterm="SQL-CREATETABLE-title">
        command.
