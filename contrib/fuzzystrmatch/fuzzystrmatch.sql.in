@@ -9,3 +9,8 @@ CREATE FUNCTION soundex(text) RETURNS text
 
 CREATE FUNCTION text_soundex(text) RETURNS text
   AS 'MODULE_PATHNAME', 'soundex' LANGUAGE 'c';
+
+GRANT EXECUTE ON FUNCTION levenshtein (text,text) TO PUBLIC;
+GRANT EXECUTE ON FUNCTION metaphone (text,int) TO PUBLIC;
+GRANT EXECUTE ON FUNCTION soundex(text) TO PUBLIC;
+GRANT EXECUTE ON FUNCTION text_soundex(text) TO PUBLIC;
