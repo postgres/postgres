@@ -1,5 +1,5 @@
 -- PostgreSQL catalog extensions for ODBC compatibility
--- $Header: /cvsroot/pgsql/src/interfaces/odbc/Attic/odbc.sql,v 1.2 2001/10/09 22:32:33 petere Exp $
+-- $Header: /cvsroot/pgsql/src/interfaces/odbc/Attic/odbc.sql,v 1.3 2001/10/13 19:16:32 petere Exp $
 
 -- ODBC functions are described here:
 -- <http://msdn.microsoft.com/library/en-us/odbc/htm/odbcscalar_functions.asp>
@@ -33,7 +33,7 @@ CREATE OR REPLACE FUNCTION concat(text, text) RETURNS text AS '
 
 -- INSERT(string1, start, len, string2)
 CREATE OR REPLACE FUNCTION insert(text, integer, integer, text) RETURNS text AS '
-    SELECT substring($1 from 1 for $2) || $4 || substring($1 from $2 + $3 + 1);
+    SELECT substring($1 from 1 for $2 - 1) || $4 || substring($1 from $2 + $3);
 ' LANGUAGE SQL;
 
 
