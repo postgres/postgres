@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.27 2000/04/11 03:56:19 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.28 2000/04/13 21:44:25 momjian Exp $
 -->
 
  <chapter id="datatype">
@@ -16,7 +16,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.27 2000/04/11 03:56:19 mo
    <productname>Postgres</productname> has a rich set of native data 
    types available to users.
    Users may add new types to <productname>Postgres</productname> using the
-   <command>DEFINE TYPE</command> command.
+   <command>CREATE TYPE</command> command.
   </para>
 
   <para>
