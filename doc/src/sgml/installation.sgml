@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.36 2001/02/10 18:24:14 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.37 2001/02/17 16:52:53 tgl Exp $ -->
 
 <chapter id="installation">
  <title><![%flattext-install-include[<productname>PostgreSQL</>]]> Installation Instructions</title>
@@ -1048,7 +1048,7 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
       The <citetitle>Tutorial</> should be your first reading if you
       are completely new to <acronym>SQL</> databases. It should have
       been installed at
-      <filename>/usr/local/pgsql/doc/html/tutorial.htm</> unless you
+      <filename>/usr/local/pgsql/doc/html/tutorial.html</> unless you
       changed the installation directories.
      </para>
     </listitem>
@@ -1059,7 +1059,7 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
       proceed with the <citetitle>Administrator's Guide</citetitle>,
       which contains information about how to set up the database
       server, database users, and authentication. It can be found at
-      <filename>/usr/local/pgsql/doc/html/admin.htm</>.
+      <filename>/usr/local/pgsql/doc/html/admin.html</>.
      </para>
     </listitem>
 

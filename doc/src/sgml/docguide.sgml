@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/docguide.sgml,v 1.30 2000/12/22 18:57:49 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/docguide.sgml,v 1.31 2001/02/17 16:52:53 tgl Exp $ -->
 
 <appendix label="DG2" id="docguide">
  <title>Documentation</title>
@@ -906,8 +906,8 @@ exit
     <filename>src/test/regress/README</filename> is not fully
     automated.  After building the <acronym>HTML</acronym> version of
     the <citetitle>Administrator's Guide</citetitle>, convert the
-    resulting files <filename>regress.htm</filename> and
-    <filename>regress-platform.htm</filename> to text, using
+    resulting files <filename>regress.html</filename> and
+    <filename>regress-platform.html</filename> to text, using
     <productname>Netscape</productname>.  Then paste the text files
     together and edit them to taste (e.g., remove the navigation
     bars, remove the references to other chapters).
