@@ -80,20 +80,18 @@ Detailed Change List
        Sefcik)
        Fixes for CASE in WHERE join clauses(Tom)
        Fix BTScan abort(Tom)
-       Repair the check for redundant UNIQUE and PRIMARY KEY indices(Tom)
+       Repair the check for redundant UNIQUE and PRIMARY KEY indices(Thomas)
        Improve it so that it checks for multi-column constraints(Tom)
        Fix for Win32 making problem with MB enabled(Hiroki Kataoka)
        Allow BSD yacc and bison to compile pl code(Bruce)
        Fix SET NAMES
        int8 fixes(Thomas)
-       Fix vacuum's memory consumption(Tom)
+       Fix vacuum's memory consumption(Hiroshi,Tatsuo)
        Reduce the total memory consumption of vacuum(Tom)
        Fix for timestamp(datetime)
        Rule deparsing bugfixes(Tom)
        Fix quoting problems in mkMakefile.tcldefs.sh.in and
        mkMakefile.tkdefs.sh.in(Tom)
-       Update frontend libpq to remove limits on query lengths,
-       error/notice message lengths, and number of fields per tuple(Tom)
        This is to re-use space on index pages freed by vacuum(Vadim)
        document -x for pg_dump(Bruce)
        Fix for unary operators in rule deparser(Tom)
