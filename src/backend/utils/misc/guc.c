@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.198 2004/04/07 05:05:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.199 2004/04/07 18:52:26 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -2730,13 +2730,12 @@ set_config_option(const char *name, const char *value,
 										name)));
 						return false;
 					}
-					if (record->context == PGC_USERLIMIT &&
-						IsUnderPostmaster && !superuser())
+					if (record->context == PGC_USERLIMIT)
 					{
 						if (newval < conf->reset_val)
 						{
 							/* Limit non-superuser changes */
-							if (source > PGC_S_UNPRIVILEGED)
+							if (source > PGC_S_UNPRIVILEGED && !superuser())
 							{
 								ereport(elevel,
 										(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
@@ -2750,7 +2749,8 @@ set_config_option(const char *name, const char *value,
 						{
 							/* Allow change if admin should override */
 							if (source < PGC_S_UNPRIVILEGED &&
-								record->source > PGC_S_UNPRIVILEGED)
+								record->source > PGC_S_UNPRIVILEGED &&
+								!superuser())
 								changeVal = changeValOrig;
 						}
 					}
@@ -2830,8 +2830,7 @@ set_config_option(const char *name, const char *value,
 								   newval, name, conf->min, conf->max)));
 						return false;
 					}
-					if (record->context == PGC_USERLIMIT &&
-						IsUnderPostmaster && !superuser())
+					if (record->context == PGC_USERLIMIT)
 					{
 						/* handle log_min_duration_statement, -1=disable */
 						if ((newval != -1 && conf->reset_val != -1 &&
@@ -2839,7 +2838,7 @@ set_config_option(const char *name, const char *value,
 						 	(newval == -1 && conf->reset_val != -1)) /* turn off */
 						{
 							/* Limit non-superuser changes */
-							if (source > PGC_S_UNPRIVILEGED)
+							if (source > PGC_S_UNPRIVILEGED && !superuser())
 							{
 								ereport(elevel,
 										(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
@@ -2855,7 +2854,8 @@ set_config_option(const char *name, const char *value,
 							(newval != -1 && *conf->variable == -1)) /* turn on */
 						{
 							if (source < PGC_S_UNPRIVILEGED &&
-								record->source > PGC_S_UNPRIVILEGED)
+								record->source > PGC_S_UNPRIVILEGED &&
+								!superuser())
 								changeVal = changeValOrig;
 						}
 					}
@@ -2935,12 +2935,11 @@ set_config_option(const char *name, const char *value,
 								   newval, name, conf->min, conf->max)));
 						return false;
 					}
-					if (record->context == PGC_USERLIMIT &&
-						IsUnderPostmaster && !superuser())
+					if (record->context == PGC_USERLIMIT)
 					/* No REAL PGC_USERLIMIT */
 					{
 						/* Limit non-superuser changes */
-						if (source > PGC_S_UNPRIVILEGED)
+						if (source > PGC_S_UNPRIVILEGED && !superuser())
 						{
 							ereport(elevel,
 									(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
@@ -2951,7 +2950,8 @@ set_config_option(const char *name, const char *value,
 						}
 						/* Allow change if admin should override */
 						if (source < PGC_S_UNPRIVILEGED &&
-							record->source > PGC_S_UNPRIVILEGED)
+							record->source > PGC_S_UNPRIVILEGED &&
+							!superuser())
 							changeVal = false;
 					}
 				}
@@ -3023,8 +3023,7 @@ set_config_option(const char *name, const char *value,
 						return false;
 					}
 
-					if (record->context == PGC_USERLIMIT &&
-						IsUnderPostmaster && !superuser())
+					if (record->context == PGC_USERLIMIT)
 					{
 						int		var_value, reset_value, new_value;
 						const char * (*var_hook) (int *var, const char *newval,
@@ -3045,7 +3044,7 @@ set_config_option(const char *name, const char *value,
 						if (new_value > reset_value)
 						{
 							/* Limit non-superuser changes */
-							if (source > PGC_S_UNPRIVILEGED)
+							if (source > PGC_S_UNPRIVILEGED && !superuser())
 							{
 								ereport(elevel,
 										(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
@@ -3060,7 +3059,8 @@ set_config_option(const char *name, const char *value,
 						if (new_value < var_value)
 						{
 							if (source < PGC_S_UNPRIVILEGED &&
-								record->source > PGC_S_UNPRIVILEGED)
+								record->source > PGC_S_UNPRIVILEGED &&
+								!superuser())
 								changeVal = changeValOrig;
 						}
 					}
