@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.133 2002/09/04 20:31:42 momjian Exp $
+ * $Id: pg_type.h,v 1.134 2002/09/24 21:26:44 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -153,18 +153,16 @@ CATALOG(pg_type) BOOTSTRAP
 	Oid			typbasetype;
 
 	/*
-	 * typtypmod records type-specific data supplied at domain creation
-	 * time (for example, the max length of a varchar field).  It is
-	 * passed to type-specific input and output functions as the third
-	 * argument. The value will generally be -1 for types that do not need
-	 * typmod.	This value is copied to pg_attribute.atttypmod when
-	 * creating a column of a domain type.
+	 * Domains use typtypmod to record the typmod to be applied to their
+	 * base type (-1 if base type does not use a typmod).  -1 if this type
+	 * is not a domain.
 	 */
 	int4		typtypmod;
 
 	/*
-	 * typndims is the declared number of dimensions for a domain type
-	 * that is an array (with element type typbasetype).  Otherwise zero.
+	 * typndims is the declared number of dimensions for an array domain type
+	 * (i.e., typbasetype is an array type; the domain's typelem will match
+	 * the base type's typelem).  Otherwise zero.
 	 */
 	int4		typndims;
 

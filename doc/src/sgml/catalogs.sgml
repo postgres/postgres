@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.61 2002/09/22 19:42:50 tgl Exp $
+ $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.62 2002/09/24 21:26:44 tgl Exp $
  -->
 
 <chapter id="catalogs">
@@ -232,7 +232,7 @@
       <entry>aggfinalfn</entry>
       <entry><type>regproc</type></entry>
       <entry>pg_proc.oid</entry>
-      <entry>Final function</entry>
+      <entry>Final function (zero if none)</entry>
      </row>
      <row>
       <entry>aggtranstype</entry>
@@ -685,9 +685,9 @@
       <entry><type>int2</type></entry>
       <entry></entry>
       <entry>
-       This is a copy of the
+       This is a copy of
        <structname>pg_type</structname>.<structfield>typlen</structfield>
-       for this column's type.
+       of this column's type.
       </entry>
      </row>
 
@@ -732,9 +732,8 @@
        <structfield>atttypmod</structfield> records type-specific data
        supplied at table creation time (for example, the maximum
        length of a <type>varchar</type> column).  It is passed to
-       type-specific input and output functions as the third
-       argument. The value will generally be -1 for types that do not
-       need typmod.
+       type-specific input functions and length coercion functions.
+       The value will generally be -1 for types that do not need typmod.
       </entry>
      </row>
 
@@ -754,9 +753,10 @@
       <entry><type>char</type></entry>
       <entry></entry>
       <entry>
-       A copy of
+       Normally a copy of
        <structname>pg_type</structname>.<structfield>typstorage</structfield>
-       of this column's type
+       of this column's type.  For TOASTable datatypes, this can be altered
+       after column creation to control storage policy.
       </entry>
      </row>
 
@@ -922,7 +922,7 @@
    table.  This includes indexes (but see also
    <structname>pg_index</structname>), sequences, views, and some
    kinds of special relation; see <structfield>relkind</>.
-.  Below, when we mean all of these
+   Below, when we mean all of these
    kinds of objects we speak of <quote>relations</quote>.  Not all
    fields are meaningful for all relation types.
   </para>
@@ -1287,14 +1287,14 @@
 
      <row>
       <entry>conkey</entry>
-      <entry><type>smallint[]</type></entry>
+      <entry><type>int2[]</type></entry>
       <entry>pg_attribute.attnum</entry>
       <entry>If a table constraint, list of columns which the constraint constrains</entry>
      </row>
 
      <row>
       <entry>confkey</entry>
-      <entry><type>smallint[]</type></entry>
+      <entry><type>int2[]</type></entry>
       <entry>pg_attribute.attnum</entry>
       <entry>If a foreign key, list of the referenced columns</entry>
      </row>
@@ -1448,7 +1448,7 @@
       <entry>datdba</entry>
       <entry><type>int4</type></entry>
       <entry>pg_shadow.usesysid</entry>
-      <entry>Owner of the database, initially who created it</entry>
+      <entry>Owner of the database, usually the user who created it</entry>
      </row>
 
      <row>
@@ -1584,7 +1584,7 @@
 
      <row>
       <entry>objsubid</entry>
-      <entry><type>integer</type></entry>
+      <entry><type>int4</type></entry>
       <entry></entry>
       <entry>For a table attribute, this is the attribute's
        column number (the objid and classid refer to the table itself).
@@ -1608,10 +1608,10 @@
 
      <row>
       <entry>refobjsubid</entry>
-      <entry><type>integer</type></entry>
+      <entry><type>int4</type></entry>
       <entry></entry>
       <entry>For a table attribute, this is the attribute's
-       column number (the objid and classid refer to the table itself).
+       column number (the refobjid and refclassid refer to the table itself).
        For all other object types, this field is presently zero.
       </entry>
      </row>
@@ -1694,10 +1694,10 @@
   <para>
    The pg_description table can store an optional description or
    comment for each database object.  Descriptions can be manipulated
-   with the <command>COMMENT</command> command.  Client applications
-   can view the descriptions by joining with this table.  Many built-in
-   system objects have comments associated with them that are shown by
+   with the <command>COMMENT</command> command and viewed with
    <application>psql</application>'s <literal>\d</literal> commands.
+   Descriptions of many built-in system objects are provided in the initial
+   contents of pg_description.
   </para>
 
   <table>
@@ -1837,21 +1837,22 @@
       <entry>indexrelid</entry>
       <entry><type>oid</type></entry>
       <entry>pg_class.oid</entry>
-      <entry>The oid of the pg_class entry for this index</entry>
+      <entry>The OID of the pg_class entry for this index</entry>
      </row>
 
      <row>
       <entry>indrelid</entry>
       <entry><type>oid</type></entry>
       <entry>pg_class.oid</entry>
-      <entry>The oid of the pg_class entry for the table this index is for</entry>
+      <entry>The OID of the pg_class entry for the table this index is for</entry>
      </row>
 
      <row>
       <entry>indproc</entry>
       <entry><type>regproc</type></entry>
       <entry>pg_proc.oid</entry>
-      <entry>The registered procedure if this is a functional index</entry>
+      <entry>The function's OID if this is a functional index,
+      else zero</entry>
      </row>
 
      <row>
@@ -1863,7 +1864,9 @@
        <symbol>INDEX_MAX_KEYS</symbol> values that indicate which
        table columns this index pertains to.  For example a value of
        <literal>1 3</literal> would mean that the first and the third
-       column make up the index key.
+       column make up the index key.  For a functional index, these
+       columns are the inputs to the function, and the function's return
+       value is the index key.
       </entry>
      </row>
 
@@ -1912,7 +1915,8 @@
       <entry><type>text</type></entry>
       <entry></entry>
       <entry>Expression tree (in the form of a nodeToString representation)
-      for partial index predicate</entry>
+      for partial index predicate.  Empty string if not a partial
+      index.</entry>
      </row>
     </tbody>
    </tgroup>
@@ -1947,9 +1951,7 @@
       <entry><type>oid</type></entry>
       <entry>pg_class.oid</entry>
       <entry>
-       This is the reference to the subtable, that is, it records the
-       fact that the identified table is inherited from some other
-       table.
+       The OID of the child table.
       </entry>
      </row>
 
@@ -1958,9 +1960,7 @@
       <entry><type>oid</type></entry>
       <entry>pg_class.oid</entry>
       <entry>
-       This is the reference to the parent table, which the table
-       referenced by <structfield>inhrelid</structfield> inherited
-       from.
+       The OID of the parent table.
       </entry>
      </row>
 
@@ -1969,7 +1969,7 @@
       <entry><type>int4</type></entry>
       <entry></entry>
       <entry>
-       If there is more than one parent for a subtable (multiple
+       If there is more than one parent for a child table (multiple
        inheritance), this number tells the order in which the
        inherited columns are to be arranged.  The count starts at 1.
       </entry>
@@ -2511,6 +2511,11 @@
    </tgroup>
   </table>
 
+  <para>
+   Unused fields contain zeroes, for example oprleft is zero for a
+   prefix operator.
+  </para>
+
  </sect1>
 
 
@@ -2582,10 +2587,11 @@
      </row>
 
      <row>
-      <entry>proistrusted</entry>
+      <entry>prosecdef</entry>
       <entry><type>bool</type></entry>
       <entry></entry>
-      <entry>not functional</entry>
+      <entry>Function is a security definer (i.e., a <quote>setuid</>
+      function)</entry>
      </row>
 
      <row>
@@ -2638,7 +2644,7 @@
       <entry>prorettype</entry>
       <entry><type>oid</type></entry>
       <entry>pg_type.oid</entry>
-      <entry>Data type of the return value (0 if the function does not return a value)</entry>
+      <entry>Data type of the return value</entry>
      </row>
 
      <row>
@@ -2722,14 +2728,6 @@
      </row>
 
      <row>
-      <entry>ev_type</entry>
-      <entry><type>char</type></entry>
-      <entry></entry>
-      <entry>Event type that the rule is for: '1' = SELECT,
-      '2' = UPDATE, '3' = INSERT, '4' = DELETE</entry>
-     </row>
-
-     <row>
       <entry>ev_class</entry>
       <entry><type>oid</type></entry>
       <entry>pg_class.oid</entry>
@@ -2742,6 +2740,14 @@
       <entry></entry>
       <entry>The column this rule is for (currently, always zero to
       indicate the whole table)</entry>
+     </row>
+
+     <row>
+      <entry>ev_type</entry>
+      <entry><type>char</type></entry>
+      <entry></entry>
+      <entry>Event type that the rule is for: '1' = SELECT,
+      '2' = UPDATE, '3' = INSERT, '4' = DELETE</entry>
      </row>
 
      <row>
@@ -3054,7 +3060,7 @@
       <entry>tgname</entry>
       <entry><type>name</type></entry>
       <entry></entry>
-      <entry>Trigger name (need not be unique)</entry>
+      <entry>Trigger name (must be unique among triggers of same table)</entry>
      </row>
 
      <row>
@@ -3084,7 +3090,7 @@
       <entry>tgisconstraint</entry>
       <entry><type>bool</type></entry>
       <entry></entry>
-      <entry>True if trigger is a RI constraint</entry>
+      <entry>True if trigger implements an RI constraint</entry>
      </row>
 
      <row>
@@ -3251,7 +3257,7 @@
       <entry></entry>
       <entry>True if the type is defined, false if this is a placeholder
       entry for a not-yet-defined type.  When typisdefined is false,
-      nothing except the type name and OID can be relied on.
+      nothing except the type name, namespace, and OID can be relied on.
       </entry>
      </row>
 
@@ -3306,14 +3312,14 @@
       <entry>typinput</entry>
       <entry><type>regproc</type></entry>
       <entry>pg_proc.oid</entry>
-      <entry>Input function</entry>
+      <entry>Input conversion function</entry>
      </row>
 
      <row>
       <entry>typoutput</entry>
       <entry><type>regproc</type></entry>
       <entry>pg_proc.oid</entry>
-      <entry>Output function</entry>
+      <entry>Output conversion function</entry>
      </row>
 
      <row>
@@ -3417,15 +3423,10 @@
       <entry><type>int4</type></entry>
       <entry></entry>
       <entry><para>
-       <structfield>typtypmod</structfield> records type-specific data
-       supplied at table creation time (for example, the maximum
-       length of a <type>varchar</type> column).  It is passed to
-       type-specific input and output functions as the third
-       argument. The value will generally be -1 for types that do not
-       need typmod.  This value is copied to
-       <structfield>pg_attribute.atttypmod</structfield> when
-       creating a column of a domain type.
-       </para></entry>
+       Domains use <structfield>typtypmod</structfield> to record the typmod
+       to be applied to their base type (-1 if base type does not use a
+       typmod).  -1 if this type is not a domain.
+      </para></entry>
      </row>
 
      <row>
@@ -3434,11 +3435,9 @@
       <entry></entry>
       <entry><para>
        <structfield>typndims</structfield> is the number of array dimensions
-       for a domain that is an array.  (The array element type is
-       typbasetype.)  Zero for non-domains and non-array domains.
-       This value is copied to
-       <structfield>pg_attribute.attndims</structfield> when
-       creating a column of a domain type.
+       for a domain that is an array (that is, typbasetype is an array type;
+       the domain's typelem will match the base type's typelem).
+       Zero for non-domains and non-array domains.
        </para></entry>
      </row>
 
