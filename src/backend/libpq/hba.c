@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.90 2002/12/06 04:37:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.91 2002/12/11 22:17:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -93,6 +93,7 @@ void
 next_token(FILE *fp, char *buf, const int bufsz)
 {
 	int			c;
+	char	   *start_buf = buf;
 	char	   *end_buf = buf + (bufsz - 1);
 	bool		in_quote = false;
 	bool		was_quote = false;
@@ -115,7 +116,10 @@ next_token(FILE *fp, char *buf, const int bufsz)
 			{
 				while ((c = getc(fp)) != EOF && c != '\n')
 					;
-				continue;
+				/* If only comment, consume EOL too; return EOL */
+				if (c != EOF && buf == start_buf)
+					c = getc(fp);
+				break;
 			}
 
 			if (buf >= end_buf)
