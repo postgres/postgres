@@ -6,7 +6,7 @@ find `pwd`/ \( -name _deadcode -a -prune \) -o \
 
 sort tags >/tmp/$$ && mv /tmp/$$ tags
 
-find . -type d -print |while read DIR
+find . -name  'CVS' -prune -o -type d -print  |while read DIR
 do
 	[ "$DIR" != "." ] && ln -f -s `pwd`/tags $DIR/tags
 done
