@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.53 1997/11/25 21:59:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.54 1997/12/17 04:44:50 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,7 +54,7 @@
 #include <sys/resource.h>
 #endif
 
-#include <port-protos.h>
+/* #include <port-protos.h> */
 
 extern int BlowawayRelationBuffers(Relation rdesc, BlockNumber block);
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.25 1997/12/06 22:56:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.26 1997/12/17 04:44:49 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -82,7 +82,9 @@
 #include <commands/async.h>
 #include <libpq/libpq.h>
 
-#include <port-protos.h>		/* for strdup() */
+#ifndef HAVE_STRDUP
+#  include <port-protos.h>		/* for strdup() */
+#endif
 
 #include <storage/lmgr.h>
 
