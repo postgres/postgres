@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.148 2005/03/10 23:21:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.149 2005/03/26 05:53:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -287,44 +287,83 @@ static void
 rewriteTargetList(Query *parsetree, Relation target_relation)
 {
 	CmdType		commandType = parsetree->commandType;
-	List	   *tlist = parsetree->targetList;
+	TargetEntry **new_tles;
 	List	   *new_tlist = NIL;
+	List	   *junk_tlist = NIL;
+	Form_pg_attribute att_tup;
 	int			attrno,
+				next_junk_attrno,
 				numattrs;
 	ListCell   *temp;
 
 	/*
-	 * Scan the tuple description in the relation's relcache entry to make
-	 * sure we have all the user attributes in the right order.
+	 * We process the normal (non-junk) attributes by scanning the input
+	 * tlist once and transferring TLEs into an array, then scanning the
+	 * array to build an output tlist.  This avoids O(N^2) behavior for
+	 * large numbers of attributes.
+	 *
+	 * Junk attributes are tossed into a separate list during the same
+	 * tlist scan, then appended to the reconstructed tlist.
 	 */
 	numattrs = RelationGetNumberOfAttributes(target_relation);
+	new_tles = (TargetEntry **) palloc0(numattrs * sizeof(TargetEntry *));
+	next_junk_attrno = numattrs + 1;
+
+	foreach(temp, parsetree->targetList)
+	{
+		TargetEntry *old_tle = (TargetEntry *) lfirst(temp);
+		Resdom	   *resdom = old_tle->resdom;
+
+		if (!resdom->resjunk)
+		{
+			/* Normal attr: stash it into new_tles[] */
+			attrno = resdom->resno;
+			if (attrno < 1 || attrno > numattrs)
+				elog(ERROR, "bogus resno %d in targetlist", attrno);
+			att_tup = target_relation->rd_att->attrs[attrno - 1];
+
+			/* We can (and must) ignore deleted attributes */
+			if (att_tup->attisdropped)
+				continue;
+
+			/* Merge with any prior assignment to same attribute */
+			new_tles[attrno - 1] =
+				process_matched_tle(old_tle,
+									new_tles[attrno - 1],
+									NameStr(att_tup->attname));
+		}
+		else
+		{
+			/*
+			 * Copy all resjunk tlist entries to junk_tlist, and
+			 * assign them resnos above the last real resno.
+			 *
+			 * Typical junk entries include ORDER BY or GROUP BY expressions
+			 * (are these actually possible in an INSERT or UPDATE?), system
+			 * attribute references, etc.
+			 */
+
+			/* Get the resno right, but don't copy unnecessarily */
+			if (resdom->resno != next_junk_attrno)
+			{
+				resdom = (Resdom *) copyObject((Node *) resdom);
+				resdom->resno = next_junk_attrno;
+				old_tle = makeTargetEntry(resdom, old_tle->expr);
+			}
+			junk_tlist = lappend(junk_tlist, old_tle);
+			next_junk_attrno++;
+		}
+	}
 
 	for (attrno = 1; attrno <= numattrs; attrno++)
 	{
-		Form_pg_attribute att_tup = target_relation->rd_att->attrs[attrno - 1];
-		TargetEntry *new_tle = NULL;
+		TargetEntry *new_tle = new_tles[attrno - 1];
 
-		/* We can ignore deleted attributes */
+		att_tup = target_relation->rd_att->attrs[attrno - 1];
+
+		/* We can (and must) ignore deleted attributes */
 		if (att_tup->attisdropped)
 			continue;
-
-		/*
-		 * Look for targetlist entries matching this attr.
-		 *
-		 * Junk attributes are not candidates to be matched.
-		 */
-		foreach(temp, tlist)
-		{
-			TargetEntry *old_tle = (TargetEntry *) lfirst(temp);
-			Resdom	   *resdom = old_tle->resdom;
-
-			if (!resdom->resjunk && resdom->resno == attrno)
-			{
-				new_tle = process_matched_tle(old_tle, new_tle,
-											  NameStr(att_tup->attname));
-				/* keep scanning to detect multiple assignments to attr */
-			}
-		}
 
 		/*
 		 * Handle the two cases where we need to insert a default
@@ -332,7 +371,7 @@ rewriteTargetList(Query *parsetree, Relation target_relation)
 		 * column, or the tlist entry is a DEFAULT placeholder node.
 		 */
 		if ((new_tle == NULL && commandType == CMD_INSERT) ||
-		  (new_tle && new_tle->expr && IsA(new_tle->expr, SetToDefault)))
+			(new_tle && new_tle->expr && IsA(new_tle->expr, SetToDefault)))
 		{
 			Node	   *new_expr;
 
@@ -380,40 +419,9 @@ rewriteTargetList(Query *parsetree, Relation target_relation)
 			new_tlist = lappend(new_tlist, new_tle);
 	}
 
-	/*
-	 * Copy all resjunk tlist entries to the end of the new tlist, and
-	 * assign them resnos above the last real resno.
-	 *
-	 * Typical junk entries include ORDER BY or GROUP BY expressions (are
-	 * these actually possible in an INSERT or UPDATE?), system attribute
-	 * references, etc.
-	 */
-	foreach(temp, tlist)
-	{
-		TargetEntry *old_tle = (TargetEntry *) lfirst(temp);
-		Resdom	   *resdom = old_tle->resdom;
+	pfree(new_tles);
 
-		if (resdom->resjunk)
-		{
-			/* Get the resno right, but don't copy unnecessarily */
-			if (resdom->resno != attrno)
-			{
-				resdom = (Resdom *) copyObject((Node *) resdom);
-				resdom->resno = attrno;
-				old_tle = makeTargetEntry(resdom, old_tle->expr);
-			}
-			new_tlist = lappend(new_tlist, old_tle);
-			attrno++;
-		}
-		else
-		{
-			/* Let's just make sure we processed all the non-junk items */
-			if (resdom->resno < 1 || resdom->resno > numattrs)
-				elog(ERROR, "bogus resno %d in targetlist", resdom->resno);
-		}
-	}
-
-	parsetree->targetList = new_tlist;
+	parsetree->targetList = list_concat(new_tlist, junk_tlist);
 }
 
 
