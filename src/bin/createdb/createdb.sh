@@ -11,7 +11,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/createdb/Attic/createdb.sh,v 1.5 1996/11/14 10:24:46 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/bin/createdb/Attic/createdb.sh,v 1.6 1996/11/17 03:54:44 bryanh Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -42,27 +42,27 @@ do
     shift;
 done
 
-if [-z "$AUTHSYS" ]; then
-  AUTHOPT = ""
+if [ -z "$AUTHSYS" ]; then
+  AUTHOPT=""
 else
-  AUTHOPT = "-a $AUTHSYS"
+  AUTHOPT="-a $AUTHSYS"
 fi
 
-if [-z "$PGHOST" ]; then
-  PGHOSTOPT = ""
+if [ -z "$PGHOST" ]; then
+  PGHOSTOPT=""
 else
-  PGHOSTOPT = "-h $PGHOST"
+  PGHOSTOPT="-h $PGHOST"
 fi
 
-if [-z "$PGPORT" ]; then
-  PGPORTOPT = ""
+if [ -z "$PGPORT" ]; then
+  PGPORTOPT=""
 else
-  PGPORTOPT = "-p $PGPORT"
+  PGPORTOPT="-p $PGPORT"
 fi
 
 psql -tq $AUTHOPT $PGHOSTOPT $PGPORTOPT -c "create database $dbname" template1
 
-if [ $? -ne 0 ]
+if [ $? -ne 0 ]; then
     echo "$CMDNAME: database creation failed on $dbname."
     exit 1
 fi

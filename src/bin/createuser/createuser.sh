@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/createuser/Attic/createuser.sh,v 1.6 1996/11/14 10:24:54 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/bin/createuser/Attic/createuser.sh,v 1.7 1996/11/17 03:54:54 bryanh Exp $
 #
 # Note - this should NOT be setuid.
 #
@@ -39,25 +39,25 @@ do
     shift;
 done
 
-if [-z "$AUTHSYS" ]; then
-  AUTHOPT = ""
+if [ -z "$AUTHSYS" ]; then
+  AUTHOPT=""
 else
-  AUTHOPT = "-a $AUTHSYS"
+  AUTHOPT="-a $AUTHSYS"
 fi
 
-if [-z "$PGHOST" ]; then
-  PGHOSTOPT = ""
+if [ -z "$PGHOST" ]; then
+  PGHOSTOPT=""
 else
-  PGHOSTOPT = "-h $PGHOST"
+  PGHOSTOPT="-h $PGHOST"
 fi
 
-if [-z "$PGPORT" ]; then
-  PGPORTOPT = ""
+if [ -z "$PGPORT" ]; then
+  PGPORTOPT=""
 else
-  PGPORTOPT = "-p $PGPORT"
+  PGPORTOPT="-p $PGPORT"
 fi
 
-PARGS="-tq $AUTHOPT $PGHOSTOPT $PGPORTOPT
+PARGS="-tq $AUTHOPT $PGHOSTOPT $PGPORTOPT"
 
 #
 # generate the first part of the actual monitor command
