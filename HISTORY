@@ -5,6 +5,9 @@ by The PostgreSQL Development Team
 PostgreSQL is Copyright © 1996-9 by the Postgres Global Development Group.
 
 Table of Contents
+          Release 6.5.1                                         
+             Migration to v6.5.1                                
+             Detailed Change List                               
           Release 6.5                                           
              Migration to v6.5                                  
                  Multi-Version Concurrency Control              
@@ -57,6 +60,43 @@ Table of Contents
           Postgres95 Beta 0.02                                  
              Detailed Change List                               
           Postgres95 Beta 0.01                                  
+
+Release 6.5.1
+
+        This is basically a cleanup release for 6.5.  We have fixed a
+       variety of problems reported by 6.5 users.
+
+Migration to v6.5.1
+
+       A dump/restore is not required for those running 6.5.
+
+Detailed Change List
+
+       Fix for datetime constant problem on some platforms(Thomas)
+       Add NT README file
+       Portability fixes for linux_ppc, Irix, linux_alpha, OpenBSD, alpha
+       Remove QUERY_LIMIT, use SELECT...LIMIT
+       Fix for EXPLAIN on inheritance(Tom)
+       Patch to allow vacuum on multi-segment tables(Hiroshi)
+       R-Tree optimizer selectivity fix(Tom)
+       ACL file descriptor leak fix(Atsushi Ogawa)
+       New expresssion subtree code(Tom)
+       Avoid disk writes for read-only transactions(Vadim)
+       Fix for removal of temp tables if last transaction was aborted(Bruce)
+       Fix to prevent too large tuple from being created(Bruce)
+       plpgsql fixes
+       Allow port numbers 32k - 64k(Bruce)
+       Add ^ precedence(Bruce)
+       Rename sort files called pg_temp to pg_sorttemp(Bruce)
+       Fix for microseconds in time values(Tom)
+       Tutorial source cleanup
+       New linux_m68k port
+       Fix for sorting of NULL's in some cases(Tom)
+       Shared library dependencies fixed (Tom)
+       Fixed glitches affecting GROUP BY in subselects(Tom)
+       Fix some compiler warnings (Tomoaki Nishiyama)
+       Add Win1250 (Czech) support (Pavel Behal)
+
 
 Release 6.5
 
@@ -166,8 +206,6 @@ Migration to v6.5
        true referential integrity will be implemented. 
 
 Detailed Change List
-
-        
 
        Bug Fixes
        ---------
@@ -350,9 +388,6 @@ Detailed Change List
        leak(Tom)
        New install commands for plpgsql(Jan)
             
-
-        
-
 Release 6.4.2
 
        The 6.4.1 release was improperly packaged. This also has one 
