@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.46 1997/11/14 15:38:31 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.47 1997/11/17 16:42:39 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -350,49 +350,43 @@ PQsetdb(const char *pghost, const char *pgport, const char *pgoptions, const cha
 		conn->port = NULL;
 		conn->notifyList = DLNewList();
 
-		if (!pghost || pghost[0] == '\0')
+		if ((pghost == NULL) || pghost[0] == '\0')
 		{
 			conn->pghost = NULL;
-			if (tmp = getenv("PGHOST"))
+			if ((tmp = getenv("PGHOST")) != NULL)
 				conn->pghost = strdup(tmp);
 		}
 		else
 			conn->pghost = strdup(pghost);
 
-		if (!pgport || pgport[0] == '\0')
+		if ((pgport == NULL) || pgport[0] == '\0')
 		{
-			if (!(tmp = getenv("PGPORT")))
-			{
+			if ((tmp = getenv("PGPORT")) == NULL)
 				tmp = DEF_PGPORT;
-			}
 			conn->pgport = strdup(tmp);
 		}
 		else
 			conn->pgport = strdup(pgport);
 
-		if (!pgtty || pgtty[0] == '\0')
+		if ((pgtty == NULL) || pgtty[0] == '\0')
 		{
-			if (!(tmp = getenv("PGTTY")))
-			{
+			if ((tmp = getenv("PGTTY")) == NULL)
 				tmp = DefaultTty;
-			}
 			conn->pgtty = strdup(tmp);
 		}
 		else
 			conn->pgtty = strdup(pgtty);
 
-		if (!pgoptions || pgoptions[0] == '\0')
+		if ((pgoptions == NULL) || pgoptions[0] == '\0')
 		{
-			if (!(tmp = getenv("PGOPTIONS")))
-			{
+			if ((tmp = getenv("PGOPTIONS")) == NULL)
 				tmp = DefaultOption;
-			}
 			conn->pgoptions = strdup(tmp);
 		}
 		else
 			conn->pgoptions = strdup(pgoptions);
 
-		if ((tmp = getenv("PGUSER")))
+		if ((tmp = getenv("PGUSER")) != NULL)
 		{
 			error = FALSE;
 			conn->pguser = strdup(tmp);
@@ -413,19 +407,15 @@ PQsetdb(const char *pghost, const char *pgport, const char *pgoptions, const cha
 			}
 		}
 
-		if ((tmp = getenv("PGPASSWORD")))
-		{
+		if ((tmp = getenv("PGPASSWORD")) != NULL)
 			conn->pgpass = strdup(tmp);
-		}
 		else
-		{
 			conn->pgpass = 0;
-		}
 
 		if (!error)
 		{
-			if (((tmp = (char *) dbName) && (dbName[0] != '\0')) ||
-				((tmp = getenv("PGDATABASE"))))
+			if ((((tmp = (char *) dbName) != NULL) && (dbName[0] != '\0'))
+				|| ((tmp = getenv("PGDATABASE"))))
 				conn->dbName = strdup(tmp);
 			else
 				conn->dbName = strdup(conn->pguser);
@@ -523,17 +513,25 @@ connectDB(PGconn *conn)
 	port = (Port *) malloc(sizeof(Port));
 	MemSet((char *) port, 0, sizeof(Port));
 
-	if (conn->pghost &&
-	  (!(hp = gethostbyname(conn->pghost)) || hp->h_addrtype != AF_INET))
+	if (conn->pghost != NULL)
 	{
-		(void) sprintf(conn->errorMessage,
-					   "connectDB() --  unknown hostname: %s\n",
-					   conn->pghost);
-		goto connect_errReturn;
-	}
+		hp = gethostbyname(conn->pghost);
+		if ((hp == NULL) || (hp->h_addrtype != AF_INET))
+		{
+			(void) sprintf(conn->errorMessage,
+						   "connectDB() --  unknown hostname: %s\n",
+						   conn->pghost);
+			goto connect_errReturn;
+		}
+	} else
+		hp = NULL;
+
+#if FALSE
 	MemSet((char *) &port->raddr, 0, sizeof(port->raddr));
+#endif
 	portno = atoi(conn->pgport);
-	port->raddr.in.sin_family = family = conn->pghost ? AF_INET : AF_UNIX;
+	family = (conn->pghost != NULL) ? AF_INET : AF_UNIX;
+	port->raddr.in.sin_family = family;
 	if (family == AF_INET)
 	{
 		memmove((char *) &(port->raddr.in.sin_addr),
@@ -620,7 +618,7 @@ connectDB(PGconn *conn)
 	}
 
 	/* free the password so it's not hanging out in memory forever */
-	if (conn->pgpass)
+	if (conn->pgpass != NULL)
 	{
 		free(conn->pgpass);
 	}
@@ -628,7 +626,7 @@ connectDB(PGconn *conn)
 	/* set up the socket file descriptors */
 	conn->Pfout = fdopen(port->sock, "w");
 	conn->Pfin = fdopen(dup(port->sock), "r");
-	if (!conn->Pfout || !conn->Pfin)
+	if ((conn->Pfout == NULL) || (conn->Pfin == NULL))
 	{
 		(void) sprintf(conn->errorMessage,
 					   "connectDB() -- fdopen() failed: errno=%d\n%s\n",
