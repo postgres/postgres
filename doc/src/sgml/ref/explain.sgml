@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/explain.sgml,v 1.8 1999/07/22 15:09:12 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/explain.sgml,v 1.9 2000/02/15 23:37:49 tgl Exp $
 Postgres documentation
 -->
 
@@ -15,7 +15,7 @@ Postgres documentation
    EXPLAIN
   </refname>
   <refpurpose>
-   Shows statement execution details
+   Shows statement execution plan
   </refpurpose>
  </refnamediv>
 
@@ -102,12 +102,32 @@ EXPLAIN
   </title>
 
   <para>
-   This command outputs details about the supplied query.
-   The default output is the computed query cost. 
-   The cost value is only meaningful to the optimizer in comparing
-   various query plans.
-   VERBOSE displays the full query plan and cost to your screen,
-   and pretty-prints the plan to the postmaster log file.   
+   This command displays the execution plan that the Postgres planner
+   generates for the supplied query.  The execution plan shows how
+   the table(s) referenced by the query will be scanned --- by plain
+   sequential scan, index scan etc --- and if multiple tables are
+   referenced, what join algorithms will be used to bring together
+   the required tuples from each input table.
+  </para>
+
+  <para>
+   The most critical part of the display is the estimated query execution
+   cost, which is the planner's guess at how long it will take to run the
+   query (measured in units of disk page fetches).  Actually two numbers
+   are shown: the startup time before the first tuple can be returned, and
+   the total time to return all the tuples.  For most queries the total time
+   is what matters, but in contexts such as an EXISTS sub-query the planner
+   will choose the smallest startup time instead of the smallest total time
+   (since the executor will stop after getting one tuple, anyway).
+   Also, if you limit the number of tuples to return with a LIMIT clause,
+   the planner makes an appropriate interpolation between the endpoint
+   costs to estimate which plan is really the cheapest.
+  </para>
+
+  <para>
+   The VERBOSE option emits the full internal representation of the plan tree,
+   rather than just a summary (and sends it to the postmaster log file, too).
+   Usually this option is only useful for debugging Postgres.
   </para>
 
   <refsect2 id="R2-SQL-EXPLAIN-3">
@@ -143,7 +163,7 @@ EXPLAIN SELECT * FROM foo;
     <computeroutput>
 NOTICE:  QUERY PLAN:
 
-Seq Scan on foo  (cost=5.22 rows=128 width=4)
+Seq Scan on foo  (cost=0.00..2.28 rows=128 width=4)
 
 EXPLAIN
     </computeroutput>
@@ -160,7 +180,7 @@ EXPLAIN SELECT * FROM foo WHERE i = 4;
     <computeroutput>
 NOTICE:  QUERY PLAN:
 
-Index Scan using fi on foo  (cost=2.05 rows=1 width=4)
+Index Scan using fi on foo  (cost=0.00..0.42 rows=1 width=4)
 
 EXPLAIN
     </computeroutput>
@@ -178,10 +198,15 @@ EXPLAIN SELECT sum(i) FROM foo WHERE i = 4;
     <computeroutput>
 NOTICE:  QUERY PLAN:
 
-Aggregate  (cost=2.05 rows=1 width=4)
-  ->  Index Scan using fi on foo  (cost=2.05 rows=1 width=4)
+Aggregate  (cost=0.42..0.42 rows=1 width=4)
+  ->  Index Scan using fi on foo  (cost=0.00..0.42 rows=1 width=4)
     </computeroutput>
    </programlisting>
+  </para>
+
+  <para>
+   Note that the specific numbers shown, and even the selected query
+   strategy, may vary between Postgres releases due to planner improvements.
   </para>
  </refsect1>
 
