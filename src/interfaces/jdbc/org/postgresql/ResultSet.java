@@ -18,6 +18,7 @@ public abstract class ResultSet
   protected Vector rows;			// The results
   protected Field fields[];		// The field descriptions
   protected String status;		// Status of the result
+  protected boolean binaryCursor = false; // is the data binary or Strings
   protected int updateCount;		// How many rows did we get back?
   protected int insertOID;		// The oid of an inserted row
   protected int current_row;		// Our pointer to where we are at
@@ -41,7 +42,7 @@ public abstract class ResultSet
    * @param updateCount the number of rows affected by the operation
    * @param cursor the positioned update/delete cursor name
    */
-  public ResultSet(Connection conn, Field[] fields, Vector tuples, String status, int updateCount,int insertOID)
+  public ResultSet(Connection conn, Field[] fields, Vector tuples, String status, int updateCount,int insertOID, boolean binaryCursor)
   {
     this.connection = conn;
     this.fields = fields;
@@ -51,6 +52,7 @@ public abstract class ResultSet
     this.insertOID = insertOID;
     this.this_row = null;
     this.current_row = -1;
+    this.binaryCursor = binaryCursor;
   }
 
 
@@ -65,10 +67,10 @@ public abstract class ResultSet
    * @param updateCount the number of rows affected by the operation
    * @param cursor the positioned update/delete cursor name
    */
-  public ResultSet(Connection conn, Field[] fields, Vector tuples, String status, int updateCount)
-  {
-      this(conn,fields,tuples,status,updateCount,0);
-  }
+   public ResultSet(Connection conn, Field[] fields, Vector tuples, String status, int updateCount)
+   {
+       this(conn,fields,tuples,status,updateCount,0,false);
+   }
 
   /**
    * We at times need to know if the resultSet we are working
@@ -172,7 +174,7 @@ public abstract class ResultSet
      */
     public int getInsertedOID()
     {
-	return insertOID;
+        return insertOID;
     }
 
     /**

@@ -70,9 +70,9 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
    * @param updateCount the number of rows affected by the operation
    * @param cursor the positioned update/delete cursor name
    */
-  public ResultSet(Connection conn, Field[] fields, Vector tuples, String status, int updateCount,int insertOID)
+  public ResultSet(Connection conn, Field[] fields, Vector tuples, String status, int updateCount, int insertOID, boolean binaryCursor)
   {
-      super(conn,fields,tuples,status,updateCount,insertOID);
+      super(conn,fields,tuples,status,updateCount,insertOID,binaryCursor);
   }
   
   /**
@@ -86,10 +86,10 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
    * @param updateCount the number of rows affected by the operation
    * @param cursor the positioned update/delete cursor name
    */
-  public ResultSet(Connection conn, Field[] fields, Vector tuples, String status, int updateCount)
-  {
-      super(conn,fields,tuples,status,updateCount,0);
-  }
+   public ResultSet(Connection conn, Field[] fields, Vector tuples, String status, int updateCount)
+   {
+       super(conn,fields,tuples,status,updateCount,0,false);
+   }
   
   /**
    * A ResultSet is initially positioned before its first row,
@@ -375,6 +375,9 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
     if (columnIndex < 1 || columnIndex > fields.length)
       throw new PSQLException("postgresql.res.colrange");
     
+    //If the data is already binary then just return it
+    if (binaryCursor) return this_row[columnIndex - 1];
+
     if (connection.haveMinimumCompatibleVersion("7.2")) {
       //Version 7.2 supports the bytea datatype for byte arrays
       return PGbytea.toBytes(getString(columnIndex));

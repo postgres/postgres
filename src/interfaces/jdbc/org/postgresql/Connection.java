@@ -11,7 +11,7 @@ import org.postgresql.util.*;
 import org.postgresql.core.*;
 
 /**
- * $Id: Connection.java,v 1.29 2001/09/10 15:07:05 momjian Exp $
+ * $Id: Connection.java,v 1.30 2001/10/09 20:47:35 barry Exp $
  *
  * This abstract class is used by org.postgresql.Driver to open either the JDBC1 or
  * JDBC2 versions of the Connection class.
@@ -130,104 +130,104 @@ public abstract class Connection
     // Now make the initial connection
     try
       {
-	pg_stream = new PG_Stream(host, port);
+        pg_stream = new PG_Stream(host, port);
       } catch (ConnectException cex) {
-	// Added by Peter Mount <peter@retep.org.uk>
-	// ConnectException is thrown when the connection cannot be made.
-	// we trap this an return a more meaningful message for the end user
-	throw new PSQLException ("postgresql.con.refused");
+        // Added by Peter Mount <peter@retep.org.uk>
+        // ConnectException is thrown when the connection cannot be made.
+        // we trap this an return a more meaningful message for the end user
+        throw new PSQLException ("postgresql.con.refused");
       } catch (IOException e) {
-	throw new PSQLException ("postgresql.con.failed",e);
+        throw new PSQLException ("postgresql.con.failed",e);
       }
 
       // Now we need to construct and send a startup packet
       try
-	{
-	  // Ver 6.3 code
-	  pg_stream.SendInteger(4+4+SM_DATABASE+SM_USER+SM_OPTIONS+SM_UNUSED+SM_TTY,4);
-	  pg_stream.SendInteger(PG_PROTOCOL_LATEST_MAJOR,2);
-	  pg_stream.SendInteger(PG_PROTOCOL_LATEST_MINOR,2);
-	  pg_stream.Send(database.getBytes(),SM_DATABASE);
+        {
+          // Ver 6.3 code
+          pg_stream.SendInteger(4+4+SM_DATABASE+SM_USER+SM_OPTIONS+SM_UNUSED+SM_TTY,4);
+          pg_stream.SendInteger(PG_PROTOCOL_LATEST_MAJOR,2);
+          pg_stream.SendInteger(PG_PROTOCOL_LATEST_MINOR,2);
+          pg_stream.Send(database.getBytes(),SM_DATABASE);
 
-	  // This last send includes the unused fields
-	  pg_stream.Send(PG_USER.getBytes(),SM_USER+SM_OPTIONS+SM_UNUSED+SM_TTY);
+          // This last send includes the unused fields
+          pg_stream.Send(PG_USER.getBytes(),SM_USER+SM_OPTIONS+SM_UNUSED+SM_TTY);
 
-	  // now flush the startup packets to the backend
-	  pg_stream.flush();
+          // now flush the startup packets to the backend
+          pg_stream.flush();
 
-	  // Now get the response from the backend, either an error message
-	  // or an authentication request
-	  int areq = -1; // must have a value here
-	  do {
-	    int beresp = pg_stream.ReceiveChar();
-	    switch(beresp)
-	      {
-	      case 'E':
-		// An error occured, so pass the error message to the
-		// user.
-		//
-		// The most common one to be thrown here is:
-		// "User authentication failed"
-		//
+          // Now get the response from the backend, either an error message
+          // or an authentication request
+          int areq = -1; // must have a value here
+          do {
+            int beresp = pg_stream.ReceiveChar();
+            switch(beresp)
+              {
+              case 'E':
+                // An error occured, so pass the error message to the
+                // user.
+                //
+                // The most common one to be thrown here is:
+                // "User authentication failed"
+                //
                 throw new SQLException(pg_stream.ReceiveString(encoding));
 
-	      case 'R':
-		// Get the type of request
-		areq = pg_stream.ReceiveIntegerR(4);
+              case 'R':
+                // Get the type of request
+                areq = pg_stream.ReceiveIntegerR(4);
 
-		// Get the password salt if there is one
-		if(areq == AUTH_REQ_CRYPT) {
-		  byte[] rst = new byte[2];
-		  rst[0] = (byte)pg_stream.ReceiveChar();
-		  rst[1] = (byte)pg_stream.ReceiveChar();
-		  salt = new String(rst,0,2);
-		  DriverManager.println("Salt="+salt);
-		}
+                // Get the password salt if there is one
+                if(areq == AUTH_REQ_CRYPT) {
+                  byte[] rst = new byte[2];
+                  rst[0] = (byte)pg_stream.ReceiveChar();
+                  rst[1] = (byte)pg_stream.ReceiveChar();
+                  salt = new String(rst,0,2);
+                  DriverManager.println("Salt="+salt);
+                }
 
-		// now send the auth packet
-		switch(areq)
-		  {
-		  case AUTH_REQ_OK:
-		    break;
+                // now send the auth packet
+                switch(areq)
+                  {
+                  case AUTH_REQ_OK:
+                    break;
 
-		  case AUTH_REQ_KRB4:
-		    DriverManager.println("postgresql: KRB4");
-		    throw new PSQLException("postgresql.con.kerb4");
+                  case AUTH_REQ_KRB4:
+                    DriverManager.println("postgresql: KRB4");
+                    throw new PSQLException("postgresql.con.kerb4");
 
-		  case AUTH_REQ_KRB5:
-		    DriverManager.println("postgresql: KRB5");
-		    throw new PSQLException("postgresql.con.kerb5");
+                  case AUTH_REQ_KRB5:
+                    DriverManager.println("postgresql: KRB5");
+                    throw new PSQLException("postgresql.con.kerb5");
 
-		  case AUTH_REQ_PASSWORD:
-		    DriverManager.println("postgresql: PASSWORD");
-		    pg_stream.SendInteger(5+PG_PASSWORD.length(),4);
-		    pg_stream.Send(PG_PASSWORD.getBytes());
-		    pg_stream.SendInteger(0,1);
-		    pg_stream.flush();
-		    break;
+                  case AUTH_REQ_PASSWORD:
+                    DriverManager.println("postgresql: PASSWORD");
+                    pg_stream.SendInteger(5+PG_PASSWORD.length(),4);
+                    pg_stream.Send(PG_PASSWORD.getBytes());
+                    pg_stream.SendInteger(0,1);
+                    pg_stream.flush();
+                    break;
 
-		  case AUTH_REQ_CRYPT:
-		    DriverManager.println("postgresql: CRYPT");
-		    String crypted = UnixCrypt.crypt(salt,PG_PASSWORD);
-		    pg_stream.SendInteger(5+crypted.length(),4);
-		    pg_stream.Send(crypted.getBytes());
-		    pg_stream.SendInteger(0,1);
-		    pg_stream.flush();
-		    break;
+                  case AUTH_REQ_CRYPT:
+                    DriverManager.println("postgresql: CRYPT");
+                    String crypted = UnixCrypt.crypt(salt,PG_PASSWORD);
+                    pg_stream.SendInteger(5+crypted.length(),4);
+                    pg_stream.Send(crypted.getBytes());
+                    pg_stream.SendInteger(0,1);
+                    pg_stream.flush();
+                    break;
 
-		  default:
-		    throw new PSQLException("postgresql.con.auth",new Integer(areq));
-		  }
-		break;
+                  default:
+                    throw new PSQLException("postgresql.con.auth",new Integer(areq));
+                  }
+                break;
 
-	      default:
-		throw new PSQLException("postgresql.con.authfail");
-	      }
-	    } while(areq != AUTH_REQ_OK);
+              default:
+                throw new PSQLException("postgresql.con.authfail");
+              }
+            } while(areq != AUTH_REQ_OK);
 
-	} catch (IOException e) {
-	  throw new PSQLException("postgresql.con.failed",e);
-	}
+        } catch (IOException e) {
+          throw new PSQLException("postgresql.con.failed",e);
+        }
 
 
       // As of protocol version 2.0, we should now receive the cancellation key and the pid
@@ -237,8 +237,8 @@ public abstract class Connection
           pid = pg_stream.ReceiveInteger(4);
           ckey = pg_stream.ReceiveInteger(4);
           break;
-	case 'E':
-	case 'N':
+        case 'E':
+        case 'N':
            throw new SQLException(pg_stream.ReceiveString(encoding));
         default:
           throw new PSQLException("postgresql.con.setup");
@@ -248,9 +248,9 @@ public abstract class Connection
       beresp = pg_stream.ReceiveChar();
       switch(beresp) {
         case 'Z':
-	   break;
-	case 'E':
-	case 'N':
+           break;
+        case 'E':
+        case 'N':
            throw new SQLException(pg_stream.ReceiveString(encoding));
         default:
           throw new PSQLException("postgresql.con.setup");
@@ -264,16 +264,16 @@ public abstract class Connection
       // used, so we denote this with 'UNKNOWN'.
 
       final String encodingQuery =
-	  "case when pg_encoding_to_char(1) = 'SQL_ASCII' then 'UNKNOWN' else getdatabaseencoding() end";
+          "case when pg_encoding_to_char(1) = 'SQL_ASCII' then 'UNKNOWN' else getdatabaseencoding() end";
 
       // Set datestyle and fetch db encoding in a single call, to avoid making
       // more than one round trip to the backend during connection startup.
 
       java.sql.ResultSet resultSet =
-	  ExecSQL("set datestyle to 'ISO'; select version(), " + encodingQuery + ";");
+          ExecSQL("set datestyle to 'ISO'; select version(), " + encodingQuery + ";");
 
       if (! resultSet.next()) {
-	  throw new PSQLException("postgresql.con.failed", "failed getting backend encoding");
+          throw new PSQLException("postgresql.con.failed", "failed getting backend encoding");
       }
       String version = resultSet.getString(1);
       dbVersionNumber = extractVersionNumber(version);
@@ -299,28 +299,28 @@ public abstract class Connection
      */
     public void addWarning(String msg)
     {
-	DriverManager.println(msg);
+        DriverManager.println(msg);
 
-	// Add the warning to the chain
-	if(firstWarning!=null)
-	    firstWarning.setNextWarning(new SQLWarning(msg));
-	else
-	    firstWarning = new SQLWarning(msg);
+        // Add the warning to the chain
+        if(firstWarning!=null)
+            firstWarning.setNextWarning(new SQLWarning(msg));
+        else
+            firstWarning = new SQLWarning(msg);
 
-	// Now check for some specific messages
+        // Now check for some specific messages
 
-	// This is obsolete in 6.5, but I've left it in here so if we need to use this
-	// technique again, we'll know where to place it.
-	//
-	// This is generated by the SQL "show datestyle"
-	//if(msg.startsWith("NOTICE:") && msg.indexOf("DateStyle")>0) {
-	//// 13 is the length off "DateStyle is "
-	//msg = msg.substring(msg.indexOf("DateStyle is ")+13);
-	//
-	//for(int i=0;i<dateStyles.length;i+=2)
-	//if(msg.startsWith(dateStyles[i]))
-	//currentDateStyle=i+1; // this is the index of the format
-	//}
+        // This is obsolete in 6.5, but I've left it in here so if we need to use this
+        // technique again, we'll know where to place it.
+        //
+        // This is generated by the SQL "show datestyle"
+        //if(msg.startsWith("NOTICE:") && msg.indexOf("DateStyle")>0) {
+        //// 13 is the length off "DateStyle is "
+        //msg = msg.substring(msg.indexOf("DateStyle is ")+13);
+        //
+        //for(int i=0;i<dateStyles.length;i+=2)
+        //if(msg.startsWith(dateStyles[i]))
+        //currentDateStyle=i+1; // this is the index of the format
+        //}
     }
 
     /**
@@ -353,7 +353,7 @@ public abstract class Connection
      */
     public java.sql.ResultSet ExecSQL(String sql, java.sql.Statement stat) throws SQLException
     {
-	return new QueryExecutor(sql, stat, pg_stream, this).execute();
+        return new QueryExecutor(sql, stat, pg_stream, this).execute();
     }
 
     /**
@@ -371,7 +371,7 @@ public abstract class Connection
      */
     public void setCursorName(String cursor) throws SQLException
     {
-	this.cursor = cursor;
+        this.cursor = cursor;
     }
 
     /**
@@ -382,7 +382,7 @@ public abstract class Connection
      */
     public String getCursorName() throws SQLException
     {
-	return cursor;
+        return cursor;
     }
 
     /**
@@ -396,7 +396,7 @@ public abstract class Connection
      */
     public String getURL() throws SQLException
     {
-	return this_url;
+        return this_url;
     }
 
     /**
@@ -408,7 +408,7 @@ public abstract class Connection
      */
     public String getUserName() throws SQLException
     {
-	return PG_USER;
+        return PG_USER;
     }
 
     /**
@@ -442,9 +442,9 @@ public abstract class Connection
      */
     public Fastpath getFastpathAPI() throws SQLException
     {
-	if(fastpath==null)
-	    fastpath = new Fastpath(this,pg_stream);
-	return fastpath;
+        if(fastpath==null)
+            fastpath = new Fastpath(this,pg_stream);
+        return fastpath;
     }
 
     // This holds a reference to the Fastpath API if already open
@@ -471,9 +471,9 @@ public abstract class Connection
      */
     public LargeObjectManager getLargeObjectAPI() throws SQLException
     {
-	if(largeobject==null)
-	    largeobject = new LargeObjectManager(this);
-	return largeobject;
+        if(largeobject==null)
+            largeobject = new LargeObjectManager(this);
+        return largeobject;
     }
 
     // This holds a reference to the LargeObject API if already open
@@ -500,46 +500,46 @@ public abstract class Connection
      */
     public Object getObject(String type,String value) throws SQLException
     {
-	try {
-	    Object o = objectTypes.get(type);
+        try {
+            Object o = objectTypes.get(type);
 
-	    // If o is null, then the type is unknown, so check to see if type
-	    // is an actual table name. If it does, see if a Class is known that
-	    // can handle it
-	    if(o == null) {
-		Serialize ser = new Serialize(this,type);
-		objectTypes.put(type,ser);
-		return ser.fetch(Integer.parseInt(value));
-	    }
+            // If o is null, then the type is unknown, so check to see if type
+            // is an actual table name. If it does, see if a Class is known that
+            // can handle it
+            if(o == null) {
+                Serialize ser = new Serialize(this,type);
+                objectTypes.put(type,ser);
+                return ser.fetch(Integer.parseInt(value));
+            }
 
-	    // If o is not null, and it is a String, then its a class name that
-	    // extends PGobject.
-	    //
-	    // This is used to implement the org.postgresql unique types (like lseg,
-	    // point, etc).
-	    if(o instanceof String) {
-		// 6.3 style extending PG_Object
-		PGobject obj = null;
-		obj = (PGobject)(Class.forName((String)o).newInstance());
-		obj.setType(type);
-		obj.setValue(value);
-		return (Object)obj;
-	    } else {
-		// If it's an object, it should be an instance of our Serialize class
-		// If so, then call it's fetch method.
-		if(o instanceof Serialize)
-		    return ((Serialize)o).fetch(Integer.parseInt(value));
-	    }
-	} catch(SQLException sx) {
-	    // rethrow the exception. Done because we capture any others next
-	    sx.fillInStackTrace();
-	    throw sx;
-	} catch(Exception ex) {
-	    throw new PSQLException("postgresql.con.creobj",type,ex);
-	}
+            // If o is not null, and it is a String, then its a class name that
+            // extends PGobject.
+            //
+            // This is used to implement the org.postgresql unique types (like lseg,
+            // point, etc).
+            if(o instanceof String) {
+                // 6.3 style extending PG_Object
+                PGobject obj = null;
+                obj = (PGobject)(Class.forName((String)o).newInstance());
+                obj.setType(type);
+                obj.setValue(value);
+                return (Object)obj;
+            } else {
+                // If it's an object, it should be an instance of our Serialize class
+                // If so, then call it's fetch method.
+                if(o instanceof Serialize)
+                    return ((Serialize)o).fetch(Integer.parseInt(value));
+            }
+        } catch(SQLException sx) {
+            // rethrow the exception. Done because we capture any others next
+            sx.fillInStackTrace();
+            throw sx;
+        } catch(Exception ex) {
+            throw new PSQLException("postgresql.con.creobj",type,ex);
+        }
 
-	// should never be reached
-	return null;
+        // should never be reached
+        return null;
     }
 
     /**
@@ -551,34 +551,34 @@ public abstract class Connection
      */
     public int putObject(Object o) throws SQLException
     {
-	try {
-	    String type = o.getClass().getName();
-	    Object x = objectTypes.get(type);
+        try {
+            String type = o.getClass().getName();
+            Object x = objectTypes.get(type);
 
-	    // If x is null, then the type is unknown, so check to see if type
-	    // is an actual table name. If it does, see if a Class is known that
-	    // can handle it
-	    if(x == null) {
-		Serialize ser = new Serialize(this,type);
-		objectTypes.put(type,ser);
-		return ser.store(o);
-	    }
+            // If x is null, then the type is unknown, so check to see if type
+            // is an actual table name. If it does, see if a Class is known that
+            // can handle it
+            if(x == null) {
+                Serialize ser = new Serialize(this,type);
+                objectTypes.put(type,ser);
+                return ser.store(o);
+            }
 
-	    // If it's an object, it should be an instance of our Serialize class
-	    // If so, then call it's fetch method.
-	    if(x instanceof Serialize)
-		return ((Serialize)x).store(o);
+            // If it's an object, it should be an instance of our Serialize class
+            // If so, then call it's fetch method.
+            if(x instanceof Serialize)
+                return ((Serialize)x).store(o);
 
-	    // Thow an exception because the type is unknown
-	    throw new PSQLException("postgresql.con.strobj");
+            // Thow an exception because the type is unknown
+            throw new PSQLException("postgresql.con.strobj");
 
-	} catch(SQLException sx) {
-	    // rethrow the exception. Done because we capture any others next
-	    sx.fillInStackTrace();
-	    throw sx;
-	} catch(Exception ex) {
-	    throw new PSQLException("postgresql.con.strobjex",ex);
-	}
+        } catch(SQLException sx) {
+            // rethrow the exception. Done because we capture any others next
+            sx.fillInStackTrace();
+            throw sx;
+        } catch(Exception ex) {
+            throw new PSQLException("postgresql.con.strobjex",ex);
+        }
     }
 
     /**
@@ -603,7 +603,7 @@ public abstract class Connection
      */
     public void addDataType(String type,String name)
     {
-	objectTypes.put(type,name);
+        objectTypes.put(type,name);
     }
 
     // This holds the available types
@@ -615,21 +615,21 @@ public abstract class Connection
     // the full class name of the handling class.
     //
     private static final String defaultObjectTypes[][] = {
-	{"box",		"org.postgresql.geometric.PGbox"},
-	{"circle",	"org.postgresql.geometric.PGcircle"},
-	{"line",	"org.postgresql.geometric.PGline"},
-	{"lseg",	"org.postgresql.geometric.PGlseg"},
-	{"path",	"org.postgresql.geometric.PGpath"},
-	{"point",	"org.postgresql.geometric.PGpoint"},
-	{"polygon",	"org.postgresql.geometric.PGpolygon"},
-	{"money",	"org.postgresql.util.PGmoney"}
+        {"box",		"org.postgresql.geometric.PGbox"},
+        {"circle",	"org.postgresql.geometric.PGcircle"},
+        {"line",	"org.postgresql.geometric.PGline"},
+        {"lseg",	"org.postgresql.geometric.PGlseg"},
+        {"path",	"org.postgresql.geometric.PGpath"},
+        {"point",	"org.postgresql.geometric.PGpoint"},
+        {"polygon",	"org.postgresql.geometric.PGpolygon"},
+        {"money",	"org.postgresql.util.PGmoney"}
     };
 
     // This initialises the objectTypes hashtable
     private void initObjectTypes()
     {
-	for(int i=0;i<defaultObjectTypes.length;i++)
-	    objectTypes.put(defaultObjectTypes[i][0],defaultObjectTypes[i][1]);
+        for(int i=0;i<defaultObjectTypes.length;i++)
+            objectTypes.put(defaultObjectTypes[i][0],defaultObjectTypes[i][1]);
     }
 
     // These are required by other common classes
@@ -639,7 +639,7 @@ public abstract class Connection
      * This returns a resultset. It must be overridden, so that the correct
      * version (from jdbc1 or jdbc2) are returned.
      */
-    public abstract java.sql.ResultSet getResultSet(org.postgresql.Connection conn,java.sql.Statement stat, Field[] fields, Vector tuples, String status, int updateCount,int insertOID) throws SQLException;
+    public abstract java.sql.ResultSet getResultSet(org.postgresql.Connection conn,java.sql.Statement stat, Field[] fields, Vector tuples, String status, int updateCount,int insertOID, boolean binaryCursor) throws SQLException;
 
     /**
      * In some cases, it is desirable to immediately release a Connection's
@@ -653,14 +653,14 @@ public abstract class Connection
      * @exception SQLException if a database access error occurs
      */
     public void close() throws SQLException {
-	if (pg_stream != null) {
-	    try {
-		pg_stream.SendChar('X');
-		pg_stream.flush();
-		pg_stream.close();
-	    } catch (IOException e) {}
-	    pg_stream = null;
-	}
+        if (pg_stream != null) {
+            try {
+                pg_stream.SendChar('X');
+                pg_stream.flush();
+                pg_stream.close();
+            } catch (IOException e) {}
+            pg_stream = null;
+        }
     }
 
     /**
@@ -674,7 +674,7 @@ public abstract class Connection
      * @exception SQLException if a database access error occurs
      */
     public String nativeSQL(String sql) throws SQLException {
-	return sql;
+        return sql;
     }
 
     /**
@@ -688,7 +688,7 @@ public abstract class Connection
      * @exception SQLException if a database access error occurs
      */
     public SQLWarning getWarnings() throws SQLException {
-	return firstWarning;
+        return firstWarning;
     }
 
     /**
@@ -698,7 +698,7 @@ public abstract class Connection
      * @exception SQLException if a database access error occurs
      */
     public void clearWarnings() throws SQLException {
-	firstWarning = null;
+        firstWarning = null;
     }
 
 
@@ -713,7 +713,7 @@ public abstract class Connection
      * @exception SQLException if a database access error occurs
      */
     public void setReadOnly(boolean readOnly) throws SQLException {
-	this.readOnly = readOnly;
+        this.readOnly = readOnly;
     }
 
     /**
@@ -725,7 +725,7 @@ public abstract class Connection
      * @exception SQLException if a database access error occurs
      */
     public boolean isReadOnly() throws SQLException {
-	return readOnly;
+        return readOnly;
     }
 
     /**
@@ -747,19 +747,19 @@ public abstract class Connection
      * @exception SQLException if a database access error occurs
      */
     public void setAutoCommit(boolean autoCommit) throws SQLException {
-	if (this.autoCommit == autoCommit)
-	    return;
-	if (autoCommit)
-	    ExecSQL("end");
-	else {
+        if (this.autoCommit == autoCommit)
+            return;
+        if (autoCommit)
+            ExecSQL("end");
+        else {
           if (haveMinimumServerVersion("7.1")){
             ExecSQL("begin;"+getIsolationLevelSQL());
           }else{
-	    ExecSQL("begin");
-	    ExecSQL(getIsolationLevelSQL());
+            ExecSQL("begin");
+            ExecSQL(getIsolationLevelSQL());
           }
-	}
-	this.autoCommit = autoCommit;
+        }
+        this.autoCommit = autoCommit;
     }
 
     /**
@@ -770,7 +770,7 @@ public abstract class Connection
      * @see setAutoCommit
      */
     public boolean getAutoCommit() throws SQLException {
-	return this.autoCommit;
+        return this.autoCommit;
     }
 
     /**
@@ -784,14 +784,14 @@ public abstract class Connection
      * @see setAutoCommit
      */
     public void commit() throws SQLException {
-	if (autoCommit)
-	    return;
-	if (haveMinimumServerVersion("7.1")){
-	  ExecSQL("commit;begin;"+getIsolationLevelSQL());
-	}else{
-	  ExecSQL("commit");
-	  ExecSQL("begin");
-	  ExecSQL(getIsolationLevelSQL());
+        if (autoCommit)
+            return;
+        if (haveMinimumServerVersion("7.1")){
+          ExecSQL("commit;begin;"+getIsolationLevelSQL());
+        }else{
+          ExecSQL("commit");
+          ExecSQL("begin");
+          ExecSQL(getIsolationLevelSQL());
         }
     }
 
@@ -804,15 +804,15 @@ public abstract class Connection
      * @see commit
      */
     public void rollback() throws SQLException {
-	if (autoCommit)
-	    return;
-	if (haveMinimumServerVersion("7.1")){
-	  ExecSQL("rollback; begin;"+getIsolationLevelSQL());
-	}else{
-	  ExecSQL("rollback");
-	  ExecSQL("begin");
-	  ExecSQL(getIsolationLevelSQL());
-	}
+        if (autoCommit)
+            return;
+        if (haveMinimumServerVersion("7.1")){
+          ExecSQL("rollback; begin;"+getIsolationLevelSQL());
+        }else{
+          ExecSQL("rollback");
+          ExecSQL("begin");
+          ExecSQL(getIsolationLevelSQL());
+        }
     }
 
     /**
@@ -822,29 +822,29 @@ public abstract class Connection
      * @exception SQLException if a database access error occurs
      */
     public int getTransactionIsolation() throws SQLException {
-	clearWarnings();
-	ExecSQL("show xactisolevel");
+        clearWarnings();
+        ExecSQL("show xactisolevel");
 
-	SQLWarning warning = getWarnings();
-	if (warning != null) {
-	    String message = warning.getMessage();
-	    clearWarnings();
-	    if (message.indexOf("READ COMMITTED") != -1)
-		return java.sql.Connection.TRANSACTION_READ_COMMITTED;
-	    else if (message.indexOf("READ UNCOMMITTED") != -1)
-		return java.sql.Connection.TRANSACTION_READ_UNCOMMITTED;
-	    else if (message.indexOf("REPEATABLE READ") != -1)
-		return java.sql.Connection.TRANSACTION_REPEATABLE_READ;
-	    else if (message.indexOf("SERIALIZABLE") != -1)
-		return java.sql.Connection.TRANSACTION_SERIALIZABLE;
-	}
-	return java.sql.Connection.TRANSACTION_READ_COMMITTED;
+        SQLWarning warning = getWarnings();
+        if (warning != null) {
+            String message = warning.getMessage();
+            clearWarnings();
+            if (message.indexOf("READ COMMITTED") != -1)
+                return java.sql.Connection.TRANSACTION_READ_COMMITTED;
+            else if (message.indexOf("READ UNCOMMITTED") != -1)
+                return java.sql.Connection.TRANSACTION_READ_UNCOMMITTED;
+            else if (message.indexOf("REPEATABLE READ") != -1)
+                return java.sql.Connection.TRANSACTION_REPEATABLE_READ;
+            else if (message.indexOf("SERIALIZABLE") != -1)
+                return java.sql.Connection.TRANSACTION_SERIALIZABLE;
+        }
+        return java.sql.Connection.TRANSACTION_READ_COMMITTED;
     }
 
     /**
      * You can call this method to try to change the transaction
      * isolation level using one of the TRANSACTION_* values.
-     * 
+     *
      * <B>Note:</B> setTransactionIsolation cannot be called while
      * in the middle of a transaction
      *
@@ -855,32 +855,32 @@ public abstract class Connection
      * @see java.sql.DatabaseMetaData#supportsTransactionIsolationLevel
      */
     public void setTransactionIsolation(int level) throws SQLException {
-	//In 7.1 and later versions of the server it is possible using
+        //In 7.1 and later versions of the server it is possible using
         //the "set session" command to set this once for all future txns
-        //however in 7.0 and prior versions it is necessary to set it in 
+        //however in 7.0 and prior versions it is necessary to set it in
         //each transaction, thus adding complexity below.
         //When we decide to drop support for servers older than 7.1
         //this can be simplified
         isolationLevel = level;
         String isolationLevelSQL;
 
-	if (!haveMinimumServerVersion("7.1")) {
-	    isolationLevelSQL = getIsolationLevelSQL();
-	} else {
-	    isolationLevelSQL = "SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL ";
-	    switch(isolationLevel) {
-		case java.sql.Connection.TRANSACTION_READ_COMMITTED:
-		    isolationLevelSQL += "READ COMMITTED";
-		    break;
-		case java.sql.Connection.TRANSACTION_SERIALIZABLE:
-		    isolationLevelSQL += "SERIALIZABLE";
-		    break;
-		default:
-		    throw new PSQLException("postgresql.con.isolevel",
-					    new Integer(isolationLevel));
-	    }
-	}
-	ExecSQL(isolationLevelSQL);
+        if (!haveMinimumServerVersion("7.1")) {
+            isolationLevelSQL = getIsolationLevelSQL();
+        } else {
+            isolationLevelSQL = "SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL ";
+            switch(isolationLevel) {
+                case java.sql.Connection.TRANSACTION_READ_COMMITTED:
+                    isolationLevelSQL += "READ COMMITTED";
+                    break;
+                case java.sql.Connection.TRANSACTION_SERIALIZABLE:
+                    isolationLevelSQL += "SERIALIZABLE";
+                    break;
+                default:
+                    throw new PSQLException("postgresql.con.isolevel",
+                                            new Integer(isolationLevel));
+            }
+        }
+        ExecSQL(isolationLevelSQL);
     }
 
     /**
@@ -893,25 +893,25 @@ public abstract class Connection
      * servers are dropped
      */
     protected String getIsolationLevelSQL() throws SQLException {
-	//7.1 and higher servers have a default specified so 
-	//no additional SQL is required to set the isolation level
-	if (haveMinimumServerVersion("7.1")) {
+        //7.1 and higher servers have a default specified so
+        //no additional SQL is required to set the isolation level
+        if (haveMinimumServerVersion("7.1")) {
           return "";
         }
-	StringBuffer sb = new StringBuffer("SET TRANSACTION ISOLATION LEVEL");
+        StringBuffer sb = new StringBuffer("SET TRANSACTION ISOLATION LEVEL");
 
-	switch(isolationLevel) {
-	    case java.sql.Connection.TRANSACTION_READ_COMMITTED:
-		sb.append(" READ COMMITTED");
+        switch(isolationLevel) {
+            case java.sql.Connection.TRANSACTION_READ_COMMITTED:
+                sb.append(" READ COMMITTED");
                 break;
 
-	    case java.sql.Connection.TRANSACTION_SERIALIZABLE:
-		sb.append(" SERIALIZABLE");
+            case java.sql.Connection.TRANSACTION_SERIALIZABLE:
+                sb.append(" SERIALIZABLE");
                 break;
 
-	    default:
-		throw new PSQLException("postgresql.con.isolevel",new Integer(isolationLevel));
-	}
+            default:
+                throw new PSQLException("postgresql.con.isolevel",new Integer(isolationLevel));
+        }
         return sb.toString();
     }
 
@@ -936,7 +936,7 @@ public abstract class Connection
      */
     public String getCatalog() throws SQLException
     {
-	return PG_DATABASE;
+        return PG_DATABASE;
     }
 
     /**
@@ -949,7 +949,7 @@ public abstract class Connection
      */
     public void finalize() throws Throwable
     {
-	close();
+        close();
     }
 
   private static String extractVersionNumber(String fullVersionString)
@@ -963,7 +963,7 @@ public abstract class Connection
      * Get server version number
      */
     public String getDBVersionNumber() {
-	return dbVersionNumber;
+        return dbVersionNumber;
     }
 
   public boolean haveMinimumServerVersion(String ver) throws SQLException
@@ -1069,4 +1069,4 @@ public abstract class Connection
   }
 
 }
-   
+

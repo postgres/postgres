@@ -17,7 +17,7 @@ import org.postgresql.largeobject.*;
 import org.postgresql.util.*;
 
 /**
- * $Id: Connection.java,v 1.12 2001/09/10 15:07:05 momjian Exp $
+ * $Id: Connection.java,v 1.13 2001/10/09 20:47:35 barry Exp $
  *
  * A Connection represents a session with a specific database.  Within the
  * context of a Connection, SQL statements are executed and results are
@@ -204,16 +204,16 @@ public class Connection extends org.postgresql.Connection implements java.sql.Co
      * This overides the method in org.postgresql.Connection and returns a
      * ResultSet.
      */
-    public java.sql.ResultSet getResultSet(org.postgresql.Connection conn, java.sql.Statement stat,Field[] fields, Vector tuples, String status, int updateCount, int insertOID) throws SQLException
+    public java.sql.ResultSet getResultSet(org.postgresql.Connection conn, java.sql.Statement stat,Field[] fields, Vector tuples, String status, int updateCount, int insertOID, boolean binaryCursor) throws SQLException
     {
       // In 7.1 we now test concurrency to see which class to return. If we are not working with a
       // Statement then default to a normal ResultSet object.
       if(stat!=null) {
         if(stat.getResultSetConcurrency()==java.sql.ResultSet.CONCUR_UPDATABLE)
-          return new org.postgresql.jdbc2.UpdateableResultSet((org.postgresql.jdbc2.Connection)conn,fields,tuples,status,updateCount,insertOID);
+          return new org.postgresql.jdbc2.UpdateableResultSet((org.postgresql.jdbc2.Connection)conn,fields,tuples,status,updateCount,insertOID,binaryCursor);
       }
 
-      return new org.postgresql.jdbc2.ResultSet((org.postgresql.jdbc2.Connection)conn,fields,tuples,status,updateCount,insertOID);
+      return new org.postgresql.jdbc2.ResultSet((org.postgresql.jdbc2.Connection)conn,fields,tuples,status,updateCount,insertOID,binaryCursor);
     }
 
     // *****************
@@ -296,9 +296,9 @@ public class Connection extends org.postgresql.Connection implements java.sql.Co
     "date",
     "time",
     "abstime","timestamp",
-    "_bool", "_char", "_int2", "_int4", "_text", 
-    "_oid", "_varchar", "_int8", "_float4", "_float8", 
-    "_abstime", "_date", "_time", "_timestamp", "_numeric", 
+    "_bool", "_char", "_int2", "_int4", "_text",
+    "_oid", "_varchar", "_int8", "_float4", "_float8",
+    "_abstime", "_date", "_time", "_timestamp", "_numeric",
     "_bytea"
   };
 
@@ -324,8 +324,8 @@ public class Connection extends org.postgresql.Connection implements java.sql.Co
     Types.DATE,
     Types.TIME,
     Types.TIMESTAMP,Types.TIMESTAMP,
-    Types.ARRAY, Types.ARRAY, Types.ARRAY, Types.ARRAY, Types.ARRAY, 
-    Types.ARRAY, Types.ARRAY, Types.ARRAY, Types.ARRAY, Types.ARRAY, 
+    Types.ARRAY, Types.ARRAY, Types.ARRAY, Types.ARRAY, Types.ARRAY,
+    Types.ARRAY, Types.ARRAY, Types.ARRAY, Types.ARRAY, Types.ARRAY,
     Types.ARRAY, Types.ARRAY, Types.ARRAY, Types.ARRAY, Types.ARRAY,
     Types.ARRAY
   };

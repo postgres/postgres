@@ -40,9 +40,9 @@ public class UpdateableResultSet extends org.postgresql.jdbc2.ResultSet
    * @param updateCount the number of rows affected by the operation
    * @param cursor the positioned update/delete cursor name
    */
-  public UpdateableResultSet(Connection conn, Field[] fields, Vector tuples, String status, int updateCount,int insertOID)
+  public UpdateableResultSet(Connection conn, Field[] fields, Vector tuples, String status, int updateCount,int insertOID, boolean binaryCursor)
   {
-      super(conn,fields,tuples,status,updateCount,insertOID);
+      super(conn,fields,tuples,status,updateCount,insertOID,binaryCursor);
   }
 
   /**
@@ -56,10 +56,10 @@ public class UpdateableResultSet extends org.postgresql.jdbc2.ResultSet
    * @param updateCount the number of rows affected by the operation
    * @param cursor the positioned update/delete cursor name
    */
-  public UpdateableResultSet(Connection conn, Field[] fields, Vector tuples, String status, int updateCount)
-  {
-      super(conn,fields,tuples,status,updateCount,0);
-  }
+    //  public UpdateableResultSet(Connection conn, Field[] fields, Vector tuples, String status, int updateCount)
+    //  {
+    //     super(conn,fields,tuples,status,updateCount,0,false);
+    //}
 
     public void cancelRowUpdates() throws SQLException
     {
@@ -77,7 +77,7 @@ public class UpdateableResultSet extends org.postgresql.jdbc2.ResultSet
     {
         // New in 7.1 - The updateable ResultSet class will now return
         // CONCUR_UPDATEABLE.
-	return CONCUR_UPDATABLE;
+        return CONCUR_UPDATABLE;
     }
 
     public void insertRow() throws SQLException
@@ -120,26 +120,26 @@ public class UpdateableResultSet extends org.postgresql.jdbc2.ResultSet
     }
 
     public void updateAsciiStream(int columnIndex,
-				  java.io.InputStream x,
-				  int length
-				  ) throws SQLException
+                                  java.io.InputStream x,
+                                  int length
+                                  ) throws SQLException
     {
       // only sub-classes implement CONCUR_UPDATEABLE
       throw org.postgresql.Driver.notImplemented();
     }
 
     public void updateBigDecimal(int columnIndex,
-				  java.math.BigDecimal x
-				  ) throws SQLException
+                                  java.math.BigDecimal x
+                                  ) throws SQLException
     {
       // only sub-classes implement CONCUR_UPDATEABLE
       throw org.postgresql.Driver.notImplemented();
     }
 
     public void updateBinaryStream(int columnIndex,
-				  java.io.InputStream x,
-				  int length
-				  ) throws SQLException
+                                  java.io.InputStream x,
+                                  int length
+                                  ) throws SQLException
     {
       // only sub-classes implement CONCUR_UPDATEABLE
       throw org.postgresql.Driver.notImplemented();
@@ -164,9 +164,9 @@ public class UpdateableResultSet extends org.postgresql.jdbc2.ResultSet
     }
 
     public void updateCharacterStream(int columnIndex,
-				      java.io.Reader x,
-				      int length
-				      ) throws SQLException
+                                      java.io.Reader x,
+                                      int length
+                                      ) throws SQLException
     {
       // only sub-classes implement CONCUR_UPDATEABLE
       throw org.postgresql.Driver.notImplemented();
