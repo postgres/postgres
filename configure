@@ -844,6 +844,7 @@ Optional Features:
   --enable-debug          build with debugging symbols (-g)
   --enable-depend         turn on automatic dependency tracking
   --enable-cassert        enable assertion checks (for debugging)
+  --enable-thread-safety allow libpq and ecpg to be thread-safe
   --disable-largefile     omit support for large files
 
 Optional Packages:
@@ -854,7 +855,6 @@ Optional Packages:
   --with-libraries=DIRS   look for additional libraries in DIRS
   --with-libs=DIRS        alternative spelling of --with-libraries
   --with-pgport=PORTNUM   change default port number 5432
-  --enable-thread-safety allow libpq and ecpg to be thread-safe
   --with-tcl              build Tcl and Tk interfaces
   --without-tk            do not build Tk interfaces if Tcl is enabled
   --with-tclconfig=DIR    tclConfig.sh and tkConfig.sh are in DIR
@@ -2779,34 +2779,28 @@ echo "$as_me:$LINENO: checking allow thread-safe libpq and ecpg" >&5
 echo $ECHO_N "checking allow thread-safe libpq and ecpg... $ECHO_C" >&6
 
 
+# Check whether --enable-thread-safety or --disable-thread-safety was given.
+if test "${enable_thread_safety+set}" = set; then
+  enableval="$enable_thread_safety"
 
-# Check whether --with-threads or --without-threads was given.
-if test "${with_threads+set}" = set; then
-  withval="$with_threads"
-
-  case $withval in
+  case $enableval in
     yes)
-
-cat >>confdefs.h <<\_ACEOF
-#define USE_THREADS 1
-_ACEOF
-
+      :
       ;;
     no)
       :
       ;;
     *)
-      { { echo "$as_me:$LINENO: error: no argument expected for --with-threads option" >&5
-echo "$as_me: error: no argument expected for --with-threads option" >&2;}
+      { { echo "$as_me:$LINENO: error: no argument expected for --enable-thread-safety option" >&5
+echo "$as_me: error: no argument expected for --enable-thread-safety option" >&2;}
    { (exit 1); exit 1; }; }
       ;;
   esac
 
 else
-  with_threads=no
+  enable_thread_safety=no
 
 fi;
-
 
 echo "$as_me:$LINENO: result: $enable_thread_safety" >&5
 echo "${ECHO_T}$enable_thread_safety" >&6
@@ -13079,6 +13073,10 @@ functions, or libraries required for threading support.
 " >&2;}
    { (exit 1); exit 1; }; }
 fi
+else
+# do not use values from template file
+THREAD_CFLAGS=
+THREAD_LIBS=
 fi
 
 
@@ -13096,8 +13094,8 @@ fi
 #
 if test "$enable_thread_safety" = yes -a "$NEED_REENTRANT_FUNC_NAMES" = yes ; then
 _CFLAGS="$CFLAGS"
-_LIB="$LIBS"
-CFLAGS="$CFLAGS $TREAD_CFLAGS"
+_LIBS="$LIBS"
+CFLAGS="$CFLAGS $THREAD_CFLAGS"
 LIBS="$LIBS $THREAD_LIBS"
 
 
@@ -13178,7 +13176,7 @@ fi
 done
 
 CFLAGS="$_CFLAGS"
-LIB="$_LIBS"
+LIBS="$_LIBS"
 fi
 
 

@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $Header: /cvsroot/pgsql/configure.in,v 1.274 2003/08/04 04:03:03 tgl Exp $
+dnl $Header: /cvsroot/pgsql/configure.in,v 1.275 2003/08/04 16:48:03 momjian Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -314,9 +314,7 @@ IFS=$ac_save_IFS
 # Enable libpq to be thread-safety
 #
 AC_MSG_CHECKING([allow thread-safe libpq and ecpg])
-PGAC_ARG_BOOL(with, threads, no, [  --enable-thread-safety allow libpq and ecpg to be thread-safe],
-              [AC_DEFINE([USE_THREADS], 1, [Define to 1 to build libpq and ecpg to be thread-safe. (--enable-thread-safety)])])
-
+PGAC_ARG_BOOL(enable, thread-safety, no, [  --enable-thread-safety allow libpq and ecpg to be thread-safe])
 AC_MSG_RESULT([$enable_thread_safety])
 AC_SUBST(enable_thread_safety)
 
@@ -970,6 +968,10 @@ so it can be added to the next release.  Report all compile flags, link flags,
 functions, or libraries required for threading support.
 ])
 fi
+else
+# do not use values from template file
+THREAD_CFLAGS=
+THREAD_LIBS=
 fi
 AC_SUBST(THREAD_CFLAGS)
 AC_SUBST(THREAD_LIBS)
@@ -987,12 +989,12 @@ AC_SUBST(THREAD_LIBS)
 #
 if test "$enable_thread_safety" = yes -a "$NEED_REENTRANT_FUNC_NAMES" = yes ; then
 _CFLAGS="$CFLAGS"
-_LIB="$LIBS"
-CFLAGS="$CFLAGS $TREAD_CFLAGS"
+_LIBS="$LIBS"
+CFLAGS="$CFLAGS $THREAD_CFLAGS"
 LIBS="$LIBS $THREAD_LIBS"
 AC_CHECK_FUNCS([strerror_r getpwuid_r gethostbyname_r])
 CFLAGS="$_CFLAGS"
-LIB="$_LIBS"
+LIBS="$_LIBS"
 fi
 
 
