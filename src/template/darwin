@@ -1,6 +1,6 @@
-# -traditional-cpp means "don't use apple's cpp-precomp" on darwin
-# this should change to -no-cpp-precomp when that flag is implemented
-CC="$CC -traditional-cpp"
+# Apple's cpp-precomp seems a tad broken, so don't use it
+# (Note: on OS X before 10.2, you might need -traditional-cpp instead)
+CC="$CC -no-cpp-precomp"
 
 # Select appropriate semaphore support
 USE_NAMED_POSIX_SEMAPHORES=1
