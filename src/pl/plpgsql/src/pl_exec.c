@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.65 2002/10/19 22:10:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.66 2002/11/10 00:35:58 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -73,6 +73,8 @@ static int exec_stmt(PLpgSQL_execstate * estate,
 		  PLpgSQL_stmt * stmt);
 static int exec_stmt_assign(PLpgSQL_execstate * estate,
 				 PLpgSQL_stmt_assign * stmt);
+static int exec_stmt_perform(PLpgSQL_execstate * estate,
+							 PLpgSQL_stmt_perform * stmt);
 static int exec_stmt_getdiag(PLpgSQL_execstate * estate,
 				  PLpgSQL_stmt_getdiag * stmt);
 static int exec_stmt_if(PLpgSQL_execstate * estate,
@@ -890,6 +892,10 @@ exec_stmt(PLpgSQL_execstate * estate, PLpgSQL_stmt * stmt)
 			rc = exec_stmt_assign(estate, (PLpgSQL_stmt_assign *) stmt);
 			break;
 
+		case PLPGSQL_STMT_PERFORM:
+			rc = exec_stmt_perform(estate, (PLpgSQL_stmt_perform *) stmt);
+			break;
+
 		case PLPGSQL_STMT_GETDIAG:
 			rc = exec_stmt_getdiag(estate, (PLpgSQL_stmt_getdiag *) stmt);
 			break;
@@ -973,43 +979,43 @@ exec_stmt(PLpgSQL_execstate * estate, PLpgSQL_stmt * stmt)
 /* ----------
  * exec_stmt_assign			Evaluate an expression and
  *					put the result into a variable.
- *
- * For no very good reason, this is also used for PERFORM statements.
  * ----------
  */
 static int
 exec_stmt_assign(PLpgSQL_execstate * estate, PLpgSQL_stmt_assign * stmt)
 {
+	Assert(stmt->varno >= 0);
+
+	exec_assign_expr(estate, estate->datums[stmt->varno], stmt->expr);
+
+	return PLPGSQL_RC_OK;
+}
+
+/* ----------
+ * exec_stmt_perform		Evaluate query and discard result (but set
+ *							FOUND depending on whether at least one row
+ *							was returned).
+ * ----------
+ */
+static int
+exec_stmt_perform(PLpgSQL_execstate * estate, PLpgSQL_stmt_perform * stmt)
+{
 	PLpgSQL_expr *expr = stmt->expr;
+	int			rc;
 
-	if (stmt->varno >= 0)
-		exec_assign_expr(estate, estate->datums[stmt->varno], expr);
-	else
-	{
-		/*
-		 * PERFORM: evaluate query and discard result (but set FOUND
-		 * depending on whether at least one row was returned).
-		 *
-		 * This cannot share code with the assignment case since we do not
-		 * wish to constrain the discarded result to be only one
-		 * row/column.
-		 */
-		int			rc;
+	/*
+	 * If not already done create a plan for this expression
+	 */
+	if (expr->plan == NULL)
+		exec_prepare_plan(estate, expr);
+	
+	rc = exec_run_select(estate, expr, 0, NULL);
+	if (rc != SPI_OK_SELECT)
+		elog(ERROR, "query \"%s\" didn't return data", expr->query);
 
-		/*
-		 * If not already done create a plan for this expression
-		 */
-		if (expr->plan == NULL)
-			exec_prepare_plan(estate, expr);
+	exec_set_found(estate, (estate->eval_processed != 0));
 
-		rc = exec_run_select(estate, expr, 0, NULL);
-		if (rc != SPI_OK_SELECT)
-			elog(ERROR, "query \"%s\" didn't return data", expr->query);
-
-		exec_set_found(estate, (estate->eval_processed != 0));
-
-		exec_eval_cleanup(estate);
-	}
+	exec_eval_cleanup(estate);
 
 	return PLPGSQL_RC_OK;
 }
@@ -1579,12 +1585,11 @@ exec_stmt_return(PLpgSQL_execstate * estate, PLpgSQL_stmt_return * stmt)
 	return PLPGSQL_RC_RETURN;
 }
 
-/*
- * Notes:
- *	- the tuple store must be created in a sufficiently long-lived
- *	  memory context, as the same store must be used within the executor
- *	  after the PL/PgSQL call returns. At present, the code uses
- *	  TopTransactionContext.
+/* ----------
+ * exec_stmt_return_next		Evaluate an expression and add it to the
+ *								list of tuples returned by the current
+ *								SRF.
+ * ----------
  */
 static int
 exec_stmt_return_next(PLpgSQL_execstate * estate,
@@ -1731,7 +1736,6 @@ exec_init_tuple_store(PLpgSQL_execstate * estate)
 
 	estate->rettupdesc = rsi->expectedDesc;
 }
-
 
 /* ----------
  * exec_stmt_raise			Build a message and throw it with

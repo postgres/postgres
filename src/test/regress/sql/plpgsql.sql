@@ -1559,3 +1559,48 @@ END;' language 'plpgsql';
 
 SELECT * FROM test_ret_rec_dyn(1500) AS (a int, b int, c int);
 SELECT * FROM test_ret_rec_dyn(5) AS (a int, b numeric, c text);
+
+--
+-- test PERFORM
+--
+
+create table perform_test (
+	a	INT,
+	b	INT
+);
+
+create function simple_func(int) returns boolean as '
+BEGIN
+	IF $1 < 20 THEN
+		INSERT INTO perform_test VALUES ($1, $1 + 10);
+		RETURN TRUE;
+	ELSE
+		RETURN FALSE;
+	END IF;
+END;' language 'plpgsql';
+
+create function perform_test_func() returns void as '
+BEGIN
+	IF FOUND then
+		INSERT INTO perform_test VALUES (100, 100);
+	END IF;
+
+	PERFORM simple_func(5);
+
+	IF FOUND then
+		INSERT INTO perform_test VALUES (100, 100);
+	END IF;
+
+	PERFORM simple_func(50);
+
+	IF FOUND then
+		INSERT INTO perform_test VALUES (100, 100);
+	END IF;
+
+	RETURN;
+END;' language 'plpgsql';
+
+SELECT perform_test_func();
+SELECT * FROM perform_test;
+
+drop table perform_test;

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/plpgsql.sgml,v 1.8 2002/09/21 18:32:53 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/plpgsql.sgml,v 1.9 2002/11/10 00:35:58 momjian Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -102,7 +102,7 @@ END;
 </programlisting>
     If you execute the above function, it will reference the OID for
     <function>my_function()</function> in the query plan produced for
-    the PERFORM statement. Later, if you
+    the <command>PERFORM</command> statement. Later, if you
     drop and re-create <function>my_function()</function>, then
     <function>populate()</function> will not be able to find
     <function>my_function()</function> anymore. You would then have to
@@ -117,17 +117,19 @@ END;
 	same tables and fields on every execution; that is, you cannot use
 	a parameter as the name of a table or field in a query.  To get
 	around this restriction, you can construct dynamic queries using
-	the <application>PL/pgSQL</application> EXECUTE statement --- at
-	the price of constructing a new query plan on every execution.
+	the <application>PL/pgSQL</application> <command>EXECUTE</command>
+	statement --- at the price of constructing a new query plan on
+	every execution.
    </para>
 
    <note>
 	<para>
-	 The <application>PL/pgSQL</application> EXECUTE statement is not
-	 related to the EXECUTE statement supported by the
+	 The <application>PL/pgSQL</application>
+	 <command>EXECUTE</command> statement is not related to the
+	 <command>EXECUTE</command> statement supported by the
 	 <productname>PostgreSQL</productname> backend. The backend
-	 EXECUTE statement cannot be used within <application>PL/pgSQL</> functions (and
-	 is not needed).
+	 <command>EXECUTE</command> statement cannot be used within
+	 <application>PL/pgSQL</> functions (and is not needed).
 	</para>
    </note>
 
@@ -173,13 +175,12 @@ END;
     </para>
 
     <para>
-     That means that your client application must send each
-     query to the database server, wait for it to process it,
-     receive the results, do some computation, then send
-     other queries to the server. All this incurs inter-process communication
-     and may also incur network
-     overhead if your client is on a different machine than
-     the database server.
+     That means that your client application must send each query to
+     the database server, wait for it to process it, receive the
+     results, do some computation, then send other queries to the
+     server. All this incurs inter-process communication and may also
+     incur network overhead if your client is on a different machine
+     than the database server.
     </para>
 
     <para>
@@ -753,14 +754,14 @@ CREATE FUNCTION logfunc2 (TEXT) RETURNS TIMESTAMP AS '
 
     <para>
      The mutable nature of record variables presents a problem in this
-     connection.  When fields of a record variable are used in expressions or
-     statements, the data types of the
-     fields must not change between calls of one and the same expression,
-     since the expression will be planned using the data type that is present
-     when the expression is first reached.
-     Keep this in mind when writing trigger procedures that handle events
-     for more than one table.  (EXECUTE can be used to get around this
-     problem when necessary.)
+     connection.  When fields of a record variable are used in
+     expressions or statements, the data types of the fields must not
+     change between calls of one and the same expression, since the
+     expression will be planned using the data type that is present
+     when the expression is first reached.  Keep this in mind when
+     writing trigger procedures that handle events for more than one
+     table.  (<command>EXECUTE</command> can be used to get around
+     this problem when necessary.)
     </para>
   </sect1>
 
@@ -904,10 +905,11 @@ END;
     <title>Executing an expression or query with no result</title>
 
     <para>
-     Sometimes one wishes to evaluate an expression or query but discard
-     the result (typically because one is calling a function that has
-     useful side-effects but no useful result value).  To do this in
-     <application>PL/pgSQL</application>, use the PERFORM statement:
+     Sometimes one wishes to evaluate an expression or query but
+     discard the result (typically because one is calling a function
+     that has useful side-effects but no useful result value).  To do
+     this in <application>PL/pgSQL</application>, use the
+     <command>PERFORM</command> statement:
 
 <synopsis>
 PERFORM <replaceable>query</replaceable>;
@@ -922,11 +924,12 @@ PERFORM <replaceable>query</replaceable>;
     </para>
 
     <note>
-    <para>
-     One might expect that SELECT with no INTO clause would accomplish
-     this result, but at present the only accepted way to do it is PERFORM.
-    </para>
-    </note>
+	 <para>
+	  One might expect that <command>SELECT</command> with no INTO
+	  clause would accomplish this result, but at present the only
+	  accepted way to do it is <command>PERFORM</command>.
+	 </para>
+	</note>
 
     <para>
      An example:
@@ -940,13 +943,13 @@ PERFORM create_mv(''cs_session_page_requests_mv'', my_query);
     <title>Executing dynamic queries</title>
     
     <para>
-     Oftentimes you will want to generate dynamic queries inside
-     your <application>PL/pgSQL</application> functions, that is,
-     queries that will involve different tables or different data types
-     each time they are executed.  <application>PL/pgSQL</application>'s
+     Oftentimes you will want to generate dynamic queries inside your
+     <application>PL/pgSQL</application> functions, that is, queries
+     that will involve different tables or different data types each
+     time they are executed.  <application>PL/pgSQL</application>'s
      normal attempts to cache plans for queries will not work in such
-     scenarios.  To handle this sort of problem, the EXECUTE statement
-     is provided:
+     scenarios.  To handle this sort of problem, the
+     <command>EXECUTE</command> statement is provided:
 
 <synopsis>
 EXECUTE <replaceable class="command">query-string</replaceable>;
@@ -973,20 +976,22 @@ EXECUTE <replaceable class="command">query-string</replaceable>;
      
     <para>
      Unlike all other queries in <application>PL/pgSQL</>, a
-     <replaceable>query</replaceable> run by an EXECUTE statement is
-     not prepared and saved just once during the life of the server.
-     Instead, the <replaceable>query</replaceable> is prepared each
-     time the statement is run. The
-     <replaceable>query-string</replaceable> can be dynamically
-     created within the procedure to perform actions on variable
-     tables and fields.
+     <replaceable>query</replaceable> run by an
+     <command>EXECUTE</command> statement is not prepared and saved
+     just once during the life of the server.  Instead, the
+     <replaceable>query</replaceable> is prepared each time the
+     statement is run. The <replaceable>query-string</replaceable> can
+     be dynamically created within the procedure to perform actions on
+     variable tables and fields.
     </para>
   
     <para>
-     The results from SELECT queries are discarded by EXECUTE, and
-     SELECT INTO is not currently supported within EXECUTE.  So, the
-     only way to extract a result from a dynamically-created SELECT is
-     to use the FOR-IN-EXECUTE form described later.
+     The results from <command>SELECT</command> queries are discarded
+     by <command>EXECUTE</command>, and <command>SELECT INTO</command>
+     is not currently supported within <command>EXECUTE</command>.
+     So, the only way to extract a result from a dynamically-created
+     <command>SELECT</command> is to use the FOR-IN-EXECUTE form
+     described later.
     </para>
 
     <para>
@@ -1017,7 +1022,8 @@ EXECUTE ''UPDATE tbl SET ''
     </para>
 
     <para>
-     Here is a much larger example of a dynamic query and EXECUTE:
+     Here is a much larger example of a dynamic query and
+     <command>EXECUTE</command>:
 <programlisting>
 CREATE FUNCTION cs_update_referrer_type_proc() RETURNS INTEGER AS '
 DECLARE
@@ -1159,9 +1165,9 @@ GET DIAGNOSTICS <replaceable>variable</replaceable> = <replaceable>item</replace
 RETURN <replaceable>expression</replaceable>;
 </synopsis>
 
-     RETURN with an expression is used to return from a
-     <application>PL/pgSQL</> function that does not return a set.
-     The function terminates and the value of
+     <command>RETURN</command> with an expression is used to return
+     from a <application>PL/pgSQL</> function that does not return a
+     set.  The function terminates and the value of
      <replaceable>expression</replaceable> is returned to the caller.
     </para>
 
@@ -1176,22 +1182,24 @@ RETURN <replaceable>expression</replaceable>;
     </para>
 
     <para>
-     The return value of a function cannot be left undefined. If control
-     reaches the end of the top-level block of 
-     the function without hitting a RETURN statement, a run-time error
-     will occur.
+     The return value of a function cannot be left undefined. If
+     control reaches the end of the top-level block of the function
+     without hitting a <command>RETURN</command> statement, a run-time
+     error will occur.
     </para>
 
     <para>
      When a <application>PL/pgSQL</> function is declared to return
      <literal>SETOF</literal> <replaceable>sometype</>, the procedure
      to follow is slightly different.  In that case, the individual
-     items to return are specified in RETURN NEXT commands, and then a
-     final RETURN command with no arguments is used to indicate that
-     the function has finished executing.  RETURN NEXT can be used with
-     both scalar and composite data types; in the later case, an
-     entire "table" of results will be returned.  Functions that use
-     RETURN NEXT should be called in the following fashion:
+     items to return are specified in <command>RETURN NEXT</command>
+     commands, and then a final <command>RETURN</command> command with
+     no arguments is used to indicate that the function has finished
+     executing.  <command>RETURN NEXT</command> can be used with both
+     scalar and composite data types; in the later case, an entire
+     "table" of results will be returned.  Functions that use
+     <command>RETURN NEXT</command> should be called in the following
+     fashion:
 
 <programlisting>
 SELECT * FROM some_func();
@@ -1203,19 +1211,19 @@ SELECT * FROM some_func();
 RETURN NEXT <replaceable>expression</replaceable>;
 </synopsis>
 
-     RETURN NEXT does not actually return from the function; it simply
-     saves away the value of the expression (or record or row variable,
-     as appropriate for the data type being returned).
-     Execution then continues with the next statement in the
-     <application>PL/pgSQL</> function.  As successive RETURN NEXT
-     commands are executed, the result set is built up.  A final
-     RETURN, which need have no argument, causes control to exit
-     the function.
+     <command>RETURN NEXT</command> does not actually return from the
+     function; it simply saves away the value of the expression (or
+     record or row variable, as appropriate for the data type being
+     returned).  Execution then continues with the next statement in
+     the <application>PL/pgSQL</> function.  As successive
+     <command>RETURN NEXT</command> commands are executed, the result
+     set is built up.  A final <command>RETURN</commmand>, which need
+     have no argument, causes control to exit the function.
     </para>
 
    <note>
     <para>
-     The current implementation of RETURN NEXT for
+     The current implementation of <command>RETURN NEXT</command> for
      <application>PL/pgSQL</> stores the entire result set before
      returning from the function, as discussed above.  That means that
      if a <application>PL/pgSQL</> function produces a very large result set,
@@ -1586,12 +1594,12 @@ FOR <replaceable>record | row</replaceable> IN EXECUTE <replaceable>text_express
     <replaceable>statements</replaceable>
 END LOOP;
 </synopsis>
-     This is like the previous form, except that the source SELECT
-     statement is specified as a string expression, which is evaluated
-     and re-planned on each entry to the FOR loop.  This allows the
-     programmer to choose the speed of a pre-planned query or the
-     flexibility of a dynamic query, just as with a plain EXECUTE
-     statement.
+     This is like the previous form, except that the source
+     <command>SELECT</command> statement is specified as a string
+     expression, which is evaluated and re-planned on each entry to
+     the FOR loop.  This allows the programmer to choose the speed of
+     a pre-planned query or the flexibility of a dynamic query, just
+     as with a plain <command>EXECUTE</command> statement.
     </para>
 
     <note>
@@ -1700,18 +1708,18 @@ OPEN curs1 FOR SELECT * FROM foo WHERE key = mykey;
     <sect3>
      <title>OPEN FOR EXECUTE</title>
 
-       <para>
+	 <para>
 <synopsis>
 OPEN <replaceable>unbound-cursor</replaceable> FOR EXECUTE <replaceable class="command">query-string</replaceable>;
 </synopsis>
 
-        The cursor variable is opened and given the specified query
-	to execute.  The cursor cannot be open already, and it must
-	have been declared as an unbound cursor (that is, as a simple
-	<type>refcursor</> variable).  The query is specified as a
-	string expression in the same way as in the EXECUTE command.
-	As usual, this gives flexibility so the query can vary
-	from one run to the next.
+	  The cursor variable is opened and given the specified query to
+	  execute.  The cursor cannot be open already, and it must have been
+	  declared as an unbound cursor (that is, as a simple
+	  <type>refcursor</> variable).  The query is specified as a string
+	  expression in the same way as in the <command>EXECUTE</command>
+	  command.  As usual, this gives flexibility so the query can vary
+	  from one run to the next.
 
 <programlisting>
 OPEN curs1 FOR EXECUTE ''SELECT * FROM '' || quote_ident($1);
@@ -1722,19 +1730,18 @@ OPEN curs1 FOR EXECUTE ''SELECT * FROM '' || quote_ident($1);
     <sect3>
      <title>Opening a bound cursor</title>
 
-       <para>
+	 <para>
 <synopsis>
 OPEN <replaceable>bound-cursor</replaceable> <optional> ( <replaceable>argument_values</replaceable> ) </optional>;
 </synopsis>
 
-        This form of OPEN is used to open a cursor variable whose query
-	was bound to it when it was declared.
-	The cursor cannot be open already.  A list of actual argument
-	value expressions must appear if and only if the cursor was
-	declared to take arguments.  These values will be substituted
-	in the query.
-	The query plan for a bound cursor is always considered
-	cacheable --- there is no equivalent of EXECUTE in this case.
+	  This form of <command>OPEN</command> is used to open a cursor
+	  variable whose query was bound to it when it was declared.  The
+	  cursor cannot be open already.  A list of actual argument value
+	  expressions must appear if and only if the cursor was declared to
+	  take arguments.  These values will be substituted in the query.
+	  The query plan for a bound cursor is always considered cacheable
+	  --- there is no equivalent of <command>EXECUTE</command> in this case.
 
 <programlisting>
 OPEN curs2;
@@ -1771,16 +1778,17 @@ OPEN curs3(42);
     <sect3>
      <title>FETCH</title>
 
-       <para>
+	 <para>
 <synopsis>
 FETCH <replaceable>cursor</replaceable> INTO <replaceable>target</replaceable>;
 </synopsis>
 
-        FETCH retrieves the next row from the cursor into a target,
-	which may be a row variable, a record variable, or a comma-separated
-	list of simple variables, just like SELECT INTO.  As with
-	SELECT INTO, the special variable <literal>FOUND</literal> may be
-	checked to see whether a row was obtained or not.
+	  <command>FETCH</command> retrieves the next row from the
+	  cursor into a target, which may be a row variable, a record
+	  variable, or a comma-separated list of simple variables, just like
+	  <command>SELECT INTO</command>.  As with <command>SELECT
+	   INTO</command>, the special variable <literal>FOUND</literal> may
+	  be checked to see whether a row was obtained or not.
 
 <programlisting>
 FETCH curs1 INTO rowvar;

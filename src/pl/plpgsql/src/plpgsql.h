@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.28 2002/09/12 00:24:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.29 2002/11/10 00:35:58 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -100,7 +100,8 @@ enum
 	PLPGSQL_STMT_GETDIAG,
 	PLPGSQL_STMT_OPEN,
 	PLPGSQL_STMT_FETCH,
-	PLPGSQL_STMT_CLOSE
+	PLPGSQL_STMT_CLOSE,
+	PLPGSQL_STMT_PERFORM
 };
 
 
@@ -288,6 +289,12 @@ typedef struct
 	PLpgSQL_expr *expr;
 }	PLpgSQL_stmt_assign;
 
+typedef struct
+{								/* PERFORM statement		*/
+	int			cmd_type;
+	int			lineno;
+	PLpgSQL_expr *expr;
+}   PLpgSQL_stmt_perform;
 
 typedef struct
 {								/* Get Diagnostics item		*/
