@@ -1,11 +1,11 @@
 /*-------------------------------------------------------------------------
  *
- * xid.c--
+ * xid.c
  *	  POSTGRES transaction identifier code.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: xid.c,v 1.20 1998/12/14 06:50:17 scrappy Exp $
+ *  $Id: xid.c,v 1.21 1999/02/13 23:14:49 momjian Exp $
  *
  * OLD COMMENTS
  * XXX WARNING

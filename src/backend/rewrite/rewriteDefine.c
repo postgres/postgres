@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * rewriteDefine.c--
+ * rewriteDefine.c
  *	  routines for defining a rewrite rule
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.24 1999/02/08 14:14:13 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.25 1999/02/13 23:17:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

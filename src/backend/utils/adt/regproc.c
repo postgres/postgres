@@ -1,13 +1,13 @@
  /*-------------------------------------------------------------------------
  *
- * regproc.c--
+ * regproc.c
  *	  Functions for the built-in type "RegProcedure".
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.33 1998/11/27 19:52:22 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.34 1999/02/13 23:19:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

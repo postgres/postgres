@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * lmgr.h--
+ * lmgr.h
  *	  POSTGRES lock manager definitions.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lmgr.h,v 1.16 1998/12/15 12:46:57 vadim Exp $
+ * $Id: lmgr.h,v 1.17 1999/02/13 23:22:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

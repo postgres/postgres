@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * lispsort.h--
+ * lispsort.h
  *
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lispsort.h,v 1.4 1998/09/01 04:36:19 momjian Exp $
+ * $Id: lispsort.h,v 1.5 1999/02/13 23:21:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

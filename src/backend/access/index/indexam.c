@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * indexam.c--
+ * indexam.c
  *	  general index access method routines
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.29 1998/12/15 12:45:15 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.30 1999/02/13 23:14:30 momjian Exp $
  *
  * INTERFACE ROUTINES
  *		index_open		- open an index relation by relationId

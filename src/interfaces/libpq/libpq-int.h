@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * libpq-int.h--
+ * libpq-int.h
  *	  This file contains internal definitions meant to be used only by
  *	  the frontend libpq library, not by applications that call it.
  *
@@ -11,7 +11,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-int.h,v 1.5 1998/11/18 00:47:26 tgl Exp $
+ * $Id: libpq-int.h,v 1.6 1999/02/13 23:22:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

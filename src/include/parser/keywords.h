@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * keywords.h--
+ * keywords.h
  *	  string,atom lookup thingy, reduces strcmp traffic greatly
  *	  in the bowels of the system.	Look for actual defs in lib/C/atoms.c
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: keywords.h,v 1.5 1998/09/01 04:37:28 momjian Exp $
+ * $Id: keywords.h,v 1.6 1999/02/13 23:21:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

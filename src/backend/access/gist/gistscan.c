@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * gistscan.c--
+ * gistscan.c
  *	  routines to manage scans on index relations
  *
  *

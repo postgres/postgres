@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * transam.c--
+ * transam.c
  *	  postgres transaction log/time interface routines
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.22 1999/02/03 21:15:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.23 1999/02/13 23:14:46 momjian Exp $
  *
  * NOTES
  *	  This file contains the high level access-method interface to the
@@ -375,7 +375,7 @@ TransRecover(Relation logRelation)
  */
 
 /*
- * InitializeTransactionLog --
+ * InitializeTransactionLog 
  *		Initializes transaction logging.
  */
 void
@@ -485,7 +485,7 @@ InitializeTransactionLog(void)
  */
 
 /*
- * TransactionIdDidCommit --
+ * TransactionIdDidCommit 
  *		True iff transaction associated with the identifier did commit.
  *
  * Note:
@@ -501,7 +501,7 @@ TransactionIdDidCommit(TransactionId transactionId)
 }
 
 /*
- * TransactionIdDidAborted --
+ * TransactionIdDidAborted 
  *		True iff transaction associated with the identifier did abort.
  *
  * Note:
@@ -542,7 +542,7 @@ TransactionIdIsInProgress(TransactionId transactionId)
  */
 
 /*
- * TransactionIdCommit --
+ * TransactionIdCommit 
  *		Commits the transaction associated with the identifier.
  *
  * Note:
@@ -558,7 +558,7 @@ TransactionIdCommit(TransactionId transactionId)
 }
 
 /*
- * TransactionIdAbort --
+ * TransactionIdAbort 
  *		Aborts the transaction associated with the identifier.
  *
  * Note:

@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * relscan.h--
+ * relscan.h
  *	  POSTGRES internal relation scan descriptor definitions.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relscan.h,v 1.13 1998/11/27 19:33:31 vadim Exp $
+ * $Id: relscan.h,v 1.14 1999/02/13 23:20:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,13 +69,13 @@ typedef IndexScanDescData *IndexScanDesc;
 typedef IndexScanDesc *IndexScanDescPtr;
 
 /*
- * HeapScanIsValid --
+ * HeapScanIsValid 
  *		True iff the heap scan is valid.
  */
 #define HeapScanIsValid(scan) PointerIsValid(scan)
 
 /*
- * IndexScanIsValid --
+ * IndexScanIsValid 
  *		True iff the index scan is valid.
  */
 #define IndexScanIsValid(scan) PointerIsValid(scan)

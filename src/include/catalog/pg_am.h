@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * pg_am.h--
+ * pg_am.h
  *	  definition of the system "am" relation (pg_am)
  *	  along with the relation's initial contents.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_am.h,v 1.10 1998/12/15 12:46:49 vadim Exp $
+ * $Id: pg_am.h,v 1.11 1999/02/13 23:21:04 momjian Exp $
  *
  * NOTES
  *		the genbki.sh script reads this file and generates .bki

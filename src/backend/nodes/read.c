@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * read.c--
+ * read.c
  *	  routines to convert a string (legal ascii representation of node) back
  *	  to nodes
  *
@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/read.c,v 1.13 1998/09/01 03:23:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/read.c,v 1.14 1999/02/13 23:16:01 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT

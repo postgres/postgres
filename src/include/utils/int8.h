@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * int8.h--
+ * int8.h
  *	  Declarations for operations on 64-bit integers.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: int8.h,v 1.9 1999/02/13 04:13:56 thomas Exp $
+ * $Id: int8.h,v 1.10 1999/02/13 23:22:23 momjian Exp $
  *
  * NOTES
  * These data types are supported on all 64-bit architectures, and may

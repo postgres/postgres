@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * be-fsstubs.c--
+ * be-fsstubs.c
  *	  support for filesystem operations on large objects
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.27 1999/01/17 06:18:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.28 1999/02/13 23:15:41 momjian Exp $
  *
  * NOTES
  *	  This should be moved to a more appropriate place.  It is here

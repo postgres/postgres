@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * psql.c--
+ * psql.c
  *	  an interactive front-end to postgreSQL
  *
  * Copyright (c) 1996, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.169 1999/02/07 02:56:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.170 1999/02/13 23:20:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

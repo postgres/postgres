@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * be-pqexec.c--
+ * be-pqexec.c
  *	  support for executing POSTGRES commands and functions from a
  *	  user-defined function in a backend.
  *
@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-pqexec.c,v 1.19 1998/09/01 03:22:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-pqexec.c,v 1.20 1999/02/13 23:15:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

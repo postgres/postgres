@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * execQual.c--
+ * execQual.c
  *	  Routines to evaluate qualification and targetlist expressions
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.42 1999/02/03 21:16:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.43 1999/02/13 23:15:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * localbuf.c--
+ * localbuf.c
  *	  local buffer manager. Fast buffer manager for temporary tables
  *	  or special cases when the operation is not visible to other backends.
  *
@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/localbuf.c,v 1.20 1999/02/03 21:17:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/localbuf.c,v 1.21 1999/02/13 23:18:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

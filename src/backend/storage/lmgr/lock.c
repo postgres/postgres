@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * lock.c--
+ * lock.c
  *	  simple lock acquisition
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.40 1999/01/17 20:59:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.41 1999/02/13 23:18:25 momjian Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release

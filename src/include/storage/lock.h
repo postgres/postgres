@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * lock.h--
+ * lock.h
  *
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lock.h,v 1.20 1998/12/15 12:46:58 vadim Exp $
+ * $Id: lock.h,v 1.21 1999/02/13 23:22:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -127,7 +127,7 @@ typedef struct LOCKMETHODTABLE
  * we store is the number of locks of each type (holders) and the
  * total number of locks (nHolding) held by the transaction.
  *
- * NOTE: --
+ * NOTE: 
  * There were some problems with the fact that currently TransactionIdData
  * is a 5 byte entity and compilers long word aligning of structure fields.
  * If the 3 byte padding is put in front of the actual xid data then the

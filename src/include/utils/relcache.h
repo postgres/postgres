@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * relcache.h--
+ * relcache.h
  *	  Relation descriptor cache definitions.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relcache.h,v 1.10 1998/09/01 04:39:32 momjian Exp $
+ * $Id: relcache.h,v 1.11 1999/02/13 23:22:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

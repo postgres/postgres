@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * smgr.h--
+ * smgr.h
  *	  storage manager switch public interface declarations.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: smgr.h,v 1.13 1998/10/08 18:30:47 momjian Exp $
+ * $Id: smgr.h,v 1.14 1999/02/13 23:22:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

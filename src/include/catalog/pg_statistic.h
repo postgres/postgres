@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * pg_statistic.h--
+ * pg_statistic.h
  *	  definition of the system "statistic" relation (pg_statistic)
  *	  along with the relation's initial contents.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_statistic.h,v 1.5 1998/09/01 04:35:15 momjian Exp $
+ * $Id: pg_statistic.h,v 1.6 1999/02/13 23:21:15 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki

@@ -1,14 +1,14 @@
 %{
 /*-------------------------------------------------------------------------
  *
- * bootscanner.lex--
+ * bootscanner.lex
  *	  a lexical scanner for the bootstrap parser
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootscanner.l,v 1.11 1998/08/24 01:13:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootscanner.l,v 1.12 1999/02/13 23:14:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

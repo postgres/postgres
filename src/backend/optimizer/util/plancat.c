@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * plancat.c--
+ * plancat.c
  *	   routines for accessing the system catalogs
  *
  *
@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.24 1999/02/03 21:16:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.25 1999/02/13 23:16:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,7 @@ static void IndexSelectivity(Oid indexrelid, Oid indrelid, int32 nIndexKeys,
 
 
 /*
- * relation-info -
+ * relation_info -
  *	  Retrieves catalog information for a given relation. Given the oid of
  *	  the relation, return the following information:
  *				whether the relation has secondary indices
@@ -85,7 +85,7 @@ relation_info(Query *root, Index relid,
 
 
 /*
- * index-info--
+ * index_info
  *	  Retrieves catalog information on an index on a given relation.
  *
  *	  The index relation is opened on the first invocation. The current
@@ -225,7 +225,7 @@ index_info(Query *root, bool first, int relid, IdxInfoRetval *info)
 }
 
 /*
- * index-selectivity--
+ * index_selectivity
  *
  *	  Call util/plancat.c:IndexSelectivity with the indicated arguments.
  *
@@ -308,7 +308,7 @@ index_selectivity(Oid indid,
 }
 
 /*
- * restriction_selectivity in lisp system.--
+ * restriction_selectivity in lisp system.
  *
  *	  NOTE: The routine is now merged with RestrictionClauseSelectivity
  *	  as defined in plancat.c
@@ -349,7 +349,7 @@ restriction_selectivity(Oid functionObjectId,
 }
 
 /*
- * join_selectivity--
+ * join_selectivity
  *	  Similarly, this routine is merged with JoinClauseSelectivity in
  *	  plancat.c
  *
@@ -388,7 +388,7 @@ join_selectivity(Oid functionObjectId,
 }
 
 /*
- * find_all_inheritors--
+ * find_all_inheritors
  *
  * Returns a LISP list containing the OIDs of all relations which
  * inherits from the relation with OID 'inhparent'.
@@ -424,7 +424,7 @@ find_inheritance_children(Oid inhparent)
 
 #ifdef NOT_USED
 /*
- * VersionGetParents--
+ * VersionGetParents
  *
  * Returns a LISP list containing the OIDs of all relations which are
  * base relations of the relation with OID 'verrelid'.
@@ -469,7 +469,7 @@ VersionGetParents(Oid verrelid)
  *****************************************************************************/
 
 /*
- * IdexSelectivity--
+ * IdexSelectivity
  *
  *	  Retrieves the 'amopnpages' and 'amopselect' parameters for each
  *	  AM operator when a given index (specified by 'indexrelid') is used.

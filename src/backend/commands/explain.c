@@ -1,10 +1,10 @@
 /*
- * explain.c--
+ * explain.c
  *	  Explain the query execution plan
  *
  * Copyright (c) 1994-5, Regents of the University of California
  *
- *	  $Id: explain.c,v 1.31 1999/02/09 17:02:43 momjian Exp $
+ *	  $Id: explain.c,v 1.32 1999/02/13 23:15:06 momjian Exp $
  *
  */
 #include <stdio.h>

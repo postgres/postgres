@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * relnode.c--
+ * relnode.c
  *	  Relation manipulation routines
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.12 1999/02/12 05:56:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.13 1999/02/13 23:16:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,7 @@
 
 
 /*
- * get_base_rel--
+ * get_base_rel
  *	  Returns relation entry corresponding to 'relid', creating a new one if
  *	  necessary. This is for base relations.
  *
@@ -93,7 +93,7 @@ get_base_rel(Query *root, int relid)
 }
 
 /*
- * get_join_rel--
+ * get_join_rel
  *	  Returns relation entry corresponding to 'relid' (a list of relids),
  *	  creating a new one if necessary. This is for join relations.
  *
@@ -105,7 +105,7 @@ get_join_rel(Query *root, List *relid)
 }
 
 /*
- * rel-member--
+ * rel_member
  *	  Determines whether a relation of id 'relid' is contained within a list
  *	  'rels'.
  *

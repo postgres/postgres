@@ -1,11 +1,11 @@
 /*-------------------------------------------------------------------------
  *
- * geqo_random.h--
+ * geqo_random.h
  *	  random number generator
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_random.h,v 1.3 1998/09/01 04:37:04 momjian Exp $
+ * $Id: geqo_random.h,v 1.4 1999/02/13 23:21:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * funcindex.h--
+ * funcindex.h
  *
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: funcindex.h,v 1.6 1998/09/01 04:34:05 momjian Exp $
+ * $Id: funcindex.h,v 1.7 1999/02/13 23:20:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

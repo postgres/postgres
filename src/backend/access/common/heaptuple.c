@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * heaptuple.c--
+ * heaptuple.c
  *	  This file contains heap tuple accessor and mutator routines, as well
  *	  as a few various tuple utilities.
  *
@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.48 1999/02/03 21:15:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.49 1999/02/13 23:14:10 momjian Exp $
  *
  * NOTES
  *	  The old interface functions have been converted to macros

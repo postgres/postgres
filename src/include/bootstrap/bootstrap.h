@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * bootstrap.h--
+ * bootstrap.h
  *	  include file for the bootstrapping code
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bootstrap.h,v 1.13 1998/09/01 04:34:36 momjian Exp $
+ * $Id: bootstrap.h,v 1.14 1999/02/13 23:21:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

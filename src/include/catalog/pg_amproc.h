@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * pg_amproc.h--
+ * pg_amproc.h
  *	  definition of the system "amproc" relation (pg_amproce)
  *	  along with the relation's initial contents.  The amproc
  *	  catalog is used to store procedures used by indexed access
@@ -9,7 +9,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_amproc.h,v 1.11 1998/10/03 05:40:52 momjian Exp $
+ * $Id: pg_amproc.h,v 1.12 1999/02/13 23:21:06 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki

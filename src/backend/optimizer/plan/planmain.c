@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * planmain.c--
+ * planmain.c
  *	  Routines to plan a single query
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.30 1999/02/09 17:03:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.31 1999/02/13 23:16:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,7 +48,7 @@ extern Plan *make_groupPlan(List **tlist, bool tuplePerGroup,
 			   List *groupClause, Plan *subplan);
 
 /*
- * query_planner--
+ * query_planner
  *	  Routine to create a query plan.  It does so by first creating a
  *	  subplan for the topmost level of attributes in the query.  Then,
  *	  it modifies all target list and qualifications to consider the next
@@ -58,7 +58,7 @@ extern Plan *make_groupPlan(List **tlist, bool tuplePerGroup,
  *	  be placed where and any relation level qualifications to be
  *	  satisfied.
  *
- *	  command-type is the query command, e.g., retrieve, delete, etc.
+ *	  command-type is the query command, e.g., select, delete, etc.
  *	  tlist is the target list of the query
  *	  qual is the qualification of the query
  *
@@ -134,7 +134,6 @@ query_planner(Query *root,
 	 */
 	if (var_only_tlist == NULL && qual == NULL)
 	{
-
 		switch (command_type)
 		{
 			case CMD_SELECT:
@@ -143,7 +142,6 @@ query_planner(Query *root,
 											 (Node *) constant_qual,
 											 (Plan *) NULL));
 				break;
-
 			case CMD_DELETE:
 			case CMD_UPDATE:
 				{
@@ -153,16 +151,13 @@ query_planner(Query *root,
 													(Plan *) NULL);
 
 					if (constant_qual != NULL)
-					{
 						return ((Plan *) make_result(tlist,
 												  (Node *) constant_qual,
 													 (Plan *) scan));
-					}
 					else
 						return (Plan *) scan;
 				}
 				break;
-
 			default:
 				return (Plan *) NULL;
 		}
@@ -236,7 +231,7 @@ query_planner(Query *root,
  *	 Subplanner creates an entire plan consisting of joins and scans
  *	 for processing a single level of attributes.
  *
- *	 flat-tlist is the flattened target list
+ *	 flat_tlist is the flattened target list
  *	 qual is the qualification to be satisfied
  *
  *	 Returns a subplan.
@@ -258,8 +253,8 @@ subplanner(Query *root,
 	root->base_rel_list = NIL;
 	root->join_rel_list = NIL;
 
-	init_base_rels_tlist(root, flat_tlist);
-	init_base_rels_qual(root, qual);
+	make_var_only_tlist(root, flat_tlist);
+	add_restrict_and_join_to_rels(root, qual);
 	add_missing_vars_to_tlist(root, flat_tlist);
 
 	/*

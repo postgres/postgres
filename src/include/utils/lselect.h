@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * lselect.h--
+ * lselect.h
  *	  definitions for the replacement selection algorithm.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lselect.h,v 1.11 1998/09/01 04:39:16 momjian Exp $
+ * $Id: lselect.h,v 1.12 1999/02/13 23:22:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * dllist.h--
+ * dllist.h
  *		simple doubly linked list primitives
  *		the elements of the list are void* so the lists can contain
  *		anything
@@ -26,7 +26,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dllist.h,v 1.8 1998/09/01 04:36:15 momjian Exp $
+ * $Id: dllist.h,v 1.9 1999/02/13 23:21:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

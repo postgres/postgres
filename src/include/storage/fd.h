@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * fd.h--
+ * fd.h
  *	  Virtual file descriptor definitions.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fd.h,v 1.11 1998/09/01 04:38:14 momjian Exp $
+ * $Id: fd.h,v 1.12 1999/02/13 23:22:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

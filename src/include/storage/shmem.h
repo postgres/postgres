@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * shmem.h--
+ * shmem.h
  *	  shared memory management structures
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: shmem.h,v 1.14 1998/09/01 04:38:33 momjian Exp $
+ * $Id: shmem.h,v 1.15 1999/02/13 23:22:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

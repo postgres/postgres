@@ -1,12 +1,12 @@
- /*-------------------------------------------------------------------------
+/*-------------------------------------------------------------------------
  *
- * parse_query.h--
+ * parse_query.h
  *	  prototypes for parse_query.c.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_relation.h,v 1.8 1998/09/01 04:37:38 momjian Exp $
+ * $Id: parse_relation.h,v 1.9 1999/02/13 23:21:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

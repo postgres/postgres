@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * sinvaladt.h--
+ * sinvaladt.h
  *	  POSTGRES shared cache invalidation segment definitions.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: sinvaladt.h,v 1.10 1998/09/01 04:38:36 momjian Exp $
+ * $Id: sinvaladt.h,v 1.11 1999/02/13 23:22:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * rel.c--
+ * rel.c
  *	  POSTGRES relation descriptor code.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/rel.c,v 1.3 1997/09/08 21:48:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/rel.c,v 1.4 1999/02/13 23:19:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,7 +29,7 @@
  */
 
 /*
- * RelationGetIndexStrategy --
+ * RelationGetIndexStrategy 
  *		Returns index strategy for a relation.
  *
  * Note:
@@ -43,7 +43,7 @@ RelationGetIndexStrategy(Relation relation)
 }
 
 /*
- * RelationSetIndexSupport --
+ * RelationSetIndexSupport 
  *		Sets index strategy and support info for a relation.
  *
  * Note:

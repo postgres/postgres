@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * plannodes.h--
+ * plannodes.h
  *	  definitions for query plan nodes
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: plannodes.h,v 1.21 1999/02/09 17:03:12 momjian Exp $
+ * $Id: plannodes.h,v 1.22 1999/02/13 23:21:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

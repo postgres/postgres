@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * pg_aggregate.h--
+ * pg_aggregate.h
  *	  definition of the system "aggregate" relation (pg_aggregate)
  *	  along with the relation's initial contents.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_aggregate.h,v 1.19 1998/12/30 19:56:30 wieck Exp $
+ * $Id: pg_aggregate.h,v 1.20 1999/02/13 23:21:04 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki

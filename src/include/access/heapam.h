@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * heapam.h--
+ * heapam.h
  *	  POSTGRES heap access method definitions.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: heapam.h,v 1.40 1998/12/15 12:46:44 vadim Exp $
+ * $Id: heapam.h,v 1.41 1999/02/13 23:20:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

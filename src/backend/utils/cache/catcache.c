@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * catcache.c--
+ * catcache.c
  *	  System catalog cache for tuples matching a key.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.38 1999/02/03 21:17:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.39 1999/02/13 23:19:39 momjian Exp $
  *
  * Notes:
  *		XXX This needs to use exception.h to handle recovery when
@@ -277,7 +277,7 @@ CatalogCacheSetId(CatCache *cacheInOutP, int id)
 #endif
 
 /* ----------------
- * comphash --
+ * comphash 
  *		Compute a hash value, somehow.
  *
  * XXX explain algorithm here.

@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * itemptr.c--
+ * itemptr.c
  *	  POSTGRES disk item pointer code.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/page/itemptr.c,v 1.4 1998/09/01 03:25:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/page/itemptr.c,v 1.5 1999/02/13 23:18:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,7 @@
 #include "storage/bufpage.h"
 
 /*
- * ItemPointerEquals --
+ * ItemPointerEquals 
  *	Returns true if both item pointers point to the same item,
  *	 otherwise returns false.
  *

@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * float.h--
+ * float.h
  *	  definitions for ANSI floating point
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: float.h,v 1.3 1998/09/01 04:31:19 momjian Exp $
+ * $Id: float.h,v 1.4 1999/02/13 23:17:37 momjian Exp $
  *
  * NOTES
  *	  These come straight out of ANSI X3.159-1989 (p.18) and

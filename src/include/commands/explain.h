@@ -1,11 +1,11 @@
 /*-------------------------------------------------------------------------
  *
- * explain.h--
+ * explain.h
  *	  prototypes for explain.c
  *
  * Copyright (c) 1994-5, Regents of the University of California
  *
- * $Id: explain.h,v 1.7 1998/09/01 04:35:31 momjian Exp $
+ * $Id: explain.h,v 1.8 1999/02/13 23:21:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

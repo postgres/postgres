@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * nodeSort.c--
+ * nodeSort.c
  *	  Routines to handle sorting of relations.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSort.c,v 1.17 1999/02/09 17:02:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSort.c,v 1.18 1999/02/13 23:15:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * executor.h--
+ * executor.h
  *	  support for the POSTGRES executor module
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: executor.h,v 1.30 1999/02/08 14:14:18 wieck Exp $
+ * $Id: executor.h,v 1.31 1999/02/13 23:21:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

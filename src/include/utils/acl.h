@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * acl.h--
+ * acl.h
  *	  Definition of (and support for) access control list data structures.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: acl.h,v 1.18 1998/09/01 04:38:48 momjian Exp $
+ * $Id: acl.h,v 1.19 1999/02/13 23:22:14 momjian Exp $
  *
  * NOTES
  *	  For backward-compatability purposes we have to allow there

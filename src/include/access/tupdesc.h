@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * tupdesc.h--
+ * tupdesc.h
  *	  POSTGRES tuple descriptor definitions.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tupdesc.h,v 1.20 1998/09/01 04:34:32 momjian Exp $
+ * $Id: tupdesc.h,v 1.21 1999/02/13 23:20:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

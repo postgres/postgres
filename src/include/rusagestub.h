@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * rusagestub.h--
+ * rusagestub.h
  *	  Stubs for getrusage(3).
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rusagestub.h,v 1.3 1998/09/01 04:34:02 momjian Exp $
+ * $Id: rusagestub.h,v 1.4 1999/02/13 23:20:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

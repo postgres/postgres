@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * dynamic_loader.h--
+ * dynamic_loader.h
  *
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dynamic_loader.h,v 1.9 1998/09/01 04:39:02 momjian Exp $
+ * $Id: dynamic_loader.h,v 1.10 1999/02/13 23:22:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * date.c--
+ * date.c
  *	  Utilities for the built-in type "AbsoluteTime" (defined in nabstime).
  *	  Functions for the built-in type "RelativeTime".
  *	  Functions for the built-in type "TimeInterval".
@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.28 1998/10/08 18:30:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.29 1999/02/13 23:19:07 momjian Exp $
  *
  * NOTES
  *	 This code is actually (almost) unused.

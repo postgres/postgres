@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * planmain.h--
+ * planmain.h
  *	  prototypes for various files in optimizer/plan
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: planmain.h,v 1.20 1999/02/09 17:03:14 momjian Exp $
+ * $Id: planmain.h,v 1.21 1999/02/13 23:21:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,8 +41,8 @@ extern Unique *make_unique(List *tlist, Plan *lefttree, char *uniqueAttr);
 /*
  * prototypes for plan/initsplan.c
  */
-extern void init_base_rels_tlist(Query *root, List *tlist);
-extern void init_base_rels_qual(Query *root, List *clauses);
+extern void make_var_only_tlist(Query *root, List *tlist);
+extern void add_restrict_and_join_to_rels(Query *root, List *clauses);
 extern void init_join_info(List *rel_list);
 extern void add_missing_vars_to_tlist(Query *root, List *tlist);
 

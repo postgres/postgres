@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * xact.c--
+ * xact.c
  *	  top level transaction system support routines
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.31 1999/02/03 21:15:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.32 1999/02/13 23:14:49 momjian Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -1036,7 +1036,7 @@ StartTransactionCommand()
 			break;
 
 			/* ----------------
-			 *		As with BEGIN, we should never experience this --
+			 *		As with BEGIN, we should never experience this 
 			 *		if we do it means the END state was not changed in the
 			 *		previous CommitTransactionCommand().  If we get it, we
 			 *		print a warning, commit the transaction, start a new

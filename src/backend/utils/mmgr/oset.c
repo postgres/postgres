@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * oset.c--
+ * oset.c
  *	  Fixed format ordered set definitions.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/Attic/oset.c,v 1.10 1999/01/17 03:04:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/Attic/oset.c,v 1.11 1999/02/13 23:20:10 momjian Exp $
  *
  * NOTE
  *	  XXX This is a preliminary implementation which lacks fail-fast
@@ -24,7 +24,7 @@ static void OrderedElemPush(OrderedElem elem);
 static void OrderedElemPushHead(OrderedElem elem);
 
 /*
- * OrderedElemGetBase --
+ * OrderedElemGetBase 
  *		Returns base of enclosing structure.
  */
 static Pointer
@@ -37,7 +37,7 @@ OrderedElemGetBase(OrderedElem elem)
 }
 
 /*
- * OrderedSetInit --
+ * OrderedSetInit 
  */
 void
 OrderedSetInit(OrderedSet set, Offset offset)
@@ -49,7 +49,7 @@ OrderedSetInit(OrderedSet set, Offset offset)
 }
 
 /*
- * OrderedSetContains --
+ * OrderedSetContains 
  *		True iff ordered set contains given element.
  */
 bool
@@ -59,7 +59,7 @@ OrderedSetContains(OrderedSet set, OrderedElem elem)
 }
 
 /*
- * OrderedSetGetHead --
+ * OrderedSetGetHead 
  */
 Pointer
 OrderedSetGetHead(OrderedSet set)
@@ -73,7 +73,7 @@ OrderedSetGetHead(OrderedSet set)
 }
 
 /*
- * OrderedSetGetTail --
+ * OrderedSetGetTail 
  */
 #ifdef NOT_USED
 Pointer
@@ -90,7 +90,7 @@ OrderedSetGetTail(OrderedSet set)
 #endif
 
 /*
- * OrderedElemGetPredecessor --
+ * OrderedElemGetPredecessor 
  */
 Pointer
 OrderedElemGetPredecessor(OrderedElem elem)
@@ -102,7 +102,7 @@ OrderedElemGetPredecessor(OrderedElem elem)
 }
 
 /*
- * OrderedElemGetSuccessor --
+ * OrderedElemGetSuccessor 
  */
 Pointer
 OrderedElemGetSuccessor(OrderedElem elem)
@@ -114,7 +114,7 @@ OrderedElemGetSuccessor(OrderedElem elem)
 }
 
 /*
- * OrderedElemPop --
+ * OrderedElemPop 
  */
 void
 OrderedElemPop(OrderedElem elem)
@@ -127,7 +127,7 @@ OrderedElemPop(OrderedElem elem)
 }
 
 /*
- * OrderedElemPushInto --
+ * OrderedElemPushInto 
  */
 void
 OrderedElemPushInto(OrderedElem elem, OrderedSet set)
@@ -140,7 +140,7 @@ OrderedElemPushInto(OrderedElem elem, OrderedSet set)
 }
 
 /*
- * OrderedElemPush --
+ * OrderedElemPush 
  */
 static void
 OrderedElemPush(OrderedElem elem)
@@ -149,7 +149,7 @@ OrderedElemPush(OrderedElem elem)
 }
 
 /*
- * OrderedElemPushHead --
+ * OrderedElemPushHead 
  */
 static void
 OrderedElemPushHead(OrderedElem elem)

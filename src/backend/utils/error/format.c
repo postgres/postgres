@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * format.c--
+ * format.c
  *	  a wrapper around code that does what vsprintf does.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/format.c,v 1.9 1999/01/17 03:04:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/format.c,v 1.10 1999/02/13 23:19:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * gist.c--
+ * gist.c
  *	  interface routines for the postgres GiST index access method.
  *
  *

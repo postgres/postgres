@@ -1,11 +1,11 @@
 /*-------------------------------------------------------------------------
  *
- * psqlHelp.h--
+ * psqlHelp.h
  *	  Help for query language syntax
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: psqlHelp.h,v 1.58 1999/02/02 18:51:24 momjian Exp $
+ * $Id: psqlHelp.h,v 1.59 1999/02/13 23:20:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

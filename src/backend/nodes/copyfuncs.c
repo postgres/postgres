@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * copyfuncs.c--
+ * copyfuncs.c
  *	  Copy functions for Postgres tree nodes.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.69 1999/02/12 06:43:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.70 1999/02/13 23:15:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,7 +32,7 @@
 #include "optimizer/planmain.h"
 
 /*
- * listCopy--
+ * listCopy
  *	  this copy function only copies the "lcons-cells" of the list but not
  *	  its contents. (good for list of pointers as well as list of integers).
  */
@@ -57,7 +57,7 @@ listCopy(List *list)
 }
 
 /*
- * Node_Copy--
+ * Node_Copy
  *	  a macro to simplify calling of copyObject on the specified field
  */
 #define Node_Copy(from, newnode, field) \
@@ -1327,7 +1327,7 @@ _copyMergeOrder(MergeOrder *from)
  * ----------------
  */
 static RestrictInfo *
-_copyRestrictInfo(RestrictInfo * from)
+_copyRestrictInfo(RestrictInfo *from)
 {
 	RestrictInfo *newnode = makeNode(RestrictInfo);
 

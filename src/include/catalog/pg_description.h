@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * pg_description.h--
+ * pg_description.h
  *	  definition of the system "description" relation (pg_description)
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_description.h,v 1.7 1998/09/01 04:34:55 momjian Exp $
+ * $Id: pg_description.h,v 1.8 1999/02/13 23:21:09 momjian Exp $
  *
  * NOTES
  *		the genbki.sh script reads this file and generates .bki

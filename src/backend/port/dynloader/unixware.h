@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * unixware.h--
+ * unixware.h
  *	  port-specific prototypes for Intel x86/UNIXWARE 7
  *
  *

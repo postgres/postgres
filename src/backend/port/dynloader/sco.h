@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * port-protos.h--
+ * port_protos.h
  *	  port-specific prototypes for SCO 3.2v5.2
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: sco.h,v 1.2 1998/09/01 04:31:04 momjian Exp $
+ * $Id: sco.h,v 1.3 1999/02/13 23:17:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

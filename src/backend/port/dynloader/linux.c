@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * dynloader.c--
+ * dynloader.c
  *	  Dynamic Loader for Postgres for Linux, generated from those for
  *	  Ultrix.
  *
@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/linux.c,v 1.9 1998/09/01 03:24:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/linux.c,v 1.10 1999/02/13 23:17:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

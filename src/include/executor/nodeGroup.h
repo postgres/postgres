@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * nodeGroup.h--
+ * nodeGroup.h
  *	  prototypes for nodeGroup.c
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeGroup.h,v 1.8 1999/01/18 00:10:02 momjian Exp $
+ * $Id: nodeGroup.h,v 1.9 1999/02/13 23:21:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

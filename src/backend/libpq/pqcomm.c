@@ -1,11 +1,11 @@
 /*-------------------------------------------------------------------------
  *
- * pqcomm.c--
+ * pqcomm.c
  *	  Communication functions between the Frontend and the Backend
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: pqcomm.c,v 1.65 1999/01/24 02:47:15 tgl Exp $
+ *  $Id: pqcomm.c,v 1.66 1999/02/13 23:15:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

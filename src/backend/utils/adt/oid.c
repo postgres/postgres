@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * oid.c--
+ * oid.c
  *	  Functions for the built-in type Oid.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/oid.c,v 1.21 1998/10/29 18:07:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/oid.c,v 1.22 1999/02/13 23:19:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

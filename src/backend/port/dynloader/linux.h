@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * port-protos.h--
+ * port_protos.h
  *	  port-specific prototypes for Linux
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: linux.h,v 1.4 1998/09/01 04:31:01 momjian Exp $
+ * $Id: linux.h,v 1.5 1999/02/13 23:17:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * univel.h--
+ * univel.h
  *	  port-specific prototypes for Intel x86/UNIXWARE
  *
  *

@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * execScan.c--
+ * execScan.c
  *	  This code provides support for generalized relation scans. ExecScan
  *	  is passed a node and a pointer to a function to "do the right thing"
  *	  and return a tuple from the relation. ExecScan then does the tedious
@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execScan.c,v 1.8 1998/09/01 04:28:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execScan.c,v 1.9 1999/02/13 23:15:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * prepqual.c--
+ * prepqual.c
  *	  Routines for preprocessing the parse tree qualification
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepqual.c,v 1.12 1999/02/03 21:16:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepqual.c,v 1.13 1999/02/13 23:16:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

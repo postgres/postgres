@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * ordering.h--
+ * ordering.h
  *	  prototypes for ordering.c.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: ordering.h,v 1.12 1999/02/11 17:00:49 momjian Exp $
+ * $Id: ordering.h,v 1.13 1999/02/13 23:21:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * buf_internals.h--
+ * buf_internals.h
  *	  Internal definitions.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: buf_internals.h,v 1.27 1998/12/15 12:46:55 vadim Exp $
+ * $Id: buf_internals.h,v 1.28 1999/02/13 23:22:03 momjian Exp $
  *
  * NOTE
  *		If BUFFERPAGE0 is defined, then 0 will be used as a

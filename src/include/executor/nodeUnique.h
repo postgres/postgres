@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * nodeUnique.h--
+ * nodeUnique.h
  *
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeUnique.h,v 1.7 1998/09/01 04:36:11 momjian Exp $
+ * $Id: nodeUnique.h,v 1.8 1999/02/13 23:21:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * heap.c--
+ * heap.c
  *	  code to create and destroy POSTGRES heap relations
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.73 1999/02/09 17:02:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.74 1999/02/13 23:14:55 momjian Exp $
  *
  *
  * INTERFACE ROUTINES

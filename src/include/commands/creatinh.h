@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * creatinh.h--
+ * creatinh.h
  *	  prototypes for creatinh.c.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: creatinh.h,v 1.8 1998/09/01 04:35:27 momjian Exp $
+ * $Id: creatinh.h,v 1.9 1999/02/13 23:21:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

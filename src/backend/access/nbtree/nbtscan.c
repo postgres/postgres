@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * btscan.c--
+ * btscan.c
  *	  manage scans on btrees.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/Attic/nbtscan.c,v 1.18 1998/09/01 04:27:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/Attic/nbtscan.c,v 1.19 1999/02/13 23:14:36 momjian Exp $
  *
  *
  * NOTES

@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * tqual.h--
+ * tqual.h
  *	  POSTGRES "time" qualification definitions.
  *
  *	  Should be moved/renamed...	- vadim 07/28/98
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tqual.h,v 1.19 1999/01/29 09:23:17 vadim Exp $
+ * $Id: tqual.h,v 1.20 1999/02/13 23:22:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,7 +42,7 @@ extern TransactionId HeapSpecialTransactionId;
 extern CommandId HeapSpecialCommandId;
 
 /*
- * HeapTupleSatisfiesVisibility --
+ * HeapTupleSatisfiesVisibility 
  *		True iff heap tuple satsifies a time qual.
  *
  * Note:

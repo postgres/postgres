@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * nodeMaterial.c--
+ * nodeMaterial.c
  *	  Routines to handle materialization nodes.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMaterial.c,v 1.20 1999/02/09 17:02:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMaterial.c,v 1.21 1999/02/13 23:15:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

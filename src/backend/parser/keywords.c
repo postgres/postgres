@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * keywords.c--
+ * keywords.c
  *	  lexical token lookup for reserved words in postgres SQL
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.53 1999/02/08 14:14:13 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.54 1999/02/13 23:17:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

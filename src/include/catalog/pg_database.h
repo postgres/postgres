@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * pg_database.h--
+ * pg_database.h
  *	  definition of the system "database" relation (pg_database)
  *	  along with the relation's initial contents.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_database.h,v 1.7 1998/09/01 04:34:54 momjian Exp $
+ * $Id: pg_database.h,v 1.8 1999/02/13 23:21:08 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki

@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * scansup.c--
+ * scansup.c
  *	  support routines for the lex/flex scanner, used by both the normal
  * backend as well as the bootstrap backend
  *
@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scansup.c,v 1.11 1999/02/07 23:59:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scansup.c,v 1.12 1999/02/13 23:17:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

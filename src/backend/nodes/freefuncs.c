@@ -1,13 +1,13 @@
  /*-------------------------------------------------------------------------
  *
- * freefuncs.c--
+ * freefuncs.c
  *	  Free functions for Postgres tree nodes.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/Attic/freefuncs.c,v 1.9 1999/02/12 06:43:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/Attic/freefuncs.c,v 1.10 1999/02/13 23:15:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -939,7 +939,7 @@ _freeMergeOrder(MergeOrder *node)
  * ----------------
  */
 static void
-_freeRestrictInfo(RestrictInfo * node)
+_freeRestrictInfo(RestrictInfo *node)
 {
 	/* ----------------
 	 *	free remainder of node

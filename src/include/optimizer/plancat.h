@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * plancat.h--
+ * plancat.h
  *	  prototypes for plancat.c.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: plancat.h,v 1.10 1998/10/08 18:30:32 momjian Exp $
+ * $Id: plancat.h,v 1.11 1999/02/13 23:21:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

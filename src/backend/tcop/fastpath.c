@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * fastpath.c--
+ * fastpath.c
  *	  routines to handle function requests from the frontend
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.21 1998/09/01 04:32:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.22 1999/02/13 23:18:44 momjian Exp $
  *
  * NOTES
  *	  This cruft is the server side of PQfn.

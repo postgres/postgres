@@ -235,14 +235,14 @@
 /*#define YYDEBUG 1*/
 /*-------------------------------------------------------------------------
  *
- * gram.y--
+ * gram.y
  *	  POSTGRES SQL YACC rules/actions
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/Attic/gram.c,v 2.71 1999/02/09 06:30:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/Attic/gram.c,v 2.72 1999/02/13 23:16:54 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT

@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * pg_amop.h--
+ * pg_amop.h
  *	  definition of the system "amop" relation (pg_amop)
  *	  along with the relation's initial contents.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_amop.h,v 1.18 1998/10/22 13:50:58 momjian Exp $
+ * $Id: pg_amop.h,v 1.19 1999/02/13 23:21:05 momjian Exp $
  *
  * NOTES
  *	 the genbki.sh script reads this file and generates .bki

@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * equalfuncs.c--
+ * equalfuncs.c
  *	  equal functions to compare the nodes
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.31 1999/02/12 06:43:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.32 1999/02/13 23:15:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -281,7 +281,7 @@ _equalFunc(Func *a, Func *b)
  * RestrictInfo is a subclass of Node.
  */
 static bool
-_equalRestrictInfo(RestrictInfo * a, RestrictInfo * b)
+_equalRestrictInfo(RestrictInfo *a, RestrictInfo *b)
 {
 	Assert(IsA(a, RestrictInfo));
 	Assert(IsA(b, RestrictInfo));
@@ -697,7 +697,7 @@ _equalValue(Value *a, Value *b)
 }
 
 /*
- * equal--
+ * equal
  *	  returns whether two nodes are equal
  */
 bool
@@ -846,7 +846,7 @@ equal(void *a, void *b)
 }
 
 /*
- * equali--
+ * equali
  *	  compares two lists of integers
  *
  * XXX temp hack. needs something like T_IntList

@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * libpq-be.h--
+ * libpq_be.h
  *	  This file contains definitions for structures and
  *	  externs for functions used by the POSTGRES backend.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-be.h,v 1.13 1999/01/11 03:56:11 scrappy Exp $
+ * $Id: libpq-be.h,v 1.14 1999/02/13 23:21:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

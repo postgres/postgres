@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * tupdesc.c--
+ * tupdesc.c
  *	  POSTGRES tuple descriptor support code
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.47 1999/02/03 21:15:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.48 1999/02/13 23:14:14 momjian Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be

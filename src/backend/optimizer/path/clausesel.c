@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * clausesel.c--
+ * clausesel.c
  *	  Routines to compute and set clause selectivities
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.16 1999/02/03 21:16:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.17 1999/02/13 23:16:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

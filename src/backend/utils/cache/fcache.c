@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * fcache.c--
+ * fcache.c
  *	  Code for the 'function cache' used in Oper and Func nodes....
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.20 1999/02/03 21:17:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.21 1999/02/13 23:19:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * cost.h--
+ * cost.h
  *	  prototypes for costsize.c and clausesel.c.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: cost.h,v 1.16 1999/02/12 17:25:05 momjian Exp $
+ * $Id: cost.h,v 1.17 1999/02/13 23:21:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,7 @@
 #include "nodes/relation.h"
 
 /*
- * prototypes for costsize.c--
+ * prototypes for costsize.c
  *	  routines to compute costs and sizes
  */
 extern bool _enable_seqscan_;
@@ -49,7 +49,7 @@ extern int	compute_joinrel_size(JoinPath *joinpath);
 extern int	page_size(int tuples, int width);
 
 /*
- * prototypes for fuctions in clausesel.h--
+ * prototypes for fuctions in clausesel.h
  *	  routines to compute clause selectivities
  */
 extern void set_clause_selectivities(List *restrictinfo_list, Cost new_selectivity);

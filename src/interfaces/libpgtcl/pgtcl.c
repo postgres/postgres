@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * pgtcl.c--
+ * pgtcl.c
  *
  *	libpgtcl is a tcl package for front-ends to interface with PostgreSQL.
  *	It's a Tcl wrapper for libpq.
@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtcl.c,v 1.13 1998/09/21 01:02:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtcl.c,v 1.14 1999/02/13 23:22:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * varlena.c--
+ * varlena.c
  *	  Functions for the variable-length built-in types.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.46 1998/12/13 23:35:48 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.47 1999/02/13 23:19:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * arrayfuncs.c--
+ * arrayfuncs.c
  *	  Special functions for arrays.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.37 1999/02/03 21:17:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.38 1999/02/13 23:19:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -244,7 +244,7 @@ array_in(char *string,			/* input array in external form */
 }
 
 /*-----------------------------------------------------------------------------
- * _ArrayCount --
+ * _ArrayCount 
  *	 Counts the number of dimensions and the *dim array for an array string.
  *		 The syntax for array input is C-like nested curly braces
  *-----------------------------------------------------------------------------

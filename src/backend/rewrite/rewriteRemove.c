@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * rewriteRemove.c--
+ * rewriteRemove.c
  *	  routines for removing rewrite rules
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteRemove.c,v 1.21 1998/12/15 12:46:16 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteRemove.c,v 1.22 1999/02/13 23:17:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

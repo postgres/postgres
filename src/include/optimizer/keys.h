@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * keys.h--
+ * keys.h
  *	  prototypes for keys.c.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: keys.h,v 1.11 1999/02/11 17:00:49 momjian Exp $
+ * $Id: keys.h,v 1.12 1999/02/13 23:21:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * sinval.c--
+ * sinval.c
  *	  POSTGRES shared cache invalidation communication code.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.12 1998/09/01 04:31:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.13 1999/02/13 23:18:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -87,7 +87,7 @@ InitSharedInvalidationState(void)
 }
 
 /*
- * RegisterSharedInvalid --
+ * RegisterSharedInvalid 
  *	Returns a new local cache invalidation state containing a new entry.
  *
  * Note:
@@ -147,7 +147,7 @@ RegisterSharedInvalid(int cacheId,		/* XXX */
 }
 
 /*
- * InvalidateSharedInvalid --
+ * InvalidateSharedInvalid 
  *	Processes all entries in a shared cache invalidation state.
  */
 /****************************************************************************/

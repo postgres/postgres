@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * hashfn.c--
+ * hashfn.c
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/hashfn.c,v 1.8 1998/09/01 03:26:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/hashfn.c,v 1.9 1999/02/13 23:19:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

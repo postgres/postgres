@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * nodeHash.h--
+ * nodeHash.h
  *
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeHash.h,v 1.10 1998/09/01 04:35:57 momjian Exp $
+ * $Id: nodeHash.h,v 1.11 1999/02/13 23:21:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

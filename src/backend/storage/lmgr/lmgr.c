@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * lmgr.c--
+ * lmgr.c
  *	  POSTGRES lock manager code
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.21 1998/12/16 11:53:48 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.22 1999/02/13 23:18:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -129,7 +129,7 @@ InitLockTable()
 }
 
 /*
- * RelationInitLockInfo --
+ * RelationInitLockInfo 
  *		Initializes the lock information in a relation descriptor.
  */
 void

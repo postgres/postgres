@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * temprel.h--
+ * temprel.h
  *	  Temporary relation functions
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: temprel.h,v 1.1 1999/02/02 03:45:28 momjian Exp $
+ * $Id: temprel.h,v 1.2 1999/02/13 23:22:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

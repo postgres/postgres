@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * port-protos.h--
+ * port_protos.h
  *	  port-specific prototypes for HP-UX
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: port-protos.h,v 1.6 1998/09/01 04:31:17 momjian Exp $
+ * $Id: port-protos.h,v 1.7 1999/02/13 23:17:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

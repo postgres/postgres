@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * rtstrat.c--
+ * rtstrat.c
  *	  strategy map data for rtrees.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtstrat.c,v 1.10 1998/09/01 04:27:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtstrat.c,v 1.11 1999/02/13 23:14:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

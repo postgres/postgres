@@ -1,11 +1,11 @@
 /*-------------------------------------------------------------------------
  *
- * cluster.h--
+ * cluster.h
  *	  header file for postgres cluster command stuff
  *
  * Copyright (c) 1994-5, Regents of the University of California
  *
- * $Id: cluster.h,v 1.6 1998/09/01 04:35:23 momjian Exp $
+ * $Id: cluster.h,v 1.7 1999/02/13 23:21:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

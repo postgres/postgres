@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * nodeHashjoin.c--
+ * nodeHashjoin.c
  *	  Routines to handle hash join nodes
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.16 1999/02/03 21:16:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.17 1999/02/13 23:15:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

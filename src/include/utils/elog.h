@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * elog.h--
+ * elog.h
  *	  POSTGRES error logging definitions.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: elog.h,v 1.9 1999/01/18 00:10:17 momjian Exp $
+ * $Id: elog.h,v 1.10 1999/02/13 23:22:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

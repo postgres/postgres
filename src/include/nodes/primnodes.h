@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * primnodes.h--
+ * primnodes.h
  *	  Definitions for parse tree/query tree ("primitive") nodes.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: primnodes.h,v 1.24 1999/01/24 00:28:34 momjian Exp $
+ * $Id: primnodes.h,v 1.25 1999/02/13 23:21:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

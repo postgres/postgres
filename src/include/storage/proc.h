@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * proc.h--
+ * proc.h
  *
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: proc.h,v 1.16 1998/12/15 12:46:59 vadim Exp $
+ * $Id: proc.h,v 1.17 1999/02/13 23:22:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,8 +75,8 @@ typedef struct procglobal
 
 extern PROC *MyProc;
 
-#define PROC_INCR_SLOCK(lock) if (MyProc) (MyProc->sLocks[(lock)])++
-#define PROC_DECR_SLOCK(lock) if (MyProc) (MyProc->sLocks[(lock)])--
+#define PROC_INCR_SLOCK(lock) if (MyProc) ((MyProc->sLocks[(lock)])++)
+#define PROC_DECR_SLOCK(lock) if (MyProc) ((MyProc->sLocks[(lock)])--)
 
 /*
  * flags explaining why process woke up

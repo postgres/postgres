@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * pqsignal.c--
+ * pqsignal.c
  *	  reliable BSD-style signal(2) routine stolen from RWW who stole it
  *	  from Stevens...
  *
@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/pqsignal.c,v 1.9 1998/09/01 04:40:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/pqsignal.c,v 1.10 1999/02/13 23:22:43 momjian Exp $
  *
  * NOTES
  *		This shouldn't be in libpq, but the monitor and some other

@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * auth.h--
+ * auth.h
  *	  Definitions for network authentication routines
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: auth.h,v 1.10 1998/09/01 04:36:23 momjian Exp $
+ * $Id: auth.h,v 1.11 1999/02/13 23:21:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

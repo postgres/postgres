@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * pg_log.h--
+ * pg_log.h
  *	  the system log relation "pg_log" is not a "heap" relation.
  *	  it is automatically created by the transam/ code and the
  *	  information here is all bogus and is just here to make the
@@ -9,7 +9,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_log.h,v 1.5 1998/09/01 04:35:05 momjian Exp $
+ * $Id: pg_log.h,v 1.6 1999/02/13 23:21:11 momjian Exp $
  *
  * NOTES
  *	  The structures and macros used by the transam/ code

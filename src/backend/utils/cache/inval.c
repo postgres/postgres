@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * inval.c--
+ * inval.c
  *	  POSTGRES cache invalidation dispatcher code.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.20 1999/02/03 21:17:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.21 1999/02/13 23:19:41 momjian Exp $
  *
  * Note - this code is real crufty...
  *
@@ -90,7 +90,7 @@ Oid			MyAMOPRelationId = InvalidOid;
  */
 
 /* --------------------------------
- *		InvalidationEntryAllocate--
+ *		InvalidationEntryAllocate
  *				Allocates an invalidation entry.
  * --------------------------------
  */
@@ -106,7 +106,7 @@ InvalidationEntryAllocate(uint16 size)
 }
 
 /* --------------------------------
- *		LocalInvalidRegister --
+ *		LocalInvalidRegister 
  *		   Returns a new local cache invalidation state containing a new entry.
  * --------------------------------
  */
@@ -123,7 +123,7 @@ LocalInvalidRegister(LocalInvalid invalid,
 }
 
 /* --------------------------------
- *		LocalInvalidInvalidate--
+ *		LocalInvalidInvalidate
  *				Processes, then frees all entries in a local cache
  *				invalidation state.
  * --------------------------------
@@ -504,7 +504,7 @@ InitLocalInvalidateData()
 
 
 /*
- * DiscardInvalid --
+ * DiscardInvalid 
  *		Causes the invalidated cache state to be discarded.
  *
  * Note:
@@ -527,7 +527,7 @@ DiscardInvalid()
 }
 
 /*
- * RegisterInvalid --
+ * RegisterInvalid 
  *		Causes registration of invalidated state with other backends iff true.
  *
  * Note:
@@ -559,7 +559,7 @@ RegisterInvalid(bool send)
 }
 
 /*
- * RelationIdInvalidateHeapTuple --
+ * RelationIdInvalidateHeapTuple 
  *		Causes the given tuple in a relation to be invalidated.
  *
  * Note:

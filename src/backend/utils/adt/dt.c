@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * dt.c--
+ * dt.c
  *	  Functions for the built-in type "dt".
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.64 1999/02/13 05:34:24 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.65 1999/02/13 23:19:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * print.c--
+ * print.c
  *	  various print routines (used mostly for debugging)
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.21 1999/02/10 03:52:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.22 1999/02/13 23:16:00 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -36,7 +36,7 @@
 static char *plannode_type(Plan *p);
 
 /*
- * print--
+ * print
  *	  print contents of Node to stdout
  */
 void
@@ -125,7 +125,7 @@ pprint(void *obj)
 }
 
 /*
- * print_rt--
+ * print_rt
  *	  print contents of range table
  */
 void
@@ -150,7 +150,7 @@ print_rt(List *rtable)
 
 
 /*
- * print_expr--
+ * print_expr
  *	  print an expression
  */
 void
@@ -233,7 +233,7 @@ print_pathkeys(List *pathkeys, List *rtable)
 }
 
 /*
- * print_tl --
+ * print_tl 
  *	  print targetlist in a more legible way.
  */
 void
@@ -258,7 +258,7 @@ print_tl(List *tlist, List *rtable)
 }
 
 /*
- * print_slot--
+ * print_slot
  *	  print out the tuple with the given TupleTableSlot
  */
 void

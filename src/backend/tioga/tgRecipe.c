@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * tgRecipe.c--
+ * tgRecipe.c
  *		Tioga recipe-related definitions
  *		these functions can be used in both the frontend and the
  *		backend
@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tioga/Attic/tgRecipe.c,v 1.10 1998/09/01 04:32:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tioga/Attic/tgRecipe.c,v 1.11 1999/02/13 23:18:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

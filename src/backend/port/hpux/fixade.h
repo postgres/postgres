@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * fixade.h--
+ * fixade.h
  *	  compiler tricks to make things work while POSTGRES does non-native
  *	  dereferences on PA-RISC.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fixade.h,v 1.4 1998/09/01 04:31:16 momjian Exp $
+ * $Id: fixade.h,v 1.5 1999/02/13 23:17:33 momjian Exp $
  *
  *	 NOTES
  *		This must be included in EVERY source file.

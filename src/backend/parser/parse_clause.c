@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * parse_clause.c--
+ * parse_clause.c
  *	  handle clauses in parser
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.27 1999/02/02 12:57:51 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.28 1999/02/13 23:17:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,7 +43,7 @@ static void parseFromClause(ParseState *pstate, List *frmList);
 /*
  * makeRangeTable -
  *	  make a range table with the specified relation (optional) and the
- *	  from-clause.
+ *	  from_clause.
  */
 void
 makeRangeTable(ParseState *pstate, char *relname, List *frmList)

@@ -1,11 +1,11 @@
 /*-------------------------------------------------------------------------
  *
- * version.c--
+ * version.c
  *	 Returns the version string
  *
  * IDENTIFICATION
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/version.c,v 1.4 1998/10/12 05:09:55 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/version.c,v 1.5 1999/02/13 23:19:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

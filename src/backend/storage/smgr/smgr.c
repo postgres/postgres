@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * smgr.c--
+ * smgr.c
  *	  public interface routines to storage manager switch.
  *
  *	  All file system operations in POSTGRES dispatch through these
@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.21 1998/10/08 18:30:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.22 1999/02/13 23:18:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

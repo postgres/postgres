@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * copy.h--
+ * copy.h
  *	  Definitions for using the POSTGRES copy command.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: copy.h,v 1.4 1998/09/01 04:35:26 momjian Exp $
+ * $Id: copy.h,v 1.5 1999/02/13 23:21:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

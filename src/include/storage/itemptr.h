@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * itemptr.h--
+ * itemptr.h
  *	  POSTGRES disk item pointer definitions.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: itemptr.h,v 1.9 1998/09/01 04:38:20 momjian Exp $
+ * $Id: itemptr.h,v 1.10 1999/02/13 23:22:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,14 +37,14 @@ typedef ItemPointerData *ItemPointer;
  */
 
 /*
- * ItemPointerIsValid --
+ * ItemPointerIsValid 
  *		True iff the disk item pointer is not NULL.
  */
 #define ItemPointerIsValid(pointer) \
 	((bool) (PointerIsValid(pointer) && ((pointer)->ip_posid != 0)))
 
 /*
- * ItemPointerGetBlockNumber --
+ * ItemPointerGetBlockNumber 
  *		Returns the block number of a disk item pointer.
  */
 #define ItemPointerGetBlockNumber(pointer) \
@@ -54,7 +54,7 @@ typedef ItemPointerData *ItemPointer;
 )
 
 /*
- * ItemPointerGetOffsetNumber --
+ * ItemPointerGetOffsetNumber 
  *		Returns the offset number of a disk item pointer.
  */
 #define ItemPointerGetOffsetNumber(pointer) \
@@ -64,7 +64,7 @@ typedef ItemPointerData *ItemPointer;
 )
 
 /*
- * ItemPointerSet --
+ * ItemPointerSet 
  *		Sets a disk item pointer to the specified block and offset.
  */
 #define ItemPointerSet(pointer, blockNumber, offNum) \
@@ -75,7 +75,7 @@ typedef ItemPointerData *ItemPointer;
 )
 
 /*
- * ItemPointerSetBlockNumber --
+ * ItemPointerSetBlockNumber 
  *		Sets a disk item pointer to the specified block.
  */
 #define ItemPointerSetBlockNumber(pointer, blockNumber) \
@@ -85,7 +85,7 @@ typedef ItemPointerData *ItemPointer;
 )
 
 /*
- * ItemPointerSetOffsetNumber --
+ * ItemPointerSetOffsetNumber 
  *		Sets a disk item pointer to the specified offset.
  */
 #define ItemPointerSetOffsetNumber(pointer, offsetNumber) \
@@ -95,7 +95,7 @@ typedef ItemPointerData *ItemPointer;
 )
 
 /*
- * ItemPointerCopy --
+ * ItemPointerCopy 
  *		Copies the contents of one disk item pointer to another.
  */
 #define ItemPointerCopy(fromPointer, toPointer) \
@@ -106,7 +106,7 @@ typedef ItemPointerData *ItemPointer;
 )
 
 /*
- * ItemPointerSetInvalid --
+ * ItemPointerSetInvalid 
  *		Sets a disk item pointer to be invalid.
  */
 #define ItemPointerSetInvalid(pointer) \

@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * cluster.c--
+ * cluster.c
  *	  Paul Brown's implementation of cluster index.
  *
  *	  I am going to use the rename function as a model for this in the
@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.37 1999/02/03 21:16:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.38 1999/02/13 23:15:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

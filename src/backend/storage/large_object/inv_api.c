@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * inv_api.c--
+ * inv_api.c
  *	  routines for manipulating inversion fs large objects. This file
  *	  contains the user-level large object application interface routines.
  *
@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.48 1999/02/04 14:52:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.49 1999/02/13 23:18:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -563,7 +563,7 @@ inv_write(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 }
 
 /*
- * inv_cleanindex --
+ * inv_cleanindex
  *		 Clean opened indexes for large objects, and clears current result.
  *		 This is necessary on transaction commit in order to prevent buffer
  *		 leak.

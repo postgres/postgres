@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * defind.c--
+ * defind.c
  *	  POSTGRES define, extend and remove index code.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/defind.c,v 1.33 1999/02/03 21:16:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/defind.c,v 1.34 1999/02/13 23:15:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,7 +53,7 @@ static void NormIndexAttrs(List *attList, AttrNumber *attNumP,
 static char *GetDefaultOpClass(Oid atttypid);
 
 /*
- * DefineIndex --
+ * DefineIndex 
  *		Creates a new index.
  *
  * 'attributeList' is a list of IndexElem specifying either a functional
@@ -208,7 +208,7 @@ DefineIndex(char *heapRelationName,
 
 
 /*
- * ExtendIndex --
+ * ExtendIndex 
  *		Extends a partial index.
  *
  * Exceptions:
@@ -545,7 +545,7 @@ GetDefaultOpClass(Oid atttypid)
 }
 
 /*
- * RemoveIndex --
+ * RemoveIndex 
  *		Deletes an index.
  *
  * Exceptions:

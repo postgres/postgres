@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * rtget.c--
+ * rtget.c
  *	  fetch tuples from an rtree scan.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtget.c,v 1.12 1998/09/01 04:27:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtget.c,v 1.13 1999/02/13 23:14:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * spin.h--
+ * spin.h
  *	  synchronization routines
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: spin.h,v 1.7 1998/09/01 04:38:38 momjian Exp $
+ * $Id: spin.h,v 1.8 1999/02/13 23:22:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * nodeIndexscan.h--
+ * nodeIndexscan.h
  *
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeIndexscan.h,v 1.7 1998/09/01 04:35:59 momjian Exp $
+ * $Id: nodeIndexscan.h,v 1.8 1999/02/13 23:21:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

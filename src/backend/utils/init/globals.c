@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * globals.c--
+ * globals.c
  *	  global variable declarations
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.26 1998/10/16 06:05:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.27 1999/02/13 23:20:00 momjian Exp $
  *
  * NOTES
  *	  Globals used all over the place should be declared here and not

@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * pgtclId.c--
+ * pgtclId.c
  *
  *	Contains Tcl "channel" interface routines, plus useful routines
  *	to convert between strings and pointers.  These are needed because
@@ -12,7 +12,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclId.c,v 1.17 1999/01/17 21:14:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclId.c,v 1.18 1999/02/13 23:22:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * tqual.c--
+ * tqual.c
  *	  POSTGRES "time" qualification code.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.24 1999/01/29 09:23:12 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.25 1999/02/13 23:20:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,7 +59,7 @@ setheapoverride(bool on)
  */
 
 /*
- * HeapTupleSatisfiesItself --
+ * HeapTupleSatisfiesItself 
  *		True iff heap tuple is valid for "itself."
  *		"{it}self" means valid as of everything that's happened
  *		in the current transaction, _including_ the current command.
@@ -144,7 +144,7 @@ HeapTupleSatisfiesItself(HeapTupleHeader tuple)
 }
 
 /*
- * HeapTupleSatisfiesNow --
+ * HeapTupleSatisfiesNow 
  *		True iff heap tuple is valid "now."
  *		"now" means valid including everything that's happened
  *		 in the current transaction _up to, but not including,_

@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * rewriteHandler.c--
+ * rewriteHandler.c
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.34 1999/02/03 21:17:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.35 1999/02/13 23:17:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

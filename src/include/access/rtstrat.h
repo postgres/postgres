@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * rtstrat.h--
+ * rtstrat.h
  *	  routines defined in access/rtree/rtstrat.c
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rtstrat.h,v 1.8 1998/09/01 04:34:26 momjian Exp $
+ * $Id: rtstrat.h,v 1.9 1999/02/13 23:20:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

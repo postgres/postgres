@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * pg_attrdef.h--
+ * pg_attrdef.h
  *
  *
  * Copyright (c) 1994, Regents of the University of California

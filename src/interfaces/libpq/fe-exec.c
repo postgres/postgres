@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * fe-exec.c--
+ * fe-exec.c
  *	  functions related to sending a query down to the backend
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.73 1999/02/07 22:08:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.74 1999/02/13 23:22:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

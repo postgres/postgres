@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * remove.c--
+ * remove.c
  *	  POSTGRES remove (function | type | operator ) utilty code.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.31 1998/12/15 12:45:57 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.32 1999/02/13 23:15:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,7 +36,7 @@
 #endif
 
 /*
- * RemoveOperator --
+ * RemoveOperator 
  *		Deletes an operator.
  *
  * Exceptions:
@@ -288,7 +288,7 @@ RemoveType(char *typeName)		/* type name to be removed */
 }
 
 /*
- * RemoveFunction --
+ * RemoveFunction 
  *		Deletes a function.
  *
  * Exceptions:

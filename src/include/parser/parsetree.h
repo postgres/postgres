@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * parsetree.h--
+ * parsetree.h
  *	  Routines to access various components and subcomponents of
  *	  parse trees.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsetree.h,v 1.5 1998/09/01 04:37:43 momjian Exp $
+ * $Id: parsetree.h,v 1.6 1999/02/13 23:21:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

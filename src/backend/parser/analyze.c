@@ -1,11 +1,11 @@
 /*-------------------------------------------------------------------------
  *
- * analyze.c--
+ * analyze.c
  *	  transform the parse tree into a query tree
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: analyze.c,v 1.98 1999/02/08 14:14:11 wieck Exp $
+ *  $Id: analyze.c,v 1.99 1999/02/13 23:16:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * common.c--
+ * common.c
  *	  common routines between pg_dump and pg4_dump
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.28 1998/12/13 23:41:32 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.29 1999/02/13 23:20:22 momjian Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -101,7 +101,7 @@ findOprByOid(OprInfo *oprinfo, int numOprs, const char *oid)
 
 
 /*
- * findParentsByOid --
+ * findParentsByOid 
  *	  given the oid of a class, return the names of its parent classes
  * and assign the number of parents to the last argument.
  *

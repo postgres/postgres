@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * restrictinfo.c--
+ * restrictinfo.c
  *	  RestrictInfo node manipulation routines.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.1 1999/02/05 19:59:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.2 1999/02/13 23:16:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,13 +21,13 @@
 #include "optimizer/restrictinfo.h"
 
 /*
- * valid-or-clause--
+ * valid_or_clause
  *
  * Returns t iff the restrictinfo node contains a 'normal' 'or' clause.
  *
  */
 bool
-valid_or_clause(RestrictInfo * restrictinfo)
+valid_or_clause(RestrictInfo *restrictinfo)
 {
 	if (restrictinfo != NULL &&
 		!single_node((Node *) restrictinfo->clause) &&
@@ -39,9 +39,9 @@ valid_or_clause(RestrictInfo * restrictinfo)
 }
 
 /*
- * get-actual-clauses--
+ * get_actual_clauses
  *
- * Returns a list containing the clauses from 'restrictinfo-list'.
+ * Returns a list containing the clauses from 'restrictinfo_list'.
  *
  */
 List *
@@ -68,7 +68,7 @@ get_actual_clauses(List *restrictinfo_list)
  */
 
 /*
- * get_relattvals--
+ * get_relattvals
  *	  For each member of  a list of restrictinfo nodes to be used with an
  *	  index, create a vectori-long specifying:
  *				the attnos,
@@ -79,7 +79,7 @@ get_actual_clauses(List *restrictinfo_list)
  *	  flag indicating whether the constant is on the left or right should
  *	  always be *SELEC-CONSTANT-RIGHT*.
  *
- * 'restrictinfo-list' is a list of restrictinfo nodes
+ * 'restrictinfo_list' is a list of restrictinfo nodes
  *
  * Returns a list of vectori-longs.
  *
@@ -117,7 +117,7 @@ get_relattvals(List *restrictinfo_list,
 }
 
 /*
- * get_joinvars --
+ * get_joinvars 
  *	  Given a list of join restrictinfo nodes to be used with the index
  *	  of an inner join relation, return three lists consisting of:
  *				the attributes corresponding to the inner join relation
@@ -126,7 +126,7 @@ get_relattvals(List *restrictinfo_list,
  *						the operator.
  *
  * 'relid' is the inner join relation
- * 'restrictinfo-list' is a list of qualification clauses to be used with
+ * 'restrictinfo_list' is a list of qualification clauses to be used with
  *		'rel'
  *
  */
@@ -168,7 +168,7 @@ get_joinvars(Oid relid,
 }
 
 /*
- * get_opnos--
+ * get_opnos
  *	  Create and return a list containing the clause operators of each member
  *	  of a list of restrictinfo nodes to be used with an index.
  *

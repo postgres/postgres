@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * libpq-fs.h--
+ * libpq-fs.h
  *	  definitions for using Inversion file system routines
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fs.h,v 1.7 1998/09/01 04:36:28 momjian Exp $
+ * $Id: libpq-fs.h,v 1.8 1999/02/13 23:21:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * planner.c--
+ * planner.c
  *	  The query optimizer external interface.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.43 1999/02/09 17:03:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.44 1999/02/13 23:16:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,7 +91,7 @@ planner(Query *parse)
 }
 
 /*
- * union_planner--
+ * union_planner
  *
  *	  Invokes the planner on union queries if there are any left,
  *	  recursing if necessary to get them all, then processes normal plans.
@@ -357,7 +357,7 @@ union_planner(Query *parse)
 }
 
 /*
- * make_sortplan--
+ * make_sortplan
  *	  Returns a sortplan which is basically a SORT node attached to the
  *	  top of the plan returned from the planner.  It also adds the
  *	   cost of sorting into the plan.

@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * lotest.c--
+ * lotest.c
  *	  test using large objects with libpq
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/test/examples/Attic/testlo2.c,v 1.8 1998/06/15 19:30:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/test/examples/Attic/testlo2.c,v 1.9 1999/02/13 23:22:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

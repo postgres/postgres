@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * nodeNestloop.h--
+ * nodeNestloop.h
  *
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeNestloop.h,v 1.8 1999/02/12 17:24:55 momjian Exp $
+ * $Id: nodeNestloop.h,v 1.9 1999/02/13 23:21:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

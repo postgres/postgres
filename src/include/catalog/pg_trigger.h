@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * pg_trigger.h--
+ * pg_trigger.h
  *
  *
  * Copyright (c) 1994, Regents of the University of California

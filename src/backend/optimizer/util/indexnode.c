@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * indexnode.c--
+ * indexnode.c
  *	  Routines to find all indices on a relation
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/indexnode.c,v 1.13 1999/02/12 05:56:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/indexnode.c,v 1.14 1999/02/13 23:16:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,7 @@
 static List *find_secondary_index(Query *root, Oid relid);
 
 /*
- * find-relation-indices--
+ * find_relation_indices
  *	  Returns a list of index nodes containing appropriate information for
  *	  each (secondary) index defined on a relation.
  *
@@ -42,7 +42,7 @@ find_relation_indices(Query *root, RelOptInfo *rel)
 }
 
 /*
- * find-secondary-index--
+ * find_secondary_index
  *	  Creates a list of index path nodes containing information for each
  *	  secondary index defined on a relation by searching through the index
  *	  catalog.

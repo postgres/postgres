@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * hio.h--
+ * hio.h
  *	  POSTGRES heap access method input/output definitions.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hio.h,v 1.9 1998/12/15 12:46:45 vadim Exp $
+ * $Id: hio.h,v 1.10 1999/02/13 23:20:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * regexp.c--
+ * regexp.c
  *	  regular expression handling code.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regexp.c,v 1.21 1999/02/03 21:17:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regexp.c,v 1.22 1999/02/13 23:19:30 momjian Exp $
  *
  *		Alistair Crooks added the code for the regex caching
  *		agc - cached the regular expressions used - there's a good chance

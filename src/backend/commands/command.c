@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * command.c--
+ * command.c
  *	  random postgres portal and utility support code
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.37 1999/02/08 14:14:08 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.38 1999/02/13 23:15:03 momjian Exp $
  *
  * NOTES
  *	  The PortalExecutorHeapMemory crap needs to be eliminated

@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * tupmacs.h--
+ * tupmacs.h
  *	  Tuple macros used by both index tuples and heap tuples.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tupmacs.h,v 1.7 1998/09/08 15:24:11 momjian Exp $
+ * $Id: tupmacs.h,v 1.8 1999/02/13 23:20:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * recipe.c--
+ * recipe.c
  *	  routines for handling execution of Tioga recipes
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/recipe.c,v 1.27 1999/02/02 03:44:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/recipe.c,v 1.28 1999/02/13 23:15:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

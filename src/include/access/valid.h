@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * valid.h--
+ * valid.h
  *	  POSTGRES tuple qualification validity definitions.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: valid.h,v 1.16 1998/11/27 19:33:32 vadim Exp $
+ * $Id: valid.h,v 1.17 1999/02/13 23:20:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * nodeTee.c--
+ * nodeTee.c
  *
  *
  * Copyright (c) 1994, Regents of the University of California
@@ -14,7 +14,7 @@
  *		ExecInitTee
  *		ExecEndTee
  *
- *  $Id: nodeTee.c,v 1.29 1999/02/02 03:44:24 momjian Exp $
+ *  $Id: nodeTee.c,v 1.30 1999/02/13 23:15:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

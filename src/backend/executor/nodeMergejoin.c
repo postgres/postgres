@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * nodeMergejoin.c--
+ * nodeMergejoin.c
  *	  routines supporting merge joins
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.20 1999/02/03 21:16:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.21 1999/02/13 23:15:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

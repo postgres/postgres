@@ -1,14 +1,14 @@
 %{
 /*-------------------------------------------------------------------------
  *
- * backendparse.y--
+ * backendparse.y
  *	  yacc parser grammer for the "backend" initialization program.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.23 1999/02/02 03:44:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.24 1999/02/13 23:14:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

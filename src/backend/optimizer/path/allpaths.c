@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * allpaths.c--
+ * allpaths.c
  *	  Routines to find possible search paths for processing a query
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.30 1999/02/12 17:24:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.31 1999/02/13 23:16:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,7 +52,7 @@ static void debug_print_rel(Query *root, RelOptInfo *rel);
 #endif
 
 /*
- * find-paths--
+ * find_paths
  *	  Finds all possible access paths for executing a query, returning the
  *	  top level list of relation entries.
  *
@@ -96,7 +96,7 @@ find_paths(Query *root, List *rels)
 }
 
 /*
- * find-rel-paths--
+ * find_rel_paths
  *	  Finds all paths available for scanning each relation entry in
  *	  'rels'.  Sequential scan and any available indices are considered
  *	  if possible(indices are not considered for lower nesting levels).
@@ -108,7 +108,6 @@ static void
 find_rel_paths(Query *root, List *rels)
 {
 	List	   *temp;
-	List	   *lastpath;
 
 	foreach(temp, rels)
 	{
@@ -132,13 +131,6 @@ find_rel_paths(Query *root, List *rels)
 									 append(rel_index_scan_list,
 											or_index_scan_list));
 
-		/*
-		 * The unordered path is always the last in the list. If it is not
-		 * the cheapest path, prune it.
-		 */
-		lastpath = rel->pathlist;
-		while (lnext(lastpath) != NIL)
-			lastpath = lnext(lastpath);
 		set_cheapest(rel, rel->pathlist);
 
 		/*
@@ -153,7 +145,7 @@ find_rel_paths(Query *root, List *rels)
 }
 
 /*
- * find-join-paths--
+ * find_join_paths
  *	  Find all possible joinpaths for a query by successively finding ways
  *	  to join single relations into join relations.
  *
@@ -161,10 +153,10 @@ find_rel_paths(Query *root, List *rels)
  *	  Find all possible joinpaths(bushy trees) for a query by systematically
  *	  finding ways to join relations(both original and derived) together.
  *
- * 'outer-rels' is the current list of relations for which join paths
+ * 'outer_rels' is the current list of relations for which join paths
  *				are to be found, i.e., he current list of relations that
  *				have already been derived.
- * 'levels-needed' is the number of iterations needed
+ * 'levels_needed' is the number of iterations needed
  *
  * Returns the final level of join relations, i.e., the relation that is
  * the result of joining all the original relations together.
@@ -204,7 +196,7 @@ find_join_paths(Query *root, List *outer_rels, int levels_needed)
 		/*
 		 * Determine all possible pairs of relations to be joined at this
 		 * level. Determine paths for joining these relation pairs and
-		 * modify 'new-rels' accordingly, then eliminate redundant join
+		 * modify 'new_rels' accordingly, then eliminate redundant join
 		 * relations.
 		 */
 		new_rels = find_join_rels(root, outer_rels);

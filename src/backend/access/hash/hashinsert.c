@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * hashinsert.c--
+ * hashinsert.c
  *	  Item insertion in hash tables for Postgres.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashinsert.c,v 1.14 1998/09/01 03:20:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashinsert.c,v 1.15 1999/02/13 23:14:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

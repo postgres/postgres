@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * bufpage.c--
+ * bufpage.c
  *	  POSTGRES standard buffer page code.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.20 1998/09/01 04:32:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.21 1999/02/13 23:18:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,7 +35,7 @@ static bool PageManagerShuffle = true;	/* default is shuffle mode */
  */
 
 /*
- * PageInit --
+ * PageInit 
  *		Initializes the contents of a page.
  */
 void
@@ -56,7 +56,7 @@ PageInit(Page page, Size pageSize, Size specialSize)
 }
 
 /*
- * PageAddItem --
+ * PageAddItem 
  *		Adds item to the given page.
  *
  * Note:
@@ -174,7 +174,7 @@ PageAddItem(Page page,
 }
 
 /*
- * PageGetTempPage --
+ * PageGetTempPage 
  *		Get a temporary page in local memory for special processing
  */
 Page
@@ -207,7 +207,7 @@ PageGetTempPage(Page page, Size specialSize)
 }
 
 /*
- * PageRestoreTempPage --
+ * PageRestoreTempPage 
  *		Copy temporary page back to permanent page after special processing
  *		and release the temporary page.
  */
@@ -246,7 +246,7 @@ itemidcompare(const void *itemidp1, const void *itemidp2)
 }
 
 /*
- * PageRepairFragmentation --
+ * PageRepairFragmentation 
  *		Frees fragmented space on a page.
  */
 void
@@ -327,7 +327,7 @@ PageRepairFragmentation(Page page)
 }
 
 /*
- * PageGetFreeSpace --
+ * PageGetFreeSpace 
  *		Returns the size of the free (allocatable) space on a page.
  */
 Size
@@ -346,7 +346,7 @@ PageGetFreeSpace(Page page)
 }
 
 /*
- * PageManagerModeSet --
+ * PageManagerModeSet 
  *
  *	 Sets mode to either: ShufflePageManagerMode (the default) or
  *	 OverwritePageManagerMode.	For use by access methods code

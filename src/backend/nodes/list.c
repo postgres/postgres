@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * list.c--
+ * list.c
  *	  various list handling routines
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.16 1999/02/09 03:51:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.17 1999/02/13 23:15:57 momjian Exp $
  *
  * NOTES
  *	  XXX a few of the following functions are duplicated to handle

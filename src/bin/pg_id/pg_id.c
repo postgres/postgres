@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * pg_id.c--
+ * pg_id.c
  *	  Print the user ID for the login name passed as argument,
  *	  or the real user ID of the caller if no argument.  If the
  *	  login name doesn't exist, print "NOUSER" and exit 1.
@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_id/Attic/pg_id.c,v 1.7 1999/01/17 06:19:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_id/Attic/pg_id.c,v 1.8 1999/02/13 23:20:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

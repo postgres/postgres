@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * xfunc.c--
+ * xfunc.c
  *	  Utility routines to handle expensive function optimization.
  *	  Includes xfunc_trypullup(), which attempts early pullup of predicates
  *	  to allow for maximal pruning.
@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/xfunc.c,v 1.27 1999/02/12 17:24:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/xfunc.c,v 1.28 1999/02/13 23:16:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,7 +49,7 @@ static int xfunc_card_unreferenced(Query *queryInfo,
 */
 
 /*
-** xfunc_trypullup --
+** xfunc_trypullup 
 **	  Preliminary pullup of predicates, to allow for maximal pruning.
 ** Given a relation, check each of its paths and see if you can
 ** pullup clauses from its inner and outer.
@@ -127,7 +127,7 @@ xfunc_trypullup(RelOptInfo rel)
 }
 
 /*
- ** xfunc_shouldpull --
+ ** xfunc_shouldpull 
  **    find clause with highest rank, and decide whether to pull it up
  ** from child to parent.  Currently we only pullup secondary join clauses
  ** that are in the pathrestrictinfo.  Secondary hash and sort clauses are
@@ -144,7 +144,7 @@ xfunc_shouldpull(Query *queryInfo,
 				 Path childpath,
 				 JoinPath parentpath,
 				 int whichchild,
-				 RestrictInfo * maxcinfopt)		/* Out: pointer to clause
+				 RestrictInfo *maxcinfopt)		/* Out: pointer to clause
 												 * to pullup */
 {
 	LispValue	clauselist,
@@ -250,7 +250,7 @@ xfunc_shouldpull(Query *queryInfo,
 
 
 /*
- ** xfunc_pullup --
+ ** xfunc_pullup 
  **    move clause from child pathnode to parent pathnode.	 This operation
  ** makes the child pathnode produce a larger relation than it used to.
  ** This means that we must construct a new RelOptInfo just for the childpath,
@@ -386,7 +386,7 @@ LispValue	clause;
 }
 
 /*
- ** xfunc_join_expense --
+ ** xfunc_join_expense 
  **    Find global expense of a join clause
  */
 Cost
@@ -457,7 +457,7 @@ xfunc_local_expense(LispValue clause)
 }
 
 /*
- ** xfunc_func_expense --
+ ** xfunc_func_expense 
  **    given a Func or Oper and its args, find its expense.
  ** Note: in Stonebraker's SIGMOD '91 paper, he uses a more complicated metric
  ** than the one here.	We can ignore the expected number of tuples for
@@ -581,7 +581,7 @@ xfunc_func_expense(LispValue node, LispValue args)
 }
 
 /*
- ** xfunc_width --
+ ** xfunc_width 
  **    recursively find the width of a expression
  */
 
@@ -1071,7 +1071,7 @@ xfunc_total_path_cost(JoinPath pathnode)
 
 
 /*
- ** xfunc_expense_per_tuple --
+ ** xfunc_expense_per_tuple 
  **    return the expense of the join *per-tuple* of the input relation.
  ** The cost model here is that a join costs
  **		k*card(outer)*card(inner) + l*card(outer) + m*card(inner) + n
@@ -1124,7 +1124,7 @@ xfunc_expense_per_tuple(JoinPath joinnode, int whichchild)
 }
 
 /*
- ** xfunc_fixvars --
+ ** xfunc_fixvars 
  ** After pulling up a clause, we must walk its expression tree, fixing Var
  ** nodes to point to the correct varno (either INNER or OUTER, depending
  ** on which child the clause was pulled from), and the right varattno in the
@@ -1154,7 +1154,7 @@ xfunc_fixvars(LispValue clause, /* clause being pulled up */
 			 * have to add it. *
 			 *
 			 */
-			add_tl_element(rel, (Var) clause);
+			add_var_to_tlist(rel, (Var) clause);
 			tle = tlistentry_member((Var) clause, get_targetlist(rel));
 		}
 		set_varno(((Var) clause), varno);
@@ -1223,7 +1223,7 @@ xfunc_clause_compare(void *arg1, void *arg2)
 }
 
 /*
- ** xfunc_disjunct_sort --
+ ** xfunc_disjunct_sort 
  **   given a list of clauses, for each clause sort the disjuncts by cost
  **   (this assumes the predicates have been converted to Conjunctive NF)
  **   Modifies the clause list!
@@ -1287,7 +1287,7 @@ xfunc_disjunct_compare(Query *queryInfo, void *arg1, void *arg2)
 
 /* ------------------------ UTILITY FUNCTIONS ------------------------------- */
 /*
- ** xfunc_func_width --
+ ** xfunc_func_width 
  **    Given a function OID and operands, find the width of the return value.
  */
 int
@@ -1349,7 +1349,7 @@ exit:
 }
 
 /*
- ** xfunc_tuple_width --
+ ** xfunc_tuple_width 
  **		Return the sum of the lengths of all the attributes of a given relation
  */
 int
@@ -1371,7 +1371,7 @@ xfunc_tuple_width(Relation rd)
 }
 
 /*
- ** xfunc_num_join_clauses --
+ ** xfunc_num_join_clauses 
  **   Find the number of join clauses associated with this join path
  */
 int
@@ -1388,7 +1388,7 @@ xfunc_num_join_clauses(JoinPath path)
 }
 
 /*
- ** xfunc_LispRemove --
+ ** xfunc_LispRemove 
  **   Just like LispRemove, but it whines if the item to be removed ain't there
  */
 LispValue
@@ -1419,7 +1419,7 @@ do { \
 } while(0)
 
 /*
- ** xfunc_copyrel --
+ ** xfunc_copyrel 
  **   Just like _copyRel, but doesn't copy the paths
  */
 bool

@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * nodeResult.h--
+ * nodeResult.h
  *
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeResult.h,v 1.7 1998/09/01 04:36:04 momjian Exp $
+ * $Id: nodeResult.h,v 1.8 1999/02/13 23:21:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

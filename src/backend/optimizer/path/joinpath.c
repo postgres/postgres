@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * joinpath.c--
+ * joinpath.c
  *	  Routines to find all possible paths for processing a set of joins
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.22 1999/02/12 17:24:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.23 1999/02/13 23:16:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,7 +42,7 @@ static List *hash_inner_and_outer(RelOptInfo *joinrel, RelOptInfo *outerrel, Rel
 					 List *hashinfo_list);
 
 /*
- * find-all-join-paths--
+ * find_all_join_paths
  *	  Creates all possible ways to process joins for each of the join
  *	  relations in the list 'joinrels.'  Each unique path will be included
  *	  in the join relation's 'pathlist' field.
@@ -131,7 +131,7 @@ find_all_join_paths(Query *root, List *joinrels)
 		 * 3. Consider paths where the inner relation need not be
 		 * explicitly sorted.  This may include nestloops and mergejoins
 		 * the actual nestloop nodes were constructed in
-		 * (match-unsorted-outer).
+		 * (match_unsorted_outer).
 		 */
 		pathlist = add_pathlist(joinrel, pathlist,
 						 match_unsorted_inner(joinrel, outerrel,
@@ -152,8 +152,8 @@ find_all_join_paths(Query *root, List *joinrels)
 
 		/*
 		 * 'OuterJoinCost is only valid when calling
-		 * (match-unsorted-inner) with the same arguments as the previous
-		 * invokation of (match-unsorted-outer), so clear the field before
+		 * (match_unsorted_inner) with the same arguments as the previous
+		 * invokation of (match_unsorted_outer), so clear the field before
 		 * going on.
 		 */
 		temp_list = innerrel->pathlist;
@@ -180,13 +180,13 @@ find_all_join_paths(Query *root, List *joinrels)
 }
 
 /*
- * best-innerjoin--
+ * best_innerjoin
  *	  Find the cheapest index path that has already been identified by
  *	  (indexable_joinclauses) as being a possible inner path for the given
  *	  outer relation in a nestloop join.
  *
- * 'join-paths' is a list of join nodes
- * 'outer-relid' is the relid of the outer join relation
+ * 'join_paths' is a list of join nodes
+ * 'outer_relid' is the relid of the outer join relation
  *
  * Returns the pathnode of the selected path.
  */
@@ -212,14 +212,14 @@ best_innerjoin(List *join_paths, List *outer_relids)
 }
 
 /*
- * sort-inner-and-outer--
+ * sort_inner_and_outer
  *	  Create mergejoin join paths by explicitly sorting both the outer and
  *	  inner join relations on each available merge ordering.
  *
  * 'joinrel' is the join relation
  * 'outerrel' is the outer join relation
  * 'innerrel' is the inner join relation
- * 'mergeinfo-list' is a list of nodes containing info on(mergejoinable)
+ * 'mergeinfo_list' is a list of nodes containing info on(mergejoinable)
  *				clauses for joining the relations
  *
  * Returns a list of mergejoin paths.
@@ -272,7 +272,7 @@ sort_inner_and_outer(RelOptInfo *joinrel,
 }
 
 /*
- * match-unsorted-outer--
+ * match_unsorted_outer
  *	  Creates possible join paths for processing a single join relation
  *	  'joinrel' by employing either iterative substitution or
  *	  mergejoining on each of its possible outer paths(assuming that the
@@ -290,10 +290,10 @@ sort_inner_and_outer(RelOptInfo *joinrel,
  * 'joinrel' is the join relation
  * 'outerrel' is the outer join relation
  * 'innerrel' is the inner join relation
- * 'outerpath-list' is the list of possible outer paths
- * 'cheapest-inner' is the cheapest inner path
- * 'best-innerjoin' is the best inner index path(if any)
- * 'mergeinfo-list' is a list of nodes containing info on mergejoinable
+ * 'outerpath_list' is the list of possible outer paths
+ * 'cheapest_inner' is the cheapest inner path
+ * 'best_innerjoin' is the best inner index path(if any)
+ * 'mergeinfo_list' is a list of nodes containing info on mergejoinable
  *		clauses
  *
  * Returns a list of possible join path nodes.
@@ -391,7 +391,7 @@ match_unsorted_outer(RelOptInfo *joinrel,
 			/*
 			 * Keep track of the cost of the outer path used with this
 			 * ordered inner path for later processing in
-			 * (match-unsorted-inner), since it isn't a sort and thus
+			 * (match_unsorted_inner), since it isn't a sort and thus
 			 * wouldn't otherwise be considered.
 			 */
 			if (path_is_cheaper_than_sort)
@@ -421,23 +421,23 @@ match_unsorted_outer(RelOptInfo *joinrel,
 }
 
 /*
- * match-unsorted-inner --
+ * match_unsorted_inner 
  *	  Find the cheapest ordered join path for a given(ordered, unsorted)
  *	  inner join path.
  *
  *	  Scans through each path available on an inner join relation and tries
  *	  matching its ordering keys against those of mergejoin clauses.
- *	  If 1. an appropriately-ordered inner path and matching mergeclause are
+ *	  If 1. an appropriately_ordered inner path and matching mergeclause are
  *			found, and
  *		 2. sorting the cheapest outer path is cheaper than using an ordered
  *			  but unsorted outer path(as was considered in
- *			(match-unsorted-outer)), then this merge path is considered.
+ *			(match_unsorted_outer)), then this merge path is considered.
  *
  * 'joinrel' is the join result relation
  * 'outerrel' is the outer join relation
  * 'innerrel' is the inner join relation
- * 'innerpath-list' is the list of possible inner join paths
- * 'mergeinfo-list' is a list of nodes containing info on mergejoinable
+ * 'innerpath_list' is the list of possible inner join paths
+ * 'mergeinfo_list' is a list of nodes containing info on mergejoinable
  *				clauses
  *
  * Returns a list of possible merge paths.
@@ -490,7 +490,7 @@ match_unsorted_inner(RelOptInfo *joinrel,
 		}
 
 		/*
-		 * (match-unsorted-outer) if it is applicable. 'OuterJoinCost was
+		 * (match_unsorted_outer) if it is applicable. 'OuterJoinCost was
 		 * set above in
 		 */
 		if (clauses && matchedJoinKeys)
@@ -555,14 +555,14 @@ EnoughMemoryForHashjoin(RelOptInfo *hashrel)
 }
 
 /*
- * hash-inner-and-outer--				XXX HASH
+ * hash_inner_and_outer--				XXX HASH
  *	  Create hashjoin join paths by explicitly hashing both the outer and
  *	  inner join relations on each available hash op.
  *
  * 'joinrel' is the join relation
  * 'outerrel' is the outer join relation
  * 'innerrel' is the inner join relation
- * 'hashinfo-list' is a list of nodes containing info on(hashjoinable)
+ * 'hashinfo_list' is a list of nodes containing info on(hashjoinable)
  *		clauses for joining the relations
  *
  * Returns a list of hashjoin paths.

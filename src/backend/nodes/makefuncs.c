@@ -1,5 +1,5 @@
 /*
- * makefuncs.c--
+ * makefuncs.c
  *	  creator functions for primitive nodes. The functions here are for
  *	  the most frequently created nodes.
  *
@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/makefuncs.c,v 1.12 1998/07/20 20:01:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/makefuncs.c,v 1.13 1999/02/13 23:15:58 momjian Exp $
  *
  * NOTES
  *	  Creator functions in POSTGRES 4.2 are generated automatically. Most of

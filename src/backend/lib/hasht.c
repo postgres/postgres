@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * hasht.c--
+ * hasht.c
  *	  hash table related functions that are not directly supported
  *	  by the hashing packages under utils/hash.
  *
@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/lib/Attic/hasht.c,v 1.7 1997/09/08 21:43:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/lib/Attic/hasht.c,v 1.8 1999/02/13 23:15:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

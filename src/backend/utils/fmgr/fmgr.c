@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * fmgr.c--
+ * fmgr.c
  *	  Interface routines for the table-driven function manager.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.21 1999/02/03 21:17:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.22 1999/02/13 23:19:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

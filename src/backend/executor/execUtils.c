@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * execUtils.c--
+ * execUtils.c
  *	  miscellanious executor utility routines
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.42 1999/02/03 21:16:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.43 1999/02/13 23:15:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -450,12 +450,12 @@ ExecAssignScanTypeFromOuterPlan(Plan *node, CommonScanState *csstate)
  *		Routines dealing with the structure 'attribute' which conatains
  *		the type information about attributes in a tuple:
  *
- *		ExecMakeTypeInfo(noType) --
+ *		ExecMakeTypeInfo(noType) 
  *				returns pointer to array of 'noType' structure 'attribute'.
- *		ExecSetTypeInfo(index, typeInfo, attNum, attLen) --
+ *		ExecSetTypeInfo(index, typeInfo, attNum, attLen) 
  *				sets the element indexed by 'index' in typeInfo with
  *				the values: attNum, attLen.
- *		ExecFreeTypeInfo(typeInfo) --
+ *		ExecFreeTypeInfo(typeInfo) 
  *				frees the structure 'typeInfo'.
  * ----------------------------------------------------------------
  */

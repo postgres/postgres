@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * nodeAppend.h--
+ * nodeAppend.h
  *
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeAppend.h,v 1.9 1998/09/01 04:35:54 momjian Exp $
+ * $Id: nodeAppend.h,v 1.10 1999/02/13 23:21:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

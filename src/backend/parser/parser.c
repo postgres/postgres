@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * parser.c--
+ * parser.c
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.36 1998/09/01 04:30:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.37 1999/02/13 23:17:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

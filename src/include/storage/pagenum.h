@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * pagenum.h--
+ * pagenum.h
  *	  POSTGRES page number definitions.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pagenum.h,v 1.6 1998/09/01 04:38:29 momjian Exp $
+ * $Id: pagenum.h,v 1.7 1999/02/13 23:22:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,7 +21,7 @@ typedef uint32 LogicalPageNumber;
 #define InvalidLogicalPageNumber		0
 
 /*
- * LogicalPageNumberIsValid --
+ * LogicalPageNumberIsValid 
  *		True iff the logical page number is valid.
  */
 #define LogicalPageNumberIsValid(pageNumber) \

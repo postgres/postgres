@@ -1,11 +1,11 @@
 /*-------------------------------------------------------------------------
  *
- * view.c--
+ * view.c
  *	  use rewrite rules to construct views
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: view.c,v 1.31 1999/02/03 21:16:06 momjian Exp $
+ *  $Id: view.c,v 1.32 1999/02/13 23:15:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

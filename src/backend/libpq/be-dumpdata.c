@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * be-dumpdata.c--
+ * be-dumpdata.c
  *	  support for collection of returned tuples from an internal
  *	  PQ call into a backend buffer.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: be-dumpdata.c,v 1.21 1999/01/27 00:36:12 tgl Exp $
+ *  $Id: be-dumpdata.c,v 1.22 1999/02/13 23:15:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

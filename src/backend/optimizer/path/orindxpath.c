@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * orindxpath.c--
+ * orindxpath.c
  *	  Routines to find index paths that match a set of 'or' clauses
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/orindxpath.c,v 1.19 1999/02/11 14:58:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/orindxpath.c,v 1.20 1999/02/13 23:16:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,7 +40,7 @@ static void best_or_subclause_index(Query *root, RelOptInfo *rel, Expr *subclaus
 
 
 /*
- * create-or-index-paths--
+ * create_or_index_paths
  *	  Creates index paths for indices that match 'or' clauses.
  *
  * 'rel' is the relation entry for which the paths are to be defined on
@@ -142,7 +142,7 @@ create_or_index_paths(Query *root,
 }
 
 /*
- * best-or-subclause-indices--
+ * best_or_subclause_indices
  *	  Determines the best index to be used in conjunction with each subclause
  *	  of an 'or' clause and the cost of scanning a relation using these
  *	  indices.	The cost is the sum of the individual index costs.
@@ -151,9 +151,9 @@ create_or_index_paths(Query *root,
  * 'subclauses' are the subclauses of the 'or' clause
  * 'indices' are those index nodes that matched subclauses of the 'or'
  *		clause
- * 'examined-indexids' is a list of those index ids to be used with
+ * 'examined_indexids' is a list of those index ids to be used with
  *		subclauses that have already been examined
- * 'subcost' is the cost of using the indices in 'examined-indexids'
+ * 'subcost' is the cost of using the indices in 'examined_indexids'
  * 'selectivities' is a list of the selectivities of subclauses that
  *		have already been examined
  *
@@ -199,7 +199,7 @@ best_or_subclause_indices(Query *root,
 }
 
 /*
- * best-or-subclause-index--
+ * best_or_subclause_index
  *	  Determines which is the best index to be used with a subclause of
  *	  an 'or' clause by estimating the cost of using each index and selecting
  *	  the least expensive.
@@ -208,7 +208,7 @@ best_or_subclause_indices(Query *root,
  * 'subclause' is the subclause
  * 'indices' is a list of index nodes that match the subclause
  *
- * Returns a list (index-id index-subcost index-selectivity)
+ * Returns a list (index_id index_subcost index_selectivity)
  * (a fixnum, a fixnum, and a flonum respectively).
  *
  */

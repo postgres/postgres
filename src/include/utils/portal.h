@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * portal.h--
+ * portal.h
  *	  POSTGRES portal definitions.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: portal.h,v 1.11 1999/02/06 16:50:34 wieck Exp $
+ * $Id: portal.h,v 1.12 1999/02/13 23:22:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,7 +53,7 @@ struct PortalD
 };
 
 /*
- * PortalIsValid --
+ * PortalIsValid 
  *		True iff portal is valid.
  */
 #define PortalIsValid(p) PointerIsValid(p)

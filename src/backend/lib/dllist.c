@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * dllist.c--
+ * dllist.c
  *	  this is a simple doubly linked list implementation
  *	  replaces the old simplelists stuff
  *	  the elements of the lists are void*
@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/lib/dllist.c,v 1.11 1998/09/01 03:22:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/lib/dllist.c,v 1.12 1999/02/13 23:15:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

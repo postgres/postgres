@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * parsenodes.h--
+ * parsenodes.h
  *	  definitions for parse tree nodes
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.69 1999/02/02 03:45:21 momjian Exp $
+ * $Id: parsenodes.h,v 1.70 1999/02/13 23:21:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

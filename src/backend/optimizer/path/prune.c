@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * prune.c--
+ * prune.c
  *	  Routines to prune redundant paths and relations
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/prune.c,v 1.30 1999/02/12 17:24:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/prune.c,v 1.31 1999/02/13 23:16:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,9 +27,9 @@
 static List *prune_joinrel(RelOptInfo *rel, List *other_rels);
 
 /*
- * prune-joinrels--
+ * prune_joinrels
  *	  Removes any redundant relation entries from a list of rel nodes
- *	  'rel-list'.  Obviously, the first relation can't be a duplicate.
+ *	  'rel_list'.  Obviously, the first relation can't be a duplicate.
  *
  * Returns the resulting list.
  *
@@ -48,8 +48,8 @@ prune_joinrels(List *rel_list)
 }
 
 /*
- * prune-joinrel--
- *	  Prunes those relations from 'other-rels' that are redundant with
+ * prune_joinrel
+ *	  Prunes those relations from 'other_rels' that are redundant with
  *	  'rel'.  A relation is redundant if it is built up of the same
  *	  relations as 'rel'.  Paths for the redundant relation are merged into
  *	  the pathlist of 'rel'.
@@ -83,8 +83,8 @@ prune_joinrel(RelOptInfo *rel, List *other_rels)
 }
 
 /*
- * rels-set-cheapest
- *	  For each relation entry in 'rel-list' (which corresponds to a join
+ * rels_set_cheapest
+ *	  For each relation entry in 'rel_list' (which corresponds to a join
  *	  relation), set pointers to the cheapest path
  */
 void
@@ -108,12 +108,12 @@ rels_set_cheapest(List *rel_list)
 
 
 /*
- * merge-joinrels--
+ * merge_joinrels
  *	  Given two lists of rel nodes that are already
  *	  pruned, merge them into one pruned rel node list
  *
- * 'rel-list1' and
- * 'rel-list2' are the rel node lists
+ * 'rel_list1' and
+ * 'rel_list2' are the rel node lists
  *
  * Returns one pruned rel node list
  */
@@ -132,7 +132,7 @@ merge_joinrels(List *rel_list1, List *rel_list2)
 }
 
 /*
- * prune_oldrels--
+ * prune_oldrels
  *	  If all the joininfo's in a rel node are inactive,
  *	  that means that this node has been joined into
  *	  other nodes in all possible ways, therefore

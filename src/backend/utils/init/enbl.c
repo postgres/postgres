@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * enbl.c--
+ * enbl.c
  *	  POSTGRES module enable and disable support code.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/Attic/enbl.c,v 1.5 1999/02/02 03:45:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/Attic/enbl.c,v 1.6 1999/02/13 23:19:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,7 +15,7 @@
 #include "utils/module.h"		/* where the declarations go */
 
 /*
- * BypassEnable --
+ * BypassEnable 
  *		False iff enable/disable processing is required given on and "*countP."
  *
  * Note:

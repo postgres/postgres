@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * tcopprot.h--
+ * tcopprot.h
  *	  prototypes for postgres.c.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tcopprot.h,v 1.16 1998/09/01 04:38:45 momjian Exp $
+ * $Id: tcopprot.h,v 1.17 1999/02/13 23:22:13 momjian Exp $
  *
  * OLD COMMENTS
  *	  This file was created so that other c files could get the two

@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * buf_init.c--
+ * buf_init.c
  *	  buffer manager initialization routines
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.20 1998/12/15 12:46:18 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.21 1999/02/13 23:17:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

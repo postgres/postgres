@@ -59,7 +59,7 @@ extern struct _reent *__imp_reent_data;
 /*
  *----------------------------------------------------------------------
  *
- * DllMain --
+ * DllMain 
  *
  *	This routine is called by the Mingw32, Cygwin32 or VC++ C run 
  *	time library init code, or the Borland DllEntryPoint routine. It 

@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * pg_version.c--
+ * pg_version.c
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_version/Attic/pg_version.c,v 1.10 1998/09/01 03:27:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_version/Attic/pg_version.c,v 1.11 1999/02/13 23:20:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

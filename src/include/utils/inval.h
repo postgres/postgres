@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * inval.h--
+ * inval.h
  *	  POSTGRES cache invalidation dispatcher definitions.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: inval.h,v 1.10 1998/10/12 00:53:36 momjian Exp $
+ * $Id: inval.h,v 1.11 1999/02/13 23:22:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

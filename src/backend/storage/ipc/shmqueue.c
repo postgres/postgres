@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * shmqueue.c--
+ * shmqueue.c
  *	  shared memory linked lists
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmqueue.c,v 1.9 1998/09/01 04:31:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmqueue.c,v 1.10 1999/02/13 23:18:13 momjian Exp $
  *
  * NOTES
  *

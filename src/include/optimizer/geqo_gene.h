@@ -1,11 +1,11 @@
 /*-------------------------------------------------------------------------
  *
- * geqo_gene.h--
+ * geqo_gene.h
  *	  genome representation in optimizer/geqo
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_gene.h,v 1.6 1998/09/01 04:36:58 momjian Exp $
+ * $Id: geqo_gene.h,v 1.7 1999/02/13 23:21:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

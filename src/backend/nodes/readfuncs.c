@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * readfuncs.c--
+ * readfuncs.c
  *	  Reader functions for Postgres tree nodes.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.56 1999/02/12 06:43:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.57 1999/02/13 23:16:02 momjian Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they

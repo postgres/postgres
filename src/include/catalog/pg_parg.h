@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * pg_parg.h--
+ * pg_parg.h
  *	  definition of the system "parg" relation (pg_parg)
  *	  along with the relation's initial contents.
  *
@@ -8,7 +8,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_parg.h,v 1.6 1998/09/01 04:35:09 momjian Exp $
+ * $Id: pg_parg.h,v 1.7 1999/02/13 23:21:12 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki

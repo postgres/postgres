@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * execdefs.h--
+ * execdefs.h
  *
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execdefs.h,v 1.3 1998/09/01 04:35:47 momjian Exp $
+ * $Id: execdefs.h,v 1.4 1999/02/13 23:21:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * dest.h--
+ * dest.h
  *		Whenever the backend executes a query, the results
  *		have to go someplace - either to the standard output,
  *		to a local portal buffer or to a remote portal buffer.
@@ -44,7 +44,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dest.h,v 1.17 1999/01/27 00:36:08 tgl Exp $
+ * $Id: dest.h,v 1.18 1999/02/13 23:22:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * creatinh.c--
+ * creatinh.c
  *	  POSTGRES create/destroy relation with inheritance utility code.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.39 1999/02/03 21:16:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.40 1999/02/13 23:15:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,7 +39,7 @@ static List *MergeAttributes(List *schema, List *supers, List **supconstr);
 static void StoreCatalogInheritance(Oid relationId, List *supers);
 
 /* ----------------------------------------------------------------
- *		DefineRelation --
+ *		DefineRelation 
  *				Creates a new relation.
  * ----------------------------------------------------------------
  */
@@ -145,7 +145,7 @@ DefineRelation(CreateStmt *stmt, char relkind)
 }
 
 /*
- * RemoveRelation --
+ * RemoveRelation 
  *		Deletes a new relation.
  *
  * Exceptions:
@@ -164,7 +164,7 @@ RemoveRelation(char *name)
 
 
 /*
- * MergeAttributes --
+ * MergeAttributes 
  *		Returns new schema given initial schema and supers.
  *
  *
@@ -365,7 +365,7 @@ MergeAttributes(List *schema, List *supers, List **supconstr)
 }
 
 /*
- * StoreCatalogInheritance --
+ * StoreCatalogInheritance 
  *		Updates the system catalogs with proper inheritance information.
  */
 static void

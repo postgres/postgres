@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * pqpacket.c--
+ * pqpacket.c
  *	  routines for reading and writing data packets sent/received by
  *	  POSTGRES clients and servers
  *
@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/pqpacket.c,v 1.18 1998/09/01 04:28:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/pqpacket.c,v 1.19 1999/02/13 23:15:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

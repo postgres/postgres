@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * dynloader.c--
+ * dynloader.c
  *	  Dynamic Loader for Postgres for Linux, generated from those for
  *	  Ultrix.
  *

@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * dynloader.h--
+ * dynloader.h
  *	  port-specific prototypes for Intel x86/Intel SVR4
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: svr4.h,v 1.2 1998/09/01 04:31:10 momjian Exp $
+ * $Id: svr4.h,v 1.3 1999/02/13 23:17:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

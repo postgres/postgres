@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * gist.h--
+ * gist.h
  *	  common declarations for the GiST access method code.
  *
  *

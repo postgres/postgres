@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * postgres.h--
+ * postgres.h
  *	  definition of (and support for) postgres system types.
  * this file is included by almost every .c in the system
  *
  * Copyright (c) 1995, Regents of the University of California
  *
- * $Id: postgres.h,v 1.19 1998/09/01 04:34:01 momjian Exp $
+ * $Id: postgres.h,v 1.20 1999/02/13 23:20:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

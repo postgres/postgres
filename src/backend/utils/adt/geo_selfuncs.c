@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * geo-selfuncs.c--
+ * geo-selfuncs.c
  *	  Selectivity routines registered in the operator catalog in the
  *	  "oprrest" and "oprjoin" attributes.
  *
@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_selfuncs.c,v 1.6 1998/09/01 03:26:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_selfuncs.c,v 1.7 1999/02/13 23:19:18 momjian Exp $
  *
  *		XXX These are totally bogus.
  *

@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * version.c--
+ * version.c
  *	  Routines to handle Postgres version number.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/utils/Attic/version.c,v 1.10 1999/01/17 06:20:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/utils/Attic/version.c,v 1.11 1999/02/13 23:22:53 momjian Exp $
  *
  * NOTES
  *		XXX eventually, should be able to handle version identifiers

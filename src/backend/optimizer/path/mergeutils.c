@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * mergeutils.c--
+ * mergeutils.c
  *	  Utilities for finding applicable merge clauses and pathkeys
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/mergeutils.c,v 1.17 1999/02/11 14:58:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/mergeutils.c,v 1.18 1999/02/13 23:16:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,13 +22,13 @@
 #include "optimizer/ordering.h"
 
 /*
- * group-clauses-by-order--
- *	  If a join clause node in 'restrictinfo-list' is mergejoinable, store
+ * group_clauses_by_order
+ *	  If a join clause node in 'restrictinfo_list' is mergejoinable, store
  *	  it within a mergeinfo node containing other clause nodes with the same
  *	  mergejoin ordering.
  *
- * 'restrictinfo-list' is the list of restrictinfo nodes
- * 'inner-relid' is the relid of the inner join relation
+ * 'restrictinfo_list' is the list of restrictinfo nodes
+ * 'inner_relid' is the relid of the inner join relation
  *
  * Returns the new list of mergeinfo nodes.
  *
@@ -49,7 +49,7 @@ group_clauses_by_order(List *restrictinfo_list,
 		{
 
 			/*
-			 * Create a new mergeinfo node and add it to 'mergeinfo-list'
+			 * Create a new mergeinfo node and add it to 'mergeinfo_list'
 			 * if one does not yet exist for this merge ordering.
 			 */
 			PathOrder	*pathorder;
@@ -96,8 +96,8 @@ group_clauses_by_order(List *restrictinfo_list,
 
 
 /*
- * match-order-mergeinfo--
- *	  Searches the list 'mergeinfo-list' for a mergeinfo node whose order
+ * match_order_mergeinfo
+ *	  Searches the list 'mergeinfo_list' for a mergeinfo node whose order
  *	  field equals 'ordering'.
  *
  * Returns the node if it exists.

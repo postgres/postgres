@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * btstrat.c--
+ * btstrat.c
  *	  Srategy map entries for the btree indexed access method
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/Attic/nbtstrat.c,v 1.7 1998/09/01 03:21:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/Attic/nbtstrat.c,v 1.8 1999/02/13 23:14:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

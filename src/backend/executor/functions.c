@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * functions.c--
+ * functions.c
  *	  Routines to handle functions called from the executor
  *	  Putting this stuff in fmgr makes the postmaster a mess....
  *
@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.23 1999/02/08 14:14:09 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.24 1999/02/13 23:15:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

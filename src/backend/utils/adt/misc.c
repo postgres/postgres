@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * misc.c--
+ * misc.c
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/misc.c,v 1.15 1998/09/01 04:32:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/misc.c,v 1.16 1999/02/13 23:19:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

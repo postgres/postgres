@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * printtup.c--
+ * printtup.c
  *	  Routines to print out tuples to the destination (binary or non-binary
  *	  portals, frontend/interactive backend, etc.).
  *
@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.41 1999/01/27 01:11:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.42 1999/02/13 23:14:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

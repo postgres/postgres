@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * predmig.c--
+ * predmig.c
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/predmig.c,v 1.17 1999/02/12 17:24:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/predmig.c,v 1.18 1999/02/13 23:16:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -269,7 +269,7 @@ xfunc_llel_chains(Stream root, Stream bottom)
 }
 
 /*
- ** xfunc_complete_stream --
+ ** xfunc_complete_stream 
  **   Given a stream composed of join nodes only, make a copy containing the
  ** join nodes along with the associated restriction nodes.
  */
@@ -390,7 +390,7 @@ xfunc_prdmig_pullup(Stream origstream, Stream pullme, JoinPath joinpath)
 }
 
 /*
- ** xfunc_form_groups --
+ ** xfunc_form_groups 
  **    A group is a pair of stream nodes a,b such that a is constrained to
  ** precede b (for instance if a and b are both joins), but rank(a) > rank(b).
  ** In such a situation, Monma and Sidney prove that no clauses should end
@@ -490,7 +490,7 @@ xfunc_form_groups(Query *queryInfo, Stream root, Stream bottom)
 /* -------------------			   UTILITY FUNCTIONS	 ------------------------- */
 
 /*
- ** xfunc_free_stream --
+ ** xfunc_free_stream 
  **   walk down a stream and pfree it
  */
 static void
@@ -623,7 +623,7 @@ xfunc_num_relids(Stream node)
 }
 
 /*
- ** xfunc_get_downjoin --
+ ** xfunc_get_downjoin 
  **    Given a stream node, find the next lowest node which points to a
  ** join predicate or a scan node.
  */
@@ -642,7 +642,7 @@ xfunc_get_downjoin(Stream node)
 }
 
 /*
- ** xfunc_get_upjoin --
+ ** xfunc_get_upjoin 
  **   same as above, but upwards.
  */
 static StreamPtr
@@ -660,7 +660,7 @@ xfunc_get_upjoin(Stream node)
 }
 
 /*
- ** xfunc_stream_qsort --
+ ** xfunc_stream_qsort 
  **   Given a stream, sort by group rank the elements in the stream from the
  ** node "bottom" up.  DESTRUCTIVELY MODIFIES STREAM!  Returns new root.
  */

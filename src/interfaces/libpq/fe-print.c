@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * fe-print.c--
+ * fe-print.c
  *	  functions for pretty-printing query results
  *
  * Copyright (c) 1994, Regents of the University of California
@@ -9,7 +9,7 @@
  * didn't really belong there.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-print.c,v 1.19 1999/02/05 04:25:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-print.c,v 1.20 1999/02/13 23:22:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * attnum.h--
+ * attnum.h
  *	  POSTGRES attribute number definitions.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: attnum.h,v 1.8 1998/09/01 04:34:03 momjian Exp $
+ * $Id: attnum.h,v 1.9 1999/02/13 23:20:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,21 +26,21 @@ typedef int16 AttrNumber;
  * ----------------
  */
 /*
- * AttributeNumberIsValid --
+ * AttributeNumberIsValid 
  *		True iff the attribute number is valid.
  */
 #define AttributeNumberIsValid(attributeNumber) \
 	((bool) ((attributeNumber) != InvalidAttrNumber))
 
 /*
- * AttrNumberIsForUserDefinedAttr --
+ * AttrNumberIsForUserDefinedAttr 
  *		True iff the attribute number corresponds to an user defined attribute.
  */
 #define AttrNumberIsForUserDefinedAttr(attributeNumber) \
 	((bool) ((attributeNumber) > 0))
 
 /*
- * AttrNumberGetAttrOffset --
+ * AttrNumberGetAttrOffset 
  *		Returns the attribute offset for an attribute number.
  *
  * Note:
@@ -53,7 +53,7 @@ typedef int16 AttrNumber;
 )
 
 /*
- * AttributeOffsetGetAttributeNumber --
+ * AttributeOffsetGetAttributeNumber 
  *		Returns the attribute number for an attribute offset.
  */
 #define AttrOffsetGetAttrNumber(attributeOffset) \

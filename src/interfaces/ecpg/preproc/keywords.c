@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * keywords.c--
+ * keywords.c
  *	  lexical token lookup for reserved words in postgres SQL
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.9 1999/02/04 04:58:04 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.10 1999/02/13 23:22:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

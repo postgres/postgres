@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * pg_rewrite.h--
+ * pg_rewrite.h
  *	  definition of the system "rewrite-rule" relation (pg_rewrite)
  *	  along with the relation's initial contents.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_rewrite.h,v 1.6 1998/09/01 04:35:13 momjian Exp $
+ * $Id: pg_rewrite.h,v 1.7 1999/02/13 23:21:14 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki

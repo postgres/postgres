@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * testlo.c--
+ * testlo.c
  *	  test using large objects with libpq
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/test/examples/testlo.c,v 1.9 1998/06/15 19:30:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/test/examples/testlo.c,v 1.10 1999/02/13 23:22:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

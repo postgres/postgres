@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * builtins.h--
+ * builtins.h
  *	  Declarations for operations on built-in types.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: inet.h,v 1.2 1998/10/21 16:06:50 momjian Exp $
+ * $Id: inet.h,v 1.3 1999/02/13 23:22:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

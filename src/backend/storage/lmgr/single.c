@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * single.c--
+ * single.c
  *	  set single locks in the multi-level lock hierarchy
  *
  *	  Sometimes we don't want to set all levels of the multi-level
@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Attic/single.c,v 1.9 1998/09/01 03:25:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Attic/single.c,v 1.10 1999/02/13 23:18:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

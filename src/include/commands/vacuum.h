@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * vacuum.h--
+ * vacuum.h
  *	  header file for postgres vacuum cleaner
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: vacuum.h,v 1.16 1998/09/01 04:35:39 momjian Exp $
+ * $Id: vacuum.h,v 1.17 1999/02/13 23:21:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

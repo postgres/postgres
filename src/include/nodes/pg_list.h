@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * pg_list.h--
+ * pg_list.h
  *	  POSTGRES generic list package
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_list.h,v 1.9 1998/09/01 04:36:44 momjian Exp $
+ * $Id: pg_list.h,v 1.10 1999/02/13 23:21:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,11 +1,11 @@
 /* ----------
- * numeric.c -
+ * numeric.c
  *
  *	An exact numeric data type for the Postgres database system
  *
  *	1998 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.9 1999/01/05 11:10:45 wieck Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.10 1999/02/13 23:19:28 momjian Exp $
  *
  * ----------
  */

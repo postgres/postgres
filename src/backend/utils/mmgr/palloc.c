@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * palloc.c--
+ * palloc.c
  *	  POSTGRES memory allocator code.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/Attic/palloc.c,v 1.10 1999/02/06 16:50:27 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/Attic/palloc.c,v 1.11 1999/02/13 23:20:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * pg_class.h--
+ * pg_class.h
  *	  definition of the system "relation" relation (pg_class)
  *	  along with the relation's initial contents.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_class.h,v 1.26 1998/12/15 12:46:50 vadim Exp $
+ * $Id: pg_class.h,v 1.27 1999/02/13 23:21:08 momjian Exp $
  *
  * NOTES
  *	  ``pg_relation'' is being replaced by ``pg_class''.  currently

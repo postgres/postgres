@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * nodeGroup.c--
+ * nodeGroup.c
  *	  Routines to handle group nodes (used for queries with GROUP BY clause).
  *
  * Copyright (c) 1994, Regents of the University of California
@@ -13,7 +13,7 @@
  *	  columns. (ie. tuples from the same group are consecutive)
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeGroup.c,v 1.24 1999/01/24 05:40:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeGroup.c,v 1.25 1999/02/13 23:15:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

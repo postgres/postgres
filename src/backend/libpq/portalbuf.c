@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * portalbuf.c--
+ * portalbuf.c
  *	  portal buffer support routines for src/libpq/portal.c
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/portalbuf.c,v 1.12 1999/02/03 21:16:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/portalbuf.c,v 1.13 1999/02/13 23:15:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,7 +63,7 @@ size_t		portals_array_size = 0;
 /*	GlobalMemory portals_mmcxt = (GlobalMemory) NULL;  */
 
 /* -------------------------------
- * portals_realloc --
+ * portals_realloc 
  *	  grow the size of the portals array by size
  *
  *	  also ensures that elements are initially NULL

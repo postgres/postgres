@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * junk.c--
+ * junk.c
  *	  Junk attribute support stuff....
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execJunk.c,v 1.15 1999/02/03 21:16:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execJunk.c,v 1.16 1999/02/13 23:15:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

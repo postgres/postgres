@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * clauses.h--
+ * clauses.h
  *	  prototypes for clauses.c.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: clauses.h,v 1.14 1998/12/04 15:34:49 thomas Exp $
+ * $Id: clauses.h,v 1.15 1999/02/13 23:21:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

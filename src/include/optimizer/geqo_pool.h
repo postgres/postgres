@@ -1,11 +1,11 @@
 /*-------------------------------------------------------------------------
  *
- * geqo_pool.h--
+ * geqo_pool.h
  *	  pool representation in optimizer/geqo
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_pool.h,v 1.6 1998/09/01 04:37:03 momjian Exp $
+ * $Id: geqo_pool.h,v 1.7 1999/02/13 23:21:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

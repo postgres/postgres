@@ -549,14 +549,14 @@ char *yytext;
 #line 2 "scan.l"
 /*-------------------------------------------------------------------------
  *
- * scan.l--
+ * scan.l
  *	  lexical scanner for POSTGRES
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/Attic/scan.c,v 1.34 1999/02/09 03:51:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/Attic/scan.c,v 1.35 1999/02/13 23:17:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

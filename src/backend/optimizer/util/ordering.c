@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * ordering.c--
+ * ordering.c
  *	  Routines to manipulate and compare merge and path orderings
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/ordering.c,v 1.14 1999/02/11 21:05:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/ordering.c,v 1.15 1999/02/13 23:16:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,7 @@ static bool sortops_order_match(Oid *ordering1, Oid *ordering2,
 								int *better_sort);
 
 /*
- * equal-path-ordering--
+ * equal_path_ordering
  *	  Returns t iff two path orderings are equal.
  *
  */
@@ -83,7 +83,7 @@ pathorder_match(PathOrder *path_ordering1,
 }
 
 /*
- * equal-path-merge-ordering--
+ * equal_path_merge_ordering
  *	  Returns t iff a path ordering is usable for ordering a merge join.
  *
  * XXX	Presently, this means that the first sortop of the path matches
@@ -106,7 +106,7 @@ equal_path_merge_ordering(Oid *path_ordering,
 }
 
 /*
- * equal-merge-ordering--
+ * equal_merge_ordering
  *	  Returns t iff two merge orderings are equal.
  *
  */

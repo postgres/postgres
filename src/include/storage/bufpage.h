@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * bufpage.h--
+ * bufpage.h
  *	  Standard POSTGRES buffer page definitions.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufpage.h,v 1.20 1998/09/01 04:38:13 momjian Exp $
+ * $Id: bufpage.h,v 1.21 1999/02/13 23:22:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,7 +75,7 @@
  */
 
 /*
- * PageIsValid --
+ * PageIsValid 
  *		True iff page is valid.
  */
 #define PageIsValid(page) PointerIsValid(page)
@@ -154,7 +154,7 @@ typedef enum
  */
 
 /*
- * PageIsUsed --
+ * PageIsUsed 
  *		True iff the page size is used.
  *
  * Note:
@@ -167,7 +167,7 @@ typedef enum
 )
 
 /*
- * PageIsEmpty --
+ * PageIsEmpty 
  *		returns true iff no itemid has been allocated on the page
  */
 #define PageIsEmpty(page) \
@@ -175,14 +175,14 @@ typedef enum
 	 (sizeof(PageHeaderData) - sizeof(ItemIdData)) ? true : false)
 
 /*
- * PageIsNew --
+ * PageIsNew 
  *		returns true iff page is not initialized (by PageInit)
  */
 
 #define PageIsNew(page) (((PageHeader) (page))->pd_upper == 0)
 
 /*
- * PageGetItemId --
+ * PageGetItemId 
  *		Returns an item identifier of a page.
  */
 #define PageGetItemId(page, offsetNumber) \
@@ -194,7 +194,7 @@ typedef enum
  */
 
 /*
- * PageSizeIsValid --
+ * PageSizeIsValid 
  *		True iff the page size is valid.
  *
  * XXX currently all page sizes are "valid" but we only actually
@@ -206,7 +206,7 @@ typedef enum
 #define PageSizeIsValid(pageSize) ((pageSize) == BLCKSZ)
 
 /*
- * PageGetPageSize --
+ * PageGetPageSize 
  *		Returns the page size of a page.
  *
  * this can only be called on a formatted page (unlike
@@ -217,7 +217,7 @@ typedef enum
 	((Size) ((PageHeader) (page))->pd_opaque.od_pagesize)
 
 /*
- * PageSetPageSize --
+ * PageSetPageSize 
  *		Sets the page size of a page.
  */
 #define PageSetPageSize(page, size) \
@@ -228,7 +228,7 @@ typedef enum
  * ----------------
  */
 /*
- * PageGetSpecialSize --
+ * PageGetSpecialSize 
  *		Returns size of special space on a page.
  *
  * Note:
@@ -238,7 +238,7 @@ typedef enum
 	((uint16) (PageGetPageSize(page) - ((PageHeader)(page))->pd_special))
 
 /*
- * PageGetSpecialPointer --
+ * PageGetSpecialPointer 
  *		Returns pointer to special space on a page.
  *
  * Note:
@@ -251,7 +251,7 @@ typedef enum
 )
 
 /*
- * PageGetItem --
+ * PageGetItem 
  *		Retrieves an item on the given page.
  *
  * Note:
@@ -266,7 +266,7 @@ typedef enum
 )
 
 /*
- * BufferGetPageSize --
+ * BufferGetPageSize 
  *		Returns the page size within a buffer.
  *
  * Notes:
@@ -283,13 +283,13 @@ typedef enum
 )
 
 /*
- * BufferGetPage --
+ * BufferGetPage 
  *		Returns the page associated with a buffer.
  */
 #define BufferGetPage(buffer) ((Page)BufferGetBlock(buffer))
 
 /*
- * PageGetMaxOffsetNumber --
+ * PageGetMaxOffsetNumber 
  *		Returns the maximum offset number used by the given page.
  *
  *		NOTE: The offset is invalid if the page is non-empty.

@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * trace.c--
+ * trace.c
  *
  *	  Conditional trace ans logging functions.
  *

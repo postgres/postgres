@@ -1,11 +1,11 @@
 /*-------------------------------------------------------------------------
  *
- * async.h--
+ * async.h
  *	  Asynchronous notification: NOTIFY, LISTEN, UNLISTEN
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: async.h,v 1.10 1998/10/06 02:40:08 tgl Exp $
+ * $Id: async.h,v 1.11 1999/02/13 23:21:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

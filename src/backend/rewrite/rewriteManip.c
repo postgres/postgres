@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * rewriteManip.c--
+ * rewriteManip.c
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.28 1999/02/08 01:39:45 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.29 1999/02/13 23:17:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

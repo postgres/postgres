@@ -50,12 +50,12 @@
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
  * SOFTWARE.
  * -
- * --Copyright--
+ * --Copyright
  */
 
 /*
  *		@(#)cdefs.h		8.1 (Berkeley) 6/2/93
- *		$Id: cdefs.h,v 1.4 1998/09/01 04:37:51 momjian Exp $
+ *		$Id: cdefs.h,v 1.5 1999/02/13 23:21:58 momjian Exp $
  */
 
 #ifndef _CDEFS_H_

@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * execdesc.h--
+ * execdesc.h
  *	  plan and query descriptor accessor macros used by the executor
  *	  and related modules.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execdesc.h,v 1.9 1998/09/01 04:35:48 momjian Exp $
+ * $Id: execdesc.h,v 1.10 1999/02/13 23:21:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * rewriteSupport.c--
+ * rewriteSupport.c
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteSupport.c,v 1.31 1999/02/03 21:17:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteSupport.c,v 1.32 1999/02/13 23:17:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

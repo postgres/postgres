@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * utility.h--
+ * utility.h
  *	  prototypes for utility.c.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: utility.h,v 1.6 1998/09/01 04:38:47 momjian Exp $
+ * $Id: utility.h,v 1.7 1999/02/13 23:22:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

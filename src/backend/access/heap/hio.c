@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * hio.c--
+ * hio.c
  *	  POSTGRES heap access method input/output code.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Id: hio.c,v 1.16 1999/02/02 03:43:57 momjian Exp $
+ *	  $Id: hio.c,v 1.17 1999/02/13 23:14:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

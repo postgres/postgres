@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * relation.h--
+ * relation.h
  *	  Definitions for internal planner nodes.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relation.h,v 1.22 1999/02/12 17:24:59 momjian Exp $
+ * $Id: relation.h,v 1.23 1999/02/13 23:21:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

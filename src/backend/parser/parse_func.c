@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.37 1999/02/03 21:16:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.38 1999/02/13 23:17:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -90,7 +90,7 @@ typedef struct _SuperQE
 } SuperQE;
 
 /*
- ** ParseNestedFuncOrColumn --
+ ** ParseNestedFuncOrColumn 
  **    Given a nested dot expression (i.e. (relation func ... attr), build up
  ** a tree with of Iter and Func nodes.
  */
@@ -1306,7 +1306,7 @@ make_arguments(ParseState *pstate,
 }
 
 /*
- ** setup_tlist --
+ ** setup_tlist 
  **		Build a tlist that says which attribute to project to.
  **		This routine is called by ParseFuncOrColumn() to set up a target list
  **		on a tuple parameter or return value.  Due to a bug in 4.0,
@@ -1344,7 +1344,7 @@ setup_tlist(char *attname, Oid relid)
 }
 
 /*
- ** setup_base_tlist --
+ ** setup_base_tlist 
  **		Build a tlist that extracts a base type from the tuple
  **		returned by the executor.
  */

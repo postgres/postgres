@@ -1,9 +1,9 @@
 /*-------------------------------------------------------------------------
  *
- * spi.c--
+ * spi.c
  *				Server Programming Interface
  *
- * $Id: spi.c,v 1.33 1999/02/08 14:14:10 wieck Exp $
+ * $Id: spi.c,v 1.34 1999/02/13 23:15:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -549,7 +549,7 @@ SPI_pfree(void *pointer)
 /* =================== private functions =================== */
 
 /*
- * spi_printtup --
+ * spi_printtup 
  *		store tuple retrieved by Executor into SPITupleTable
  *		of current SPI procedure
  *
@@ -925,7 +925,7 @@ _SPI_procmem()
 }
 
 /*
- * _SPI_begin_call --
+ * _SPI_begin_call 
  *
  */
 static int

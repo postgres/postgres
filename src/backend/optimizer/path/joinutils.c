@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * joinutils.c--
+ * joinutils.c
  *	  Utilities for matching and building join and path keys
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/joinutils.c,v 1.19 1999/02/11 17:00:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/joinutils.c,v 1.20 1999/02/13 23:16:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,7 +40,7 @@ static List *new_matching_subkeys(Var *subkey, List *considered_subkeys,
  ****************************************************************************/
 
 /*
- * match-pathkeys-joinkeys--
+ * match_pathkeys_joinkeys
  *	  Attempts to match the keys of a path against the keys of join clauses.
  *	  This is done by looking for a matching join key in 'joinkeys' for
  *	  every path key in the list 'path.keys'. If there is a matching join key
@@ -54,7 +54,7 @@ static List *new_matching_subkeys(Var *subkey, List *considered_subkeys,
  *		( (outer inner) (outer inner) ... )
  * 'joinclauses' is a list of clauses corresponding to the join keys in
  *		'joinkeys'
- * 'which-subkey' is a flag that selects the desired subkey of a join key
+ * 'which_subkey' is a flag that selects the desired subkey of a join key
  *		in 'joinkeys'
  *
  * Returns the join keys and corresponding join clauses in a list if all
@@ -112,7 +112,7 @@ match_pathkeys_joinkeys(List *pathkeys,
 }
 
 /*
- * match-pathkey-joinkeys--
+ * match_pathkey_joinkeys
  *	  Returns the 0-based index into 'joinkeys' of the first joinkey whose
  *	  outer or inner subkey matches any subkey of 'pathkey'.
  */
@@ -144,7 +144,7 @@ match_pathkey_joinkeys(List *pathkey,
 }
 
 /*
- * match-paths-joinkeys--
+ * match_paths_joinkeys
  *	  Attempts to find a path in 'paths' whose keys match a set of join
  *	  keys 'joinkeys'.	To match,
  *	  1. the path node ordering must equal 'ordering'.
@@ -159,7 +159,7 @@ match_pathkey_joinkeys(List *pathkey,
  *		must correspond
  * 'paths' is a list of(inner) paths which are to be matched against
  *		each join key in 'joinkeys'
- * 'which-subkey' is a flag that selects the desired subkey of a join key
+ * 'which_subkey' is a flag that selects the desired subkey of a join key
  *		in 'joinkeys'
  *
  * Returns the matching path node if one exists, nil otherwise.
@@ -238,14 +238,14 @@ match_paths_joinkeys(List *joinkeys,
 
 
 /*
- * extract-path-keys--
+ * extract_path_keys
  *	  Builds a subkey list for a path by pulling one of the subkeys from
  *	  a list of join keys 'joinkeys' and then finding the var node in the
  *	  target list 'tlist' that corresponds to that subkey.
  *
  * 'joinkeys' is a list of join key pairs
  * 'tlist' is a relation target list
- * 'which-subkey' is a flag that selects the desired subkey of a join key
+ * 'which_subkey' is a flag that selects the desired subkey of a join key
  *		in 'joinkeys'
  *
  * Returns a list of pathkeys: ((tlvar1)(tlvar2)...(tlvarN)).
@@ -296,7 +296,7 @@ extract_path_keys(List *joinkeys,
  ****************************************************************************/
 
 /*
- * new-join-pathkeys--
+ * new_join_pathkeys
  *	  Find the path keys for a join relation by finding all vars in the list
  *	  of join clauses 'joinclauses' such that:
  *		(1) the var corresponding to the outer join relation is a
@@ -305,8 +305,8 @@ extract_path_keys(List *joinkeys,
  *	  In other words, add to each outer path key the inner path keys that
  *	  are required for qualification.
  *
- * 'outer-pathkeys' is the list of the outer path's path keys
- * 'join-rel-tlist' is the target list of the join relation
+ * 'outer_pathkeys' is the list of the outer path's path keys
+ * 'join_rel_tlist' is the target list of the join relation
  * 'joinclauses' is the list of restricting join clauses
  *
  * Returns the list of new path keys.
@@ -333,17 +333,17 @@ new_join_pathkeys(List *outer_pathkeys,
 }
 
 /*
- * new-join-pathkey--
+ * new_join_pathkey
  *	  Finds new vars that become subkeys due to qualification clauses that
  *	  contain any previously considered subkeys.  These new subkeys plus the
  *	  subkeys from 'subkeys' form a new pathkey for the join relation.
  *
  *	  Note that each returned subkey is the var node found in
- *	  'join-rel-tlist' rather than the joinclause var node.
+ *	  'join_rel_tlist' rather than the joinclause var node.
  *
  * 'subkeys' is a list of subkeys for which matching subkeys are to be
  *		found
- * 'considered-subkeys' is the current list of all subkeys corresponding
+ * 'considered_subkeys' is the current list of all subkeys corresponding
  *		to a given pathkey
  *
  * Returns a new pathkey(list of subkeys).
@@ -388,15 +388,15 @@ new_join_pathkey(List *subkeys,
 }
 
 /*
- * new-matching-subkeys--
+ * new_matching_subkeys
  *	  Returns a list of new subkeys:
- *	  (1) which are not listed in 'considered-subkeys'
+ *	  (1) which are not listed in 'considered_subkeys'
  *	  (2) for which the "other" variable in some clause in 'joinclauses' is
  *		  'subkey'
- *	  (3) which are mentioned in 'join-rel-tlist'
+ *	  (3) which are mentioned in 'join_rel_tlist'
  *
  *	  Note that each returned subkey is the var node found in
- *	  'join-rel-tlist' rather than the joinclause var node.
+ *	  'join_rel_tlist' rather than the joinclause var node.
  *
  * 'subkey' is the var node for which we are trying to find matching
  *		clauses

@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * char.c--
+ * char.c
  *	  Functions for the built-in type "char".
  *	  Functions for the built-in type "cid".
  *
@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/char.c,v 1.20 1998/12/13 23:35:48 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/char.c,v 1.21 1999/02/13 23:19:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

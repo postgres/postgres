@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * bootstrap.c--
+ * bootstrap.c
  *	  routines to support running postgres in 'bootstrap' mode
  *	bootstrap mode is used to create the initial template database
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.54 1999/02/03 21:15:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.55 1999/02/13 23:14:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

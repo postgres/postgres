@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * pquery.h--
+ * pquery.h
  *	  prototypes for pquery.c.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pquery.h,v 1.11 1998/09/01 04:38:43 momjian Exp $
+ * $Id: pquery.h,v 1.12 1999/02/13 23:22:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

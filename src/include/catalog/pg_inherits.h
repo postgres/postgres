@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * pg_inherits.h--
+ * pg_inherits.h
  *	  definition of the system "inherits" relation (pg_inherits)
  *	  along with the relation's initial contents.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_inherits.h,v 1.6 1998/09/01 04:35:00 momjian Exp $
+ * $Id: pg_inherits.h,v 1.7 1999/02/13 23:21:10 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki

@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * pg_group.h--
+ * pg_group.h
  *
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_group.h,v 1.5 1998/09/01 04:34:56 momjian Exp $
+ * $Id: pg_group.h,v 1.6 1999/02/13 23:21:09 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki

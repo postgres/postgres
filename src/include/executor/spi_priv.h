@@ -1,9 +1,9 @@
 /*-------------------------------------------------------------------------
  *
- * spi.c--
+ * spi.c
  *				Server Programming Interface private declarations
  *
- * $Header: /cvsroot/pgsql/src/include/executor/spi_priv.h,v 1.1 1999/01/27 16:15:21 wieck Exp $
+ * $Header: /cvsroot/pgsql/src/include/executor/spi_priv.h,v 1.2 1999/02/13 23:21:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

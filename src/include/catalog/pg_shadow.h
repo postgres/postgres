@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * pg_shadow.h--
+ * pg_shadow.h
  *	  definition of the system "shadow" relation (pg_shadow)
  *	  along with the relation's initial contents.
  *		  pg_user is now a public accessible view on pg_shadow.
@@ -8,7 +8,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_shadow.h,v 1.3 1998/09/01 04:35:14 momjian Exp $
+ * $Id: pg_shadow.h,v 1.4 1999/02/13 23:21:14 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki

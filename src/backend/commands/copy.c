@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * copy.c--
+ * copy.c
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.72 1999/02/07 16:17:10 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.73 1999/02/13 23:15:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

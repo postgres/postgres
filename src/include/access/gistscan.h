@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * gistscan.h--
+ * gistscan.h
  *	  routines defined in access/gisr/gistscan.c
  *
  *

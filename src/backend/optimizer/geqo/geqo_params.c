@@ -1,11 +1,11 @@
 /*------------------------------------------------------------------------
 *
-* geqo_params.c--
+* geqo_params.c
 *	 routines for determining necessary genetic optimization parameters
 *
 * Copyright (c) 1994, Regents of the University of California
 *
-* $Id: geqo_params.c,v 1.12 1999/02/03 21:16:23 momjian Exp $
+* $Id: geqo_params.c,v 1.13 1999/02/13 23:16:10 momjian Exp $
 *
 *-------------------------------------------------------------------------
 */
@@ -63,7 +63,7 @@ static int	gimme_number_generations(int pool_size, int effort);
 static int	next_token(FILE *, char *, int);
 
 /*
- * geqo_param--
+ * geqo_param
  *		 get ga parameters out of "$PGDATA/pg_geqo" file.
  */
 void
@@ -303,7 +303,7 @@ next_token(FILE *fp, char *buf, int bufsz)
 	return c == '\n' ? '\n' : 0;
 }
 
-/* gimme_pool_size--
+/* gimme_pool_size
  *	 compute good estimation for pool size
  *	 according to number of involved rels in a query
  */
@@ -325,7 +325,7 @@ gimme_pool_size(int string_length)
 		return (int) ceil(size);
 }
 
-/* gimme_number_generations--
+/* gimme_number_generations
  *	 compute good estimation for number of generations size
  *	 for convergence
  */

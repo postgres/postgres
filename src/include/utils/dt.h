@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * dt.h--
+ * dt.h
  *	  Definitions for the date/time and other date/time support code.
  *	  The support code is shared with other date data types,
  *	   including abstime, reltime, date, and time.
@@ -8,7 +8,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dt.h,v 1.35 1999/02/13 04:15:33 thomas Exp $
+ * $Id: dt.h,v 1.36 1999/02/13 23:22:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

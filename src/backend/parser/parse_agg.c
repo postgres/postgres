@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * parse_agg.c--
+ * parse_agg.c
  *	  handle aggregates in parser
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.16 1999/01/24 00:28:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.17 1999/02/13 23:17:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,7 +36,7 @@ static bool exprIsAggOrGroupCol(Node *expr, List *groupClause);
 static bool tleIsAggOrGroupCol(TargetEntry *tle, List *groupClause);
 
 /*
- * contain_agg_clause--
+ * contain_agg_clause
  *	  Recursively find aggref nodes from a clause.
  *
  *	  Returns true if any aggregate found.

@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * keys.c--
+ * keys.c
  *	  Key manipulation routines
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/keys.c,v 1.16 1999/02/11 17:00:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/keys.c,v 1.17 1999/02/13 23:16:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,7 +35,7 @@ static bool equal_indexkey_var(int index_key, Var *var);
  *		where subkeyI is a var node
  *		note that the 'Keys field is a list of these
  * 3. join key
- *		(outer-subkey inner-subkey)
+ *		(outer_subkey inner_subkey)
  *				where each subkey is a var node
  * 4. sort key
  *		one of:
@@ -48,8 +48,8 @@ static bool equal_indexkey_var(int index_key, Var *var);
  */
 
 /*
- * match-indexkey-operand--
- *	  Returns t iff an index key 'index-key' matches the given clause
+ * match_indexkey_operand
+ *	  Returns t iff an index key 'index_key' matches the given clause
  *	  operand.
  *
  */
@@ -65,8 +65,8 @@ match_indexkey_operand(int indexkey, Var *operand, RelOptInfo *rel)
 }
 
 /*
- * equal_indexkey_var--
- *	  Returns t iff an index key 'index-key' matches the corresponding
+ * equal_indexkey_var
+ *	  Returns t iff an index key 'index_key' matches the corresponding
  *	  fields of var node 'var'.
  *
  */
@@ -80,7 +80,7 @@ equal_indexkey_var(int index_key, Var *var)
 }
 
 /*
- * extract-join-subkey--
+ * extract_join_subkey
  *	 Returns the subkey in a join key corresponding to the outer or inner
  *	 relation.
  *
@@ -106,7 +106,7 @@ extract_join_subkey(JoinKey *jk, int which_subkey)
 }
 
 /*
- * pathkeys_match--
+ * pathkeys_match
  *	  Returns t iff two sets of path keys are equivalent.  They are
  *	  equivalent if the first Var nodes match the second Var nodes.
  *
@@ -169,14 +169,14 @@ pathkeys_match(List *keys1, List *keys2, int *better_key)
 }
 
 /*
- * collect-index-pathkeys--
+ * collect_index_pathkeys
  *	  Creates a list of subkeys by retrieving var nodes corresponding to
- *	  each index key in 'index-keys' from the relation's target list
+ *	  each index key in 'index_keys' from the relation's target list
  *	  'tlist'.	If the key is not in the target list, the key is irrelevant
  *	  and is thrown away.  The returned subkey list is of the form:
  *				((var1) (var2) ... (varn))
  *
- * 'index-keys' is a list of index keys
+ * 'index_keys' is a list of index keys
  * 'tlist' is a relation target list
  *
  * Returns the list of cons'd subkeys.

@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * mm.c--
+ * mm.c
  *	  main memory storage manager
  *
  *	  This code manages relations that reside in (presumably stable)
@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/Attic/mm.c,v 1.12 1998/09/01 04:32:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/Attic/mm.c,v 1.13 1999/02/13 23:18:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

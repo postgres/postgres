@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * execFlatten.c--
+ * execFlatten.c
  *	  This file handles the nodes associated with flattening sets in the
  *	  target list of queries containing functions returning sets.
  *
@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/Attic/execFlatten.c,v 1.7 1998/09/01 04:28:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/Attic/execFlatten.c,v 1.8 1999/02/13 23:15:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

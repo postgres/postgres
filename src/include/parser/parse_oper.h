@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * catalog_utils.h--
+ * catalog_utils.h
  *
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_oper.h,v 1.6 1998/09/01 04:37:37 momjian Exp $
+ * $Id: parse_oper.h,v 1.7 1999/02/13 23:21:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

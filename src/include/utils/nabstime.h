@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * nabstime.h--
+ * nabstime.h
  *	  Definitions for the "new" abstime code.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nabstime.h,v 1.17 1998/10/08 18:30:52 momjian Exp $
+ * $Id: nabstime.h,v 1.18 1999/02/13 23:22:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,7 +91,7 @@ typedef TimeIntervalData *TimeInterval;
 extern AbsoluteTime GetCurrentAbsoluteTime(void);
 
 /*
- * getSystemTime --
+ * getSystemTime 
  *		Returns system time.
  */
 #define getSystemTime() \

@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * parse_node.c--
+ * parse_node.c
  *	  various routines that make nodes for query plans
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.23 1998/10/01 22:45:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.24 1999/02/13 23:17:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

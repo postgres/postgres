@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * pg_opclass.h--
+ * pg_opclass.h
  *	  definition of the system "opclass" relation (pg_opclass)
  *	  along with the relation's initial contents.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_opclass.h,v 1.15 1998/10/22 20:40:46 momjian Exp $
+ * $Id: pg_opclass.h,v 1.16 1999/02/13 23:21:11 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki

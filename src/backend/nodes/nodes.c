@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * nodes.c--
+ * nodes.c
  *	  support code for nodes (now that we get rid of the home-brew
  *	  inheritance system, our support code for nodes get much simpler)
  *
@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/nodes.c,v 1.6 1998/09/01 03:22:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/nodes.c,v 1.7 1999/02/13 23:15:59 momjian Exp $
  *
  * HISTORY
  *	  Andrew Yu			Oct 20, 1994	file creation

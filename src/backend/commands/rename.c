@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * rename.c--
+ * rename.c
  *	  renameatt() and renamerel() reside here.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.20 1999/02/02 03:44:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.21 1999/02/13 23:15:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

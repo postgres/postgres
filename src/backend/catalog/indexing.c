@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * indexing.c--
+ * indexing.c
  *	  This file contains routines to support indices defined on system
  *	  catalogs.
  *
@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.35 1999/02/02 03:44:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.36 1999/02/13 23:14:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * s_lock.h--
+ * s_lock.h
  *	   This file contains the implementation (if any) for spinlocks.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.57 1998/12/15 12:46:59 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.58 1999/02/13 23:22:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * strdup.c--
+ * strdup.c
  *	  copies a null-terminated string.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/utils/Attic/strdup.c,v 1.5 1998/02/26 04:46:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/utils/Attic/strdup.c,v 1.6 1999/02/13 23:22:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * pg_language.h--
+ * pg_language.h
  *	  definition of the system "language" relation (pg_language)
  *	  along with the relation's initial contents.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_language.h,v 1.7 1998/09/01 04:35:03 momjian Exp $
+ * $Id: pg_language.h,v 1.8 1999/02/13 23:21:11 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki

@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * smgrtype.c--
+ * smgrtype.c
  *	  storage manager type
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgrtype.c,v 1.10 1998/09/01 03:25:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgrtype.c,v 1.11 1999/02/13 23:18:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * memutils.h--
+ * memutils.h
  *	  this file contains general memory alignment, allocation
  *	  and manipulation stuff that used to be spread out
  *	  between the following files:
@@ -15,7 +15,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: memutils.h,v 1.20 1999/02/06 16:50:33 wieck Exp $
+ * $Id: memutils.h,v 1.21 1999/02/13 23:22:25 momjian Exp $
  *
  * NOTES
  *	  some of the information in this file will be moved to
@@ -186,13 +186,13 @@ extern void OrderedElemPushInto(OrderedElem elem, OrderedSet Set);
  */
 
 /*
- * AllocPointer --
+ * AllocPointer 
  *		Aligned pointer which may be a member of an allocation set.
  */
 typedef Pointer AllocPointer;
 
 /*
- * AllocMode --
+ * AllocMode 
  *		Mode of allocation for an allocation set.
  *
  * Note:
@@ -209,7 +209,7 @@ typedef enum AllocMode
 #define DefaultAllocMode		DynamicAllocMode
 
 /*
- * AllocBlock --
+ * AllocBlock 
  *		Small pieces of memory are taken from bigger blocks of
  *		memory with a size aligned to a power of two. These
  *		pieces are not free's separately, instead they are reused
@@ -225,7 +225,7 @@ typedef struct AllocBlockData {
 typedef AllocBlockData *AllocBlock;
 
 /*
- * AllocChunk --
+ * AllocChunk 
  *		The prefix of each piece of memory in an AllocBlock
  */
 typedef struct AllocChunkData {
@@ -236,7 +236,7 @@ typedef struct AllocChunkData {
 typedef AllocChunkData *AllocChunk;
 
 /*
- * AllocSet --
+ * AllocSet 
  *		Allocation set.
  */
 typedef struct AllocSetData
@@ -249,13 +249,13 @@ typedef struct AllocSetData
 typedef AllocSetData *AllocSet;
 
 /*
- * AllocPointerIsValid --
+ * AllocPointerIsValid 
  *		True iff pointer is valid allocation pointer.
  */
 #define AllocPointerIsValid(pointer) PointerIsValid(pointer)
 
 /*
- * AllocSetIsValid --
+ * AllocSetIsValid 
  *		True iff set is valid allocation set.
  */
 #define AllocSetIsValid(set) PointerIsValid(set)
@@ -288,7 +288,7 @@ extern void AllocSetDump(AllocSet set);
 typedef int LibCCopyLength;
 
 /*
- * MemoryCopy --
+ * MemoryCopy 
  *		Copies fixed length block of memory to another.
  */
 #define MemoryCopy(toBuffer, fromBuffer, length)\

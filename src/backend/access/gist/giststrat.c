@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * giststrat.c--
+ * giststrat.c
  *	  strategy map data for GiSTs.
  *
  * Copyright (c) 1994, Regents of the University of California

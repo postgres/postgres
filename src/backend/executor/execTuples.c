@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * execTuples.c--
+ * execTuples.c
  *	  Routines dealing with the executor tuple tables.	These are used to
  *	  ensure that the executor frees copies of tuples (made by
  *	  ExecTargetList) properly.
@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.22 1999/02/03 21:16:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.23 1999/02/13 23:15:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

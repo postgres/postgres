@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * pg_type.c--
+ * pg_type.c
  *	  routines to support manipulation of the pg_type relation
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.34 1999/02/06 16:50:22 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.35 1999/02/13 23:14:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

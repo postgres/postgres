@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * rtree.c--
+ * rtree.c
  *	  interface routines for the postgres rtree indexed access method.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.30 1998/12/15 12:45:25 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.31 1999/02/13 23:14:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * hsearch.h--
+ * hsearch.h
  *	  for hashing in the new buffer manager
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hsearch.h,v 1.9 1998/09/01 04:39:12 momjian Exp $
+ * $Id: hsearch.h,v 1.10 1999/02/13 23:22:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * postmaster.c--
+ * postmaster.c
  *	  This program acts as a clearing house for requests to the
  *	  POSTGRES system.	Frontend programs send a startup message
  *	  to the Postmaster and the postmaster uses the info in the
@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.100 1999/01/30 20:04:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.101 1999/02/13 23:17:40 momjian Exp $
  *
  * NOTES
  *

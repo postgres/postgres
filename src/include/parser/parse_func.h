@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * parse_func.h--
+ * parse_func.h
  *
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_func.h,v 1.13 1998/12/08 06:18:27 thomas Exp $
+ * $Id: parse_func.h,v 1.14 1999/02/13 23:21:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

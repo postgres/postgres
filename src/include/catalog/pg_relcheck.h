@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * pg_relcheck.h--
+ * pg_relcheck.h
  *
  *
  * Copyright (c) 1994, Regents of the University of California

@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * costsize.c--
+ * costsize.c
  *	  Routines to compute (and set) relation sizes and path costs
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.31 1999/02/12 17:24:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.32 1999/02/13 23:16:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,7 +54,7 @@ Cost		_cpu_page_wight_ = _CPU_PAGE_WEIGHT_;
 Cost		_cpu_index_page_wight_ = _CPU_INDEX_PAGE_WEIGHT_;
 
 /*
- * cost_seqscan--
+ * cost_seqscan
  *	  Determines and returns the cost of scanning a relation sequentially.
  *	  If the relation is a temporary to be materialized from a query
  *	  embedded within a data field (determined by 'relid' containing an
@@ -100,7 +100,7 @@ cost_seqscan(int relid, int relpages, int reltuples)
 
 
 /*
- * cost_index--
+ * cost_index
  *	  Determines and returns the cost of scanning a relation using an index.
  *
  *		disk = expected-index-pages + expected-data-pages
@@ -156,7 +156,7 @@ cost_index(Oid indexid,
 }
 
 /*
- * cost_sort--
+ * cost_sort
  *	  Determines and returns the cost of sorting a relation by considering
  *	  1. the cost of doing an external sort:	XXX this is probably too low
  *				disk = (p lg p)
@@ -206,7 +206,7 @@ cost_sort(List *pathkeys, int tuples, int width, bool noread)
 
 
 /*
- * cost_result--
+ * cost_result
  *	  Determines and returns the cost of writing a relation of 'tuples'
  *	  tuples of 'width' bytes out to a result relation.
  *
@@ -228,7 +228,7 @@ cost_result(int tuples, int width)
 #endif
 
 /*
- * cost_nestloop--
+ * cost_nestloop
  *	  Determines and returns the cost of joining two relations using the
  *	  nested loop algorithm.
  *
@@ -259,7 +259,7 @@ cost_nestloop(Cost outercost,
 }
 
 /*
- * cost_mergejoin--
+ * cost_mergejoin
  *	  'outercost' and 'innercost' are the (disk+cpu) costs of scanning the
  *				outer and inner relations
  *	  'outersortkeys' and 'innersortkeys' are lists of the keys to be used
@@ -350,8 +350,8 @@ cost_hashjoin(Cost outercost,
 }
 
 /*
- * compute-rel-size--
- *	  Computes the size of each relation in 'rel-list' (after applying
+ * compute_rel_size
+ *	  Computes the size of each relation in 'rel_list' (after applying
  *	  restrictions), by multiplying the selectivity of each restriction
  *	  by the original size of the relation.
  *
@@ -377,7 +377,7 @@ compute_rel_size(RelOptInfo *rel)
 }
 
 /*
- * compute-rel-width--
+ * compute_rel_width
  *	  Computes the width in bytes of a tuple from 'rel'.
  *
  * Returns the width of the tuple as a fixnum.
@@ -389,7 +389,7 @@ compute_rel_width(RelOptInfo *rel)
 }
 
 /*
- * compute-targetlist-width--
+ * compute_targetlist_width
  *	  Computes the width in bytes of a tuple made from 'targetlist'.
  *
  * Returns the width of the tuple as a fixnum.
@@ -409,7 +409,7 @@ compute_targetlist_width(List *targetlist)
 }
 
 /*
- * compute-attribute-width--
+ * compute_attribute_width
  *	  Given a target list entry, find the size in bytes of the attribute.
  *
  *	  If a field is variable-length, it is assumed to be at least the size
@@ -429,7 +429,7 @@ compute_attribute_width(TargetEntry *tlistentry)
 }
 
 /*
- * compute-joinrel-size--
+ * compute_joinrel_size
  *	  Computes the size of the join relation 'joinrel'.
  *
  * Returns a fixnum.
@@ -461,7 +461,7 @@ compute_joinrel_size(JoinPath *joinpath)
 }
 
 /*
- * page-size--
+ * page_size
  *	  Returns an estimate of the number of pages covered by a given
  *	  number of tuples of a given width (size in bytes).
  */

@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * hashutils.c--
+ * hashutils.c
  *	  Utilities for finding applicable merge clauses and pathkeys
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/hashutils.c,v 1.12 1999/02/10 03:52:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/hashutils.c,v 1.13 1999/02/13 23:16:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,13 +23,13 @@
 static HashInfo *match_hashop_hashinfo(Oid hashop, List *hashinfo_list);
 
 /*
- * group-clauses-by-hashop--
- *	  If a join clause node in 'restrictinfo-list' is hashjoinable, store
+ * group_clauses_by_hashop
+ *	  If a join clause node in 'restrictinfo_list' is hashjoinable, store
  *	  it within a hashinfo node containing other clause nodes with the same
  *	  hash operator.
  *
- * 'restrictinfo-list' is the list of restrictinfo nodes
- * 'inner-relid' is the relid of the inner join relation
+ * 'restrictinfo_list' is the list of restrictinfo nodes
+ * 'inner_relid' is the relid of the inner join relation
  *
  * Returns the new list of hashinfo nodes.
  *
@@ -49,7 +49,7 @@ group_clauses_by_hashop(List *restrictinfo_list,
 		hashjoinop = restrictinfo->hashjoinoperator;
 
 		/*
-		 * Create a new hashinfo node and add it to 'hashinfo-list' if one
+		 * Create a new hashinfo node and add it to 'hashinfo_list' if one
 		 * does not yet exist for this hash operator.
 		 */
 		if (hashjoinop)
@@ -98,8 +98,8 @@ group_clauses_by_hashop(List *restrictinfo_list,
 
 
 /*
- * match-hashop-hashinfo--
- *	  Searches the list 'hashinfo-list' for a hashinfo node whose hash op
+ * match_hashop_hashinfo
+ *	  Searches the list 'hashinfo_list' for a hashinfo node whose hash op
  *	  field equals 'hashop'.
  *
  * Returns the node if it exists.

@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * joininfo.c--
+ * joininfo.c
  *	  JoinInfo node manipulation routines
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/joininfo.c,v 1.14 1999/02/10 21:02:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/joininfo.c,v 1.15 1999/02/13 23:16:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,16 +22,16 @@
 
 
 /*
- * joininfo-member--
+ * joininfo_member
  *	  Determines whether a node has already been created for a join
  *	  between a set of join relations and the relation described by
- *	  'joininfo-list'.
+ *	  'joininfo_list'.
  *
- * 'join-relids' is a list of relids corresponding to the join relation
- * 'joininfo-list' is the list of joininfo nodes against which this is
+ * 'join_relids' is a list of relids corresponding to the join relation
+ * 'joininfo_list' is the list of joininfo nodes against which this is
  *				checked
  *
- * Returns the corresponding node in 'joininfo-list' if such a node
+ * Returns the corresponding node in 'joininfo_list' if such a node
  * exists.
  *
  */
@@ -52,9 +52,9 @@ joininfo_member(List *join_relids, List *joininfo_list)
 
 
 /*
- * find-joininfo-node--
+ * find_joininfo_node
  *	  Find the joininfo node within a relation entry corresponding
- *	  to a join between 'this_rel' and the relations in 'join-relids'.	A
+ *	  to a join between 'this_rel' and the relations in 'join_relids'.	A
  *	  new node is created and added to the relation entry's joininfo
  *	  field if the desired one can't be found.
  *
@@ -81,7 +81,7 @@ find_joininfo_node(RelOptInfo *this_rel, List *join_relids)
 }
 
 /*
- * other-join-clause-var--
+ * other_join_clause_var
  *	  Determines whether a var node is contained within a joinclause
  *	  of the form(op var var).
  *

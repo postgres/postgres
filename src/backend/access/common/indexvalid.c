@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * indexvalid.c--
+ * indexvalid.c
  *	  index tuple qualification validity checking code
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/Attic/indexvalid.c,v 1.20 1998/09/01 03:20:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/Attic/indexvalid.c,v 1.21 1999/02/13 23:14:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

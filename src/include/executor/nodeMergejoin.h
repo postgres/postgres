@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * nodeMergejoin.h--
+ * nodeMergejoin.h
  *
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeMergejoin.h,v 1.9 1998/09/01 04:36:02 momjian Exp $
+ * $Id: nodeMergejoin.h,v 1.10 1999/02/13 23:21:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

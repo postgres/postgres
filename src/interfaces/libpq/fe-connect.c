@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * fe-connect.c--
+ * fe-connect.c
  *	  functions related to setting up a connection to the backend
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.91 1999/02/05 04:25:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.92 1999/02/13 23:22:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

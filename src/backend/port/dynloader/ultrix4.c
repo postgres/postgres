@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * dynloader.c--
+ * dynloader.c
  *	  This dynamic loader uses Andrew Yu's libdl-1.0 package for Ultrix 4.x.
  *	  (Note that pg_dlsym and pg_dlclose are actually macros defined in
  *	  "port-protos.h".)
@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/ultrix4.c,v 1.4 1999/01/17 03:04:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/ultrix4.c,v 1.5 1999/02/13 23:17:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

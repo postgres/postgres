@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * nodeUnique.c--
+ * nodeUnique.c
  *	  Routines to handle unique'ing of queries where appropriate
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeUnique.c,v 1.19 1999/01/24 05:40:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeUnique.c,v 1.20 1999/02/13 23:15:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

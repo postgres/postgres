@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * vacuum.c--
+ * vacuum.c
  *	  the postgres vacuum cleaner
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.94 1999/02/03 21:16:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.95 1999/02/13 23:15:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

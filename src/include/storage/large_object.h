@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * large_object.h--
+ * large_object.h
  *	  file of info for Postgres large objects. POSTGRES 4.2 supports
  *	  zillions of large objects (internal, external, jaquith, inversion).
  *	  Now we only support inversion.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: large_object.h,v 1.9 1998/09/01 04:38:22 momjian Exp $
+ * $Id: large_object.h,v 1.10 1999/02/13 23:22:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

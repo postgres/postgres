@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * name.c--
+ * name.c
  *	  Functions for the built-in type "name".
  * name replaces char16 and is carefully implemented so that it
  * is a string of length NAMEDATALEN.  DO NOT use hard-coded constants anywhere
@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/name.c,v 1.16 1998/10/08 18:30:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/name.c,v 1.17 1999/02/13 23:19:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

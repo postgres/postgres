@@ -1,11 +1,11 @@
 /*-------------------------------------------------------------------------
  *
- * execAmi.c--
+ * execAmi.c
  *	  miscellanious executor access method routines
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: execAmi.c,v 1.31 1999/02/09 17:02:44 momjian Exp $
+ *  $Id: execAmi.c,v 1.32 1999/02/13 23:15:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

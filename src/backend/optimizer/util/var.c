@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * var.c--
+ * var.c
  *	  Var node manipulation routines
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.15 1999/01/24 00:28:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.16 1999/02/13 23:16:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,7 +67,7 @@ pull_varnos(Node *me)
 }
 
 /*
- * contain_var_clause--
+ * contain_var_clause
  *	  Recursively find var nodes from a clause by pulling vars from the
  *	  left and right operands of the clause.
  *
@@ -157,7 +157,7 @@ contain_var_clause(Node *clause)
 }
 
 /*
- * pull_var_clause--
+ * pull_var_clause
  *	  Recursively pulls all var nodes from a clause by pulling vars from the
  *	  left and right operands of the clause.
  *

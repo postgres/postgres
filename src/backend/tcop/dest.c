@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * dest.c--
+ * dest.c
  *	  support for various communication destinations - see include/tcop/dest.h
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.24 1999/01/27 00:36:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.25 1999/02/13 23:18:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * skey.h--
+ * skey.h
  *	  POSTGRES scan key definitions.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: skey.h,v 1.10 1998/09/01 04:34:29 momjian Exp $
+ * $Id: skey.h,v 1.11 1999/02/13 23:20:58 momjian Exp $
  *
  *
  * Note:

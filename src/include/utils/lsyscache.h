@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * lsyscache.h--
+ * lsyscache.h
  *
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lsyscache.h,v 1.15 1998/09/01 04:39:18 momjian Exp $
+ * $Id: lsyscache.h,v 1.16 1999/02/13 23:22:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * locks.c--
+ * locks.c
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/Attic/locks.c,v 1.16 1999/01/25 18:02:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/Attic/locks.c,v 1.17 1999/02/13 23:17:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * miscadmin.h--
+ * miscadmin.h
  *	  this file contains general postgres administration and initialization
  *	  stuff that used to be spread out between the following files:
  *		globals.h						global variables
@@ -11,7 +11,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.34 1998/10/08 18:30:18 momjian Exp $
+ * $Id: miscadmin.h,v 1.35 1999/02/13 23:20:46 momjian Exp $
  *
  * NOTES
  *	  some of the information in this file will be moved to

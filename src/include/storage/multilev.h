@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * multilev.h--
+ * multilev.h
  *	  multi level lock table consts/defs for single.c and multi.c and their
  *	  clients
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: multilev.h,v 1.14 1998/10/08 18:30:46 momjian Exp $
+ * $Id: multilev.h,v 1.15 1999/02/13 23:22:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * async.c--
+ * async.c
  *	  Asynchronous notification: NOTIFY, LISTEN, UNLISTEN
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.43 1998/12/15 12:45:50 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.44 1999/02/13 23:15:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -141,7 +141,7 @@ static void ClearPendingNotifies(void);
 
 /*
  *--------------------------------------------------------------
- * Async_Notify --
+ * Async_Notify 
  *
  *		This is executed by the SQL notify command.
  *
@@ -184,7 +184,7 @@ Async_Notify(char *relname)
 
 /*
  *--------------------------------------------------------------
- * Async_Listen --
+ * Async_Listen 
  *
  *		This is executed by the SQL listen command.
  *
@@ -283,7 +283,7 @@ Async_Listen(char *relname, int pid)
 
 /*
  *--------------------------------------------------------------
- * Async_Unlisten --
+ * Async_Unlisten 
  *
  *		This is executed by the SQL unlisten command.
  *
@@ -332,7 +332,7 @@ Async_Unlisten(char *relname, int pid)
 
 /*
  *--------------------------------------------------------------
- * Async_UnlistenAll --
+ * Async_UnlistenAll 
  *
  *		Unlisten all relations for this backend.
  *
@@ -378,7 +378,7 @@ Async_UnlistenAll()
 
 /*
  *--------------------------------------------------------------
- * Async_UnlistenOnExit --
+ * Async_UnlistenOnExit 
  *
  *		Clean up the pg_listener table at backend exit.
  *
@@ -412,7 +412,7 @@ Async_UnlistenOnExit()
 
 /*
  *--------------------------------------------------------------
- * AtCommit_Notify --
+ * AtCommit_Notify 
  *
  *		This is called at transaction commit.
  *
@@ -548,7 +548,7 @@ AtCommit_Notify()
 
 /*
  *--------------------------------------------------------------
- * AtAbort_Notify --
+ * AtAbort_Notify 
  *
  *		This is called at transaction abort.
  *
@@ -568,7 +568,7 @@ AtAbort_Notify()
 
 /*
  *--------------------------------------------------------------
- * Async_NotifyHandler --
+ * Async_NotifyHandler 
  *
  *		This is the signal handler for SIGUSR2.
  *
@@ -627,7 +627,7 @@ Async_NotifyHandler(SIGNAL_ARGS)
 
 /*
  * --------------------------------------------------------------
- * EnableNotifyInterrupt --
+ * EnableNotifyInterrupt 
  *
  *		This is called by the PostgresMain main loop just before waiting
  *		for a frontend command.  If we are truly idle (ie, *not* inside
@@ -685,7 +685,7 @@ EnableNotifyInterrupt(void)
 
 /*
  * --------------------------------------------------------------
- * DisableNotifyInterrupt --
+ * DisableNotifyInterrupt 
  *
  *		This is called by the PostgresMain main loop just after receiving
  *		a frontend command.  Signal handler execution of inbound notifies
@@ -701,7 +701,7 @@ DisableNotifyInterrupt(void)
 
 /*
  * --------------------------------------------------------------
- * ProcessIncomingNotify --
+ * ProcessIncomingNotify 
  *
  *		Deal with arriving NOTIFYs from other backends.
  *		This is called either directly from the SIGUSR2 signal handler,

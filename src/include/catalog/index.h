@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * index.h--
+ * index.h
  *	  prototypes for index.c.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: index.h,v 1.14 1999/01/21 22:48:14 momjian Exp $
+ * $Id: index.h,v 1.15 1999/02/13 23:21:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

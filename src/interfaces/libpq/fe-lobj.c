@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * fe-lobj.c--
+ * fe-lobj.c
  *	  Front-end large object interface
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-lobj.c,v 1.18 1999/01/17 06:19:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-lobj.c,v 1.19 1999/02/13 23:22:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * indextuple.c--
+ * indextuple.c
  *	   This file contains index tuple accessor and mutator routines,
  *	   as well as a few various tuple utilities.
  *
@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.32 1998/09/07 05:35:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.33 1999/02/13 23:14:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

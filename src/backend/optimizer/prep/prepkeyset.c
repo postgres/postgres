@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * prepkeyset.c--
+ * prepkeyset.c
  *	  Special preperation for keyset queries.
  *
  * Copyright (c) 1994, Regents of the University of California
@@ -14,7 +14,7 @@
 #include "optimizer/planmain.h"
 
 /*
- * Node_Copy--
+ * Node_Copy
  *        a macro to simplify calling of copyObject on the specified field
  */
 #define Node_Copy(from, newnode, field) newnode->field = copyObject(from->field)

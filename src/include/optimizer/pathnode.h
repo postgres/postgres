@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * pathnode.h--
+ * pathnode.h
  *	  prototypes for pathnode.c, indexnode.c, relnode.c.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pathnode.h,v 1.13 1999/02/12 06:43:53 momjian Exp $
+ * $Id: pathnode.h,v 1.14 1999/02/13 23:21:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

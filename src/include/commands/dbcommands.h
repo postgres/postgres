@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * dbcommands.h--
+ * dbcommands.h
  *
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dbcommands.h,v 1.6 1998/09/01 04:35:29 momjian Exp $
+ * $Id: dbcommands.h,v 1.7 1999/02/13 23:21:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

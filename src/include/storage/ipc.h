@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * ipc.h--
+ * ipc.h
  *	  POSTGRES inter-process communication definitions.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: ipc.h,v 1.31 1998/12/15 12:46:57 vadim Exp $
+ * $Id: ipc.h,v 1.32 1999/02/13 23:22:05 momjian Exp $
  *
  * NOTES
  *	  This file is very architecture-specific.	This stuff should actually

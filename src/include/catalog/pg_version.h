@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * pg_version.h--
+ * pg_version.h
  *	  definition of the system "version" relation (pg_version)
  *	  along with the relation's initial contents.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_version.h,v 1.7 1998/09/01 04:35:20 momjian Exp $
+ * $Id: pg_version.h,v 1.8 1999/02/13 23:21:16 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki

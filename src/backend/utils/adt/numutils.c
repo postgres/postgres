@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * numutils.c--
+ * numutils.c
  *	  utility functions for I/O of built-in numeric types.
  *
  *		integer:				itoa, ltoa
@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/numutils.c,v 1.28 1998/10/02 01:22:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/numutils.c,v 1.29 1999/02/13 23:19:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

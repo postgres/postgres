@@ -1,14 +1,14 @@
 %{
 /*-------------------------------------------------------------------------
  *
- * scan.l--
+ * scan.l
  *	  lexical scanner for POSTGRES
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.45 1999/02/07 23:58:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.46 1999/02/13 23:17:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

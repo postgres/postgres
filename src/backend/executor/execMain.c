@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * execMain.c--
+ * execMain.c
  *	  top level executor interface routines
  *
  * INTERFACE ROUTINES
@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.76 1999/02/08 14:14:09 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.77 1999/02/13 23:15:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

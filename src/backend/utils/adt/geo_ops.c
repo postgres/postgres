@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * geo_ops.c--
+ * geo_ops.c
  *	  2D geometric operations
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.39 1998/10/29 18:11:28 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.40 1999/02/13 23:19:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

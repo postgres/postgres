@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * nodeAgg.c--
+ * nodeAgg.c
  *	  Routines to handle aggregate nodes.
  *
  * Copyright (c) 1994, Regents of the University of California

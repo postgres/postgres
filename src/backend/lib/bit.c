@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * bit.c--
+ * bit.c
  *	  Standard bit array code.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/lib/Attic/bit.c,v 1.5 1997/09/07 04:41:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/lib/Attic/bit.c,v 1.6 1999/02/13 23:15:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,13 +1,13 @@
  /*-------------------------------------------------------------------------
  *
- * ipc.c--
+ * ipc.c
  *	  POSTGRES inter-process communication definitions.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.34 1998/09/02 23:05:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.35 1999/02/13 23:18:09 momjian Exp $
  *
  * NOTES
  *

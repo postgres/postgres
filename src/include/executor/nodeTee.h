@@ -1,11 +1,11 @@
 /*-------------------------------------------------------------------------
  *
- * nodeTee.h--
+ * nodeTee.h
  *	  support functions for a Tee executor node
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeTee.h,v 1.7 1998/10/08 18:30:31 momjian Exp $
+ * $Id: nodeTee.h,v 1.8 1999/02/13 23:21:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

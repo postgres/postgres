@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * rewriteRemove.h--
+ * rewriteRemove.h
  *
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rewriteRemove.h,v 1.4 1998/09/01 04:38:04 momjian Exp $
+ * $Id: rewriteRemove.h,v 1.5 1999/02/13 23:22:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

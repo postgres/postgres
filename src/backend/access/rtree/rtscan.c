@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * rtscan.c--
+ * rtscan.c
  *	  routines to manage scans on index relations
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtscan.c,v 1.21 1999/02/03 21:15:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtscan.c,v 1.22 1999/02/13 23:14:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * pg_proc.c--
+ * pg_proc.c
  *	  routines to support manipulation of the pg_proc relation
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.24 1998/11/27 19:51:51 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.25 1999/02/13 23:14:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

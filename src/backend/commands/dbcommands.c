@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * dbcommands.c--
+ * dbcommands.c
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.29 1999/01/17 06:18:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.30 1999/02/13 23:15:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

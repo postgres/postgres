@@ -1,12 +1,12 @@
 /*
- * stringinfo.c--
+ * stringinfo.c
  *	  These are routines that can be used to write informations to a string,
  *	  without having to worry about string lengths, space allocation etc.
  *	  Ideally the interface should look like the file i/o interface,
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	  $Id: stringinfo.c,v 1.13 1998/12/14 08:11:04 scrappy Exp $
+ *	  $Id: stringinfo.c,v 1.14 1999/02/13 23:15:36 momjian Exp $
  */
 
 #include <stdio.h>

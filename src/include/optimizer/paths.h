@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * paths.h--
+ * paths.h
  *	  prototypes for various files in optimizer/paths (were separate
  *	  header files
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: paths.h,v 1.14 1999/02/12 05:57:08 momjian Exp $
+ * $Id: paths.h,v 1.15 1999/02/13 23:21:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * libpq-fe.h--
+ * libpq-fe.h
  *	  This file contains definitions for structures and
  *	  externs for functions used by frontend postgres applications.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.48 1999/02/07 22:08:53 tgl Exp $
+ * $Id: libpq-fe.h,v 1.49 1999/02/13 23:22:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

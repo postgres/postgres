@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * execFlatten.h--
+ * execFlatten.h
  *	  prototypes for execFlatten.c.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execFlatten.h,v 1.7 1998/09/01 04:35:44 momjian Exp $
+ * $Id: execFlatten.h,v 1.8 1999/02/13 23:21:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * nodeHashjoin.h--
+ * nodeHashjoin.h
  *
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeHashjoin.h,v 1.10 1998/09/01 04:35:58 momjian Exp $
+ * $Id: nodeHashjoin.h,v 1.11 1999/02/13 23:21:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * nbtpage.c--
+ * nbtpage.c
  *	  BTree-specific page management code for the Postgres btree access
  *	  method.
  *
@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.17 1998/12/15 12:45:23 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.18 1999/02/13 23:14:35 momjian Exp $
  *
  *	NOTES
  *	   Postgres btree pages look like ordinary relation pages.	The opaque
@@ -413,7 +413,7 @@ _bt_pageinit(Page page, Size size)
 {
 
 	/*
-	 * Cargo-cult programming -- don't really need this to be zero, but
+	 * Cargo_cult programming -- don't really need this to be zero, but
 	 * creating new pages is an infrequent occurrence and it makes me feel
 	 * good when I know they're empty.
 	 */

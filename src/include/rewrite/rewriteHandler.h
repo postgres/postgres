@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * rewriteHandler.h--
+ * rewriteHandler.h
  *
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rewriteHandler.h,v 1.7 1999/01/18 00:10:12 momjian Exp $
+ * $Id: rewriteHandler.h,v 1.8 1999/02/13 23:22:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * pg_attribute.h--
+ * pg_attribute.h
  *	  definition of the system "attribute" relation (pg_attribute)
  *	  along with the relation's initial contents.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_attribute.h,v 1.44 1998/09/10 15:32:30 vadim Exp $
+ * $Id: pg_attribute.h,v 1.45 1999/02/13 23:21:07 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki

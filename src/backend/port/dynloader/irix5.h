@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * port-protos.h--
+ * port_protos.h
  *	  port-specific prototypes for Irix 5
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * port-protos.h,v 1.2 1995/03/17 06:40:18 andrew Exp
+ * port_protos.h,v 1.2 1995/03/17 06:40:18 andrew Exp
  *
  *-------------------------------------------------------------------------
  */

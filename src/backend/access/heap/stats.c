@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * stats.c--
+ * stats.c
  *	  heap access method debugging statistic collection routines
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/Attic/stats.c,v 1.14 1998/12/15 12:45:15 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/Attic/stats.c,v 1.15 1999/02/13 23:14:25 momjian Exp $
  *
  * NOTES
  *	  initam should be moved someplace else.

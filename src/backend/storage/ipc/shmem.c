@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * shmem.c--
+ * shmem.c
  *	  create shared memory and initialize shared memory data structures.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.35 1999/02/03 21:17:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.36 1999/02/13 23:18:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -107,7 +107,7 @@ ShmemIndexReset(void)
 }
 
 /*
- *	CreateSharedRegion() --
+ *	CreateSharedRegion() 
  *
  *	This routine is called once by the postmaster to
  *	initialize the shared buffer pool.	Assume there is

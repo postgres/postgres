@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * selfuncs.c--
+ * selfuncs.c
  *	  Selectivity functions for system catalogs and builtin types
  *
  *	  These routines are registered in the operator catalog in the
@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.24 1999/02/05 17:47:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.25 1999/02/13 23:19:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

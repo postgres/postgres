@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * lsyscache.c--
+ * lsyscache.c
  *	  Routines to access information within system caches
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.23 1999/02/03 21:17:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.24 1999/02/13 23:19:42 momjian Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -253,7 +253,7 @@ op_mergejoinable(Oid opno, Oid ltype, Oid rtype, Oid *leftOp, Oid *rightOp)
 }
 
 /*
- * op_hashjoinable--
+ * op_hashjoinable
  *
  * Returns the hash operator corresponding to a hashjoinable operator,
  * or nil if the operator is not hashjoinable.

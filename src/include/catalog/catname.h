@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * catname.h--
+ * catname.h
  *	  POSTGRES system catalog relation name definitions.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: catname.h,v 1.10 1998/09/01 04:34:40 momjian Exp $
+ * $Id: catname.h,v 1.11 1999/02/13 23:21:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

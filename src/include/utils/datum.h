@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * datum.h--
+ * datum.h
  *	  POSTGRES abstract data type datum representation definitions.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: datum.h,v 1.8 1998/09/01 04:38:58 momjian Exp $
+ * $Id: datum.h,v 1.9 1999/02/13 23:22:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * port-protos.h--
+ * port_protos.h
  *	  port-specific prototypes for NetBSD 1.0
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: freebsd.h,v 1.1 1998/10/27 04:41:29 scrappy Exp $
+ * $Id: freebsd.h,v 1.2 1999/02/13 23:17:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

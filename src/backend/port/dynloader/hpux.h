@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * dynloader.h--
+ * dynloader.h
  *	  dynamic loader for HP-UX using the shared library mechanism
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/hpux.h,v 1.1 1998/01/26 02:48:36 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/hpux.h,v 1.2 1999/02/13 23:17:21 momjian Exp $
  *
  *	NOTES
  *		all functions are defined here -- it's impossible to trace the

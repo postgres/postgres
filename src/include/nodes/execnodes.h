@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * execnodes.h--
+ * execnodes.h
  *	  definitions for executor state nodes
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.23 1999/02/07 16:17:14 wieck Exp $
+ * $Id: execnodes.h,v 1.24 1999/02/13 23:21:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

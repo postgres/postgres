@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * filename.c--
+ * filename.c
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/filename.c,v 1.16 1998/09/01 03:25:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/filename.c,v 1.17 1999/02/13 23:19:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

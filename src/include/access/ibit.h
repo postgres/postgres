@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * ibit.h--
+ * ibit.h
  *	  POSTGRES index valid attribute bit map definitions.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: ibit.h,v 1.8 1998/09/01 04:34:15 momjian Exp $
+ * $Id: ibit.h,v 1.9 1999/02/13 23:20:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,7 +26,7 @@ typedef IndexAttributeBitMapData *IndexAttributeBitMap;
 #define IndexAttributeBitMapSize		sizeof(IndexAttributeBitMapData)
 
 /*
- * IndexAttributeBitMapIsValid --
+ * IndexAttributeBitMapIsValid
  *		True iff attribute bit map is valid.
  */
 #define IndexAttributeBitMapIsValid(bits) PointerIsValid(bits)

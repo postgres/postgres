@@ -1,11 +1,11 @@
 /*------------------------------------------------------------------------
  *
- * geqo_eval.c--
+ * geqo_eval.c
  *	  Routines to evaluate query trees
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_eval.c,v 1.28 1999/02/12 05:56:47 momjian Exp $
+ * $Id: geqo_eval.c,v 1.29 1999/02/13 23:16:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,7 +59,7 @@ static void geqo_joinrel_size(RelOptInfo *joinrel, RelOptInfo *outer_rel, RelOpt
 static RelOptInfo *geqo_nth(int stop, List *rels);
 
 /*
- * geqo_eval--
+ * geqo_eval
  *
  * Returns cost of a query tree as an individual of the population.
  */
@@ -91,7 +91,7 @@ geqo_eval(Query *root, Gene *tour, int num_gene)
 }
 
 /*
- * gimme-tree --
+ * gimme_tree 
  *	  this program presumes that only LEFT-SIDED TREES are considered!
  *
  * 'outer_rel' is the preceeding join
@@ -179,10 +179,10 @@ gimme_tree(Query *root, Gene *tour, int rel_count, int num_gene, RelOptInfo *out
 }
 
 /*
- * gimme-clause-joins--
+ * gimme_clause_joins
  *
- * 'outer-rel' is the relation entry for the outer relation
- * 'inner-rel' is the relation entry for the inner relation
+ * 'outer_rel' is the relation entry for the outer relation
+ * 'inner_rel' is the relation entry for the inner relation
  *
  * Returns a list of new join relations.
  */
@@ -231,9 +231,9 @@ gimme_clause_joins(Query *root, RelOptInfo *outer_rel, RelOptInfo *inner_rel)
 }
 
 /*
- * gimme-clauseless-join--
- *	  Given an outer relation 'outer-rel' and an inner relation
- *	  'inner-rel', create a join relation between 'outer-rel' and 'inner-rel'
+ * gimme_clauseless_join
+ *	  Given an outer relation 'outer_rel' and an inner relation
+ *	  'inner_rel', create a join relation between 'outer_rel' and 'inner_rel'
  *
  * Returns a new join relation.
  */
@@ -245,13 +245,13 @@ gimme_clauseless_join(RelOptInfo *outer_rel, RelOptInfo *inner_rel)
 }
 
 /*
- * init-join-rel--
+ * init_join_rel
  *	  Creates and initializes a new join relation.
  *
- * 'outer-rel' and 'inner-rel' are relation nodes for the relations to be
+ * 'outer_rel' and 'inner_rel' are relation nodes for the relations to be
  *		joined
  * 'joininfo' is the joininfo node(join clause) containing both
- *		'outer-rel' and 'inner-rel', if any exists
+ *		'outer_rel' and 'inner_rel', if any exists
  *
  * Returns the new join relation node.
  */
@@ -315,17 +315,17 @@ init_join_rel(RelOptInfo *outer_rel, RelOptInfo *inner_rel, JoinInfo * joininfo)
 }
 
 /*
- * new-join-tlist--
+ * new_join_tlist
  *	  Builds a join relations's target list by keeping those elements that
  *	  will be in the final target list and any other elements that are still
  *	  needed for future joins.	For a target list entry to still be needed
  *	  for future joins, its 'joinlist' field must not be empty after removal
- *	  of all relids in 'other-relids'.
+ *	  of all relids in 'other_relids'.
  *
  * 'tlist' is the target list of one of the join relations
- * 'other-relids' is a list of relids contained within the other
+ * 'other_relids' is a list of relids contained within the other
  *				join relation
- * 'first-resdomno' is the resdom number to use for the first created
+ * 'first_resdomno' is the resdom number to use for the first created
  *				target list entry
  *
  * Returns the new target list.
@@ -362,19 +362,19 @@ new_join_tlist(List *tlist,
 }
 
 /*
- * new-joininfo-list--
+ * new_joininfo_list
  *	  Builds a join relation's joininfo list by checking for join clauses
  *	  which still need to used in future joins involving this relation.  A
  *	  join clause is still needed if there are still relations in the clause
  *	  not contained in the list of relations comprising this join relation.
  *	  New joininfo nodes are only created and added to
- *	  'current-joininfo-list' if a node for a particular join hasn't already
+ *	  'current_joininfo_list' if a node for a particular join hasn't already
  *	  been created.
  *
- * 'current-joininfo-list' contains a list of those joininfo nodes that
+ * 'current_joininfo_list' contains a list of those joininfo nodes that
  *		have already been built
- * 'joininfo-list' is the list of join clauses involving this relation
- * 'join-relids' is a list of relids corresponding to the relations
+ * 'joininfo_list' is the list of join clauses involving this relation
+ * 'join_relids' is a list of relids corresponding to the relations
  *		currently being joined
  *
  * Returns a list of joininfo nodes, new and old.
@@ -430,7 +430,7 @@ new_joininfo_list(List *joininfo_list, List *join_relids)
 
 #ifdef	NOTUSED
 /*
- * add-new-joininfos--
+ * add_new_joininfos
  *	  For each new join relation, create new joininfos that
  *	  use the join relation as inner relation, and add
  *	  the new joininfos to those rel nodes that still
@@ -578,11 +578,11 @@ geqo_add_new_joininfos(Query *root, List *joinrels, List *outerrels)
 }
 
 /*
- * final-join-rels--
+ * final_join_rels
  *	   Find the join relation that includes all the original
  *	   relations, i.e. the final join result.
  *
- * 'join-rel-list' is a list of join relations.
+ * 'join_rel_list' is a list of join relations.
  *
  * Returns the list of final join relations.
  */
@@ -624,11 +624,11 @@ geqo_final_join_rels(List *join_rel_list)
 }
 
 /*
- * add_superrels--
+ * add_superrels
  *	  add rel to the temporary property list superrels.
  *
  * 'rel' a rel node
- * 'super-rel' rel node of a join relation that includes rel
+ * 'super_rel' rel node of a join relation that includes rel
  *
  * Modifies the superrels field of rel
  */
@@ -639,7 +639,7 @@ add_superrels(RelOptInfo *rel, RelOptInfo *super_rel)
 }
 
 /*
- * nonoverlap-rels--
+ * nonoverlap_rels
  *	  test if two join relations overlap, i.e., includes the same
  *	  relation.
  *
@@ -671,7 +671,7 @@ nonoverlap_sets(List *s1, List *s2)
 #endif	 /* NOTUSED */
 
 /*
- * geqo_joinrel_size--
+ * geqo_joinrel_size
  *	  compute estimate for join relation tuples, even for
  *	  long join queries; so get logarithm of size when MAXINT overflow;
  */

@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * makefuncs.h--
+ * makefuncs.h
  *	  prototypes for the creator functions (for primitive nodes)
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: makefuncs.h,v 1.15 1998/10/01 22:51:22 momjian Exp $
+ * $Id: makefuncs.h,v 1.16 1999/02/13 23:21:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

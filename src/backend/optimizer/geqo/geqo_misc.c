@@ -1,11 +1,11 @@
 /*------------------------------------------------------------------------
  *
- * geqo_misc.c--
+ * geqo_misc.c
  *	   misc. printout and debug stuff
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_misc.c,v 1.16 1999/02/12 17:24:47 momjian Exp $
+ * $Id: geqo_misc.c,v 1.17 1999/02/13 23:16:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,7 +43,7 @@
 
 static float avg_pool(Pool *pool);
 
-/* avg_pool--
+/* avg_pool
  *
  */
 static float
@@ -61,7 +61,7 @@ avg_pool(Pool *pool)
 	return (float) cumulative / pool->size;
 }
 
-/* print_pool--
+/* print_pool
  */
 void
 print_pool(FILE *fp, Pool *pool, int start, int stop)
@@ -91,7 +91,7 @@ print_pool(FILE *fp, Pool *pool, int start, int stop)
 	}
 }
 
-/* print_gen--
+/* print_gen
  *
  *	 printout for chromosome: best, worst, mean, average
  *

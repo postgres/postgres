@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * nodeSeqscan.h--
+ * nodeSeqscan.h
  *
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeSeqscan.h,v 1.7 1998/09/01 04:36:05 momjian Exp $
+ * $Id: nodeSeqscan.h,v 1.8 1999/02/13 23:21:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

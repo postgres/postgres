@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * hashsearch.c--
+ * hashsearch.c
  *	  search code for postgres hash tables
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashsearch.c,v 1.16 1998/09/01 03:21:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashsearch.c,v 1.17 1999/02/13 23:14:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

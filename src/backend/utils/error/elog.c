@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * elog.c--
+ * elog.c
  *	  error logger
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.38 1999/01/23 22:27:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.39 1999/02/13 23:19:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,7 +53,7 @@ static int	Err_file = -1;
 static int	ElogDebugIndentLevel = 0;
 
 /*
- * elog --
+ * elog 
  *		Old error logging function.
  */
 void
@@ -165,7 +165,7 @@ elog(int lev, const char *fmt,...)
 	 * front-end program, write to it first.  This is important because
 	 * there's a bug in the socket code on ultrix.  If the front end has
 	 * gone away (so the channel to it has been closed at the other end),
-	 * then writing here can cause this backend to exit without warning --
+	 * then writing here can cause this backend to exit without warning 
 	 * that is, write() does an exit(). In this case, our only hope of
 	 * finding out what's going on is if Err_file was set to some disk
 	 * log.  This is a major pain.

@@ -1,11 +1,11 @@
 /*-------------------------------------------------------------------------
  *
- * geqo_paths.c--
+ * geqo_paths.c
  *	  Routines to process redundant paths and relations
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_paths.c,v 1.19 1999/02/12 17:24:47 momjian Exp $
+ * $Id: geqo_paths.c,v 1.20 1999/02/13 23:16:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,9 +31,9 @@
 static List *geqo_prune_rel(RelOptInfo *rel, List *other_rels);
 
 /*
- * geqo-prune-rels--
+ * geqo_prune_rels
  *	  Removes any redundant relation entries from a list of rel nodes
- *	  'rel-list'.
+ *	  'rel_list'.
  *
  * Returns the resulting list.
  *
@@ -53,8 +53,8 @@ geqo_prune_rels(List *rel_list)
 }
 
 /*
- * geqo-prune-rel--
- *	  Prunes those relations from 'other-rels' that are redundant with
+ * geqo_prune_rel
+ *	  Prunes those relations from 'other_rels' that are redundant with
  *	  'rel'.  A relation is redundant if it is built up of the same
  *	  relations as 'rel'.  Paths for the redundant relation are merged into
  *	  the pathlist of 'rel'.
@@ -91,7 +91,7 @@ geqo_prune_rel(RelOptInfo *rel, List *other_rels)
 }
 
 /*
- * geqo-set-cheapest--
+ * geqo_set_cheapest
  *	  For a relation 'rel' (which corresponds to a join
  *	  relation), set pointers to the cheapest path
  */

@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * superuser.c--
+ * superuser.c
  *
  *	  The superuser() function.  Determines if user has superuser privilege.
  *
@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/superuser.c,v 1.7 1998/09/01 04:33:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/superuser.c,v 1.8 1999/02/13 23:20:06 momjian Exp $
  *
  * DESCRIPTION
  *	  See superuser().

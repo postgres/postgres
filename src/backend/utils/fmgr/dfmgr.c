@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * dfmgr.c--
+ * dfmgr.c
  *	  Dynamic function manager code.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.22 1999/02/07 22:06:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.23 1999/02/13 23:19:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

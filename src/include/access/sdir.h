@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * sdir.h--
+ * sdir.h
  *	  POSTGRES scan direction definitions.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: sdir.h,v 1.4 1998/09/01 04:34:27 momjian Exp $
+ * $Id: sdir.h,v 1.5 1999/02/13 23:20:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,7 +26,7 @@ typedef enum ScanDirection
 } ScanDirection;
 
 /*
- * ScanDirectionIsValid --
+ * ScanDirectionIsValid 
  *		True iff scan direction is valid.
  */
 #define ScanDirectionIsValid(direction) \
@@ -34,21 +34,21 @@ typedef enum ScanDirection
 			 direction <= ForwardScanDirection))
 
 /*
- * ScanDirectionIsBackward --
+ * ScanDirectionIsBackward 
  *		True iff scan direction is backward.
  */
 #define ScanDirectionIsBackward(direction) \
 	((bool) (direction == BackwardScanDirection))
 
 /*
- * ScanDirectionIsNoMovement --
+ * ScanDirectionIsNoMovement 
  *		True iff scan direction indicates no movement.
  */
 #define ScanDirectionIsNoMovement(direction) \
 	((bool) (direction == NoMovementScanDirection))
 
 /*
- * ScanDirectionIsForward --
+ * ScanDirectionIsForward 
  *		True iff scan direction is forward.
  */
 #define ScanDirectionIsForward(direction) \

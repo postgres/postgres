@@ -1,12 +1,12 @@
 /*------------------------------------------------------------------------
 *
-* geqo_cx.c--
+* geqo_cx.c
 *
 *	 cycle crossover [CX] routines;
 *	 CX operator according to Oliver et al
 *	 (Proc 2nd Int'l Conf on GA's)
 *
-* $Id: geqo_cx.c,v 1.5 1998/09/01 03:23:04 momjian Exp $
+* $Id: geqo_cx.c,v 1.6 1999/02/13 23:16:05 momjian Exp $
 *
 *-------------------------------------------------------------------------
 */
@@ -55,7 +55,7 @@
 #include "optimizer/geqo_random.h"
 
 
-/* cx--
+/* cx
  *
  *	 cycle crossover
  */

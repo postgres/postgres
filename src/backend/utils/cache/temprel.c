@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * temprel.c--
+ * temprel.c
  *	  POSTGRES temporary relation handling
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/temprel.c,v 1.1 1999/02/02 03:45:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/temprel.c,v 1.2 1999/02/13 23:19:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

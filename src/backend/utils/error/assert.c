@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * assert.c--
+ * assert.c
  *	  Assert code.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/assert.c,v 1.12 1998/09/01 04:33:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/assert.c,v 1.13 1999/02/13 23:19:47 momjian Exp $
  *
  * NOTE
  *	  This should eventually work with elog(), dlog(), etc.

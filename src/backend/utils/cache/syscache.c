@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * syscache.c--
+ * syscache.c
  *	  System cache management routines
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.23 1999/02/03 21:17:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.24 1999/02/13 23:19:45 momjian Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -392,7 +392,7 @@ static int32 SysCacheSize = lengthof(cacheinfo);
 
 
 /*
- * zerocaches--
+ * zerocaches
  *
  *	  Make sure the SysCache structure is zero'd.
  */
@@ -439,7 +439,7 @@ InitCatalogCache()
 }
 
 /*
- * SearchSysCacheTupleCopy--
+ * SearchSysCacheTupleCopy
  *
  *	THis is like SearchSysCacheTuple, except it returns a copy of the tuple
  *	that the user is required to pfree().
@@ -462,7 +462,7 @@ SearchSysCacheTupleCopy(int cacheId,	/* cache selection code */
 
 
 /*
- * SearchSysCacheTuple--
+ * SearchSysCacheTuple
  *
  *	A layer on top of SearchSysCache that does the initialization and
  *	key-setting for you.
@@ -519,7 +519,7 @@ SearchSysCacheTuple(int cacheId,/* cache selection code */
 }
 
 /*
- * SearchSysCacheStruct--
+ * SearchSysCacheStruct
  *	  Fills 's' with the information retrieved by calling SearchSysCache()
  *	  with arguments key1...key4.  Retrieves only the portion of the tuple
  *	  which is not variable-length.
@@ -553,7 +553,7 @@ SearchSysCacheStruct(int cacheId,		/* cache selection code */
 
 
 /*
- * SearchSysCacheGetAttribute--
+ * SearchSysCacheGetAttribute
  *	  Returns the attribute corresponding to 'attributeNumber' for
  *	  a given cached tuple.
  *
@@ -647,7 +647,7 @@ SearchSysCacheGetAttribute(int cacheId,
 }
 
 /*
- * TypeDefaultRetrieve--
+ * TypeDefaultRetrieve
  *
  *	  Given a type OID, return the typdefault field associated with that
  *	  type.  The typdefault is returned as the car of a dotted pair which

@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * varchar.c--
+ * varchar.c
  *	  Functions for the built-in type char() and varchar().
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.42 1998/10/06 03:02:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.43 1999/02/13 23:19:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

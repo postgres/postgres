@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * execProcnode.c--
+ * execProcnode.c
  *	 contains dispatch functions which call the appropriate "initialize",
  *	 "get a tuple", and "cleanup" routines for the given node type.
  *	 If the node has children, then it will presumably call ExecInitNode,
@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execProcnode.c,v 1.12 1998/09/01 03:22:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execProcnode.c,v 1.13 1999/02/13 23:15:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * fe-auth.c--
+ * fe-auth.c
  *	   The front-end (client) authorization routines
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.25 1999/01/22 13:28:50 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.26 1999/02/13 23:22:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * bufmgr.c--
+ * bufmgr.c
  *	  buffer manager interface routines
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.47 1999/02/03 21:17:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.48 1999/02/13 23:17:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -161,7 +161,7 @@ extern int	ShowPinTrace;
 								 * defined */
 
 /*
- * ReadBuffer --
+ * ReadBuffer 
  *
  */
 Buffer
@@ -666,7 +666,7 @@ BufferAlloc(Relation reln,
 }
 
 /*
- * WriteBuffer--
+ * WriteBuffer
  *
  *		Pushes buffer contents to disk if WriteMode is BUFFER_FLUSH_WRITE.
  *		Otherwise, marks contents as dirty.
@@ -1116,7 +1116,7 @@ WaitIO(BufferDesc *buf, SPINLOCK spinlock)
 }
 
 /*
- * SignalIO --
+ * SignalIO 
  */
 static void
 SignalIO(BufferDesc *buf)
@@ -1245,7 +1245,7 @@ FlushBufferPool(int StableMainMemoryFlag)
 }
 
 /*
- * BufferGetBlockNumber --
+ * BufferGetBlockNumber 
  *		Returns the block number associated with a buffer.
  *
  * Note:
@@ -1265,7 +1265,7 @@ BufferGetBlockNumber(Buffer buffer)
 
 #ifdef NOT_USED
 /*
- * BufferGetRelation --
+ * BufferGetRelation 
  *		Returns the relation desciptor associated with a buffer.
  *
  * Note:
@@ -1362,7 +1362,7 @@ BufferReplace(BufferDesc *bufHdr, bool bufferLockHeld)
 }
 
 /*
- * RelationGetNumberOfBlocks --
+ * RelationGetNumberOfBlocks 
  *		Returns the buffer descriptor associated with a page in a relation.
  *
  * Note:

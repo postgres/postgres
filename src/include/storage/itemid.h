@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * itemid.h--
+ * itemid.h
  *	  Standard POSTGRES buffer page item identifier definitions.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: itemid.h,v 1.7 1998/09/01 04:38:18 momjian Exp $
+ * $Id: itemid.h,v 1.8 1999/02/13 23:22:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,13 +57,13 @@ typedef struct ItemIdData *ItemId;
    ((itemId)->lp_flags)
 
 /*
- * ItemIdIsValid --
+ * ItemIdIsValid 
  *		True iff disk item identifier is valid.
  */
 #define ItemIdIsValid(itemId)	PointerIsValid(itemId)
 
 /*
- * ItemIdIsUsed --
+ * ItemIdIsUsed 
  *		True iff disk item identifier is in use.
  *
  * Note:

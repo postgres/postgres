@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * sequence.c--
+ * sequence.c
  *	  PostgreSQL sequences support code.
  *
  *-------------------------------------------------------------------------
@@ -66,7 +66,7 @@ static void init_params(CreateSeqStmt *seq, Form_pg_sequence new);
 static int	get_param(DefElem *def);
 
 /*
- * DefineSequence --
+ * DefineSequence 
  *				Creates a new sequence relation
  */
 void
@@ -464,7 +464,7 @@ init_sequence(char *caller, char *name)
 
 
 /*
- * CloseSequences --
+ * CloseSequences 
  *				is calling by xact mgr at commit/abort.
  */
 void

@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * syscache.h--
+ * syscache.h
  *	  System catalog cache definitions.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: syscache.h,v 1.12 1998/09/01 04:39:34 momjian Exp $
+ * $Id: syscache.h,v 1.13 1999/02/13 23:22:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

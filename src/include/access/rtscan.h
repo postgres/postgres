@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * rtscan.h--
+ * rtscan.h
  *	  routines defined in access/rtree/rtscan.c
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rtscan.h,v 1.5 1998/09/01 04:34:25 momjian Exp $
+ * $Id: rtscan.h,v 1.6 1999/02/13 23:20:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

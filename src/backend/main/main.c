@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * main.c--
+ * main.c
  *	  Stub main() routine for the postgres backend.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.22 1998/09/01 04:28:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.23 1999/02/13 23:15:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

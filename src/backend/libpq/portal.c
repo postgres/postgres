@@ -1,11 +1,11 @@
 /*-------------------------------------------------------------------------
  *
- * portal.c--
+ * portal.c
  *	  generalized portal support routines
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: portal.c,v 1.19 1998/12/14 08:11:06 scrappy Exp $
+ *  $Id: portal.c,v 1.20 1999/02/13 23:15:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

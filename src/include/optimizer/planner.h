@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * planner.h--
+ * planner.h
  *	  prototypes for planner.c.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: planner.h,v 1.9 1998/09/01 04:37:18 momjian Exp $
+ * $Id: planner.h,v 1.10 1999/02/13 23:21:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

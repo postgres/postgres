@@ -270,7 +270,7 @@ int i;
 
 
 	switch (fOption) {
-	/* Statement Options --
+	/* Statement Options 
 	   (apply to all stmts on the connection and become defaults for new stmts)
 	*/
 	case SQL_ASYNC_ENABLE:

@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * itempos.h--
+ * itempos.h
  *	  Standard POSTGRES buffer page long item subposition definitions.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: itempos.h,v 1.6 1998/09/01 04:38:19 momjian Exp $
+ * $Id: itempos.h,v 1.7 1999/02/13 23:22:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

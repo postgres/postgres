@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * buf_table.c--
+ * buf_table.c
  *	  routines for finding buffers in the buffer pool.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_table.c,v 1.13 1998/09/01 03:25:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_table.c,v 1.14 1999/02/13 23:17:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

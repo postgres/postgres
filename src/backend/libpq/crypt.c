@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * crypt.c--
+ * crypt.c
  *	Look into pg_shadow and check the encrypted password with 
  *	the one passed in from the frontend.
  *
@@ -9,7 +9,7 @@
  * Dec 17, 1997 - Todd A. Brandys
  *	Orignal Version Completed.
  *
- * $Id: crypt.c,v 1.14 1999/01/17 06:18:25 momjian Exp $
+ * $Id: crypt.c,v 1.15 1999/02/13 23:15:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

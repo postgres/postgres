@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * execdebug.h--
+ * execdebug.h
  *	  #defines governing debugging behaviour in the executor
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execdebug.h,v 1.6 1998/09/01 04:35:46 momjian Exp $
+ * $Id: execdebug.h,v 1.7 1999/02/13 23:21:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,12 +1,12 @@
 /*------------------------------------------------------------------------
 *
-* geqo_ox2.c--
+* geqo_ox2.c
 *
 *	 order crossover [OX] routines;
 *	 OX2 operator according to Syswerda
 *	 (The Genetic Algorithms Handbook, ed L Davis)
 *
-* $Id: geqo_ox2.c,v 1.4 1997/09/08 21:44:29 momjian Exp $
+* $Id: geqo_ox2.c,v 1.5 1999/02/13 23:16:10 momjian Exp $
 *
 *-------------------------------------------------------------------------
 */
@@ -54,7 +54,7 @@
 #include "optimizer/geqo_random.h"
 
 
-/* ox2--
+/* ox2
  *
  *	 position crossover
  */

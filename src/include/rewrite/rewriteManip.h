@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * rewriteManip.h--
+ * rewriteManip.h
  *
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rewriteManip.h,v 1.12 1999/01/18 00:10:16 momjian Exp $
+ * $Id: rewriteManip.h,v 1.13 1999/02/13 23:22:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

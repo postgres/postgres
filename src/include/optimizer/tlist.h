@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * tlist.h--
+ * tlist.h
  *	  prototypes for tlist.c.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tlist.h,v 1.14 1999/02/10 21:02:50 momjian Exp $
+ * $Id: tlist.h,v 1.15 1999/02/13 23:21:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,7 @@
 
 extern TargetEntry *tlistentry_member(Var *var, List *targetlist);
 extern Expr *matching_tlvar(Var *var, List *targetlist);
-extern void add_tl_element(RelOptInfo *rel, Var *var);
+extern void add_var_to_tlist(RelOptInfo *rel, Var *var);
 extern TargetEntry *create_tl_element(Var *var, int resdomno);
 extern List *get_actual_tlist(List *tlist);
 extern Resdom *tlist_member(Var *var, List *tlist);

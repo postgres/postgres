@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * nodes.h--
+ * nodes.h
  *	  Definitions for tagged nodes.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.42 1999/02/12 06:43:45 momjian Exp $
+ * $Id: nodes.h,v 1.43 1999/02/13 23:21:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

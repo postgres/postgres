@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * nodeFuncs.c--
+ * nodeFuncs.c
  *	  All node routines more complicated than simple access/modification
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/nodeFuncs.c,v 1.8 1998/09/01 03:22:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/nodeFuncs.c,v 1.9 1999/02/13 23:15:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

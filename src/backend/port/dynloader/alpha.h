@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * alpha.h--
+ * alpha.h
  *	  prototypes for OSF/1-specific routines
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: alpha.h,v 1.2 1998/09/01 04:30:52 momjian Exp $
+ * $Id: alpha.h,v 1.3 1999/02/13 23:17:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

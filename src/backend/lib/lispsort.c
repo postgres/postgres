@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * lispsort.c--
+ * lispsort.c
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/lib/Attic/lispsort.c,v 1.9 1998/09/01 03:22:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/lib/Attic/lispsort.c,v 1.10 1999/02/13 23:15:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

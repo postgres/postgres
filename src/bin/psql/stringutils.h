@@ -1,11 +1,11 @@
 /*-------------------------------------------------------------------------
  *
- * stringutils.h--
+ * stringutils.h
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: stringutils.h,v 1.7 1998/09/01 04:33:56 momjian Exp $
+ * $Id: stringutils.h,v 1.8 1999/02/13 23:20:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

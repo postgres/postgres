@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * array.h--
+ * array.h
  *	  Utilities for the new array code. Contain prototypes from the
  *	  following files:
  *				utils/adt/arrayfuncs.c
@@ -10,7 +10,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: array.h,v 1.14 1998/09/01 04:38:50 momjian Exp $
+ * $Id: array.h,v 1.15 1999/02/13 23:22:15 momjian Exp $
  *
  * NOTES
  *	  XXX the data array should be LONGALIGN'd -- notice that the array

@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * genam.h--
+ * genam.h
  *	  POSTGRES general access method definitions.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: genam.h,v 1.17 1998/10/08 18:30:20 momjian Exp $
+ * $Id: genam.h,v 1.18 1999/02/13 23:20:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

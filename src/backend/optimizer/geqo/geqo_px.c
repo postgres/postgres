@@ -1,12 +1,12 @@
 /*------------------------------------------------------------------------
 *
-* geqo_px.c--
+* geqo_px.c
 *
 *	 position crossover [PX] routines;
 *	 PX operator according to Syswerda
 *	 (The Genetic Algorithms Handbook, L Davis, ed)
 *
-* $Id: geqo_px.c,v 1.5 1998/06/15 19:28:37 momjian Exp $
+* $Id: geqo_px.c,v 1.6 1999/02/13 23:16:12 momjian Exp $
 *
 *-------------------------------------------------------------------------
 */
@@ -54,7 +54,7 @@
 #include "optimizer/geqo_random.h"
 
 
-/* px--
+/* px
  *
  *	 position crossover
  */

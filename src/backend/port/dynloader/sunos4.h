@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * port-protos.h--
+ * port_protos.h
  *	  port-specific prototypes for SunOS 4
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: sunos4.h,v 1.2 1998/09/01 04:31:08 momjian Exp $
+ * $Id: sunos4.h,v 1.3 1999/02/13 23:17:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

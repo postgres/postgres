@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * palloc.h--
+ * palloc.h
  *	  POSTGRES memory allocator definitions.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: palloc.h,v 1.7 1999/02/06 16:50:34 wieck Exp $
+ * $Id: palloc.h,v 1.8 1999/02/13 23:22:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

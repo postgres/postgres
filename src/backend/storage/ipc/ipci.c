@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * ipci.c--
+ * ipci.c
  *	  POSTGRES inter-process communication initialization code.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipci.c,v 1.17 1998/12/15 12:46:24 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipci.c,v 1.18 1999/02/13 23:18:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,7 +25,7 @@
 #include "miscadmin.h"			/* for DebugLvl */
 
 /*
- * SystemPortAddressCreateMemoryKey --
+ * SystemPortAddressCreateMemoryKey 
  *		Returns a memory key given a port address.
  */
 IPCKey
@@ -37,7 +37,7 @@ SystemPortAddressCreateIPCKey(SystemPortAddress address)
 }
 
 /*
- * CreateSharedMemoryAndSemaphores --
+ * CreateSharedMemoryAndSemaphores 
  *		Creates and initializes shared memory and semaphores.
  */
 /**************************************************
@@ -106,7 +106,7 @@ CreateSharedMemoryAndSemaphores(IPCKey key)
 
 
 /*
- * AttachSharedMemoryAndSemaphores --
+ * AttachSharedMemoryAndSemaphores 
  *		Attachs existant shared memory and semaphores.
  */
 void

@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * exc.c--
+ * exc.c
  *	  POSTGRES exception handling code.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/exc.c,v 1.23 1998/09/01 04:33:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/exc.c,v 1.24 1999/02/13 23:19:48 momjian Exp $
  *
  * NOTE
  *	  XXX this code needs improvement--check for state violations and
@@ -48,7 +48,7 @@ extern char *ProgramName;
  */
 
 /*
- * EnableExceptionHandling --
+ * EnableExceptionHandling 
  *		Enables/disables the exception handling system.
  *
  * Note:

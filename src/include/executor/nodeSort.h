@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * nodeSort.h--
+ * nodeSort.h
  *
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeSort.h,v 1.7 1998/09/01 04:36:07 momjian Exp $
+ * $Id: nodeSort.h,v 1.8 1999/02/13 23:21:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

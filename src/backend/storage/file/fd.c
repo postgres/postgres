@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * fd.c--
+ * fd.c
  *	  Virtual file descriptor code.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Id: fd.c,v 1.36 1999/02/03 21:17:14 momjian Exp $
+ *	  $Id: fd.c,v 1.37 1999/02/13 23:18:05 momjian Exp $
  *
  * NOTES:
  *

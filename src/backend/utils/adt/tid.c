@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * tid.c--
+ * tid.c
  *	  Functions for the built-in type tuple id
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/tid.c,v 1.5 1998/02/26 04:37:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/tid.c,v 1.6 1999/02/13 23:19:34 momjian Exp $
  *
  * NOTES
  *	  input routine largely stolen from boxin().

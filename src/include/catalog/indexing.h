@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * indexing.h--
+ * indexing.h
  *	  This include provides some definitions to support indexing
  *	  on system catalogs
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: indexing.h,v 1.18 1998/09/01 04:34:44 momjian Exp $
+ * $Id: indexing.h,v 1.19 1999/02/13 23:21:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

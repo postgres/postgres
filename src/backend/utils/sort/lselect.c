@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * lselect.c--
+ * lselect.c
  *	  leftist tree selection algorithm (linked priority queue--Knuth, Vol.3,
  *	  pp.150-52)
  *
@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/lselect.c,v 1.14 1998/09/01 03:27:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/lselect.c,v 1.15 1999/02/13 23:20:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

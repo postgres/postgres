@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * nodeAppend.c--
+ * nodeAppend.c
  *	  routines to handle append nodes.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAppend.c,v 1.16 1999/02/03 21:16:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAppend.c,v 1.17 1999/02/13 23:15:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,7 +68,7 @@
 static bool exec_append_initialize_next(Append *node);
 
 /* ----------------------------------------------------------------
- *		exec-append-initialize-next
+ *		exec_append_initialize_next
  *
  *		Sets up the append node state (i.e. the append state node)
  *		for the "next" scan.

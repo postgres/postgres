@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * sinval.h--
+ * sinval.h
  *	  POSTGRES shared cache invalidation communication definitions.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: sinval.h,v 1.9 1998/09/01 04:38:34 momjian Exp $
+ * $Id: sinval.h,v 1.10 1999/02/13 23:22:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

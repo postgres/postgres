@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * prepunion.c--
+ * prepunion.c
  *	  Routines to plan inheritance, union, and version queries
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.28 1999/02/03 21:16:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.29 1999/02/13 23:16:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,7 +48,7 @@ static Append *make_append(List *appendplans, List *unionrtables, Index rt_index
 
 
 /*
- * plan-union-queries--
+ * plan_union_queries
  *
  *	  Plans the queries for a given UNION.
  *
@@ -204,7 +204,7 @@ plan_union_queries(Query *parse)
 
 
 /*
- * plan-inherit-queries--
+ * plan_inherit_queries
  *
  *	  Plans the queries for a given parent relation.
  *
@@ -243,7 +243,7 @@ plan_inherit_queries(Query *parse, Index rt_index)
 }
 
 /*
- * plan-inherit-query--
+ * plan_inherit_query
  *	  Returns a list of plans for 'relids' and a list of range table entries
  *	  in union_rtentries.
  */
@@ -295,7 +295,7 @@ plan_inherit_query(List *relids,
 }
 
 /*
- * find-all-inheritors -
+ * find_all_inheritors -
  *		Returns a list of relids corresponding to relations that inherit
  *		attributes from any relations listed in either of the argument relid
  *		lists.
@@ -310,7 +310,7 @@ find_all_inheritors(List *unexamined_relids,
 
 	/*
 	 * Find all relations which inherit from members of
-	 * 'unexamined-relids' and store them in 'new-inheritors'.
+	 * 'unexamined_relids' and store them in 'new_inheritors'.
 	 */
 	List	   *rels = NIL;
 	List	   *newrels = NIL;
@@ -336,7 +336,7 @@ find_all_inheritors(List *unexamined_relids,
 }
 
 /*
- * first-inherit-rt-entry -
+ * first_inherit_rt_entry -
  *		Given a rangetable, find the first rangetable entry that represents
  *		the appropriate special case.
  *
@@ -361,11 +361,11 @@ first_inherit_rt_entry(List *rangetable)
 }
 
 /*
- * new-rangetable-entry -
- *		Replaces the name and relid of 'old-entry' with the values for
- *		'new-relid'.
+ * new_rangetable_entry -
+ *		Replaces the name and relid of 'old_entry' with the values for
+ *		'new_relid'.
  *
- *		Returns a copy of 'old-entry' with the parameters substituted.
+ *		Returns a copy of 'old_entry' with the parameters substituted.
  */
 static RangeTblEntry *
 new_rangetable_entry(Oid new_relid, RangeTblEntry *old_entry)
@@ -384,8 +384,8 @@ new_rangetable_entry(Oid new_relid, RangeTblEntry *old_entry)
 }
 
 /*
- * subst-rangetable--
- *	  Replaces the 'index'th rangetable entry in 'root' with 'new-entry'.
+ * subst_rangetable
+ *	  Replaces the 'index'th rangetable entry in 'root' with 'new_entry'.
  *
  * Returns a new copy of 'root'.
  */
@@ -463,12 +463,12 @@ fix_parsetree_attnums_nodes(Index rt_index,
 }
 
 /*
- * fix-parsetree-attnums--
+ * fix_parsetree_attnums
  *	  Replaces attribute numbers from the relation represented by
- *	  'old-relid' in 'parsetree' with the attribute numbers from
- *	  'new-relid'.
+ *	  'old_relid' in 'parsetree' with the attribute numbers from
+ *	  'new_relid'.
  *
- * Returns the destructively-modified parsetree.
+ * Returns the destructively_modified parsetree.
  *
  */
 static void

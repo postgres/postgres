@@ -1,11 +1,11 @@
 /*-------------------------------------------------------------------------
  *
- * hba.c--
+ * hba.c
  *	  Routines to handle host based authentication (that's the scheme
  *	  wherein you authenticate a user by seeing what IP address the system
  *	  says he comes from and possibly using ident).
  *
- *  $Id: hba.c,v 1.38 1999/01/17 06:18:25 momjian Exp $
+ *  $Id: hba.c,v 1.39 1999/02/13 23:15:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * rewriteSupport.h--
+ * rewriteSupport.h
  *
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rewriteSupport.h,v 1.9 1998/09/01 04:38:05 momjian Exp $
+ * $Id: rewriteSupport.h,v 1.10 1999/02/13 23:22:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

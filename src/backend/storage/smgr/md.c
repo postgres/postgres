@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * md.c--
+ * md.c
  *	  This code manages relations that reside on magnetic disk.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.40 1999/01/17 06:18:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.41 1999/02/13 23:18:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * float.c--
+ * float.c
  *	  Functions for the built-in floating-point types.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.39 1999/01/24 00:12:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.40 1999/02/13 23:19:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

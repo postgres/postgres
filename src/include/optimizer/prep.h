@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * prep.h--
+ * prep.h
  *	  prototypes for files in prep.c
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: prep.h,v 1.13 1998/09/01 04:37:19 momjian Exp $
+ * $Id: prep.h,v 1.14 1999/02/13 23:21:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

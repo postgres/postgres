@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * datetime.h--
+ * datetime.h
  *	  Definitions for the datetime
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: datetime.h,v 1.6 1998/09/01 04:38:56 momjian Exp $
+ * $Id: datetime.h,v 1.7 1999/02/13 23:22:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

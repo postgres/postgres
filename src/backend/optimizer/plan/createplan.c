@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * createplan.c--
+ * createplan.c
  *	  Routines to create the desired plan for processing a query
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.45 1999/02/12 17:24:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.46 1999/02/13 23:16:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,9 +76,9 @@ static Material *make_material(List *tlist, Oid nonameid, Plan *lefttree,
 			  int keycount);
 
 /*
- * create_plan--
+ * create_plan
  *	  Creates the access plan for a query by tracing backwards through the
- *	  desired chain of pathnodes, starting at the node 'best-path'.  For
+ *	  desired chain of pathnodes, starting at the node 'best_path'.  For
  *	  every pathnode found:
  *	  (1) Create a corresponding plan node containing appropriate id,
  *		  target list, and qualification information.
@@ -86,7 +86,7 @@ static Material *make_material(List *tlist, Oid nonameid, Plan *lefttree,
  *		  relative values.
  *	  (3) Target lists are not modified, but will be in another routine.
  *
- *	  best-path is the best access path
+ *	  best_path is the best access path
  *
  *	  Returns the optimal(?) access plan.
  */
@@ -147,10 +147,10 @@ create_plan(Path *best_path)
 }
 
 /*
- * create_scan_node--
- *	 Create a scan path for the parent relation of 'best-path'.
+ * create_scan_node
+ *	 Create a scan path for the parent relation of 'best_path'.
  *
- *	 tlist is the targetlist for the base relation scanned by 'best-path'
+ *	 tlist is the targetlist for the base relation scanned by 'best_path'
  *
  *	 Returns the scan node.
  */
@@ -194,12 +194,12 @@ create_scan_node(Path *best_path, List *tlist)
 }
 
 /*
- * create_join_node --
- *	  Create a join path for 'best-path' and(recursively) paths for its
+ * create_join_node 
+ *	  Create a join path for 'best_path' and(recursively) paths for its
  *	  inner and outer paths.
  *
  *	  'tlist' is the targetlist for the join relation corresponding to
- *		'best-path'
+ *		'best_path'
  *
  *	  Returns the join node.
  */
@@ -260,7 +260,7 @@ create_join_node(JoinPath *best_path, List *tlist)
 
 	/*
 	 * * Expensive function pullups may have pulled local predicates *
-	 * into this path node.  Put them in the qpqual of the plan node. * --
+	 * into this path node.  Put them in the qpqual of the plan node. * 
 	 * JMH, 6/15/92
 	 */
 	if (get_loc_restrictinfo(best_path) != NIL)
@@ -281,9 +281,9 @@ create_join_node(JoinPath *best_path, List *tlist)
 
 
 /*
- * create_seqscan_node--
- *	 Returns a seqscan node for the base relation scanned by 'best-path'
- *	 with restriction clauses 'scan-clauses' and targetlist 'tlist'.
+ * create_seqscan_node
+ *	 Returns a seqscan node for the base relation scanned by 'best_path'
+ *	 with restriction clauses 'scan_clauses' and targetlist 'tlist'.
  */
 static SeqScan *
 create_seqscan_node(Path *best_path, List *tlist, List *scan_clauses)
@@ -309,9 +309,9 @@ create_seqscan_node(Path *best_path, List *tlist, List *scan_clauses)
 }
 
 /*
- * create_indexscan_node--
- *	  Returns a indexscan node for the base relation scanned by 'best-path'
- *	  with restriction clauses 'scan-clauses' and targetlist 'tlist'.
+ * create_indexscan_node
+ *	  Returns a indexscan node for the base relation scanned by 'best_path'
+ *	  with restriction clauses 'scan_clauses' and targetlist 'tlist'.
  */
 static IndexScan *
 create_indexscan_node(IndexPath *best_path,
@@ -758,7 +758,7 @@ fix_indxqual_references(Node *clause, Path *index_path)
 
 
 /*
- * switch_outer--
+ * switch_outer
  *	  Given a list of merge clauses, rearranges the elements within the
  *	  clauses so the outer join variable is on the left and the inner is on
  *	  the right.
@@ -798,7 +798,7 @@ switch_outer(List *clauses)
 }
 
 /*
- * set-noname-tlist-operators--
+ * set_noname_tlist_operators
  *	  Sets the key and keyop fields of resdom nodes in a target list.
  *
  *	  'tlist' is the target list
@@ -846,16 +846,16 @@ set_noname_tlist_operators(List *tlist, List *pathkeys, Oid *operators)
  *****************************************************************************/
 
 /*
- * make_noname--
+ * make_noname
  *	  Create plan nodes to sort or materialize relations into noname. The
- *	  result returned for a sort will look like (SEQSCAN(SORT(plan-node)))
- *	  or (SEQSCAN(MATERIAL(plan-node)))
+ *	  result returned for a sort will look like (SEQSCAN(SORT(plan_node)))
+ *	  or (SEQSCAN(MATERIAL(plan_node)))
  *
  *	  'tlist' is the target list of the scan to be sorted or hashed
  *	  'pathkeys' is the list of keys which the sort or hash will be done on
  *	  'operators' is the operators with which the sort or hash is to be done
  *		(a list of operator OIDs)
- *	  'plan-node' is the node which yields tuples for the sort
+ *	  'plan_node' is the node which yields tuples for the sort
  *	  'nonametype' indicates which operation(sort or hash) to perform
  */
 static Noname *

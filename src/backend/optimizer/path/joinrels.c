@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * joinrels.c--
+ * joinrels.c
  *	  Routines to determine which relations should be joined
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.19 1999/02/12 05:56:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.20 1999/02/13 23:16:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,15 +44,15 @@ static void set_joinrel_size(RelOptInfo *joinrel, RelOptInfo *outer_rel, RelOptI
 				 JoinInfo * jinfo);
 
 /*
- * find-join-rels--
+ * find_join_rels
  *	  Find all possible joins for each of the outer join relations in
- *	  'outer-rels'.  A rel node is created for each possible join relation,
+ *	  'outer_rels'.  A rel node is created for each possible join relation,
  *	  and the resulting list of nodes is returned.	If at all possible, only
  *	  those relations for which join clauses exist are considered.	If none
  *	  of these exist for a given relation, all remaining possibilities are
  *	  considered.
  *
- * 'outer-rels' is the list of rel nodes
+ * 'outer_rels' is the list of rel nodes
  *
  * Returns a list of rel nodes corresponding to the new join relations.
  */
@@ -82,16 +82,16 @@ find_join_rels(Query *root, List *outer_rels)
 }
 
 /*
- * find-clause-joins--
+ * find_clause_joins
  *	  Determines whether joins can be performed between an outer relation
- *	  'outer-rel' and those relations within 'outer-rel's joininfo nodes
- *	  (i.e., relations that participate in join clauses that 'outer-rel'
+ *	  'outer_rel' and those relations within 'outer_rel's joininfo nodes
+ *	  (i.e., relations that participate in join clauses that 'outer_rel'
  *	  participates in).  This is possible if all but one of the relations
  *	  contained within the join clauses of the joininfo node are already
- *	  contained within 'outer-rel'.
+ *	  contained within 'outer_rel'.
  *
- * 'outer-rel' is the relation entry for the outer relation
- * 'joininfo-list' is a list of join clauses which 'outer-rel'
+ * 'outer_rel' is the relation entry for the outer relation
+ * 'joininfo_list' is a list of join clauses which 'outer_rel'
  *		participates in
  *
  * Returns a list of new join relations.
@@ -148,10 +148,10 @@ find_clause_joins(Query *root, RelOptInfo *outer_rel, List *joininfo_list)
 }
 
 /*
- * find-clauseless-joins--
- *	  Given an outer relation 'outer-rel' and a list of inner relations
- *	  'inner-rels', create a join relation between 'outer-rel' and each
- *	  member of 'inner-rels' that isn't already included in 'outer-rel'.
+ * find_clauseless_joins
+ *	  Given an outer relation 'outer_rel' and a list of inner relations
+ *	  'inner_rels', create a join relation between 'outer_rel' and each
+ *	  member of 'inner_rels' that isn't already included in 'outer_rel'.
  *
  * Returns a list of new join relations.
  */
@@ -180,13 +180,13 @@ find_clauseless_joins(RelOptInfo *outer_rel, List *inner_rels)
 }
 
 /*
- * init-join-rel--
+ * init_join_rel
  *	  Creates and initializes a new join relation.
  *
- * 'outer-rel' and 'inner-rel' are relation nodes for the relations to be
+ * 'outer_rel' and 'inner_rel' are relation nodes for the relations to be
  *		joined
  * 'joininfo' is the joininfo node(join clause) containing both
- *		'outer-rel' and 'inner-rel', if any exists
+ *		'outer_rel' and 'inner_rel', if any exists
  *
  * Returns the new join relation node.
  */
@@ -251,17 +251,17 @@ init_join_rel(RelOptInfo *outer_rel, RelOptInfo *inner_rel, JoinInfo * joininfo)
 }
 
 /*
- * new-join-tlist--
+ * new_join_tlist
  *	  Builds a join relations's target list by keeping those elements that
  *	  will be in the final target list and any other elements that are still
  *	  needed for future joins.	For a target list entry to still be needed
  *	  for future joins, its 'joinlist' field must not be empty after removal
- *	  of all relids in 'other-relids'.
+ *	  of all relids in 'other_relids'.
  *
  * 'tlist' is the target list of one of the join relations
- * 'other-relids' is a list of relids contained within the other
+ * 'other_relids' is a list of relids contained within the other
  *				join relation
- * 'first-resdomno' is the resdom number to use for the first created
+ * 'first_resdomno' is the resdom number to use for the first created
  *				target list entry
  *
  * Returns the new target list.
@@ -298,19 +298,19 @@ new_join_tlist(List *tlist,
 }
 
 /*
- * new-joininfo-list--
+ * new_joininfo_list
  *	  Builds a join relation's joininfo list by checking for join clauses
  *	  which still need to used in future joins involving this relation.  A
  *	  join clause is still needed if there are still relations in the clause
  *	  not contained in the list of relations comprising this join relation.
  *	  New joininfo nodes are only created and added to
- *	  'current-joininfo-list' if a node for a particular join hasn't already
+ *	  'current_joininfo_list' if a node for a particular join hasn't already
  *	  been created.
  *
- * 'current-joininfo-list' contains a list of those joininfo nodes that
+ * 'current_joininfo_list' contains a list of those joininfo nodes that
  *		have already been built
- * 'joininfo-list' is the list of join clauses involving this relation
- * 'join-relids' is a list of relids corresponding to the relations
+ * 'joininfo_list' is the list of join clauses involving this relation
+ * 'join_relids' is a list of relids corresponding to the relations
  *		currently being joined
  *
  * Returns a list of joininfo nodes, new and old.
@@ -364,7 +364,7 @@ new_joininfo_list(List *joininfo_list, List *join_relids)
 }
 
 /*
- * add-new-joininfos--
+ * add_new_joininfos
  *	  For each new join relation, create new joininfos that
  *	  use the join relation as inner relation, and add
  *	  the new joininfos to those rel nodes that still
@@ -462,11 +462,11 @@ add_new_joininfos(Query *root, List *joinrels, List *outerrels)
 }
 
 /*
- * final-join-rels--
+ * final_join_rels
  *	   Find the join relation that includes all the original
  *	   relations, i.e. the final join result.
  *
- * 'join-rel-list' is a list of join relations.
+ * 'join_rel_list' is a list of join relations.
  *
  * Returns the list of final join relations.
  */
@@ -508,11 +508,11 @@ final_join_rels(List *join_rel_list)
 }
 
 /*
- * add_superrels--
+ * add_superrels
  *	  add rel to the temporary property list superrels.
  *
  * 'rel' a rel node
- * 'super-rel' rel node of a join relation that includes rel
+ * 'super_rel' rel node of a join relation that includes rel
  *
  * Modifies the superrels field of rel
  */
@@ -523,7 +523,7 @@ add_superrels(RelOptInfo *rel, RelOptInfo *super_rel)
 }
 
 /*
- * nonoverlap-rels--
+ * nonoverlap_rels
  *	  test if two join relations overlap, i.e., includes the same
  *	  relation.
  *

@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * pgtclId.h--
+ * pgtclId.h
  *
  *	Contains Tcl "channel" interface routines, plus useful routines
  *	to convert between strings and pointers.  These are needed because
@@ -9,7 +9,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pgtclId.h,v 1.9 1998/09/21 01:02:04 momjian Exp $
+ * $Id: pgtclId.h,v 1.10 1999/02/13 23:22:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

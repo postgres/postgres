@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * tlist.c--
+ * tlist.c
  *	  Target list manipulation routines
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.25 1999/02/10 21:02:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.26 1999/02/13 23:16:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,13 +34,13 @@ static Node *flatten_tlistentry(Node *tlistentry, List *flat_tlist);
  *****************************************************************************/
 
 /*
- * tlistentry-member--
+ * tlistentry_member
  *
  * RETURNS:  the leftmost member of sequence "targetlist" that satisfies
  *			 the predicate "var_equal"
  * MODIFIES: nothing
  * REQUIRES: test = function which can operate on a lispval union
- *			 var = valid var-node
+ *			 var = valid var_node
  *			 targetlist = valid sequence
  */
 TargetEntry *
@@ -61,7 +61,7 @@ tlistentry_member(Var *var, List *targetlist)
 }
 
 /*
- * matching_tlvar--
+ * matching_tlvar
  *
  * RETURNS:  var node in a target list which is var_equal to 'var',
  *			 if one exists.
@@ -81,7 +81,7 @@ matching_tlvar(Var *var, List *targetlist)
 }
 
 /*
- * add_tl_element--
+ * add_var_to_tlist
  *	  Creates a targetlist entry corresponding to the supplied var node
  *
  * 'var' and adds the new targetlist entry to the targetlist field of
@@ -90,10 +90,10 @@ matching_tlvar(Var *var, List *targetlist)
  * RETURNS: nothing
  * MODIFIES: vartype and varid fields of leftmost varnode that matches
  *			 argument "var" (sometimes).
- * CREATES:  new var-node iff no matching var-node exists in targetlist
+ * CREATES:  new var_node iff no matching var_node exists in targetlist
  */
 void
-add_tl_element(RelOptInfo *rel, Var *var)
+add_var_to_tlist(RelOptInfo *rel, Var *var)
 {
 	Expr	   *oldvar = (Expr *) NULL;
 
@@ -121,12 +121,12 @@ add_tl_element(RelOptInfo *rel, Var *var)
 }
 
 /*
- * create_tl_element--
+ * create_tl_element
  *	  Creates a target list entry node and its associated (resdom var) pair
  *	  with its resdom number equal to 'resdomno' and the joinlist field set
  *	  to 'joinlist'.
  *
- * RETURNS:  newly created tlist-entry
+ * RETURNS:  newly created tlist_entry
  * CREATES:  new targetlist entry (always).
  */
 TargetEntry *
@@ -144,7 +144,7 @@ create_tl_element(Var *var, int resdomno)
 }
 
 /*
- * get-actual-tlist--
+ * get_actual_tlist
  *	  Returns the targetlist elements from a relation tlist.
  *
  */
@@ -184,7 +184,7 @@ get_actual_tlist(List *tlist)
  *****************************************************************************/
 
 /*
- * tlist-member--
+ * tlist_member
  *	  Determines whether a var node is already contained within a
  *	  target list.
  *
@@ -245,7 +245,7 @@ tlist_resdom(List *tlist, Resdom *resnode)
 
 
 /*
- * match_varid--
+ * match_varid
  *	  Searches a target list for an entry with some desired varid.
  *
  * 'varid' is the desired id
@@ -299,7 +299,7 @@ match_varid(Var *test_var, List *tlist)
 
 
 /*
- * new-unsorted-tlist--
+ * new_unsorted_tlist
  *	  Creates a copy of a target list by creating new resdom nodes
  *	  without sort information.
  *
@@ -325,7 +325,7 @@ new_unsorted_tlist(List *targetlist)
 }
 
 /*
- * copy-vars--
+ * copy_vars
  *	  Replaces the var nodes in the first target list with those from
  *	  the second target list.  The two target lists are assumed to be
  *	  identical except their actual resdoms and vars are different.
@@ -355,7 +355,7 @@ copy_vars(List *target, List *source)
 }
 
 /*
- * flatten-tlist--
+ * flatten_tlist
  *	  Create a target list that only contains unique variables.
  *
  *
@@ -407,13 +407,13 @@ flatten_tlist(List *tlist)
 }
 
 /*
- * flatten-tlist-vars--
+ * flatten_tlist_vars
  *	  Redoes the target list of a query with no nested attributes by
  *	  replacing vars within computational expressions with vars from
  *	  the 'flattened' target list of the query.
  *
- * 'full-tlist' is the actual target list
- * 'flat-tlist' is the flattened (var-only) target list
+ * 'full_tlist' is the actual target list
+ * 'flat_tlist' is the flattened (var-only) target list
  *
  * Returns the modified actual target list.
  *
@@ -437,12 +437,12 @@ flatten_tlist_vars(List *full_tlist, List *flat_tlist)
 }
 
 /*
- * flatten-tlistentry--
+ * flatten_tlistentry
  *	  Replaces vars within a target list entry with vars from a flattened
  *	  target list.
  *
  * 'tlistentry' is the target list entry to be modified
- * 'flat-tlist' is the flattened target list
+ * 'flat_tlist' is the flattened target list
  *
  * Returns the (modified) target_list entry from the target list.
  *

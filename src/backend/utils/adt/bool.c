@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * bool.c--
+ * bool.c
  *	  Functions for the built-in type "bool".
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/bool.c,v 1.15 1998/09/01 03:25:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/bool.c,v 1.16 1999/02/13 23:19:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

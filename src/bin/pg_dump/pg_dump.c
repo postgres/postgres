@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * pg_dump.c--
+ * pg_dump.c
  *	  pg_dump is an utility for dumping out a postgres database
  * into a script file.
  *
@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.101 1999/02/08 01:46:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.102 1999/02/13 23:20:23 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -2952,7 +2952,7 @@ dumpIndices(FILE *fout, IndInfo *indinfo, int numIndices,
 }
 
 /*
- * dumpTuples --
+ * dumpTuples 
  *	  prints out the tuples in ASCII representation. The output is a valid
  *	  input to COPY FROM stdin.
  *

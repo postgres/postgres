@@ -1,12 +1,12 @@
 /*------------------------------------------------------------------------
  *
- * geqo_main.c--
+ * geqo_main.c
  *	  solution of the query optimization problem
  *	  by means of a Genetic Algorithm (GA)
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_main.c,v 1.12 1999/02/03 21:16:22 momjian Exp $
+ * $Id: geqo_main.c,v 1.13 1999/02/13 23:16:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,7 +58,7 @@
 
 
 /*
- * geqo--
+ * geqo
  *	  solution of the query optimization problem
  *	  similar to a constrained Traveling Salesman Problem (TSP)
  */

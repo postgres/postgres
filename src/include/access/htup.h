@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * htup.h--
+ * htup.h
  *	  POSTGRES heap tuple definitions.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: htup.h,v 1.12 1998/12/15 12:46:46 vadim Exp $
+ * $Id: htup.h,v 1.13 1999/02/13 23:20:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,10 +1,10 @@
 /*------------------------------------------------------------------------
  *
- * geqo_copy.c--
+ * geqo_copy.c
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_copy.c,v 1.4 1997/09/08 21:44:13 momjian Exp $
+ * $Id: geqo_copy.c,v 1.5 1999/02/13 23:16:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,7 +50,7 @@
 #include "optimizer/geqo_gene.h"
 #include "optimizer/geqo_copy.h"
 
-/* geqo_copy--
+/* geqo_copy
  *
  *	 copies one gene to another
  *

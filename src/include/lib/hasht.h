@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * hasht.h--
+ * hasht.h
  *	  hash table related functions that are not directly supported
  *	  under utils/hash.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hasht.h,v 1.6 1998/09/01 04:36:17 momjian Exp $
+ * $Id: hasht.h,v 1.7 1999/02/13 23:21:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

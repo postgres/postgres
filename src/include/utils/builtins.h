@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * builtins.h--
+ * builtins.h
  *	  Declarations for operations on built-in types.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.73 1998/12/30 19:56:34 wieck Exp $
+ * $Id: builtins.h,v 1.74 1999/02/13 23:22:15 momjian Exp $
  *
  * NOTES
  *	  This should normally only be included by fmgr.h.

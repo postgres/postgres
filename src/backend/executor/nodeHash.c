@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * nodeHash.c--
+ * nodeHash.c
  *	  Routines to hash relations for hashjoin
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
- *  $Id: nodeHash.c,v 1.30 1999/02/03 21:16:12 momjian Exp $
+ *  $Id: nodeHash.c,v 1.31 1999/02/13 23:15:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

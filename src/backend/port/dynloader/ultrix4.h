@@ -1,19 +1,19 @@
 /*-------------------------------------------------------------------------
  *
- * dl.h--
+ * dl.h
  *
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: ultrix4.h,v 1.2 1998/09/01 04:31:11 momjian Exp $
+ * $Id: ultrix4.h,v 1.3 1999/02/13 23:17:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 /*
  *	Ultrix 4.x Dynamic Loader Library Version 1.0
  *
- *	dl.h--
+ *	dl.h
  *		header file for the Dynamic Loader Library
  *
  *

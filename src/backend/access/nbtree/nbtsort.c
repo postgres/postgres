@@ -1,11 +1,11 @@
 /*-------------------------------------------------------------------------
- * btsort.c--
+ * btsort.c
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Id: nbtsort.c,v 1.35 1999/02/03 21:15:36 momjian Exp $
+ *	  $Id: nbtsort.c,v 1.36 1999/02/13 23:14:36 momjian Exp $
  *
  * NOTES
  *

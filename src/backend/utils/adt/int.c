@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * int.c--
+ * int.c
  *	  Functions for the built-in integer types.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.19 1998/09/22 20:28:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.20 1999/02/13 23:19:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

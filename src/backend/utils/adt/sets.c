@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * sets.c--
+ * sets.c
  *	  Functions for sets, which are defined by queries.
  *	  Example:	 a set is defined as being the result of the query
  *			retrieve (X.all)
@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.20 1998/12/15 12:46:34 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.21 1999/02/13 23:19:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * params.h--
+ * params.h
  *	  Declarations/definitions of stuff needed to handle parameterized plans.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: params.h,v 1.9 1998/09/01 04:36:42 momjian Exp $
+ * $Id: params.h,v 1.10 1999/02/13 23:21:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

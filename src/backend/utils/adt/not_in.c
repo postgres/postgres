@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * not_in.c--
+ * not_in.c
  *	  Executes the "not_in" operator for any data type
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/not_in.c,v 1.13 1998/09/01 04:32:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/not_in.c,v 1.14 1999/02/13 23:19:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

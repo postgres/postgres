@@ -1,11 +1,11 @@
 /*-------------------------------------------------------------------------
  *
- * pgtclCmds.h--
+ * pgtclCmds.h
  *	  declarations for the C functions which implement pg_* tcl commands
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pgtclCmds.h,v 1.12 1998/09/21 01:02:02 momjian Exp $
+ * $Id: pgtclCmds.h,v 1.13 1999/02/13 23:22:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

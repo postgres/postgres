@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * defrem.h--
+ * defrem.h
  *	  POSTGRES define and remove utility definitions.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: defrem.h,v 1.14 1999/01/21 22:48:16 momjian Exp $
+ * $Id: defrem.h,v 1.15 1999/02/13 23:21:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * nodeResult.c--
+ * nodeResult.c
  *	  support for constant nodes needing special code.
  *
  * Copyright (c) 1994, Regents of the University of California
@@ -27,7 +27,7 @@
  *				   SeqScan (emp.all)
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeResult.c,v 1.8 1998/02/26 04:31:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeResult.c,v 1.9 1999/02/13 23:15:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * stringutils.c--
+ * stringutils.c
  *	  simple string manipulation routines
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/stringutils.c,v 1.15 1998/09/01 04:33:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/stringutils.c,v 1.16 1999/02/13 23:20:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

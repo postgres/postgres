@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * win.h--
+ * win.h
  *	  port-specific prototypes for Intel x86/Window NT
  *
  *

@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * clauses.c--
+ * clauses.c
  *	  routines to manipulate qualification clauses
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.28 1999/02/03 21:16:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.29 1999/02/13 23:16:42 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -71,7 +71,7 @@ make_clause(int type, Node *oper, List *args)
 
 
 /*
- * is_opclause--
+ * is_opclause
  *
  * Returns t iff the clause is an operator clause:
  *				(op expr expr) or (op expr).
@@ -88,7 +88,7 @@ is_opclause(Node *clause)
 }
 
 /*
- * make_opclause--
+ * make_opclause
  *	  Creates a clause given its operator left operand and right
  *	  operand (if it is non-null).
  *
@@ -106,7 +106,7 @@ make_opclause(Oper *op, Var *leftop, Var *rightop)
 }
 
 /*
- * get_leftop--
+ * get_leftop
  *
  * Returns the left operand of a clause of the form (op expr expr)
  *		or (op expr)
@@ -151,7 +151,7 @@ agg_clause(Node *clause)
  *****************************************************************************/
 
 /*
- * is_funcclause--
+ * is_funcclause
  *
  * Returns t iff the clause is a function clause: (func { expr }).
  *
@@ -164,7 +164,7 @@ is_funcclause(Node *clause)
 }
 
 /*
- * make_funcclause--
+ * make_funcclause
  *
  * Creates a function clause given the FUNC node and the functional
  * arguments.
@@ -187,7 +187,7 @@ make_funcclause(Func *func, List *funcargs)
  *****************************************************************************/
 
 /*
- * or_clause--
+ * or_clause
  *
  * Returns t iff the clause is an 'or' clause: (OR { expr }).
  *
@@ -201,7 +201,7 @@ or_clause(Node *clause)
 }
 
 /*
- * make_orclause--
+ * make_orclause
  *
  * Creates an 'or' clause given a list of its subclauses.
  *
@@ -223,7 +223,7 @@ make_orclause(List *orclauses)
  *****************************************************************************/
 
 /*
- * not_clause--
+ * not_clause
  *
  * Returns t iff this is a 'not' clause: (NOT expr).
  *
@@ -236,7 +236,7 @@ not_clause(Node *clause)
 }
 
 /*
- * make_notclause--
+ * make_notclause
  *
  * Create a 'not' clause given the expression to be negated.
  *
@@ -254,7 +254,7 @@ make_notclause(Expr *notclause)
 }
 
 /*
- * get_notclausearg--
+ * get_notclausearg
  *
  * Retrieve the clause within a 'not' clause
  *
@@ -271,7 +271,7 @@ get_notclausearg(Expr *notclause)
 
 
 /*
- * and_clause--
+ * and_clause
  *
  * Returns t iff its argument is an 'and' clause: (AND { expr }).
  *
@@ -284,7 +284,7 @@ and_clause(Node *clause)
 }
 
 /*
- * make_andclause--
+ * make_andclause
  *
  * Create an 'and' clause given its arguments in a list.
  *
@@ -308,7 +308,7 @@ make_andclause(List *andclauses)
 
 
 /*
- * case_clause--
+ * case_clause
  *
  * Returns t iff its argument is a 'case' clause: (CASE { expr }).
  *
@@ -328,7 +328,7 @@ case_clause(Node *clause)
 
 
 /*
- * pull-constant-clauses--
+ * pull_constant_clauses
  *	  Scans through a list of qualifications and find those that
  *	  contain no variables.
  *
@@ -356,7 +356,7 @@ pull_constant_clauses(List *quals, List **constantQual)
 }
 
 /*
- * clause-relids-vars--
+ * clause_relids_vars
  *	  Retrieves relids and vars appearing within a clause.
  *	  Returns ((relid1 relid2 ... relidn) (var1 var2 ... varm)) where
  *	  vars appear in the clause  this is done by recursively searching
@@ -399,8 +399,8 @@ clause_get_relids_vars(Node *clause, List **relids, List **vars)
 }
 
 /*
- * NumRelids--
- *		(formerly clause-relids)
+ * NumRelids
+ *		(formerly clause_relids)
  *
  * Returns the number of different relations referenced in 'clause'.
  */
@@ -423,7 +423,7 @@ NumRelids(Node *clause)
 }
 
 /*
- * contains-not--
+ * contains_not
  *
  * Returns t iff the clause is a 'not' clause or if any of the
  * subclauses within an 'or' clause contain 'not's.
@@ -453,7 +453,7 @@ contains_not(Node *clause)
 }
 
 /*
- * is_joinable--
+ * is_joinable
  *
  * Returns t iff 'clause' is a valid join clause.
  *
@@ -487,7 +487,7 @@ is_joinable(Node *clause)
 }
 
 /*
- * qual-clause-p--
+ * qual_clause_p
  *
  * Returns t iff 'clause' is a valid qualification clause.
  *
@@ -509,7 +509,7 @@ qual_clause_p(Node *clause)
 }
 
 /*
- * fix-opid--
+ * fix_opid
  *	  Calculate the opfid from the opno...
  *
  * Returns nothing.
@@ -571,7 +571,7 @@ fix_opid(Node *clause)
 }
 
 /*
- * fix-opids--
+ * fix_opids
  *	  Calculate the opfid from the opno for all the clauses...
  *
  * Returns its argument.
@@ -589,7 +589,7 @@ fix_opids(List *clauses)
 }
 
 /*
- * get_relattval--
+ * get_relattval
  *		For a non-join clause, returns a list consisting of the
  *				relid,
  *				attno,
@@ -716,7 +716,7 @@ get_relattval(Node *clause,
 }
 
 /*
- * get_relsatts--
+ * get_relsatts
  *
  * Returns a list
  *				( relid1 attno1 relid2 attno2 )

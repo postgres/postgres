@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * pg_index.h--
+ * pg_index.h
  *	  definition of the system "index" relation (pg_index)
  *	  along with the relation's initial contents.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_index.h,v 1.10 1998/09/10 15:32:32 vadim Exp $
+ * $Id: pg_index.h,v 1.11 1999/02/13 23:21:10 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki

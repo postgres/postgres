@@ -1,11 +1,11 @@
 /*
  *
- * outfuncs.c--
+ * outfuncs.c
  *	  routines to convert a node to ascii representation
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: outfuncs.c,v 1.71 1999/02/12 06:43:24 momjian Exp $
+ *  $Id: outfuncs.c,v 1.72 1999/02/13 23:15:59 momjian Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -1148,7 +1148,7 @@ _outMergeOrder(StringInfo str, MergeOrder *node)
  *	RestrictInfo is a subclass of Node.
  */
 static void
-_outRestrictInfo(StringInfo str, RestrictInfo * node)
+_outRestrictInfo(StringInfo str, RestrictInfo *node)
 {
 	appendStringInfo(str, " RESTRICTINFO :clause ");
 	_outNode(str, node->clause);

@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * transam.h--
+ * transam.h
  *	  postgres transaction access method support code header
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: transam.h,v 1.18 1998/12/18 09:09:52 vadim Exp $
+ * $Id: transam.h,v 1.19 1999/02/13 23:20:59 momjian Exp $
  *
  *	 NOTES
  *		Transaction System Version 101 now support proper oid

@@ -1,11 +1,11 @@
 /*-------------------------------------------------------------------------
  *
- * util.c--
+ * util.c
  *	  general routines for libpq backend
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: util.c,v 1.7 1998/12/14 08:11:07 scrappy Exp $
+ *  $Id: util.c,v 1.8 1999/02/13 23:15:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

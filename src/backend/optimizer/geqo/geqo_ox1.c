@@ -1,12 +1,12 @@
 /*------------------------------------------------------------------------
 *
-* geqo_ox1.c--
+* geqo_ox1.c
 *
 *	 order crossover [OX] routines;
 *	 OX1 operator according to Davis
 *	 (Proc Int'l Joint Conf on AI)
 *
-* $Id: geqo_ox1.c,v 1.4 1997/09/08 21:44:28 momjian Exp $
+* $Id: geqo_ox1.c,v 1.5 1999/02/13 23:16:10 momjian Exp $
 *
 *-------------------------------------------------------------------------
 */
@@ -54,7 +54,7 @@
 #include "optimizer/geqo_random.h"
 
 
-/* ox1--
+/* ox1
  *
  *	 position crossover
  */

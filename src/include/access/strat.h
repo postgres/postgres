@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * strat.h--
+ * strat.h
  *	  index strategy type definitions
  *	  (separated out from original istrat.h to avoid circular refs)
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: strat.h,v 1.11 1998/09/01 04:34:30 momjian Exp $
+ * $Id: strat.h,v 1.12 1999/02/13 23:20:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,7 +70,7 @@ typedef struct StrategyEvaluationData
 typedef StrategyEvaluationData *StrategyEvaluation;
 
 /*
- * StrategyTransformMapIsValid --
+ * StrategyTransformMapIsValid 
  *		Returns true iff strategy transformation map is valid.
  */
 #define StrategyTransformMapIsValid(transform) PointerIsValid(transform)

@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * spin.c--
+ * spin.c
  *	  routines for managing spin locks
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/spin.c,v 1.17 1998/09/01 04:31:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/spin.c,v 1.18 1999/02/13 23:18:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * joininfo.h--
+ * joininfo.h
  *	  prototypes for joininfo.c.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: joininfo.h,v 1.9 1999/02/10 21:02:48 momjian Exp $
+ * $Id: joininfo.h,v 1.10 1999/02/13 23:21:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

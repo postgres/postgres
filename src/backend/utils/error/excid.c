@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * excid.c--
+ * excid.c
  *	  POSTGRES known exception identifier code.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/excid.c,v 1.4 1997/09/08 02:31:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/excid.c,v 1.5 1999/02/13 23:19:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,19 +22,19 @@
 
 
 /*
- * FailedAssertion --
+ * FailedAssertion 
  *		Indicates an Assert(...) failed.
  */
 Exception	FailedAssertion = {"Failed Assertion"};
 
 /*
- * BadState --
+ * BadState 
  *		Indicates a function call request is inconsistent with module state.
  */
 Exception	BadState = {"Bad State for Function Call"};
 
 /*
- * BadArg --
+ * BadArg 
  *		Indicates a function call argument or arguments is out-of-bounds.
  */
 Exception	BadArg = {"Bad Argument to Function Call"};
@@ -44,19 +44,19 @@ Exception	BadArg = {"Bad Argument to Function Call"};
  *****************************************************************************/
 
 /*
- * BadAllocSize --
+ * BadAllocSize 
  *		Indicates that an allocation request is of unreasonable size.
  */
 Exception	BadAllocSize = {"Too Large Allocation Request"};
 
 /*
- * ExhaustedMemory --
+ * ExhaustedMemory 
  *		Indicates an dynamic memory allocation failed.
  */
 Exception	ExhaustedMemory = {"Memory Allocation Failed"};
 
 /*
- * Unimplemented --
+ * Unimplemented 
  *		Indicates a function call request requires unimplemented code.
  */
 Exception	Unimplemented = {"Unimplemented Functionality"};

@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * heapam.c--
+ * heapam.c
  *	  heap access method code
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.40 1999/01/29 09:22:51 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.41 1999/02/13 23:14:22 momjian Exp $
  *
  *
  * INTERFACE ROUTINES

@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * ps_status.h--
+ * ps_status.h
  *
  *	Defines macros to show backend status on the ps status line.
  *	Unfortunately this is system dpendent.

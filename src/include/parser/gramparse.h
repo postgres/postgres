@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * gramparse.h--
+ * gramparse.h
  *	  scanner support routines.  used by both the bootstrap lexer
  * as well as the normal lexer
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: gramparse.h,v 1.8 1998/09/01 04:37:27 momjian Exp $
+ * $Id: gramparse.h,v 1.9 1999/02/13 23:21:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

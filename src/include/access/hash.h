@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * hash.h--
+ * hash.h
  *	  header file for postgres hash access method implementation
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hash.h,v 1.20 1998/10/04 20:19:06 tgl Exp $
+ * $Id: hash.h,v 1.21 1999/02/13 23:20:52 momjian Exp $
  *
  * NOTES
  *		modeled after Margo Seltzer's hash implementation for unix.

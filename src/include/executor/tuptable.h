@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * tuptable.h--
+ * tuptable.h
  *	  tuple table support stuff
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tuptable.h,v 1.9 1998/11/27 19:33:33 vadim Exp $
+ * $Id: tuptable.h,v 1.10 1999/02/13 23:21:29 momjian Exp $
  *
  * NOTES
  *	  The tuple table interface is getting pretty ugly.

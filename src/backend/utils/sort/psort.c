@@ -1,10 +1,10 @@
 /*
- * psort.c--
+ * psort.c
  *	  Polyphase merge sort.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	  $Id: psort.c,v 1.49 1999/02/03 21:17:42 momjian Exp $
+ *	  $Id: psort.c,v 1.50 1999/02/13 23:20:15 momjian Exp $
  *
  * NOTES
  *		Sorts the first relation into the second relation.

@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * like.c--
+ * like.c
  *	  like expression handling code.
  *
  * Copyright (c) 1994, Regents of the University of California
@@ -111,7 +111,7 @@ textnlike(struct varlena * s, struct varlena * p)
 }
 
 
-/*	$Revision: 1.20 $
+/*	$Revision: 1.21 $
 **	"like.c" A first attempt at a LIKE operator for Postgres95.
 **
 **	Originally written by Rich $alz, mirror!rs, Wed Nov 26 19:03:17 EST 1986.

@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * xact.h--
+ * xact.h
  *	  postgres transaction system header
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: xact.h,v 1.19 1998/12/18 09:09:52 vadim Exp $
+ * $Id: xact.h,v 1.20 1999/02/13 23:21:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

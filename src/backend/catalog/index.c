@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * index.c--
+ * index.c
  *	  code to create and destroy POSTGRES index relations
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.69 1999/02/03 21:15:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.70 1999/02/13 23:14:56 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -356,7 +356,7 @@ ConstructTupleDescriptor(Oid heapoid,
 }
 
 /* ----------------------------------------------------------------
- * AccessMethodObjectIdGetForm --
+ * AccessMethodObjectIdGetForm 
  *		Returns the formated access method tuple given its object identifier.
  *
  * XXX ADD INDEXING

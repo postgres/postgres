@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * pquery.c--
+ * pquery.c
  *	  POSTGRES process query command code
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.20 1999/02/08 14:14:14 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.21 1999/02/13 23:18:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

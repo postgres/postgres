@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * setrefs.c--
+ * setrefs.c
  *	  Routines to change varno/attno entries to contain references
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.38 1999/02/09 17:03:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.39 1999/02/13 23:16:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,7 +55,7 @@ static void set_result_tlist_references(Result *resultNode);
  *****************************************************************************/
 
 /*
- * set-tlist-references--
+ * set_tlist_references
  *	  Modifies the target list of nodes in a plan to reference target lists
  *	  at lower levels.
  *
@@ -85,7 +85,7 @@ set_tlist_references(Plan *plan)
 }
 
 /*
- * set-join-tlist-references--
+ * set_join_tlist_references
  *	  Modifies the target list of a join node by setting the varnos and
  *	  varattnos to reference the target list of the outer and inner join
  *	  relations.
@@ -136,7 +136,7 @@ set_join_tlist_references(Join *join)
 }
 
 /*
- * set-nonamescan-tlist-references--
+ * set_nonamescan_tlist_references
  *	  Modifies the target list of a node that scans a noname relation (i.e., a
  *	  sort or hash node) so that the varnos refer to the child noname.
  *
@@ -156,7 +156,7 @@ set_nonamescan_tlist_references(SeqScan *nonamescan)
 }
 
 /*
- * set-noname-tlist-references--
+ * set_noname_tlist_references
  *	  The noname's vars are made consistent with (actually, identical to) the
  *	  modified version of the target list of the node from which noname node
  *	  receives its tuples.
@@ -182,14 +182,14 @@ set_noname_tlist_references(Noname *noname)
 }
 
 /*
- * join-references--
+ * join_references
  *	   Creates a new set of join clauses by replacing the varno/varattno
  *	   values of variables in the clauses to reference target list values
  *	   from the outer and inner join relation target lists.
  *
  * 'clauses' is the list of join clauses
- * 'outer-tlist' is the target list of the outer join relation
- * 'inner-tlist' is the target list of the inner join relation
+ * 'outer_tlist' is the target list of the outer join relation
+ * 'inner_tlist' is the target list of the inner join relation
  *
  * Returns the new join clauses.
  *
@@ -205,16 +205,16 @@ join_references(List *clauses,
 }
 
 /*
- * index-outerjoin-references--
+ * index_outerjoin_references
  *	  Given a list of join clauses, replace the operand corresponding to the
  *	  outer relation in the join with references to the corresponding target
- *	  list element in 'outer-tlist' (the outer is rather obscurely
+ *	  list element in 'outer_tlist' (the outer is rather obscurely
  *	  identified as the side that doesn't contain a var whose varno equals
- *	  'inner-relid').
+ *	  'inner_relid').
  *
  *	  As a side effect, the operator is replaced by the regproc id.
  *
- * 'inner-indxqual' is the list of join clauses (so-called because they
+ * 'inner_indxqual' is the list of join clauses (so-called because they
  * are used as qualifications for the inner (inbex) scan of a nestloop)
  *
  * Returns the new list of clauses.
@@ -268,17 +268,17 @@ index_outerjoin_references(List *inner_indxqual,
 }
 
 /*
- * replace-clause-joinvar-refs
- * replace-subclause-joinvar-refs
- * replace-joinvar-refs
+ * replace_clause_joinvar_refs
+ * replace_subclause_joinvar_refs
+ * replace_joinvar_refs
  *
  *	  Replaces all variables within a join clause with a new var node
  *	  whose varno/varattno fields contain a reference to a target list
  *	  element from either the outer or inner join relation.
  *
  * 'clause' is the join clause
- * 'outer-tlist' is the target list of the outer join relation
- * 'inner-tlist' is the target list of the inner join relation
+ * 'outer_tlist' is the target list of the outer join relation
+ * 'inner_tlist' is the target list of the inner join relation
  *
  * Returns the new join clause.
  *
@@ -475,7 +475,7 @@ replace_joinvar_refs(Var *var, List *outer_tlist, List *inner_tlist)
 }
 
 /*
- * tlist-noname-references--
+ * tlist_noname_references
  *	  Creates a new target list for a node that scans a noname relation,
  *	  setting the varnos to the id of the noname relation and setting varids
  *	  if necessary (varids are only needed if this is a targetlist internal
@@ -937,7 +937,7 @@ check_having_qual_for_vars(Node *clause, List *targetlist_so_far)
 
 		/* Check if the VAR is already contained in the targetlist */
 		if (tlist_member((Var *) clause, (List *) targetlist_so_far) == NULL)
-			add_tl_element(&tmp_rel, (Var *) clause);
+			add_var_to_tlist(&tmp_rel, (Var *) clause);
 
 		return tmp_rel.targetlist;
 	}

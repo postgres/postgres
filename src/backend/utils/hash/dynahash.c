@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * dynahash.c--
+ * dynahash.c
  *	  dynamic hashing
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.17 1999/02/03 21:17:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.18 1999/02/13 23:19:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

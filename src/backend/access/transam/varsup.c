@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * varsup.c--
+ * varsup.c
  *	  postgres variable relation support routines
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.18 1998/12/18 09:10:17 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.19 1999/02/13 23:14:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -260,7 +260,7 @@ VariableRelationPutNextOid(Oid *oidP)
  *		In the version 2 transaction system, transaction id's are
  *		restricted in several ways.
  *
- *		-- Old comments removed --
+ *		-- Old comments removed 
  *
  *		Second, since we may someday preform compression of the data
  *		in the log and time relations, we cause the numbering of the

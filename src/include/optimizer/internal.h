@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * internal.h--
+ * internal.h
  *	  Definitions required throughout the query optimizer.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: internal.h,v 1.13 1999/02/09 17:03:14 momjian Exp $
+ * $Id: internal.h,v 1.14 1999/02/13 23:21:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

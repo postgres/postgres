@@ -1,11 +1,11 @@
 /*------------------------------------------------------------------------
  *
- * geqo_pool.c--
+ * geqo_pool.c
  *	  Genetic Algorithm (GA) pool stuff
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_pool.c,v 1.10 1999/02/03 21:16:23 momjian Exp $
+ * $Id: geqo_pool.c,v 1.11 1999/02/13 23:16:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,7 @@
 static int	compare(const void *arg1, const void *arg2);
 
 /*
- * alloc-pool--
+ * alloc_pool
  *		allocates memory for GA pool
  */
 Pool *
@@ -72,7 +72,7 @@ alloc_pool(int pool_size, int string_length)
 }
 
 /*
- * free-pool--
+ * free_pool
  *		deallocates memory for GA pool
  */
 void
@@ -94,7 +94,7 @@ free_pool(Pool *pool)
 }
 
 /*
- * random-init-pool--
+ * random_init_pool
  *		initialize genetic pool
  */
 void
@@ -114,7 +114,7 @@ random_init_pool(Query *root, Pool *pool, int strt, int stp)
 }
 
 /*
- * sort-pool--
+ * sort_pool
  *	 sorts input pool according to worth, from smallest to largest
  *
  *	 maybe you have to change compare() for different ordering ...
@@ -126,7 +126,7 @@ sort_pool(Pool *pool)
 }
 
 /*
- * compare--
+ * compare
  *	 static input function for pg_sort
  *
  *	 return values for sort from smallest to largest are prooved!
@@ -146,7 +146,7 @@ compare(const void *arg1, const void *arg2)
 		return -1;
 }
 
-/* alloc_chromo--
+/* alloc_chromo
  *	  allocates a chromosome and string space
  */
 Chromosome *
@@ -160,7 +160,7 @@ alloc_chromo(int string_length)
 	return chromo;
 }
 
-/* free_chromo--
+/* free_chromo
  *	  deallocates a chromosome and string space
  */
 void
@@ -170,7 +170,7 @@ free_chromo(Chromosome *chromo)
 	pfree(chromo);
 }
 
-/* spread_chromo--
+/* spread_chromo
  *	 inserts a new chromosome into the pool, displacing worst gene in pool
  *	 assumes best->worst = smallest->largest
  */

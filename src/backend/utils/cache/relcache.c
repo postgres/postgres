@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * relcache.c--
+ * relcache.c
  *	  POSTGRES relation descriptor cache code
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.57 1999/02/03 21:17:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.58 1999/02/13 23:19:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

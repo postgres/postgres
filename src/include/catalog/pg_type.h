@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * pg_type.h--
+ * pg_type.h
  *	  definition of the system "type" relation (pg_type)
  *	  along with the relation's initial contents.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.53 1998/12/30 19:56:33 wieck Exp $
+ * $Id: pg_type.h,v 1.54 1999/02/13 23:21:15 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki

@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * database.c--
+ * database.c
  *	  miscellanious initialization support stuff
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.22 1999/01/17 06:18:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.23 1999/02/13 23:20:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

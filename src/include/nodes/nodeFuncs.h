@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * nodeFuncs.h--
+ * nodeFuncs.h
  *
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeFuncs.h,v 1.7 1998/09/01 04:36:40 momjian Exp $
+ * $Id: nodeFuncs.h,v 1.8 1999/02/13 23:21:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * multi.c--
+ * multi.c
  *	  multi level lock table manager
  *
  *	  Standard multi-level lock manager as per the Gray paper
@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Attic/multi.c,v 1.26 1998/10/08 18:29:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Attic/multi.c,v 1.27 1999/02/13 23:18:27 momjian Exp $
  *
  * NOTES:
  *	 (1) The lock.c module assumes that the caller here is doing

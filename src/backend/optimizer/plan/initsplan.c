@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * initsplan.c--
+ * initsplan.c
  *	  Target list, qualification, joininfo initialization routines
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.22 1999/02/03 21:16:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.23 1999/02/13 23:16:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,8 +39,8 @@
 
 extern int	Quiet;
 
-static void add_clause_to_rels(Query *root, List *clause);
-static void add_join_info_to_rels(Query *root, RestrictInfo * restrictinfo,
+static void add_restrict_and_join_to_rel(Query *root, List *clause);
+static void add_join_info_to_rels(Query *root, RestrictInfo *restrictinfo,
 					  List *join_relids);
 static void add_vars_to_targetlist(Query *root, List *vars, List *join_relids);
 
@@ -55,16 +55,14 @@ static Oid	hashjoinop(Expr *clause);
  *****************************************************************************/
 
 /*
- * init-base-rel-tlist--
+ * make_var_only_tlist
  *	  Creates rel nodes for every relation mentioned in the target list
  *	  'tlist' (if a node hasn't already been created) and adds them to
- *	  *query-relation-list*.  Creates targetlist entries for each member of
+ *	  *query_relation_list*.  Creates targetlist entries for each member of
  *	  'tlist' and adds them to the tlist field of the appropriate rel node.
- *
- *	  Returns nothing.
  */
 void
-init_base_rels_tlist(Query *root, List *tlist)
+make_var_only_tlist(Query *root, List *tlist)
 {
 	List	   *tlist_vars = NIL;
 	List	   *l = NIL;
@@ -80,20 +78,19 @@ init_base_rels_tlist(Query *root, List *tlist)
 	/* now, the target list only contains Var nodes */
 	foreach(tvar, tlist_vars)
 	{
-		Var		   *var;
+		Var		   *var = (Var *) lfirst(tvar);
 		Index		varno;
 		RelOptInfo *result;
 
-		var = (Var *) lfirst(tvar);
 		varno = var->varno;
 		result = get_base_rel(root, varno);
 
-		add_tl_element(result, var);
+		add_var_to_tlist(result, var);
 	}
 }
 
 /*
- * add_missing-vars-to-tlist--
+ * add_missing_vars_to_tlist
  *	  If we have range variable(s) in the FROM clause that does not appear
  *	  in the target list nor qualifications, we add it to the base relation
  *	  list. For instance, "select f.x from foo f, foo f2" is a join of f and
@@ -121,7 +118,7 @@ add_missing_vars_to_tlist(Query *root, List *tlist)
 						  OIDOID, -1, 0, varno, ObjectIdAttributeNumber);
 			/* add it to base_rel_list */
 			result = get_base_rel(root, varno);
-			add_tl_element(result, var);
+			add_var_to_tlist(result, var);
 		}
 		pfree(relids);
 		varno++;
@@ -139,25 +136,25 @@ add_missing_vars_to_tlist(Query *root, List *tlist)
 
 
 /*
- * init-base-rels-qual--
+ * add_restrict_and_join_to_rels-
  *	  Initializes RestrictInfo and JoinInfo fields of relation entries for all
  *	  relations appearing within clauses.  Creates new relation entries if
- *	  necessary, adding them to *query-relation-list*.
+ *	  necessary, adding them to *query_relation_list*.
  *
  *	  Returns nothing of interest.
  */
 void
-init_base_rels_qual(Query *root, List *clauses)
+add_restrict_and_join_to_rels(Query *root, List *clauses)
 {
 	List	   *clause;
 
 	foreach(clause, clauses)
-		add_clause_to_rels(root, lfirst(clause));
+		add_restrict_and_join_to_rel(root, lfirst(clause));
 	return;
 }
 
 /*
- * add-clause-to-rels--
+ * add_restrict_and_join_to_rel-
  *	  Add clause information to either the 'RestrictInfo' or 'JoinInfo' field
  *	  of a relation entry(depending on whether or not the clause is a join)
  *	  by creating a new RestrictInfo node and setting appropriate fields
@@ -166,7 +163,7 @@ init_base_rels_qual(Query *root, List *clauses)
  *	  Returns nothing of interest.
  */
 static void
-add_clause_to_rels(Query *root, List *clause)
+add_restrict_and_join_to_rel(Query *root, List *clause)
 {
 	List	   *relids;
 	List	   *vars;
@@ -186,53 +183,43 @@ add_clause_to_rels(Query *root, List *clause)
 
 	if (length(relids) == 1)
 	{
-		RelOptInfo *rel = get_base_rel(root, lfirsti(relids));
-
 		/*
 		 * There is only one relation participating in 'clause', so
 		 * 'clause' must be a restriction clause.
 		 */
+		RelOptInfo *rel = get_base_rel(root, lfirsti(relids));
 
 		/*
-		 * the selectivity of the clause must be computed regardless of
+		 * The selectivity of the clause must be computed regardless of
 		 * whether it's a restriction or a join clause
 		 */
 		if (is_funcclause((Node *) clause))
-		{
 
 			/*
 			 * XXX If we have a func clause set selectivity to 1/3, really
 			 * need a true selectivity function.
 			 */
 			restrictinfo->selectivity = (Cost) 0.3333333;
-		}
 		else
-		{
 			restrictinfo->selectivity = compute_clause_selec(root, (Node *) clause, NIL);
-		}
+
 		rel->restrictinfo = lcons(restrictinfo, rel->restrictinfo);
 	}
 	else
 	{
-
 		/*
 		 * 'clause' is a join clause, since there is more than one atom in
 		 * the relid list.
 		 */
-
 		if (is_funcclause((Node *) clause))
-		{
-
 			/*
 			 * XXX If we have a func clause set selectivity to 1/3, really
 			 * need a true selectivity function.
 			 */
 			restrictinfo->selectivity = (Cost) 0.3333333;
-		}
 		else
-		{
 			restrictinfo->selectivity = compute_clause_selec(root, (Node *) clause, NIL);
-		}
+
 		add_join_info_to_rels(root, restrictinfo, relids);
 		/* we are going to be doing a join, so add var to targetlist */
 		add_vars_to_targetlist(root, vars, relids);
@@ -240,19 +227,19 @@ add_clause_to_rels(Query *root, List *clause)
 }
 
 /*
- * add-join-info-to-rels--
+ * add_join_info_to_rels
  *	  For every relation participating in a join clause, add 'restrictinfo' to
  *	  the appropriate joininfo node(creating a new one and adding it to the
  *	  appropriate rel node if necessary).
  *
  * 'restrictinfo' describes the join clause
- * 'join-relids' is the list of relations participating in the join clause
+ * 'join_relids' is the list of relations participating in the join clause
  *
  * Returns nothing.
  *
  */
 static void
-add_join_info_to_rels(Query *root, RestrictInfo * restrictinfo, List *join_relids)
+add_join_info_to_rels(Query *root, RestrictInfo *restrictinfo, List *join_relids)
 {
 	List	   *join_relid;
 
@@ -276,7 +263,7 @@ add_join_info_to_rels(Query *root, RestrictInfo * restrictinfo, List *join_relid
 }
 
 /*
- * add-vars-to-targetlist--
+ * add_vars_to_targetlist
  *	  For each variable appearing in a clause,
  *	  (1) If a targetlist entry for the variable is not already present in
  *		  the appropriate relation's target list, add one.
@@ -285,7 +272,7 @@ add_join_info_to_rels(Query *root, RestrictInfo * restrictinfo, List *join_relid
  *		  entry of the targetlist entry.
  *
  *	  'vars' is the list of var nodes
- *	  'join-relids' is the list of relids appearing in the join clause
+ *	  'join_relids' is the list of relids appearing in the join clause
  *		(if this is a join clause)
  *
  *	  Returns nothing.
@@ -305,7 +292,7 @@ add_vars_to_targetlist(Query *root, List *vars, List *join_relids)
 		tlistentry = tlistentry_member(var, rel->targetlist);
 		if (tlistentry == NULL)
 			/* add a new entry */
-			add_tl_element(rel, var);
+			add_var_to_tlist(rel, var);
 	}
 }
 
@@ -316,7 +303,7 @@ add_vars_to_targetlist(Query *root, List *vars, List *join_relids)
  *****************************************************************************/
 
 /*
- * init-join-info--
+ * init_join_info
  *	  Set the MergeJoinable or HashJoinable field for every joininfo node
  *	  (within a rel node) and the MergeJoinOrder or HashJoinOp field for
  *	  each restrictinfo node(within a joininfo node) for all relations in a
@@ -372,7 +359,7 @@ init_join_info(List *rel_list)
 }
 
 /*
- * mergejoinop--
+ * mergejoinop
  *	  Returns the mergejoin operator of an operator iff 'clause' is
  *	  mergejoinable, i.e., both operands are single vars and the operator is
  *	  a mergejoinable operator.
@@ -406,7 +393,7 @@ mergejoinop(Expr *clause)
 }
 
 /*
- * hashjoinop--
+ * hashjoinop
  *	  Returns the hashjoin operator of an operator iff 'clause' is
  *	  hashjoinable, i.e., both operands are single vars and the operator is
  *	  a hashjoinable operator.

@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * nodeIndexscan.c--
+ * nodeIndexscan.c
  *	  Routines to support indexes and indexed scans of relations
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.31 1999/02/03 21:16:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.32 1999/02/13 23:15:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

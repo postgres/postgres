@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * utility.c--
+ * utility.c
  *	  Contains functions which control the execution of the POSTGRES utility
  *	  commands.  At one time acted as an interface between the Lisp and C
  *	  systems.
@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.54 1999/01/26 14:38:52 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.55 1999/02/13 23:18:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

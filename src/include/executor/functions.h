@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * functions.h--
+ * functions.h
  *
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: functions.h,v 1.8 1998/09/01 04:35:51 momjian Exp $
+ * $Id: functions.h,v 1.9 1999/02/13 23:21:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * excid.h--
+ * excid.h
  *	  POSTGRES known exception identifier definitions.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: excid.h,v 1.5 1998/09/01 04:39:06 momjian Exp $
+ * $Id: excid.h,v 1.6 1999/02/13 23:22:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

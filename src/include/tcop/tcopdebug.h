@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * tcopdebug.h--
+ * tcopdebug.h
  *	  #defines governing debugging behaviour in the traffic cop
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tcopdebug.h,v 1.3 1998/09/01 04:38:44 momjian Exp $
+ * $Id: tcopdebug.h,v 1.4 1999/02/13 23:22:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

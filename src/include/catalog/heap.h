@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * heap.h--
+ * heap.h
  *	  prototypes for functions in lib/catalog/heap.c
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: heap.h,v 1.17 1999/02/02 03:45:16 momjian Exp $
+ * $Id: heap.h,v 1.18 1999/02/13 23:21:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * xfunc.h--
+ * xfunc.h
  *	  prototypes for xfunc.c and predmig.c.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: xfunc.h,v 1.14 1999/02/12 17:25:05 momjian Exp $
+ * $Id: xfunc.h,v 1.15 1999/02/13 23:21:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,8 +51,8 @@ extern int	XfuncMode;			/* defined in tcop/postgres.c */
 /* function prototypes from planner/path/xfunc.c */
 extern void xfunc_trypullup(RelOptInfo *rel);
 extern int xfunc_shouldpull(Path *childpath, JoinPath *parentpath,
-				 int whichchild, RestrictInfo * maxcinfopt);
-extern RestrictInfo *xfunc_pullup(Path *childpath, JoinPath *parentpath, RestrictInfo * cinfo,
+				 int whichchild, RestrictInfo *maxcinfopt);
+extern RestrictInfo *xfunc_pullup(Path *childpath, JoinPath *parentpath, RestrictInfo *cinfo,
 			 int whichchild, int clausetype);
 extern Cost xfunc_rank(Expr *clause);
 extern Cost xfunc_expense(Query *queryInfo, Expr *clause);

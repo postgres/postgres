@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * nodeNestloop.c--
+ * nodeNestloop.c
  *	  routines to support nest-loop joins
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeNestloop.c,v 1.10 1998/06/15 19:28:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeNestloop.c,v 1.11 1999/02/13 23:15:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * version.c--
+ * version.c
  *	  This file contains all the rules that govern all version semantics.
  *
  * Copyright (c) 1994, Regents of the University of California
@@ -9,7 +9,7 @@
  *	doesn't work! - jolly 8/19/95
  *
  *
- *  $Id: version.c,v 1.17 1998/12/14 06:50:19 scrappy Exp $
+ *  $Id: version.c,v 1.18 1999/02/13 23:15:12 momjian Exp $
  *
  * NOTES
  *	At the point the version is defined, 2 physical relations are created

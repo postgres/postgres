@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * pg_operator.h--
+ * pg_operator.h
  *	  definition of the system "operator" relation (pg_operator)
  *	  along with the relation's initial contents.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_operator.h,v 1.48 1998/12/30 19:56:31 wieck Exp $
+ * $Id: pg_operator.h,v 1.49 1999/02/13 23:21:11 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki

@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * off.h--
+ * off.h
  *	  POSTGRES disk "offset" definitions.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: off.h,v 1.5 1998/09/01 04:38:26 momjian Exp $
+ * $Id: off.h,v 1.6 1999/02/13 23:22:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,7 +32,7 @@ typedef uint16 OffsetNumber;
  */
 
 /*
- * OffsetNumberIsValid --
+ * OffsetNumberIsValid 
  *		True iff the offset number is valid.
  */
 #define OffsetNumberIsValid(offsetNumber) \
@@ -40,8 +40,8 @@ typedef uint16 OffsetNumber;
 			 (offsetNumber <= MaxOffsetNumber)))
 
 /*
- * OffsetNumberNext --
- * OffsetNumberPrev --
+ * OffsetNumberNext 
+ * OffsetNumberPrev 
  *		Increments/decrements the argument.  These macros look pointless
  *		but they help us disambiguate the different manipulations on
  *		OffsetNumbers (e.g., sometimes we substract one from an

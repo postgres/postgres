@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * pg_operator.c--
+ * pg_operator.c
  *	  routines to support manipulation of the pg_operator relation
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.32 1999/02/03 21:15:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.33 1999/02/13 23:14:57 momjian Exp $
  *
  * NOTES
  *	  these routines moved here from commands/define.c and somewhat cleaned up.

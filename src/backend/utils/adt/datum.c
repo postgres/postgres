@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * datum.c--
+ * datum.c
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datum.c,v 1.11 1998/09/01 03:25:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datum.c,v 1.12 1999/02/13 23:19:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * rtree.h--
+ * rtree.h
  *	  common declarations for the rtree access method code.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rtree.h,v 1.13 1998/09/01 04:34:24 momjian Exp $
+ * $Id: rtree.h,v 1.14 1999/02/13 23:20:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

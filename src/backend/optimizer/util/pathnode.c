@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * pathnode.c--
+ * pathnode.c
  *	  Routines to manipulate pathlists and create path nodes
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.34 1999/02/12 06:43:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.35 1999/02/13 23:16:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,7 @@ static Path *better_path(Path *new_path, List *unique_paths, bool *is_new);
  *****************************************************************************/
 
 /*
- * path-is-cheaper--
+ * path_is_cheaper
  *	  Returns t iff 'path1' is cheaper than 'path2'.
  *
  */
@@ -51,11 +51,11 @@ path_is_cheaper(Path *path1, Path *path2)
 }
 
 /*
- * set_cheapest--
+ * set_cheapest
  *	  Finds the minimum cost path from among a relation's paths.
  *
- * 'parent-rel' is the parent relation
- * 'pathlist' is a list of path nodes corresponding to 'parent-rel'
+ * 'parent_rel' is the parent relation
+ * 'pathlist' is a list of path nodes corresponding to 'parent_rel'
  *
  * Returns and sets the relation entry field with the pathnode that
  * is minimum.
@@ -86,14 +86,14 @@ set_cheapest(RelOptInfo *parent_rel, List *pathlist)
 }
 
 /*
- * add_pathlist--
- *	  For each path in the list 'new-paths', add to the list 'unique-paths'
+ * add_pathlist
+ *	  For each path in the list 'new_paths', add to the list 'unique_paths'
  *	  only those paths that are unique (i.e., unique ordering and ordering
  *	  keys).  Should a conflict arise, the more expensive path is thrown out,
  *	  thereby pruning the plan space.  But we don't prune if xfunc
  *	  told us not to.
  *
- * 'parent-rel' is the relation entry to which these paths correspond.
+ * 'parent_rel' is the relation entry to which these paths correspond.
  *
  * Returns the list of unique pathnodes.
  *
@@ -140,15 +140,15 @@ add_pathlist(RelOptInfo *parent_rel, List *unique_paths, List *new_paths)
 }
 
 /*
- * better_path--
- *	  Determines whether 'new-path' has the same ordering and keys as some
- *	  path in the list 'unique-paths'.	If there is a redundant path,
+ * better_path
+ *	  Determines whether 'new_path' has the same ordering and keys as some
+ *	  path in the list 'unique_paths'.	If there is a redundant path,
  *	  eliminate the more expensive path.
  *
  * Returns:
- *	  The old path - if 'new-path' matches some path in 'unique-paths' and is
+ *	  The old path - if 'new_path' matches some path in 'unique_paths' and is
  *				cheaper
- *	  nil - if 'new-path' matches but isn't cheaper
+ *	  nil - if 'new_path' matches but isn't cheaper
  *	  t - if there is no path in the list with the same ordering and keys
  *
  */
@@ -269,7 +269,7 @@ better_path(Path *new_path, List *unique_paths, bool *is_new)
  *****************************************************************************/
 
 /*
- * create_seqscan_path--
+ * create_seqscan_path
  *	  Creates a path corresponding to a sequential scan, returning the
  *	  pathnode.
  *
@@ -290,7 +290,7 @@ create_seqscan_path(RelOptInfo *rel)
 	pathnode->pathkeys = NIL;
 
 	/*
-	 * copy restrictinfo list into path for expensive function processing --
+	 * copy restrictinfo list into path for expensive function processing 
 	 * JMH, 7/7/92
 	 */
 	pathnode->loc_restrictinfo = (List *) copyObject((Node *) rel->restrictinfo);
@@ -311,13 +311,13 @@ create_seqscan_path(RelOptInfo *rel)
 }
 
 /*
- * create_index_path--
+ * create_index_path
  *	  Creates a single path node for an index scan.
  *
  * 'rel' is the parent rel
  * 'index' is the pathnode for the index on 'rel'
- * 'restriction-clauses' is a list of restriction clause nodes.
- * 'is-join-scan' is a flag indicating whether or not the index is being
+ * 'restriction_clauses' is a list of restriction clause nodes.
+ * 'is_join_scan' is a flag indicating whether or not the index is being
  *		considered because of its sort order.
  *
  * Returns the new path node.
@@ -343,7 +343,7 @@ create_index_path(Query *root,
 	pathnode->indexqual = NIL;
 
 	/*
-	 * copy restrictinfo list into path for expensive function processing --
+	 * copy restrictinfo list into path for expensive function processing 
 	 * JMH, 7/7/92
 	 */
 	pathnode->path.loc_restrictinfo = set_difference((List *) copyObject((Node *) rel->restrictinfo),
@@ -460,7 +460,7 @@ create_index_path(Query *root,
 }
 
 /*
- * create_nestloop_path--
+ * create_nestloop_path
  *	  Creates a pathnode corresponding to a nestloop join between two
  *	  relations.
  *
@@ -523,7 +523,7 @@ create_nestloop_path(RelOptInfo *joinrel,
 }
 
 /*
- * create_mergejoin_path--
+ * create_mergejoin_path
  *	  Creates a pathnode corresponding to a mergejoin join between
  *	  two relations
  *

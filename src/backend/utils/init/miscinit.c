@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * miscinit.c--
+ * miscinit.c
  *	  miscellanious initialization support stuff
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.25 1999/01/17 06:18:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.26 1999/02/13 23:20:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,7 +39,7 @@
 #include "storage/fd.h"			/* for O_ */
 
 /*
- * EnableAbortEnvVarName --
+ * EnableAbortEnvVarName 
  *		Enables system abort iff set to a non-empty string in environment.
  */
 #define EnableAbortEnvVarName	"POSTGRESABORT"
@@ -68,7 +68,7 @@ unsigned char RecodeBackTable[128];
  */
 
 /*
- * ExitPostgres --
+ * ExitPostgres 
  *		Exit POSTGRES with a status code.
  *
  * Note:
@@ -88,7 +88,7 @@ ExitPostgres(ExitStatus status)
 }
 
 /*
- * AbortPostgres --
+ * AbortPostgres 
  *		Abort POSTGRES dumping core.
  *
  * Note:
@@ -148,7 +148,7 @@ static ProcessingMode Mode = NoProcessing;
 
 #ifdef NOT_USED
 /*
- * IsNoProcessingMode --
+ * IsNoProcessingMode 
  *		True iff processing mode is NoProcessing.
  */
 bool
@@ -159,7 +159,7 @@ IsNoProcessingMode()
 #endif
 
 /*
- * IsBootstrapProcessingMode --
+ * IsBootstrapProcessingMode 
  *		True iff processing mode is BootstrapProcessing.
  */
 bool
@@ -169,7 +169,7 @@ IsBootstrapProcessingMode()
 }
 
 /*
- * IsInitProcessingMode --
+ * IsInitProcessingMode 
  *		True iff processing mode is InitProcessing.
  */
 bool
@@ -179,7 +179,7 @@ IsInitProcessingMode()
 }
 
 /*
- * IsNormalProcessingMode --
+ * IsNormalProcessingMode 
  *		True iff processing mode is NormalProcessing.
  */
 bool
@@ -189,7 +189,7 @@ IsNormalProcessingMode()
 }
 
 /*
- * SetProcessingMode --
+ * SetProcessingMode 
  *		Sets mode of processing as specified.
  *
  * Exceptions:

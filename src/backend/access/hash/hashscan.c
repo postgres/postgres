@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * hashscan.c--
+ * hashscan.c
  *	  manage scans on hash tables
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashscan.c,v 1.16 1998/09/01 03:20:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashscan.c,v 1.17 1999/02/13 23:14:20 momjian Exp $
  *
  * NOTES
  *	  Because we can be doing an index scan on a relation while we

@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * catalog.h--
+ * catalog.h
  *	  prototypes for functions in lib/catalog/catalog.c
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: catalog.h,v 1.6 1998/09/01 04:34:39 momjian Exp $
+ * $Id: catalog.h,v 1.7 1999/02/13 23:21:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

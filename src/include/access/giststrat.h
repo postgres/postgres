@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * giststrat.h--
+ * giststrat.h
  *	  routines defined in access/gist/giststrat.c
  *
  *
