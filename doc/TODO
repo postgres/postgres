@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Jan 11 07:07:31 EST 2000
+Last updated:		Wed Jan 12 20:45:08 EST 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -19,7 +19,7 @@ RELIABILITY
 RESOURCES
 
 * -Elog() does not free all its memory
-* -spinlock stuck problem when elog(FATAL) and elog(ERROR) inside bufmgr
+* spinlock stuck problem when elog(FATAL) and elog(ERROR) inside bufmgr
 * -Recover or force failure when disk space is exhausted(Hiroshi)
 
 PARSER
@@ -301,7 +301,7 @@ Developers who have claimed items are:
 	* David is David Hartwig <daveh@insightdist.com>
 	* Edmund is Edmund Mergl <E.Mergl@bawue.de>
 	* Goran is Goran Thyni <goran@kyla.kiruna.se>
-	* Hiroshi is Hiroshi Inoue<Inoue@tpf.co.jp>
+      >::	* Hiroshi is Hiroshi Inoue<Inoue@tpf.co.jp>
 	* Jan is Jan Wieck <wieck@sapserv.debis.de>
  	* Marc is Marc Fournier <scrappy@hub.org>
 	* Massimo Dal Zotto <dz@cs.unitn.it>
