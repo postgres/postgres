@@ -34,7 +34,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_restore.c,v 1.29 2001/11/05 17:46:30 momjian Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_restore.c,v 1.30 2001/11/19 06:06:21 tgl Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *
@@ -373,7 +373,7 @@ main(int argc, char **argv)
 
 	CloseArchive(AH);
 
-	return 1;
+	return 0;
 }
 
 static void
