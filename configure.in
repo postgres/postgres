@@ -936,6 +936,16 @@ PGAC_ARG_BOOL(enable, syslog, no, [  --enable-syslog         enable logging to s
                              [AC_MSG_ERROR([no syslog interface found])])])
 
 
+AC_CACHE_CHECK([for optreset], pgac_cv_var_int_optreset,
+[AC_TRY_LINK([#include <unistd.h>],
+  [extern int optreset; optreset = 1;],
+  [pgac_cv_var_int_optreset=yes],
+  [pgac_cv_var_int_optreset=no])])
+if test x"$pgac_cv_var_int_optreset" = x"yes"; then
+  AC_DEFINE(HAVE_INT_OPTRESET, 1)
+fi
+
+
 dnl Check to see if we have a working 64-bit integer type.
 dnl This breaks down into two steps:
 dnl (1) figure out if the compiler has a 64-bit int type with working

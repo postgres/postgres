@@ -23,7 +23,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.110 2000/11/04 12:47:48 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.111 2000/11/06 22:18:09 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -109,11 +109,11 @@ fi
 
 if [ x"$self_path" != x"" ] \
   && [ -x "$self_path/postgres" ] \
-  && [ x"`$self_path/postgres --version 2>/dev/null`" = x"postgres (PostgreSQL) $VERSION" ]
+  && [ x"`$self_path/postgres -V 2>/dev/null`" = x"postgres (PostgreSQL) $VERSION" ]
 then
     PGPATH=$self_path
 elif [ -x "$bindir/postgres" ]; then
-    if [ x"`$bindir/postgres --version 2>/dev/null`" = x"postgres (PostgreSQL) $VERSION" ]
+    if [ x"`$bindir/postgres -V 2>/dev/null`" = x"postgres (PostgreSQL) $VERSION" ]
     then
         PGPATH=$bindir
     else
@@ -186,7 +186,7 @@ do
                 usage=t
                 break
                 ;;
-        --version)
+        --version|-V)
                 echo "initdb (PostgreSQL) $VERSION"
                 exit 0
                 ;;

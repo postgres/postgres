@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.178 2000/11/04 12:43:23 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.179 2000/11/06 22:18:06 petere Exp $
  *
  * NOTES
  *
@@ -57,7 +57,7 @@
 #endif
 
 #ifdef HAVE_GETOPT_H
-#include "getopt.h"
+#include <getopt.h>
 #endif
 
 #include "catalog/pg_database.h"
@@ -372,13 +372,17 @@ PostmasterMain(int argc, char *argv[])
 	 * will occur.
 	 */
 	opterr = 1;
-	while ((opt = getopt(argc, argv, "A:a:B:b:D:d:Film:MN:no:p:Ss-:?")) != EOF)
+	while ((opt = getopt(argc, argv, "A:a:B:b:D:d:Film:MN:no:p:SsV-:?")) != EOF)
 	{
 		switch(opt)
 		{
 			case 'D':
 				potential_DataDir = optarg;
 				break;
+
+			case 'V':
+				puts("postmaster (PostgreSQL) " PG_VERSION);
+				exit(0);
 
 			case '-':
 			{
@@ -421,7 +425,10 @@ PostmasterMain(int argc, char *argv[])
 	IgnoreSystemIndexes(false);
 
 	optind = 1; /* start over */
-	while ((opt = getopt(argc, argv, "A:a:B:b:D:d:Film:MN:no:p:Ss-:?")) != EOF)
+#ifdef HAVE_INT_OPTRESET
+	optreset = 1;
+#endif
+	while ((opt = getopt(argc, argv, "A:a:B:b:D:d:Film:MN:no:p:SsV-:?")) != EOF)
 	{
 		switch (opt)
 		{
