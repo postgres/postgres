@@ -1,5 +1,13 @@
 The Postgres Wisconsin Benchmark
 
+The short form of the directions below:
+
+	ensure postmaster is stopped
+	export PGDATA=/wherever
+	make runtest
+
+The long form:
+
 In this directory are the queries and raw data files used to populate the
 Postgres version of the Wisconsin benchmark.  In order to run the benchmark,
 you'll initially need to execute the script

@@ -1,8 +1,8 @@
 #!/bin/sh
-# $PostgreSQL: pgsql/src/test/bench/create.sh,v 1.3 2003/11/29 19:52:14 pgsql Exp $
+# $PostgreSQL: pgsql/src/test/bench/create.sh,v 1.4 2004/09/01 17:25:40 tgl Exp $
 # 
 if [ ! -d $1 ]; then
-	echo " you must specify a valid data directory "
+	echo " you must specify a valid data directory " >&2
 	exit
 fi
 if [ -d ./obj ]; then
@@ -19,7 +19,7 @@ if [ $? -ne 0 ]; then
 	exit 1
 fi
 
-postgres -D${1} -Q bench < create.sql > /dev/null
+postgres -D${1} bench < create.sql > /dev/null
 if [ $? -ne 0 ]; then
 	echo initial database load failed
 	exit 1
