@@ -1,4 +1,4 @@
-PostgreSQL 6.2beta               Sat Sep 13 21:53:27 EDT 1997
+PostgreSQL 6.2beta               Sat Sep 27 07:20:16 PDT 1997
 -------------------------------------------------------------
 
 A dump/restore is required for those wishing to migrate data from
@@ -8,72 +8,70 @@ Bug Fixes
 ---------
 Fix problems with pg_dump for inheritance, sequences, archive tables(Bruce)
 Fix compile errors on overflow due to shifts, unsigned, and bad prototypes
-	 from Solaris, (Diab Jerius)
-Fix bugs in line arithmetic which resulted in bad intersection
-	calculations(Thomas)
-Check explicitly for intersections at endpoints to avoid rounding
-	ugliness(Thomas)
+	 from Solaris(Diab Jerius)
+Fix bugs in geometric line arithmetic (bad intersection calculations)(Thomas)
+Check for geometric intersections at endpoints to avoid rounding ugliness(Thomas)
 Catch non-functional delete attempts(Vadim)
 Change time function names to be more consistent(Michael Reifenberg)
 Check for zero divides(Michael Reifenberg)
 Fix very old bug which made tuples changed/inserted by a commnd
-	visible to command itself (so we had multiple update of 
-	updated tuples, etc).(Vadim)
+	visible to the command itself (so we had multiple update of 
+	updated tuples, etc)(Vadim)
 Fix for SELECT null, 'fail' FROM pg_am (Patrick)
 SELECT NULL as EMPTY_FIELD now allowed(Patrick)
 Remove un-needed signal stuff from contrib/pginterface
 
 Enhancements
 ------------
-psql:  Add PAGER for \h and \?,\C fix
+Default genetic optimizer GEQO parameter is now 8(Bruce)
+Allow use parameters in target list having aggregates in functions(Vadim)
+Added JDBC driver as an interface(Adrian & Peter)
+pg_password utility
+Return number of tuples inserted/affected by INSERT/UPDATE/DELETE etc.(Vadim)
+Triggers implemented with CREATE TRIGGER (SQL3)(Vadim)
+SPI (Server Programming Interface) implemented to support triggers(Vadim)
+NOT NULL implemented (SQL92)(Robson Paniago de Miranda)
+Include reserved words for string handling, outer joins, and unions(Thomas)
+Implement extended comments ("/* ... */") using exclusive states(Thomas)
+Add "//" single-line comments(Bruce)
+Remove some restrictions on characters in operator names(Thomas)
+DEFAULT and CONSTRAINT for tables implemented (SQL92)(Vadim & Thomas)
+Add text concatenation operator and function (SQL92)(Thomas)
+Support WITH TIME ZONE syntax (SQL92)(Thomas)
+Support INTERVAL <unit> TO <unit> syntax (SQL92)(Thomas)
+Define types DOUBLE PRECISION, INTERVAL, CHARACTER,
+	and CHARACTER VARYING (SQL92)(Thomas)
+Define type FLOAT(p) and rudimentary DECIMAL(p,s), NUMERIC(p,s) (SQL92)(Thomas)
+Define EXTRACT(), POSITION(), SUBSTRING(), and TRIM() (SQL92)(Thomas)
+Define CURRENT_DATE, CURRENT_TIME, CURRENT_TIMESTAMP (SQL92)(Thomas)
+Add syntax and warnings for UNION, HAVING, INNER and OUTER JOIN (SQL92)(Thomas)
+Add more reserved words, mostly for SQL92 compliance(Thomas)
 Allow hh:mm:ss time entry for timespan/reltime types(Thomas)
 Add center() routines for lseg, path, polygon(Thomas)
 Add distance() routines for circle-polygon, polygon-polygon(Thomas)
 Check explicitly for points and polygons contained within polygons
-	using an axis-crossing algorithm. (Thomas)
+	using an axis-crossing algorithm(Thomas)
 Add routine to convert circle-box(Thomas)
 Merge conflicting operators for different geometric data types(Thomas)
 Replace distance operator "<===>" with "<->"(Thomas)
-Replace "above" operator "!^" with ">^"
-	and "below" operator "!|" with "<^"(Thomas)
+Replace "above" operator "!^" with ">^" and "below" operator "!|" with "<^"(Thomas)
 Add routines for text trimming on both ends, substring, and string position(Thomas)
-Add text concatenation operator and function(Thomas)
-Add text trim function for SQL92 support(Thomas)
 Added conversion routines circle(box) and poly(circle)(Thomas)
-Allow use parameters in target list having aggregates in functions(Vadim)
 Allow internal sorts to be stored in memory rather than in files(Bruce & Vadim)
-Added JDBC driver as an interface(Adrian & Peter)
-Reduce open() calls(Bruce)
-NOT NULL implementation (Robson Paniago de Miranda).
 Allow functions and operators on internally-identical types to succeed(Bruce)
 Speed up backend startup after profiling analysis(Bruce)
-pg_password utility
-Number of tuples inserted/affected by INSERT/UPDATE/DELETE...(Vadim)
-SPI manager(Vadim)
-Triggers (Vadim)
-Add detection and warnings for UNION and HAVING clauses(Thomas)
-Add more reserved words, mostly for SQL92 compliance(Thomas)
-Include reserved words for string handling, outer joins, and unions(Thomas)
-Implement extended comments ("/* ... */") using exclusive states(Thomas)
-Modify definitions of operators to remove some restrictions on characters
-	and character order(Thomas)
-Fix for psql pager when no tty(Bruce)
-Add // comments(Bruce)
-New entab utility(Bruce)
-CHECK/DEFAULT constraints implemented(Vadim)
-CHECK/DEFAULT syntax additions(Thomas)
-Default GEQO parameter is now 8(Bruce)
-Define DOUBLE PRECISION, INTERVAL, CHARACTER, and 
-	CHARACTER VARYING (SQL-92)(Thomas)
-Define EXTRACT(), POSITION(), SUBSTRING(), and TRIM() (SQL-92)(Thomas)
 Inline frequently called functions for performance(Bruce)
+Reduce open() calls(Bruce)
+psql:  Add PAGER for \h and \?,\C fix
+Fix for psql pager when no tty(Bruce)
+New entab utility(Bruce)
 
 Source Tree Changes
 -------------------
 HPUX 10 patches (Vladimir Turin)
 Added SCO support, (Daniel Harris)
 mkLinux patches (Tatsuo Ishii)
-Change box terminology from "length" to "width"(Thomas)
+Change geometric box terminology from "length" to "width"(Thomas)
 Deprecate temporary unstored slope fields in geometric code(Thomas)
 Remove restart instructions from INSTALL(Bruce)
 Look in /usr/ucb first for install(Bruce)
@@ -81,19 +79,23 @@ Fix c++ copy example code(Thomas)
 Add -o to psql manual page(Bruce)
 Prevent relname unallocated string length from being copied into database(Bruce)
 Cleanup for NAMEDATALEN use(Bruce)
-Fix pgproc names over 15 chars in output(Bruce)
+Fix pg_proc names over 15 chars in output(Bruce)
 Add strNcpy() function(Bruce)
 remove some (void) casts that are unnecessary(Bruce)
 new interfaces directory(Marc)
 Replace fopen() calls with calls to fd.c functions(Bruce)
 Make functions static where possible(Bruce)
 enclose unused functions in #ifdef NOT_USED(Bruce)
-Fix for sunos4 difftime() call(Bruce)
+Remove call to difftime() in timestamp support to fix SunOS(Bruce & Thomas)
 Changes for Digital Unix
 Portability fix for pg_dumpall(Bruce)
 Rename pg_attribute.attnvals to attdisbursion(Bruce)
-intro/unix manual page now pgintro(Bruce)
-built-in manual page now pgbuiltin(Bruce)
+"intro/unix" manual page now "pgintro"(Bruce)
+"built-in" manual page now "pgbuiltin"(Bruce)
+"drop" manual page now "drop_table"(Bruce)
+Add "create_trigger", "drop_trigger" manual pages(Thomas)
+Add constraints regression test(Vadim & Thomas)
+Add comments syntax regression test(Thomas)
 Add PGINDENT and support program(Bruce)
 Massive commit to run PGINDENT on all *.c and *.h files(Bruce)
 Files moved to /src/tools directory(Bruce)
