@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.44 1998/08/19 02:03:56 momjian Exp $
+ * $Id: pg_type.h,v 1.45 1998/08/27 05:06:57 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -162,7 +162,7 @@ DATA(insert OID = 18 (	char	   PGUID  1   1 t b t \054 0   0 charin charout char
 DESCR("single character");
 #define CHAROID			18
 
-DATA(insert OID = 19 (	name	   PGUID NAMEDATALEN NAMEDATALEN  f b t \054 0	18 namein nameout namein nameout d _null_ ));
+DATA(insert OID = 19 (	name	   PGUID NAMEDATALEN NAMEDATALEN  f b t \054 0	18 namein nameout namein nameout i _null_ ));
 DESCR("31-character type for storing system identifiers");
 #define NAMEOID			19
 
