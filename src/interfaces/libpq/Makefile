@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.28 1997/03/14 23:34:03 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.29 1997/03/15 19:17:03 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -23,20 +23,24 @@ ifdef KRBVERS
 CFLAGS+= $(KRBFLAGS)
 endif
 
-# dllist.c is found in backend/lib
-VPATH:= $(VPATH):../backend/lib
- 
 OBJS= fe-auth.o fe-connect.o fe-exec.o fe-misc.o fe-lobj.o \
-         ../backend/lib/dllist.o pqsignal.o 
+         dllist.o pqsignal.o 
 
-
+# Shared library stuff
 shlib := 
 install-shlib-dep :=
 ifeq ($(PORTNAME), linux)
   ifdef LINUX_ELF
     install-shlib-dep := install-shlib
     shlib := libpq.so.1
+    LDFLAGS_SL = -shared
   endif
+endif
+ifeq ($(PORTNAME), BSD44_derived)
+  install-shlib-dep := install-shlib
+  shlib := libpq.so.1.0
+  LDFLAGS_SL = -x -Bshareable -Bforcearchive
+  CFLAGS += -fpic -DPIC
 endif
 
 all: libpq.a $(shlib) c.h
@@ -51,17 +55,19 @@ endif
 
 fe-lobj.o: ../backend/fmgr.h
 
+# We need to compile this with special options for shared libs,
+# so we can't use the object in ../backend
+dllist.c:	../backend/lib/dllist.c
+	-ln ../backend/lib/dllist.c
+
 # The following rules cause dependencies in the backend directory to 
 # get made if they don't exist, but don't cause them to get remade if they
 # are out of date.
 ../backend/fmgr.h:
 	$(MAKE) -C ../backend fmgr.h
 
-../backend/lib/dllist.o:
-	$(MAKE) -C ../backend/lib dllist.o
-
-libpq.so.1: $(OBJS)
-	gcc $(LDFLAGS) -shared -o $@ $(OBJS)
+$(shlib): $(OBJS)
+	$(LD) $(LDFLAGS) $(LDFLAGS_SL) -o $@ $(OBJS)
 
 c.h: ../include/c.h
 	rm -f c.h
