@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/destroydb/Attic/Makefile,v 1.3 1996/11/14 10:25:10 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/bin/destroydb/Attic/Makefile,v 1.4 1996/12/10 03:39:43 bryanh Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -24,3 +24,5 @@ install: destroydb
 
 clean:
 	rm -f destroydb
+
+dep:

@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/destroyuser/Attic/Makefile,v 1.3 1996/11/14 10:25:16 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/bin/destroyuser/Attic/Makefile,v 1.4 1996/12/10 03:39:53 bryanh Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -28,3 +28,5 @@ install: destroyuser
 
 clean:
 	rm -f destroyuser
+
+dep:
