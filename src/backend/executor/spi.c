@@ -229,7 +229,7 @@ SPI_prepare(char *src, int nargs, Oid * argtypes)
 {
 	_SPI_plan  *plan;
 
-	if (nargs < 0 || (nargs > 0 && argtypes == NULL))
+	if (src == NULL || nargs < 0 || (nargs > 0 && argtypes == NULL))
 	{
 		SPI_result = SPI_ERROR_ARGUMENT;
 		return (NULL);
