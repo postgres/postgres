@@ -166,8 +166,8 @@ DROP TABLE tmp_new2;
 
 -- ALTER TABLE ... RENAME on non-table relations
 -- renaming indexes (FIXME: this should probably test the index's functionality)
-ALTER TABLE onek_unique1 RENAME TO tmp_onek_unique1;
-ALTER TABLE tmp_onek_unique1 RENAME TO onek_unique1;
+ALTER INDEX onek_unique1 RENAME TO tmp_onek_unique1;
+ALTER INDEX tmp_onek_unique1 RENAME TO onek_unique1;
 -- renaming views
 CREATE VIEW tmp_view (unique1) AS SELECT unique1 FROM tenk1;
 ALTER TABLE tmp_view RENAME TO tmp_view_new;
