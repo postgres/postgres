@@ -1,0 +1,144 @@
+<REFENTRY ID="SQL-UNLISTEN">
+<REFMETA>
+<REFENTRYTITLE>
+UNLISTEN
+</REFENTRYTITLE>
+<REFMISCINFO>SQL - Language Statements</REFMISCINFO>
+</REFMETA>
+<REFNAMEDIV>
+<REFNAME>
+UNLISTEN
+</REFNAME>
+<REFPURPOSE>
+Stop listening for notification on a notify condition
+</REFPURPOSE>
+
+<REFSYNOPSISDIV>
+<REFSYNOPSISDIVINFO>
+<DATE>1998-10-07</DATE>
+</REFSYNOPSISDIVINFO>
+<SYNOPSIS>
+UNLISTEN <REPLACEABLE CLASS="PARAMETER">notifyname</REPLACEABLE> | "*"
+</SYNOPSIS>
+
+<REFSECT2 ID="R2-SQL-UNLISTEN-1">
+<REFSECT2INFO>
+<DATE>1998-10-07</DATE>
+</REFSECT2INFO>
+<TITLE>
+Inputs
+</TITLE>
+<PARA>
+</PARA>
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+<REPLACEABLE CLASS="PARAMETER">notifyname</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+Name of notify condition to stop listening to.
+If "*", all current listen registrations for this backend are cleared.
+
+</VARIABLELIST>
+
+</REFSECT2>
+
+<REFSECT2 ID="R2-SQL-UNLISTEN-2">
+<REFSECT2INFO>
+<DATE>1998-10-07</DATE>
+</REFSECT2INFO>
+<TITLE>
+Outputs
+</TITLE>
+<PARA>
+
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+<replaceable>status</replaceable>
+</TERM>
+<LISTITEM>
+<PARA>
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+<returnvalue>UNLISTEN</returnvalue>
+</TERM>
+<LISTITEM>
+<PARA>
+Acknowledgement that statement has executed.
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+</variablelist>
+</LISTITEM>
+</VARLISTENTRY>
+</VARIABLELIST>
+</REFSECT2>
+</REFSYNOPSISDIV>
+
+<REFSECT1 ID="R1-SQL-UNLISTEN-1">
+<REFSECT1INFO>
+<DATE>1998-10-07</DATE>
+</REFSECT1INFO>
+<TITLE>
+Description
+</TITLE>
+<PARA>
+UNLISTEN cancels any existing registration of the current
+<productname>Postgres</productname> backend as a listener on the notify
+condition <REPLACEABLE CLASS="PARAMETER">notifyname</REPLACEABLE>.
+The special condition name "*" means to cancel all listener registrations
+for the current backend.
+
+<para>
+The backend does not complain if you UNLISTEN something you were not
+listening for.
+
+<para>
+Each backend will automatically execute <command>UNLISTEN "*"</command> when
+exiting.
+
+<para>
+The reference page for <command>NOTIFY</command> contains a more extensive
+discussion of the use of <command>LISTEN</command> and
+<command>NOTIFY</command>.
+
+<REFSECT1 ID="R1-SQL-UNLISTEN-2">
+<TITLE>
+Usage
+</TITLE>
+<PARA>
+<ProgramListing>
+postgres=> listen virtual;
+LISTEN
+postgres=> notify virtual;
+NOTIFY
+ASYNC NOTIFY of 'virtual' from backend pid '12317' received
+postgres=> unlisten virtual;
+UNLISTEN
+postgres=> notify virtual;
+NOTIFY
+-- notice no NOTIFY event is received
+postgres=>
+</ProgramListing>
+
+</REFSECT1>
+
+<REFSECT1 ID="R1-SQL-UNLISTEN-3">
+<TITLE>
+Compatibility
+</TITLE>
+<PARA>
+
+<REFSECT2 ID="R2-SQL-UNLISTEN-4">
+<REFSECT2INFO>
+<DATE>1998-10-07</DATE>
+</REFSECT2INFO>
+<TITLE>
+SQL92
+</TITLE>
+<PARA>
+   There is no <command>UNLISTEN</command> in <acronym>SQL92</acronym>.
+</REFENTRY>
