@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/s_lock.c,v 1.31 2004/08/30 02:54:38 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/s_lock.c,v 1.32 2004/08/30 23:47:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -249,40 +249,73 @@ tas_dummy()						/* really means: extern int tas(slock_t
  * test program for verifying a port's spinlock support.
  */
 
-volatile slock_t test_lock;
+struct test_lock_struct
+{
+	char		pad1;
+	slock_t		lock;
+	char		pad2;
+};
+
+volatile struct test_lock_struct test_lock;
 
 int
 main()
 {
 	srandom((unsigned int) time(NULL));
 
-	S_INIT_LOCK(&test_lock);
+	test_lock.pad1 = test_lock.pad2 = 0x44;
 
-	if (!S_LOCK_FREE(&test_lock))
+	S_INIT_LOCK(&test_lock.lock);
+
+	if (test_lock.pad1 != 0x44 || test_lock.pad2 != 0x44)
+	{
+		printf("S_LOCK_TEST: failed, declared datatype is wrong size\n");
+		return 1;
+	}
+
+	if (!S_LOCK_FREE(&test_lock.lock))
 	{
 		printf("S_LOCK_TEST: failed, lock not initialized\n");
 		return 1;
 	}
 
-	S_LOCK(&test_lock);
+	S_LOCK(&test_lock.lock);
 
-	if (S_LOCK_FREE(&test_lock))
+	if (test_lock.pad1 != 0x44 || test_lock.pad2 != 0x44)
+	{
+		printf("S_LOCK_TEST: failed, declared datatype is wrong size\n");
+		return 1;
+	}
+
+	if (S_LOCK_FREE(&test_lock.lock))
 	{
 		printf("S_LOCK_TEST: failed, lock not locked\n");
 		return 1;
 	}
 
-	S_UNLOCK(&test_lock);
+	S_UNLOCK(&test_lock.lock);
 
-	if (!S_LOCK_FREE(&test_lock))
+	if (test_lock.pad1 != 0x44 || test_lock.pad2 != 0x44)
+	{
+		printf("S_LOCK_TEST: failed, declared datatype is wrong size\n");
+		return 1;
+	}
+
+	if (!S_LOCK_FREE(&test_lock.lock))
 	{
 		printf("S_LOCK_TEST: failed, lock not unlocked\n");
 		return 1;
 	}
 
-	S_LOCK(&test_lock);
+	S_LOCK(&test_lock.lock);
 
-	if (S_LOCK_FREE(&test_lock))
+	if (test_lock.pad1 != 0x44 || test_lock.pad2 != 0x44)
+	{
+		printf("S_LOCK_TEST: failed, declared datatype is wrong size\n");
+		return 1;
+	}
+
+	if (S_LOCK_FREE(&test_lock.lock))
 	{
 		printf("S_LOCK_TEST: failed, lock not re-locked\n");
 		return 1;
@@ -293,7 +326,7 @@ main()
 	printf("             if S_LOCK() and TAS() are working.\n");
 	fflush(stdout);
 
-	s_lock(&test_lock, __FILE__, __LINE__);
+	s_lock(&test_lock.lock, __FILE__, __LINE__);
 
 	printf("S_LOCK_TEST: failed, lock not locked\n");
 	return 1;
