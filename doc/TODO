@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Feb 11 17:04:35 EST 2004
+Last updated:		Thu Feb 12 09:41:06 EST 2004
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -237,8 +237,7 @@ Commands
 * SERVER-SIDE LANGUAGES
 	o Allow PL/PgSQL's RAISE function to take expressions
 	o Change PL/PgSQL to use palloc() instead of malloc()
-	o Allow Java server-side programming, http://pljava.sourceforge.net
-	  [java]
+	o Allow Java server-side programming [java]
 	o Fix problems with complex temporary table creation/destruction
 	  without using PL/PgSQL EXECUTE, needs cache prevention/invalidation
         o Fix PL/pgSQL RENAME to work on variables other than OLD/NEW
@@ -466,7 +465,7 @@ Source Code
 * Acquire lock on a relation before building a relcache entry for it
 * Research interaction of setitimer() and sleep() used by statement_timeout
 * -Add checks for fclose() failure (Tom)
-* Change CVS $PostgreSQL: pgsql/doc/TODO,v 1.1198 2004/02/11 22:04:35 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1198 2004/02/11 22:04:35 momjian Exp $
+* Change CVS $PostgreSQL: pgsql/doc/TODO,v 1.1199 2004/02/12 14:41:13 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1199 2004/02/12 14:41:13 momjian Exp $
 * Exit postmaster if postgresql.conf can not be opened
 * Rename /scripts directory because they are all C programs now
 * Allow the regression tests to start postmaster with -i so the tests
