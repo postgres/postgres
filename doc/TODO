@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Oct  8 17:43:55 EDT 2003
+Last updated:		Wed Oct  8 18:29:55 EDT 2003
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -127,7 +127,6 @@ Multi-Language Support
 * Fix upper()/lower() to work for multibyte encodings
 
 
- 
 Views / Rules
 =============
 
@@ -344,6 +343,7 @@ Referential Integrity
 * Print table names with constraint names in error messages, or make constraint
   names unique within a schema
 * Issue NOTICE if foreign key data type doesn't match primary key
+* Remove CREATE CONSTRAINT TRIGGER
 
 
 Dependency Checking
@@ -504,7 +504,7 @@ Source Code
 * Acquire lock on a relation before building a relcache entry for it
 * Research interaction of setitimer() and sleep() used by statement_timeout
 * Add checks for fclose() failure
-* Change CVS $Id: TODO,v 1.1144 2003/10/08 21:44:06 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1144 2003/10/08 21:44:06 momjian Exp $
+* Change CVS $Id: TODO,v 1.1145 2003/10/08 22:29:58 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1145 2003/10/08 22:29:58 momjian Exp $
 * Exit postmaster if postgresql.conf can not be opened
 * Rename /scripts directory because they are all C programs now
 * Allow the regression tests to start postmaster with -i so the tests
