@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.146 2004/10/28 00:39:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.147 2004/11/18 01:14:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -330,7 +330,7 @@ createdb(const CreatedbStmt *stmt)
 	/*
 	 * Force dirty buffers out to disk, to ensure source database is
 	 * up-to-date for the copy.  (We really only need to flush buffers for
-	 * the source database...)
+	 * the source database, but bufmgr.c provides no API for that.)
 	 */
 	BufferSync(-1, -1);
 
@@ -497,15 +497,15 @@ createdb(const CreatedbStmt *stmt)
 	/* Update indexes */
 	CatalogUpdateIndexes(pg_database_rel, tuple);
 
-	/* Close pg_database, but keep lock till commit */
-	heap_close(pg_database_rel, NoLock);
-
 	/*
 	 * Force dirty buffers out to disk, so that newly-connecting backends
 	 * will see the new database in pg_database right away.  (They'll see
 	 * an uncommitted tuple, but they don't care; see GetRawDatabaseInfo.)
 	 */
-	BufferSync(-1, -1);
+	FlushRelationBuffers(pg_database_rel, MaxBlockNumber);
+
+	/* Close pg_database, but keep exclusive lock till commit */
+	heap_close(pg_database_rel, NoLock);
 }
 
 
@@ -608,12 +608,6 @@ dropdb(const char *dbname)
 	DeleteComments(db_id, RelationGetRelid(pgdbrel), 0);
 
 	/*
-	 * Close pg_database, but keep exclusive lock till commit to ensure
-	 * that any new backend scanning pg_database will see the tuple dead.
-	 */
-	heap_close(pgdbrel, NoLock);
-
-	/*
 	 * Drop pages for this database that are in the shared buffer cache.
 	 * This is important to ensure that no remaining backend tries to
 	 * write out a dirty buffer to the dead database later...
@@ -644,7 +638,10 @@ dropdb(const char *dbname)
 	 * (They'll see an uncommitted deletion, but they don't care; see
 	 * GetRawDatabaseInfo.)
 	 */
-	BufferSync(-1, -1);
+	FlushRelationBuffers(pgdbrel, MaxBlockNumber);
+
+	/* Close pg_database, but keep exclusive lock till commit */
+	heap_close(pgdbrel, NoLock);
 }
 
 
@@ -733,7 +730,6 @@ RenameDatabase(const char *oldname, const char *newname)
 	CatalogUpdateIndexes(rel, newtup);
 
 	systable_endscan(scan);
-	heap_close(rel, NoLock);
 
 	/*
 	 * Force dirty buffers out to disk, so that newly-connecting backends
@@ -741,7 +737,10 @@ RenameDatabase(const char *oldname, const char *newname)
 	 * see an uncommitted tuple, but they don't care; see
 	 * GetRawDatabaseInfo.)
 	 */
-	BufferSync(-1, -1);
+	FlushRelationBuffers(rel, MaxBlockNumber);
+
+	/* Close pg_database, but keep exclusive lock till commit */
+	heap_close(rel, NoLock);
 }
 
 
@@ -763,7 +762,10 @@ AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
 
 	valuestr = flatten_set_variable_args(stmt->variable, stmt->value);
 
-	rel = heap_openr(DatabaseRelationName, RowExclusiveLock);
+	/*
+	 * We need AccessExclusiveLock so we can safely do FlushRelationBuffers.
+	 */
+	rel = heap_openr(DatabaseRelationName, AccessExclusiveLock);
 	ScanKeyInit(&scankey,
 				Anum_pg_database_datname,
 				BTEqualStrategyNumber, F_NAMEEQ,
@@ -821,6 +823,16 @@ AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
 	CatalogUpdateIndexes(rel, newtuple);
 
 	systable_endscan(scan);
+
+	/*
+	 * Force dirty buffers out to disk, so that newly-connecting backends
+	 * will see the altered row in pg_database right away.  (They'll
+	 * see an uncommitted tuple, but they don't care; see
+	 * GetRawDatabaseInfo.)
+	 */
+	FlushRelationBuffers(rel, MaxBlockNumber);
+
+	/* Close pg_database, but keep exclusive lock till commit */
 	heap_close(rel, NoLock);
 }
 
@@ -837,7 +849,10 @@ AlterDatabaseOwner(const char *dbname, AclId newOwnerSysId)
 	SysScanDesc scan;
 	Form_pg_database datForm;
 
-	rel = heap_openr(DatabaseRelationName, RowExclusiveLock);
+	/*
+	 * We need AccessExclusiveLock so we can safely do FlushRelationBuffers.
+	 */
+	rel = heap_openr(DatabaseRelationName, AccessExclusiveLock);
 	ScanKeyInit(&scankey,
 				Anum_pg_database_datname,
 				BTEqualStrategyNumber, F_NAMEEQ,
@@ -901,9 +916,22 @@ AlterDatabaseOwner(const char *dbname, AclId newOwnerSysId)
 		CatalogUpdateIndexes(rel, newtuple);
 
 		heap_freetuple(newtuple);
-	}
 
-	systable_endscan(scan);
+		/* must release buffer pins before FlushRelationBuffers */
+		systable_endscan(scan);
+
+		/*
+		 * Force dirty buffers out to disk, so that newly-connecting backends
+		 * will see the altered row in pg_database right away.  (They'll
+		 * see an uncommitted tuple, but they don't care; see
+		 * GetRawDatabaseInfo.)
+		 */
+		FlushRelationBuffers(rel, MaxBlockNumber);
+	}
+	else
+		systable_endscan(scan);
+
+	/* Close pg_database, but keep exclusive lock till commit */
 	heap_close(rel, NoLock);
 }
 
@@ -1176,7 +1204,7 @@ dbase_redo(XLogRecPtr lsn, XLogRecord *record)
 		/*
 		 * Force dirty buffers out to disk, to ensure source database is
 		 * up-to-date for the copy.  (We really only need to flush buffers for
-		 * the source database...)
+		 * the source database, but bufmgr.c provides no API for that.)
 		 */
 		BufferSync(-1, -1);
 
