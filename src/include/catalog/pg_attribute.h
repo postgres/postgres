@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_attribute.h,v 1.91 2002/04/21 00:26:43 tgl Exp $
+ * $Id: pg_attribute.h,v 1.92 2002/05/18 13:48:00 petere Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -300,7 +300,7 @@ DATA(insert ( 1262 tableoid			26 0  4  -7 0 -1 -1 t p f i f f));
 { 1255, {"proowner"},			23, 0,	4,	3, 0, -1, -1, true, 'p', false, 'i', false, false }, \
 { 1255, {"prolang"},			26, 0,	4,	4, 0, -1, -1, true, 'p', false, 'i', false, false }, \
 { 1255, {"proisagg"},			16, 0,	1,	5, 0, -1, -1, true, 'p', false, 'c', false, false }, \
-{ 1255, {"proistrusted"},		16, 0,	1,	6, 0, -1, -1, true, 'p', false, 'c', false, false }, \
+{ 1255, {"prosecdef"},			16, 0,	1,	6, 0, -1, -1, true, 'p', false, 'c', false, false }, \
 { 1255, {"proimplicit"},		16, 0,	1,	7, 0, -1, -1, true, 'p', false, 'c', false, false }, \
 { 1255, {"proisstrict"},		16, 0,	1,	8, 0, -1, -1, true, 'p', false, 'c', false, false }, \
 { 1255, {"proretset"},			16, 0,	1,  9, 0, -1, -1, true, 'p', false, 'c', false, false }, \
@@ -321,7 +321,7 @@ DATA(insert ( 1255 pronamespace		26 0  4   2 0 -1 -1 t p f i f f));
 DATA(insert ( 1255 proowner			23 0  4   3 0 -1 -1 t p f i f f));
 DATA(insert ( 1255 prolang			26 0  4   4 0 -1 -1 t p f i f f));
 DATA(insert ( 1255 proisagg			16 0  1   5 0 -1 -1 t p f c f f));
-DATA(insert ( 1255 proistrusted		16 0  1   6 0 -1 -1 t p f c f f));
+DATA(insert ( 1255 prosecdef		16 0  1   6 0 -1 -1 t p f c f f));
 DATA(insert ( 1255 proimplicit		16 0  1   7 0 -1 -1 t p f c f f));
 DATA(insert ( 1255 proisstrict		16 0  1   8 0 -1 -1 t p f c f f));
 DATA(insert ( 1255 proretset		16 0  1   9 0 -1 -1 t p f c f f));

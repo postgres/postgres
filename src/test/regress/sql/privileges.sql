@@ -144,12 +144,19 @@ GRANT USAGE ON FUNCTION testfunc1(int) TO regressuser3; -- semantic error
 GRANT ALL PRIVILEGES ON FUNCTION testfunc1(int) TO regressuser4;
 GRANT ALL PRIVILEGES ON FUNCTION testfunc_nosuch(int) TO regressuser4;
 
+CREATE FUNCTION testfunc4(boolean) RETURNS text
+  AS 'select col1 from atest2 where col2 = $1;'
+  LANGUAGE sql SECURITY DEFINER;
+GRANT EXECUTE ON FUNCTION testfunc4(boolean) TO regressuser3;
+
 SET SESSION AUTHORIZATION regressuser2;
 SELECT testfunc1(5), testfunc2(5); -- ok
 CREATE FUNCTION testfunc3(int) RETURNS int AS 'select 2 * $1;' LANGUAGE sql; -- fail
 
 SET SESSION AUTHORIZATION regressuser3;
 SELECT testfunc1(5); -- fail
+SELECT col1 FROM atest2 WHERE col2 = true; -- fail
+SELECT testfunc4(true); -- ok
 
 SET SESSION AUTHORIZATION regressuser4;
 SELECT testfunc1(5); -- ok
@@ -265,6 +272,9 @@ from (select oid from pg_class where relname = 'atest1') as t1;
 -- clean up
 
 \c regression
+DROP FUNCTION testfunc2(int);
+DROP FUNCTION testfunc4(boolean);
+
 DROP TABLE atest1;
 DROP TABLE atest2;
 DROP TABLE atest3;

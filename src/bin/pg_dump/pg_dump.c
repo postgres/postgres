@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.261 2002/05/17 18:32:52 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.262 2002/05/18 13:48:00 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3216,6 +3216,7 @@ dumpOneFunc(Archive *fout, FuncInfo *finfo)
 	char	   *provolatile;
 	char	   *proimplicit;
 	char	   *proisstrict;
+	char	   *prosecdef;
 	char	   *lanname;
 	char	   *rettypename;
 
@@ -3232,7 +3233,7 @@ dumpOneFunc(Archive *fout, FuncInfo *finfo)
 	{
 		appendPQExpBuffer(query,
 						  "SELECT proretset, prosrc, probin, "
-						  "provolatile, proimplicit, proisstrict, "
+						  "provolatile, proimplicit, proisstrict, prosecdef, "
 						  "(SELECT lanname FROM pg_language WHERE oid = prolang) as lanname "
 						  "FROM pg_proc "
 						  "WHERE oid = '%s'::oid",
@@ -3245,6 +3246,7 @@ dumpOneFunc(Archive *fout, FuncInfo *finfo)
 						  "case when proiscachable then 'i' else 'v' end as provolatile, "
 						  "'f'::boolean as proimplicit, "
 						  "proisstrict, "
+						  "'f'::boolean as prosecdef, "
 						  "(SELECT lanname FROM pg_language WHERE oid = prolang) as lanname "
 						  "FROM pg_proc "
 						  "WHERE oid = '%s'::oid",
@@ -3257,6 +3259,7 @@ dumpOneFunc(Archive *fout, FuncInfo *finfo)
 						  "case when proiscachable then 'i' else 'v' end as provolatile, "
 						  "'f'::boolean as proimplicit, "
 						  "'f'::boolean as proisstrict, "
+						  "'f'::boolean as prosecdef, "
 						  "(SELECT lanname FROM pg_language WHERE oid = prolang) as lanname "
 						  "FROM pg_proc "
 						  "WHERE oid = '%s'::oid",
@@ -3287,6 +3290,7 @@ dumpOneFunc(Archive *fout, FuncInfo *finfo)
 	provolatile = PQgetvalue(res, 0, PQfnumber(res, "provolatile"));
 	proimplicit = PQgetvalue(res, 0, PQfnumber(res, "proimplicit"));
 	proisstrict = PQgetvalue(res, 0, PQfnumber(res, "proisstrict"));
+	prosecdef = PQgetvalue(res, 0, PQfnumber(res, "prosecdef"));
 	lanname = PQgetvalue(res, 0, PQfnumber(res, "lanname"));
 
 	/*
@@ -3357,6 +3361,9 @@ dumpOneFunc(Archive *fout, FuncInfo *finfo)
 
 	if (proisstrict[0] == 't')
 		appendPQExpBuffer(q, " STRICT");
+
+	if (prosecdef[0] == 't')
+		appendPQExpBuffer(q, " SECURITY DEFINER");
 
 	appendPQExpBuffer(q, ";\n");
 

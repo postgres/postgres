@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.58 2002/03/05 05:33:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.59 2002/05/18 13:47:59 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,7 @@
 #include "catalog/pg_language.h"
 #include "catalog/pg_proc.h"
 #include "executor/functions.h"
+#include "miscadmin.h"
 #include "utils/builtins.h"
 #include "utils/fmgrtab.h"
 #include "utils/lsyscache.h"
@@ -56,10 +57,12 @@ typedef struct
 } Oldstyle_fnextra;
 
 
+static void fmgr_info_cxt_security(Oid functionId, FmgrInfo *finfo, MemoryContext mcxt,
+								   bool ignore_security);
 static void fmgr_info_C_lang(Oid functionId, FmgrInfo *finfo, HeapTuple procedureTuple);
 static void fmgr_info_other_lang(Oid functionId, FmgrInfo *finfo, HeapTuple procedureTuple);
 static Datum fmgr_oldstyle(PG_FUNCTION_ARGS);
-static Datum fmgr_untrusted(PG_FUNCTION_ARGS);
+static Datum fmgr_security_definer(PG_FUNCTION_ARGS);
 
 
 /*
@@ -136,6 +139,18 @@ fmgr_info(Oid functionId, FmgrInfo *finfo)
 void
 fmgr_info_cxt(Oid functionId, FmgrInfo *finfo, MemoryContext mcxt)
 {
+	fmgr_info_cxt_security(functionId, finfo, mcxt, false);
+}
+
+/*
+ * This one does the actual work.  ignore_security is ordinarily false
+ * but is set to true by fmgr_security_definer to avoid infinite
+ * recursive lookups.
+ */
+static void
+fmgr_info_cxt_security(Oid functionId, FmgrInfo *finfo, MemoryContext mcxt,
+					   bool ignore_security)
+{
 	const FmgrBuiltin *fbp;
 	HeapTuple	procedureTuple;
 	Form_pg_proc procedureStruct;
@@ -177,10 +192,9 @@ fmgr_info_cxt(Oid functionId, FmgrInfo *finfo, MemoryContext mcxt)
 	finfo->fn_strict = procedureStruct->proisstrict;
 	finfo->fn_retset = procedureStruct->proretset;
 
-	if (!procedureStruct->proistrusted)
+	if (procedureStruct->prosecdef && !ignore_security)
 	{
-		/* This isn't really supported anymore... */
-		finfo->fn_addr = fmgr_untrusted;
+		finfo->fn_addr = fmgr_security_definer;
 		finfo->fn_oid = functionId;
 		ReleaseSysCache(procedureTuple);
 		return;
@@ -620,17 +634,63 @@ fmgr_oldstyle(PG_FUNCTION_ARGS)
 
 
 /*
- * Handler for all functions marked "untrusted"
+ * Support for security definer functions
+ */
+
+struct fmgr_security_definer_cache
+{
+	FmgrInfo	flinfo;
+	Oid			userid;
+};
+
+/*
+ * Function handler for security definer functions.  We extract the
+ * OID of the actual function and do a fmgr lookup again.  Then we
+ * look up the owner of the function and cache both the fmgr info and
+ * the owner ID.  During the call we temporarily replace the flinfo
+ * with the cached/looked-up one, while keeping the outer fcinfo
+ * (which contains all the actual arguments, etc.) intact.
  */
 static Datum
-fmgr_untrusted(PG_FUNCTION_ARGS)
+fmgr_security_definer(PG_FUNCTION_ARGS)
 {
-	/*
-	 * Currently these are unsupported.  Someday we might do something
-	 * like forking a subprocess to execute 'em.
-	 */
-	elog(ERROR, "Untrusted functions not supported");
-	return 0;					/* keep compiler happy */
+	Datum		result;
+	FmgrInfo   *save_flinfo;
+	struct fmgr_security_definer_cache *fcache;
+	Oid			save_userid;
+	HeapTuple	tuple;
+
+	if (!fcinfo->flinfo->fn_extra)
+	{
+		fcache = MemoryContextAlloc(fcinfo->flinfo->fn_mcxt, sizeof(*fcache));
+		memset(fcache, 0, sizeof(*fcache));
+
+		fmgr_info_cxt_security(fcinfo->flinfo->fn_oid, &fcache->flinfo,
+							   fcinfo->flinfo->fn_mcxt, true);
+
+		tuple = SearchSysCache(PROCOID, ObjectIdGetDatum(fcinfo->flinfo->fn_oid), 0, 0, 0);
+		if (!HeapTupleIsValid(tuple))
+			elog(ERROR, "fmgr_security_definer: function %u: cache lookup failed",
+				 fcinfo->flinfo->fn_oid);
+		fcache->userid = ((Form_pg_proc) GETSTRUCT(tuple))->proowner;
+		ReleaseSysCache(tuple);
+
+		fcinfo->flinfo->fn_extra = fcache;
+	}
+	else
+		fcache = fcinfo->flinfo->fn_extra;
+
+	save_flinfo = fcinfo->flinfo;
+	fcinfo->flinfo = &fcache->flinfo;
+
+	save_userid = GetUserId();
+	SetUserId(fcache->userid);
+	result = FunctionCallInvoke(fcinfo);
+	SetUserId(save_userid);
+
+	fcinfo->flinfo = save_flinfo;
+
+	return result;
 }
 
 

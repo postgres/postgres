@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/functioncmds.c,v 1.4 2002/05/17 18:32:52 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/functioncmds.c,v 1.5 2002/05/18 13:47:59 petere Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -421,6 +421,7 @@ CreateFunction(CreateFunctionStmt *stmt)
 	outin_ratio = OUTIN_RATIO;
 	isImplicit = false;
 	isStrict = false;
+	security = false;
 	volatility = PROVOLATILE_VOLATILE;
 
 	/* override attributes from explicit list */
@@ -489,7 +490,7 @@ CreateFunction(CreateFunctionStmt *stmt)
 					prosrc_str, /* converted to text later */
 					probin_str, /* converted to text later */
 					false,		/* not an aggregate */
-					true,		/* (obsolete "trusted") */
+					security,
 					isImplicit,
 					isStrict,
 					volatility,

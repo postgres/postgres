@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.38 2002/05/17 18:32:52 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.39 2002/05/18 13:47:59 petere Exp $
 -->
 
 <refentry id="SQL-CREATEFUNCTION">
@@ -21,6 +21,7 @@ CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable>
     | IMMUTABLE | STABLE | VOLATILE
     | CALLED ON NULL INPUT | RETURNS NULL ON NULL INPUT | STRICT
     | IMPLICIT CAST
+    | [EXTERNAL] SECURITY INVOKER | [EXTERNAL] SECURITY DEFINER
     | AS '<replaceable class="parameter">definition</replaceable>'
     | AS '<replaceable class="parameter">obj_file</replaceable>', '<replaceable class="parameter">link_symbol</replaceable>'
   } ...
@@ -199,6 +200,27 @@ CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable>
      </listitem>
     </varlistentry>
 
+   <varlistentry>
+    <term><optional>EXTERNAL</optional> SECURITY INVOKER</term>
+    <term><optional>EXTERNAL</optional> SECURITY DEFINER</term>
+
+    <listitem>
+     <para>
+      <literal>SECURITY INVOKER</literal> indicates that the function
+      is to be executed with the privileges of the user that calls it.
+      That is the default.  <literal>SECURITY DEFINER</literal>
+      specifies that the function is to be executed with the
+      privileges of the user that created it.
+     </para>
+
+     <para>
+      The key word <literal>EXTERNAL</literal> is present for SQL
+      compatibility but is optional since, unlike in SQL, this feature
+      does not only apply to external functions.
+     </para>
+    </listitem>
+   </varlistentry>
+
     <varlistentry>
      <term><replaceable class="parameter">definition</replaceable></term>
 
@@ -372,7 +394,7 @@ CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable>
   </para>
  </refsect1>
 
- <refsect1 id="sql-createfunction-cast-function">
+ <refsect1 id="sql-createfunction-cast-functions">
   <title id="sql-createfunction-cast-functions-title">
    Type Cast Functions
   </title>

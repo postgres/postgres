@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.45 2002/05/17 22:35:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.46 2002/05/18 13:47:59 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -139,7 +139,7 @@ AggregateCreate(const char *aggName,
 							  "aggregate_dummy",	/* placeholder proc */
 							  "-",			/* probin */
 							  true,			/* isAgg */
-							  true,			/* (obsolete "trusted") */
+							  false,		/* security invoker (currently not definable for agg) */
 							  false,		/* isImplicit */
 							  false,		/* isStrict (not needed for agg) */
 							  PROVOLATILE_IMMUTABLE,	/* volatility (not needed for agg) */

@@ -54,7 +54,7 @@ WHERE p1.oid != p2.oid AND
     p1.prolang = 12 AND p2.prolang = 12 AND
     (p1.prolang != p2.prolang OR
      p1.proisagg != p2.proisagg OR
-     p1.proistrusted != p2.proistrusted OR
+     p1.prosecdef != p2.prosecdef OR
      p1.proisstrict != p2.proisstrict OR
      p1.proretset != p2.proretset OR
      p1.provolatile != p2.provolatile OR

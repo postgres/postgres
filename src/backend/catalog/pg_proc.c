@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.71 2002/05/17 22:35:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.72 2002/05/18 13:47:59 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,7 +48,7 @@ ProcedureCreate(const char *procedureName,
 				const char *prosrc,
 				const char *probin,
 				bool isAgg,
-				bool trusted,
+				bool security_definer,
 				bool isImplicit,
 				bool isStrict,
 				char volatility,
@@ -220,7 +220,7 @@ ProcedureCreate(const char *procedureName,
 	values[i++] = Int32GetDatum(GetUserId());	/* proowner */
 	values[i++] = ObjectIdGetDatum(languageObjectId); /* prolang */
 	values[i++] = BoolGetDatum(isAgg);			/* proisagg */
-	values[i++] = BoolGetDatum(trusted);		/* proistrusted */
+	values[i++] = BoolGetDatum(security_definer); /* prosecdef */
 	values[i++] = BoolGetDatum(isImplicit);		/* proimplicit */
 	values[i++] = BoolGetDatum(isStrict);		/* proisstrict */
 	values[i++] = BoolGetDatum(returnsSet);		/* proretset */

@@ -206,6 +206,10 @@ ERROR:  invalid privilege type USAGE for function object
 GRANT ALL PRIVILEGES ON FUNCTION testfunc1(int) TO regressuser4;
 GRANT ALL PRIVILEGES ON FUNCTION testfunc_nosuch(int) TO regressuser4;
 ERROR:  GRANT: function testfunc_nosuch(integer) does not exist
+CREATE FUNCTION testfunc4(boolean) RETURNS text
+  AS 'select col1 from atest2 where col2 = $1;'
+  LANGUAGE sql SECURITY DEFINER;
+GRANT EXECUTE ON FUNCTION testfunc4(boolean) TO regressuser3;
 SET SESSION AUTHORIZATION regressuser2;
 SELECT testfunc1(5), testfunc2(5); -- ok
  testfunc1 | testfunc2 
@@ -218,6 +222,14 @@ ERROR:  sql: permission denied
 SET SESSION AUTHORIZATION regressuser3;
 SELECT testfunc1(5); -- fail
 ERROR:  testfunc1: permission denied
+SELECT col1 FROM atest2 WHERE col2 = true; -- fail
+ERROR:  atest2: permission denied
+SELECT testfunc4(true); -- ok
+ testfunc4 
+-----------
+ bar
+(1 row)
+
 SET SESSION AUTHORIZATION regressuser4;
 SELECT testfunc1(5); -- ok
  testfunc1 
@@ -501,6 +513,8 @@ from (select oid from pg_class where relname = 'atest1') as t1;
 
 -- clean up
 \c regression
+DROP FUNCTION testfunc2(int);
+DROP FUNCTION testfunc4(boolean);
 DROP TABLE atest1;
 DROP TABLE atest2;
 DROP TABLE atest3;

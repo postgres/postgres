@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.136 2002/05/17 18:32:52 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.137 2002/05/18 13:47:59 petere Exp $
 -->
 
 <appendix id="release">
@@ -24,6 +24,7 @@ CDATA means the content is "SGML-free", so you can write without
 worries about funny characters.
 -->
 <literallayout><![CDATA[
+Functions can be executed with the privileges of the owner
 Syntax of CREATE FUNCTION has been extended to resemble SQL99
 Effects of SET within a transaction block now roll back if transaction aborts
 New SET LOCAL syntax sets a parameter for the life of the current transaction
