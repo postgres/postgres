@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sun Aug 24 18:57:19 EDT 2003
+Last updated:		Mon Aug 25 00:10:58 EDT 2003
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -285,6 +285,7 @@ Clients
 * Allow psql \du to show groups, and add \dg for groups
 * Allow clients to query WITH HOLD cursors and prepared statements
 * Prevent unneeded quoting in psql \d output using fmtId()
+* Add a libpq function to support Parse/DescribeStatement capability
 
 
 * JDBC
@@ -488,7 +489,7 @@ Source Code
 * Acquire lock on a relation before building a relcache entry for it
 * Research interaction of setitimer() and sleep() used by statement_timeout
 * Add checks for fclose() failure
-* Change CVS $Id: TODO,v 1.1124 2003/08/24 22:57:21 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1124 2003/08/24 22:57:21 momjian Exp $
+* Change CVS $Id: TODO,v 1.1125 2003/08/25 04:10:59 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1125 2003/08/25 04:10:59 momjian Exp $
 * Exit postmaster if postgresql.conf can not be opened
 * Rename /scripts directory because they are all C programs now
 * Allow the regression tests to start postmaster with -i so the tests
