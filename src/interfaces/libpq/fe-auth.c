@@ -10,7 +10,7 @@
  * exceed INITIAL_EXPBUFFER_SIZE (currently 256 bytes).
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.71 2002/09/04 20:31:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.72 2002/12/03 22:09:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -449,7 +449,9 @@ pg_krb5_sendauth(char *PQerrormsg, int sock,
 static int
 pg_local_sendauth(char *PQerrormsg, PGconn *conn)
 {
-#if defined(HAVE_STRUCT_CMSGCRED) || defined(HAVE_STRUCT_FCRED) || (defined(HAVE_STRUCT_SOCKCRED) && defined(LOCAL_CREDS))
+#if defined(HAVE_STRUCT_CMSGCRED) || defined(HAVE_STRUCT_FCRED) || \
+	(defined(HAVE_STRUCT_SOCKCRED) && defined(LOCAL_CREDS)) && \
+	!defined(HAVE_GETPEEREID) && !defined(SO_PEERCRED)
 	char		buf;
 	struct iovec iov;
 	struct msghdr msg;
