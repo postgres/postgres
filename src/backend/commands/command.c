@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.90 2000/07/15 12:37:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.91 2000/07/18 03:57:33 tgl Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -1076,7 +1076,7 @@ AlterTableDropColumn(const char *relationName,
  * ALTER TABLE ADD CONSTRAINT
  */
 void
-AlterTableAddConstraint(const char *relationName,
+AlterTableAddConstraint(char *relationName,
 						bool inh, Node *newConstraint)
 {
 	char rulequery[41+NAMEDATALEN]; 
