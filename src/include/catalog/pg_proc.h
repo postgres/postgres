@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.345 2004/08/29 05:06:55 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.346 2004/10/04 22:13:14 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -1470,7 +1470,7 @@ DATA(insert OID = 1171 (  date_part		   PGNSP PGUID 12 f f t f s 2  701 "25 1184
 DESCR("extract field from timestamp with time zone");
 DATA(insert OID = 1172 (  date_part		   PGNSP PGUID 12 f f t f i 2  701 "25 1186" _null_ interval_part - _null_ ));
 DESCR("extract field from interval");
-DATA(insert OID = 1173 (  timestamptz	   PGNSP PGUID 12 f f t f s 1 1184 "702" _null_ abstime_timestamptz - _null_ ));
+DATA(insert OID = 1173 (  timestamptz	   PGNSP PGUID 12 f f t f i 1 1184 "702" _null_ abstime_timestamptz - _null_ ));
 DESCR("convert abstime to timestamp with time zone");
 DATA(insert OID = 1174 (  timestamptz	   PGNSP PGUID 12 f f t f s 1 1184 "1082" _null_  date_timestamptz - _null_ ));
 DESCR("convert date to timestamp with time zone");
@@ -1482,16 +1482,16 @@ DATA(insert OID = 1178 (  date			   PGNSP PGUID 12 f f t f s 1 1082 "1184" _null
 DESCR("convert timestamp with time zone to date");
 DATA(insert OID = 1179 (  date			   PGNSP PGUID 12 f f t f s 1 1082 "702" _null_ abstime_date - _null_ ));
 DESCR("convert abstime to date");
-DATA(insert OID = 1180 (  abstime		   PGNSP PGUID 12 f f t f s 1  702 "1184" _null_  timestamptz_abstime - _null_ ));
+DATA(insert OID = 1180 (  abstime		   PGNSP PGUID 12 f f t f i 1  702 "1184" _null_  timestamptz_abstime - _null_ ));
 DESCR("convert timestamp with time zone to abstime");
 DATA(insert OID = 1181 (  age			   PGNSP PGUID 12 f f t f s 1 23 "28" _null_  xid_age - _null_ ));
 DESCR("age of a transaction ID, in transactions before current transaction");
 
 DATA(insert OID = 1188 (  timestamptz_mi   PGNSP PGUID 12 f f t f i 2 1186 "1184 1184" _null_	timestamp_mi - _null_ ));
 DESCR("subtract");
-DATA(insert OID = 1189 (  timestamptz_pl_interval PGNSP PGUID 12 f f t f i 2 1184 "1184 1186" _null_  timestamptz_pl_interval - _null_ ));
+DATA(insert OID = 1189 (  timestamptz_pl_interval PGNSP PGUID 12 f f t f s 2 1184 "1184 1186" _null_  timestamptz_pl_interval - _null_ ));
 DESCR("plus");
-DATA(insert OID = 1190 (  timestamptz_mi_interval PGNSP PGUID 12 f f t f i 2 1184 "1184 1186" _null_  timestamptz_mi_interval - _null_ ));
+DATA(insert OID = 1190 (  timestamptz_mi_interval PGNSP PGUID 12 f f t f s 2 1184 "1184 1186" _null_  timestamptz_mi_interval - _null_ ));
 DESCR("minus");
 DATA(insert OID = 1191 (  timestamptz		PGNSP PGUID 12 f f t f s 1 1184 "25" _null_ text_timestamptz - _null_ ));
 DESCR("convert text to timestamp with time zone");
@@ -1522,7 +1522,7 @@ DESCR("get description for object id and catalog name");
 DATA(insert OID = 1216 (  col_description	PGNSP PGUID 14 f f t f s 2	25 "26 23" _null_	"select description from pg_catalog.pg_description where objoid = $1 and classoid = \'pg_catalog.pg_class\'::regclass and objsubid = $2" - _null_ ));
 DESCR("get description for table column");
 
-DATA(insert OID = 1217 (  date_trunc	   PGNSP PGUID 12 f f t f i 2 1184 "25 1184" _null_ timestamptz_trunc - _null_ ));
+DATA(insert OID = 1217 (  date_trunc	   PGNSP PGUID 12 f f t f s 2 1184 "25 1184" _null_ timestamptz_trunc - _null_ ));
 DESCR("truncate timestamp with time zone to specified units");
 DATA(insert OID = 1218 (  date_trunc	   PGNSP PGUID 12 f f t f i 2 1186 "25 1186" _null_ interval_trunc - _null_ ));
 DESCR("truncate interval to specified units");
@@ -1619,11 +1619,11 @@ DESCR("join selectivity for containment comparison operators");
 
 DATA(insert OID = 1304 ( overlaps			 PGNSP PGUID 12 f f f f i 4 16 "1184 1184 1184 1184" _null_ overlaps_timestamp - _null_ ));
 DESCR("SQL92 interval comparison");
-DATA(insert OID = 1305 ( overlaps			 PGNSP PGUID 14 f f f f i 4 16 "1184 1186 1184 1186" _null_ "select ($1, ($1 + $2)) overlaps ($3, ($3 + $4))" - _null_ ));
+DATA(insert OID = 1305 ( overlaps			 PGNSP PGUID 14 f f f f s 4 16 "1184 1186 1184 1186" _null_ "select ($1, ($1 + $2)) overlaps ($3, ($3 + $4))" - _null_ ));
 DESCR("SQL92 interval comparison");
-DATA(insert OID = 1306 ( overlaps			 PGNSP PGUID 14 f f f f i 4 16 "1184 1184 1184 1186" _null_ "select ($1, $2) overlaps ($3, ($3 + $4))" - _null_ ));
+DATA(insert OID = 1306 ( overlaps			 PGNSP PGUID 14 f f f f s 4 16 "1184 1184 1184 1186" _null_ "select ($1, $2) overlaps ($3, ($3 + $4))" - _null_ ));
 DESCR("SQL92 interval comparison");
-DATA(insert OID = 1307 ( overlaps			 PGNSP PGUID 14 f f f f i 4 16 "1184 1186 1184 1184" _null_ "select ($1, ($1 + $2)) overlaps ($3, $4)" - _null_ ));
+DATA(insert OID = 1307 ( overlaps			 PGNSP PGUID 14 f f f f s 4 16 "1184 1186 1184 1184" _null_ "select ($1, ($1 + $2)) overlaps ($3, $4)" - _null_ ));
 DESCR("SQL92 interval comparison");
 
 DATA(insert OID = 1308 ( overlaps			 PGNSP PGUID 12 f f f f i 4 16 "1083 1083 1083 1083" _null_ overlaps_time - _null_ ));
@@ -2931,7 +2931,7 @@ DATA(insert OID = 2047 (  timetz			PGNSP PGUID 12 f f t f s 1 1266 "1083" _null_
 DESCR("convert time to timetz");
 DATA(insert OID = 2048 (  isfinite			PGNSP PGUID 12 f f t f i 1	 16 "1114" _null_	timestamp_finite - _null_ ));
 DESCR("finite timestamp?");
-DATA(insert OID = 2049 ( to_char			PGNSP PGUID 12 f f t f s 2	25 "1114 25" _null_  timestamp_to_char - _null_ ));
+DATA(insert OID = 2049 ( to_char			PGNSP PGUID 12 f f t f i 2	25 "1114 25" _null_  timestamp_to_char - _null_ ));
 DESCR("format timestamp to text");
 DATA(insert OID = 2052 (  timestamp_eq		PGNSP PGUID 12 f f t f i 2 16 "1114 1114" _null_  timestamp_eq - _null_ ));
 DESCR("equal");
@@ -3604,7 +3604,7 @@ DESCR("bitwise-or bit aggregate");
 DATA(insert OID = 2546 ( interval_pl_date			PGNSP PGUID 14 f f t f i 2 1114 "1186 1082" _null_	"select $2 + $1" - _null_ ));
 DATA(insert OID = 2547 ( interval_pl_timetz			PGNSP PGUID 14 f f t f i 2 1266 "1186 1266" _null_	"select $2 + $1" - _null_ ));
 DATA(insert OID = 2548 ( interval_pl_timestamp		PGNSP PGUID 14 f f t f i 2 1114 "1186 1114" _null_	"select $2 + $1" - _null_ ));
-DATA(insert OID = 2549 ( interval_pl_timestamptz	PGNSP PGUID 14 f f t f i 2 1184 "1186 1184" _null_	"select $2 + $1" - _null_ ));
+DATA(insert OID = 2549 ( interval_pl_timestamptz	PGNSP PGUID 14 f f t f s 2 1184 "1186 1184" _null_	"select $2 + $1" - _null_ ));
 DATA(insert OID = 2550 ( integer_pl_date			PGNSP PGUID 14 f f t f i 2 1082 "23 1082" _null_  "select $2 + $1" - _null_ ));
 
 DATA(insert OID = 2556 ( pg_tablespace_databases	PGNSP PGUID 12 f f t t s 1 26 "26" _null_ pg_tablespace_databases - _null_));
