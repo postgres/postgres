@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.84 2004/03/03 21:28:54 tgl Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.85 2004/03/24 03:06:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,6 +53,7 @@ static void fixPriorBlobRefs(ArchiveHandle *AH, TocEntry *blobte,
 							 RestoreOptions *ropt);
 static void _doSetFixedOutputState(ArchiveHandle *AH);
 static void _doSetSessionAuth(ArchiveHandle *AH, const char *user);
+static void _doSetWithOids(ArchiveHandle *AH, const bool withOids);
 static void _reconnectToDB(ArchiveHandle *AH, const char *dbname, const char *user);
 static void _becomeUser(ArchiveHandle *AH, const char *user);
 static void _becomeOwner(ArchiveHandle *AH, TocEntry *te);
@@ -254,6 +255,7 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 		if ((reqs & REQ_SCHEMA) != 0)	/* We want the schema */
 		{
 			ahlog(AH, 1, "creating %s %s\n", te->desc, te->tag);
+
 			_printTocEntry(AH, te, ropt, false);
 			defnDumped = true;
 
@@ -559,7 +561,7 @@ void
 ArchiveEntry(Archive *AHX,
 			 CatalogId catalogId, DumpId dumpId,
 			 const char *tag,
-			 const char *namespace, const char *owner,
+			 const char *namespace, const char *owner, bool withOids,
 			 const char *desc, const char *defn,
 			 const char *dropStmt, const char *copyStmt,
 			 const DumpId *deps, int nDeps,
@@ -587,6 +589,7 @@ ArchiveEntry(Archive *AHX,
 	newToc->tag = strdup(tag);
 	newToc->namespace = namespace ? strdup(namespace) : NULL;
 	newToc->owner = strdup(owner);
+	newToc->withOids = withOids;
 	newToc->desc = strdup(desc);
 	newToc->defn = strdup(defn);
 	newToc->dropStmt = strdup(dropStmt);
@@ -1597,7 +1600,8 @@ _allocAH(const char *FileSpec, const ArchiveFormat fmt,
 	AH->currUser = strdup("");	/* So it's valid, but we can free() it
 								 * later if necessary */
 	AH->currSchema = strdup("");	/* ditto */
-
+	AH->currWithOids = -1;		/* force SET */
+	
 	AH->toc = (TocEntry *) calloc(1, sizeof(TocEntry));
 	if (!AH->toc)
 		die_horribly(AH, modulename, "out of memory\n");
@@ -1727,6 +1731,7 @@ WriteToc(ArchiveHandle *AH)
 		WriteStr(AH, te->copyStmt);
 		WriteStr(AH, te->namespace);
 		WriteStr(AH, te->owner);
+		WriteStr(AH, te->withOids ? "true" : "false");
 
 		/* Dump list of dependencies */
 		for (i = 0; i < te->nDeps; i++)
@@ -1795,7 +1800,16 @@ ReadToc(ArchiveHandle *AH)
 			te->namespace = ReadStr(AH);
 
 		te->owner = ReadStr(AH);
-
+		if (AH->version >= K_VERS_1_9)
+		{
+			if (strcmp(ReadStr(AH), "true") == 0)
+				te->withOids = true;
+			else
+				te->withOids = false;
+		}
+		else
+			te->withOids = true;
+		
 		/* Read TOC entry dependencies */
 		if (AH->version >= K_VERS_1_5)
 		{
@@ -2010,6 +2024,37 @@ _doSetSessionAuth(ArchiveHandle *AH, const char *user)
 
 
 /*
+ * Issue a SET default_with_oids command.  Caller is responsible
+ * for updating state if appropriate.
+ */
+static void
+_doSetWithOids(ArchiveHandle *AH, const bool withOids)
+{
+	PQExpBuffer cmd = createPQExpBuffer();
+
+	appendPQExpBuffer(cmd, "SET default_with_oids = %s;", withOids ?
+			"true" : "false");
+
+	if (RestoringToDB(AH))
+	{
+		PGresult   *res;
+
+		res = PQexec(AH->connection, cmd->data);
+
+		if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
+			die_horribly(AH, modulename, "could not set default_with_oids: %s",
+						 PQerrorMessage(AH->connection));
+
+		PQclear(res);
+	}
+	else
+		ahprintf(AH, "%s\n\n", cmd->data);
+
+	destroyPQExpBuffer(cmd);
+}
+
+
+/*
  * Issue the commands to connect to the specified database
  * as the specified user.
  *
@@ -2049,7 +2094,8 @@ _reconnectToDB(ArchiveHandle *AH, const char *dbname, const char *user)
 	if (AH->currSchema)
 		free(AH->currSchema);
 	AH->currSchema = strdup("");
-
+	AH->currWithOids = -1;
+	
 	/* re-establish fixed state */
 	_doSetFixedOutputState(AH);
 }
@@ -2091,6 +2137,20 @@ _becomeOwner(ArchiveHandle *AH, TocEntry *te)
 		return;
 
 	_becomeUser(AH, te->owner);
+}
+
+
+/*
+ * Set the proper default_with_oids value for the table.
+ */
+static void
+_setWithOids(ArchiveHandle *AH, TocEntry *te)
+{
+	if (AH->currWithOids != te->withOids)
+	{
+		_doSetWithOids(AH, te->withOids);
+		AH->currWithOids = te->withOids;
+	}
 }
 
 
@@ -2146,6 +2206,8 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isDat
 	/* Select owner and schema as necessary */
 	_becomeOwner(AH, te);
 	_selectOutputSchema(AH, te->namespace);
+	if (strcmp(te->desc, "TABLE") == 0)
+		_setWithOids(AH, te);
 
 	if (isData)
 		pfx = "Data for ";

@@ -17,7 +17,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.56 2004/02/24 03:35:19 tgl Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.57 2004/03/24 03:06:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,7 +62,7 @@ typedef z_stream *z_streamp;
 #endif
 
 #define K_VERS_MAJOR 1
-#define K_VERS_MINOR 8
+#define K_VERS_MINOR 9
 #define K_VERS_REV 0
 
 /* Data block types */
@@ -80,8 +80,9 @@ typedef z_stream *z_streamp;
 #define K_VERS_1_7 (( (1 * 256 + 7) * 256 + 0) * 256 + 0)		/* File Offset size in
 																 * header */
 #define K_VERS_1_8 (( (1 * 256 + 8) * 256 + 0) * 256 + 0)		/* change interpretation of ID numbers and dependencies */
+#define K_VERS_1_9 (( (1 * 256 + 9) * 256 + 0) * 256 + 0)		/* add default_with_oids tracking */
 
-#define K_VERS_MAX (( (1 * 256 + 8) * 256 + 255) * 256 + 0)
+#define K_VERS_MAX (( (1 * 256 + 9) * 256 + 255) * 256 + 0)
 
 /* No of BLOBs to restore in 1 TX */
 #define BLOB_BATCH_SIZE 100
@@ -245,7 +246,8 @@ typedef struct _archiveHandle
 	/* these vars track state to avoid sending redundant SET commands */
 	char	   *currUser;		/* current username */
 	char	   *currSchema;		/* current schema */
-
+	bool		currWithOids;	/* current default_with_oids setting */
+	
 	void	   *lo_buf;
 	size_t		lo_buf_used;
 	size_t		lo_buf_size;
@@ -262,6 +264,7 @@ typedef struct _tocEntry
 	char	   *tag;			/* index tag */
 	char	   *namespace;		/* null or empty string if not in a schema */
 	char	   *owner;
+	bool		withOids;		/* Used only by "TABLE" tags */
 	char	   *desc;
 	char	   *defn;
 	char	   *dropStmt;

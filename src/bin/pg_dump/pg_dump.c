@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.369 2004/03/23 22:06:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.370 2004/03/24 03:06:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1094,7 +1094,7 @@ dumpTableData(Archive *fout, TableDataInfo *tdinfo)
 	ArchiveEntry(fout, tdinfo->dobj.catId, tdinfo->dobj.dumpId,
 				 tbinfo->dobj.name,
 				 tbinfo->dobj.namespace->dobj.name,
-				 tbinfo->usename,
+				 tbinfo->usename, false,
 				 "TABLE DATA", "", "", copyStmt,
 				 tdinfo->dobj.dependencies, tdinfo->dobj.nDeps,
 				 dumpFn, tdinfo);
@@ -1263,6 +1263,7 @@ dumpDatabase(Archive *AH)
 				 datname,		/* Name */
 				 NULL,			/* Namespace */
 				 dba,			/* Owner */
+				 false,			/* with oids */
 				 "DATABASE",	/* Desc */
 				 creaQry->data, /* Create */
 				 delQry->data,	/* Del */
@@ -1318,7 +1319,7 @@ dumpEncoding(Archive *AH)
 
 	ArchiveEntry(AH, nilCatalogId, createDumpId(),
 				 "ENCODING", NULL, "",
-				 "ENCODING", qry->data, "", NULL,
+				 false, "ENCODING", qry->data, "", NULL,
 				 NULL, 0,
 				 NULL, NULL);
 
@@ -3930,7 +3931,7 @@ dumpComment(Archive *fout, const char *target,
 		appendPQExpBuffer(query, ";\n");
 
 		ArchiveEntry(fout, nilCatalogId, createDumpId(),
-					 target, namespace, owner,
+					 target, namespace, owner, false,
 					 "COMMENT", query->data, "", NULL,
 					 &(dumpId), 1,
 					 NULL, NULL);
@@ -3990,7 +3991,7 @@ dumpTableComment(Archive *fout, TableInfo *tbinfo,
 			ArchiveEntry(fout, nilCatalogId, createDumpId(),
 						 target->data,
 						 tbinfo->dobj.namespace->dobj.name, tbinfo->usename,
-						 "COMMENT", query->data, "", NULL,
+						 false, "COMMENT", query->data, "", NULL,
 						 &(tbinfo->dobj.dumpId), 1,
 						 NULL, NULL);
 		}
@@ -4010,7 +4011,7 @@ dumpTableComment(Archive *fout, TableInfo *tbinfo,
 			ArchiveEntry(fout, nilCatalogId, createDumpId(),
 						 target->data,
 						 tbinfo->dobj.namespace->dobj.name, tbinfo->usename,
-						 "COMMENT", query->data, "", NULL,
+						 false, "COMMENT", query->data, "", NULL,
 						 &(tbinfo->dobj.dumpId), 1,
 						 NULL, NULL);
 		}
@@ -4259,7 +4260,7 @@ dumpDumpableObject(Archive *fout, DumpableObject *dobj)
 		case DO_BLOBS:
 			ArchiveEntry(fout, dobj->catId, dobj->dumpId,
 						 dobj->name, NULL, "",
-						 "BLOBS", "", "", NULL,
+						 false, "BLOBS", "", "", NULL,
 						 NULL, 0,
 						 dumpBlobs, NULL);
 			break;
@@ -4313,7 +4314,7 @@ dumpNamespace(Archive *fout, NamespaceInfo *nspinfo)
 		ArchiveEntry(fout, nspinfo->dobj.catId, nspinfo->dobj.dumpId,
 					 nspinfo->dobj.name,
 					 NULL, "",
-					 "SCHEMA", q->data, delq->data, NULL,
+					 false, "SCHEMA", q->data, delq->data, NULL,
 					 nspinfo->dobj.dependencies, nspinfo->dobj.nDeps,
 					 NULL, NULL);
 	}
@@ -4604,7 +4605,7 @@ dumpBaseType(Archive *fout, TypeInfo *tinfo)
 	ArchiveEntry(fout, tinfo->dobj.catId, tinfo->dobj.dumpId,
 				 tinfo->dobj.name,
 				 tinfo->dobj.namespace->dobj.name,
-				 tinfo->usename,
+				 tinfo->usename, false,
 				 "TYPE", q->data, delq->data, NULL,
 				 tinfo->dobj.dependencies, tinfo->dobj.nDeps,
 				 NULL, NULL);
@@ -4710,7 +4711,7 @@ dumpDomain(Archive *fout, TypeInfo *tinfo)
 	ArchiveEntry(fout, tinfo->dobj.catId, tinfo->dobj.dumpId,
 				 tinfo->dobj.name,
 				 tinfo->dobj.namespace->dobj.name,
-				 tinfo->usename,
+				 tinfo->usename, false,
 				 "DOMAIN", q->data, delq->data, NULL,
 				 tinfo->dobj.dependencies, tinfo->dobj.nDeps,
 				 NULL, NULL);
@@ -4803,7 +4804,7 @@ dumpCompositeType(Archive *fout, TypeInfo *tinfo)
 	ArchiveEntry(fout, tinfo->dobj.catId, tinfo->dobj.dumpId,
 				 tinfo->dobj.name,
 				 tinfo->dobj.namespace->dobj.name,
-				 tinfo->usename,
+				 tinfo->usename, false,
 				 "TYPE", q->data, delq->data, NULL,
 				 tinfo->dobj.dependencies, tinfo->dobj.nDeps,
 				 NULL, NULL);
@@ -4896,7 +4897,7 @@ dumpProcLang(Archive *fout, ProcLangInfo *plang)
 	ArchiveEntry(fout, plang->dobj.catId, plang->dobj.dumpId,
 				 plang->dobj.name,
 				 funcInfo->dobj.namespace->dobj.name, "",
-				 "PROCEDURAL LANGUAGE",
+				 false, "PROCEDURAL LANGUAGE",
 				 defqry->data, delqry->data, NULL,
 				 plang->dobj.dependencies, plang->dobj.nDeps,
 				 NULL, NULL);
@@ -5168,7 +5169,7 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 	ArchiveEntry(fout, finfo->dobj.catId, finfo->dobj.dumpId,
 				 funcsig_tag,
 				 finfo->dobj.namespace->dobj.name,
-				 finfo->usename,
+				 finfo->usename, false,
 				 "FUNCTION", q->data, delqry->data, NULL,
 				 finfo->dobj.dependencies, finfo->dobj.nDeps,
 				 NULL, NULL);
@@ -5308,7 +5309,7 @@ dumpCast(Archive *fout, CastInfo *cast)
 	ArchiveEntry(fout, cast->dobj.catId, cast->dobj.dumpId,
 				 castsig->data,
 				 "pg_catalog", "",
-				 "CAST", defqry->data, delqry->data, NULL,
+				 false, "CAST", defqry->data, delqry->data, NULL,
 				 cast->dobj.dependencies, cast->dobj.nDeps,
 				 NULL, NULL);
 
@@ -5561,7 +5562,7 @@ dumpOpr(Archive *fout, OprInfo *oprinfo)
 	ArchiveEntry(fout, oprinfo->dobj.catId, oprinfo->dobj.dumpId,
 				 oprinfo->dobj.name,
 				 oprinfo->dobj.namespace->dobj.name, oprinfo->usename,
-				 "OPERATOR", q->data, delq->data, NULL,
+				 false, "OPERATOR", q->data, delq->data, NULL,
 				 oprinfo->dobj.dependencies, oprinfo->dobj.nDeps,
 				 NULL, NULL);
 
@@ -5868,7 +5869,7 @@ dumpOpclass(Archive *fout, OpclassInfo *opcinfo)
 	ArchiveEntry(fout, opcinfo->dobj.catId, opcinfo->dobj.dumpId,
 				 opcinfo->dobj.name,
 				 opcinfo->dobj.namespace->dobj.name, opcinfo->usename,
-				 "OPERATOR CLASS", q->data, delq->data, NULL,
+				 false, "OPERATOR CLASS", q->data, delq->data, NULL,
 				 opcinfo->dobj.dependencies, opcinfo->dobj.nDeps,
 				 NULL, NULL);
 
@@ -5978,7 +5979,7 @@ dumpConversion(Archive *fout, ConvInfo *convinfo)
 	ArchiveEntry(fout, convinfo->dobj.catId, convinfo->dobj.dumpId,
 				 convinfo->dobj.name,
 				 convinfo->dobj.namespace->dobj.name, convinfo->usename,
-				 "CONVERSION", q->data, delq->data, NULL,
+				 false, "CONVERSION", q->data, delq->data, NULL,
 				 convinfo->dobj.dependencies, convinfo->dobj.nDeps,
 				 NULL, NULL);
 
@@ -6213,7 +6214,7 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 	ArchiveEntry(fout, agginfo->aggfn.dobj.catId, agginfo->aggfn.dobj.dumpId,
 				 aggsig_tag,
 				 agginfo->aggfn.dobj.namespace->dobj.name, agginfo->aggfn.usename,
-				 "AGGREGATE", q->data, delq->data, NULL,
+				 false, "AGGREGATE", q->data, delq->data, NULL,
 				 agginfo->aggfn.dobj.dependencies, agginfo->aggfn.dobj.nDeps,
 				 NULL, NULL);
 
@@ -6292,7 +6293,7 @@ dumpACL(Archive *fout, CatalogId objCatId, DumpId objDumpId,
 		ArchiveEntry(fout, nilCatalogId, createDumpId(),
 					 tag, nspname,
 					 owner ? owner : "",
-					 "ACL", sql->data, "", NULL,
+					 false, "ACL", sql->data, "", NULL,
 					 &(objDumpId), 1,
 					 NULL, NULL);
 
@@ -6528,8 +6529,6 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 			appendPQExpBuffer(q, ")");
 		}
 
-		appendPQExpBuffer(q, tbinfo->hasoids ? " WITH OIDS" : " WITHOUT OIDS");
-
 		appendPQExpBuffer(q, ";\n");
 
 		/* Loop dumping statistics and storage statements */
@@ -6596,6 +6595,7 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 	ArchiveEntry(fout, tbinfo->dobj.catId, tbinfo->dobj.dumpId,
 				 tbinfo->dobj.name,
 				 tbinfo->dobj.namespace->dobj.name, tbinfo->usename,
+				 (strcmp(reltypename, "TABLE") == 0) ? tbinfo->hasoids : false,
 				 reltypename, q->data, delq->data, NULL,
 				 tbinfo->dobj.dependencies, tbinfo->dobj.nDeps,
 				 NULL, NULL);
@@ -6650,7 +6650,7 @@ dumpAttrDef(Archive *fout, AttrDefInfo *adinfo)
 	ArchiveEntry(fout, adinfo->dobj.catId, adinfo->dobj.dumpId,
 				 tbinfo->attnames[adnum - 1],
 				 tbinfo->dobj.namespace->dobj.name, tbinfo->usename,
-				 "DEFAULT", q->data, delq->data, NULL,
+				 false, "DEFAULT", q->data, delq->data, NULL,
 				 adinfo->dobj.dependencies, adinfo->dobj.nDeps,
 				 NULL, NULL);
 
@@ -6740,7 +6740,7 @@ dumpIndex(Archive *fout, IndxInfo *indxinfo)
 		ArchiveEntry(fout, indxinfo->dobj.catId, indxinfo->dobj.dumpId,
 					 indxinfo->dobj.name,
 					 tbinfo->dobj.namespace->dobj.name,
-					 tbinfo->usename,
+					 tbinfo->usename, false,
 					 "INDEX", q->data, delq->data, NULL,
 					 indxinfo->dobj.dependencies, indxinfo->dobj.nDeps,
 					 NULL, NULL);
@@ -6838,7 +6838,7 @@ dumpConstraint(Archive *fout, ConstraintInfo *coninfo)
 		ArchiveEntry(fout, coninfo->dobj.catId, coninfo->dobj.dumpId,
 					 coninfo->dobj.name,
 					 tbinfo->dobj.namespace->dobj.name,
-					 tbinfo->usename,
+					 tbinfo->usename, false,
 					 "CONSTRAINT", q->data, delq->data, NULL,
 					 coninfo->dobj.dependencies, coninfo->dobj.nDeps,
 					 NULL, NULL);
@@ -6869,7 +6869,7 @@ dumpConstraint(Archive *fout, ConstraintInfo *coninfo)
 		ArchiveEntry(fout, coninfo->dobj.catId, coninfo->dobj.dumpId,
 					 coninfo->dobj.name,
 					 tbinfo->dobj.namespace->dobj.name,
-					 tbinfo->usename,
+					 tbinfo->usename, false,
 					 "FK CONSTRAINT", q->data, delq->data, NULL,
 					 coninfo->dobj.dependencies, coninfo->dobj.nDeps,
 					 NULL, NULL);
@@ -6902,7 +6902,7 @@ dumpConstraint(Archive *fout, ConstraintInfo *coninfo)
 			ArchiveEntry(fout, coninfo->dobj.catId, coninfo->dobj.dumpId,
 						 coninfo->dobj.name,
 						 tbinfo->dobj.namespace->dobj.name,
-						 tbinfo->usename,
+						 tbinfo->usename, false,
 						 "CHECK CONSTRAINT", q->data, delq->data, NULL,
 						 coninfo->dobj.dependencies, coninfo->dobj.nDeps,
 						 NULL, NULL);
@@ -6936,7 +6936,7 @@ dumpConstraint(Archive *fout, ConstraintInfo *coninfo)
 			ArchiveEntry(fout, coninfo->dobj.catId, coninfo->dobj.dumpId,
 						 coninfo->dobj.name,
 						 tinfo->dobj.namespace->dobj.name,
-						 tinfo->usename,
+						 tinfo->usename, false,
 						 "CHECK CONSTRAINT", q->data, delq->data, NULL,
 						 coninfo->dobj.dependencies, coninfo->dobj.nDeps,
 						 NULL, NULL);
@@ -7003,7 +7003,7 @@ setMaxOid(Archive *fout)
 
 	ArchiveEntry(fout, nilCatalogId, createDumpId(),
 				 "Max OID", NULL, "",
-				 "<Init>", sql, "", NULL,
+				 false, "<Init>", sql, "", NULL,
 				 NULL, 0,
 				 NULL, NULL);
 }
@@ -7200,7 +7200,7 @@ dumpSequence(Archive *fout, TableInfo *tbinfo)
 		ArchiveEntry(fout, tbinfo->dobj.catId, tbinfo->dobj.dumpId,
 					 tbinfo->dobj.name,
 					 tbinfo->dobj.namespace->dobj.name, tbinfo->usename,
-					 "SEQUENCE", query->data, delqry->data, NULL,
+					 false, "SEQUENCE", query->data, delqry->data, NULL,
 					 tbinfo->dobj.dependencies, tbinfo->dobj.nDeps,
 					 NULL, NULL);
 	}
@@ -7216,7 +7216,7 @@ dumpSequence(Archive *fout, TableInfo *tbinfo)
 		ArchiveEntry(fout, nilCatalogId, createDumpId(),
 					 tbinfo->dobj.name,
 					 tbinfo->dobj.namespace->dobj.name, tbinfo->usename,
-					 "SEQUENCE SET", query->data, "", NULL,
+					 false, "SEQUENCE SET", query->data, "", NULL,
 					 &(tbinfo->dobj.dumpId), 1,
 					 NULL, NULL);
 	}
@@ -7381,7 +7381,7 @@ dumpTrigger(Archive *fout, TriggerInfo *tginfo)
 	ArchiveEntry(fout, tginfo->dobj.catId, tginfo->dobj.dumpId,
 				 tginfo->dobj.name,
 				 tbinfo->dobj.namespace->dobj.name,
-				 tbinfo->usename,
+				 tbinfo->usename, false,
 				 "TRIGGER", query->data, delqry->data, NULL,
 				 tginfo->dobj.dependencies, tginfo->dobj.nDeps,
 				 NULL, NULL);
@@ -7475,7 +7475,7 @@ dumpRule(Archive *fout, RuleInfo *rinfo)
 	ArchiveEntry(fout, rinfo->dobj.catId, rinfo->dobj.dumpId,
 				 rinfo->dobj.name,
 				 tbinfo->dobj.namespace->dobj.name,
-				 tbinfo->usename,
+				 tbinfo->usename, false,
 				 "RULE", cmd->data, delcmd->data, NULL,
 				 rinfo->dobj.dependencies, rinfo->dobj.nDeps,
 				 NULL, NULL);
