@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.48 2003/06/07 16:27:02 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.49 2003/06/11 14:07:00 tgl Exp $
 -->
 
 <chapter id="client-authentication">
@@ -639,7 +639,7 @@ local   db1,db2,@demodbs  all                                       md5
    </para>
 
    <para>
-<ulink url="http://www.kernel.org/pub/linux/libs/pam/"><productname>Linux-PAM</>
+<ulink url="http://www.kernel.org/pub/linux/libs/pam/"><productname>Linux-PAM</></ulink>
     Page
 
     If you use <application>mod_auth_kerb</application> from
