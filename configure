@@ -19174,30 +19174,30 @@ if test cross_compiling != yes; then
 #
 echo "$as_me:$LINENO: checking thread safety of required library functions" >&5
 echo $ECHO_N "checking thread safety of required library functions... $ECHO_C" >&6
-if ! $MAKE -C $srcdir/src/tools/thread clean >&5
-then	rm -f $srcdir/src/Makefile.global
+if ! $MAKE -C src/tools/thread clean >&5
+then	rm -f src/Makefile.global
 	{ { echo "$as_me:$LINENO: error: Can not clean thread test directory." >&5
 echo "$as_me: error: Can not clean thread test directory." >&2;}
    { (exit 1); exit 1; }; }
 fi
-if ! $MAKE -C $srcdir/src/tools/thread >&5
-then	rm -f $srcdir/src/Makefile.global
+if ! $MAKE -C src/tools/thread >&5
+then	rm -f src/Makefile.global
 	{ { echo "$as_me:$LINENO: error: Can not build thread test proram." >&5
 echo "$as_me: error: Can not build thread test proram." >&2;}
    { (exit 1); exit 1; }; }
 fi
-if ! $srcdir/src/tools/thread/thread_test >&5
-then	rm -f $srcdir/src/Makefile.global
+if ! src/tools/thread/thread_test >&5
+then	rm -f src/Makefile.global
 	echo "no"
 	echo
-	$srcdir/src/tools/thread/thread_test
+	src/tools/thread/thread_test
 	echo
 	{ { echo "$as_me:$LINENO: error: Thread test program failed.  Your platform is not thread-safe." >&5
 echo "$as_me: error: Thread test program failed.  Your platform is not thread-safe." >&2;}
    { (exit 1); exit 1; }; }
 fi
-if ! $MAKE -C $srcdir/src/tools/thread clean >&5
-then	rm -f $srcdir/src/Makefile.global
+if ! $MAKE -C src/tools/thread clean >&5
+then	rm -f src/Makefile.global
 	{ { echo "$as_me:$LINENO: error: Can not clean thread test directory." >&5
 echo "$as_me: error: Can not clean thread test directory." >&2;}
    { (exit 1); exit 1; }; }
@@ -19206,11 +19206,11 @@ echo "yes"
 else
 { echo "$as_me:$LINENO: WARNING:
 *** Skipping thread test program because of cross-compile build.
-*** Run the program in $srcdir/src/tools/thread on the target matchine.
+*** Run the program in src/tools/thread on the target matchine.
 " >&5
 echo "$as_me: WARNING:
 *** Skipping thread test program because of cross-compile build.
-*** Run the program in $srcdir/src/tools/thread on the target matchine.
+*** Run the program in src/tools/thread on the target matchine.
 " >&2;}
 fi
 fi
