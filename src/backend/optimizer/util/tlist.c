@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.14 1998/07/18 04:22:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.15 1998/07/20 19:53:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -133,19 +133,15 @@ add_tl_element(RelOptInfo *rel, Var *var)
 TargetEntry *
 create_tl_element(Var *var, int resdomno)
 {
-	TargetEntry *tlelement = makeNode(TargetEntry);
 
-	tlelement->resdom =
-		makeResdom(resdomno,
-				   var->vartype,
-				   var->vartypmod,
-				   NULL,
-				   (Index) 0,
-				   (Oid) 0,
-				   0);
-	tlelement->expr = (Node *) var;
-
-	return (tlelement);
+	return	makeTargetEntry(makeResdom(resdomno,
+					   var->vartype,
+					   var->vartypmod,
+					   NULL,
+					   (Index) 0,
+					   (Oid) 0,
+					   0),
+				(Node *) var);
 }
 
 /*
@@ -351,7 +347,7 @@ copy_vars(List *target, List *source)
 	for (src = source, dest = target; src != NIL &&
 		 dest != NIL; src = lnext(src), dest = lnext(dest))
 	{
-		TargetEntry *temp = MakeTLE(((TargetEntry *) lfirst(dest))->resdom,
+		TargetEntry *temp = makeTargetEntry(((TargetEntry *) lfirst(dest))->resdom,
 									(Node *) get_expr(lfirst(src)));
 
 		result = lappend(result, temp);
@@ -404,7 +400,7 @@ flatten_tlist(List *tlist)
 						   (Oid) 0,
 						   0);
 			last_resdomno++;
-			new_tlist = lappend(new_tlist, MakeTLE(r, (Node *) var));
+			new_tlist = lappend(new_tlist, makeTargetEntry(r, (Node *) var));
 		}
 	}
 
@@ -435,7 +431,7 @@ flatten_tlist_vars(List *full_tlist, List *flat_tlist)
 
 		result =
 			lappend(result,
-					MakeTLE(tle->resdom,
+					makeTargetEntry(tle->resdom,
 							flatten_tlistentry((Node *) get_expr(tle),
 											   flat_tlist)));
 	}
@@ -544,16 +540,6 @@ flatten_tlistentry(Node *tlistentry, List *flat_tlist)
 }
 
 
-TargetEntry *
-MakeTLE(Resdom *resdom, Node *expr)
-{
-	TargetEntry *rt = makeNode(TargetEntry);
-
-	rt->resdom = resdom;
-	rt->expr = expr;
-	return rt;
-}
-
 Var *
 get_expr(TargetEntry *tle)
 {
@@ -597,7 +583,7 @@ AddGroupAttrToTlist(List *tlist, List *grpCl)
 						   (Oid) 0,
 						   0);
 			last_resdomno++;
-			tlist = lappend(tlist, MakeTLE(r, (Node *) var));
+			tlist = lappend(tlist, makeTargetEntry(r, (Node *) var));
 		}
 	}
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/makefuncs.c,v 1.10 1998/07/12 21:29:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/makefuncs.c,v 1.11 1998/07/20 19:53:45 momjian Exp $
  *
  * NOTES
  *	  Creator functions in POSTGRES 4.2 are generated automatically. Most of
@@ -69,6 +69,20 @@ makeVar(Index varno,
 	var->varoattno = varoattno;
 
 	return var;
+}
+
+/*
+ * makeTargetEntry -
+ *	  creates a TargetEntry node(contains a Resdom)
+ */
+TargetEntry *
+makeTargetEntry(Resdom *resdom, Node *expr)
+{
+	TargetEntry *rt = makeNode(TargetEntry);
+
+	rt->resdom = resdom;
+	rt->expr = expr;
+	return rt;
 }
 
 /*

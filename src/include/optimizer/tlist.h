@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tlist.h,v 1.9 1998/07/18 04:22:52 momjian Exp $
+ * $Id: tlist.h,v 1.10 1998/07/20 19:53:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,7 +26,7 @@ extern List *get_actual_tlist(List *tlist);
 extern Resdom *tlist_member(Var *var, List *tlist);
 extern Resdom *tlist_resdom(List *tlist, Resdom *resnode);
 
-extern TargetEntry *MakeTLE(Resdom *resdom, Node *expr);
+extern TargetEntry *makeTargetEntry(Resdom *resdom, Node *expr);
 extern Var *get_expr(TargetEntry *tle);
 
 extern TargetEntry *match_varid(Var *test_var, List *tlist);

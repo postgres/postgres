@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.18 1998/07/12 21:29:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.19 1998/07/20 19:53:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -692,7 +692,6 @@ printf("MakeTargetlistExpr: attrtypmod is %d\n", (int4) attrtypmod);
 		attrtypmod = type_mod;
 	}
 
-	tent = makeNode(TargetEntry);
 	resnode = makeResdom((AttrNumber) resdomno,
 						 (Oid) attrtype,
 						 attrtypmod,
@@ -701,8 +700,7 @@ printf("MakeTargetlistExpr: attrtypmod is %d\n", (int4) attrtypmod);
 						 (Oid) 0,
 						 0);
 
-	tent->resdom = resnode;
-	tent->expr = expr;
+	tent = makeTargetEntry(resnode, expr);
 
 	return tent;
 } /* MakeTargetlistExpr() */

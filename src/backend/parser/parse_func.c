@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.22 1998/07/20 11:17:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.23 1998/07/20 19:53:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1240,9 +1240,7 @@ setup_tlist(char *attname, Oid relid)
 						 0);
 	varnode = makeVar(-1, attno, typeid, type_mod, 0, -1, attno);
 
-	tle = makeNode(TargetEntry);
-	tle->resdom = resnode;
-	tle->expr = (Node *) varnode;
+	tle = makeTargetEntry(resnode, (Node *) varnode);
 	return (lcons(tle, NIL));
 }
 
@@ -1266,9 +1264,7 @@ setup_base_tlist(Oid typeid)
 						 (Oid) 0,
 						 0);
 	varnode = makeVar(-1, 1, typeid, -1, 0, -1, 1);
-	tle = makeNode(TargetEntry);
-	tle->resdom = resnode;
-	tle->expr = (Node *) varnode;
+	tle = makeTargetEntry(resnode, (Node *) varnode);
 
 	return (lcons(tle, NIL));
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.77 1998/07/19 05:49:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.78 1998/07/20 19:53:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -312,14 +312,12 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 			 * preptlist.c), but may break RULEs in some way. It seems
 			 * better to create proper target list here...
 			 */
-			te = makeNode(TargetEntry);
-			te->resdom = makeResdom(defval[ndef].adnum,
+			te = makeTargetEntry(makeResdom(defval[ndef].adnum,
 									att[defval[ndef].adnum - 1]->atttypid,
 									att[defval[ndef].adnum - 1]->atttypmod,
 									pstrdup(nameout(&(att[defval[ndef].adnum - 1]->attname))),
-									0, 0, 0);
-			te->fjoin = NULL;
-			te->expr = (Node *) stringToNode(defval[ndef].adbin);
+									0, 0, 0),
+						(Node *) stringToNode(defval[ndef].adbin);
 			qry->targetList = lappend(qry->targetList, te);
 		}
 	}

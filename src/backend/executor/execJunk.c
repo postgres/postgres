@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execJunk.c,v 1.11 1998/06/15 19:28:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execJunk.c,v 1.12 1998/07/20 19:53:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,7 @@
 #include "access/heapam.h"
 #include "executor/executor.h"
 #include "nodes/relation.h"
-#include "optimizer/tlist.h"	/* for MakeTLE */
+#include "optimizer/tlist.h"	/* for makeTargetEntry */
 
 /*-------------------------------------------------------------------------
  *		XXX this stuff should be rewritten to take advantage
@@ -111,9 +111,7 @@ ExecInitJunkFilter(List *targetList)
 				/*
 				 * create a new target list entry
 				 */
-				tle = makeNode(TargetEntry);
-				tle->resdom = cleanResdom;
-				tle->expr = expr;
+				tle = makeTargetEntry(cleanResdom, expr);
 				cleanTargetList = lappend(cleanTargetList, tle);
 			}
 		}
@@ -134,7 +132,7 @@ ExecInitJunkFilter(List *targetList)
 			cleanResdom = (Resdom) copyObject((Node) resdom);
 			set_resno(cleanResdom, cleanResno);
 			cleanResno++;
-			tle = (List) MakeTLE(cleanResdom, (Expr) expr);
+			tle = (List) makeTargetEntry(cleanResdom, (Node *) expr);
 			set_fj_innerNode(cleanFjoin, tle);
 
 			foreach(fjListP, lnext(fjList))
@@ -150,7 +148,7 @@ ExecInitJunkFilter(List *targetList)
 				/*
 				 * create a new target list entry
 				 */
-				tle = (List) MakeTLE(cleanResdom, (Expr) expr);
+				tle = (List) makeTargetEntry(cleanResdom, (Node *) expr);
 				cleanFjList = lappend(cleanFjList, tle);
 			}
 			lappend(cleanTargetList, cleanFjList);

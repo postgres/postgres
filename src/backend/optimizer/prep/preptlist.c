@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.13 1998/07/20 19:21:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.14 1998/07/20 19:53:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -114,9 +114,7 @@ preprocess_targetlist(List *tlist,
 
 		var = makeVar(result_relation, -1, TIDOID, -1, 0, result_relation, -1);
 
-		ctid = makeNode(TargetEntry);
-		ctid->resdom = resdom;
-		ctid->expr = (Node *) var;
+		ctid = makeTargetEntry(resdom, (Node *) var);
 		t_list = lappend(t_list, ctid);
 	}
 
@@ -233,7 +231,7 @@ replace_matching_resname(List *new_tlist, List *old_tlist)
 			newresno = (Resdom *) copyObject((Node *) old_tle->resdom);
 			newresno->resno = length(t_list) + 1;
 			newresno->resjunk = 1;
-			new_tl = MakeTLE(newresno, old_tle->expr);
+			new_tl = makeTargetEntry(newresno, old_tle->expr);
 			t_list = lappend(t_list, new_tl);
 		}
 	}
@@ -296,7 +294,7 @@ new_relation_targetlist(Oid relid, Index rt_index, NodeTag node_type)
 									  false,	/* not a set */
 									  false);
 
-					temp3 = MakeTLE(makeResdom(attno,
+					temp3 = makeTargetEntry(makeResdom(attno,
 											   atttype,
 											   -1,
 											   attname,
@@ -317,7 +315,7 @@ new_relation_targetlist(Oid relid, Index rt_index, NodeTag node_type)
 								get_atttypmod(relid, attno),
 								0, rt_index, attno);
 
-					temp_list = MakeTLE(makeResdom(attno,
+					temp_list = makeTargetEntry(makeResdom(attno,
 												   atttype,
 												   get_atttypmod(relid, attno),
 												   attname,

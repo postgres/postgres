@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.23 1998/07/19 05:49:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.24 1998/07/20 19:53:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -132,7 +132,7 @@ set_join_tlist_references(Join *join)
 											  outer_tlist,
 											  inner_tlist);
 
-		temp = MakeTLE(xtl->resdom, (Node *) joinvar);
+		temp = makeTargetEntry(xtl->resdom, (Node *) joinvar);
 		new_join_targetlist = lappend(new_join_targetlist, temp);
 	}
 
@@ -497,7 +497,7 @@ tlist_temp_references(Oid tempid,
 		else
 			oattno = 0;
 
-		temp = MakeTLE(xtl->resdom,
+		temp = makeTargetEntry(xtl->resdom,
 					   (Node *) makeVar(tempid,
 										xtl->resdom->resno,
 										xtl->resdom->restype,
