@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.44 2000/12/17 05:55:26 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.45 2000/12/19 17:35:46 petere Exp $ -->
 
 <chapter id="functions">
  <title>Functions and Operators</title>
@@ -248,7 +248,7 @@
       <entry><type>double precision</type></entry>
       <entry>cube root</entry>
       <entry>cbrt(27.0)</entry>
-      <entry>9.0</entry>
+      <entry>3.0</entry>
      </row>
 
      <row>
@@ -280,7 +280,7 @@
       <entry><type>numeric</type></entry>
       <entry>largest integer not greater than argument</entry>
       <entry>floor(-42.8)</entry>
-      <entry>43</entry>
+      <entry>-43</entry>
      </row>
 
      <row>
