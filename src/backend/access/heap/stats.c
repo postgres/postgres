@@ -7,20 +7,21 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/heap/Attic/stats.c,v 1.1.1.1 1996/07/09 06:21:11 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/heap/Attic/stats.c,v 1.2 1996/10/20 06:56:04 scrappy Exp $
  *
  * NOTES
  *    initam should be moved someplace else.
  *
  *-------------------------------------------------------------------------
  */
+
 #include "postgres.h"
-
+#include "utils/rel.h"
+#include "access/htup.h"
+#include "access/relscan.h"
 #include "access/heapam.h"
+#include "nodes/memnodes.h"
 
-#include "utils/memutils.h"
-#include "utils/palloc.h"
-#include "utils/elog.h"
 #include "utils/mcxt.h"
 
 /* ----------------

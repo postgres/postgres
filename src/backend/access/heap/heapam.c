@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.2 1996/08/24 20:47:54 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.3 1996/10/20 06:55:59 scrappy Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -72,42 +72,15 @@
  *
  *-------------------------------------------------------------------------
  */
-#include <sys/file.h>
-#include <string.h>
 
 #include "postgres.h"
-
-#include "access/attnum.h"
-#include "access/heapam.h"
-#include "access/hio.h"
+#include "utils/rel.h"
 #include "access/htup.h"
 #include "access/relscan.h"
-#include "access/skey.h"
-
-#include "utils/tqual.h"
-#include "access/valid.h"
-#include "access/xact.h"
-
-#include "catalog/catalog.h"
-#include "catalog/catname.h"
-#include "storage/buf.h"
-#include "storage/bufmgr.h"
-#include "storage/bufpage.h"
 #include "storage/itemid.h"
-#include "storage/itemptr.h"
-#include "storage/lmgr.h"
-
-#include "tcop/tcopdebug.h"
+#include "storage/bufpage.h"
+#include "access/heapam.h"
 #include "miscadmin.h"
-
-#include "utils/memutils.h"
-#include "utils/palloc.h"
-#include "fmgr.h"
-#include "utils/inval.h"
-#include "utils/elog.h"
-#include "utils/mcxt.h"
-#include "utils/rel.h"
-#include "utils/relcache.h"
 
 static bool	ImmediateInvalidation;
 
