@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.34 1998/02/05 15:08:49 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.35 1998/02/06 20:17:49 momjian Exp $
  *
  * NOTES
  *	  The old interface functions have been converted to macros
@@ -428,7 +428,7 @@ nocachegetattr(HeapTuple tup,
 
 #if IN_MACRO
 /* This is handled in the macro */
-		if (att[attnum]->attcacheoff > 0)
+		if (att[attnum]->attcacheoff != -1)
 		{
 			return (Datum)
 				fetchatt(&(att[attnum]),
@@ -512,7 +512,7 @@ nocachegetattr(HeapTuple tup,
 	 */
 	if (!slow)
 	{
-		if (att[attnum]->attcacheoff > 0)
+		if (att[attnum]->attcacheoff != -1)
 		{
 			return (Datum)fetchatt(&(att[attnum]),
 						tp + att[attnum]->attcacheoff);
@@ -650,7 +650,7 @@ nocachegetattr(HeapTuple tup,
 			}
 
 			/* If we know the next offset, we can skip the rest */
-			if (usecache && att[i]->attcacheoff > 0)
+			if (usecache && att[i]->attcacheoff != -1)
 				off = att[i]->attcacheoff;
 			else
 			{

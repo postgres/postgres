@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.25 1998/02/05 17:22:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.26 1998/02/06 20:17:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -181,7 +181,7 @@ nocache_index_getattr(IndexTuple tup,
 		{
 			return (Datum) fetchatt(&(att[0]), (char *) tup + data_off);
 		}
-		if (att[attnum]->attcacheoff > 0)
+		if (att[attnum]->attcacheoff != -1)
 		{
 			return (Datum) fetchatt(&(att[attnum]),
 							 (char *) tup + data_off +
@@ -254,7 +254,7 @@ nocache_index_getattr(IndexTuple tup,
 
 	if (!slow)
 	{
-		if (att[attnum]->attcacheoff > 0)
+		if (att[attnum]->attcacheoff != -1)
 		{
 			return (Datum) fetchatt(&(att[attnum]),
 							 tp + att[attnum]->attcacheoff);
@@ -290,7 +290,7 @@ nocache_index_getattr(IndexTuple tup,
 
 		att[0]->attcacheoff = 0;
 
-		while (att[j]->attcacheoff > 0)
+		while (att[j]->attcacheoff != -1)
 			j++;
 
 		if (!VARLENA_FIXED_SIZE(att[j-1]))
@@ -366,7 +366,7 @@ nocache_index_getattr(IndexTuple tup,
 			}
 
 			/* If we know the next offset, we can skip the rest */
-			if (usecache && att[i]->attcacheoff > 0)
+			if (usecache && att[i]->attcacheoff != -1)
 				off = att[i]->attcacheoff;
 			else
 			{

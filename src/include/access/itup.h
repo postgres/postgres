@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: itup.h,v 1.11 1998/02/01 05:38:39 momjian Exp $
+ * $Id: itup.h,v 1.12 1998/02/06 20:18:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -123,7 +123,7 @@ typedef struct PredInfo
 		*(isnull) = false, \
 		IndexTupleNoNulls(tup) ? \
 		( \
-			((tupleDesc)->attrs[(attnum)-1]->attcacheoff > 0 || \
+			((tupleDesc)->attrs[(attnum)-1]->attcacheoff != -1 || \
 			 (attnum) == 1) ? \
 			( \
 				(Datum)fetchatt(&((tupleDesc)->attrs[(attnum)-1]), \

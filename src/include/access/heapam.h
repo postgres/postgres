@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: heapam.h,v 1.28 1998/02/01 05:38:38 momjian Exp $
+ * $Id: heapam.h,v 1.29 1998/02/06 20:18:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -95,7 +95,7 @@ typedef HeapAccessStatisticsData *HeapAccessStatistics;
 		((isnull) ? (*(isnull) = false) : (dummyret)NULL), \
 		HeapTupleNoNulls(tup) ? \
 		( \
-			((tupleDesc)->attrs[(attnum)-1]->attcacheoff > 0 || \
+			((tupleDesc)->attrs[(attnum)-1]->attcacheoff != -1 || \
 			 (attnum) == 1) ? \
 			( \
 				(Datum)fetchatt(&((tupleDesc)->attrs[(attnum)-1]), \
