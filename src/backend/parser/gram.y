@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.65 1999/03/18 22:03:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.66 1999/03/19 23:48:50 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -340,6 +340,7 @@ Oid	param_type(int t); /* used in parse_expr.c */
 %left		Op				/* multi-character ops and user-defined operators */
 %nonassoc	NOTNULL
 %nonassoc	ISNULL
+%nonassoc	NULL_P
 %nonassoc	IS
 %left		'+' '-'
 %left		'*' '/' '%'
