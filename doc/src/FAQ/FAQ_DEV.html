@@ -12,7 +12,7 @@
     <H1>Developer's Frequently Asked Questions (FAQ) for
     PostgreSQL</H1>
 
-    <P>Last updated: Sat Feb 23 15:09:27 EST 2002</P>
+    <P>Last updated: Mon Feb 25 15:29:28 EST 2002</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -777,14 +777,19 @@
 
     <P><I>elog()</I> is used to send messages to the front-end, and
     optionally terminate the current query being processed. The first
-    parameter is an elog level of <I>NOTICE,</I> <I>DEBUG,</I>
-    <I>ERROR,</I> or <I>FATAL.</I> <I>NOTICE</I> prints on the user's
-    terminal and the postmaster logs. <I>DEBUG</I> prints only in the
-    postmaster logs. <I>ERROR</I> prints in both places, and terminates
-    the current query, never returning from the call. <I>FATAL</I>
-    terminates the backend process. The remaining parameters of
-    <I>elog</I> are a <I>printf</I>-style set of parameters to
-    print.</P>
+    parameter is an elog level of <I>DEBUG</I> (levels 1-5), <I>LOG,</I>
+    <I>INFO,</I> <I>NOTICE,</I> <I>ERROR,</I> <I>FATAL,</I> or
+    <I>PANIC.</I> <I>NOTICE</I> prints on the user's terminal and the
+    postmaster logs. <I>INFO</I> prints only to the user's terminal and
+    <I>LOG</I> prints only to the server logs. (These can be changed
+    from <I>postgresql.conf.</I>) <I>ERROR</I> prints in both places,
+    and terminates the current query, never returning from the call.
+    <I>FATAL</I> terminates the backend process. The remaining
+    parameters of <I>elog</I> are a <I>printf</I>-style set of
+    parameters to print.</P>
+
+    <P><I>elog(ERROR)</I> frees most memory and open file descriptors so
+    you don't need to clean these up before the call.</P>
 
     <H3><A name="2.7">2.7</A>) What is CommandCounterIncrement()?</H3>
 

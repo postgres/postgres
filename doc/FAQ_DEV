@@ -1,7 +1,7 @@
 
           Developer's Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Sat Feb 23 15:09:27 EST 2002
+   Last updated: Mon Feb 25 15:29:28 EST 2002
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -642,12 +642,16 @@ List *i, *list;
   
    elog() is used to send messages to the front-end, and optionally
    terminate the current query being processed. The first parameter is an
-   elog level of NOTICE, DEBUG, ERROR, or FATAL. NOTICE prints on the
-   user's terminal and the postmaster logs. DEBUG prints only in the
-   postmaster logs. ERROR prints in both places, and terminates the
-   current query, never returning from the call. FATAL terminates the
-   backend process. The remaining parameters of elog are a printf-style
-   set of parameters to print.
+   elog level of DEBUG (levels 1-5), LOG, INFO, NOTICE, ERROR, FATAL, or
+   PANIC. NOTICE prints on the user's terminal and the postmaster logs.
+   INFO prints only to the user's terminal and LOG prints only to the
+   server logs. (These can be changed from postgresql.conf.) ERROR prints
+   in both places, and terminates the current query, never returning from
+   the call. FATAL terminates the backend process. The remaining
+   parameters of elog are a printf-style set of parameters to print.
+   
+   elog(ERROR) frees most memory and open file descriptors so you don't
+   need to clean these up before the call.
    
   2.7) What is CommandCounterIncrement()?
   
