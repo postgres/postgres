@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.53 2001/10/03 15:50:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.54 2001/10/04 14:49:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -152,7 +152,10 @@ AdjustTimestampForTypmod(Timestamp *time, int32 typmod)
 		static int32 TimestampTypmod = 0;
 
 		if (typmod != TimestampTypmod)
-			TimestampScale = pow(10, typmod);
+		{
+			TimestampScale = pow(10.0, typmod);
+			TimestampTypmod = typmod;
+		}
 
 		*time = (rint(((double) *time)*TimestampScale)/TimestampScale);
 	}
@@ -1716,8 +1719,10 @@ text_timestamp(PG_FUNCTION_ARGS)
 		*dp++ = *sp++;
 	*dp = '\0';
 
-	return DirectFunctionCall1(timestamp_in,
-							   CStringGetDatum(dstr));
+	return DirectFunctionCall3(timestamp_in,
+							   CStringGetDatum(dstr),
+							   ObjectIdGetDatum(InvalidOid),
+							   Int32GetDatum(-1));
 }
 
 
@@ -1770,8 +1775,10 @@ text_timestamptz(PG_FUNCTION_ARGS)
 		*dp++ = *sp++;
 	*dp = '\0';
 
-	return DirectFunctionCall1(timestamptz_in,
-							   CStringGetDatum(dstr));
+	return DirectFunctionCall3(timestamptz_in,
+							   CStringGetDatum(dstr),
+							   ObjectIdGetDatum(InvalidOid),
+							   Int32GetDatum(-1));
 }
 
 

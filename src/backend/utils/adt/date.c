@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.59 2001/10/03 05:29:24 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.60 2001/10/04 14:49:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -920,8 +920,10 @@ text_time(PG_FUNCTION_ARGS)
 		*dp++ = *sp++;
 	*dp = '\0';
 
-	return DirectFunctionCall1(time_in,
-							   CStringGetDatum(dstr));
+	return DirectFunctionCall3(time_in,
+							   CStringGetDatum(dstr),
+							   ObjectIdGetDatum(InvalidOid),
+							   Int32GetDatum(-1));
 }
 
 
@@ -1448,8 +1450,10 @@ text_timetz(PG_FUNCTION_ARGS)
 		*dp++ = *sp++;
 	*dp = '\0';
 
-	return DirectFunctionCall1(timetz_in,
-							   CStringGetDatum(dstr));
+	return DirectFunctionCall3(timetz_in,
+							   CStringGetDatum(dstr),
+							   ObjectIdGetDatum(InvalidOid),
+							   Int32GetDatum(-1));
 }
 
 /* timetz_zone()
