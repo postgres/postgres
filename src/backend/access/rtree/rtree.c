@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.63 2001/07/15 22:48:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.64 2001/09/29 03:46:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,6 +55,14 @@ typedef struct SPLITVEC
 	Datum		spl_rdatum;
 } SPLITVEC;
 
+/* for sorting tuples by cost, for picking split */
+typedef struct SPLITCOST
+{
+	OffsetNumber	offset_number;
+	float			cost_differential;
+	bool			choose_left;
+} SPLITCOST;
+
 typedef struct RTSTATE
 {
 	FmgrInfo	unionFn;		/* union function */
@@ -92,6 +100,7 @@ static OffsetNumber choose(Relation r, Page p, IndexTuple it,
 	   RTSTATE *rtstate);
 static int	nospace(Page p, IndexTuple it);
 static void initRtstate(RTSTATE *rtstate, Relation index);
+static int qsort_comp_splitcost(const void *a, const void *b);
 
 
 /*
@@ -366,7 +375,12 @@ rttighten(Relation r,
 	FunctionCall2(&rtstate->sizeFn, datum,
 				  PointerGetDatum(&newd_size));
 
-	if (newd_size != old_size)
+	/*
+	 * If newd_size == 0 we have degenerate rectangles, so we
+	 * don't know if there was any change, so we have to
+	 * assume there was.
+	 */
+	if ((newd_size == 0) || (newd_size != old_size))
 	{
 		TupleDesc	td = RelationGetDescr(r);
 
@@ -442,6 +456,8 @@ rtdosplit(Relation r,
 	OffsetNumber *spl_left,
 			   *spl_right;
 	TupleDesc	tupDesc;
+	int			n;
+	OffsetNumber newitemoff;
 
 	p = (Page) BufferGetPage(buffer);
 	opaque = (RTreePageOpaque) PageGetSpecialPointer(p);
@@ -478,56 +494,64 @@ rtdosplit(Relation r,
 	spl_right = v.spl_right;
 	leftoff = rightoff = FirstOffsetNumber;
 	maxoff = PageGetMaxOffsetNumber(p);
-	for (i = FirstOffsetNumber; i <= maxoff; i = OffsetNumberNext(i))
-	{
-		itemid = PageGetItemId(p, i);
-		item = (IndexTuple) PageGetItem(p, itemid);
-
-		if (i == *spl_left)
-		{
-			if (PageAddItem(left, (Item) item, IndexTupleSize(item),
-							leftoff, LP_USED) == InvalidOffsetNumber)
-				elog(ERROR, "rtdosplit: failed to copy index item in %s",
-					 RelationGetRelationName(r));
-			leftoff = OffsetNumberNext(leftoff);
-			spl_left++;			/* advance in left split vector */
-		}
-		else
-		{
-			Assert(i == *spl_right);
-			if (PageAddItem(right, (Item) item, IndexTupleSize(item),
-							rightoff, LP_USED) == InvalidOffsetNumber)
-				elog(ERROR, "rtdosplit: failed to copy index item in %s",
-					 RelationGetRelationName(r));
-			rightoff = OffsetNumberNext(rightoff);
-			spl_right++;		/* advance in right split vector */
-		}
-	}
+	newitemoff = OffsetNumberNext(maxoff);
 
 	/* build an InsertIndexResult for this insertion */
 	res = (InsertIndexResult) palloc(sizeof(InsertIndexResultData));
 
-	/* now insert the new index tuple */
-	if (*spl_left == maxoff + 1)
+	/*
+	 * spl_left contains a list of the offset numbers of the 
+	 * tuples that will go to the left page.  For each offset
+	 * number, get the tuple item, then add the item to the
+	 * left page.  Similarly for the right side.
+	 */
+
+	/* fill left node */
+	for (n = 0; n < v.spl_nleft; n++)
 	{
-		if (PageAddItem(left, (Item) itup, IndexTupleSize(itup),
+		i = *spl_left;
+		if (i == newitemoff)
+			item = itup;
+		else
+		{
+			itemid = PageGetItemId(p, i);
+			item = (IndexTuple) PageGetItem(p, itemid);
+		}
+
+		if (PageAddItem(left, (Item) item, IndexTupleSize(item),
 						leftoff, LP_USED) == InvalidOffsetNumber)
 			elog(ERROR, "rtdosplit: failed to add index item to %s",
 				 RelationGetRelationName(r));
 		leftoff = OffsetNumberNext(leftoff);
-		ItemPointerSet(&(res->pointerData), lbknum, leftoff);
-		spl_left++;
+
+		if (i == newitemoff)
+			ItemPointerSet(&(res->pointerData), lbknum, leftoff);
+
+		spl_left++;		/* advance in left split vector */
 	}
-	else
+
+	/* fill right node */
+	for (n = 0; n < v.spl_nright; n++)
 	{
-		Assert(*spl_right == maxoff + 1);
-		if (PageAddItem(right, (Item) itup, IndexTupleSize(itup),
+		i = *spl_right;
+		if (i == newitemoff)
+			item = itup;
+		else
+		{
+			itemid = PageGetItemId(p, i);
+			item = (IndexTuple) PageGetItem(p, itemid);
+		}
+
+		if (PageAddItem(right, (Item) item, IndexTupleSize(item),
 						rightoff, LP_USED) == InvalidOffsetNumber)
 			elog(ERROR, "rtdosplit: failed to add index item to %s",
 				 RelationGetRelationName(r));
 		rightoff = OffsetNumberNext(rightoff);
-		ItemPointerSet(&(res->pointerData), rbknum, rightoff);
-		spl_right++;
+
+		if (i == newitemoff)
+			ItemPointerSet(&(res->pointerData), rbknum, rightoff);
+
+		spl_right++;		/* advance in right split vector */
 	}
 
 	/* Make sure we consumed all of the split vectors, and release 'em */
@@ -680,8 +704,10 @@ rtnewroot(Relation r, IndexTuple lt, IndexTuple rt)
  * In addition, the item to be added (itup) is listed in the appropriate
  * vector.	It is represented by item number N+1 (N = # of items on page).
  *
- * Both vectors appear in sequence order with a terminating sentinel value
- * of InvalidOffsetNumber.
+ * Both vectors have a terminating sentinel value of InvalidOffsetNumber,
+ * but the sentinal value is no longer used, because the SPLITVEC
+ * vector also contains the length of each vector, and that information
+ * is now used to iterate over them in rtdosplit(). --kbb, 21 Sept 2001
  *
  * The bounding-box datums for the two new pages are also returned in *v.
  *
@@ -736,6 +762,12 @@ rtpicksplit(Relation r,
 				item_2_sz,
 				left_avail_space,
 				right_avail_space;
+	int			total_num_tuples,
+				num_tuples_without_seeds,
+				max_after_split; /* in Guttman's lingo, (M - m) */
+	float		diff; /* diff between cost of putting tuple left or right */
+	SPLITCOST   *cost_vector;
+	int			n;
 
 	/*
 	 * First, make sure the new item is not so large that we can't
@@ -751,6 +783,9 @@ rtpicksplit(Relation r,
 	maxoff = PageGetMaxOffsetNumber(page);
 	newitemoff = OffsetNumberNext(maxoff);		/* phony index for new
 												 * item */
+	total_num_tuples = newitemoff;
+	num_tuples_without_seeds = total_num_tuples - 2;
+	max_after_split = total_num_tuples / 2;		/* works for m = M/2 */
 
 	/* Make arrays big enough for worst case, including sentinel */
 	nbytes = (maxoff + 2) * sizeof(OffsetNumber);
@@ -848,47 +883,111 @@ rtpicksplit(Relation r,
 	right_avail_space = RTPageAvailSpace - IndexTupleTotalSize(item_2);
 
 	/*
-	 * Now split up the regions between the two seeds.	An important
-	 * property of this split algorithm is that the split vector v has the
-	 * indices of items to be split in order in its left and right
-	 * vectors.  We exploit this property by doing a merge in the code
-	 * that actually splits the page.
+	 * Now split up the regions between the two seeds.
 	 *
-	 * For efficiency, we also place the new index tuple in this loop. This
-	 * is handled at the very end, when we have placed all the existing
-	 * tuples and i == maxoff + 1.
+	 * The cost_vector array will contain hints for determining where
+	 * each tuple should go.  Each record in the array will contain
+	 * a boolean, choose_left, that indicates which node the tuple
+	 * prefers to be on, and the absolute difference in cost between
+	 * putting the tuple in its favored node and in the other node.
+	 *
+	 * Later, we will sort the cost_vector in descending order by cost
+	 * difference, and consider the tuples in that order for
+	 * placement.  That way, the tuples that *really* want to be in
+	 * one node or the other get to choose first, and the tuples that
+	 * don't really care choose last.
+	 *
+	 * First, build the cost_vector array.  The new index tuple will
+	 * also be handled in this loop, and represented in the array,
+	 * with i==newitemoff.
+	 *
+	 * In the case of variable size tuples it is possible that we only
+	 * have the two seeds and no other tuples, in which case we don't
+	 * do any of this cost_vector stuff.
 	 */
+
+	/* to keep compiler quiet */
+	cost_vector = (SPLITCOST *) NULL;
+
+	if (num_tuples_without_seeds > 0)
+	{
+		cost_vector =
+			(SPLITCOST *) palloc(num_tuples_without_seeds * sizeof(SPLITCOST));
+		n = 0;
+		for (i = FirstOffsetNumber; i <= newitemoff; i = OffsetNumberNext(i))
+		{
+			/* Compute new union datums and sizes for both choices */
+
+			if ((i == seed_1) || (i == seed_2))
+				continue;
+			else if (i == newitemoff)
+				item_1 = itup;
+			else
+				item_1 = (IndexTuple) PageGetItem(page, PageGetItemId(page, i));
+
+			datum_alpha = IndexTupleGetDatum(item_1);
+			union_dl = FunctionCall2(&rtstate->unionFn, datum_l, datum_alpha);
+			union_dr = FunctionCall2(&rtstate->unionFn, datum_r, datum_alpha);
+			FunctionCall2(&rtstate->sizeFn, union_dl,
+						  PointerGetDatum(&size_alpha));
+			FunctionCall2(&rtstate->sizeFn, union_dr,
+						  PointerGetDatum(&size_beta));
+
+			diff = (size_alpha - size_l) - (size_beta - size_r);
+
+			cost_vector[n].offset_number = i;
+			cost_vector[n].cost_differential = fabs(diff);
+			cost_vector[n].choose_left = (diff < 0);
+
+			n++;
+		}
+
+		/*
+		 * Sort the array.  The function qsort_comp_splitcost is
+		 * set up "backwards", to provided descending order.
+		 */
+		qsort(cost_vector, num_tuples_without_seeds, sizeof(SPLITCOST),
+			  &qsort_comp_splitcost);
+	}
+
+	/*
+	 * Now make the final decisions about where each tuple will go,
+	 * and build the vectors to return in the SPLITVEC record.
+	 *
+	 * The cost_vector array contains (descriptions of) all the
+	 * tuples, in the order that we want to consider them, so we
+	 * we just iterate through it and place each tuple in left
+	 * or right nodes, according to the criteria described below.
+	 */
+
 	left = v->spl_left;
 	v->spl_nleft = 0;
 	right = v->spl_right;
 	v->spl_nright = 0;
 
-	for (i = FirstOffsetNumber; i <= newitemoff; i = OffsetNumberNext(i))
+	/* Place the seeds first.
+	 * left avail space, left union, right avail space, and right
+	 * union have already been adjusted for the seeds.
+	 */
+
+	*left++ = seed_1;
+	v->spl_nleft++;
+
+	*right++ = seed_2;
+	v->spl_nright++;
+
+	for (n = 0; n < num_tuples_without_seeds; n++)
 	{
 		bool		left_feasible,
 					right_feasible,
 					choose_left;
 
 		/*
-		 * If we've already decided where to place this item, just put it
-		 * on the correct list.  Otherwise, we need to figure out which
-		 * page needs the least enlargement in order to store the item.
+		 * We need to figure out which page needs the least
+		 * enlargement in order to store the item.
 		 */
 
-		if (i == seed_1)
-		{
-			*left++ = i;
-			v->spl_nleft++;
-			/* left avail_space & union already includes this one */
-			continue;
-		}
-		if (i == seed_2)
-		{
-			*right++ = i;
-			v->spl_nright++;
-			/* right avail_space & union already includes this one */
-			continue;
-		}
+		i = cost_vector[n].offset_number;
 
 		/* Compute new union datums and sizes for both possible additions */
 		if (i == newitemoff)
@@ -918,6 +1017,24 @@ rtpicksplit(Relation r,
 		 * (We know that all the old items together can fit on one page, so
 		 * we need not worry about any other problem than failing to fit
 		 * the new item.)
+		 *
+		 * Guttman's algorithm actually has two factors to consider (in
+		 * order):  1. if one node has so many tuples already assigned to
+		 * it that the other needs all the rest in order to satisfy the
+		 * condition that neither node has fewer than m tuples, then
+		 * that is decisive; 2. otherwise, choose the page that shows
+		 * the smaller enlargement of its union area.
+		 *
+		 * I have chosen m = M/2, where M is the maximum number of
+		 * tuples on a page.  (Actually, this is only strictly
+		 * true for fixed size tuples.  For variable size tuples,
+		 * there still might have to be only one tuple on a page,
+		 * if it is really big.  But even with variable size
+		 * tuples we still try to get m as close as possible to M/2.)
+		 *
+		 * The question of which page shows the smaller enlargement of
+		 * its union area has already been answered, and the answer
+		 * stored in the choose_left field of the SPLITCOST record.
 		 */
 		left_feasible = (left_avail_space >= item_1_sz &&
 						 ((left_avail_space - item_1_sz) >= newitemsz ||
@@ -927,8 +1044,18 @@ rtpicksplit(Relation r,
 						   left_avail_space >= newitemsz));
 		if (left_feasible && right_feasible)
 		{
-			/* Both feasible, use Guttman's algorithm */
-			choose_left = (size_alpha - size_l < size_beta - size_r);
+			/*
+			 * Both feasible, use Guttman's algorithm.
+			 * First check the m condition described above, and if
+			 * that doesn't apply, choose the page with the smaller
+			 * enlargement of its union area.
+			 */
+			if (v->spl_nleft > max_after_split)
+				choose_left = false;
+			else if (v->spl_nright > max_after_split)
+				choose_left = true;
+			else
+				choose_left = cost_vector[n].choose_left;
 		}
 		else if (left_feasible)
 			choose_left = true;
@@ -960,6 +1087,11 @@ rtpicksplit(Relation r,
 			*right++ = i;
 			v->spl_nright++;
 		}
+	}
+
+	if (num_tuples_without_seeds > 0)
+	{
+		pfree(cost_vector);
 	}
 
 	*left = *right = InvalidOffsetNumber;		/* add ending sentinels */
@@ -1143,6 +1275,21 @@ initRtstate(RTSTATE *rtstate, Relation index)
 	fmgr_info(size_proc, &rtstate->sizeFn);
 	fmgr_info(inter_proc, &rtstate->interFn);
 	return;
+}
+
+/* for sorting SPLITCOST records in descending order */
+static int
+qsort_comp_splitcost(const void *a, const void *b)
+{
+	float diff =
+		((SPLITCOST *)a)->cost_differential -
+		((SPLITCOST *)b)->cost_differential;
+	if (diff < 0)
+		return 1;
+	else if (diff > 0)
+		return -1;
+	else
+		return 0;
 }
 
 #ifdef RTDEBUG
