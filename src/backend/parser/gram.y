@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.55 1997/10/09 05:35:30 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.56 1997/10/09 05:43:59 thomas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2362,7 +2362,7 @@ typname:  txname
 txname:  Id								{ $$ = $1; }
 		| DateTime						{ $$ = $1; }
 		| TIME							{ $$ = xlateSqlType("time"); }
-		| TYPE_P						{ $$ = xlateSqlType("type"); }
+		| P_TYPE						{ $$ = xlateSqlType("type"); }
 		| INTERVAL interval_opts		{ $$ = xlateSqlType("interval"); }
 		| CHARACTER char_type			{ $$ = $2; }
 		| DOUBLE PRECISION				{ $$ = xlateSqlType("float8"); }
@@ -3142,7 +3142,7 @@ index_name:				Id				{ $$ = $1; };
 name:  Id								{ $$ = $1; }
 		| DateTime						{ $$ = $1; }
 		| TIME							{ $$ = xlateSqlType("time"); }
-		| TYPE_P						{ $$ = xlateSqlType("type"); }
+		| P_TYPE						{ $$ = xlateSqlType("type"); }
 		;
 
 date:					Sconst			{ $$ = $1; };
@@ -3198,7 +3198,7 @@ Id:  IDENT								{ $$ = $1; };
 ColId:	Id								{ $$ = $1; }
 		| DateTime						{ $$ = $1; }
 		| TIME							{ $$ = "time"; }
-		| TYPE_P						{ $$ = "type"; }
+		| P_TYPE						{ $$ = "type"; }
 		;
 
 SpecialRuleRelation:  CURRENT
