@@ -118,7 +118,7 @@ From owner-pgsql-hackers@hub.org Sun Aug 30 13:01:10 1998
 Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
 	by candle.pha.pa.us (8.8.5/8.8.5) with ESMTP id NAA13785
 	for <maillist@candle.pha.pa.us>; Sun, 30 Aug 1998 13:01:09 -0400 (EDT)
-Received: from hub.org (hub.org [209.47.148.200]) by renoir.op.net (o1/$Revision: 1.1 $) with ESMTP id MAA29386 for <maillist@candle.pha.pa.us>; Sun, 30 Aug 1998 12:58:24 -0400 (EDT)
+Received: from hub.org (hub.org [209.47.148.200]) by renoir.op.net (o1/$Revision: 1.2 $) with ESMTP id MAA29386 for <maillist@candle.pha.pa.us>; Sun, 30 Aug 1998 12:58:24 -0400 (EDT)
 Received: from localhost (majordom@localhost) by hub.org (8.8.8/8.7.5) with SMTP id MAA11406; Sun, 30 Aug 1998 12:54:48 -0400 (EDT)
 Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Sun, 30 Aug 1998 12:52:22 +0000 (EDT)
 Received: (from majordom@localhost) by hub.org (8.8.8/8.7.5) id MAA11310 for pgsql-hackers-outgoing; Sun, 30 Aug 1998 12:52:20 -0400 (EDT)
@@ -278,7 +278,7 @@ From owner-pgsql-hackers@hub.org Mon Aug 31 11:31:19 1998
 Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
 	by candle.pha.pa.us (8.8.5/8.8.5) with ESMTP id LAA21195
 	for <maillist@candle.pha.pa.us>; Mon, 31 Aug 1998 11:31:13 -0400 (EDT)
-Received: from hub.org (hub.org [209.47.148.200]) by renoir.op.net (o1/$Revision: 1.1 $) with ESMTP id LAA06827 for <maillist@candle.pha.pa.us>; Mon, 31 Aug 1998 11:17:41 -0400 (EDT)
+Received: from hub.org (hub.org [209.47.148.200]) by renoir.op.net (o1/$Revision: 1.2 $) with ESMTP id LAA06827 for <maillist@candle.pha.pa.us>; Mon, 31 Aug 1998 11:17:41 -0400 (EDT)
 Received: from localhost (majordom@localhost) by hub.org (8.8.8/8.7.5) with SMTP id LAA24792; Mon, 31 Aug 1998 11:12:18 -0400 (EDT)
 Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Mon, 31 Aug 1998 11:10:31 +0000 (EDT)
 Received: (from majordom@localhost) by hub.org (8.8.8/8.7.5) id LAA24742 for pgsql-hackers-outgoing; Mon, 31 Aug 1998 11:10:29 -0400 (EDT)
