@@ -52,8 +52,9 @@ Rename sort files called pg_temp to pg_sorttemp(Bruce)
 Fix for microseconds in time values(Tom)
 Tutorial source cleanup
 New linux_m68k port
-Fix for sorting of NULL's in rare cases(Tom)
-GROUP BY fixes(Tom)
+Fix for sorting of NULL's in some cases(Tom)
+Shared library dependencies fixed (Tom)
+Fixed glitches affecting GROUP BY in subselects(Tom)
 </programlisting>
 </para>
 </sect2>
