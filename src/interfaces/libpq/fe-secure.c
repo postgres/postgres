@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-secure.c,v 1.7 2002/06/20 20:29:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-secure.c,v 1.8 2002/06/23 14:56:16 momjian Exp $
  *	  
  * NOTES
  *	  The client *requires* a valid server certificate.  Since
@@ -406,15 +406,6 @@ verify_peer (PGconn *conn)
 		for (s = h->h_addr_list; *s != NULL; s++)
 		{
 			if (!memcmp(&sin->sin_addr.s_addr, *s, h->h_length))
-				return 0;
-		}
-		break;
-
-	case AF_INET6:
-		sin6 = (struct sockaddr_in6 *) &addr;
-		for (s = h->h_addr_list; *s != NULL; s++)
-		{
-			if (!memcmp(sin6->sin6_addr.s6_addr8, *s, h->h_length))
 				return 0;
 		}
 		break;
