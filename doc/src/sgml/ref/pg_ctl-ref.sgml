@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_ctl-ref.sgml,v 1.2 2000/10/08 13:22:24 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_ctl-ref.sgml,v 1.3 2000/10/12 22:13:21 momjian Exp $
 Postgres documentation
 -->
 
@@ -287,7 +287,7 @@ $ pg_ctl -w start
     try:
 
     <programlisting>
-$ pg_ctl -p /usr/local/pgsq/bin/postmaster start
+$ pg_ctl -p /usr/local/pgsql/bin/postmaster start
     </programlisting>
    </para>
 
