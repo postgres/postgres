@@ -146,10 +146,11 @@ operator		{op_and_self}+
 xmstop			-
 
 integer			[\-]?{digit}+
+decimal			[\-]?(({digit}*\.{digit}+)|({digit}+\.{digit}*))
+real			[\-]?((({digit}*\.{digit}+)|({digit}+\.{digit}*)|({digit}+))([Ee][-+]?{digit}+))
 /*
-real			[\-]?{digit}+\.{digit}+([Ee][-+]?{digit}+)?
-*/
 real			[\-]?(((({digit}*\.{digit}+)|({digit}+\.{digit}*))([Ee][-+]?{digit}+)?)|({digit}+[Ee][-+]?{digit}+))
+*/
 
 param			\${integer}
 
@@ -391,14 +392,34 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 					if (*endptr != '\0' || errno == ERANGE)
 					{
 						errno = 0;
+#if 0
 						yylval.dval = strtod(((char *)yytext),&endptr);
 						if (*endptr != '\0' || errno == ERANGE)
 							yyerror("ERROR: Bad integer input");
 						yyerror("WARNING: Integer input is out of range; promoted to float");
 						return FCONST;
+#endif
+						yylval.str = mm_strdup((char*)yytext);
+                                                return SCONST;
 					}
 					return ICONST;
 				}
+{decimal}/{space}*-{number} {
+                                        char* endptr;
+
+                                        BEGIN(xm);
+                                        if (strlen((char *)yytext) <= 17)
+                                        {
+                                                errno = 0;
+						yylval.dval = strtod(((char *)yytext),&endptr);
+						if (*endptr != '\0' || errno == ERANGE)
+							yyerror("ERROR: Bad float8 input");
+						return FCONST;
+                                        }
+                                        yylval.str = mm_strdup((char*)yytext);
+                                        return SCONST;
+                                }
+
 <C,SQL>{real}/{space}*-{number} {
 					char* endptr;
 
@@ -417,14 +438,32 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 					if (*endptr != '\0' || errno == ERANGE)
 					{
 						errno = 0;
+#if 0
 						yylval.dval = strtod(((char *)yytext),&endptr);
 						if (*endptr != '\0' || errno == ERANGE)
 							yyerror("ERROR: Bad integer input");
 						yyerror("WARNING: Integer input is out of range; promoted to float");
 						return FCONST;
+#endif
+						yylval.str = mm_strdup((char*)yytext);
+                                                return SCONST;
 					}
 					return ICONST;
 				}
+{decimal}   		        {
+                                        char* endptr;
+
+                                        if (strlen((char *)yytext) <= 17)
+                                        {
+                                                errno = 0;
+                                                yylval.dval = strtod((char *)yytext,&endptr);
+						if (*endptr != '\0' || errno == ERANGE)
+							yyerror("ERROR: Bad float8 input");
+						return FCONST;
+                                        }
+                                        yylval.str = mm_strdup((char*)yytext);
+                                        return SCONST;
+                                }
 <C,SQL>{real}			{
 					char* endptr;
 

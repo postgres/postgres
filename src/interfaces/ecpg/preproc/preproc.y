@@ -2918,7 +2918,7 @@ name_list:  name
 				{	$$ = cat3_str($1, make1_str(","), $3); }
 		;
 
-group_clause:  GROUP BY expr_list			{ $$ = cat2_str(make1_str("groub by"), $3); }
+group_clause:  GROUP BY expr_list			{ $$ = cat2_str(make1_str("group by"), $3); }
 		| /*EMPTY*/				{ $$ = make1_str(""); }
 		;
 
