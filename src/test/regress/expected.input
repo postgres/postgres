@@ -229,8 +229,8 @@ QUERY: CREATE FUNCTION reverse_c16(char16)
    RETURNS char16
    AS '_CWD_/regress_DLSUFFIX_'
    LANGUAGE 'c';
-QUERY: LOAD '_CWD_/regress_DLSUFFIX_'
-COPY onek FROM '_CWD_/data/onek.data';
+QUERY: LOAD '_CWD_/regress_DLSUFFIX_';
+QUERY: COPY onek FROM '_CWD_/data/onek.data';
 QUERY: COPY tenk1 FROM '_CWD_/data/tenk.data';
 QUERY: INSERT INTO tenk2 VALUES (tenk1.*);
 QUERY: SELECT * INTO TABLE onek2 FROM onek;
@@ -272,8 +272,8 @@ QUERY: INSERT INTO shighway
    FROM road
    WHERE name ~ 'State Hwy.*';
 QUERY: UPDATE shighway
-   SET surface = 'asphalt'
-INSERT INTO a_star (class, a) VALUES ('a', 1);
+   SET surface = 'asphalt';
+QUERY: INSERT INTO a_star (class, a) VALUES ('a', 1);
 QUERY: INSERT INTO a_star (class, a) VALUES ('a', 2);
 QUERY: INSERT INTO a_star (class) VALUES ('a');
 QUERY: INSERT INTO b_star (class, a, b) VALUES ('b', 3, 'mumble'::text);
@@ -295,8 +295,8 @@ QUERY: INSERT INTO d_star (class, a, c, d)
 QUERY: INSERT INTO d_star (class, b, c, d)
    VALUES ('d', 'crumble'::text, 'hi boris'::char16, '100.001'::float8);
 QUERY: INSERT INTO d_star (class, a, b)
-   VALUES ('d', 11, 'fumble'::text)
-INSERT INTO d_star (class, a, c)
+   VALUES ('d', 11, 'fumble'::text);
+QUERY: INSERT INTO d_star (class, a, c)
    VALUES ('d', 12, 'hi avi'::char16);
 QUERY: INSERT INTO d_star (class, a, d)
    VALUES ('d', 13, '1000.0001'::float8);
