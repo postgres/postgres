@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.32 1999/06/06 17:38:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.33 1999/06/10 06:55:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -192,6 +192,13 @@ plan_union_queries(Query *parse)
 		/* needed so we don't take the flag from the first query */
 		parse->uniqueFlag = NULL;
 
+	/* Make sure we don't try to apply the first query's grouping stuff
+	 * to the Append node, either.  Basically we don't want union_planner
+	 * to do anything when we return control, except add the top sort/unique
+	 * nodes for DISTINCT processing if this wasn't UNION ALL, or the top
+	 * sort node if it was UNION ALL with a user-provided sort clause.
+	 */
+	parse->groupClause = NULL;
 	parse->havingQual = NULL;
 	parse->hasAggs = false;
 
