@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/Makefile,v 1.14 1998/04/06 01:36:07 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/Makefile,v 1.15 1998/04/06 04:57:32 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -94,26 +94,26 @@ LIBPGXXHEADERS = pgenv.h \
 		 pglobject.h
 
 install-headers: beforeinstall-headers $(MAINHEADER)
-	@$(INSTALL) $(INSTLOPTS) $(MAINHEADER) $(DESTDIR)/$(HEADERDIR)/$(MAINHEADER)
+	@$(INSTALL) $(INSTLOPTS) $(MAINHEADER) $(DESTDIR)$(HEADERDIR)/$(MAINHEADER)
 	@for i in ${LIBPGXXHEADERS}; do \
 		echo "Installing $(LIBPGXXHEADERDIR)/$$i."; \
-		$(INSTALL) $(INSTLOPTS) $$i $(DESTDIR)/$(LIBPGXXHEADERDIR)/$$i; \
+		$(INSTALL) $(INSTLOPTS) $$i $(DESTDIR)$(LIBPGXXHEADERDIR)/$$i; \
 	done
 
 beforeinstall-headers:
-	@if [ ! -d $(DESTDIR)/$(HEADERDIR) ]; then mkdir $(DESTDIR)/$(HEADERDIR); fi
-	@if [ ! -d $(DESTDIR)/$(LIBPGXXHEADERDIR) ]; then mkdir $(DESTDIR)/$(LIBPGXXHEADERDIR); fi
+	@if [ ! -d $(DESTDIR)$(HEADERDIR) ]; then mkdir $(DESTDIR)$(HEADERDIR); fi
+	@if [ ! -d $(DESTDIR)$(LIBPGXXHEADERDIR) ]; then mkdir $(DESTDIR)$(LIBPGXXHEADERDIR); fi
 
 beforeinstall-lib:
-	@if [ ! -d $(DESTDIR)/$(LIBDIR) ] ; then mkdir $(DESTDIR)/$(LIBDIR); fi
+	@if [ ! -d $(DESTDIR)$(LIBDIR) ] ; then mkdir $(DESTDIR)$(LIBDIR); fi
 
 install-$(LIBNAME): $(LIBNAME).a beforeinstall-lib
 	$(INSTALL) $(INSTL_LIB_OPTS) $(LIBNAME).a $(DESTDIR)$(LIBDIR)/$(LIBNAME).a
 
 install-shlib: $(SHLIBNAME) beforeinstall-lib
-	$(INSTALL) $(INSTL_SHLIB_OPTS) $(SHLIB) $(DESTDIR)/$(LIBDIR)/$(SHLIB)
-	rm -f $(DESTDIR)/$(LIBDIR)/libpq++.so
-	ln -sf $(SHLIB) $(DESTDIR)/$(LIBDIR)/libpq++.so
+	$(INSTALL) $(INSTL_SHLIB_OPTS) $(SHLIB) $(DESTDIR)$(LIBDIR)/$(SHLIB)
+	rm -f $(DESTDIR)$(LIBDIR)/libpq++.so
+	ln -sf $(SHLIB) $(DESTDIR)$(LIBDIR)/libpq++.so
 
 
 doc:
