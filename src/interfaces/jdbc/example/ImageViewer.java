@@ -186,14 +186,10 @@ public class ImageViewer implements ItemListener
     Class.forName("org.postgresql.Driver");
     
     // Connect to database
-    System.out.println("Connecting to Database URL = " + url);
     db = DriverManager.getConnection(url, user, password);
     
     // Create a statement
     stat = db.createStatement();
-    
-    // Set the connection to use transactions
-    db.setAutoCommit(false);
     
     // Also, get the LargeObjectManager for this connection
     lom = ((org.postgresql.Connection)db).getLargeObjectAPI();
@@ -210,7 +206,7 @@ public class ImageViewer implements ItemListener
   public void init()
   {
     try {
-      db.setAutoCommit(true);
+      //db.setAutoCommit(true);
       stat.executeUpdate("create table images (imgname name,imgoid oid)");
       label.setText("Initialised database");
       db.commit();
@@ -219,11 +215,11 @@ public class ImageViewer implements ItemListener
     }
     
     // This must run outside the previous try{} catch{} segment
-    try {
-      db.setAutoCommit(true);
-    } catch(SQLException ex) {
-      label.setText(ex.toString());
-    }
+    //try {
+    //db.setAutoCommit(true);
+    //} catch(SQLException ex) {
+    //label.setText(ex.toString());
+    //}
   }
   
   /**
@@ -283,37 +279,29 @@ public class ImageViewer implements ItemListener
 	  // fetch the large object manager
 	  LargeObjectManager lom = ((org.postgresql.Connection)db).getLargeObjectAPI();
 	  
-	  System.out.println("Importing file");
+	  db.setAutoCommit(false);
+	  
 	  // A temporary buffer - this can be as large as you like
 	  byte buf[] = new byte[2048];
 	  
 	  // Open the file
-	  System.out.println("Opening file "+dir+"/"+name);
 	  FileInputStream fis = new FileInputStream(new File(dir,name));
 	  
-	  // Gain access to large objects
-	  System.out.println("Gaining LOAPI");
-	  
 	  // Now create the large object
-	  System.out.println("creating blob");
 	  int oid = lom.create();
-	  
-	  System.out.println("Opening "+oid);
 	  LargeObject blob = lom.open(oid);
 	  
 	  // Now copy the file into the object.
 	  //
 	  // Note: we dont use write(buf), as the last block is rarely the same
 	  // size as our buffer, so we have to use the amount read.
-	  System.out.println("Importing file");
 	  int s,t=0;
 	  while((s=fis.read(buf,0,buf.length))>0) {
-	    System.out.println("Block s="+s+" t="+t);t+=s;
+	    t+=s;
 	    blob.write(buf,0,s);
 	  }
 	  
 	  // Close the object
-	  System.out.println("Closing blob");
 	  blob.close();
 	  
 	  // Now store the entry into the table
@@ -323,6 +311,7 @@ public class ImageViewer implements ItemListener
 	  stat = db.createStatement();
 	  stat.executeUpdate("insert into images values ('"+name+"',"+oid+")");
 	  db.commit();
+	  db.setAutoCommit(false);
 	  
 	  // Finally refresh the names list, and display the current image
 	  ImageViewer.this.refreshList();
@@ -370,26 +359,28 @@ public class ImageViewer implements ItemListener
   public void removeImage()
   {
     try {
+      //
       // Delete any large objects for the current name
+      //
+      // Note: We don't need to worry about being in a transaction
+      // here, because we are not opening any blobs, only deleting
+      // them
+      //
       ResultSet rs = stat.executeQuery("select imgoid from images where imgname='"+currentImage+"'");
       if(rs!=null) {
 	// Even though there should only be one image, we still have to
 	// cycle through the ResultSet
 	while(rs.next()) {
-	  System.out.println("Got oid "+rs.getInt(1));
 	  lom.delete(rs.getInt(1));
-	  System.out.println("Import complete");
 	}
       }
       rs.close();
       
       // Finally delete any entries for that name
       stat.executeUpdate("delete from images where imgname='"+currentImage+"'");
-      db.commit();
       
       label.setText(currentImage+" deleted");
       currentImage=null;
-      db.commit();
       refreshList();
     } catch(SQLException ex) {
       label.setText(ex.toString());
@@ -404,21 +395,30 @@ public class ImageViewer implements ItemListener
   public void displayImage(String name)
   {
     try {
-      System.out.println("Selecting oid for "+name);
+      //
+      // Now as we are opening and reading a large object we must
+      // turn on Transactions. This includes the ResultSet.getBytes()
+      // method when it's used on a field of type oid!
+      //
+      db.setAutoCommit(false);
+      
       ResultSet rs = stat.executeQuery("select imgoid from images where imgname='"+name+"'");
       if(rs!=null) {
 	// Even though there should only be one image, we still have to
 	// cycle through the ResultSet
 	while(rs.next()) {
-	  System.out.println("Got oid "+rs.getInt(1));
 	  canvas.setImage(canvas.getToolkit().createImage(rs.getBytes(1)));
-	  System.out.println("Import complete");
 	  label.setText(currentImage = name);
 	}
       }
       rs.close();
     } catch(SQLException ex) {
       label.setText(ex.toString());
+    } finally {
+	try {
+	  db.setAutoCommit(true);
+	} catch(SQLException ex2) {
+	}
     }
   }
   
@@ -454,6 +454,7 @@ public class ImageViewer implements ItemListener
       frame.setLayout(new BorderLayout());
       ImageViewer viewer = new ImageViewer(frame,args[0],args[1],args[2]);
       frame.pack();
+      frame.setLocation(0,50);
       frame.setVisible(true);
     } catch(Exception ex) {
       System.err.println("Exception caught.\n"+ex);

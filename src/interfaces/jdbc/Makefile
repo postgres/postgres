@@ -4,7 +4,7 @@
 #    Makefile for Java JDBC interface
 #
 # IDENTIFICATION
-#    $Id: Makefile,v 1.20 2000/05/03 15:58:08 peter Exp $
+#    $Id: Makefile,v 1.21 2000/05/05 07:35:29 peter Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -68,10 +68,14 @@ msg:
 	@echo
 	@echo ------------------------------------------------------------
 	@echo To build the examples, type:
-	@echo "  make examples"
+	@echo "JDBC1:  make examples"
+	@echo "JDBC2:  make examples2"
 	@echo
 	@echo "To build the CORBA example (requires Java2):"
 	@echo "  make corba"
+	@echo
+	@echo "To make the tests, type:"
+	@echo "  make tests"
 	@echo ------------------------------------------------------------
 	@echo
 
@@ -214,12 +218,18 @@ $(PGBASE)/util/UnixCrypt.class:	$(PGBASE)/util/UnixCrypt.java
 #######################################################################
 # These classes are in the example directory, and form the examples
 EX=	example/basic.class \
-	example/blobtest.class \
-	example/datestyle.class \
 	example/psql.class \
-	example/ImageViewer.class \
-	example/metadata.class \
+	example/ImageViewer.class
+
+# These are only valid for JDBC2
+EX2=	example/blobtest.class
+
+# These are really test classes not true examples
+TESTS=	example/metadata.class \
 	example/threadsafe.class
+
+# Non functional/obsolete examples
+#	example/datestyle.class \
 #	example/Objects.class
 
 # This rule builds the examples
@@ -229,20 +239,31 @@ examples:	postgresql.jar $(EX)
 	@echo
 	@echo For instructions on how to use them, simply run them. For example:
 	@echo
-	@echo "  java example.blobtest"
+	@echo "  java example.basic"
 	@echo
 	@echo This would display instructions on how to run the example.
 	@echo ------------------------------------------------------------
 	@echo Available examples:
 	@echo
 	@echo "  example.basic        Basic JDBC useage"
-	@echo "  example.blobtest     Binary Large Object tests"
 	@echo "  example.datestyle    Shows how datestyles are handled"
 	@echo "  example.ImageViewer  Example application storing images"
 	@echo "  example.psql         Simple java implementation of psql"
-	@echo "  example.Objects      Demonstrates Object Serialisation"
 	@echo " "
-	@echo These are not really examples, but tests various parts of the driver
+	@echo ------------------------------------------------------------
+	@echo
+
+examples2:	$(EX2) examples
+	@echo "The following JDBC2 only examples have also been built:"
+	@echo
+	@echo "  example.blobtest     Binary Large Object tests"
+	@echo
+	@echo ------------------------------------------------------------
+	@echo
+
+tests:	$(TESTS)
+	@echo ------------------------------------------------------------
+	@echo The following tests have been built:
 	@echo "  example.metadata     Tests various metadata methods"
 	@echo "  example.threadsafe   Tests the driver's thread safety"
 	@echo ------------------------------------------------------------

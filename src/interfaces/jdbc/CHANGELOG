@@ -1,9 +1,13 @@
-Wed May 02 16:47:00 BST 2000 petermount@it.maidstone.gov.uk
+Thu May 04 11:38:00 BST 2000 petermount@it.maidstone.gov.uk
+	- Corrected incorrect date in CHANGELOG
+	- Fixed the ImageViewer example
+	
+Wed May 03 16:47:00 BST 2000 petermount@it.maidstone.gov.uk
 	- Fixed the Makefile so that postgresql.jar is built everytime
 	  the jdbc1 or jdbc2 rules are called.
 	- Fixed the threadsafe example. It had problems with autocommit
 	
-Wed May 02 14:32:00 BST 2000 petermount@it.maidstone.gov.uk
+Wed May 03 14:32:00 BST 2000 petermount@it.maidstone.gov.uk
 	- Rewrote the README file (the old one was 18 months old!)
 	- Added @deprecated tags to org.postgresql.jdbc2.ResultSet
 	  to clear some warnings issued during compilation.
