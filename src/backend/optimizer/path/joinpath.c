@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.35 1999/05/16 19:45:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.36 1999/05/18 21:36:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,6 @@ static List *match_unsorted_outer(RelOptInfo *joinrel, RelOptInfo *outerrel, Rel
 					 List *mergeinfo_list);
 static List *match_unsorted_inner(RelOptInfo *joinrel, RelOptInfo *outerrel, RelOptInfo *innerrel,
 					 List *innerpath_list, List *mergeinfo_list);
-static bool EnoughMemoryForHashjoin(RelOptInfo *hashrel);
 static List *hash_inner_and_outer(RelOptInfo *joinrel, RelOptInfo *outerrel, RelOptInfo *innerrel,
 					 List *hashinfo_list);
 
@@ -490,27 +489,6 @@ match_unsorted_inner(RelOptInfo *joinrel,
 	return mp_list;
 }
 
-static bool
-EnoughMemoryForHashjoin(RelOptInfo *hashrel)
-{
-	int			ntuples;
-	int			tupsize;
-	int			pages;
-
-	ntuples = hashrel->size;
-	if (ntuples == 0)
-		ntuples = 1000;
-	tupsize = hashrel->width + sizeof(HeapTupleData);
-	pages = page_size(ntuples, tupsize);
-
-	/*
-	 * if amount of buffer space below hashjoin threshold, return false
-	 */
-	if (ceil(sqrt((double) pages)) > NBuffers)
-		return false;
-	return true;
-}
-
 /*
  * hash_inner_and_outer--				XXX HASH
  *	  Create hashjoin join paths by explicitly hashing both the outer and
@@ -530,17 +508,17 @@ hash_inner_and_outer(RelOptInfo *joinrel,
 					 RelOptInfo *innerrel,
 					 List *hashinfo_list)
 {
-	HashInfo   *xhashinfo = (HashInfo *) NULL;
 	List	   *hjoin_list = NIL;
-	HashPath   *temp_node = (HashPath *) NULL;
-	List	   *i = NIL;
-	List	   *outerkeys = NIL;
-	List	   *innerkeys = NIL;
-	List	   *hash_pathkeys = NIL;
+	List	   *i;
 
 	foreach(i, hashinfo_list)
 	{
-		xhashinfo = (HashInfo *) lfirst(i);
+		HashInfo   *xhashinfo = (HashInfo *) lfirst(i);
+		List	   *outerkeys;
+		List	   *innerkeys;
+		List	   *hash_pathkeys;
+		HashPath   *temp_node;
+
 		outerkeys = make_pathkeys_from_joinkeys(
 							  ((JoinMethod *) xhashinfo)->jmkeys,
 							  outerrel->targetlist,
@@ -549,26 +527,31 @@ hash_inner_and_outer(RelOptInfo *joinrel,
 							  ((JoinMethod *) xhashinfo)->jmkeys,
 							  innerrel->targetlist,
 							  INNER);
+		/* We cannot assume that the output of the hashjoin appears in any
+		 * particular order, so it should have NIL pathkeys.
+		 */
+#ifdef NOT_USED
 		hash_pathkeys = new_join_pathkeys(outerkeys,
 							  joinrel->targetlist,
 							  ((JoinMethod *) xhashinfo)->clauses);
+#else
+		hash_pathkeys = NIL;
+#endif
 
-		if (EnoughMemoryForHashjoin(innerrel))
-		{
-			temp_node = create_hashjoin_path(joinrel,
-											 outerrel->size,
-											 innerrel->size,
-											 outerrel->width,
-											 innerrel->width,
-										 	(Path *) outerrel->cheapestpath,
-										 	(Path *) innerrel->cheapestpath,
-											 hash_pathkeys,
-											 xhashinfo->hashop,
-									 	((JoinMethod *) xhashinfo)->clauses,
-											 outerkeys,
-											 innerkeys);
-			hjoin_list = lappend(hjoin_list, temp_node);
-		}
+		temp_node = create_hashjoin_path(joinrel,
+										 outerrel->size,
+										 innerrel->size,
+										 outerrel->width,
+										 innerrel->width,
+										 (Path *) outerrel->cheapestpath,
+										 (Path *) innerrel->cheapestpath,
+										 hash_pathkeys,
+										 xhashinfo->hashop,
+										 ((JoinMethod *) xhashinfo)->clauses,
+										 outerkeys,
+										 innerkeys);
+		hjoin_list = lappend(hjoin_list, temp_node);
 	}
+
 	return hjoin_list;
 }
