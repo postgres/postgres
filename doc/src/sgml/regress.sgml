@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/regress.sgml,v 1.13 2000/11/21 23:40:27 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/regress.sgml,v 1.14 2000/11/22 00:58:47 tgl Exp $ -->
 
  <chapter id="regress">
   <title id="regress-title">Regression Tests</title>
@@ -289,13 +289,14 @@ diff results/random.out expected/random.out
    <para>
     Each line in the mapping file is of the form
 <synopsis>
-testname/platformnamepattern=comparisonfilename
+testname/platformpattern=comparisonfilename
 </synopsis>
     The test name is just the name of the particular regression test
-    module.  The platform name pattern is a pattern in the style of
-    expr(1) (that is, a regular expression with an implicit ^ anchor
+    module.  The platform pattern is a pattern in the style of
+    expr(1) (that is, a regular expression with an implicit
+    <literal>^</literal> anchor
     at the start).  It is matched against the platform name as printed
-    by <filename>config.guess</filename> with an appended
+    by <filename>config.guess</filename> followed by
     <literal>:gcc</literal> or <literal>:cc</literal>, depending on
     whether you use the GNU compiler or the system's native compiler
     (on systems where there is a difference).  The comparison file

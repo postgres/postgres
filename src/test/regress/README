@@ -193,14 +193,16 @@ mapping file, which is "resultmap".
 
 Each line in the mapping file is of the form
 
-    testname/platformnamepattern=comparisonfilename
+    testname/platformpattern=comparisonfilename
 
 The test name is just the name of the particular regression test
-module. The platform name pattern is a pattern in the style of expr(1)
-(that is, a regular expression with an implicit ^ anchor at the
-start). It is matched against the platform name as printed by
-config.guess. The comparison file name is the name of the substitute
-result comparison file.
+module. The platform pattern is a pattern in the style of expr(1)
+(that is, a regular expression with an implicit ^ anchor at the start).
+It is matched against the platform name as printed by config.guess
+followed by ":gcc" or ":cc", depending on whether you use the GNU compiler
+or the system's native compiler (on systems where there is a difference).
+The comparison file name is the name of the substitute result comparison
+file.
 
 For example: the int2 regress test includes a deliberate entry of a
 value that is too large to fit in int2. The specific error message
