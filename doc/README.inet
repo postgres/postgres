@@ -1,7 +1,7 @@
 PostgreSQL type extensions for IP and MAC addresses.
 ---------------------------------------------------
 
-$Id: README.ipaddr,v 1.1 1998/10/03 05:40:41 momjian Exp $
+$Id: README.inet,v 1.1 1998/10/08 00:19:32 momjian Exp $
 
 I needed to record IP and MAC level ethernet addresses in a data
 base, and I really didn't want to store them as plain strings, with

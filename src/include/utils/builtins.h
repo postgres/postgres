@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.57 1998/10/04 15:31:07 momjian Exp $
+ * $Id: builtins.h,v 1.58 1998/10/08 00:19:43 momjian Exp $
  *
  * NOTES
  *	  This should normally only be included by fmgr.h.
@@ -28,7 +28,7 @@
 #include <utils/nabstime.h>
 #include <utils/int8.h>
 #include <utils/cash.h>
-#include <utils/mac.h>
+#include <utils/network.h>
 #include <utils/rel.h>
 
 /*
@@ -518,21 +518,20 @@ char *inet_net_ntop(int af, const void *src, int bits, char *dst, size_t size);
 /* inet_net_pton.c */
 int inet_net_pton(int af, const char *src, void *dst, size_t size);
 
-/* ip.c */
-ipaddr	   *ipaddr_in(char *str);
-char	   *ipaddr_out(ipaddr * addr);
-bool		ipaddr_lt(ipaddr * a1, ipaddr * a2);
-bool		ipaddr_le(ipaddr * a1, ipaddr * a2);
-bool		ipaddr_eq(ipaddr * a1, ipaddr * a2);
-bool		ipaddr_ge(ipaddr * a1, ipaddr * a2);
-bool		ipaddr_gt(ipaddr * a1, ipaddr * a2);
-bool		ipaddr_ne(ipaddr * a1, ipaddr * a2);
-bool		ipaddr_sub(ipaddr * a1, ipaddr * a2);
-bool		ipaddr_subeq(ipaddr * a1, ipaddr * a2);
-bool		ipaddr_sup(ipaddr * a1, ipaddr * a2);
-bool		ipaddr_supeq(ipaddr * a1, ipaddr * a2);
-int4		ipaddr_cmp(ipaddr * a1, ipaddr * a2);
-int			v4bitncmp(unsigned int a1, unsigned int a2, int bits);
+/* inet.c */
+inet	   *inet_in(char *str);
+char	   *inet_out(inet * addr);
+bool		inet_lt(inet * a1, inet * a2);
+bool		inet_le(inet * a1, inet * a2);
+bool		inet_eq(inet * a1, inet * a2);
+bool		inet_ge(inet * a1, inet * a2);
+bool		inet_gt(inet * a1, inet * a2);
+bool		inet_ne(inet * a1, inet * a2);
+bool		inet_sub(inet * a1, inet * a2);
+bool		inet_subeq(inet * a1, inet * a2);
+bool		inet_sup(inet * a1, inet * a2);
+bool		inet_supeq(inet * a1, inet * a2);
+int4		inet_cmp(inet * a1, inet * a2);
 
 
 /* mac.c */

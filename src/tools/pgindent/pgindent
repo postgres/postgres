@@ -786,7 +786,7 @@ do
 -Tword8 \
 -Tyy_size_t \
 -Tyy_state_type \
--Tipaddr \
+-Tinet \
 -Tmacaddr \
 /tmp/$$a >/tmp/$$ 2>&1
 	if [ "$?" -ne 0 -o -s /tmp/$$ ]

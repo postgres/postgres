@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.71 1998/10/03 05:40:56 momjian Exp $
+ * $Id: pg_proc.h,v 1.72 1998/10/08 00:19:40 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2069,32 +2069,32 @@ DATA(insert OID = 837 (  macaddr_manuf	   PGUID 11 f t f 1 f 25 "829" 100 0 0 10
 DESCR("MAC manufacturer");
 
 /* for ip type support */
-DATA(insert OID = 910 (  ipaddr_in			PGUID 11 f t f 1 f 869 "0" 100 0 0 100	foo bar ));
+DATA(insert OID = 910 (  inet_in			PGUID 11 f t f 1 f 869 "0" 100 0 0 100	foo bar ));
 DESCR("(internal)");
-DATA(insert OID = 911 (  ipaddr_out			PGUID 11 f t f 1 f 23 "0" 100 0 0 100  foo bar ));
+DATA(insert OID = 911 (  inet_out			PGUID 11 f t f 1 f 23 "0" 100 0 0 100  foo bar ));
 DESCR("(internal)");
 
-DATA(insert OID = 920 (  ipaddr_eq		   PGUID 11 f t f 2 f 16 "869 869" 100 0 0 100  foo bar ));
+DATA(insert OID = 920 (  inet_eq		   PGUID 11 f t f 2 f 16 "869 869" 100 0 0 100  foo bar ));
 DESCR("equal");
-DATA(insert OID = 921 (  ipaddr_lt		   PGUID 11 f t f 2 f 16 "869 869" 100 0 0 100  foo bar ));
+DATA(insert OID = 921 (  inet_lt		   PGUID 11 f t f 2 f 16 "869 869" 100 0 0 100  foo bar ));
 DESCR("less-than");
-DATA(insert OID = 922 (  ipaddr_le		   PGUID 11 f t f 2 f 16 "869 869" 100 0 0 100  foo bar ));
+DATA(insert OID = 922 (  inet_le		   PGUID 11 f t f 2 f 16 "869 869" 100 0 0 100  foo bar ));
 DESCR("less-than-or-equal");
-DATA(insert OID = 923 (  ipaddr_gt		   PGUID 11 f t f 2 f 16 "869 869" 100 0 0 100  foo bar ));
+DATA(insert OID = 923 (  inet_gt		   PGUID 11 f t f 2 f 16 "869 869" 100 0 0 100  foo bar ));
 DESCR("greater-than");
-DATA(insert OID = 924 (  ipaddr_ge		   PGUID 11 f t f 2 f 16 "869 869" 100 0 0 100  foo bar ));
+DATA(insert OID = 924 (  inet_ge		   PGUID 11 f t f 2 f 16 "869 869" 100 0 0 100  foo bar ));
 DESCR("greater-than-or-equal");
-DATA(insert OID = 925 (  ipaddr_ne		   PGUID 11 f t f 2 f 16 "869 869" 100 0 0 100  foo bar ));
+DATA(insert OID = 925 (  inet_ne		   PGUID 11 f t f 2 f 16 "869 869" 100 0 0 100  foo bar ));
 DESCR("not equal");
-DATA(insert OID = 926 (  ipaddr_cmp	   	   PGUID 11 f t f 2 f 23 "869 869" 100 0 0 100  foo bar ));
+DATA(insert OID = 926 (  inet_cmp	   	   PGUID 11 f t f 2 f 23 "869 869" 100 0 0 100  foo bar ));
 DESCR("less-equal-greater");
-DATA(insert OID = 927 (  ipaddr_sub	   	   PGUID 11 f t f 2 f 16 "869 869" 100 0 0 100  foo bar ));
+DATA(insert OID = 927 (  inet_sub	   	   PGUID 11 f t f 2 f 16 "869 869" 100 0 0 100  foo bar ));
 DESCR("is-subnet");
-DATA(insert OID = 928 (  ipaddr_subeq  	   PGUID 11 f t f 2 f 16 "869 869" 100 0 0 100  foo bar ));
+DATA(insert OID = 928 (  inet_subeq  	   PGUID 11 f t f 2 f 16 "869 869" 100 0 0 100  foo bar ));
 DESCR("is-subnet-or-equal");
-DATA(insert OID = 929 (  ipaddr_sup	   	   PGUID 11 f t f 2 f 16 "869 869" 100 0 0 100  foo bar ));
+DATA(insert OID = 929 (  inet_sup	   	   PGUID 11 f t f 2 f 16 "869 869" 100 0 0 100  foo bar ));
 DESCR("is-supernet");
-DATA(insert OID = 930 (  ipaddr_supeq  	   PGUID 11 f t f 2 f 16 "869 869" 100 0 0 100  foo bar ));
+DATA(insert OID = 930 (  inet_supeq  	   PGUID 11 f t f 2 f 16 "869 869" 100 0 0 100  foo bar ));
 DESCR("is-supernet-or-equal");
 
 

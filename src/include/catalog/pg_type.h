@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.48 1998/10/03 05:40:58 momjian Exp $
+ * $Id: pg_type.h,v 1.49 1998/10/08 00:19:42 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -300,7 +300,7 @@ DATA(insert OID = 791 (  _money    PGUID  -1 -1 f b t \054 0  790 array_in array
 /* OIDS 800 - 899 */
 DATA(insert OID = 829 ( macaddr	   PGUID  6 -1 f b t \054 0	0 macaddr_in macaddr_out macaddr_in macaddr_out i _null_ ));
 DESCR("MAC address");
-DATA(insert OID = 869 ( ipaddr	   PGUID  -1 -1 f b t \054 0 0 ipaddr_in ipaddr_out ipaddr_in ipaddr_out i _null_ ));
+DATA(insert OID = 869 ( inet	   PGUID  -1 -1 f b t \054 0 0 inet_in inet_out inet_in inet_out i _null_ ));
 DESCR("IP address");
 
 /* OIDS 900 - 999 */
@@ -339,7 +339,7 @@ DATA(insert OID = 1033 (  aclitem	 PGUID 8   -1 f b t \054 0 0 aclitemin aclitem
 DESCR("access control list");
 DATA(insert OID = 1034 (  _aclitem	 PGUID -1 -1 f b t \054 0 1033 array_in array_out array_in array_out i _null_ ));
 DATA(insert OID = 1040 (  _macaddr   PGUID -1 -1 f b t \054 0  829 array_in array_out array_in array_out i _null_ ));
-DATA(insert OID = 1041 (  _ipaddr    PGUID -1 -1 f b t \054 0  869 array_in array_out array_in array_out i _null_ ));
+DATA(insert OID = 1041 (  _inet    PGUID -1 -1 f b t \054 0  869 array_in array_out array_in array_out i _null_ ));
 DATA(insert OID = 1042 ( bpchar		 PGUID -1  -1 f b t \054 0	18 bpcharin bpcharout bpcharin bpcharout i _null_ ));
 DESCR("blank-padded characters, length specifed when created");
 #define BPCHAROID		1042

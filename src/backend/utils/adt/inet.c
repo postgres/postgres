@@ -1,9 +1,9 @@
 /*
- *	PostgreSQL type definitions for IP addresses.  This
+ *	PostgreSQL type definitions for the INET type.  This
  *	is for IP V4 CIDR notation, but prepared for V6: just
  *	add the necessary bits where the comments indicate.
  *
- *	$Id: ip.c,v 1.4 1998/10/04 16:24:30 momjian Exp $
+ *	$Id: inet.c,v 1.1 1998/10/08 00:19:35 momjian Exp $
  */
 
 #include <sys/types.h>
@@ -19,38 +19,40 @@
 #include <postgres.h>
 #include <utils/palloc.h>
 #include <utils/builtins.h>
-#include <utils/mac.h>
+#include <utils/network.h>
+
+static int v4bitncmp(unsigned int a1, unsigned int a2, int bits);
 
 /*
  *	Access macros.	Add IPV6 support.
  */
 
-#define ip_addrsize(ipaddrptr) \
-	(((ipaddr_struct *)VARDATA(ipaddrptr))->family == AF_INET ? 4 : -1)
+#define ip_addrsize(inetptr) \
+	(((inet_struct *)VARDATA(inetptr))->family == AF_INET ? 4 : -1)
 
-#define ip_family(ipaddrptr) \
-	(((ipaddr_struct *)VARDATA(ipaddrptr))->family)
+#define ip_family(inetptr) \
+	(((inet_struct *)VARDATA(inetptr))->family)
 
-#define ip_bits(ipaddrptr) \
-	(((ipaddr_struct *)VARDATA(ipaddrptr))->bits)
+#define ip_bits(inetptr) \
+	(((inet_struct *)VARDATA(inetptr))->bits)
 
-#define ip_v4addr(ipaddrptr) \
-	(((ipaddr_struct *)VARDATA(ipaddrptr))->addr.ipv4_addr)
+#define ip_v4addr(inetptr) \
+	(((inet_struct *)VARDATA(inetptr))->addr.ipv4_addr)
 
 /*
  *	IP address reader.
  */
 
-ipaddr *
-ipaddr_in(char *src)
+inet *
+inet_in(char *src)
 {
 	int			bits;
-	ipaddr	   *dst;
+	inet	   *dst;
 
-	dst = palloc(VARHDRSZ + sizeof(ipaddr_struct));
+	dst = palloc(VARHDRSZ + sizeof(inet_struct));
 	if (dst == NULL)
 	{
-		elog(ERROR, "unable to allocate memory in ipaddr_in()");
+		elog(ERROR, "unable to allocate memory in inet_in()");
 		return (NULL);
 	}
 	/* First, try for an IP V4 address: */
@@ -75,7 +77,7 @@ ipaddr_in(char *src)
  */
 
 char *
-ipaddr_out(ipaddr *src)
+inet_out(inet *src)
 {
 	char	   *dst,
 				tmp[sizeof("255.255.255.255/32")];
@@ -99,7 +101,7 @@ ipaddr_out(ipaddr *src)
 	dst = palloc(strlen(tmp) + 1);
 	if (dst == NULL)
 	{
-		elog(ERROR, "unable to allocate memory in ipaddr_out()");
+		elog(ERROR, "unable to allocate memory in inet_out()");
 		return (NULL);
 	}
 	strcpy(dst, tmp);
@@ -111,7 +113,7 @@ ipaddr_out(ipaddr *src)
  */
 
 bool
-ipaddr_lt(ipaddr *a1, ipaddr *a2)
+inet_lt(inet *a1, inet *a2)
 {
 	if ((ip_family(a1) == AF_INET) && (ip_family(a2) == AF_INET))
 	{
@@ -129,13 +131,13 @@ ipaddr_lt(ipaddr *a1, ipaddr *a2)
 }
 
 bool
-ipaddr_le(ipaddr *a1, ipaddr *a2)
+inet_le(inet *a1, inet *a2)
 {
-	return (ipaddr_lt(a1, a2) || ipaddr_eq(a1, a2));
+	return (inet_lt(a1, a2) || inet_eq(a1, a2));
 }
 
 bool
-ipaddr_eq(ipaddr *a1, ipaddr *a2)
+inet_eq(inet *a1, inet *a2)
 {
 	if ((ip_family(a1) == AF_INET) && (ip_family(a2) == AF_INET))
 	{
@@ -152,13 +154,13 @@ ipaddr_eq(ipaddr *a1, ipaddr *a2)
 }
 
 bool
-ipaddr_ge(ipaddr *a1, ipaddr *a2)
+inet_ge(inet *a1, inet *a2)
 {
-	return (ipaddr_gt(a1, a2) || ipaddr_eq(a1, a2));
+	return (inet_gt(a1, a2) || inet_eq(a1, a2));
 }
 
 bool
-ipaddr_gt(ipaddr *a1, ipaddr *a2)
+inet_gt(inet *a1, inet *a2)
 {
 	if ((ip_family(a1) == AF_INET) && (ip_family(a2) == AF_INET))
 	{
@@ -176,13 +178,13 @@ ipaddr_gt(ipaddr *a1, ipaddr *a2)
 }
 
 bool
-ipaddr_ne(ipaddr *a1, ipaddr *a2)
+inet_ne(inet *a1, inet *a2)
 {
-	return (!ipaddr_eq(a1, a2));
+	return (!inet_eq(a1, a2));
 }
 
 bool
-ipaddr_sub(ipaddr *a1, ipaddr *a2)
+inet_sub(inet *a1, inet *a2)
 {
 	if ((ip_family(a1) == AF_INET) && (ip_family(a2) == AF_INET))
 	{
@@ -199,7 +201,7 @@ ipaddr_sub(ipaddr *a1, ipaddr *a2)
 }
 
 bool
-ipaddr_subeq(ipaddr *a1, ipaddr *a2)
+inet_subeq(inet *a1, inet *a2)
 {
 	if ((ip_family(a1) == AF_INET) && (ip_family(a2) == AF_INET))
 	{
@@ -216,7 +218,7 @@ ipaddr_subeq(ipaddr *a1, ipaddr *a2)
 }
 
 bool
-ipaddr_sup(ipaddr *a1, ipaddr *a2)
+inet_sup(inet *a1, inet *a2)
 {
 	if ((ip_family(a1) == AF_INET) && (ip_family(a2) == AF_INET))
 	{
@@ -233,7 +235,7 @@ ipaddr_sup(ipaddr *a1, ipaddr *a2)
 }
 
 bool
-ipaddr_supeq(ipaddr *a1, ipaddr *a2)
+inet_supeq(inet *a1, inet *a2)
 {
 	if ((ip_family(a1) == AF_INET) && (ip_family(a2) == AF_INET))
 	{
@@ -254,7 +256,7 @@ ipaddr_supeq(ipaddr *a1, ipaddr *a2)
  */
 
 int4
-ipaddr_cmp(ipaddr *a1, ipaddr *a2)
+inet_cmp(inet *a1, inet *a2)
 {
 	if (ntohl(ip_v4addr(a1)) < ntohl(ip_v4addr(a2)))
 		return (-1);
@@ -267,7 +269,7 @@ ipaddr_cmp(ipaddr *a1, ipaddr *a2)
  *	Bitwise comparison for V4 addresses.  Add V6 implementation!
  */
 
-int
+static int
 v4bitncmp(unsigned int a1, unsigned int a2, int bits)
 {
 	unsigned long mask = 0;
