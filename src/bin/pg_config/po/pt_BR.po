@@ -4,8 +4,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.0\n"
-"POT-Creation-Date: 2004-10-05 15:35-0300\n"
-"PO-Revision-Date: 2004-10-05 15:15-0300\n"
+"POT-Creation-Date: 2004-10-19 00:39-0300\n"
+"PO-Revision-Date: 2004-10-19 00:44-0300\n"
 "Last-Translator: Euler Taveira de Oliveira <euler@ufgnet.ufg.br>\n"
 "Language-Team: Brazilian Portuguese <pgsql-dev@lists.querencialivre.rs.gov."
 "br>\n"
@@ -50,7 +50,8 @@ msgid ""
 "  --includedir          show location of C header files of the client\n"
 "                        interfaces\n"
 msgstr ""
-"  --includedir          mostra local dos arquivos de cabeçalho das interfaces\n"
+"  --includedir          mostra local dos arquivos de cabeçalho das "
+"interfaces\n"
 "                        do cliente\n"
 
 #: pg_config.c:43
@@ -66,8 +67,7 @@ msgstr "  --libdir              mostra local das bibliotecas objeto\n"
 #: pg_config.c:45
 msgid "  --pkglibdir           show location of dynamically loadable modules\n"
 msgstr ""
-"  --pkglibdir           mostra local dos módulos carregáveis "
-"dinamicamente\n"
+"  --pkglibdir           mostra local dos módulos carregáveis dinamicamente\n"
 
 #: pg_config.c:46
 msgid "  --pgxs                show location of extension makefile\n"
@@ -75,11 +75,11 @@ msgstr "  --pgxs                mostra local do makefile extensível\n"
 
 #: pg_config.c:47
 msgid ""
-"  --configure           show options given to 'configure' script when\n"
+"  --configure           show options given to \"configure\" script when\n"
 "                        PostgreSQL was built\n"
 msgstr ""
-"  --configure           mostra opções informadas ao script 'configure'\n"
-"                        quando o PostgreSQL foi gerado\n"
+"  --configure           mostra opções informadas ao script \"configure\" quando\n"
+"                        o PostgreSQL foi gerado\n"
 
 #: pg_config.c:49
 msgid "  --version             show the PostgreSQL version, then exit\n"
@@ -106,12 +106,17 @@ msgstr ""
 "\n"
 "Tente \"%s --help\" para obter mais informação\n"
 
-#: pg_config.c:73
+#: pg_config.c:75
 #, c-format
 msgid "%s: argument required\n"
 msgstr "%s: argumento requerido\n"
 
-#: pg_config.c:102
+#: pg_config.c:104
 #, c-format
 msgid "%s: invalid argument: %s\n"
 msgstr "%s: argumento inválido: %s\n"
+
+#: pg_config.c:113
+#, c-format
+msgid "%s: could not find own executable\n"
+msgstr "%s: não pôde encontrar o próprio executável\n"
