@@ -411,7 +411,7 @@ SS_process_sublinks(Node *expr)
            * Otherwise aggregate functions will fail later on (at execution 
            * time!) Reason: The rewite System makes several copies of the
            * VAR nodes and in this case it should not do so :-( */
-	    if(expr->lefthand != NULL)
+	    if(((SubLink *) expr)->lefthand != NULL)
 		{
 			lfirst(((Expr *) lfirst(((SubLink *)expr)->oper))->args) = 
 			lfirst(((SubLink *)expr)->lefthand);
