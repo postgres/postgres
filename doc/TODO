@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Jan 24 22:50:22 EST 2001
+Last updated:		Fri Jan 26 15:35:31 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -133,6 +133,7 @@ VIEWS
 * Automatically create rules on views so they are updateable, per SQL92
 * -Change elog for complex view ins|upd|del to "cannot {ins|upd|del}
 * Add the functionality for "with check option" clause of create view
+* Allow NOTIFY in rules
 
 INDEXES
 
