@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.24 2004/08/29 16:34:48 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.25 2004/11/17 21:37:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,6 +36,9 @@
 #include <sys/time.h>
 #include <time.h>
 #include <unistd.h>
+#ifdef HAVE_GETOPT_H
+#include <getopt.h>
+#endif
 
 #include "access/xlog.h"
 #include "access/xlog_internal.h"
