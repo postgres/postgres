@@ -7,15 +7,20 @@
 #
 # This file controls: which hosts are allowed to connect, how clients
 # are authenticated, which PostgreSQL user names they can use, which
-# databases they can access.  Records take one of five forms:
+# databases they can access.  Records take one of seven forms:
 #
-# local    DATABASE  USER  METHOD  [OPTION]
-# host     DATABASE  USER  IP-ADDRESS  IP-MASK   METHOD  [OPTION]
-# hostssl  DATABASE  USER  IP-ADDRESS  IP-MASK   METHOD  [OPTION]
-# host     DATABASE  USER  IP-ADDRESS/CIDR-MASK  METHOD  [OPTION]
-# hostssl  DATABASE  USER  IP-ADDRESS/CIDR-MASK  METHOD  [OPTION]
+# local      DATABASE  USER  METHOD  [OPTION]
+# host       DATABASE  USER  IP-ADDRESS  IP-MASK   METHOD  [OPTION]
+# hostssl    DATABASE  USER  IP-ADDRESS  IP-MASK   METHOD  [OPTION]
+# hostnossl  DATABASE  USER  IP-ADDRESS  IP-MASK   METHOD  [OPTION]
+# host       DATABASE  USER  IP-ADDRESS/CIDR-MASK  METHOD  [OPTION]
+# hostssl    DATABASE  USER  IP-ADDRESS/CIDR-MASK  METHOD  [OPTION]
+# hostnossl  DATABASE  USER  IP-ADDRESS/CIDR-MASK  METHOD  [OPTION]
 #
 # (The uppercase quantities should be replaced by actual values.)
+# The first field is the connection type: "local" is a Unix-domain socket,
+# "host" is either a plain or SSL-encrypted TCP/IP socket, "hostssl" is an
+# SSL-encrypted TCP/IP socket, and "hostnossl" is a plain TCP/IP socket.
 # DATABASE can be "all", "sameuser", "samegroup", a database name (or
 # a comma-separated list thereof), or a file name prefixed with "@".
 # USER can be "all", an actual user name or a group name prefixed with

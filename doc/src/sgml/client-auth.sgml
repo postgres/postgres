@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.58 2003/09/12 22:17:22 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.59 2003/09/13 16:43:38 momjian Exp $
 -->
 
 <chapter id="client-authentication">
@@ -102,7 +102,7 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
       <para>
        This record matches connection attempts using Unix-domain
        sockets.  Without a record of this type, Unix-domain socket
-       connections are disallowed
+       connections are disallowed.
       </para>
      </listitem>
     </varlistentry>
