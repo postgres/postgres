@@ -710,40 +710,6 @@ Int2 sqlType;
 		}
 	}
 
-    // cycle through the types
-//    for(i=0, type = pgtypes_defined[0]; type; type = pgtypes_defined[++i]) {
-
-//		if(fSqlType == SQL_ALL_TYPES || fSqlType == pgtype_to_sqltype(stmt, type)) {
-
-//			row = (TupleNode *)malloc(sizeof(TupleNode) + (15 - 1)*sizeof(TupleField));
-
-			/*	These values can't be NULL */
-/*
-			set_tuplefield_string(&row->tuple[0], pgtype_to_name(stmt, type));
-			set_tuplefield_int2(&row->tuple[1], pgtype_to_sqltype(stmt, type));
-			set_tuplefield_int2(&row->tuple[6], pgtype_nullable(stmt, type));
-			set_tuplefield_int2(&row->tuple[7], pgtype_case_sensitive(stmt, type));
-			set_tuplefield_int2(&row->tuple[8], pgtype_searchable(stmt, type));
-			set_tuplefield_int2(&row->tuple[10], pgtype_money(stmt, type));
-*/
-			/*	Localized data-source dependent data type name (always NULL) */
-//			set_tuplefield_null(&row->tuple[12]);	
-
-			/*	These values can be NULL */
-/*
-			set_nullfield_int4(&row->tuple[2], pgtype_precision(stmt, type, PG_STATIC, PG_STATIC));
-			set_nullfield_string(&row->tuple[3], pgtype_literal_prefix(stmt, type));
-			set_nullfield_string(&row->tuple[4], pgtype_literal_suffix(stmt, type));
-			set_nullfield_string(&row->tuple[5], pgtype_create_params(stmt, type));
-			set_nullfield_int2(&row->tuple[9], pgtype_unsigned(stmt, type));
-			set_nullfield_int2(&row->tuple[11], pgtype_auto_increment(stmt, type));
-			set_nullfield_int2(&row->tuple[13], pgtype_scale(stmt, type));
-			set_nullfield_int2(&row->tuple[14], pgtype_scale(stmt, type));
-
-			QR_add_tuple(stmt->result, row);
-*/
-//		}
-//    }
 
     stmt->status = STMT_FINISHED;
     stmt->currTuple = -1;

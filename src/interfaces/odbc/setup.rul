@@ -1,8 +1,7 @@
 /*
-#	Insight Distribution Systems - System V - Oct 1997
-#ident	"@(#)setup.rul	1.3 :/sccs/sql/odbc/s.setup.rul 11/13/97 12:18:11"
+#	Insight Distribution Systems - System V - Apr 1998
+#ident	"@(#)setup.rul	1.13 :/sccs/sql/odbc/s.setup.rul 1/6/99 14:47:48"
 */
-
 
 /*----------------------------------------------------------------------------*\
  *
@@ -13,13 +12,15 @@
 
 #define APP_NAME                "PostgreSQL ODBC Driver"
 #define DRIVER_NAME             "PostgreSQL"
-#define DRIVER_FILE             "PODBC32.DLL"
+#define DRIVER_FILE             "PSQLODBC.DLL"
+#define OLD_DRIVER_FILE			"PODBC32.DLL"
+#define OLD_DRIVER_FILE_RENAMED	"podbc32_sav.dll"
 
 #define COMPANY_NAME            "Insight"
 #define PRODUCT_NAME            "PostgreSQL ODBC Driver"
-#define PRODUCT_VERSION         "6.2"
-#define PRODUCT_KEY             "PODBC32.DLL"
-#define UNINSTALL_KEY           "PODBC32v6.2"
+#define PRODUCT_VERSION         "6.3"
+#define PRODUCT_KEY             "PSQLODBC.DLL"
+#define UNINSTALL_KEY           "PSQLODBCv6.3"
 
 #define ODBC_DM_KEY      "\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\SharedDLLs"
 #define ODBC_COMP_KEY    "\\SOFTWARE\\ODBC\\ODBCINST.INI"
@@ -36,10 +37,10 @@ declare
         STRING svMainDirectory [_MAX_STRING], svGrp, svUninstLogFile, svPath;
         STRING svValue, szName, szKey, szMessage;
         STRING szMsg, szTmp, szTmp2, szFileSet, szProgram;
-        NUMBER nResult, nvType, nvSize, nStartup, ComponentUsageCount;
+        NUMBER nResult, pos, nvType, nvSize, nStartup, ComponentUsageCount;
 
         NUMBER nvDoNot, nvVersion, nvInstall, nCore, nDM;
-        STRING dm, core, szFileName;        
+        STRING dm, core, szFileName, svFileName;        
         NUMBER options, nvInfo, nvResult;
         LONG lResult;
         STRING svCompVersion, svFileVersion, svCompDate, svCompTime, svFileDate, svFileTime;
@@ -100,9 +101,10 @@ OptionsDlg:
 Version:
         CompressInfo("driver.z", DRIVER_FILE, COMP_INFO_VERSIONMS|COMP_INFO_VERSIONLS, nvInfo, svCompVersion);
 
-        szFileName = WINSYSDIR ^ "PODBC32.DLL";
+        szFileName = WINSYSDIR ^ DRIVER_FILE;
         nResult = VerGetFileVersion(szFileName, svFileVersion);
-        // MessageBox("System file PODBC32.dll version is " + svFileVersion, INFORMATION);
+
+        // MessageBox("System file PSQLODBC.dll version is " + svFileVersion, INFORMATION);
 
         lResult = VerCompare(svCompVersion, svFileVersion, VERSION);
 
@@ -186,7 +188,7 @@ FileSetup:
         //      Show the uninstall under Add/Remove Programs in Control Panel
         RegDBSetItem(REGDB_UNINSTALL_NAME, PRODUCT_NAME);
 
-        szFileSet = "podbc32";
+        szFileSet = "psqlodbc";
 
         TARGETDIR = svMainDirectory;    // winsys
 
@@ -374,6 +376,44 @@ UpdateRegistry:
                 MessageBox("Unable to create 'UsageCount' key value.", SEVERE);
                 exit;
         endif;
+
+        pos = StrFind(CMDLINE, "UseDeclareFetch=");
+        if (pos >= 0) then
+                StrSub(svValue, CMDLINE, pos + 16, 1);
+                nResult = RegDBSetKeyValueEx(szKey, "UseDeclareFetch", REGDB_STRING, svValue, -1);
+                if (nResult < 0) then
+                        MessageBeep(0);
+                        MessageBox("Unable to create 'UseDeclareFetch' key value.", SEVERE);
+                        exit;
+                endif;
+        endif;
+
+        pos = StrFind(CMDLINE, "Protocol=");
+        if (pos >= 0) then
+                StrSub(svValue, CMDLINE, pos + 9, 3);
+                nResult = RegDBSetKeyValueEx(szKey, "Protocol", REGDB_STRING, svValue, -1);
+                if (nResult < 0) then
+                        MessageBeep(0);
+                        MessageBox("Unable to create 'Protocol' key value.", SEVERE);
+                        exit;
+                endif;
+        endif;
+
+RenameOld:
+		if (FindFile(WINSYSDIR, OLD_DRIVER_FILE, svFileName) = 0) then
+			szMessage = "Renaming old driver to "  + OLD_DRIVER_FILE_RENAMED + " ...";
+			SetStatusWindow(98, szMessage);
+			Delay(1);
+
+			Disable(LOGGING);
+
+			SRCDIR= WINSYSDIR;
+			TARGETDIR = WINSYSDIR;
+
+			RenameFile(OLD_DRIVER_FILE, OLD_DRIVER_FILE_RENAMED);
+
+			Enable(LOGGING);
+		endif;
 
 Done:
         Delay(1);

@@ -60,7 +60,7 @@
 #define PG_TYPE_DATETIME   1184
 #define PG_TYPE_TIMESTAMP  1296
 
-extern Int4 pgtypes_defined[];
+/* extern Int4 pgtypes_defined[]; */
 extern Int2 sqlTypes[];
 
 /*	Defines for pgtype_precision */

@@ -39,8 +39,8 @@ typedef UInt4 Oid;
 
 #define DRIVERNAME             "PostgreSQL ODBC"
 #define DBMS_NAME              "PostgreSQL"
-#define DBMS_VERSION           "06.40.0002 PostgreSQL 6.4"
-#define POSTGRESDRIVERVERSION  "06.40.0002"
+#define DBMS_VERSION           "06.40.0003 PostgreSQL 6.4"
+#define POSTGRESDRIVERVERSION  "06.40.0003"
 
 #ifdef WIN32
 #define DRIVER_FILE_NAME		"PSQLODBC.DLL"
@@ -83,6 +83,7 @@ typedef UInt4 Oid;
 
 #define PG62	"6.2"		/* "Protocol" key setting to force Postgres 6.2 */
 #define PG63	"6.3"		/* "Protocol" key setting to force postgres 6.3 */
+#define PG64	"6.4"
 
 typedef struct ConnectionClass_ ConnectionClass;
 typedef struct StatementClass_ StatementClass;
@@ -121,6 +122,8 @@ typedef struct GlobalValues_
 	char				cancel_as_freestmt;
 	char				extra_systable_prefixes[MEDIUM_REGISTRY_LEN];
 	char				conn_settings[LARGE_REGISTRY_LEN];
+	char				protocol[SMALL_REGISTRY_LEN];
+
 	FILE*				mylogFP;
 	FILE*				qlogFP;	
 } GLOBAL_VALUES;

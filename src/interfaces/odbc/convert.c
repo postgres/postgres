@@ -579,7 +579,6 @@ int lobj_fd, retval;
 		return SQL_ERROR;
 	}
 
-
 	memset(&st, 0, sizeof(SIMPLE_TIME));
 
 	/*	Initialize current date */
@@ -1141,7 +1140,7 @@ char *p;
 	for (i = 0; i < max; i++) {
 		if (si[i] == '\r' && i+1 < strlen(si) && si[i+1] == '\n') 
 			continue;
-		if (si[i] == '\'')
+		else if (si[i] == '\'' || si[i] == '\\')
 			p[out++] = '\\';
 
 		p[out++] = si[i];

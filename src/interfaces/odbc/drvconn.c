@@ -79,8 +79,9 @@ static char *func = "SQLDriverConnect";
 ConnectionClass *conn = (ConnectionClass *) hdbc;
 ConnInfo *ci;
 #ifdef WIN32
-RETCODE dialog_result, result;
+RETCODE dialog_result;
 #endif
+RETCODE result;
 char connStrIn[MAX_CONNECT_STRING];
 char connStrOut[MAX_CONNECT_STRING];
 int retval;

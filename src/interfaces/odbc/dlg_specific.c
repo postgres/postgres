@@ -248,7 +248,7 @@ char buf[128];
 			CheckDlgButton(hdlg, DS_PG62, 1);
 		else if (strncmp(ci->protocol, PG63, strlen(PG63)) == 0)
 			CheckDlgButton(hdlg, DS_PG63, 1);
-		else 
+		else /* latest */
 			CheckDlgButton(hdlg, DS_PG64, 1);
 
 
@@ -286,8 +286,8 @@ char buf[128];
 				strcpy(ci->protocol, PG62);
 			else if ( IsDlgButtonChecked(hdlg, DS_PG63))
 				strcpy(ci->protocol, PG63);
-			else
-				ci->protocol[0] = '\0';
+			else	/* latest */
+				strcpy(ci->protocol, PG64);
 
 			sprintf(ci->show_system_tables, "%d", IsDlgButtonChecked(hdlg, DS_SHOWSYSTEMTABLES));
 
@@ -404,6 +404,9 @@ getDSNdefaults(ConnInfo *ci)
 
 	if (ci->readonly[0] == '\0')
 		sprintf(ci->readonly, "%d", globals.readonly);
+
+	if (ci->protocol[0] == '\0')
+		strcpy(ci->protocol, globals.protocol);
 
 	if (ci->fake_oid_index[0] == '\0')
 		sprintf(ci->fake_oid_index, "%d", DEFAULT_FAKEOIDINDEX);
@@ -695,13 +698,6 @@ char temp[256];
 	else if ( ! override)
 		globals.cancel_as_freestmt = DEFAULT_CANCELASFREESTMT;
 
-	//	Readonly is stored in the driver section AND per datasource
-	SQLGetPrivateProfileString(section, INI_READONLY, "", 
-				temp, sizeof(temp), filename);
-	if ( temp[0] ) 
-		globals.readonly = atoi(temp);
-	else if ( ! override)
-		globals.readonly = DEFAULT_READONLY;
 
 
 	//	UseDeclareFetch is stored in the driver section only
@@ -772,6 +768,25 @@ char temp[256];
 		SQLGetPrivateProfileString(section, INI_CONNSETTINGS, "", 
 					globals.conn_settings, sizeof(globals.conn_settings), filename);
 
+		//	Default state for future DSN's Readonly attribute
+		SQLGetPrivateProfileString(section, INI_READONLY, "", 
+					temp, sizeof(temp), filename);
+		if ( temp[0] ) 
+			globals.readonly = atoi(temp);
+		else
+			globals.readonly = DEFAULT_READONLY;
+
+		/*	Default state for future DSN's protocol attribute
+			This isn't a real driver option YET.  This is more
+			intended for customization from the install.
+		*/
+		SQLGetPrivateProfileString(section, INI_PROTOCOL, "@@@", 
+				temp, sizeof(temp), filename);
+		if ( strcmp(temp, "@@@" ))	
+			strcpy(globals.protocol, temp);
+		else 
+			strcpy(globals.protocol, DEFAULT_PROTOCOL);
+	
 	}
 }
 

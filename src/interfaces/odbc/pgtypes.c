@@ -44,10 +44,13 @@ Int4 getCharPrecision(StatementClass *stmt, Int4 type, int col, int handle_unkno
 
 /* these are the types we support.  all of the pgtype_ functions should */
 /* return values for each one of these.                                 */
+/* Even types not directly supported are handled as character types	
+   so all types should work (points, etc.) */
 
-/* NOTE: Even types not directly supported are handled as character types
-		so all types should work (points, etc.) */
-
+/* ALL THESE TYPES ARE NO LONGER REPORTED in SQLGetTypeInfo.  Instead, all
+   the SQL TYPES are reported and mapped to a corresponding Postgres Type 
+*/
+/*
 Int4 pgtypes_defined[]  = { 
 				PG_TYPE_CHAR,
 				PG_TYPE_CHAR2,
@@ -60,7 +63,7 @@ Int4 pgtypes_defined[]  = {
 				PG_TYPE_DATE,
 				PG_TYPE_TIME,
 				PG_TYPE_DATETIME,
-				PG_TYPE_ABSTIME,	/* a timestamp, sort of */
+				PG_TYPE_ABSTIME,
 				PG_TYPE_TIMESTAMP,
 			    PG_TYPE_TEXT,
 			    PG_TYPE_INT2,
@@ -73,11 +76,13 @@ Int4 pgtypes_defined[]  = {
 				PG_TYPE_BYTEA,
 				PG_TYPE_LO,
 			    0 };
+*/
 
-/*	These are the SQL Types reported in SQLGetTypeInfo.  */
+
+/*	These are NOW the SQL Types reported in SQLGetTypeInfo.  */
 Int2 sqlTypes [] = {
 	SQL_BIGINT,
-	/* SQL_BINARY, */
+	/* SQL_BINARY, -- Commented out because VarBinary is more correct. */
 	SQL_BIT,
 	SQL_CHAR,
 	SQL_DATE,
@@ -201,8 +206,11 @@ Int2 pgtype_to_sqltype(StatementClass *stmt, Int4 type)
 	case PG_TYPE_LO:			return SQL_LONGVARBINARY;
 
 	case PG_TYPE_INT2:          return SQL_SMALLINT;
+
 	case PG_TYPE_OID:
+	case PG_TYPE_XID:
 	case PG_TYPE_INT4:          return SQL_INTEGER;
+
 	case PG_TYPE_FLOAT4:        return SQL_REAL;
 	case PG_TYPE_FLOAT8:        return SQL_FLOAT;
 	case PG_TYPE_DATE:			return SQL_DATE;
@@ -230,6 +238,7 @@ Int2 pgtype_to_ctype(StatementClass *stmt, Int4 type)
 	switch(type) {
 	case PG_TYPE_INT2:          return SQL_C_SSHORT;
 	case PG_TYPE_OID:
+	case PG_TYPE_XID:
 	case PG_TYPE_INT4:          return SQL_C_SLONG;
 	case PG_TYPE_FLOAT4:        return SQL_C_FLOAT;
 	case PG_TYPE_FLOAT8:        return SQL_C_DOUBLE;
@@ -375,6 +384,7 @@ Int4 pgtype_precision(StatementClass *stmt, Int4 type, int col, int handle_unkno
 	case PG_TYPE_INT2:          return 5;
 
 	case PG_TYPE_OID:
+	case PG_TYPE_XID:
 	case PG_TYPE_INT4:          return 10;
 
 	case PG_TYPE_FLOAT4:        
@@ -408,7 +418,8 @@ Int4 pgtype_display_size(StatementClass *stmt, Int4 type, int col, int handle_un
 	switch(type) {
 	case PG_TYPE_INT2:			return 6;
 
-	case PG_TYPE_OID:			return 10;
+	case PG_TYPE_OID:
+	case PG_TYPE_XID:			return 10;
 
 	case PG_TYPE_INT4:			return 11;
 
@@ -434,6 +445,7 @@ Int4 pgtype_length(StatementClass *stmt, Int4 type, int col, int handle_unknown_
 	case PG_TYPE_INT2:          return 2;
 
 	case PG_TYPE_OID:
+	case PG_TYPE_XID:
 	case PG_TYPE_INT4:          return 4;
 
 	case PG_TYPE_FLOAT4:
@@ -461,6 +473,7 @@ Int2 pgtype_scale(StatementClass *stmt, Int4 type)
 
 	case PG_TYPE_INT2:
 	case PG_TYPE_OID:
+	case PG_TYPE_XID:
 	case PG_TYPE_INT4:
 	case PG_TYPE_FLOAT4:
 	case PG_TYPE_FLOAT8:
@@ -502,6 +515,7 @@ Int2 pgtype_auto_increment(StatementClass *stmt, Int4 type)
 
 	case PG_TYPE_INT2:         
 	case PG_TYPE_OID:
+	case PG_TYPE_XID:
 	case PG_TYPE_INT4:         
 	case PG_TYPE_FLOAT4:       
 	case PG_TYPE_MONEY:
@@ -566,7 +580,8 @@ Int2 pgtype_searchable(StatementClass *stmt, Int4 type)
 Int2 pgtype_unsigned(StatementClass *stmt, Int4 type)
 {
 	switch(type) {
-	case PG_TYPE_OID:			return TRUE;
+	case PG_TYPE_OID:
+	case PG_TYPE_XID:			return TRUE;
 
 	case PG_TYPE_INT2:
 	case PG_TYPE_INT4:
@@ -584,6 +599,7 @@ char *pgtype_literal_prefix(StatementClass *stmt, Int4 type)
 
 	case PG_TYPE_INT2:
 	case PG_TYPE_OID:
+	case PG_TYPE_XID:
 	case PG_TYPE_INT4:
 	case PG_TYPE_FLOAT4:
 	case PG_TYPE_FLOAT8:        
@@ -599,6 +615,7 @@ char *pgtype_literal_suffix(StatementClass *stmt, Int4 type)
 
 	case PG_TYPE_INT2:
 	case PG_TYPE_OID:
+	case PG_TYPE_XID:
 	case PG_TYPE_INT4:
 	case PG_TYPE_FLOAT4:
 	case PG_TYPE_FLOAT8:        

@@ -91,6 +91,7 @@
 /*	Connection Defaults */
 #define DEFAULT_PORT					"5432"
 #define DEFAULT_READONLY				1
+#define DEFAULT_PROTOCOL				"6.4"		// the latest protocol is the default
 #define DEFAULT_USEDECLAREFETCH			0
 #define DEFAULT_TEXTASLONGVARCHAR		1
 #define DEFAULT_UNKNOWNSASLONGVARCHAR	0
