@@ -1,11 +1,15 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.17 1999/01/19 16:06:25 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.18 1999/02/13 03:52:46 thomas Exp $
 
 Postgres integrated documentation.
 Other subset docs should be copied and shrunk from here.
 thomas 1998-02-23
 
 $Log: postgres.sgml,v $
+Revision 1.18  1999/02/13 03:52:46  thomas
+Include chapter on SQL language elements (keywords, etc).
+Should merge with or complement Stefan's Master's Thesis intro to SQL.
+
 Revision 1.17  1999/01/19 16:06:25  thomas
 Merge current.sgml into release.sgml so all release notes are in the same
  file. Per Bruce's preference. Go to it Bruce!
@@ -65,19 +69,20 @@ Move SQL reference pages up into the User's Guide.
 
 <!-- user's guide -->
 <!entity advanced SYSTEM "advanced.sgml">
-<!entity environ  SYSTEM "environ.sgml">
-<!entity manage   SYSTEM "manage.sgml">
-<!entity datatype SYSTEM "datatype.sgml">
-<!entity oper     SYSTEM "oper.sgml">
-<!entity func     SYSTEM "func.sgml">
-<!entity typeconv SYSTEM "typeconv.sgml">
-<!entity keys     SYSTEM "keys.sgml">
 <!entity array    SYSTEM "array.sgml">
+<!entity datatype SYSTEM "datatype.sgml">
+<!entity environ  SYSTEM "environ.sgml">
+<!entity func     SYSTEM "func.sgml">
 <!entity inherit  SYSTEM "inherit.sgml">
+<!entity keys     SYSTEM "keys.sgml">
+<!entity manage   SYSTEM "manage.sgml">
+<!entity oper     SYSTEM "oper.sgml">
+<!entity pgaccess SYSTEM "pgaccess.sgml">
+<!entity psql     SYSTEM "psql.sgml">
 <!entity query-ug SYSTEM "query-ug.sgml">
 <!entity storage  SYSTEM "storage.sgml">
-<!entity psql     SYSTEM "psql.sgml">
-<!entity pgaccess SYSTEM "pgaccess.sgml">
+<!entity syntax   SYSTEM "syntax.sgml">
+<!entity typeconv SYSTEM "typeconv.sgml">
 
 <!-- reference pages -->
 <!entity % allfiles SYSTEM "ref/allfiles.sgml">
@@ -134,25 +139,25 @@ Move SQL reference pages up into the User's Guide.
 <!-- entity manpages SYSTEM "man/manpages.sgml" subdoc -->
 <Book Id="postgres">
 
-<!-- Title information -->
+ <!-- Title information -->
 
-<Title>PostgreSQL</Title>
-<BookInfo>
-    <ReleaseInfo>Covering v6.4 for general release</ReleaseInfo>
-    <BookBiblio>
-    <AuthorGroup>
-      <CorpAuthor>The PostgreSQL Development Team</CorpAuthor>
-    </AuthorGroup>
+ <Title>PostgreSQL</Title>
+ <BookInfo>
+  <ReleaseInfo>Covering v6.4 for general release</ReleaseInfo>
+  <BookBiblio>
+   <AuthorGroup>
+    <CorpAuthor>The PostgreSQL Development Team</CorpAuthor>
+   </AuthorGroup>
 <!-- editor in authorgroup is not supported
     <AuthorGroup>
 -->
-      <Editor>
-        <FirstName>Thomas</FirstName>
-        <SurName>Lockhart</SurName>
-        <Affiliation>
-          <OrgName>Caltech/JPL</OrgName>
-        </Affiliation>
-      </Editor>
+   <Editor>
+    <FirstName>Thomas</FirstName>
+    <SurName>Lockhart</SurName>
+    <Affiliation>
+     <OrgName>Caltech/JPL</OrgName>
+    </Affiliation>
+   </Editor>
 <!--
     </AuthorGroup>
 -->
@@ -161,17 +166,17 @@ Move SQL reference pages up into the User's Guide.
     <AuthorInitials>TGL</AuthorInitials>
 -->
 
-    <Date>(last updated 1998-02-23)</Date>
-    </BookBiblio>
+   <Date>(last updated 1998-02-23)</Date>
+  </BookBiblio>
 
-<LegalNotice>
-<Para>
-<ProductName>PostgreSQL</ProductName> is copyright (C) 1998 
-by the Postgres Global Development Group.
-</Para>
-</LegalNotice>
+  <LegalNotice>
+   <Para>
+    <ProductName>PostgreSQL</ProductName> is copyright (C) 1998 
+    by the Postgres Global Development Group.
+   </Para>
+  </LegalNotice>
 
-</BookInfo>
+ </BookInfo>
 
 <!--
 <TOC> </TOC>
@@ -186,146 +191,147 @@ Your name here...
 </Dedication>
 -->
 
-<preface id="preface">
-<Title>Summary</Title>
+ <preface id="preface">
+  <Title>Summary</Title>
 
-<Para>
-<ProductName>Postgres</ProductName>, 
- developed originally in the UC Berkeley Computer Science Department,
- pioneered many of the object-relational concepts
- now becoming available in some commercial databases.
-It provides SQL92/SQL3 language support,
- transaction integrity, and type extensibility.
- <ProductName>PostgreSQL</ProductName> is a public-domain,
- open source descendant of this original Berkeley code.
-</Para>
-</Preface>
+  <Para>
+   <ProductName>Postgres</ProductName>, 
+   developed originally in the UC Berkeley Computer Science Department,
+   pioneered many of the object-relational concepts
+   now becoming available in some commercial databases.
+   It provides SQL92/SQL3 language support,
+   transaction integrity, and type extensibility.
+   <ProductName>PostgreSQL</ProductName> is a public-domain,
+   open source descendant of this original Berkeley code.
+  </Para>
+ </Preface>
 
-<part Id="part-tutorial">
-<Title>Tutorial</Title>
-<PartIntro>
-<Para>
-Introduction for new users.
-</Para>
-</PartIntro>
-&intro;
-&arch;
-&start;
-&query;
-&advanced;
-</Part>
+ <part Id="part-tutorial">
+  <Title>Tutorial</Title>
+  <PartIntro>
+   <Para>
+    Introduction for new users.
+   </Para>
+  </PartIntro>
+   &intro;
+   &arch;
+   &start;
+   &query;
+   &advanced;
+ </Part>
 
-<part Id="part-user">
-<Title>User's Guide</Title>
-<PartIntro>
-<Para>
-Information for users.
-</Para>
-</PartIntro>
-&environ;
-&manage;
-&datatype;
-&oper;
-&func;
-&typeconv;
-&keys;
-&array;
-&inherit;
-&query-ug;
-&storage;
-&psql;
-&pgaccess;
-&commands;
-</Part>
+ <part Id="part-user">
+  <Title>User's Guide</Title>
+  <PartIntro>
+   <Para>
+    Information for users.
+   </Para>
+  </PartIntro>
+   &environ;
+   &manage;
+  &syntax;
+   &datatype;
+   &oper;
+   &func;
+   &typeconv;
+  &keys;
+   &array;
+   &inherit;
+   &query-ug;
+   &storage;
+   &psql;
+   &pgaccess;
+   &commands;
+ </Part>
 
-<part Id="part-admin">
-<Title>Administrator's Guide</Title>
-<PartIntro>
-<Para>
-Installation and maintenance information.
-</Para>
-</PartIntro>
-&intro-ag;
-&ports;
-&config;
-&install;
-&installw;
-&runtime;
-&options;
-&start-ag;
-&recovery;
-&regress;
-&release;
-</Part>
+ <part Id="part-admin">
+  <Title>Administrator's Guide</Title>
+  <PartIntro>
+   <Para>
+    Installation and maintenance information.
+   </Para>
+  </PartIntro>
+   &intro-ag;
+   &ports;
+   &config;
+   &install;
+  &installw;
+   &runtime;
+   &options;
+  &start-ag;
+   &recovery;
+   &regress;
+   &release;
+ </Part>
 
-<part Id="part-programmer">
-<Title>Programmer's Guide</Title>
-<PartIntro>
-<Para>
-Information for extending <ProductName>Postgres</ProductName>.
-</Para>
-</PartIntro>
-&intro-pg;
-&arch-pg;
-&extend;
-&xfunc;
-&xtypes;
-&xoper;
-&xaggr;
-&rules;
-&xindex;
-&gist;
-&dfunc;
-&trigger;
-&spi;
-&xplang;
-<!-- &libpq; -->
-</Part>
+ <part Id="part-programmer">
+  <Title>Programmer's Guide</Title>
+  <PartIntro>
+   <Para>
+    Information for extending <ProductName>Postgres</ProductName>.
+   </Para>
+  </PartIntro>
+   &intro-pg;
+   &arch-pg;
+   &extend;
+   &xfunc;
+   &xtypes;
+   &xoper;
+   &xaggr;
+   &rules;
+   &xindex;
+   &gist;
+   &dfunc;
+   &trigger;
+   &spi;
+   &xplang;
+  <!-- &libpq; -->
+ </Part>
 
-<part Id="part-interfaces">
-<Title>Interfaces</Title>
-<PartIntro>
-<Para>
-User and programmer interfaces.
-</Para>
-</PartIntro>
-&func-ref;
-&lobj;
-&ecpg;
-&libpq;
-&libpgtcl;
-&odbc;
-&jdbc;
-</Part>
-
-<part Id="part-developer">
-<Title>Developer's Guide</Title>
-<PartIntro>
-<Para>
-The Developer's Guide includes discussion of design decisions and 
-suggestions for future development.
-</Para>
-</PartIntro>
-&arch-dev;
-&geqo;
-&protocol;
-&signals;
-&compiler;
-&bki;
-&page;
-</Part>
-
-<part Id="part-appendix">
-<Title>Appendices</Title>
-<PartIntro>
-<Para>
-Additional related information.
-</Para>
-</PartIntro>
-&docguide;
-&contacts;
-&biblio;
-</Part>
+ <part Id="part-interfaces">
+  <Title>Interfaces</Title>
+  <PartIntro>
+   <Para>
+    User and programmer interfaces.
+   </Para>
+  </PartIntro>
+   &func-ref;
+   &lobj;
+   &ecpg;
+   &libpq;
+   &libpgtcl;
+   &odbc;
+   &jdbc;
+ </Part>
+ 
+ <part Id="part-developer">
+  <Title>Developer's Guide</Title>
+  <PartIntro>
+   <Para>
+    The Developer's Guide includes discussion of design decisions and 
+    suggestions for future development.
+   </Para>
+  </PartIntro>
+   &arch-dev;
+   &geqo;
+   &protocol;
+   &signals;
+   &compiler;
+   &bki;
+   &page;
+ </Part>
+ 
+ <part Id="part-appendix">
+  <Title>Appendices</Title>
+  <PartIntro>
+   <Para>
+    Additional related information.
+   </Para>
+  </PartIntro>
+  &docguide;
+   &contacts;
+   &biblio;
+ </Part>
 
 <!--
 Omit index until we have some index entries.
