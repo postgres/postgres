@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.58 2000/01/26 05:57:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.59 2000/03/13 01:54:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,21 +71,14 @@ bpcharin(char *s, int dummy, int32 atttypmod)
 	if (s == NULL)
 		return (char *) NULL;
 
-	if (atttypmod == -1)
+	if (atttypmod < (int32) VARHDRSZ)
 	{
-
-		/*
-		 * this is here because some functions can't supply the atttypmod
-		 */
+		/* If typmod is -1 (or invalid), use the actual string length */
 		len = strlen(s);
 		atttypmod = len + VARHDRSZ;
 	}
 	else
 		len = atttypmod - VARHDRSZ;
-
-	if (len > MaxAttrSize)
-		elog(ERROR, "bpcharin: length of char() must be less than %ld",
-				MaxAttrSize);
 
 	result = (char *) palloc(atttypmod);
 	VARSIZE(result) = atttypmod;
@@ -149,14 +142,11 @@ bpchar(char *s, int32 len)
 	if (s == NULL)
 		return (char *) NULL;
 
-	if ((len == -1) || (len == VARSIZE(s)))
+	/* No work if typmod is invalid or supplied data matches it already */
+	if (len < (int32) VARHDRSZ || len == VARSIZE(s))
 		return s;
 
 	rlen = len - VARHDRSZ;
-
-	if (rlen > MaxAttrSize)
-		elog(ERROR, "bpchar: length of char() must be less than %ld",
-			MaxAttrSize);
 
 #ifdef STRINGDEBUG
 	printf("bpchar- convert string length %d (%d) ->%d (%d)\n",
@@ -333,12 +323,8 @@ varcharin(char *s, int dummy, int32 atttypmod)
 		return (char *) NULL;
 
 	len = strlen(s) + VARHDRSZ;
-	if (atttypmod != -1 && len > atttypmod)
+	if (atttypmod >= (int32) VARHDRSZ && len > atttypmod)
 		len = atttypmod;		/* clip the string at max length */
-
-	if (len > MaxAttrSize)
-		elog(ERROR, "varcharin: length of char() must be less than %ld",
-				MaxAttrSize);
 
 	result = (char *) palloc(len);
 	VARSIZE(result) = len;
@@ -391,7 +377,7 @@ varchar(char *s, int32 slen)
 		return (char *) NULL;
 
 	len = VARSIZE(s);
-	if ((slen == -1) || (len <= slen))
+	if (slen < (int32) VARHDRSZ || len <= slen)
 		return (char *) s;
 
 	/* only reach here if we need to truncate string... */
@@ -407,10 +393,6 @@ varchar(char *s, int32 slen)
 #else
 	len = slen - VARHDRSZ;
 #endif
-
-	if (len > MaxAttrSize)
-		elog(ERROR, "varchar: length of varchar() must be less than %ld",
-			MaxAttrSize);
 
 	result = (char *) palloc(slen);
 	VARSIZE(result) = slen;
