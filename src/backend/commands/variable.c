@@ -2,7 +2,7 @@
  * Routines for handling of 'SET var TO',
  *	'SHOW var' and 'RESET var' statements.
  *
- * $Id: variable.c,v 1.20 1999/05/25 16:08:28 momjian Exp $
+ * $Id: variable.c,v 1.21 1999/06/17 15:15:48 momjian Exp $
  *
  */
 
@@ -16,14 +16,10 @@
 #include "utils/builtins.h"
 #include "optimizer/internal.h"
 #include "access/xact.h"
+#include "utils/tqual.h"
 #ifdef MULTIBYTE
 #include "mb/pg_wchar.h"
 #endif
-#ifdef QUERY_LIMIT
-#include "executor/executor.h"
-#include "executor/execdefs.h"
-#endif
-
 static bool show_date(void);
 static bool reset_date(void);
 static bool parse_date(const char *);
@@ -45,13 +41,6 @@ static bool parse_ksqo(const char *);
 static bool show_XactIsoLevel(void);
 static bool reset_XactIsoLevel(void);
 static bool parse_XactIsoLevel(const char *);
-
-#ifdef QUERY_LIMIT
-static bool show_query_limit(void);
-static bool reset_query_limit(void);
-static bool parse_query_limit(const char *);
-
-#endif
 
 extern Cost _cpu_page_wight_;
 extern Cost _cpu_index_page_wight_;
@@ -538,52 +527,6 @@ reset_timezone()
 	return TRUE;
 }	/* reset_timezone() */
 
-/*
- *
- * Query_limit
- *
- */
-#ifdef QUERY_LIMIT
-static bool
-parse_query_limit(const char *value)
-{
-	int32		limit;
-
-	if (value == NULL)
-	{
-		reset_query_limit();
-		return (TRUE);
-	}
-	/* why is pg_atoi's arg not declared "const char *" ? */
-	limit = pg_atoi((char *) value, sizeof(int32), '\0');
-	if (limit <= -1)
-		elog(ERROR, "Bad value for # of query limit (%s)", value);
-	ExecutorLimit(limit);
-	return (TRUE);
-}
-
-static bool
-show_query_limit(void)
-{
-	int			limit;
-
-	limit = ExecutorGetLimit();
-	if (limit == ALL_TUPLES)
-		elog(NOTICE, "No query limit is set");
-	else
-		elog(NOTICE, "query limit is %d", limit);
-	return (TRUE);
-}
-
-static bool
-reset_query_limit(void)
-{
-	ExecutorLimit(ALL_TUPLES);
-	return (TRUE);
-}
-
-#endif
-
 /*-----------------------------------------------------------------------*/
 
 struct VariableParsers
@@ -624,11 +567,6 @@ struct VariableParsers
 	{
 		"XactIsoLevel", parse_XactIsoLevel, show_XactIsoLevel, reset_XactIsoLevel
 	},
-#ifdef QUERY_LIMIT
-	{
-		"query_limit", parse_query_limit, show_query_limit, reset_query_limit
-	},
-#endif
 	{
 		NULL, NULL, NULL, NULL
 	}

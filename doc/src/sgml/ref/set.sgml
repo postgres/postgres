@@ -601,43 +601,6 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZED }
       </listitem>
      </varlistentry>
 
-     <varlistentry>
-      <term>
-       QUERY_LIMIT
-      </term>
-      <listitem>
-       <para>
-	Sets the maximum number of rows returned by a query.
-	By default, there is no limit to the number of rows
-	returned by a query.
-       
-	<variablelist>
-	 <varlistentry>
-	  <term>
-	   <replaceable class="parameter">#</replaceable>
-	  </term>
-	  <listitem>
-	   <para>
-	    Sets the maximum number of rows returned by a
-	    query to <replaceable class="parameter">#</replaceable>.
-	   </para>
-	  </listitem>
-	 </varlistentry>
-	 <varlistentry>
-	  <term>
-	   DEFAULT
-	  </term>
-	  <listitem>
-	   <para>
-	    Sets the maximum number of rows returned by a query to be unlimited.
-	   </para>
-	  </listitem>
-	 </varlistentry>
-	</variablelist>
-       </para>
-      </listitem>
-     </varlistentry>
-
     </variablelist>
    </para>
   </refsect2>

@@ -15,7 +15,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: memutils.h,v 1.27 1999/05/26 12:57:07 momjian Exp $
+ * $Id: memutils.h,v 1.28 1999/06/17 15:15:59 momjian Exp $
  *
  * NOTES
  *	  some of the information in this file will be moved to
@@ -33,18 +33,18 @@
  * There used to be some incredibly crufty platform-dependent hackery here,
  * but now we rely on the configure script to get the info for us. Much nicer.
  *
- * NOTE: _ALIGN will not work if ALIGNVAL is not a power of 2.
+ * NOTE: TYPEALIGN will not work if ALIGNVAL is not a power of 2.
  * That case seems extremely unlikely to occur in practice, however.
  * ----------------
  */
 
-#define _ALIGN(ALIGNVAL,LEN)	(((long)(LEN) + (ALIGNVAL-1)) & ~(ALIGNVAL-1))
+#define TYPEALIGN(ALIGNVAL,LEN)	(((long)(LEN) + (ALIGNVAL-1)) & ~(ALIGNVAL-1))
 
-#define SHORTALIGN(LEN)			_ALIGN(ALIGNOF_SHORT, (LEN))
-#define INTALIGN(LEN)			_ALIGN(ALIGNOF_INT, (LEN))
-#define LONGALIGN(LEN)			_ALIGN(ALIGNOF_LONG, (LEN))
-#define DOUBLEALIGN(LEN)		_ALIGN(ALIGNOF_DOUBLE, (LEN))
-#define MAXALIGN(LEN)			_ALIGN(MAXIMUM_ALIGNOF, (LEN))
+#define SHORTALIGN(LEN)			TYPEALIGN(ALIGNOF_SHORT, (LEN))
+#define INTALIGN(LEN)			TYPEALIGN(ALIGNOF_INT, (LEN))
+#define LONGALIGN(LEN)			TYPEALIGN(ALIGNOF_LONG, (LEN))
+#define DOUBLEALIGN(LEN)		TYPEALIGN(ALIGNOF_DOUBLE, (LEN))
+#define MAXALIGN(LEN)			TYPEALIGN(MAXIMUM_ALIGNOF, (LEN))
 
 /*****************************************************************************
  *	  oset.h --			Fixed format ordered set definitions.				 *

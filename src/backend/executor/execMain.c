@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.87 1999/06/09 12:23:42 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.88 1999/06/17 15:15:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -87,26 +87,6 @@ static TupleTableSlot *EvalPlanQualNext(EState *estate);
 
 
 /* end of local decls */
-
-#ifdef QUERY_LIMIT
-static int	queryLimit = ALL_TUPLES;
-
-#undef ALL_TUPLES
-#define ALL_TUPLES queryLimit
-
-int
-ExecutorLimit(int limit)
-{
-	return queryLimit = limit;
-}
-
-int
-ExecutorGetLimit()
-{
-	return queryLimit;
-}
-
-#endif
 
 /* ----------------------------------------------------------------
  *		ExecutorStart

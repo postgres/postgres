@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/set.l,v 1.22 1999/06/09 03:51:40 vadim Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/set.l,v 1.23 1999/06/17 15:16:06 momjian Exp $
 .TH SET SQL 05/14/97 PostgreSQL PostgreSQL
 .SH NAME
 set - set run-time parameters for session
@@ -73,10 +73,6 @@ enables or disables a workaround for memory exhaustion in queries with many
 .B OR
 clauses.
 The default is disabled.
-.PP
-.IR QUERY_LIMIT
-restricts the number of rows returned by a query.
-The default is unlimited.
 .PP
 .IR TIMEZONE
 sets your timezone.

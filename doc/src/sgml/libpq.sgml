@@ -1521,12 +1521,6 @@ sets the default cost for heap searches for the optimizer.
 sets the default cost for indexed searches for the optimizer.
 </Para>
 </ListItem>
-<ListItem>
-<Para>
-<Acronym>PGQUERY_LIMIT</Acronym>
-sets the maximum number of rows returned by a query.
-</Para>
-</ListItem>
 </ItemizedList>
 </Para>
 

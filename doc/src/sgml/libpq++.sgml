@@ -182,12 +182,6 @@
 	sets the default cost for indexed searches for the optimizer.
        </para>
       </listitem>
-      <listitem>
-       <para>
-	<envar>PGQUERY_LIMIT</envar>
-	sets the maximum number of rows returned by a query.
-       </para>
-      </listitem>
      </itemizedlist>
     </para>
 	
