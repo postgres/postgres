@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.82 2001/11/05 17:46:24 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.83 2001/12/19 19:42:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -744,9 +744,13 @@ begin:;
 	/* If first XLOG record of transaction, save it in PROC array */
 	if (MyLastRecPtr.xrecoff == 0 && !no_tran)
 	{
-		LWLockAcquire(SInvalLock, LW_EXCLUSIVE);
+		/*
+		 * We do not acquire SInvalLock here because of possible deadlock.
+		 * Anyone who wants to inspect other procs' logRec must acquire
+		 * WALInsertLock, instead.  A better solution would be a per-PROC
+		 * spinlock, but no time for that before 7.2 --- tgl 12/19/01.
+		 */
 		MyProc->logRec = RecPtr;
-		LWLockRelease(SInvalLock);
 	}
 
 	if (XLOG_DEBUG)
@@ -2928,11 +2932,22 @@ CreateCheckPoint(bool shutdown)
 	 * this while holding insert lock to ensure that we won't miss any
 	 * about-to-commit transactions (UNDO must include all xacts that have
 	 * commits after REDO point).
+	 *
+	 * XXX temporarily ifdef'd out to avoid three-way deadlock condition:
+	 * GetUndoRecPtr needs to grab SInvalLock to ensure that it is looking
+	 * at a stable set of proc records, but grabbing SInvalLock while holding
+	 * WALInsertLock is no good.  GetNewTransactionId may cause a WAL record
+	 * to be written while holding XidGenLock, and GetSnapshotData needs to
+	 * get XidGenLock while holding SInvalLock, so there's a risk of deadlock.
+	 * Need to find a better solution.  See pgsql-hackers discussion of
+	 * 17-Dec-01.
 	 */
+#ifdef NOT_USED
 	checkPoint.undo = GetUndoRecPtr();
 
 	if (shutdown && checkPoint.undo.xrecoff != 0)
 		elog(STOP, "active transaction while database system is shutting down");
+#endif
 
 	/*
 	 * Now we can release insert lock, allowing other xacts to proceed
