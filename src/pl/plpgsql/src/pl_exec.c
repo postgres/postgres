@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.4 1998/10/04 15:38:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.5 1999/01/17 21:53:32 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1243,9 +1243,9 @@ exec_stmt_fori(PLpgSQL_execstate * estate, PLpgSQL_stmt_fori * stmt)
 		 * ----------
 		 */
 		if (stmt->reverse)
-			(int4)var->value--;
+			var->value--;
 		else
-			(int4)var->value++;
+			var->value++;
 	}
 
 	return PLPGSQL_RC_OK;
