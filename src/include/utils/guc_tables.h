@@ -7,7 +7,7 @@
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
- *	  $PostgreSQL: pgsql/src/include/utils/guc_tables.h,v 1.7 2003/11/29 22:41:15 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/include/utils/guc_tables.h,v 1.8 2003/12/03 18:52:00 joe Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,7 +50,8 @@ enum config_group
 	COMPAT_OPTIONS,
 	COMPAT_OPTIONS_PREVIOUS,
 	COMPAT_OPTIONS_CLIENT,
-	DEVELOPER_OPTIONS
+	DEVELOPER_OPTIONS,
+	COMPILE_OPTIONS
 };
 
 /*

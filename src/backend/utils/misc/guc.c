@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.174 2003/12/01 22:08:00 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.175 2003/12/03 18:52:00 joe Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -158,7 +158,11 @@ static char *server_version_string;
 static char *session_authorization_string;
 static char *timezone_string;
 static char *XactIsoLevel_string;
-
+static int	max_function_args;
+static int	max_index_keys;
+static int	max_identifier_length;
+static int	block_size;
+static bool integer_datetimes;
 
 /* Macros for freeing malloc'd pointers only if appropriate to do so */
 /* Some of these tests are probably redundant, but be safe ... */
@@ -304,6 +308,8 @@ const char *const config_group_names[] =
 	gettext_noop("Version and Platform Compatibility / Other Platforms and Clients"),
 	/* DEVELOPER_OPTIONS */
 	gettext_noop("Developer Options"),
+	/* COMPILE_OPTIONS */
+	gettext_noop("Compiled-in Options"),
 	/* help_config wants this array to be null-terminated */
 	NULL
 };
@@ -842,6 +848,20 @@ static struct config_bool ConfigureNamesBool[] =
 		true, NULL, NULL
 	},
 
+	{
+		{"integer_datetimes", PGC_INTERNAL, COMPILE_OPTIONS,
+			gettext_noop("Datetimes are integer based"),
+			NULL,
+			GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
+		},
+		&integer_datetimes,
+#ifdef HAVE_INT64_TIMESTAMP
+		true, NULL, NULL
+#else
+		false, NULL, NULL
+#endif
+	},
+
 	/* End-of-list marker */
 	{
 		{NULL, 0, 0, NULL, NULL}, NULL, false, NULL, NULL
@@ -1236,6 +1256,46 @@ static struct config_int ConfigureNamesInt[] =
 		},
 		&BgWriterMaxpages,
 		100, 1, 1000, NULL, NULL
+	},
+
+	{
+		{"max_function_args", PGC_INTERNAL, COMPILE_OPTIONS,
+			gettext_noop("Shows the maximum number of function arguments"),
+			NULL,
+			GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
+		},
+		&max_function_args,
+		FUNC_MAX_ARGS, FUNC_MAX_ARGS, FUNC_MAX_ARGS, NULL, NULL
+	},
+
+	{
+		{"max_index_keys", PGC_INTERNAL, COMPILE_OPTIONS,
+			gettext_noop("Shows the maximum number of index keys"),
+			NULL,
+			GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
+		},
+		&max_index_keys,
+		INDEX_MAX_KEYS, INDEX_MAX_KEYS, INDEX_MAX_KEYS, NULL, NULL
+	},
+
+	{
+		{"max_identifier_length", PGC_INTERNAL, COMPILE_OPTIONS,
+			gettext_noop("Shows the maximum identifier length"),
+			NULL,
+			GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
+		},
+		&max_identifier_length,
+		NAMEDATALEN - 1, NAMEDATALEN - 1, NAMEDATALEN - 1, NULL, NULL
+	},
+
+	{
+		{"block_size", PGC_INTERNAL, COMPILE_OPTIONS,
+			gettext_noop("Shows size of a disk block"),
+			NULL,
+			GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
+		},
+		&block_size,
+		BLCKSZ, BLCKSZ, BLCKSZ, NULL, NULL
 	},
 
 	/* End-of-list marker */
@@ -3478,14 +3538,23 @@ GetConfigOptionByNum(int varnum, const char **values, bool *noshow)
 	/* setting : use _ShowOption in order to avoid duplicating the logic */
 	values[1] = _ShowOption(conf);
 
+	/* group */
+	values[2] = config_group_names[conf->group];
+
+	/* short_desc */
+	values[3] = conf->short_desc;
+
+	/* extra_desc */
+	values[4] = conf->long_desc;
+
 	/* context */
-	values[2] = GucContext_Names[conf->context];
+	values[5] = GucContext_Names[conf->context];
 
 	/* vartype */
-	values[3] = config_type_names[conf->vartype];
+	values[6] = config_type_names[conf->vartype];
 
 	/* source */
-	values[4] = GucSource_Names[conf->source];
+	values[7] = GucSource_Names[conf->source];
 
 	/* now get the type specifc attributes */
 	switch (conf->vartype)
@@ -3493,10 +3562,10 @@ GetConfigOptionByNum(int varnum, const char **values, bool *noshow)
 		case PGC_BOOL:
 			{
 				/* min_val */
-				values[5] = NULL;
+				values[8] = NULL;
 
 				/* max_val */
-				values[6] = NULL;
+				values[9] = NULL;
 			}
 			break;
 
@@ -3506,11 +3575,11 @@ GetConfigOptionByNum(int varnum, const char **values, bool *noshow)
 
 				/* min_val */
 				snprintf(buffer, sizeof(buffer), "%d", lconf->min);
-				values[5] = pstrdup(buffer);
+				values[8] = pstrdup(buffer);
 
 				/* max_val */
 				snprintf(buffer, sizeof(buffer), "%d", lconf->max);
-				values[6] = pstrdup(buffer);
+				values[9] = pstrdup(buffer);
 			}
 			break;
 
@@ -3520,21 +3589,21 @@ GetConfigOptionByNum(int varnum, const char **values, bool *noshow)
 
 				/* min_val */
 				snprintf(buffer, sizeof(buffer), "%g", lconf->min);
-				values[5] = pstrdup(buffer);
+				values[8] = pstrdup(buffer);
 
 				/* max_val */
 				snprintf(buffer, sizeof(buffer), "%g", lconf->max);
-				values[6] = pstrdup(buffer);
+				values[9] = pstrdup(buffer);
 			}
 			break;
 
 		case PGC_STRING:
 			{
 				/* min_val */
-				values[5] = NULL;
+				values[8] = NULL;
 
 				/* max_val */
-				values[6] = NULL;
+				values[9] = NULL;
 			}
 			break;
 
@@ -3546,10 +3615,10 @@ GetConfigOptionByNum(int varnum, const char **values, bool *noshow)
 				 */
 
 				/* min_val */
-				values[5] = NULL;
+				values[8] = NULL;
 
 				/* max_val */
-				values[6] = NULL;
+				values[9] = NULL;
 			}
 			break;
 	}
@@ -3592,7 +3661,7 @@ show_config_by_name(PG_FUNCTION_ARGS)
  * show_all_settings - equiv to SHOW ALL command but implemented as
  * a Table Function.
  */
-#define NUM_PG_SETTINGS_ATTS	7
+#define NUM_PG_SETTINGS_ATTS	10
 
 Datum
 show_all_settings(PG_FUNCTION_ARGS)
@@ -3626,15 +3695,21 @@ show_all_settings(PG_FUNCTION_ARGS)
 						   TEXTOID, -1, 0, false);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "setting",
 						   TEXTOID, -1, 0, false);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 3, "context",
+		TupleDescInitEntry(tupdesc, (AttrNumber) 3, "category",
 						   TEXTOID, -1, 0, false);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 4, "vartype",
+		TupleDescInitEntry(tupdesc, (AttrNumber) 4, "short_desc",
 						   TEXTOID, -1, 0, false);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 5, "source",
+		TupleDescInitEntry(tupdesc, (AttrNumber) 5, "extra_desc",
 						   TEXTOID, -1, 0, false);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 6, "min_val",
+		TupleDescInitEntry(tupdesc, (AttrNumber) 6, "context",
 						   TEXTOID, -1, 0, false);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 7, "max_val",
+		TupleDescInitEntry(tupdesc, (AttrNumber) 7, "vartype",
+						   TEXTOID, -1, 0, false);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 8, "source",
+						   TEXTOID, -1, 0, false);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 9, "min_val",
+						   TEXTOID, -1, 0, false);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 10, "max_val",
 						   TEXTOID, -1, 0, false);
 
 		/* allocate a slot for a tuple with this tupdesc */

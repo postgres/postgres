@@ -3,7 +3,7 @@
  *
  * Copyright 1996-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.3 2003/11/29 22:39:40 pgsql Exp $
+ * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.4 2003/12/03 18:52:00 joe Exp $
  */
 
 CREATE VIEW pg_user AS 
@@ -260,8 +260,8 @@ CREATE VIEW pg_locks AS
 CREATE VIEW pg_settings AS 
     SELECT * 
     FROM pg_show_all_settings() AS A 
-    (name text, setting text, context text, vartype text, 
-     source text, min_val text, max_val text);
+    (name text, setting text, category text, short_desc text, extra_desc text,
+     context text, vartype text, source text, min_val text, max_val text);
 
 CREATE RULE pg_settings_u AS 
     ON UPDATE TO pg_settings 
