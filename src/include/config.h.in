@@ -194,7 +194,6 @@
 #  define USE_POSIX_TIME 
 #  define USE_POSIX_SIGNALS
 #  define NO_EMPTY_STMTS
-#  define USE_POSIX_TIME
 #  define SYSV_DIRENT
 #  define HAS_TEST_AND_SET
 typedef unsigned char slock_t;
@@ -202,7 +201,6 @@ typedef unsigned char slock_t;
 
 #if defined(sunos4)
 #  define USE_POSIX_TIME
-/* #  undef HAVE_MEMMOVE */
 #endif
 
 #if defined(svr4) 
@@ -259,11 +257,6 @@ typedef unsigned char slock_t;
  */ 
 
 #define DEF_PGPORT "5432"
-
-/* turn this on if you prefer European style dates instead of American
- * style dates
- */
-/* #define EUROPEAN_DATES  */
 
 /*
  * If you do not plan to use Host based authentication,
@@ -395,10 +388,4 @@ typedef unsigned char slock_t;
 /* Undocumented "features"? */
 #define FASTBUILD /* access/nbtree/nbtsort.c */
 
-
-
-
-
-
 #endif /* CONFIG_H */
-

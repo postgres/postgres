@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.8 1997/02/05 21:21:33 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.9 1997/02/06 06:33:47 scrappy Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the 
@@ -79,11 +79,6 @@ LIBPQDIR:= $(SRCDIR)/libpq
 # and other target destinations are rooted.  Of course, each of these is 
 # changable separately.
 POSTGRESDIR= /usr/local/pgsql
-
-# DATADIR specifies where the postmaster expects to find its database.
-# This may be overridden by command line options or the PGDATA environment
-# variable.
-DATADIR= $(POSTGRESDIR)/data
 
 # Where the postgres executables live (changeable by just putting them
 # somewhere else and putting that directory in your shell PATH)
