@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.56 1997/02/11 03:11:33 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.57 1997/02/13 08:31:48 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,7 +26,7 @@
 #include "pqsignal.h"
 #include "stringutils.h"
 #include "psqlHelp.h"
-#ifdef NEED_STRDUP
+#ifndef HAVE_STRDUP
 #include "strdup.h"
 #endif
 

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.38 1997/02/06 19:27:22 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.39 1997/02/13 08:31:09 scrappy Exp $
  *
  * NOTES
  *
@@ -420,12 +420,16 @@ pmdaemonize(void)
     
     if (fork())
         exit(0);
-    
+/* GH: If there's no setsid(), we hopefully don't need silent mode.
+ * Until there's a better solution.
+ */
+#ifdef HAVE_SETSID
     if (setsid() < 0) {
         fprintf(stderr, "%s: ", progname);
         perror("cannot disassociate from controlling TTY");
         exit(1);
     }
+#endif
     i = open(NULL_DEV, O_RDWR);
     (void) dup2(i, 0);
     (void) dup2(i, 1);
@@ -459,19 +463,30 @@ ServerLoop(void)
     fd_set      rmask, basemask;
     int         nSockets, nSelected, status, newFd;
     Dlelem   *next, *curr;
-/*    int orgsigmask = sigblock(0); */
+    /* GH: For !HAVE_SIGPROCMASK (NEXTSTEP), TRH implemented
+     * an alternative interface.
+     */
+#ifdef HAVE_SIGPROCMASK
     sigset_t oldsigmask, newsigmask;
+#else
+    int orgsigmask = sigblock(0);
+#endif
     
     nSockets = ServerSock + 1;
     FD_ZERO(&basemask);
     FD_SET(ServerSock, &basemask);
     
+#ifdef HAVE_SIGPROCMASK
     sigprocmask(0,0,&oldsigmask);
     sigemptyset(&newsigmask);
     sigaddset(&newsigmask,SIGCHLD);
+#endif
     for (;;) {
-/*      sigsetmask(orgsigmask); */
+#ifdef HAVE_SIGPROCMASK
         sigprocmask(SIG_SETMASK,&oldsigmask,0);
+#else
+        sigsetmask(orgsigmask); 
+#endif
         newFd = -1;
         memmove((char *) &rmask, (char *) &basemask, sizeof(fd_set));
         if ((nSelected = select(nSockets, &rmask,
@@ -490,8 +505,11 @@ ServerLoop(void)
          * manipulate the BackEnd list, and reaper() calls free() which is
          * usually non-reentrant.)
          */
+#ifdef HAVE_SIGPROCMASK
         sigprocmask(SIG_BLOCK, &newsigmask, &oldsigmask);
-/*      sigblock(sigmask(SIGCHLD));     */      /* XXX[TRH] portability */
+#else
+        sigblock(sigmask(SIGCHLD));           /* XXX[TRH] portability */
+#endif
         if (DebugLvl > 1) {
             fprintf(stderr, "%s: ServerLoop: %d sockets pending\n",
                     progname, nSelected);
@@ -816,15 +834,25 @@ pmdie(SIGNAL_ARGS)
 static void
 reaper(SIGNAL_ARGS)
 {
+/* GH: replace waitpid for !HAVE_WAITPID. Does this work ? */
+#ifdef HAVE_WAITPID
     int status;         /* backend exit status */
+#else
+    union wait statusp;         /* backend exit status */
+#endif
     int pid;            /* process id of dead backend */
     
     if (DebugLvl)
         fprintf(stderr, "%s: reaping dead processes...\n",
                 progname);
 #ifndef WIN32
+#ifdef HAVE_WAITPID
     while((pid = waitpid(-1, &status, WNOHANG)) > 0)
         CleanupProc(pid, status);
+#else
+    while((pid = wait3(&statusp, WNOHANG, NULL)) > 0)
+        CleanupProc(pid, statusp.w_status);
+#endif
 #endif /* WIN32 */
 }
 

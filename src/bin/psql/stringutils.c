@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/stringutils.c,v 1.7 1996/11/26 07:38:36 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/stringutils.c,v 1.8 1997/02/13 08:31:57 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,7 +16,7 @@
 #include <ctype.h>
 #include <stdlib.h>
 
-#ifdef NEED_STRDUP
+#ifndef HAVE_STRDUP
 #include "strdup.h"
 #endif
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.22 1996/11/28 03:32:12 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.23 1997/02/13 08:32:08 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,7 @@
 #include "fe-auth.h"
 #include "libpq-fe.h"
 
-#ifdef NEED_STRDUP
+#ifndef HAVE_STRDUP
 #include "strdup.h"
 #endif
 
@@ -518,6 +518,8 @@ freePGconn(PGconn *conn)
 static void
 closePGconn(PGconn *conn)
 {
+/* GH: What to do for !USE_POSIX_SIGNALS ? */
+#if defined(USE_POSIX_SIGNALS)
     struct sigaction ignore_action;
       /* This is used as a constant, but not declared as such because the
          sigaction structure is defined differently on different systems */
@@ -534,6 +536,12 @@ closePGconn(PGconn *conn)
     fputs("X\0", conn->Pfout);
     fflush(conn->Pfout);
     sigaction(SIGPIPE, &oldaction, NULL);
+#else
+    signal(SIGPIPE, SIG_IGN);
+    fputs("X\0", conn->Pfout);
+    fflush(conn->Pfout);
+    signal(SIGPIPE, SIG_DFL);
+#endif
     if (conn->Pfout) fclose(conn->Pfout);
     if (conn->Pfin)  fclose(conn->Pfin);
     if (conn->Pfdebug) fclose(conn->Pfdebug);
