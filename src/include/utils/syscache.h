@@ -6,18 +6,17 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: syscache.h,v 1.1 1996/08/28 01:59:26 scrappy Exp $
+ * $Id: syscache.h,v 1.2 1996/10/19 04:16:04 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef	SYSCACHE_H
 #define SYSCACHE_H
 
+#include "access/attnum.h"
+
 /*#define CACHEDEBUG*/ 	/* turns DEBUG elogs on */
 
-#include "postgres.h"
-#include "access/htup.h"
-#include "nodes/pg_list.h"
 
 /*
  *	Declarations for util/syscache.c.
