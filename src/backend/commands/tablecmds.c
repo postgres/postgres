@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.48 2002/10/19 03:01:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.49 2002/10/21 20:31:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1584,7 +1584,6 @@ update_ri_trigger_args(Oid relid,
 void
 AlterTableAddColumn(Oid myrelid,
 					bool recurse,
-					bool recursing,
 					ColumnDef *colDef)
 {
 	Relation	rel,
@@ -1643,22 +1642,50 @@ AlterTableAddColumn(Oid myrelid,
 		colDefChild->inhcount = 1;
 		colDefChild->is_local = false;
 
-		/* this routine is actually in the planner */
-		children = find_all_inheritors(myrelid);
+		/* We only want direct inheritors */
+		children = find_inheritance_children(myrelid);
 
-		/*
-		 * find_all_inheritors does the recursive search of the
-		 * inheritance hierarchy, so all we have to do is process all of
-		 * the relids in the list that it returns.
-		 */
 		foreach(child, children)
 		{
 			Oid			childrelid = lfirsti(child);
+			HeapTuple	tuple;
+			Form_pg_attribute childatt;
+			Relation	childrel;
 
 			if (childrelid == myrelid)
 				continue;
 
-			AlterTableAddColumn(childrelid, false, true, colDefChild);
+			attrdesc = heap_openr(AttributeRelationName, RowExclusiveLock);
+			tuple = SearchSysCacheCopyAttName(childrelid, colDef->colname);
+			if (!HeapTupleIsValid(tuple))
+			{
+				heap_close(attrdesc, RowExclusiveLock);
+				AlterTableAddColumn(childrelid, true, colDefChild);
+				continue;
+			}
+			childatt = (Form_pg_attribute) GETSTRUCT(tuple);
+
+			typeTuple = typenameType(colDef->typename);
+
+			if (HeapTupleGetOid(typeTuple) != childatt->atttypid ||
+					colDef->typename->typmod != childatt->atttypmod)
+				elog(ERROR, "ALTER TABLE: child table %u has different "
+						"type for column \"%s\"",
+						childrelid, colDef->colname);
+
+			childatt->attinhcount++;
+			simple_heap_update(attrdesc, &tuple->t_self, tuple);
+			CatalogUpdateIndexes(attrdesc, tuple);
+			
+			childrel = RelationIdGetRelation(childrelid);
+			elog(NOTICE, "ALTER TABLE: merging definition of column "
+					"\"%s\" for child %s", colDef->colname,
+					RelationGetRelationName(childrel));
+			RelationClose(childrel);
+
+			heap_close(attrdesc, RowExclusiveLock);
+			heap_freetuple(tuple);
+			ReleaseSysCache(typeTuple);
 		}
 	}
 	else
@@ -1667,8 +1694,7 @@ AlterTableAddColumn(Oid myrelid,
 		 * If we are told not to recurse, there had better not be any
 		 * child tables; else the addition would put them out of step.
 		 */
-		if (!recursing &&
-			find_inheritance_children(myrelid) != NIL)
+		if (find_inheritance_children(myrelid) != NIL)
 			elog(ERROR, "Attribute must be added to child tables too");
 	}
 

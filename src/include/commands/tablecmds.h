@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tablecmds.h,v 1.7 2002/09/04 20:31:42 momjian Exp $
+ * $Id: tablecmds.h,v 1.8 2002/10/21 20:31:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,8 +16,7 @@
 
 #include "nodes/parsenodes.h"
 
-extern void AlterTableAddColumn(Oid myrelid, bool recurse, bool recursing,
-					ColumnDef *colDef);
+extern void AlterTableAddColumn(Oid myrelid, bool recurse, ColumnDef *colDef);
 
 extern void AlterTableAlterColumnDropNotNull(Oid myrelid, bool recurse,
 								 const char *colName);

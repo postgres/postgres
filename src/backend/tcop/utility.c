@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.179 2002/10/08 17:17:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.180 2002/10/21 20:31:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -475,7 +475,6 @@ ProcessUtility(Node *parsetree,
 						 */
 						AlterTableAddColumn(relid,
 							  interpretInhOption(stmt->relation->inhOpt),
-											false,
 											(ColumnDef *) stmt->def);
 						break;
 					case 'T':	/* ALTER COLUMN DEFAULT */
