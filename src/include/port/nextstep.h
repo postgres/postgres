@@ -12,9 +12,7 @@ typedef int sigset_t;
 #define SIG_BLOCK	  00
 #define SIG_UNBLOCK   01
 #define SIG_SETMASK   02
-#define NEED_SIG_JMP
 #endif
 
-#define JMP_BUF
 #define NO_WAITPID
 typedef struct mutex slock_t;

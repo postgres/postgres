@@ -4,7 +4,6 @@
    __USE_BSD is set by bsd/signal.h, and __USE_BSD_SIGNAL appears not to
    be used.
 */
-#define JMP_BUF
 #define USE_POSIX_TIME
 
 #if defined(__i386__)

@@ -7,30 +7,21 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: exc.h,v 1.16 2000/01/26 05:58:38 momjian Exp $
+ * $Id: exc.h,v 1.17 2000/10/28 23:53:01 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef EXC_H
 #define EXC_H
 
-#include <setjmp.h>
-
 #include "config.h"
+
+#include <setjmp.h>
 
 extern char *ExcFileName;
 extern Index ExcLineNumber;
 
-/*
- * ExcMessage and Exception are now defined in c.h
- */
-#if defined(JMP_BUF)
-typedef jmp_buf ExcContext;
-
-#else
 typedef sigjmp_buf ExcContext;
-
-#endif
 
 typedef Exception *ExcId;
 typedef long ExcDetail;
