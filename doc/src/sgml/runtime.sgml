@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.135 2002/09/02 13:45:30 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.136 2002/09/17 21:41:47 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1784,12 +1784,13 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
 	Specifies the amount of memory to be used by internal sorts and
 	hashes before switching to temporary disk files. The value is
 	specified in kilobytes, and defaults to 1024 kilobytes (1MB).
-	Note that for a complex query, several sorts and/or hashes might be
-	running in parallel, and each one will be allowed to use as much
-	memory as this value specifies before it starts to put data into
-	temporary files. Also, each running backend could be doing one
-	or more sorts simultaneously, so the total memory used could be
-	many times the value of <varname>SORT_MEM</varname>.
+	Note that for a complex query, several sorts might be running in
+	parallel, and each one will be allowed to use as much memory as
+	this value specifies before it starts to put data into temporary
+	files. Also, each running backend could be doing one or more
+	sorts simultaneously, so the total memory used could be many
+	times the value of <varname>SORT_MEM</varname>. Sorts are used
+	by ORDER BY, merge joins, and CREATE INDEX.
        </para>
       </listitem>
      </varlistentry>
