@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.119 2002/06/16 00:09:11 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.120 2002/07/05 01:17:20 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -801,6 +801,81 @@ env PGOPTIONS='-c geqo=off' psql
 	detail to the logs. <literal>LOG</> has a different precedence 
 	here than in <literal>CLIENT_MIN_MESSAGES</>.
        </para>
+       <para>
+        Here is a summary of the various message types:
+        <variablelist>
+         <varlistentry>
+          <term><varname>DEBUG[1-5]</varname></term>
+          <listitem>
+           <para>
+            This provides information for use by developers.
+	   </para>
+          </listitem>
+         </varlistentry>
+         <varlistentry>
+          <term><varname>INFO</varname></term>
+          <listitem>
+           <para>
+            This provides information requested by the user, e.g. 
+	    <command>SET</>.
+	   </para>
+          </listitem>
+         </varlistentry>
+         <varlistentry>
+          <term><varname>NOTICE</varname></term>
+          <listitem>
+           <para>
+            This provides information that may be helpful to users, e.g.
+	    truncation of long identifiers, sequence creation as part of
+	    <command>SERIAL</>.
+	   </para>
+          </listitem>
+         </varlistentry>
+         <varlistentry>
+          <term><varname>WARNING</varname></term>
+          <listitem>
+           <para>
+            This provides warnings to the user, e.g. <command>COMMIT</>
+            outside a transaction.
+	   </para>
+          </listitem>
+         </varlistentry>
+         <varlistentry>
+          <term><varname>ERROR</varname></term>
+          <listitem>
+           <para>
+            Reports the error that caused the transaction to abort.
+	   </para>
+          </listitem>
+         </varlistentry>
+
+         <varlistentry>
+          <term><varname>LOG</varname></term>
+          <listitem>
+           <para>
+            This reports information of interest to administrators, e.g. 
+	    checkpoint activity.
+	   </para>
+          </listitem>
+         </varlistentry>
+         <varlistentry>
+          <term><varname>FATAL</varname></term>
+          <listitem>
+           <para>
+            This reports why the backend session terminated.
+	   </para>
+          </listitem>
+         </varlistentry>
+         <varlistentry>
+          <term><varname>PANIC</varname></term>
+          <listitem>
+           <para>
+            This reports why all backends restarted.
+	   </para>
+          </listitem>
+         </varlistentry>
+        </variablelist>
+       </para>
       </listitem>
      </varlistentry>
 
@@ -812,10 +887,11 @@ env PGOPTIONS='-c geqo=off' psql
         default is <literal>NOTICE</>. Valid values are
         <literal>DEBUG5</>, <literal>DEBUG4</>, <literal>DEBUG3</>,
         <literal>DEBUG2</>, <literal>DEBUG1</>, <literal>LOG</>,
-        <literal>NOTICE</>, <literal>WARNING</>, and <literal>ERROR</>. 
-	Later values send less information to the user. <literal>LOG</> 
-	has a different precedence here than in 
-	<literal>SERVER_MIN_MESSAGES</>.
+        <literal>NOTICE</>, <literal>WARNING</>, and <literal>ERROR</>.
+        Later values send less information to the user. <literal>LOG</>
+        has a different precedence here than in
+        <literal>SERVER_MIN_MESSAGES</>. Also see that section for an
+        explanation of the various values.
        </para>
       </listitem>
      </varlistentry>
