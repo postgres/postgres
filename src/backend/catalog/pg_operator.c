@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.8 1996/12/26 17:46:07 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.9 1997/07/23 17:14:34 momjian Exp $
  *
  * NOTES
  *    these routines moved here from commands/define.c and somewhat cleaned up.
@@ -237,7 +237,7 @@ OperatorShellMakeWithOpenRelation(Relation pg_operator_desc,
      */
     i = 0;
     values[i++] =  PointerGetDatum(operatorName);
-    values[i++] =  ObjectIdGetDatum(InvalidOid);
+    values[i++] =  Int32GetDatum(GetUserId());
     values[i++] =  (Datum) (uint16) 0;
     
     values[i++] = (Datum)'b';	/* fill oprkind with a bogus value */

@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.33 1997/06/20 02:20:17 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.34 1997/07/23 17:14:59 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -738,137 +738,146 @@ getOperators(int *numOprs)
 void
 clearTypeInfo(TypeInfo *tp, int numTypes)
 {
-int i;
-for(i=0;i<numTypes;++i) {
-    if(tp[i].oid) free(tp[i].oid);
-    if(tp[i].typowner) free(tp[i].typowner);
-    if(tp[i].typname) free(tp[i].typname);
-    if(tp[i].typlen) free(tp[i].typlen);
-    if(tp[i].typprtlen) free(tp[i].typprtlen);
-    if(tp[i].typinput) free(tp[i].typinput);
-    if(tp[i].typoutput) free(tp[i].typoutput);
-    if(tp[i].typreceive) free(tp[i].typreceive);
-    if(tp[i].typsend) free(tp[i].typsend);
-    if(tp[i].typelem) free(tp[i].typelem);
-    if(tp[i].typdelim) free(tp[i].typdelim);
-    if(tp[i].typdefault) free(tp[i].typdefault);
-    if(tp[i].typrelid) free(tp[i].typrelid);
-    if(tp[i].usename) free(tp[i].usename);
-	}
-free(tp);
+    int i;
+    for(i=0;i<numTypes;++i) {
+        if(tp[i].oid) free(tp[i].oid);
+        if(tp[i].typowner) free(tp[i].typowner);
+        if(tp[i].typname) free(tp[i].typname);
+        if(tp[i].typlen) free(tp[i].typlen);
+        if(tp[i].typprtlen) free(tp[i].typprtlen);
+        if(tp[i].typinput) free(tp[i].typinput);
+        if(tp[i].typoutput) free(tp[i].typoutput);
+        if(tp[i].typreceive) free(tp[i].typreceive);
+        if(tp[i].typsend) free(tp[i].typsend);
+        if(tp[i].typelem) free(tp[i].typelem);
+        if(tp[i].typdelim) free(tp[i].typdelim);
+        if(tp[i].typdefault) free(tp[i].typdefault);
+        if(tp[i].typrelid) free(tp[i].typrelid);
+        if(tp[i].usename) free(tp[i].usename);
+    }
+    free(tp);
 }
 
 void
 clearFuncInfo (FuncInfo *fun, int numFuncs)
 {
-int i,a;
-if(!fun) return;
-for(i=0;i<numFuncs;++i) {
-    if(fun[i].oid) free(fun[i].oid);
-    if(fun[i].proname) free(fun[i].proname);
-    if(fun[i].usename) free(fun[i].usename);
-    for(a=0;a<8;++a)
-    if(fun[i].argtypes[a]) free(fun[i].argtypes[a]);
-    if(fun[i].prorettype) free(fun[i].prorettype);
-    if(fun[i].prosrc) free(fun[i].prosrc);
-    if(fun[i].probin) free(fun[i].probin);
-	}
-free(fun);
+    int i,a;
+    if(!fun) return;
+    for(i=0;i<numFuncs;++i) {
+        if(fun[i].oid) free(fun[i].oid);
+        if(fun[i].proname) free(fun[i].proname);
+        if(fun[i].usename) free(fun[i].usename);
+        for(a=0;a<8;++a)
+            if(fun[i].argtypes[a]) free(fun[i].argtypes[a]);
+        if(fun[i].prorettype) free(fun[i].prorettype);
+        if(fun[i].prosrc) free(fun[i].prosrc);
+        if(fun[i].probin) free(fun[i].probin);
+    }
+    free(fun);
 }
 
 void
 clearTableInfo(TableInfo *tblinfo, int numTables)
 {
-int i,j;
-for(i=0;i<numTables;++i) {
+    int i,j;
+    for(i=0;i<numTables;++i) {
+
+        /* skip archive tables */
+        if (isArchiveName(tblinfo[i].relname))
+            continue;
+        
+        if ( tblinfo[i].sequence )
+            continue;
+
         if(tblinfo[i].oid) free (tblinfo[i].oid);
         if(tblinfo[i].relname) free (tblinfo[i].relname);
         if(tblinfo[i].relarch) free (tblinfo[i].relarch);
         if(tblinfo[i].relacl) free (tblinfo[i].relacl);
-	for (j=0;j<tblinfo[i].numatts;j++) {
+        for(j=0;j<tblinfo[i].numatts;j++) {
             if(tblinfo[i].attnames[j]) free (tblinfo[i].attnames[j]);
             if(tblinfo[i].typnames[j]) free (tblinfo[i].typnames[j]);
-	    }
-    if(tblinfo[i].attlen) free((int *)tblinfo[i].attlen);
-    if(tblinfo[i].inhAttrs) free((int *)tblinfo[i].inhAttrs);
-    if(tblinfo[i].attnames) free (tblinfo[i].attnames);
-    if(tblinfo[i].typnames) free (tblinfo[i].typnames);
-    if(tblinfo[i].usename) free (tblinfo[i].usename);
-     }
-free(tblinfo);
+        }
+        if(tblinfo[i].attlen) free((int *)tblinfo[i].attlen);
+        if(tblinfo[i].inhAttrs) free((int *)tblinfo[i].inhAttrs);
+        if(tblinfo[i].attnames) free (tblinfo[i].attnames);
+        if(tblinfo[i].typnames) free (tblinfo[i].typnames);
+        if(tblinfo[i].usename) free (tblinfo[i].usename);
+    }
+    free(tblinfo);
 }
 
 void 
 clearInhInfo (InhInfo *inh, int numInherits) {
-int i;
-if(!inh) return;
-for(i=0;i<numInherits;++i) {
-    if(inh[i].oid) free(inh[i].oid);
-    if(inh[i].inhrel) free(inh[i].inhrel);
-    if(inh[i].inhparent) free(inh[i].inhparent);}
-free(inh);
+    int i;
+    if(!inh) return;
+    for(i=0;i<numInherits;++i) {
+        if(inh[i].inhrel) free(inh[i].inhrel);
+        if(inh[i].inhparent) free(inh[i].inhparent);
+    }
+    free(inh);
 }
 
 void
 clearOprInfo(OprInfo *opr, int numOprs){
-int i;
-if(!opr) return;
-for(i=0;i<numOprs;++i) {
-     if(opr[i].oid) free(opr[i].oid);
-     if(opr[i].oprname) free(opr[i].oprname);
-     if(opr[i].oprkind) free(opr[i].oprkind);
-     if(opr[i].oprcode) free(opr[i].oprcode);
-     if(opr[i].oprleft) free(opr[i].oprleft);
-     if(opr[i].oprright) free(opr[i].oprright);
-     if(opr[i].oprcom) free(opr[i].oprcom);
-     if(opr[i].oprnegate) free(opr[i].oprnegate);
-     if(opr[i].oprrest) free(opr[i].oprrest);
-     if(opr[i].oprjoin) free(opr[i].oprjoin);
-     if(opr[i].oprcanhash) free(opr[i].oprcanhash);
-     if(opr[i].oprlsortop) free(opr[i].oprlsortop);
-     if(opr[i].oprrsortop) free(opr[i].oprrsortop);
-     if(opr[i].usename) free(opr[i].usename);
-	}
-free(opr);
+    int i;
+    if(!opr) return;
+    for(i=0;i<numOprs;++i) {
+        if(opr[i].oid) free(opr[i].oid);
+        if(opr[i].oprname) free(opr[i].oprname);
+        if(opr[i].oprkind) free(opr[i].oprkind);
+        if(opr[i].oprcode) free(opr[i].oprcode);
+        if(opr[i].oprleft) free(opr[i].oprleft);
+        if(opr[i].oprright) free(opr[i].oprright);
+        if(opr[i].oprcom) free(opr[i].oprcom);
+        if(opr[i].oprnegate) free(opr[i].oprnegate);
+        if(opr[i].oprrest) free(opr[i].oprrest);
+        if(opr[i].oprjoin) free(opr[i].oprjoin);
+        if(opr[i].oprcanhash) free(opr[i].oprcanhash);
+        if(opr[i].oprlsortop) free(opr[i].oprlsortop);
+        if(opr[i].oprrsortop) free(opr[i].oprrsortop);
+        if(opr[i].usename) free(opr[i].usename);
+    }
+    free(opr);
 }
 
 void
 clearIndInfo(IndInfo *ind, int numIndices)
 {
-int i,a;
-if(!ind) return;
-for(i=0;i<numIndices;++i) {
-    if(ind[i].indexrelname) free(ind[i].indexrelname);
-    if(ind[i].indrelname) free(ind[i].indrelname);
-    if(ind[i].indamname) free(ind[i].indamname);
-    if(ind[i].indproc) free(ind[i].indproc);
-    if(ind[i].indisunique) free(ind[i].indisunique);
-    for(a=0;a<INDEX_MAX_KEYS;++a) {
-    if(ind[i].indkey[a]) free(ind[i].indkey[a]);
-    if(ind[i].indclass[a]) free(ind[i].indclass[a]);}
+    int i,a;
+    if(!ind) return;
+    for(i=0;i<numIndices;++i) {
+        if(ind[i].indexrelname) free(ind[i].indexrelname);
+        if(ind[i].indrelname) free(ind[i].indrelname);
+        if(ind[i].indamname) free(ind[i].indamname);
+        if(ind[i].indproc) free(ind[i].indproc);
+        if(ind[i].indisunique) free(ind[i].indisunique);
+        for(a=0;a<INDEX_MAX_KEYS;++a) {
+            if(ind[i].indkey[a]) free(ind[i].indkey[a]);
+            if(ind[i].indclass[a]) free(ind[i].indclass[a]);
+        }
     }
-free(ind);
+    free(ind);
 }
 
 void
 clearAggInfo(AggInfo *agginfo, int numArgs)
 {
-int i;
-if(!agginfo) return;
-for(i=0;i<numArgs;++i) {
-    if(agginfo[i].oid) free (agginfo[i].oid);
-    if(agginfo[i].aggname) free (agginfo[i].aggname);
-    if(agginfo[i].aggtransfn1) free (agginfo[i].aggtransfn1);
-    if(agginfo[i].aggtransfn2) free (agginfo[i].aggtransfn2);
-    if(agginfo[i].aggfinalfn) free (agginfo[i].aggfinalfn);
-    if(agginfo[i].aggtranstype1) free (agginfo[i].aggtranstype1);
-    if(agginfo[i].aggbasetype) free (agginfo[i].aggbasetype);
-    if(agginfo[i].aggtranstype2) free (agginfo[i].aggtranstype2);
-    if(agginfo[i].agginitval1) free (agginfo[i].agginitval1);
-    if(agginfo[i].agginitval2) free (agginfo[i].agginitval2);
-    if(agginfo[i].usename) free (agginfo[i].usename);
-	}
-free (agginfo);
+    int i;
+    if(!agginfo) return;
+    for(i=0;i<numArgs;++i) {
+        if(agginfo[i].oid) free (agginfo[i].oid);
+        if(agginfo[i].aggname) free (agginfo[i].aggname);
+        if(agginfo[i].aggtransfn1) free (agginfo[i].aggtransfn1);
+        if(agginfo[i].aggtransfn2) free (agginfo[i].aggtransfn2);
+        if(agginfo[i].aggfinalfn) free (agginfo[i].aggfinalfn);
+        if(agginfo[i].aggtranstype1) free (agginfo[i].aggtranstype1);
+        if(agginfo[i].aggbasetype) free (agginfo[i].aggbasetype);
+        if(agginfo[i].aggtranstype2) free (agginfo[i].aggtranstype2);
+        if(agginfo[i].agginitval1) free (agginfo[i].agginitval1);
+        if(agginfo[i].agginitval2) free (agginfo[i].agginitval2);
+        if(agginfo[i].usename) free (agginfo[i].usename);
+    }
+    free (agginfo);
 }
 
 /*
