@@ -1,0 +1,121 @@
+From scrappy@ki.net Tue Aug  6 19:57:11 1996
+Status: RO
+X-Status: 
+Received: from candle.pha.pa.us (maillist@s1-03.ppp.op.net [206.84.209.132]) by quagmire.ki.net (8.7.5/8.7.5) with ESMTP id TAA01576 for <scrappy@ki.net>; Tue, 6 Aug 1996 19:57:08 -0400 (EDT)
+Received: (from maillist@localhost) by candle.pha.pa.us (8.7.4/8.7.3) id TAA11618 for scrappy@ki.net; Tue, 6 Aug 1996 19:57:37 -0400 (EDT)
+From: Bruce Momjian <maillist@candle.pha.pa.us>
+Message-Id: <199608062357.TAA11618@candle.pha.pa.us>
+Subject: add TODO to distribution
+To: scrappy@ki.net (Marc G. Fournier)
+Date: Tue, 6 Aug 1996 19:57:36 -0400 (EDT)
+X-Mailer: ELM [version 2.4 PL25]
+MIME-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+
+Here is the current TODO list.  Let's add it to the next distribution. 
+This was not ready at the time of the 1.02 release.
+
+---------------------------------------------------------------------------
+
+
+=================================================
+TODO list (FAQ) for Postgres95
+==================================================
+last updated:		Mon Aug  5 21:00:12 EDT 1996
+
+current maintainer:	Bruce Momjian (maillist@candle.pha.pa.us)
+original author:	Jolly Chen (jolly@cs.berkeley.edu)
+
+
+RELIABILITY
+-----------
+Overhaul mdmgr/smgr to fix double unlinking and double opens, cleanup
+Memory leaks (hunt and destroy with tools like Purify)
+	fix unitialized reads of memory
+	fix array over-runs of memory writes
+Re-visit and fix vacuum
+	can't vacuum large objects
+        can't shrink tables, pg_time and pg_log
+Fix all NULL features
+DROP AGGREGATE should take in basetype as an arg
+Add other language types for built-in functions
+	expand to allow tcl, perl, java,
+	generalize the function manager switch to pass 
+		function sources to interpreter engines.
+Fix large object mapping scheme
+	not to stuff everything as files in a single directory
+Fix CLUSTER
+Prevent improper index creation
+Starting quote in insert string errors
+Change default decimal constant representation from float4 to float8
+ALTER TABLE bug - running postgress process needs to re-read table definition
+Allow libpq to distinguish between text value '' and null
+Allow non-postgres users with createdb privs to destroydb's
+
+PERFORMANCE
+-----------
+Optimizing disjunctive queries
+Other optimizer bugs
+Is fsync use optimized?
+Multi-representational types, a la Illustra. For example, have a
+       text type that is stored in-tuple when less than 8K and in large
+       objects, when greater than 8K.
+
+ENHANCEMENTS
+------------
+Add full ANSI SQL capabilities ( a vendor has offered to help)
+	add subselects
+	column constraints (using rules), esp. primary keys
+	add DEFAULT, UNIQUE, RESTRAINT, and CHECK capabilities
+	report "Not implemented" if valid syntax is supplied
+	add OUTER joins
+	make VIEWs updateable where possible
+	add UNIONS, INTERSECTS, SUBTRACTS
+	add temporary tables
+	add assertions
+	add domains
+	add sql3 recursive unions
+	add the concept of dataspaces
+	Implement HAVING clause
+	Implement IN qualifier
+Add a way to preserve oid's when doing dump and load
+	if not, make oid's accessable in insert rules
+Add word index for text fields, maybe with trigrams, i.e.:
+    ' (cat | dog) & ! fox ' meaning text has cat or dog, but not fox
+Allow compression of large fields or a compressed field type
+Fix the rules system
+	robust
+	making INSTEAD rules work
+Full set of text operations and functions
+	word searches, concat, upper/lower(), max() on text, char
+Replace table-level locking with row or page-level locking
+Large objects
+	overwriting blocks has problems
+	there are other problems, too.
+Better interface for adding to pg_group
+Make multi-field indexes easier to create
+	allow optimizer to effectively use parameters without accessing table
+Improve debugging output
+Add int8 type
+Add table comments
+Add support for tables >2G
+Incorporate the PERL PG95 interface library into source tree
+Threaded version of the server or libpq
+Add REGEX internationalization
+
+DOCUMENTATION
+-------------
+Better documentation. Write a real book on postgres, perhaps?
+Document OPENLINK fsync patch
+Update usermanual source
+Reduce size of regression diffs
+
+PORTABILITY
+-----------
+Windows NT port
+	Mariposa project at Berkeley has a person who's working on this
+Binary distributions for linux
+Merge bsdi_2_1 to bsdi
+Merge i386_solaris and sparc_solaris into solaris
+

@@ -1,0 +1,700 @@
+.\" This is -*-nroff-*-
+.\" XXX standard disclaimer belongs here....
+.\" $Header: /cvsroot/pgsql/doc/man/Attic/built-in.3,v 1.1.1.1 1996/08/18 22:14:20 scrappy Exp $
+.TH BUILT-INS INTRO 11/05/95 Postgres95 Postgres95
+.SH "DESCRIPTION"
+This section describes the data types, functions and operators
+available to users in Postgres as it is distributed.
+.SH "Built-in and System Types"
+.SH "BUILT-IN TYPES"
+This section describes both 
+.BR built-in
+data types.
+These Built-in types are 
+are installed in every database.
+.PP
+Users may add new types to Postgres using the
+.IR "define type"
+command described in this manual.  User-defined types are not
+described in this section.
+.SH "List of built-in types"
+.PP
+.if n .ta 5 +15 +40
+.if t .ta 0.5i +1.5i +3.0i
+.in 0
+.nf
+	\fBPOSTGRES Type\fP	\fBMeaning\fP
+	abstime	absolute date and time
+	aclitem	access control list item
+	bool	boolean	
+	box	2-dimensional rectangle
+	bpchar	blank-padded characters
+	bytea	variable length array of bytes
+	char	character
+	char2	array of 2 characters
+	char4	array of 4 characters
+	char8	array of 8 characters
+	char16	array of 16 characters
+	cid	command identifier type
+	date	ANSI SQL date type
+	filename	large object filename
+	int	alias for int4
+	integer	alias for int4
+	int2	two-byte signed integer
+	int28	array of 8 int2	
+	int4	four-byte signed integer
+	float	alias for float4
+	float4	single-precision floating-point number
+	float8	double-precision floating-point number
+	lseg	2-dimensional line segment
+	name	a multi-character type for storing system identifiers
+	oid	object identifier type
+	oid8	array of 8 oid
+	oidchar16	oid and char16 composed	
+	oidint2	oid and int2 composed
+	oidint4	oid and int4 composed
+	path	variable-length array of lseg
+	point	2-dimensional geometric point
+	polygon	2-dimensional polygon
+	real	alias for float4
+	regproc	registered procedure
+	reltime	relative date and time
+	smgr	storage manager	
+	smallint	alias for int2
+	text	variable length array of characters
+	tid	tuple identifier type
+	time 	ANSI SQL time type 
+	tinterval	time interval
+	varchar	variable-length characters
+	xid	transaction identifier type
+
+.fi
+.in
+.PP
+As a rule, the built-in types are all either (1) internal types, in
+which case the user should not worry about their external format, or
+(2) have obvious formats.  The exceptions to this rule are the three
+time types.
+.SH "Syntax of date and time types"
+.SH "ABSOLUTE TIME"
+Absolute time is specified using the following syntax:
+.nf
+Month  Day [ Hour : Minute : Second ]  Year [ Timezone ]
+.sp
+where	
+	Month is Jan, Feb, ..., Dec
+	Day is 1, 2, ..., 31
+	Hour is 01, 02, ..., 24
+	Minute is 00, 01, ..., 59
+	Second is 00, 01, ..., 59
+	Year is 1901, 1902, ..., 2038
+.fi
+Valid dates are from Dec 13 20:45:53 1901 GMT to Jan 19 03:14:04
+2038 GMT.  As of Version 3.0, times are no longer read and written
+using Greenwich Mean Time; the input and output routines default to
+the local time zone.
+.PP
+The special absolute time values \*(lqcurrent\*(rq,
+\*(lqinfinity\*(rq and \*(lq-infinity\*(rq are also provided.
+\*(lqinfinity\*(rq specifies a time later than any valid time, and
+\*(lq-infinity\*(rq specifies a time earlier than any valid time.
+\*(lqcurrent\*(rq indicates that the current time should be
+substituted whenever this value appears in a computation.
+.PP
+The strings \*(lqnow\*(rq and \*(lqepoch\*(rq can be used to specify
+time values.  \*(lqnow\*(rq means the current time, and differs from
+\*(lqcurrent\*(rq in that the current time is immediately substituted
+for it.  \*(lqepoch\*(rq means Jan 1 00:00:00 1970 GMT.
+.SH "RELATIVE TIME"
+Relative time is specified with the following syntax:
+.nf
+@ Quantity Unit [Direction]
+.sp
+where 	
+	Quantity is `1', `2', ...
+	Unit is ``second'', ``minute'', ``hour'', ``day'', ``week'',
+	``month'' (30-days), or ``year'' (365-days),
+	or PLURAL of these units.
+	Direction is ``ago''
+.fi
+.PP
+.RB ( Note :
+Valid relative times are less than or equal to 68 years.)
+In addition, the special relative time \*(lqUndefined RelTime\*(rq is
+provided.
+.SH "TIME RANGES"
+Time ranges are specified as:
+.nf
+[ 'abstime' 'abstime']
+.fi
+where 
+.IR abstime
+is a time in the absolute time format.  Special abstime values such as 
+\*(lqcurrent\*(rq, \*(lqinfinity\*(rq and \*(lq-infinity\*(rq can be used.
+.SH "Built-in operators and functions"
+.SH OPERATORS
+Postgres provides a large number of built-in operators on system types.
+These operators are declared in the system catalog
+\*(lqpg_operator\*(rq.  Every entry in \*(lqpg_operator\*(rq includes
+the object ID of the procedure that implements the operator.
+.PP
+Users may invoke operators using the operator name, as in
+.nf
+select * from emp where salary < 40000;
+.fi
+Alternatively, users may call the functions that implement the
+operators directly.  In this case, the query above would be expressed
+as
+.nf
+select * from emp where int4lt(salary, 40000);
+.fi
+The rest of this section provides a list of the built-in operators and
+the functions that implement them.  Binary operators are listed first,
+followed by unary operators.
+.SH "BINARY OPERATORS"
+This list was generated from the Postgres system catalogs with the
+query:
+
+.nf
+SELECT
+	t0.typname AS result,
+        t1.typname AS left_type,
+        t2.typname AS right_type,
+        o.oprname AS operatr,
+        p.proname AS func_name
+FROM 	pg_proc p, pg_type t0,
+        pg_type t1, pg_type t2,
+        pg_operator o
+WHERE 	p.prorettype = t0.oid AND
+        RegprocToOid(o.oprcode) = p.oid AND
+	p.pronargs = 2 AND
+	o.oprleft = t1.oid AND
+	o.oprright = t2.oid
+ORDER BY result, left_type, right_type, operatr;
+.fi
+
+These operations are cast in terms of SQL types and so are
+.BR not
+directly usable as C function prototypes.
+
+.nf
+Operators:
+
+general
+	<\(eq	less or equal
+	<>	inequality
+	<	less than
+	<\(eq	greater or equal
+	>\(eq	greater or equal
+	>	greater than
+	\(eq	equality
+	~	A matches regular expression B, case-sensitive
+	!~	A does not match regular expression B, case-sensitive
+	~*	A matches regular expression B, case-insensitive.
+	!~*	A does not match regular expression B, case-insensitive
+	~~	A matches LIKE expression B, case-sensitive
+	!~~	A does not match LIKE expression B, case-sensitive
+
+	+	addition
+	\(mi	subtraction
+	*	multiplication
+	/	division
+	%	modulus
+	@	absolute value
+
+float8	
+	^	exponentiation
+	%	truncate to integer
+	|/	square root
+	||/	cube root
+	:	exponential function
+	;	natural logarithm
+
+point
+	!<	A is left of B
+	!>	A is right of B
+	!^	A is above B
+	!|	A is below B
+	\(eq|\(eq	equality
+	===>	point inside box
+	===`	point on path
+	<===>	distance between points
+
+box
+	&&	boxes overlap
+	&<	box A overlaps box B, but does not extend to right of box B
+	&>	box A overlaps box B, but does not extend to left of box B
+	<<	A is left of B
+	\(eq	area equal
+	<	area less than
+	<\(eq	area less or equal
+	>\(eq	area greater or equal
+	>	area greater than
+	>>	A is right of B
+	@	A is contained in B
+	~\(eq	box equality
+	~=	A same as B
+	~	A contains B
+	@@	center of box
+
+polygon	
+	&&	polygons overlap
+	&<	A overlaps B but does not extend to right of B
+	&>	A overlaps B but does not extend to left of B
+	<<	A is left of B
+	>>	A is right of B
+	@	A is contained by B
+	~\(eq	equality
+	~=	A same as B
+	~	A contains B
+
+tinterval
+	#<\(eq	interval length less or equal reltime
+	#<>	interval length not equal to reltime.
+	#<	interval length less than reltime
+	#\(eq	interval length equal to reltime
+	#>\(eq	interval length greater or equal reltime
+	#>	interval length greater than reltime
+	&&	intervals overlap
+	<<	A contains B
+	\(eq	equality
+	<>	interval bounded by two abstimes
+	<?>	abstime in tinterval
+	|	start of interval
+	<#>	convert to interval
+
+result   |left_type |right_type|operatr|func_name      
+---------+----------+----------+-------+---------------
+_aclitem |_aclitem  |aclitem   |+      |aclinsert      
+_aclitem |_aclitem  |aclitem   |-      |aclremove      
+abstime  |abstime   |reltime   |+      |timepl         
+abstime  |abstime   |reltime   |-      |timemi         
+bool     |_abstime  |_abstime  |=      |array_eq       
+bool     |_aclitem  |_aclitem  |=      |array_eq       
+bool     |_aclitem  |aclitem   |~      |aclcontains    
+bool     |_bool     |_bool     |=      |array_eq       
+bool     |_box      |_box      |=      |array_eq       
+bool     |_bytea    |_bytea    |=      |array_eq       
+bool     |_char     |_char     |=      |array_eq       
+bool     |_char16   |_char16   |=      |array_eq       
+bool     |_cid      |_cid      |=      |array_eq       
+bool     |_filename |_filename |=      |array_eq       
+bool     |_float4   |_float4   |=      |array_eq       
+bool     |_float8   |_float8   |=      |array_eq       
+bool     |_int2     |_int2     |=      |array_eq       
+bool     |_int28    |_int28    |=      |array_eq       
+bool     |_int4     |_int4     |=      |array_eq       
+bool     |_lseg     |_lseg     |=      |array_eq       
+bool     |_name     |_name     |=      |array_eq       
+bool     |_oid      |_oid      |=      |array_eq       
+bool     |_oid8     |_oid8     |=      |array_eq       
+bool     |_path     |_path     |=      |array_eq       
+bool     |_point    |_point    |=      |array_eq       
+bool     |_polygon  |_polygon  |=      |array_eq       
+bool     |_ref      |_ref      |=      |array_eq       
+bool     |_regproc  |_regproc  |=      |array_eq       
+bool     |_reltime  |_reltime  |=      |array_eq       
+bool     |_stub     |_stub     |=      |array_eq       
+bool     |_text     |_text     |=      |array_eq       
+bool     |_tid      |_tid      |=      |array_eq       
+bool     |_tinterval|_tinterval|=      |array_eq       
+bool     |_xid      |_xid      |=      |array_eq       
+bool     |abstime   |abstime   |<      |abstimelt      
+bool     |abstime   |abstime   |<=     |abstimele      
+bool     |abstime   |abstime   |<>     |abstimene      
+bool     |abstime   |abstime   |=      |abstimeeq      
+bool     |abstime   |abstime   |>      |abstimegt      
+bool     |abstime   |abstime   |>=     |abstimege      
+bool     |abstime   |tinterval |<?>    |ininterval     
+bool     |bool      |bool      |<>     |boolne         
+bool     |bool      |bool      |=      |booleq         
+bool     |box       |box       |&&     |box_overlap    
+bool     |box       |box       |&<     |box_overleft   
+bool     |box       |box       |&>     |box_overright  
+bool     |box       |box       |<      |box_lt         
+bool     |box       |box       |<<     |box_left       
+bool     |box       |box       |<=     |box_le         
+bool     |box       |box       |=      |box_eq         
+bool     |box       |box       |>      |box_gt         
+bool     |box       |box       |>=     |box_ge         
+bool     |box       |box       |>>     |box_right      
+bool     |box       |box       |@      |box_contained  
+bool     |box       |box       |~      |box_contain    
+bool     |box       |box       |~=     |box_same       
+bool     |bpchar    |bpchar    |<      |bpcharlt       
+bool     |bpchar    |bpchar    |<=     |bpcharle       
+bool     |bpchar    |bpchar    |<>     |bpcharne       
+bool     |bpchar    |bpchar    |=      |bpchareq       
+bool     |bpchar    |bpchar    |>      |bpchargt       
+bool     |bpchar    |bpchar    |>=     |bpcharge       
+bool     |bpchar    |text      |!~     |textregexne    
+bool     |bpchar    |text      |!~*    |texticregexne  
+bool     |bpchar    |text      |!~~    |textnlike      
+bool     |bpchar    |text      |~      |textregexeq    
+bool     |bpchar    |text      |~*     |texticregexeq  
+bool     |bpchar    |text      |~~     |textlike       
+bool     |char      |char      |<      |charlt         
+bool     |char      |char      |<=     |charle         
+bool     |char      |char      |<>     |charne         
+bool     |char      |char      |=      |chareq         
+bool     |char      |char      |>      |chargt         
+bool     |char      |char      |>=     |charge         
+bool     |char16    |char16    |<      |char16lt       
+bool     |char16    |char16    |<=     |char16le       
+bool     |char16    |char16    |<>     |char16ne       
+bool     |char16    |char16    |=      |char16eq       
+bool     |char16    |char16    |>      |char16gt       
+bool     |char16    |char16    |>=     |char16ge       
+bool     |char16    |text      |!~     |char16regexne  
+bool     |char16    |text      |!~*    |char16icregexne
+bool     |char16    |text      |!~~    |char16nlike    
+bool     |char16    |text      |!~~    |char16nlike    
+bool     |char16    |text      |~      |char16regexeq  
+bool     |char16    |text      |~*     |char16icregexeq
+bool     |char16    |text      |~~     |char16like     
+bool     |char16    |text      |~~     |char16like     
+bool     |char2     |char2     |<      |char2lt        
+bool     |char2     |char2     |<=     |char2le        
+bool     |char2     |char2     |<>     |char2ne        
+bool     |char2     |char2     |=      |char2eq        
+bool     |char2     |char2     |>      |char2gt        
+bool     |char2     |char2     |>=     |char2ge        
+bool     |char2     |text      |!~     |char2regexne   
+bool     |char2     |text      |!~*    |char2icregexne 
+bool     |char2     |text      |!~~    |char2nlike     
+bool     |char2     |text      |~      |char2regexeq   
+bool     |char2     |text      |~*     |char2icregexeq 
+bool     |char2     |text      |~~     |char2like      
+bool     |char4     |char4     |<      |char4lt        
+bool     |char4     |char4     |<=     |char4le        
+bool     |char4     |char4     |<>     |char4ne        
+bool     |char4     |char4     |=      |char4eq        
+bool     |char4     |char4     |>      |char4gt        
+bool     |char4     |char4     |>=     |char4ge        
+bool     |char4     |text      |!~     |char4regexne   
+bool     |char4     |text      |!~*    |char4icregexne 
+bool     |char4     |text      |!~~    |char4nlike     
+bool     |char4     |text      |~      |char4regexeq   
+bool     |char4     |text      |~*     |char4icregexeq 
+bool     |char4     |text      |~~     |char4like      
+bool     |char8     |char8     |<      |char8lt        
+bool     |char8     |char8     |<=     |char8le        
+bool     |char8     |char8     |<>     |char8ne        
+bool     |char8     |char8     |=      |char8eq        
+bool     |char8     |char8     |>      |char8gt        
+bool     |char8     |char8     |>=     |char8ge        
+bool     |char8     |text      |!~     |char8regexne   
+bool     |char8     |text      |!~*    |char8icregexne 
+bool     |char8     |text      |!~~    |char8nlike     
+bool     |char8     |text      |~      |char8regexeq   
+bool     |char8     |text      |~*     |char8icregexeq 
+bool     |char8     |text      |~~     |char8like      
+bool     |date      |date      |<      |date_lt        
+bool     |date      |date      |<=     |date_le        
+bool     |date      |date      |<>     |date_ne        
+bool     |date      |date      |=      |date_eq        
+bool     |date      |date      |>      |date_gt        
+bool     |date      |date      |>=     |date_ge        
+bool     |float4    |float4    |<      |float4lt       
+bool     |float4    |float4    |<=     |float4le       
+bool     |float4    |float4    |<>     |float4ne       
+bool     |float4    |float4    |=      |float4eq       
+bool     |float4    |float4    |>      |float4gt       
+bool     |float4    |float4    |>=     |float4ge       
+bool     |float4    |float8    |<      |float48lt      
+bool     |float4    |float8    |<=     |float48le      
+bool     |float4    |float8    |<>     |float48ne      
+bool     |float4    |float8    |=      |float48eq      
+bool     |float4    |float8    |>      |float48gt      
+bool     |float4    |float8    |>=     |float48ge      
+bool     |float8    |float4    |<      |float84lt      
+bool     |float8    |float4    |<=     |float84le      
+bool     |float8    |float4    |<>     |float84ne      
+bool     |float8    |float4    |=      |float84eq      
+bool     |float8    |float4    |>      |float84gt      
+bool     |float8    |float4    |>=     |float84ge      
+bool     |float8    |float8    |<      |float8lt       
+bool     |float8    |float8    |<=     |float8le       
+bool     |float8    |float8    |<>     |float8ne       
+bool     |float8    |float8    |=      |float8eq       
+bool     |float8    |float8    |>      |float8gt       
+bool     |float8    |float8    |>=     |float8ge       
+bool     |int2      |int2      |<      |int2lt         
+bool     |int2      |int2      |<=     |int2le         
+bool     |int2      |int2      |<>     |int2ne         
+bool     |int2      |int2      |=      |int2eq         
+bool     |int2      |int2      |>      |int2gt         
+bool     |int2      |int2      |>=     |int2ge         
+bool     |int4      |int4      |<      |int4lt         
+bool     |int4      |int4      |<=     |int4le         
+bool     |int4      |int4      |<>     |int4ne         
+bool     |int4      |int4      |=      |int4eq         
+bool     |int4      |int4      |>      |int4gt         
+bool     |int4      |int4      |>=     |int4ge         
+bool     |int4      |name      |!!=    |int4notin      
+bool     |int4      |oid       |=      |int4eqoid      
+bool     |name      |name      |<      |namelt         
+bool     |name      |name      |<=     |namele         
+bool     |name      |name      |<>     |namene         
+bool     |name      |name      |=      |nameeq         
+bool     |name      |name      |>      |namegt         
+bool     |name      |name      |>=     |namege         
+bool     |name      |text      |!~     |nameregexne    
+bool     |name      |text      |!~*    |nameicregexne  
+bool     |name      |text      |!~~    |namenlike      
+bool     |name      |text      |~      |nameregexeq    
+bool     |name      |text      |~*     |nameicregexeq  
+bool     |name      |text      |~~     |namelike       
+bool     |oid       |int4      |=      |oideqint4      
+bool     |oid       |name      |!!=    |oidnotin       
+bool     |oid       |oid       |<      |int4lt         
+bool     |oid       |oid       |<=     |int4le         
+bool     |oid       |oid       |<>     |oidne          
+bool     |oid       |oid       |=      |oideq          
+bool     |oid       |oid       |>      |int4gt         
+bool     |oid       |oid       |>=     |int4ge         
+bool     |oidint2   |oidint2   |<      |oidint2lt      
+bool     |oidint2   |oidint2   |<=     |oidint2le      
+bool     |oidint2   |oidint2   |<>     |oidint2ne      
+bool     |oidint2   |oidint2   |=      |oidint2eq      
+bool     |oidint2   |oidint2   |>      |oidint2gt      
+bool     |oidint2   |oidint2   |>=     |oidint2ge      
+bool     |oidint4   |oidint4   |<      |oidint4lt      
+bool     |oidint4   |oidint4   |<=     |oidint4le      
+bool     |oidint4   |oidint4   |<>     |oidint4ne      
+bool     |oidint4   |oidint4   |=      |oidint4eq      
+bool     |oidint4   |oidint4   |>      |oidint4gt      
+bool     |oidint4   |oidint4   |>=     |oidint4ge      
+bool     |oidname   |oidname   |<      |oidnamelt      
+bool     |oidname   |oidname   |<=     |oidnamele      
+bool     |oidname   |oidname   |<>     |oidnamene      
+bool     |oidname   |oidname   |=      |oidnameeq      
+bool     |oidname   |oidname   |>      |oidnamegt      
+bool     |oidname   |oidname   |>=     |oidnamege      
+bool     |point     |box       |===>   |on_pb          
+bool     |point     |path      |===`   |on_ppath       
+bool     |point     |point     |!<     |point_left     
+bool     |point     |point     |!>     |point_right    
+bool     |point     |point     |!^     |point_above    
+bool     |point     |point     |!\|    |point_below    
+bool     |point     |point     |=\|=   |point_eq       
+bool     |polygon   |polygon   |&&     |poly_overlap   
+bool     |polygon   |polygon   |&<     |poly_overleft  
+bool     |polygon   |polygon   |&>     |poly_overright 
+bool     |polygon   |polygon   |<<     |poly_left      
+bool     |polygon   |polygon   |>>     |poly_right     
+bool     |polygon   |polygon   |@      |poly_contained 
+bool     |polygon   |polygon   |~      |poly_contain   
+bool     |polygon   |polygon   |~=     |poly_same      
+bool     |reltime   |reltime   |<      |reltimelt      
+bool     |reltime   |reltime   |<=     |reltimele      
+bool     |reltime   |reltime   |<>     |reltimene      
+bool     |reltime   |reltime   |=      |reltimeeq      
+bool     |reltime   |reltime   |>      |reltimegt      
+bool     |reltime   |reltime   |>=     |reltimege      
+bool     |text      |text      |!~     |textregexne    
+bool     |text      |text      |!~*    |texticregexne  
+bool     |text      |text      |!~~    |textnlike      
+bool     |text      |text      |<      |text_lt        
+bool     |text      |text      |<=     |text_le        
+bool     |text      |text      |<>     |textne         
+bool     |text      |text      |=      |texteq         
+bool     |text      |text      |>      |text_gt        
+bool     |text      |text      |>=     |text_ge        
+bool     |text      |text      |~      |textregexeq    
+bool     |text      |text      |~*     |texticregexeq  
+bool     |text      |text      |~~     |textlike       
+bool     |time      |time      |<      |time_lt        
+bool     |time      |time      |<=     |time_le        
+bool     |time      |time      |<>     |time_ne        
+bool     |time      |time      |=      |time_eq        
+bool     |time      |time      |>      |time_gt        
+bool     |time      |time      |>=     |time_ge        
+bool     |tinterval |reltime   |#<     |intervallenlt  
+bool     |tinterval |reltime   |#<=    |intervallenle  
+bool     |tinterval |reltime   |#<>    |intervallenne  
+bool     |tinterval |reltime   |#=     |intervalleneq  
+bool     |tinterval |reltime   |#>     |intervallengt  
+bool     |tinterval |reltime   |#>=    |intervallenge  
+bool     |tinterval |tinterval |&&     |intervalov     
+bool     |tinterval |tinterval |<<     |intervalct     
+bool     |tinterval |tinterval |=      |intervaleq     
+bool     |varchar   |text      |!~     |textregexne    
+bool     |varchar   |text      |!~*    |texticregexne  
+bool     |varchar   |text      |!~~    |textnlike      
+bool     |varchar   |text      |~      |textregexeq    
+bool     |varchar   |text      |~*     |texticregexeq  
+bool     |varchar   |text      |~~     |textlike       
+bool     |varchar   |varchar   |<      |varcharlt      
+bool     |varchar   |varchar   |<=     |varcharle      
+bool     |varchar   |varchar   |<>     |varcharne      
+bool     |varchar   |varchar   |=      |varchareq      
+bool     |varchar   |varchar   |>      |varchargt      
+bool     |varchar   |varchar   |>=     |varcharge      
+char     |char      |char      |*      |charmul        
+char     |char      |char      |+      |charpl         
+char     |char      |char      |-      |charmi         
+char     |char      |char      |/      |chardiv        
+float4   |float4    |float4    |*      |float4mul      
+float4   |float4    |float4    |+      |float4pl       
+float4   |float4    |float4    |-      |float4mi       
+float4   |float4    |float4    |/      |float4div      
+float8   |float4    |float8    |*      |float48mul     
+float8   |float4    |float8    |+      |float48pl      
+float8   |float4    |float8    |-      |float48mi      
+float8   |float4    |float8    |/      |float48div     
+float8   |float8    |float4    |*      |float84mul     
+float8   |float8    |float4    |+      |float84pl      
+float8   |float8    |float4    |-      |float84mi      
+float8   |float8    |float4    |/      |float84div     
+float8   |float8    |float8    |*      |float8mul      
+float8   |float8    |float8    |+      |float8pl       
+float8   |float8    |float8    |-      |float8mi       
+float8   |float8    |float8    |/      |float8div      
+float8   |float8    |float8    |^      |dpow           
+int2     |int2      |int2      |%      |int2mod        
+int2     |int2      |int2      |*      |int2mul        
+int2     |int2      |int2      |+      |int2pl         
+int2     |int2      |int2      |-      |int2mi         
+int2     |int2      |int2      |/      |int2div        
+int4     |int2      |int4      |%      |int24mod       
+int4     |int2      |int4      |*      |int24mul       
+int4     |int2      |int4      |+      |int24pl        
+int4     |int2      |int4      |-      |int24mi        
+int4     |int2      |int4      |/      |int24div       
+int4     |int2      |int4      |<      |int24lt        
+int4     |int2      |int4      |<=     |int24le        
+int4     |int2      |int4      |<>     |int24ne        
+int4     |int2      |int4      |=      |int24eq        
+int4     |int2      |int4      |>      |int24gt        
+int4     |int2      |int4      |>=     |int24ge        
+int4     |int4      |int2      |%      |int42mod       
+int4     |int4      |int2      |*      |int42mul       
+int4     |int4      |int2      |+      |int42pl        
+int4     |int4      |int2      |-      |int42mi        
+int4     |int4      |int2      |/      |int42div       
+int4     |int4      |int2      |<      |int42lt        
+int4     |int4      |int2      |<=     |int42le        
+int4     |int4      |int2      |<>     |int42ne        
+int4     |int4      |int2      |=      |int42eq        
+int4     |int4      |int2      |>      |int42gt        
+int4     |int4      |int2      |>=     |int42ge        
+int4     |int4      |int4      |%      |int4mod        
+int4     |int4      |int4      |*      |int4mul        
+int4     |int4      |int4      |+      |int4pl         
+int4     |int4      |int4      |-      |int4mi         
+int4     |int4      |int4      |/      |int4div        
+int4     |point     |point     |<===>  |pointdist      
+tinterval|abstime   |abstime   |<#>    |mktinterval    
+
+
+.fi
+.SH "LEFT UNARY OPERATORS"
+The table below gives the left unary operators that are
+registered in the system catalogs.  
+
+This list was generated from the Postgres system catalogs with the query:
+
+.nf
+SELECT o.oprname AS left_unary, 
+       right.typname AS operand,
+       result.typname AS return_type
+FROM pg_operator o, pg_type right, pg_type result
+WHERE o.oprkind = 'l' AND          -- left unary
+      o.oprright = right.oid AND
+      o.oprresult = result.oid
+ORDER BY operand;
+
+left_unary|operand  |return_type
+----------+---------+-----------
+@@        |box      |point      
+@         |float4   |float4     
+-         |float4   |float4     
+;         |float8   |float8     
+:         |float8   |float8     
+%         |float8   |float8     
+\|\|/     |float8   |float8     
+\|/       |float8   |float8     
+@         |float8   |float8     
+-         |float8   |float8     
+-         |int2     |int2       
+-         |int4     |int4       
+!!        |int4     |int4       
+\|        |tinterval|abstime    
+
+.fi
+.in
+.SH "RIGHT UNARY OPERATORS"
+The table below gives the right unary operators that are
+registered in the system catalogs.  
+
+This list was generated from the Postgres system catalogs with the query:
+
+.nf
+SELECT o.oprname AS right_unary,
+       left.typname AS operand,
+       result.typname AS return_type
+FROM pg_operator o, pg_type left, pg_type result
+WHERE o.oprkind = 'r' AND          -- right unary
+      o.oprleft = left.oid AND
+      o.oprresult = result.oid
+ORDER BY operand;
+
+right_unary|operand|return_type
+-----------+-------+-----------
+%          |float8 |float8     
+!          |int4   |int4       
+
+.fi
+.in
+.SH "AGGREGATE FUNCTIONS"
+The table below gives the aggregate functions that are 
+registered in the system catalogs.  
+
+This list was generated from the Postgres system catalogs with the query:
+
+.nf
+SELECT a.aggname, t.typname
+FROM pg_aggregate a, pg_type t
+WHERE a.aggbasetype = t.oid
+ORDER BY aggname, typname;
+
+aggname|typname
+-------+-------
+avg    |float4 
+avg    |float8 
+avg    |int2   
+avg    |int4   
+max    |float4 
+max    |float8 
+max    |int2   
+max    |int4   
+min    |float4 
+min    |float8 
+min    |int2   
+min    |int4   
+sum    |float4 
+sum    |float8 
+sum    |int2   
+sum    |int4   
+
+\fBcount\fR is also available.
+
+.fi
+.in
+.SH "SEE ALSO"
+For examples on specifying literals of built-in types, see
+.IR SQL(l).
+.SH BUGS
+.PP
+Although most of the input and output functions correponding to the
+base types (e.g., integers and floating point numbers) do some
+error-checking, none of them are particularly rigorous about it.  More
+importantly, almost none of the operators and functions (e.g.,
+addition and multiplication) perform any error-checking at all.
+Consequently, many of the numeric operations will (for example)
+silently underflow or overflow.
+.PP
+Some of the input and output functions are not invertible.  That is,
+the result of an output function may lose precision when compared to
+the original input.

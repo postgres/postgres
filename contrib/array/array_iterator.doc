@@ -1,0 +1,26 @@
+From: Massimo Dal Zotto <dz@cs.unitn.it>
+Date: Mon, 6 May 1996 01:03:37 +0200 (MET DST)
+Subject: [PG95]: new operators for arrays
+
+- -----BEGIN PGP SIGNED MESSAGE-----
+
+Hi,
+
+I have written an extension to Postgres95 which allows to use qualification
+clauses based on the values of single elements of arrays.
+For example I can now select rows having some or all element of an array
+attribute equal to a given value or matching a regular expression:
+
+select * from t where t.foo *= 'bar';
+select * from t where t.foo **~ '^ba[rz]';
+
+The scheme is quite general, each operator which operates on a base type can
+be iterated over the elements of an array. It seem to work well but defining
+each new operators requires writing a different C function. Furthermore in
+each function there are two hardcoded OIDs which reference a base type and
+a procedure. Not very portable. Can anyone suggest a better and more portable
+way to do it ?  Do you think this could be a useful feature for next release ?
+Here is my code, it can be compiled and loaded as a dynamic module without
+need to recompile the backend. I have defined only the few operators I needed,
+the list can be extended. Feddback is welcome.
+

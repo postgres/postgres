@@ -1,0 +1,23 @@
+.\" This is -*-nroff-*-
+.\" XXX standard disclaimer belongs here....
+.\" $Header: /cvsroot/pgsql/doc/man/Attic/cleardbdir.1,v 1.1.1.1 1996/08/18 22:14:20 scrappy Exp $
+.TH CLEARDBDIR UNIX 11/05/95 Postgres95 Postgres95
+.SH NAME
+cleardbdir \(em completely destroys all database files
+.SH SYNOPSIS
+.BR "cleardbdir"
+.SH DESCRIPTION
+.IR cleardbdir
+destroys all the database files.  It is used only by the 
+Postgres super-user
+before re-initializing the entire installation for a particular site.  Normal
+database users should never use this command.
+.PP
+The
+Postgres super-user
+should ensure the
+.IR postmaster
+process is not running before running cleardbdir.
+.SH "SEE ALSO"
+initdb(1)
+

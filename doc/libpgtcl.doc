@@ -1,0 +1,181 @@
+
+pgtcl is a tcl package for front-end programs to interface with Postgres95
+backends.    PgTcl does not use the libpq library but communicates to
+the backend directly via the frontend-backend protocol.  Thus, it is
+more efficient than previous postgres->tcl bindings which are layered
+on top of libpq.  In addition, pgtcl can handle multiple backend
+connections from a single frontend application.
+
+If you have any questions or bug reports, please send them to
+Jolly Chen at jolly@cs.berkeley.edu.
+
+-------------------------------------------------------------------
+
+
+The pgtcl package provides the following commands. 
+
+	pg_connect 	- opens a connection to the backend server
+	pg_disconnect   - closes a connection
+	pg_exec 	- send a query to the backend
+	pg_result 	- manipulate the results of a query
+
+	pg_lo_creat	- create a large object
+	pg_lo_open	- open a large object
+	pg_lo_close	- close a large object
+	pg_lo_read	- read a large object
+	pg_lo_write	- write a large object
+	pg_lo_lseek	- seek to a position on a large object
+	pg_lo_tell	- return the current seek position of a large object
+	pg_lo_unlink	- delete a large object
+	pg_lo_import	- import a Unix file into a large object
+	pg_lo_export	- export a large object into a Unix file
+
+1)  pg_connect:   opens a connection to the backend
+
+   syntax:
+        pg_connect dbName [-host hostName] [-port portNumber] [-tty pqtty] [-options optionalBackendArgs]]
+
+   the return result is either an error message or a handle for a database
+   connection.  Handles start with the prefix "pgp"
+
+
+2)  pg_disconnect:	closes a connection
+
+   syntax:
+        pg_disconnect connection
+
+   The argument passed in must be a connection pointer.
+
+3)  pg_exec:		send a query string to the backend 
+
+   syntax:
+	pg_exec connection query
+
+   the return result is either an error message or a handle for a query
+   result.  Handles start with the prefix "pgp"
+
+4)  pg_result:		get information about a query result
+
+   syntax:
+        pg_result result ?option? 
+	       
+    the options are:
+         -status  
+	      the status of the result
+	 -oid
+	      if the last query was an insert, returns the oid of the 
+	      inserted tuple
+	 -conn
+	      the connection that produced the result
+	 -assign arrayName
+	      assign the results to an array
+	 -numTuples
+	      the number of tuples in the query
+	 -attributes
+	      returns a list of the name/type pairs of the tuple attributes
+	 -getTuple tupleNumber
+	      returns the values of the tuple in a list
+	 -clear 
+	      clear the result buffer. Do not reuse after this
+
+----------------------------------------------------------------------------
+The pg_lo* routines are interfaces to the Inversion large objects in postgres.
+The functions are designed to mimic the analogous file system functions in
+the standard Unix file system interface.
+
+The pg_lo* routines should typically be used within a BEGIN/END transaction
+block becaus the file descriptor returned by pg_lo_open is only valid for
+the current transaction.  pg_lo_import and pg_lo_export MUST be used
+in a BEGIN/END transaction block.
+
+* pg_lo_creat:		create a large object
+
+ syntax:
+	g_lo_creat conn mode
+
+mode can be any OR'ing together of INV_READ, INV_WRITE, and INV_ARCHIVE. 
+The OR delimiter character is "|".
+	e.g. [pg_lo_creat $conn "INV_READ|INV_WRITE"]
+
+returns the oid of the large object created.
+
+* pg_lo_open:		open a large object
+
+ syntax:
+	 pg_lo_open conn objOid mode 
+
+ where mode can be either "r", "w", or "rw"
+
+ returns a file descriptor for use in later pg_lo* routines
+
+* pg_lo_close:		close a large object
+
+ syntax:
+	 pg_lo_close conn fd 
+
+* pg_lo_read:		read a large object
+
+ syntax:
+	pg_lo_read conn fd bufVar len
+
+reads at most len bytes from a large object into a variable named bufVar.
+Note that the third argument should be a variable name.
+
+* pg_lo_write:		write a large object
+
+ syntax:
+	pg_lo_write conn fd buf len
+
+write at most len bytes to a large object.  
+The third argument should be the actual string to write, not a variable name.
+
+* pg_lo_lseek:		seek to a position on a large object
+
+ syntax:
+	pg_lo_lseek conn fd offset whence
+
+whence can be "SEEK_CUR", "SEEK_END", or "SEEK_SET"
+
+* pg_lo_tell:		return the current seek position of a large object
+
+ syntax:
+	pg_lo_tell conn fd
+
+* pg_lo_unlink:		delete a large object 
+
+ syntax:
+	pg_lo_unlink conn lobjId
+
+* pg_lo_import:		import a Unix file into a large object
+
+ syntax:
+	pg_lo_import conn filename
+
+  pg_lo_import must be called within a BEGIN/END transaction block
+
+* pg_lo_export:		export a large object into a Unix file
+ 
+ syntax:
+	pg_lo_export conn lobjId filename
+
+  pg_lo_export must be called within a BEGIN/END transaction block
+
+------------------------------------------------------------------
+Here's a small example of how to use the routines:
+
+# getDBs :
+#   get the names of all the databases at a given host and port number
+#   with the defaults being the localhost and port 5432
+#   return them in alphabetical order
+proc getDBs { {host "localhost"} {port "5432"} } {
+    # datnames is the list to be result
+    set conn [pg_connect template1 -host $host -port $port]
+    set res [pg_exec $conn "SELECT datname FROM pg_database ORDER BY datname"]
+    set ntups [pg_result $res -numTuples]
+    for {set i 0} {$i < $ntups} {incr i} {
+	lappend datnames [pg_result $res -getTuple $i]
+    }
+    pg_disconnect $conn
+    return $datnames
+}
+

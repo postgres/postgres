@@ -1,0 +1,359 @@
+.\" This is -*-nroff-*-
+.\" XXX standard disclaimer belongs here....
+.\" $Header: /cvsroot/pgsql/doc/man/Attic/psql.1,v 1.1.1.1 1996/08/18 22:14:26 scrappy Exp $
+.TH PSQL UNIX 1/20/96 Postgres95 Postgres95
+.SH NAME
+psql \(em run the interactive query front-end
+.SH SYNOPSIS
+.BR psql
+[\c
+.BR "-a"
+authsvc
+]
+[\c
+.BR "-A"
+]
+[\c
+.BR "-c"
+query
+]
+[\c
+.BR "-d"
+dbName]
+[\c
+.BR "-e"
+]
+[\c
+.BR "-f"
+filename]
+[\c
+.BR "-h"
+hostname]
+[\c
+.BR "-H"
+]
+[\c
+.BR "-l"
+port]
+[\c
+.BR "-n"
+]
+[\c
+.BR "-o"
+filename
+]
+[\c
+.BR "-p"
+port]
+[\c
+.BR "-q"
+]
+[\c
+.BR "-s"
+]
+[\c
+.BR "-S"
+]
+[\c
+.BR "-t"
+]
+[\c
+.BR "-x"
+]
+[dbname]
+.in -5n
+.SH DESCRIPTION
+psql is a interactive query front-end to Postgres.  It enables you to
+type in queries interactively, issue them to Postgres, and see the query
+results.
+.IR psql
+can be used in a pipe sequence, and automatically detects when it
+is not listening or talking to a real tty.
+.IR psql
+is designed to be an enhanced version of the older
+.IR "monitor"
+program.
+.PP
+.IR "psql"
+is a frontend application, like any other.  Hence, a
+.IR "postmaster"
+process must be running on the database server host before
+.IR "psql"
+is executed.  In addition, the correct
+.IR "postmaster"
+port number must be specified
+as described below.
+.PP
+The optional argument
+.IR dbname
+specifies the name of the database to be accessed.  This database must
+already have been created.
+.IR dbname
+defaults to the value of the
+.SM USER
+environment variable or, if that's not set, to the Unix account name of the
+current user.
+.PP
+.IR "psql"
+understands the following command-line options:
+.TP
+.BR "-a" " system"
+Specifies an authentication system
+.IR "system"
+(see
+.IR introduction (1))
+to use in connecting to the
+.IR postmaster
+process.  The default is site-specific.
+.TP
+.BR "-A"
+Turn off fill justification when printing out attributes.
+.TP
+.BR "-c" " query"
+Specifies that
+.IR "psql"
+is to execute one query string,
+.IR "query" ,
+and then exit.  This is useful for shell scripts, typically in
+conjunction with the
+.BR -q ""
+options.
+.BR -c
+option in shell scripts.
+.TP
+.BR "-d" " dbName"
+Specifies the name of the database to connect to.
+.TP
+.BR "-e" " "
+Echo the query sent to the backend
+.TP
+.BR "-f" " filename"
+Use the file
+.IR "filename"
+as the source of queries instead of reading queries interactively.
+.TP
+.BR "-h" " hostname"
+Specifies the hostname of the machine on which the
+.IR postmaster
+is running.  Defaults to the name of the local host, or the value of
+the
+.SM PGHOST
+environment variable (if set).
+.TP
+.BR "-H"
+Turns on
+.SM HTML3.0
+tabular output.
+.TP
+.BR "-l"
+Lists all available databases
+.TP
+.BR "-n"
+Do not use the readline library for input line editing and command history.
+.TP
+.BR "-p" " port"
+Specifies the Internet TCP port on which the
+.IR postmaster
+is listening for connections.  Defaults to 5432, or the value of the
+.SM PGPORT
+environment variable (if set).
+.TP
+.BR "-q"
+Specifies that
+.IR psql
+should do its work quietly.  By default, it
+prints welcome and exit messages and prompts for each query, and prints
+out the number of rows returned from a query.
+If this option is used, none of this happens. This is useful with the
+.BR -c
+option in shell scripts.
+.TP
+.BR "-s"
+Run in single-step mode where the user at prompted for each query before
+it is sent to the backend.
+.TP
+.BR "-S"
+Run ins single-line mode where each query is terminated by a newline,
+instead of a semicolon.
+.TP
+.BR "-t"
+Turn off printing of attributes names.
+This is useful with the
+.BR -c
+option in shell scripts.
+.TP
+.BR "-x"
+Turns on extended field mode. When enabled each tuple will have its field
+names printed on the left with the field values printed on the right.
+This is useful for tuples which are otherwise too long to fit into
+one screen line. HTML tuple output supports this mode also.
+.PP
+You may set environment variables to avoid typing some of the above
+options.  See the
+.SM "ENVIRONMENT VARIABLES"
+section below.
+.SH "CONNECTING TO A DATABASE"
+.IR psql
+attempts to make a connection to the database at the hostname and
+port number specified on the command line.   If the connection could not
+be made for any reason (e.g. insufficient privileges, postmaster is not
+running on the server, etc)
+.IR psql
+will return an error that says
+.nf
+Connection to database failed.
+.fi
+The reason for the connection failure is not provided.
+.SH "ENTERING QUERIES"
+In normal operation, psql provides a prompt with the name of the
+database that psql is current connected to followed by the string "=>".
+For example,
+.nf
+Welcome to the POSTGRES95 interactive sql monitor:
+  Please read the file COPYRIGHT for copyright terms of POSTGRES95
+
+   type \e? for help on slash commands
+   type \eq to quit
+   type \eg or terminate with semicolon to execute query
+ You are currently connected to the database: testdb
+
+testdb=>
+.fi
+.PP
+At the prompt, the user may type in SQL queries.  Unless the -S option
+is set, input lines are sent to the backend when a query-terminating
+semicolon is reached.
+.PP
+Whenever a query is executed, psql also polls for asynchronous notification
+events generated by
+.IR listen (l)
+and
+.IR notify (l).
+.PP
+.SH "PSQL COMMANDS"
+.IP "\ea"
+Toggle field alignment when printing out attributes.
+.IP "\eC \fIcaption\fR"
+Set the HTML3.0 table caption.
+.IP "\ec \fIdbname\fR"
+Establish a connection to a new database. The previous connection is closed.
+.IP "\ed [\fItable\fR]"
+List tables in the database, or if
+.IR table
+is specified, list the columns in
+.IR table.
+If table name is
+.IR *,
+list all tables and column information for each tables.
+.IP "\ee [\fIfilename\fR]"
+Edit the current query buffer or \fIfile\fR.
+.IP "\eE [\fIfilename\fR]"
+Edit the current query buffer or \fIfile\fR and execute it
+upon editor exit.
+.IP "\ef [\fIseparator\fR]"
+Set the field separator.  Default is a single blank space.
+.IP "\eg [\fI|command\fR] | [\fIfilename\fR]"
+Send the current query input buffer to the backend and optionally
+save the output in
+.IR filename
+or pipe the output into
+.IR "|command".
+.IP "\eh [\fIcommand\fR]"
+Give syntax help on the specified SQL command.  If the
+.IR command
+is not specified, list all the commands for which syntax help is
+available.  If the
+.IR command
+is
+.IR *,
+give syntax help on all SQL commands.
+.IP "\eH"
+Toggle html3 output.
+.IP "\ei \fIfilename\fR"
+Read queries from
+.IR filename
+into the query input buffer.
+.IP "\el"
+List all the databases in the server.
+.IP "\em"
+Toggle monitor-like table display.
+This is standard SQL output (i.e extra border characters).
+.IP "\eo [\fI|command\fR] | [\fIfilename\fR]"
+Send query results to
+.IR filename .
+Or pipe into
+.IR command .
+If no arguments are specified, send query results to
+.IR stdout .
+.IP "\ep"
+Print the current query buffer.
+.IP \eq
+Quit the psql program.
+.IP "\er"
+Reset(clear) the query buffer.
+.IP "\es [\fIfilename\fR]"
+Print or save the command line history to \fIfilename\fR.  (Only available if psql is
+configured to use readline)
+.IP "\et"
+Toggle display of output attribute name headings and row count (defaults to on).
+.IP "\eT"
+Set html3.0 <table ...> options.
+.IP "\ex"
+Toggles extended field mode. When enabled each tuple will have its field
+names printed on the left with the field values printed on the right.
+This is useful for tuples which are otherwise too long to fit into
+one screen line. HTML tuple output mode supports this flag too.
+.IP "\e! [\fIcommand\fR]"
+Escape to shell or execute
+.IR command.
+.IP \e?
+Get help information about the \e commands.
+.SH "ENVIRONMENT VARIABLES"
+You may set any of the following environment variables to avoid
+specifying command-line options:
+.nf
+hostname:	PGHOST
+port:		PGPORT
+tty:		PGTTY
+options:		PGOPTION
+realm:		PGREALM
+.fi
+.PP
+If
+.SM PGOPTION
+is specified, then the options it contains are parsed
+.BR before
+any command-line options.
+.PP
+.SM PGREALM
+only applies if
+.IR Kerberos
+authentication is in use.  If this environment variable is set, Postgres
+will attempt authentication with servers for this realm and use
+separate ticket files to avoid conflicts with local ticket files.  See
+.IR introduction (1)
+for additional information on
+.IR Kerberos .
+.PP
+See
+.IR introduction (libpq)
+for additional details.
+.SH "RETURN VALUE"
+When executed with the
+.BR "-c"
+option,
+.IR psql
+returns 0 to the shell on successful query completion, 1 otherwise.
+.IR psql
+will also return 1 if the connection to a database could not be made for
+any reason.
+.SH "SEE ALSO"
+introduction(libpq),
+monitor(1)
+postgres(1),
+postmaster(1).
+.SH BUGS
+If multiple queries are sent to the backend at once without semicolon
+termination after each query, psql gets confused about the query
+results.  The queries will still be processed correctly by the backend.
+

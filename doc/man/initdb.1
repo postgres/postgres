@@ -1,0 +1,65 @@
+.\" This is -*-nroff-*-
+.\" XXX standard disclaimer belongs here....
+.\" $Header: /cvsroot/pgsql/doc/man/Attic/initdb.1,v 1.1.1.1 1996/08/18 22:14:24 scrappy Exp $
+.TH INITDB UNIX 11/05/95 Postgres95 Postgres95
+.SH NAME
+initdb \(em initalize the database templates and primary directories
+.SH SYNOPSIS
+.BR "initdb"
+[\c
+.BR "-v"
+]
+[\c
+.BR "-d"
+]
+[\c
+.BR "-n"
+]
+.SH DESCRIPTION
+.IR Initdb
+sets up the initial template databases and is normally executed as
+part of the installation process.  The template database is created
+under the directory specified by the the environment variable 
+.SM PGDATA,
+or to a default specified at compile-time.  The template database
+is then 
+.BR vacuum ed.
+.PP
+.IR Initdb
+is a shell script that invokes the backend server directly.  Hence, it
+must be executed by the Postgres super-user.
+.PP
+.IR Initdb
+understands the following command-line options:
+.TP
+.BR "-v"
+Produce verbose output, printing messages stating where the
+directories are being created, etc.
+.TP
+.BR "-d"
+Print debugging output from the backend server.  This option generates
+a tremendous amount of information.  This option also turns off the
+final vacuuming step.
+.TP
+.BR "-n"
+Run in \*(lqnoclean\*(rq mode.  By default, 
+.IR initdb
+cleans up (recursively unlinks) the data directory if any error
+occurs, which also removes any core files left by the backend server.
+This option inhibits any tidying-up.
+.SH FILES
+.TP
+\&$PGDATA/base
+The location of global (shared) classes.
+.TP
+\&$PGDATA/base/template1
+The location of the template database.
+.TP
+\&$PGDATA/files/{global1,local1_template1}.bki
+Command files used to generate the global and template databases,
+generated and installed by the initial compilation process.
+.SH "SEE ALSO"
+createdb(1),
+vacuum(l),
+bki(files),
+template(files).

@@ -1,0 +1,73 @@
+.\" This is -*-nroff-*-
+.\" XXX standard disclaimer belongs here....
+.\" $Header: /cvsroot/pgsql/doc/man/Attic/pg_dump.1,v 1.1.1.1 1996/08/18 22:14:26 scrappy Exp $
+.TH PG_DUMP UNIX 1/20/96 Postgres95 Postgres95
+.SH NAME
+pg_dump \(em dumps out a Postgres database into a script file
+.SH SYNOPSIS
+.BR pg_dump
+[\c
+.BR "-f"
+filename
+]
+[\c
+.BR "-H"
+hostname
+]
+[\c
+.BR "-p"
+port]
+[\c
+.BR "-v"
+]
+[\c
+.BR "-S"
+help]
+dbname
+.in -5n
+.SH DESCRIPTION
+.IR "pg_dump"
+is a utility for dumping out a 
+Postgres database into a script file containing query commands.  The script
+files are in a ASCII format and can be used to reconstruct the database,
+even on other machines and other architectures.  
+.IR "pg_dump" 
+will produce the queries necessary to re-generate all
+user-defined types, functions, tables, indices, aggregates, and
+operators.  In addition, all the data is copied out in ASCII format so
+that it can be readily copied in again, as well, as imported into tools
+for textual editing.
+.PP
+.IR "pg_dump" 
+is useful for dumping out the contents of a database to move from one
+postgres95 installation to another.  After running 
+.IR "pg_dump"
+, one should examine the output script file for any warnings, especially
+in light of the limitations listed below. 
+.SH "CAVEATS AND LIMITATIONS"
+.IR pg_dump 
+has a few limitations.
+The limitations mostly stem from
+difficulty in extracting certain meta-information from the system
+catalogs.   
+.TP
+.BR "rules and views"
+pg_dump does not understand user-defined rules and views and
+will fail to dump them properly.  (This is due to the fact that
+rules are stored as plans in the catalogs and not textually)
+.TP
+.BR "partial indices"
+pg_dump does not understand partial indices. (The reason is
+the same as above.  Partial index predicates are stored as plans)
+.TP
+.BR "large objects"
+pg_dump does not handle large objects.  Large objects are ignored and
+must be dealt with manually. 
+.TP
+.BR "oid preservation"
+pg_dump does not preserve oid's while dumping.  If you have
+stored oid's explicitly in tables in user-defined attributes,
+and are using them as keys, then the output scripts will not
+regenerate your database correctly. 
+.SH "SEE ALSO"
+copy(l)

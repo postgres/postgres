@@ -1,0 +1,283 @@
+Postgres95 1.02                 Thu Aug  1 18:00:00 EDT 1996
+-------------------------------------------------------------
+
+Source code maintainenance and development
+ * worldwide team of volunteers
+ * the source tree now in CVS at ftp.ki.net
+ * developers mailing list - pg95-dev@ki.net
+
+Enhancements
+ * psql (and underlying libpq library) now has many more options for
+   formatting output, including HTML
+ * pg_dump now output the schema and/or the data, with many fixes to
+   enhance completeness.
+ * psql used in place of monitor in administration shell scripts.
+   monitor to be depreciated in next release.
+ * date/time functions enhanced
+ * NULL insert/update/comparison fixed/enhanced
+ * TCL/TK lib and shell fixed to work with both tck7.4/tk4.0 and tcl7.5/tk4.1
+
+Bug Fixes (almost too numerous to mention)
+ * indexes
+ * storage management
+ * check for NULL pointer before dereferencing
+ * Makefile fixes
+
+New Ports
+ * added SolarisX86 port
+ * added BSDI 2.1 port
+ * added DGUX port
+
+Contributors (appologies to any missed)
+ * Kurt J. Lidl <lidl@va.pubnix.com> 
+	(missed in first run, but no less important)
+ * Erich Stamberger <eberger@gewi.kfunigraz.ac.at>
+ * Jason Wright <jason@shiloh.vnet.net>
+ * Cees de Groot <C.deGroot@inter.NL.net>
+ * ernst.molitor@uni-bonn.de
+ * michael.siebenborn@ae3.Hypo.DE (Michael Siebenborn (6929))
+ * Brian E. Gallew <geek+@cmu.edu>
+ * Vadim B. Mikheev <vadim@sable.krasnoyarsk.su>
+ * Adam Sussman <myddryn@vidya.com>
+ * Chris Dunlop <chris@onthe.net.au>
+ * Marc G. Fournier <scrappy@ki.net>
+ * Dan McGuirk <mcguirk@indirect.com>
+ * Dr_George_D_Detlefsen <drgeorge@ilt.com>
+ * Erich Stamberger <eberger@gewi.kfunigraz.ac.at>
+ * Massimo Dal Zotto <dz@cs.unitn.it>
+ * Randy Kunkee <kunkee@Starbase.NeoSoft.COM>
+ * Rick Weldon <rick@wisetech.com>
+ * Thomas van Reimersdahl <reimersd@dali.techinfo.rwth-aachen.de>
+ * david bennett <dave@bensoft.com>
+ * ernst.molitor@uni-bonn.de
+ * Julian Assange <proff@suburbia.net>
+ * Bruce Momjian <maillist@candle.pha.pa.us>
+ * Paul "Shag" Walmsley <ccshag@cclabs.missouri.edu>
+ * "Alistair G. Crooks" <azcb0@sde.uts.amdahl.com>
+
+Postgres95 1.01			Fri Feb 23 18:20:36 PST 1996
+-------------------------------------------------------------
+Incompatibilities:
+ * 1.01 is backwards compatible with 1.0 database provided the user
+   follow the steps outlined in the MIGRATION_from_1.0_to_1.01 file.
+   If those steps are not taken, 1.01 is not compatible with 1.0 database.
+
+Enhancements:
+ * added PQdisplayTuples() to libpq and changed monitor and psql to use it
+ * added NeXT port (requires SysVIPC implementation)
+ * added CAST .. AS ... syntax
+ * added ASC and DESC keywords
+ * added 'internal' as a possible language for CREATE FUNCTION
+   internal functions are C functions which have been statically linked
+   into the postgres backend.
+ * a new type "name" has been added for system identifiers (table names,
+   attribute names, etc.)  This replaces the old char16 type.   The
+   of name is set by the NAMEDATALEN #define in src/Makefile.global
+ * a readable reference manual that describes the query language.
+ * added host-based access control.  A configuration file ($PGDATA/pg_hba)
+   is used to hold the configuration data.  If host-based access control
+   is not desired, comment out HBA=1 in src/Makefile.global.
+ * changed regex handling to be uniform use of Henry Spencer's regex code
+   regardless of platform.  The regex code is included in the distribution
+ * added functions and operators for case-insensitive regular expressions. 
+   The operators are ~* and !~*.
+ * pg_dump uses COPY instead of SELECT loop for better performance
+
+Bug fixes:
+ * fixed an optimizer bug that was causing core dumps when 
+   functions calls were used in comparisons in the WHERE clause
+ * changed all uses of getuid to geteuid so that effective uids are used
+ * psql now returns non-zero status on errors when using -c
+ * applied public patches 1-14
+
+Postgres95 1.0			Tue Sep  5 11:24:11 PDT 1995
+-------------------------------------------------------------
+
+Copyright change:
+ * The copyright of Postgres 1.0 has been loosened to be freely modifiable
+   and modifiable for any purpose.  Please read the COPYRIGHT file.
+   Thanks to Professor Michael Stonebraker for making this possible.
+
+Incompatibilities:
+ *  date formats have to be MM-DD-YYYY (or DD-MM-YYYY if you're using
+   EUROPEAN STYLE).  This follows SQL-92 specs.
+ *  "delimiters" is now a keyword
+
+Enhancements:
+ *  sql LIKE syntax has been added
+ *  copy command now takes an optional USING DELIMITER specification.
+   delimiters can be any single-character string. 
+ *  IRIX 5.3 port has been added.
+   Thanks to Paul Walmsley (ccshag@everest.cclabs.missouri.edu) and others.
+ *  updated pg_dump to work with new libpq
+ *  \d has been added psql 
+   Thanks to Keith Parks (emkxp01@mtcc.demon.co.uk)
+ *  regexp performance for architectures that use POSIX regex has been
+   improved due to caching of precompiled patterns.
+   Thanks to Alistair Crooks (agc@uts.amdahl.com) 
+ *  a new version of libpq++
+   Thanks to William Wanders (wwanders@sci.kun.nl)
+
+Bug fixes:
+ *  arbitrary userids can be specified in the createuser script
+ *  \c to connect to other databases in psql now works.
+ *  bad pg_proc entry for float4inc() is fixed
+ *  users with usecreatedb field set can now create databases without
+   having to be usesuper
+ *  remove access control entries when the entry no longer has any
+   permissions
+ *  fixed non-portable datetimes implementation
+ *  added kerberos flags to the src/backend/Makefile
+ *  libpq now works with kerberos
+ *  typographic errors in the user manual have been corrected.
+ *  btrees with multiple index never worked, now we tell you they don't
+   work when you try to use them
+
+
+Postgres95 Beta 0.03		Fri Jul 21 14:49:31 PDT 1995
+------------------------------------------------------
+Incompatible changes:
+ * BETA-0.3 IS INCOMPATIBLE WITH DATABASES CREATED WITH PREVIOUS VERSIONS
+   (due to system catalog changes and indexing structure changes).
+ * double-quote (") is deprecated as a quoting character for string literals;
+   you need to convert them to single quotes (').
+ * name of aggregates (eg. int4sum) are renamed in accordance with the
+   SQL standard (eg. sum).
+ * CHANGE ACL syntax is replaced by GRANT/REVOKE syntax.
+ * float literals (eg. 3.14) are now of type float4 (instead of float8 in
+   previous releases); you might have to do typecasting if you depend on it
+   being of type float8.  If you neglect to do the typecasting and you assign
+   a float literal to a field of type float8, you may get incorrect values
+   stored!
+ * LIBPQ has been totally revamped so that frontend applications
+   can connect to multiple backends
+ * the usesysid field in pg_user has been changed from int2 to int4 to
+   allow wider range of Unix user ids.
+ * the netbsd/freebsd/bsd o/s ports have been consolidated into a
+   single BSD44_derived port.  (thanks to Alistair Crooks)
+
+SQL standard-compliance (the following details changes that makes postgres95
+more compliant to the SQL-92 standard):
+ * the following SQL types are now built-in: smallint, int(eger), float, real,
+   char(N), varchar(N), date and time.
+
+   The following are aliases to existing postgres types:
+		smallint -> int2
+		integer, int -> int4
+		float, real  -> float4
+   char(N) and varchar(N) are implemented as truncated text types. In
+   addition, char(N) does blank-padding. 
+ * single-quote (') is used for quoting string literals; '' (in addition to
+   \') is supported as means of inserting a single quote in a string
+ * SQL standard aggregate names (MAX, MIN, AVG, SUM, COUNT) are used
+   (Also, aggregates can now be overloaded, i.e. you can define your
+   own MAX aggregate to take in a user-defined type.)
+ * CHANGE ACL removed. GRANT/REVOKE syntax added.  
+   - Privileges can be given to a group using the "GROUP" keyword.
+	For example:
+		GRANT SELECT ON foobar TO GROUP my_group;
+	The keyword 'PUBLIC' is also supported to mean all users.	
+
+	Privileges can only be granted or revoked to one user or group
+	at a time.  
+
+	"WITH GRANT OPTION" is not supported.  Only class owners can change
+	access control
+   - The default access control is to to grant users readonly access.
+     You must explicitly grant insert/update access to users.  To change
+     this, modify the line in 
+		src/backend/utils/acl.h 
+     that defines ACL_WORLD_DEFAULT 
+
+Bug fixes:
+ * the bug where aggregates of empty tables were not run has been fixed. Now,
+   aggregates run on empty tables will return the initial conditions of the
+   aggregates. Thus, COUNT of an empty	table will now properly return 0.
+   MAX/MIN of an empty table will return a tuple of value NULL. 
+ * allow the use of \; inside the monitor
+ * the LISTEN/NOTIFY asynchronous notification mechanism now work
+ * NOTIFY in rule action bodies now work
+ * hash indices work, and access methods in general should perform better.
+   creation of large btree indices should be much faster.  (thanks to Paul
+   Aoki)
+
+Other changes and enhancements:
+ * addition of an EXPLAIN statement used for explaining the query execution
+   plan (eg. "EXPLAIN SELECT * FROM EMP" prints out the execution plan for
+   the query).
+ * WARN and NOTICE messages no longer have timestamps on them. To turn on
+   timestamps of error messages, uncomment the line in
+   src/backend/utils/elog.h:
+	/* define ELOG_TIMESTAMPS */ 
+ * On an access control violation, the message
+	"Either no such class or insufficient privilege"
+   will be given.  This is the same message that is returned when
+   a class is not found.  This dissuades non-privileged users from
+   guessing the existence of privileged classes.
+ * some additional system catalog changes have been made that are not
+   visible to the user.
+
+libpgtcl changes:
+ * The -oid option has been added to the "pg_result" tcl command.
+   pg_result -oid returns oid of the last tuple inserted.   If the
+   last command was not an INSERT, then pg_result -oid returns "".
+ * the large object interface is available as pg_lo* tcl commands:
+   pg_lo_open, pg_lo_close, pg_lo_creat, etc.
+
+Portability enhancements and New Ports:
+ * flex/lex problems have been cleared up.  Now, you should be able to use
+   flex instead of lex on any platforms.  We no longer make assumptions of
+   what lexer you use based on the platform you use. 
+ * The Linux-ELF port is now supported.  Various configuration have been 
+   tested:  The following configuration is known to work:
+	kernel 1.2.10, gcc 2.6.3, libc 4.7.2, flex 2.5.2, bison 1.24
+   with everything in ELF format,
+
+New utilities:
+ * ipcclean added to the distribution
+   ipcclean usually does not need to be run, but if your backend crashes
+   and leaves shared memory segments hanging around, ipcclean will
+   clean them up for you.
+
+New documentation:
+ * the user manual has been revised and libpq documentation added.
+
+Postgres95 Beta 0.02	(Thu May 25 16:54:46 PDT 1995)
+------------------------------------------------------
+Incompatible changes:
+ * The SQL statement for creating a database is 'CREATE DATABASE' instead
+   of 'CREATEDB'. Similarly, dropping a database is 'DROP DATABASE' instead
+   of 'DESTROYDB'. However, the names of the executables 'createdb' and 
+   'destroydb' remain the same.
+ 
+New tools:
+ * pgperl - a Perl (4.036) interface to Postgres95
+ * pg_dump - a utility for dumping out a postgres database into a
+	script file containing query commands. The script files are in a ASCII
+	format and can be used to reconstruct the database, even on other
+	machines and other architectures. (Also good for converting
+	a Postgres 4.2 database to Postgres95 database.)
+
+The following ports have been incorporated into postgres95-beta-0.02:
+ * the NetBSD port by Alistair Crooks
+ * the AIX port by Mike Tung
+ * the Windows NT port by Jon Forrest (more stuff but not done yet)
+ * the Linux ELF port by Brian Gallew
+
+The following bugs have been fixed in postgres95-beta-0.02:
+ * new lines not escaped in COPY OUT and problem with COPY OUT when first
+   attribute is a '.' 
+ * cannot type return to use the default user id in createuser
+ * SELECT DISTINCT on big tables crashes
+ * Linux installation problems
+ * monitor doesn't allow use of 'localhost' as PGHOST
+ * psql core dumps when doing \c or \l
+ * the "pgtclsh" target missing from src/bin/pgtclsh/Makefile
+ * libpgtcl has a hard-wired default port number
+ * SELECT DISTINCT INTO TABLE hangs
+ * CREATE TYPE doesn't accept 'variable' as the internallength
+ * wrong result using more than 1 aggregate in a SELECT
+
+Postgres95 Beta 0.01	(Mon May 1 19:03:10 PDT 1995)
+------------------------------------------------------
+Initial release.

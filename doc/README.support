@@ -1,0 +1,35 @@
+
+In order to co-ordinate both usage and development of Postgres95,
+there are currently two mailing lists available:
+
+
+General Discussion
+	- mainly geared towards usage of PostGres95 and associated
+	  support & third-party software
+
+	- send a message of subscribe to postgres95-request@postgres95.vnet.net
+
+	- a digest version of this list is available. To subscribe, send
+	  a message of subscribe to:
+		postgres95-digest-request@postgres95.vnet.net
+
+	- archives and back issues of these lists are stored on:
+		ftp://postgres95.vnet.net/pub/postgres95/archives
+		ftp://postgres95.vnet.net/pub/postgres95/digests
+
+Developers Mailling List
+	- those wishing to help improve Postgres95 and further develop it
+
+	- send a message of subscribe to pg95-dev-request@ki.net
+
+
+WWW: http://www.ki.net/postgres95
+FTP: ftp://ftp.ki.net/pub/postgres95
+
+	The current source tree, with all patches installed, is available
+via sup @ sup.ki.net, or in a .tar.gz file available at:
+
+	ftp://ftp.ki.net/pub/postgres95
+
+
+

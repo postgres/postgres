@@ -1,0 +1,256 @@
+
+POSTGRES95 INSTALLATION INSTRUCTIONS
+Copyright (c) 1996 Regents of the University of California
+
+This directory contains the source and documentation for Postgres95
+(version 1.02)  Postgres95 is a derivative of POSTGRES 4.2 (the last
+release of the UC Berkeley research project).   For copyright terms
+for postgres95, please see the file named COPYRIGHT.   This version 
+was developed by a team of developers on the postgres developers
+mailing list.  Version 1.01 was developed by Jolly Chen and Andrew Yu.
+
+Postgres95 has been tested on the following platforms:
+
+	alpha		-	DEC Alpha AXP on OSF/1 2.0
+	hpux		-	HP PA-RISC on HP-UX 9.0
+	i386_solaris	-	i386 Solaris
+	sparc_solaris	-	SUN SPARC on Solaris 2.4
+	sparc		-	SUN SPARC on SunOS 4.1.3
+	ultrix4		-	DEC MIPS on Ultrix 4.4
+	linux		-	Intel x86 on Linux 1.2 and Linux ELF
+	BSD44_derived	-	OSs derived from 4.4-lite BSD (NetBSD, FreeBSD)
+        bsdi            -       BSD/OS 2.0 and 2.01
+        bsdi_2_1        -       BSD/OS 2.1
+	aix		-	IBM on AIX 3.2.5
+	irix5		-	SGI MIPS on IRIX 5.3
+	dgux            -       DG/UX 5.4R3.10
+  Some hooks are provided for
+	svr4		-	Intel x86 on Intel SVR4
+	next		-	Motorola MC68K or Intel x86 on NeXTSTEP 3.2
+  but these are guaranteed not to work as of yet.
+
+Postgres95 is also known to work on a number of other platforms that
+the authors have not personally tested.
+
+You should have at least 8 MB of memory and at least 30 MB of disk space to
+hold the source, binaries, and user databases.
+
+If you would like to migrate your databases from postgres 1.0 to
+postgres 1.02, see the directory called MIGRATION_1.0_TO_1.02.  People
+upgrading from version 1.01 do not have to make any database changes.
+
+----------------------------------------------------------------------
+To install Postgres95 on UNIX platforms:
+
+1. Create the postgres login.
+   
+   Create a login called postgres (this requires root privileges). We 
+   recommend that you run the postmaster as the user postgres for security 
+   reasons.
+
+   If you run the postmaster as yourself, be warned that you essentially
+   grant all database users the ability to execute arbitrary C functions
+   as you without your password. (In any case, DO NOT run the postmaster 
+   as root.)
+
+2. Compile and install Postgres95.
+
+   If you have earlier versions of Postgres installed, you might want
+   to install Postgres95 in a different place.
+
+   If you're installing Postgres95 on Ultrix 4.x or Linux, see the 
+   porting notes at the end for additional packages that you need to install
+   before installing Postgres95.
+
+   Our Makefiles require GNU make (called gmake in this document) and
+   also assume that "install" accepts BSD options. The INSTALL
+   variable in the Makefiles is set to the BSD-compatible version of
+   install. On some systems, you will have to find a BSD-compatible
+   install to the location of this program. (eg. bsdinst, which comes
+   with the MIT X Window System distribution) 
+
+   Customization can be done by editing src/Makefile.global. You may change
+   the various configuration options here, such as where the Postgres95
+   executable files are installed and where postgres looks for the database
+   directory.  The configuration switches are fairly self-explanatory, but we
+   will go over some of the more commonly-changed options:
+
+     -  PORTNAME specifies the platform on which Postgres95 is being build
+        (linux is the default). You might need to change it to reflect your 
+        platform. (sparc for SunOS 4.1.x, sparc_solaris for Solaris 2.4, 
+        ultrix4 for Ultrix 4.4, and hpux for HP-UX 9.0)
+
+     -  SRCDIR specifies where the source files are located. (defaults
+        to $(POSTGRESDIR)/src.)
+
+     -  POSTSGRESDIR specifies the top-level directory where Postgres95
+        binaries, header files, libraries, and databases are installed.
+
+     -  POSTGRESLOGIN specifies the user who will be doing initdb and
+        running the postmaster (defaults to postgres).  Do not set
+	this to root, or any users with UID = 0!
+
+     -  NAMEDATALEN and OIDNAMELEN allows you to set the maximum
+        length of system identifiers (table names, function names, etc.)
+        It defaults to 32.  You may alter this if you like, but
+        be aware that databases created with different NAMEDATALEN's
+        do not interoperate. 
+
+     -  USE_READLINE specifies whether you want to use the GNU
+        readline and history libraries for the psql interactive 
+        frontend program.
+        GNU readline is not supplied with postgres95 and can be found
+        in the usual ftp sites for GNU software.
+
+      - HBA specifies whether you wish to use host-based
+        authentication for postgres95.  If you do use host-based
+        authentication, after installing, modify the file
+        $PGDATA/pg_hba accordingly. 
+
+   After editing src/Makefile.global, you are ready to compile and
+   install Postgres95 (it takes about 10 minutes on a 133Mhz Pentium
+   running linux):
+
+     % cd src
+     % gmake 
+     % gmake install
+
+   The first gmake ultimately issues the message "All of Postgres95 is 
+   successfully made.  Ready to install."  If you don't get that, the make
+   failed, and there should be error messages at the end detailing why.
+
+   After the installation is complete, check that you have the following files
+   in the top level Postgres95 directory (eg. /usr/local/postgres95).
+
+   You will find the following executables in the bin directory (which
+   should be included in the search path of your shell):
+
+     % ls /usr/local/postgres95/bin
+     cleardbdir*   destroydb*    pg_dump*      postgres*
+     createdb*     destroyuser*  pg_id*        postmaster@
+     createuser*   initdb*       pg_version*   psql*
+
+   You will find the following in the database directory:
+
+     % ls -R /usr/local/postgres95/data
+     files/
+     pg_hba
+	
+     data/files:
+     global1.bki                   local1_template1.bki
+     global1.bki.source            local1_template1.bki.source
+
+3. Initialize the database.
+
+   After you have installed Postgres95, initialize the database by typing:
+
+     % initdb
+
+4. Start the postmaster.
+
+   Now, you are ready to make the system operational by running the
+   postmaster daemon. There are a few environment variables which affect
+   its operation:
+	PGDATA	- location of the database (eg. /usr/local/postgres95/data)
+	PGPORT	- TCP port where it listens for connection (eg. 5432)
+   You don't have to set these variables if you use the (compile time) 
+   default.
+
+     % postmaster -S
+
+   
+5. Testing.
+
+   We suggest you run the regression tests to make sure the release
+   was installed successfully. The regression tests can be found in
+   src/test/regress. (see src/test/regress/README for more details)
+
+     % cd /usr/local/postgres95/src/test/regress
+     % gmake all runtest
+
+   This will run a whole slew of regression tests and might take a long
+   time to run.  When it's done, the output is in the file obj/regress.out.
+   You can compare this to a sample run that we supply in the file 
+   sample.regress.out. (You should get roughly the same output except
+   for some pathnames.) 
+
+     % diff obj/regress.out sample.regress.out
+
+   The regression test takes about half an hour to run on a Sparc 10.
+   You may want to use 'grep -v' to remove unsignificant differences.
+
+6. Run queries.
+
+   After the database is initialized, you can create a new database. To
+   create a database, do the following:
+
+     % createdb foo
+
+   To connect to the postmaster, you have a choice of two front-end programs.
+   ("psql" is recommended.  "monitor" is the old terminal monitor
+     supplied in earlier versions of Postgres)
+   
+     % psql foo
+Please read the file COPYRIGHT for copyright terms of POSTGRES95
+
+  type \? for help on slash commands
+  type \q to quit
+  type \g or terminate with semicolon to execute query
+You are currently connected to the database: foo
+
+foo=> 
+
+----------------------------------------------------------------------
+Questions? Bugs? Feedback?
+
+First, please read the Frequently Asked Questions and answers
+in the file called FAQ.
+
+If you still have questions, please send them to
+postgres95@postgres95.vnet.net.   
+
+If you have a bug report to make, please send a filled out version of
+the file named "bug.template" to pg95-dev@ki.net.
+
+If you would like to help out with the development and maintenance of
+postgres95, send subscribe to the developers mailing list.  See
+README.support for more information
+
+----------------------------------------------------------------------
+
+Porting Notes:
+-------------
+Ultrix4.x:
+	You need to install the libdl-1.1 package since Ultrix 4.x doesn't
+	have a dynamic loader. It's available in
+	   s2k-ftp.CS.Berkeley.EDU:pub/personal/andrew/libdl-1.1.tar.Z
+
+Linux:
+	The linux port defaults to the ELF binary format. (Note that if you're
+	using ELF, you don't need dld because you'll be using the dl library
+	that comes with Linux ELF instead.)
+
+	To compile on non-ELF Linux, comment out the LINUX_ELF line in
+	src/mk/port/postgres.mk.linux. Also, the dld library MUST be obtained
+	and installed on the system. It enables dynamic link loading capability
+	to the postgres port. The dld library can be obtained from the sunsite
+	linux distributions. The current name is dld-3.2.5.
+				(Jalon Q. Zimmerman 
+				<sneaker@powergrid.electriciti.com> 5/11/95)
+
+	To compile with flex, you need a recent version (2.5.2 or
+	later). Otherwise, you will get a 'yy_flush_buffer' undefined error.
+
+BSD/OS:
+	For BSD/OS 2.0 and 2.01, you will need to get flex version 2.5.2
+	as well as the GNU dld library.  Flex version 2.5.3 has a known bug.
+
+NeXT: 
+	The NeXT port was supplied by Tom R. Hageman <tom@basil.icce.rug.nl>.
+	It requires a SysV IPC emulation library and header files for 
+        shared libary and semaphore stuff.   Tom just happens to sell such 
+        a product so contact him for information.  He has also indicated that
+        binary releases of postgres95 for NEXTSTEP will be made available to
+        the general public.  Contact Info@RnA.nl for information.
+
+

@@ -1,0 +1,41 @@
+To report a bug, please complete the following form and send it by
+email to pg95-dev@ki.net
+
+============================================================================
+                        POSTGRES95 BUG REPORT TEMPLATE
+============================================================================
+
+
+Your name		:	
+Your email address	:
+
+
+System Configuration
+---------------------
+  Architecture (example: Intel Pentium)  	:
+
+  Operating System (example: Linux 1.3.42 ELF) 	:
+
+  Postgres95 version (example: Postgres95-1.01) :   Postgres95-1.02
+
+  Compiler used (example:  gcc 2.7.0)		:
+
+
+Please enter a FULL description of your problem:
+------------------------------------------------
+
+
+
+
+
+Please describe a way to repeat the problem.   Please try to provide a
+concise reproducible example, if at all possible: 
+----------------------------------------------------------------------
+
+
+
+
+
+If you know how this problem might be fixed, list the solution below:
+---------------------------------------------------------------------
+
