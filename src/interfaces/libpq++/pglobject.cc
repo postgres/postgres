@@ -10,7 +10,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/pglobject.cc,v 1.9 2002/06/15 18:49:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/pglobject.cc,v 1.10 2002/06/15 19:30:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -121,7 +121,6 @@ int PgLargeObject::Unlink()
 }
 
 
-
 void PgLargeObject::Close()
 { 
   if (pgFd >= 0) lo_close(pgConn, pgFd);
@@ -168,4 +167,8 @@ int PgLargeObject::Export(const char* filename)
 string PgLargeObject::Status() const
 { 
   return loStatus; 
+}
+
+Oid PgLargeObject::LOid(){
+  return pgObject;
 }
