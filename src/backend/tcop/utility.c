@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.124 2002/01/03 23:21:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.125 2002/02/07 00:27:30 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -885,15 +885,6 @@ ProcessUtility(Node *parsetree,
 						break;
 					case TABLE:
 						relname = (char *) stmt->name;
-						if (IsSystemRelationName(relname))
-						{
-							if (!allowSystemTableMods)
-								elog(ERROR, "\"%s\" is a system table. call REINDEX under standalone postgres with -O -P options",
-									 relname);
-							if (!IsIgnoringSystemIndexes())
-								elog(ERROR, "\"%s\" is a system table. call REINDEX under standalone postgres with -P -O options",
-									 relname);
-						}
 						if (!pg_ownercheck(GetUserId(), relname, RELNAME))
 							elog(ERROR, "%s: %s", relname, aclcheck_error_strings[ACLCHECK_NOT_OWNER]);
 						ReindexTable(relname, stmt->force);
