@@ -1,5 +1,5 @@
 #
-# $Header: /cvsroot/pgsql/contrib/pg_controldata/Attic/Makefile,v 1.1 2001/02/23 20:38:35 momjian Exp $
+# $Header: /cvsroot/pgsql/contrib/pg_controldata/Attic/Makefile,v 1.2 2001/02/25 15:57:45 petere Exp $
 #
 
 subdir = contrib/pg_controldata
@@ -12,8 +12,8 @@ OBJS	= pg_controldata.o
 
 all: pg_controldata
 
-pg_controldata: $(OBJS) $(libpq_builddir)/libpq.a
-	$(CC) $(CFLAGS) $(OBJS) $(libpq) $(LDFLAGS) $(LIBS) -o $@
+pg_controldata: $(OBJS)
+	$(CC) $(CFLAGS) $(OBJS) $(LDFLAGS) $(LIBS) -o $@
 
 install: all installdirs
 	$(INSTALL_PROGRAM) pg_controldata$(X)	$(bindir)
