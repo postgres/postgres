@@ -162,7 +162,7 @@ Setting up Permissions
 
 The first thing you should do after creating a database system is set up
 the permissions for connecting to the database.  These are kept in the 
-file pg_hba in the data directory.  Initdb creates a sample version of
+file pg_hba.conf in the lib directory.  Initdb creates a sample version of
 this file, which contains comments telling you how to set it up.
 
 The Postmaster Daemon
