@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Feb 18 00:15:49 EST 2003
+Last updated:		Tue Feb 18 20:30:27 EST 2003
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -142,7 +142,7 @@ Indexes
 * Use index to restrict rows returned by multi-key index when used with
   non-consecutive keys or OR clauses, so fewer heap accesses
 * Be smarter about insertion of already-ordered data into btree index
-* Prevent index uniqueness checks when UPDATE does not modifying column
+* Prevent index uniqueness checks when UPDATE does not modify the column
 * Use bitmaps to fetch heap pages in sequential order [performance]
 * Use bitmaps to combine existing indexes [performance]
 * Improve handling of index scans for NULL
@@ -232,7 +232,7 @@ Commands
 	o Allow array declarations and other data types in PL/PgSQL DECLARE
 	o Add PL/PgSQL PROCEDURES that can return multiple values
 	o Add table function support to pltcl, plperl, plpython
-	o Make PL/PgSQL %TYPE schema-aware
+	o -Make PL/PgSQL %TYPE schema-aware
 	o Allow PL/PgSQL to support array element assignment
 
 
