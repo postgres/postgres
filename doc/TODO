@@ -5,7 +5,7 @@ TODO list for PostgreSQL
 Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Wed Aug 25 23:09:14 EDT 2004
+Last updated:		Thu Aug 26 21:44:50 EDT 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web site, http://www.PostgreSQL.org.
 
@@ -392,9 +392,11 @@ Commands
 * CLUSTER
 	o Automatically maintain clustering on a table
 
-	This would require some background daemon to restore clustering
+	This would require some background daemon to maintain clustering
 	during periods of low usage. It might also require tables to be only
-	paritally filled for easier reorganization.
+	paritally filled for easier reorganization.  It also might require
+	creating a merged heap/index data file so an index lookup would
+	automatically access the heap data too.
 
 	o -Add ALTER TABLE table SET WITHOUT CLUSTER (Christopher)
 	o Add default clustering to system tables
