@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.153 2004/04/24 22:53:44 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.154 2004/04/24 22:58:40 neilc Exp $
 -->
 
  <chapter id="libpq">
@@ -15,14 +15,14 @@ $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.153 2004/04/24 22:53:44 neilc Exp
 
   <para>
    <application>libpq</application> is the <acronym>C</acronym>
-   application programmer's interface to
-   <productname>PostgreSQL</productname>.  <application>libpq</application> is a set
-   of library functions that allow client programs to pass queries to the
-   <productname>PostgreSQL</productname> backend server and to receive the
-   results of these queries.  <application>libpq</application> is also the
-   underlying engine for several other <productname>PostgreSQL</productname>
-   application interfaces, including those written for C++, TCL, Perl, Python
-   <application>ECPG</application>.  So some aspects of <application>libpq</>'s behavior will be
+   application programmer's interface to <productname>PostgreSQL</>.
+   <application>libpq</> is a set of library functions that allow
+   client programs to pass queries to the <productname>PostgreSQL</>
+   backend server and to receive the results of these queries.
+   <application>libpq</> is also the underlying engine for several
+   other <productname>PostgreSQL</> application interfaces, including
+   those written for C++, TCL, Perl, Python and <application>ECPG</>.
+   So some aspects of <application>libpq</>'s behavior will be
    important to you if you use one of those packages.
   </para>
 
