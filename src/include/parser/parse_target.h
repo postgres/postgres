@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_target.h,v 1.9 1998/08/05 04:49:15 scrappy Exp $
+ * $Id: parse_target.h,v 1.10 1998/08/25 03:17:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,9 +25,8 @@
 extern List *transformTargetList(ParseState *pstate, List *targetlist);
 extern List *makeTargetNames(ParseState *pstate, List *cols);
 extern TargetEntry *
-transformTargetIdent(ParseState *pstate,
+MakeTargetEntryIdent(ParseState *pstate,
 					 Node *node,
-					 TargetEntry *tent,
 					 char **resname,
 					 char *refname,
 					 char *colname,
@@ -35,7 +34,7 @@ transformTargetIdent(ParseState *pstate,
 extern Node *
 CoerceTargetExpr(ParseState *pstate, Node *expr,
 				 Oid type_id, Oid attrtype);
-TargetEntry * MakeTargetlistExpr(ParseState *pstate,
+TargetEntry * MakeTargetEntryExpr(ParseState *pstate,
 				   char *colname,
 				   Node *expr,
 				   List *arrayRef,

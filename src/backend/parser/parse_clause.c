@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.23 1998/08/05 04:49:09 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.24 1998/08/25 03:17:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -272,14 +272,14 @@ findTargetlistEntry(ParseState *pstate, Node *node, List *tlist, int clause)
 		switch(nodeTag(node))
 		{
 			case T_Attr: 
-				target_result = transformTargetIdent(pstate, node, makeNode(TargetEntry),
+				target_result = MakeTargetEntryIdent(pstate, node,
 										&((Attr*)node)->relname, NULL,
 										((Attr*)node)->relname, TRUE);
 				lappend(tlist, target_result);
 				break;
 
 			case T_Ident:
-				target_result = transformTargetIdent(pstate, node, makeNode(TargetEntry),
+				target_result = MakeTargetEntryIdent(pstate, node,
 										&((Ident*)node)->name, NULL,
 										((Ident*)node)->name, TRUE);
 				lappend(tlist, target_result);
@@ -294,7 +294,7 @@ findTargetlistEntry(ParseState *pstate, Node *node, List *tlist, int clause)
 
 			case T_FuncCall:
 			case T_A_Expr:
-				target_result = MakeTargetlistExpr(pstate, "resjunk", expr, FALSE, TRUE);
+				target_result = MakeTargetEntryExpr(pstate, "resjunk", expr, FALSE, TRUE);
 				lappend(tlist, target_result);
 				break;
 

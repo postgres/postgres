@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.22 1998/08/23 14:43:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.23 1998/08/25 03:17:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,7 +40,7 @@ SizeTargetExpr(ParseState *pstate,
 			   int32 attrtypmod);
 
 
-/* transformTargetIdent()
+/* MakeTargetEntryIdent()
  * Transforms an Ident Node to a Target Entry
  * Created this function to allow the ORDER/GROUP BY clause to be able 
  *  to construct a TargetEntry from an Ident.
@@ -52,13 +52,12 @@ SizeTargetExpr(ParseState *pstate,
  * - thomas 1998-06-02
  */
 TargetEntry *
-transformTargetIdent(ParseState *pstate,
+MakeTargetEntryIdent(ParseState *pstate,
 #if FALSE
 					 Ident *ident,
 #else
 					 Node *node,
 #endif
-					 TargetEntry *tent,
 					 char **resname,
 					 char *refname,
 					 char *colname,
@@ -66,7 +65,7 @@ transformTargetIdent(ParseState *pstate,
 {
 	Node   *expr = NULL;
 	Oid		attrtype_target;
-
+	TargetEntry *tent = makeNode(TargetEntry);
 
 	if (pstate->p_is_insert)
 	{
@@ -93,6 +92,7 @@ transformTargetIdent(ParseState *pstate,
 
 		target_colname = *resname;
 
+		/* this looks strange to me, returning an empty TargetEntry bjm 1998/08/24 */
 		if (target_colname == NULL || colname == NULL)
 			return (tent);
 
@@ -115,7 +115,7 @@ transformTargetIdent(ParseState *pstate,
 		attrtypmod_target = get_atttypmod(pstate->p_target_relation->rd_id, resdomno_target);
 
 #ifdef PARSEDEBUG
-printf("transformTargetIdent- transform type %d to %d\n",
+printf("MakeTargetEntryIdent- transform type %d to %d\n",
  attrtype_id, attrtype_target);
 #endif
 		if ((attrtype_id != attrtype_target)
@@ -125,7 +125,7 @@ printf("transformTargetIdent- transform type %d to %d\n",
 			{
 				expr = coerce_type(pstate, node, attrtype_id, attrtype_target);
 				expr = transformExpr(pstate, expr, EXPR_COLUMN_FIRST);
-				tent = MakeTargetlistExpr(pstate, *resname, expr, FALSE, FALSE);
+				tent = MakeTargetEntryExpr(pstate, *resname, expr, FALSE, FALSE);
 				expr = tent->expr;
 			}
 			else
@@ -155,7 +155,7 @@ printf("transformTargetIdent- transform type %d to %d\n",
 		name = ((*resname != NULL)? *resname: colname);
 
 #ifdef PARSEDEBUG
-printf("transformTargetIdent- call transformIdent()\n");
+printf("MakeTargetEntryIdent- call transformIdent()\n");
 #endif
 #if FALSE
 		expr = transformIdent(pstate, (Node *) ident, EXPR_COLUMN_FIRST);
@@ -170,7 +170,7 @@ printf("transformTargetIdent- call transformIdent()\n");
 			type_mod = -1;
 
 #ifdef PARSEDEBUG
-printf("transformTargetIdent- attrtype_target = %d; type_mod = %d\n", attrtype_target, type_mod);
+printf("MakeTargetEntryIdent- attrtype_target = %d; type_mod = %d\n", attrtype_target, type_mod);
 #endif
 
 		tent->resdom = makeResdom((AttrNumber) pstate->p_last_resno++,
@@ -184,10 +184,10 @@ printf("transformTargetIdent- attrtype_target = %d; type_mod = %d\n", attrtype_t
 	}
 
 	return (tent);
-} /* transformTargetIdent() */
+} /* MakeTargetEntryIdent() */
 
 
-/* MakeTargetlistExpr()
+/* MakeTargetEntryExpr()
  * Make a TargetEntry from an expression.
  * arrayRef is a list of transformed A_Indices.
  *
@@ -200,7 +200,7 @@ printf("transformTargetIdent- attrtype_target = %d; type_mod = %d\n", attrtype_t
  * -  daveh@insightdist.com 1998-07-31 
  */
 TargetEntry *
-MakeTargetlistExpr(ParseState *pstate,
+MakeTargetEntryExpr(ParseState *pstate,
 					 char *colname,
 					 Node *expr,
 					 List *arrayRef,
@@ -213,11 +213,10 @@ MakeTargetlistExpr(ParseState *pstate,
 	int			resdomno;
 	Relation	rd;
 	bool		attrisset;
-	TargetEntry *tent;
 	Resdom	   *resnode;
 
 	if (expr == NULL)
-		elog(ERROR, "MakeTargetlistExpr: invalid use of NULL expression");
+		elog(ERROR, "MakeTargetEntryExpr: invalid use of NULL expression");
 
 	type_id = exprType(expr);
 	if (nodeTag(expr) == T_Var)
@@ -225,7 +224,7 @@ MakeTargetlistExpr(ParseState *pstate,
 	else
 		type_mod = -1;
 
-	/* Processes target columns that will be receiving results */
+	/* Process target columns that will be receiving results */
 	if (pstate->p_is_insert || pstate->p_is_update)
 	{
 		/*
@@ -266,7 +265,7 @@ MakeTargetlistExpr(ParseState *pstate,
 			}
 
 #ifdef PARSEDEBUG
-printf("MakeTargetlistExpr: attrtypmod is %d\n", (int4) attrtypmod);
+printf("MakeTargetEntryExpr: attrtypmod is %d\n", (int4) attrtypmod);
 #endif
 
 			/* Apparently going to a fixed-length string?
@@ -329,12 +328,199 @@ printf("MakeTargetlistExpr: attrtypmod is %d\n", (int4) attrtypmod);
 						 (Oid) 0,
 						 resjunk);
 
-	tent = makeTargetEntry(resnode, expr);
+	return makeTargetEntry(resnode, expr);
+} /* MakeTargetEntryExpr() */
 
+/*
+ *	MakeTargetlistComplex()
+ *	pMake a TargetEntry from an complex node.
+ */
+static TargetEntry *
+MakeTargetEntryComplex(ParseState *pstate,
+					  ResTarget	*res)
+{
+	Node	*expr = transformExpr(pstate, (Node *) res->val, EXPR_COLUMN_FIRST);
+
+#ifdef PARSEDEBUG
+printf("transformTargetList: decode T_Expr\n");
+#endif
+
+	handleTargetColname(pstate, &res->name, NULL, NULL);
+	/* note indirection has not been transformed */
+	if (pstate->p_is_insert && res->indirection != NIL)
+	{
+		/* this is an array assignment */
+		char	   *val;
+		char	   *str,
+				   *save_str;
+		List	   *elt;
+		int			i = 0,
+					ndims;
+		int			lindx[MAXDIM],
+					uindx[MAXDIM];
+		int			resdomno;
+		Relation	rd;
+		Value	   *constval;
+
+		if (exprType(expr) != UNKNOWNOID || !IsA(expr, Const))
+			elog(ERROR, "yyparse: string constant expected");
+
+		val = (char *) textout((struct varlena *)
+						   ((Const *) expr)->constvalue);
+		str = save_str = (char *) palloc(strlen(val) + MAXDIM * 25 + 2);
+		foreach(elt, res->indirection)
+		{
+			A_Indices  *aind = (A_Indices *) lfirst(elt);
+
+			aind->uidx = transformExpr(pstate, aind->uidx, EXPR_COLUMN_FIRST);
+			if (!IsA(aind->uidx, Const))
+				elog(ERROR, "Array Index for Append should be a constant");
+
+			uindx[i] = ((Const *) aind->uidx)->constvalue;
+			if (aind->lidx != NULL)
+			{
+				aind->lidx = transformExpr(pstate, aind->lidx, EXPR_COLUMN_FIRST);
+				if (!IsA(aind->lidx, Const))
+					elog(ERROR, "Array Index for Append should be a constant");
+
+				lindx[i] = ((Const *) aind->lidx)->constvalue;
+			}
+			else
+				lindx[i] = 1;
+			if (lindx[i] > uindx[i])
+				elog(ERROR, "yyparse: lower index cannot be greater than upper index");
+
+			sprintf(str, "[%d:%d]", lindx[i], uindx[i]);
+			str += strlen(str);
+			i++;
+		}
+		sprintf(str, "=%s", val);
+		rd = pstate->p_target_relation;
+		Assert(rd != NULL);
+		resdomno = attnameAttNum(rd, res->name);
+		ndims = attnumAttNelems(rd, resdomno);
+		if (i != ndims)
+			elog(ERROR, "yyparse: array dimensions do not match");
+
+		constval = makeNode(Value);
+		constval->type = T_String;
+		constval->val.str = save_str;
+		return MakeTargetEntryExpr(pstate, res->name,
+								  (Node *) make_const(constval),
+								  NULL, FALSE);
+		pfree(save_str);
+	}
+	else
+	{
+		char	   *colname = res->name;
+
+		/* this is not an array assignment */
+		if (colname == NULL)
+		{
+			/*
+			 * if you're wondering why this is here, look
+			 * at the yacc grammar for why a name can be
+			 * missing. -ay
+			 */
+			colname = FigureColname(expr, res->val);
+		}
+		if (res->indirection)
+		{
+			List	   *ilist = res->indirection;
+
+			while (ilist != NIL)
+			{
+				A_Indices  *ind = lfirst(ilist);
+
+				ind->lidx = transformExpr(pstate, ind->lidx, EXPR_COLUMN_FIRST);
+				ind->uidx = transformExpr(pstate, ind->uidx, EXPR_COLUMN_FIRST);
+				ilist = lnext(ilist);
+			}
+		}
+		res->name = colname;
+		return MakeTargetEntryExpr(pstate, res->name, expr,
+								  res->indirection, FALSE);
+	}
+}
+
+/*
+ *	MakeTargetlistComplex()
+ *	pMake a TargetEntry from an complex node.
+ */
+static TargetEntry *
+MakeTargetEntryAttr(ParseState *pstate,
+				   ResTarget	*res)
+{
+	Oid			type_id;
+	int32		type_mod;
+	Attr	   *att = (Attr *) res->val;
+	Node	   *result;
+	char	   *attrname;
+	char	   *resname;
+	Resdom	   *resnode;
+	int			resdomno;
+	List	   *attrs = att->attrs;
+	TargetEntry	*tent;
+	Oid			relid;
+
+	attrname = strVal(lfirst(att->attrs));
+	/*
+	 * Target item is fully specified: ie.
+	 * relation.attribute
+	 */
+#ifdef PARSEDEBUG
+printf("transformTargetList: decode T_Attr\n");
+#endif
+	result = ParseNestedFuncOrColumn(pstate, att, &pstate->p_last_resno, EXPR_COLUMN_FIRST);
+	handleTargetColname(pstate, &res->name, att->relname, attrname);
+	if (att->indirection != NIL)
+	{
+		List	   *ilist = att->indirection;
+
+		while (ilist != NIL)
+		{
+			A_Indices  *ind = lfirst(ilist);
+
+			ind->lidx = transformExpr(pstate, ind->lidx, EXPR_COLUMN_FIRST);
+			ind->uidx = transformExpr(pstate, ind->uidx, EXPR_COLUMN_FIRST);
+			ilist = lnext(ilist);
+		}
+		result = (Node *) make_array_ref(result, att->indirection);
+	}
+	type_id = exprType(result);
+	if (nodeTag(result) == T_Var)
+		type_mod = ((Var *) result)->vartypmod;
+	else
+		type_mod = -1;
+	/* move to last entry */
+	while (lnext(attrs) != NIL)
+		attrs = lnext(attrs);
+	resname = (res->name) ? res->name : strVal(lfirst(attrs));
+	if (pstate->p_is_insert || pstate->p_is_update)
+	{
+		/*
+		 * insert or update query -- insert, update work only on one
+		 * relation, so multiple occurence of same resdomno is bogus
+		 */
+		relid = refnameRangeTableEntry(pstate, att->relname)->relid;
+		resdomno = get_attnum(relid, attrname);
+	}
+	else
+		resdomno  = pstate->p_last_resno++;
+	resnode = makeResdom((AttrNumber) resdomno,
+						 (Oid) type_id,
+						 type_mod,
+						 resname,
+						 (Index) 0,
+						 (Oid) 0,
+						 0);
+	tent = makeNode(TargetEntry);
+	tent->resdom = resnode;
+	tent->expr = result;
 	return tent;
-} /* MakeTargetlistExpr() */
+}
 
-
+					  
 /* transformTargetList()
  * Turns a list of ResTarget's into a list of TargetEntry's.
  */
@@ -347,22 +533,19 @@ transformTargetList(ParseState *pstate, List *targetlist)
 	while (targetlist != NIL)
 	{
 		ResTarget	*res = (ResTarget *) lfirst(targetlist);
-		TargetEntry	*tent = makeNode(TargetEntry);
+		TargetEntry	*tent = NULL;
 
 		switch (nodeTag(res->val))
 		{
 			case T_Ident:
 				{
 					char	   *identname;
-#if FALSE
-					char	   *resname;
-#endif
 
 #ifdef PARSEDEBUG
 printf("transformTargetList: decode T_Ident\n");
 #endif
 					identname = ((Ident *) res->val)->name;
-					tent = transformTargetIdent(pstate, (Node *)res->val, tent, &res->name, NULL, identname, FALSE);
+					tent = MakeTargetEntryIdent(pstate, (Node *)res->val, &res->name, NULL, identname, FALSE);
 					break;
 				}
 			case T_ParamNo:
@@ -370,120 +553,14 @@ printf("transformTargetList: decode T_Ident\n");
 			case T_A_Const:
 			case T_A_Expr:
 				{
-					Node	*expr = transformExpr(pstate, (Node *) res->val, EXPR_COLUMN_FIRST);
-
-#ifdef PARSEDEBUG
-printf("transformTargetList: decode T_Expr\n");
-#endif
-					handleTargetColname(pstate, &res->name, NULL, NULL);
-					/* note indirection has not been transformed */
-					if (pstate->p_is_insert && res->indirection != NIL)
-					{
-						/* this is an array assignment */
-						char	   *val;
-						char	   *str,
-								   *save_str;
-						List	   *elt;
-						int			i = 0,
-									ndims;
-						int			lindx[MAXDIM],
-									uindx[MAXDIM];
-						int			resdomno;
-						Relation	rd;
-						Value	   *constval;
-
-						if (exprType(expr) != UNKNOWNOID || !IsA(expr, Const))
-							elog(ERROR, "yyparse: string constant expected");
-
-						val = (char *) textout((struct varlena *)
-										   ((Const *) expr)->constvalue);
-						str = save_str = (char *) palloc(strlen(val) + MAXDIM * 25 + 2);
-						foreach(elt, res->indirection)
-						{
-							A_Indices  *aind = (A_Indices *) lfirst(elt);
-
-							aind->uidx = transformExpr(pstate, aind->uidx, EXPR_COLUMN_FIRST);
-							if (!IsA(aind->uidx, Const))
-								elog(ERROR, "Array Index for Append should be a constant");
-
-							uindx[i] = ((Const *) aind->uidx)->constvalue;
-							if (aind->lidx != NULL)
-							{
-								aind->lidx = transformExpr(pstate, aind->lidx, EXPR_COLUMN_FIRST);
-								if (!IsA(aind->lidx, Const))
-									elog(ERROR, "Array Index for Append should be a constant");
-
-								lindx[i] = ((Const *) aind->lidx)->constvalue;
-							}
-							else
-								lindx[i] = 1;
-							if (lindx[i] > uindx[i])
-								elog(ERROR, "yyparse: lower index cannot be greater than upper index");
-
-							sprintf(str, "[%d:%d]", lindx[i], uindx[i]);
-							str += strlen(str);
-							i++;
-						}
-						sprintf(str, "=%s", val);
-						rd = pstate->p_target_relation;
-						Assert(rd != NULL);
-						resdomno = attnameAttNum(rd, res->name);
-						ndims = attnumAttNelems(rd, resdomno);
-						if (i != ndims)
-							elog(ERROR, "yyparse: array dimensions do not match");
-
-						constval = makeNode(Value);
-						constval->type = T_String;
-						constval->val.str = save_str;
-						tent = MakeTargetlistExpr(pstate, res->name,
-												  (Node *) make_const(constval),
-												  NULL, FALSE);
-						pfree(save_str);
-					}
-					else
-					{
-						char	   *colname = res->name;
-
-						/* this is not an array assignment */
-						if (colname == NULL)
-						{
-							/*
-							 * if you're wondering why this is here, look
-							 * at the yacc grammar for why a name can be
-							 * missing. -ay
-							 */
-							colname = FigureColname(expr, res->val);
-						}
-						if (res->indirection)
-						{
-							List	   *ilist = res->indirection;
-
-							while (ilist != NIL)
-							{
-								A_Indices  *ind = lfirst(ilist);
-
-								ind->lidx = transformExpr(pstate, ind->lidx, EXPR_COLUMN_FIRST);
-								ind->uidx = transformExpr(pstate, ind->uidx, EXPR_COLUMN_FIRST);
-								ilist = lnext(ilist);
-							}
-						}
-						res->name = colname;
-						tent = MakeTargetlistExpr(pstate, res->name, expr,
-												  res->indirection, FALSE);
-					}
+					tent = MakeTargetEntryComplex(pstate, res);
 					break;
 				}
 			case T_Attr:
 				{
-					Oid			type_id;
-					int32		type_mod;
-					Attr	   *att = (Attr *) res->val;
-					Node	   *result;
+					bool expand_star = false;
 					char	   *attrname;
-					char	   *resname;
-					Resdom	   *resnode;
-					List	   *attrs = att->attrs;
-
+					Attr	   *att = (Attr *) res->val;
 					/*
 					 * Target item is a single '*', expand all tables (eg.
 					 * SELECT * FROM emp)
@@ -494,16 +571,7 @@ printf("transformTargetList: decode T_Expr\n");
 							p_target = tail_p_target = ExpandAllTables(pstate);
 						else
 							lnext(tail_p_target) = ExpandAllTables(pstate);
-
-						while (lnext(tail_p_target) != NIL)
-							/* make sure we point to the last target entry */
-							tail_p_target = lnext(tail_p_target);
-
-						/*
-						 * skip rest of while loop
-						 */
-						targetlist = lnext(targetlist);
-						continue;
+						expand_star = true;
 					}
 
 					/*
@@ -526,60 +594,24 @@ printf("transformTargetList: decode T_Expr\n");
 							lnext(tail_p_target) =
 								expandAll(pstate, att->relname, att->relname,
 										  &pstate->p_last_resno);
+						expand_star = true;
+					}
+					if (expand_star)
+					{
 						while (lnext(tail_p_target) != NIL)
 							/* make sure we point to the last target entry */
 							tail_p_target = lnext(tail_p_target);
-
 						/*
-						 * skip the rest of the while loop
+						 * skip rest of while loop
 						 */
 						targetlist = lnext(targetlist);
 						continue;
 					}
-
-
-					/*
-					 * Target item is fully specified: ie.
-					 * relation.attribute
-					 */
-#ifdef PARSEDEBUG
-printf("transformTargetList: decode T_Attr\n");
-#endif
-					result = ParseNestedFuncOrColumn(pstate, att, &pstate->p_last_resno, EXPR_COLUMN_FIRST);
-					handleTargetColname(pstate, &res->name, att->relname, attrname);
-					if (att->indirection != NIL)
-					{
-						List	   *ilist = att->indirection;
-
-						while (ilist != NIL)
-						{
-							A_Indices  *ind = lfirst(ilist);
-
-							ind->lidx = transformExpr(pstate, ind->lidx, EXPR_COLUMN_FIRST);
-							ind->uidx = transformExpr(pstate, ind->uidx, EXPR_COLUMN_FIRST);
-							ilist = lnext(ilist);
-						}
-						result = (Node *) make_array_ref(result, att->indirection);
-					}
-					type_id = exprType(result);
-					if (nodeTag(result) == T_Var)
-						type_mod = ((Var *) result)->vartypmod;
 					else
-						type_mod = -1;
-					/* move to last entry */
-					while (lnext(attrs) != NIL)
-						attrs = lnext(attrs);
-					resname = (res->name) ? res->name : strVal(lfirst(attrs));
-					resnode = makeResdom((AttrNumber) pstate->p_last_resno++,
-										 (Oid) type_id,
-										 type_mod,
-										 resname,
-										 (Index) 0,
-										 (Oid) 0,
-										 0);
-					tent->resdom = resnode;
-					tent->expr = result;
-					break;
+					{
+						tent = MakeTargetEntryAttr(pstate, res);
+						break;
+					}
 				}
 			default:
 				/* internal error */
