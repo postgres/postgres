@@ -748,8 +748,14 @@ QueryInfo qi;
 	/*	Begin a transaction if one is not already in progress */
 	/*	The reason is because we can't use declare/fetch cursors without
 		starting a transaction first.
+
+		A transaction should be begun if and only if
+		we use declare/fetch and the statement is SELECT.
+		We assume that the Postgres backend has an autocommit
+		feature as default. (Zoltan Kovacs, 04/26/2000)
 	*/
-	if ( ! self->internal && ! CC_is_in_trans(conn) && (globals.use_declarefetch || STMT_UPDATE(self))) {
+	// if ( ! self->internal && ! CC_is_in_trans(conn) && (globals.use_declarefetch || STMT_UPDATE(self))) {
+	if ( ! self->internal && ! CC_is_in_trans(conn) && globals.use_declarefetch && self->statement_type == STMT_TYPE_SELECT) {
 
 		mylog("   about to begin a transaction on statement = %u\n", self);
 		res = CC_send_query(conn, "BEGIN", NULL);
@@ -826,11 +832,14 @@ QueryInfo qi;
 		self->result = CC_send_query(conn, self->stmt_with_params, NULL);
 
 		/*	If we are in autocommit, we must send the commit. */
-		if ( ! self->internal && CC_is_in_autocommit(conn) && STMT_UPDATE(self)) {
+		/*	No, we shouldn't. Postgres backend does the
+			autocommit if neccessary. (Zoltan, 04/26/2000)
+		*/
+/*		if ( ! self->internal && CC_is_in_autocommit(conn) && STMT_UPDATE(self)) {
 	    res = CC_send_query(conn, "COMMIT", NULL);
 	    QR_Destructor(res);
 	    CC_set_no_trans(conn);
-		}
+		}*/		
 
 	}
 
@@ -889,10 +898,12 @@ QueryInfo qi;
 	if (self->errornumber == STMT_OK)
 		return SQL_SUCCESS;
 
-	else if (self->errornumber == STMT_INFO_ONLY)
-		return SQL_SUCCESS_WITH_INFO;
-
 	else {
+		// Modified, 04/29/2000, Zoltan
+		if (self->errornumber == STMT_INFO_ONLY)
+		    self->errormsg = "Error while executing the query (non-fatal)";
+		else
+		    self->errormsg = "Unknown error";
 		SC_log_error(func, "", self);
 		return SQL_ERROR;
 	}

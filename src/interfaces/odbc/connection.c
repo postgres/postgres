@@ -947,6 +947,19 @@ char cmdbuffer[MAX_MESSAGE_LEN+1];	/* QR_set_command() dups this string so dont 
 					case 'E':
 						SOCK_get_string(sock, cmdbuffer, ERROR_MSG_LENGTH);
 						qlog("ERROR from backend during clear: '%s'\n", cmdbuffer);
+						/* We must report this type of error as well
+						   (practically for reference integrity violation
+						   error reporting, from PostgreSQL 7.0).
+						   (Zoltan Kovacs, 04/26/2000)
+						*/
+						self->errormsg = cmdbuffer;
+						if ( ! strncmp(self->errormsg, "FATAL", 5)) {
+						    self->errornumber = CONNECTION_SERVER_REPORTED_ERROR;
+						    CC_set_no_trans(self);
+						    }
+						else 
+						    self->errornumber = CONNECTION_SERVER_REPORTED_WARNING;
+						QR_set_status(res, PGRES_NONFATAL_ERROR);
 						break;
 					}
 				}
@@ -1001,14 +1014,20 @@ char cmdbuffer[MAX_MESSAGE_LEN+1];	/* QR_set_command() dups this string so dont 
 			mylog("send_query: 'E' - %s\n", self->errormsg);
 			qlog("ERROR from backend during send_query: '%s'\n", self->errormsg);
 
+			/* We should report that an error occured. Zoltan */
+			res = QR_Constructor();
+
 			if ( ! strncmp(self->errormsg, "FATAL", 5)) {
 				self->errornumber = CONNECTION_SERVER_REPORTED_ERROR;
 				CC_set_no_trans(self);
+				QR_set_status(res, PGRES_FATAL_ERROR);
 			}
-			else
+			else {
 				self->errornumber = CONNECTION_SERVER_REPORTED_WARNING;
+				QR_set_status(res, PGRES_NONFATAL_ERROR);
+			}
 
-			return NULL;
+			return res; /* instead of NULL. Zoltan */
 
 		case 'P' : /* get the Portal name */
 			SOCK_get_string(sock, msgbuffer, MAX_MESSAGE_LEN);

@@ -330,6 +330,15 @@ int i;
 		switch(vParam) {
 		case SQL_AUTOCOMMIT_OFF:
 			CC_set_autocommit_off(conn);
+		/* The following two lines are new.
+		   With this modification the SELECT statements
+		   are also included in the transactions.
+		   Error handling should be written, 
+		   this is missing yet, see
+		   SC_execute in statement.c for details. Zoltan
+		*/    
+			CC_send_query(conn,"BEGIN",NULL);
+			CC_set_in_trans(conn);
 			break;
 
 		case SQL_AUTOCOMMIT_ON:
