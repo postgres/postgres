@@ -13,7 +13,7 @@ Allow IPv6 server connections (Nigel Kukard, Johan Jordaan, Bruce, Tom, Kurt
 Fix SSL to handle errors cleanly (Nathan Mueller)
 SSL protocol security and performance improvements (Sean Chittenden)
 Print lock information when a deadlock is detected (Tom)
-Update /tmp socket files regularly to avoid their removal (Tom)
+Update /tmp socket mod. times regularly to avoid their removal (Tom)
 Enable PAM for MAC OS X (Aaron Hillegass)
 Make btree indexes fully WAL-safe (Tom)
 Allow btree index compaction and empty page reuse (Tom)
@@ -24,7 +24,7 @@ Set proper schema permissions in initdb (Peter)
 Add start time to pg_stat_activity (Neil)
 New code to detect corrupt disk pages;  erase with zero_damaged_pages (Tom)
 New client/server protocol: faster, no username length limit, allow
-  clean exit
+  clean exit from COPY (Tom)
 Add transaction status, tableid, columnid to backend protocol (Tom)
 Add new binary I/O protocol (Tom)
 Remove autocommit server setting; move to client applications (Tom)
@@ -45,8 +45,8 @@ Allow IN/NOT IN to be handled via hash tables (Tom)
 Improve NOT IN (subquery) performance (Tom)
 Allow most IN subqueries to be processed as joins (Tom)
 Allow the postmaster to preload libraries using preload_libraries (Joe)
-Improve reverse index scan performance (Tom)
 Improve optimizer cost computations, particularly for subqueries (Tom)
+Avoid sort when subquery ORDER BY matches upper query (Tom)
 Assume WHERE a.x = b.y and b.y = 42 also means a.x = 42 (Tom)
 Allow hash/merge joins on complex joins (Tom)
 Allow hash joins for more data types (Tom)
@@ -76,11 +76,10 @@ Add ability to print only slow statements using log_min_duration_statement
 Allow pg_hba.conf to accept netmasks in CIDR format (Andrew Dunstan)
 New is_superuser read-only variable (Tom)
 New server-side parameter log_error_verbosity to control error detail (Tom)
-postgres --help-config now dumps server config variables (Tom)
+postgres --help-config now dumps server config variables (Aizaz Ahmed)
 Make default shared_buffers 1000 and max_connections 100, if possible (Tom)
 Add new columns in pg_settings: context, type, source , min_val, max_val (Joe)
-Prevent assign_session_authorization() from being confused by
-  all-numeric user names (Tom)
+New pg_hba.conf 'hostnossl' to prevent SSL connections (Jon Jensen)
 
      _________________________________________________________________
 
@@ -90,15 +89,15 @@ New SQL-standard information schema (Peter)
 Add read-only transactions (Peter)
 Add server variable regex_flavor to control regular expression
   processing (Tom)
-Allow ORDER BY in FROM subqueries to be honored by outer queries (Tom)
-Print key name in foreign-key violation messages (Dmitry Tkach)
+Print key name and value in foreign-key violation messages (Dmitry Tkach)
 Allow users to see their own queries in pg_stat_activity (Kevin Brown)
-Allow subquery aggregates to reference upper query columns (?) (Tom)
+Fix subquery aggregates of upper query columns to match SQL spec. (Tom)
 Add option to prevent auto-addition of tables referenced in query (Nigel J.
   Andrews)
 Allow dollar signs in identifiers, except as first character (Tom)
 Allow UPDATE ... SET col = DEFAULT (Rod)
 Allow expressions to be used in LIMIT/OFFSET (Tom)
+Change EXECUTE INTO to CREATE TABLE AS EXECUTE (Peter)
 
      _________________________________________________________________
 
@@ -109,19 +108,16 @@ Add FOR EACH STATEMENT statement-level triggers (Neil Conway)
 Add DOMAIN CHECK constraints (Rod)
 Add ALTER DOMAIN .. SET / DROP NOT NULL, SET / DROP DEFAULT, ADD / DROP
   CONSTRAINT (Rod)
-Allow zero-column tables (Tom)
+Fix several zero-column table bugs (Tom)
 Have ALTER TABLE ... ADD PRIMARY KEY add NOT NULL constraint (Rod)
 Add ALTER DOMAIN OWNER (Rod)
-Add pg_trigger.tgenabled to disable triggers? (Neil)
 Add ALTER TABLE ... WITHOUT OIDS? (Rod)
-Have parser honor foreign-key constraints if created via ALTER TABLE ADD
-  COLUMN? (Tom)
 Add ALTER SEQUENCE to modify min/max/increment/cache/cycle values (Rod)
 Add ALTER TABLE ... CLUSTER ON (Alvaro Herrera)
-Improve DOMAIN automatic type casting (Tom)
-Disallow dollar signs in operator names (Tom)
+Improve DOMAIN automatic type casting (Rod, Tom)
+Disallow dollar signs in operator names, so x=$1 works (Tom)
 Allow SQL200X inheritance syntax LIKE <subtable>, INCLUDING DEFAULTS? (Rod)
-Object owners can allow grantees to grant privilege to others?
+Add WITH GRANT OPTION clause to GRANT, per SQL spec (Peter)
 
      _________________________________________________________________
 
@@ -133,19 +129,19 @@ Make MOVE/FETCH 0 actually move/fetch 0 (Bruce)
 Cause FETCH 1 to return the current cursor row, or zero if at
   beginning/end of cursor, per SQL spec (Bruce)
 Have MOVE return 0 or 1 depending on cursor position (Bruce)
-Properly handle SCROLL with cursors, or report an error (Tom)
+Properly handle SCROLL with cursors, or report an error (Neil)
 Implement SQL92-compatible FIRST, LAST, ABSOLUTE n, RELATIVE n options
    for FETCH and MOVE (Tom)
 Allow EXPLAIN on DECLARE CURSOR (Tom)
 Allow CLUSTER to use index marked as pre-clustered by default (Alvaro Herrera)
-Allow CLUSTER without tablename clusters all tables (Alvaro Herrera)
+Allow CLUSTER to cluster all tables (Alvaro Herrera)
 Prevent CLUSTER on partial indexes (Tom)
 Allow \r and \r\n termination for COPY files (Bruce)
 Disallow literal carriage return as a data value, backslash-carriage-return
   and \r still allowed (Bruce)
 COPY changes (binary, \.)? (Tom)
 Recover from COPY IN/OUT failure cleanly (Tom)
-Reduce memory used by COPY (Tom)
+Prevent possible memory leaks in COPY (Tom)
 Make TRUNCATE transaction-safe (Rod)
 Multiple pg_dump fixes, including tar format and large objects
 Allow pg_dump to dump specific schemas (Neil)
@@ -154,6 +150,7 @@ Allow pg_dump to preserve CLUSTER characteristics (Christopher)
 Have pg_dumpall use GRANT/REVOKE to dump database-level permissions (Tom)
 Allow pg_dumpall to support the -a, -s, -x options of pg_dump (Tom)
 Prevent pg_dump from lowercasing identifiers specified on the command line (Tom)
+Allow PREPARE/bind of utility commands like FETCH and EXPLAIN (Tom)
 Allow EXPLAIN EXECUTE (Neil)
 Allow pg_get_constraintdef() to support UNIQUE, PRIMARY KEY and
   CHECK constraints (Christopher)
@@ -162,7 +159,7 @@ Allow pg_ctl to better handle non-standard ports (Greg)
 Functional indexes now support indexes on column expressions (Tom)
 Syntax errors now reported as 'syntax error' rather than 'parse error' (Tom)
 Have SHOW TRANSACTION_ISOLATION match input to SET TRANSACTION_ISOLATION (Tom)
-Have COMMENT ON DATABASE on non-local database generate a warning (Tom)
+Have COMMENT ON DATABASE on non-local database generate a warning
 
      _________________________________________________________________
 
@@ -178,24 +175,23 @@ Change EXTRACT(EPOCH FROM timestamp) so timestamp without time zone
  is assumed to be in local time, not GMT (Tom)
 Trap division by zero in case the operating system doesn't prevent it (Tom)
 Change the NUMERIC data type internally to base 10000 (Tom)
-New hostmast() function (Greg Wickham)
+New hostmask() function (Greg Wickham)
 Fixes for to_char() (Karel)
 Allow functions that can take any argument data type and return
   any data type, using ANYELEMENT and ANYARRAY (Joe)
 Arrays may now be specified as ARRAY[1,2,3], ARRAY[['a','b'],['c','d']],
   or ARRAY[ARRAY[ARRAY[2]]] (Joe)
 Allow proper comparisons for arrays (Joe)
+Allow array concatenation with '||' (Joe)
 Allow indexes on array columns, and used in ORDER BY and DISTINCT (Joe)
 Allow WHERE qualification 'expr <oper> ANY/SOME/ALL (array-expr)' (Joe)
-Allow polymorphic SQL functions (Tom, Joe)
-Allow array concatenation with '||' and normal array comparisons (Joe)
+Allow polymorphic SQL functions (Joe)
 New array functions array_append(), array_cat(), array_lower(),
   array_prepend(), array_to_string(), array_upper(), string_to_array() (Joe)
 Allow user defined aggregates to use polymorphic functions (Joe)
 Allow polymorphic user defined aggregates  (Joe)
 Allow assignments to empty arrays (Joe)
 Allow 60 in seconds fields of timestamp, time, interval input values (Tom)
-Allow PREPARE/bind of utility commands like FETCH and EXPLAIN (Tom)
 Allow CIDR data type to be cast to text (Tom)
 Allow the creation of special LIKE indexes for non-C locales (Peter)
 Disallow invalid timezone names (Tom)
@@ -209,29 +205,28 @@ Make EXTRACT(TIMEZONE) and SET/SHOW TIMEZONE follow the SQL convention
   for the sign of timezone offsets, ie, positive is east from UTC (Tom)
 Fix date_trunc('quarter',...) (B?jthe Zolt?n)
 Make initcap() more compatible with Oracle (Mike Nolan)
-Honor only DateStyle setting for date entry without a four-digit year (Greg)
+Allow only DateStyle field order for date values not in ISO format (Greg)
 Add new DateStyle values MDY, DMY, and YMD, honor US and European for
   backward compatibility (Tom)
-'now' will no longer work as a default, use now() (change required for prepared
-  statements) (Tom)
-Assume NaN value to be larger than any other value in comparisons (Tom)
+'now' will no longer work as a column default, use now() (change required for 
+  prepared statements) (Tom)
+Assume NaN value to be larger than any other value in MIN()/MAX() (Tom)
 Prevent interval from supressing ':00' seconds display
 
      _________________________________________________________________
 
 Server-side Languages
 
-Prevent PL/pgSQL crash when RETURN NEXT is used on a zero-row record (Tom)
+Prevent PL/pgSQL crash when RETURN NEXT is used on a zero-row record var. (Tom)
 Make PL/python's spi_execute interface handle NULLs properly (Andrew Bosma)
 Allow PL/pgSQL to declare variables of composite types without %ROWTYPE (Tom)
 Fix PL/python _quote() function to handle big integers (?)
 Make PL/python an untrusted language, now called plpythonu (Kevin Jacobs, Tom)
-Change PL/pgSQL EXECUTE INTO to CREATE TABLE AS EXECUTE? (Peter)
 Allow polymorphic PL/pgSQL functions (Tom, Joe)
 Improved compiled function caching mechanism in PL/pgSQL with full
-  support for polymorphism (Tom, Joe)
+  support for polymorphism (Joe)
 Add new $0 parameter in PL/pgSQL representing the function's actual
-  return type (Tom, Joe)
+  return type (Joe)
 
      _________________________________________________________________
 
@@ -245,8 +240,8 @@ Add schema, cast, and conversion backslash commands (Christopher)
 Save edit history into readline history (Ross)
 Improve \d display (Christopher)
 Enhance HTML mode to be more standards-compliant (Greg)
-New '\set autocommit off' capability (Tom)
-New '\set verbosity' to control error detail (Tom)
+New '\set AUTOCOMMIT off' capability (Tom)
+New '\set VERBOSITY' to control error detail (Tom)
 New  %T prompt string to show transaction status (Tom)
 
      _________________________________________________________________
@@ -295,8 +290,8 @@ Improved PPC locking primitive (Reinhard Max)
 Embed LD_LIBRARY_PATH used for build process into binaries (Billy)
 New palloc0 to allocate and clear memory (Bruce)
 Fix locking code for s390x CPU (64-bit) (Tom)
-Allow OpenBSD to use local indent credentials (William Ahern)
-Allow read-only query plans (Tom)
+Allow OpenBSD to use local ident credentials (William Ahern)
+Make query plan trees read-only to executor (Tom)
 Add Darwin startup scripts (David Wheeler)
 Allow libpq to compile with Borland C++ compiler (Lester Godwin, Karl Waclawek)
 Use our own version of getopt_long() if needed (Peter)
