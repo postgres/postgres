@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_conversion.h,v 1.10 2003/08/04 02:40:12 momjian Exp $
+ * $Id: pg_conversion.h,v 1.11 2003/09/16 07:47:06 ishii Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -37,7 +37,7 @@
  *	conforencoding		FOR encoding id
  *	contoencoding		TO encoding id
  *	conproc				OID of the conversion proc
- *	condefault			TRUE is this is a default conversion
+ *	condefault			TRUE if this is a default conversion
  * ----------------------------------------------------------------
  */
 CATALOG(pg_conversion)
