@@ -276,7 +276,7 @@ SOURCE CODE
 * Make configure --enable-debug add -g on compile line
 * Does Mariposa source contain any other bug fixes?
 * Remove SET KSQO option if OR processing is improved(Tom)
-* Make configure --enable-debug add -g on compile line
+
 ---------------------------------------------------------------------------
 
 
