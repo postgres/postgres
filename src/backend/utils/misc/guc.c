@@ -4,7 +4,7 @@
  * Support for grand unified configuration scheme, including SET
  * command, configuration file, and command line options.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.14 2000/10/11 17:58:01 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.15 2000/11/01 21:14:03 petere Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -22,6 +22,7 @@
 
 #include "commands/async.h"
 #include "libpq/auth.h"
+#include "libpq/pqcomm.h"
 #include "miscadmin.h"
 #include "optimizer/cost.h"
 #include "optimizer/geqo.h"
@@ -253,6 +254,9 @@ ConfigureNamesInt[] =
 	{"max_expr_depth",          PGC_USERSET,            &max_expr_depth,
 	 DEFAULT_MAX_EXPR_DEPTH, 10, INT_MAX},
 
+	{"unix_socket_permissions", PGC_POSTMASTER,         &Unix_socket_permissions,
+	 0777, 0000, 0777},
+
     {NULL, 0, NULL, 0, 0, 0}
 };
 
@@ -281,8 +285,11 @@ ConfigureNamesReal[] =
 static struct config_string
 ConfigureNamesString[] =
 {
-	{"krb_server_keyfile",        PGC_USERSET,       &pg_krb_server_keyfile,
+	{"krb_server_keyfile",        PGC_POSTMASTER,       &pg_krb_server_keyfile,
 	 PG_KRB_SRVTAB, NULL},
+
+	{"unix_socket_group",         PGC_POSTMASTER,       &Unix_socket_group,
+	 "", NULL},
 
 	{NULL, 0, NULL, NULL, NULL}
 };

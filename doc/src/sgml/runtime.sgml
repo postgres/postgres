@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.30 2000/10/20 14:00:49 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.31 2000/11/01 21:14:00 petere Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1031,6 +1031,57 @@ env PGOPTIONS='--geqo=off' psql
        </para>
       </listitem>
      </varlistentry>
+
+     <varlistentry>
+      <term>UNIX_SOCKET_GROUP (<type>string</type>)</term>
+      <listitem>
+       <para>
+        Sets the group owner of the Unix domain socket.  (The owning
+        user of the socket is always the user that starts the
+        postmaster.)  In combination with the option
+        <option>UNIX_SOCKET_PERMISSIONS</option> this can be used as
+        an additional access control mechanism for this socket type.
+        By default this is the empty string, which uses the default
+        group for the current user.  This option can only be set at
+        server start.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>UNIX_SOCKET_PERMISSIONS (<type>integer</type>)</term>
+      <listitem>
+       <para>
+        Sets the access permissions of the Unix domain socket.  Unix
+        domain sockets use the usual Unix file system permission set.
+        The option value is expected to be an numeric mode
+        specification in the form accepted by the
+        <function>chmod</function> and <function>umask</function>
+        system calls.  (To use the customary octal format the number
+        must start with a <literal>0</literal> (zero).)
+       </para>
+
+       <para>
+        The default permissions are <literal>0777</literal>, meaning
+        anyone can connect.  Reasonable alternatives would be
+        <literal>0770</literal> (only user and group, see also under
+        <option>UNIX_SOCKET_GROUP</option>) and
+        <literal>0700</literal> (only user).  (Note that actually for
+        a Unix socket, only write permission matters and there is no
+        point in setting or revoking read or execute permissions.)
+       </para>
+
+       <para>
+        This access control mechanism is independent from the one
+        described in <xref linkend="client-authentication">.
+       </para>
+
+       <para>
+        This option can only be set at server start.
+       </para>
+      </listitem>
+     </varlistentry>
+
     </variablelist>
    </para>
    </sect2>

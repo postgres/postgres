@@ -29,7 +29,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqcomm.c,v 1.108 2000/10/23 14:48:50 momjian Exp $
+ *	$Id: pqcomm.c,v 1.109 2000/11/01 21:14:01 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,6 +63,7 @@
 #include <signal.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <grp.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -82,6 +83,13 @@
 #ifndef SOMAXCONN
 #define SOMAXCONN 5				/* from Linux listen(2) man page */
 #endif
+
+
+/*
+ * Configuration options
+ */
+int Unix_socket_permissions;
+char * Unix_socket_group;
 
 
 /*
@@ -295,8 +303,60 @@ StreamServerPort(int family, unsigned short portName, int *fdP)
 	 */
 
 	*fdP = fd;
+
 	if (family == AF_UNIX)
-		chmod(sock_path, 0777);
+	{
+		Assert(Unix_socket_group);
+		if (Unix_socket_group[0] != '\0')
+		{
+			char *endptr;
+			unsigned long int val;
+			gid_t gid;
+
+			val = strtoul(Unix_socket_group, &endptr, 10);
+			if (*endptr == '\0')
+			{
+				/* numeric group id */
+				gid = val;
+			}
+			else
+			{
+				/* convert group name to id */
+				struct group *gr;
+
+				gr = getgrnam(Unix_socket_group);
+				if (!gr)
+				{
+					snprintf(PQerrormsg, PQERRORMSG_LENGTH,
+							 "FATAL:  no such group '%s'\n",
+							 Unix_socket_group);
+					fputs(PQerrormsg, stderr);
+					pqdebug("%s", PQerrormsg);
+					return STATUS_ERROR;
+				}
+				gid = gr->gr_gid;
+			}
+			if (chown(sock_path, -1, gid) == -1)
+			{
+				snprintf(PQerrormsg, PQERRORMSG_LENGTH,
+						 "FATAL:  could not set group of %s: %s\n",
+						 sock_path, strerror(errno));
+				fputs(PQerrormsg, stderr);
+				pqdebug("%s", PQerrormsg);
+				return STATUS_ERROR;
+			}
+		}
+
+		if (chmod(sock_path, Unix_socket_permissions) == -1)
+		{
+			snprintf(PQerrormsg, PQERRORMSG_LENGTH,
+					 "FATAL:  could not set permissions on %s: %s\n",
+					 sock_path, strerror(errno));
+			fputs(PQerrormsg, stderr);
+			pqdebug("%s", PQerrormsg);
+			return STATUS_ERROR;
+		}
+	}
 	return STATUS_OK;
 }
 

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.176 2000/10/28 18:27:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.177 2000/11/01 21:14:02 petere Exp $
  *
  * NOTES
  *
@@ -588,7 +588,7 @@ PostmasterMain(int argc, char *argv[])
 		{
 			fprintf(stderr, "%s: cannot create INET stream port\n",
 					progname);
-			exit(1);
+			ExitPostmaster(1);
 		}
 	}
 
@@ -598,7 +598,7 @@ PostmasterMain(int argc, char *argv[])
 	{
 		fprintf(stderr, "%s: cannot create UNIX stream port\n",
 				progname);
-		exit(1);
+		ExitPostmaster(1);
 	}
 #endif
 	/* set up shared memory and semaphores */
