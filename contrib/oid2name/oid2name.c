@@ -52,7 +52,7 @@ void		sql_exec_searchoid(PGconn *, int);
 void
 get_opts(int argc, char **argv, struct options * my_opts)
 {
-	char		c;
+	int			c;
 
 	/* set the defaults */
 	my_opts->getdatabase = 0;
