@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.31 2001/03/01 18:34:29 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.32 2001/04/15 00:43:37 petere Exp $
  */
 #include "postgres_fe.h"
 
@@ -208,7 +208,7 @@ simple_prompt(const char *prompt, int maxlen, bool echo)
 	if (!echo)
 	{
 		tcsetattr(0, TCSADRAIN, &t_orig);
-		puts("");
+		fputs("\n", stderr);
 	}
 #endif
 
