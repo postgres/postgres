@@ -7,7 +7,7 @@
  * Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/fork_process.c,v 1.2 2005/03/13 23:27:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/fork_process.c,v 1.3 2005/03/16 00:02:39 neilc Exp $
  */
 #include "postgres.h"
 #include "postmaster/fork_process.h"
@@ -16,6 +16,7 @@
 #include <sys/time.h>
 #include <unistd.h>
 
+#ifndef WIN32
 /*
  * Wrapper for fork(). Return values are the same as those for fork():
  * -1 if the fork failed, 0 in the child process, and the PID of the
@@ -80,3 +81,4 @@ fork_process(void)
 
 	return result;
 }
+#endif /* ! WIN32 */
