@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/backend/utils/adt/oracle_compat.c,v 1.52 2004/05/26 16:16:03 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/utils/adt/oracle_compat.c,v 1.53 2004/06/06 22:17:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -166,40 +166,44 @@ Datum
 lower(PG_FUNCTION_ARGS)
 {
 #ifdef USE_WIDE_UPPER_LOWER
-	text	   *string = PG_GETARG_TEXT_P(0);
-	text	   *result;
-	wchar_t	   *workspace;
-	int			i;
-
-	workspace = texttowcs(string);
-
-	for (i = 0; workspace[i] != 0; i++)
-		workspace[i] = towlower(workspace[i]);
-
-	result = wcstotext(workspace, i);
-
-	pfree(workspace);
-
-	PG_RETURN_TEXT_P(result);
-
-#else /* !USE_WIDE_UPPER_LOWER */
-
-	text	   *string = PG_GETARG_TEXT_P_COPY(0);
-	char	   *ptr;
-	int			m;
-
-	/* Since we copied the string, we can scribble directly on the value */
-	ptr = VARDATA(string);
-	m = VARSIZE(string) - VARHDRSZ;
-
-	while (m-- > 0)
+	/* use wide char code only when max encoding length > one */
+	if (pg_database_encoding_max_length() > 1)
 	{
-		*ptr = tolower((unsigned char) *ptr);
-		ptr++;
-	}
+		text	   *string = PG_GETARG_TEXT_P(0);
+		text	   *result;
+		wchar_t	   *workspace;
+		int			i;
 
-	PG_RETURN_TEXT_P(string);
+		workspace = texttowcs(string);
+
+		for (i = 0; workspace[i] != 0; i++)
+			workspace[i] = towlower(workspace[i]);
+
+		result = wcstotext(workspace, i);
+
+		pfree(workspace);
+
+		PG_RETURN_TEXT_P(result);
+	}
+	else
 #endif /* USE_WIDE_UPPER_LOWER */
+	{
+		text	   *string = PG_GETARG_TEXT_P_COPY(0);
+		char	   *ptr;
+		int			m;
+
+		/* Since we copied the string, we can scribble directly on the value */
+		ptr = VARDATA(string);
+		m = VARSIZE(string) - VARHDRSZ;
+
+		while (m-- > 0)
+		{
+			*ptr = tolower((unsigned char) *ptr);
+			ptr++;
+		}
+
+		PG_RETURN_TEXT_P(string);
+	}
 }
 
 
@@ -221,40 +225,44 @@ Datum
 upper(PG_FUNCTION_ARGS)
 {
 #ifdef USE_WIDE_UPPER_LOWER
-	text	   *string = PG_GETARG_TEXT_P(0);
-	text	   *result;
-	wchar_t	   *workspace;
-	int			i;
-
-	workspace = texttowcs(string);
-
-	for (i = 0; workspace[i] != 0; i++)
-		workspace[i] = towupper(workspace[i]);
-
-	result = wcstotext(workspace, i);
-
-	pfree(workspace);
-
-	PG_RETURN_TEXT_P(result);
-
-#else /* !USE_WIDE_UPPER_LOWER */
-
-	text	   *string = PG_GETARG_TEXT_P_COPY(0);
-	char	   *ptr;
-	int			m;
-
-	/* Since we copied the string, we can scribble directly on the value */
-	ptr = VARDATA(string);
-	m = VARSIZE(string) - VARHDRSZ;
-
-	while (m-- > 0)
+	/* use wide char code only when max encoding length > one */
+	if (pg_database_encoding_max_length() > 1)
 	{
-		*ptr = toupper((unsigned char) *ptr);
-		ptr++;
-	}
+		text	   *string = PG_GETARG_TEXT_P(0);
+		text	   *result;
+		wchar_t	   *workspace;
+		int			i;
 
-	PG_RETURN_TEXT_P(string);
+		workspace = texttowcs(string);
+
+		for (i = 0; workspace[i] != 0; i++)
+			workspace[i] = towupper(workspace[i]);
+
+		result = wcstotext(workspace, i);
+
+		pfree(workspace);
+
+		PG_RETURN_TEXT_P(result);
+	}
+	else
 #endif /* USE_WIDE_UPPER_LOWER */
+	{
+		text	   *string = PG_GETARG_TEXT_P_COPY(0);
+		char	   *ptr;
+		int			m;
+
+		/* Since we copied the string, we can scribble directly on the value */
+		ptr = VARDATA(string);
+		m = VARSIZE(string) - VARHDRSZ;
+
+		while (m-- > 0)
+		{
+			*ptr = toupper((unsigned char) *ptr);
+			ptr++;
+		}
+
+		PG_RETURN_TEXT_P(string);
+	}
 }
 
 
@@ -279,58 +287,56 @@ Datum
 initcap(PG_FUNCTION_ARGS)
 {
 #ifdef USE_WIDE_UPPER_LOWER
-	text	   *string = PG_GETARG_TEXT_P(0);
-	text	   *result;
-	wchar_t	   *workspace;
-	int			wasalnum = 0;
-	int			i;
-
-	workspace = texttowcs(string);
-
-	for (i = 0; workspace[i] != 0; i++)
+	/* use wide char code only when max encoding length > one */
+	if (pg_database_encoding_max_length() > 1)
 	{
-		if (wasalnum)
-			workspace[i] = towlower(workspace[i]);
-		else
-			workspace[i] = towupper(workspace[i]);
-		wasalnum = iswalnum(workspace[i]);
+		text	   *string = PG_GETARG_TEXT_P(0);
+		text	   *result;
+		wchar_t	   *workspace;
+		int			wasalnum = 0;
+		int			i;
+
+		workspace = texttowcs(string);
+
+		for (i = 0; workspace[i] != 0; i++)
+		{
+			if (wasalnum)
+				workspace[i] = towlower(workspace[i]);
+			else
+				workspace[i] = towupper(workspace[i]);
+			wasalnum = iswalnum(workspace[i]);
+		}
+
+		result = wcstotext(workspace, i);
+
+		pfree(workspace);
+
+		PG_RETURN_TEXT_P(result);
 	}
-
-	result = wcstotext(workspace, i);
-
-	pfree(workspace);
-
-	PG_RETURN_TEXT_P(result);
-
-#else /* !USE_WIDE_UPPER_LOWER */
-
-	text	   *string = PG_GETARG_TEXT_P_COPY(0);
-	char	   *ptr;
-	int			m;
-
-	/* Since we copied the string, we can scribble directly on the value */
-	ptr = VARDATA(string);
-	m = VARSIZE(string) - VARHDRSZ;
-
-	if (m > 0)
-	{
-		*ptr = toupper((unsigned char) *ptr);
-		ptr++;
-		m--;
-	}
-
-	while (m-- > 0)
-	{
-		/* Oracle capitalizes after all non-alphanumeric */
-		if (!isalnum((unsigned char) ptr[-1]))
-			*ptr = toupper((unsigned char) *ptr);
-		else
-			*ptr = tolower((unsigned char) *ptr);
-		ptr++;
-	}
-
-	PG_RETURN_TEXT_P(string);
+	else
 #endif /* USE_WIDE_UPPER_LOWER */
+	{
+		text	   *string = PG_GETARG_TEXT_P_COPY(0);
+		int			wasalnum = 0;
+		char	   *ptr;
+		int			m;
+
+		/* Since we copied the string, we can scribble directly on the value */
+		ptr = VARDATA(string);
+		m = VARSIZE(string) - VARHDRSZ;
+
+		while (m-- > 0)
+		{
+			if (wasalnum)
+				*ptr = tolower((unsigned char) *ptr);
+			else
+				*ptr = toupper((unsigned char) *ptr);
+			wasalnum = isalnum((unsigned char) *ptr);
+			ptr++;
+		}
+
+		PG_RETURN_TEXT_P(string);
+	}
 }
 
 
