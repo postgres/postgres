@@ -1,8 +1,8 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.73 2001/01/24 05:06:15 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.74 2001/01/27 11:12:53 petere Exp $
 -->
 
- <chapter id="release">
+ <appendix id="release">
   <title>Release Notes</title>
 
   <sect1>
@@ -169,7 +169,7 @@ Add OUTER JOINs (Tom)
 Function manager overhaul (Tom)
 Allow ALTER TABLE RENAME on indexes(Tom)
 Improve CLUSTER(Tom)
-Improve ps status display for more platforms(Marc)
+Improve ps status display for more platforms (Peter E)
 Improve CREATE FUNCTION failure message(Ross)
 JDBC improvements (Peter, Travis Bauer, Christopher Cain, William Webber,
     Gunnar)
@@ -184,12 +184,12 @@ ODBC cleanups/improvements (Nick Gorham, Stephan Szabo, Zoltan Kovacs,
     Michael Fork)
 Allow renaming of temp tables (Tom)
 Overhaul memory manager contexts (Tom)
-pg_dump uses CREATE USER or CREATE GROUP rather using COPY (Peter E)
+pg_dumpall uses CREATE USER or CREATE GROUP rather using COPY (Peter E)
 Overhaul pg_dump (Philip Warner)
-Allow pg_hba.conf secondary password file to specify username (Peter E)
+Allow pg_hba.conf secondary password file to specify only username (Peter E)
 Allow TEMPORARY or TEMP keyword when creating temporary tables (Bruce)
 New memory leak checker (Karel)
-New SET SESSION CHARACTERISTICS and SET DefaultXactIsoLevel (Thomas, Peter E)
+New SET SESSION CHARACTERISTICS (Thomas)
 Allow nested block comments (Thomas)
 Add WITHOUT TIME ZONE type qualifier (Thomas)
 New ALTER TABLE ADD CONSTRAINT (Stephan)
@@ -220,7 +220,7 @@ Allow DROP VIEW view1, view2 (Mark)
 Allow multiple objects in DROP INDEX, DROP RULE, and DROP TYPE (Tom)
 Allow automatic conversion to Unicode (Tatsuo)
 New /contrib/pgcrypto hashing functions (Marko Kreen)
-New pg_dumpall --accounts-only option (Peter E)
+New pg_dumpall --globals-only option (Peter E)
 New CHECKPOINT command for WAL which creates new WAL log file (Vadim)
 New AT TIME ZONE syntax (Thomas)
 Allow location of Unix domain socket to be configurable (David J. MacKenzie)
@@ -235,7 +235,7 @@ Fix INET/CIDR type ordering and add new functions (Tom)
 Make OID behave as an unsigned type (Tom)
 Allow BIGINT as synonym for INT8 (Peter E)
 New int2 and int8 comparison operators (Tom)
-New BIT and BIT VARYING types (Adriaan Joubert, Tom)
+New BIT and BIT VARYING types (Adriaan Joubert, Tom, Peter E)
 CHAR() no longer faster than VARCHAR() because of TOAST (Tom)
 New GIST seg/cube examples (Gene Selkov)
 
@@ -253,7 +253,7 @@ Source Code
 -----------
 New function manager call conventions (Tom)
 SGI portability fixes (David Kaelbling)
-New configure --enable-syslog option (Marc)
+New configure --enable-syslog option (Peter E)
 New BSDI README (Bruce)
 configure script moved to top level, not /src (Peter E)
 Makefile/configuration/compilation overhaul (Peter E)
@@ -3572,7 +3572,7 @@ Incompatible changes:
  * BETA-0.3 IS INCOMPATIBLE WITH DATABASES CREATED WITH PREVIOUS VERSIONS
    (due to system catalog changes and indexing structure changes).
  * double-quote (") is deprecated as a quoting character for string literals;
-   you need to convert them to single quotes (').
+   you need to convert them to single quotes ('). <!-- " -->
  * name of aggregates (eg. int4sum) are renamed in accordance with the
    SQL standard (eg. sum).
  * CHANGE ACL syntax is replaced by GRANT/REVOKE syntax.
@@ -3857,7 +3857,7 @@ In general, however, 6.3 is substantially faster than previous releases (thanks,
 </para>
 </sect2>
 </sect1>
-</chapter>
+</appendix>
 
 <!-- Keep this comment at the end of the file
 Local variables:
