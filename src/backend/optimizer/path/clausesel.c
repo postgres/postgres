@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.13 1998/09/01 04:29:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.13.2.1 1998/11/09 02:49:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -253,6 +253,11 @@ compute_selec(Query *root, List *clauses, List *or_selectivities)
 		 * SELECTIVITIES THEMSELVES.	   -- JMH 7/9/92
 		 */
 		s1 = 0.1;
+	}
+	else if (not_clause((Node *) clause))
+	{
+		/* negate this baby */
+		return 1 - compute_selec(root, ((Expr *)clause)->args, or_selectivities);
 	}
 	else if (is_subplan((Node *) clause))
 	{
