@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.134 2002/09/02 05:52:34 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.135 2002/09/02 13:45:30 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -605,6 +605,7 @@ env PGOPTIONS='-c geqo=off' psql
       </row>
      </tbody>
     </tgroup>
+    </table>
 
    </sect2>
 
