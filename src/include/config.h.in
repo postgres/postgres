@@ -285,7 +285,7 @@
 #undef HAVE_STRICMP
 
 /* Set to 1 if you have libreadline and it includes history functions */
-#undef HAVE_HISTORY
+#undef HAVE_HISTORY_IN_READLINE
 
 /*
  * Block of parameters for the ODBC code.
@@ -430,6 +430,10 @@ extern void srandom(unsigned int seed);
 
 /* Set to 1 if you have libhistory.a */
 #undef HAVE_LIBHISTORY
+
+/* Set to 1 if you have getopt_long() (GNU long options) */
+#undef HAVE_GETOPT_LONG
+
 
 /*
  * On architectures for which we have not implemented spinlocks (or

@@ -583,9 +583,10 @@ for curses in ncurses curses ; do
 		[LIBS="-l${curses} $LIBS"; break])
 done
 AC_CHECK_LIB(termcap,  main)
-AC_CHECK_LIB(history,  main)
 AC_CHECK_LIB(readline, main)
-AC_CHECK_LIB(readline, write_history, AC_DEFINE(HAVE_HISTORY))
+AC_CHECK_LIB(readline, using_history, AC_DEFINE(HAVE_HISTORY_IN_READLINE),
+    AC_CHECK_LIB(history,  main) )
+
 if test "$PORTNAME" != "aix" -a "$PORTNAME" != "alpha"
 then
 	AC_CHECK_LIB(bsd,      main)
@@ -790,6 +791,11 @@ AC_SUBST(HPUXMATHLIB)
 AC_CHECK_FUNC(rint,
 	      AC_DEFINE(HAVE_RINT),
 	      AC_CHECK_LIB(m, rint, AC_DEFINE(HAVE_RINT), , $HPUXMATHLIB))
+
+
+dnl Check for GNU style long options support (getopt_long)
+AC_CHECK_FUNCS(getopt_long)
+
 
 AC_MSG_CHECKING(for finite() macro or function)
 AC_TRY_LINK([#include <math.h>],
