@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.51 2000/11/16 22:30:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.52 2000/12/05 19:15:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -472,6 +472,70 @@ attribute_used(Node *node, int rt_index, int attno, int sublevels_up)
 
 
 /*
+ * If the given Query is an INSERT ... SELECT construct, extract and
+ * return the sub-Query node that represents the SELECT part.  Otherwise
+ * return the given Query.
+ *
+ * If subquery_ptr is not NULL, then *subquery_ptr is set to the location
+ * of the link to the SELECT subquery inside parsetree, or NULL if not an
+ * INSERT ... SELECT.
+ *
+ * This is a hack needed because transformations on INSERT ... SELECTs that
+ * appear in rule actions should be applied to the source SELECT, not to the
+ * INSERT part.  Perhaps this can be cleaned up with redesigned querytrees.
+ */
+Query *
+getInsertSelectQuery(Query *parsetree, Query ***subquery_ptr)
+{
+	Query	   *selectquery;
+	RangeTblEntry *selectrte;
+	RangeTblRef *rtr;
+
+	if (subquery_ptr)
+		*subquery_ptr = NULL;
+
+	if (parsetree == NULL)
+		return parsetree;
+	if (parsetree->commandType != CMD_INSERT)
+		return parsetree;
+	/*
+	 * Currently, this is ONLY applied to rule-action queries, and so
+	 * we expect to find the *OLD* and *NEW* placeholder entries in the
+	 * given query.  If they're not there, it must be an INSERT/SELECT
+	 * in which they've been pushed down to the SELECT.
+	 */
+	if (length(parsetree->rtable) >= 2 &&
+		strcmp(rt_fetch(PRS2_OLD_VARNO, parsetree->rtable)->eref->relname,
+			   "*OLD*") == 0 &&
+		strcmp(rt_fetch(PRS2_NEW_VARNO, parsetree->rtable)->eref->relname,
+			   "*NEW*") == 0)
+		return parsetree;
+	Assert(parsetree->jointree && IsA(parsetree->jointree, FromExpr));
+	if (length(parsetree->jointree->fromlist) != 1)
+		elog(ERROR, "getInsertSelectQuery: expected to find SELECT subquery");
+	rtr = (RangeTblRef *) lfirst(parsetree->jointree->fromlist);
+	Assert(IsA(rtr, RangeTblRef));
+	selectrte = rt_fetch(rtr->rtindex, parsetree->rtable);
+	selectquery = selectrte->subquery;
+	if (! (selectquery && IsA(selectquery, Query) &&
+		   selectquery->commandType == CMD_SELECT))
+		elog(ERROR, "getInsertSelectQuery: expected to find SELECT subquery");
+	if (length(selectquery->rtable) >= 2 &&
+		strcmp(rt_fetch(PRS2_OLD_VARNO, selectquery->rtable)->eref->relname,
+			   "*OLD*") == 0 &&
+		strcmp(rt_fetch(PRS2_NEW_VARNO, selectquery->rtable)->eref->relname,
+			   "*NEW*") == 0)
+	{
+		if (subquery_ptr)
+			*subquery_ptr = & (selectrte->subquery);
+		return selectquery;
+	}
+	elog(ERROR, "getInsertSelectQuery: can't find rule placeholders");
+	return NULL;				/* not reached */
+}
+
+
+/*
  * Add the given qualifier condition to the query's WHERE clause
  */
 void
@@ -719,25 +783,6 @@ ResolveNew(Node *node, int target_varno, int sublevels_up,
 	}
 	else
 		return ResolveNew_mutator(node, &context);
-}
-
-/*
- * Alternate interface to ResolveNew: substitute Vars in info->rule_action
- * with targetlist items from the parsetree's targetlist.
- */
-void
-FixNew(RewriteInfo *info, Query *parsetree)
-{
-	ResolveNew_context context;
-
-	context.target_varno = info->new_varno;
-	context.sublevels_up = 0;
-	context.targetlist = parsetree->targetList;
-	context.event = info->event;
-	context.update_varno = info->current_varno;
-
-	query_tree_mutator(info->rule_action, ResolveNew_mutator,
-					   (void *) &context, true);
 }
 
 

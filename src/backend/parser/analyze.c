@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: analyze.c,v 1.168 2000/11/24 20:16:39 petere Exp $
+ *	$Id: analyze.c,v 1.169 2000/12/05 19:15:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -312,7 +312,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 	 */
 	if (stmt->selectStmt)
 	{
-		List   *selectList;
+		ParseState *sub_pstate = make_parsestate(pstate->parentParseState);
 		Query  *selectQuery;
 		RangeTblEntry *rte;
 		RangeTblRef *rtr;
@@ -324,11 +324,18 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 		 * otherwise the behavior of SELECT within INSERT might be different
 		 * from a stand-alone SELECT. (Indeed, Postgres up through 6.5 had
 		 * bugs of just that nature...)
+		 *
+		 * If a non-nil rangetable was passed in, pass it down to the SELECT.
+		 * This can only happen if we are inside a CREATE RULE, and in that
+		 * case we want the rule's OLD and NEW rtable entries to appear as
+		 * part of the SELECT's rtable, not as outer references for it.
 		 */
-		selectList = parse_analyze(stmt->selectStmt, pstate);
-		Assert(length(selectList) == 1);
+		sub_pstate->p_rtable = pstate->p_rtable;
+		pstate->p_rtable = NIL;
+		selectQuery = transformStmt(sub_pstate, stmt->selectStmt);
+		release_pstate_resources(sub_pstate);
+		pfree(sub_pstate);
 
-		selectQuery = (Query *) lfirst(selectList);
 		Assert(IsA(selectQuery, Query));
 		Assert(selectQuery->commandType == CMD_SELECT);
 		if (selectQuery->into || selectQuery->isPortal)
@@ -1587,7 +1594,8 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt)
 		foreach(actions, stmt->actions)
 		{
 			ParseState *sub_pstate = make_parsestate(pstate->parentParseState);
-			Query	   *sub_qry;
+			Query	   *sub_qry,
+					   *top_subqry;
 			bool		has_old,
 						has_new;
 
@@ -1608,7 +1616,14 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt)
 			newrte->checkForRead = false;
 
 			/* Transform the rule action statement */
-			sub_qry = transformStmt(sub_pstate, lfirst(actions));
+			top_subqry = transformStmt(sub_pstate, lfirst(actions));
+
+			/*
+			 * If the action is INSERT...SELECT, OLD/NEW have been pushed
+			 * down into the SELECT, and that's what we need to look at.
+			 * (Ugly kluge ... try to fix this when we redesign querytrees.)
+			 */
+			sub_qry = getInsertSelectQuery(top_subqry, NULL);
 
 			/*
 			 * Validate action's use of OLD/NEW, qual too
@@ -1648,15 +1663,28 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt)
 			/*
 			 * For efficiency's sake, add OLD to the rule action's jointree
 			 * only if it was actually referenced in the statement or qual.
-			 * NEW is not really a relation and should never be added.
+			 *
+			 * For INSERT, NEW is not really a relation (only a reference to
+			 * the to-be-inserted tuple) and should never be added to the
+			 * jointree.
+			 *
+			 * For UPDATE, we treat NEW as being another kind of reference to
+			 * OLD, because it represents references to *transformed* tuples
+			 * of the existing relation.  It would be wrong to enter NEW
+			 * separately in the jointree, since that would cause a double
+			 * join of the updated relation.  It's also wrong to fail to make
+			 * a jointree entry if only NEW and not OLD is mentioned.
 			 */
-			if (has_old)
+			if (has_old || (has_new && stmt->event == CMD_UPDATE))
 			{
+				/* hack so we can use addRTEtoJoinList() */
+				sub_pstate->p_rtable = sub_qry->rtable;
+				sub_pstate->p_joinlist = sub_qry->jointree->fromlist;
 				addRTEtoJoinList(sub_pstate, oldrte);
 				sub_qry->jointree->fromlist = sub_pstate->p_joinlist;
 			}
 
-			lfirst(actions) = sub_qry;
+			lfirst(actions) = top_subqry;
 
 			release_pstate_resources(sub_pstate);
 			pfree(sub_pstate);

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rewriteManip.h,v 1.23 2000/09/29 18:21:24 tgl Exp $
+ * $Id: rewriteManip.h,v 1.24 2000/12/05 19:15:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,6 +28,8 @@ extern bool rangeTableEntry_used(Node *node, int rt_index,
 extern bool attribute_used(Node *node, int rt_index, int attno,
 						   int sublevels_up);
 
+extern Query *getInsertSelectQuery(Query *parsetree, Query ***subquery_ptr);
+
 extern void AddQual(Query *parsetree, Node *qual);
 extern void AddHavingQual(Query *parsetree, Node *havingQual);
 extern void AddNotQual(Query *parsetree, Node *qual);
@@ -37,6 +39,5 @@ extern bool checkExprHasSubLink(Node *node);
 
 extern Node *ResolveNew(Node *node, int target_varno, int sublevels_up,
 						List *targetlist, int event, int update_varno);
-extern void FixNew(RewriteInfo *info, Query *parsetree);
 
 #endif	 /* REWRITEMANIP_H */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.83 2000/11/08 22:09:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.84 2000/12/05 19:15:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,6 +61,8 @@ gatherRewriteMeta(Query *parsetree,
 				  bool instead_flag)
 {
 	RewriteInfo *info;
+	Query	   *sub_action;
+	Query	  **sub_action_ptr;
 	int			rt_length;
 
 	info = (RewriteInfo *) palloc(sizeof(RewriteInfo));
@@ -70,85 +72,135 @@ gatherRewriteMeta(Query *parsetree,
 	info->rule_action = (Query *) copyObject(rule_action);
 	info->rule_qual = (Node *) copyObject(rule_qual);
 	if (info->rule_action == NULL)
-		info->nothing = TRUE;
-	else
 	{
-		info->nothing = FALSE;
-		info->action = info->rule_action->commandType;
-		info->current_varno = rt_index;
-		rt_length = length(parsetree->rtable);
-
-		/* Adjust rule action and qual to offset its varnos */
-		info->new_varno = PRS2_NEW_VARNO + rt_length;
-		OffsetVarNodes((Node *) info->rule_action, rt_length, 0);
-		OffsetVarNodes(info->rule_qual, rt_length, 0);
-		/* but its references to *OLD* should point at original rt_index */
-		ChangeVarNodes((Node *) info->rule_action,
-					   PRS2_OLD_VARNO + rt_length, rt_index, 0);
-		ChangeVarNodes(info->rule_qual,
-					   PRS2_OLD_VARNO + rt_length, rt_index, 0);
-
-		/*
-		 * We want the main parsetree's rtable to end up as the concatenation
-		 * of its original contents plus those of all the relevant rule
-		 * actions.  Also store same into all the rule_action rtables.
-		 * Some of the entries may be unused after we finish rewriting, but
-		 * if we tried to clean those out we'd have a much harder job to
-		 * adjust RT indexes in the query's Vars.  It's OK to have unused
-		 * RT entries, since planner will ignore them.
-		 *
-		 * NOTE KLUGY HACK: we assume the parsetree rtable had at least one
-		 * entry to begin with (OK enough, else where'd the rule come from?).
-		 * Because of this, if multiple rules nconc() their rtable additions
-		 * onto parsetree->rtable, they'll all see the same rtable because
-		 * they all have the same list head pointer.
-		 */
-		parsetree->rtable = nconc(parsetree->rtable,
-								  info->rule_action->rtable);
-		info->rule_action->rtable = parsetree->rtable;
-
-		/*
-		 * Each rule action's jointree should be the main parsetree's jointree
-		 * plus that rule's jointree, but *without* the original rtindex
-		 * that we're replacing (if present, which it won't be for INSERT).
-		 * Note that if the rule refers to OLD, its jointree will add back
-		 * a reference to rt_index.
-		 */
-		{
-			bool	found;
-			List   *newjointree = adjustJoinTreeList(parsetree,
-													 rt_index,
-													 &found);
-
-			info->rule_action->jointree->fromlist =
-				nconc(newjointree,
-					  info->rule_action->jointree->fromlist);
-		}
-
-		/*
-		 * bug here about replace CURRENT  -- sort of replace current is
-		 * deprecated now so this code shouldn't really need to be so
-		 * clutzy but.....
-		 */
-		if (info->action != CMD_SELECT)
-		{						/* i.e update XXXXX */
-			int			result_reln;
-			int			new_result_reln;
-
-			result_reln = info->rule_action->resultRelation;
-			switch (result_reln)
-			{
-				case PRS2_OLD_VARNO:
-					new_result_reln = rt_index;
-					break;
-				case PRS2_NEW_VARNO:	/* XXX */
-				default:
-					new_result_reln = result_reln + rt_length;
-					break;
-			}
-			info->rule_action->resultRelation = new_result_reln;
-		}
+		info->nothing = TRUE;
+		return info;
 	}
+	info->nothing = FALSE;
+	info->action = info->rule_action->commandType;
+	info->current_varno = rt_index;
+	rt_length = length(parsetree->rtable);
+	info->new_varno = PRS2_NEW_VARNO + rt_length;
+
+	/*
+	 * Adjust rule action and qual to offset its varnos, so that we can
+	 * merge its rtable into the main parsetree's rtable.
+	 *
+	 * If the rule action is an INSERT...SELECT, the OLD/NEW rtable
+	 * entries will be in the SELECT part, and we have to modify that
+	 * rather than the top-level INSERT (kluge!).
+	 */
+	sub_action = getInsertSelectQuery(info->rule_action, &sub_action_ptr);
+
+	OffsetVarNodes((Node *) sub_action, rt_length, 0);
+	OffsetVarNodes(info->rule_qual, rt_length, 0);
+	/* but references to *OLD* should point at original rt_index */
+	ChangeVarNodes((Node *) sub_action,
+				   PRS2_OLD_VARNO + rt_length, rt_index, 0);
+	ChangeVarNodes(info->rule_qual,
+				   PRS2_OLD_VARNO + rt_length, rt_index, 0);
+
+	/*
+	 * Update resultRelation too ... perhaps this should be done by
+	 * Offset/ChangeVarNodes?
+	 */
+	if (sub_action->resultRelation)
+	{
+		int			result_reln;
+		int			new_result_reln;
+
+		result_reln = sub_action->resultRelation;
+		switch (result_reln)
+		{
+			case PRS2_OLD_VARNO:
+				new_result_reln = rt_index;
+				break;
+			case PRS2_NEW_VARNO:
+			default:
+				new_result_reln = result_reln + rt_length;
+				break;
+		}
+		sub_action->resultRelation = new_result_reln;
+	}
+
+	/*
+	 * We want the main parsetree's rtable to end up as the concatenation
+	 * of its original contents plus those of all the relevant rule
+	 * actions.  Also store same into all the rule_action rtables.
+	 * Some of the entries may be unused after we finish rewriting, but
+	 * if we tried to clean those out we'd have a much harder job to
+	 * adjust RT indexes in the query's Vars.  It's OK to have unused
+	 * RT entries, since planner will ignore them.
+	 *
+	 * NOTE KLUGY HACK: we assume the parsetree rtable had at least one
+	 * entry to begin with (OK enough, else where'd the rule come from?).
+	 * Because of this, if multiple rules nconc() their rtable additions
+	 * onto parsetree->rtable, they'll all see the same rtable because
+	 * they all have the same list head pointer.
+	 */
+	parsetree->rtable = nconc(parsetree->rtable,
+							  sub_action->rtable);
+	sub_action->rtable = parsetree->rtable;
+
+	/*
+	 * Each rule action's jointree should be the main parsetree's jointree
+	 * plus that rule's jointree, but *without* the original rtindex
+	 * that we're replacing (if present, which it won't be for INSERT).
+	 * Note that if the rule refers to OLD, its jointree will add back
+	 * a reference to rt_index.
+	 */
+	{
+		bool	found;
+		List   *newjointree = adjustJoinTreeList(parsetree,
+												 rt_index,
+												 &found);
+
+		sub_action->jointree->fromlist =
+			nconc(newjointree, sub_action->jointree->fromlist);
+	}
+
+	/*
+	 * We copy the qualifications of the parsetree to the action and vice
+	 * versa. So force hasSubLinks if one of them has it. If this is not
+	 * right, the flag will get cleared later, but we mustn't risk having
+	 * it not set when it needs to be.
+	 */
+	if (parsetree->hasSubLinks)
+		sub_action->hasSubLinks = TRUE;
+	else if (sub_action->hasSubLinks)
+		parsetree->hasSubLinks = TRUE;
+
+	/*
+	 * Event Qualification forces copying of parsetree and
+	 * splitting into two queries one w/rule_qual, one w/NOT
+	 * rule_qual. Also add user query qual onto rule action
+	 */
+	AddQual(sub_action, info->rule_qual);
+
+	AddQual(sub_action, parsetree->jointree->quals);
+
+	/*
+	 * Rewrite new.attribute w/ right hand side of target-list
+	 * entry for appropriate field name in insert/update.
+	 *
+	 * KLUGE ALERT: since ResolveNew returns a mutated copy, we can't just
+	 * apply it to sub_action; we have to remember to update the sublink
+	 * inside info->rule_action, too.
+	 */
+	if (info->event == CMD_INSERT || info->event == CMD_UPDATE)
+	{
+		sub_action = (Query *) ResolveNew((Node *) sub_action,
+										  info->new_varno,
+										  0,
+										  parsetree->targetList,
+										  info->event,
+										  info->current_varno);
+		if (sub_action_ptr)
+			*sub_action_ptr = sub_action;
+		else
+			info->rule_action = sub_action;
+	}
+
 	return info;
 }
 
@@ -536,42 +588,37 @@ orderRules(List *locks)
 }
 
 
-
+/*
+ * Modify the given query by adding 'AND NOT rule_qual' to its qualification.
+ * This is used to generate suitable "else clauses" for conditional INSTEAD
+ * rules.
+ *
+ * The rule_qual may contain references to OLD or NEW.  OLD references are
+ * replaced by references to the specified rt_index (the relation that the
+ * rule applies to).  NEW references are only possible for INSERT and UPDATE
+ * queries on the relation itself, and so they should be replaced by copies
+ * of the related entries in the query's own targetlist.
+ */
 static Query *
 CopyAndAddQual(Query *parsetree,
-			   List *actions,
 			   Node *rule_qual,
 			   int rt_index,
 			   CmdType event)
 {
 	Query	   *new_tree = (Query *) copyObject(parsetree);
-	Node	   *new_qual = NULL;
-	Query	   *rule_action = NULL;
+	Node	   *new_qual = (Node *) copyObject(rule_qual);
 
-	if (actions)
-		rule_action = lfirst(actions);
-	if (rule_qual != NULL)
-		new_qual = (Node *) copyObject(rule_qual);
-	if (rule_action != NULL)
-	{
-		List	   *rtable;
-		int			rt_length;
-		List	   *jointreelist;
-
-		rtable = new_tree->rtable;
-		rt_length = length(rtable);
-		rtable = nconc(rtable, copyObject(rule_action->rtable));
-		new_tree->rtable = rtable;
-		OffsetVarNodes(new_qual, rt_length, 0);
-		ChangeVarNodes(new_qual, PRS2_OLD_VARNO + rt_length, rt_index, 0);
-		jointreelist = copyObject(rule_action->jointree->fromlist);
-		OffsetVarNodes((Node *) jointreelist, rt_length, 0);
-		ChangeVarNodes((Node *) jointreelist, PRS2_OLD_VARNO + rt_length,
-					   rt_index, 0);
-		new_tree->jointree->fromlist = nconc(new_tree->jointree->fromlist,
-											 jointreelist);
-	}
-	/* XXX -- where current doesn't work for instead nothing.... yet */
+	/* Fix references to OLD */
+	ChangeVarNodes(new_qual, PRS2_OLD_VARNO, rt_index, 0);
+	/* Fix references to NEW */
+	if (event == CMD_INSERT || event == CMD_UPDATE)
+		new_qual = ResolveNew(new_qual,
+							  PRS2_NEW_VARNO,
+							  0,
+							  parsetree->targetList,
+							  event,
+							  rt_index);
+	/* And attach the fixed qual */
 	AddNotQual(new_tree, new_qual);
 
 	return new_tree;
@@ -598,7 +645,6 @@ fireRules(Query *parsetree,
 		  List *locks,
 		  List **qual_products)
 {
-	RewriteInfo *info;
 	List	   *results = NIL;
 	List	   *i;
 
@@ -623,7 +669,6 @@ fireRules(Query *parsetree,
 		if (event_qual != NULL && *instead_flag)
 		{
 			Query	   *qual_product;
-			RewriteInfo qual_info;
 
 			/* ----------
 			 * If there are instead rules with qualifications,
@@ -642,21 +687,10 @@ fireRules(Query *parsetree,
 			else
 				qual_product = (Query *) lfirst(*qual_products);
 
-			MemSet(&qual_info, 0, sizeof(qual_info));
-			qual_info.event = qual_product->commandType;
-			qual_info.current_varno = rt_index;
-			qual_info.new_varno = length(qual_product->rtable) + 2;
-
 			qual_product = CopyAndAddQual(qual_product,
-										  actions,
 										  event_qual,
 										  rt_index,
 										  event);
-
-			qual_info.rule_action = qual_product;
-
-			if (event == CMD_INSERT || event == CMD_UPDATE)
-				FixNew(&qual_info, qual_product);
 
 			*qual_products = makeList1(qual_product);
 		}
@@ -664,38 +698,12 @@ fireRules(Query *parsetree,
 		foreach(r, actions)
 		{
 			Query	   *rule_action = lfirst(r);
-			Node	   *rule_qual = copyObject(event_qual);
+			RewriteInfo *info;
 
 			if (rule_action->commandType == CMD_NOTHING)
 				continue;
 
-			/*--------------------------------------------------
-			 * We copy the qualifications of the parsetree
-			 * to the action and vice versa. So force
-			 * hasSubLinks if one of them has it.
-			 *
-			 * As of 6.4 only parsetree qualifications can
-			 * have sublinks. If this changes, we must make
-			 * this a node lookup at the end of rewriting.
-			 *
-			 * Jan
-			 *--------------------------------------------------
-			 */
-			if (parsetree->hasSubLinks && !rule_action->hasSubLinks)
-			{
-				rule_action = copyObject(rule_action);
-				rule_action->hasSubLinks = TRUE;
-			}
-			if (!parsetree->hasSubLinks && rule_action->hasSubLinks)
-				parsetree->hasSubLinks = TRUE;
-
-			/*--------------------------------------------------
-			 * Step 1:
-			 *	  Rewrite current.attribute or current to tuple variable
-			 *	  this appears to be done in parser?
-			 *--------------------------------------------------
-			 */
-			info = gatherRewriteMeta(parsetree, rule_action, rule_qual,
+			info = gatherRewriteMeta(parsetree, rule_action, event_qual,
 									 rt_index, event, *instead_flag);
 
 			/* handle escapable cases, or those handled by other code */
@@ -707,34 +715,6 @@ fireRules(Query *parsetree,
 					continue;
 			}
 
-			if (info->action == info->event &&
-				info->event == CMD_SELECT)
-				continue;
-
-			/*
-			 * Event Qualification forces copying of parsetree and
-			 * splitting into two queries one w/rule_qual, one w/NOT
-			 * rule_qual. Also add user query qual onto rule action
-			 */
-			AddQual(info->rule_action, info->rule_qual);
-
-			AddQual(info->rule_action, parsetree->jointree->quals);
-
-			/*--------------------------------------------------
-			 * Step 2:
-			 *	  Rewrite new.attribute w/ right hand side of target-list
-			 *	  entry for appropriate field name in insert/update
-			 *--------------------------------------------------
-			 */
-			if ((info->event == CMD_INSERT) || (info->event == CMD_UPDATE))
-				FixNew(info, parsetree);
-
-			/*--------------------------------------------------
-			 * Step 3:
-			 *	  Simplify? hey, no algorithm for simplification... let
-			 *	  the planner do it.
-			 *--------------------------------------------------
-			 */
 			results = lappend(results, info->rule_action);
 
 			pfree(info);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.55 2000/10/26 21:36:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.56 2000/12/05 19:15:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,6 +24,7 @@
 #include "optimizer/clauses.h"
 #include "parser/parse_relation.h"
 #include "rewrite/rewriteDefine.h"
+#include "rewrite/rewriteManip.h"
 #include "rewrite/rewriteSupport.h"
 #include "storage/smgr.h"
 #include "utils/builtins.h"
@@ -205,16 +206,17 @@ DefineQueryRewrite(RuleStmt *stmt)
 	foreach(l, action)
 	{
 		query = (Query *) lfirst(l);
+		if (query->resultRelation == 0)
+			continue;
+		/* Don't be fooled by INSERT/SELECT */
+		if (query != getInsertSelectQuery(query, NULL))
+			continue;
 		if (query->resultRelation == PRS2_OLD_VARNO)
-		{
 			elog(ERROR, "rule actions on OLD currently not supported"
 				 "\n\tuse views or triggers instead");
-		}
 		if (query->resultRelation == PRS2_NEW_VARNO)
-		{
 			elog(ERROR, "rule actions on NEW currently not supported"
 				 "\n\tuse triggers instead");
-		}
 	}
 
 	/*
