@@ -68,7 +68,7 @@ VIEWS
 
 MISC
 
-* -User who can create databases can modify pg_database table(Peter)
+* -User who can create databases can modify pg_database table(Peter E)
 * Plpgsql does not handle quoted mixed-case identifiers
 * -Fix btree to give a useful elog when key > 1/2 (page - overhead)(Tom)
 * -pg_dump should preserve primary key information
@@ -94,7 +94,7 @@ URGENT
 
 ADMIN
 
-* -Better interface for adding to pg_group(Peter)
+* -Better interface for adding to pg_group(Peter E)
 * More access control over who can create tables and access the database
 * Test syslog functionality
 * Allow elog() to return error codes, not just messages
@@ -145,7 +145,7 @@ INDEXES
 * Allow CREATE INDEX zman_index ON test (date_trunc( 'day', zman ) datetime_ops)
   fails index can't store constant parameters
 * Allow creation of functional indexes to use default types
-* -Permissions on indexes, prevent them(Peter)
+* -Permissions on indexes, prevent them(Peter E)
 * Allow SQL function indexes
 * Add FILLFACTOR to index creation
 * -Allow indexing of LIKE with localle character sets
@@ -154,7 +154,7 @@ INDEXES
 COMMANDS
 
 * ALTER TABLE ADD COLUMN to inherited table put column in wrong place [inherit]
-* -Add ALTER TABLE DROP/ALTER COLUMN feature(Peter E.)
+* -Add ALTER TABLE DROP/ALTER COLUMN feature(Peter E)
 * Allow CLUSTER on all tables at once, and improve CLUSTER, loses NOT
 	NULL specification, indexes, permissions, etc on table[cluster]
 * Add SIMILAR TO to allow character classes, 'pg_[a-c]%'
@@ -218,7 +218,7 @@ MISC
 * -Overhaul mdmgr/smgr to fix double unlinking and double opens, cleanup
 * Overhaul bufmgr/lockmgr/transaction manager
 * Add PL/Perl(Mark Hollomon)
-* -Add option for postgres user have a password by default(Peter)
+* -Add option for postgres user have a password by default(Peter E)
 * Add configure test to check for C++ need for *.h and namespaces
 * Allow BLCKSZ <= 64k, not <= 32k
 * redesign UNION structures to have separarate target lists
