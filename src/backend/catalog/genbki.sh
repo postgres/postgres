@@ -10,7 +10,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/catalog/Attic/genbki.sh,v 1.15 2000/07/06 21:33:22 petere Exp $
+#    $Header: /cvsroot/pgsql/src/backend/catalog/Attic/genbki.sh,v 1.16 2000/07/09 13:16:12 petere Exp $
 #
 # NOTES
 #    non-essential whitespace is removed from the generated file.
@@ -45,13 +45,13 @@ do
             INCLUDE_DIR="$2"
             shift;;
         -I*)
-            INCLUDE_DIR=`echo $1 | sed s/^-I//`
+            INCLUDE_DIR=`echo $1 | sed -e 's/^-I//'`
             ;;
         -o)
             OUTPUT_PREFIX="$2"
             shift;;
         -o*)
-            OUTPUT_PREFIX=`echo $1 | sed s/^-o//`
+            OUTPUT_PREFIX=`echo $1 | sed -e 's/^-o//'`
             ;;
         --help)
             echo "$CMDNAME generates system catalog bootstrapping files."
