@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.201 2002/05/21 22:05:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.202 2002/05/22 07:46:58 inoue Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -353,7 +353,7 @@ heap_storage_create(Relation rel)
  * --------------------------------
  */
 static void
-CheckAttributeNames(TupleDesc tupdesc, bool relhasoids)
+CheckAttributeNames(TupleDesc tupdesc, bool relhasoids, int relkind)
 {
 	int			i;
 	int			j;
@@ -365,17 +365,18 @@ CheckAttributeNames(TupleDesc tupdesc, bool relhasoids)
 	 * also, warn user if attribute to be created has an unknown typid
 	 * (usually as a result of a 'retrieve into' - jolly
 	 */
-	for (i = 0; i < natts; i++)
-	{
-		if (SystemAttributeByName(NameStr(tupdesc->attrs[i]->attname),
+	if (relkind != RELKIND_VIEW)
+		for (i = 0; i < natts; i++)
+		{
+			if (SystemAttributeByName(NameStr(tupdesc->attrs[i]->attname),
 								  relhasoids) != NULL)
-			elog(ERROR, "name of column \"%s\" conflicts with an existing system column",
+				elog(ERROR, "name of column \"%s\" conflicts with an existing system column",
 				 NameStr(tupdesc->attrs[i]->attname));
-		if (tupdesc->attrs[i]->atttypid == UNKNOWNOID)
-			elog(WARNING, "Attribute '%s' has an unknown type"
+			if (tupdesc->attrs[i]->atttypid == UNKNOWNOID)
+				elog(WARNING, "Attribute '%s' has an unknown type"
 				 "\n\tProceeding with relation creation anyway",
 				 NameStr(tupdesc->attrs[i]->attname));
-	}
+		}
 
 	/*
 	 * next check for repeated attribute names
@@ -402,7 +403,8 @@ CheckAttributeNames(TupleDesc tupdesc, bool relhasoids)
 static void
 AddNewAttributeTuples(Oid new_rel_oid,
 					  TupleDesc tupdesc,
-					  bool relhasoids)
+					  bool relhasoids,
+					  int	relkind)
 {
 	Form_pg_attribute *dpp;
 	int			i;
@@ -453,36 +455,36 @@ AddNewAttributeTuples(Oid new_rel_oid,
 	 * next we add the system attributes.  Skip OID if rel has no OIDs.
 	 */
 	dpp = SysAtt;
-	for (i = 0; i < -1 - FirstLowInvalidHeapAttributeNumber; i++)
-	{
-		if (relhasoids || (*dpp)->attnum != ObjectIdAttributeNumber)
+	if (relkind != RELKIND_VIEW)
+		for (i = 0; i < -1 - FirstLowInvalidHeapAttributeNumber; i++)
 		{
-			Form_pg_attribute attStruct;
+			if (relhasoids || (*dpp)->attnum != ObjectIdAttributeNumber)
+			{
+				Form_pg_attribute attStruct;
 
-			tup = heap_addheader(Natts_pg_attribute,
+				tup = heap_addheader(Natts_pg_attribute,
 								 ATTRIBUTE_TUPLE_SIZE,
 								 (void *) *dpp);
 
-			/* Fill in the correct relation OID in the copied tuple */
-			attStruct = (Form_pg_attribute) GETSTRUCT(tup);
-			attStruct->attrelid = new_rel_oid;
+				/* Fill in the correct relation OID in the copied tuple */
+				attStruct = (Form_pg_attribute) GETSTRUCT(tup);
+				attStruct->attrelid = new_rel_oid;
 
-			/*
-			 * Unneeded since they should be OK in the constant data
-			 * anyway
-			 */
-			/* attStruct->attstattarget = 0; */
-			/* attStruct->attcacheoff = -1; */
+				/*
+			 	 * Unneeded since they should be OK in the constant data
+			 	 * anyway
+			 	 */
+				/* attStruct->attstattarget = 0; */
+				/* attStruct->attcacheoff = -1; */
 
-			simple_heap_insert(rel, tup);
+				simple_heap_insert(rel, tup);
 
-			if (hasindex)
-				CatalogIndexInsert(idescs, Num_pg_attr_indices, rel, tup);
+				if (hasindex)
+					CatalogIndexInsert(idescs, Num_pg_attr_indices, rel, tup);
 
-			heap_freetuple(tup);
+				heap_freetuple(tup);
+			}
 		}
-		dpp++;
-	}
 
 	/*
 	 * close pg_attribute indices
@@ -664,7 +666,7 @@ heap_create_with_catalog(const char *relname,
 		elog(ERROR, "Number of columns is out of range (1 to %d)",
 			 MaxHeapAttributeNumber);
 
-	CheckAttributeNames(tupdesc, relhasoids);
+	CheckAttributeNames(tupdesc, relhasoids, relkind);
 
 	if (get_relname_relid(relname, relnamespace))
 		elog(ERROR, "Relation '%s' already exists", relname);
@@ -717,7 +719,7 @@ heap_create_with_catalog(const char *relname,
 	 * now add tuples to pg_attribute for the attributes in our new
 	 * relation.
 	 */
-	AddNewAttributeTuples(new_rel_oid, new_rel_desc->rd_att, relhasoids);
+	AddNewAttributeTuples(new_rel_oid, new_rel_desc->rd_att, relhasoids, relkind);
 
 	/*
 	 * store constraints and defaults passed in the tupdesc, if any.

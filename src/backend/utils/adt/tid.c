@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/tid.c,v 1.29 2002/03/30 01:02:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/tid.c,v 1.30 2002/05/22 07:46:58 inoue Exp $
  *
  * NOTES
  *	  input routine largely stolen from boxin().
@@ -21,6 +21,7 @@
 #include "access/heapam.h"
 #include "catalog/namespace.h"
 #include "utils/builtins.h"
+#include "catalog/pg_type.h"
 
 #define DatumGetItemPointer(X)	 ((ItemPointer) DatumGetPointer(X))
 #define ItemPointerGetDatum(X)	 PointerGetDatum(X)
@@ -133,6 +134,65 @@ setLastTid(const ItemPointer tid)
 	Current_last_tid = *tid;
 }
 
+/*
+ *	Handle CTIDs of views.
+ *		CTID should be defined in the view and it must
+ *		correspond to the CTID of a base relation.
+ */
+static Datum
+currtid_for_view(Relation viewrel, ItemPointer tid) 
+{
+	TupleDesc	att = RelationGetDescr(viewrel);
+	RuleLock	*rulelock;
+	RewriteRule	*rewrite;
+	int	i, natts = att->natts, tididx = -1;
+
+	for (i = 0; i < natts ; i++)
+	{
+		if (strcasecmp(NameStr(att->attrs[i]->attname), "ctid") == 0)
+		{
+			if (att->attrs[i]->atttypid != TIDOID)
+				elog(ERROR, "ctid isn't of type TID");
+			tididx = i;
+		}
+	}
+	if (tididx < 0)
+		elog(ERROR, "currtid can't handle views with no CTID");
+	if (rulelock = viewrel->rd_rules, !rulelock)
+		elog(ERROR, "the view has no rules");
+	for (i = 0; i < rulelock->numLocks; i++)
+	{
+		rewrite = rulelock->rules[i];
+		if (rewrite->event == CMD_SELECT)
+		{
+			Query	*query;
+			TargetEntry *tle;
+
+			if (length(rewrite->actions) != 1)
+				elog(ERROR, "only one select rule is allowed in views");
+			query = (Query *) lfirst(rewrite->actions);
+			tle = (TargetEntry *) nth(tididx, query->targetList);
+			if (tle && tle->expr && nodeTag(tle->expr) == T_Var)
+			{
+				Var *var = (Var *) tle->expr;
+				RangeTblEntry *rte;
+				if (var->varno > 0 && var->varno < INNER && var->varattno == SelfItemPointerAttributeNumber)
+				{
+					rte = (RangeTblEntry *) nth(var->varno - 1, query->rtable);
+					if (rte)
+					{
+						heap_close(viewrel, AccessShareLock);
+						return DirectFunctionCall2(currtid_byreloid, ObjectIdGetDatum(rte->relid), PointerGetDatum(tid));
+					}
+				}
+			}
+			break;
+		}
+	}
+	elog(ERROR, "currtid can't handle this view");
+	return (Datum) 0;
+}
+
 Datum
 currtid_byreloid(PG_FUNCTION_ARGS)
 {
@@ -149,6 +209,8 @@ currtid_byreloid(PG_FUNCTION_ARGS)
 	}
 
 	rel = heap_open(reloid, AccessShareLock);
+	if (rel->rd_rel->relkind == RELKIND_VIEW)
+		return currtid_for_view(rel, tid);
 
 	ItemPointerCopy(tid, result);
 	heap_get_latest_tid(rel, SnapshotNow, result);
@@ -170,6 +232,8 @@ currtid_byrelname(PG_FUNCTION_ARGS)
 	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname,
 														"currtid_byrelname"));
 	rel = heap_openrv(relrv, AccessShareLock);
+	if (rel->rd_rel->relkind == RELKIND_VIEW)
+		return currtid_for_view(rel, tid);
 
 	result = (ItemPointer) palloc(sizeof(ItemPointerData));
 	ItemPointerCopy(tid, result);
