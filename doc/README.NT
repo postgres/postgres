@@ -21,6 +21,8 @@ It can be done by done by typing configure, make and make install.
 
 1. Install the Andy Piper Tools (http://www.xemacs.freeserve.co.uk/)
    (This may be optional.)
+   You need at least the crypt library (also available as
+   ftp://sourceware.cygnus.com/pub/cygwin/xfree/libcrypt-cygwin-b20.1.tar.bz2)
 
 ---------------------------------------------------------------------------
 
@@ -29,8 +31,8 @@ It can be done by done by typing configure, make and make install.
 1. Download the Cygwin32 IPC Package by Ludovic LANGE 
    http://www.multione.capgemini.fr:80/tools/pack_ipc/current.tar.gz
 2. Untar the package and follow the readme instructions.
-3. Apply the patch pgsql/src/win32/ipc.patch to the CygWin32 sources
-   before compiling CygWin32.
+3. Apply the patch pgsql/src/win32/ipc.patch to the cygipc sources
+   before compiling the library.
 4. I tested 1.03.
 5. I used the \cygwin-b20\h-i568-cygwin32\i586-cygwin32\lib and
 \cygwin-b20\h-i568-cygwin32\i586-cygwin32\include\sys instead of the
