@@ -1,0 +1,2088 @@
+2001-02-23 04:31  inoue
+
+	* src/backend/catalog/index.c: Resolve a compile error.
+
+2001-02-23 04:26  inoue
+
+	* src/backend/: catalog/index.c, commands/indexcmds.c: Reindex of
+	shared system indexes must be overwrite mode.
+
+2001-02-23 03:44  ishii
+
+	* src/backend/utils/mb/Unicode/UCS_to_SJIS.pl: Enhanced UTF-8/SJIS
+	mapping generator, contributed by Eiji Tokuya"
+	<e-tokuya@Mail.Sankyo-Unyu.co.jp>
+
+2001-02-22 21:17  thomas
+
+	* doc/src/sgml/installation.sgml: Freshen with a few recent
+	platform reports:  Linux/Alpha, Linux/Sparc, MacOS-X.
+
+2001-02-22 20:21  momjian
+
+	* src/bin/pgaccess/lib/languages/: chinese-gb, chinese_gb:
+	chinese-gb -> chinese_gb.
+
+2001-02-22 20:21  momjian
+
+	* src/bin/pgaccess/lib/languages/: chinese, chinese-gb: Rename to
+	chinese-gb
+
+2001-02-22 18:20  momjian
+
+	* src/backend/storage/lmgr/lock.c: More comment cleanups.
+
+2001-02-22 18:02  momjian
+
+	* src/: backend/storage/lmgr/lock.c, include/access/nbtree.h,
+	include/storage/lmgr.h, include/storage/lock.h: More comment
+	improvements.
+
+2001-02-22 16:48  momjian
+
+	* src/: backend/access/common/indextuple.c,
+	backend/access/gist/gist.c, backend/access/hash/hash.c,
+	backend/access/hash/hashutil.c, include/access/itup.h,
+	include/access/nbtree.h: Clean up index/btree comments/macros, as
+	approved.
+
+2001-02-22 13:39  momjian
+
+	* src/: backend/utils/cache/catcache.c,
+	backend/utils/cache/inval.c, backend/utils/cache/relcache.c,
+	backend/utils/cache/syscache.c, include/storage/shmem.h: Change
+	/*---- commants to /* where appropriate.  pgindent will tighten up
+	the comments later.
+
+2001-02-22 13:09  momjian
+
+	* src/tools/backend/flow.fig: Update flowchart xfig file.
+
+2001-02-22 10:33  momjian
+
+	* src/bin/pgaccess/lib/languages/chinese:     The attachement is
+	the Chinese (GB) patch for PgAccess, don't know
+	if it's correct to post here.  It's simple to do the translation,
+	And I've test in 7.0.2 & current CVS, seems pretty good.  If anyone
+	want this little thing, I'll very happy.  use it is very simple,
+	just gunzip it and copy to $PGDIR/share/pgaccess/lib/languages/ for
+	current CVS version, and $PGDIR/pgaccess/lib/languages/ for 7.0*
+	BTW: I havn't got the tools to translate it to BIG5 encoding, is
+	there anybody to to it?
+	
+	He Weiping(Laser Henry)
+
+2001-02-22 03:59  inoue
+
+	* src/backend/access/transam/xlogutils.c: Avoid 'FATAL: out of free
+	buffers: time to abort !" error during WAL recovery.  Recovery
+	failure is always serious.
+
+2001-02-22 00:32  tgl
+
+	* src/test/regress/output/constraints.source: Adjust expected error
+	message due to change of keyword case-folding.
+
+2001-02-21 23:35  ishii
+
+	* src/include/regex/utils.h: Add _REGEX_UTILS_H to avoid
+	duplication.
+
+2001-02-21 23:30  ishii
+
+	* doc/README.mb.jp: Update mutibyte doc
+
+2001-02-21 22:39  inoue
+
+	* src/interfaces/odbc/parse.c: Fix the bug report [ODBC] select
+	from a table having more than 32 fields: reported by Matteo
+	Cavalleri.  Great thanks to Tom for his accurate analysis.
+
+2001-02-21 18:15  tgl
+
+	* doc/src/sgml/func.sgml: Document timeofday(), mention
+	start-of-transaction vs. current-time semantics, a few other small
+	improvements.
+
+2001-02-21 17:03  tgl
+
+	* src/backend/utils/adt/nabstime.c: Correct bogus output formatting
+	of timeofday() function.  A number of microseconds < 100000 should
+	be displayed as, eg, 13.000126, not 13.126.
+
+2001-02-21 14:07  momjian
+
+	* src/include/: access/htup.h, access/itup.h, access/nbtree.h,
+	storage/bufpage.h: Comment improvements.
+
+2001-02-21 13:53  tgl
+
+	* src/: backend/parser/keywords.c, backend/parser/scan.l,
+	backend/utils/adt/ruleutils.c,
+	interfaces/ecpg/preproc/ecpg_keywords.c,
+	interfaces/ecpg/preproc/keywords.c, interfaces/ecpg/preproc/pgc.l:
+	Change case-folding of keywords to conform to SQL99 and fix
+	misbehavior in Turkish locale.	Keywords are now checked under pure
+	ASCII case-folding rules ('A'-'Z'->'a'-'z' and nothing else). 
+	However, once a word is determined not to be a keyword, it will be
+	case-folded under the current locale, same as before.  See
+	pghackers discussion 20-Feb-01.
+
+2001-02-21 12:50  petere
+
+	* doc/src/sgml/plsql.sgml: Fix markup.	(A <keyword> isn't what it
+	is in SQL.)  Add jungle of more markup. ;-)
+
+2001-02-21 01:05  ishii
+
+	* src/backend/utils/error/elog.c: Safe guard in case of imporper
+	data is provided to elog() in multi-byte build.
+
+2001-02-21 01:03  ishii
+
+	* src/test/mb/expected/: big5.out, euc_cn.out, euc_jp.out,
+	euc_kr.out, euc_tw.out, mule_internal.out, sjis.out, unicode.out:
+	new regression data for 7.1
+
+2001-02-21 01:02  ishii
+
+	* src/test/mb/mbregress.sh: change destroydb -> dropdb
+
+2001-02-20 17:27  petere
+
+	* doc/src/sgml/indices.sgml: Add more details.
+
+2001-02-20 17:27  petere
+
+	* doc/src/sgml/stylesheet.dsl: Turn on section numbering.
+
+2001-02-20 15:37  tgl
+
+	* src/include/Makefile: Clean out any old versions of
+	no-longer-installed header files that may be lurking in the install
+	target directory.  But don't zap up-to-date headers (so
+	install-all-headers before regular install will work).	Per
+	suggestion from Larry Rosenman.
+
+2001-02-20 14:39  tgl
+
+	* src/interfaces/odbc/dlg_specific.h: Remove unportable #warning
+	directive.
+
+2001-02-20 14:20  petere
+
+	* contrib/array/Makefile, contrib/cube/Makefile,
+	contrib/earthdistance/Makefile, contrib/findoidjoins/Makefile,
+	contrib/fulltextindex/Makefile, contrib/intarray/Makefile,
+	contrib/isbn_issn/Makefile, contrib/lo/Makefile,
+	contrib/mSQL-interface/Makefile, contrib/miscutil/Makefile,
+	contrib/noupdate/Makefile, contrib/oid2name/Makefile,
+	contrib/pg_dumplo/Makefile, contrib/pgbench/Makefile,
+	contrib/rserv/Makefile, contrib/seg/Makefile, contrib/spi/Makefile,
+	contrib/string/Makefile, contrib/userlock/Makefile,
+	contrib/vacuumlo/Makefile, src/Makefile.global.in,
+	src/Makefile.shlib, src/backend/tioga/Makefile,
+	src/bin/pg_dump/Makefile, src/bin/pg_encoding/Makefile,
+	src/bin/pgtclsh/Makefile, src/bin/psql/Makefile,
+	src/interfaces/ecpg/lib/Makefile,
+	src/interfaces/ecpg/preproc/Makefile,
+	src/interfaces/libpgeasy/Makefile,
+	src/interfaces/libpgtcl/Makefile, src/interfaces/libpq/Makefile,
+	src/interfaces/libpq++/Makefile, src/interfaces/odbc/GNUmakefile,
+	src/makefiles/Makefile.win, src/pl/plpgsql/src/Makefile,
+	src/test/bench/Makefile, src/test/examples/Makefile,
+	src/test/regress/GNUmakefile: Make sure -L and -I's for our source
+	tree are always before system include or library directories on the
+	command line.
+
+2001-02-20 14:06  tgl
+
+	* doc/FAQ_HPUX: Remove obsolete claim that it doesn't work to use
+	gcc with HP's C++ compiler or g++ with HP's C compiler.
+
+2001-02-20 14:04  tgl
+
+	* src/template/hpux: Select optimization by default for HP's C
+	compiler.
+
+2001-02-20 12:35  momjian
+
+	* doc/TODO: Update TODO list.
+
+2001-02-20 12:25  momjian
+
+	* doc/TODO: Update TODO list.
+
+2001-02-20 10:34  momjian
+
+	* contrib/pgcrypto/: Makefile, krb.c: Changes:
+	
+	* reverse the change #include <> -> "" in krb.c.    It _must not_
+	include files in "."  * Makefile update.  Inconsistent var usage
+	and SHLIB was	not set.
+	
+	Now it should work with all external libs.
+	
+	arko Kreen
+
+2001-02-19 20:34  tgl
+
+	* src/backend/postmaster/postmaster.c: Truncate incoming username
+	and database name to NAMEDATALEN-1 characters so that we don't
+	reject overlength names unnecessarily.
+
+2001-02-19 20:33  momjian
+
+	* doc/FAQ_HPUX: Update HPUX FAQ.
+
+2001-02-19 20:16  tgl
+
+	* doc/src/sgml/ref/pg_passwd.sgml, src/bin/pg_passwd/pg_passwd.c:
+	Fix pg_passwd's failure to cope with usernames > 8 chars.
+
+2001-02-19 19:28  tgl
+
+	* src/include/c.h: Remove inclusion of <varargs.h> on SunOS; this
+	does not work since we use the ANSI varargs style (<stdarg.h>) not
+	the old style.	Tatsuo had reported this change was necessary back
+	in the 7.0 beta cycle (4/13/00) but for some reason, making the
+	edit never got done.
+
+2001-02-19 17:25  tgl
+
+	* doc/src/sgml/installation.sgml: Document --enable-cassert.
+
+2001-02-19 16:52  momjian
+
+	* doc/TODO: Update TODO list.
+
+2001-02-19 15:46  momjian
+
+	* doc/TODO: Update TODO list.
+
+2001-02-19 14:49  tgl
+
+	* src/include/executor/spi.h, doc/src/sgml/plsql.sgml,
+	src/backend/executor/spi.c, src/pl/plpgsql/src/gram.y,
+	src/pl/plpgsql/src/pl_exec.c, src/pl/plpgsql/src/pl_funcs.c,
+	src/pl/plpgsql/src/plpgsql.h, src/pl/plpgsql/src/scan.l: Change
+	plpgsql's GET DIAGNOSTICS statement to use SQL99-compatible syntax.
+	 Fix the RESULT_OID case, which never worked.  Add documentation.
+
+2001-02-19 14:06  momjian
+
+	* doc/TODO: Update TODO list.
+
+2001-02-19 11:55  momjian
+
+	* doc/TODO: Update TODO list.
+
+2001-02-19 10:23  momjian
+
+	* doc/TODO: Update TODO list.
+
+2001-02-19 02:30  meskes
+
+	* src/interfaces/ecpg/: ChangeLog, preproc/preproc.y: Synced gram.y
+	and preproc.y.
+
+2001-02-19 00:16  ishii
+
+	* configure, configure.in: Fix nasty bug in configure.	     
+	STRTOL='strtoul.o' --> STRTOUL='strtoul.o'
+
+2001-02-18 19:24  tgl
+
+	* doc/src/sgml/perform.sgml: Update example of partially
+	constraining join order to use a subselect in FROM instead of an
+	auxiliary view.  We didn't have subselect-in-FROM when I wrote this
+	originally...
+
+2001-02-18 19:01  tgl
+
+	* doc/src/sgml/func.sgml: AND/OR truth table needs another row
+	IMHO.
+
+2001-02-18 13:33  momjian
+
+	* doc/FAQ_BSDI, src/bin/Makefile, src/bin/initdb/Makefile,
+	src/bin/initdb/initdb.sh, src/bin/initlocation/Makefile,
+	src/bin/initlocation/initlocation.sh, src/bin/ipcclean/Makefile,
+	src/bin/pg_dump/Makefile, src/bin/pg_dump/pg_dump.c,
+	src/bin/pgaccess/Makefile, src/bin/pgaccess/README,
+	src/bin/pgaccess/copyright.html,
+	src/bin/pgaccess/doc/html/copyright.html,
+	src/bin/pgaccess/lib/help/copyrights.hlp, src/bin/pgtclsh/Makefile,
+	src/bin/pgtclsh/pgtclAppInit.c, src/bin/psql/Makefile,
+	src/bin/scripts/Makefile, src/bin/scripts/createlang.sh,
+	src/bin/scripts/createuser, src/bin/scripts/dropdb,
+	src/bin/scripts/droplang, src/bin/scripts/dropuser,
+	src/bin/scripts/vacuumdb: Add copyright mentions, per Tom Lane.
+
+2001-02-18 13:06  petere
+
+	* src/backend/parser/gram.y: Allow extract() to accept the same
+	field selectors as date_part(), not just the ones specified by SQL.
+
+2001-02-18 12:53  tgl
+
+	* doc/src/sgml/ref/createdb.sgml, src/bin/scripts/createdb,
+	src/test/regress/pg_regress.sh: Add --template option to createdb
+	script to allow access to WITH TEMPLATE option of CREATE DATABASE. 
+	In pg_regress, create regression database from template0 to ensure
+	that any installation-local cruft in template1 will not mess up the
+	tests.
+
+2001-02-18 12:17  petere
+
+	* doc/src/sgml/func.sgml: Enhance documentation of date/time
+	functions.  Add extract, current_date, current_time,
+	current_timestamp.  Add more examples.	Remove age(), because it
+	doesn't work like it is documented, and no one could explain it to
+	me.
+
+2001-02-18 12:15  petere
+
+	* doc/src/sgml/stylesheet.dsl: Make <lineannotation> italic.  Fix
+	syntax error in print style.
+
+2001-02-18 01:07  tgl
+
+	* doc/src/sgml/indices.sgml: Add note that partial indices are not
+	currently supported.
+
+2001-02-18 00:30  tgl
+
+	* doc/src/sgml/runtime.sgml: Update description of fsync option for
+	7.1.
+
+2001-02-17 23:50  tgl
+
+	* doc/src/sgml/wal.sgml, src/backend/access/transam/xact.c,
+	src/backend/utils/misc/guc.c,
+	src/backend/utils/misc/postgresql.conf.sample: Change default
+	commit_delay to zero, update documentation.
+
+2001-02-17 23:39  tgl
+
+	* configure.in, configure, src/backend/access/transam/xlog.c,
+	src/backend/storage/buffer/bufmgr.c,
+	src/backend/storage/buffer/s_lock.c, src/backend/storage/file/fd.c,
+	src/include/config.h.in, src/include/storage/fd.h,
+	src/include/storage/s_lock.h: Change s_lock to not use any
+	zero-delay select() calls; these are just a waste of cycles on
+	single-CPU machines, and of dubious utility on multi-CPU machines
+	too.  Tweak s_lock_stuck so that caller can specify timeout
+	interval, and increase interval before declaring stuck spinlock for
+	buffer locks and XLOG locks.  On systems that have fdatasync(), use
+	that rather than fsync() to sync WAL log writes.  Ensure that WAL
+	file is entirely allocated during XLogFileInit.
+
+2001-02-17 23:28  tgl
+
+	* src/backend/tcop/postgres.c: Remove bogus set_ps_display call ---
+	changing displayed status here is either wrong or unnecessary in
+	most cases, and on systems where setting status takes a kernel
+	call, the overhead of setting status three times per command rather
+	than two is annoying.
+
+2001-02-17 11:52  tgl
+
+	* doc/src/sgml/: docguide.sgml, installation.sgml: Catch some stray
+	references to .htm files.
+
+2001-02-17 11:47  tgl
+
+	* doc/src/Makefile: No more .htm files, so don't try to add them to
+	the doc tarballs.
+
+2001-02-17 09:35  momjian
+
+	* doc/TODO: Update TODO list.
+
+2001-02-17 05:03  ishii
+
+	* src/bin/psql/command.c: Fix a bug in psql. unescape() does not
+	work for multi-byte encodings.
+
+2001-02-17 01:50  ishii
+
+	* contrib/pgbench/README.pgbench_jis: Fix README in Japanese to
+	sync with README.pgbench updated by Tom.  (thanks!)
+
+2001-02-16 22:37  tgl
+
+	* src/interfaces/libpq/fe-misc.c: Seems a bad idea to assume that
+	select(2) doesn't touch the input masks if it returns EINTR.
+
+2001-02-16 20:00  tgl
+
+	* src/backend/storage/file/fd.c: Add current seek position to
+	FDDEBUG output for FileRead, FileWrite, FileSeek.
+
+2001-02-16 18:50  tgl
+
+	* src/include/storage/s_lock.h: Just noticed that use of 'volatile'
+	in HPPA S_UNLOCK() was causing gcc to generate unnecessarily stupid
+	code.  Tweak macro to describe a series of store-constant ops, not
+	store/load/store/load/store/load/store.
+
+2001-02-16 16:41  tgl
+
+	* contrib/pgbench/README.pgbench: Update README's install
+	instructions to agree with current reality.
+
+2001-02-16 14:43  momjian
+
+	* doc/: FAQ_BSDI, src/sgml/runtime.sgml: Update bsdi shared memory
+	stuff.
+
+2001-02-16 14:27  momjian
+
+	* doc/: FAQ_BSDI, src/sgml/runtime.sgml: Update BSDI FAQ.
+
+2001-02-16 13:50  tgl
+
+	* src/backend/utils/init/postinit.c: Defend against starting a
+	non-MULTIBYTE-enabled backend in a database with encoding other
+	than SQL_ASCII.  Per recent discussion in pghackers.
+
+2001-02-16 11:44  peter
+
+	* src/interfaces/jdbc/: CHANGELOG,
+	org/postgresql/jdbc2/DatabaseMetaData.java,
+	org/postgresql/jdbc2/PreparedStatement.java,
+	org/postgresql/jdbc2/ResultSet.java,
+	org/postgresql/jdbc2/Statement.java,
+	org/postgresql/largeobject/PGclob.java,
+	org/postgresql/test/jdbc2/TimestampTest.java: Some more updates...
+	
+	Fri Feb 17 15:11:00 GMT 2001 peter@retep.org.uk 	- Reduced
+	the object overhead in PreparedStatement by reusing the same	   
+	   StringBuffer object throughout. Similarly SimpleDateStamp's are
+	alse	       reused in a thread save manner.		-
+	Implemented in PreparedStatement: setNull(), setDate/Time/Timestamp
+		   using Calendar, setBlob(), setCharacterStream()	   
+	- Clob's are now implemented in ResultSet & PreparedStatement!	   
+	    - Implemented a lot of DatabaseMetaData & ResultSetMetaData
+	methods.	    We have about 18 unimplemented methods left in
+	JDBC2 at the current		time.
+
+2001-02-16 11:10  momjian
+
+	* doc/: FAQ_BSDI, src/sgml/runtime.sgml: Update BSDI SGML.
+
+2001-02-15 22:49  tgl
+
+	* src/interfaces/odbc/convert.c: ichar() has been renamed to chr(),
+	so fix translation table.
+
+2001-02-15 22:26  tgl
+
+	* src/pl/tcl/pltcl.c: Fix bugs in pltcl's new return_null command:
+	it was liable to go belly up if the return datatype's input
+	converter was at all strict, because the converter would get called
+	on junk data when returning NULL.  Also ensure that it gives an
+	error rather than coredumping if someone tries to use it in a
+	trigger function.
+
+2001-02-15 22:22  tgl
+
+	* src/pl/tcl/test/: test.expected, test_queries.sql: Fix erroneous
+	sort request in pltcl selftest.
+
+2001-02-15 22:16  tgl
+
+	* src/: backend/executor/nodeAgg.c, backend/executor/nodeGroup.c,
+	backend/optimizer/path/indxpath.c,
+	backend/optimizer/plan/initsplan.c, backend/parser/parse_clause.c,
+	backend/commands/analyze.c, backend/parser/parse_expr.c,
+	backend/parser/parse_oper.c, include/parser/parse_oper.h: Clean up
+	two rather nasty bugs in operator selection code.
+	
+	1. If there is exactly one pg_operator entry of the right name and
+	oprkind, oper() and related routines would return that entry
+	whether its input type had anything to do with the request or not. 
+	This is just premature optimization: we shouldn't return the single
+	candidate until after we verify that it really is a valid
+	candidate, ie, is at least coercion-compatible with the given
+	types.
+	
+	2. oper() and related routines only promise a coercion-compatible
+	result.  Unfortunately, there were quite a few callers that assumed
+	the returned operator is binary-compatible with the given datatype;
+	they would proceed to call it without making any datatype
+	coercions.  These callers include sorting, grouping, aggregation,
+	and VACUUM ANALYZE.  In general I think it is appropriate for these
+	callers to require an exact or binary-compatible match, so I've
+	added a new routine compatible_oper() that only succeeds if it can
+	find an operator that doesn't require any run-time conversions. 
+	Callers now call oper() or compatible_oper() depending on whether
+	they are prepared to deal with type conversion or not.
+	
+	The upshot of these bugs is revealed by the following silliness in
+	PL/Tcl's selftest: it creates an operator @< on int4, and then
+	tries to use it to sort a char(N) column.  The system would let it
+	do that :-( (and evidently has done so since 6.3 :-( :-().  The
+	result in this case was just a silly sort order, but the reverse
+	combination would've provoked coredump from trying to dereference
+	integers.  With this fix you get more reasonable behavior:
+	pltcl_test=# select * from T_pkey1 order by key1, key2 using @<;
+	ERROR:	Unable to identify an operator '@<' for types 'bpchar' and
+	'bpchar'	 You will have to retype this query using an
+	explicit cast
+
+2001-02-15 22:10  inoue
+
+	* src/interfaces/odbc/convert.c: Add casting for
+	numeric/float4/float8 type value automatically to compensate the
+	lack of automatic conversion functionality of PostgreSQL server. 
+	For example if there's a numeric type binding	 1.2567 -->
+	1.2567::numeric.  I hope this change would enable the use of
+	numeric type in MS-Access etc.
+	
+	Thanks Hiroki Kataoka for his checking my code.
+
+2001-02-15 19:46  momjian
+
+	* doc/FAQ_BSDI: Update bsdi faq.
+
+2001-02-15 19:17  momjian
+
+	* doc/FAQ_BSDI: Update bsdi faq.
+
+2001-02-15 19:03  tgl
+
+	* src/: include/optimizer/cost.h, include/optimizer/pathnode.h,
+	backend/optimizer/path/costsize.c,
+	backend/optimizer/path/joinrels.c,
+	backend/optimizer/util/relnode.c: Take OUTER JOIN semantics into
+	account when estimating the size of join relations.  It's not very
+	bright, but at least it now knows that A LEFT JOIN B must produce
+	at least as many rows as are in A ...
+
+2001-02-15 17:21  momjian
+
+	* doc/: FAQ, src/FAQ/FAQ.html: Update FAQ.
+
+2001-02-15 17:15  momjian
+
+	* doc/: FAQ, src/FAQ/FAQ.html: Update FAQ.
+
+2001-02-15 16:57  tgl
+
+	* src/backend/utils/adt/ri_triggers.c: Add some notes about memory
+	management of RI plans.
+
+2001-02-15 16:47  tgl
+
+	* src/backend/executor/nodeAgg.c: Update comments about memory
+	management.
+
+2001-02-15 16:38  tgl
+
+	* src/backend/utils/mmgr/README: Update notes about memory context
+	scheme.
+
+2001-02-15 16:11  tgl
+
+	* doc/src/sgml/ref/declare.sgml: Update obsolete wording of error
+	message.
+
+2001-02-15 15:57  tgl
+
+	* src/: backend/access/common/indextuple.c,
+	backend/access/heap/tuptoaster.c, include/access/tuptoaster.h:
+	Although we can't support out-of-line TOAST storage in indexes
+	(yet), compressed storage works perfectly well.  Might as well have
+	a coherent strategy for applying it, rather than the haphazard
+	store-what-you-get approach that was in the code before.  The
+	strategy I've set up here is to attempt compression of any
+	compressible index value exceeding BLCKSZ/16, or about 500 bytes by
+	default.
+
+2001-02-15 14:03  tgl
+
+	* doc/src/sgml/xfunc.sgml: Further polishing of documentation about
+	new fmgr call convention.
+
+2001-02-15 12:55  tgl
+
+	* src/backend/utils/adt/geo_selfuncs.c: Reduce default selectivity
+	estimates for geometric operators; it seems the old ones were not
+	small enough to ensure r-tree and gist indexes would get picked
+	when available.  These numbers are totally bogus anyway, but in the
+	absence of any real estimation technique, we'd like to select
+	indexes when available ...
+
+2001-02-15 12:46  tgl
+
+	* src/backend/optimizer/path/costsize.c: Update a couple of
+	obsolete comments.
+
+2001-02-15 11:21  momjian
+
+	* doc/TODO: Update TODO list.
+
+2001-02-15 11:03  momjian
+
+	* doc/TODO: Update TODO list.
+
+2001-02-15 08:31  momjian
+
+	* HISTORY, doc/src/sgml/release.sgml: Update for Tatsuo.
+
+2001-02-15 00:32  inoue
+
+	* src/interfaces/odbc/: connection.c, psqlodbc.h, psqlodbc.rc,
+	qresult.c, qresult.h, statement.c: 1) Change transaction boundary
+	in autocommit off mode	  per recent discussion in pgsql-odbc. Now
+	SELECT is    a boundary but VACUUM isn't.  2) Put back the error
+	handling behavior. When elog(ERROR)    was detected the driver
+	automatically issue "ABORT"    if a transaction is in progress.  3)
+	Driver version is 7.01.0003(Dave already set it but    it was put
+	back).
+
+2001-02-14 23:28  tgl
+
+	* doc/src/sgml/runtime.sgml: Clarify meaning of GEQO_THRESHOLD
+	parameter.
+
+2001-02-14 23:10  tgl
+
+	* doc/src/sgml/: queries.sgml, sql.sgml: Improve documentation of
+	JOIN syntax.  Explain NATURAL as an alternative to ON and USING for
+	specifying the join condition, not as an independent kind of join
+	semantics.
+
+2001-02-14 20:56  ishii
+
+	* src/backend/utils/mb/Unicode/: sjis_to_utf8.map,
+	utf8_to_sjis.map: Unicode <-> SJIS new mapping tables (based on
+	CP932.TXT) contributed by Eiji Tokuya"
+	<e-tokuya@Mail.Sankyo-Unyu.co.jp>
+
+2001-02-14 20:10  tgl
+
+	* src/backend/parser/analyze.c: Arrange for ORDER BY an expression
+	on a UNION/INTERSECT/EXCEPT result, such as	SELECT f1 FROM foo
+	UNION SELECT ... ORDER BY upper(f1) to draw 'ORDER BY on a
+	UNION/INTERSECT/EXCEPT result must be on one of the result columns'
+	rather than the uninformative 'f1 not found' we were producing
+	before.  Eventually this should actually work, but that looks much
+	too hard to try to implement in late beta...
+
+2001-02-14 18:32  tgl
+
+	* src/backend/parser/analyze.c: Repair problems with duplicate
+	index names generated when CREATE TABLE specifies redundant UNIQUE
+	conditions.
+
+2001-02-14 16:34  tgl
+
+	* src/: backend/catalog/heap.c, backend/commands/command.c,
+	backend/parser/analyze.c, backend/parser/parse_clause.c,
+	backend/parser/parse_expr.c, backend/parser/parse_func.c,
+	backend/parser/parse_node.c, backend/parser/parse_relation.c,
+	backend/parser/parse_target.c, backend/utils/adt/ruleutils.c,
+	include/nodes/primnodes.h, include/parser/parse_clause.h,
+	include/parser/parse_node.h, include/parser/parse_relation.h,
+	include/utils/builtins.h, tools/backend/index.html: Change scoping
+	of table and join refnames to conform to SQL92: a JOIN clause with
+	an alias is a <subquery> and therefore hides table references
+	appearing within it, according to the spec.  This is the same as
+	the preliminary patch I posted to pgsql-patches yesterday, plus
+	some really grotty code in ruleutils.c to reverse-list a query tree
+	with the correct alias name depending on context.  I'd rather not
+	have done that, but unless we want to force another initdb for 7.1,
+	there's no other way for now.
+
+2001-02-14 14:37  petere
+
+	* doc/src/sgml/datatype.sgml: Alter documentation of boolean type,
+	add example.  Someone figured that it wasn't clear that the
+	"boolean type" was actually called "boolean".  Add tip about
+	"casting" booleans using CASE.
+	
+	Spell check whole file.
+
+2001-02-14 14:35  petere
+
+	* doc/src/sgml/stylesheet.dsl: Format <structname>, <structfield>,
+	and <type> mono-spaced.
+
+2001-02-14 12:45  peter
+
+	* src/interfaces/jdbc/: CHANGELOG, build.xml,
+	org/postgresql/jdbc2/PreparedStatement.java,
+	org/postgresql/largeobject/BlobOutputStream.java,
+	org/postgresql/largeobject/LargeObject.java,
+	org/postgresql/test/JDBC2Tests.java,
+	org/postgresql/test/jdbc2/BlobTest.java: Web Feb 14 17:29:00 GMT
+	2001 peter@retep.org.uk 	- Fixed bug in LargeObject &
+	BlobOutputStream where the stream's output	     was not
+	flushed when either the stream or the blob were closed. 	 -
+	Fixed PreparedStatement.setBinaryStream() where it ignored the
+	length
+
+2001-02-14 10:12  momjian
+
+	* doc/TODO: Update TODO list.
+
+2001-02-14 01:10  momjian
+
+	* src/interfaces/odbc/psqlodbc.rc: Add 7.X to dialog box.
+
+2001-02-14 00:45  momjian
+
+	* src/interfaces/odbc/: GNUmakefile, bind.c, bind.h, columninfo.c,
+	columninfo.h, connection.c, connection.h, convert.c, convert.h,
+	dlg_specific.c, dlg_specific.h, drvconn.c, environ.c, environ.h,
+	execute.c, gpps.c, gpps.h, info.c, iodbc.h, isql.h, isqlext.h,
+	lobj.c, lobj.h, misc.c, misc.h, options.c, parse.c, pgtypes.c,
+	pgtypes.h, psqlodbc.c, psqlodbc.h, psqlodbc.rc, qresult.c,
+	qresult.h, resource.h, results.c, setup.c, socket.c, socket.h,
+	statement.c, statement.h, tuple.c, tuple.h, tuplelist.c,
+	tuplelist.h: Back out all ODBC formatting changes, and back out
+	removal of <6.4 protocol. I have left in Tom's SOCK_get_next_byte()
+	fix, and the new win32.mak file addition.  I have also left in the
+	'X' connection close fix.
+
+2001-02-13 21:42  momjian
+
+	* doc/TODO: Update TODO list.
+
+2001-02-13 17:35  petere
+
+	* doc/src/sgml/stylesheet.dsl: Hmm, so referencing a CSS stylesheet
+	when there isn't one doesn't work everywhere.
+
+2001-02-13 17:05  petere
+
+	* doc/src/sgml/release.sgml: Fix markup.
+
+2001-02-13 16:51  petere
+
+	* doc/src/sgml/Makefile: Didn't work when Makefile.custom is
+	missing.
+
+2001-02-13 16:27  petere
+
+	* doc/src/sgml/: Makefile, stylesheet.dsl: Custom DSSSL stylesheet.
+	 Style changes included here: HTML: * make .html the default
+	extension * allow use of CSS stylesheet ("stylesheet.css", not
+	included) * make <set> TOC two levels deep * put time of creation
+	into meta header Print: * make print output justified by default *
+	footnotes at bottom of each page * allow TeX to hyphenate
+
+2001-02-13 16:13  petere
+
+	* doc/src/sgml/queries.sgml: Fix tag.
+
+2001-02-13 15:54  momjian
+
+	* doc/: TODO, TODO: Update TODO list.
+
+2001-02-13 15:40  vadim
+
+	* src/backend/access/transam/xlog.c: Comments about
+	GetFreeXLBuffer().  GetFreeXLBuffer(): use Insert->LgwrResult
+	instead of private LgwrResult copy if it's more fresh (attempt to
+	avoid acquiring info_lck/lgwr_lck).
+
+2001-02-13 11:39  peter
+
+	* src/interfaces/jdbc/: CHANGELOG, org/postgresql/Field.java,
+	org/postgresql/ResultSet.java,
+	org/postgresql/jdbc2/Connection.java,
+	org/postgresql/jdbc2/DatabaseMetaData.java,
+	org/postgresql/jdbc2/PreparedStatement.java,
+	org/postgresql/jdbc2/ResultSet.java,
+	org/postgresql/jdbc2/Statement.java,
+	org/postgresql/test/JDBC2Tests.java,
+	org/postgresql/test/jdbc2/ConnectionTest.java,
+	org/postgresql/test/jdbc2/DatabaseMetaDataTest.java,
+	org/postgresql/test/jdbc2/DateTest.java,
+	org/postgresql/test/jdbc2/JBuilderTest.java,
+	org/postgresql/test/jdbc2/MiscTest.java,
+	org/postgresql/test/jdbc2/TimeTest.java,
+	org/postgresql/test/jdbc2/TimestampTest.java,
+	org/postgresql/util/PGmoney.java: Some more including the patch to
+	DatabaseMetaData backed out by Bruce.
+	
+	Tue Feb 13 16:33:00 GMT 2001 peter@retep.org.uk 	- More
+	TestCases implemented. Refined the test suite api's.	      -
+	Removed need for SimpleDateFormat in ResultSet.getDate() improving 
+		  performance.		- Rewrote ResultSet.getTime() so
+	that it uses JDK api's better.
+	
+	Tue Feb 13 10:25:00 GMT 2001 peter@retep.org.uk 	- Added
+	MiscTest to hold reported problems from users.		- Fixed
+	PGMoney.	  - JBuilder4/JDBCExplorer now works with Money
+	fields. Patched Field & 	   ResultSet (lots of methods) for
+	this one. Also changed cash/money to		return type DOUBLE
+	not DECIMAL. This broke JBuilder as zero scale		 
+	BigDecimal's can't have decimal places! 	 - When a Statement
+	is reused, the previous ResultSet is now closed.	  - Removed
+	deprecated call in ResultSet.getTime()
+	
+	Thu Feb 08 18:53:00 GMT 2001 peter@retep.org.uk 	- Changed a
+	couple of settings in DatabaseMetaData where 7.1 now	      
+	supports those features 	- Implemented the DatabaseMetaData
+	TestCase.
+	
+	Wed Feb 07 18:06:00 GMT 2001 peter@retep.org.uk 	- Added
+	comment to Connection.isClosed() explaining why we deviate from    
+	      the JDBC2 specification.		- Fixed bug where the
+	Isolation Level is lost while in autocommit mode.	   - Fixed
+	bug where several calls to getTransactionIsolationLevel()	   
+	 returned the first call's result.
+
+2001-02-13 11:11  momjian
+
+	* doc/TODO: Update TODO list.
+
+2001-02-13 10:43  momjian
+
+	* src/interfaces/jdbc/org/postgresql/jdbc2/DatabaseMetaData.java:
+	Back out *inv* changes for this file.  Peter want to handle it.
+
+2001-02-13 09:33  momjian
+
+	* src/test/regress/expected/: abstime-1947-PDT.out,
+	horology-1947-PDT.out, tinterval-1947-PDT.out: Remove unused files,
+	per Andreas
+
+2001-02-13 09:32  momjian
+
+	* src/: backend/utils/adt/nabstime.c,
+	backend/utils/adt/timestamp.c, include/port/aix.h,
+	include/port/irix5.h, test/regress/resultmap: Please apply the
+	following patch to fix AIX and IRIX timestamp behavior as
+	previously discussed.
+	
+	It makes AIX and IRIX not use DST for dates before 1970.
+	
+	The following expected files need to be removed from the regression
+	tests, they contain wrong results and are not needed any more.
+	
+	src/test/regress/expected/horology-1947-PDT.out
+	src/test/regress/expected/tinterval-1947-PDT.out
+	src/test/regress/expected/abstime-1947-PDT.out
+	
+	Zeugswetter Andreas
+
+2001-02-13 03:44  vadim
+
+	* src/backend/access/transam/xlog.c: Removed abort() in
+	XLogFileOpen.
+
+2001-02-12 20:57  pjw
+
+	* src/backend/commands/sequence.c: Added some comments to setval,
+	setval_is_called and do_setval
+
+2001-02-12 20:31  pjw
+
+	* src/bin/pg_dump/: pg_backup_archiver.h, pg_backup_tar.c,
+	pg_dump.c: - Fix help output: replace 'f' with 't' and change desc
+	- Add extra arg to formatStringLiteral to specify how to handle LF
+	& TAB.	  I opted for encoding them except in procedure bodies &
+	comments  - Fixed bug in tar file input when restoring blobs
+
+2001-02-12 19:02  tgl
+
+	* src/: backend/regex/engine.c, backend/regex/regcomp.c,
+	backend/regex/regerror.c, backend/regex/regexec.c,
+	backend/regex/regfree.c, include/regex/cclass.h,
+	include/regex/regex.h, include/regex/regex2.h: Clean up portability
+	problems in regexp package: change all routine definitions from K&R
+	to ANSI C style, and fix broken assumption that int and long are
+	the same datatype.  This repairs problems observed on Alpha with
+	regexps having between 32 and 63 states.
+
+2001-02-12 17:50  momjian
+
+	* src/interfaces/odbc/win32.mak: Attached is a makefile for the
+	ODBC driver for use under win32. It has been tested only with MS
+	VC++ 6.0SP4 using nmake.
+	
+	Dave Page
+
+2001-02-12 17:17  tgl
+
+	* src/include/regex/regexp.h: Hmm, this isn't used either.
+
+2001-02-12 17:13  tgl
+
+	* src/include/regex/cdefs.h: Remove unused and
+	largely-broken-anyway compatibility defs.
+
+2001-02-12 16:49  momjian
+
+	* contrib/oid2name/oid2name.c: Bruce Momjian
+	<pgman@candle.pha.pa.us> writes:
+	> OK, add #include <stdio.h> to the file.  That should fix it.
+	
+	Seems unlikely, since libpq-fe.h already includes <stdio.h>.
+	
+	The real problem here is that the code is wrong: it's passing NULL
+	to an int parameter.
+	
+				regards, tom lane
+
+2001-02-12 16:45  momjian
+
+	* src/interfaces/odbc/resource.h: New MS resource file, pgindented.
+
+2001-02-12 16:03  tgl
+
+	* src/backend/nodes/readfuncs.c: Suppress compiler warning on
+	Alpha.
+
+2001-02-12 15:07  tgl
+
+	* src/: include/catalog/pg_type.h, backend/catalog/heap.c,
+	backend/catalog/pg_type.c, backend/commands/define.c: Rearrange
+	order of operations in heap_create_with_catalog so that if two
+	transactions create the same table name concurrently, the one that
+	fails will complain about unique index pg_class_relname_index,
+	rather than about pg_type_typname_index which'll confuse most
+	people.  Free side benefit: pg_class.reltype is correctly linked to
+	the pg_type entry now.	It's been zero in all but the preloaded
+	pg_class entries since who knows when.
+
+2001-02-12 13:46  momjian
+
+	* src/backend/optimizer/util/clauses.c: Cleanup
+
+2001-02-12 13:37  momjian
+
+	* contrib/oid2name/oid2name.c: Add stdio to file.
+
+2001-02-12 13:30  momjian
+
+	* contrib/intarray/_int.c, src/backend/optimizer/util/clauses.c,
+	src/tools/pgindent/pgindent: Add // -> /* */ mapping to pgindent.
+
+2001-02-12 12:54  momjian
+
+	* src/interfaces/odbc/resource.h: Update ODBC resource MS-generated
+	file.
+
+2001-02-12 09:21  momjian
+
+	* doc/src/sgml/: datetime.sgml, func.sgml:  User Manual
+	  Chapter 4
+	   String Operators
+	    Table 4.7: Other String Functions
+	      strpos is missing the result in the result column, it should
+	be 2
+	      Also to_ascii might need a result but maybe not.
+	
+	Appendix A In the Time Zone Table  Greenwich is spelled Greenwish
+	
+	David Aldrich
+
+2001-02-12 09:17  momjian
+
+	* src/interfaces/odbc/resource.h: Change more // comments.
+
+2001-02-12 08:56  momjian
+
+	* src/interfaces/ecpg/lib/execute.c: Remove // and make /* */
+
+2001-02-12 08:55  momjian
+
+	* contrib/oid2name/oid2name.c: Add	#include <unistd.h>
+
+2001-02-12 08:09  momjian
+
+	* doc/src/sgml/release.sgml: New release format, Peter E style.
+
+2001-02-12 07:59  momjian
+
+	* src/interfaces/odbc/resource.h: Replace // comments from file for
+	MS products.
+
+2001-02-12 07:52  momjian
+
+	* src/backend/utils/adt/formatting.c: poit -> point.
+
+2001-02-11 18:46  tgl
+
+	* src/interfaces/odbc/socket.c: SOCK_get_next_byte should not
+	return garbage after error/EOF.  Return zero bytes instead.
+
+2001-02-11 18:34  momjian
+
+	* src/interfaces/odbc/socket.c: Remove unneeded shutdown() call,
+	per Tom Lane.
+
+2001-02-11 18:12  tgl
+
+	* src/backend/postmaster/postmaster.c: Improve error message when
+	startup or shutdown proc fails.
+
+2001-02-11 09:20  momjian
+
+	* doc/src/sgml/release.sgml: Move release date into release
+	heading.
+
+2001-02-11 08:58  momjian
+
+	* src/interfaces/odbc/: connection.h, isql.h, isqlext.h: More
+	cleanups.
+
+2001-02-11 08:53  momjian
+
+	* src/interfaces/odbc/: columninfo.h, connection.h, dlg_specific.h,
+	gpps.h, iodbc.h, isql.h, isqlext.h, misc.h, pgtypes.h, psqlodbc.h,
+	socket.h, statement.h: Include file alignment fixes.
+
+2001-02-11 08:15  momjian
+
+	* src/interfaces/odbc/socket.c: Move X packet before shutdown().
+
+2001-02-11 00:58  momjian
+
+	* src/: interfaces/odbc/bind.c, interfaces/odbc/columninfo.h,
+	interfaces/odbc/connection.c, interfaces/odbc/connection.h,
+	interfaces/odbc/drvconn.c, interfaces/odbc/environ.c,
+	interfaces/odbc/execute.c, interfaces/odbc/gpps.h,
+	interfaces/odbc/info.c, interfaces/odbc/iodbc.h,
+	interfaces/odbc/isql.h, interfaces/odbc/isqlext.h,
+	interfaces/odbc/options.c, interfaces/odbc/pgtypes.h,
+	interfaces/odbc/psqlodbc.c, interfaces/odbc/psqlodbc.h,
+	interfaces/odbc/results.c, interfaces/odbc/socket.h,
+	interfaces/odbc/statement.c, interfaces/odbc/statement.h,
+	tools/pgindent/README, tools/pgindent/pgindent: Source alignment
+	cleanups.
+
+2001-02-11 00:15  momjian
+
+	* src/tools/pgindent/pgindent: More updates.
+
+2001-02-11 00:13  momjian
+
+	* src/: interfaces/odbc/bind.c, interfaces/odbc/bind.h,
+	interfaces/odbc/columninfo.c, interfaces/odbc/columninfo.h,
+	interfaces/odbc/connection.c, interfaces/odbc/connection.h,
+	interfaces/odbc/convert.c, interfaces/odbc/convert.h,
+	interfaces/odbc/dlg_specific.c, interfaces/odbc/dlg_specific.h,
+	interfaces/odbc/drvconn.c, interfaces/odbc/environ.c,
+	interfaces/odbc/environ.h, interfaces/odbc/execute.c,
+	interfaces/odbc/gpps.h, interfaces/odbc/info.c,
+	interfaces/odbc/isql.h, interfaces/odbc/isqlext.h,
+	interfaces/odbc/lobj.c, interfaces/odbc/lobj.h,
+	interfaces/odbc/options.c, interfaces/odbc/parse.c,
+	interfaces/odbc/pgtypes.c, interfaces/odbc/pgtypes.h,
+	interfaces/odbc/psqlodbc.h, interfaces/odbc/qresult.c,
+	interfaces/odbc/qresult.h, interfaces/odbc/results.c,
+	interfaces/odbc/setup.c, interfaces/odbc/socket.c,
+	interfaces/odbc/socket.h, interfaces/odbc/statement.c,
+	interfaces/odbc/statement.h, interfaces/odbc/tuple.c,
+	interfaces/odbc/tuple.h, interfaces/odbc/tuplelist.c,
+	interfaces/odbc/tuplelist.h, tools/pgindent/pgindent: More cleanup.
+
+2001-02-11 00:04  momjian
+
+	* src/interfaces/odbc/socket.c: More cleanup.
+
+2001-02-10 23:56  momjian
+
+	* src/interfaces/: libpq/fe-misc.c, odbc/convert.c,
+	odbc/dlg_specific.c, odbc/drvconn.c, odbc/execute.c, odbc/info.c,
+	odbc/isql.h, odbc/options.c, odbc/qresult.c, odbc/resource.h,
+	odbc/setup.c, odbc/socket.c, odbc/statement.c, odbc/tuplelist.c:
+	Cleanup of source.
+
+2001-02-10 21:18  momjian
+
+	* contrib/Makefile: Add to Makefile.
+
+2001-02-10 21:18  momjian
+
+	* contrib/: README, pg_logger/Makefile, pg_logger/README.pg_logger,
+	pg_logger/pg_logger.c: Add pg_logger to /contrib.
+
+2001-02-10 21:01  momjian
+
+	* src/interfaces/odbc/: info.c, psqlodbc.h, psqlodbc.rc,
+	resource.h: The attached patch does the following:
+	
+	1) Tidies up the Datasource Dialogue now the version options are
+	gone.  2) Tidies a comment in info.c.  3) Increments all version
+	numbers to 07.01.0003 to take account of recent revisions.
+	
+	Regards, Dave Page
+
+2001-02-10 20:59  ishii
+
+	* src/backend/utils/mb/: common.c, wchar.c: Move
+	pg_encoding_mblen() from common.c to wchar.c.
+
+2001-02-10 20:56  ishii
+
+	* src/backend/utils/mb/conv.c: conv.c did not compile anymore. Fix
+	wrong header file inclusion.
+
+2001-02-10 20:52  ishii
+
+	* src/interfaces/libpq/Makefile: Clean up mutibyte supoorting
+	source files.  Now only wchar.c is shared by fronetnd/backend.
+
+2001-02-10 20:48  momjian
+
+	* HISTORY, doc/src/sgml/release.sgml: Clean up HISTORY file, add
+	dates to releases.
+
+2001-02-10 20:41  petere
+
+	* doc/src/sgml/ref/pg_dumpall.sgml: Repair markup.
+
+2001-02-10 18:35  momjian
+
+	* src/interfaces/odbc/socket.c: Disable X connection close in ODBC
+	until solution is found.
+
+2001-02-10 17:53  momjian
+
+	* src/pl/plpgsql/src/gram.y: Format to match standard conventions
+
+2001-02-10 17:42  momjian
+
+	* src/pl/plpgsql/src/gram.y: Convert to standard 4-space tabs.
+
+2001-02-10 17:31  petere
+
+	* configure, configure.in, config/missing, config/programs.m4,
+	contrib/cube/Makefile, contrib/seg/Makefile,
+	src/backend/bootstrap/Makefile, src/backend/parser/Makefile,
+	src/interfaces/ecpg/preproc/Makefile, src/pl/plpgsql/src/Makefile:
+	Only look for bison as YACC; other yaccs need to be selected
+	explicitly.  When no suitable YACC is configured, supply useful
+	informational messages to users.  (Same way flex has been handled
+	for a while.)
+
+2001-02-10 13:46  momjian
+
+	* src/Makefile.shlib: move comment
+
+2001-02-10 13:24  petere
+
+	* doc/src/sgml/installation.sgml: Document that NetBSD's libedit
+	can be used instead of readline.
+
+2001-02-10 13:02  petere
+
+	* doc/src/sgml/datatype.sgml: Add note about the availability of
+	contrib/mac for the macaddr data type.
+
+2001-02-10 12:36  momjian
+
+	* src/Makefile.shlib: Add comment about linker/compiler on bsd.
+
+2001-02-10 12:17  momjian
+
+	* src/: Makefile.shlib, makefiles/Makefile.freebsd,
+	makefiles/Makefile.openbsd: Fix -Bsymbolic for FreeBSD and OpenBSD.
+	 NetBSD already had all these fixes.
+
+2001-02-10 11:51  petere
+
+	* src/: Makefile.shlib, interfaces/odbc/GNUmakefile,
+	makefiles/Makefile.bsdi: Repair BSD/OS shared library fixes.
+
+2001-02-10 11:41  momjian
+
+	* doc/src/sgml/ref/alter_table.sgml: Back out addition.  Seems
+	grammar doesn't handle CONSTRAINT as optional.
+
+2001-02-10 11:39  momjian
+
+	* doc/src/sgml/ref/alter_table.sgml: Add mention of CONSTRAINT in
+	ADD CONSTRAINT section.
+
+2001-02-10 11:26  momjian
+
+	* src/Makefile.shlib: Revert shlib changes.
+
+2001-02-10 11:25  momjian
+
+	* src/: Makefile.shlib, interfaces/odbc/psqlodbc.rc: Remove protcol
+	option buttons.
+
+2001-02-10 10:59  momjian
+
+	* src/interfaces/odbc/GNUmakefile: ODBC BSD/OS fix.
+
+2001-02-10 07:07  momjian
+
+	* contrib/Makefile: cleanup
+
+2001-02-10 06:59  momjian
+
+	* contrib/mysql/README: Add URL for my2pg.pl.
+
+2001-02-10 06:53  momjian
+
+	* contrib/mysql/README: Add description.
+
+2001-02-10 06:46  momjian
+
+	* contrib/README: Add both conversion utilities.
+
+2001-02-10 06:43  momjian
+
+	* contrib/mysql/my2pg.pl: cleanup
+
+2001-02-10 06:43  momjian
+
+	* contrib/mysql/my2pg.pl: Add other mysql conversion utility for
+	comparisons.
+
+2001-02-10 06:31  momjian
+
+	* src/interfaces/odbc/GNUmakefile: Allow -Bsymbolic on BSDI for
+	ODBC.
+
+2001-02-10 05:27  petere
+
+	* src/bin/ipcclean/ipcclean.sh: Fix on Linux
+
+2001-02-10 03:30  tgl
+
+	* doc/src/sgml/queries.sgml: Minor improvements and copy-editing.
+
+2001-02-10 02:11  momjian
+
+	* src/interfaces/odbc/: bind.c, columninfo.c, connection.c,
+	convert.c, dlg_specific.c, drvconn.c, environ.c, execute.c, info.c,
+	lobj.c, misc.c, options.c, parse.c, pgtypes.c, psqlodbc.c,
+	qresult.c, results.c, setup.c, socket.c, statement.c, tuplelist.c:
+	More ODBC formatting cleanup.
+
+2001-02-10 02:08  tgl
+
+	* doc/src/sgml/syntax.sgml: Fix example of syntactic ambiguity
+	between prefix/infix/postfix operators --- Postgres now accepts the
+	example we claimed it wouldn't.  Miscellaneous copy-editing as
+	well.
+
+2001-02-10 02:01  momjian
+
+	* src/: interfaces/odbc/bind.c, interfaces/odbc/bind.h,
+	interfaces/odbc/columninfo.c, interfaces/odbc/columninfo.h,
+	interfaces/odbc/connection.c, interfaces/odbc/connection.h,
+	interfaces/odbc/convert.c, interfaces/odbc/convert.h,
+	interfaces/odbc/dlg_specific.c, interfaces/odbc/dlg_specific.h,
+	interfaces/odbc/drvconn.c, interfaces/odbc/environ.c,
+	interfaces/odbc/environ.h, interfaces/odbc/execute.c,
+	interfaces/odbc/gpps.c, interfaces/odbc/gpps.h,
+	interfaces/odbc/info.c, interfaces/odbc/iodbc.h,
+	interfaces/odbc/isql.h, interfaces/odbc/isqlext.h,
+	interfaces/odbc/lobj.c, interfaces/odbc/lobj.h,
+	interfaces/odbc/misc.c, interfaces/odbc/misc.h,
+	interfaces/odbc/options.c, interfaces/odbc/parse.c,
+	interfaces/odbc/pgtypes.c, interfaces/odbc/pgtypes.h,
+	interfaces/odbc/psqlodbc.c, interfaces/odbc/psqlodbc.h,
+	interfaces/odbc/qresult.c, interfaces/odbc/qresult.h,
+	interfaces/odbc/resource.h, interfaces/odbc/results.c,
+	interfaces/odbc/setup.c, interfaces/odbc/socket.c,
+	interfaces/odbc/socket.h, interfaces/odbc/statement.c,
+	interfaces/odbc/statement.h, interfaces/odbc/tuple.c,
+	interfaces/odbc/tuple.h, interfaces/odbc/tuplelist.c,
+	interfaces/odbc/tuplelist.h, tools/pgindent/README: Run pgindent
+	over ODBC source.  We couldn't do this years ago because we weren't
+	the master source.  We are now, and it really needs it.
+
+2001-02-10 01:58  momjian
+
+	* src/interfaces/odbc/statement.c: Remove protocol-dependent code. 
+	This should have been on previous commit.
+
+2001-02-10 01:57  momjian
+
+	* src/interfaces/odbc/: connection.c, connection.h, dlg_specific.c,
+	psqlodbc.h, resource.h, statement.c: Cleanup
+
+2001-02-10 01:12  momjian
+
+	* src/bin/ipcclean/ipcclean.sh: More cleanup, again not sure it
+	works.
+
+2001-02-10 00:55  momjian
+
+	* src/bin/ipcclean/ipcclean.sh: Clean up bad variable used in
+	script.  Still not sure it works under Linux.
+
+2001-02-10 00:50  momjian
+
+	* src/interfaces/odbc/: GNUmakefile, bind.c, columninfo.c,
+	connection.c, convert.c, dlg_specific.c, drvconn.c, environ.c,
+	execute.c, info.c, lobj.c, misc.c, options.c, parse.c, pgtypes.c,
+	psqlodbc.c, qresult.c, results.c, setup.c, socket.c, statement.c,
+	tuple.c, tuplelist.c: Properly exit ODBC with 'X', allow linking on
+	BSD/OS.
+
+2001-02-10 00:32  tgl
+
+	* doc/src/sgml/plsql.sgml: Fix documentation of EXECUTE, add
+	documentation of FOR ... EXECUTE.
+
+2001-02-09 23:07  tgl
+
+	* src/include/storage/s_lock.h: Fix byte-vs-word-width oversight in
+	m68k TAS() code.  Man, this brings back some old memories ...
+
+2001-02-09 22:57  tgl
+
+	* contrib/findoidjoins/README.findoidjoins: Update findoidjoins
+	notes for 7.1.
+
+2001-02-09 22:44  tgl
+
+	* contrib/findoidjoins/findoidjoins.c: Compile a little more
+	cleanly.
+
+2001-02-09 22:44  tgl
+
+	* contrib/Makefile: Add oid2name subdirectory to contrib Makefile.
+
+2001-02-09 22:12  tgl
+
+	* src/interfaces/odbc/statement.c: Ignore leading whitespace when
+	trying to determine statement type, so that ODBC driver doesn't go
+	belly up by failing to recognize a SELECT as such.
+
+2001-02-09 21:31  tgl
+
+	* GNUmakefile.in, Makefile, contrib/cube/cubedata.h,
+	contrib/earthdistance/earthdistance.c, contrib/fulltextindex/fti.c,
+	contrib/intarray/_int.c, contrib/isbn_issn/isbn_issn.c,
+	contrib/lo/lo.c, contrib/pg_dumplo/main.c,
+	contrib/pgbench/pgbench.c, contrib/pgcrypto/encode.c,
+	contrib/pgcrypto/internal.c, contrib/pgcrypto/krb.c,
+	contrib/pgcrypto/md5.c, contrib/pgcrypto/mhash.c,
+	contrib/pgcrypto/openssl.c, contrib/pgcrypto/pgcrypto.c,
+	contrib/pgcrypto/sha1.c, contrib/soundex/soundex.c,
+	contrib/string/string_io.c, doc/src/sgml/installation.sgml,
+	src/GNUmakefile.in, src/Makefile, src/backend/lib/dllist.c,
+	src/backend/libpq/hba.c, src/backend/libpq/pqsignal.c,
+	src/backend/port/snprintf.c, src/backend/port/dynloader/aix.h,
+	src/backend/port/dynloader/beos.c,
+	src/backend/port/dynloader/bsdi.h,
+	src/backend/port/dynloader/dgux.h,
+	src/backend/port/dynloader/freebsd.c,
+	src/backend/port/dynloader/freebsd.h,
+	src/backend/port/dynloader/hpux.c,
+	src/backend/port/dynloader/irix5.h,
+	src/backend/port/dynloader/linux.h,
+	src/backend/port/dynloader/netbsd.c,
+	src/backend/port/dynloader/netbsd.h,
+	src/backend/port/dynloader/nextstep.h,
+	src/backend/port/dynloader/openbsd.c,
+	src/backend/port/dynloader/openbsd.h,
+	src/backend/port/dynloader/qnx4.c,
+	src/backend/port/dynloader/sco.h,
+	src/backend/port/dynloader/solaris.h,
+	src/backend/port/dynloader/sunos4.h,
+	src/backend/port/dynloader/svr4.h,
+	src/backend/port/dynloader/ultrix4.c,
+	src/backend/port/dynloader/univel.h,
+	src/backend/port/dynloader/unixware.h,
+	src/backend/port/dynloader/win.h,
+	src/backend/postmaster/postmaster.c,
+	src/backend/storage/large_object/inv_api.c,
+	src/backend/utils/adt/varchar.c, src/backend/utils/adt/varlena.c,
+	src/backend/utils/fmgr/fmgr.c, src/backend/utils/mb/alt.c,
+	src/backend/utils/mb/big5.c, src/backend/utils/mb/common.c,
+	src/backend/utils/mb/conv.c, src/backend/utils/mb/iso.c,
+	src/backend/utils/mb/liketest.c, src/backend/utils/mb/mbutils.c,
+	src/backend/utils/mb/wchar.c, src/backend/utils/mb/win.c,
+	src/backend/utils/mb/wstrcmp.c, src/backend/utils/mb/wstrncmp.c,
+	src/bin/pg_dump/common.c, src/bin/pg_dump/pg_backup.h,
+	src/bin/pg_dump/pg_backup_archiver.h,
+	src/bin/pg_dump/pg_backup_custom.c, src/bin/pg_dump/pg_backup_db.c,
+	src/bin/pg_dump/pg_backup_files.c,
+	src/bin/pg_dump/pg_backup_null.c, src/bin/pg_dump/pg_backup_tar.c,
+	src/bin/pg_dump/pg_dump.c, src/bin/pg_dump/pg_dump.h,
+	src/bin/pg_dump/pg_restore.c, src/bin/pg_id/pg_id.c,
+	src/bin/pg_passwd/pg_passwd.c, src/bin/psql/command.c,
+	src/bin/psql/common.c, src/bin/psql/common.h, src/bin/psql/copy.c,
+	src/bin/psql/describe.c, src/bin/psql/help.c, src/bin/psql/input.c,
+	src/bin/psql/large_obj.c, src/bin/psql/mainloop.c,
+	src/bin/psql/mainloop.h, src/bin/psql/print.c,
+	src/bin/psql/prompt.c, src/bin/psql/startup.c,
+	src/bin/psql/stringutils.c, src/bin/psql/tab-complete.c,
+	src/bin/psql/tab-complete.h, src/bin/psql/variables.c,
+	src/include/Makefile, src/include/c.h, src/include/miscadmin.h,
+	src/include/postgres.h, src/include/postgres_ext.h,
+	src/include/postgres_fe.h, src/include/executor/spi.h,
+	src/include/libpq/libpq-fs.h, src/include/libpq/pqcomm.h,
+	src/include/mb/pg_wchar.h, src/include/regex/regex.h,
+	src/include/regex/regex2.h, src/include/regex/utils.h,
+	src/include/storage/ipc.h, src/include/utils/dynamic_loader.h,
+	src/include/utils/exc.h, src/include/utils/geo_decls.h,
+	src/include/utils/guc.h, src/include/utils/palloc.h,
+	src/interfaces/ecpg/lib/extern.h,
+	src/interfaces/ecpg/preproc/c_keywords.c,
+	src/interfaces/ecpg/preproc/descriptor.c,
+	src/interfaces/ecpg/preproc/ecpg.c,
+	src/interfaces/ecpg/preproc/ecpg_keywords.c,
+	src/interfaces/ecpg/preproc/extern.h,
+	src/interfaces/ecpg/preproc/keywords.c,
+	src/interfaces/ecpg/preproc/output.c,
+	src/interfaces/ecpg/preproc/pgc.l,
+	src/interfaces/ecpg/preproc/preproc.y,
+	src/interfaces/ecpg/preproc/type.c,
+	src/interfaces/ecpg/preproc/type.h,
+	src/interfaces/ecpg/preproc/variable.c,
+	src/interfaces/libpgtcl/pgtcl.c,
+	src/interfaces/libpgtcl/pgtclCmds.c,
+	src/interfaces/libpgtcl/pgtclId.c, src/interfaces/libpq/fe-auth.c,
+	src/interfaces/libpq/fe-connect.c, src/interfaces/libpq/fe-exec.c,
+	src/interfaces/libpq/fe-lobj.c, src/interfaces/libpq/fe-misc.c,
+	src/interfaces/libpq/fe-print.c, src/interfaces/libpq/libpq-int.h,
+	src/interfaces/libpq/pqexpbuffer.c,
+	src/interfaces/libpq/pqsignal.h,
+	src/interfaces/libpq++/pgconnection.h, src/test/regress/regress.c,
+	src/tutorial/funcs.c, src/tutorial/funcs_new.c: Restructure the key
+	include files per recent pghackers discussion: there are now
+	separate files "postgres.h" and "postgres_fe.h", which are meant to
+	be the primary include files for backend .c files and frontend .c
+	files respectively.  By default, only include files meant for
+	frontend use are installed into the installation include directory.
+	 There is a new make target 'make install-all-headers' that adds
+	the whole content of the src/include tree to the installed fileset,
+	for use by people who want to develop server-side code without
+	keeping the complete source tree on hand.  Cleaned up a whole lot
+	of crufty and inconsistent header inclusions.
+
+2001-02-09 19:50  petere
+
+	* doc/src/sgml/runtime.sgml: Update section about how to start
+	server from boot scripts.
+
+2001-02-09 19:13  petere
+
+	* contrib/start-scripts/freebsd: Add new FreeBSD start script that
+	makes use of new pg_ctl functionality.
+
+2001-02-09 17:23  momjian
+
+	* src/interfaces/jdbc/org/postgresql/: jdbc1/DatabaseMetaData.java,
+	jdbc2/DatabaseMetaData.java: Remove last code that assumed
+	xinv/xinx are large object files.
+
+2001-02-09 15:38  petere
+
+	* doc/src/sgml/runtime.sgml: Avoid a particular <simplelist>. 
+	jadetex has formatting problems, apparently when the content is
+	long enough to require line breaks.
+
+2001-02-09 15:24  petere
+
+	* config/prep_buildtree: Make more portable.
+
+2001-02-09 14:26  tgl
+
+	* src/backend/port/hpux/port-protos.h: This hasn't been used for
+	anything for a long time...
+
+2001-02-09 14:24  momjian
+
+	* doc/src/sgml/lobj.sgml: Large object manual updates.
+
+2001-02-09 13:42  tgl
+
+	* contrib/Makefile: Remove link to dead subdirectory 'linux'.
+
+2001-02-09 12:55  momjian
+
+	* HISTORY, doc/src/sgml/release.sgml: Mention NetBSD
+
+2001-02-09 12:53  momjian
+
+	* HISTORY, doc/src/sgml/release.sgml: Remove pg_service mention.
+
+2001-02-09 12:37  momjian
+
+	* doc/TODO: Update TODO list.
+
+2001-02-09 12:30  tgl
+
+	* src/backend/access/heap/tuptoaster.c: When updating a tuple
+	containing compressed-in-line fields, do not decompress the
+	existing fields unnecessarily.
+
+2001-02-09 12:16  momjian
+
+	* HISTORY, doc/src/sgml/release.sgml,
+	doc/src/sgml/ref/pg_dumpall.sgml, src/bin/pg_dump/pg_dumpall.sh:
+	Add -g as synonmym for --globals-only in pg_dumpall.  Add info
+	about -c,--clean option to manual page.
+
+2001-02-09 10:20  momjian
+
+	* doc/: TODO, TODO: Update TODO list.
+
+2001-02-09 10:15  momjian
+
+	* doc/TODO: Update TODO list.
+
+2001-02-09 10:13  momjian
+
+	* src/: include/port/qnx4.h, interfaces/ecpg/preproc/pgc.l: I have
+	deleted the include of termios.h in include/port/qnx4.h.  Then I
+	recompiled pgsql and I have compiled a program with ecpg.
+	
+	I have removed the termios.h, and the ECHO hack.
+	
+	Thanks Maurizio
+
+2001-02-09 01:03  inoue
+
+	* src/interfaces/odbc/statement.c: Change SELECT to not trigger
+	"BEGIN" in not autocommit mode.
+
+2001-02-08 22:26  tgl
+
+	* src/: include/parser/gramparse.h, backend/parser/gram.y,
+	pl/plpgsql/src/pl_comp.c: plpgsql's private copy of xlateSqlType
+	was out of sync.  Again.  This is clearly not maintainable, so dike
+	it out in favor of calling the real version in the backend's
+	gram.y.
+
+2001-02-08 22:06  tgl
+
+	* doc/src/sgml/pltcl.sgml: Document PL/TclU language variant, and
+	do some minor copy-editing.
+
+2001-02-08 21:20  tgl
+
+	* doc/src/sgml/xplang.sgml: Restructure discussion of PL
+	installation to emphasize createlang as the recommended install
+	procedure, rather than mentioning it as an afterthought.
+
+2001-02-08 20:05  tgl
+
+	* src/pl/plpgsql/src/: INSTALL, Makefile, mklang.sql.in: Remove
+	no-longer-needed mklang script; now superseded by createlang.
+
+2001-02-08 19:14  tgl
+
+	* src/pl/plpgsql/src/pl_exec.c: EXECUTE of a SELECT ... INTO now
+	draws a 'not implemented' error, rather than executing the INTO
+	clause with non-plpgsql semantics as it was doing for the last few
+	weeks/months.  This keeps our options open for making it do the
+	right plpgsql-ish thing in future without creating a backwards
+	compatibility problem.	There is no loss of functionality since
+	people can get the same behavior with CREATE TABLE AS.
+
+2001-02-08 14:53  petere
+
+	* contrib/: README, start-scripts/linux: Remove outdated
+	contrib/linux start scripts.  Beat some sense into contrib/init.d
+	start script.  Place into more aptly named directory.  Maybe we
+	could add scripts for other platforms here later.
+
+2001-02-08 14:39  petere
+
+	* doc/src/sgml/ref/pg_ctl-ref.sgml, src/bin/pg_ctl/pg_ctl.sh: Make
+	-w the default for shut down, add -W option to specify no wait. 
+	Add -l option to name log file.  Set umask to 077.  Proper file
+	descriptor redirection to allow postmaster to detach from shell's
+	process group.	Add -s option to turn off informational messages.
+
+2001-02-07 20:54  inoue
+
+	* src/interfaces/odbc/connection.c: Fix a misuse of 'char *'
+	declaration.
+
+2001-02-07 19:35  tgl
+
+	* src/backend/postmaster/postmaster.c: When launching a child
+	backend, take care to close file descriptors for any other client
+	connections that may exist (which would only happen if another
+	client is currently in the authentication cycle).  This avoids
+	wastage of open descriptors in a child.  It might also explain
+	peculiar behaviors like not closing connections when expected,
+	since the kernel will probably not signal EOF as long as some other
+	backend is randomly holding open a reference to the connection,
+	even if the client went away long since ...
+
+2001-02-07 18:42  tgl
+
+	* src/backend/libpq/crypt.c: Back-patch password leak fix for
+	Vaschenko.
+
+2001-02-07 18:36  vadim
+
+	* src/backend/utils/misc/guc.c: FixBTree flag still exists and may
+	be used to turn runtime recovery OFF.
+
+2001-02-07 18:35  vadim
+
+	* src/backend/access/nbtree/: nbtinsert.c, nbtpage.c, nbtree.c:
+	Runtime btree recovery is now ON by default.
+
+2001-02-07 18:34  vadim
+
+	* src/include/access/nbtree.h: Macro for btree runtime fix.
+
+2001-02-07 18:31  tgl
+
+	* src/backend/libpq/crypt.c: Repair postmaster memory leakage
+	during password authentication.
+
+2001-02-07 16:30  tgl
+
+	* src/bin/pgaccess/lib/: database.tcl, mainlib.tcl: Redo pgaccess'
+	queries about views so that they will work in both 7.1 and prior
+	releases --- rely on pg_views view instead of direct access to
+	pg_class and pg_rewrite.
+
+2001-02-07 16:25  tgl
+
+	* src/bin/pgaccess/lib/qed: Not sure why this work script was in
+	the repository ... but it doesn't belong ...
+
+2001-02-07 15:46  tgl
+
+	* doc/src/sgml/ref/pgaccess-ref.sgml: Minor copy-editing.
+
+2001-02-07 15:30  tgl
+
+	* src/bin/pgaccess/: Makefile, main.tcl, pgaccess.sh,
+	lib/preferences.tcl: Use explicit path to libpgtcl.so, instead of
+	relying on LD_LIBRARY_PATH or local equivalent.  Also, honor
+	--with-pgport configure option for default port number, and allow
+	PGPORT environment variable to override this.
+
+2001-02-07 15:13  tgl
+
+	* configure, configure.in, src/Makefile.global.in: Make DEF_PGPORT
+	available to Makefiles, so it can be substituted into scripts like
+	pgaccess.
+
+2001-02-07 15:00  tgl
+
+	* src/: include/config.h.win32, interfaces/libpq/win32.h: Actually,
+	it looks like DEF_PGPORT belongs over in config.h.win32 for the
+	Windows build...
+
+2001-02-07 14:30  tgl
+
+	* src/interfaces/libpq/win32.h: Remove broken (and unnecessary)
+	definition of DEF_PGPORT.
+
+2001-02-07 13:22  petere
+
+	* src/interfaces/python/GNUmakefile: Only pass the -L* portions of
+	LDFLAGS to the Python build environment.  Other flags can have
+	unpredictable effects when Python uses different commands to build
+	than we do.
+
+2001-02-07 12:59  tgl
+
+	* src/backend/port/dynloader/hpux.c: Need to specify DYNAMIC_PATH
+	flag to shl_load, else HPUX's dld will not honor library search
+	path that we so carefully installed into the executable ...
+
+2001-02-07 11:32  momjian
+
+	* doc/: FAQ, src/FAQ/FAQ.html, FAQ, src/FAQ/FAQ.html: Update FAQ.
+
+2001-02-07 04:13  peter
+
+	* src/interfaces/jdbc/: CHANGELOG, build.xml, jdbc.jpx,
+	org/postgresql/jdbc2/ResultSet.java,
+	org/postgresql/test/JDBC2Tests.java,
+	org/postgresql/test/jdbc2/ANTTest.java,
+	org/postgresql/test/jdbc2/ConnectionTest.java,
+	org/postgresql/test/jdbc2/DriverTest.java: Some updates prior to
+	retrieving a fresh cvs copy:
+	
+	Tue Feb 06 19:00:00 GMT 2001 peter@retep.org.uk 	- Completed
+	first two TestCase's for the test suite. JUnit is now	       
+	recognised by ant.
+
+2001-02-06 23:50  momjian
+
+	* doc/TODO.detail/java: 
+	Add java.
+
+2001-02-06 23:50  momjian
+
+	* doc/TODO: Update TODO list.
+
+2001-02-06 23:48  momjian
+
+	* doc/TODO.detail/thread: Add item.
+
+2001-02-06 19:52  momjian
+
+	* doc/: TODO, TODO: Update TODO list.
+
+2001-02-06 14:20  petere
+
+	* configure, configure.in, config/programs.m4: Only use termcap xor
+	[n]curses, depending on what readline needs.  Solaris has problems
+	when linking with both.
+
+2001-02-06 13:05  momjian
+
+	* contrib/pgcrypto/: encode.c, pgcrypto.c: Well, learned the hard
+	way...
+	
+	Marko Kreen
+
+2001-02-06 13:02  momjian
+
+	* doc/TODO.detail/thread: Add.
+
+2001-02-06 12:47  momjian
+
+	* doc/TODO.detail/thread: Update /contrib and TODO.detail.
+
+2001-02-06 12:42  momjian
+
+	* doc/: TODO, TODO: Update TODO list.
+
+2001-02-06 12:00  petere
+
+	* src/backend/main/main.c: If the first argument is --version or
+	--help, skip the root check.
+
+2001-02-06 01:24  vadim
+
+	* src/backend/storage/page/bufpage.c: PageAddItem in overwrite
+	mode: must *NOT* check itemid' flag if OffsetNumber ==
+	MaxOffsetNumber + 1 - there may be garbage there!
+
+2001-02-05 23:28  momjian
+
+	* doc/: FAQ, src/FAQ/FAQ.html: Update FAQ.
+
+2001-02-05 21:21  inoue
+
+	* src/interfaces/odbc/: columninfo.c, connection.c, connection.h,
+	drvconn.c, info.c, psqlodbc.h, psqlodbc.rc: Improved version
+	handling introduced by Dave Page.  The driver version is 07.01.0002
+	now.  1) initialized pg_version by DSN's protocol info	  so that
+	we could always use pg_version info    once a connection is
+	established (pg_version()    didn't exist before 6.4).
+	PROTOCOL_XX() macros	are removed(except from connection.[ch]). 
+	2) provided a few macros to encapsulate connection's	version
+	info and replaced existent comparison	 stuff by those macros.  3)
+	change SQLTables() so that 7.1 servers could show    views.
+	
+	In addtion, the following patch from Dave Page is applied.
+	
+	  This patch fixes a bug in SQLGetInfo for SQL_DBMS_VER which
+	corrupted the
+	  driver version string. The driver version number has also been
+	incremented
+	  to 07.01.0002.
+	
+	  Regards, Dave. <<odbc.diff>>
+
+2001-02-05 21:02  tgl
+
+	* src/interfaces/libpq/fe-exec.c: Now that I look at it,
+	PQoidValue() ain't quite right either.
+
+2001-02-05 21:00  tgl
+
+	* src/interfaces/libpq/fe-exec.c: Repair PQoidStatus() bug reported
+	by darcy@druid.net.
+
+2001-02-05 20:53  tgl
+
+	* src/: include/utils/excid.h, include/utils/memutils.h,
+	backend/utils/error/excid.c, backend/utils/mmgr/mcxt.c:
+	Out-of-bounds memory allocation request sizes should be treated as
+	just elog(ERROR) not an Assert trap, since we've downgraded
+	out-of-memory to elog(ERROR) not a fatal error.  Also, change the
+	hard boundary from 256Mb to 1Gb, just so that anyone who's actually
+	got that much memory to spare can play with TOAST objects
+	approaching a gigabyte.
+
+2001-02-05 14:21  petere
+
+	* doc/src/sgml/func.sgml: Document BETWEEN.
+
+2001-02-05 12:37  momjian
+
+	* doc/: FAQ, src/FAQ/FAQ.html: Update FAQ.
+
+2001-02-05 12:35  petere
+
+	* src/backend/utils/adt/format_type.c: Dump/display 'timestamp' as
+	'timestamp with time zone', to make room for a future 'timestamp
+	without time zone', which SQL claims is equivalent to plain
+	'timestamp'.
+
+2001-02-04 10:28  petere
+
+	* doc/src/sgml/: admin.sgml, environ.sgml, filelist.sgml,
+	manage-ag.sgml, manage.sgml, programmer.sgml, user.sgml,
+	xplang.sgml: Move PL docs to programmer's guide, "storage" chapter
+	to admin guide, clean up some things in the affected areas.
+
+2001-02-04 09:09  petere
+
+	* configure, configure.in, src/Makefile.shlib,
+	src/interfaces/libpq/Makefile: Check for -lresolv.
+
+2001-02-04 08:21  petere
+
+	* src/interfaces/python/GNUmakefile: Pass LDFLAGS along with LIBS
+	to the Python build stuff, especially to pick up -L options.
+
+2001-02-04 07:23  petere
+
+	* doc/src/sgml/Makefile: Must run jadetex three times to get
+	correct page numbers.  Add support for pdfjadetex.
+
+2001-02-04 07:18  petere
+
+	* doc/src/sgml/ref/: create_table.sgml, select.sgml: When making
+	xrefs to refsects, the linkend should point to the refsect and the
+	endterm to the title element, not both to the title.  At least
+	docbook2man prefers it that way.
+
+2001-02-03 16:50  momjian
+
+	* HISTORY, doc/src/sgml/release.sgml: Re-add Peter E's changes.
+
+2001-02-03 16:17  tgl
+
+	* src/backend/optimizer/path/allpaths.c: Fix inappropriate attempt
+	to push down qual clauses into a view that has
+	UNION/INTERSECT/EXCEPT operations.  Per bug report from Ferrier.
+
+2001-02-03 15:13  petere
+
+	* src/backend/parser/scan.l: Use elog() instead of exit() for fatal
+	scanner errors.
+
+2001-02-03 14:09  petere
+
+	* doc/src/sgml/ref/psql-ref.sgml: Improved wording, from Albert
+	REINER <areiner@tph.tuwien.ac.at>.
+
+2001-02-03 14:03  petere
+
+	* doc/src/sgml/: Makefile, about.sgml, admin.sgml, developer.sgml,
+	filelist.sgml, history.sgml, info.sgml, intro-ag.sgml,
+	intro-pg.sgml, intro.sgml, legal.sgml, notation.sgml,
+	postgres.sgml, problems.sgml, programmer.sgml, reference.sgml,
+	tutorial.sgml, user.sgml, y2k.sgml: Update, polish, consistencify
+	preface/intro sections.
+
+2001-02-02 23:13  momjian
+
+	* contrib/README: Change description.
+
+2001-02-02 14:49  vadim
+
+	* src/backend/access/nbtree/nbtinsert.c: Runtime tree recovery is
+	implemented, just testing is left -:)
+
+2001-02-02 13:21  momjian
+
+	* src/: backend/port/qnx4/sem.c, include/storage/s_lock.h,
+	interfaces/ecpg/preproc/pgc.l, interfaces/python/README: Apply
+	patches for QNX from Maurizio
+
+2001-02-01 14:13  momjian
+
+	* doc/src/sgml/queries.sgml: A patch for the GROUP BY/HAVING
+	example.  p.date should be s.date.
+	
+	Robert B. Easter
+
+2001-01-31 11:12  meskes
+
+	* src/interfaces/ecpg/: ChangeLog, lib/execute.c, test/Makefile,
+	test/test_text.pgc: Applied two bug fixes by Christof Petig.
+
+2001-01-31 04:23  peter
+
+	* src/interfaces/jdbc/: CHANGELOG, jdbc.jpx, example/basic.java,
+	org/postgresql/Statement.java, org/postgresql/jdbc1/Statement.java,
+	org/postgresql/jdbc2/Statement.java: Wed Jan 31 08:46:00 GMT 2001
+	peter@retep.org.uk	   - Some minor additions to Statement to
+	make our own extensions more	       portable.	  -
+	Statement.close() will now call ResultSet.close() rather than just 
+		  dissasociating with it.
+
+2001-01-31 03:26  peter
+
+	* src/interfaces/jdbc/: CHANGELOG, jdbc.jpx, example/basic.java,
+	org/postgresql/Connection.java,
+	org/postgresql/jdbc1/Statement.java,
+	org/postgresql/jdbc2/Connection.java,
+	org/postgresql/jdbc2/PreparedStatement.java,
+	org/postgresql/jdbc2/ResultSet.java,
+	org/postgresql/jdbc2/Statement.java,
+	org/postgresql/largeobject/BlobInputStream.java,
+	org/postgresql/largeobject/BlobOutputStream.java,
+	org/postgresql/largeobject/LargeObject.java: Tue Jan 30 22:24:00
+	GMT 2001 peter@retep.org.uk	    - Fixed bug where
+	Statement.setMaxRows() was a global setting. Now	   limited
+	to just itself. 	 - Changed LargeObject.read(byte[],int,int)
+	to return the actual number	       of bytes read (used to be
+	void).		- LargeObject now supports InputStream's!	  
+	- PreparedStatement.setBinaryStream() now works!	  -
+	ResultSet.getBinaryStream() now returns an InputStream that doesn't
+		   copy the blob into memory first!	     -
+	Connection.isClosed() now tests to see if the connection is still
+	alive		 rather than if it thinks it's alive.
+
+2001-01-30 20:08  vadim
+
+	* src/backend/access/nbtree/nbtinsert.c: Couple additional
+	functions to fix tree at runtime.  Need in one more function to
+	handle "my bits moved..." case. FixBTree is still FALSE.
+
+2001-01-30 12:37  momjian
+
+	* contrib/README: Update /contrib README and add init.d from Ryan.
+
+2001-01-29 13:58  momjian
+
+	* HISTORY, doc/src/sgml/release.sgml: Update HISTORY/release with
+	current changes.
+
+2001-01-29 12:57  momjian
+
+	* doc/TODO: Update TODO list.
+
+2001-01-29 12:57  momjian
+
+	* doc/: TODO, TODO.detail/function, TODO.detail/logging,
+	TODO.detail/outer: Remove unused TODO.detail functions.
+
+2001-01-29 12:52  momjian
+
+	* doc/: TODO, TODO.detail/subquery: Remove subquery.
+
+2001-01-29 12:48  momjian
+
+	* doc/: TODO, TODO: Update TODO list.
+
+2001-01-29 11:27  momjian
+
+	* HISTORY: Update to PyGreSQL-3.1
+
+2001-01-29 02:28  vadim
+
+	* src/backend/access/nbtree/: nbtinsert.c, nbtpage.c: Call
+	_bt_fixroot() from _bt_insertonpg.
+
+2001-01-28 21:52  scrappy
+
+	* configure, configure.in,
+	ChangeLogs/ChangeLog-7.1beta3-to-7.1beta4: 
+	update configure to beta4
+	
+	Install a ChangeLog file from beta3->beta4
+
+2001-01-28 20:23  momjian
+
+	* doc/: FAQ, src/FAQ/FAQ.html: Update FAQ.
+
+2001-01-28 19:39  tgl
+
+	* src/: backend/access/gist/gist.c, backend/access/hash/hash.c,
+	backend/access/nbtree/nbtree.c, backend/access/rtree/rtree.c,
+	backend/catalog/index.c, backend/executor/execJunk.c,
+	backend/executor/execMain.c, backend/executor/execProcnode.c,
+	backend/executor/execQual.c, backend/executor/execTuples.c,
+	backend/executor/execUtils.c, backend/executor/functions.c,
+	backend/executor/nodeHashjoin.c, backend/executor/nodeIndexscan.c,
+	backend/executor/nodeMergejoin.c, backend/executor/nodeSeqscan.c,
+	backend/executor/nodeSort.c, backend/executor/nodeSubqueryscan.c,
+	backend/executor/nodeTidscan.c, backend/utils/sort/tuplesort.c,
+	backend/commands/command.c, backend/commands/copy.c,
+	include/executor/executor.h, include/executor/tuptable.h,
+	include/nodes/execnodes.h: Clean up handling of tuple descriptors
+	so that result-tuple descriptors allocated by plan nodes are not
+	leaked at end of query.  This doesn't really matter for normal
+	queries, but it sure does for queries invoked repetitively inside
+	SQL functions.	Clean up some other grotty code associated with
+	tupdescs, and fix a few other memory leaks exposed by tests with
+	simple SQL functions.
+
+2001-01-28 19:11  momjian
+
+	* src/bin/pg_dump/pg_backup_archiver.c: The following patch is
+	required for successful compilation on Irix.
+	
+	Robert E. Bruccole
+
+2001-01-28 12:43  momjian
+
+	* doc/src/FAQ/FAQ.html: Update FAQ.
+
+2001-01-28 12:39  momjian
+
+	* doc/: FAQ, src/FAQ/FAQ.html, FAQ, src/FAQ/FAQ.html: Update FAQ.
+
+2001-01-28 10:41  momjian
+
+	* doc/: TODO, TODO: Update TODO list.
+
+2001-01-28 10:18  momjian
+
+	* doc/: FAQ, src/FAQ/FAQ.html: Update FAQ.
+
+2001-01-28 00:05  momjian
+
+	* doc/TODO: Update TODO list.
+
+2001-01-27 22:47  pjw
+
+	* src/bin/pg_dump/: common.c, pg_backup_archiver.h, pg_dump.c: Used
+	LEFT OUTER JOIN for various queries
+
+2001-01-27 21:57  pjw
+
+	* src/bin/pg_dump/: common.c, pg_dump.c: Applied (slightly
+	modified) patches from Tatsuo:
+	
+	Ok. I have made patches for fixing some of pg_dump problems(see
+	attached patches). The patches address the problem with user
+	defined functions, operators and aggregates.
+
+2001-01-27 16:49  momjian
+
+	* src/: bin/psql/command.c, bin/psql/win32.mak,
+	include/config.h.win32, interfaces/libpq/win32.mak: Here is an
+	update on the Win32 patch. Modified files are 'config.h.win32' and
+	two 'win32.mak'. Addresses the following:
+	
+	1) Oops. Spelled fcntl.h wrong in the last one. D'uh.  2)
+	PG_VERSION changed to be defined with " around it. psql/command.c
+	failed to compile without that.  3) Changed makefiles to use "/MD"
+	and link both psql and libpq.dll against MSVCRT.DLL instead of a
+	static library. This takes care of the crash-upon-free in psql.
+	
+	I *think* this is what is on the "Open 7.1 Items" list as "Magnus
+	Hagander ODBC Issues?". It has nothing to do with ODBC, but it's
+	the only issue I've been involved with...
+	
+	Magnus Hagander
+
+2001-01-27 15:19  momjian
+
+	* doc/: FAQ, src/FAQ/FAQ.html: Update FAQ.
+
+2001-01-27 14:49  momjian
+
+	* doc/TODO.detail/foreign: Add 'foreign' file.
+
