@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.56 2000/07/14 15:26:21 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.57 2000/07/14 16:04:18 thomas Exp $
 -->
 
  <chapter id="release">
@@ -20,9 +20,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.56 2000/07/14 15:26:21 tho
    -->
 
    <para>
-    Release date 2000-xx-xx.
-
-   <para>
+    Release date 2000-09-01.
     Major changes in this release:
 
     <variablelist>
@@ -36,6 +34,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.56 2000/07/14 15:26:21 tho
        </para>
       </listitem>
      </varlistentry>
+    </variablelist>
    </para>
 
    <sect2>
