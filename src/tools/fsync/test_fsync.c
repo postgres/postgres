@@ -80,7 +80,7 @@ int main(int argc, char *argv[])
 	print_elapse(start_t, elapse_t);
 	printf("\n");
 
-	printf("\nTest file sync methods\n");
+	printf("\nTest file sync methods:\n");
 
 #ifdef OPEN_DATASYNC_FLAG
 	/* open_dsync, write */
@@ -93,8 +93,10 @@ int main(int argc, char *argv[])
 	unlink("/var/tmp/test_fsync.out");
 	printf("open o_dsync, write    ");
 	print_elapse(start_t, elapse_t);
-	printf("\n");
+#else
+	printf("o_dsync unavailable    ");
 #endif
+	printf("\n");
 
 	/* open_fsync, write */
 	gettimeofday(&start_t, NULL);
@@ -120,8 +122,10 @@ int main(int argc, char *argv[])
 	unlink("/var/tmp/test_fsync.out");
 	printf("write, fdatasync       ");
 	print_elapse(start_t, elapse_t);
-	printf("\n");
+#else
+	printf("fdatasync unavailable  ");
 #endif
+	printf("\n");
 
 	/* write, fsync, close */
 	gettimeofday(&start_t, NULL);
