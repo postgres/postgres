@@ -3,7 +3,7 @@
  * client encoding and server internal encoding.
  * (currently mule internal code (mic) is used)
  * Tatsuo Ishii
- * $Id: mbutils.c,v 1.25 2001/10/25 05:49:51 momjian Exp $
+ * $Id: mbutils.c,v 1.26 2001/11/19 06:48:39 ishii Exp $
  */
 #include "postgres.h"
 
@@ -220,6 +220,8 @@ pg_convert(PG_FUNCTION_ARGS)
 	from_mic_converter dest;
 	unsigned char *result;
 	text	   *retval;
+	unsigned char *str;
+	int len;
 
 	if (encoding < 0)
 		elog(ERROR, "Invalid encoding name %s", NameStr(*s));
@@ -231,14 +233,28 @@ pg_convert(PG_FUNCTION_ARGS)
 		elog(ERROR, "Conversion from %s to %s is not possible", NameStr(*s), encoding_name);
 	}
 
-	result = pg_do_encoding_conversion(VARDATA(string), VARSIZE(string) - VARHDRSZ,
-									   src, dest);
+	/* make sure that source string is null terminated */
+	len = VARSIZE(string) - VARHDRSZ;
+	str = palloc(len + 1);
+	memcpy(str, VARDATA(string), len);
+	*(str + len) = '\0';
+
+	result = pg_do_encoding_conversion(str, len, src, dest);
 	if (result == NULL)
 		elog(ERROR, "Encoding conversion failed");
 
-	retval = DatumGetTextP(DirectFunctionCall1(textin, CStringGetDatum(result)));
-	if (result != (unsigned char *) VARDATA(string))
+	/* build text data type structre. we cannot use textin() here,
+	   since textin assumes that input string encoding is same as
+	   database encoding.  */
+	len = strlen(result) + VARHDRSZ;
+	retval = palloc(len);
+	VARATT_SIZEP(retval) = len;
+	memcpy(VARDATA(retval), result, len - VARHDRSZ);
+	
+	/* free memory allocated by pg_do_encoding_conversion */
+	if (result != str)
 		pfree(result);
+        pfree(str);
 
 	/* free memory if allocated by the toaster */
 	PG_FREE_IF_COPY(string, 0);
@@ -263,6 +279,8 @@ pg_convert2(PG_FUNCTION_ARGS)
 	from_mic_converter dest;
 	unsigned char *result;
 	text	   *retval;
+	unsigned char *str;
+	int len;
 
 	if (src_encoding < 0)
 		elog(ERROR, "Invalid source encoding name %s", src_encoding_name);
@@ -275,14 +293,27 @@ pg_convert2(PG_FUNCTION_ARGS)
 			 src_encoding_name, dest_encoding_name);
 	}
 
-	result = pg_do_encoding_conversion(VARDATA(string), VARSIZE(string) - VARHDRSZ,
-									   src, dest);
+	/* make sure that source string is null terminated */
+	len = VARSIZE(string) - VARHDRSZ;
+	str = palloc(len + 1);
+	memcpy(str, VARDATA(string), len);
+	*(str + len) = '\0';
+
+	result = pg_do_encoding_conversion(str, len, src, dest);
 	if (result == NULL)
 		elog(ERROR, "Encoding conversion failed");
 
-	retval = DatumGetTextP(DirectFunctionCall1(textin, CStringGetDatum(result)));
-	if (result != (unsigned char *) VARDATA(string))
+	/* build text data type structre. we cannot use textin() here,
+	   since textin assumes that input string encoding is same as
+	   database encoding.  */
+	len = strlen(result) + VARHDRSZ;
+	retval = palloc(len);
+	VARATT_SIZEP(retval) = len;
+	memcpy(VARDATA(retval), result, len - VARHDRSZ);
+
+	if (result != str)
 		pfree(result);
+        pfree(str);
 
 	/* free memory if allocated by the toaster */
 	PG_FREE_IF_COPY(string, 0);
