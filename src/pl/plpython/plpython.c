@@ -29,7 +29,7 @@
  * MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	$Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.40 2003/09/14 17:13:06 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.41 2003/09/16 01:07:51 tgl Exp $
  *
  *********************************************************************
  */
@@ -486,7 +486,6 @@ PLy_modify_tuple(PLyProcedure * proc, PyObject * pltd, TriggerData *tdata,
 	HeapTuple	rtup;
 	int			natts,
 				i,
-				j,
 				attn,
 				atti;
 	int		   *volatile modattrs;
@@ -531,31 +530,21 @@ PLy_modify_tuple(PLyProcedure * proc, PyObject * pltd, TriggerData *tdata,
 	plkeys = PyDict_Keys(plntup);
 	natts = PyList_Size(plkeys);
 
-	if (natts != proc->result.out.r.natts)
-		elog(ERROR, "TD[\"new\"] has an incorrect number of keys");
-
-	modattrs = palloc(natts * sizeof(int));
-	modvalues = palloc(natts * sizeof(Datum));
-	for (i = 0; i < natts; i++)
-	{
-		modattrs[i] = i + 1;
-		modvalues[i] = (Datum) NULL;
-	}
+	/* +1 to avoid palloc(0) on empty tuple */
+	modattrs = palloc(natts * sizeof(int) + 1);
+	modvalues = palloc(natts * sizeof(Datum) + 1);
 	modnulls = palloc(natts + 1);
-	memset(modnulls, 'n', natts);
-	modnulls[natts] = '\0';
 
 	tupdesc = tdata->tg_relation->rd_att;
 
-	for (j = 0; j < natts; j++)
+	for (i = 0; i < natts; i++)
 	{
 		char	   *src;
 
-		platt = PyList_GetItem(plkeys, j);
+		platt = PyList_GetItem(plkeys, i);
 		if (!PyString_Check(platt))
-			elog(ERROR, "attribute is not a string");
-		attn = modattrs[j] = SPI_fnumber(tupdesc, PyString_AsString(platt));
-
+			elog(ERROR, "attribute name is not a string");
+		attn = SPI_fnumber(tupdesc, PyString_AsString(platt));
 		if (attn == SPI_ERROR_NOATTRIBUTE)
 			elog(ERROR, "invalid attribute \"%s\" in tuple",
 				 PyString_AsString(platt));
@@ -567,30 +556,38 @@ PLy_modify_tuple(PLyProcedure * proc, PyObject * pltd, TriggerData *tdata,
 
 		Py_INCREF(plval);
 
-		if (plval != Py_None)
+		modattrs[i] = attn;
+
+		if (plval != Py_None && !tupdesc->attrs[atti]->attisdropped)
 		{
 			plstr = PyObject_Str(plval);
 			src = PyString_AsString(plstr);
 
-			modvalues[j] = FunctionCall3(&proc->result.out.r.atts[atti].typfunc,
+			modvalues[i] = FunctionCall3(&proc->result.out.r.atts[atti].typfunc,
 										 CStringGetDatum(src),
 				 ObjectIdGetDatum(proc->result.out.r.atts[atti].typelem),
 						 Int32GetDatum(tupdesc->attrs[atti]->atttypmod));
-			modnulls[j] = ' ';
+			modnulls[i] = ' ';
 
 			Py_DECREF(plstr);
 			plstr = NULL;
 		}
+		else
+		{
+			modvalues[i] = (Datum) 0;
+			modnulls[i] = 'n';
+		}
+
 		Py_DECREF(plval);
 		plval = NULL;
-
 	}
-	rtup = SPI_modifytuple(tdata->tg_relation, otup, natts, modattrs,
-						   modvalues, modnulls);
+
+	rtup = SPI_modifytuple(tdata->tg_relation, otup, natts,
+						   modattrs, modvalues, modnulls);
 
 	/*
 	 * FIXME -- these leak if not explicitly pfree'd by other elog calls,
-	 * no?
+	 * no?  (No, I think, but might as well leave the pfrees here...)
 	 */
 	pfree(modattrs);
 	pfree(modvalues);
@@ -1311,6 +1308,9 @@ PLy_input_tuple_funcs(PLyTypeInfo * arg, TupleDesc desc)
 		HeapTuple	typeTup;
 		Form_pg_type typeStruct;
 
+		if (desc->attrs[i]->attisdropped)
+			continue;
+
 		typeTup = SearchSysCache(TYPEOID,
 							  ObjectIdGetDatum(desc->attrs[i]->atttypid),
 								 0, 0, 0);
@@ -1345,6 +1345,9 @@ PLy_output_tuple_funcs(PLyTypeInfo * arg, TupleDesc desc)
 	{
 		HeapTuple	typeTup;
 		Form_pg_type typeStruct;
+
+		if (desc->attrs[i]->attisdropped)
+			continue;
 
 		typeTup = SearchSysCache(TYPEOID,
 							  ObjectIdGetDatum(desc->attrs[i]->atttypid),
@@ -1532,6 +1535,9 @@ PLyDict_FromTuple(PLyTypeInfo * info, HeapTuple tuple, TupleDesc desc)
 					vdat;
 		bool		is_null;
 		PyObject   *value;
+
+		if (desc->attrs[i]->attisdropped)
+			continue;
 
 		key = NameStr(desc->attrs[i]->attname);
 		vattr = heap_getattr(tuple, (i + 1), desc, &is_null);
