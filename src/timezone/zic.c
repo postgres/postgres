@@ -3,13 +3,16 @@
  * 1996-06-05 by Arthur David Olson (arthur_david_olson@nih.gov).
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/zic.c,v 1.8 2004/06/03 02:08:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/zic.c,v 1.9 2004/07/22 01:41:24 tgl Exp $
  */
 
 #include "postgres.h"
 
-#include <locale.h>
+#ifdef HAVE_GETOPT_H
+#include <getopt.h>
+#endif
 #include <limits.h>
+#include <locale.h>
 
 #include "pgtz.h"
 #include "private.h"
