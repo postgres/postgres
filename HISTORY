@@ -159,7 +159,6 @@ Allow postmaster to listen on a specific IP address (David J. MacKenzie)
 Allow socket path name to be specified in hostname by using leading slash
     (David J. MacKenzie)
 Allow CREATE DATABASE to specify template database (Tom)
-New pg_dump --globals-only option (Peter E)
 New utility to convert MySQL schema dumps to SQL92 and PostgreSQL (Thomas)
 New /contrib/rserv replication toolkit (Vadim)
 New file format for COPY BINARY (Tom)

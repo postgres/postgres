@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.18 2000/12/25 23:15:26 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.19 2001/02/09 17:16:57 momjian Exp $
 Postgres documentation
 -->
 
@@ -25,7 +25,7 @@ Postgres documentation
    <group><arg>-c</arg><arg>--clean</arg></group>
    <arg>-h <replaceable>host</replaceable></arg>
    <arg>-p <replaceable>port</replaceable></arg>
-   <arg>--globals-only</arg>
+   <group><arg>-g</arg><arg>--globals-only</arg></group>
   </cmdsynopsis>
  </refsynopsisdiv>
 
@@ -73,6 +73,16 @@ Postgres documentation
 
     <variablelist>
      <varlistentry>
+      <term>-c, --clean</term>
+      <listitem>
+       <para>
+	Clean (drop) database before creating schema.
+       </para>
+      </listitem>
+     </varlistentry>
+
+    <variablelist>
+     <varlistentry>
       <term>-h <replaceable>host</replaceable></term>
       <listitem>
        <para>
@@ -97,7 +107,7 @@ Postgres documentation
      </varlistentry>
 
      <varlistentry>
-      <term>--globals-only</term>
+      <term>-g, --globals-only</term>
       <listitem>
        <para>
 	Only dump global objects (users and groups), no databases.

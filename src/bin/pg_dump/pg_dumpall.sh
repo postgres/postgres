@@ -6,7 +6,7 @@
 # and "pg_group" tables, which belong to the whole installation rather
 # than any one individual database.
 #
-# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_dumpall.sh,v 1.10 2001/01/25 17:28:15 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_dumpall.sh,v 1.11 2001/02/09 17:16:57 momjian Exp $
 
 CMDNAME=`basename $0`
 
@@ -75,7 +75,8 @@ cleanschema=
 globals_only=
 
 #
-# Scan options. We're interested in the -h (host), -p (port), and -c (clean) options.
+# Scan options. We're interested in the -h (host), -p (port),
+# -c (clean), and -g (global) options.
 # The rest we pass to pg_dump, which may or may not be useful.
 #
 while [ $# -gt 0 ] ; do
@@ -110,7 +111,7 @@ while [ $# -gt 0 ] ; do
                 cleanschema=yes
                 pgdumpextraopts="$pgdumpextraopts -c"
                 ;;
-        --globals-only)
+        -g|--globals-only)
                 globals_only=yes
                 ;;
         *)
@@ -125,13 +126,13 @@ if [ "$usage" ] ; then
     echo "$CMDNAME extracts a PostgreSQL database cluster into an SQL script file."
     echo
     echo "Usage:"
-    echo "  $CMDNAME [ -c ] [ -h HOSTNAME ] [ -p PORT ] [ --globals-only ]"
+    echo "  $CMDNAME [ -c ] [ -h HOSTNAME ] [ -p PORT ] [ -g ]"
     echo
     echo "Options:"
     echo "  -c, --clean            Clean (drop) schema prior to create"
     echo "  -h, --host=HOSTNAME    Server host name"
     echo "  -p, --port=PORT        Server port number"
-    echo "  --globals-only         Only dump global objects, no databases"
+    echo "  -g, --globals-only     Only dump global objects, no databases"
     echo "Any extra options will be passed to pg_dump."
     echo
     echo "Report bugs to <pgsql-bugs@postgresql.org>."
