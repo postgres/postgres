@@ -6,8 +6,6 @@
 #define strcasecmp(a,b) stricmp(a,b)
 #define strncasecmp(a,b,c) _strnicmp(a,b,c)
 
-#define ACCEPT_TYPE_ARG3 int
-
 /*
  * Some compat functions
  */
@@ -24,11 +22,8 @@
  */
 #define crypt(a,b) a
 
-
-
 /*
  * Parts of config.h that you get with autoconf on other systems
  */
-
-#define DEF_PGPORT "5432"
 #define MAXIMUM_ALIGNOF 4
+#define ACCEPT_TYPE_ARG3 int
