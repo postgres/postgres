@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.101 2002/12/06 03:42:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.102 2002/12/06 05:00:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -667,7 +667,7 @@ cluster(ClusterStmt *stmt)
 		tableOid = RangeVarGetRelid(stmt->relation, false);
 		if (!check_cluster_ownership(tableOid))
 			elog(ERROR, "CLUSTER: You do not own relation %s",
-					stmt->relation->relname);
+				 stmt->relation->relname);
 
 		tuple = SearchSysCache(RELOID,
 							   ObjectIdGetDatum(tableOid),
@@ -706,7 +706,7 @@ cluster(ClusterStmt *stmt)
 			}
 			if (indexOid == InvalidOid)
 				elog(ERROR, "CLUSTER: No previously clustered index found on table %s",
-						stmt->relation->relname);
+					 stmt->relation->relname);
 			RelationClose(rel);
 			ReleaseSysCache(ituple);
 			ReleaseSysCache(idxtuple);
@@ -721,7 +721,7 @@ cluster(ClusterStmt *stmt)
 		/* XXX Maybe the namespace should be reported as well */
 		if (!OidIsValid(indexOid))
 			elog(ERROR, "CLUSTER: cannot find index \"%s\" for table \"%s\"",
-					stmt->indexname, stmt->relation->relname);
+				 stmt->indexname, stmt->relation->relname);
 		rvtc.tableOid = tableOid;
 		rvtc.indexOid = indexOid;
 		rvtc.isPrevious = false;
@@ -819,7 +819,7 @@ get_tables_to_cluster(AclId owner)
 	List		   *rvs = NIL;
 
 	/*
-	 * Get all indexes that have indisclustered set.	System
+	 * Get all indexes that have indisclustered set. System
 	 * relations or nailed-in relations cannot ever have
 	 * indisclustered set, because CLUSTER will refuse to
 	 * set it when called with one of them as argument.

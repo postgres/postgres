@@ -127,6 +127,7 @@ SELECT cast(col4 as dnotnull) from nulltest; -- fail
 drop table nulltest;
 drop domain dnotnull restrict;
 drop domain dnull restrict;
+drop domain dcheck restrict;
 
 
 create domain ddef1 int4 DEFAULT 3;
@@ -159,7 +160,71 @@ COPY defaulttest(col5) FROM stdin;
 select * from defaulttest;
 
 drop sequence ddef4_seq;
-drop table defaulttest;
+drop table defaulttest cascade;
+
+-- Test ALTER DOMAIN .. NOT NULL
+create domain dnotnulltest integer;
+create table domnotnull
+( col1 dnotnulltest
+, col2 dnotnulltest
+);
+
+insert into domnotnull default values;
+alter domain dnotnulltest set not null; -- fails
+
+update domnotnull set col1 = 5;
+alter domain dnotnulltest set not null; -- fails
+
+update domnotnull set col2 = 6;
+
+alter domain dnotnulltest set not null;
+alter domain dnotnulltest set not null; -- fails
+
+update domnotnull set col1 = null; -- fails
+
+alter domain dnotnulltest drop not null;
+alter domain dnotnulltest drop not null; -- fails
+
+update domnotnull set col1 = null;
+
+drop domain dnotnulltest cascade;
+
+-- Test ALTER DOMAIN .. DEFAULT ..
+create table domdeftest (col1 ddef1);
+
+insert into domdeftest default values;
+select * from domdeftest;
+
+alter domain ddef1 set default '42';
+insert into domdeftest default values;
+select * from domdeftest;
+
+alter domain ddef1 drop default;
+insert into domdeftest default values;
+select * from domdeftest;
+
+drop table domdeftest;
+
+-- Test ALTER DOMAIN .. CONSTRAINT ..
+create domain con as integer;
+create table domcontest (col1 con);
+
+insert into domcontest values (1);
+insert into domcontest values (2);
+alter domain con add constraint t check (VALUE < 1); -- fails
+
+alter domain con add constraint t check (VALUE < 34);
+alter domain con add check (VALUE > 0);
+
+insert into domcontest values (-5); -- fails
+insert into domcontest values (42); -- fails
+insert into domcontest values (5);
+
+alter domain con drop constraint t;
+insert into domcontest values (-5); --fails
+insert into domcontest values (42);
+
+-- cleanup
 drop domain ddef1 restrict;
 drop domain ddef2 restrict;
 drop domain ddef3 restrict;

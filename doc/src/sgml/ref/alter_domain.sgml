@@ -1,0 +1,237 @@
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_domain.sgml,v 1.4 2002/12/06 05:00:10 momjian Exp $
+PostgreSQL documentation
+-->
+
+<refentry id="SQL-ALTERDOMAIN">
+ <refmeta>
+  <refentrytitle id="sql-alterdomain-title">ALTER DOMAIN</refentrytitle>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+ <refnamediv>
+  <refname>
+   ALTER DOMAIN
+  </refname>
+  <refpurpose>
+   change the definition of a table
+  </refpurpose>
+ </refnamediv>
+ <refsynopsisdiv>
+  <refsynopsisdivinfo>
+   <date>2002-11-27</date>
+  </refsynopsisdivinfo>
+  <synopsis>
+ALTER DOMAIN <replaceable class="PARAMETER">domain</replaceable>
+    { SET DEFAULT <replaceable class="PARAMETER">value</replaceable> | DROP DEFAULT }
+ALTER DOMAIN <replaceable class="PARAMETER">domain</replaceable>
+    { SET | DROP } NOT NULL
+ALTER DOMAIN <replaceable class="PARAMETER">domain</replaceable>
+    ADD <replaceable class="PARAMETER">domain_constraint</replaceable>
+ALTER DOMAIN <replaceable class="PARAMETER">domain</replaceable>
+    DROP CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> [ RESTRICT | CASCADE ]
+  </synopsis>
+
+  <refsect2 id="R2-SQL-ALTERDOMAIN-1">
+   <refsect2info>
+    <date>2002-11-27</date>
+   </refsect2info>
+   <title>
+    Inputs
+   </title>
+   <para>
+    <variablelist>
+
+     <varlistentry>
+      <term><replaceable class="PARAMETER"> domain </replaceable></term>
+      <listitem>
+       <para>
+	The name (possibly schema-qualified) of an existing domain to
+	alter.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="PARAMETER"> domain_constraint </replaceable></term>
+      <listitem>
+       <para>
+	New domain constraint for the domain.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="PARAMETER"> constraint_name </replaceable></term>
+      <listitem>
+       <para>
+	Name of an existing constraint to drop.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>CASCADE</term>
+      <listitem>
+       <para>
+        Automatically drop objects that depend constraint.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>RESTRICT</term>
+      <listitem>
+       <para>
+        Refuse to drop the constraint if there are any dependent
+	objects. This is the default behavior.
+       </para>
+      </listitem>
+     </varlistentry>
+
+    </variablelist>
+   </para>
+  </refsect2>
+
+  <refsect2 id="R2-SQL-ALTERDOMAIN-2">
+   <refsect2info>
+    <date>1998-04-15</date>
+   </refsect2info>
+   <title>
+    Outputs
+   </title>
+   <para>
+
+    <variablelist>
+     <varlistentry>
+      <term><computeroutput>ALTER DOMAIN</computeroutput></term>
+      <listitem>
+       <para>
+	Message returned from domain alteration.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><computeroutput>ERROR</computeroutput></term>
+      <listitem>
+       <para>
+	Message returned if domain is not available.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+  </refsect2>
+ </refsynopsisdiv>
+
+ <refsect1 id="R1-SQL-ALTERDOMAIN-1">
+  <refsect1info>
+   <date>2002-11-27</date>
+  </refsect1info>
+  <title>
+   Description
+  </title>
+  <para>
+   <command>ALTER DOMAIN</command> changes the definition of an existing domain.
+   There are several sub-forms:
+  </para>
+
+  <variablelist>
+   <varlistentry>
+    <term>SET/DROP DEFAULT</term>
+    <listitem>
+     <para>
+      These forms set or remove the default value for a column. Note
+      that defaults only apply to subsequent <command>INSERT</command>
+      commands; they do not cause rows already in a table using the domain.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>SET/DROP NOT NULL</term>
+    <listitem>
+     <para>
+      These forms change whether a domain is marked to allow NULL
+      values or to reject NULL values.  You may only <literal>SET NOT NULL</>
+      when the tables using the domain contain no null values in the domain
+      based column.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>ADD <replaceable class="PARAMETER">domain_constraint</replaceable></term>
+    <listitem>
+     <para>
+      This form adds a new constraint to a table using the same syntax as
+      <xref linkend="SQL-CREATEDOMAIN" endterm="SQL-CREATEDOMAIN-TITLE">. 
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>DROP CONSTRAINT</term>
+    <listitem>
+     <para>
+      This form drops constraints on a domain.
+     </para>
+    </listitem>
+   </varlistentry>
+
+  </variablelist>
+
+  <para>
+   You must own the domain to use <command>ALTER DOMAIN</>; except for
+   <command>ALTER TABLE OWNER</>, which may only be executed by a superuser.
+  </para>
+ </refsect1>
+
+ <refsect1 id="R1-SQL-ALTERDOMAIN-2">
+  <title>
+   Usage
+  </title>
+  <para>
+   To add a NOT NULL constraint to a column:
+   <programlisting>
+ALTER DOMAIN zipcode SET NOT NULL;
+   </programlisting>
+   To remove a NOT NULL constraint from a column:
+   <programlisting>
+ALTER DOMAIN zipcode DROP NOT NULL;
+   </programlisting>
+  </para>
+
+  <para> 
+   To add a check constraint to a table:
+   <programlisting>
+ALTER DOMAIN zipcode ADD CONSTRAINT zipchk CHECK (char_length(VALUE) = 5);
+   </programlisting>
+  </para>
+
+  <para> 
+   To remove a check constraint from a table and all its children:
+   <programlisting>
+ALTER DOMAIN zipcode DROP CONSTRAINT zipchk;
+   </programlisting>
+  </para>
+ </refsect1>
+
+</refentry>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:nil
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+sgml-parent-document:nil
+sgml-default-dtd-file:"../reference.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:"/usr/lib/sgml/catalog"
+sgml-local-ecat-files:nil
+End:
+-->

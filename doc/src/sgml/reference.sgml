@@ -1,5 +1,5 @@
 <!-- reference.sgml
-$Header: /cvsroot/pgsql/doc/src/sgml/reference.sgml,v 1.40 2002/12/06 03:42:48 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/reference.sgml,v 1.41 2002/12/06 05:00:10 momjian Exp $
 
 PostgreSQL Reference Manual
 -->
@@ -47,6 +47,7 @@ PostgreSQL Reference Manual
 
    &abort;
    &alterDatabase;
+   &alterDomain;
    &alterGroup;
    &alterTable;
    &alterTrigger;

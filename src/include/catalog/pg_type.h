@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.136 2002/12/06 03:43:18 momjian Exp $
+ * $Id: pg_type.h,v 1.137 2002/12/06 05:00:31 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -550,13 +550,25 @@ extern Oid TypeCreate(const char *typeName,
 		   Oid elementType,
 		   Oid baseType,
 		   const char *defaultTypeValue,
-		   const char *defaultTypeBin,
+		   char *defaultTypeBin,
 		   bool passedByValue,
 		   char alignment,
 		   char storage,
 		   int32 typeMod,
 		   int32 typNDims,
 		   bool typeNotNull);
+
+extern void
+GenerateTypeDependencies(Oid typeNamespace,
+						 Oid typeObjectId,
+						 Oid relationOid,		/* only for 'c'atalog typeType */
+						 char relationKind,
+						 Oid inputProcedure,
+						 Oid outputProcedure,
+						 Oid elementType,
+						 Oid baseType,
+						 char *defaultTypeBin,	/* cooked rep */
+						 bool rebuild);
 
 
 extern void TypeRename(const char *oldTypeName, Oid typeNamespace,

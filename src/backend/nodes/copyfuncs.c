@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.228 2002/12/06 03:42:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.229 2002/12/06 05:00:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1479,6 +1479,20 @@ _copyAlterTableStmt(AlterTableStmt *from)
 	return newnode;
 }
 
+static AlterDomainStmt *
+_copyAlterDomainStmt(AlterDomainStmt *from)
+{
+	AlterDomainStmt *newnode = makeNode(AlterDomainStmt);
+
+	COPY_SCALAR_FIELD(subtype);
+	COPY_NODE_FIELD(typename);
+	COPY_STRING_FIELD(name);
+	COPY_NODE_FIELD(def);
+	COPY_SCALAR_FIELD(behavior);
+
+	return newnode;
+} 
+
 static GrantStmt *
 _copyGrantStmt(GrantStmt *from)
 {
@@ -2463,6 +2477,9 @@ copyObject(void *from)
 			break;
 		case T_AlterTableStmt:
 			retval = _copyAlterTableStmt(from);
+			break;
+		case T_AlterDomainStmt:
+			retval = _copyAlterDomainStmt(from);
 			break;
 		case T_GrantStmt:
 			retval = _copyGrantStmt(from);
