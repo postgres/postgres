@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sat May 13 22:32:35 EDT 2000
+Last updated:		Thu May 25 12:08:57 EDT 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -229,6 +229,8 @@ MISC
 * prevent labels from being output for stored rules (Tom)
 * allow configuration of maximum number of open files
 * Remove pg_listener index
+* Remove ANALYZE from VACUUM so it can be run separately without locks
+* Gather more accurate statistics using indexes
 
 SOURCE CODE
 -----------
