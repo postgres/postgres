@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.27 2001/09/07 21:57:53 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.28 2001/09/12 02:13:25 ishii Exp $
 Postgres documentation
 -->
 
@@ -280,28 +280,28 @@ ALTER TABLE distributors RENAME TO suppliers;
   <para> 
    To add a check constraint to a table:
    <programlisting>
-ALTER TABLE distributors ADD CONSTRAINT zipchk CHECK (char_length(zipcode) = 5)
+ALTER TABLE distributors ADD CONSTRAINT zipchk CHECK (char_length(zipcode) = 5);
    </programlisting>
   </para>
 
   <para> 
    To remove a check constraint from a table and all its children:
    <programlisting>
-ALTER TABLE distributors DROP CONSTRAINT zipchk
+ALTER TABLE distributors DROP CONSTRAINT zipchk;
    </programlisting>
   </para>
 
   <para> 
    To add a foreign key constraint to a table:
    <programlisting>
-ALTER TABLE distributors ADD CONSTRAINT distfk FOREIGN KEY (address) REFERENCES addresses(address) MATCH FULL
+ALTER TABLE distributors ADD CONSTRAINT distfk FOREIGN KEY (address) REFERENCES addresses(address) MATCH FULL;
    </programlisting>
   </para>
 
   <para> 
    To add a (multi-column) unique constraint to a table:
    <programlisting>
-ALTER TABLE distributors ADD CONSTRAINT dist_id_zipcode_key UNIQUE (dist_id, zipcode)
+ALTER TABLE distributors ADD CONSTRAINT dist_id_zipcode_key UNIQUE (dist_id, zipcode);
    </programlisting>
   </para>
  </refsect1>
