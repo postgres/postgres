@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.127 2000/05/20 23:11:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.128 2000/05/25 21:25:32 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1578,12 +1578,15 @@ heap_drop_with_catalog(const char *relname)
 void
 heap_drop(Relation rel)
 {
+	Oid			rid = RelationGetRelid(rel);
+
 	ReleaseRelationBuffers(rel);
 	if (!(rel->rd_isnoname) || !(rel->rd_unlinked))
 		smgrunlink(DEFAULT_SMGR, rel);
 	rel->rd_unlinked = TRUE;
 	heap_close(rel, NoLock);
 	RemoveFromNoNameRelList(rel);
+	RelationForgetRelation(rid);
 }
 
 
