@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_operator.h,v 1.83 2000/10/24 20:15:45 petere Exp $
+ * $Id: pg_operator.h,v 1.84 2000/11/21 03:23:19 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -280,10 +280,10 @@ DATA(insert OID = 606 (  "<#>"	   PGUID 0 b t f 702 702 704	0  0   0   0 mktinte
 DATA(insert OID = 607 (  "="	   PGUID 0 b t t  26  26  16 607 608 609 609 oideq eqsel eqjoinsel ));
 #define MIN_OIDCMP 607			/* used by cache code */
 DATA(insert OID = 608 (  "<>"	   PGUID 0 b t f  26  26  16 608 607  0  0 oidne neqsel neqjoinsel ));
-DATA(insert OID = 609 (  "<"	   PGUID 0 b t f  26  26  16 610 612  0  0 int4lt scalarltsel scalarltjoinsel ));
-DATA(insert OID = 610 (  ">"	   PGUID 0 b t f  26  26  16 609 611  0  0 int4gt scalargtsel scalargtjoinsel ));
-DATA(insert OID = 611 (  "<="	   PGUID 0 b t f  26  26  16 612 610  0  0 int4le scalarltsel scalarltjoinsel ));
-DATA(insert OID = 612 (  ">="	   PGUID 0 b t f  26  26  16 611 609  0  0 int4ge scalargtsel scalargtjoinsel ));
+DATA(insert OID = 609 (  "<"	   PGUID 0 b t f  26  26  16 610 612  0  0 oidlt scalarltsel scalarltjoinsel ));
+DATA(insert OID = 610 (  ">"	   PGUID 0 b t f  26  26  16 609 611  0  0 oidgt scalargtsel scalargtjoinsel ));
+DATA(insert OID = 611 (  "<="	   PGUID 0 b t f  26  26  16 612 610  0  0 oidle scalarltsel scalarltjoinsel ));
+DATA(insert OID = 612 (  ">="	   PGUID 0 b t f  26  26  16 611 609  0  0 oidge scalargtsel scalargtjoinsel ));
 #define MAX_OIDCMP 612			/* used by cache code */
 
 DATA(insert OID = 644 (  "<>"	   PGUID 0 b t f  30  30  16 644 649   0   0 oidvectorne neqsel neqjoinsel ));
@@ -516,9 +516,9 @@ DATA(insert OID = 1133 (  ">"		PGUID 0 b t f  701	700  16 1122 1134  0 0 float84
 DATA(insert OID = 1134 (  "<="		PGUID 0 b t f  701	700  16 1125 1133  0 0 float84le scalarltsel scalarltjoinsel ));
 DATA(insert OID = 1135 (  ">="		PGUID 0 b t f  701	700  16 1124 1132  0 0 float84ge scalargtsel scalargtjoinsel ));
 
-/* int4 and oid equality */
-DATA(insert OID = 1136 (  "="		PGUID 0 b t t	23	 26   16 1137 0 0 0 int4eqoid eqsel eqjoinsel ));
-DATA(insert OID = 1137 (  "="		PGUID 0 b t t	26	 23   16 1136 0 0 0 oideqint4 eqsel eqjoinsel ));
+/* int4 vs oid equality --- use oid (unsigned) comparison */
+DATA(insert OID = 1136 (  "="		PGUID 0 b t t	23	 26   16 1137 1656 0 0 oideq eqsel eqjoinsel ));
+DATA(insert OID = 1137 (  "="		PGUID 0 b t t	26	 23   16 1136 1661 0 0 oideq eqsel eqjoinsel ));
 
 DATA(insert OID = 1158 (  "!"		PGUID 0 r t f	21	  0   23 0 0 0 0 int2fac - - ));
 DATA(insert OID = 1175 (  "!!"		PGUID 0 l t f	 0	 21   23 0 0 0 0 int2fac - - ));
@@ -703,6 +703,18 @@ DATA(insert OID = 1630 (  "!~~*"  PGUID 0 b t f  1042 25  16 0 1629 0 0 texticnl
 DATA(insert OID = 1631 (  "~~*"	  PGUID 0 b t f  1043 25  16 0 1632 0 0 texticlike iclikesel iclikejoinsel ));
 #define OID_VARCHAR_ICLIKE_OP	1631
 DATA(insert OID = 1632 (  "!~~*"  PGUID 0 b t f  1043 25  16 0 1631 0 0 texticnlike icnlikesel icnlikejoinsel ));
+
+/* int4 vs oid comparisons --- use oid (unsigned) comparison */
+DATA(insert OID = 1656 (  "<>"	   PGUID 0 b t f  23  26  16 1661 1136  0  0 oidne neqsel neqjoinsel ));
+DATA(insert OID = 1657 (  "<"	   PGUID 0 b t f  23  26  16 1663 1660  0  0 oidlt scalarltsel scalarltjoinsel ));
+DATA(insert OID = 1658 (  ">"	   PGUID 0 b t f  23  26  16 1662 1659  0  0 oidgt scalargtsel scalargtjoinsel ));
+DATA(insert OID = 1659 (  "<="	   PGUID 0 b t f  23  26  16 1665 1658  0  0 oidle scalarltsel scalarltjoinsel ));
+DATA(insert OID = 1660 (  ">="	   PGUID 0 b t f  23  26  16 1664 1657  0  0 oidge scalargtsel scalargtjoinsel ));
+DATA(insert OID = 1661 (  "<>"	   PGUID 0 b t f  26  23  16 1656 1137  0  0 oidne neqsel neqjoinsel ));
+DATA(insert OID = 1662 (  "<"	   PGUID 0 b t f  26  23  16 1658 1665  0  0 oidlt scalarltsel scalarltjoinsel ));
+DATA(insert OID = 1663 (  ">"	   PGUID 0 b t f  26  23  16 1657 1664  0  0 oidgt scalargtsel scalargtjoinsel ));
+DATA(insert OID = 1664 (  "<="	   PGUID 0 b t f  26  23  16 1660 1663  0  0 oidle scalarltsel scalarltjoinsel ));
+DATA(insert OID = 1665 (  ">="	   PGUID 0 b t f  26  23  16 1659 1662  0  0 oidge scalargtsel scalargtjoinsel ));
 
 /* NUMERIC type - OID's 1700-1799 */
 DATA(insert OID = 1751 (  "-"	   PGUID 0 l t f	0 1700 1700    0	0 0 0 numeric_uminus - - ));

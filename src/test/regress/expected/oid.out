@@ -6,63 +6,70 @@ INSERT INTO OID_TBL(f1) VALUES ('1234');
 INSERT INTO OID_TBL(f1) VALUES ('1235');
 INSERT INTO OID_TBL(f1) VALUES ('987');
 INSERT INTO OID_TBL(f1) VALUES ('-1040');
+INSERT INTO OID_TBL(f1) VALUES ('99999999');
 INSERT INTO OID_TBL(f1) VALUES ('');
 -- bad inputs 
 INSERT INTO OID_TBL(f1) VALUES ('asdfasd');
-ERROR:  pg_atoi: error in "asdfasd": can't parse "asdfasd"
-SELECT '' AS five, OID_TBL.*;
- five |  f1   
-------+-------
-      |  1234
-      |  1235
-      |   987
-      | -1040
-      |     0
+ERROR:  oidin: error in "asdfasd": can't parse "asdfasd"
+INSERT INTO OID_TBL(f1) VALUES ('99asdfasd');
+ERROR:  oidin: error in "99asdfasd": can't parse "asdfasd"
+SELECT '' AS six, OID_TBL.*;
+ six |     f1     
+-----+------------
+     |       1234
+     |       1235
+     |        987
+     | 4294966256
+     |   99999999
+     |          0
+(6 rows)
+
+SELECT '' AS one, o.* FROM OID_TBL o WHERE o.f1 = 1234;
+ one |  f1  
+-----+------
+     | 1234
+(1 row)
+
+SELECT '' AS five, o.* FROM OID_TBL o WHERE o.f1 <> '1234';
+ five |     f1     
+------+------------
+      |       1235
+      |        987
+      | 4294966256
+      |   99999999
+      |          0
 (5 rows)
 
-SELECT '' AS one, o.* FROM OID_TBL o WHERE o.f1 = oid '1234';
- one |  f1  
------+------
-     | 1234
-(1 row)
-
-SELECT '' AS four, o.* FROM OID_TBL o WHERE o.f1 <> '1234';
- four |  f1   
-------+-------
-      |  1235
-      |   987
-      | -1040
-      |     0
-(4 rows)
-
-SELECT '' AS four, o.* FROM OID_TBL o WHERE o.f1 <= '1234';
- four |  f1   
-------+-------
-      |  1234
-      |   987
-      | -1040
-      |     0
-(4 rows)
-
-SELECT '' AS three, o.* FROM OID_TBL o WHERE o.f1 < '1234';
- three |  f1   
--------+-------
-       |   987
-       | -1040
-       |     0
+SELECT '' AS three, o.* FROM OID_TBL o WHERE o.f1 <= '1234';
+ three |  f1  
+-------+------
+       | 1234
+       |  987
+       |    0
 (3 rows)
 
-SELECT '' AS two, o.* FROM OID_TBL o WHERE o.f1 >= '1234';
- two |  f1  
------+------
-     | 1234
-     | 1235
+SELECT '' AS two, o.* FROM OID_TBL o WHERE o.f1 < '1234';
+ two | f1  
+-----+-----
+     | 987
+     |   0
 (2 rows)
 
-SELECT '' AS one, o.* FROM OID_TBL o WHERE o.f1 > '1234';
- one |  f1  
------+------
-     | 1235
-(1 row)
+SELECT '' AS four, o.* FROM OID_TBL o WHERE o.f1 >= '1234';
+ four |     f1     
+------+------------
+      |       1234
+      |       1235
+      | 4294966256
+      |   99999999
+(4 rows)
+
+SELECT '' AS three, o.* FROM OID_TBL o WHERE o.f1 > '1234';
+ three |     f1     
+-------+------------
+       |       1235
+       | 4294966256
+       |   99999999
+(3 rows)
 
 DROP TABLE OID_TBL;

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.174 2000/11/11 19:55:33 thomas Exp $
+ * $Id: pg_proc.h,v 1.175 2000/11/21 03:23:19 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -936,10 +936,10 @@ DATA(insert OID = 713 (  oidrand		   PGUID 12 f t f t 2 f 16 "26 23" 100 0 0 100
 DESCR("random");
 DATA(insert OID = 715 (  oidsrand		   PGUID 12 f t f t 1 f 16 "23" 100 0 0 100  oidsrand - ));
 DESCR("seed random number generator");
-DATA(insert OID = 716 (  oideqint4		   PGUID 12 f t t t 2 f 16 "26 23" 100 0 0 100  oideqint4 - ));
-DESCR("equal");
-DATA(insert OID = 717 (  int4eqoid		   PGUID 12 f t t t 2 f 16 "23 26" 100 0 0 100  int4eqoid - ));
-DESCR("equal");
+DATA(insert OID = 716 (  oidlt			   PGUID 12 f t t t 2 f 16 "26 26" 100 0 0 100  oidlt - ));
+DESCR("less-than");
+DATA(insert OID = 717 (  oidle			   PGUID 12 f t t t 2 f 16 "26 26" 100 0 0 100  oidle - ));
+DESCR("less-than-or-equal");
 
 DATA(insert OID = 720 (  octet_length	   PGUID 12 f t t t 1 f 23 "17" 100 0 0 100  byteaoctetlen - ));
 DESCR("octet length");
@@ -2127,6 +2127,11 @@ DESCR("convert encoding name to encoding id");
 
 DATA(insert OID = 1597 (  pg_encoding_to_char	   PGUID 12 f t f t 1 f 19 "23" 100 0 0 100  PG_encoding_to_char - ));
 DESCR("convert encoding id to encoding name");
+
+DATA(insert OID = 1638 (  oidgt				   PGUID 12 f t t t 2 f 16 "26 26" 100 0 0 100  oidgt - ));
+DESCR("greater-than");
+DATA(insert OID = 1639 (  oidge				   PGUID 12 f t t t 2 f 16 "26 26" 100 0 0 100  oidge - ));
+DESCR("greater-than-or-equal");
 
 /* System-view support functions */
 DATA(insert OID = 1640 (  pg_get_ruledef	   PGUID 12 f t f t 1 f 25 "19" 100 0 0 100  pg_get_ruledef - ));

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/oid.c,v 1.38 2000/08/01 18:29:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/oid.c,v 1.39 2000/11/21 03:23:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,7 +43,7 @@ oidvectorin(PG_FUNCTION_ARGS)
 			break;
 		while (*oidString && isspace((int) *oidString))
 			oidString++;
-		while (*oidString && !isspace((int) *oidString))
+		while (*oidString && isdigit((int) *oidString))
 			oidString++;
 	}
 	while (*oidString && isspace((int) *oidString))
@@ -79,7 +79,7 @@ oidvectorout(PG_FUNCTION_ARGS)
 	{
 		if (num != 0)
 			*rp++ = ' ';
-		pg_ltoa((int32) oidArray[num], rp);
+		sprintf(rp, "%u", oidArray[num]);
 		while (*++rp != '\0')
 			;
 	}
@@ -91,18 +91,43 @@ Datum
 oidin(PG_FUNCTION_ARGS)
 {
 	char	   *s = PG_GETARG_CSTRING(0);
+	unsigned long cvt;
+	char	   *endptr;
+	Oid			result;
 
-	/* XXX should use an unsigned-int conversion here */
-	return DirectFunctionCall1(int4in, CStringGetDatum(s));
+	errno = 0;
+
+	cvt = strtoul(s, &endptr, 10);
+
+	/*
+	 * strtoul() normally only sets ERANGE.  On some systems it also
+	 * may set EINVAL, which simply means it couldn't parse the
+	 * input string.  This is handled by the second "if" consistent
+	 * across platforms.
+	 */
+	if (errno && errno != EINVAL)
+		elog(ERROR, "oidin: error reading \"%s\": %m", s);
+	if (endptr && *endptr)
+		elog(ERROR, "oidin: error in \"%s\": can't parse \"%s\"", s, endptr);
+
+	/*
+	 * Cope with possibility that unsigned long is wider than Oid.
+	 */
+	result = (Oid) cvt;
+	if ((unsigned long) result != cvt)
+		elog(ERROR, "oidin: error reading \"%s\": value too large", s);
+
+	return ObjectIdGetDatum(result);
 }
 
 Datum
 oidout(PG_FUNCTION_ARGS)
 {
 	Oid			o = PG_GETARG_OID(0);
+	char	   *result = (char *) palloc(12);
 
-	/* XXX should use an unsigned-int conversion here */
-	return DirectFunctionCall1(int4out, ObjectIdGetDatum(o));
+	snprintf(result, 12, "%u", o);
+	PG_RETURN_CSTRING(result);
 }
 
 /*****************************************************************************
@@ -125,6 +150,42 @@ oidne(PG_FUNCTION_ARGS)
 	Oid			arg2 = PG_GETARG_OID(1);
 
 	PG_RETURN_BOOL(arg1 != arg2);
+}
+
+Datum
+oidlt(PG_FUNCTION_ARGS)
+{
+	Oid			arg1 = PG_GETARG_OID(0);
+	Oid			arg2 = PG_GETARG_OID(1);
+
+	PG_RETURN_BOOL(arg1 < arg2);
+}
+
+Datum
+oidle(PG_FUNCTION_ARGS)
+{
+	Oid			arg1 = PG_GETARG_OID(0);
+	Oid			arg2 = PG_GETARG_OID(1);
+
+	PG_RETURN_BOOL(arg1 <= arg2);
+}
+
+Datum
+oidge(PG_FUNCTION_ARGS)
+{
+	Oid			arg1 = PG_GETARG_OID(0);
+	Oid			arg2 = PG_GETARG_OID(1);
+
+	PG_RETURN_BOOL(arg1 >= arg2);
+}
+
+Datum
+oidgt(PG_FUNCTION_ARGS)
+{
+	Oid			arg1 = PG_GETARG_OID(0);
+	Oid			arg2 = PG_GETARG_OID(1);
+
+	PG_RETURN_BOOL(arg1 > arg2);
 }
 
 Datum
@@ -195,26 +256,6 @@ oidvectorgt(PG_FUNCTION_ARGS)
 		if (arg1[i] != arg2[i])
 			PG_RETURN_BOOL(arg1[i] > arg2[i]);
 	PG_RETURN_BOOL(false);
-}
-
-Datum
-oideqint4(PG_FUNCTION_ARGS)
-{
-	Oid			arg1 = PG_GETARG_OID(0);
-	int32		arg2 = PG_GETARG_INT32(1);
-
-	/* oid is unsigned, but int4 is signed */
-	PG_RETURN_BOOL(arg2 >= 0 && arg1 == arg2);
-}
-
-Datum
-int4eqoid(PG_FUNCTION_ARGS)
-{
-	int32		arg1 = PG_GETARG_INT32(0);
-	Oid			arg2 = PG_GETARG_OID(1);
-
-	/* oid is unsigned, but int4 is signed */
-	PG_RETURN_BOOL(arg1 >= 0 && arg1 == arg2);
 }
 
 Datum

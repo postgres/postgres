@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.141 2000/11/10 20:13:26 tgl Exp $
+ * $Id: builtins.h,v 1.142 2000/11/21 03:23:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -283,22 +283,24 @@ extern Datum int4notin(PG_FUNCTION_ARGS);
 extern Datum oidnotin(PG_FUNCTION_ARGS);
 
 /* oid.c */
-extern Datum oidvectorin(PG_FUNCTION_ARGS);
-extern Datum oidvectorout(PG_FUNCTION_ARGS);
 extern Datum oidin(PG_FUNCTION_ARGS);
 extern Datum oidout(PG_FUNCTION_ARGS);
 extern Datum oideq(PG_FUNCTION_ARGS);
 extern Datum oidne(PG_FUNCTION_ARGS);
+extern Datum oidlt(PG_FUNCTION_ARGS);
+extern Datum oidle(PG_FUNCTION_ARGS);
+extern Datum oidge(PG_FUNCTION_ARGS);
+extern Datum oidgt(PG_FUNCTION_ARGS);
+extern Datum oid_text(PG_FUNCTION_ARGS);
+extern Datum text_oid(PG_FUNCTION_ARGS);
+extern Datum oidvectorin(PG_FUNCTION_ARGS);
+extern Datum oidvectorout(PG_FUNCTION_ARGS);
 extern Datum oidvectoreq(PG_FUNCTION_ARGS);
 extern Datum oidvectorne(PG_FUNCTION_ARGS);
 extern Datum oidvectorlt(PG_FUNCTION_ARGS);
 extern Datum oidvectorle(PG_FUNCTION_ARGS);
 extern Datum oidvectorge(PG_FUNCTION_ARGS);
 extern Datum oidvectorgt(PG_FUNCTION_ARGS);
-extern Datum oideqint4(PG_FUNCTION_ARGS);
-extern Datum int4eqoid(PG_FUNCTION_ARGS);
-extern Datum oid_text(PG_FUNCTION_ARGS);
-extern Datum text_oid(PG_FUNCTION_ARGS);
 
 /* regexp.c */
 extern Datum nameregexeq(PG_FUNCTION_ARGS);
