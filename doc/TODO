@@ -5,9 +5,10 @@ TODO list for PostgreSQL
 Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Tue Sep 14 10:34:34 EDT 2004
+Last updated:		Sat Sep 25 21:33:44 EDT 2004
 
-The most recent version of this document can be viewed at the PostgreSQL web site, http://www.PostgreSQL.org.
+The most recent version of this document can be viewed at the PostgreSQL web
+site, http://www.PostgreSQL.org.
 
 Remove items before beta?
 
