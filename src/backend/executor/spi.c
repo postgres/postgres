@@ -3,7 +3,7 @@
  * spi.c
  *				Server Programming Interface
  *
- * $Id: spi.c,v 1.49 2000/11/16 22:30:22 tgl Exp $
+ * $Id: spi.c,v 1.50 2000/12/01 22:10:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -397,10 +397,13 @@ SPI_fname(TupleDesc tupdesc, int fnumber)
 char *
 SPI_getvalue(HeapTuple tuple, TupleDesc tupdesc, int fnumber)
 {
-	Datum		val;
+	Datum		origval,
+				val,
+				result;
 	bool		isnull;
 	Oid			foutoid,
 				typelem;
+	bool		typisvarlena;
 
 	SPI_result = 0;
 	if (tuple->t_data->t_natts < fnumber || fnumber <= 0)
@@ -409,20 +412,35 @@ SPI_getvalue(HeapTuple tuple, TupleDesc tupdesc, int fnumber)
 		return NULL;
 	}
 
-	val = heap_getattr(tuple, fnumber, tupdesc, &isnull);
+	origval = heap_getattr(tuple, fnumber, tupdesc, &isnull);
 	if (isnull)
 		return NULL;
-	if (!getTypeOutAndElem((Oid) tupdesc->attrs[fnumber - 1]->atttypid,
-						   &foutoid, &typelem))
+	if (!getTypeOutputInfo(tupdesc->attrs[fnumber - 1]->atttypid,
+						   &foutoid, &typelem, &typisvarlena))
 	{
 		SPI_result = SPI_ERROR_NOOUTFUNC;
 		return NULL;
 	}
 
-	return DatumGetCString(OidFunctionCall3(foutoid,
-						   val,
-						   ObjectIdGetDatum(typelem),
-						   Int32GetDatum(tupdesc->attrs[fnumber - 1]->atttypmod)));
+	/*
+	 * If we have a toasted datum, forcibly detoast it here to avoid memory
+	 * leakage inside the type's output routine.
+	 */
+	if (typisvarlena)
+		val = PointerGetDatum(PG_DETOAST_DATUM(origval));
+	else
+		val = origval;
+
+	result = OidFunctionCall3(foutoid,
+							  val,
+							  ObjectIdGetDatum(typelem),
+							  Int32GetDatum(tupdesc->attrs[fnumber - 1]->atttypmod));
+
+	/* Clean up detoasted copy, if any */
+	if (val != origval)
+		pfree(DatumGetPointer(val));
+
+	return DatumGetCString(result);
 }
 
 Datum
