@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.89 2003/01/15 19:35:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.90 2003/01/15 23:10:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,6 +44,11 @@ static void fix_expr_references(Plan *plan, Node *node);
 static bool fix_expr_references_walker(Node *node, void *context);
 static void set_join_references(Join *join, List *rtable);
 static void set_uppernode_references(Plan *plan, Index subvarno);
+static List *join_references(List *clauses,
+							 List *rtable,
+							 List *outer_tlist,
+							 List *inner_tlist,
+							 Index acceptable_rel);
 static Node *join_references_mutator(Node *node,
 						join_references_context *context);
 static Node *replace_vars_with_subplan_refs(Node *node,
@@ -157,12 +162,26 @@ set_plan_references(Plan *plan, List *rtable)
 			fix_expr_references(plan,
 							  (Node *) ((HashJoin *) plan)->hashclauses);
 			break;
+		case T_Hash:
+			/*
+			 * Hash does not evaluate its targetlist or quals, so don't
+			 * touch those (see comments below).  But we do need to fix its
+			 * hashkeys.  The hashkeys are a little bizarre because they
+			 * need to match the hashclauses of the parent HashJoin node,
+			 * so we use join_references to fix them.
+			 */
+			((Hash *) plan)->hashkeys =
+				join_references(((Hash *) plan)->hashkeys,
+								rtable,
+								NIL,
+								plan->lefttree->targetlist,
+								(Index) 0);
+			break;
 		case T_Material:
 		case T_Sort:
 		case T_Unique:
 		case T_SetOp:
 		case T_Limit:
-		case T_Hash:
 
 			/*
 			 * These plan types don't actually bother to evaluate their
@@ -270,20 +289,14 @@ fix_expr_references_walker(Node *node, void *context)
 
 /*
  * set_join_references
- *	  Modifies the target list of a join node to reference its subplans,
- *	  by setting the varnos to OUTER or INNER and setting attno values to the
- *	  result domain number of either the corresponding outer or inner join
- *	  tuple item.
+ *	  Modifies the target list and quals of a join node to reference its
+ *	  subplans, by setting the varnos to OUTER or INNER and setting attno
+ *	  values to the result domain number of either the corresponding outer
+ *	  or inner join tuple item.
  *
- * Note: this same transformation has already been applied to the quals
- * of the join by createplan.c.  It's a little odd to do it here for the
- * targetlist and there for the quals, but it's easier that way.  (Look
- * at the handling of nestloop inner indexscans to see why.)
- *
- * Because the quals are reference-adjusted sooner, we cannot do equal()
- * comparisons between qual and tlist var nodes during the time between
- * creation of a plan node by createplan.c and its fixing by this module.
- * Fortunately, there doesn't seem to be any need to do that.
+ * In the case of a nestloop with inner indexscan, we will also need to
+ * apply the same transformation to any outer vars appearing in the
+ * quals of the child indexscan.
  *
  *	'join' is a join plan node
  *	'rtable' is the associated range table
@@ -291,16 +304,103 @@ fix_expr_references_walker(Node *node, void *context)
 static void
 set_join_references(Join *join, List *rtable)
 {
-	Plan	   *outer = join->plan.lefttree;
-	Plan	   *inner = join->plan.righttree;
-	List	   *outer_tlist = ((outer == NULL) ? NIL : outer->targetlist);
-	List	   *inner_tlist = ((inner == NULL) ? NIL : inner->targetlist);
+	Plan	   *outer_plan = join->plan.lefttree;
+	Plan	   *inner_plan = join->plan.righttree;
+	List	   *outer_tlist = outer_plan->targetlist;
+	List	   *inner_tlist = inner_plan->targetlist;
 
+	/* All join plans have tlist, qual, and joinqual */
 	join->plan.targetlist = join_references(join->plan.targetlist,
 											rtable,
 											outer_tlist,
 											inner_tlist,
 											(Index) 0);
+	join->plan.qual = join_references(join->plan.qual,
+									  rtable,
+									  outer_tlist,
+									  inner_tlist,
+									  (Index) 0);
+	join->joinqual = join_references(join->joinqual,
+									 rtable,
+									 outer_tlist,
+									 inner_tlist,
+									 (Index) 0);
+
+	/* Now do join-type-specific stuff */
+	if (IsA(join, NestLoop))
+	{
+		if (IsA(inner_plan, IndexScan))
+		{
+			/*
+			 * An index is being used to reduce the number of tuples scanned
+			 * in the inner relation.  If there are join clauses being used
+			 * with the index, we must update their outer-rel var nodes to
+			 * refer to the outer side of the join.
+			 */
+			IndexScan  *innerscan = (IndexScan *) inner_plan;
+			List	   *indxqualorig = innerscan->indxqualorig;
+
+			/* No work needed if indxqual refers only to its own rel... */
+			if (NumRelids((Node *) indxqualorig) > 1)
+			{
+				Index		innerrel = innerscan->scan.scanrelid;
+
+				/* only refs to outer vars get changed in the inner qual */
+				innerscan->indxqualorig = join_references(indxqualorig,
+														  rtable,
+														  outer_tlist,
+														  NIL,
+														  innerrel);
+				innerscan->indxqual = join_references(innerscan->indxqual,
+													  rtable,
+													  outer_tlist,
+													  NIL,
+													  innerrel);
+				/*
+				 * We must fix the inner qpqual too, if it has join clauses
+				 * (this could happen if the index is lossy: some indxquals
+				 * may get rechecked as qpquals).
+				 */
+				if (NumRelids((Node *) inner_plan->qual) > 1)
+					inner_plan->qual = join_references(inner_plan->qual,
+													   rtable,
+													   outer_tlist,
+													   NIL,
+													   innerrel);
+			}
+		}
+		else if (IsA(inner_plan, TidScan))
+		{
+			TidScan    *innerscan = (TidScan *) inner_plan;
+			Index		innerrel = innerscan->scan.scanrelid;
+
+			innerscan->tideval = join_references(innerscan->tideval,
+												 rtable,
+												 outer_tlist,
+												 NIL,
+												 innerrel);
+		}
+	}
+	else if (IsA(join, MergeJoin))
+	{
+		MergeJoin  *mj = (MergeJoin *) join;
+
+		mj->mergeclauses = join_references(mj->mergeclauses,
+										   rtable,
+										   outer_tlist,
+										   inner_tlist,
+										   (Index) 0);
+	}
+	else if (IsA(join, HashJoin))
+	{
+		HashJoin   *hj = (HashJoin *) join;
+
+		hj->hashclauses = join_references(hj->hashclauses,
+										  rtable,
+										  outer_tlist,
+										  inner_tlist,
+										  (Index) 0);
+	}
 }
 
 /*
@@ -400,7 +500,7 @@ set_uppernode_references(Plan *plan, Index subvarno)
  * Returns the new expression tree.  The original clause structure is
  * not modified.
  */
-List *
+static List *
 join_references(List *clauses,
 				List *rtable,
 				List *outer_tlist,

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.130 2003/01/15 19:35:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.131 2003/01/15 23:10:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -651,20 +651,6 @@ create_functionscan_plan(Path *best_path, List *tlist, List *scan_clauses)
  *
  *	JOIN METHODS
  *
- * A general note about join_references() processing in these routines:
- * once we have changed a Var node to refer to a subplan output rather than
- * the original relation, it is no longer equal() to an unmodified Var node
- * for the same var.  So, we cannot easily compare reference-adjusted qual
- * clauses to clauses that have not been adjusted.	Fortunately, that
- * doesn't seem to be necessary; all the decisions are made before we do
- * the reference adjustments.
- *
- * A cleaner solution would be to not call join_references() here at all,
- * but leave it for setrefs.c to do at the end of plan tree construction.
- * But some care would be needed to get setrefs.c to do the right thing with
- * nestloop inner indexscan quals.  So, we do subplan reference adjustment
- * here for quals of join nodes (and *only* for quals of join nodes).
- *
  *****************************************************************************/
 
 static NestLoop *
@@ -676,8 +662,6 @@ create_nestloop_plan(Query *root,
 					 Plan *outer_plan,
 					 Plan *inner_plan)
 {
-	List	   *outer_tlist = outer_plan->targetlist;
-	List	   *inner_tlist = inner_plan->targetlist;
 	NestLoop   *join_plan;
 
 	if (IsA(inner_plan, IndexScan))
@@ -685,86 +669,27 @@ create_nestloop_plan(Query *root,
 		/*
 		 * An index is being used to reduce the number of tuples scanned
 		 * in the inner relation.  If there are join clauses being used
-		 * with the index, we must update their outer-rel var nodes to
-		 * refer to the outer side of the join.
+		 * with the index, we may remove those join clauses from the list of
+		 * clauses that have to be checked as qpquals at the join node ---
+		 * but only if there's just one indexscan in the inner path
+		 * (otherwise, several different sets of clauses are being ORed
+		 * together).
 		 *
-		 * We can also remove those join clauses from the list of clauses
-		 * that have to be checked as qpquals at the join node, but only
-		 * if there's just one indexscan in the inner path (otherwise,
-		 * several different sets of clauses are being ORed together).
-		 *
-		 * Note: if the index is lossy, the same clauses may also be getting
-		 * checked as qpquals in the indexscan.  We can still remove them
-		 * from the nestloop's qpquals, but we gotta update the outer-rel
-		 * vars in the indexscan's qpquals too.
-		 *
-		 * Note: we can safely do set_difference() against my clauses and
-		 * join_references() because the innerscan is a primitive plan,
-		 * and therefore has not itself done join_references renumbering
-		 * of the vars in its quals.
+		 * Note we must compare against indxqualorig not the "fixed" indxqual
+		 * (which has index attnos instead of relation attnos, and may have
+		 * been commuted as well).
 		 */
 		IndexScan  *innerscan = (IndexScan *) inner_plan;
 		List	   *indxqualorig = innerscan->indxqualorig;
 
-		/* No work needed if indxqual refers only to its own relation... */
-		if (NumRelids((Node *) indxqualorig) > 1)
+		if (length(indxqualorig) == 1) /* single indexscan? */
 		{
-			Index		innerrel = innerscan->scan.scanrelid;
-
-			/*
-			 * Remove redundant tests from my clauses, if possible. Note
-			 * we must compare against indxqualorig not the "fixed"
-			 * indxqual (which has index attnos instead of relation
-			 * attnos, and may have been commuted as well).
-			 */
-			if (length(indxqualorig) == 1)		/* single indexscan? */
+			/* No work needed if indxqual refers only to its own relation... */
+			if (NumRelids((Node *) indxqualorig) > 1)
 				joinclauses = set_difference(joinclauses,
 											 lfirst(indxqualorig));
-
-			/* only refs to outer vars get changed in the inner indexqual */
-			innerscan->indxqualorig = join_references(indxqualorig,
-													  root->rtable,
-													  outer_tlist,
-													  NIL,
-													  innerrel);
-			innerscan->indxqual = join_references(innerscan->indxqual,
-												  root->rtable,
-												  outer_tlist,
-												  NIL,
-												  innerrel);
-			/* fix the inner qpqual too, if it has join clauses */
-			if (NumRelids((Node *) inner_plan->qual) > 1)
-				inner_plan->qual = join_references(inner_plan->qual,
-												   root->rtable,
-												   outer_tlist,
-												   NIL,
-												   innerrel);
 		}
 	}
-	else if (IsA(inner_plan, TidScan))
-	{
-		TidScan    *innerscan = (TidScan *) inner_plan;
-
-		innerscan->tideval = join_references(innerscan->tideval,
-											 root->rtable,
-											 outer_tlist,
-											 inner_tlist,
-											 innerscan->scan.scanrelid);
-	}
-
-	/*
-	 * Set quals to contain INNER/OUTER var references.
-	 */
-	joinclauses = join_references(joinclauses,
-								  root->rtable,
-								  outer_tlist,
-								  inner_tlist,
-								  (Index) 0);
-	otherclauses = join_references(otherclauses,
-								   root->rtable,
-								   outer_tlist,
-								   inner_tlist,
-								   (Index) 0);
 
 	join_plan = make_nestloop(tlist,
 							  joinclauses,
@@ -787,8 +712,6 @@ create_mergejoin_plan(Query *root,
 					  Plan *outer_plan,
 					  Plan *inner_plan)
 {
-	List	   *outer_tlist = outer_plan->targetlist;
-	List	   *inner_tlist = inner_plan->targetlist;
 	List	   *mergeclauses;
 	MergeJoin  *join_plan;
 
@@ -805,25 +728,6 @@ create_mergejoin_plan(Query *root,
 	 */
 	mergeclauses = get_switched_clauses(best_path->path_mergeclauses,
 										best_path->jpath.outerjoinpath->parent->relids);
-
-	/*
-	 * Fix all the join clauses to contain INNER/OUTER var references.
-	 */
-	joinclauses = join_references(joinclauses,
-								  root->rtable,
-								  outer_tlist,
-								  inner_tlist,
-								  (Index) 0);
-	otherclauses = join_references(otherclauses,
-								   root->rtable,
-								   outer_tlist,
-								   inner_tlist,
-								   (Index) 0);
-	mergeclauses = join_references(mergeclauses,
-								   root->rtable,
-								   outer_tlist,
-								   inner_tlist,
-								   (Index) 0);
 
 	/*
 	 * Create explicit sort nodes for the outer and inner join paths if
@@ -868,8 +772,6 @@ create_hashjoin_plan(Query *root,
 					 Plan *outer_plan,
 					 Plan *inner_plan)
 {
-	List	   *outer_tlist = outer_plan->targetlist;
-	List	   *inner_tlist = inner_plan->targetlist;
 	List	   *hashclauses;
 	HashJoin   *join_plan;
 	Hash	   *hash_plan;
@@ -891,25 +793,6 @@ create_hashjoin_plan(Query *root,
 									   best_path->jpath.outerjoinpath->parent->relids);
 
 	/*
-	 * Fix all the join clauses to contain INNER/OUTER var references.
-	 */
-	joinclauses = join_references(joinclauses,
-								  root->rtable,
-								  outer_tlist,
-								  inner_tlist,
-								  (Index) 0);
-	otherclauses = join_references(otherclauses,
-								   root->rtable,
-								   outer_tlist,
-								   inner_tlist,
-								   (Index) 0);
-	hashclauses = join_references(hashclauses,
-								  root->rtable,
-								  outer_tlist,
-								  inner_tlist,
-								  (Index) 0);
-
-	/*
 	 * Extract the inner hash keys (right-hand operands of the hashclauses)
 	 * to put in the Hash node.
 	 */
@@ -922,7 +805,9 @@ create_hashjoin_plan(Query *root,
 	/*
 	 * Build the hash node and hash join node.
 	 */
-	hash_plan = make_hash(inner_tlist, innerhashkeys, inner_plan);
+	hash_plan = make_hash(inner_plan->targetlist,
+						  innerhashkeys,
+						  inner_plan);
 	join_plan = make_hashjoin(tlist,
 							  joinclauses,
 							  otherclauses,

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: planmain.h,v 1.65 2003/01/15 19:35:47 tgl Exp $
+ * $Id: planmain.h,v 1.66 2003/01/15 23:10:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,9 +63,6 @@ extern bool exprs_known_equal(Query *root, Node *item1, Node *item2);
  * prototypes for plan/setrefs.c
  */
 extern void set_plan_references(Plan *plan, List *rtable);
-extern List *join_references(List *clauses, List *rtable,
-				List *outer_tlist, List *inner_tlist,
-				Index acceptable_rel);
 extern void fix_opfuncids(Node *node);
 
 #endif   /* PLANMAIN_H */
