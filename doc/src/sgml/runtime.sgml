@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.193 2003/07/14 20:00:22 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.194 2003/07/22 20:29:13 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -728,6 +728,16 @@ SET ENABLE_SEQSCAN TO OFF;
         to listen for connections from client applications. The
         default is to listen on all configured addresses (including
         <systemitem class="systemname">localhost</>).
+       </para>
+      </listitem>
+     </varlistentry>
+     
+     <varlistentry>
+      <term><varname>RENDEZVOUS_NAME</varname> (<type>string</type>)</term>
+      <listitem>
+       <para>
+        Specifies the Rendezvous broadcast name.  By default, the
+        computer name is used, specified as ''.
        </para>
       </listitem>
      </varlistentry>

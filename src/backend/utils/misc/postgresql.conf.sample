@@ -38,6 +38,7 @@
 #unix_socket_group = ''
 #unix_socket_permissions = 0777	# octal
 #virtual_host = ''
+#rendezvous_name = ''		# defaults to the computer name
 
 # - Security & Authentication -
 

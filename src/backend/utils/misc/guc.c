@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.137 2003/07/15 19:19:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.138 2003/07/22 20:29:13 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -1297,6 +1297,15 @@ static struct config_string ConfigureNamesString[] =
 		},
 		&pg_krb_server_keyfile,
 		PG_KRB_SRVTAB, NULL, NULL
+	},
+
+	{
+		{"rendezvous_name", PGC_POSTMASTER, CONN_AUTH_SETTINGS,
+			gettext_noop("The Rendezvous broadcast service name"),
+			NULL
+		},
+		&rendezvous_name,
+		"", NULL, NULL
 	},
 
 	/* See main.c about why defaults for LC_foo are not all alike */

@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.334 2003/07/22 19:00:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.335 2003/07/22 20:29:13 momjian Exp $
  *
  * NOTES
  *
@@ -209,6 +209,8 @@ bool		log_hostname;		/* for ps display */
 bool		LogSourcePort;
 bool		Log_connections = false;
 bool		Db_user_namespace = false;
+
+char		*rendezvous_name;
 
 /* For FNCTL_NONBLOCK */
 #if defined(WIN32) || defined(__BEOS__)
@@ -771,17 +773,17 @@ PostmasterMain(int argc, char *argv[])
 					"socket.");
 			}
 		}
-#ifdef USE_RENDEZVOUS                    
-                if (service_name != NULL)
-                {
-                        DNSServiceRegistrationCreate(NULL,	/* default to hostname */
-                                                     "_postgresql._tcp.",
-                                                     "",
-                                                     htonl(PostPortNumber),
-                                                     "",
-                                                     (DNSServiceRegistrationReply)reg_reply,
-                                                     NULL);
-                }
+#ifdef USE_RENDEZVOUS					 
+				if (rendezvous_name != NULL)
+				{
+						DNSServiceRegistrationCreate(rendezvous_name,
+													 "_postgresql._tcp.",
+													 "",
+													 htonl(PostPortNumber),
+													 "",
+													 (DNSServiceRegistrationReply)reg_reply,
+													 NULL);
+				}
 #endif
 	}
 
