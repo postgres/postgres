@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.102 2000/06/18 22:44:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.103 2000/06/19 23:40:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -230,6 +230,7 @@ static Relation RelationBuildDesc(RelationBuildDescInfo buildinfo,
 static void IndexedAccessMethodInitialize(Relation relation);
 static void AttrDefaultFetch(Relation relation);
 static void RelCheckFetch(Relation relation);
+static List *insert_ordered_oid(List *list, Oid datum);
 
 static bool criticalRelcacheBuild = false;
 
@@ -2078,6 +2079,12 @@ RelCheckFetch(Relation relation)
  * so that we must recompute the index list on next request.  This handles
  * creation or deletion of an index.
  *
+ * The returned list is guaranteed to be sorted in order by OID.  This is
+ * needed by the executor, since for index types that we obtain exclusive
+ * locks on when updating the index, all backends must lock the indexes in
+ * the same order or we will get deadlocks (see ExecOpenIndices()).  Any
+ * consistent ordering would do, but ordering by OID is easy.
+ *
  * Since shared cache inval causes the relcache's copy of the list to go away,
  * we return a copy of the list palloc'd in the caller's context.  The caller
  * may freeList() the returned list after scanning it.  This is necessary
@@ -2163,7 +2170,7 @@ RelationGetIndexList(Relation relation)
 
 		index = (Form_pg_index) GETSTRUCT(htup);
 
-		result = lappendi(result, index->indexrelid);
+		result = insert_ordered_oid(result, index->indexrelid);
 
 		if (hasindex)
 			ReleaseBuffer(buffer);
@@ -2178,7 +2185,7 @@ RelationGetIndexList(Relation relation)
 		heap_endscan(hscan);
 	heap_close(indrel, AccessShareLock);
 
-	/* Now we can save the completed list in the relcache entry. */
+	/* Now save a copy of the completed list in the relcache entry. */
 	oldcxt = MemoryContextSwitchTo((MemoryContext) CacheCxt);
 	relation->rd_indexlist = listCopy(result);
 	relation->rd_indexfound = true;
@@ -2186,6 +2193,39 @@ RelationGetIndexList(Relation relation)
 
 	return result;
 }
+
+/*
+ * insert_ordered_oid
+ *		Insert a new Oid into a sorted list of Oids, preserving ordering
+ *
+ * Building the ordered list this way is O(N^2), but with a pretty small
+ * constant, so for the number of entries we expect it will probably be
+ * faster than trying to apply qsort().  Most tables don't have very many
+ * indexes...
+ */
+static List *
+insert_ordered_oid(List *list, Oid datum)
+{
+	List	   *l;
+
+	/* Does the datum belong at the front? */
+	if (list == NIL || datum < (Oid) lfirsti(list))
+		return lconsi(datum, list);
+	/* No, so find the entry it belongs after */
+	l = list;
+	for (;;)
+	{
+		List	   *n = lnext(l);
+
+		if (n == NIL || datum < (Oid) lfirsti(n))
+			break;				/* it belongs before n */
+		l = n;
+	}
+	/* Insert datum into list after item l */
+	lnext(l) = lconsi(datum, lnext(l));
+	return list;
+}
+
 
 /*
  *	init_irels(), write_irels() -- handle special-case initialization of
@@ -2412,7 +2452,14 @@ write_irels(void)
 
 	fd = PathNameOpenFile(tempfilename, O_WRONLY | O_CREAT | O_TRUNC | PG_BINARY, 0600);
 	if (fd < 0)
-		elog(FATAL, "cannot create init file %s", tempfilename);
+	{
+		/*
+		 * We used to consider this a fatal error, but we might as well
+		 * continue with backend startup ...
+		 */
+		elog(NOTICE, "Cannot create init file %s: %m\n\tContinuing anyway, but there's something wrong.", tempfilename);
+		return;
+	}
 
 	FileSeek(fd, 0L, SEEK_SET);
 
@@ -2540,7 +2587,10 @@ write_irels(void)
 
 	/*
 	 * And rename the temp file to its final name, deleting any
-	 * previously- existing init file.
+	 * previously-existing init file.
 	 */
-	rename(tempfilename, finalfilename);
+	if (rename(tempfilename, finalfilename) < 0)
+	{
+		elog(NOTICE, "Cannot rename init file %s to %s: %m\n\tContinuing anyway, but there's something wrong.", tempfilename, finalfilename);
+	}
 }

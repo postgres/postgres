@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.60 2000/06/17 21:48:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.61 2000/06/19 23:40:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -799,15 +799,20 @@ ExecOpenIndices(RelationInfo *resultRelationInfo)
 		/* ----------------
 		 * Open (and lock, if necessary) the index relation
 		 *
-		 * Hack for not btree and hash indices: they use relation
-		 * level exclusive locking on update (i.e. - they are not
-		 * ready for MVCC) and so we have to exclusively lock
-		 * indices here to prevent deadlocks if we will scan them
-		 * - index_beginscan places AccessShareLock, indices
-		 * update methods don't use locks at all. We release this
-		 * lock in ExecCloseIndices. Note, that hashes use page
-		 * level locking - i.e. are not deadlock-free, - let's
-		 * them be on their way -:)) vadim 03-12-1998
+		 * Hack for not btree and hash indices: they use relation level
+		 * exclusive locking on update (i.e. - they are not ready for MVCC)
+		 * and so we have to exclusively lock indices here to prevent
+		 * deadlocks if we will scan them - index_beginscan places
+		 * AccessShareLock, indices update methods don't use locks at all.
+		 * We release this lock in ExecCloseIndices. Note, that hashes use
+		 * page level locking - i.e. are not deadlock-free - let's them be
+		 * on their way -:)) vadim 03-12-1998
+		 *
+		 * If there are multiple not-btree-or-hash indices, all backends must
+		 * lock the indices in the same order or we will get deadlocks here
+		 * during concurrent updates.  This is now guaranteed by
+		 * RelationGetIndexList(), which promises to return the index list
+		 * in OID order.  tgl 06-19-2000
 		 * ----------------
 		 */
 		indexDesc = index_open(indexOid);
