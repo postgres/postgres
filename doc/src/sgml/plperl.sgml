@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/plperl.sgml,v 2.6 2000/12/19 18:16:25 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/plperl.sgml,v 2.7 2000/12/22 18:57:50 petere Exp $
 -->
 
 <chapter id="plperl">
@@ -7,7 +7,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/plperl.sgml,v 2.6 2000/12/19 18:16:25 peter
 
  <para>
   PL/Perl allows you to write functions in the Perl programming
-  language which may be used in SQL queries as if they were built into
+  language that may be used in SQL queries as if they were built into
   <productname>Postgres</productname>.
  </para>
 
@@ -137,7 +137,7 @@ SELECT name, empcomp(employee) FROM employee;
   </para>
 
   <para>
-   Here is an example of a function which will not work because file
+   Here is an example of a function that will not work because file
    system operations are not allowed for security reasons:
 <programlisting>
 CREATE FUNCTION badfunc() RETURNS integer AS '

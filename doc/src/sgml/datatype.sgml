@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.45 2000/12/22 18:00:24 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.46 2000/12/22 18:57:49 petere Exp $
 -->
 
  <chapter id="datatype">
@@ -238,7 +238,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.45 2000/12/22 18:00:24 tg
    of <acronym>SQL92</acronym> are also supported.
    Although we strive for <acronym>SQL92</acronym> compliance, 
    there are some aspects of the standard
-   which are ill considered and which should not live through subsequent standards.
+   that are ill considered and which should not live through subsequent standards.
    <productname>Postgres</productname> will not make great efforts to 
    conform to these features; however, these tend to apply in little-used 
    or obsure cases, and a typical user is not likely to run into them.
@@ -910,7 +910,7 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
 
      <para>
       This type is defined by SQL92, but the definition exhibits
-      fundamental deficiencies which renders the type nearly useless. In
+      fundamental deficiencies that render the type nearly useless. In
       most cases, a combination of <type>date</type>,
       <type>time</type>, and <type>timestamp</type>
       should provide a complete range of date/time functionality
@@ -974,7 +974,7 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
 1999-01-08 04:05:06 -8:00
       </programlisting>
 
-      is a valid <type>timestamp</type> value, which is <acronym>ISO</acronym>-compliant.
+      is a valid <type>timestamp</type> value that is <acronym>ISO</acronym>-compliant.
       In addition, the wide-spread format
 
       <programlisting>
@@ -1267,7 +1267,7 @@ January 8 04:05:06 1999 PST
 
     <para>
      To address these difficulties, we recommend using date/time
-     types which contain both date and time when using time zones. We
+     types that contain both date and time when using time zones. We
      recommend <emphasis>not</emphasis> using the SQL92 type TIME
      WITH TIME ZONE (though it is supported by
      <productname>Postgres</productname> for legacy applications and
@@ -1574,7 +1574,7 @@ January 8 04:05:06 1999 PST
     <title>Box</title>
 
     <para>
-     Boxes are represented by pairs of points which are opposite
+     Boxes are represented by pairs of points that are opposite
      corners of the box.
     </para>
 

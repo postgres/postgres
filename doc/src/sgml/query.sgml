@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/query.sgml,v 1.14 2000/12/12 16:47:52 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/query.sgml,v 1.15 2000/12/22 18:57:50 petere Exp $
 -->
 
  <chapter id="query">
@@ -414,7 +414,7 @@ DELETE FROM classname;
 SELECT max(temp_lo) FROM weather;
     </programlisting>
 
-    If we want to know which city (or cities) that reading occurred in,
+    If we want to know what city (or cities) that reading occurred in,
     we might try
 
     <programlisting>

@@ -18,7 +18,7 @@ In the following explanation, a
 <firstterm>byte</firstterm>
 is assumed to contain 8 bits.  In addition, the term
 <firstterm>item</firstterm>
-refers to data which is stored in <productname>Postgres</productname> classes.
+refers to data that is stored in <productname>Postgres</productname> classes.
 </para>
 
 <para>
@@ -134,8 +134,8 @@ and
 <firstterm>special</firstterm>)
 represent byte offsets to the start of unallocated space, to the end
 of unallocated space, and to the start of <firstterm>special space</firstterm>.
-Special space is a region at the end of the page which is allocated at
-page initialization time and which contains information specific to an
+Special space is a region at the end of the page that is allocated at
+page initialization time and contains information specific to an
 access method.  The last 2 bytes of the page header,
 <firstterm>opaque</firstterm>,
 encode the page size and information on the internal fragmentation of

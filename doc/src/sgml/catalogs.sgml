@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.12 2000/12/11 18:26:37 momjian Exp $
+ $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.13 2000/12/22 18:57:49 petere Exp $
  -->
 
 <chapter id="catalogs">
@@ -492,7 +492,7 @@
        stored in the attribute is the OID of a tuple in the
        <structname>pg_proc</structname> catalog.  The
        <structname>pg_proc</structname> tuple contains the query
-       string which defines this set - i.e., the query to run to get
+       string that defines this set - i.e., the query to run to get
        the set.  So the <structfield>atttypid</structfield> (see
        above) refers to the type returned by this query, but the
        actual length of this attribute is the length (size) of an

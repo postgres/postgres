@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/bki.sgml,v 1.4 2000/09/29 20:21:33 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/bki.sgml,v 1.5 2000/12/22 18:57:49 petere Exp $
 
 Transcribed from the original bki.man.5 documentation
 - Thomas Lockhart 1998-08-03
@@ -53,7 +53,7 @@ and the <acronym>SQL</acronym> command <command>CREATE DATABASE</command>.
 
 <para>
 Commands are composed of a command name followed by space separated
-arguments.  Arguments to a command which begin with a "$" are
+arguments.  Arguments to a command that begin with a "$" are
 treated specially.  If "$$" are the first two characters, then
 the first "$" is ignored and the argument is then processed
 normally.  If the "$" is followed by space, then it is treated

@@ -411,7 +411,7 @@ INSERT INTO a SELECT * FROM a;
 
     <blockquote>
      <para>
-Changes made by query Q are visible by queries which are started after
+Changes made by query Q are visible by queries that are started after
 query Q, no matter whether they are started inside Q (during the
 execution of Q) or after Q is done.
      </para>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.10 2000/09/29 20:21:34 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.11 2000/12/22 18:57:50 petere Exp $
 -->
 
  <chapter id="plsql">
@@ -320,7 +320,7 @@ RENAME <replaceable>oldname</replaceable> TO <replaceable>newname</replaceable>;
 
     <para>
      All expressions used in PL/pgSQL statements are processed using
-     the backends executor. Expressions which appear to contain
+     the backends executor. Expressions that appear to contain
      constants may in fact require run-time evaluation (e.g. 'now' for the
      datetime type) so
      it is impossible for the PL/pgSQL parser

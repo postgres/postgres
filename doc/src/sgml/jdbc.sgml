@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.16 2000/12/21 22:55:27 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.17 2000/12/22 18:57:49 petere Exp $
 -->
 
  <chapter id="jdbc">
@@ -1299,7 +1299,7 @@ java.lang.Object
    public class PGpath extends PGobject implements Serializable, 
 Cloneable
                
-   This implements a path (a multiple segmented line, which may be 
+   This implements a path (a multiply segmented line, which may be 
 closed)
            
 Variables

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.32 2000/12/20 17:23:39 thomas Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.33 2000/12/22 18:57:49 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%flattext-install-include[<productname>PostgreSQL</>]]> Installation Instructions</title>
@@ -204,7 +204,7 @@ su - postgres
     </para>
 
     <para>
-     On systems which have <productname>PostgreSQL</> started at boot time, there is
+     On systems that have <productname>PostgreSQL</> started at boot time, there is
      probably a start-up file that will accomplish the same thing. For
      example, on a Red Hat Linux system one might find that
 <screen>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.30 2000/12/21 22:55:27 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.31 2000/12/22 18:57:50 petere Exp $
 -->
 
  <chapter id="syntax">
@@ -71,7 +71,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.30 2000/12/21 22:55:27 pete
 
     <para>
      The following are <productname>Postgres</productname>
-     reserved words which are neither <acronym>SQL92</acronym>
+     reserved words that are neither <acronym>SQL92</acronym>
      nor <acronym>SQL3</acronym> reserved words. These are allowed
      to be present as column labels, but not as identifiers:
 
@@ -94,8 +94,8 @@ VACUUM VERBOSE
 
     <para>
      The following are <productname>Postgres</productname>
-     reserved words which are also <acronym>SQL92</acronym> 
-     or <acronym>SQL3</acronym> reserved words, and which
+     reserved words that are also <acronym>SQL92</acronym> 
+     or <acronym>SQL3</acronym> reserved words, and that
      are allowed to be present as column labels, but not as identifiers:
 
      <programlisting>
@@ -123,7 +123,7 @@ WHEN WHERE
      </programlisting>
 
      The following are <productname>Postgres</productname>
-     reserved words which are also <acronym>SQL92</acronym> 
+     reserved words that are also <acronym>SQL92</acronym> 
      or <acronym>SQL3</acronym> reserved words:
 
      <programlisting>
@@ -151,8 +151,8 @@ WHERE WITH WITHOUT WORK
     </para>
 
     <para>
-     The following are <acronym>SQL92</acronym> reserved key words which
-     are not <productname>Postgres</productname> reserved key words, but which
+     The following are <acronym>SQL92</acronym> reserved key words that
+     are not <productname>Postgres</productname> reserved key words, but that
      if used as function names are always translated into the function
      <function>CHAR_LENGTH</function>:
 
@@ -163,7 +163,7 @@ CHARACTER_LENGTH
 
     <para>
      The following are <acronym>SQL92</acronym> or <acronym>SQL3</acronym> 
-     reserved key words which
+     reserved key words that
      are not <productname>Postgres</productname> reserved key words, but
      if used as type names are always translated into an alternate, native type:
 
@@ -190,7 +190,7 @@ DATETIME TIMESPAN
     <para>
      The following are either <acronym>SQL92</acronym>
      or <acronym>SQL3</acronym> reserved key words
-     which are not key words in <productname>Postgres</productname>.
+     that are not key words in <productname>Postgres</productname>.
      These have no proscribed usage in <productname>Postgres</productname>
      at the time of writing (version 7.0) but may become reserved key words in the
      future:
@@ -247,7 +247,7 @@ WHENEVER WRITE
 
     <para>
      The following are <productname>Postgres</productname>
-     non-reserved key words which are neither <acronym>SQL92</acronym>
+     non-reserved key words that are neither <acronym>SQL92</acronym>
      nor <acronym>SQL3</acronym> non-reserved key words:
 
      <programlisting>
@@ -274,7 +274,7 @@ VALID VERSION
 
     <para>
      The following are <productname>Postgres</productname>
-     non-reserved key words which are <acronym>SQL92</acronym>
+     non-reserved key words that are <acronym>SQL92</acronym>
      or <acronym>SQL3</acronym> reserved key words:
 
      <programlisting>
@@ -299,7 +299,7 @@ ZONE
 
     <para>
      The following are <productname>Postgres</productname>
-     non-reserved key words which are also either <acronym>SQL92</acronym>
+     non-reserved key words that are also either <acronym>SQL92</acronym>
      or <acronym>SQL3</acronym> non-reserved key words:
 
      <programlisting>
@@ -309,7 +309,7 @@ COMMITTED SERIALIZABLE TYPE
 
     <para>
      The following are either <acronym>SQL92</acronym>
-     or <acronym>SQL3</acronym> non-reserved key words which are not
+     or <acronym>SQL3</acronym> non-reserved key words that are not
      key words of any kind in <productname>Postgres</productname>:
 
      <programlisting>
@@ -362,7 +362,7 @@ UNCOMMITTED UNNAMED
     where the comment begins with "<literal>/*</literal>" and extends
     to the matching occurrence of "<literal>*/</literal>". These block
     comments nest, as specified in SQL99, so that one can comment out
-    larger blocks of code which may contain existing block comments.
+    larger blocks of code that may contain existing block comments.
    </para>
   </sect1>
 

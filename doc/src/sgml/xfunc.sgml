@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.24 2000/12/21 22:55:27 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.25 2000/12/22 18:57:50 petere Exp $
 -->
 
  <chapter id="xfunc">
@@ -351,7 +351,7 @@ SELECT clean_EMP();
    <title>Internal Functions</title>
 
    <para>
-    Internal functions are functions written in C which have been statically
+    Internal functions are functions written in C that have been statically
     linked into the <productname>Postgres</productname> backend
     process. The AS
     clause gives the C-language name of the function, which need not be the
@@ -397,7 +397,7 @@ SELECT clean_EMP();
    </para>
 
    <para>
-    The string which specifies the object file (the first string in the AS
+    The string that specifies the object file (the first string in the AS
     clause) should be the <emphasis>full path</emphasis> of the object
     code file for the function, bracketed by single quote marks.  If a
     link symbol is given in the AS clause, the link symbol should also be

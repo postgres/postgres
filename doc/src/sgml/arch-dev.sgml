@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/arch-dev.sgml,v 2.11 2000/12/21 22:55:26 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/arch-dev.sgml,v 2.12 2000/12/22 18:57:49 petere Exp $
 -->
 
  <chapter id="overview">
@@ -357,7 +357,7 @@ XXX merge in the figures later... - thomas 1999-01-29
      the parser as input and steps recursively through it.  If
      a <literal>SelectStmt</literal> node is found, it is transformed
      to a <literal>Query</literal>
-     node which will be the top most node of the new data structure. Figure
+     node that will be the top most node of the new data structure. Figure
      \ref{transformed} shows the transformed data structure (the part
      for the transformed <firstterm>where clause</firstterm> is given in figure
      \ref{transformed_where} because there was not enough space to show all
@@ -371,7 +371,7 @@ XXX merge in the figures later... - thomas 1999-01-29
      created containing the relation name, the <firstterm>alias name</firstterm> and
      the <firstterm>relation id</firstterm>. From now on the relation ids are used to
      refer to the <firstterm>relations</firstterm> given in the query. All <abbrev>RTE</abbrev> nodes
-     are collected in the <firstterm>range table entry list</firstterm> which is connected
+     are collected in the <firstterm>range table entry list</firstterm> that is connected
      to the field <literal>rtable</literal> of the <literal>Query</literal> node. If a name of a
      relation that is not known to the system is detected in the query an
      error will be returned and the query processing will be aborted.
@@ -668,7 +668,7 @@ current context are performed.
     </para>
 
     <para>
-     The top node of the plan is a <literal>MergeJoin</literal> node which has two
+     The top node of the plan is a <literal>MergeJoin</literal> node that has two
      successors, one attached to the field <literal>lefttree</literal> and the second
      attached to the field <literal>righttree</literal>. Each of the subnodes represents
      one relation of the join. As mentioned above a merge sort
@@ -861,7 +861,7 @@ the {\it aggregate function} used in the query.
 
 A check is made that every attribute grouped for appears only without
 an {\it aggregate function} in the {\it targetlist} and that every
-attribute which appears without an {\it aggregate function} in the
+attribute that appears without an {\it aggregate function} in the
 {\it targetlist} is grouped for.
 %
 
@@ -1050,7 +1050,7 @@ the {\it parser} transform the {\it operator tree} attached to the field
 transformation of the {\it operator tree} for the {\it where clause}. This
 is possible because both trees are built up by the same grammar rules
 of the {\it parser} and are therefore compatible. Additional checks
-which make sure that the {\it having clause} involves at least one
+that make sure that the {\it having clause} involves at least one
 {\it aggregate function} etc. are performed at a later point in time
 in the {\it planner/optimizer} stage. \\
 \\
@@ -1061,7 +1061,7 @@ parts of the affected code are presented instead of the whole
 functions. Every added source line will be marked by a {\tt '+'} at the
 beginning of the line and every changed source line will be marked by
 a {\tt '!'} throughout the following code listings. Whenever a part of
-the code which is not relevant at the moment is skipped, three
+the code that is not relevant at the moment is skipped, three
 vertical dots are inserted instead.
 %
 \pagebreak
@@ -1961,7 +1961,7 @@ node.
 
 Unfortunately this is not the only thing to do. Remember from section
 \ref{aggregates} {\it How Aggregate Functions are Implemented} that
-the {\it targetlist} is searched for {\it aggregate functions} which
+the {\it targetlist} is searched for {\it aggregate functions} that
 are appended to a list that will be attached to the field {\tt aggs}
 of the {\tt AGG} node. This was sufficient as long as {\it aggregate
 functions} have only been allowed to appear within the {\it
@@ -3158,7 +3158,7 @@ operators).
 %
 \end{itemize}
 %
-Here is a part of the grammar which is responsible for {\tt select}
+Here is a part of the grammar that is responsible for {\tt select}
 statements having the code building up the data structures inserted:
 %
 \pagebreak

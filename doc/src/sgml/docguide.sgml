@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/docguide.sgml,v 1.29 2000/11/11 13:53:49 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/docguide.sgml,v 1.30 2000/12/22 18:57:49 petere Exp $ -->
 
 <appendix label="DG2" id="docguide">
  <title>Documentation</title>
@@ -435,7 +435,7 @@ CATALOG "docbook31/docbook.cat"
     <para>
      <productname>JadeTeX</productname> does not at the time of
      writing come with much of an installation guide, but there is a
-     <filename>makefile</filename> which shows what is needed.  It
+     <filename>makefile</filename> that shows what is needed.  It
      also includes a directory <filename>cooked</filename>, wherein
      you'll find some of the macro packages it needs, but not all, and
      not complete -- at least last we looked.
@@ -824,7 +824,7 @@ exit
 	   Not all documents have figures.
 	   You can grep the <acronym>SGML</acronym> source files for
 	   the string "<literal>graphic</literal>" to identify those parts of the
-	   documentation which may have figures. A few figures are replicated in
+	   documentation that may have figures. A few figures are replicated in
 	   various parts of the documentation.
 	  </para>
 	 </note>
@@ -969,7 +969,7 @@ exit
 
     <step performance="required">
      <para>
-      Lop off the parts of the document which are not needed.
+      Lop off the parts of the document that are not needed.
      </para>
 
      <para>

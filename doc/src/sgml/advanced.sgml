@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/advanced.sgml,v 1.17 2000/12/18 23:39:37 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/advanced.sgml,v 1.18 2000/12/22 18:57:49 petere Exp $
 -->
 
  <chapter id="advanced">
@@ -23,7 +23,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/advanced.sgml,v 1.17 2000/12/18 23:39:37 tg
 
    <para>
     Let's create two classes. The capitals  class  contains
-    state  capitals  which  are also cities. Naturally, the
+    state  capitals  that  are also cities. Naturally, the
     capitals class should inherit from cities.
 
     <programlisting>

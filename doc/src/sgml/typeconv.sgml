@@ -36,7 +36,7 @@ implicit type conversion and coercion.
 <para>
 <acronym>SQL</acronym> is a strongly typed language. That is, every data item
 has an associated data type which determines its behavior and allowed usage.
-<productname>Postgres</productname> has an extensible type system which is
+<productname>Postgres</productname> has an extensible type system that is
 much more general and flexible than other <acronym>RDBMS</acronym> implementations.
 Hence, most type conversion behavior in <productname>Postgres</productname>
 should be governed by general rules rather than by ad-hoc heuristics to allow
@@ -265,7 +265,7 @@ If only one candidate remains, use it; else continue to the next step.
 </step>
 <step performance="required">
 <para>
-Run through all candidates and keep those which accept preferred types at
+Run through all candidates and keep those that accept preferred types at
 the most positions where type coercion will be required.
 Keep all candidates if none accept preferred types.
 If only one candidate remains, use it; else continue to the next step.
@@ -474,7 +474,7 @@ If only one candidate remains, use it; else continue to the next step.
 </step>
 <step performance="required">
 <para>
-Run through all candidates and keep those which accept preferred types at
+Run through all candidates and keep those that accept preferred types at
 the most positions where type coercion will be required.
 Keep all candidates if none accept preferred types.
 If only one candidate remains, use it; else continue to the next step.

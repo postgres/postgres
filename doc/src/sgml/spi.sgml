@@ -1288,7 +1288,7 @@ int * <REPLACEABLE CLASS="PARAMETER">attnum</REPLACEABLE>
 </TERM>
 <LISTITEM>
 <PARA>
-Array of numbers of the attributes which are to be changed
+Array of numbers of the attributes that are to be changed
 </PARA>
 </LISTITEM>
 </VARLISTENTRY>
@@ -2615,7 +2615,7 @@ TBD
    Server allocates memory in memory contexts in such way that allocations
 made in one context may be freed by context destruction without affecting
 allocations made in other contexts. All allocations (via <Function>palloc</Function>, etc) are
-made in the context which are chosen as current one. You'll get
+made in the context that is chosen as the current one. You'll get
 unpredictable results if you'll try to free (or reallocate) memory allocated
 not in current context.
 </Para>
@@ -2691,7 +2691,7 @@ rules, of course) without recursing.
 </Para>
 
 <Para>
-   Changes made by query Q are visible by queries which are started after
+   Changes made by query Q are visible to queries that are started after
 query Q, no matter whether they are started inside Q (during the execution
 of Q) or after Q is done.
 </Para>

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/regress.sgml,v 1.14 2000/11/22 00:58:47 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/regress.sgml,v 1.15 2000/12/22 18:57:50 petere Exp $ -->
 
  <chapter id="regress">
   <title id="regress-title">Regression Tests</title>
@@ -144,7 +144,7 @@
      platform system routines. In the latter case, the messages may
      vary between platforms, but should reflect similar
      information. These differences in messages will result in a
-     <quote>failed</quote> regression test which can be validated by
+     <quote>failed</quote> regression test that can be validated by
      inspection.
     </para>
    </sect2>
@@ -177,7 +177,7 @@ PGTZ='PST8PDT7,M04.01.0,M10.05.03'; export PGTZ
     </para>
 
     <para>
-     There appear to be some systems which do not accept the
+     There appear to be some systems that do not accept the
      recommended syntax for explicitly setting the local time zone
      rules; you may need to use a different <envar>PGTZ</envar>
      setting on such machines.
@@ -232,7 +232,7 @@ PGTZ='PST8PDT7,M04.01.0,M10.05.03'; export PGTZ
      polygons whose vertices are represented as pairs of <type>double
      precision</type> numbers (decimal latitude and
      longitude). Initially, some tables are created and loaded with
-     geographic data, then some views are created which join two
+     geographic data, then some views are created that join two
      tables using the polygon intersection operator
      (<literal>##</literal>), then a select is done on the view.
     </para>

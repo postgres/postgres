@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.52 2000/12/21 18:47:05 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.53 2000/12/22 18:57:49 petere Exp $
 -->
 
  <chapter id="libpq-chapter">
@@ -33,7 +33,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.52 2000/12/21 18:47:05 momji
   </para>
 
   <para>
-   Frontend programs which use <filename>libpq</filename> must include the
+   Frontend programs that use <filename>libpq</filename> must include the
    header file <filename>libpq-fe.h</filename> and must link with the
    <filename>libpq</filename> library.
   </para>
@@ -116,7 +116,7 @@ PGconn *PQconnectdb(const char *conninfo)
       specified, the value for hostaddr gives the remote address; the value
       for host is ignored, unless Kerberos is used, in which case that value
       is used for Kerberos authentication. Note that authentication is likely
-      to fail if libpq is passed a host name which is not the name of the
+      to fail if libpq is passed a host name that is not the name of the
       machine at hostaddr.
      </para>
      <para>

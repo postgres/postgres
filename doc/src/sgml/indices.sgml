@@ -4,7 +4,7 @@
   <para>
    Indexes are commonly used to enhance database
    performance. They should be defined on table columns (or class
-   attributes) which are used as qualifications in repetitive queries.
+   attributes) that are used as qualifications in repetitive queries.
    Inappropriate use will result in slower performance, since update
    and insertion times are increased in the presence of indices.
   </para>
@@ -285,7 +285,7 @@ Subject: Re: [QUESTIONS] PRIMARY KEY | UNIQUE
    <para>
     Thus, you may query a table by any combination of its columns, despite the
     fact that you don't have an index on these columns. The indexes are merely
-    an implementational aid which each <acronym>RDBMS</acronym> offers
+    an implementational aid that each <acronym>RDBMS</acronym> offers
     you, in order to cause
     commonly used queries to be done more efficiently.
     Some <acronym>RDBMS</acronym> may give you
@@ -306,14 +306,14 @@ CREATE MEMSTORE ON &lt;table&gt; COLUMNS &lt;cols&gt;
    </para>
 
    <para>
-    So, if you want to use a combination of fields which is not unique as a
+    So, if you want to use a combination of fields that is not unique as a
     secondary key, you really don't have to specify anything - just start
     retrieving by that combination! However, if you want to make the retrieval
     efficient, you'll have to resort to the means your
     <acronym>RDBMS</acronym> provider gives you
     - be it an index, my imaginary MEMSTORE command, or an intelligent
     <acronym>RDBMS</acronym>
-    which creates indices without your knowledge based on the fact that you have
+    that creates indices without your knowledge based on the fact that you have
     sent it many queries based on a specific combination of keys... (It learns
     from experience).
    </para>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.20 2000/11/30 23:20:50 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.21 2000/12/22 18:57:49 petere Exp $
 -->
 
  <chapter id="libpqplusplus">
@@ -8,7 +8,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.20 2000/11/30 23:20:
   <para>
    <filename>libpq++</filename> is the C++ API to 
    <productname>Postgres</productname>.
-   <filename>libpq++</filename>  is a set of classes which allow
+   <filename>libpq++</filename>  is a set of classes that allow
    client programs to connect to the 
    <productname>Postgres</productname> backend server. These connections
    come in two forms: a Database Class and a Large Object class.
