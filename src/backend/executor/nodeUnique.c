@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeUnique.c,v 1.15 1998/02/18 12:40:44 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeUnique.c,v 1.16 1998/02/23 06:26:58 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -354,4 +354,20 @@ ExecEndUnique(Unique *node)
 	uniquestate = node->uniquestate;
 	ExecEndNode(outerPlan((Plan *) node), (Plan *) node);
 	ExecClearTuple(uniquestate->cs_ResultTupleSlot);
+}
+
+
+void
+ExecReScanUnique(Unique *node, ExprContext *exprCtxt, Plan *parent)
+{
+	UniqueState *uniquestate = node->uniquestate;
+	
+	ExecClearTuple(uniquestate->cs_ResultTupleSlot);
+	/* 
+	 * if chgParam of subnode is not null then plan
+	 * will be re-scanned by first ExecProcNode.
+	 */
+	if (((Plan*) node)->lefttree->chgParam == NULL)
+		ExecReScan (((Plan*) node)->lefttree, exprCtxt, (Plan *) node);
+	
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSort.c,v 1.12 1998/01/07 21:02:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSort.c,v 1.13 1998/02/23 06:26:56 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -183,8 +183,6 @@ ExecSort(Sort *node)
 	else
 	{
 		slot = (TupleTableSlot *) sortstate->csstate.cstate.cs_ResultTupleSlot;
-		/* *** get_cs_ResultTupleSlot((CommonState) sortstate); */
-/*		slot =	sortstate->csstate.css_ScanTupleSlot; orig */
 	}
 
 	SO1_printf("ExecSort: %s\n",
@@ -389,4 +387,29 @@ ExecSortRestrPos(Sort *node)
 	 * ----------------
 	 */
 	psort_restorepos(node);
+}
+
+void
+ExecReScanSort(Sort *node, ExprContext *exprCtxt, Plan *parent)
+{
+	SortState  *sortstate = node->sortstate;
+
+	/*
+	 * If we haven't sorted yet, just return. If outerplan'
+	 * chgParam is not NULL then it will be re-scanned by
+	 * ExecProcNode, else - no reason to re-scan it at all.
+	 */
+	if (sortstate->sort_Flag == false)
+		return;
+	
+	ExecClearTuple(sortstate->csstate.cstate.cs_ResultTupleSlot);
+	
+	psort_rescan (node);
+	
+	/*
+	 * If subnode is to be rescanned then we aren't sorted
+	 */
+	if (((Plan*) node)->lefttree->chgParam != NULL)
+		sortstate->sort_Flag = false;
+
 }

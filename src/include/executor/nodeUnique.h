@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeUnique.h,v 1.5 1997/11/26 01:13:06 momjian Exp $
+ * $Id: nodeUnique.h,v 1.6 1998/02/23 06:27:56 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,5 +21,6 @@ extern TupleTableSlot *ExecUnique(Unique *node);
 extern bool ExecInitUnique(Unique *node, EState *estate, Plan *parent);
 extern int	ExecCountSlotsUnique(Unique *node);
 extern void ExecEndUnique(Unique *node);
+extern void ExecReScanUnique(Unique *node, ExprContext *exprCtxt, Plan *parent);
 
 #endif							/* NODEUNIQUE_H */

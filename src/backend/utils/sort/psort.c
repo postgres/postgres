@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/psort.c,v 1.37 1998/02/11 19:13:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/psort.c,v 1.38 1998/02/23 06:27:39 vadim Exp $
  *
  * NOTES
  *		Sorts the first relation into the second relation.
@@ -924,8 +924,6 @@ psort_end(Sort * node)
 
 	if (!node->cleaned)
 	{
-		Assert(node != (Sort *) NULL);
-
 		/*
 		 * I'm changing this because if we are sorting a relation with no
 		 * tuples, psortstate is NULL.
@@ -944,10 +942,33 @@ psort_end(Sort * node)
 				(int) ceil((double) PS(node)->BytesWritten / BLCKSZ);
 
 			pfree((void *) node->psortstate);
+			node->psortstate = NULL;
 
 			node->cleaned = TRUE;
 		}
 	}
+}
+
+void
+psort_rescan (Sort *node)
+{
+	/*
+	 * If subnode is to be rescanned then free our previous results
+	 */
+	if (((Plan*) node)->lefttree->chgParam != NULL)
+	{
+		psort_end (node);
+		node->cleaned = false;
+	}
+	else if (PS(node) != (Psortstate *) NULL)
+	{
+		PS(node)->all_fetched = false;
+		PS(node)->psort_current = 0;
+		PS(node)->psort_saved = 0;
+		if (PS(node)->using_tape_files == true)
+			rewind (PS(node)->psort_grab_file);
+	}
+
 }
 
 /*
