@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.69 2004/12/26 23:06:56 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.70 2004/12/27 19:19:23 tgl Exp $
 -->
 
 <chapter id="client-authentication">
@@ -175,8 +175,7 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
        a specific <productname>PostgreSQL</productname> database.
        Multiple database names can be supplied by separating them with
        commas.  A file containing database names can be specified by
-       preceding the file name with <literal>@</>. The file must be in
-       the same directory as <filename>pg_hba.conf</>.
+       preceding the file name with <literal>@</>.
       </para>
      </listitem>
     </varlistentry>
@@ -192,8 +191,7 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
        can be supplied by separating them with commas. Group names can
        be specified by preceding the group name with <literal>+</>. A
        file containing user names can be specified by preceding the
-       file name with <literal>@</>. The file must be in the same
-       directory as <filename>pg_hba.conf</>.
+       file name with <literal>@</>.
       </para>
      </listitem>
     </varlistentry>
@@ -391,6 +389,16 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
      </listitem>
     </varlistentry>
    </variablelist>
+  </para>
+
+  <para>
+   Files included by <literal>@</> constructs are read as lists of names,
+   which can be separated by either whitespace or commas.  Comments are
+   introduced by <literal>#</literal>, just as in
+   <filename>pg_hba.conf</filename>, and nested <literal>@</> constructs are
+   allowed.  Unless the file name following <literal>@</> is an absolute
+   path, it is taken to be relative to the directory containing the
+   referencing file.
   </para>
 
   <para>
