@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/freelist.c,v 1.44 2004/06/03 02:08:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/freelist.c,v 1.45 2004/06/11 17:20:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -709,6 +709,7 @@ StrategyInvalidateBuffer(BufferDesc *buf)
 	 */
 	CLEAR_BUFFERTAG(buf->tag);
 	buf->flags &= ~(BM_VALID | BM_DIRTY);
+	buf->cntxDirty = false;
 	buf->bufNext = StrategyControl->listFreeBuffers;
 	StrategyControl->listFreeBuffers = buf->buf_id;
 }
@@ -757,8 +758,7 @@ StrategyDirtyBufferList(BufferDesc **buffers, BufferTag *buftags,
 	cdb_id_t1 = StrategyControl->listHead[STRAT_LIST_T1];
 	cdb_id_t2 = StrategyControl->listHead[STRAT_LIST_T2];
 
-	while ((cdb_id_t1 >= 0 || cdb_id_t2 >= 0) && 
-		   num_buffer_dirty < max_buffers)
+	while (cdb_id_t1 >= 0 || cdb_id_t2 >= 0)
 	{
 		if (cdb_id_t1 >= 0)
 		{
@@ -772,6 +772,8 @@ StrategyDirtyBufferList(BufferDesc **buffers, BufferTag *buftags,
 					buffers[num_buffer_dirty] = buf;
 					buftags[num_buffer_dirty] = buf->tag;
 					num_buffer_dirty++;
+					if (num_buffer_dirty >= max_buffers)
+						break;
 				}
 			}
 
@@ -790,6 +792,8 @@ StrategyDirtyBufferList(BufferDesc **buffers, BufferTag *buftags,
 					buffers[num_buffer_dirty] = buf;
 					buftags[num_buffer_dirty] = buf->tag;
 					num_buffer_dirty++;
+					if (num_buffer_dirty >= max_buffers)
+						break;
 				}
 			}
 
