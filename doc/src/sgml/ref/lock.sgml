@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/lock.sgml,v 1.13 1999/07/22 15:09:12 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/lock.sgml,v 1.14 1999/10/01 15:26:29 thomas Exp $
 Postgres documentation
 -->
 
@@ -15,7 +15,7 @@ Postgres documentation
    LOCK
   </refname>
   <refpurpose>
-   Explicit lock of a table inside a transaction
+   Explicitly lock a table inside a transaction
   </refpurpose>
  </refnamediv>
  <refsynopsisdiv>
@@ -23,9 +23,9 @@ Postgres documentation
    <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
-LOCK [ TABLE ] <replaceable class="PARAMETER">table</replaceable>
-LOCK [ TABLE ] <replaceable class="PARAMETER">table</replaceable> IN [ ROW | ACCESS ] { SHARE | EXCLUSIVE } MODE
-LOCK [ TABLE ] <replaceable class="PARAMETER">table</replaceable> IN SHARE ROW EXCLUSIVE MODE
+LOCK [ TABLE ] <replaceable class="PARAMETER">name</replaceable>
+LOCK [ TABLE ] <replaceable class="PARAMETER">name</replaceable> IN [ ROW | ACCESS ] { SHARE | EXCLUSIVE } MODE
+LOCK [ TABLE ] <replaceable class="PARAMETER">name</replaceable> IN SHARE ROW EXCLUSIVE MODE
   </synopsis>
 
   <refsect2 id="R2-SQL-LOCK-1">
@@ -39,7 +39,7 @@ LOCK [ TABLE ] <replaceable class="PARAMETER">table</replaceable> IN SHARE ROW E
 
     <variablelist>
      <varlistentry>
-      <term><replaceable class="PARAMETER">table</replaceable></term>
+      <term><replaceable class="PARAMETER">name</replaceable></term>
       <listitem>
        <para>
 	The name of an existing table to lock.
@@ -195,11 +195,11 @@ LOCK TABLE
 
      <varlistentry>
       <term><computeroutput>
-ERROR <replaceable class="PARAMETER">table</replaceable>: Table does not exist.
+ERROR <replaceable class="PARAMETER">name</replaceable>: Table does not exist.
        </computeroutput></term>
       <listitem>
        <para>
-	Message returned if <replaceable class="PARAMETER">table</replaceable>
+	Message returned if <replaceable class="PARAMETER">name</replaceable>
 	does not exist.
        </para>
       </listitem>
@@ -230,8 +230,9 @@ ERROR <replaceable class="PARAMETER">table</replaceable>: Table does not exist.
    table before querying. This will protect data from concurrent changes 
    and provide any further read operations over the table with data in their 
    actual current state, because SHARE lock mode conflicts with any ROW EXCLUSIVE 
-   one acquired by writers, and your LOCK TABLE table IN SHARE MODE statement 
-   will wait until any concurrent write operations commit or rollback.
+   one acquired by writers, and your
+   <command>LOCK TABLE <replaceable class="PARAMETER">name</replaceable> IN SHARE MODE</command>
+   statement will wait until any concurrent write operations commit or rollback.
 
    <note>
     <para>
