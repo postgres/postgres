@@ -10,9 +10,6 @@ select 1;
 -- UNSUPPORTED STUFF
  
 -- doesn't work 
--- attachas nonesuch
---
--- doesn't work 
 -- notify pg_class
 --
 

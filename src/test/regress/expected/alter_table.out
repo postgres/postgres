@@ -318,7 +318,7 @@ drop table atacc3;
 drop table atacc2;
 drop table atacc1;
 -- test unique constraint adding
-create table atacc1 ( test int );
+create table atacc1 ( test int ) with oids;
 -- add a unique constraint
 alter table atacc1 add constraint atacc_test1 unique (test);
 NOTICE:  ALTER TABLE / ADD UNIQUE will create implicit index "atacc_test1" for table "atacc1"
@@ -378,7 +378,7 @@ insert into atacc1 (test2, test) values (2, 3);
 ERROR:  duplicate key violates unique constraint "atacc1_test_key"
 drop table atacc1;
 -- test primary key constraint adding
-create table atacc1 ( test int );
+create table atacc1 ( test int ) with oids;
 -- add a primary key constraint
 alter table atacc1 add constraint atacc_test1 primary key (test);
 NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index "atacc_test1" for table "atacc1"
@@ -476,7 +476,7 @@ alter table non_existent alter column bar drop not null;
 ERROR:  relation "non_existent" does not exist
 -- test setting columns to null and not null and vice versa
 -- test checking for null values and primary key
-create table atacc1 (test int not null);
+create table atacc1 (test int not null) with oids;
 alter table atacc1 add constraint "atacc1_pkey" primary key (test);
 NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index "atacc1_pkey" for table "atacc1"
 alter table atacc1 alter column test drop not null;
@@ -598,7 +598,7 @@ ERROR:  permission denied: "pg_class" is a system catalog
 alter table nosuchtable drop column bar;
 ERROR:  relation "nosuchtable" does not exist
 -- test dropping columns
-create table atacc1 (a int4 not null, b int4, c int4 not null, d int4);
+create table atacc1 (a int4 not null, b int4, c int4 not null, d int4) with oids;
 insert into atacc1 values (1, 2, 3, 4);
 alter table atacc1 drop a;
 alter table atacc1 drop a;

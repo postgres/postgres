@@ -348,7 +348,7 @@ drop table atacc1;
 
 -- test unique constraint adding
 
-create table atacc1 ( test int );
+create table atacc1 ( test int ) with oids;
 -- add a unique constraint
 alter table atacc1 add constraint atacc_test1 unique (test);
 -- insert first value
@@ -402,7 +402,7 @@ drop table atacc1;
 
 -- test primary key constraint adding
 
-create table atacc1 ( test int );
+create table atacc1 ( test int ) with oids;
 -- add a primary key constraint
 alter table atacc1 add constraint atacc_test1 primary key (test);
 -- insert first value
@@ -485,7 +485,7 @@ alter table non_existent alter column bar drop not null;
 
 -- test setting columns to null and not null and vice versa
 -- test checking for null values and primary key
-create table atacc1 (test int not null);
+create table atacc1 (test int not null) with oids;
 alter table atacc1 add constraint "atacc1_pkey" primary key (test);
 alter table atacc1 alter column test drop not null;
 alter table atacc1 drop constraint "atacc1_pkey";
@@ -582,7 +582,7 @@ alter table pg_class drop column relname;
 alter table nosuchtable drop column bar;
 
 -- test dropping columns
-create table atacc1 (a int4 not null, b int4, c int4 not null, d int4);
+create table atacc1 (a int4 not null, b int4, c int4 not null, d int4) with oids;
 insert into atacc1 values (1, 2, 3, 4);
 alter table atacc1 drop a;
 alter table atacc1 drop a;

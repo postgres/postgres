@@ -51,7 +51,7 @@ CREATE TABLE tenk1 (
 	stringu1	name,
 	stringu2	name,
 	string4		name
-);
+) WITH OIDS;
 
 CREATE TABLE tenk2 (
 	unique1 	int4,
@@ -83,7 +83,7 @@ CREATE TABLE person (
 CREATE TABLE emp (
 	salary 		int4,
 	manager 	name
-) INHERITS (person);
+) INHERITS (person) WITH OIDS;
 
 
 CREATE TABLE student (

@@ -4,7 +4,7 @@ CREATE TABLE x (
 	c text not null default 'stuff',
 	d text,
 	e text
-);
+) WITH OIDS;
 NOTICE:  CREATE TABLE will create implicit sequence "x_a_seq" for serial column "x.a"
 CREATE FUNCTION fn_x_before () RETURNS TRIGGER AS '
   BEGIN
