@@ -149,7 +149,19 @@ SELECT '' AS five, f.f1, f.f1 % AS round_f1
       | 1.2345678901234e-200 |                    0
 (5 rows)
 
+SELECT sqrt(float8 '64') AS eight;
+ eight 
+-------
+     8
+(1 row)
+
 -- square root 
+SELECT |/ float8 '64' AS eight;
+ eight 
+-------
+     8
+(1 row)
+
 SELECT '' AS three, f.f1, |/f.f1 AS sqrt_f1
    FROM FLOAT8_TBL f
    WHERE f.f1 > '0.0';
@@ -172,6 +184,12 @@ SELECT '' AS three, f.f1, exp(ln(f.f1)) AS exp_ln_f1
 (3 rows)
 
 -- cube root 
+SELECT ||/ float8 '27' AS three;
+ three 
+-------
+     3
+(1 row)
+
 SELECT '' AS five, f.f1, ||/f.f1 AS cbrt_f1 FROM FLOAT8_TBL f;
  five |          f1          |        cbrt_f1        
 ------+----------------------+-----------------------
@@ -217,7 +235,7 @@ SELECT '' AS five, FLOAT8_TBL.*;
       | -1.2345678901234e-200
 (5 rows)
 
--- test for over and under flow 
+-- test for over- and underflow 
 INSERT INTO FLOAT8_TBL(f1) VALUES ('10e400');
 ERROR:  Input '10e400' is out of range for float8
 INSERT INTO FLOAT8_TBL(f1) VALUES ('-10e400');
