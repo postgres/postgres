@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.96 2002/07/16 17:05:46 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.97 2002/08/05 19:43:30 petere Exp $
 -->
 
  <chapter id="datatype">
@@ -3092,6 +3092,8 @@ SELECT SUBSTRING(b FROM 1 FOR 2) FROM test;
    </para>
 
   </sect1>
+
+  &array;
 
  </chapter>
 

@@ -1,6 +1,6 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/array.sgml,v 1.20 2002/03/17 19:59:57 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/array.sgml,v 1.21 2002/08/05 19:43:30 petere Exp $ -->
 
-<chapter id="arrays">
+<sect1 id="arrays">
  <title>Arrays</title>
 
  <indexterm>
@@ -325,4 +325,4 @@ INSERT ... VALUES ('{"\\\\","\\""}');
   </para>
  </tip>
 
-</chapter>
+</sect1>

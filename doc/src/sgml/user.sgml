@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/user.sgml,v 1.30 2002/06/15 02:59:55 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/user.sgml,v 1.31 2002/08/05 19:43:31 petere Exp $
 -->
 
 <book id="user">
@@ -16,13 +16,13 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/user.sgml,v 1.30 2002/06/15 02:59:55 
  &intro;
 
  &syntax;
+ &ddl;
+ &dml;
  &queries;
  &datatype;
  &func;
  &typeconv;
- &array;
  &indices;
- &inherit;
  &mvcc;
  &manage;
  &perform;

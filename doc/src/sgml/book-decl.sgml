@@ -8,4 +8,6 @@
 <!entity % set-of-books "IGNORE">
 <!entity % single-book "INCLUDE">
 
+<!entity % entities SYSTEM "entities.sgml">
+%entities;
 ]>

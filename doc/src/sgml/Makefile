@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.50 2002/04/14 17:23:20 petere Exp $
+#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.51 2002/08/05 19:43:30 petere Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -56,6 +56,11 @@ ALLSGML := $(wildcard $(srcdir)/*.sgml $(srcdir)/ref/*.sgml) bookindex.sgml seti
 
 ifdef DOCBOOKSTYLE
 CATALOG = -c $(DOCBOOKSTYLE)/catalog
+endif
+
+# Enable draft mode during development
+ifneq (,$(findstring devel, $(VERSION)))
+JADEFLAGS += -V draft-mode
 endif
 
 

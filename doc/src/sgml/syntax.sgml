@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.63 2002/06/15 22:15:03 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.64 2002/08/05 19:43:31 petere Exp $
 -->
 
 <chapter id="sql-syntax">
@@ -10,11 +10,18 @@ $Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.63 2002/06/15 22:15:03 tgl 
   <secondary>SQL</secondary>
  </indexterm>
 
-  <abstract>
-   <para>
-    This chapter describes the syntax of SQL.
-   </para>
-  </abstract>
+ <para>
+  This chapter describes the syntax of SQL.  It forms the foundation
+  for understanding the following chapters which will go into detail
+  about how the SQL commands are applied to define and modify data.
+ </para>
+
+ <para>
+  We also advise users who are already familiar with SQL to read this
+  chapter carefully because there are several rules and concepts that
+  are implemented inconsistently among SQL databases or that are
+  specific to <productname>PostgreSQL</productname>.
+ </para>
 
  <sect1 id="sql-syntax-lexical">
   <title>Lexical Structure</title>
@@ -798,7 +805,7 @@ SELECT (5 !) - 6;
  </sect1>
 
  <sect1 id="sql-naming">
-  <title>Schemas and naming conventions</title>
+  <title>Schemas and Naming Conventions</title>
 
      <indexterm>
       <primary>schemas</primary>
@@ -830,6 +837,9 @@ SELECT (5 !) - 6;
      <literal>joe</> access to only some of the databases.
     </para>
    </note>
+
+  <sect2>
+   <title>Schema Object Names</title>
 
    <para>
     A database contains one or more named <firstterm>schemas</>, which
@@ -944,6 +954,7 @@ SELECT 3 OPERATOR(pg_catalog.+) 4;
     place <literal>pg_catalog</> at the end of your search path if you
     prefer to have user-defined names override built-in names.
    </para>
+  </sect2>
 
   <sect2 id="sql-reserved-names">
    <title>Reserved names</title>

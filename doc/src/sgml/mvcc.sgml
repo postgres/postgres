@@ -1,9 +1,9 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.25 2002/05/30 20:45:18 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.26 2002/08/05 19:43:31 petere Exp $
 -->
 
  <chapter id="mvcc">
-  <title>Multiversion Concurrency Control</title>
+  <title>Concurrency Control</title>
 
   <indexterm>
    <primary>concurrency</primary>

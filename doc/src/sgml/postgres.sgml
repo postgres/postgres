@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.47 2001/11/21 05:53:41 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.48 2002/08/05 19:43:31 petere Exp $
 -->
 
 <!doctype set PUBLIC "-//OASIS//DTD DocBook V3.1//EN" [
@@ -11,6 +11,9 @@ $Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.47 2001/11/21 05:53:41 th
 
 <!entity % set-of-books "INCLUDE">
 <!entity % single-book "IGNORE">
+
+<!entity % entities SYSTEM "entities.sgml">
+%entities;
 
 <!entity admin      SYSTEM "admin.sgml">
 <!entity developer  SYSTEM "developer.sgml">

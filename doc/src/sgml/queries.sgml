@@ -1,16 +1,22 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/queries.sgml,v 1.15 2002/04/25 20:14:43 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/queries.sgml,v 1.16 2002/08/05 19:43:31 petere Exp $ -->
 
 <chapter id="queries">
  <title>Queries</title>
+
+ <para>
+  The previous chapters explained how to create tables, how to fill
+  them with data, and how to manipulate that data.  Now we finally
+  discuss how to retrieve the data out of the database.
+ </para>
 
  <sect1 id="queries-overview">
   <title>Overview</title>
 
  <para>
-  A <firstterm>query</firstterm> is the process of retrieving or the command
-  to retrieve data from a database.  In SQL the <command>SELECT</command>
-  command is used to specify queries.  The general syntax of the
-  <command>SELECT</command> command is
+  The process of retrieving or the command to retrieve data from a
+  database is called a <firstterm>query</firstterm>.  In SQL the
+  <command>SELECT</command> command is used to specify queries.  The
+  general syntax of the <command>SELECT</command> command is
 <synopsis>
 SELECT <replaceable>select_list</replaceable> FROM <replaceable>table_expression</replaceable> <optional><replaceable>sort_specification</replaceable></optional>
 </synopsis>
@@ -114,14 +120,14 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
     <para>
      A joined table is a table derived from two other (real or
      derived) tables according to the rules of the particular join
-     type.  INNER, OUTER, and CROSS JOIN are supported.
+     type.  Inner, outer, and cross-joins are available.
     </para>
 
     <variablelist>
      <title>Join Types</title>
 
      <varlistentry>
-      <term>CROSS JOIN</term>
+      <term>Cross-join</term>
 
       <indexterm>
        <primary>joins</primary>
@@ -244,7 +250,7 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
           <para>
            First, an INNER JOIN is performed.  Then, for each row in T1
            that does not satisfy the join condition with any row in
-           T2, a joined row is returned with NULL values in columns of
+           T2, a joined row is returned with null values in columns of
            T2.  Thus, the joined table unconditionally has at least one
 	   row for each row in T1.
           </para>
@@ -258,7 +264,7 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
           <para>
            First, an INNER JOIN is performed.  Then, for each row in T2
            that does not satisfy the join condition with any row in
-           T1, a joined row is returned with NULL values in columns of
+           T1, a joined row is returned with null values in columns of
            T1.  This is the converse of a left join: the result table will
            unconditionally have a row for each row in T2.
           </para>
@@ -460,7 +466,7 @@ WHERE <replaceable>search_condition</replaceable>
     After the processing of the FROM clause is done, each row of the
     derived table is checked against the search condition.  If the
     result of the condition is true, the row is kept in the output
-    table, otherwise (that is, if the result is false or NULL) it is
+    table, otherwise (that is, if the result is false or null) it is
     discarded.  The search condition typically references at least some
     column in the table generated in the FROM clause; this is not
     required, but otherwise the WHERE clause will be fairly useless.
@@ -735,7 +741,7 @@ SELECT DISTINCT <replaceable>select_list</replaceable> ...
 
    <para>
     Obviously, two rows are considered distinct if they differ in at
-    least one column value.  NULLs are considered equal in this
+    least one column value.  Null values are considered equal in this
     comparison.
    </para>
 
