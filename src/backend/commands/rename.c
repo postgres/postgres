@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.57 2001/08/12 21:35:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.58 2001/10/08 18:40:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
 
 #include "access/heapam.h"
 #include "catalog/catname.h"
+#include "catalog/pg_index.h"
 #include "catalog/pg_type.h"
 #include "catalog/heap.h"
 #include "catalog/indexing.h"
@@ -47,9 +48,6 @@
  *		modify attname in attribute tuple
  *		insert modified attribute in attribute catalog
  *		delete original attribute from attribute catalog
- *
- *		XXX Renaming an indexed attribute must (eventually) also change
- *				the attribute name in the associated indexes.
  */
 void
 renameatt(char *relname,
@@ -62,6 +60,8 @@ renameatt(char *relname,
 	HeapTuple	reltup,
 				atttup;
 	Oid			relid;
+	List	   *indexoidlist;
+	List	   *indexoidscan;
 
 	/*
 	 * permissions checking.  this would normally be done in utility.c,
@@ -83,7 +83,6 @@ renameatt(char *relname,
 	 */
 	targetrelation = heap_openr(relname, AccessExclusiveLock);
 	relid = RelationGetRelid(targetrelation);
-	heap_close(targetrelation, NoLock); /* close rel but keep lock! */
 
 	/*
 	 * if the 'recurse' flag is set then we are supposed to rename this
@@ -166,7 +165,67 @@ renameatt(char *relname,
 	}
 
 	heap_freetuple(atttup);
+
+	/*
+	 * Update column names of indexes that refer to the column being renamed.
+	 */
+	indexoidlist = RelationGetIndexList(targetrelation);
+
+	foreach(indexoidscan, indexoidlist)
+	{
+		Oid			indexoid = lfirsti(indexoidscan);
+		HeapTuple	indextup;
+
+		/*
+		 * First check to see if index is a functional index.
+		 * If so, its column name is a function name and shouldn't
+		 * be renamed here.
+		 */
+		indextup = SearchSysCache(INDEXRELID,
+								  ObjectIdGetDatum(indexoid),
+								  0, 0, 0);
+		if (!HeapTupleIsValid(indextup))
+			elog(ERROR, "renameatt: can't find index id %u", indexoid);
+		if (OidIsValid(((Form_pg_index) GETSTRUCT(indextup))->indproc))
+		{
+			ReleaseSysCache(indextup);
+			continue;
+		}
+		ReleaseSysCache(indextup);
+		/*
+		 * Okay, look to see if any column name of the index matches
+		 * the old attribute name.
+		 */
+		atttup = SearchSysCacheCopy(ATTNAME,
+									ObjectIdGetDatum(indexoid),
+									PointerGetDatum(oldattname),
+									0, 0);
+		if (!HeapTupleIsValid(atttup))
+			continue;			/* Nope, so ignore it */
+
+		/*
+		 * Update the (copied) attribute tuple.
+		 */
+	    StrNCpy(NameStr(((Form_pg_attribute) GETSTRUCT(atttup))->attname),
+			    newattname, NAMEDATALEN);
+
+	    simple_heap_update(attrelation, &atttup->t_self, atttup);
+
+		/* keep system catalog indices current */
+	    {
+		    Relation	irelations[Num_pg_attr_indices];
+
+		    CatalogOpenIndices(Num_pg_attr_indices, Name_pg_attr_indices, irelations);
+		    CatalogIndexInsert(irelations, Num_pg_attr_indices, attrelation, atttup);
+		    CatalogCloseIndices(Num_pg_attr_indices, irelations);
+	    }
+	    heap_freetuple(atttup);
+	}
+
+	freeList(indexoidlist);
+
 	heap_close(attrelation, RowExclusiveLock);
+	heap_close(targetrelation, NoLock); /* close rel but keep lock! */
 }
 
 /*
