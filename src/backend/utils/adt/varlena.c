@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.106.2.1 2003/11/30 20:53:43 joe Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.106.2.2 2003/12/19 04:56:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2230,11 +2230,11 @@ array_to_text(PG_FUNCTION_ARGS)
 Datum
 to_hex32(PG_FUNCTION_ARGS)
 {
-	static char digits[] = "0123456789abcdef";
-	char		buf[32];		/* bigger than needed, but reasonable */
-	char	   *ptr;
+	uint32		value = (uint32) PG_GETARG_INT32(0);
 	text	   *result_text;
-	int32		value = PG_GETARG_INT32(0);
+	char	   *ptr;
+	const char *digits = "0123456789abcdef";
+	char		buf[32];		/* bigger than needed, but reasonable */
 
 	ptr = buf + sizeof(buf) - 1;
 	*ptr = '\0';
@@ -2256,11 +2256,11 @@ to_hex32(PG_FUNCTION_ARGS)
 Datum
 to_hex64(PG_FUNCTION_ARGS)
 {
-	static char digits[] = "0123456789abcdef";
-	char		buf[32];		/* bigger than needed, but reasonable */
-	char	   *ptr;
+	uint64		value = (uint64) PG_GETARG_INT64(0);
 	text	   *result_text;
-	int64		value = PG_GETARG_INT64(0);
+	char	   *ptr;
+	const char *digits = "0123456789abcdef";
+	char		buf[32];		/* bigger than needed, but reasonable */
 
 	ptr = buf + sizeof(buf) - 1;
 	*ptr = '\0';
