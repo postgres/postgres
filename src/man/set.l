@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/set.l,v 1.16 1999/03/07 12:00:40 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/set.l,v 1.17 1999/06/03 18:18:43 momjian Exp $
 .TH SET SQL 05/14/97 PostgreSQL PostgreSQL
 .SH NAME
 set - set run-time parameters for session
@@ -22,7 +22,7 @@ Parameters and values are case-insensitive.
 Note that the value field is always specified as a string, so
 is enclosed in single-quotes.
 .PP
-.IR DateStyle
+.IR DATESTYLE
 determines the output format for the date and time data types.
 
 .ce 1
@@ -40,6 +40,13 @@ determines the output format for the date and time data types.
 	US	- same as 'NonEuropean'
 	default	- restores the default values ('US,Postgres')
 .fi
+
+.PP
+.IR COST_HEAP
+sets the cost uses for heap scans by the optimizer.
+.PP
+.IR COST_INDEX
+sets the cost uses for index scans by the optimizer.
 .PP
 .IR GEQO
 enables or disables the genetic optimizer algorithm. This algorithm is
@@ -61,9 +68,32 @@ for more information.
 	off	- do not use the genetic optimizer
 .fi
 .PP
+.IR KSQO
+enables or disables a workaround for memory exhaustion in queries with many
+.B OR
+clauses.
+The default is disabled.
+.PP
 .IR QUERY_LIMIT
 restricts the number of rows returned by a query.
 The default is unlimited.
+.PP
+.IR TIMEZONE
+sets your timezone.
+.PP
+.IR XACTISOLEVEL
+sets the transaction isolation level to
+.IR SERIALIZABLE
+or
+.IR COMMITTED .
+.PP
+.IR CLIENT_ENCODING
+sets the character set encoding of the client.  Only available if multi-byte
+is enabled at configure time.
+.PP
+.IR SERVER_ENCODING
+sets the character set encoding of the server.  Only available if multi-byte
+is enabled at configure time.
 
 
 .SH EXAMPLES
@@ -94,5 +124,3 @@ set GEQO to 'off'
 .SH "SEE ALSO"
 reset(l),
 show(l).
-.SH BUGS
-Of course.

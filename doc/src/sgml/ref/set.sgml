@@ -526,7 +526,49 @@ SET TIME ZONE { '<REPLACEABLE CLASS="PARAMETER">timezone</REPLACEABLE>' | LOCAL 
       </listitem>
      </varlistentry>
     </variablelist>
+
+    <variablelist>
+     <varlistentry>
+      <term>
+       XACTISOLEVEL
+      </term>
+      <listitem>
+       <para>
+	Sets the isolation level for transactions.
+	
+	<variablelist>
+	 <varlistentry>
+	  <term>
+	   <replaceable class="parameter">value</replaceable>
+	  </term>
+	  <listitem>
+	   <para>
+		Sets the isolation level for transactions to
+		'SERIALIZABLE' or 'COMMITTED'.
+	   </para>
+	  </listitem>
+	 </varlistentry>
    </para>
+	 
+	 <varlistentry>
+	  <term>
+	   DEFAULT
+	  </term>
+	  <listitem>
+	   <para>
+	    Sets the cost of a heap scan to the default value.
+	   </para>
+	  </listitem>
+	 </varlistentry>
+	</variablelist>
+       </para>
+       <para>
+	The frontend may be initialized by setting the PGCOSTHEAP
+	environment variable.
+       </para>
+
+
+
   </REFSECT2>
   
   <REFSECT2 ID="R2-SQL-SET-2">

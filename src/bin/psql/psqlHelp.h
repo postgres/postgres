@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: psqlHelp.h,v 1.63 1999/04/18 03:01:49 tgl Exp $
+ * $Id: psqlHelp.h,v 1.64 1999/06/03 18:18:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -294,13 +294,9 @@ static struct _helpStruct QL_HELP[] = {
 \tNOTIFY name|\"non-name string\""},
 	{"reset",
 		"set run-time environment back to default",
-#ifdef MULTIBYTE
 	"\
-\tRESET DateStyle|GEQO|R_PLANS|QUERY_LIMIT|CLIENT_ENCODING"},
-#else
-	"\
-\tRESET DateStyle|GEQO|R_PLANS|QUERY_LIMIT"},
-#endif
+\tRESET DATESTYLE|COST_HEAP|COST_INDEX|GEQO|KSQO|QUERY_LIMIT|\n\
+TIMEZONE|XACTISOLEVEL|CLIENT_ENCODING|SERVER_ENCODING"},
 	{"revoke",
 		"revoke access control from a user or group",
 	"\
@@ -324,29 +320,22 @@ static struct _helpStruct QL_HELP[] = {
 \t[ { UNION [ALL] | INTERSECT | EXCEPT } SELECT ...];"},
 	{"set",
 		"set run-time environment",
-#ifdef MULTIBYTE
 	"\
-\tSET DateStyle TO 'ISO'|'SQL'|'Postgres'|'European'|'US'|'NonEuropean'\n\
+\tSET DATESTYLE TO 'ISO'|'SQL'|'Postgres'|'European'|'US'|'NonEuropean'\n\
+set COST_HEAP TO #\n\
+set COST_INDEX TO #\n\
 set GEQO TO 'ON[=#]'|'OFF'\n\
-set R_PLANS TO 'ON'|'OFF'\n\
+set KSQO TO 'ON'|'OFF'\n\
 set QUERY_LIMIT TO #\n\
-set CLIENT_ENCODING TO 'EUC_JP'|'SJIS'|'EUC_CN'|'EUC_KR'|'EUC_TW'|'BIG5'|'MULE_INTERNAL'|'LATIN1'|'LATIN2'|'LATIN3'|'LATIN4'|'LATIN5'|'KOI8|'WIN'|'ALT'"},
-#else
-	"\
-\tSET DateStyle TO 'ISO'|'SQL'|'Postgres'|'European'|'US'|'NonEuropean'\n\
-set GEQO TO 'ON[=#]'|'OFF'\n\
-set R_PLANS TO 'ON'| 'OFF'\n\
-set QUERY_LIMIT TO #"},
-#endif
+set TIMEZONE TO 'value'\n\
+set XACTISOLEVEL TO 'SERIALIZABLE'|'COMMITTED'\n\
+set CLIENT_ENCODING TO 'EUC_JP'|'SJIS'|'EUC_CN'|'EUC_KR'|'EUC_TW'|'BIG5'|'MULE_INTERNAL'|'LATIN1'|'LATIN2'|'LATIN3'|'LATIN4'|'LATIN5'|'KOI8|'WIN'|'ALT'\n\
+set SERVER_ENCODING TO 'EUC_JP'|'SJIS'|'EUC_CN'|'EUC_KR'|'EUC_TW'|'BIG5'|'MULE_INTERNAL'|'LATIN1'|'LATIN2'|'LATIN3'|'LATIN4'|'LATIN5'|'KOI8|'WIN'|'ALT'"},
 	{"show",
 		"show current run-time environment",
-#ifdef MULTIBYTE
 	"\
-\tSHOW DateStyle|GEQO|R_PLANS|QUERY_LIMIT|CLIENT_ENCODING"},
-#else
-	"\
-\tSHOW DateStyle|GEQO|R_PLANS|QUERY_LIMIT"},
-#endif
+\tSHOW DATESTYLE|COST_HEAP|COST_INDEX|GEQO|KSQO|QUERY_LIMIT|\n\
+TIMEZONE|XACTISOLEVEL|CLIENT_ENCODING|SERVER_ENCODING"},
 	{"unlisten",
 		"stop listening for notification on a condition name",
 	"\
