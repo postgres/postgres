@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.278 2004/04/29 14:08:10 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.279 2004/05/05 15:03:04 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -211,7 +211,7 @@ adjust_informix(struct arguments *list)
 		
 		if (atoi(ptr->variable->type->size) > 1)
 		{
-			ptr->variable = new_variable(cat_str(4, make_str("("), mm_strdup(ECPGtype_name(ptr->variable->type->type)), make_str(" *)(ECPG_informix_get_var("), mm_strdup(temp)), ECPGmake_simple_type(ptr->variable->type->type, ptr->variable->type->size), 0);
+			ptr->variable = new_variable(cat_str(4, make_str("("), mm_strdup(ECPGtype_name(ptr->variable->type->u.element->type)), make_str(" *)(ECPG_informix_get_var("), mm_strdup(temp)), ECPGmake_array_type(ECPGmake_simple_type(ptr->variable->type->u.element->type, make_str("1")), ptr->variable->type->size), 0);
 			sprintf(temp, "%d, (", ecpg_informix_var++);
 		}
 		else
@@ -442,7 +442,7 @@ add_additional_variables(char *name, bool insert)
 %type  <str>	TableConstraint OptTableElementList Xconst opt_transaction 
 %type  <str>	ConstraintElem key_actions ColQualList type_name
 %type  <str>	target_list target_el update_target_list alias_clause
-%type  <str>	update_target_el qualified_name database_name
+%type  <str>	update_target_el qualified_name database_name alter_using
 %type  <str>	access_method attr_name index_name name func_name
 %type  <str>	file_name AexprConst c_expr ConstTypename var_list
 %type  <str>	a_expr b_expr TruncateStmt CommentStmt OnCommitOption opt_by
@@ -464,15 +464,15 @@ add_additional_variables(char *name, bool insert)
 %type  <str>	copy_delimiter ListenStmt CopyStmt copy_file_name opt_binary
 %type  <str>	FetchStmt from_in CreateOpClassStmt like_including_defaults
 %type  <str>	ClosePortalStmt DropStmt VacuumStmt AnalyzeStmt opt_verbose
-%type  <str>	opt_full func_arg OptWithOids opt_freeze 
+%type  <str>	opt_full func_arg OptWithOids opt_freeze alter_table_cmd 
 %type  <str>	analyze_keyword opt_name_list ExplainStmt index_params
-%type  <str>	index_elem opt_class access_method_clause
+%type  <str>	index_elem opt_class access_method_clause alter_table_cmds
 %type  <str>	index_opt_unique IndexStmt func_return ConstInterval
 %type  <str>	func_args_list func_args opt_with def_arg overlay_placing
 %type  <str>	def_elem def_list definition DefineStmt select_with_parens
 %type  <str>	opt_instead event RuleActionList opt_using CreateAssertStmt
 %type  <str>	RuleActionStmtOrEmpty RuleActionMulti func_as reindex_type
-%type  <str>	RuleStmt opt_column opt_name oper_argtypes NumConst
+%type  <str>	RuleStmt opt_column oper_argtypes NumConst
 %type  <str>	MathOp RemoveFuncStmt aggr_argtype for_update_clause
 %type  <str>	RemoveAggrStmt opt_procedural select_no_parens CreateCastStmt
 %type  <str>	RemoveOperStmt RenameStmt all_Op opt_Trusted opt_lancompiler
@@ -1140,45 +1140,58 @@ CheckPointStmt: CHECKPOINT	   { $$= make_str("checkpoint"); }
  *****************************************************************************/
 
 AlterTableStmt:
+		ALTER TABLE relation_expr alter_table_cmds
+			{ $$ = cat_str(3, make_str("alter table"), $3, $4); }
+		;
+
+alter_table_cmds:
+		alter_table_cmd 			{ $$ = $1; }
+		| alter_table_cmds ',' alter_table_cmd	{ $$ = cat_str(3, $1, make_str(","), $3); }
+		;
+
+alter_table_cmd:
+		ADD opt_column columnDef
 /* ALTER TABLE <relation> ADD [COLUMN] <coldef> */
-		ALTER TABLE relation_expr ADD opt_column columnDef
-			{ $$ = cat_str(5, make_str("alter table"), $3, make_str("add"), $5, $6); }
+			{ $$ = cat_str(3, make_str("add"), $2, $3); }
 /* ALTER TABLE <relation> ALTER [COLUMN] <colname> {SET DEFAULT <expr>|DROP DEFAULT} */
-		| ALTER TABLE relation_expr ALTER opt_column ColId alter_column_default
-			{ $$ = cat_str(6, make_str("alter table"), $3, make_str("alter"), $5, $6, $7); }
+		| ALTER opt_column ColId alter_column_default
+			{ $$ = cat_str(4, make_str("alter"), $2, $3, $4); }
 /* ALTER TABLE <relation> ALTER [COLUMN] <colname> DROP NOT NULL */
-		| ALTER TABLE relation_expr ALTER opt_column ColId DROP NOT NULL_P
-			{ $$ = cat_str(6, make_str("alter table"), $3, make_str("alter"), $5, $6, make_str("drop not null")); }
+		| ALTER opt_column ColId DROP NOT NULL_P
+			{ $$ = cat_str(4, make_str("alter"), $2, $3, make_str("drop not null")); }
 /* ALTER TABLE <relation> ALTER [COLUMN] <colname> SET NOT NULL */
-		| ALTER TABLE relation_expr ALTER opt_column ColId SET NOT NULL_P
-			{ $$ = cat_str(6, make_str("alter table"), $3, make_str("alter"), $5, $6, make_str("set not null")); }
+		| ALTER opt_column ColId SET NOT NULL_P
+			{ $$ = cat_str(4, make_str("alter"), $2, $3, make_str("set not null")); }
 /* ALTER TABLE <relation> ALTER [COLUMN] <colname> SET STATISTICS <IntegerOnly> */
-		| ALTER TABLE relation_expr ALTER opt_column ColId SET STATISTICS PosIntConst
-			{ $$ = cat_str(7, make_str("alter table"), $3, make_str("alter"), $5, $6, make_str("set statistics"), $9); }
+		| ALTER opt_column ColId SET STATISTICS PosIntConst
+			{ $$ = cat_str(5, make_str("alter"), $2, $3, make_str("set statistics"), $6); }
 /* ALTER TABLE <relation> ALTER [COLUMN] <colname> SET STORAGE <storagemode> */
-		| ALTER TABLE relation_expr ALTER opt_column ColId SET STORAGE ColId
-			{ $$ = cat_str(7, make_str("alter table"), $3, make_str("alter"), $5, $6, make_str("set storage"), $9); }
+		| ALTER opt_column ColId SET STORAGE ColId
+			{ $$ = cat_str(5, make_str("alter"), $2, $3, make_str("set storage"), $6); }
 /* ALTER TABLE <relation> DROP [COLUMN] <colname> {RESTRICT|CASCADE} */
-		| ALTER TABLE relation_expr DROP opt_column ColId opt_drop_behavior
-			{ $$ = cat_str(6, make_str("alter table"), $3, make_str("drop"), $5, $6, $7); }
+		| DROP opt_column ColId opt_drop_behavior
+			{ $$ = cat_str(4, make_str("drop"), $2, $3, $4); }
+/* ALTER TABLE <relation> ALTER [COLUMN] <colname> TYPE <typename> [ USING <expression> ] */
+		| ALTER opt_column ColId TYPE_P Typename alter_using
+			{ $$ = cat_str(6, make_str("alter"), $2, $3, make_str("type"), $5, $6); }
 /* ALTER TABLE <relation> ADD CONSTRAINT ... */
-		| ALTER TABLE relation_expr ADD TableConstraint
-			{ $$ = cat_str(4, make_str("alter table"), $3, make_str("add"), $5); }
+		| ADD TableConstraint
+			{ $$ = cat_str(2, make_str("add"), $2); }
 /* ALTER TABLE <relation> DROP CONSTRAINT ... */
-		| ALTER TABLE relation_expr DROP CONSTRAINT name opt_drop_behavior
-			{ $$ = cat_str(5, make_str("alter table"), $3, make_str("drop constraint"), $6, $7); }
+		| DROP CONSTRAINT name opt_drop_behavior
+			{ $$ = cat_str(3, make_str("drop constraint"), $3, $4); }
 /* ALTER TABLE <relation> SET WITHOUT OIDS  */
-		| ALTER TABLE relation_expr SET WITHOUT OIDS
-			{ $$ = cat_str(3, make_str("alter table"), $3, make_str("set without oids")); }
+		| SET WITHOUT OIDS
+			{ $$ = make_str("set without oids"); }
  /* ALTER TABLE <name> CREATE TOAST TABLE */
-		| ALTER TABLE qualified_name CREATE TOAST TABLE
-			{ $$ = cat_str(3, make_str("alter table"), $3, make_str("create toast table")); }
+		| CREATE TOAST TABLE
+			{ $$ = make_str("create toast table"); }
 /* ALTER TABLE <name> OWNER TO UserId */
-		| ALTER TABLE qualified_name OWNER TO UserId
-			{ $$ = cat_str(4, make_str("alter table"), $3, make_str("owner to"), $6); }
+		| OWNER TO UserId
+			{ $$ = cat_str(2, make_str("owner to"), $3); }
 /* ALTER TABLE <name> CLUSTER ON <indexname> */
-		| ALTER TABLE qualified_name CLUSTER ON name
-			{ $$ = cat_str(4, make_str("alter table"), $3, make_str("cluster on"), $6); }
+		| CLUSTER ON name
+			{ $$ = cat_str(2, make_str("cluster on"), $3); }
 		;
 
 alter_column_default:
@@ -1191,6 +1204,10 @@ opt_drop_behavior: CASCADE 			{ $$ = make_str("cascade"); }
 		| /* EMPTY */ 			{ $$ = EMPTY; }
 		;
 
+alter_using:	USING a_expr			{ $$ = cat2_str(make_str("using"), $2); }
+		| /* EMPTY */                   { $$ = EMPTY; }
+		;
+				
 /*****************************************************************************
  *
  *		QUERY :
@@ -2310,16 +2327,14 @@ RenameStmt:  ALTER AGGREGATE func_name '(' aggr_argtype ')' RENAME TO name
 			{ $$ = cat_str(6, make_str("alter operator class"), $4, make_str("using"), $6, make_str("rename to"), $9); }
 	| ALTER SCHEMA name RENAME TO name
 			{ $$ = cat_str(4, make_str("alter schema"), $3, make_str("rename to"), $6); }
-	| ALTER TABLE relation_expr RENAME opt_column opt_name TO name
+	| ALTER TABLE relation_expr RENAME TO name
+			{ $$ = cat_str(4, make_str("alter table"), $3, make_str("rename to"), $6); }
+	| ALTER TABLE relation_expr RENAME opt_column name TO name
 			{ $$ = cat_str(7, make_str("alter table"), $3, make_str("rename"), $5, $6, make_str("to"), $8); }
 	| ALTER TRIGGER name ON relation_expr RENAME TO name
 			{ $$ = cat_str(6, make_str("alter trigger"), $3, make_str("on"), $5, make_str("rename to"), $8); }
 	| ALTER USER UserId RENAME TO UserId
 			{ $$ = cat_str(4, make_str("alter user"), $3, make_str("rename to"), $6); }
-		;
-
-opt_name:  name				{ $$ = $1; }
-		| /*EMPTY*/			{ $$ = EMPTY; }
 		;
 
 opt_column:  COLUMN			{ $$ = make_str("column"); }

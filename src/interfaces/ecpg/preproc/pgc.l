@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.127 2004/03/02 06:45:05 meskes Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.128 2004/05/05 15:03:04 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,6 +28,7 @@
 extern YYSTYPE yylval;
 
 static int		xcdepth = 0;	/* depth of nesting in slash-star comments */
+static char    *dolqstart;      /* current $foo$ quote start string */
 
 /*
  * literalbuf is used to accumulate literal values when multiple rules
@@ -93,6 +94,7 @@ static struct _if_value
  *	<xd> delimited identifiers (double-quoted identifiers) - thomas 1997-10-27
  *	<xh> hexadecimal numeric string - thomas 1997-11-16
  *	<xq> quoted strings - thomas 1997-07-30
+ *  	<xdolq> $foo$ quoted strings
  */
 
 %x xb
@@ -101,6 +103,7 @@ static struct _if_value
 %x xdc
 %x xh
 %x xq
+%x xdolq
 %x xpre
 %x xcond
 %x xskip
@@ -128,7 +131,7 @@ xnstart                        [nN]{quote}
 xch			0[xX][0-9A-Fa-f]*
 
 /* Extended quote
- * xqdouble implements SQL92 embedded quote
+ * xqdouble implements embedded quote
  * xqcat allows strings to cross input lines
  */
 quote			'
@@ -139,6 +142,17 @@ xqinside		[^\\']+
 xqescape                [\\][^0-7]
 xqoctesc                [\\][0-7]{1,3}
 xqcat			{quote}{whitespace_with_newline}{quote}
+
+/* $foo$ style quotes ("dollar quoting")
+ * The quoted string starts with $foo$ where "foo" is an optional string
+ * in the form of an identifier, except that it may not contain "$",
+ * and extends to the first occurrence of an identical string.
+ * There is *no* processing of the quoted text.
+ */
+dolq_start             [A-Za-z\200-\377_]
+dolq_cont              [A-Za-z\200-\377_0-9]
+dolqdelim              \$({dolq_start}{dolq_cont}*)?\$
+dolqinside             [^$]+
 
 /* Double quote
  * Allows embedded spaces and other special characters into identifiers.
@@ -171,8 +185,7 @@ xdcinside		({xdcqq}|{xdcqdq}|{xdcother})
  * 2. In the operator rule, check for slash-star within the operator, and
  *	  if found throw it back with yyless().  This handles the plus-slash-star
  *	  problem.
- * SQL92-style comments, which start with dash-dash, have similar interactions
- * with the operator rule.
+ * Dash-dash comments have similar interactions with the operator rule.
  */
 xcstart			\/\*{op_chars}*
 xcstop			\*+\/
@@ -279,9 +292,10 @@ cppinclude 		{space}*#{include}{space}*
 cppline			{space}*#(.*\\{space})+.*
 
 /*
- * Quoted strings must allow some special characters such as single-quote
+ * Dollar quoted strings are totally opaque, and no escaping is done on them.
+ * Other quoted strings must allow some special characters such as single-quote
  *	and newline.
- * Embedded single-quotes are implemented both in the SQL92-standard
+ * Embedded single-quotes are implemented both in the SQL standard
  *	style of two adjacent single quotes "''" and in the Postgres/Java style
  *	of escaped-quote "\'".
  * Other embedded escaped characters are matched explicitly and the leading
@@ -341,7 +355,7 @@ cppline			{space}*#(.*\\{space})+.*
 						BEGIN(SQL);
 						if (literalbuf[strspn(literalbuf, "01") + 1] != '\0')
 							mmerror(PARSE_ERROR, ET_ERROR, "invalid bit string input.");
-						yylval.str = literalbuf;
+						yylval.str = mm_strdup(literalbuf);
 						return BCONST;
 					}
 
@@ -358,7 +372,7 @@ cppline			{space}*#(.*\\{space})+.*
 						addlitchar('x');
 					}
 <xh>{xhstop}		{
-						yylval.str = literalbuf;
+						yylval.str = mm_strdup(literalbuf);
 						return XCONST;
 					}
 
@@ -388,8 +402,44 @@ cppline			{space}*#(.*\\{space})+.*
 <xq>{xqescape}  	{ addlit(yytext, yyleng); }
 <xq>{xqoctesc}          { addlit(yytext, yyleng); }
 <xq>{xqcat}		{ /* ignore */ }
-
+<xq>.                   {
+                                       /* This is only needed for \ just before EOF */
+                                       addlitchar(yytext[0]);
+                        }
 <xq><<EOF>>		{ mmerror(PARSE_ERROR, ET_FATAL, "Unterminated quoted string"); }
+<SQL>{dolqdelim}        {
+				token_start = yytext;
+				dolqstart = mm_strdup(yytext);
+				BEGIN(xdolq);
+				startlit();
+			}
+<xdolq>{dolqdelim}      {
+				if (strcmp(yytext, dolqstart) == 0)
+				{
+					free(dolqstart);
+					BEGIN(SQL);
+					yylval.str = mm_strdup(literalbuf);
+					return SCONST;
+				}
+				else
+				{
+				        /*
+				         * When we fail to match $...$ to dolqstart, transfer
+				         * the $... part to the output, but put back the final
+				         * $ for rescanning.  Consider $delim$...$junk$delim$
+				         */
+				        addlit(yytext, yyleng-1);
+				        yyless(yyleng-1);
+				}
+			}
+<xdolq>{dolqinside} 	{
+				addlit(yytext, yyleng);
+			}
+<xdolq>.		{
+				/* This is only needed for $ inside the quoted text */
+				addlitchar(yytext[0]);
+			}
+<xdolq><<EOF>> { yyerror("unterminated dollar-quoted string"); }
 
 <SQL>{xdstart}		{
 						state_before = YYSTATE;
@@ -400,6 +450,7 @@ cppline			{space}*#(.*\\{space})+.*
 						BEGIN(state_before);
 						if (literallen == 0)
 							mmerror(PARSE_ERROR, ET_ERROR, "zero-length delimited identifier");
+						/* The backend will truncate the idnetifier here. We do not as it does not change the result. */
 						yylval.str = mm_strdup(literalbuf);
 						return CSTRING;
 					}
@@ -459,12 +510,12 @@ cppline			{space}*#(.*\\{space})+.*
 							nchars = slashstar - yytext;
 
 						/*
-						 * For SQL92 compatibility, '+' and '-' cannot be the
+						 * For SQL compatibility, '+' and '-' cannot be the
 						 * last char of a multi-char operator unless the operator
-						 * contains chars that are not in SQL92 operators.
+						 * contains chars that are not in SQL operators.
 						 * The idea is to lex '=-' as two operators, but not
 						 * to forbid operator names like '?-' that could not be
-						 * sequences of SQL92 operators.
+						 * sequences of SQL operators.
 						 */
 						while (nchars > 1 &&
 							   (yytext[nchars-1] == '+' ||
