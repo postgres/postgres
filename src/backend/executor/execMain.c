@@ -27,7 +27,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.119 2000/07/04 06:11:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.120 2000/07/05 13:22:25 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,6 +35,7 @@
 
 #include "access/heapam.h"
 #include "catalog/heap.h"
+#include "commands/command.h"
 #include "commands/trigger.h"
 #include "executor/execdebug.h"
 #include "executor/execdefs.h"
@@ -891,6 +892,11 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 				 * relation's catalog tuples will be visible to heap_open.
 				 */
 				CommandCounterIncrement();
+
+				/*
+				 * Eventually create a TOAST table for the into relation
+				 */
+				AlterTableCreateToastTable(intoName, true);
 
 				intoRelationDesc = heap_open(intoRelationId,
 											 AccessExclusiveLock);
