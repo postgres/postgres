@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.157.2.1 2004/05/07 03:20:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.157.2.2 2004/07/06 04:50:54 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1990,6 +1990,7 @@ get_setop_query(Node *setOp, Query *query, deparse_context *context,
 				TupleDesc resultDesc)
 {
 	StringInfo	buf = context->buf;
+	bool		need_paren;
 
 	if (IsA(setOp, RangeTblRef))
 	{
@@ -1998,24 +1999,37 @@ get_setop_query(Node *setOp, Query *query, deparse_context *context,
 		Query	   *subquery = rte->subquery;
 
 		Assert(subquery != NULL);
+		Assert(subquery->setOperations == NULL);
+		/* Need parens if ORDER BY, FOR UPDATE, or LIMIT; see gram.y */
+		need_paren = (subquery->sortClause ||
+					  subquery->rowMarks ||
+					  subquery->limitOffset ||
+					  subquery->limitCount);
+		if (need_paren)
+			appendStringInfoChar(buf, '(');
 		get_query_def(subquery, buf, context->namespaces, resultDesc,
 					  context->prettyFlags, context->indentLevel);
+		if (need_paren)
+			appendStringInfoChar(buf, ')');
 	}
 	else if (IsA(setOp, SetOperationStmt))
 	{
 		SetOperationStmt *op = (SetOperationStmt *) setOp;
-		bool		need_paren;
 
-		need_paren = (PRETTY_PAREN(context) ?
-					  !IsA(op->rarg, RangeTblRef) : true);
+		/*
+		 * We force parens whenever nesting two SetOperationStmts.
+		 * There are some cases in which parens are needed around a leaf
+		 * query too, but those are more easily handled at the next level
+		 * down (see code above).
+		 */
+		need_paren = !IsA(op->larg, RangeTblRef);
 
-		if (!PRETTY_PAREN(context))
-			appendStringInfoString(buf, "((");
-
+		if (need_paren)
+			appendStringInfoChar(buf, '(');
 		get_setop_query(op->larg, query, context, resultDesc);
-
-		if (!PRETTY_PAREN(context))
+		if (need_paren)
 			appendStringInfoChar(buf, ')');
+
 		if (!PRETTY_INDENT(context))
 			appendStringInfoChar(buf, ' ');
 		switch (op->op)
@@ -2042,27 +2056,13 @@ get_setop_query(Node *setOp, Query *query, deparse_context *context,
 		if (PRETTY_INDENT(context))
 			appendStringInfoChar(buf, '\n');
 
-		if (PRETTY_PAREN(context))
-		{
-			if (need_paren)
-			{
-				appendStringInfoChar(buf, '(');
-				if (PRETTY_INDENT(context))
-					appendStringInfoChar(buf, '\n');
-			}
-		}
-		else
+		need_paren = !IsA(op->rarg, RangeTblRef);
+
+		if (need_paren)
 			appendStringInfoChar(buf, '(');
-
 		get_setop_query(op->rarg, query, context, resultDesc);
-
-		if (PRETTY_PAREN(context))
-		{
-			if (need_paren)
-				appendStringInfoChar(buf, ')');
-		}
-		else
-			appendStringInfoString(buf, "))");
+		if (need_paren)
+			appendStringInfoChar(buf, ')');
 	}
 	else
 	{
