@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.26 1999/02/21 03:48:32 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.27 1999/04/18 02:57:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,6 +26,7 @@
 #include "parser/parse_node.h"
 #include "tcop/tcopprot.h"
 #include "utils/builtins.h"
+#include "utils/fmgrtab.h"
 #include "utils/lsyscache.h"
 #include "utils/sets.h"
 #include "utils/syscache.h"
@@ -37,7 +38,7 @@
 #endif
 
 /* ----------------------------------------------------------------
- *		ProcedureDefine
+ *		ProcedureCreate
  * ----------------------------------------------------------------
  */
 Oid
@@ -94,7 +95,7 @@ ProcedureCreate(char *procedureName,
 		if (strcmp(strVal(t), "opaque") == 0)
 		{
 			if (strcmp(languageName, "sql") == 0)
-				elog(ERROR, "ProcedureDefine: sql functions cannot take type \"opaque\"");
+				elog(ERROR, "ProcedureCreate: sql functions cannot take type \"opaque\"");
 			toid = 0;
 		}
 		else
@@ -219,6 +220,32 @@ ProcedureCreate(char *procedureName,
 		/* typecheck return value */
 		pg_checkretval(typeObjectId, querytree_list);
 	}
+
+	/*
+	 * If this is an internal procedure, check that the given internal
+	 * function name (the 'prosrc' value) is a known builtin function.
+	 *
+	 * NOTE: in Postgres versions before 6.5, the SQL name of the created
+	 * function could not be different from the internal name, and 'prosrc'
+	 * wasn't used.  So there is code out there that does CREATE FUNCTION
+	 * xyz AS '' LANGUAGE 'internal'.  To preserve some modicum of
+	 * backwards compatibility, accept an empty 'prosrc' value as meaning
+	 * the supplied SQL function name.
+	 */
+
+	if (strcmp(languageName, "internal") == 0)
+	{
+		if (strlen(prosrc) == 0)
+			prosrc = procedureName;
+		if (fmgr_lookupByName(prosrc) == (func_ptr) NULL)
+			elog(ERROR,
+				 "ProcedureCreate: there is no builtin function named \"%s\"",
+				 prosrc);
+	}
+
+	/*
+	 * All seems OK; prepare the tuple to be inserted into pg_proc.
+	 */
 
 	for (i = 0; i < Natts_pg_proc; ++i)
 	{
