@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/copy.sgml,v 1.42 2003/04/15 13:25:08 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/copy.sgml,v 1.43 2003/04/19 19:55:37 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -289,7 +289,7 @@ COPY <replaceable class="parameter">table</replaceable> [ ( <replaceable class="
     otherwise be taken as row or column delimiters. In particular, the
     following characters <emphasis>must</> be preceded by a backslash if
     they appear as part of a column value: backslash itself,
-    newline, and the current delimiter character.
+    newline, carriage return, and the current delimiter character.
    </para>
 
    <para>
@@ -355,16 +355,16 @@ COPY <replaceable class="parameter">table</replaceable> [ ( <replaceable class="
     It is strongly recommended that applications generating COPY data convert
     data newlines and carriage returns to the <literal>\n</> and
     <literal>\r</> sequences respectively.  At present it is
-    possible to represent a data carriage return without any special quoting,
-    and to represent a data newline by a backslash and newline.  However,
-    these representations will not be accepted by default in future releases.
+    possible to represent a data carriage return by a backslash and carriage
+    return, and to represent a data newline by a backslash and newline.  
+    However, these representations might not be accepted in future releases.
    </para>
 
    <para>
-    Note that the end of each row is marked by a Unix-style newline
-    (<quote><literal>\n</></>).  Presently, <command>COPY FROM</command> will not behave as
-    desired if given a file containing DOS- or Mac-style newlines.
-    This is expected to change in future releases.
+    <command>COPY TO</command> will terminate each row with a Unix-style 
+    newline (<quote><literal>\n</></>),  or carriage return/newline 
+    ("\r\n") on  MS Windows.  <command>COPY FROM</command> can handle lines 
+    ending with newlines, carriage returns, or carriage return/newlines.
    </para>
   </refsect2>
 
@@ -393,7 +393,7 @@ COPY <replaceable class="parameter">table</replaceable> [ ( <replaceable class="
 12-byte sequence <literal>PGBCOPY\n\377\r\n\0</> --- note that the zero byte
 is a required part of the signature.  (The signature is designed to allow
 easy identification of files that have been munged by a non-8-bit-clean
-transfer.  This signature will be changed by newline-translation
+transfer.  This signature will be changed by end-of-line-translation
 filters, dropped zero bytes, dropped high bits, or parity changes.)
        </para>
       </listitem>
