@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.130 2001/03/23 04:49:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.131 2001/04/02 23:30:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1125,12 +1125,21 @@ RelationBuildDesc(RelationBuildDescInfo buildinfo,
 	relation->rd_node.relNode = relation->rd_rel->relfilenode;
 
 	/*
-	 * open the relation and assign the file descriptor returned by the
+	 * Open the relation and assign the file descriptor returned by the
 	 * storage manager code to rd_fd.
 	 *
+	 * We do not raise a hard error if we fail to open the relation at this
+	 * point.  If we did, it would be impossible to drop a relation whose
+	 * underlying physical file had disappeared.
 	 */
 	if (relation->rd_rel->relkind != RELKIND_VIEW)
-		relation->rd_fd = smgropen(DEFAULT_SMGR, relation, false);
+	{
+		relation->rd_fd = smgropen(DEFAULT_SMGR, relation, true);
+		Assert(relation->rd_fd >= -1);
+		if (relation->rd_fd == -1)
+			elog(NOTICE, "RelationBuildDesc: can't open %s: %m",
+				 RelationGetRelationName(relation));
+	}
 	else
 		relation->rd_fd = -1;
 
