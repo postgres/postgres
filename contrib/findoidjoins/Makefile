@@ -1,20 +1,23 @@
 #
-# Makefile, requires pgsql/contrib/pginterface
+# Makefile, requires src/interfaces/libpgeasy
 #
 #
-PGINTERFACE = ../pginterface/pginterface.o ../pginterface/halt.o # these have to be in your library search path
+INSTALLDIR = /usr/local/pgsql
+
 TARGET = findoidjoins
-CFLAGS = -g -Wall -I. -I../pginterface -I../../src/interfaces/libpq  -I/usr/local/pgsql/include
-LDFLAGS = -L/usr/local/pgsql/lib -lpq
+PGEASY = ../../src/interfaces/libpgeasy
+CFLAGS = -g -Wall -I. -I$(PGEASY) -I$(INSTALLDIR)/include
+LIBPGEASY = $(PGEASY)/libpgeasy.a
+LDFLAGS = -L$(INSTALLDIR)/lib -lpq
 
 all : $(TARGET)
 
-findoidjoins:	$(PGINTERFACE) findoidjoins.c
-	gcc -o $@ $(CFLAGS) $@.c $(PGINTERFACE) $(LDFLAGS)
+findoidjoins:	findoidjoins.c $(LIBPGEASY)
+	gcc -o $@ $(CFLAGS) $^ $(LDFLAGS)
 
 clean:
 	rm -f *.o $(TARGET) log core
 
 install:
-	install -s -o bin -g bin $(TARGET) /usr/local/pgsql/bin
+	install -s -o bin -g bin $(TARGET) $(INSTALLDIR)/bin
 

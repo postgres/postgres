@@ -1,13 +1,14 @@
 /*
- * findoidjoins.c, required pgsql/contrib/pginterface
+ * findoidjoins.c, requires src/interfaces/libpgeasy
  *
  */
 
 #include <stdio.h>
 #include <string.h>
+#include "libpq-fe.h"
+
 #include "halt.h"
-#include <libpq-fe.h>
-#include "pginterface.h"
+#include "libpgeasy.h"
 
 PGresult   *attres,
 		   *relres;
@@ -69,14 +70,14 @@ main(int argc, char **argv)
 				sprintf(query, "\
 					DECLARE c_matches BINARY CURSOR FOR \
 					SELECT	count(*) \
-						FROM % s t1, %s t2 \
-					WHERE t1.% s = t2.oid ", relname, relname2, attname);
+						FROM %s t1, %s t2 \
+					WHERE t1.%s = t2.oid ", relname, relname2, attname);
 			else
 				sprintf(query, "\
 					DECLARE c_matches BINARY CURSOR FOR \
 					SELECT	count(*) \
-								FROM % s t1, %s t2 \
-								WHERE RegprocToOid(t1.% s) = t2.oid ", relname, relname2, attname);
+								FROM %s t1, %s t2 \
+								WHERE RegprocToOid(t1.%s) = t2.oid ", relname, relname2, attname);
 
 			doquery(query);
 			doquery("FETCH ALL IN c_matches");
