@@ -1,126 +1,180 @@
-This utility allows administrators to view the file structure used by
-PostgreSQL.  Databases are placed in directories based on their OIDs in
-pg_database, and the tables in that directory are named by original
-OIDs, stored in pg_class.relfilenode.  Oid2name connects to the database
-and extracts the OID and table name information.
+This utility allows administrators to examine the file structure used by
+PostgreSQL.
 
----------------------------------------------------------------------------
+Databases are placed in directories named after their OIDs in pg_database,
+and the table files within a database's directory are named by "filenode"
+numbers, which are stored in pg_class.relfilenode.
 
-It can be used in four ways:
+Note that while a table's filenode often matches its OID, this is *not*
+necessarily the case; some operations, like TRUNCATE, REINDEX, CLUSTER
+and some forms of ALTER TABLE, can change the filenode while preserving
+the OID.  Avoid assuming that filenode and table OID are the same.
 
+When a table exceeds 1Gb, it is divided into gigabyte-sized "segments".
+The first segment's file name is the same as the filenode; subsequent
+segments are named filenode.1, filenode.2, etc.
 
-oid2name
+Tablespaces make the scenario more complicated.  Each non-default
+tablespace has a symlink inside the pg_tblspc directory, which points to
+the physical tablespace directory (as specified in its CREATE TABLESPACE
+command).  The symlink is named after the tablespace's OID.  Inside the
+physical tablespace directory there is another directory for each database
+that has elements in the tablespace, named after the database's OID.
+Tables within that directory follow the filenode naming scheme.  The
+"pg_default" tablespace is not addressed via pg_tblspc, but corresponds to
+$PGDATA/base.
 
-  This will connect to the template1 database and display all databases
-  in the system:
+Oid2name connects to the database and extracts OID, filenode, and table
+name information.  You can also have it show database OIDs and tablespace
+OIDs.
 
-  $ oid2name
-  All databases:
-  ---------------------------------
-  18720  = test1
-  1      = template1
-  18719  = template0
-  18721  = test
-  18735  = postgres
-  18736  = cssi
+When displaying specific tables, you can select which tables to show by
+using -o, -f and -t.  The first switch takes an OID, the second takes
+a filenode, and the third takes a tablename (actually, it's a LIKE
+pattern, so you can use things like "foo%").  Note that you can use as many
+of these switches as you like, and the listing will include all objects
+matched by any of the switches.  Also note that these switches can only
+show objects in the database given in -d.
 
+If you don't give any of -o, -f or -t it will dump all the tables in the
+database given in -d.  If you don't give -d, it will show a database
+listing.  Alternatively you can give -s to get a tablespace listing.
 
-oid2name -d test [-x]
-
-  This connects to the database test and shows all tables and their OIDs:
-
-  $ oid2name -d test
-  All tables from database "test":
-  ---------------------------------
-  18766  = dns
-  18737  = ips
-  18722  = testdate
-
-
-oid2name -d test -o 18737
-oid2name -d test -t testdate
-
-  This will connect to the database test and display the table name for oid
-  18737 and the oid for table name testdate respectively:
-
-  $ oid2name -d test -o 18737
-  Tablename of oid 18737 from database "test":
-  ---------------------------------
-  18737  = ips
-
-
-  $ oid2name -d test -t testdate 
-  Oid of table testdate from database "test":
-  ---------------------------------
-  18722  = testdate
-
-Keep in mind tables over one gigabyte will be split into separate files
-with numeric file extensions.
+Additional switches:
+	-i	include indexes and sequences in the database listing.
+	-x	display more information about each object shown:
+		tablespace name, schema name, OID.
+	-S	also show system objects
+		(those in information_schema, pg_toast and pg_catalog schemas)
+	-q	don't display headers
+		(useful for scripting)
 
 ---------------------------------------------------------------------------
 
 Sample session:
 
-$ cd /u/pg/data/base
 $ oid2name
 All databases:
----------------------------------
-16817  = test2
-16578  = x
-16756  = test
-1      = template1
-16569  = template0
-16818  = test3
-16811  = floattest
+    Oid  Database Name  Tablespace
+----------------------------------
+  17228       alvherre  pg_default
+  17255     regression  pg_default
+  17227      template0  pg_default
+      1      template1  pg_default
 
-$ cd 16756
-$ ls 1873*
-18730   18731   18732   18735   18736   18737   18738   18739
+$ oid2name -s
+All tablespaces:
+     Oid  Tablespace Name
+-------------------------
+    1663       pg_default
+    1664        pg_global
+  155151         fastdisk
+  155152          bigdisk
 
-$ oid2name -d test -o 18737
-Tablename of oid 18737 from database "test":
----------------------------------
-18737  = ips
+$ cd $PGDATA/17228
 
-$ oid2name -d test -t ips
-Oid of table ips from database "test":
----------------------------------
-18737  = ips
+$ # get top 10 db objects in the default tablespace, ordered by size
+$ ls -lS * | head -10
+-rw-------  1 alvherre alvherre 136536064 sep 14 09:51 155173
+-rw-------  1 alvherre alvherre  17965056 sep 14 09:51 1155291
+-rw-------  1 alvherre alvherre   1204224 sep 14 09:51 16717
+-rw-------  1 alvherre alvherre    581632 sep  6 17:51 1255
+-rw-------  1 alvherre alvherre    237568 sep 14 09:50 16674
+-rw-------  1 alvherre alvherre    212992 sep 14 09:51 1249
+-rw-------  1 alvherre alvherre    204800 sep 14 09:51 16684
+-rw-------  1 alvherre alvherre    196608 sep 14 09:50 16700
+-rw-------  1 alvherre alvherre    163840 sep 14 09:50 16699
+-rw-------  1 alvherre alvherre    122880 sep  6 17:51 16751
+
+$ oid2name -d alvherre -f 155173
+From database "alvherre":
+  Filenode  Table Name
+----------------------
+    155173    accounts
+
+$ # you can ask for more than one object
+$ oid2name -d alvherre -f 155173 -f 1155291
+From database "alvherre":
+  Filenode     Table Name
+-------------------------
+    155173       accounts
+   1155291  accounts_pkey
+
+$ # you can also mix the options, and have more details
+$ oid2name -d alvherre -t accounts -f 1155291 -x
+From database "alvherre":
+  Filenode     Table Name      Oid  Schema  Tablespace
+------------------------------------------------------
+    155173       accounts   155173  public  pg_default
+   1155291  accounts_pkey  1155291  public  pg_default
 
 $ # show disk space for every db object
-$ du * | while read SIZE OID
+$ du [0-9]* |
+> while read SIZE FILENODE
 > do
->	echo "$SIZE      `oid2name -q -d test -o $OID`"
+>   echo "$SIZE       `oid2name -q -d alvherre -i -f $FILENODE`"
 > done
-24      18737  = ips
-36      18722  = cities
+16 	   1155287  branches_pkey
+16 	   1155289  tellers_pkey
+17561 	   1155291  accounts_pkey
 ...
 
-$ # same as above, but sort by largest first
-$ du * | while read SIZE OID
+$ # same, but sort by size
+$ du [0-9]* | sort -rn | while read SIZE FN
 > do
->	echo "$SIZE      `oid2name -q -d test -o $OID`"
-> done |
-> sort -rn
-2048    19324  = bigtable
-1950    23903  = customers
+>   echo "$SIZE   `oid2name -q -d alvherre -f $FN`"
+> done
+133466 	    155173    accounts
+17561 	   1155291  accounts_pkey
+1177 	     16717  pg_proc_proname_args_nsp_index
 ...
 
-$ # show disk usage per database
-$ cd /u/pg/data/base
-$ du -s * |
-> while read SIZE OID
-> do
->	echo "$SIZE      `aspg oid2name -q | grep ^$OID' '`"
-> done |
-> sort -rn
-2256        18721  = test
-2135        18735  = postgres
-..
+$ # If you want to see what's in tablespaces, use the pg_tblspc directory
+$ cd $PGDATA/pg_tblspc
+$ oid2name -s
+All tablespaces:
+     Oid  Tablespace Name
+-------------------------
+    1663       pg_default
+    1664        pg_global
+  155151         fastdisk
+  155152          bigdisk
 
-This can be done in psql with:  
+$ # what databases have objects in tablespace "fastdisk"?
+$ ls -d 155151/*
+155151/17228/  155151/PG_VERSION
 
-test=> SELECT relpages, relfilenode, relname FROM pg_class ORDER BY relpages DESC;
+$ # Oh, what was database 17228 again?
+$ oid2name   
+All databases:
+    Oid  Database Name  Tablespace
+----------------------------------
+  17228       alvherre  pg_default
+  17255     regression  pg_default
+  17227      template0  pg_default
+      1      template1  pg_default
+
+$ # Let's see what objects does this database have in the tablespace.
+$ cd 155151/17228
+$ ls -l
+total 0
+-rw-------  1 postgres postgres 0 sep 13 23:20 155156
+
+$ # OK, this is a pretty small table ... but which one is it?
+$ oid2name -d alvherre -f 155156
+From database "alvherre":
+  Filenode  Table Name
+----------------------
+    155156         foo
+
+$ # end of sample session.
+
+---------------------------------------------------------------------------
+
+You can also get approximate size data for each object using psql.  For
+example,
+
+SELECT relpages, relfilenode, relname FROM pg_class ORDER BY relpages DESC;
 
 Each page is typically 8k.  Relpages is updated by VACUUM.
 

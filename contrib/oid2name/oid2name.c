@@ -1,9 +1,9 @@
 /*
-  oid2name; a postgresql 7.1 (+?) app to map OIDs on the filesystem
-   to table and database names.
-
-  b. palmer, bpalmer@crimelabs.net 1-17-2001
-
+ * oid2name, a PostgreSQL app to map OIDs on the filesystem
+ * to table and database names.
+ *
+ * Originally by
+ * B. Palmer, bpalmer@crimelabs.net 1-17-2001
  */
 #include "postgres_fe.h"
 
@@ -14,41 +14,46 @@
 
 #include "libpq-fe.h"
 
+/* an extensible array to keep track of elements to show */
+typedef struct
+{
+	char  **array;
+	int		num;
+	int		alloc;
+} eary;
+
 /* these are the opts structures for command line params */
 struct options
 {
-	int			getdatabase;
-	int			gettable;
-	int			getoid;
+	eary	   *tables;
+	eary	   *oids;
+	eary	   *filenodes;
 
-	int			quiet;
+	bool		quiet;
+	bool		systables;
+	bool		indexes;
+	bool		nodb;
+	bool		extended;
+	bool		tablespaces;
 
-	int			systables;
-
-	int			remotehost;
-	int			remoteport;
-	int			remoteuser;
-	int			remotepass;
-
-	int			_oid;
-	char		_dbname[128];
-	char		_tbname[128];
-
-	char		_hostname[128];
-	char		_port[6];
-	char		_username[128];
-	char		_password[128];
+	char		*dbname;
+	char		*hostname;
+	char		*port;
+	char		*username;
+	char		*password;
 };
 
 /* function prototypes */
 void		get_opts(int, char **, struct options *);
-PGconn	   *sql_conn(const char *, struct options *);
-void		sql_exec_error(int);
-int			sql_exec(PGconn *, const char *, int);
-void		sql_exec_dumpdb(PGconn *);
-void		sql_exec_dumptable(PGconn *, int);
-void		sql_exec_searchtable(PGconn *, const char *);
-void		sql_exec_searchoid(PGconn *, int);
+void	   *myalloc(size_t size);
+void		add_one_elt(char *eltname, eary *eary);
+char	   *get_comma_elts(eary *eary);
+PGconn	   *sql_conn(struct options *);
+int			sql_exec(PGconn *, const char *sql, bool quiet);
+void		sql_exec_dumpalldbs(PGconn *, struct options *);
+void		sql_exec_dumpalltables(PGconn *, struct options *);
+void		sql_exec_searchtables(PGconn *, struct options *);
+void		sql_exec_dumpalltbspc(PGconn *, struct options *);
 
 /* function to parse command line options and check for some usage errors. */
 void
@@ -57,239 +62,237 @@ get_opts(int argc, char **argv, struct options * my_opts)
 	int			c;
 
 	/* set the defaults */
-	my_opts->getdatabase = 0;
-	my_opts->gettable = 0;
-	my_opts->getoid = 0;
-
-	my_opts->quiet = 0;
-
-	my_opts->systables = 0;
-
-	my_opts->remotehost = 0;
-	my_opts->remoteport = 0;
-	my_opts->remoteuser = 0;
-	my_opts->remotepass = 0;
+	my_opts->quiet = false;
+	my_opts->systables = false;
+	my_opts->indexes = false;
+	my_opts->nodb = false;
+	my_opts->extended = false;
+	my_opts->tablespaces = false;
 
 	/* get opts */
-	while ((c = getopt(argc, argv, "H:p:U:P:d:t:o:qxh?")) != -1)
+	while ((c = getopt(argc, argv, "H:p:U:P:d:t:o:f:qSxish?")) != -1)
 	{
 		switch (c)
 		{
 				/* specify the database */
 			case 'd':
-				my_opts->getdatabase = 1;
-				sscanf(optarg, "%s", my_opts->_dbname);
+				my_opts->dbname = (char *) myalloc(strlen(optarg));
+				sscanf(optarg, "%s", my_opts->dbname);
 				break;
 
-				/* specify the table name */
+				/* specify one tablename to show */
 			case 't':
-				/* make sure we set the database first */
-				if (!my_opts->getdatabase)
-				{
-					fprintf(stderr, "You must specify a database to dump from.\n");
-					exit(1);
-				}
-				/* make sure we don't try to do a -o also */
-				if (my_opts->getoid)
-				{
-					fprintf(stderr, "You can only specify either oid or table\n");
-					exit(1);
-				}
-
-				my_opts->gettable = 1;
-				sscanf(optarg, "%s", my_opts->_tbname);
-
+				add_one_elt(optarg, my_opts->tables);
 				break;
 
-				/* specify the oid int */
+				/* specify one Oid to show */
 			case 'o':
-				/* make sure we set the database first */
-				if (!my_opts->getdatabase)
-				{
-					fprintf(stderr, "You must specify a database to dump from.\n");
-					exit(1);
-				}
-				/* make sure we don't try to do a -t also */
-				if (my_opts->gettable)
-				{
-					fprintf(stderr, "You can only specify either oid or table\n");
-					exit(1);
-				}
-
-				my_opts->getoid = 1;
-				sscanf(optarg, "%i", &my_opts->_oid);
-
+				add_one_elt(optarg, my_opts->oids);
 				break;
 
+				/* specify one filenode to show*/
+			case 'f':
+				add_one_elt(optarg, my_opts->filenodes);
+				break;
+
+				/* don't show headers */
 			case 'q':
-				my_opts->quiet = 1;
+				my_opts->quiet = true;
 				break;
 
 				/* host to connect to */
 			case 'H':
-				my_opts->remotehost = 1;
-				sscanf(optarg, "%s", my_opts->_hostname);
+				my_opts->hostname = (char *) myalloc(strlen(optarg));
+				sscanf(optarg, "%s", my_opts->hostname);
 				break;
 
 				/* port to connect to on remote host */
 			case 'p':
-				my_opts->remoteport = 1;
-				sscanf(optarg, "%s", my_opts->_port);
+				my_opts->port = (char *) myalloc(strlen(optarg));
+				sscanf(optarg, "%s", my_opts->port);
 				break;
 
 				/* username */
 			case 'U':
-				my_opts->remoteuser = 1;
-				sscanf(optarg, "%s", my_opts->_username);
+				my_opts->username = (char *) myalloc(strlen(optarg));
+				sscanf(optarg, "%s", my_opts->username);
 				break;
 
 				/* password */
 			case 'P':
-				my_opts->remotepass = 1;
-				sscanf(optarg, "%s", my_opts->_password);
+				my_opts->password = (char *) myalloc(strlen(optarg));
+				sscanf(optarg, "%s", my_opts->password);
 				break;
 
 				/* display system tables */
+			case 'S':
+				my_opts->systables = true;
+				break;
+
+				/* also display indexes */
+			case 'i':
+				my_opts->indexes = true;
+				break;
+
+				/* display extra columns */
 			case 'x':
-				my_opts->systables = 1;
+				my_opts->extended = true;
+				break;
+
+				/* dump tablespaces only */
+			case 's':
+				my_opts->tablespaces = true;
 				break;
 
 				/* help! (ugly in code for easier editing) */
 			case '?':
 			case 'h':
-				fprintf(stderr, "\
-Usage: oid2name [-d database [-x] ] [-t table | -o oid]\n\
-        default action        display all databases\n\
-        -d database           database to oid2name\n\
-        -x                    display system tables\n\
-        -t table | -o oid     search for table name (-t) or\n\
-                               oid (-o) in -d database\n\
-        -q                    quiet\n\
-        -H host               connect to remote host\n\
-        -p port               host port to connect to\n\
-        -U username           username to connect with\n\
-        -P password           password for username\n\
-");
+				fprintf(stderr,
+"Usage: oid2name [-s|-d database] [-S][-i][-q][-x] [-t table|-o oid|-f file] ...\n"
+"        default action        show all database Oids\n"
+"        -d database           database to connect to\n"
+"        -s                    show all tablespaces\n"
+"        -S                    show system objects too\n"
+"        -i                    show indexes and sequences too\n"
+"        -x                    extended (show additional columns)\n"
+"        -q                    quiet (don't show headers)\n"
+"        -t <table>            show info for table named <table>\n"
+"        -o <oid>              show info for table with Oid <oid>\n"
+"        -f <filenode>         show info for table with filenode <filenode>\n"
+"        -H host               connect to remote host\n"
+"        -p port               host port to connect to\n"
+"        -U username           username to connect with\n"
+"        -P password           password for username\n"
+"                              (see also $PGPASSWORD and ~/.pgpass)\n"
+);
 				exit(1);
 				break;
 		}
 	}
 }
 
+void *
+myalloc(size_t size)
+{
+	void *ptr = malloc(size);
+	if (!ptr)
+	{
+		fprintf(stderr, "out of memory");
+		exit(1);
+	}
+	return ptr;
+}
+
+/*
+ * add_one_elt
+ *
+ * Add one element to a (possibly empty) eary struct.
+ */
+void
+add_one_elt(char *eltname, eary *eary)
+{
+	if (eary->alloc == 0)
+	{
+		eary->alloc = 8;
+		eary->array = (char **) myalloc(8 * sizeof(char *));
+	}
+	else if (eary->num >= eary->alloc)
+	{
+		eary->alloc *= 2;
+		eary->array = (char **)
+			realloc(eary->array, eary->alloc * sizeof(char *));
+		if (!eary->array)
+		{
+			fprintf(stderr, "out of memory");
+			exit(1);
+		}
+	}
+
+	eary->array[eary->num] = strdup(eltname);
+	eary->num++;
+}
+
+/*
+ * get_comma_elts
+ *
+ * Return the elements of an eary as a (freshly allocated) single string, in
+ * single quotes, separated by commas and properly escaped for insertion in an
+ * SQL statement.
+ */
+char *
+get_comma_elts(eary *eary)
+{
+	char *ret,
+		 *ptr;
+	int i, length = 0;
+
+	if (eary->num == 0)
+		return "";
+
+	/*
+	 * PQescapeString wants 2 * length + 1 bytes of breath space.  Add two
+	 * chars per element for the single quotes and one for the comma.
+	 */
+	for (i = 0; i < eary->num; i++)
+		length += strlen(eary->array[i]);
+
+	ret = (char *) myalloc(length * 2 + 4 * eary->num);
+	ptr = ret;
+
+	for (i = 0; i < eary->num; i++)
+	{
+		if (i != 0)
+			sprintf(ptr++, ",");
+		sprintf(ptr++, "'");
+		ptr += PQescapeString(ptr, eary->array[i], strlen(eary->array[i]));
+		sprintf(ptr++, "'");
+	}
+
+	return ret;
+}
+
 /* establish connection with database. */
 PGconn *
-sql_conn(const char *dbName, struct options * my_opts)
+sql_conn(struct options * my_opts)
 {
-	char	   *pghost,
-			   *pgport;
-	char	   *pgoptions,
-			   *pgtty;
-	char	   *pguser,
-			   *pgpass;
-
 	PGconn	   *conn;
 
-	pghost = NULL;
-	pgport = NULL;
-	pgoptions = NULL;			/* special options to start up the backend
-								 * server */
-	pgtty = NULL;				/* debugging tty for the backend server */
-	pguser = NULL;
-	pgpass = NULL;
-
-	/* override the NULLs with the user params if passed */
-	if (my_opts->remotehost)
-	{
-		pghost = (char *) malloc(128);
-		sscanf(my_opts->_hostname, "%s", pghost);
-	}
-
-	if (my_opts->remoteport)
-	{
-		pgport = (char *) malloc(6);
-		sscanf(my_opts->_port, "%s", pgport);
-	}
-
-	if (my_opts->remoteuser)
-	{
-		pguser = (char *) malloc(128);
-		sscanf(my_opts->_username, "%s", pguser);
-	}
-
-	if (my_opts->remotepass)
-	{
-		pgpass = (char *) malloc(128);
-		sscanf(my_opts->_password, "%s", pgpass);
-	}
-
 	/* login */
-	conn = PQsetdbLogin(pghost, pgport, pgoptions, pgtty, dbName, pguser, pgpass);
+	conn = PQsetdbLogin(my_opts->hostname,
+			            my_opts->port,
+						NULL,  /* options */
+						NULL,  /* tty */
+						my_opts->dbname,
+						my_opts->username,
+						my_opts->password);
 
 	/* deal with errors */
-	if (PQstatus(conn) == CONNECTION_BAD)
+	if (PQstatus(conn) != CONNECTION_OK)
 	{
-		fprintf(stderr, "Connection to database '%s' failed.\n", dbName);
+		fprintf(stderr, "%s: connection to database '%s' failed.\n", "oid2name", my_opts->dbname);
 		fprintf(stderr, "%s", PQerrorMessage(conn));
 
 		PQfinish(conn);
 		exit(1);
 	}
 
-	/* free data structures: not strictly necessary */
-	if (pghost != NULL)
-		free(pghost);
-	if (pgport != NULL)
-		free(pgport);
-	if (pguser != NULL)
-		free(pguser);
-	if (pgpass != NULL)
-		free(pgpass);
-
-	sql_exec(conn, "SET search_path = public;", 0);
-
 	/* return the conn if good */
 	return conn;
 }
 
-/* If the sql_ command has an error,  this function looks up the error number and prints it out. */
-void
-sql_exec_error(int error_number)
-{
-	fprintf(stderr, "Error number %i.\n", error_number);
-	switch (error_number)
-	{
-		case 3:
-			fprintf(stderr, "Error:  PGRES_COPY_OUT\n");
-			break;
-
-		case 4:
-			fprintf(stderr, "Error:  PGRES_COPY_IN\n");
-			break;
-
-		case 5:
-			fprintf(stderr, "Error:  PGRES_BAD_RESPONCE\n");
-			break;
-
-		case 6:
-			fprintf(stderr, "Error:  PGRES_NONFATAL_ERROR\n");
-			break;
-
-		case 7:
-			fprintf(stderr, "Error:  PGRES_FATAL_ERROR\n");
-			break;
-	}
-}
-
-/* actual code to make call to the database and print the output data */
+/*
+ * Actual code to make call to the database and print the output data.
+ */
 int
-sql_exec(PGconn *conn, const char *todo, int match)
+sql_exec(PGconn *conn, const char *todo, bool quiet)
 {
 	PGresult   *res;
 
-	int			numbfields;
-	int			error_number;
-	int			i,
-				len;
+	int			nfields;
+	int			nrows;
+	int			i, j, l;
+	int		   *length;
+	char	   *pad;
 
 	/* make the call */
 	res = PQexec(conn, todo);
@@ -297,10 +300,8 @@ sql_exec(PGconn *conn, const char *todo, int match)
 	/* check and deal with errors */
 	if (!res || PQresultStatus(res) > 2)
 	{
-		error_number = PQresultStatus(res);
-		fprintf(stderr, "There was an error in the SQL command:\n%s\n", todo);
-		sql_exec_error(error_number);
-		fprintf(stderr, "PQerrorMessage = %s\n", PQerrorMessage(conn));
+		fprintf(stderr, "oid2name: query failed: %s\n", PQerrorMessage(conn));
+		fprintf(stderr, "oid2name: query was: %s\n", todo);
 
 		PQclear(res);
 		PQfinish(conn);
@@ -308,97 +309,179 @@ sql_exec(PGconn *conn, const char *todo, int match)
 	}
 
 	/* get the number of fields */
-	numbfields = PQntuples(res);
+	nrows = PQntuples(res);
+	nfields = PQnfields(res);
 
-	/* if we only expect 1 and there mode than,  return -2 */
-	if (match == 1 && numbfields > 1)
-		return -2;
+	/* for each field, get the needed width */
+	length = (int *) myalloc(sizeof(int) * nfields);
+	for (j = 0; j < nfields; j++)
+		length[j] = strlen(PQfname(res, j));
 
-	/* return -1 if there aren't any returns */
-	if (match == 1 && numbfields < 1)
-		return -1;
-
-	/* for each row,  dump the information */
-	for (i = 0; i < numbfields; i++)
+	for (i = 0; i < nrows; i++)
 	{
-		len = strlen(PQgetvalue(res, i, 0));
-
-		fprintf(stdout, "%-6s = %s\n", PQgetvalue(res, i, 0), PQgetvalue(res, i, 1));
+		for (j = 0; j < nfields; j++)
+		{
+		   	l = strlen(PQgetvalue(res, i, j));
+			if (l > length[j])
+				length[j] = strlen(PQgetvalue(res, i, j));
+		}
 	}
 
-	/* clean the PGconn once done */
+	/* print a header */
+	if (!quiet)
+	{
+		for (j = 0, l = 0; j < nfields; j++)
+		{
+			fprintf(stdout, "%*s", length[j] + 2, PQfname(res, j));
+			l += length[j] + 2;
+		}
+		fprintf(stdout, "\n");
+		pad = (char *) myalloc(l + 1);
+		MemSet(pad, '-', l);
+		pad[l] = '\0';
+		fprintf(stdout, "%s\n", pad);
+		free(pad);
+	}
+
+	/* for each row, dump the information */
+	for (i = 0; i < nrows; i++)
+	{
+		for (j = 0; j < nfields; j++)
+			fprintf(stdout, "%*s", length[j] + 2, PQgetvalue(res, i, j));
+		fprintf(stdout, "\n");
+	}
+
+	/* cleanup */
 	PQclear(res);
+	free(length);
 
 	return 0;
 }
 
-/* dump all databases known by the system table */
+/*
+ * Dump all databases.  There are no system objects to worry about.
+ */
 void
-sql_exec_dumpdb(PGconn *conn)
+sql_exec_dumpalldbs(PGconn *conn, struct options *opts)
 {
 	char		todo[1024];
 
 	/* get the oid and database name from the system pg_database table */
-	snprintf(todo, 1024, "select oid,datname from pg_database");
+	snprintf(todo, 1024, "SELECT d.oid AS \"Oid\", datname AS \"Database Name\", "
+			 "spcname AS \"Tablespace\" FROM pg_database d JOIN pg_tablespace t ON "
+			 "(dattablespace = t.oid) ORDER BY 2");
 
-	sql_exec(conn, todo, 0);
+	sql_exec(conn, todo, opts->quiet);
 }
 
-/* display all tables in whatever db we are connected to.  don't display the
-   system tables by default */
+/* 
+ * Dump all tables, indexes and sequences in the current database.
+ */
 void
-sql_exec_dumptable(PGconn *conn, int systables)
+sql_exec_dumpalltables(PGconn *conn, struct options *opts)
 {
 	char		todo[1024];
+	char	   *addfields = ",c.oid AS \"Oid\", nspname AS \"Schema\", spcname as \"Tablespace\" ";
 
-	/* don't exclude the systables if this is set */
-	if (systables == 1)
-		snprintf(todo, 1024, "select relfilenode,relname from pg_class order by relname");
-	else
-		snprintf(todo, 1024, "select relfilenode,relname from pg_class "
-				 "where relkind not in ('v','s', 'c') and "
-				 "relname not like 'pg_%%' order by relname");
+	snprintf(todo, 1024,
+			 "SELECT relfilenode as \"Filenode\", relname as \"Table Name\" %s "
+			 "FROM pg_class c "
+			 "	LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace "
+			 "	LEFT JOIN pg_catalog.pg_database d ON d.datname = current_database(),"
+			 "	pg_catalog.pg_tablespace t "
+			 "WHERE relkind IN ('r'%s) AND "
+			 "	%s"
+			 "		t.oid = CASE"
+			 "			WHEN reltablespace <> 0 THEN reltablespace"
+			 "			WHEN n.nsptablespace <> 0 THEN nsptablespace"
+			 "			WHEN d.dattablespace <> 0 THEN dattablespace"
+			 "		END "
+			 "ORDER BY relname",
+			 opts->extended ? addfields : "",
+			 opts->indexes ? ", 'i', 'S', 't'" : "",
+ 			 opts->systables ? "" : "n.nspname NOT IN ('pg_catalog', 'pg_toast', 'information_schema') AND");
 
-	sql_exec(conn, todo, 0);
+	sql_exec(conn, todo, opts->quiet);
 }
 
-/* display the oid for a given tablename for whatever db we are connected
-   to.	do we want to allow %bar% in the search?  Not now. */
+/*
+ * Show oid, relfilenode, name, schema and tablespace for each of the
+ * given objects in the current database.
+ */
 void
-sql_exec_searchtable(PGconn *conn, const char *tablename)
+sql_exec_searchtables(PGconn *conn, struct options *opts)
 {
-	int			returnvalue;
-	char		todo[1024];
+	char	   *todo;
+	char	   *qualifiers, *ptr;
+	char	   *comma_oids, *comma_filenodes, *comma_tables;
+	bool		written = false;
+	char	   *addfields = ",c.oid AS \"Oid\", nspname AS \"Schema\", spcname as \"Tablespace\" ";
 
-	/* get the oid and tablename where the name matches tablename */
-	snprintf(todo, 1024, "select relfilenode,relname from pg_class where relname = '%s'", tablename);
+	/* get tables qualifiers, whether names, relfilenodes, or OIDs */
+	comma_oids = get_comma_elts(opts->oids);
+	comma_tables = get_comma_elts(opts->tables);
+	comma_filenodes = get_comma_elts(opts->filenodes);
 
-	returnvalue = sql_exec(conn, todo, 1);
+	/* 80 extra chars for SQL expression */
+	qualifiers = (char *) myalloc(strlen(comma_oids) + strlen(comma_tables) +
+								  strlen(comma_filenodes) + 80);
+	ptr = qualifiers;
 
-	/* deal with the return errors */
-	if (returnvalue == -1)
-		printf("No tables with that name found\n");
+	if (opts->oids->num > 0)
+	{
+		ptr += sprintf(ptr, "c.oid IN (%s)", comma_oids);
+		written = true;
+	}
+	if (opts->filenodes->num > 0)
+	{
+		if (written)
+			ptr += sprintf(ptr, " OR ");
+		ptr += sprintf(ptr, "c.relfilenode IN (%s)", comma_filenodes);
+		written = true;
+	}
+	if (opts->tables->num > 0)
+	{
+		if (written)
+			ptr += sprintf(ptr, " OR ");
+		sprintf(ptr, "c.relname ~~ ANY (ARRAY[%s])", comma_tables);
+	}
+	free(comma_oids);
+	free(comma_tables);
+	free(comma_filenodes);
 
-	if (returnvalue == -2)
-		printf("VERY scary:  more than one table with that name found!!\n");
+	/* now build the query */
+	todo = (char *) myalloc(650 + strlen(qualifiers));
+	snprintf(todo, 1024,
+			 "SELECT relfilenode as \"Filenode\", relname as \"Table Name\" %s\n"
+			 "FROM pg_class c \n"
+			 "	LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace \n"
+			 "	LEFT JOIN pg_catalog.pg_database d ON d.datname = current_database(),\n"
+			 "	pg_catalog.pg_tablespace t \n"
+			 "WHERE relkind IN ('r', 'i', 'S', 't') AND \n"
+			 "		t.oid = CASE\n"
+			 "			WHEN reltablespace <> 0 THEN reltablespace\n"
+			 "			WHEN n.nsptablespace <> 0 THEN nsptablespace\n"
+			 "			WHEN d.dattablespace <> 0 THEN dattablespace\n"
+			 "		END AND \n"
+			 "  (%s) \n"
+			 "ORDER BY relname\n",
+			 opts->extended ? addfields : "",
+			 qualifiers);
+
+	free(qualifiers);
+
+	sql_exec(conn, todo, opts->quiet);
 }
 
-/* same as above */
 void
-sql_exec_searchoid(PGconn *conn, int oid)
+sql_exec_dumpalltbspc(PGconn *conn, struct options *opts)
 {
-	int			returnvalue;
-	char		todo[1024];
+	char	todo[1024];
 
-	snprintf(todo, 1024, "select relfilenode,relname from pg_class where oid = %i", oid);
+	snprintf(todo, 1024, "SELECT oid AS \"Oid\", spcname as \"Tablespace Name\"\n"
+			 "FROM pg_tablespace");
 
-	returnvalue = sql_exec(conn, todo, 1);
-
-	if (returnvalue == -1)
-		printf("No tables with that oid found\n");
-
-	if (returnvalue == -2)
-		printf("VERY scary:  more than one table with that oid found!!\n");
+	sql_exec(conn, todo, opts->quiet);
 }
 
 int
@@ -407,65 +490,66 @@ main(int argc, char **argv)
 	struct options *my_opts;
 	PGconn	   *pgconn;
 
-	my_opts = (struct options *) malloc(sizeof(struct options));
+	my_opts = (struct options *) myalloc(sizeof(struct options));
+
+	my_opts->oids = (eary *) myalloc(sizeof(eary));
+	my_opts->tables = (eary *) myalloc(sizeof(eary));
+	my_opts->filenodes = (eary *) myalloc(sizeof(eary));
+
+	my_opts->oids->num = my_opts->oids->alloc = 0;
+	my_opts->tables->num = my_opts->tables->alloc = 0;
+	my_opts->filenodes->num = my_opts->filenodes->alloc = 0;
 
 	/* parse the opts */
 	get_opts(argc, argv, my_opts);
 
-	/* display all the tables in the database */
-	if (my_opts->getdatabase & my_opts->gettable)
+	if (my_opts->dbname == NULL)
+	{
+		my_opts->dbname = "template1";
+		my_opts->nodb = true;
+	}
+	pgconn = sql_conn(my_opts);
+
+	/* display only tablespaces */
+	if (my_opts->tablespaces)
 	{
 		if (!my_opts->quiet)
-		{
-			printf("Oid of table %s from database \"%s\":\n", my_opts->_tbname, my_opts->_dbname);
-			printf("---------------------------------\n");
-		}
-		pgconn = sql_conn(my_opts->_dbname, my_opts);
-		sql_exec_searchtable(pgconn, my_opts->_tbname);
-		PQfinish(pgconn);
+			printf("All tablespaces:\n");
+		sql_exec_dumpalltbspc(pgconn, my_opts);
 
-		exit(1);
+		PQfinish(pgconn);
+		exit(0);
 	}
 
-	/* search for the tablename of the given OID */
-	if (my_opts->getdatabase & my_opts->getoid)
+	/* display the given elements in the database */
+	if (my_opts->oids->num > 0 ||
+		my_opts->tables->num > 0 ||
+		my_opts->filenodes->num > 0)
 	{
 		if (!my_opts->quiet)
-		{
-			printf("Tablename of oid %i from database \"%s\":\n", my_opts->_oid, my_opts->_dbname);
-			printf("---------------------------------\n");
-		}
-		pgconn = sql_conn(my_opts->_dbname, my_opts);
-		sql_exec_searchoid(pgconn, my_opts->_oid);
-		PQfinish(pgconn);
+			printf("From database \"%s\":\n", my_opts->dbname);
+		sql_exec_searchtables(pgconn, my_opts);
 
-		exit(1);
+		PQfinish(pgconn);
+		exit(0);
 	}
 
-	/* search for the oid for the given tablename */
-	if (my_opts->getdatabase)
+	/* no elements given; dump the given database */
+	if (my_opts->dbname && !my_opts->nodb)
 	{
 		if (!my_opts->quiet)
-		{
-			printf("All tables from database \"%s\":\n", my_opts->_dbname);
-			printf("---------------------------------\n");
-		}
-		pgconn = sql_conn(my_opts->_dbname, my_opts);
-		sql_exec_dumptable(pgconn, my_opts->systables);
-		PQfinish(pgconn);
+			printf("From database \"%s\":\n", my_opts->dbname);
+		sql_exec_dumpalltables(pgconn, my_opts);
 
-		exit(1);
+		PQfinish(pgconn);
+		exit(0);
 	}
 
-	/* display all the databases for the server we are connected to.. */
+	/* no database either; dump all databases */
 	if (!my_opts->quiet)
-	{
 		printf("All databases:\n");
-		printf("---------------------------------\n");
-	}
-	pgconn = sql_conn("template1", my_opts);
-	sql_exec_dumpdb(pgconn);
-	PQfinish(pgconn);
+	sql_exec_dumpalldbs(pgconn, my_opts);
 
+	PQfinish(pgconn);
 	exit(0);
 }
