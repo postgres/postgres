@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.125 2002/09/24 18:38:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.125.2.1 2002/12/05 21:46:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -330,10 +330,14 @@ pull_up_subqueries(Query *parse, Node *jtnode, bool below_outer_join)
 			 * nothing will happen after the first time.  We do have to be
 			 * careful to copy everything we pull up, however, or risk
 			 * having chunks of structure multiply linked.
+			 *
+			 * Note: 'false' is correct here even if we are within an outer
+			 * join in the upper query; the lower query starts with a clean
+			 * slate for outer-join semantics.
 			 */
 			subquery->jointree = (FromExpr *)
 				pull_up_subqueries(subquery, (Node *) subquery->jointree,
-								   below_outer_join);
+								   false);
 
 			/*
 			 * Now make a modifiable copy of the subquery that we can run
@@ -513,6 +517,20 @@ is_simple_subquery(Query *subquery)
 	 * quals of higher queries.
 	 */
 	if (expression_returns_set((Node *) subquery->targetList))
+		return false;
+
+	/*
+	 * Don't pull up a subquery that has any sublinks in its targetlist,
+	 * either.  As of PG 7.3 this creates problems because the pulled-up
+	 * expressions may go into join alias lists, and the sublinks would
+	 * not get fixed because we do flatten_join_alias_vars() too late.
+	 * Eventually we should do a complete flatten_join_alias_vars as the
+	 * first step of preprocess_expression, and then we could probably
+	 * support this.  (BUT: it might be a bad idea anyway, due to possibly
+	 * causing multiple evaluations of an expensive sublink.)
+	 */
+	if (subquery->hasSubLinks &&
+		contain_subplans((Node *) subquery->targetList))
 		return false;
 
 	/*
