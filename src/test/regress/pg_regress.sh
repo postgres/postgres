@@ -1,5 +1,5 @@
 #! /bin/sh
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/pg_regress.sh,v 1.19 2001/02/18 17:53:55 tgl Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/pg_regress.sh,v 1.20 2001/03/24 23:32:25 petere Exp $
 
 me=`basename $0`
 : ${TMPDIR=/tmp}
@@ -595,7 +595,7 @@ elif [ $count_ignored -eq 0 ]; then
     msg="$count_failed of $count_total tests failed."
     result=1
 else
-    msg="$count_failed of $count_total tests failed, $count_ignored failed test(s) ignored."
+    msg="`expr $count_failed + $count_ignored` of $count_total tests failed, $count_ignored of these failures ignored."
     result=1
 fi
 
