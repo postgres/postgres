@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Fri Jan 7 22:58:29 EST 2005
+   Last updated: Sun Jan 9 14:44:04 EST 2005
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -190,8 +190,8 @@
    
    There is also a Novell Netware 6 port at http://forge.novell.com, and
    an OS/2 (eComStation) version at
-   http://www.os2world.com/cgi-bin/news/viewnews.cgi?category=32&id=11035
-   94114.
+   http://hobbes.nmsu.edu/cgi-bin/h-search?sh=1&button=Search&key=postgre
+   SQL&stype=all&sort=type&dir=%2F.
    
     1.5) Where can I get PostgreSQL?
     
