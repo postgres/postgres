@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.46 2004/02/17 09:07:16 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.47 2004/07/13 02:59:49 momjian Exp $ -->
 
 <refentry id="APP-PGRESTORE">
  <refmeta>
@@ -337,10 +337,10 @@
       <term><option>--use-set-session-authorization</option></term>
       <listitem>
        <para>
-        This option is obsolete but still accepted for backwards
-	compatibility.
-        <application>pg_restore</application> now always behaves in the
-	way formerly selected by this option.
+	Output SQL standard SET SESSION AUTHORIZATION commands instead
+	of OWNER TO commands.  This makes the dump more standards compatible,
+	but depending on the history of the objects in the dump, may not
+	restore properly.
        </para>
       </listitem>
      </varlistentry>

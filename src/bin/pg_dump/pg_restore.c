@@ -34,7 +34,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_restore.c,v 1.58 2004/06/03 00:07:37 momjian Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_restore.c,v 1.59 2004/07/13 03:00:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -243,7 +243,7 @@ main(int argc, char **argv)
 
 			case 'X':
 				if (strcmp(optarg, "use-set-session-authorization") == 0)
-					/* no-op, still allowed for compatibility */ ;
+					use_setsessauth = 1;
 				else if (strcmp(optarg, "disable-triggers") == 0)
 					disable_triggers = 1;
 				else
@@ -286,6 +286,7 @@ main(int argc, char **argv)
 	}
 
 	opts->disable_triggers = disable_triggers;
+	opts->use_setsessauth = use_setsessauth;
 
 	if (opts->formatName)
 	{
@@ -381,6 +382,9 @@ usage(const char *progname)
 	printf(_("  -x, --no-privileges      skip restoration of access privileges (grant/revoke)\n"));
 	printf(_("  -X disable-triggers, --disable-triggers\n"
 			 "                           disable triggers during data-only restore\n"));
+	printf(_("  -X use-set-session-authorization, --use-set-session-authorization\n"
+			 "                           use SESSION AUTHORIZATION commands instead of\n"
+			 "                           OWNER TO commands\n"));
 
 	printf(_("\nConnection options:\n"));
 	printf(_("  -h, --host=HOSTNAME      database server host or socket directory\n"));

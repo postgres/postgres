@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.378 2004/07/12 05:37:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.379 2004/07/13 03:00:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -392,7 +392,7 @@ main(int argc, char **argv)
 				else if (strcmp(optarg, "disable-triggers") == 0)
 					disable_triggers = 1;
 				else if (strcmp(optarg, "use-set-session-authorization") == 0)
-					/* no-op, still allowed for compatibility */ ;
+					use_setsessauth = 1;
 				else
 				{
 					fprintf(stderr,
@@ -636,6 +636,7 @@ main(int argc, char **argv)
 		ropt->create = outputCreate;
 		ropt->noOwner = outputNoOwner;
 		ropt->disable_triggers = disable_triggers;
+		ropt->use_setsessauth = use_setsessauth;
 
 		if (compressLevel == -1)
 			ropt->compression = 0;
@@ -693,6 +694,9 @@ help(const char *progname)
 			 "                           disable dollar quoting, use SQL standard quoting\n"));
 	printf(_("  -X disable-triggers, --disable-triggers\n"
 			 "                           disable triggers during data-only restore\n"));
+	printf(_("  -X use-set-session-authorization, --use-set-session-authorization\n"
+			 "                           use SESSION AUTHORIZATION commands instead of\n"
+			 "                           OWNER TO commands\n"));
 
 	printf(_("\nConnection options:\n"));
 	printf(_("  -h, --host=HOSTNAME      database server host or socket directory\n"));

@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.87 2004/05/19 21:21:26 momjian Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.88 2004/07/13 03:00:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,10 @@ static char *modulename = gettext_noop("archiver");
 
 static ArchiveHandle *_allocAH(const char *FileSpec, const ArchiveFormat fmt,
 		 const int compression, ArchiveMode mode);
-static int	_printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isData);
+static char 	*_getObjectFromDropStmt(const char *dropStmt, const char *type);
+static void	_printTocHeader(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isData);
+static int	_printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isData, bool ownerAndACL);
+
 
 static void fixPriorBlobRefs(ArchiveHandle *AH, TocEntry *blobte,
 							 RestoreOptions *ropt);
@@ -59,7 +62,7 @@ static void _becomeUser(ArchiveHandle *AH, const char *user);
 static void _becomeOwner(ArchiveHandle *AH, TocEntry *te);
 static void _selectOutputSchema(ArchiveHandle *AH, const char *schemaName);
 
-static teReqs _tocEntryRequired(TocEntry *te, RestoreOptions *ropt);
+static teReqs _tocEntryRequired(TocEntry *te, RestoreOptions *ropt, bool ownerAndACL);
 static void _disableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt);
 static void _enableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt);
 static TocEntry *getTocEntryByDumpId(ArchiveHandle *AH, DumpId id);
@@ -181,7 +184,7 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 		impliedDataOnly = 1;
 		while (te != AH->toc)
 		{
-			reqs = _tocEntryRequired(te, ropt);
+			reqs = _tocEntryRequired(te, ropt, false);
 			if ((reqs & REQ_SCHEMA) != 0)
 			{					/* It's schema, and it's wanted */
 				impliedDataOnly = 0;
@@ -217,7 +220,7 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 		te = AH->toc->prev;
 		while (te != AH->toc)
 		{
-			reqs = _tocEntryRequired(te, ropt);
+			reqs = _tocEntryRequired(te, ropt, false);
 			if (((reqs & REQ_SCHEMA) != 0) && te->dropStmt)
 			{
 				/* We want the schema */
@@ -239,7 +242,7 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 	while (te != AH->toc)
 	{
 		/* Work out what, if anything, we want from this entry */
-		reqs = _tocEntryRequired(te, ropt);
+		reqs = _tocEntryRequired(te, ropt, false);
 
 		/* Dump any relevant dump warnings to stderr */
 		if (!ropt->suppressDumpWarnings && strcmp(te->desc, "WARNING") == 0)
@@ -256,7 +259,7 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 		{
 			ahlog(AH, 1, "creating %s %s\n", te->desc, te->tag);
 
-			_printTocEntry(AH, te, ropt, false);
+			_printTocEntry(AH, te, ropt, false, false);
 			defnDumped = true;
 
 			/* If we created a DB, connect to it... */
@@ -290,7 +293,7 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 						die_horribly(AH, modulename, "cannot restore from compressed archive (not configured for compression support)\n");
 #endif
 
-					_printTocEntry(AH, te, ropt, true);
+					_printTocEntry(AH, te, ropt, true, false);
 
 					/*
 					 * Maybe we can't do BLOBS, so check if this node is
@@ -361,11 +364,33 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 			{
 				/* If we haven't already dumped the defn part, do so now */
 				ahlog(AH, 1, "executing %s %s\n", te->desc, te->tag);
-				_printTocEntry(AH, te, ropt, false);
+				_printTocEntry(AH, te, ropt, false, false);
 			}
 		}
 		te = te->next;
 	}		/* end loop over TOC entries */
+
+	/*
+	 * Scan TOC again to output ownership commands and ACLs
+	 */
+	te = AH->toc->next;
+	while (te != AH->toc)
+	{
+		/* Work out what, if anything, we want from this entry */
+		reqs = _tocEntryRequired(te, ropt, true);
+
+		defnDumped = false;
+
+		if ((reqs & REQ_SCHEMA) != 0)	/* We want the schema */
+		{
+			ahlog(AH, 1, "setting owner and acl for %s %s\n", te->desc, te->tag);
+
+			_printTocEntry(AH, te, ropt, false, true);
+			defnDumped = true;
+		}
+
+		te = te->next;
+	}
 
 	/*
 	 * Clean up & we're done.
@@ -408,7 +433,7 @@ fixPriorBlobRefs(ArchiveHandle *AH, TocEntry *blobte, RestoreOptions *ropt)
 		{
 			if (strcmp(te->desc, "TABLE DATA") == 0)
 			{
-				reqs = _tocEntryRequired(te, ropt);
+				reqs = _tocEntryRequired(te, ropt, false);
 
 				if ((reqs & REQ_DATA) != 0)		/* We loaded the data */
 				{
@@ -659,7 +684,7 @@ PrintTOCSummary(Archive *AHX, RestoreOptions *ropt)
 
 	while (te != AH->toc)
 	{
-		if (_tocEntryRequired(te, ropt) != 0)
+		if (_tocEntryRequired(te, ropt, false) != 0)
 			ahprintf(AH, "%d; %u %u %s %s %s\n", te->dumpId,
 					 te->catalogId.tableoid, te->catalogId.oid,
 					 te->desc, te->tag, te->owner);
@@ -1270,7 +1295,7 @@ TocIDRequired(ArchiveHandle *AH, DumpId id, RestoreOptions *ropt)
 	if (!te)
 		return 0;
 
-	return _tocEntryRequired(te, ropt);
+	return _tocEntryRequired(te, ropt, false);
 }
 
 size_t
@@ -1888,7 +1913,7 @@ ReadToc(ArchiveHandle *AH)
 }
 
 static teReqs
-_tocEntryRequired(TocEntry *te, RestoreOptions *ropt)
+_tocEntryRequired(TocEntry *te, RestoreOptions *ropt, bool ownerAndACL)
 {
 	teReqs		res = 3;		/* Schema = 1, Data = 2, Both = 3 */
 
@@ -1897,7 +1922,7 @@ _tocEntryRequired(TocEntry *te, RestoreOptions *ropt)
 		return 0;
 
 	/* If it's an ACL, maybe ignore it */
-	if (ropt->aclsSkip && strcmp(te->desc, "ACL") == 0)
+	if ((!ownerAndACL || ropt->aclsSkip) && strcmp(te->desc, "ACL") == 0)
 		return 0;
 
 	if (!ropt->create && strcmp(te->desc, "DATABASE") == 0)
@@ -2159,7 +2184,7 @@ _becomeUser(ArchiveHandle *AH, const char *user)
 static void
 _becomeOwner(ArchiveHandle *AH, TocEntry *te)
 {
-	if (AH->ropt && AH->ropt->noOwner)
+	if (AH->ropt && (AH->ropt->noOwner || !AH->ropt->use_setsessauth))
 		return;
 
 	_becomeUser(AH, te->owner);
@@ -2224,17 +2249,64 @@ _selectOutputSchema(ArchiveHandle *AH, const char *schemaName)
 }
 
 
+/**
+ * Parses the dropStmt part of a TOC entry and returns
+ * a newly allocated string that is the object identifier
+ * The caller must free the result.
+ */
+static char *
+_getObjectFromDropStmt(const char *dropStmt, const char *type)
+{
+	/* Chop "DROP" off the front and make a copy */
+	char *first = strdup(dropStmt + 5);
+	char *last = first + strlen(first) - 1; /* Points to the last real char in extract */
+	char *buf = NULL;
 
-static int
-_printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isData)
+	/* Loop from the end of the string until last char is no longer '\n' or ';' */
+	while (last >= first && (*last == '\n' || *last == ';')) {
+		last--;
+	}
+
+	/* Insert end of string one place after last */
+	*(last + 1) = '\0';
+
+	/* Take off CASCADE if necessary.  Only TYPEs seem to have this, but may
+	 * as well check for all */
+	if ((last - first) >= 8) {
+		if (strcmp(last - 7, " CASCADE") == 0)
+			last -= 8;
+	}
+
+	/* Insert end of string one place after last */
+	*(last + 1) = '\0';
+
+	/* Special case VIEWs and SEQUENCEs.  They must use ALTER TABLE. */
+	if (strcmp(type, "VIEW") == 0 && (last - first) >= 5)
+	{
+		int len = 6 + strlen(first + 5) + 1;
+		buf = malloc(len);
+		snprintf(buf, len, "TABLE %s", first + 5);
+		free (first);
+	}
+	else if (strcmp(type, "SEQUENCE") == 0 && (last - first) >= 9)
+	{
+		int len = 6 + strlen(first + 9) + 1;
+		buf = malloc(len);
+		snprintf(buf, len, "TABLE %s", first + 9);
+		free (first);
+	}
+	else
+	{
+		buf = first;
+	}
+
+	return buf;
+}
+
+static void
+_printTocHeader(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isData)
 {
 	const char	   *pfx;
-
-	/* Select owner and schema as necessary */
-	_becomeOwner(AH, te);
-	_selectOutputSchema(AH, te->namespace);
-	if (strcmp(te->desc, "TABLE") == 0)
-		_setWithOids(AH, te);
 
 	if (isData)
 		pfx = "Data for ";
@@ -2263,21 +2335,60 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isDat
 	if (AH->PrintExtraTocPtr != NULL)
 		(*AH->PrintExtraTocPtr) (AH, te);
 	ahprintf(AH, "--\n\n");
+}
 
-	/*
-	 * Really crude hack for suppressing AUTHORIZATION clause of CREATE SCHEMA
-	 * when --no-owner mode is selected.  This is ugly, but I see no other
-	 * good way ...
-	 */
-	if (AH->ropt && AH->ropt->noOwner && strcmp(te->desc, "SCHEMA") == 0)
+static int
+_printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isData, bool ownerAndACL)
+{
+	/* Select schema as necessary */
+	_becomeOwner(AH, te);
+	_selectOutputSchema(AH, te->namespace);
+	if (strcmp(te->desc, "TABLE") == 0 && !ownerAndACL)
+		_setWithOids(AH, te);
+
+	if (!ropt->noOwner && !ropt->use_setsessauth && ownerAndACL && strlen(te->owner) > 0 && strlen(te->dropStmt) > 0 && (
+							strcmp(te->desc, "AGGREGATE") == 0 ||
+							strcmp(te->desc, "CONVERSION") == 0 ||
+							strcmp(te->desc, "DOMAIN") == 0 ||
+							strcmp(te->desc, "FUNCTION") == 0 ||
+							strcmp(te->desc, "OPERATOR") == 0 ||
+							strcmp(te->desc, "OPERATOR CLASS") == 0 ||
+							strcmp(te->desc, "TABLE") == 0 ||
+							strcmp(te->desc, "TYPE") == 0 ||
+							strcmp(te->desc, "VIEW") == 0 ||
+							strcmp(te->desc, "SEQUENCE") == 0
+							))
 	{
-		ahprintf(AH, "CREATE SCHEMA %s;\n\n\n", te->tag);
+		char *temp = _getObjectFromDropStmt(te->dropStmt, te->desc);
+		_printTocHeader(AH, te, ropt, isData);
+		ahprintf(AH, "ALTER %s OWNER TO %s;\n\n", temp, fmtId(te->owner));
+		free (temp);
+	} 
+	else if (ownerAndACL && strcmp(te->desc, "ACL") == 0)
+	{
+		_printTocHeader(AH, te, ropt, isData);
+		ahprintf(AH, "%s\n\n", te->defn);
 	}
-	else
+	else if (!ownerAndACL && strlen(te->defn) > 0)
 	{
-		/* normal case */
-		if (strlen(te->defn) > 0)
+		_printTocHeader(AH, te, ropt, isData);
+
+		/*
+		 * Really crude hack for suppressing AUTHORIZATION clause of CREATE SCHEMA
+		 * when --no-owner mode is selected.  This is ugly, but I see no other
+		 * good way ...
+		 */
+		if (AH->ropt && AH->ropt->noOwner && strcmp(te->desc, "SCHEMA") == 0)
+		{
+			ahprintf(AH, "CREATE SCHEMA %s;\n\n\n", te->tag);
+		}
+		else
+		{
 			ahprintf(AH, "%s\n\n", te->defn);
+		}
+	}
+	else if (isData) {
+		_printTocHeader(AH, te, ropt, isData);
 	}
 
 	return 1;
