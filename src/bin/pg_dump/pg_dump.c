@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.317 2003/02/13 04:54:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.318 2003/02/13 22:56:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1311,7 +1311,7 @@ dumpBlobs(Archive *AH, char *junkOid, void *junkVal)
 	int			i;
 	int			loFd;
 	char		buf[loBufSize];
-	size_t		cnt;
+	int			cnt;
 	Oid			blobOid;
 
 	if (g_verbose)
