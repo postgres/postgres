@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.45 1997/09/13 03:15:46 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.46 1997/09/16 16:11:20 thomas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -419,27 +419,27 @@ default_expr:  AexprConst
 			| Pnull
 				{	$$ = lcons( makeString("NULL"), NIL); }
 			| '-' default_expr %prec UMINUS
-				{   $$ = lcons( makeString( "-"), $2); }
+				{	$$ = lcons( makeString( "-"), $2); }
 			| default_expr '+' default_expr
-				{   $$ = nconc( $1, lcons( makeString( "+"), $3)); }
+				{	$$ = nconc( $1, lcons( makeString( "+"), $3)); }
 			| default_expr '-' default_expr
-				{   $$ = nconc( $1, lcons( makeString( "-"), $3)); }
+				{	$$ = nconc( $1, lcons( makeString( "-"), $3)); }
 			| default_expr '/' default_expr
-				{   $$ = nconc( $1, lcons( makeString( "/"), $3)); }
+				{	$$ = nconc( $1, lcons( makeString( "/"), $3)); }
 			| default_expr '*' default_expr
-				{   $$ = nconc( $1, lcons( makeString( "*"), $3)); }
+				{	$$ = nconc( $1, lcons( makeString( "*"), $3)); }
 			| default_expr '=' default_expr
-				{   elog(WARN,"boolean expressions not supported in DEFAULT",NULL); }
+				{	elog(WARN,"boolean expressions not supported in DEFAULT",NULL); }
 			| default_expr '<' default_expr
-				{   elog(WARN,"boolean expressions not supported in DEFAULT",NULL); }
+				{	elog(WARN,"boolean expressions not supported in DEFAULT",NULL); }
 			| default_expr '>' default_expr
-				{   elog(WARN,"boolean expressions not supported in DEFAULT",NULL); }
+				{	elog(WARN,"boolean expressions not supported in DEFAULT",NULL); }
 			| ':' default_expr
-				{   $$ = lcons( makeString( ":"), $2); }
+				{	$$ = lcons( makeString( ":"), $2); }
 			| ';' default_expr
-				{   $$ = lcons( makeString( ";"), $2); }
+				{	$$ = lcons( makeString( ";"), $2); }
 			| '|' default_expr
-				{   $$ = lcons( makeString( "|"), $2); }
+				{	$$ = lcons( makeString( "|"), $2); }
 			| default_expr TYPECAST Typename
 				{
 		   		 $$ = nconc( lcons( makeString( "CAST"), $1), makeList( makeString("AS"), $3, -1));
@@ -449,7 +449,7 @@ default_expr:  AexprConst
 		   		 $$ = nconc( lcons( makeString( "CAST"), $2), makeList( makeString("AS"), $4, -1));
 				}
 			| '(' default_expr ')'
-				{   $$ = lappend( lcons( makeString( "("), $2), makeString( ")")); }
+				{	$$ = lappend( lcons( makeString( "("), $2), makeString( ")")); }
 			| name '(' default_expr ')'
 				{
 					$$ = makeList( makeString($1), makeString("("), -1);
@@ -460,12 +460,12 @@ default_expr:  AexprConst
 				{
 					if (!strcmp("<=", $2) || !strcmp(">=", $2))
 						elog(WARN,"boolean expressions not supported in DEFAULT",NULL);
-					$$ = nconc( $1, lcons( $2, $3));
+					$$ = nconc( $1, lcons( makeString( $2), $3));
 				}
 			| Op default_expr
-				{   $$ = lcons( $1, $2); }
+				{	$$ = lcons( makeString( $1), $2); }
 			| default_expr Op
-				{   $$ = lcons( $2, $1); }
+				{	$$ = lappend( $1, makeString( $2)); }
 		;
 
 opt_null: NOT PNULL								{ $$ = TRUE; }
@@ -635,6 +635,9 @@ printf("in ConstraintDef\n");
 					constr->type = CONSTR_CHECK;
 					constr->name = NULL;
 					constr->def = FlattenStringList($2);
+#ifdef PARSEDEBUG
+printf("ConstraintDef: string is %s\n", (char *) constr->def);
+#endif
 					$$ = constr;
 				}
 		;
@@ -651,27 +654,27 @@ printf( "Id is %s\n", $1);
 					$$ = lcons( makeString($1), NIL);
 				}
 			| '-' constraint_elem %prec UMINUS
-				{   $$ = lcons( makeString( "-"), $2); }
+				{	$$ = lcons( makeString( "-"), $2); }
 			| constraint_elem '+' constraint_elem
-				{   $$ = nconc( $1, lcons( makeString( "+"), $3)); }
+				{	$$ = nconc( $1, lcons( makeString( "+"), $3)); }
 			| constraint_elem '-' constraint_elem
-				{   $$ = nconc( $1, lcons( makeString( "-"), $3)); }
+				{	$$ = nconc( $1, lcons( makeString( "-"), $3)); }
 			| constraint_elem '/' constraint_elem
-				{   $$ = nconc( $1, lcons( makeString( "/"), $3)); }
+				{	$$ = nconc( $1, lcons( makeString( "/"), $3)); }
 			| constraint_elem '*' constraint_elem
-				{   $$ = nconc( $1, lcons( makeString( "*"), $3)); }
+				{	$$ = nconc( $1, lcons( makeString( "*"), $3)); }
 			| constraint_elem '=' constraint_elem
-				{   $$ = nconc( $1, lcons( makeString( "="), $3)); }
+				{	$$ = nconc( $1, lcons( makeString( "="), $3)); }
 			| constraint_elem '<' constraint_elem
-				{   $$ = nconc( $1, lcons( makeString( "<"), $3)); }
+				{	$$ = nconc( $1, lcons( makeString( "<"), $3)); }
 			| constraint_elem '>' constraint_elem
-				{   $$ = nconc( $1, lcons( makeString( ">"), $3)); }
+				{	$$ = nconc( $1, lcons( makeString( ">"), $3)); }
 			| ':' constraint_elem
-				{   $$ = lcons( makeString( ":"), $2); }
+				{	$$ = lcons( makeString( ":"), $2); }
 			| ';' constraint_elem
-				{   $$ = lcons( makeString( ";"), $2); }
+				{	$$ = lcons( makeString( ";"), $2); }
 			| '|' constraint_elem
-				{   $$ = lcons( makeString( "|"), $2); }
+				{	$$ = lcons( makeString( "|"), $2); }
 			| constraint_elem TYPECAST Typename
 				{
 		   		 $$ = nconc( lcons( makeString( "CAST"), $1), makeList( makeString("AS"), $3, -1));
@@ -681,7 +684,7 @@ printf( "Id is %s\n", $1);
 		   		 $$ = nconc( lcons( makeString( "CAST"), $2), makeList( makeString("AS"), $4, -1));
 				}
 			| '(' constraint_elem ')'
-				{   $$ = lappend( lcons( makeString( "("), $2), makeString( ")")); }
+				{	$$ = lappend( lcons( makeString( "("), $2), makeString( ")")); }
 			| name '(' constraint_elem ')'
 				{
 					$$ = makeList( makeString($1), makeString("("), -1);
@@ -689,15 +692,15 @@ printf( "Id is %s\n", $1);
 					$$ = lappend( $$, makeString(")"));
 				}
 			| constraint_elem Op constraint_elem
-				{	$$ = nconc( $1, lcons( $2, $3)); }
+				{	$$ = nconc( $1, lcons( makeString( $2), $3)); }
 			| constraint_elem AND constraint_elem
-				{   $$ = nconc( $1, lcons( makeString( "AND"), $3)); }
+				{	$$ = nconc( $1, lcons( makeString( "AND"), $3)); }
 			| constraint_elem OR constraint_elem
-				{   $$ = nconc( $1, lcons( makeString( "OR"), $3)); }
+				{	$$ = nconc( $1, lcons( makeString( "OR"), $3)); }
 			| Op constraint_elem
-				{   $$ = lcons( $1, $2); }
+				{	$$ = lcons( makeString( $1), $2); }
 			| constraint_elem Op
-				{   $$ = lcons( $2, $1); }
+				{	$$ = lappend( $1, makeString( $2)); }
 		;
 
 
