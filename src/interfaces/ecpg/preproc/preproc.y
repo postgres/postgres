@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.297 2004/09/27 09:59:17 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.298 2004/10/18 13:36:23 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -545,7 +545,7 @@ add_additional_variables(char *name, bool insert)
 %type  <str>	storage_declaration storage_clause opt_initializer c_anything
 %type  <str>	variable_list variable c_thing c_term ECPGKeywords_vanames
 %type  <str>	opt_pointer ECPGDisconnect dis_name storage_modifier
-%type  <str>	execstring server_name ECPGVarDeclaration
+%type  <str>	execstring server_name ECPGVarDeclaration func_expr
 %type  <str>	connection_object opt_server opt_port c_stuff c_stuff_item
 %type  <str>	user_name opt_user char_variable ora_user ident opt_reference
 %type  <str>	var_type_declarations quoted_ident_stringvar ECPGKeywords_rest
@@ -2210,8 +2210,8 @@ index_params:  index_elem			{ $$ = $1; }
 
 index_elem:  ColId opt_class
 		{ $$ = cat2_str($1, $2); }
-	| func_name '(' expr_list ')' opt_class
-		{ $$ = cat_str(5, $1, make_str("("), $3, ")", $5); }
+	| func_expr opt_class
+		{ $$ = cat2_str($1, $2); }
 	| '(' a_expr ')' opt_class
 		{ $$ = cat_str(4, make_str("("), $2, make_str(")"), $4); }
 	;
@@ -3291,10 +3291,7 @@ relation_expr:	qualified_name
 			{ /* inheritance query */ $$ = cat_str(3, make_str("only ("), $3, make_str(")")); }
 		;
 
-func_table:  func_name '(' ')'
-		{ $$ = cat2_str($1, make_str("()")); }
-	| func_name '(' expr_list ')'
-		{ $$ = cat_str(4, $1, make_str("("), $3, make_str(")")); }
+func_table:  func_expr 	{ $$ = $1; }
 	;
 
 where_clause:  WHERE a_expr		{ $$ = cat2_str(make_str("where"), $2); }
@@ -3769,7 +3766,29 @@ c_expr: columnref
 			{ $$ = cat_str(4, make_str("("), $2, make_str(")"), $4); }
 		| case_expr
 			{ $$ = $1; }
-		| func_name '(' ')'
+		| func_expr
+			{ $$ = $1; }
+		| select_with_parens	%prec UMINUS
+			{ $$ = $1; }
+		| EXISTS select_with_parens
+			{ $$ = cat2_str(make_str("exists"), $2); }
+		| ARRAY select_with_parens
+			{ $$ = cat2_str(make_str("array"), $2); }
+		| ARRAY array_expr
+			{ $$ = cat2_str(make_str("array"), $2); }
+		| row
+			{ $$ = $1; }
+		;
+
+/*
+ * func_expr is split out from c_expr just so that we have a classification
+ * for "everything that is a function call or looks like one".  This isn't
+ * very important, but it saves us having to document which variants are
+ * legal in the backwards-compatible functional-index syntax for CREATE INDEX.
+ * (Note that many of the special SQL functions wouldn't actually make any
+ * sense as functional index entries, but we ignore that consideration here.)
+ */
+func_expr:      func_name '(' ')'
 			{ $$ = cat2_str($1, make_str("()"));	}
 		| func_name '(' expr_list ')'
 			{ $$ = cat_str(4, $1, make_str("("), $3, make_str(")"));	}
@@ -3820,17 +3839,12 @@ c_expr: columnref
 		 	{ $$ = cat_str(5, make_str("convert("), $3, make_str("using"), $5, make_str(")"));}
 		| CONVERT '(' expr_list ')'
 			{ $$ = cat_str(3, make_str("convert("), $3, make_str(")")); }
-		| select_with_parens	%prec UMINUS
-			{ $$ = $1; }
-		| EXISTS select_with_parens
-			{ $$ = cat2_str(make_str("exists"), $2); }
-		| ARRAY select_with_parens
-			{ $$ = cat2_str(make_str("array"), $2); }
-		| ARRAY array_expr
-			{ $$ = cat2_str(make_str("array"), $2); }
-		| row
-			{ $$ = $1; }
+		| NULLIF '(' a_expr ',' a_expr ')'
+                        { $$ = cat_str(5, make_str("nullif("), $3, make_str(","), $5, make_str(")")); }
+		| COALESCE '(' expr_list ')'
+			{ $$ = cat_str(3, make_str("coalesce("), $3, make_str(")")); }
 		;
+
 
 row: ROW '(' expr_list ')'
 		{ $$ = cat_str(3, make_str("row ("), $3, make_str(")")); }
@@ -3972,25 +3986,9 @@ in_expr:  select_with_parens
 
 /* Case clause
  * Define SQL92-style case clause.
- * Allow all four forms described in the standard:
- * - Full specification
- *	CASE WHEN a = b THEN c ... ELSE d END
- * - Implicit argument
- *	CASE a WHEN b THEN c ... ELSE d END
- * - Conditional NULL
- *	NULLIF(x,y)
- *	same as CASE WHEN x = y THEN NULL ELSE x END
- * - Conditional substitution from list, use first non-null argument
- *	COALESCE(a,b,...)
- * same as CASE WHEN a IS NOT NULL THEN a WHEN b IS NOT NULL THEN b ... END
- * - thomas 1998-11-09
  */
 case_expr:	CASE case_arg when_clause_list case_default END_P
 			{ $$ = cat_str(5, make_str("case"), $2, $3, $4, make_str("end")); }
-		| NULLIF '(' a_expr ',' a_expr ')'
-			{ $$ = cat_str(5, make_str("nullif("), $3, make_str(","), $5, make_str(")")); }
-		| COALESCE '(' expr_list ')'
-			{ $$ = cat_str(3, make_str("coalesce("), $3, make_str(")")); }
 		;
 
 when_clause_list:  when_clause_list when_clause
@@ -5981,6 +5979,7 @@ ECPGunreserved:	  ABORT_P			{ $$ = make_str("abort"); }
 		| NOCREATEUSER			{ $$ = make_str("nocreateuser"); }
 		| NOTHING			{ $$ = make_str("nothing"); }
 		| NOTIFY			{ $$ = make_str("notify"); }
+		| NOWAIT			{ $$ = make_str("nowait"); }
 		| OBJECT_P			{ $$ = make_str("object"); }
 		| OF				{ $$ = make_str("of"); }
 		| OIDS				{ $$ = make_str("oids"); }
@@ -6196,7 +6195,6 @@ reserved_keyword:
 		| LIMIT				{ $$ = make_str("limit"); }
 		| NEW				{ $$ = make_str("new"); }
 		| NOT				{ $$ = make_str("not"); }
-		| NOWAIT			{ $$ = make_str("nowait"); }
 		| NULL_P			{ $$ = make_str("null"); }
 		| OFF				{ $$ = make_str("off"); }
 		| OFFSET			{ $$ = make_str("offset"); }
