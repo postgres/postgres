@@ -2,7 +2,7 @@
 **	entab.c		- add tabs to a text file
 **	by Bruce Momjian (root@candle.pha.pa.us)
 **
-**  version 1.1
+**  version 1.2
 **
 **	tabsize = 4
 **
@@ -98,6 +98,7 @@ char **argv;
 			if (escaped == FALSE)
 				quote_char = ' ';
 			escaped = FALSE;
+
 			while (*src != NUL)
 			{
 				col_in_tab++;
@@ -149,6 +150,11 @@ char **argv;
 								for (; prv_spaces > 0; prv_spaces--)
 									*(dst++) = ' ';
 							}
+						}
+						else
+						{
+							*(dst++) = *src;
+							prv_spaces = 0;
 						}
 					}
 				}
