@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.299 2004/05/05 04:48:46 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.300 2004/05/23 17:10:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1929,17 +1929,17 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 	 */
 	qry->sortClause = transformSortClause(pstate,
 										  stmt->sortClause,
-										  qry->targetList,
+										  &qry->targetList,
 										  true /* fix unknowns */ );
 
 	qry->groupClause = transformGroupClause(pstate,
 											stmt->groupClause,
-											qry->targetList,
+											&qry->targetList,
 											qry->sortClause);
 
 	qry->distinctClause = transformDistinctClause(pstate,
 												  stmt->distinctClause,
-												  qry->targetList,
+												  &qry->targetList,
 												  &qry->sortClause);
 
 	qry->limitOffset = transformLimitClause(pstate, stmt->limitOffset,
@@ -2145,7 +2145,7 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 
 	qry->sortClause = transformSortClause(pstate,
 										  sortClause,
-										  qry->targetList,
+										  &qry->targetList,
 									  false /* no unknowns expected */ );
 
 	pstate->p_namespace = sv_namespace;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.128 2004/04/18 18:12:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.129 2004/05/23 17:10:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,7 +58,7 @@ static Node *transformFromClauseItem(ParseState *pstate, Node *n,
 static Node *buildMergedJoinVar(ParseState *pstate, JoinType jointype,
 				   Var *l_colvar, Var *r_colvar);
 static TargetEntry *findTargetlistEntry(ParseState *pstate, Node *node,
-					List *tlist, int clause);
+					List **tlist, int clause);
 
 
 /*
@@ -1076,12 +1076,11 @@ transformLimitClause(ParseState *pstate, Node *clause,
  *	  list as a "resjunk" node.
  *
  * node		the ORDER BY, GROUP BY, or DISTINCT ON expression to be matched
- * tlist	the existing target list (NB: this will never be NIL, which is a
- *			good thing since we'd be unable to append to it if it were...)
- * clause	identifies clause type being processed.
+ * tlist	the target list (passed by reference so we can append to it)
+ * clause	identifies clause type being processed
  */
 static TargetEntry *
-findTargetlistEntry(ParseState *pstate, Node *node, List *tlist, int clause)
+findTargetlistEntry(ParseState *pstate, Node *node, List **tlist, int clause)
 {
 	TargetEntry *target_result = NULL;
 	List	   *tl;
@@ -1157,7 +1156,7 @@ findTargetlistEntry(ParseState *pstate, Node *node, List *tlist, int clause)
 
 		if (name != NULL)
 		{
-			foreach(tl, tlist)
+			foreach(tl, *tlist)
 			{
 				TargetEntry *tle = (TargetEntry *) lfirst(tl);
 				Resdom	   *resnode = tle->resdom;
@@ -1196,7 +1195,7 @@ findTargetlistEntry(ParseState *pstate, Node *node, List *tlist, int clause)
 					 errmsg("non-integer constant in %s",
 							clauseText[clause])));
 		target_pos = intVal(val);
-		foreach(tl, tlist)
+		foreach(tl, *tlist)
 		{
 			TargetEntry *tle = (TargetEntry *) lfirst(tl);
 			Resdom	   *resnode = tle->resdom;
@@ -1224,7 +1223,7 @@ findTargetlistEntry(ParseState *pstate, Node *node, List *tlist, int clause)
 	 */
 	expr = transformExpr(pstate, node);
 
-	foreach(tl, tlist)
+	foreach(tl, *tlist)
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(tl);
 
@@ -1238,7 +1237,8 @@ findTargetlistEntry(ParseState *pstate, Node *node, List *tlist, int clause)
 	 * that it will not be projected into the final tuple.
 	 */
 	target_result = transformTargetEntry(pstate, node, expr, NULL, true);
-	lappend(tlist, target_result);
+
+	*tlist = lappend(*tlist, target_result);
 
 	return target_result;
 }
@@ -1247,10 +1247,13 @@ findTargetlistEntry(ParseState *pstate, Node *node, List *tlist, int clause)
 /*
  * transformGroupClause -
  *	  transform a GROUP BY clause
+ *
+ * GROUP BY items will be added to the targetlist (as resjunk columns)
+ * if not already present, so the targetlist must be passed by reference.
  */
 List *
 transformGroupClause(ParseState *pstate, List *grouplist,
-					 List *targetlist, List *sortClause)
+					 List **targetlist, List *sortClause)
 {
 	List	   *glist = NIL,
 			   *gl;
@@ -1304,7 +1307,7 @@ transformGroupClause(ParseState *pstate, List *grouplist,
 		}
 
 		grpcl = makeNode(GroupClause);
-		grpcl->tleSortGroupRef = assignSortGroupRef(tle, targetlist);
+		grpcl->tleSortGroupRef = assignSortGroupRef(tle, *targetlist);
 		grpcl->sortop = ordering_op;
 		glist = lappend(glist, grpcl);
 	}
@@ -1315,11 +1318,14 @@ transformGroupClause(ParseState *pstate, List *grouplist,
 /*
  * transformSortClause -
  *	  transform an ORDER BY clause
+ *
+ * ORDER BY items will be added to the targetlist (as resjunk columns)
+ * if not already present, so the targetlist must be passed by reference.
  */
 List *
 transformSortClause(ParseState *pstate,
 					List *orderlist,
-					List *targetlist,
+					List **targetlist,
 					bool resolveUnknown)
 {
 	List	   *sortlist = NIL;
@@ -1334,7 +1340,7 @@ transformSortClause(ParseState *pstate,
 								  targetlist, ORDER_CLAUSE);
 
 		sortlist = addTargetToSortList(pstate, tle,
-									   sortlist, targetlist,
+									   sortlist, *targetlist,
 									   sortby->sortby_kind,
 									   sortby->useOp,
 									   resolveUnknown);
@@ -1348,13 +1354,11 @@ transformSortClause(ParseState *pstate,
  *	  transform a DISTINCT or DISTINCT ON clause
  *
  * Since we may need to add items to the query's sortClause list, that list
- * is passed by reference.	We might also need to add items to the query's
- * targetlist, but we assume that cannot be empty initially, so we can
- * lappend to it even though the pointer is passed by value.
+ * is passed by reference.	Likewise for the targetlist.
  */
 List *
 transformDistinctClause(ParseState *pstate, List *distinctlist,
-						List *targetlist, List **sortClause)
+						List **targetlist, List **sortClause)
 {
 	List	   *result = NIL;
 	List	   *slitem;
@@ -1377,7 +1381,7 @@ transformDistinctClause(ParseState *pstate, List *distinctlist,
 		 */
 		*sortClause = addAllTargetsToSortList(pstate,
 											  *sortClause,
-											  targetlist,
+											  *targetlist,
 											  true);
 
 		/*
@@ -1390,7 +1394,7 @@ transformDistinctClause(ParseState *pstate, List *distinctlist,
 		foreach(slitem, *sortClause)
 		{
 			SortClause *scl = (SortClause *) lfirst(slitem);
-			TargetEntry *tle = get_sortgroupclause_tle(scl, targetlist);
+			TargetEntry *tle = get_sortgroupclause_tle(scl, *targetlist);
 
 			if (tle->resdom->resjunk)
 				ereport(ERROR,
@@ -1442,7 +1446,7 @@ transformDistinctClause(ParseState *pstate, List *distinctlist,
 			else
 			{
 				*sortClause = addTargetToSortList(pstate, tle,
-												  *sortClause, targetlist,
+												  *sortClause, *targetlist,
 												  SORTBY_ASC, NIL, true);
 
 				/*
