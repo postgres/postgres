@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/Attic/freefuncs.c,v 1.8 1999/02/12 05:56:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/Attic/freefuncs.c,v 1.9 1999/02/12 06:43:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -811,14 +811,14 @@ _freeIndexPath(IndexPath *node)
 }
 
 /* ----------------
- *		FreeJoinPathFields
+ *		FreeNestPathFields
  *
- *		This function frees the fields of the JoinPath node.  It is used by
- *		all the free functions for classes which inherit node JoinPath.
+ *		This function frees the fields of the NestPath node.  It is used by
+ *		all the free functions for classes which inherit node NestPath.
  * ----------------
  */
 static void
-FreeJoinPathFields(JoinPath *node)
+FreeNestPathFields(NestPath *node)
 {
 	freeObject(node->pathinfo);
 	freeObject(node->outerjoinpath);
@@ -826,18 +826,18 @@ FreeJoinPathFields(JoinPath *node)
 }
 
 /* ----------------
- *		_freeJoinPath
+ *		_freeNestPath
  * ----------------
  */
 static void
-_freeJoinPath(JoinPath *node)
+_freeNestPath(NestPath *node)
 {
 	/* ----------------
 	 *	free the node superclass fields
 	 * ----------------
 	 */
 	FreePathFields((Path *) node);
-	FreeJoinPathFields(node);
+	FreeNestPathFields(node);
 
 	pfree(node);
 }
@@ -854,7 +854,7 @@ _freeMergePath(MergePath *node)
 	 * ----------------
 	 */
 	FreePathFields((Path *) node);
-	FreeJoinPathFields((JoinPath *) node);
+	FreeNestPathFields((NestPath *) node);
 
 	/* ----------------
 	 *	free the remainder of the node
@@ -879,7 +879,7 @@ _freeHashPath(HashPath *node)
 	 * ----------------
 	 */
 	FreePathFields((Path *) node);
-	FreeJoinPathFields((JoinPath *) node);
+	FreeNestPathFields((NestPath *) node);
 
 	/* ----------------
 	 *	free remainder of node
@@ -1292,8 +1292,8 @@ freeObject(void *node)
 		case T_IndexPath:
 			_freeIndexPath(node);
 			break;
-		case T_JoinPath:
-			_freeJoinPath(node);
+		case T_NestPath:
+			_freeNestPath(node);
 			break;
 		case T_MergePath:
 			_freeMergePath(node);

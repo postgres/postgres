@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.41 1999/02/09 17:03:11 momjian Exp $
+ * $Id: nodes.h,v 1.42 1999/02/12 06:43:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,7 +74,7 @@ typedef enum NodeTag
 	T_PathOrder,
 	T_Path,
 	T_IndexPath,
-	T_JoinPath,
+	T_NestPath,
 	T_MergePath,
 	T_HashPath,
 	T_OrderKey,
@@ -244,7 +244,7 @@ typedef struct Node
  * ----------------------------------------------------------------
  */
 #define IsA_JoinPath(jp) \
-	(nodeTag(jp)==T_JoinPath || nodeTag(jp)==T_MergePath || \
+	(nodeTag(jp)==T_NestPath || nodeTag(jp)==T_MergePath || \
 	 nodeTag(jp)==T_HashPath)
 
 #define IsA_Join(j) \

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.33 1999/02/12 05:56:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.34 1999/02/12 06:43:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -473,14 +473,14 @@ create_index_path(Query *root,
  * Returns the resulting path node.
  *
  */
-JoinPath   *
+NestPath   *
 create_nestloop_path(RelOptInfo *joinrel,
 					 RelOptInfo *outer_rel,
 					 Path *outer_path,
 					 Path *inner_path,
 					 List *pathkeys)
 {
-	JoinPath   *pathnode = makeNode(JoinPath);
+	NestPath   *pathnode = makeNode(NestPath);
 
 	pathnode->path.pathtype = T_NestLoop;
 	pathnode->path.parent = joinrel;

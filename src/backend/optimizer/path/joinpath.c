@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.20 1999/02/11 14:58:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.21 1999/02/12 06:43:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -87,23 +87,21 @@ find_all_join_paths(Query *root, List *joinrels)
 		 * list of integers.
 		 */
 		innerrel = (length(innerrelids) == 1) ?
-			get_base_rel(root, lfirsti(innerrelids)) : get_join_rel(root, innerrelids);
+			get_base_rel(root, lfirsti(innerrelids)) :
+			get_join_rel(root, innerrelids);
 		outerrel = (length(outerrelids) == 1) ?
-			get_base_rel(root, lfirsti(outerrelids)) : get_join_rel(root, outerrelids);
+			get_base_rel(root, lfirsti(outerrelids)) :
+			get_join_rel(root, outerrelids);
 
-		bestinnerjoin = best_innerjoin(innerrel->innerjoin,
-									   outerrel->relids);
+		bestinnerjoin = best_innerjoin(innerrel->innerjoin, outerrel->relids);
+
 		if (_enable_mergejoin_)
-		{
 			mergeinfo_list = group_clauses_by_order(joinrel->restrictinfo,
 									   lfirsti(innerrel->relids));
-		}
 
 		if (_enable_hashjoin_)
-		{
 			hashinfo_list = group_clauses_by_hashop(joinrel->restrictinfo,
 										lfirsti(innerrel->relids));
-		}
 
 		/* need to flatten the relids list */
 		joinrel->relids = intAppend(outerrelids, innerrelids);
@@ -330,10 +328,8 @@ match_unsorted_outer(RelOptInfo *joinrel,
 		outerpath_ordering = outerpath->pathorder;
 
 		if (outerpath_ordering)
-		{
 			xmergeinfo = match_order_mergeinfo(outerpath_ordering,
-									  mergeinfo_list);
-		}
+												mergeinfo_list);
 
 		if (xmergeinfo)
 			clauses = xmergeinfo->jmethod.clauses;
@@ -344,12 +340,12 @@ match_unsorted_outer(RelOptInfo *joinrel,
 			List	   *clauses = xmergeinfo->jmethod.clauses;
 
 			matchedJoinKeys = match_pathkeys_joinkeys(outerpath->pathkeys,
-										jmkeys,
-										clauses,
-										OUTER,
-										&matchedJoinClauses);
-			merge_pathkeys = new_join_pathkeys(outerpath->pathkeys,
-								  joinrel->targetlist, clauses);
+														jmkeys,
+														clauses,
+														OUTER,
+														&matchedJoinClauses);
+ 			merge_pathkeys = new_join_pathkeys(outerpath->pathkeys,
+											  joinrel->targetlist, clauses);
 		}
 		else
 			merge_pathkeys = outerpath->pathkeys;
@@ -434,8 +430,7 @@ match_unsorted_outer(RelOptInfo *joinrel,
  *			found, and
  *		 2. sorting the cheapest outer path is cheaper than using an ordered
  *			  but unsorted outer path(as was considered in
- *			  (match-unsorted-outer)),
- *	  then this merge path is considered.
+ *			(match-unsorted-outer)), then this merge path is considered.
  *
  * 'joinrel' is the join result relation
  * 'outerrel' is the outer join relation

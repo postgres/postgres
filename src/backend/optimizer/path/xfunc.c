@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/xfunc.c,v 1.25 1999/02/10 21:02:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/xfunc.c,v 1.26 1999/02/12 06:43:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,7 +61,7 @@ xfunc_trypullup(RelOptInfo rel)
 	LispValue	y;				/* list ptr */
 	RestrictInfo	maxcinfo;		/* The RestrictInfo to pull up, as
 								 * calculated by xfunc_shouldpull() */
-	JoinPath	curpath;		/* current path in list */
+	NestPath	curpath;		/* current path in list */
 	int			progress;		/* has progress been made this time
 								 * through? */
 	int			clausetype;
@@ -71,7 +71,7 @@ xfunc_trypullup(RelOptInfo rel)
 		progress = false;		/* no progress yet in this iteration */
 		foreach(y, get_pathlist(rel))
 		{
-			curpath = (JoinPath) lfirst(y);
+			curpath = (NestPath) lfirst(y);
 
 			/*
 			 * * for each operand, attempt to pullup predicates until
@@ -142,7 +142,7 @@ xfunc_trypullup(RelOptInfo rel)
 int
 xfunc_shouldpull(Query *queryInfo,
 				 Path childpath,
-				 JoinPath parentpath,
+				 NestPath parentpath,
 				 int whichchild,
 				 RestrictInfo * maxcinfopt)		/* Out: pointer to clause
 												 * to pullup */
@@ -184,8 +184,8 @@ xfunc_shouldpull(Query *queryInfo,
 	 * see if any join clause has even higher rank than the highest *
 	 * local predicate
 	 */
-	if (is_join(childpath) && xfunc_num_join_clauses((JoinPath) childpath) > 1)
-		for (tmplist = get_pathrestrictinfo((JoinPath) childpath);
+	if (is_join(childpath) && xfunc_num_join_clauses((NestPath) childpath) > 1)
+		for (tmplist = get_pathrestrictinfo((NestPath) childpath);
 			 tmplist != LispNil;
 			 tmplist = lnext(tmplist))
 		{
@@ -224,7 +224,7 @@ xfunc_shouldpull(Query *queryInfo,
 			  || (joincost == 0 && joinselec < 1)
 			  || (!is_join(childpath)
 				  && (whichchild == INNER)
-				  && IsA(parentpath, JoinPath)
+				  && IsA(parentpath, NestPath)
 				  &&!IsA(parentpath, HashPath)
 				  &&!IsA(parentpath, MergePath)))))
 		{
@@ -263,7 +263,7 @@ xfunc_shouldpull(Query *queryInfo,
 RestrictInfo
 xfunc_pullup(Query *queryInfo,
 			 Path childpath,
-			 JoinPath parentpath,
+			 NestPath parentpath,
 			 RestrictInfo cinfo,	/* clause to pull up */
 			 int whichchild,	/* whether child is INNER or OUTER of join */
 			 int clausetype)	/* whether clause to pull is join or local */
@@ -285,9 +285,9 @@ xfunc_pullup(Query *queryInfo,
 	else
 	{
 		set_pathrestrictinfo
-			((JoinPath) newkid,
+			((NestPath) newkid,
 			 xfunc_LispRemove((LispValue) cinfo,
-						  (List) get_pathrestrictinfo((JoinPath) newkid)));
+						  (List) get_pathrestrictinfo((NestPath) newkid)));
 	}
 
 	/*
@@ -390,7 +390,7 @@ LispValue	clause;
  **    Find global expense of a join clause
  */
 Cost
-xfunc_join_expense(Query *queryInfo, JoinPath path, int whichchild)
+xfunc_join_expense(Query *queryInfo, NestPath path, int whichchild)
 {
 	LispValue	primjoinclause = xfunc_primary_join(path);
 
@@ -854,7 +854,7 @@ xfunc_find_references(LispValue clause)
  ** min rank pathclause
  */
 LispValue
-xfunc_primary_join(JoinPath pathnode)
+xfunc_primary_join(NestPath pathnode)
 {
 	LispValue	joinclauselist = get_pathrestrictinfo(pathnode);
 	RestrictInfo	mincinfo;
@@ -947,13 +947,13 @@ xfunc_get_path_cost(Query *queryInfo, Path pathnode)
 	 * * Now add in any node-specific expensive function costs. * Again,
 	 * we must ensure that the clauses are sorted by rank.
 	 */
-	if (IsA(pathnode, JoinPath))
+	if (IsA(pathnode, NestPath))
 	{
 		if (XfuncMode != XFUNC_OFF)
-			set_pathrestrictinfo((JoinPath) pathnode, lisp_qsort
-							   (get_pathrestrictinfo((JoinPath) pathnode),
+			set_pathrestrictinfo((NestPath) pathnode, lisp_qsort
+							   (get_pathrestrictinfo((NestPath) pathnode),
 								xfunc_cinfo_compare));
-		for (tmplist = get_pathrestrictinfo((JoinPath) pathnode), selec = 1.0;
+		for (tmplist = get_pathrestrictinfo((NestPath) pathnode), selec = 1.0;
 			 tmplist != LispNil;
 			 tmplist = lnext(tmplist))
 		{
@@ -1006,14 +1006,14 @@ xfunc_get_path_cost(Query *queryInfo, Path pathnode)
  ** Recalculate the cost of a path node.  This includes the basic cost of the
  ** node, as well as the cost of its expensive functions.
  ** We need to do this to the parent after pulling a clause from a child into a
- ** parent.  Thus we should only be calling this function on JoinPaths.
+ ** parent.  Thus we should only be calling this function on NestPaths.
  */
 Cost
-xfunc_total_path_cost(JoinPath pathnode)
+xfunc_total_path_cost(NestPath pathnode)
 {
 	Cost		cost = xfunc_get_path_cost((Path) pathnode);
 
-	Assert(IsA(pathnode, JoinPath));
+	Assert(IsA(pathnode, NestPath));
 	if (IsA(pathnode, MergePath))
 	{
 		MergePath	mrgnode = (MergePath) pathnode;
@@ -1089,7 +1089,7 @@ xfunc_total_path_cost(JoinPath pathnode)
 
  */
 Cost
-xfunc_expense_per_tuple(JoinPath joinnode, int whichchild)
+xfunc_expense_per_tuple(NestPath joinnode, int whichchild)
 {
 	RelOptInfo	outerrel = get_parent((Path) get_outerjoinpath(joinnode));
 	RelOptInfo	innerrel = get_parent((Path) get_innerjoinpath(joinnode));
@@ -1118,7 +1118,7 @@ xfunc_expense_per_tuple(JoinPath joinnode, int whichchild)
 	else
 /* nestloop */
 	{
-		Assert(IsA(joinnode, JoinPath));
+		Assert(IsA(joinnode, NestPath));
 		return _CPU_PAGE_WEIGHT_;
 	}
 }
@@ -1375,7 +1375,7 @@ xfunc_tuple_width(Relation rd)
  **   Find the number of join clauses associated with this join path
  */
 int
-xfunc_num_join_clauses(JoinPath path)
+xfunc_num_join_clauses(NestPath path)
 {
 	int			num = length(get_pathrestrictinfo(path));
 

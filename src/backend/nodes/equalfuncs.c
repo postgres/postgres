@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.30 1999/02/11 14:58:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.31 1999/02/12 06:43:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -390,7 +390,7 @@ _equalIndexPath(IndexPath *a, IndexPath *b)
 }
 
 static bool
-_equalJoinPath(JoinPath *a, JoinPath *b)
+_equalNestPath(NestPath *a, NestPath *b)
 {
 	Assert(IsA_JoinPath(a));
 	Assert(IsA_JoinPath(b));
@@ -412,7 +412,7 @@ _equalMergePath(MergePath *a, MergePath *b)
 	Assert(IsA(a, MergePath));
 	Assert(IsA(b, MergePath));
 
-	if (!_equalJoinPath((JoinPath *) a, (JoinPath *) b))
+	if (!_equalNestPath((NestPath *) a, (NestPath *) b))
 		return false;
 	if (!equal(a->path_mergeclauses, b->path_mergeclauses))
 		return false;
@@ -429,7 +429,7 @@ _equalHashPath(HashPath *a, HashPath *b)
 	Assert(IsA(a, HashPath));
 	Assert(IsA(b, HashPath));
 
-	if (!_equalJoinPath((JoinPath *) a, (JoinPath *) b))
+	if (!_equalNestPath((NestPath *) a, (NestPath *) b))
 		return false;
 	if (!equal((a->path_hashclauses), (b->path_hashclauses)))
 		return false;
@@ -773,8 +773,8 @@ equal(void *a, void *b)
 		case T_IndexPath:
 			retval = _equalIndexPath(a, b);
 			break;
-		case T_JoinPath:
-			retval = _equalJoinPath(a, b);
+		case T_NestPath:
+			retval = _equalNestPath(a, b);
 			break;
 		case T_MergePath:
 			retval = _equalMergePath(a, b);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.43 1999/02/11 14:58:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.44 1999/02/12 06:43:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,12 +45,12 @@
 
 static List *switch_outer(List *clauses);
 static Scan *create_scan_node(Path *best_path, List *tlist);
-static Join *create_join_node(JoinPath *best_path, List *tlist);
+static Join *create_join_node(NestPath *best_path, List *tlist);
 static SeqScan *create_seqscan_node(Path *best_path, List *tlist,
 					List *scan_clauses);
 static IndexScan *create_indexscan_node(IndexPath *best_path, List *tlist,
 					  List *scan_clauses);
-static NestLoop *create_nestloop_node(JoinPath *best_path, List *tlist,
+static NestLoop *create_nestloop_node(NestPath *best_path, List *tlist,
 					 List *clauses, Plan *outer_node, List *outer_tlist,
 					 Plan *inner_node, List *inner_tlist);
 static MergeJoin *create_mergejoin_node(MergePath *best_path, List *tlist,
@@ -117,7 +117,7 @@ create_plan(Path *best_path)
 		case T_HashJoin:
 		case T_MergeJoin:
 		case T_NestLoop:
-			plan_node = (Plan *) create_join_node((JoinPath *) best_path, tlist);
+			plan_node = (Plan *) create_join_node((NestPath *) best_path, tlist);
 			break;
 		default:
 			/* do nothing */
@@ -204,7 +204,7 @@ create_scan_node(Path *best_path, List *tlist)
  *	  Returns the join node.
  */
 static Join *
-create_join_node(JoinPath *best_path, List *tlist)
+create_join_node(NestPath *best_path, List *tlist)
 {
 	Plan	   *outer_node;
 	List	   *outer_tlist;
@@ -242,7 +242,7 @@ create_join_node(JoinPath *best_path, List *tlist)
 												   inner_tlist);
 			break;
 		case T_NestLoop:
-			retval = (Join *) create_nestloop_node((JoinPath *) best_path,
+			retval = (Join *) create_nestloop_node((NestPath *) best_path,
 												   tlist,
 												   clauses,
 												   outer_node,
@@ -416,7 +416,7 @@ create_indexscan_node(IndexPath *best_path,
  *****************************************************************************/
 
 static NestLoop *
-create_nestloop_node(JoinPath *best_path,
+create_nestloop_node(NestPath *best_path,
 					 List *tlist,
 					 List *clauses,
 					 Plan *outer_node,

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: outfuncs.c,v 1.70 1999/02/12 05:56:46 momjian Exp $
+ *  $Id: outfuncs.c,v 1.71 1999/02/12 06:43:24 momjian Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -990,13 +990,13 @@ _outIndexPath(StringInfo str, IndexPath *node)
 }
 
 /*
- *	JoinPath is a subclass of Path
+ *	NestPath is a subclass of Path
  */
 static void
-_outJoinPath(StringInfo str, JoinPath *node)
+_outNestPath(StringInfo str, NestPath *node)
 {
 	appendStringInfo(str, 
-			" JOINPATH :pathtype %d :cost %f :pathkeys ",
+			" NESTPATH :pathtype %d :cost %f :pathkeys ",
 			node->path.pathtype,
 			node->path.path_cost);
 	_outNode(str, node->path.pathkeys);
@@ -1021,7 +1021,7 @@ _outJoinPath(StringInfo str, JoinPath *node)
 }
 
 /*
- *	MergePath is a subclass of JoinPath.
+ *	MergePath is a subclass of NestPath.
  */
 static void
 _outMergePath(StringInfo str, MergePath *node)
@@ -1061,7 +1061,7 @@ _outMergePath(StringInfo str, MergePath *node)
 }
 
 /*
- *	HashPath is a subclass of JoinPath.
+ *	HashPath is a subclass of NestPath.
  */
 static void
 _outHashPath(StringInfo str, HashPath *node)
@@ -1600,8 +1600,8 @@ _outNode(StringInfo str, void *obj)
 			case T_IndexPath:
 				_outIndexPath(str, obj);
 				break;
-			case T_JoinPath:
-				_outJoinPath(str, obj);
+			case T_NestPath:
+				_outNestPath(str, obj);
 				break;
 			case T_MergePath:
 				_outMergePath(str, obj);

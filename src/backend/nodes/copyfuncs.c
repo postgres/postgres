@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.68 1999/02/12 05:56:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.69 1999/02/12 06:43:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1174,14 +1174,14 @@ _copyIndexPath(IndexPath *from)
 }
 
 /* ----------------
- *		CopyJoinPathFields
+ *		CopyNestPathFields
  *
- *		This function copies the fields of the JoinPath node.  It is used by
- *		all the copy functions for classes which inherit from JoinPath.
+ *		This function copies the fields of the NestPath node.  It is used by
+ *		all the copy functions for classes which inherit from NestPath.
  * ----------------
  */
 static void
-CopyJoinPathFields(JoinPath *from, JoinPath *newnode)
+CopyNestPathFields(NestPath *from, NestPath *newnode)
 {
 	Node_Copy(from, newnode, pathinfo);
 	Node_Copy(from, newnode, outerjoinpath);
@@ -1189,20 +1189,20 @@ CopyJoinPathFields(JoinPath *from, JoinPath *newnode)
 }
 
 /* ----------------
- *		_copyJoinPath
+ *		_copyNestPath
  * ----------------
  */
-static JoinPath *
-_copyJoinPath(JoinPath *from)
+static NestPath *
+_copyNestPath(NestPath *from)
 {
-	JoinPath   *newnode = makeNode(JoinPath);
+	NestPath   *newnode = makeNode(NestPath);
 
 	/* ----------------
 	 *	copy the node superclass fields
 	 * ----------------
 	 */
 	CopyPathFields((Path *) from, (Path *) newnode);
-	CopyJoinPathFields(from, newnode);
+	CopyNestPathFields(from, newnode);
 
 	return newnode;
 }
@@ -1221,7 +1221,7 @@ _copyMergePath(MergePath *from)
 	 * ----------------
 	 */
 	CopyPathFields((Path *) from, (Path *) newnode);
-	CopyJoinPathFields((JoinPath *) from, (JoinPath *) newnode);
+	CopyNestPathFields((NestPath *) from, (NestPath *) newnode);
 
 	/* ----------------
 	 *	copy the remainder of the node
@@ -1248,7 +1248,7 @@ _copyHashPath(HashPath *from)
 	 * ----------------
 	 */
 	CopyPathFields((Path *) from, (Path *) newnode);
-	CopyJoinPathFields((JoinPath *) from, (JoinPath *) newnode);
+	CopyNestPathFields((NestPath *) from, (NestPath *) newnode);
 
 	/* ----------------
 	 *	copy remainder of node
@@ -1773,8 +1773,8 @@ copyObject(void *from)
 		case T_IndexPath:
 			retval = _copyIndexPath(from);
 			break;
-		case T_JoinPath:
-			retval = _copyJoinPath(from);
+		case T_NestPath:
+			retval = _copyNestPath(from);
 			break;
 		case T_MergePath:
 			retval = _copyMergePath(from);

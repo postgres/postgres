@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.28 1999/02/12 05:56:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.29 1999/02/12 06:43:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -302,7 +302,7 @@ static void
 print_path(Query *root, Path *path, int indent)
 {
 	char	   *ptype = NULL;
-	JoinPath   *jp;
+	NestPath   *jp;
 	bool		join = false;
 	int			i;
 
@@ -319,7 +319,7 @@ print_path(Query *root, Path *path, int indent)
 			ptype = "IdxScan";
 			join = false;
 			break;
-		case T_JoinPath:
+		case T_NestPath:
 			ptype = "Nestloop";
 			join = true;
 			break;
@@ -338,7 +338,7 @@ print_path(Query *root, Path *path, int indent)
 	{
 		int			size = path->parent->size;
 
-		jp = (JoinPath *) path;
+		jp = (NestPath *) path;
 		printf("%s size=%d cost=%f\n", ptype, size, path->path_cost);
 		switch (nodeTag(path))
 		{
@@ -347,7 +347,7 @@ print_path(Query *root, Path *path, int indent)
 				for (i = 0; i < indent + 1; i++)
 					printf("\t");
 				printf("   clauses=(");
-				print_joinclauses(root, ((JoinPath *) path)->pathinfo);
+				print_joinclauses(root, ((NestPath *) path)->pathinfo);
 				printf(")\n");
 
 				if (nodeTag(path) == T_MergePath)

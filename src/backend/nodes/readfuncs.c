@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.55 1999/02/12 05:56:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.56 1999/02/12 06:43:24 momjian Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -1564,20 +1564,20 @@ _readIndexPath()
 }
 
 /* ----------------
- *		_readJoinPath
+ *		_readNestPath
  *
- *	JoinPath is a subclass of Path
+ *	NestPath is a subclass of Path
  * ----------------
  */
-static JoinPath *
-_readJoinPath()
+static NestPath *
+_readNestPath()
 {
-	JoinPath   *local_node;
+	NestPath   *local_node;
 	char	   *token;
 	int			length;
 
 
-	local_node = makeNode(JoinPath);
+	local_node = makeNode(NestPath);
 
 	token = lsptok(NULL, &length);		/* get :pathtype */
 	token = lsptok(NULL, &length);		/* now read it */
@@ -1630,7 +1630,7 @@ _readJoinPath()
 /* ----------------
  *		_readMergePath
  *
- *	MergePath is a subclass of JoinPath.
+ *	MergePath is a subclass of NestPath.
  * ----------------
  */
 static MergePath *
@@ -1704,7 +1704,7 @@ _readMergePath()
 /* ----------------
  *		_readHashPath
  *
- *	HashPath is a subclass of JoinPath.
+ *	HashPath is a subclass of NestPath.
  * ----------------
  */
 static HashPath *
@@ -2110,8 +2110,8 @@ parsePlanString(void)
 		return_value = _readPath();
 	else if (!strncmp(token, "INDEXPATH", length))
 		return_value = _readIndexPath();
-	else if (!strncmp(token, "JOINPATH", length))
-		return_value = _readJoinPath();
+	else if (!strncmp(token, "NESTPATH", length))
+		return_value = _readNestPath();
 	else if (!strncmp(token, "MERGEPATH", length))
 		return_value = _readMergePath();
 	else if (!strncmp(token, "HASHPATH", length))

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_paths.c,v 1.17 1999/02/12 05:56:48 momjian Exp $
+ * $Id: geqo_paths.c,v 1.18 1999/02/12 06:43:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -98,7 +98,7 @@ geqo_prune_rel(RelOptInfo *rel, List *other_rels)
 void
 geqo_set_cheapest(RelOptInfo *rel)
 {
-	JoinPath *cheapest = (JoinPath *)set_cheapest(rel, rel->pathlist);
+	NestPath *cheapest = (NestPath *)set_cheapest(rel, rel->pathlist);
 
 	if (IsA_JoinPath(cheapest))
 		rel->size = compute_joinrel_size(cheapest);

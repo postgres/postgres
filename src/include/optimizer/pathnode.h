@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pathnode.h,v 1.12 1999/02/10 21:02:49 momjian Exp $
+ * $Id: pathnode.h,v 1.13 1999/02/12 06:43:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,7 @@ extern List *add_pathlist(RelOptInfo *parent_rel, List *unique_paths,
 extern Path *create_seqscan_path(RelOptInfo *rel);
 extern IndexPath *create_index_path(Query *root, RelOptInfo *rel, RelOptInfo *index,
 				  List *restriction_clauses, bool is_join_scan);
-extern JoinPath *create_nestloop_path(RelOptInfo *joinrel, RelOptInfo *outer_rel,
+extern NestPath *create_nestloop_path(RelOptInfo *joinrel, RelOptInfo *outer_rel,
 					 Path *outer_path, Path *inner_path, List *pathkeys);
 extern MergePath *create_mergejoin_path(RelOptInfo *joinrel, int outersize,
 		 int innersize, int outerwidth, int innerwidth, Path *outer_path,
