@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_query.h,v 1.2 1996/10/31 05:57:23 momjian Exp $
+ * $Id: parse_query.h,v 1.3 1996/10/31 18:27:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,7 +25,6 @@ typedef struct QueryTreeList {
 
 extern RangeTblEntry *refnameRangeTableEntry(List *rtable, char *refname);
 extern RangeTblEntry *colnameRangeTableEntry(ParseState *pstate, char *colname);
-extern RangeTblEntry *findRangeTableEntry(List *rtable, char *refname);
 extern int refnameRangeTablePosn(List *rtable, char *refname);
 extern RangeTblEntry *addRangeTableEntry(ParseState *pstate,
 					  char *relname, char *refname,
@@ -53,8 +52,8 @@ extern QueryTreeList *parser(char *str, Oid *typev, int nargs);
 extern Node *parser_typecast(Value *expr, TypeName *typename, int typlen);
 extern Node *parser_typecast2(Node *expr, int exprType, Type tp, int typlen);
 extern Aggreg *ParseAgg(char *aggname, Oid basetype, Node *target);
-extern void handleTargetColumnName(ParseState *pstate, ResTarget *res,
-					char *refname, char *colname);
+extern void handleTargetColname(ParseState *pstate, char **resname,
+					char *refname, char *colname)
 extern void checkTargetTypes(ParseState *pstate, char *target_colname,
 					char *refname, char *colname);
 
