@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.33 1998/05/04 23:49:17 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.34 1998/05/06 23:25:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -129,7 +129,7 @@
 
 
 
-#if (defined(__alpha)
+#if defined(__alpha)
 /*
  * OSF/1 (Alpha AXP)
  *
