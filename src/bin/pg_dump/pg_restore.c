@@ -34,7 +34,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_restore.c,v 1.22 2001/07/03 20:21:50 petere Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_restore.c,v 1.23 2001/08/12 19:02:39 petere Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *
@@ -89,11 +89,12 @@ struct option cmdopts[] = {
 	{"dbname", 1, NULL, 'd'},
 	{"file", 1, NULL, 'f'},
 	{"format", 1, NULL, 'F'},
-	{"function", 2, NULL, 'P'},
+	{"function", 1, NULL, 'P'},
 	{"host", 1, NULL, 'h'},
 	{"ignore-version", 0, NULL, 'i'},
-	{"index", 2, NULL, 'I'},
+	{"index", 1, NULL, 'I'},
 	{"list", 0, NULL, 'l'},
+	{"no-privileges", 0, NULL, 'x'},
 	{"no-acl", 0, NULL, 'x'},
 	{"no-owner", 0, NULL, 'O'},
 	{"no-reconnect", 0, NULL, 'R'},
@@ -104,8 +105,8 @@ struct option cmdopts[] = {
 	{"rearrange", 0, NULL, 'r'},
 	{"schema-only", 0, NULL, 's'},
 	{"superuser", 1, NULL, 'S'},
-	{"table", 2, NULL, 't'},
-	{"trigger", 2, NULL, 'T'},
+	{"table", 1, NULL, 't'},
+	{"trigger", 1, NULL, 'T'},
 	{"use-list", 1, NULL, 'L'},
 	{"username", 1, NULL, 'U'},
 	{"verbose", 0, NULL, 'v'},
@@ -359,7 +360,7 @@ usage(const char *progname)
 		"  -f, --file=FILENAME      script output file name\n"
 		"  -F, --format {c|f}       specify backup file format\n"
 		"  -h, --host HOSTNAME      server host name\n"
-		"  -i, --index[=NAME]       restore indexes or named index\n"
+		"  -i, --index=NAME         restore indexes or named index\n"
 		"  -l, --list               dump summarized TOC for this file\n"
 		"  -L, --use-list=FILENAME  use specified table of contents for ordering\n"
 		"                           output from this file\n"
@@ -368,18 +369,18 @@ usage(const char *progname)
 		"  -O, --no-owner           do not reconnect to database to match\n"
 		"                           object owner\n"
 		"  -p, --port PORT          server port number\n"
-		"  -P, --function[=NAME]    restore functions or named function\n"
+		"  -P, --function=NAME      restore functions or named function\n"
 		"  -r, --rearrange          rearrange output to put indexes etc. at end\n"
 		"  -R, --no-reconnect       disallow ALL reconnections to the database\n"
 		"  -s, --schema-only        restore only the schema, no data\n"
 		"  -S, --superuser=NAME     specify the superuser user name to use for\n"
 		"                           disabling triggers\n"
-		"  -t, --table[=TABLE]      restore this table only\n"
-		"  -T, --trigger[=NAME]     restore triggers or named trigger\n"
+		"  -t, --table=TABLE        restore this table only\n"
+		"  -T, --trigger=NAME       restore triggers or named trigger\n"
 		"  -U, --username=NAME      connect as specified database user\n"
 		"  -v, --verbose            verbose\n"
 		"  -W, --password           force password prompt (should happen automatically)\n"
-		"  -x, --no-acl             skip dumping of ACLs (grant/revoke)\n"
+		"  -x, --no-privileges      skip dumping of access privileges (grant/revoke)\n"
 		));
 
 #else /* not HAVE_GETOPT_LONG */

@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.29 2001/07/03 20:21:48 petere Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.30 2001/08/12 19:02:39 petere Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *
@@ -777,7 +777,7 @@ StartRestoreBlob(ArchiveHandle *AH, Oid oid)
 	if (!AH->createdBlobXref)
 	{
 		if (!AH->connection)
-			die_horribly(AH, modulename, "cannot restore BLOBs without a database connection");
+			die_horribly(AH, modulename, "cannot restore BLOBs without a database connection\n");
 
 		CreateBlobXrefTable(AH);
 		AH->createdBlobXref = 1;

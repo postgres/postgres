@@ -5,7 +5,7 @@
  *	Implements the basic DB functions used by the archiver.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.22 2001/08/03 19:43:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.23 2001/08/12 19:02:39 petere Exp $
  *
  * NOTES
  *
@@ -42,6 +42,7 @@ static const char *modulename = gettext_noop("archiver (db)");
 static void _check_database_version(ArchiveHandle *AH, bool ignoreVersion);
 static PGconn *_connectDB(ArchiveHandle *AH, const char *newdbname, char *newUser);
 static int	_executeSqlCommand(ArchiveHandle *AH, PGconn *conn, PQExpBuffer qry, char *desc);
+static void notice_processor(void *arg, const char *message);
 
 
 /*
@@ -164,7 +165,7 @@ _check_database_version(ArchiveHandle *AH, bool ignoreVersion)
 	if (myversion != remoteversion 
 		&& (remoteversion < AH->public.minRemoteVersion || remoteversion > AH->public.maxRemoteVersion) )
 	{
-		write_msg(NULL, "server version: %s, %s version: %s\n",
+		write_msg(NULL, "server version: %s; %s version: %s\n",
 				  remoteversion_str, progname, PG_VERSION);
 		if (ignoreVersion)
 			write_msg(NULL, "proceeding despite version mismatch\n");
@@ -325,6 +326,8 @@ _connectDB(ArchiveHandle *AH, const char *reqdb, char *requser)
 	if (password)
 		free(password);
 
+	PQsetNoticeProcessor(newConn, notice_processor, NULL);
+
 	return newConn;
 }
 
@@ -416,6 +419,8 @@ ConnectDatabase(Archive *AHX,
 	/* check for version mismatch */
 	_check_database_version(AH, ignoreVersion);
 
+	PQsetNoticeProcessor(AH->connection, notice_processor, NULL);
+
 	/*
 	 * AH->currUser = PQuser(AH->connection);
 	 *
@@ -425,6 +430,13 @@ ConnectDatabase(Archive *AHX,
 
 	return AH->connection;
 }
+
+
+static void notice_processor(void *arg, const char *message)
+{
+	write_msg(NULL, "%s", message);
+}
+
 
 /* Public interface */
 /* Convenience function to send a query. Monitors result to handle COPY statements */

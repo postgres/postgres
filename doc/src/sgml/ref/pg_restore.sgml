@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.12 2001/05/17 21:50:18 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.13 2001/08/12 19:02:39 petere Exp $ -->
 
 <refentry id="APP-PGRESTORE">
  <docinfo>
@@ -405,10 +405,11 @@
 
      <varlistentry>
       <term>-x</term>
+      <term>--no-privileges</term>
       <term>--no-acl</term>
       <listitem>
        <para>
-	Prevent restoration of ACLs (grant/revoke commands).
+	Prevent restoration of access privileges (grant/revoke commands).
        </para>
       </listitem>
      </varlistentry>

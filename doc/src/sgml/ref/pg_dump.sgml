@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.33 2001/05/17 21:50:18 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.34 2001/08/12 19:02:39 petere Exp $
 Postgres documentation
 -->
 
@@ -121,7 +121,7 @@ Postgres documentation
       <term>--data-only</term>
       <listitem>
        <para>
-	Dump only the data, not the schema (definitions).
+	Dump only the data, not the schema (data definitions).
        </para>
       </listitem>
      </varlistentry>
@@ -171,11 +171,15 @@ Postgres documentation
 
      <varlistentry>
       <term>-D</term>
+      <term>--column-inserts</term>
       <term>--attribute-inserts</term>
       <listitem>
        <para>
 	Dump data as <command>INSERT</command> commands with explicit
-	column names.  This will make restoration very slow.
+	column names (<literal>INSERT INTO
+	<replaceable>table</replaceable>
+	(<replaceable>column</replaceable>, ...) VALUES
+	...</literal>).  This will make restoration very slow.
        </para>
       </listitem>
      </varlistentry>
@@ -320,7 +324,7 @@ Postgres documentation
       <term>--schema-only</term>
       <listitem>
        <para>
-	Dump only the schema (definitions), no data.
+	Dump only the schema (data definitions), no data.
        </para>
       </listitem>
      </varlistentry>
@@ -358,10 +362,12 @@ Postgres documentation
 
      <varlistentry>
       <term>-x</term>
+      <term>--no-privileges</term>
       <term>--no-acl</term>
       <listitem>
        <para>
-	Prevent dumping of ACLs (grant/revoke commands) and table ownership information.
+	Prevent dumping of access privileges (grant/revoke commands)
+	and table ownership information.
        </para>
       </listitem>
      </varlistentry>
@@ -467,24 +473,6 @@ connectDBStart() -- connect() failed: No such file or directory
     </msgexplan>
    </msgentry>
 
-   <msgentry>
-    <msg>
-     <msgmain>
-      <msgtext>
-<screen><computeroutput>
-dumpSequence(<replaceable class="parameter">table</replaceable>): SELECT failed
-</computeroutput></screen>
-      </msgtext>
-     </msgmain>
-    </msg>
-
-    <msgexplan>
-       <para>
-	You do not have permission to read the database.
-	Contact your <productname>Postgres</productname> site administrator.
-       </para>
-    </msgexplan>
-   </msgentry>
   </msgset>
 
    <note>
@@ -503,9 +491,6 @@ dumpSequence(<replaceable class="parameter">table</replaceable>): SELECT failed
   <title>Notes</title>
   <para>
    <command>pg_dump</command> has a few limitations.
-   The limitations mostly stem from
-   difficulty in extracting certain meta-information from the system
-   catalogs.
 
    <itemizedlist>
     <listitem>

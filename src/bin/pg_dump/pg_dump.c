@@ -16,122 +16,13 @@
  *		  indexes
  *		  aggregates
  *		  operators
- *		  ACL - grant/revoke
+ *		  privileges
  *
  * the output script is SQL that is understood by PostgreSQL
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.220 2001/08/10 22:50:09 tgl Exp $
- *
- * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
- *
- *	 Applied 'insert string' patch from "Marc G. Fournier" <scrappy@ki.net>
- *	 Added '-t table' option
- *	 Added '-a' option
- *	 Added '-da' option
- *
- * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
- *
- *	 - Fixed dumpTable output to output lengths for char and varchar types!
- *	 - Added single. quote to twin single quote expansion for 'insert' string
- *	   mode.
- *
- * Modifications - 7/26/96 - asussman@vidya.com
- *
- *	 - Fixed ouput lengths for char and varchar type where the length is variable (-1)
- *
- * Modifications - 6/1/97 - igor@sba.miami.edu
- * - Added functions to free allocated memory used for retrieving
- *	 indexes,tables,inheritance,types,functions and aggregates.
- *	 No more leaks reported by Purify.
- *
- *
- * Modifications - 1/26/98 - pjlobo@euitt.upm.es
- *		 - Added support for password authentication
- *
- * Modifications - 28-Jun-2000 - Philip Warner pjw@rhyme.com.au
- *		 - Used custom IO routines to allow for more
- *		   output formats and simple rearrangement of order.
- *		 - Discouraged operations more appropriate to the 'restore'
- *		   operation. (eg. -c "clear schema" - now always dumps
- *		   commands, but pg_restore can be told not to output them).
- *		 - Added RI warnings to the 'as insert strings' output mode
- *		 - Added a small number of comments
- *		 - Added a -Z option for compression level on compressed formats
- *		 - Restored '-f' in usage output
- *
- *
- * Modifications - 17-Jul-2000 - Philip Warner pjw@rhyme.com.au
- *		 - Support for BLOB output.
- *		 - Sort archive by OID, put some items at end (out of OID order)
- *
- * Modifications - 28-Jul-2000 - pjw@rhyme.com.au (1.45)
- *
- *		Added --create, --no-owner, --superuser, --no-reconnect (pg_dump & pg_restore)
- *		Added code to dump 'Create Schema' statement (pg_dump)
- *		Don't bother to disable/enable triggers if we don't have a superuser (pg_restore)
- *		Cleaned up code for reconnecting to database.
- *		Force a reconnect as superuser before enabling/disabling triggers.
- *
- * Modifications - 31-Jul-2000 - pjw@rhyme.com.au (1.46, 1.47)
- *		Added & Removed --throttle (pg_dump)
- *		Fixed minor bug in language dumping code: expbuffres were not being reset.
- *		Fixed version number initialization in _allocAH (pg_backup_archiver.c)
- *
- * Modifications - 14-Sep-2000 - pjw@rhyme.com.au
- *		Use symbols for tests on relkind (ie. use RELKIND_VIEW, not 'v')
- *		Support for relkind = RELKIND_VIEW.
- *		Fix bug in support for -b option (== --blobs).
- *		Dump views as views (using 'create view').
- *		Remove 'isViewRule' since we check the relkind when getting tables.
- *		Now uses temp table 'pgdump_oid' rather than 'pg_dump_oid' (errors otherwise).
- *
- * Modifications - 02-Oct-2000 - pjw@rhyme.com.au
- *
- *	  - Be more paranoid when getting views: call get_viewdef in separate statement
- *		so we can be more informative in error messages.
- *	  - Support for 'isstrict' procedure attribute.
- *	  - Disable --blobs and --table since (a) it's a pain to get ONLY the blobs for the
- *		table with the currently implementation, and (b) it's not clear how to restore
- *		a partial BLOB backup (given the current OID-based BLOB implementation).
- *
- * Modifications - 04-Jan-2001 - pjw@rhyme.com.au
- *
- *	  - Check ntuples == 1 for various SELECT statements.
- *	  - Fix handling of --tables=* (multiple tables never worked properly, AFAICT)
- *
- * Modifications - 13-Feb-2001 - pjw@rhyme.com.au
- *
- *	  - Fix help output: replace 'f' with 't' and change desc.
- *	  - Add extra arg to formatStringLiteral to specify how to handle LF & TAB.
- *		I opted for encoding them except in procedure bodies.
- *	  - Dump relevant parts of sequences only when doing schemaOnly & dataOnly
- *	  - Prevent double-dumping of sequences when dataOnly.
- *
- * Modifications - 19-Mar-2001 - pjw@rhyme.com.au
- *
- *	  - Remove fmtId calls for all ArchiveEntry name fields. This fixes
- *		quoting problems in trigger enable/disable code for mixed case
- *		table names, and avoids commands like 'pg_restore -t '"TblA"''
- *
- * Modifications - 31-Mar-2001 - pjw@rhyme.com.au
- *
- *	  - Dump dependency information in dumpType. This is necessary
- *		because placeholder types will have an OID less than the
- *		OID of the type functions, but type must be created after
- *		the functions.
- *
- * Modifications - 4-Apr-2001 - pjw@rhyme.com.au
- *
- *	  - Don't dump CHECK constraints with same source and names both
- *		starting with '$'.
- *
- * Modifications - 10-May-2001 - pjw@rhyme.com.au
- *
- *	  - Don't dump COMMENTs in data-only dumps
- *	  - Fix view dumping SQL for V7.0
- *	  - Fix bug when getting view oid with long view names
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.221 2001/08/12 19:02:39 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -200,7 +91,7 @@ static Oid	findLastBuiltinOid_V70(void);
 static void setMaxOid(Archive *fout);
 
 static void AddAcl(char *aclbuf, const char *keyword);
-static char *GetPrivileges(const char *s);
+static char *GetPrivileges(Archive *AH, const char *s);
 
 static int	dumpBlobs(Archive *AH, char *, void *);
 static int	dumpDatabase(Archive *AH);
@@ -254,7 +145,7 @@ help(const char *progname)
 		"  -c, --clean              clean (drop) schema prior to create\n"
 		"  -C, --create             include commands to create database in dump\n"
 		"  -d, --inserts            dump data as INSERT, rather than COPY, commands\n"
-		"  -D, --attribute-inserts  dump data as INSERT commands with column names\n"
+		"  -D, --column-inserts     dump data as INSERT commands with column names\n"
 		"  -f, --file=FILENAME      output file name\n"
 		"  -F, --format {c|t|p}     output file format (custom, tar, plain text)\n"
 		"  -h, --host=HOSTNAME      database server host name\n"
@@ -275,7 +166,7 @@ help(const char *progname)
 		"  -U, --username=NAME      connect as specified database user\n"
 		"  -v, --verbose            verbose mode\n"
 		"  -W, --password           force password prompt (should happen automatically)\n"
-		"  -x, --no-acl             do not dump privileges (grant/revoke)\n"
+		"  -x, --no-privileges      do not dump privileges (grant/revoke)\n"
 		"  -Z, --compress {0-9}     compression level for compressed formats\n"
 		));
 #else
@@ -690,6 +581,30 @@ dumpClasses(const TableInfo *tblinfo, const int numTables, Archive *fout,
 	}
 }
 
+
+
+static int
+parse_version(const char* versionString)
+{
+	int			cnt;
+	int			vmaj, vmin, vrev;
+
+	cnt = sscanf(versionString, "%d.%d.%d", &vmaj, &vmin, &vrev);
+
+	if (cnt < 2)
+	{
+		write_msg(NULL, "unable to parse version string \"%s\"\n", versionString);
+		exit(1);
+	}
+
+	if (cnt == 2)
+		vrev = 0;
+
+	return (100 * vmaj + vmin) * 100 + vrev;
+}
+
+
+
 int
 main(int argc, char **argv)
 {
@@ -727,6 +642,7 @@ main(int argc, char **argv)
 		{"format", required_argument, NULL, 'F'},
 		{"inserts", no_argument, NULL, 'd'},
 		{"attribute-inserts", no_argument, NULL, 'D'},
+		{"column-inserts", no_argument, NULL, 'D'},
 		{"host", required_argument, NULL, 'h'},
 		{"ignore-version", no_argument, NULL, 'i'},
 		{"no-reconnect", no_argument, NULL, 'R'},
@@ -741,6 +657,7 @@ main(int argc, char **argv)
 		{"password", no_argument, NULL, 'W'},
 		{"username", required_argument, NULL, 'U'},
 		{"verbose", no_argument, NULL, 'v'},
+		{"no-privileges", no_argument, NULL, 'x'},
 		{"no-acl", no_argument, NULL, 'x'},
 		{"compress", required_argument, NULL, 'Z'},
 		{"help", no_argument, NULL, '?'},
@@ -1041,10 +958,10 @@ main(int argc, char **argv)
 
 	/*
 	 * Open the database using the Archiver, so it knows about it. Errors
-	 * mean death. Accept 7.0 & 7.1 database versions.
+	 * mean death.
 	 */
-	g_fout->minRemoteVersion = 70000;
-	g_fout->maxRemoteVersion = 70199;
+	g_fout->minRemoteVersion = 70000; /* we can handle back to 7.0 */
+	g_fout->maxRemoteVersion = parse_version(PG_VERSION);
 	g_conn = ConnectDatabase(g_fout, dbname, pghost, pgport, username, force_password, ignore_version);
 
 	/*
@@ -3856,7 +3773,7 @@ AddAcl(char *aclbuf, const char *keyword)
  * comma delimited string of SELECT,INSERT,UPDATE,DELETE,RULE
  */
 static char *
-GetPrivileges(const char *s)
+GetPrivileges(Archive *AH, const char *s)
 {
 	char		aclbuf[100];
 
@@ -3865,18 +3782,28 @@ GetPrivileges(const char *s)
 	if (strchr(s, 'a'))
 		AddAcl(aclbuf, "INSERT");
 
-	if (strchr(s, 'w'))
-		AddAcl(aclbuf, "UPDATE,DELETE");
-
 	if (strchr(s, 'r'))
 		AddAcl(aclbuf, "SELECT");
 
 	if (strchr(s, 'R'))
 		AddAcl(aclbuf, "RULE");
 
-	/* Special-case when they're all there */
-	if (strcmp(aclbuf, "INSERT,UPDATE,DELETE,SELECT,RULE") == 0)
-		return strdup("ALL");
+	if (AH->remoteVersion >= 70200)
+	{
+		if (strchr(s, 'w'))
+			AddAcl(aclbuf, "UPDATE");
+		if (strchr(s, 'd'))
+			AddAcl(aclbuf, "DELETE");
+		if (strchr(s, 'x'))
+			AddAcl(aclbuf, "REFERENCES");
+		if (strchr(s, 't'))
+			AddAcl(aclbuf, "TRIGGER");
+	}
+	else
+	{
+		if (strchr(s, 'w'))
+			AddAcl(aclbuf, "UPDATE,DELETE");
+	}
 
 	return strdup(aclbuf);
 }
@@ -3963,7 +3890,7 @@ dumpACL(Archive *fout, TableInfo tbinfo)
 		 * Parse the privileges (right-hand side).	Skip if there are
 		 * none.
 		 */
-		priv = GetPrivileges(eqpos + 1);
+		priv = GetPrivileges(fout, eqpos + 1);
 		if (*priv)
 		{
 			sprintf(tmp, "GRANT %s on %s to ",
