@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.63 1997/11/07 07:02:07 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.64 1997/11/10 15:22:36 thomas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -456,9 +456,6 @@ alter_clause:  ADD opt_column columnDef
 
 					if (length($3) != 1)
 						elog(WARN,"ALTER TABLE/ADD() allows one column only",NULL);
-#ifdef PARSEDEBUG
-printf( "list has %d elements\n", length($3));
-#endif
 					$$ = lp;
 				}
 			| DROP opt_column ColId
@@ -743,15 +740,9 @@ ConstraintElem:
 ConstraintDef:	CHECK constraint_elem
 				{
 					ConstraintDef *constr = palloc (sizeof(ConstraintDef));
-#ifdef PARSEDEBUG
-printf("in ConstraintDef\n");
-#endif
 					constr->type = CONSTR_CHECK;
 					constr->name = NULL;
 					constr->def = FlattenStringList($2);
-#ifdef PARSEDEBUG
-printf("ConstraintDef: string is %s\n", (char *) constr->def);
-#endif
 					$$ = constr;
 				}
 		| UNIQUE '(' columnList ')'
@@ -768,9 +759,6 @@ constraint_elem:  AexprConst
 				{	$$ = lcons( makeString("NULL"), NIL); }
 			| ColId
 				{
-#ifdef PARSEDEBUG
-printf( "ColId is %s\n", $1);
-#endif
 					$$ = lcons( makeString(fmtId($1)), NIL);
 				}
 			| '-' constraint_elem %prec UMINUS
@@ -1037,21 +1025,12 @@ def_rest:  def_name definition
 				{
 					$$ = makeNode(DefineStmt);
 					$$->defname = $1;
-#ifdef PARSEDEBUG
-printf("def_rest: defname is %s\n", $1);
-#endif
 					$$->definition = $2;
 				}
 		;
 
 def_type:  OPERATOR							{ $$ = OPERATOR; }
-		| Type
-				{
-#ifdef PARSEDEBUG
-printf("def_type: decoding TYPE_P\n");
-#endif
-					$$ = TYPE_P;
-				}
+		| Type								{ $$ = TYPE_P; }
 		| AGGREGATE							{ $$ = AGGREGATE; }
 		;
 
@@ -1071,29 +1050,18 @@ def_list:  def_elem							{ $$ = lcons($1, NIL); }
 
 def_elem:  def_name '=' def_arg
 				{
-#ifdef PARSEDEBUG
-printf("def_elem: decoding %s =\n", $1);
-pprint($3);
-#endif
 					$$ = makeNode(DefElem);
 					$$->defname = $1;
 					$$->arg = (Node *)$3;
 				}
 		| def_name
 				{
-#ifdef PARSEDEBUG
-printf("def_elem: decoding %s\n", $1);
-#endif
 					$$ = makeNode(DefElem);
 					$$->defname = $1;
 					$$->arg = (Node *)NULL;
 				}
 		| DEFAULT '=' def_arg
 				{
-#ifdef PARSEDEBUG
-printf("def_elem: decoding DEFAULT =\n");
-pprint($3);
-#endif
 					$$ = makeNode(DefElem);
 					$$->defname = "default";
 					$$->arg = (Node *)$3;
@@ -2406,14 +2374,14 @@ time_range:  '[' opt_range_start ',' opt_range_end ']'
 					$$ = makeNode(TimeRange);
 					$$->startDate = $2;
 					$$->endDate = $4;
-					elog (WARN, "parser: TimeRange is not supported");
+					elog (WARN, "time travel is no longer available");
 				}
 		| '[' date ']'
 				{
 					$$ = makeNode(TimeRange);
 					$$->startDate = $2;
 					$$->endDate = NULL;
-					elog (WARN, "parser: TimeRange is not supported");
+					elog (WARN, "time travel is no longer available");
 				}
 		;
 
@@ -3057,9 +3025,6 @@ extract_list:  datetime FROM a_expr
 					A_Const *n = makeNode(A_Const);
 					n->val.type = T_String;
 					n->val.val.str = $1;
-#ifdef PARSEDEBUG
-printf( "string is %s\n", $1);
-#endif
 					$$ = lappend(lcons((Node *)n,NIL), $3);
 				}
 		| /* EMPTY */
@@ -3581,6 +3546,7 @@ static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr)
 	return (Node *)a;
 }
 
+
 static Node *makeIndexable(char *opname, Node *lexpr, Node *rexpr)
 {
 	Node *result = NULL;
@@ -3748,7 +3714,7 @@ static Node *makeIndexable(char *opname, Node *lexpr, Node *rexpr)
 	if (result == NULL)
 		result = makeA_Expr(OP, opname, lexpr, rexpr);
 	return result;
-}
+} /* makeIndexable() */
 
 
 /* xlateSqlType()
@@ -3774,6 +3740,7 @@ xlateSqlType(char *name)
 		return name;
 } /* xlateSqlName() */
 
+
 void parser_init(Oid *typev, int nargs)
 {
 	QueryIsRule = FALSE;
@@ -3782,6 +3749,7 @@ void parser_init(Oid *typev, int nargs)
 
 	param_type_init(typev, nargs);
 }
+
 
 /* FlattenStringList()
  * Traverse list of string nodes and convert to a single string.
@@ -3799,17 +3767,11 @@ FlattenStringList(List *list)
 	int nlist, len = 0;
 
 	nlist = length(list);
-#ifdef PARSEDEBUG
-printf( "list has %d elements\n", nlist);
-#endif
 	l = list;
 	while(l != NIL) {
 		v = (Value *)lfirst(l);
 		sp = v->val.str;
 		l = lnext(l);
-#ifdef PARSEDEBUG
-printf( "sp is x%8p; length of %s is %d\n", sp, sp, strlen(sp));
-#endif
 		len += strlen(sp);
 	};
 	len += nlist;
@@ -3822,9 +3784,6 @@ printf( "sp is x%8p; length of %s is %d\n", sp, sp, strlen(sp));
 		v = (Value *)lfirst(l);
 		sp = v->val.str;
 		l = lnext(l);
-#ifdef PARSEDEBUG
-printf( "length of %s is %d\n", sp, strlen(sp));
-#endif
 		strcat(s,sp);
 		if (l != NIL) strcat(s," ");
 	};
@@ -3837,6 +3796,7 @@ printf( "flattened string is \"%s\"\n", s);
 	return(s);
 } /* FlattenStringList() */
 
+
 /* makeConstantList()
  * Convert constant value node into string node.
  */
@@ -3844,39 +3804,25 @@ static List *
 makeConstantList( A_Const *n)
 {
 	char *defval = NULL;
-#ifdef PARSEDEBUG
-printf( "in AexprConst\n");
-#endif
 	if (nodeTag(n) != T_A_Const) {
 		elog(WARN,"Cannot handle non-constant parameter",NULL);
 
 	} else if (n->val.type == T_Float) {
-#ifdef PARSEDEBUG
-printf( "AexprConst float is %f\n", n->val.val.dval);
-#endif
 		defval = (char*) palloc(20+1);
 		sprintf( defval, "%g", n->val.val.dval);
 
 	} else if (n->val.type == T_Integer) {
-#ifdef PARSEDEBUG
-printf( "AexprConst integer is %ld\n", n->val.val.ival);
-#endif
 		defval = (char*) palloc(20+1);
 		sprintf( defval, "%ld", n->val.val.ival);
 
 	} else if (n->val.type == T_String) {
-
-#ifdef PARSEDEBUG
-printf( "AexprConst string is \"%s\"\n", n->val.val.str);
-#endif
-
 		defval = (char*) palloc(strlen( ((A_Const *) n)->val.val.str) + 3);
 		strcpy( defval, "'");
 		strcat( defval, ((A_Const *) n)->val.val.str);
 		strcat( defval, "'");
 
 	} else {
-		elog(WARN,"Internal error: cannot encode node",NULL);
+		elog(WARN,"Internal error in makeConstantList(): cannot encode node",NULL);
 	};
 
 #ifdef PARSEDEBUG
@@ -3885,6 +3831,7 @@ printf( "AexprConst argument is \"%s\"\n", defval);
 
 	return( lcons( makeString(defval), NIL));
 } /* makeConstantList() */
+
 
 /* fmtId()
  * Check input string for non-lowercase/non-numeric characters.
