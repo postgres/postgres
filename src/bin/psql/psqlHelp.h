@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: psqlHelp.h,v 1.39 1998/01/22 23:05:09 momjian Exp $
+ * $Id: psqlHelp.h,v 1.40 1998/02/03 19:27:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -292,9 +292,10 @@ set R_PLANS to {'ON' | 'OFF'}"},
 	"update <class_name> set <attr1>=<expr1>,...<attrN>=<exprN> [from <from_clause>] [where <qual>];"},
 	{"vacuum",
 		"vacuum the database, i.e. cleans out deleted records, updates statistics",
-	"vacuum [verbose] [analyze]\n\
+	"\
+vacuum [verbose] [analyze] [table]\n\
 \tor\n\
-vacuum [verbose] [analyze] table [analyze [(attr1, ... attrN)] ];"},
+vacuum [verbose]  analyze  [table [(attr1, ... attrN)]];"},
 	{NULL, NULL, NULL}			/* important to keep a NULL terminator
 								 * here! */
 };

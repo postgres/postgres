@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.102 1998/02/03 16:04:02 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.103 1998/02/03 19:26:41 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2916,11 +2916,151 @@ row_expr: '(' row_descriptor ')' IN '(' SubSelect ')'
 					n->subselect = $7;
 					$$ = (Node *)n;
 				}
+		| '(' row_descriptor ')' '+' ANY '(' SubSelect ')'
+				{
+					SubLink *n = makeNode(SubLink);
+					n->lefthand = $2;
+					n->oper = lcons("+",NIL);
+					n->useor = false;
+					n->subLinkType = ANY_SUBLINK;
+					n->subselect = $7;
+					$$ = (Node *)n;
+				}
+		| '(' row_descriptor ')' '-' ANY '(' SubSelect ')'
+				{
+					SubLink *n = makeNode(SubLink);
+					n->lefthand = $2;
+					n->oper = lcons("-",NIL);
+					n->useor = false;
+					n->subLinkType = ANY_SUBLINK;
+					n->subselect = $7;
+					$$ = (Node *)n;
+				}
+		| '(' row_descriptor ')' '/' ANY '(' SubSelect ')'
+				{
+					SubLink *n = makeNode(SubLink);
+					n->lefthand = $2;
+					n->oper = lcons("/",NIL);
+					n->useor = false;
+					n->subLinkType = ANY_SUBLINK;
+					n->subselect = $7;
+					$$ = (Node *)n;
+				}
+		| '(' row_descriptor ')' '*' ANY '(' SubSelect ')'
+				{
+					SubLink *n = makeNode(SubLink);
+					n->lefthand = $2;
+					n->oper = lcons("*",NIL);
+					n->useor = false;
+					n->subLinkType = ANY_SUBLINK;
+					n->subselect = $7;
+					$$ = (Node *)n;
+				}
+		| '(' row_descriptor ')' '<' ANY '(' SubSelect ')'
+				{
+					SubLink *n = makeNode(SubLink);
+					n->lefthand = $2;
+					n->oper = lcons("<",NIL);
+					n->useor = false;
+					n->subLinkType = ANY_SUBLINK;
+					n->subselect = $7;
+					$$ = (Node *)n;
+				}
+		| '(' row_descriptor ')' '>' ANY '(' SubSelect ')'
+				{
+					SubLink *n = makeNode(SubLink);
+					n->lefthand = $2;
+					n->oper = lcons(">",NIL);
+					n->useor = false;
+					n->subLinkType = ANY_SUBLINK;
+					n->subselect = $7;
+					$$ = (Node *)n;
+				}
+		| '(' row_descriptor ')' '=' ANY '(' SubSelect ')'
+				{
+					SubLink *n = makeNode(SubLink);
+					n->lefthand = $2;
+					n->oper = lcons("=",NIL);
+					n->useor = false;
+					n->subLinkType = ANY_SUBLINK;
+					n->subselect = $7;
+					$$ = (Node *)n;
+				}
 		| '(' row_descriptor ')' Op ALL '(' SubSelect ')'
 				{
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = $2;
 					n->oper = lcons($4,NIL);
+					n->useor = false;
+					n->subLinkType = ALL_SUBLINK;
+					n->subselect = $7;
+					$$ = (Node *)n;
+				}
+		| '(' row_descriptor ')' '+' ALL '(' SubSelect ')'
+				{
+					SubLink *n = makeNode(SubLink);
+					n->lefthand = $2;
+					n->oper = lcons("+",NIL);
+					n->useor = false;
+					n->subLinkType = ALL_SUBLINK;
+					n->subselect = $7;
+					$$ = (Node *)n;
+				}
+		| '(' row_descriptor ')' '-' ALL '(' SubSelect ')'
+				{
+					SubLink *n = makeNode(SubLink);
+					n->lefthand = $2;
+					n->oper = lcons("-",NIL);
+					n->useor = false;
+					n->subLinkType = ALL_SUBLINK;
+					n->subselect = $7;
+					$$ = (Node *)n;
+				}
+		| '(' row_descriptor ')' '/' ALL '(' SubSelect ')'
+				{
+					SubLink *n = makeNode(SubLink);
+					n->lefthand = $2;
+					n->oper = lcons("/",NIL);
+					n->useor = false;
+					n->subLinkType = ALL_SUBLINK;
+					n->subselect = $7;
+					$$ = (Node *)n;
+				}
+		| '(' row_descriptor ')' '*' ALL '(' SubSelect ')'
+				{
+					SubLink *n = makeNode(SubLink);
+					n->lefthand = $2;
+					n->oper = lcons("*",NIL);
+					n->useor = false;
+					n->subLinkType = ALL_SUBLINK;
+					n->subselect = $7;
+					$$ = (Node *)n;
+				}
+		| '(' row_descriptor ')' '<' ALL '(' SubSelect ')'
+				{
+					SubLink *n = makeNode(SubLink);
+					n->lefthand = $2;
+					n->oper = lcons("<",NIL);
+					n->useor = false;
+					n->subLinkType = ALL_SUBLINK;
+					n->subselect = $7;
+					$$ = (Node *)n;
+				}
+		| '(' row_descriptor ')' '>' ALL '(' SubSelect ')'
+				{
+					SubLink *n = makeNode(SubLink);
+					n->lefthand = $2;
+					n->oper = lcons(">",NIL);
+					n->useor = false;
+					n->subLinkType = ALL_SUBLINK;
+					n->subselect = $7;
+					$$ = (Node *)n;
+				}
+		| '(' row_descriptor ')' '=' ALL '(' SubSelect ')'
+				{
+					SubLink *n = makeNode(SubLink);
+					n->lefthand = $2;
+					n->oper = lcons("=",NIL);
 					n->useor = false;
 					n->subLinkType = ALL_SUBLINK;
 					n->subselect = $7;
@@ -2939,9 +3079,107 @@ row_expr: '(' row_descriptor ')' IN '(' SubSelect ')'
 					n->subselect = $6;
 					$$ = (Node *)n;
 				}
+		| '(' row_descriptor ')' '+' '(' SubSelect ')'
+				{
+					SubLink *n = makeNode(SubLink);
+					n->lefthand = $2;
+					n->oper = lcons("+", NIL);
+					n->useor = false;
+					n->subLinkType = EXPR_SUBLINK;
+					n->subselect = $6;
+					$$ = (Node *)n;
+				}
+		| '(' row_descriptor ')' '-' '(' SubSelect ')'
+				{
+					SubLink *n = makeNode(SubLink);
+					n->lefthand = $2;
+					n->oper = lcons("-", NIL);
+					n->useor = false;
+					n->subLinkType = EXPR_SUBLINK;
+					n->subselect = $6;
+					$$ = (Node *)n;
+				}
+		| '(' row_descriptor ')' '/' '(' SubSelect ')'
+				{
+					SubLink *n = makeNode(SubLink);
+					n->lefthand = $2;
+					n->oper = lcons("/", NIL);
+					n->useor = false;
+					n->subLinkType = EXPR_SUBLINK;
+					n->subselect = $6;
+					$$ = (Node *)n;
+				}
+		| '(' row_descriptor ')' '*' '(' SubSelect ')'
+				{
+					SubLink *n = makeNode(SubLink);
+					n->lefthand = $2;
+					n->oper = lcons("*", NIL);
+					n->useor = false;
+					n->subLinkType = EXPR_SUBLINK;
+					n->subselect = $6;
+					$$ = (Node *)n;
+				}
+		| '(' row_descriptor ')' '<' '(' SubSelect ')'
+				{
+					SubLink *n = makeNode(SubLink);
+					n->lefthand = $2;
+					n->oper = lcons("<", NIL);
+					n->useor = false;
+					n->subLinkType = EXPR_SUBLINK;
+					n->subselect = $6;
+					$$ = (Node *)n;
+				}
+		| '(' row_descriptor ')' '>' '(' SubSelect ')'
+				{
+					SubLink *n = makeNode(SubLink);
+					n->lefthand = $2;
+					n->oper = lcons(">", NIL);
+					n->useor = false;
+					n->subLinkType = EXPR_SUBLINK;
+					n->subselect = $6;
+					$$ = (Node *)n;
+				}
+		| '(' row_descriptor ')' '=' '(' SubSelect ')'
+				{
+					SubLink *n = makeNode(SubLink);
+					n->lefthand = $2;
+					n->oper = lcons("=", NIL);
+					n->useor = false;
+					n->subLinkType = EXPR_SUBLINK;
+					n->subselect = $6;
+					$$ = (Node *)n;
+				}
 		| '(' row_descriptor ')' Op '(' row_descriptor ')'
 				{
 					$$ = makeRowExpr($4, $2, $6);
+				}
+		| '(' row_descriptor ')' '+' '(' row_descriptor ')'
+				{
+					$$ = makeRowExpr("+", $2, $6);
+				}
+		| '(' row_descriptor ')' '-' '(' row_descriptor ')'
+				{
+					$$ = makeRowExpr("-", $2, $6);
+				}
+		| '(' row_descriptor ')' '/' '(' row_descriptor ')'
+				{
+					$$ = makeRowExpr("/", $2, $6);
+				}
+		| '(' row_descriptor ')' '*' '(' row_descriptor ')'
+				{
+					$$ = makeRowExpr("*", $2, $6);
+				}
+		| '(' row_descriptor ')' '<' '(' row_descriptor ')'
+				{
+					$$ = makeRowExpr("<", $2, $6);
+				}
+		| '(' row_descriptor ')' '>' '(' row_descriptor ')'
+				{
+					$$ = makeRowExpr(">", $2, $6);
+				}
+		| '(' row_descriptor ')' '=' '(' row_descriptor ')'
+				{
+					$$ = makeRowExpr("=", $2, $6);
 				}
 		;
 
@@ -3320,6 +3558,76 @@ a_expr:  attr opt_indirection
 					n->subselect = $5;
 					$$ = (Node *)n;
 				}
+		| a_expr '+' ANY '(' SubSelect ')'
+				{
+					SubLink *n = makeNode(SubLink);
+					n->lefthand = lcons($1,NIL);
+					n->oper = lcons("+",NIL);
+					n->useor = false;
+					n->subLinkType = ANY_SUBLINK;
+					n->subselect = $5;
+					$$ = (Node *)n;
+				}
+		| a_expr '-' ANY '(' SubSelect ')'
+				{
+					SubLink *n = makeNode(SubLink);
+					n->lefthand = lcons($1,NIL);
+					n->oper = lcons("-",NIL);
+					n->useor = false;
+					n->subLinkType = ANY_SUBLINK;
+					n->subselect = $5;
+					$$ = (Node *)n;
+				}
+		| a_expr '/' ANY '(' SubSelect ')'
+				{
+					SubLink *n = makeNode(SubLink);
+					n->lefthand = lcons($1,NIL);
+					n->oper = lcons("/",NIL);
+					n->useor = false;
+					n->subLinkType = ANY_SUBLINK;
+					n->subselect = $5;
+					$$ = (Node *)n;
+				}
+		| a_expr '*' ANY '(' SubSelect ')'
+				{
+					SubLink *n = makeNode(SubLink);
+					n->lefthand = lcons($1,NIL);
+					n->oper = lcons("*",NIL);
+					n->useor = false;
+					n->subLinkType = ANY_SUBLINK;
+					n->subselect = $5;
+					$$ = (Node *)n;
+				}
+		| a_expr '<' ANY '(' SubSelect ')'
+				{
+					SubLink *n = makeNode(SubLink);
+					n->lefthand = lcons($1,NIL);
+					n->oper = lcons("<",NIL);
+					n->useor = false;
+					n->subLinkType = ANY_SUBLINK;
+					n->subselect = $5;
+					$$ = (Node *)n;
+				}
+		| a_expr '>' ANY '(' SubSelect ')'
+				{
+					SubLink *n = makeNode(SubLink);
+					n->lefthand = lcons($1,NIL);
+					n->oper = lcons(">",NIL);
+					n->useor = false;
+					n->subLinkType = ANY_SUBLINK;
+					n->subselect = $5;
+					$$ = (Node *)n;
+				}
+		| a_expr '=' ANY '(' SubSelect ')'
+				{
+					SubLink *n = makeNode(SubLink);
+					n->lefthand = lcons($1,NIL);
+					n->oper = lcons("=",NIL);
+					n->useor = false;
+					n->subLinkType = ANY_SUBLINK;
+					n->subselect = $5;
+					$$ = (Node *)n;
+				}
 		| a_expr Op ALL '(' SubSelect ')'
 				{
 					SubLink *n = makeNode(SubLink);
@@ -3330,11 +3638,151 @@ a_expr:  attr opt_indirection
 					n->subselect = $5;
 					$$ = (Node *)n;
 				}
+		| a_expr '+' ALL '(' SubSelect ')'
+				{
+					SubLink *n = makeNode(SubLink);
+					n->lefthand = lcons($1, NULL);
+					n->oper = lcons("+",NIL);
+					n->useor = false;
+					n->subLinkType = ALL_SUBLINK;
+					n->subselect = $5;
+					$$ = (Node *)n;
+				}
+		| a_expr '-' ALL '(' SubSelect ')'
+				{
+					SubLink *n = makeNode(SubLink);
+					n->lefthand = lcons($1, NULL);
+					n->oper = lcons("-",NIL);
+					n->useor = false;
+					n->subLinkType = ALL_SUBLINK;
+					n->subselect = $5;
+					$$ = (Node *)n;
+				}
+		| a_expr '/' ALL '(' SubSelect ')'
+				{
+					SubLink *n = makeNode(SubLink);
+					n->lefthand = lcons($1, NULL);
+					n->oper = lcons("/",NIL);
+					n->useor = false;
+					n->subLinkType = ALL_SUBLINK;
+					n->subselect = $5;
+					$$ = (Node *)n;
+				}
+		| a_expr '*' ALL '(' SubSelect ')'
+				{
+					SubLink *n = makeNode(SubLink);
+					n->lefthand = lcons($1, NULL);
+					n->oper = lcons("*",NIL);
+					n->useor = false;
+					n->subLinkType = ALL_SUBLINK;
+					n->subselect = $5;
+					$$ = (Node *)n;
+				}
+		| a_expr '<' ALL '(' SubSelect ')'
+				{
+					SubLink *n = makeNode(SubLink);
+					n->lefthand = lcons($1, NULL);
+					n->oper = lcons("<",NIL);
+					n->useor = false;
+					n->subLinkType = ALL_SUBLINK;
+					n->subselect = $5;
+					$$ = (Node *)n;
+				}
+		| a_expr '>' ALL '(' SubSelect ')'
+				{
+					SubLink *n = makeNode(SubLink);
+					n->lefthand = lcons($1, NULL);
+					n->oper = lcons(">",NIL);
+					n->useor = false;
+					n->subLinkType = ALL_SUBLINK;
+					n->subselect = $5;
+					$$ = (Node *)n;
+				}
+		| a_expr '=' ALL '(' SubSelect ')'
+				{
+					SubLink *n = makeNode(SubLink);
+					n->lefthand = lcons($1, NULL);
+					n->oper = lcons("=",NIL);
+					n->useor = false;
+					n->subLinkType = ALL_SUBLINK;
+					n->subselect = $5;
+					$$ = (Node *)n;
+				}
 		| a_expr Op '(' SubSelect ')'
 				{
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = lcons($1, NULL);
 					n->oper = lcons($2,NIL);
+					n->useor = false;
+					n->subLinkType = ALL_SUBLINK;
+					n->subselect = $4;
+					$$ = (Node *)n;
+				}
+		| a_expr '+' '(' SubSelect ')'
+				{
+					SubLink *n = makeNode(SubLink);
+					n->lefthand = lcons($1, NULL);
+					n->oper = lcons("+",NIL);
+					n->useor = false;
+					n->subLinkType = ALL_SUBLINK;
+					n->subselect = $4;
+					$$ = (Node *)n;
+				}
+		| a_expr '-' '(' SubSelect ')'
+				{
+					SubLink *n = makeNode(SubLink);
+					n->lefthand = lcons($1, NULL);
+					n->oper = lcons("-",NIL);
+					n->useor = false;
+					n->subLinkType = ALL_SUBLINK;
+					n->subselect = $4;
+					$$ = (Node *)n;
+				}
+		| a_expr '/' '(' SubSelect ')'
+				{
+					SubLink *n = makeNode(SubLink);
+					n->lefthand = lcons($1, NULL);
+					n->oper = lcons("/",NIL);
+					n->useor = false;
+					n->subLinkType = ALL_SUBLINK;
+					n->subselect = $4;
+					$$ = (Node *)n;
+				}
+		| a_expr '*' '(' SubSelect ')'
+				{
+					SubLink *n = makeNode(SubLink);
+					n->lefthand = lcons($1, NULL);
+					n->oper = lcons("*",NIL);
+					n->useor = false;
+					n->subLinkType = ALL_SUBLINK;
+					n->subselect = $4;
+					$$ = (Node *)n;
+				}
+		| a_expr '<' '(' SubSelect ')'
+				{
+					SubLink *n = makeNode(SubLink);
+					n->lefthand = lcons($1, NULL);
+					n->oper = lcons("<",NIL);
+					n->useor = false;
+					n->subLinkType = ALL_SUBLINK;
+					n->subselect = $4;
+					$$ = (Node *)n;
+				}
+		| a_expr '>' '(' SubSelect ')'
+				{
+					SubLink *n = makeNode(SubLink);
+					n->lefthand = lcons($1, NULL);
+					n->oper = lcons(">",NIL);
+					n->useor = false;
+					n->subLinkType = ALL_SUBLINK;
+					n->subselect = $4;
+					$$ = (Node *)n;
+				}
+		| a_expr '=' '(' SubSelect ')'
+				{
+					SubLink *n = makeNode(SubLink);
+					n->lefthand = lcons($1, NULL);
+					n->oper = lcons("=",NIL);
 					n->useor = false;
 					n->subLinkType = ALL_SUBLINK;
 					n->subselect = $4;

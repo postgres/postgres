@@ -1,12 +1,13 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/vacuum.l,v 1.7 1998/01/11 22:18:01 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/vacuum.l,v 1.8 1998/02/03 19:27:30 momjian Exp $
 .TH VACUUM SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
 vacuum - vacuum a database
 .SH SYNOPSIS
 .nf
-\fBvacuum [verbose] [analyze] [\fPtable [(column,...)]\fB]\fP
+\fBvacuum [verbose] [analyze] [\fPtable\fB]\fP
+\fBvacuum [verbose]  analyze  [\fPtable [(column,...)]\fB]\fP
 .fi
 .SH DESCRIPTION
 .BR Vacuum
