@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.140 2000/04/27 02:59:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.141 2000/05/23 22:16:27 momjian Exp $
  *
  * NOTES
  *
@@ -381,7 +381,7 @@ PostmasterMain(int argc, char *argv[])
 	*original_extraoptions = '\0';
 
 	/*
-	 * We need three params so we can display status.  If we don't get
+	 * We need four params so we can display status.  If we don't get
 	 * them from the user, let's make them ourselves.
 	 */
 	if (argc < 5)
@@ -405,7 +405,7 @@ PostmasterMain(int argc, char *argv[])
 
 		execv(new_argv[0], new_argv);
 
-		/* How did we get here, error! */
+		/* How did we get here?  Error! */
 		perror(new_argv[0]);
 		fprintf(stderr, "PostmasterMain execv failed on %s\n", argv[0]);
 		exit(1);
