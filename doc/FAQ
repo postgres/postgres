@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Mon Jan 31 17:58:50 EST 2005
+   Last updated: Mon Jan 31 19:18:44 EST 2005
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -425,23 +425,10 @@
    
     3.5) Why do I get "Sorry, too many clients" when trying to connect?
     
-   You need to increase postmaster's limit on how many concurrent backend
-   processes it can start.
-   
-   The default limit is 32 processes. You can increase it by restarting
-   postmaster with a suitable -N value or modifying postgresql.conf.
-   
-   Note that if you make -N larger than 32, you must also increase -B
-   beyond its default of 64; -B must be at least twice -N, and probably
-   should be more than that for best performance. For large numbers of
-   backend processes, you are also likely to find that you need to
-   increase various Unix kernel configuration parameters. Things to check
-   include the maximum size of shared memory blocks, SHMMAX; the maximum
-   number of semaphores, SEMMNS and SEMMNI; the maximum number of
-   processes, NPROC; the maximum number of processes per user, MAXUPRC;
-   and the maximum number of open files, NFILE and NINODE. The reason
-   that PostgreSQL has a limit on the number of allowed backend processes
-   is so your system won't run out of resources.
+   You have reached the default limit is 100 database sessions. You need
+   to increase the postmaster's limit on how many concurrent backend
+   processes it can start by changing the max_connections value in
+   postgresql.conf and restarting the postmaster.
    
     3.6) What is in the pgsql_tmp directory?
     
