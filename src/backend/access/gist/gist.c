@@ -11,23 +11,24 @@
  *-------------------------------------------------------------------------
  */
 
-#include "postgres.h"
+#include <postgres.h>
 
-#include "fmgr.h"
-#include "access/genam.h"
-#include "access/gist.h"
-#include "access/gistscan.h"
-#include "access/heapam.h"
-#include "catalog/index.h"
-#include "executor/executor.h"
-#include "storage/bufmgr.h"
-#include "storage/bufpage.h"
-#include "storage/lmgr.h"
-#include "utils/palloc.h"
-#include "utils/syscache.h"
+#include <fmgr.h>
+#include <access/genam.h>
+#include <access/gist.h>
+#include <access/gistscan.h>
+#include <access/heapam.h>
+#include <catalog/index.h>
+#include <executor/executor.h>
+#include <storage/bufmgr.h>
+#include <storage/bufpage.h>
+#include <storage/lmgr.h>
+#include <utils/syscache.h>
 
 #ifndef HAVE_MEMMOVE
-# include "regex/utils.h"
+# include <regex/utils.h>
+#else
+# include <string.h>
 #endif
 
 /* non-export function prototypes */

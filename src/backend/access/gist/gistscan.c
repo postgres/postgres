@@ -10,31 +10,20 @@
  *-------------------------------------------------------------------------
  */
 
-#include <stdio.h>
-#include <time.h>
+#include <postgres.h>
 
-#include "postgres.h"
-
-#include "access/relscan.h"
-#include "access/gist.h"
-#include "access/genam.h"
-#include "storage/lmgr.h" 
+#include <access/gist.h>
+#include <access/genam.h>
+#include <access/rtree.h>
+#include <storage/bufmgr.h>
+#include <access/giststrat.h>
+#include <storage/lmgr.h> 
 
 #ifndef HAVE_MEMMOVE
-# include "regex/utils.h"
+# include <regex/utils.h>
 #else
 # include <string.h>
 #endif
-
-#include "utils/palloc.h"
-
-#include "storage/block.h"
-#include "storage/off.h"  
-#include "access/rtree.h"
-
-#include "storage/bufmgr.h"
-
-#include "access/giststrat.h"
 
 /* routines defined and used here */
 static void gistregscan(IndexScanDesc s);
