@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/mcxt.c,v 1.30 2002/06/20 20:29:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/mcxt.c,v 1.31 2002/08/10 20:29:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,6 @@
 #include "postgres.h"
 
 #include "nodes/memnodes.h"
-#include "utils/excid.h"
 #include "utils/memutils.h"
 
 

@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1995, Regents of the University of California
  *
- * $Id: postgres.h,v 1.58 2002/06/20 20:29:42 momjian Exp $
+ * $Id: postgres.h,v 1.59 2002/08/10 20:29:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -470,17 +470,6 @@ extern Datum Float8GetDatum(float8 X);
  * ----------------------------------------------------------------
  */
 
-typedef char *ExcMessage;
-
-typedef struct Exception
-{
-	ExcMessage	message;
-} Exception;
-
-extern DLLIMPORT Exception FailedAssertion;
-extern DLLIMPORT Exception BadArg;
-extern DLLIMPORT Exception BadState;
-
 extern DLLIMPORT bool assert_enabled;
 
 /*
@@ -495,25 +484,24 @@ extern DLLIMPORT bool assert_enabled;
  *		Generates an exception if the given condition is true.
  *
  */
-#define Trap(condition, exception) \
+#define Trap(condition, errorType) \
 		do { \
 			if ((assert_enabled) && (condition)) \
-				ExceptionalCondition(CppAsString(condition), &(exception), \
-						(char*)NULL, __FILE__, __LINE__); \
+				ExceptionalCondition(CppAsString(condition), (errorType), \
+									 __FILE__, __LINE__); \
 		} while (0)
 
 /*
  *	TrapMacro is the same as Trap but it's intended for use in macros:
  *
- *		#define foo(x) (AssertM(x != 0) && bar(x))
+ *		#define foo(x) (AssertMacro(x != 0) && bar(x))
  *
  *	Isn't CPP fun?
  */
-#define TrapMacro(condition, exception) \
+#define TrapMacro(condition, errorType) \
 	((bool) ((! assert_enabled) || ! (condition) || \
-			 (ExceptionalCondition(CppAsString(condition), \
-								  &(exception), \
-								  (char*) NULL, __FILE__, __LINE__))))
+			 (ExceptionalCondition(CppAsString(condition), (errorType), \
+								   __FILE__, __LINE__))))
 
 #ifndef USE_ASSERT_CHECKING
 #define Assert(condition)
@@ -523,72 +511,20 @@ extern DLLIMPORT bool assert_enabled;
 #define assert_enabled 0
 #else
 #define Assert(condition) \
-		Trap(!(condition), FailedAssertion)
+		Trap(!(condition), "FailedAssertion")
 
 #define AssertMacro(condition) \
-		((void) TrapMacro(!(condition), FailedAssertion))
+		((void) TrapMacro(!(condition), "FailedAssertion"))
 
 #define AssertArg(condition) \
-		Trap(!(condition), BadArg)
+		Trap(!(condition), "BadArgument")
 
 #define AssertState(condition) \
-		Trap(!(condition), BadState)
+		Trap(!(condition), "BadState")
 #endif   /* USE_ASSERT_CHECKING */
 
-/*
- * LogTrap
- *		Generates an exception with a message if the given condition is true.
- *
- */
-#define LogTrap(condition, exception, printArgs) \
-		do { \
-			if ((assert_enabled) && (condition)) \
-				ExceptionalCondition(CppAsString(condition), &(exception), \
-						vararg_format printArgs, __FILE__, __LINE__); \
-		} while (0)
-
-/*
- *	LogTrapMacro is the same as LogTrap but it's intended for use in macros:
- *
- *		#define foo(x) (LogAssertMacro(x != 0, "yow!") && bar(x))
- */
-#define LogTrapMacro(condition, exception, printArgs) \
-	((bool) ((! assert_enabled) || ! (condition) || \
-			 (ExceptionalCondition(CppAsString(condition), \
-								   &(exception), \
-								   vararg_format printArgs, __FILE__, __LINE__))))
-
-extern int ExceptionalCondition(char *conditionName,
-					 Exception *exceptionP, char *details,
+extern int ExceptionalCondition(char *conditionName, char *errorType,
 					 char *fileName, int lineNumber);
-
-extern char *
-vararg_format(const char *fmt,...)
-/* This lets gcc check the format string for consistency. */
-__attribute__((format(printf, 1, 2)));
-
-#ifndef USE_ASSERT_CHECKING
-#define LogAssert(condition, printArgs)
-#define LogAssertMacro(condition, printArgs) true
-#define LogAssertArg(condition, printArgs)
-#define LogAssertState(condition, printArgs)
-#else
-#define LogAssert(condition, printArgs) \
-		LogTrap(!(condition), FailedAssertion, printArgs)
-
-#define LogAssertMacro(condition, printArgs) \
-		LogTrapMacro(!(condition), FailedAssertion, printArgs)
-
-#define LogAssertArg(condition, printArgs) \
-		LogTrap(!(condition), BadArg, printArgs)
-
-#define LogAssertState(condition, printArgs) \
-		LogTrap(!(condition), BadState, printArgs)
-
-#ifdef ASSERT_CHECKING_TEST
-extern int	assertTest(int val);
-#endif
-#endif   /* USE_ASSERT_CHECKING */
 
 /* ----------------------------------------------------------------
  *				Section 4: genbki macros used by catalog/pg_xxx.h files

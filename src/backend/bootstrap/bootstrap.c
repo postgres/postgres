@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.136 2002/08/04 06:26:38 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.137 2002/08/10 20:29:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,6 @@
 #include "storage/proc.h"
 #include "tcop/tcopprot.h"
 #include "utils/builtins.h"
-#include "utils/exc.h"
 #include "utils/fmgroids.h"
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
@@ -238,7 +237,6 @@ BootstrapMain(int argc, char *argv[])
 	 */
 	if (!IsUnderPostmaster)
 	{
-		EnableExceptionHandling(true);
 		MemoryContextInit();
 	}
 

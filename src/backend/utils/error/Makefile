@@ -4,7 +4,7 @@
 #    Makefile for utils/error
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/error/Makefile,v 1.9 2000/08/31 16:10:48 petere Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/error/Makefile,v 1.10 2002/08/10 20:29:18 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -12,7 +12,7 @@ subdir = src/backend/utils/error
 top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
 
-OBJS = assert.o elog.o exc.o excabort.o excid.o format.o
+OBJS = assert.o elog.o
 
 all: SUBSYS.o
 

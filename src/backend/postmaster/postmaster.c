@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.282 2002/08/04 06:26:38 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.283 2002/08/10 20:29:18 momjian Exp $
  *
  * NOTES
  *
@@ -102,7 +102,6 @@
 #include "storage/proc.h"
 #include "access/xlog.h"
 #include "tcop/tcopprot.h"
-#include "utils/exc.h"
 #include "utils/guc.h"
 #include "utils/memutils.h"
 #include "utils/ps_status.h"
@@ -380,9 +379,8 @@ PostmasterMain(int argc, char *argv[])
 	MyProcPid = getpid();
 
 	/*
-	 * Fire up essential subsystems: error and memory management
+	 * Fire up essential subsystems: memory management
 	 */
-	EnableExceptionHandling(true);
 	MemoryContextInit();
 
 	/*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.280 2002/08/06 05:24:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.281 2002/08/10 20:29:18 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -54,7 +54,6 @@
 #include "tcop/pquery.h"
 #include "tcop/tcopprot.h"
 #include "tcop/utility.h"
-#include "utils/exc.h"
 #include "utils/guc.h"
 #include "utils/memutils.h"
 #include "utils/ps_status.h"
@@ -1148,7 +1147,6 @@ PostgresMain(int argc, char *argv[], const char *username)
 	 */
 	if (!IsUnderPostmaster)
 	{
-		EnableExceptionHandling(true);
 		MemoryContextInit();
 	}
 
@@ -1676,7 +1674,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.280 $ $Date: 2002/08/06 05:24:04 $\n");
+		puts("$Revision: 1.281 $ $Date: 2002/08/10 20:29:18 $\n");
 	}
 
 	/*
@@ -2073,35 +2071,6 @@ ShowUsage(const char *title)
 
 	pfree(str.data);
 }
-
-#ifdef NOT_USED
-static int
-assertEnable(int val)
-{
-	assert_enabled = val;
-	return val;
-}
-
-#ifdef ASSERT_CHECKING_TEST
-int
-assertTest(int val)
-{
-	Assert(val == 0);
-
-	if (assert_enabled)
-	{
-		/* val != 0 should be trapped by previous Assert */
-		elog(DEBUG3, "Assert test successful (val = %d)", val);
-	}
-	else
-		elog(DEBUG3, "Assert checking is disabled (val = %d)", val);
-
-	return val;
-}
-#endif
-
-#endif
-
 
 /* ----------------------------------------------------------------
  *		CreateCommandTag
