@@ -1,6 +1,7 @@
 
 # RANLIB is not used on IRIX 5
 RANLIB= touch
+MK_NO_LORDER= true
 
 %.so: %.o
 	$(LD) -G -Bdynamic -shared -o $@ $< 
