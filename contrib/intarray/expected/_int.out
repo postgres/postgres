@@ -3,10 +3,10 @@
 -- does not depend on contents of _int.sql.
 --
 \set ECHO none
-psql:_int.sql:13: NOTICE:  type query_int is not yet defined
+psql:_int.sql:13: NOTICE:  type "query_int" is not yet defined
 DETAIL:  Creating a shell type definition.
 psql:_int.sql:18: NOTICE:  argument type query_int is only a shell
-psql:_int.sql:367: NOTICE:  type intbig_gkey is not yet defined
+psql:_int.sql:367: NOTICE:  type "intbig_gkey" is not yet defined
 DETAIL:  Creating a shell type definition.
 psql:_int.sql:372: NOTICE:  argument type intbig_gkey is only a shell
 SELECT intset(1234);

@@ -7,13 +7,13 @@ psql:tsearch2.sql:13: NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit i
 psql:tsearch2.sql:145: NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pg_ts_parser_pkey" for table "pg_ts_parser"
 psql:tsearch2.sql:244: NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pg_ts_cfg_pkey" for table "pg_ts_cfg"
 psql:tsearch2.sql:251: NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pg_ts_cfgmap_pkey" for table "pg_ts_cfgmap"
-psql:tsearch2.sql:339: NOTICE:  type tsvector is not yet defined
+psql:tsearch2.sql:339: NOTICE:  type "tsvector" is not yet defined
 DETAIL:  Creating a shell type definition.
 psql:tsearch2.sql:344: NOTICE:  argument type tsvector is only a shell
-psql:tsearch2.sql:398: NOTICE:  type tsquery is not yet defined
+psql:tsearch2.sql:398: NOTICE:  type "tsquery" is not yet defined
 DETAIL:  Creating a shell type definition.
 psql:tsearch2.sql:403: NOTICE:  argument type tsquery is only a shell
-psql:tsearch2.sql:545: NOTICE:  type gtsvector is not yet defined
+psql:tsearch2.sql:545: NOTICE:  type "gtsvector" is not yet defined
 DETAIL:  Creating a shell type definition.
 psql:tsearch2.sql:550: NOTICE:  argument type gtsvector is only a shell
 --tsvector

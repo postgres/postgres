@@ -6,7 +6,7 @@
 -- does not depend on contents of cube.sql.
 --
 \set ECHO none
-psql:cube.sql:10: NOTICE:  type cube is not yet defined
+psql:cube.sql:10: NOTICE:  type "cube" is not yet defined
 DETAIL:  Creating a shell type definition.
 psql:cube.sql:15: NOTICE:  argument type cube is only a shell
 --

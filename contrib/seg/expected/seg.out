@@ -6,7 +6,7 @@
 -- does not depend on contents of seg.sql.
 --
 \set ECHO none
-psql:seg.sql:10: NOTICE:  type seg is not yet defined
+psql:seg.sql:10: NOTICE:  type "seg" is not yet defined
 DETAIL:  Creating a shell type definition.
 psql:seg.sql:15: NOTICE:  argument type seg is only a shell
 --

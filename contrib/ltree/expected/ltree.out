@@ -1,14 +1,14 @@
 \set ECHO none
-psql:ltree.sql:7: NOTICE:  type ltree is not yet defined
+psql:ltree.sql:7: NOTICE:  type "ltree" is not yet defined
 DETAIL:  Creating a shell type definition.
 psql:ltree.sql:12: NOTICE:  argument type ltree is only a shell
-psql:ltree.sql:299: NOTICE:  type lquery is not yet defined
+psql:ltree.sql:299: NOTICE:  type "lquery" is not yet defined
 DETAIL:  Creating a shell type definition.
 psql:ltree.sql:304: NOTICE:  argument type lquery is only a shell
-psql:ltree.sql:410: NOTICE:  type ltxtquery is not yet defined
+psql:ltree.sql:410: NOTICE:  type "ltxtquery" is not yet defined
 DETAIL:  Creating a shell type definition.
 psql:ltree.sql:415: NOTICE:  argument type ltxtquery is only a shell
-psql:ltree.sql:477: NOTICE:  type ltree_gist is not yet defined
+psql:ltree.sql:477: NOTICE:  type "ltree_gist" is not yet defined
 DETAIL:  Creating a shell type definition.
 psql:ltree.sql:482: NOTICE:  argument type ltree_gist is only a shell
 SELECT ''::ltree;
