@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	$Header: /cvsroot/pgsql/src/backend/utils/adt/oracle_compat.c,v 1.40 2002/08/22 04:55:05 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/oracle_compat.c,v 1.41 2002/08/22 05:05:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1008,8 +1008,14 @@ repeat(PG_FUNCTION_ARGS)
 	tlen = (VARHDRSZ + (count * slen));
 
 	/* Check for integer overflow */
-	if (slen != 0 && count != 0 && tlen / slen != count)
-		elog(ERROR, "Requested buffer is too large.");
+	if (slen != 0 && count != 0)
+	{
+		int check = count * slen;
+		int check2 = check + VARHDRSZ;
+
+		if ((check / slen) != count || check2 <= check)
+			elog(ERROR, "Requested buffer is too large.");
+	}
 
 	result = (text *) palloc(tlen);
 
