@@ -1,5 +1,6 @@
 /* Copyright comment! */
 %{
+#include "config.h"
 #include <sys/types.h>
 #include <limits.h>
 #if defined(HAVE_STRING_H)
