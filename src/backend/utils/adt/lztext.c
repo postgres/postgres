@@ -1,7 +1,7 @@
 /* ----------
  * lztext.c -
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/lztext.c,v 1.8 2000/07/03 23:09:52 wieck Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/lztext.c,v 1.9 2000/07/05 10:09:53 wieck Exp $
  *
  *	Text type with internal LZ compressed representation. Uses the
  *	standard PostgreSQL compression method.
@@ -118,7 +118,7 @@ lztextlen(lztext *lz)
 #ifdef MULTIBYTE
 	len = 0;
 	s1 = s2 = (unsigned char *) lztextout(lz);
-	l = PGLZ_RAW_SIZE(lz);
+	l = strlen(s2);
 	while (l > 0)
 	{
 		wl = pg_mblen(s1);
