@@ -4992,9 +4992,10 @@ ECPGRelease: TransactionStmt SQL_RELEASE
 		if (strncmp($1, "begin", 5) == 0)
                         yyerror("RELEASE does not make sense when beginning a transaction");
 
-		fprintf(yyout, "ECPGtrans(__LINE__, %s, \"%s\");", connection, $1);
+		fprintf(yyout, "ECPGtrans(__LINE__, %s, \"%s\");",
+				connection ? connection : "NULL", $1);
 		whenever_action(0);
-		fprintf(yyout, "ECPGdisconnect(\"\");"); 
+		fprintf(yyout, "ECPGdisconnect(__LINE__, \"\");"); 
 		whenever_action(0);
 		free($1);
 	}
