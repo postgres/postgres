@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.129 2001/01/14 05:08:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.130 2001/01/19 06:54:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1161,7 +1161,6 @@ CopyAttributeOut(FILE *fp, char *server_string, char *delim)
 	char	   *string_start;
 	int			mblen;
 	int			i;
-
 #endif
 
 #ifdef MULTIBYTE
@@ -1174,6 +1173,7 @@ CopyAttributeOut(FILE *fp, char *server_string, char *delim)
 	else
 	{
 		string = server_string;
+		string_start = NULL;	/* unused, but keep compiler quiet */
 	}
 #else
 	string = server_string;
