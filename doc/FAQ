@@ -39,24 +39,22 @@
    
                           Administrative Questions
                                       
-   3.1) Why does initdb fail?
-   3.2) How do I install PostgreSQL somewhere other than
+   3.1) How do I install PostgreSQL somewhere other than
    /usr/local/pgsql?
-   3.3) When I start the postmaster, I get a Bad System Call or core
+   3.2) When I start the postmaster, I get a Bad System Call or core
    dumped message. Why?
-   3.4) When I try to start the postmaster, I get IpcMemoryCreate errors.
+   3.3) When I try to start the postmaster, I get IpcMemoryCreate errors.
    Why?
-   3.5) When I try to start the postmaster, I get IpcSemaphoreCreate
+   3.4) When I try to start the postmaster, I get IpcSemaphoreCreate
    errors. Why?
-   3.6) How do I prevent other hosts from accessing my PostgreSQL
+   3.5) How do I prevent other hosts from accessing my PostgreSQL
    database?
-   3.7) Why can't I connect to my database from another machine?
-   3.8) Why can't I access the database as the root user?
-   3.9) All my servers crash under concurrent table access. Why?
-   3.10) How do I tune the database engine for better performance?
-   3.11) What debugging features are available?
-   3.12) I get "Sorry, too many clients" when trying to connect. Why?
-   3.13) What are the pg_sorttempNNN.NN files in my database directory?
+   3.6) Why can't I connect to my database from another machine?
+   3.7) All my servers crash under concurrent table access. Why?
+   3.8) How do I tune the database engine for better performance?
+   3.9) What debugging features are available?
+   3.10) I get "Sorry, too many clients" when trying to connect. Why?
+   3.11) What are the pg_sorttempNNN.NN files in my database directory?
    
                            Operational Questions
                                       
@@ -177,15 +175,16 @@
    It is possible to compile the libpq C library, psql, and other
    interfaces and binaries to run on MS Windows platforms. In this case,
    the client is running on MS Windows, and communicates via TCP/IP to a
-   server running on one of our supported Unix platforms.
+   server running on one of our supported Unix platforms. A file
+   win31.mak is included in the distribution for making a Win32 libpq
+   library and psql.
    
-   A file win31.mak is included in the distribution for making a Win32
-   libpq library and psql.
-   
-   The database server is now working on Windows NT using Cygwin, the
-   Cygnus Unix/NT porting library. See pgsql/doc/FAQ_NT in the
-   distribution. It does not work on MS Windows 9X because Cygwin does
-   not support the features we need on those platforms.
+   The database server can run on Windows NT and later using Cygwin, the
+   Cygnus Unix/NT porting library. See pgsql/doc/FAQ_MSWIN in the
+   distribution. The database server does not run on MS Windows 9X
+   because Cygwin does not support the required features on those
+   platforms. We have no plans to do a native port to any Microsoft
+   platform.
    
     1.5) Where can I get PostgreSQL?
     
@@ -238,7 +237,7 @@
    
     1.7) What is the latest release?
     
-   The latest release of PostgreSQL is version 7.0.2.
+   The latest release of PostgreSQL is version 7.0.3.
    
    We plan to have major releases every four months.
    
@@ -425,32 +424,18 @@
    
                           Administrative Questions
                                       
-    3.1) Why does initdb fail?
+    3.1) How do I install PostgreSQL somewhere other than /usr/local/pgsql?
     
-   Try these:
-     * check that you don't have any of the previous version's binaries
-       in your path
-     * check to see that you have the proper paths set
-     * check that the postgres user owns the proper files
-       
-   If you see an error message about oidvector, you definately have a
-   version mismatch.
+   Specify the --prefix option when running configure.
    
-    3.2) How do I install PostgreSQL somewhere other than /usr/local/pgsql?
-    
-   The simplest way is to specify the --prefix option when running
-   configure. If you forgot to do that, you can edit Makefile.global and
-   change POSTGRESDIR accordingly, or create a Makefile.custom and define
-   POSTGRESDIR there.
-   
-    3.3) When I start the postmaster, I get a Bad System Call or core dumped
+    3.2) When I start the postmaster, I get a Bad System Call or core dumped
     message. Why?
     
    It could be a variety of problems, but first check to see that you
    have System V extensions installed in your kernel. PostgreSQL requires
    kernel support for shared memory and semaphores.
    
-    3.4) When I try to start the postmaster, I get IpcMemoryCreate errors. Why?
+    3.3) When I try to start the postmaster, I get IpcMemoryCreate errors. Why?
     
    You either do not have shared memory configured properly in your
    kernel or you need to enlarge the shared memory available in the
@@ -459,7 +444,7 @@
    For most systems, with default numbers of buffers and processes, you
    need a minimum of ~1MB.
    
-    3.5) When I try to start the postmaster, I get IpcSemaphoreCreate errors.
+    3.4) When I try to start the postmaster, I get IpcSemaphoreCreate errors.
     Why?
     
    If the error message is IpcSemaphoreCreate: semget failed (No space
@@ -473,7 +458,7 @@
    If the error message is something else, you might not have semaphore
    support configured in your kernel at all.
    
-    3.6) How do I prevent other hosts from accessing my PostgreSQL database?
+    3.5) How do I prevent other hosts from accessing my PostgreSQL database?
     
    By default, PostgreSQL only allows connections from the local machine
    using Unix domain sockets. Other machines will not be able to connect
@@ -481,26 +466,19 @@
    authentication by modifying the file $PGDATA/pg_hba.conf accordingly.
    This will allow TCP/IP connections.
    
-    3.7) Why can't I connect to my database from another machine?
+    3.6) Why can't I connect to my database from another machine?
     
    The default configuration allows only unix domain socket connections
    from the local machine. To enable TCP/IP connections, make sure the
    postmaster has been started with the -i option, and add an appropriate
    host entry to the file pgsql/data/pg_hba.conf.
    
-    3.8) Why can't I access the database as the root user?
-    
-   You should not create database users with user id 0 (root). They will
-   be unable to access the database. This is a security precaution
-   because of the ability of users to dynamically link object modules
-   into the database engine.
-   
-    3.9) All my servers crash under concurrent table access. Why?
+    3.7) All my servers crash under concurrent table access. Why?
     
    This problem can be caused by a kernel that is not configured to
    support semaphores.
    
-    3.10) How do I tune the database engine for better performance?
+    3.8) How do I tune the database engine for better performance?
     
    Certainly, indices can speed up queries. The EXPLAIN command allows
    you to see how PostgreSQL is interpreting your query, and which
@@ -531,7 +509,7 @@
    You can also use the CLUSTER command to group data in tables to match
    an index. See the CLUSTER manual page for more details.
    
-    3.11) What debugging features are available?
+    3.9) What debugging features are available?
     
    PostgreSQL has several features that report status information that
    can be valuable for debugging purposes.
@@ -578,7 +556,7 @@
    pgsql/data/base/dbname directory. The client profile file will be put
    in the client's current directory.
    
-    3.12) I get 'Sorry, too many clients' when trying to connect. Why?
+    3.10) I get 'Sorry, too many clients' when trying to connect. Why?
     
    You need to increase the postmaster's limit on how many concurrent
    backend processes it can start.
@@ -606,7 +584,7 @@
    was 64, and changing it required a rebuild after altering the
    MaxBackendId constant in include/storage/sinvaladt.h.
    
-    3.13) What are the pg_sorttempNNN.NN files in my database directory?
+    3.11) What are the pg_sorttempNNN.NN files in my database directory?
     
    They are temporary files generated by the query executor. For example,
    if a sort needs to be done to satisfy an ORDER BY, and the sort
@@ -645,9 +623,9 @@
     4.4) How do I get a list of tables or other things I can see in psql?
     
    You can read the source code for psql in file
-   pgsql/src/bin/psql/psql.c. It contains SQL commands that generate the
-   output for psql's backslash commands. You can also start psql with the
-   -E option so it will print out the queries it uses to execute the
+   pgsql/src/bin/psql/describe.c. It contains SQL commands that generate
+   the output for psql's backslash commands. You can also start psql with
+   the -E option so it will print out the queries it uses to execute the
    commands you give.
    
     4.5) How do you remove a column from a table?
@@ -664,19 +642,13 @@
    These are the limits:
 Maximum size for a database?             unlimited (60GB databases exist)
 Maximum size for a table?                unlimited on all operating systems
-Maximum size for a row?                  8k, configurable to 32k
-Maximum number of rows in a table?   unlimited
+Maximum size for a row?                  unlimited in 7.1 and later
+Maximum number of rows in a table?       unlimited
 Maximum number of columns in a table?    unlimited
 Maximum number of indexes on a table?    unlimited
 
    Of course, these are not actually unlimited, but limited to available
    disk space.
-   
-   To change the maximum row size, edit include/config.h and change
-   BLCKSZ. To use attributes larger than 8K, you can also use the large
-   object interface.
-   
-   The row length limit will be removed in 7.1.
    
     4.7) How much database disk space is required to store data from a typical
     text file?
@@ -969,10 +941,10 @@ SELECT *
    
     4.24) How do I do an outer join?
     
-   PostgreSQL does not support outer joins in the current release. They
-   can be simulated using UNION and NOT IN. For example, when joining
-   tab1 and tab2, the following query does an outer join of the two
-   tables:
+   PostgreSQL 7.1 and later supports outer joins. In previous releases,
+   outer joins can be simulated using UNION and NOT IN. For example, when
+   joining tab1 and tab2, the following query does an outer join of the
+   two tables:
     SELECT tab1.col1, tab2.col2
     FROM tab1, tab2
     WHERE tab1.col1 = tab2.col1
@@ -1011,4 +983,6 @@ SELECT *
     change?
     
    The Makefiles do not have the proper dependencies for include files.
-   You have to do a make clean and then another make.
+   You have to do a make clean and then another make. If you are using
+   GCC you can use the --enable-depend option of configure to have the
+   compiler compute the dependencies automatically.

@@ -63,30 +63,27 @@
     <CENTER>
       <H2>Administrative Questions</H2>
     </CENTER>
-    <A href="#3.1">3.1</A>) Why does <I>initdb</I> fail?<BR>
-     <A href="#3.2">3.2</A>) How do I install PostgreSQL somewhere
+     <A href="#3.1">3.1</A>) How do I install PostgreSQL somewhere
     other than <I>/usr/local/pgsql?</I><BR>
-     <A href="#3.3">3.3</A>) When I start the <I>postmaster</I>, I get
+     <A href="#3.2">3.2</A>) When I start the <I>postmaster</I>, I get
     a <I>Bad System Call</I> or core dumped message. Why?<BR>
-     <A href="#3.4">3.4</A>) When I try to start the <I>postmaster</I>,
+     <A href="#3.3">3.3</A>) When I try to start the <I>postmaster</I>,
     I get <I>IpcMemoryCreate</I> errors. Why?<BR>
-     <A href="#3.5">3.5</A>) When I try to start the <I>postmaster</I>,
+     <A href="#3.4">3.4</A>) When I try to start the <I>postmaster</I>,
     I get <I>IpcSemaphoreCreate</I> errors. Why?<BR>
-     <A href="#3.6">3.6</A>) How do I prevent other hosts from
+     <A href="#3.5">3.5</A>) How do I prevent other hosts from
     accessing my PostgreSQL database?<BR>
-     <A href="#3.7">3.7</A>) Why can't I connect to my database from
+     <A href="#3.6">3.6</A>) Why can't I connect to my database from
     another machine?<BR>
-     <A href="#3.8">3.8</A>) Why can't I access the database as the
-    <I>root</I> user?<BR>
-     <A href="#3.9">3.9</A>) All my servers crash under concurrent
+     <A href="#3.7">3.7</A>) All my servers crash under concurrent
     table access. Why?<BR>
-     <A href="#3.10">3.10</A>) How do I tune the database engine for
+     <A href="#3.8">3.8</A>) How do I tune the database engine for
     better performance?<BR>
-     <A href="#3.11">3.11</A>) What debugging features are
+     <A href="#3.9">3.9</A>) What debugging features are
     available?<BR>
-     <A href="#3.12">3.12</A>) I get <I>"Sorry, too many clients"</I>
+     <A href="#3.10">3.10</A>) I get <I>"Sorry, too many clients"</I>
     when trying to connect. Why?<BR>
-     <A href="#3.13">3.13</A>) What are the <I>pg_sorttempNNN.NN</I>
+     <A href="#3.11">3.11</A>) What are the <I>pg_sorttempNNN.NN</I>
     files in my database directory?<BR>
      
 
@@ -236,15 +233,14 @@
     other interfaces and binaries to run on MS Windows platforms. In
     this case, the client is running on MS Windows, and communicates
     via TCP/IP to a server running on one of our supported Unix
-    platforms.</P>
-
-    <P>A file <I>win31.mak</I> is included in the distribution for
+    platforms.  A file <I>win31.mak</I> is included in the distribution for
     making a Win32 <I>libpq</I> library and psql.</P>
 
-    <P>The database server is now working on Windows NT using Cygwin,
-    the Cygnus Unix/NT porting library. See <I>pgsql/doc/FAQ_NT</I> in
-    the distribution. It does not work on MS Windows 9X because Cygwin
-    does not support the features we need on those platforms.</P>
+    <P>The database server can run on Windows NT and later using
+    Cygwin, the Cygnus Unix/NT porting library. See <I>pgsql/doc/FAQ_MSWIN</I>
+    in the distribution.  The database server does not run on MS Windows 9X
+    because Cygwin does not support the required features on those platforms.
+    We have no plans to do a native port to any Microsoft platform.</P>
 
     <H4><A name="1.5">1.5</A>) Where can I get PostgreSQL?</H4>
 
@@ -317,7 +313,7 @@
 
     <H4><A name="1.7">1.7</A>) What is the latest release?</H4>
 
-    <P>The latest release of PostgreSQL is version 7.0.2.</P>
+    <P>The latest release of PostgreSQL is version 7.0.3.</P>
 
     <P>We plan to have major releases every four months.</P>
 
@@ -565,39 +561,19 @@
       <H2>Administrative Questions</H2>
     </CENTER>
 
-    <H4><A name="3.1">3.1</A>) Why does <I>initdb</I> fail?</H4>
-
-    <P>Try these:</P>
-
-    <UL>
-      <LI>check that you don't have any of the previous version's
-      binaries in your path</LI>
-
-      <LI>check to see that you have the proper paths set</LI>
-
-      <LI>check that the <I>postgres</I> user owns the proper
-      files</LI>
-    </UL>
-
-    <P>If you see an error message about <I>oidvector,</I> you
-    definately have a version mismatch.</P>
-
-    <H4><A name="3.2">3.2</A>) How do I install PostgreSQL somewhere
+    <H4><A name="3.1">3.1</A>) How do I install PostgreSQL somewhere
     other than <I>/usr/local/pgsql?</I></H4>
 
-    <P>The simplest way is to specify the --prefix option when running
-    <I>configure.</I> If you forgot to do that, you can edit
-    <I>Makefile.global</I> and change POSTGRESDIR accordingly, or
-    create a <I>Makefile.custom</I> and define POSTGRESDIR there.</P>
+    <P>Specify the <I>--prefix</I> option when running <I>configure.</I></P>
 
-    <H4><A name="3.3">3.3</A>) When I start the <I>postmaster</I>, I
+    <H4><A name="3.2">3.2</A>) When I start the <I>postmaster</I>, I
     get a <I>Bad System Call</I> or core dumped message. Why?</H4>
 
     <P>It could be a variety of problems, but first check to see that
     you have System V extensions installed in your kernel. PostgreSQL
     requires kernel support for shared memory and semaphores.</P>
 
-    <H4><A name="3.4">3.4</A>) When I try to start the
+    <H4><A name="3.3">3.3</A>) When I try to start the
     <I>postmaster,</I> I get <I>IpcMemoryCreate</I> errors. Why?</H4>
 
     <P>You either do not have shared memory configured properly in your
@@ -607,7 +583,7 @@
     <I>postmaster.</I> For most systems, with default numbers of
     buffers and processes, you need a minimum of ~1MB.</P>
 
-    <H4><A name="3.5">3.5</A>) When I try to start the
+    <H4><A name="3.4">3.4</A>) When I try to start the
     <I>postmaster,</I> I get <I>IpcSemaphoreCreate</I> errors.
     Why?</H4>
 
@@ -623,7 +599,7 @@
     <P>If the error message is something else, you might not have
     semaphore support configured in your kernel at all.</P>
 
-    <H4><A name="3.6">3.6</A>) How do I prevent other hosts from
+    <H4><A name="3.5">3.5</A>) How do I prevent other hosts from
     accessing my PostgreSQL database?</H4>
 
     <P>By default, PostgreSQL only allows connections from the local
@@ -633,7 +609,7 @@
     modifying the file <I>$PGDATA/pg_hba.conf</I> accordingly. This
     will allow TCP/IP connections.</P>
 
-    <H4><A name="3.7">3.7</A>) Why can't I connect to my database from
+    <H4><A name="3.6">3.6</A>) Why can't I connect to my database from
     another machine?</H4>
 
     <P>The default configuration allows only unix domain socket
@@ -642,21 +618,13 @@
     option, and add an appropriate host entry to the file
     <I>pgsql/data/pg_hba.conf</I>.</P>
 
-    <H4><A name="3.8">3.8</A>) Why can't I access the database as the
-    <I>root</I> user?</H4>
-
-    <P>You should not create database users with user id 0 (root). They
-    will be unable to access the database. This is a security
-    precaution because of the ability of users to dynamically link
-    object modules into the database engine.</P>
-
-    <H4><A name="3.9">3.9</A>) All my servers crash under concurrent
+    <H4><A name="3.7">3.7</A>) All my servers crash under concurrent
     table access. Why?</H4>
 
     <P>This problem can be caused by a kernel that is not configured to
     support semaphores.</P>
 
-    <H4><A name="3.10">3.10</A>) How do I tune the database engine for
+    <H4><A name="3.8">3.8</A>) How do I tune the database engine for
     better performance?</H4>
 
     <P>Certainly, indices can speed up queries. The
@@ -693,7 +661,7 @@
     data in tables to match an index. See the <SMALL>CLUSTER</SMALL>
     manual page for more details.</P>
 
-    <H4><A name="3.11">3.11</A>) What debugging features are
+    <H4><A name="3.9">3.9</A>) What debugging features are
     available?</H4>
 
     <P>PostgreSQL has several features that report status information
@@ -749,7 +717,7 @@
     in the <I>pgsql/data/base/dbname</I> directory. The client profile
     file will be put in the client's current directory.</P>
 
-    <H4><A name="3.12">3.12</A>) I get 'Sorry, too many clients' when
+    <H4><A name="3.10">3.10</A>) I get 'Sorry, too many clients' when
     trying to connect. Why?</H4>
 
     <P>You need to increase the <I>postmaster's</I> limit on how many
@@ -784,7 +752,7 @@
     the MaxBackendId constant in
     <I>include/storage/sinvaladt.h.</I></P>
 
-    <H4><A name="3.13">3.13</A>) What are the <I>pg_sorttempNNN.NN</I>
+    <H4><A name="3.11">3.11</A>) What are the <I>pg_sorttempNNN.NN</I>
     files in my database directory?</H4>
 
     <P>They are temporary files generated by the query executor. For
@@ -835,7 +803,7 @@
     </H4>
 
     <P>You can read the source code for <I>psql</I> in file
-    <I>pgsql/src/bin/psql/psql.c.</I> It contains SQL commands that
+    <I>pgsql/src/bin/psql/describe.c.</I> It contains SQL commands that
     generate the output for psql's backslash commands. You can also
     start <I>psql</I> with the <I>-E</I> option so it will print out
     the queries it uses to execute the commands you give.</P>
@@ -860,19 +828,13 @@
 <PRE>
 Maximum size for a database?             unlimited (60GB databases exist)
 Maximum size for a table?                unlimited on all operating systems
-Maximum size for a row?                  8k, configurable to 32k
-Maximum number of rows in a table?   unlimited
+Maximum size for a row?                  unlimited in 7.1 and later
+Maximum number of rows in a table?       unlimited
 Maximum number of columns in a table?    unlimited
 Maximum number of indexes on a table?    unlimited
 </PRE>
     Of course, these are not actually unlimited, but limited to
     available disk space. 
-
-    <P>To change the maximum row size, edit <I>include/config.h</I> and
-    change <SMALL>BLCKSZ.</SMALL> To use attributes larger than 8K, you
-    can also use the large object interface.</P>
-
-    <P>The row length limit will be removed in 7.1.</P>
 
     <H4><A name="4.7">4.7</A>) How much database disk space is required
     to store data from a typical text file?<BR>
@@ -1242,8 +1204,8 @@ BYTEA           bytea           variable-length byte array (null-safe)
     <H4><A name="4.24">4.24</A>) How do I do an <I>outer</I> join?<BR>
     </H4>
 
-    <P>PostgreSQL does not support outer joins in the current release.
-    They can be simulated using <SMALL>UNION</SMALL> and <SMALL>NOT
+    <P>PostgreSQL 7.1 and later supports outer joins.  In previous releases,
+    outer joins can be simulated using <SMALL>UNION</SMALL> and <SMALL>NOT
     IN</SMALL>. For example, when joining <I>tab1</I> and <I>tab2,</I>
     the following query does an <I>outer</I> join of the two
     tables:</P>
@@ -1295,7 +1257,9 @@ BYTEA           bytea           variable-length byte array (null-safe)
 
     <P>The <I>Makefiles</I> do not have the proper dependencies for
     include files. You have to do a <I>make clean</I> and then another
-    <I>make</I>.</P>
+    <I>make</I>.  If you are using GCC you can use the <i>--enable-depend</i>
+    option of <i>configure</i> to have the compiler compute the
+    dependencies automatically.</P>
   </BODY>
 </HTML>
 
