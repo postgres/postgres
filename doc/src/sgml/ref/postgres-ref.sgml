@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/postgres-ref.sgml,v 1.38 2003/10/16 17:38:01 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/postgres-ref.sgml,v 1.39 2003/10/28 15:01:27 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -331,6 +331,17 @@ PostgreSQL documentation
 	As soon as this option is encountered, the process sleeps for
 	the specified amount of seconds.  This gives developers time
 	to attach a debugger to the server process.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--describe-config</option></term>
+      <listitem>
+       <para>
+        This option dumps out the server's internal configuration variables, 
+        descriptions, and defaults in tab-delimited <command>COPY</> format.
+        It is designed primarily for use by administration tools.
        </para>
       </listitem>
      </varlistentry>
