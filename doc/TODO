@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Aug 27 17:16:09 EDT 2002
+Last updated:		Wed Aug 28 12:45:07 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -48,7 +48,6 @@ Permissions
 * -Allow user/group names to be specified directly in pg_hba.conf (Bruce)
 * -Add PGPASSWORDFILE environment variable or ~/.pgpass to store
   user/host/password combinations
-* Remove PGPASSWORD because it is insecure on some OS's, in 7.4
 * Make single-user local access permissions the default by limiting
   permissions on the socket file (Peter E)
 * -Allow permissions for functions (Peter E)
