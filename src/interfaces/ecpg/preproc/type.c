@@ -214,7 +214,8 @@ static void ECPGdump_a_struct(FILE *o, const char *name, const char *ind_name, c
 
 void
 ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * type,
-		const char *ind_name, struct ECPGtype * ind_type,
+		const char *var_array_element, const char *ind_name,
+		struct ECPGtype * ind_type, const char *ind_array_element,
 		const char *prefix, const char *ind_prefix,
 		char *arr_str_siz, const char *struct_sizeof,
 		const char *ind_struct_sizeof)
@@ -450,7 +451,11 @@ ECPGdump_a_struct(FILE *o, const char *name, const char *ind_name, char *arrsiz,
 
 	for (p = type->u.members; p; p = p->next)
 	{
-		ECPGdump_a_type(o, p->name, p->type, (ind_p != NULL) ? ind_p->name : NULL, (ind_p != NULL) ? ind_p->type : NULL, prefix, ind_prefix, arrsiz, type->struct_sizeof, (ind_p != NULL) ? ind_type->struct_sizeof : NULL);
+		ECPGdump_a_type(o, p->name, p->type, NULL,
+				(ind_p != NULL) ? ind_p->name : NULL,
+				(ind_p != NULL) ? ind_p->type : NULL, NULL,
+				prefix, ind_prefix, arrsiz, type->struct_sizeof,
+				(ind_p != NULL) ? ind_type->struct_sizeof : NULL);
 		if (ind_p != NULL && ind_p != &struct_no_indicator)
 			ind_p = ind_p->next;
 	}

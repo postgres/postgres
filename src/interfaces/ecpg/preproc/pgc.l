@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.109 2003/05/20 11:05:27 meskes Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.110 2003/05/22 07:58:41 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -434,20 +434,6 @@ cppline			{space}*#(.*\\{space})+.*
 			  else
 				return yytext[0];
 			}
-<C>{informix_special}{struct} {
-				  /* are we simulating Informix? */
-				  if (compat == ECPG_COMPAT_INFORMIX)
-				  {
-				  	string_unput("typedef struct ");
-			  		BEGIN SQL;
-					return SQL_START;
-				  }
-				  else
-				  {
-					string_unput("struct ");
-				  	return S_ANYTHING;
-				  }
-}
 <SQL>{self}			{ /*
 					   * We may find a ';' inside a structure
 					   * definition in a TYPE or VAR statement.
@@ -905,7 +891,7 @@ cppline			{space}*#(.*\\{space})+.*
 
 <xskip>{other}		{ /* ignore */ }
 
-<xcond>{identifier}{space}*';' {
+<xcond>{identifier}{space}*";" {
 						if ( preproc_tos >= MAX_NESTED_IF-1 ) {
 							mmerror(PARSE_ERROR, ET_FATAL, "Too many nested 'EXEC SQL IFDEF' conditions");
 						}

@@ -194,19 +194,21 @@ reset_variables(void)
 
 /* Insert a new variable into our request list. */
 void
-add_variable(struct arguments ** list, struct variable * var, struct variable * ind)
+add_variable(struct arguments ** list, struct variable * var, char * var_array_element, struct variable * ind, char * ind_array_element)
 {
 	struct arguments *p = (struct arguments *) mm_alloc(sizeof(struct arguments));
 
 	p->variable = var;
+	p->var_array_element = var_array_element;
 	p->indicator = ind;
+	p->ind_array_element = ind_array_element;
 	p->next = *list;
 	*list = p;
 }
 
 /* Append a new variable to our request list. */
 void
-append_variable(struct arguments ** list, struct variable * var, struct variable * ind)
+append_variable(struct arguments ** list, struct variable * var, char * var_array_element, struct variable * ind, char * ind_array_element)
 {
 	struct arguments *p,
 			   *new = (struct arguments *) mm_alloc(sizeof(struct arguments));
@@ -214,7 +216,9 @@ append_variable(struct arguments ** list, struct variable * var, struct variable
 	for (p = *list; p && p->next; p = p->next);
 
 	new->variable = var;
+	new->var_array_element = var_array_element;
 	new->indicator = ind;
+	new->ind_array_element = ind_array_element;
 	new->next = NULL;
 
 	if (p)
@@ -241,8 +245,9 @@ dump_variables(struct arguments * list, int mode)
 	dump_variables(list->next, mode);
 
 	/* Then the current element and its indicator */
-	ECPGdump_a_type(yyout, list->variable->name, list->variable->type,
-					list->indicator->name, list->indicator->type, NULL, NULL, 0, NULL, NULL);
+	ECPGdump_a_type(yyout, list->variable->name, list->variable->type, list->var_array_element,
+					list->indicator->name, list->indicator->type, list->ind_array_element,
+					NULL, NULL, 0, NULL, NULL);
 
 	/* Then release the list element. */
 	if (mode != 0)

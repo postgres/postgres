@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.219 2003/05/16 11:30:09 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.220 2003/05/22 07:58:41 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -384,14 +384,15 @@ make_name(void)
 %type  <str>	ECPGSetConnection ECPGTypedef c_args ECPGKeywords
 %type  <str>	enum_type civar civarind ECPGCursorStmt ECPGDeallocate
 %type  <str>	ECPGFree ECPGDeclare ECPGVar opt_at enum_definition
-%type  <str>	struct_type s_struct vt_declarations variable_declarations
+%type  <str>	struct_union_type s_struct_union vt_declarations 
 %type  <str>	var_declaration type_declaration single_vt_declaration
-%type  <str>	s_union union_type ECPGSetAutocommit on_off
-%type  <str>	ECPGAllocateDescr ECPGDeallocateDescr symbol opt_symbol
+%type  <str>	ECPGSetAutocommit on_off variable_declarations
+%type  <str>	ECPGAllocateDescr ECPGDeallocateDescr symbol 
 %type  <str>	ECPGGetDescriptorHeader ECPGColLabel single_var_declaration
 %type  <str>	reserved_keyword unreserved_keyword ecpg_interval
 %type  <str>	col_name_keyword func_name_keyword precision opt_scale
 %type  <str>	ECPGTypeName variablelist ECPGColLabelCommon
+%type  <str>	s_struct_union_symbol
 
 %type  <descriptor> ECPGGetDescriptor
 
@@ -399,7 +400,8 @@ make_name(void)
 
 %type  <dtype_enum> descriptor_item desc_header_item
 
-%type  <type>	var_type common_type single_vt_type
+%type  <type>	var_type common_type single_vt_type 
+%type  <type>	struct_union_type_with_symbol
 
 %type  <action> action
 
@@ -611,10 +613,10 @@ stmt:  AlterDatabaseSetStmt { output_statement($1, 0, connection); }
 
 			/* merge variables given in prepare statement with those given here */
 			for (p = ptr->argsinsert; p; p = p->next)
-				append_variable(&argsinsert, p->variable, p->indicator);
+				append_variable(&argsinsert, p->variable, p->var_array_element, p->indicator, p->ind_array_element);
 
 			for (p = ptr->argsresult; p; p = p->next)
-				add_variable(&argsresult, p->variable, p->indicator);
+				add_variable(&argsresult, p->variable, p->var_array_element, p->indicator, p->ind_array_element);
 
 			output_statement(mm_strdup(ptr->command), 0, ptr->connection ? mm_strdup(ptr->connection) : NULL);
 		}
@@ -3834,14 +3836,14 @@ StringConst:	Sconst		{ $$ = $1; }
 		;
 
 PosIntStringConst:	Iconst	{ $$ = $1; }
-		| Sconst			{ $$ = $1; }
+		| Sconst			{ $$ = $1; } 
 		| civar				{ $$ = make_str("?"); }
 		;
 
 NumConst:	Fconst			{ $$ = $1; }
 		| Iconst			{ $$ = $1; }
 		| '-' Fconst		{ $$ = cat2_str(make_str("-"), $2); }
-		| '-' Iconst		{ $$ = cat2_str(make_str("-"), $2); }
+		| '-' Iconst		{ $$ = cat2_str(make_str("-"), $2); } 
 		| civar				{ $$ = make_str("?"); }
 		;
 
@@ -4121,7 +4123,7 @@ ECPGCursorStmt:  DECLARE name opt_cursor CURSOR FOR ident
 			sprintf(thisquery->name, "ECPGprepared_statement(\"%s\")", $6);
 
 			this->argsinsert = NULL;
-			add_variable(&(this->argsinsert), thisquery, &no_indicator);
+			add_variable(&(this->argsinsert), thisquery, NULL, &no_indicator, NULL);
 
 			cur = this;
 
@@ -4148,25 +4150,62 @@ single_vt_declaration: type_declaration		{ $$ = $1; }
 		| single_var_declaration	{ $$ = $1; }
 		;
 	
-single_var_declaration: storage_declaration
+single_var_declaration: storage_declaration 
 		single_vt_type
 		{
 			actual_type[struct_level].type_enum = $2.type_enum;
 			actual_type[struct_level].type_dimension = $2.type_dimension;
 			actual_type[struct_level].type_index = $2.type_index;
 			actual_type[struct_level].type_sizeof = $2.type_sizeof;
-
-			/* we do not need the string "varchar" for output */
-			/* so replace it with an empty string */
-			/* if ($2.type_enum == ECPGt_varchar)
-			{
-				free($2.type_str);
-				$2.type_str=EMPTY;
-			}*/
 		}
 		variable_list ';'
 		{
 			$$ = cat_str(5, actual_startline[struct_level], $1, $2.type_str, $4, make_str(";\n"));
+		}
+		| single_vt_type
+		{
+			actual_type[struct_level].type_enum = $1.type_enum;
+			actual_type[struct_level].type_dimension = $1.type_dimension;
+			actual_type[struct_level].type_index = $1.type_index;
+			actual_type[struct_level].type_sizeof = $1.type_sizeof;
+			actual_storage[struct_level] = EMPTY;
+
+			actual_startline[struct_level] = hashline_number();
+		}
+		variable_list ';'
+		{
+			$$ = cat_str(4, actual_startline[struct_level], $1.type_str, $3, make_str(";\n"));
+		}
+		| struct_union_type_with_symbol ';'
+		{
+			/* this is essantially a typedef but needs the keyword struct/union as well */
+			struct typedefs *ptr, *this;
+			
+			for (ptr = types; ptr != NULL; ptr = ptr->next)
+                        {
+                                if (strcmp($1.type_str, ptr->name) == 0)
+                                {
+                                        /* re-definition is a bug */
+                                        snprintf(errortext, sizeof(errortext), "Type %s already defined", $1.type_str);
+                                        mmerror(PARSE_ERROR, ET_ERROR, errortext);
+                                }
+                        }
+
+                        this = (struct typedefs *) mm_alloc(sizeof(struct typedefs));
+
+                        /* initial definition */
+                        this->next = types;
+			this->name = $1.type_str;
+                        this->type = (struct this_type *) mm_alloc(sizeof(struct this_type));
+                        this->type->type_enum = $1.type_enum;
+                        this->type->type_str = mm_strdup($1.type_str);
+                        this->type->type_dimension = make_str("-1"); /* dimension of array */
+                        this->type->type_index = make_str("-1");    /* length of string */
+                        this->type->type_sizeof = ECPGstruct_sizeof;
+                        this->struct_member_list = struct_member_list[struct_level];
+
+			types = this;
+			$$ = cat2_str($1.type_sizeof, make_str(";"));
 		}
 		;
 
@@ -4277,6 +4316,20 @@ single_vt_type: common_type
 				struct_member_list[struct_level] = ECPGstruct_member_dup(this->struct_member_list);
 			}
 		}
+		| s_struct_union_symbol
+		{
+			/* this is for named structs/unions */
+			char *name = $1;
+			struct typedefs *this = get_typedef(name);
+
+			$$.type_str = mm_strdup(this->name);
+			$$.type_enum = this->type->type_enum;
+			$$.type_dimension = this->type->type_dimension;
+			$$.type_index = this->type->type_index;
+			$$.type_sizeof = this->type->type_sizeof;
+			struct_member_list[struct_level] = ECPGstruct_member_dup(this->struct_member_list);
+			free(name);
+		}
 		;
 
 /*
@@ -4353,7 +4406,7 @@ type_declaration: S_TYPEDEF
 			this->type->type_enum = $3.type_enum;
 			this->type->type_str = mm_strdup($5);
 			this->type->type_dimension = dimension; /* dimension of array */
-			this->type->type_index = length;    /* lenght of string */
+			this->type->type_index = length;    /* length of string */
 			this->type->type_sizeof = ECPGstruct_sizeof;
 			this->struct_member_list = ($3.type_enum == ECPGt_struct || $3.type_enum == ECPGt_union) ?
 				struct_member_list[struct_level] : NULL;
@@ -4379,18 +4432,55 @@ var_declaration: storage_declaration
 			actual_type[struct_level].type_dimension = $2.type_dimension;
 			actual_type[struct_level].type_index = $2.type_index;
 			actual_type[struct_level].type_sizeof = $2.type_sizeof;
-
-			/* we do not need the string "varchar" for output */
-			/* so replace it with an empty string */
-			/* if ($2.type_enum == ECPGt_varchar)
-			{
-				free($2.type_str);
-				$2.type_str=EMPTY;
-			}*/
 		}
 		variable_list ';'
 		{
 			$$ = cat_str(5, actual_startline[struct_level], $1, $2.type_str, $4, make_str(";\n"));
+		}
+		| var_type
+		{
+			actual_type[struct_level].type_enum = $1.type_enum;
+			actual_type[struct_level].type_dimension = $1.type_dimension;
+			actual_type[struct_level].type_index = $1.type_index;
+			actual_type[struct_level].type_sizeof = $1.type_sizeof;
+			actual_storage[struct_level] = EMPTY;
+			
+			actual_startline[struct_level] = hashline_number();
+		}
+		variable_list ';'
+		{
+			$$ = cat_str(4, actual_startline[struct_level], $1.type_str, $3, make_str(";\n"));
+		}
+		| struct_union_type_with_symbol ';'
+		{
+			/* this is essantially a typedef but needs the keyword struct/union as well */
+			struct typedefs *ptr, *this;
+			
+			for (ptr = types; ptr != NULL; ptr = ptr->next)
+                        {
+                                if (strcmp($1.type_str, ptr->name) == 0)
+                                {
+                                        /* re-definition is a bug */
+                                        snprintf(errortext, sizeof(errortext), "Type %s already defined", $1.type_str);
+                                        mmerror(PARSE_ERROR, ET_ERROR, errortext);
+                                }
+                        }
+
+                        this = (struct typedefs *) mm_alloc(sizeof(struct typedefs));
+
+                        /* initial definition */
+                        this->next = types;
+			this->name = $1.type_str;
+                        this->type = (struct this_type *) mm_alloc(sizeof(struct this_type));
+                        this->type->type_enum = $1.type_enum;
+                        this->type->type_str = mm_strdup($1.type_str);
+                        this->type->type_dimension = make_str("-1"); /* dimension of array */
+                        this->type->type_index = make_str("-1");    /* length of string */
+                        this->type->type_sizeof = ECPGstruct_sizeof;
+                        this->struct_member_list = struct_member_list[struct_level];
+
+			types = this;
+			$$ = cat2_str($1.type_sizeof, make_str(";"));
 		}
 		;
 
@@ -4399,18 +4489,26 @@ storage_declaration: storage_clause storage_modifier
 			actual_storage[struct_level] = cat2_str(mm_strdup($1), mm_strdup($2));
 			actual_startline[struct_level] = hashline_number();
 		}
+		| storage_clause
+		{
+			actual_storage[struct_level] = mm_strdup($1);
+			actual_startline[struct_level] = hashline_number();
+		}
+		| storage_modifier
+		{
+			actual_storage[struct_level] = mm_strdup($1);
+			actual_startline[struct_level] = hashline_number();
+		}
 		;
 
 storage_clause : S_EXTERN		{ $$ = make_str("extern"); }
-		| S_STATIC				{ $$ = make_str("static"); }
-		| S_REGISTER			{ $$ = make_str("register"); }
-		| S_AUTO				{ $$ = make_str("auto"); }
-		| /*EMPTY*/				{ $$ = EMPTY; }
+		| S_STATIC		{ $$ = make_str("static"); }
+		| S_REGISTER		{ $$ = make_str("register"); }
+		| S_AUTO		{ $$ = make_str("auto"); }
 		;
 
 storage_modifier : S_CONST		{ $$ = make_str("const"); }
-		| S_VOLATILE			{ $$ = make_str("volatile"); }
-		| /*EMPTY*/				{ $$ = EMPTY; }
+		| S_VOLATILE		{ $$ = make_str("volatile"); }
 		;
 
 common_type: simple_type
@@ -4421,21 +4519,22 @@ common_type: simple_type
 			$$.type_index = make_str("-1");
 			$$.type_sizeof = NULL;
 		}
-		| struct_type
+		| struct_union_type
 		{
-			$$.type_enum = ECPGt_struct;
 			$$.type_str = $1;
 			$$.type_dimension = make_str("-1");
 			$$.type_index = make_str("-1");
-			$$.type_sizeof = ECPGstruct_sizeof;
-		}
-		| union_type
-		{
-			$$.type_enum = ECPGt_union;
-			$$.type_str = $1;
-			$$.type_dimension = make_str("-1");
-			$$.type_index = make_str("-1");
-			$$.type_sizeof = NULL;
+
+			if (strncmp($1, "struct", sizeof("struct")-1) == 0)
+			{
+				$$.type_enum = ECPGt_struct;
+				$$.type_sizeof = ECPGstruct_sizeof;
+			}
+			else
+			{
+				$$.type_enum = ECPGt_union;
+				$$.type_sizeof = NULL;
+			}
 		}
 		| enum_type
 		{
@@ -4553,53 +4652,81 @@ var_type:	common_type
 				struct_member_list[struct_level] = ECPGstruct_member_dup(this->struct_member_list);
 			}
 		}
+		| s_struct_union_symbol
+		{
+			/* this is for named structs/unions */
+			char *name = $1;
+			struct typedefs *this = get_typedef(name);
+			$$.type_str = mm_strdup(this->name);
+			$$.type_enum = this->type->type_enum;
+			$$.type_dimension = this->type->type_dimension;
+			$$.type_index = this->type->type_index;
+			$$.type_sizeof = this->type->type_sizeof;
+			struct_member_list[struct_level] = ECPGstruct_member_dup(this->struct_member_list);
+			free(name);
+		}
 		;
 
-enum_type: SQL_ENUM opt_symbol enum_definition
+enum_type: SQL_ENUM symbol enum_definition
 			{ $$ = cat_str(3, make_str("enum"), $2, $3); }
-		|  SQL_ENUM symbol
+		| SQL_ENUM enum_definition
+			{ $$ = cat2_str(make_str("enum"), $2); }
+		| SQL_ENUM symbol
 			{ $$ = cat2_str(make_str("enum"), $2); }
 		;
 
 enum_definition: '{' c_list '}'
 			{ $$ = cat_str(3, make_str("{"), $2, make_str("}")); };
 
-struct_type: s_struct '{' variable_declarations '}'
-		{
-			ECPGfree_struct_member(struct_member_list[struct_level]);
-			struct_member_list[struct_level] = NULL;
-			free(actual_storage[struct_level--]);
-			$$ = cat_str(4, $1, make_str("{"), $3, make_str("}"));
-		}
-		;
-
-union_type: s_union '{' variable_declarations '}'
-		{
-			ECPGfree_struct_member(struct_member_list[struct_level]);
-			struct_member_list[struct_level] = NULL;
-			free(actual_storage[struct_level--]);
-			$$ = cat_str(4, $1, make_str("{"), $3, make_str("}"));
-		}
-		;
-
-s_struct: SQL_STRUCT opt_symbol
+struct_union_type_with_symbol: s_struct_union_symbol
 		{
 			struct_member_list[struct_level++] = NULL;
+			if (struct_level >= STRUCT_DEPTH)
+				 mmerror(PARSE_ERROR, ET_ERROR, "Too many levels in nested structure/union definition");
+		} 
+		'{' variable_declarations '}'
+		{
+			ECPGfree_struct_member(struct_member_list[struct_level]);
+			struct_member_list[struct_level] = NULL;
+			free(actual_storage[struct_level--]);
+			if (strncmp($1, "struct", sizeof("struct")-1) == 0)
+				$$.type_enum = ECPGt_struct;
+			else
+				$$.type_enum = ECPGt_union;
+			$$.type_str = mm_strdup($1);
+			$$.type_sizeof = cat_str(4, $1, make_str("{"), $4, make_str("}"));
+		}
+		;
+
+struct_union_type: struct_union_type_with_symbol	{ $$ = $1.type_sizeof; }
+		| s_struct_union
+		{
+			struct_member_list[struct_level++] = NULL;
+			if (struct_level >= STRUCT_DEPTH)
+				 mmerror(PARSE_ERROR, ET_ERROR, "Too many levels in nested structure/union definition");
+		}
+		'{' variable_declarations '}'
+		{
+			ECPGfree_struct_member(struct_member_list[struct_level]);
+			struct_member_list[struct_level] = NULL;
+			free(actual_storage[struct_level--]);
+			$$ = cat_str(4, $1, make_str("{"), $4, make_str("}"));
+		}
+		;
+
+s_struct_union_symbol: SQL_STRUCT symbol
+		{
 			$$ = cat2_str(make_str("struct"), $2);
-			ECPGstruct_sizeof = cat_str(3, make_str("sizeof("), strdup($$), make_str(")"));
-			if (struct_level >= STRUCT_DEPTH)
-				 mmerror(PARSE_ERROR, ET_ERROR, "Too many levels in nested structure definition");
+			ECPGstruct_sizeof = cat_str(3, make_str("sizeof("), strdup($$), make_str(")")); 
 		}
-		;
-
-s_union: UNION opt_symbol
+		| UNION symbol
 		{
-			struct_member_list[struct_level++] = NULL;
-			if (struct_level >= STRUCT_DEPTH)
-				 mmerror(PARSE_ERROR, ET_ERROR, "Too many levels in nested structure definition");
-
 			$$ = cat2_str(make_str("union"), $2);
 		}
+		;
+
+s_struct_union: SQL_STRUCT	{ $$ = make_str("struct"); }
+		| UNION 	{ $$ = make_str("union"); }
 		;
 
 simple_type: unsigned_type					{ $$=$1; }
@@ -4670,7 +4797,7 @@ variable: opt_pointer ECPGColLabelCommon opt_array_bounds opt_initializer
 		{
 			struct ECPGtype * type;
 			char *dimension = $3.index1; /* dimension of array */
-			char *length = $3.index2;    /* lenght of string */
+			char *length = $3.index2;    /* length of string */
 			char dim[14L];
 
 			adjust_array(actual_type[struct_level].type_enum, &dimension, &length, actual_type[struct_level].type_dimension, actual_type[struct_level].type_index, strlen($1));
@@ -4811,7 +4938,7 @@ ECPGExecute : EXECUTE IMMEDIATE execstring
 			thisquery->next = NULL;
 			thisquery->name = $3;
 
-			add_variable(&argsinsert, thisquery, &no_indicator);
+			add_variable(&argsinsert, thisquery, NULL, &no_indicator, NULL);
 
 			$$ = make_str("?");
 		}
@@ -4825,7 +4952,7 @@ ECPGExecute : EXECUTE IMMEDIATE execstring
 			thisquery->name = (char *) mm_alloc(sizeof("ECPGprepared_statement(\"\")") + strlen($2));
 			sprintf(thisquery->name, "ECPGprepared_statement(\"%s\")", $2);
 
-			add_variable(&argsinsert, thisquery, &no_indicator);
+			add_variable(&argsinsert, thisquery, NULL, &no_indicator, NULL);
 		}
 		opt_ecpg_using opt_ecpg_into
 		{
@@ -4866,7 +4993,7 @@ ecpg_into: INTO into_list
 		}
 		| INTO opt_sql SQL_DESCRIPTOR quoted_ident_stringvar
 		{
-			add_variable(&argsresult, descriptor_variable($4,0), &no_indicator);
+			add_variable(&argsresult, descriptor_variable($4,0), NULL, &no_indicator, NULL);
 			$$ = EMPTY;
 		}
 		;
@@ -5044,7 +5171,7 @@ ECPGTypedef: TYPE_P
 				this->type->type_enum = $5.type_enum;
 				this->type->type_str = mm_strdup($3);
 				this->type->type_dimension = dimension; /* dimension of array */
-				this->type->type_index = length;	/* lenght of string */
+				this->type->type_index = length;	/* length of string */
 				this->type->type_sizeof = ECPGstruct_sizeof;
 				this->struct_member_list = ($5.type_enum == ECPGt_struct || $5.type_enum == ECPGt_union) ?
 					struct_member_list[struct_level] : NULL;
@@ -5267,10 +5394,6 @@ ECPGTypeName:  SQL_BOOL				{ $$ = make_str("bool"); }
 		| SQL_STRUCT			{ $$ = make_str("struct"); }
 		| SQL_SIGNED			{ $$ = make_str("signed"); }
 		| SQL_UNSIGNED			{ $$ = make_str("unsigned"); }
-		;
-
-opt_symbol: symbol				{ $$ = $1; }
-		| /*EMPTY*/				{ $$ = EMPTY; }
 		;
 
 symbol: ColLabel				{ $$ = $1; }
@@ -5684,24 +5807,50 @@ c_args: /*EMPTY*/		{ $$ = EMPTY; }
 		;
 
 coutputvariable: CVARIABLE indicator
-			{ add_variable(&argsresult, find_variable($1), find_variable($2)); }
+			{ add_variable(&argsresult, find_variable($1), NULL, find_variable($2), NULL); }
 		| CVARIABLE
-			{ add_variable(&argsresult, find_variable($1), &no_indicator); }
+			{ add_variable(&argsresult, find_variable($1), NULL, &no_indicator, NULL); }
 		;
 
 
-civarind: CVARIABLE indicator
+civarind: CVARIABLE '[' Iresult ']' indicator '[' Iresult ']' 
 		{
-			if ($2 != NULL && (find_variable($2))->type->type == ECPGt_array)
+			if (find_variable($5)->type->type == ECPGt_array)
 				mmerror(PARSE_ERROR, ET_ERROR, "arrays of indicators are not allowed on input");
 
-			add_variable(&argsinsert, find_variable($1), ($2 == NULL) ? &no_indicator : find_variable($2));
+			add_variable(&argsinsert, find_variable($1), $3, find_variable($5), $7);
+		}
+		| CVARIABLE indicator '[' Iresult ']' 
+		{
+			if (find_variable($2)->type->type == ECPGt_array)
+				mmerror(PARSE_ERROR, ET_ERROR, "arrays of indicators are not allowed on input");
+
+			add_variable(&argsinsert, find_variable($1), NULL, find_variable($2), $4);
+		}
+		| CVARIABLE '[' Iresult ']' indicator 
+		{
+			if (find_variable($5)->type->type == ECPGt_array)
+				mmerror(PARSE_ERROR, ET_ERROR, "arrays of indicators are not allowed on input");
+
+			add_variable(&argsinsert, find_variable($1), $3, find_variable($5), NULL);
+		}
+		| CVARIABLE indicator
+		{
+			if (find_variable($2)->type->type == ECPGt_array)
+				mmerror(PARSE_ERROR, ET_ERROR, "arrays of indicators are not allowed on input");
+
+			add_variable(&argsinsert, find_variable($1), NULL, find_variable($2), NULL);
 		}
 		;
 
-civar: CVARIABLE
+civar: CVARIABLE '[' Iresult ']' 
 		{
-			add_variable(&argsinsert, find_variable($1), &no_indicator);
+			add_variable(&argsinsert, find_variable($1), $3, &no_indicator, NULL);
+			$$ = cat_str(4, $1, make_str("["), $3, make_str("]"));
+		}
+		| CVARIABLE
+		{
+			add_variable(&argsinsert, find_variable($1), NULL, &no_indicator, NULL);
 			$$ = $1;
 		}
 		;
@@ -5753,7 +5902,7 @@ c_thing:	c_anything	{ $$ = $1; }
 
 c_anything:  IDENT					{ $$ = $1; }
 		| CSTRING					{ $$ = make3_str(make_str("\""), $1, make_str("\"")); }
-		| PosIntConst				{ $$ = $1; }
+		| Iconst				{ $$ = $1; }
 		| Fconst					{ $$ = $1; }
 		| Sconst					{ $$ = $1; }
 		| '*'						{ $$ = make_str("*"); }

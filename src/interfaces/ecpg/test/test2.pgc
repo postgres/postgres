@@ -9,20 +9,19 @@ typedef char* c;
 exec sql type ind is union { int integer; short smallint; };
 typedef union { int integer; short smallint; } ind;
 
-#define BUFSIZ 8
-exec sql type str is varchar[BUFSIZ];
+#define BUFFERSIZ 8
+exec sql type str is varchar[BUFFERSIZ];
 
 int
 main ()
 {
-	typedef struct { long born; short age; } birthinfo;
-	exec sql type birthinfo is struct { long born; short age; };
+	exec sql struct birthinfo { long born; short age; };
 exec sql begin declare section;
 	struct personal_struct	{	str name;
-					birthinfo birth;
+					struct birthinfo birth;
 				} personal, *p;
 	struct personal_indicator {	int ind_name;
-					birthinfo ind_birth;
+					struct birthinfo ind_birth;
 				  } ind_personal, *i;
 	ind ind_children;
 	c testname="Petra";

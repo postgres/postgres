@@ -126,7 +126,7 @@ exec sql end declare section;
 	    amount[i]+=1000;
 
 	    strcpy(msg, "insert");
-	    exec sql at pm insert into "Test" (name, amount, letter) values (:n, :a, :l);	     
+	    exec sql at pm insert into "Test" (name, amount, letter) values (:n, :a, :l);
 	}
 
 	strcpy(msg, "commit");
