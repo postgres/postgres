@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.151 2002/08/25 14:34:24 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.152 2002/08/27 04:55:07 tgl Exp $
 -->
 
 <appendix id="release">
@@ -24,6 +24,7 @@ CDATA means the content is "SGML-free", so you can write without
 worries about funny characters.
 -->
 <literallayout><![CDATA[
+PREPARE statement allows caching query plans for interactive statements
 Type OPAQUE is now deprecated in favor of pseudo-types cstring, trigger, etc
 Files larger than 2 GB are now supported (if supported by the operating system)
 SERIAL no longer implies UNIQUE; specify explicitly if index is wanted

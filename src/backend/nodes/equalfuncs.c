@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.154 2002/08/26 17:53:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.155 2002/08/27 04:55:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1491,6 +1491,43 @@ _equalDropCastStmt(DropCastStmt *a, DropCastStmt *b)
 }
 
 static bool
+_equalPrepareStmt(PrepareStmt *a, PrepareStmt *b)
+{
+	if (!equalstr(a->name, b->name))
+		return false;
+	if (!equal(a->argtypes, b->argtypes))
+		return false;
+	if (!equali(a->argtype_oids, b->argtype_oids))
+		return false;
+	if (!equal(a->query, b->query))
+		return false;
+
+	return true;
+}
+
+static bool
+_equalExecuteStmt(ExecuteStmt *a, ExecuteStmt *b)
+{
+	if (!equalstr(a->name, b->name))
+		return false;
+	if (!equal(a->into, b->into))
+		return false;
+	if (!equal(a->params, b->params))
+		return false;
+
+	return true;
+}
+
+static bool
+_equalDeallocateStmt(DeallocateStmt *a, DeallocateStmt *b)
+{
+	if (!equalstr(a->name, b->name))
+		return false;
+
+	return true;
+}
+
+static bool
 _equalAExpr(A_Expr *a, A_Expr *b)
 {
 	if (a->oper != b->oper)
@@ -2248,6 +2285,15 @@ equal(void *a, void *b)
 			break;
 		case T_DropCastStmt:
 			retval = _equalDropCastStmt(a, b);
+			break;
+		case T_PrepareStmt:
+			retval = _equalPrepareStmt(a, b);
+			break;
+		case T_ExecuteStmt:
+			retval = _equalExecuteStmt(a, b);
+			break;
+		case T_DeallocateStmt:
+			retval = _equalDeallocateStmt(a, b);
 			break;
 
 		case T_A_Expr:

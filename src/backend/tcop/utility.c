@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.172 2002/08/17 13:04:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.173 2002/08/27 04:55:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,6 +30,7 @@
 #include "commands/explain.h"
 #include "commands/lockcmds.h"
 #include "commands/portalcmds.h"
+#include "commands/prepare.h"
 #include "commands/proclang.h"
 #include "commands/schemacmds.h"
 #include "commands/sequence.h"
@@ -379,6 +380,18 @@ ProcessUtility(Node *parsetree,
 			}
 			break;
 
+		case T_PrepareStmt:
+			PrepareQuery((PrepareStmt *) parsetree);
+			break;
+
+		case T_ExecuteStmt:
+			ExecuteQuery((ExecuteStmt *) parsetree, dest);
+			break;
+
+		case T_DeallocateStmt:
+			DeallocateQuery((DeallocateStmt *) parsetree);
+			break;
+
 			/*
 			 * schema
 			 */
@@ -541,11 +554,7 @@ ProcessUtility(Node *parsetree,
 
 
 		case T_GrantStmt:
-			{
-				GrantStmt  *stmt = (GrantStmt *) parsetree;
-
-				ExecuteGrantStmt(stmt);
-			}
+			ExecuteGrantStmt((GrantStmt *) parsetree);
 			break;
 
 			/*
@@ -841,9 +850,7 @@ ProcessUtility(Node *parsetree,
 			break;
 
 		case T_CreateConversionStmt:
-			{
-				CreateConversionCommand((CreateConversionStmt *) parsetree);
-			}
+			CreateConversionCommand((CreateConversionStmt *) parsetree);
 			break;
 
 		case T_CreateCastStmt:

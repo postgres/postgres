@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.243 2002/08/27 03:56:34 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.244 2002/08/27 04:55:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,10 @@
 #include "catalog/namespace.h"
 #include "catalog/pg_index.h"
 #include "catalog/pg_type.h"
+#include "commands/prepare.h"
 #include "nodes/makefuncs.h"
+#include "optimizer/clauses.h"
+#include "optimizer/planmain.h"
 #include "parser/analyze.h"
 #include "parser/gramparse.h"
 #include "parser/parsetree.h"
@@ -94,6 +97,8 @@ static Query *transformSelectStmt(ParseState *pstate, SelectStmt *stmt);
 static Query *transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt);
 static Node *transformSetOperationTree(ParseState *pstate, SelectStmt *stmt);
 static Query *transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt);
+static Query *transformPrepareStmt(ParseState *pstate, PrepareStmt *stmt);
+static Query *transformExecuteStmt(ParseState *pstate, ExecuteStmt *stmt);
 static Query *transformCreateStmt(ParseState *pstate, CreateStmt *stmt,
 						List **extras_before, List **extras_after);
 static Query *transformAlterTableStmt(ParseState *pstate, AlterTableStmt *stmt,
@@ -275,6 +280,14 @@ transformStmt(ParseState *pstate, Node *parseTree,
 		case T_AlterTableStmt:
 			result = transformAlterTableStmt(pstate, (AlterTableStmt *) parseTree,
 										extras_before, extras_after);
+			break;
+
+		case T_PrepareStmt:
+			result = transformPrepareStmt(pstate, (PrepareStmt *) parseTree);
+			break;
+
+		case T_ExecuteStmt:
+			result = transformExecuteStmt(pstate, (ExecuteStmt *) parseTree);
 			break;
 
 			/*
@@ -2452,6 +2465,131 @@ transformAlterTableStmt(ParseState *pstate, AlterTableStmt *stmt,
 	qry->utilityStmt = (Node *) stmt;
 
 	return qry;
+}
+
+static Query *
+transformPrepareStmt(ParseState *pstate, PrepareStmt *stmt)
+{
+	Query	*result = makeNode(Query);
+	List	*extras_before	= NIL,
+			*extras_after	= NIL;
+	List	*argtype_oids = NIL; /* argtype OIDs in a list */
+	Oid		*argtoids = NULL;	/* as an array for parser_param_set */
+	int		nargs;
+
+	result->commandType = CMD_UTILITY;
+	result->utilityStmt = (Node *) stmt;
+
+	/* Transform list of TypeNames to list (and array) of type OIDs */
+	nargs = length(stmt->argtypes);
+
+	if (nargs)
+	{
+		List *l;
+		int i = 0;
+
+		argtoids = (Oid *) palloc(nargs * sizeof(Oid));
+
+		foreach (l, stmt->argtypes)
+		{
+			TypeName *tn = lfirst(l);
+			Oid toid = typenameTypeId(tn);
+
+			argtype_oids = lappendi(argtype_oids, toid);
+			argtoids[i++] = toid;
+		}
+	}
+
+	stmt->argtype_oids = argtype_oids;
+
+	/*
+	 * We need to adjust the parameters expected by the
+	 * rest of the system, so that $1, ... $n are parsed properly.
+	 *
+	 * This is somewhat of a hack; however, the main parser interface
+	 * only allows parameters to be specified when working with a
+	 * raw query string, which is not helpful here.
+	 */
+	parser_param_set(argtoids, nargs);
+
+	stmt->query = transformStmt(pstate, (Node *) stmt->query,
+								&extras_before, &extras_after);
+
+	/* Shouldn't get any extras, since grammar only allows OptimizableStmt */
+	if (extras_before || extras_after)
+		elog(ERROR, "transformPrepareStmt: internal error");
+
+	/* Remove links to our local parameters */
+	parser_param_set(NULL, 0);
+
+	return result;
+}
+
+static Query *
+transformExecuteStmt(ParseState *pstate, ExecuteStmt *stmt)
+{
+	Query *result = makeNode(Query);
+	List   *paramtypes;
+
+	result->commandType = CMD_UTILITY;
+	result->utilityStmt = (Node *) stmt;
+
+	paramtypes = FetchQueryParams(stmt->name);
+
+	if (stmt->params || paramtypes)
+	{
+		int nparams = length(stmt->params);
+		int nexpected = length(paramtypes);
+		List *l;
+		int i = 1;
+
+		if (nparams != nexpected)
+			elog(ERROR, "Wrong number of parameters, expected %d but got %d",
+				 nexpected, nparams);
+
+		foreach (l, stmt->params)
+		{
+			Node *expr = lfirst(l);
+			Oid expected_type_id,
+				given_type_id;
+
+			expr = transformExpr(pstate, expr);
+
+			/* Cannot contain subselects or aggregates */
+			if (contain_subplans(expr))
+				elog(ERROR, "Cannot use subselects in EXECUTE parameters");
+			if (contain_agg_clause(expr))
+				elog(ERROR, "Cannot use aggregates in EXECUTE parameters");
+
+			given_type_id = exprType(expr);
+			expected_type_id = (Oid) lfirsti(paramtypes);
+
+			if (given_type_id != expected_type_id)
+			{
+				expr = CoerceTargetExpr(pstate,
+										expr,
+										given_type_id,
+										expected_type_id,
+										-1,
+										false);
+
+				if (!expr)
+					elog(ERROR, "Parameter $%d of type %s cannot be coerced into the expected type %s"
+								"\n\tYou will need to rewrite or cast the expression",
+						 i,
+						 format_type_be(given_type_id),
+						 format_type_be(expected_type_id));
+			}
+
+			fix_opids(expr);
+			lfirst(l) = expr;
+
+			paramtypes = lnext(paramtypes);
+			i++;
+		}
+	}
+
+	return result;
 }
 
 /* exported so planner can check again after rewriting, query pullup, etc */

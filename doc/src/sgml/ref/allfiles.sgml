@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/allfiles.sgml,v 1.47 2002/08/27 03:38:27 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/allfiles.sgml,v 1.48 2002/08/27 04:55:07 tgl Exp $
 PostgreSQL documentation
 Complete list of usable sgml source files in this directory.
 -->
@@ -71,6 +71,7 @@ Complete list of usable sgml source files in this directory.
 <!entity createType         system "create_type.sgml">
 <!entity createUser         system "create_user.sgml">
 <!entity createView         system "create_view.sgml">
+<!entity deallocate         system "deallocate.sgml">
 <!entity declare            system "declare.sgml">
 <!entity delete             system "delete.sgml">
 <!entity dropAggregate      system "drop_aggregate.sgml">
@@ -93,6 +94,7 @@ Complete list of usable sgml source files in this directory.
 <!entity dropUser           system "drop_user.sgml">
 <!entity dropView           system "drop_view.sgml">
 <!entity end                system "end.sgml">
+<!entity execute            system "execute.sgml">
 <!entity explain            system "explain.sgml">
 <!entity fetch              system "fetch.sgml">
 <!entity grant              system "grant.sgml">
@@ -102,6 +104,7 @@ Complete list of usable sgml source files in this directory.
 <!entity lock               system "lock.sgml">
 <!entity move               system "move.sgml">
 <!entity notify             system "notify.sgml">
+<!entity prepare            system "prepare.sgml">
 <!entity reindex            system "reindex.sgml">
 <!entity reset              system "reset.sgml">
 <!entity revoke             system "revoke.sgml">

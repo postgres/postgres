@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.201 2002/08/19 15:08:47 tgl Exp $
+ * $Id: parsenodes.h,v 1.202 2002/08/27 04:55:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1619,5 +1619,43 @@ typedef struct DropCastStmt
 	DropBehavior behavior;
 } DropCastStmt;
 
+
+/* ----------------------
+ *		PREPARE Statement
+ * ----------------------
+ */
+typedef struct PrepareStmt
+{
+	NodeTag		 type;
+	char		*name;			/* Name of plan, arbitrary */
+	List		*argtypes;		/* Types of parameters (TypeNames) */
+	List		*argtype_oids;	/* Types of parameters (OIDs) */
+	Query		*query;			/* The query itself */
+} PrepareStmt;
+
+
+/* ----------------------
+ *		EXECUTE Statement
+ * ----------------------
+ */
+
+typedef struct ExecuteStmt
+{
+	NodeTag		 type;
+	char		*name;			/* The name of the plan to execute */
+	RangeVar	*into;			/* Optional table to store results in */
+	List		*params;		/* Values to assign to parameters */
+} ExecuteStmt;
+
+
+/* ----------------------
+ *		DEALLOCATE Statement
+ * ----------------------
+ */
+typedef struct DeallocateStmt
+{
+	NodeTag		type;
+	char	   *name;			/* The name of the plan to remove */
+} DeallocateStmt;
 
 #endif   /* PARSENODES_H */

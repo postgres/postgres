@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.283 2002/08/17 15:12:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.284 2002/08/27 04:55:11 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1666,7 +1666,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.283 $ $Date: 2002/08/17 15:12:07 $\n");
+		puts("$Revision: 1.284 $ $Date: 2002/08/27 04:55:11 $\n");
 	}
 
 	/*
@@ -2404,6 +2404,18 @@ CreateCommandTag(Node *parsetree)
 
 		case T_RemoveOpClassStmt:
 			tag = "DROP OPERATOR CLASS";
+			break;
+
+		case T_PrepareStmt:
+			tag = "PREPARE";
+			break;
+
+		case T_ExecuteStmt:
+			tag = "EXECUTE";
+			break;
+
+		case T_DeallocateStmt:
+			tag = "DEALLOCATE";
 			break;
 
 		default:

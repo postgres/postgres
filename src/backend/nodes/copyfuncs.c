@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.206 2002/08/26 17:53:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.207 2002/08/27 04:55:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2647,6 +2647,41 @@ _copyDropCastStmt(DropCastStmt *from)
 	return newnode;
 }
 
+static PrepareStmt *
+_copyPrepareStmt(PrepareStmt *from)
+{
+	PrepareStmt *newnode = makeNode(PrepareStmt);
+
+	newnode->name = pstrdup(from->name);
+	Node_Copy(from, newnode, argtypes);
+	newnode->argtype_oids = listCopy(from->argtype_oids);
+	Node_Copy(from, newnode, query);
+
+	return newnode;
+}
+
+static ExecuteStmt *
+_copyExecuteStmt(ExecuteStmt *from)
+{
+	ExecuteStmt *newnode = makeNode(ExecuteStmt);
+
+	newnode->name = pstrdup(from->name);
+	Node_Copy(from, newnode, into);
+	Node_Copy(from, newnode, params);
+
+	return newnode;
+}
+
+static DeallocateStmt *
+_copyDeallocateStmt(DeallocateStmt *from)
+{
+	DeallocateStmt *newnode = makeNode(DeallocateStmt);
+
+	newnode->name = pstrdup(from->name);
+
+	return newnode;
+}
+
 
 /* ****************************************************************
  *					pg_list.h copy functions
@@ -3078,6 +3113,15 @@ copyObject(void *from)
 			break;
 		case T_DropCastStmt:
 			retval = _copyDropCastStmt(from);
+			break;
+		case T_PrepareStmt:
+			retval = _copyPrepareStmt(from);
+			break;
+		case T_ExecuteStmt:
+			retval = _copyExecuteStmt(from);
+			break;
+		case T_DeallocateStmt:
+			retval = _copyDeallocateStmt(from);
 			break;
 
 		case T_A_Expr:

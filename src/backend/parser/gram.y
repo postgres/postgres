@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.360 2002/08/19 15:08:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.361 2002/08/27 04:55:08 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -68,8 +68,6 @@
 extern List *parsetree;			/* final parse result is delivered here */
 
 static bool QueryIsRule = FALSE;
-static Oid	*param_type_info;
-static int	pfunc_num_args;
 
 /*
  * If you need access to certain yacc-generated variables and find that
@@ -149,7 +147,8 @@ static void doNegateFloat(Value *v);
 		SelectStmt, TransactionStmt, TruncateStmt,
 		UnlistenStmt, UpdateStmt, VacuumStmt,
 		VariableResetStmt, VariableSetStmt, VariableShowStmt,
-		ViewStmt, CheckPointStmt, CreateConversionStmt
+		ViewStmt, CheckPointStmt, CreateConversionStmt,
+		DeallocateStmt, PrepareStmt, ExecuteStmt
 
 %type <node>	select_no_parens, select_with_parens, select_clause,
 				simple_select
@@ -218,7 +217,8 @@ static void doNegateFloat(Value *v);
 				group_clause, TriggerFuncArgs, select_limit,
 				opt_select_limit, opclass_item_list, trans_options,
 				TableFuncElementList, OptTableFuncElementList,
-				convert_args
+				convert_args, prep_type_clause, prep_type_list,
+				execute_param_clause, execute_param_list
 
 %type <range>	into_clause, OptTempTableName
 
@@ -335,7 +335,7 @@ static void doNegateFloat(Value *v);
 	CREATEUSER, CROSS, CURRENT_DATE, CURRENT_TIME,
 	CURRENT_TIMESTAMP, CURRENT_USER, CURSOR, CYCLE,
 
-	DATABASE, DAY_P, DEC, DECIMAL, DECLARE, DEFAULT,
+	DATABASE, DAY_P, DEALLOCATE, DEC, DECIMAL, DECLARE, DEFAULT,
 	DEFERRABLE, DEFERRED, DEFINER, DELETE_P, DELIMITER, DELIMITERS,
     DESC, DISTINCT, DO, DOMAIN_P, DOUBLE, DROP,
 
@@ -371,7 +371,7 @@ static void doNegateFloat(Value *v);
 	ORDER, OUT_P, OUTER_P, OVERLAPS, OVERLAY, OWNER,
 
 	PARTIAL, PASSWORD, PATH_P, PENDANT, PLACING, POSITION,
-	PRECISION, PRIMARY, PRIOR, PRIVILEGES, PROCEDURE,
+	PRECISION, PREPARE, PRIMARY, PRIOR, PRIVILEGES, PROCEDURE,
 	PROCEDURAL,
 
 	READ, REAL, RECHECK, REFERENCES, REINDEX, RELATIVE, RENAME, REPLACE,
@@ -490,6 +490,7 @@ stmt :
 			| CreateTrigStmt
 			| CreateUserStmt
 			| ClusterStmt
+			| DeallocateStmt
 			| DefineStmt
 			| DropStmt
 			| TruncateStmt
@@ -502,6 +503,7 @@ stmt :
 			| DropTrigStmt
 			| DropRuleStmt
 			| DropUserStmt
+			| ExecuteStmt
 			| ExplainStmt
 			| FetchStmt
 			| GrantStmt
@@ -510,6 +512,7 @@ stmt :
 			| UnlistenStmt
 			| LockStmt
 			| NotifyStmt
+			| PrepareStmt
 			| ReindexStmt
 			| RemoveAggrStmt
 			| RemoveOperStmt
@@ -3875,6 +3878,77 @@ ExplainStmt:
 				}
 		;
 
+/*****************************************************************************
+ *
+ *		QUERY:
+ *				PREPARE <plan_name> [(args, ...)] AS <query>
+ *
+ *****************************************************************************/
+
+PrepareStmt: PREPARE name prep_type_clause AS OptimizableStmt
+				{
+					PrepareStmt *n = makeNode(PrepareStmt);
+					n->name = $2;
+					n->argtypes = $3;
+					n->query = (Query *) $5;
+					$$ = (Node *) n;
+				}
+		;
+
+prep_type_clause: '(' prep_type_list ')'	{ $$ = $2; }
+				| /* EMPTY */				{ $$ = NIL; }
+		;
+
+prep_type_list: Typename			{ $$ = makeList1($1); }
+			  | prep_type_list ',' Typename
+									{ $$ = lappend($1, $3); }
+		;
+
+/*****************************************************************************
+ *
+ *		QUERY:
+ *				EXECUTE <plan_name> [(params, ...)] [INTO ...]
+ *
+ *****************************************************************************/
+
+ExecuteStmt: EXECUTE name execute_param_clause into_clause
+				{
+					ExecuteStmt *n = makeNode(ExecuteStmt);
+					n->name = $2;
+					n->params = $3;
+					n->into = $4;
+					$$ = (Node *) n;
+				}
+		;
+
+execute_param_clause: '(' execute_param_list ')'	{ $$ = $2; }
+					| /* EMPTY */					{ $$ = NIL; }
+					;
+
+execute_param_list: a_expr							{ $$ = makeList1($1); }
+				  | execute_param_list ',' a_expr	{ $$ = lappend($1, $3); }
+				  ;
+
+/*****************************************************************************
+ *
+ *		QUERY:
+ *				DEALLOCATE [PREPARE] <plan_name>
+ *
+ *****************************************************************************/
+
+DeallocateStmt: DEALLOCATE name
+					{
+						DeallocateStmt *n = makeNode(DeallocateStmt);
+						n->name = $2;
+						$$ = (Node *) n;
+					}
+				| DEALLOCATE PREPARE name
+					{
+						DeallocateStmt *n = makeNode(DeallocateStmt);
+						n->name = $3;
+						$$ = (Node *) n;
+					}
+		;
 
 /*****************************************************************************
  *																			 *
@@ -6947,6 +7021,7 @@ unreserved_keyword:
 			| CYCLE
 			| DATABASE
 			| DAY_P
+			| DEALLOCATE
 			| DECLARE
 			| DEFERRED
 			| DEFINER
@@ -7019,6 +7094,7 @@ unreserved_keyword:
 			| PATH_P
 			| PENDANT
 			| PRECISION
+			| PREPARE
 			| PRIOR
 			| PRIVILEGES
 			| PROCEDURAL
@@ -7589,26 +7665,9 @@ SystemTypeName(char *name)
  * Initialize to parse one query string
  */
 void
-parser_init(Oid *typev, int nargs)
+parser_init(void)
 {
 	QueryIsRule = FALSE;
-	/*
-	 * Keep enough information around to fill out the type of param nodes
-	 * used in postquel functions
-	 */
-	param_type_info = typev;
-	pfunc_num_args = nargs;
-}
-
-/* param_type()
- * Fetch a parameter type previously passed to parser_init
- */
-Oid
-param_type(int t)
-{
-	if ((t > pfunc_num_args) || (t <= 0))
-		return InvalidOid;
-	return param_type_info[t - 1];
 }
 
 /* exprIsNullConstant()

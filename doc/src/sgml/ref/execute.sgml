@@ -1,0 +1,132 @@
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/execute.sgml,v 1.1 2002/08/27 04:55:07 tgl Exp $
+PostgreSQL documentation
+-->
+
+<refentry id="SQL-EXECUTE">
+ <refmeta>
+  <refentrytitle id="sql-execute-title">EXECUTE</refentrytitle>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+ <refnamediv>
+  <refname>
+   EXECUTE
+  </refname>
+  <refpurpose>
+   execute a prepared query
+  </refpurpose>
+ </refnamediv>
+ <refsynopsisdiv>
+  <refsynopsisdivinfo>
+   <date>2002-08-12</date>
+  </refsynopsisdivinfo>
+  <synopsis>
+   EXECUTE <replaceable class="PARAMETER">plan_name</replaceable> [ (<replaceable class="PARAMETER">parameter</replaceable> [, ...] ) ]
+  </synopsis>
+
+  <refsect2 id="R2-SQL-EXECUTE-1">
+   <refsect2info>
+    <date>2002-08-12</date>
+   </refsect2info>
+   <title>
+    Inputs
+   </title>
+
+   <para>
+    <variablelist>
+     <varlistentry>
+      <term><replaceable class="PARAMETER">plan_name</replaceable></term>
+      <listitem>
+       <para>
+		The name of the prepared query to execute.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><replaceable class="PARAMETER">parameter</replaceable></term>
+      <listitem>
+       <para>
+		The actual value of a parameter to the prepared query.
+		This must be an expression yielding a value of a type
+		compatible with
+		the data-type specified for this parameter position in the
+		<command>PREPARE</command> statement that created the prepared
+		query.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+  </refsect2>
+ </refsynopsisdiv>
+
+ <refsect1 id="R1-SQL-EXECUTE-1">
+  <refsect1info>
+   <date>2002-08-12</date>
+  </refsect1info>
+  <title>
+   Description
+  </title>
+
+  <para>
+   <command>EXECUTE</command> is used to execute a previously prepared
+   query. Since prepared queries only exist for the duration of a
+   session, the prepared query must have been created by a
+   <command>PREPARE</command> statement executed earlier in the
+   current session.
+  </para>
+
+  <para>
+   If the <command>PREPARE</command> statement that created the query
+   specified some parameters, a compatible set of parameters must be
+   passed to the <command>EXECUTE</command> statement, or else an
+   error is raised. Note that (unlike functions) prepared queries are
+   not overloaded based on the type or number of their parameters: the
+   name of a prepared query must be unique within a database session.
+  </para>
+
+  <para>
+   For more information on the creation and usage of prepared queries,
+   see <xref linkend="sql-prepare" endterm="sql-prepare-title">.
+  </para>
+ </refsect1>
+
+ <refsect1 id="R1-SQL-EXECUTE-2">
+  <title>
+   Compatibility
+  </title>
+
+  <refsect2 id="R2-SQL-EXECUTE-2">
+   <refsect2info>
+    <date>2002-08-12</date>
+   </refsect2info>
+   <title>
+    SQL92
+   </title>
+   <para>
+	SQL92 includes an <command>EXECUTE</command> statement, but it is
+    only for use in embedded SQL clients. The
+    <command>EXECUTE</command> statement implemented by
+    <productname>PostgreSQL</productname> also uses a somewhat
+    different syntax.
+   </para>
+  </refsect2>
+ </refsect1>
+</refentry>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:nil
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+sgml-parent-document:nil
+sgml-default-dtd-file:"../reference.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:"/usr/lib/sgml/catalog"
+sgml-local-ecat-files:nil
+End:
+-->

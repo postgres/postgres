@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.125 2002/08/18 09:36:25 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.126 2002/08/27 04:55:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -96,6 +96,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"cycle", CYCLE},
 	{"database", DATABASE},
 	{"day", DAY_P},
+	{"deallocate", DEALLOCATE},
 	{"dec", DEC},
 	{"decimal", DECIMAL},
 	{"declare", DECLARE},
@@ -229,6 +230,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"placing", PLACING},
 	{"position", POSITION},
 	{"precision", PRECISION},
+	{"prepare", PREPARE},
 	{"primary", PRIMARY},
 	{"prior", PRIOR},
 	{"privileges", PRIVILEGES},
