@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.18 1997/09/08 21:48:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.19 1997/09/20 16:17:45 thomas Exp $
  *
  * NOTES
  *	 This code is actually (almost) unused.
@@ -565,16 +565,217 @@ reltimege(RelativeTime t1, RelativeTime t2)
 
 
 /*
+ *		intervalsame	- returns 1, iff interval i1 is same as interval i2
+ *		Check begin and end time.
+ */
+bool
+intervalsame(TimeInterval i1, TimeInterval i2)
+{
+	if (i1->status == T_INTERVAL_INVAL || i2->status == T_INTERVAL_INVAL)
+		return (FALSE);			/* invalid interval */
+	return (abstimeeq(i1->data[0], i2->data[0]) &&
+			abstimeeq(i1->data[1], i2->data[1]));
+} /* intervalsame() */
+
+
+/*
  *		intervaleq		- returns 1, iff interval i1 is equal to interval i2
+ *		Check length of intervals.
  */
 bool
 intervaleq(TimeInterval i1, TimeInterval i2)
 {
+	AbsoluteTime t10, t11, t20, t21;
+
 	if (i1->status == T_INTERVAL_INVAL || i2->status == T_INTERVAL_INVAL)
-		return (0);				/* invalid interval */
-	return (abstimeeq(i1->data[0], i2->data[0]) &&
-			abstimeeq(i1->data[1], i2->data[1]));
-}
+		return (FALSE);			/* invalid interval */
+
+	t10 = i1->data[0];
+	t11 = i1->data[1];
+	t20 = i2->data[0];
+	t21 = i2->data[1];
+
+	if ((t10 == INVALID_ABSTIME) || (t20 == INVALID_ABSTIME)
+	 || (t20 == INVALID_ABSTIME) || (t21 == INVALID_ABSTIME))
+		return (FALSE);
+
+	if (t10 == CURRENT_ABSTIME)
+		t10 = GetCurrentTransactionStartTime();
+	if (t11 == CURRENT_ABSTIME)
+		t11 = GetCurrentTransactionStartTime();
+	if (t20 == CURRENT_ABSTIME)
+		t20 = GetCurrentTransactionStartTime();
+	if (t21 == CURRENT_ABSTIME)
+		t21 = GetCurrentTransactionStartTime();
+
+	return ((t11-t10) == (t21-t20));
+} /* intervaleq() */
+
+/*
+ *		intervalne		- returns 1, iff interval i1 is not equal to interval i2
+ *		Check length of intervals.
+ */
+bool
+intervalne(TimeInterval i1, TimeInterval i2)
+{
+	AbsoluteTime t10, t11, t20, t21;
+
+	if (i1->status == T_INTERVAL_INVAL || i2->status == T_INTERVAL_INVAL)
+		return (FALSE);			/* invalid interval */
+
+	t10 = i1->data[0];
+	t11 = i1->data[1];
+	t20 = i2->data[0];
+	t21 = i2->data[1];
+
+	if ((t10 == INVALID_ABSTIME) || (t20 == INVALID_ABSTIME)
+	 || (t20 == INVALID_ABSTIME) || (t21 == INVALID_ABSTIME))
+		return (FALSE);
+
+	if (t10 == CURRENT_ABSTIME)
+		t10 = GetCurrentTransactionStartTime();
+	if (t11 == CURRENT_ABSTIME)
+		t11 = GetCurrentTransactionStartTime();
+	if (t20 == CURRENT_ABSTIME)
+		t20 = GetCurrentTransactionStartTime();
+	if (t21 == CURRENT_ABSTIME)
+		t21 = GetCurrentTransactionStartTime();
+
+	return ((t11-t10) != (t21-t20));
+} /* intervalne() */
+
+/*
+ *		intervallt		- returns TRUE, iff interval i1 is less than interval i2
+ *		Check length of intervals.
+ */
+bool
+intervallt(TimeInterval i1, TimeInterval i2)
+{
+	AbsoluteTime t10, t11, t20, t21;
+
+	if (i1->status == T_INTERVAL_INVAL || i2->status == T_INTERVAL_INVAL)
+		return (FALSE);			/* invalid interval */
+
+	t10 = i1->data[0];
+	t11 = i1->data[1];
+	t20 = i2->data[0];
+	t21 = i2->data[1];
+
+	if ((t10 == INVALID_ABSTIME) || (t20 == INVALID_ABSTIME)
+	 || (t20 == INVALID_ABSTIME) || (t21 == INVALID_ABSTIME))
+		return (FALSE);
+
+	if (t10 == CURRENT_ABSTIME)
+		t10 = GetCurrentTransactionStartTime();
+	if (t11 == CURRENT_ABSTIME)
+		t11 = GetCurrentTransactionStartTime();
+	if (t20 == CURRENT_ABSTIME)
+		t20 = GetCurrentTransactionStartTime();
+	if (t21 == CURRENT_ABSTIME)
+		t21 = GetCurrentTransactionStartTime();
+
+	return ((t11-t10) < (t21-t20));
+} /* intervallt() */
+
+/*
+ *		intervalle		- returns TRUE, iff interval i1 is less than or equal to interval i2
+ *		Check length of intervals.
+ */
+bool
+intervalle(TimeInterval i1, TimeInterval i2)
+{
+	AbsoluteTime t10, t11, t20, t21;
+
+	if (i1->status == T_INTERVAL_INVAL || i2->status == T_INTERVAL_INVAL)
+		return (FALSE);			/* invalid interval */
+
+	t10 = i1->data[0];
+	t11 = i1->data[1];
+	t20 = i2->data[0];
+	t21 = i2->data[1];
+
+	if ((t10 == INVALID_ABSTIME) || (t20 == INVALID_ABSTIME)
+	 || (t20 == INVALID_ABSTIME) || (t21 == INVALID_ABSTIME))
+		return (FALSE);
+
+	if (t10 == CURRENT_ABSTIME)
+		t10 = GetCurrentTransactionStartTime();
+	if (t11 == CURRENT_ABSTIME)
+		t11 = GetCurrentTransactionStartTime();
+	if (t20 == CURRENT_ABSTIME)
+		t20 = GetCurrentTransactionStartTime();
+	if (t21 == CURRENT_ABSTIME)
+		t21 = GetCurrentTransactionStartTime();
+
+	return ((t11-t10) <= (t21-t20));
+} /* intervalle() */
+
+/*
+ *		intervalgt		- returns TRUE, iff interval i1 is less than interval i2
+ *		Check length of intervals.
+ */
+bool
+intervalgt(TimeInterval i1, TimeInterval i2)
+{
+	AbsoluteTime t10, t11, t20, t21;
+
+	if (i1->status == T_INTERVAL_INVAL || i2->status == T_INTERVAL_INVAL)
+		return (FALSE);			/* invalid interval */
+
+	t10 = i1->data[0];
+	t11 = i1->data[1];
+	t20 = i2->data[0];
+	t21 = i2->data[1];
+
+	if ((t10 == INVALID_ABSTIME) || (t20 == INVALID_ABSTIME)
+	 || (t20 == INVALID_ABSTIME) || (t21 == INVALID_ABSTIME))
+		return (FALSE);
+
+	if (t10 == CURRENT_ABSTIME)
+		t10 = GetCurrentTransactionStartTime();
+	if (t11 == CURRENT_ABSTIME)
+		t11 = GetCurrentTransactionStartTime();
+	if (t20 == CURRENT_ABSTIME)
+		t20 = GetCurrentTransactionStartTime();
+	if (t21 == CURRENT_ABSTIME)
+		t21 = GetCurrentTransactionStartTime();
+
+	return ((t11-t10) > (t21-t20));
+} /* intervalgt() */
+
+/*
+ *		intervalge		- returns TRUE, iff interval i1 is less than or equal to interval i2
+ *		Check length of intervals.
+ */
+bool
+intervalge(TimeInterval i1, TimeInterval i2)
+{
+	AbsoluteTime t10, t11, t20, t21;
+
+	if (i1->status == T_INTERVAL_INVAL || i2->status == T_INTERVAL_INVAL)
+		return (FALSE);			/* invalid interval */
+
+	t10 = i1->data[0];
+	t11 = i1->data[1];
+	t20 = i2->data[0];
+	t21 = i2->data[1];
+
+	if ((t10 == INVALID_ABSTIME) || (t20 == INVALID_ABSTIME)
+	 || (t20 == INVALID_ABSTIME) || (t21 == INVALID_ABSTIME))
+		return (FALSE);
+
+	if (t10 == CURRENT_ABSTIME)
+		t10 = GetCurrentTransactionStartTime();
+	if (t11 == CURRENT_ABSTIME)
+		t11 = GetCurrentTransactionStartTime();
+	if (t20 == CURRENT_ABSTIME)
+		t20 = GetCurrentTransactionStartTime();
+	if (t21 == CURRENT_ABSTIME)
+		t21 = GetCurrentTransactionStartTime();
+
+	return ((t11-t10) >= (t21-t20));
+} /* intervalge() */
+
 
 /*
  *		intervalleneq	- returns 1, iff length of interval i is equal to
