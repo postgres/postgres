@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/datetimes.c,v 1.8 1997/01/26 15:31:12 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/datetimes.c,v 1.9 1997/03/02 02:05:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -240,32 +240,54 @@ date_smaller(int4 dateVal1, int4 dateVal2)
 int32
 date_mi(int4 dateVal1, int4 dateVal2)
 {
+  int4 dv1, dv2;
   DateADT *date1, *date2;
   int32 days = 0;
   int i;
 
-  date1 = (DateADT *) &dateVal1;
-  date2 = (DateADT *) &dateVal2;
+  /* This circumlocution allows us to assume that date1 is always
+     before date2.  */
+  dv1 = date_smaller (dateVal1, dateVal2);
+  dv2 = date_larger (dateVal1, dateVal2);
+  date1 = (DateADT *) &dv1;
+  date2 = (DateADT *) &dv2;
 
   /* Sum number of days in each full year between date1 and date2.  */
   for (i = date1->year + 1; i < date2->year; ++i)
     days += isleap (i) ? 366 : 365;
 
-  /* Add in number of days in each full month from date1 to end of
-     year.  */
-  for (i = date1->month + 1; i <= 12; ++i)
-    days += day_tab[isleap (date1->year)][i - 1];
+  if (days)
+    {
+      /* We need to wrap around the year.  Add in number of days in each
+	 full month from date1 to end of year.  */
+      for (i = date1->month + 1; i <= 12; ++i)
+	days += day_tab[isleap (date1->year)][i - 1];
 
-  /* Add in number of days in each full month from start of year to
-     date2.  */
-  for (i = 1; i < date2->month; ++i)
-    days += day_tab[isleap (date2->year)][i - 1];
+      /* Add in number of days in each full month from start of year to
+	 date2.  */
+      for (i = 1; i < date2->month; ++i)
+	days += day_tab[isleap (date2->year)][i - 1];
+    }
+  else
+    {
+      /* Add in number of days in each full month from date1 to date2.  */
+      for (i = date1->month + 1; i < date2->month; ++i)
+	days += day_tab[isleap (date1->year)][i - 1];
+    }
 
-  /* Add in number of days left in month for date1.  */
-  days += day_tab[isleap (date1->year)][date1->month - 1] - date1->day;
+  if (days || date1->month != date2->month)
+    {
+      /* Add in number of days left in month for date1.  */
+      days += day_tab[isleap (date1->year)][date1->month - 1] - date1->day;
 
-  /* Add in day of month of date2.  */
-  days += date2->day;
+      /* Add in day of month of date2.  */
+      days += date2->day;
+    }
+  else
+    {
+      /* Everything's in the same month, so just subtract the days!  */
+      days = date2->day - date1->day;
+    }
 
   return (days);
 }
