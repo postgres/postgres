@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.56 2003/02/19 04:06:28 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.57 2003/03/20 18:52:47 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -46,6 +46,8 @@ ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ * ]
     DROP CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> [ RESTRICT | CASCADE ]
 ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
     OWNER TO <replaceable class="PARAMETER">new_owner</replaceable> 
+ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
+	CLUSTER ON <replaceable class="PARAMETER">index_name</replaceable>
   </synopsis>
 
   <refsect2 id="R2-SQL-ALTERTABLE-1">
@@ -134,6 +136,15 @@ ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
       <listitem>
        <para>
 	The user name of the new owner of the table.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="PARAMETER"> index_name </replaceable></term>
+      <listitem>
+       <para>
+	The index name on which the table should be marked for clustering.
        </para>
       </listitem>
      </varlistentry>
@@ -340,6 +351,16 @@ ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
      <para>
       This form changes the owner of the table, index, sequence or view to the
       specified user.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>CLUSTER</term>
+    <listitem>
+     <para>
+      This form marks a table for future <xref linkend="SQL-CLUSTER" endterm="sql-cluster-title">
+      operations.
      </para>
     </listitem>
    </varlistentry>

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.68 2003/03/20 03:34:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.69 2003/03/20 18:52:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3793,6 +3793,90 @@ CheckTupleType(Form_pg_class tuple_class)
 			elog(ERROR, "ALTER TABLE: relation \"%s\" is not a table, TOAST table, index, view, or sequence",
 				 NameStr(tuple_class->relname));
 	}
+}
+
+/*
+ * ALTER TABLE CLUSTER ON
+ *
+ * The only thing we have to do is to change the indisclustered bits.
+ */
+void
+AlterTableClusterOn(Oid relOid, const char *indexName)
+{
+	Relation 		rel,
+					pg_index;
+	List		   *index;
+	Oid		 		indexOid;
+	HeapTuple		indexTuple;
+	Form_pg_index	indexForm;
+	
+	rel = heap_open(relOid, AccessExclusiveLock);
+
+	indexOid = get_relname_relid(indexName, rel->rd_rel->relnamespace);
+	
+	if (!OidIsValid(indexOid))
+		elog(ERROR, "ALTER TABLE: cannot find index \"%s\" for table \"%s\"",
+				indexName, NameStr(rel->rd_rel->relname));
+
+	indexTuple = SearchSysCache(INDEXRELID,
+								ObjectIdGetDatum(indexOid),
+								0, 0, 0);
+
+	if (!HeapTupleIsValid(indexTuple))
+		elog(ERROR, "Cache lookup failed for index %u",
+				indexOid);
+	indexForm = (Form_pg_index) GETSTRUCT(indexTuple);
+
+	/*
+	 * If this is the same index the relation was previously
+	 * clustered on, no need to do anything.
+	 */
+	if (indexForm->indisclustered)
+	{
+		elog(NOTICE, "ALTER TABLE: table \"%s\" is already being clustered on index \"%s\"",
+				NameStr(rel->rd_rel->relname), indexName);
+		heap_close(rel, AccessExclusiveLock);
+		return;
+	}
+
+	pg_index = heap_openr(IndexRelationName, RowExclusiveLock);
+	
+	/*
+	 * Now check each index in the relation and set the bit where needed.
+	 */
+	foreach (index, RelationGetIndexList(rel))
+	{
+		HeapTuple       idxtuple;
+		Form_pg_index   idxForm;
+		
+		indexOid = lfirsto(index);
+		idxtuple = SearchSysCacheCopy(INDEXRELID,
+		  							  ObjectIdGetDatum(indexOid),
+									  0, 0, 0);
+		if (!HeapTupleIsValid(idxtuple))
+			elog(ERROR, "Cache lookup failed for index %u", indexOid);
+		idxForm = (Form_pg_index) GETSTRUCT(idxtuple);
+		/*
+		 * Unset the bit if set.  We know it's wrong because we checked
+		 * this earlier.
+		 */
+		if (idxForm->indisclustered)
+		{
+			idxForm->indisclustered = false;
+			simple_heap_update(pg_index, &idxtuple->t_self, idxtuple);
+			CatalogUpdateIndexes(pg_index, idxtuple);
+		}
+		else if (idxForm->indexrelid == indexForm->indexrelid)
+		{
+			idxForm->indisclustered = true;
+			simple_heap_update(pg_index, &idxtuple->t_self, idxtuple);
+			CatalogUpdateIndexes(pg_index, idxtuple);
+		}
+		heap_freetuple(idxtuple);
+	}
+	ReleaseSysCache(indexTuple);
+	heap_close(rel, AccessExclusiveLock);
+	heap_close(pg_index, RowExclusiveLock);
 }
 
 /*

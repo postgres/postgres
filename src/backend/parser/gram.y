@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.407 2003/03/20 07:02:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.408 2003/03/20 18:52:47 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1213,6 +1213,15 @@ AlterTableStmt:
 					AlterTableStmt *n = makeNode(AlterTableStmt);
 					n->subtype = 'U';
 					$3->inhOpt = INH_NO;
+					n->relation = $3;
+					n->name = $6;
+					$$ = (Node *)n;
+				}
+			/* ALTER TABLE <name> CLUSTER ON <indexname> */
+			| ALTER TABLE qualified_name CLUSTER ON name
+				{
+					AlterTableStmt *n = makeNode(AlterTableStmt);
+					n->subtype = 'L';
 					n->relation = $3;
 					n->name = $6;
 					$$ = (Node *)n;

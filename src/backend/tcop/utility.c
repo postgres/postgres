@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.196 2003/03/20 07:02:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.197 2003/03/20 18:52:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -608,6 +608,9 @@ ProcessUtility(Node *parsetree,
 						/* get_usesysid raises an error if no such user */
 						AlterTableOwner(relid,
 										get_usesysid(stmt->name));
+						break;
+					case 'L':	/* CLUSTER ON */
+						AlterTableClusterOn(relid, stmt->name);
 						break;
 					case 'o': /* ADD OIDS */
 						AlterTableAlterOids(relid,

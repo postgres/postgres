@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.234 2003/03/20 07:02:11 momjian Exp $
+ * $Id: parsenodes.h,v 1.235 2003/03/20 18:52:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -704,6 +704,7 @@ typedef struct AlterTableStmt
 								 *	X = drop constraint
 								 *	E = create toast table
 								 *	U = change owner
+								 *	L = CLUSTER ON
 								 *  o = DROP OIDS
 								 *------------
 								 */

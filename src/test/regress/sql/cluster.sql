@@ -87,6 +87,14 @@ WHERE pg_class.oid=indexrelid
 	AND pg_class_2.relname = 'clstr_tst'
 	AND indisclustered;
 
+-- Try changing indisclustered
+ALTER TABLE clstr_tst CLUSTER ON clstr_tst_b_c;
+SELECT pg_class.relname FROM pg_index, pg_class, pg_class AS pg_class_2
+WHERE pg_class.oid=indexrelid
+	AND indrelid=pg_class_2.oid
+	AND pg_class_2.relname = 'clstr_tst'
+	AND indisclustered;
+
 -- Verify that clustering all tables does in fact cluster the right ones
 CREATE USER clstr_user;
 CREATE TABLE clstr_1 (a INT PRIMARY KEY);
