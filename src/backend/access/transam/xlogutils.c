@@ -198,6 +198,8 @@ XLogReadBuffer(bool extend, Relation reln, BlockNumber blkno)
 			Assert(InRecovery);
 			while (lastblock <= blkno)
 			{
+				if (buffer != InvalidBuffer)
+                                        ReleaseBuffer(buffer); /* must be WriteBuffer()? */
 				buffer = ReadBuffer(reln, P_NEW);
 				lastblock++;
 			}
