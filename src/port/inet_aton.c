@@ -1,4 +1,4 @@
-/* $Id: inet_aton.c,v 1.3 2003/06/12 08:02:57 momjian Exp $
+/* $Id: inet_aton.c,v 1.4 2003/06/12 08:11:07 momjian Exp $
  *
  *	This inet_aton() function was taken from the GNU C library and
  *	incorporated into Postgres for those systems which do not have this
@@ -44,10 +44,8 @@
 
 #include "c.h"
 
-#if !defined(WIN32) || (!defined(_MSC_VER) && !defined(__BORLANDC__))
 #include <netinet/in.h>
 #include <ctype.h>
-#endif
 
 /*
  * Check whether "cp" is a valid ascii representation

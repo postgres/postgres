@@ -50,12 +50,8 @@ __RCSID("$NetBSD: crypt.c,v 1.18 2001/03/01 14:37:35 wiz Exp $");
 #include <sys/types.h>
 #include <limits.h>
 #include <stdlib.h>
-
-#ifdef WIN32
-#include <windows.h>
-#else
 #include <unistd.h>
-#endif
+#include <windows.h>
 
 static int des_setkey(const char *key);
 static int des_cipher(const char *in, char *out, long salt, int num_iter);

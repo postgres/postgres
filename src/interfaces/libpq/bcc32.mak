@@ -4,7 +4,7 @@
 #        and a Win32 dynamic library libpq.dll with import library libpqdll.lib
 
 # Borland C++ base install directory goes here
-# BCB=d:\Borland\Bcc55
+BCB=d:\Borland\Bcc55
 
 !MESSAGE Building the Win32 DLL and Static Library...
 !MESSAGE
@@ -63,13 +63,8 @@ LIB32=tlib.exe
 LIB32_FLAGS= 
 LIB32_OBJS= \
 	"$(OUTDIR)\win32.obj" \
-	"$(INTDIR)\getaddrinfo.obj" \
-	"$(INTDIR)\inet_aton.obj" \
-	"$(INTDIR)\crypt.obj" \
-	"$(INTDIR)\path.obj" \
 	"$(INTDIR)\dllist.obj" \
 	"$(INTDIR)\md5.obj" \
-	"$(INTDIR)\ip.obj" \
 	"$(INTDIR)\fe-auth.obj" \
 	"$(INTDIR)\fe-connect.obj" \
 	"$(INTDIR)\fe-exec.obj" \
@@ -82,7 +77,7 @@ LIB32_OBJS= \
 	"$(INTDIR)\encnames.obj"
 
 RSC=brcc32.exe
-RSC_PROJ=-l 0x409 -i$(BCB)\include -fo"$(INTDIR)\libpq.res"
+RSC_PROJ=/l 0x409 /fo"$(INTDIR)\libpq.res"
 
 LINK32=ilink32.exe
 LINK32_FLAGS = -Gn -L$(BCB)\lib;$(INTDIR); -x -Tpd -v
@@ -91,20 +86,15 @@ LINK32_OBJS= "$(INTDIR)\libpqdll.obj"
 # ---------------------------------------------------------------------------
 
 .path.obj = $(INTDIR)
-.path.c = .;..\..\port;..\..\backend\libpq;..\..\backend\lib;..\..\backend\utils\mb
+.path.c = .;..\..\backend\libpq;..\..\backend\lib;..\..\backend\utils\mb
 
 # ---------------------------------------------------------------------------
 
 ALL: "$(OUTDIR)" "$(OUTDIR)\blibpq.dll" "$(OUTDIR)\blibpq.lib"
 
 CLEAN :
-	-@erase "$(INTDIR)\getaddrinfo.obj"
-	-@erase "$(INTDIR)\inet_aton.obj"
-	-@erase "$(INTDIR)\crypt.obj"
-	-@erase "$(INTDIR)\path.obj"
 	-@erase "$(INTDIR)\dllist.obj"
 	-@erase "$(INTDIR)\md5.obj"
-	-@erase "$(INTDIR)\ip.obj"
 	-@erase "$(INTDIR)\fe-auth.obj"
 	-@erase "$(INTDIR)\fe-connect.obj"
 	-@erase "$(INTDIR)\fe-exec.obj"
@@ -135,7 +125,7 @@ CLEAN :
 	"$(OUTDIR)\blibpq.lib" import32.lib cw32mti.lib, +
 	blibpqdll.def,"$(INTDIR)\libpq.res"
 !
-	implib -w "$(OUTDIR)\blibpqdll.lib" blibpqdll.def $@
+	implib -a "$(OUTDIR)\blibpqdll.lib" blibpqdll.def $@
 
 "$(INTDIR)\libpq.res" : "$(INTDIR)" libpq.rc
     $(RSC) $(RSC_PROJ) libpq.rc

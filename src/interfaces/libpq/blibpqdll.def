@@ -96,7 +96,7 @@ EXPORTS
     _pg_encoding_to_char     @ 92
     _pg_utf_mblen            @ 93
     _PQunescapeBytea         @ 94
-    _PQfreemem               @ 95
+    _PQfreeMem               @ 95
 
 ; Aliases for MS compatible names
     PQconnectdb             = _PQconnectdb            
@@ -193,5 +193,5 @@ EXPORTS
     pg_encoding_to_char     = _pg_encoding_to_char    
     pg_utf_mblen            = _pg_utf_mblen           
     PQunescapeBytea         = _PQunescapeBytea        
-    PQfreemem               = _PQfreemem              
+    PQfreeMem               = _PQfreeMem              
 

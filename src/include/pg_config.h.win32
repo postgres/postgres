@@ -21,10 +21,6 @@
 #define HAVE_ATEXIT
 #define HAVE_MEMMOVE
 
-#ifdef __BORLANDC__
-#define HAVE_RANDOM
-#endif
-
 /* use _snprintf instead of snprintf */
 #define	HAVE_DECL_SNPRINTF 1
 #define snprintf	_snprintf

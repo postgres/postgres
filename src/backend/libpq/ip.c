@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/ip.c,v 1.13 2003/06/12 08:02:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/ip.c,v 1.14 2003/06/12 08:11:07 momjian Exp $
  *
  * This file and the IPV6 implementation were initially provided by
  * Nigel Kukard <nkukard@lbsd.net>, Linux Based Systems Design
@@ -19,8 +19,6 @@
 
 /* This is intended to be used in both frontend and backend, so use c.h */
 #include "c.h"
-
-#if !defined(_MSC_VER) && !defined(__BORLANDC__)
 
 #include <errno.h>
 #include <unistd.h>
@@ -34,8 +32,6 @@
 #endif
 #include <arpa/inet.h>
 #include <sys/file.h>
-
-#endif
 
 #include "libpq/ip.h"
 

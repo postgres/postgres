@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.148 2003/06/12 08:02:56 momjian Exp $
+ * $Id: c.h,v 1.149 2003/06/12 08:11:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,7 +73,7 @@
 #include <SupportDefs.h>
 #endif
 
-#if defined(WIN32) && !defined(_MSC_VER) && !defined(__BORLANDC__)
+#ifdef WIN32
 /* We have to redefine some system functions after they are included above */
 #include "pg_config_os.h"
 #endif
