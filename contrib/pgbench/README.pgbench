@@ -34,15 +34,16 @@ o features of pgbench
 
 o How to install pgbench
 
- (1) Edit the first line in Makefile
+ (1) Configure and build the standard Postgres distribution.
 
-	POSTGRESHOME = /usr/local/pgsql
+     You can get away with just running configure at the top level
+     and doing "make all" in src/interfaces/libpq.
 
-     so that it points to the directory where PostgreSQL installed.
+ (2) Run make in this directory.
 
- (2) Run configure
-
- (3) Run make. You will see an executable file "pgbench" there.
+     You will see an executable file "pgbench".  You can run it here,
+     or install it with the standard Postgres programs by doing
+     "make install".
 
 o How to use pgbench?
 
@@ -52,7 +53,7 @@ o How to use pgbench?
 
       where <dbname> is the name of database. pgbench uses four tables
       accounts, branches, history and tellers. These tables will be
-      destroyed. Be very carefully if you have tables having same
+      destroyed. Be very careful if you have tables having same
       names. Default test data contains:
 
 	table		# of tuples
@@ -85,7 +86,7 @@ o options
 
 	-p port
 		the port number that the backend is accepting. default is
-		5432.
+		libpq's default, usually 5432.
 
 	-c number_of_clients
 		Number of clients simulated. default is 1.
@@ -106,7 +107,7 @@ o options
 
 	-v
 		Do vacuuming before testing. This will take some time.
-		Without both -n and -v pgbench will vacuum tellers and
+		With neither -n nor -v, pgbench will vacuum tellers and
 		branches tables only.
 
 	-S
