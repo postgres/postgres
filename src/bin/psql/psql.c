@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.96 1997/09/18 20:22:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.97 1997/09/19 03:42:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1776,6 +1776,30 @@ MainLoop(PsqlSettings *pset, FILE *source)
 
 				for (i = 0; i < len; i++)
 				{
+					if (line[i] == '\\')
+					{
+						char		hold_char = line[i];
+
+						line[i] = '\0';
+						if (query_start[0] != '\0')
+						{
+							if (query[0] != '\0')
+							{
+								strcat(query, "\n");
+								strcat(query, query_start);
+							}
+							else
+							{
+								strcpy(query, query_start);
+							};
+						}
+						line[i] = hold_char;
+						query_start = line + i;
+						break;	/* handle command */
+
+						/* start an extended comment? */
+					}
+
 					if (querySent && !isspace(line[i]))
 					{
 						query[0] = '\0';
@@ -1799,29 +1823,6 @@ MainLoop(PsqlSettings *pset, FILE *source)
 						continue;
 
 						/* possible backslash command? */
-					}
-					else if (line[i] == '\\')
-					{
-						char		hold_char = line[i];
-
-						line[i] = '\0';
-						if (query_start[0] != '\0')
-						{
-							if (query[0] != '\0')
-							{
-								strcat(query, "\n");
-								strcat(query, query_start);
-							}
-							else
-							{
-								strcpy(query, query_start);
-							};
-						}
-						line[i] = hold_char;
-						query_start = line + i;
-						break;	/* handle command */
-
-						/* start an extended comment? */
 					}
 					else if (line[i] == '/' && line[i + 1] == '*')
 					{
