@@ -6,8 +6,8 @@
 #include <stdio.h>
 #include <signal.h>
 #include <time.h>
-#include <libpq-fe.h>
 #include "halt.h"
+#include <libpq-fe.h>
 #include "pginterface.h"
 
 int main(int argc, char **argv)
@@ -69,5 +69,4 @@ int main(int argc, char **argv)
 	disconnectdb();
 	return 0;
 }
-
 

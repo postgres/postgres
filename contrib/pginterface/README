@@ -1,6 +1,6 @@
 
 
-   			      Pginterface 1.0
+   			      Pginterface 2.0
 
 Attached is a copy of the Postgres support routines I wrote to allow me
 to more cleanly interface to the libpg library, more like a 4gl SQL
@@ -10,7 +10,7 @@ It has several features that may be useful for others:
 
 I have simplified the C code that calls libpq by wrapping all the
 functionality of libpq in calls to connectdb(), doquery(), fetch(),
-fetchisnull() and disconnectdb().  Each call returns a structure or
+fetchwithnulls() and disconnectdb().  Each call returns a structure or
 value, so if you need to do more work with the result, you can.  Also, I
 have a global variable that allows you to disable the error checking I
 have added to the doquery() routine.
