@@ -67,17 +67,17 @@ SELECT '' AS zero, p.*
 -- contained 
 SELECT '' AS one, p.* 
    FROM POLYGON_TBL p
-   WHERE p.f1 @ '(3.0,1.0),(3.0,3.0),(1.0,0.0)';
+   WHERE p.f1 @ '(3.0,1.0),(3.0,3.0),(1.0,0.0)'::polygon;
 
 -- same 
 SELECT '' AS one, p.*
    FROM POLYGON_TBL p
-   WHERE p.f1 ~= '(3.0,1.0),(3.0,3.0),(1.0,0.0)';
+   WHERE p.f1 ~= '(3.0,1.0),(3.0,3.0),(1.0,0.0)'::polygon;
 
 -- contains 
 SELECT '' AS one, p.*
    FROM POLYGON_TBL p
-   WHERE p.f1 ~ '(3.0,1.0),(3.0,3.0),(1.0,0.0)';
+   WHERE p.f1 ~ '(3.0,1.0),(3.0,3.0),(1.0,0.0)'::polygon;
 
 --
 -- polygon logic

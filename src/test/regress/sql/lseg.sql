@@ -21,5 +21,5 @@ select * from LSEG_TBL;
 
 SELECT * FROM LSEG_TBL WHERE s <= '[(1,2),(3,4)]'::lseg;
 
-SELECT * FROM LSEG_TBL WHERE (s <===> '[(1,2),(3,4)]'::lseg) < 10;
+SELECT * FROM LSEG_TBL WHERE (s <-> '[(1,2),(3,4)]'::lseg) < 10;
 
