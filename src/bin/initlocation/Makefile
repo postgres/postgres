@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initlocation/Attic/Makefile,v 1.10 2000/08/31 16:11:07 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/initlocation/Attic/Makefile,v 1.11 2000/09/08 18:29:22 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -16,6 +16,7 @@ all: initlocation
 
 initlocation: initlocation.sh
 	cp $< $@
+	chmod a+x $@
 
 install: all installdirs
 	$(INSTALL_SCRIPT) initlocation $(bindir)/initlocation

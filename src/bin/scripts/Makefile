@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/scripts/Makefile,v 1.8 2000/08/31 16:11:25 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/scripts/Makefile,v 1.9 2000/09/08 18:29:28 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -17,9 +17,10 @@ SCRIPTS := createdb dropdb createuser dropuser createlang droplang vacuumdb
 all: $(SCRIPTS)
 
 createlang: createlang.sh
-	sed -e 's:__DLSUFFIX__:$(DLSUFFIX):g' \
-	    -e 's:__libdir__:$(libdir):g' \
-	    $< > $@
+	sed -e 's/@DLSUFFIX@/$(DLSUFFIX)/g' \
+	    -e 's,@libdir@,$(libdir),g' \
+	  $< >$@
+	chmod a+x $@
 
 install: all installdirs
 	for i in $(SCRIPTS); do $(INSTALL_SCRIPT) $$i $(bindir) || exit; done

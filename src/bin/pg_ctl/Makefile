@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1999, PostgreSQL Global Development Group
 #
-# $Header: /cvsroot/pgsql/src/bin/pg_ctl/Makefile,v 1.7 2000/08/31 16:11:10 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_ctl/Makefile,v 1.8 2000/09/08 18:29:27 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -16,6 +16,7 @@ all: pg_ctl
 
 pg_ctl: pg_ctl.sh
 	cp $< $@
+	chmod a+x $@
 
 install: all installdirs
 	$(INSTALL_SCRIPT) pg_ctl $(bindir)/pg_ctl

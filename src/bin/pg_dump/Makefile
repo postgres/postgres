@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/pg_dump/Makefile,v 1.23 2000/08/31 16:11:13 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_dump/Makefile,v 1.24 2000/09/08 18:29:27 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -30,10 +30,11 @@ pg_restore: pg_restore.o $(OBJS) $(libpq_builddir)/libpq.a
 	$(MAKE) -C ../../utils strdup.o
 
 pg_dumpall: pg_dumpall.sh
-	sed -e 's:__VERSION__:$(VERSION):g' \
-	    -e 's:__MULTIBYTE__:$(MULTIBYTE):g' \
-	    -e 's:__bindir__:$(bindir):g' \
-	  < $< > $@
+	sed -e 's,@VERSION@,$(VERSION),g' \
+	    -e 's,@MULTIBYTE@,$(MULTIBYTE),g' \
+	    -e 's,@bindir@,$(bindir),g' \
+	  $< >$@
+	chmod a+x $@
 
 .PHONY: submake
 submake:

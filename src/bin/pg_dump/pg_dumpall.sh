@@ -6,14 +6,14 @@
 # and "pg_group" tables, which belong to the whole installation rather
 # than any one individual database.
 #
-# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_dumpall.sh,v 1.3 2000/07/04 16:29:59 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_dumpall.sh,v 1.4 2000/09/08 18:29:27 petere Exp $
 
 CMDNAME=`basename $0`
 
 # substituted at build
-VERSION='__VERSION__'
-MULTIBYTE='__MULTIBYTE__'
-bindir='__bindir__'
+VERSION='@VERSION@'
+MULTIBYTE='@MULTIBYTE@'
+bindir='@bindir@'
 
 #
 # Find out where we're located
