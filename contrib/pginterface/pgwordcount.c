@@ -4,8 +4,6 @@
 */
 
 #include <stdio.h>
-#include <signal.h>
-#include <time.h>
 #include "halt.h"
 #include <libpq-fe.h>
 #include "pginterface.h"

@@ -4,16 +4,12 @@
 */
 
 #include <stdio.h>
-#include <signal.h>
 #include <string.h>
 #include <stdarg.h>
 
 #include <libpq-fe.h>
 #include "halt.h"
 #include "pginterface.h"
-
-static void sig_disconnect();
-static void set_signals();
 
 #define NUL '\0'
 
@@ -27,8 +23,6 @@ static PGresult *res = NULL;
 static int	on_error_state = ON_ERROR_STOP;
 
 /* LOCAL VARIABLES */
-static sigset_t block_sigs,
-			unblock_sigs;
 static int	tuple;
 
 /*
@@ -48,7 +42,6 @@ connectdb(char *dbName,
 	if (PQstatus(conn) == CONNECTION_BAD)
 		halt("Connection to database '%s' failed.\n%s\n", dbName,
 			 PQerrorMessage(conn));
-	set_signals();
 	return conn;
 }
 
@@ -74,9 +67,7 @@ doquery(char *query)
 	if (res != NULL)
 		PQclear(res);
 
-	sigprocmask(SIG_SETMASK, &block_sigs, NULL);
 	res = PQexec(conn, query);
-	sigprocmask(SIG_SETMASK, &unblock_sigs, NULL);
 
 	if (on_error_state == ON_ERROR_STOP &&
 		(res == NULL ||
@@ -195,38 +186,4 @@ void
 on_error_continue()
 {
 	on_error_state = ON_ERROR_CONTINUE;
-}
-
-/*
-**
-**		sig_disconnect
-**
-*/
-static void
-sig_disconnect()
-{
-	fprintf(stderr, "exiting...\n");
-	PQfinish(conn);
-	exit(1);
-}
-
-/*
-**
-**		set_signals
-**
-*/
-static void
-set_signals()
-{
-	sigemptyset(&block_sigs);
-	sigemptyset(&unblock_sigs);
-	sigaddset(&block_sigs, SIGTERM);
-	sigaddset(&block_sigs, SIGHUP);
-	sigaddset(&block_sigs, SIGINT);
-/*		sigaddset(&block_sigs,SIGQUIT); no block */
-	sigprocmask(SIG_SETMASK, &unblock_sigs, NULL);
-	signal(SIGTERM, sig_disconnect);
-	signal(SIGHUP, sig_disconnect);
-	signal(SIGINT, sig_disconnect);
-	signal(SIGQUIT, sig_disconnect);
 }

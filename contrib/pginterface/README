@@ -22,14 +22,6 @@ useful if you are running the query engine on a system with a different
 architecture than the database server.  If you pass a NULL pointer, the
 column is skipped, and you can use libpq to handle it as you wish.
 
-I have used sigprocmask() to block the reception of certain signals
-while the program is executing SQL queries.  This prevents a user
-pressing Control-C from stopping all the back ends.  It blocks SIGHUP,
-SIGINT, and SIGTERM, but does not block SIGQUIT or obviously kill -9. 
-If your platform does not support sigprocmask(), you can remove those
-function calls.  ( Am I correct that abnormal termination can cause
-shared memory resynchronization?)
-
 There is a demo program called pginsert that demonstrates how the
 library can be used.
 
