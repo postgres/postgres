@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/copy.sgml,v 1.51 2003/09/22 00:16:57 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/copy.sgml,v 1.52 2003/09/30 01:56:11 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -77,7 +77,7 @@ COPY <replaceable class="parameter">tablename</replaceable> [ ( <replaceable cla
     <term><replaceable class="parameter">tablename</replaceable></term>
     <listitem>
      <para>
-      The name (possibly schema-qualified) of an existing table.
+      The name (optionally schema-qualified) of an existing table.
      </para>
     </listitem>
    </varlistentry>
@@ -355,10 +355,16 @@ COPY <replaceable class="parameter">tablename</replaceable> [ ( <replaceable cla
 
    <para>
     <command>COPY TO</command> will terminate each row with a Unix-style 
-    newline (<quote><literal>\n</></>),  or carriage return/newline 
-    ("\r\n") for servers running MS Windows.
+    newline (<quote><literal>\n</></>).  Servers running on MS Windows instead
+    output carriage return/newline (<quote><literal>\r\n</></>), but only for
+    <command>COPY</> to a server file; for consistency across platforms,
+    <command>COPY TO STDOUT</> always sends <quote><literal>\n</></>
+    regardless of server platform.
     <command>COPY FROM</command> can handle lines ending with newlines,
-    carriage returns, or carriage return/newlines.
+    carriage returns, or carriage return/newlines.  To reduce the risk of
+    error due to un-backslashed newlines or carriage returns that were
+    meant as data, <command>COPY FROM</command> will complain if the line
+    endings in the input are not all alike.
    </para>
   </refsect2>
 
@@ -476,9 +482,9 @@ to be specified.
 To determine the appropriate binary format for the actual tuple data you
 should consult the <productname>PostgreSQL</productname> source, in
 particular the <function>*send</> and <function>*recv</> functions for
-the data type (typically found in the <filename>src/backend/utils/adt</filename>
-directory). The <application>contrib/binarycopy</application> module
-can also be used to create an appropriate format file.
+each column's data type (typically these functions are found in the
+<filename>src/backend/utils/adt/</filename> directory of the source
+distribution).
     </para>
 
     <para>
