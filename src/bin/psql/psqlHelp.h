@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: psqlHelp.h,v 1.3 1996/08/24 20:49:41 scrappy Exp $
+ * $Id: psqlHelp.h,v 1.4 1996/10/03 04:20:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -163,6 +163,6 @@ static struct _helpStruct QL_HELP[] = {
       "update <relname> set <attr1>=<expr1>,...<attrN>=<exprN> [from <from_clause>] [where <qual>];"},
   { "vacuum",
       "vacuum the database, i.e. cleans out deleted records, updates statistics",
-      "vacuum;"},
+      "vacuum [table];"},
   { NULL, NULL, NULL}  /* important to keep a NULL terminator here! */
 };
