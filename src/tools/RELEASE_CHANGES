@@ -1,33 +1,39 @@
+
+* Beta and Release Candidate (RC) changes
+	o configure.in and configure
+	o src/include/pg_config.h.win32
+
 * Version numbers
-    configure.in and configure
-    doc/bug.template
-    bump interface version numbers
-      o src/interfaces/*/Makefile (major releases only)
-      o src/interfaces/libpq/libpq.rc (major and minor releases)
-      o src/include/pg_config.h.win32 (major and minor releases)
-      o port/win32ver.rc (major and minor releases)
+	o configure.in, and run autoconf or update configure
+	o doc/bug.template
+	o bump interface version numbers
+		- src/interfaces/*/Makefile (major releases only)
+		- src/interfaces/libpq/libpq.rc (major and minor releases)
+		- src/include/pg_config.h.win32 (major and minor releases)
+		- port/win32ver.rc (major and minor releases)
 
 * Release notes
-    update doc/src/sgml/release.sgml and generate HISTORY
-      o scan cvs logs, use pgcvslog and flags in comments
-      o run spellchecker on result
-      o check dashed items from TODO to see they are complete
-      o group items into categories
-      o select major features
-      o select incompatibilities
-      o add comments for items
-      o add SGML markup
+	o scan cvs logs, use pgcvslog and flags in comments
+	o update doc/src/sgml/release.sgml
+	o run spellchecker on result
+	o check that dashed items from the TODO list are complete
+	o remove dashed TODO items
+	o group items into categories
+	o select major features
+	o select incompatibilities
+	o add comments for items
+	o add SGML markup
 
 * Documentation
-    document all new features
-    update help output from inside the programs
-    doc/src/sgml/ref manual pages
+	document all new features
+	update help output from inside the programs
+	doc/src/sgml/ref manual pages
 
 * Ports
-    update config.guess and config.sub at the start of beta
-    update ports list in doc/src/sgml/installation.sgml
-    update INSTALL
-    platform-specific FAQ's, if needed
+	update config.guess and config.sub at the start of beta
+	update ports list in doc/src/sgml/installation.sgml
+	update INSTALL
+	platform-specific FAQ's, if needed
 
 * Update timezone data to match latest zic database (see src/timezone/README)
 
