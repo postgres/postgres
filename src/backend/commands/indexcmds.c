@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.96 2003/01/02 19:29:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.97 2003/01/23 15:18:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -304,7 +304,7 @@ CheckPredicate(List *predList, List *rangeTable, Oid baseRelOid)
 	 * reasons that we don't allow a functional index to use one.
 	 */
 	if (contain_mutable_functions((Node *) predList))
-		elog(ERROR, "Functions in index predicate must be marked isImmutable");
+		elog(ERROR, "Functions in index predicate must be marked IMMUTABLE");
 }
 
 
@@ -393,7 +393,7 @@ FuncIndexArgs(IndexInfo *indexInfo,
 	 * time, it's not clear what the index entries mean at all.
 	 */
 	if (func_volatile(funcid) != PROVOLATILE_IMMUTABLE)
-		elog(ERROR, "DefineIndex: index function must be marked isImmutable");
+		elog(ERROR, "DefineIndex: index function must be marked IMMUTABLE");
 
 	/* Process opclass, using func return type as default type */
 
