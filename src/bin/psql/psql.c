@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.128 1998/01/23 19:21:11 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.129 1998/01/23 19:22:24 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2093,10 +2093,15 @@ MainLoop(PsqlSettings *pset, char *query, FILE *source)
 	int			paren_level;
 	char	   *query_start;
 
-	if (query == NULL)
+	if (query_alloced == false)
 	{
-		query = malloc(MAX_QUERY_BUFFER);
-		query_alloced = true;
+		if((query = malloc(MAX_QUERY_BUFFER)) == NULL) {
+	
+			perror("Memory Allocation Failed");
+
+		} else {
+			query_alloced = true;
+		}
 	}
 
 	interactive = ((source == stdin) && !pset->notty);
