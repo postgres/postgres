@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/lock.sgml,v 1.32 2002/04/23 02:07:16 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/lock.sgml,v 1.33 2002/05/30 20:45:18 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -53,12 +53,6 @@ where <replaceable class="PARAMETER">lockmode</replaceable> is one of:
      <varlistentry>
       <term>ACCESS SHARE MODE</term>
       <listitem>
-       <note>
-	<para>
-	 This lock mode is acquired automatically over tables being queried.
-	</para>
-       </note>
-
        <para>
 	This is the least restrictive lock mode.  It conflicts only with
 	ACCESS EXCLUSIVE mode. It is used to protect a table from being
@@ -66,108 +60,114 @@ where <replaceable class="PARAMETER">lockmode</replaceable> is one of:
 	<command>DROP TABLE</command> and <command>VACUUM FULL</command>
 	commands.
        </para>
+
+       <note>
+	<para>
+	 The <command>SELECT</command> command acquires a
+	 lock of this mode on referenced tables.  In general, any query
+	 that only reads a table and does not modify it will acquire
+	 this lock mode.
+	</para>
+       </note>
       </listitem>
      </varlistentry>
 
      <varlistentry>
       <term>ROW SHARE MODE</term>
       <listitem>
-       <note>
-       <para>
-	 Automatically acquired by <command>SELECT ... FOR UPDATE</command>.
-	</para>
-       </note>
-
        <para>
 	Conflicts with EXCLUSIVE and ACCESS EXCLUSIVE lock modes.
        </para>
+
+       <note>
+       <para>
+	 The <command>SELECT FOR UPDATE</command> command acquires a
+	 lock of this mode on the target table(s) (in addition to
+	 <literal>ACCESS SHARE</literal> locks on any other tables
+	 that are referenced but not selected <option>FOR UPDATE</option>).
+	</para>
+       </note>
       </listitem>
      </varlistentry>
 
      <varlistentry>
       <term>ROW EXCLUSIVE MODE</term>
       <listitem>
-       <note>
-	<para>
-	 Automatically acquired by <command>UPDATE</command>, 
-	 <command>DELETE</command>, and <command>INSERT</command>
-	 statements.
-        </para>
-       </note>
-
        <para>
 	 Conflicts with SHARE, SHARE ROW EXCLUSIVE, EXCLUSIVE and
 	 ACCESS EXCLUSIVE modes.
        </para>
+
+       <note>
+	<para>
+	 The commands <command>UPDATE</command>,
+	 <command>DELETE</command>, and <command>INSERT</command>
+	 acquire this lock mode on the target table (in addition to
+	 <literal>ACCESS SHARE</literal> locks on any other referenced
+	 tables).  In general, this lock mode will be acquired by any
+	 query that modifies the data in a table.
+        </para>
+       </note>
       </listitem>
      </varlistentry>
 
      <varlistentry>
       <term>SHARE UPDATE EXCLUSIVE MODE</term>
       <listitem>
-       <note>
-       <para>
-	 Automatically acquired by <command>VACUUM</command> (without
-	 <option>FULL</option>).
-       </para>
-       </note>
-
        <para>
 	Conflicts with SHARE UPDATE EXCLUSIVE, SHARE, SHARE ROW EXCLUSIVE,
 	EXCLUSIVE and
 	ACCESS EXCLUSIVE modes. This mode protects a table against
 	concurrent schema changes and VACUUMs.
        </para>
+
+       <note>
+       <para>
+	 Acquired by <command>VACUUM</command> (without
+	 <option>FULL</option>).
+       </para>
+       </note>
       </listitem>
      </varlistentry>
 
      <varlistentry>
       <term>SHARE MODE</term>
       <listitem>
-       <note>
-       <para>
-	 Automatically acquired by <command>CREATE INDEX</command>.
-	 Share-locks the entire table.
-       </para>
-       </note>
-
        <para>
 	Conflicts with ROW EXCLUSIVE, SHARE UPDATE EXCLUSIVE,
 	SHARE ROW EXCLUSIVE, EXCLUSIVE and
 	ACCESS EXCLUSIVE modes. This mode protects a table against
-	concurrent data updates.
+	concurrent data changes.
        </para>
+
+       <note>
+       <para>
+	 Acquired by <command>CREATE INDEX</command>.
+       </para>
+       </note>
       </listitem>
      </varlistentry>
 
      <varlistentry>
       <term>SHARE ROW EXCLUSIVE MODE</term>
       <listitem>
-       <note>
-       <para>
-	This is like EXCLUSIVE MODE, but allows ROW SHARE locks
-        by others.
-       </para>
-       </note>
-
        <para>
         Conflicts with ROW EXCLUSIVE, SHARE UPDATE EXCLUSIVE, SHARE,
 	SHARE ROW EXCLUSIVE, EXCLUSIVE and ACCESS EXCLUSIVE modes.
        </para>
+
+       <note>
+       <para>
+         This lock mode is not automatically acquired by any
+         <productname>PostgreSQL</productname> command.
+       </para>
+       </note>
       </listitem>
      </varlistentry>
 
      <varlistentry>
       <term>EXCLUSIVE MODE</term>
       <listitem>
-
-       <note>
-       <para>
-	This mode is yet more restrictive than SHARE ROW EXCLUSIVE.  
-	It blocks all concurrent ROW SHARE/SELECT...FOR UPDATE queries.
-       </para>
-       </note>
-
        <para>
 	Conflicts with ROW SHARE, ROW EXCLUSIVE, SHARE UPDATE EXCLUSIVE,
 	SHARE, SHARE ROW EXCLUSIVE,
@@ -176,33 +176,33 @@ where <replaceable class="PARAMETER">lockmode</replaceable> is one of:
 	from the table can proceed in parallel with a transaction holding
 	this lock mode.
        </para>
+
+       <note>
+       <para>
+        This lock mode is not automatically acquired by any
+        <productname>PostgreSQL</productname> command.
+       </para>
+       </note>
       </listitem>
      </varlistentry>
 
      <varlistentry>
       <term>ACCESS EXCLUSIVE MODE</term>
       <listitem>
-       <note>
-	<para>
-	 Automatically acquired by <command>ALTER TABLE</command>,
-	 <command>DROP TABLE</command>, <command>VACUUM FULL</command>
-	 statements.
-	 This is the most restrictive lock mode which
-	 protects a locked table from any concurrent operations.
-	</para>
-       </note>
-
-       <note>
-	<para>
-	 This lock mode is also acquired by an unqualified
-	 <command>LOCK TABLE</command> (i.e., the command without an explicit
-	 lock mode option).
-	</para>
-       </note>
-
        <para>
-	Conflicts with all lock modes.
+	Conflicts with all lock modes.  This mode guarantees that the
+	holder is the only transaction accessing the table in any way.
        </para>
+
+       <note>
+	<para>
+	 Acquired by <command>ALTER TABLE</command>,
+	 <command>DROP TABLE</command>, and <command>VACUUM FULL</command>
+	 statements.
+	 This is also the default lock mode for <command>LOCK TABLE</command>
+         statements that do not specify a mode explicitly.
+	</para>
+       </note>
       </listitem>
      </varlistentry>
     </variablelist>
@@ -255,15 +255,134 @@ ERROR <replaceable class="PARAMETER">name</replaceable>: Table does not exist.
   </title>
 
   <para>
-   <command>LOCK TABLE</command> controls concurrent access to a table
-   for the duration of a transaction.
+   <command>LOCK TABLE</command> obtains a table-level lock, waiting if
+   necessary for any conflicting locks to be released.  Once obtained,
+   the lock is held for the remainder of the current transaction.
+   (There is no <command>UNLOCK TABLE</command> command; locks are always
+   released at transaction end.)
+  </para>
+
+  <para>
+   When acquiring locks automatically for commands that reference tables,
    <productname>PostgreSQL</productname> always uses the least restrictive
-   lock mode whenever possible. <command>LOCK TABLE</command> 
+   lock mode possible. <command>LOCK TABLE</command> 
    provides for cases when you might need more restrictive locking.
   </para>
 
   <para>
-   <acronym>RDBMS</acronym> locking uses the following terminology:
+   For example, suppose an application runs a transaction at READ COMMITTED
+   isolation level and needs to ensure that data in a table remains stable
+   for the duration of the
+   transaction. To achieve this you could obtain SHARE lock mode over the
+   table before querying. This will prevent concurrent data changes
+   and ensure subsequent reads of the table see a stable
+   view of committed data, because SHARE lock mode conflicts with the ROW
+   EXCLUSIVE lock acquired by writers, and your
+   <command>LOCK TABLE <replaceable class="PARAMETER">name</replaceable> IN SHARE MODE</command>
+   statement will wait until any concurrent holders of ROW EXCLUSIVE mode
+   commit or roll back. Thus, once you obtain the lock, there are no
+   uncommitted writes outstanding; furthermore none can begin until you
+   release the lock.
+
+   <note>
+    <para>
+     To achieve a similar effect when running a transaction
+     at the SERIALIZABLE isolation level, you have to execute the
+     <command>LOCK TABLE</>
+     statement before executing any DML statement.  A serializable
+     transaction's view of data will be frozen when its first DML statement
+     begins.  A later <command>LOCK</> will still prevent concurrent writes
+     --- but it
+     won't ensure that what the transaction reads corresponds to the latest
+     committed values.
+    </para>
+   </note>
+  </para>
+  
+  <para>
+   If a transaction of this sort is going to
+   change the data in the table, then it should use SHARE ROW EXCLUSIVE lock
+   mode instead of SHARE mode.  This ensures that only one transaction of
+   this type runs at a time.  Without this, a deadlock is possible: two
+   transactions might both acquire SHARE mode, and then be unable to also
+   acquire ROW EXCLUSIVE mode to actually perform their updates.  (Note that
+   a transaction's own locks never conflict, so a transaction can acquire
+   ROW EXCLUSIVE mode when it holds SHARE mode --- but not if anyone else
+   holds SHARE mode.)
+  </para>
+  
+  <para>
+   Two general rules may be followed to prevent deadlock conditions:
+  </para>
+
+  <itemizedlist>  
+   <listitem>
+    <para>
+     Transactions have to acquire locks on the same objects in the same order.
+    </para>
+   
+    <para>
+     For example, if one application updates row R1 and than updates 
+     row R2 (in the same transaction) then the second application shouldn't 
+     update row R2 if it's going to update row R1 later (in a single transaction). 
+     Instead, it should update rows R1 and R2 in the same order as the first 
+     application.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     If multiple lock modes are involved for a single object,
+     then transactions should always acquire the  most restrictive mode first.
+    </para>
+   
+    <para>
+     An example for this rule was given previously when discussing the 
+     use of SHARE ROW EXCLUSIVE mode rather than SHARE mode.
+    </para>
+
+   </listitem>
+  </itemizedlist>
+
+  <para>
+   <productname>PostgreSQL</productname> does detect deadlocks and will
+   rollback at least one waiting transaction to resolve the deadlock.
+   If it is not practical to code an application to follow the above rules
+   strictly, an alternative solution is to be prepared to retry transactions
+   when they are aborted by deadlocks.
+  </para>
+
+  <para>
+   When locking multiple tables, the command <literal>LOCK a, b;</> is
+   equivalent to <literal>LOCK a; LOCK b;</>. The tables are locked one-by-one
+   in the order specified in the
+   <command>LOCK</command> command.
+  </para>
+
+  <refsect2 id="R2-SQL-LOCK-3">
+   <refsect2info>
+    <date>1999-06-08</date>
+   </refsect2info>
+   <title>
+    Notes
+   </title>
+
+   <para>
+    <literal>LOCK ... IN ACCESS SHARE MODE</> requires <literal>SELECT</>
+    privileges on the target table.  All other forms of <command>LOCK</>
+    require <literal>UPDATE</> and/or <literal>DELETE</> privileges.
+   </para>
+
+   <para>
+    <command>LOCK</command> is useful only inside a transaction block
+    (<command>BEGIN</>...<command>COMMIT</>), since the lock is dropped
+    as soon as the transaction ends.  A <command>LOCK</> command appearing
+    outside any transaction block forms a self-contained transaction, so the
+    lock will be dropped as soon as it is obtained.
+   </para>
+
+  <para>
+   <acronym>RDBMS</acronym> locking uses the following standard terminology:
 
    <variablelist>
     <varlistentry>
@@ -271,10 +390,7 @@ ERROR <replaceable class="PARAMETER">name</replaceable>: Table does not exist.
      <listitem>
       <para>
        An exclusive lock prevents other locks of the same type from being
-       granted.  (Note: ROW EXCLUSIVE mode does not follow this naming
-       convention perfectly, since it is shared at the level of the table;
-       it is exclusive only with respect to specific rows that are being
-       updated.)
+       granted.
       </para>
      </listitem>
     </varlistentry>
@@ -310,110 +426,16 @@ ERROR <replaceable class="PARAMETER">name</replaceable>: Table does not exist.
   </para>
 
   <para>
-   For example, suppose an application runs a transaction at READ COMMITTED
-   isolation level and needs to ensure the existence of data in a table for
-   the duration of the
-   transaction. To achieve this you could obtain SHARE lock mode over the
-   table before querying. This will prevent concurrent data changes 
-   and ensure further read operations over the table see data in their 
-   actual current state, because SHARE lock mode conflicts with any ROW
-   EXCLUSIVE lock acquired by writers, and your
-   <command>LOCK TABLE <replaceable class="PARAMETER">name</replaceable> IN SHARE MODE</command>
-   statement will wait until any concurrent write operations commit or
-   rollback. Thus, once you obtain the lock, there are no uncommitted
-   writes outstanding.
-
-   <note>
-    <para>
-     To read data in their actual current state when running a transaction
-     at the SERIALIZABLE isolation level, you have to execute the LOCK TABLE
-     statement before executing any DML statement.  A serializable
-     transaction's view of data will be frozen when its first DML statement
-     begins.
-    </para>
-   </note>
+   <productname>PostgreSQL</productname> does not follow this terminology
+   exactly.  <command>LOCK TABLE</> only deals with table-level locks, and
+   so the mode names involving ROW are all misnomers.  These mode names
+   should generally be read as indicating the intention of the user to
+   acquire row-level locks within the locked table.  Also,
+   ROW EXCLUSIVE mode does not follow this naming convention accurately,
+   since it is a sharable table lock.  Keep in mind that all the lock modes
+   have identical semantics so far as <command>LOCK TABLE</> is concerned,
+   differing only in the rules about which modes conflict with which.
   </para>
-  
-  <para>
-   In addition to the requirements above, if a transaction is going to
-   change data in a table, then SHARE ROW EXCLUSIVE lock mode should
-   be acquired to prevent deadlock conditions when two concurrent
-   transactions attempt to lock the table in SHARE mode and then
-   try to change data in this table, both (implicitly) acquiring 
-   ROW EXCLUSIVE lock mode that conflicts with a concurrent SHARE lock.
-  </para>
-  
-  <para>
-   To continue with the deadlock (when two transactions wait for one another)
-   issue raised above, you should follow two general rules to prevent 
-   deadlock conditions:
-  </para>
-
-  <itemizedlist>  
-   <listitem>
-    <para>
-     Transactions have to acquire locks on the same objects in the same order.
-    </para>
-   
-    <para>
-     For example, if one application updates row R1 and than updates 
-     row R2 (in the same transaction) then the second application shouldn't 
-     update row R2 if it's going to update row R1 later (in a single transaction). 
-     Instead, it should update rows R1 and R2 in the same order as the first 
-     application.
-    </para>
-   </listitem>
-
-   <listitem>
-    <para>
-     Transactions should acquire two conflicting lock modes only if
-     one of them is self-conflicting (i.e., may be held by only one
-     transaction at a time). If multiple lock modes are involved,
-     then transactions should always acquire the  most restrictive mode first.
-    </para>
-   
-    <para>
-     An example for this rule was given previously when discussing the 
-     use of SHARE ROW EXCLUSIVE mode rather than SHARE mode.
-    </para>
-
-   </listitem>
-  </itemizedlist>
-
-  <note>
-   <para>
-    <productname>PostgreSQL</productname> does detect deadlocks and will
-    rollback at least one waiting transaction to resolve the deadlock. 
-   </para>
-  </note>
-
-  <para>
-   When locking multiple tables, the command LOCK a, b; is equivalent to LOCK
-   a; LOCK b;. The tables are locked one-by-one in the order specified in the
-   <command>LOCK</command> command.
-  </para>
-
-  <refsect2 id="R2-SQL-LOCK-3">
-   <refsect2info>
-    <date>1999-06-08</date>
-   </refsect2info>
-   <title>
-    Notes
-   </title>
-
-   <para>
-    <literal>LOCK ... IN ACCESS SHARE MODE</> requires <literal>SELECT</>
-    privileges on the target table.  All other forms of <command>LOCK</>
-    require <literal>UPDATE</> and/or <literal>DELETE</> privileges.
-   </para>
-
-   <para>
-    <command>LOCK</command> is useful only inside a transaction block
-    (<command>BEGIN</>...<command>COMMIT</>), since the lock is dropped
-    as soon as the transaction ends.  A <command>LOCK</> command appearing
-    outside any transaction block forms a self-contained transaction, so the
-    lock will be dropped as soon as it is obtained.
-   </para>
 
   </refsect2>
  </refsect1>
@@ -424,7 +446,7 @@ ERROR <replaceable class="PARAMETER">name</replaceable>: Table does not exist.
   </title>
 
   <para>
-   Illustrate a SHARE lock on a primary key table when going to perform
+   Obtain a SHARE lock on a primary key table when going to perform
    inserts into a foreign key table:
 
   <programlisting>
