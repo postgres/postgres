@@ -200,33 +200,22 @@ export NOHBA
 dnl Unless we specify the command line options
 dnl     --disable cassert       to explicitly disable it
 dnl     --enable cassert        to explicitly enable it
-dnl If you do not explicitly do it, it asks you here.
+dnl If you do not explicitly do it, it defaults to disabled - we
+dnl should make the default enabled for the development cycle
 dnl We need some explanatory text here.
 echo ""
+
 if test "$enable_cassert" = "no"
 then
-	echo "ASSERT CHECKING disabled"
+	echo "-ASSERT CHECKING disabled"
         AC_DEFINE(NO_ASSERT_CHECKING)
 elif test "$enable_cassert" = "yes"
 then
-	echo "ASSERT CHECKING enabled"
+	echo "-ASSERT CHECKING enabled"
 else
-	echo "Disabling ASSERT CHECKING will make things go a LOT faster, but" 
-	echo "you will also loose a lot of useful error-checking"
-	echo ""
-	echo "Developers should *always* have this enabled"
-        $ECHO_N "Enable CASSERT { no }: $ECHO_C"
-        read a
-        if test "$a" = "yes"
-        then
-		echo "ASSERT CHECKING enabled"
-        else
-		echo "ASSERT CHECKING disabled"
-                AC_DEFINE(NO_ASSERT_CHECKING)
-        fi
-        echo "**************************************************************"
+	echo "-ASSERT CHECKING disabled"
+	AC_DEFINE(NO_ASSERT_CHECKING)
 fi
-echo ""
 
 dnl We use the default value of 5432 for the DEF_PGPORT value.  If
 dnl we over-ride it with --with-pgport=port then we bypass this piece
