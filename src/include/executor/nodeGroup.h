@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeGroup.h,v 1.5 1997/11/26 01:12:46 momjian Exp $
+ * $Id: nodeGroup.h,v 1.6 1998/07/16 01:49:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,5 +21,6 @@ extern TupleTableSlot *ExecGroup(Group *node);
 extern bool ExecInitGroup(Group *node, EState *estate, Plan *parent);
 extern int	ExecCountSlotsGroup(Group *node);
 extern void ExecEndGroup(Group *node);
+extern void ExecReScanGroup(Group *node, ExprContext *exprCtxt, Plan *parent);
 
 #endif							/* NODEGROUP_H */

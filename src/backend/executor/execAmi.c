@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execAmi.c,v 1.22 1998/07/15 22:16:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execAmi.c,v 1.23 1998/07/16 01:49:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,9 +42,11 @@
 #include "executor/nodeHashjoin.h"
 #include "executor/nodeHash.h"
 #include "executor/nodeAgg.h"
+#include "executor/nodeGroup.h"
 #include "executor/nodeResult.h"
 #include "executor/nodeUnique.h"
 #include "executor/nodeMergejoin.h"
+#include "executor/nodeAppend.h"
 #include "executor/nodeSubplan.h"
 #include "executor/execdebug.h"
 #include "optimizer/internal.h" /* for _TEMP_RELATION_ID_ */
@@ -351,6 +353,10 @@ ExecReScan(Plan *node, ExprContext *exprCtxt, Plan *parent)
 
 		case T_Agg:
 			ExecReScanAgg((Agg *) node, exprCtxt, parent);
+			break;
+
+		case T_Group:
+			ExecReScanGroup((Group *) node, exprCtxt, parent);
 			break;
 
 		case T_Result:
