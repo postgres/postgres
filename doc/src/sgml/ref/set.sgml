@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.66 2002/10/09 04:59:38 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.67 2002/10/09 16:27:48 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -476,10 +476,10 @@ SELECT CURRENT_TIMESTAMP AS today;
    <screen>
 SET TIME ZONE 'Europe/Rome';
 SELECT CURRENT_TIMESTAMP AS today;
-   
-         today
-------------------------
- 1998-03-31 17:41:31+02
+
+             today             
+-------------------------------
+ 2002-10-08 05:39:35.008271+02
    </screen>
   </para>
  </refsect1>
