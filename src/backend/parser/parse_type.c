@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_type.c,v 1.67 2004/05/30 23:40:35 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_type.c,v 1.68 2004/06/03 19:41:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -311,16 +311,6 @@ typeTypeName(Type t)
 	typ = (Form_pg_type) GETSTRUCT(t);
 	/* pstrdup here because result may need to outlive the syscache entry */
 	return pstrdup(NameStr(typ->typname));
-}
-
-/* given a type, return its typetype ('c' for 'c'atalog types) */
-char
-typeTypeFlag(Type t)
-{
-	Form_pg_type typ;
-
-	typ = (Form_pg_type) GETSTRUCT(t);
-	return typ->typtype;
 }
 
 Oid
