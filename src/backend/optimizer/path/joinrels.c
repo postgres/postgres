@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.2 1997/02/20 02:54:09 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.3 1997/05/20 10:37:26 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,11 @@
 #include "optimizer/joininfo.h"
 #include "optimizer/pathnode.h"
 
+#ifdef USE_RIGHT_SIDED_PLANS
+bool _use_right_sided_plans_ = true;
+#else
+bool _use_right_sided_plans_ = false;
+#endif
 
 static List *find_clause_joins(Query *root, Rel *outer_rel, List *joininfo_list);
 static List *find_clauseless_joins(Rel *outer_rel, List *inner_rels);
@@ -104,6 +109,15 @@ find_clause_joins(Query *root, Rel *outer_rel, List *joininfo_list)
 		    rel = init_join_rel(outer_rel,
 					get_base_rel(root, lfirsti(other_rels)),
 					joininfo);
+		    /* how about right-sided plan ? */
+		    if ( _use_right_sided_plans_ )
+		    {
+		    	if (rel != NULL)
+		    	    join_list = lappend(join_list, rel);
+		    	rel = init_join_rel(get_base_rel(root, lfirsti(other_rels)),
+		    				outer_rel,
+						joininfo);
+		    }
 		} else if (BushyPlanFlag) {
 		    rel = init_join_rel(outer_rel,
 					get_join_rel(root, other_rels),
