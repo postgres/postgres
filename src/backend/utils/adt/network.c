@@ -3,7 +3,7 @@
  *	is for IP V4 CIDR notation, but prepared for V6: just
  *	add the necessary bits where the comments indicate.
  *
- *	$Header: /cvsroot/pgsql/src/backend/utils/adt/network.c,v 1.26 2000/11/10 20:13:25 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/network.c,v 1.27 2000/11/25 21:30:54 tgl Exp $
  *
  *	Jon Postel RIP 16 Oct 1998
  */
@@ -418,7 +418,13 @@ network_broadcast(PG_FUNCTION_ARGS)
 		/* It's an IP V4 address: */
 		unsigned long mask = 0xffffffff;
 
-		mask >>= ip_bits(ip);
+		/* Shifting by 32 or more bits does not yield portable results,
+		 * so don't try it.
+		 */
+		if (ip_bits(ip) < 32)
+			mask >>= ip_bits(ip);
+		else
+			mask = 0;
 
 		ip_v4addr(dst) = htonl(ntohl(ip_v4addr(ip)) | mask);
 	}
@@ -451,7 +457,13 @@ network_network(PG_FUNCTION_ARGS)
 		/* It's an IP V4 address: */
 		unsigned long mask = 0xffffffff;
 
-		mask <<= (32 - ip_bits(ip));
+		/* Shifting by 32 or more bits does not yield portable results,
+		 * so don't try it.
+		 */
+		if (ip_bits(ip) > 0)
+			mask <<= (32 - ip_bits(ip));
+		else
+			mask = 0;
 
 		ip_v4addr(dst) = htonl(ntohl(ip_v4addr(ip)) & mask);
 	}
@@ -484,7 +496,13 @@ network_netmask(PG_FUNCTION_ARGS)
 		/* It's an IP V4 address: */
 		unsigned long mask = 0xffffffff;
 
-		mask <<= (32 - ip_bits(ip));
+		/* Shifting by 32 or more bits does not yield portable results,
+		 * so don't try it.
+		 */
+		if (ip_bits(ip) > 0)
+			mask <<= (32 - ip_bits(ip));
+		else
+			mask = 0;
 
 		ip_v4addr(dst) = htonl(mask);
 
@@ -512,7 +530,13 @@ v4bitncmp(unsigned long a1, unsigned long a2, int bits)
 {
 	unsigned long mask;
 
-	mask = (0xFFFFFFFFL << (32 - bits)) & 0xFFFFFFFFL;
+	/* Shifting by 32 or more bits does not yield portable results,
+	 * so don't try it.
+	 */
+	if (bits > 0)
+		mask = (0xFFFFFFFFL << (32 - bits)) & 0xFFFFFFFFL;
+	else
+		mask = 0;
 	a1 = ntohl(a1);
 	a2 = ntohl(a2);
 	if ((a1 & mask) < (a2 & mask))
@@ -530,7 +554,13 @@ v4addressOK(unsigned long a1, int bits)
 {
 	unsigned long mask;
 
-	mask = (0xFFFFFFFFL << (32 - bits)) & 0xFFFFFFFFL;
+	/* Shifting by 32 or more bits does not yield portable results,
+	 * so don't try it.
+	 */
+	if (bits > 0)
+		mask = (0xFFFFFFFFL << (32 - bits)) & 0xFFFFFFFFL;
+	else
+		mask = 0;
 	a1 = ntohl(a1);
 	if ((a1 & mask) == a1)
 		return true;
