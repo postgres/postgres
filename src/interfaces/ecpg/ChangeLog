@@ -1286,7 +1286,12 @@ Sun Aug 18 16:09:06 CEST 2002
 
 Tue Aug 20 14:13:34 CEST 2002
 
-	- Removed ',' from preproc.y to bit bison 1.49b.
+	- Removed ',' from preproc.y for bison 1.49b.
+
+Sun Sep  1 11:13:04 CEST 2002
+
+        - Synced preproc.y with gram.y.
+        - Synced keywords.c.
 	- Set ecpg version to 2.10.0.
 	- Set library version to 3.4.0.
 

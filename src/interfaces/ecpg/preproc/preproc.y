@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.190.2.4 2002/08/20 12:23:36 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.190.2.5 2002/09/01 09:31:58 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -191,8 +191,9 @@ make_name(void)
         CREATE CREATEDB CREATEUSER CROSS CURRENT_DATE CURRENT_TIME
         CURRENT_TIMESTAMP CURRENT_USER CURSOR CYCLE
 
-        DATABASE DAY_P DEC DECIMAL DECLARE DEFAULT DEFERRABLE DEFERRED
-        DEFINER DELETE_P DELIMITER DELIMITERS DESC DISTINCT DO DOMAIN_P DOUBLE DROP
+        DATABASE DAY_P DEALLOCATE DEC DECIMAL DECLARE DEFAULT
+	DEFERRABLE DEFERRED DEFINER DELETE_P DELIMITER DELIMITERS
+	DESC DISTINCT DO DOMAIN_P DOUBLE DROP
         EACH ELSE ENCODING ENCRYPTED END_TRANS ESCAPE EXCEPT EXCLUSIVE
         EXECUTE EXISTS EXPLAIN EXTERNAL EXTRACT
 
@@ -221,8 +222,8 @@ make_name(void)
 	OF OFF OFFSET OIDS OLD ON ONLY OPERATOR OPTION OR ORDER
         OUT_P OUTER_P OVERLAPS OVERLAY OWNER
 
-	PARTIAL PASSWORD PATH_P PENDANT PLACING POSITION PRECISION PRIMARY
-	PRIOR PRIVILEGES PROCEDURE PROCEDURAL
+	PARTIAL PASSWORD PATH_P PENDANT PLACING POSITION PRECISION PREPARE
+	PRIMARY	PRIOR PRIVILEGES PROCEDURE PROCEDURAL
 
 	READ REAL RECHECK REFERENCES REINDEX RELATIVE RENAME REPLACE
 	RESET RESTRICT RETURNS REVOKE RIGHT ROLLBACK ROW RULE
@@ -287,9 +288,9 @@ make_name(void)
 %type  <str>	CreateAsElement OptCreateAs CreateAsList CreateAsStmt
 %type  <str>	comment_text ConstraintDeferrabilitySpec TableElementList
 %type  <str>	key_match ColLabel SpecialRuleRelation ColId columnDef
-%type  <str>	ColConstraint ColConstraintElem drop_type Bconst
-%type  <str>	TableConstraint OptTableElementList Xconst
-%type  <str>	ConstraintElem key_actions ColQualList type_name 
+%type  <str>	ColConstraint ColConstraintElem drop_type Bconst 
+%type  <str>	TableConstraint OptTableElementList Xconst prep_type_clause
+%type  <str>	ConstraintElem key_actions ColQualList type_name PrepareStmt
 %type  <str>	target_list target_el update_target_list alias_clause
 %type  <str>	update_target_el opt_id qualified_name database_name
 %type  <str>	access_method attr_name index_name name func_name
@@ -300,7 +301,7 @@ make_name(void)
 %type  <str>	trim_list in_expr substr_for attrs TableFuncElement
 %type  <str>	Typename SimpleTypename Numeric opt_float opt_numeric
 %type  <str>	opt_decimal Character character opt_varying opt_charset
-%type  <str>	opt_collate opt_timezone opt_interval table_ref
+%type  <str>	opt_collate opt_timezone opt_interval table_ref DeallocateStmt
 %type  <str>	row_descriptor row_list ConstDatetime trans_options
 %type  <str>	SelectStmt into_clause OptTemp ConstraintAttributeSpec
 %type  <str>	opt_table opt_all sort_clause sortby_list ConstraintAttr
@@ -321,7 +322,7 @@ make_name(void)
 %type  <str>	def_elem def_list definition DefineStmt select_with_parens
 %type  <str>	opt_instead event RuleActionList opt_using CreateAssertStmt
 %type  <str>	RuleActionStmtOrEmpty RuleActionMulti func_as reindex_type
-%type  <str>	RuleStmt opt_column opt_name oper_argtypes NumConst
+%type  <str>	RuleStmt opt_column opt_name oper_argtypes NumConst ExecuteStmt
 %type  <str>	MathOp RemoveFuncStmt aggr_argtype for_update_clause
 %type  <str>	RemoveAggrStmt opt_procedural select_no_parens CreateCastStmt
 %type  <str>	RemoveOperStmt RenameStmt all_Op opt_Trusted opt_lancompiler
@@ -363,10 +364,11 @@ make_name(void)
 %type  <str>	opt_oids TableLikeClause key_action opt_definition 
 %type  <str>	opt_assignment row r_expr qual_Op qual_all_Op opt_default
 %type  <str>	CreateConversionStmt any_operator opclass_item_list
-%type  <str>	iso_level OptTableFuncElementList convert_list
+%type  <str>	iso_level convert_list prep_type_list
 %type  <str>	convert_args type_list CharacterWithLength ConstCharacter
 %type  <str>	CharacterWithoutLength BitWithLength BitWithoutLength
-%type  <str>	ConstBit GenericType TableFuncElementList
+%type  <str>	ConstBit GenericType TableFuncElementList execute_param_clause
+%type  <str>	execute_param_list opt_sort_clause
 
 %type  <str>	ECPGWhenever ECPGConnect connection_target ECPGOpen
 %type  <str>	indicator ECPGExecute ECPGPrepare ecpg_using ecpg_into
@@ -454,6 +456,7 @@ stmt:  AlterDatabaseSetStmt { output_statement($1, 0, connection); }
 		| CreateTrigStmt	{ output_statement($1, 0, connection); }
 		| CreateUserStmt	{ output_statement($1, 0, connection); }
 		| ClusterStmt		{ output_statement($1, 0, connection); }
+		| DeallocateStmt	{ output_statement($1, 0, connection); }
 		| DefineStmt		{ output_statement($1, 0, connection); }
 		| DropStmt		{ output_statement($1, 0, connection); }
 		| TruncateStmt		{ output_statement($1, 0, connection); }
@@ -466,6 +469,7 @@ stmt:  AlterDatabaseSetStmt { output_statement($1, 0, connection); }
 		| DropRuleStmt		{ output_statement($1, 0, connection); }
 		| DropUserStmt		{ output_statement($1, 0, connection); }
 		| ExplainStmt		{ output_statement($1, 0, connection); }
+		| ExecuteStmt		{ output_statement($1, 0, connection); }
 		| FetchStmt		{ output_statement($1, 1, connection); }
 		| GrantStmt		{ output_statement($1, 0, connection); }
 		| IndexStmt		{ output_statement($1, 0, connection); }
@@ -473,6 +477,7 @@ stmt:  AlterDatabaseSetStmt { output_statement($1, 0, connection); }
 		| UnlistenStmt		{ output_statement($1, 0, connection); }
 		| LockStmt		{ output_statement($1, 0, connection); }
 		| NotifyStmt		{ output_statement($1, 0, connection); }
+		| PrepareStmt		{ output_statement($1, 0, connection); }
 		| ReindexStmt		{ output_statement($1, 0, connection); }
 		| RemoveAggrStmt	{ output_statement($1, 0, connection); }
 		| RemoveOperStmt	{ output_statement($1, 0, connection); }
@@ -1122,10 +1127,10 @@ OptTableElementList:  TableElementList
 		| /*EMPTY*/
 			{ $$ = EMPTY; }
 		;
-TableElementList:  TableElementList ',' TableElement
-			{ $$ = cat_str(3, $1, make_str(","), $3); }
-		| TableElement
+TableElementList: TableElement
 			{ $$ = $1; }
+		| TableElementList ',' TableElement
+			{ $$ = cat_str(3, $1, make_str(","), $3); }
 		;
 		
 TableElement:  columnDef		{ $$ = $1; }
@@ -2358,6 +2363,54 @@ ExplainStmt:  EXPLAIN opt_verbose OptimizableStmt
 			{ $$ = cat_str(4, make_str("explain"), $2, $3, $4); }
 		;
 
+/*****************************************************************************
+ *
+ *              QUERY:
+ *                              PREPARE <plan_name> [(args, ...)] AS <query>
+ *
+ *****************************************************************************/
+
+PrepareStmt: PREPARE name prep_type_clause AS OptimizableStmt
+		{ $$ = cat_str(5, make_str("prepare"), $2, $3, make_str("as"), $5); }
+		;
+
+prep_type_clause: '(' prep_type_list ')'	{ $$ = cat_str(3, make_str("("), $2, make_str(")")); }
+			| /* EMPTY */		{ $$ = EMPTY; }
+			;
+
+prep_type_list: Typename		{ $$ = $1; }
+	| prep_type_list ',' Typename	{ $$ = cat_str(3, $1, make_str(","), $3); }
+	;
+
+/*****************************************************************************
+ *
+ *              QUERY:
+ *                              EXECUTE <plan_name> [(params, ...)] [INTO ...]
+ *
+ *****************************************************************************/
+
+ExecuteStmt: EXECUTE name execute_param_clause into_clause
+		{ $$ = cat_str(4, make_str("execute"), $2, $3, $4); }
+		;
+
+execute_param_clause: '(' execute_param_list ')'	{ $$ = cat_str(3, make_str("("), $2, make_str(")")); }
+			| /* EMPTY */		{ $$ = EMPTY; }
+			;
+
+execute_param_list: a_expr		{ $$ = $1; }
+	| execute_param_list ',' a_expr	{ $$ = cat_str(3, $1, make_str(","), $3); }
+	;
+	
+/*****************************************************************************
+ *
+ *              QUERY:
+ *                              DEALLOCATE [PREPARE] <plan_name>
+ *
+ *****************************************************************************/
+
+DeallocateStmt: DEALLOCATE name		{ $$ = cat2_str(make_str("deallocate"), $2); }
+	| DEALLOCATE PREPARE name	{ $$ = cat2_str(make_str("deallocate prepare"), $3); }
+	;
 
 /*****************************************************************************
  *																			 *
@@ -2523,12 +2576,12 @@ select_with_parens: '(' select_no_parens ')'
 
 select_no_parens:	   simple_select
 			{ $$ = $1; }
-		| select_clause sort_clause opt_for_update_clause opt_select_limit
-			{ $$ = cat_str(4, $1, $2, $3, $4); }
-		| select_clause for_update_clause opt_select_limit
-			{ $$ = cat_str(3, $1, $2, $3); }
-		| select_clause select_limit
+		| select_clause sort_clause 
 			{ $$ = cat2_str($1, $2); }
+		| select_clause opt_sort_clause for_update_clause opt_select_limit
+			{ $$ = cat_str(4, $1, $2, $3, $4); }
+		| select_clause opt_sort_clause select_limit opt_for_update_clause
+			{ $$ = cat_str(4, $1, $2, $3, $4); }
 		;
 
 select_clause: simple_select		{ $$ = $1; }
@@ -2603,6 +2656,10 @@ opt_distinct:  DISTINCT
 			{ $$ = make_str("all"); }
 		| /*EMPTY*/
 			{ $$ = EMPTY; }
+		;
+
+opt_sort_clause:	sort_clause	{ $$ = $1; }
+		| /* EMPTY */		{ $$ = EMPTY; }
 		;
 
 sort_clause:  ORDER BY sortby_list
@@ -2720,14 +2777,14 @@ table_ref:	relation_expr
 			{ $$= cat2_str($1, $2); }
 		| func_table
 			{ $$ = $1; }
-		| func_table AS '(' OptTableFuncElementList ')'
-			{ $$=cat_str(4, $1, make_str("as ("), $4, make_str(")")); }
-		| func_table AS ColId '(' OptTableFuncElementList ')'
-			{ $$=cat_str(6, $1, make_str("as"), $3, make_str("("), $5, make_str(")")); }
-		| func_table ColId '(' OptTableFuncElementList ')'
-			{ $$=cat_str(5, $1, $2, make_str("("), $4, make_str(")")); }
 		| func_table alias_clause
-			{ $$= cat2_str($1, $2); }
+		        { $$= cat2_str($1, $2); }
+		| func_table AS '(' TableFuncElementList ')'
+			{ $$=cat_str(4, $1, make_str("as ("), $4, make_str(")")); }
+		| func_table AS ColId '(' TableFuncElementList ')'
+			{ $$=cat_str(6, $1, make_str("as"), $3, make_str("("), $5, make_str(")")); }
+		| func_table ColId '(' TableFuncElementList ')'
+			{ $$=cat_str(5, $1, $2, make_str("("), $4, make_str(")")); }
 		| select_with_parens
 			{mmerror(PARSE_ERROR, ET_ERROR, "sub-SELECT in FROM must have an alias");}
 		| select_with_parens alias_clause
@@ -2825,14 +2882,10 @@ where_clause:  WHERE a_expr		{ $$ = cat2_str(make_str("where"), $2); }
 		| /*EMPTY*/				{ $$ = EMPTY;  /* no qualifiers */ }
 		;
 
-OptTableFuncElementList: TableFuncElementList	{ $$ = $1; }
-			| /* EMPTY */		{ $$ = EMPTY; }
-			;
-
-TableFuncElementList: TableFuncElementList ',' TableFuncElement
+TableFuncElementList: TableFuncElement
+                        { $$ = $1; }
+		| TableFuncElementList ',' TableFuncElement
 			{ $$ = cat_str(3, $1, ',', $3); }
-		| TableFuncElement
-			{ $$ = $1; }
 		;
 
 TableFuncElement:	ColId Typename	{ $$ = cat2_str($1, $2); }
@@ -5102,6 +5155,7 @@ unreserved_keyword:
 		| CYCLE							{ $$ = make_str("cycle"); }
 		| DATABASE						{ $$ = make_str("database"); }
 		| DAY_P							{ $$ = make_str("day"); }
+		| DEALLOCATE						{ $$ = make_str("deallocate"); }
 		| DECLARE						{ $$ = make_str("declare"); }
 		| DEFERRED						{ $$ = make_str("deferred"); }
 		| DELETE_P						{ $$ = make_str("delete"); }
@@ -5169,6 +5223,7 @@ unreserved_keyword:
 		| PATH_P						{ $$ = make_str("path"); }
 		| PENDANT						{ $$ = make_str("pendant"); }
 		| PRECISION						{ $$ = make_str("precision"); }
+		| PREPARE						{ $$ = make_str("prepare"); }
 		| PRIOR							{ $$ = make_str("prior"); }
 		| PRIVILEGES					{ $$ = make_str("privileges"); }
 		| PROCEDURAL					{ $$ = make_str("procedural"); }

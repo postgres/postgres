@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.50.2.3 2002/08/18 14:32:21 meskes Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.50.2.4 2002/09/01 09:31:58 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -94,6 +94,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"cycle", CYCLE},
 	{"database", DATABASE},
 	{"day", DAY_P},
+	{"deallocate", DEALLOCATE},
 	{"dec", DEC},
 	{"decimal", DECIMAL},
 	{"declare", DECLARE},
@@ -223,6 +224,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"pendant", PENDANT},
 	{"position", POSITION},
 	{"precision", PRECISION},
+	{"prepare", PREPARE},
 	{"primary", PRIMARY},
 	{"prior", PRIOR},
 	{"privileges", PRIVILEGES},
