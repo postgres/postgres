@@ -2,6 +2,7 @@
 # Makefile - test for 2.5.3 flex bug
 # Bruce Momjian 5/14/97
 #
+SRCDIR= ../
 include ../Makefile.global
 
 .DEFAULT all : lextest
