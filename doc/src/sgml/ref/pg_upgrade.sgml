@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pg_upgrade.sgml,v 1.7 1999/09/28 03:41:35 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pg_upgrade.sgml,v 1.8 1999/09/28 15:59:10 momjian Exp $
 Postgres documentation
 -->
 
@@ -121,9 +121,24 @@ pg_upgrade [ -f <replaceable class="parameter">filename</replaceable> ] <replace
 
    <step performance="required">
     <para>
+     Restore your old <filename>pg_hba.conf</filename> if needed to allow
+     user logins.
+    </para>
+   </step>
+
+   <step performance="required">
+    <para>
+     Stop and restart the postmaster.
+    </para>
+   </step>
+
+   <step performance="required">
+    <para>
      <emphasis>Carefully</emphasis> examine the contents of the upgraded
      database.  If you detect problems, you'll need to recover by restoring
      from your full pg_dump backup.
+     You can delete the <filename>data.old/</filename> directory when you
+     are satisfied.
     </para>
    </step>
 
@@ -135,14 +150,6 @@ pg_upgrade [ -f <replaceable class="parameter">filename</replaceable> ] <replace
     </para>
    </step>
 
-   <step performance="required">
-    <para>
-     Restart the postmaster and/or restore your old
-     <filename>pg_hba.conf</filename> if needed to allow user logins.
-     You can delete the <filename>data.old/</filename> directory when you
-     are finished.
-    </para>
-   </step>
   </procedure>
  </refsect1>
 </refentry>
