@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.113 2004/08/30 02:54:39 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.114 2004/11/01 22:00:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2842,6 +2842,7 @@ timestamptz_trunc(PG_FUNCTION_ARGS)
 	int			tz;
 	int			type,
 				val;
+	bool		redotz = false;
 	char	   *lowunits;
 	fsec_t		fsec;
 	char	   *tzn;
@@ -2872,6 +2873,7 @@ timestamptz_trunc(PG_FUNCTION_ARGS)
 				tm->tm_min = 0;
 				tm->tm_sec = 0;
 				fsec = 0;
+				redotz = true;
 				break;
 				/* one may consider DTK_THOUSAND and DTK_HUNDRED... */
 			case DTK_MILLENNIUM:
@@ -2885,12 +2887,14 @@ timestamptz_trunc(PG_FUNCTION_ARGS)
 					tm->tm_year = ((tm->tm_year + 999) / 1000) * 1000 - 999;
 				else
 					tm->tm_year = -((999 - (tm->tm_year - 1)) / 1000) * 1000 + 1;
+				/* FALL THRU */
 			case DTK_CENTURY:
 				/* truncating to the century? as above: -100, 1, 101... */
 				if (tm->tm_year > 0)
 					tm->tm_year = ((tm->tm_year + 99) / 100) * 100 - 99;
 				else
 					tm->tm_year = -((99 - (tm->tm_year - 1)) / 100) * 100 + 1;
+				/* FALL THRU */
 			case DTK_DECADE:
 
 				/*
@@ -2904,18 +2908,26 @@ timestamptz_trunc(PG_FUNCTION_ARGS)
 					else
 						tm->tm_year = -((8 - (tm->tm_year - 1)) / 10) * 10;
 				}
+				/* FALL THRU */
 			case DTK_YEAR:
 				tm->tm_mon = 1;
+				/* FALL THRU */
 			case DTK_QUARTER:
 				tm->tm_mon = (3 * ((tm->tm_mon - 1) / 3)) + 1;
+				/* FALL THRU */
 			case DTK_MONTH:
 				tm->tm_mday = 1;
+				/* FALL THRU */
 			case DTK_DAY:
 				tm->tm_hour = 0;
+				redotz = true;	/* for all cases >= DAY */
+				/* FALL THRU */
 			case DTK_HOUR:
 				tm->tm_min = 0;
+				/* FALL THRU */
 			case DTK_MINUTE:
 				tm->tm_sec = 0;
+				/* FALL THRU */
 			case DTK_SECOND:
 				fsec = 0;
 				break;
@@ -2941,7 +2953,8 @@ timestamptz_trunc(PG_FUNCTION_ARGS)
 				result = 0;
 		}
 
-		tz = DetermineLocalTimeZone(tm);
+		if (redotz)
+			tz = DetermineLocalTimeZone(tm);
 
 		if (tm2timestamp(tm, fsec, &tz, &result) != 0)
 			ereport(ERROR,
