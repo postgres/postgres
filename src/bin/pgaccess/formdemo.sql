@@ -5,13 +5,22 @@ CREATE TABLE pga_reports (reportname varchar(64), reportsource text, reportbody 
 CREATE TABLE phonebook (name varchar(32), phone_nr varchar(16), city varchar(32), company bool, continent char16);
 CREATE TABLE pga_layout (tablename varchar(64), nrcols int2, colnames text, colwidth text);
 COPY pga_queries FROM stdin;
+Query that can be saved as view	S	select * from phonebook where continent='usa'    
 \.
 COPY pga_forms FROM stdin;
+A simple demo form	asdf 14 {1 2 3 4 5 6 7 8 9 10 11 12 13 14} 377x315+170+155 {label label1 {15 36 99 57} {} {Selected color} {}} {entry entry2 {111 36 225 54} {} entry2 color} {radio red {249 21 342 36} {} {Red as cherry} color} {radio green {249 45 342 60} {} {Green as a melon} color} {radio blue {249 69 342 84} {} {Blue as the sky} color} {button button6 {45 69 198 99} {set color spooky} {Set a weird color} {}} {label label7 {24 129 138 147} {} {The checkbox's value} {}} {entry entry8 {162 129 172 147} {} entry8 cbvalue} {checkbox checkbox9 {180 126 279 150} {} {Check me :-)} cbvalue} {button button10 {219 273 366 303} {destroy .asdf} {Close that simple form} {}} {button button11 {219 237 366 267} {open_form "Phone book"} {Open my phone book} {}} {listbox lb {12 192 162 267} {} listbox12 {}} {button button13 {12 156 162 186} {.asdf.lb insert end red green blue cyan white navy black purple maroon violet} {Add some information} {}} {button button14 {12 273 162 303} {.asdf.lb delete 0 end} {Clear this listbox} {}}
 Phone book	pb 26 {1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26} 444x310+284+246 {label label1 {33 12 63 30} {} Name {}} {entry name_entry {87 9 217 30} {} entry2 pbqs(name)} {label label3 {33 39 73 54} {} Phone {}} {entry entry4 {87 36 195 57} {} entry4 pbqs(phone_nr)} {label label5 {33 66 78 84} {} City {}} {entry entry6 {87 63 195 84} {} entry6 pbqs(city)} {query qs {3 6 33 33} {} query7 {}} {button button8 {126 177 198 203} {.pb.qs:setsql "select oid,* from phonebook where name ~* '$what' order by name"\
 .pb.qs:open\
 set nrecs [.pb.qs:nrecords]\
 .pb.qs:updatecontrols\
-.pb.qs:fill .pb.allnames name} Find {}} {button button9 {159 276 229 302} {.pb.qs:close\
+.pb.qs:fill .pb.allnames name\
+bind .pb.allnames <ButtonRelease-1> {\
+   set ancr [.pb.allnames curselection]\
+   if {$ancr!=""} {\
+\	.pb.qs:moveto $ancr\
+\	.pb.qs:updatecontrols\
+   }\
+}} Find {}} {button button9 {159 276 229 302} {.pb.qs:close\
 .pb.qs:clearcontrols\
 set nrecs {}\
 set what {}\
@@ -46,7 +55,6 @@ tk_messageBox -title Information -message "A new record has been added!"\
 # so I force it to 'f' (false)\
 set pbqs(company) f\
 focus .pb.name_entry} New {}} {listbox allnames {246 12 432 240} {} listbox26 {}}
-A simple demo form	asdf 14 {1 2 3 4 5 6 7 8 9 10 11 12 13 14} 377x315+170+155 {label label1 {15 36 99 57} {} {Selected color} {}} {entry entry2 {111 36 225 54} {} entry2 color} {radio red {249 21 342 36} {} {Red as cherry} color} {radio green {249 45 342 60} {} {Green as a melon} color} {radio blue {249 69 342 84} {} {Blue as the sky} color} {button button6 {45 69 198 99} {set color spooky} {Set a weird color} {}} {label label7 {24 129 138 147} {} {The checkbox's value} {}} {entry entry8 {162 129 172 147} {} entry8 cbvalue} {checkbox checkbox9 {180 126 279 150} {} {Check me :-)} cbvalue} {button button10 {219 273 366 303} {destroy .asdf} {Close that simple form} {}} {button button11 {219 237 366 267} {open_form "Phone book"} {Open my phone book} {}} {listbox lb {12 192 162 267} {} listbox12 {}} {button button13 {12 156 162 186} {.asdf.lb insert end red green blue cyan white navy black purple maroon violet} {Add some information} {}} {button button14 {12 273 162 303} {.asdf.lb delete 0 end} {Clear this listbox} {}}
 \.
 COPY pga_scripts FROM stdin;
 How are forms keeped inside ?	open_table pga_forms\
@@ -69,9 +77,14 @@ MUGADUMBU	+92 534662634	\N	t	africa
 Frank Zappa	6734567	Montreal	f	usa
 Jimmy Page	66323452		f	europe
 Constantin Teodorescu	+40 39 611820	Braila	f	europe
-NGBENDU Wazabanga	34577345	\N	f	africa
+Ngbendu Wazabanga	34577345		f	africa
+Victor Ciorbea	634567	Bucuresti	f	europe
+Mugabe Kandalam	7635745		f	africa
 \.
 COPY pga_layout FROM stdin;
 pga_forms	2	formname formsource	82 713
 phonebook	5	name phone_nr city company continent	150 105 80 66 85
+Usaisti	5	name phone_nr city company continent	150 150 150 150 150
+q1	5	name phone_nr city company continent	150 150 150 150 150
+view_saved_from_that_query	5	name phone_nr city company continent	150 150 150 150 150
 \.

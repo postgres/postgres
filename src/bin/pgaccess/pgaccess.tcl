@@ -181,7 +181,7 @@ global dbc
 cursor_watch .dw
 .dw.lb delete 0 end
 catch {
-    pg_select $dbc "select * from pga_forms order by formname" rec {
+    pg_select $dbc "select formname from pga_forms order by formname" rec {
         .dw.lb insert end $rec(formname)
     }
 }
@@ -1627,6 +1627,8 @@ if {$flag} {
 
 proc {open_table} {objname} {
 global mw sortfield filter tablename
+set sortfield {}
+set filter {}
 Window show .mw
 set tablename $objname
 mw_load_layout $objname
@@ -2415,7 +2417,7 @@ catch {
 }
 
 proc {show_error} {emsg} {
-tk_messageBox -title Error -icon error -message $emsg
+   tk_messageBox -title Error -icon error -message $emsg
 }
 
 proc {show_table_information} {tblname} {
@@ -2542,15 +2544,20 @@ global pref newdbname newpport newhost dbc
 load libpgtcl.so
 catch {draw_tabs}
 load_pref
-if {$pref(autoload) && ($pref(lastdb)!="")} {
-    set newdbname $pref(lastdb)
-    set newhost $pref(lasthost)
-    set newpport $pref(lastport)
-    open_database
+if {$argc>0} {
+	set newdbname [lindex $argv 0]
+	set newhost localhost
+	set newpport 5432
+	open_database
+} elseif {$pref(autoload) && ($pref(lastdb)!="")} {
+	set newdbname $pref(lastdb)
+	set newhost $pref(lasthost)
+	set newpport $pref(lastport)
+	open_database
 }
 wm protocol .dw WM_DELETE_WINDOW {
-    catch {pg_disconnect $dbc}
-    exit }
+	catch {pg_disconnect $dbc}
+	exit }
 }
 
 proc {Window} {args} {
@@ -2629,7 +2636,7 @@ proc vTclWindow.about {base} {
     label $base.l2  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-*  -relief groove  -text {A Tcl/Tk interface to
 PostgreSQL
 by Constantin Teodorescu} 
-    label $base.l3  -borderwidth 0  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-*  -relief sunken -text {vers 0.83}
+    label $base.l3  -borderwidth 0  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-*  -relief sunken -text {vers 0.86}
     label $base.l4  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-*  -relief groove  -text {You will always get the latest version at:
 http://www.flex.ro/pgaccess
 
@@ -3401,9 +3408,8 @@ proc vTclWindow.qb {base} {
 } else {
     set qcmd [.qb.text1 get 1.0 end]
     regsub -all "\n" $qcmd " " qcmd
-    regsub -all "'" $qcmd "''" qcmd
     if {$qcmd==""} then {
-        show_error "This query has no commands ?"
+	show_error "This query has no commands ?"
     } else {
         if { [lindex [split [string toupper [string trim $qcmd]]] 0] == "SELECT" } {
             set qtype S
@@ -3411,6 +3417,7 @@ proc vTclWindow.qb {base} {
             set qtype A
         }
         if {$cbv} {
+        	tk_messageBox -message "create view $queryname as $qcmd"
             set retval [catch {set pgres [pg_exec $dbc "create view $queryname as $qcmd"]} errmsg]
             if {$retval} {
                 show_error "Error defining view\n\n$errmsg"
@@ -3419,34 +3426,43 @@ proc vTclWindow.qb {base} {
                 Window destroy .qb
             }
         } else {
-			cursor_watch .qb
-            set retval [catch {
+        	regsub -all "'" $qcmd "''" qcmd
+		cursor_watch .qb
+		set retval [catch {
                 if {$queryoid==0} then {
                     set pgres [pg_exec $dbc "insert into pga_queries values ('$queryname','$qtype','$qcmd')"]
                 } else {
                     set pgres [pg_exec $dbc "update pga_queries set queryname='$queryname',querytype='$qtype',querycommand='$qcmd' where oid=$queryoid"]
                 }
-            } errmsg]
-			cursor_arrow .qb
-            if {$retval} then {
-                show_error "Error executing query\n$errmsg"
-            } else {
-                cmd_Queries
-                if {$queryoid==0} {set queryoid [pg_result $pgres -oid]}
-            }
+		} errmsg]
+		cursor_arrow .qb
+		if {$retval} then {
+			show_error "Error executing query\n$errmsg"
+		} else {
+			cmd_Queries
+			if {$queryoid==0} {set queryoid [pg_result $pgres -oid]}
+		}
         }
         catch {pg_result $pgres -clear}
     }
 }}  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9  -pady 3 -text {Save query definition} 
-    button $base.execbtn  -borderwidth 1  -command {Window show .mw
+    button $base.execbtn  -borderwidth 1  -command {
 set qcmd [.qb.text1 get 0.0 end]
-regsub -all "\n" $qcmd " " qcmd
-set mw(layout_name) $queryname
-mw_load_layout $queryname
-set mw(query) $qcmd
-set mw(updatable) 0
-set mw(isaquery) 1
-mw_select_records $qcmd}  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9  -pady 3 -text {Execute query} 
+regsub -all "\n" [string trim $qcmd] " " qcmd
+if {[lindex [split [string toupper $qcmd]] 0]!="SELECT"} {
+	if {[tk_messageBox -title Warning -message "This is an action query!\n\nExecute it?" -type yesno -default no]=="yes"} {
+		sql_exec noquiet $qcmd
+	}
+} else {
+	Window show .mw
+	set mw(layout_name) $queryname
+	mw_load_layout $queryname
+	set mw(query) $qcmd
+	set mw(updatable) 0
+	set mw(isaquery) 1
+	mw_select_records $qcmd
+}
+}  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -padx 9  -pady 3 -text {Execute query} 
     button $base.termbtn  -borderwidth 1  -command {.qb.cbv configure -state normal
 set cbv 0
 set queryname {}

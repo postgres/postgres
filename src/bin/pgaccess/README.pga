@@ -1,7 +1,5 @@
 ---------------------------------------------------------------------------
 
-
-
 Copyright (c) 1994-7 Regents of the University of California
 
 Permission to use, copy, modify, and distribute this software and its
@@ -21,10 +19,10 @@ AND FITNESS FOR A PARTICULAR PURPOSE.  THE SOFTWARE PROVIDED HEREUNDER IS
 ON AN "AS IS" BASIS, AND THE UNIVERSITY OF CALIFORNIA HAS NO OBLIGATIONS TO
 PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
+---------------------------------------------------------------------------
 
 
-
-PGACCESS 0.83 11 March 1998
+PGACCESS 0.86 29 March 1998
 ================================
 I dedicate this program to my little 4 year daughter Ana-Maria and my wife
 for their understanding. I hope they will forgive me for spending so many
@@ -38,15 +36,15 @@ First of all because PostgreSQL lacks a graphical interface where you
 can manage your tables, edit them, define queries, sequences and
 functions.
 
-I use Tcl/Tk because it's a powerfull language, and it took me only
+I use Tcl/Tk because it's a powerful language, and it took me only
 four days of hard work to get it as you see it now.
 
 
 
 2.How to INSTALL ?
 
-You will need Tcl/Tk package, I am using now Tcl 7.6 and Tk 4.2. There
-are some problems running under Tcl/Tk 8.0 but I will soon fix them.
+You will need Tcl/Tk package, I am using now Tcl 7.6 and Tk 4.2.
+PgAccess is running also on Tcl/Tk 8.0
 
 Also, you will need the PostgreSQL to Tcl interface library, lined as a
 Tcl/Tk 'load'-able module.  It is called libpgtcl and the source is
@@ -65,7 +63,9 @@ go for it.
 
 You run it with the command:
 
-        wish -f pgaccess.tcl
+        wish -f pgaccess.tcl [database]
+
+[database] is optional.
 
 Another way of loading the PostgreSQL library is running it with pgwish.
 It's a wish compiled with libpgtcl library so it could understand the
@@ -82,7 +82,7 @@ pgaccess.tcl file.
 - Saves preferences in ~/pgaccessrc file
 
 Tables
-- opening tables for vieweing, max 200 records
+- opening tables for viewing, max 200 records
 - column resizing by dragging the vertical grid lines
 - text will wrap in cells now
 - dynamic row height when editing
@@ -93,7 +93,7 @@ Tables
 - editing in place, double click the text you want to change
 - record deleting , point the record, press Del key
 - adding new records ,save new row with right-button-click on table for the moment
-- table generator assistant lizzard :-) (not wizzard)
+- table generator assistant
 - table renaming and deleting (dropping)
 - table information retrieving : owner, field information, indexes
 
@@ -102,7 +102,7 @@ Queries
 - save view layout
 - can store queries as views
 - execution of queries
-- vieweing of select type queries result
+- viewing of select type queries result
 - running action queries (insert, update, delete)
 - visual query builder with drag & drop support, table aliasing
 
@@ -128,7 +128,7 @@ Reports
 Forms
 - open user defined forms
 - form design module available
-- query widget allowing access to a recordset
+- query widget allowing access to a record set
 
 Scripts
 - define, modify and call user defined scripts
@@ -137,17 +137,17 @@ Scripts
 
 - table design (add new fields, renaming, etc)
 - sequence and function renaming
-- more powerfull report generator and viewer
+- more powerful report generator and viewer
 - help on line
 
 
 
 6. How you should report the errors?
 First of all : operating system, PostgreSQL version,Tcl/Tk version.
-A more detailed story of what have you done when error had occured.
+A more detailed story of what have you done when error had occurred.
 Tcl/Tk stops usually with a error message and there is a button there
 "Stack Trace" and if you press it, you will see a detailed information
-about the place where it stucks. Please send it to me.
+about the place where it stuck. Please send it to me.
 Some information about table structure, no. of fields, records would
 be also good.
 
