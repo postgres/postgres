@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.11 1997/04/22 17:32:26 scrappy Exp $
+ * $Id: pg_type.h,v 1.12 1997/05/26 16:55:23 thomas Exp $
  *
  * NOTES
  *    the genbki.sh script reads this file and generates .bki
@@ -238,7 +238,7 @@ DATA(insert OID = 705 (  unknown   PGUID -1  -1 f b t \054 0   18 textin textout
 #define UNKNOWNOID	705
 
 DATA(insert OID = 718 (  circle    PGUID  24 47 f b t \054 0    0 circle_in circle_out circle_in circle_out d _null_ ));
-DATA(insert OID = 719 (  _circle   PGUID  -1 -1 f b t \054 0  718 array_in array_out array_in array_out i _null_ ));
+DATA(insert OID = 719 (  _circle   PGUID  -1 -1 f b t \054 0  718 array_in array_out array_in array_out d _null_ ));
 DATA(insert OID = 790 (  money     PGUID   4 24 f b t \054 0    0 cash_in cash_out cash_in cash_out i _null_ ));
 DATA(insert OID = 791 (  _money    PGUID  -1 -1 f b t \054 0  790 array_in array_out array_in array_out i _null_ ));
 
@@ -294,7 +294,7 @@ DATA(insert OID = 1043 ( varchar     PGUID -1  -1 f b t \054 0  18 varcharin var
 
 DATA(insert OID = 1082 ( date        PGUID  4  10 t b t \054 0  0 date_in date_out date_in date_out i _null_ ));
 #define DATEOID		1082
-DATA(insert OID = 1083 ( time        PGUID  8  16 f b t \054 0  0 time_in time_out time_in time_out i _null_ ));
+DATA(insert OID = 1083 ( time        PGUID  8  16 f b t \054 0  0 time_in time_out time_in time_out d _null_ ));
 #define TIMEOID		1083
 
 /* OIDS 1100 - 1199 */
