@@ -156,9 +156,8 @@ FATAL 1:  Database testdb does not exist in pg_database
 % postmaster -S
     </ProgramListing>
     and the <Application>postmaster</Application> will be "S"ilent.  
-    Notice that there
-    is no ampersand ("&amp") at the end of the last example so
-    postmaster will be running in the foreground.
+    No ampersand ("&amp") is required in this case, since the postmaster
+    automatically detaches from the terminal when -S is specified.
    </Para>
 
    <sect2 Id="pg-options-trouble">
