@@ -17,7 +17,7 @@
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_config/pg_config.c,v 1.1 2004/08/01 13:54:05 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_config/pg_config.c,v 1.2 2004/08/01 14:01:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,7 @@
 
 #define _(x) gettext((x))
 
-char * progname;
+static char *progname;
 
 static void
 help()
@@ -67,8 +67,6 @@ main (int argc, char ** argv)
 
     progname = (char *)get_progname(argv[0]);
 
-	
-
 	if (argc < 2)
 	{
 		fprintf(stderr,_("%s: argument required\n"),progname);
@@ -83,11 +81,9 @@ main (int argc, char ** argv)
 			strcmp(argv[i],"--includedir-server") == 0 ||
 			strcmp(argv[i],"--libdir") == 0 ||
 			strcmp(argv[i],"--pkglibdir") == 0 ||
-			strcmp(argv[i],"--configure") == 0
-			)
+			strcmp(argv[i],"--configure") == 0)
 		{
 			/* come back to these later */
-
 			continue; 
 		}
 
@@ -114,14 +110,11 @@ main (int argc, char ** argv)
 		exit(1);
 	}
 
-
-
 	for (i=1; i < argc; i++)
 	{
 		if (strcmp(argv[i],"--configure") == 0)
 		{
 			/* the VAL_CONFIGURE macro must be defined by the Makefile */
-
 			printf("%s\n",VAL_CONFIGURE);
 			continue;
 		}
@@ -129,8 +122,7 @@ main (int argc, char ** argv)
 		if (strcmp(argv[i],"--bindir") == 0)
 		{
 			/* assume we are located in the bindir */
-
-			char * lastsep;
+			char *lastsep;
 			strcpy(otherpath,mypath);
 			lastsep = strrchr(otherpath,'/');
 			if (lastsep)
@@ -146,8 +138,6 @@ main (int argc, char ** argv)
 			get_pkglib_path(mypath,otherpath);
 
 		printf("%s\n",otherpath);
-
-
 	}
 
 	return 0;
