@@ -1,5 +1,5 @@
 #! /bin/sh
-set -x
+
 # Guess values for system-dependent variables and create Makefiles.
 # Generated automatically using autoconf version 2.12 
 # Copyright (C) 1992, 93, 94, 95, 96 Free Software Foundation, Inc.
@@ -6144,30 +6144,6 @@ echo "configure:6121: checking for tclConfig.sh" >&5
 	fi
 fi
 
-if test "$USE_TCL"; then
-	echo $ac_n "checking for tclConfig.sh""... $ac_c" 1>&6
-echo "configure:6150: checking for tclConfig.sh" >&5
-	library_dirs="/usr/lib $LIBRARY_DIRS"
-	TCL_CONFIG_SH=
-	for dir in $library_dirs; do
-		for tcl_dir in $tcl_dirs; do
-			if test -z "$TCL_CONFIG_SH"; then
-				if test -d "$dir/$tcl_dir" -a -r "$dir/$tcl_dir/tclConfig.sh"; then
-					TCL_CONFIG_SH=$dir/$tcl_dir/tclConfig.sh
-				fi
-			fi
-		done
-	done
-	if test -z "$TCL_CONFIG_SH"; then
-		echo "$ac_t""no" 1>&6
-		echo "configure: warning: tcl support disabled; Tcl configuration script missing" 1>&2
-		USE_TCL=
-	else
-		echo "$ac_t""$TCL_CONFIG_SH" 1>&6
-		
-	fi
-fi
-
 
 if test "$USE_TCL" = "true"
 then
@@ -6181,17 +6157,17 @@ then
 	TK_INCDIR=no
 	ac_safe=`echo "tk.h" | sed 'y%./+-%__p_%'`
 echo $ac_n "checking for tk.h""... $ac_c" 1>&6
-echo "configure:6185: checking for tk.h" >&5
+echo "configure:6161: checking for tk.h" >&5
 if eval "test \"`echo '$''{'ac_cv_header_$ac_safe'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 6190 "configure"
+#line 6166 "configure"
 #include "confdefs.h"
 #include <tk.h>
 EOF
 ac_try="$ac_cpp conftest.$ac_ext >/dev/null 2>conftest.out"
-{ (eval echo configure:6195: \"$ac_try\") 1>&5; (eval $ac_try) 2>&5; }
+{ (eval echo configure:6171: \"$ac_try\") 1>&5; (eval $ac_try) 2>&5; }
 ac_err=`grep -v '^ *+' conftest.out`
 if test -z "$ac_err"; then
   rm -rf conftest*
@@ -6240,7 +6216,7 @@ then
 	for tk_lib in $tk_libs; do
 		if test -z "$TK_LIB"; then
 			echo $ac_n "checking for main in -l$tk_lib""... $ac_c" 1>&6
-echo "configure:6244: checking for main in -l$tk_lib" >&5
+echo "configure:6220: checking for main in -l$tk_lib" >&5
 ac_lib_var=`echo $tk_lib'_'main | sed 'y%./+-%__p_%'`
 if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
@@ -6248,14 +6224,14 @@ else
   ac_save_LIBS="$LIBS"
 LIBS="-l$tk_lib  $LIBS"
 cat > conftest.$ac_ext <<EOF
-#line 6252 "configure"
+#line 6228 "configure"
 #include "confdefs.h"
 
 int main() {
 main()
 ; return 0; }
 EOF
-if { (eval echo configure:6259: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest; then
+if { (eval echo configure:6235: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest; then
   rm -rf conftest*
   eval "ac_cv_lib_$ac_lib_var=yes"
 else
@@ -6301,17 +6277,17 @@ then
 	PWD_INCDIR=no
 	ac_safe=`echo "pwd.h" | sed 'y%./+-%__p_%'`
 echo $ac_n "checking for pwd.h""... $ac_c" 1>&6
-echo "configure:6305: checking for pwd.h" >&5
+echo "configure:6281: checking for pwd.h" >&5
 if eval "test \"`echo '$''{'ac_cv_header_$ac_safe'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 6310 "configure"
+#line 6286 "configure"
 #include "confdefs.h"
 #include <pwd.h>
 EOF
 ac_try="$ac_cpp conftest.$ac_ext >/dev/null 2>conftest.out"
-{ (eval echo configure:6315: \"$ac_try\") 1>&5; (eval $ac_try) 2>&5; }
+{ (eval echo configure:6291: \"$ac_try\") 1>&5; (eval $ac_try) 2>&5; }
 ac_err=`grep -v '^ *+' conftest.out`
 if test -z "$ac_err"; then
   rm -rf conftest*
@@ -6831,21 +6807,3 @@ chmod +x $CONFIG_STATUS
 rm -fr confdefs* $ac_clean_files
 test "$no_create" = yes || ${CONFIG_SHELL-/bin/sh} $CONFIG_STATUS || exit 1
 
-
-  GNUmakefile
-  Makefile.global
-  backend/port/Makefile
-  backend/utils/Gen_fmgrtab.sh
-  bin/pg_dump/Makefile
-  bin/pg_version/Makefile
-  bin/psql/Makefile
-  include/version.h
-  interfaces/ecpg/lib/Makefile
-  interfaces/libpgtcl/Makefile
-  interfaces/libpq++/Makefile
-  interfaces/libpq/Makefile
-  interfaces/odbc/GNUmakefile
-  interfaces/odbc/Makefile.global
-  pl/plpgsql/src/Makefile
-  pl/tcl/mkMakefile.tcldefs.sh
-)
