@@ -289,23 +289,26 @@ get_type_array(PGresult *result, int nfields)
 		{
 			case INT2OID:
 			case INT4OID:
-			case INT8OID:
 			case OIDOID:
 				typ[j] = 1;
+				break;
+
+			case INT8OID:
+				typ[j] = 2;
 				break;
 
 			case FLOAT4OID:
 			case FLOAT8OID:
 			case NUMERICOID:
-				typ[j] = 2;
-				break;
-
-			case CASHOID:
 				typ[j] = 3;
 				break;
 
-			default:
+			case CASHOID:
 				typ[j] = 4;
+				break;
+
+			default:
+				typ[j] = 5;
 				break;
 		}
 	}
@@ -1797,23 +1800,26 @@ pgquery_getresult(pgqueryobject * self, PyObject * args)
 		{
 			case INT2OID:
 			case INT4OID:
-			case INT8OID:
 			case OIDOID:
 				typ[j] = 1;
+				break;
+
+			case INT8OID:
+				typ[j] = 2;
 				break;
 
 			case FLOAT4OID:
 			case FLOAT8OID:
 			case NUMERICOID:
-				typ[j] = 2;
-				break;
-
-			case CASHOID:
 				typ[j] = 3;
 				break;
 
-			default:
+			case CASHOID:
 				typ[j] = 4;
+				break;
+
+			default:
+				typ[j] = 5;
 				break;
 		}
 	}
@@ -1846,10 +1852,14 @@ pgquery_getresult(pgqueryobject * self, PyObject * args)
 						break;
 
 					case 2:
-						val = PyFloat_FromDouble(strtod(s, NULL));
+						val = PyLong_FromLong(strtol(s, NULL, 10));
 						break;
 
 					case 3:
+						val = PyFloat_FromDouble(strtod(s, NULL));
+						break;
+
+					case 4:
 						{
 							int			mult = 1;
 
@@ -1946,9 +1956,12 @@ pgquery_dictresult(pgqueryobject * self, PyObject * args)
 		{
 			case INT2OID:
 			case INT4OID:
-			case INT8OID:
 			case OIDOID:
 				typ[j] = 1;
+				break;
+
+			case INT8OID:
+				typ[j] = 2;
 				break;
 
 			case FLOAT4OID:
@@ -1995,10 +2008,14 @@ pgquery_dictresult(pgqueryobject * self, PyObject * args)
 						break;
 
 					case 2:
-						val = PyFloat_FromDouble(strtod(s, NULL));
+						val = PyLong_FromLong(strtol(s, NULL, 10));
 						break;
 
 					case 3:
+						val = PyFloat_FromDouble(strtod(s, NULL));
+						break;
+
+					case 4:
 						{
 							int			mult = 1;
 

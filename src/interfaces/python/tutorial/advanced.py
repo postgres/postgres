@@ -109,11 +109,13 @@ def array_demo(pgcnx):
 	print "CREATE TABLE sal_emp ("
 	print "    name            text,"
 	print "    pay_by_quarter  int4[],"
+	print "    pay_by_extra_quarter  int8[],"
 	print "    schedule        text[][]"
 	print ")"
 	pgcnx.query("""CREATE TABLE sal_emp (
         name              text,
         pay_by_quarter    int4[],
+        pay_by_extra_quarter    int8[],
         schedule          text[][])""")
 	wait_key()
 	print
@@ -123,18 +125,22 @@ def array_demo(pgcnx):
 	print "INSERT INTO sal_emp VALUES ("
 	print "    'Bill',"
 	print "    '{10000,10000,10000,10000}',"
+	print "    '{9223372036854775800,9223372036854775800,9223372036854775800}',"
 	print "    '{{\"meeting\", \"lunch\"}, {}}')"
 	print
 	print "INSERT INTO sal_emp VALUES ("
 	print "    'Carol',"
 	print "    '{20000,25000,25000,25000}',"
+	print "    '{9223372036854775807,9223372036854775807,9223372036854775807}',"
 	print "    '{{\"talk\", \"consult\"}, {\"meeting\"}}')"
 	print
 	pgcnx.query("""INSERT INTO sal_emp VALUES (
         'Bill', '{10000,10000,10000,10000}',
+	'{9223372036854775800,9223372036854775800,9223372036854775800}',
         '{{\"meeting\", \"lunch\"}, {}}')""")
 	pgcnx.query("""INSERT INTO sal_emp VALUES (
         'Carol', '{20000,25000,25000,25000}',
+	'{9223372036854775807,9223372036854775807,9223372036854775807}',
         '{{\"talk\", \"consult\"}, {\"meeting\"}}')""")
 	wait_key()
 	print
@@ -148,11 +154,25 @@ def array_demo(pgcnx):
 	print pgcnx.query("""SELECT name FROM sal_emp WHERE
         sal_emp.pay_by_quarter[1] <> sal_emp.pay_by_quarter[2]""")
 	print
+	print pgcnx.query("""SELECT name FROM sal_emp WHERE
+        sal_emp.pay_by_extra_quarter[1] <> sal_emp.pay_by_extra_quarter[2]""")
+	print
 	print "-- retrieve third quarter pay of all employees"
 	print 
 	print "SELECT sal_emp.pay_by_quarter[3] FROM sal_emp"
 	print
 	print pgcnx.query("SELECT sal_emp.pay_by_quarter[3] FROM sal_emp")
+	print
+	print "-- retrieve third quarter extra pay of all employees"
+	print 
+	print "SELECT sal_emp.pay_by_extra_quarter[3] FROM sal_emp"
+	print pgcnx.query("SELECT sal_emp.pay_by_extra_quarter[3] FROM sal_emp")
+	print 
+	print "-- retrieve first two quarters of extra quarter pay of all employees"
+	print 
+	print "SELECT sal_emp.pay_by_extra_quarter[1:2] FROM sal_emp"
+	print
+	print pgcnx.query("SELECT sal_emp.pay_by_extra_quarter[1:2] FROM sal_emp")
 	print
 	print "-- select subarrays"
 	print 
