@@ -5,12 +5,21 @@
 #
 # On 09/06/1997, from the top directory, I ran:
 #
-#   find . -name '*.[ch]' -type f -print | grep -v '++' | xargs -n100 PGINDENT
+#   find . -name '*.[ch]' -type f -print | grep -v '++' | xargs -n100 pgindent
 #
 # The stock BSD indent has two bugs.  First, a comment after the word 'else' 
 # causes the rest of the file to be ignored.  Second, it silently ignores
-# typedesf after getting the first 100.
+# typedefs after getting the first 100.
+#
 # Both problems are worked-around in this script.
+# We also include a patch for the second bug in:
+#	/src/tools/pgindent/indent.bsd.patch
+# Even with the workaround, installation of the patch produces better output.
+#
+# GNU indent has many bugs, and it not recommended.  See the description
+# below. 
+#
+# We get the list of typedef's from /src/tools/find_typedef
 #
 
 trap "rm -f /tmp/$$ /tmp/$$a" 0 1 2 3 15
@@ -27,7 +36,7 @@ then	echo "You do not appear to have 'indent' installed on your system." >&2
 	exit 1
 fi
 indent -version -npro </dev/null >/dev/null 2>&1
-if [ "$?" -ne 0 ]
+if [ "$?" -eq 0 ]
 then	echo "You appear to have GNU indent rather than BSD indent." >&2
 	echo "Be warned, it has some small bugs, GNU indent version 1.9.1." >&2
 	echo "These bugs become pretty major when you are doing >200k lines of code." >&2
@@ -48,6 +57,8 @@ do
 \2;g' | # workaround for indent bug
 	detab -t4 -qc |
 	sed 's;^DATA(.*$;/*&*/;' >/tmp/$$a    # protect backslashes in DATA() 
+
+# We get the list of typedef's from /src/tools/find_typedef
 	indent -bad -bap -bc -bl -d0 -cdb -nce -nfc1 -di12 -i4 -l75 \
 		-lp -nip -npro $EXTRA_OPTS \
 -TA_Const \
