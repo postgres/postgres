@@ -11,15 +11,15 @@ else
         ECHO_C='\c'
 fi
 
-$ECHO_N "Additional directories to search for library files []: $ECHO_C"
+$ECHO_N "Additional directories to search for include and library files []: $ECHO_C"
 read a
-if [ "$a." = "." ]
+if [ "$a." != "." ]
 then
-        ADD_LIB_DIRS=
-else
+        ADD_INC_DIRS=`echo "$a" | sed 's@  *@ @g; s@^\([^ ]\)@-I\1@; s@ \([^ ]\)@ -I\1@g'`
+        CPPFLAGS="$ADD_INC_DIRS" ; export CPPFLAGS
+        CFLAGS="$ADD_INC_DIRS" ; export CFLAGS
         ADD_LIB_DIRS=`echo "$a" | sed 's@  *@ @g; s@^\([^ ]\)@-L\1@; s@ \([^ ]\)@ -L\1@g'`
-        LDFLAGS=$ADD_LIB_DIRS
-        export LDFLAGS
+        LDFLAGS="$ADD_LIB_DIRS" ; export LDFLAGS
 fi
 
 ./configure
