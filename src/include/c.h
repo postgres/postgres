@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/c.h,v 1.161 2004/04/30 04:14:05 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/c.h,v 1.162 2004/04/30 20:47:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -310,7 +310,7 @@ typedef unsigned long int uint64;
 #endif
 
 /* Global variable holding time zone information. */
-#ifdef USE_PGTZ
+#if defined(USE_PGTZ) && !defined(FRONTEND)
 #define TIMEZONE_GLOBAL pg_timezone
 #else
 #ifndef HAVE_UNDERSCORE_TIMEZONE
