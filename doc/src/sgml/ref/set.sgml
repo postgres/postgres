@@ -18,9 +18,8 @@
    <date>1998-09-24</date>
   </refsynopsisdivinfo>
   <synopsis>
-SET <replaceable class="PARAMETER">variable</replaceable> { TO | = } {
-   '<replaceable class="PARAMETER">value</replaceable>' | DEFAULT }
-SET TIME ZONE { '<replaceable class="PARAMETER">timezone</replaceable>' | LOCAL | DEFAULT };
+SET <replaceable class="PARAMETER">variable</replaceable> { TO | = } { '<replaceable class="PARAMETER">value</replaceable>' | DEFAULT }
+SET TIME ZONE { '<replaceable class="PARAMETER">timezone</replaceable>' | LOCAL | DEFAULT }
 SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZED }
   </synopsis>
 
@@ -36,7 +35,7 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZED }
     <variablelist>
      <varlistentry>
       <term>
-       <replaceable class="PARAMETER">variable</replaceable>
+<replaceable class="PARAMETER">variable</replaceable>
       </term>
       <listitem>
        <para>
@@ -46,7 +45,7 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZED }
      </varlistentry>
      <varlistentry>
       <term>
-       <replaceable class="PARAMETER">value</replaceable>
+<replaceable class="PARAMETER">value</replaceable>
       </term>
       <listitem>
        <para>
@@ -63,16 +62,16 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZED }
     <variablelist>
      <varlistentry>
       <term>
-       CLIENT_ENCODING | NAMES
+CLIENT_ENCODING | NAMES
       </term>
       <listitem>
        <para>
-	Sets the multi-byte client encoding
+	Sets the multi-byte client encoding. Parameters are:
 	
 	<variablelist>
 	 <varlistentry>
 	  <term>
-	   <replaceable class="parameter">value</replaceable>
+<replaceable class="parameter">value</replaceable>
 	  </term>
 	  <listitem>
 	   <para>
@@ -85,11 +84,11 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZED }
 	 
 	 <varlistentry>
 	  <term>
-	   DEFAULT
+DEFAULT
 	  </term>
 	  <listitem>
 	   <para>
-	    Sets the multi-byte client encoding.
+	    Sets the multi-byte client encoding to the default value.
 	   </para>
 	  </listitem>
 	 </varlistentry>
@@ -104,14 +103,17 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZED }
 
      <varlistentry>
       <term>
-       DateStyle
+DateStyle
       </term>
       <listitem>
        <para>
+	Set the date/time representation style. Affects the output format,
+	and in some cases it can affect the interpretation of input.
+
 	<variablelist>
 	 <varlistentry>
 	  <term>
-	   ISO
+ISO
 	  </term>
 	  <listitem>
 	   <para>
@@ -121,7 +123,7 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZED }
 	 </varlistentry>
 	 <varlistentry>
 	  <term>
-	   SQL
+SQL
 	  </term>
 	  <listitem>
 	   <para>
@@ -131,7 +133,7 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZED }
 	 </varlistentry>
 	 <varlistentry>
 	  <term>
-	   Postgres
+Postgres
 	  </term>
 	  <listitem>
 	   <para>
@@ -141,7 +143,7 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZED }
 	 </varlistentry>
 	 <varlistentry>
 	  <term>
-	   European
+European
 	  </term>
 	  <listitem>
 	   <para>
@@ -151,7 +153,7 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZED }
 	 </varlistentry>
 	 <varlistentry>
 	  <term>
-	   NonEuropean
+NonEuropean
 	  </term>
 	  <listitem>
 	   <para>
@@ -161,7 +163,7 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZED }
 	 </varlistentry>
 	 <varlistentry>
 	  <term>
-	   German
+German
 	  </term>
 	  <listitem>
 	   <para>
@@ -171,7 +173,7 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZED }
 	 </varlistentry>
 	 <varlistentry>
 	  <term>
-	   US
+US
 	  </term>
 	  <listitem>
 	   <para>
@@ -181,7 +183,7 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZED }
 	 </varlistentry>
 	 <varlistentry>
 	  <term>
-	   default
+default
 	  </term>
 	  <listitem>
 	   <para>
@@ -193,14 +195,14 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZED }
        </para>
 
        <para>
-	Date format initialization my be done by:
+	Date format initialization may be done by:
 	<simplelist>
 	 <member>
-	  Setting PGDATESTYLE environment variable.
+	  Setting the <envar>PGDATESTYLE</envar> environment variable.
 	 </member>
 	 <member>
-	  Running postmaster using -oe parameter to set
-	  dates to the 'European' convention.
+	  Running postmaster using the <option>-oe</option> parameter to set
+	  dates to the <literal>European</literal> convention.
 	  Note that this affects only the some combinations of date styles; for example
 	  the ISO style is not affected by this parameter.
 	 </member>
@@ -226,7 +228,7 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZED }
 
      <varlistentry>
       <term>
-       SERVER_ENCODING
+SERVER_ENCODING
       </term>
       <listitem>
        <para>
@@ -235,22 +237,22 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZED }
 	<variablelist>
 	 <varlistentry>
 	  <term>
-	   <replaceable class="parameter">value</replaceable>
+<replaceable class="parameter">value</replaceable>
 	  </term>
 	  <listitem>
 	   <para>
-		Sets the multi-byte server encoding.
+	    Sets the multi-byte server encoding.
 	   </para>
 	  </listitem>
 	 </varlistentry>
 	 
 	 <varlistentry>
 	  <term>
-	   DEFAULT
+DEFAULT
 	  </term>
 	  <listitem>
 	   <para>
-		Sets the multi-byte server encoding.
+	    Sets the multi-byte server encoding.
 	   </para>
 	  </listitem>
 	 </varlistentry>
@@ -264,7 +266,7 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZED }
 
      <varlistentry>
       <term>
-       TIMEZONE
+TIMEZONE
       </term>
       <listitem>
        <para>
@@ -278,7 +280,7 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZED }
 	<variablelist>
 	 <varlistentry>
 	  <term>
-	   'PST8PDT'
+'PST8PDT'
 	  </term>
 	  <listitem>
 	   <para>
@@ -288,7 +290,7 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZED }
 	 </varlistentry>
 	 <varlistentry>
 	  <term>
-	   'Portugal'
+'Portugal'
 	  </term>
 	  <listitem>
 	   <para>
@@ -298,7 +300,7 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZED }
 	 </varlistentry>
 	 <varlistentry>
 	  <term>
-	   'Europe/Rome'
+'Europe/Rome'
 	  </term>
 	  <listitem>
 	   <para>
@@ -308,7 +310,7 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZED }
 	 </varlistentry>
 	 <varlistentry>
 	  <term>
-	   DEFAULT
+DEFAULT
 	  </term>
 	  <listitem>
 	   <para>
@@ -338,7 +340,7 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZED }
 
      <varlistentry>
       <term>
-       TRANSACTION ISOLATION LEVEL
+TRANSACTION ISOLATION LEVEL
       </term>
       <listitem>
        <para>
@@ -347,7 +349,7 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZED }
 	<variablelist>
 	 <varlistentry>
 	  <term>
-	   READ COMMITTED
+READ COMMITTED
 	  </term>
 	  <listitem>
 	   <para>
@@ -366,7 +368,7 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZED }
 	 
 	 <varlistentry>
 	  <term>
-	   SERIALIZABLE
+SERIALIZABLE
 	  </term>
 	  <listitem>
 	   <para>
@@ -393,7 +395,7 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZED }
     <variablelist>
      <varlistentry>
       <term>
-       COST_HEAP
+COST_HEAP
       </term>
       <listitem>
        <para>
@@ -402,7 +404,7 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZED }
 	<variablelist>
 	 <varlistentry>
 	  <term>
-	   <replaceable class="parameter">float4</replaceable>
+<replaceable class="parameter">float4</replaceable>
 	  </term>
 	  <listitem>
 	   <para>
@@ -413,7 +415,7 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZED }
 	 
 	 <varlistentry>
 	  <term>
-	   DEFAULT
+DEFAULT
 	  </term>
 	  <listitem>
 	   <para>
@@ -432,7 +434,7 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZED }
 
      <varlistentry>
       <term>
-       COST_INDEX
+COST_INDEX
       </term>
       <listitem>
        <para>
@@ -441,7 +443,7 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZED }
 	<variablelist>     
 	 <varlistentry>
 	  <term>
-	   <replaceable class="parameter">float4</replaceable>
+<replaceable class="parameter">float4</replaceable>
 	  </term>
 	  <listitem>
 	   <para>
@@ -452,7 +454,7 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZED }
 	 
 	 <varlistentry>
 	  <term>
-	   DEFAULT
+DEFAULT
 	  </term>
 	  <listitem>
 	   <para>
@@ -472,7 +474,7 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZED }
 
      <varlistentry>
       <term>
-       GEQO
+GEQO
       </term>
       <listitem>
        <para>
@@ -481,7 +483,7 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZED }
 	<variablelist>
 	 <varlistentry>
 	  <term>
-	   ON
+ON
 	  </term>
 	  <listitem>
 	   <para>
@@ -492,7 +494,7 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZED }
 	 </varlistentry>
 	 <varlistentry>
 	  <term>
-	   ON=<replaceable class="parameter">#</replaceable>
+ON=<replaceable class="parameter">#</replaceable>
 	  </term>
 	  <listitem>
 	   <para>
@@ -504,7 +506,7 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZED }
 	 </varlistentry>
 	 <varlistentry>
 	  <term>
-	   OFF
+OFF
 	  </term>
 	  <listitem>
 	   <para>
@@ -514,7 +516,7 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZED }
 	 </varlistentry>
 	 <varlistentry>
 	  <term>
-	   DEFAULT
+DEFAULT
 	  </term>
 	  <listitem>
 	   <para>
@@ -545,7 +547,7 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZED }
 
      <varlistentry>
       <term>
-       KSQO
+KSQO
       </term>
       <listitem>
        <para>
@@ -556,7 +558,7 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZED }
 	<variablelist>
 	 <varlistentry>
 	  <term>
-	   ON
+ON
 	  </term>
 	  <listitem>
 	   <para>
@@ -567,7 +569,7 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZED }
 	
 	 <varlistentry>
 	  <term>
-	   OFF
+OFF
 	  </term>
 	  <listitem>
 	   <para>
@@ -578,7 +580,7 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZED }
 	 
 	 <varlistentry>
 	  <term>
-	   DEFAULT
+DEFAULT
 	  </term>
 	  <listitem>
 	   <para>
@@ -617,7 +619,7 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZED }
     <variablelist>
      <varlistentry>
       <term>
-       <returnvalue>SET VARIABLE</returnvalue>
+<returnvalue>SET VARIABLE</returnvalue>
       </term>
       <listitem>
        <para>
@@ -628,9 +630,7 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZED }
      
      <varlistentry>
       <term>
-       <returnvalue>WARN:  Bad value for
-	<replaceable class="parameter">variable</replaceable>
-	(<replaceable class="parameter">value</replaceable>)</returnvalue>
+<returnvalue>WARN:  Bad value for <replaceable class="parameter">variable</replaceable> (<replaceable class="parameter">value</replaceable>)</returnvalue>
       </term>
       <listitem>
        <para>
@@ -694,43 +694,46 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZED }
    Usage
   </title>
   <para>
-  </para>
-  <programlisting>
-   --Set the style of date to ISO:
-   --
-   SET DATESTYLE TO 'ISO';
-  </programlisting>
-  <programlisting> 
-   --Enable GEQO for queries with 4 or more tables
-   --
-   SET GEQO ON=4;
-  </programlisting>
-  <programlisting> 
-   --Set GEQO to default:
-   --
-   SET GEQO = DEFAULT;
-  </programlisting>
-  <programlisting> 
-   --set the timezone for Berkeley, California:
-   SET TIME ZONE 'PST8PDT';
+   Set the style of date to ISO:
    
+   <programlisting>
+   SET DATESTYLE TO 'ISO';
+   </programlisting>
+
+   Enable GEQO for queries with 4 or more tables:
+
+   <programlisting> 
+   SET GEQO ON=4;
+   </programlisting>
+
+   Set GEQO to default:
+
+   <programlisting> 
+   SET GEQO = DEFAULT;
+   </programlisting>
+
+   Set the timezone for Berkeley, California:
+
+   <programlisting> 
+   SET TIME ZONE 'PST8PDT';
    SELECT CURRENT_TIMESTAMP AS today;
    
    today
    ----------------------
    1998-03-31 07:41:21-08
-  </programlisting>
-  <programlisting> 
-   --set the timezone for Italy:
+   </programlisting>
+
+   Set the timezone for Italy:
+
+   <programlisting> 
    SET TIME ZONE 'Europe/Rome';
-   
    SELECT CURRENT_TIMESTAMP AS today;
    
    today
    ----------------------
    1998-03-31 17:41:31+02
-  </programlisting>
-  
+   </programlisting>
+  </para>
  </refsect1>
 
  <refsect1 id="R1-SQL-SET-3">
