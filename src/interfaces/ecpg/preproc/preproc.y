@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.245 2003/07/08 12:11:32 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.246 2003/07/09 14:53:18 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -202,7 +202,7 @@ adjust_informix(struct arguments *list)
 
 	 for (ptr = list; ptr != NULL; ptr = ptr->next)
 	 {
-	 	char temp[sizeof(int)+sizeof(", &()")];
+	 	char temp[20]; /* this should be sufficient unless you have 8 byte integers */
 		char *original_var;
 		
 	 	/* change variable name to "ECPG_informix_get_var(<counter>)" */
@@ -221,6 +221,27 @@ adjust_informix(struct arguments *list)
 			sprintf(temp, "%d, &(", ecpg_informix_var++);
 		}
 		result = cat_str(5, result, make_str("ECPG_informix_set_var("), mm_strdup(temp), mm_strdup(original_var), make_str("), __LINE__);\n"));
+		
+		/* now the indicator if there is one */
+		if (ptr->indicator->type->type != ECPGt_NO_INDICATOR)
+		{
+			/* change variable name to "ECPG_informix_get_var(<counter>)" */
+			original_var = ptr->indicator->name;
+			sprintf(temp, "%d))", ecpg_informix_var);
+			
+			/* create call to "ECPG_informix_set_var(<counter>, <pointer>. <linen number>)" */
+			if (atoi(ptr->indicator->type->size) > 1)
+			{
+				ptr->indicator = new_variable(cat_str(4, make_str("("), mm_strdup(ECPGtype_name(ptr->indicator->type->type)), make_str(" *)(ECPG_informix_get_var("), mm_strdup(temp)), ECPGmake_simple_type(ptr->indicator->type->type, ptr->indicator->type->size), 0);
+				sprintf(temp, "%d, (", ecpg_informix_var++);
+			}
+			else
+			{
+				ptr->indicator = new_variable(cat_str(4, make_str("*("), mm_strdup(ECPGtype_name(ptr->indicator->type->type)), make_str(" *)(ECPG_informix_get_var("), mm_strdup(temp)), ECPGmake_simple_type(ptr->indicator->type->type, ptr->indicator->type->size), 0);
+				sprintf(temp, "%d, &(", ecpg_informix_var++);
+			}
+			result = cat_str(5, result, make_str("ECPG_informix_set_var("), mm_strdup(temp), mm_strdup(original_var), make_str("), __LINE__);\n"));
+		}
 	 }
 
 	 return result;
@@ -6097,7 +6118,7 @@ c_args: /*EMPTY*/		{ $$ = EMPTY; }
 coutputvariable: CVARIABLE indicator
 			{ add_variable(&argsresult, find_variable($1), find_variable($2)); }
 		| CVARIABLE
-			{ add_variable(&argsresult, find_variable($1), &no_indicator); }
+			{ add_variable(&argsresult, find_variable($1), &no_indicator); } 
 		;
 
 
