@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_dump.h,v 1.81 2002/04/11 20:00:08 tgl Exp $
+ * $Id: pg_dump.h,v 1.82 2002/04/21 05:21:18 petere Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -66,7 +66,7 @@ typedef struct _funcInfo
 	char	   *proowner;
 	Oid			lang;
 	int			nargs;
-	char	   *argtypes[FUNC_MAX_ARGS];
+	char	   **argtypes;
 	char	   *prorettype;
 	int			retset;			/* 1 if the function returns a set, else 0 */
 	char	   *prosrc;

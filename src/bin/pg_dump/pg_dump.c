@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.250 2002/04/19 23:13:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.251 2002/04/21 05:21:17 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1636,9 +1636,13 @@ clearFuncInfo(FuncInfo *fun, int numFuncs)
 			free(fun[i].proname);
 		if (fun[i].usename)
 			free(fun[i].usename);
-		for (a = 0; a < FUNC_MAX_ARGS; ++a)
-			if (fun[i].argtypes[a])
-				free(fun[i].argtypes[a]);
+		if (fun[i].argtypes)
+		{
+			for (a = 0; a < fun[i].nargs; ++a)
+				if (fun[i].argtypes[a])
+					free(fun[i].argtypes[a]);
+			free(fun[i].argtypes);
+		}
 		if (fun[i].prorettype)
 			free(fun[i].prorettype);
 		if (fun[i].prosrc)
@@ -2066,12 +2070,7 @@ getFuncs(int *numFuncs)
 			write_msg(NULL, "WARNING: owner of function \"%s\" appears to be invalid\n",
 					  finfo[i].proname);
 
-		if (finfo[i].nargs < 0 || finfo[i].nargs > FUNC_MAX_ARGS)
-		{
-			write_msg(NULL, "failed sanity check: function %s has more than %d (namely %d) arguments\n",
-					  finfo[i].proname, FUNC_MAX_ARGS, finfo[i].nargs);
-			exit_nicely();
-		}
+		finfo[i].argtypes = malloc(finfo[i].nargs * sizeof(finfo[i].argtypes[0]));
 		parseNumericArray(PQgetvalue(res, i, i_proargtypes),
 						  finfo[i].argtypes,
 						  finfo[i].nargs);
