@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.25 1998/06/27 15:47:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.26 1998/06/28 06:17:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -487,7 +487,7 @@ ShmemInitStruct(char *name, unsigned long size, bool *foundPtr)
 	item.location = BAD_LOCATION;
 
 	SpinAcquire(ShmemIndexLock);
-
+	
 	if (!ShmemIndex)
 	{
 #ifdef USE_ASSERT_CHECKING
