@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.52 1998/07/26 04:31:29 scrappy Exp $
+ * $Id: parsenodes.h,v 1.53 1998/08/05 04:49:13 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -648,7 +648,7 @@ typedef struct TypeName
 	char	   *name;			/* name of the type */
 	bool		timezone;		/* timezone specified? */
 	bool		setof;			/* is a set? */
-	int32		typmod;			/* type modifier */
+	int16		typmod;			/* type modifier */
 	List	   *arrayBounds;	/* array bounds */
 } TypeName;
 
@@ -789,11 +789,20 @@ typedef struct RelExpr
 typedef struct SortGroupBy
 {
 	NodeTag		type;
+	char	   *useOp;			/* operator to use */
+	Node       *node;           /*  Expression  */    
+} SortGroupBy;
+
+/*
+ * JoinUsing - for join using clause
+ */
+typedef struct JoinUsing
+{
+	NodeTag		type;
 	int			resno;			/* target number */
 	char	   *range;
 	char	   *name;			/* name of column to sort on */
-	char	   *useOp;			/* operator to use */
-} SortGroupBy;
+} JoinUsing;
 
 /*
  * RangeVar - range variable, used in from clauses

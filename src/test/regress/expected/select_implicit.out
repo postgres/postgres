@@ -4,28 +4,32 @@ QUERY: INSERT INTO test_missing_target VALUES (1, 2, 'AAAA');
 QUERY: INSERT INTO test_missing_target VALUES (2, 2, 'AAAA');
 QUERY: INSERT INTO test_missing_target VALUES (3, 3, 'BBBB');
 QUERY: INSERT INTO test_missing_target VALUES (4, 3, 'BBBB');
-QUERY: INSERT INTO test_missing_target VALUES (5, 3, 'BBBB');
-QUERY: INSERT INTO test_missing_target VALUES (6, 4, 'CCCC');
-QUERY: INSERT INTO test_missing_target VALUES (7, 4, 'CCCC');
+QUERY: INSERT INTO test_missing_target VALUES (5, 3, 'bbbb');
+QUERY: INSERT INTO test_missing_target VALUES (6, 4, 'cccc');
+QUERY: INSERT INTO test_missing_target VALUES (7, 4, 'cccc');
 QUERY: INSERT INTO test_missing_target VALUES (8, 4, 'CCCC');
 QUERY: INSERT INTO test_missing_target VALUES (9, 4, 'CCCC');
 QUERY: SELECT c, count(*) FROM test_missing_target GROUP BY test_missing_target.c;
 c       |count
 --------+-----
 AAAA    |    2
-BBBB    |    3
-CCCC    |    4
+BBBB    |    2
+CCCC    |    2
 XXXX    |    1
-(4 rows)
+bbbb    |    1
+cccc    |    2
+(6 rows)
 
 QUERY: SELECT count(*) FROM test_missing_target GROUP BY test_missing_target.c;
 count
 -----
     2
-    3
-    4
+    2
+    2
     1
-(4 rows)
+    1
+    2
+(6 rows)
 
 QUERY: SELECT count(*) FROM test_missing_target GROUP BY a ORDER BY b;
 ERROR:  parser: illegal use of aggregates or non-group column in target list
@@ -56,9 +60,9 @@ AAAA
 AAAA    
 BBBB    
 BBBB    
-BBBB    
-CCCC    
-CCCC    
+bbbb    
+cccc    
+cccc    
 CCCC    
 CCCC    
 (10 rows)
@@ -82,17 +86,54 @@ QUERY: SELECT c, count(*) FROM test_missing_target GROUP BY 1;
 c       |count
 --------+-----
 AAAA    |    2
-BBBB    |    3
-CCCC    |    4
+BBBB    |    2
+CCCC    |    2
 XXXX    |    1
-(4 rows)
+bbbb    |    1
+cccc    |    2
+(6 rows)
 
 QUERY: SELECT c, count(*) FROM test_missing_target GROUP BY 3;
-ERROR:  ORDER/GROUP BY position 3 is not in target list
+ERROR:  GROUP BY position 3 is not in target list
 QUERY: SELECT count(*) FROM test_missing_target x, test_missing_target y
 	WHERE x.a = y.a
 	GROUP BY b ORDER BY b;
 ERROR:  Column b is ambiguous
+QUERY: SELECT a, a FROM test_missing_target
+	ORDER BY a;
+a|a
+-+-
+0|0
+1|1
+2|2
+3|3
+4|4
+5|5
+6|6
+7|7
+8|8
+9|9
+(10 rows)
+
+QUERY: SELECT a/2, a/2 FROM test_missing_target
+	ORDER BY a/2;
+?column?|?column?
+--------+--------
+       0|       0
+       0|       0
+       1|       1
+       1|       1
+       2|       2
+       2|       2
+       3|       3
+       3|       3
+       4|       4
+       4|       4
+(10 rows)
+
+QUERY: SELECT a/2, a/2 FROM test_missing_target
+	GROUP BY a/2;
+ERROR:  GROUP BY has ambiguous expression
 QUERY: SELECT x.b, count(*) FROM test_missing_target x, test_missing_target y
 	WHERE x.a = y.a
 	GROUP BY x.b;
@@ -128,5 +169,100 @@ count
     4
 (4 rows)
 
+QUERY: SELECT a%2, count(a) FROM test_missing_target GROUP BY test_missing_target.a%2;
+?column?|count
+--------+-----
+       0|    5
+       1|    5
+(2 rows)
+
+QUERY: /*
+	NOTE: as of 1998-08-01 a bug was detected unrelated to this feature which
+	requires the aggragate function argument to be the same as some non-agragate
+	in the target list.   (i.e. count(*) and count(b) crash the backend.)
+*/
+SELECT count(c) FROM test_missing_target GROUP BY lower(test_missing_target.c);
+count
+-----
+    2
+    3
+    4
+    1
+(4 rows)
+
+QUERY: SELECT count(a) FROM test_missing_target GROUP BY a ORDER BY b;
+ERROR:  parser: illegal use of aggregates or non-group column in target list
+QUERY: SELECT count(b) FROM test_missing_target GROUP BY b/2 ORDER BY b/2;
+count
+-----
+    1
+    5
+    4
+(3 rows)
+
+QUERY: SELECT lower(test_missing_target.c), count(c)
+  FROM test_missing_target GROUP BY lower(c) ORDER BY lower(c);
+lower   |count
+--------+-----
+aaaa    |    2
+bbbb    |    3
+cccc    |    4
+xxxx    |    1
+(4 rows)
+
+QUERY: SELECT a FROM test_missing_target ORDER BY upper(c);
+a
+-
+1
+2
+3
+4
+5
+6
+7
+8
+9
+0
+(10 rows)
+
+QUERY: SELECT count(b) FROM test_missing_target
+	GROUP BY (b + 1) / 2 ORDER BY (b + 1) / 2 desc;
+count
+-----
+    7
+    3
+(2 rows)
+
+QUERY: SELECT count(x.a) FROM test_missing_target x, test_missing_target y
+	WHERE x.a = y.a
+	GROUP BY b/2 ORDER BY b/2;
+ERROR:  Column b is ambiguous
+QUERY: SELECT x.b/2, count(x.b) FROM test_missing_target x, test_missing_target y
+	WHERE x.a = y.a
+	GROUP BY x.b/2;
+?column?|count
+--------+-----
+       0|    1
+       1|    5
+       2|    4
+(3 rows)
+
+QUERY: SELECT count(b) FROM test_missing_target x, test_missing_target y
+	WHERE x.a = y.a
+	GROUP BY x.b/2;
+ERROR:  Column b is ambiguous
+QUERY: SELECT count(x.b) INTO TABLE test_missing_target3
+FROM test_missing_target x, test_missing_target y
+	WHERE x.a = y.a
+	GROUP BY x.b/2;
+QUERY: SELECT * FROM test_missing_target3;
+count
+-----
+    1
+    5
+    4
+(3 rows)
+
 QUERY: DROP TABLE test_missing_target;
 QUERY: DROP TABLE test_missing_target2;
+QUERY: DROP TABLE test_missing_target3;

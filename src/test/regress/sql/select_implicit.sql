@@ -13,9 +13,9 @@ INSERT INTO test_missing_target VALUES (1, 2, 'AAAA');
 INSERT INTO test_missing_target VALUES (2, 2, 'AAAA');
 INSERT INTO test_missing_target VALUES (3, 3, 'BBBB');
 INSERT INTO test_missing_target VALUES (4, 3, 'BBBB');
-INSERT INTO test_missing_target VALUES (5, 3, 'BBBB');
-INSERT INTO test_missing_target VALUES (6, 4, 'CCCC');
-INSERT INTO test_missing_target VALUES (7, 4, 'CCCC');
+INSERT INTO test_missing_target VALUES (5, 3, 'bbbb');
+INSERT INTO test_missing_target VALUES (6, 4, 'cccc');
+INSERT INTO test_missing_target VALUES (7, 4, 'cccc');
 INSERT INTO test_missing_target VALUES (8, 4, 'CCCC');
 INSERT INTO test_missing_target VALUES (9, 4, 'CCCC');
 
@@ -59,6 +59,21 @@ SELECT count(*) FROM test_missing_target x, test_missing_target y
 	WHERE x.a = y.a
 	GROUP BY b ORDER BY b;
 
+--   order w/ target under ambigious condition
+--   failure NOT expected
+SELECT a, a FROM test_missing_target
+	ORDER BY a;
+
+--   order expression w/ target under ambigious condition
+--   failure NOT expected
+SELECT a/2, a/2 FROM test_missing_target
+	ORDER BY a/2;
+
+--   group expression w/ target under ambigious condition
+--   failure expected
+SELECT a/2, a/2 FROM test_missing_target
+	GROUP BY a/2;
+
 --   group w/ existing GROUP BY target under ambigious condition
 SELECT x.b, count(*) FROM test_missing_target x, test_missing_target y 
 	WHERE x.a = y.a
@@ -77,7 +92,65 @@ FROM test_missing_target x, test_missing_target y
 	GROUP BY x.b;
 SELECT * FROM test_missing_target2;
 
+
+--  Functions and expressions
+
+--   w/ existing GROUP BY target
+SELECT a%2, count(a) FROM test_missing_target GROUP BY test_missing_target.a%2;
+/*
+	NOTE: as of 1998-08-01 a bug was detected unrelated to this feature which 
+	requires the aggragate function argument to be the same as some non-agragate 
+	in the target list.   (i.e. count(*) and count(b) crash the backend.)
+*/
+
+--   w/o existing GROUP BY target using a relation name in GROUP BY clause
+SELECT count(c) FROM test_missing_target GROUP BY lower(test_missing_target.c);
+
+--   w/o existing GROUP BY target and w/o existing a different ORDER BY target
+--   failure expected
+SELECT count(a) FROM test_missing_target GROUP BY a ORDER BY b;
+
+--   w/o existing GROUP BY target and w/o existing same ORDER BY target
+SELECT count(b) FROM test_missing_target GROUP BY b/2 ORDER BY b/2;
+
+--   w/ existing GROUP BY target using a relation name in target
+SELECT lower(test_missing_target.c), count(c)
+  FROM test_missing_target GROUP BY lower(c) ORDER BY lower(c);
+
+--   w/o existing GROUP BY target
+SELECT a FROM test_missing_target ORDER BY upper(c);
+
+--   w/o existing ORDER BY target
+SELECT count(b) FROM test_missing_target
+	GROUP BY (b + 1) / 2 ORDER BY (b + 1) / 2 desc;
+
+--   group w/o existing GROUP BY and ORDER BY target under ambigious condition
+--   failure expected
+SELECT count(x.a) FROM test_missing_target x, test_missing_target y 
+	WHERE x.a = y.a
+	GROUP BY b/2 ORDER BY b/2;
+
+--   group w/ existing GROUP BY target under ambigious condition
+SELECT x.b/2, count(x.b) FROM test_missing_target x, test_missing_target y 
+	WHERE x.a = y.a
+	GROUP BY x.b/2;
+
+--   group w/o existing GROUP BY target under ambigious condition
+SELECT count(b) FROM test_missing_target x, test_missing_target y 
+	WHERE x.a = y.a
+	GROUP BY x.b/2;
+
+--   group w/o existing GROUP BY target under ambigious condition
+--   into a table
+SELECT count(x.b) INTO TABLE test_missing_target3 
+FROM test_missing_target x, test_missing_target y 
+	WHERE x.a = y.a
+	GROUP BY x.b/2;
+SELECT * FROM test_missing_target3;
+
 --   Cleanup
 DROP TABLE test_missing_target;
 DROP TABLE test_missing_target2;
+DROP TABLE test_missing_target3;
+
 

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.20 1998/08/04 17:37:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.21 1998/08/05 04:49:08 scrappy Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -103,6 +103,7 @@ Oid	param_type(int t); /* used in parse_expr.c */
 	DefElem				*defelt;
 	ParamString			*param;
 	SortGroupBy			*sortgroupby;
+	JoinUsing			*joinusing;
 	IndexElem			*ielem;
 	RangeVar			*range;
 	RelExpr				*relexp;
@@ -162,7 +163,7 @@ Oid	param_type(int t); /* used in parse_expr.c */
 		sort_clause, sortby_list, index_params, index_list, name_list,
 		from_clause, from_list, opt_array_bounds, nest_array_bounds,
 		expr_list, attrs, res_target_list, res_target_list2,
-		def_list, opt_indirection, group_clause, groupby_list, TriggerFuncArgs
+		def_list, opt_indirection, group_clause, TriggerFuncArgs
 
 %type <node>	func_return
 %type <boolean>	set_opt
@@ -171,7 +172,7 @@ Oid	param_type(int t); /* used in parse_expr.c */
 
 %type <list>	union_clause, select_list
 %type <list>	join_list
-%type <sortgroupby>
+%type <joinusing>
 				join_using
 %type <boolean>	opt_union
 %type <boolean>	opt_table
@@ -211,7 +212,6 @@ Oid	param_type(int t); /* used in parse_expr.c */
 %type <node>	CreateAsElement
 %type <value>	NumericOnly, FloatOnly, IntegerOnly
 %type <attr>	event_object, attr
-%type <sortgroupby>		groupby
 %type <sortgroupby>		sortby
 %type <ielem>	index_elem, func_index
 %type <range>	from_val
@@ -2517,28 +2517,10 @@ sortby_list:  sortby							{ $$ = lcons($1, NIL); }
 		| sortby_list ',' sortby				{ $$ = lappend($1, $3); }
 		;
 
-sortby:  ColId OptUseOp
+sortby: a_expr OptUseOp
 				{
 					$$ = makeNode(SortGroupBy);
-					$$->resno = 0;
-					$$->range = NULL;
-					$$->name = $1;
-					$$->useOp = $2;
-				}
-		| ColId '.' ColId OptUseOp
-				{
-					$$ = makeNode(SortGroupBy);
-					$$->resno = 0;
-					$$->range = $1;
-					$$->name = $3;
-					$$->useOp = $4;
-				}
-		| Iconst OptUseOp
-				{
-					$$ = makeNode(SortGroupBy);
-					$$->resno = $1;
-					$$->range = NULL;
-					$$->name = NULL;
+					$$->node = $1;
 					$$->useOp = $2;
 				}
 		;
@@ -2570,38 +2552,8 @@ name_list:  name
 				{	$$ = lappend($1,makeString($3)); }
 		;
 
-group_clause:  GROUP BY groupby_list			{ $$ = $3; }
+group_clause:  GROUP BY expr_list			{ $$ = $3; }
 		| /*EMPTY*/								{ $$ = NIL; }
-		;
-
-groupby_list:  groupby							{ $$ = lcons($1, NIL); }
-		| groupby_list ',' groupby				{ $$ = lappend($1, $3); }
-		;
-
-groupby:  ColId
-				{
-					$$ = makeNode(SortGroupBy);
-					$$->resno = 0;
-					$$->range = NULL;
-					$$->name = $1;
-					$$->useOp = NULL;
-				}
-		| ColId '.' ColId
-				{
-					$$ = makeNode(SortGroupBy);
-					$$->resno = 0;
-					$$->range = $1;
-					$$->name = $3;
-					$$->useOp = NULL;
-				}
-		| Iconst
-				{
-					$$ = makeNode(SortGroupBy);
-					$$->resno = $1;
-					$$->range = NULL;
-					$$->name = NULL;
-					$$->useOp = NULL;
-				}
 		;
 
 having_clause:  HAVING a_expr
@@ -2688,28 +2640,33 @@ join_list:  join_using							{ $$ = lcons($1, NIL); }
 		;
 
 join_using:  ColId
+				/*  Changed from SortGroupBy parse node to new JoinUsing node.
+			  	 *  SortGroupBy no longer needs these structure members.
+				 *
+			  	 *  Once, acknowledged, this comment can be removed by the
+				 *  developer(s) working on the JOIN clause.
+				 *
+			  	 *    - daveh@insightdist.com  1998-07-31
+				 */ 
 				{
-					$$ = makeNode(SortGroupBy);
+					$$ = makeNode(JoinUsing);
 					$$->resno = 0;
 					$$->range = NULL;
 					$$->name = $1;
-					$$->useOp = NULL;
 				}
 		| ColId '.' ColId
 				{
-					$$ = makeNode(SortGroupBy);
+					$$ = makeNode(JoinUsing);
 					$$->resno = 0;
 					$$->range = $1;
 					$$->name = $3;
-					$$->useOp = NULL;
 				}
 		| Iconst
 				{
-					$$ = makeNode(SortGroupBy);
+					$$ = makeNode(JoinUsing);
 					$$->resno = $1;
 					$$->range = NULL;
 					$$->name = NULL;
-					$$->useOp = NULL;
 				}
 		;
 

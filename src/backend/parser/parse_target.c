@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.19 1998/07/20 19:53:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.20 1998/08/05 04:49:11 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,11 +32,7 @@
 
 static List *ExpandAllTables(ParseState *pstate);
 static char *FigureColname(Node *expr, Node *resval);
-static TargetEntry *
-MakeTargetlistExpr(ParseState *pstate,
-				   char *colname,
-				   Node *expr,
-				   List *arrayRef);
+					
 Node *
 SizeTargetExpr(ParseState *pstate,
 			   Node *expr,
@@ -129,7 +125,7 @@ printf("transformTargetIdent- transform type %d to %d\n",
 			{
 				expr = coerce_type(pstate, node, attrtype_id, attrtype_target);
 				expr = transformExpr(pstate, expr, EXPR_COLUMN_FIRST);
-				tent = MakeTargetlistExpr(pstate, *resname, expr, FALSE);
+				tent = MakeTargetlistExpr(pstate, *resname, expr, FALSE, FALSE);
 				expr = tent->expr;
 			}
 			else
@@ -293,7 +289,7 @@ printf("transformTargetList: decode T_Expr\n");
 						constval->val.str = save_str;
 						tent = MakeTargetlistExpr(pstate, res->name,
 												  (Node *) make_const(constval),
-												  NULL);
+												  NULL, FALSE);
 						pfree(save_str);
 					}
 					else
@@ -326,7 +322,7 @@ printf("transformTargetList: decode T_Expr\n");
 						}
 						res->name = colname;
 						tent = MakeTargetlistExpr(pstate, res->name, expr,
-												  res->indirection);
+												  res->indirection, FALSE);
 					}
 					break;
 				}
@@ -570,12 +566,17 @@ printf("SizeTargetExpr: no conversion function for sizing\n");
  * For type mismatches between expressions and targets, use the same
  *  techniques as for function and operator type coersion.
  * - thomas 1998-05-08
+ *
+ * Added resjunk flag and made extern so that it can be use by GROUP/
+ * ORDER BY a function or expersion not in the target_list
+ * -  daveh@insightdist.com 1998-07-31 
  */
-static TargetEntry *
+TargetEntry *
 MakeTargetlistExpr(ParseState *pstate,
 					 char *colname,
 					 Node *expr,
-					 List *arrayRef)
+					 List *arrayRef,
+					 int16 resjunk)
 {
 	Oid			type_id,
 				attrtype;
@@ -698,7 +699,7 @@ printf("MakeTargetlistExpr: attrtypmod is %d\n", (int4) attrtypmod);
 						 colname,
 						 (Index) 0,
 						 (Oid) 0,
-						 0);
+						 resjunk);
 
 	tent = makeTargetEntry(resnode, expr);
 

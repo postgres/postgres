@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.22 1998/08/02 13:34:26 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.23 1998/08/05 04:49:09 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,9 +28,15 @@
 #include "parser/parse_coerce.h"
 
 
+
+#define ORDER_CLAUSE 0
+#define GROUP_CLAUSE 1
+
+static char *clauseText[] = {"ORDER", "GROUP"};
+
 static TargetEntry *
-find_targetlist_entry(ParseState *pstate,
-					  SortGroupBy *sortgroupby, List *tlist);
+findTargetlistEntry(ParseState *pstate, Node *node, List *tlist, int clause);
+
 static void parseFromClause(ParseState *pstate, List *frmList);
 
 
@@ -65,7 +71,7 @@ makeRangeTable(ParseState *pstate, char *relname, List *frmList)
 /*
  * transformWhereClause -
  *	  transforms the qualification and make sure it is of type Boolean
- *
+ *    
  */
 Node *
 transformWhereClause(ParseState *pstate, Node *a_expr)
@@ -128,129 +134,181 @@ parseFromClause(ParseState *pstate, List *frmList)
 }
 
 /*
- *	find_targetlist_entry -
+ *	findTargetlistEntry -
  *	  returns the Resdom in the target list matching the specified varname
- *	  and range
+ *	  and range. If none exist one is created.
+ *
+ *    Rewritten for ver 6.4 to handle expressions in the GROUP/ORDER BY clauses.
+ *     - daveh@insightdist.com  1998-07-31
  *
  */
 static TargetEntry *
-find_targetlist_entry(ParseState *pstate, SortGroupBy *sortgroupby, List *tlist)
+findTargetlistEntry(ParseState *pstate, Node *node, List *tlist, int clause)
 {
-	List	    *i;
-	int			 real_rtable_pos = 0,
-				 target_pos = 0;
+	List	    *l;
+	int			 rtable_pos = 0,
+				 target_pos = 0,
+				 targetlist_pos = 0;
 	TargetEntry *target_result = NULL;
+	Value		*val = NULL;
+	char		*relname = NULL;
+	char		*name = NULL;
+	Node		*expr = NULL;
+	int			relCnt = 0;
 
-	if (sortgroupby->range != NULL)
-		real_rtable_pos = refnameRangeTablePosn(pstate, sortgroupby->range, NULL);
-
-	foreach(i, tlist)
+	/* Pull out some values before looping thru target list  */
+	switch(nodeTag(node))
 	{
-		TargetEntry *target = (TargetEntry *) lfirst(i);
+		case T_Attr: 
+			relname = ((Attr*)node)->relname;
+			val = (Value *)lfirst(((Attr*)node)->attrs);
+			name = strVal(val);
+			rtable_pos = refnameRangeTablePosn(pstate, relname, NULL);
+			relCnt = length(pstate->p_rtable);
+			break;
+
+		case T_Ident:
+			name = ((Ident*)node)->name;
+			relCnt = length(pstate->p_rtable);
+			break;
+
+		case T_A_Const:
+			val = &((A_Const*)node)->val;
+	
+			if (nodeTag(val) !=  T_Integer)  
+				elog(ERROR, "Illegal Constant in %s BY", clauseText[clause]);
+			target_pos = intVal(val);
+			break;
+
+		case T_FuncCall:
+		case T_A_Expr:
+			expr = transformExpr(pstate, node, EXPR_COLUMN_FIRST);
+			break;
+
+		default:
+			elog(ERROR, "Illegal %s BY node = %d", clauseText[clause], nodeTag(node));
+	}
+
+	/*
+	 *  Loop through target entries and try to match to node
+	 */
+	foreach(l, tlist)
+	{
+		TargetEntry *target = (TargetEntry *) lfirst(l);
 		Resdom	   *resnode = target->resdom;
 		Var		   *var = (Var *) target->expr;
 		char	   *resname = resnode->resname;
 		int			test_rtable_pos = var->varno;
 
-		/* no name specified? then must have been a column number instead... */
-		if (sortgroupby->name == NULL)
+		++targetlist_pos;
+
+		switch(nodeTag(node))
 		{
-			if (sortgroupby->resno == ++target_pos)
+		case T_Attr:
+			if (strcmp(resname, name) == 0 && rtable_pos == test_rtable_pos)
 			{
-				target_result = target;
-				break;
-			}
-		}
-		/* otherwise, try to match name... */
-		else
-		{
-			/* same name? */
-			if (strcmp(resname, sortgroupby->name) == 0)
-			{
-				if (sortgroupby->range != NULL)
-				{
-					if (real_rtable_pos == test_rtable_pos)
-					{
-						if (target_result != NULL)
-							elog(ERROR, "ORDER/GROUP BY '%s' is ambiguous", sortgroupby->name);
-						else
-							target_result = target;
-					}
-				}
+				/*   Check for only 1 table & ORDER BY -ambiguity does not matter here  */
+				if (clause == ORDER_CLAUSE && relCnt == 1)
+					return target;
+
+				if (target_result != NULL)
+					elog(ERROR, "%s BY '%s' is ambiguous", clauseText[clause], name);
 				else
-				{
-					if (target_result != NULL)
-						elog(ERROR, "ORDER/GROUP BY '%s' is ambiguous", sortgroupby->name);
-					else
-						target_result = target;
-				}
+					target_result = target;
+				/*   Stay in loop to check for ambiguity */
 			}
+			break;
+
+		case T_Ident:
+			if (strcmp(resname, name) == 0)
+			{
+				/*   Check for only 1 table & ORDER BY  -ambiguity does not matter here */
+				if (clause == ORDER_CLAUSE && relCnt == 1)
+					return target;
+
+				if (target_result != NULL)
+					elog(ERROR, "%s BY '%s' is ambiguous", clauseText[clause], name);
+				else
+					target_result = target;
+				/*   Stay in loop to check for ambiguity  */
+			}
+			break;
+
+		case T_A_Const:
+			if (target_pos == targetlist_pos)
+			{
+				/*   Can't be ambigious and we got what we came for  */
+				return target;
+			}
+			break;
+
+		case T_FuncCall:   
+		case T_A_Expr:
+			if (equal(expr, target->expr))
+			{
+				/*   Check for only 1 table & ORDER BY  -ambiguity does not matter here */
+				if (clause == ORDER_CLAUSE)
+					return target;
+
+				if (target_result != NULL)
+					elog(ERROR, "GROUP BY has ambiguous expression");
+				else
+					target_result = target;
+			}
+			break;
+
+		default:
+			elog(ERROR, "Illegal %s BY node = %d", clauseText[clause], nodeTag(node));
 		}
 	}
 
-
-	/* No name specified and no target found?
-	 * Then must have been an out-of-range column number instead...
-	 * - thomas 1998-07-09
-	 */
-	if ((sortgroupby->name == NULL) && (target_result == NULL))
-	{
-		elog(ERROR, "ORDER/GROUP BY position %d is not in target list",
-			sortgroupby->resno);
-	}
-
-
-	/* BEGIN add missing target entry hack.
-	 *
-	 * Prior to this hack, this function returned NIL if no target_result.
-	 * Thus, ORDER/GROUP BY required the attributes be in the target list.
-	 * Now it constructs a new target entry which is appended to the end of
-	 * the target list.   This target is set to be  resjunk = TRUE so that
+	/* 
+	 * If no matches, construct a new target entry which is appended to the end
+	 * of the target list.   This target is set to be  resjunk = TRUE so that
 	 * it will not be projected into the final tuple.
-	 *       daveh@insightdist.com    5/20/98
 	 */  
-	if ((target_result == NULL) && (sortgroupby->name != NULL)) {
-
-		List   *p_target = tlist;
-		TargetEntry *tent = makeNode(TargetEntry);
-
-		if (sortgroupby->range != NULL) {
-			Attr *missingAttr = (Attr *)makeNode(Attr);
-			missingAttr->type = T_Attr;
-
-			missingAttr->relname = palloc(strlen(sortgroupby->range) + 1);
-			strcpy(missingAttr->relname, sortgroupby->range);
-
-			missingAttr->attrs = lcons(makeString(sortgroupby->name), NIL);
-
-			tent = transformTargetIdent(pstate, (Node *)missingAttr, tent,
-										&missingAttr->relname, NULL,
-										missingAttr->relname, TRUE);
-		}
-		else
+	if (target_result == NULL)
+ 	{
+		switch(nodeTag(node))
 		{
-			Ident *missingIdent = (Ident *)makeNode(Ident);
-			missingIdent->type = T_Ident;
+			case T_Attr: 
+				target_result = transformTargetIdent(pstate, node, makeNode(TargetEntry),
+										&((Attr*)node)->relname, NULL,
+										((Attr*)node)->relname, TRUE);
+				lappend(tlist, target_result);
+				break;
 
-			missingIdent->name = palloc(strlen(sortgroupby->name) + 1);
-			strcpy(missingIdent->name, sortgroupby->name);
+			case T_Ident:
+				target_result = transformTargetIdent(pstate, node, makeNode(TargetEntry),
+										&((Ident*)node)->name, NULL,
+										((Ident*)node)->name, TRUE);
+				lappend(tlist, target_result);
+				break;
 
-			tent = transformTargetIdent(pstate, (Node *)missingIdent, tent,
-										&missingIdent->name, NULL,
-										missingIdent->name, TRUE);
+			case T_A_Const:
+				/* 
+			 	* If we got this far, then must have been an out-of-range column number
+			 	*/
+				elog(ERROR, "%s BY position %d is not in target list", clauseText[clause], target_pos);
+				break;
+
+			case T_FuncCall:
+			case T_A_Expr:
+				target_result = MakeTargetlistExpr(pstate, "resjunk", expr, FALSE, TRUE);
+				lappend(tlist, target_result);
+				break;
+
+			default:
+				elog(ERROR, "Illegal %s BY node = %d", clauseText[clause], nodeTag(node));
+				break;
 		}
-
-		/* Add to the end of the target list */
-		while (lnext(p_target) != NIL) {
-			p_target = lnext(p_target);
-		}
-		lnext(p_target) = lcons(tent, NIL);
-		target_result = tent;
 	}
-	/*    END add missing target entry hack.   */
 
 	return target_result;
 }
+
+
+
 
 /*
  * transformGroupClause -
@@ -269,7 +327,7 @@ transformGroupClause(ParseState *pstate, List *grouplist, List *targetlist)
 		TargetEntry *restarget;
 		Resdom	   *resdom;
 
-		restarget = find_targetlist_entry(pstate, lfirst(grouplist), targetlist);
+		restarget = findTargetlistEntry(pstate, lfirst(grouplist), targetlist, GROUP_CLAUSE);
 
 		grpcl->entry = restarget;
 		resdom = restarget->resdom;
@@ -328,7 +386,7 @@ printf("transformSortClause: entering\n");
 		TargetEntry *restarget;
 		Resdom	   *resdom;
 
-		restarget = find_targetlist_entry(pstate, sortby, targetlist);
+		restarget = findTargetlistEntry(pstate, sortby->node, targetlist, ORDER_CLAUSE);
 
 #ifdef PARSEDEBUG
 printf("transformSortClause: find sorting operator for type %d\n",
