@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
  * nodeAgg.h
- *
+ *	  prototypes for nodeAgg.c
  *
  *
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeAgg.h,v 1.18 2002/12/05 15:50:36 tgl Exp $
+ * $Id: nodeAgg.h,v 1.19 2003/01/10 23:54:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */

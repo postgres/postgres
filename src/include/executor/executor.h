@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: executor.h,v 1.85 2002/12/15 21:01:34 tgl Exp $
+ * $Id: executor.h,v 1.86 2003/01/10 23:54:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,6 +35,31 @@ extern void ExecReScan(PlanState *node, ExprContext *exprCtxt);
 extern void ExecMarkPos(PlanState *node);
 extern void ExecRestrPos(PlanState *node);
 extern bool ExecSupportsMarkRestore(NodeTag plantype);
+
+/*
+ * prototypes from functions in execGrouping.c
+ */
+extern bool execTuplesMatch(HeapTuple tuple1,
+				HeapTuple tuple2,
+				TupleDesc tupdesc,
+				int numCols,
+				AttrNumber *matchColIdx,
+				FmgrInfo *eqfunctions,
+				MemoryContext evalContext);
+extern FmgrInfo *execTuplesMatchPrepare(TupleDesc tupdesc,
+					   int numCols,
+					   AttrNumber *matchColIdx);
+extern uint32 ComputeHashFunc(Datum key, int typLen, bool byVal);
+extern TupleHashTable BuildTupleHashTable(int numCols, AttrNumber *keyColIdx,
+										  FmgrInfo *eqfunctions,
+										  int nbuckets, Size entrysize,
+										  MemoryContext tablecxt,
+										  MemoryContext tempcxt);
+extern TupleHashEntry LookupTupleHashEntry(TupleHashTable hashtable,
+										   TupleTableSlot *slot,
+										   bool *isnew);
+extern TupleHashEntry ScanTupleHashTable(TupleHashTable hashtable,
+										 TupleHashIterator *state);
 
 /*
  * prototypes from functions in execJunk.c

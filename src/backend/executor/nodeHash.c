@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHash.c,v 1.73 2002/12/30 15:21:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHash.c,v 1.74 2003/01/10 23:54:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,10 +20,6 @@
  */
 #include "postgres.h"
 
-#include <limits.h>
-#include <math.h>
-
-#include "access/hash.h"
 #include "executor/execdebug.h"
 #include "executor/nodeHash.h"
 #include "executor/nodeHashjoin.h"
@@ -640,74 +636,6 @@ ExecScanHashBucket(HashJoinState *hjstate,
 	 * no match
 	 */
 	return NULL;
-}
-
-/* ----------------------------------------------------------------
- *		ComputeHashFunc
- *
- *		the hash function for hash joins (also used for hash aggregation)
- *
- *		XXX this probably ought to be replaced with datatype-specific
- *		hash functions, such as those already implemented for hash indexes.
- * ----------------------------------------------------------------
- */
-uint32
-ComputeHashFunc(Datum key, int typLen, bool byVal)
-{
-	unsigned char *k;
-
-	if (byVal)
-	{
-		/*
-		 * If it's a by-value data type, just hash the whole Datum value.
-		 * This assumes that datatypes narrower than Datum are
-		 * consistently padded (either zero-extended or sign-extended, but
-		 * not random bits) to fill Datum; see the XXXGetDatum macros in
-		 * postgres.h. NOTE: it would not work to do hash_any(&key, len)
-		 * since this would get the wrong bytes on a big-endian machine.
-		 */
-		k = (unsigned char *) &key;
-		typLen = sizeof(Datum);
-	}
-	else
-	{
-		if (typLen > 0)
-		{
-			/* fixed-width pass-by-reference type */
-			k = (unsigned char *) DatumGetPointer(key);
-		}
-		else if (typLen == -1)
-		{
-			/*
-			 * It's a varlena type, so 'key' points to a "struct varlena".
-			 * NOTE: VARSIZE returns the "real" data length plus the
-			 * sizeof the "vl_len" attribute of varlena (the length
-			 * information). 'key' points to the beginning of the varlena
-			 * struct, so we have to use "VARDATA" to find the beginning
-			 * of the "real" data.	Also, we have to be careful to detoast
-			 * the datum if it's toasted.  (We don't worry about freeing
-			 * the detoasted copy; that happens for free when the
-			 * per-tuple memory context is reset in ExecHashGetBucket.)
-			 */
-			struct varlena *vkey = PG_DETOAST_DATUM(key);
-
-			typLen = VARSIZE(vkey) - VARHDRSZ;
-			k = (unsigned char *) VARDATA(vkey);
-		}
-		else if (typLen == -2)
-		{
-			/* It's a null-terminated C string */
-			typLen = strlen(DatumGetCString(key)) + 1;
-			k = (unsigned char *) DatumGetPointer(key);
-		}
-		else
-		{
-			elog(ERROR, "ComputeHashFunc: Invalid typLen %d", typLen);
-			k = NULL;			/* keep compiler quiet */
-		}
-	}
-
-	return DatumGetUInt32(hash_any(k, typLen));
 }
 
 /* ----------------------------------------------------------------

@@ -45,7 +45,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.101 2002/12/15 16:17:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.102 2003/01/10 23:54:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,8 +57,6 @@
 #include "catalog/pg_operator.h"
 #include "executor/executor.h"
 #include "executor/nodeAgg.h"
-#include "executor/nodeGroup.h"
-#include "executor/nodeHash.h"
 #include "miscadmin.h"
 #include "optimizer/clauses.h"
 #include "parser/parse_coerce.h"
@@ -182,20 +180,14 @@ typedef struct AggStatePerGroupData
  * distinct set of GROUP BY column values.  We compute the hash key from
  * the GROUP BY columns.
  */
+typedef struct AggHashEntryData *AggHashEntry;
+
 typedef struct AggHashEntryData
 {
-	AggHashEntry	next;		/* next entry in same hash bucket */
-	uint32		hashkey;		/* exact hash key of this entry */
-	HeapTuple	firstTuple;		/* copy of first tuple in this group */
+	TupleHashEntryData shared;	/* common header for hash table entries */
 	/* per-aggregate transition status array - must be last! */
 	AggStatePerGroupData pergroup[1];	/* VARIABLE LENGTH ARRAY */
 } AggHashEntryData;				/* VARIABLE LENGTH STRUCT */
-
-typedef struct AggHashTableData
-{
-	int			nbuckets;		/* number of buckets in hash table */
-	AggHashEntry buckets[1];	/* VARIABLE LENGTH ARRAY */
-} AggHashTableData;				/* VARIABLE LENGTH STRUCT */
 
 
 static void initialize_aggregates(AggState *aggstate,
@@ -578,18 +570,22 @@ static void
 build_hash_table(AggState *aggstate)
 {
 	Agg			   *node = (Agg *) aggstate->ss.ps.plan;
-	AggHashTable	hashtable;
-	Size			tabsize;
+	MemoryContext	tmpmem = aggstate->tmpcontext->ecxt_per_tuple_memory;
+	Size			entrysize;
 
 	Assert(node->aggstrategy == AGG_HASHED);
 	Assert(node->numGroups > 0);
-	tabsize = sizeof(AggHashTableData) +
-		(node->numGroups - 1) * sizeof(AggHashEntry);
-	hashtable = (AggHashTable) MemoryContextAlloc(aggstate->aggcontext,
-												  tabsize);
-	MemSet(hashtable, 0, tabsize);
-	hashtable->nbuckets = node->numGroups;
-	aggstate->hashtable = hashtable;
+
+	entrysize = sizeof(AggHashEntryData) +
+		(aggstate->numaggs - 1) * sizeof(AggStatePerGroupData);
+
+	aggstate->hashtable = BuildTupleHashTable(node->numCols,
+											  node->grpColIdx,
+											  aggstate->eqfunctions,
+											  node->numGroups,
+											  entrysize,
+											  aggstate->aggcontext,
+											  tmpmem);
 }
 
 /*
@@ -601,74 +597,18 @@ build_hash_table(AggState *aggstate)
 static AggHashEntry
 lookup_hash_entry(AggState *aggstate, TupleTableSlot *slot)
 {
-	Agg		   *node = (Agg *) aggstate->ss.ps.plan;
-	AggHashTable hashtable = aggstate->hashtable;
-	MemoryContext	tmpmem = aggstate->tmpcontext->ecxt_per_tuple_memory;
-	HeapTuple	tuple = slot->val;
-	TupleDesc	tupdesc = slot->ttc_tupleDescriptor;
-	uint32		hashkey = 0;
-	int			i;
-	int			bucketno;
-	AggHashEntry	entry;
-	MemoryContext oldContext;
-	Size		entrysize;
+	AggHashEntry entry;
+	bool		isnew;
 
-	/* Need to run the hash function in short-lived context */
-	oldContext = MemoryContextSwitchTo(tmpmem);
+	entry = (AggHashEntry) LookupTupleHashEntry(aggstate->hashtable,
+												slot,
+												&isnew);
 
-	for (i = 0; i < node->numCols; i++)
+	if (isnew)
 	{
-		AttrNumber	att = node->grpColIdx[i];
-		Datum		attr;
-		bool		isNull;
-
-		/* rotate hashkey left 1 bit at each step */
-		hashkey = (hashkey << 1) | ((hashkey & 0x80000000) ? 1 : 0);
-
-		attr = heap_getattr(tuple, att, tupdesc, &isNull);
-		if (isNull)
-			continue;			/* treat nulls as having hash key 0 */
-		hashkey ^= ComputeHashFunc(attr,
-								   (int) tupdesc->attrs[att - 1]->attlen,
-								   tupdesc->attrs[att - 1]->attbyval);
+		/* initialize aggregates for new tuple group */
+		initialize_aggregates(aggstate, aggstate->peragg, entry->pergroup);
 	}
-	bucketno = hashkey % (uint32) hashtable->nbuckets;
-
-	for (entry = hashtable->buckets[bucketno];
-		 entry != NULL;
-		 entry = entry->next)
-	{
-		/* Quick check using hashkey */
-		if (entry->hashkey != hashkey)
-			continue;
-		if (execTuplesMatch(entry->firstTuple,
-							tuple,
-							tupdesc,
-							node->numCols, node->grpColIdx,
-							aggstate->eqfunctions,
-							tmpmem))
-		{
-			MemoryContextSwitchTo(oldContext);
-			return entry;
-		}
-	}
-
-	/* Not there, so build a new one */
-	MemoryContextSwitchTo(aggstate->aggcontext);
-	entrysize = sizeof(AggHashEntryData) +
-		(aggstate->numaggs - 1) * sizeof(AggStatePerGroupData);
-	entry = (AggHashEntry) palloc0(entrysize);
-
-	entry->hashkey = hashkey;
-	entry->firstTuple = heap_copytuple(tuple);
-
-	entry->next = hashtable->buckets[bucketno];
-	hashtable->buckets[bucketno] = entry;
-
-	MemoryContextSwitchTo(oldContext);
-
-	/* initialize aggregates for new tuple group */
-	initialize_aggregates(aggstate, aggstate->peragg, entry->pergroup);
 
 	return entry;
 }
@@ -964,8 +904,7 @@ agg_fill_hash_table(AggState *aggstate)
 
 	aggstate->table_filled = true;
 	/* Initialize to walk the hash table */
-	aggstate->next_hash_entry = NULL;
-	aggstate->next_hash_bucket = 0;
+	ResetTupleHashIterator(&aggstate->hashiter);
 }
 
 /*
@@ -980,7 +919,7 @@ agg_retrieve_hash_table(AggState *aggstate)
 	bool	   *aggnulls;
 	AggStatePerAgg peragg;
 	AggStatePerGroup pergroup;
-	AggHashTable	hashtable;
+	TupleHashTable	hashtable;
 	AggHashEntry	entry;
 	TupleTableSlot *firstSlot;
 	TupleTableSlot *resultSlot;
@@ -1010,18 +949,14 @@ agg_retrieve_hash_table(AggState *aggstate)
 		/*
 		 * Find the next entry in the hash table
 		 */
-		entry = aggstate->next_hash_entry;
-		while (entry == NULL)
+		entry = (AggHashEntry) ScanTupleHashTable(hashtable,
+												  &aggstate->hashiter);
+		if (entry == NULL)
 		{
-			if (aggstate->next_hash_bucket >= hashtable->nbuckets)
-			{
-				/* No more entries in hashtable, so done */
-				aggstate->agg_done = TRUE;
-				return NULL;
-			}
-			entry = hashtable->buckets[aggstate->next_hash_bucket++];
+			/* No more entries in hashtable, so done */
+			aggstate->agg_done = TRUE;
+			return NULL;
 		}
-		aggstate->next_hash_entry = entry->next;
 
 		/*
 		 * Clear the per-output-tuple context for each group
@@ -1032,7 +967,7 @@ agg_retrieve_hash_table(AggState *aggstate)
 		 * Store the copied first input tuple in the tuple table slot
 		 * reserved for it, so that it can be used in ExecProject.
 		 */
-		ExecStoreTuple(entry->firstTuple,
+		ExecStoreTuple(entry->shared.firstTuple,
 					   firstSlot,
 					   InvalidBuffer,
 					   false);
@@ -1188,6 +1123,17 @@ ExecInitAgg(Agg *node, EState *estate)
 	}
 
 	/*
+	 * If we are grouping, precompute fmgr lookup data for inner loop
+	 */
+	if (node->numCols > 0)
+	{
+		aggstate->eqfunctions =
+			execTuplesMatchPrepare(ExecGetScanType(&aggstate->ss),
+								   node->numCols,
+								   node->grpColIdx);
+	}
+
+	/*
 	 * Set up aggregate-result storage in the output expr context, and also
 	 * allocate my private per-agg working storage
 	 */
@@ -1209,17 +1155,6 @@ ExecInitAgg(Agg *node, EState *estate)
 
 		pergroup = (AggStatePerGroup) palloc0(sizeof(AggStatePerGroupData) * numaggs);
 		aggstate->pergroup = pergroup;
-	}
-
-	/*
-	 * If we are grouping, precompute fmgr lookup data for inner loop
-	 */
-	if (node->numCols > 0)
-	{
-		aggstate->eqfunctions =
-			execTuplesMatchPrepare(ExecGetScanType(&aggstate->ss),
-								   node->numCols,
-								   node->grpColIdx);
 	}
 
 	/*

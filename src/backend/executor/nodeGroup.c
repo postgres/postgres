@@ -15,7 +15,7 @@
  *	  locate group boundaries.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeGroup.c,v 1.53 2002/12/15 16:17:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeGroup.c,v 1.54 2003/01/10 23:54:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,13 +23,8 @@
 #include "postgres.h"
 
 #include "access/heapam.h"
-#include "catalog/pg_operator.h"
 #include "executor/executor.h"
 #include "executor/nodeGroup.h"
-#include "parser/parse_oper.h"
-#include "utils/builtins.h"
-#include "utils/lsyscache.h"
-#include "utils/syscache.h"
 
 
 /*
@@ -240,117 +235,4 @@ ExecReScanGroup(GroupState *node, ExprContext *exprCtxt)
 	if (((PlanState *) node)->lefttree &&
 		((PlanState *) node)->lefttree->chgParam == NULL)
 		ExecReScan(((PlanState *) node)->lefttree, exprCtxt);
-}
-
-/*****************************************************************************
- *		Code shared with nodeUnique.c and nodeAgg.c
- *****************************************************************************/
-
-/*
- * execTuplesMatch
- *		Return true if two tuples match in all the indicated fields.
- *		This is used to detect group boundaries in nodeGroup and nodeAgg,
- *		and to decide whether two tuples are distinct or not in nodeUnique.
- *
- * tuple1, tuple2: the tuples to compare
- * tupdesc: tuple descriptor applying to both tuples
- * numCols: the number of attributes to be examined
- * matchColIdx: array of attribute column numbers
- * eqFunctions: array of fmgr lookup info for the equality functions to use
- * evalContext: short-term memory context for executing the functions
- *
- * NB: evalContext is reset each time!
- */
-bool
-execTuplesMatch(HeapTuple tuple1,
-				HeapTuple tuple2,
-				TupleDesc tupdesc,
-				int numCols,
-				AttrNumber *matchColIdx,
-				FmgrInfo *eqfunctions,
-				MemoryContext evalContext)
-{
-	MemoryContext oldContext;
-	bool		result;
-	int			i;
-
-	/* Reset and switch into the temp context. */
-	MemoryContextReset(evalContext);
-	oldContext = MemoryContextSwitchTo(evalContext);
-
-	/*
-	 * We cannot report a match without checking all the fields, but we
-	 * can report a non-match as soon as we find unequal fields.  So,
-	 * start comparing at the last field (least significant sort key).
-	 * That's the most likely to be different if we are dealing with
-	 * sorted input.
-	 */
-	result = true;
-
-	for (i = numCols; --i >= 0;)
-	{
-		AttrNumber	att = matchColIdx[i];
-		Datum		attr1,
-					attr2;
-		bool		isNull1,
-					isNull2;
-
-		attr1 = heap_getattr(tuple1,
-							 att,
-							 tupdesc,
-							 &isNull1);
-
-		attr2 = heap_getattr(tuple2,
-							 att,
-							 tupdesc,
-							 &isNull2);
-
-		if (isNull1 != isNull2)
-		{
-			result = false;		/* one null and one not; they aren't equal */
-			break;
-		}
-
-		if (isNull1)
-			continue;			/* both are null, treat as equal */
-
-		/* Apply the type-specific equality function */
-
-		if (!DatumGetBool(FunctionCall2(&eqfunctions[i],
-										attr1, attr2)))
-		{
-			result = false;		/* they aren't equal */
-			break;
-		}
-	}
-
-	MemoryContextSwitchTo(oldContext);
-
-	return result;
-}
-
-/*
- * execTuplesMatchPrepare
- *		Look up the equality functions needed for execTuplesMatch.
- *		The result is a palloc'd array.
- */
-FmgrInfo *
-execTuplesMatchPrepare(TupleDesc tupdesc,
-					   int numCols,
-					   AttrNumber *matchColIdx)
-{
-	FmgrInfo   *eqfunctions = (FmgrInfo *) palloc(numCols * sizeof(FmgrInfo));
-	int			i;
-
-	for (i = 0; i < numCols; i++)
-	{
-		AttrNumber	att = matchColIdx[i];
-		Oid			typid = tupdesc->attrs[att - 1]->atttypid;
-		Oid			eq_function;
-
-		eq_function = equality_oper_funcid(typid);
-		fmgr_info(eq_function, &eqfunctions[i]);
-	}
-
-	return eqfunctions;
 }

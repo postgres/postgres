@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.89 2003/01/10 21:08:15 tgl Exp $
+ * $Id: execnodes.h,v 1.90 2003/01/10 23:54:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -325,6 +325,46 @@ typedef struct EState
 
 
 /* ----------------------------------------------------------------
+ *				 Tuple Hash Tables
+ *
+ * All-in-memory tuple hash tables are used for a number of purposes.
+ * ----------------------------------------------------------------
+ */
+typedef struct TupleHashEntryData *TupleHashEntry;
+typedef struct TupleHashTableData *TupleHashTable;
+
+typedef struct TupleHashEntryData
+{
+	TupleHashEntry next;		/* next entry in same hash bucket */
+	uint32		hashkey;		/* exact hash key of this entry */
+	HeapTuple	firstTuple;		/* copy of first tuple in this group */
+	/* there may be additional data beyond the end of this struct */
+} TupleHashEntryData;			/* VARIABLE LENGTH STRUCT */
+
+typedef struct TupleHashTableData
+{
+	int			numCols;		/* number of columns in lookup key */
+	AttrNumber *keyColIdx;		/* attr numbers of key columns */
+	FmgrInfo   *eqfunctions;	/* lookup data for comparison functions */
+	MemoryContext tablecxt;		/* memory context containing table */
+	MemoryContext tempcxt;		/* context for function evaluations */
+	Size		entrysize;		/* actual size to make each hash entry */
+	int			nbuckets;		/* number of buckets in hash table */
+	TupleHashEntry buckets[1];	/* VARIABLE LENGTH ARRAY */
+} TupleHashTableData;			/* VARIABLE LENGTH STRUCT */
+
+typedef struct
+{
+	TupleHashEntry next_entry;	/* next entry in current chain */
+	int			next_bucket;	/* next chain */
+} TupleHashIterator;
+
+#define ResetTupleHashIterator(iter) \
+	((iter)->next_entry = NULL, \
+	 (iter)->next_bucket = 0)
+
+
+/* ----------------------------------------------------------------
  *				 Expression State Trees
  *
  * Each executable expression tree has a parallel ExprState tree.
@@ -445,9 +485,6 @@ typedef struct BoolExprState
  *		SubPlanState node
  * ----------------
  */
-/* this struct is private in nodeSubplan.c: */
-typedef struct SubPlanHashTableData *SubPlanHashTable;
-
 typedef struct SubPlanState
 {
 	ExprState	xprstate;
@@ -458,8 +495,8 @@ typedef struct SubPlanState
 	bool		needShutdown;	/* TRUE = need to shutdown subplan */
 	HeapTuple	curTuple;		/* copy of most recent tuple from subplan */
 	/* these are used when hashing the subselect's output: */
-	SubPlanHashTable hashtable;	/* hash table for no-nulls subselect rows */
-	SubPlanHashTable hashnulls;	/* hash table for rows with null(s) */
+	TupleHashTable hashtable;	/* hash table for no-nulls subselect rows */
+	TupleHashTable hashnulls;	/* hash table for rows with null(s) */
 } SubPlanState;
 
 /* ----------------
@@ -877,8 +914,6 @@ typedef struct GroupState
 /* these structs are private in nodeAgg.c: */
 typedef struct AggStatePerAggData *AggStatePerAgg;
 typedef struct AggStatePerGroupData *AggStatePerGroup;
-typedef struct AggHashEntryData *AggHashEntry;
-typedef struct AggHashTableData *AggHashTable;
 
 typedef struct AggState
 {
@@ -894,10 +929,9 @@ typedef struct AggState
 	AggStatePerGroup pergroup;	/* per-Aggref-per-group working state */
 	HeapTuple	grp_firstTuple;	/* copy of first tuple of current group */
 	/* these fields are used in AGG_HASHED mode: */
-	AggHashTable hashtable;		/* hash table with one entry per group */
+	TupleHashTable hashtable;	/* hash table with one entry per group */
 	bool		table_filled;	/* hash table filled yet? */
-	AggHashEntry next_hash_entry; /* next entry in current chain */
-	int			next_hash_bucket; /* next chain */
+	TupleHashIterator hashiter;	/* for iterating through hash table */
 } AggState;
 
 /* ----------------

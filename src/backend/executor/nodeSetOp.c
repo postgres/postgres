@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSetOp.c,v 1.8 2002/12/15 16:17:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSetOp.c,v 1.9 2003/01/10 23:54:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,8 +36,8 @@
 
 #include "access/heapam.h"
 #include "executor/executor.h"
-#include "executor/nodeGroup.h"
 #include "executor/nodeSetOp.h"
+
 
 /* ----------------------------------------------------------------
  *		ExecSetOp
