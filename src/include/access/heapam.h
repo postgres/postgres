@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: heapam.h,v 1.18 1997/09/12 14:29:04 momjian Exp $
+ * $Id: heapam.h,v 1.19 1997/09/14 03:59:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -93,6 +93,10 @@ typedef HeapAccessStatisticsData *HeapAccessStatistics;
  *		<tup> is the pointer to the heap tuple.  <attnum> is the attribute
  *		number of the column (field) caller wants.	<tupleDesc> is a
  *		pointer to the structure describing the row and all its fields.
+ *
+ *		Because this macro is often called with constants, it generates
+ *		compiler warnings about 'left-hand comma expression has no effect.
+ *
  * ---------------- */
 #define heap_getattr(tup, b, attnum, tupleDesc, isnull) \
 	(AssertMacro((tup) != NULL) ? \
