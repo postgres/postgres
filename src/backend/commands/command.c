@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.76 2000/05/30 06:22:44 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.77 2000/06/04 22:04:32 tgl Exp $
  *
  * NOTES
  *	  The PortalExecutorHeapMemory crap needs to be eliminated
@@ -233,6 +233,11 @@ PerformPortalClose(char *name, CommandDest dest)
 		elog(NOTICE, "PerformPortalClose: blank portal unsupported");
 		return;
 	}
+
+	if (PortalNameIsSpecial(name))
+		elog(ERROR,
+			 "The portal name \"%s\" is reserved for internal use",
+			 name);
 
 	/* ----------------
 	 *	get the portal from the portal name
