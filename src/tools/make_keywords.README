@@ -4,6 +4,6 @@ backend/parser/keywords.c and tools/SQL_keywords.
 Then run sdif with the PostgreSQL keyword file first, then the SQL'92
 keywords.  Here is what I used:
 
-sdif tools/SQL_keywords /tmp/pgkeywords |\
+sdif /tmp/pgkeywords tools/SQL_keywords |\
 sed 's/</ /' | sed 's/>/ /'|sed 's/|/\
                                         /' | sort -b +0
