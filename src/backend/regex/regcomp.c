@@ -95,7 +95,11 @@ extern		"C"
 	static void p_b_eclass(struct parse * p, cset *cs);
 	static pg_wchar p_b_symbol(struct parse * p);
 	static char p_b_coll_elem(struct parse * p, int endc);
+#ifdef MULTIBYTE
+	static unsigned char othercase(int ch);
+#else
 	static char othercase(int ch);
+#endif
 	static void bothcases(struct parse * p, int ch);
 	static void ordinary(struct parse * p, int ch);
 	static void nonnewline(struct parse * p);
@@ -1032,18 +1036,34 @@ int			endc;				/* name ended by endc,']' */
  - othercase - return the case counterpart of an alphabetic
  == static char othercase(int ch);
  */
-static char						/* if no counterpart, return ch */
+#ifdef MULTIBYTE
+static unsigned char		/* if no counterpart, return ch */
+#else
+static char		/* if no counterpart, return ch */
+#endif
 othercase(ch)
 int			ch;
 {
 	assert(pg_isalpha(ch));
 	if (pg_isupper(ch))
+#ifdef MULTIBYTE
+		return (unsigned char)tolower(ch);
+#else
 		return tolower(ch);
+#endif
 	else if (pg_islower(ch))
+#ifdef MULTIBYTE
+		return (unsigned char)toupper(ch);
+#else
 		return toupper(ch);
+#endif
 	else
 /* peculiar, but could happen */
+#ifdef MULTIBYTE
+		return (unsigned char)ch;
+#else
 		return ch;
+#endif
 }
 
 /*
