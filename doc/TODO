@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Feb 22 09:15:39 EST 2000
+Last updated:		Thu Feb 24 22:23:07 EST 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -153,7 +153,7 @@ INDEXES
 
 * Allow CREATE INDEX zman_index ON test (date_trunc( 'day', zman ) datetime_ops)
   fails index can't store constant parameters
-* Allow creation of functional indexes to use default types
+* -Allow creation of functional indexes to use default types
 * -Permissions on indexes, prevent them(Peter E)
 * Allow SQL function indexes
 * Add FILLFACTOR to index creation
