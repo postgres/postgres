@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_index.sgml,v 1.45 2004/04/20 01:00:26 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_index.sgml,v 1.46 2004/04/20 04:25:47 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -77,11 +77,9 @@ CREATE [ UNIQUE ] INDEX <replaceable class="parameter">name</replaceable> ON <re
   </para>
 
   <para>
-   <literal>NULL</> values are not indexed by default.  The best way
-   to index <literal>NULL</> values is to create a partial index using
-   an <literal>IS NULL</> comparison.  <literal>IS NULL</> is more
-   of a function call than a value comparison, and this is why a partial
-   index works.
+   Indexes can not be used with <literal>IS NULL</> clauses by default.
+   The best way to use indexes in such cases is to create a partial index 
+   using an <literal>IS NULL</> comparison.
   </para>
 
   <para>
