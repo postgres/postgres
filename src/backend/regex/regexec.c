@@ -37,11 +37,6 @@
  *		@(#)regexec.c	8.3 (Berkeley) 3/20/94
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
-static char sccsid[] = "@(#)regexec.c	8.3 (Berkeley) 3/20/94";
-
-#endif	 /* LIBC_SCCS and not lint */
-
 #include "postgres.h"
 
 /*
@@ -52,9 +47,6 @@ static char sccsid[] = "@(#)regexec.c	8.3 (Berkeley) 3/20/94";
  * representations for state sets.
  */
 #include <sys/types.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <limits.h>
 #include <ctype.h>
 #include <assert.h>
@@ -69,24 +61,24 @@ static int	nope = 0;			/* for use in asserts; shuts lint up */
 #define states	long
 #define states1 states			/* for later use in regexec() decision */
 #define CLEAR(v)		((v) = 0)
-#define SET0(v, n)		((v) &= ~(1 << (n)))
-#define SET1(v, n)		((v) |= 1 << (n))
-#define ISSET(v, n)		((v) & (1 << (n)))
+#define SET0(v, n)		((v) &= ~(1L << (n)))
+#define SET1(v, n)		((v) |= (1L << (n)))
+#define ISSET(v, n)		((v) & (1L << (n)))
 #define ASSIGN(d, s)	((d) = (s))
 #define EQ(a, b)		((a) == (b))
 #define STATEVARS		int dummy		/* dummy version */
 #define STATESETUP(m, n)		/* nothing */
 #define STATETEARDOWN(m)		/* nothing */
 #define SETUP(v)		((v) = 0)
-#define onestate		int
-#define INIT(o, n)		((o) = (unsigned)1 << (n))
-#define INC(o)	((o) <<= 1)
-#define ISSTATEIN(v, o) ((v) & (o))
+#define onestate		long
+#define INIT(o, n)		((o) = (1L << (n)))
+#define INC(o)			((o) <<= 1)
+#define ISSTATEIN(v, o)	((v) & (o))
 /* some abbreviations; note that some of these know variable names! */
 /* do "if I'm here, I can also be there" etc without branches */
-#define FWD(dst, src, n)		((dst) |= ((unsigned)(src)&(here)) << (n))
-#define BACK(dst, src, n)		((dst) |= ((unsigned)(src)&(here)) >> (n))
-#define ISSETBACK(v, n) ((v) & ((unsigned)here >> (n)))
+#define FWD(dst, src, n)		((dst) |= ((src) & (here)) << (n))
+#define BACK(dst, src, n)		((dst) |= ((src) & (here)) >> (n))
+#define ISSETBACK(v, n) ((v) & (here >> (n)))
 /* function names */
 #define SNAMES					/* engine.c looks after details */
 
@@ -129,7 +121,7 @@ static int	nope = 0;			/* for use in asserts; shuts lint up */
 #define SETUP(v)		((v) = &m->space[m->vn++ * m->g->nstates])
 #define onestate		int
 #define INIT(o, n)		((o) = (n))
-#define INC(o)	((o)++)
+#define INC(o)			((o)++)
 #define ISSTATEIN(v, o) ((v)[o])
 /* some abbreviations; note that some of these know variable names! */
 /* do "if I'm here, I can also be there" etc without branches */
@@ -142,27 +134,14 @@ static int	nope = 0;			/* for use in asserts; shuts lint up */
 #include "engine.c"
 
 /*
- - regexec - interface for matching
- = extern int regexec(const regex_t *, const char *, size_t, \
- =										regmatch_t [], int);
- = #define		REG_NOTBOL		00001
- = #define		REG_NOTEOL		00002
- = #define		REG_STARTEND	00004
- = #define		REG_TRACE		00400	// tracing of execution
- = #define		REG_LARGE		01000	// force large representation
- = #define		REG_BACKR		02000	// force use of backref code
+ * regexec - interface for matching
  *
  * We put this here so we can exploit knowledge of the state representation
- * when choosing which matcher to call.  Also, by this point the matchers
- * have been prototyped.
+ * when choosing which matcher to call.
  */
 int								/* 0 success, REG_NOMATCH failure */
-pg95_regexec(preg, string, nmatch, pmatch, eflags)
-const regex_t *preg;
-const char *string;
-size_t		nmatch;
-regmatch_t *pmatch;
-int			eflags;
+pg95_regexec(const regex_t *preg, const char *string, size_t nmatch,
+			 regmatch_t *pmatch, int eflags)
 {
 	struct re_guts *g = preg->re_g;
 

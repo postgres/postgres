@@ -94,6 +94,6 @@ static struct cclass
 		""
 	},
 	{
-		NULL, 0, ""
+		NULL, NULL, ""
 	}
 };

@@ -37,28 +37,19 @@
  *		@(#)regfree.c	8.3 (Berkeley) 3/20/94
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
-static char sccsid[] = "@(#)regfree.c	8.3 (Berkeley) 3/20/94";
-
-#endif	 /* LIBC_SCCS and not lint */
-
 #include "postgres.h"
 
 #include <sys/types.h>
-#include <stdio.h>
-#include <stdlib.h>
 
 #include "regex/regex.h"
 #include "regex/utils.h"
 #include "regex/regex2.h"
 
 /*
- - regfree - free everything
- = extern void regfree(regex_t *);
+ * regfree - free everything
  */
 void
-pg95_regfree(preg)
-regex_t    *preg;
+pg95_regfree(regex_t *preg)
 {
 	struct re_guts *g;
 

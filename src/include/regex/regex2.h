@@ -40,22 +40,6 @@
 #include <limits.h>
 
 /*
- * First, the stuff that ends up in the outside-world include file
-*/
-/*
- typedef off_t regoff_t;
- typedef struct {
-		int re_magic;
-		size_t re_nsub;			// number of parenthesized subexpressions
-		const char *re_endp;	// end pointer for REG_PEND
-		struct re_guts *re_g;	// none of your business :-)
- } regex_t;
- typedef struct {
-		regoff_t rm_so;			// start of match
-		regoff_t rm_eo;			// end of match
- } regmatch_t;
-*/
-/*
  * internals of regex_t
  */
 #define MAGIC1	((('r'^0200)<<8) | 'e')
@@ -82,8 +66,8 @@
 typedef unsigned long sop;		/* strip operator */
 typedef long sopno;
 
-#define OPRMASK 0xf8000000
-#define OPDMASK 0x07ffffff
+#define OPRMASK ((sop) 0xf8000000)
+#define OPDMASK ((sop) 0x07ffffff)
 #define OPSHIFT ((unsigned)27)
 #define OP(n)	((n)&OPRMASK)
 #define OPND(n) ((n)&OPDMASK)
