@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.98.2.2 2002/11/08 05:10:00 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.98.2.3 2003/01/07 22:52:50 momjian Exp $
 -->
 
  <chapter id="libpq">
@@ -2153,7 +2153,7 @@ with <literal>\</literal>.
 <para>
 The permissions on <filename>.pgpass</filename> must disallow any
 access to world or group; achieve this by the command
-<command>chmod 0600 .pgaccess</command>.
+<command>chmod 0600 .pgpass</command>.
 If the permissions are less strict than this, the file will be ignored.
 </para>
 </sect1>
