@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.60 2003/07/25 23:37:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.61 2003/07/26 23:58:23 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -361,6 +361,42 @@ do_compile(FunctionCallInfo fcinfo,
 				function->fn_rettyplen = typeStruct->typlen;
 				function->fn_rettypelem = typeStruct->typelem;
 				perm_fmgr_info(typeStruct->typinput, &(function->fn_retinput));
+
+				/*
+				 * install $0 reference, but only for polymorphic
+				 * return types
+				 */
+				if (procStruct->prorettype == ANYARRAYOID ||
+					procStruct->prorettype == ANYELEMENTOID)
+				{
+					char		buf[32];
+
+					/* name for variable */
+					snprintf(buf, sizeof(buf), "$%d", 0);
+
+					/*
+					 * Normal return values get a var node
+					 */
+					var = malloc(sizeof(PLpgSQL_var));
+					memset(var, 0, sizeof(PLpgSQL_var));
+
+					var->dtype = PLPGSQL_DTYPE_VAR;
+					var->refname = strdup(buf);
+					var->lineno = 0;
+					var->datatype = build_datatype(typeTup, -1);
+					var->isconst = false;
+					var->notnull = false;
+					var->default_val = NULL;
+
+					/* preset to NULL */
+					var->value = 0;
+					var->isnull = true;
+					var->freeval = false;
+
+					plpgsql_adddatum((PLpgSQL_datum *) var);
+					plpgsql_ns_additem(PLPGSQL_NSTYPE_VAR, var->varno,
+									   var->refname);
+				}
 			}
 			ReleaseSysCache(typeTup);
 
