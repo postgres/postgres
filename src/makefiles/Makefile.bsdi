@@ -1,4 +1,9 @@
 # for bsdi 4.0 ELF
 # if we defined .so in template/bsdi_4.0
+
+ifeq ($(DLSUFFIX), .so)
+LDFLAGS+= -export-dynamic
+endif
+
 %.so: %.o
 	$(LD) -shared -o $@ $<

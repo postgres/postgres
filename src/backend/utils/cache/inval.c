@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.16 1998/09/01 04:33:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.17 1998/10/12 00:53:34 momjian Exp $
  *
  * Note - this code is real crufty...
  *
@@ -74,7 +74,6 @@ typedef InvalidationMessageData *InvalidationMessage;
  * ----------------
  */
 static LocalInvalid Invalid = EmptyLocalInvalid;		/* XXX global */
-static bool RefreshWhenInvalidate = false;
 
 Oid			MyRelationRelationId = InvalidOid;
 Oid			MyAttributeRelationId = InvalidOid;
@@ -573,20 +572,6 @@ RegisterInvalid(bool send)
 }
 
 /*
- * SetRefreshWhenInvalidate --
- *		Causes the local caches to be immediately refreshed iff true.
- */
-void
-SetRefreshWhenInvalidate(bool on)
-{
-#ifdef	INVALIDDEBUG
-	elog(DEBUG, "RefreshWhenInvalidate(%d) called", on);
-#endif	 /* defined(INVALIDDEBUG) */
-
-	RefreshWhenInvalidate = on;
-}
-
-/*
  * RelationIdInvalidateHeapTuple --
  *		Causes the given tuple in a relation to be invalidated.
  *
@@ -641,9 +626,11 @@ RelationInvalidateHeapTuple(Relation relation, HeapTuple tuple)
 									tuple,
 									RelationIdRegisterLocalInvalid);
 
+#ifdef NOT_USED
 	if (RefreshWhenInvalidate)
 		/* what does this do?  bjm 1998/08/20 */
 		RelationInvalidateCatalogCacheTuple(relation,
 											tuple,
 											(void (*) ()) NULL);
+#endif
 }

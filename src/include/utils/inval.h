@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: inval.h,v 1.9 1998/09/01 04:39:15 momjian Exp $
+ * $Id: inval.h,v 1.10 1998/10/12 00:53:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,8 +21,6 @@ extern void InitLocalInvalidateData(void);
 extern void DiscardInvalid(void);
 
 extern void RegisterInvalid(bool send);
-
-extern void SetRefreshWhenInvalidate(bool on);
 
 extern void RelationInvalidateHeapTuple(Relation relation, HeapTuple tuple);
 

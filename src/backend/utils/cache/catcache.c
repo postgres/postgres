@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.34 1998/09/01 04:32:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.35 1998/10/12 00:53:33 momjian Exp $
  *
  * Notes:
  *		XXX This needs to use exception.h to handle recovery when
@@ -1108,6 +1108,7 @@ RelationInvalidateCatalogCacheTuple(Relation relation,
 	 */
 	Assert(RelationIsValid(relation));
 	Assert(HeapTupleIsValid(tuple));
+	Assert(PointerIsValid(function));
 	CACHE1_elog(DEBUG, "RelationInvalidateCatalogCacheTuple: called");
 
 	/* ----------------
@@ -1132,9 +1133,11 @@ RelationInvalidateCatalogCacheTuple(Relation relation,
 		if (relationId != ccp->relationId)
 			continue;
 
+#ifdef NOT_USED
 		/* OPT inline simplification of CatalogCacheIdInvalidate */
 		if (!PointerIsValid(function))
 			function = CatalogCacheIdInvalidate;
+#endif
 
 		(*function) (ccp->id,
 				 CatalogCacheComputeTupleHashIndex(ccp, relation, tuple),

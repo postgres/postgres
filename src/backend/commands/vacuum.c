@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.87 1998/10/09 21:31:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.88 1998/10/12 00:53:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1084,6 +1084,8 @@ vc_rpfheap(VRelStats *vacrelstats, Relation onerel,
 			newtup = (HeapTuple) palloc(tuple_len);
 			memmove((char *) newtup, (char *) tuple, tuple_len);
 
+			RelationInvalidateHeapTuple(onerel, tuple);
+
 			/* store transaction information */
 			TransactionIdStore(myXID, &(newtup->t_xmin));
 			newtup->t_cmin = myCID;
@@ -1876,12 +1878,7 @@ vc_updstats(Oid relid, int num_pages, int num_tuples, bool hasindex, VRelStats *
 	/* XXX -- after write, should invalidate relcache in other backends */
 	WriteNoReleaseBuffer(ItemPointerGetBlockNumber(&rtup->t_ctid));
 
-	/*
-	 * invalidating system relations confuses the function cache of
-	 * pg_operator and pg_opclass, bjm
-	 */
-	if (!IsSystemRelationName(pgcform->relname.data))
-		RelationInvalidateHeapTuple(rd, rtup);
+	RelationInvalidateHeapTuple(rd, rtup);
 
 	ReleaseBuffer(buffer);
 	heap_close(rd);
