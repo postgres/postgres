@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/y2k.sgml,v 1.11 2001/09/13 15:55:23 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/y2k.sgml,v 1.12 2001/11/14 20:40:33 momjian Exp $
 -->
 
 <sect1 id="y2k">
@@ -67,7 +67,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/y2k.sgml,v 1.11 2001/09/13 15:55:23 p
 
  <para>
   Refer to 
-  <ulink url="http://www.gnu.org/software/year2000.html">The Gnu Project</ulink>
+  <ulink url="http://www.gnu.org/software/year2000.html">The GNU Project</ulink>
   and
   <ulink url="http://language.perl.com/news/y2k.html">The Perl Institute</ulink>
   for further discussion of Y2K issues, particularly
