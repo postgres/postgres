@@ -121,7 +121,8 @@
 				#   panic
 #client_min_messages = notice	# Values, in order of decreasing detail:
 				#   debug5, debug4, debug3, debug2, debug1,
-				#   log, info, notice, warning, error
+				#   log, info, notice, warning, error, 
+				#   panic(off)
 #silent_mode = false
 
 #log_connections = false
