@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/copy.c,v 1.40 2004/01/26 22:35:32 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/copy.c,v 1.41 2004/01/28 22:14:04 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "copy.h"
@@ -36,11 +36,19 @@
  * parse_slash_copy
  * -- parses \copy command line
  *
- * Accepted syntax: \copy table [(columnlist)] [with oids] from|to filename [with ] [ oids ] [ delimiter char] [ null as string ]
+ * The documented preferred syntax is:
+ *	\copy tablename [(columnlist)] from|to filename
+ *		[ with ] [ oids ] [ delimiter [as] char ] [ null [as] string ]
  * (binary is not here yet)
  *
- * Old syntax for backward compatibility: (2002-06-19):
- * \copy table [(columnlist)] [with oids] from|to filename [ using delimiters char] [ with null as string ]
+ * The pre-7.3 syntax was:
+ *	\copy tablename [(columnlist)] [with oids] from|to filename
+ *		[ [using] delimiters char ] [ with null as string ]
+ *
+ * The actual accepted syntax is a rather unholy combination of these,
+ * plus some undocumented flexibility (for instance, the clauses after
+ * WITH can appear in any order).  The accepted syntax matches what
+ * the backend grammar actually accepts (see backend/parser/gram.y).
  *
  * table name can be double-quoted and can have a schema part.
  * column names can be double-quoted.
@@ -243,6 +251,9 @@ parse_slash_copy(const char *args)
 						0, false, pset.encoding);
 		if (!(token && strcasecmp(token, "delimiters") == 0))
 			goto error;
+	}
+	if (token && strcasecmp(token, "delimiters") == 0)
+	{
 		token = strtokx(NULL, whitespace, NULL, "'",
 						'\\', false, pset.encoding);
 		if (!token)
@@ -254,12 +265,22 @@ parse_slash_copy(const char *args)
 
 	if (token)
 	{
-		if (strcasecmp(token, "with") != 0)
-			goto error;
-		while ((token = strtokx(NULL, whitespace, NULL, NULL,
-								0, false, pset.encoding)) != NULL)
+		/*
+		 * WITH is optional.  Also, the backend will allow WITH followed by
+		 * nothing, so we do too.
+		 */
+		if (strcasecmp(token, "with") == 0)
+			token = strtokx(NULL, whitespace, NULL, NULL,
+							0, false, pset.encoding);
+
+		while (token)
 		{
-			if (strcasecmp(token, "delimiter") == 0)
+			/* someday allow BINARY here */
+			if (strcasecmp(token, "oids") == 0)
+			{
+				result->oids = true;
+			}
+			else if (strcasecmp(token, "delimiter") == 0)
 			{
 				token = strtokx(NULL, whitespace, NULL, "'",
 								'\\', false, pset.encoding);
@@ -285,6 +306,9 @@ parse_slash_copy(const char *args)
 			}
 			else
 				goto error;
+
+			token = strtokx(NULL, whitespace, NULL, NULL,
+							0, false, pset.encoding);
 		}
 	}
 
