@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/GNUmakefile.in,v 1.8 1997/02/28 15:35:50 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/GNUmakefile.in,v 1.9 1997/02/28 18:34:58 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -67,6 +67,8 @@ endif
 ifneq ($(wildcard man), )
 	$(MAKE) -C man clean
 endif
+
+distclean: clean
 	rm -f Makefile.global include/config.h GNUmakefile
 
 .DEFAULT:
