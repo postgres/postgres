@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.5 1999/07/22 15:09:15 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.6 1999/11/28 02:17:04 tgl Exp $
 Postgres documentation
 -->
 
@@ -183,16 +183,6 @@ NOTICE:  Index <replaceable class="PARAMETER">index</replaceable>: Pages 28;
     query.  This will update the system catalogs with the results of all
     recent changes, and allow the <productname>Postgres</productname> 
     query optimizer to make better choices in planning user queries.
-   </para>
-   <para>
-    If the server crashes during a <command>VACUUM</command> command, 
-    chances are it will leave a lock file hanging around.  
-    Attempts to re-run the <command>VACUUM</command> command
-    result in an error message about the creation of a lock file.  If you
-    are sure <command>VACUUM</command> is not running, 
-    remove the <filename>pg_vlock</filename> file in your
-    database directory 
-    (i.e. <filename><envar>PGDATA</envar>/base/dbname/pg_vlock</filename>).
    </para>
   </refsect2>
  </refsect1>
