@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.59 1997/10/28 14:56:08 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.60 1997/10/30 16:39:27 thomas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -63,6 +63,7 @@ static char *xlateSqlType(char *);
 static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr);
 static List *makeConstantList( A_Const *node);
 static char *FlattenStringList(List *list);
+static char *fmtId(char *rawid);
 
 /* old versions of flex define this as a macro */
 #if defined(yywrap)
@@ -400,12 +401,24 @@ VariableShowStmt:  SHOW ColId
 					n->name  = $2;
 					$$ = (Node *) n;
 				}
+		| SHOW TIME ZONE
+				{
+					VariableShowStmt *n = makeNode(VariableShowStmt);
+					n->name  = "timezone";
+					$$ = (Node *) n;
+				}
 		;
 
 VariableResetStmt:	RESET ColId
 				{
 					VariableResetStmt *n = makeNode(VariableResetStmt);
 					n->name  = $2;
+					$$ = (Node *) n;
+				}
+		| RESET TIME ZONE
+				{
+					VariableResetStmt *n = makeNode(VariableResetStmt);
+					n->name  = "timezone";
 					$$ = (Node *) n;
 				}
 		;
@@ -498,11 +511,13 @@ default_expr:  AexprConst
 				{	$$ = lcons( makeString( "|"), $2); }
 			| default_expr TYPECAST Typename
 				{
-		   		 $$ = nconc( lcons( makeString( "CAST"), $1), makeList( makeString("AS"), $3, -1));
+					$3->name = fmtId($3->name);
+					$$ = nconc( lcons( makeString( "CAST"), $1), makeList( makeString("AS"), $3, -1));
 				}
 			| CAST default_expr AS Typename
 				{
-		   		 $$ = nconc( lcons( makeString( "CAST"), $2), makeList( makeString("AS"), $4, -1));
+					$4->name = fmtId($4->name);
+					$$ = nconc( lcons( makeString( "CAST"), $2), makeList( makeString("AS"), $4, -1));
 				}
 			| '(' default_expr ')'
 				{	$$ = lappend( lcons( makeString( "("), $2), makeString( ")")); }
@@ -714,7 +729,7 @@ ConstraintList:
 ConstraintElem:
 		CONSTRAINT name ConstraintDef
 				{
-						$3->name = $2;
+						$3->name = fmtId($2);
 						$$ = $3;
 				}
 		| ConstraintDef			{ $$ = $1; }
@@ -751,7 +766,7 @@ constraint_elem:  AexprConst
 #ifdef PARSEDEBUG
 printf( "ColId is %s\n", $1);
 #endif
-					$$ = lcons( makeString($1), NIL);
+					$$ = lcons( makeString(fmtId($1)), NIL);
 				}
 			| '-' constraint_elem %prec UMINUS
 				{	$$ = lcons( makeString( "-"), $2); }
@@ -777,11 +792,13 @@ printf( "ColId is %s\n", $1);
 				{	$$ = lcons( makeString( "|"), $2); }
 			| constraint_elem TYPECAST Typename
 				{
-		   		 $$ = nconc( lcons( makeString( "CAST"), $1), makeList( makeString("AS"), $3, -1));
+					$3->name = fmtId($3->name);
+					$$ = nconc( lcons( makeString( "CAST"), $1), makeList( makeString("AS"), $3, -1));
 				}
 			| CAST constraint_elem AS Typename
 				{
-		   		 $$ = nconc( lcons( makeString( "CAST"), $2), makeList( makeString("AS"), $4, -1));
+					$4->name = fmtId($4->name);
+					$$ = nconc( lcons( makeString( "CAST"), $2), makeList( makeString("AS"), $4, -1));
 				}
 			| '(' constraint_elem ')'
 				{	$$ = lappend( lcons( makeString( "("), $2), makeString( ")")); }
@@ -801,6 +818,14 @@ printf( "ColId is %s\n", $1);
 				{	$$ = lcons( makeString( $1), $2); }
 			| constraint_elem Op
 				{	$$ = lappend( $1, makeString( $2)); }
+			| constraint_elem IS TRUE_P
+				{	$$ = lappend( $1, makeString( "IS TRUE")); }
+			| constraint_elem IS FALSE_P
+				{	$$ = lappend( $1, makeString( "IS FALSE")); }
+			| constraint_elem IS NOT TRUE_P
+				{	$$ = lappend( $1, makeString( "IS NOT TRUE")); }
+			| constraint_elem IS NOT FALSE_P
+				{	$$ = lappend( $1, makeString( "IS NOT FALSE")); }
 		;
 
 key_match:  MATCH FULL					{ $$ = NULL; }
@@ -2933,31 +2958,31 @@ a_expr:  attr opt_indirection
 				{	$$ = makeA_Expr(NOTNULL, NULL, $1, NULL); }
 		| a_expr IS TRUE_P
 				{
-					A_Const *n = makeNode(A_Const);
-					n->val.type = T_String;
-					n->val.val.str = "t";
-					$$ = makeA_Expr(OP, "=", $1, (Node *)n);
+					FuncCall *n = makeNode(FuncCall);
+					n->funcname = "istrue";
+					n->args = lcons($1,NIL);
+					$$ = (Node *)n;
 				}
 		| a_expr IS FALSE_P
 				{
-					A_Const *n = makeNode(A_Const);
-					n->val.type = T_String;
-					n->val.val.str = "f";
-					$$ = makeA_Expr(OP, "=", $1, (Node *)n);
+					FuncCall *n = makeNode(FuncCall);
+					n->funcname = "isfalse";
+					n->args = lcons($1,NIL);
+					$$ = (Node *)n;
 				}
 		| a_expr IS NOT TRUE_P
 				{
-					A_Const *n = makeNode(A_Const);
-					n->val.type = T_String;
-					n->val.val.str = "f";
-					$$ = makeA_Expr(OP, "=", $1, (Node *)n);
+					FuncCall *n = makeNode(FuncCall);
+					n->funcname = "isfalse";
+					n->args = lcons($1,NIL);
+					$$ = (Node *)n;
 				}
 		| a_expr IS NOT FALSE_P
 				{
-					A_Const *n = makeNode(A_Const);
-					n->val.type = T_String;
-					n->val.val.str = "t";
-					$$ = makeA_Expr(OP, "=", $1, (Node *)n);
+					FuncCall *n = makeNode(FuncCall);
+					n->funcname = "istrue";
+					n->args = lcons($1,NIL);
+					$$ = (Node *)n;
 				}
 		| a_expr BETWEEN AexprConst AND AexprConst
 				{
@@ -3636,3 +3661,31 @@ printf( "AexprConst argument is \"%s\"\n", defval);
 
 	return( lcons( makeString(defval), NIL));
 } /* makeConstantList() */
+
+/* fmtId()
+ * Check input string for non-lowercase/non-numeric characters.
+ * Returns either input string or input surrounded by double quotes.
+ */
+static char *
+fmtId(char *rawid)
+{
+	static char *cp;
+
+	for (cp = rawid; *cp != '\0'; cp++)
+		if (! (islower(*cp) || isdigit(*cp) || (*cp == '_'))) break;
+
+	if (*cp != '\0') {
+		cp = palloc(strlen(rawid)+1);
+		strcpy(cp,"\"");
+		strcat(cp,rawid);
+		strcat(cp,"\"");
+	} else {
+		cp = rawid;
+	};
+
+#ifdef PARSEDEBUG
+printf("fmtId- %sconvert %s to %s\n", ((cp == rawid)? "do not ": ""), rawid, cp);
+#endif
+
+	return(cp);
+} /* fmtId() */
