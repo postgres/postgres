@@ -1,7 +1,7 @@
 /*
  * conversion functions between pg_wchar and multi-byte streams.
  * Tatsuo Ishii
- * $Id: wchar.c,v 1.17 2001/03/22 04:00:05 momjian Exp $
+ * $Id: wchar.c,v 1.18 2001/04/19 02:34:35 ishii Exp $
  *
  * WIN1250 client encoding updated by Pavel Behal
  *
@@ -502,5 +502,5 @@ pg_mic_mblen(const unsigned char *mbstr)
 int
 pg_encoding_mblen(int encoding, const unsigned char *mbstr)
 {
-	return ((*pg_wchar_table[encoding].mblen) (mbstr));
+	return( (encoding >= 0 && encoding < sizeof(pg_wchar_table)/sizeof(pg_wchar_tbl))? ((*pg_wchar_table[encoding].mblen) (mbstr)) : ((*pg_wchar_table[SQL_ASCII].mblen) (mbstr)));
 }
