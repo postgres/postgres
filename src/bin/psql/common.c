@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.75 2003/10/05 22:36:00 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.76 2003/10/06 01:11:12 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -45,14 +45,19 @@
 typedef struct timeval TimevalStruct;
 
 #define GETTIMEOFDAY(T) gettimeofday(T, NULL)
-#define DIFF_MSEC(T, U) ((((T)->tv_sec - (U)->tv_sec) * 1000000.0 + (T)->tv_usec - (U)->tv_usec) / 1000.0)
+#define DIFF_MSEC(T, U) \
+	((((int) ((T)->tv_sec - (U)->tv_sec)) * 1000000.0 + \
+	  ((int) ((T)->tv_usec - (U)->tv_usec))) / 1000.0)
 
 #else
 
 typedef struct _timeb TimevalStruct;
 
 #define GETTIMEOFDAY(T) _ftime(T)
-#define DIFF_MSEC(T, U) ((((T)->time - (U)->time) * 1000.0 + (T)->millitm - (U)->millitm))
+#define DIFF_MSEC(T, U) \
+	(((T)->time - (U)->time) * 1000.0 + \
+	 ((T)->millitm - (U)->millitm))
+
 #endif
 
 extern bool prompt_state;
@@ -478,18 +483,64 @@ PrintQueryTuples(const PGresult *results)
 }
 
 
-
 /*
- * PrintQueryResults: analyze query results and print them out
+ * ProcessCopyResult: if command was a COPY FROM STDIN/TO STDOUT, handle it
  *
  * Note: Utility function for use by SendQuery() only.
  *
  * Returns true if the query executed successfully, false otherwise.
  */
 static bool
-PrintQueryResults(PGresult *results,
-				  const TimevalStruct *before,
-				  const TimevalStruct *after)
+ProcessCopyResult(PGresult *results)
+{
+	bool		success = false;
+
+	if (!results)
+		return false;
+
+	switch (PQresultStatus(results))
+	{
+		case PGRES_TUPLES_OK:
+		case PGRES_COMMAND_OK:
+		case PGRES_EMPTY_QUERY:
+			/* nothing to do here */
+			success = true;
+			break;
+
+		case PGRES_COPY_OUT:
+			success = handleCopyOut(pset.db, pset.queryFout);
+			break;
+
+		case PGRES_COPY_IN:
+			if (pset.cur_cmd_interactive && !QUIET())
+				puts(gettext("Enter data to be copied followed by a newline.\n"
+							 "End with a backslash and a period on a line by itself."));
+
+			success = handleCopyIn(pset.db, pset.cur_cmd_source,
+			  pset.cur_cmd_interactive ? get_prompt(PROMPT_COPY) : NULL);
+			break;
+
+		default:
+			break;
+	}
+
+	/* may need this to recover from conn loss during COPY */
+	if (!CheckConnection())
+		return false;
+
+	return success;
+}
+
+
+/*
+ * PrintQueryResults: print out query results as required
+ *
+ * Note: Utility function for use by SendQuery() only.
+ *
+ * Returns true if the query executed successfully, false otherwise.
+ */
+static bool
+PrintQueryResults(PGresult *results)
 {
 	bool		success = false;
 
@@ -501,9 +552,7 @@ PrintQueryResults(PGresult *results,
 		case PGRES_TUPLES_OK:
 			success = PrintQueryTuples(results);
 			break;
-		case PGRES_EMPTY_QUERY:
-			success = true;
-			break;
+
 		case PGRES_COMMAND_OK:
 			{
 				char		buf[10];
@@ -525,17 +574,15 @@ PrintQueryResults(PGresult *results,
 				SetVariable(pset.vars, "LASTOID", buf);
 				break;
 			}
-		case PGRES_COPY_OUT:
-			success = handleCopyOut(pset.db, pset.queryFout);
+
+		case PGRES_EMPTY_QUERY:
+			success = true;
 			break;
 
+		case PGRES_COPY_OUT:
 		case PGRES_COPY_IN:
-			if (pset.cur_cmd_interactive && !QUIET())
-				puts(gettext("Enter data to be copied followed by a newline.\n"
-							 "End with a backslash and a period on a line by itself."));
-
-			success = handleCopyIn(pset.db, pset.cur_cmd_source,
-			  pset.cur_cmd_interactive ? get_prompt(PROMPT_COPY) : NULL);
+			/* nothing to do here */
+			success = true;
 			break;
 
 		default:
@@ -544,17 +591,8 @@ PrintQueryResults(PGresult *results,
 
 	fflush(pset.queryFout);
 
-	/* may need this to recover from conn loss during COPY */
-	if (!CheckConnection())
-		return false;
-
-	/* Possible microtiming output */
-	if (pset.timing && success)
-		printf(gettext("Time: %.3f ms\n"), DIFF_MSEC(after, before));
-
 	return success;
 }
-
 
 
 /*
@@ -621,12 +659,24 @@ SendQuery(const char *query)
 
 	if (pset.timing)
 		GETTIMEOFDAY(&before);
+
 	results = PQexec(pset.db, query);
+
+	/* these operations are included in the timing result: */
+	OK = (AcceptResult(results) && ProcessCopyResult(results));
+
 	if (pset.timing)
 		GETTIMEOFDAY(&after);
 
-	OK = (AcceptResult(results) && PrintQueryResults(results, &before, &after));
+	/* but printing results isn't: */
+	if (OK)
+		OK = PrintQueryResults(results);
+
 	PQclear(results);
+
+	/* Possible microtiming output */
+	if (OK && pset.timing)
+		printf(gettext("Time: %.3f ms\n"), DIFF_MSEC(&after, &before));
 
 	/* check for events that may occur during query execution */
 
