@@ -4,7 +4,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc-file.l,v 1.5 2000/11/16 05:50:01 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc-file.l,v 1.6 2001/01/24 19:01:31 petere Exp $
  */
 
 %{
@@ -65,7 +65,7 @@ LETTER_OR_DIGIT [A-Za-z_0-9\200-\377]
 ID              {LETTER}{LETTER_OR_DIGIT}*
 
 UNQUOTED_STRING {LETTER}({LETTER_OR_DIGIT}|[-._:/])*
-STRING          \'([^'"\n]|\\.)*\'
+STRING          \'([^'\n]|\\.)*\'
 
 %%
 
