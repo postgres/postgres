@@ -1,4 +1,4 @@
-/* This is used by psql under MS Win */
+/* This is used by psql under Win32 */
 
 /*
  * Copyright (c) 1987, 1993, 1994
