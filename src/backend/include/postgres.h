@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1995, Regents of the University of California
  *
- * $Id: postgres.h,v 1.1.1.1 1996/07/09 06:21:28 scrappy Exp $
+ * $Id: postgres.h,v 1.2 1996/08/27 22:00:21 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,6 +36,7 @@
 #ifndef POSTGRES_H
 #define POSTGRES_H
 
+#include "config.h"
 #include "c.h"
 
 /* ----------------------------------------------------------------
