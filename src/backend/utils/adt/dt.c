@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.3 1997/03/14 23:20:10 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.4 1997/03/16 05:12:08 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,11 @@
 #include <math.h>
 #include <string.h>
 #include <sys/types.h>
+#ifdef HAVE_VALUES_H
+#include <values.h>
+#else
+#include <limits.h>
+#endif
 
 #include "postgres.h"
 #include "utils/builtins.h"
