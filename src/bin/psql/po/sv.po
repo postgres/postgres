@@ -1,8 +1,8 @@
 # Swedish message translation file for psql
 # Peter Eisentraut <peter_e@gmx.net>, 2001.
-# Dennis Björklund <db@zigo.dhs.org>, 2002, 2003.
+# Dennis Björklund <db@zigo.dhs.org>, 2002, 2003, 2004.
 #
-# $PostgreSQL: pgsql/src/bin/psql/po/sv.po,v 1.12 2004/01/07 21:51:13 dennis Exp $
+# $PostgreSQL: pgsql/src/bin/psql/po/sv.po,v 1.13 2004/01/08 08:36:50 dennis Exp $
 #
 # Use these quotes: "%s"
 #
@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.4\n"
 "POT-Creation-Date: 2003-10-05 07:24-0300\n"
-"PO-Revision-Date: 2004-01-07 14:36+0100\n"
+"PO-Revision-Date: 2004-01-08 09:30+0100\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -2179,7 +2179,7 @@ msgstr "DROP AGGREGATE namn ( typ ) [ CASCADE | RESTRICT ]"
 
 #: sql_help.h:209
 msgid "remove a cast"
-msgstr "Ta bort en typomvandling"
+msgstr "ta bort en typomvandling"
 
 #: sql_help.h:210
 msgid "DROP CAST (sourcetype AS targettype) [ CASCADE | RESTRICT ]"
