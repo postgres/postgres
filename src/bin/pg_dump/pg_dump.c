@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.141 2000/01/29 16:58:44 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.142 2000/02/02 13:20:15 petere Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -127,7 +127,7 @@ char		g_comment_end[10];
 static void
 help(const char *progname)
 {
-	printf("%s dumps a database to a text file.\n\n", progname);
+	printf("%s dumps a database as a text file.\n\n", progname);
     puts(  "Usage:");
     printf("  %s [options] dbname\n\n", progname);
     puts(  "Options:");
@@ -589,13 +589,6 @@ main(int argc, char **argv)
     else
         progname = strrchr(argv[0], SEP_CHAR) + 1;
 
-    /*
-     * A note on options:
-     *
-     * The -f option was yanked because in the rest of the world (and
-     * PostgreSQL) it specifies an *input* file. You can use the shell's
-     * output redirection to achieve the same.
-     */
 
 #ifdef HAVE_GETOPT_LONG
 	while ((c = getopt_long(argc, argv, "acdDf:h:nNop:st:uvxzV?", long_options, &optindex)) != -1)
@@ -621,9 +614,8 @@ main(int argc, char **argv)
 				attrNames = true;
 				break;
             case 'f':
-                fprintf(stderr, "%s: The -f option is obsolete. You can achieve the same by writing %s > %s.\n",
-                        progname, progname, optarg);
-                exit(1);
+		filename = optarg;
+		break;
 			case 'h':			/* server host */
 				pghost = optarg;
 				break;
