@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.56 2000/03/14 23:06:32 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.57 2000/03/15 23:31:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -719,9 +719,9 @@ parseFromClause(ParseState *pstate, List *frmList)
  *	  list as a "resjunk" node.
  *
  * node		the ORDER BY, GROUP BY, or DISTINCT ON expression to be matched
- * tlist	the existing target list (NB: this cannot be NIL, which is a
- *			good thing since we'd be unable to append to it...)
- * clause	identifies clause type (mainly for error messages).
+ * tlist	the existing target list (NB: this will never be NIL, which is a
+ *			good thing since we'd be unable to append to it if it were...)
+ * clause	identifies clause type being processed.
  */
 static TargetEntry *
 findTargetlistEntry(ParseState *pstate, Node *node, List *tlist, int clause)
@@ -733,7 +733,7 @@ findTargetlistEntry(ParseState *pstate, Node *node, List *tlist, int clause)
 	/*----------
 	 * Handle two special cases as mandated by the SQL92 spec:
 	 *
-	 * 1. ORDER BY ColumnName
+	 * 1. Bare ColumnName (no qualifier or subscripts)
 	 *    For a bare identifier, we search for a matching column name
 	 *	  in the existing target list.  Multiple matches are an error
 	 *	  unless they refer to identical values; for example,
@@ -741,49 +741,76 @@ findTargetlistEntry(ParseState *pstate, Node *node, List *tlist, int clause)
 	 *	  but not   SELECT a AS b, b FROM table ORDER BY b
 	 *	  If no match is found, we fall through and treat the identifier
 	 *	  as an expression.
-	 *	  We do NOT attempt this match for GROUP BY, since it is clearly
-	 *	  contrary to the spec to use an output column name in preference
-	 *	  to an underlying column name in GROUP BY.  DISTINCT ON isn't in
-	 *	  the standard, so we can do what we like there; we choose to make
-	 *	  it work like GROUP BY.
+	 *	  For GROUP BY, it is incorrect to match the grouping item against
+	 *	  targetlist entries: according to SQL92, an identifier in GROUP BY
+	 *	  is a reference to a column name exposed by FROM, not to a target
+	 *	  list column.  However, many implementations (including pre-7.0
+	 *	  PostgreSQL) accept this anyway.  So for GROUP BY, we look first
+	 *	  to see if the identifier matches any FROM column name, and only
+	 *	  try for a targetlist name if it doesn't.  This ensures that we
+	 *	  adhere to the spec in the case where the name could be both.
+	 *	  DISTINCT ON isn't in the standard, so we can do what we like there;
+	 *	  we choose to make it work like ORDER BY, on the rather flimsy
+	 *	  grounds that ordinary DISTINCT works on targetlist entries.
 	 *
-	 * 2. ORDER BY/GROUP BY/DISTINCT ON IntegerConstant
+	 * 2. IntegerConstant
 	 *	  This means to use the n'th item in the existing target list.
 	 *	  Note that it would make no sense to order/group/distinct by an
 	 *	  actual constant, so this does not create a conflict with our
 	 *	  extension to order/group by an expression.
-	 *	  I believe that GROUP BY column-number is not sanctioned by SQL92,
-	 *	  but since the standard has no other behavior defined for this
-	 *	  syntax, we may as well continue to support our past behavior.
+	 *	  GROUP BY column-number is not allowed by SQL92, but since
+	 *	  the standard has no other behavior defined for this syntax,
+	 *	  we may as well accept this common extension.
 	 *
-	 * Note that pre-existing resjunk targets must not be used in either case.
+	 * Note that pre-existing resjunk targets must not be used in either case,
+	 * since the user didn't write them in his SELECT list.
+	 *
+	 * If neither special case applies, fall through to treat the item as
+	 * an expression.
 	 *----------
 	 */
-	if (clause == ORDER_CLAUSE &&
-		IsA(node, Ident) && ((Ident *) node)->indirection == NIL)
+	if (IsA(node, Ident) && ((Ident *) node)->indirection == NIL)
 	{
 		char	   *name = ((Ident *) node)->name;
-		foreach(tl, tlist)
-		{
-			TargetEntry *tle = (TargetEntry *) lfirst(tl);
-			Resdom	   *resnode = tle->resdom;
 
-			if (!resnode->resjunk &&
-				strcmp(resnode->resname, name) == 0)
-			{
-				if (target_result != NULL)
-				{
-					if (! equal(target_result->expr, tle->expr))
-						elog(ERROR, "%s '%s' is ambiguous",
-							 clauseText[clause], name);
-				}
-				else
-					target_result = tle;
-				/* Stay in loop to check for ambiguity */
-			}
+		if (clause == GROUP_CLAUSE)
+		{
+			/*
+			 * In GROUP BY, we must prefer a match against a FROM-clause
+			 * column to one against the targetlist.  Look to see if there is
+			 * a matching column.  If so, fall through to let transformExpr()
+			 * do the rest.  NOTE: if name could refer ambiguously to more
+			 * than one column name exposed by FROM, colnameRangeTableEntry
+			 * will elog(ERROR).  That's just what we want here.
+			 */
+			if (colnameRangeTableEntry(pstate, name) != NULL)
+				name = NULL;
 		}
-		if (target_result != NULL)
-			return target_result; /* return the first match */
+
+		if (name != NULL)
+		{
+			foreach(tl, tlist)
+			{
+				TargetEntry *tle = (TargetEntry *) lfirst(tl);
+				Resdom	   *resnode = tle->resdom;
+
+				if (!resnode->resjunk &&
+					strcmp(resnode->resname, name) == 0)
+				{
+					if (target_result != NULL)
+					{
+						if (! equal(target_result->expr, tle->expr))
+							elog(ERROR, "%s '%s' is ambiguous",
+								 clauseText[clause], name);
+					}
+					else
+						target_result = tle;
+					/* Stay in loop to check for ambiguity */
+				}
+			}
+			if (target_result != NULL)
+				return target_result; /* return the first match */
+		}
 	}
 	if (IsA(node, A_Const))
 	{

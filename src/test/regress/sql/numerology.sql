@@ -70,9 +70,8 @@ SELECT f1 AS two, max(f3) AS max_float, min(f3) as min_float
   GROUP BY f1
   ORDER BY two, max_float, min_float;
 
--- Postgres used to accept this, but it is clearly against SQL92 to
--- interpret GROUP BY arguments as result column names; they should
--- be source column names *only*.  An error is expected.
+-- GROUP BY a result column name is not legal per SQL92, but we accept it
+-- anyway (if the name is not the name of any column exposed by FROM).
 SELECT f1 AS two, max(f3) AS max_float, min(f3) AS min_float
   FROM TEMP_GROUP
   GROUP BY two

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.25 2000/02/21 01:13:52 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.26 2000/03/15 23:31:19 tgl Exp $
 Postgres documentation
 -->
 
@@ -37,7 +37,7 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="PARAMETER">expression</replac
   
   <refsect2 id="R2-SQL-SELECT-1">
    <refsect2info>
-    <date>1998-09-24</date>
+    <date>2000-03-15</date>
    </refsect2info>
    <title>
     Inputs
@@ -59,10 +59,12 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="PARAMETER">expression</replac
       <listitem>
        <para>
 	Specifies another name for a column or an expression using
-	the AS clause.  This name is primarily used to label the output
-	column.  The <replaceable class="PARAMETER">name</replaceable>
-	cannot be used in the WHERE, GROUP BY, or HAVING clauses.
-	It can, however, be referenced in ORDER BY clauses.
+	the AS clause.  This name is primarily used to label the column
+	for display.  It can also be used to refer to the column's value in
+	ORDER BY and GROUP BY clauses.  But the
+	<replaceable class="PARAMETER">name</replaceable>
+	cannot be used in the WHERE or HAVING clauses; write out the
+	expression instead.
        </para>
       </listitem>
      </varlistentry>
@@ -72,7 +74,8 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="PARAMETER">expression</replac
      <term>TEMP</term>
      <listitem>
       <para>
-	The table is created unique to this session, and is
+	If TEMPORARY or TEMP is specified,
+	the table is created unique to this session, and is
 	automatically dropped on session exit.
       </para>
      </listitem>
@@ -83,10 +86,10 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="PARAMETER">expression</replac
       <listitem>
        <para>
 	If the INTO TABLE clause is specified, the result of the
-	query will be stored in another table with the indicated
+	query will be stored in a new table with the indicated
 	name.
 	The target table (<replaceable class="PARAMETER">new_table</replaceable>) will
-	be created automatically and should not exist before this command.
+	be created automatically and must not exist before this command.
         Refer to <command>SELECT INTO</command> for more information.
 
 	<note>
@@ -143,7 +146,8 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="PARAMETER">expression</replac
       <term><replaceable class="PARAMETER">select</replaceable></term>
       <listitem>
        <para>
-	A select statement with all features except the ORDER BY clause.
+	A select statement with all features except the ORDER BY and
+	LIMIT clauses.
        </para>
       </listitem>
      </varlistentry>
@@ -188,7 +192,7 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="PARAMETER">expression</replac
 
  <refsect1 id="R1-SQL-SELECT-1">
   <refsect1info>
-   <date>1998-09-24</date>
+   <date>2000-03-15</date>
   </refsect1info>
   <title>
    Description
@@ -210,7 +214,9 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="PARAMETER">expression</replac
   <para>
    <command>DISTINCT ON</command> eliminates rows that match on all the
    specified expressions, keeping only the first row of each set of
-   duplicates.  Note that "the first row" of each set is unpredictable
+   duplicates.  The DISTINCT ON expressions are interpreted using the
+   same rules as for ORDER BY items; see below.
+   Note that "the first row" of each set is unpredictable
    unless <command>ORDER BY</command> is used to ensure that the desired
    row appears first.  For example,
    <programlisting>
@@ -226,21 +232,20 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="PARAMETER">expression</replac
 
   <para>
    The GROUP BY clause allows a user to divide a table
-   conceptually into groups.
+   into groups of rows that match on one or more values.
    (See <xref linkend="sql-groupby" endterm="sql-groupby-title">.)
   </para>
 
   <para>
-   The HAVING clause specifies a grouped table derived by the
-   elimination of groups from the result of the previously
-   specified clause.
+   The HAVING clause allows selection of only those groups of rows
+   meeting the specified condition.
    (See <xref linkend="sql-having" endterm="sql-having-title">.)
   </para>
    
   <para>
-   The ORDER BY clause allows a user to specify that he/she
-   wishes the rows sorted according to the ASCending or 
-   DESCending mode operator.
+   The ORDER BY clause causes the returned rows to be sorted in a specified
+   order.  If ORDER BY is not given, the rows are returned in whatever order
+   the system finds cheapest to produce.
    (See <xref linkend="sql-orderby-title" endterm="sql-orderby-title">.)
   </para>
    
@@ -279,7 +284,7 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="PARAMETER">expression</replac
    
   <refsect2 id="SQL-WHERE">
    <refsect2info>
-    <date>1998-09-24</date>
+    <date>2000-03-15</date>
    </refsect2info>
    <title id="sql-where-title">
     WHERE Clause
@@ -312,15 +317,14 @@ WHERE <replaceable class="PARAMETER">boolean_expr</replaceable>
     locally-defined operator, 
     and <replaceable class="PARAMETER">log_op</replaceable> can be one 
     of: AND, OR, NOT.
-    The comparison returns either TRUE or FALSE and all
-    instances will be discarded
-    if the expression evaluates to FALSE.
+    SELECT will ignore all rows for which the WHERE condition does not return
+    TRUE.
    </para>
   </refsect2>
   
   <refsect2 id="SQL-GROUPBY">
    <refsect2info>
-    <date>1998-09-24</date>
+    <date>2000-03-15</date>
    </refsect2info>
    <title id="sql-groupby-title">
     GROUP BY Clause
@@ -334,20 +338,28 @@ GROUP BY <replaceable class="PARAMETER">column</replaceable> [, ...]
    </para>
 
    <para>
-    GROUP BY will condense into a single row all rows that share the
+    GROUP BY will condense into a single row all selected rows that share the
     same values for the grouped columns.  Aggregate functions, if any,
     are computed across all rows making up each group, producing a
     separate value for each group (whereas without GROUP BY, an
     aggregate produces a single value computed across all the selected
-    rows).  When GROUP BY is present, it is not valid to refer to
+    rows).  When GROUP BY is present, it is not valid for the SELECT
+    output expression(s) to refer to
     ungrouped columns except within aggregate functions, since there
     would be more than one possible value to return for an ungrouped column.
+   </para>
+
+   <para>
+    An item in GROUP BY can also be the name or ordinal number of an output
+    column (SELECT expression), or it can be an arbitrary expression formed
+    from input-column values.  In case of ambiguity, a GROUP BY name will
+    be interpreted as an input-column name rather than an output column name.
    </para>
   </refsect2>
 
   <refsect2 id="SQL-HAVING">
    <refsect2info>
-    <date>1998-09-24</date>
+    <date>2000-03-15</date>
    </refsect2info>
    <title id="sql-having-title">
     HAVING Clause
@@ -365,8 +377,12 @@ HAVING <replaceable class="PARAMETER">cond_expr</replaceable>
     
    <para>
     HAVING specifies a grouped table derived by the elimination
-    of groups from the result of the previously specified clause
-    that do not meet the <replaceable class="PARAMETER">cond_expr</replaceable>.</para>
+    of group rows that do not satisfy the
+    <replaceable class="PARAMETER">cond_expr</replaceable>.
+    HAVING is different from WHERE:
+    WHERE filters individual rows before application of GROUP BY,
+    while HAVING filters group rows created by GROUP BY.
+   </para>
 
    <para>
     Each column referenced in 
@@ -378,7 +394,7 @@ HAVING <replaceable class="PARAMETER">cond_expr</replaceable>
   
   <refsect2 id="SQL-ORDERBY">
    <refsect2info>
-    <date>1998-09-24</date>
+    <date>2000-03-15</date>
    </refsect2info>
    <title id="sql-orderby-title">
     ORDER BY Clause
@@ -389,15 +405,15 @@ ORDER BY <replaceable class="PARAMETER">column</replaceable> [ ASC | DESC ] [, .
     </synopsis></para>
     
    <para>
-    <replaceable class="PARAMETER">column</replaceable> can be either a column
-    name or an ordinal number.
+    <replaceable class="PARAMETER">column</replaceable> can be either a
+    result column name or an ordinal number.
    </para>
    <para>
     The ordinal numbers refers to the ordinal (left-to-right) position
-    of the column. This feature makes it possible to define an ordering
+    of the result column. This feature makes it possible to define an ordering
     on the basis of a column that does not have a proper name.
     This is never absolutely necessary because it is always possible
-    to assign a name to a calculated column using the AS clause, e.g.:
+    to assign a name to a result column using the AS clause, e.g.:
     <programlisting>
 SELECT title, date_prod + 1 AS newlen FROM films ORDER BY newlen;
     </programlisting></para>
@@ -410,6 +426,11 @@ SELECT title, date_prod + 1 AS newlen FROM films ORDER BY newlen;
     <programlisting>
 SELECT name FROM distributors ORDER BY code;
     </programlisting>
+    Note that if an ORDER BY item is a simple name that matches both
+    a result column name and an input column name, ORDER BY will interpret
+    it as the result column name.  This is the opposite of the choice that
+    GROUP BY will make in the same situation.  This inconsistency is
+    mandated by the SQL92 standard.
    </para>
     
    <para>
@@ -436,7 +457,7 @@ SELECT name FROM distributors ORDER BY code;
 
     where
     <replaceable class="PARAMETER">table_query</replaceable>
-    specifies any select expression without an ORDER BY clause.
+    specifies any select expression without an ORDER BY or LIMIT clause.
    </para>
     
    <para>
@@ -476,7 +497,7 @@ SELECT name FROM distributors ORDER BY code;
     
     where
     <replaceable class="PARAMETER">table_query</replaceable>
-    specifies any select expression without an ORDER BY clause.
+    specifies any select expression without an ORDER BY or LIMIT clause.
    </para>
 
    <para>
@@ -507,7 +528,7 @@ SELECT name FROM distributors ORDER BY code;
     
     where
     <replaceable class="PARAMETER">table_query</replaceable>
-    specifies any select expression without an ORDER BY clause.
+    specifies any select expression without an ORDER BY or LIMIT clause.
    </para>
 
    <para>
@@ -560,7 +581,7 @@ SELECT name FROM distributors ORDER BY code;
    </para>
 
    <para>
-    As of Postgres 7.0, the
+    As of PostgreSQL 7.0, the
     query optimizer takes LIMIT into account when generating a query plan,
     so you are very likely to get different plans (yielding different row
     orders) depending on what you give for LIMIT and OFFSET.  Thus, using
@@ -764,6 +785,18 @@ SELECT distributors.* WHERE name = 'Westwood';
     <para>
      The DISTINCT ON phrase is not part of <acronym>SQL92</acronym>.
      Nor are LIMIT and OFFSET.
+    </para>
+     
+    <para>
+     In <acronym>SQL92</acronym>, an ORDER BY clause may only use result
+     column names or numbers, while a GROUP BY clause may only use input
+     column names.
+     <productname>Postgres</productname> extends each of these clauses to
+     allow the other choice as well (but it uses the standard's interpretation
+     if there is ambiguity).
+     <productname>Postgres</productname> also allows both clauses to specify
+     arbitrary expressions.  Note that names appearing in an expression will
+     always be taken as input-column names, not as result-column names.
     </para>
    </refsect3>
 

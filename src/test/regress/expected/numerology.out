@@ -96,14 +96,18 @@ SELECT f1 AS two, max(f3) AS max_float, min(f3) as min_float
    2 |                    0 | -1.2345678901234e+200
 (2 rows)
 
--- Postgres used to accept this, but it is clearly against SQL92 to
--- interpret GROUP BY arguments as result column names; they should
--- be source column names *only*.  An error is expected.
+-- GROUP BY a result column name is not legal per SQL92, but we accept it
+-- anyway (if the name is not the name of any column exposed by FROM).
 SELECT f1 AS two, max(f3) AS max_float, min(f3) AS min_float
   FROM TEMP_GROUP
   GROUP BY two
   ORDER BY two, max_float, min_float;
-ERROR:  Attribute 'two' not found
+ two |      max_float       |       min_float       
+-----+----------------------+-----------------------
+   1 | 1.2345678901234e+200 |                     0
+   2 |                    0 | -1.2345678901234e+200
+(2 rows)
+
 SELECT f1 AS two, (max(f3) + 1) AS max_plus_1, (min(f3) - 1) AS min_minus_1
   FROM TEMP_GROUP
   GROUP BY f1
