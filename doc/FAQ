@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Sat Jan 25 21:43:37 EST 2003
+   Last updated: Mon Jan 27 01:24:42 EST 2003
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -585,10 +585,6 @@
    and the maximum number of open files, NFILE and NINODE. The reason
    that PostgreSQL has a limit on the number of allowed backend processes
    is so your system won't run out of resources.
-   
-   In PostgreSQL versions prior to 6.5, the maximum number of backends
-   was 64, and changing it required a rebuild after altering the
-   MaxBackendId constant in include/storage/sinvaladt.h.
    
     3.9) What is in the pgsql_tmp directory?
     
