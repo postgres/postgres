@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: sequence.h,v 1.19 2001/11/05 17:46:33 momjian Exp $
+ * $Id: sequence.h,v 1.20 2002/05/22 21:40:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -84,7 +84,6 @@ extern Datum setval(PG_FUNCTION_ARGS);
 extern Datum setval_and_iscalled(PG_FUNCTION_ARGS);
 
 extern void DefineSequence(CreateSeqStmt *stmt);
-extern void CloseSequences(void);
 
 extern void seq_redo(XLogRecPtr lsn, XLogRecord *rptr);
 extern void seq_undo(XLogRecPtr lsn, XLogRecord *rptr);

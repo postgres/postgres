@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.123 2002/05/21 22:05:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.124 2002/05/22 21:40:55 tgl Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -166,7 +166,6 @@
 #include "catalog/index.h"
 #include "catalog/namespace.h"
 #include "commands/async.h"
-#include "commands/sequence.h"
 #include "commands/trigger.h"
 #include "executor/spi.h"
 #include "libpq/be-fsstubs.h"
@@ -947,7 +946,6 @@ CommitTransaction(void)
 	/* NOTIFY commit must also come before lower-level cleanup */
 	AtCommit_Notify();
 
-	CloseSequences();
 	AtEOXact_portals();
 
 	/* Here is where we really truly commit. */
@@ -1063,7 +1061,6 @@ AbortTransaction(void)
 	DeferredTriggerAbortXact();
 	lo_commit(false);			/* 'false' means it's abort */
 	AtAbort_Notify();
-	CloseSequences();
 	AtEOXact_portals();
 
 	/* Advertise the fact that we aborted in pg_clog. */
