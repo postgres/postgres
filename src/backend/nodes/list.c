@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.25 1999/07/17 20:17:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.26 1999/08/14 19:29:35 tgl Exp $
  *
  * NOTES
  *	  XXX a few of the following functions are duplicated to handle
@@ -55,6 +55,45 @@ makeList(void *elem,...)
 	va_end(args);
 
 	return retval;
+}
+
+/*
+ *	makeInteger
+ */
+Value *
+makeInteger(long i)
+{
+	Value	   *v = makeNode(Value);
+
+	v->type = T_Integer;
+	v->val.ival = i;
+	return v;
+}
+
+/*
+ *	makeFloat
+ */
+Value *
+makeFloat(double d)
+{
+	Value	   *v = makeNode(Value);
+
+	v->type = T_Float;
+	v->val.dval = d;
+	return v;
+}
+
+/*
+ *	makeString
+ */
+Value *
+makeString(char *str)
+{
+	Value	   *v = makeNode(Value);
+
+	v->type = T_String;
+	v->val.str = str;
+	return v;
 }
 
 /*
@@ -115,6 +154,9 @@ lappendi(List *list, int datum)
  *	nconc
  *
  *	Concat l2 on to the end of l1
+ *
+ * NB: l1 is destructively changed!  Use nconc(listCopy(l1), l2)
+ * if you need to make a merged list without touching the original lists.
  */
 List *
 nconc(List *l1, List *l2)
@@ -128,74 +170,11 @@ nconc(List *l1, List *l2)
 	if (l1 == l2)
 		elog(ERROR, "tryout to nconc a list to itself");
 
-	for (temp = l1; lnext(temp) != NULL; temp = lnext(temp))
+	for (temp = l1; lnext(temp) != NIL; temp = lnext(temp))
 		;
 
 	lnext(temp) = l2;
 	return l1;					/* list1 is now list1+list2  */
-}
-
-
-#ifdef NOT_USED
-List *
-nreverse(List *list)
-{
-	List	   *rlist = NIL;
-	List	   *p = NIL;
-
-	if (list == NULL)
-		return NIL;
-
-	if (length(list) == 1)
-		return list;
-
-	for (p = list; p != NULL; p = lnext(p))
-		rlist = lcons(lfirst(p), rlist);
-
-	lfirst(list) = lfirst(rlist);
-	lnext(list) = lnext(rlist);
-	return list;
-}
-
-#endif
-
-/*
- *	makeInteger
- */
-Value *
-makeInteger(long i)
-{
-	Value	   *v = makeNode(Value);
-
-	v->type = T_Integer;
-	v->val.ival = i;
-	return v;
-}
-
-/*
- *	makeFloat
- */
-Value *
-makeFloat(double d)
-{
-	Value	   *v = makeNode(Value);
-
-	v->type = T_Float;
-	v->val.dval = d;
-	return v;
-}
-
-/*
- *	makeString
- */
-Value *
-makeString(char *str)
-{
-	Value	   *v = makeNode(Value);
-
-	v->type = T_String;
-	v->val.str = str;
-	return v;
 }
 
 /*
@@ -243,7 +222,6 @@ set_nth(List *l, int n, void *elem)
 		n--;
 	}
 	lfirst(l) = elem;
-	return;
 }
 
 /*
@@ -268,6 +246,9 @@ length(List *l)
  *	freeList
  *
  *	Free the List nodes of a list
+ *  The pointed-to nodes, if any, are NOT freed.
+ *  This works for integer lists too.
+ * 
  */
 void
 freeList(List *list)
@@ -281,73 +262,24 @@ freeList(List *list)
 	}
 }
 
-#ifdef NOT_USED
-/*
- * below are for backwards compatibility
- */
-List *
-append(List *l1, List *l2)
-{
-	List	   *newlist,
-			   *newlist2,
-			   *p;
-
-	if (l1 == NIL)
-		return copyObject(l2);
-
-	newlist = copyObject(l1);
-	newlist2 = copyObject(l2);
-
-	for (p = newlist; lnext(p) != NIL; p = lnext(p))
-		;
-	lnext(p) = newlist2;
-	return newlist;
-}
-
-#endif
-
-#ifdef NOT_USED
-/*
- * below are for backwards compatibility
- */
-List *
-intAppend(List *l1, List *l2)
-{
-	List	   *newlist,
-			   *newlist2,
-			   *p;
-
-	if (l1 == NIL)
-		return listCopy(l2);
-
-	newlist = listCopy(l1);
-	newlist2 = listCopy(l2);
-
-	for (p = newlist; lnext(p) != NIL; p = lnext(p))
-		;
-	lnext(p) = newlist2;
-	return newlist;
-}
-
-#endif
-
 /*
  *		same
  *
- *		Returns t if two lists contain the same elements.
- *		 now defined in lispdep.c
+ *		Returns t if two lists contain the same elements
+ *		(but unlike equal(), they need not be in the same order)
+ *	    
  *
- * XXX only good for IntList	-ay
+ * XXX should be called samei() --- only good for IntList	-ay
  */
 bool
 same(List *l1, List *l2)
 {
-	List	   *temp = NIL;
+	List	   *temp;
 
-	if (l1 == NULL)
-		return l2 == NULL;
-	if (l2 == NULL)
-		return l1 == NULL;
+	if (l1 == NIL)
+		return l2 == NIL;
+	if (l2 == NIL)
+		return l1 == NIL;
 	if (length(l1) == length(l2))
 	{
 		foreach(temp, l1)
@@ -361,70 +293,47 @@ same(List *l1, List *l2)
 
 }
 
+/*
+ * Generate the union of two lists,
+ * ie, l1 plus all members of l2 that are not already in l1.
+ *
+ * NOTE: if there are duplicates in l1 they will still be duplicate in the
+ * result; but duplicates in l2 are discarded.
+ *
+ * The result is a fresh List, but it points to the same member nodes
+ * as were in the inputs.
+ */
 List *
 LispUnion(List *l1, List *l2)
 {
-	List	   *retval = NIL;
-	List	   *i = NIL;
-	List	   *j = NIL;
+	List	   *retval = listCopy(l1);
+	List	   *i;
 
-	if (l1 == NIL)
-		return l2;				/* XXX - should be copy of l2 */
-
-	if (l2 == NIL)
-		return l1;				/* XXX - should be copy of l1 */
-
-	foreach(i, l1)
-	{
-		foreach(j, l2)
-		{
-			if (!equal(lfirst(i), lfirst(j)))
-			{
-				retval = lappend(retval, lfirst(i));
-				break;
-			}
-		}
-	}
 	foreach(i, l2)
-		retval = lappend(retval, lfirst(i));
-
+	{
+		if (! member(lfirst(i), retval))
+			retval = lappend(retval, lfirst(i));
+	}
 	return retval;
 }
 
 List *
 LispUnioni(List *l1, List *l2)
 {
-	List	   *retval = NIL;
-	List	   *i = NIL;
-	List	   *j = NIL;
+	List	   *retval = listCopy(l1);
+	List	   *i;
 
-	if (l1 == NIL)
-		return l2;				/* XXX - should be copy of l2 */
-
-	if (l2 == NIL)
-		return l1;				/* XXX - should be copy of l1 */
-
-	foreach(i, l1)
-	{
-		foreach(j, l2)
-		{
-			if (lfirsti(i) != lfirsti(j))
-			{
-				retval = lappendi(retval, lfirsti(i));
-				break;
-			}
-		}
-	}
 	foreach(i, l2)
-		retval = lappendi(retval, lfirsti(i));
-
+	{
+		if (! intMember(lfirsti(i), retval))
+			retval = lappendi(retval, lfirsti(i));
+	}
 	return retval;
 }
 
 /*
  * member()
- * - nondestructive, returns t iff l1 is a member of the list
- *	 l2
+ *	nondestructive, returns t iff l1 is a member of the list l2
  */
 bool
 member(void *l1, List *l2)
@@ -432,8 +341,10 @@ member(void *l1, List *l2)
 	List	   *i;
 
 	foreach(i, l2)
+	{
 		if (equal((Node *) l1, (Node *) lfirst(i)))
-		return true;
+			return true;
+	}
 	return false;
 }
 
@@ -443,14 +354,18 @@ intMember(int l1, List *l2)
 	List	   *i;
 
 	foreach(i, l2)
+	{
 		if (l1 == lfirsti(i))
-		return true;
+			return true;
+	}
 	return false;
 }
 
 /*
- * lremove -
- *	  only does pointer comparisons. Removes 'elem' from the the linked list.
+ * lremove
+ *	  Removes 'elem' from the the linked list.
+ *	  This version matches 'elem' using simple pointer comparison.
+ *	  See also LispRemove.
  */
 List *
 lremove(void *elem, List *list)
@@ -465,10 +380,10 @@ lremove(void *elem, List *list)
 			break;
 		prev = l;
 	}
-	if (l != NULL)
+	if (l != NIL)
 	{
 		if (prev == NIL)
-			result = lnext(list);
+			result = lnext(l);
 		else
 			lnext(prev) = lnext(l);
 	}
@@ -477,54 +392,57 @@ lremove(void *elem, List *list)
 
 /*
  *	LispRemove
+ *	  Removes 'elem' from the the linked list.
+ *	  This version matches 'elem' using equal().
+ *	  (If there is more than one equal list member, the first is removed.)
+ *	  See also lremove.
  */
 List *
 LispRemove(void *elem, List *list)
 {
-	List	   *temp = NIL;
+	List	   *l;
 	List	   *prev = NIL;
+	List	   *result = list;
 
-	if (equal(elem, lfirst(list)))
-		return lnext(list);
-
-	temp = lnext(list);
-	prev = list;
-	while (temp != NIL)
+	foreach(l, list)
 	{
-		if (equal(elem, lfirst(temp)))
-		{
-			lnext(prev) = lnext(temp);
+		if (equal(elem, lfirst(l)))
 			break;
-		}
-		temp = lnext(temp);
-		prev = lnext(prev);
+		prev = l;
 	}
-	return list;
+	if (l != NIL)
+	{
+		if (prev == NIL)
+			result = lnext(l);
+		else
+			lnext(prev) = lnext(l);
+	}
+	return result;
 }
 
 #ifdef NOT_USED
+
 List *
 intLispRemove(int elem, List *list)
 {
-	List	   *temp = NIL;
+	List	   *l;
 	List	   *prev = NIL;
+	List	   *result = list;
 
-	if (elem == lfirsti(list))
-		return lnext(list);
-
-	temp = lnext(list);
-	prev = list;
-	while (temp != NIL)
+	foreach(l, list)
 	{
-		if (elem == lfirsti(temp))
-		{
-			lnext(prev) = lnext(temp);
+		if (elem == lfirsti(l))
 			break;
-		}
-		temp = lnext(temp);
-		prev = lnext(prev);
+		prev = l;
 	}
-	return list;
+	if (l != NIL)
+	{
+		if (prev == NIL)
+			result = lnext(l);
+		else
+			lnext(prev) = lnext(l);
+	}
+	return result;
 }
 
 #endif
@@ -533,20 +451,23 @@ intLispRemove(int elem, List *list)
  *	set_difference
  *
  *	Return l1 without the elements in l2.
+ *
+ * The result is a fresh List, but it points to the same member nodes
+ * as were in l1.
  */
 List *
 set_difference(List *l1, List *l2)
 {
-	List	   *temp1 = NIL;
 	List	   *result = NIL;
+	List	   *i;
 
 	if (l2 == NIL)
-		return l1;
+		return listCopy(l1);	/* slightly faster path for empty l2 */
 
-	foreach(temp1, l1)
+	foreach(i, l1)
 	{
-		if (!member(lfirst(temp1), l2))
-			result = lappend(result, lfirst(temp1));
+		if (! member(lfirst(i), l2))
+			result = lappend(result, lfirst(i));
 	}
 	return result;
 }
@@ -559,16 +480,16 @@ set_difference(List *l1, List *l2)
 List *
 set_differencei(List *l1, List *l2)
 {
-	List	   *temp1 = NIL;
 	List	   *result = NIL;
+	List	   *i;
 
 	if (l2 == NIL)
-		return l1;
+		return listCopy(l1);	/* slightly faster path for empty l2 */
 
-	foreach(temp1, l1)
+	foreach(i, l1)
 	{
-		if (!intMember(lfirsti(temp1), l2))
-			result = lappendi(result, lfirsti(temp1));
+		if (! intMember(lfirsti(i), l2))
+			result = lappendi(result, lfirsti(i));
 	}
 	return result;
 }
