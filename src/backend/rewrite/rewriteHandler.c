@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.71 2000/04/12 17:15:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.72 2000/04/20 00:31:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -704,8 +704,7 @@ ApplyRetrieveRule(Query *parsetree,
 				  int rt_index,
 				  int relation_level,
 				  Relation relation,
-				  bool relWasInJoinSet,
-				  int *modified)
+				  bool relWasInJoinSet)
 {
 	Query	   *rule_action = NULL;
 	Node	   *rule_qual;
@@ -714,6 +713,7 @@ ApplyRetrieveRule(Query *parsetree,
 			   *l;
 	int			nothing,
 				rt_length;
+	int			modified = false;
 	int			badsql = false;
 
 	rule_qual = rule->qual;
@@ -809,18 +809,23 @@ ApplyRetrieveRule(Query *parsetree,
 		parsetree = (Query *) apply_RIR_view((Node *) parsetree,
 											 rt_index, rte,
 											 rule_action->targetList,
-											 modified, 0);
+											 &modified, 0);
 		rule_action = (Query *) apply_RIR_view((Node *) rule_action,
 											   rt_index, rte,
 											   rule_action->targetList,
-											   modified, 0);
+											   &modified, 0);
+		/* always apply quals of relation-level rules, whether we found a
+		 * var to substitute or not.
+		 */
+		modified = true;
 	}
 	else
 	{
 		HandleRIRAttributeRule(parsetree, rtable, rule_action->targetList,
-							   rt_index, rule->attrno, modified, &badsql);
+							   rt_index, rule->attrno, &modified, &badsql);
+		/* quals will be inserted only if we found uses of the attribute */
 	}
-	if (*modified && !badsql)
+	if (modified && !badsql)
 	{
 		AddQual(parsetree, rule_action->qual);
 		AddGroupClause(parsetree, rule_action->groupClause,
@@ -894,7 +899,6 @@ fireRIRrules(Query *parsetree)
 	RewriteRule *rule;
 	RewriteRule RIRonly;
 	bool		relWasInJoinSet;
-	int			modified = false;
 	int			i;
 	List	   *l;
 
@@ -910,18 +914,15 @@ fireRIRrules(Query *parsetree)
 		rte = rt_fetch(rt_index, parsetree->rtable);
 
 		/*
-		 * If the table is not one named in the original FROM clause then
-		 * it must be referenced in the query, or we ignore it. This
-		 * prevents infinite expansion loop due to new rtable entries
-		 * inserted by expansion of a rule.
+		 * If the table is not referenced in the query, then we ignore it.
+		 * This prevents infinite expansion loop due to new rtable entries
+		 * inserted by expansion of a rule. A table is referenced if it is
+		 * part of the join set (a source table), or is the result table,
+		 * or is referenced by any Var nodes.
 		 */
-		if (!rte->inFromCl && rt_index != parsetree->resultRelation &&
+		if (!rte->inJoinSet && rt_index != parsetree->resultRelation &&
 			!rangeTableEntry_used((Node *) parsetree, rt_index, 0))
-		{
-			/* Make sure the planner ignores it too... */
-			rte->inJoinSet = false;
 			continue;
-		}
 
 		rel = heap_openr(rte->relname, AccessShareLock);
 		rules = rel->rd_rules;
@@ -989,8 +990,7 @@ fireRIRrules(Query *parsetree)
 										  rt_index,
 										  RIRonly.attrno == -1,
 										  rel,
-										  relWasInJoinSet,
-										  &modified);
+										  relWasInJoinSet);
 		}
 
 		heap_close(rel, AccessShareLock);
