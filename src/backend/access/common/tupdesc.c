@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.9 1996/11/03 10:57:24 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.10 1996/11/05 05:25:44 scrappy Exp $
  *
  * NOTES
  *    some of the executor utility code such as "ExecTypeFromTL" should be
@@ -16,14 +16,16 @@
  *-------------------------------------------------------------------------
  */
 
+#include <stdio.h>
+
 #include "postgres.h"
 
 #include "parser/catalog_utils.h"
 #include "nodes/parsenodes.h"
 #include "utils/builtins.h"
 #include "utils/fcache.h"
-#include "utils/palloc.h"
 #include "utils/tqual.h"
+#include "utils/syscache.h"
 
 #ifndef HAVE_MEMMOVE
 # include "regex/utils.h"
