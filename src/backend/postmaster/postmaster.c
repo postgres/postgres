@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.124 1999/10/08 04:28:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.125 1999/10/08 05:20:48 momjian Exp $
  *
  * NOTES
  *
@@ -1771,8 +1771,8 @@ DoBackend(Port *port)
 #endif
 
 	/*
-	 * Pass the requested debugging level along to the backend.  We
-	 * decrement by one; level one debugging in the postmaster traces
+	 * Pass the requested debugging level along to the backend.
+	 * Level one debugging in the postmaster traces
 	 * postmaster connection activity, and levels two and higher are
 	 * passed along to the backend.  This allows us to watch only the
 	 * postmaster or the postmaster and the backend.
