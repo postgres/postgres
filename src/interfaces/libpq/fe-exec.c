@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.7 1996/07/27 02:55:19 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.8 1996/07/28 06:54:15 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,9 +21,17 @@
 #include "libpq-fe.h"
 #include <signal.h>
 #include <sys/ioctl.h>
+#ifdef PORTNAME_sparc_solaris
+#include <sys/termios.h>
+#endif
 
 #ifdef TIOCGWINSZ
 struct winsize screen_size;
+#else
+struct winsize {
+  int ws_row;
+  int ws_col;
+} screen_size;
 #endif
 
 /* the tuples array in a PGresGroup  has to grow to accommodate the tuples */
