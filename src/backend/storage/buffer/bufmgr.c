@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.89 2000/10/21 15:43:27 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.90 2000/10/22 20:20:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1567,7 +1567,6 @@ recheck:
 			}
 			/* Now we can do what we came for */
 			bufHdr->flags &= ~(BM_DIRTY | BM_JUST_DIRTIED);
-			BufferDirtiedByMe[i - 1] = false;
 
 			/*
 			 * Release any refcount we may have.
@@ -1594,12 +1593,23 @@ recheck:
 		else
 		{
 			Assert(bufHdr->relId.relId != relid ||
-			(bufHdr->relId.dbId != MyDatabaseId &&
-			 bufHdr->relId.dbId != InvalidOid));
-			if (RelFileNodeEquals(rel->rd_node, 
-					BufferTagLastDirtied[i - 1].rnode))
-				BufferDirtiedByMe[i - 1] = false;
+				   (bufHdr->relId.dbId != MyDatabaseId &&
+					bufHdr->relId.dbId != InvalidOid));
 		}
+
+		/*
+		 * Also check to see if BufferDirtiedByMe info for this buffer
+		 * refers to the target relation, and clear it if so.  This is
+		 * independent of whether the current contents of the buffer
+		 * belong to the target relation!
+		 *
+		 * NOTE: we have no way to clear BufferDirtiedByMe info in other
+		 * backends, but hopefully there are none with that bit set for
+		 * this rel, since we hold exclusive lock on this rel.
+		 */
+		if (RelFileNodeEquals(rel->rd_node, 
+							  BufferTagLastDirtied[i - 1].rnode))
+			BufferDirtiedByMe[i - 1] = false;
 	}
 
 	SpinRelease(BufMgrLock);
@@ -1652,7 +1662,6 @@ recheck:
 			}
 			/* Now we can do what we came for */
 			bufHdr->flags &= ~(BM_DIRTY | BM_JUST_DIRTIED);
-			BufferDirtiedByMe[i - 1] = false;
 
 			/*
 			 * The thing should be free, if caller has checked that no
@@ -1667,9 +1676,19 @@ recheck:
 		else
 		{
 			Assert(bufHdr->relId.dbId != dbid);
-			if (BufferTagLastDirtied[i - 1].rnode.tblNode == dbid)
-				BufferDirtiedByMe[i - 1] = false;
 		}
+
+		/*
+		 * Also check to see if BufferDirtiedByMe info for this buffer
+		 * refers to the target database, and clear it if so.  This is
+		 * independent of whether the current contents of the buffer
+		 * belong to the target database!
+		 *
+		 * (Actually, this is probably unnecessary, since I shouldn't have
+		 * ever dirtied pages of the target database, but...)
+		 */
+		if (BufferTagLastDirtied[i - 1].rnode.tblNode == dbid)
+			BufferDirtiedByMe[i - 1] = false;
 	}
 	SpinRelease(BufMgrLock);
 }
