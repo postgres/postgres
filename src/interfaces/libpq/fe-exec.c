@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.18 1996/09/16 05:50:46 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.19 1996/11/20 22:35:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -363,7 +363,7 @@ PGresult*
 PQexec(PGconn* conn, const char* query)
 {
   PGresult *result;
-  int id, clear;
+  int id, clear, error;
   char buffer[MAX_MESSAGE_LEN];
   char cmdStatus[MAX_MESSAGE_LEN];
   char pname[MAX_MESSAGE_LEN]; /* portal name */
@@ -459,6 +459,7 @@ PQexec(PGconn* conn, const char* query)
 	// until an 'I' is received.
 	*/
 	clear = 0;
+	error = 0;
 
 	pqPuts("Q ",pfout,pfdebug); /* send an empty query */
 #ifdef PQ_NOTIFY_PATCH
@@ -472,8 +473,19 @@ PQexec(PGconn* conn, const char* query)
 	  {
 	    if (pqGets(buffer,ERROR_MSG_LENGTH,pfin,pfdebug) == 1)
 	      clear = 1;
+	    /*
+	    // Rules can create error messages while we are waiting
+	    // for the 'I'.
+	    */
+	    if (buffer[0] == 'E') {
+	        strcpy(conn->errorMessage, &buffer[1]);
+		error++;
+	    }
 	    clear = (buffer[0] == 'I');
 	  }
+	if (error) {
+	    return (PGresult*)NULL;
+	}
 	result = makeEmptyPGresult(conn,PGRES_COMMAND_OK);
 	strncpy(result->cmdStatus,cmdStatus, CMDSTATUS_LEN-1);
 	return result;
