@@ -9,7 +9,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Connection.java,v 1.27.2.1 2003/12/18 03:29:12 davec Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Connection.java,v 1.27.2.2 2004/02/10 01:58:48 jurka Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -349,9 +349,13 @@ public abstract class AbstractJdbc1Connection implements BaseConnection
 							md5Salt[1] = (byte)pgStream.ReceiveChar();
 							md5Salt[2] = (byte)pgStream.ReceiveChar();
 							md5Salt[3] = (byte)pgStream.ReceiveChar();
-							salt = new String(md5Salt, 0, 4);
-							if (Driver.logDebug)
-								Driver.debug("MD5 salt=" + salt);
+							if (Driver.logDebug) {
+								String md5SaltString = "";
+								for (int i=0; i<md5Salt.length; i++) {
+									md5SaltString += " " + md5Salt[i];
+								}
+								Driver.debug("MD5 salt=" + md5SaltString);
+							}
 						}
 
 						// now send the auth packet
@@ -631,9 +635,13 @@ public abstract class AbstractJdbc1Connection implements BaseConnection
 							md5Salt[1] = (byte)pgStream.ReceiveChar();
 							md5Salt[2] = (byte)pgStream.ReceiveChar();
 							md5Salt[3] = (byte)pgStream.ReceiveChar();
-							salt = new String(md5Salt, 0, 4);
-							if (Driver.logDebug)
-								Driver.debug("MD5 salt=" + salt);
+							if (Driver.logDebug) {
+								String md5SaltString = "";
+								for (int i=0; i<md5Salt.length; i++) {
+									md5SaltString += " " + md5Salt[i];
+								}
+								Driver.debug("MD5 salt=" + md5SaltString);
+							}
 						}
 
 						// now send the auth packet
