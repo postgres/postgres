@@ -153,4 +153,26 @@ public class ServerPreparedStmtTest extends TestCase
 		pstmt.close();
 	}
 
+	public void testSPSToggle() throws Exception
+	{
+		// Verify we can toggle UseServerPrepare safely before a query is executed.
+		PreparedStatement pstmt = con.prepareStatement("SELECT * FROM testsps WHERE id = 2");
+        ((PGStatement)pstmt).setUseServerPrepare(true);
+        ((PGStatement)pstmt).setUseServerPrepare(false);
+	}
+
+	public void testBytea() throws Exception
+	{
+		// Verify we can use setBytes() with a server-prepared update.
+		try {
+			TestUtil.createTable(con, "testsps_bytea", "data bytea");
+			
+			PreparedStatement pstmt = con.prepareStatement("INSERT INTO testsps_bytea(data) VALUES (?)");
+			((PGStatement)pstmt).setUseServerPrepare(true);
+			pstmt.setBytes(1, new byte[100]);
+			pstmt.executeUpdate();
+		} finally {
+			TestUtil.dropTable(con, "testsps_bytea");
+		}
+	}
 }

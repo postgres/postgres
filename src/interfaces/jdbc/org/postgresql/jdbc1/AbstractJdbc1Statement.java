@@ -25,7 +25,7 @@ import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.Vector;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.31 2003/08/11 21:12:00 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.32 2003/08/24 22:10:09 barry Exp $
  * This class defines methods of the jdbc1 specification.  This class is
  * extended by org.postgresql.jdbc2.AbstractJdbc2Statement which adds the jdbc2
  * methods.  The real Statement class (for jdbc1) is org.postgresql.jdbc1.Jdbc1Statement
@@ -87,7 +87,7 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 	// returnTypeSet is true when a proper call to registerOutParameter has been made
 	private boolean returnTypeSet;
 	protected Object callResult;
-
+	protected static int maxfieldSize = 0;
 
 	public abstract BaseResultSet createResultSet(Field[] fields, Vector tuples, String status, int updateCount, long insertOID, boolean binaryCursor) throws SQLException;
 
@@ -640,19 +640,19 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 	 */
 	public int getMaxFieldSize() throws SQLException
 	{
-		return 8192;		// We cannot change this
+		return maxfieldSize;
 	}
 
 	/*
-	 * Sets the maxFieldSize - NOT! - We throw an SQLException just
-	 * to inform them to stop doing this.
+	 * Sets the maxFieldSize 
 	 *
 	 * @param max the new max column size limit; zero means unlimited
 	 * @exception SQLException if a database access error occurs
 	 */
 	public void setMaxFieldSize(int max) throws SQLException
 	{
-		throw new PSQLException("postgresql.stat.maxfieldsize");
+		if (max < 0) throw new PSQLException("postgresql.input.field.gt0");
+		maxfieldSize = max;
 	}
 
 	/*
@@ -721,6 +721,15 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 		result = null;
 	}
 
+ 	/**
+ 	 * This finalizer ensures that statements that have allocated server-side
+ 	 * resources free them when they become unreferenced.
+ 	 */
+ 	protected void finalize() {
+ 		try { close(); }
+ 		catch (SQLException e) {}
+ 	}
+ 
 	/*
 	 * Filter the SQL string of Java SQL Escape clauses.
 	 *
@@ -1088,7 +1097,7 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 			}
 			else
 			{
-				setString(parameterIndex, PGbytea.toPGString(x), PG_TEXT);
+				setString(parameterIndex, PGbytea.toPGString(x), PG_BYTEA);
 			}
 		}
 		else
@@ -2055,7 +2064,7 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
         if (connection.haveMinimumServerVersion("7.3")) {
 			//If turning server prepared statements off deallocate statement
 			//and reset statement name
-			if (m_useServerPrepare != flag && !flag)
+			if (m_useServerPrepare != flag && !flag && m_statementName != null)
 				connection.execSQL("DEALLOCATE " + m_statementName);
 			m_statementName = null;
 			m_useServerPrepare = flag;

@@ -6,7 +6,7 @@
 
   This file now requires Ant 1.4.1.  2002-04-18
 
-  $Header: /cvsroot/pgsql/src/interfaces/jdbc/Attic/build.xml,v 1.35 2003/08/11 23:42:04 barry Exp $
+  $Header: /cvsroot/pgsql/src/interfaces/jdbc/Attic/build.xml,v 1.36 2003/08/24 22:10:09 barry Exp $
 
 -->
 
@@ -108,19 +108,45 @@
   </target>
 
 
-  <!-- This is the core of the driver.  It is common for all three versions. -->
   <target name="compile" depends="prepare,check_versions,driver">
-    <javac srcdir="${srcdir}" destdir="${builddir}" debug="${debug}">
-      <include name="${package}/**" />
 
-      <exclude name="${package}/jdbc1/**" unless="jdbc1"/>
-      <exclude name="${package}/jdbc2/**" unless="jdbc2"/>
-      <exclude name="${package}/jdbc3/**" unless="jdbc3"/>
+    <available classname="org.postgresql.Driver" property="old.driver.present" />
+    <fail message="Old driver was detected on classpath or in jre/lib/ext, please remove and try again." if="old.driver.present" />
 
-      <exclude name="${package}/jdbc2/optional/**" unless="jdbc2" />
-      <exclude name="${package}/jdbc2/optional/**" unless="datasource" />
+    <javac classpath="{$srcdir}" srcdir="${srcdir}" destdir="${builddir}" debug="${debug}">
+      <!-- This is the core of the driver.  It is common for all three versions. -->
+       <include name="${package}/*.java" />
+       <include name="${package}/core/**" />
+       <include name="${package}/fastpath/**" />
+       <include name="${package}/geometric/**" />
+       <include name="${package}/largeobject/**" />
+       <include name="${package}/util/**" />
 
-      <exclude name="${package}/test/**"/>
+       <!--      
+       Each jdbcN subpackage is used only if the driver supports *at least* that
+       revision of JDBC. That is, a JDBC1 build uses only jdbc1, a JDBC2 build
+       uses both jdbc1 and jdbc2, etc.
+  
+       Within those subpackages, classes beginning with "JdbcN" are assumed to be
+       the concrete implementations for JDBC version N and are built only if the
+       driver supports *exactly* that version. For example, jdbc1/Jdbc1Statement.java
+       is built only if the driver build is a JDBC1 build.
+       -->
+ 
+       <!-- jdbc1 subpackage -->
+       <include name="${package}/jdbc1/**"/>
+       <exclude name="${package}/jdbc1/Jdbc1*.java" unless="jdbc1"/>
+ 
+       <!-- jdbc2 subpackage -->
+       <include name="${package}/jdbc2/**" if="jdbc2"/>
+       <include name="${package}/jdbc2/**" if="jdbc3"/>
+       <exclude name="${package}/jdbc2/Jdbc2*.java" unless="jdbc2"/>
+       <exclude name="${package}/jdbc2/optional/**" unless="datasource"/>
+ 
+       <!-- jdbc3 subpackage -->
+       <include name="${package}/jdbc3/*.java" if="jdbc3"/>
+       <exclude name="${package}/jdbc3/Jdbc3*.java" unless="jdbc3"/>
+
     </javac>
   </target>
 

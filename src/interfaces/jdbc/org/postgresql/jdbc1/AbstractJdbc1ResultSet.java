@@ -9,7 +9,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1ResultSet.java,v 1.14 2003/08/06 05:53:13 barry Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1ResultSet.java,v 1.15 2003/08/24 22:10:09 barry Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -176,7 +176,7 @@ public abstract class AbstractJdbc1ResultSet implements BaseResultSet
 			return null;
 
 		Encoding encoding = connection.getEncoding();
-		return encoding.decode(this_row[columnIndex - 1]);
+		return trimString(columnIndex, encoding.decode(this_row[columnIndex-1]));
 	}
 
 	public boolean getBoolean(int columnIndex) throws SQLException
@@ -303,11 +303,11 @@ public abstract class AbstractJdbc1ResultSet implements BaseResultSet
 				//Version 7.2 supports the bytea datatype for byte arrays
 				if (fields[columnIndex - 1].getPGType().equals("bytea"))
 				{
-					return PGbytea.toBytes(this_row[columnIndex - 1]);
+					return trimBytes(columnIndex, PGbytea.toBytes(this_row[columnIndex - 1]));
 				}
 				else
 				{
-					return this_row[columnIndex - 1];
+					return trimBytes(columnIndex, this_row[columnIndex - 1]);
 				}
 			}
 			else
@@ -320,11 +320,11 @@ public abstract class AbstractJdbc1ResultSet implements BaseResultSet
 					LargeObject lob = lom.open(getInt(columnIndex));
 					byte buf[] = lob.read(lob.size());
 					lob.close();
-					return buf;
+					return trimBytes(columnIndex, buf);
 				}
 				else
 				{
-					return this_row[columnIndex - 1];
+					return trimBytes(columnIndex, this_row[columnIndex - 1]);
 				}
 			}
 		}
@@ -1143,7 +1143,54 @@ public abstract class AbstractJdbc1ResultSet implements BaseResultSet
 			}
 		}
 	}
+	
+	private boolean isColumnTrimmable(int columnIndex) throws SQLException
+	{
+		switch (fields[columnIndex-1].getSQLType())
+		{
+			case Types.CHAR:
+			case Types.VARCHAR:
+		  	case Types.LONGVARCHAR:
+		   	case Types.BINARY:
+		   	case Types.VARBINARY:
+		   	case Types.LONGVARBINARY:
+		   		return true;
+		}
+	   	return false;
+	}
 
+	private byte[] trimBytes(int p_columnIndex, byte[] p_bytes) throws SQLException
+	{
+		int l_maxSize = statement.getMaxFieldSize();
+		//we need to trim if maxsize is set and the length is greater than maxsize and the
+		//type of this column is a candidate for trimming
+		if (l_maxSize > 0 && p_bytes.length > l_maxSize && isColumnTrimmable(p_columnIndex))
+		{
+			byte[] l_bytes = new byte[l_maxSize];
+			System.arraycopy (p_bytes, 0, l_bytes, 0, l_maxSize);
+			return l_bytes;
+		}
+		else
+		{
+			return p_bytes;
+		}
+	}
+
+	private String trimString(int p_columnIndex, String p_string) throws SQLException
+	{
+		int l_maxSize = statement.getMaxFieldSize();
+		//we need to trim if maxsize is set and the length is greater than maxsize and the
+		//type of this column is a candidate for trimming
+		if (l_maxSize > 0 && p_string.length() > l_maxSize && isColumnTrimmable(p_columnIndex))
+		{
+			return p_string.substring(0,l_maxSize);
+		} 
+		else 
+		{
+			return p_string;
+		}
+	}
+	
 	public SimpleDateFormat getTimestampTZFormat() {
 		if (m_tstzFormat == null) {
 			m_tstzFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss z");
