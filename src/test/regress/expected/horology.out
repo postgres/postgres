@@ -442,16 +442,16 @@ QUERY: SELECT '' AS ten, f1 AS datetime, date( f1) AS date
   ORDER BY date;
 ten|datetime                       |      date
 ---+-------------------------------+----------
-   |Wed Feb 28 17:32:01.00 1996 PST|02-29-1996
-   |Thu Feb 29 17:32:01.00 1996 PST|03-01-1996
-   |Fri Mar 01 17:32:01.00 1996 PST|03-02-1996
-   |Mon Dec 30 17:32:01.00 1996 PST|12-31-1996
-   |Tue Dec 31 17:32:01.00 1996 PST|01-01-1997
-   |Fri Dec 31 17:32:01.00 1999 PST|01-01-2000
-   |epoch                          |01-01-2000
-   |Sat Jan 01 17:32:01.00 2000 PST|01-02-2000
-   |Sun Dec 31 17:32:01.00 2000 PST|01-01-2001
-   |Mon Jan 01 17:32:01.00 2001 PST|01-02-2001
+   |epoch                          |01-01-1970
+   |Wed Feb 28 17:32:01.00 1996 PST|02-28-1996
+   |Thu Feb 29 17:32:01.00 1996 PST|02-29-1996
+   |Fri Mar 01 17:32:01.00 1996 PST|03-01-1996
+   |Mon Dec 30 17:32:01.00 1996 PST|12-30-1996
+   |Tue Dec 31 17:32:01.00 1996 PST|12-31-1996
+   |Fri Dec 31 17:32:01.00 1999 PST|12-31-1999
+   |Sat Jan 01 17:32:01.00 2000 PST|01-01-2000
+   |Sun Dec 31 17:32:01.00 2000 PST|12-31-2000
+   |Mon Jan 01 17:32:01.00 2001 PST|01-01-2001
 (10 rows)
 
 QUERY: SELECT '' AS ten, f1 AS datetime, abstime( f1) AS abstime
