@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/prepare.sgml,v 1.9 2003/12/01 22:07:58 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/prepare.sgml,v 1.10 2003/12/14 00:55:46 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -52,7 +52,7 @@ PREPARE <replaceable class="PARAMETER">plan_name</replaceable> [ (<replaceable c
   </para>
 
   <para>
-   Prepared statements are only for the duration of the current
+   Prepared statements only last for the duration of the current
    database session. When the session ends, the prepared statement is
    forgotten, so it must be recreated before being used again. This
    also means that a single prepared statement cannot be used by
@@ -115,12 +115,12 @@ PREPARE <replaceable class="PARAMETER">plan_name</replaceable> [ (<replaceable c
   <title>Notes</title>
 
   <para>
-   In some situations, the query plan produced by for a prepared
-   statement may be inferior to the plan produced if the statement
-   were submitted and executed normally. This is because when the
-   statement is planned and the planner attempts to determine the
-   optimal query plan, the actual values of any parameters specified
-   in the statement are
+   In some situations, the query plan produced for a prepared
+   statement will be inferior to the query plan that would have been
+   chosen if the statement had been submitted and executed
+   normally. This is because when the statement is planned and the
+   planner attempts to determine the optimal query plan, the actual
+   values of any parameters specified in the statement are
    unavailable. <productname>PostgreSQL</productname> collects
    statistics on the distribution of data in the table, and can use
    constant values in a statement to make guesses about the likely
