@@ -225,10 +225,12 @@ ECPGnoticeProcessor(void *arg, const char *message)
 	sqlca.sqlwarn[0]='W';
 }
 
+/* this contains some quick hacks, needs to be cleaned up, but it works */
 bool
-ECPGconnect(int lineno, const char *dbname, const char *user, const char *passwd, const char *connection_name, int autocommit)
+ECPGconnect(int lineno, const char *name, const char *user, const char *passwd, const char *connection_name, int autocommit)
 {
 	struct connection *this;
+	char *dbname = strdup(name), *host = NULL, *tmp, *port = NULL, *realname = NULL, *options = NULL;
 
 	init_sqlca();
 
@@ -238,11 +240,126 @@ ECPGconnect(int lineno, const char *dbname, const char *user, const char *passwd
 	if (dbname == NULL && connection_name == NULL)
 		connection_name = "DEFAULT";
 		
+	/* get the detail information out of dbname */
+	if (strchr(dbname, '@') != NULL)
+        {
+        	/* old style: dbname[@server][:port] */
+	        tmp = strrchr(dbname, ':');
+	        if (tmp != NULL)                /* port number given */
+	        {
+	                port = strdup(tmp + 1);
+	                *tmp = '\0';
+	        }
+
+	        tmp = strrchr(dbname, '@');
+                if (tmp != NULL)                /* host name given */
+                {
+	                host = strdup(tmp + 1);
+	                *tmp = '\0';
+		}
+		realname = strdup(dbname);
+	}
+	else if (strncmp(dbname, "tcp:", 4) == 0 || strncmp(dbname, "unix:", 5) == 0)
+	{
+		int offset = 0;
+		
+		/*
+		 * only allow protocols tcp and unix
+		 */
+		if (strncmp(dbname, "tcp:", 4) == 0)
+		        offset = 4;
+		else if (strncmp(dbname, "unix:", 5) == 0)
+		        offset = 5;
+               		
+               	if (strncmp(dbname + offset, "postgresql://", strlen("postgresql://")) == 0)
+               	{
+               		/*
+			 * new style:
+                         * <tcp|unix>:postgresql://server[:port|:/unixsocket/path:][/dbname][?options] 
+  		         */
+                        offset += strlen("postgresql://");
+                        
+                        tmp = strrchr(dbname + offset, '?'); 
+                        if (tmp != NULL)	/* options given */
+                        {
+                        	options = strdup(tmp + 1);
+                                *tmp = '\0';
+                        }
+                        
+                        tmp = strrchr(dbname + offset, '/');
+                        if (tmp != NULL)        /* database name given */
+                        {
+                        	realname = strdup(tmp + 1);
+                                *tmp = '\0';
+                        }
+                        
+                        tmp = strrchr(dbname + offset, ':');
+                        if (tmp != NULL)        /* port number or Unix socket path given */
+                        {
+                        	char *tmp2;
+                        	
+                        	*tmp = '\0';
+				if ((tmp2 = strchr(tmp + 1, ':')) != NULL)
+				{
+					*tmp2 = '\0';
+					host = strdup(tmp + 1);
+                        		if (strncmp(dbname, "unix:", 5) != 0)
+                        		{
+						ECPGlog("connect: socketname %s given for TCP connection in line %d\n", host, lineno);
+						ECPGraise(lineno, ECPG_CONNECT, realname ? realname : "<DEFAULT>");
+						if (host)
+							free(host);
+						if (port)
+							free(port);
+						if (options)
+							free(options);
+						if (realname)
+							free(realname);
+						if (dbname)
+							free(dbname);
+						return false;
+                        		}
+                        	}
+                        	else
+                        	{
+                        		port = strdup(tmp + 1);   
+                        	}
+                        }
+                        
+                        if (strncmp(dbname, "unix:", 5) == 0)
+                        {
+                        	if (strcmp(dbname + offset, "localhost") != 0 && strcmp(dbname + offset, "127.0.0.1") != 0)
+	                        {
+	                        	ECPGlog("connect: non-localhost access via sockets in line %d\n", lineno);
+					ECPGraise(lineno, ECPG_CONNECT, realname ? realname : "<DEFAULT>");
+					if (host)
+						free(host);
+					if (port)
+						free(port);
+					if (options)
+						free(options);
+					if (realname)
+						free(realname);
+					if(dbname)
+						free(dbname);
+					return false;
+                	        }
+                        }
+                        else
+                        {
+                        	host = strdup(dbname + offset);
+                        }
+                        	
+               	}
+	}
+	else
+		realname = strdup(dbname);
+		
 	/* add connection to our list */
 	if (connection_name != NULL)
 		this->name = ecpg_strdup(connection_name, lineno);
 	else
-		this->name = ecpg_strdup(dbname, lineno);
+		this->name = ecpg_strdup(realname, lineno);
 		
 	this->cache_head = NULL;
 
@@ -253,15 +370,37 @@ ECPGconnect(int lineno, const char *dbname, const char *user, const char *passwd
 
 	actual_connection = all_connections = this;
 
-	ECPGlog("ECPGconnect: opening database %s %s%s\n", dbname ? dbname : "<DEFAULT>", user ? "for user " : "", user ? user : "");
+	ECPGlog("ECPGconnect: opening database %s on %s port %s %s%s%s%s\n",
+			realname ? realname : "<DEFAULT>", 
+			host ? host : "<DEFAULT>", 
+			port ? port : "<DEFAULT>", 
+			options ? "with options " : "", options ? options : "",
+			user ? "for user " : "", user ? user : "");
 
-	this->connection = PQsetdbLogin(NULL, NULL, NULL, NULL, dbname, user, passwd);
+	this->connection = PQsetdbLogin(host, port, options, NULL, realname, user, passwd);
 
+	if (host)
+		free(host);
+	if (port)
+		free(port);
+	if (options)
+		free(options);
+	if (realname)
+		free(realname);
+	if (dbname)
+		free(dbname);
+		
 	if (PQstatus(this->connection) == CONNECTION_BAD)
 	{
 		ecpg_finish(this);
-		ECPGlog("connect: could not open database %s %s%s in line %d\n", dbname ? dbname : "<DEFAULT>", user ? "for user " : "", user ? user : "", lineno);
-		ECPGraise(lineno, ECPG_CONNECT, dbname ? dbname : "<DEFAULT>");
+		ECPGlog("connect: could not open database %s on %s port %s %s%s%s%s in line %d\n",
+			realname ? realname : "<DEFAULT>", 
+			host ? host : "<DEFAULT>", 
+			port ? port : "<DEFAULT>", 
+			options ? "with options " : "", options ? options : "",
+			user ? "for user " : "", user ? user : "",
+			lineno);
+		ECPGraise(lineno, ECPG_CONNECT, realname ? realname : "<DEFAULT>");
 		return false;
 	}
 
