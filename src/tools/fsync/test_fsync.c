@@ -29,6 +29,8 @@
 #endif
 #endif
 
+#define WAL_FILE_SIZE 	(16 * 1024 * 1024)
+
 void		die(char *str);
 void		print_elapse(struct timeval start_t, struct timeval elapse_t);
 
@@ -40,7 +42,7 @@ main(int argc, char *argv[])
 	int			tmpfile,
 				i,
 				loops=1000;
-	char	   *strout = (char *) malloc(65536);
+	char	   *strout = (char *) malloc(WAL_FILE_SIZE);
 	char	   *filename = FSYNC_FILENAME;
 
 	if (argc > 2 && strcmp(argv[1],"-f") == 0)
@@ -53,12 +55,12 @@ main(int argc, char *argv[])
 	if (argc > 1)
 			loops = atoi(argv[1]);
 		
-	for (i = 0; i < 65536; i++)
+	for (i = 0; i < WAL_FILE_SIZE; i++)
 		strout[i] = 'a';
 
 	if ((tmpfile = open(FSYNC_FILENAME, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR)) == -1)
 		die("can't open /var/tmp/test_fsync.out");
-	write(tmpfile, strout, 65536);
+	write(tmpfile, strout, WAL_FILE_SIZE);
 	fsync(tmpfile);				/* fsync so later fsync's don't have to do
 								 * it */
 	close(tmpfile);
