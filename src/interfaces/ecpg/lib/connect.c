@@ -118,7 +118,7 @@ ECPGnoticeProcessor_raise(int code, const char *message)
 	sqlca.sqlerrm.sqlerrmc[sizeof(sqlca.sqlerrm.sqlerrmc)-1]=0;
 	sqlca.sqlerrm.sqlerrml = strlen(sqlca.sqlerrm.sqlerrmc);
 	
-	// remove trailing newline
+	/* remove trailing newline */
 	if (sqlca.sqlerrm.sqlerrml 
 		&& sqlca.sqlerrm.sqlerrmc[sqlca.sqlerrm.sqlerrml-1]=='\n')
 	{
@@ -201,7 +201,7 @@ ECPGnoticeProcessor(void *arg, const char *message)
 		return;
 	
 	/* NOTICE:  QUERY PLAN: */
-	if (!strncmp(message,"QUERY PLAN:",11)) // do we really see these?
+	if (!strncmp(message,"QUERY PLAN:",11)) /* do we really see these? */
 		return;
 	
 	/* NOTICE:  DROP TABLE implicitly drops referential integrity trigger from table "*" */
