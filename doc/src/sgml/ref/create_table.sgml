@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.55 2002/05/18 15:44:47 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.56 2002/09/02 06:20:53 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -247,9 +247,7 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
     <term><literal>NOT NULL</></term>
     <listitem>
      <para>
-      The column is not allowed to contain NULL values.  This is
-      equivalent to the column constraint <literal>CHECK (<replaceable
-      class="PARAMETER">column</replaceable> NOT NULL)</literal>.
+      The column is not allowed to contain NULL values.
      </para>
     </listitem>
    </varlistentry>
