@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.91 2002/05/21 22:05:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.92 2002/05/25 16:30:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -504,6 +504,20 @@ AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
 
 	newtuple = heap_modifytuple(tuple, rel, repl_val, repl_null, repl_repl);
 	simple_heap_update(rel, &tuple->t_self, newtuple);
+
+	/*
+	 * Update indexes
+	 */
+	if (RelationGetForm(rel)->relhasindex)
+	{
+		Relation	idescs[Num_pg_database_indices];
+
+		CatalogOpenIndices(Num_pg_database_indices,
+						   Name_pg_database_indices, idescs);
+		CatalogIndexInsert(idescs, Num_pg_database_indices, rel,
+						   newtuple);
+		CatalogCloseIndices(Num_pg_database_indices, idescs);
+	}
 
 	heap_endscan(scan);
 	heap_close(rel, RowExclusiveLock);
