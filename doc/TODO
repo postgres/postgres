@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Sep  3 19:38:56 EDT 2002
+Last updated:		Wed Sep  4 17:05:21 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -241,7 +241,7 @@ Commands
 	o -Remove SET KSQO option now that OR processing is improved (Bruce)
 	o Add SET PERFORMANCE_TIPS option to suggest INDEX, VACUUM, VACUUM
 	  ANALYZE, and CLUSTER
-	o Add SHOW command to see locale
+	o -Add SHOW command to see locale
 	o -Allow SHOW to output as a query result, like EXPLAIN
 	o -Abort all SET changes made in an aborted transaction
 	o Add SET SCHEMA
