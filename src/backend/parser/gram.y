@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.304 2002/04/18 20:01:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.305 2002/04/18 21:16:16 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -330,7 +330,7 @@ static bool set_name_needs_quotes(const char *name);
 		MATCH, MINUTE_P, MONTH_P, NAMES,
 		NATIONAL, NATURAL, NCHAR, NEXT, NO, NOT, NULLIF, NULL_P, NUMERIC,
 		OF, OLD, ON, ONLY, OPTION, OR, ORDER, OUTER_P, OVERLAPS,
-		PARTIAL, POSITION, PRECISION, PRIMARY, PRIOR, PRIVILEGES, PROCEDURE, PUBLIC,
+		PARTIAL, POSITION, PRECISION, PRIMARY, PRIOR, PRIVILEGES, PROCEDURE,
 		READ, REFERENCES, RELATIVE, REVOKE, RIGHT, ROLLBACK,
 		SCHEMA, SCROLL, SECOND_P, SELECT, SESSION, SESSION_USER, SET, SOME, SUBSTRING,
 		TABLE, TEMPORARY, THEN, TIME, TIMESTAMP,
@@ -2532,25 +2532,26 @@ grantee_list: grantee					{ $$ = makeList1($1); }
 		| grantee_list ',' grantee		{ $$ = lappend($1, $3); }
 		;
 
-grantee:  PUBLIC
+grantee:  ColId
 				{
 					PrivGrantee *n = makeNode(PrivGrantee);
-					n->username = NULL;
+					/* This hack lets us avoid reserving PUBLIC as a keyword */
+					if (strcmp($1, "public") == 0)
+						n->username = NULL;
+					else
+						n->username = $1;
 					n->groupname = NULL;
 					$$ = (Node *)n;
 				}
 		| GROUP ColId
 				{
 					PrivGrantee *n = makeNode(PrivGrantee);
+					/* Treat GROUP PUBLIC as a synonym for PUBLIC */
+					if (strcmp($2, "public") == 0)
+						n->groupname = NULL;
+					else
+						n->groupname = $2;
 					n->username = NULL;
-					n->groupname = $2;
-					$$ = (Node *)n;
-				}
-		| ColId
-				{
-					PrivGrantee *n = makeNode(PrivGrantee);
-					n->username = $1;
-					n->groupname = NULL;
 					$$ = (Node *)n;
 				}
 		;
@@ -6112,7 +6113,7 @@ unreserved_keyword:
 		| STATISTICS					{ $$ = "statistics"; }
 		| STDIN							{ $$ = "stdin"; }
 		| STDOUT						{ $$ = "stdout"; }
-        | STORAGE                       { $$ = "storage"; }
+		| STORAGE						{ $$ = "storage"; }
 		| SYSID							{ $$ = "sysid"; }
 		| TEMP							{ $$ = "temp"; }
 		| TEMPLATE						{ $$ = "template"; }
@@ -6205,7 +6206,6 @@ func_name_keyword:
 		| NOTNULL						{ $$ = "notnull"; }
 		| OUTER_P						{ $$ = "outer"; }
 		| OVERLAPS						{ $$ = "overlaps"; }
-		| PUBLIC						{ $$ = "public"; }
 		| RIGHT							{ $$ = "right"; }
 		| VERBOSE						{ $$ = "verbose"; }
 		;

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.95 2002/04/04 04:25:45 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.96 2002/04/18 21:16:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -153,7 +153,7 @@ write_group_file(Relation urel, Relation grel)
 		datum = heap_getattr(tuple, Anum_pg_group_groname, dsc, &isnull);
 		if (isnull)
 			continue;			/* ignore NULL groupnames */
-		groname = (char *) DatumGetName(datum);
+		groname = NameStr(*DatumGetName(datum));
 
 		grolist_datum = heap_getattr(tuple, Anum_pg_group_grolist, dsc, &isnull);
 		/* Ignore NULL group lists */
@@ -293,7 +293,7 @@ write_user_file(Relation urel)
 		datum = heap_getattr(tuple, Anum_pg_shadow_usename, dsc, &isnull);
 		if (isnull)
 			continue;			/* ignore NULL usernames */
-		usename = (char *) DatumGetName(datum);
+		usename = NameStr(*DatumGetName(datum));
 
 		datum = heap_getattr(tuple, Anum_pg_shadow_passwd, dsc, &isnull);
 
@@ -498,6 +498,10 @@ CreateUser(CreateUserStmt *stmt)
 	if (!superuser())
 		elog(ERROR, "CREATE USER: permission denied");
 
+	if (strcmp(stmt->user, "public") == 0)
+		elog(ERROR, "CREATE USER: user name \"%s\" is reserved",
+			 stmt->user);
+
 	/*
 	 * Scan the pg_shadow relation to be certain the user or id doesn't
 	 * already exist.  Note we secure exclusive lock, because we also need
@@ -518,7 +522,7 @@ CreateUser(CreateUserStmt *stmt)
 		datum = heap_getattr(tuple, Anum_pg_shadow_usename,
 							 pg_shadow_dsc, &null);
 		Assert(!null);
-		user_exists = (strcmp((char *) DatumGetName(datum), stmt->user) == 0);
+		user_exists = (strcmp(NameStr(*DatumGetName(datum)), stmt->user) == 0);
 
 		datum = heap_getattr(tuple, Anum_pg_shadow_usesysid,
 							 pg_shadow_dsc, &null);
@@ -1027,7 +1031,7 @@ DropUser(DropUserStmt *stmt)
 			datum = heap_getattr(tmp_tuple, Anum_pg_database_datname,
 								 pg_dsc, &null);
 			Assert(!null);
-			dbname = (char *) DatumGetName(datum);
+			dbname = NameStr(*DatumGetName(datum));
 			elog(ERROR, "DROP USER: user \"%s\" owns database \"%s\", cannot be removed%s",
 				 user, dbname,
 				 (length(stmt->users) > 1) ? " (no users removed)" : "");
@@ -1186,6 +1190,10 @@ CreateGroup(CreateGroupStmt *stmt)
 	if (!superuser())
 		elog(ERROR, "CREATE GROUP: permission denied");
 
+	if (strcmp(stmt->name, "public") == 0)
+		elog(ERROR, "CREATE GROUP: group name \"%s\" is reserved",
+			 stmt->name);
+
 	pg_group_rel = heap_openr(GroupRelationName, ExclusiveLock);
 	pg_group_dsc = RelationGetDescr(pg_group_rel);
 
@@ -1200,7 +1208,7 @@ CreateGroup(CreateGroupStmt *stmt)
 		datum = heap_getattr(tuple, Anum_pg_group_groname,
 							 pg_group_dsc, &null);
 		Assert(!null);
-		group_exists = (strcmp((char *) DatumGetName(datum), stmt->name) == 0);
+		group_exists = (strcmp(NameStr(*DatumGetName(datum)), stmt->name) == 0);
 
 		datum = heap_getattr(tuple, Anum_pg_group_grosysid,
 							 pg_group_dsc, &null);
@@ -1597,7 +1605,7 @@ DropGroup(DropGroupStmt *stmt)
 
 		datum = heap_getattr(tuple, Anum_pg_group_groname,
 							 pg_group_dsc, &null);
-		if (!null && strcmp((char *) DatumGetName(datum), stmt->name) == 0)
+		if (!null && strcmp(NameStr(*DatumGetName(datum)), stmt->name) == 0)
 		{
 			gro_exists = true;
 			simple_heap_delete(pg_group_rel, &tuple->t_self);
