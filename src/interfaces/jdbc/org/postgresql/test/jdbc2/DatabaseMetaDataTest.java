@@ -9,7 +9,7 @@ import java.sql.*;
  *
  * PS: Do you know how difficult it is to type on a train? ;-)
  *
- * $Id: DatabaseMetaDataTest.java,v 1.6 2002/05/30 16:26:55 davec Exp $
+ * $Id: DatabaseMetaDataTest.java,v 1.7 2002/05/30 16:39:26 davec Exp $
  */
 
 public class DatabaseMetaDataTest extends TestCase
@@ -274,17 +274,13 @@ public class DatabaseMetaDataTest extends TestCase
       // this is hacky, but it will serve the purpose
       assertTrue ( rs.next() );
 
-      for (int i = 0; i < 14 ; i++ )
-      {
-        assertTrue( rs.getString( "PKTABLE_NAME" ).equals( "people" ) );
-        assertTrue( rs.getString( "PKCOLUMN_NAME" ).equals( "id" ) );
+      assertTrue( rs.getString( "PKTABLE_NAME" ).equals( "people" ) );
+      assertTrue( rs.getString( "PKCOLUMN_NAME" ).equals( "id" ) );
 
-        assertTrue( rs.getString( "FKTABLE_NAME" ).equals( "users" ) );
-        assertTrue( rs.getString( "FKCOLUMN_NAME" ).equals( "people_id" ) );
+      assertTrue( rs.getString( "FKTABLE_NAME" ).equals( "users" ) );
+      assertTrue( rs.getString( "FKCOLUMN_NAME" ).equals( "people_id" ) );
 
-        assertTrue( rs.getString( "FK_NAME" ).equals( "people" ) );
-
-      }
+      assertTrue( rs.getString( "FK_NAME" ).equals( "people" ) );
 
 
       JDBC2Tests.dropTable( con1, "users" );
