@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.22 2001/11/25 01:05:37 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.23 2001/11/25 01:11:36 tgl Exp $
 Postgres documentation
 -->
 
@@ -36,6 +36,7 @@ Postgres documentation
    <arg>-o <replaceable>extra-options</replaceable></arg>
    <arg>-p <replaceable>port</replaceable></arg>
    <arg>-S</arg>
+   <arg>--<replaceable>name</replaceable>=<replaceable>value</replaceable></arg>
    <group><arg>-n</arg><arg>-s</arg></group>
   </cmdsynopsis>
  </refsynopsisdiv>
@@ -115,12 +116,8 @@ Postgres documentation
         Sets a named run-time parameter. Consult the
         <citetitle>Administrator's Guide</citetitle> for a list and
         descriptions.  Most of the other command line options are in
-        fact short forms of such a parameter assignment.
-       </para>
-
-       <para>
-        These options may also be specified using the GNU-style long option
-        format, <option>--name=value</option>.
+        fact short forms of such a parameter assignment.  <option>-c</>
+	can appear multiple times to set multiple parameters.
        </para>
       </listitem>
      </varlistentry>
@@ -131,7 +128,8 @@ Postgres documentation
        <para>
         Sets the debug level.  The higher this value is set, the more
         debugging output is written to the server log.  The default is
-        0, which means no debugging.  Values up to 4 make sense.
+        0, which means no debugging.  Values up to 4 are useful; higher
+	numbers produce no additional output.
        </para>
       </listitem>
      </varlistentry>
@@ -151,8 +149,8 @@ Postgres documentation
       <listitem>
        <para>
         Disables <function>fsync</function> calls for performance
-        improvement at the risk of data corruption.  Read the detailed
-        documentation before using this!
+        improvement, at the risk of data corruption in event of a
+	system crash.  Read the detailed documentation before using this!
        </para>
       </listitem>
      </varlistentry>
@@ -209,10 +207,12 @@ Postgres documentation
        <para>
 	Sets the maximum number of client connections that this
 	<application>postmaster</application> will accept.  By
-	default, this value is 32, but it can be set as high as 1024
-	if your system will support that many processes.  (Note that
+	default, this value is 32, but it can be set as high as your
+	system will support.  (Note that
 	<option>-B</option> is required to be at least twice
-	<option>-N</option>.)
+	<option>-N</option>.  See the <citetitle>Administrator's
+	Guide</citetitle> for a discussion of system resource requirements
+	for large numbers of client connections.)
        </para>
       </listitem>
      </varlistentry>
@@ -263,6 +263,15 @@ Postgres documentation
 	probably not what you want, since it makes it very difficult
 	to troubleshoot problems.  See below for a better way to start
 	the <application>postmaster</application> in the background.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>--<replaceable>name</replaceable>=<replaceable>value</replaceable></term>
+      <listitem>
+       <para>
+        Sets a named run-time parameter; a shorter form of <option>-c</>.
        </para>
       </listitem>
      </varlistentry>
@@ -417,7 +426,7 @@ StreamServerPort: cannot bind to port
    or <literal>SIGQUIT</literal> can be used.  The first will wait for
    all clients to terminate before quitting, the second will
    forcefully disconnect all clients, and the third will quit
-   immediately without lengthy shutdown, resulting in a recovery run
+   immediately without proper shutdown, resulting in a recovery run
    during restart.
   </para>
 
@@ -458,6 +467,26 @@ StreamServerPort: cannot bind to port
 <prompt>$</prompt> <userinput>psql</userinput>
 </screen>
   </para>
+
+  <para>
+   Named runtime parameters can be set in either of these styles:
+<screen>
+<prompt>$</prompt> <userinput>postmaster -c sort_mem=1234</userinput>
+<prompt>$</prompt> <userinput>postmaster --sort-mem=1234</userinput>
+</screen>
+   Either form overrides whatever setting might exist for <literal>sort_mem</>
+   in <filename>postgresql.conf</>.  Notice that underscores in parameter
+   names can be written as either underscore or dash on the command line.
+  </para>
+
+  <tip>
+  <para>
+   Except for short-term experiments,
+   it's probably better practice to edit the setting in
+   <filename>postgresql.conf</> than to rely on a command-line switch
+   to set a parameter.
+  </para>
+  </tip>
  </refsect1>
 </refentry>
 

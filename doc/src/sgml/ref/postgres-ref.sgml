@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/postgres-ref.sgml,v 1.20 2001/09/27 16:29:12 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/postgres-ref.sgml,v 1.21 2001/11/25 01:11:36 tgl Exp $
 Postgres documentation
 -->
 
@@ -43,6 +43,7 @@ Postgres documentation
    </group>
    <arg>-S <replaceable>sort-mem</replaceable></arg>
    <arg>-W <replaceable>seconds</replaceable></arg>
+   <arg>--<replaceable>name</replaceable>=<replaceable>value</replaceable></arg>
    <arg choice="plain"><replaceable>database</replaceable></arg>
    <sbr>
    <!-- postmaster fork -->
@@ -67,6 +68,7 @@ Postgres documentation
    <arg>-S <replaceable>sort-mem</replaceable></arg>
    <arg>-v <replaceable>protocol-version</replaceable></arg>
    <arg>-W <replaceable>seconds</replaceable></arg>
+   <arg>--<replaceable>name</replaceable>=<replaceable>value</replaceable></arg>
   </cmdsynopsis>
  </refsynopsisdiv>
 
@@ -87,8 +89,9 @@ Postgres documentation
    conceptually, since both <filename>postmaster</filename> and
    <filename>postgres</filename> are in fact the same program); it
    should not be invoked directly this way.  The first form invokes
-   the server directly in interactive mode.  The primary use for this
-   mode is for bootstrapping by <xref linkend="app-initdb">.
+   the server directly in interactive single-user mode.  The primary use
+   for this mode is during bootstrapping by <xref linkend="app-initdb">.
+   Sometimes it is used for debugging or disaster recovery.
   </para>
 
   <para>
@@ -138,8 +141,8 @@ Postgres documentation
     <para>
      The options <option>-A</option>, <option>-B</option>,
      <option>-c</option>, <option>-d</option>, <option>-D</option>,
-     and <option>-F</option> have the same meaning as with the <xref
-     linkend="app-postmaster">.
+     <option>-F</option>, and <option>--name</> have the same meanings as
+     for the <xref linkend="app-postmaster">.
     </para>
 
     <variablelist>
@@ -163,12 +166,10 @@ Postgres documentation
        <para>
 	Sends all debugging and error output to 
 	<replaceable class="parameter">filename</replaceable>.
-	If the backend is running under the <application>postmaster</application>,
-	error messages are still sent to the frontend process as well as to
-	<replaceable class="parameter">filename</replaceable>,
-	but debugging output is sent to the controlling tty of the
-	<application>postmaster</application>
-	(since only one file descriptor can be sent to an actual file).
+	If the backend is running under the
+	<application>postmaster</application>, this option is ignored,
+	and the stderr inherited from the
+	<application>postmaster</application> is used.
        </para>
       </listitem>
      </varlistentry>
@@ -177,7 +178,7 @@ Postgres documentation
       <term>-P</term>
       <listitem>
        <para>
-	Ignore system indexes to scan/update system tuples. The
+	Ignore system indexes while scanning/updating system tuples. The
 	<command>REINDEX</command> command for system tables/indexes
 	requires this option to be used.
        </para>
@@ -348,6 +349,46 @@ Postgres documentation
     </variablelist>
    </refsect3>
   </refsect2>
+ </refsect1>
+
+ <refsect1>
+  <title>Usage</title>
+
+   <para>
+    Start a standalone backend with a command like
+<screen>
+<userinput>postgres -D $PGDATA <replaceable>other-options</> my_database</userinput>
+</screen>
+    Provide the correct path to the database area with <option>-D</>, or
+    make sure that the environment variable <envar>PGDATA</> is set.
+    Also specify the name of the particular database you want to work in.
+   </para>
+
+   <para>
+    Normally, the standalone backend treats newline as the command
+    entry terminator; there is no intelligence about semicolons,
+    as there is in <application>psql</>.  To continue a command
+    across multiple lines, you must type backslash just before each
+    newline except the last one.
+   </para>
+
+   <para>
+    But if you use the <option>-N</> command line switch, then newline does
+    not terminate command entry.  The backend will read stdin until EOF, then
+    process the input as a single query string.  Backslash-newline is not
+    treated specially in this case.
+   </para>
+
+   <para>
+    The standalone backend does not have readline input processing
+    (no command history, for example).
+   </para>
+
+   <para>
+    To quit the backend, type EOF (control-D, usually).  If you've
+    used <option>-N</>, two consecutive EOFs are needed to exit.
+   </para>
+
  </refsect1>
 
  <refsect1>
