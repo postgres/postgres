@@ -1,10 +1,10 @@
 # ru.po
 # PSQL Translated Messages into the Russian Language (KOI8-R)
 #
-# $PostgreSQL: pgsql/src/bin/psql/po/ru.po,v 1.18 2004/10/12 17:57:14 petere Exp $
+# $PostgreSQL: pgsql/src/bin/psql/po/ru.po,v 1.19 2004/10/27 11:22:15 petere Exp $
 #
 # ChangeLog:
-#   - March 27 - October 9, 2004: Updates for 8.0; <mokhov@cs.concordia.ca>
+#   - March 27 - October 21, 2004: Updates for 8.0; <mokhov@cs.concordia.ca>
 #   - July 26 - October 12, 2003: Updates for 7.4.x; <mokhov@cs.concordia.ca>
 #   - October 12, 2002: Complete post-7.3beta2 Translation, Serguei A. Mokhov <mokhov@cs.concordia.ca>
 #   - September 7, 2002: Complete post-7.3beta1 Translation, Serguei A. Mokhov <mokhov@cs.concordia.ca>
@@ -13,8 +13,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.0\n"
-"POT-Creation-Date: 2004-10-09 19:06+0100\n"
-"PO-Revision-Date: 2004-10-09 19:30-0500\n"
+"POT-Creation-Date: 2004-10-20 19:07+0100\n"
+"PO-Revision-Date: 2004-10-21 03:24-0500\n"
 "Last-Translator: Serguei A. Mokhov <mokhov@cs.concordia.ca>\n"
 "Language-Team: pgsql-rus <pgsql-rus@yahoogroups.com>\n"
 "MIME-Version: 1.0\n"
@@ -741,8 +741,8 @@ msgid "  \\dl            list large objects, same as \\lo_list\n"
 msgstr "  \\dl            показать большие объекты, аналог \\lo_list\n"
 
 #: help.c:226
-msgid "  \\dp [PATTERN]  list table, view and sequence access privileges\n"
-msgstr "  \\dp [ПАТТЕРН]  показать привилегии доступа таблицы, вида и последовательности\n"
+msgid "  \\dp [PATTERN]  list table, view, and sequence access privileges\n"
+msgstr "  \\dp [ПАТТЕРН]  показать привилегии доступа таблиц, представлений и последовательностей\n"
 
 #: help.c:227
 msgid "  \\dT [PATTERN]  list data types (add \"+\" for more detail)\n"
@@ -757,8 +757,8 @@ msgid "  \\l             list all databases (add \"+\" for more detail)\n"
 msgstr "  \\l             показать все базы данных (добавьте \"+\" для более детальной информации)\n"
 
 #: help.c:230
-msgid "  \\z [PATTERN]   list table, view and sequence access privileges (same as \\dp)\n"
-msgstr "  \\z [ПАТТЕРН]   показать привилегии доступа таблицы, вида и последовательности (аналог \\dp)\n"
+msgid "  \\z [PATTERN]   list table, view, and sequence access privileges (same as \\dp)\n"
+msgstr "  \\z [ПАТТЕРН]   показать привилегии доступа таблиц, представлений и последовательностей (аналог \\dp)\n"
 
 #: help.c:233
 msgid "Formatting\n"
@@ -861,8 +861,8 @@ msgid "could not save history to file \"%s\": %s\n"
 msgstr "не получилось сохранить историю в \"%s\": %s\n"
 
 #: input.c:213
-msgid "history is not supported\n"
-msgstr "история не поддерживается\n"
+msgid "history is not supported by this installation\n"
+msgstr "история не поддерживается этой инсталляцией\n"
 
 #: large_obj.c:36
 #, c-format
@@ -1029,8 +1029,8 @@ msgstr "Список агрегатных функций"
 
 #: describe.c:117
 #, c-format
-msgid "This server version (%d) does not support tablespaces.\n"
-msgstr "Данная версия сервера (%d) не поддерживает tablespaces.\n"
+msgid "The server version (%d) does not support tablespaces.\n"
+msgstr "Версия сервера (%d) не поддерживает tablespaces.\n"
 
 #: describe.c:128
 #: describe.c:186
@@ -1236,12 +1236,12 @@ msgid "?%c? \"%s.%s\""
 msgstr "?%c? \"%s.%s\""
 
 #: describe.c:925
-msgid "PRIMARY KEY, "
-msgstr "PRIMARY KEY, "
+msgid "primary key, "
+msgstr "первичный ключ, "
 
 #: describe.c:927
-msgid "UNIQUE, "
-msgstr "UNIQUE, "
+msgid "unique, "
+msgstr "уникальный, "
 
 #: describe.c:933
 #, c-format
@@ -1254,8 +1254,8 @@ msgid ", predicate (%s)"
 msgstr ", предикат (%s)"
 
 #: describe.c:940
-msgid ", CLUSTER"
-msgstr ", CLUSTER"
+msgid ", clustered"
+msgstr ", перегруппирован"
 
 #: describe.c:977
 #, c-format
@@ -1316,7 +1316,7 @@ msgid "Inherits"
 msgstr "Наследует"
 
 #: describe.c:1259
-msgid "Contains OIDs"
+msgid "Has OIDs"
 msgstr "Содержит OIDs"
 
 #: describe.c:1262

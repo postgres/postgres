@@ -1,10 +1,10 @@
 # ru.po
 # LIBPQ Translated Messages into the Russian Language (KOI8-R)
 #
-# $PostgreSQL: pgsql/src/interfaces/libpq/po/ru.po,v 1.15 2004/10/03 20:20:31 petere Exp $
+# $PostgreSQL: pgsql/src/interfaces/libpq/po/ru.po,v 1.16 2004/10/27 11:22:18 petere Exp $
 #
 # ChangeLog:
-#   - March 27 - September 28, 2004: Updates for 8.0; <mokhov@cs.concordia.ca>
+#   - March 27 - October 17, 2004: Updates for 8.0; <mokhov@cs.concordia.ca>
 #   - July 24 - October 5, 2003: Updates for 7.4.*; <mokhov@cs.concordia.ca>
 #   - Januray 2, 2002: Completed SSL translation, Serguei A. Mokhov <mokhov@cs.concordia.ca>
 #   - October 12, 2002: Post-7.3beta2 fuzzy translation fixes, Serguei A. Mokhov <mokhov@cs.concordia.ca>
@@ -14,8 +14,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.0\n"
-"POT-Creation-Date: 2004-09-28 19:13+0100\n"
-"PO-Revision-Date: 2004-09-28 20:06-0500\n"
+"POT-Creation-Date: 2004-10-17 01:11+0100\n"
+"PO-Revision-Date: 2004-10-17 15:47-0500\n"
 "Last-Translator: Serguei A. Mokhov <mokhov@cs.concordia.ca>\n"
 "Language-Team: pgsql-rus <pgsql-rus@yahoogroups.com>\n"
 "MIME-Version: 1.0\n"
@@ -155,12 +155,12 @@ msgid "could not send SSL negotiation packet: %s\n"
 msgstr "не получилось отправить пакет согласования SSL: %s\n"
 
 #: fe-connect.c:1414
-#: fe-connect.c:2538
-#: fe-connect.c:2547
-#: fe-connect.c:3126
+#: fe-connect.c:2544
+#: fe-connect.c:2553
+#: fe-connect.c:3132
 #: fe-lobj.c:556
-#: fe-protocol2.c:1002
-#: fe-protocol3.c:944
+#: fe-protocol2.c:1007
+#: fe-protocol3.c:949
 msgid "out of memory\n"
 msgstr "недостаточно памяти\n"
 
@@ -199,25 +199,25 @@ msgstr "неожиданное сообщение от сервера при запуске\n"
 msgid "invalid connection state %c, probably indicative of memory corruption\n"
 msgstr "неправильное состояние подсоединения %c, возможный указатель на нарушение целостности памяти\n"
 
-#: fe-connect.c:2586
+#: fe-connect.c:2592
 #, c-format
 msgid "missing \"=\" after \"%s\" in connection info string\n"
 msgstr "отсутствует \"=\" после \"%s\" в строке подсоединения\n"
 
-#: fe-connect.c:2635
+#: fe-connect.c:2641
 msgid "unterminated quoted string in connection info string\n"
 msgstr "неоконченная строка (не хватает кавычки) в строке подсоединения\n"
 
-#: fe-connect.c:2669
+#: fe-connect.c:2675
 #, c-format
 msgid "invalid connection option \"%s\"\n"
 msgstr "неправильная опция подсоединения \"%s\"\n"
 
-#: fe-connect.c:2891
+#: fe-connect.c:2897
 msgid "connection pointer is NULL\n"
 msgstr "указатель подсоединения является NULL'ом\n"
 
-#: fe-connect.c:3148
+#: fe-connect.c:3154
 #, c-format
 msgid "WARNING: Password file %s has world or group read access; permission should be u=rw (0600)\n"
 msgstr "ВНИМАНИЕ: Парольный файл %s записан с правами чтения для всех или группы; права должны быть u=rw (0600)\n"
@@ -244,7 +244,7 @@ msgid "another command is already in progress\n"
 msgstr "другая команда в процессе выполнения\n"
 
 #: fe-exec.c:814
-#: fe-exec.c:1466
+#: fe-exec.c:1467
 msgid "function requires at least protocol version 3.0\n"
 msgstr "функция требует как минимум версию протокола 3.0\n"
 
@@ -265,34 +265,34 @@ msgstr "сначала состояние COPY IN должно быть завершено\n"
 msgid "COPY OUT state must be terminated first\n"
 msgstr "сначала состояние COPY OUT должно быть завершено\n"
 
-#: fe-exec.c:1358
-#: fe-exec.c:1423
-#: fe-exec.c:1508
-#: fe-protocol2.c:1148
-#: fe-protocol3.c:1101
+#: fe-exec.c:1359
+#: fe-exec.c:1424
+#: fe-exec.c:1509
+#: fe-protocol2.c:1153
+#: fe-protocol3.c:1106
 msgid "no COPY in progress\n"
 msgstr "выполнения процесса COPY не наблюдается\n"
 
-#: fe-exec.c:1700
+#: fe-exec.c:1701
 msgid "connection in wrong state\n"
 msgstr "соединение в неверном состоянии\n"
 
-#: fe-exec.c:1731
+#: fe-exec.c:1732
 msgid "invalid ExecStatusType code"
 msgstr "неверный код ExecStatusType"
 
-#: fe-exec.c:1795
-#: fe-exec.c:1818
+#: fe-exec.c:1796
+#: fe-exec.c:1819
 #, c-format
 msgid "column number %d is out of range 0..%d"
 msgstr "колонка N %d вне диапазона 0..%d"
 
-#: fe-exec.c:1811
+#: fe-exec.c:1812
 #, c-format
 msgid "row number %d is out of range 0..%d"
 msgstr "ряд N %d вне диапазона 0..%d"
 
-#: fe-exec.c:2093
+#: fe-exec.c:2094
 #, c-format
 msgid "could not interpret result from server: %s"
 msgstr "не в состоянии интерпретировать ответ сервера: %s"
@@ -451,19 +451,19 @@ msgstr "неожиданный ответ сервера; первый полученный символ: \"%c\"\n"
 msgid "out of memory for query result\n"
 msgstr "недостаточно памяти для результата запроса\n"
 
-#: fe-protocol2.c:1191
-#: fe-protocol3.c:1170
+#: fe-protocol2.c:1196
+#: fe-protocol3.c:1175
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: fe-protocol2.c:1203
+#: fe-protocol2.c:1208
 msgid "lost synchronization with server, resetting connection"
 msgstr "потеряна синхронизация с сервером; переподсоединение"
 
-#: fe-protocol2.c:1338
-#: fe-protocol2.c:1370
-#: fe-protocol3.c:1373
+#: fe-protocol2.c:1343
+#: fe-protocol2.c:1375
+#: fe-protocol3.c:1378
 #, c-format
 msgid "protocol error: id=0x%x\n"
 msgstr "ошибка протокола: id=0x%x\n"
@@ -474,8 +474,8 @@ msgstr "сервер отправил данные (сообщение \"D\") без предварительного описания с
 
 #: fe-protocol3.c:356
 #, c-format
-msgid "Message contents do not agree with length in message type \"%c\"\n"
-msgstr "Содержимое сообщения не соглашается с длиной в сообщении типа \"%c\"\n"
+msgid "message contents do not agree with length in message type \"%c\"\n"
+msgstr "содержимое сообщения не соглашается с длиной в сообщении типа \"%c\"\n"
 
 #: fe-protocol3.c:377
 #, c-format
@@ -483,8 +483,8 @@ msgid "lost synchronization with server: got message type \"%c\", length %d\n"
 msgstr "потеряна синхронизация с сервером: получено сообщение типа \"%c\", длина %d\n"
 
 #: fe-protocol3.c:513
-msgid "unexpected field count in D message\n"
-msgstr "неожиданное число полей в собщении D\n"
+msgid "unexpected field count in \"D\" message\n"
+msgstr "неожиданное число полей в собщении \"D\"\n"
 
 #. translator: %s represents a digit string
 #: fe-protocol3.c:642
@@ -527,7 +527,7 @@ msgstr "%s, "
 msgid "%s:%s"
 msgstr "%s:%s"
 
-#: fe-protocol3.c:986
+#: fe-protocol3.c:991
 msgid "PQgetline: not doing text COPY OUT\n"
 msgstr "PQgetline: не производится текстовый COPY OUT\n"
 

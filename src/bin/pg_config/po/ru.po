@@ -1,16 +1,16 @@
 # ru.po
 # PG_CONFIG Translated Messages into the Russian Language (KOI8-R)
 #
-# $PostgreSQL: pgsql/src/bin/pg_config/po/ru.po,v 1.1 2004/10/17 21:12:55 petere Exp $
+# $PostgreSQL: pgsql/src/bin/pg_config/po/ru.po,v 1.2 2004/10/27 11:22:07 petere Exp $
 #
 # ChangeLog:
-#   - October 13, 2004: Initial Translation, Serguei A. Mokhov <mokhov@cs.concordia.ca>
+#   - October 13 - 21, 2004: Initial Translation, Serguei A. Mokhov <mokhov@cs.concordia.ca>
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.0\n"
-"POT-Creation-Date: 2004-10-13 19:08+0100\n"
-"PO-Revision-Date: 2004-10-13 17:56-0500\n"
+"POT-Creation-Date: 2004-10-20 19:06+0100\n"
+"PO-Revision-Date: 2004-10-21 02:58-0500\n"
 "Last-Translator: Serguei A. Mokhov <mokhov@cs.concordia.ca>\n"
 "Language-Team: pgsql-ru-general <pgsql-ru-general@postgresql.org>\n"
 "MIME-Version: 1.0\n"
@@ -77,10 +77,10 @@ msgstr "  --pgxs                показать путь для makefile рассширений\n"
 
 #: pg_config.c:47
 msgid ""
-"  --configure           show options given to 'configure' script when\n"
+"  --configure           show options given to \"configure\" script when\n"
 "                        PostgreSQL was built\n"
 msgstr ""
-"  --configure           показать опции указанные в скрипте 'configure'\n"
+"  --configure           показать опции указанные в скрипте \"configure\"\n"
 "                        во время инсталляции PostgreSQL\n"
 
 #: pg_config.c:49
@@ -108,13 +108,18 @@ msgstr ""
 "\n"
 "Наберите \"%s --help\" для более подробной информации\n"
 
-#: pg_config.c:73
+#: pg_config.c:75
 #, c-format
 msgid "%s: argument required\n"
 msgstr "%s: требуется аргумент\n"
 
-#: pg_config.c:102
+#: pg_config.c:104
 #, c-format
 msgid "%s: invalid argument: %s\n"
 msgstr "%s: неверный аргумент: %s\n"
+
+#: pg_config.c:113
+#, c-format
+msgid "%s: could not find own executable\n"
+msgstr "%s: не удалось найти свой собственный выполняемый файл\n"
 
