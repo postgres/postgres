@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.85 2000/07/05 13:22:23 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.86 2000/07/05 13:50:59 wieck Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -340,13 +340,17 @@ AlterTableAddColumn(const char *relationName,
 			foreach(child, children)
 			{
 				Oid			childrelid = lfirsti(child);
+				char	   *childrelname;
 
 				if (childrelid == myrelid)
 					continue;
 				rel = heap_open(childrelid, AccessExclusiveLock);
-				AlterTableAddColumn(RelationGetRelationName(rel),
-									false, colDef);
+				childrelname = pstrdup(RelationGetRelationName(rel));
 				heap_close(rel, AccessExclusiveLock);
+
+				AlterTableAddColumn(childrelname, false, colDef);
+
+				pfree(childrelname);
 			}
 		}
 	}
