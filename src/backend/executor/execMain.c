@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.18 1997/08/22 03:12:16 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.19 1997/08/22 14:28:20 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,8 +72,6 @@ static void ExecDelete(TupleTableSlot *slot, ItemPointer tupleid,
 		       EState *estate);
 static void ExecReplace(TupleTableSlot *slot, ItemPointer tupleid,
 			EState *estate, Query *parseTree);
-
-static HeapTuple ExecAttrDefault (Relation rel, HeapTuple tuple);
 
 /* end of local decls */
 
@@ -930,29 +928,15 @@ ExecAppend(TupleTableSlot *slot,
 
     if ( resultRelationDesc->rd_att->constr )
     {
-    	if ( resultRelationDesc->rd_att->constr->num_defval > 0 )
+    	HeapTuple newtuple;
+    	
+    	newtuple = ExecConstraints ("ExecAppend", resultRelationDesc, tuple);
+    	
+    	if ( newtuple != tuple )		/* modified by DEFAULT */
     	{
-    	    HeapTuple newtuple;
-    	    
-    	    newtuple = ExecAttrDefault (resultRelationDesc, tuple);
-    	    
-    	    if ( newtuple != tuple )
-    	    {
-    	    	Assert ( slot->ttc_shouldFree );
-    	    	slot->val = tuple = newtuple;
-    	    }
-    	}
-    	    
-    	if ( resultRelationDesc->rd_att->constr->has_not_null )
-    	{
-	    int attrChk;
-	    
-	    for (attrChk = 1; attrChk <= resultRelationDesc->rd_att->natts; attrChk++)
-	    {
-	    	if (resultRelationDesc->rd_att->attrs[attrChk-1]->attnotnull && heap_attisnull(tuple,attrChk))
-    	    	    elog(WARN,"ExecAppend:  Fail to add null value in not null attribute %s",
-	    	    	resultRelationDesc->rd_att->attrs[attrChk-1]->attname.data);
-    	    }
+    	    Assert ( slot->ttc_shouldFree );
+    	    pfree (tuple);
+    	    slot->val = tuple = newtuple;
     	}
     }
     
@@ -1081,15 +1065,19 @@ ExecReplace(TupleTableSlot *slot,
      * ----------------
      */
 
-    if (resultRelationDesc->rd_att->constr && resultRelationDesc->rd_att->constr->has_not_null)
-      {
-	int attrChk;
-	for (attrChk = 1; attrChk <= resultRelationDesc->rd_att->natts; attrChk++) {
-	  if (resultRelationDesc->rd_att->attrs[attrChk-1]->attnotnull && heap_attisnull(tuple,attrChk))
-	    elog(WARN,"ExecReplace:  Fail to update null value in not null attribute %s",
-		 resultRelationDesc->rd_att->attrs[attrChk-1]->attname.data);
-	}
-      }
+    if ( resultRelationDesc->rd_att->constr )
+    {
+    	HeapTuple newtuple;
+    	
+    	newtuple = ExecConstraints ("ExecReplace", resultRelationDesc, tuple);
+    	
+    	if ( newtuple != tuple )		/* modified by DEFAULT */
+    	{
+    	    Assert ( slot->ttc_shouldFree );
+    	    pfree (tuple);
+    	    slot->val = tuple = newtuple;
+    	}
+    }
 
     /* ----------------
      *	replace the heap tuple
@@ -1140,7 +1128,8 @@ ExecAttrDefault (Relation rel, HeapTuple tuple)
 {
     int ndef = rel->rd_att->constr->num_defval;
     AttrDefault *attrdef = rel->rd_att->constr->defval;
-    ExprContext *econtext = makeNode(ExprContext);
+    ExprContext *econtext = makeNode (ExprContext);
+    HeapTuple newtuple;
     Node *expr;
     bool isnull;
     bool isdone;
@@ -1150,21 +1139,23 @@ ExecAttrDefault (Relation rel, HeapTuple tuple)
     char *repl = NULL;
     int i;
     
+    econtext->ecxt_scantuple = NULL;		/* scan tuple slot */
+    econtext->ecxt_innertuple = NULL;		/* inner tuple slot */
+    econtext->ecxt_outertuple = NULL;		/* outer tuple slot */
+    econtext->ecxt_relation = NULL;		/* relation */
+    econtext->ecxt_relid = 0;			/* relid */
+    econtext->ecxt_param_list_info = NULL;	/* param list info */
+    econtext->ecxt_range_table = NULL;		/* range table */
     for (i = 0; i < ndef; i++)
     {
     	if ( !heap_attisnull (tuple, attrdef[i].adnum) )
     	    continue;
     	expr = (Node*) stringToNode (attrdef[i].adbin);
-    	econtext->ecxt_scantuple = NULL;		/* scan tuple slot */
-    	econtext->ecxt_innertuple = NULL;		/* inner tuple slot */
-    	econtext->ecxt_outertuple = NULL;		/* outer tuple slot */
-    	econtext->ecxt_relation = NULL;			/* relation */
-    	econtext->ecxt_relid = 0;			/* relid */
-    	econtext->ecxt_param_list_info = NULL;		/* param list info */
-    	econtext->ecxt_range_table = NULL;		/* range table */
     	
     	val = ExecEvalExpr (expr, econtext, &isnull, &isdone);
     	
+    	pfree (expr);
+
     	if ( isnull )
     	    continue;
     	
@@ -1182,9 +1173,108 @@ ExecAttrDefault (Relation rel, HeapTuple tuple)
     	
     }
     
+    pfree (econtext);
+    
     if ( repl == NULL )
     	return (tuple);
     
-    return (heap_modifytuple (tuple, InvalidBuffer, rel, replValue, replNull, repl));
+    newtuple = heap_modifytuple (tuple, InvalidBuffer, rel, replValue, replNull, repl);
     
+    pfree (repl);
+    pfree (replNull);
+    pfree (replValue);
+    
+    return (newtuple);
+    
+}
+
+static char *
+ExecRelCheck (Relation rel, HeapTuple tuple)
+{
+    int ncheck = rel->rd_att->constr->num_check;
+    ConstrCheck *check = rel->rd_att->constr->check;
+    ExprContext *econtext = makeNode (ExprContext);
+    TupleTableSlot *slot = makeNode (TupleTableSlot);
+    RangeTblEntry *rte = makeNode (RangeTblEntry);
+    List *rtlist;
+    List *qual;
+    bool res;
+    int i;
+    
+    slot->val = tuple;
+    slot->ttc_shouldFree = false;
+    slot->ttc_descIsNew = true;
+    slot->ttc_tupleDescriptor = rel->rd_att;
+    slot->ttc_buffer = InvalidBuffer;
+    slot->ttc_whichplan = -1;
+    rte->relname = nameout (&(rel->rd_rel->relname));
+    rte->timeRange = NULL;
+    rte->refname = rte->relname;
+    rte->relid = rel->rd_id;
+    rte->inh = false;
+    rte->archive = false;
+    rte->inFromCl = true;
+    rte->timeQual = NULL;
+    rtlist = lcons (rte, NIL);
+    econtext->ecxt_scantuple = slot; 		/* scan tuple slot */
+    econtext->ecxt_innertuple = NULL;		/* inner tuple slot */
+    econtext->ecxt_outertuple = NULL;		/* outer tuple slot */
+    econtext->ecxt_relation = rel;		/* relation */
+    econtext->ecxt_relid = 0;			/* relid */
+    econtext->ecxt_param_list_info = NULL;	/* param list info */
+    econtext->ecxt_range_table = rtlist;	/* range table */
+    
+    for (i = 0; i < ncheck; i++)
+    {
+    	qual = (List*) stringToNode (check[i].ccbin);
+    	
+    	res = ExecQual (qual, econtext);
+    	
+    	pfree (qual);
+    	
+    	if ( !res )
+    	    return (check[i].ccname);
+    }
+    
+    pfree (slot);
+    pfree (rte->relname);
+    pfree (rte);
+    pfree (rtlist);
+    pfree (econtext);
+    
+    return ((char *) NULL);
+    
+}
+
+HeapTuple
+ExecConstraints (char *caller, Relation rel, HeapTuple tuple)
+{
+    HeapTuple newtuple = tuple;
+    
+    Assert ( rel->rd_att->constr );
+    
+    if ( rel->rd_att->constr->num_defval > 0 )
+    	newtuple = tuple = ExecAttrDefault (rel, tuple);
+    	    
+    if ( rel->rd_att->constr->has_not_null )
+    {
+	int attrChk;
+	
+	for (attrChk = 1; attrChk <= rel->rd_att->natts; attrChk++)
+	{
+	    if (rel->rd_att->attrs[attrChk-1]->attnotnull && heap_attisnull (tuple,attrChk))
+    	    	    elog(WARN,"%s: Fail to add null value in not null attribute %s",
+	    	    	caller, rel->rd_att->attrs[attrChk-1]->attname.data);
+    	}
+    }
+    
+    if ( rel->rd_att->constr->num_check > 0 )
+    {
+    	char *failed;
+    	    
+    	if ( ( failed = ExecRelCheck (rel, tuple) ) != NULL )
+    	    	elog(WARN,"%s: rejected due to CHECK constraint %s", caller, failed);
+    }
+
+    return (newtuple);
 }
