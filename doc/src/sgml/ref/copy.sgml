@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/copy.sgml,v 1.37 2002/08/04 05:22:02 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/copy.sgml,v 1.38 2002/08/30 03:18:23 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -56,7 +56,7 @@ COPY <replaceable class="parameter">table</replaceable> [ ( <replaceable class="
       </listitem>
      </varlistentry>
      
-		 <varlistentry>
+     <varlistentry>
       <term><replaceable class="parameter">column</replaceable></term>
       <listitem>
        <para>
@@ -698,6 +698,19 @@ ZW      ZIMBABWE
    </title>
    <para>
     There is no <command>COPY</command> statement in SQL92.
+   </para>
+   <para>
+    The following syntax was used by pre-7.3 servers and is still supported:
+    <synopsis>
+    COPY [ BINARY ] <replaceable class="parameter">table</replaceable> [ WITH OIDS ]
+        FROM { '<replaceable class="parameter">filename</replaceable>' | <filename>stdin</filename> }
+        [ [USING] DELIMITERS '<replaceable class="parameter">delimiter</replaceable>' ]
+        [ WITH NULL AS '<replaceable class="parameter">null string</replaceable>' ]
+    COPY [ BINARY ] <replaceable class="parameter">table</replaceable> [ WITH OIDS ]
+        TO { '<replaceable class="parameter">filename</replaceable>' | <filename>stdout</filename> }
+        [ [USING] DELIMITERS '<replaceable class="parameter">delimiter</replaceable>' ]
+        [ WITH NULL AS '<replaceable class="parameter">null string</replaceable>' ]
+    </synopsis>
    </para>
   </refsect2>
  </refsect1>
