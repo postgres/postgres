@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.50 2001/11/21 05:53:41 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.51 2001/11/28 04:18:46 tgl Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -62,7 +62,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.50 2001/11/21 05:53:41
    <para>
     The <application>PL/pgSQL</> call handler parses the function's source text and
     produces an internal binary instruction tree the first time the
-    function is called.  The instruction tree fully translates the
+    function is called (within any one backend process).  The instruction tree
+    fully translates the 
     <application>PL/pgSQL</> statement structure, but individual
     <acronym>SQL</acronym> expressions and <acronym>SQL</acronym> queries
     used in the function are not translated immediately.
