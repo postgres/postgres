@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.211 2004/03/23 19:35:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.212 2004/04/19 21:21:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -302,15 +302,12 @@ ProcessUtility(Node *parsetree,
 
 				switch (stmt->kind)
 				{
+					/*
+					 * START TRANSACTION, as defined by SQL99:
+					 * Identical to BEGIN, except that it takes a few
+					 * additional options.  Same code for both.
+					 */
 					case TRANS_STMT_BEGIN:
-						BeginTransactionBlock();
-						break;
-
-						/*
-						 * START TRANSACTION, as defined by SQL99:
-						 * Identical to BEGIN, except that it takes a few
-						 * additional options.
-						 */
 					case TRANS_STMT_START:
 						{
 							BeginTransactionBlock();
