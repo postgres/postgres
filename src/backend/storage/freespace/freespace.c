@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/freespace/freespace.c,v 1.14 2002/09/20 19:56:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/freespace/freespace.c,v 1.15 2003/02/23 06:17:13 tgl Exp $
  *
  *
  * NOTES:
@@ -681,7 +681,9 @@ free_chunk_chain(FSMChunk *fchunk)
  * Look to see if a page with at least the specified amount of space is
  * available in the given FSMRelation.	If so, return its page number,
  * and advance the nextPage counter so that the next inquiry will return
- * a different page if possible.  Return InvalidBlockNumber if no success.
+ * a different page if possible; also update the entry to show that the
+ * requested space is not available anymore.  Return InvalidBlockNumber
+ * if no success.
  */
 static BlockNumber
 find_free_space(FSMRelation *fsmrel, Size spaceNeeded)
@@ -713,6 +715,12 @@ find_free_space(FSMRelation *fsmrel, Size spaceNeeded)
 		/* Check the next page */
 		if ((Size) curChunk->bytes[chunkRelIndex] >= spaceNeeded)
 		{
+			/*
+			 * Found what we want --- adjust the entry.  In theory we could
+			 * delete the entry immediately if it drops below threshold,
+			 * but it seems better to wait till we next need space.
+			 */
+			curChunk->bytes[chunkRelIndex] -= (ItemLength) spaceNeeded;
 			fsmrel->nextPage = pageIndex + 1;
 			return curChunk->pages[chunkRelIndex];
 		}

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.98 2003/02/22 00:45:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.99 2003/02/23 06:17:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,7 +58,6 @@ static OffsetNumber _bt_findsplitloc(Relation rel, Page page,
 static void _bt_checksplitloc(FindSplitData *state, OffsetNumber firstright,
 				  int leftfree, int rightfree,
 				  bool newitemonleft, Size firstrightitemsz);
-static Buffer _bt_getstackbuf(Relation rel, BTStack stack, int access);
 static void _bt_pgaddtup(Relation rel, Page page,
 			 Size itemsize, BTItem btitem,
 			 OffsetNumber itup_off, const char *where);
@@ -666,7 +665,6 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 				rightoff;
 	OffsetNumber maxoff;
 	OffsetNumber i;
-	BTItem		lhikey;
 
 	rbuf = _bt_getbuf(rel, P_NEW, BT_WRITE);
 	origpage = BufferGetPage(buf);
@@ -730,7 +728,6 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 		itemsz = ItemIdGetLength(itemid);
 		item = (BTItem) PageGetItem(origpage, itemid);
 	}
-	lhikey = item;
 	if (PageAddItem(leftpage, (Item) item, itemsz, leftoff,
 					LP_USED) == InvalidOffsetNumber)
 		elog(PANIC, "btree: failed to add hikey to the left sibling");
@@ -1262,7 +1259,7 @@ _bt_insert_parent(Relation rel,
  *
  *		Returns InvalidBuffer if item not found (should not happen).
  */
-static Buffer
+Buffer
 _bt_getstackbuf(Relation rel, BTStack stack, int access)
 {
 	BlockNumber blkno;

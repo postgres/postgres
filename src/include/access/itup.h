@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: itup.h,v 1.36 2002/08/25 17:20:01 tgl Exp $
+ * $Id: itup.h,v 1.37 2003/02/23 06:17:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -133,11 +133,11 @@ typedef InsertIndexResultData *InsertIndexResult;
 )
 
 
-/* indextuple.h */
+/* routines in indextuple.c */
 extern IndexTuple index_formtuple(TupleDesc tupleDescriptor,
 				Datum *value, char *null);
 extern Datum nocache_index_getattr(IndexTuple tup, int attnum,
 					  TupleDesc tupleDesc, bool *isnull);
-extern void CopyIndexTuple(IndexTuple source, IndexTuple *target);
+extern IndexTuple CopyIndexTuple(IndexTuple source);
 
 #endif   /* ITUP_H */

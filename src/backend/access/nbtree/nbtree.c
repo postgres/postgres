@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.96 2003/02/22 00:45:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.97 2003/02/23 06:17:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -710,15 +710,16 @@ Datum
 btvacuumcleanup(PG_FUNCTION_ARGS)
 {
 	Relation	rel = (Relation) PG_GETARG_POINTER(0);
-#ifdef NOT_USED
 	IndexVacuumCleanupInfo *info = (IndexVacuumCleanupInfo *) PG_GETARG_POINTER(1);
-#endif
 	IndexBulkDeleteResult *stats = (IndexBulkDeleteResult *) PG_GETARG_POINTER(2);
 	BlockNumber num_pages;
 	BlockNumber blkno;
 	PageFreeSpaceInfo *pageSpaces;
 	int			nFreePages,
 				maxFreePages;
+	BlockNumber pages_deleted = 0;
+	MemoryContext mycontext;
+	MemoryContext oldcontext;
 
 	Assert(stats != NULL);
 
@@ -730,6 +731,13 @@ btvacuumcleanup(PG_FUNCTION_ARGS)
 		maxFreePages = (int) num_pages + 1;	/* +1 to avoid palloc(0) */
 	pageSpaces = (PageFreeSpaceInfo *) palloc(maxFreePages * sizeof(PageFreeSpaceInfo));
 	nFreePages = 0;
+
+	/* Create a temporary memory context to run _bt_pagedel in */
+	mycontext = AllocSetContextCreate(CurrentMemoryContext,
+									  "_bt_pagedel",
+									  ALLOCSET_DEFAULT_MINSIZE,
+									  ALLOCSET_DEFAULT_INITSIZE,
+									  ALLOCSET_DEFAULT_MAXSIZE);
 
 	/*
 	 * Scan through all pages of index, except metapage.  (Any pages added
@@ -745,16 +753,52 @@ btvacuumcleanup(PG_FUNCTION_ARGS)
 		buf = _bt_getbuf(rel, blkno, BT_READ);
 		page = BufferGetPage(buf);
 		opaque = (BTPageOpaque) PageGetSpecialPointer(page);
-		if (P_ISDELETED(opaque))
+		if (_bt_page_recyclable(page))
 		{
-			/* XXX if safe-to-reclaim... */
+			/* Okay to recycle this page */
 			if (nFreePages < maxFreePages)
 			{
 				pageSpaces[nFreePages].blkno = blkno;
-				/* The avail-space value is bogus, but must be < BLCKSZ */
+				/* claimed avail-space must be < BLCKSZ */
 				pageSpaces[nFreePages].avail = BLCKSZ-1;
 				nFreePages++;
 			}
+		}
+		else if ((opaque->btpo_flags & BTP_HALF_DEAD) ||
+				 P_FIRSTDATAKEY(opaque)	> PageGetMaxOffsetNumber(page))
+		{
+			/* Empty, try to delete */
+			int		ndel;
+
+			/* Run pagedel in a temp context to avoid memory leakage */
+			MemoryContextReset(mycontext);
+			oldcontext = MemoryContextSwitchTo(mycontext);
+
+			ndel = _bt_pagedel(rel, buf, info->vacuum_full);
+			pages_deleted += ndel;
+
+			/*
+			 * During VACUUM FULL it's okay to recycle deleted pages
+			 * immediately, since there can be no other transactions
+			 * scanning the index.  Note that we will only recycle the
+			 * current page and not any parent pages that _bt_pagedel
+			 * might have recursed to; this seems reasonable in the name
+			 * of simplicity.  (Trying to do otherwise would mean we'd
+			 * have to sort the list of recyclable pages we're building.)
+			 */
+			if (ndel && info->vacuum_full)
+			{
+				if (nFreePages < maxFreePages)
+				{
+					pageSpaces[nFreePages].blkno = blkno;
+					/* claimed avail-space must be < BLCKSZ */
+					pageSpaces[nFreePages].avail = BLCKSZ-1;
+					nFreePages++;
+				}
+			}
+
+			MemoryContextSwitchTo(oldcontext);
+			continue;			/* pagedel released buffer */
 		}
 		_bt_relbuf(rel, buf);
 	}
@@ -767,6 +811,13 @@ btvacuumcleanup(PG_FUNCTION_ARGS)
 	MultiRecordFreeSpace(&rel->rd_node, 0, nFreePages, pageSpaces);
 
 	pfree(pageSpaces);
+
+	MemoryContextDelete(mycontext);
+
+	if (pages_deleted > 0)
+		elog(info->message_level, "Index %s: %u pages, deleted %u; %u now free",
+			 RelationGetRelationName(rel),
+			 num_pages, pages_deleted, nFreePages);
 
 	/* update statistics */
 	stats->num_pages = num_pages;

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.63 2002/11/13 00:39:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.64 2003/02/23 06:17:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -394,17 +394,16 @@ nocache_index_getattr(IndexTuple tup,
 }
 
 /*
- * Copies source into target.  If *target == NULL, we palloc space; otherwise
- * we assume we have space that is already palloc'ed.
+ * Create a palloc'd copy of an index tuple.
  */
-void
-CopyIndexTuple(IndexTuple source, IndexTuple *target)
+IndexTuple
+CopyIndexTuple(IndexTuple source)
 {
+	IndexTuple	result;
 	Size		size;
 
 	size = IndexTupleSize(source);
-	if (*target == NULL)
-		*target = (IndexTuple) palloc(size);
-
-	memmove((char *) *target, (char *) source, size);
+	result = (IndexTuple) palloc(size);
+	memcpy(result, source, size);
+	return result;
 }
