@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.106 2002/05/18 21:38:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.107 2002/05/28 22:16:15 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -101,9 +101,9 @@ typedef struct
  * ----------
  */
 static void *plan_getrulebyoid = NULL;
-static char *query_getrulebyoid = "SELECT * FROM pg_rewrite WHERE oid = $1";
+static char *query_getrulebyoid = "SELECT * FROM pg_catalog.pg_rewrite WHERE oid = $1";
 static void *plan_getviewrule = NULL;
-static char *query_getviewrule = "SELECT * FROM pg_rewrite WHERE ev_class = $1 AND rulename = $2";
+static char *query_getviewrule = "SELECT * FROM pg_catalog.pg_rewrite WHERE ev_class = $1 AND rulename = $2";
 
 
 /* ----------
