@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.75 2001/01/02 04:33:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.76 2001/01/10 01:24:19 inoue Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -1636,7 +1636,6 @@ DeadLockCheck(PROC *thisProc, LOCK *findlock)
 												 MyProc,
 												 NULL) == STATUS_OK)
 						{
-							SetWaitingForLock(false);
 							GrantLock(MyProc->waitLock,
 									  MyProc->waitHolder,
 									  MyProc->waitLockMode);
