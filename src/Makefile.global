@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.47 1996/11/01 02:32:16 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.48 1996/11/01 03:32:57 momjian Exp $
 #
 # NOTES
 #    This is seen by any Makefiles that include mk/postgres.mk. To
@@ -425,15 +425,15 @@ MK_PORT=	bsdi
 
 CC=			gcc
 
-PRE_BSDI_2_1=N
+PRE_BSDI_2_1= false
 ifeq ($(shell uname -r), 2.0)
-PRE_BSDI_2_1=Y
+PRE_BSDI_2_1= true
 endif
 ifeq ($(shell uname -r), 2.01)
-PRE_BSDI_2_1=Y
+PRE_BSDI_2_1= true
 endif
 
-ifeq ($(PRE_BSDI_2_1), N)
+ifeq ($(PRE_BSDI_2_1), false)
 # cc is gcc v1.42
 # gcc is gcc v2.7.2
   LEX=		lex

@@ -4,7 +4,7 @@
 #    Makefile for port/bsdi
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/port/bsdi/Attic/Makefile,v 1.2 1996/11/01 01:46:21 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/port/bsdi/Attic/Makefile,v 1.3 1996/11/01 03:35:54 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -17,7 +17,11 @@ INCLUDE_OPT = -I../.. \
 
 CFLAGS+=$(INCLUDE_OPT)
 
+ifeq ($(PRE_BSDI_2_1), false)
+OBJS = port.o
+else
 OBJS = dynloader.o port.o
+endif
 
 all: SUBSYS.o
 

@@ -34,7 +34,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.12 1996/11/01 01:46:00 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.13 1996/11/01 03:35:43 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -64,7 +64,7 @@ LDADD+= -lln
 endif
 
 ifeq ($(PORTNAME), bsdi)
-  ifeq ($(PRE_BSDI_2_1), N)
+  ifeq ($(PRE_BSDI_2_1), false)
     LDADD+= -ldl -lipc
   else
     LDADD+= -ldld -lipc

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: ipc.h,v 1.6 1996/10/31 09:49:48 scrappy Exp $
+ * $Id: ipc.h,v 1.7 1996/11/01 03:36:16 momjian Exp $
  *
  * NOTES
  *    This file is very architecture-specific.  This stuff should actually
@@ -33,7 +33,6 @@
     defined(PORTNAME_alpha) || \
     defined(PORTNAME_BSD44_derived) || \
     defined(PORTNAME_bsdi) || \
-    defined(PORTNAME_bsdi_2_1) || \
     defined(PORTNAME_hpux) || \
     defined(PORTNAME_i386_solaris) || \
     defined(PORTNAME_irix5) || \
