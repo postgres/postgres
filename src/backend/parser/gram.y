@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.20 1996/11/30 03:38:05 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.21 1996/12/11 22:55:53 momjian Exp $
  *
  * HISTORY
  *    AUTHOR		DATE		MAJOR EVENT
@@ -98,7 +98,7 @@ static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr);
     AppendStmt		*astmt;
 }
 
-%type <node>	query, stmt, AddAttrStmt, ClosePortalStmt,
+%type <node>	stmt, AddAttrStmt, ClosePortalStmt,
 	CopyStmt, CreateStmt, DefineStmt, DestroyStmt, 
 	ExtendStmt, FetchStmt,	GrantStmt,
 	IndexStmt, MoveStmt, ListenStmt, OptimizableStmt, 
@@ -121,7 +121,7 @@ static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr);
 %type <str>	privileges, operation_commalist, grantee
 %type <chr>	operation
 
-%type <list>	queryblock, relation_name_list, OptTableElementList,
+%type <list>	stmtblock, relation_name_list, OptTableElementList,
 	tableElementList, OptInherit, definition,
 	opt_with, def_args, def_name_list, func_argtypes, 
 	oper_argtypes, OptStmtList, OptStmtBlock, opt_column_list, columnList,
@@ -218,14 +218,12 @@ static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr);
 %nonassoc REDUCE
 %%
 
-queryblock:  query queryblock
+stmtblock:  stmt ';' stmtblock
 		{ parsetree = lcons($1, parsetree); }
-	| query
+	| stmt ';'
 		{ parsetree = lcons($1, NIL); }
-	;
-
-query:    stmt 
-	| stmt ';'				{  $$ = $1;  }
+	| stmt
+		{ parsetree = lcons($1, NIL); }
 	;
 
 stmt :	  AddAttrStmt
