@@ -76,11 +76,11 @@ prsd_end(PG_FUNCTION_ARGS)
 #define ENDPUNCTOKEN(x) ( (x)==12 )
 
 
-#define IDIGNORE(x) ( (x)==13 || (x)==14 || (x)==12 || (x)==23 )
+#define TS_IDIGNORE(x) ( (x)==13 || (x)==14 || (x)==12 || (x)==23 )
 #define HLIDIGNORE(x) ( (x)==5 || (x)==13 || (x)==15 || (x)==16 || (x)==17 )
 #define HTMLHLIDIGNORE(x) ( (x)==5 || (x)==15 || (x)==16 || (x)==17 )
 #define NONWORDTOKEN(x) ( (x)==12 || HLIDIGNORE(x) )
-#define NOENDTOKEN(x)	( NONWORDTOKEN(x) || (x)==7 || (x)==8 || (x)==20 || (x)==21 || (x)==22 || IDIGNORE(x) )
+#define NOENDTOKEN(x)	( NONWORDTOKEN(x) || (x)==7 || (x)==8 || (x)==20 || (x)==21 || (x)==22 || TS_IDIGNORE(x) )
 
 typedef struct
 {
