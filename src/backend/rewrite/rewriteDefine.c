@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.6 1997/09/08 21:46:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.7 1997/10/25 05:37:07 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -123,7 +123,7 @@ InsertRule(char *rulname,
 	strcpyq(qualbuf, evqual);
 
 	template = "INSERT INTO pg_rewrite \
-(rulename, ev_type, ev_class, ev_attr, action, ev_qual, is_instead) VALUES \
+(rulename, ev_type, ev_class, ev_attr, ev_action, ev_qual, is_instead) VALUES \
 ('%s', %d::char, %d::oid, %d::int2, '%s'::text, '%s'::text, \
  '%s'::bool);";
 	if (strlen(template) + strlen(rulname) + strlen(actionbuf) +
