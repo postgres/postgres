@@ -220,11 +220,7 @@ do { \
 #if !defined(__CYGWIN__) && !defined(WIN32)
 #define TIMEZONE_GLOBAL timezone
 #else
-#if defined(WIN32)
 #define TIMEZONE_GLOBAL _timezone
-#else
-#define TIMEZONE_GLOBAL ((int)_timezone)	/* time_t on Cywgin */
-#endif
 #define tzname _tzname			/* should be in time.h? */
 #endif
 
