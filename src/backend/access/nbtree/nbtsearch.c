@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.17 1997/04/16 01:48:17 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.18 1997/04/24 15:46:44 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1353,6 +1353,8 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
     }
     else
     {
+	ItemPointerSetInvalid(current);
+	so->btso_curbuf = InvalidBuffer;
 	_bt_relbuf(rel, buf, BT_READ);
 	res = (RetrieveIndexResult) NULL;
     }
