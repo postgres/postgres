@@ -9,7 +9,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2ResultSet.java,v 1.25.2.4 2004/03/29 17:47:47 barry Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2ResultSet.java,v 1.25.2.5 2004/04/24 01:54:45 jurka Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1097,11 +1097,11 @@ public abstract class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.Abstra
 				updateValues.clear();
 				doingUpdates = false;
 			}
-			catch (Exception e)
+			catch (SQLException e)
 			{
 				if ( Driver.logDebug )
 					Driver.debug(e.getClass().getName() + e);
-				throw new SQLException( e.getMessage() );
+				throw e;
 			}
 
 		}
@@ -1497,6 +1497,7 @@ public abstract class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.Abstra
 					case Types.NUMERIC:
 					case Types.REAL:
 					case Types.TINYINT:
+					case Types.OTHER:
 
 						rowBuffer[columnIndex] = connection.getEncoding().encode(String.valueOf( valueObject));
 
