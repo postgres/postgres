@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.182 2004/12/31 21:59:16 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.183 2005/02/20 21:46:47 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -714,10 +714,6 @@ heap_beginscan(Relation relation, Snapshot snapshot,
 	 * rel open anyway, so this is redundant in all normal scenarios...
 	 */
 	RelationIncrementReferenceCount(relation);
-
-	/* XXX someday assert SelfTimeQual if relkind == RELKIND_UNCATALOGED */
-	if (relation->rd_rel->relkind == RELKIND_UNCATALOGED)
-		snapshot = SnapshotSelf;
 
 	/*
 	 * allocate and initialize scan descriptor

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.196 2005/02/20 02:21:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.197 2005/02/20 21:46:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -450,22 +450,23 @@ GetCurrentTransactionNestLevel(void)
 
 /*
  *	TransactionIdIsCurrentTransactionId
- *
- *	During bootstrap, we cheat and say "it's not my transaction ID" even though
- *	it is.	Along with transam.c's cheat to say that the bootstrap XID is
- *	already committed, this causes the tqual.c routines to see previously
- *	inserted tuples as committed, which is what we need during bootstrap.
  */
 bool
 TransactionIdIsCurrentTransactionId(TransactionId xid)
 {
 	TransactionState s;
 
-	if (AMI_OVERRIDE)
-	{
-		Assert(xid == BootstrapTransactionId);
+	/*
+	 * We always say that BootstrapTransactionId is "not my transaction ID"
+	 * even when it is (ie, during bootstrap).  Along with the fact that
+	 * transam.c always treats BootstrapTransactionId as already committed,
+	 * this causes the tqual.c routines to see all tuples as committed,
+	 * which is what we need during bootstrap.  (Bootstrap mode only inserts
+	 * tuples, it never updates or deletes them, so all tuples can be presumed
+	 * good immediately.)
+	 */
+	if (xid == BootstrapTransactionId)
 		return false;
-	}
 
 	/*
 	 * We will return true for the Xid of the current subtransaction, any

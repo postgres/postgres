@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/transam.c,v 1.63 2004/12/31 21:59:29 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/transam.c,v 1.64 2005/02/20 21:46:48 tgl Exp $
  *
  * NOTES
  *	  This file contains the high level access-method interface to the
@@ -23,18 +23,6 @@
 #include "access/subtrans.h"
 #include "access/transam.h"
 #include "utils/tqual.h"
-
-
-/* ----------------
- *		Flag indicating that we are bootstrapping.
- *
- * Transaction ID generation is disabled during bootstrap; we just use
- * BootstrapTransactionId.	Also, the transaction ID status-check routines
- * are short-circuited; they claim that BootstrapTransactionId has already
- * committed, allowing tuples already inserted to be seen immediately.
- * ----------------
- */
-bool		AMI_OVERRIDE = false;
 
 
 static XidStatus TransactionLogFetch(TransactionId transactionId);
@@ -134,18 +122,6 @@ TransactionLogMultiUpdate(int nxids, TransactionId *xids, XidStatus status)
 		TransactionIdSetStatus(xids[i], status);
 }
 
-/* --------------------------------
- *		AmiTransactionOverride
- *
- *		This function is used to manipulate the bootstrap flag.
- * --------------------------------
- */
-void
-AmiTransactionOverride(bool flag)
-{
-	AMI_OVERRIDE = flag;
-}
-
 /* ----------------------------------------------------------------
  *						Interface functions
  *
@@ -183,12 +159,6 @@ bool							/* true if given transaction committed */
 TransactionIdDidCommit(TransactionId transactionId)
 {
 	XidStatus	xidstatus;
-
-	if (AMI_OVERRIDE)
-	{
-		Assert(transactionId == BootstrapTransactionId);
-		return true;
-	}
 
 	xidstatus = TransactionLogFetch(transactionId);
 
@@ -232,12 +202,6 @@ bool							/* true if given transaction aborted */
 TransactionIdDidAbort(TransactionId transactionId)
 {
 	XidStatus	xidstatus;
-
-	if (AMI_OVERRIDE)
-	{
-		Assert(transactionId == BootstrapTransactionId);
-		return false;
-	}
 
 	xidstatus = TransactionLogFetch(transactionId);
 

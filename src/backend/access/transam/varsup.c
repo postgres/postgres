@@ -6,7 +6,7 @@
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/varsup.c,v 1.61 2005/02/20 02:21:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/varsup.c,v 1.62 2005/02/20 21:46:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,7 +41,7 @@ GetNewTransactionId(bool isSubXact)
 	 * During bootstrap initialization, we return the special bootstrap
 	 * transaction id.
 	 */
-	if (AMI_OVERRIDE)
+	if (IsBootstrapProcessingMode())
 		return BootstrapTransactionId;
 
 	LWLockAcquire(XidGenLock, LW_EXCLUSIVE);
