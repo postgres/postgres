@@ -1,5 +1,5 @@
 # Postgres documentation makefile
-# $Header: /cvsroot/pgsql/doc/src/Makefile,v 1.29 2002/07/28 15:19:59 petere Exp $
+# $Header: /cvsroot/pgsql/doc/src/Makefile,v 1.30 2002/11/30 00:22:39 tgl Exp $
 
 subdir = doc/src
 top_builddir = ../..
@@ -12,13 +12,13 @@ BOOKS = admin developer reference programmer tutorial user  postgres
 TARGETS= $(BOOKS:%=%.tar.$(ZIPSUFFIX))
 
 .PRECIOUS:
-.PHONY: install all sources clean distclean
+.PHONY: install all sources clean distclean maintainer-clean
 
-install:
-	$(MAKE) all
-	(mv -f *.$(ZIPSUFFIX) ..)
+install: all
+	cp -f *.$(ZIPSUFFIX) ..
 
 clean distclean maintainer-clean:
+	rm -f *.tar *.$(ZIPSUFFIX)
 	$(MAKE) -C sgml $@
 
 all: $(TARGETS)
