@@ -1,22 +1,18 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/doc/man/Attic/delete.l,v 1.1.1.1 1996/08/18 22:14:23 scrappy Exp $
+.\" $Header: /cvsroot/pgsql/doc/man/Attic/delete.l,v 1.2 1996/09/23 08:39:53 scrappy Exp $
 .TH DELETE SQL 11/05/95 Postgres95 Postgres95
 .SH NAME
 delete \(em delete instances from a class
 .SH SYNOPSIS
 .nf
-\fBdelete\fR instance_variable [ \fBfrom\fR from_list ] [ \fBwhere\fR qual ]
+\fBdelete\fR \fBfrom\fR class_name [ \fBwhere\fR qual ]
 .fi
 .SH DESCRIPTION
 .BR Delete
 removes instances which satisfy the qualification,
-.IR qual ,
-from the class specified by
-.IR instance_variable .
-.IR Instance_variable
-is either a class name or a variable assigned by
-.IR from_list .
+.IR qual
+from the specified class.
 If the qualification is absent, the effect is to delete all instances
 in the class.  The result is a valid, but empty class.
 .PP
