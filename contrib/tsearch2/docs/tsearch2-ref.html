@@ -1,67 +1,63 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<html>
-<head>
-<link type="text/css" rel="stylesheet" href="/~megera/postgres/gist/tsearch/tsearch.css">
-<title>tsearch2 reference</title>
-</head>
-<body>
-<h1 align=center>The tsearch2 Reference</h1>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"><html><head>
+<link type="text/css" rel="stylesheet" href="tsearch2-ref_files/tsearch.txt"><title>tsearch2 reference</title></head>
 
-<p align=center>
-Brandon Craig Rhodes<br>30 June 2003
-<p>
+<body>
+<h1 align="center">The tsearch2 Reference</h1>
+
+<p align="center">
+Brandon Craig Rhodes<br>30 June 2003 (edited by Oleg Bartunov, 2 Aug 2003).
+</p><p>
 This Reference documents the user types and functions
 of the tsearch2 module for PostgreSQL.
 An introduction to the module is provided
-by the <a href="tsearch2-guide.html">tsearch2 Guide</a>,
+by the <a href="http://www.sai.msu.su/%7Emegera/postgres/gist/tsearch/V2/docs/tsearch2-guide.html">tsearch2 Guide</a>,
 a companion document to this one.
 You can retrieve a beta copy of the tsearch2 module from the
-<a href="http://www.sai.msu.su/~megera/postgres/gist/">GiST for PostgreSQL</a>
-page &mdash; look under the section entitled <i>Development History</i>
+<a href="http://www.sai.msu.su/%7Emegera/postgres/gist/">GiST for PostgreSQL</a>
+page -- look under the section entitled <i>Development History</i>
 for the current version.
 
-<h2><a name="vq">Vectors and Queries</h2>
+</p><h2><a name="vq">Vectors and Queries</a></h2>
 
-Vectors and queries both store lexemes,
+<a name="vq">Vectors and queries both store lexemes,
 but for different purposes.
 A <tt>tsvector</tt> stores the lexemes
 of the words that are parsed out of a document,
 and can also remember the position of each word.
 A <tt>tsquery</tt> specifies a boolean condition among lexemes.
-<p>
-Any of the following functions with a <tt><i>configuration</i></tt> argument
+</a><p>
+<a name="vq">Any of the following functions with a <tt><i>configuration</i></tt> argument
 can use either an integer <tt>id</tt> or textual <tt>ts_name</tt>
 to select a configuration;
 if the option is omitted, then the current configuration is used.
 For more information on the current configuration,
 read the next section on Configurations.
 
-<h3>Vector Operations</h3>
+</a></p><h3><a name="vq">Vector Operations</a></h3>
 
-<dl>
-<dt>
- <tt>to_tsvector( <em>[</em><i>configuration</i>,<em>]</em>
+<dl><dt>
+<a name="vq"> <tt>to_tsvector( <em>[</em><i>configuration</i>,<em>]</em>
  <i>document</i> TEXT) RETURNS tsvector</tt>
-<dd>
- Parses a document into tokens,
+</a></dt><dd>
+<a name="vq"> Parses a document into tokens,
  reduces the tokens to lexemes,
  and returns a <tt>tsvector</tt> which lists the lexemes
  together with their positions in the document.
  For the best description of this process,
- see the section on <a href="tsearch2-guide.html#ps">Parsing and Stemming</a>
+ see the section on </a><a href="http://www.sai.msu.su/%7Emegera/postgres/gist/tsearch/V2/docs/tsearch2-guide.html#ps">Parsing and Stemming</a>
  in the accompanying tsearch2 Guide.
-<dt>
+</dd><dt>
  <tt>strip(<i>vector</i> tsvector) RETURNS tsvector</tt>
-<dd>
+</dt><dd>
  Return a vector which lists the same lexemes
  as the given <tt><i>vector</i></tt>,
  but which lacks any information
  about where in the document each lexeme appeared.
  While the returned vector is thus useless for relevance ranking,
  it will usually be much smaller.
-<dt>
+</dd><dt>
  <tt>setweight(<i>vector</i> tsvector, <i>letter</i>) RETURNS tsvector</tt>
-<dd>
+</dt><dd>
  This function returns a copy of the input vector
  in which every location has been labelled
  with either the <tt><i>letter</i></tt>
@@ -72,12 +68,12 @@ read the next section on Configurations.
  These labels are retained when vectors are concatenated,
  allowing words from different parts of a document
  to be weighted differently by ranking functions.
-<dt>
+</dd><dt>
  <tt><i>vector1</i> || <i>vector2</i></tt>
-<dt class=br>
+</dt><dt class="br">
  <tt>concat(<i>vector1</i> tsvector, <i>vector2</i> tsvector)
  RETURNS tsvector</tt>
-<dd>
+</dt><dd>
  Returns a vector which combines the lexemes and position information
  in the two vectors given as arguments.
  Position weight labels (described in the previous paragraph)
@@ -98,53 +94,52 @@ read the next section on Configurations.
  and then providing a <tt><i>weights</i></tt> argument
  to the <tt>rank()</tt> function
  that assigns different weights to positions with different labels.
-<dt>
+</dd><dt>
  <tt>tsvector_size(<i>vector</i> tsvector) RETURNS INT4</tt>
-<dd>
+</dt><dd>
  Returns the number of lexemes stored in the vector.
-<dt>
+</dd><dt>
  <tt><i>text</i>::tsvector RETURNS tsvector</tt>
-<dd>
+</dt><dd>
  Directly casting text to a <tt>tsvector</tt>
  allows you to directly inject lexemes into a vector,
  with whatever positions and position weights you choose to specify.
  The <tt><i>text</i></tt> should be formatted
  like the vector would be printed by the output of a <tt>SELECT</tt>.
- See the <a href="tsearch2-guide.html#casting">Casting</a>
+ See the <a href="http://www.sai.msu.su/%7Emegera/postgres/gist/tsearch/V2/docs/tsearch2-guide.html#casting">Casting</a>
  section in the Guide for details.
-</dl>
+</dd></dl>
 
 <h3>Query Operations</h3>
 
-<dl>
-<dt>
+<dl><dt>
  <tt>to_tsquery( <em>[</em><i>configuration</i>,<em>]</em>
  <i>querytext</i> text) RETURNS tsvector</tt>
-<dd>
+</dt><dd>
  Parses a query,
  which should be single words separated by the boolean operators
- &ldquo;<tt>&amp;</tt>&rdquo;&nbsp;and,
- &ldquo;<tt>|</tt>&rdquo;&nbsp;or,
- and&nbsp;&ldquo;<tt>!</tt>&rdquo;&nbsp;not,
+ "<tt>&amp;</tt>"&nbsp;and,
+ "<tt>|</tt>"&nbsp;or,
+ and&nbsp;"<tt>!</tt>"&nbsp;not,
  which can be grouped using parenthesis.
  Each word is reduced to a lexeme using the current
  or specified configuration.
-</ul>
-<dt>
+
+</dd><dt>
  <tt>querytree(<i>query</i> tsquery) RETURNS text</tt>
-<dd>
+</dt><dd>
  This might return a textual representation of the given query.
-<dt>
+</dd><dt>
  <tt><i>text</i>::tsquery RETURNS tsquery</tt>
-<dd>
+</dt><dd>
  Directly casting text to a <tt>tsquery</tt>
  allows you to directly inject lexemes into a query,
  with whatever positions and position weight flags you choose to specify.
  The <tt><i>text</i></tt> should be formatted
  like the query would be printed by the output of a <tt>SELECT</tt>.
- See the <a href="tsearch2-guide.html#casting">Casting</a>
+ See the <a href="http://www.sai.msu.su/%7Emegera/postgres/gist/tsearch/V2/docs/tsearch2-guide.html#casting">Casting</a>
  section in the Guide for details.
-</dl>
+</dd></dl>
 
 <h2><a name="configurations">Configurations</a></h2>
 
@@ -157,39 +152,38 @@ uses a configuration to perform its processing.
 Three configurations come with tsearch2:
 
 <ul>
-<li><b>default</b> &mdash; Indexes words and numbers,
+<li><b>default</b> -- Indexes words and numbers,
  using the <i>en_stem</i> English Snowball stemmer for Latin-alphabet words
  and the <i>simple</i> dictionary for all others.
-<li><b>default_russian</b> &mdash; Indexes words and numbers,
+</li><li><b>default_russian</b> -- Indexes words and numbers,
  using the <i>en_stem</i> English Snowball stemmer for Latin-alphabet words
  and the <i>ru_stem</i> Russian Snowball dictionary for all others.
-<li><b>simple</b> &mdash; Processes both words and numbers
+</li><li><b>simple</b> -- Processes both words and numbers
  with the <i>simple</i> dictionary,
  which neither discards any stop words nor alters them.
-</ul>
+</li></ul>
 
 The tsearch2 modules initially chooses your current configuration
 by looking for your current locale in the <tt>locale</tt> field
 of the <tt>pg_ts_cfg</tt> table described below.
 You can manipulate the current configuration yourself with these functions:
 
-<dl>
-<dt>
+<dl><dt>
  <tt>set_curcfg( <i>id</i> INT <em>|</em> <i>ts_name</i> TEXT
   ) RETURNS VOID</tt>
-<dd>
+</dt><dd>
  Set the current configuration used by <tt>to_tsvector</tt>
  and <tt>to_tsquery</tt>.
-<dt>
+</dd><dt>
  <tt>show_curcfg() RETURNS INT4</tt>
-<dd>
+</dt><dd>
  Returns the integer <tt>id</tt> of the current configuration.
-</dl>
+</dd></dl>
 
 <p>
 Each configuration is defined by a record in the <tt>pg_ts_cfg</tt> table:
 
-<pre>create table pg_ts_cfg (
+</p><pre>create table pg_ts_cfg (
 	id		int not  null primary key,
 	ts_name		text not null,
 	prs_name	text not null,
@@ -200,17 +194,17 @@ The <tt>id</tt> and <tt>ts_name</tt> are unique values
 which identify the configuration;
 the <tt>prs_name</tt> specifies which parser the configuration uses.
 Once this parser has split document text into tokens,
-the type of each resulting token &mdash;
-or, more specifically, the type's <tt>lex_alias</tt>
-as specified in the parser's <tt>lexem_type()</tt> table &mdash;
+the type of each resulting token --
+or, more specifically, the type's <tt>tok_alias</tt>
+as specified in the parser's <tt>lexem_type()</tt> table --
 is searched for together with the configuration's <tt>ts_name</tt>
 in the <tt>pg_ts_cfgmap</tt> table:
 
 <pre>create table pg_ts_cfgmap (
 	ts_name		text not null,
-	lex_alias	text not null,
+	tok_alias	text not null,
 	dict_name	text[],
-	primary key (ts_name,lex_alias)
+	primary key (ts_name,tok_alias)
 );</pre>
 
 Those tokens whose types are not listed are discarded.
@@ -227,17 +221,16 @@ or discarding the token if no dictionary returns a lexeme for it.
 Each parser is defined by a record in the <tt>pg_ts_parser</tt> table:
 
 <pre>create table pg_ts_parser (
-	prs_id		int not null primary key,
 	prs_name	text not null,
 	prs_start	oid not null,
-	prs_getlexem	oid not null,
+	prs_nexttoken	oid not null,
 	prs_end		oid not null,
 	prs_headline	oid not null,
 	prs_lextype	oid not null,
 	prs_comment	text
 );</pre>
 
-The <tt>prs_id</tt> and <tt>prs_name</tt> uniquely identify the parser,
+The <tt>prs_name</tt> uniquely identify the parser,
 while <tt>prs_comment</tt> usually describes its name and version
 for the reference of users.
 The other items identify the low-level functions
@@ -246,40 +239,65 @@ and are only of interest to someone writing a parser of their own.
 <p>
 The tsearch2 module comes with one parser named <tt>default</tt>
 which is suitable for parsing most plain text and HTML documents.
-<p>
+</p><p>
 Each <tt><i>parser</i></tt> argument below
-must designate a parser with either an integer <tt><i>prs_id</i></tt>
-or a textual <tt><i>prs_name</i></tt>;
+must designate a parser with <tt><i>prs_name</i></tt>;
 the current parser is used when this argument is omitted.
 
-<dl>
-<dt>
+</p><dl><dt>
  <tt>CREATE FUNCTION set_curprs(<i>parser</i>) RETURNS VOID</tt>
-<dd>
+</dt><dd>
  Selects a current parser
  which will be used when any of the following functions
  are called without a parser as an argument.
-<dt>
- <tt>CREATE FUNCTION lexem_type(
+</dd><dt>
+ <tt>CREATE FUNCTION token_type(
   <em>[</em> <i>parser</i> <em>]</em>
-  ) RETURNS SETOF lexemtype</tt>
-<dd>
+  ) RETURNS SETOF tokentype</tt>
+</dt><dd>
  Returns a table which defines and describes
  each kind of token the parser may produce as output.
- For each token type the table gives the <tt>lexid</tt>
+ For each token type the table gives the <tt>tokid</tt>
  which the parser will label each token of that type,
  the <tt>alias</tt> which names the token type,
  and a short description <tt>descr</tt> for the user to read.
-<dt>
+ <br>
+ Example:
+ <br>
+ <pre> apod=# select m.ts_name, t.alias as tok_type, t.descr as description, p.token,\
+ apod=# m.dict_name, strip(to_tsvector(p.token)) as tsvector\
+ apod=# from parse('Tsearch module for PostgreSQL 7.3.3') as\
+ apod=# p, token_type() as t, pg_ts_cfgmap as m, pg_ts_cfg as c\
+ apod=# where t.tokid=p.tokid and t.alias = m.tok_alias\
+ apod=# and m.ts_name=c.ts_name and c.oid=show_curcfg();
+  ts_name | tok_type | description |   token    | dict_name |  tsvector    
+ ---------+----------+-------------+------------+-----------+--------------
+  default | lword    | Latin word  | Tsearch    | {en_stem} | 'tsearch'
+  default | word     | Word        | module     | {simple}  | 'modul'
+  default | lword    | Latin word  | for        | {en_stem} | 
+  default | lword    | Latin word  | PostgreSQL | {en_stem} | 'postgresql'
+  default | version  | VERSION     | 7.3.3      | {simple}  | '7.3.3'
+ </pre>
+ Here:
+ <ul>
+ <li> tsname - configuration name
+ </li><li> tok_type  - token type
+ </li><li> description - human readable name of tok_type
+ </li><li> token       - parser's token
+ </li><li> dict_name - dictionary will be used for the token
+ </li><li> tsvector - final result
+ </li></ul>
+
+</dd><dt>
  <tt>CREATE FUNCTION parse(
   <em>[</em> <i>parser</i>, <em>]</em> <i>document</i> TEXT
-  ) RETURNS SETOF lexemtype</tt>
-<dd>
+  ) RETURNS SETOF tokenout</tt>
+</dt><dd>
  Parses the given document and returns a series of records,
  one for each token produced by parsing.
- Each token includes a <tt>lexid</tt> giving its type
+ Each token includes a <tt>tokid</tt> giving its type
  and a <tt>lexem</tt> which gives its content.
-</dl>
+</dd></dl>
 
 <h2><a name="dictionaries">Dictionaries</a></h2>
 
@@ -291,24 +309,23 @@ Among the dictionaries which come installed with tsearch2 are:
 <ul>
 <li><b>simple</b> simply folds uppercase letters to lowercase
  before returning the word.
-<li><b>en_stem</b> runs an English Snowball stemmer on each word
+</li><li><b>en_stem</b> runs an English Snowball stemmer on each word
  that attempts to reduce the various forms of a verb or noun
  to a single recognizable form.
-<li><b>ru_stem</b> runs a Russian Snowball stemmer on each word.
-</ul>
+</li><li><b>ru_stem</b> runs a Russian Snowball stemmer on each word.
+</li></ul>
 
 Each dictionary is defined by an entry in the <tt>pg_ts_dict</tt> table:
 
 <pre>CREATE TABLE pg_ts_dict (
-	dict_id		int not null primary key,
 	dict_name	text not null,
 	dict_init	oid,
 	dict_initoption	text,
-	dict_lemmatize	oid not null,
+	dict_lexize	oid not null,
 	dict_comment	text
 );</pre>
 
-The <tt>dict_id</tt> and <tt>dict_name</tt>
+The <tt>dict_name</tt>
 serve as unique identifiers for the dictionary.
 The meaning of the <tt>dict_initoption</tt> varies among dictionaries,
 but for the built-in Snowball dictionaries
@@ -319,33 +336,32 @@ useful only to developers trying to implement their own dictionaries.
 <p>
 The argument named <tt><i>dictionary</i></tt>
 in each of the following functions
-should be either an integer <tt>dict_id</tt> or a textual <tt>dict_name</tt>
+should be <tt>dict_name</tt>
 identifying which dictionary should be used for the operation;
 if omitted then the current dictionary is used.
 
-<dl>
-<dt>
+</p><dl><dt>
  <tt>CREATE FUNCTION set_curdict(<i>dictionary</i>) RETURNS VOID</tt>
-<dd>
+</dt><dd>
  Selects a current dictionary for use by functions
  that do not select a dictionary explicitly.
-<dt>
+</dd><dt>
  <tt>CREATE FUNCTION lexize(
  <em>[</em> <i>dictionary</i>, <em>]</em> <i>word</i> text)
  RETURNS TEXT[]</tt>
-<dd>
+</dt><dd>
  Reduces a single word to a lexeme.
  Note that lexemes are arrays of zero or more strings,
  since in some languages there might be several base words
  from which an inflected form could arise.
-</dl>
+</dd></dl>
 
 <h2><a name="ranking">Ranking</a></h2>
 
 Ranking attempts to measure how relevant documents are to particular queries
 by inspecting the number of times each search word appears in the document,
 and whether different search terms occur near each other.
-Note that this information is only available in unstripped vectors &mdash;
+Note that this information is only available in unstripped vectors --
 ranking functions will only return a useful result
 for a <tt>tsvector</tt> which still has position information!
 <p>
@@ -357,45 +373,42 @@ since a hundred-word document with five instances of a search word
 is probably more relevant than a thousand-word document with five instances.
 The option can have the values:
 
-<ul>
+</p><ul>
 <li><tt>0</tt> (the default) ignores document length.
-<li><tt>1</tt> divides the rank by the logarithm of the length.
-<li><tt>2</tt> divides the rank by the length itself.
-</ul>
+</li><li><tt>1</tt> divides the rank by the logarithm of the length.
+</li><li><tt>2</tt> divides the rank by the length itself.
+</li></ul>
 
 The two ranking functions currently available are:
 
-<dl>
-<dt>
+<dl><dt>
  <tt>CREATE FUNCTION rank(<br>
   <em>[</em> <i>weights</i> float4[], <em>]</em>
   <i>vector</i> tsvector, <i>query</i> tsquery,
   <em>[</em> <i>normalization</i> int4 <em>]</em><br>
   ) RETURNS float4</tt>
-<dd>
+</dt><dd>
  This is the ranking function from the old version of OpenFTS,
  and offers the ability to weight word instances more heavily
  depending on how you have classified them.
  The <i>weights</i> specify how heavily to weight each category of word:
- <pre
->{<i>D-weight</i>, <i>A-weight</i>, <i>B-weight</i>, <i>C-weight</i>}</pre>
+ <pre>{<i>D-weight</i>, <i>C-weight</i>, <i>B-weight</i>, <i>A-weight</i>}</pre>
  If no weights are provided, then these defaults are used:
  <pre>{0.1, 0.2, 0.4, 1.0}</pre>
  Often weights are used to mark words from special areas of the document,
  like the title or an initial abstract,
  and make them more or less important than words in the document body.
-<dt>
+</dd><dt>
  <tt>CREATE FUNCTION rank_cd(<br>
   <em>[</em> <i>K</i> int4, <em>]</em>
   <i>vector</i> tsvector, <i>query</i> tsquery,
   <em>[</em> <i>normalization</i> int4 <em>]</em><br>
   ) RETURNS float4</tt>
-<dd>
+</dt><dd>
  This function computes the cover density ranking
  for the given document <i>vector</i> and <i>query</i>,
  as described in Clarke, Cormack, and Tudhope's
- &ldquo;<a href="http://citeseer.nj.nec.com/clarke00relevance.html"
->Relevance Ranking for One to Three Term Queries</a>&rdquo;
+ "<a href="http://citeseer.nj.nec.com/clarke00relevance.html">Relevance Ranking for One to Three Term Queries</a>"
  in the 1999 <i>Information Processing and Management</i>.
  The value <i>K</i> is one of the values from their formula,
  and defaults to&nbsp;<i>K</i>=4.
@@ -403,18 +416,17 @@ The two ranking functions currently available are:
  we can roughly describe the term
  as stating how far apart two search terms can fall
  before the formula begins penalizing them for lack of proximity.
-</dl>
+</dd></dl>
 
 <h2><a name="headlines">Headlines</a></h2>
 
-<dl>
-<dt>
+<dl><dt>
  <tt>CREATE FUNCTION headline(<br>
   <em>[</em> <i>id</i> int4, <em>|</em> <i>ts_name</i> text, <em>]</em>
   <i>document</i> text, <i>query</i> tsquery,
   <em>[</em> <i>options</i> text <em>]</em><br>
   ) RETURNS text</tt>
-<dd>
+</dt><dd>
  Every form of the the <tt>headline()</tt> function
  accepts a <tt>document</tt> along with a <tt>query</tt>,
  and returns one or more ellipse-separated excerpts from the document
@@ -424,25 +436,23 @@ The two ranking functions currently available are:
  if none is specified that the current configuration is used instead.
  <p>
  An <i>options</i> string if provided should be a comma-separated list
- of one or more &lsquo;<i>option</i><tt>=</tt><i>value</i>&rsquo; pairs.
+ of one or more '<i>option</i><tt>=</tt><i>value</i>' pairs.
  The available options are:
- <ul>
-  <li><tt>StartSel</tt>, <tt>StopSel</tt> &mdash;
+ </p><ul>
+  <li><tt>StartSel</tt>, <tt>StopSel</tt> --
    the strings with which query words appearing in the document
    should be delimited to distinguish them from other excerpted words.
-  <li><tt>MaxWords</tt>, <tt>MinWords</tt> &mdash;
+  </li><li><tt>MaxWords</tt>, <tt>MinWords</tt> --
    limits on the shortest and longest headlines you will accept.
-  <li><tt>ShortWord</tt> &mdash;
+  </li><li><tt>ShortWord</tt> --
    this prevents your headline from beginning or ending
    with a word which has this many characters or less.
    The default value of <tt>3</tt> should eliminate most English
    conjunctions and articles.
- </ul>
+ </li></ul>
  Any unspecified options receive these defaults:
- <pre>
-StartSel=&lt;b&gt;, StopSel=&lt;/b&gt;, MaxWords=35, MinWords=15, ShortWord=3
+ <pre>StartSel=&lt;b&gt;, StopSel=&lt;/b&gt;, MaxWords=35, MinWords=15, ShortWord=3
  </pre>
-</dl>
+</dd></dl>
 
-</body>
-</html>
+</body></html>
