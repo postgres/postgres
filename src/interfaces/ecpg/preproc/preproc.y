@@ -620,7 +620,7 @@ output_statement(char * stmt, int mode)
 %type  <str> 	ColId default_expr ColQualifier columnDef ColQualList
 %type  <str>    ColConstraint ColConstraintElem default_list NumericOnly FloatOnly
 %type  <str>    OptTableElementList OptTableElement TableConstraint
-%type  <str>    ConstraintElem key_actions constraint_list TypeId
+%type  <str>    ConstraintElem key_actions constraint_list
 %type  <str>    res_target_list res_target_el res_target_list2
 %type  <str>    res_target_el2 opt_id relation_name database_name
 %type  <str>    access_method attr_name class index_name name func_name
@@ -636,12 +636,12 @@ output_statement(char * stmt, int mode)
 %type  <str>	SelectStmt union_clause select_list SubSelect result
 %type  <str>	opt_table opt_union opt_unique sort_clause sortby_list
 %type  <str>	sortby OptUseOp opt_inh_star relation_name_list name_list
-%type  <str>	group_clause groupby_list groupby having_clause from_clause
+%type  <str>	group_clause having_clause from_clause c_list 
 %type  <str>	from_list from_val join_expr join_outer join_spec join_list
 %type  <str> 	join_using where_clause relation_expr row_op sub_type
 %type  <str>	opt_column_list insert_rest InsertStmt OptimizableStmt
 %type  <str>    columnList DeleteStmt LockStmt UpdateStmt CursorStmt
-%type  <str>    NotifyStmt columnElem copy_dirn SubUnion
+%type  <str>    NotifyStmt columnElem copy_dirn SubUnion c_expr
 %type  <str>    copy_delimiter ListenStmt CopyStmt copy_file_name opt_binary
 %type  <str>    opt_with_copy FetchStmt opt_direction fetch_how_many opt_portal_name
 %type  <str>    ClosePortalStmt DestroyStmt VacuumStmt opt_verbose
@@ -652,7 +652,7 @@ output_statement(char * stmt, int mode)
 %type  <str>    def_elem def_list definition def_name def_type DefineStmt
 %type  <str>    opt_instead event event_object OptStmtMulti OptStmtBlock
 %type  <str>    OptStmtList RuleStmt opt_column opt_name oper_argtypes
-%type  <str>    MathOp RemoveOperStmt RemoveFuncStmt aggr_argtype
+%type  <str>    MathOp RemoveFuncStmt aggr_argtype
 %type  <str>    RemoveAggrStmt remove_type RemoveStmt ExtendStmt RecipeStmt
 %type  <str>    RemoveOperStmt RenameStmt all_Op user_valid_clause
 %type  <str>    VariableSetStmt var_value zone_value VariableShowStmt
@@ -661,7 +661,7 @@ output_statement(char * stmt, int mode)
 %type  <str>    user_createuser_clause user_group_list user_group_clause
 %type  <str>    CreateUserStmt AlterUserStmt CreateSeqStmt OptSeqList
 %type  <str>    OptSeqElem TriggerForSpec TriggerForOpt TriggerForType
-%type  <str>	TriggerFuncArgs DropTrigStmt TriggerOneEvent TriggerEvents
+%type  <str>	DropTrigStmt TriggerOneEvent TriggerEvents
 %type  <str>    TriggerActionTime CreateTrigStmt DropPLangStmt PLangTrusted
 %type  <str>    CreatePLangStmt IntegerOnly TriggerFuncArgs TriggerFuncArg
 %type  <str>    ViewStmt LoadStmt CreatedbStmt opt_database1 opt_database2 location
@@ -669,7 +669,7 @@ output_statement(char * stmt, int mode)
 %type  <str>	GrantStmt privileges operation_commalist operation
 
 %type  <str>	ECPGWhenever ECPGConnect connection_target ECPGOpen open_opts
-%type  <str>	indicator ECPGExecute c_expr variable_list dotext
+%type  <str>	indicator ECPGExecute ecpg_expr dotext
 %type  <str>    storage_clause opt_initializer vartext c_anything blockstart
 %type  <str>    blockend variable_list variable var_anything do_anything
 %type  <str>	opt_pointer cvariable ECPGDisconnect dis_name
@@ -756,6 +756,7 @@ stmt:  AddAttrStmt			{ output_statement($1, 0); }
 		| VariableShowStmt	{ output_statement($1, 0); }
 		| VariableResetStmt	{ output_statement($1, 0); }
 		| ECPGConnect		{
+						fprintf(yyout, "no_auto_trans = %d;\n", no_auto_trans);
 						fprintf(yyout, "ECPGconnect(__LINE__, %s);", $1);
 						whenever_action(0);
 						free($1);
@@ -1307,6 +1308,8 @@ constraint_expr:  AexprConst
 				{	$$ = cat3_str($1, $2, $3); }
 			| constraint_expr LIKE constraint_expr
 				{	$$ = cat3_str($1, make1_str("like"), $3); }
+			| constraint_expr NOT LIKE constraint_expr
+				{	$$ = cat3_str($1, make1_str("not like"), $4); }
 			| constraint_expr AND constraint_expr
 				{	$$ = cat3_str($1, make1_str("and"), $3); }
 			| constraint_expr OR constraint_expr
@@ -1333,7 +1336,28 @@ constraint_expr:  AexprConst
 				{	$$ = cat2_str($1, make1_str("is not true")); }
 			| constraint_expr IS NOT FALSE_P
 				{	$$ = cat2_str($1, make1_str("is not false")); }
+			| constraint_expr IN '(' c_list ')'
+				{	$$ = cat4_str($1, make1_str("in ("), $4, make1_str(")")); }
+			| constraint_expr NOT IN '(' c_list ')'
+				{	$$ = cat4_str($1, make1_str("not in ("), $5, make1_str(")")); }
+			| constraint_expr BETWEEN c_expr AND c_expr
+				{	$$ = cat5_str($1, make1_str("between"), $3, make1_str("and"), $5); }
+			| constraint_expr NOT BETWEEN c_expr AND c_expr
+				{	$$ = cat5_str($1, make1_str("not between"), $4, make1_str("and"), $6); }
 		;
+c_list:  c_list ',' c_expr
+	{
+		$$ = make3_str($1, make1_str(", "), $3);
+	}
+	| c_expr
+	{
+		$$ = $1;
+	}
+
+c_expr:  AexprConst
+	{
+		$$ = $1;
+	}
 
 key_match:  MATCH FULL					{ $$ = make1_str("match full"); }
 		| MATCH PARTIAL					{ $$ = make1_str("match partial"); }
@@ -2025,6 +2049,7 @@ RuleStmt:  CREATE RULE name AS
 OptStmtList:  NOTHING					{ $$ = make1_str("nothing"); }
 		| OptimizableStmt			{ $$ = $1; }
 		| '[' OptStmtBlock ']'			{ $$ = cat3_str(make1_str("["), $2, make1_str("]")); }
+		| '(' OptStmtBlock ')'			{ $$ = cat3_str(make1_str("("), $2, make1_str(")")); }
 		;
 
 OptStmtBlock:  OptStmtMulti
@@ -2480,18 +2505,10 @@ sortby_list:  sortby					{ $$ = $1; }
 		| sortby_list ',' sortby		{ $$ = cat3_str($1, make1_str(","), $3); }
 		;
 
-sortby:  ColId OptUseOp
+sortby: a_expr OptUseOp
 				{
-					$$ = cat2_str($1, $2);
-				}
-		| ColId '.' ColId OptUseOp
-				{
-					$$ = cat2_str(make3_str($1, make1_str("."), $3), $4);
-				}
-		| Iconst OptUseOp
-				{
-					$$ = cat2_str($1, $2);
-				}
+					 $$ = cat2_str($1, $2);
+                                }
 		;
 
 OptUseOp:  USING Op				{ $$ = cat2_str(make1_str("using"), $2); }
@@ -2521,26 +2538,8 @@ name_list:  name
 				{	$$ = cat3_str($1, make1_str(","), $3); }
 		;
 
-group_clause:  GROUP BY groupby_list			{ $$ = cat2_str(make1_str("groub by"), $3); }
+group_clause:  GROUP BY expr_list			{ $$ = cat2_str(make1_str("groub by"), $3); }
 		| /*EMPTY*/				{ $$ = make1_str(""); }
-		;
-
-groupby_list:  groupby					{ $$ = $1; }
-		| groupby_list ',' groupby		{ $$ = cat3_str($1, make1_str(","), $3); }
-		;
-
-groupby:  ColId
-				{
-					$$ = $1;
-				}
-		| ColId '.' ColId
-				{
-					$$ = make3_str($1, make1_str(","), $3);
-				}
-		| Iconst
-				{
-					$$ = $1;
-				}
 		;
 
 having_clause:  HAVING a_expr
@@ -3410,11 +3409,11 @@ b_expr:  attr opt_indirection
 			        { $$ = make1_str(";;"); }
 		;
 
-opt_indirection:  '[' c_expr ']' opt_indirection
+opt_indirection:  '[' ecpg_expr ']' opt_indirection
 				{
 					$$ = cat4_str(make1_str("["), $2, make1_str("]"), $4);
 				}
-		| '[' c_expr ':' c_expr ']' opt_indirection
+		| '[' ecpg_expr ':' ecpg_expr ']' opt_indirection
 				{
 					$$ = cat2_str(cat5_str(make1_str("["), $2, make1_str(":"), $4, make1_str("]")), $6);
 				}
@@ -4353,7 +4352,7 @@ action : SQL_CONTINUE {
 
 /* some other stuff for ecpg */
 
-c_expr:  attr opt_indirection
+ecpg_expr:  attr opt_indirection
 				{
 					$$ = cat2_str($1, $2);
 				}
@@ -4365,27 +4364,27 @@ c_expr:  attr opt_indirection
 				{
 					$$ = $1;
 				}
-		| '-' c_expr %prec UMINUS
+		| '-' ecpg_expr %prec UMINUS
 				{	$$ = cat2_str(make1_str("-"), $2); }
-		| a_expr '+' c_expr
+		| a_expr '+' ecpg_expr
 				{	$$ = cat3_str($1, make1_str("+"), $3); }
-		| a_expr '-' c_expr
+		| a_expr '-' ecpg_expr
 				{	$$ = cat3_str($1, make1_str("-"), $3); }
-		| a_expr '/' c_expr
+		| a_expr '/' ecpg_expr
 				{	$$ = cat3_str($1, make1_str("/"), $3); }
-		| a_expr '*' c_expr
+		| a_expr '*' ecpg_expr
 				{	$$ = cat3_str($1, make1_str("*"), $3); }
-		| a_expr '<' c_expr
+		| a_expr '<' ecpg_expr
 				{	$$ = cat3_str($1, make1_str("<"), $3); }
-		| a_expr '>' c_expr
+		| a_expr '>' ecpg_expr
 				{	$$ = cat3_str($1, make1_str(">"), $3); }
-		| a_expr '=' c_expr
+		| a_expr '=' ecpg_expr
 				{	$$ = cat3_str($1, make1_str("="), $3); }
-	/*	| ':' c_expr
+	/*	| ':' ecpg_expr
 				{	$$ = cat2_str(make1_str(":"), $2); }*/
-		| ';' c_expr
+		| ';' ecpg_expr
 				{	$$ = cat2_str(make1_str(";"), $2); }
-		| '|' c_expr
+		| '|' ecpg_expr
 				{	$$ = cat2_str(make1_str("|"), $2); }
 		| a_expr TYPECAST Typename
 				{
@@ -4397,13 +4396,13 @@ c_expr:  attr opt_indirection
 				}
 		| '(' a_expr_or_null ')'
 				{	$$ = make3_str(make1_str("("), $2, make1_str(")")); }
-		| a_expr Op c_expr
+		| a_expr Op ecpg_expr
 				{	$$ = cat3_str($1, $2, $3);	}
-		| a_expr LIKE c_expr
+		| a_expr LIKE ecpg_expr
 				{	$$ = cat3_str($1, make1_str("like"), $3); }
-		| a_expr NOT LIKE c_expr
+		| a_expr NOT LIKE ecpg_expr
 				{	$$ = cat3_str($1, make1_str("not like"), $4); }
-		| Op c_expr
+		| Op ecpg_expr
 				{	$$ = cat2_str($1, $2); }
 		| a_expr Op
 				{	$$ = cat2_str($1, $2); }
@@ -4621,11 +4620,11 @@ c_expr:  attr opt_indirection
 				{
 					$$ = make4_str($1, make1_str("=all("), $5, make1_str(")")); 
 				}
-		| a_expr AND c_expr
+		| a_expr AND ecpg_expr
 				{	$$ = cat3_str($1, make1_str("and"), $3); }
-		| a_expr OR c_expr
+		| a_expr OR ecpg_expr
 				{	$$ = cat3_str($1, make1_str("or"), $3); }
-		| NOT c_expr
+		| NOT ecpg_expr
 				{	$$ = cat2_str(make1_str("not"), $2); }
 		| civariableonly
 			        { $$ = make1_str(";;"); }

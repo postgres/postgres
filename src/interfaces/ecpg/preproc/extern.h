@@ -3,7 +3,7 @@
 
 /* variables */
 
-extern int  braces_open;
+extern int  braces_open, no_auto_trans;
 extern char *yytext;
 extern int	yylineno,
 			yyleng;
@@ -25,6 +25,13 @@ struct cursor { char *name;
                                            
 extern struct cursor *cur;
 
+struct _defines { char *old;
+                  char *new;
+                  struct _defines *next;
+                };
+
+extern struct _defines *defines;
+                                                                                        
 /* This is a linked list of the variable names and types. */
 struct variable
 {

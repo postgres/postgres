@@ -46,9 +46,12 @@ struct _yy_buffer { YY_BUFFER_STATE 	buffer;
 		    struct _yy_buffer * next;
 		  } *yy_buffer = NULL;
 
+struct _defines *defines = NULL;
+static char *old;
+
 %}
 %option yylineno
-%s C SQL incl
+%s C SQL incl def def_ident
 /* OK, here is a short description of lex/flex rules behavior.
  * The longest pattern which matches an input string is always chosen.
  * For equal-length patterns, the first occurring in the rules list is chosen.
@@ -156,6 +159,7 @@ other			.
 /* some stuff needed for ecpg */
 ccomment	"//".*\n
 exec    [eE][xX][eE][cC]
+define	[dD][eE][fF][iI][nN][eE]
 include [iI][nN][cC][lL][uU][dD][eE]
 sql     [sS][qQ][lL]
 
@@ -307,7 +311,6 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 
 
 <SQL>{typecast}			{ 	return TYPECAST; }
-
 <SQL>{self}/{space}*-[\.0-9]	{
 					BEGIN(xm);
 					return (yytext[0]);
@@ -328,7 +331,6 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 					yylval.ival = atoi((char*)&yytext[1]);
 					return (PARAM);
 				}
-
 <SQL>{identifier}/{space}*-{number}	{
 					int i;
 					ScanKeyword		*keyword;
@@ -350,12 +352,36 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 						}
 						else
 						{
-							yylval.str = strdup((char*)yytext);
-							return (IDENT);
+							struct _defines *ptr;
+
+							for (ptr = defines; ptr; ptr = ptr->next)
+							{
+								if (strcmp(yytext, ptr->old) == 0)
+								{
+									struct _yy_buffer *yb;
+
+									yb = mm_alloc(sizeof(struct _yy_buffer));
+
+						                        yb->buffer =  YY_CURRENT_BUFFER;
+						                        yb->lineno = yylineno;
+						                        yb->filename = strdup(input_filename);
+						                        yb->next = yy_buffer;
+
+						                        yy_buffer = yb;
+
+ 									yy_scan_string(ptr->new);
+									break;
+								}
+							}
+							if (ptr == NULL) 
+							{
+								yylval.str = strdup((char*)yytext);
+								return (IDENT);
+							}
 						}
 					}
 				}
-{integer}/{space}*-{number}	{
+<SQL>{integer}/{space}*-{number}	{
 					char* endptr;
 
 					BEGIN(xm);
@@ -372,7 +398,7 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 					}
 					return (ICONST);
 				}
-{real}/{space}*-{number} {
+<SQL>{real}/{space}*-{number} {
 					char* endptr;
 
 					BEGIN(xm);
@@ -382,7 +408,7 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 						yyerror("ERROR: Bad float8 input");
 					return (FCONST);
 				}
-{integer}		{
+<SQL>{integer}		{
 					char* endptr;
 
 					errno = 0;
@@ -398,7 +424,7 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 					}
 					return (ICONST);
 				}
-{real}			{
+<SQL>{real}			{
 					char* endptr;
 
 					errno = 0;
@@ -407,7 +433,39 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 						yyerror("ERROR: Bad float input");
 					return (FCONST);
 				}
+<C>{integer}/{space}*-{number}	{
+					char* endptr;
 
+					BEGIN(xm);
+					errno = 0;
+					yylval.ival = strtol((char *)yytext,&endptr,10);
+					if (*endptr != '\0' || errno == ERANGE)
+					{
+						errno = 0;
+						yylval.dval = strtod(((char *)yytext),&endptr);
+						if (*endptr != '\0' || errno == ERANGE)
+							yyerror("ERROR: Bad integer input");
+						yyerror("WARNING: Integer input is out of range; promoted to float");
+						return (FCONST);
+					}
+					return (ICONST);
+				}
+<C>{integer}		{
+					char* endptr;
+
+					errno = 0;
+					yylval.ival = strtol((char *)yytext,&endptr,10);
+					if (*endptr != '\0' || errno == ERANGE)
+					{
+						errno = 0;
+						yylval.dval = strtod(((char *)yytext),&endptr);
+						if (*endptr != '\0' || errno == ERANGE)
+							yyerror("ERROR: Bad integer input");
+						yyerror("WARNING: Integer input is out of range; promoted to float");
+						return (FCONST);
+					}
+					return (ICONST);
+				}
 <SQL>:{identifier}(("->"|\.){identifier})*	{
 					yylval.str = strdup((char*)yytext+1);
 					return(CVARIABLE);
@@ -432,15 +490,38 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 						}
 						else
 						{
-							yylval.str = strdup((char*)yytext);
-							return (IDENT);
+							struct _defines *ptr;
+
+							for (ptr = defines; ptr; ptr = ptr->next)
+							{
+								if (strcmp(yytext, ptr->old) == 0)
+								{
+									struct _yy_buffer *yb;
+
+									yb = mm_alloc(sizeof(struct _yy_buffer));
+
+						                        yb->buffer =  YY_CURRENT_BUFFER;
+						                        yb->lineno = yylineno;
+						                        yb->filename = strdup(input_filename);
+						                        yb->next = yy_buffer;
+
+						                        yy_buffer = yb;
+
+ 									yy_scan_string(ptr->new);
+									break;
+								}
+							}
+							if (ptr == NULL) 
+							{
+								yylval.str = strdup((char*)yytext);
+								return (IDENT);
+							}
 						}
 					}
 				}
 <SQL>{space}			{ /* ignore */ }
 <SQL>";"	                { BEGIN C; return SQL_SEMI; }
 <SQL>{other}			{ return (yytext[0]); }
-
 <C>{exec}{space}{sql}		{ BEGIN SQL; return SQL_START; }
 <C>{ccomment}			{ /* ignore */ } 
 <C>{cppline}			{
@@ -456,8 +537,32 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 					}
 					else
 					{
-						yylval.str = strdup((char*)yytext);
-						return (IDENT);
+						struct _defines *ptr;
+
+						for (ptr = defines; ptr; ptr = ptr->next)
+						{
+							if (strcmp(yytext, ptr->old) == 0)
+							{
+								struct _yy_buffer *yb;
+
+								yb = mm_alloc(sizeof(struct _yy_buffer));
+
+					                        yb->buffer =  YY_CURRENT_BUFFER;
+					                        yb->lineno = yylineno;
+					                        yb->filename = strdup(input_filename);
+					                        yb->next = yy_buffer;
+
+					                        yy_buffer = yb;
+
+								yy_scan_string(ptr->new);
+								break;
+							}
+						}
+						if (ptr == NULL) 
+						{
+							yylval.str = strdup((char*)yytext);
+							return (IDENT);
+						}
 					}
 				}
 <C>";"	      	        { return(';'); }
@@ -470,6 +575,45 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 <C>\]			{ return(']'); }
 <C>\=			{ return('='); }
 <C>{other}			{ return (S_ANYTHING); }
+<C>{exec}{space}{sql}{space}{define}	{BEGIN(def_ident);}
+<def_ident>{space}	{}
+<def_ident>{identifier}	{
+				old = strdup(yytext);
+				BEGIN(def);
+				llen = 0;
+				*literal = '\0';
+			}
+<def>{space}		/* eat the whitespace */
+<def>";"		{
+				struct _defines *ptr, *this;
+        
+                                for (ptr = defines; ptr != NULL; ptr = ptr->next)
+                                {
+                                     if (strcmp(old, ptr->old) == 0)
+                                     {
+					free(ptr->new);
+					ptr->new = strdup(scanstr(literal));
+                                     }
+                                }
+				if (ptr == NULL)
+				{                        
+                                        this = (struct _defines *) mm_alloc(sizeof(struct _defines));
+
+                                        /* initial definition */
+                                        this->old = old;
+                                        this->new = strdup(scanstr(literal));
+					this->next = defines;
+					defines = this;
+				}
+
+				BEGIN(C);
+			}
+<def>[^";"]		{
+				if ((llen+yyleng) > (MAX_PARSE_BUFFER - 1))
+					yyerror("ERROR: define statement parse buffer exceeded");
+				memcpy(literal+llen, yytext, yyleng+1);
+				llen += yyleng;
+			}
 <C>{exec}{space}{sql}{space}{include}	{ BEGIN(incl); }
 <incl>{space}		/* eat the whitespace */
 <incl>[^ \t\n]+ 	{ /* got the include file name */

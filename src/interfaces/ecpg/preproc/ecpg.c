@@ -22,7 +22,7 @@ extern char *optarg;
 #include "extern.h"
 
 struct _include_path *include_paths;
-static int no_auto_trans = 0;
+int no_auto_trans = 0;
 struct cursor *cur = NULL;
 
 static void
@@ -138,10 +138,12 @@ main(int argc, char *const argv[])
 			else
 			{
 				struct cursor *ptr;
+				struct _defines *defptr;
 				
 				/* remove old cursor definitions if any are still there */
-				for (ptr = cur; ptr != NULL; ptr=ptr->next)
+				for (ptr = cur; ptr != NULL;)
 				{
+					struct cursor *this = ptr;
 					struct arguments *l1, *l2;
 					
 					free(ptr->command);
@@ -156,12 +158,25 @@ main(int argc, char *const argv[])
 						l2 = l1->next;
 						free(l1);
 					}
+					ptr = ptr->next;
+					free(this);
 				}
+				
+				/* remove old defines as well */
+				for (defptr = defines; defptr != NULL;)
+				{
+					struct _defines *this = defptr;
+					free(defptr->new);
+					free(defptr->old);
+					defptr = defptr->next;
+					free(this);
+				}
+				
 				/* initialize lex */
 				lex_init();
 				
 				/* we need two includes and a constant */
-				fprintf(yyout, "/* Processed by ecpg (%d.%d.%d) */\n/*These two include files are added by the preprocessor */\n#include <ecpgtype.h>\n#include <ecpglib.h>\n\nconst int no_auto_trans = %d;\n\n", MAJOR_VERSION, MINOR_VERSION, PATCHLEVEL, no_auto_trans);
+				fprintf(yyout, "/* Processed by ecpg (%d.%d.%d) */\n/* These two include files are added by the preprocessor */\n#include <ecpgtype.h>\n#include <ecpglib.h>\n\n", MAJOR_VERSION, MINOR_VERSION, PATCHLEVEL);
 
 				/* and parse the source */
 				yyparse();

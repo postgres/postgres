@@ -24,7 +24,32 @@
 #include <ecpglib.h>
 #include <sqlca.h>
 
-extern int no_auto_trans;
+/* variables visible to the programs */
+int no_auto_trans;
+
+static struct sqlca sqlca_init  =
+{
+         {'S', 'Q', 'L', 'C', 'A', ' ', ' ', ' '},
+         sizeof(struct sqlca),
+         0,
+         { 0, {0}},
+         {'N', 'O', 'T', ' ', 'S', 'E', 'T', ' '},
+         {0, 0, 0, 0, 0, 0},
+         {0, 0, 0, 0, 0, 0, 0, 0},
+         {0, 0, 0, 0, 0, 0, 0, 0}
+};
+
+struct sqlca sqlca =
+{
+         {'S', 'Q', 'L', 'C', 'A', ' ', ' ', ' '},
+         sizeof(struct sqlca),
+         0,
+         { 0, {0}},
+         {'N', 'O', 'T', ' ', 'S', 'E', 'T', ' '},
+         {0, 0, 0, 0, 0, 0},
+         {0, 0, 0, 0, 0, 0, 0, 0},
+         {0, 0, 0, 0, 0, 0, 0, 0}
+};
 
 static struct connection
 {
@@ -72,39 +97,6 @@ register_error(long code, char *fmt,...)
 	sqlca.sqlerrm.sqlerrml = strlen(sqlca.sqlerrm.sqlerrmc);
 }
 
-/* This function returns a newly malloced string that has the ' and \
-   in the argument quoted with \.
- */
-static
-char *
-quote_postgres(char *arg)
-{
-	char	   *res = (char *) malloc(2 * strlen(arg) + 1);
-	int			i,
-				ri;
-
-	if (!res)
-		return(res);
-		
-	for (i = 0, ri = 0; arg[i]; i++, ri++)
-	{
-		switch (arg[i])
-		{
-			case '\'':
-			case '\\':
-				res[ri++] = '\\';
-			default:
-				;
-		}
-
-		res[ri] = arg[i];
-	}
-	res[ri] = '\0';
-
-	return res;
-}
-
-
 static void
 ECPGfinish(struct connection *act)
 {
@@ -139,6 +131,54 @@ ECPGfinish(struct connection *act)
 		ECPGlog("ECPGfinish: called an extra time.\n");
 }
 
+static char *ecpg_alloc(long size, int lineno)
+{
+	char *new = (char *) malloc(size);
+
+	if (!new)
+	{
+		ECPGfinish(actual_connection);
+		ECPGlog("out of memory\n");
+	        register_error(ECPG_OUT_OF_MEMORY, "out of memory in line %d", lineno);
+		return NULL;
+	}
+	
+	memset(new, '\0', size);
+	return(new);
+}
+
+/* This function returns a newly malloced string that has the ' and \
+   in the argument quoted with \.
+ */
+static
+char *
+quote_postgres(char *arg, int lineno)
+{
+	char	   *res = (char *) ecpg_alloc(2 * strlen(arg) + 1, lineno);
+	int			i,
+				ri;
+
+	if (!res)
+		return(res);
+		
+	for (i = 0, ri = 0; arg[i]; i++, ri++)
+	{
+		switch (arg[i])
+		{
+			case '\'':
+			case '\\':
+				res[ri++] = '\\';
+			default:
+				;
+		}
+
+		res[ri] = arg[i];
+	}
+	res[ri] = '\0';
+
+	return res;
+}
+
 /* create a list of variables */
 static bool
 create_statement(int lineno, struct statement **stmt, char *query, va_list ap)
@@ -146,15 +186,8 @@ create_statement(int lineno, struct statement **stmt, char *query, va_list ap)
 	struct variable **list = &((*stmt)->inlist);
 	enum ECPGttype	type;
 	
-	*stmt = calloc(sizeof(struct statement), 1);
-	
-	if (!*stmt)
-	{
-	       ECPGfinish(actual_connection);
-	       ECPGlog("out of memory\n");
-	       register_error(ECPG_OUT_OF_MEMORY, "out of memory in line %d", lineno);
-	       return false;
-	}
+	if (!(*stmt = (struct statement *) ecpg_alloc(sizeof(struct statement), lineno)))
+		return false;
 	
 	(*stmt)->command = query;
 	(*stmt)->lineno = lineno;
@@ -173,14 +206,8 @@ create_statement(int lineno, struct statement **stmt, char *query, va_list ap)
    	   {
 		struct variable *var, *ptr;
 						
-		var = malloc(sizeof(struct variable));
-		if (!var)
-		{
-			ECPGfinish(actual_connection);
-			ECPGlog("out of memory\n");
-		        register_error(ECPG_OUT_OF_MEMORY, "out of memory in line %d", lineno);
+		if (!(var = (struct variable *) ecpg_alloc(sizeof(struct variable), lineno)))
 			return false;
-		}
 	   	
 	   	var->type = type;
 	   	var->value = va_arg(ap, void *);
@@ -217,8 +244,8 @@ ECPGexecute(struct statement *stmt)
 	PGnotify   *notify;
 	struct variable *var;
 
-	memset((char *) &sqlca, 0, sizeof (sqlca));
-
+ 	memcpy((char *)&sqlca, (char *)&sqlca_init, sizeof(sqlca));
+	
 	copiedquery = strdup(stmt->command);
 
 	/*
@@ -314,36 +341,19 @@ ECPGexecute(struct statement *stmt)
 					int			slen = (var->varcharsize == 0) ? strlen((char *) var->value) : var->varcharsize;
 					char * tmp;
 
-					newcopy = (char *) malloc(slen + 1);
-					if (!newcopy)
-					{
-						ECPGfinish(actual_connection);
-						ECPGlog("out of memory\n");
-				                register_error(ECPG_OUT_OF_MEMORY, "out of memory in line %d", stmt->lineno);
+					if (!(newcopy = ecpg_alloc(slen + 1, stmt->lineno)))
 						return false;
-					}
 						
 					strncpy(newcopy, (char *) var->value, slen);
 					newcopy[slen] = '\0';
 
-					mallocedval = (char *) malloc(2 * strlen(newcopy) + 3);
-					if (!mallocedval)
-					{
-						ECPGfinish(actual_connection);
-						ECPGlog("out of memory\n");
-				                register_error(ECPG_OUT_OF_MEMORY, "out of memory in line %d", stmt->lineno);
+					if (!(mallocedval = (char *) ecpg_alloc(2 * strlen(newcopy) + 3, stmt->lineno)))
 						return false;
-					}
 						
 					strcpy(mallocedval, "'");
-					tmp = quote_postgres(newcopy);
+					tmp = quote_postgres(newcopy, stmt->lineno);
 					if (!tmp)
-					{
-						ECPGfinish(actual_connection);
-						ECPGlog("out of memory\n");
-				                register_error(ECPG_OUT_OF_MEMORY, "out of memory in line %d", stmt->lineno);
 						return false;
-					}
 						
 					strcat(mallocedval, tmp);
 					strcat(mallocedval, "'");
@@ -360,36 +370,19 @@ ECPGexecute(struct statement *stmt)
 					(struct ECPGgeneric_varchar *) (var->value);
 					char *tmp;
 
-					newcopy = (char *) malloc(variable->len + 1);
-					if (!newcopy)
-					{
-						ECPGfinish(actual_connection);
-						ECPGlog("out of memory\n");
-				                register_error(ECPG_OUT_OF_MEMORY, "out of memory in line %d", stmt->lineno);
+					if (!(newcopy = (char *) ecpg_alloc(variable->len + 1, stmt->lineno)))
 						return false;
-					}
 						
 					strncpy(newcopy, variable->arr, variable->len);
 					newcopy[variable->len] = '\0';
 
-					mallocedval = (char *) malloc(2 * strlen(newcopy) + 3);
-					if (!mallocedval)
-					{
-						ECPGfinish(actual_connection);
-						ECPGlog("out of memory\n");
-				                register_error(ECPG_OUT_OF_MEMORY, "out of memory in line %d", stmt->lineno);
+					if (!(mallocedval = (char *) ecpg_alloc(2 * strlen(newcopy) + 3, stmt->lineno)))
 						return false;
-					}
 					
 					strcpy(mallocedval, "'");
-					tmp = quote_postgres(newcopy);
+					tmp = quote_postgres(newcopy, stmt->lineno);
 					if (!tmp)
-					{
-						ECPGfinish(actual_connection);
-						ECPGlog("out of memory\n");
-				                register_error(ECPG_OUT_OF_MEMORY, "out of memory in line %d", stmt->lineno);
 						return false;
-					}
 					                                                
 					strcat(mallocedval, tmp);
 					strcat(mallocedval, "'");
@@ -415,16 +408,8 @@ ECPGexecute(struct statement *stmt)
 		 * Now tobeinserted points to an area that is to be inserted at
 		 * the first %s
 		 */
-		newcopy = (char *) malloc(strlen(copiedquery)
-								  + strlen(tobeinserted)
-								  + 1);
-		if (!newcopy)
-		{
-			ECPGfinish(actual_connection);
-			ECPGlog("out of memory\n");
-	                register_error(ECPG_OUT_OF_MEMORY, "out of memory in line %d", stmt->lineno);
+		if (!(newcopy = (char *) ecpg_alloc(strlen(copiedquery) + strlen(tobeinserted) + 1, stmt->lineno)))
 			return false;
-		}
 		 	
 		strcpy(newcopy, copiedquery);
 		if ((p = strstr(newcopy, ";;")) == NULL)
@@ -857,7 +842,15 @@ ECPGdo(int lineno, char *query, ...)
 	if (create_statement(lineno, &stmt, query, args) == false)
 		return(false);
 	va_end(args);
-	
+
+	/* are we connected? */
+	if (actual_connection == NULL || actual_connection->connection == NULL)
+	{		
+		ECPGlog("ECPGdo: not connected\n");
+		register_error(ECPG_NOT_CONN, "Not connected in line %d", lineno);
+		return false;
+	}		
+
 	return(ECPGexecute(stmt));
 }
 
@@ -902,14 +895,10 @@ ECPGsetconn(int lineno, const char *connection_name)
 bool
 ECPGconnect(int lineno, const char *dbname, const char *user, const char *passwd, const char * connection_name)
 {
-	struct connection *this = malloc(sizeof(struct connection));
+	struct connection *this = (struct connection *) ecpg_alloc(sizeof(struct connection), lineno);
 
 	if (!this)
-	{
-		ECPGlog("out of memory\n");
-                register_error(ECPG_OUT_OF_MEMORY, "out of memory in line %d", lineno);
 		return false;
-	}
 				
 	if (dbname == NULL && connection_name == NULL)
 		connection_name = "DEFAULT";
@@ -937,7 +926,6 @@ ECPGconnect(int lineno, const char *dbname, const char *user, const char *passwd
 	{
 		ECPGfinish(this);
                 ECPGlog("connect: could not open database %s %s%s in line %d\n", dbname ? dbname : "NULL", user ? "for user ": "", user ? user : "", lineno);
-                
 		register_error(ECPG_CONNECT, "connect: could not open database %s.", dbname ? dbname : "NULL");
 		return false;
 	}
