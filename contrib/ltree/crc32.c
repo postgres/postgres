@@ -105,6 +105,6 @@ crc32_sz(char *buf, int size)
 	len = 0;
 	nr = size;
 	for (len += nr, p = buf; nr--; ++p)
-		_CRC32_(crc, TOLOWER(*p));
+		_CRC32_(crc, TOLOWER((unsigned int)*p));
 	return ~crc;
 }

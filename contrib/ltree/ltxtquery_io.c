@@ -76,7 +76,7 @@ gettoken_query(QPRS_STATE * state, int4 *val, int4 *lenval, char **strval, uint1
 					*strval = state->buf;
 					*lenval = 1;
 					*flag = 0;
-				} else if ( !isspace(*(state->buf)) )
+				} else if ( !isspace((unsigned int)*(state->buf)) )
 					elog(ERROR,"Operand syntax error");
 				break;
 			case INOPERAND:

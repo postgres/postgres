@@ -18,7 +18,7 @@ PG_FUNCTION_INFO_V1(lquery_out);
 Datum lquery_out(PG_FUNCTION_ARGS);
 
 
-#define UNCHAR elog(ERROR,"Syntax error in position %d near '%c'", ptr-buf, *ptr)
+#define UNCHAR elog(ERROR,"Syntax error in position %d near '%c'", (int)(ptr-buf), *ptr)
 
 typedef struct {
 	char* 	start;
@@ -60,7 +60,7 @@ ltree_in(PG_FUNCTION_ARGS) {
 				lptr->len = ptr - lptr->start;
 				if ( lptr->len > 255 ) 
 					elog(ERROR,"Name of level is too long (%d, must be < 256) in position %d", 
-						lptr->len, lptr->start - buf);
+						lptr->len, (int)(lptr->start - buf));
 				totallen += MAXALIGN(lptr->len + LEVEL_HDRSIZE);
 				lptr++;
 				state = LTPRS_WAITNAME;
@@ -75,7 +75,7 @@ ltree_in(PG_FUNCTION_ARGS) {
 		lptr->len = ptr - lptr->start;
 		if ( lptr->len > 255 ) 
 			elog(ERROR,"Name of level is too long (%d, must be < 256) in position %d", 
-				lptr->len, lptr->start - buf);
+				lptr->len, (int)(lptr->start - buf));
 		totallen += MAXALIGN(lptr->len + LEVEL_HDRSIZE);
 		lptr++;
 	} else if ( ! (state == LTPRS_WAITNAME && lptr == list) )
@@ -214,7 +214,7 @@ lquery_in(PG_FUNCTION_ARGS) {
 					( ( lptr->flag & LVAR_ANYEND ) ? 1 : 0 );
 				if ( lptr->len > 255 ) 
 					elog(ERROR,"Name of level is too long (%d, must be < 256) in position %d", 
-						lptr->len, lptr->start - buf);
+						lptr->len, (int)(lptr->start - buf));
 				state = LQPRS_WAITVAR;
 			} else if ( *ptr == '.' ) {
 				lptr->len = ptr - lptr->start - 
@@ -223,7 +223,7 @@ lquery_in(PG_FUNCTION_ARGS) {
 					( ( lptr->flag & LVAR_ANYEND ) ? 1 : 0 );
 				if ( lptr->len > 255 ) 
 					elog(ERROR,"Name of level is too long (%d, must be < 256) in position %d", 
-						lptr->len, lptr->start - buf);
+						lptr->len, (int)(lptr->start - buf));
 				state = LQPRS_WAITLEVEL;
 				curqlevel = NEXTLEV(curqlevel);
 			} else if ( ISALNUM(*ptr) ) {
@@ -244,13 +244,13 @@ lquery_in(PG_FUNCTION_ARGS) {
 		} else if ( state == LQPRS_WAITFNUM ) {
 			if ( *ptr == ',' ) {
 				state = LQPRS_WAITSNUM; 
-			} else if ( isdigit(*ptr) ) {
+			} else if ( isdigit((unsigned int)*ptr) ) {
 				curqlevel->low = atoi( ptr );
 				state = LQPRS_WAITND;
 			} else
 				UNCHAR; 
 		} else if ( state == LQPRS_WAITSNUM ) {
-			if ( isdigit(*ptr) ) {
+			if ( isdigit((unsigned int)*ptr) ) {
 				curqlevel->high = atoi( ptr );
 				state =  LQPRS_WAITCLOSE;
 			} else if ( *ptr == '}' ) {
@@ -261,7 +261,7 @@ lquery_in(PG_FUNCTION_ARGS) {
 		} else if ( state == LQPRS_WAITCLOSE ) {
 			if ( *ptr == '}' )
 				state = LQPRS_WAITEND;
-			else if ( !isdigit(*ptr) )
+			else if ( !isdigit((unsigned int)*ptr) )
 				UNCHAR;
 		} else if ( state == LQPRS_WAITND ) { 
 			if ( *ptr == '}' ) {
@@ -269,7 +269,7 @@ lquery_in(PG_FUNCTION_ARGS) {
 				state = LQPRS_WAITEND;
 			} else if ( *ptr == ',' )
 				state = LQPRS_WAITSNUM;
-			else if ( !isdigit(*ptr) )
+			else if ( !isdigit((unsigned int)*ptr) )
 				UNCHAR;
 		} else if ( state == LQPRS_WAITEND ) {
 			if ( *ptr == '.' ) {
@@ -293,7 +293,7 @@ lquery_in(PG_FUNCTION_ARGS) {
 			elog(ERROR,"Unexpected end of line");
 		if ( lptr->len > 255 ) 
 			elog(ERROR,"Name of level is too long (%d, must be < 256) in position %d", 
-				lptr->len, lptr->start - buf);
+				lptr->len, (int)(lptr->start - buf));
 	} else if ( state == LQPRS_WAITOPEN ) {
 		curqlevel->high = 0xffff;
 	} else if ( state != LQPRS_WAITEND ) 

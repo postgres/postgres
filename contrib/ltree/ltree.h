@@ -83,7 +83,7 @@ typedef struct {
 #ifndef abs
 #define abs(a)                  ((a) <  (0) ? -(a) : (a))
 #endif
-#define ISALNUM(x)	( isalnum(x) || (x) == '_' )
+#define ISALNUM(x)	( isalnum((unsigned int)(x)) || (x) == '_' )
 
 /* full text query */
 
