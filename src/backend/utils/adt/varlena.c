@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.109 2003/12/19 04:56:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.110 2004/01/31 00:45:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@ typedef struct varlena unknown;
 #define TEXTLEN(textp) \
 	text_length(PointerGetDatum(textp))
 #define TEXTPOS(buf_text, from_sub_text) \
-	text_position(PointerGetDatum(buf_text), PointerGetDatum(from_sub_text), 1)
+	text_position(buf_text, from_sub_text, 1)
 #define TEXTDUP(textp) \
 	DatumGetTextPCopy(PointerGetDatum(textp))
 #define LEFT(buf_text, from_sub_text) \
@@ -55,12 +55,12 @@ typedef struct varlena unknown;
 					TEXTPOS(buf_text, from_sub_text) - 1, false)
 #define RIGHT(buf_text, from_sub_text, from_sub_text_len) \
 	text_substring(PointerGetDatum(buf_text), \
-					TEXTPOS(buf_text, from_sub_text) + from_sub_text_len, \
+					TEXTPOS(buf_text, from_sub_text) + (from_sub_text_len), \
 					-1, true)
 
 static int	text_cmp(text *arg1, text *arg2);
 static int32 text_length(Datum str);
-static int32 text_position(Datum str, Datum search_str, int matchnum);
+static int32 text_position(text *t1, text *t2, int matchnum);
 static text *text_substring(Datum str,
 			   int32 start,
 			   int32 length,
@@ -403,14 +403,20 @@ unknownsend(PG_FUNCTION_ARGS)
 Datum
 textlen(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_INT32(text_length(PG_GETARG_DATUM(0)));
+	Datum		str = PG_GETARG_DATUM(0);
+
+	/* try to avoid decompressing argument */
+	PG_RETURN_INT32(text_length(str));
 }
 
 /*
  * text_length -
  *	Does the real work for textlen()
+ *
  *	This is broken out so it can be called directly by other string processing
- *	functions.
+ *	functions.  Note that the argument is passed as a Datum, to indicate that
+ *	it may still be in compressed form.  We can avoid decompressing it at all
+ *	in some cases.
  */
 static int32
 text_length(Datum str)
@@ -418,20 +424,13 @@ text_length(Datum str)
 	/* fastpath when max encoding length is one */
 	if (pg_database_encoding_max_length() == 1)
 		PG_RETURN_INT32(toast_raw_datum_size(str) - VARHDRSZ);
-
-	if (pg_database_encoding_max_length() > 1)
+	else
 	{
 		text	   *t = DatumGetTextP(str);
 
 		PG_RETURN_INT32(pg_mbstrlen_with_len(VARDATA(t),
 											 VARSIZE(t) - VARHDRSZ));
 	}
-
-	/* should never get here */
-	elog(ERROR, "invalid backend encoding: encoding max length < 1");
-
-	/* not reached: suppress compiler warning */
-	return 0;
 }
 
 /*
@@ -442,7 +441,10 @@ text_length(Datum str)
 Datum
 textoctetlen(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_INT32(toast_raw_datum_size(PG_GETARG_DATUM(0)) - VARHDRSZ);
+	Datum		str = PG_GETARG_DATUM(0);
+
+	/* We need not detoast the input at all */
+	PG_RETURN_INT32(toast_raw_datum_size(str) - VARHDRSZ);
 }
 
 /*
@@ -504,9 +506,6 @@ textcat(PG_FUNCTION_ARGS)
  *	adjusting the length to be consistent with the "negative start" per SQL92.
  * If the length is less than zero, return the remaining string.
  *
- * Note that the arguments operate on octet length,
- *	so not aware of multibyte character sets.
- *
  * Added multibyte support.
  * - Tatsuo Ishii 1998-4-21
  * Changed behavior if starting position is less than one to conform to SQL92 behavior.
@@ -545,8 +544,11 @@ text_substr_no_len(PG_FUNCTION_ARGS)
 /*
  * text_substring -
  *	Does the real work for text_substr() and text_substr_no_len()
+ *
  *	This is broken out so it can be called directly by other string processing
- *	functions.
+ *	functions.  Note that the argument is passed as a Datum, to indicate that
+ *	it may still be in compressed/toasted form.  We can avoid detoasting all
+ *	of it in some cases.
  */
 static text *
 text_substring(Datum str, int32 start, int32 length, bool length_not_specified)
@@ -717,7 +719,7 @@ text_substring(Datum str, int32 start, int32 length, bool length_not_specified)
 		elog(ERROR, "invalid backend encoding: encoding max length < 1");
 
 	/* not reached: suppress compiler warning */
-	return PG_STR_GET_TEXT("");
+	return NULL;
 }
 
 /*
@@ -730,51 +732,61 @@ text_substring(Datum str, int32 start, int32 length, bool length_not_specified)
 Datum
 textpos(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_INT32(text_position(PG_GETARG_DATUM(0), PG_GETARG_DATUM(1), 1));
+	text	   *str = PG_GETARG_TEXT_P(0);
+	text	   *search_str = PG_GETARG_TEXT_P(1);
+
+	PG_RETURN_INT32(text_position(str, search_str, 1));
 }
 
 /*
  * text_position -
  *	Does the real work for textpos()
+ *
+ * Inputs:
+ *		t1 - string to be searched
+ *		t2 - pattern to match within t1
+ *		matchnum - number of the match to be found (1 is the first match)
+ * Result:
+ *		Character index of the first matched char, starting from 1,
+ *		or 0 if no match.
+ *
  *	This is broken out so it can be called directly by other string processing
  *	functions.
  */
 static int32
-text_position(Datum str, Datum search_str, int matchnum)
+text_position(text *t1, text *t2, int matchnum)
 {
-	int			eml = pg_database_encoding_max_length();
-	text	   *t1 = DatumGetTextP(str);
-	text	   *t2 = DatumGetTextP(search_str);
 	int			match = 0,
 				pos = 0,
-				p = 0,
+				p,
 				px,
 				len1,
 				len2;
 
-	if (matchnum == 0)
+	if (matchnum <= 0)
 		return 0;				/* result for 0th match */
 
 	if (VARSIZE(t2) <= VARHDRSZ)
-		PG_RETURN_INT32(1);		/* result for empty pattern */
+		return 1;				/* result for empty pattern */
 
 	len1 = (VARSIZE(t1) - VARHDRSZ);
 	len2 = (VARSIZE(t2) - VARHDRSZ);
 
-	/* no use in searching str past point where search_str will fit */
-	px = (len1 - len2);
-
-	if (eml == 1)				/* simple case - single byte encoding */
+	if (pg_database_encoding_max_length() == 1)
 	{
+		/* simple case - single byte encoding */
 		char	   *p1,
 				   *p2;
 
 		p1 = VARDATA(t1);
 		p2 = VARDATA(t2);
 
+		/* no use in searching str past point where search_str will fit */
+		px = (len1 - len2);
+
 		for (p = 0; p <= px; p++)
 		{
-			if ((*p2 == *p1) && (strncmp(p1, p2, len2) == 0))
+			if ((*p1 == *p2) && (strncmp(p1, p2, len2) == 0))
 			{
 				if (++match == matchnum)
 				{
@@ -785,8 +797,9 @@ text_position(Datum str, Datum search_str, int matchnum)
 			p1++;
 		}
 	}
-	else if (eml > 1)			/* not as simple - multibyte encoding */
+	else
 	{
+		/* not as simple - multibyte encoding */
 		pg_wchar   *p1,
 				   *p2,
 				   *ps1,
@@ -799,9 +812,12 @@ text_position(Datum str, Datum search_str, int matchnum)
 		(void) pg_mb2wchar_with_len((unsigned char *) VARDATA(t2), p2, len2);
 		len2 = pg_wchar_strlen(p2);
 
+		/* no use in searching str past point where search_str will fit */
+		px = (len1 - len2);
+
 		for (p = 0; p <= px; p++)
 		{
-			if ((*p2 == *p1) && (pg_wchar_strncmp(p1, p2, len2) == 0))
+			if ((*p1 == *p2) && (pg_wchar_strncmp(p1, p2, len2) == 0))
 			{
 				if (++match == matchnum)
 				{
@@ -815,10 +831,8 @@ text_position(Datum str, Datum search_str, int matchnum)
 		pfree(ps1);
 		pfree(ps2);
 	}
-	else
-		elog(ERROR, "invalid backend encoding: encoding max length < 1");
 
-	PG_RETURN_INT32(pos);
+	return pos;
 }
 
 /* varstr_cmp()
@@ -1199,7 +1213,10 @@ bttext_pattern_cmp(PG_FUNCTION_ARGS)
 Datum
 byteaoctetlen(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_INT32(toast_raw_datum_size(PG_GETARG_DATUM(0)) - VARHDRSZ);
+	Datum		str = PG_GETARG_DATUM(0);
+
+	/* We need not detoast the input at all */
+	PG_RETURN_INT32(toast_raw_datum_size(str) - VARHDRSZ);
 }
 
 /*
@@ -1925,17 +1942,17 @@ byteacmp(PG_FUNCTION_ARGS)
 Datum
 replace_text(PG_FUNCTION_ARGS)
 {
+	text	   *src_text = PG_GETARG_TEXT_P(0);
+	text	   *from_sub_text = PG_GETARG_TEXT_P(1);
+	text	   *to_sub_text = PG_GETARG_TEXT_P(2);
+	int			src_text_len = TEXTLEN(src_text);
+	int			from_sub_text_len = TEXTLEN(from_sub_text);
+	char	   *to_sub_str = PG_TEXT_GET_STR(to_sub_text);
 	text	   *left_text;
 	text	   *right_text;
 	text	   *buf_text;
 	text	   *ret_text;
 	int			curr_posn;
-	text	   *src_text = PG_GETARG_TEXT_P(0);
-	int			src_text_len = TEXTLEN(src_text);
-	text	   *from_sub_text = PG_GETARG_TEXT_P(1);
-	int			from_sub_text_len = TEXTLEN(from_sub_text);
-	text	   *to_sub_text = PG_GETARG_TEXT_P(2);
-	char	   *to_sub_str = PG_TEXT_GET_STR(to_sub_text);
 	StringInfo	str = makeStringInfo();
 
 	if (src_text_len == 0 || from_sub_text_len == 0)
@@ -1978,13 +1995,19 @@ Datum
 split_text(PG_FUNCTION_ARGS)
 {
 	text	   *inputstring = PG_GETARG_TEXT_P(0);
-	int			inputstring_len = TEXTLEN(inputstring);
 	text	   *fldsep = PG_GETARG_TEXT_P(1);
-	int			fldsep_len = TEXTLEN(fldsep);
 	int			fldnum = PG_GETARG_INT32(2);
-	int			start_posn = 0;
-	int			end_posn = 0;
+	int			inputstring_len = TEXTLEN(inputstring);
+	int			fldsep_len = TEXTLEN(fldsep);
+	int			start_posn;
+	int			end_posn;
 	text	   *result_text;
+
+	/* field number is 1 based */
+	if (fldnum < 1)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("field position must be greater than zero")));
 
 	/* return empty string for empty input string */
 	if (inputstring_len < 1)
@@ -1993,52 +2016,45 @@ split_text(PG_FUNCTION_ARGS)
 	/* empty field separator */
 	if (fldsep_len < 1)
 	{
-		if (fldnum == 1)		/* first field - just return the input
-								 * string */
+		/* if first field, return input string, else empty string */
+		if (fldnum == 1)
 			PG_RETURN_TEXT_P(inputstring);
 		else
-/* otherwise return an empty string */
 			PG_RETURN_TEXT_P(PG_STR_GET_TEXT(""));
 	}
 
-	/* field number is 1 based */
-	if (fldnum < 1)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("field position must be greater than zero")));
-
-	start_posn = text_position(PointerGetDatum(inputstring),
-							   PointerGetDatum(fldsep),
-							   fldnum - 1);
-	end_posn = text_position(PointerGetDatum(inputstring),
-							 PointerGetDatum(fldsep),
-							 fldnum);
+	start_posn = text_position(inputstring, fldsep, fldnum - 1);
+	end_posn = text_position(inputstring, fldsep, fldnum);
 
 	if ((start_posn == 0) && (end_posn == 0))	/* fldsep not found */
 	{
-		if (fldnum == 1)		/* first field - just return the input
-								 * string */
+		/* if first field, return input string, else empty string */
+		if (fldnum == 1)
 			PG_RETURN_TEXT_P(inputstring);
 		else
-/* otherwise return an empty string */
 			PG_RETURN_TEXT_P(PG_STR_GET_TEXT(""));
 	}
-	else if ((start_posn != 0) && (end_posn == 0))
-	{
-		/* last field requested */
-		result_text = text_substring(PointerGetDatum(inputstring), start_posn + fldsep_len, -1, true);
-		PG_RETURN_TEXT_P(result_text);
-	}
-	else if ((start_posn == 0) && (end_posn != 0))
+	else if (start_posn == 0)
 	{
 		/* first field requested */
 		result_text = LEFT(inputstring, fldsep);
 		PG_RETURN_TEXT_P(result_text);
 	}
+	else if (end_posn == 0)
+	{
+		/* last field requested */
+		result_text = text_substring(PointerGetDatum(inputstring),
+									 start_posn + fldsep_len,
+									 -1, true);
+		PG_RETURN_TEXT_P(result_text);
+	}
 	else
 	{
-		/* prior to last field requested */
-		result_text = text_substring(PointerGetDatum(inputstring), start_posn + fldsep_len, end_posn - start_posn - fldsep_len, false);
+		/* interior field requested */
+		result_text = text_substring(PointerGetDatum(inputstring),
+									 start_posn + fldsep_len,
+									 end_posn - start_posn - fldsep_len,
+									 false);
 		PG_RETURN_TEXT_P(result_text);
 	}
 }
@@ -2053,15 +2069,14 @@ Datum
 text_to_array(PG_FUNCTION_ARGS)
 {
 	text	   *inputstring = PG_GETARG_TEXT_P(0);
-	int			inputstring_len = TEXTLEN(inputstring);
 	text	   *fldsep = PG_GETARG_TEXT_P(1);
+	int			inputstring_len = TEXTLEN(inputstring);
 	int			fldsep_len = TEXTLEN(fldsep);
 	int			fldnum;
-	int			start_posn = 0;
-	int			end_posn = 0;
-	text	   *result_text = NULL;
+	int			start_posn;
+	int			end_posn;
+	text	   *result_text;
 	ArrayBuildState *astate = NULL;
-	MemoryContext oldcontext = CurrentMemoryContext;
 
 	/* return NULL for empty input string */
 	if (inputstring_len < 1)
@@ -2083,9 +2098,7 @@ text_to_array(PG_FUNCTION_ARGS)
 		bool		disnull = false;
 
 		start_posn = end_posn;
-		end_posn = text_position(PointerGetDatum(inputstring),
-								 PointerGetDatum(fldsep),
-								 fldnum);
+		end_posn = text_position(inputstring, fldsep, fldnum);
 
 		if ((start_posn == 0) && (end_posn == 0))		/* fldsep not found */
 		{
@@ -2101,30 +2114,36 @@ text_to_array(PG_FUNCTION_ARGS)
 			else
 			{
 				/* otherwise create array and exit */
-				PG_RETURN_ARRAYTYPE_P(makeArrayResult(astate, oldcontext));
+				PG_RETURN_ARRAYTYPE_P(makeArrayResult(astate,
+													  CurrentMemoryContext));
 			}
 		}
-		else if ((start_posn != 0) && (end_posn == 0))
-		{
-			/* last field requested */
-			result_text = text_substring(PointerGetDatum(inputstring), start_posn + fldsep_len, -1, true);
-		}
-		else if ((start_posn == 0) && (end_posn != 0))
+		else if (start_posn == 0)
 		{
 			/* first field requested */
 			result_text = LEFT(inputstring, fldsep);
 		}
+		else if (end_posn == 0)
+		{
+			/* last field requested */
+			result_text = text_substring(PointerGetDatum(inputstring),
+										 start_posn + fldsep_len,
+										 -1, true);
+		}
 		else
 		{
-			/* prior to last field requested */
-			result_text = text_substring(PointerGetDatum(inputstring), start_posn + fldsep_len, end_posn - start_posn - fldsep_len, false);
+			/* interior field requested */
+			result_text = text_substring(PointerGetDatum(inputstring),
+										 start_posn + fldsep_len,
+										 end_posn - start_posn - fldsep_len,
+										 false);
 		}
 
 		/* stash away current value */
 		dvalue = PointerGetDatum(result_text);
 		astate = accumArrayResult(astate, dvalue,
-								  disnull, TEXTOID, oldcontext);
-
+								  disnull, TEXTOID,
+								  CurrentMemoryContext);
 	}
 
 	/* never reached -- keep compiler quiet */
