@@ -12,10 +12,10 @@
 #include "fmgr.h"				/* for func_ptr */
 #include "utils/dynamic_loader.h"
 
-void	   *next_dlopen(char *name);
-int			next_dlclose(void *handle);
-void	   *next_dlsym(void *handle, char *symbol);
-char	   *next_dlerror(void);
+void	*next_dlopen(char *name);
+int	next_dlclose(void *handle);
+void	*next_dlsym(void *handle, char *symbol);
+char	*next_dlerror(void);
 
 #define pg_dlopen(f)	next_dlopen
 #define pg_dlsym		next_dlsym
