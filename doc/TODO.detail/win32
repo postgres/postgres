@@ -6475,7 +6475,7 @@ X-MimeOLE: Produced By Microsoft MimeOLE V6.00.2600.0000
 X-Spam-Status: Yes, hits=5.0 required=5.0 tests=RCVD_IN_OSIRUSOFT_COM,X_OSIRU_SPAM_SRC version=2.20
 X-Spam-Flag: YES
 X-Spam-Level: *****
-X-Spam-Checker-Version: SpamAssassin 2.20 (devel $Id: win32,v 1.5 2003/05/23 16:34:35 momjian Exp $)
+X-Spam-Checker-Version: SpamAssassin 2.20 (devel $Id: win32,v 1.6 2003/11/13 03:45:33 momjian Exp $)
 X-Spam-Report: Detailed Report
 SPAM: -------------------- Start SpamAssassin results ----------------------
   SPAM: This mail is probably spam.  The original message has been altered
@@ -9731,4 +9731,114 @@ locking in place.
 TIP 3: if posting/reading through Usenet, please send an appropriate
 subscribe-nomail command to majordomo@postgresql.org so that your
 message can get through to the mailing list cleanly
+
+From pgsql-hackers-win32-owner+M201@postgresql.org Tue Nov 11 15:00:07 2003
+Return-path: <pgsql-hackers-win32-owner+M201@postgresql.org>
+Received: from noon.pghoster.com ([64.246.0.64])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id hABK01q22399
+	for <pgman@candle.pha.pa.us>; Tue, 11 Nov 2003 15:00:04 -0500 (EST)
+Received: from svr1.postgresql.org ([200.46.204.71] helo=postgresql.org)
+	by noon.pghoster.com with esmtp (Exim 4.20)
+	id 1AJefU-0007cv-4L; Tue, 11 Nov 2003 13:59:16 -0600
+X-Original-To: pgsql-hackers-win32-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.2])
+	by svr1.postgresql.org (Postfix) with ESMTP id 79C28D1B537
+	for <pgsql-hackers-win32-postgresql.org@localhost.postgresql.org>; Tue, 11 Nov 2003 19:59:09 +0000 (GMT)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (neptune.hub.org [200.46.204.2]) (amavisd-new, port 10024)
+	with ESMTP id 12494-07
+	for <pgsql-hackers-win32-postgresql.org@localhost.postgresql.org>;
+	Tue, 11 Nov 2003 15:58:39 -0400 (AST)
+Received: from cuthbert.rcsinc.local (unknown [205.217.85.91])
+	by svr1.postgresql.org (Postfix) with ESMTP id 3798FD1B50D
+	for <pgsql-hackers-win32@postgresql.org>; Tue, 11 Nov 2003 15:58:37 -0400 (AST)
+Content-Class: urn:content-classes:message
+MIME-Version: 1.0
+Content-Type: text/plain;
+	charset="us-ascii"
+Subject: [pgsql-hackers-win32] CreateProcess vs. CreateThread (was: Committing Resources to Win32)
+X-MimeOLE: Produced By Microsoft Exchange V6.0.6375.0
+Date: Tue, 11 Nov 2003 14:58:23 -0500
+Message-ID: <303E00EBDD07B943924382E153890E5434AA08@cuthbert.rcsinc.local>
+Thread-Topic: CreateProcess vs. CreateThread (was: Committing Resources to Win32)
+Thread-Index: AcOocYEp+LfkD1VdRtuF8Post6o+9gACl8Hg
+From: "Merlin Moncure" <merlin.moncure@rcsonline.com>
+To: "Joshua D. Drake" <jd@commandprompt.com>
+cc: <pgsql-hackers-win32@postgresql.org>
+X-Virus-Scanned: by amavisd-new at postgresql.org
+X-Mailing-List: pgsql-hackers-win32
+Precedence: bulk
+Sender: pgsql-hackers-win32-owner@postgresql.org
+X-AntiAbuse: This header was added to track abuse, please include it with any abuse report
+X-AntiAbuse: Primary Hostname - noon.pghoster.com
+X-AntiAbuse: Original Domain - candle.pha.pa.us
+X-AntiAbuse: Originator/Caller UID/GID - [47 12] / [47 12]
+X-AntiAbuse: Sender Address Domain - postgresql.org
+Content-Transfer-Encoding: 8bit
+X-MIME-Autoconverted: from quoted-printable to 8bit by candle.pha.pa.us id hABK01q22399
+Status: OR
+
+Joshua D. Drake wrote:
+> >problem is the ipc-daemon which has a tendency to crash.  It seems
+> >slower on writes, but that is strictly anecdotal.  With synching off,
+it
+> >hums along happily.
+> >
+> It is slower on rights, connection startup, limited on connections,
+> tcp/ip transfer and you should
+> never run PostgreSQL with sync off unless you are not worried about
+data
+> integrity.
+
+I agree 100%.  See notes below.
+
+> >The perceived win32 process management problems are a total red
+herring.
+> >
+> >
+> I disagree... read the other posts. CreateProcess does not scale like
+> CreateThread.
+
+Here is a good resource comparing process creation on Linux and NT (with
+source).  
+
+http://www-106.ibm.com/developerworks/linux/library/l-rt7/?t=gr,Redhat=T
+headsMgt
+
+NT can create 150 processes/sec (vs. 300+ on Linux 2.4.2).  Even with
+the slower process creation time, most postgres applications will spend
+a tiny fraction of their time inside process creation.  Again, this is
+much more relevant to a web server than a database server.  Compile and
+run the code supplied in the link if you don't believe me (and I don't
+expect you to :)).
+
+My point about cygwin was to try and illustrate that the performance
+problems wrt postgres on win32 are almost certainly going to be I/O
+based, not process based (as evidenced by the decent performance with
+fsync=off), and this is due to the way files are synched (somebody
+correct me if I'm wrong on this point).  I would hate to see you spend a
+bunch of time implementing threading only to find out you are better off
+than with the cygwin version.  In case I am wrong, it might be
+informative to fire up a threaded port to see if the end justifies the
+means.  The best apples to apples comparison is to run cygwin/peerdirect
+fsync=off vs. linux fsync=off.  This is not useful in a production
+sense, but will help tell the relative performance wrt threads vs.
+processes.
+
+My gut tells me the proper path is to:
+1. Implement no frills process based port to win32 based on (as much as
+possible) native sources and native build environment.
+2. Troubleshoot specific performance problems, which will most likely be
+on the I/O side.  Fixing them may ultimately lead to api level file
+calls (possibly including asynch I/O) on win32, which may be the only
+way that platform will ever run postgres as good as on the unix side of
+things.
+
+Regards,
+Merlin
+
+---------------------------(end of broadcast)---------------------------
+TIP 5: Have you checked our extensive FAQ?
+
+               http://www.postgresql.org/docs/faqs/FAQ.html
 
