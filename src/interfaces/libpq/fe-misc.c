@@ -25,7 +25,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.54 2001/08/21 20:39:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.55 2001/09/06 02:52:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -855,23 +855,46 @@ libpq_gettext(const char *msgid)
 #ifdef WIN32
 /*
  * strerror replacement for windows:
+ *
+ * We dont't know a fix for win9x yet, but this whould work for nt4 and win2k.
+ * If you can verify this working on win9x or have a solution, let us know, ok?
+ *
  */
 const char*
 winsock_strerror(DWORD eno)
 {
-	if (!FormatMessage( 
-		FORMAT_MESSAGE_IGNORE_INSERTS |
-        FORMAT_MESSAGE_FROM_SYSTEM | /* always consider system table */
-        ((netmsgModule != NULL) ? FORMAT_MESSAGE_FROM_HMODULE : 0),
-        netmsgModule, /* module to get message from (NULL == system) */
-		eno,
-        MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-        winsock_strerror_buf,sizeof(winsock_strerror_buf)-1,
-        NULL
-       )){
-      sprintf(winsock_strerror_buf,"Unknown socket error(%u)",eno);
-    }
-    winsock_strerror_buf[sizeof(winsock_strerror_buf)-1]='\0';
-    return winsock_strerror_buf;
+  #define WSSE_MAXLEN (sizeof(winsock_strerror_buf)-1-12) /* 12 == "(0x00000000)" */
+  int length;
+
+  /* First try the "system table", this works on Win2k pro */
+
+  if (FormatMessage(
+	   FORMAT_MESSAGE_IGNORE_INSERTS|FORMAT_MESSAGE_FROM_SYSTEM,
+	   0,eno,MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+	   winsock_strerror_buf,WSSE_MAXLEN,NULL
+	 ))
+    goto WSSE_GOODEXIT;
+
+  /* That didn't work, let's try the netmsg.dll */
+
+  if (netmsgModule && 
+      FormatMessage(
+	   FORMAT_MESSAGE_IGNORE_INSERTS|FORMAT_MESSAGE_FROM_HMODULE,
+	   0,eno,MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+	   winsock_strerror_buf,WSSE_MAXLEN,NULL 
+	   ))
+    goto WSSE_GOODEXIT;
+
+  /* Everything failed, just tell the user that we don't know the desc */
+  
+  strcat(winsock_strerror_buf,"Socket error, no description available.");
+
+WSSE_GOODEXIT:
+
+  length = strlen(winsock_strerror_buf);
+  sprintf(winsock_strerror_buf + length<WSSE_MAXLEN?length:WSSE_MAXLEN,
+	  "(0x%08X)",eno);
+
+  return winsock_strerror_buf;
 }
 #endif
