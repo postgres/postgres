@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclId.c,v 1.37.2.1 2003/02/01 00:07:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclId.c,v 1.37.2.2 2003/02/01 00:22:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -273,8 +273,9 @@ PgDelConnectionId(DRIVER_DEL_PROTO)
 		Tcl_DeleteHashTable(&notifies->notify_hash);
 		if (notifies->conn_loss_cmd)
 			ckfree((void *) notifies->conn_loss_cmd);
-		Tcl_DontCallWhenDeleted(notifies->interp, PgNotifyInterpDelete,
-								(ClientData) notifies);
+		if (notifies->interp)
+			Tcl_DontCallWhenDeleted(notifies->interp, PgNotifyInterpDelete,
+									(ClientData) notifies);
 		ckfree((void *) notifies);
 	}
 
