@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.48 2000/07/04 16:31:53 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.49 2000/08/25 10:00:30 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,6 +51,9 @@ static int	map_old_to_new(Port *port, UserAuth old, int status);
 static void auth_failed(Port *port);
 
 
+char * pg_krb_server_keyfile;
+
+
 #ifdef KRB4
 /*----------------------------------------------------------------
  * MIT Kerberos authentication system - protocol version 4
@@ -89,7 +92,7 @@ pg_krb4_recvauth(Port *port)
 						  &port->raddr.in,
 						  &port->laddr.in,
 						  &auth_data,
-						  PG_KRB_SRVTAB,
+						  pg_krb_server_keyfile,
 						  key_sched,
 						  version);
 	if (status != KSUCCESS)
@@ -197,13 +200,13 @@ pg_krb5_init(void)
 		return STATUS_ERROR;
 	}
 
-	retval = krb5_kt_resolve(pg_krb5_context, PG_KRB_SRVTAB, &pg_krb5_keytab);
+	retval = krb5_kt_resolve(pg_krb5_context, pg_krb_server_keyfile, &pg_krb5_keytab);
 	if (retval) {
 		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
 				 "pg_krb5_init: krb5_kt_resolve returned"
 				 " Kerberos error %d\n", retval);
 	    com_err("postgres", retval, "while resolving keytab file %s",
-				PG_KRB_SRVTAB);
+				pg_krb_server_keyfile);
 		krb5_free_context(pg_krb5_context);
 		return STATUS_ERROR;
 	}
@@ -216,7 +219,7 @@ pg_krb5_init(void)
 				 " Kerberos error %d\n", retval);
 	    com_err("postgres", retval, 
 				"while getting server principal for service %s",
-				PG_KRB_SRVTAB);
+				pg_krb_server_keyfile);
 		krb5_kt_close(pg_krb5_context, pg_krb5_keytab);
 		krb5_free_context(pg_krb5_context);
 		return STATUS_ERROR;

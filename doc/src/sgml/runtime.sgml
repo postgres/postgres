@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.18 2000/08/11 18:31:06 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.19 2000/08/25 10:00:29 petere Exp $
 -->
 
 <Chapter Id="runtime">
@@ -894,6 +894,16 @@ env PGOPTIONS='--geqo=off' psql
         the safe side, on is also the default. If you trust your
         operating system, your utility company, and your hardware, you
         might want to disable it.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>KRB_SERVER_KEYFILE</>
+      <listitem>
+       <para>
+        Sets the location of the Kerberos server key file. See
+        <xref linkend="kerberos-auth"> for details.
        </para>
       </listitem>
      </varlistentry>

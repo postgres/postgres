@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.3 2000/07/15 21:35:47 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.4 2000/08/25 10:00:29 petere Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
@@ -341,7 +341,7 @@ host    all     192.168.2.0     255.255.255.0           ident othermap
 
   </sect2>
 
-  <sect2>
+  <sect2 id="kerberos-auth">
    <title>Kerberos authentication</title>
 
    <para>
@@ -369,13 +369,15 @@ host    all     192.168.2.0     255.255.255.0           ident othermap
     <productname>Postgres</> should operate like a normal Kerberos
     service. The name of the service principal is normally
     <literal>postgres</literal>, unless it was changed during the
-    build. Make sure that your server keytab file is readable (and
+    build. Make sure that your server key file is readable (and
     preferrably only readable) by the Postgres server account (see
-    <xref linkend="postgres-user">). The location of the keytab file
-    is specified at build time; by default it is
-    <filename>/etc/srvtab</filename> in Kerberos 4 and
-    <filename>FILE:/usr/local/pgsql/etc/krb5.keytab</filename> in
-    Kerberos 5.
+    <xref linkend="postgres-user">). The location of the key file
+    is specified with the <varname>krb_server_keyfile</> run time
+    configuration parameter. (See also <xref linkend="runtime-config">.)
+    The default is <filename>/etc/srvtab</> if you are using Kerberos 4
+    and <filename>FILE:/usr/local/pgsql/etc/krb5.keytab</> (or whichever
+    directory was specified as <varname>sysconfdir</> at build time)
+    with Kerberos 5.
    </para>
 
    <para>

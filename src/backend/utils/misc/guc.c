@@ -4,7 +4,7 @@
  * Support for grand unified configuration scheme, including SET
  * command, configuration file, and command line options.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.8 2000/08/11 18:31:10 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.9 2000/08/25 10:00:31 petere Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -21,6 +21,7 @@
 #include "utils/guc.h"
 
 #include "commands/async.h"
+#include "libpq/auth.h"
 #include "miscadmin.h"
 #include "optimizer/cost.h"
 #include "optimizer/geqo.h"
@@ -53,6 +54,11 @@ bool Show_query_stats       = false; /* this is sort of all three above together
 bool Show_btree_build_stats = false;
 
 bool SQL_inheritance        = true;
+
+#ifndef PG_KRB_SRVTAB
+# define PG_KRB_SRVTAB ""
+#endif
+
 
 
 enum config_type
@@ -113,7 +119,7 @@ struct config_string
 {
     const char *name;
     GucContext  context;
-    char       *variable;
+    char      **variable;
     const char *default_val;
     bool       (*parse_hook)(const char *);
 };
@@ -273,7 +279,8 @@ ConfigureNamesReal[] =
 static struct config_string
 ConfigureNamesString[] =
 {
-	/* none so far */
+	{"krb_server_keyfile",        PGC_USERSET,       &pg_krb_server_keyfile,
+	 PG_KRB_SRVTAB, NULL},
 
 	{NULL, 0, NULL, NULL, NULL}
 };
@@ -323,7 +330,7 @@ find_option(const char * name, struct config_generic ** record)
         {
             if (record)
                 *record = (struct config_generic *)&ConfigureNamesString[i];
-            return PGC_REAL;
+            return PGC_STRING;
         }
 
     return PGC_NONE;
@@ -349,7 +356,7 @@ ResetAllOptions(void)
     for (i = 0; ConfigureNamesReal[i].name; i++)
         *(ConfigureNamesReal[i].variable) = ConfigureNamesReal[i].default_val;
 
-    for (i = 0; ConfigureNamesString[i].name; i++)
+	for (i = 0; ConfigureNamesString[i].name; i++)
 	{
 		char * str = NULL;
 
@@ -359,7 +366,7 @@ ResetAllOptions(void)
 			if (str == NULL)
 				elog(ERROR, "out of memory");
 		}
-		ConfigureNamesString[i].variable = str;
+		*(ConfigureNamesString[i].variable) = str;
 	}
 
 	if (getenv("PGPORT"))
@@ -650,8 +657,8 @@ set_config_option(const char * name, const char * value, GucContext
 						elog(elevel, "out of memory");
 						return false;
 					}
-					free(conf->variable);
-					conf->variable = str;
+					free(*conf->variable);
+					*conf->variable = str;
 				}
 			}
 			else if (DoIt)
@@ -664,8 +671,8 @@ set_config_option(const char * name, const char * value, GucContext
 					elog(elevel, "out of memory");
 					return false;
 				}
-				free(conf->variable);
-				conf->variable = str;
+				free(*conf->variable);
+				*conf->variable = str;
 			}
 			break;
 		}
@@ -725,7 +732,7 @@ GetConfigOption(const char * name)
 			return buffer;
 
 		case PGC_STRING:
-			return ((struct config_string *)record)->variable;
+			return *((struct config_string *)record)->variable;
 
         default:
 			;

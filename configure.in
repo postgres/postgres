@@ -477,6 +477,8 @@ if test "$with_krb4" = yes ; then
   fi
   dnl Test for these libraries is below
   KRB_LIBS="$krb_libdir -lkrb -ldes"
+
+  krb_srvtab='/etc/srvtab'
 fi
 
 
@@ -513,6 +515,8 @@ if test "$with_krb5" = yes ; then
 
   dnl Test for these libraries is below
   KRB_LIBS="$krb_libdir -lkrb5 -lcrypto -lcom_err"
+
+  krb_srvtab='FILE:$(sysconfdir)/krb5.keytab'
 fi
 
 
@@ -521,6 +525,8 @@ if test "$with_krb4" = yes && test "$with_krb5" = yes ; then
   AC_MSG_ERROR([Kerberos 4 and Kerberos 5 support cannot be combined])
 fi
 
+
+AC_SUBST(krb_srvtab)
 dnl Necessary for special libpq link
 AC_SUBST(KRB_LIBS)
 
@@ -537,20 +543,6 @@ fi],
 [krb_srvnam="postgres"])
 AC_DEFINE_UNQUOTED(PG_KRB_SRVNAM, ["$krb_srvnam"], [The name of the Postgres service principal])
 
-AC_ARG_WITH(krb-srvtab, [  --with-krb-srvtab=FILE  location of Kerberos server's keytab file],
-[if test x"$withval" = x"yes"; then
-  AC_MSG_ERROR([argument required for --with-krb-srvtab])
-else
-  krb_srvtab=$withval
-fi],
-[if test "$with_krb5" = yes ; then
-  krb_srvtab='FILE:${sysconfdir}/krb5.keytab'
-elif test "$with_krb4" = yes ; then
-  krb_srvtab='/etc/srvtab'
-else
-  krb_srvtab=
-fi])
-AC_SUBST(krb_srvtab)
 
 
 #

@@ -1,17 +1,17 @@
-#-------------------------------------------------------------------------
-#
-# Makefile--
-#    Makefile for utils/misc
-#
-# IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/misc/Makefile,v 1.16 2000/06/04 01:44:34 petere Exp $
-#
-#-------------------------------------------------------------------------
+# $Header: /cvsroot/pgsql/src/backend/utils/misc/Makefile,v 1.17 2000/08/25 10:00:31 petere Exp $
 
-SRCDIR = ../../..
-include $(SRCDIR)/Makefile.global
+subdir = src/backend/utils/misc
+top_builddir = ../../../..
+include $(top_builddir)/src/Makefile.global
 
 OBJS = database.o superuser.o guc.o guc-file.o ps_status.o
+
+# This location might depend on the installation directories. Therefore
+# we can't subsitute it into config.h.
+ifdef krb_srvtab
+CPPFLAGS += -DPG_KRB_SRVTAB='"$(krb_srvtab)"'
+endif
+
 
 all: SUBSYS.o
 
