@@ -4,8 +4,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.5\n"
-"POT-Creation-Date: 2004-08-04 02:53-0300\n"
-"PO-Revision-Date: 2004-08-18 12:15+0800\n"
+"POT-Creation-Date: 2004-09-17 01:13+0100\n"
+"PO-Revision-Date: 2004-09-17 13:49+0800\n"
 "Last-Translator: Zhenbang Wei <forth@zbwei.net>\n"
 "Language-Team: Zhenbang Wei <forth@zbwei.net>\n"
 "MIME-Version: 1.0\n"
@@ -110,102 +110,104 @@ msgstr ""
 "\t伺服器是否在主機\"%s\"上執行並且準備接受在\n"
 "\t埠號 %s 上的 TCP/IP 連線？\n"
 
-#: fe-connect.c:945
+#: fe-connect.c:946
 #, c-format
 msgid "could not translate host name \"%s\" to address: %s\n"
 msgstr "無法將主機名稱\"%s\"轉換成位址: %s\n"
 
-#: fe-connect.c:949
+#: fe-connect.c:950
 #, c-format
 msgid "could not translate Unix-domain socket path \"%s\" to address: %s\n"
 msgstr "無法將Unix-domain socket路徑\"%s\"轉換成位址: %s\n"
 
-#: fe-connect.c:1153
+#: fe-connect.c:1154
 msgid "invalid connection state, probably indicative of memory corruption\n"
 msgstr "無效的連線狀態，可能是記憶體中的資料被破壞\n"
 
-#: fe-connect.c:1196
+#: fe-connect.c:1197
 #, c-format
 msgid "could not create socket: %s\n"
 msgstr "無法建立 socket: %s\n"
 
-#: fe-connect.c:1307
+#: fe-connect.c:1308
 #, c-format
 msgid "could not get socket error status: %s\n"
 msgstr "無法取得 socket 的錯誤狀態: %s\n"
 
-#: fe-connect.c:1346
+#: fe-connect.c:1347
 #, c-format
 msgid "could not get client address from socket: %s\n"
 msgstr "無法從 socket 取得客戶端位址: %s\n"
 
-#: fe-connect.c:1391
+#: fe-connect.c:1392
 #, c-format
 msgid "could not send SSL negotiation packet: %s\n"
 msgstr "無法傳送 SSL 交談封包: %s\n"
 
-#: fe-connect.c:1413
-#: fe-connect.c:2536
-#: fe-connect.c:2545
-#: fe-connect.c:3112
-#: fe-lobj.c:548
+#: fe-connect.c:1414
+#: fe-connect.c:2538
+#: fe-connect.c:2547
+#: fe-connect.c:3126
+#: fe-lobj.c:556
+#: fe-protocol2.c:1002
+#: fe-protocol3.c:944
 msgid "out of memory\n"
 msgstr "記憶體用盡\n"
 
-#: fe-connect.c:1426
+#: fe-connect.c:1427
 #, c-format
 msgid "could not send startup packet: %s\n"
 msgstr "無法傳送啟動封包: %s\n"
 
-#: fe-connect.c:1466
+#: fe-connect.c:1467
 #, c-format
 msgid "could not receive server response to SSL negotiation packet: %s\n"
 msgstr "收不到伺服器對 SSL 交談封包的回應: %s\n"
 
-#: fe-connect.c:1485
-#: fe-connect.c:1502
+#: fe-connect.c:1486
+#: fe-connect.c:1503
 msgid "server does not support SSL, but SSL was required\n"
 msgstr "伺服器不支援 SSL，但是被要求使用 SSL\n"
 
-#: fe-connect.c:1518
+#: fe-connect.c:1519
 #, c-format
 msgid "received invalid response to SSL negotiation: %c\n"
 msgstr "收到無效的 SSL 交談回應: %c\n"
 
-#: fe-connect.c:1575
-#: fe-connect.c:1607
+#: fe-connect.c:1576
+#: fe-connect.c:1608
 #, c-format
 msgid "expected authentication request from server, but received %c\n"
 msgstr "期待來自伺服器的認證請求，但是收到 %c\n"
 
-#: fe-connect.c:1843
+#: fe-connect.c:1844
 msgid "unexpected message from server during startup\n"
 msgstr "啟動過程中收到來自伺服器的非預期訊息\n"
 
-#: fe-connect.c:1913
+#: fe-connect.c:1914
 #, c-format
 msgid "invalid connection state %c, probably indicative of memory corruption\n"
 msgstr "無效的連線狀態 %c，可能是記憶體中的資料被破壞\n"
 
-#: fe-connect.c:2584
+#: fe-connect.c:2586
 #, c-format
 msgid "missing \"=\" after \"%s\" in connection info string\n"
 msgstr "在連線資訊字串裡的 \"%s\" 後面缺少 \"=\"\n"
 
-#: fe-connect.c:2633
+#: fe-connect.c:2635
 msgid "unterminated quoted string in connection info string\n"
 msgstr "連線資訊字串中有未結束的引號\n"
 
-#: fe-connect.c:2667
+#: fe-connect.c:2669
 #, c-format
 msgid "invalid connection option \"%s\"\n"
 msgstr "無效的連線選項 \"%s\"\n"
 
-#: fe-connect.c:2879
+#: fe-connect.c:2891
 msgid "connection pointer is NULL\n"
 msgstr "連線指標是 NULL\n"
 
-#: fe-connect.c:3130
+#: fe-connect.c:3148
 #, c-format
 msgid "WARNING: Password file %s has world or group read access; permission should be u=rw (0600)\n"
 msgstr "警告：密碼檔%s可以被其他人或群組存取，應該將權限設為u=rw(0600)\n"
@@ -232,7 +234,7 @@ msgid "another command is already in progress\n"
 msgstr "另外一條命令正在執行中\n"
 
 #: fe-exec.c:814
-#: fe-exec.c:1465
+#: fe-exec.c:1466
 msgid "function requires at least protocol version 3.0\n"
 msgstr "函式需要3.0版以上的協定\n"
 
@@ -255,95 +257,97 @@ msgstr "必須先結束 COPY OUT 狀態\n"
 
 #: fe-exec.c:1358
 #: fe-exec.c:1423
-#: fe-exec.c:1507
+#: fe-exec.c:1508
+#: fe-protocol2.c:1148
+#: fe-protocol3.c:1101
 msgid "no COPY in progress\n"
 msgstr "沒有執行中的 COPY 命令\n"
 
-#: fe-exec.c:1699
+#: fe-exec.c:1700
 msgid "connection in wrong state\n"
 msgstr "連線處於錯誤的狀態\n"
 
-#: fe-exec.c:1730
+#: fe-exec.c:1731
 msgid "invalid ExecStatusType code"
 msgstr "無效的 ExecStatusType 代碼"
 
-#: fe-exec.c:1794
-#: fe-exec.c:1817
+#: fe-exec.c:1795
+#: fe-exec.c:1818
 #, c-format
 msgid "column number %d is out of range 0..%d"
 msgstr "列號 %d 超出了範圍 0..%d"
 
-#: fe-exec.c:1810
+#: fe-exec.c:1811
 #, c-format
 msgid "row number %d is out of range 0..%d"
 msgstr "行號 %d 超出了範圍 0..%d"
 
-#: fe-exec.c:2094
+#: fe-exec.c:2093
 #, c-format
 msgid "could not interpret result from server: %s"
 msgstr "無法解讀來自伺服器的結果: %s"
 
-#: fe-lobj.c:402
-#: fe-lobj.c:487
+#: fe-lobj.c:410
+#: fe-lobj.c:495
 #, c-format
 msgid "could not open file \"%s\": %s\n"
 msgstr "無法開啟檔案 \"%s\": %s\n"
 
-#: fe-lobj.c:414
+#: fe-lobj.c:422
 #, c-format
 msgid "could not create large object for file \"%s\"\n"
 msgstr "無法為檔案 \"%s\" 建立 large object\n"
 
-#: fe-lobj.c:424
-#: fe-lobj.c:474
+#: fe-lobj.c:432
+#: fe-lobj.c:482
 #, c-format
 msgid "could not open large object %u\n"
 msgstr "無法開啟 large object %u\n"
 
-#: fe-lobj.c:439
+#: fe-lobj.c:447
 #, c-format
 msgid "error while reading file \"%s\"\n"
 msgstr "讀取檔案 \"%s\" 時發生錯誤\n"
 
-#: fe-lobj.c:502
-#: fe-lobj.c:515
+#: fe-lobj.c:510
+#: fe-lobj.c:523
 #, c-format
 msgid "error while writing to file \"%s\"\n"
 msgstr "寫入檔案 \"%s\" 時發生錯誤\n"
 
-#: fe-lobj.c:593
+#: fe-lobj.c:601
 msgid "query to initialize large object functions did not return data\n"
 msgstr "初始化大型物件函式的查詢沒有傳回資料\n"
 
-#: fe-lobj.c:631
+#: fe-lobj.c:639
 msgid "cannot determine OID of function lo_open\n"
 msgstr "無法判斷函式 lo_open 的 OID\n"
 
-#: fe-lobj.c:638
+#: fe-lobj.c:646
 msgid "cannot determine OID of function lo_close\n"
 msgstr "無法判斷函式 lo_close 的 OID\n"
 
-#: fe-lobj.c:645
+#: fe-lobj.c:653
 msgid "cannot determine OID of function lo_creat\n"
 msgstr "無法判斷函式 lo_creat 的 OID\n"
 
-#: fe-lobj.c:652
+#: fe-lobj.c:660
 msgid "cannot determine OID of function lo_unlink\n"
 msgstr "無法判斷函式 lo_unlink 的 OID\n"
 
-#: fe-lobj.c:659
+#: fe-lobj.c:667
 msgid "cannot determine OID of function lo_lseek\n"
 msgstr "無法判斷函式 lo_lseek 的 OID\n"
 
-#: fe-lobj.c:666
+#: fe-lobj.c:674
 msgid "cannot determine OID of function lo_tell\n"
 msgstr "無法判斷函式 lo_tell 的 OID\n"
 
-#: fe-lobj.c:673
+#: fe-lobj.c:681
 msgid "cannot determine OID of function loread\n"
 msgstr "無法判斷函式 loread 的 OID\n"
 
-#: fe-lobj.c:680
+#: fe-lobj.c:688
 msgid "cannot determine OID of function lowrite\n"
 msgstr "無法判斷函式 lowrite 的 OID\n"
 
@@ -384,135 +388,255 @@ msgstr ""
 msgid "could not send data to server: %s\n"
 msgstr "無法向伺服器傳送資料: %s\n"
 
-#: fe-misc.c:922
+#: fe-misc.c:923
 msgid "timeout expired\n"
 msgstr "發生逾時\n"
 
-#: fe-misc.c:967
+#: fe-misc.c:968
 msgid "socket not open\n"
 msgstr "socket 未開啟\n"
 
-#: fe-misc.c:990
+#: fe-misc.c:991
 #, c-format
 msgid "select() failed: %s\n"
 msgstr "select() 失敗: %s\n"
 
-#: fe-secure.c:260
+#: fe-protocol2.c:91
+#, c-format
+msgid "invalid setenv state %c, probably indicative of memory corruption\n"
+msgstr "無效的setenv狀態 %c，可能是記憶體中的資料被破壞\n"
+
+#: fe-protocol2.c:333
+#, c-format
+msgid "invalid state %c, probably indicative of memory corruption\n"
+msgstr "無效的狀態 %c，可能是記憶體中的資料被破壞\n"
+
+#: fe-protocol2.c:423
+#: fe-protocol3.c:183
+#, c-format
+msgid "message type 0x%02x arrived from server while idle"
+msgstr "idle時收到伺服器送來類型為0x%02x的訊息"
+
+#: fe-protocol2.c:462
+#, c-format
+msgid "unexpected character %c following empty query response (\"I\" message)"
+msgstr ""
+
+#: fe-protocol2.c:517
+msgid "server sent data (\"D\" message) without prior row description (\"T\" message)"
+msgstr ""
+
+#: fe-protocol2.c:533
+msgid "server sent binary data (\"B\" message) without prior row description (\"T\" message)"
+msgstr ""
+
+#: fe-protocol2.c:548
+#: fe-protocol3.c:335
+#, c-format
+msgid "unexpected response from server; first received character was \"%c\"\n"
+msgstr "非預期的伺服器回應，收到的第一個字元是\"%c\"\n"
+
+#: fe-protocol2.c:760
+#: fe-protocol3.c:568
+msgid "out of memory for query result\n"
+msgstr "查詢結果用盡記憶體\n"
+
+#: fe-protocol2.c:1191
+#: fe-protocol3.c:1170
+#, c-format
+msgid "%s"
+msgstr ""
+
+#: fe-protocol2.c:1203
+msgid "lost synchronization with server, resetting connection"
+msgstr "無法與伺服器協調，重置連線"
+
+#: fe-protocol2.c:1338
+#: fe-protocol2.c:1370
+#: fe-protocol3.c:1373
+#, c-format
+msgid "protocol error: id=0x%x\n"
+msgstr "協定錯誤：id=0x%x\n"
+
+#: fe-protocol3.c:297
+msgid "server sent data (\"D\" message) without prior row description (\"T\" message)\n"
+msgstr ""
+
+#: fe-protocol3.c:356
+#, c-format
+msgid "Message contents do not agree with length in message type \"%c\"\n"
+msgstr "訊息類型\"%c\"中的長度和訊息中的內容不符\n"
+
+#: fe-protocol3.c:377
+#, c-format
+msgid "lost synchronization with server: got message type \"%c\", length %d\n"
+msgstr "無法與伺服器協調：收到訊息類型\"%c\"，長度 %d\n"
+
+#: fe-protocol3.c:513
+msgid "unexpected field count in D message\n"
+msgstr "D訊息中有預期外的欄位數\n"
+
+#  translator: %s represents a digit string
+#: fe-protocol3.c:642
+#: fe-protocol3.c:650
+#, c-format
+msgid " at character %s"
+msgstr "於字元 %s"
+
+#: fe-protocol3.c:659
+#, c-format
+msgid "DETAIL:  %s\n"
+msgstr ""
+
+#: fe-protocol3.c:662
+#, c-format
+msgid "HINT:  %s\n"
+msgstr ""
+
+#: fe-protocol3.c:665
+#, c-format
+msgid "QUERY:  %s\n"
+msgstr ""
+
+#: fe-protocol3.c:668
+#, c-format
+msgid "CONTEXT:  %s\n"
+msgstr ""
+
+#: fe-protocol3.c:680
+msgid "LOCATION:  "
+msgstr ""
+
+#: fe-protocol3.c:682
+#, c-format
+msgid "%s, "
+msgstr ""
+
+#: fe-protocol3.c:684
+#, c-format
+msgid "%s:%s"
+msgstr ""
+
+#: fe-protocol3.c:986
+msgid "PQgetline: not doing text COPY OUT\n"
+msgstr ""
+
+#: fe-secure.c:262
 #, c-format
 msgid "could not establish SSL connection: %s\n"
 msgstr "無法建立 SSL 連線: %s\n"
 
-#: fe-secure.c:323
-#: fe-secure.c:403
-#: fe-secure.c:1022
+#: fe-secure.c:325
+#: fe-secure.c:406
+#: fe-secure.c:1036
 #, c-format
 msgid "SSL SYSCALL error: %s\n"
 msgstr "SSL SYSCALL錯誤: %s\n"
 
-#: fe-secure.c:328
-#: fe-secure.c:408
-#: fe-secure.c:1026
+#: fe-secure.c:330
+#: fe-secure.c:411
+#: fe-secure.c:1040
 msgid "SSL SYSCALL error: EOF detected\n"
 msgstr "SSL SYSCALL錯誤: 發現EOF\n"
 
-#: fe-secure.c:339
-#: fe-secure.c:418
-#: fe-secure.c:1034
+#: fe-secure.c:342
+#: fe-secure.c:422
+#: fe-secure.c:1049
 #, c-format
 msgid "SSL error: %s\n"
 msgstr "SSL 錯誤: %s\n"
 
-#: fe-secure.c:349
-#: fe-secure.c:428
-#: fe-secure.c:1042
+#: fe-secure.c:352
+#: fe-secure.c:432
+#: fe-secure.c:1057
 msgid "unrecognized SSL error code\n"
 msgstr "無法識別的SSL錯誤碼\n"
 
-#: fe-secure.c:490
+#: fe-secure.c:494
 #, c-format
 msgid "error querying socket: %s\n"
 msgstr "詢問 socket 發生錯誤: %s\n"
 
-#: fe-secure.c:518
+#: fe-secure.c:522
 #, c-format
 msgid "could not get information about host (%s): %s\n"
 msgstr "無法取得關於主機(%s)的資訊: %s\n"
 
-#: fe-secure.c:537
+#: fe-secure.c:541
 msgid "unsupported protocol\n"
 msgstr "不被支援的協定\n"
 
-#: fe-secure.c:559
+#: fe-secure.c:563
 #, c-format
 msgid "server common name \"%s\" does not resolve to %ld.%ld.%ld.%ld\n"
 msgstr "伺服器的common name \"%s\" 無法解析成位址%ld.%ld.%ld.%ld\n"
 
-#: fe-secure.c:566
+#: fe-secure.c:570
 #, c-format
 msgid "server common name \"%s\" does not resolve to peer address\n"
 msgstr "伺服器的common name \"%s\" 無法解析成位址\n"
 
-#: fe-secure.c:749
+#: fe-secure.c:753
 msgid "could not get user information\n"
 msgstr "無法取得使用者的資訊\n"
 
-#: fe-secure.c:761
+#: fe-secure.c:765
 #, c-format
 msgid "could not open certificate (%s): %s\n"
 msgstr "無法開啟憑證(%s): %s\n"
 
-#: fe-secure.c:769
+#: fe-secure.c:774
 #, c-format
 msgid "could not read certificate (%s): %s\n"
 msgstr "無法讀取憑證(%s): %s\n"
 
-#: fe-secure.c:783
+#: fe-secure.c:788
 #, c-format
 msgid "certificate present, but not private key (%s)\n"
 msgstr "只有憑證，沒有私鑰(%s)\n"
 
-#: fe-secure.c:792
+#: fe-secure.c:797
 #, c-format
 msgid "private key (%s) has wrong permissions\n"
 msgstr "私鑰(%s)權限錯誤\n"
 
-#: fe-secure.c:799
+#: fe-secure.c:804
 #, c-format
 msgid "could not open private key file (%s): %s\n"
 msgstr "無法開啟私鑰檔案(%s): %s\n"
 
-#: fe-secure.c:808
+#: fe-secure.c:813
 #, c-format
 msgid "private key (%s) changed during execution\n"
 msgstr "私鑰(%s)在執行過程被改變\n"
 
-#: fe-secure.c:816
+#: fe-secure.c:822
 #, c-format
 msgid "could not read private key (%s): %s\n"
 msgstr "無法讀取私鑰(%s): %s\n"
 
-#: fe-secure.c:830
+#: fe-secure.c:837
 #, c-format
 msgid "certificate/private key mismatch (%s): %s\n"
 msgstr "憑證/私鑰不符(%s): %s\n"
 
-#: fe-secure.c:909
+#: fe-secure.c:921
 #, c-format
 msgid "could not create SSL context: %s\n"
 msgstr "無法建立 SSL context: %s\n"
 
-#: fe-secure.c:953
-#: fe-secure.c:962
+#: fe-secure.c:966
+#: fe-secure.c:976
 #, c-format
 msgid "could not read root certificate list (%s): %s\n"
 msgstr "無法讀取根憑證清單(%s): %s\n"
 
-#: fe-secure.c:1061
+#: fe-secure.c:1076
 #, c-format
 msgid "certificate could not be validated: %s\n"
 msgstr "無法驗證憑證: %s\n"
 
-#: fe-secure.c:1074
+#: fe-secure.c:1090
 #, c-format
 msgid "certificate could not be obtained: %s\n"
 msgstr "無法取得憑證: %s\n"
