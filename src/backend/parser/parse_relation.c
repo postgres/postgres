@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.103 2005/03/31 22:46:13 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.104 2005/04/06 16:34:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -910,15 +910,15 @@ addRangeTableEntryForSubquery(ParseState *pstate,
 	{
 		TargetEntry *te = (TargetEntry *) lfirst(tlistitem);
 
-		if (te->resdom->resjunk)
+		if (te->resjunk)
 			continue;
 		varattno++;
-		Assert(varattno == te->resdom->resno);
+		Assert(varattno == te->resno);
 		if (varattno > numaliases)
 		{
 			char	   *attrname;
 
-			attrname = pstrdup(te->resdom->resname);
+			attrname = pstrdup(te->resname);
 			eref->colnames = lappend(eref->colnames, makeString(attrname));
 		}
 	}
@@ -1260,10 +1260,10 @@ expandRTE(List *rtable, int rtindex, int sublevels_up,
 				{
 					TargetEntry *te = (TargetEntry *) lfirst(tlistitem);
 
-					if (te->resdom->resjunk)
+					if (te->resjunk)
 						continue;
 					varattno++;
-					Assert(varattno == te->resdom->resno);
+					Assert(varattno == te->resno);
 
 					if (colnames)
 					{
@@ -1279,8 +1279,8 @@ expandRTE(List *rtable, int rtindex, int sublevels_up,
 						Var		   *varnode;
 
 						varnode = makeVar(rtindex, varattno,
-										  te->resdom->restype,
-										  te->resdom->restypmod,
+										  exprType((Node *) te->expr),
+										  exprTypmod((Node *) te->expr),
 										  sublevels_up);
 
 						*colvars = lappend(*colvars, varnode);
@@ -1532,14 +1532,12 @@ expandRelAttrs(ParseState *pstate, List *rtable, int rtindex, int sublevels_up)
 	{
 		char	   *label = strVal(lfirst(name));
 		Node	   *varnode = (Node *) lfirst(var);
-		TargetEntry *te = makeNode(TargetEntry);
+		TargetEntry *te;
 
-		te->resdom = makeResdom((AttrNumber) pstate->p_next_resno++,
-								exprType(varnode),
-								exprTypmod(varnode),
-								label,
-								false);
-		te->expr = (Expr *) varnode;
+		te = makeTargetEntry((Expr *) varnode,
+							 (AttrNumber) pstate->p_next_resno++,
+							 label,
+							 false);
 		te_list = lappend(te_list, te);
 	}
 
@@ -1641,11 +1639,11 @@ get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
 				TargetEntry *te = get_tle_by_resno(rte->subquery->targetList,
 												   attnum);
 
-				if (te == NULL || te->resdom->resjunk)
+				if (te == NULL || te->resjunk)
 					elog(ERROR, "subquery %s does not have attribute %d",
 						 rte->eref->aliasname, attnum);
-				*vartype = te->resdom->restype;
-				*vartypmod = te->resdom->restypmod;
+				*vartype = exprType((Node *) te->expr);
+				*vartypmod = exprTypmod((Node *) te->expr);
 			}
 			break;
 		case RTE_FUNCTION:
@@ -1856,7 +1854,7 @@ get_tle_by_resno(List *tlist, AttrNumber resno)
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(l);
 
-		if (tle->resdom->resno == resno)
+		if (tle->resno == resno)
 			return tle;
 	}
 	return NULL;

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.275 2005/03/29 17:58:51 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.276 2005/04/06 16:34:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -552,11 +552,11 @@ typedef struct RangeTblEntry
  * SortClause -
  *	   representation of ORDER BY clauses
  *
- * tleSortGroupRef must match ressortgroupref of exactly one Resdom of the
+ * tleSortGroupRef must match ressortgroupref of exactly one entry of the
  * associated targetlist; that is the expression to be sorted (or grouped) by.
  * sortop is the OID of the ordering operator.
  *
- * SortClauses are also used to identify Resdoms that we will do a "Unique"
+ * SortClauses are also used to identify targets that we will do a "Unique"
  * filter step on (for SELECT DISTINCT and SELECT DISTINCT ON).  The
  * distinctClause list is simply a copy of the relevant members of the
  * sortClause list.  Note that distinctClause can be a subset of sortClause,

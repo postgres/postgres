@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execTuples.c,v 1.86 2005/03/17 15:25:51 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execTuples.c,v 1.87 2005/04/06 16:34:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -784,15 +784,14 @@ ExecTypeFromTLInternal(List *targetList, bool hasoid, bool skipjunk)
 	foreach(l, targetList)
 	{
 		TargetEntry *tle = lfirst(l);
-		Resdom	   *resdom = tle->resdom;
 
-		if (skipjunk && resdom->resjunk)
+		if (skipjunk && tle->resjunk)
 			continue;
 		TupleDescInitEntry(typeInfo,
 						   cur_resno++,
-						   resdom->resname,
-						   resdom->restype,
-						   resdom->restypmod,
+						   tle->resname,
+						   exprType((Node *) tle->expr),
+						   exprTypmod((Node *) tle->expr),
 						   0);
 	}
 

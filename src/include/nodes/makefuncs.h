@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/makefuncs.h,v 1.51 2004/12/31 22:03:34 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/makefuncs.h,v 1.52 2005/04/06 16:34:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,13 +29,12 @@ extern Var *makeVar(Index varno,
 		int32 vartypmod,
 		Index varlevelsup);
 
-extern TargetEntry *makeTargetEntry(Resdom *resdom, Expr *expr);
+extern TargetEntry *makeTargetEntry(Expr *expr,
+									AttrNumber resno,
+									char *resname,
+									bool resjunk);
 
-extern Resdom *makeResdom(AttrNumber resno,
-		   Oid restype,
-		   int32 restypmod,
-		   char *resname,
-		   bool resjunk);
+extern TargetEntry *flatCopyTargetEntry(TargetEntry *src_tle);
 
 extern Const *makeConst(Oid consttype,
 		  int constlen,

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.114 2005/03/27 06:29:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.115 2005/04/06 16:34:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -789,7 +789,7 @@ is_distinct_query(Query *query)
 			TargetEntry *tle = get_sortgroupclause_tle(grpcl,
 													   query->targetList);
 
-			if (tle->resdom->resjunk)
+			if (tle->resjunk)
 				break;
 		}
 		if (!gl)				/* got to the end? */

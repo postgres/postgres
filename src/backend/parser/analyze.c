@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.316 2005/03/10 23:21:23 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.317 2005/04/06 16:34:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -438,15 +438,12 @@ transformViewStmt(ParseState *pstate, ViewStmt *stmt,
 		foreach(targetList, stmt->query->targetList)
 		{
 			TargetEntry *te = (TargetEntry *) lfirst(targetList);
-			Resdom	   *rd;
 
 			Assert(IsA(te, TargetEntry));
-			rd = te->resdom;
-			Assert(IsA(rd, Resdom));
 			/* junk columns don't get aliases */
-			if (rd->resjunk)
+			if (te->resjunk)
 				continue;
-			rd->resname = pstrdup(strVal(lfirst(alist_item)));
+			te->resname = pstrdup(strVal(lfirst(alist_item)));
 			alist_item = lnext(alist_item);
 			if (alist_item == NULL)
 				break;			/* done assigning aliases */
@@ -507,7 +504,6 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt,
 {
 	Query	   *qry = makeNode(Query);
 	Query	   *selectQuery = NULL;
-	bool		copy_up_hack = false;
 	List	   *sub_rtable;
 	List	   *sub_namespace;
 	List	   *icolumns;
@@ -615,7 +611,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt,
 		 * separate from the subquery's tlist because we may add columns,
 		 * insert datatype coercions, etc.)
 		 *
-		 * HACK: unknown-type constants and params in the INSERT's targetlist
+		 * HACK: unknown-type constants and params in the SELECT's targetlist
 		 * are copied up as-is rather than being referenced as subquery
 		 * outputs.  This is to ensure that when we try to coerce them to
 		 * the target column's datatype, the right things happen (see
@@ -627,28 +623,25 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt,
 		foreach(tl, selectQuery->targetList)
 		{
 			TargetEntry *tle = (TargetEntry *) lfirst(tl);
-			Resdom	   *resnode = tle->resdom;
 			Expr	   *expr;
 
-			if (resnode->resjunk)
+			if (tle->resjunk)
 				continue;
 			if (tle->expr &&
 				(IsA(tle->expr, Const) || IsA(tle->expr, Param)) &&
 				exprType((Node *) tle->expr) == UNKNOWNOID)
-			{
 				expr = tle->expr;
-				copy_up_hack = true;
-			}
 			else
 				expr = (Expr *) makeVar(rtr->rtindex,
-										resnode->resno,
-										resnode->restype,
-										resnode->restypmod,
+										tle->resno,
+										exprType((Node *) tle->expr),
+										exprTypmod((Node *) tle->expr),
 										0);
-			resnode = copyObject(resnode);
-			resnode->resno = (AttrNumber) pstate->p_next_resno++;
-			qry->targetList = lappend(qry->targetList,
-									  makeTargetEntry(resnode, expr));
+			tle = makeTargetEntry(expr,
+								  (AttrNumber) pstate->p_next_resno++,
+								  tle->resname,
+								  false);
+			qry->targetList = lappend(qry->targetList, tle);
 		}
 	}
 	else
@@ -690,7 +683,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt,
 		col = (ResTarget *) lfirst(icols);
 		Assert(IsA(col, ResTarget));
 
-		Assert(!tle->resdom->resjunk);
+		Assert(!tle->resjunk);
 		updateTargetListEntry(pstate, tle, col->name, lfirst_int(attnos),
 							  col->indirection);
 
@@ -707,28 +700,6 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt,
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 			 errmsg("INSERT has more target columns than expressions")));
-
-	/*
-	 * If we copied up any unknown Params (see HACK above) then their
-	 * resolved types need to be propagated into the Resdom nodes of
-	 * the sub-INSERT's tlist.  One hack begets another :-(
-	 */
-	if (copy_up_hack)
-	{
-		foreach(tl, selectQuery->targetList)
-		{
-			TargetEntry *tle = (TargetEntry *) lfirst(tl);
-			Resdom	   *resnode = tle->resdom;
-
-			if (resnode->resjunk)
-				continue;
-			if (resnode->restype == UNKNOWNOID)
-			{
-				resnode->restype = exprType((Node *) tle->expr);
-				resnode->restypmod = exprTypmod((Node *) tle->expr);
-			}
-		}
-	}
 
 	/* done building the range table and jointree */
 	qry->rtable = pstate->p_rtable;
@@ -2007,26 +1978,23 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	foreach(dtlist, sostmt->colTypes)
 	{
 		Oid			colType = lfirst_oid(dtlist);
-		Resdom	   *leftResdom;
+		TargetEntry *lefttle = (TargetEntry *) lfirst(left_tlist);
 		char	   *colName;
-		Resdom	   *resdom;
+		TargetEntry *tle;
 		Expr	   *expr;
 
-		leftResdom = ((TargetEntry *) lfirst(left_tlist))->resdom;
-		Assert(!leftResdom->resjunk);
-		colName = pstrdup(leftResdom->resname);
-		resdom = makeResdom((AttrNumber) pstate->p_next_resno++,
-							colType,
-							-1,
-							colName,
-							false);
+		Assert(!lefttle->resjunk);
+		colName = pstrdup(lefttle->resname);
 		expr = (Expr *) makeVar(leftmostRTI,
-								leftResdom->resno,
+								lefttle->resno,
 								colType,
 								-1,
 								0);
-		qry->targetList = lappend(qry->targetList,
-								  makeTargetEntry(resdom, expr));
+		tle = makeTargetEntry(expr,
+							  (AttrNumber) pstate->p_next_resno++,
+							  colName,
+							  false);
+		qry->targetList = lappend(qry->targetList, tle);
 		targetvars = lappend(targetvars, expr);
 		targetnames = lappend(targetnames, makeString(colName));
 		left_tlist = lnext(left_tlist);
@@ -2284,11 +2252,10 @@ getSetColTypes(ParseState *pstate, Node *node)
 		foreach(tl, selectQuery->targetList)
 		{
 			TargetEntry *tle = (TargetEntry *) lfirst(tl);
-			Resdom	   *resnode = tle->resdom;
 
-			if (resnode->resjunk)
+			if (tle->resjunk)
 				continue;
-			result = lappend_oid(result, resnode->restype);
+			result = lappend_oid(result, exprType((Node *) tle->expr));
 		}
 		return result;
 	}
@@ -2324,8 +2291,8 @@ applyColumnNames(List *dst, List *src)
 		TargetEntry *d = (TargetEntry *) lfirst(dst_item);
 		ColumnDef  *s = (ColumnDef *) lfirst(src_item);
 
-		Assert(d->resdom && !d->resdom->resjunk);
-		d->resdom->resname = pstrdup(s->colname);
+		Assert(!d->resjunk);
+		d->resname = pstrdup(s->colname);
 	}
 }
 
@@ -2383,10 +2350,9 @@ transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
 	foreach(tl, qry->targetList)
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(tl);
-		Resdom	   *resnode = tle->resdom;
 		ResTarget  *origTarget;
 
-		if (resnode->resjunk)
+		if (tle->resjunk)
 		{
 			/*
 			 * Resjunk nodes need no additional processing, but be sure
@@ -2394,8 +2360,8 @@ transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
 			 * rewriter or planner might get confused.	They don't need a
 			 * resname either.
 			 */
-			resnode->resno = (AttrNumber) pstate->p_next_resno++;
-			resnode->resname = NULL;
+			tle->resno = (AttrNumber) pstate->p_next_resno++;
+			tle->resname = NULL;
 			continue;
 		}
 		if (origTargetList == NULL)

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeSubplan.c,v 1.67 2005/03/16 21:38:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeSubplan.c,v 1.68 2005/04/06 16:34:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -828,12 +828,10 @@ ExecInitSubPlan(SubPlanState *node, EState *estate)
 			/* Process lefthand argument */
 			exstate = (ExprState *) linitial(fstate->args);
 			expr = exstate->expr;
-			tle = makeTargetEntry(makeResdom(i,
-											 exprType((Node *) expr),
-											 exprTypmod((Node *) expr),
-											 NULL,
-											 false),
-								  expr);
+			tle = makeTargetEntry(expr,
+								  i,
+								  NULL,
+								  false);
 			tlestate = makeNode(GenericExprState);
 			tlestate->xprstate.expr = (Expr *) tle;
 			tlestate->xprstate.evalfunc = NULL;
@@ -844,12 +842,10 @@ ExecInitSubPlan(SubPlanState *node, EState *estate)
 			/* Process righthand argument */
 			exstate = (ExprState *) lsecond(fstate->args);
 			expr = exstate->expr;
-			tle = makeTargetEntry(makeResdom(i,
-											 exprType((Node *) expr),
-											 exprTypmod((Node *) expr),
-											 NULL,
-											 false),
-								  expr);
+			tle = makeTargetEntry(expr,
+								  i,
+								  NULL,
+								  false);
 			tlestate = makeNode(GenericExprState);
 			tlestate->xprstate.expr = (Expr *) tle;
 			tlestate->xprstate.evalfunc = NULL;

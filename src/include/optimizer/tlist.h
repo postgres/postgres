@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/tlist.h,v 1.41 2004/12/31 22:03:36 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/tlist.h,v 1.42 2005/04/06 16:34:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,10 +17,7 @@
 #include "nodes/relation.h"
 
 
-extern TargetEntry *tlistentry_member(Node *node, List *targetlist);
-extern Resdom *tlist_member(Node *node, List *targetlist);
-
-extern TargetEntry *create_tl_element(Var *var, int resdomno);
+extern TargetEntry *tlist_member(Node *node, List *targetlist);
 
 extern List *flatten_tlist(List *tlist);
 extern List *add_to_flat_tlist(List *tlist, List *vars);

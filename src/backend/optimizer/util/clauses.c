@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.192 2005/03/31 22:46:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.193 2005/04/06 16:34:06 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -966,22 +966,22 @@ has_distinct_on_clause(Query *query)
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(l);
 
-		if (tle->resdom->ressortgroupref == 0)
+		if (tle->ressortgroupref == 0)
 		{
-			if (tle->resdom->resjunk)
+			if (tle->resjunk)
 				continue;		/* we can ignore unsorted junk cols */
 			return true;		/* definitely not in DISTINCT list */
 		}
 		if (targetIsInSortList(tle, query->distinctClause))
 		{
-			if (tle->resdom->resjunk)
+			if (tle->resjunk)
 				return true;	/* junk TLE in DISTINCT means DISTINCT ON */
 			/* else this TLE is okay, keep looking */
 		}
 		else
 		{
 			/* This TLE is not in DISTINCT list */
-			if (!tle->resdom->resjunk)
+			if (!tle->resjunk)
 				return true;	/* non-junk, non-DISTINCT, so DISTINCT ON */
 			if (targetIsInSortList(tle, query->sortClause))
 				return true;	/* sorted, non-distinct junk */
@@ -3314,10 +3314,6 @@ expression_tree_mutator(Node *node,
 			break;
 		case T_TargetEntry:
 			{
-				/*
-				 * We mutate the expression, but not the resdom, by
-				 * default.
-				 */
 				TargetEntry *targetentry = (TargetEntry *) node;
 				TargetEntry *newnode;
 

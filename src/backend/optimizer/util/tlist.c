@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/tlist.c,v 1.68 2004/12/31 22:00:23 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/tlist.c,v 1.69 2005/04/06 16:34:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,12 +25,12 @@
  *****************************************************************************/
 
 /*
- * tlistentry_member
+ * tlist_member
  *	  Finds the (first) member of the given tlist whose expression is
  *	  equal() to the given expression.	Result is NULL if no such member.
  */
 TargetEntry *
-tlistentry_member(Node *node, List *targetlist)
+tlist_member(Node *node, List *targetlist)
 {
 	ListCell   *temp;
 
@@ -43,77 +43,6 @@ tlistentry_member(Node *node, List *targetlist)
 	}
 	return NULL;
 }
-
-#ifdef NOT_USED
-/*
- * matching_tlist_expr
- *	  Same as tlistentry_member(), except returns the tlist expression
- *	  rather than its parent TargetEntry node.
- */
-Node *
-matching_tlist_expr(Node *node, List *targetlist)
-{
-	TargetEntry *tlentry;
-
-	tlentry = tlistentry_member(node, targetlist);
-	if (tlentry)
-		return tlentry->expr;
-
-	return NULL;
-}
-#endif
-
-/*
- * tlist_member
- *	  Same as tlistentry_member(), except returns the Resdom node
- *	  rather than its parent TargetEntry node.
- */
-Resdom *
-tlist_member(Node *node, List *targetlist)
-{
-	TargetEntry *tlentry;
-
-	tlentry = tlistentry_member(node, targetlist);
-	if (tlentry)
-		return tlentry->resdom;
-
-	return NULL;
-}
-
-/*
- * create_tl_element
- *	  Creates a target list entry node and its associated (resdom var) pair
- *	  with its resdom number equal to 'resdomno'.
- *
- * Note: the argument is almost always a Var, but occasionally not.
- */
-TargetEntry *
-create_tl_element(Var *var, int resdomno)
-{
-	Oid			vartype;
-	int32		vartypmod;
-
-	if (IsA(var, Var))
-	{
-		vartype = var->vartype;
-		vartypmod = var->vartypmod;
-	}
-	else
-	{
-		vartype = exprType((Node *) var);
-		vartypmod = exprTypmod((Node *) var);
-	}
-	return makeTargetEntry(makeResdom(resdomno,
-									  vartype,
-									  vartypmod,
-									  NULL,
-									  false),
-						   (Expr *) var);
-}
-
-/*****************************************************************************
- *		---------- GENERAL target list routines ----------
- *****************************************************************************/
 
 /*
  * flatten_tlist
@@ -153,24 +82,22 @@ flatten_tlist(List *tlist)
 List *
 add_to_flat_tlist(List *tlist, List *vars)
 {
-	int			next_resdomno = list_length(tlist) + 1;
+	int			next_resno = list_length(tlist) + 1;
 	ListCell   *v;
 
 	foreach(v, vars)
 	{
 		Var		   *var = (Var *) lfirst(v);
 
-		if (!tlistentry_member((Node *) var, tlist))
+		if (!tlist_member((Node *) var, tlist))
 		{
-			Resdom	   *r;
+			TargetEntry *tle;
 
-			r = makeResdom(next_resdomno++,
-						   var->vartype,
-						   var->vartypmod,
-						   NULL,
-						   false);
-			tlist = lappend(tlist,
-							makeTargetEntry(r, copyObject(var)));
+			tle = makeTargetEntry(copyObject(var), /* copy needed?? */
+								  next_resno++,
+								  NULL,
+								  false);
+			tlist = lappend(tlist, tle);
 		}
 	}
 	return tlist;
@@ -195,7 +122,7 @@ get_sortgroupclause_tle(SortClause *sortClause,
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(l);
 
-		if (tle->resdom->ressortgroupref == refnumber)
+		if (tle->ressortgroupref == refnumber)
 			return tle;
 	}
 

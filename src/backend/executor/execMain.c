@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.244 2005/03/25 21:57:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.245 2005/04/06 16:34:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -640,7 +640,7 @@ InitPlan(QueryDesc *queryDesc, bool explainOnly)
 				{
 					TargetEntry *tle = (TargetEntry *) lfirst(tlist);
 
-					if (tle->resdom->resjunk)
+					if (tle->resjunk)
 					{
 						junk_filter_needed = true;
 						break;

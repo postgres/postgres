@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/nodes.h,v 1.164 2005/03/14 00:19:37 neilc Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/nodes.h,v 1.165 2005/04/06 16:34:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -93,8 +93,7 @@ typedef enum NodeTag
 	/*
 	 * TAGS FOR PRIMITIVE NODES (primnodes.h)
 	 */
-	T_Resdom = 300,
-	T_Alias,
+	T_Alias = 300,
 	T_RangeVar,
 	T_Expr,
 	T_Var,

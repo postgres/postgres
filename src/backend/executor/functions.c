@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.95 2005/03/31 22:46:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.96 2005/04/06 16:34:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -935,7 +935,7 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 							format_type_be(rettype)),
 			 errdetail("Final SELECT must return exactly one column.")));
 
-		restype = ((TargetEntry *) linitial(tlist))->resdom->restype;
+		restype = exprType((Node *) ((TargetEntry *) linitial(tlist))->expr);
 		if (!IsBinaryCoercible(restype, rettype))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
@@ -961,7 +961,7 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 		 */
 		if (tlistlen == 1)
 		{
-			restype = ((TargetEntry *) linitial(tlist))->resdom->restype;
+			restype = exprType((Node *) ((TargetEntry *) linitial(tlist))->expr);
 			if (IsBinaryCoercible(restype, rettype))
 				return false;	/* NOT returning whole tuple */
 		}
@@ -996,7 +996,7 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 			Oid			tletype;
 			Oid			atttype;
 
-			if (tle->resdom->resjunk)
+			if (tle->resjunk)
 				continue;
 
 			do

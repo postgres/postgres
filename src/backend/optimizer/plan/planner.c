@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.181 2005/03/28 00:58:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.182 2005/04/06 16:34:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1349,7 +1349,7 @@ hash_safe_grouping(Query *parse)
 		Operator	optup;
 		bool		oprcanhash;
 
-		optup = equality_oper(tle->resdom->restype, true);
+		optup = equality_oper(exprType((Node *) tle->expr), true);
 		if (!optup)
 			return false;
 		oprcanhash = ((Form_pg_operator) GETSTRUCT(optup))->oprcanhash;
@@ -1467,18 +1467,16 @@ make_subplanTargetList(Query *parse,
 			}
 			if (!sl)
 			{
-				te = makeTargetEntry(makeResdom(list_length(sub_tlist) + 1,
-												exprType(groupexpr),
-												exprTypmod(groupexpr),
-												NULL,
-												false),
-									 (Expr *) groupexpr);
+				te = makeTargetEntry((Expr *) groupexpr,
+									 list_length(sub_tlist) + 1,
+									 NULL,
+									 false);
 				sub_tlist = lappend(sub_tlist, te);
 				*need_tlist_eval = true;		/* it's not flat anymore */
 			}
 
 			/* and save its resno */
-			grpColIdx[keyno++] = te->resdom->resno;
+			grpColIdx[keyno++] = te->resno;
 		}
 	}
 
@@ -1528,7 +1526,7 @@ locate_grouping_columns(Query *parse,
 		if (!sl)
 			elog(ERROR, "failed to locate grouping columns");
 
-		groupColIdx[keyno++] = te->resdom->resno;
+		groupColIdx[keyno++] = te->resno;
 	}
 }
 
@@ -1554,17 +1552,16 @@ postprocess_setop_tlist(List *new_tlist, List *orig_tlist)
 		TargetEntry *orig_tle;
 
 		/* ignore resjunk columns in setop result */
-		if (new_tle->resdom->resjunk)
+		if (new_tle->resjunk)
 			continue;
 
 		Assert(orig_tlist_item != NULL);
 		orig_tle = (TargetEntry *) lfirst(orig_tlist_item);
 		orig_tlist_item = lnext(orig_tlist_item);
-		if (orig_tle->resdom->resjunk)	/* should not happen */
+		if (orig_tle->resjunk)			/* should not happen */
 			elog(ERROR, "resjunk output columns are not implemented");
-		Assert(new_tle->resdom->resno == orig_tle->resdom->resno);
-		Assert(new_tle->resdom->restype == orig_tle->resdom->restype);
-		new_tle->resdom->ressortgroupref = orig_tle->resdom->ressortgroupref;
+		Assert(new_tle->resno == orig_tle->resno);
+		new_tle->ressortgroupref = orig_tle->ressortgroupref;
 	}
 	if (orig_tlist_item != NULL)
 		elog(ERROR, "resjunk output columns are not implemented");

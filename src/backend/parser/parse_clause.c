@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.138 2004/12/31 22:00:27 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.139 2005/04/06 16:34:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1161,10 +1161,9 @@ findTargetlistEntry(ParseState *pstate, Node *node, List **tlist, int clause)
 			foreach(tl, *tlist)
 			{
 				TargetEntry *tle = (TargetEntry *) lfirst(tl);
-				Resdom	   *resnode = tle->resdom;
 
-				if (!resnode->resjunk &&
-					strcmp(resnode->resname, name) == 0)
+				if (!tle->resjunk &&
+					strcmp(tle->resname, name) == 0)
 				{
 					if (target_result != NULL)
 					{
@@ -1204,9 +1203,8 @@ findTargetlistEntry(ParseState *pstate, Node *node, List **tlist, int clause)
 		foreach(tl, *tlist)
 		{
 			TargetEntry *tle = (TargetEntry *) lfirst(tl);
-			Resdom	   *resnode = tle->resdom;
 
-			if (!resnode->resjunk)
+			if (!tle->resjunk)
 			{
 				if (++targetlist_pos == target_pos)
 					return tle; /* return the unique match */
@@ -1282,7 +1280,7 @@ transformGroupClause(ParseState *pstate, List *grouplist,
 			continue;
 
 		/* if tlist item is an UNKNOWN literal, change it to TEXT */
-		restype = tle->resdom->restype;
+		restype = exprType((Node *) tle->expr);
 
 		if (restype == UNKNOWNOID)
 		{
@@ -1290,8 +1288,7 @@ transformGroupClause(ParseState *pstate, List *grouplist,
 											 restype, TEXTOID, -1,
 											 COERCION_IMPLICIT,
 											 COERCE_IMPLICIT_CAST);
-			restype = tle->resdom->restype = TEXTOID;
-			tle->resdom->restypmod = -1;
+			restype = TEXTOID;
 		}
 
 		/*
@@ -1304,7 +1301,7 @@ transformGroupClause(ParseState *pstate, List *grouplist,
 		 */
 		if (sortItem &&
 			((SortClause *) lfirst(sortItem))->tleSortGroupRef ==
-			tle->resdom->ressortgroupref)
+			tle->ressortgroupref)
 		{
 			ordering_op = ((SortClause *) lfirst(sortItem))->sortop;
 			sortItem = lnext(sortItem);
@@ -1405,7 +1402,7 @@ transformDistinctClause(ParseState *pstate, List *distinctlist,
 			SortClause *scl = (SortClause *) lfirst(slitem);
 			TargetEntry *tle = get_sortgroupclause_tle(scl, *targetlist);
 
-			if (tle->resdom->resjunk)
+			if (tle->resjunk)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
 						 errmsg("for SELECT DISTINCT, ORDER BY expressions must appear in select list")));
@@ -1445,7 +1442,7 @@ transformDistinctClause(ParseState *pstate, List *distinctlist,
 			{
 				SortClause *scl = (SortClause *) lfirst(nextsortlist);
 
-				if (tle->resdom->ressortgroupref != scl->tleSortGroupRef)
+				if (tle->ressortgroupref != scl->tleSortGroupRef)
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
 							 errmsg("SELECT DISTINCT ON expressions must match initial ORDER BY expressions")));
@@ -1466,7 +1463,7 @@ transformDistinctClause(ParseState *pstate, List *distinctlist,
 				{
 					SortClause *scl = (SortClause *) lfirst(slitem);
 
-					if (tle->resdom->ressortgroupref == scl->tleSortGroupRef)
+					if (tle->ressortgroupref == scl->tleSortGroupRef)
 					{
 						result = lappend(result, copyObject(scl));
 						break;
@@ -1501,7 +1498,7 @@ addAllTargetsToSortList(ParseState *pstate, List *sortlist,
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(l);
 
-		if (!tle->resdom->resjunk)
+		if (!tle->resjunk)
 			sortlist = addTargetToSortList(pstate, tle,
 										   sortlist, targetlist,
 										   SORTBY_ASC, NIL,
@@ -1533,7 +1530,7 @@ addTargetToSortList(ParseState *pstate, TargetEntry *tle,
 	if (!targetIsInSortList(tle, sortlist))
 	{
 		SortClause *sortcl = makeNode(SortClause);
-		Oid			restype = tle->resdom->restype;
+		Oid			restype = exprType((Node *) tle->expr);
 
 		/* if tlist item is an UNKNOWN literal, change it to TEXT */
 		if (restype == UNKNOWNOID && resolveUnknown)
@@ -1542,8 +1539,7 @@ addTargetToSortList(ParseState *pstate, TargetEntry *tle,
 											 restype, TEXTOID, -1,
 											 COERCION_IMPLICIT,
 											 COERCE_IMPLICIT_CAST);
-			restype = tle->resdom->restype = TEXTOID;
-			tle->resdom->restypmod = -1;
+			restype = TEXTOID;
 		}
 
 		sortcl->tleSortGroupRef = assignSortGroupRef(tle, targetlist);
@@ -1586,20 +1582,20 @@ assignSortGroupRef(TargetEntry *tle, List *tlist)
 	Index		maxRef;
 	ListCell   *l;
 
-	if (tle->resdom->ressortgroupref)	/* already has one? */
-		return tle->resdom->ressortgroupref;
+	if (tle->ressortgroupref)			/* already has one? */
+		return tle->ressortgroupref;
 
 	/* easiest way to pick an unused refnumber: max used + 1 */
 	maxRef = 0;
 	foreach(l, tlist)
 	{
-		Index		ref = ((TargetEntry *) lfirst(l))->resdom->ressortgroupref;
+		Index		ref = ((TargetEntry *) lfirst(l))->ressortgroupref;
 
 		if (ref > maxRef)
 			maxRef = ref;
 	}
-	tle->resdom->ressortgroupref = maxRef + 1;
-	return tle->resdom->ressortgroupref;
+	tle->ressortgroupref = maxRef + 1;
+	return tle->ressortgroupref;
 }
 
 /*
@@ -1613,7 +1609,7 @@ assignSortGroupRef(TargetEntry *tle, List *tlist)
 bool
 targetIsInSortList(TargetEntry *tle, List *sortList)
 {
-	Index		ref = tle->resdom->ressortgroupref;
+	Index		ref = tle->ressortgroupref;
 	ListCell   *l;
 
 	/* no need to scan list if tle has no marker */

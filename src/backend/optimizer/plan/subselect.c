@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.94 2004/12/31 22:00:09 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.95 2005/04/06 16:34:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -350,8 +350,9 @@ make_subplan(SubLink *slink, List *lefthand, bool isTopQual)
 		TargetEntry *te = linitial(plan->targetlist);
 		Param	   *prm;
 
-		Assert(!te->resdom->resjunk);
-		prm = generate_new_param(te->resdom->restype, te->resdom->restypmod);
+		Assert(!te->resjunk);
+		prm = generate_new_param(exprType((Node *) te->expr),
+								 exprTypmod((Node *) te->expr));
 		node->setParam = list_make1_int(prm->paramid);
 		PlannerInitPlan = lappend(PlannerInitPlan, node);
 		result = (Node *) prm;
@@ -362,11 +363,11 @@ make_subplan(SubLink *slink, List *lefthand, bool isTopQual)
 		Oid			arraytype;
 		Param	   *prm;
 
-		Assert(!te->resdom->resjunk);
-		arraytype = get_array_type(te->resdom->restype);
+		Assert(!te->resjunk);
+		arraytype = get_array_type(exprType((Node *) te->expr));
 		if (!OidIsValid(arraytype))
 			elog(ERROR, "could not find array type for datatype %s",
-				 format_type_be(te->resdom->restype));
+				 format_type_be(exprType((Node *) te->expr)));
 		prm = generate_new_param(arraytype, -1);
 		node->setParam = list_make1_int(prm->paramid);
 		PlannerInitPlan = lappend(PlannerInitPlan, node);
@@ -525,15 +526,15 @@ convert_sublink_opers(List *lefthand, List *operOids,
 		Node	   *rightop;
 		Operator	tup;
 
-		Assert(!te->resdom->resjunk);
+		Assert(!te->resjunk);
 
 		if (rtindex)
 		{
 			/* Make the Var node representing the subplan's result */
 			rightop = (Node *) makeVar(rtindex,
-									   te->resdom->resno,
-									   te->resdom->restype,
-									   te->resdom->restypmod,
+									   te->resno,
+									   exprType((Node *) te->expr),
+									   exprTypmod((Node *) te->expr),
 									   0);
 
 			/*
@@ -547,8 +548,8 @@ convert_sublink_opers(List *lefthand, List *operOids,
 			/* Make the Param node representing the subplan's result */
 			Param	   *prm;
 
-			prm = generate_new_param(te->resdom->restype,
-									 te->resdom->restypmod);
+			prm = generate_new_param(exprType((Node *) te->expr),
+									 exprTypmod((Node *) te->expr));
 			/* Record its ID */
 			*righthandIds = lappend_int(*righthandIds, prm->paramid);
 			rightop = (Node *) prm;
@@ -575,7 +576,7 @@ convert_sublink_opers(List *lefthand, List *operOids,
 									  leftop,
 									  rightop,
 									  exprType(leftop),
-									  te->resdom->restype));
+									  exprType((Node *) te->expr)));
 
 		ReleaseSysCache(tup);
 

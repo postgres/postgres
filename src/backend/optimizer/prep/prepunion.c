@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.119 2004/12/31 22:00:20 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.120 2005/04/06 16:34:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,6 +32,7 @@
 #include "optimizer/tlist.h"
 #include "parser/parse_clause.h"
 #include "parser/parse_coerce.h"
+#include "parser/parse_expr.h"
 #include "parser/parsetree.h"
 #include "utils/lsyscache.h"
 
@@ -429,7 +430,7 @@ generate_setop_tlist(List *colTypes, int flag,
 	ListCell   *i,
 			   *j,
 			   *k;
-	Resdom	   *resdom;
+	TargetEntry *tle;
 	Node	   *expr;
 
 	j = list_head(input_tlist);
@@ -439,12 +440,11 @@ generate_setop_tlist(List *colTypes, int flag,
 		Oid			colType = lfirst_oid(i);
 		TargetEntry *inputtle = (TargetEntry *) lfirst(j);
 		TargetEntry *reftle = (TargetEntry *) lfirst(k);
-		int32		colTypmod;
 
-		Assert(inputtle->resdom->resno == resno);
-		Assert(reftle->resdom->resno == resno);
-		Assert(!inputtle->resdom->resjunk);
-		Assert(!reftle->resdom->resjunk);
+		Assert(inputtle->resno == resno);
+		Assert(reftle->resno == resno);
+		Assert(!inputtle->resjunk);
+		Assert(!reftle->resjunk);
 
 		/*
 		 * Generate columns referencing input columns and having
@@ -463,29 +463,23 @@ generate_setop_tlist(List *colTypes, int flag,
 			expr = (Node *) inputtle->expr;
 		else
 			expr = (Node *) makeVar(0,
-									inputtle->resdom->resno,
-									inputtle->resdom->restype,
-									inputtle->resdom->restypmod,
+									inputtle->resno,
+									exprType((Node *) inputtle->expr),
+									exprTypmod((Node *) inputtle->expr),
 									0);
-		if (inputtle->resdom->restype == colType)
-		{
-			/* no coercion needed, and believe the input typmod */
-			colTypmod = inputtle->resdom->restypmod;
-		}
-		else
+		if (exprType(expr) != colType)
 		{
 			expr = coerce_to_common_type(NULL,	/* no UNKNOWNs here */
 										 expr,
 										 colType,
 										 "UNION/INTERSECT/EXCEPT");
-			colTypmod = -1;
 		}
-		resdom = makeResdom((AttrNumber) resno++,
-							colType,
-							colTypmod,
-							pstrdup(reftle->resdom->resname),
-							false);
-		tlist = lappend(tlist, makeTargetEntry(resdom, (Expr *) expr));
+		tle = makeTargetEntry((Expr *) expr,
+							  (AttrNumber) resno++,
+							  pstrdup(reftle->resname),
+							  false);
+		tlist = lappend(tlist, tle);
+
 		j = lnext(j);
 		k = lnext(k);
 	}
@@ -493,18 +487,17 @@ generate_setop_tlist(List *colTypes, int flag,
 	if (flag >= 0)
 	{
 		/* Add a resjunk flag column */
-		resdom = makeResdom((AttrNumber) resno++,
-							INT4OID,
-							-1,
-							pstrdup("flag"),
-							true);
 		/* flag value is the given constant */
 		expr = (Node *) makeConst(INT4OID,
 								  sizeof(int4),
 								  Int32GetDatum(flag),
 								  false,
 								  true);
-		tlist = lappend(tlist, makeTargetEntry(resdom, (Expr *) expr));
+		tle = makeTargetEntry((Expr *) expr,
+							  (AttrNumber) resno++,
+							  pstrdup("flag"),
+							  true);
+		tlist = lappend(tlist, tle);
 	}
 
 	return tlist;
@@ -531,7 +524,7 @@ generate_append_tlist(List *colTypes, bool flag,
 	ListCell   *curColType;
 	ListCell   *ref_tl_item;
 	int			colindex;
-	Resdom	   *resdom;
+	TargetEntry *tle;
 	Node	   *expr;
 	ListCell   *planl;
 	int32	   *colTypmods;
@@ -555,15 +548,17 @@ generate_append_tlist(List *colTypes, bool flag,
 		{
 			TargetEntry *subtle = (TargetEntry *) lfirst(subtlist);
 
-			if (subtle->resdom->resjunk)
+			if (subtle->resjunk)
 				continue;
 			Assert(curColType != NULL);
-			if (subtle->resdom->restype == lfirst_oid(curColType))
+			if (exprType((Node *) subtle->expr) == lfirst_oid(curColType))
 			{
 				/* If first subplan, copy the typmod; else compare */
+				int32		subtypmod = exprTypmod((Node *) subtle->expr);
+
 				if (planl == list_head(input_plans))
-					colTypmods[colindex] = subtle->resdom->restypmod;
-				else if (subtle->resdom->restypmod != colTypmods[colindex])
+					colTypmods[colindex] = subtypmod;
+				else if (subtypmod != colTypmods[colindex])
 					colTypmods[colindex] = -1;
 			}
 			else
@@ -587,36 +582,34 @@ generate_append_tlist(List *colTypes, bool flag,
 		int32		colTypmod = colTypmods[colindex++];
 		TargetEntry *reftle = (TargetEntry *) lfirst(ref_tl_item);
 
-		Assert(reftle->resdom->resno == resno);
-		Assert(!reftle->resdom->resjunk);
+		Assert(reftle->resno == resno);
+		Assert(!reftle->resjunk);
 		expr = (Node *) makeVar(0,
 								resno,
 								colType,
 								colTypmod,
 								0);
-		resdom = makeResdom((AttrNumber) resno++,
-							colType,
-							colTypmod,
-							pstrdup(reftle->resdom->resname),
-							false);
-		tlist = lappend(tlist, makeTargetEntry(resdom, (Expr *) expr));
+		tle = makeTargetEntry((Expr *) expr,
+							  (AttrNumber) resno++,
+							  pstrdup(reftle->resname),
+							  false);
+		tlist = lappend(tlist, tle);
 	}
 
 	if (flag)
 	{
 		/* Add a resjunk flag column */
-		resdom = makeResdom((AttrNumber) resno++,
-							INT4OID,
-							-1,
-							pstrdup("flag"),
-							true);
 		/* flag value is shown as copied up from subplan */
 		expr = (Node *) makeVar(0,
-								resdom->resno,
+								resno,
 								INT4OID,
 								-1,
 								0);
-		tlist = lappend(tlist, makeTargetEntry(resdom, (Expr *) expr));
+		tle = makeTargetEntry((Expr *) expr,
+							  (AttrNumber) resno++,
+							  pstrdup("flag"),
+							  true);
+		tlist = lappend(tlist, tle);
 	}
 
 	pfree(colTypmods);
@@ -640,7 +633,7 @@ tlist_same_datatypes(List *tlist, List *colTypes, bool junkOK)
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(l);
 
-		if (tle->resdom->resjunk)
+		if (tle->resjunk)
 		{
 			if (!junkOK)
 				return false;
@@ -649,7 +642,7 @@ tlist_same_datatypes(List *tlist, List *colTypes, bool junkOK)
 		{
 			if (curColType == NULL)
 				return false;
-			if (tle->resdom->restype != lfirst_oid(curColType))
+			if (exprType((Node *) tle->expr) != lfirst_oid(curColType))
 				return false;
 			curColType = lnext(curColType);
 		}
@@ -1105,8 +1098,7 @@ adjust_relid_set(Relids relids, Index oldrelid, Index newrelid)
  *
  * The given tlist has already been through expression_tree_mutator;
  * therefore the TargetEntry nodes are fresh copies that it's okay to
- * scribble on.  But the Resdom nodes have not been copied; make new ones
- * if we need to change them!
+ * scribble on.
  *
  * Note that this is not needed for INSERT because INSERT isn't inheritable.
  */
@@ -1124,18 +1116,15 @@ adjust_inherited_tlist(List *tlist,
 	foreach(tl, tlist)
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(tl);
-		Resdom	   *resdom = tle->resdom;
 
-		if (resdom->resjunk)
+		if (tle->resjunk)
 			continue;			/* ignore junk items */
 
-		attrno = translate_inherited_attnum(resdom->resno, context);
+		attrno = translate_inherited_attnum(tle->resno, context);
 
-		if (resdom->resno != attrno)
+		if (tle->resno != attrno)
 		{
-			resdom = (Resdom *) copyObject((Node *) resdom);
-			resdom->resno = attrno;
-			tle->resdom = resdom;
+			tle->resno = attrno;
 			changed_it = true;
 		}
 	}
@@ -1157,14 +1146,13 @@ adjust_inherited_tlist(List *tlist,
 		foreach(tl, tlist)
 		{
 			TargetEntry *tle = (TargetEntry *) lfirst(tl);
-			Resdom	   *resdom = tle->resdom;
 
-			if (resdom->resjunk)
+			if (tle->resjunk)
 				continue;		/* ignore junk items */
 
-			if (resdom->resno == attrno)
+			if (tle->resno == attrno)
 				new_tlist = lappend(new_tlist, tle);
-			else if (resdom->resno > attrno)
+			else if (tle->resno > attrno)
 				more = true;
 		}
 	}
@@ -1172,17 +1160,11 @@ adjust_inherited_tlist(List *tlist,
 	foreach(tl, tlist)
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(tl);
-		Resdom	   *resdom = tle->resdom;
 
-		if (!resdom->resjunk)
+		if (!tle->resjunk)
 			continue;			/* here, ignore non-junk items */
 
-		if (resdom->resno != attrno)
-		{
-			resdom = (Resdom *) copyObject((Node *) resdom);
-			resdom->resno = attrno;
-			tle->resdom = resdom;
-		}
+		tle->resno = attrno;
 		new_tlist = lappend(new_tlist, tle);
 		attrno++;
 	}

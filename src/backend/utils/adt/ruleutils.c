@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.189 2005/03/29 00:17:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.190 2005/04/06 16:34:06 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1493,13 +1493,12 @@ deparse_context_for_subplan(const char *name, List *tlist,
 	foreach(tl, tlist)
 	{
 		TargetEntry *tle = lfirst(tl);
-		Resdom	   *resdom = tle->resdom;
 
 		nattrs++;
-		Assert(resdom->resno == nattrs);
-		if (resdom->resname)
+		Assert(tle->resno == nattrs);
+		if (tle->resname)
 		{
-			attrs = lappend(attrs, makeString(resdom->resname));
+			attrs = lappend(attrs, makeString(tle->resname));
 			continue;
 		}
 		if (tle->expr && IsA(tle->expr, Var))
@@ -1518,7 +1517,7 @@ deparse_context_for_subplan(const char *name, List *tlist,
 			}
 		}
 		/* Fallback if can't get name */
-		snprintf(buf, sizeof(buf), "?column%d?", resdom->resno);
+		snprintf(buf, sizeof(buf), "?column%d?", tle->resno);
 		attrs = lappend(attrs, makeString(pstrdup(buf)));
 	}
 
@@ -1974,7 +1973,7 @@ get_basic_select_query(Query *query, deparse_context *context,
 		TargetEntry *tle = (TargetEntry *) lfirst(l);
 		char	   *colname;
 
-		if (tle->resdom->resjunk)
+		if (tle->resjunk)
 			continue;			/* ignore junk entries */
 
 		appendStringInfo(buf, sep);
@@ -1992,7 +1991,7 @@ get_basic_select_query(Query *query, deparse_context *context,
 		if (resultDesc && colno <= resultDesc->natts)
 			colname = NameStr(resultDesc->attrs[colno - 1]->attname);
 		else
-			colname = tle->resdom->resname;
+			colname = tle->resname;
 
 		if (colname)			/* resname could be NULL */
 		{
@@ -2166,8 +2165,8 @@ get_rule_sortgroupclause(SortClause *srt, List *tlist, bool force_colno,
 	 */
 	if (force_colno || (expr && IsA(expr, Const)))
 	{
-		Assert(!tle->resdom->resjunk);
-		appendStringInfo(buf, "%d", tle->resdom->resno);
+		Assert(!tle->resjunk);
+		appendStringInfo(buf, "%d", tle->resno);
 	}
 	else
 		get_rule_expr(expr, context, true);
@@ -2227,7 +2226,7 @@ get_insert_query_def(Query *query, deparse_context *context)
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(l);
 
-		if (tle->resdom->resjunk)
+		if (tle->resjunk)
 			continue;			/* ignore junk entries */
 
 		appendStringInfo(buf, sep);
@@ -2239,7 +2238,7 @@ get_insert_query_def(Query *query, deparse_context *context)
 		 */
 		appendStringInfoString(buf,
 					quote_identifier(get_relid_attribute_name(rte->relid,
-												   tle->resdom->resno)));
+															  tle->resno)));
 
 		/*
 		 * Print any indirection needed (subfields or subscripts), and
@@ -2299,7 +2298,7 @@ get_update_query_def(Query *query, deparse_context *context)
 		TargetEntry *tle = (TargetEntry *) lfirst(l);
 		Node	   *expr;
 
-		if (tle->resdom->resjunk)
+		if (tle->resjunk)
 			continue;			/* ignore junk entries */
 
 		appendStringInfo(buf, sep);
@@ -2311,7 +2310,7 @@ get_update_query_def(Query *query, deparse_context *context)
 		 */
 		appendStringInfoString(buf,
 					quote_identifier(get_relid_attribute_name(rte->relid,
-												   tle->resdom->resno)));
+															  tle->resno)));
 
 		/*
 		 * Print any indirection needed (subfields or subscripts), and

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.149 2005/03/26 05:53:01 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.150 2005/04/06 16:34:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -312,12 +312,11 @@ rewriteTargetList(Query *parsetree, Relation target_relation)
 	foreach(temp, parsetree->targetList)
 	{
 		TargetEntry *old_tle = (TargetEntry *) lfirst(temp);
-		Resdom	   *resdom = old_tle->resdom;
 
-		if (!resdom->resjunk)
+		if (!old_tle->resjunk)
 		{
 			/* Normal attr: stash it into new_tles[] */
-			attrno = resdom->resno;
+			attrno = old_tle->resno;
 			if (attrno < 1 || attrno > numattrs)
 				elog(ERROR, "bogus resno %d in targetlist", attrno);
 			att_tup = target_relation->rd_att->attrs[attrno - 1];
@@ -344,11 +343,10 @@ rewriteTargetList(Query *parsetree, Relation target_relation)
 			 */
 
 			/* Get the resno right, but don't copy unnecessarily */
-			if (resdom->resno != next_junk_attrno)
+			if (old_tle->resno != next_junk_attrno)
 			{
-				resdom = (Resdom *) copyObject((Node *) resdom);
-				resdom->resno = next_junk_attrno;
-				old_tle = makeTargetEntry(resdom, old_tle->expr);
+				old_tle = flatCopyTargetEntry(old_tle);
+				old_tle->resno = next_junk_attrno;
 			}
 			junk_tlist = lappend(junk_tlist, old_tle);
 			next_junk_attrno++;
@@ -407,12 +405,10 @@ rewriteTargetList(Query *parsetree, Relation target_relation)
 			}
 
 			if (new_expr)
-				new_tle = makeTargetEntry(makeResdom(attrno,
-													 att_tup->atttypid,
-													 att_tup->atttypmod,
-									  pstrdup(NameStr(att_tup->attname)),
-													 false),
-										  (Expr *) new_expr);
+				new_tle = makeTargetEntry((Expr *) new_expr,
+										  attrno,
+										  pstrdup(NameStr(att_tup->attname)),
+										  false);
 		}
 
 		if (new_tle)
@@ -436,7 +432,7 @@ process_matched_tle(TargetEntry *src_tle,
 					TargetEntry *prior_tle,
 					const char *attrName)
 {
-	Resdom	   *resdom = src_tle->resdom;
+	TargetEntry *result;
 	Node	   *src_expr;
 	Node	   *prior_expr;
 	Node	   *src_input;
@@ -547,7 +543,9 @@ process_matched_tle(TargetEntry *src_tle,
 		newexpr = NULL;
 	}
 
-	return makeTargetEntry(resdom, (Expr *) newexpr);
+	result = flatCopyTargetEntry(src_tle);
+	result->expr = (Expr *) newexpr;
+	return result;
 }
 
 /*

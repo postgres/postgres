@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.103 2005/03/29 00:17:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.104 2005/04/06 16:34:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -378,6 +378,7 @@ build_physical_tlist(Query *root, RelOptInfo *rel)
 	for (attrno = 1; attrno <= numattrs; attrno++)
 	{
 		Form_pg_attribute att_tup = relation->rd_att->attrs[attrno - 1];
+		Var	   *var;
 
 		if (att_tup->attisdropped)
 		{
@@ -386,13 +387,17 @@ build_physical_tlist(Query *root, RelOptInfo *rel)
 			break;
 		}
 
+		var = makeVar(varno,
+					  attrno,
+					  att_tup->atttypid,
+					  att_tup->atttypmod,
+					  0);
+
 		tlist = lappend(tlist,
-						create_tl_element(makeVar(varno,
-												  attrno,
-												  att_tup->atttypid,
-												  att_tup->atttypmod,
-												  0),
-										  attrno));
+						makeTargetEntry((Expr *) var,
+										attrno,
+										NULL,
+										false));
 	}
 
 	heap_close(relation, AccessShareLock);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.175 2005/03/29 00:16:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.176 2005/04/06 16:34:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3467,7 +3467,7 @@ ExecCleanTargetListLength(List *targetlist)
 		TargetEntry *curTle = (TargetEntry *) lfirst(tl);
 
 		Assert(IsA(curTle, TargetEntry));
-		if (!curTle->resdom->resjunk)
+		if (!curTle->resjunk)
 			len++;
 	}
 	return len;
@@ -3516,7 +3516,7 @@ ExecTargetList(List *targetlist,
 	{
 		GenericExprState *gstate = (GenericExprState *) lfirst(tl);
 		TargetEntry *tle = (TargetEntry *) gstate->xprstate.expr;
-		AttrNumber	resind = tle->resdom->resno - 1;
+		AttrNumber	resind = tle->resno - 1;
 
 		values[resind] = ExecEvalExpr(gstate->arg,
 									  econtext,
@@ -3568,7 +3568,7 @@ ExecTargetList(List *targetlist,
 			{
 				GenericExprState *gstate = (GenericExprState *) lfirst(tl);
 				TargetEntry *tle = (TargetEntry *) gstate->xprstate.expr;
-				AttrNumber	resind = tle->resdom->resno - 1;
+				AttrNumber	resind = tle->resno - 1;
 
 				if (itemIsDone[resind] == ExprEndResult)
 				{
@@ -3602,7 +3602,7 @@ ExecTargetList(List *targetlist,
 				{
 					GenericExprState *gstate = (GenericExprState *) lfirst(tl);
 					TargetEntry *tle = (TargetEntry *) gstate->xprstate.expr;
-					AttrNumber	resind = tle->resdom->resno - 1;
+					AttrNumber	resind = tle->resno - 1;
 
 					while (itemIsDone[resind] == ExprMultipleResult)
 					{

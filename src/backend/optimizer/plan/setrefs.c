@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.105 2004/12/31 22:00:09 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.106 2005/04/06 16:34:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,7 @@
 #include "optimizer/planmain.h"
 #include "optimizer/tlist.h"
 #include "optimizer/var.h"
+#include "parser/parse_expr.h"
 #include "parser/parsetree.h"
 #include "utils/lsyscache.h"
 
@@ -462,9 +463,9 @@ set_uppernode_references(Plan *plan, Index subvarno)
 												 subvarno,
 												 subplan_targetlist,
 												 tlist_has_non_vars);
-		output_targetlist = lappend(output_targetlist,
-									makeTargetEntry(tle->resdom,
-													(Expr *) newexpr));
+		tle = flatCopyTargetEntry(tle);
+		tle->expr = (Expr *) newexpr;
+		output_targetlist = lappend(output_targetlist, tle);
 	}
 	plan->targetlist = output_targetlist;
 
@@ -550,25 +551,25 @@ join_references_mutator(Node *node,
 	if (IsA(node, Var))
 	{
 		Var		   *var = (Var *) node;
-		Resdom	   *resdom;
+		TargetEntry *tle;
 
 		/* First look for the var in the input tlists */
-		resdom = tlist_member((Node *) var, context->outer_tlist);
-		if (resdom)
+		tle = tlist_member((Node *) var, context->outer_tlist);
+		if (tle)
 		{
 			Var		   *newvar = (Var *) copyObject(var);
 
 			newvar->varno = OUTER;
-			newvar->varattno = resdom->resno;
+			newvar->varattno = tle->resno;
 			return (Node *) newvar;
 		}
-		resdom = tlist_member((Node *) var, context->inner_tlist);
-		if (resdom)
+		tle = tlist_member((Node *) var, context->inner_tlist);
+		if (tle)
 		{
 			Var		   *newvar = (Var *) copyObject(var);
 
 			newvar->varno = INNER;
-			newvar->varattno = resdom->resno;
+			newvar->varattno = tle->resno;
 			return (Node *) newvar;
 		}
 
@@ -582,33 +583,33 @@ join_references_mutator(Node *node,
 	/* Try matching more complex expressions too, if tlists have any */
 	if (context->tlists_have_non_vars)
 	{
-		Resdom	   *resdom;
+		TargetEntry *tle;
 
-		resdom = tlist_member(node, context->outer_tlist);
-		if (resdom)
+		tle = tlist_member(node, context->outer_tlist);
+		if (tle)
 		{
 			/* Found a matching subplan output expression */
 			Var		   *newvar;
 
 			newvar = makeVar(OUTER,
-							 resdom->resno,
-							 resdom->restype,
-							 resdom->restypmod,
+							 tle->resno,
+							 exprType((Node *) tle->expr),
+							 exprTypmod((Node *) tle->expr),
 							 0);
 			newvar->varnoold = 0;		/* wasn't ever a plain Var */
 			newvar->varoattno = 0;
 			return (Node *) newvar;
 		}
-		resdom = tlist_member(node, context->inner_tlist);
-		if (resdom)
+		tle = tlist_member(node, context->inner_tlist);
+		if (tle)
 		{
 			/* Found a matching subplan output expression */
 			Var		   *newvar;
 
 			newvar = makeVar(INNER,
-							 resdom->resno,
-							 resdom->restype,
-							 resdom->restypmod,
+							 tle->resno,
+							 exprType((Node *) tle->expr),
+							 exprTypmod((Node *) tle->expr),
 							 0);
 			newvar->varnoold = 0;		/* wasn't ever a plain Var */
 			newvar->varoattno = 0;
@@ -668,32 +669,32 @@ replace_vars_with_subplan_refs_mutator(Node *node,
 	if (IsA(node, Var))
 	{
 		Var		   *var = (Var *) node;
-		Resdom	   *resdom;
+		TargetEntry *tle;
 		Var		   *newvar;
 
-		resdom = tlist_member((Node *) var, context->subplan_targetlist);
-		if (!resdom)
+		tle = tlist_member((Node *) var, context->subplan_targetlist);
+		if (!tle)
 			elog(ERROR, "variable not found in subplan target list");
 		newvar = (Var *) copyObject(var);
 		newvar->varno = context->subvarno;
-		newvar->varattno = resdom->resno;
+		newvar->varattno = tle->resno;
 		return (Node *) newvar;
 	}
 	/* Try matching more complex expressions too, if tlist has any */
 	if (context->tlist_has_non_vars)
 	{
-		Resdom	   *resdom;
+		TargetEntry *tle;
 
-		resdom = tlist_member(node, context->subplan_targetlist);
-		if (resdom)
+		tle = tlist_member(node, context->subplan_targetlist);
+		if (tle)
 		{
 			/* Found a matching subplan output expression */
 			Var		   *newvar;
 
 			newvar = makeVar(context->subvarno,
-							 resdom->resno,
-							 resdom->restype,
-							 resdom->restypmod,
+							 tle->resno,
+							 exprType((Node *) tle->expr),
+							 exprTypmod((Node *) tle->expr),
 							 0);
 			newvar->varnoold = 0;		/* wasn't ever a plain Var */
 			newvar->varoattno = 0;

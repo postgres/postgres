@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execJunk.c,v 1.48 2005/03/16 21:38:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execJunk.c,v 1.49 2005/04/06 16:34:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,8 +31,8 @@
  * of some system attributes like "ctid" or rule locks.
  *
  * The general idea is the following: A target list consists of a list of
- * Resdom nodes & expression pairs. Each Resdom node has an attribute
- * called 'resjunk'. If the value of this attribute is true then the
+ * TargetEntry nodes containing expressions. Each TargetEntry has a field
+ * called 'resjunk'. If the value of this field is true then the
  * corresponding attribute is a "junk" attribute.
  *
  * When we initialize a plan we call 'ExecInitJunkFilter' to create
@@ -101,11 +101,10 @@ ExecInitJunkFilter(List *targetList, bool hasoid, TupleTableSlot *slot)
 		foreach(t, targetList)
 		{
 			TargetEntry *tle = lfirst(t);
-			Resdom	   *resdom = tle->resdom;
 
-			if (!resdom->resjunk)
+			if (!tle->resjunk)
 			{
-				cleanMap[cleanResno - 1] = resdom->resno;
+				cleanMap[cleanResno - 1] = tle->resno;
 				cleanResno++;
 			}
 		}
@@ -177,12 +176,11 @@ ExecInitJunkFilterConversion(List *targetList,
 			for (;;)
 			{
 				TargetEntry *tle = lfirst(t);
-				Resdom	   *resdom = tle->resdom;
 
 				t = lnext(t);
-				if (!resdom->resjunk)
+				if (!tle->resjunk)
 				{
-					cleanMap[i] = resdom->resno;
+					cleanMap[i] = tle->resno;
 					break;
 				}
 			}
@@ -228,13 +226,12 @@ ExecGetJunkAttribute(JunkFilter *junkfilter,
 	foreach(t, junkfilter->jf_targetList)
 	{
 		TargetEntry *tle = lfirst(t);
-		Resdom	   *resdom = tle->resdom;
 
-		if (resdom->resjunk && resdom->resname &&
-			(strcmp(resdom->resname, attrName) == 0))
+		if (tle->resjunk && tle->resname &&
+			(strcmp(tle->resname, attrName) == 0))
 		{
 			/* We found it ! */
-			*value = slot_getattr(slot, resdom->resno, isNull);
+			*value = slot_getattr(slot, tle->resno, isNull);
 			return true;
 		}
 	}

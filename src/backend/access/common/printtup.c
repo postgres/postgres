@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/printtup.c,v 1.87 2005/03/16 21:38:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/printtup.c,v 1.88 2005/04/06 16:34:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -190,14 +190,14 @@ SendRowDescriptionMessage(TupleDesc typeinfo, List *targetlist, int16 *formats)
 		{
 			/* Do we have a non-resjunk tlist item? */
 			while (tlist_item &&
-				   ((TargetEntry *) lfirst(tlist_item))->resdom->resjunk)
+				   ((TargetEntry *) lfirst(tlist_item))->resjunk)
 				tlist_item = lnext(tlist_item);
 			if (tlist_item)
 			{
-				Resdom	   *res = ((TargetEntry *) lfirst(tlist_item))->resdom;
+				TargetEntry *tle = (TargetEntry *) lfirst(tlist_item);
 
-				pq_sendint(&buf, res->resorigtbl, 4);
-				pq_sendint(&buf, res->resorigcol, 2);
+				pq_sendint(&buf, tle->resorigtbl, 4);
+				pq_sendint(&buf, tle->resorigcol, 2);
 				tlist_item = lnext(tlist_item);
 			}
 			else

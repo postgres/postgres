@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.124 2005/03/10 23:21:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.125 2005/04/06 16:34:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,7 @@
 #include "optimizer/var.h"
 #include "parser/parsetree.h"
 #include "parser/parse_clause.h"
+#include "parser/parse_expr.h"
 #include "rewrite/rewriteManip.h"
 
 
@@ -656,12 +657,12 @@ compare_tlist_datatypes(List *tlist, List *colTypes,
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(l);
 
-		if (tle->resdom->resjunk)
+		if (tle->resjunk)
 			continue;			/* ignore resjunk columns */
 		if (colType == NULL)
 			elog(ERROR, "wrong number of tlist entries");
-		if (tle->resdom->restype != lfirst_oid(colType))
-			differentTypes[tle->resdom->resno] = true;
+		if (exprType((Node *) tle->expr) != lfirst_oid(colType))
+			differentTypes[tle->resno] = true;
 		colType = lnext(colType);
 	}
 	if (colType != NULL)
@@ -740,7 +741,7 @@ qual_is_pushdown_safe(Query *subquery, Index rti, Node *qual,
 		/* Must find the tlist element referenced by the Var */
 		tle = get_tle_by_resno(subquery->targetList, var->varattno);
 		Assert(tle != NULL);
-		Assert(!tle->resdom->resjunk);
+		Assert(!tle->resjunk);
 
 		/* If subquery uses DISTINCT or DISTINCT ON, check point 3 */
 		if (subquery->distinctClause != NIL &&

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.180 2005/01/19 23:45:24 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.181 2005/04/06 16:34:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -960,13 +960,13 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 		 * resjunk targets).
 		 */
 		if (tlist_item == NULL ||
-			((TargetEntry *) lfirst(tlist_item))->resdom->resjunk)
+			((TargetEntry *) lfirst(tlist_item))->resjunk)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("subquery must return a column")));
 		while ((tlist_item = lnext(tlist_item)) != NULL)
 		{
-			if (!((TargetEntry *) lfirst(tlist_item))->resdom->resjunk)
+			if (!((TargetEntry *) lfirst(tlist_item))->resjunk)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("subquery must return only one column")));
@@ -1045,7 +1045,7 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 			Operator	optup;
 			Form_pg_operator opform;
 
-			if (tent->resdom->resjunk)
+			if (tent->resjunk)
 				continue;
 
 			if (ll_item == NULL)
@@ -1417,18 +1417,16 @@ exprType(Node *expr)
 						elog(ERROR, "cannot get type for untransformed sublink");
 					tent = (TargetEntry *) linitial(qtree->targetList);
 					Assert(IsA(tent, TargetEntry));
-					Assert(!tent->resdom->resjunk);
-					if (sublink->subLinkType == EXPR_SUBLINK)
-						type = tent->resdom->restype;
-					else
+					Assert(!tent->resjunk);
+					type = exprType((Node *) tent->expr);
+					if (sublink->subLinkType == ARRAY_SUBLINK)
 					{
-						/* ARRAY_SUBLINK */
-						type = get_array_type(tent->resdom->restype);
+						type = get_array_type(type);
 						if (!OidIsValid(type))
 							ereport(ERROR,
 									(errcode(ERRCODE_UNDEFINED_OBJECT),
 									 errmsg("could not find array type for data type %s",
-								format_type_be(tent->resdom->restype))));
+											format_type_be(exprType((Node *) tent->expr)))));
 					}
 				}
 				else
@@ -1456,18 +1454,16 @@ exprType(Node *expr)
 
 					tent = (TargetEntry *) linitial(subplan->plan->targetlist);
 					Assert(IsA(tent, TargetEntry));
-					Assert(!tent->resdom->resjunk);
-					if (subplan->subLinkType == EXPR_SUBLINK)
-						type = tent->resdom->restype;
-					else
+					Assert(!tent->resjunk);
+					type = exprType((Node *) tent->expr);
+					if (subplan->subLinkType == ARRAY_SUBLINK)
 					{
-						/* ARRAY_SUBLINK */
-						type = get_array_type(tent->resdom->restype);
+						type = get_array_type(type);
 						if (!OidIsValid(type))
 							ereport(ERROR,
 									(errcode(ERRCODE_UNDEFINED_OBJECT),
 									 errmsg("could not find array type for data type %s",
-								format_type_be(tent->resdom->restype))));
+											format_type_be(exprType((Node *) tent->expr)))));
 					}
 				}
 				else

@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.238 2005/03/29 17:58:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.239 2005/04/06 16:34:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,21 +81,6 @@
 /*
  *	Stuff from primnodes.h
  */
-
-static bool
-_equalResdom(Resdom *a, Resdom *b)
-{
-	COMPARE_SCALAR_FIELD(resno);
-	COMPARE_SCALAR_FIELD(restype);
-	COMPARE_SCALAR_FIELD(restypmod);
-	COMPARE_STRING_FIELD(resname);
-	COMPARE_SCALAR_FIELD(ressortgroupref);
-	COMPARE_SCALAR_FIELD(resorigtbl);
-	COMPARE_SCALAR_FIELD(resorigcol);
-	COMPARE_SCALAR_FIELD(resjunk);
-
-	return true;
-}
 
 static bool
 _equalAlias(Alias *a, Alias *b)
@@ -546,8 +531,13 @@ _equalSetToDefault(SetToDefault *a, SetToDefault *b)
 static bool
 _equalTargetEntry(TargetEntry *a, TargetEntry *b)
 {
-	COMPARE_NODE_FIELD(resdom);
 	COMPARE_NODE_FIELD(expr);
+	COMPARE_SCALAR_FIELD(resno);
+	COMPARE_STRING_FIELD(resname);
+	COMPARE_SCALAR_FIELD(ressortgroupref);
+	COMPARE_SCALAR_FIELD(resorigtbl);
+	COMPARE_SCALAR_FIELD(resorigcol);
+	COMPARE_SCALAR_FIELD(resjunk);
 
 	return true;
 }
@@ -1814,9 +1804,6 @@ equal(void *a, void *b)
 			/*
 			 * PRIMITIVE NODES
 			 */
-		case T_Resdom:
-			retval = _equalResdom(a, b);
-			break;
 		case T_Alias:
 			retval = _equalAlias(a, b);
 			break;

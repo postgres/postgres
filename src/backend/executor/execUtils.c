@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.119 2005/03/21 01:24:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.120 2005/04/06 16:34:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -561,7 +561,7 @@ ExecBuildProjectionInfo(List *targetList,
 			Var		   *variable = (Var *) gstate->arg->expr;
 			AttrNumber	attnum = variable->varattno;
 			TargetEntry *tle = (TargetEntry *) gstate->xprstate.expr;
-			AttrNumber	resind = tle->resdom->resno - 1;
+			AttrNumber	resind = tle->resno - 1;
 
 			Assert(resind >= 0 && resind < len);
 			varNumbers[resind] = attnum;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/view.c,v 1.87 2005/02/02 06:36:00 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/view.c,v 1.88 2005/04/06 16:34:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,7 @@
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "optimizer/clauses.h"
+#include "parser/parse_expr.h"
 #include "parser/parse_relation.h"
 #include "rewrite/rewriteDefine.h"
 #include "rewrite/rewriteManip.h"
@@ -106,18 +107,17 @@ DefineVirtualRelation(const RangeVar *relation, List *tlist, bool replace)
 	attrList = NIL;
 	foreach(t, tlist)
 	{
-		TargetEntry *entry = lfirst(t);
-		Resdom	   *res = entry->resdom;
+		TargetEntry *tle = lfirst(t);
 
-		if (!res->resjunk)
+		if (!tle->resjunk)
 		{
 			ColumnDef  *def = makeNode(ColumnDef);
 			TypeName   *typename = makeNode(TypeName);
 
-			def->colname = pstrdup(res->resname);
+			def->colname = pstrdup(tle->resname);
 
-			typename->typeid = res->restype;
-			typename->typmod = res->restypmod;
+			typename->typeid = exprType((Node *) tle->expr);
+			typename->typmod = exprTypmod((Node *) tle->expr);
 			def->typename = typename;
 
 			def->inhcount = 0;

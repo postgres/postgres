@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.245 2004/12/31 21:59:55 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.246 2005/04/06 16:34:05 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -521,21 +521,6 @@ _outHash(StringInfo str, Hash *node)
  *****************************************************************************/
 
 static void
-_outResdom(StringInfo str, Resdom *node)
-{
-	WRITE_NODE_TYPE("RESDOM");
-
-	WRITE_INT_FIELD(resno);
-	WRITE_OID_FIELD(restype);
-	WRITE_INT_FIELD(restypmod);
-	WRITE_STRING_FIELD(resname);
-	WRITE_UINT_FIELD(ressortgroupref);
-	WRITE_OID_FIELD(resorigtbl);
-	WRITE_INT_FIELD(resorigcol);
-	WRITE_BOOL_FIELD(resjunk);
-}
-
-static void
 _outAlias(StringInfo str, Alias *node)
 {
 	WRITE_NODE_TYPE("ALIAS");
@@ -900,8 +885,13 @@ _outTargetEntry(StringInfo str, TargetEntry *node)
 {
 	WRITE_NODE_TYPE("TARGETENTRY");
 
-	WRITE_NODE_FIELD(resdom);
 	WRITE_NODE_FIELD(expr);
+	WRITE_INT_FIELD(resno);
+	WRITE_STRING_FIELD(resname);
+	WRITE_UINT_FIELD(ressortgroupref);
+	WRITE_OID_FIELD(resorigtbl);
+	WRITE_INT_FIELD(resorigcol);
+	WRITE_BOOL_FIELD(resjunk);
 }
 
 static void
@@ -1683,9 +1673,6 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_Hash:
 				_outHash(str, obj);
-				break;
-			case T_Resdom:
-				_outResdom(str, obj);
 				break;
 			case T_Alias:
 				_outAlias(str, obj);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/print.c,v 1.73 2005/03/16 21:38:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/print.c,v 1.74 2005/04/06 16:34:05 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -449,10 +449,10 @@ print_tl(List *tlist, List *rtable)
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(tl);
 
-		printf("\t%d %s\t", tle->resdom->resno,
-			   tle->resdom->resname ? tle->resdom->resname : "<null>");
-		if (tle->resdom->ressortgroupref != 0)
-			printf("(%u):\t", tle->resdom->ressortgroupref);
+		printf("\t%d %s\t", tle->resno,
+			   tle->resname ? tle->resname : "<null>");
+		if (tle->ressortgroupref != 0)
+			printf("(%u):\t", tle->ressortgroupref);
 		else
 			printf("    :\t");
 		print_expr((Node *) tle->expr, rtable);

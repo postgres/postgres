@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteDefine.c,v 1.101 2005/01/27 23:24:05 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteDefine.c,v 1.102 2005/04/06 16:34:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,7 @@
 #include "commands/view.h"
 #include "miscadmin.h"
 #include "optimizer/clauses.h"
+#include "parser/parse_expr.h"
 #include "parser/parse_relation.h"
 #include "rewrite/rewriteDefine.h"
 #include "rewrite/rewriteManip.h"
@@ -290,11 +291,11 @@ DefineQueryRewrite(RuleStmt *stmt)
 		foreach(tllist, query->targetList)
 		{
 			TargetEntry *tle = (TargetEntry *) lfirst(tllist);
-			Resdom	   *resdom = tle->resdom;
+			int32		tletypmod;
 			Form_pg_attribute attr;
 			char	   *attname;
 
-			if (resdom->resjunk)
+			if (tle->resjunk)
 				continue;
 			i++;
 			if (i > event_relation->rd_att->natts)
@@ -318,12 +319,12 @@ DefineQueryRewrite(RuleStmt *stmt)
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 						 errmsg("cannot convert relation containing dropped columns to view")));
 
-			if (strcmp(resdom->resname, attname) != 0)
+			if (strcmp(tle->resname, attname) != 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 						 errmsg("SELECT rule's target entry %d has different column name from \"%s\"", i, attname)));
 
-			if (attr->atttypid != resdom->restype)
+			if (attr->atttypid != exprType((Node *) tle->expr))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 						 errmsg("SELECT rule's target entry %d has different type from column \"%s\"", i, attname)));
@@ -335,8 +336,9 @@ DefineQueryRewrite(RuleStmt *stmt)
 			 * length but the select rule's expression will probably have
 			 * typmod = -1.
 			 */
-			if (attr->atttypmod != resdom->restypmod &&
-				attr->atttypmod != -1 && resdom->restypmod != -1)
+			tletypmod = exprTypmod((Node *) tle->expr);
+			if (attr->atttypmod != tletypmod &&
+				attr->atttypmod != -1 && tletypmod != -1)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 						 errmsg("SELECT rule's target entry %d has different size from column \"%s\"", i, attname)));

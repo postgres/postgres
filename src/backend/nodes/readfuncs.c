@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/readfuncs.c,v 1.175 2004/12/31 21:59:55 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/readfuncs.c,v 1.176 2005/04/06 16:34:05 tgl Exp $
  *
  * NOTES
  *	  Path and Plan nodes do not have any readfuncs support, because we
@@ -237,26 +237,6 @@ _readSetOperationStmt(void)
 /*
  *	Stuff from primnodes.h.
  */
-
-/*
- * _readResdom
- */
-static Resdom *
-_readResdom(void)
-{
-	READ_LOCALS(Resdom);
-
-	READ_INT_FIELD(resno);
-	READ_OID_FIELD(restype);
-	READ_INT_FIELD(restypmod);
-	READ_STRING_FIELD(resname);
-	READ_UINT_FIELD(ressortgroupref);
-	READ_OID_FIELD(resorigtbl);
-	READ_INT_FIELD(resorigcol);
-	READ_BOOL_FIELD(resjunk);
-
-	READ_DONE();
-}
 
 static Alias *
 _readAlias(void)
@@ -787,8 +767,13 @@ _readTargetEntry(void)
 {
 	READ_LOCALS(TargetEntry);
 
-	READ_NODE_FIELD(resdom);
 	READ_NODE_FIELD(expr);
+	READ_INT_FIELD(resno);
+	READ_STRING_FIELD(resname);
+	READ_UINT_FIELD(ressortgroupref);
+	READ_OID_FIELD(resorigtbl);
+	READ_INT_FIELD(resorigcol);
+	READ_BOOL_FIELD(resjunk);
 
 	READ_DONE();
 }
@@ -952,8 +937,6 @@ parseNodeString(void)
 		return_value = _readGroupClause();
 	else if (MATCH("SETOPERATIONSTMT", 16))
 		return_value = _readSetOperationStmt();
-	else if (MATCH("RESDOM", 6))
-		return_value = _readResdom();
 	else if (MATCH("ALIAS", 5))
 		return_value = _readAlias();
 	else if (MATCH("RANGEVAR", 8))

@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.299 2005/03/29 17:58:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.300 2005/04/06 16:34:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -540,26 +540,6 @@ _copyLimit(Limit *from)
  */
 
 /*
- * _copyResdom
- */
-static Resdom *
-_copyResdom(Resdom *from)
-{
-	Resdom	   *newnode = makeNode(Resdom);
-
-	COPY_SCALAR_FIELD(resno);
-	COPY_SCALAR_FIELD(restype);
-	COPY_SCALAR_FIELD(restypmod);
-	COPY_STRING_FIELD(resname);
-	COPY_SCALAR_FIELD(ressortgroupref);
-	COPY_SCALAR_FIELD(resorigtbl);
-	COPY_SCALAR_FIELD(resorigcol);
-	COPY_SCALAR_FIELD(resjunk);
-
-	return newnode;
-}
-
-/*
  * _copyAlias
  */
 static Alias *
@@ -1077,8 +1057,13 @@ _copyTargetEntry(TargetEntry *from)
 {
 	TargetEntry *newnode = makeNode(TargetEntry);
 
-	COPY_NODE_FIELD(resdom);
 	COPY_NODE_FIELD(expr);
+	COPY_SCALAR_FIELD(resno);
+	COPY_STRING_FIELD(resname);
+	COPY_SCALAR_FIELD(ressortgroupref);
+	COPY_SCALAR_FIELD(resorigtbl);
+	COPY_SCALAR_FIELD(resorigcol);
+	COPY_SCALAR_FIELD(resjunk);
 
 	return newnode;
 }
@@ -2670,9 +2655,6 @@ copyObject(void *from)
 			/*
 			 * PRIMITIVE NODES
 			 */
-		case T_Resdom:
-			retval = _copyResdom(from);
-			break;
 		case T_Alias:
 			retval = _copyAlias(from);
 			break;

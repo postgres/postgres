@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.177 2005/03/27 06:29:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.178 2005/04/06 16:34:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -259,7 +259,7 @@ static List *
 build_relation_tlist(RelOptInfo *rel)
 {
 	List	   *tlist = NIL;
-	int			resdomno = 1;
+	int			resno = 1;
 	ListCell   *v;
 
 	foreach(v, rel->reltargetlist)
@@ -267,8 +267,11 @@ build_relation_tlist(RelOptInfo *rel)
 		/* Do we really need to copy here?	Not sure */
 		Var		   *var = (Var *) copyObject(lfirst(v));
 
-		tlist = lappend(tlist, create_tl_element(var, resdomno));
-		resdomno++;
+		tlist = lappend(tlist, makeTargetEntry((Expr *) var,
+											   resno,
+											   NULL,
+											   false));
+		resno++;
 	}
 	return tlist;
 }
@@ -557,20 +560,18 @@ create_unique_plan(Query *root, UniquePath *best_path)
 		Node	   *uniqexpr = lfirst(l);
 		TargetEntry *tle;
 
-		tle = tlistentry_member(uniqexpr, newtlist);
+		tle = tlist_member(uniqexpr, newtlist);
 		if (!tle)
 		{
-			tle = makeTargetEntry(makeResdom(nextresno,
-											 exprType(uniqexpr),
-											 exprTypmod(uniqexpr),
-											 NULL,
-											 false),
-								  (Expr *) uniqexpr);
+			tle = makeTargetEntry((Expr *) uniqexpr,
+								  nextresno,
+								  NULL,
+								  false);
 			newtlist = lappend(newtlist, tle);
 			nextresno++;
 			newitems = true;
 		}
-		groupColIdx[groupColPos++] = tle->resdom->resno;
+		groupColIdx[groupColPos++] = tle->resno;
 	}
 
 	if (newitems)
@@ -1844,7 +1845,7 @@ make_sort_from_pathkeys(Query *root, Plan *lefttree, List *pathkeys)
 	{
 		List	   *keysublist = (List *) lfirst(i);
 		PathKeyItem *pathkey = NULL;
-		Resdom	   *resdom = NULL;
+		TargetEntry *tle = NULL;
 		ListCell   *j;
 
 		/*
@@ -1863,11 +1864,11 @@ make_sort_from_pathkeys(Query *root, Plan *lefttree, List *pathkeys)
 		{
 			pathkey = (PathKeyItem *) lfirst(j);
 			Assert(IsA(pathkey, PathKeyItem));
-			resdom = tlist_member(pathkey->key, tlist);
-			if (resdom)
+			tle = tlist_member(pathkey->key, tlist);
+			if (tle)
 				break;
 		}
-		if (!resdom)
+		if (!tle)
 		{
 			/* No matching Var; look for a computable expression */
 			foreach(j, keysublist)
@@ -1901,14 +1902,11 @@ make_sort_from_pathkeys(Query *root, Plan *lefttree, List *pathkeys)
 			/*
 			 * Add resjunk entry to input's tlist
 			 */
-			resdom = makeResdom(list_length(tlist) + 1,
-								exprType(pathkey->key),
-								exprTypmod(pathkey->key),
-								NULL,
-								true);
-			tlist = lappend(tlist,
-							makeTargetEntry(resdom,
-											(Expr *) pathkey->key));
+			tle = makeTargetEntry((Expr *) pathkey->key,
+								  list_length(tlist) + 1,
+								  NULL,
+								  true);
+			tlist = lappend(tlist, tle);
 			lefttree->targetlist = tlist;		/* just in case NIL before */
 		}
 
@@ -1918,7 +1916,7 @@ make_sort_from_pathkeys(Query *root, Plan *lefttree, List *pathkeys)
 		 * scenarios where multiple mergejoinable clauses mention the same
 		 * var, for example.)  So enter it only once in the sort arrays.
 		 */
-		numsortkeys = add_sort_column(resdom->resno, pathkey->sortop,
+		numsortkeys = add_sort_column(tle->resno, pathkey->sortop,
 								 numsortkeys, sortColIdx, sortOperators);
 	}
 
@@ -1964,7 +1962,7 @@ make_sort_from_sortclauses(Query *root, List *sortcls, Plan *lefttree)
 		 * parser should have removed 'em, but no point in sorting
 		 * redundantly.
 		 */
-		numsortkeys = add_sort_column(tle->resdom->resno, sortcl->sortop,
+		numsortkeys = add_sort_column(tle->resno, sortcl->sortop,
 								 numsortkeys, sortColIdx, sortOperators);
 	}
 
@@ -2020,7 +2018,7 @@ make_sort_from_groupcols(Query *root,
 		 * parser should have removed 'em, but no point in sorting
 		 * redundantly.
 		 */
-		numsortkeys = add_sort_column(tle->resdom->resno, grpcl->sortop,
+		numsortkeys = add_sort_column(tle->resno, grpcl->sortop,
 								 numsortkeys, sortColIdx, sortOperators);
 		grpno++;
 	}
@@ -2253,7 +2251,7 @@ make_unique(Plan *lefttree, List *distinctList)
 		SortClause *sortcl = (SortClause *) lfirst(slitem);
 		TargetEntry *tle = get_sortgroupclause_tle(sortcl, plan->targetlist);
 
-		uniqColIdx[keyno++] = tle->resdom->resno;
+		uniqColIdx[keyno++] = tle->resno;
 	}
 
 	node->numCols = numCols;
@@ -2311,7 +2309,7 @@ make_setop(SetOpCmd cmd, Plan *lefttree,
 		SortClause *sortcl = (SortClause *) lfirst(slitem);
 		TargetEntry *tle = get_sortgroupclause_tle(sortcl, plan->targetlist);
 
-		dupColIdx[keyno++] = tle->resdom->resno;
+		dupColIdx[keyno++] = tle->resno;
 	}
 
 	node->cmd = cmd;

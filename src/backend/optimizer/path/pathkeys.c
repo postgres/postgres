@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/pathkeys.c,v 1.65 2005/03/27 06:29:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/pathkeys.c,v 1.66 2005/04/06 16:34:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -791,7 +791,7 @@ build_subquery_pathkeys(Query *root, RelOptInfo *rel, Query *subquery)
 			{
 				TargetEntry *tle = (TargetEntry *) lfirst(k);
 
-				if (!tle->resdom->resjunk &&
+				if (!tle->resjunk &&
 					equal(tle->expr, sub_key))
 				{
 					/* Found a representation for this sub_key */
@@ -800,9 +800,9 @@ build_subquery_pathkeys(Query *root, RelOptInfo *rel, Query *subquery)
 					int			score;
 
 					outer_var = makeVar(rel->relid,
-										tle->resdom->resno,
-										tle->resdom->restype,
-										tle->resdom->restypmod,
+										tle->resno,
+										exprType((Node *) tle->expr),
+										exprTypmod((Node *) tle->expr),
 										0);
 					outer_item = makePathKeyItem((Node *) outer_var,
 												 sub_item->sortop,

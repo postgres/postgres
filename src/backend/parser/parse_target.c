@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.130 2005/03/26 06:28:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.131 2005/04/06 16:34:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,7 @@
 #include "utils/typcache.h"
 
 
-static void markTargetListOrigin(ParseState *pstate, Resdom *res,
+static void markTargetListOrigin(ParseState *pstate, TargetEntry *tle,
 								 Var *var, int levelsup);
 static Node *transformAssignmentIndirection(ParseState *pstate,
 							   Node *basenode,
@@ -65,16 +65,9 @@ transformTargetEntry(ParseState *pstate,
 					 char *colname,
 					 bool resjunk)
 {
-	Oid			type_id;
-	int32		type_mod;
-	Resdom	   *resnode;
-
 	/* Transform the node if caller didn't do it already */
 	if (expr == NULL)
 		expr = transformExpr(pstate, node);
-
-	type_id = exprType(expr);
-	type_mod = exprTypmod(expr);
 
 	if (colname == NULL && !resjunk)
 	{
@@ -85,13 +78,10 @@ transformTargetEntry(ParseState *pstate,
 		colname = FigureColname(node);
 	}
 
-	resnode = makeResdom((AttrNumber) pstate->p_next_resno++,
-						 type_id,
-						 type_mod,
-						 colname,
-						 resjunk);
-
-	return makeTargetEntry(resnode, (Expr *) expr);
+	return makeTargetEntry((Expr *) expr,
+						   (AttrNumber) pstate->p_next_resno++,
+						   colname,
+						   resjunk);
 }
 
 
@@ -176,13 +166,13 @@ markTargetListOrigins(ParseState *pstate, List *targetlist)
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(l);
 
-		markTargetListOrigin(pstate, tle->resdom, (Var *) tle->expr, 0);
+		markTargetListOrigin(pstate, tle, (Var *) tle->expr, 0);
 	}
 }
 
 /*
  * markTargetListOrigin()
- *		If 'var' is a Var of a plain relation, mark 'res' with its origin
+ *		If 'var' is a Var of a plain relation, mark 'tle' with its origin
  *
  * levelsup is an extra offset to interpret the Var's varlevelsup correctly.
  *
@@ -190,7 +180,8 @@ markTargetListOrigins(ParseState *pstate, List *targetlist)
  * do not drill down into views, but report the view as the column owner.
  */
 static void
-markTargetListOrigin(ParseState *pstate, Resdom *res, Var *var, int levelsup)
+markTargetListOrigin(ParseState *pstate, TargetEntry *tle,
+					 Var *var, int levelsup)
 {
 	int			netlevelsup;
 	RangeTblEntry *rte;
@@ -206,20 +197,20 @@ markTargetListOrigin(ParseState *pstate, Resdom *res, Var *var, int levelsup)
 	{
 		case RTE_RELATION:
 			/* It's a table or view, report it */
-			res->resorigtbl = rte->relid;
-			res->resorigcol = attnum;
+			tle->resorigtbl = rte->relid;
+			tle->resorigcol = attnum;
 			break;
 		case RTE_SUBQUERY:
 			{
 				/* Subselect-in-FROM: copy up from the subselect */
-				TargetEntry *te = get_tle_by_resno(rte->subquery->targetList,
-												   attnum);
+				TargetEntry *ste = get_tle_by_resno(rte->subquery->targetList,
+													attnum);
 
-				if (te == NULL || te->resdom->resjunk)
+				if (ste == NULL || ste->resjunk)
 					elog(ERROR, "subquery %s does not have attribute %d",
 						 rte->eref->aliasname, attnum);
-				res->resorigtbl = te->resdom->resorigtbl;
-				res->resorigcol = te->resdom->resorigcol;
+				tle->resorigtbl = ste->resorigtbl;
+				tle->resorigcol = ste->resorigcol;
 			}
 			break;
 		case RTE_JOIN:
@@ -229,7 +220,7 @@ markTargetListOrigin(ParseState *pstate, Resdom *res, Var *var, int levelsup)
 
 				Assert(attnum > 0 && attnum <= list_length(rte->joinaliasvars));
 				aliasvar = (Var *) list_nth(rte->joinaliasvars, attnum - 1);
-				markTargetListOrigin(pstate, res, aliasvar, netlevelsup);
+				markTargetListOrigin(pstate, tle, aliasvar, netlevelsup);
 			}
 			break;
 		case RTE_SPECIAL:
@@ -264,7 +255,6 @@ updateTargetListEntry(ParseState *pstate,
 	Oid			type_id;		/* type of value provided */
 	Oid			attrtype;		/* type of target column */
 	int32		attrtypmod;
-	Resdom	   *resnode = tle->resdom;
 	Relation	rd = pstate->p_target_relation;
 
 	Assert(rd != NULL);
@@ -369,21 +359,14 @@ updateTargetListEntry(ParseState *pstate,
 	}
 
 	/*
-	 * The result of the target expression should now match the
-	 * destination column's type.
-	 */
-	resnode->restype = attrtype;
-	resnode->restypmod = attrtypmod;
-
-	/*
 	 * Set the resno to identify the target column --- the rewriter and
 	 * planner depend on this.	We also set the resname to identify the
 	 * target column, but this is only for debugging purposes; it should
 	 * not be relied on.  (In particular, it might be out of date in a
 	 * stored rule.)
 	 */
-	resnode->resno = (AttrNumber) attrno;
-	resnode->resname = colname;
+	tle->resno = (AttrNumber) attrno;
+	tle->resname = colname;
 }
 
 /*
@@ -881,13 +864,10 @@ ExpandIndirectionStar(ParseState *pstate, A_Indirection *ind)
 			fieldnode = (Node *) fselect;
 		}
 
-		te = makeNode(TargetEntry);
-		te->resdom = makeResdom((AttrNumber) pstate->p_next_resno++,
-								att->atttypid,
-								att->atttypmod,
-								pstrdup(NameStr(att->attname)),
-								false);
-		te->expr = (Expr *) fieldnode;
+		te = makeTargetEntry((Expr *) fieldnode,
+							 (AttrNumber) pstate->p_next_resno++,
+							 pstrdup(NameStr(att->attname)),
+							 false);
 		te_list = lappend(te_list, te);
 	}
 

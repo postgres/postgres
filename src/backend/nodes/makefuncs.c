@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/makefuncs.c,v 1.46 2004/12/31 21:59:55 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/makefuncs.c,v 1.47 2005/04/06 16:34:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -87,48 +87,49 @@ makeVar(Index varno,
 
 /*
  * makeTargetEntry -
- *	  creates a TargetEntry node (contains a Resdom)
+ *	  creates a TargetEntry node
  */
 TargetEntry *
-makeTargetEntry(Resdom *resdom, Expr *expr)
+makeTargetEntry(Expr *expr,
+				AttrNumber resno,
+				char *resname,
+				bool resjunk)
 {
-	TargetEntry *rt = makeNode(TargetEntry);
+	TargetEntry *tle = makeNode(TargetEntry);
 
-	rt->resdom = resdom;
-	rt->expr = expr;
-	return rt;
-}
-
-/*
- * makeResdom -
- *	  creates a Resdom (Result Domain) node
- */
-Resdom *
-makeResdom(AttrNumber resno,
-		   Oid restype,
-		   int32 restypmod,
-		   char *resname,
-		   bool resjunk)
-{
-	Resdom	   *resdom = makeNode(Resdom);
-
-	resdom->resno = resno;
-	resdom->restype = restype;
-	resdom->restypmod = restypmod;
-	resdom->resname = resname;
+	tle->expr = expr;
+	tle->resno = resno;
+	tle->resname = resname;
 
 	/*
 	 * We always set these fields to 0. If the caller wants to change them
 	 * he must do so explicitly.  Few callers do that, so omitting these
 	 * arguments reduces the chance of error.
 	 */
-	resdom->ressortgroupref = 0;
-	resdom->resorigtbl = InvalidOid;
-	resdom->resorigcol = 0;
+	tle->ressortgroupref = 0;
+	tle->resorigtbl = InvalidOid;
+	tle->resorigcol = 0;
 
-	resdom->resjunk = resjunk;
+	tle->resjunk = resjunk;
 
-	return resdom;
+	return tle;
+}
+
+/*
+ * flatCopyTargetEntry -
+ *	  duplicate a TargetEntry, but don't copy substructure
+ *
+ * This is commonly used when we just want to modify the resno or substitute
+ * a new expression.
+ */
+TargetEntry *
+flatCopyTargetEntry(TargetEntry *src_tle)
+{
+	TargetEntry *tle = makeNode(TargetEntry);
+
+	Assert(IsA(src_tle, TargetEntry));
+	memcpy(tle, src_tle, sizeof(TargetEntry));
+	return tle;
 }
 
 /*

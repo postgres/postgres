@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/preptlist.c,v 1.73 2005/03/17 23:44:52 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/preptlist.c,v 1.74 2005/04/06 16:34:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,17 +79,16 @@ preprocess_targetlist(Query *parse, List *tlist)
 	 */
 	if (command_type == CMD_UPDATE || command_type == CMD_DELETE)
 	{
-		Resdom	   *resdom;
+		TargetEntry *tle;
 		Var		   *var;
-
-		resdom = makeResdom(list_length(tlist) + 1,
-							TIDOID,
-							-1,
-							pstrdup("ctid"),
-							true);
 
 		var = makeVar(result_relation, SelfItemPointerAttributeNumber,
 					  TIDOID, -1, 0);
+
+		tle = makeTargetEntry((Expr *) var,
+							  list_length(tlist) + 1,
+							  pstrdup("ctid"),
+							  true);
 
 		/*
 		 * For an UPDATE, expand_targetlist already created a fresh tlist.
@@ -99,7 +98,7 @@ preprocess_targetlist(Query *parse, List *tlist)
 		if (command_type == CMD_DELETE)
 			tlist = list_copy(tlist);
 
-		tlist = lappend(tlist, makeTargetEntry(resdom, (Expr *) var));
+		tlist = lappend(tlist, tle);
 	}
 
 	/*
@@ -132,18 +131,9 @@ preprocess_targetlist(Query *parse, List *tlist)
 		foreach(l, parse->rowMarks)
 		{
 			Index		rti = lfirst_int(l);
-			char	   *resname;
-			Resdom	   *resdom;
 			Var		   *var;
-			TargetEntry *ctid;
-
-			resname = (char *) palloc(32);
-			snprintf(resname, 32, "ctid%u", rti);
-			resdom = makeResdom(list_length(tlist) + 1,
-								TIDOID,
-								-1,
-								resname,
-								true);
+			char	   *resname;
+			TargetEntry *tle;
 
 			var = makeVar(rti,
 						  SelfItemPointerAttributeNumber,
@@ -151,8 +141,15 @@ preprocess_targetlist(Query *parse, List *tlist)
 						  -1,
 						  0);
 
-			ctid = makeTargetEntry(resdom, (Expr *) var);
-			tlist = lappend(tlist, ctid);
+			resname = (char *) palloc(32);
+			snprintf(resname, 32, "ctid%u", rti);
+
+			tle = makeTargetEntry((Expr *) var,
+								  list_length(tlist) + 1,
+								  resname,
+								  true);
+
+			tlist = lappend(tlist, tle);
 		}
 	}
 
@@ -206,9 +203,8 @@ expand_targetlist(List *tlist, int command_type,
 		if (tlist_item != NULL)
 		{
 			TargetEntry *old_tle = (TargetEntry *) lfirst(tlist_item);
-			Resdom	   *resdom = old_tle->resdom;
 
-			if (!resdom->resjunk && resdom->resno == attrno)
+			if (!old_tle->resjunk && old_tle->resno == attrno)
 			{
 				new_tle = old_tle;
 				tlist_item = lnext(tlist_item);
@@ -268,9 +264,6 @@ expand_targetlist(List *tlist, int command_type,
 													  (Datum) 0,
 													  true,		/* isnull */
 													  true /* byval */ );
-						/* label resdom with INT4, too */
-						atttype = INT4OID;
-						atttypmod = -1;
 					}
 					break;
 				case CMD_UPDATE:
@@ -290,9 +283,6 @@ expand_targetlist(List *tlist, int command_type,
 													  (Datum) 0,
 													  true,		/* isnull */
 													  true /* byval */ );
-						/* label resdom with INT4, too */
-						atttype = INT4OID;
-						atttypmod = -1;
 					}
 					break;
 				default:
@@ -302,12 +292,10 @@ expand_targetlist(List *tlist, int command_type,
 					break;
 			}
 
-			new_tle = makeTargetEntry(makeResdom(attrno,
-												 atttype,
-												 atttypmod,
+			new_tle = makeTargetEntry((Expr *) new_expr,
+									  attrno,
 									  pstrdup(NameStr(att_tup->attname)),
-												 false),
-									  (Expr *) new_expr);
+									  false);
 		}
 
 		new_tlist = lappend(new_tlist, new_tle);
@@ -324,16 +312,14 @@ expand_targetlist(List *tlist, int command_type,
 	while (tlist_item)
 	{
 		TargetEntry *old_tle = (TargetEntry *) lfirst(tlist_item);
-		Resdom	   *resdom = old_tle->resdom;
 
-		if (!resdom->resjunk)
+		if (!old_tle->resjunk)
 			elog(ERROR, "targetlist is not sorted correctly");
 		/* Get the resno right, but don't copy unnecessarily */
-		if (resdom->resno != attrno)
+		if (old_tle->resno != attrno)
 		{
-			resdom = (Resdom *) copyObject((Node *) resdom);
-			resdom->resno = attrno;
-			old_tle = makeTargetEntry(resdom, old_tle->expr);
+			old_tle = flatCopyTargetEntry(old_tle);
+			old_tle->resno = attrno;
 		}
 		new_tlist = lappend(new_tlist, old_tle);
 		attrno++;
