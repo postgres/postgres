@@ -1059,7 +1059,7 @@ From owner-pgsql-hackers@hub.org Thu Jan 20 18:45:32 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id TAA00672
 	for <pgman@candle.pha.pa.us>; Thu, 20 Jan 2000 19:45:30 -0500 (EST)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.19 $) with ESMTP id TAA01989 for <pgman@candle.pha.pa.us>; Thu, 20 Jan 2000 19:39:15 -0500 (EST)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.20 $) with ESMTP id TAA01989 for <pgman@candle.pha.pa.us>; Thu, 20 Jan 2000 19:39:15 -0500 (EST)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.3/8.9.3) with SMTP id TAA00957;
 	Thu, 20 Jan 2000 19:35:19 -0500 (EST)
@@ -2002,4 +2002,405 @@ scan, then you open up the risk of betting wrong every time, should
 your stats be out-of-date or otherwise misleading.
 
 			regards, tom lane
+
+From pgsql-hackers-owner+M29943@postgresql.org Thu Oct  3 18:18:27 2002
+Return-path: <pgsql-hackers-owner+M29943@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g93MIOU23771
+	for <pgman@candle.pha.pa.us>; Thu, 3 Oct 2002 18:18:25 -0400 (EDT)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP
+	id B9F51476570; Thu,  3 Oct 2002 18:18:21 -0400 (EDT)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP
+	id E083B4761B0; Thu,  3 Oct 2002 18:18:19 -0400 (EDT)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP id 13ADC476063
+	for <pgsql-hackers@postgresql.org>; Thu,  3 Oct 2002 18:18:17 -0400 (EDT)
+Received: from acorn.he.net (acorn.he.net [64.71.137.130])
+	by postgresql.org (Postfix) with ESMTP id 3AEC8475FFF
+	for <pgsql-hackers@postgresql.org>; Thu,  3 Oct 2002 18:18:16 -0400 (EDT)
+Received: from CurtisVaio ([63.164.0.47] (may be forged)) by acorn.he.net (8.8.6/8.8.2) with SMTP id PAA19215; Thu, 3 Oct 2002 15:18:14 -0700
+From: "Curtis Faith" <curtis@galtair.com>
+To: "Tom Lane" <tgl@sss.pgh.pa.us>
+cc: "Pgsql-Hackers" <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Advice: Where could I be of help? 
+Date: Thu, 3 Oct 2002 18:17:55 -0400
+Message-ID: <DMEEJMCDOJAKPPFACMPMGEBNCEAA.curtis@galtair.com>
+MIME-Version: 1.0
+Content-Type: text/plain;
+	charset="iso-8859-1"
+Content-Transfer-Encoding: 7bit
+X-Priority: 3 (Normal)
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook IMO, Build 9.0.2416 (9.0.2911.0)
+In-Reply-To: <13379.1033675158@sss.pgh.pa.us>
+X-MimeOLE: Produced By Microsoft MimeOLE V5.00.2919.6700
+Importance: Normal
+X-Virus-Scanned: by AMaViS new-20020517
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by AMaViS new-20020517
+Status: OR
+
+tom lane wrote:
+> But more globally, I think that our worst problems these days have to do
+> with planner misestimations leading to bad plans.  The planner is
+> usually *capable* of generating a good plan, but all too often it picks
+> the wrong one.  We need work on improving the cost modeling equations
+> to be closer to reality.  If that's at all close to your sphere of
+> interest then I think it should be #1 priority --- it's both localized,
+> which I think is important for a first project, and potentially a
+> considerable win.
+
+This seems like a very interesting problem. One of the ways that I thought
+would be interesting and would solve the problem of trying to figure out the
+right numbers is to have certain guesses for the actual values based on
+statistics gathered during vacuum and general running and then have the
+planner run the "best" plan.
+
+Then during execution if the planner turned out to be VERY wrong about
+certain assumptions the execution system could update the stats that led to
+those wrong assumptions. That way the system would seek the correct values
+automatically. We could also gather the stats that the system produces for
+certain actual databases and then use those to make smarter initial guesses.
+
+I've found that I can never predict costs. I always end up testing
+empirically and find myself surprised at the results.
+
+We should be able to make the executor smart enough to keep count of actual
+costs (or a statistical approximation) without introducing any significant
+overhead.
+
+tom lane also wrote:
+> There is no "cache flushing".  We have a shared buffer cache management
+> algorithm that's straight LRU across all buffers.  There's been some
+> interest in smarter cache-replacement code; I believe Neil Conway is
+> messing around with an LRU-2 implementation right now.  If you've got
+> better ideas we're all ears.
+
+Hmmm, this is the area that I think could lead to huge performance gains.
+
+Consider a simple system with a table tbl_master that gets read by each
+process many times but with very infrequent inserts and that contains about
+3,000 rows. The single but heavily used index for this table is contained in
+a btree with a depth of three with 20 - 8K pages in the first two levels of
+the btree.
+
+Another table tbl_detail with 10 indices that gets very frequent inserts.
+There are over 300,000 rows. Some queries result in index scans over the
+approximatley 5,000 8K pages in the index.
+
+There is a 40M shared cache for this system.
+
+Everytime a query which requires the index scan runs it will blow out the
+entire cache since the scan will load more blocks than the cache holds. Only
+blocks that are accessed while the scan is going will survive. LRU is bad,
+bad, bad!
+
+LRU-2 might be better but it seems like it still won't give enough priority
+to the most frequently used blocks. I don't see how it would do better for
+the above case.
+
+I once implemented a modified cache algorithm that was based on the clock
+algorithm for VM page caches. VM paging is similar to databases in that
+there is definite locality of reference and certain pages are MUCH more
+likely to be requested.
+
+The basic idea was to have a flag in each block that represented the access
+time in clock intervals. Imagine a clock hand sweeping across a clock, every
+access is like a tiny movement in the clock hand. Blocks that are not
+accessed during a sweep are candidates for removal.
+
+My modification was to use access counts to increase the durability of the
+more accessed blocks. Each time a block is accessed it's flag is shifted
+left (up to a maximum number of shifts - ShiftN ) and 1 is added to it.
+Every so many cache accesses (and synchronously when the cache is full) a
+pass is made over each block, right shifting the flags (a clock sweep). This
+can also be done one block at a time each access so the clock is directly
+linked to the cache access rate. Any blocks with 0 are placed into a doubly
+linked list of candidates for removal. New cache blocks are allocated from
+the list of candidates. Accesses of blocks in the candidate list just
+removes them from the list.
+
+An index root node page would likely be accessed frequently enough so that
+all it's bits would be set so it would take ShiftN clock sweeps.
+
+This algorithm increased the cache hit ratio from 40% to about 90% for the
+cases I tested when compared to a simple LRU mechanism. The paging ratio is
+greatly dependent on the ratio of the actual database size to the cache
+size.
+
+The bottom line that it is very important to keep blocks that are frequently
+accessed in the cache. The top levels of large btrees are accessed many
+hundreds (actually a power of the number of keys in each page) of times more
+frequently than the leaf pages. LRU can be the worst possible algorithm for
+something like an index or table scan of large tables since it flushes a
+large number of potentially frequently accessed blocks in favor of ones that
+are very unlikely to be retrieved again.
+
+tom lane also wrote:
+> This is an interesting area.  Keep in mind though that Postgres is a
+> portable DB that tries to be agnostic about what kernel and filesystem
+> it's sitting on top of --- and in any case it does not run as root, so
+> has very limited ability to affect what the kernel/filesystem do.
+> I'm not sure how much can be done without losing those portability
+> advantages.
+
+The kinds of things I was thinking about should be very portable. I found
+that simply writing the cache in order of the file system offset results in
+very greatly improved performance since it lets the head seek in smaller
+increments and much more smoothly, especially with modern disks. Most of the
+time the file system will create files are large sequential bytes on the
+physical disks in order. It might be in a few chunks but those chunks will
+be sequential and fairly large.
+
+tom lane also wrote:
+> Well, not really all that isolated.  The bottom-level index code doesn't
+> know whether you're doing INSERT or UPDATE, and would have no easy
+> access to the original tuple if it did know.  The original theory about
+> this was that the planner could detect the situation where the index(es)
+> don't overlap the set of columns being changed by the UPDATE, which
+> would be nice since there'd be zero runtime overhead.  Unfortunately
+> that breaks down if any BEFORE UPDATE triggers are fired that modify the
+> tuple being stored.  So all in all it turns out to be a tad messy to fit
+> this in :-(.  I am unconvinced that the impact would be huge anyway,
+> especially as of 7.3 which has a shortcut path for dead index entries.
+
+Well, this probably is not the right place to start then.
+
+- Curtis
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 4: Don't 'kill -9' the postmaster
+
+From pgsql-hackers-owner+M29945@postgresql.org Thu Oct  3 18:47:34 2002
+Return-path: <pgsql-hackers-owner+M29945@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g93MlWU26068
+	for <pgman@candle.pha.pa.us>; Thu, 3 Oct 2002 18:47:32 -0400 (EDT)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP
+	id F2AAE476306; Thu,  3 Oct 2002 18:47:27 -0400 (EDT)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP
+	id E7B5247604F; Thu,  3 Oct 2002 18:47:24 -0400 (EDT)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP id 9ADCC4761A1
+	for <pgsql-hackers@postgresql.org>; Thu,  3 Oct 2002 18:47:18 -0400 (EDT)
+Received: from sss.pgh.pa.us (unknown [192.204.191.242])
+	by postgresql.org (Postfix) with ESMTP id DDB0B476187
+	for <pgsql-hackers@postgresql.org>; Thu,  3 Oct 2002 18:47:17 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.12.5/8.12.5) with ESMTP id g93MlIhR015091;
+	Thu, 3 Oct 2002 18:47:18 -0400 (EDT)
+To: "Curtis Faith" <curtis@galtair.com>
+cc: "Pgsql-Hackers" <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Advice: Where could I be of help? 
+In-Reply-To: <DMEEJMCDOJAKPPFACMPMGEBNCEAA.curtis@galtair.com> 
+References: <DMEEJMCDOJAKPPFACMPMGEBNCEAA.curtis@galtair.com>
+Comments: In-reply-to "Curtis Faith" <curtis@galtair.com>
+	message dated "Thu, 03 Oct 2002 18:17:55 -0400"
+Date: Thu, 03 Oct 2002 18:47:17 -0400
+Message-ID: <15090.1033685237@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+X-Virus-Scanned: by AMaViS new-20020517
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by AMaViS new-20020517
+Status: OR
+
+"Curtis Faith" <curtis@galtair.com> writes:
+> Then during execution if the planner turned out to be VERY wrong about
+> certain assumptions the execution system could update the stats that led to
+> those wrong assumptions. That way the system would seek the correct values
+> automatically.
+
+That has been suggested before, but I'm unsure how to make it work.
+There are a lot of parameters involved in any planning decision and it's
+not obvious which ones to tweak, or in which direction, if the plan
+turns out to be bad.  But if you can come up with some ideas, go to
+it!
+
+> Everytime a query which requires the index scan runs it will blow out the
+> entire cache since the scan will load more blocks than the cache
+> holds.
+
+Right, that's the scenario that kills simple LRU ...
+
+> LRU-2 might be better but it seems like it still won't give enough priority
+> to the most frequently used blocks.
+
+Blocks touched more than once per query (like the upper-level index
+blocks) will survive under LRU-2.  Blocks touched once per query won't.
+Seems to me that it should be a win.
+
+> My modification was to use access counts to increase the durability of the
+> more accessed blocks.
+
+You could do it that way too, but I'm unsure whether the extra
+complexity will buy anything.  Ultimately, I think an LRU-anything
+algorithm is equivalent to a clock sweep for those pages that only get
+touched once per some-long-interval: the single-touch guys get recycled
+in order of last use, which seems just like a clock sweep around the
+cache.  The guys with some amount of preference get excluded from the
+once-around sweep.  To determine whether LRU-2 is better or worse than
+some other preference algorithm requires a finer grain of analysis than
+this.  I'm not a fan of "more complex must be better", so I'd want to see
+why it's better before buying into it ...
+
+> The kinds of things I was thinking about should be very portable. I found
+> that simply writing the cache in order of the file system offset results in
+> very greatly improved performance since it lets the head seek in smaller
+> increments and much more smoothly, especially with modern disks.
+
+Shouldn't the OS be responsible for scheduling those writes
+appropriately?  Ye good olde elevator algorithm ought to handle this;
+and it's at least one layer closer to the actual disk layout than we
+are, thus more likely to issue the writes in a good order.  It's worth
+experimenting with, perhaps, but I'm pretty dubious about it.
+
+BTW, one other thing that Vadim kept saying we should do is alter the
+cache management strategy to retain dirty blocks in memory (ie, give
+some amount of preference to as-yet-unwritten dirty pages compared to
+clean pages).  There is no reliability cost here since the WAL will let
+us reconstruct any dirty pages if we crash before they get written; and
+the periodic checkpoints will ensure that we eventually write a dirty
+block and thus it will become available for recycling.  This seems like
+a promising line of thought that's orthogonal to the basic
+LRU-vs-whatever issue.  Nobody's got round to looking at it yet though.
+I've got no idea how much preference should be given to a dirty block
+--- not infinite, probably, but some.
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 5: Have you checked our extensive FAQ?
+
+http://www.postgresql.org/users-lounge/docs/faq.html
+
+From pgsql-hackers-owner+M29974@postgresql.org Fri Oct  4 01:28:54 2002
+Return-path: <pgsql-hackers-owner+M29974@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g945SpU13476
+	for <pgman@candle.pha.pa.us>; Fri, 4 Oct 2002 01:28:52 -0400 (EDT)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP
+	id 63999476BB2; Fri,  4 Oct 2002 01:26:56 -0400 (EDT)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP
+	id BB7CA476B85; Fri,  4 Oct 2002 01:26:54 -0400 (EDT)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP id 5FD7E476759
+	for <pgsql-hackers@postgresql.org>; Fri,  4 Oct 2002 01:26:52 -0400 (EDT)
+Received: from mclean.mail.mindspring.net (mclean.mail.mindspring.net [207.69.200.57])
+	by postgresql.org (Postfix) with ESMTP id 1F4A14766D8
+	for <pgsql-hackers@postgresql.org>; Fri,  4 Oct 2002 01:26:51 -0400 (EDT)
+Received: from 1cust163.tnt1.st-thomas.vi.da.uu.net ([200.58.4.163] helo=CurtisVaio)
+	by mclean.mail.mindspring.net with smtp (Exim 3.33 #1)
+	id 17xKzB-0000yK-00; Fri, 04 Oct 2002 01:26:49 -0400
+From: "Curtis Faith" <curtis@galtair.com>
+To: "Tom Lane" <tgl@sss.pgh.pa.us>
+cc: "Pgsql-Hackers" <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Advice: Where could I be of help? 
+Date: Fri, 4 Oct 2002 01:26:36 -0400
+Message-ID: <DMEEJMCDOJAKPPFACMPMIECECEAA.curtis@galtair.com>
+MIME-Version: 1.0
+Content-Type: text/plain;
+	charset="iso-8859-1"
+Content-Transfer-Encoding: 7bit
+X-Priority: 3 (Normal)
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook IMO, Build 9.0.2416 (9.0.2911.0)
+In-Reply-To: <15090.1033685237@sss.pgh.pa.us>
+X-MimeOLE: Produced By Microsoft MimeOLE V5.00.2919.6700
+Importance: Normal
+X-Virus-Scanned: by AMaViS new-20020517
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by AMaViS new-20020517
+Status: OR
+
+I wrote:
+
+> > My modification was to use access counts to increase the
+> durability of the
+> > more accessed blocks.
+>
+
+tom lane replies:
+> You could do it that way too, but I'm unsure whether the extra
+> complexity will buy anything.  Ultimately, I think an LRU-anything
+> algorithm is equivalent to a clock sweep for those pages that only get
+> touched once per some-long-interval: the single-touch guys get recycled
+> in order of last use, which seems just like a clock sweep around the
+> cache.  The guys with some amount of preference get excluded from the
+> once-around sweep.  To determine whether LRU-2 is better or worse than
+> some other preference algorithm requires a finer grain of analysis than
+> this.  I'm not a fan of "more complex must be better", so I'd want to see
+> why it's better before buying into it ...
+
+I'm definitely not a fan of "more complex must be better either". In fact,
+its surprising how often the real performance problems are easy to fix
+and simple while many person years are spent solving the issue everyone
+"knows" must be causing the performance problems only to find little gain.
+
+The key here is empirical testing. If the cache hit ratio for LRU-2 is
+much better then there may be no need here. OTOH, it took less than
+less than 30 lines or so of code to do what I described, so I don't consider
+it too, too "more complex" :=} We should run a test which includes
+running indexes (or is indices the PostgreSQL convention?) that are three
+or more times the size of the cache to see how well LRU-2 works. Is there
+any cache performance reporting built into pgsql?
+
+tom lane wrote:
+> Shouldn't the OS be responsible for scheduling those writes
+> appropriately?  Ye good olde elevator algorithm ought to handle this;
+> and it's at least one layer closer to the actual disk layout than we
+> are, thus more likely to issue the writes in a good order.  It's worth
+> experimenting with, perhaps, but I'm pretty dubious about it.
+
+I wasn't proposing anything other than changing the order of the writes,
+not actually ensuring that they get written that way at the level you
+describe above. This will help a lot on brain-dead file systems that
+can't do this ordering and probably also in cases where the number
+of blocks in the cache is very large.
+
+On a related note, while looking at the code, it seems to me that we
+are writing out the buffer cache synchronously, so there won't be
+any possibility of the file system reordering anyway. This appears to be
+a huge performance problem. I've read claims  in the archives that
+that the buffers are written asynchronously but my read of the
+code says otherwise. Can someone point out my error?
+
+I only see calls that ultimately call FileWrite or write(2) which will
+block without a O_NOBLOCK open. I thought one of the main reasons
+for having a WAL is so that you can write out the buffer's asynchronously.
+
+What am I missing?
+
+I wrote:
+> > Then during execution if the planner turned out to be VERY wrong about
+> > certain assumptions the execution system could update the stats
+> that led to
+> > those wrong assumptions. That way the system would seek the
+> correct values
+> > automatically.
+
+tom lane replied:
+> That has been suggested before, but I'm unsure how to make it work.
+> There are a lot of parameters involved in any planning decision and it's
+> not obvious which ones to tweak, or in which direction, if the plan
+> turns out to be bad.  But if you can come up with some ideas, go to
+> it!
+
+I'll have to look at the current planner before I can suggest
+anything concrete.
+
+- Curtis
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 1: subscribe and unsubscribe commands go to majordomo@postgresql.org
 
