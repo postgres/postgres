@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.220 2002/08/11 21:17:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.221 2002/08/15 16:36:00 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -357,9 +357,10 @@ CheckAttributeNames(TupleDesc tupdesc, bool relhasoids, char relkind)
 	/*
 	 * first check for collision with system attribute names
 	 *
-	 * Skip this for a view, since it doesn't have system attributes.
+	 * Skip this for a view and type relation, since it doesn't have system
+	 * attributes.
 	 */
-	if (relkind != RELKIND_VIEW)
+	if (relkind != RELKIND_VIEW && relkind != RELKIND_COMPOSITE_TYPE)
 	{
 		for (i = 0; i < natts; i++)
 		{
@@ -473,10 +474,10 @@ AddNewAttributeTuples(Oid new_rel_oid,
 
 	/*
 	 * Next we add the system attributes.  Skip OID if rel has no OIDs.
-	 * Skip all for a view.  We don't bother with making datatype
-	 * dependencies here, since presumably all these types are pinned.
+	 * Skip all for a view or type relation.  We don't bother with making
+	 * datatype dependencies here, since presumably all these types are pinned.
 	 */
-	if (relkind != RELKIND_VIEW)
+	if (relkind != RELKIND_VIEW && relkind != RELKIND_COMPOSITE_TYPE)
 	{
 		dpp = SysAtt;
 		for (i = 0; i < -1 - FirstLowInvalidHeapAttributeNumber; i++)
@@ -689,13 +690,14 @@ heap_create_with_catalog(const char *relname,
 	 * physical disk file.  (If we fail further down, it's the smgr's
 	 * responsibility to remove the disk file again.)
 	 *
-	 * NB: create a physical file only if it's not a view.
+	 * NB: create a physical file only if it's not a view or type relation.
 	 */
 	new_rel_desc = heap_create(relname,
 							   relnamespace,
 							   tupdesc,
 							   shared_relation,
-							   (relkind != RELKIND_VIEW),
+							   (relkind != RELKIND_VIEW &&
+							    relkind != RELKIND_COMPOSITE_TYPE),
 							   allow_system_table_mods);
 
 	/* Fetch the relation OID assigned by heap_create */
@@ -1131,7 +1133,8 @@ heap_drop_with_catalog(Oid rid)
 	/*
 	 * unlink the relation's physical file and finish up.
 	 */
-	if (rel->rd_rel->relkind != RELKIND_VIEW)
+	if (rel->rd_rel->relkind != RELKIND_VIEW &&
+			rel->rd_rel->relkind != RELKIND_COMPOSITE_TYPE)
 		smgrunlink(DEFAULT_SMGR, rel);
 
 	/*

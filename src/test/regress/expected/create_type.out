@@ -37,4 +37,17 @@ SELECT * FROM default_test;
  zippo | 42
 (1 row)
 
+-- Test stand-alone composite type
+CREATE TYPE default_test_row AS (f1 text_w_default, f2 int42);
+CREATE FUNCTION get_default_test() RETURNS SETOF default_test_row AS '
+  SELECT * FROM default_test;
+' LANGUAGE SQL;
+SELECT * FROM get_default_test();
+  f1   | f2 
+-------+----
+ zippo | 42
+(1 row)
+
+DROP TYPE default_test_row CASCADE;
+NOTICE:  Drop cascades to function get_default_test()
 DROP TABLE default_test;

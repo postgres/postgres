@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.169 2002/08/07 21:45:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.170 2002/08/15 16:36:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,6 +70,7 @@ static struct kindstrings kindstringarray[] = {
 	{RELKIND_SEQUENCE, "a", "sequence", "SEQUENCE"},
 	{RELKIND_VIEW, "a", "view", "VIEW"},
 	{RELKIND_INDEX, "an", "index", "INDEX"},
+	{RELKIND_COMPOSITE_TYPE, "a", "type", "TYPE"},
 	{'\0', "a", "???", "???"}
 };
 
@@ -570,6 +571,19 @@ ProcessUtility(Node *parsetree,
 						DefineAggregate(stmt->defnames, stmt->definition);
 						break;
 				}
+			}
+			break;
+
+		case T_CompositeTypeStmt:		/* CREATE TYPE (composite) */
+			{
+				Oid	relid;
+				CompositeTypeStmt   *stmt = (CompositeTypeStmt *) parsetree;
+
+				/*
+				 * DefineCompositeType returns relid for use when creating
+				 * an implicit composite type during function creation
+				 */
+				relid = DefineCompositeType(stmt->typevar, stmt->coldeflist);
 			}
 			break;
 

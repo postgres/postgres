@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_dump.h,v 1.94 2002/08/02 18:15:08 tgl Exp $
+ * $Id: pg_dump.h,v 1.95 2002/08/15 16:36:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,6 +47,7 @@ typedef struct _typeInfo
 	char	   *usename;		/* name of owner, or empty string */
 	char	   *typelem;		/* OID */
 	char	   *typrelid;		/* OID */
+	char		typrelkind;		/* 'r', 'v', 'c', etc */
 	char		typtype;		/* 'b', 'c', etc */
 	bool		isArray;		/* true if user-defined array type */
 	bool		isDefined;		/* true if typisdefined */

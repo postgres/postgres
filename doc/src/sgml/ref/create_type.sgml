@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_type.sgml,v 1.30 2002/07/24 19:11:07 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_type.sgml,v 1.31 2002/08/15 16:36:00 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -30,6 +30,13 @@ CREATE TYPE <replaceable class="parameter">typename</replaceable> ( INPUT = <rep
     [ , ALIGNMENT = <replaceable class="parameter">alignment</replaceable> ]
     [ , STORAGE = <replaceable class="parameter">storage</replaceable> ]
 )
+
+CREATE TYPE <replaceable class="parameter">typename</replaceable> AS
+      ( <replaceable class="PARAMETER">column_definition_list</replaceable> )
+
+where <replaceable class="PARAMETER">column_definition_list</replaceable> can be:
+
+( <replaceable class="PARAMETER">column_name</replaceable> <replaceable class="PARAMETER">data_type</replaceable> [, ... ] )
   </synopsis>
   
   <refsect2 id="R2-SQL-CREATETYPE-1">
@@ -138,6 +145,25 @@ CREATE TYPE <replaceable class="parameter">typename</replaceable> ( INPUT = <rep
        </para>
       </listitem>
      </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="PARAMETER">column_name</replaceable></term>
+      <listitem>
+       <para>
+        The name of a column of the composite type.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="PARAMETER">data_type</replaceable></term>
+      <listitem>
+       <para>
+        The name of an existing data type.
+       </para>
+      </listitem>
+     </varlistentry>
+
     </variablelist>
    </para>
   </refsect2>
@@ -191,9 +217,9 @@ CREATE TYPE
   </para>
 
   <para>
-   <command>CREATE TYPE</command>  requires  the  registration of two functions
-   (using CREATE FUNCTION) before defining the type.   The
-   representation  of  a  new  base  type  is  determined  by
+   The first form of <command>CREATE TYPE</command>  requires  the  
+   registration of two functions (using CREATE FUNCTION) before defining the
+   type. The representation of a new base type is determined by
    <replaceable class="parameter">input_function</replaceable>, which
    converts the type's external  representation  to  an  internal
    representation  usable by the
@@ -288,6 +314,14 @@ CREATE TYPE
    <literal>extended</literal> and <literal>external</literal> items.)
   </para>
 
+  <para>
+   The second form of <command>CREATE TYPE</command> requires a column
+   definition list in the form ( <replaceable class="PARAMETER">column_name</replaceable> 
+   <replaceable class="PARAMETER">data_type</replaceable> [, ... ] ). This
+   creates a composite type, similar to that of a TABLE or VIEW relation.
+   A stand-alone composite type is useful as the return type of FUNCTION.
+  </para>
+
   <refsect2>
    <title>Array Types</title>
 
@@ -370,6 +404,15 @@ CREATE TYPE box (INTERNALLENGTH = 16,
 CREATE TYPE bigobj (INPUT = lo_filein, OUTPUT = lo_fileout,
     INTERNALLENGTH = VARIABLE);
 CREATE TABLE big_objs (id int4, obj bigobj);
+</programlisting>
+  </para>
+
+  <para>
+   This example creates a composite type and uses it in
+   a table function definition:
+<programlisting>
+CREATE TYPE compfoo AS (f1 int, f2 int);
+CREATE FUNCTION getfoo() RETURNS SETOF compfoo AS 'SELECT fooid, foorefid FROM foo' LANGUAGE SQL;
 </programlisting>
   </para>
  </refsect1>

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: defrem.h,v 1.43 2002/07/29 22:14:11 tgl Exp $
+ * $Id: defrem.h,v 1.44 2002/08/15 16:36:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,6 +58,7 @@ extern void RemoveType(List *names, DropBehavior behavior);
 extern void RemoveTypeById(Oid typeOid);
 extern void DefineDomain(CreateDomainStmt *stmt);
 extern void RemoveDomain(List *names, DropBehavior behavior);
+extern Oid DefineCompositeType(const RangeVar *typevar, List *coldeflist);
 
 extern void DefineOpClass(CreateOpClassStmt *stmt);
 extern void RemoveOpClass(RemoveOpClassStmt *stmt);

@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.45 2002/08/12 14:25:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.46 2002/08/15 16:36:08 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1028,12 +1028,13 @@ plpgsql_parse_dblwordtype(char *word)
 	}
 
 	/*
-	 * It must be a relation, sequence or view
+	 * It must be a relation, sequence, view, or type
 	 */
 	classStruct = (Form_pg_class) GETSTRUCT(classtup);
 	if (classStruct->relkind != RELKIND_RELATION &&
 		classStruct->relkind != RELKIND_SEQUENCE &&
-		classStruct->relkind != RELKIND_VIEW)
+		classStruct->relkind != RELKIND_VIEW &&
+		classStruct->relkind != RELKIND_COMPOSITE_TYPE)
 	{
 		ReleaseSysCache(classtup);
 		pfree(cp[0]);
@@ -1145,10 +1146,11 @@ build_rowtype(Oid classOid)
 	classStruct = (Form_pg_class) GETSTRUCT(classtup);
 	relname = NameStr(classStruct->relname);
 
-	/* accept relation, sequence, or view pg_class entries */
+	/* accept relation, sequence, view, or type pg_class entries */
 	if (classStruct->relkind != RELKIND_RELATION &&
 		classStruct->relkind != RELKIND_SEQUENCE &&
-		classStruct->relkind != RELKIND_VIEW)
+		classStruct->relkind != RELKIND_VIEW &&
+		classStruct->relkind != RELKIND_COMPOSITE_TYPE)
 		elog(ERROR, "%s isn't a table", relname);
 
 	/*

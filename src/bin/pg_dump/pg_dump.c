@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.281 2002/08/10 16:57:31 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.282 2002/08/15 16:36:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -95,6 +95,7 @@ static void dumpOneBaseType(Archive *fout, TypeInfo *tinfo,
 							FuncInfo *g_finfo, int numFuncs,
 							TypeInfo *g_tinfo, int numTypes);
 static void dumpOneDomain(Archive *fout, TypeInfo *tinfo);
+static void dumpOneCompositeType(Archive *fout, TypeInfo *tinfo);
 static void dumpOneTable(Archive *fout, TableInfo *tbinfo,
 						 TableInfo *g_tblinfo);
 static void dumpOneSequence(Archive *fout, TableInfo *tbinfo,
@@ -1171,6 +1172,10 @@ dumpClasses(const TableInfo *tblinfo, const int numTables, Archive *fout,
 		if (tblinfo[i].relkind == RELKIND_VIEW)
 			continue;
 
+		/* Skip TYPE relations */
+		if (tblinfo[i].relkind == RELKIND_COMPOSITE_TYPE)
+			continue;
+
 		if (tblinfo[i].relkind == RELKIND_SEQUENCE)		/* already dumped */
 			continue;
 
@@ -1575,6 +1580,7 @@ getTypes(int *numTypes)
 	int			i_usename;
 	int			i_typelem;
 	int			i_typrelid;
+	int			i_typrelkind;
 	int			i_typtype;
 	int			i_typisdefined;
 
@@ -1595,7 +1601,9 @@ getTypes(int *numTypes)
 		appendPQExpBuffer(query, "SELECT pg_type.oid, typname, "
 						  "typnamespace, "
 						  "(select usename from pg_user where typowner = usesysid) as usename, "
-						  "typelem, typrelid, typtype, typisdefined "
+						  "typelem, typrelid, "
+						  "(select relkind from pg_class where oid = typrelid) as typrelkind, "
+						  "typtype, typisdefined "
 						  "FROM pg_type");
 	}
 	else
@@ -1603,7 +1611,9 @@ getTypes(int *numTypes)
 		appendPQExpBuffer(query, "SELECT pg_type.oid, typname, "
 						  "0::oid as typnamespace, "
 						  "(select usename from pg_user where typowner = usesysid) as usename, "
-						  "typelem, typrelid, typtype, typisdefined "
+						  "typelem, typrelid, "
+						  "''::char as typrelkind, "
+						  "typtype, typisdefined "
 						  "FROM pg_type");
 	}
 
@@ -1625,6 +1635,7 @@ getTypes(int *numTypes)
 	i_usename = PQfnumber(res, "usename");
 	i_typelem = PQfnumber(res, "typelem");
 	i_typrelid = PQfnumber(res, "typrelid");
+	i_typrelkind = PQfnumber(res, "typrelkind");
 	i_typtype = PQfnumber(res, "typtype");
 	i_typisdefined = PQfnumber(res, "typisdefined");
 
@@ -1637,6 +1648,7 @@ getTypes(int *numTypes)
 		tinfo[i].usename = strdup(PQgetvalue(res, i, i_usename));
 		tinfo[i].typelem = strdup(PQgetvalue(res, i, i_typelem));
 		tinfo[i].typrelid = strdup(PQgetvalue(res, i, i_typrelid));
+		tinfo[i].typrelkind = *PQgetvalue(res, i, i_typrelkind);
 		tinfo[i].typtype = *PQgetvalue(res, i, i_typtype);
 
 		/*
@@ -2102,7 +2114,6 @@ getTables(int *numTables)
 		appendPQExpBuffer(query,
 						  "SELECT pg_class.oid, relname, relacl, relkind, "
 						  "relnamespace, "
-
 						  "(select usename from pg_user where relowner = usesysid) as usename, "
 						  "relchecks, reltriggers, "
 						  "relhasindex, relhasrules, relhasoids "
@@ -2113,6 +2124,7 @@ getTables(int *numTables)
 	}
 	else if (g_fout->remoteVersion >= 70200)
 	{
+		/* before 7.3 there were no type relations with relkind 'c' */
 		appendPQExpBuffer(query,
 						  "SELECT pg_class.oid, relname, relacl, relkind, "
 						  "0::oid as relnamespace, "
@@ -2354,6 +2366,10 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 	{
 		/* Don't bother to collect info for sequences */
 		if (tblinfo[i].relkind == RELKIND_SEQUENCE)
+			continue;
+
+		/* Don't bother to collect info for type relations */
+		if (tblinfo[i].relkind == RELKIND_COMPOSITE_TYPE)
 			continue;
 
 		/* Don't bother with uninteresting tables, either */
@@ -3173,6 +3189,105 @@ dumpOneDomain(Archive *fout, TypeInfo *tinfo)
 }
 
 /*
+ * dumpOneCompositeType
+ *    writes out to fout the queries to recreate a user-defined stand-alone
+ *    composite type as requested by dumpTypes
+ */
+static void
+dumpOneCompositeType(Archive *fout, TypeInfo *tinfo)
+{
+	PQExpBuffer q = createPQExpBuffer();
+	PQExpBuffer delq = createPQExpBuffer();
+	PQExpBuffer query = createPQExpBuffer();
+	PGresult   *res;
+	int			ntups;
+	char	   *attname;
+	char	   *atttypdefn;
+	char	   *attbasetype;
+	const char *((*deps)[]);
+	int			depIdx = 0;
+	int			i;
+
+	deps = malloc(sizeof(char *) * 10);
+
+	/* Set proper schema search path so type references list correctly */
+	selectSourceSchema(tinfo->typnamespace->nspname);
+
+	/* Fetch type specific details */
+	/* We assume here that remoteVersion must be at least 70300 */
+
+	appendPQExpBuffer(query, "SELECT a.attname, "
+					  "pg_catalog.format_type(a.atttypid, a.atttypmod) as atttypdefn, "
+					  "a.atttypid as attbasetype "
+					  "FROM pg_catalog.pg_type t, pg_catalog.pg_attribute a "
+					  "WHERE t.oid = '%s'::pg_catalog.oid "
+					  "AND a.attrelid = t.typrelid",
+					  tinfo->oid);
+
+	res = PQexec(g_conn, query->data);
+	if (!res ||
+		PQresultStatus(res) != PGRES_TUPLES_OK)
+	{
+		write_msg(NULL, "query to obtain type information failed: %s", PQerrorMessage(g_conn));
+		exit_nicely();
+	}
+
+	/* Expecting at least a single result */
+	ntups = PQntuples(res);
+	if (ntups < 1)
+	{
+		write_msg(NULL, "Got no rows from: %s", query->data);
+		exit_nicely();
+	}
+
+	/* DROP must be fully qualified in case same name appears in pg_catalog */
+	appendPQExpBuffer(delq, "DROP TYPE %s.",
+					  fmtId(tinfo->typnamespace->nspname, force_quotes));
+	appendPQExpBuffer(delq, "%s RESTRICT;\n",
+					  fmtId(tinfo->typname, force_quotes));
+
+	appendPQExpBuffer(q,
+					  "CREATE TYPE %s AS (",
+					  fmtId(tinfo->typname, force_quotes));
+
+	for (i = 0; i < ntups; i++)
+	{
+		attname = PQgetvalue(res, i, PQfnumber(res, "attname"));
+		atttypdefn = PQgetvalue(res, i, PQfnumber(res, "atttypdefn"));
+		attbasetype = PQgetvalue(res, i, PQfnumber(res, "attbasetype"));
+
+		if (i > 0)
+			appendPQExpBuffer(q, ",\n\t %s %s", attname, atttypdefn);
+		else
+			appendPQExpBuffer(q, "%s %s", attname, atttypdefn);
+
+		/* Depends on the base type */
+		(*deps)[depIdx++] = strdup(attbasetype);
+	}
+	appendPQExpBuffer(q, ");\n");
+
+	(*deps)[depIdx++] = NULL;		/* End of List */
+
+	ArchiveEntry(fout, tinfo->oid, tinfo->typname,
+				 tinfo->typnamespace->nspname,
+				 tinfo->usename, "TYPE", deps,
+				 q->data, delq->data, NULL, NULL, NULL);
+
+	/*** Dump Type Comments ***/
+	resetPQExpBuffer(q);
+
+	appendPQExpBuffer(q, "TYPE %s", fmtId(tinfo->typname, force_quotes));
+	dumpComment(fout, q->data,
+				tinfo->typnamespace->nspname, tinfo->usename,
+				tinfo->oid, "pg_type", 0, NULL);
+
+	PQclear(res);
+	destroyPQExpBuffer(q);
+	destroyPQExpBuffer(delq);
+	destroyPQExpBuffer(query);
+}
+
+/*
  * dumpTypes
  *	  writes out to fout the queries to recreate all the user-defined types
  */
@@ -3188,8 +3303,8 @@ dumpTypes(Archive *fout, FuncInfo *finfo, int numFuncs,
 		if (!tinfo[i].typnamespace->dump)
 			continue;
 
-		/* skip relation types */
-		if (atooid(tinfo[i].typrelid) != 0)
+		/* skip relation types for non-stand-alone type relations*/
+		if (atooid(tinfo[i].typrelid) != 0 && tinfo[i].typrelkind != 'c')
 			continue;
 
 		/* skip undefined placeholder types */
@@ -3207,6 +3322,8 @@ dumpTypes(Archive *fout, FuncInfo *finfo, int numFuncs,
 							finfo, numFuncs, tinfo, numTypes);
 		else if (tinfo[i].typtype == 'd')
 			dumpOneDomain(fout, &tinfo[i]);
+		else if (tinfo[i].typtype == 'c')
+			dumpOneCompositeType(fout, &tinfo[i]);
 	}
 }
 
@@ -4832,6 +4949,7 @@ dumpTables(Archive *fout, TableInfo tblinfo[], int numTables,
 
 		if (tbinfo->relkind != RELKIND_SEQUENCE)
 			continue;
+
 		if (tbinfo->dump)
 		{
 			dumpOneSequence(fout, tbinfo, schemaOnly, dataOnly);
@@ -4847,6 +4965,8 @@ dumpTables(Archive *fout, TableInfo tblinfo[], int numTables,
 			TableInfo	   *tbinfo = &tblinfo[i];
 
 			if (tbinfo->relkind == RELKIND_SEQUENCE) /* already dumped */
+				continue;
+			if (tbinfo->relkind == RELKIND_COMPOSITE_TYPE) /* dumped as a type */
 				continue;
 
 			if (tbinfo->dump)

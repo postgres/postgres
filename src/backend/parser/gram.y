@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.358 2002/08/10 19:01:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.359 2002/08/15 16:36:03 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -205,7 +205,7 @@ static void doNegateFloat(Value *v);
 
 %type <list>	stmtblock, stmtmulti,
 				OptTableElementList, TableElementList, OptInherit, definition,
-				opt_distinct, opt_definition, func_args,
+				opt_distinct, opt_definition, func_args, rowdefinition
 				func_args_list, func_as, createfunc_opt_list
 				oper_argtypes, RuleActionList, RuleActionMulti,
 				opt_column_list, columnList, opt_name_list,
@@ -2233,6 +2233,39 @@ DefineStmt:
 					n->definition = $4;
 					$$ = (Node *)n;
 				}
+			| CREATE TYPE_P any_name AS rowdefinition
+				{
+					CompositeTypeStmt *n = makeNode(CompositeTypeStmt);
+					RangeVar *r = makeNode(RangeVar);
+
+					switch (length($3))
+					{
+						case 1:
+							r->catalogname = NULL;
+							r->schemaname = NULL;
+							r->relname = strVal(lfirst($3));
+							break;
+						case 2:
+							r->catalogname = NULL;
+							r->schemaname = strVal(lfirst($3));
+							r->relname = strVal(lsecond($3));
+							break;
+						case 3:
+							r->catalogname = strVal(lfirst($3));
+							r->schemaname = strVal(lsecond($3));
+							r->relname = strVal(lfirst(lnext(lnext($3))));
+							break;
+						default:
+							elog(ERROR,
+							"Improper qualified name "
+							"(too many dotted names): %s",
+								 NameListToString($3));
+							break;
+					}
+					n->typevar = r;
+					n->coldeflist = $5;
+					$$ = (Node *)n;
+				}
 			| CREATE CHARACTER SET opt_as any_name GET definition opt_collate
 				{
 					DefineStmt *n = makeNode(DefineStmt);
@@ -2241,6 +2274,9 @@ DefineStmt:
 					n->definition = $7;
 					$$ = (Node *)n;
 				}
+		;
+
+rowdefinition: '(' TableFuncElementList ')'			{ $$ = $2; }
 		;
 
 definition: '(' def_list ')'						{ $$ = $2; }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.28 2002/08/07 21:45:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.29 2002/08/15 16:36:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -343,6 +343,10 @@ TruncateRelation(const RangeVar *relation)
 
 	if (rel->rd_rel->relkind == RELKIND_VIEW)
 		elog(ERROR, "TRUNCATE cannot be used on views. '%s' is a view",
+			 RelationGetRelationName(rel));
+
+	if (rel->rd_rel->relkind == RELKIND_COMPOSITE_TYPE)
+		elog(ERROR, "TRUNCATE cannot be used on type relations. '%s' is a type",
 			 RelationGetRelationName(rel));
 
 	if (!allowSystemTableMods && IsSystemRelation(rel))
@@ -3210,12 +3214,13 @@ CheckTupleType(Form_pg_class tuple_class)
 		case RELKIND_RELATION:
 		case RELKIND_INDEX:
 		case RELKIND_VIEW:
+		case RELKIND_COMPOSITE_TYPE:
 		case RELKIND_SEQUENCE:
 		case RELKIND_TOASTVALUE:
 			/* ok to change owner */
 			break;
 		default:
-			elog(ERROR, "ALTER TABLE: relation \"%s\" is not a table, TOAST table, index, view, or sequence",
+			elog(ERROR, "ALTER TABLE: relation \"%s\" is not a table, TOAST table, index, view, type, or sequence",
 				 NameStr(tuple_class->relname));
 	}
 }

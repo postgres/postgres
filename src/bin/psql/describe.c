@@ -3,7 +3,7 @@
  *
  * Copyright 2000-2002 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.60 2002/08/10 16:01:16 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.61 2002/08/15 16:36:06 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -210,9 +210,12 @@ describeTypes(const char *pattern, bool verbose)
 
 	/*
 	 * do not include array types (start with underscore), do not include
-	 * user relations (typrelid!=0)
+	 * user relations (typrelid!=0) unless they are type relations
 	 */
-	appendPQExpBuffer(&buf, "WHERE t.typrelid = 0 AND t.typname !~ '^_'\n");
+	appendPQExpBuffer(&buf, "WHERE (t.typrelid = 0 ");
+	appendPQExpBuffer(&buf, "OR (SELECT c.relkind = 'c' FROM pg_class c "
+							  "where c.oid = t.typrelid)) ");
+	appendPQExpBuffer(&buf, "AND t.typname !~ '^_'\n");
 
 	/* Match name pattern against either internal or external name */
 	processNamePattern(&buf, pattern, true, false,

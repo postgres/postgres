@@ -41,4 +41,16 @@ INSERT INTO default_test DEFAULT VALUES;
 
 SELECT * FROM default_test;
 
+-- Test stand-alone composite type
+
+CREATE TYPE default_test_row AS (f1 text_w_default, f2 int42);
+
+CREATE FUNCTION get_default_test() RETURNS SETOF default_test_row AS '
+  SELECT * FROM default_test;
+' LANGUAGE SQL;
+
+SELECT * FROM get_default_test();
+
+DROP TYPE default_test_row CASCADE;
+
 DROP TABLE default_test;

@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.149 2002/08/04 23:49:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.150 2002/08/15 16:36:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1056,6 +1056,17 @@ _equalTransactionStmt(TransactionStmt *a, TransactionStmt *b)
 	if (a->command != b->command)
 		return false;
 	if (!equal(a->options, b->options))
+		return false;
+
+	return true;
+}
+
+static bool
+_equalCompositeTypeStmt(CompositeTypeStmt *a, CompositeTypeStmt *b)
+{
+	if (!equal(a->typevar, b->typevar))
+		return false;
+	if (!equal(a->coldeflist, b->coldeflist))
 		return false;
 
 	return true;
@@ -2110,6 +2121,9 @@ equal(void *a, void *b)
 			break;
 		case T_TransactionStmt:
 			retval = _equalTransactionStmt(a, b);
+			break;
+		case T_CompositeTypeStmt:
+			retval = _equalCompositeTypeStmt(a, b);
 			break;
 		case T_ViewStmt:
 			retval = _equalViewStmt(a, b);

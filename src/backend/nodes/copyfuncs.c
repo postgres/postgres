@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.200 2002/08/04 19:48:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.201 2002/08/15 16:36:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2233,6 +2233,17 @@ _copyTransactionStmt(TransactionStmt *from)
 	return newnode;
 }
 
+static CompositeTypeStmt *
+_copyCompositeTypeStmt(CompositeTypeStmt *from)
+{
+	CompositeTypeStmt   *newnode = makeNode(CompositeTypeStmt);
+
+	Node_Copy(from, newnode, typevar);
+	Node_Copy(from, newnode, coldeflist);
+
+	return newnode;
+}
+
 static ViewStmt *
 _copyViewStmt(ViewStmt *from)
 {
@@ -2938,6 +2949,9 @@ copyObject(void *from)
 			break;
 		case T_TransactionStmt:
 			retval = _copyTransactionStmt(from);
+			break;
+		case T_CompositeTypeStmt:
+			retval = _copyCompositeTypeStmt(from);
 			break;
 		case T_ViewStmt:
 			retval = _copyViewStmt(from);

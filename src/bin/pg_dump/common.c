@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.67 2002/07/30 21:56:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.68 2002/08/15 16:36:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -215,9 +215,10 @@ flagInhTables(TableInfo *tblinfo, int numTables,
 
 	for (i = 0; i < numTables; i++)
 	{
-		/* Sequences and views never have parents */
+		/* Sequences, views, and types never have parents */
 		if (tblinfo[i].relkind == RELKIND_SEQUENCE ||
-			tblinfo[i].relkind == RELKIND_VIEW)
+			tblinfo[i].relkind == RELKIND_VIEW ||
+			tblinfo[i].relkind == RELKIND_COMPOSITE_TYPE)
 			continue;
 
 		/* Don't bother computing anything for non-target tables, either */
@@ -269,9 +270,10 @@ flagInhAttrs(TableInfo *tblinfo, int numTables,
 
 	for (i = 0; i < numTables; i++)
 	{
-		/* Sequences and views never have parents */
+		/* Sequences, views, and types never have parents */
 		if (tblinfo[i].relkind == RELKIND_SEQUENCE ||
-			tblinfo[i].relkind == RELKIND_VIEW)
+			tblinfo[i].relkind == RELKIND_VIEW ||
+			tblinfo[i].relkind == RELKIND_COMPOSITE_TYPE)
 			continue;
 
 		/* Don't bother computing anything for non-target tables, either */

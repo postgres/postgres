@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.8 2002/07/24 19:11:09 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.9 2002/08/15 16:36:02 momjian Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -38,6 +38,7 @@
 #include "catalog/namespace.h"
 #include "catalog/pg_type.h"
 #include "commands/defrem.h"
+#include "commands/tablecmds.h"
 #include "miscadmin.h"
 #include "parser/parse_func.h"
 #include "parser/parse_type.h"
@@ -49,7 +50,6 @@
 
 
 static Oid findTypeIOFunction(List *procname, bool isOutput);
-
 
 /*
  * DefineType
@@ -665,4 +665,43 @@ findTypeIOFunction(List *procname, bool isOutput)
 	}
 
 	return procOid;
+}
+
+/*-------------------------------------------------------------------
+ * DefineCompositeType
+ *
+ * Create a Composite Type relation.
+ * `DefineRelation' does all the work, we just provide the correct
+ * arguments!
+ *
+ * If the relation already exists, then 'DefineRelation' will abort
+ * the xact...
+ *
+ * DefineCompositeType returns relid for use when creating
+ * an implicit composite type during function creation
+ *-------------------------------------------------------------------
+ */
+Oid
+DefineCompositeType(const RangeVar *typevar, List *coldeflist)
+{
+	CreateStmt *createStmt = makeNode(CreateStmt);
+
+	if (coldeflist == NIL)
+		elog(ERROR, "attempted to define composite type relation with"
+					" no attrs");
+
+	/*
+	 * now create the parameters for keys/inheritance etc. All of them are
+	 * nil...
+	 */
+	createStmt->relation = (RangeVar *) typevar;
+	createStmt->tableElts = coldeflist;
+	createStmt->inhRelations = NIL;
+	createStmt->constraints = NIL;
+	createStmt->hasoids = false;
+
+	/*
+	 * finally create the relation...
+	 */
+	return DefineRelation(createStmt, RELKIND_COMPOSITE_TYPE);
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.77 2002/08/05 03:29:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.78 2002/08/15 16:36:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -311,15 +311,28 @@ TypeCreate(const char *typeName,
 
 		/*
 		 * If the type is a rowtype for a relation, mark it as internally
-		 * dependent on the relation.  This allows it to be auto-dropped
-		 * when the relation is, and not otherwise.
+		 * dependent on the relation, *unless* it is a stand-alone composite
+		 * type relation. For the latter case, we have to reverse the
+		 * dependency.
+		 *
+		 * In the former case, this allows the type to be auto-dropped
+		 * when the relation is, and not otherwise. And in the latter,
+		 * of course we get the opposite effect.
 		 */
 		if (OidIsValid(relationOid))
 		{
+			Relation	rel = relation_open(relationOid, AccessShareLock);
+			char		relkind = rel->rd_rel->relkind;
+			relation_close(rel, AccessShareLock);
+
 			referenced.classId = RelOid_pg_class;
 			referenced.objectId = relationOid;
 			referenced.objectSubId = 0;
-			recordDependencyOn(&myself, &referenced, DEPENDENCY_INTERNAL);
+
+			if (relkind != RELKIND_COMPOSITE_TYPE)
+				recordDependencyOn(&myself, &referenced, DEPENDENCY_INTERNAL);
+			else
+				recordDependencyOn(&referenced, &myself, DEPENDENCY_INTERNAL);
 		}
 
 		/*

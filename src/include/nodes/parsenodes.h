@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.198 2002/08/04 19:48:10 momjian Exp $
+ * $Id: parsenodes.h,v 1.199 2002/08/15 16:36:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1400,6 +1400,18 @@ typedef struct TransactionStmt
 	int			command;		/* BEGIN_TRANS|START|COMMIT|ROLLBACK */
 	List	   *options;
 } TransactionStmt;
+
+/* ----------------------
+ *		Create Type Statement, composite types
+ * ----------------------
+ */
+typedef struct CompositeTypeStmt
+{
+	NodeTag		type;
+	RangeVar   *typevar;		/* the composite type to be created */
+	List	   *coldeflist;		/* list of ColumnDef nodes */
+} CompositeTypeStmt;
+
 
 /* ----------------------
  *		Create View Statement

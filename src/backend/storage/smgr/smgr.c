@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.58 2002/08/06 02:36:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.59 2002/08/15 16:36:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -262,6 +262,8 @@ smgropen(int16 which, Relation reln, bool failOK)
 	int			fd;
 
 	if (reln->rd_rel->relkind == RELKIND_VIEW)
+		return -1;
+	if (reln->rd_rel->relkind == RELKIND_COMPOSITE_TYPE)
 		return -1;
 	if ((fd = (*(smgrsw[which].smgr_open)) (reln)) < 0)
 		if (!failOK)
