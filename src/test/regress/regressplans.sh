@@ -27,71 +27,74 @@
 
 
 # Select make to use --- default gmake, can be overridden by env var
-MAKE=${MAKE:-gmake}
+MAKE="${MAKE:-gmake}"
+
+# If PGOPTIONS is already defined, we'll add the -f switches to it.
+PGOPTIONS="${PGOPTIONS:-}"
 
 mkdir planregress
 
-PGOPTIONS="                   " $MAKE runtest
+PGOPTIONS="$PGOPTIONS                     " $MAKE runtest
 mv -f regression.out planregress/out.normal
 mv -f regression.diffs planregress/diffs.normal
-PGOPTIONS="                -fh" $MAKE runtest
+PGOPTIONS="$PGOPTIONS                  -fh" $MAKE runtest
 mv -f regression.out planregress/out.h
 mv -f regression.diffs planregress/diffs.h
-PGOPTIONS="            -fm    " $MAKE runtest
+PGOPTIONS="$PGOPTIONS              -fm    " $MAKE runtest
 mv -f regression.out planregress/out.m
 mv -f regression.diffs planregress/diffs.m
-PGOPTIONS="            -fm -fh" $MAKE runtest
+PGOPTIONS="$PGOPTIONS              -fm -fh" $MAKE runtest
 mv -f regression.out planregress/out.mh
 mv -f regression.diffs planregress/diffs.mh
-PGOPTIONS="        -fn        " $MAKE runtest
+PGOPTIONS="$PGOPTIONS          -fn        " $MAKE runtest
 mv -f regression.out planregress/out.n
 mv -f regression.diffs planregress/diffs.n
-PGOPTIONS="        -fn     -fh" $MAKE runtest
+PGOPTIONS="$PGOPTIONS          -fn     -fh" $MAKE runtest
 mv -f regression.out planregress/out.nh
 mv -f regression.diffs planregress/diffs.nh
-PGOPTIONS="        -fn -fm    " $MAKE runtest
+PGOPTIONS="$PGOPTIONS          -fn -fm    " $MAKE runtest
 mv -f regression.out planregress/out.nm
 mv -f regression.diffs planregress/diffs.nm
-PGOPTIONS="    -fi            " $MAKE runtest
+PGOPTIONS="$PGOPTIONS      -fi            " $MAKE runtest
 mv -f regression.out planregress/out.i
 mv -f regression.diffs planregress/diffs.i
-PGOPTIONS="    -fi         -fh" $MAKE runtest
+PGOPTIONS="$PGOPTIONS      -fi         -fh" $MAKE runtest
 mv -f regression.out planregress/out.ih
 mv -f regression.diffs planregress/diffs.ih
-PGOPTIONS="    -fi     -fm    " $MAKE runtest
+PGOPTIONS="$PGOPTIONS      -fi     -fm    " $MAKE runtest
 mv -f regression.out planregress/out.im
 mv -f regression.diffs planregress/diffs.im
-PGOPTIONS="    -fi     -fm -fh" $MAKE runtest
+PGOPTIONS="$PGOPTIONS      -fi     -fm -fh" $MAKE runtest
 mv -f regression.out planregress/out.imh
 mv -f regression.diffs planregress/diffs.imh
-PGOPTIONS="    -fi -fn        " $MAKE runtest
+PGOPTIONS="$PGOPTIONS      -fi -fn        " $MAKE runtest
 mv -f regression.out planregress/out.in
 mv -f regression.diffs planregress/diffs.in
-PGOPTIONS="    -fi -fn     -fh" $MAKE runtest
+PGOPTIONS="$PGOPTIONS      -fi -fn     -fh" $MAKE runtest
 mv -f regression.out planregress/out.inh
 mv -f regression.diffsregression.planregress/inh
-PGOPTIONS="    -fi -fn -fm    " $MAKE runtest
+PGOPTIONS="$PGOPTIONS      -fi -fn -fm    " $MAKE runtest
 mv -f regression.out planregress/out.inm
 mv -f regression.diffs planregress/diffs.inm
-PGOPTIONS="-fs                " $MAKE runtest
+PGOPTIONS="$PGOPTIONS  -fs                " $MAKE runtest
 mv -f regression.out planregress/out.s
 mv -f regression.diffs planregress/diffs.s
-PGOPTIONS="-fs             -fh" $MAKE runtest
+PGOPTIONS="$PGOPTIONS  -fs             -fh" $MAKE runtest
 mv -f regression.out planregress/out.sh
 mv -f regression.diffs planregress/diffs.sh
-PGOPTIONS="-fs         -fm    " $MAKE runtest
+PGOPTIONS="$PGOPTIONS  -fs         -fm    " $MAKE runtest
 mv -f regression.out planregress/out.sm
 mv -f regression.diffs planregress/diffs.sm
-PGOPTIONS="-fs         -fm -fh" $MAKE runtest
+PGOPTIONS="$PGOPTIONS  -fs         -fm -fh" $MAKE runtest
 mv -f regression.out planregress/out.smh
 mv -f regression.diffs planregress/diffs.smh
-PGOPTIONS="-fs     -fn        " $MAKE runtest
+PGOPTIONS="$PGOPTIONS  -fs     -fn        " $MAKE runtest
 mv -f regression.out planregress/out.sn
 mv -f regression.diffs planregress/diffs.sn
-PGOPTIONS="-fs     -fn     -fh" $MAKE runtest
+PGOPTIONS="$PGOPTIONS  -fs     -fn     -fh" $MAKE runtest
 mv -f regression.out planregress/out.snh
 mv -f regression.diffs planregress/diffs.snh
-PGOPTIONS="-fs     -fn -fm    " $MAKE runtest
+PGOPTIONS="$PGOPTIONS  -fs     -fn -fm    " $MAKE runtest
 mv -f regression.out planregress/out.snm
 mv -f regression.diffs planregress/diffs.snm
 
