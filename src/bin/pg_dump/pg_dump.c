@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.79 1998/08/06 05:12:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.80 1998/08/25 15:02:04 thomas Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -221,15 +221,15 @@ dumpClasses_nodumpData(FILE *fout, const char *classname, const bool oids)
 
 	if (oids)
 	{
-		fprintf(fout, "COPY \"%s\" WITH OIDS FROM stdin;\n",
+		fprintf(fout, "COPY %s WITH OIDS FROM stdin;\n",
 				fmtId(classname));
-		sprintf(query, "COPY \"%s\" WITH OIDS TO stdout;\n",
+		sprintf(query, "COPY %s WITH OIDS TO stdout;\n",
 				fmtId(classname));
 	}
 	else
 	{
-		fprintf(fout, "COPY \"%s\" FROM stdin;\n", fmtId(classname));
-		sprintf(query, "COPY \"%s\" TO stdout;\n", fmtId(classname));
+		fprintf(fout, "COPY %s FROM stdin;\n", fmtId(classname));
+		sprintf(query, "COPY %s TO stdout;\n", fmtId(classname));
 	}
 	res = PQexec(g_conn, query);
 	if (!res ||
@@ -316,7 +316,7 @@ dumpClasses_dumpData(FILE *fout, const char *classname,
 	int			tuple;
 	int			field;
 
-	sprintf(query, "SELECT * FROM \"%s\"", classname);
+	sprintf(query, "SELECT * FROM %s", fmtId(classname));
 	res = PQexec(g_conn, query);
 	if (!res ||
 		PQresultStatus(res) != PGRES_TUPLES_OK)
@@ -327,7 +327,7 @@ dumpClasses_dumpData(FILE *fout, const char *classname,
 	tuple = 0;
 	while (tuple < PQntuples(res))
 	{
-		fprintf(fout, "INSERT INTO \"%s\" ", fmtId(classname));
+		fprintf(fout, "INSERT INTO %s ", fmtId(classname));
 		if (attrNames)
 		{
 			int			j;
@@ -338,7 +338,7 @@ dumpClasses_dumpData(FILE *fout, const char *classname,
 			{
 				if (tblinfo.inhAttrs[j] == 0)
 				{
-					sprintf(q, "%s%s\"%s\"",
+					sprintf(q, "%s%s%s",
 							q,
 							(actual_atts > 0) ? "," : "",
 							fmtId(tblinfo.attnames[j]));
@@ -1570,7 +1570,7 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 					exit_nicely(g_conn);
 				}
 				tgfunc = finfo[findx].proname;
-				sprintf(query, "CREATE TRIGGER \"%s\" ", PQgetvalue(res2, i2, i_tgname));
+				sprintf(query, "CREATE TRIGGER %s ", fmtId(PQgetvalue(res2, i2, i_tgname)));
 				/* Trigger type */
 				findx = 0;
 				if (TRIGGER_FOR_BEFORE(tgtype))
@@ -1597,8 +1597,8 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 					else
 						strcat(query, " UPDATE");
 				}
-				sprintf(query, "%s ON \"%s\" FOR EACH ROW EXECUTE PROCEDURE %s (",
-						query, tblinfo[i].relname, tgfunc);
+				sprintf(query, "%s ON %s FOR EACH ROW EXECUTE PROCEDURE %s (",
+						query, fmtId(tblinfo[i].relname), tgfunc);
 				for (findx = 0; findx < tgnargs; findx++)
 				{
 					char	   *s,
@@ -1967,10 +1967,10 @@ dumpTypes(FILE *fout, FuncInfo *finfo, int numFuncs,
 		becomeUser(fout, tinfo[i].usename);
 
 		sprintf(q,
-				"CREATE TYPE \"%s\" "
+				"CREATE TYPE %s "
 				"( internallength = %s, externallength = %s, input = %s, "
 				"output = %s, send = %s, receive = %s, default = '%s'",
-				tinfo[i].typname,
+				fmtId(tinfo[i].typname),
 				tinfo[i].typlen,
 				tinfo[i].typprtlen,
 				tinfo[i].typinput,
@@ -2033,13 +2033,13 @@ dumpOneFunc(FILE *fout, FuncInfo *finfo, int i,
 
 	becomeUser(fout, finfo[i].usename);
 
-	sprintf(q, "CREATE FUNCTION \"%s\" (", finfo[i].proname);
+	sprintf(q, "CREATE FUNCTION %s (", fmtId(finfo[i].proname));
 	for (j = 0; j < finfo[i].nargs; j++)
 	{
 		char	   *typname;
 
 		typname = findTypeByOid(tinfo, numTypes, finfo[i].argtypes[j]);
-		sprintf(q, "%s%s\"%s\"",
+		sprintf(q, "%s%s%s",
 				q,
 				(j > 0) ? "," : "",
 				fmtId(typname));
@@ -2400,8 +2400,8 @@ dumpACL(FILE *fout, TableInfo tbinfo)
 
 	/* Revoke Default permissions for PUBLIC */
 	fprintf(fout,
-			"REVOKE ALL on \"%s\" from PUBLIC;\n",
-			tbinfo.relname);
+			"REVOKE ALL on %s from PUBLIC;\n",
+			fmtId(tbinfo.relname));
 
 	for (k = 0; k < l; k++)
 	{
@@ -2409,13 +2409,13 @@ dumpACL(FILE *fout, TableInfo tbinfo)
 		{
 			if (ACLlist[k].user == (char *) NULL)
 				fprintf(fout,
-						"GRANT %s on \"%s\" to PUBLIC;\n",
-						ACLlist[k].privledges, tbinfo.relname);
+						"GRANT %s on %s to PUBLIC;\n",
+						ACLlist[k].privledges, fmtId(tbinfo.relname));
 			else
 				fprintf(fout,
-						"GRANT %s on \"%s\" to \"%s\";\n",
-						ACLlist[k].privledges, tbinfo.relname,
-						ACLlist[k].user);
+						"GRANT %s on %s to %s;\n",
+						ACLlist[k].privledges, fmtId(tbinfo.relname),
+						fmtId(ACLlist[k].user));
 		}
 	}
 }
@@ -2471,7 +2471,7 @@ dumpTables(FILE *fout, TableInfo *tblinfo, int numTables,
 
 			becomeUser(fout, tblinfo[i].usename);
 
-			sprintf(q, "CREATE TABLE \"%s\" (", fmtId(tblinfo[i].relname));
+			sprintf(q, "CREATE TABLE %s (", fmtId(tblinfo[i].relname));
 			actual_atts = 0;
 			for (j = 0; j < tblinfo[i].numatts; j++)
 			{
@@ -2481,7 +2481,7 @@ dumpTables(FILE *fout, TableInfo *tblinfo, int numTables,
 					/* Show lengths on bpchar and varchar */
 					if (!strcmp(tblinfo[i].typnames[j], "bpchar"))
 					{
-						sprintf(q, "%s%s\"%s\" char",
+						sprintf(q, "%s%s%s char",
 								q,
 								(actual_atts > 0) ? ", " : "",
 								fmtId(tblinfo[i].attnames[j]));
@@ -2493,7 +2493,7 @@ dumpTables(FILE *fout, TableInfo *tblinfo, int numTables,
 					}
 					else if (!strcmp(tblinfo[i].typnames[j], "varchar"))
 					{
-						sprintf(q, "%s%s\"%s\" %s",
+						sprintf(q, "%s%s%s %s",
 								q,
 								(actual_atts > 0) ? ", " : "",
 								fmtId(tblinfo[i].attnames[j]),
@@ -2506,7 +2506,7 @@ dumpTables(FILE *fout, TableInfo *tblinfo, int numTables,
 					}
 					else
 					{
-						sprintf(q, "%s%s\"%s\" %s",
+						sprintf(q, "%s%s%s %s",
 								q,
 								(actual_atts > 0) ? ", " : "",
 								fmtId(tblinfo[i].attnames[j]),
@@ -2539,7 +2539,7 @@ dumpTables(FILE *fout, TableInfo *tblinfo, int numTables,
 					sprintf(q, "%s%s%s",
 							q,
 							(k > 0) ? ", " : "",
-							parentRels[k]);
+							fmtId(parentRels[k]));
 				}
 				strcat(q, ")");
 			}
@@ -2648,7 +2648,7 @@ dumpIndices(FILE *fout, IndInfo *indinfo, int numIndices,
 			else
 				attname = tblinfo[tableInd].attnames[indkey];
 			if (funcname)
-				sprintf(attlist + strlen(attlist), "%s\"%s\"",
+				sprintf(attlist + strlen(attlist), "%s%s",
 						(k == 0) ? "" : ", ", fmtId(attname));
 			else
 			{
@@ -2659,7 +2659,7 @@ dumpIndices(FILE *fout, IndInfo *indinfo, int numIndices,
 							attname, indinfo[i].indexrelname);
 					exit_nicely(g_conn);
 				}
-				sprintf(attlist + strlen(attlist), "%s\"%s\" \"%s\"",
+				sprintf(attlist + strlen(attlist), "%s%s %s",
 						(k == 0) ? "" : ", ", fmtId(attname), fmtId(classname[k]));
 				free(classname[k]);
 			}
@@ -2668,14 +2668,14 @@ dumpIndices(FILE *fout, IndInfo *indinfo, int numIndices,
 		if (!tablename || (!strcmp(indinfo[i].indrelname, tablename)))
 		{
 
-			sprintf(q, "CREATE %s INDEX \"%s\" on \"%s\" using %s (",
+			sprintf(q, "CREATE %s INDEX %s on %s using %s (",
 			  (strcmp(indinfo[i].indisunique, "t") == 0) ? "UNIQUE" : "",
 					fmtId(indinfo[i].indexrelname),
 					fmtId(indinfo[i].indrelname),
 					indinfo[i].indamname);
 			if (funcname)
 			{
-				sprintf(q, "%s %s (%s) \"%s\" );\n",
+				sprintf(q, "%s %s (%s) %s );\n",
 						q, funcname, attlist, fmtId(classname[0]));
 				free(funcname);
 				free(classname[0]);
@@ -2892,7 +2892,7 @@ dumpSequence(FILE *fout, TableInfo tbinfo)
 
 	sprintf(query,
 			"SELECT sequence_name, last_value, increment_by, max_value, "
-			"min_value, cache_value, is_cycled, is_called from \"%s\"",
+			"min_value, cache_value, is_cycled, is_called from %s",
 			fmtId(tbinfo.relname));
 
 	res = PQexec(g_conn, query);
@@ -2931,7 +2931,7 @@ dumpSequence(FILE *fout, TableInfo tbinfo)
 	PQclear(res);
 
 	sprintf(query,
-			"CREATE SEQUENCE \"%s\" start %d increment %d maxvalue %d "
+			"CREATE SEQUENCE %s start %d increment %d maxvalue %d "
 			"minvalue %d  cache %d %s;\n",
 			fmtId(tbinfo.relname), last, incby, maxv, minv, cache,
 			(cycled == 't') ? "cycle" : "");
