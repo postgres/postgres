@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.70 2002/11/11 03:02:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.71 2002/11/13 00:39:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3130,9 +3130,8 @@ poly_in(PG_FUNCTION_ARGS)
 		elog(ERROR, "Bad polygon external representation '%s'", str);
 
 	size = offsetof(POLYGON, p[0]) +sizeof(poly->p[0]) * npts;
-	poly = (POLYGON *) palloc(size);
+	poly = (POLYGON *) palloc0(size);	/* zero any holes */
 
-	MemSet((char *) poly, 0, size);		/* zero any holes */
 	poly->size = size;
 	poly->npts = npts;
 
@@ -4452,9 +4451,7 @@ circle_poly(PG_FUNCTION_ARGS)
 	if (base_size / npts != sizeof(poly->p[0]) || size <= base_size)
 		elog(ERROR, "too many points requested");
 
-	poly = (POLYGON *) palloc(size);
-
-	MemSet(poly, 0, size);		/* zero any holes */
+	poly = (POLYGON *) palloc0(size);	/* zero any holes */
 	poly->size = size;
 	poly->npts = npts;
 

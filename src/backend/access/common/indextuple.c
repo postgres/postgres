@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.62 2002/11/11 03:02:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.63 2002/11/13 00:39:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -121,9 +121,8 @@ index_formtuple(TupleDesc tupleDescriptor,
 #endif
 	size = MAXALIGN(size);		/* be conservative */
 
-	tp = (char *) palloc(size);
+	tp = (char *) palloc0(size);
 	tuple = (IndexTuple) tp;
-	MemSet(tp, 0, size);
 
 	DataFill((char *) tp + hoff,
 			 tupleDescriptor,

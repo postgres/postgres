@@ -1442,8 +1442,7 @@ init_dblink_results(MemoryContext fn_mcxt)
 
 	oldcontext = MemoryContextSwitchTo(fn_mcxt);
 
-	retval = (dblink_results *) palloc(sizeof(dblink_results));
-	MemSet(retval, 0, sizeof(dblink_results));
+	retval = (dblink_results *) palloc0(sizeof(dblink_results));
 
 	retval->tup_num = -1;
 	retval->res_id_index = -1;

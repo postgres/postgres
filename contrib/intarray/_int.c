@@ -916,10 +916,8 @@ new_intArrayType(int num)
 	ArrayType  *r;
 	int			nbytes = ARR_OVERHEAD(NDIM) + sizeof(int) * num;
 
-	r = (ArrayType *) palloc(nbytes);
+	r = (ArrayType *) palloc0(nbytes);
 
-	MemSet(r, 0, nbytes);
-	
 	ARR_SIZE(r) = nbytes;
 	ARR_NDIM(r) = NDIM;
 	ARR_ELEMTYPE(r) = INT4OID;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.65 2002/11/11 03:02:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.66 2002/11/13 00:39:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1550,9 +1550,8 @@ Int64GetDatum(int64 X)
 	 * with zeroes in the unused bits.	This is needed so that, for
 	 * example, hash join of int8 will behave properly.
 	 */
-	int64	   *retval = (int64 *) palloc(Max(sizeof(int64), 8));
+	int64	   *retval = (int64 *) palloc0(Max(sizeof(int64), 8));
 
-	MemSet(retval, 0, Max(sizeof(int64), 8));
 	*retval = X;
 	return PointerGetDatum(retval);
 #endif   /* INT64_IS_BUSTED */

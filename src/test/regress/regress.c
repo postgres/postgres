@@ -1,5 +1,5 @@
 /*
- * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.53 2002/11/11 03:02:20 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.54 2002/11/13 00:39:48 momjian Exp $
  */
 
 #include "postgres.h"
@@ -300,12 +300,11 @@ reverse_name(char *string)
 	int			len;
 	char	   *new_string;
 
-	if (!(new_string = palloc(NAMEDATALEN)))
+	if (!(new_string = palloc0(NAMEDATALEN)))
 	{
 		fprintf(stderr, "reverse_name: palloc failed\n");
 		return NULL;
 	}
-	MemSet(new_string, 0, NAMEDATALEN);
 	for (i = 0; i < NAMEDATALEN && string[i]; ++i)
 		;
 	if (i == NAMEDATALEN || !string[i])

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.77 2002/11/11 03:02:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.78 2002/11/13 00:39:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -783,9 +783,8 @@ SPI_cursor_open(char *name, void *plan, Datum *Values, char *Nulls)
 	{
 		ParamListInfo paramLI;
 
-		paramLI = (ParamListInfo) palloc((spiplan->nargs + 1) *
+		paramLI = (ParamListInfo) palloc0((spiplan->nargs + 1) *
 										 sizeof(ParamListInfoData));
-		MemSet(paramLI, 0, (spiplan->nargs + 1) * sizeof(ParamListInfoData));
 
 		eState->es_param_list_info = paramLI;
 		for (k = 0; k < spiplan->nargs; paramLI++, k++)
@@ -1193,9 +1192,7 @@ _SPI_execute_plan(_SPI_plan *plan, Datum *Values, char *Nulls, int tcount)
 					int			k;
 
 					paramLI = (ParamListInfo)
-						palloc((nargs + 1) * sizeof(ParamListInfoData));
-					MemSet(paramLI, 0,
-						   (nargs + 1) * sizeof(ParamListInfoData));
+						palloc0((nargs + 1) * sizeof(ParamListInfoData));
 
 					state->es_param_list_info = paramLI;
 					for (k = 0; k < plan->nargs; paramLI++, k++)

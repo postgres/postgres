@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varbit.c,v 1.28 2002/11/11 03:02:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varbit.c,v 1.29 2002/11/13 00:39:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -107,9 +107,8 @@ bit_in(PG_FUNCTION_ARGS)
 			 bitlen, atttypmod);
 
 	len = VARBITTOTALLEN(atttypmod);
-	result = (VarBit *) palloc(len);
 	/* set to 0 so that *r is always initialised and string is zero-padded */
-	MemSet(result, 0, len);
+	result = (VarBit *) palloc0(len);
 	VARATT_SIZEP(result) = len;
 	VARBITLEN(result) = atttypmod;
 
@@ -232,9 +231,8 @@ bit(PG_FUNCTION_ARGS)
 			 VARBITLEN(arg), len);
 
 	rlen = VARBITTOTALLEN(len);
-	result = (VarBit *) palloc(rlen);
 	/* set to 0 so that string is zero-padded */
-	MemSet(result, 0, rlen);
+	result = (VarBit *) palloc0(rlen);
 	VARATT_SIZEP(result) = rlen;
 	VARBITLEN(result) = len;
 
@@ -316,9 +314,8 @@ varbit_in(PG_FUNCTION_ARGS)
 			 atttypmod);
 
 	len = VARBITTOTALLEN(bitlen);
-	result = (VarBit *) palloc(len);
 	/* set to 0 so that *r is always initialised and string is zero-padded */
-	MemSet(result, 0, len);
+	result = (VarBit *) palloc0(len);
 	VARATT_SIZEP(result) = len;
 	VARBITLEN(result) = Min(bitlen, atttypmod);
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.179 2002/11/11 03:02:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.180 2002/11/13 00:39:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -804,9 +804,8 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 	elements = (Oid *) palloc(num_phys_attrs * sizeof(Oid));
 	defmap = (int *) palloc(num_phys_attrs * sizeof(int));
 	defexprs = (Node **) palloc(num_phys_attrs * sizeof(Node *));
-	constraintexprs = (Node **) palloc(num_phys_attrs * sizeof(Node *));
+	constraintexprs = (Node **) palloc0(num_phys_attrs * sizeof(Node *));
 	constraintconsts = (Const **) palloc(num_phys_attrs * sizeof(Const *));
-	MemSet(constraintexprs, 0, num_phys_attrs * sizeof(Node *));
 
 	for (i = 0; i < num_phys_attrs; i++)
 	{

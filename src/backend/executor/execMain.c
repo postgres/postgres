@@ -27,7 +27,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.184 2002/11/11 22:19:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.185 2002/11/13 00:39:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,12 +106,8 @@ ExecutorStart(QueryDesc *queryDesc, EState *estate)
 	Assert(queryDesc != NULL);
 
 	if (queryDesc->plantree->nParamExec > 0)
-	{
 		estate->es_param_exec_vals = (ParamExecData *)
-			palloc(queryDesc->plantree->nParamExec * sizeof(ParamExecData));
-		MemSet(estate->es_param_exec_vals, 0,
-			   queryDesc->plantree->nParamExec * sizeof(ParamExecData));
-	}
+			palloc0(queryDesc->plantree->nParamExec * sizeof(ParamExecData));
 
 	/*
 	 * Make our own private copy of the current query snapshot data.
@@ -1792,17 +1788,12 @@ EvalPlanQual(EState *estate, Index rti, ItemPointer tid)
 			 */
 			epqstate->es_evTupleNull = (bool *) palloc(rtsize * sizeof(bool));
 			if (epq == NULL)
-			{
 				/* first PQ stack entry */
 				epqstate->es_evTuple = (HeapTuple *)
-					palloc(rtsize * sizeof(HeapTuple));
-				memset(epqstate->es_evTuple, 0, rtsize * sizeof(HeapTuple));
-			}
+					palloc0(rtsize * sizeof(HeapTuple));
 			else
-			{
 				/* later stack entries share the same storage */
 				epqstate->es_evTuple = epq->estate.es_evTuple;
-			}
 		}
 		else
 		{

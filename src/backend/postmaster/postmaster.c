@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.292 2002/11/11 03:02:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.293 2002/11/13 00:39:47 momjian Exp $
  *
  * NOTES
  *
@@ -1092,10 +1092,8 @@ ProcessStartupPacket(Port *port, bool SSLdone)
 	if (len < sizeof(ProtocolVersion) || len > sizeof(StartupPacket))
 		elog(FATAL, "invalid length of startup packet");
 
-	buf = palloc(sizeof(StartupPacket));
-
 	/* Ensure we see zeroes for any bytes not sent */
-	MemSet(buf, 0, sizeof(StartupPacket));
+	buf = palloc0(sizeof(StartupPacket));
 
 	if (pq_getbytes(buf, len) == EOF)
 	{

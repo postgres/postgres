@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.98 2002/11/11 03:02:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.99 2002/11/13 00:39:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1316,10 +1316,8 @@ gistSplit(Relation r,
 	 */
 	if (r->rd_att->natts > 1)
 	{
-		v.spl_idgrp = (int *) palloc(sizeof(int) * (*len + 1));
-		MemSet((void *) v.spl_idgrp, 0, sizeof(int) * (*len + 1));
-		v.spl_grpflag = (char *) palloc(sizeof(char) * (*len + 1));
-		MemSet((void *) v.spl_grpflag, 0, sizeof(char) * (*len + 1));
+		v.spl_idgrp = (int *) palloc0(sizeof(int) * (*len + 1));
+		v.spl_grpflag = (char *) palloc0(sizeof(char) * (*len + 1));
 		v.spl_ngrp = (int *) palloc(sizeof(int) * (*len + 1));
 
 		MaxGrpId = gistfindgroup(giststate, (GISTENTRY *) VARDATA(entryvec), &v);

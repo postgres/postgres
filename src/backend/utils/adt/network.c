@@ -3,7 +3,7 @@
  *	is for IP V4 CIDR notation, but prepared for V6: just
  *	add the necessary bits where the comments indicate.
  *
- *	$Header: /cvsroot/pgsql/src/backend/utils/adt/network.c,v 1.37 2002/11/11 03:02:19 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/network.c,v 1.38 2002/11/13 00:39:47 momjian Exp $
  *
  *	Jon Postel RIP 16 Oct 1998
  */
@@ -51,9 +51,8 @@ network_in(char *src, int type)
 	int			bits;
 	inet	   *dst;
 
-	dst = (inet *) palloc(VARHDRSZ + sizeof(inet_struct));
 	/* make sure any unused bits in a CIDR value are zeroed */
-	MemSet(dst, 0, VARHDRSZ + sizeof(inet_struct));
+	dst = (inet *) palloc0(VARHDRSZ + sizeof(inet_struct));
 
 	/* First, try for an IP V4 address: */
 	ip_family(dst) = AF_INET;
@@ -494,9 +493,8 @@ network_broadcast(PG_FUNCTION_ARGS)
 	inet	   *ip = PG_GETARG_INET_P(0);
 	inet	   *dst;
 
-	dst = (inet *) palloc(VARHDRSZ + sizeof(inet_struct));
 	/* make sure any unused bits are zeroed */
-	MemSet(dst, 0, VARHDRSZ + sizeof(inet_struct));
+	dst = (inet *) palloc0(VARHDRSZ + sizeof(inet_struct));
 
 	if (ip_family(ip) == AF_INET)
 	{
@@ -534,9 +532,8 @@ network_network(PG_FUNCTION_ARGS)
 	inet	   *ip = PG_GETARG_INET_P(0);
 	inet	   *dst;
 
-	dst = (inet *) palloc(VARHDRSZ + sizeof(inet_struct));
 	/* make sure any unused bits are zeroed */
-	MemSet(dst, 0, VARHDRSZ + sizeof(inet_struct));
+	dst = (inet *) palloc0(VARHDRSZ + sizeof(inet_struct));
 
 	if (ip_family(ip) == AF_INET)
 	{
@@ -574,9 +571,8 @@ network_netmask(PG_FUNCTION_ARGS)
 	inet	   *ip = PG_GETARG_INET_P(0);
 	inet	   *dst;
 
-	dst = (inet *) palloc(VARHDRSZ + sizeof(inet_struct));
 	/* make sure any unused bits are zeroed */
-	MemSet(dst, 0, VARHDRSZ + sizeof(inet_struct));
+	dst = (inet *) palloc0(VARHDRSZ + sizeof(inet_struct));
 
 	if (ip_family(ip) == AF_INET)
 	{
