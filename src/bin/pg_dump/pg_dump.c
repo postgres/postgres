@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.53 1997/11/21 18:11:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.54 1997/12/01 21:00:57 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -107,29 +107,27 @@ static void
 usage(const char *progname)
 {
 	fprintf(stderr,
-			"%s - version 1.13.dhb.2\n\n", progname);
-	fprintf(stderr,
 			"usage:  %s [options] [dbname]\n", progname);
+	fprintf(stderr,
+			"\t -a          \t\t dump out only the data, no schema\n");
+	fprintf(stderr,
+			"\t -d          \t\t dump data as proper insert strings\n");
+	fprintf(stderr,
+			"\t -D          \t\t dump data as inserts with attribute names\n");
 	fprintf(stderr,
 			"\t -f filename \t\t script output filename\n");
 	fprintf(stderr,
 			"\t -h hostname \t\t server host name\n");
 	fprintf(stderr,
+			"\t -o          \t\t dump object id's (oids)\n");
+	fprintf(stderr,
 			"\t -p port     \t\t server port number\n");
 	fprintf(stderr,
-			"\t -v          \t\t verbose\n");
-	fprintf(stderr,
-			"\t -d          \t\t dump data as proper insert strings\n");
-	fprintf(stderr,
-	  "\t -D          \t\t dump data as inserts with attribute names\n");
-	fprintf(stderr,
-			"\t -S          \t\t dump out only the schema, no data\n");
-	fprintf(stderr,
-			"\t -a          \t\t dump out only the data, no schema\n");
+			"\t -s          \t\t dump out only the schema, no data\n");
 	fprintf(stderr,
 			"\t -t table    \t\t dump for this table only\n");
 	fprintf(stderr,
-			"\t -o          \t\t dump object id's (oids)\n");
+			"\t -v          \t\t verbose\n");
 	fprintf(stderr,
 			"\t -z          \t\t dump ACLs (grant/revoke)\n");
 	fprintf(stderr,
@@ -479,24 +477,12 @@ main(int argc, char **argv)
 
 	progname = *argv;
 
-	while ((c = getopt(argc, argv, "f:h:p:t:vSDdDaoz")) != EOF)
+	while ((c = getopt(argc, argv, "adDf:h:op:st:vz")) != EOF)
 	{
 		switch (c)
 		{
-			case 'f':			/* output file name */
-				filename = optarg;
-				break;
-			case 'h':			/* server host */
-				pghost = optarg;
-				break;
-			case 'p':			/* server port */
-				pgport = optarg;
-				break;
-			case 'v':			/* verbose */
-				g_verbose = true;
-				break;
-			case 'S':			/* dump schema only */
-				schemaOnly = 1;
+			case 'a':			/* Dump data only */
+				dataOnly = 1;
 				break;
 			case 'd':			/* dump data as proper insert strings */
 				dumpData = 1;
@@ -506,14 +492,26 @@ main(int argc, char **argv)
 				dumpData = 1;
 				attrNames = 1;
 				break;
-			case 't':			/* Dump data for this table only */
-				tablename = optarg;
+			case 'f':			/* output file name */
+				filename = optarg;
 				break;
-			case 'a':			/* Dump data only */
-				dataOnly = 1;
+			case 'h':			/* server host */
+				pghost = optarg;
 				break;
 			case 'o':			/* Dump oids */
 				oids = 1;
+				break;
+			case 'p':			/* server port */
+				pgport = optarg;
+				break;
+			case 's':			/* dump schema only */
+				schemaOnly = 1;
+				break;
+			case 't':			/* Dump data for this table only */
+				tablename = optarg;
+				break;
+			case 'v':			/* verbose */
+				g_verbose = true;
 				break;
 			case 'z':			/* Dump oids */
 				acls = 1;

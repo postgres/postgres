@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.39 1997/11/28 17:26:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.40 1997/12/01 21:00:35 momjian Exp $
  *
  * INTERFACE ROUTINES
  *		heap_create()			- Create an uncataloged heap relation
@@ -35,26 +35,28 @@
 #include <catalog/heap.h>
 #include <catalog/index.h>
 #include <catalog/indexing.h>
-#include <catalog/pg_ipl.h>
-#include <catalog/pg_inherits.h>
-#include <catalog/pg_proc.h>
-#include <catalog/pg_index.h>
-#include <catalog/pg_type.h>
 #include <catalog/pg_attrdef.h>
+#include <catalog/pg_index.h>
+#include <catalog/pg_inherits.h>
+#include <catalog/pg_ipl.h>
+#include <catalog/pg_proc.h>
 #include <catalog/pg_relcheck.h>
+#include <catalog/pg_type.h>
 #include <commands/trigger.h>
+#include <nodes/plannodes.h>
+#include <optimizer/tlist.h>
 #include <parser/parse_expr.h>
 #include <parser/parse_node.h>
 #include <parser/parse_type.h>
+#include <rewrite/rewriteRemove.h>
 #include <storage/bufmgr.h>
 #include <storage/lmgr.h>
 #include <storage/smgr.h>
-#include <rewrite/rewriteRemove.h>
+#include <tcop/tcopprot.h>
 #include <utils/builtins.h>
 #include <utils/mcxt.h>
 #include <utils/relcache.h>
 #include <utils/tqual.h>
-#include <nodes/plannodes.h>
 #ifndef HAVE_MEMMOVE
 #include <regex/utils.h>
 #else
@@ -1482,10 +1484,6 @@ DestroyTempRels(void)
 	tempRels = NULL;
 }
 
-extern List *flatten_tlist(List *tlist);
-extern List *
-pg_plan(char *query_string, Oid *typev, int nargs,
-		QueryTreeList **queryListP, CommandDest dest);
 
 static void
 StoreAttrDefault(Relation rel, AttrDefault *attrdef)
