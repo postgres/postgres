@@ -515,6 +515,10 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	 */
 	public void setObject(int parameterIndex, Object x, int targetSqlType, int scale) throws SQLException
 	{
+		if (x == null){
+			setNull(parameterIndex,Types.OTHER);
+			return;
+		}
 		switch (targetSqlType)
 		{
 			case Types.TINYINT:
@@ -566,6 +570,10 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
    */
 	public void setObject(int parameterIndex, Object x) throws SQLException
 	{
+		if (x == null){
+			setNull(parameterIndex,Types.OTHER);
+			return;
+		}
 		if (x instanceof String)
 			setString(parameterIndex, (String)x);
 		else if (x instanceof BigDecimal)
