@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.24 2004/01/05 05:07:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.25 2004/01/05 23:39:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,12 @@
 #include "optimizer/var.h"
 
 
-static Expr *make_sub_restrictinfos(Expr *clause, bool is_pushed_down,
+static RestrictInfo *make_restrictinfo_internal(Expr *clause,
+												Expr *orclause,
+												bool is_pushed_down,
+												bool valid_everywhere);
+static Expr *make_sub_restrictinfos(Expr *clause,
+									bool is_pushed_down,
 									bool valid_everywhere);
 static bool join_clause_is_redundant(Query *root,
 						 RestrictInfo *rinfo,
@@ -43,9 +48,88 @@ static bool join_clause_is_redundant(Query *root,
 RestrictInfo *
 make_restrictinfo(Expr *clause, bool is_pushed_down, bool valid_everywhere)
 {
+	Expr	   *orclause;
+
+	/*
+	 * If it's an OR clause, build a modified copy with RestrictInfos
+	 * inserted above each subclause of the top-level AND/OR structure.
+	 */
+	if (or_clause((Node *) clause))
+	{
+		orclause = make_sub_restrictinfos(clause,
+										  is_pushed_down,
+										  valid_everywhere);
+	}
+	else
+	{
+		/* Shouldn't be an AND clause, else flatten_andors messed up */
+		Assert(!and_clause((Node *) clause));
+
+		orclause = NULL;
+	}
+
+	return make_restrictinfo_internal(clause, orclause,
+									  is_pushed_down, valid_everywhere);
+}
+
+/*
+ * make_restrictinfo_from_indexclauses
+ *
+ * Given an indexclauses structure, convert to ordinary expression format
+ * and build RestrictInfo node(s).
+ *
+ * The result is a List since we might need to return multiple RestrictInfos.
+ *
+ * This could be done as make_restrictinfo(make_expr_from_indexclauses()),
+ * but if we did it that way then we would strip the original RestrictInfo
+ * nodes from the index clauses and be forced to build new ones.  It's better
+ * to have a specialized routine that allows sharing of RestrictInfos.
+ */
+List *
+make_restrictinfo_from_indexclauses(List *indexclauses,
+									bool is_pushed_down,
+									bool valid_everywhere)
+{
+	List	   *withris = NIL;
+	List	   *withoutris = NIL;
+	List	   *orlist;
+
+	/* Empty list probably can't happen, but here's what to do */
+	if (indexclauses == NIL)
+		return NIL;
+	/* If single indexscan, just return the ANDed clauses */
+	if (lnext(indexclauses) == NIL)
+		return (List *) lfirst(indexclauses);
+	/* Else we need an OR RestrictInfo structure */
+	foreach(orlist, indexclauses)
+	{
+		List   *andlist = (List *) lfirst(orlist);
+
+		/* Create AND subclause with RestrictInfos */
+		withris = lappend(withris, make_ands_explicit(andlist));
+		/* And one without */
+		andlist = get_actual_clauses(andlist);
+		withoutris = lappend(withoutris, make_ands_explicit(andlist));
+	}
+	return makeList1(make_restrictinfo_internal(make_orclause(withoutris),
+												make_orclause(withris),
+												is_pushed_down,
+												valid_everywhere));
+}
+
+/*
+ * make_restrictinfo_internal
+ *
+ * Common code for the above two entry points.
+ */
+static RestrictInfo *
+make_restrictinfo_internal(Expr *clause, Expr *orclause,
+						   bool is_pushed_down, bool valid_everywhere)
+{
 	RestrictInfo *restrictinfo = makeNode(RestrictInfo);
 
 	restrictinfo->clause = clause;
+	restrictinfo->orclause = orclause;
 	restrictinfo->is_pushed_down = is_pushed_down;
 	restrictinfo->valid_everywhere = valid_everywhere;
 	restrictinfo->can_join = false;		/* may get set below */
@@ -81,24 +165,6 @@ make_restrictinfo(Expr *clause, bool is_pushed_down, bool valid_everywhere)
 		restrictinfo->right_relids = NULL;
 		/* and get the total relid set the hard way */
 		restrictinfo->clause_relids = pull_varnos((Node *) clause);
-	}
-
-	/*
-	 * If it's an OR clause, set up a modified copy with RestrictInfos
-	 * inserted above each subclause of the top-level AND/OR structure.
-	 */
-	if (or_clause((Node *) clause))
-	{
-		restrictinfo->orclause = make_sub_restrictinfos(clause,
-														is_pushed_down,
-														valid_everywhere);
-	}
-	else
-	{
-		/* Shouldn't be an AND clause, else flatten_andors messed up */
-		Assert(!and_clause((Node *) clause));
-
-		restrictinfo->orclause = NULL;
 	}
 
 	/*
@@ -161,9 +227,10 @@ make_sub_restrictinfos(Expr *clause, bool is_pushed_down,
 		return make_andclause(andlist);
 	}
 	else
-		return (Expr *) make_restrictinfo(clause,
-										  is_pushed_down,
-										  valid_everywhere);
+		return (Expr *) make_restrictinfo_internal(clause,
+												   NULL,
+												   is_pushed_down,
+												   valid_everywhere);
 }
 
 /*
@@ -193,9 +260,11 @@ get_actual_clauses(List *restrictinfo_list)
 
 	foreach(temp, restrictinfo_list)
 	{
-		RestrictInfo *clause = (RestrictInfo *) lfirst(temp);
+		RestrictInfo *rinfo = (RestrictInfo *) lfirst(temp);
 
-		result = lappend(result, clause->clause);
+		Assert(IsA(rinfo, RestrictInfo));
+
+		result = lappend(result, rinfo->clause);
 	}
 	return result;
 }

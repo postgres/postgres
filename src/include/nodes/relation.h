@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.92 2004/01/05 18:04:39 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.93 2004/01/05 23:39:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -344,23 +344,24 @@ typedef struct Path
  *
  * 'indexinfo' is a list of IndexOptInfo nodes, one per scan to be performed.
  *
- * 'indexqual' is a list of index qualifications, also one per scan.
- * Each entry in 'indexqual' is a sublist of qualification expressions with
- * implicit AND semantics across the sublist items.  Only expressions that
- * are usable as indexquals (as determined by indxpath.c) may appear here.
- * NOTE that the semantics of the top-level list in 'indexqual' is OR
+ * 'indexclauses' is a list of index qualifications, also one per scan.
+ * Each entry in 'indexclauses' is a sublist of qualification clauses to be
+ * used for that scan, with implicit AND semantics across the sublist items.
+ * NOTE that the semantics of the top-level list in 'indexclauses' is OR
  * combination, while the sublists are implicitly AND combinations!
- * Also note that indexquals lists do not contain RestrictInfo nodes,
- * just bare clause expressions.
  *
- * 'indexjoinclauses' is NIL for an ordinary indexpath (one that does not
- * use any join clauses in the index conditions).  For an innerjoin indexpath,
- * it has the same structure as 'indexqual', but references the RestrictInfo
- * nodes from which the indexqual was built, rather than the bare clause
- * expressions.  (Note: there isn't necessarily a one-to-one correspondence
- * between RestrictInfos and expressions, because of expansion of special
- * indexable operators.)  We need this so that we can eliminate redundant
- * join clauses when plans are built.
+ * 'indexquals' has the same structure as 'indexclauses', but it contains
+ * the actual indexqual conditions that can be used with the index(es).
+ * In simple cases this is identical to 'indexclauses', but when special
+ * indexable operators appear in 'indexclauses', they are replaced by the
+ * derived indexscannable conditions in 'indexquals'.
+ *
+ * Both 'indexclauses' and 'indexquals' are lists of sublists of RestrictInfo
+ * nodes.  (Before 7.5, we kept bare operator expressions in these lists, but
+ * storing RestrictInfos is more efficient since selectivities can be cached.)
+ *
+ * 'isjoininner' is TRUE if the path is a nestloop inner scan (that is,
+ * some of the index conditions are join rather than restriction clauses).
  *
  * 'indexscandir' is one of:
  *		ForwardScanDirection: forward scan of an ordered index
@@ -381,8 +382,9 @@ typedef struct IndexPath
 {
 	Path		path;
 	List	   *indexinfo;
-	List	   *indexqual;
-	List	   *indexjoinclauses;
+	List	   *indexclauses;
+	List	   *indexquals;
+	bool		isjoininner;
 	ScanDirection indexscandir;
 	double		rows;			/* estimated number of result tuples */
 } IndexPath;

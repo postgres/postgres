@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.154 2004/01/05 05:07:35 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.155 2004/01/05 23:39:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,7 +76,7 @@ static bool match_index_to_operand(Node *operand, int indexcol,
 					   RelOptInfo *rel, IndexOptInfo *index);
 static bool match_special_index_operator(Expr *clause, Oid opclass,
 							 bool indexkey_on_left);
-static List *expand_indexqual_condition(Expr *clause, Oid opclass);
+static List *expand_indexqual_condition(RestrictInfo *rinfo, Oid opclass);
 static List *prefix_quals(Node *leftop, Oid opclass,
 			 Const *prefix, Pattern_Prefix_Status pstatus);
 static List *network_prefix_quals(Node *leftop, Oid expr_op, Oid opclass,
@@ -1418,8 +1418,7 @@ make_innerjoin_index_path(Query *root,
 {
 	IndexPath  *pathnode = makeNode(IndexPath);
 	List	   *indexquals,
-			   *allclauses,
-			   *l;
+			   *allclauses;
 
 	/* XXX perhaps this code should be merged with create_index_path? */
 
@@ -1433,28 +1432,21 @@ make_innerjoin_index_path(Query *root,
 	 */
 	pathnode->path.pathkeys = NIL;
 
-	/* Convert RestrictInfo nodes to indexquals the executor can handle */
+	/* Convert clauses to indexquals the executor can handle */
 	indexquals = expand_indexqual_conditions(index, clausegroups);
 
-	/*
-	 * Also make a flattened list of the RestrictInfo nodes; createplan.c
-	 * will need this later.  We assume here that we can destructively
-	 * modify the passed-in clausegroups list structure.
-	 */
-	allclauses = NIL;
-	foreach(l, clausegroups)
-	{
-		/* nconc okay here since same clause couldn't be in two sublists */
-		allclauses = nconc(allclauses, (List *) lfirst(l));
-	}
+	/* Flatten the clausegroups list to produce indexclauses list */
+	allclauses = flatten_clausegroups_list(clausegroups);
 
 	/*
 	 * Note that we are making a pathnode for a single-scan indexscan;
-	 * therefore, indexinfo and indexqual should be single-element lists.
+	 * therefore, indexinfo etc should be single-element lists.
 	 */
 	pathnode->indexinfo = makeList1(index);
-	pathnode->indexqual = makeList1(indexquals);
-	pathnode->indexjoinclauses = makeList1(allclauses);
+	pathnode->indexclauses = makeList1(allclauses);
+	pathnode->indexquals = makeList1(indexquals);
+
+	pathnode->isjoininner = true;
 
 	/* We don't actually care what order the index scans in ... */
 	pathnode->indexscandir = NoMovementScanDirection;
@@ -1488,6 +1480,61 @@ make_innerjoin_index_path(Query *root,
 
 	return (Path *) pathnode;
 }
+
+/*
+ * flatten_clausegroups_list
+ *	  Given a list of lists of RestrictInfos, flatten it to a list
+ *	  of RestrictInfos.
+ *
+ * This is used to flatten out the result of group_clauses_by_indexkey()
+ * or one of its sibling routines, to produce an indexclauses list.
+ */
+List *
+flatten_clausegroups_list(List *clausegroups)
+{
+	List	   *allclauses = NIL;
+	List	   *l;
+
+	foreach(l, clausegroups)
+	{
+		allclauses = nconc(allclauses, listCopy((List *) lfirst(l)));
+	}
+	return allclauses;
+}
+
+/*
+ * make_expr_from_indexclauses()
+ *	  Given an indexclauses structure, produce an ordinary boolean expression.
+ *
+ * This consists of stripping out the RestrictInfo nodes and inserting
+ * explicit AND and OR nodes as needed.  There's not much to it, but
+ * the functionality is needed in a few places, so centralize the logic.
+ */
+Expr *
+make_expr_from_indexclauses(List *indexclauses)
+{
+	List	   *orclauses = NIL;
+	List	   *orlist;
+
+	/* There's no such thing as an indexpath with zero scans */
+	Assert(indexclauses != NIL);
+
+	foreach(orlist, indexclauses)
+	{
+		List   *andlist = (List *) lfirst(orlist);
+
+		/* Strip RestrictInfos */
+		andlist = get_actual_clauses(andlist);
+		/* Insert AND node if needed, and add to orclauses list */
+		orclauses = lappend(orclauses, make_ands_explicit(andlist));
+	}
+
+	if (length(orclauses) > 1)
+		return make_orclause(orclauses);
+	else
+		return (Expr *) lfirst(orclauses);
+}
+
 
 /****************************************************************************
  *				----  ROUTINES TO CHECK OPERANDS  ----
@@ -1799,8 +1846,7 @@ expand_indexqual_conditions(IndexOptInfo *index, List *clausegroups)
 			RestrictInfo *rinfo = (RestrictInfo *) lfirst(i);
 
 			FastConc(&resultquals,
-					 expand_indexqual_condition(rinfo->clause,
-												curClass));
+					 expand_indexqual_condition(rinfo, curClass));
 		}
 
 		clausegroups = lnext(clausegroups);
@@ -1816,10 +1862,13 @@ expand_indexqual_conditions(IndexOptInfo *index, List *clausegroups)
 
 /*
  * expand_indexqual_condition --- expand a single indexqual condition
+ *
+ * The input is a single RestrictInfo, the output a list of RestrictInfos
  */
 static List *
-expand_indexqual_condition(Expr *clause, Oid opclass)
+expand_indexqual_condition(RestrictInfo *rinfo, Oid opclass)
 {
+	Expr	   *clause = rinfo->clause;
 	/* we know these will succeed */
 	Node	   *leftop = get_leftop(clause);
 	Node	   *rightop = get_rightop(clause);
@@ -1883,7 +1932,7 @@ expand_indexqual_condition(Expr *clause, Oid opclass)
 			break;
 
 		default:
-			result = makeList1(clause);
+			result = makeList1(rinfo);
 			break;
 	}
 
@@ -1978,7 +2027,7 @@ prefix_quals(Node *leftop, Oid opclass,
 			elog(ERROR, "no = operator for opclass %u", opclass);
 		expr = make_opclause(oproid, BOOLOID, false,
 							 (Expr *) leftop, (Expr *) prefix_const);
-		result = makeList1(expr);
+		result = makeList1(make_restrictinfo(expr, true, true));
 		return result;
 	}
 
@@ -1993,7 +2042,7 @@ prefix_quals(Node *leftop, Oid opclass,
 		elog(ERROR, "no >= operator for opclass %u", opclass);
 	expr = make_opclause(oproid, BOOLOID, false,
 						 (Expr *) leftop, (Expr *) prefix_const);
-	result = makeList1(expr);
+	result = makeList1(make_restrictinfo(expr, true, true));
 
 	/*-------
 	 * If we can create a string larger than the prefix, we can say
@@ -2009,7 +2058,7 @@ prefix_quals(Node *leftop, Oid opclass,
 			elog(ERROR, "no < operator for opclass %u", opclass);
 		expr = make_opclause(oproid, BOOLOID, false,
 							 (Expr *) leftop, (Expr *) greaterstr);
-		result = lappend(result, expr);
+		result = lappend(result, make_restrictinfo(expr, true, true));
 	}
 
 	return result;
@@ -2080,7 +2129,7 @@ network_prefix_quals(Node *leftop, Oid expr_op, Oid opclass, Datum rightop)
 						 (Expr *) leftop,
 						 (Expr *) makeConst(datatype, -1, opr1right,
 											false, false));
-	result = makeList1(expr);
+	result = makeList1(make_restrictinfo(expr, true, true));
 
 	/* create clause "key <= network_scan_last( rightop )" */
 
@@ -2095,7 +2144,7 @@ network_prefix_quals(Node *leftop, Oid expr_op, Oid opclass, Datum rightop)
 						 (Expr *) leftop,
 						 (Expr *) makeConst(datatype, -1, opr2right,
 											false, false));
-	result = lappend(result, expr);
+	result = lappend(result, make_restrictinfo(expr, true, true));
 
 	return result;
 }

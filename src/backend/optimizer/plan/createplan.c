@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.163 2004/01/05 18:04:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.164 2004/01/05 23:39:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,15 +44,15 @@ static Append *create_append_plan(Query *root, AppendPath *best_path);
 static Result *create_result_plan(Query *root, ResultPath *best_path);
 static Material *create_material_plan(Query *root, MaterialPath *best_path);
 static Plan *create_unique_plan(Query *root, UniquePath *best_path);
-static SeqScan *create_seqscan_plan(Path *best_path, List *tlist,
-					List *scan_clauses);
+static SeqScan *create_seqscan_plan(Query *root, Path *best_path,
+									List *tlist, List *scan_clauses);
 static IndexScan *create_indexscan_plan(Query *root, IndexPath *best_path,
 					  List *tlist, List *scan_clauses);
-static TidScan *create_tidscan_plan(TidPath *best_path, List *tlist,
-					List *scan_clauses);
-static SubqueryScan *create_subqueryscan_plan(Path *best_path,
+static TidScan *create_tidscan_plan(Query *root, TidPath *best_path,
+									List *tlist, List *scan_clauses);
+static SubqueryScan *create_subqueryscan_plan(Query *root, Path *best_path,
 						 List *tlist, List *scan_clauses);
-static FunctionScan *create_functionscan_plan(Path *best_path,
+static FunctionScan *create_functionscan_plan(Query *root, Path *best_path,
 						 List *tlist, List *scan_clauses);
 static NestLoop *create_nestloop_plan(Query *root, NestPath *best_path,
 					 Plan *outer_plan, Plan *inner_plan);
@@ -219,15 +219,13 @@ create_scan_plan(Query *root, Path *best_path)
 	 * Extract the relevant restriction clauses from the parent relation;
 	 * the executor must apply all these restrictions during the scan.
 	 */
-	scan_clauses = get_actual_clauses(rel->baserestrictinfo);
-
-	/* Sort clauses into best execution order */
-	scan_clauses = order_qual_clauses(root, scan_clauses);
+	scan_clauses = rel->baserestrictinfo;
 
 	switch (best_path->pathtype)
 	{
 		case T_SeqScan:
-			plan = (Scan *) create_seqscan_plan(best_path,
+			plan = (Scan *) create_seqscan_plan(root,
+												best_path,
 												tlist,
 												scan_clauses);
 			break;
@@ -240,19 +238,22 @@ create_scan_plan(Query *root, Path *best_path)
 			break;
 
 		case T_TidScan:
-			plan = (Scan *) create_tidscan_plan((TidPath *) best_path,
+			plan = (Scan *) create_tidscan_plan(root,
+												(TidPath *) best_path,
 												tlist,
 												scan_clauses);
 			break;
 
 		case T_SubqueryScan:
-			plan = (Scan *) create_subqueryscan_plan(best_path,
+			plan = (Scan *) create_subqueryscan_plan(root,
+													 best_path,
 													 tlist,
 													 scan_clauses);
 			break;
 
 		case T_FunctionScan:
-			plan = (Scan *) create_functionscan_plan(best_path,
+			plan = (Scan *) create_functionscan_plan(root,
+													 best_path,
 													 tlist,
 													 scan_clauses);
 			break;
@@ -667,7 +668,8 @@ create_unique_plan(Query *root, UniquePath *best_path)
  *	 with restriction clauses 'scan_clauses' and targetlist 'tlist'.
  */
 static SeqScan *
-create_seqscan_plan(Path *best_path, List *tlist, List *scan_clauses)
+create_seqscan_plan(Query *root, Path *best_path,
+					List *tlist, List *scan_clauses)
 {
 	SeqScan    *scan_plan;
 	Index		scan_relid = best_path->parent->relid;
@@ -675,6 +677,12 @@ create_seqscan_plan(Path *best_path, List *tlist, List *scan_clauses)
 	/* it should be a base rel... */
 	Assert(scan_relid > 0);
 	Assert(best_path->parent->rtekind == RTE_RELATION);
+
+	/* Reduce RestrictInfo list to bare expressions */
+	scan_clauses = get_actual_clauses(scan_clauses);
+
+	/* Sort clauses into best execution order */
+	scan_clauses = order_qual_clauses(root, scan_clauses);
 
 	scan_plan = make_seqscan(tlist,
 							 scan_clauses,
@@ -690,9 +698,9 @@ create_seqscan_plan(Path *best_path, List *tlist, List *scan_clauses)
  *	  Returns a indexscan plan for the base relation scanned by 'best_path'
  *	  with restriction clauses 'scan_clauses' and targetlist 'tlist'.
  *
- * The indexqual of the path contains a sublist of implicitly-ANDed qual
- * conditions for each scan of the index(es); if there is more than one
- * scan then the retrieved tuple sets are ORed together.  The indexqual
+ * The indexquals list of the path contains a sublist of implicitly-ANDed
+ * qual conditions for each scan of the index(es); if there is more than one
+ * scan then the retrieved tuple sets are ORed together.  The indexquals
  * and indexinfo lists must have the same length, ie, the number of scans
  * that will occur.  Note it is possible for a qual condition sublist
  * to be empty --- then no index restrictions will be applied during that
@@ -704,16 +712,17 @@ create_indexscan_plan(Query *root,
 					  List *tlist,
 					  List *scan_clauses)
 {
-	List	   *indxqual = best_path->indexqual;
+	List	   *indxquals = best_path->indexquals;
 	Index		baserelid = best_path->path.parent->relid;
 	List	   *qpqual;
 	Expr	   *indxqual_or_expr = NULL;
-	List	   *fixed_indxqual;
-	List	   *recheck_indxqual;
+	List	   *stripped_indxquals;
+	List	   *fixed_indxquals;
+	List	   *recheck_indxquals;
 	List	   *indxstrategy;
 	List	   *indxsubtype;
 	FastList	indexids;
-	List	   *ixinfo;
+	List	   *i;
 	IndexScan  *scan_plan;
 
 	/* it should be a base rel... */
@@ -721,64 +730,94 @@ create_indexscan_plan(Query *root,
 	Assert(best_path->path.parent->rtekind == RTE_RELATION);
 
 	/*
-	 * Build list of index OIDs.
+	 * If this is a innerjoin scan, the indexclauses will contain join
+	 * clauses that are not present in scan_clauses (since the passed-in
+	 * value is just the rel's baserestrictinfo list).  We must add these
+	 * clauses to scan_clauses to ensure they get checked.  In most cases
+	 * we will remove the join clauses again below, but if a join clause
+	 * contains a lossy or special operator, we need to make sure it gets
+	 * into scan_clauses.
 	 */
-	FastListInit(&indexids);
-	foreach(ixinfo, best_path->indexinfo)
+	if (best_path->isjoininner)
 	{
-		IndexOptInfo *index = (IndexOptInfo *) lfirst(ixinfo);
+		/*
+		 * We don't currently support OR indexscans in joins, so we only
+		 * need to worry about the plain AND case.  Also, pointer comparison
+		 * should be enough to determine RestrictInfo matches.
+		 */
+		Assert(length(best_path->indexclauses) == 1);
+		scan_clauses = set_ptrUnion(scan_clauses,
+									(List *) lfirst(best_path->indexclauses));
+	}
+
+	/* Reduce RestrictInfo list to bare expressions */
+	scan_clauses = get_actual_clauses(scan_clauses);
+
+	/* Sort clauses into best execution order */
+	scan_clauses = order_qual_clauses(root, scan_clauses);
+
+	/* Build list of index OIDs */
+	FastListInit(&indexids);
+	foreach(i, best_path->indexinfo)
+	{
+		IndexOptInfo *index = (IndexOptInfo *) lfirst(i);
 
 		FastAppendo(&indexids, index->indexoid);
 	}
 
 	/*
+	 * Build "stripped" indexquals structure (no RestrictInfos) to pass to
+	 * executor as indxqualorig
+	 */
+	stripped_indxquals = NIL;
+	foreach(i, indxquals)
+	{
+		List   *andlist = (List *) lfirst(i);
+
+		stripped_indxquals = lappend(stripped_indxquals,
+									 get_actual_clauses(andlist));
+	}
+
+	/*
 	 * The qpqual list must contain all restrictions not automatically
-	 * handled by the index.  Normally the predicates in the indxqual are
+	 * handled by the index.  Normally the predicates in the indexquals are
 	 * checked fully by the index, but if the index is "lossy" for a
 	 * particular operator (as signaled by the amopreqcheck flag in
 	 * pg_amop), then we need to double-check that predicate in qpqual,
 	 * because the index may return more tuples than match the predicate.
 	 *
 	 * Since the indexquals were generated from the restriction clauses given
-	 * by scan_clauses, there will normally be some duplications between
-	 * the lists.  We get rid of the duplicates, then add back if lossy.
+	 * by scan_clauses, there will normally be duplications between the lists.
+	 * We get rid of the duplicates, then add back if lossy.
 	 */
-	if (length(indxqual) > 1)
+	if (length(indxquals) > 1)
 	{
 		/*
 		 * Build an expression representation of the indexqual, expanding
 		 * the implicit OR and AND semantics of the first- and
 		 * second-level lists.
 		 */
-		FastList	orclauses;
-		List	   *orclause;
-
-		FastListInit(&orclauses);
-		foreach(orclause, indxqual)
-			FastAppend(&orclauses, make_ands_explicit(lfirst(orclause)));
-		indxqual_or_expr = make_orclause(FastListValue(&orclauses));
-
+		indxqual_or_expr = make_expr_from_indexclauses(indxquals);
 		qpqual = set_difference(scan_clauses, makeList1(indxqual_or_expr));
 	}
-	else if (indxqual != NIL)
+	else
 	{
 		/*
 		 * Here, we can simply treat the first sublist as an independent
 		 * set of qual expressions, since there is no top-level OR
 		 * behavior.
 		 */
-		qpqual = set_difference(scan_clauses, lfirst(indxqual));
+		Assert(stripped_indxquals != NIL);
+		qpqual = set_difference(scan_clauses, lfirst(stripped_indxquals));
 	}
-	else
-		qpqual = scan_clauses;
 
 	/*
 	 * The executor needs a copy with the indexkey on the left of each
 	 * clause and with index attr numbers substituted for table ones. This
 	 * pass also looks for "lossy" operators.
 	 */
-	fix_indxqual_references(indxqual, best_path,
-							&fixed_indxqual, &recheck_indxqual,
+	fix_indxqual_references(indxquals, best_path,
+							&fixed_indxquals, &recheck_indxquals,
 							&indxstrategy, &indxsubtype);
 
 	/*
@@ -786,10 +825,10 @@ create_indexscan_plan(Query *root,
 	 * appropriate qual clauses to the qpqual.	When there is just one
 	 * indexscan being performed (ie, we have simple AND semantics), we
 	 * can just add the lossy clauses themselves to qpqual.  If we have
-	 * OR-of-ANDs, we'd better add the entire original indexqual to make
+	 * OR-of-ANDs, we'd better add the entire original indexquals to make
 	 * sure that the semantics are correct.
 	 */
-	if (recheck_indxqual != NIL)
+	if (recheck_indxquals != NIL)
 	{
 		if (indxqual_or_expr)
 		{
@@ -799,8 +838,8 @@ create_indexscan_plan(Query *root,
 		else
 		{
 			/* Subroutine already copied quals, so just append to list */
-			Assert(length(recheck_indxqual) == 1);
-			qpqual = nconc(qpqual, (List *) lfirst(recheck_indxqual));
+			Assert(length(recheck_indxquals) == 1);
+			qpqual = nconc(qpqual, (List *) lfirst(recheck_indxquals));
 		}
 	}
 
@@ -809,8 +848,8 @@ create_indexscan_plan(Query *root,
 							   qpqual,
 							   baserelid,
 							   FastListValue(&indexids),
-							   fixed_indxqual,
-							   indxqual,
+							   fixed_indxquals,
+							   stripped_indxquals,
 							   indxstrategy,
 							   indxsubtype,
 							   best_path->indexscandir);
@@ -828,7 +867,8 @@ create_indexscan_plan(Query *root,
  *	 with restriction clauses 'scan_clauses' and targetlist 'tlist'.
  */
 static TidScan *
-create_tidscan_plan(TidPath *best_path, List *tlist, List *scan_clauses)
+create_tidscan_plan(Query *root, TidPath *best_path,
+					List *tlist, List *scan_clauses)
 {
 	TidScan    *scan_plan;
 	Index		scan_relid = best_path->path.parent->relid;
@@ -836,6 +876,12 @@ create_tidscan_plan(TidPath *best_path, List *tlist, List *scan_clauses)
 	/* it should be a base rel... */
 	Assert(scan_relid > 0);
 	Assert(best_path->path.parent->rtekind == RTE_RELATION);
+
+	/* Reduce RestrictInfo list to bare expressions */
+	scan_clauses = get_actual_clauses(scan_clauses);
+
+	/* Sort clauses into best execution order */
+	scan_clauses = order_qual_clauses(root, scan_clauses);
 
 	scan_plan = make_tidscan(tlist,
 							 scan_clauses,
@@ -853,7 +899,8 @@ create_tidscan_plan(TidPath *best_path, List *tlist, List *scan_clauses)
  *	 with restriction clauses 'scan_clauses' and targetlist 'tlist'.
  */
 static SubqueryScan *
-create_subqueryscan_plan(Path *best_path, List *tlist, List *scan_clauses)
+create_subqueryscan_plan(Query *root, Path *best_path,
+						 List *tlist, List *scan_clauses)
 {
 	SubqueryScan *scan_plan;
 	Index		scan_relid = best_path->parent->relid;
@@ -861,6 +908,12 @@ create_subqueryscan_plan(Path *best_path, List *tlist, List *scan_clauses)
 	/* it should be a subquery base rel... */
 	Assert(scan_relid > 0);
 	Assert(best_path->parent->rtekind == RTE_SUBQUERY);
+
+	/* Reduce RestrictInfo list to bare expressions */
+	scan_clauses = get_actual_clauses(scan_clauses);
+
+	/* Sort clauses into best execution order */
+	scan_clauses = order_qual_clauses(root, scan_clauses);
 
 	scan_plan = make_subqueryscan(tlist,
 								  scan_clauses,
@@ -878,7 +931,8 @@ create_subqueryscan_plan(Path *best_path, List *tlist, List *scan_clauses)
  *	 with restriction clauses 'scan_clauses' and targetlist 'tlist'.
  */
 static FunctionScan *
-create_functionscan_plan(Path *best_path, List *tlist, List *scan_clauses)
+create_functionscan_plan(Query *root, Path *best_path,
+						 List *tlist, List *scan_clauses)
 {
 	FunctionScan *scan_plan;
 	Index		scan_relid = best_path->parent->relid;
@@ -886,6 +940,12 @@ create_functionscan_plan(Path *best_path, List *tlist, List *scan_clauses)
 	/* it should be a function base rel... */
 	Assert(scan_relid > 0);
 	Assert(best_path->parent->rtekind == RTE_FUNCTION);
+
+	/* Reduce RestrictInfo list to bare expressions */
+	scan_clauses = get_actual_clauses(scan_clauses);
+
+	/* Sort clauses into best execution order */
+	scan_clauses = order_qual_clauses(root, scan_clauses);
 
 	scan_plan = make_functionscan(tlist, scan_clauses, scan_relid);
 
@@ -928,20 +988,19 @@ create_nestloop_plan(Query *root,
 		 * have caught this case because the join clauses would never have
 		 * been put in the same joininfo list.
 		 *
-		 * This would be a waste of time if the indexpath was an ordinary
-		 * indexpath and not a special innerjoin path.	We will skip it in
-		 * that case since indexjoinclauses is NIL in an ordinary
-		 * indexpath.
+		 * We can skip this if the index path is an ordinary indexpath and
+		 * not a special innerjoin path.
 		 */
 		IndexPath  *innerpath = (IndexPath *) best_path->innerjoinpath;
-		List	   *indexjoinclauses = innerpath->indexjoinclauses;
+		List	   *indexclauses = innerpath->indexclauses;
 
-		if (length(indexjoinclauses) == 1)		/* single indexscan? */
+		if (innerpath->isjoininner &&
+			length(indexclauses) == 1)		/* single indexscan? */
 		{
 			joinrestrictclauses =
 				select_nonredundant_join_clauses(root,
 												 joinrestrictclauses,
-												 lfirst(indexjoinclauses),
+												 lfirst(indexclauses),
 												 best_path->jointype);
 		}
 	}
@@ -1138,7 +1197,8 @@ create_hashjoin_plan(Query *root,
  *	  Adjust indexqual clauses to the form the executor's indexqual
  *	  machinery needs, and check for recheckable (lossy) index conditions.
  *
- * We have four tasks here:
+ * We have five tasks here:
+ *	* Remove RestrictInfo nodes from the input clauses.
  *	* Index keys must be represented by Var nodes with varattno set to the
  *	  index's attribute number, not the attribute number in the original rel.
  *	* If the index key is on the right, commute the clause to put it on the
@@ -1154,14 +1214,15 @@ create_hashjoin_plan(Query *root,
  *
  * Both the input list and the output lists have the form of lists of sublists
  * of qual clauses --- the top-level list has one entry for each indexscan
- * to be performed.  The semantics are OR-of-ANDs.
+ * to be performed.  The semantics are OR-of-ANDs.  Note however that the
+ * input list contains RestrictInfos, while the output lists do not.
  *
  * fixed_indexquals receives a modified copy of the indexqual list --- the
  * original is not changed.  Note also that the copy shares no substructure
  * with the original; this is needed in case there is a subplan in it (we need
  * two separate copies of the subplan tree, or things will go awry).
  *
- * recheck_indexquals similarly receives a full copy of whichever clauses
+ * recheck_indexquals similarly receives a copy of whichever clauses
  * need rechecking.
  *
  * indxstrategy receives a list of integer sublists of strategy numbers.
@@ -1243,14 +1304,16 @@ fix_indxqual_sublist(List *indexqual,
 	*subtype = NIL;
 	foreach(i, indexqual)
 	{
-		OpExpr	   *clause = (OpExpr *) lfirst(i);
+		RestrictInfo *rinfo = (RestrictInfo *) lfirst(i);
+		OpExpr	   *clause;
 		OpExpr	   *newclause;
-		Relids		leftvarnos;
 		Oid			opclass;
 		int			stratno;
 		Oid			stratsubtype;
 		bool		recheck;
 
+		Assert(IsA(rinfo, RestrictInfo));
+		clause = (OpExpr *) rinfo->clause;
 		if (!IsA(clause, OpExpr) ||
 			length(clause->args) != 2)
 			elog(ERROR, "indexqual clause is not binary opclause");
@@ -1269,10 +1332,8 @@ fix_indxqual_sublist(List *indexqual,
 		 * the clause.	The indexkey should be the side that refers to
 		 * (only) the base relation.
 		 */
-		leftvarnos = pull_varnos((Node *) lfirst(newclause->args));
-		if (!bms_equal(leftvarnos, baserelids))
+		if (!bms_equal(rinfo->left_relids, baserelids))
 			CommuteClause(newclause);
-		bms_free(leftvarnos);
 
 		/*
 		 * Now, determine which index attribute this is, change the

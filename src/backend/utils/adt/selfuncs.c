@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.152 2003/12/29 22:22:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.153 2004/01/05 23:39:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -94,6 +94,7 @@
 #include "optimizer/paths.h"
 #include "optimizer/plancat.h"
 #include "optimizer/prep.h"
+#include "optimizer/restrictinfo.h"
 #include "optimizer/tlist.h"
 #include "optimizer/var.h"
 #include "parser/parse_expr.h"
@@ -3896,13 +3897,13 @@ genericcostestimate(Query *root, RelOptInfo *rel,
 	double		numIndexTuples;
 	double		numIndexPages;
 	QualCost	index_qual_cost;
-	List	   *selectivityQuals = indexQuals;
+	List	   *selectivityQuals;
 
 	/*
 	 * If the index is partial, AND the index predicate with the
 	 * explicitly given indexquals to produce a more accurate idea of the
-	 * index selectivity.  This may produce redundant clauses.  We can get
-	 * rid of exact duplicates by using set_union().  We expect that most
+	 * index selectivity.  This may produce redundant clauses.  We get rid
+	 * of exact duplicates in the code below.  We expect that most
 	 * cases of partial redundancy (such as "x < 4" from the qual and
 	 * "x < 5" from the predicate) will be recognized and handled correctly
 	 * by clauselist_selectivity().  This assumption is somewhat fragile,
@@ -3913,10 +3914,25 @@ genericcostestimate(Query *root, RelOptInfo *rel,
 	 * necessarily a bad thing.  But it'd be nice to do better someday.
 	 *
 	 * Note that index->indpred and indexQuals are both in implicit-AND form,
-	 * so ANDing them together just takes merging the lists.
+	 * so ANDing them together just takes merging the lists.  However,
+	 * eliminating duplicates is a bit trickier because indexQuals contains
+	 * RestrictInfo nodes and the indpred does not.  It is okay to pass a
+	 * mixed list to clauselist_selectivity, but we have to work a bit to
+	 * generate a list without logical duplicates.  (We could just set_union
+	 * indpred and strippedQuals, but then we'd not get caching of per-qual
+	 * selectivity estimates.)
 	 */
 	if (index->indpred != NIL)
-		selectivityQuals = set_union(index->indpred, indexQuals);
+	{
+		List   *strippedQuals;
+		List   *predExtraQuals;
+
+		strippedQuals = get_actual_clauses(indexQuals);
+		predExtraQuals = set_difference(index->indpred, strippedQuals);
+		selectivityQuals = nconc(predExtraQuals, indexQuals);
+	}
+	else
+		selectivityQuals = indexQuals;
 
 	/* Estimate the fraction of main-table tuples that will be visited */
 	*indexSelectivity = clauselist_selectivity(root, selectivityQuals,

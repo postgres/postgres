@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/orindxpath.c,v 1.56 2004/01/05 05:07:35 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/orindxpath.c,v 1.57 2004/01/05 23:39:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,8 @@ static bool best_or_subclause_index(Query *root,
 						RelOptInfo *rel,
 						Expr *subclause,
 						IndexOptInfo **retIndexInfo,
-						List **retIndexQual,
+						List **retIndexClauses,
+						List **retIndexQuals,
 						Cost *retStartupCost,
 						Cost *retTotalCost);
 
@@ -95,9 +96,7 @@ create_or_index_quals(Query *root, RelOptInfo *rel)
 {
 	IndexPath  *bestpath = NULL;
 	RestrictInfo *bestrinfo = NULL;
-	FastList	orclauses;
-	List	   *orclause;
-	Expr	   *indxqual_or_expr;
+	List	   *newrinfos;
 	RestrictInfo *or_rinfo;
 	Selectivity or_selec,
 				orig_selec;
@@ -145,20 +144,14 @@ create_or_index_quals(Query *root, RelOptInfo *rel)
 		return false;
 
 	/*
-	 * Build an expression representation of the indexqual, expanding
-	 * the implicit OR and AND semantics of the first- and
-	 * second-level lists.
+	 * Convert the indexclauses structure to a RestrictInfo tree,
+	 * and add it to the rel's restriction list.
 	 */
-	FastListInit(&orclauses);
-	foreach(orclause, bestpath->indexqual)
-		FastAppend(&orclauses, make_ands_explicit(lfirst(orclause)));
-	indxqual_or_expr = make_orclause(FastListValue(&orclauses));
-
-	/*
-	 * And add it to the rel's restriction list.
-	 */
-	or_rinfo = make_restrictinfo(indxqual_or_expr, true, true);
-	rel->baserestrictinfo = lappend(rel->baserestrictinfo, or_rinfo);
+	newrinfos = make_restrictinfo_from_indexclauses(bestpath->indexclauses,
+													true, true);
+	Assert(length(newrinfos) == 1);
+	or_rinfo = (RestrictInfo *) lfirst(newrinfos);
+	rel->baserestrictinfo = nconc(rel->baserestrictinfo, newrinfos);
 
 	/*
 	 * Adjust the original OR clause's cached selectivity to compensate
@@ -251,6 +244,7 @@ best_or_subclause_indexes(Query *root,
 						  List *subclauses)
 {
 	FastList	infos;
+	FastList	clauses;
 	FastList	quals;
 	Cost		path_startup_cost;
 	Cost		path_total_cost;
@@ -258,6 +252,7 @@ best_or_subclause_indexes(Query *root,
 	IndexPath  *pathnode;
 
 	FastListInit(&infos);
+	FastListInit(&clauses);
 	FastListInit(&quals);
 	path_startup_cost = 0;
 	path_total_cost = 0;
@@ -267,17 +262,20 @@ best_or_subclause_indexes(Query *root,
 	{
 		Expr	   *subclause = lfirst(slist);
 		IndexOptInfo *best_indexinfo;
-		List	   *best_indexqual;
+		List	   *best_indexclauses;
+		List	   *best_indexquals;
 		Cost		best_startup_cost;
 		Cost		best_total_cost;
 
 		if (!best_or_subclause_index(root, rel, subclause,
-									 &best_indexinfo, &best_indexqual,
+									 &best_indexinfo,
+									 &best_indexclauses, &best_indexquals,
 									 &best_startup_cost, &best_total_cost))
 			return NULL;		/* failed to match this subclause */
 
 		FastAppend(&infos, best_indexinfo);
-		FastAppend(&quals, best_indexqual);
+		FastAppend(&clauses, best_indexclauses);
+		FastAppend(&quals, best_indexquals);
 		/*
 		 * Path startup_cost is the startup cost for the first index scan only;
 		 * startup costs for later scans will be paid later on, so they just
@@ -306,10 +304,11 @@ best_or_subclause_indexes(Query *root,
 	pathnode->path.pathkeys = NIL;
 
 	pathnode->indexinfo = FastListValue(&infos);
-	pathnode->indexqual = FastListValue(&quals);
+	pathnode->indexclauses = FastListValue(&clauses);
+	pathnode->indexquals = FastListValue(&quals);
 
 	/* It's not an innerjoin path. */
-	pathnode->indexjoinclauses = NIL;
+	pathnode->isjoininner = false;
 
 	/* We don't actually care what order the index scans in. */
 	pathnode->indexscandir = NoMovementScanDirection;
@@ -336,7 +335,8 @@ best_or_subclause_indexes(Query *root,
  * 'subclause' is the OR subclause being considered
  *
  * '*retIndexInfo' gets the IndexOptInfo of the best index
- * '*retIndexQual' gets a list of the indexqual conditions for the best index
+ * '*retIndexClauses' gets a list of the index clauses for the best index
+ * '*retIndexQuals' gets a list of the expanded indexquals for the best index
  * '*retStartupCost' gets the startup cost of a scan with that index
  * '*retTotalCost' gets the total cost of a scan with that index
  */
@@ -345,7 +345,8 @@ best_or_subclause_index(Query *root,
 						RelOptInfo *rel,
 						Expr *subclause,
 						IndexOptInfo **retIndexInfo,	/* return value */
-						List **retIndexQual,	/* return value */
+						List **retIndexClauses,	/* return value */
+						List **retIndexQuals,	/* return value */
 						Cost *retStartupCost,	/* return value */
 						Cost *retTotalCost)		/* return value */
 {
@@ -355,7 +356,7 @@ best_or_subclause_index(Query *root,
 	foreach(ilist, rel->indexlist)
 	{
 		IndexOptInfo *index = (IndexOptInfo *) lfirst(ilist);
-		List	   *qualrinfos;
+		List	   *indexclauses;
 		List	   *indexquals;
 		Path		subclause_path;
 
@@ -364,21 +365,22 @@ best_or_subclause_index(Query *root,
 			continue;
 
 		/* Collect index clauses usable with this index */
-		qualrinfos = group_clauses_by_indexkey_for_or(rel, index, subclause);
+		indexclauses = group_clauses_by_indexkey_for_or(rel, index, subclause);
 
 		/* Ignore index if it doesn't match the subclause at all */
-		if (qualrinfos == NIL)
+		if (indexclauses == NIL)
 			continue;
 
-		/* Convert RestrictInfo nodes to indexquals the executor can handle */
-		indexquals = expand_indexqual_conditions(index, qualrinfos);
+		/* Convert clauses to indexquals the executor can handle */
+		indexquals = expand_indexqual_conditions(index, indexclauses);
 
 		cost_index(&subclause_path, root, rel, index, indexquals, false);
 
 		if (!found || subclause_path.total_cost < *retTotalCost)
 		{
 			*retIndexInfo = index;
-			*retIndexQual = indexquals;
+			*retIndexClauses = flatten_clausegroups_list(indexclauses);
+			*retIndexQuals = indexquals;
 			*retStartupCost = subclause_path.startup_cost;
 			*retTotalCost = subclause_path.total_cost;
 			found = true;
