@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.46 1998/06/15 19:28:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.47 1998/06/19 11:40:46 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,7 +61,7 @@ static char *CopyReadAttribute(FILE *fp, bool *isnull, char *delim, int *newline
 static char *CopyReadAttribute(FILE *fp, bool *isnull, char *delim);
 
 #endif
-static void CopyAttributeOut(FILE *fp, char *string, char *delim);
+static void CopyAttributeOut(FILE *fp, char *string, char *delim, int is_array);
 static int	CountTuples(Relation relation);
 
 extern FILE *Pfout,
@@ -277,7 +277,7 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 				{
 					string = (char *) (*fmgr_faddr(&out_functions[i]))
 						(value, elements[i], typmod[i]);
-					CopyAttributeOut(fp, string, delim);
+					CopyAttributeOut(fp, string, delim, attr[i]->attnelems);
 					pfree(string);
 				}
 				else
@@ -554,7 +554,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 				{
 					loaded_oid = oidin(string);
 					if (loaded_oid < BootstrapObjectIdData)
-						elog(ERROR, "COPY TEXT: Invalid Oid");
+						elog(ERROR, "COPY TEXT: Invalid Oid. line: %d", lineno);
 				}
 			}
 			for (i = 0; i < attr_count && !done; i++)
@@ -603,7 +603,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 				{
 					fread(&loaded_oid, sizeof(int32), 1, fp);
 					if (loaded_oid < BootstrapObjectIdData)
-						elog(ERROR, "COPY BINARY: Invalid Oid");
+						elog(ERROR, "COPY BINARY: Invalid Oid line: %d", lineno);
 				}
 				fread(&null_ct, sizeof(int32), 1, fp);
 				if (null_ct > 0)
@@ -642,7 +642,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 								ptr += sizeof(int32);
 								break;
 							default:
-								elog(ERROR, "COPY BINARY: impossible size!");
+								elog(ERROR, "COPY BINARY: impossible size! line: %d", lineno);
 								break;
 						}
 					}
@@ -1099,7 +1099,7 @@ CopyReadAttribute(FILE *fp, bool *isnull, char *delim)
 				case '.':
 					c = getc(fp);
 					if (c != '\n')
-						elog(ERROR, "CopyReadAttribute - end of record marker corrupted");
+						elog(ERROR, "CopyReadAttribute - end of record marker corrupted. line: %d", lineno);
 					return (NULL);
 					break;
 			}
@@ -1115,22 +1115,16 @@ CopyReadAttribute(FILE *fp, bool *isnull, char *delim)
 		if (!done)
 			attribute[i++] = c;
 		if (i == EXT_ATTLEN - 1)
-			elog(ERROR, "CopyReadAttribute - attribute length too long");
+			elog(ERROR, "CopyReadAttribute - attribute length too long. line: %d", lineno);
 	}
 	attribute[i] = '\0';
 	return (&attribute[0]);
 }
 
 static void
-CopyAttributeOut(FILE *fp, char *string, char *delim)
+CopyAttributeOut(FILE *fp, char *string, char *delim, int is_array)
 {
 	char		c;
-	int			is_array = false;
-	int			len = strlen(string);
-
-	/* XXX - This is a kludge, we should check the data type */
-	if (len && (string[0] == '{') && (string[len - 1] == '}'))
-		is_array = true;
 
 	for (; (c = *string) != '\0'; string++)
 	{
