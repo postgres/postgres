@@ -1034,5 +1034,9 @@ Fri Dec 22 13:33:31 CET 2000
 
 	- Fixed bug in a connect statement using varchars.
 	- Synced gram.y and preproc.y.   
+
+Tue Jan  9 20:24:56 CET 2001
+
+	- Synced gram.y.   
 	- Set ecpg version to 2.8.0. 
 	- Set library version to 3.2.0.

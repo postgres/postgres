@@ -294,7 +294,7 @@ make_name(void)
 %type  <str> 	opt_indirection expr_list extract_list extract_arg
 %type  <str>	position_list substr_list substr_from alter_column_action
 %type  <str>	trim_list in_expr substr_for attr attrs drop_behavior
-%type  <str>	Typename SimpleTypename Generic Numeric generic opt_float opt_numeric
+%type  <str>	Typename SimpleTypename GenericType Numeric opt_float opt_numeric
 %type  <str> 	opt_decimal Character character opt_varying opt_charset
 %type  <str>	opt_collate datetime opt_timezone opt_interval table_ref
 %type  <str>	row_expr row_descriptor row_list ConstDatetime opt_chain
@@ -2928,7 +2928,7 @@ SimpleTypename:  ConstTypename	{ $$ = $1; }
                | ConstInterval	{ $$ = $1; }
                ;  
 
-ConstTypename:  Generic	{ $$ = $1; }
+ConstTypename:  GenericType	{ $$ = $1; }
 		| ConstDatetime	{ $$ = $1; }
 		| Numeric	{ $$ = $1; }
 		| Geometric	{ $$ = $1; }
@@ -2936,14 +2936,7 @@ ConstTypename:  Generic	{ $$ = $1; }
 		| Character	{ $$ = $1; }
 		;
 
-Generic:  generic
-				{
-					$$ = $1;
-				}
-		;
-
-generic:  ident					{ $$ = $1; }
-		| TYPE_P			{ $$ = make_str("type"); }
+GenericType:  ident				{ $$ = $1; }
 		| ECPGKeywords			{ $$ = $1; }
 		| ECPGTypeName			{ $$ = $1; }
 		;
@@ -5076,6 +5069,7 @@ TokenId:  ABSOLUTE			{ $$ = make_str("absolute"); }
 	| TRIGGER			{ $$ = make_str("trigger"); }
 	| TRUNCATE			{ $$ = make_str("truncate"); }
 	| TRUSTED			{ $$ = make_str("trusted"); }
+	| TYPE_P			{ $$ = make_str("type"); }
 	| UNLISTEN			{ $$ = make_str("unlisten"); }
 	| UNTIL				{ $$ = make_str("until"); }
 	| UPDATE			{ $$ = make_str("update"); }
@@ -5109,6 +5103,7 @@ ECPGColLabel:  ECPGColId	{ $$ = $1; }
 		| ALL		{ $$ = make_str("all"); }
 		| ANALYSE       { $$ = make_str("analyse"); }
 		| ANALYZE       { $$ = make_str("analyze"); }
+		| AND		{ $$ = make_str("and"); }
 		| ANY		{ $$ = make_str("any"); }
 		| ASC		{ $$ = make_str("asc"); }
 	    	| BETWEEN       { $$ = make_str("between"); }
@@ -5203,6 +5198,7 @@ ECPGColLabel:  ECPGColId	{ $$ = $1; }
 		| TABLE		{ $$ = make_str("table"); }
 		| THEN          { $$ = make_str("then"); }
 		| TO		{ $$ = make_str("to"); }
+		| TRAILING	{ $$ = make_str("trailing"); }
 		| TRANSACTION	{ $$ = make_str("transaction"); }
 		| TRIM		{ $$ = make_str("trim"); }
 		| TRUE_P	{ $$ = make_str("true"); }
