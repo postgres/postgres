@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.53 2001/09/19 15:19:12 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.54 2001/10/18 17:30:14 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,6 +27,7 @@
 #include "optimizer/paths.h"
 #include "parser/parse_expr.h"
 #include "utils/builtins.h"
+#include "utils/date.h"
 #include "utils/guc.h"
 #include "utils/tqual.h"
 
@@ -41,24 +42,24 @@
 
 static bool show_datestyle(void);
 static bool reset_datestyle(void);
-static bool parse_datestyle(char *);
+static bool parse_datestyle(List *);
 static bool show_timezone(void);
 static bool reset_timezone(void);
-static bool parse_timezone(char *);
+static bool parse_timezone(List *);
 
 static bool show_XactIsoLevel(void);
 static bool reset_XactIsoLevel(void);
-static bool parse_XactIsoLevel(char *);
-static bool parse_random_seed(char *);
+static bool parse_XactIsoLevel(List *);
 static bool show_random_seed(void);
 static bool reset_random_seed(void);
+static bool parse_random_seed(List *);
 
 static bool show_client_encoding(void);
 static bool reset_client_encoding(void);
-static bool parse_client_encoding(char *);
+static bool parse_client_encoding(List *);
 static bool show_server_encoding(void);
 static bool reset_server_encoding(void);
-static bool parse_server_encoding(char *);
+static bool parse_server_encoding(List *);
 
 
 /*
@@ -177,7 +178,7 @@ get_token(char **tok, char **val, char *str)
 
 
 /*
- * DATE_STYLE
+ * DATESTYLE
  *
  * NOTE: set_default_datestyle() is called during backend startup to check
  * if the PGDATESTYLE environment variable is set.	We want the env var
@@ -189,17 +190,14 @@ static int	DefaultDateStyle;
 static bool DefaultEuroDates;
 
 static bool
-parse_datestyle(char *value)
+parse_datestyle_internal(char *value)
 {
 	char	   *tok;
 	int			dcnt = 0,
 				ecnt = 0;
 
 	if (value == NULL)
-	{
-		reset_datestyle();
-		return TRUE;
-	}
+		return reset_datestyle();
 
 	while ((value = get_token(&tok, NULL, value)) != 0)
 	{
@@ -255,6 +253,21 @@ parse_datestyle(char *value)
 		elog(NOTICE, "Conflicting settings for date");
 
 	return TRUE;
+}
+
+static bool
+parse_datestyle(List *args)
+{
+	char	   *value;
+
+	if (args == NULL)
+		return reset_datestyle();
+
+	Assert(IsA(lfirst(args), A_Const));
+
+	value = ((A_Const *) lfirst(args))->val.val.str;
+
+	return parse_datestyle_internal(value);
 }
 
 static bool
@@ -321,8 +334,11 @@ set_default_datestyle(void)
 	 */
 	DBDate = strdup(DBDate);
 
-	/* Parse desired setting into DateStyle/EuroDates */
-	parse_datestyle(DBDate);
+	/* Parse desired setting into DateStyle/EuroDates
+	 * Use parse_datestyle_internal() to avoid any palloc() issues per above
+	 * - thomas 2001-10-15
+	 */
+	parse_datestyle_internal(DBDate);
 
 	free(DBDate);
 
@@ -348,39 +364,96 @@ static char tzbuf[64];
 /* parse_timezone()
  * Handle SET TIME ZONE...
  * Try to save existing TZ environment variable for later use in RESET TIME ZONE.
- * - thomas 1997-11-10
+ * Accept an explicit interval per SQL9x, though this is less useful than a full time zone.
+ * - thomas 2001-10-11
  */
 static bool
-parse_timezone(char *value)
+parse_timezone(List *args)
 {
-	char	   *tok;
+	List	   *arg;
+	TypeName   *type;
 
-	if (value == NULL)
-	{
-		reset_timezone();
-		return TRUE;
-	}
+	if (args == NULL)
+		return reset_timezone();
 
-	while ((value = get_token(&tok, NULL, value)) != 0)
+	Assert(IsA(args, List));
+
+	foreach(arg, args)
 	{
-		/* Not yet tried to save original value from environment? */
-		if (defaultTZ == NULL)
+		A_Const *p;
+
+		Assert(IsA(arg, List));
+		p = lfirst(arg);
+		Assert(IsA(p, A_Const));
+
+		type = p->typename;
+		if (type != NULL)
 		{
-			/* found something? then save it for later */
-			if ((defaultTZ = getenv("TZ")) != NULL)
-				strcpy(TZvalue, defaultTZ);
+			if (strcmp(type->name, "interval") == 0)
+			{
+				Interval   *interval;
 
-			/* found nothing so mark with an invalid pointer */
+				interval = DatumGetIntervalP(DirectFunctionCall3(interval_in,
+																 CStringGetDatum(p->val.val.str),
+																 ObjectIdGetDatum(InvalidOid),
+																 Int32GetDatum(-1)));
+				if (interval->month != 0)
+					elog(ERROR, "SET TIME ZONE illegal INTERVAL; month not allowed");
+				CTimeZone = interval->time;
+			}
+			else if (strcmp(type->name, "float8") == 0)
+			{
+				float8 time;
+
+				time = DatumGetFloat8(DirectFunctionCall1(float8in, CStringGetDatum(p->val.val.str)));
+				CTimeZone = time * 3600;
+			}
+			/* We do not actually generate an integer constant in gram.y so this is not used... */
+			else if (strcmp(type->name, "int4") == 0)
+			{
+				int32 time;
+
+				time = p->val.val.ival;
+				CTimeZone = time * 3600;
+			}
 			else
-				defaultTZ = (char *) -1;
+			{
+				elog(ERROR, "Unable to process SET TIME ZONE command; internal coding error");
+			}
+
+			HasCTZSet = true;
 		}
+		else
+		{
+			char	   *tok;
+			char	   *value;
 
-		strcpy(tzbuf, "TZ=");
-		strcat(tzbuf, tok);
-		if (putenv(tzbuf) != 0)
-			elog(ERROR, "Unable to set TZ environment variable to %s", tok);
+			value = p->val.val.str;
 
-		tzset();
+			while ((value = get_token(&tok, NULL, value)) != 0)
+			{
+				/* Not yet tried to save original value from environment? */
+				if (defaultTZ == NULL)
+				{
+					/* found something? then save it for later */
+					if ((defaultTZ = getenv("TZ")) != NULL)
+						strcpy(TZvalue, defaultTZ);
+
+					/* found nothing so mark with an invalid pointer */
+					else
+						defaultTZ = (char *) -1;
+				}
+
+				strcpy(tzbuf, "TZ=");
+				strcat(tzbuf, tok);
+				if (putenv(tzbuf) != 0)
+					elog(ERROR, "Unable to set TZ environment variable to %s", tok);
+
+				tzset();
+			}
+
+			HasCTZSet = false;
+		}
 	}
 
 	return TRUE;
@@ -389,11 +462,26 @@ parse_timezone(char *value)
 static bool
 show_timezone(void)
 {
-	char	   *tz;
+	char *tzn;
 
-	tz = getenv("TZ");
+	if (HasCTZSet)
+	{
+		Interval interval;
 
-	elog(NOTICE, "Time zone is %s", ((tz != NULL) ? tz : "unset"));
+		interval.month = 0;
+		interval.time = CTimeZone;
+
+		tzn = DatumGetCString(DirectFunctionCall1(interval_out, IntervalPGetDatum(&interval)));
+	}
+	else
+	{
+		tzn = getenv("TZ");
+	}
+
+	if (tzn != NULL)
+		elog(NOTICE, "Time zone is '%s'", tzn);
+	else
+		elog(NOTICE, "Time zone is unset");
 
 	return TRUE;
 }	/* show_timezone() */
@@ -411,8 +499,13 @@ show_timezone(void)
 static bool
 reset_timezone(void)
 {
+	if (HasCTZSet)
+	{
+		HasCTZSet = false;
+	}
+
 	/* no time zone has been set in this session? */
-	if (defaultTZ == NULL)
+	else if (defaultTZ == NULL)
 	{
 	}
 
@@ -443,24 +536,29 @@ reset_timezone(void)
 
 
 
-/* SET TRANSACTION */
+/*
+ *
+ * SET TRANSACTION
+ *
+ */
 
 static bool
-parse_XactIsoLevel(char *value)
+parse_XactIsoLevel(List *args)
 {
+	char *value;
 
-	if (value == NULL)
-	{
-		reset_XactIsoLevel();
-		return TRUE;
-	}
+	if (args == NULL)
+		return reset_XactIsoLevel();
+
+	Assert(IsA(lfirst(args), A_Const));
+
+	value = ((A_Const *) lfirst(args))->val.val.str;
 
 	if (SerializableSnapshot != NULL)
 	{
 		elog(ERROR, "SET TRANSACTION ISOLATION LEVEL must be called before any query");
 		return TRUE;
 	}
-
 
 	if (strcmp(value, "serializable") == 0)
 		XactIsoLevel = XACT_SERIALIZABLE;
@@ -503,17 +601,21 @@ reset_XactIsoLevel(void)
  * Random number seed
  */
 static bool
-parse_random_seed(char *value)
+parse_random_seed(List *args)
 {
-	double		seed = 0;
+	char   *value;
+	double	seed = 0;
 
-	if (value == NULL)
-		reset_random_seed();
-	else
-	{
-		sscanf(value, "%lf", &seed);
-		DirectFunctionCall1(setseed, Float8GetDatum(seed));
-	}
+	if (args == NULL)
+		return reset_random_seed();
+
+	Assert(IsA(lfirst(args), A_Const));
+
+	value = ((A_Const *) lfirst(args))->val.val.str;
+
+	sscanf(value, "%lf", &seed);
+	DirectFunctionCall1(setseed, Float8GetDatum(seed));
+
 	return (TRUE);
 }
 
@@ -544,16 +646,26 @@ reset_random_seed(void)
  */
 
 static bool
-parse_client_encoding(char *value)
+parse_client_encoding(List *args)
 {
+	char   *value;
 #ifdef MULTIBYTE
-	int			encoding;
+	int		encoding;
+#endif
 
+	if (args == NULL)
+		return reset_client_encoding();
+
+	Assert(IsA(lfirst(args), A_Const));
+
+	value = ((A_Const *) lfirst(args))->val.val.str;
+
+#ifdef MULTIBYTE
 	encoding = pg_valid_client_encoding(value);
 	if (encoding < 0)
 	{
 		if (value)
-			elog(ERROR, "Client encoding %s is not supported", value);
+			elog(ERROR, "Client encoding '%s' is not supported", value);
 		else
 			elog(ERROR, "No client encoding is specified");
 	}
@@ -576,8 +688,8 @@ parse_client_encoding(char *value)
 static bool
 show_client_encoding(void)
 {
-	elog(NOTICE, "Current client encoding is %s",
-		pg_get_client_encoding_name());
+	elog(NOTICE, "Current client encoding is '%s'",
+		 pg_get_client_encoding_name());
 	return TRUE;
 }
 
@@ -596,6 +708,7 @@ reset_client_encoding(void)
 	}
 	else
 		encoding = GetDatabaseEncoding();
+
 	pg_set_client_encoding(encoding);
 #endif
 	return TRUE;
@@ -610,7 +723,7 @@ set_default_client_encoding(void)
 
 
 static bool
-parse_server_encoding(char *value)
+parse_server_encoding(List *args)
 {
 	elog(NOTICE, "SET SERVER_ENCODING is not supported");
 	return TRUE;
@@ -619,7 +732,7 @@ parse_server_encoding(char *value)
 static bool
 show_server_encoding(void)
 {
-	elog(NOTICE, "Current server encoding is %s", GetDatabaseEncodingName());
+	elog(NOTICE, "Current server encoding is '%s'", GetDatabaseEncodingName());
 	return TRUE;
 }
 
@@ -632,33 +745,42 @@ reset_server_encoding(void)
 
 
 
+/* SetPGVariable()
+ * Dispatcher for handling SET commands.
+ * Special cases ought to be removed and handled separately by TCOP
+ */
 void
-SetPGVariable(const char *name, const char *value)
+SetPGVariable(const char *name, List *args)
 {
-	char	   *mvalue = value ? pstrdup(value) : ((char *) NULL);
-
-	/*
-	 * Special cases ought to be removed and handled separately by TCOP
-	 */
 	if (strcasecmp(name, "datestyle") == 0)
-		parse_datestyle(mvalue);
+		parse_datestyle(args);
 	else if (strcasecmp(name, "timezone") == 0)
-		parse_timezone(mvalue);
+		parse_timezone(args);
 	else if (strcasecmp(name, "XactIsoLevel") == 0)
-		parse_XactIsoLevel(mvalue);
+		parse_XactIsoLevel(args);
 	else if (strcasecmp(name, "client_encoding") == 0)
-		parse_client_encoding(mvalue);
+		parse_client_encoding(args);
 	else if (strcasecmp(name, "server_encoding") == 0)
-		parse_server_encoding(mvalue);
+		parse_server_encoding(args);
 	else if (strcasecmp(name, "seed") == 0)
-		parse_random_seed(mvalue);
-	else if (strcasecmp(name, "session_authorization") == 0)
-		SetSessionAuthorization(value);
+		parse_random_seed(args);
 	else
-		SetConfigOption(name, value, superuser() ? PGC_SUSET : PGC_USERSET, false);
+	{
+		/* For routines defined somewhere else,
+		 * go ahead and extract the string argument
+		 * to match the original interface definition.
+		 * Later, we can change this code too...
+		 */
+		char *value;
 
-	if (mvalue)
-		pfree(mvalue);
+		value = ((args != NULL)? ((A_Const *) lfirst(args))->val.val.str: NULL);
+
+		if (strcasecmp(name, "session_authorization") == 0)
+			SetSessionAuthorization(value);
+		else
+			SetConfigOption(name, value, superuser() ? PGC_SUSET : PGC_USERSET, false);
+	}
+	return;
 }
 
 void
@@ -685,7 +807,8 @@ GetPGVariable(const char *name)
 		show_client_encoding();
 		show_server_encoding();
 		show_random_seed();
-	} else
+	}
+	else
 	{
 		const char *val = GetConfigOption(name);
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.55 2001/10/05 06:38:59 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.56 2001/10/18 17:30:15 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,6 +33,7 @@ static double time2t(const int hour, const int min, const double sec);
 static int	EncodeSpecialTimestamp(Timestamp dt, char *str);
 static Timestamp dt2local(Timestamp dt, int timezone);
 static void AdjustTimestampForTypmod(Timestamp *time, int32 typmod);
+static void AdjustIntervalForTypmod(Interval *interval, int32 typmod);
 
 
 /*****************************************************************************
@@ -69,7 +70,7 @@ timestamp_in(PG_FUNCTION_ARGS)
 	{
 		case DTK_DATE:
 			if (tm2timestamp(tm, fsec, NULL, &result) != 0)
-				elog(ERROR, "Timestamp out of range '%s'", str);
+				elog(ERROR, "TIMESTAMP out of range '%s'", str);
 			break;
 
 		case DTK_EPOCH:
@@ -85,12 +86,12 @@ timestamp_in(PG_FUNCTION_ARGS)
 			break;
 
 		case DTK_INVALID:
-			elog(ERROR, "Timestamp '%s' no longer supported", str);
+			elog(ERROR, "TIMESTAMP '%s' no longer supported", str);
 			TIMESTAMP_NOEND(result);
 			break;
 
 		default:
-			elog(ERROR, "Timestamp '%s' not parsed; internal coding error", str);
+			elog(ERROR, "TIMESTAMP '%s' not parsed; internal coding error", str);
 			TIMESTAMP_NOEND(result);
 	}
 
@@ -157,7 +158,7 @@ AdjustTimestampForTypmod(Timestamp *time, int32 typmod)
 			TimestampTypmod = typmod;
 		}
 
-		*time = (rint(((double) *time)*TimestampScale)/TimestampScale);
+		*time = (rint(((double) *time) * TimestampScale)/TimestampScale);
 	}
 }
 
@@ -192,7 +193,7 @@ timestamptz_in(PG_FUNCTION_ARGS)
 	{
 		case DTK_DATE:
 			if (tm2timestamp(tm, fsec, &tz, &result) != 0)
-				elog(ERROR, "Timestamp out of range '%s'", str);
+				elog(ERROR, "TIMESTAMP WITH TIME ZONE out of range '%s'", str);
 			break;
 
 		case DTK_EPOCH:
@@ -208,12 +209,12 @@ timestamptz_in(PG_FUNCTION_ARGS)
 			break;
 
 		case DTK_INVALID:
-			elog(ERROR, "Timestamp with time zone '%s' no longer supported", str);
+			elog(ERROR, "TIMESTAMP WITH TIME ZONE '%s' no longer supported", str);
 			TIMESTAMP_NOEND(result);
 			break;
 
 		default:
-			elog(ERROR, "Timestamp with time zone '%s' not parsed; internal coding error", str);
+			elog(ERROR, "TIMESTAMP WITH TIME ZONE '%s' not parsed; internal coding error", str);
 			TIMESTAMP_NOEND(result);
 	}
 
@@ -277,6 +278,10 @@ Datum
 interval_in(PG_FUNCTION_ARGS)
 {
 	char	   *str = PG_GETARG_CSTRING(0);
+#ifdef NOT_USED
+	Oid			typelem = PG_GETARG_OID(1);
+#endif
+	int32		typmod = PG_GETARG_INT32(2);
 	Interval   *result;
 	double		fsec;
 	struct tm	tt,
@@ -306,6 +311,7 @@ interval_in(PG_FUNCTION_ARGS)
 		case DTK_DELTA:
 			if (tm2interval(tm, fsec, result) != 0)
 				elog(ERROR, "Bad interval external representation '%s'", str);
+			AdjustIntervalForTypmod(result, typmod);
 			break;
 
 		case DTK_INVALID:
@@ -340,6 +346,148 @@ interval_out(PG_FUNCTION_ARGS)
 
 	result = pstrdup(buf);
 	PG_RETURN_CSTRING(result);
+}
+
+/* interval_scale()
+ * Adjust interval type for specified fields.
+ * Used by PostgreSQL type system to stuff columns.
+ */
+Datum
+interval_scale(PG_FUNCTION_ARGS)
+{
+	Interval   *interval = PG_GETARG_INTERVAL_P(0);
+	int32		typmod = PG_GETARG_INT32(1);
+	Interval   *result;
+
+	result = palloc(sizeof(Interval));
+	*result = *interval;
+
+	AdjustIntervalForTypmod(result, typmod);
+
+	PG_RETURN_INTERVAL_P(result);
+}
+
+#define MASK(b) (1 << (b))
+
+static void
+AdjustIntervalForTypmod(Interval *interval, int32 typmod)
+{
+	if (typmod != -1)
+	{
+		int range = ((typmod >> 16) & 0xFFFF);
+		int precision = (typmod & 0xFFFF);
+
+		if (range == 0xFFFF)
+		{
+			/* Do nothing... */
+		}
+		if (range == MASK(YEAR))
+		{
+			interval->month = ((interval->month / 12) * 12);
+			interval->time = 0;
+		}
+		else if (range == MASK(MONTH))
+		{
+			interval->month %= 12;
+			interval->time = 0;
+		}
+		/* YEAR TO MONTH */
+		else if (range  == (MASK(YEAR) | MASK(MONTH)))
+		{
+			interval->time = 0;
+		}
+		else if (range == MASK(DAY))
+		{
+			interval->month = 0;
+			interval->time = (((int)(interval->time / 86400)) * 86400);
+		}
+		else if (range == MASK(HOUR))
+		{
+			double day;
+
+			interval->month = 0;
+			TMODULO(interval->time, day, 86400.0);
+			interval->time = (((int)(interval->time / 3600)) * 3600.0);
+		}
+		else if (range == MASK(MINUTE))
+		{
+			double hour;
+
+			interval->month = 0;
+			TMODULO(interval->time, hour, 3600.0);
+			interval->time = (((int)(interval->time / 60)) * 60);
+		}
+		else if (range == MASK(SECOND))
+		{
+			double hour;
+
+			interval->month = 0;
+			TMODULO(interval->time, hour, 60.0);
+//			interval->time = (int)(interval->time);
+		}
+		/* DAY TO HOUR */
+		else if (range == (MASK(DAY) | MASK(HOUR)))
+		{
+			interval->month = 0;
+			interval->time = (((int)(interval->time / 3600)) * 3600);
+		}
+		/* DAY TO MINUTE */
+		else if (range == (MASK(DAY) | MASK(HOUR) | MASK(MINUTE)))
+		{
+			interval->month = 0;
+			interval->time = (((int)(interval->time / 60)) * 60);
+		}
+		/* DAY TO SECOND */
+		else if (range == (MASK(DAY) | MASK(HOUR) | MASK(MINUTE) | MASK(SECOND)))
+		{
+			interval->month = 0;
+		}
+		/* HOUR TO MINUTE */
+		else if (range == (MASK(HOUR) | MASK(MINUTE)))
+		{
+			double day;
+
+			interval->month = 0;
+			TMODULO(interval->time, day, 86400.0);
+			interval->time = (((int)(interval->time / 60)) * 60);
+		}
+		/* HOUR TO SECOND */
+		else if (range == (MASK(HOUR) | MASK(MINUTE) | MASK(SECOND)))
+		{
+			double day;
+
+			interval->month = 0;
+			TMODULO(interval->time, day, 86400.0);
+		}
+		/* MINUTE TO SECOND */
+		else if (range == (MASK(MINUTE) | MASK(SECOND)))
+		{
+			double hour;
+
+			interval->month = 0;
+			TMODULO(interval->time, hour, 3600.0);
+		}
+		else
+		{
+			elog(ERROR, "AdjustIntervalForTypmod(): internal coding error");
+		}
+
+		if (precision != 0xFFFF)
+		{
+			static double IntervalScale = 1;
+			static int IntervalTypmod = 0;
+
+			if (precision != IntervalTypmod)
+			{
+				IntervalTypmod = precision;
+				IntervalScale = pow(10.0, IntervalTypmod);
+			}
+
+			interval->time = (rint(interval->time * IntervalScale) / IntervalScale);
+		}
+	}
+
+	return;
 }
 
 
@@ -417,6 +565,13 @@ timestamp2tm(Timestamp dt, int *tzp, struct tm * tm, double *fsec, char **tzn)
 
 	date0 = date2j(2000, 1, 1);
 
+	/* If HasCTZSet is true then we have a brute force time zone specified.
+	 * Go ahead and rotate to the local time zone since we will later bypass
+	 * any calls which adjust the tm fields.
+	 */
+	if (HasCTZSet && (tzp != NULL))
+		dt -= CTimeZone;
+
 	time = dt;
 	TMODULO(time, date, 86400e0);
 
@@ -441,7 +596,24 @@ timestamp2tm(Timestamp dt, int *tzp, struct tm * tm, double *fsec, char **tzn)
 
 	if (tzp != NULL)
 	{
-		if (IS_VALID_UTIME(tm->tm_year, tm->tm_mon, tm->tm_mday))
+		/* We have a brute force time zone per SQL99?
+		 * Then use it without change
+		 * since we have already rotated to the time zone.
+		 */
+		if (HasCTZSet)
+		{
+			*tzp = CTimeZone;
+			tm->tm_gmtoff = CTimeZone;
+			tm->tm_isdst = 0;
+			tm->tm_zone = NULL;
+			if (tzn != NULL)
+				*tzn = NULL;
+		}
+
+		/* Does this fall within the capabilities of the localtime() interface?
+		 * Then use this to rotate to the local time zone.
+		 */
+		else if (IS_VALID_UTIME(tm->tm_year, tm->tm_mon, tm->tm_mday))
 		{
 			utime = (dt + (date0 - date2j(1970, 1, 1)) * 86400);
 
@@ -492,6 +664,7 @@ timestamp2tm(Timestamp dt, int *tzp, struct tm * tm, double *fsec, char **tzn)
 				*tzn = CTZName;
 #endif
 
+			dt = dt2local(dt, *tzp);
 		}
 		else
 		{
@@ -500,9 +673,6 @@ timestamp2tm(Timestamp dt, int *tzp, struct tm * tm, double *fsec, char **tzn)
 			if (tzn != NULL)
 				*tzn = NULL;
 		}
-
-		dt = dt2local(dt, *tzp);
-
 	}
 	else
 	{
@@ -1072,14 +1242,14 @@ timestamp_pl_span(PG_FUNCTION_ARGS)
 
 				if (tm2timestamp(tm, fsec, NULL, &timestamp) != 0)
 				{
-					elog(ERROR, "Unable to add timestamp and interval"
+					elog(ERROR, "Unable to add TIMESTAMP and INTERVAL"
 						 "\n\ttimestamp_pl_span() internal error encoding timestamp");
 					PG_RETURN_NULL();
 				}
 			}
 			else
 			{
-				elog(ERROR, "Unable to add timestamp and interval"
+				elog(ERROR, "Unable to add TIMESTAMP and INTERVAL"
 					 "\n\ttimestamp_pl_span() internal error decoding timestamp");
 				PG_RETURN_NULL();
 			}
@@ -1164,12 +1334,12 @@ timestamptz_pl_span(PG_FUNCTION_ARGS)
 				tz = DetermineLocalTimeZone(tm);
 
 				if (tm2timestamp(tm, fsec, &tz, &timestamp) != 0)
-					elog(ERROR, "Unable to add timestamp and interval"
+					elog(ERROR, "Unable to add TIMESTAMP and INTERVAL"
 						"\n\ttimestamptz_pl_span() internal error encoding timestamp");
 			}
 			else
 			{
-				elog(ERROR, "Unable to add timestamp and interval"
+				elog(ERROR, "Unable to add TIMESTAMP and INTERVAL"
 					 "\n\ttimestamptz_pl_span() internal error decoding timestamp");
 			}
 		}
@@ -1546,11 +1716,11 @@ timestamp_age(PG_FUNCTION_ARGS)
 		}
 
 		if (tm2interval(tm, fsec, result) != 0)
-			elog(ERROR, "Unable to encode interval"
+			elog(ERROR, "Unable to encode INTERVAL"
 				 "\n\ttimestamp_age() internal coding error");
 	}
 	else
-		elog(ERROR, "Unable to decode timestamp"
+		elog(ERROR, "Unable to decode TIMESTAMP"
 			 "\n\ttimestamp_age() internal coding error");
 
 	PG_RETURN_INTERVAL_P(result);
@@ -1655,10 +1825,10 @@ timestamptz_age(PG_FUNCTION_ARGS)
 		}
 
 		if (tm2interval(tm, fsec, result) != 0)
-			elog(ERROR, "Unable to decode timestamp");
+			elog(ERROR, "Unable to decode TIMESTAMP");
 	}
 	else
-		elog(ERROR, "Unable to decode timestamp");
+		elog(ERROR, "Unable to decode TIMESTAMP");
 
 	PG_RETURN_INTERVAL_P(result);
 }
@@ -1711,7 +1881,7 @@ text_timestamp(PG_FUNCTION_ARGS)
 				dstr[MAXDATELEN + 1];
 
 	if (VARSIZE(str) - VARHDRSZ > MAXDATELEN)
-		elog(ERROR, "Bad timestamp external representation (too long)");
+		elog(ERROR, "TIMESTAMP bad external representation (too long)");
 
 	sp = VARDATA(str);
 	dp = dstr;
@@ -1767,7 +1937,7 @@ text_timestamptz(PG_FUNCTION_ARGS)
 				dstr[MAXDATELEN + 1];
 
 	if (VARSIZE(str) - VARHDRSZ > MAXDATELEN)
-		elog(ERROR, "Bad timestamp with time zone external representation (too long)");
+		elog(ERROR, "TIMESTAMP WITH TIME ZONE bad external representation (too long)");
 
 	sp = VARDATA(str);
 	dp = dstr;
@@ -1824,14 +1994,17 @@ text_interval(PG_FUNCTION_ARGS)
 				dstr[MAXDATELEN + 1];
 
 	if (VARSIZE(str) - VARHDRSZ > MAXDATELEN)
-		elog(ERROR, "Bad interval external representation (too long)");
+		elog(ERROR, "INTERVAL bad external representation (too long)");
 	sp = VARDATA(str);
 	dp = dstr;
 	for (i = 0; i < (VARSIZE(str) - VARHDRSZ); i++)
 		*dp++ = *sp++;
 	*dp = '\0';
 
-	return DirectFunctionCall1(interval_in, CStringGetDatum(dstr));
+	return DirectFunctionCall3(interval_in,
+							   CStringGetDatum(dstr),
+							   ObjectIdGetDatum(InvalidOid),
+							   Int32GetDatum(-1));
 }
 
 /* timestamp_trunc()
@@ -1854,7 +2027,7 @@ timestamp_trunc(PG_FUNCTION_ARGS)
 			   *tm = &tt;
 
 	if (VARSIZE(units) - VARHDRSZ > MAXDATELEN)
-		elog(ERROR, "Interval units '%s' not recognized",
+		elog(ERROR, "TIMESTAMP units '%s' not recognized",
 			 DatumGetCString(DirectFunctionCall1(textout,
 												 PointerGetDatum(units))));
 	up = VARDATA(units);
@@ -1903,16 +2076,16 @@ timestamp_trunc(PG_FUNCTION_ARGS)
 				break;
 
 			default:
-				elog(ERROR, "Timestamp units '%s' not supported", lowunits);
+				elog(ERROR, "TIMESTAMP units '%s' not supported", lowunits);
 				result = 0;
 		}
 
 		if (tm2timestamp(tm, fsec, NULL, &result) != 0)
-			elog(ERROR, "Unable to truncate timestamp to '%s'", lowunits);
+			elog(ERROR, "Unable to truncate TIMESTAMP to '%s'", lowunits);
 	}
 	else
 	{
-		elog(ERROR, "Timestamp units '%s' not recognized", lowunits);
+		elog(ERROR, "TIMESTAMP units '%s' not recognized", lowunits);
 		result = 0;
 	}
 
@@ -1941,7 +2114,7 @@ timestamptz_trunc(PG_FUNCTION_ARGS)
 			   *tm = &tt;
 
 	if (VARSIZE(units) - VARHDRSZ > MAXDATELEN)
-		elog(ERROR, "Interval units '%s' not recognized",
+		elog(ERROR, "TIMESTAMP WITH TIME ZONE units '%s' not recognized",
 			 DatumGetCString(DirectFunctionCall1(textout,
 												 PointerGetDatum(units))));
 	up = VARDATA(units);
@@ -1984,24 +2157,23 @@ timestamptz_trunc(PG_FUNCTION_ARGS)
 			case DTK_MILLISEC:
 				fsec = rint(fsec * 1000) / 1000;
 				break;
-
 			case DTK_MICROSEC:
 				fsec = rint(fsec * 1000000) / 1000000;
 				break;
 
 			default:
-				elog(ERROR, "Timestamp units '%s' not supported", lowunits);
+				elog(ERROR, "TIMESTAMP WITH TIME ZONE units '%s' not supported", lowunits);
 				result = 0;
 		}
 
 		tz = DetermineLocalTimeZone(tm);
 
 		if (tm2timestamp(tm, fsec, &tz, &result) != 0)
-			elog(ERROR, "Unable to truncate timestamp to '%s'", lowunits);
+			elog(ERROR, "Unable to truncate TIMESTAMP WITH TIME ZONE to '%s'", lowunits);
 	}
 	else
 	{
-		elog(ERROR, "Timestamp units '%s' not recognized", lowunits);
+		elog(ERROR, "TIMESTAMP WITH TIME ZONE units '%s' not recognized", lowunits);
 		PG_RETURN_NULL();
 	}
 
@@ -2030,7 +2202,7 @@ interval_trunc(PG_FUNCTION_ARGS)
 	result = (Interval *) palloc(sizeof(Interval));
 
 	if (VARSIZE(units) - VARHDRSZ > MAXDATELEN)
-		elog(ERROR, "Interval units '%s' not recognized",
+		elog(ERROR, "INTERVAL units '%s' not recognized",
 			 DatumGetCString(DirectFunctionCall1(textout,
 												 PointerGetDatum(units))));
 	up = VARDATA(units);
@@ -2078,22 +2250,22 @@ interval_trunc(PG_FUNCTION_ARGS)
 					break;
 
 				default:
-					elog(ERROR, "Interval units '%s' not supported", lowunits);
+					elog(ERROR, "INTERVAL units '%s' not supported", lowunits);
 			}
 
 			if (tm2interval(tm, fsec, result) != 0)
-				elog(ERROR, "Unable to truncate interval to '%s'", lowunits);
+				elog(ERROR, "Unable to truncate INTERVAL to '%s'", lowunits);
 
 		}
 		else
 		{
-			elog(NOTICE, "Unable to decode interval; internal coding error");
+			elog(NOTICE, "Unable to decode INTERVAL; internal coding error");
 			*result = *interval;
 		}
 	}
 	else
 	{
-		elog(ERROR, "Interval units '%s' not recognized",
+		elog(ERROR, "INTERVAL units '%s' not recognized",
 			 DatumGetCString(DirectFunctionCall1(textout,
 												 PointerGetDatum(units))));
 		*result = *interval;
@@ -2202,7 +2374,7 @@ timestamp_part(PG_FUNCTION_ARGS)
 			   *tm = &tt;
 
 	if (VARSIZE(units) - VARHDRSZ > MAXDATELEN)
-		elog(ERROR, "Interval units '%s' not recognized",
+		elog(ERROR, "TIMESTAMP units '%s' not recognized",
 			 DatumGetCString(DirectFunctionCall1(textout,
 												 PointerGetDatum(units))));
 	up = VARDATA(units);
@@ -2212,7 +2384,7 @@ timestamp_part(PG_FUNCTION_ARGS)
 	*lp = '\0';
 
 	type = DecodeUnits(0, lowunits, &val);
-	if (type == IGNORE)
+	if (type == UNKNOWN_FIELD)
 		type = DecodeSpecial(0, lowunits, &val);
 
 	if (TIMESTAMP_NOT_FINITE(timestamp))
@@ -2221,7 +2393,8 @@ timestamp_part(PG_FUNCTION_ARGS)
 		PG_RETURN_FLOAT8(result);
 	}
 
-	if ((type == UNITS) && (timestamp2tm(timestamp, NULL, tm, &fsec, NULL) == 0))
+	if ((type == UNITS)
+		&& (timestamp2tm(timestamp, NULL, tm, &fsec, NULL) == 0))
 	{
 		switch (val)
 		{
@@ -2281,7 +2454,7 @@ timestamp_part(PG_FUNCTION_ARGS)
 			case DTK_TZ_MINUTE:
 			case DTK_TZ_HOUR:
 			default:
-				elog(ERROR, "Timestamp units '%s' not supported", lowunits);
+				elog(ERROR, "TIMESTAMP units '%s' not supported", lowunits);
 				result = 0;
 		}
 	}
@@ -2295,28 +2468,28 @@ timestamp_part(PG_FUNCTION_ARGS)
 
 			case DTK_DOW:
 				if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL) != 0)
-					elog(ERROR, "Unable to encode timestamp");
+					elog(ERROR, "Unable to encode TIMESTAMP");
 
 				result = j2day(date2j(tm->tm_year, tm->tm_mon, tm->tm_mday));
 				break;
 
 			case DTK_DOY:
 				if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL) != 0)
-					elog(ERROR, "Unable to encode timestamp");
+					elog(ERROR, "Unable to encode TIMESTAMP");
 
 				result = (date2j(tm->tm_year, tm->tm_mon, tm->tm_mday)
 						  - date2j(tm->tm_year, 1, 1) + 1);
 				break;
 
 			default:
-				elog(ERROR, "Timestamp units '%s' not supported", lowunits);
+				elog(ERROR, "TIMESTAMP units '%s' not supported", lowunits);
 				result = 0;
 		}
 
 	}
 	else
 	{
-		elog(ERROR, "Timestamp units '%s' not recognized", lowunits);
+		elog(ERROR, "TIMESTAMP units '%s' not recognized", lowunits);
 		result = 0;
 	}
 
@@ -2346,7 +2519,7 @@ timestamptz_part(PG_FUNCTION_ARGS)
 			   *tm = &tt;
 
 	if (VARSIZE(units) - VARHDRSZ > MAXDATELEN)
-		elog(ERROR, "Interval units '%s' not recognized",
+		elog(ERROR, "TIMESTAMP WITH TIME ZONE units '%s' not recognized",
 			 DatumGetCString(DirectFunctionCall1(textout,
 											   PointerGetDatum(units))));
 	up = VARDATA(units);
@@ -2356,7 +2529,7 @@ timestamptz_part(PG_FUNCTION_ARGS)
 	*lp = '\0';
 
 	type = DecodeUnits(0, lowunits, &val);
-	if (type == IGNORE)
+	if (type == UNKNOWN_FIELD)
 		type = DecodeSpecial(0, lowunits, &val);
 
 	if (TIMESTAMP_NOT_FINITE(timestamp))
@@ -2436,7 +2609,7 @@ timestamptz_part(PG_FUNCTION_ARGS)
 				break;
 
 			default:
-				elog(ERROR, "Timestamp with time zone units '%s' not supported", lowunits);
+				elog(ERROR, "TIMESTAMP WITH TIME ZONE units '%s' not supported", lowunits);
 				result = 0;
 		}
 
@@ -2451,27 +2624,27 @@ timestamptz_part(PG_FUNCTION_ARGS)
 
 			case DTK_DOW:
 				if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn) != 0)
-					elog(ERROR, "Unable to encode timestamp with time zone");
+					elog(ERROR, "Unable to encode TIMESTAMP WITH TIME ZONE");
 
 				result = j2day(date2j(tm->tm_year, tm->tm_mon, tm->tm_mday));
 				break;
 
 			case DTK_DOY:
 				if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn) != 0)
-					elog(ERROR, "Unable to encode timestamp with time zone");
+					elog(ERROR, "Unable to encode TIMESTAMP WITH TIME ZONE");
 
 				result = (date2j(tm->tm_year, tm->tm_mon, tm->tm_mday)
 						  - date2j(tm->tm_year, 1, 1) + 1);
 				break;
 
 			default:
-				elog(ERROR, "Timestamp with time zone units '%s' not supported", lowunits);
+				elog(ERROR, "TIMESTAMP WITH TIME ZONE units '%s' not supported", lowunits);
 				result = 0;
 		}
 	}
 	else
 	{
-		elog(ERROR, "Timestamp with time zone units '%s' not recognized", lowunits);
+		elog(ERROR, "TIMESTAMP WITH TIME ZONE units '%s' not recognized", lowunits);
 		result = 0;
 	}
 
@@ -2499,7 +2672,7 @@ interval_part(PG_FUNCTION_ARGS)
 			   *tm = &tt;
 
 	if (VARSIZE(units) - VARHDRSZ > MAXDATELEN)
-		elog(ERROR, "Interval units '%s' not recognized",
+		elog(ERROR, "INTERVAL units '%s' not recognized",
 			 DatumGetCString(DirectFunctionCall1(textout,
 											   PointerGetDatum(units))));
 	up = VARDATA(units);
@@ -2509,7 +2682,7 @@ interval_part(PG_FUNCTION_ARGS)
 	*lp = '\0';
 
 	type = DecodeUnits(0, lowunits, &val);
-	if (type == IGNORE)
+	if (type == UNKNOWN_FIELD)
 		type = DecodeSpecial(0, lowunits, &val);
 
 	if (type == UNITS)
@@ -2567,7 +2740,7 @@ interval_part(PG_FUNCTION_ARGS)
 					break;
 
 				default:
-					elog(ERROR, "Interval units '%s' not supported",
+					elog(ERROR, "INTERVAL units '%s' not supported",
 						 DatumGetCString(DirectFunctionCall1(textout,
 															 PointerGetDatum(units))));
 					result = 0;
@@ -2576,7 +2749,7 @@ interval_part(PG_FUNCTION_ARGS)
 		}
 		else
 		{
-			elog(NOTICE, "Unable to decode interval"
+			elog(NOTICE, "Unable to decode INTERVAL"
 				 "\n\tinterval_part() internal coding error");
 			result = 0;
 		}
@@ -2592,7 +2765,7 @@ interval_part(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-		elog(ERROR, "Interval units '%s' not recognized",
+		elog(ERROR, "INTERVAL units '%s' not recognized",
 			 DatumGetCString(DirectFunctionCall1(textout,
 												 PointerGetDatum(units))));
 		result = 0;
@@ -2695,12 +2868,12 @@ timestamp_timestamptz(PG_FUNCTION_ARGS)
 	else
 	{
 		if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL) != 0)
-			elog(ERROR, "Unable to convert timestamp to timestamp with time zone (tm)");
+			elog(ERROR, "Unable to convert TIMESTAMP to TIMESTAMP WITH TIME ZONE (tm)");
 
 		tz = DetermineLocalTimeZone(tm);
 
 		if (tm2timestamp(tm, fsec, &tz, &result) != 0)
-			elog(ERROR, "Unable to convert timestamp to timestamp with time zone");
+			elog(ERROR, "Unable to convert TIMESTAMP to TIMESTAMP WITH TIME ZONE");
 	}
 
 	PG_RETURN_TIMESTAMPTZ(result);
@@ -2727,10 +2900,10 @@ timestamptz_timestamp(PG_FUNCTION_ARGS)
 	else
 	{
 		if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn) != 0)
-			elog(ERROR, "Unable to convert timestamp with time zone to timestamp (tm)");
+			elog(ERROR, "Unable to convert TIMESTAMP WITH TIME ZONE to TIMESTAMP (tm)");
 
 		if (tm2timestamp(tm, fsec, NULL, &result) != 0)
-			elog(ERROR, "Unable to convert timestamp with time zone to timestamp");
+			elog(ERROR, "Unable to convert TIMESTAMP WITH TIME ZONE to TIMESTAMP");
 	}
 
 	PG_RETURN_TIMESTAMP(result);
@@ -2784,8 +2957,8 @@ timestamptz_zone(PG_FUNCTION_ARGS)
 		dt = dt2local(timestamp, tz);
 
 		if (timestamp2tm(dt, NULL, tm, &fsec, NULL) != 0)
-			elog(ERROR, "Unable to decode timestamp"
-				 "\n\ttimestamp_zone() internal coding error");
+			elog(ERROR, "Unable to decode TIMESTAMP WITH TIME ZONE"
+				 "\n\ttimestamptz_zone() internal coding error");
 
 		up = upzone;
 		lp = lowzone;
@@ -2845,8 +3018,8 @@ timestamptz_izone(PG_FUNCTION_ARGS)
 	dt = dt2local(timestamp, tz);
 
 	if (timestamp2tm(dt, NULL, tm, &fsec, NULL) != 0)
-		elog(ERROR, "Unable to decode timestamp"
-			"\n\ttimestamp_izone() internal coding error");
+		elog(ERROR, "Unable to decode TIMESTAMP WITH TIME ZONE"
+			"\n\ttimestamptz_izone() internal coding error");
 
 	EncodeDateTime(tm, fsec, &tz, &tzn, USE_ISO_DATES, buf);
 	len = (strlen(buf) + VARHDRSZ);

@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.105 2001/10/02 21:39:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.106 2001/10/18 17:30:14 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1159,7 +1159,7 @@ _equalVariableSetStmt(VariableSetStmt *a, VariableSetStmt *b)
 {
 	if (!equalstr(a->name, b->name))
 		return false;
-	if (!equalstr(a->value, b->value))
+	if (!equal(a->args, b->args))
 		return false;
 
 	return true;

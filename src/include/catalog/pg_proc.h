@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.216 2001/10/12 02:08:34 ishii Exp $
+ * $Id: pg_proc.h,v 1.217 2001/10/18 17:30:15 thomas Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -1434,7 +1434,6 @@ DATA(insert OID = 1171 (  date_part		   PGUID 12 f t f t 2 f  701 "25 1184" 100 
 DESCR("extract field from timestamp with time zone");
 DATA(insert OID = 1172 (  date_part		   PGUID 12 f t t t 2 f  701 "25 1186" 100 0 0 100  interval_part - ));
 DESCR("extract field from interval");
-
 DATA(insert OID = 1173 (  timestamptz	   PGUID 12 f t f t 1 f 1184 "702" 100 0 0 100  abstime_timestamptz - ));
 DESCR("convert abstime to timestamp with time zone");
 DATA(insert OID = 1174 (  timestamptz	   PGUID 12 f t f t 1 f 1184 "1082" 100 0 0 100  date_timestamptz - ));
@@ -1523,7 +1522,8 @@ DATA(insert OID = 1271 (  overlaps		   PGUID 12 f t t f 4 f 16 "1266 1266 1266 1
 DESCR("SQL92 interval comparison");
 DATA(insert OID = 1272 (  datetime_pl	   PGUID 12 f t t t 2 f 1114 "1082 1083" 100 0 0 100  datetime_timestamp - ));
 DESCR("convert date and time to timestamp");
-
+DATA(insert OID = 1273 (  date_part		   PGUID 12 f t t t 2 f  701 "25 1266" 100 0 0 100  timetz_part - ));
+DESCR("extract field from time with time zone");
 DATA(insert OID = 1274 (  int84pl		   PGUID 12 f t t t 2 f 20 "20 23" 100 0 0 100  int84pl - ));
 DESCR("add");
 DATA(insert OID = 1275 (  int84mi		   PGUID 12 f t t t 2 f 20 "20 23" 100 0 0 100  int84mi - ));
@@ -1709,11 +1709,11 @@ DESCR("length");
 
 DATA(insert OID = 1382 (  date_part    PGUID 14 f t f t 2 f  701 "25 702" 100 0 0 100  "select date_part($1, timestamptz($2))" - ));
 DESCR("extract field from abstime");
-DATA(insert OID = 1383 (  date_part    PGUID 14 f t f t 2 f  701 "25 703" 100 0 0 100  "select date_part($1, interval($2))" - ));
+DATA(insert OID = 1383 (  date_part    PGUID 14 f t f t 2 f  701 "25 703" 100 0 0 100  "select date_part($1, cast($2 as interval))" - ));
 DESCR("extract field from reltime");
 DATA(insert OID = 1384 (  date_part    PGUID 14 f t t t 2 f  701 "25 1082" 100 0 0 100  "select date_part($1, cast($2 as timestamp without time zone))" - ));
 DESCR("extract field from date");
-DATA(insert OID = 1385 (  date_part    PGUID 14 f t t t 2 f  701 "25 1083" 100 0 0 100  "select date_part($1, interval($2))" - ));
+DATA(insert OID = 1385 (  date_part    PGUID 14 f t t t 2 f  701 "25 1083" 100 0 0 100  "select date_part($1, cast($2 as time with time zone))" - ));
 DESCR("extract field from time");
 DATA(insert OID = 1386 (  age		   PGUID 14 f t f t 1 f 1186 "1184" 100 0 0 100  "select age(cast(current_date as timestamp with time zone), $1)" - ));
 DESCR("date difference from today preserving months and years");

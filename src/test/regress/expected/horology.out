@@ -1310,9 +1310,9 @@ SELECT '' AS "16", f1 AS "timestamp"
     | Sat Sep 22 18:19:20 2001 PDT
 (16 rows)
 
-SELECT '' AS "160", d.f1 AS "timestamp", t.f1 AS interval, d.f1 + t.f1 AS plus
+SELECT '' AS "160", d.f1 AS "timestamp", t.f1 AS "interval", d.f1 + t.f1 AS plus
   FROM TEMP_TIMESTAMP d, INTERVAL_TBL t
-  ORDER BY plus, "timestamp", interval;
+  ORDER BY plus, "timestamp", "interval";
  160 |          timestamp           |           interval            |             plus             
 -----+------------------------------+-------------------------------+------------------------------
      | Thu Jan 01 00:00:00 1970 PST | @ 14 secs ago                 | Wed Dec 31 23:59:46 1969 PST
@@ -1477,10 +1477,10 @@ SELECT '' AS "160", d.f1 AS "timestamp", t.f1 AS interval, d.f1 + t.f1 AS plus
      | Sat Sep 22 18:19:20 2001 PDT | @ 34 years                    | Sat Sep 22 18:19:20 2035 PDT
 (160 rows)
 
-SELECT '' AS "160", d.f1 AS "timestamp", t.f1 AS interval, d.f1 - t.f1 AS minus
+SELECT '' AS "160", d.f1 AS "timestamp", t.f1 AS "interval", d.f1 - t.f1 AS minus
   FROM TEMP_TIMESTAMP d, INTERVAL_TBL t
   WHERE isfinite(d.f1)
-  ORDER BY minus, "timestamp", interval;
+  ORDER BY minus, "timestamp", "interval";
  160 |          timestamp           |           interval            |            minus             
 -----+------------------------------+-------------------------------+------------------------------
      | Thu Jan 01 00:00:00 1970 PST | @ 34 years                    | Wed Jan 01 00:00:00 1936 PST
@@ -2084,7 +2084,7 @@ SELECT '' AS ten, f1 AS interval, reltime(f1) AS reltime
      | @ 5 mons 12 hours             | @ 5 mons 12 hours
 (10 rows)
 
-SELECT '' AS six, f1 as reltime, interval(f1) AS interval
+SELECT '' AS six, f1 as reltime, CAST(f1 AS interval) AS interval
   FROM RELTIME_TBL;
  six |    reltime    |   interval    
 -----+---------------+---------------

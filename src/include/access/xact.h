@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: xact.h,v 1.37 2001/09/28 08:09:12 thomas Exp $
+ * $Id: xact.h,v 1.38 2001/10/18 17:30:15 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,7 +40,7 @@ typedef struct TransactionStateData
 	CommandId	commandId;
 	CommandId	scanCommandId;
 	AbsoluteTime startTime;
-	int			startTimeMsec;
+	int			startTimeUsec;
 	int			state;
 	int			blockState;
 } TransactionStateData;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.111 2001/09/29 04:02:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.112 2001/10/18 17:30:03 thomas Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -378,7 +378,7 @@ GetCurrentTransactionStartTimeUsec(int *msec)
 {
 	TransactionState s = CurrentTransactionState;
 
-	*msec = s->startTimeMsec;
+	*msec = s->startTimeUsec;
 
 	return s->startTime;
 }
@@ -877,7 +877,7 @@ StartTransaction(void)
 #if NOT_USED
 	s->startTime = GetCurrentAbsoluteTime();
 #endif
-	s->startTime = GetCurrentAbsoluteTimeUsec(&(s->startTimeMsec));
+	s->startTime = GetCurrentAbsoluteTimeUsec(&(s->startTimeUsec));
 
 	/*
 	 * initialize the various transaction subsystems

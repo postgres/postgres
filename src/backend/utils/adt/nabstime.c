@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.87 2001/10/01 02:31:33 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.88 2001/10/18 17:30:15 thomas Exp $
  *
  * NOTES
  *
@@ -113,7 +113,7 @@ static int istinterval(char *i_string,
 
 /* GetCurrentAbsoluteTime()
  * Get the current system time. Set timezone parameters if not specified elsewhere.
- * Define HasTZSet to allow clients to specify the default timezone.
+ * Define HasCTZSet to allow clients to specify the default timezone.
  *
  * Returns the number of seconds since epoch (January 1 1970 GMT)
  */
@@ -173,7 +173,7 @@ GetCurrentAbsoluteTime(void)
 		 */
 		strftime(CTZName, MAXTZLEN, "%Z", localtime(&now));
 #endif
-	};
+	}
 
 	return (AbsoluteTime) now;
 }	/* GetCurrentAbsoluteTime() */
@@ -181,7 +181,7 @@ GetCurrentAbsoluteTime(void)
 
 /* GetCurrentAbsoluteTime()
  * Get the current system time. Set timezone parameters if not specified elsewhere.
- * Define HasTZSet to allow clients to specify the default timezone.
+ * Define HasCTZSet to allow clients to specify the default timezone.
  *
  * Returns the number of seconds since epoch (January 1 1970 GMT)
  */
@@ -284,7 +284,7 @@ GetCurrentTimeUsec(struct tm *tm, double *fsec)
 
 
 void
-abstime2tm(AbsoluteTime _time, int *tzp, struct tm * tm, char *tzn)
+abstime2tm(AbsoluteTime _time, int *tzp, struct tm * tm, char **tzn)
 {
 	time_t		time = (time_t) _time;
 
@@ -297,9 +297,15 @@ abstime2tm(AbsoluteTime _time, int *tzp, struct tm * tm, char *tzn)
 	ftime(&tb);
 #endif
 
+	/* If HasCTZSet is true then we have a brute force time zone specified.
+	 * Go ahead and rotate to the local time zone since we will later bypass
+	 * any calls which adjust the tm fields.
+	 */
+	if (HasCTZSet && (tzp != NULL))
+		time -= CTimeZone;
 
 #if defined(HAVE_TM_ZONE) || defined(HAVE_INT_TIMEZONE)
-	if (tzp != NULL)
+	if ((! HasCTZSet) && (tzp != NULL))
 	{
 		tx = localtime((time_t *) &time);
 #ifdef NO_MKTIME_BEFORE_1970
@@ -329,47 +335,95 @@ abstime2tm(AbsoluteTime _time, int *tzp, struct tm * tm, char *tzn)
 	tm->tm_zone = tx->tm_zone;
 
 	if (tzp != NULL)
-		*tzp = -tm->tm_gmtoff;	/* tm_gmtoff is Sun/DEC-ism */
-	/* XXX FreeBSD man pages indicate that this should work - tgl 97/04/23 */
-	if (tzn != NULL)
 	{
-
-		/*
-		 * Copy no more than MAXTZLEN bytes of timezone to tzn, in case it
-		 * contains an error message, which doesn't fit in the buffer
+		/* We have a brute force time zone per SQL99?
+		 * Then use it without change
+		 * since we have already rotated to the time zone.
 		 */
-		StrNCpy(tzn, tm->tm_zone, MAXTZLEN + 1);
-		if (strlen(tm->tm_zone) > MAXTZLEN)
-			elog(NOTICE, "Invalid timezone \'%s\'", tm->tm_zone);
+		if (HasCTZSet)
+		{
+			*tzp = CTimeZone;
+			tm->tm_gmtoff = CTimeZone;
+			tm->tm_isdst = -1;
+			tm->tm_zone = NULL;
+			if (tzn != NULL)
+				*tzn = NULL;
+		}
+		else
+		{
+			*tzp = -tm->tm_gmtoff;	/* tm_gmtoff is Sun/DEC-ism */
+
+			/* XXX FreeBSD man pages indicate that this should work - tgl 97/04/23 */
+			if (tzn != NULL)
+			{
+				/*
+				 * Copy no more than MAXTZLEN bytes of timezone to tzn, in case it
+				 * contains an error message, which doesn't fit in the buffer
+				 */
+				StrNCpy(*tzn, tm->tm_zone, MAXTZLEN + 1);
+				if (strlen(tm->tm_zone) > MAXTZLEN)
+					elog(NOTICE, "Invalid timezone \'%s\'", tm->tm_zone);
+			}
+		}
 	}
 #elif defined(HAVE_INT_TIMEZONE)
 	if (tzp != NULL)
-		*tzp = ((tm->tm_isdst > 0) ? (TIMEZONE_GLOBAL - 3600) : TIMEZONE_GLOBAL);
-
-	if (tzn != NULL)
-	{
-
-		/*
-		 * Copy no more than MAXTZLEN bytes of timezone to tzn, in case it
-		 * contains an error message, which doesn't fit in the buffer
+		/* We have a brute force time zone per SQL99?
+		 * Then use it without change
+		 * since we have already rotated to the time zone.
 		 */
-		StrNCpy(tzn, tzname[tm->tm_isdst], MAXTZLEN + 1);
-		if (strlen(tzname[tm->tm_isdst]) > MAXTZLEN)
-			elog(NOTICE, "Invalid timezone \'%s\'", tzname[tm->tm_isdst]);
+		if (HasCTZSet)
+		{
+			*tzp = CTimeZone;
+			tm->tm_isdst = -1;
+			if (tzn != NULL)
+				*tzn = NULL;
+		}
+		else
+		{
+			*tzp = ((tm->tm_isdst > 0) ? (TIMEZONE_GLOBAL - 3600) : TIMEZONE_GLOBAL);
+
+			if (tzn != NULL)
+			{
+
+				/*
+				 * Copy no more than MAXTZLEN bytes of timezone to tzn, in case it
+				 * contains an error message, which doesn't fit in the buffer
+				 */
+				StrNCpy(*tzn, tzname[tm->tm_isdst], MAXTZLEN + 1);
+				if (strlen(tzname[tm->tm_isdst]) > MAXTZLEN)
+					elog(NOTICE, "Invalid timezone \'%s\'", tzname[tm->tm_isdst]);
+			}
+		}
 	}
 #endif
 #else							/* not (HAVE_TM_ZONE || HAVE_INT_TIMEZONE) */
 	if (tzp != NULL)
-		*tzp = tb.timezone * 60;
-
-	/*
-	 * XXX does this work to get the local timezone string in V7? - tgl
-	 * 97/03/18
-	 */
-	if (tzn != NULL)
 	{
-		strftime(tzn, MAXTZLEN, "%Z", localtime(&now));
-		tzn[MAXTZLEN] = '\0';	/* let's just be sure it's null-terminated */
+		/* We have a brute force time zone per SQL99?
+		 * Then use it without change
+		 * since we have already rotated to the time zone.
+		 */
+		if (HasCTZSet)
+		{
+			*tzp = CTimeZone;
+			if (tzn != NULL)
+				*tzn = NULL;
+		}
+		else
+		{
+			*tzp = tb.timezone * 60;
+
+			/*
+			 * XXX does this work to get the local timezone string in V7? - tgl
+			 * 97/03/18
+			 */
+			if (tzn != NULL)
+			{
+				strftime(*tzn, MAXTZLEN, "%Z", localtime(&now));
+				tzn[MAXTZLEN] = '\0';	/* let's just be sure it's null-terminated */
+			}
+		}
 	}
 #endif
 
@@ -508,7 +562,7 @@ nabstimeout(PG_FUNCTION_ARGS)
 			strcpy(buf, EARLY);
 			break;
 		default:
-			abstime2tm(time, &tz, tm, tzn);
+			abstime2tm(time, &tz, tm, &tzn);
 			EncodeDateTime(tm, fsec, &tz, &tzn, DateStyle, buf);
 			break;
 	}
@@ -676,7 +730,8 @@ abstime_timestamp(PG_FUNCTION_ARGS)
 	struct tm	tt,
 			   *tm = &tt;
 	int			tz;
-	char		tzn[MAXTZLEN];
+	char		zone[MAXDATELEN + 1],
+			   *tzn = zone;
 
 	switch (abstime)
 	{
@@ -694,7 +749,7 @@ abstime_timestamp(PG_FUNCTION_ARGS)
 			break;
 
 		default:
-			abstime2tm(abstime, &tz, tm, tzn);
+			abstime2tm(abstime, &tz, tm, &tzn);
 			result = abstime + ((date2j(1970, 1, 1) - date2j(2000, 1, 1)) * 86400) + tz;
 			break;
 	};

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.262 2001/10/10 00:02:42 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.263 2001/10/18 17:30:14 thomas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -58,6 +58,7 @@
 #include "storage/lmgr.h"
 #include "utils/acl.h"
 #include "utils/numeric.h"
+#include "utils/datetime.h"
 
 #ifdef MULTIBYTE
 #include "mb/pg_wchar.h"
@@ -82,6 +83,8 @@ static int	pfunc_num_args;
 
 static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr);
 static Node *makeTypeCast(Node *arg, TypeName *typename);
+static Node *makeStringConst(char *str, TypeName *typename);
+static Node *makeFloatConst(char *str);
 static Node *makeRowExpr(char *opr, List *largs, List *rargs);
 static void mapTargetColumns(List *source, List *target);
 static SelectStmt *findLeftmostSelect(SelectStmt *node);
@@ -91,6 +94,8 @@ static void insertSelectOptions(SelectStmt *stmt,
 static Node *makeSetOp(SetOperation op, bool all, Node *larg, Node *rarg);
 static Node *doNegate(Node *n);
 static void doNegateFloat(Value *v);
+
+#define MASK(b) (1 << (b))
 
 %}
 
@@ -209,7 +214,7 @@ static void doNegateFloat(Value *v);
 
 %type <list>	extract_list, position_list
 %type <list>	substr_list, trim_list
-%type <list>	opt_interval
+%type <ival>	opt_interval
 %type <node>	substr_from, substr_for
 
 %type <boolean>	opt_binary, opt_using, opt_instead, opt_cursor
@@ -263,8 +268,9 @@ static void doNegateFloat(Value *v);
 
 %type <ival>	Iconst
 %type <str>		Sconst, comment_text
-%type <str>		UserId, opt_boolean, var_value, zone_value, ColId_or_Sconst
+%type <str>		UserId, opt_boolean, var_value, ColId_or_Sconst
 %type <str>		ColId, ColLabel, TokenId
+%type <node>	zone_value
 
 %type <node>	TableConstraint
 %type <list>	ColQualList
@@ -757,49 +763,50 @@ VariableSetStmt:  SET ColId TO var_value
 				{
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->name  = $2;
-					n->value = $4;
+					n->args = makeList1(makeStringConst($4, NULL));
 					$$ = (Node *) n;
 				}
 		| SET ColId '=' var_value
 				{
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->name  = $2;
-					n->value = $4;
+					n->args = makeList1(makeStringConst($4, NULL));
 					$$ = (Node *) n;
 				}
 		| SET TIME ZONE zone_value
 				{
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->name  = "timezone";
-					n->value = $4;
+					if ($4 != NULL)
+						n->args = makeList1($4);
 					$$ = (Node *) n;
 				}
 		| SET TRANSACTION ISOLATION LEVEL opt_level
 				{
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->name  = "XactIsoLevel";
-					n->value = $5;
+					n->args = makeList1(makeStringConst($5, NULL));
 					$$ = (Node *) n;
 				}
         | SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL opt_level
 				{
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->name  = "default_transaction_isolation";
-					n->value = $8;
+					n->args = makeList1(makeStringConst($8, NULL));
 					$$ = (Node *) n;
 				}
 		| SET NAMES opt_encoding
 				{
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->name  = "client_encoding";
-					n->value = $3;
+					n->args = makeList1(makeStringConst($3, NULL));
 					$$ = (Node *) n;
 				}
 		| SET SESSION AUTHORIZATION ColId_or_Sconst
 				{
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->name = "session_authorization";
-					n->value = $4;
+					n->args = makeList1(makeStringConst($4, NULL));
 					$$ = (Node *) n;
 				}
 		;
@@ -868,7 +875,47 @@ opt_boolean:  TRUE_P						{ $$ = "true"; }
 		| OFF								{ $$ = "off"; }
 		;
 
-zone_value:  Sconst							{ $$ = $1; }
+/* Timezone values can be:
+ * - a string such as 'pst8pdt'
+ * - an integer or floating point number
+ * - a time interval per SQL99
+ */
+zone_value:  Sconst
+			{
+				$$ = makeStringConst($1, NULL);
+			}
+		| ConstInterval Sconst opt_interval
+			{
+				A_Const *n = (A_Const *) makeStringConst($2, $1);
+				n->typename->typmod = (($3 << 16) | 0xFFFF);
+				$$ = (Node *)n;
+			}
+		| ConstInterval '(' Iconst ')' Sconst opt_interval
+			{
+				A_Const *n = (A_Const *) makeStringConst($5, $1);
+				n->typename->typmod = (($3 << 16) | $6);
+				$$ = (Node *)n;
+			}
+		| FCONST
+			{
+				$$ = makeFloatConst($1);
+			}
+		| '-' FCONST
+			{
+				$$ = doNegate(makeFloatConst($2));
+			}
+		| ICONST
+			{
+				char buf[64];
+				sprintf(buf, "%d", $1);
+				$$ = makeFloatConst(pstrdup(buf));
+			}
+		| '-' ICONST
+			{
+				char buf[64];
+				sprintf(buf, "%d", $2);
+				$$ = doNegate(makeFloatConst(pstrdup(buf)));
+			}
 		| DEFAULT							{ $$ = NULL; }
 		| LOCAL								{ $$ = NULL; }
 		;
@@ -3994,7 +4041,16 @@ opt_array_bounds:	opt_array_bounds '[' ']'
 		;
 
 SimpleTypename:  ConstTypename
-		| ConstInterval
+		| ConstInterval opt_interval
+				{
+					$$ = $1;
+					$$->typmod = (($2 << 16) | 0xFFFF);
+				}
+		| ConstInterval '(' Iconst ')' opt_interval
+				{
+					$$ = $1;
+					$$->typmod = (($5 << 16) | $3);
+				}
 		;
 
 ConstTypename:  GenericType
@@ -4267,7 +4323,10 @@ ConstDatetime:  datetime
 					 * - thomas 2001-09-06
 					 */
 					$$->timezone = $2;
-					$$->typmod = 0;
+					/* SQL99 specified a default precision of six.
+					 * - thomas 2001-09-30
+					 */
+					$$->typmod = 6;
 				}
 		| TIME '(' Iconst ')' opt_timezone
 				{
@@ -4295,7 +4354,7 @@ ConstDatetime:  datetime
 				}
 		;
 
-ConstInterval:  INTERVAL opt_interval
+ConstInterval:  INTERVAL
 				{
 					$$ = makeNode(TypeName);
 					$$->name = xlateSqlType("interval");
@@ -4326,15 +4385,20 @@ opt_timezone:  WITH TIME ZONE					{ $$ = TRUE; }
 		| /*EMPTY*/								{ $$ = FALSE; }
 		;
 
-opt_interval:  datetime							{ $$ = makeList1($1); }
-		| YEAR_P TO MONTH_P						{ $$ = NIL; }
-		| DAY_P TO HOUR_P						{ $$ = NIL; }
-		| DAY_P TO MINUTE_P						{ $$ = NIL; }
-		| DAY_P TO SECOND_P						{ $$ = NIL; }
-		| HOUR_P TO MINUTE_P					{ $$ = NIL; }
-		| HOUR_P TO SECOND_P					{ $$ = NIL; }
-		| MINUTE_P TO SECOND_P					{ $$ = NIL; }
-		| /*EMPTY*/								{ $$ = NIL; }
+opt_interval:  YEAR_P							{ $$ = MASK(YEAR); }
+		| MONTH_P								{ $$ = MASK(MONTH); }
+		| DAY_P									{ $$ = MASK(DAY); }
+		| HOUR_P								{ $$ = MASK(HOUR); }
+		| MINUTE_P								{ $$ = MASK(MINUTE); }
+		| SECOND_P								{ $$ = MASK(SECOND); }
+		| YEAR_P TO MONTH_P						{ $$ = MASK(YEAR) | MASK(MONTH); }
+		| DAY_P TO HOUR_P						{ $$ = MASK(DAY) | MASK(HOUR); }
+		| DAY_P TO MINUTE_P						{ $$ = MASK(DAY) | MASK(HOUR) | MASK(MINUTE); }
+		| DAY_P TO SECOND_P						{ $$ = MASK(DAY) | MASK(HOUR) | MASK(MINUTE) | MASK(SECOND); }
+		| HOUR_P TO MINUTE_P					{ $$ = MASK(HOUR) | MASK(MINUTE); }
+		| HOUR_P TO SECOND_P					{ $$ = MASK(HOUR) | MASK(MINUTE) | MASK(SECOND); }
+		| MINUTE_P TO SECOND_P					{ $$ = MASK(MINUTE) | MASK(SECOND); }
+		| /*EMPTY*/								{ $$ = -1; }
 		;
 
 
@@ -5561,6 +5625,16 @@ AexprConst:  Iconst
 					n->typename = $1;
 					n->val.type = T_String;
 					n->val.val.str = $2;
+					n->typename->typmod = (($3 << 16) | 0xFFFF);
+					$$ = (Node *)n;
+				}
+		| ConstInterval '(' Iconst ')' Sconst opt_interval
+				{
+					A_Const *n = makeNode(A_Const);
+					n->typename = $1;
+					n->val.type = T_String;
+					n->val.val.str = $5;
+					n->typename->typmod = (($6 << 16) | $3);
 					$$ = (Node *)n;
 				}
 		| ParamNo
@@ -5616,7 +5690,6 @@ UserId:  ColId							{ $$ = $1; };
 ColId:  IDENT							{ $$ = $1; }
 		| datetime						{ $$ = $1; }
 		| TokenId						{ $$ = $1; }
-		| INTERVAL						{ $$ = "interval"; }
 		| NATIONAL						{ $$ = "national"; }
 		| NONE							{ $$ = "none"; }
 		| PATH_P						{ $$ = "path"; }
@@ -5818,12 +5891,13 @@ ColLabel:  ColId						{ $$ = $1; }
 		| GROUP							{ $$ = "group"; }
 		| HAVING						{ $$ = "having"; }
 		| ILIKE							{ $$ = "ilike"; }
-		| INITIALLY						{ $$ = "initially"; }
 		| IN							{ $$ = "in"; }
+		| INITIALLY						{ $$ = "initially"; }
 		| INNER_P						{ $$ = "inner"; }
-		| INTERSECT						{ $$ = "intersect"; }
-		| INTO							{ $$ = "into"; }
 		| INOUT							{ $$ = "inout"; }
+		| INTERSECT						{ $$ = "intersect"; }
+		| INTERVAL						{ $$ = "interval"; }
+		| INTO							{ $$ = "into"; }
 		| IS							{ $$ = "is"; }
 		| ISNULL						{ $$ = "isnull"; }
 		| JOIN							{ $$ = "join"; }
@@ -5945,6 +6019,31 @@ makeTypeCast(Node *arg, TypeName *typename)
 		n->typename = typename;
 		return (Node *) n;
 	}
+}
+
+static Node *
+makeStringConst(char *str, TypeName *typename)
+{
+	A_Const *n = makeNode(A_Const);
+	n->val.type = T_String;
+	n->val.val.str = str;
+	n->typename = typename;
+
+	return (Node *)n;
+}
+
+static Node *
+makeFloatConst(char *str)
+{
+	A_Const *n = makeNode(A_Const);
+	TypeName *t = makeNode(TypeName);
+	n->val.type = T_Float;
+	n->val.val.str = str;
+	t->name = xlateSqlType("float");
+	t->typmod = -1;
+	n->typename = t;
+
+	return (Node *)n;
 }
 
 /* makeRowExpr()

@@ -59,7 +59,7 @@ INSERT INTO TIMESTAMP_TBL VALUES ('infinity');
 INSERT INTO TIMESTAMP_TBL VALUES ('epoch');
 -- Obsolete special values
 INSERT INTO TIMESTAMP_TBL VALUES ('invalid');
-ERROR:  Timestamp 'invalid' no longer supported
+ERROR:  TIMESTAMP 'invalid' no longer supported
 -- Postgres v6.0 standard output format
 INSERT INTO TIMESTAMP_TBL VALUES ('Mon Feb 10 17:32:01 1997 PST');
 INSERT INTO TIMESTAMP_TBL VALUES ('Invalid Abstime');
@@ -137,7 +137,7 @@ INSERT INTO TIMESTAMP_TBL VALUES ('Jan 01 17:32:01 2001');
 INSERT INTO TIMESTAMP_TBL VALUES ('Feb 16 17:32:01 -0097');
 ERROR:  Bad timestamp external representation 'Feb 16 17:32:01 -0097'
 INSERT INTO TIMESTAMP_TBL VALUES ('Feb 16 17:32:01 5097 BC');
-ERROR:  Timestamp out of range 'Feb 16 17:32:01 5097 BC'
+ERROR:  TIMESTAMP out of range 'Feb 16 17:32:01 5097 BC'
 SELECT '' AS "64", d1 FROM TIMESTAMP_TBL; 
  64 |             d1              
 ----+-----------------------------

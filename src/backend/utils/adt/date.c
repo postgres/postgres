@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.61 2001/10/04 15:14:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.62 2001/10/18 17:30:15 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1456,6 +1456,117 @@ text_timetz(PG_FUNCTION_ARGS)
 							   CStringGetDatum(dstr),
 							   ObjectIdGetDatum(InvalidOid),
 							   Int32GetDatum(-1));
+}
+
+/* timetz_part()
+ * Extract specified field from time type.
+ */
+Datum
+timetz_part(PG_FUNCTION_ARGS)
+{
+	text	   *units = PG_GETARG_TEXT_P(0);
+	TimeTzADT  *time = PG_GETARG_TIMETZADT_P(1);
+	float8		result;
+	int			type,
+				val;
+	int			i;
+	char	   *up,
+			   *lp,
+				lowunits[MAXDATELEN + 1];
+
+	if (VARSIZE(units) - VARHDRSZ > MAXDATELEN)
+		elog(ERROR, "TIMETZ units '%s' not recognized",
+			 DatumGetCString(DirectFunctionCall1(textout,
+												 PointerGetDatum(units))));
+	up = VARDATA(units);
+	lp = lowunits;
+	for (i = 0; i < (VARSIZE(units) - VARHDRSZ); i++)
+		*lp++ = tolower((unsigned char) *up++);
+	*lp = '\0';
+
+	type = DecodeUnits(0, lowunits, &val);
+	if (type == UNKNOWN_FIELD)
+		type = DecodeSpecial(0, lowunits, &val);
+
+	if (type == UNITS)
+	{
+		double		trem;
+		double		dummy;
+		int			tz;
+		double		fsec;
+		struct tm	tt,
+				   *tm = &tt;
+
+		trem = time->time;
+		TMODULO(trem, tm->tm_hour, 3600e0);
+		TMODULO(trem, tm->tm_min, 60e0);
+		TMODULO(trem, tm->tm_sec, 1e0);
+		fsec = trem;
+		tz = time->zone;
+
+		switch (val)
+		{
+			case DTK_TZ:
+				result = tz;
+				break;
+
+			case DTK_TZ_MINUTE:
+				result = tz / 60;
+				TMODULO(result, dummy, 60e0);
+				break;
+
+			case DTK_TZ_HOUR:
+				dummy = tz;
+				TMODULO(dummy, result, 3600e0);
+				break;
+
+			case DTK_MICROSEC:
+				result = ((tm->tm_sec + fsec) * 1000000);
+				break;
+
+			case DTK_MILLISEC:
+				result = ((tm->tm_sec + fsec) * 1000);
+				break;
+
+			case DTK_SECOND:
+				result = (tm->tm_sec + fsec);
+				break;
+
+			case DTK_MINUTE:
+				result = tm->tm_min;
+				break;
+
+			case DTK_HOUR:
+				result = tm->tm_hour;
+				break;
+
+			case DTK_DAY:
+			case DTK_MONTH:
+			case DTK_QUARTER:
+			case DTK_YEAR:
+			case DTK_DECADE:
+			case DTK_CENTURY:
+			case DTK_MILLENNIUM:
+			default:
+				elog(ERROR, "TIMETZ units '%s' not supported",
+					 DatumGetCString(DirectFunctionCall1(textout,
+														 PointerGetDatum(units))));
+				result = 0;
+		}
+	}
+	else if ((type == RESERV) && (val == DTK_EPOCH))
+	{
+		result = time->time - time->zone;
+	}
+	else
+	{
+		elog(ERROR, "TIMETZ units '%s' not recognized",
+			 DatumGetCString(DirectFunctionCall1(textout,
+												 PointerGetDatum(units))));
+		result = 0;
+	}
+
+	PG_RETURN_FLOAT8(result);
 }
 
 /* timetz_zone()

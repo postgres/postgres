@@ -177,14 +177,14 @@ SELECT '' AS "16", f1 AS "timestamp"
   FROM TEMP_TIMESTAMP
   ORDER BY "timestamp";
 
-SELECT '' AS "160", d.f1 AS "timestamp", t.f1 AS interval, d.f1 + t.f1 AS plus
+SELECT '' AS "160", d.f1 AS "timestamp", t.f1 AS "interval", d.f1 + t.f1 AS plus
   FROM TEMP_TIMESTAMP d, INTERVAL_TBL t
-  ORDER BY plus, "timestamp", interval;
+  ORDER BY plus, "timestamp", "interval";
 
-SELECT '' AS "160", d.f1 AS "timestamp", t.f1 AS interval, d.f1 - t.f1 AS minus
+SELECT '' AS "160", d.f1 AS "timestamp", t.f1 AS "interval", d.f1 - t.f1 AS minus
   FROM TEMP_TIMESTAMP d, INTERVAL_TBL t
   WHERE isfinite(d.f1)
-  ORDER BY minus, "timestamp", interval;
+  ORDER BY minus, "timestamp", "interval";
 
 SELECT '' AS "16", d.f1 AS "timestamp", timestamp '1980-01-06 00:00 GMT' AS gpstime_zero,
    d.f1 - timestamp '1980-01-06 00:00 GMT' AS difference
@@ -250,7 +250,7 @@ SELECT '' AS three, f1 as abstime, cast(f1 as timestamp) AS "timestamp"
 SELECT '' AS ten, f1 AS interval, reltime(f1) AS reltime
   FROM INTERVAL_TBL;
 
-SELECT '' AS six, f1 as reltime, interval(f1) AS interval
+SELECT '' AS six, f1 as reltime, CAST(f1 AS interval) AS interval
   FROM RELTIME_TBL;
 
 DROP TABLE TEMP_TIMESTAMP;

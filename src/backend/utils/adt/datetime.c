@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.72 2001/10/11 18:06:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.73 2001/10/18 17:30:15 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,6 +38,7 @@ static int	DecodeTimezone(char *str, int *tzp);
 static datetkn *datebsearch(char *key, datetkn *base, unsigned int nel);
 static int	DecodeDate(char *str, int fmask, int *tmask, struct tm * tm);
 static int	DecodePosixTimezone(char *str, int *val);
+void TrimTrailingZeros(char *str);
 
 
 int			day_tab[2][13] = {
@@ -239,81 +240,73 @@ static unsigned int australian_szdatetktbl = sizeof australian_datetktbl /
 											 sizeof australian_datetktbl[0];
 
 static datetkn deltatktbl[] = {
-/*	text, token, lexval */
-	{"@", IGNORE, 0},			/* postgres relative time prefix */
+	/* text, token, lexval */
+	{"@", IGNORE, 0},			/* postgres relative prefix */
 	{DAGO, AGO, 0},				/* "ago" indicates negative time offset */
-	{"c", UNITS, DTK_CENTURY},	/* "century" relative time units */
-	{"cent", UNITS, DTK_CENTURY},		/* "century" relative time units */
-	{"centuries", UNITS, DTK_CENTURY},	/* "centuries" relative time units */
-	{DCENTURY, UNITS, DTK_CENTURY},		/* "century" relative time units */
-	{"d", UNITS, DTK_DAY},		/* "day" relative time units */
-	{DDAY, UNITS, DTK_DAY},		/* "day" relative time units */
-	{"days", UNITS, DTK_DAY},	/* "days" relative time units */
-	{"dec", UNITS, DTK_DECADE}, /* "decade" relative time units */
-	{"decs", UNITS, DTK_DECADE},/* "decades" relative time units */
-	{DDECADE, UNITS, DTK_DECADE},		/* "decade" relative time units */
-	{"decades", UNITS, DTK_DECADE},		/* "decades" relative time units */
-	{"h", UNITS, DTK_HOUR},		/* "hour" relative time units */
-	{DHOUR, UNITS, DTK_HOUR},	/* "hour" relative time units */
-	{"hours", UNITS, DTK_HOUR}, /* "hours" relative time units */
-	{"hr", UNITS, DTK_HOUR},	/* "hour" relative time units */
-	{"hrs", UNITS, DTK_HOUR},	/* "hours" relative time units */
+	{"c", UNITS, DTK_CENTURY},	/* "century" relative */
+	{"cent", UNITS, DTK_CENTURY},		/* "century" relative */
+	{"centuries", UNITS, DTK_CENTURY},	/* "centuries" relative */
+	{DCENTURY, UNITS, DTK_CENTURY},		/* "century" relative */
+	{"d", UNITS, DTK_DAY},				/* "day" relative */
+	{DDAY, UNITS, DTK_DAY},				/* "day" relative */
+	{"days", UNITS, DTK_DAY},			/* "days" relative */
+	{"dec", UNITS, DTK_DECADE},			/* "decade" relative */
+	{"decs", UNITS, DTK_DECADE},		/* "decades" relative */
+	{DDECADE, UNITS, DTK_DECADE},		/* "decade" relative */
+	{"decades", UNITS, DTK_DECADE},		/* "decades" relative */
+	{"h", UNITS, DTK_HOUR},				/* "hour" relative */
+	{DHOUR, UNITS, DTK_HOUR},			/* "hour" relative */
+	{"hours", UNITS, DTK_HOUR},			/* "hours" relative */
+	{"hr", UNITS, DTK_HOUR},			/* "hour" relative */
+	{"hrs", UNITS, DTK_HOUR},			/* "hours" relative */
 	{INVALID, RESERV, DTK_INVALID},		/* reserved for invalid time */
-	{"m", UNITS, DTK_MINUTE},	/* "minute" relative time units */
-	{"microsecon", UNITS, DTK_MICROSEC},		/* "microsecond" relative
-												 * time units */
-	{"mil", UNITS, DTK_MILLENNIUM},		/* "millennium" relative time
-										 * units */
-	{"mils", UNITS, DTK_MILLENNIUM},	/* "millennia" relative time units */
-	{"millennia", UNITS, DTK_MILLENNIUM},		/* "millennia" relative
-												 * time units */
-	{DMILLENNIUM, UNITS, DTK_MILLENNIUM},		/* "millennium" relative
-												 * time units */
-	{"millisecon", UNITS, DTK_MILLISEC},		/* relative time units */
-	{"min", UNITS, DTK_MINUTE}, /* "minute" relative time units */
-	{"mins", UNITS, DTK_MINUTE},/* "minutes" relative time units */
-	{"mins", UNITS, DTK_MINUTE},/* "minutes" relative time units */
-	{DMINUTE, UNITS, DTK_MINUTE},		/* "minute" relative time units */
-	{"minutes", UNITS, DTK_MINUTE},		/* "minutes" relative time units */
-	{"mon", UNITS, DTK_MONTH},	/* "months" relative time units */
-	{"mons", UNITS, DTK_MONTH}, /* "months" relative time units */
-	{DMONTH, UNITS, DTK_MONTH}, /* "month" relative time units */
+	{"m", UNITS, DTK_MINUTE},			/* "minute" relative */
+	{"microsecon", UNITS, DTK_MICROSEC},	/* "microsecond" relative */
+	{"mil", UNITS, DTK_MILLENNIUM},			/* "millennium" relative */
+	{"millennia", UNITS, DTK_MILLENNIUM},	/* "millennia" relative */
+	{DMILLENNIUM, UNITS, DTK_MILLENNIUM},	/* "millennium" relative */
+	{"millisecon", UNITS, DTK_MILLISEC},	/* relative */
+	{"mils", UNITS, DTK_MILLENNIUM},	/* "millennia" relative */
+	{"min", UNITS, DTK_MINUTE},			/* "minute" relative */
+	{"mins", UNITS, DTK_MINUTE},		/* "minutes" relative */
+	{"mins", UNITS, DTK_MINUTE},		/* "minutes" relative */
+	{DMINUTE, UNITS, DTK_MINUTE},		/* "minute" relative */
+	{"minutes", UNITS, DTK_MINUTE},		/* "minutes" relative */
+	{"mon", UNITS, DTK_MONTH},			/* "months" relative */
+	{"mons", UNITS, DTK_MONTH},			/* "months" relative */
+	{DMONTH, UNITS, DTK_MONTH},			/* "month" relative */
 	{"months", UNITS, DTK_MONTH},
 	{"ms", UNITS, DTK_MILLISEC},
 	{"msec", UNITS, DTK_MILLISEC},
 	{DMILLISEC, UNITS, DTK_MILLISEC},
 	{"mseconds", UNITS, DTK_MILLISEC},
 	{"msecs", UNITS, DTK_MILLISEC},
-	{"qtr", UNITS, DTK_QUARTER},/* "quarter" relative time */
-	{DQUARTER, UNITS, DTK_QUARTER},		/* "quarter" relative time */
-	{"reltime", IGNORE, 0},		/* for pre-v6.1 "Undefined Reltime" */
+	{"qtr", UNITS, DTK_QUARTER},		/* "quarter" relative */
+	{DQUARTER, UNITS, DTK_QUARTER},		/* "quarter" relative */
+	{"reltime", IGNORE, 0},		/* pre-v6.1 "Undefined Reltime" */
 	{"s", UNITS, DTK_SECOND},
 	{"sec", UNITS, DTK_SECOND},
 	{DSECOND, UNITS, DTK_SECOND},
 	{"seconds", UNITS, DTK_SECOND},
 	{"secs", UNITS, DTK_SECOND},
-	{DTIMEZONE, UNITS, DTK_TZ}, /* "timezone" time offset */
+	{DTIMEZONE, UNITS, DTK_TZ},			/* "timezone" time offset */
 	{"timezone", UNITS, DTK_TZ},		/* "timezone" time offset */
 	{"timezone_h", UNITS, DTK_TZ_HOUR},		/* timezone hour units */
 	{"timezone_m", UNITS, DTK_TZ_MINUTE},	/* timezone minutes units */
 	{"undefined", RESERV, DTK_INVALID}, /* pre-v6.1 invalid time */
-	{"us", UNITS, DTK_MICROSEC},/* "microsecond" relative time units */
-	{"usec", UNITS, DTK_MICROSEC},		/* "microsecond" relative time
-										 * units */
-	{DMICROSEC, UNITS, DTK_MICROSEC},	/* "microsecond" relative time
-										 * units */
-	{"useconds", UNITS, DTK_MICROSEC},	/* "microseconds" relative time
-										 * units */
-	{"usecs", UNITS, DTK_MICROSEC},		/* "microseconds" relative time
-										 * units */
-	{"w", UNITS, DTK_WEEK},		/* "week" relative time units */
-	{DWEEK, UNITS, DTK_WEEK},	/* "week" relative time units */
-	{"weeks", UNITS, DTK_WEEK}, /* "weeks" relative time units */
-	{"y", UNITS, DTK_YEAR},		/* "year" relative time units */
-	{DYEAR, UNITS, DTK_YEAR},	/* "year" relative time units */
-	{"years", UNITS, DTK_YEAR}, /* "years" relative time units */
-	{"yr", UNITS, DTK_YEAR},	/* "year" relative time units */
-	{"yrs", UNITS, DTK_YEAR},	/* "years" relative time units */
+	{"us", UNITS, DTK_MICROSEC},		/* "microsecond" relative */
+	{"usec", UNITS, DTK_MICROSEC},		/* "microsecond" relative */
+	{DMICROSEC, UNITS, DTK_MICROSEC},	/* "microsecond" relative */
+	{"useconds", UNITS, DTK_MICROSEC},	/* "microseconds" relative */
+	{"usecs", UNITS, DTK_MICROSEC},		/* "microseconds" relative */
+	{"w", UNITS, DTK_WEEK},		/* "week" relative */
+	{DWEEK, UNITS, DTK_WEEK},	/* "week" relative */
+	{"weeks", UNITS, DTK_WEEK}, /* "weeks" relative */
+	{"y", UNITS, DTK_YEAR},		/* "year" relative */
+	{DYEAR, UNITS, DTK_YEAR},	/* "year" relative */
+	{"years", UNITS, DTK_YEAR}, /* "years" relative */
+	{"yr", UNITS, DTK_YEAR},	/* "year" relative */
+	{"yrs", UNITS, DTK_YEAR},	/* "years" relative */
 };
 
 static unsigned int szdeltatktbl = sizeof deltatktbl / sizeof deltatktbl[0];
@@ -346,8 +339,10 @@ date2j(int y, int m, int d)
 {
 	int			m12 = (m - 14) / 12;
 
-	return ((1461 * (y + 4800 + m12)) / 4 + (367 * (m - 2 - 12 * (m12))) / 12
-			- (3 * ((y + 4900 + m12) / 100)) / 4 + d - 32075);
+	return ((1461 * (y + 4800 + m12)) / 4
+			+ (367 * (m - 2 - 12 * (m12))) / 12
+			- (3 * ((y + 4900 + m12) / 100)) / 4
+			+ d - 32075);
 }	/* date2j() */
 
 void
@@ -390,11 +385,28 @@ j2day(int date)
 }	/* j2day() */
 
 
-/*
- * parse and convert date in timestr (the normal interface)
- *
- * Returns the number of seconds since epoch (J2000)
- */
+void
+TrimTrailingZeros(char *str)
+{
+	int len = strlen(str);
+
+	/* chop off trailing one to cope with interval rounding */
+	if (strcmp((str + len - 4), "0001") == 0)
+	{
+		len -= 4;
+		*(str + len) = '\0';
+	}
+
+	/* chop off trailing zeros... */
+	while ((*(str + len - 1) == '0')
+		   && (*(str + len - 3) != '.'))
+	{
+		len--;
+		*(str + len) = '\0';
+	}
+	return;
+}
+
 
 /* ParseDateTime()
  * Break string into tokens based on a date/time context.
@@ -989,7 +1001,11 @@ DetermineLocalTimeZone(struct tm * tm)
 {
 	int			tz;
 
-	if (IS_VALID_UTIME(tm->tm_year, tm->tm_mon, tm->tm_mday))
+	if (HasCTZSet)
+	{
+		tz = CTimeZone;
+	}
+	else if (IS_VALID_UTIME(tm->tm_year, tm->tm_mon, tm->tm_mday))
 	{
 #if defined(HAVE_TM_ZONE) || defined(HAVE_INT_TIMEZONE)
 		/*
@@ -1044,9 +1060,6 @@ DetermineLocalTimeZone(struct tm * tm)
  * SQL92 TIME WITH TIME ZONE, but it reveals
  * bogosity with SQL92 date/time standards, since
  * we must infer a time zone from current time.
- * XXX Later, we should probably support
- * SET TIME ZONE <integer>
- * which of course is a screwed up convention.
  * - thomas 2000-03-10
  */
 int
@@ -2246,33 +2259,23 @@ EncodeDateTime(struct tm * tm, double fsec, int *tzp, char **tzn, int style, cha
 				 */
 				if (fsec != 0) {
 					sprintf((str + strlen(str)), ":%013.10f", sec);
-					/* chop off trailing pairs of zeros... */
-					while ((strcmp((str + strlen(str) - 2), "00") == 0)
-						   && (*(str + strlen(str) - 3) != '.'))
-					{
-						*(str + strlen(str) - 2) = '\0';
-					}
+					TrimTrailingZeros(str);
 				}
 				else
 				{
 					sprintf((str + strlen(str)), ":%02.0f", sec);
 				}
 
-				if ((*tzn != NULL) && (tm->tm_isdst >= 0))
+				/* tzp == NULL indicates that we don't want *any* time zone info in the output string.
+				 * *tzn != NULL indicates that we *have* time zone info available.
+				 * tm_isdst != -1 indicates that we have a valid time zone translation.
+				 */
+				if ((tzp != NULL) && (*tzn != NULL) && (tm->tm_isdst >= 0))
 				{
-					if (tzp != NULL)
-					{
-						hour = -(*tzp / 3600);
-						min = ((abs(*tzp) / 60) % 60);
-					}
-					else
-					{
-						hour = 0;
-						min = 0;
-					}
+					hour = -(*tzp / 3600);
+					min = ((abs(*tzp) / 60) % 60);
 					sprintf((str + strlen(str)), ((min != 0) ? "%+03d:%02d" : "%+03d"), hour, min);
 				}
-
 			}
 			else
 			{
@@ -2305,12 +2308,7 @@ EncodeDateTime(struct tm * tm, double fsec, int *tzp, char **tzn, int style, cha
 				 */
 				if (fsec != 0) {
 					sprintf((str + strlen(str)), ":%013.10f", sec);
-					/* chop off trailing pairs of zeros... */
-					while ((strcmp((str + strlen(str) - 2), "00") == 0)
-						   && (*(str + strlen(str) - 3) != '.'))
-					{
-						*(str + strlen(str) - 2) = '\0';
-					}
+					TrimTrailingZeros(str);
 				}
 				else
 				{
@@ -2319,6 +2317,13 @@ EncodeDateTime(struct tm * tm, double fsec, int *tzp, char **tzn, int style, cha
 
 				if ((*tzn != NULL) && (tm->tm_isdst >= 0))
 					sprintf((str + strlen(str)), " %.*s", MAXTZLEN, *tzn);
+
+				else if (tzp != NULL)
+				{
+					hour = -(*tzp / 3600);
+					min = ((abs(*tzp) / 60) % 60);
+					sprintf((str + strlen(str)), ((min != 0) ? "%+03d:%02d" : "%+03d"), hour, min);
+				}
 			}
 			else
 				sprintf((str + 5), "/%04d %02d:%02d %s",
@@ -2341,12 +2346,7 @@ EncodeDateTime(struct tm * tm, double fsec, int *tzp, char **tzn, int style, cha
 				 */
 				if (fsec != 0) {
 					sprintf((str + strlen(str)), ":%013.10f", sec);
-					/* chop off trailing pairs of zeros... */
-					while ((strcmp((str + strlen(str) - 2), "00") == 0)
-						   && (*(str + strlen(str) - 3) != '.'))
-					{
-						*(str + strlen(str) - 2) = '\0';
-					}
+					TrimTrailingZeros(str);
 				}
 				else
 				{
@@ -2355,6 +2355,13 @@ EncodeDateTime(struct tm * tm, double fsec, int *tzp, char **tzn, int style, cha
 
 				if ((*tzn != NULL) && (tm->tm_isdst >= 0))
 					sprintf((str + strlen(str)), " %.*s", MAXTZLEN, *tzn);
+
+				else if (tzp != NULL)
+				{
+					hour = -(*tzp / 3600);
+					min = ((abs(*tzp) / 60) % 60);
+					sprintf((str + strlen(str)), ((min != 0) ? "%+03d:%02d" : "%+03d"), hour, min);
+				}
 			}
 			else
 				sprintf((str + 5), ".%04d %02d:%02d %s",
@@ -2387,12 +2394,7 @@ EncodeDateTime(struct tm * tm, double fsec, int *tzp, char **tzn, int style, cha
 				 */
 				if (fsec != 0) {
 					sprintf((str + strlen(str)), ":%013.10f", sec);
-					/* chop off trailing pairs of zeros... */
-					while ((strcmp((str + strlen(str) - 2), "00") == 0)
-						   && (*(str + strlen(str) - 3) != '.'))
-					{
-						*(str + strlen(str) - 2) = '\0';
-					}
+					TrimTrailingZeros(str);
 				}
 				else
 				{
@@ -2400,8 +2402,16 @@ EncodeDateTime(struct tm * tm, double fsec, int *tzp, char **tzn, int style, cha
 				}
 
 				sprintf((str + strlen(str)), " %04d", tm->tm_year);
-				if ((*tzn != NULL) && (tm->tm_isdst >= 0))
+
+				if ((tzp != NULL) && (*tzn != NULL) && (tm->tm_isdst >= 0))
 					sprintf((str + strlen(str)), " %.*s", MAXTZLEN, *tzn);
+
+				else if (HasCTZSet && (tzp != NULL))
+				{
+					hour = -(*tzp / 3600);
+					min = ((abs(*tzp) / 60) % 60);
+					sprintf((str + strlen(str)), ((min != 0) ? "%+03d:%02d" : "%+03d"), hour, min);
+				}
 			}
 			else
 			{
@@ -2485,12 +2495,12 @@ EncodeTimeSpan(struct tm * tm, double fsec, int style, char *str)
 				if (fsec != 0)
 				{
 					fsec += tm->tm_sec;
-					sprintf(cp, ":%05.2f", fabs(fsec));
+					sprintf(cp, ":%013.10f", fabs(fsec));
+					TrimTrailingZeros(cp);
 					cp += strlen(cp);
 					is_nonzero = TRUE;
-
-					/* otherwise, integer seconds only? */
 				}
+				/* otherwise, integer seconds only? */
 				else if (tm->tm_sec != 0)
 				{
 					sprintf(cp, ":%02d", abs(tm->tm_sec));

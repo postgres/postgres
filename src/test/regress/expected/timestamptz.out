@@ -54,7 +54,7 @@ INSERT INTO TIMESTAMPTZ_TBL VALUES ('infinity');
 INSERT INTO TIMESTAMPTZ_TBL VALUES ('epoch');
 -- Obsolete special values
 INSERT INTO TIMESTAMPTZ_TBL VALUES ('invalid');
-ERROR:  Timestamp with time zone 'invalid' no longer supported
+ERROR:  TIMESTAMP WITH TIME ZONE 'invalid' no longer supported
 -- Postgres v6.0 standard output format
 INSERT INTO TIMESTAMPTZ_TBL VALUES ('Mon Feb 10 17:32:01 1997 PST');
 INSERT INTO TIMESTAMPTZ_TBL VALUES ('Invalid Abstime');
@@ -132,7 +132,7 @@ INSERT INTO TIMESTAMPTZ_TBL VALUES ('Jan 01 17:32:01 2001');
 INSERT INTO TIMESTAMPTZ_TBL VALUES ('Feb 16 17:32:01 -0097');
 ERROR:  Bad timestamp external representation 'Feb 16 17:32:01 -0097'
 INSERT INTO TIMESTAMPTZ_TBL VALUES ('Feb 16 17:32:01 5097 BC');
-ERROR:  Timestamp out of range 'Feb 16 17:32:01 5097 BC'
+ERROR:  TIMESTAMP WITH TIME ZONE out of range 'Feb 16 17:32:01 5097 BC'
 SELECT '' AS "64", d1 FROM TIMESTAMPTZ_TBL; 
  64 |               d1                
 ----+---------------------------------

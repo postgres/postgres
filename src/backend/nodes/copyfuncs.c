@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.157 2001/10/02 21:39:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.158 2001/10/18 17:30:14 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2287,8 +2287,7 @@ _copyVariableSetStmt(VariableSetStmt *from)
 
 	if (from->name)
 		newnode->name = pstrdup(from->name);
-	if (from->value)
-		newnode->value = pstrdup(from->value);
+	Node_Copy(from, newnode, args);
 
 	return newnode;
 }

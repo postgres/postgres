@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.120 2001/10/12 00:07:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.121 2001/10/18 17:30:15 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -740,7 +740,7 @@ ProcessUtility(Node *parsetree,
 			{
 				VariableSetStmt *n = (VariableSetStmt *) parsetree;
 
-				SetPGVariable(n->name, n->value);
+				SetPGVariable(n->name, n->args);
 				set_ps_display(commandTag = "SET VARIABLE");
 			}
 			break;

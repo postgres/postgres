@@ -2,13 +2,13 @@
  * Headers for handling of 'SET var TO', 'SHOW var' and 'RESET var'
  * statements
  *
- * $Id: variable.h,v 1.13 2000/10/26 17:31:33 tgl Exp $
+ * $Id: variable.h,v 1.14 2001/10/18 17:30:16 thomas Exp $
  *
  */
 #ifndef VARIABLE_H
 #define VARIABLE_H
 
-extern void SetPGVariable(const char *name, const char *value);
+extern void SetPGVariable(const char *name, List *args);
 extern void GetPGVariable(const char *name);
 extern void ResetPGVariable(const char *name);
 

@@ -1788,8 +1788,8 @@ convert_escape(char *value)
 		mapFunc = mapFunction(key);
 
 		/*
-		 * We could have mapFunction() return key if not in table... -
-		 * thomas 2000-04-03
+		 * We could have mapFunction() return key if not in table...
+		 * - thomas 2000-04-03
 		 */
 		if (mapFunc == NULL)
 		{
