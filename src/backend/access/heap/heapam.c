@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.173 2004/08/29 05:06:40 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.174 2004/09/11 18:28:32 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1262,7 +1262,7 @@ simple_heap_insert(Relation relation, HeapTuple tup)
  *	tid - TID of tuple to be deleted
  *	ctid - output parameter, used only for failure case (see below)
  *	cid - delete command ID to use in verifying tuple visibility
- *	crosscheck - if not SnapshotAny, also check tuple against this
+ *	crosscheck - if not InvalidSnapshot, also check tuple against this
  *	wait - true if should wait for any conflicting update to commit/abort
  *
  * Normal, successful return value is HeapTupleMayBeUpdated, which
@@ -1274,7 +1274,8 @@ simple_heap_insert(Relation relation, HeapTuple tup)
  */
 int
 heap_delete(Relation relation, ItemPointer tid,
-		 ItemPointer ctid, CommandId cid, Snapshot crosscheck, bool wait)
+			ItemPointer ctid, CommandId cid,
+			Snapshot crosscheck, bool wait)
 {
 	ItemId		lp;
 	HeapTupleData tp;
@@ -1339,7 +1340,7 @@ l1:
 			result = HeapTupleUpdated;
 	}
 
-	if (crosscheck != SnapshotAny && result == HeapTupleMayBeUpdated)
+	if (crosscheck != InvalidSnapshot && result == HeapTupleMayBeUpdated)
 	{
 		/* Perform additional check for serializable RI updates */
 		if (!HeapTupleSatisfiesSnapshot(tp.t_data, crosscheck))
@@ -1443,7 +1444,7 @@ simple_heap_delete(Relation relation, ItemPointer tid)
 
 	result = heap_delete(relation, tid,
 						 &ctid,
-						 GetCurrentCommandId(), SnapshotAny,
+						 GetCurrentCommandId(), InvalidSnapshot,
 						 true /* wait for commit */ );
 	switch (result)
 	{
@@ -1477,7 +1478,7 @@ simple_heap_delete(Relation relation, ItemPointer tid)
  *	newtup - newly constructed tuple data to store
  *	ctid - output parameter, used only for failure case (see below)
  *	cid - update command ID to use in verifying old tuple visibility
- *	crosscheck - if not SnapshotAny, also check old tuple against this
+ *	crosscheck - if not InvalidSnapshot, also check old tuple against this
  *	wait - true if should wait for any conflicting update to commit/abort
  *
  * Normal, successful return value is HeapTupleMayBeUpdated, which
@@ -1491,7 +1492,8 @@ simple_heap_delete(Relation relation, ItemPointer tid)
  */
 int
 heap_update(Relation relation, ItemPointer otid, HeapTuple newtup,
-		 ItemPointer ctid, CommandId cid, Snapshot crosscheck, bool wait)
+			ItemPointer ctid, CommandId cid,
+			Snapshot crosscheck, bool wait)
 {
 	ItemId		lp;
 	HeapTupleData oldtup;
@@ -1566,7 +1568,7 @@ l2:
 			result = HeapTupleUpdated;
 	}
 
-	if (crosscheck != SnapshotAny && result == HeapTupleMayBeUpdated)
+	if (crosscheck != InvalidSnapshot && result == HeapTupleMayBeUpdated)
 	{
 		/* Perform additional check for serializable RI updates */
 		if (!HeapTupleSatisfiesSnapshot(oldtup.t_data, crosscheck))
@@ -1804,7 +1806,7 @@ simple_heap_update(Relation relation, ItemPointer otid, HeapTuple tup)
 
 	result = heap_update(relation, otid, tup,
 						 &ctid,
-						 GetCurrentCommandId(), SnapshotAny,
+						 GetCurrentCommandId(), InvalidSnapshot,
 						 true /* wait for commit */ );
 	switch (result)
 	{

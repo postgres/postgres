@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/tqual.h,v 1.50 2004/08/29 04:13:11 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/tqual.h,v 1.51 2004/09/11 18:28:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,20 @@
 #include "access/htup.h"
 #include "access/xact.h"
 
+
+/*
+ * "Regular" snapshots are pointers to a SnapshotData structure.
+ *
+ * We also have some "special" snapshot values that have fixed meanings
+ * and don't need any backing SnapshotData.  These are encoded by small
+ * integer values, which of course is a gross violation of ANSI C, but
+ * it works fine on all known platforms.
+ *
+ * SnapshotDirty is an even more special case: its semantics are fixed,
+ * but there is a backing SnapshotData struct for it.  That struct is
+ * actually used as *output* data from tqual.c, not input into it.
+ * (But hey, SnapshotDirty ought to have a dirty implementation, no? ;-))
+ */
 
 typedef struct SnapshotData
 {
@@ -32,10 +46,12 @@ typedef struct SnapshotData
 
 typedef SnapshotData *Snapshot;
 
-#define SnapshotNow					((Snapshot) 0x0)
-#define SnapshotSelf				((Snapshot) 0x1)
-#define SnapshotAny					((Snapshot) 0x2)
-#define SnapshotToast				((Snapshot) 0x3)
+/* Special snapshot values: */
+#define InvalidSnapshot				((Snapshot) 0x0) /* same as NULL */
+#define SnapshotNow					((Snapshot) 0x1)
+#define SnapshotSelf				((Snapshot) 0x2)
+#define SnapshotAny					((Snapshot) 0x3)
+#define SnapshotToast				((Snapshot) 0x4)
 
 extern DLLIMPORT Snapshot SnapshotDirty;
 extern DLLIMPORT Snapshot QuerySnapshot;
