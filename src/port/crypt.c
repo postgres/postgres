@@ -45,7 +45,7 @@ __RCSID("$NetBSD: crypt.c,v 1.18 2001/03/01 14:37:35 wiz Exp $");
 #endif
 #endif   /* not lint */
 
-#include "pg_config.h"
+#include "c.h"
 
 #include <stddef.h>
 #include <sys/types.h>
@@ -58,8 +58,6 @@ __RCSID("$NetBSD: crypt.c,v 1.18 2001/03/01 14:37:35 wiz Exp $");
 
 static int	des_setkey(const char *key);
 static int	des_cipher(const char *in, char *out, long salt, int num_iter);
-static int	setkey(const char *key);
-static int	encrypt(char *block, int flag);
 
 /*
  * UNIX password, and DES, encryption.
@@ -1010,6 +1008,7 @@ int			chars_in,
 /*
  * "setkey" routine (for backwards compatibility)
  */
+#ifdef NOT_USED
 int
 setkey(key)
 const char *key;
@@ -1068,6 +1067,7 @@ int			flag;
 	}
 	return (0);
 }
+#endif
 
 #ifdef DEBUG
 STATIC
