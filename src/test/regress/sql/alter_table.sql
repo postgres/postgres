@@ -31,7 +31,7 @@ ALTER TABLE tmp ADD COLUMN l tid;
 
 ALTER TABLE tmp ADD COLUMN m xid;
 
-ALTER TABLE tmp ADD COLUMN n oid8;
+ALTER TABLE tmp ADD COLUMN n oidvector;
 
 --ALTER TABLE tmp ADD COLUMN o lock;
 ALTER TABLE tmp ADD COLUMN p smgr;
@@ -100,7 +100,7 @@ ALTER TABLE tmp ADD COLUMN l tid;
 
 ALTER TABLE tmp ADD COLUMN m xid;
 
-ALTER TABLE tmp ADD COLUMN n oid8;
+ALTER TABLE tmp ADD COLUMN n oidvector;
 
 --ALTER TABLE tmp ADD COLUMN o lock;
 ALTER TABLE tmp ADD COLUMN p smgr;
