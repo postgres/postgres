@@ -10,7 +10,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/catalog/Attic/genbki.sh,v 1.5 1996/08/26 06:04:49 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/catalog/Attic/genbki.sh,v 1.6 1996/09/25 19:24:58 momjian Exp $
 #
 # NOTES
 #    non-essential whitespace is removed from the generated file.
@@ -65,7 +65,7 @@ sed -e 's/\/\*.*\*\///g' \
     -e 's/^NameData/\name/g' \
     -e 's/(NameData/(name/g' \
     -e 's/(Oid/(oid/g' | \
-gawk '
+awk '
 # ----------------
 #	now use awk to process remaining .h file..
 #
