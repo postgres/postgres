@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.23 1997/03/07 00:59:05 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.24 1997/03/09 07:12:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1602,6 +1602,7 @@ vc_attrstats(Relation onerel, VacAttrStats *vacattrstats, HeapTuple htup)
 	    }
 	    if (stats->guess1_cnt > stats->best_cnt) {
 		swapDatum(stats->best,stats->guess1);
+		swapInt(stats->best_len,stats->guess1_len);
 		swapLong(stats->best_cnt,stats->guess1_cnt);
 		stats->guess1_hits = 1;
 		stats->	guess2_hits = 1;
