@@ -2,7 +2,7 @@
 TODO list for PostgreSQL
 ========================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Wed Mar 23 16:09:58 EST 2005
+Last updated:		Wed Mar 23 16:49:42 EST 2005
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -182,14 +182,16 @@ Data Types
 * Prevent INET cast to CIDR from droping netmask, SELECT '1.1.1.1'::inet::cidr
 * Add 'tid != tid ' operator for use in corruption recovery
 * Add ANSI INTERVAL handling
-	o Add support for day-time syntax, INTERVAL '1 2:03:04' 
+	o Add support for day-time syntax, INTERVAL '1 2:03:04'
 	  DAY TO SECOND
 	o Add support for year-month syntax, INTERVAL '50-6' YEAR TO MONTH
 	o Process mixed ANSI/PG syntax, and round value to requested
 	  precision or generate an error
 	o Interpret INTERVAL '1 year' MONTH as CAST (INTERVAL '1 year' AS
 	  INTERVAL MONTH), and this should return '12 months'
-	o Interpret INTERVAL '1:30' MINUTE TO SECOND as '1 minute 30 seconds'
+	o Interpret syntax that isn't uniquely ANSI or PG, like '1:30' or
+	  '1' as ANSI syntax, e.g. interpret '1:30' MINUTE TO SECOND as 
+	  '1 minute 30 seconds'
 	o Support precision, CREATE TABLE foo (a INTERVAL MONTH(3))
 
 * ARRAYS
