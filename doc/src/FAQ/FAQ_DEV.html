@@ -13,7 +13,7 @@
     <H1>Developer's Frequently Asked Questions (FAQ) for
     PostgreSQL</H1>
 
-    <P>Last updated: Wed Jan  5 17:36:58 EST 2005</P>
+    <P>Last updated: Fri Mar 11 16:43:05 EST 2005</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -26,9 +26,7 @@
     <BR>
      
 
-    <CENTER>
       <H2>General Questions</H2>
-    </CENTER>
     <A href="#1.1">1.1</A>) How do I get involved in PostgreSQL
     development?<BR>
      <A href="#1.2">1.2</A>) What development environment is required
@@ -59,9 +57,7 @@
     site development?<BR>
      
 
-    <CENTER>
       <H2>Technical Questions</H2>
-    </CENTER>
     <A href="#2.1">2.1</A>) How do I efficiently access information in
     tables from the backend code?<BR>
      <A href="#2.2">2.2</A>) Why are table, column, type, function,
@@ -83,7 +79,7 @@
       <H2>General Questions</H2>
     </CENTER>
 
-    <H3><A name="1.1">1.1</A>) How go I get involved in PostgreSQL
+    <H3><A name="1.1">1.1</A>) How do I get involved in PostgreSQL
     development?</H3>
 
     <P>Download the code and have a look around. See <A href=
@@ -147,6 +143,13 @@
     item; you may have misunderstood the TODO item; your approach may
     benefit from the review of others.</P>
 
+    <P>A web site is maintained for patches that are ready to be applied,
+    <a href="http://momjian.postgresql.org/cgi-bin/pgpatches">
+    http://momjian.postgresql.org/cgi-bin/pgpatches</a>, and
+    those that are being kept for the next release,
+    <a href="http://momjian.postgresql.org/cgi-bin/pgpatches2">
+    http://momjian.postgresql.org/cgi-bin/pgpatches2</a>.</P>
+    
     <H3><A name="1.5">1.5</A>) Where can I learn more about the
     code?</H3>
 
@@ -192,7 +195,7 @@
     <P><B>Basic system testing</B></P>
 
     <P>The easiest way to test your code is to ensure that it builds
-    against the latest verion of the code and that it does not generate
+    against the latest version of the code and that it does not generate
     compiler warnings.</P>
 
     <P>It is worth advised that you pass --enable-cassert to
@@ -210,7 +213,7 @@
     directory of the source tree. If any tests failure,
     investigate.</P>
 
-    <P>If you've deliberately changed existing behaviour, this change
+    <P>If you've deliberately changed existing behavior, this change
     may cause a regression test failure but not any actual regression.
     If so, you should also patch the regression test suite.</P>
 
@@ -472,7 +475,7 @@
 
       <LI>The initscript;</LI>
 
-      <LI>Any other ancilliary scripts and files;</LI>
+      <LI>Any other ancillary scripts and files;</LI>
 
       <LI>A README.rpm-dist document that tries to adequately document
       both the differences between the RPM build and the WHY of the
@@ -601,7 +604,7 @@
     cvs ... checkout pgsql
 </PRE>
 
-    <P>To get a past branch, you cd to whereever you want it and
+    <P>To get a past branch, you cd to wherever you want it and
     say</P>
 <PRE>
     cvs ... checkout -r BRANCHNAME pgsql
@@ -682,7 +685,7 @@
     questions about development of new features, on IRC at
     irc.freenode.net in the #postgresql channel.</P>
 
-    <H3><A name="1.18">1.18</A>) How go I get involved in PostgreSQL
+    <H3><A name="1.18">1.18</A>) How do I get involved in PostgreSQL
     web site development?</H3>
 
     <P>PostgreSQL website development is discussed on the
@@ -690,15 +693,13 @@
     the source code is available at <A href=
     "http://gborg.postgresql.org/project/pgweb/projdisplay.php">http://gborg.postgresql.org/project/pgweb/projdisplay.php</A>
     , the code for the next version of the website is under the
-    "portal" module. You will al so find code for the "techdocs"
+    "portal" module. You will also find code for the "techdocs"
     website if you would like to contribute to that. A temporary todo
     list for current website development issues is available at <A
     href=
     "http://xzilla.postgresql.org/todo">http://xzilla.postgresql.org/todo</A></P>
 
-    <CENTER>
       <H2>Technical Questions</H2>
-    </CENTER>
 
     <H3><A name="2.1">2.1</A>) How do I efficiently access information
     in tables from the backend code?</H3>
@@ -810,7 +811,7 @@
       <DL>
         <DT>lfirst(i), lfirst_int(i), lfirst_oid(i)</DT>
 
-        <DD>return the data (a point, inteter and OID respectively) at
+        <DD>return the data (a point, integer and OID respectively) at
         list element <I>i.</I></DD>
 
         <DT>lnext(i)</DT>

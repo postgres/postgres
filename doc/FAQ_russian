@@ -520,11 +520,11 @@
     Proizvol'noj stroki?
     
    Dlya polucheniya tol'ko neskol'kih strok, esli vy znaete ih
-   kolichestvo na moment vypolneniya SELECT ispol'zujte LIMIT.
-   Esli est' kakoj-libo indeks, kotoryj sovpadaet s ORDER BY, to
-   vozmozhno, chto ves' zapros vypolnen i ne budet. Esli vy ne znaete
-   kolichestva neobhodimyh strok na moment vypolneniya SELECT,
-   ispol'zujte kursor i FETCH.
+   kolichestvo na moment vypolneniya SELECT ispol'zujte LIMIT. Esli est'
+   kakoj-libo indeks, kotoryj sovpadaet s ORDER BY, to vozmozhno, chto
+   ves' zapros vypolnen i ne budet. Esli vy ne znaete kolichestva
+   neobhodimyh strok na moment vypolneniya SELECT, ispol'zujte kursor i
+   FETCH.
    
    To SELECT a random row, use:
     SELECT col
@@ -821,10 +821,8 @@
    
    TID ispol'zuetsya dlya identifikacii special'nyh fizicheskih zapisej s
    blochnymi i offset znacheniyami. TID izmenyaetsya posle togo kak
-   stroki v tablice byli izmeneny ili peregruzheny.
-   
-   TID ispol'zuetsya indeksnymi zapisyami v kachestve ukazatelya na
-   fizicheskie zapisi.
+   stroki v tablice byli izmeneny ili peregruzheny. TID ispol'zuetsya
+   indeksnymi zapisyami v kachestve ukazatelya na fizicheskie zapisi.
    
     4.13) Pochemu ya poluchayu oshibku "ERROR: Memory exhausted in
     AllocSetAlloc()"?

@@ -111,7 +111,7 @@ adreslerinde görülebilir.</p>
 	<a href="#4.18">4.18</a>) Neden "<code>ERROR: Memory exhausted in AllocSetAlloc()</code>"
 	hatasýný alýyorum?<br>
 	<a href="#4.19">4.19</a>) Hangi PostgreSQL sürümünü çalýstýrdýðýmý nasýl görebilirim?<br>
-	<a href="#4.20">4.20</a>) Neden <i>large-object</i> iþlemlerim, "</code>invalid large
+	<a href="#4.20">4.20</a>) Neden <i>large-object</i> iþlemlerim, "<code>invalid large
 	obj descriptor</code>" hatasýný veriyor?<br>
 	<a href="#4.21">4.21</a>) Þu andaki zamaný öntanýmlý deðer olarak kabul
 	eden kolonu nasýl yaratýrým?<br>
@@ -190,7 +190,7 @@ adreslerinde görülebilir.</p>
 	        <P>PostgreSQL 8.0 sürümü ile , PostgreSQL artýk Win2000, WinXP ve Win2003 gibi Microsoft 
 		Windows NT tabanlý iþletim sistemlerinde doðal olarak çalýþmaya baþlamýþtýr. Paketlenmiþ bir
 		kurulum programý, <a href="http://pgfoundry.org/projects/pginstaller">http://pgfoundry.org/projects/pginstaller</a>. adresinden 
-		indirilebilir.
+		indirilebilir.</P>
 
 		<p>Ayrýca, http://forge.novell.com adresinde Novell Netware 6 portu bulunmaktadýr.</p>
 		
@@ -218,7 +218,7 @@ adreslerinde görülebilir.</p>
 		<pre>subscribe<br>end</pre>
 		<p>yazan bir e-posta atmanýz yeterli olacaktýr.</p>
 		<p>Bunun dýþýndaki e-posta listelerine ve PostgreSQL hakkýnda bilgiye, PostgreSQL WWW 
-		ana sayfasýndan ulasabilirsiniz: <i><a href="http://www.PostgreSQL.org">http://www.PostgreSQL.org</a></i><p>
+		ana sayfasýndan ulasabilirsiniz: <i><a href="http://www.PostgreSQL.org">http://www.PostgreSQL.org</a></i></p>
 		<p>Ayný zamanda, EFNet üzerinde, <code>#PostgreSQL</code> adlý bir IRC kanalý
 		bulunmaktadýr. Bunun için, <code>irc -c '#PostgreSQL' "$USER" irc.phoenix.net</code>
 		Unix komutunu kullanabilirsiniz.</p>
@@ -235,7 +235,7 @@ adreslerinde görülebilir.</p>
 		<code>/doc</code> dizinine bakýnýz. Ayrýca, bu el kitapçýklarýný online olarak
 		<i><a href="http://www.PostgreSQL.org/docs/">http://www.PostgreSQL.org/docs/</a></i> adresinden inceleyebilirsiniz.</p>
 		<p><i><a href="http://www.PostgreSQL.org/docs/awbook.html">http://www.PostgreSQL.org/docs/awbook.html</a></i>
-		ve <i><a href="http://www.commandprompt.com/ppbook">http://www.commandprompt.com/ppbook<a></i>
+		ve <i><a href="http://www.commandprompt.com/ppbook">http://www.commandprompt.com/ppbook</a></i>
 		adreslerinde PostgreSQL kitaplarý bulunmaktadýr. PostgreSQL kitablarýnýn listesine, 
 		<i><a href="http://www.ca.PostgreSQL.org/books/">http://www.ca.PostgreSQL.org/books/</a></i> adresinden ulaþaiblirsiniz.
 		Ayrýca, PostgreSQL konusundaki teknik makalelere de
@@ -288,7 +288,7 @@ adreslerinde görülebilir.</p>
 		<h4><a name="1.14">1.14</a>) PostgreSQL, diger DBMS'lerle nasýl karþýlastýrýlabilir?</h4>
 		<p>Bir yazýlýmýn gücünü ölçmek için çeþitli yollar vardýr: Yazýlýmýn özellikleri, 
 		baþarýmý, güvenilirliði, desteði ve ücreti.</p>
-		<p>Özellikler:<p>
+		<p>Özellikler:</p>
 		<p>PostgreSQL mevcut büyük ticari veritabanlarýnýn, <i>transaction</i>,
 		<i>subselect</i>, <i>trigger</i>, <i>view</i>, <i>foreign key referential integrity</i>
 		ve <i>sophisticated locking</i> gibi (<i>user-defined types</i>), <i>rules</i>,
@@ -355,7 +355,7 @@ adreslerinde görülebilir.</p>
 		<p><i><a href="http://www.webreview.com/">http://www.webreview.com/</a></i> adresinde,
 		arka planda veritabaný çalýstýran Web sayfalarý için giriþ seviyesinde bilgi bulunmaktadýr.</p>
 		<p>Web ile bütünleþme için, PHP (<i><a href="http://www.php.net/"></a></i>)
-		mükemmel bir arabirim sunar.<p>
+		mükemmel bir arabirim sunar.</p>
 		<p>Karmaþýk sorunlar için, çoðu kisi Perl arabirimini ve CGI.pm ya da mod_perl kullanýr.</p>
 		
 		<h4><a name="2.3">2.3</a>) PostgreSQL'in grafik kullanýcý arabirimi var mýdýr?</h4>
@@ -466,7 +466,7 @@ adreslerinde görülebilir.</p>
 		<p>Postmaster ve postgres çeþitli hata ayýklama seçeneklerine sahiptir. Öncelikle,
 		postmaster'ý baþlattýðýnýzda, standart çýktýyý ve hatalarý bir log dosyasýna 
 		yönlendirdiðinize emin olun:</p>
-		<pre>cd /usr/local/pgsql<br>./bin/postmaster >server.log 2>&1 &</pre>
+		<pre>cd /usr/local/pgsql<br>./bin/postmaster >server.log 2>&amp;1 &amp;</pre>
 		<p>Bu iþlem PostgreSQL ana dizinine <code>server.log</code> dosyasý yerleþtirecektir.
 		Bu dosya sunucunun yaþadýðý sorunlar ya da hatalar hakkýnda yararlý bilgiler içerir.
 		<code>-d</code> seçeneði, hata ayýklama seviyesini belirten bir rakam ile kullanýlýr.
@@ -497,7 +497,7 @@ adreslerinde görülebilir.</p>
 		deðeri ile ya da <code>postgresql.conf</code> dosyasýný düzenleyerek yeniden
 		baþlatmakla arttýrabilirsiniz.</p>
 		<p>Eðer <code>-N</code> deðerini 32'den büyük yapacaksanýz, ayný zamanda
-		<code>-B</code> deðerini de deðiþtirmeniz gerektiðini unutmayýn. </code>-B</code>,
+		<code>-B</code> deðerini de deðiþtirmeniz gerektiðini unutmayýn. <code>-B</code>,
 		<code>-N</code>'nin en az 2 katý kadar olmalýdýr; daha iyi baþarým için bu sayýyý daha
 		da arttýrmalýsýnýz. Yüksek sayýdaki <i>backend</i> süreçleri için, çeþitli çekirdek
 		yapýlandýrma parametrelerini arttýrmanýz gerekecektir. Yapýlmasý gerekenler,
@@ -554,7 +554,7 @@ adreslerinde görülebilir.</p>
 		<code>LIMIT</code> ... kullanýnýz.</p>
 		<p>Ýlk birkaç satýrý almak isteseniz bile, tüm sorgu deðerlendirilmek durumunda kalýnabilir. ORDER 
  		BY içeren bir sorgu düþünün. Eðer ORDER BY iþe eþleþen bir index varsa, PostgreSQL istenen ilk birkaç  
-		satýrý iþleyebilir, ya da tüm sorgu istenen satýrlar üretilene kadar iþlenebilir. </b></p>
+		satýrý iþleyebilir, ya da tüm sorgu istenen satýrlar üretilene kadar iþlenebilir. </p>
 		
 		<h4><a name="4.3">4.3</a>) psql'in içinde gördügüm tablolarýn ya da diðer
 		þeylerin listesini nasýl alabilirim?</h4>
@@ -786,7 +786,7 @@ CREATE UNIQUE INDEX person_id_key ON person ( id );
     execute("INSERT INTO person (id, name) VALUES (new_id, 'Blaise Pascal')");</pre>
 
 	<P>Diðer sorgular için new_id'de yeni deðerin saklanmasý gerekir. Otomatik olarak yaratýlan SEQUENE nesnesinin adý,
-  <tablo adý>_<serial kolonu adý>_seq þeklinde olacaktýr (< > iþaretleri olmadan).</p>
+  &lt;tablo adý&gt;_&lt;serial kolonu adý&gt;_seq þeklinde olacaktýr (&lt; &gt; iþaretleri olmadan).</p>
 
 		<p>Alternatif olarak, atanmýþ SERIAL deðerini, deðer girildikten sonra currval()
 		fonksiyonu ile alabilirsiniz:</p>

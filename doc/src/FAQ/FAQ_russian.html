@@ -236,16 +236,16 @@
     <A href="http://techdocs.postgresql.org/companies.php">http://techdocs.postgresql.org/companies.php</A>.</P>
 
 
-    <H4><A name="1.6">1.6</A>) Как мне сообщить об ошибке?</H3>
+    <H4><A name="1.6">1.6</A>) Как мне сообщить об ошибке?</H4>
     
     <P>Посетите страничку со специальной формой отчёта об ошибке в
     PostgreSQL по адресу:
-    <A HREF="http://www.postgresql.org/support/submitbug">
+    <A href="http://www.postgresql.org/support/submitbug">
     http://www.postgresql.org/support/submitbug</A>.</P>
     
     <P>Также проверьте наличие более свежей версии PostgreSQL на нашем
     FTP сайте <A href="ftp://ftp.postgresql.org/pub">
-    ftp://ftp.PostgreSQL.org/pub</A>.
+    ftp://ftp.PostgreSQL.org/pub</A>.</P>
     
 
     <H4><A name="1.7">1.7</A>) Какая последняя версия?</H4>
@@ -604,19 +604,18 @@
      для нескольких первых строчек запроса? Произвольной строки?</H4>
 
     <P>Для получения только нескольких строк, если вы знаете их количество
-    на момент выполнения <SMALL>SELECT</SMALL> используйте <SMALL>LIMIT</SMALL>.</P>
+    на момент выполнения <SMALL>SELECT</SMALL> используйте <SMALL>LIMIT</SMALL>.
     Если есть какой-либо индекс, который совпадает с <SMALL>ORDER BY</SMALL>,
     то возможно, что весь запрос выполнен и не будет. Если вы не знаете
     количества необходимых строк на момент выполнения <SMALL>SELECT</SMALL>,
     используйте курсор и <SMALL>FETCH</SMALL>.</P>
 
-    <p>To <small>SELECT</small> a random row, use:
-</p><pre>    SELECT col
+    <p>To <small>SELECT</small> a random row, use:</p>
+<pre>    SELECT col
     FROM tab
     ORDER BY random()
     LIMIT 1;
 </pre>
-</p>
 
     <H4><A name="4.2">4.2</A>) Как мне найти какие таблицы, индексы,
     базы данных и пользователи существуют? Как мне увидеть запросы,
@@ -646,7 +645,7 @@
     <H4><A name="4.3">4.3</A>) Как изменить тип данных колонки?</H4>
 
     <P>В 8.0 и более поздних версиях, изменение типа колонки выполняется
-    очень легко через <SMALL>ALTER TABLE ALTER COLUMN TYPE</SMALL>.
+    очень легко через <SMALL>ALTER TABLE ALTER COLUMN TYPE</SMALL>.</P>
 
     <P>В более ранних версиях сделайте так:</P>
 <PRE>
@@ -662,7 +661,7 @@
 
     <P>Существуют следующие ограничения:</P>
 <BLOCKQUOTE>
-<TABLE BORDER="1">
+<TABLE>
 <TBODY>
 <TR>
   <TD>Максимальный размер базы?</TD>
@@ -775,7 +774,7 @@
     и в этом случае индекс будет использоваться, поскольку при выполнении
     будет возвращаться небольшая часть таблицы. Фактически MAX() и MIN() не
     используют индексы, но индекс используется при построении запросов с
-    <SMALL>ORDER BY</SMALL> и <SMALL>LIMIT</SMALL>:
+    <SMALL>ORDER BY</SMALL> и <SMALL>LIMIT</SMALL>:</P>
 <pre>
     SELECT col
     FROM tab
@@ -833,8 +832,8 @@
     WHERE lower(col) = 'abc';
 </PRE>
 
-    Эта конструкция не будет использовать стандартный индекс. Однако, если
-    вы создадите индекс выражения, он будет использован:
+<P>    Эта конструкция не будет использовать стандартный индекс. Однако, если
+    вы создадите индекс выражения, он будет использован:</P>
 <PRE>
     CREATE INDEX tabindex ON tab (lower(col));
 </PRE>
@@ -848,7 +847,7 @@
     <H4><A name="4.10">4.10</A>) Каковы отличия между разными символьными
      типами?</H4>
 <BLOCKQUOTE>
-<TABLE BORDER="1">
+<TABLE>
 <TBODY>
 <TR>
   <TH>Тип</TH>
@@ -919,7 +918,7 @@
     );
 </PRE>
 
-    автоматически транслируется в: 
+<P>    автоматически транслируется в: </P>
 <PRE>
     CREATE SEQUENCE person_id_seq;
     CREATE TABLE person ( 
@@ -994,12 +993,12 @@
     O<SMALL>ID</SMALL>, потому что последовательности <SMALL>SERIAL</SMALL>
     уникальны только внутри таблицы и таким образом меньше подвержены
     переполнению. Для хранения значений 8-ми байтной последовательности
-    доступен тип <SMALL>SERIAL8</SMALL>.
+    доступен тип <SMALL>SERIAL8</SMALL>.</P>
 
     <P>T<SMALL>ID</SMALL> используется для идентификации специальных
     физических записей с блочными и offset значениями. T<SMALL>ID</SMALL>
     изменяется после того как строки в таблице были изменены или перегружены.
-    <P>T<SMALL>ID</SMALL> используется индексными записями в качестве
+    T<SMALL>ID</SMALL> используется индексными записями в качестве
     указателя на физические записи.</P>
 
 

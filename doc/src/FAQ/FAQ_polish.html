@@ -237,7 +237,7 @@
 
     <P>Tekst powy¿ej, jest klasyczn± licencj± BSD.
     Nie posiada ona ¿adnych restrykcji co do u¿ywania kodu ¼ród³owego.
-	 Podoba nam siê i nie zamierzamy jej zmieniaæ.
+	 Podoba nam siê i nie zamierzamy jej zmieniaæ.</P>
 
     <H4><A name="1.3">1.3</A>) Na jakich systemach Unixowych dzia³a
 	      PostreSQL?</H4>
@@ -266,7 +266,7 @@
     <P>Serwer mo¿e byæ uruchamiany na Windows NT i Win2k u¿ywaj±c
 	 bibliotek Cygwin, Cygnus Unix/NT. W pliku <I>pgsql/doc/FAQ_MSWIN</I>
 	 znajduj±cym siê w ¼ród³ach lub pod adresem: <A href=
-    "http://www.postgresql.org/docs/faqs/text/FAQ_MSWIN">http://www.PostgreSQL.org/docs/faqs/text/FAQ_MSWIN</A> na naszych stronach.<P>
+    "http://www.postgresql.org/docs/faqs/text/FAQ_MSWIN">http://www.PostgreSQL.org/docs/faqs/text/FAQ_MSWIN</A> na naszych stronach.</P><P>
 	 Obecnie prowadzone s± prace nad stworzeniem wersji dla MS Win
 	 NT/200/XP. Je¶li chcesz siê dowiedzieæ o obecnym statusie tych prac
 	 zobacz <A
@@ -283,7 +283,7 @@
 
     <P>G³ówny serwer ftp z dostêpem "anonymous" dla PostgreSQL znajduje
 	 siê <A href="ftp://ftp.PostgreSQL.org/pub">ftp://ftp.PostgreSQL.org/pub</A>.
-	 je¶li szukasz mirrorów sprawd¼ nasz± g³ówn± stronê www.<P>
+	 je¶li szukasz mirrorów sprawd¼ nasz± g³ówn± stronê www.</P>
 
     <H4><A name="1.6">1.6</A>) Gdzie mo¿na szukaæ wsparcia technicznego?</H4>
 
@@ -334,7 +334,7 @@
 	 mo¿na znale¼æ na stronach WWW PostgreSQL pod adresem:</P>
 
     <BLOCKQUOTE>
-      <A href="http://www.PostgreSQL.org">http://www.PostgreSQL.org</A>
+      <P><A href="http://www.PostgreSQL.org">http://www.PostgreSQL.org</A></P>
     </BLOCKQUOTE>
 
     <P>W sieci EFNet istnieje kana³ IRC <I>#PostgreSQL</I>. Ja, do
@@ -599,7 +599,7 @@
 	</P>
 	<P>
 	Wiêcej informacji na ten temat znajduje siê pod adresem See
-	<A href="http://techdocs.postgresql.org/guides/GUITools">http://techdocs.postgresql.org/guides/GUITools</A>.
+	<A href="http://techdocs.postgresql.org/guides/GUITools">http://techdocs.postgresql.org/guides/GUITools</A>.</P>
 	 
 	 <H4><A name="2.4">2.4</A>) Za pomoc± jakich jêzyków programowania
 	 mo¿na siê komunikowaæ z PostgreSQL?</H4>
@@ -882,14 +882,13 @@
 	 pierwszych rzêdów, byæ mo¿e bêdzie konieczno¶æ wykonania zapytania do
 	 momentu a¿ zostan± znalezione po¿±dane wyniki.</P>
 	 <P>
-	 Aby otrzymaæ losowy rz±d, u¿yj:
+	 Aby otrzymaæ losowy rz±d, u¿yj:</P>
 	 <PRE>
     SELECT col
     FROM tab
     ORDER BY random()
     LIMIT 1;
 	 </PRE>
-	</P>
 
     <H4><A name="4.3">4.3</A>) Jak mogê uzyskaæ listê wszystkich tabel
 	 czy  innych rzeczy pod <I>psql</I>?</H4>
@@ -926,7 +925,6 @@
    ALTER TABLE tab DROP COLUMN old_col;
    COMMIT;
 	</PRE>
-	</P>
 
     <H4><A name="4.5">4.5</A>) Jaki jest maksymalny rozmiar dla rzêdu,
 	      tabeli i bazy danych?</H4>
@@ -1034,7 +1032,7 @@
 	 przy wykonywaniu z³±czeñ (join). Sekwencyjne przeszukiwanie po którym
 	 nastêpuje sortowanie jest zazwyczaj szybsze niê wyszukiwanie za
 	 pomoc± indeksu na du¿ej tabeli.</P>
-	 Jakkolwiek <SMALL>LIMIT</SMALL> w po³±czeniu z <SMALL>ORDER BY</SMALL>
+	 <P>Jakkolwiek <SMALL>LIMIT</SMALL> w po³±czeniu z <SMALL>ORDER BY</SMALL>
 	czêsto bêdzie wykorzystywa³ indeksy poniewa¿ jedynie ma³a czê¶æ z
 	tabeli jest zwracana. W rzeczywisto¶ci, chocia¿ MAX() i MIN() nie
 	u¿ywaj± indeksów, mo¿liwe jest aby zwróciæ te warto¶ci u¿ywaj±c
@@ -1049,7 +1047,7 @@
 	<P>
 	Je¶li uwa¿asz, ¿e optimizer myli siê wybieraj±c sequential scan, u¿yj
 	SET enable_seqscan TO 'off' i uruchom testy aby sprawdziæ czy wtym
-	wypadku zapytanie bêdzie szybciej wykonywane.
+	wypadku zapytanie bêdzie szybciej wykonywane.</P>
 
     <P>Kiedy u¿ywa siê operatorów dopasuj±cych takich jak
 	 <SMALL>LIKE</SMALL> lub <I>~</I>, indeksy bêd± u¿ywane jedynie w
@@ -1057,16 +1055,16 @@
 	 <UL>
 	 <LI>Pocz±tek wyszukiwania jest oparty na pocz±tku ³añcucha tekstu.
 	 <UL>
-	 	<LI>wzorce <SMALL>LIKE</SMALL> nie mog± siê zaczynaæ <I>%</I>
+	 	<LI>wzorce <SMALL>LIKE</SMALL> nie mog± siê zaczynaæ <I>%</I></LI>
 		<LI>dopasowania operatorem <I>~</I> (dopasowania regularne)
-		musz± siê zaczynaæ znakiem specjalnym <I>^</I>.</P>
-	 </UL>
+		musz± siê zaczynaæ znakiem specjalnym <I>^</I>.</LI>
+	 </UL></LI>
 	 <LI>Pocz±tek wyszukiwania nie mo¿e siê zaczynaæ od klas znaków, np.
-	 [a-e].
+	 [a-e].</LI>
 	 <LI>Case-insensitive searches such as ILIKE and ~* do not utilise
 	 indexes. Instead, use functional indexes, which are described in
-	 section 4.12.
-	 <LI>Standardowe locale C musi byæ uzyte przy wykonywaniu initdb
+	 section 4.12.</LI>
+	 <LI>Standardowe locale C musi byæ uzyte przy wykonywaniu initdb</LI>
 	 </UL>
     <H4><A name="4.9">4.9</A>) Jak mogê sprawdziæ w jakis sposób "query
 	 optimizer" wykonuje moje zapytanie?</H4>
@@ -1165,7 +1163,7 @@ BYTEA           bytea              zmiennej d³ugo¶ci tablica bajtów (null-byte s
 	 przechowywane out-of-line jako <SMALL>TOAST</SMALL>, wiêc faktyczne
 	 zu¿ycie miejsca na dysku mo¿e byæ mniejsze ni¿ oczekiwane.</P>
 
-	 <SMALL>VARCHAR(n)</SMALL> jest
+	<P> <SMALL>VARCHAR(n)</SMALL> jest
 	 najodpowiedniejszy do przechowywania ³añcuchów o ró¿nej d³ugo¶ci
 	 ale okre¶la on maksymaln± jego d³ugo¶æ. 
 	 
@@ -1344,7 +1342,7 @@ BYTEA           bytea              zmiennej d³ugo¶ci tablica bajtów (null-byte s
 
     <P>Listê terminów zwi±zanych z bazami danych mo¿esz znale¼æ pod tym
 	 adresem:<A
-	 href="http://hea-www.harvard.edu/MST/simul/software/docs/pkgs/pgsql/glossary/glossary.html">http://hea-www.harvard.edu/MST/simul/software/docs/pkgs/pgsql/glossary/glossary.html</A>.
+	 href="http://hea-www.harvard.edu/MST/simul/software/docs/pkgs/pgsql/glossary/glossary.html">http://hea-www.harvard.edu/MST/simul/software/docs/pkgs/pgsql/glossary/glossary.html</A>.</P>
 
     <H4><A name="4.18">4.18</A>) Sk±d bierze siê ten b³±d <I>"ERROR:
 	 Memory exhausted in AllocSetAlloc()"</I>?</H4>
@@ -1488,7 +1486,7 @@ BYTEA           bytea              zmiennej d³ugo¶ci tablica bajtów (null-byte s
 	      kolumn?</H4>
 
      <P>Mo¿esz w ³atwy sposób zwracaæ wiele rzêdów lub kolumn u¿ywaj±c
-	  funkcji z: <A HREF="http://techdocs.postgresql.org/guides/SetReturningFunctions">http://techdocs.postgresql.org/guides/SetReturningFunctions</A>.
+	  funkcji z: <A href="http://techdocs.postgresql.org/guides/SetReturningFunctions">http://techdocs.postgresql.org/guides/SetReturningFunctions</A>.</P>
      
 	<H4><A name="4.26">4.26</A>) Dlaczego nie mogê w sposób pewny
 	     tworzyæ/usuwaæ tabel tymczasowych w funkcjach PL/PgSQL?</H4>
@@ -1503,38 +1501,36 @@ BYTEA           bytea              zmiennej d³ugo¶ci tablica bajtów (null-byte s
 	funkcji.
 	</P>
 	
-	<H4><A name="4.27">4.27) Jakie s± mo¿liwo¶ci replikacji w PostgreSQL?</H4>
+	<H4><A name="4.27">4.27</A>) Jakie s± mo¿liwo¶ci replikacji w PostgreSQL?</H4>
 	<P>
 	Jest kilka opcji aby stosowaæ replikacjê typu master/slave. Ten typ
 	pozwala jedynie masterowi na dokonywanie zmian w bazie danych, a
 	slave mo¿e jedynie te zmiany odczytywaæ. Na stronie 
 	<A
-	HREF="http://gborg.PostgreSQL.org/genpage?replication_research">http://gborg.PostgreSQL.org/genpage?replication_research</A>
+	href="http://gborg.PostgreSQL.org/genpage?replication_research">http://gborg.PostgreSQL.org/genpage?replication_research</A>
 	znajduje siê ich lista. Replikacja typu multi-master jest w trakcie
 	prac, opis projektu znajduje siê pod adresem: <A
-	HREF="http://gborg.PostgreSQL.org/project/pgreplication/projdisplay.php">
+	href="http://gborg.PostgreSQL.org/project/pgreplication/projdisplay.php">
 http://gborg.PostgreSQL.org/project/pgreplication/projdisplay.php</A>.
 	</P>
 
-	<H4><A name="4.28">4.28) Jakie mo¿liwo¶ci szyfrowania oferuje
+	<H4><A name="4.28">4.28</A>) Jakie mo¿liwo¶ci szyfrowania oferuje
 	PostgreSQL?</H4>
-	<P>
 	<UL>
 	<LI>contrib/pgcrypto zawiera wiele funkcji za pomoc±, których mo¿emy u¿ywaæ
-	kryptografii w zapytaniach SQL.
+	kryptografii w zapytaniach SQL.</LI>
 	<LI>Aby szyfrowaæ transmisjê od klienta do serwera, ten musi mieæ
 	ustawion± opcjê ssl na true w pliku postgresql.conf, odpowiedni
 	wpis host lub hostssl musi wystêpowaæ w pliku pg_hba.conf, oraz
 	sslmode nie mo¿e byæ wy³±czone w kliencie. (Warto zwróciæ uwagê, ¿e
 	mo¿liwe jest tak¿e u¿ywanie transportów szyfruj±ców przez strony
 	trzecie, takie jak stunnel lub ssh, poza natywnym wsparciem dla SSL
-	przez PostgreSQL).
+	przez PostgreSQL).</LI>
 	<LI>Has³a u¿ytkowników bazy danych s± automatycznie szyfrowane od
 	wersji 7.3. W poprzednich wersjach, nale¿y t± funkcjonalno¶æ poprzez
-	w³±czenie opcji PASSWORD_ENCRYPTION w postgresql.conf. 
-	<LI>Serwer mo¿e dzia³aæ u¿ywaj±c szyfrowanego systemu plików.
+	w³±czenie opcji PASSWORD_ENCRYPTION w postgresql.conf. </LI>
+	<LI>Serwer mo¿e dzia³aæ u¿ywaj±c szyfrowanego systemu plików.</LI>
 	</UL>
-</P>
 
     <H2 align="center">Rozwijanie PostgreSQL</H2>
 

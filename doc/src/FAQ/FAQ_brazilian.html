@@ -17,7 +17,7 @@
     </P>
 
     <P>Traduzido por: Euler Taveira de Oliveira (<A href=
-    "mailto:eulerto@yahoo.com.br">eulerto@yahoo.com.br</A>)<BR>
+    "mailto:eulerto@yahoo.com.br">eulerto@yahoo.com.br</A>)</P>
 
     <P>A vers&atilde;o mais recente desse documento pode ser vista em <A href=
     "http://www.postgresql.org/files/documentation/faqs/FAQ.html">
@@ -202,14 +202,14 @@
     baseados no NT tais como Win2000, WinXP e Win2003. Um instalador
     est&aacute; dispon&iacute;vel em <a href=
 	    "http://pgfoundry.org/projects/pginstaller">
-	    http://pgfoundry.org/projects/pginstaller</a> Versões do Windows
-    baseados no MSDOS (Win95, Win98, WinMe) podem executar o PostgreSQL utilizando o Cygwin.
+	    http://pgfoundry.org/projects/pginstaller</a> Vers&otilde;es do Windows
+    baseados no MSDOS (Win95, Win98, WinMe) podem executar o PostgreSQL utilizando o Cygwin.</P>
 
     <P>H&aacute; tamb&eacute;m um porte para Novell Netware 6 em
     <A href="http://forge.novell.com">http://forge.novell.com</A>
-    e uma versão para OS/2 (eComStation) em <a href=
-    "http://hobbes.nmsu.edu/cgi-bin/h-search?sh=1&button=Search&key=postgreSQL&stype=all&sort=type&dir=%2F">
-    http://hobbes.nmsu.edu/cgi-bin/h-search?sh=1&button=Search&key=postgreSQL&stype=all&sort=type&dir=%2F</a>.</P>
+    e uma vers&atilde;o para OS/2 (eComStation) em <a href=
+    "http://hobbes.nmsu.edu/cgi-bin/h-search?sh=1&amp;button=Search&amp;key=postgreSQL&amp;stype=all&amp;sort=type&amp;dir=%2F">
+    http://hobbes.nmsu.edu/cgi-bin/h-search?sh=1&amp;button=Search&amp;key=postgreSQL&amp;stype=all&amp;sort=type&amp;dir=%2F</a>.</P>
 
     <H4><A name="1.5">1.5</A>) Onde eu posso conseguir o PostgreSQL?</H4>
 
@@ -253,7 +253,7 @@ H&aacute; tamb&eacute;m uma lista de discuss&atilde;o dos desenvolvedores dispon
 <P>Outras listas de discuss&otilde;es e informa&ccedil;&otilde;es sobre o PostgreSQL podem ser encontradas na homepage do PostgreSQL em:</P>
 
     <BLOCKQUOTE>
-      <A href="http://www.PostgreSQL.org">http://www.PostgreSQL.org</A>
+      <P><A href="http://www.PostgreSQL.org">http://www.PostgreSQL.org</A></P>
     </BLOCKQUOTE>
 
     <P>O principal canal de IRC &eacute; o <I>#postgresql</I> na Freenode (<I>irc.freenode.net</I>). Para se conectar voc&ecirc; pode utilizar o comando Unix <code>irc -c '#postgresql' "$USER" irc.freenode.net</code> ou utilizar qualquer outro cliente de IRC. Um canal hisp&acirc;nico (<I>#postgresql-es</I>) e um franc&ecirc;s (<I>#postgresqlfr</I>) tamb&eacute;m existem na mesma rede. H&aacute; tamb&eacute;m um canal PostgreSQL na EFNet.</P>
@@ -499,9 +499,9 @@ H&aacute; tamb&eacute;m uma lista de discuss&atilde;o dos desenvolvedores dispon
 
 <P>Se o <I>postmaster</I> n&atilde;o est&aacute; sendo executado, voc&ecirc; pode executar o n&uacute;cleo do <I>postgres</I> a partir da linha de comando, e digitar a sua senten&ccedil;a <SMALL>SQL</SMALL> diretamente. Isso &eacute; recomendado <B>somente</B> para fins de depura&ccedil;&atilde;o. Note que uma nova linha termina a consulta, e n&atilde;o um ponto-e-v&iacute;rgula. Se voc&ecirc; compilou com s&iacute;mbolos de depura&ccedil;&atilde;o, voc&ecirc; pode utilizar um depurador para ver o que est&aacute; acontecendo. Como o n&uacute;cleo (backend) n&atilde;o foi iniciado a partir do <I>postmaster</I>, ele n&atilde;o est&aacute; executando em um ambiente id&ecirc;ntico e problemas de itera&ccedil;&atilde;o com o n&uacute;cleo/travamento n&atilde;o podem ser reproduzidos.</P>
 
-<P>Se o <i>postmaster</i> est&aacute; sendo executado, inicie o <i>psql</i> em uma janela, e ent&atilde;o encontre o <small>PID</small> do processo <i>postgres</i> utilizado pelo <i>psql</i> utilizando <pre>SELECT pg_backend_pid()</pre>. Utilize um depurador para anexar ao <small>PID</small> do <i>postgres</i>. Voc&ecirc; pode definir pontos de parada (<i>breakpoints</i>) no depurador e digitar consultas no <i>psql</i>. Se voc&ecirc; est&aacute; depurando a inicializa&ccedil;&atilde;o do <i>postgres</i>, voc&ecirc; pode definir PGOPTIONS="-W n" e ent&atilde;o iniciar o <i>psql</i>. Isto retardar&aacute; a inicializa&ccedil;&atilde;o por <i>n</i> segundos ent&atilde;o voc&ecirc; pode anexar o depurador ao processo, definir quaisquer pontos de parada e continuar pela sequ&ecirc;ncia de inicializa&ccedil;&atilde;o.</p>
+<P>Se o <i>postmaster</i> est&aacute; sendo executado, inicie o <i>psql</i> em uma janela, e ent&atilde;o encontre o <small>PID</small> do processo <i>postgres</i> utilizado pelo <i>psql</i> utilizando <code>SELECT pg_backend_pid()</code>. Utilize um depurador para anexar ao <small>PID</small> do <i>postgres</i>. Voc&ecirc; pode definir pontos de parada (<i>breakpoints</i>) no depurador e digitar consultas no <i>psql</i>. Se voc&ecirc; est&aacute; depurando a inicializa&ccedil;&atilde;o do <i>postgres</i>, voc&ecirc; pode definir PGOPTIONS="-W n" e ent&atilde;o iniciar o <i>psql</i>. Isto retardar&aacute; a inicializa&ccedil;&atilde;o por <i>n</i> segundos ent&atilde;o voc&ecirc; pode anexar o depurador ao processo, definir quaisquer pontos de parada e continuar pela sequ&ecirc;ncia de inicializa&ccedil;&atilde;o.</p>
 
-<P>H&aacute; v&aacute;rias vari&aacute;veis de configura&ccedil;&atilde;o do servidor <pre>log_*</pre> que habilitam a exibi&ccedil;&atilde;o de estat&iacute;sticas que podem ser muito &uacute;teis para depura&ccedil;&atilde;o e medidas de performance.</P>
+<P>H&aacute; v&aacute;rias vari&aacute;veis de configura&ccedil;&atilde;o do servidor <code>log_*</code> que habilitam a exibi&ccedil;&atilde;o de estat&iacute;sticas que podem ser muito &uacute;teis para depura&ccedil;&atilde;o e medidas de performance.</P>
 
 <P>Voc&ecirc; tamb&eacute;m pode compilar com perfil para ver que fun&ccedil;&otilde;es est&atilde;o demandando tempo de execu&ccedil;&atilde;o. Os arquivo de perfil do n&uacute;cleo (backend) ser&atilde;o colocados no diret&oacute;rio <I>pgsql/data/base/dbname</I>. O arquivo de perfil do cliente ser&aacute; colocado no diret&oacute;rio atual do cliente. O Linux requer uma compila&ccedil;&atilde;o com <I>-DLINUX_PROFILE</I> para cria&ccedil;&atilde;o dos perfis.</P>
 
@@ -526,7 +526,7 @@ H&aacute; tamb&eacute;m uma lista de discuss&atilde;o dos desenvolvedores dispon
 
     <H4><A name="3.11">3.11</A>) Que tipo de hardware eu devo usar?</H4>
 
-    <P>Por causa do hardware de PC ser em sua maioria compat&iacute;vel, pessoas tendem a acreditar que todos os hardwares de PC são de mesma qualidade. Não &eacute; verdade. ECC RAM, SCSI e placas m&atilde;e de qualidade s&atilde;o mais confi&aacute;veis e t&ecirc;m uma melhor performance do que hardwares mais baratos. O PostgreSQL executar&aacute; em quase todo hardware, mas se a confiabilidade e a performance forem importantes &eacute; prudente pesquisar sobre as op&ccedil;&otilde;es de hardware. Nossas listas de discuss&atilde;o podem ser usadas para discutir op&ccedil;&otilde;es de hardware e dilemas.</P>
+    <P>Por causa do hardware de PC ser em sua maioria compat&iacute;vel, pessoas tendem a acreditar que todos os hardwares de PC satilde;o de mesma qualidade. Natilde;o &eacute; verdade. ECC RAM, SCSI e placas m&atilde;e de qualidade s&atilde;o mais confi&aacute;veis e t&ecirc;m uma melhor performance do que hardwares mais baratos. O PostgreSQL executar&aacute; em quase todo hardware, mas se a confiabilidade e a performance forem importantes &eacute; prudente pesquisar sobre as op&ccedil;&otilde;es de hardware. Nossas listas de discuss&atilde;o podem ser usadas para discutir op&ccedil;&otilde;es de hardware e dilemas.</P>
 
     <HR>
 
@@ -543,7 +543,7 @@ H&aacute; tamb&eacute;m uma lista de discuss&atilde;o dos desenvolvedores dispon
 
     <P>Toda a consulta tem que ser avaliada, mesmo se voc&ecirc; s&oacute; quer os primeiros registros. Considere utilizar uma consulta que tenha um <SMALL>ORDER BY</SMALL>. Se h&aacute; um &iacute;ndice que combina com o <SMALL>ORDER BY</SMALL>, o PostgreSQL pode ser capaz de avaliar somente os primeiros registros requisitados, ou toda consulta tem que ser avaliada at&eacute; que os registros desejados tenham sido gerados.</P>
 
-    <P>Para obter um registro rand&ocirc;mico, utilize:
+    <P>Para obter um registro rand&ocirc;mico, utilize:</P>
 <PRE>
     SELECT col
     FROM tab
@@ -639,7 +639,7 @@ N&uacute;mero m&aacute;ximo de &iacute;ndices em uma tabela?        ilimitado
     utilizados se uma tabela &eacute; maior do que o tamanho m&iacute;nimo e uma consulta
     seleciona somente uma porcentagem pequena de registros de uma tabela. Isto porque
     o acesso rand&ocirc;mico ao disco causado por uma busca por &iacute;ndice pode ser
-    mais lento do que uma leitura ao longo da tabela ou uma busca sequencial.
+    mais lento do que uma leitura ao longo da tabela ou uma busca sequencial.</p>
 
     <P>Para determinar se um &iacute;ndice pode ser utilizado, o PostgreSQL deve ter
     estat&iacute;sticas sobre a tabela. Estas estat&iacute;sticas s&atilde;o coletadas utilizando
@@ -686,11 +686,10 @@ N&uacute;mero m&aacute;ximo de &iacute;ndices em uma tabela?        ilimitado
     <LI>A localidade padr&atilde;o <I>C</I> deve ser utilizada durante o
     <i>initdb</i> porque n&atilde;o &eacute; poss&iacute;vel saber o pr&oacute;ximo/maior caracter
     em uma localidade que n&atilde;o seja a C. Voc&ecirc; pode criar um &iacute;ndice
-    especial <PRE>text_pattern_ops</PRE> para tais casos que funcionam somente para
-    indexa&ccedil;&atilde;o utilizando <PRE>LIKE</PRE>.
+    especial <tt>text_pattern_ops</tt> para tais casos que funcionam somente para
+    indexa&ccedil;&atilde;o utilizando <tt>LIKE</tt>.
     </LI>
     </UL>
-    <P>
 
     <P>Em vers&otilde;es anteriores a 8.0, &iacute;ndices frequentemente n&atilde;o podiam ser usados a menos que os tipos de dados correspodessem aos tipos da coluna do &iacute;ndice. Isto &eacute; particularmente verdadeiro para &iacute;ndices de coluna int2, int8 e numeric.</P>
 
@@ -922,14 +921,15 @@ Veja a p&aacute;gina sobre <I>create_sequence</I> no manual para mais informa&cc
     FROM tab
     WHERE col IN (SELECT subcol FROM subtab);
 </PRE>
-    por:
+<p>por:</p>
 <PRE>    SELECT *
     FROM tab
     WHERE EXISTS (SELECT subcol FROM subtab WHERE subcol = col);
 </PRE>
-
-Para isto ser r&aacute;pido, <CODE>subcol</CODE> deve ser uma coluna indexada. <P>A partir da vers&atilde;o 7.4, <CODE>IN</CODE> utiliza a mesma t&eacute;cnica de agrupamento do que consultas normais, e &eacute; recomendado utilizar <CODE>EXISTS</CODE>.
-
+<p>
+Para isto ser r&aacute;pido, <CODE>subcol</CODE> deve ser uma coluna indexada.</P>
+<P>A partir da vers&atilde;o 7.4, <CODE>IN</CODE> utiliza a mesma t&eacute;cnica de agrupamento do que consultas normais, e &eacute; recomendado utilizar <CODE>EXISTS</CODE>.
+</p>
     <H4><A name="4.23">4.23</A>) Como eu fa&ccedil;o uma jun&ccedil;&atilde;o externa (outer join)?</H4>
 
     <P>PostgreSQL suporta jun&ccedil;&otilde;es externas utilizando a sintaxe padr&atilde;o do SQL. Aqui temos dois exemplos:</P>
@@ -965,7 +965,7 @@ Para isto ser r&aacute;pido, <CODE>subcol</CODE> deve ser uma coluna indexada. <
 
     <H4><A name="4.25">4.25</A>) Como eu retorno m&uacute;ltiplos registros ou colunas de uma fun&ccedil;&atilde;o?</H4>
 
-    <P>No 7.3, voc&ecirc; pode facilmente retornar m&uacute;ltiplos registros ou colunas de uma fun&ccedil;&atilde;o, <A href="http://techdocs.postgresql.org/guides/SetReturningFunctions">http://techdocs.postgresql.org/guides/SetReturningFunctions</A>.
+    <P>No 7.3, voc&ecirc; pode facilmente retornar m&uacute;ltiplos registros ou colunas de uma fun&ccedil;&atilde;o, <A href="http://techdocs.postgresql.org/guides/SetReturningFunctions">http://techdocs.postgresql.org/guides/SetReturningFunctions</A>.</P>
 
     <H4><A name="4.26">4.26</A>) Por que eu n&atilde;o posso confiar na cria&ccedil;&atilde;o/remo&ccedil;&atilde;o de tabelas tempor&aacute;rias em fun&ccedil;&otilde;es PL/PgSQL?</H4>
     <P>PL/PgSQL armazena o conte&uacute;do da fun&ccedil;&atilde;o, e o efeito indesejado &eacute; que se uma fun&ccedil;&atilde;o PL/PgSQL acessa uma tabela tempor&aacute;ria, e aquela tabela &eacute; removida e criada novamente, e a fun&ccedil;&atilde;o &eacute; chamada novamente, a fun&ccedil;&atilde;o ir&aacute; falhar porque o conte&uacute;do armazenado da fun&ccedil;&atilde;o ainda apontar&aacute; para a tabela tempor&aacute;ria antiga. A solu&ccedil;&atilde;o &eacute; utilizar o <SMALL>EXECUTE</SMALL> para acesso a tabelas tempor&aacute;rias no PL/PgSQL. Isto ir&aacute; fazer com que a consulta seja avaliada toda vez.</P>
@@ -973,7 +973,7 @@ Para isto ser r&aacute;pido, <CODE>subcol</CODE> deve ser uma coluna indexada. <
     <H4><A name="4.27">4.27</A>) Que op&ccedil;&otilde;es para encripta&ccedil;&atilde;o est&atilde;o dispon&iacute;veis?</H4>
     <UL>
 	    <LI>No <I>contrib/pgcrypto</I> cont&eacute;m muitas fun&ccedil;&otilde;es de encripta&ccedil;&atilde;o para serem utilizados em consultas <SMALL>SQL</SMALL>.</li>
-	    <LI>Para encriptar a transmiss&atilde;o do cliente ao servidor, o servidor deve ter a op&ccedil;&atilde;o <I>ssl</I> definida como <I>true</I> no <I>postgresql.conf</I>, e um registro <I>host</I> ou <I>hostssl</I> deve existir no <I>pg_hba.conf</I>, e o <I>sslmode</I> no cliente n&atilde;o deve estar <I>disable</I>. (Note que tamb&eacute;m &eacute; poss&iacute;vel utilizar outros esquemas de transporte encriptado, tais como stunnel ou ssh, ao inv&eacute;s da conex&atilde;o SSL nativa do PostgreSQL.)
+	    <LI>Para encriptar a transmiss&atilde;o do cliente ao servidor, o servidor deve ter a op&ccedil;&atilde;o <I>ssl</I> definida como <I>true</I> no <I>postgresql.conf</I>, e um registro <I>host</I> ou <I>hostssl</I> deve existir no <I>pg_hba.conf</I>, e o <I>sslmode</I> no cliente n&atilde;o deve estar <I>disable</I>. (Note que tamb&eacute;m &eacute; poss&iacute;vel utilizar outros esquemas de transporte encriptado, tais como stunnel ou ssh, ao inv&eacute;s da conex&atilde;o SSL nativa do PostgreSQL.)</LI>
 	    <LI>Senhas dos usu&aacute;rios do banco de dados s&atilde;o automaticamente encriptadas quando armazenadas na vers&atilde;o 7.3. Em vers&otilde;es anteriores, voc&ecirc; deve habilitar a op&ccedil;&atilde;o <I>PASSWORD_ENCRYPTION</I> no <I>postgresql.conf</I>.</li>
 	    <li>O servidor pode executar utilizando um sistema de arquivos encriptado.</li>
     </UL>
