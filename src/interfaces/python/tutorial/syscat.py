@@ -37,7 +37,7 @@ def list_simple_ind(pgcnx):
 		FROM pg_class bc, pg_class ic, pg_index i, pg_attribute a
 		WHERE i.indrelid = bc.oid AND i.indexrelid = bc.oid
 				AND i.indkey[0] = a.attnum AND a.attrelid = bc.oid
-				AND i.indproc = '0'::oid
+				AND i.indproc = '0'::oid AND a.attisdropped = 'f'
 		ORDER BY class_name, index_name, attname""")
 	return result
 
@@ -48,6 +48,7 @@ def list_all_attr(pgcnx):
 		WHERE c.relkind = 'r' and c.relname !~ '^pg_'
 			AND c.relname !~ '^Inv' and a.attnum > 0
 			AND a.attrelid = c.oid and a.atttypid = t.oid
+                        AND a.attisdropped = 'f'
 			ORDER BY relname, attname""")
 	return result
 

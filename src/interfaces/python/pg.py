@@ -69,7 +69,8 @@ class DB:
 						WHERE pg_class.oid = pg_attribute.attrelid AND
 							pg_class.oid = pg_index.indrelid AND
 							pg_index.indkey[0] = pg_attribute.attnum AND 
-							pg_index.indisprimary = 't'""").getresult():
+							pg_index.indisprimary = 't' AND
+							pg_attribute.attisdropped = 'f'""").getresult():
 			self.__pkeys__[rel] = att
 
 	# wrap query for debugging
@@ -111,7 +112,8 @@ class DB:
 					WHERE pg_class.relname = '%s' AND
 						pg_attribute.attnum > 0 AND
 						pg_attribute.attrelid = pg_class.oid AND
-						pg_attribute.atttypid = pg_type.oid"""
+						pg_attribute.atttypid = pg_type.oid AND
+						pg_attribute.attisdropped = 'f'"""
 
 		l = {}
 		for attname, typname in self.db.query(query % cl).getresult():
