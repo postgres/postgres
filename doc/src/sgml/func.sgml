@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.122 2002/09/12 00:21:24 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.123 2002/09/20 03:44:06 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -5554,7 +5554,7 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
       <row>
        <entry><function>pg_get_viewdef</function>(<parameter>viewname</parameter>)</entry>
        <entry><type>text</type></entry>
-       <entry>Get CREATE VIEW command for view</entry>
+       <entry>Get CREATE VIEW command for view (<emphasis>deprecated</emphasis>)</entry>
       </row>
       <row>
        <entry><function>pg_get_viewdef</function>(<parameter>viewOID</parameter>)</entry>
