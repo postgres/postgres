@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.1.1.1 1996/07/09 06:22:06 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.2 1996/10/13 18:38:51 momjian Exp $
  *
  * Notes:
  *	XXX This needs to use exception.h to handle recovery when
@@ -965,7 +965,7 @@ SearchSysCache(struct catcache *cache,
 void
 RelationInvalidateCatalogCacheTuple(Relation relation,
 				    HeapTuple tuple,
-				    void (*function)())
+ 				    void (*function)(int, Index, ItemPointer))
 {
     struct catcache 	*ccp;
     MemoryContext	oldcxt;
