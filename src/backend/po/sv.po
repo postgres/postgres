@@ -6,7 +6,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 7.5\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2004-01-11 20:39+0100\n"
-"PO-Revision-Date: 2004-01-22 08:24+0100\n"
+"PO-Revision-Date: 2004-01-24 08:29+0100\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -7191,17 +7191,17 @@ msgstr ""
 #: utils/adt/numutils.c:105
 #, c-format
 msgid "value \"%s\" is out of range for type integer"
-msgstr ""
+msgstr "värdet \"%s\" är utanför intervallet för ett integer"
 
 #: utils/adt/numutils.c:111
 #, c-format
 msgid "value \"%s\" is out of range for type shortint"
-msgstr ""
+msgstr "värdet \"%s\" är utanför intervallet för en shortint"
 
 #: utils/adt/numutils.c:117
 #, c-format
 msgid "value \"%s\" is out of range for 8-bit integer"
-msgstr ""
+msgstr "värdet \"%s\" är utanför intervallet för ett 8-bitars heltal"
 
 #: utils/adt/oid.c:49 utils/adt/oid.c:54 utils/adt/oid.c:75
 #, fuzzy, c-format
@@ -7211,7 +7211,7 @@ msgstr "ogiltigt värde för \"%s\": \"%s\""
 #: utils/adt/oid.c:60 utils/adt/oid.c:98
 #, c-format
 msgid "value \"%s\" is out of range for type \"oid\""
-msgstr ""
+msgstr "värdet \"%s\" är utanför intervallet för en \"oid\""
 
 #: utils/adt/oid.c:176
 msgid "oidvector has too many elements"
@@ -7913,7 +7913,7 @@ msgstr ""
 #: utils/mb/conv.c:406
 #, c-format
 msgid "invalid encoding number: %d"
-msgstr ""
+msgstr "ogiltigt kodningsnummer: %d"
 
 #: utils/mb/conv.c:445
 #, c-format
@@ -7922,7 +7922,7 @@ msgstr ""
 
 #: utils/mb/encnames.c:445
 msgid "encoding name too long"
-msgstr ""
+msgstr "kodningsnamnet är för långt"
 
 #: utils/mb/mbutils.c:252
 #, fuzzy, c-format
@@ -8131,9 +8131,8 @@ msgid "Makes the server accept TCP/IP connections."
 msgstr ""
 
 #: utils/misc/guc.c:455
-#, fuzzy
 msgid "Enables SSL connections."
-msgstr "Tillåter SSL-anslutningar"
+msgstr "Tillåter SSL-anslutningar."
 
 #: utils/misc/guc.c:463
 msgid "Forces synchronization of updates to disk."
@@ -8198,7 +8197,7 @@ msgstr ""
 
 #: utils/misc/guc.c:543
 msgid "Logs each SQL statement."
-msgstr ""
+msgstr "Loggar varje SQL-sats."
 
 #: utils/misc/guc.c:551
 msgid "Logs the duration each completed SQL statement."
@@ -8292,7 +8291,7 @@ msgstr ""
 
 #: utils/misc/guc.c:763
 msgid "Interprets ACST, CST, EST, and SAT as Australian time zones."
-msgstr ""
+msgstr "Tolkar ACST, CST, EST och SAT som Australienska tidszoner."
 
 #: utils/misc/guc.c:764
 msgid ""
@@ -8302,7 +8301,7 @@ msgstr ""
 
 #: utils/misc/guc.c:772
 msgid "Encrypt passwords."
-msgstr ""
+msgstr "Kryptera lösenord."
 
 #: utils/misc/guc.c:773
 msgid ""
@@ -8313,7 +8312,7 @@ msgstr ""
 
 #: utils/misc/guc.c:782
 msgid "Treats \"expr=NULL\" as \"expr IS NULL\"."
-msgstr ""
+msgstr "Tolkar \"uttryck=NULL\" som \"uttryck IS NULL\"."
 
 #: utils/misc/guc.c:783
 msgid ""
@@ -8864,28 +8863,28 @@ msgstr "\"%s\" kan inte ändras efter uppkopplingen startats"
 
 #: utils/misc/guc.c:2600 utils/misc/guc.c:2670 utils/misc/guc.c:2767
 #: utils/misc/guc.c:2863 utils/misc/guc.c:2962
-#, fuzzy, c-format
+#, c-format
 msgid "permission denied to set parameter \"%s\""
-msgstr "rättighet saknas för att skapa \"%s.%s\""
+msgstr "rättighet saknas för att sätta parameter \"%s\""
 
 #: utils/misc/guc.c:2658
-#, fuzzy, c-format
+#, c-format
 msgid "parameter \"%s\" requires a Boolean value"
-msgstr "\"%s\" kräver ett boolskt värde"
+msgstr "parameter \"%s\" kräver ett boolskt värde"
 
 #: utils/misc/guc.c:2672
 msgid "Must be superuser to change this value to false."
 msgstr ""
 
 #: utils/misc/guc.c:2694 utils/misc/guc.c:2791
-#, fuzzy, c-format
+#, c-format
 msgid "invalid value for parameter \"%s\": %d"
-msgstr "ogiltigt värde för \"%s\": %d"
+msgstr "ogiltigt värde för parameter \"%s\": %d"
 
 #: utils/misc/guc.c:2746
-#, fuzzy, c-format
+#, c-format
 msgid "parameter \"%s\" requires an integer value"
-msgstr "\"%s\" kräver ett heltalsvärde"
+msgstr "parameter \"%s\" kräver ett heltalsvärde"
 
 #: utils/misc/guc.c:2754
 #, c-format
@@ -8897,9 +8896,9 @@ msgid "Must be superuser to increase this value or set it to zero."
 msgstr ""
 
 #: utils/misc/guc.c:2843
-#, fuzzy, c-format
+#, c-format
 msgid "parameter \"%s\" requires a numeric value"
-msgstr "\"%s\" kräver ett numeriskt värde"
+msgstr "parameter \"%s\" kräver ett numeriskt värde"
 
 #: utils/misc/guc.c:2851
 #, c-format
@@ -8911,24 +8910,23 @@ msgid "Must be superuser to increase this value."
 msgstr ""
 
 #: utils/misc/guc.c:2887
-#, fuzzy, c-format
+#, c-format
 msgid "invalid value for parameter \"%s\": %g"
-msgstr "ogiltigt värde för \"%s\": %g"
+msgstr "ogiltigt värde för parameter \"%s\": %g"
 
 #: utils/misc/guc.c:3018
-#, fuzzy, c-format
+#, c-format
 msgid "invalid value for parameter \"%s\": \"%s\""
-msgstr "ogiltigt värde för \"%s\": \"%s\""
+msgstr "ogiltigt värde för parameter \"%s\": \"%s\""
 
 #: utils/misc/guc.c:3225
 #, c-format
 msgid "SET %s takes only one argument"
-msgstr ""
+msgstr "SET %s tar bara ett argument"
 
 #: utils/misc/guc.c:3329
-#, fuzzy
 msgid "SET requires parameter name"
-msgstr "%s kräver en parameter"
+msgstr "SET kräver ett parameternamn"
 
 #: utils/misc/guc.c:4155
 #, fuzzy, c-format
@@ -8940,9 +8938,9 @@ msgid "SET AUTOCOMMIT TO OFF is no longer supported"
 msgstr ""
 
 #: guc-file.l:267
-#, fuzzy, c-format
+#, c-format
 msgid "syntax error in file \"%s\" line %u, near token \"%s\""
-msgstr "\" rad %u, nära symbol \"%s\""
+msgstr "syntaxfel i fil \"%s\" rad %u, nära symbol \"%s\""
 
 #: utils/mmgr/aset.c:336
 #, c-format
@@ -8960,9 +8958,9 @@ msgid "cursor \"%s\" already exists"
 msgstr "markör \"%s\" finns redan"
 
 #: utils/mmgr/portalmem.c:174
-#, fuzzy, c-format
+#, c-format
 msgid "closing existing cursor \"%s\""
-msgstr "kunde inte tolka inställningen för \"%s\""
+msgstr ""
 
 #: utils/sort/logtape.c:202
 #, c-format
