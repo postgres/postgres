@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.178 2002/09/26 22:58:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.179 2002/10/08 17:17:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -380,14 +380,7 @@ ProcessUtility(Node *parsetree,
 			break;
 
 		case T_CopyStmt:
-			{
-				CopyStmt   *stmt = (CopyStmt *) parsetree;
-
-				if (!stmt->is_from)
-					SetQuerySnapshot();
-
-				DoCopy(stmt);
-			}
+			DoCopy((CopyStmt *) parsetree);
 			break;
 
 		case T_PrepareStmt:

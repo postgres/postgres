@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.298 2002/10/06 03:56:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.299 2002/10/08 17:17:19 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -716,20 +716,33 @@ pg_exec_query_string(StringInfo query_string,	/* string to execute */
 				/*
 				 * process utility functions (create, destroy, etc..)
 				 */
+				Node   *utilityStmt = querytree->utilityStmt;
+
 				elog(DEBUG2, "ProcessUtility");
+
+				/* set snapshot if utility stmt needs one */
+				/* XXX maybe cleaner to list those that shouldn't set one? */
+				if (IsA(utilityStmt, AlterTableStmt) ||
+					IsA(utilityStmt, ClusterStmt) ||
+					IsA(utilityStmt, CopyStmt) ||
+					IsA(utilityStmt, ExecuteStmt) ||
+					IsA(utilityStmt, ExplainStmt) ||
+					IsA(utilityStmt, IndexStmt) ||
+					IsA(utilityStmt, PrepareStmt) ||
+					IsA(utilityStmt, ReindexStmt))
+					SetQuerySnapshot();
 
 				if (querytree->originalQuery)
 				{
 					/* utility statement can override default tag string */
-					ProcessUtility(querytree->utilityStmt, dest,
-								   completionTag);
+					ProcessUtility(utilityStmt, dest, completionTag);
 					if (completionTag[0])
 						commandTag = completionTag;
 				}
 				else
 				{
 					/* utility added by rewrite cannot override tag */
-					ProcessUtility(querytree->utilityStmt, dest, NULL);
+					ProcessUtility(utilityStmt, dest, NULL);
 				}
 			}
 			else
@@ -739,13 +752,19 @@ pg_exec_query_string(StringInfo query_string,	/* string to execute */
 				 */
 				Plan	   *plan;
 
+				/*
+				 * Initialize snapshot state for query.  This has to
+				 * be done before running the planner, because it might
+				 * try to evaluate immutable or stable functions, which
+				 * in turn might run queries.
+				 */
+				SetQuerySnapshot();
+
+				/* Make the plan */
 				plan = pg_plan_query(querytree);
 
 				/* if we got a cancel signal whilst planning, quit */
 				CHECK_FOR_INTERRUPTS();
-
-				/* Initialize snapshot state for query */
-				SetQuerySnapshot();
 
 				/*
 				 * execute the plan
@@ -1701,7 +1720,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.298 $ $Date: 2002/10/06 03:56:03 $\n");
+		puts("$Revision: 1.299 $ $Date: 2002/10/08 17:17:19 $\n");
 	}
 
 	/*
@@ -1885,6 +1904,9 @@ PostgresMain(int argc, char *argv[], const char *username)
 
 				/* start an xact for this function invocation */
 				start_xact_command();
+
+				/* assume it may need a snapshot */
+				SetQuerySnapshot();
 
 				if (HandleFunctionRequest() == EOF)
 				{
