@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/copy.c,v 1.29 2003/03/20 06:00:12 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/copy.c,v 1.30 2003/06/28 00:12:40 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "copy.h"
@@ -31,8 +31,6 @@
 #define	__S_ISTYPE(mode, mask)	(((mode) & S_IFMT) == (mask))
 #define	S_ISDIR(mode)	 __S_ISTYPE((mode), S_IFDIR)
 #endif
-
-bool		copy_in_state;
 
 /*
  * parse_slash_copy
@@ -395,7 +393,7 @@ do_copy(const char *args)
 		return false;
 	}
 
-	result = PSQLexec(query.data, false);
+	result = PSQLexec(query.data, true);
 	termPQExpBuffer(&query);
 
 	switch (PQresultStatus(result))
@@ -506,10 +504,6 @@ handleCopyIn(PGconn *conn, FILE *copystream, const char *prompt)
 	int			ret;
 	unsigned int linecount = 0;
 
-#ifdef USE_ASSERT_CHECKING
-	assert(copy_in_state);
-#endif
-
 	if (prompt)					/* disable prompt if not interactive */
 	{
 		if (!isatty(fileno(copystream)))
@@ -563,7 +557,6 @@ handleCopyIn(PGconn *conn, FILE *copystream, const char *prompt)
 		linecount++;
 	}
 	ret = !PQendcopy(conn);
-	copy_in_state = false;
 	pset.lineno += linecount;
 	return ret;
 }

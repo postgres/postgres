@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.73 2003/04/04 20:42:13 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.74 2003/06/28 00:12:40 tgl Exp $
  */
 #include "postgres_fe.h"
 
@@ -74,18 +74,13 @@ struct adhoc_opts
 	bool		no_psqlrc;
 };
 
-static void
-			parse_psql_options(int argc, char *argv[], struct adhoc_opts * options);
-
-static void
-			process_psqlrc(void);
-
-static void
-			showVersion(void);
+static void parse_psql_options(int argc, char *argv[],
+							   struct adhoc_opts * options);
+static void process_psqlrc(void);
+static void showVersion(void);
 
 #ifdef USE_SSL
-static void
-			printSSLInfo(void);
+static void printSSLInfo(void);
 #endif
 
 
@@ -143,6 +138,10 @@ main(int argc, char *argv[])
 	pset.popt.default_footer = true;
 
 	SetVariable(pset.vars, "VERSION", PG_VERSION_STR);
+
+	/* Default values for variables that are used in noninteractive cases */
+	SetVariableBool(pset.vars, "AUTOCOMMIT");
+	SetVariable(pset.vars, "VERBOSE", "default");
 
 	pset.notty = (!isatty(fileno(stdin)) || !isatty(fileno(stdout)));
 
@@ -208,11 +207,7 @@ main(int argc, char *argv[])
 
 	PQsetNoticeProcessor(pset.db, NoticeProcessor, NULL);
 
-	/*
-	 * We need to save the encoding because we want to have it available
-	 * even if the database connection goes bad.
-	 */
-	pset.encoding = PQclientEncoding(pset.db);
+	SyncVariables();
 
 	if (options.action == ACT_LIST_DB)
 	{
@@ -221,14 +216,6 @@ main(int argc, char *argv[])
 		PQfinish(pset.db);
 		exit(success ? EXIT_SUCCESS : EXIT_FAILURE);
 	}
-
-	SetVariable(pset.vars, "DBNAME", PQdb(pset.db));
-	SetVariable(pset.vars, "USER", PQuser(pset.db));
-	SetVariable(pset.vars, "HOST", PQhost(pset.db));
-	SetVariable(pset.vars, "PORT", PQport(pset.db));
-	SetVariable(pset.vars, "ENCODING", pg_encoding_to_char(pset.encoding));
-
-	pset.popt.topt.encoding = pset.encoding;
 
 	/*
 	 * Now find something to do
@@ -274,7 +261,6 @@ main(int argc, char *argv[])
 	 */
 	else
 	{
-		pset.issuper = test_superuser(PQuser(pset.db));
 		if (!QUIET() && !pset.notty)
 		{
 			printf(gettext("Welcome to %s %s, the PostgreSQL interactive terminal.\n\n"
@@ -289,15 +275,18 @@ main(int argc, char *argv[])
 #endif
 		}
 
+		/* Default values for variables that are used in interactive case */
 		SetVariable(pset.vars, "PROMPT1", DEFAULT_PROMPT1);
 		SetVariable(pset.vars, "PROMPT2", DEFAULT_PROMPT2);
 		SetVariable(pset.vars, "PROMPT3", DEFAULT_PROMPT3);
+
 		if (!options.no_psqlrc)
 			process_psqlrc();
 		if (!pset.notty)
 			initializeInput(options.no_readline ? 0 : 1);
 		if (options.action_string)		/* -f - was used */
 			pset.inputfile = "<stdin>";
+
 		successResult = MainLoop(stdin);
 	}
 

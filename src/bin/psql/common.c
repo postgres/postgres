@@ -3,11 +3,12 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.64 2003/06/12 08:15:28 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.65 2003/06/28 00:12:40 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
 
+#include <ctype.h>
 #include <errno.h>
 #include <stdarg.h>
 #ifndef HAVE_STRDUP
@@ -29,6 +30,7 @@
 
 #include "settings.h"
 #include "variables.h"
+#include "command.h"
 #include "copy.h"
 #include "prompt.h"
 #include "print.h"
@@ -54,6 +56,10 @@ typedef struct _timeb TimevalStruct;
 #endif
 
 extern bool prompt_state;
+
+
+static bool is_transact_command(const char *query);
+
 
 /*
  * "Safe" wrapper around strdup()
@@ -195,8 +201,8 @@ handle_sigint(SIGNAL_ARGS)
 {
 	int			save_errno = errno;
 
-	/* Don't muck around if copying in or prompting for a password. */
-	if ((copy_in_state && pset.cur_cmd_interactive) || prompt_state)
+	/* Don't muck around if prompting for a password. */
+	if (prompt_state)
 		return;
 
 	if (cancelConn == NULL)
@@ -262,11 +268,7 @@ CheckConnection()
 			PQfinish(pset.db);
 			pset.db = NULL;
 			ResetCancelConn();
-			SetVariable(pset.vars, "DBNAME", NULL);
-			SetVariable(pset.vars, "HOST", NULL);
-			SetVariable(pset.vars, "PORT", NULL);
-			SetVariable(pset.vars, "USER", NULL);
-			SetVariable(pset.vars, "ENCODING", NULL);
+			UnsyncVariables();
 		}
 		else
 			fputs(gettext("Succeeded.\n"), stderr);
@@ -304,8 +306,8 @@ void ResetCancelConn(void)
  * AcceptResult
  *
  * Checks whether a result is valid, giving an error message if necessary;
- * (re)sets copy_in_state and cancelConn as needed, and ensures that the
- * connection to the backend is still up.
+ * resets cancelConn as needed, and ensures that the connection to the backend
+ * is still up.
  *
  * Returns true for valid result, false for error state.
  */
@@ -322,12 +324,9 @@ AcceptResult(const PGresult *result)
 	}
 	else switch (PQresultStatus(result))
 	{
-	  case PGRES_COPY_IN:
-		 copy_in_state = true;
-		 break;
-
 	  case PGRES_COMMAND_OK:
 	  case PGRES_TUPLES_OK:
+	  case PGRES_COPY_IN:
 		 /* Fine, do nothing */
 		 break;
 
@@ -358,18 +357,15 @@ AcceptResult(const PGresult *result)
  * This is the way to send "backdoor" queries (those not directly entered
  * by the user). It is subject to -E but not -e.
  *
- * If the given querystring generates multiple PGresults, normally the last
- * one is returned to the caller.  However, if ignore_command_ok is TRUE,
- * then PGresults with status PGRES_COMMAND_OK are ignored.  This is intended
- * mainly to allow locutions such as "begin; select ...; commit".
+ * In autocommit-off mode, a new transaction block is started if start_xact
+ * is true; nothing special is done when start_xact is false.  Typically,
+ * start_xact = false is used for SELECTs and explicit BEGIN/COMMIT commands.
  */
 PGresult *
-PSQLexec(const char *query, bool ignore_command_ok)
+PSQLexec(const char *query, bool start_xact)
 {
-	PGresult   *res = NULL;
-	PGresult   *newres;
+	PGresult   *res;
 	int	echo_hidden;
-	ExecStatusType rstatus;
 
 	if (!pset.db)
 	{
@@ -378,50 +374,40 @@ PSQLexec(const char *query, bool ignore_command_ok)
 	}
 
 	echo_hidden = SwitchVariable(pset.vars, "ECHO_HIDDEN", "noexec", NULL);
-	if (echo_hidden != var_notset)
+	if (echo_hidden != VAR_NOTSET)
 	{
 		printf("********* QUERY **********\n"
 			   "%s\n"
 			   "**************************\n\n", query);
 		fflush(stdout);
 
-		if (echo_hidden == 1)
-		return NULL;
+		if (echo_hidden == 1)	/* noexec? */
+			return NULL;
 	}
-
-	/* discard any uneaten results of past queries */
-	while ((newres = PQgetResult(pset.db)) != NULL)
-		PQclear(newres);
 
 	SetCancelConn();
-	if (!PQsendQuery(pset.db, query))
+
+	if (start_xact && PQtransactionStatus(pset.db) == PQTRANS_IDLE &&
+		!GetVariableBool(pset.vars, "AUTOCOMMIT"))
 	{
-	  psql_error("%s", PQerrorMessage(pset.db));
-	  ResetCancelConn();
-	  return NULL;
-	}
-
-	rstatus = PGRES_EMPTY_QUERY;
-
-	while (rstatus != PGRES_COPY_IN &&
-			 rstatus != PGRES_COPY_OUT &&
-			 (newres = PQgetResult(pset.db)))
+		res = PQexec(pset.db, "BEGIN");
+		if (PQresultStatus(res) != PGRES_COMMAND_OK)
 		{
-			rstatus = PQresultStatus(newres);
-		if (!ignore_command_ok || rstatus != PGRES_COMMAND_OK)
-			{
-		  PGresult *tempRes = res;
-			res = newres;
-		  newres = tempRes;
+			psql_error("%s", PQerrorMessage(pset.db));
+			PQclear(res);
+			ResetCancelConn();
+			return NULL;
 		}
-		PQclear(newres);
+		PQclear(res);
 	}
+
+	res = PQexec(pset.db, query);
 
 	if (!AcceptResult(res) && res)
 	{
 		PQclear(res);
 		res = NULL;
-		}
+	}
 
 	return res;
 }
@@ -613,6 +599,21 @@ SendQuery(const char *query)
 
 	SetCancelConn();
 
+	if (PQtransactionStatus(pset.db) == PQTRANS_IDLE &&
+		!GetVariableBool(pset.vars, "AUTOCOMMIT") &&
+		!is_transact_command(query))
+	{
+		results = PQexec(pset.db, "BEGIN");
+		if (PQresultStatus(results) != PGRES_COMMAND_OK)
+		{
+			psql_error("%s", PQerrorMessage(pset.db));
+			PQclear(results);
+			ResetCancelConn();
+			return false;
+		}
+		PQclear(results);
+	}
+
 	if (pset.timing)
 		GETTIMEOFDAY(&before);
 	results = PQexec(pset.db, query);
@@ -626,6 +627,68 @@ SendQuery(const char *query)
 	return OK;
 }
 
+/*
+ * check whether a query string begins with BEGIN/COMMIT/ROLLBACK/START XACT
+ */
+static bool
+is_transact_command(const char *query)
+{
+	int		wordlen;
+
+	/*
+	 * First we must advance over any whitespace and comments.
+	 */
+	while (*query)
+	{
+		if (isspace((unsigned char) *query))
+			query++;
+		else if (query[0] == '-' && query[1] == '-')
+		{
+			query += 2;
+			while (*query && *query != '\n')
+				query++;
+		}
+		else if (query[0] == '/' && query[1] == '*')
+		{
+			query += 2;
+			while (*query)
+			{
+				if (query[0] == '*' && query[1] == '/')
+				{
+					query += 2;
+					break;
+				}
+				else
+					query++;
+			}
+		}
+		else
+			break;				/* found first token */
+	}
+
+	/*
+	 * Check word length ("beginx" is not "begin").
+	 */
+	wordlen = 0;
+	while (isalpha((unsigned char) query[wordlen]))
+		wordlen++;
+
+	if (wordlen == 5 && strncasecmp(query, "begin", 5) == 0)
+		return true;
+	if (wordlen == 6 && strncasecmp(query, "commit", 6) == 0)
+		return true;
+	if (wordlen == 8 && strncasecmp(query, "rollback", 8) == 0)
+		return true;
+	if (wordlen == 5 && strncasecmp(query, "abort", 5) == 0)
+		return true;
+	if (wordlen == 3 && strncasecmp(query, "end", 3) == 0)
+		return true;
+	if (wordlen == 5 && strncasecmp(query, "start", 5) == 0)
+		return true;
+
+	return false;
+}
+
 
 char parse_char(char **buf)
 {
@@ -637,3 +700,24 @@ char parse_char(char **buf)
 }
 
 
+/*
+ * Test if the current user is a database superuser.
+ *
+ * Note: this will correctly detect superuserness only with a protocol-3.0
+ * or newer backend; otherwise it will always say "false".
+ */
+bool
+is_superuser(void)
+{
+	const char *val;
+
+	if (!pset.db)
+		return false;
+
+	val = PQparameterStatus(pset.db, "is_superuser");
+
+	if (val && strcmp(val, "on") == 0)
+		return true;
+
+	return false;
+}

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.89 2003/05/14 03:26:00 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.90 2003/06/28 00:12:39 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -1200,13 +1200,6 @@ Tue Oct 26 21:40:57 CEST 1999
 	<acronym>OID</acronym>.
 	</para>
 	</tip>
-	<note>
-	<para>
-	See the description of the <varname>LO_TRANSACTION</varname>
-	variable for important information concerning all large object
-	operations.
-	</para>
-	</note>
 	</listitem>
       </varlistentry>
 
@@ -1236,14 +1229,6 @@ lo_import 152801
 	on the local file system, rather than the server's user and file
 	system.
 	</para>
-
-	<note>
-	<para>
-	See the description of the <varname>LO_TRANSACTION</varname>
-	variable for important information concerning all large object
-	operations.
-	</para>
-	</note>
 	</listitem>
       </varlistentry>
 
@@ -1274,13 +1259,6 @@ lo_import 152801
 	<acronym>OID</acronym>.
 	</para>
 	</tip>
-	<note>
-	<para>
-	See the description of the <varname>LO_TRANSACTION</varname>
-	variable for important information concerning all large object
-	operations.
-	</para>
-	</note>
 	</listitem>
       </varlistentry>
 
@@ -1809,14 +1787,14 @@ bar
 
     <para>
     If you call <command>\set</command> without a second argument, the
-    variable is simply set, but has no value. To unset (or delete) a
+    variable is set, with an empty string as value. To unset (or delete) a
     variable, use the command <command>\unset</command>.
     </para>
 
     <para>
     <application>psql</application>'s internal variable names can
     consist of letters, numbers, and underscores in any order and any
-    number of them. A number of regular variables are treated specially
+    number of them. A number of these variables are treated specially
     by <application>psql</application>. They indicate certain option
     settings that can be changed at run time by altering the value of
     the variable or represent some state of the application. Although
@@ -1825,10 +1803,47 @@ bar
     really quickly. By convention, all specially treated variables
     consist of all upper-case letters (and possibly numbers and
     underscores). To ensure maximum compatibility in the future, avoid
-    such variables. A list of all specially treated variables follows.
+    using such variable names for your own purposes. A list of all specially
+    treated variables follows.
    </para>
 
     <variablelist>
+      <varlistentry>
+        <term><varname>AUTOCOMMIT</varname></term>
+	<listitem>
+	<para>
+	When <literal>on</> (the default), each SQL command is automatically
+	committed upon successful completion.  To postpone commit in this
+	mode, you must enter a <command>BEGIN</> or <command>START
+	TRANSACTION</> SQL command.  When <literal>off</> or unset, SQL
+	commands are not committed until you explicitly issue
+	<command>COMMIT</> or <command>END</>.  The autocommit-off
+	mode works by issuing an implicit <command>BEGIN</> for you, just
+	before any command that is not already in a transaction block and
+	is not itself a <command>BEGIN</> or other transaction-control
+	command.
+	</para>
+
+	<note>
+	<para>
+	 In autocommit-off mode, you must explicitly abandon any failed
+	 transaction by entering <command>ABORT</> or <command>ROLLBACK</>.
+	 Also keep in mind that if you exit the session
+	 without committing, your work will be lost.
+	</para>
+	</note>
+
+	<note>
+	<para>
+	 The autocommit-on mode is <productname>PostgreSQL</>'s traditional
+	 behavior, but autocommit-off is closer to the SQL spec.  If you
+	 prefer autocommit-off, you may wish to set it in
+	 your <filename>.psqlrc</filename> file.
+	</para>
+	</note>
+	</listitem>
+      </varlistentry>
+
       <varlistentry>
         <term><varname>DBNAME</varname></term>
 	<listitem>
@@ -1846,11 +1861,11 @@ bar
 	<para>
 	If set to <literal>all</literal>, all lines
 	entered or from a script are written to the standard output
-	before they are parsed or executed. To specify this on program
+	before they are parsed or executed. To select this behavior on program
 	start-up, use the switch <option>-a</option>. If set to
 	<literal>queries</literal>,
 	<application>psql</application> merely prints all queries as
-	they are sent to the server. The option for this is
+	they are sent to the server. The switch for this is
 	<option>-e</option>.
 	</para>
 	</listitem>
@@ -1863,10 +1878,10 @@ bar
 	When this variable is set and a backslash command queries the
 	database, the query is first shown. This way you can study the
 	<productname>PostgreSQL</productname> internals and provide
-	similar functionality in your own programs. If you set the
-	variable to the value <literal>noexec</literal>, the queries are
-	just shown but are not actually sent to the server and
-	executed.
+	similar functionality in your own programs. (To select this behavior
+	on program start-up, use the switch <option>-E</option>.)  If you set
+	the variable to the value <literal>noexec</literal>, the queries are
+	just shown but are not actually sent to the server and executed.
 	</para>
 	</listitem>
       </varlistentry>
@@ -1963,39 +1978,6 @@ bar
       </varlistentry>
 
       <varlistentry>
-        <term><varname>LO_TRANSACTION</varname></term>
-	<listitem>
-	<para>
-	If you use the <productname>PostgreSQL</productname> large
-	object interface to specially store data that does not fit into
-	one row, all the operations must be contained in a transaction
-	block. (See the documentation of the large object interface for
-	more information.) Since <application>psql</application> has no
-	way to tell if you already have a transaction in progress when
-	you call one of its internal commands
-	(<command>\lo_export</command>, <command>\lo_import</command>,
-	<command>\lo_unlink</command>) it must take some arbitrary
-	action. This action could either be to roll back any transaction
-	that might already be in progress, or to commit any such
-	transaction, or to do nothing at all. In the last case you must
-	provide your own <command>BEGIN</command>/<command>COMMIT</command> block or the
-	results will be unpredictable (usually resulting in the desired
-	action's not being performed in any case).
-	</para>
-
-	<para>
-	To choose what you want to do you set this variable to one of
-	<literal>rollback</literal>, <literal>commit</literal>, or
-	<literal>nothing</literal>. The default is to roll back the
-	transaction. If you just want to load one or a few objects this
-	is fine. However, if you intend to transfer many large objects,
-	it might be advisable to provide one explicit transaction block
-	around all commands.
-	</para>
-	</listitem>
-      </varlistentry>
-
-      <varlistentry>
         <term><varname>ON_ERROR_STOP</varname></term>
 	<listitem>
 	<para>
@@ -2032,8 +2014,8 @@ bar
         <term><varname>PROMPT3</varname></term>
 	<listitem>
 	<para>
-	These specify what the prompt <application>psql</application>
-	issues is supposed to look like. See <xref
+	These specify what the prompts <application>psql</application>
+	issues should look like. See <xref
 	linkend="APP-PSQL-prompting"
 	endterm="APP-PSQL-prompting-title"> below.
 	</para>
@@ -2055,8 +2037,8 @@ bar
         <term><varname>SINGLELINE</varname></term>
 	<listitem>
 	<para>
-	This variable is set by the command line option
-	<option>-S</option>. You can unset or reset it at run time.
+	This variable is equivalent to the command line option
+	<option>-S</option>.
 	</para>
 	</listitem>
       </varlistentry>
@@ -2078,6 +2060,17 @@ bar
         The database user you are currently connected as. This is set
         every time you connect to a database (including program
         start-up), but can be unset.
+	</para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><varname>VERBOSE</varname></term>
+	<listitem>
+	<para>
+	This variable can be set to the values <literal>default</>,
+	<literal>verbose</>, or <literal>terse</> to control the verbosity
+	of error reports.
 	</para>
 	</listitem>
       </varlistentry>
@@ -2123,7 +2116,7 @@ testdb=> <userinput>INSERT INTO my_table VALUES (:content);</userinput>
 <programlisting>
 testdb=> <userinput>\set content '\'' `sed -e "s/'/\\\\\\'/g" < my_file.txt` '\''</userinput>
 </programlisting>
-    Observe the correct number of backslashes (6)! You can resolve it
+    Observe the correct number of backslashes (6)! It works
     this way: After <application>psql</application> has parsed this
     line, it passes <literal>sed -e "s/'/\\\'/g" < my_file.txt</literal>
     to the shell. The shell will do its own thing inside the double
@@ -2141,9 +2134,10 @@ testdb=> <userinput>\set content '\'' `sed -e "s/'/\\\\\\'/g" < my_file.txt` '\'
 
     <para>
     Since colons may legally appear in SQL commands, the following rule
-    applies: If the variable is not set, the character sequence
-    <quote>colon+name</quote> is not changed. In any case you can escape
-    a colon with a backslash to protect it from interpretation. (The
+    applies: the character sequence
+    <quote>:name</quote> is not changed unless <quote>name</> is the name
+    of a variable that is currently set. In any case you can escape
+    a colon with a backslash to protect it from substitution. (The
     colon syntax for variables is standard <acronym>SQL</acronym> for
     embedded query languages, such as <application>ECPG</application>.
     The colon syntax for array slices and type casts are
@@ -2171,7 +2165,7 @@ testdb=> <userinput>\set content '\'' `sed -e "s/'/\\\\\\'/g" < my_file.txt` '\'
     </para>
 
     <para>
-    The value of the respective prompt variable is printed literally,
+    The value of the selected prompt variable is printed literally,
     except where a percent sign (<literal>%</literal>) is encountered.
     Depending on the next character, certain other text is substituted
     instead. Defined substitutions are:
@@ -2243,7 +2237,20 @@ testdb=> <userinput>\set content '\'' `sed -e "s/'/\\\\\\'/g" < my_file.txt` '\'
 	<application>psql</application> expects more input because the
 	command wasn't terminated yet, because you are inside a
 	<literal>/* ... */</literal> comment, or because you are inside
-	a quote. In prompt 3 the sequence doesn't resolve to anything.
+	a quote. In prompt 3 the sequence doesn't produce anything.
+	</para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><literal>%T</literal></term>
+	<listitem>
+	<para>
+	Transaction status: an empty string when not in a transaction
+	block, or <literal>*</> when in a transaction block, or
+	<literal>!</> when in a failed transaction block, or <literal>?</>
+	when the transaction state is indeterminate (for example, because
+	there is no connection).
 	</para>
 	</listitem>
       </varlistentry>
@@ -2252,13 +2259,12 @@ testdb=> <userinput>\set content '\'' `sed -e "s/'/\\\\\\'/g" < my_file.txt` '\'
         <term><literal>%</literal><replaceable class="parameter">digits</replaceable></term>
 	<listitem>
 	<para>
+	The character with the indicated numeric code is substituted.
 	If <replaceable class="parameter">digits</replaceable> starts
 	with <literal>0x</literal> the rest of the characters are
-	interpreted as a hexadecimal digit and the character with the
-	corresponding code is substituted. If the first digit is
-	<literal>0</literal> the characters are interpreted as on octal
-	number and the corresponding character is substituted. Otherwise
-	a decimal number is assumed.
+	interpreted as hexadecimal; otherwise if the first digit is
+	<literal>0</literal> the digits are interpreted as octal;
+	otherwise the digits are read as a decimal number.
 	</para>
 	</listitem>
       </varlistentry>
@@ -2289,7 +2295,7 @@ testdb=> <userinput>\set content '\'' `sed -e "s/'/\\\\\\'/g" < my_file.txt` '\'
     </variablelist>
 
     To insert a percent sign into your prompt, write
-    <literal>%%</literal>. The default prompts are equivalent to
+    <literal>%%</literal>. The default prompts are
     <literal>'%/%R%# '</literal> for prompts 1 and 2, and
     <literal>'&gt;&gt; '</literal> for prompt 3.
     </para>
@@ -2470,17 +2476,6 @@ Field separator is "oo".
       fail outright, but subtle and not-so-subtle problems might come
       up.  Backslash commands are particularly likely to fail if the
       server is of a different version.
-      </para>
-      </listitem>
-
-      <listitem>
-      <para>
-      Pressing <keycombo action="simul"><keycap>Control</><keycap>C</></>
-      during a <quote>copy in</quote> (data sent to
-      the server) doesn't show the most ideal of behaviors. If you get a
-      message such as <errorname>COPY state must be terminated
-      first</errorname>, simply reset the connection by entering <literal>\c
-      - -</literal>.
       </para>
       </listitem>
 

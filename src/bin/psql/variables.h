@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/variables.h,v 1.11 2003/03/20 06:43:35 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/variables.h,v 1.12 2003/06/28 00:12:40 tgl Exp $
  */
 
 /*
@@ -45,18 +45,18 @@ int GetVariableNum(VariableSpace space,
 
 
 /* Find value of variable <name> among NULL-terminated list of alternative 
- * options.  Returns var_notset if the variable was not set, var_notfound if its
- * value did not occur in the list of options, or the number of the matching
- * option.  The first option is 1, the second is 2 and so on.
+ * options.  Returns VAR_NOTSET if the variable was not set, VAR_NOTFOUND
+ * if its value did not occur in the list of options, or the number of the
+ * matching option.  The first option is 1, the second is 2 and so on.
  */
-enum { var_notset = 0, var_notfound = -1 };
-int 	SwitchVariable(VariableSpace space, const char name[], const char *opt,...);
+enum { VAR_NOTSET = 0, VAR_NOTFOUND = -1 };
+int 	SwitchVariable(VariableSpace space, const char name[],
+					   const char *opt, ...);
 
 void 	PrintVariables(VariableSpace space);
 
 bool	SetVariable(VariableSpace space, const char *name, const char *value);
 bool	SetVariableBool(VariableSpace space, const char *name);
 bool	DeleteVariable(VariableSpace space, const char *name);
-void	DestroyVariableSpace(VariableSpace space);
 
 #endif   /* VARIABLES_H */

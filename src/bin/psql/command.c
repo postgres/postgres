@@ -3,7 +3,7 @@
  *
  * Copyright 2000-2002 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.96 2003/05/14 03:26:02 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.97 2003/06/28 00:12:40 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -457,20 +457,30 @@ exec_command(const char *cmd,
 		char	   *encoding = scan_option(&string, OT_NORMAL, NULL, false);
 
 		if (!encoding)
-			/* show encoding */
+		{
+			/* show encoding --- first check for change sent from server */
+			if (pset.encoding != PQclientEncoding(pset.db) &&
+				PQclientEncoding(pset.db) >= 0)
+			{
+				pset.encoding = PQclientEncoding(pset.db);
+				pset.popt.topt.encoding = pset.encoding;
+				SetVariable(pset.vars, "ENCODING",
+							pg_encoding_to_char(pset.encoding));
+			}
 			puts(pg_encoding_to_char(pset.encoding));
+		}
 		else
 		{
 			/* set encoding */
 			if (PQsetClientEncoding(pset.db, encoding) == -1)
 				psql_error("%s: invalid encoding name or conversion procedure not found\n", encoding);
-
 			else
 			{
 				/* save encoding info into psql internal data */
 				pset.encoding = PQclientEncoding(pset.db);
-				pset.popt.topt.encoding = PQclientEncoding(pset.db);
-				SetVariable(pset.vars, "ENCODING", pg_encoding_to_char(pset.encoding));
+				pset.popt.topt.encoding = pset.encoding;
+				SetVariable(pset.vars, "ENCODING",
+							pg_encoding_to_char(pset.encoding));
 			}
 			free(encoding);
 		}
@@ -694,7 +704,13 @@ exec_command(const char *cmd,
 				free(opt);
 			}
 
-			if (!SetVariable(pset.vars, opt0, newval))
+			if (SetVariable(pset.vars, opt0, newval))
+			{
+				/* Check for special variables */
+				if (strcmp(opt0, "VERBOSE") == 0)
+					SyncVerboseVariable();
+			}
+			else
 			{
 				psql_error("\\%s: error\n", cmd);
 				success = false;
@@ -1327,11 +1343,7 @@ do_connect(const char *new_dbname, const char *new_user)
 	bool		success = false;
 
 	/* Delete variables (in case we fail before setting them anew) */
-	SetVariable(pset.vars, "DBNAME", NULL);
-	SetVariable(pset.vars, "USER", NULL);
-	SetVariable(pset.vars, "HOST", NULL);
-	SetVariable(pset.vars, "PORT", NULL);
-	SetVariable(pset.vars, "ENCODING", NULL);
+	UnsyncVariables();
 
 	/* If dbname is "" then use old name, else new one (even if NULL) */
 	if (oldconn && new_dbname && PQdb(oldconn) && strcmp(new_dbname, "") == 0)
@@ -1429,51 +1441,75 @@ do_connect(const char *new_dbname, const char *new_user)
 	}
 
 	PQsetNoticeProcessor(pset.db, NoticeProcessor, NULL);
-	pset.encoding = PQclientEncoding(pset.db);
-	pset.popt.topt.encoding = PQclientEncoding(pset.db);
 
 	/* Update variables */
+	SyncVariables();
+
+	return success;
+}
+
+
+/*
+ * SyncVariables
+ *
+ * Make psql's internal variables agree with connection state upon
+ * establishing a new connection.
+ */
+void
+SyncVariables(void)
+{
+	/* get stuff from connection */
+	pset.encoding = PQclientEncoding(pset.db);
+	pset.popt.topt.encoding = pset.encoding;
+
 	SetVariable(pset.vars, "DBNAME", PQdb(pset.db));
 	SetVariable(pset.vars, "USER", PQuser(pset.db));
 	SetVariable(pset.vars, "HOST", PQhost(pset.db));
 	SetVariable(pset.vars, "PORT", PQport(pset.db));
 	SetVariable(pset.vars, "ENCODING", pg_encoding_to_char(pset.encoding));
 
-	pset.issuper = test_superuser(PQuser(pset.db));
-
-	return success;
+	/* send stuff to it, too */
+	SyncVerboseVariable();
 }
-
-
 
 /*
- * Test if the given user is a database superuser.
- * (Is used to set up the prompt right.)
+ * UnsyncVariables
+ *
+ * Clear variables that should be not be set when there is no connection.
  */
-bool
-test_superuser(const char *username)
+void
+UnsyncVariables(void)
 {
-	PGresult   *res;
-	PQExpBufferData buf;
-	bool		answer;
-
-	if (!username)
-		return false;
-
-	initPQExpBuffer(&buf);
-	printfPQExpBuffer(&buf, "SELECT usesuper FROM pg_catalog.pg_user WHERE usename = '%s'", username);
-	res = PSQLexec(buf.data, true);
-	termPQExpBuffer(&buf);
-
-	answer =
-		(res && PQntuples(res) > 0 && PQnfields(res) > 0
-		 && !PQgetisnull(res, 0, 0)
-		 && PQgetvalue(res, 0, 0)
-		 && strcmp(PQgetvalue(res, 0, 0), "t") == 0);
-	PQclear(res);
-	return answer;
+	SetVariable(pset.vars, "DBNAME", NULL);
+	SetVariable(pset.vars, "USER", NULL);
+	SetVariable(pset.vars, "HOST", NULL);
+	SetVariable(pset.vars, "PORT", NULL);
+	SetVariable(pset.vars, "ENCODING", NULL);
 }
 
+/*
+ * Update connection state from VERBOSE variable
+ */
+void
+SyncVerboseVariable(void)
+{
+	switch (SwitchVariable(pset.vars, "VERBOSE",
+						   "default", "terse", "verbose", NULL))
+	{
+		case 1:					/* default */
+			PQsetErrorVerbosity(pset.db, PQERRORS_DEFAULT);
+			break;
+		case 2:					/* terse */
+			PQsetErrorVerbosity(pset.db, PQERRORS_TERSE);
+			break;
+		case 3:					/* verbose */
+			PQsetErrorVerbosity(pset.db, PQERRORS_VERBOSE);
+			break;
+		default:				/* not set or unrecognized value */
+			PQsetErrorVerbosity(pset.db, PQERRORS_DEFAULT);
+			break;
+	}
+}
 
 
 /*

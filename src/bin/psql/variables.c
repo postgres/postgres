@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/variables.c,v 1.10 2003/03/20 06:43:35 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/variables.c,v 1.11 2003/06/28 00:12:40 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "variables.h"
@@ -33,8 +33,6 @@ CreateVariableSpace(void)
 	return ptr;
 }
 
-
-
 const char *
 GetVariable(VariableSpace space, const char *name)
 {
@@ -59,14 +57,19 @@ GetVariable(VariableSpace space, const char *name)
 	return NULL;
 }
 
-
-
 bool
 GetVariableBool(VariableSpace space, const char *name)
 {
-	return GetVariable(space, name) != NULL ? true : false;
-}
+	const char *val;
 
+	val = GetVariable(space, name);
+	if (val == NULL)
+		return false;			/* not set -> assume "off" */
+	if (strcmp(val, "off") == 0)
+		return false;
+	/* for backwards compatibility, anything except "off" is taken as "true" */
+	return true;
+}
 
 bool
 VariableEquals(VariableSpace space, const char name[], const char value[])
@@ -75,7 +78,6 @@ VariableEquals(VariableSpace space, const char name[], const char value[])
 	var = GetVariable(space, name);
 	return var && (strcmp(var, value) == 0);
 }
-
 
 int 
 GetVariableNum(VariableSpace space, 
@@ -103,7 +105,6 @@ GetVariableNum(VariableSpace space,
 	return result;
 }
 
-
 int
 SwitchVariable(VariableSpace space, const char name[], const char *opt, ...)
 {
@@ -117,16 +118,15 @@ SwitchVariable(VariableSpace space, const char name[], const char *opt, ...)
 		va_start(args, opt);
 		for (result=1; opt && (strcmp(var, opt) != 0); result++)
 			opt = va_arg(args,const char *);
-
-		if (!opt) result = var_notfound;
+		if (!opt)
+			result = VAR_NOTFOUND;
 		va_end(args);
 	}
 	else
-	  result = var_notset;
+	  result = VAR_NOTSET;
 
 	return result;
 }
-
 
 void 
 PrintVariables(VariableSpace space)
@@ -135,7 +135,6 @@ PrintVariables(VariableSpace space)
   for (ptr = space->next; ptr; ptr = ptr->next)
 	 printf("%s = '%s'\n", ptr->name, ptr->value);
 }
-
 
 bool
 SetVariable(VariableSpace space, const char *name, const char *value)
@@ -176,15 +175,11 @@ SetVariable(VariableSpace space, const char *name, const char *value)
 	return previous->next->value ? true : false;
 }
 
-
-
 bool
 SetVariableBool(VariableSpace space, const char *name)
 {
-	return SetVariable(space, name, "");
+	return SetVariable(space, name, "on");
 }
-
-
 
 bool
 DeleteVariable(VariableSpace space, const char *name)
@@ -216,16 +211,4 @@ DeleteVariable(VariableSpace space, const char *name)
 	}
 
 	return true;
-}
-
-
-
-void
-DestroyVariableSpace(VariableSpace space)
-{
-	if (!space)
-		return;
-
-	DestroyVariableSpace(space->next);
-	free(space);
 }

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.194 2003/06/19 23:22:40 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.195 2003/06/28 00:12:40 tgl Exp $
 -->
 
 <appendix id="release">
@@ -31,7 +31,7 @@ Functional indexes have been generalized into expressional indexes
 CHAR(n) to TEXT conversion automatically strips trailing blanks
 Pattern matching operations can use indexes regardless of locale
 New frontend/backend protocol supports many long-requested features
-SET AUTOCOMMIT TO OFF is no longer supported
+SET AUTOCOMMIT TO OFF is no longer supported; psql has an AUTOCOMMIT variable
 Reimplementation of NUMERIC datatype for more speed
 New regular expression package, many more regexp features (most of Perl5)
 Can now do EXPLAIN ... EXECUTE to see plan used for a prepared query

@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/prompt.c,v 1.25 2003/04/04 20:42:13 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/prompt.c,v 1.26 2003/06/28 00:12:40 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "prompt.h"
@@ -44,6 +44,7 @@
  *			or a ! if session is not connected to a database;
  *		in prompt2 -, *, ', or ";
  *		in prompt3 nothing
+ * %T - transaction status: empty, *, !, ? (unknown or no connection)
  * %? - the error code of the last query (not yet implemented)
  * %% - a percent sign
  *
@@ -172,7 +173,7 @@ get_prompt(promptStatus_t status)
 				case '8':
 				case '9':
 					*buf = parse_char((char **)&p);
-						break;
+					break;
 
 				case 'R':
 					switch (status)
@@ -204,20 +205,39 @@ get_prompt(promptStatus_t status)
 							buf[0] = '\0';
 							break;
 					}
+					break;
+
+				case 'T':
+					if (!pset.db)
+						buf[0] = '?';
+					else switch (PQtransactionStatus(pset.db))
+					{
+						case PQTRANS_IDLE:
+							buf[0] = '\0';
+							break;
+						case PQTRANS_ACTIVE:
+						case PQTRANS_INTRANS:
+							buf[0] = '*';
+							break;
+						case PQTRANS_INERROR:
+							buf[0] = '!';
+							break;
+						default:
+							buf[0] = '?';
+							break;
+					}
+					break;
 
 				case '?':
 					/* not here yet */
 					break;
 
 				case '#':
-					{
-						if (pset.issuper)
-							buf[0] = '#';
-						else
-							buf[0] = '>';
-
-						break;
-					}
+					if (is_superuser())
+						buf[0] = '#';
+					else
+						buf[0] = '>';
+					break;
 
 					/* execute command */
 				case '`':
