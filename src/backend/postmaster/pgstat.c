@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2003, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.61 2004/03/15 16:21:37 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.62 2004/03/22 23:55:29 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -191,6 +191,12 @@ pgstat_init(void)
 			   *addr,
 				hints;
 	int			ret;
+	fd_set      rset;
+	struct timeval tv;
+	char        test_byte;
+	int         sel_res;
+
+#define TESTBYTEVAL ((char) 199)
 
 	/*
 	 * Force start of collector daemon if something to collect
@@ -303,6 +309,85 @@ pgstat_init(void)
 			ereport(LOG,
 					(errcode_for_socket_access(),
 					 errmsg("could not connect socket for statistics collector: %m")));
+			closesocket(pgStatSock);
+			pgStatSock = -1;
+			continue;
+		}
+
+		/*
+		 * Try to send and receive a one-byte test message on the socket.
+		 * This is to catch situations where the socket can be created but
+		 * will not actually pass data (for instance, because kernel packet
+		 * filtering rules prevent it).
+		 */
+		test_byte = TESTBYTEVAL;
+		if (send(pgStatSock, &test_byte, 1, 0) != 1)
+		{
+			ereport(LOG,
+					(errcode_for_socket_access(),
+					 errmsg("could not send test message on socket for statistics collector: %m")));
+			closesocket(pgStatSock);
+			pgStatSock = -1;
+			continue;
+		}
+
+		/*
+		 * There could possibly be a little delay before the message can be
+		 * received.  We arbitrarily allow up to half a second before deciding
+		 * it's broken.
+		 */
+		for (;;)				/* need a loop to handle EINTR */
+		{
+			FD_ZERO(&rset);
+			FD_SET(pgStatSock, &rset);
+			tv.tv_sec = 0;
+			tv.tv_usec = 500000;
+			sel_res = select(pgStatSock+1, &rset, NULL, NULL, &tv);
+			if (sel_res >= 0 || errno != EINTR)
+				break;
+		}
+		if (sel_res < 0)
+		{
+			ereport(LOG,
+					(errcode_for_socket_access(),
+					 errmsg("select() failed in statistics collector: %m")));
+			closesocket(pgStatSock);
+			pgStatSock = -1;
+			continue;
+		}
+		if (sel_res == 0 || !FD_ISSET(pgStatSock, &rset))
+		{
+			/*
+			 * This is the case we actually think is likely, so take pains to
+			 * give a specific message for it.
+			 *
+			 * errno will not be set meaningfully here, so don't use it.
+			 */
+			ereport(LOG,
+					(ERRCODE_CONNECTION_FAILURE,
+					 errmsg("test message did not get through on socket for statistics collector")));
+			closesocket(pgStatSock);
+			pgStatSock = -1;
+			continue;
+		}
+
+		test_byte++;			/* just make sure variable is changed */
+
+		if (recv(pgStatSock, &test_byte, 1, 0) != 1)
+		{
+			ereport(LOG,
+					(errcode_for_socket_access(),
+					 errmsg("could not receive test message on socket for statistics collector: %m")));
+			closesocket(pgStatSock);
+			pgStatSock = -1;
+			continue;
+		}
+
+		if (test_byte != TESTBYTEVAL) /* strictly paranoia ... */
+		{
+			ereport(LOG,
+					(ERRCODE_INTERNAL_ERROR,
+					 errmsg("incorrect test message transmission on socket for statistics collector")));
 			closesocket(pgStatSock);
 			pgStatSock = -1;
 			continue;
