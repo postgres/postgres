@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/pltcl.sgml,v 2.7 2001/02/09 03:06:38 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/pltcl.sgml,v 2.8 2001/03/25 10:16:12 petere Exp $
 -->
 
  <chapter id="pltcl">
@@ -335,7 +335,7 @@ CREATE TRIGGER trig_mytab_modcount BEFORE INSERT OR UPDATE ON mytab
       <term>quote <replaceable>string</replaceable></term>
       <listitem>
        <para>
-	Duplicates all occurences of single quote and backslash characters.
+	Duplicates all occurrences of single quote and backslash characters.
 	It should be used when variables are used in the query string given
 	to <function>spi_exec</function> or
 	<function>spi_prepare</function> (not for the value list on
