@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.33 1999/02/14 05:14:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.34 1999/02/14 05:27:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -162,7 +162,7 @@ static List *
 find_join_paths(Query *root, List *outer_rels, int levels_needed)
 {
 	List	   *x;
-	List	   *new_rels = NIL;
+	List	   *joined_rels = NIL;
 	RelOptInfo *rel;
 
 	/*******************************************
@@ -181,14 +181,14 @@ find_join_paths(Query *root, List *outer_rels, int levels_needed)
 		/*
 		 * Determine all possible pairs of relations to be joined at this
 		 * level. Determine paths for joining these relation pairs and
-		 * modify 'new_rels' accordingly, then eliminate redundant join
+		 * modify 'joined_rels' accordingly, then eliminate redundant join
 		 * relations.
 		 */
-		new_rels = make_new_rels_by_joins(root, outer_rels);
+		joined_rels = make_new_rels_by_joins(root, outer_rels);
 
-		update_rels_pathlist_for_joins(root, new_rels);
+		update_rels_pathlist_for_joins(root, joined_rels);
 
-		merge_rels_with_same_relids(new_rels);
+		merge_rels_with_same_relids(joined_rels);
 
 #if 0
 		/*
@@ -196,11 +196,11 @@ find_join_paths(Query *root, List *outer_rels, int levels_needed)
 		 * rel, * consider doing pullup  -- JMH
 		 */
 		if (XfuncMode != XFUNC_NOPULL && XfuncMode != XFUNC_OFF)
-			foreach(x, new_rels)
+			foreach(x, joined_rels)
 				xfunc_trypullup((RelOptInfo *) lfirst(x));
 #endif
 
-		rels_set_cheapest(new_rels);
+		rels_set_cheapest(joined_rels);
 
 		if (BushyPlanFlag)
 		{
@@ -211,10 +211,10 @@ find_join_paths(Query *root, List *outer_rels, int levels_needed)
 			 * involves the join relation to the joininfo list of the
 			 * other relation
 			 */
-			add_new_joininfos(root, new_rels, outer_rels);
+			add_new_joininfos(root, joined_rels, outer_rels);
 		}
 
-		foreach(x, new_rels)
+		foreach(x, joined_rels)
 		{
 			rel = (RelOptInfo *) lfirst(x);
 
@@ -239,20 +239,20 @@ find_join_paths(Query *root, List *outer_rels, int levels_needed)
 			/*
 			 * merge join rels if then contain the same list of base rels
 			 */
-			outer_rels = merge_joinrels(new_rels, outer_rels);
+			outer_rels = merge_joinrels(joined_rels, outer_rels);
 			root->join_rel_list = outer_rels;
 		}
 		else
-			root->join_rel_list = new_rels;
+			root->join_rel_list = joined_rels;
 
 		if (!BushyPlanFlag)
-			outer_rels = new_rels;
+			outer_rels = joined_rels;
 	}
 
 	if (BushyPlanFlag)
 		return final_join_rels(outer_rels);
 	else
-		return new_rels;
+		return joined_rels;
 }
 
 /*****************************************************************************
