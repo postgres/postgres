@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.130 2000/11/16 22:30:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.131 2000/12/08 06:17:57 inoue Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -76,7 +76,7 @@ static void DefaultBuild(Relation heapRelation, Relation indexRelation,
 						 IndexInfo *indexInfo, Node *oldPred,
 						 IndexStrategy indexStrategy);
 static Oid	IndexGetRelation(Oid indexId);
-static bool activate_index(Oid indexId, bool activate);
+static bool activate_index(Oid indexId, bool activate, bool inplace);
 
 
 static bool reindexing = false;
@@ -1430,7 +1430,11 @@ setRelhasindex(Oid relid, bool hasindex)
 	 */
 	pg_class = heap_openr(RelationRelationName, RowExclusiveLock);
 
+#ifdef	OLD_FILE_NAMING
 	if (!IsIgnoringSystemIndexes())
+#else
+	if (!IsIgnoringSystemIndexes() && (!IsReindexProcessing() || pg_class->rd_rel->relhasindex))
+#endif /* OLD_FILE_NAMING */
 	{
 		tuple = SearchSysCacheCopy(RELOID,
 								   ObjectIdGetDatum(relid),
@@ -1462,7 +1466,11 @@ setRelhasindex(Oid relid, bool hasindex)
 	 *	Update hasindex in pg_class.
 	 * ----------------
 	 */
+	if (pg_class_scan)
+		LockBuffer(pg_class_scan->rs_cbuf, BUFFER_LOCK_EXCLUSIVE);
 	((Form_pg_class) GETSTRUCT(tuple))->relhasindex = hasindex;
+	if (pg_class_scan)
+		LockBuffer(pg_class_scan->rs_cbuf, BUFFER_LOCK_UNLOCK);
 
 	if (pg_class_scan)
 	{
@@ -1471,6 +1479,7 @@ setRelhasindex(Oid relid, bool hasindex)
 		/* Send out shared cache inval if necessary */
 		if (!IsBootstrapProcessingMode())
 			RelationInvalidateHeapTuple(pg_class, tuple);
+		BufferSync();
 	}
 	else
 	{
@@ -1495,6 +1504,75 @@ setRelhasindex(Oid relid, bool hasindex)
 
 	heap_close(pg_class, RowExclusiveLock);
 }
+
+#ifndef OLD_FILE_NAMING
+void
+setNewRelfilenode(Relation relation)
+{
+	Relation	pg_class, idescs[Num_pg_class_indices];
+	Oid		newrelfilenode;
+	bool		in_place_update = false;
+	HeapTupleData 	lockTupleData;
+	HeapTuple 	classTuple;
+	Buffer		buffer;
+	RelationData	workrel;
+	
+	Assert(!IsSystemRelationName(NameStr(relation->rd_rel->relname)) || relation->rd_rel->relkind == RELKIND_INDEX);
+
+	pg_class = heap_openr(RelationRelationName, RowExclusiveLock);
+	 /* Fetch and lock the classTuple associated with this relation */
+	if (!LockClassinfoForUpdate(relation->rd_id, &lockTupleData, &buffer, true))
+		elog(ERROR, "setNewRelfilenode impossible to lock class tuple");
+	if (IsIgnoringSystemIndexes())
+		in_place_update = true;
+	/* Allocate a new relfilenode */
+	newrelfilenode = newoid();
+	/* update pg_class tuple with new relfilenode */
+	if (!in_place_update)
+	{
+		classTuple = heap_copytuple(&lockTupleData);
+		ReleaseBuffer(buffer);
+		((Form_pg_class) GETSTRUCT(classTuple))->relfilenode = newrelfilenode;
+		heap_update(pg_class, &classTuple->t_self, classTuple, NULL);
+	}
+	/* unlink old relfilenode */
+	DropRelationBuffers(relation);
+	smgrunlink(DEFAULT_SMGR, relation);
+	/* cleanup pg_internal.init if necessary */
+	if (relation->rd_isnailed)
+		unlink(RELCACHE_INIT_FILENAME);
+	/* create another storage file. Is it a little ugly ? */
+	memcpy((char *) &workrel, relation, sizeof(RelationData));
+	workrel.rd_node.relNode = newrelfilenode;
+	heap_storage_create(&workrel);
+	/* update pg_class tuple with new relfilenode in place */
+	if (in_place_update)
+	{
+		classTuple = &lockTupleData;
+		/* Send out shared cache inval if necessary */
+		if (!IsBootstrapProcessingMode())
+			RelationInvalidateHeapTuple(pg_class, classTuple);
+		/* Update the buffer in-place */
+		LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
+		((Form_pg_class) GETSTRUCT(classTuple))->relfilenode = newrelfilenode;
+		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+		WriteBuffer(buffer);
+		BufferSync();
+	}
+	/* Keep the catalog indices up to date */
+	if (!in_place_update && pg_class->rd_rel->relhasindex)
+	{
+		CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices,
+							   idescs);
+		CatalogIndexInsert(idescs, Num_pg_class_indices, pg_class, classTuple);
+		CatalogCloseIndices(Num_pg_class_indices, idescs);
+		heap_freetuple(classTuple);
+	}
+	heap_close(pg_class, NoLock);
+	/* Make sure the relfilenode change */
+	CommandCounterIncrement();
+}
+#endif /* OLD_FILE_NAMING */
 
 /* ----------------
  *		UpdateStats
@@ -1552,7 +1630,12 @@ UpdateStats(Oid relid, long reltuples)
 	 */
 	pg_class = heap_openr(RelationRelationName, RowExclusiveLock);
 
+#ifdef	OLD_FILE_NAMING
 	in_place_upd = (IsReindexProcessing() || IsBootstrapProcessingMode());
+#else
+	in_place_upd = (IsIgnoringSystemIndexes() || (IsReindexProcessing() &&
+			relid == RelOid_pg_class));
+#endif /* OLD_FILE_NAMING */
 
 	if (!in_place_upd)
 	{
@@ -1631,8 +1714,10 @@ UpdateStats(Oid relid, long reltuples)
 		 * visibility of changes, so we cheat.  Also cheat if REINDEX.
 		 */
 		rd_rel = (Form_pg_class) GETSTRUCT(tuple);
+		LockBuffer(pg_class_scan->rs_cbuf, BUFFER_LOCK_EXCLUSIVE);
 		rd_rel->relpages = relpages;
 		rd_rel->reltuples = reltuples;
+		LockBuffer(pg_class_scan->rs_cbuf, BUFFER_LOCK_UNLOCK);
 		WriteNoReleaseBuffer(pg_class_scan->rs_cbuf);
 		if (!IsBootstrapProcessingMode())
 			RelationInvalidateHeapTuple(pg_class, tuple);
@@ -1924,11 +2009,11 @@ IndexGetRelation(Oid indexId)
  * ---------------------------------
  */
 static bool
-activate_index(Oid indexId, bool activate)
+activate_index(Oid indexId, bool activate, bool inplace)
 {
 	if (!activate)				/* Currently does nothing */
 		return true;
-	return reindex_index(indexId, false);
+	return reindex_index(indexId, false, inplace);
 }
 
 /* --------------------------------
@@ -1936,7 +2021,7 @@ activate_index(Oid indexId, bool activate)
  * --------------------------------
  */
 bool
-reindex_index(Oid indexId, bool force)
+reindex_index(Oid indexId, bool force, bool inplace)
 {
 	Relation	iRel,
 				indexRelation,
@@ -1996,18 +2081,25 @@ reindex_index(Oid indexId, bool force)
 	if (iRel == NULL)
 		elog(ERROR, "reindex_index: can't open index relation");
 
+#ifndef OLD_FILE_NAMING
+	if (!inplace)
+		setNewRelfilenode(iRel);
+#endif /* OLD_FILE_NAMING */
 	/* Obtain exclusive lock on it, just to be sure */
 	LockRelation(iRel, AccessExclusiveLock);
 
-	/*
-	 * Release any buffers associated with this index.	If they're dirty,
-	 * they're just dropped without bothering to flush to disk.
-	 */
-	DropRelationBuffers(iRel);
+	if (inplace)
+	{
+		/*
+	 	 * Release any buffers associated with this index.	If they're dirty,
+	 	 * they're just dropped without bothering to flush to disk.
+	 	 */
+		DropRelationBuffers(iRel);
 
-	/* Now truncate the actual data and set blocks to zero */
-	smgrtruncate(DEFAULT_SMGR, iRel, 0);
-	iRel->rd_nblocks = 0;
+		/* Now truncate the actual data and set blocks to zero */
+		smgrtruncate(DEFAULT_SMGR, iRel, 0);
+		iRel->rd_nblocks = 0;
+	}
 
 	/* Initialize the index and rebuild */
 	InitIndexStrategy(indexInfo->ii_NumIndexAttrs, iRel, accessMethodId);
@@ -2064,15 +2156,57 @@ reindex_relation(Oid relid, bool force)
 	bool		old,
 				reindexed;
 
-	old = SetReindexProcessing(true);
-	if (IndexesAreActive(relid, true))
+	bool	deactivate_needed, overwrite, upd_pg_class_inplace;
+#ifdef OLD_FILE_NAMING
+	overwrite = upd_pg_class_inplace = deactivate_needed = true;	
+#else
+	Relation rel;
+	overwrite = upd_pg_class_inplace = deactivate_needed = false;	
+	/*
+ 	 * avoid heap_update() pg_class tuples while processing
+ 	 * reindex for pg_class. 
+ 	 */
+	if (IsIgnoringSystemIndexes())
+		upd_pg_class_inplace = true;
+	/*
+	 * ignore the indexes of the target system relation while processing
+	 * reindex.
+	 */ 
+	rel = RelationIdGetRelation(relid);
+	if (!IsIgnoringSystemIndexes() && IsSystemRelationName(NameStr(rel->rd_rel->relname)))
+		deactivate_needed = true;
+#ifndef	ENABLE_REINDEX_NAILED_RELATIONS
+	/* 
+ 	 * nailed relations are never updated.
+ 	 * We couldn't keep the consistency between the relation
+ 	 * descriptors and pg_class tuples.
+ 	 */
+	if (rel->rd_isnailed)
 	{
-		if (!force)
+		if (IsIgnoringSystemIndexes())
 		{
-			SetReindexProcessing(old);
-			return false;
+			overwrite = true;
+			deactivate_needed = true;
 		}
-		activate_indexes_of_a_table(relid, false);
+		else
+			elog(ERROR, "the target relation %u is nailed", relid);
+	}
+#endif /* ENABLE_REINDEX_NAILED_RELATIONS */
+	RelationClose(rel);
+#endif /* OLD_FILE_NAMING */
+	old = SetReindexProcessing(true);
+	if (deactivate_needed)
+	{
+		if (IndexesAreActive(relid, upd_pg_class_inplace))
+		{
+			if (!force)
+			{
+				SetReindexProcessing(old);
+				return false;
+			}
+			activate_indexes_of_a_table(relid, false);
+			CommandCounterIncrement();
+		}
 	}
 
 	indexRelation = heap_openr(IndexRelationName, AccessShareLock);
@@ -2085,7 +2219,7 @@ reindex_relation(Oid relid, bool force)
 	{
 		Form_pg_index index = (Form_pg_index) GETSTRUCT(indexTuple);
 
-		if (activate_index(index->indexrelid, true))
+		if (activate_index(index->indexrelid, true, overwrite))
 			reindexed = true;
 		else
 		{
@@ -2096,7 +2230,30 @@ reindex_relation(Oid relid, bool force)
 	heap_endscan(scan);
 	heap_close(indexRelation, AccessShareLock);
 	if (reindexed)
-		setRelhasindex(relid, true);
+	/*
+	 * Ok,we could use the reindexed indexes of the target
+	 * system relation now.
+	 */
+	{ 
+		if (deactivate_needed)
+		{
+			if (!overwrite && relid == RelOid_pg_class)
+			{
+				/* 
+				 * For pg_class, relhasindex should be set
+				 * to true here in place.
+				 */
+				setRelhasindex(relid, true);
+				CommandCounterIncrement();
+				/* 
+				 * However the following setRelhasindex()
+				 * is needed to keep consistency with WAL.
+				 */
+			}
+			setRelhasindex(relid, true);
+		}
+	}
 	SetReindexProcessing(old);
+
 	return reindexed;
 }

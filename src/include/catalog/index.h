@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: index.h,v 1.30 2000/11/08 22:10:01 tgl Exp $
+ * $Id: index.h,v 1.31 2000/12/08 06:17:56 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,13 +49,16 @@ extern void FormIndexDatum(IndexInfo *indexInfo,
 extern void UpdateStats(Oid relid, long reltuples);
 extern bool IndexesAreActive(Oid relid, bool comfirmCommitted);
 extern void setRelhasindex(Oid relid, bool hasindex);
+#ifndef OLD_FILE_NAMING
+extern void setNewRelfilenode(Relation relation);
+#endif /* OLD_FILE_NAMING */
 extern bool SetReindexProcessing(bool processing);
 extern bool IsReindexProcessing(void);
 
 extern void index_build(Relation heapRelation, Relation indexRelation,
 						IndexInfo *indexInfo, Node *oldPred);
 
-extern bool reindex_index(Oid indexId, bool force);
+extern bool reindex_index(Oid indexId, bool force, bool inplace);
 extern bool activate_indexes_of_a_table(Oid relid, bool activate);
 extern bool reindex_relation(Oid relid, bool force);
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.118 2000/11/30 18:38:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.119 2000/12/08 06:17:56 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -250,6 +250,10 @@ do { \
 /* non-export function prototypes */
 
 static void RelationClearRelation(Relation relation, bool rebuildIt);
+#ifdef	ENABLE_REINDEX_NAILED_RELATIONS
+static void RelationReloadClassinfo(Relation relation);
+#endif /* ENABLE_REINDEX_NAILED_RELATIONS */
+static void RelationResetRelation(Relation relation, bool rebuildIt);
 static void RelationFlushRelation(Relation *relationPtr,
 					  int skipLocalRelations);
 static Relation RelationNameCacheGetRelation(const char *relationName);
@@ -387,6 +391,15 @@ scan_pg_rel_ind(RelationBuildDescInfo buildinfo)
 	HeapTuple	return_tuple;
 
 	pg_class_desc = heap_openr(RelationRelationName, AccessShareLock);
+	/*
+	 * If the indexes of pg_class are deactivated
+	 * we have to call scan_pg_rel_seq() instead.
+	 */
+	if (!pg_class_desc->rd_rel->relhasindex)
+	{
+		heap_close(pg_class_desc, AccessShareLock);
+		return scan_pg_rel_seq(buildinfo);
+	}
 
 	switch (buildinfo.infotype)
 	{
@@ -1555,6 +1568,45 @@ RelationClose(Relation relation)
 	RelationDecrementReferenceCount(relation);
 }
 
+#ifdef	ENABLE_REINDEX_NAILED_RELATIONS
+/* --------------------------------
+ * RelationReloadClassinfo
+ *
+ *	This function is especially for nailed relations.
+ *	relhasindex/relfilenode could be changed even for
+ *	nailed relations.
+ * --------------------------------
+ */
+static void
+RelationReloadClassinfo(Relation relation)
+{
+	RelationBuildDescInfo buildinfo;
+	HeapTuple	pg_class_tuple;
+	Form_pg_class	relp;
+
+	if (!relation->rd_rel)
+		return;
+	buildinfo.infotype = INFO_RELID;
+	buildinfo.i.info_id = relation->rd_id;
+	pg_class_tuple = ScanPgRelation(buildinfo);
+	if (!HeapTupleIsValid(pg_class_tuple))
+	{
+		elog(ERROR, "RelationReloadClassinfo system relation id=%d doesn't exist", relation->rd_id);
+		return;
+	}
+	RelationCacheDelete(relation);
+	relp = (Form_pg_class) GETSTRUCT(pg_class_tuple);
+	memcpy((char *) relation->rd_rel, (char *) relp, CLASS_TUPLE_SIZE);
+	relation->rd_node.relNode = relp->relfilenode;
+	RelationCacheInsert(relation);
+	heap_freetuple(pg_class_tuple);
+fprintf(stderr, "RelationClearRelation nailed %s hasindex=%d relfilenode=%d,%d\n",
+RelationGetRelationName(relation), relation->rd_rel->relhasindex,
+relation->rd_rel->relfilenode, relation->rd_node.relNode);
+
+	return;
+}
+#endif /* ENABLE_REINDEX_NAILED_RELATIONS */
 /* --------------------------------
  * RelationClearRelation
  *
@@ -1588,7 +1640,14 @@ RelationClearRelation(Relation relation, bool rebuildIt)
 	 * we'd be unable to recover.
 	 */
 	if (relation->rd_isnailed)
+#ifdef	ENABLE_REINDEX_NAILED_RELATIONS
+	{
+		RelationReloadClassinfo(relation);
+#endif /* ENABLE_REINDEX_NAILED_RELATIONS */
 		return;
+#ifdef	ENABLE_REINDEX_NAILED_RELATIONS
+	}
+#endif /* ENABLE_REINDEX_NAILED_RELATIONS */
 
 	/*
 	 * Remove relation from hash tables
