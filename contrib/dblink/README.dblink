@@ -151,6 +151,10 @@ Installation:
 
 Documentation:
 
+  Note: Parameters representing relation names must include double
+     quotes if the names are mixed-case or contain special characters. They
+     must also be appropriately qualified with schema name if applicable.
+
   See the following files:
      doc/connection
      doc/cursor

@@ -44,6 +44,26 @@ SELECT dblink_build_sql_update('foo','1 2',2,'{"0", "a"}','{"99", "xyz"}');
 -- build a delete statement based on a local tuple,
 SELECT dblink_build_sql_delete('foo','1 2',2,'{"0", "a"}');
 
+-- retest using a quoted and schema qualified table
+CREATE SCHEMA "MySchema";
+CREATE TABLE "MySchema"."Foo"(f1 int, f2 text, f3 text[], primary key (f1,f2));
+INSERT INTO "MySchema"."Foo" VALUES (0,'a','{"a0","b0","c0"}');
+
+-- list the primary key fields
+SELECT *
+FROM dblink_get_pkey('"MySchema"."Foo"');
+
+-- build an insert statement based on a local tuple,
+-- replacing the primary key values with new ones
+SELECT dblink_build_sql_insert('"MySchema"."Foo"','1 2',2,'{"0", "a"}','{"99", "xyz"}');
+
+-- build an update statement based on a local tuple,
+-- replacing the primary key values with new ones
+SELECT dblink_build_sql_update('"MySchema"."Foo"','1 2',2,'{"0", "a"}','{"99", "xyz"}');
+
+-- build a delete statement based on a local tuple,
+SELECT dblink_build_sql_delete('"MySchema"."Foo"','1 2',2,'{"0", "a"}');
+
 -- regular old dblink
 SELECT *
 FROM dblink('dbname=regression','SELECT * FROM foo') AS t(a int, b text, c text[])
