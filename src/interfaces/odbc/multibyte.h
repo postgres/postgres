@@ -36,4 +36,4 @@ extern int	multibyte_status;	/* Multibyte charcter status. */
 void		multibyte_init(void);
 unsigned char *check_client_encoding(unsigned char *str);
 int			multibyte_char_check(unsigned char s);
-unsigned char *multibyte_strchr(unsigned char *s, unsigned char c);
+unsigned char *multibyte_strchr(const unsigned char *s, unsigned char c);

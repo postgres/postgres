@@ -15,7 +15,7 @@ int			multibyte_status;	/* Multibyte Odds and ends character. */
 
 
 unsigned char *
-multibyte_strchr(unsigned char *s, unsigned char c)
+multibyte_strchr(const unsigned char *s, unsigned char c)
 {
 	int			mb_st = 0,
 				i = 0;
@@ -56,7 +56,7 @@ multibyte_strchr(unsigned char *s, unsigned char c)
 #ifdef _DEBUG
 	qlog("i = %d\n", i);
 #endif
-	return (s + i);
+	return (char *) (s + i);
 }
 
 
