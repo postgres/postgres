@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.14 2002/04/27 03:45:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.15 2002/04/29 22:15:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,9 +37,10 @@
 #include "storage/backendid.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
+#include "utils/catcache.h"
 #include "utils/fmgroids.h"
 #include "utils/guc.h"
-#include "utils/catcache.h"
+#include "utils/inval.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
@@ -66,9 +67,24 @@
  * path is determined by GUC.  The factory default path contains the PUBLIC
  * namespace (if it exists), preceded by the user's personal namespace
  * (if one exists).
+ *
+ * If namespaceSearchPathValid is false, then namespaceSearchPath (and the
+ * derived variables) need to be recomputed from namespace_search_path.
+ * We mark it invalid upon an assignment to namespace_search_path or receipt
+ * of a syscache invalidation event for pg_namespace.  The recomputation
+ * is done during the next lookup attempt.
+ *
+ * Any namespaces mentioned in namespace_search_path that are not readable
+ * by the current user ID are simply left out of namespaceSearchPath; so
+ * we have to be willing to recompute the path when current userid changes.
+ * namespaceUser is the userid the path has been computed for.
  */
 
 static List *namespaceSearchPath = NIL;
+
+static bool namespaceSearchPathValid = true;
+
+static Oid	namespaceUser = InvalidOid;
 
 /* this flag must be updated correctly when namespaceSearchPath is changed */
 static bool pathContainsSystemNamespace = false;
@@ -103,12 +119,14 @@ typedef struct DelConstraint
 
 
 /* Local functions */
+static void recomputeNamespacePath(void);
 static Oid	GetTempTableNamespace(void);
 static void RemoveTempRelations(Oid tempNamespaceId);
 static List *FindTempRelations(Oid tempNamespaceId);
 static List *FindDeletionConstraints(List *relOids);
 static List *TopoSortRels(List *relOids, List *constraintList);
 static void RemoveTempRelationsCallback(void);
+static void NamespaceCallback(Datum arg, Oid relid);
 
 
 /*
@@ -137,12 +155,18 @@ RangeVarGetRelid(const RangeVar *relation, bool failOK)
 	if (relation->schemaname)
 	{
 		/* use exact schema given */
+		AclResult	aclresult;
+
 		namespaceId = GetSysCacheOid(NAMESPACENAME,
 									 CStringGetDatum(relation->schemaname),
 									 0, 0, 0);
 		if (!OidIsValid(namespaceId))
 			elog(ERROR, "Namespace \"%s\" does not exist",
 				 relation->schemaname);
+		aclresult = pg_namespace_aclcheck(namespaceId, GetUserId(), ACL_USAGE);
+		if (aclresult != ACLCHECK_OK)
+			aclcheck_error(aclresult, relation->schemaname);
+
 		relId = get_relname_relid(relation->relname, namespaceId);
 	}
 	else
@@ -210,10 +234,13 @@ RangeVarGetCreationNamespace(const RangeVar *newRelation)
 	else
 	{
 		/* use the default creation namespace */
+		recomputeNamespacePath();
 		namespaceId = defaultCreationNamespace;
 		if (!OidIsValid(namespaceId))
 			elog(ERROR, "No namespace has been selected to create in");
 	}
+
+	/* Note: callers will check for CREATE rights when appropriate */
 
 	return namespaceId;
 }
@@ -229,9 +256,11 @@ RelnameGetRelid(const char *relname)
 	Oid			relid;
 	List	   *lptr;
 
+	recomputeNamespacePath();
+
 	/*
 	 * If a TEMP-table namespace has been set up, it is implicitly first
-	 * in the search path.
+	 * in the search path.  We do not need to check USAGE permission.
 	 */
 	if (OidIsValid(myTempNamespace))
 	{
@@ -241,7 +270,8 @@ RelnameGetRelid(const char *relname)
 	}
 
 	/*
-	 * If system namespace is not in path, implicitly search it before path
+	 * If system namespace is not in path, implicitly search it before path.
+	 * We do not check USAGE permission.
 	 */
 	if (!pathContainsSystemNamespace)
 	{
@@ -280,6 +310,8 @@ TypenameGetTypid(const char *typname)
 {
 	Oid			typid;
 	List	   *lptr;
+
+	recomputeNamespacePath();
 
 	/*
 	 * If system namespace is not in path, implicitly search it before path
@@ -326,6 +358,8 @@ OpclassnameGetOpcid(Oid amid, const char *opcname)
 {
 	Oid			opcid;
 	List	   *lptr;
+
+	recomputeNamespacePath();
 
 	/*
 	 * If system namespace is not in path, implicitly search it before path
@@ -414,17 +448,23 @@ FuncnameGetCandidates(List *names, int nargs)
 	if (schemaname)
 	{
 		/* use exact schema given */
+		AclResult	aclresult;
+
 		namespaceId = GetSysCacheOid(NAMESPACENAME,
 									 CStringGetDatum(schemaname),
 									 0, 0, 0);
 		if (!OidIsValid(namespaceId))
 			elog(ERROR, "Namespace \"%s\" does not exist",
 				 schemaname);
+		aclresult = pg_namespace_aclcheck(namespaceId, GetUserId(), ACL_USAGE);
+		if (aclresult != ACLCHECK_OK)
+			aclcheck_error(aclresult, schemaname);
 	}
 	else
 	{
 		/* flag to indicate we need namespace search */
 		namespaceId = InvalidOid;
+		recomputeNamespacePath();
 	}
 
 	/* Search syscache by name and (optionally) nargs only */
@@ -598,17 +638,23 @@ OpernameGetCandidates(List *names, char oprkind)
 	if (schemaname)
 	{
 		/* use exact schema given */
+		AclResult	aclresult;
+
 		namespaceId = GetSysCacheOid(NAMESPACENAME,
 									 CStringGetDatum(schemaname),
 									 0, 0, 0);
 		if (!OidIsValid(namespaceId))
 			elog(ERROR, "Namespace \"%s\" does not exist",
 				 schemaname);
+		aclresult = pg_namespace_aclcheck(namespaceId, GetUserId(), ACL_USAGE);
+		if (aclresult != ACLCHECK_OK)
+			aclcheck_error(aclresult, schemaname);
 	}
 	else
 	{
 		/* flag to indicate we need namespace search */
 		namespaceId = InvalidOid;
+		recomputeNamespacePath();
 	}
 
 	/* Search syscache by name only */
@@ -735,6 +781,8 @@ OpclassGetCandidates(Oid amid)
 	OpclassCandidateList resultList = NULL;
 	CatCList   *catlist;
 	int			i;
+
+	recomputeNamespacePath();
 
 	/* Search syscache by AM OID only */
 	catlist = SearchSysCacheList(CLAAMNAMENSP, 1,
@@ -891,10 +939,13 @@ QualifiedNameGetCreationNamespace(List *names, char **objname_p)
 	else
 	{
 		/* use the default creation namespace */
+		recomputeNamespacePath();
 		namespaceId = defaultCreationNamespace;
 		if (!OidIsValid(namespaceId))
 			elog(ERROR, "No namespace has been selected to create in");
 	}
+
+	/* Note: callers will check for CREATE rights when appropriate */
 
 	*objname_p = objname;
 	return namespaceId;
@@ -966,6 +1017,118 @@ isTempNamespace(Oid namespaceId)
 }
 
 /*
+ * recomputeNamespacePath - recompute path derived variables if needed.
+ */
+static void
+recomputeNamespacePath(void)
+{
+	Oid			userId = GetUserId();
+	char	   *rawname;
+	List	   *namelist;
+	List	   *oidlist;
+	List	   *newpath;
+	List	   *l;
+	MemoryContext oldcxt;
+
+	/*
+	 * Do nothing if path is already valid.
+	 */
+	if (namespaceSearchPathValid && namespaceUser == userId)
+		return;
+
+	/* Need a modifiable copy of namespace_search_path string */
+	rawname = pstrdup(namespace_search_path);
+
+	/* Parse string into list of identifiers */
+	if (!SplitIdentifierString(rawname, ',', &namelist))
+	{
+		/* syntax error in name list */
+		/* this should not happen if GUC checked check_search_path */
+		elog(ERROR, "recomputeNamespacePath: invalid list syntax");
+	}
+
+	/*
+	 * Convert the list of names to a list of OIDs.  If any names are not
+	 * recognizable or we don't have read access, just leave them out of
+	 * the list.  (We can't raise an error, since the search_path setting
+	 * has already been accepted.)
+	 */
+	oidlist = NIL;
+	foreach(l, namelist)
+	{
+		char   *curname = (char *) lfirst(l);
+		Oid		namespaceId;
+
+		if (strcmp(curname, "$user") == 0)
+		{
+			/* $user --- substitute namespace matching user name, if any */
+			HeapTuple	tuple;
+
+			tuple = SearchSysCache(SHADOWSYSID,
+								   ObjectIdGetDatum(userId),
+								   0, 0, 0);
+			if (HeapTupleIsValid(tuple))
+			{
+				char   *uname;
+
+				uname = NameStr(((Form_pg_shadow) GETSTRUCT(tuple))->usename);
+				namespaceId = GetSysCacheOid(NAMESPACENAME,
+											 CStringGetDatum(uname),
+											 0, 0, 0);
+				ReleaseSysCache(tuple);
+				if (OidIsValid(namespaceId) &&
+					pg_namespace_aclcheck(namespaceId, userId,
+										  ACL_USAGE) == ACLCHECK_OK)
+					oidlist = lappendi(oidlist, namespaceId);
+			}
+		}
+		else
+		{
+			/* normal namespace reference */
+			namespaceId = GetSysCacheOid(NAMESPACENAME,
+										 CStringGetDatum(curname),
+										 0, 0, 0);
+			if (OidIsValid(namespaceId) &&
+				pg_namespace_aclcheck(namespaceId, userId,
+									  ACL_USAGE) == ACLCHECK_OK)
+				oidlist = lappendi(oidlist, namespaceId);
+		}
+	}
+
+	/*
+	 * Now that we've successfully built the new list of namespace OIDs,
+	 * save it in permanent storage.
+	 */
+	oldcxt = MemoryContextSwitchTo(TopMemoryContext);
+	newpath = listCopy(oidlist);
+	MemoryContextSwitchTo(oldcxt);
+
+	/* Now safe to assign to state variable. */
+	freeList(namespaceSearchPath);
+	namespaceSearchPath = newpath;
+
+	/*
+	 * Update info derived from search path.
+	 */
+	pathContainsSystemNamespace = intMember(PG_CATALOG_NAMESPACE,
+											namespaceSearchPath);
+
+	if (namespaceSearchPath == NIL)
+		defaultCreationNamespace = InvalidOid;
+	else
+		defaultCreationNamespace = (Oid) lfirsti(namespaceSearchPath);
+
+	/* Mark the path valid. */
+	namespaceSearchPathValid = true;
+	namespaceUser = userId;
+
+	/* Clean up. */
+	pfree(rawname);
+	freeList(namelist);
+	freeList(oidlist);
+}
+
+/*
  * GetTempTableNamespace
  *		Initialize temp table namespace on first use in a particular backend
  */
@@ -979,8 +1142,12 @@ GetTempTableNamespace(void)
 	 * First, do permission check to see if we are authorized to make
 	 * temp tables.  We use a nonstandard error message here since
 	 * "databasename: permission denied" might be a tad cryptic.
+	 *
+	 * Note we apply the check to the session user, not the currently
+	 * active userid, since we are not going to change our minds about
+	 * temp table availability during the session.
 	 */
-	if (pg_database_aclcheck(MyDatabaseId, GetUserId(),
+	if (pg_database_aclcheck(MyDatabaseId, GetSessionUserId(),
 							 ACL_CREATE_TEMP) != ACLCHECK_OK)
 		elog(ERROR, "%s: not authorized to create temp tables",
 			 DatabaseName);
@@ -1320,7 +1487,8 @@ check_search_path(const char *proposed)
 
 	/*
 	 * Verify that all the names are either valid namespace names or "$user".
-	 * (We do not require $user to correspond to a valid namespace; should we?)
+	 * We do not require $user to correspond to a valid namespace.
+	 * We do not check for USAGE rights, either; should we?
 	 */
 	foreach(l, namelist)
 	{
@@ -1348,104 +1516,12 @@ check_search_path(const char *proposed)
 void
 assign_search_path(const char *newval)
 {
-	char	   *rawname;
-	List	   *namelist;
-	List	   *oidlist;
-	List	   *newpath;
-	List	   *l;
-	MemoryContext oldcxt;
-
 	/*
-	 * If we aren't inside a transaction, we cannot do database access so
-	 * cannot look up the names.  In this case, do nothing; the internal
-	 * search path will be fixed later by InitializeSearchPath.  (We assume
-	 * this situation can only happen in the postmaster or early in backend
-	 * startup.)
+	 * We mark the path as needing recomputation, but don't do anything until
+	 * it's needed.  This avoids trying to do database access during GUC
+	 * initialization.
 	 */
-	if (!IsTransactionState())
-		return;
-
-	/* Need a modifiable copy of string */
-	rawname = pstrdup(newval);
-
-	/* Parse string into list of identifiers */
-	if (!SplitIdentifierString(rawname, ',', &namelist))
-	{
-		/* syntax error in name list */
-		/* this should not happen if GUC checked check_search_path */
-		elog(ERROR, "assign_search_path: invalid list syntax");
-	}
-
-	/*
-	 * Convert the list of names to a list of OIDs.  If any names are not
-	 * recognizable, just leave them out of the list.  (This is our only
-	 * reasonable recourse when the already-accepted default is bogus.)
-	 */
-	oidlist = NIL;
-	foreach(l, namelist)
-	{
-		char   *curname = (char *) lfirst(l);
-		Oid		namespaceId;
-
-		if (strcmp(curname, "$user") == 0)
-		{
-			/* $user --- substitute namespace matching user name, if any */
-			HeapTuple	tuple;
-
-			tuple = SearchSysCache(SHADOWSYSID,
-								   ObjectIdGetDatum(GetSessionUserId()),
-								   0, 0, 0);
-			if (HeapTupleIsValid(tuple))
-			{
-				char   *uname;
-
-				uname = NameStr(((Form_pg_shadow) GETSTRUCT(tuple))->usename);
-				namespaceId = GetSysCacheOid(NAMESPACENAME,
-											 CStringGetDatum(uname),
-											 0, 0, 0);
-				if (OidIsValid(namespaceId))
-					oidlist = lappendi(oidlist, namespaceId);
-				ReleaseSysCache(tuple);
-			}
-		}
-		else
-		{
-			/* normal namespace reference */
-			namespaceId = GetSysCacheOid(NAMESPACENAME,
-										 CStringGetDatum(curname),
-										 0, 0, 0);
-			if (OidIsValid(namespaceId))
-				oidlist = lappendi(oidlist, namespaceId);
-		}
-	}
-
-	/*
-	 * Now that we've successfully built the new list of namespace OIDs,
-	 * save it in permanent storage.
-	 */
-	oldcxt = MemoryContextSwitchTo(TopMemoryContext);
-	newpath = listCopy(oidlist);
-	MemoryContextSwitchTo(oldcxt);
-
-	/* Now safe to assign to state variable. */
-	freeList(namespaceSearchPath);
-	namespaceSearchPath = newpath;
-
-	/*
-	 * Update info derived from search path.
-	 */
-	pathContainsSystemNamespace = intMember(PG_CATALOG_NAMESPACE,
-											namespaceSearchPath);
-
-	if (namespaceSearchPath == NIL)
-		defaultCreationNamespace = InvalidOid;
-	else
-		defaultCreationNamespace = (Oid) lfirsti(namespaceSearchPath);
-
-	/* Clean up. */
-	pfree(rawname);
-	freeList(namelist);
-	freeList(oidlist);
+	namespaceSearchPathValid = false;
 }
 
 /*
@@ -1469,17 +1545,30 @@ InitializeSearchPath(void)
 		MemoryContextSwitchTo(oldcxt);
 		pathContainsSystemNamespace = true;
 		defaultCreationNamespace = PG_CATALOG_NAMESPACE;
+		namespaceSearchPathValid = true;
+		namespaceUser = GetUserId();
 	}
 	else
 	{
 		/*
-		 * If a search path setting was provided before we were able to
-		 * execute lookups, establish the internal search path now.
+		 * In normal mode, arrange for a callback on any syscache invalidation
+		 * of pg_namespace rows.
 		 */
-		if (namespace_search_path && *namespace_search_path &&
-			namespaceSearchPath == NIL)
-			assign_search_path(namespace_search_path);
+		CacheRegisterSyscacheCallback(NAMESPACEOID,
+									  NamespaceCallback,
+									  (Datum) 0);
 	}
+}
+
+/*
+ * NamespaceCallback
+ *		Syscache inval callback function
+ */
+static void
+NamespaceCallback(Datum arg, Oid relid)
+{
+	/* Force search path to be recomputed on next use */
+	namespaceSearchPathValid = false;
 }
 
 /*
@@ -1490,5 +1579,6 @@ InitializeSearchPath(void)
 List *
 fetch_search_path(void)
 {
+	recomputeNamespacePath();
 	return namespaceSearchPath;
 }
