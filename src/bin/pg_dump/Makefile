@@ -5,7 +5,7 @@
 # Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/bin/pg_dump/Makefile,v 1.59 2005/01/01 20:44:23 tgl Exp $
+# $PostgreSQL: pgsql/src/bin/pg_dump/Makefile,v 1.60 2005/03/25 18:17:13 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -25,13 +25,13 @@ EXTRA_OBJS = $(top_builddir)/src/backend/parser/keywords.o
 all: submake-libpq submake-libpgport submake-backend pg_dump pg_restore pg_dumpall
 
 pg_dump: pg_dump.o common.o pg_dump_sort.o $(OBJS) $(libpq_builddir)/libpq.a 
-	$(CC) $(CFLAGS) pg_dump.o common.o pg_dump_sort.o $(OBJS) $(EXTRA_OBJS) $(libpq) $(LDFLAGS) $(LIBS) -o $@$(X)
+	$(CC) $(CFLAGS) pg_dump.o common.o pg_dump_sort.o $(OBJS) $(EXTRA_OBJS) $(libpq_pgport) $(LDFLAGS) $(LIBS) -o $@$(X)
 
 pg_restore: pg_restore.o $(OBJS) $(libpq_builddir)/libpq.a
-	$(CC) $(CFLAGS) pg_restore.o $(OBJS) $(EXTRA_OBJS) $(libpq) $(LDFLAGS) $(LIBS) -o $@$(X)
+	$(CC) $(CFLAGS) pg_restore.o $(OBJS) $(EXTRA_OBJS) $(libpq_pgport) $(LDFLAGS) $(LIBS) -o $@$(X)
 
 pg_dumpall: pg_dumpall.o dumputils.o $(libpq_builddir)/libpq.a
-	$(CC) $(CFLAGS) pg_dumpall.o dumputils.o $(EXTRA_OBJS) $(WIN32RES) $(libpq) $(LDFLAGS) $(LIBS) -o $@$(X)
+	$(CC) $(CFLAGS) pg_dumpall.o dumputils.o $(EXTRA_OBJS) $(WIN32RES) $(libpq_pgport) $(LDFLAGS) $(LIBS) -o $@$(X)
 
 .PHONY: submake-backend
 submake-backend:

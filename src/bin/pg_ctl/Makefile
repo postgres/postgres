@@ -5,7 +5,7 @@
 # Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/bin/pg_ctl/Makefile,v 1.19 2004/12/31 22:03:05 pgsql Exp $
+# $PostgreSQL: pgsql/src/bin/pg_ctl/Makefile,v 1.20 2005/03/25 18:17:13 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -21,7 +21,7 @@ OBJS=	pg_ctl.o $(WIN32RES)
 all: submake-libpq submake-libpgport pg_ctl
 
 pg_ctl: $(OBJS) $(libpq_builddir)/libpq.a
-	$(CC) $(CFLAGS) $(OBJS) $(libpq) $(LDFLAGS) $(LIBS) -o $@$(X)
+	$(CC) $(CFLAGS) $(OBJS) $(libpq_pgport) $(LDFLAGS) $(LIBS) -o $@$(X)
 
 install: all installdirs
 	$(INSTALL_PROGRAM) pg_ctl$(X) $(DESTDIR)$(bindir)/pg_ctl$(X)

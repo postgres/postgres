@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.211 2005/03/24 23:53:48 tgl Exp $
+# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.212 2005/03/25 18:17:12 momjian Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -306,8 +306,10 @@ libpq_srcdir = $(top_srcdir)/src/interfaces/libpq
 libpq_builddir = $(top_builddir)/src/interfaces/libpq
 endif
 
+# This is for use for libraries linking to libpq.  Because libpqport
+# isn't created with the same link flags as libpq, it can't be used.
 libpq = -L$(libpq_builddir) -lpq
-
+  
 # If doing static linking, shared library dependency can't be
 # used so we specify pthread libs for every usage of libpq
 ifeq ($(enable_shared), no)
@@ -319,6 +321,19 @@ ifeq ($(PORTNAME), aix)
 libpq += $(PTHREAD_LIBS)
 endif
 endif
+
+# Force clients to pull symbols from the non-shared library libpgport 
+# rather than pulling some libpgport symbols from libpq just because 
+# libpq uses those functions too.  This makes applications less 
+# dependent on changes in libpq's usage of pgport.  To do this we link to
+# pgport before libpq.  This does cause duplicate -lpgport's to appear
+# on client link lines.
+ifdef PGXS
+libpq_pgport = -L$(libdir) -lpgport $(libpq)
+else
+libpq_pgport = -L$(top_builddir)/src/port -lpgport $(libpq)
+endif
+
 
 submake-libpq:
 	$(MAKE) -C $(libpq_builddir) all

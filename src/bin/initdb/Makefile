@@ -5,7 +5,7 @@
 # Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/bin/initdb/Makefile,v 1.48 2004/12/31 22:02:59 pgsql Exp $
+# $PostgreSQL: pgsql/src/bin/initdb/Makefile,v 1.49 2005/03/25 18:17:12 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -21,7 +21,7 @@ OBJS=	initdb.o $(WIN32RES)
 all: submake-libpq submake-libpgport initdb
 
 initdb: $(OBJS) $(libpq_builddir)/libpq.a
-	$(CC) $(CFLAGS) $(OBJS) $(libpq) $(LDFLAGS) $(LIBS) -o $@$(X)
+	$(CC) $(CFLAGS) $(OBJS) $(libpq_pgport) $(LDFLAGS) $(LIBS) -o $@$(X)
 
 install: all installdirs
 	$(INSTALL_PROGRAM) initdb$(X) $(DESTDIR)$(bindir)/initdb$(X)
