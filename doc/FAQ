@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Tue Aug 21 07:05:48 EDT 2001
+   Last updated: Tue Sep 4 01:14:28 EDT 2001
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -92,6 +92,7 @@
    4.22) How do I create a column that will default to the current time?
    4.23) Why are my subqueries using IN so slow?
    4.24) How do I perform an outer join?
+   4.25) How do I perform queries using multiple databases?
    
                             Extending PostgreSQL
                                       
@@ -559,9 +560,9 @@
    In PostgreSQL 6.5 and up, the default limit is 32 processes. You can
    increase it by restarting the postmaster with a suitable -N value.
    With the default configuration you can set -N as large as 1024. If you
-   need more, increase MAXBACKENDS in include/pg_config.h and rebuild. You
-   can set the default value of -N at configuration time, if you like,
-   using configure's --with-maxbackends switch.
+   need more, increase MAXBACKENDS in include/pg_config.h and rebuild.
+   You can set the default value of -N at configuration time, if you
+   like, using configure's --with-maxbackends switch.
    
    Note that if you make -N larger than 32, you must also increase -B
    beyond its default of 64; -B must be at least twice -N, and probably
@@ -982,6 +983,15 @@ SELECT *
     FROM tab1
     WHERE tab1.col1 NOT IN (SELECT tab2.col1 FROM tab2)
     ORDER BY col1
+
+    4.25) How do I perform queries using multiple databases?
+    
+   There is no way to query any database except the current one. Because
+   PostgreSQL loads database-specific system catalogs, it is uncertain
+   how a cross-database query should even behave.
+   
+   Of course, a client can make simultaneous connections to different
+   databases and merge the information that way.
      _________________________________________________________________
    
                             Extending PostgreSQL

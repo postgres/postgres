@@ -782,3 +782,128 @@ TIP 3: if posting/reading through Usenet, please send an appropriate
 subscribe-nomail command to majordomo@postgresql.org so that your
 message can get through to the mailing list cleanly
 
+From pgsql-general-owner+M14597@postgresql.org Fri Aug 31 23:23:15 2001
+Return-path: <pgsql-general-owner+M14597@postgresql.org>
+Received: from server1.pgsql.org (server1.pgsql.org [64.39.15.238] (may be forged))
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id f813NEF20222
+	for <pgman@candle.pha.pa.us>; Fri, 31 Aug 2001 23:23:14 -0400 (EDT)
+Received: from postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by server1.pgsql.org (8.11.6/8.11.6) with ESMTP id f813Njq38048;
+	Fri, 31 Aug 2001 22:23:46 -0500 (CDT)
+	(envelope-from pgsql-general-owner+M14597@postgresql.org)
+Received: from spider.pilosoft.com (p55-222.acedsl.com [160.79.55.222])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id f812Yuf42942
+	for <pgsql-general@postgresql.org>; Fri, 31 Aug 2001 22:35:04 -0400 (EDT)
+	(envelope-from alex@pilosoft.com)
+Received: from localhost (alexmail@localhost)
+	by spider.pilosoft.com (8.9.3/8.9.3) with ESMTP id WAA20075;
+	Fri, 31 Aug 2001 22:35:23 -0400 (EDT)
+Date: Fri, 31 Aug 2001 22:35:23 -0400 (EDT)
+From: Alex Pilosov <alex@pilosoft.com>
+To: Alex Knight <knight@phunc.com>
+cc: pgsql-general@postgresql.org
+Subject: [WAY OT] Re: [GENERAL] PL/java?
+In-Reply-To: <MAEFKNDLAHNIFMAIEGHJCEKJCDAA.knight@phunc.com>
+Message-ID: <Pine.BSO.4.10.10108312220140.19501-100000@spider.pilosoft.com>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Precedence: bulk
+Sender: pgsql-general-owner@postgresql.org
+Status: OR
+
+On Fri, 31 Aug 2001, Alex Knight wrote:
+
+> It is generally wiser to split the webservers from the appservers;
+> that will save on memory footprints from each respectively. That alone
+> can give each machine a specific task to accomplish... generally more
+> efficiently. But I would assume you know this.
+
+And it is wise to split database from middleware, and not try to saddle
+PostgreSQL with requirements to support Java in-process. _IF_ java stored
+procedures are implemented, it should be via something like a) oracle's
+extproc (start a separate process to load the function) b) some of perl
+java tools (they start a jdk in a separate process and communicate with it
+using RMI).
+
+
+Problem with java-pgsql integration is the threads model: Java really
+really wants threads. Postgres doesn't do threads. So if most simple way
+is attempted, you will incur overhead of starting up JVM for each backend
+(a few seconds as opposed to milliseconds) and non-shared 30M of memory
+per backend (as opposed to currently <3 megs of non-shared memory per
+backend).
+
+> Using something like WebLogic, WebSphere, or Orion would be a wiser
+> approach. For the company with the low budget, Orion is only something
+> like $2000, and it has full J2EE support, including EJBs, etc. Try
+> finding that kind of richness in Tomcat. Also, Orion takes up only
+> 40-50mb at start, which is really fairly reasonable; ram is cheap
+> anyways... a server that has to perform complicated algorithms to a
+> large audience but has hardly any ram shouldn't be on the internet
+> anyways; unless it can handle it.
+
+_ONLY_ 40-50Mb?! Egads, I'm hard pressed to find any other piece of
+(non-windows, non-java) software that takes 40-50M just to start up!
+
+I worked with both CrapLogic and CrapSphere. Weblogic takes 20-60 seconds
+to start up on P3-800, that, IMHO, is ridiculous. 
+
+It is not only issue of memory, its easy to throw memory at the problem,
+its an issue of _incremental use_ of memory. As you scale 
+
+> I feel that you don't really have enough experience with _java_ to
+> judge it accurately. Frankly, the JVM is quite small nowadays,
+> considering the amount of base classes that sit in memory much of the
+> time. And the JVMs are really much faster these days. Java is still
+> slow for 2 reasons: 1) Developers who don't optimize their code as
+> they write it, 2) Bytecode interpretation is and probably never will
+> be as fast as something like C/C++. But it certainly isn't the JVM
+> itself slowing it down because of some "extended memory" that it lives
+> in. Any reasonable server should have absolutely no problems if the
+> jvm is implemented _properly_ (which many packages do not do), etc. If
+> you're comparing Java to perl, yes, certainly it's a bit more of a
+> beast, but perl quite simply can't keep up in speed and feature
+> richness (when was the last time you secured your perl code in a
+> redistributable fashion?)
+_WHY_ the heck do all base classes need to be in memory all the time? Why
+are they so huge? Libc is _far far_ smaller, and libstdc++ is tiny
+compared to all the java standard library. 
+
+You know what the answer to it is: Because they are ALL written in java,
+as opposed to more sane languages like perl which handcode their "standard
+libraries" or the most important pieces of them in C. 
+
+Perl is far faster than java in about any practical application I did.
+Again, the issue is not speed of JVM versus PP (perl virtual machine), if
+you did number crunching in perl and java, they would probably be at par.
+Its an issue of standard libraries. They are _horribly slow_. Perl's
+hashtables are a very nice piece of optimized C code. Java's hashtables
+are written in Java. Need I say more? Java's AWT was a dog. Swing is a dog
+and a half, because they reimplemented all the things that are commonly
+done in C in Java.
+
+> The only mistake the developers can make is poorly implementing the
+> jvm, but most certainly not Java itself. I've been working on
+> architecting and building enterprise level sites and applications for
+> nearly 8 years now, and I've seen too many people try to implement
+> perl cgi websites for enterprise sites and watch them choke and crawl
+> to their knees because of poor system resource handling, lack of
+> scalability, etc... I most certainly don't consider a single webserver
+> with an appserver and tiny database to be enterprise level either (not
+> that I'm inferring you said it was).
+You cannot compare a perl CGI script and a J2EE server. Its like comparing
+a webserver you wrote yourself vs apache! There are application servers
+(or more closely, code libraries) for perl that match what J2EE provides. 
+
+--
+Alex Pilosov            | http://www.acedsl.com/home.html
+CTO - Acecape, Inc.     | AceDSL:The best ADSL in the world
+325 W 38 St. Suite 1005 | (Stealth Marketing Works! :)
+New York, NY 10018      |
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 3: if posting/reading through Usenet, please send an appropriate
+subscribe-nomail command to majordomo@postgresql.org so that your
+message can get through to the mailing list cleanly
+
