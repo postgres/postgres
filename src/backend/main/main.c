@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/main/main.c,v 1.92 2004/11/05 17:11:17 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/main/main.c,v 1.93 2004/11/17 00:14:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -118,9 +118,6 @@ main(int argc, char *argv[])
 						 argv[0], err);
 			exit(1);
 		}
-
-		/* Start our win32 signal implementation */
-		pgwin32_signal_initialize();
 	}
 #endif
 
@@ -279,6 +276,16 @@ main(int argc, char *argv[])
 #ifdef EXEC_BACKEND
 	if (argc > 1 && strncmp(argv[1], "-fork", 5) == 0)
 		exit(SubPostmasterMain(argc, argv));
+#endif
+
+#ifdef WIN32
+	/*
+	 * Start our win32 signal implementation
+	 *
+	 * SubPostmasterMain() will do this for itself, but the remaining
+	 * modes need it here
+	 */
+	pgwin32_signal_initialize();
 #endif
 
 	/*

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/win32/signal.c,v 1.9 2004/11/09 13:01:25 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/win32/signal.c,v 1.10 2004/11/17 00:14:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,6 +26,7 @@ static pqsigfunc pg_signal_defaults[PG_SIGNAL_COUNT];
 static int	pg_signal_mask;
 
 DLLIMPORT HANDLE pgwin32_signal_event;
+HANDLE pgwin32_initial_signal_pipe = INVALID_HANDLE_VALUE;
 
 
 /* Signal handling thread function */
@@ -154,6 +155,28 @@ pqsignal(int signum, pqsigfunc handler)
 	return prevfunc;
 }
 
+/* Create the signal listener pipe for specified pid */
+HANDLE
+pgwin32_create_signal_listener(pid_t pid)
+{
+	char		pipename[128];
+	HANDLE		pipe;
+
+	wsprintf(pipename, "\\\\.\\pipe\\pgsignal_%d", (int) pid);
+
+	pipe = CreateNamedPipe(pipename, PIPE_ACCESS_DUPLEX,
+						   PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
+						   PIPE_UNLIMITED_INSTANCES, 16, 16, 1000, NULL);
+
+	if (pipe == INVALID_HANDLE_VALUE)
+		ereport(ERROR,
+				(errmsg("could not create signal listener pipe for pid %d: error code %d",
+						(int) pid, (int) GetLastError())));
+
+	return pipe;
+}
+
+
 /*
  * All functions below execute on the signal handler thread
  * and must be synchronized as such!
@@ -210,7 +233,7 @@ static DWORD WINAPI
 pg_signal_thread(LPVOID param)
 {
 	char		pipename[128];
-	HANDLE		pipe = INVALID_HANDLE_VALUE;
+	HANDLE      pipe = pgwin32_initial_signal_pipe;
 
 	wsprintf(pipename, "\\\\.\\pipe\\pgsignal_%d", GetCurrentProcessId());
 
@@ -219,14 +242,18 @@ pg_signal_thread(LPVOID param)
 		BOOL		fConnected;
 		HANDLE		hThread;
 
-		pipe = CreateNamedPipe(pipename, PIPE_ACCESS_DUPLEX,
-				   PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
-						   PIPE_UNLIMITED_INSTANCES, 16, 16, 1000, NULL);
 		if (pipe == INVALID_HANDLE_VALUE)
 		{
-			write_stderr("could not create signal listener pipe: error code %d; retrying\n", (int) GetLastError());
-			SleepEx(500, FALSE);
-			continue;
+			pipe = CreateNamedPipe(pipename, PIPE_ACCESS_DUPLEX,
+								   PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
+								   PIPE_UNLIMITED_INSTANCES, 16, 16, 1000, NULL);
+
+			if (pipe == INVALID_HANDLE_VALUE)
+			{
+				write_stderr("could not create signal listener pipe: error code %d; retrying\n", (int) GetLastError());
+				SleepEx(500, FALSE);
+				continue;
+			}
 		}
 
 		fConnected = ConnectNamedPipe(pipe, NULL) ? TRUE : (GetLastError() == ERROR_PIPE_CONNECTED);
@@ -244,6 +271,9 @@ pg_signal_thread(LPVOID param)
 		else
 			/* Connection failed. Cleanup and try again */
 			CloseHandle(pipe);
+
+		/* Set up so we create a new pipe on next loop */
+		pipe = INVALID_HANDLE_VALUE;
 	}
 	return 0;
 }

@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2004, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.84 2004/10/28 01:38:41 neilc Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.85 2004/11/17 00:14:12 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -110,8 +110,9 @@ bool		pgstat_collect_blocklevel = false;
  * ----------
  */
 NON_EXEC_STATIC int pgStatSock = -1;
-static int	pgStatPipe[2];
+NON_EXEC_STATIC int pgStatPipe[2] = {-1,-1};
 static struct sockaddr_storage pgStatAddr;
+static pid_t pgStatCollectorPid = 0;
 
 static time_t last_pgstat_start_time;
 
@@ -492,10 +493,6 @@ pgstat_forkexec(STATS_PROCESS_TYPE procType)
 	/* postgres_exec_path is not passed by write_backend_variables */
 	av[ac++] = postgres_exec_path;
 
-	/* Pipe file ids (those not passed by write_backend_variables) */
-	snprintf(pgstatBuf[bufc++], 32, "%d", pgStatPipe[0]);
-	snprintf(pgstatBuf[bufc++], 32, "%d", pgStatPipe[1]);
-
 	/* Add to the arg list */
 	Assert(bufc <= lengthof(pgstatBuf));
 	for (i = 0; i < bufc; i++)
@@ -517,12 +514,10 @@ pgstat_forkexec(STATS_PROCESS_TYPE procType)
 static void
 pgstat_parseArgs(int argc, char *argv[])
 {
-	Assert(argc == 6);
+	Assert(argc == 4);
 
 	argc = 3;
 	StrNCpy(postgres_exec_path, argv[argc++], MAXPGPATH);
-	pgStatPipe[0] = atoi(argv[argc++]);
-	pgStatPipe[1] = atoi(argv[argc++]);
 }
 #endif   /* EXEC_BACKEND */
 
@@ -1385,12 +1380,13 @@ PgstatBufferMain(int argc, char *argv[])
 				(errcode_for_socket_access(),
 			 errmsg("could not create pipe for statistics buffer: %m")));
 
-#ifdef EXEC_BACKEND
 	/* child becomes collector process */
-	switch (pgstat_forkexec(STAT_PROC_COLLECTOR))
+#ifdef EXEC_BACKEND
+	pgStatCollectorPid = pgstat_forkexec(STAT_PROC_COLLECTOR);
 #else
-	switch (fork())
+	pgStatCollectorPid = fork();
 #endif
+	switch (pgStatCollectorPid)
 	{
 		case -1:
 			ereport(ERROR,
@@ -1445,7 +1441,12 @@ PgstatCollectorMain(int argc, char *argv[])
 	pqsignal(SIGHUP, SIG_IGN);
 	pqsignal(SIGINT, SIG_IGN);
 	pqsignal(SIGTERM, SIG_IGN);
+#ifndef WIN32
 	pqsignal(SIGQUIT, SIG_IGN);
+#else
+	/* kluge to allow buffer process to kill collector; FIXME */
+	pqsignal(SIGQUIT, pgstat_exit);
+#endif
 	pqsignal(SIGALRM, SIG_IGN);
 	pqsignal(SIGPIPE, SIG_IGN);
 	pqsignal(SIGUSR1, SIG_IGN);
@@ -1943,6 +1944,16 @@ pgstat_exit(SIGNAL_ARGS)
 	 * be cleaner to allow any pending messages to be sent, but that
 	 * creates a tradeoff against speed of exit.
 	 */
+
+	/*
+	 * If running in bufferer, kill our collector as well. On some broken
+	 * win32 systems, it does not shut down automatically because of issues
+	 * with socket inheritance.  XXX so why not fix the socket inheritance...
+	 */
+#ifdef WIN32
+	if (pgStatCollectorPid > 0)
+		kill(pgStatCollectorPid, SIGQUIT);
+#endif
 	exit(0);
 }
 

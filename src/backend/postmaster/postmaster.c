@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.438 2004/11/14 19:35:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.439 2004/11/17 00:14:12 tgl Exp $
  *
  * NOTES
  *
@@ -119,6 +119,10 @@
 #include "utils/ps_status.h"
 #include "bootstrap/bootstrap.h"
 #include "pgstat.h"
+
+#ifdef EXEC_BACKEND
+#include "storage/spin.h"
+#endif
 
 
 /*
@@ -273,7 +277,6 @@ static pid_t StartChildProcess(int xlop);
 #ifdef EXEC_BACKEND
 
 #ifdef WIN32
-static pid_t win32_forkexec(const char *path, char *argv[]);
 static void win32_AddChild(pid_t pid, HANDLE handle);
 static void win32_RemoveChild(pid_t pid);
 static pid_t win32_waitpid(int *exitstatus);
@@ -289,11 +292,67 @@ HANDLE		PostmasterHandle;
 static pid_t backend_forkexec(Port *port);
 static pid_t internal_forkexec(int argc, char *argv[], Port *port);
 
-static void read_backend_variables(char *filename, Port *port);
-static bool write_backend_variables(char *filename, Port *port);
+/* Type for a socket that can be inherited to a client process */
+#ifdef WIN32
+typedef struct
+{
+	SOCKET origsocket; /* Original socket value, or -1 if not a socket */
+	WSAPROTOCOL_INFO wsainfo;
+} InheritableSocket;
+#else
+typedef int InheritableSocket;
+#endif
+
+typedef struct LWLock LWLock;	/* ugly kluge */
+
+/*
+ * Structure contains all variables passed to exec:ed backends
+ */
+typedef struct
+{
+	Port port;
+	InheritableSocket portsocket;
+	char DataDir[MAXPGPATH];
+	int ListenSocket[MAXLISTEN];
+	long MyCancelKey;
+	unsigned long UsedShmemSegID;
+	void *UsedShmemSegAddr;
+	slock_t *ShmemLock;
+	slock_t *ShmemIndexLock;
+	VariableCache ShmemVariableCache;
+	void *ShmemIndexAlloc;
+	Backend *ShmemBackendArray;
+	LWLock *LWLockArray;
+	slock_t *ProcStructLock;
+	InheritableSocket pgStatSock;
+	InheritableSocket pgStatPipe0;
+	InheritableSocket pgStatPipe1;
+	pid_t PostmasterPid;
+#ifdef WIN32
+	HANDLE PostmasterHandle;
+	HANDLE initial_signal_pipe;
+	HANDLE syslogPipe[2];
+#else
+	int syslogPipe[2];
+#endif
+	char my_exec_path[MAXPGPATH];
+	char ExtraOptions[MAXPGPATH];
+	char lc_collate[MAXPGPATH];
+	char lc_ctype[MAXPGPATH];
+} BackendParameters;
+
+static void read_backend_variables(char *id, Port *port);
+static void restore_backend_variables(BackendParameters *param, Port *port);
+#ifndef WIN32
+static bool save_backend_variables(BackendParameters *param, Port *port);
+#else
+static bool save_backend_variables(BackendParameters *param, Port *port,
+								   HANDLE childProcess, pid_t childPid);
+#endif
 
 static void ShmemBackendArrayAdd(Backend *bn);
 static void ShmemBackendArrayRemove(pid_t pid);
+
 #endif   /* EXEC_BACKEND */
 
 #define StartupDataBase()		StartChildProcess(BS_XLOG_STARTUP)
@@ -335,6 +394,11 @@ PostmasterMain(int argc, char *argv[])
 			ExitPostmaster(0);
 		}
 	}
+
+#ifdef WIN32
+	/* Start our win32 signal implementation */
+	pgwin32_signal_initialize();
+#endif
 
 	/*
 	 * for security, no dir or file created can be group or other
@@ -756,7 +820,7 @@ PostmasterMain(int argc, char *argv[])
 						TRUE,
 						DUPLICATE_SAME_ACCESS) == 0)
 		ereport(FATAL,
-			(errmsg_internal("could not duplicate postmaster handle: %d",
+			(errmsg_internal("could not duplicate postmaster handle: error code %d",
 							 (int) GetLastError())));
 #endif
 
@@ -2799,14 +2863,70 @@ backend_forkexec(Port *port)
 	return internal_forkexec(ac, av, port);
 }
 
+#ifndef WIN32
+
+/*
+ * internal_forkexec non-win32 implementation
+ *
+ * - writes out backend variables to the parameter file
+ * - fork():s, and then exec():s the child process
+ */
 static pid_t
 internal_forkexec(int argc, char *argv[], Port *port)
 {
+	static unsigned long tmpBackendFileNum = 0;
 	pid_t		pid;
 	char		tmpfilename[MAXPGPATH];
+	BackendParameters param;
+	FILE       *fp;
 
-	if (!write_backend_variables(tmpfilename, port))
-		return -1;				/* log made by write_backend_variables */
+	if (!save_backend_variables(&param, port))
+		return -1;				/* log made by save_backend_variables */
+
+	/* Calculate name for temp file */
+	Assert(DataDir);
+	snprintf(tmpfilename, MAXPGPATH, "%s/%s/%s.backend_var.%d.%lu",
+			 DataDir, PG_TEMP_FILES_DIR, PG_TEMP_FILE_PREFIX,
+			 MyProcPid, ++tmpBackendFileNum);
+
+	/* Open file */
+	fp = AllocateFile(tmpfilename, PG_BINARY_W);
+	if (!fp)
+	{
+		/* As per OpenTemporaryFile... */
+		char		dirname[MAXPGPATH];
+
+		snprintf(dirname, MAXPGPATH, "%s/%s", DataDir, PG_TEMP_FILES_DIR);
+		mkdir(dirname, S_IRWXU);
+
+		fp = AllocateFile(tmpfilename, PG_BINARY_W);
+		if (!fp)
+		{
+			ereport(LOG,
+					(errcode_for_file_access(),
+					 errmsg("could not create file \"%s\": %m",
+							tmpfilename)));
+			return -1;
+		}
+	}
+
+	if (fwrite(&param, sizeof(param), 1, fp) != 1)
+	{
+		ereport(LOG,
+				(errcode_for_file_access(),
+				 errmsg("could not write to file \"%s\": %m", tmpfilename)));
+		FreeFile(fp);
+		return -1;
+	}
+
+	/* Release file */
+	if (FreeFile(fp))
+	{
+		ereport(LOG,
+				(errcode_for_file_access(),
+				 errmsg("could not write to file \"%s\": %m", tmpfilename)));
+		return -1;
+	}
 
 	/* Make sure caller set up argv properly */
 	Assert(argc >= 3);
@@ -2817,9 +2937,6 @@ internal_forkexec(int argc, char *argv[], Port *port)
 	/* Insert temp file name after -fork argument */
 	argv[2] = tmpfilename;
 
-#ifdef WIN32
-	pid = win32_forkexec(postgres_exec_path, argv);
-#else
 	/* Fire off execv in child */
 	if ((pid = fork()) == 0)
 	{
@@ -2832,11 +2949,187 @@ internal_forkexec(int argc, char *argv[], Port *port)
 			exit(1);
 		}
 	}
-#endif
 
 	return pid;					/* Parent returns pid, or -1 on fork
 								 * failure */
 }
+
+#else /* WIN32 */
+
+/*
+ * internal_forkexec win32 implementation
+ *
+ * - starts backend using CreateProcess(), in suspended state
+ * - writes out backend variables to the parameter file
+ *  - during this, duplicates handles and sockets required for
+ *    inheritance into the new process
+ * - resumes execution of the new process once the backend parameter
+ *   file is complete.
+ */
+static pid_t
+internal_forkexec(int argc, char *argv[], Port *port)
+{
+	STARTUPINFO si;
+	PROCESS_INFORMATION pi;
+	int			i;
+	int			j;
+	char		cmdLine[MAXPGPATH * 2];
+	HANDLE		childHandleCopy;
+	HANDLE		waiterThread;
+	HANDLE      paramHandle;
+	BackendParameters *param;
+	SECURITY_ATTRIBUTES sa;
+	char        paramHandleStr[32];
+
+	/* Make sure caller set up argv properly */
+	Assert(argc >= 3);
+	Assert(argv[argc] == NULL);
+	Assert(strncmp(argv[1], "-fork", 5) == 0);
+	Assert(argv[2] == NULL);
+
+	/* Set up shared memory for parameter passing */
+	ZeroMemory(&sa,sizeof(sa));
+	sa.nLength = sizeof(sa);
+	sa.bInheritHandle = TRUE;
+	paramHandle = CreateFileMapping(INVALID_HANDLE_VALUE,
+									&sa,
+									PAGE_READWRITE,
+									0,
+									sizeof(BackendParameters),
+									NULL);
+	if (paramHandle == INVALID_HANDLE_VALUE)
+	{
+		elog(LOG, "could not create backend parameter file mapping: error code %d",
+			 (int) GetLastError());
+		return -1;
+	}
+
+	param = MapViewOfFile(paramHandle, FILE_MAP_WRITE, 0, 0, sizeof(BackendParameters));
+	if (!param)
+	{
+		elog(LOG, "could not map backend parameter memory: error code %d",
+			 (int) GetLastError());
+		CloseHandle(paramHandle);
+		return -1;
+	}
+
+	/* Insert temp file name after -fork argument */
+	sprintf(paramHandleStr, "%lu", (DWORD)paramHandle);
+	argv[2] = paramHandleStr;
+
+	/* Format the cmd line */
+	cmdLine[sizeof(cmdLine) - 1] = '\0';
+	cmdLine[sizeof(cmdLine) - 2] = '\0';
+	snprintf(cmdLine, sizeof(cmdLine) - 1, "\"%s\"", postgres_exec_path);
+	i = 0;
+	while (argv[++i] != NULL)
+	{
+		j = strlen(cmdLine);
+		snprintf(cmdLine + j, sizeof(cmdLine) - 1 - j, " \"%s\"", argv[i]);
+	}
+	if (cmdLine[sizeof(cmdLine) - 2] != '\0')
+	{
+		elog(LOG, "subprocess command line too long");
+		return -1;
+	}
+
+	memset(&pi, 0, sizeof(pi));
+	memset(&si, 0, sizeof(si));
+	si.cb = sizeof(si);
+	/*
+	 * Create the subprocess in a suspended state. This will be resumed
+	 * later, once we have written out the parameter file.
+	 */
+	if (!CreateProcess(NULL, cmdLine, NULL, NULL, TRUE, CREATE_SUSPENDED,
+					   NULL, NULL, &si, &pi))
+	{
+		elog(LOG, "CreateProcess call failed: %m (error code %d)",
+			 (int) GetLastError());
+		return -1;
+	}
+
+	if (!save_backend_variables(param, port, pi.hProcess, pi.dwProcessId))
+	{
+		/*
+		 * log made by save_backend_variables, but we have to clean
+		 * up the mess with the half-started process
+		 */
+		if (!TerminateProcess(pi.hProcess, 255))
+			ereport(ERROR,
+					(errmsg_internal("could not terminate unstarted process: error code %d",
+									 (int) GetLastError())));
+		CloseHandle(pi.hProcess);
+		CloseHandle(pi.hThread);
+		return -1;				/* log made by save_backend_variables */
+	}
+
+	/* Drop the shared memory that is now inherited to the backend */
+	if (!UnmapViewOfFile(param))
+		elog(LOG, "could not unmap view of backend parameter file: error code %d",
+			 (int) GetLastError());
+	if (!CloseHandle(paramHandle))
+		elog(LOG, "could not close handle to backend parameter file: error code %d",
+			 (int) GetLastError());
+
+	/*
+	 * Now that the backend variables are written out, we start the
+	 * child thread so it can start initializing while we set up
+	 * the rest of the parent state.
+	 */
+	if (ResumeThread(pi.hThread) == -1)
+	{
+		if (!TerminateProcess(pi.hProcess, 255))
+		{
+			ereport(ERROR,
+					(errmsg_internal("could not terminate unstartable process: error code %d",
+									 (int) GetLastError())));
+			CloseHandle(pi.hProcess);
+			CloseHandle(pi.hThread);
+			return -1;
+		}
+		CloseHandle(pi.hProcess);
+		CloseHandle(pi.hThread);
+		ereport(ERROR,
+				(errmsg_internal("could not resume thread of unstarted process: error code %d",
+								 (int) GetLastError())));
+		return -1;
+	}
+
+	if (!IsUnderPostmaster)
+	{
+		/* We are the Postmaster creating a child... */
+		win32_AddChild(pi.dwProcessId, pi.hProcess);
+	}
+
+	/* Set up the thread to handle the SIGCHLD for this process */
+	if (DuplicateHandle(GetCurrentProcess(),
+						pi.hProcess,
+						GetCurrentProcess(),
+						&childHandleCopy,
+						0,
+						FALSE,
+						DUPLICATE_SAME_ACCESS) == 0)
+		ereport(FATAL,
+				(errmsg_internal("could not duplicate child handle: error code %d",
+								 (int) GetLastError())));
+
+	waiterThread = CreateThread(NULL, 64 * 1024, win32_sigchld_waiter,
+								(LPVOID) childHandleCopy, 0, NULL);
+	if (!waiterThread)
+		ereport(FATAL,
+		   (errmsg_internal("could not create sigchld waiter thread: error code %d",
+							(int) GetLastError())));
+	CloseHandle(waiterThread);
+
+	if (IsUnderPostmaster)
+		CloseHandle(pi.hProcess);
+	CloseHandle(pi.hThread);
+
+	return pi.dwProcessId;
+}
+
+#endif /* WIN32 */
+
 
 /*
  * SubPostmasterMain -- Get the fork/exec'd process into a state equivalent
@@ -2859,6 +3152,19 @@ SubPostmasterMain(int argc, char *argv[])
 
 	MyProcPid = getpid();		/* reset MyProcPid */
 
+	/* Read in file-based context */
+	memset(&port, 0, sizeof(Port));
+	read_backend_variables(argv[2], &port);
+
+	/*
+	 * Start our win32 signal implementation. This has to be done
+	 * after we read the backend variables, because we need to pick
+	 * up the signal pipe from the parent process.
+	 */
+#ifdef WIN32
+	pgwin32_signal_initialize();
+#endif
+
 	/* In EXEC_BACKEND case we will not have inherited these settings */
 	IsPostmasterEnvironment = true;
 	whereToSendOutput = None;
@@ -2873,9 +3179,7 @@ SubPostmasterMain(int argc, char *argv[])
 	if (argc < 3)
 		elog(FATAL, "invalid subpostmaster invocation");
 
-	/* Read in file-based context */
-	memset(&port, 0, sizeof(Port));
-	read_backend_variables(argv[2], &port);
+	/* Read in remaining GUC variables */
 	read_nondefault_variables();
 
 	/* Run backend or appropriate child */
@@ -3297,189 +3601,278 @@ CreateOptsFile(int argc, char *argv[], char *fullprogname)
 #ifdef EXEC_BACKEND
 
 /*
- * The following need to be available to the read/write_backend_variables
+ * The following need to be available to the save/restore_backend_variables
  * functions
  */
-#include "storage/spin.h"
-
 extern slock_t *ShmemLock;
 extern slock_t *ShmemIndexLock;
 extern void *ShmemIndexAlloc;
-typedef struct LWLock LWLock;
 extern LWLock *LWLockArray;
 extern slock_t *ProcStructLock;
 extern int	pgStatSock;
+extern int pgStatPipe[2];
 
-#define write_var(var,fp) fwrite((void*)&(var),sizeof(var),1,fp)
-#define read_var(var,fp)  fread((void*)&(var),sizeof(var),1,fp)
-#define write_array_var(var,fp) fwrite((void*)(var),sizeof(var),1,fp)
-#define read_array_var(var,fp)	fread((void*)(var),sizeof(var),1,fp)
-
-static bool
-write_backend_variables(char *filename, Port *port)
-{
-	static unsigned long tmpBackendFileNum = 0;
-	FILE	   *fp;
-	char		str_buf[MAXPGPATH];
-
-	/* Calculate name for temp file in caller's buffer */
-	Assert(DataDir);
-	snprintf(filename, MAXPGPATH, "%s/%s/%s.backend_var.%d.%lu",
-			 DataDir, PG_TEMP_FILES_DIR, PG_TEMP_FILE_PREFIX,
-			 MyProcPid, ++tmpBackendFileNum);
-
-	/* Open file */
-	fp = AllocateFile(filename, PG_BINARY_W);
-	if (!fp)
-	{
-		/* As per OpenTemporaryFile... */
-		char		dirname[MAXPGPATH];
-
-		snprintf(dirname, MAXPGPATH, "%s/%s", DataDir, PG_TEMP_FILES_DIR);
-		mkdir(dirname, S_IRWXU);
-
-		fp = AllocateFile(filename, PG_BINARY_W);
-		if (!fp)
-		{
-			ereport(LOG,
-					(errcode_for_file_access(),
-					 errmsg("could not create file \"%s\": %m",
-							filename)));
-			return false;
-		}
-	}
-
-	/* Write vars */
-	write_var(port->sock, fp);
-	write_var(port->proto, fp);
-	write_var(port->laddr, fp);
-	write_var(port->raddr, fp);
-	write_var(port->canAcceptConnections, fp);
-	write_var(port->cryptSalt, fp);
-	write_var(port->md5Salt, fp);
-
-	/*
-	 * XXX FIXME later: writing these strings as MAXPGPATH bytes always is
-	 * probably a waste of resources
-	 */
-
-	StrNCpy(str_buf, DataDir, MAXPGPATH);
-	write_array_var(str_buf, fp);
-
-	write_array_var(ListenSocket, fp);
-
-	write_var(MyCancelKey, fp);
-
-	write_var(UsedShmemSegID, fp);
-	write_var(UsedShmemSegAddr, fp);
-
-	write_var(ShmemLock, fp);
-	write_var(ShmemIndexLock, fp);
-	write_var(ShmemVariableCache, fp);
-	write_var(ShmemIndexAlloc, fp);
-	write_var(ShmemBackendArray, fp);
-
-	write_var(LWLockArray, fp);
-	write_var(ProcStructLock, fp);
-	write_var(pgStatSock, fp);
-
-	write_var(PostmasterPid, fp);
-#ifdef WIN32
-	write_var(PostmasterHandle, fp);
+#ifndef WIN32
+#define write_inheritable_socket(dest, src, childpid) (*(dest) = (src))
+#define read_inheritable_socket(dest, src) (*(dest) = *(src))
+#else
+static void write_duplicated_handle(HANDLE *dest, HANDLE src, HANDLE child);
+static void write_inheritable_socket(InheritableSocket *dest, SOCKET src,
+									 pid_t childPid);
+static void read_inheritable_socket(SOCKET *dest, InheritableSocket *src);
 #endif
 
-	write_var(syslogPipe[0], fp);
-	write_var(syslogPipe[1], fp);
 
-	StrNCpy(str_buf, my_exec_path, MAXPGPATH);
-	write_array_var(str_buf, fp);
+/* Save critical backend variables into the BackendParameters struct */
+#ifndef WIN32
+static bool
+save_backend_variables(BackendParameters *param, Port *port)
+#else
+static bool
+save_backend_variables(BackendParameters *param, Port *port,
+					   HANDLE childProcess, pid_t childPid)
+#endif
+{
+	memcpy(&param->port, port, sizeof(Port));
+	write_inheritable_socket(&param->portsocket, port->sock, childPid);
 
-	write_array_var(ExtraOptions, fp);
+	StrNCpy(param->DataDir, DataDir, MAXPGPATH);
 
-	StrNCpy(str_buf, setlocale(LC_COLLATE, NULL), MAXPGPATH);
-	write_array_var(str_buf, fp);
-	StrNCpy(str_buf, setlocale(LC_CTYPE, NULL), MAXPGPATH);
-	write_array_var(str_buf, fp);
+	memcpy(&param->ListenSocket, &ListenSocket, sizeof(ListenSocket));
 
-	/* Release file */
-	if (FreeFile(fp))
-	{
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not write to file \"%s\": %m", filename)));
-		return false;
-	}
+	param->MyCancelKey = MyCancelKey;
+
+	param->UsedShmemSegID = UsedShmemSegID;
+	param->UsedShmemSegAddr = UsedShmemSegAddr;
+
+	param->ShmemLock = ShmemLock;
+	param->ShmemIndexLock = ShmemIndexLock;
+	param->ShmemVariableCache = ShmemVariableCache;
+	param->ShmemIndexAlloc = ShmemIndexAlloc;
+	param->ShmemBackendArray = ShmemBackendArray;
+
+	param->LWLockArray = LWLockArray;
+	param->ProcStructLock = ProcStructLock;
+	write_inheritable_socket(&param->pgStatSock, pgStatSock, childPid);
+	write_inheritable_socket(&param->pgStatPipe0, pgStatPipe[0], childPid);
+	write_inheritable_socket(&param->pgStatPipe1, pgStatPipe[1], childPid);
+
+	param->PostmasterPid = PostmasterPid;
+
+#ifdef WIN32
+	param->PostmasterHandle = PostmasterHandle;
+	write_duplicated_handle(&param->initial_signal_pipe,
+							pgwin32_create_signal_listener(childPid),
+							childProcess);
+#endif
+
+	memcpy(&param->syslogPipe, &syslogPipe, sizeof(syslogPipe));
+
+	StrNCpy(param->my_exec_path, my_exec_path, MAXPGPATH);
+
+	StrNCpy(param->ExtraOptions, ExtraOptions, MAXPGPATH);
+
+	StrNCpy(param->lc_collate, setlocale(LC_COLLATE, NULL), MAXPGPATH);
+	StrNCpy(param->lc_ctype, setlocale(LC_CTYPE, NULL), MAXPGPATH);
 
 	return true;
 }
 
-static void
-read_backend_variables(char *filename, Port *port)
-{
-	FILE	   *fp;
-	char		str_buf[MAXPGPATH];
 
-	/* Open file */
-	fp = AllocateFile(filename, PG_BINARY_R);
-	if (!fp)
-		ereport(FATAL,
-				(errcode_for_file_access(),
-		  errmsg("could not read from backend variables file \"%s\": %m",
-				 filename)));
-
-	/* Read vars */
-	read_var(port->sock, fp);
-	read_var(port->proto, fp);
-	read_var(port->laddr, fp);
-	read_var(port->raddr, fp);
-	read_var(port->canAcceptConnections, fp);
-	read_var(port->cryptSalt, fp);
-	read_var(port->md5Salt, fp);
-
-	read_array_var(str_buf, fp);
-	SetDataDir(str_buf);
-
-	read_array_var(ListenSocket, fp);
-
-	read_var(MyCancelKey, fp);
-
-	read_var(UsedShmemSegID, fp);
-	read_var(UsedShmemSegAddr, fp);
-
-	read_var(ShmemLock, fp);
-	read_var(ShmemIndexLock, fp);
-	read_var(ShmemVariableCache, fp);
-	read_var(ShmemIndexAlloc, fp);
-	read_var(ShmemBackendArray, fp);
-
-	read_var(LWLockArray, fp);
-	read_var(ProcStructLock, fp);
-	read_var(pgStatSock, fp);
-
-	read_var(PostmasterPid, fp);
 #ifdef WIN32
-	read_var(PostmasterHandle, fp);
+/*
+ * Duplicate a handle for usage in a child process, and write the child
+ * process instance of the handle to the parameter file.
+ */
+static void
+write_duplicated_handle(HANDLE *dest, HANDLE src, HANDLE childProcess)
+{
+	HANDLE hChild = INVALID_HANDLE_VALUE;
+
+	if (!DuplicateHandle(GetCurrentProcess(),
+						 src,
+						 childProcess,
+						 &hChild,
+						 0,
+						 TRUE,
+						 DUPLICATE_CLOSE_SOURCE | DUPLICATE_SAME_ACCESS))
+		ereport(ERROR,
+				(errmsg_internal("could not duplicate handle to be written to backend parameter file: error code %d",
+								 (int) GetLastError())));
+
+	*dest = hChild;
+}
+
+/*
+ * Duplicate a socket for usage in a child process, and write the resulting
+ * structure to the parameter file.
+ * This is required because a number of LSPs (Layered Service Providers) very
+ * common on Windows (antivirus, firewalls, download managers etc) break
+ * straight socket inheritance.
+ */
+static void
+write_inheritable_socket(InheritableSocket *dest, SOCKET src, pid_t childpid)
+{
+	dest->origsocket = src;
+	if (src != 0 && src != -1)
+	{
+		/* Actual socket */
+		if (WSADuplicateSocket(src, childpid, &dest->wsainfo) != 0)
+			ereport(ERROR,
+					(errmsg("could not duplicate socket %d for use in backend: error code %d",
+							src, WSAGetLastError())));
+	}
+}
+
+/*
+ * Read a duplicate socket structure back, and get the socket descriptor.
+ */
+static void
+read_inheritable_socket(SOCKET *dest, InheritableSocket *src)
+{
+	SOCKET s;
+
+	if (src->origsocket == -1  || src->origsocket == 0)
+	{
+		/* Not a real socket! */
+		*dest = src->origsocket;
+	}
+	else
+	{
+		/* Actual socket, so create from structure */
+		s = WSASocket(FROM_PROTOCOL_INFO,
+					  FROM_PROTOCOL_INFO,
+					  FROM_PROTOCOL_INFO,
+					  &src->wsainfo,
+					  0,
+					  0);
+		if (s == INVALID_SOCKET)
+		{
+			write_stderr("could not create inherited socket: error code %d\n",
+						 WSAGetLastError());
+			exit(1);
+		}
+		*dest = s;
+
+		/*
+		 * To make sure we don't get two references to the same socket,
+		 * close the original one. (This would happen when inheritance
+		 * actually works..
+		 */
+		closesocket(src->origsocket);
+	}
+}
 #endif
 
-	read_var(syslogPipe[0], fp);
-	read_var(syslogPipe[1], fp);
+static void
+read_backend_variables(char *id, Port *port)
+{
+#ifndef WIN32
+	/* Non-win32 implementation reads from file */
+	FILE *fp;
+	BackendParameters param;
 
-	read_array_var(str_buf, fp);
-	StrNCpy(my_exec_path, str_buf, MAXPGPATH);
+	/* Open file */
+	fp = AllocateFile(id, PG_BINARY_R);
+	if (!fp)
+	{
+		write_stderr("could not read from backend variables file \"%s\": %s\n",
+					 id, strerror(errno));
+		exit(1);
+	}
 
-	read_array_var(ExtraOptions, fp);
-
-	read_array_var(str_buf, fp);
-	setlocale(LC_COLLATE, str_buf);
-	read_array_var(str_buf, fp);
-	setlocale(LC_CTYPE, str_buf);
+	if (fread(&param, sizeof(param), 1, fp) != 1)
+	{
+		write_stderr("could not read from backend variables file \"%s\": %s\n",
+					 id, strerror(errno));
+		exit(1);
+	}
 
 	/* Release file */
 	FreeFile(fp);
-	if (unlink(filename) != 0)
-		ereport(WARNING,
-				(errcode_for_file_access(),
-				 errmsg("could not remove file \"%s\": %m", filename)));
+	if (unlink(id) != 0)
+	{
+		write_stderr("could not remove file \"%s\": %s\n",
+					 id, strerror(errno));
+		exit(1);
+	}
+
+	restore_backend_variables(&param, port);
+#else
+	/* Win32 version uses mapped file */
+	HANDLE paramHandle;
+	BackendParameters *param;
+
+	paramHandle = (HANDLE)atol(id);
+	param = MapViewOfFile(paramHandle, FILE_MAP_READ, 0, 0, 0);
+	if (!param)
+	{
+		write_stderr("could not map view of backend variables: error code %d\n",
+					 (int) GetLastError());
+		exit(1);
+	}
+
+	restore_backend_variables(param, port);
+
+	if (!UnmapViewOfFile(param))
+	{
+		write_stderr("could not unmap view of backend variables: error code %d\n",
+					 (int) GetLastError());
+		exit(1);
+	}
+
+	if (!CloseHandle(paramHandle))
+	{
+		write_stderr("could not close handle to backend parameter variables: error code %d\n",
+					 (int) GetLastError());
+		exit(1);
+	}
+#endif
+}
+
+/* Restore critical backend variables from the BackendParameters struct */
+static void
+restore_backend_variables(BackendParameters *param, Port *port)
+{
+	memcpy(port, &param->port, sizeof(Port));
+	read_inheritable_socket(&port->sock, &param->portsocket);
+
+	SetDataDir(param->DataDir);
+
+	memcpy(&ListenSocket, &param->ListenSocket, sizeof(ListenSocket));
+
+	MyCancelKey = param->MyCancelKey;
+
+	UsedShmemSegID = param->UsedShmemSegID;
+	UsedShmemSegAddr = param->UsedShmemSegAddr;
+
+	ShmemLock = param->ShmemLock;
+	ShmemIndexLock = param->ShmemIndexLock;
+	ShmemVariableCache = param->ShmemVariableCache;
+	ShmemIndexAlloc = param->ShmemIndexAlloc;
+	ShmemBackendArray = param->ShmemBackendArray;
+
+	LWLockArray = param->LWLockArray;
+	ProcStructLock = param->ProcStructLock;
+	read_inheritable_socket(&pgStatSock, &param->pgStatSock);
+	read_inheritable_socket(&pgStatPipe[0], &param->pgStatPipe0);
+	read_inheritable_socket(&pgStatPipe[1], &param->pgStatPipe1);
+
+	PostmasterPid = param->PostmasterPid;
+
+#ifdef WIN32
+	PostmasterHandle = param->PostmasterHandle;
+	pgwin32_initial_signal_pipe = param->initial_signal_pipe;
+#endif
+
+	memcpy(&syslogPipe, &param->syslogPipe, sizeof(syslogPipe));
+
+	StrNCpy(my_exec_path, param->my_exec_path, MAXPGPATH);
+
+	StrNCpy(ExtraOptions, param->ExtraOptions, MAXPGPATH);
+
+	setlocale(LC_COLLATE, param->lc_collate);
+	setlocale(LC_CTYPE, param->lc_ctype);
 }
 
 
@@ -3541,74 +3934,6 @@ ShmemBackendArrayRemove(pid_t pid)
 
 
 #ifdef WIN32
-
-static pid_t
-win32_forkexec(const char *path, char *argv[])
-{
-	STARTUPINFO si;
-	PROCESS_INFORMATION pi;
-	int			i;
-	int			j;
-	char		cmdLine[MAXPGPATH * 2];
-	HANDLE		childHandleCopy;
-	HANDLE		waiterThread;
-
-	/* Format the cmd line */
-	cmdLine[sizeof(cmdLine) - 1] = '\0';
-	cmdLine[sizeof(cmdLine) - 2] = '\0';
-	snprintf(cmdLine, sizeof(cmdLine) - 1, "\"%s\"", path);
-	i = 0;
-	while (argv[++i] != NULL)
-	{
-		j = strlen(cmdLine);
-		snprintf(cmdLine + j, sizeof(cmdLine) - 1 - j, " \"%s\"", argv[i]);
-	}
-	if (cmdLine[sizeof(cmdLine) - 2] != '\0')
-	{
-		elog(LOG, "subprocess command line too long");
-		return -1;
-	}
-
-	memset(&pi, 0, sizeof(pi));
-	memset(&si, 0, sizeof(si));
-	si.cb = sizeof(si);
-	if (!CreateProcess(NULL, cmdLine, NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi))
-	{
-		elog(LOG, "CreateProcess call failed (%d): %m", (int) GetLastError());
-		return -1;
-	}
-
-	if (!IsUnderPostmaster)
-	{
-		/* We are the Postmaster creating a child... */
-		win32_AddChild(pi.dwProcessId, pi.hProcess);
-	}
-
-	if (DuplicateHandle(GetCurrentProcess(),
-						pi.hProcess,
-						GetCurrentProcess(),
-						&childHandleCopy,
-						0,
-						FALSE,
-						DUPLICATE_SAME_ACCESS) == 0)
-		ereport(FATAL,
-				(errmsg_internal("could not duplicate child handle: %d",
-								 (int) GetLastError())));
-
-	waiterThread = CreateThread(NULL, 64 * 1024, win32_sigchld_waiter,
-								(LPVOID) childHandleCopy, 0, NULL);
-	if (!waiterThread)
-		ereport(FATAL,
-		   (errmsg_internal("could not create sigchld waiter thread: %d",
-							(int) GetLastError())));
-	CloseHandle(waiterThread);
-
-	if (IsUnderPostmaster)
-		CloseHandle(pi.hProcess);
-	CloseHandle(pi.hThread);
-
-	return pi.dwProcessId;
-}
 
 /*
  * Note: The following three functions must not be interrupted (eg. by
@@ -3687,7 +4012,7 @@ win32_waitpid(int *exitstatus)
 		{
 			case WAIT_FAILED:
 				ereport(LOG,
-						(errmsg_internal("failed to wait on %lu of %lu children: %d",
+						(errmsg_internal("failed to wait on %lu of %lu children: error code %d",
 						 num, win32_numChildren, (int) GetLastError())));
 				return -1;
 
@@ -3712,7 +4037,7 @@ win32_waitpid(int *exitstatus)
 					 */
 					ereport(FATAL,
 							(errmsg_internal("failed to get exit code for child %lu",
-										   win32_childPIDArray[index])));
+											 (DWORD)win32_childPIDArray[index])));
 				}
 				*exitstatus = (int) exitCode;
 				return win32_childPIDArray[index];
