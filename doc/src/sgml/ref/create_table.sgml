@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.18 2000/03/27 17:14:42 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.19 2000/04/08 02:44:55 momjian Exp $
 Postgres documentation
 -->
 
@@ -1001,7 +1001,7 @@ ERROR: Cannot insert a duplicate key into a unique index.
     <para>
      <productname>Postgres</productname> now
      supports FOREIGN KEY
-     integrity constraints (new for release 7.0).
+     integrity constraints
     </para>
    </note>
   </refsect2>
