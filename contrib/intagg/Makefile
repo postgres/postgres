@@ -11,7 +11,7 @@ NAME=int_aggregate
 SONAME	= $(NAME)$(DLSUFFIX)
 MODULES = int_aggregate
 DATA_built = int_aggregate.so
-DOCS = README.int_aggrigate
+DOCS = README.int_aggregate
 SQLS=int_aggregate.sql
 
 include $(top_srcdir)/contrib/contrib-global.mk
