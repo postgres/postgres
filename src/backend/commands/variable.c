@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.71.2.1 2003/02/01 18:31:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.71.2.2 2003/06/06 16:25:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -550,6 +550,16 @@ assign_session_authorization(const char *value, bool doit, bool interactive)
 	{
 		/* not a saved ID, so look it up */
 		HeapTuple	userTup;
+
+		if (! IsTransactionState())
+		{
+			/*
+			 * Can't do catalog lookups, so fail.  The upshot of this is
+			 * that session_authorization cannot be set in postgresql.conf,
+			 * which seems like a good thing anyway.
+			 */
+			return NULL;
+		}
 
 		userTup = SearchSysCache(SHADOWNAME,
 								 PointerGetDatum(value),
