@@ -43,7 +43,7 @@ From owner-pgsql-hackers@hub.org Fri Dec 24 10:01:18 1999
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id LAA11295
 	for <pgman@candle.pha.pa.us>; Fri, 24 Dec 1999 11:01:17 -0500 (EST)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.5 $) with ESMTP id KAA20310 for <pgman@candle.pha.pa.us>; Fri, 24 Dec 1999 10:39:18 -0500 (EST)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.6 $) with ESMTP id KAA20310 for <pgman@candle.pha.pa.us>; Fri, 24 Dec 1999 10:39:18 -0500 (EST)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.3/8.9.3) with SMTP id KAA61760;
 	Fri, 24 Dec 1999 10:31:13 -0500 (EST)
@@ -129,7 +129,7 @@ From owner-pgsql-hackers@hub.org Fri Dec 24 18:31:03 1999
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id TAA26244
 	for <pgman@candle.pha.pa.us>; Fri, 24 Dec 1999 19:31:02 -0500 (EST)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.5 $) with ESMTP id TAA12730 for <pgman@candle.pha.pa.us>; Fri, 24 Dec 1999 19:30:05 -0500 (EST)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.6 $) with ESMTP id TAA12730 for <pgman@candle.pha.pa.us>; Fri, 24 Dec 1999 19:30:05 -0500 (EST)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.3/8.9.3) with SMTP id TAA57851;
 	Fri, 24 Dec 1999 19:23:31 -0500 (EST)
@@ -212,7 +212,7 @@ From owner-pgsql-hackers@hub.org Fri Dec 24 21:31:10 1999
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id WAA02578
 	for <pgman@candle.pha.pa.us>; Fri, 24 Dec 1999 22:31:09 -0500 (EST)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.5 $) with ESMTP id WAA16641 for <pgman@candle.pha.pa.us>; Fri, 24 Dec 1999 22:18:56 -0500 (EST)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.6 $) with ESMTP id WAA16641 for <pgman@candle.pha.pa.us>; Fri, 24 Dec 1999 22:18:56 -0500 (EST)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.3/8.9.3) with SMTP id WAA89135;
 	Fri, 24 Dec 1999 22:11:12 -0500 (EST)
@@ -486,7 +486,7 @@ From owner-pgsql-hackers@hub.org Sun Dec 26 08:31:09 1999
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id JAA17976
 	for <pgman@candle.pha.pa.us>; Sun, 26 Dec 1999 09:31:07 -0500 (EST)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.5 $) with ESMTP id JAA23337 for <pgman@candle.pha.pa.us>; Sun, 26 Dec 1999 09:28:36 -0500 (EST)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.6 $) with ESMTP id JAA23337 for <pgman@candle.pha.pa.us>; Sun, 26 Dec 1999 09:28:36 -0500 (EST)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.3/8.9.3) with SMTP id JAA90738;
 	Sun, 26 Dec 1999 09:21:58 -0500 (EST)
@@ -909,7 +909,7 @@ From owner-pgsql-hackers@hub.org Thu Dec 30 08:01:09 1999
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id JAA10317
 	for <pgman@candle.pha.pa.us>; Thu, 30 Dec 1999 09:01:08 -0500 (EST)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.5 $) with ESMTP id IAA02365 for <pgman@candle.pha.pa.us>; Thu, 30 Dec 1999 08:37:10 -0500 (EST)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.6 $) with ESMTP id IAA02365 for <pgman@candle.pha.pa.us>; Thu, 30 Dec 1999 08:37:10 -0500 (EST)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.3/8.9.3) with SMTP id IAA87902;
 	Thu, 30 Dec 1999 08:34:22 -0500 (EST)
@@ -1006,7 +1006,7 @@ From owner-pgsql-patches@hub.org Sun Jan  2 23:01:38 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id AAA16274
 	for <pgman@candle.pha.pa.us>; Mon, 3 Jan 2000 00:01:28 -0500 (EST)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.5 $) with ESMTP id XAA02655 for <pgman@candle.pha.pa.us>; Sun, 2 Jan 2000 23:45:55 -0500 (EST)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.6 $) with ESMTP id XAA02655 for <pgman@candle.pha.pa.us>; Sun, 2 Jan 2000 23:45:55 -0500 (EST)
 Received: from hub.org (hub.org [216.126.84.1])
 	by hub.org (8.9.3/8.9.3) with ESMTP id XAA13828;
 	Sun, 2 Jan 2000 23:40:47 -0500 (EST)
@@ -1424,7 +1424,7 @@ From owner-pgsql-hackers@hub.org Tue Jan  4 10:31:01 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id LAA17522
 	for <pgman@candle.pha.pa.us>; Tue, 4 Jan 2000 11:31:00 -0500 (EST)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.5 $) with ESMTP id LAA01541 for <pgman@candle.pha.pa.us>; Tue, 4 Jan 2000 11:27:30 -0500 (EST)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.6 $) with ESMTP id LAA01541 for <pgman@candle.pha.pa.us>; Tue, 4 Jan 2000 11:27:30 -0500 (EST)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.3/8.9.3) with SMTP id LAA09992;
 	Tue, 4 Jan 2000 11:18:07 -0500 (EST)
@@ -1727,4 +1727,181 @@ Betreff: [HACKERS] failing over with postgresql
 > tshrider@valinux.com www.valinux.com
 >
 
+
+From pgsql-hackers-owner+M3662@postgresql.org Tue Jan 23 16:23:34 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id QAA04456
+	for <pgman@candle.pha.pa.us>; Tue, 23 Jan 2001 16:23:34 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id f0NLKf004705;
+	Tue, 23 Jan 2001 16:20:41 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M3662@postgresql.org)
+Received: from sectorbase2.sectorbase.com ([208.48.122.131])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id f0NLAe003753
+	for <pgsql-hackers@postgresql.org>; Tue, 23 Jan 2001 16:10:40 -0500 (EST)
+	(envelope-from vmikheev@SECTORBASE.COM)
+Received: by sectorbase2.sectorbase.com with Internet Mail Service (5.5.2653.19)
+	id <DG1W4Q8F>; Tue, 23 Jan 2001 12:49:07 -0800
+Message-ID: <8F4C99C66D04D4118F580090272A7A234D32AF@sectorbase1.sectorbase.com>
+From: "Mikheev, Vadim" <vmikheev@SECTORBASE.COM>
+To: "'dom@idealx.com'" <dom@idealx.com>, pgsql-hackers@postgresql.org
+Subject: RE: [HACKERS] Re: AW: Re: MySQL and BerkleyDB (fwd)
+Date: Tue, 23 Jan 2001 13:10:34 -0800
+MIME-Version: 1.0
+X-Mailer: Internet Mail Service (5.5.2653.19)
+Content-Type: text/plain;
+	charset="iso-8859-1"
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: ORr
+
+>   I had thought that the pre-commit information could be stored in an
+> auxiliary table by the middleware program ; we would then have
+> to re-implement some sort of higher-level WAL (I thought of the list
+> of the commands performed in the current transaction, with a sequence
+> number for each of them that would guarantee correct ordering between
+> concurrent transactions in case of a REDO). But I fear I am missing
+
+This wouldn't work for READ COMMITTED isolation level.
+But why do you want to log commands into WAL where each modification
+is already logged in, hm, correct order?
+Well, it has sense if you're looking for async replication but
+you need not in two-phase commit for this and should aware about
+problems with READ COMMITTED isolevel.
+
+Back to two-phase commit - it's easiest part of work required for
+distributed transaction processing.
+Currently we place single commit record to log and transaction is
+committed when this record (and so all other transaction records)
+is on disk.
+Two-phase commit:
+
+1. For 1st phase we'll place into log "prepared-to-commit" record
+   and this phase will be accomplished after record is flushed on disk.
+   At this point transaction may be committed at any time because of
+   all its modifications are logged. But it still may be rolled back
+   if this phase failed on other sites of distributed system.
+
+2. When all sites are prepared to commit we'll place "committed"
+   record into log. No need to flush it because of in the event of
+   crash for all "prepared" transactions recoverer will have to
+   communicate other sites to know their statuses anyway.
+
+That's all! It is really hard to implement distributed lock- and
+communication- managers but there is no problem with logging two
+records instead of one. Period.
+
+Vadim
+
+From pgsql-hackers-owner+M3665@postgresql.org Tue Jan 23 17:05:26 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id RAA05972
+	for <pgman@candle.pha.pa.us>; Tue, 23 Jan 2001 17:05:24 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id f0NM31008120;
+	Tue, 23 Jan 2001 17:03:01 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M3665@postgresql.org)
+Received: from candle.pha.pa.us (candle.navpoint.com [162.33.245.46])
+	by mail.postgresql.org (8.11.1/8.11.1) with ESMTP id f0NLsU007188
+	for <pgsql-hackers@postgresql.org>; Tue, 23 Jan 2001 16:54:30 -0500 (EST)
+	(envelope-from pgman@candle.pha.pa.us)
+Received: (from pgman@localhost)
+	by candle.pha.pa.us (8.9.0/8.9.0) id QAA05300;
+	Tue, 23 Jan 2001 16:53:53 -0500 (EST)
+From: Bruce Momjian <pgman@candle.pha.pa.us>
+Message-Id: <200101232153.QAA05300@candle.pha.pa.us>
+Subject: Re: [HACKERS] Re: AW: Re: MySQL and BerkleyDB (fwd)
+In-Reply-To: <8F4C99C66D04D4118F580090272A7A234D32AF@sectorbase1.sectorbase.com>
+	"from Mikheev, Vadim at Jan 23, 2001 01:10:34 pm"
+To: "Mikheev, Vadim" <vmikheev@SECTORBASE.COM>
+Date: Tue, 23 Jan 2001 16:53:53 -0500 (EST)
+CC: "'dom@idealx.com'" <dom@idealx.com>, pgsql-hackers@postgresql.org
+X-Mailer: ELM [version 2.4ME+ PL77 (25)]
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=US-ASCII
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+[ Charset ISO-8859-1 unsupported, converting... ]
+> >   I had thought that the pre-commit information could be stored in an
+> > auxiliary table by the middleware program ; we would then have
+> > to re-implement some sort of higher-level WAL (I thought of the list
+> > of the commands performed in the current transaction, with a sequence
+> > number for each of them that would guarantee correct ordering between
+> > concurrent transactions in case of a REDO). But I fear I am missing
+> 
+> This wouldn't work for READ COMMITTED isolation level.
+> But why do you want to log commands into WAL where each modification
+> is already logged in, hm, correct order?
+> Well, it has sense if you're looking for async replication but
+> you need not in two-phase commit for this and should aware about
+> problems with READ COMMITTED isolevel.
+> 
+
+I believe the issue here is that while SERIALIZABLE ISOLATION means all
+queries can be run serially, our default is READ COMMITTED, meaning that
+open transactions see committed transactions, even if the transaction
+committed after our transaction started.  (FYI, see my chapter on
+transactions for help,  http://www.postgresql.org/docs/awbook.html.)
+
+To do higher-level WAL, you would have to record not only the queries,
+but the other queries that were committed at the start of each command
+in your transaction.
+
+Ideally, you could number every commit by its XID your log, and then
+when processing the query, pass the "committed" transaction ids that
+were visible at the time each command began.
+
+In other words, you can replay the queries in transaction commit order,
+except that you have to have some transactions committed at specific
+points while other transactions are open, i.e.:
+
+XID	Open XIDS	Query
+500			UPDATE t SET col = 3;
+501	500		BEGIN;
+501	500		UPDATE t SET col = 4;
+501			UPDATE t SET col = 5;
+501			COMMIT;
+
+This is a silly example, but it shows that 500 must commit after the
+first command in transaction 501, but before the second command in the
+transaction.  This is because UPDATE t SET col = 5 actually sees the
+changes made by transaction 500 in READ COMMITTED isolation level.
+
+I am not advocating this.  I think WAL is a better choice.  I just
+wanted to outline how replaying the queries in commit order is 
+insufficient.
+
+> Back to two-phase commit - it's easiest part of work required for
+> distributed transaction processing.
+> Currently we place single commit record to log and transaction is
+> committed when this record (and so all other transaction records)
+> is on disk.
+> Two-phase commit:
+> 
+> 1. For 1st phase we'll place into log "prepared-to-commit" record
+>    and this phase will be accomplished after record is flushed on disk.
+>    At this point transaction may be committed at any time because of
+>    all its modifications are logged. But it still may be rolled back
+>    if this phase failed on other sites of distributed system.
+> 
+> 2. When all sites are prepared to commit we'll place "committed"
+>    record into log. No need to flush it because of in the event of
+>    crash for all "prepared" transactions recoverer will have to
+>    communicate other sites to know their statuses anyway.
+> 
+> That's all! It is really hard to implement distributed lock- and
+> communication- managers but there is no problem with logging two
+> records instead of one. Period.
+
+Great.
+
+
+-- 
+  Bruce Momjian                        |  http://candle.pha.pa.us
+  pgman@candle.pha.pa.us               |  (610) 853-3000
+  +  If your life is a hard drive,     |  830 Blythe Avenue
+  +  Christ can be your backup.        |  Drexel Hill, Pennsylvania 19026
 
