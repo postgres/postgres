@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.96 2002/11/23 04:05:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.97 2002/11/23 18:26:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -184,7 +184,7 @@ rebuild_rel(Oid tableOid, Oid indexOid, List *indexes, bool dataCopy)
 	 * If dataCopy is true, we assume that we will be basing the
 	 * copy off an index for cluster operations.
 	 */
-	Assert(!dataCopy || indexOid != NULL);
+	Assert(!dataCopy || OidIsValid(indexOid));
 	/*
 	 * Create the new heap, using a temporary name in the same namespace
 	 * as the existing table.  NOTE: there is some risk of collision with

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.56 2002/11/23 04:05:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.57 2002/11/23 18:26:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -449,7 +449,7 @@ TruncateRelation(const RangeVar *relation)
 	 * Do the real work using the same technique as cluster, but
 	 * without the code copy portion
 	 */
-	rebuild_rel(relid, NULL, indexes, false);
+	rebuild_rel(relid, InvalidOid, indexes, false);
 }
 
 /*----------
