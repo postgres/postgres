@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.353 2002/08/04 04:31:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.354 2002/08/04 06:51:23 thomas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -70,7 +70,6 @@ static bool QueryIsRule = FALSE;
 static Oid	*param_type_info;
 static int	pfunc_num_args;
 
-
 /*
  * If you need access to certain yacc-generated variables and find that
  * they're static by default, uncomment the next line.  (this is not a
@@ -96,8 +95,6 @@ static void insertSelectOptions(SelectStmt *stmt,
 static Node *makeSetOp(SetOperation op, bool all, Node *larg, Node *rarg);
 static Node *doNegate(Node *n);
 static void doNegateFloat(Value *v);
-
-#define MASK(b) (1 << (b))
 
 %}
 
@@ -265,7 +262,7 @@ static void doNegateFloat(Value *v);
 %type <node>	def_arg, columnElem, where_clause, insert_column_item,
 				a_expr, b_expr, c_expr, r_expr, AexprConst,
 				in_expr, having_clause, func_table
-%type <list>	row, row_descriptor, row_list, in_expr_nodes
+%type <list>	row, row_descriptor, row_list, in_expr_nodes, type_list
 %type <node>	case_expr, case_arg, when_clause, case_default
 %type <list>	when_clause_list
 %type <ival>	sub_type
@@ -282,8 +279,11 @@ static void doNegateFloat(Value *v);
 %type <target>	target_el, insert_target_el, update_target_el
 
 %type <typnam>	Typename, SimpleTypename, ConstTypename,
-				GenericType, Numeric, opt_float, Character,
-				ConstDatetime, ConstInterval, Bit
+				GenericType, Numeric, opt_float,
+				Character, ConstCharacter,
+				CharacterWithLength, CharacterWithoutLength,
+				ConstDatetime, ConstInterval,
+				Bit, ConstBit, BitWithLength, BitWithoutLength
 %type <str>		character
 %type <str>		extract_arg
 %type <str>		opt_charset, opt_collate
@@ -404,7 +404,7 @@ static void doNegateFloat(Value *v);
 %token			UNIONJOIN
 
 /* Special keywords, not in the query language - see the "lex" file */
-%token <str>	IDENT, FCONST, SCONST, BITCONST, Op
+%token <str>	IDENT, FCONST, SCONST, NCONST, BCONST, XCONST, Op
 %token <ival>	ICONST, PARAM
 
 /* these are not real. they are here so that they get generated as #define's*/
@@ -943,12 +943,13 @@ zone_value:
 			| ConstInterval Sconst opt_interval
 				{
 					A_Const *n = (A_Const *) makeStringConst($2, $1);
-					if ($3 != -1)
+					if ($3 != INTERVAL_FULL_RANGE)
 					{
-						if (($3 & ~(MASK(HOUR) | MASK(MINUTE))) != 0)
+						if (($3 & ~(INTERVAL_MASK(HOUR) | INTERVAL_MASK(MINUTE))) != 0)
 							elog(ERROR,
-						"Time zone interval must be HOUR or HOUR TO MINUTE");
-						n->typename->typmod = ((($3 & 0x7FFF) << 16) | 0xFFFF);
+								 "Time zone interval"
+								 " must be HOUR or HOUR TO MINUTE");
+						n->typename->typmod = INTERVAL_TYPMOD(INTERVAL_FULL_PRECISION, $3);
 					}
 					$$ = (Node *)n;
 				}
@@ -959,17 +960,14 @@ zone_value:
 						elog(ERROR,
 							"INTERVAL(%d) precision must be between %d and %d",
 							$3, 0, MAX_INTERVAL_PRECISION);
-					if ($6 != -1)
-					{
-						if (($6 & ~(MASK(HOUR) | MASK(MINUTE))) != 0)
-							elog(ERROR,
-						"Time zone interval must be HOUR or HOUR TO MINUTE");
-						n->typename->typmod = ((($6 & 0x7FFF) << 16) | $3);
-					}
-					else
-					{
-						n->typename->typmod = ((0x7FFF << 16) | $3);
-					}
+
+					if (($6 != INTERVAL_FULL_RANGE)
+						&& (($6 & ~(INTERVAL_MASK(HOUR) | INTERVAL_MASK(MINUTE))) != 0))
+						elog(ERROR,
+							 "Time zone interval"
+							 " must be HOUR or HOUR TO MINUTE");
+
+					n->typename->typmod = INTERVAL_TYPMOD($3, $6);
 
 					$$ = (Node *)n;
 				}
@@ -1386,6 +1384,21 @@ CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
 					n->inhRelations = $8;
 					n->constraints = NIL;
 					n->hasoids = $9;
+					$$ = (Node *)n;
+				}
+		| CREATE OptTemp TABLE qualified_name OF qualified_name
+			'(' OptTableElementList ')' OptWithOids
+				{
+					/* SQL99 CREATE TABLE OF <UDT> (cols) seems to be satisfied
+					 * by our inheritance capabilities. Let's try it...
+					 */
+					CreateStmt *n = makeNode(CreateStmt);
+					$4->istemp = $2;
+					n->relation = $4;
+					n->tableElts = $8;
+					n->inhRelations = makeList1($6);
+					n->constraints = NIL;
+					n->hasoids = $10;
 					$$ = (Node *)n;
 				}
 		;
@@ -2100,7 +2113,8 @@ TriggerFuncArg:
 				}
 			| FCONST								{ $$ = makeString($1); }
 			| Sconst								{ $$ = makeString($1); }
-			| BITCONST								{ $$ = makeString($1); }
+			| BCONST								{ $$ = makeString($1); }
+			| XCONST								{ $$ = makeString($1); }
 			| ColId									{ $$ = makeString($1); }
 		;
 
@@ -4651,6 +4665,13 @@ relation_expr:
 					$$->inhOpt = INH_NO;
 					$$->alias = NULL;
 				}
+			| ONLY '(' qualified_name ')'
+				{
+					/* no inheritance, SQL99-style syntax */
+					$$ = $3;
+					$$->inhOpt = INH_NO;
+					$$->alias = NULL;
+				}
 		;
 
 
@@ -4722,12 +4743,16 @@ opt_array_bounds:
  * for.  FIXME later.
  */
 SimpleTypename:
-			ConstTypename							{ $$ = $1; }
+			GenericType								{ $$ = $1; }
+			| Numeric								{ $$ = $1; }
+			| Bit									{ $$ = $1; }
+			| Character								{ $$ = $1; }
+			| ConstDatetime							{ $$ = $1; }
 			| ConstInterval opt_interval
 				{
 					$$ = $1;
-					if ($2 != -1)
-						$$->typmod = ((($2 & 0x7FFF) << 16) | 0xFFFF);
+					if ($2 != INTERVAL_FULL_RANGE)
+						$$->typmod = INTERVAL_TYPMOD(INTERVAL_FULL_PRECISION, $2);
 				}
 			| ConstInterval '(' Iconst ')' opt_interval
 				{
@@ -4736,7 +4761,7 @@ SimpleTypename:
 						elog(ERROR,
 						"INTERVAL(%d) precision must be between %d and %d",
 							 $3, 0, MAX_INTERVAL_PRECISION);
-					$$->typmod = ((($5 & 0x7FFF) << 16) | $3);
+					$$->typmod = INTERVAL_TYPMOD($3, $5);
 				}
 			| type_name attrs
 				{
@@ -4746,12 +4771,21 @@ SimpleTypename:
 				}
 		;
 
+/* We have a separate ConstTypename to allow defaulting fixed-length
+ * types such as CHAR() and BIT() to an unspecified length.
+ * SQL9x requires that these default to a length of one, but this
+ * makes no sense for constructs like CHAR 'hi' and BIT '0101',
+ * where there is an obvious better choice to make.
+ * Note that ConstInterval is not included here since it must
+ * be pushed up higher in the rules to accomodate the postfix
+ * options (e.g. INTERVAL '1' YEAR).
+ */
 ConstTypename:
-			GenericType								{ $$ = $1;}
-			| Numeric								{ $$ = $1;}
-			| Bit									{ $$ = $1;}
-			| Character								{ $$ = $1;}
-			| ConstDatetime							{ $$ = $1;}
+			GenericType								{ $$ = $1; }
+			| Numeric								{ $$ = $1; }
+			| ConstBit								{ $$ = $1; }
+			| ConstCharacter						{ $$ = $1; }
+			| ConstDatetime							{ $$ = $1; }
 		;
 
 GenericType:
@@ -4899,7 +4933,29 @@ opt_decimal:
  * SQL92 bit-field data types
  * The following implements BIT() and BIT VARYING().
  */
-Bit:		BIT opt_varying '(' Iconst ')'
+Bit:		BitWithLength
+				{
+					$$ = $1;
+				}
+			| BitWithoutLength
+				{
+					$$ = $1;
+				}
+		;
+
+ConstBit:	BitWithLength
+				{
+					$$ = $1;
+				}
+			| BitWithoutLength
+				{
+					$$->typmod = -1;
+					$$ = $1;
+				}
+		;
+
+BitWithLength:
+			BIT opt_varying '(' Iconst ')'
 				{
 					char *typname;
 
@@ -4913,7 +4969,10 @@ Bit:		BIT opt_varying '(' Iconst ')'
 							 typname, (MaxAttrSize * BITS_PER_BYTE));
 					$$->typmod = $4;
 				}
-			| BIT opt_varying
+		;
+
+BitWithoutLength:
+			BIT opt_varying
 				{
 					/* bit defaults to bit(1), varbit to no limit */
 					if ($2)
@@ -4934,7 +4993,34 @@ Bit:		BIT opt_varying '(' Iconst ')'
  * SQL92 character data types
  * The following implements CHAR() and VARCHAR().
  */
-Character:	character '(' Iconst ')' opt_charset
+Character:  CharacterWithLength
+				{
+					$$ = $1;
+				}
+			| CharacterWithoutLength
+				{
+					$$ = $1;
+				}
+		;
+
+ConstCharacter:  CharacterWithLength
+				{
+					$$ = $1;
+				}
+			| CharacterWithoutLength
+				{
+					/* Length was not specified so allow to be unrestricted.
+					 * This handles problems with fixed-length (bpchar) strings
+					 * which in column definitions must default to a length
+					 * of one, but should not be constrained if the length
+					 * was not specified.
+					 */
+					$1->typmod = -1;
+					$$ = $1;
+				}
+		;
+
+CharacterWithLength:  character '(' Iconst ')' opt_charset
 				{
 					if (($5 != NULL) && (strcmp($5, "sql_text") != 0))
 					{
@@ -4963,7 +5049,9 @@ Character:	character '(' Iconst ')' opt_charset
 					 */
 					$$->typmod = VARHDRSZ + $3;
 				}
-			| character opt_charset
+		;
+
+CharacterWithoutLength:	 character opt_charset
 				{
 					if (($2 != NULL) && (strcmp($2, "sql_text") != 0))
 					{
@@ -5090,27 +5178,30 @@ opt_timezone:
 		;
 
 opt_interval:
-			YEAR_P									{ $$ = MASK(YEAR); }
-			| MONTH_P								{ $$ = MASK(MONTH); }
-			| DAY_P									{ $$ = MASK(DAY); }
-			| HOUR_P								{ $$ = MASK(HOUR); }
-			| MINUTE_P								{ $$ = MASK(MINUTE); }
-			| SECOND_P								{ $$ = MASK(SECOND); }
+			YEAR_P									{ $$ = INTERVAL_MASK(YEAR); }
+			| MONTH_P								{ $$ = INTERVAL_MASK(MONTH); }
+			| DAY_P									{ $$ = INTERVAL_MASK(DAY); }
+			| HOUR_P								{ $$ = INTERVAL_MASK(HOUR); }
+			| MINUTE_P								{ $$ = INTERVAL_MASK(MINUTE); }
+			| SECOND_P								{ $$ = INTERVAL_MASK(SECOND); }
 			| YEAR_P TO MONTH_P
-					{ $$ = MASK(YEAR) | MASK(MONTH); }
+					{ $$ = INTERVAL_MASK(YEAR) | INTERVAL_MASK(MONTH); }
 			| DAY_P TO HOUR_P
-					{ $$ = MASK(DAY) | MASK(HOUR); }
+					{ $$ = INTERVAL_MASK(DAY) | INTERVAL_MASK(HOUR); }
 			| DAY_P TO MINUTE_P
-					{ $$ = MASK(DAY) | MASK(HOUR) | MASK(MINUTE); }
+					{ $$ = INTERVAL_MASK(DAY) | INTERVAL_MASK(HOUR)
+						| INTERVAL_MASK(MINUTE); }
 			| DAY_P TO SECOND_P
-					{ $$ = MASK(DAY) | MASK(HOUR) | MASK(MINUTE) | MASK(SECOND); }
+					{ $$ = INTERVAL_MASK(DAY) | INTERVAL_MASK(HOUR)
+						| INTERVAL_MASK(MINUTE) | INTERVAL_MASK(SECOND); }
 			| HOUR_P TO MINUTE_P
-					{ $$ = MASK(HOUR) | MASK(MINUTE); }
+					{ $$ = INTERVAL_MASK(HOUR) | INTERVAL_MASK(MINUTE); }
 			| HOUR_P TO SECOND_P
-					{ $$ = MASK(HOUR) | MASK(MINUTE) | MASK(SECOND); }
+					{ $$ = INTERVAL_MASK(HOUR) | INTERVAL_MASK(MINUTE)
+						| INTERVAL_MASK(SECOND); }
 			| MINUTE_P TO SECOND_P
-					{ $$ = MASK(MINUTE) | MASK(SECOND); }
-			| /*EMPTY*/								{ $$ = -1; }
+					{ $$ = INTERVAL_MASK(MINUTE) | INTERVAL_MASK(SECOND); }
+			| /*EMPTY*/								{ $$ = INTERVAL_FULL_RANGE; }
 		;
 
 
@@ -5510,6 +5601,14 @@ a_expr:		c_expr									{ $$ = $1; }
 				}
 			| a_expr IS DISTINCT FROM a_expr			%prec DISTINCT
 				{ $$ = (Node *) makeSimpleA_Expr(DISTINCT, "=", $1, $5); }
+			| a_expr IS OF '(' type_list ')'
+				{
+					$$ = (Node *) makeSimpleA_Expr(OF, "=", $1, (Node *) $5);
+				}
+			| a_expr IS NOT OF '(' type_list ')'
+				{
+					$$ = (Node *) makeSimpleA_Expr(OF, "!=", $1, (Node *) $6);
+				}
 			| a_expr BETWEEN b_expr AND b_expr			%prec BETWEEN
 				{
 					$$ = (Node *) makeA_Expr(AND, NIL,
@@ -5588,6 +5687,19 @@ a_expr:		c_expr									{ $$ = $1; }
 					n->subselect = $4;
 					$$ = (Node *)n;
 				}
+			| UNIQUE select_with_parens %prec Op
+				{
+					/* Not sure how to get rid of the parentheses
+					 * but there are lots of shift/reduce errors without them.
+					 *
+					 * Should be able to implement this by plopping the entire
+					 * select into a node, then transforming the target expressions
+					 * from whatever they are into count(*), and testing the
+					 * entire result equal to one.
+					 * But, will probably implement a separate node in the executor.
+					 */
+					elog(ERROR, "UNIQUE predicate is not yet implemented");
+				}
 			| r_expr
 				{ $$ = $1; }
 		;
@@ -5643,6 +5755,14 @@ b_expr:		c_expr
 				{ $$ = (Node *) makeA_Expr(OP, $2, $1, NULL); }
 			| b_expr IS DISTINCT FROM b_expr	%prec Op
 				{ $$ = (Node *) makeSimpleA_Expr(DISTINCT, "=", $1, $5); }
+			| b_expr IS OF '(' type_list ')'
+				{
+					$$ = (Node *) makeSimpleA_Expr(OF, "=", $1, (Node *) $5);
+				}
+			| b_expr IS NOT OF '(' type_list ')'
+				{
+					$$ = (Node *) makeSimpleA_Expr(OF, "!=", $1, (Node *) $6);
+				}
 		;
 
 /*
@@ -6139,6 +6259,16 @@ extract_list:
 			| /*EMPTY*/								{ $$ = NIL; }
 		;
 
+type_list:  type_list ',' Typename
+				{
+					$$ = lappend($1, $3);
+				}
+			| Typename
+				{
+					$$ = makeList1($1);
+				}
+		;
+
 /* Allow delimited string SCONST in extract_arg as an SQL extension.
  * - thomas 2001-04-12
  */
@@ -6186,6 +6316,7 @@ position_list:
  * SQL9x defines a specific syntax for arguments to SUBSTRING():
  * o substring(text from int for int)
  * o substring(text from int) get entire string from starting point "int"
+ * o substring(text from pattern) get entire string matching pattern
  * o substring(text for int) get first "int" characters of string
  * We also want to implement generic substring functions which accept
  * the usual generic list of arguments. So we will accept both styles
@@ -6511,8 +6642,8 @@ func_name:	function_name
 		;
 
 
-/* Constants
- * Include TRUE/FALSE for SQL3 support. - thomas 1997-10-24
+/*
+ * Constants
  */
 AexprConst: Iconst
 				{
@@ -6535,19 +6666,25 @@ AexprConst: Iconst
 					n->val.val.str = $1;
 					$$ = (Node *)n;
 				}
-			| BITCONST
+			| BCONST
 				{
 					A_Const *n = makeNode(A_Const);
 					n->val.type = T_BitString;
 					n->val.val.str = $1;
 					$$ = (Node *)n;
 				}
-			/* This rule formerly used Typename,
-			 * but that causes reduce conflicts with subscripted column names.
-			 * Now, separate into ConstTypename and ConstInterval,
-			 * to allow implementing the SQL92 syntax for INTERVAL literals.
-			 * - thomas 2000-06-24
-			 */
+			| XCONST
+				{
+					/* This is a bit constant per SQL99:
+					 * Without Feature F511, "BIT data type",
+					 * a <general literal> shall not be a
+					 * <bit string literal> or a <hex string literal>.
+					 */
+					A_Const *n = makeNode(A_Const);
+					n->val.type = T_BitString;
+					n->val.val.str = $1;
+					$$ = (Node *)n;
+				}
 			| ConstTypename Sconst
 				{
 					A_Const *n = makeNode(A_Const);
@@ -6563,8 +6700,8 @@ AexprConst: Iconst
 					n->val.type = T_String;
 					n->val.val.str = $2;
 					/* precision is not specified, but fields may be... */
-					if ($3 != -1)
-						n->typename->typmod = ((($3 & 0x7FFF) << 16) | 0xFFFF);
+					if ($3 != INTERVAL_FULL_RANGE)
+						n->typename->typmod = INTERVAL_TYPMOD(INTERVAL_FULL_PRECISION, $3);
 					$$ = (Node *)n;
 				}
 			| ConstInterval '(' Iconst ')' Sconst opt_interval
@@ -6578,7 +6715,7 @@ AexprConst: Iconst
 						elog(ERROR,
 						"INTERVAL(%d) precision must be between %d and %d",
 							 $3, 0, MAX_INTERVAL_PRECISION);
-					n->typename->typmod = ((($6 & 0x7FFF) << 16) | $3);
+					n->typename->typmod = INTERVAL_TYPMOD($3, $6);
 					$$ = (Node *)n;
 				}
 			| PARAM opt_indirection
