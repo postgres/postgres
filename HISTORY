@@ -27,11 +27,12 @@ Reduce COPY IN lock level (Tom)
 Change libpqeasy to use PQconnectdb() style parameters (Bruce)
 Fix pg_dump to handle OID indexes (Tom)
 Fix small memory leak (Tom)
-Solaris fix for createdb/dropdb
+Solaris fix for createdb/dropdb (Tatsuo)
 Fix for non-blocking connections (Alfred Perlstein)
 Fix improper recovery after RENAME TABLE failures (Tom)
 Copy pg_ident.conf.sample into /lib directory in install (Bruce)
-
+Add SJIS UDC (NEC selection IBM kanji) support (Eiji Tokuya)
+Fix too long syslog message (Tatsuo)
 
   ------------------------------------------------------------------------
                                                                Release 7.0
