@@ -9,7 +9,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Connection.java,v 1.27.2.3 2004/06/22 09:37:03 jurka Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Connection.java,v 1.27.2.4 2004/08/11 06:56:00 jurka Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -460,7 +460,8 @@ public abstract class AbstractJdbc1Connection implements BaseConnection
 					throw new PSQLException("postgresql.con.backend", PSQLState.CONNECTION_UNABLE_TO_CONNECT, PSQLException.parseServerError(encoding.decode(pgStream.Receive(l_elen-4))));
 				case 'N':
 					int l_nlen = pgStream.ReceiveIntegerR(4);
-					addWarning(encoding.decode(pgStream.Receive(l_nlen-4)));
+					PSQLException notify = PSQLException.parseServerError(encoding.decode(pgStream.Receive(l_nlen-4)));
+					addWarning(notify.getMessage());
 					break;
 			    case 'S':
 					//TODO: handle parameter status messages

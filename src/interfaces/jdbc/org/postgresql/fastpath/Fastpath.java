@@ -6,7 +6,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/fastpath/Attic/Fastpath.java,v 1.16.2.3 2004/02/03 05:43:22 jurka Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/fastpath/Attic/Fastpath.java,v 1.16.2.4 2004/08/11 06:56:00 jurka Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -142,7 +142,8 @@ public class Fastpath
 						// Notice from backend
 					case 'N':
 						int l_nlen = stream.ReceiveIntegerR(4);
-						conn.addWarning(conn.getEncoding().decode(stream.Receive(l_nlen-4)));
+						PSQLException notify = PSQLException.parseServerError(conn.getEncoding().decode(stream.Receive(l_nlen-4)));
+						conn.addWarning(notify.getMessage());
 						break;
 
 					case 'V':
