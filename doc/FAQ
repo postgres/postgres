@@ -1,13 +1,10 @@
 
-              FREQUENTLY ASKED QUESTIONS (FAQ) FOR POSTGRESQL 
+                Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   
-   
-   Last updated: Thu Mar 6 17:44:07 EST 1997
-   Version: 6.0
+   Last updated: Tue May 13 23:15:59 EDT 1997
+   Version: 6.1
    
    Current maintainer: Bruce Momjian (maillist@candle.pha.pa.us)
-   
    
    The most recent version of this document can be viewed at the
    postgreSQL Web site, http://postgreSQL.org.
@@ -20,15 +17,13 @@
    
    Changes in this version (* = modified, + = new):
      * 3.42) What is Genetic Query Optimization?
+     * 3.43) I am running Solaris and my dates display wrong. Why?
        
-   
      _________________________________________________________________
-   
-   
-   
+                                      
 Questions answered:
 
-   1) General questions
+  1) General questions
   
    1.1) What is PostgreSQL?
    1.2) What does PostgreSQL run on?
@@ -54,9 +49,8 @@ Questions answered:
    /usr/local/pgsql?
    2.5) When I run postmaster, I get a Bad System Call core dumped
    message.
-   2.6) When I try to start the postmaster, I get IpcMemoryCreate errors.
-   2.7) I have changed a source file, but a recompile does not see the
-   change.
+   2.6) I get the error message "obj/fmgr.h: No such file or directory"
+   2.7) When I try to start the postmaster, I get IpcMemoryCreate errors.
    2.8) I have changed a source file, but a recompile does not see the
    change?
    
@@ -115,6 +109,7 @@ Questions answered:
    3.40) What is an oid? What is a tid?
    3.41) What is the meaning of some of the terms used in Postgres?
    3.42) What is Genetic Query Optimization?
+   3.42) I am running Solaris and my dates display wrong. Why?
    
   4) Questions about extending PostgreSQL
   
@@ -129,13 +124,11 @@ Questions answered:
   
    5.1) How do I make a bug report?
      _________________________________________________________________
-   
+                                      
 Section 1: General Questions
 
   1.1) What is PostgreSQL?
   
-   
-   
    PostgreSQL is an enhancement of the POSTGRES database management
    system, a next-generation DBMS research prototype. While PostgreSQL
    retains the powerful data model and rich data types of POSTGRES, it
@@ -145,8 +138,8 @@ Section 1: General Questions
    PostgreSQL development is being performed by a team of Internet
    developers who all subscribe to the PostgreSQL development mailing
    list. The current coordinator is Marc G. Fournier
-   (scrappy@postgreSQL.org). (See below on how to join). This team is
-   now responsible for all current and future development of PostgreSQL.
+   (scrappy@postgreSQL.org). (See below on how to join). This team is now
+   responsible for all current and future development of PostgreSQL.
    
    The authors of PostgreSQL 1.01 were Andrew Yu and Jolly Chen. Many
    others have contributed to the porting, testing, debugging and
@@ -162,14 +155,12 @@ Section 1: General Questions
    
   1.2) What does PostgreSQL run on?
   
-   
-   
    The authors have compiled and tested PostgreSQL on the following
    platforms(some of these compiles require gcc 2.7.0):
      * aix - IBM on AIX 3.2.5
      * alpha - DEC Alpha AXP on OSF/1 2.0
      * BSD44_derived - OSs derived from 4.4-lite BSD (NetBSD, FreeBSD)
-     * bsdi - BSD/OS 2.0, 2.01, 2.1
+     * bsdi - BSD/OS 2.0, 2.01, 2.1, 3.0
      * dgux - DG/UX 5.4R3.10
      * hpux - HP PA-RISC on HP-UX 9.0
      * i386_solaris - i386 Solaris
@@ -184,17 +175,11 @@ Section 1: General Questions
    The following platforms have known problems/bugs:
      * nextstep - Motorola MC68K or Intel x86 on NeXTSTEP 3.2
        
-   
-   
   1.3) Where can I get PostgreSQL?
   
-   
-   
-    The primary anonymous ftp site for PostgreSQL is:
+   The primary anonymous ftp site for PostgreSQL is:
      * ftp://ftp.postgreSQL.org/pub
        
-   
-   
    A mirror site exists at:
      * ftp://postgres95.vnet.net/pub/postgres95
      * ftp://ftp.luga.or.at/pub/postgres95
@@ -204,8 +189,6 @@ Section 1: General Questions
        
   1.4) What's the copyright on PostgreSQL?
   
-   
-   
    PostgreSQL is subject to the following COPYRIGHT.
    
    PostgreSQL Data Base Management System
@@ -231,10 +214,8 @@ Section 1: General Questions
    CALIFORNIA HAS NO OBLIGATIONS TO PROVIDE MAINTENANCE, SUPPORT,
    UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
    
-  1.5) Support for PostgreSQL 
+  1.5) Support for PostgreSQL
   
-   
-   
    There is no official support for PostgreSQL from the original
    maintainers or from University of California, Berkeley. It is
    maintained through volunteer effort only.
@@ -248,8 +229,6 @@ Section 1: General Questions
         subscribe
         end
 
-   
-   
    to questions-request@postgreSQL.org.
    
    There is also a digest list available. To subscribe to this list, send
@@ -270,26 +249,19 @@ Section 1: General Questions
    with a BODY of:
    
 
-
         subscribe
         end
 
-   
-   
    Additional information about PostgreSQL can be found via the
    PostgreSQL WWW home page at:
    
      http://postgreSQL.org
      
-   
-   
   1.6) Latest release of PostgreSQL
   
-   
-   
    The latest release of PostgreSQL is version 6.0, which was released on
-   January 31, 1997. For information about what is new in 6.0, see our
-   TODO list on our WWW page.
+   January 31, 1997. 6.1 is scheduled for release soon. For information
+   about what is new in 6.1, see our TODO list on our WWW page.
    
    We expect a 7.0 release in several months that will remove time-travel
    and reduce by 50% the size of on-disk system columns maintained for
@@ -298,8 +270,6 @@ Section 1: General Questions
    
   1.7) Is there a commercial version of PostgreSQL?
   
-   
-   
    Illustra Information Technology (a wholly owned subsidiary of Informix
    Software, Inc.) sells an object-relational DBMS called Illustra that
    was originally based on postgres. Illustra has cosmetic similarities
@@ -309,8 +279,6 @@ Section 1: General Questions
    
   1.8) What documentation is available for PostgreSQL?
   
-   
-   
    A user manual, manual pages, and some small test examples are included
    in the distribution. The sql and built-in manual pages are
    particularly important.
@@ -320,24 +288,18 @@ Section 1: General Questions
    
   1.9) What version of SQL does PostgreSQL use?
   
-   
-   
    PostgreSQL supports a subset of SQL-92. It has most of the important
    constructs but lacks some of the functionality. The most visible
    differences are:
      * no support for nested subqueries
      * no HAVING clause under a GROUP BY
        
-   
-   
    On the other hand, you get to create user-defined types, functions,
    inheritance etc. If you're willing to help with PostgreSQL coding,
    eventually we can also add the missing features listed above.
    
   1.10) Does PostgreSQL work with databases from earlier versions of postgres?
   
-   
-   
    PostgreSQL v1.09 is compatible with databases created with v1.01.
    Those upgrading from 1.0 should read the directions in the
    MIGRATION_1.0_TO_1.02 directory.
@@ -346,68 +308,49 @@ Section 1: General Questions
    
   1.11) How many people use PostgreSQL?
   
-   
-   
    Since we don't have any licensing or registration scheme, it's
    impossible to tell. We do know hundreds copies of PostgreSQL v1.* have
    been downloaded, and that there many hundreds of subscribers to the
    mailing lists.
    
-   
      _________________________________________________________________
-   
-Section 2: Installation Questions 
+                                      
+Section 2: Installation Questions
 
-   
-   
   2.1) initdb doesn't run
   
-   
-   
      * check to see that you have the proper paths set
      * check that the 'postgres' user owns all the right files
      * ensure that there are files in $PGDATA/files, and that they are
        non-empty. If they aren't, then "gmake install" failed for some
        reason
        
-   
-   
   2.2) when I start up the postmaster, I get "FindBackend: could not find a
   backend to execute..." "postmaster: could not find backend to execute..."
   
-   
-   
    You probably do not have the right path set up. The 'postgres'
    executable needs to be in your path.
    
   2.3) The system seems to be confused about commas, decimal points, and date
   formats.
   
-   
-   
    Check your locale configuration. PostgreSQL uses the locale settings
    of the user that ran the postmaster process. Set those accordingly for
    your operating environment.
    
   2.4) How do I install PostgreSQL somewhere other than /usr/local/pgsql?
   
-   
-   
    You need to edit Makefile.global and change POSTGRESDIR accordingly,
    or create a Makefile.custom and define POSTGRESDIR there.
    
   2.5) When I run postmaster, I get a Bad System Call core dumped message.
   
-   
-   
    It could be a variety of problems, but first check to see that you
    have system V extensions installed on your kernel. PostgreSQL requires
    kernel support for shared memory.
    
   2.6) I get the error message "obj/fmgr.h: No such file or directory"
   
-   
-   
    This indicates that you did not generate the file fmgr.h properly.
    Something failed in the running of the
    src/backend/utils/Gen_fmgrtab.sh script. Check to see the paths used
@@ -415,8 +358,6 @@ Section 2: Installation Questions
    
   2.7) When I try to start the postmaster, I get IpcMemoryCreate errors.
   
-   
-   
    You either do not have shared memory configured properly in kernel or
    you need to enlarge the shared memory available in the kernel. The
    exact amount you need depends on your architecture and how many
@@ -425,22 +366,15 @@ Section 2: Installation Questions
    
   2.8) I have changed a source file, but a recompile does not see the change?
   
-   
-   
    The Makefiles do not have the proper dependencies for include files.
    You have to do a 'make clean' and then another 'make'.
    
-   
      _________________________________________________________________
-   
-Section 3: PostgreSQL Features 
+                                      
+Section 3: PostgreSQL Features
 
-   
-   
   3.1) How do I specify a KEY or other constraints on a column?
   
-   
-   
    Column constraints are not supported in PostgreSQL. As a consequence,
    the system does not check for duplicates.
    
@@ -449,29 +383,21 @@ Section 3: PostgreSQL Features
    
   3.2) Does PostgreSQL support nested subqueries?
   
-   
-   
    Subqueries are not implemented, but they can be simulated using sql
    functions.
    
   3.3) How do I define a unique indices?
   
-   
-   
    PostgreSQL 6.0 supports unique indices.
    
   3.4) I've having a lot of problems using rules.
   
-   
-   
    Currently, the rule system in PostgreSQL is mostly broken. It works
    enough to support the view mechanism, but that's about it. Use
    PostgreSQL rules at your own peril.
    
   3.5) I can't seem to write into the middle of large objects reliably.
   
-   
-   
    The Inversion large object system in PostgreSQL is also mostly broken.
    It works well enough for storing large wads of data and reading them
    back out, but the implementation has some underlying problems. Use
@@ -480,8 +406,6 @@ Section 3: PostgreSQL Features
   3.6) Does PostgreSQL have a graphical user interface? A report generator? A
   embedded query language interface?
   
-   
-   
    No. No. No. Not in the official distribution at least. Some users have
    reported some success at using 'pgbrowse' and 'onyx' as frontends to
    PostgreSQL. Several contributions are working on tk based frontend
@@ -489,8 +413,6 @@ Section 3: PostgreSQL Features
    
   3.7) How can I write client applications to PostgreSQL?
   
-   
-   
    PostgreSQL supports a C-callable library interface called libpq as
    well as a Tcl-based library interface called libtcl.
    
@@ -499,15 +421,11 @@ Section 3: PostgreSQL Features
    
   3.8) How do I prevent other hosts from accessing my PostgreSQL backend?
   
-   
-   
    Use host-based authentication by modifying the file $PGDATA/pg_hba
    accordingly.
    
   3.9) How do I set up a pg_group?
   
-   
-   
    Currently, there is no easy interface to set up user groups. You have
    to explicitly insert/update the pg_group table. For example:
 
@@ -519,8 +437,6 @@ Section 3: PostgreSQL Features
         CHANGE
         jolly=>
 
-   
-   
    The fields in pg_group are:
      * groname: the group name. This a char16 and should be purely
        alphanumeric. Do not include underscores or other punctuation.
@@ -529,12 +445,8 @@ Section 3: PostgreSQL Features
      * grolist: the list of pg_user id's that belong in the group. This
        is an int4[].
        
-   
-   
   3.10) What is the exact difference between binary cursors and normal cursors?
   
-   
-   
    Normal cursors return data back in ASCII format. Since data is stored
    natively in binary format, the system must do a conversion to produce
    the ASCII format. In addition, ASCII formats are often large in size
@@ -556,8 +468,6 @@ Section 3: PostgreSQL Features
    
   3.11) Why doesn't the != operator work?
   
-   
-   
    SQL specifies <> as the inequality operator, and that is what we have
    defined for the built-in types.
    
@@ -565,8 +475,6 @@ Section 3: PostgreSQL Features
    
   3.12) What is a R-tree index and what is it used for?
   
-   
-   
    An r-tree index is used for indexing spatial data. A hash index can't
    handle range searches. A B-tree index only handles range searches in a
    single dimension. R-tree's can handle multi-dimensional data. For
@@ -585,8 +493,6 @@ Section 3: PostgreSQL Features
    
   3.13) What is the maximum size for a tuple?
   
-   
-   
    Tuples are limited to 8K bytes. Taking into account system attributes
    and other overhead, one should stay well shy of 8,000 bytes to be on
    the safe side. To use attributes larger than 8K, try using the large
@@ -597,8 +503,6 @@ Section 3: PostgreSQL Features
    
   3.14) I defined indices but my queries don't seem to make use of them. Why?
   
-   
-   
    PostgreSQL does not automatically maintain statistics. One has to make
    an explicit 'vacuum' call to update the statistics. After statistics
    are updated, the optimizer has a better shot at using indices. Note
@@ -619,8 +523,6 @@ Section 3: PostgreSQL Features
    
   3.15) Are there ODBC drivers for PostgreSQL?
   
-   
-   
    There are two ODBC drivers available, PostODBC and OpenLink ODBC.
    
    For all people being interested in PostODBC, there are now two mailing
@@ -628,14 +530,10 @@ Section 3: PostgreSQL Features
      * postodbc-users@listserv.direct. net
      * postodbc-developers@listse rv.direct.net
        
-   
-   
    these lists are ordinary majordomo mailing lists. You can subscribe by
    sending a mail to:
      * majordomo@listserv.direct.net
        
-   
-   
    OpenLink ODBC is currently in beta under Linux. You can get it from
    http://www.openlinksw.com/postgres.html. It works with our standard
    ODBC client software so you'll have Postgres ODBC available on every
@@ -647,8 +545,6 @@ Section 3: PostgreSQL Features
    
   3.16) How do I use postgres for multi-dimensional indexing (> 2 dimensions)?
   
-   
-   
    Builtin R-Trees can handle polygons and boxes. In theory, R-trees can
    be extended to handle higher number of dimensions. In practice,
    extending R-trees require a bit of work and we don't currently have
@@ -657,8 +553,6 @@ Section 3: PostgreSQL Features
   3.17) How do I do regular expression searches? case-insensitive regexp
   searching?
   
-   
-   
    PostgreSQL supports the SQL LIKE syntax as well as more general
    regular expression searching with the ~ operator. The !~ is the
    negated regexp operator. ~* and !~* are the case-insensitive regular
@@ -666,8 +560,6 @@ Section 3: PostgreSQL Features
    
   3.18) I can't access the database as the 'root' user.
   
-   
-   
    You should not create database users with user id 0(root). They will
    be unable to access the database. This is a security precaution
    because of the ability of any user to dynamically link object modules
@@ -676,8 +568,6 @@ Section 3: PostgreSQL Features
   3.19) I experienced a server crash during a vacuum. How do I remove the lock
   file?
   
-   
-   
    If the server crashes during a vacuum command, chances are it will
    leave a lock file hanging around. Attempts to re-run the vacuum
    command result in
@@ -685,14 +575,12 @@ Section 3: PostgreSQL Features
 
         WARN:can't create lock file -- another vacuum cleaner running?
 
-   
-   
    If you are sure that no vacuum is actually running, you can remove the
    file called "pg_vlock" in your database directory (which is
    $PGDATA/base/<dbName>)
    
   3.20) What is the difference between the various character types?
-
+  
 Type            Internal Name   Notes
 --------------------------------------------------
 CHAR            char            1 character   }
@@ -705,8 +593,6 @@ VARCHAR(#)      varchar         size specifies maximum length, no padding
 TEXT            text            length limited only by maximum tuple length
 BYTEA           bytea           variable-length array of bytes
 
-   
-   
    Remember, you need to use the internal name when creating indexes on
    these fields or when doing other internal operations.
    
@@ -718,27 +604,18 @@ BYTEA           bytea           variable-length array of bytes
    
   3.21) In a query, how do I detect if a field is NULL?
   
-   
-   
    PostgreSQL has two builtin keywords, "isnull" and "notnull" (note no
    spaces). Version 1.05 and later and 6.* understand IS NULL and IS NOT
    NULL.
    
   3.22) How do I see how the query optimizer is evaluating my query?
   
-   
-   
    Place the word 'EXPLAIN' at the beginning of the query, for example:
-
 
         EXPLAIN SELECT * FROM table1 WHERE age = 23;
 
-   
-   
   3.23) How do I create a serial field?
   
-   
-   
    Postgres does not allow the user to specifiy a user column as type
    SERIAL. Instead, you can use each row's oid field as a unique value.
    However, if you need to dump and reload the database, you need to be
@@ -747,23 +624,17 @@ BYTEA           bytea           variable-length array of bytes
    
    Another valid way of doing this is to create a function:
 
-
         create table my_oids (f1 int4);
         insert into my_oids values (1);
         create function new_oid () returns int4 as
                 'update my_oids set f1 = f1 + 1;  select f1 from my_oids; '
         language 'sql';
 
-   
-   
    then:
-
 
         create table my_stuff (my_key int4, value text);
         insert into my_stuff values (new_oid(), 'hello');
 
-   
-   
    However, keep in mind there is a race condition here where one server
    could do the update, then another one do an update, and they both
    could select the same new id. This statement should be performed
@@ -771,16 +642,14 @@ BYTEA           bytea           variable-length array of bytes
    
   3.24) How do I create a multi-column index?
   
+   In 6.0, you can not directly create a multi-column index using create
+   index. You need to define a function which acts on the multiple
+   columns, then use create index with that function.
    
-   
-   You can not directly create a multi-column index using create index.
-   You need to define a function which acts on the multiple columns, then
-   use create index with that function.
+   In 6.1, this feature is available.
    
   3.25) What are the temp_XXX files in my database directory?
   
-   
-   
    They are temp_ files generated by the query executor. For example, if
    a sort needs to be done to satisfy an ORDER BY, some temp files are
    generated as a result of the sort.
@@ -790,8 +659,6 @@ BYTEA           bytea           variable-length array of bytes
    
   3.26) Why are my table files not getting any smaller after a delete?
   
-   
-   
    If you run vacuum in pre-6.0, unused rows will be marked for reuse,
    but the file blocks are not released.
    
@@ -799,24 +666,16 @@ BYTEA           bytea           variable-length array of bytes
    
   3.27) Why can't I connect to my database from another machine?
   
-   
-   
    The default configuration allows only connections from tcp/ip host
    localhost. You need to add a host entry to the file pgsql/data/pg_hba.
-   
    
   3.28) I get the error 'default index class unsupported' when creating an
   index. How do I do it?
   
-   
-   
    You probably used:
-
 
         create index idx1 on person using btree (name);
 
-   
-   
    PostgreSQL indexes are extensible, and therefore in pre-6.0, you must
    specify a class_type when creating an index. Read the manual page for
    create index (called create_index).
@@ -826,40 +685,30 @@ BYTEA           bytea           variable-length array of bytes
    
   3.29) Why does creating an index crash the backend server?
   
-   
-   
    You have probably defined an incorrect *_ops type class for the field
    you are indexing.
    
   3.30) How do I specify a decimal constant as a float8, or a string as a text?
   Why am I getting poor precision?
   
-   
-   
    Use the :: operator. It is needed only when the default promotion
    rules fail. i.e.:
 
 
         insert into tab1 values (4.23::float8, '2343'::text)
 
-   
-   
    The default floating-point constant is a float4 in releases prior to
    1.05. Later releases default to float8.
    
   3.31) How do I find out what indexes or operations are defined in the
   database?
   
-   
-   
    Run the file pgsql/src/tutorial/syscat.source. It illustrates many of
    the 'select's needed to get information out of the database system
    tables.
    
   3.32) My database is corrupt. I can't do anything. What should I do?
   
-   
-   
    The 1.02 release has a README file and utility that describes a
    possible cause of the problem and a workaround.
    
@@ -867,8 +716,6 @@ BYTEA           bytea           variable-length array of bytes
    
   3.33) Createdb, destroydb, createuser,destroyuser don't run. Why?
   
-   
-   
    Release 1.02 does not have this problem.
    
    The 1.01 release of PostgreSQL uses a variable called PAGER to filter
@@ -879,8 +726,6 @@ BYTEA           bytea           variable-length array of bytes
   'createuser' return 'unexpected last match in input()'? Why does pg_dump
   fail?
   
-   
-   
    You have compile postgres with flex version 2.5.3. There is bug in
    this version of flex. Use flex version 2.5.2 or flex 2.5.4 instead.
    There is a doc/README.flex file which will properly patch the flex
@@ -888,15 +733,11 @@ BYTEA           bytea           variable-length array of bytes
    
   3.35) All my servers crash under concurrent table access. Why?
   
-   
-   
    This problem can be caused by a kernel that is not configured to
    support semaphores.
    
   3.36) What tools are available for hooking postgres to Web pages?
   
-   
-   
    For web integration, PHP/FI is an excellent interface. The URL for
    that is http://www.vex.net/php/
    
@@ -906,15 +747,11 @@ BYTEA           bytea           variable-length array of bytes
    An example of using WWW with C to talk to Postgres is can be tried at:
      * http://postgreSQL.org/~mlc
        
-   
-   
    An WWW gatway based on WDB using perl can be downloaded from:
      * http://www.eol.ists.ca/~dunlop/wdb -p95
        
   3.37) What is the time-warp feature and how does it relate to vacuum?
   
-   
-   
    PostgreSQL handles data changes differently than most database
    systems. When a row is changed in a table, the original row is marked
    with the time it was changed, and a new row is created with the
@@ -926,8 +763,6 @@ BYTEA           bytea           variable-length array of bytes
         SELECT *
         FROM employees ['July 24, 1996 09:00:00']
 
-   
-   
    displays employee rows in the table at the specified time. You can
    specify intervals like [date,date], [date,], [,date], or [,]. This
    last option accesses all rows that ever existed.
@@ -946,8 +781,6 @@ BYTEA           bytea           variable-length array of bytes
    
   3.38) How do I tune the database engine for better performance?
   
-   
-   
    There are two things that can be done. You can use Openlink's option
    to disable fsync() by starting the postmaster with a '-o -F' option.
    This will prevent fsync()'s from flushing to disk after every
@@ -960,8 +793,6 @@ BYTEA           bytea           variable-length array of bytes
    
   3.39) What debugging features are available in PostgreSQL?
   
-   
-   
    PostgreSQL has several features that report status information that
    can be valuable for debugging purposes.
    
@@ -977,8 +808,6 @@ BYTEA           bytea           variable-length array of bytes
         cd /usr/local/pgsql
         ./bin/postmaster >server.log 2>&1 &
 
-   
-   
    This will put a server.log file in the top-level PostgreSQL directory.
    This file can contain useful information about problems or errors
    encountered by the server. Postmaster has a -d option that allows even
@@ -1006,8 +835,6 @@ BYTEA           bytea           variable-length array of bytes
    
   3.40) What is an oid? What is a tid?
   
-   
-   
    Oids are Postgres's answer to unique row ids or serial columns. Every
    row that is created in Postgres gets a unique oid. All oids generated
    by initdb are less than 16384 (from backend/access/transam.h). All
@@ -1028,8 +855,6 @@ BYTEA           bytea           variable-length array of bytes
    
   3.41) What is the meaning of some of the terms used in Postgres?
   
-   
-   
    Some of the source code and older documentation use terms that have
    more common usage. Here are some:
      * row, record, tuple
@@ -1042,14 +867,10 @@ BYTEA           bytea           variable-length array of bytes
      * portal, cursor
      * range variable, table name, table alias
        
-   
-   
    Please let me know if you think of any more.
    
   3.42) What is Genetic Query Optimization?
   
-   
-   
    The GEQO module in PostgreSQL is intended to solve the query
    optimization problem of joining many tables by means of a Genetic
    Algorithm (GA). It allows the handling of large join queries through
@@ -1057,18 +878,20 @@ BYTEA           bytea           variable-length array of bytes
    
    For further information see README.GEQO <utesch@aut.tu-freiberg.de>.
    
+  3.43) I am running Solaris and my dates display wrong. Why?
+  
+   Gcc under Solaris has an bug when compiled with optimization level 2.
+   Edit 'configure', and change -O2 to -O, and recompile. If 'configure'
+   does not exist in your top level source directory, make the change to
+   Makefile.global.
    
      _________________________________________________________________
-   
-Section 4: Extending PostgreSQL 
+                                      
+Section 4: Extending PostgreSQL
 
-   
-   
   4.1) I wrote a user-defined function and when I run it in psql, it dumps
   core.
   
-   
-   
    The problem could be a number of things. Try testing your user-defined
    function in a stand alone test program first. Also, make sure you are
    not sending elog NOTICES when the front-end is expecting data, such as
@@ -1077,8 +900,6 @@ Section 4: Extending PostgreSQL
   4.2) I get messages of the type NOTICE:PortalHeapMemoryFree: 0x402251d0 not
   in alloc set!
   
-   
-   
    You are pfree'ing something that was not palloc'ed. When writing
    user-defined functions, do not include the file "libpq-fe.h". Doing so
    will cause your palloc to be a malloc instead of a free. Then, when
@@ -1086,31 +907,22 @@ Section 4: Extending PostgreSQL
    
   4.3) I've written some nifty new types and functions for PostgreSQL.
   
-   
-   
    Please share them with other PostgreSQL users. Send your extensions to
    mailing list, and they will eventually end up in the contrib/
    subdirectory.
    
   4.4) How do I write a C function to return a tuple?
   
-   
-   
    This requires extreme wizardry, so extreme that the authors have not
    ever tried it, though in principle it can be done. The short answer is
    ... you can't. This capability is forthcoming in the future.
    
-   
      _________________________________________________________________
-   
-Section 5: Bugs 
+                                      
+Section 5: Bugs
 
-   
-   
   5.1) How do I make a bug report?
   
-   
-   
    Check the current FAQ at http://postgreSQL.org
    
    Also check out our ftp site ftp://ftp.postgreSQL.org/pub to see if
@@ -1119,6 +931,4 @@ Section 5: Bugs
    You can also fill out the "bug-template" file and send it to:
      * bugs@postgreSQL.org
        
-   
-   
    This is the address of the developers mailing list.

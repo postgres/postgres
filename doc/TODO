@@ -1,16 +1,16 @@
 ====================================================
 TODO list (FAQ) for PostgreSQL
 ====================================================
-last updated:		Sat Mar  1 21:28:10 EST 1997
+last updated:		Tue May 13 23:16:50 EDT 1997
 
 current maintainer:	Bruce Momjian (maillist@candle.pha.pa.us)
 
 The most recent version of this document can be viewed at
 the postgreSQL WWW site, http://www.postgreSQL.org.
 
-Changes included in the 6.0 release are listed at the end of this page.
+Dashed items(-) are being worked on for the 6.1 release.
 
-Dashed items(-) are being worked on for the post-6.0 release.
+THE CHANGES FOR 6.1 APPEAR AT THE END OF THIS DOCUMENT
 
 Developers who have claimed items are:
 	Bruce is Bruce Momjian<maillist@candle.pha.pa.us>
@@ -20,8 +20,15 @@ Developers who have claimed items are:
 	Darren is Darren King <darrenk@insightdist.com>
 	Edmund is Edmund Mergl <E.Mergl@bawue.de>
 	Erich Stamberger <eberger@gewi.kfunigraz.ac.at>
+	Jun is Jun Kuwamura <juk@rccm.co.jp>
 	Kurt is "Kurt J. Lidl" <lidl@va.pubnix.com>
  	Martin is Martin S. Utesch <utesch@aut.tu-freiberg.de>
+	Oleg is Oleg Bartunov <oleg@sai.msu.su>
+	Paul is Paul M. Aoki <aoki@CS.Berkeley.EDU>
+	Raymond is Raymond Toy <toy@rtp.ericsson.se>
+	Soo-Ho Ok <shok@detc.dongeui-tc.ac.kr>
+	Stefan Simkovics <ssimkovi@rainbow.studorg.tuwien.ac.at>
+	Sven is Sven Verdoolaege <skimo@breughel.ufsia.ac.be>
 	Thomas is Thomas Lockhart <tgl@mythos.jpl.nasa.gov>
 	Vadim is "Vadim B. Mikheev" <vadim@sable.krasnoyarsk.su>
 	Vivek is Vivek Khera <khera@kci.kciLink.com>
@@ -51,7 +58,7 @@ Fix UPDATE key_table SET keyval=max(reftab.NUM)+1 WHERE tblname='reftab'
 
 ENHANCEMENTS
 ------------
-Add full ANSI SQL capabilities
+Add full ANSI SQL capabilities (Stefan)
 	add subselects, possibility using temporary SQL functions
 	Implement HAVING clause
 	Implement EXISTS qualifier
@@ -69,12 +76,13 @@ Add full ANSI SQL capabilities
 	add the concept of dataspaces
 	allow conversion type casts on SELECT target fields
 Allow compression of large fields or a compressed field type
-Fix the rules system(Jan?)
+Fix the rules system(Jan?,Soo-Ho)
 	robust
 	making INSTEAD rules work
 	add CONSTRAINT
 Full set of text operations and functions
-	word searches, concat, upper/lower(), max() on text, char
+-	upper/lower()
+	word searches, concat,max() on text, char
 Replace table-level locking with row or page-level locking(Vadim)
 Large objects
 	overwriting blocks has problems
@@ -82,11 +90,11 @@ Large objects
 	Fix large object mapping scheme
 	not to stuff everything as files in a single directory
 Better interface for adding to pg_group
-Make multi-field indexes easier to create
+-Make multi-field indexes easier to create(Vadim)
 	allow optimizer to effectively use parameters without accessing table
-Add int8 type
-Add MONEY/DECIMAL type with defined precision
-Add table comments
+-Add int8 type(Thomas)
+-Add MONEY/DECIMAL type(Thomas)
+Make MONEY/DECIMAL have a defined precision
 Add support for tables >2G, or test current version
 Incorporate the PERL PG95 interface library into source tree(Edmund)
 Threaded version of the server or libpq
@@ -100,8 +108,9 @@ remove time-travel feature(Vadim)
 reduce system column overhead(Vadmin)
 remove pg_time table(Vadim)
 allow row re-use without vacuum, maybe?(Vadim)
-split apart row removal function from statistics function
+-split apart row removal function from statistics function(Vadim)
 can't vacuum large objects
+can't reduce index file size with vacuum
 Remove restriction that ORDER BY field must be in SELECT list(?)
 Allow queries about owner of datbases, tables like:
         SELECT u.usesysid FROM postgres.pg_user u;
@@ -117,17 +126,20 @@ Remove stale files upon startup(Vivek)
 Add command to show privileges
 Allow INSERT INTO ... SELECT to convert column types
 Add syslog functionality
-Allow aggregate for All types, like count(Darren)
+Allow aggregate for all types, like count(Darren)
 Improve optimizer plan choice(Darren)
 Add STDDEV/VARIANCE() function for standard deviation computation/variance
-Add upper/lower functions
 Add table/column/function discription table indexed by oid
 -make all identifiers case-insensitive(Bruce)
 add pg_type attribute to identify types that need length (bpchar, varchar)
 add UNIQUE capability to non-btree indexes
-allow GROUP BY on columns that are functions
-add non-ascii collating strings with strcoll() and setlocale()
-new DATE routines (Thomas)
+-allow GROUP BY on columns that on functions(Vadim)
+-add non-ascii collating strings with strcoll() and setlocale (Oleg)
+-new DATE routines (Thomas)
+-index NULL fields(Vadim)
+-Add SERIAL column type(Vadim)
+-Add multi-column indexes(Vadim)
+-Add SET VAR TO command
 
 PERFORMANCE
 -----------
@@ -153,7 +165,7 @@ Allow indexes to be used with OR clauses(Vadim)
 
 DOCUMENTATION
 -------------
-Update usermanual source
+Update usermanual source(many)
 remove time-travel in documentation(Bruce)
 added features used in grammer but not in docs, like :: and CAST
 add DECLARE manual page
@@ -161,113 +173,73 @@ add DECLARE manual page
 PORTABILITY
 -----------
 Change c.h "Index" and "bool" so they do not conflict with c++
-
+ 
 
 ---------------------------------------------------------------------------
 
-			CHANGES IN 6.0 RELEASE
-Bug Fixes
----------
-ALTER TABLE bug - running postgress process needs to re-read table definition
-Allow vacuum to be run on one table or entire database(Bruce)
-Array fixes
-Fix array over-runs of memory writes(Kurt)
-Fix elusive btree range/non-range bug(Dan)
-Fix for hash indexes on some types like time and date
-Fix for pg_log size explosion
-Fix permissions on lo_export()(Bruce)
-Fix unitialized reads of memory(Kurt)
-Fixed ALTER TABLE ... char(3) bug(Bruce)
-Fixed a few small memory leaks
-Fixed EXPLAIN handling of options and changed full_path option name
-Fixed output of group acl permissions
-Memory leaks (hunt and destroy with tools like Purify(Kurt)
-Minor improvements to rules system
-NOTIFY fixes
-New asserts for run-checking
-Overhauled parser/analyze code to properly report errors and increase speed
-Pg_dump -d now handles NULL's properly(Bruce)
-Prevent SELECT NULL from crashing server (Bruce)
-Properly report errors when INSERT ... SELECT columns did not match
-Properly report errors when insert column names were not correct
-Psql \g filename now works(Bruce)
-Psql fixed problem with multiple statements on one line with multiple outputs
-Removed duplicate system oid's
-SELECT * INTO TABLE . GROUP/ORDER BY gives unlink error if table exists(Bruce)
-Several fixes for queries that crashed the backend
-Starting quote in insert string errors(Bruce)
-Submiting an empty query now returns empty status, not just " " query(Bruce)
+                      CHANGES IN THE 6.1 RELEASE
 
-Enhancements
-------------
-Add EXPLAIN manual page(Bruce)
-Add UNIQUE index capability(Dan)
-Add hostname/user level access control rather than just hostname and user
-Add synonym of != for <>(Bruce)
-Allow "select oid,* from table"
-Allow BY,ORDER BY to specify columns by number, or by non-alias table.column(Bruce)
-Allow COPY from the frontend(Bryan)
-Allow GROUP BY to use alias column name(Bruce)
-Allow actual compression, not just reuse on the same page(Vadim)
-Allow installation-configuration option to auto-add all local users(Bryan)
-Allow libpq to distinguish between text value '' and null(Bruce)
-Allow non-postgres users with createdb privs to destroydb's
-Allow restriction on who can create C functions(Bryan)
-Allow restriction on who can do backend COPY(Bryan)
-Allow system to use oid index using constant without cast to oid(Bruce)
-Auto-cast numeric constants to type of non-constant(Bruce)
-Can shrink tables, pg_time and pg_log(Vadim & Erich)
-Change debug level 2 to print queries only, changed debug heading layout(Bruce)
-Change default decimal constant representation from float4 to float8(Bruce)
-European date format now set when postmaster is started
-Execute lowercase function names if not found with exact case
-Fixes for aggregate/GROUP processing, allow 'select sum(func(x),sum(x+y) from z'
-Gist now included in the distrubution(Marc)
-Idend authentication of local users(Bryan)
-Implement BETWEEN qualifier(Bruce)
-Implement IN qualifier(Bruce)
-Libpq has PQgetisnull()(Bruce)
-Libpq++ improvements
-New options to initdb(Bryan)
-Pg_dump allow dump of oid's(Bruce)
-Pg_dump create indexes after tables are loaded for speed(Bruce)
-Pg_dumpall dumps all databases, and the user table
-Pginterface additions for NULL values(Bruce)
-Prevent postmaster from being run as root
-Psql \h and \? is now readable(Bruce)
-Psql allow backslashed, semicolons anywhere on the line(Bruce)
-Psql changed command prompt for lines in query or in quotes(Bruce)
-Psql char(3) now displays as (bp)char in \d output(Bruce)
-Psql return code now more accurate(Bryan?)
-Psql updated help syntax(Bruce)
-Re-visit and fix vacuum(Vadim)
-Reduce size of regression diffs, remove timezone name difference(Bruce)
-Remove compile-time parameters to enable binary distributions(Bryan)
-Reverse meaning of HBA masks(Bryan)
-Secure Authentication of local users(Bryan)
-Speed up vacuum(Vadim)
-Vacuum now had VERBOSE option(Bruce)
+new configuration script(Marc)
+readline configuration option added(Marc)
+OS-specific configuration options removed(Marc)
+new OS-specific template files(Marc)
+no more need to edit Makefile.global(Marc)
+attribute optimization statistics(Bruce)
+re-arrange include files(Marc)
+much faster new btree bulk load code(Paul)
+BTREE UNIQUE added to bulk load code(Vadim) 
+new lock debug code(Massimo)
+packet length checking in library routines
+lock manager priority patch
+massing changes to libpg++(Leo)
+nextstep patches (Gregor Hoffleit)
+removed WIN32-specific code(Bruce)
+new GEQO optimizer speeds table multi-table optimization(Martin)
+removed postmaster -e option, now only postgres -e option (Bruce)
+check for under/over flow of float8(Bruce)
+multi-table join fix(Vadim)
+new WARN message for non-unique insert into unique key(Marc)
+update x=-3, no spaces, now valid(Bruce)
+remove case-sensitive identifier handling(Bruce,Thomas,Dan)
+SIGPIPE crash fix(Darren)
+debug backend now pretty-prints tree(Darren)
+new Oracle character functions(Edmund)
+new plaintext password functions(Dan)
+no such class or insufficient privilege changed to distinct messages(Dan)
+new ANSI timestamp function(Dan)
+new ANSI Time and Date types (Thomas)
+merge duplicate library code in front/backends(Martin)
+move large chunks of data in backend(Martin)
+multi-column btree indexes(Vadim)
+new SET var TO value command(Martin)
+now works with eBones, international Kerberos(Jun)
+large object fixes(Sven)
+allow btree indexes to handle NULLs(Vadim)
+timezone fixes(D'Arcy)
+more shared library support
+auto-udpate transaction status on reads(Dan)
+new locale settings for character types(Oleg)
+new SEQUENCE serial number generator(Vadim)
+select SUM(x) can return NULL on no rows(Thomas)
+internal optimizer, executor bug fixes(Vadim)
+fix problem where inner loop in < or <= has no rows(Vadim)
+prevent re-commuting join index clauses(Vadim)
+fix join clauses for multiple tables(Vadim)
+fix hash, hashjoin for arrays(Vadim)
+fix btree for abstime type(Vadim)
+GROUP BY function now possible(Vadim)
+re-organize regression test(Thomas,Marc)
+new optimizer operation weights(Vadim)
+new psql \z grant/permit option(Marc)
+new MONEY data type(D'Arcy)
+c++ include file cleanup(Bruce)
+tcp socket communication speed improved(Vadim)
+large object fixes(Raymond)
+new VACUUM option for attribute statistics, and for certain columns (Vadim)
+many geometric type improvements(Thomas,Keith)
+additional regression tests(Thomas)
+new datestyle variable(Thomas)
+more comparison operators for sorting types(Thomas)
+new conversion functions(Thomas)
+new more compact btree format(Vadim)
 
-Source tree changes
--------------------
-All functions now have prototypes that are compared against the calls
-Allow asserts to be disabled easly from Makefile.global(Bruce)
-Change oid constants used in code to #define names
-Decoupled sparc and solaris defines(Kurt)
-Gcc -Wall compiles cleanly with warnings only from unfixable constructs
-Major include file reorganization/reduction(Marc)
-Make now stops on compile failure(Bryan)
-Makefile restructuring(Bryan, Marc)
-Merge bsdi_2_1 to bsdi(Bruce)
-Monitor program removed
-Name change from Postgres95 to PostgreSQL
-New config.h file(Marc, Bryan)
-PG_VERSION now set to 6.0 and used by postmaster
-Portability additions, including Ultrix, DG/UX, AIX, and Solaris
-Reduced the number of #define's, centeralized #define's
-Remove duplicate OIDS in system tables(Dan)
-Remove duplicate system catalog info or report mismatches(Dan)
-Removed many os-specific #define's
-Restructured object file generation/location(Bryan, Marc)
-Restructured port-specific file locations(Bryan, Marc)
-Unused/uninialized variables corrected
