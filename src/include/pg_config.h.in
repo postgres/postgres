@@ -357,6 +357,9 @@
 /* Define to 1 if you have the `snprintf' function. */
 #undef HAVE_SNPRINTF
 
+/* Define to 1 if you have spinlocks. */
+#undef HAVE_SPINLOCKS
+
 /* Define to 1 if you have the `srandom' function. */
 #undef HAVE_SRANDOM
 

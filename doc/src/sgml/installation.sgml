@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.141 2003/09/11 21:42:20 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.142 2003/09/12 16:10:26 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -895,6 +895,18 @@ JAVACMD=$JAVA_HOME/bin/java
        <listitem>
         <para>
 	 Build with Rendezvous support.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><option>--without-spinlocks</option></term>
+       <listitem>
+        <para>
+         Allows source builds to succeed without CPU spinlock support.
+         Lack of spinlock support will produce poor performance.
+         This option is to be used only by platforms without
+         spinlock support.
         </para>
        </listitem>
       </varlistentry>

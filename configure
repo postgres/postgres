@@ -869,6 +869,7 @@ Optional Packages:
   --with-rendezvous       build with Rendezvous support
   --with-openssl[=DIR]    build with OpenSSL support [/usr/local/ssl]
   --without-readline      do not use Readline
+  --without-spinlocks     do not use Spinlocks
   --without-zlib          do not use Zlib
   --with-gnu-ld           assume the C compiler uses GNU ld default=no
 
@@ -3494,6 +3495,36 @@ fi;
 
 
 #
+# Spinlocks
+#
+
+
+
+# Check whether --with-spinlocks or --without-spinlocks was given.
+if test "${with_spinlocks+set}" = set; then
+  withval="$with_spinlocks"
+
+  case $withval in
+    yes)
+      :
+      ;;
+    no)
+      :
+      ;;
+    *)
+      { { echo "$as_me:$LINENO: error: no argument expected for --with-spinlocks option" >&5
+echo "$as_me: error: no argument expected for --with-spinlocks option" >&2;}
+   { (exit 1); exit 1; }; }
+      ;;
+  esac
+
+else
+  with_spinlocks=yes
+
+fi;
+
+
+#
 # Zlib
 #
 
@@ -3521,7 +3552,6 @@ else
   with_zlib=yes
 
 fi;
-
 
 
 #
@@ -6060,6 +6090,19 @@ Use --without-zlib to disable zlib support." >&2;}
    { (exit 1); exit 1; }; }
 fi
 
+fi
+
+if test "$with_spinlocks" = yes; then
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_SPINLOCKS 1
+_ACEOF
+
+else
+  { echo "$as_me:$LINENO: WARNING:
+*** Not using spinlocks will cause poor performance." >&5
+echo "$as_me: WARNING:
+*** Not using spinlocks will cause poor performance." >&2;}
 fi
 
 if test "$with_krb4" = yes ; then

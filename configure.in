@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $Header: /cvsroot/pgsql/configure.in,v 1.286 2003/09/07 16:38:05 momjian Exp $
+dnl $Header: /cvsroot/pgsql/configure.in,v 1.287 2003/09/12 16:10:26 momjian Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -522,11 +522,16 @@ PGAC_ARG_BOOL(with, readline, yes,
               [  --without-readline      do not use Readline])
 
 #
+# Spinlocks
+#
+PGAC_ARG_BOOL(with, spinlocks, yes,
+              [  --without-spinlocks     do not use Spinlocks])
+
+#
 # Zlib
 #
 PGAC_ARG_BOOL(with, zlib, yes,
               [  --without-zlib          do not use Zlib])
-
 
 #
 # Elf
@@ -676,6 +681,13 @@ if test "$with_zlib" = yes; then
 If you have zlib already installed, see config.log for details on the
 failure.  It is possible the compiler isn't looking in the proper directory.
 Use --without-zlib to disable zlib support.])])
+fi
+
+if test "$with_spinlocks" = yes; then
+  AC_DEFINE(HAVE_SPINLOCKS, 1, [Define to 1 if you have spinlocks.])
+else
+  AC_MSG_WARN([
+*** Not using spinlocks will cause poor performance.])
 fi
 
 if test "$with_krb4" = yes ; then
