@@ -1,300 +1,339 @@
-QUERY: CREATE TABLE DEFAULT_TBL (i int DEFAULT 100,
+--
+-- CONSTRAINTS
+-- Constraints can be specified with:
+--  - DEFAULT clause
+--  - CHECK clauses
+--  - PRIMARY KEY clauses
+--  - UNIQUE clauses
+--
+--
+-- DEFAULT syntax
+--
+CREATE TABLE DEFAULT_TBL (i int DEFAULT 100,
 	x text DEFAULT 'vadim', f float8 DEFAULT 123.456);
-QUERY: INSERT INTO DEFAULT_TBL VALUES (1, 'thomas', 57.0613);
-QUERY: INSERT INTO DEFAULT_TBL VALUES (1, 'bruce');
-QUERY: INSERT INTO DEFAULT_TBL (i, f) VALUES (2, 987.654);
-QUERY: INSERT INTO DEFAULT_TBL (x) VALUES ('marc');
-QUERY: INSERT INTO DEFAULT_TBL VALUES (3, null, 1.0);
-QUERY: SELECT '' AS five, * FROM DEFAULT_TBL;
-five|  i|x     |      f
-----+---+------+-------
-    |  1|thomas|57.0613
-    |  1|bruce |123.456
-    |  2|vadim |987.654
-    |100|marc  |123.456
-    |  3|      |      1
+INSERT INTO DEFAULT_TBL VALUES (1, 'thomas', 57.0613);
+INSERT INTO DEFAULT_TBL VALUES (1, 'bruce');
+INSERT INTO DEFAULT_TBL (i, f) VALUES (2, 987.654);
+INSERT INTO DEFAULT_TBL (x) VALUES ('marc');
+INSERT INTO DEFAULT_TBL VALUES (3, null, 1.0);
+SELECT '' AS five, * FROM DEFAULT_TBL;
+ five |  i  |   x    |    f    
+------+-----+--------+---------
+      |   1 | thomas | 57.0613
+      |   1 | bruce  | 123.456
+      |   2 | vadim  | 987.654
+      | 100 | marc   | 123.456
+      |   3 |        |       1
 (5 rows)
 
-QUERY: CREATE SEQUENCE DEFAULT_SEQ;
-QUERY: CREATE TABLE DEFAULTEXPR_TBL (i1 int DEFAULT 100 + (200-199) * 2,
+CREATE SEQUENCE DEFAULT_SEQ;
+CREATE TABLE DEFAULTEXPR_TBL (i1 int DEFAULT 100 + (200-199) * 2,
 	i2 int DEFAULT nextval('default_seq'));
-QUERY: INSERT INTO DEFAULTEXPR_TBL VALUES (-1, -2);
-QUERY: INSERT INTO DEFAULTEXPR_TBL (i1) VALUES (-3);
-QUERY: INSERT INTO DEFAULTEXPR_TBL (i2) VALUES (-4);
-QUERY: INSERT INTO DEFAULTEXPR_TBL (i2) VALUES (NULL);
-QUERY: SELECT '' AS four, * FROM DEFAULTEXPR_TBL;
-four| i1|i2
-----+---+--
-    | -1|-2
-    | -3| 1
-    |102|-4
-    |102|  
+INSERT INTO DEFAULTEXPR_TBL VALUES (-1, -2);
+INSERT INTO DEFAULTEXPR_TBL (i1) VALUES (-3);
+INSERT INTO DEFAULTEXPR_TBL (i2) VALUES (-4);
+INSERT INTO DEFAULTEXPR_TBL (i2) VALUES (NULL);
+SELECT '' AS four, * FROM DEFAULTEXPR_TBL;
+ four | i1  | i2 
+------+-----+----
+      |  -1 | -2
+      |  -3 |  1
+      | 102 | -4
+      | 102 |   
 (4 rows)
 
-QUERY: CREATE TABLE error_tbl (i int DEFAULT (100, ));
+-- syntax errors
+--  test for extraneous comma
+CREATE TABLE error_tbl (i int DEFAULT (100, ));
 ERROR:  parser: parse error at or near ","
-QUERY: CREATE TABLE error_tbl (b1 bool DEFAULT 1 IN (1, 2));
+--  this will fail because gram.y uses b_expr not a_expr for defaults,
+--  to avoid a shift/reduce conflict that arises from NOT NULL being
+--  part of the column definition syntax:
+CREATE TABLE error_tbl (b1 bool DEFAULT 1 IN (1, 2));
 ERROR:  parser: parse error at or near "in"
-QUERY: CREATE TABLE error_tbl (b1 bool DEFAULT (1 IN (1, 2)));
-QUERY: DROP TABLE error_tbl;
-QUERY: CREATE TABLE CHECK_TBL (x int,
+--  this should work, however:
+CREATE TABLE error_tbl (b1 bool DEFAULT (1 IN (1, 2)));
+DROP TABLE error_tbl;
+--
+-- CHECK syntax
+--
+CREATE TABLE CHECK_TBL (x int,
 	CONSTRAINT CHECK_CON CHECK (x > 3));
-QUERY: INSERT INTO CHECK_TBL VALUES (5);
-QUERY: INSERT INTO CHECK_TBL VALUES (4);
-QUERY: INSERT INTO CHECK_TBL VALUES (3);
+INSERT INTO CHECK_TBL VALUES (5);
+INSERT INTO CHECK_TBL VALUES (4);
+INSERT INTO CHECK_TBL VALUES (3);
 ERROR:  ExecAppend: rejected due to CHECK constraint check_con
-QUERY: INSERT INTO CHECK_TBL VALUES (2);
+INSERT INTO CHECK_TBL VALUES (2);
 ERROR:  ExecAppend: rejected due to CHECK constraint check_con
-QUERY: INSERT INTO CHECK_TBL VALUES (6);
-QUERY: INSERT INTO CHECK_TBL VALUES (1);
+INSERT INTO CHECK_TBL VALUES (6);
+INSERT INTO CHECK_TBL VALUES (1);
 ERROR:  ExecAppend: rejected due to CHECK constraint check_con
-QUERY: SELECT '' AS three, * FROM CHECK_TBL;
-three|x
------+-
-     |5
-     |4
-     |6
+SELECT '' AS three, * FROM CHECK_TBL;
+ three | x 
+-------+---
+       | 5
+       | 4
+       | 6
 (3 rows)
 
-QUERY: CREATE SEQUENCE CHECK_SEQ;
-QUERY: CREATE TABLE CHECK2_TBL (x int, y text, z int,
+CREATE SEQUENCE CHECK_SEQ;
+CREATE TABLE CHECK2_TBL (x int, y text, z int,
 	CONSTRAINT SEQUENCE_CON
 	CHECK (x > 3 and y <> 'check failed' and z < 8));
-QUERY: INSERT INTO CHECK2_TBL VALUES (4, 'check ok', -2);
-QUERY: INSERT INTO CHECK2_TBL VALUES (1, 'x check failed', -2);
+INSERT INTO CHECK2_TBL VALUES (4, 'check ok', -2);
+INSERT INTO CHECK2_TBL VALUES (1, 'x check failed', -2);
 ERROR:  ExecAppend: rejected due to CHECK constraint sequence_con
-QUERY: INSERT INTO CHECK2_TBL VALUES (5, 'z check failed', 10);
+INSERT INTO CHECK2_TBL VALUES (5, 'z check failed', 10);
 ERROR:  ExecAppend: rejected due to CHECK constraint sequence_con
-QUERY: INSERT INTO CHECK2_TBL VALUES (0, 'check failed', -2);
+INSERT INTO CHECK2_TBL VALUES (0, 'check failed', -2);
 ERROR:  ExecAppend: rejected due to CHECK constraint sequence_con
-QUERY: INSERT INTO CHECK2_TBL VALUES (6, 'check failed', 11);
+INSERT INTO CHECK2_TBL VALUES (6, 'check failed', 11);
 ERROR:  ExecAppend: rejected due to CHECK constraint sequence_con
-QUERY: INSERT INTO CHECK2_TBL VALUES (7, 'check ok', 7);
-QUERY: SELECT '' AS two, * from CHECK2_TBL;
-two|x|y       | z
----+-+--------+--
-   |4|check ok|-2
-   |7|check ok| 7
+INSERT INTO CHECK2_TBL VALUES (7, 'check ok', 7);
+SELECT '' AS two, * from CHECK2_TBL;
+ two | x |    y     | z  
+-----+---+----------+----
+     | 4 | check ok | -2
+     | 7 | check ok |  7
 (2 rows)
 
-QUERY: CREATE SEQUENCE INSERT_SEQ;
-QUERY: CREATE TABLE INSERT_TBL (x INT DEFAULT nextval('insert_seq'),
+--
+-- Check constraints on INSERT
+--
+CREATE SEQUENCE INSERT_SEQ;
+CREATE TABLE INSERT_TBL (x INT DEFAULT nextval('insert_seq'),
 	y TEXT DEFAULT '-NULL-', z INT DEFAULT -1 * currval('insert_seq'),
-	CONSTRAINT INSERT_CON CHECK (x >= 3 AND y <> 'check failed' AND x < 8),
+	CONSTRAINT INSERT_CON CHECK (x >= 3 AND y <> 'check failed' AND x < 8), 
 		CHECK (x + z = 0));
-QUERY: INSERT INTO INSERT_TBL VALUES (null, null, null);
+INSERT INTO INSERT_TBL VALUES (null, null, null);
 ERROR:  ExecAppend: rejected due to CHECK constraint $2
-QUERY: INSERT INTO INSERT_TBL(x,z) VALUES (2, -2);
+INSERT INTO INSERT_TBL(x,z) VALUES (2, -2);
 ERROR:  ExecAppend: rejected due to CHECK constraint insert_con
-QUERY: SELECT '' AS zero, * FROM INSERT_TBL;
-zero|x|y|z
-----+-+-+-
+SELECT '' AS zero, * FROM INSERT_TBL;
+ zero | x | y | z 
+------+---+---+---
 (0 rows)
 
-QUERY: SELECT 'one' AS one, nextval('insert_seq');
-one|nextval
----+-------
-one|      1
+SELECT 'one' AS one, nextval('insert_seq');
+ one | nextval 
+-----+---------
+ one |       1
 (1 row)
 
-QUERY: INSERT INTO INSERT_TBL(y) VALUES ('Y');
+INSERT INTO INSERT_TBL(y) VALUES ('Y');
 ERROR:  ExecAppend: rejected due to CHECK constraint insert_con
-QUERY: INSERT INTO INSERT_TBL(y) VALUES ('Y');
-QUERY: INSERT INTO INSERT_TBL(x,z) VALUES (1, -2);
+INSERT INTO INSERT_TBL(y) VALUES ('Y');
+INSERT INTO INSERT_TBL(x,z) VALUES (1, -2);
 ERROR:  ExecAppend: rejected due to CHECK constraint $2
-QUERY: INSERT INTO INSERT_TBL(z,x) VALUES (-7,  7);
-QUERY: INSERT INTO INSERT_TBL VALUES (5, 'check failed', -5);
+INSERT INTO INSERT_TBL(z,x) VALUES (-7,  7);
+INSERT INTO INSERT_TBL VALUES (5, 'check failed', -5);
 ERROR:  ExecAppend: rejected due to CHECK constraint insert_con
-QUERY: INSERT INTO INSERT_TBL VALUES (7, '!check failed', -7);
-QUERY: INSERT INTO INSERT_TBL(y) VALUES ('-!NULL-');
-QUERY: SELECT '' AS four, * FROM INSERT_TBL;
-four|x|y            | z
-----+-+-------------+--
-    |3|Y            |-3
-    |7|-NULL-       |-7
-    |7|!check failed|-7
-    |4|-!NULL-      |-4
+INSERT INTO INSERT_TBL VALUES (7, '!check failed', -7);
+INSERT INTO INSERT_TBL(y) VALUES ('-!NULL-');
+SELECT '' AS four, * FROM INSERT_TBL;
+ four | x |       y       | z  
+------+---+---------------+----
+      | 3 | Y             | -3
+      | 7 | -NULL-        | -7
+      | 7 | !check failed | -7
+      | 4 | -!NULL-       | -4
 (4 rows)
 
-QUERY: INSERT INTO INSERT_TBL(y,z) VALUES ('check failed', 4);
+INSERT INTO INSERT_TBL(y,z) VALUES ('check failed', 4);
 ERROR:  ExecAppend: rejected due to CHECK constraint $2
-QUERY: INSERT INTO INSERT_TBL(x,y) VALUES (5, 'check failed');
+INSERT INTO INSERT_TBL(x,y) VALUES (5, 'check failed');
 ERROR:  ExecAppend: rejected due to CHECK constraint insert_con
-QUERY: INSERT INTO INSERT_TBL(x,y) VALUES (5, '!check failed');
-QUERY: INSERT INTO INSERT_TBL(y) VALUES ('-!NULL-');
-QUERY: SELECT '' AS six, * FROM INSERT_TBL;
-six|x|y            | z
----+-+-------------+--
-   |3|Y            |-3
-   |7|-NULL-       |-7
-   |7|!check failed|-7
-   |4|-!NULL-      |-4
-   |5|!check failed|-5
-   |6|-!NULL-      |-6
+INSERT INTO INSERT_TBL(x,y) VALUES (5, '!check failed');
+INSERT INTO INSERT_TBL(y) VALUES ('-!NULL-');
+SELECT '' AS six, * FROM INSERT_TBL;
+ six | x |       y       | z  
+-----+---+---------------+----
+     | 3 | Y             | -3
+     | 7 | -NULL-        | -7
+     | 7 | !check failed | -7
+     | 4 | -!NULL-       | -4
+     | 5 | !check failed | -5
+     | 6 | -!NULL-       | -6
 (6 rows)
 
-QUERY: SELECT 'seven' AS one, nextval('insert_seq');
-one  |nextval
------+-------
-seven|      7
+SELECT 'seven' AS one, nextval('insert_seq');
+  one  | nextval 
+-------+---------
+ seven |       7
 (1 row)
 
-QUERY: INSERT INTO INSERT_TBL(y) VALUES ('Y');
+INSERT INTO INSERT_TBL(y) VALUES ('Y');
 ERROR:  ExecAppend: rejected due to CHECK constraint insert_con
-QUERY: SELECT 'eight' AS one, currval('insert_seq');
-one  |currval
------+-------
-eight|      8
+SELECT 'eight' AS one, currval('insert_seq');
+  one  | currval 
+-------+---------
+ eight |       8
 (1 row)
 
-QUERY: DELETE FROM INSERT_TBL;
-QUERY: DROP SEQUENCE INSERT_SEQ;
-QUERY: CREATE SEQUENCE INSERT_SEQ START 4;
-QUERY: CREATE TABLE tmp (xd INT, yd TEXT, zd INT);
-QUERY: INSERT INTO tmp VALUES (null, 'Y', null);
-QUERY: INSERT INTO tmp VALUES (5, '!check failed', null);
-QUERY: INSERT INTO tmp VALUES (null, 'try again', null);
-QUERY: INSERT INTO INSERT_TBL(y) select yd from tmp;
+--
+-- Check constraints on INSERT INTO
+--
+DELETE FROM INSERT_TBL;
+DROP SEQUENCE INSERT_SEQ;
+CREATE SEQUENCE INSERT_SEQ START 4;
+CREATE TABLE tmp (xd INT, yd TEXT, zd INT);
+INSERT INTO tmp VALUES (null, 'Y', null);
+INSERT INTO tmp VALUES (5, '!check failed', null);
+INSERT INTO tmp VALUES (null, 'try again', null);
 NOTICE:  insert_seq.nextval: sequence was re-created
-QUERY: SELECT '' AS three, * FROM INSERT_TBL;
-three|x|y            | z
------+-+-------------+--
-     |4|Y            |-4
-     |5|!check failed|-5
-     |6|try again    |-6
+INSERT INTO INSERT_TBL(y) select yd from tmp;
+SELECT '' AS three, * FROM INSERT_TBL;
+ three | x |       y       | z  
+-------+---+---------------+----
+       | 4 | Y             | -4
+       | 5 | !check failed | -5
+       | 6 | try again     | -6
 (3 rows)
 
-QUERY: INSERT INTO INSERT_TBL SELECT * FROM tmp WHERE yd = 'try again';
+INSERT INTO INSERT_TBL SELECT * FROM tmp WHERE yd = 'try again';
 ERROR:  ExecAppend: rejected due to CHECK constraint $2
-QUERY: INSERT INTO INSERT_TBL(y,z) SELECT yd, -7 FROM tmp WHERE yd = 'try again';
-QUERY: INSERT INTO INSERT_TBL(y,z) SELECT yd, -8 FROM tmp WHERE yd = 'try again';
+INSERT INTO INSERT_TBL(y,z) SELECT yd, -7 FROM tmp WHERE yd = 'try again';
+INSERT INTO INSERT_TBL(y,z) SELECT yd, -8 FROM tmp WHERE yd = 'try again';
 ERROR:  ExecAppend: rejected due to CHECK constraint insert_con
-QUERY: SELECT '' AS four, * FROM INSERT_TBL;
-four|x|y            | z
-----+-+-------------+--
-    |4|Y            |-4
-    |5|!check failed|-5
-    |6|try again    |-6
-    |7|try again    |-7
+SELECT '' AS four, * FROM INSERT_TBL;
+ four | x |       y       | z  
+------+---+---------------+----
+      | 4 | Y             | -4
+      | 5 | !check failed | -5
+      | 6 | try again     | -6
+      | 7 | try again     | -7
 (4 rows)
 
-QUERY: DROP TABLE tmp;
-QUERY: UPDATE INSERT_TBL SET x = NULL WHERE x = 6;
+DROP TABLE tmp;
+--
+-- Check constraints on UPDATE
+--
+UPDATE INSERT_TBL SET x = NULL WHERE x = 6;
 ERROR:  ExecReplace: rejected due to CHECK constraint $2
-QUERY: UPDATE INSERT_TBL SET x = 6 WHERE x = 6;
-QUERY: UPDATE INSERT_TBL SET x = -z, z = -x;
-QUERY: UPDATE INSERT_TBL SET x = z, z = x;
+UPDATE INSERT_TBL SET x = 6 WHERE x = 6;
+UPDATE INSERT_TBL SET x = -z, z = -x;
+UPDATE INSERT_TBL SET x = z, z = x;
 ERROR:  ExecReplace: rejected due to CHECK constraint insert_con
-QUERY: SELECT * FROM INSERT_TBL;
-x|y            | z
--+-------------+--
-4|Y            |-4
-5|!check failed|-5
-7|try again    |-7
-6|try again    |-6
+SELECT * FROM INSERT_TBL;
+ x |       y       | z  
+---+---------------+----
+ 4 | Y             | -4
+ 5 | !check failed | -5
+ 7 | try again     | -7
+ 6 | try again     | -6
 (4 rows)
 
-QUERY: CREATE TABLE COPY_TBL (x INT, y TEXT, z INT,
+-- DROP TABLE INSERT_TBL;
+--
+-- Check constraints on COPY FROM
+--
+CREATE TABLE COPY_TBL (x INT, y TEXT, z INT,
 	CONSTRAINT COPY_CON
 	CHECK (x > 3 AND y <> 'check failed' AND x < 7 ));
-QUERY: COPY COPY_TBL FROM '_OBJWD_/data/constro.data';
-QUERY: SELECT '' AS two, * FROM COPY_TBL;
-two|x|y            |z
----+-+-------------+-
-   |4|!check failed|5
-   |6|OK           |4
+COPY COPY_TBL FROM '_OBJWD_/data/constro.data';
+SELECT '' AS two, * FROM COPY_TBL;
+ two | x |       y       | z 
+-----+---+---------------+---
+     | 4 | !check failed | 5
+     | 6 | OK            | 4
 (2 rows)
 
-QUERY: COPY COPY_TBL FROM '_OBJWD_/data/constrf.data';
+COPY COPY_TBL FROM '_OBJWD_/data/constrf.data';
 ERROR:  CopyFrom: rejected due to CHECK constraint copy_con
-QUERY: SELECT * FROM COPY_TBL;
-x|y            |z
--+-------------+-
-4|!check failed|5
-6|OK           |4
+SELECT * FROM COPY_TBL;
+ x |       y       | z 
+---+---------------+---
+ 4 | !check failed | 5
+ 6 | OK            | 4
 (2 rows)
 
-QUERY: CREATE TABLE PRIMARY_TBL (i int PRIMARY KEY, t text);
+--
+-- Primary keys
+--
 NOTICE:  CREATE TABLE/PRIMARY KEY will create implicit index 'primary_tbl_pkey' for table 'primary_tbl'
-QUERY: INSERT INTO PRIMARY_TBL VALUES (1, 'one');
-QUERY: INSERT INTO PRIMARY_TBL VALUES (2, 'two');
-QUERY: INSERT INTO PRIMARY_TBL VALUES (1, 'three');
+CREATE TABLE PRIMARY_TBL (i int PRIMARY KEY, t text);
+INSERT INTO PRIMARY_TBL VALUES (1, 'one');
+INSERT INTO PRIMARY_TBL VALUES (2, 'two');
+INSERT INTO PRIMARY_TBL VALUES (1, 'three');
 ERROR:  Cannot insert a duplicate key into unique index primary_tbl_pkey
-QUERY: INSERT INTO PRIMARY_TBL VALUES (4, 'three');
-QUERY: INSERT INTO PRIMARY_TBL VALUES (5, 'one');
-QUERY: INSERT INTO PRIMARY_TBL (t) VALUES ('six');
+INSERT INTO PRIMARY_TBL VALUES (4, 'three');
+INSERT INTO PRIMARY_TBL VALUES (5, 'one');
+INSERT INTO PRIMARY_TBL (t) VALUES ('six');
 ERROR:  ExecAppend: Fail to add null value in not null attribute i
-QUERY: SELECT '' AS four, * FROM PRIMARY_TBL;
-four|i|t    
-----+-+-----
-    |1|one  
-    |2|two  
-    |4|three
-    |5|one  
+SELECT '' AS four, * FROM PRIMARY_TBL;
+ four | i |   t   
+------+---+-------
+      | 1 | one
+      | 2 | two
+      | 4 | three
+      | 5 | one
 (4 rows)
 
-QUERY: DROP TABLE PRIMARY_TBL;
-QUERY: CREATE TABLE PRIMARY_TBL (i int, t text,
-	PRIMARY KEY(i,t));
+DROP TABLE PRIMARY_TBL;
+CREATE TABLE PRIMARY_TBL (i int, t text,
 NOTICE:  CREATE TABLE/PRIMARY KEY will create implicit index 'primary_tbl_pkey' for table 'primary_tbl'
-QUERY: INSERT INTO PRIMARY_TBL VALUES (1, 'one');
-QUERY: INSERT INTO PRIMARY_TBL VALUES (2, 'two');
-QUERY: INSERT INTO PRIMARY_TBL VALUES (1, 'three');
-QUERY: INSERT INTO PRIMARY_TBL VALUES (4, 'three');
-QUERY: INSERT INTO PRIMARY_TBL VALUES (5, 'one');
-QUERY: INSERT INTO PRIMARY_TBL (t) VALUES ('six');
+	PRIMARY KEY(i,t));
+INSERT INTO PRIMARY_TBL VALUES (1, 'one');
+INSERT INTO PRIMARY_TBL VALUES (2, 'two');
+INSERT INTO PRIMARY_TBL VALUES (1, 'three');
+INSERT INTO PRIMARY_TBL VALUES (4, 'three');
+INSERT INTO PRIMARY_TBL VALUES (5, 'one');
+INSERT INTO PRIMARY_TBL (t) VALUES ('six');
 ERROR:  ExecAppend: Fail to add null value in not null attribute i
-QUERY: SELECT '' AS three, * FROM PRIMARY_TBL;
-three|i|t    
------+-+-----
-     |1|one  
-     |2|two  
-     |1|three
-     |4|three
-     |5|one  
+SELECT '' AS three, * FROM PRIMARY_TBL;
+ three | i |   t   
+-------+---+-------
+       | 1 | one
+       | 2 | two
+       | 1 | three
+       | 4 | three
+       | 5 | one
 (5 rows)
 
-QUERY: DROP TABLE PRIMARY_TBL;
-QUERY: CREATE TABLE UNIQUE_TBL (i int UNIQUE, t text);
+DROP TABLE PRIMARY_TBL;
+--
+-- Unique keys
+--
 NOTICE:  CREATE TABLE/UNIQUE will create implicit index 'unique_tbl_i_key' for table 'unique_tbl'
-QUERY: INSERT INTO UNIQUE_TBL VALUES (1, 'one');
-QUERY: INSERT INTO UNIQUE_TBL VALUES (2, 'two');
-QUERY: INSERT INTO UNIQUE_TBL VALUES (1, 'three');
+CREATE TABLE UNIQUE_TBL (i int UNIQUE, t text);
+INSERT INTO UNIQUE_TBL VALUES (1, 'one');
+INSERT INTO UNIQUE_TBL VALUES (2, 'two');
+INSERT INTO UNIQUE_TBL VALUES (1, 'three');
 ERROR:  Cannot insert a duplicate key into unique index unique_tbl_i_key
-QUERY: INSERT INTO UNIQUE_TBL VALUES (4, 'four');
-QUERY: INSERT INTO UNIQUE_TBL VALUES (5, 'one');
-QUERY: INSERT INTO UNIQUE_TBL (t) VALUES ('six');
-QUERY: INSERT INTO UNIQUE_TBL (t) VALUES ('seven');
-QUERY: SELECT '' AS five, * FROM UNIQUE_TBL;
-five|i|t    
-----+-+-----
-    |1|one  
-    |2|two  
-    |4|four 
-    |5|one  
-    | |six  
-    | |seven
+INSERT INTO UNIQUE_TBL VALUES (4, 'four');
+INSERT INTO UNIQUE_TBL VALUES (5, 'one');
+INSERT INTO UNIQUE_TBL (t) VALUES ('six');
+INSERT INTO UNIQUE_TBL (t) VALUES ('seven');
+SELECT '' AS five, * FROM UNIQUE_TBL;
+ five | i |   t   
+------+---+-------
+      | 1 | one
+      | 2 | two
+      | 4 | four
+      | 5 | one
+      |   | six
+      |   | seven
 (6 rows)
 
-QUERY: DROP TABLE UNIQUE_TBL;
-QUERY: CREATE TABLE UNIQUE_TBL (i int, t text,
-	UNIQUE(i,t));
+DROP TABLE UNIQUE_TBL;
+CREATE TABLE UNIQUE_TBL (i int, t text,
 NOTICE:  CREATE TABLE/UNIQUE will create implicit index 'unique_tbl_i_key' for table 'unique_tbl'
-QUERY: INSERT INTO UNIQUE_TBL VALUES (1, 'one');
-QUERY: INSERT INTO UNIQUE_TBL VALUES (2, 'two');
-QUERY: INSERT INTO UNIQUE_TBL VALUES (1, 'three');
-QUERY: INSERT INTO UNIQUE_TBL VALUES (1, 'one');
+	UNIQUE(i,t));
+INSERT INTO UNIQUE_TBL VALUES (1, 'one');
+INSERT INTO UNIQUE_TBL VALUES (2, 'two');
+INSERT INTO UNIQUE_TBL VALUES (1, 'three');
+INSERT INTO UNIQUE_TBL VALUES (1, 'one');
 ERROR:  Cannot insert a duplicate key into unique index unique_tbl_i_key
-QUERY: INSERT INTO UNIQUE_TBL VALUES (5, 'one');
-QUERY: INSERT INTO UNIQUE_TBL (t) VALUES ('six');
-QUERY: SELECT '' AS five, * FROM UNIQUE_TBL;
-five|i|t    
-----+-+-----
-    |1|one  
-    |2|two  
-    |1|three
-    |5|one  
-    | |six  
+INSERT INTO UNIQUE_TBL VALUES (5, 'one');
+INSERT INTO UNIQUE_TBL (t) VALUES ('six');
+SELECT '' AS five, * FROM UNIQUE_TBL;
+ five | i |   t   
+------+---+-------
+      | 1 | one
+      | 2 | two
+      | 1 | three
+      | 5 | one
+      |   | six
 (5 rows)
 
-QUERY: DROP TABLE UNIQUE_TBL;
+DROP TABLE UNIQUE_TBL;

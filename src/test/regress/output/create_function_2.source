@@ -1,40 +1,46 @@
-QUERY: CREATE FUNCTION hobbies(person)
-   RETURNS setof hobbies_r
+--
+-- CREATE_FUNCTION_2
+--
+CREATE FUNCTION hobbies(person)
+   RETURNS setof hobbies_r 
    AS 'select * from hobbies_r where person = $1.name'
    LANGUAGE 'sql';
-QUERY: CREATE FUNCTION hobby_construct(text, text)
+CREATE FUNCTION hobby_construct(text, text)
    RETURNS hobbies_r
    AS 'select $1 as name, $2 as hobby'
    LANGUAGE 'sql';
-QUERY: CREATE FUNCTION equipment(hobbies_r)
+CREATE FUNCTION equipment(hobbies_r)
    RETURNS setof equipment_r
    AS 'select * from equipment_r where hobby = $1.name'
    LANGUAGE 'sql';
-QUERY: CREATE FUNCTION user_relns()
+CREATE FUNCTION user_relns()
    RETURNS setof name
-   AS 'select relname
-       from pg_class
+   AS 'select relname 
+       from pg_class 
        where relname !~ ''pg_.*'' and
              relkind <> ''i'' '
    LANGUAGE 'sql';
-QUERY: CREATE FUNCTION pt_in_widget(point, widget)
+CREATE FUNCTION pt_in_widget(point, widget)
    RETURNS int4
    AS '_OBJWD_/regress_DLSUFFIX_'
    LANGUAGE 'c';
-QUERY: CREATE FUNCTION overpaid(emp)
+CREATE FUNCTION overpaid(emp)
    RETURNS bool
    AS '_OBJWD_/regress_DLSUFFIX_'
    LANGUAGE 'c';
-QUERY: CREATE FUNCTION boxarea(box)
+CREATE FUNCTION boxarea(box)
    RETURNS int4
    AS '_OBJWD_/regress_DLSUFFIX_'
    LANGUAGE 'c';
-QUERY: CREATE FUNCTION interpt_pp(path, path)
+CREATE FUNCTION interpt_pp(path, path)
    RETURNS point
    AS '_OBJWD_/regress_DLSUFFIX_'
    LANGUAGE 'c';
-QUERY: CREATE FUNCTION reverse_name(name)
+CREATE FUNCTION reverse_name(name)
    RETURNS name
    AS '_OBJWD_/regress_DLSUFFIX_'
    LANGUAGE 'c';
-QUERY: LOAD '_OBJWD_/regress_DLSUFFIX_';
+--
+-- Function dynamic loading
+--
+LOAD '/opt/postgres/current/src/test/regress/input/../regress.so';

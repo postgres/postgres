@@ -1,39 +1,36 @@
-QUERY: CREATE FUNCTION widget_in(opaque)
+--
+-- CREATE_FUNCTION_1
+--
+CREATE FUNCTION widget_in(opaque)
    RETURNS widget
    AS '_OBJWD_/regress_DLSUFFIX_'
-   LANGUAGE 'c';
 NOTICE:  ProcedureCreate: type 'widget' is not yet defined
-QUERY: CREATE FUNCTION widget_out(opaque)
+   LANGUAGE 'c';
+CREATE FUNCTION widget_out(opaque)
    RETURNS opaque
    AS '_OBJWD_/regress_DLSUFFIX_'
    LANGUAGE 'c';
-QUERY: CREATE FUNCTION check_primary_key ()
+CREATE FUNCTION check_primary_key ()
 	RETURNS opaque
-	AS '_OBJWD_/../../../contrib/spi/refint_DLSUFFIX_'
-	LANGUAGE 'c'
-;
-QUERY: CREATE FUNCTION check_foreign_key ()
+	AS '_OBJWD_/../../../contrib/spi/refint.so'
+	LANGUAGE 'c';
+CREATE FUNCTION check_foreign_key ()
 	RETURNS opaque
-	AS '_OBJWD_/../../../contrib/spi/refint_DLSUFFIX_'
-	LANGUAGE 'c'
-;
-QUERY: CREATE FUNCTION autoinc ()
+	AS '_OBJWD_/../../../contrib/spi/refint.so'
+	LANGUAGE 'c';
+CREATE FUNCTION autoinc ()
 	RETURNS opaque
-	AS '_OBJWD_/../../../contrib/spi/autoinc_DLSUFFIX_'
-	LANGUAGE 'c'
-;
-QUERY: CREATE FUNCTION funny_dup17 ()
+	AS '_OBJWD_/../../../contrib/spi/autoinc.so'
+	LANGUAGE 'c';
+CREATE FUNCTION funny_dup17 ()
         RETURNS opaque
         AS '_OBJWD_/regress_DLSUFFIX_'
-        LANGUAGE 'c'
-;
-QUERY: CREATE FUNCTION ttdummy ()
+        LANGUAGE 'c';
+CREATE FUNCTION ttdummy ()
         RETURNS opaque
         AS '_OBJWD_/regress_DLSUFFIX_'
-        LANGUAGE 'c'
-;
-QUERY: CREATE FUNCTION set_ttdummy (int4)
+        LANGUAGE 'c';
+CREATE FUNCTION set_ttdummy (int4)
         RETURNS int4
         AS '_OBJWD_/regress_DLSUFFIX_'
-        LANGUAGE 'c'
-;
+        LANGUAGE 'c';
