@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.7 1996/11/10 02:25:16 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.8 1996/11/11 04:54:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,6 +42,7 @@
 #include "rewrite/rewriteDefine.h"
 #include "tcop/tcopdebug.h"
 #include "tcop/dest.h"
+#include "tcop/utility.h"
 #include "fmgr.h"       /* For load_file() */
 
 #ifndef NO_SECURITY

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.3 1996/11/08 20:45:45 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.4 1996/11/11 04:54:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -250,6 +250,7 @@ myinput(char* buf, int max)
     }
 }
 
+#ifdef NOT_USED
 char*
 CurScan(void)
 {
@@ -258,5 +259,7 @@ CurScan(void)
 	   (yy_c_buf_p - &yy_current_buffer->yy_ch_buf[yy_n_chars]);
 */
 }
+#endif
+
 #endif /* FLEX_SCANNER */
 

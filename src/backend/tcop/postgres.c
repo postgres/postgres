@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.17 1996/11/10 03:02:50 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.18 1996/11/11 04:54:51 momjian Exp $
  *
  * NOTES
  *    this is the "main" module of the postgres backend and
@@ -736,7 +736,7 @@ die(SIGNAL_ARGS)
 }
 
 /* signal handler for floating point exception */
-void
+static void
 FloatExceptionHandler(SIGNAL_ARGS)
 {
    elog(WARN, "floating point exception! the last floating point operation eit\
@@ -1257,7 +1257,7 @@ PostgresMain(int argc, char *argv[])
      */
     if (IsUnderPostmaster == false) {
 	puts("\nPOSTGRES backend interactive interface");
-	puts("$Revision: 1.17 $ $Date: 1996/11/10 03:02:50 $");
+	puts("$Revision: 1.18 $ $Date: 1996/11/11 04:54:51 $");
     }
     
     /* ----------------

@@ -19,12 +19,13 @@
 #include <time.h>
 
 #include <config.h>
+#include <parser/sysfunc.h>
 
 /*
  * Can't get much more obvious than this.  Might need to replace localtime()
  * on older systems...
  */
-char *Sysfunc_system_date(void)
+static char *Sysfunc_system_date(void)
 {
 	time_t	cur_time_secs;
 	struct	tm *cur_time_expanded;
