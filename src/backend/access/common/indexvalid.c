@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/common/Attic/indexvalid.c,v 1.13 1997/03/12 20:56:32 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/common/Attic/indexvalid.c,v 1.14 1997/03/18 18:38:19 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,7 +48,7 @@ index_keytest(IndexTuple tuple,
     
     while (scanKeySize > 0) {
 	datum = index_getattr(tuple,
-			      1,
+			      key[0].sk_attno,
 			      tupdesc,
 			      &isNull);
 	

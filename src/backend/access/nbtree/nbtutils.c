@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.7 1996/11/05 10:35:38 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.8 1997/03/18 18:38:46 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,7 +80,7 @@ _bt_freestack(BTStack stack)
  *	more than one qual clauses using this index.
  */
 void
-_bt_orderkeys(Relation relation, uint16 *numberOfKeys, ScanKey key, uint16 *qual_ok)
+_bt_orderkeys(Relation relation, BTScanOpaque so)
 {
     ScanKey xform;
     ScanKeyData *cur;
@@ -89,42 +89,137 @@ _bt_orderkeys(Relation relation, uint16 *numberOfKeys, ScanKey key, uint16 *qual
     long test;
     int i, j;
     int init[BTMaxStrategyNumber+1];
+    ScanKey key;
+    uint16 numberOfKeys, new_numberOfKeys = 0;
+    AttrNumber attno = 1;
     
-    /* haven't looked at any strategies yet */
-    for (i = 0; i <= BTMaxStrategyNumber; i++)
-	init[i] = 0;
+    numberOfKeys = so->numberOfKeys;
+    key = so->keyData;
+    
+    if ( numberOfKeys <= 1 )
+    	return;
     
     /* get space for the modified array of keys */
     nbytes = BTMaxStrategyNumber * sizeof(ScanKeyData);
     xform = (ScanKey) palloc(nbytes);
+    
+    cur = &key[0];
+    if ( cur->sk_attno != 1 )
+	elog (WARN, "_bt_orderkeys: key(s) for attribute 1 missed");
+
     memset(xform, 0, nbytes); 
-    
-    
-    /* get the strategy map for this index/attribute pair */
-    /*
-     *  XXX
-     *  When we support multiple keys in a single index, this is what
-     *  we'll want to do.  At present, the planner is hosed, so we
-     *  hard-wire the attribute number below.  Postgres only does single-
-     *  key indices...
-     * map = IndexStrategyGetStrategyMap(RelationGetIndexStrategy(relation),
-     * 				    BTMaxStrategyNumber,
-     * 				    key->data[0].attributeNumber);
-     */
     map = IndexStrategyGetStrategyMap(RelationGetIndexStrategy(relation),
 				      BTMaxStrategyNumber,
-				      1 /* XXX */ );
+				      attno);
+    for (j = 0; j <= BTMaxStrategyNumber; j++)
+	init[j] = 0;
     
     /* check each key passed in */
-    for (i = *numberOfKeys; --i >= 0; ) {
-	cur = &key[i];
-	for (j = BTMaxStrategyNumber; --j >= 0; ) {
+    for (i = 0; ; )
+    {
+	if ( i < numberOfKeys )
+	    cur = &key[i];
+	if ( i == numberOfKeys || cur->sk_attno != attno )
+	{
+	    if ( cur->sk_attno != attno + 1 && i < numberOfKeys )
+	    {
+	    	elog (WARN, "_bt_orderkeys: key(s) for attribute %d missed", attno + 1);
+	    }
+	    /* 
+	     * If = has been specified, no other key will be used.
+	     * In case of key < 2 && key == 1 and so on 
+     	     * we have to set qual_ok to 0
+     	     */
+	    if (init[BTEqualStrategyNumber - 1])
+	    {
+		ScanKeyData *eq, *chk;
+
+		eq = &xform[BTEqualStrategyNumber - 1];
+		for (j = BTMaxStrategyNumber; --j >= 0; )
+		{
+		    if ( j == (BTEqualStrategyNumber - 1) || init[j] == 0 )
+			continue;
+		    chk = &xform[j];
+		    test = (long) fmgr(chk->sk_procedure, eq->sk_argument, chk->sk_argument);
+		    if (!test)
+			so->qual_ok = 0;
+		}
+		init[BTLessStrategyNumber - 1] = 0;
+		init[BTLessEqualStrategyNumber - 1] = 0;
+		init[BTGreaterEqualStrategyNumber - 1] = 0;
+		init[BTGreaterStrategyNumber - 1] = 0;
+	    }
+    
+	    /* only one of <, <= */
+	    if (init[BTLessStrategyNumber - 1]
+			&& init[BTLessEqualStrategyNumber - 1])
+	    {
+		ScanKeyData *lt, *le;
+	
+		lt = &xform[BTLessStrategyNumber - 1];
+		le = &xform[BTLessEqualStrategyNumber - 1];
+		/*
+		 *  DO NOT use the cached function stuff here -- this is key
+		 *  ordering, happens only when the user expresses a hokey
+		 *  qualification, and gets executed only once, anyway.  The
+		 *  transform maps are hard-coded, and can't be initialized
+		 *  in the correct way.
+		 */
+		test = (long) fmgr(le->sk_procedure, lt->sk_argument, le->sk_argument);
+		if (test)
+	    	    init[BTLessEqualStrategyNumber - 1] = 0;
+		else
+		    init[BTLessStrategyNumber - 1] = 0;
+    	    }
+    
+	    /* only one of >, >= */
+	    if (init[BTGreaterStrategyNumber - 1]
+			&& init[BTGreaterEqualStrategyNumber - 1])
+	    {
+	    	ScanKeyData *gt, *ge;
+	
+		gt = &xform[BTGreaterStrategyNumber - 1];
+		ge = &xform[BTGreaterEqualStrategyNumber - 1];
+	
+		/* see note above on function cache */
+		test = (long) fmgr(ge->sk_procedure, gt->sk_argument, ge->sk_argument);
+		if (test)
+	    	    init[BTGreaterEqualStrategyNumber - 1] = 0;
+		else
+	    	    init[BTGreaterStrategyNumber - 1] = 0;
+    	    }
+    
+    	    /* okay, reorder and count */
+    	    for (j = BTMaxStrategyNumber; --j >= 0; )
+	    	if (init[j])
+		    key[new_numberOfKeys++] = xform[j];
+    
+    	    if ( attno == 1 )
+    		so->numberOfFirstKeys = new_numberOfKeys;
+    	    
+    	    if ( i == numberOfKeys )
+    	    	break;
+
+	    /* initialization for new attno */    	    
+    	    attno = cur->sk_attno;
+    	    memset(xform, 0, nbytes); 
+	    map = IndexStrategyGetStrategyMap(RelationGetIndexStrategy(relation),
+				      BTMaxStrategyNumber,
+				      attno);
+	    /* haven't looked at any strategies yet */
+	    for (j = 0; j <= BTMaxStrategyNumber; j++)
+		init[j] = 0;
+	}
+
+	for (j = BTMaxStrategyNumber; --j >= 0; )
+	{
 	    if (cur->sk_procedure == map->entry[j].sk_procedure)
-		break;
+	    	break;
 	}
 	
 	/* have we seen one of these before? */
-	if (init[j]) {
+	if (init[j])
+	{
 	    /* yup, use the appropriate value */
 	    test =
 		(long) FMGR_PTR2(cur->sk_func, cur->sk_procedure,
@@ -132,97 +227,18 @@ _bt_orderkeys(Relation relation, uint16 *numberOfKeys, ScanKey key, uint16 *qual
 	    if (test)
 		xform[j].sk_argument = cur->sk_argument;
 	    else if ( j == (BTEqualStrategyNumber - 1) )
-	    	*qual_ok = 0;		/* key == a && key == b, but a != b */
-	} else {
+	    	so->qual_ok = 0;	/* key == a && key == b, but a != b */
+	} else
+	{
 	    /* nope, use this value */
 	    memmove(&xform[j], cur, sizeof(*cur));
-	   
 	    init[j] = 1;
 	}
+	
+	i++;
     }
     
-    /* if = has been specified, no other key will be used */
-    /*
-     * XXX
-     * But in case of key < 2 && key == 1 and so on 
-     * we have to set qual_ok to 0
-     */
-    if (init[BTEqualStrategyNumber - 1]) {
-
-	ScanKeyData *eq, *chk;
-
-	eq = &xform[BTEqualStrategyNumber - 1];
-
-	for (j = BTMaxStrategyNumber; --j >= 0; )
-	{
-		if ( j == (BTEqualStrategyNumber - 1) || init[j] == 0 )
-			continue;
-
-		chk = &xform[j];
-
-		test = (long) fmgr(chk->sk_procedure, eq->sk_argument, chk->sk_argument);
-	
-		if (!test)
-			*qual_ok = 0;
-	}
-
-	init[BTLessStrategyNumber - 1] = 0;
-	init[BTLessEqualStrategyNumber - 1] = 0;
-	init[BTGreaterEqualStrategyNumber - 1] = 0;
-	init[BTGreaterStrategyNumber - 1] = 0;
-    }
-    
-    /* only one of <, <= */
-    if (init[BTLessStrategyNumber - 1]
-	&& init[BTLessEqualStrategyNumber - 1]) {
-	
-	ScanKeyData *lt, *le;
-	
-	lt = &xform[BTLessStrategyNumber - 1];
-	le = &xform[BTLessEqualStrategyNumber - 1];
-	
-	/*
-	 *  DO NOT use the cached function stuff here -- this is key
-	 *  ordering, happens only when the user expresses a hokey
-	 *  qualification, and gets executed only once, anyway.  The
-	 *  transform maps are hard-coded, and can't be initialized
-	 *  in the correct way.
-	 */
-	
-	test = (long) fmgr(le->sk_procedure, lt->sk_argument, le->sk_argument);
-	
-	if (test)
-	    init[BTLessEqualStrategyNumber - 1] = 0;
-	else
-	    init[BTLessStrategyNumber - 1] = 0;
-    }
-    
-    /* only one of >, >= */
-    if (init[BTGreaterStrategyNumber - 1]
-	&& init[BTGreaterEqualStrategyNumber - 1]) {
-	
-	ScanKeyData *gt, *ge;
-	
-	gt = &xform[BTGreaterStrategyNumber - 1];
-	ge = &xform[BTGreaterEqualStrategyNumber - 1];
-	
-	/* see note above on function cache */
-	test = (long) fmgr(ge->sk_procedure, gt->sk_argument, ge->sk_argument);
-	
-	if (test)
-	    init[BTGreaterEqualStrategyNumber - 1] = 0;
-	else
-	    init[BTGreaterStrategyNumber - 1] = 0;
-    }
-    
-    /* okay, reorder and count */
-    j = 0;
-    
-    for (i = BTMaxStrategyNumber; --i >= 0; )
-	if (init[i])
-	    key[j++] = xform[i];
-    
-    *numberOfKeys = j;
+    so->numberOfKeys = new_numberOfKeys;
     
     pfree(xform);
 }
@@ -230,9 +246,25 @@ _bt_orderkeys(Relation relation, uint16 *numberOfKeys, ScanKey key, uint16 *qual
 bool
 _bt_checkqual(IndexScanDesc scan, IndexTuple itup)
 {
-    if (scan->numberOfKeys > 0)
+    BTScanOpaque so;
+    
+    so = (BTScanOpaque) scan->opaque;
+    if (so->numberOfKeys > 0)
 	return (index_keytest(itup, RelationGetTupleDescriptor(scan->relation),
-			      scan->numberOfKeys, scan->keyData));
+			      so->numberOfKeys, so->keyData));
+    else
+	return (true);
+}
+
+bool
+_bt_checkforkeys(IndexScanDesc scan, IndexTuple itup, Size keysz)
+{
+    BTScanOpaque so;
+    
+    so = (BTScanOpaque) scan->opaque;
+    if ( keysz > 0 && so->numberOfKeys >= keysz )
+	return (index_keytest(itup, RelationGetTupleDescriptor(scan->relation),
+			      keysz, so->keyData));
     else
 	return (true);
 }

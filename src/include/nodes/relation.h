@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relation.h,v 1.3 1996/11/06 07:44:18 scrappy Exp $
+ * $Id: relation.h,v 1.4 1997/03/18 18:41:37 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -150,6 +150,7 @@ typedef struct IndexPath {
     Path	path;
     List	*indexid;
     List	*indexqual;
+    int		*indexkeys;	/* to transform heap attnos into index ones */
 } IndexPath;
 
 typedef struct JoinPath {

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.14 1997/02/18 17:13:48 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.15 1997/03/18 18:38:41 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -562,7 +562,6 @@ _bt_next(IndexScanDesc scan, ScanDirection dir)
     Page page;
     OffsetNumber offnum;
     RetrieveIndexResult res;
-    BlockNumber blkno;
     ItemPointer current;
     BTItem btitem;
     IndexTuple itup;
@@ -584,31 +583,35 @@ _bt_next(IndexScanDesc scan, ScanDirection dir)
     
     /* we still have the buffer pinned and locked */
     buf = so->btso_curbuf;
-    blkno = BufferGetBlockNumber(buf);
     
-    /* step one tuple in the appropriate direction */
-    if (!_bt_step(scan, &buf, dir))
-	return ((RetrieveIndexResult) NULL);
+    do
+    {
+    	/* step one tuple in the appropriate direction */
+    	if (!_bt_step(scan, &buf, dir))
+	    return ((RetrieveIndexResult) NULL);
     
-    /* by here, current is the tuple we want to return */
-    offnum = ItemPointerGetOffsetNumber(current);
-    page = BufferGetPage(buf);
-    btitem = (BTItem) PageGetItem(page, PageGetItemId(page, offnum));
-    itup = &btitem->bti_itup;
+    	/* by here, current is the tuple we want to return */
+    	offnum = ItemPointerGetOffsetNumber(current);
+    	page = BufferGetPage(buf);
+    	btitem = (BTItem) PageGetItem(page, PageGetItemId(page, offnum));
+    	itup = &btitem->bti_itup;
     
-    if (_bt_checkqual(scan, itup)) {
-	res = FormRetrieveIndexResult(current, &(itup->t_tid));
+    	if (_bt_checkqual(scan, itup)) 
+    	{
+	    res = FormRetrieveIndexResult(current, &(itup->t_tid));
 	
-	/* remember which buffer we have pinned and locked */
-	so->btso_curbuf = buf;
-    } else {
-	ItemPointerSetInvalid(current);
-	so->btso_curbuf = InvalidBuffer;
-	_bt_relbuf(rel, buf, BT_READ);
-	res = (RetrieveIndexResult) NULL;
-    }
+	    /* remember which buffer we have pinned and locked */
+	    so->btso_curbuf = buf;
+	    return (res);
+	}
+
+    } while ( _bt_checkforkeys (scan, itup, so->numberOfFirstKeys) );
+
+    ItemPointerSetInvalid(current);
+    so->btso_curbuf = InvalidBuffer;
+    _bt_relbuf(rel, buf, BT_READ);
     
-    return (res);
+    return ((RetrieveIndexResult) NULL);
 }
 
 /*
@@ -659,13 +662,6 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
      *  the first item in the scan key passed in (which has been correctly
      *  ordered to take advantage of index ordering) to position ourselves
      *  at the right place in the scan.
-     */
-    
-    /*
-     *  XXX -- The attribute number stored in the scan key is the attno
-     *	       in the heap relation.  We need to transmogrify this into
-     *         the index relation attno here.  For the moment, we have
-     *	       hardwired attno == 1.
      */
     proc = index_getprocid(rel, 1, BTORDER_PROC);
     ScanKeyEntryInitialize(&skdata, so->keyData[0].sk_flags, 1, proc,
@@ -802,12 +798,20 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
     btitem = (BTItem) PageGetItem(page, PageGetItemId(page, offnum));
     itup = &btitem->bti_itup;
     
-    if (_bt_checkqual(scan, itup)) {
+    if ( _bt_checkqual(scan, itup) )
+    {
 	res = FormRetrieveIndexResult(current, &(itup->t_tid));
 	
 	/* remember which buffer we have pinned */
 	so->btso_curbuf = buf;
-    } else {
+    }
+    else if ( _bt_checkforkeys (scan, itup, so->numberOfFirstKeys) )
+    {
+	so->btso_curbuf = buf;
+	return (_bt_next (scan, dir));
+    }
+    else
+    {
 	ItemPointerSetInvalid(current);
 	so->btso_curbuf = InvalidBuffer;
 	_bt_relbuf(rel, buf, BT_READ);
@@ -1224,7 +1228,14 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 	
 	/* remember which buffer we have pinned */
 	so->btso_curbuf = buf;
-    } else {
+    }
+    else if ( _bt_checkforkeys (scan, itup, so->numberOfFirstKeys) )
+    {
+	so->btso_curbuf = buf;
+	return (_bt_next (scan, dir));
+    }
+    else
+    {
 	_bt_relbuf(rel, buf, BT_READ);
 	res = (RetrieveIndexResult) NULL;
     }

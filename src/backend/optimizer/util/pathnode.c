@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.1.1.1 1996/07/09 06:21:38 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.2 1997/03/18 18:40:40 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -248,10 +248,11 @@ create_index_path(Query *root,
     
     pathnode->path.pathtype = T_IndexScan;
     pathnode->path.parent = rel;
-    pathnode->indexid = index->relids;
-
     pathnode->path.p_ordering.ordtype = SORTOP_ORDER;
     pathnode->path.p_ordering.ord.sortop = index->ordering;
+
+    pathnode->indexid = index->relids;
+    pathnode->indexkeys = index->indexkeys;
     pathnode->indexqual = NIL;
 
     /* copy clauseinfo list into path for expensive function processing 

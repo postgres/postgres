@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.15 1997/02/22 10:04:14 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.16 1997/03/18 18:38:35 scrappy Exp $
  *
  * NOTES
  *    This file contains only the public interface routines.
@@ -423,6 +423,7 @@ btrescan(IndexScanDesc scan, bool fromEnd, ScanKey scankey)
     
     /* reset the scan key */
     so->numberOfKeys = scan->numberOfKeys;
+    so->numberOfFirstKeys = 0;
     so->qual_ok = 1;			/* may be changed by _bt_orderkeys */
     if (scan->numberOfKeys > 0) {
 	memmove(scan->keyData,
@@ -433,7 +434,9 @@ btrescan(IndexScanDesc scan, bool fromEnd, ScanKey scankey)
 		so->numberOfKeys * sizeof(ScanKeyData));
 	/* order the keys in the qualification */
 	if (so->numberOfKeys > 1)
-		_bt_orderkeys(scan->relation, &so->numberOfKeys, so->keyData, &so->qual_ok);
+	    _bt_orderkeys(scan->relation, so);
+	else
+	    so->numberOfFirstKeys = 1;
     }
     
     /* finally, be sure that the scan exploits the tree order */

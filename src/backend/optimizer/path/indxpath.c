@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.6 1997/03/12 21:00:17 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.7 1997/03/18 18:39:40 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,8 +53,9 @@ static bool match_index_to_operand(int indexkey, Expr *operand,
 static List *match_index_orclause(Rel *rel, Rel *index, int indexkey,
     int xclass, List *or_clauses, List *other_matching_indices);
 static List *group_clauses_by_indexkey(Rel *rel, Rel *index,
-    int *indexkeys, Oid *classes, List *clauseinfo_list,
-    bool join);
+    int *indexkeys, Oid *classes, List *clauseinfo_list);
+static List *group_clauses_by_ikey_for_joins(Rel *rel, Rel *index,
+    int *indexkeys, Oid *classes, List *join_cinfo_list, List *restr_cinfo_list);
 static CInfo *match_clause_to_indexkey(Rel *rel, Rel *index, int indexkey,
     int xclass, CInfo *clauseInfo, bool join);
 static bool pred_test(List *predicate_list, List *clauseinfo_list,
@@ -63,7 +64,8 @@ static bool one_pred_test(Expr *predicate, List *clauseinfo_list);
 static bool one_pred_clause_expr_test(Expr *predicate, Node *clause);
 static bool one_pred_clause_test(Expr *predicate, Node *clause);
 static bool clause_pred_clause_test(Expr *predicate, Node *clause);
-static List *indexable_joinclauses(Rel *rel, Rel *index, List *joininfo_list);
+static List *indexable_joinclauses (Rel *rel, Rel *index, 
+		List *joininfo_list, List *clauseinfo_list);
 static List *index_innerjoin(Query *root, Rel *rel, 
 			     List *clausegroup_list, Rel *index);
 static List *create_index_paths(Query *root, Rel *rel, Rel *index,
@@ -114,7 +116,6 @@ find_index_paths (Query *root,
     List *joinclausegroups = NIL;
     List *joinpaths = NIL;
     List *retval = NIL;
-    extern List *add_index_paths();
     
     if(indices == NIL)
 	return(NULL);
@@ -160,8 +161,7 @@ find_index_paths (Query *root,
 						 index,
 						 index->indexkeys,
 						 index->classlist,
-						 clauseinfo_list,
-						 false);
+						 clauseinfo_list);
     
     scanpaths = NIL;
     if (scanclausegroups != NIL)
@@ -178,7 +178,7 @@ find_index_paths (Query *root,
      * useful for a mergejoin, or if the index can possibly be 
      * used for scanning the inner relation of a nestloop join. 
      */
-    joinclausegroups = indexable_joinclauses(rel,index,joininfo_list);
+    joinclausegroups = indexable_joinclauses(rel,index,joininfo_list, clauseinfo_list);
     joinpaths = NIL;
 
     if (joinclausegroups != NIL)
@@ -375,10 +375,8 @@ match_index_orclause(Rel *rel,
  * 	(2) a list of join clauses between 'rel' and a fixed set of
  * 		relations,
  * 	depending on the value of 'join'.
- * 'startlist' is a list of those clause nodes that have matched the keys 
- * 	that have already been checked.
- * 'join' is a flag indicating that the clauses being checked are join
- * 	clauses.
+ *
+ *	NOTE: it works now for restriction clauses only. - vadim 03/18/97
  *    
  * Returns all possible groups of clauses that will match (given that
  * one or more clauses can match any of the remaining keys).
@@ -391,45 +389,144 @@ group_clauses_by_indexkey(Rel *rel,
 			  Rel *index,
 			  int *indexkeys,
 			  Oid *classes,
-			  List *clauseinfo_list,
-			  bool join)
+			  List *clauseinfo_list)
 {
     List *curCinfo		= NIL;
     CInfo *matched_clause	= (CInfo*)NULL;
     List *clausegroup	= NIL;
-
+    int curIndxKey;
+    Oid curClass;
 
     if (clauseinfo_list == NIL)
 	return NIL;
 
-    foreach (curCinfo,clauseinfo_list) {
-	CInfo *temp	= (CInfo*)lfirst(curCinfo);
-	int *curIndxKey	= indexkeys;
-	Oid *curClass	= classes;
+    while ( !DoneMatchingIndexKeys(indexkeys, index) )
+    {
+    	List *tempgroup = NIL;
+    	
+    	curIndxKey = indexkeys[0];
+	curClass = classes[0];
 
-	do {
-	    /*
-	     * If we can't find any matching clauses for the first of 
-	     * the remaining keys, give up.
-	     */
+    	foreach (curCinfo,clauseinfo_list) 
+    	{
+	    CInfo *temp	= (CInfo*)lfirst(curCinfo);
+
 	    matched_clause = match_clause_to_indexkey (rel, 
 						       index, 
-						       curIndxKey[0],
-						       curClass[0],
+						       curIndxKey,
+						       curClass,
 						       temp,
-						       join);
+						       false);
 	    if (!matched_clause)
-		break;
+		continue;
 
-	    clausegroup = lcons(matched_clause, clausegroup);
-	    curIndxKey++;
-	    curClass++;
+	    tempgroup = lappend(tempgroup, matched_clause);
+	}
+	if ( tempgroup == NIL )
+	    break;
 
-	} while ( !DoneMatchingIndexKeys(curIndxKey, index) );
+	clausegroup = nconc (clausegroup, tempgroup);
+	
+	indexkeys++;
+	classes++;
+	
     }
+
+    /* clausegroup holds all matched clauses ordered by indexkeys */
 
     if (clausegroup != NIL)
 	return(lcons(clausegroup, NIL));
+    return NIL;
+}
+
+/*    
+ * group-clauses-by-ikey-for-joins--
+ *    special edition of group-clauses-by-indexkey - will
+ *    match join & restriction clauses. See comment in indexable_joinclauses.
+ *	- vadim 03/18/97
+ *    
+ */
+static List *
+group_clauses_by_ikey_for_joins(Rel *rel,
+			  Rel *index,
+			  int *indexkeys,
+			  Oid *classes,
+			  List *join_cinfo_list,
+			  List *restr_cinfo_list)
+{
+    List *curCinfo		= NIL;
+    CInfo *matched_clause	= (CInfo*)NULL;
+    List *clausegroup	= NIL;
+    int curIndxKey;
+    Oid curClass;
+    bool jfound = false;
+
+    if (join_cinfo_list == NIL)
+	return NIL;
+
+    while ( !DoneMatchingIndexKeys(indexkeys, index) )
+    {
+    	List *tempgroup = NIL;
+    	
+    	curIndxKey = indexkeys[0];
+	curClass = classes[0];
+
+    	foreach (curCinfo,join_cinfo_list) 
+    	{
+	    CInfo *temp	= (CInfo*)lfirst(curCinfo);
+
+	    matched_clause = match_clause_to_indexkey (rel, 
+						       index, 
+						       curIndxKey,
+						       curClass,
+						       temp,
+						       true);
+	    if (!matched_clause)
+		continue;
+
+	    tempgroup = lappend(tempgroup, matched_clause);
+	    jfound = true;
+	}
+    	foreach (curCinfo,restr_cinfo_list) 
+    	{
+	    CInfo *temp	= (CInfo*)lfirst(curCinfo);
+
+	    matched_clause = match_clause_to_indexkey (rel, 
+						       index, 
+						       curIndxKey,
+						       curClass,
+						       temp,
+						       false);
+	    if (!matched_clause)
+		continue;
+
+	    tempgroup = lappend(tempgroup, matched_clause);
+	}
+	if ( tempgroup == NIL )
+	    break;
+
+	clausegroup = nconc (clausegroup, tempgroup);
+	
+	indexkeys++;
+	classes++;
+	
+    }
+
+    /* clausegroup holds all matched clauses ordered by indexkeys */
+
+    if (clausegroup != NIL)
+    {
+	/* 
+	 * if no one join clause was matched then there ain't clauses
+	 * for joins at all.
+	 */
+    	if ( !jfound )
+    	{
+    	    freeList (clausegroup);
+    	    return NIL;
+    	}
+	return(lcons(clausegroup, NIL));
+    }
     return NIL;
 }
 
@@ -482,6 +579,7 @@ match_clause_to_indexkey(Rel *rel,
     Expr *clause = clauseInfo->clause;
     Var *leftop, *rightop;
     Oid join_op = InvalidOid;
+    Oid restrict_op = InvalidOid;
     bool isIndexable = false;
 
     if (or_clause((Node*)clause) ||
@@ -495,90 +593,87 @@ match_clause_to_indexkey(Rel *rel,
      * (operator var/func constant) and (operator constant var/func)
      */
     if (!join) 
-	{
-	    Oid restrict_op = InvalidOid;
-
-	    /*
-	     * Check for standard s-argable clause
-	     */
+    {
+	/*
+	 * Check for standard s-argable clause
+	 */
 #ifdef INDEXSCAN_PATCH
 	    /* Handle also function parameters.  DZ - 27-8-1996 */ 
-	    if ((rightop && IsA(rightop,Const)) ||
+	if ((rightop && IsA(rightop,Const)) ||
 		(rightop && IsA(rightop,Param)))
 #else
-	    if (rightop && IsA(rightop,Const))
+	if (rightop && IsA(rightop,Const))
 #endif
-		{
-		    restrict_op = ((Oper*)((Expr*)clause)->oper)->opno;
-		    isIndexable =
-			( op_class(restrict_op, xclass, index->relam) &&
+	{
+	    restrict_op = ((Oper*)((Expr*)clause)->oper)->opno;
+	    isIndexable =
+		( op_class(restrict_op, xclass, index->relam) &&
 			 IndexScanableOperand(leftop,
 					      indexkey,
 					      rel,
 					      index) );
-		}
+	}
 
-	    /*
-	     * Must try to commute the clause to standard s-arg format.
-	     */
+	/*
+	 * Must try to commute the clause to standard s-arg format.
+	 */
 #ifdef INDEXSCAN_PATCH
 	    /* ...And here...  - vadim 01/22/97 */ 
-	    else if ((leftop && IsA(leftop,Const)) ||
+	else if ((leftop && IsA(leftop,Const)) ||
 			(leftop && IsA(leftop,Param)))
 #else
-	    else if (leftop && IsA(leftop,Const))
+	else if (leftop && IsA(leftop,Const))
 #endif
-		{
-		    restrict_op =
-			get_commutator(((Oper*)((Expr*)clause)->oper)->opno);
+	{
+	    restrict_op =
+		get_commutator(((Oper*)((Expr*)clause)->oper)->opno);
 
-		    if ( (restrict_op != InvalidOid) &&
+	    if ( (restrict_op != InvalidOid) &&
 			op_class(restrict_op, xclass, index->relam) &&
 			IndexScanableOperand(rightop,
 					     indexkey,rel,index) )
-			{
-			    isIndexable = true;
-			    /*
-			     * In place list modification.
-			     * (op const var/func) -> (op var/func const)
-			     */
-			    /* BUG!  Old version:
-			       CommuteClause(clause, restrict_op);
-			       */
-			    CommuteClause((Node*)clause);
-			}
-		}
-	} 
+	    {
+		isIndexable = true;
+		/*
+		 * In place list modification.
+		 * (op const var/func) -> (op var/func const)
+		 */
+		CommuteClause((Node*)clause);
+	    }
+	}
+    } 
     /*
      * Check for an indexable scan on one of the join relations.
      * clause is of the form (operator var/func var/func)
      */
     else
+    {
+	if (rightop
+		&& match_index_to_operand(indexkey,(Expr*)rightop,rel,index))
 	{
-	    if (rightop
-		&& match_index_to_operand(indexkey,(Expr*)rightop,rel,index)) {
 					
 		join_op = get_commutator(((Oper*)((Expr*)clause)->oper)->opno);
 
-	    } else if (leftop
+	} else if (leftop
 		       && match_index_to_operand(indexkey,
-						 (Expr*)leftop,rel,index)) {
+						 (Expr*)leftop,rel,index))
+	{
 		join_op = ((Oper*)((Expr*)clause)->oper)->opno;
-	    }
-
-	    if ( join_op && op_class(join_op,xclass,index->relam) &&
-		join_clause_p((Node*)clause))
-		{
-		    isIndexable = true;
-
-		    /*
-		     * If we're using the operand's commutator we must
-		     * commute the clause.
-		     */
-		    if (join_op != ((Oper*)((Expr*)clause)->oper)->opno)
-			CommuteClause((Node*)clause);
-		}
 	}
+
+	if ( join_op && op_class(join_op,xclass,index->relam) &&
+		join_clause_p((Node*)clause))
+	{
+	    isIndexable = true;
+
+	    /*
+	     * If we're using the operand's commutator we must
+	     * commute the clause.
+	     */
+	    if (join_op != ((Oper*)((Expr*)clause)->oper)->opno)
+			CommuteClause((Node*)clause);
+	}
+    }
 
     if (isIndexable)
 	return(clauseInfo);
@@ -955,10 +1050,15 @@ clause_pred_clause_test(Expr *predicate, Node *clause)
  *    in the join clause as its outer join relation.
  *    
  * Returns a list of these clause groups.
+ *
+ *    Added: clauseinfo_list - list of restriction CInfos. It's to
+ *	support multi-column indices in joins and for cases
+ *	when a key is in both join & restriction clauses. - vadim 03/18/97
  *    
  */
 static List *
-indexable_joinclauses(Rel *rel, Rel *index, List *joininfo_list)
+indexable_joinclauses(Rel *rel, Rel *index, 
+			List *joininfo_list, List *clauseinfo_list)
 {
     JInfo *joininfo = (JInfo*)NULL;
     List *cg_list = NIL;
@@ -967,13 +1067,16 @@ indexable_joinclauses(Rel *rel, Rel *index, List *joininfo_list)
 
     foreach(i,joininfo_list) { 
 	joininfo = (JInfo*)lfirst(i);
+	
+	if ( joininfo->jinfoclauseinfo == NIL )
+	    continue;
 	clausegroups = 
-	    group_clauses_by_indexkey (rel,
+	    group_clauses_by_ikey_for_joins (rel,
 				       index,
 				       index->indexkeys,
 				       index->classlist,
 				       joininfo->jinfoclauseinfo,
-				       true);
+				       clauseinfo_list);
 
 	if (clausegroups != NIL) {
 	    List *clauses = lfirst(clausegroups);
@@ -1056,6 +1159,7 @@ index_innerjoin(Query *root, Rel *rel, List *clausegroup_list, Rel *index)
 	pathnode->path.pathtype = T_IndexScan;
 	pathnode->path.parent = rel;
 	pathnode->indexid = index->relids;
+	pathnode->indexkeys = index->indexkeys;
 	pathnode->indexqual = clausegroup;
 
 	pathnode->path.joinid = ((CInfo*)lfirst(clausegroup))->cinfojoinid;
@@ -1130,7 +1234,7 @@ create_index_paths(Query *root,
 		temp = false;
 	    }
 	}
-	  
+
 	if (!join || temp) {	/* restriction, ordering scan */
 	    temp_path = create_index_path (root, rel,index,clausegroup,join);
 	    temp_node = 

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nbtree.h,v 1.9 1997/02/22 10:08:27 vadim Exp $
+ * $Id: nbtree.h,v 1.10 1997/03/18 18:41:16 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,6 +68,7 @@ typedef struct BTScanOpaqueData {
     Buffer	btso_mrkbuf;
     uint16	qual_ok;		/* 0 for quals like key == 1 && key > 2 */
     uint16	numberOfKeys;		/* number of key attributes */
+    uint16	numberOfFirstKeys;	/* number of first key attributes */
     ScanKey	keyData;		/* key descriptor */
 } BTScanOpaqueData;
 
@@ -270,9 +271,9 @@ extern bool _bt_invokestrat(Relation rel, AttrNumber attno,
 extern ScanKey  _bt_mkscankey(Relation rel, IndexTuple itup);
 extern void _bt_freeskey(ScanKey skey);
 extern void _bt_freestack(BTStack stack);
-extern void _bt_orderkeys(Relation relation, uint16 *numberOfKeys,
-			  ScanKey key, uint16 *qual_ok);
+extern void _bt_orderkeys(Relation relation, BTScanOpaque so);
 extern bool _bt_checkqual(IndexScanDesc scan, IndexTuple itup);
+extern bool _bt_checkforkeys(IndexScanDesc scan, IndexTuple itup, Size keysz);
 extern BTItem _bt_formitem(IndexTuple itup);
 
 /*

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.8 1997/03/12 21:05:56 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.9 1997/03/18 18:40:05 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -417,22 +417,35 @@ create_nestloop_node(JoinPath *best_path,
     NestLoop *join_node = (NestLoop*)NULL;
 
     if (IsA(inner_node,IndexScan)) {
-	/*  An index is being used to reduce the number of tuples scanned in 
-	 *    the inner relation.
-	 * There will never be more than one index used in the inner 
-	 * scan path, so we need only consider the first set of 
-	 *    qualifications in indxqual. 
+	/* An index is being used to reduce the number of tuples scanned in 
+	 * the inner relation. There will never be more than one index used 
+	 * in the inner scan path, so we need only consider the first set of 
+	 * qualifications in indxqual. 
+	 *
+	 * But there may be more than one clauses in this "first set" 
+	 * in the case of multi-column indices. - vadim 03/18/97
 	 */
 
 	List *inner_indxqual = lfirst(((IndexScan*)inner_node)->indxqual);
-	List *inner_qual = (inner_indxqual == NULL)? NULL:lfirst(inner_indxqual);
+	List *inner_qual;
+	bool found = false;
+
+	foreach (inner_qual, inner_indxqual)
+	{
+	    if ( !(qual_clause_p ((Node*)inner_qual)) )
+	    {
+	    	found = true;
+	    	break;
+	    }
+	}
 
 	/* If we have in fact found a join index qualification, remove these
 	 * index clauses from the nestloop's join clauses and reset the 
 	 * inner(index) scan's qualification so that the var nodes refer to
 	 * the proper outer join relation attributes.
 	 */
-	if  (!(qual_clause_p((Node*)inner_qual))) {
+	if  ( found )
+	{
 	    List *new_inner_qual = NIL;
 	    
 	    clauses = set_difference(clauses,inner_indxqual);
@@ -613,7 +626,7 @@ fix_indxqual_references(Node *clause, Path *index_path)
 	if (lfirsti(index_path->parent->relids) == ((Var*)clause)->varno) {
 	    int pos = 0;
 	    int varatt = ((Var*)clause)->varattno;
-	    int *indexkeys = index_path->parent->indexkeys;
+	    int *indexkeys = ((IndexPath*)index_path)->indexkeys;
 	    
 	    if (indexkeys) {
 		while (indexkeys[pos] != 0) {
