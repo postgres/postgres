@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.78 2001/06/12 05:55:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.79 2001/06/16 18:59:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,13 +66,13 @@ char	   *Name_pg_proc_indices[Num_pg_proc_indices] =
 char	   *Name_pg_relcheck_indices[Num_pg_relcheck_indices] =
 {RelCheckIndex};
 char	   *Name_pg_rewrite_indices[Num_pg_rewrite_indices] =
-{RewriteRulenameIndex};
+{RewriteOidIndex, RewriteRulenameIndex};
 char	   *Name_pg_shadow_indices[Num_pg_shadow_indices] =
 {ShadowNameIndex, ShadowSysidIndex};
 char	   *Name_pg_statistic_indices[Num_pg_statistic_indices] =
 {StatisticRelidAttnumIndex};
 char	   *Name_pg_trigger_indices[Num_pg_trigger_indices] =
-{TriggerRelidIndex, TriggerConstrNameIndex, TriggerConstrRelidIndex};
+{TriggerRelidIndex, TriggerConstrNameIndex, TriggerConstrRelidIndex, TriggerOidIndex};
 char	   *Name_pg_type_indices[Num_pg_type_indices] =
 {TypeNameIndex, TypeOidIndex};
 char	   *Name_pg_description_indices[Num_pg_description_indices] =

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: indexing.h,v 1.50 2001/06/12 05:55:50 tgl Exp $
+ * $Id: indexing.h,v 1.51 2001/06/16 18:59:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,10 +38,10 @@
 #define Num_pg_operator_indices		2
 #define Num_pg_proc_indices			2
 #define Num_pg_relcheck_indices		1
-#define Num_pg_rewrite_indices		1
+#define Num_pg_rewrite_indices		2
 #define Num_pg_shadow_indices		2
 #define Num_pg_statistic_indices	1
-#define Num_pg_trigger_indices		3
+#define Num_pg_trigger_indices		4
 #define Num_pg_type_indices			2
 
 /*
@@ -77,6 +77,7 @@
 #define ProcedureNameIndex			"pg_proc_proname_narg_type_index"
 #define ProcedureOidIndex			"pg_proc_oid_index"
 #define RelCheckIndex				"pg_relcheck_rcrelid_index"
+#define RewriteOidIndex				"pg_rewrite_oid_index"
 #define RewriteRulenameIndex		"pg_rewrite_rulename_index"
 #define ShadowNameIndex				"pg_shadow_usename_index"
 #define ShadowSysidIndex			"pg_shadow_usesysid_index"
@@ -84,6 +85,7 @@
 #define TriggerConstrNameIndex		"pg_trigger_tgconstrname_index"
 #define TriggerConstrRelidIndex		"pg_trigger_tgconstrrelid_index"
 #define TriggerRelidIndex			"pg_trigger_tgrelid_index"
+#define TriggerOidIndex				"pg_trigger_oid_index"
 #define TypeNameIndex				"pg_type_typname_index"
 #define TypeOidIndex				"pg_type_oid_index"
 
@@ -181,6 +183,7 @@ DECLARE_UNIQUE_INDEX(pg_proc_oid_index on pg_proc using btree(oid oid_ops));
 DECLARE_UNIQUE_INDEX(pg_proc_proname_narg_type_index on pg_proc using btree(proname name_ops, pronargs int2_ops, proargtypes oidvector_ops));
 /* This following index is not used for a cache and is not unique */
 DECLARE_INDEX(pg_relcheck_rcrelid_index on pg_relcheck using btree(rcrelid oid_ops));
+DECLARE_UNIQUE_INDEX(pg_rewrite_oid_index on pg_rewrite using btree(oid oid_ops));
 DECLARE_UNIQUE_INDEX(pg_rewrite_rulename_index on pg_rewrite using btree(rulename name_ops));
 DECLARE_UNIQUE_INDEX(pg_shadow_usename_index on pg_shadow using btree(usename name_ops));
 DECLARE_UNIQUE_INDEX(pg_shadow_usesysid_index on pg_shadow using btree(usesysid int4_ops));
@@ -188,6 +191,7 @@ DECLARE_UNIQUE_INDEX(pg_statistic_relid_att_index on pg_statistic using btree(st
 DECLARE_INDEX(pg_trigger_tgconstrname_index on pg_trigger using btree(tgconstrname name_ops));
 DECLARE_INDEX(pg_trigger_tgconstrrelid_index on pg_trigger using btree(tgconstrrelid oid_ops));
 DECLARE_INDEX(pg_trigger_tgrelid_index on pg_trigger using btree(tgrelid oid_ops));
+DECLARE_UNIQUE_INDEX(pg_trigger_oid_index on pg_trigger using btree(oid oid_ops));
 DECLARE_UNIQUE_INDEX(pg_type_oid_index on pg_type using btree(oid oid_ops));
 DECLARE_UNIQUE_INDEX(pg_type_typname_index on pg_type using btree(typname name_ops));
 
