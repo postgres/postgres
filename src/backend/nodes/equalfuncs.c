@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.184 2003/02/08 20:20:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.185 2003/02/09 06:56:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,6 +56,13 @@
 #define COMPARE_INTLIST_FIELD(fldname) \
 	do { \
 		if (!equali(a->fldname, b->fldname)) \
+			return false; \
+	} while (0)
+
+/* Compare a field that is a pointer to a list of Oids */
+#define COMPARE_OIDLIST_FIELD(fldname) \
+	do { \
+		if (!equalo(a->fldname, b->fldname)) \
 			return false; \
 	} while (0)
 
@@ -297,7 +304,7 @@ _equalSubLink(SubLink *a, SubLink *b)
 	COMPARE_SCALAR_FIELD(useOr);
 	COMPARE_NODE_FIELD(lefthand);
 	COMPARE_NODE_FIELD(operName);
-	COMPARE_INTLIST_FIELD(operOids);
+	COMPARE_OIDLIST_FIELD(operOids);
 	COMPARE_NODE_FIELD(subselect);
 
 	return true;
@@ -611,7 +618,7 @@ _equalSetOperationStmt(SetOperationStmt *a, SetOperationStmt *b)
 	COMPARE_SCALAR_FIELD(all);
 	COMPARE_NODE_FIELD(larg);
 	COMPARE_NODE_FIELD(rarg);
-	COMPARE_INTLIST_FIELD(colTypes);
+	COMPARE_OIDLIST_FIELD(colTypes);
 
 	return true;
 }
@@ -1237,7 +1244,7 @@ _equalPrepareStmt(PrepareStmt *a, PrepareStmt *b)
 {
 	COMPARE_STRING_FIELD(name);
 	COMPARE_NODE_FIELD(argtypes);
-	COMPARE_INTLIST_FIELD(argtype_oids);
+	COMPARE_OIDLIST_FIELD(argtype_oids);
 	COMPARE_NODE_FIELD(query);
 
 	return true;

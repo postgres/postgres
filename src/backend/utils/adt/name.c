@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/name.c,v 1.41 2002/09/04 20:31:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/name.c,v 1.42 2003/02/09 06:56:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -245,7 +245,7 @@ current_schema(PG_FUNCTION_ARGS)
 
 	if (search_path == NIL)
 		PG_RETURN_NULL();
-	nspname = get_namespace_name((Oid) lfirsti(search_path));
+	nspname = get_namespace_name(lfirsto(search_path));
 	PG_RETURN_DATUM(DirectFunctionCall1(namein, CStringGetDatum(nspname)));
 }
 
@@ -265,7 +265,7 @@ current_schemas(PG_FUNCTION_ARGS)
 	{
 		char	   *nspname;
 
-		nspname = get_namespace_name((Oid) lfirsti(search_path));
+		nspname = get_namespace_name(lfirsto(search_path));
 		names[i] = DirectFunctionCall1(namein, CStringGetDatum(nspname));
 		i++;
 		search_path = lnext(search_path);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.197 2003/02/09 00:30:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.198 2003/02/09 06:56:27 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -173,7 +173,7 @@ _outOidList(StringInfo str, List *list)
 
 	appendStringInfoChar(str, '(');
 	foreach(l, list)
-		appendStringInfo(str, " %u", (Oid) lfirsti(l));
+		appendStringInfo(str, " %u", lfirsto(l));
 	appendStringInfoChar(str, ')');
 }
 
@@ -689,7 +689,7 @@ _outSubLink(StringInfo str, SubLink *node)
 	WRITE_BOOL_FIELD(useOr);
 	WRITE_NODE_FIELD(lefthand);
 	WRITE_NODE_FIELD(operName);
-	WRITE_INTLIST_FIELD(operOids);
+	WRITE_OIDLIST_FIELD(operOids);
 	WRITE_NODE_FIELD(subselect);
 }
 

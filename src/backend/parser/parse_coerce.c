@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.92 2003/02/03 21:15:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.93 2003/02/09 06:56:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -553,7 +553,7 @@ coerce_to_boolean(Node *node, const char *constructName)
  *		This is used for determining the output type of CASE and UNION
  *		constructs.
  *
- * typeids is a nonempty integer list of type OIDs.  Note that earlier items
+ * typeids is a nonempty list of type OIDs.  Note that earlier items
  * in the list will be preferred if there is doubt.
  * 'context' is a phrase to use in the error message if we fail to select
  * a usable type.
@@ -566,11 +566,11 @@ select_common_type(List *typeids, const char *context)
 	List	   *l;
 
 	Assert(typeids != NIL);
-	ptype = (Oid) lfirsti(typeids);
+	ptype = lfirsto(typeids);
 	pcategory = TypeCategory(ptype);
 	foreach(l, lnext(typeids))
 	{
-		Oid			ntype = (Oid) lfirsti(l);
+		Oid			ntype = lfirsto(l);
 
 		/* move on to next one if no new information... */
 		if ((ntype != InvalidOid) && (ntype != UNKNOWNOID) && (ntype != ptype))

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.144 2003/01/08 22:29:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.145 2003/02/09 06:56:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2245,7 +2245,7 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 						 cname);
 
 				constr_oid = HeapTupleGetOid(htup);
-				loid = lappendi(loid, constr_oid);
+				loid = lappendo(loid, constr_oid);
 				found = true;
 			}
 
@@ -2271,7 +2271,7 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 			foreach(ls, deftrig_trigstates)
 			{
 				state = (DeferredTriggerStatus) lfirst(ls);
-				if (state->dts_tgoid == (Oid) lfirsti(l))
+				if (state->dts_tgoid == lfirsto(l))
 				{
 					state->dts_tgisdeferred = stmt->deferred;
 					found = true;
@@ -2282,7 +2282,7 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 			{
 				state = (DeferredTriggerStatus)
 					palloc(sizeof(DeferredTriggerStatusData));
-				state->dts_tgoid = (Oid) lfirsti(l);
+				state->dts_tgoid = lfirsto(l);
 				state->dts_tgisdeferred = stmt->deferred;
 
 				deftrig_trigstates =

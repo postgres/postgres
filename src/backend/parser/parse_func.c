@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.143 2002/12/12 15:49:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.144 2003/02/09 06:56:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -972,7 +972,7 @@ find_inheritors(Oid relid, Oid **supervec)
 	 * Use queue to do a breadth-first traversal of the inheritance graph
 	 * from the relid supplied up to the root.	At the top of the loop,
 	 * relid is the OID of the reltype to check next, queue is the list of
-	 * pending rels to check after this one, and visited is the list of
+	 * pending relids to check after this one, and visited is the list of
 	 * relids we need to output.
 	 */
 	do
@@ -989,7 +989,7 @@ find_inheritors(Oid relid, Oid **supervec)
 		{
 			Form_pg_inherits inh = (Form_pg_inherits) GETSTRUCT(inhtup);
 
-			queue = lappendi(queue, inh->inhparent);
+			queue = lappendo(queue, inh->inhparent);
 		}
 
 		heap_endscan(inhscan);
@@ -999,9 +999,9 @@ find_inheritors(Oid relid, Oid **supervec)
 		newrelid = false;
 		while (queue != NIL)
 		{
-			relid = lfirsti(queue);
+			relid = lfirsto(queue);
 			queue = lnext(queue);
-			if (!intMember(relid, visited))
+			if (!oidMember(relid, visited))
 			{
 				newrelid = true;
 				break;
@@ -1010,7 +1010,7 @@ find_inheritors(Oid relid, Oid **supervec)
 
 		if (newrelid)
 		{
-			visited = lappendi(visited, relid);
+			visited = lappendo(visited, relid);
 			nvisited++;
 		}
 	} while (newrelid);
@@ -1025,7 +1025,7 @@ find_inheritors(Oid relid, Oid **supervec)
 		foreach(elt, visited)
 		{
 			/* return the type id, rather than the relation id */
-			*relidvec++ = get_rel_type_id((Oid) lfirsti(elt));
+			*relidvec++ = get_rel_type_id(lfirsto(elt));
 		}
 	}
 	else

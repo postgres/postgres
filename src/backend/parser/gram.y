@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.399 2003/02/05 20:16:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.400 2003/02/09 06:56:28 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2276,7 +2276,7 @@ DefineStmt:
 						case 3:
 							r->catalogname = strVal(lfirst($3));
 							r->schemaname = strVal(lsecond($3));
-							r->relname = strVal(lfirst(lnext(lnext($3))));
+							r->relname = strVal(lthird($3));
 							break;
 						default:
 							elog(ERROR,
@@ -6857,7 +6857,7 @@ qualified_name:
 						case 3:
 							$$->catalogname = strVal(lfirst($1));
 							$$->schemaname = strVal(lsecond($1));
-							$$->relname = strVal(lfirst(lnext(lnext($1))));
+							$$->relname = strVal(lthird($1));
 							break;
 						default:
 							elog(ERROR,

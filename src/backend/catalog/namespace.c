@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.46 2003/02/07 01:33:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.47 2003/02/09 06:56:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -262,7 +262,7 @@ RelnameGetRelid(const char *relname)
 
 	foreach(lptr, namespaceSearchPath)
 	{
-		Oid			namespaceId = (Oid) lfirsti(lptr);
+		Oid			namespaceId = lfirsto(lptr);
 
 		relid = get_relname_relid(relname, namespaceId);
 		if (OidIsValid(relid))
@@ -300,11 +300,11 @@ RelationIsVisible(Oid relid)
 	/*
 	 * Quick check: if it ain't in the path at all, it ain't visible.
 	 * Items in the system namespace are surely in the path and so we
-	 * needn't even do intMember() for them.
+	 * needn't even do oidMember() for them.
 	 */
 	relnamespace = relform->relnamespace;
 	if (relnamespace != PG_CATALOG_NAMESPACE &&
-		!intMember(relnamespace, namespaceSearchPath))
+		!oidMember(relnamespace, namespaceSearchPath))
 		visible = false;
 	else
 	{
@@ -342,7 +342,7 @@ TypenameGetTypid(const char *typname)
 
 	foreach(lptr, namespaceSearchPath)
 	{
-		Oid			namespaceId = (Oid) lfirsti(lptr);
+		Oid			namespaceId = lfirsto(lptr);
 
 		typid = GetSysCacheOid(TYPENAMENSP,
 							   PointerGetDatum(typname),
@@ -382,11 +382,11 @@ TypeIsVisible(Oid typid)
 	/*
 	 * Quick check: if it ain't in the path at all, it ain't visible.
 	 * Items in the system namespace are surely in the path and so we
-	 * needn't even do intMember() for them.
+	 * needn't even do oidMember() for them.
 	 */
 	typnamespace = typform->typnamespace;
 	if (typnamespace != PG_CATALOG_NAMESPACE &&
-		!intMember(typnamespace, namespaceSearchPath))
+		!oidMember(typnamespace, namespaceSearchPath))
 		visible = false;
 	else
 	{
@@ -480,7 +480,7 @@ FuncnameGetCandidates(List *names, int nargs)
 
 			foreach(nsp, namespaceSearchPath)
 			{
-				if (procform->pronamespace == (Oid) lfirsti(nsp))
+				if (procform->pronamespace == lfirsto(nsp))
 					break;
 				pathpos++;
 			}
@@ -583,11 +583,11 @@ FunctionIsVisible(Oid funcid)
 	/*
 	 * Quick check: if it ain't in the path at all, it ain't visible.
 	 * Items in the system namespace are surely in the path and so we
-	 * needn't even do intMember() for them.
+	 * needn't even do oidMember() for them.
 	 */
 	pronamespace = procform->pronamespace;
 	if (pronamespace != PG_CATALOG_NAMESPACE &&
-		!intMember(pronamespace, namespaceSearchPath))
+		!oidMember(pronamespace, namespaceSearchPath))
 		visible = false;
 	else
 	{
@@ -695,7 +695,7 @@ OpernameGetCandidates(List *names, char oprkind)
 
 			foreach(nsp, namespaceSearchPath)
 			{
-				if (operform->oprnamespace == (Oid) lfirsti(nsp))
+				if (operform->oprnamespace == lfirsto(nsp))
 					break;
 				pathpos++;
 			}
@@ -795,11 +795,11 @@ OperatorIsVisible(Oid oprid)
 	/*
 	 * Quick check: if it ain't in the path at all, it ain't visible.
 	 * Items in the system namespace are surely in the path and so we
-	 * needn't even do intMember() for them.
+	 * needn't even do oidMember() for them.
 	 */
 	oprnamespace = oprform->oprnamespace;
 	if (oprnamespace != PG_CATALOG_NAMESPACE &&
-		!intMember(oprnamespace, namespaceSearchPath))
+		!oidMember(oprnamespace, namespaceSearchPath))
 		visible = false;
 	else
 	{
@@ -871,7 +871,7 @@ OpclassGetCandidates(Oid amid)
 		/* Consider only opclasses that are in the search path */
 		foreach(nsp, namespaceSearchPath)
 		{
-			if (opcform->opcnamespace == (Oid) lfirsti(nsp))
+			if (opcform->opcnamespace == lfirsto(nsp))
 				break;
 			pathpos++;
 		}
@@ -967,7 +967,7 @@ OpclassnameGetOpcid(Oid amid, const char *opcname)
 
 	foreach(lptr, namespaceSearchPath)
 	{
-		Oid			namespaceId = (Oid) lfirsti(lptr);
+		Oid			namespaceId = lfirsto(lptr);
 
 		opcid = GetSysCacheOid(CLAAMNAMENSP,
 							   ObjectIdGetDatum(amid),
@@ -1008,11 +1008,11 @@ OpclassIsVisible(Oid opcid)
 	/*
 	 * Quick check: if it ain't in the path at all, it ain't visible.
 	 * Items in the system namespace are surely in the path and so we
-	 * needn't even do intMember() for them.
+	 * needn't even do oidMember() for them.
 	 */
 	opcnamespace = opcform->opcnamespace;
 	if (opcnamespace != PG_CATALOG_NAMESPACE &&
-		!intMember(opcnamespace, namespaceSearchPath))
+		!oidMember(opcnamespace, namespaceSearchPath))
 		visible = false;
 	else
 	{
@@ -1049,7 +1049,7 @@ ConversionGetConid(const char *conname)
 
 	foreach(lptr, namespaceSearchPath)
 	{
-		Oid			namespaceId = (Oid) lfirsti(lptr);
+		Oid			namespaceId = lfirsto(lptr);
 
 		conid = GetSysCacheOid(CONNAMENSP,
 							   PointerGetDatum(conname),
@@ -1089,11 +1089,11 @@ ConversionIsVisible(Oid conid)
 	/*
 	 * Quick check: if it ain't in the path at all, it ain't visible.
 	 * Items in the system namespace are surely in the path and so we
-	 * needn't even do intMember() for them.
+	 * needn't even do oidMember() for them.
 	 */
 	connamespace = conform->connamespace;
 	if (connamespace != PG_CATALOG_NAMESPACE &&
-		!intMember(connamespace, namespaceSearchPath))
+		!oidMember(connamespace, namespaceSearchPath))
 		visible = false;
 	else
 	{
@@ -1141,7 +1141,7 @@ DeconstructQualifiedName(List *names,
 		case 3:
 			catalogname = strVal(lfirst(names));
 			schemaname = strVal(lsecond(names));
-			objname = strVal(lfirst(lnext(lnext(names))));
+			objname = strVal(lthird(names));
 
 			/*
 			 * We check the catalog name and then ignore it.
@@ -1251,7 +1251,7 @@ makeRangeVarFromNameList(List *names)
 		case 3:
 			rel->catalogname = strVal(lfirst(names));
 			rel->schemaname = strVal(lsecond(names));
-			rel->relname = strVal(lfirst(lnext(lnext(names))));
+			rel->relname = strVal(lthird(names));
 			break;
 		default:
 			elog(ERROR, "Improper relation name (too many dotted names)");
@@ -1402,7 +1402,7 @@ FindConversionByName(List *name)
 
 		foreach(lptr, namespaceSearchPath)
 		{
-			namespaceId = (Oid) lfirsti(lptr);
+			namespaceId = lfirsto(lptr);
 			conoid = FindConversion(conversion_name, namespaceId);
 			if (OidIsValid(conoid))
 				return conoid;
@@ -1426,7 +1426,7 @@ FindDefaultConversionProc(int4 for_encoding, int4 to_encoding)
 
 	foreach(lptr, namespaceSearchPath)
 	{
-		Oid			namespaceId = (Oid) lfirsti(lptr);
+		Oid			namespaceId = lfirsto(lptr);
 
 		proc = FindDefaultConversion(namespaceId, for_encoding, to_encoding);
 		if (OidIsValid(proc))
@@ -1499,10 +1499,10 @@ recomputeNamespacePath(void)
 											 0, 0, 0);
 				ReleaseSysCache(tuple);
 				if (OidIsValid(namespaceId) &&
-					!intMember(namespaceId, oidlist) &&
+					!oidMember(namespaceId, oidlist) &&
 					pg_namespace_aclcheck(namespaceId, userId,
 										  ACL_USAGE) == ACLCHECK_OK)
-					oidlist = lappendi(oidlist, namespaceId);
+					oidlist = lappendo(oidlist, namespaceId);
 			}
 		}
 		else
@@ -1512,10 +1512,10 @@ recomputeNamespacePath(void)
 										 CStringGetDatum(curname),
 										 0, 0, 0);
 			if (OidIsValid(namespaceId) &&
-				!intMember(namespaceId, oidlist) &&
+				!oidMember(namespaceId, oidlist) &&
 				pg_namespace_aclcheck(namespaceId, userId,
 									  ACL_USAGE) == ACLCHECK_OK)
-				oidlist = lappendi(oidlist, namespaceId);
+				oidlist = lappendo(oidlist, namespaceId);
 		}
 	}
 
@@ -1525,23 +1525,23 @@ recomputeNamespacePath(void)
 	if (oidlist == NIL)
 		firstNS = InvalidOid;
 	else
-		firstNS = (Oid) lfirsti(oidlist);
+		firstNS = lfirsto(oidlist);
 
 	/*
 	 * Add any implicitly-searched namespaces to the list.	Note these go
 	 * on the front, not the back; also notice that we do not check USAGE
 	 * permissions for these.
 	 */
-	if (!intMember(PG_CATALOG_NAMESPACE, oidlist))
-		oidlist = lconsi(PG_CATALOG_NAMESPACE, oidlist);
+	if (!oidMember(PG_CATALOG_NAMESPACE, oidlist))
+		oidlist = lconso(PG_CATALOG_NAMESPACE, oidlist);
 
 	if (OidIsValid(myTempNamespace) &&
-		!intMember(myTempNamespace, oidlist))
-		oidlist = lconsi(myTempNamespace, oidlist);
+		!oidMember(myTempNamespace, oidlist))
+		oidlist = lconso(myTempNamespace, oidlist);
 
 	if (OidIsValid(mySpecialNamespace) &&
-		!intMember(mySpecialNamespace, oidlist))
-		oidlist = lconsi(mySpecialNamespace, oidlist);
+		!oidMember(mySpecialNamespace, oidlist))
+		oidlist = lconso(mySpecialNamespace, oidlist);
 
 	/*
 	 * Now that we've successfully built the new list of namespace OIDs,
@@ -1801,7 +1801,7 @@ InitializeSearchPath(void)
 		MemoryContext oldcxt;
 
 		oldcxt = MemoryContextSwitchTo(TopMemoryContext);
-		namespaceSearchPath = makeListi1(PG_CATALOG_NAMESPACE);
+		namespaceSearchPath = makeListo1(PG_CATALOG_NAMESPACE);
 		MemoryContextSwitchTo(oldcxt);
 		defaultCreationNamespace = PG_CATALOG_NAMESPACE;
 		firstExplicitNamespace = PG_CATALOG_NAMESPACE;
@@ -1851,7 +1851,7 @@ fetch_search_path(bool includeImplicit)
 	result = namespaceSearchPath;
 	if (!includeImplicit)
 	{
-		while (result && (Oid) lfirsti(result) != firstExplicitNamespace)
+		while (result && lfirsto(result) != firstExplicitNamespace)
 			result = lnext(result);
 	}
 

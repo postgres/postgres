@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.50 2002/09/04 20:31:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.51 2003/02/09 06:56:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,13 +67,13 @@ LookupTypeName(const TypeName *typename)
 			case 3:
 				rel->schemaname = strVal(lfirst(typename->names));
 				rel->relname = strVal(lsecond(typename->names));
-				field = strVal(lfirst(lnext(lnext(typename->names))));
+				field = strVal(lthird(typename->names));
 				break;
 			case 4:
 				rel->catalogname = strVal(lfirst(typename->names));
 				rel->schemaname = strVal(lsecond(typename->names));
-				rel->relname = strVal(lfirst(lnext(lnext(typename->names))));
-				field = strVal(lfirst(lnext(lnext(lnext(typename->names)))));
+				rel->relname = strVal(lthird(typename->names));
+				field = strVal(lfourth(typename->names));
 				break;
 			default:
 				elog(ERROR, "Improper %%TYPE reference (too many dotted names): %s",

@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.89 2003/02/08 20:20:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.90 2003/02/09 06:56:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -111,7 +111,7 @@ plan_set_operations(Query *parse)
  * recurse_set_operations
  *	  Recursively handle one step in a tree of set operations
  *
- * colTypes: integer list of type OIDs of expected output columns
+ * colTypes: list of type OIDs of expected output columns
  * junkOK: if true, child resjunk columns may be left in the result
  * flag: if >= 0, add a resjunk output column indicating value of flag
  * refnames_tlist: targetlist to take column names from
@@ -330,7 +330,7 @@ recurse_union_children(Node *setOp, Query *parse,
 
 		if (op->op == top_union->op &&
 			(op->all == top_union->all || op->all) &&
-			equali(op->colTypes, top_union->colTypes))
+			equalo(op->colTypes, top_union->colTypes))
 		{
 			/* Same UNION, so fold children into parent's subplan list */
 			return nconc(recurse_union_children(op->larg, parse,
@@ -380,7 +380,7 @@ generate_setop_tlist(List *colTypes, int flag,
 
 	foreach(i, colTypes)
 	{
-		Oid			colType = (Oid) lfirsti(i);
+		Oid			colType = lfirsto(i);
 		TargetEntry *inputtle = (TargetEntry *) lfirst(input_tlist);
 		TargetEntry *reftle = (TargetEntry *) lfirst(refnames_tlist);
 		int32		colTypmod;
@@ -500,7 +500,7 @@ generate_append_tlist(List *colTypes, bool flag,
 			if (subtle->resdom->resjunk)
 				continue;
 			Assert(curColType != NIL);
-			if (subtle->resdom->restype == (Oid) lfirsti(curColType))
+			if (subtle->resdom->restype == lfirsto(curColType))
 			{
 				/* If first subplan, copy the typmod; else compare */
 				if (planl == input_plans)
@@ -525,7 +525,7 @@ generate_append_tlist(List *colTypes, bool flag,
 	colindex = 0;
 	foreach(curColType, colTypes)
 	{
-		Oid			colType = (Oid) lfirsti(curColType);
+		Oid			colType = lfirsto(curColType);
 		int32		colTypmod = colTypmods[colindex++];
 		TargetEntry *reftle = (TargetEntry *) lfirst(refnames_tlist);
 
@@ -591,7 +591,7 @@ tlist_same_datatypes(List *tlist, List *colTypes, bool junkOK)
 		{
 			if (colTypes == NIL)
 				return false;
-			if (tle->resdom->restype != (Oid) lfirsti(colTypes))
+			if (tle->resdom->restype != lfirsto(colTypes))
 				return false;
 			colTypes = lnext(colTypes);
 		}
@@ -604,14 +604,14 @@ tlist_same_datatypes(List *tlist, List *colTypes, bool junkOK)
 
 /*
  * find_all_inheritors -
- *		Returns an integer list of relation OIDs including the given rel plus
+ *		Returns a list of relation OIDs including the given rel plus
  *		all relations that inherit from it, directly or indirectly.
  */
 List *
 find_all_inheritors(Oid parentrel)
 {
 	List	   *examined_relids = NIL;
-	List	   *unexamined_relids = makeListi1(parentrel);
+	List	   *unexamined_relids = makeListo1(parentrel);
 
 	/*
 	 * While the queue of unexamined relids is nonempty, remove the first
@@ -620,11 +620,11 @@ find_all_inheritors(Oid parentrel)
 	 */
 	while (unexamined_relids != NIL)
 	{
-		Oid			currentrel = lfirsti(unexamined_relids);
+		Oid			currentrel = lfirsto(unexamined_relids);
 		List	   *currentchildren;
 
 		unexamined_relids = lnext(unexamined_relids);
-		examined_relids = lappendi(examined_relids, currentrel);
+		examined_relids = lappendo(examined_relids, currentrel);
 		currentchildren = find_inheritance_children(currentrel);
 
 		/*
@@ -634,8 +634,8 @@ find_all_inheritors(Oid parentrel)
 		 * into an infinite loop, though theoretically there can't be any
 		 * cycles in the inheritance graph anyway.)
 		 */
-		currentchildren = set_differencei(currentchildren, examined_relids);
-		unexamined_relids = set_unioni(unexamined_relids, currentchildren);
+		currentchildren = set_differenceo(currentchildren, examined_relids);
+		unexamined_relids = set_uniono(unexamined_relids, currentchildren);
 	}
 
 	return examined_relids;
@@ -702,7 +702,7 @@ expand_inherted_rtentry(Query *parse, Index rti, bool dup_parent)
 
 	foreach(l, inhOIDs)
 	{
-		Oid			childOID = (Oid) lfirsti(l);
+		Oid			childOID = lfirsto(l);
 		RangeTblEntry *childrte;
 		Index		childRTindex;
 

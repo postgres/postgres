@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.128 2003/02/08 20:20:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.129 2003/02/09 06:56:27 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -566,7 +566,7 @@ contain_mutable_functions_walker(Node *node, void *context)
 
 		foreach(opid, sublink->operOids)
 		{
-			if (op_volatile((Oid) lfirsti(opid)) != PROVOLATILE_IMMUTABLE)
+			if (op_volatile(lfirsto(opid)) != PROVOLATILE_IMMUTABLE)
 				return true;
 		}
 		/* else fall through to check args */
@@ -633,7 +633,7 @@ contain_volatile_functions_walker(Node *node, void *context)
 
 		foreach(opid, sublink->operOids)
 		{
-			if (op_volatile((Oid) lfirsti(opid)) == PROVOLATILE_VOLATILE)
+			if (op_volatile(lfirsto(opid)) == PROVOLATILE_VOLATILE)
 				return true;
 		}
 		/* else fall through to check args */
@@ -718,7 +718,7 @@ contain_nonstrict_functions_walker(Node *node, void *context)
 
 		foreach(opid, sublink->operOids)
 		{
-			if (!op_strict((Oid) lfirsti(opid)))
+			if (!op_strict(lfirsto(opid)))
 				return true;
 		}
 		/* else fall through to check args */
@@ -1679,7 +1679,7 @@ inline_function(Oid funcid, List *args, HeapTuple func_tuple,
 		return NULL;
 
 	/* Check for recursive function, and give up trying to expand if so */
-	if (intMember(funcid, active_fns))
+	if (oidMember(funcid, active_fns))
 		return NULL;
 
 	/* Check permission to call function (fail later, if not) */
@@ -1824,7 +1824,7 @@ inline_function(Oid funcid, List *args, HeapTuple func_tuple,
 	 * add the current function to the context list of active functions.
 	 */
 	newexpr = eval_const_expressions_mutator(newexpr,
-											 lconsi(funcid, active_fns));
+											 lconso(funcid, active_fns));
 
 	return (Expr *) newexpr;
 

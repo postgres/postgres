@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.78 2003/02/08 20:20:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.79 2003/02/09 06:56:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -98,7 +98,7 @@ get_relation_info(Oid relationObjectId, RelOptInfo *rel)
 
 		foreach(indexoidscan, indexoidlist)
 		{
-			Oid			indexoid = lfirsti(indexoidscan);
+			Oid			indexoid = lfirsto(indexoidscan);
 			Relation	indexRelation;
 			Form_pg_index index;
 			IndexOptInfo *info;
@@ -270,7 +270,7 @@ join_selectivity(Query *root,
 /*
  * find_inheritance_children
  *
- * Returns an integer list containing the OIDs of all relations which
+ * Returns a list containing the OIDs of all relations which
  * inherit *directly* from the relation with OID 'inhparent'.
  *
  * XXX might be a good idea to create an index on pg_inherits' inhparent
@@ -305,7 +305,7 @@ find_inheritance_children(Oid inhparent)
 	while ((inheritsTuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
 		inhrelid = ((Form_pg_inherits) GETSTRUCT(inheritsTuple))->inhrelid;
-		list = lappendi(list, inhrelid);
+		list = lappendo(list, inhrelid);
 	}
 	heap_endscan(scan);
 	heap_close(relation, AccessShareLock);

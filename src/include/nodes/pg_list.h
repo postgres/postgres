@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_list.h,v 1.34 2003/02/08 20:20:55 tgl Exp $
+ * $Id: pg_list.h,v 1.35 2003/02/09 06:56:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,6 +61,15 @@ typedef struct Value
 
 /*----------------------
  *		List node
+ *
+ * We support three types of lists:
+ *	lists of pointers (in practice always pointers to Nodes, but declare as
+ *		"void *" to minimize casting annoyances)
+ *	lists of integers
+ *	lists of Oids
+ *
+ * (At this writing, ints and Oids are the same size, but they may not always
+ * be so; try to be careful to maintain the distinction.)
  *----------------------
  */
 typedef struct List
@@ -70,6 +79,7 @@ typedef struct List
 	{
 		void	   *ptr_value;
 		int			int_value;
+		Oid			oid_value;
 	}			elem;
 	struct List *next;
 } List;
@@ -78,23 +88,31 @@ typedef struct List
 
 /* ----------------
  *		accessor macros
+ *
+ * The general naming convention is that the base name xyz() is for the
+ * pointer version, xyzi() is for integers, xyzo() is for Oids.  We don't
+ * bother with multiple names if the same routine can handle all cases.
  * ----------------
  */
 
-/* anything that doesn't end in 'i' is assumed to be referring to the */
-/* pointer version of the list (where it makes a difference)		  */
 #define lfirst(l)								((l)->elem.ptr_value)
+#define lfirsti(l)								((l)->elem.int_value)
+#define lfirsto(l)								((l)->elem.oid_value)
+
 #define lnext(l)								((l)->next)
+
 #define lsecond(l)								lfirst(lnext(l))
 
-#define lfirsti(l)								((l)->elem.int_value)
+#define lthird(l)								lfirst(lnext(lnext(l)))
+
+#define lfourth(l)								lfirst(lnext(lnext(lnext(l))))
 
 /*
  * foreach -
  *	  a convenience macro which loops through the list
  */
 #define foreach(_elt_,_list_)	\
-	for(_elt_=(_list_); _elt_!=NIL; _elt_=lnext(_elt_))
+	for (_elt_ = (_list_); _elt_ != NIL; _elt_ = lnext(_elt_))
 
 /*
  * Convenience macros for building fixed-length lists
@@ -106,49 +124,48 @@ typedef struct List
 
 #define makeListi1(x1)				lconsi(x1, NIL)
 #define makeListi2(x1,x2)			lconsi(x1, makeListi1(x2))
-#define makeListi3(x1,x2,x3)		lconsi(x1, makeListi2(x2,x3))
-#define makeListi4(x1,x2,x3,x4)		lconsi(x1, makeListi3(x2,x3,x4))
+
+#define makeListo1(x1)				lconso(x1, NIL)
+#define makeListo2(x1,x2)			lconso(x1, makeListo1(x2))
 
 /*
  * function prototypes in nodes/list.c
  */
-extern int	length(List *list);
-extern void *llast(List *list);
-extern List *nconc(List *list1, List *list2);
-extern List *lcons(void *datum, List *list);
-extern List *lconsi(int datum, List *list);
-extern bool member(void *datum, List *list);
-extern bool ptrMember(void *datum, List *list);
-extern bool intMember(int datum, List *list);
 extern Value *makeInteger(long i);
 extern Value *makeFloat(char *numericStr);
 extern Value *makeString(char *str);
 extern Value *makeBitString(char *str);
+
+extern List *lcons(void *datum, List *list);
+extern List *lconsi(int datum, List *list);
+extern List *lconso(Oid datum, List *list);
 extern List *lappend(List *list, void *datum);
 extern List *lappendi(List *list, int datum);
+extern List *lappendo(List *list, Oid datum);
+extern List *nconc(List *list1, List *list2);
+extern void *nth(int n, List *l);
+extern int	length(List *list);
+extern void *llast(List *list);
+extern bool member(void *datum, List *list);
+extern bool ptrMember(void *datum, List *list);
+extern bool intMember(int datum, List *list);
+extern bool oidMember(Oid datum, List *list);
 extern List *lremove(void *elem, List *list);
 extern List *LispRemove(void *elem, List *list);
 extern List *lremovei(int elem, List *list);
 extern List *ltruncate(int n, List *list);
 
-extern void *nth(int n, List *l);
-extern int	nthi(int n, List *l);
-extern void set_nth(List *l, int n, void *elem);
-
 extern List *set_union(List *list1, List *list2);
-extern List *set_unioni(List *list1, List *list2);
+extern List *set_uniono(List *list1, List *list2);
 extern List *set_ptrUnion(List *list1, List *list2);
-extern List *set_intersect(List *l1, List *l2);
-extern List *set_intersecti(List *list1, List *list2);
 extern List *set_difference(List *list1, List *list2);
-extern List *set_differencei(List *list1, List *list2);
+extern List *set_differenceo(List *list1, List *list2);
 extern List *set_ptrDifference(List *list1, List *list2);
 
 extern bool equali(List *list1, List *list2);
+extern bool equalo(List *list1, List *list2);
 
 extern void freeList(List *list);
-
-/* should be in nodes.h but needs List */
 
 /* in copyfuncs.c */
 extern List *listCopy(List *list);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.104 2003/02/08 20:20:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.105 2003/02/09 06:56:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -854,7 +854,7 @@ buildMergedJoinVar(JoinType jointype, Var *l_colvar, Var *r_colvar)
 	outcoltypmod = l_colvar->vartypmod;
 	if (outcoltype != r_colvar->vartype)
 	{
-		outcoltype = select_common_type(makeListi2(l_colvar->vartype,
+		outcoltype = select_common_type(makeListo2(l_colvar->vartype,
 												   r_colvar->vartype),
 										"JOIN/USING");
 		outcoltypmod = -1;		/* ie, unknown */

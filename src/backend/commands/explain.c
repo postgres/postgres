@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.101 2003/02/08 20:20:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.102 2003/02/09 06:56:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -403,7 +403,7 @@ explain_outNode(StringInfo str,
 			{
 				Relation	relation;
 
-				relation = index_open(lfirsti(l));
+				relation = index_open(lfirsto(l));
 				appendStringInfo(str, "%s%s",
 								 (++i > 1) ? ", " : "",
 					quote_identifier(RelationGetRelationName(relation)));

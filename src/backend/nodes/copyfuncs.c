@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.241 2003/02/09 00:30:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.242 2003/02/09 06:56:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,6 +47,10 @@
 #define COPY_INTLIST_FIELD(fldname) \
 	(newnode->fldname = listCopy(from->fldname))
 
+/* Copy a field that is a pointer to a list of Oids */
+#define COPY_OIDLIST_FIELD(fldname) \
+	(newnode->fldname = listCopy(from->fldname))
+
 /* Copy a field that is a pointer to a Bitmapset */
 #define COPY_BITMAPSET_FIELD(fldname) \
 	(newnode->fldname = bms_copy(from->fldname))
@@ -69,31 +73,38 @@
  *	  This copy function only copies the "cons-cells" of the list, not the
  *	  pointed-to objects.  (Use copyObject if you want a "deep" copy.)
  *
- *	  We also use this function for copying lists of integers, which is
- *	  grotty but unlikely to break --- it could fail if sizeof(pointer)
- *	  is less than sizeof(int), but I don't know any such machines...
+ *	  We also use this function for copying lists of integers and Oids,
+ *	  which is notationally a bit ugly, but perfectly safe.
  *
  *	  Note that copyObject will surely coredump if applied to a list
- *	  of integers!
+ *	  of integers or Oids!
  */
 List *
 listCopy(List *list)
 {
 	List	   *newlist,
-			   *l,
-			   *nl;
+			   *oldl,
+			   *newcell,
+			   *prev;
 
 	/* rather ugly coding for speed... */
 	if (list == NIL)
 		return NIL;
 
-	newlist = nl = makeList1(lfirst(list));
+	newcell = makeNode(List);
+	newcell->elem = list->elem;
 
-	foreach(l, lnext(list))
+	newlist = prev = newcell;
+
+	foreach(oldl, lnext(list))
 	{
-		lnext(nl) = makeList1(lfirst(l));
-		nl = lnext(nl);
+		newcell = makeNode(List);
+		newcell->elem = oldl->elem;
+		prev->next = newcell;
+		prev = newcell;
 	}
+	prev->next = NIL;
+
 	return newlist;
 }
 
@@ -248,7 +259,7 @@ _copyIndexScan(IndexScan *from)
 	/*
 	 * copy remainder of node
 	 */
-	COPY_INTLIST_FIELD(indxid);
+	COPY_OIDLIST_FIELD(indxid);
 	COPY_NODE_FIELD(indxqual);
 	COPY_NODE_FIELD(indxqualorig);
 	COPY_SCALAR_FIELD(indxorderdir);
@@ -816,7 +827,7 @@ _copySubLink(SubLink *from)
 	COPY_SCALAR_FIELD(useOr);
 	COPY_NODE_FIELD(lefthand);
 	COPY_NODE_FIELD(operName);
-	COPY_INTLIST_FIELD(operOids);
+	COPY_OIDLIST_FIELD(operOids);
 	COPY_NODE_FIELD(subselect);
 
 	return newnode;
@@ -1523,7 +1534,7 @@ _copySetOperationStmt(SetOperationStmt *from)
 	COPY_SCALAR_FIELD(all);
 	COPY_NODE_FIELD(larg);
 	COPY_NODE_FIELD(rarg);
-	COPY_INTLIST_FIELD(colTypes);
+	COPY_OIDLIST_FIELD(colTypes);
 
 	return newnode;
 }
@@ -2271,7 +2282,7 @@ _copyPrepareStmt(PrepareStmt *from)
 
 	COPY_STRING_FIELD(name);
 	COPY_NODE_FIELD(argtypes);
-	COPY_INTLIST_FIELD(argtype_oids);
+	COPY_OIDLIST_FIELD(argtype_oids);
 	COPY_NODE_FIELD(query);
 
 	return newnode;
@@ -2527,19 +2538,26 @@ copyObject(void *from)
 		case T_List:
 			{
 				List	   *list = from,
-						   *l,
-						   *nl;
+						   *oldl,
+						   *newcell,
+						   *prev;
 
 				/* rather ugly coding for speed... */
 				/* Note the input list cannot be NIL if we got here. */
-				nl = makeList1(copyObject(lfirst(list)));
-				retval = nl;
+				newcell = makeNode(List);
+				lfirst(newcell) = copyObject(lfirst(list));
 
-				foreach(l, lnext(list))
+				retval = (void *) newcell;
+				prev = newcell;
+
+				foreach(oldl, lnext(list))
 				{
-					lnext(nl) = makeList1(copyObject(lfirst(l)));
-					nl = lnext(nl);
+					newcell = makeNode(List);
+					lfirst(newcell) = copyObject(lfirst(oldl));
+					prev->next = newcell;
+					prev = newcell;
 				}
+				prev->next = NIL;
 			}
 			break;
 

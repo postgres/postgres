@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.227 2003/01/23 23:39:07 petere Exp $
+ * $Id: parsenodes.h,v 1.228 2003/02/09 06:56:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -639,8 +639,7 @@ typedef struct SetOperationStmt
 	/* Eventually add fields for CORRESPONDING spec here */
 
 	/* Fields derived during parse analysis: */
-	List	   *colTypes;		/* integer list of OIDs of output column
-								 * types */
+	List	   *colTypes;		/* list of OIDs of output column types */
 } SetOperationStmt;
 
 

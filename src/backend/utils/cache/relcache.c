@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.183 2002/12/16 18:39:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.184 2003/02/09 06:56:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2642,20 +2642,20 @@ insert_ordered_oid(List *list, Oid datum)
 	List	   *l;
 
 	/* Does the datum belong at the front? */
-	if (list == NIL || datum < (Oid) lfirsti(list))
-		return lconsi(datum, list);
+	if (list == NIL || datum < lfirsto(list))
+		return lconso(datum, list);
 	/* No, so find the entry it belongs after */
 	l = list;
 	for (;;)
 	{
 		List	   *n = lnext(l);
 
-		if (n == NIL || datum < (Oid) lfirsti(n))
+		if (n == NIL || datum < lfirsto(n))
 			break;				/* it belongs before n */
 		l = n;
 	}
 	/* Insert datum into list after item l */
-	lnext(l) = lconsi(datum, lnext(l));
+	lnext(l) = lconso(datum, lnext(l));
 	return list;
 }
 
@@ -2967,7 +2967,7 @@ load_relcache_init_file(void)
 	{
 		RelationCacheInsert(rels[relno]);
 		/* also make a list of their OIDs, for RelationIdIsInInitFile */
-		initFileRelationIds = lconsi((int) RelationGetRelid(rels[relno]),
+		initFileRelationIds = lconso(RelationGetRelid(rels[relno]),
 									 initFileRelationIds);
 	}
 
@@ -3133,7 +3133,7 @@ write_relcache_init_file(void)
 
 		/* also make a list of their OIDs, for RelationIdIsInInitFile */
 		oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
-		initFileRelationIds = lconsi((int) RelationGetRelid(rel),
+		initFileRelationIds = lconso(RelationGetRelid(rel),
 									 initFileRelationIds);
 		MemoryContextSwitchTo(oldcxt);
 	}
@@ -3202,7 +3202,7 @@ write_relcache_init_file(void)
 bool
 RelationIdIsInInitFile(Oid relationId)
 {
-	return intMember((int) relationId, initFileRelationIds);
+	return oidMember(relationId, initFileRelationIds);
 }
 
 /*

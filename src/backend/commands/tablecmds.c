@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.65 2003/01/08 22:06:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.66 2003/02/09 06:56:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -456,7 +456,7 @@ TruncateRelation(const RangeVar *relation)
  * 'istemp' is TRUE if we are creating a temp relation.
  *
  * Output arguments:
- * 'supOids' receives an integer list of the OIDs of the parent relations.
+ * 'supOids' receives a list of the OIDs of the parent relations.
  * 'supconstr' receives a list of constraints belonging to the parents,
  *		updated as necessary to be valid for the child.
  * 'supHasOids' is set TRUE if any parent has OIDs, else it is set FALSE.
@@ -575,11 +575,11 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 		/*
 		 * Reject duplications in the list of parents.
 		 */
-		if (intMember(RelationGetRelid(relation), parentOids))
+		if (oidMember(RelationGetRelid(relation), parentOids))
 			elog(ERROR, "CREATE TABLE: inherited relation \"%s\" duplicated",
 				 parent->relname);
 
-		parentOids = lappendi(parentOids, RelationGetRelid(relation));
+		parentOids = lappendo(parentOids, RelationGetRelid(relation));
 		setRelhassubclassInRelation(RelationGetRelid(relation), true);
 
 		parentHasOids |= relation->rd_rel->relhasoids;
@@ -879,8 +879,8 @@ change_varattnos_of_a_node(Node *node, const AttrNumber *newattno)
  * StoreCatalogInheritance
  *		Updates the system catalogs with proper inheritance information.
  *
- * supers is an integer list of the OIDs of the new relation's direct
- * ancestors.  NB: it is destructively changed to include indirect ancestors.
+ * supers is a list of the OIDs of the new relation's direct ancestors.
+ * NB: it is destructively changed to include indirect ancestors.
  */
 static void
 StoreCatalogInheritance(Oid relationId, List *supers)
@@ -909,7 +909,7 @@ StoreCatalogInheritance(Oid relationId, List *supers)
 	seqNumber = 1;
 	foreach(entry, supers)
 	{
-		Oid			entryOid = lfirsti(entry);
+		Oid			entryOid = lfirsto(entry);
 		Datum		datum[Natts_pg_inherits];
 		char		nullarr[Natts_pg_inherits];
 		ObjectAddress childobject,
@@ -963,13 +963,12 @@ StoreCatalogInheritance(Oid relationId, List *supers)
 	 */
 	foreach(entry, supers)
 	{
+		Oid			id = lfirsto(entry);
 		HeapTuple	tuple;
-		Oid			id;
 		int16		number;
-		List	   *next;
 		List	   *current;
+		List	   *next;
 
-		id = (Oid) lfirsti(entry);
 		current = entry;
 		next = lnext(entry);
 
@@ -982,13 +981,12 @@ StoreCatalogInheritance(Oid relationId, List *supers)
 			if (!HeapTupleIsValid(tuple))
 				break;
 
-			lnext(current) = lconsi(((Form_pg_inherits)
+			lnext(current) = lconso(((Form_pg_inherits)
 									 GETSTRUCT(tuple))->inhparent,
 									NIL);
+			current = lnext(current);
 
 			ReleaseSysCache(tuple);
-
-			current = lnext(current);
 		}
 		lnext(current) = next;
 	}
@@ -1003,11 +1001,11 @@ StoreCatalogInheritance(Oid relationId, List *supers)
 		List	   *rest;
 
 again:
-		thisone = lfirsti(entry);
 		found = false;
+		thisone = lfirsto(entry);
 		foreach(rest, lnext(entry))
 		{
-			if (thisone == lfirsti(rest))
+			if (thisone == lfirsto(rest))
 			{
 				found = true;
 				break;
@@ -1018,7 +1016,7 @@ again:
 			/*
 			 * found a later duplicate, so remove this entry.
 			 */
-			lfirsti(entry) = lfirsti(lnext(entry));
+			lfirsto(entry) = lfirsto(lnext(entry));
 			lnext(entry) = lnext(lnext(entry));
 
 			goto again;
@@ -1151,7 +1149,7 @@ renameatt(Oid myrelid,
 		 */
 		foreach(child, children)
 		{
-			Oid			childrelid = lfirsti(child);
+			Oid			childrelid = lfirsto(child);
 
 			if (childrelid == myrelid)
 				continue;
@@ -1216,7 +1214,7 @@ renameatt(Oid myrelid,
 
 	foreach(indexoidscan, indexoidlist)
 	{
-		Oid			indexoid = lfirsti(indexoidscan);
+		Oid			indexoid = lfirsto(indexoidscan);
 		HeapTuple	indextup;
 
 		/*
@@ -1668,7 +1666,7 @@ AlterTableAddColumn(Oid myrelid,
 
 		foreach(child, children)
 		{
-			Oid			childrelid = lfirsti(child);
+			Oid			childrelid = lfirsto(child);
 			HeapTuple	tuple;
 			Form_pg_attribute childatt;
 			Relation	childrel;
@@ -1934,7 +1932,7 @@ AlterTableAlterColumnDropNotNull(Oid myrelid, bool recurse,
 		 */
 		foreach(child, children)
 		{
-			Oid			childrelid = lfirsti(child);
+			Oid			childrelid = lfirsto(child);
 
 			if (childrelid == myrelid)
 				continue;
@@ -1967,7 +1965,7 @@ AlterTableAlterColumnDropNotNull(Oid myrelid, bool recurse,
 
 	foreach(indexoidscan, indexoidlist)
 	{
-		Oid			indexoid = lfirsti(indexoidscan);
+		Oid			indexoid = lfirsto(indexoidscan);
 		HeapTuple	indexTuple;
 		Form_pg_index indexStruct;
 		int			i;
@@ -2068,7 +2066,7 @@ AlterTableAlterColumnSetNotNull(Oid myrelid, bool recurse,
 		 */
 		foreach(child, children)
 		{
-			Oid			childrelid = lfirsti(child);
+			Oid			childrelid = lfirsto(child);
 
 			if (childrelid == myrelid)
 				continue;
@@ -2186,7 +2184,7 @@ AlterTableAlterColumnDefault(Oid myrelid, bool recurse,
 		 */
 		foreach(child, children)
 		{
-			Oid			childrelid = lfirsti(child);
+			Oid			childrelid = lfirsto(child);
 
 			if (childrelid == myrelid)
 				continue;
@@ -2334,7 +2332,7 @@ AlterTableAlterColumnFlags(Oid myrelid, bool recurse,
 		 */
 		foreach(child, children)
 		{
-			Oid			childrelid = lfirsti(child);
+			Oid			childrelid = lfirsto(child);
 
 			if (childrelid == myrelid)
 				continue;
@@ -2451,7 +2449,7 @@ AlterTableDropColumn(Oid myrelid, bool recurse, bool recursing,
 		attr_rel = heap_openr(AttributeRelationName, RowExclusiveLock);
 		foreach(child, children)
 		{
-			Oid			childrelid = lfirsti(child);
+			Oid			childrelid = lfirsto(child);
 			Relation	childrel;
 			HeapTuple	tuple;
 			Form_pg_attribute childatt;
@@ -2499,7 +2497,7 @@ AlterTableDropColumn(Oid myrelid, bool recurse, bool recursing,
 		attr_rel = heap_openr(AttributeRelationName, RowExclusiveLock);
 		foreach(child, children)
 		{
-			Oid			childrelid = lfirsti(child);
+			Oid			childrelid = lfirsto(child);
 			Relation	childrel;
 			HeapTuple	tuple;
 			Form_pg_attribute childatt;
@@ -2599,7 +2597,7 @@ AlterTableAddConstraint(Oid myrelid, bool recurse,
 		 */
 		foreach(child, children)
 		{
-			Oid			childrelid = lfirsti(child);
+			Oid			childrelid = lfirsto(child);
 
 			if (childrelid == myrelid)
 				continue;
@@ -3042,7 +3040,7 @@ transformFkeyGetPrimaryKey(Relation pkrel, Oid *indexOid,
 
 	foreach(indexoidscan, indexoidlist)
 	{
-		Oid			indexoid = lfirsti(indexoidscan);
+		Oid			indexoid = lfirsto(indexoidscan);
 
 		indexTuple = SearchSysCache(INDEXRELID,
 									ObjectIdGetDatum(indexoid),
@@ -3117,7 +3115,7 @@ transformFkeyCheckAttrs(Relation pkrel,
 		Form_pg_index indexStruct;
 		int			i, j;
 
-		indexoid = lfirsti(indexoidscan);
+		indexoid = lfirsto(indexoidscan);
 		indexTuple = SearchSysCache(INDEXRELID,
 									ObjectIdGetDatum(indexoid),
 									0, 0, 0);
@@ -3564,7 +3562,7 @@ AlterTableDropConstraint(Oid myrelid, bool recurse,
 		 */
 		foreach(child, children)
 		{
-			Oid			childrelid = lfirsti(child);
+			Oid			childrelid = lfirsto(child);
 			Relation	inhrel;
 
 			if (childrelid == myrelid)
@@ -3647,7 +3645,7 @@ AlterTableOwner(Oid relationOid, int32 newOwnerSysId)
 
 		/* For each index, recursively change its ownership */
 		foreach(i, index_oid_list)
-			AlterTableOwner(lfirsti(i), newOwnerSysId);
+			AlterTableOwner(lfirsto(i), newOwnerSysId);
 
 		freeList(index_oid_list);
 	}

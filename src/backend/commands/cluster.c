@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.104 2002/12/30 19:45:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.105 2003/02/09 06:56:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -129,7 +129,7 @@ cluster(ClusterStmt *stmt)
 				HeapTuple		idxtuple;
 				Form_pg_index	indexForm;
 
-				indexOid = lfirsti(index);
+				indexOid = lfirsto(index);
 				idxtuple = SearchSysCache(INDEXRELID,
 										  ObjectIdGetDatum(indexOid),
 										  0, 0, 0);
@@ -527,7 +527,7 @@ get_indexattr_list(Relation OldHeap, Oid OldIndex)
 	/* Ask the relcache to produce a list of the indexes of the old rel */
 	foreach(indlist, RelationGetIndexList(OldHeap))
 	{
-		Oid			indexOID = (Oid) lfirsti(indlist);
+		Oid			indexOID = lfirsto(indlist);
 		HeapTuple	indexTuple;
 		HeapTuple	classTuple;
 		Form_pg_index indexForm;

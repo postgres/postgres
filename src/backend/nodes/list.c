@@ -1,14 +1,15 @@
 /*-------------------------------------------------------------------------
  *
  * list.c
- *	  various list handling routines
+ *	  POSTGRES generic list package
+ *
  *
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.47 2003/02/08 20:20:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.48 2003/02/09 06:56:27 tgl Exp $
  *
  * NOTES
  *	  XXX a few of the following functions are duplicated to handle
@@ -118,6 +119,21 @@ lconsi(int datum, List *list)
 }
 
 /*
+ *	lconso
+ *
+ *	Same as lcons, but for Oid data
+ */
+List *
+lconso(Oid datum, List *list)
+{
+	List	   *l = makeNode(List);
+
+	lfirsto(l) = datum;
+	lnext(l) = list;
+	return l;
+}
+
+/*
  *	lappend
  *
  *	Add obj to the end of list, or make a new list if 'list' is NIL
@@ -142,6 +158,17 @@ lappendi(List *list, int datum)
 }
 
 /*
+ *	lappendo
+ *
+ *	Same as lappend, but for Oids
+ */
+List *
+lappendo(List *list, Oid datum)
+{
+	return nconc(list, makeListo1(datum));
+}
+
+/*
  *	nconc
  *
  *	Concat l2 on to the end of l1
@@ -159,7 +186,7 @@ nconc(List *l1, List *l2)
 	if (l2 == NIL)
 		return l1;
 	if (l1 == l2)
-		elog(ERROR, "tryout to nconc a list to itself");
+		elog(ERROR, "can't nconc a list to itself");
 
 	for (temp = l1; lnext(temp) != NIL; temp = lnext(temp))
 		;
@@ -177,42 +204,11 @@ void *
 nth(int n, List *l)
 {
 	/* XXX assume list is long enough */
-	while (n > 0)
+	while (n-- > 0)
 	{
 		l = lnext(l);
-		n--;
 	}
 	return lfirst(l);
-}
-
-/*
- *	nthi
- *
- *	Same as nthi, but for integers
- */
-int
-nthi(int n, List *l)
-{
-	/* XXX assume list is long enough */
-	while (n > 0)
-	{
-		l = lnext(l);
-		n--;
-	}
-	return lfirsti(l);
-}
-
-/* this is here solely for rt_store. Get rid of me some day! */
-void
-set_nth(List *l, int n, void *elem)
-{
-	/* XXX assume list is long enough */
-	while (n > 0)
-	{
-		l = lnext(l);
-		n--;
-	}
-	lfirst(l) = elem;
 }
 
 /*
@@ -253,7 +249,7 @@ llast(List *l)
  *
  *	Free the List nodes of a list
  *	The pointed-to nodes, if any, are NOT freed.
- *	This works for integer lists too.
+ *	This works for integer and Oid lists too.
  */
 void
 freeList(List *list)
@@ -290,6 +286,28 @@ equali(List *list1, List *list2)
 }
 
 /*
+ * equalo
+ *	  compares two lists of Oids
+ */
+bool
+equalo(List *list1, List *list2)
+{
+	List	   *l;
+
+	foreach(l, list1)
+	{
+		if (list2 == NIL)
+			return false;
+		if (lfirsto(l) != lfirsto(list2))
+			return false;
+		list2 = lnext(list2);
+	}
+	if (list2 != NIL)
+		return false;
+	return true;
+}
+
+/*
  * Generate the union of two lists,
  * ie, l1 plus all members of l2 that are not already in l1.
  *
@@ -313,17 +331,17 @@ set_union(List *l1, List *l2)
 	return retval;
 }
 
-/* set_union for integer lists */
+/* set_union for Oid lists */
 List *
-set_unioni(List *l1, List *l2)
+set_uniono(List *l1, List *l2)
 {
 	List	   *retval = listCopy(l1);
 	List	   *i;
 
 	foreach(i, l2)
 	{
-		if (!intMember(lfirsti(i), retval))
-			retval = lappendi(retval, lfirsti(i));
+		if (!oidMember(lfirsto(i), retval))
+			retval = lappendo(retval, lfirsto(i));
 	}
 	return retval;
 }
@@ -353,6 +371,7 @@ set_ptrUnion(List *l1, List *l2)
  * The result is a fresh List, but it points to the same member nodes
  * as were in the inputs.
  */
+#ifdef NOT_USED
 List *
 set_intersect(List *l1, List *l2)
 {
@@ -366,20 +385,7 @@ set_intersect(List *l1, List *l2)
 	}
 	return retval;
 }
-
-List *
-set_intersecti(List *l1, List *l2)
-{
-	List	   *retval = NIL;
-	List	   *i;
-
-	foreach(i, l1)
-	{
-		if (intMember(lfirsti(i), l2))
-			retval = lappendi(retval, lfirsti(i));
-	}
-	return retval;
-}
+#endif
 
 /*
  * member()
@@ -408,7 +414,7 @@ ptrMember(void *l1, List *l2)
 
 	foreach(i, l2)
 	{
-		if (l1 == ((void *) lfirst(i)))
+		if (l1 == lfirst(i))
 			return true;
 	}
 	return false;
@@ -431,8 +437,25 @@ intMember(int l1, List *l2)
 }
 
 /*
+ * membership test for Oid lists
+ */
+bool
+oidMember(Oid l1, List *l2)
+{
+	List	   *i;
+
+	foreach(i, l2)
+	{
+		if (l1 == lfirsto(i))
+			return true;
+	}
+	return false;
+}
+
+/*
  * lremove
  *	  Removes 'elem' from the linked list (destructively changing the list!).
+ *	  (If there is more than one equal list member, the first is removed.)
  *
  *	  This version matches 'elem' using simple pointer comparison.
  *	  See also LispRemove.
@@ -464,9 +487,9 @@ lremove(void *elem, List *list)
 /*
  *	LispRemove
  *	  Removes 'elem' from the linked list (destructively changing the list!).
+ *	  (If there is more than one equal list member, the first is removed.)
  *
  *	  This version matches 'elem' using equal().
- *	  (If there is more than one equal list member, the first is removed.)
  *	  See also lremove.
  */
 List *
@@ -572,12 +595,12 @@ set_difference(List *l1, List *l2)
 }
 
 /*
- *	set_differencei
+ *	set_differenceo
  *
- *	Same as set_difference, but for integers
+ *	Same as set_difference, but for Oid lists
  */
 List *
-set_differencei(List *l1, List *l2)
+set_differenceo(List *l1, List *l2)
 {
 	List	   *result = NIL;
 	List	   *i;
@@ -587,8 +610,8 @@ set_differencei(List *l1, List *l2)
 
 	foreach(i, l1)
 	{
-		if (!intMember(lfirsti(i), l2))
-			result = lappendi(result, lfirsti(i));
+		if (!oidMember(lfirsto(i), l2))
+			result = lappendo(result, lfirsto(i));
 	}
 	return result;
 }

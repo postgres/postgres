@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsetree.h,v 1.19 2002/09/04 20:31:45 momjian Exp $
+ * $Id: parsetree.h,v 1.20 2003/02/09 06:56:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,15 +26,11 @@
 
 /*
  *		rt_fetch
- *		rt_store
  *
- *		Access and (destructively) replace rangetable entries.
+ * NB: this will crash and burn if handed an out-of-range RT index
  */
 #define rt_fetch(rangetable_index, rangetable) \
 	((RangeTblEntry *) nth((rangetable_index)-1, rangetable))
-
-#define rt_store(rangetable_index, rangetable, rt) \
-	set_nth(rangetable, (rangetable_index)-1, rt)
 
 /*
  *		getrelid

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.94 2002/12/12 20:35:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.95 2003/02/09 06:56:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -146,7 +146,7 @@ transformTargetList(ParseState *pstate, List *targetlist)
 							if (strcmp(name1, DatabaseName) != 0)
 								elog(ERROR, "Cross-database references are not implemented");
 							schemaname = strVal(lsecond(fields));
-							relname = strVal(lfirst(lnext(lnext(fields))));
+							relname = strVal(lthird(fields));
 							break;
 						}
 					default:

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.260 2003/01/17 03:25:04 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.261 2003/02/09 06:56:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1793,7 +1793,7 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	lefttl = leftmostQuery->targetList;
 	foreach(dtlist, sostmt->colTypes)
 	{
-		Oid			colType = (Oid) lfirsti(dtlist);
+		Oid			colType = lfirsto(dtlist);
 		Resdom	   *leftResdom = ((TargetEntry *) lfirst(lefttl))->resdom;
 		char	   *colName = pstrdup(leftResdom->resname);
 		Resdom	   *resdom;
@@ -2030,13 +2030,13 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt)
 		op->colTypes = NIL;
 		while (lcoltypes != NIL)
 		{
-			Oid			lcoltype = (Oid) lfirsti(lcoltypes);
-			Oid			rcoltype = (Oid) lfirsti(rcoltypes);
+			Oid			lcoltype = lfirsto(lcoltypes);
+			Oid			rcoltype = lfirsto(rcoltypes);
 			Oid			rescoltype;
 
-			rescoltype = select_common_type(makeListi2(lcoltype, rcoltype),
+			rescoltype = select_common_type(makeListo2(lcoltype, rcoltype),
 											context);
-			op->colTypes = lappendi(op->colTypes, rescoltype);
+			op->colTypes = lappendo(op->colTypes, rescoltype);
 			lcoltypes = lnext(lcoltypes);
 			rcoltypes = lnext(rcoltypes);
 		}
@@ -2069,7 +2069,7 @@ getSetColTypes(ParseState *pstate, Node *node)
 
 			if (resnode->resjunk)
 				continue;
-			result = lappendi(result, resnode->restype);
+			result = lappendo(result, resnode->restype);
 		}
 		return result;
 	}
@@ -2333,7 +2333,7 @@ transformPrepareStmt(ParseState *pstate, PrepareStmt *stmt)
 			TypeName   *tn = lfirst(l);
 			Oid			toid = typenameTypeId(tn);
 
-			argtype_oids = lappendi(argtype_oids, toid);
+			argtype_oids = lappendo(argtype_oids, toid);
 			argtoids[i++] = toid;
 		}
 	}
@@ -2400,7 +2400,7 @@ transformExecuteStmt(ParseState *pstate, ExecuteStmt *stmt)
 				elog(ERROR, "Cannot use aggregates in EXECUTE parameters");
 
 			given_type_id = exprType(expr);
-			expected_type_id = (Oid) lfirsti(paramtypes);
+			expected_type_id = lfirsto(paramtypes);
 
 			expr = coerce_to_target_type(expr, given_type_id,
 										 expected_type_id, -1,
@@ -2533,7 +2533,7 @@ relationHasPrimaryKey(Oid relationOid)
 
 	foreach(indexoidscan, indexoidlist)
 	{
-		Oid			indexoid = lfirsti(indexoidscan);
+		Oid			indexoid = lfirsto(indexoidscan);
 		HeapTuple	indexTuple;
 
 		indexTuple = SearchSysCache(INDEXRELID,

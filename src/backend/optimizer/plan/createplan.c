@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.135 2003/02/08 20:20:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.136 2003/02/09 06:56:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -658,7 +658,7 @@ create_indexscan_plan(Query *root,
 	{
 		IndexOptInfo *index = (IndexOptInfo *) lfirst(ixinfo);
 
-		indexids = lappendi(indexids, index->indexoid);
+		indexids = lappendo(indexids, index->indexoid);
 	}
 
 	/*

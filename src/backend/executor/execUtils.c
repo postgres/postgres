@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.97 2003/02/09 00:30:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.98 2003/02/09 06:56:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -677,7 +677,7 @@ ExecOpenIndices(ResultRelInfo *resultRelInfo)
 	i = 0;
 	foreach(indexoidscan, indexoidlist)
 	{
-		Oid			indexOid = lfirsti(indexoidscan);
+		Oid			indexOid = lfirsto(indexoidscan);
 		Relation	indexDesc;
 		IndexInfo  *ii;
 

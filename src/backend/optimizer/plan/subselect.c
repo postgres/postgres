@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.71 2003/02/09 00:30:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.72 2003/02/09 06:56:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -458,7 +458,7 @@ convert_sublink_opers(List *lefthand, List *operOids,
 
 	foreach(lst, operOids)
 	{
-		Oid			opid = (Oid) lfirsti(lst);
+		Oid			opid = lfirsto(lst);
 		Node	   *leftop = lfirst(lefthand);
 		TargetEntry *te = lfirst(targetlist);
 		Node	   *rightop;
@@ -577,7 +577,7 @@ subplan_is_hashable(SubLink *slink, SubPlan *node)
 	 */
 	foreach(opids, slink->operOids)
 	{
-		Oid			opid = (Oid) lfirsti(opids);
+		Oid			opid = lfirsto(opids);
 		HeapTuple	tup;
 		Form_pg_operator optup;
 

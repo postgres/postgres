@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.78 2003/02/03 15:07:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.79 2003/02/09 06:56:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -897,7 +897,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
 	listscan = indxid;
 	for (i = 0; i < numIndices; i++)
 	{
-		Oid			indexOid = (Oid) lfirsti(listscan);
+		Oid			indexOid = lfirsto(listscan);
 
 		indexDescs[i] = index_open(indexOid);
 		scanDescs[i] = index_beginscan(currentRelation,
