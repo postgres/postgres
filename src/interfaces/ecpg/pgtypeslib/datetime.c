@@ -53,14 +53,14 @@ PGTYPESdate_from_asc(char *str, char **endptr)
 	if (strlen(str) >= sizeof(lowstr))
 	{
 		errno = PGTYPES_DATE_BAD_DATE;
-		return 0;
+		return INT_MIN;
 	}
 
 	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf, ptr) != 0)
 		|| (DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, &tzp, EuroDates) != 0))
 	{
 		errno = PGTYPES_DATE_BAD_DATE;
-		return 0;
+		return INT_MIN;
 	}
 
 	switch (dtype)
@@ -74,7 +74,7 @@ PGTYPESdate_from_asc(char *str, char **endptr)
 
 		default:
 			errno = PGTYPES_DATE_BAD_DATE;
-			return -1;
+			return INT_MIN;
 	}
 
 	dDate = (date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - date2j(2000, 1, 1));

@@ -436,7 +436,7 @@ rstrdate(char *str, date * d)
 {
 	date		dat = PGTYPESdate_from_asc(str, NULL);
 
-	if (errno != PGTYPES_DATE_BAD_DATE && dat == 0)
+	if (errno && errno != PGTYPES_DATE_BAD_DATE)
 		return ECPG_INFORMIX_BAD_DATE;
 
 	*d = dat;

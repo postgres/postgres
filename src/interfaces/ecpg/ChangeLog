@@ -1675,6 +1675,10 @@ Mon Oct  6 08:41:45 CEST 2003
 	- Fixed constant listing in execute using clause.
 	- Fixed typo in ecpg for Informix dec_t type.
 	- Fixed precision handling in Informix compat funxtions.
+	
+Tue Oct  7 07:45:09 CEST 2003
+
+	- Fixed error handling in rstrdate.
 	- Set ecpg version to 3.0.0
 	- Set ecpg library to 4.0.0
 	- Set pgtypes library to 1.0.0
