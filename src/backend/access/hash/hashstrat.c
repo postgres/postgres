@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/hash/Attic/hashstrat.c,v 1.8 1997/08/19 21:29:07 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/hash/Attic/hashstrat.c,v 1.9 1997/08/20 02:01:42 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,7 @@
  *  only one valid strategy for hash tables: equality. 
  */
 
+#ifdef NOT_USED
 static StrategyNumber	HTNegate[1] = {
     InvalidStrategy
 };
@@ -33,7 +34,6 @@ static StrategyNumber	HTNegateCommute[1] = {
     InvalidStrategy
 };
 
-#ifdef NOT_USED
 static StrategyEvaluationData	HTEvaluationData = {
     /* XXX static for simplicity */
 
