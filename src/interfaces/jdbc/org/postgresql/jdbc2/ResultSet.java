@@ -415,8 +415,9 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
     String s = getString(columnIndex);
     if(s==null)
       return null;
+    SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
     try {
-      return new java.sql.Date(DF5.parse(s).getTime());
+      return new java.sql.Date(df.parse(s).getTime());
     } catch (ParseException e) {
       throw new PSQLException("postgresql.res.baddate",new Integer(e.getErrorOffset()),s);
     }
@@ -459,66 +460,47 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
    * @return the column value; null if SQL NULL
    * @exception SQLException if a database access error occurs
    */
-  private static final SimpleDateFormat DF1 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSzzzzzzzzz");
-  private static final SimpleDateFormat DF2 = new SimpleDateFormat("yyyy-MM-dd HH:mm:sszzzzzzzzz");
-  private static final SimpleDateFormat DF3 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
-  private static final SimpleDateFormat DF4 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-  private static final SimpleDateFormat DF5 = new SimpleDateFormat("yyyy-MM-dd");
   public Timestamp getTimestamp(int columnIndex) throws SQLException
   {
     String s = getString(columnIndex);
     if(s==null)
 	return null;
-
-    boolean subsecond;
-    //if string contains a '.' we have fractional seconds
-    if (s.indexOf('.') == -1) {
-      subsecond = false;
-    } else {
-      subsecond = true;
+    
+    // This works, but it's commented out because Michael Stephenson's
+    // solution is better still:
+    //SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+// Modification by Jan Thomae
+    String sub = s.substring(s.length() - 3, s.length()-2);
+    if (sub.equals("+") || sub.equals("-")) {
+            s = s.substring(0, s.length()-3) + "GMT"+ s.substring(s.length()-3, s.length())+":00";
     }
-
-    //here we are modifying the string from ISO format to a format java can understand
-    //java expects timezone info as 'GMT-08:00' instead of '-08' in postgres ISO format
-    //and java expects three digits if fractional seconds are present instead of two for postgres
-    //so this code strips off timezone info and adds on the GMT+/-...
-    //as well as adds a third digit for partial seconds if necessary
-    StringBuffer strBuf = new StringBuffer(s);
-    char sub = strBuf.charAt(strBuf.length()-3);
-    if (sub == '+' || sub == '-') {
-      strBuf.setLength(strBuf.length()-3);
-      if (subsecond)  {
-        strBuf = strBuf.append('0').append("GMT").append(s.substring(s.length()-3, s.length())).append(":00");
-      } else {
-        strBuf = strBuf.append("GMT").append(s.substring(s.length()-3, s.length())).append(":00");
-      }
-    } else if (subsecond) {
-      strBuf = strBuf.append('0');
-    }
-
-    s = strBuf.toString();
-
+// -------
+       // Michael Stephenson's solution:
     SimpleDateFormat df = null;
 
-    if (s.length()>23 && subsecond) {
-      df = DF1;
-    } else if (s.length()>23 && !subsecond) {
-      df = DF2;
-    } else if (s.length()>10 && subsecond) {
-      df = DF3;
-    } else if (s.length()>10 && !subsecond) {
-      df = DF4;
+// Modification by Jan Thomae
+    if (s.length()>27) {
+    df = new SimpleDateFormat("yyyy-MM-dd HH:mm:sszzzzzzzzz");  
+    } else              
+// -------
+    if (s.length()>21 && s.indexOf('.') != -1) {
+	df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSzzz");
+    } else if (s.length()>19 && s.indexOf('.') == -1) {
+	df = new SimpleDateFormat("yyyy-MM-dd HH:MM:sszzz");
+    } else if (s.length()>19 && s.indexOf('.') != -1) {
+	df = new SimpleDateFormat("yyyy-MM-dd HH:MM:ss.SS");
+    } else if (s.length()>10 && s.length()<=18) {
+	df = new SimpleDateFormat("yyyy-MM-dd HH:MM:ss");
     } else {
-      df = DF5;
+	df = new SimpleDateFormat("yyyy-MM-dd");
     }
-
+    
     try {
 	return new Timestamp(df.parse(s).getTime());
     } catch(ParseException e) {
 	throw new PSQLException("postgresql.res.badtimestamp",new Integer(e.getErrorOffset()),s);
     }
   }
-
   
   /**
    * A column value can be retrieved as a stream of ASCII characters
