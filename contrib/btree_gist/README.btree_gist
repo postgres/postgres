@@ -1,4 +1,4 @@
-This is B-Tree implementation using GiST for int4, int8, float4, float8
+This is B-Tree implementation using GiST for int2, int4, int8, float4, float8
 timestamp types.
 
 All work was done by Teodor Sigaev (teodor@stack.net) and Oleg Bartunov
@@ -6,7 +6,7 @@ All work was done by Teodor Sigaev (teodor@stack.net) and Oleg Bartunov
 for additional information.
 
 NEWS:
-     Feb 5, 2003 - btree_gist now support int8, float4, float8 !
+     Feb 5, 2003 - btree_gist now support int2, int8, float4, float8 !
                    Thank Janko Richter <jankorichter@yahoo.de> for
                    contribution.
      

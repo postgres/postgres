@@ -51,6 +51,9 @@ g__BTREE_GIST_TYPE2___compress(PG_FUNCTION_ARGS)
 	if (entry->leafkey)
 	{
 		__BTREE_GIST_TYPE__KEY    *r = ( __BTREE_GIST_TYPE__KEY * ) palloc(sizeof(__BTREE_GIST_TYPE__KEY));
+    #ifdef BTREE_GIST_INT2
+    	int16		leaf = DatumGetInt16(entry->key);
+    #endif
     #ifdef BTREE_GIST_INT4
     	int32		leaf = DatumGetInt32(entry->key);
     #endif
@@ -80,6 +83,9 @@ Datum
 g__BTREE_GIST_TYPE2___consistent(PG_FUNCTION_ARGS)
 {
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
+  #ifdef BTREE_GIST_INT2
+  	int16		query = PG_GETARG_INT16(1);
+  #endif
   #ifdef BTREE_GIST_INT4
   	int32		query = PG_GETARG_INT32(1);
   #endif

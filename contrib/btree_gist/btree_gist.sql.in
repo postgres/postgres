@@ -3,6 +3,23 @@ SET search_path = public;
 
 SET autocommit TO 'on';
 
+-- create type of int2 key
+CREATE FUNCTION int2key_in(cstring)
+RETURNS int2key
+AS 'MODULE_PATHNAME'
+LANGUAGE 'c' WITH (isstrict);
+
+CREATE FUNCTION int2key_out(int2key)
+RETURNS cstring
+AS 'MODULE_PATHNAME'
+LANGUAGE 'c' WITH (isstrict);
+
+CREATE TYPE int2key (
+INTERNALLENGTH = 4,
+INPUT = int2key_in,
+OUTPUT = int2key_out
+);
+
 -- create type of int4 key
 CREATE FUNCTION int4key_in(cstring)
 RETURNS int4key
@@ -75,6 +92,67 @@ OUTPUT = float8key_out
 --
 --
 --
+-- int2 ops
+--
+--
+--
+-- define the GiST support methods
+CREATE FUNCTION gint2_consistent(internal,int2,int2)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';
+
+CREATE FUNCTION gint2_compress(internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';
+
+CREATE FUNCTION btree_decompress(internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';
+
+CREATE FUNCTION gint2_penalty(internal,internal,internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C' WITH (isstrict);
+
+CREATE FUNCTION gint2_picksplit(internal, internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';
+
+CREATE FUNCTION gint2_union(bytea, internal)
+RETURNS int4
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';
+
+CREATE FUNCTION gint2_same(internal, internal, internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C';
+
+-- Create the operator class
+CREATE OPERATOR CLASS gist_int2_ops
+DEFAULT FOR TYPE int2 USING gist 
+AS
+	OPERATOR	1	< ,
+	OPERATOR	2	<= ,
+	OPERATOR	3	= ,
+	OPERATOR	4	>= ,
+	OPERATOR	5	> ,
+	FUNCTION	1	gint2_consistent (internal, int2, int2),
+	FUNCTION	2	gint2_union (bytea, internal),
+	FUNCTION	3	gint2_compress (internal),
+	FUNCTION	4	btree_decompress (internal),
+	FUNCTION	5	gint2_penalty (internal, internal, internal),
+	FUNCTION	6	gint2_picksplit (internal, internal),
+	FUNCTION	7	gint2_same (internal, internal, internal),
+	STORAGE		int2key;
+
+--
+--
+--
 -- int4 ops
 --
 --
@@ -86,11 +164,6 @@ AS 'MODULE_PATHNAME'
 LANGUAGE 'C';
 
 CREATE FUNCTION gint4_compress(internal)
-RETURNS internal
-AS 'MODULE_PATHNAME'
-LANGUAGE 'C';
-
-CREATE FUNCTION btree_decompress(internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE 'C';
