@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.74.2.2 2003/01/09 01:07:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.74.2.3 2003/02/27 21:37:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2861,13 +2861,26 @@ timestamp_part(PG_FUNCTION_ARGS)
 		switch (val)
 		{
 			case DTK_EPOCH:
+			{
+				int		tz;
+				TimestampTz timestamptz;
+
+				/* convert to timestamptz to produce consistent results */
+				if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL) != 0)
+					elog(ERROR, "Unable to convert TIMESTAMP to TIMESTAMP WITH TIME ZONE (tm)");
+
+				tz = DetermineLocalTimeZone(tm);
+
+				if (tm2timestamp(tm, fsec, &tz, &timestamptz) != 0)
+					elog(ERROR, "Unable to convert TIMESTAMP to TIMESTAMP WITH TIME ZONE");
+
 #ifdef HAVE_INT64_TIMESTAMP
-				result = ((timestamp - SetEpochTimestamp()) / 1000000e0);
+				result = ((timestamptz - SetEpochTimestamp()) / 1000000e0);
 #else
-				result = timestamp - SetEpochTimestamp();
+				result = timestamptz - SetEpochTimestamp();
 #endif
 				break;
-
+			}
 			case DTK_DOW:
 				if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL) != 0)
 					elog(ERROR, "Unable to encode TIMESTAMP");
