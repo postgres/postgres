@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.184 2002/05/12 23:43:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.185 2002/05/13 20:39:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2468,7 +2468,7 @@ _copyAlterUserSetStmt(AlterUserSetStmt *from)
 	if (from->user)
 		newnode->user = pstrdup(from->user);
 	if (from->variable)
-		newnode->user = pstrdup(from->variable);
+		newnode->variable = pstrdup(from->variable);
 	Node_Copy(from, newnode, value);
 
 	return newnode;
