@@ -1184,5 +1184,9 @@ Sun Dec 23 13:08:36 CET 2001
 
 	- Fixed several bugs concerning arrays of structs including a memory
 	  allocation bug.
+
+Mon Jan  7 12:18:01 CET 2002
+
+	- Fixed parser to accept initializing expressions starting with "(".
 	- Set ecpg version to 2.9.0.
         - Set library version to 3.3.0.

@@ -12,7 +12,8 @@ void sqlmeldung(char *meldung, short trans)
 {
 }
 
-#define NO 0
+exec sql define NONO 0;
+
 #define YES 1
 
 #ifdef _cplusplus
@@ -24,8 +25,9 @@ namespace N
 int main()
 { struct sa x,*y;
 exec sql begin declare section;
-int a=2;
+int a=(int)2;
 int b=2+2;
+int b2=(14*7);
 int d=x.member;
 int g=fb(2);
 int i=3^1;
@@ -38,7 +40,6 @@ long iay /* = 1L */ ;
 long long iax /* = 40000000000LL */ ;
 exec sql end declare section;
 
-/* not working */
 int f=fa();
 
 #ifdef _cplusplus
@@ -57,7 +58,7 @@ exec sql whenever sqlerror do fd("50",1);
 exec sql select now();
 exec sql whenever sqlerror do fe(ENUM0);
 exec sql select now();
-/* ex ec sql whenever sqlerror do sqlmeldung(NULL,NO); */
+exec sql whenever sqlerror do sqlmeldung(NULL, NONO); 
 exec sql select now();
 return 0;
 }

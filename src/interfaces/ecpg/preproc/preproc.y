@@ -5389,6 +5389,14 @@ c_stuff: c_anything 	{ $$ = $1; }
 			{
 				$$ = cat_str(3, $1, make_str("("), make_str(")"));
 			}
+	| '(' c_stuff ')'
+			{
+				$$ = cat_str(3, make_str("("), $2, make_str(")"));
+			}
+	| '(' c_stuff ')' c_stuff
+			{
+				$$ = cat_str(4, make_str("("), $2, make_str(")"), $4);
+			}
 	;
 
 c_list: c_term			{ $$ = $1; }
