@@ -1,4 +1,4 @@
-alpha-dec-osf=alpha
+alpha-dec-osf=alpha_cc
 alpha-unknown-linux-gnu=linux_alpha
 hppa1.1-hp-hpux=hpux_cc
 hppa1.1-stratus-sysv4=svr4

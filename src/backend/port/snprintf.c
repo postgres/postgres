@@ -72,7 +72,7 @@ typedef long long long_long;
  * causing nast effects.
  **************************************************************/
 
-/*static char _id[] = "$Id: snprintf.c,v 1.13 1998/12/18 07:03:06 momjian Exp $";*/
+/*static char _id[] = "$Id: snprintf.c,v 1.14 1998/12/18 07:08:00 momjian Exp $";*/
 static char *end;
 static int	SnprfOverflow;
 
@@ -349,7 +349,7 @@ int			base,
 			zpad;
 {
 	int			signvalue = 0;
-#ifdef HAVE_LONG_INT_64
+#ifdef HAVE_LONG_LONG_INT_64
 	unsigned long_long uvalue;
 #else
 	unsigned long uvalue;
