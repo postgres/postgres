@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.74 2000/11/28 23:27:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.75 2000/12/03 14:41:42 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -128,6 +128,29 @@ __asm__("swpb %0, %0, [%3]": "=r"(_res), "=m"(*lock):"0"(_res), "r" (lock));
 
 #endif   /* __arm__ */
 
+#if defined(__s390__)
+/*
+ * S/390 Linux
+ */
+#define TAS(lock)      tas(lock)
+
+static inline int
+tas(volatile slock_t *lock)
+{
+ int _res;
+
+        __asm__ __volatile("    la    1,1\n"
+                           "    l     2,%2\n"
+                           "    slr   0,0\n"
+                           "    cs    0,1,0(2)\n"
+                           "    lr    %1,0"
+                           : "=m" (lock), "=d" (_res)
+                           : "m" (lock)
+                           : "0", "1", "2");
+
+       return (_res);
+}
+#endif  /* __s390__ */
 
 
 #if defined(__sparc__)

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.30 2000/11/30 21:44:07 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.31 2000/12/03 14:41:47 thomas Exp $ -->
 
 <chapter id="installation">
  <title><![%flattext-install-include[<productname>PostgreSQL</>]]> Installation Instructions</title>
@@ -1159,6 +1159,13 @@ gunzip -c user.ps.gz \
 	<entry>7.0</entry>
 	<entry>2000-04-12, Tom Lane (<email>tgl@sss.pgh.pa.us</>)</entry>
         <entry>See also <filename>doc/FAQ_HPUX</></>
+       </row>
+       <row>
+	<entry>IBM</entry>
+	<entry>S/390</entry>
+	<entry>7.1</entry>
+	<entry>2000-11-17, Neale Ferguson (<email>Neale.Ferguson@softwareAG-usa.com</>)</entry>
+	<entry></>
        </row>
        <row>
 	<entry>IRIX 6.5.6f</entry>
