@@ -54,3 +54,36 @@ COPY bt_txt_heap FROM '@abs_srcdir@/data/desc.data';
 
 COPY bt_f8_heap FROM '@abs_srcdir@/data/hash.data';
 
+--- test copying in CSV mode with various styles
+--- of embedded line ending characters
+
+create temp table copytest (
+	style	text,
+	test 	text,
+	filler	int);
+
+insert into copytest values('DOS','abc\r\ndef',1);
+insert into copytest values('Unix','abc\ndef',2);
+insert into copytest values('Mac','abc\rdef',3);
+insert into copytest values('esc\\ape','a\\r\\\r\\\n\\nb',4);
+
+copy copytest to '@abs_builddir@/results/copytest.csv' csv;
+
+create temp table copytest2 (like copytest);
+
+copy copytest2 from '@abs_builddir@/results/copytest.csv' csv;
+
+select * from copytest except select * from copytest2;
+
+truncate copytest2;
+
+--- same test but with an escape char different from quote char
+
+copy copytest to '@abs_builddir@/results/copytest.csv' csv quote '\'' escape '\\';
+
+copy copytest2 from '@abs_builddir@/results/copytest.csv' csv quote '\'' escape '\\';
+
+select * from copytest except select * from copytest2;
+
+
+
