@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.31 1997/04/30 03:05:43 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.32 1997/05/05 10:01:02 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1025,14 +1025,18 @@ vc_rpfheap (VRelStats *vacrelstats, Relation onerel,
 		dowrite = true;
 	    }
 	    else
+	    {
 		Assert ( isempty );
-	    Assert ( --Vnpages > 0 );
+	    }
+	    --Vnpages;
+	    Assert ( Vnpages > 0 );
 	    /* get prev reapped page from Vvpl */
 	    Vvplast = Vvpl->vpl_pgdesc[Vnpages - 1];
 	    Vblklast = Vvplast->vpd_blkno;
 	    if ( blkno == Fblklast )	/* this page in Fvpl too */
 	    {
-		Assert ( --Fnpages > 0 );
+		--Fnpages;
+		Assert ( Fnpages > 0 );
 		Assert ( Fvplast->vpd_nusd == 0 );
 		/* get prev reapped page from Fvpl */
 		Fvplast = Fvpl->vpl_pgdesc[Fnpages - 1];
