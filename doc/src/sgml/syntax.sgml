@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.98 2004/12/13 18:05:09 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.99 2004/12/23 05:37:40 tgl Exp $
 -->
 
 <chapter id="sql-syntax">
@@ -599,7 +599,8 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
       A dollar sign (<literal>$</literal>) followed by digits is used
       to represent a positional parameter in the body of a function
       definition or a prepared statement.  In other contexts the
-      dollar sign may be part of an identifier.
+      dollar sign may be part of an identifier or a dollar-quoted string
+      constant.
      </para>
     </listitem>
 
@@ -646,8 +647,9 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
 
     <listitem>
      <para>
-      The asterisk (<literal>*</literal>) has a special meaning when
-      used in the <command>SELECT</command> command or with the
+      The asterisk (<literal>*</literal>) is used in some contexts to denote
+      all the fields of a table row or composite value.  It also
+      has a special meaning when used as the argument of the
       <function>COUNT</function> aggregate function.
      </para>
     </listitem>
@@ -823,7 +825,7 @@ SELECT (5 !) - 6;
       <row>
        <entry><token>BETWEEN</token></entry>
        <entry></entry>
-       <entry>containment</entry>
+       <entry>range containment</entry>
       </row>
 
       <row>
@@ -1083,7 +1085,7 @@ $<replaceable>number</replaceable>
 
 <programlisting>
 CREATE FUNCTION dept(text) RETURNS dept
-    AS $$SELECT * FROM dept WHERE name = $1$$
+    AS $$ SELECT * FROM dept WHERE name = $1 $$
     LANGUAGE SQL;
 </programlisting>
 
@@ -1552,7 +1554,9 @@ SELECT ROW(1,2.5,'this is a test');
     to avoid ambiguity.  For example:
 <programlisting>
 CREATE TABLE mytable(f1 int, f2 float, f3 text);
+
 CREATE FUNCTION getf1(mytable) RETURNS int AS 'SELECT $1.f1' LANGUAGE SQL;
+
 -- No cast needed since only one getf1() exists
 SELECT getf1(ROW(1,2.5,'this is a test'));
  getf1
@@ -1561,10 +1565,13 @@ SELECT getf1(ROW(1,2.5,'this is a test'));
 (1 row)
 
 CREATE TYPE myrowtype AS (f1 int, f2 text, f3 numeric);
+
 CREATE FUNCTION getf1(myrowtype) RETURNS int AS 'SELECT $1.f1' LANGUAGE SQL;
+
 -- Now we need a cast to indicate which function to call:
 SELECT getf1(ROW(1,2.5,'this is a test'));
 ERROR:  function getf1(record) is not unique
+
 SELECT getf1(ROW(1,2.5,'this is a test')::mytable);
  getf1
 -------
@@ -1587,6 +1594,7 @@ SELECT getf1(CAST(ROW(11,'this is a test',2.5) AS myrowtype));
    <literal>IS NULL</> or <literal>IS NOT NULL</>, for example
 <programlisting>
 SELECT ROW(1,2.5,'this is a test') = ROW(1, 3, 'not the same');
+
 SELECT ROW(a, b, c) IS NOT NULL FROM table;
 </programlisting>
    For more detail see <xref linkend="functions-comparisons">.

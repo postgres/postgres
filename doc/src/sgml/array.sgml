@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/array.sgml,v 1.41 2004/12/13 18:05:07 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/array.sgml,v 1.42 2004/12/23 05:37:39 tgl Exp $ -->
 
 <sect1 id="arrays">
  <title>Arrays</title>
@@ -546,11 +546,11 @@ SELECT * FROM sal_emp WHERE 10000 = ALL (pay_by_quarter);
    set to one. If any of an array's dimensions has a lower bound index not
    equal to one, an additional decoration that indicates the actual
    array dimensions will precede the array structure decoration.
-   The decoration consists of square braces (<literal>[</> and <literal>]</>)
-   around each array dimension's lower and upper bound indices, plus
-   a colon (<literal>:</>) delimiter character in between. Delimiting the
-   array dimension decoration from the array structure decoration is a
-   single assignment operator (<literal>=</>). For example:
+   This decoration consists of square brackets (<literal>[]</>)
+   around each array dimension's lower and upper bounds, with
+   a colon (<literal>:</>) delimiter character in between. The
+   array dimension decoration is followed by an equal sign (<literal>=</>).
+   For example:
 <programlisting>
 SELECT 1 || ARRAY[2,3] AS array;
 
@@ -569,8 +569,8 @@ SELECT ARRAY[1,2] || ARRAY[[3,4]] AS array;
   </para>
 
   <para>
-   In a similar fashion, an array with non-default indices may be specified
-   using the same literal syntax. For example:
+   This syntax can also be used to specify non-default array subscripts
+   in an array literal. For example:
 <programlisting>
 SELECT f1[1][-2][3] AS e1, f1[1][-1][5] AS e2
  FROM (SELECT '[1:1][-2:-1][3:5]={{{1,2,3},{4,5,6}}}'::int[] AS f1) AS ss;
@@ -598,8 +598,8 @@ SELECT f1[1][-2][3] AS e1, f1[1][-1][5] AS e2
    You may write whitespace before a left brace or after a right
    brace. You may also write whitespace before or after any individual item
    string. In all of these cases the whitespace will be ignored. However,
-   whitespace within double quoted elements, or surrounded on both sides by
-   non-whitespace characters of an element, are not ignored.
+   whitespace within double-quoted elements, or surrounded on both sides by
+   non-whitespace characters of an element, is not ignored.
   </para>
 
  <note>
@@ -618,6 +618,8 @@ INSERT ... VALUES ('{"\\\\","\\""}');
    with a data type whose input routine also treated backslashes specially,
    <type>bytea</> for example, we might need as many as eight backslashes
    in the command to get one backslash into the stored array element.)
+   Dollar quoting (see <xref linkend="sql-syntax-dollar-quoting">) may be
+   used to avoid the need to double backslashes.
   </para>
  </note>
 

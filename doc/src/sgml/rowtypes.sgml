@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/rowtypes.sgml,v 2.3 2004/12/13 18:05:09 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/rowtypes.sgml,v 2.4 2004/12/23 05:37:40 tgl Exp $ -->
 
 <sect1 id="rowtypes">
  <title>Composite Types</title>
@@ -308,6 +308,8 @@ INSERT ... VALUES ('("\\"\\\\")');
    with a data type whose input routine also treated backslashes specially,
    <type>bytea</> for example, we might need as many as eight backslashes
    in the command to get one backslash into the stored composite field.)
+   Dollar quoting (see <xref linkend="sql-syntax-dollar-quoting">) may be
+   used to avoid the need to double backslashes.
   </para>
  </note>
 

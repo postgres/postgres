@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/postgres.sgml,v 1.68 2004/12/03 05:50:18 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/postgres.sgml,v 1.69 2004/12/23 05:37:39 tgl Exp $
 -->
 
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
@@ -67,7 +67,7 @@ $PostgreSQL: pgsql/doc/src/sgml/postgres.sgml,v 1.68 2004/12/03 05:50:18 momjian
     explain how to create the structures to hold data, how to populate
     the database, and how to query it.  The middle part lists the
     available data types and functions for use in
-    <acronym>SQL</acronym> data commands.  The rest treats several
+    <acronym>SQL</acronym> commands.  The rest treats several
     aspects that are important for tuning a database for optimal
     performance.
    </para>

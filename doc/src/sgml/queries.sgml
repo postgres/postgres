@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/queries.sgml,v 1.31 2004/11/15 06:32:14 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/queries.sgml,v 1.32 2004/12/23 05:37:40 tgl Exp $ -->
 
 <chapter id="queries">
  <title>Queries</title>
@@ -477,7 +477,7 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
     <para>
      A temporary name can be given to tables and complex table
      references to be used for references to the derived table in
-     further processing.  This is called a <firstterm>table
+     the rest of the query.  This is called a <firstterm>table
      alias</firstterm>.
     </para>
 
@@ -542,7 +542,8 @@ SELECT * FROM (my_table AS a CROSS JOIN my_table) AS b ...
     </para>
 
     <para>
-     Another form of table aliasing also gives temporary names to the columns of the table:
+     Another form of table aliasing gives temporary names to the columns of
+     the table, as well as the table itself:
 <synopsis>
 FROM <replaceable>table_reference</replaceable> <optional>AS</optional> <replaceable>alias</replaceable> ( <replaceable>column1</replaceable> <optional>, <replaceable>column2</replaceable> <optional>, ...</optional></optional> )
 </synopsis>
@@ -642,6 +643,7 @@ SELECT * FROM foo
                            where z.fooid = foo.fooid);
 
 CREATE VIEW vw_getfoo AS SELECT * FROM getfoo(1);
+
 SELECT * FROM vw_getfoo;
 </programlisting>
     </para>
@@ -679,12 +681,12 @@ SELECT *
 
    <para>
     The syntax of the <xref linkend="sql-where"
-    endterm="sql-where-title"> clause is
+    endterm="sql-where-title"> is
 <synopsis>
 WHERE <replaceable>search_condition</replaceable>
 </synopsis>
     where <replaceable>search_condition</replaceable> is any value
-    expression as defined in <xref linkend="sql-expressions"> that
+    expression (see <xref linkend="sql-expressions">) that
     returns a value of type <type>boolean</type>.
    </para>
 
@@ -694,17 +696,16 @@ WHERE <replaceable>search_condition</replaceable>
     condition.  If the result of the condition is true, the row is
     kept in the output table, otherwise (that is, if the result is
     false or null) it is discarded.  The search condition typically
-    references at least some column in the table generated in the
+    references at least some column of the table generated in the
     <literal>FROM</> clause; this is not required, but otherwise the
     <literal>WHERE</> clause will be fairly useless.
    </para>
 
    <note>
     <para>
-     Before the implementation of the <literal>JOIN</> syntax, it was
-     necessary to put the join condition of an inner join in the
-     <literal>WHERE</> clause.  For example, these table expressions
-     are equivalent:
+     The join condition of an inner join can be written either in
+     the <literal>WHERE</> clause or in the <literal>JOIN</> clause.
+     For example, these table expressions are equivalent:
 <programlisting>
 FROM a, b WHERE a.id = b.id AND b.val &gt; 5
 </programlisting>
@@ -788,7 +789,7 @@ SELECT <replaceable>select_list</replaceable>
     The <xref linkend="sql-groupby" endterm="sql-groupby-title"> is
     used to group together those rows in a table that share the same
     values in all the columns listed. The order in which the columns
-    are listed does not matter.  The purpose is to reduce each group
+    are listed does not matter.  The effect is to combine each set
     of rows sharing common values into one group row that is
     representative of all rows in the group.  This is done to
     eliminate redundancy in the output and/or compute aggregates that
@@ -818,7 +819,7 @@ SELECT <replaceable>select_list</replaceable>
     FROM test1 GROUP BY x</literal>, because there is no single value
     for the column <literal>y</> that could be associated with each
     group.  The grouped-by columns can be referenced in the select list since
-    they have a known constant value per group.
+    they have a single value in each group.
    </para>
 
    <para>
@@ -1055,14 +1056,14 @@ SELECT a AS value, b + c AS sum FROM ...
 
    <para>
     After the select list has been processed, the result table may
-    optionally be subject to the elimination of duplicates.  The
-    <literal>DISTINCT</literal> key word is written directly after the
-    <literal>SELECT</literal> to enable this:
+    optionally be subject to the elimination of duplicate rows.  The
+    <literal>DISTINCT</literal> key word is written directly after
+    <literal>SELECT</literal> to specify this:
 <synopsis>
 SELECT DISTINCT <replaceable>select_list</replaceable> ...
 </synopsis>
     (Instead of <literal>DISTINCT</> the key word <literal>ALL</literal>
-    can be used to select the default behavior of retaining all rows.)
+    can be used to specify the default behavior of retaining all rows.)
    </para>
 
    <para>
@@ -1153,8 +1154,8 @@ SELECT DISTINCT ON (<replaceable>expression</replaceable> <optional>, <replaceab
    <replaceable>query2</replaceable> to the result of
    <replaceable>query1</replaceable> (although there is no guarantee
    that this is the order in which the rows are actually returned).
-   Furthermore, it eliminates all duplicate rows, in the sense of
-   <literal>DISTINCT</>, unless <literal>UNION ALL</> is used.
+   Furthermore, it eliminates duplicate rows from its result, in the same
+   way as <literal>DISTINCT</>, unless <literal>UNION ALL</> is used.
   </para>
 
   <para>
@@ -1175,8 +1176,8 @@ SELECT DISTINCT ON (<replaceable>expression</replaceable> <optional>, <replaceab
   <para>
    In order to calculate the union, intersection, or difference of two
    queries, the two queries must be <quote>union compatible</quote>,
-   which means that they both return the same number of columns, and
-   that the corresponding columns have compatible data types, as
+   which means that they return the same number of columns and
+   the corresponding columns have compatible data types, as
    described in <xref linkend="typeconv-union-case">.
   </para>
  </sect1>
@@ -1196,7 +1197,7 @@ SELECT DISTINCT ON (<replaceable>expression</replaceable> <optional>, <replaceab
   <para>
    After a query has produced an output table (after the select list
    has been processed) it can optionally be sorted.  If sorting is not
-   chosen, the rows will be returned in random order.  The actual
+   chosen, the rows will be returned in an unspecified order.  The actual
    order in that case will depend on the scan and join plan types and
    the order on disk, but it must not be relied on.  A particular
    output ordering can only be guaranteed if the sort step is explicitly
@@ -1227,10 +1228,10 @@ SELECT a, sum(b) FROM table1 GROUP BY a ORDER BY 1;
 <programlisting>
 SELECT a, b FROM table1 ORDER BY a + b;
 </programlisting>
-   References to column names in the <literal>FROM</> clause that are
-   renamed in the select list are also allowed:
+   References to column names of the <literal>FROM</> clause that are
+   not present in the select list are also allowed:
 <programlisting>
-SELECT a AS b FROM table1 ORDER BY a;
+SELECT a FROM table1 ORDER BY b;
 </programlisting>
    But these extensions do not work in queries involving
    <literal>UNION</>, <literal>INTERSECT</>, or <literal>EXCEPT</>,
@@ -1324,6 +1325,12 @@ SELECT <replaceable>select_list</replaceable>
    is an inherent consequence of the fact that SQL does not promise to
    deliver the results of a query in any particular order unless
    <literal>ORDER BY</> is used to constrain the order.
+  </para>
+
+  <para>
+   The rows skipped by an <literal>OFFSET</> clause still have to be
+   computed inside the server; therefore a large <literal>OFFSET</>
+   can be inefficient.
   </para>
  </sect1>
 

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/dml.sgml,v 1.8 2003/11/29 19:51:36 pgsql Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/dml.sgml,v 1.9 2004/12/23 05:37:39 tgl Exp $ -->
 
 <chapter id="dml">
  <title>Data Manipulation</title>
@@ -161,7 +161,7 @@ UPDATE products SET price = 10 WHERE price = 5;
   </para>
 
   <para>
-   Let's look at that command in detail: First is the key word
+   Let's look at that command in detail. First is the key word
    <literal>UPDATE</literal> followed by the table name.  As usual,
    the table name may be schema-qualified, otherwise it is looked up
    in the path.  Next is the key word <literal>SET</literal> followed
@@ -172,21 +172,22 @@ UPDATE products SET price = 10 WHERE price = 5;
 <programlisting>
 UPDATE products SET price = price * 1.10;
 </programlisting>
-   As you see, the expression for the new value can also refer to the
-   old value.  We also left out the <literal>WHERE</literal> clause.
+   As you see, the expression for the new value can refer to the existing
+   value(s) in the row.  We also left out the <literal>WHERE</literal> clause.
    If it is omitted, it means that all rows in the table are updated.
-   If it is present, only those rows that match the condition after
-   the <literal>WHERE</literal> are updated.  Note that the equals
+   If it is present, only those rows that match the
+   <literal>WHERE</literal> condition are updated.  Note that the equals
    sign in the <literal>SET</literal> clause is an assignment while
    the one in the <literal>WHERE</literal> clause is a comparison, but
-   this does not create any ambiguity.  Of course, the condition does
+   this does not create any ambiguity.  Of course, the
+   <literal>WHERE</literal> condition does
    not have to be an equality test.  Many other operators are
    available (see <xref linkend="functions">).  But the expression
    needs to evaluate to a Boolean result.
   </para>
 
   <para>
-   You can also update more than one column in an
+   You can update more than one column in an
    <literal>UPDATE</literal> command by listing more than one
    assignment in the <literal>SET</literal> clause.  For example:
 <programlisting>
@@ -211,7 +212,7 @@ UPDATE mytable SET a = 5, b = 3, c = 1 WHERE a > 0;
    change data.  What remains is to discuss how to remove data that is
    no longer needed.  Just as adding data is only possible in whole
    rows, you can only remove entire rows from a table.  In the
-   previous section we discussed that SQL does not provide a way to
+   previous section we explained that SQL does not provide a way to
    directly address individual rows.  Therefore, removing rows can
    only be done by specifying conditions that the rows to be removed
    have to match.  If you have a primary key in the table then you can

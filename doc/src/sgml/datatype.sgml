@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.151 2004/11/27 21:27:05 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.152 2004/12/23 05:37:39 tgl Exp $
 -->
 
  <chapter id="datatype">
@@ -22,9 +22,8 @@ $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.151 2004/11/27 21:27:05 petere
   </para>
 
   <para>
-   <xref linkend="datatype-table"> shows all built-in general-purpose data types.
-   Most of the alternative names
-   listed in the 
+   <xref linkend="datatype-table"> shows all the built-in general-purpose data
+   types. Most of the alternative names listed in the 
    <quote>Aliases</quote> column are the names used internally by
    <productname>PostgreSQL</productname> for historical reasons.  In
    addition, some internally used or deprecated types are available,
@@ -82,7 +81,7 @@ $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.151 2004/11/27 21:27:05 petere
       <row>
        <entry><type>bytea</type></entry>
        <entry></entry>
-       <entry>binary data</entry>
+       <entry>binary data (<quote>byte array</>)</entry>
       </row>
 
       <row>
@@ -142,7 +141,7 @@ $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.151 2004/11/27 21:27:05 petere
       <row>
        <entry><type>line</type></entry>
        <entry></entry>
-       <entry>infinite line in the plane (not fully implemented)</entry>
+       <entry>infinite line in the plane</entry>
       </row>
 
       <row>
@@ -168,13 +167,13 @@ $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.151 2004/11/27 21:27:05 petere
          <replaceable>s</replaceable>) ]</type></entry>
        <entry><type>decimal [ (<replaceable>p</replaceable>,
          <replaceable>s</replaceable>) ]</type></entry>
-       <entry>exact numeric with selectable precision</entry>
+       <entry>exact numeric of selectable precision</entry>
       </row>
 
       <row>
        <entry><type>path</type></entry>
        <entry></entry>
-       <entry>open or closed geometric path in the plane</entry>
+       <entry>geometric path in the plane</entry>
       </row>
 
       <row>
@@ -227,7 +226,7 @@ $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.151 2004/11/27 21:27:05 petere
 
       <row>
        <entry><type>timestamp [ (<replaceable>p</replaceable>) ] [ without time zone ]</type></entry>
-       <entry><type></type></entry>
+       <entry></entry>
        <entry>date and time</entry>
       </row>
 
@@ -259,20 +258,12 @@ $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.151 2004/11/27 21:27:05 petere
    Each data type has an external representation determined by its input
    and output functions.  Many of the built-in types have
    obvious external formats.  However, several types are either unique
-   to <productname>PostgreSQL</productname>, such as open and closed
+   to <productname>PostgreSQL</productname>, such as geometric
    paths, or have several possibilities for formats, such as the date
    and time types.
    Some of the input and output functions are not invertible.  That is,
    the result of an output function may lose accuracy when compared to
    the original input.
-  </para>
-
-  <para>
-   Some of the operators and functions (e.g.,
-   addition and multiplication) do not perform run-time error-checking in the
-   interests of improving execution speed.
-   On some systems, for example, the numeric operators for some data types may
-   silently cause underflow or overflow.
   </para>
 
   <sect1 id="datatype-numeric">
@@ -285,7 +276,7 @@ $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.151 2004/11/27 21:27:05 petere
 
    <para>
     Numeric types consist of two-, four-, and eight-byte integers,
-    four- and eight-byte floating-point numbers, and fixed-precision
+    four- and eight-byte floating-point numbers, and selectable-precision
     decimals.  <xref linkend="datatype-numeric-table"> lists the
     available types.
    </para>
@@ -755,7 +746,7 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (
      created by reloading a dump from a pre-7.3 database; the dump
      file does not contain the information needed to establish the
      dependency link.) Furthermore, this dependency between sequence
-     and column is made only for the <type>serial</> column itself; if
+     and column is made only for the <type>serial</> column itself. If
      any other columns reference the sequence (perhaps by manually
      calling the <function>nextval</> function), they will be broken
      if the sequence is removed. Using a <type>serial</> column's sequence
@@ -916,7 +907,7 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (
     varying(<replaceable>n</>)</type> and
     <type>character(<replaceable>n</>)</type>, respectively.
     <type>character</type> without length specifier is equivalent to
-    <type>character(1)</type>; if <type>character varying</type> is used
+    <type>character(1)</type>. If <type>character varying</type> is used
     without length specifier, the type accepts strings of any size. The
     latter is a <productname>PostgreSQL</> extension.
    </para>
@@ -1114,8 +1105,8 @@ SELECT b, char_length(b) FROM test2;
     literal in an <acronym>SQL</acronym> statement. In general, to
     escape an octet, it is converted into the three-digit octal number
     equivalent of its decimal octet value, and preceded by two
-    backslashes. <xref linkend="datatype-binary-sqlesc"> contains the
-    characters which must be escaped, and gives the alternate escape
+    backslashes. <xref linkend="datatype-binary-sqlesc"> shows the
+    characters that must be escaped, and gives the alternate escape
     sequences where applicable.
    </para>
 
@@ -2429,7 +2420,7 @@ SELECT * FROM test1 WHERE a;
     <para>
      Boxes are represented by pairs of points that are opposite
      corners of the box.
-     Values of type <type>box</type> is specified using the following syntax:
+     Values of type <type>box</type> are specified using the following syntax:
 
 <synopsis>
 ( ( <replaceable>x1</replaceable> , <replaceable>y1</replaceable> ) , ( <replaceable>x2</replaceable> , <replaceable>y2</replaceable> ) )
@@ -2441,7 +2432,7 @@ SELECT * FROM test1 WHERE a;
      <literal>(<replaceable>x1</replaceable>,<replaceable>y1</replaceable>)</literal>
      and
      <literal>(<replaceable>x2</replaceable>,<replaceable>y2</replaceable>)</literal>
-     are the opposite corners of the box.
+     are any two opposite corners of the box.
     </para>
 
     <para>
@@ -2449,7 +2440,7 @@ SELECT * FROM test1 WHERE a;
      The corners are reordered on input to store
      the upper right corner, then the lower left corner.
      Other corners of the box can be entered, but the lower
-     left and upper right corners are determined from the input and stored corners.
+     left and upper right corners are determined from the input and stored.
     </para>
    </sect2>
 
@@ -2461,18 +2452,11 @@ SELECT * FROM test1 WHERE a;
     </indexterm>
 
     <para>
-     Paths are represented by connected sets of points. Paths can be
+     Paths are represented by lists of connected points. Paths can be
      <firstterm>open</firstterm>, where
-     the first and last points in the set are not connected, and <firstterm>closed</firstterm>,
-     where the first and last point are connected. The functions
-     <function>popen(<replaceable>p</>)</function>
-     and
-     <function>pclose(<replaceable>p</>)</function>
-     are supplied to force a path to be open or closed, and the functions
-     <function>isopen(<replaceable>p</>)</function>
-     and
-     <function>isclosed(<replaceable>p</>)</function>
-     are supplied to test for either type in an expression.
+     the first and last points in the list are not connected, or
+     <firstterm>closed</firstterm>,
+     where the first and last points are connected.
     </para>
 
     <para>
@@ -2505,7 +2489,8 @@ SELECT * FROM test1 WHERE a;
     </indexterm>
 
     <para>
-     Polygons are represented by sets of points. Polygons should probably be
+     Polygons are represented by lists of points (the vertexes of the
+     polygon). Polygons should probably be
      considered equivalent to closed paths, but are stored differently 
      and have their own set of support routines.
     </para>
@@ -2569,8 +2554,9 @@ SELECT * FROM test1 WHERE a;
 
    <para>
     <productname>PostgreSQL</> offers data types to store IPv4, IPv6, and MAC
-    addresses, shown in <xref linkend="datatype-net-types-table">.  It
-    is preferable to use these types over plain text types, because
+    addresses, as shown in <xref linkend="datatype-net-types-table">.  It
+    is preferable to use these types instead of plain text types to store
+    network addresses, because
     these types offer input error checking and several specialized
     operators and functions.
    </para>
@@ -2590,7 +2576,7 @@ SELECT * FROM test1 WHERE a;
        <row>
         <entry><type>cidr</type></entry>
         <entry>12 or 24 bytes</entry>
-        <entry>IPv4 or IPv6 networks</entry>
+        <entry>IPv4 and IPv6 networks</entry>
        </row>
 
        <row>
@@ -2631,7 +2617,7 @@ SELECT * FROM test1 WHERE a;
      the host address represent the network address (the
      <quote>netmask</quote>).  If the netmask is 32 and the address is IPv4,
      then the value does not indicate a subnet, only a single host.
-     In IPv6, the address length is 128 bits, so 128 bits will specify a
+     In IPv6, the address length is 128 bits, so 128 bits specify a
      unique host address.  Note that if you
      want to accept networks only, you should use the
      <type>cidr</type> type rather than <type>inet</type>.
@@ -2647,7 +2633,7 @@ SELECT * FROM test1 WHERE a;
       is the number of bits in the netmask.  If the
       <replaceable class="parameter">/y</replaceable>
       part is left off, then the
-      netmask is 32 for IPv4 and 128 for IPv6, and the value represents
+      netmask is 32 for IPv4 and 128 for IPv6, so the value represents
       just a single host.  On display, the
       <replaceable class="parameter">/y</replaceable>
       portion is suppressed if the netmask specifies a single host.
@@ -2824,7 +2810,7 @@ SELECT * FROM test1 WHERE a;
      which would all specify the same
      address.  Upper and lower case is accepted for the digits
      <literal>a</> through <literal>f</>.  Output is always in the
-     last of the shown forms.
+     last of the forms shown.
     </para>
 
     <para>

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/intro.sgml,v 1.26 2004/11/27 21:27:06 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/intro.sgml,v 1.27 2004/12/23 05:37:39 tgl Exp $
 -->
 
 <preface id="preface">
@@ -41,7 +41,7 @@ $PostgreSQL: pgsql/doc/src/sgml/intro.sgml,v 1.26 2004/11/27 21:27:06 petere Exp
    <listitem>
     <para>
      <xref linkend="admin"> describes the installation and
-     administration of the server.  Everyone that runs a
+     administration of the server.  Everyone who runs a
      <productname>PostgreSQL</productname> server, be it for private
      use or for others, should read this part.
     </para>
@@ -67,8 +67,8 @@ $PostgreSQL: pgsql/doc/src/sgml/intro.sgml,v 1.26 2004/11/27 21:27:06 petere Exp
 
    <listitem>
     <para>
-     <xref linkend="reference"> contains information about the syntax
-     of SQL commands, client and server programs.  This part supports
+     <xref linkend="reference"> contains reference information about
+     SQL commands, client and server programs.  This part supports
      the other parts with structured information sorted by command or
      program.
     </para>
@@ -76,7 +76,7 @@ $PostgreSQL: pgsql/doc/src/sgml/intro.sgml,v 1.26 2004/11/27 21:27:06 petere Exp
 
    <listitem>
     <para>
-     <xref linkend="internals"> contains assorted information that can be of
+     <xref linkend="internals"> contains assorted information that may be of
      use to <productname>PostgreSQL</> developers.
     </para>
    </listitem>

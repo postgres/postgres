@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.34 2004/12/13 18:05:08 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.35 2004/12/23 05:37:39 tgl Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -260,7 +260,7 @@ DROP TABLE products;
      <para>
       The identity (transaction ID) of the deleting transaction, or
       zero for an undeleted row version.  It is possible for this column to
-      be nonzero in a visible row version: That usually indicates that the
+      be nonzero in a visible row version. That usually indicates that the
       deleting transaction hasn't committed yet, or that an attempted
       deletion was rolled back.
      </para>
@@ -329,8 +329,8 @@ DROP TABLE products;
       <para>
        The tables in question should be created using <literal>WITH
        OIDS</literal> to ensure forward compatibility with future
-       releases of <productname>PostgreSQL</productname> in which OIDs
-       are not included in all tables by default.
+       releases of <productname>PostgreSQL</productname>.  It is
+       planned that <literal>WITHOUT OIDS</> will become the default.
       </para>
      </listitem>
     </itemizedlist>
@@ -367,15 +367,15 @@ DROP TABLE products;
    created and no values are specified for some of the columns, the
    columns will be filled with their respective default values.  A
    data manipulation command can also request explicitly that a column
-   be set to its default value, without knowing what this value is.
+   be set to its default value, without having to know what that value is.
    (Details about data manipulation commands are in <xref linkend="dml">.)
   </para>
 
   <para>
    <indexterm><primary>null value</primary><secondary>default value</secondary></indexterm>
-   If no default value is declared explicitly, the null value is the
-   default value.  This usually makes sense because a null value can
-   be thought to represent unknown data.
+   If no default value is declared explicitly, the default value is the
+   null value.  This usually makes sense because a null value can
+   be considered to represent unknown data.
   </para>
 
   <para>
@@ -393,7 +393,9 @@ CREATE TABLE products (
   <para>
    The default value may be a scalar expression, which will be
    evaluated whenever the default value is inserted
-   (<emphasis>not</emphasis> when the table is created).
+   (<emphasis>not</emphasis> when the table is created).  A common example
+   is that a timestamp column may have a default of <literal>now()</>,
+   so that it gets set to the time of row insertion.
   </para>
  </sect1>
 
@@ -544,7 +546,7 @@ CREATE TABLE products (
     expressions will evaluate to the null value if one operand is null,
     they will not prevent null values in the constrained columns.  To
     ensure that a column does not contain null values, the not-null
-    constraint described in the next section should be used.
+    constraint described in the next section can be used.
    </para>
   </sect2>
 
@@ -691,11 +693,11 @@ CREATE TABLE products (
    </indexterm>
 
    <para>
-    In general, a unique constraint is violated when there are (at
-    least) two rows in the table where the values of each of the
-    corresponding columns that are part of the constraint are equal.
+    In general, a unique constraint is violated when there are two or
+    more rows in the table where the values of all of the
+    columns included in the constraint are equal.
     However, null values are not considered equal in this
-    consideration.  That means even in the presence of a
+    comparison.  That means even in the presence of a
     unique constraint it is possible to store an unlimited number of
     rows that contain a null value in at least one of the constrained
     columns.  This behavior conforms to the SQL standard, but we have
@@ -839,7 +841,7 @@ CREATE TABLE orders (
 );
 </programlisting>
     because in absence of a column list the primary key of the
-    referenced table is used as the referenced column.
+    referenced table is used as the referenced column(s).
    </para>
 
    <para>
@@ -902,7 +904,7 @@ CREATE TABLE order_items (
     We know that the foreign keys disallow creation of orders that
     do not relate to any products.  But what if a product is removed
     after an order is created that references it?  SQL allows you to
-    specify that as well.  Intuitively, we have a few options:
+    handle that as well.  Intuitively, we have a few options:
     <itemizedlist spacing="compact">
      <listitem><para>Disallow deleting a referenced product</para></listitem>
      <listitem><para>Delete the orders as well</para></listitem>
@@ -940,13 +942,15 @@ CREATE TABLE order_items (
 
    <para>
     Restricting and cascading deletes are the two most common options.
-    <literal>RESTRICT</literal> prevents a statement from deleting a
+    <literal>RESTRICT</literal> prevents deletion of a
     referenced row. <literal>NO ACTION</literal> means that if any
     referencing rows still exist when the constraint is checked, an error
-    is raised; this is the default if you do not specify anything.
-    (The essential difference between these choices is that
+    is raised; this is the default behavior if you do not specify anything.
+    (The essential difference between these two choices is that
     <literal>NO ACTION</literal> allows the check to be deferred until
     later in the transaction, whereas <literal>RESTRICT</literal> does not.)
+    <literal>CASCADE</> specifies that when a referenced row is deleted,
+    row(s) referencing it should be automatically deleted as well.
     There are two other options:
     <literal>SET NULL</literal> and <literal>SET DEFAULT</literal>.
     These cause the referencing columns to be set to nulls or default
@@ -954,13 +958,13 @@ CREATE TABLE order_items (
     Note that these do not excuse you from observing any constraints.
     For example, if an action specifies <literal>SET DEFAULT</literal>
     but the default value would not satisfy the foreign key, the
-    deletion of the primary key will fail.
+    operation will fail.
    </para>
 
    <para>
     Analogous to <literal>ON DELETE</literal> there is also
-    <literal>ON UPDATE</literal> which is invoked when a primary key
-    is changed (updated).  The possible actions are the same.
+    <literal>ON UPDATE</literal> which is invoked when a referenced
+    column is changed (updated).  The possible actions are the same.
    </para>
 
    <para>
@@ -1220,6 +1224,9 @@ WHERE c.altitude &gt; 500 and c.tableoid = p.oid;
      <para>Change default values,</para>
     </listitem>
     <listitem>
+     <para>Change column data types,</para>
+    </listitem>
+    <listitem>
      <para>Rename columns,</para>
     </listitem>
     <listitem>
@@ -1227,8 +1234,9 @@ WHERE c.altitude &gt; 500 and c.tableoid = p.oid;
     </listitem>
    </itemizedlist>
 
-   All these actions are performed using the <literal>ALTER
-   TABLE</literal> command.
+   All these actions are performed using the
+   <xref linkend="sql-altertable" endterm="sql-altertable-title">
+   command.
   </para>
 
   <sect2>
@@ -1343,7 +1351,7 @@ ALTER TABLE products ALTER COLUMN product_no DROP NOT NULL;
   </sect2>
 
   <sect2>
-   <title>Changing the Default</title>
+   <title>Changing a Column's Default Value</title>
 
    <indexterm>
     <primary>default value</primary>
@@ -1363,6 +1371,35 @@ ALTER TABLE products ALTER COLUMN price DROP DEFAULT;
     <productname>PostgreSQL</>.  As a consequence, it is not an error
     to drop a default where one hadn't been defined, because the
     default is implicitly the null value.
+   </para>
+  </sect2>
+
+  <sect2>
+   <title>Changing a Column's Data Type</title>
+
+   <indexterm>
+    <primary>column data type</primary>
+    <secondary>changing</secondary>
+   </indexterm>
+
+   <para>
+    To convert a column to a different data type, use a command like this:
+<programlisting>
+ALTER TABLE products ALTER COLUMN price TYPE numeric(10,2);
+</programlisting>
+    This will succeed only if each existing entry in the column can be
+    converted to the new type by an implicit cast.  If a more complex
+    conversion is needed, you can add a <literal>USING</> clause that
+    specifies how to compute the new values from the old.
+   </para>
+
+   <para>
+    <productname>PostgreSQL</> will attempt to convert the column's
+    default value (if any) to the new type, as well as any constraints
+    that involve the column.  But these conversions may fail, or may
+    produce surprising results.  It's often best to drop any constraints
+    on the column before altering its type, and then add back suitably
+    modified constraints afterwards.
    </para>
   </sect2>
 
@@ -1568,7 +1605,7 @@ REVOKE ALL ON accounts FROM PUBLIC;
    </indexterm>
 
    <para>
-    To create a separate schema, use the command <literal>CREATE
+    To create a schema, use the command <literal>CREATE
     SCHEMA</literal>.  Give the schema a name of your choice.  For
     example:
 <programlisting>
@@ -1830,7 +1867,7 @@ REVOKE CREATE ON SCHEMA public FROM PUBLIC;
     (The first <quote>public</quote> is the schema, the second
     <quote>public</quote> means <quote>every user</quote>.  In the
     first sense it is an identifier, in the second sense it is a
-    reserved word, hence the different capitalization; recall the
+    key word, hence the different capitalization; recall the
     guidelines from <xref linkend="sql-syntax-identifiers">.)
    </para>
   </sect2>
