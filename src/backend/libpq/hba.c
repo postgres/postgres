@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.103 2003/06/12 07:36:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.104 2003/06/15 16:21:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -629,7 +629,7 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 		token = lfirst(line);
 
 		/* Check if it has a CIDR suffix and if so isolate it */
-		cidr_slash = index(token,'/');
+		cidr_slash = strchr(token,'/');
 		if (cidr_slash)
 		{
 			*cidr_slash = '\0';
