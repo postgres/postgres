@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Feb 12 17:24:00 EST 2002
+Last updated:		Sun Feb 17 20:16:14 EST 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -268,6 +268,11 @@ CLIENTS
 	o Fix nested C comments
 	o Add SQLSTATE
 	o fix handling of DB attributes that are arrays
+
+* ODBC
+	o ODBC 3.0 support
+	o Unicode(UCS-2) support
+	o Updatable cursors support
 
 
 REFERENTIAL INTEGRITY
