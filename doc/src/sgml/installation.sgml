@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.125 2002/11/20 22:01:57 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.126 2002/11/23 03:50:34 tgl Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1585,10 +1585,10 @@ gunzip -c user.ps.gz \
        <row>
 	<entry><systemitem class="osname">Linux</></entry>
 	<entry><systemitem>PlayStation 2</></entry>
-	<entry>7.2</entry>
-	<entry>2001-12-12,
+	<entry>7.3</entry>
+	<entry>2002-11-19,
 	 Permaine Cheung <email>pcheung@redhat.com</email>)</entry>
-	<entry>#undef HAS_TEST_AND_SET, slock_t</entry>
+	<entry>#undef HAS_TEST_AND_SET, remove slock_t typedef</entry>
        </row>
        <row>
 	<entry><systemitem class="osname">Linux</></entry>
@@ -1602,10 +1602,10 @@ gunzip -c user.ps.gz \
        <row>
 	<entry><systemitem class="osname">Linux</></entry>
 	<entry><systemitem>S/390</></entry>
-	<entry>7.2</entry>
-	<entry>2001-12-12,
+	<entry>7.3</entry>
+	<entry>2002-11-22,
 	 Permaine Cheung <email>pcheung@redhat.com</email>)</entry>
-	<entry></entry>
+	<entry>both s390 and s390x (32 and 64 bit)</entry>
        </row>
        <row>
 	<entry><systemitem class="osname">Linux</></entry>
@@ -1724,10 +1724,10 @@ gunzip -c user.ps.gz \
        <row>
 	<entry><systemitem class="osname">Solaris</></entry>
 	<entry><systemitem>x86</></entry>
-	<entry>7.2</entry>
-	<entry>2001-11-28, 
+	<entry>7.3</entry>
+	<entry>2002-11-20,
 	 Martin Renters (<email>martin@datafax.com</email>)</entry>
-	<entry>2.8; see also <filename>doc/FAQ_Solaris</filename></entry>
+	<entry>5.8; see also <filename>doc/FAQ_Solaris</filename></entry>
        </row>
        <row>
         <entry><systemitem class="osname">SunOS 4</></entry>
