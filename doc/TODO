@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Jun 26 15:43:04 EDT 2001
+Last updated:		Wed Jun 27 12:24:10 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -197,7 +197,7 @@ CLIENTS
 	* Comprehensive test suite. This may be available already.
 	* Updateable resultSet (must be done in backend code)
 	* Improved DatabaseMetaData
-	* Compatible blob support
+	* JDBC-standard BLOB support
 	* Error Codes (pending backend implementation)
 
 REFERENTIAL INTEGRITY
