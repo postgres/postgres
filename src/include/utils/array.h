@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/array.h,v 1.51 2004/12/31 22:03:45 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/utils/array.h,v 1.51.4.1 2005/03/24 21:50:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,6 +63,15 @@ typedef struct ArrayMetaState
 	Oid			typiofunc;
 	FmgrInfo	proc;
 } ArrayMetaState;
+
+/*
+ * private state needed by array_map (here because caller must provide it)
+ */
+typedef struct ArrayMapState
+{
+	ArrayMetaState inp_extra;
+	ArrayMetaState ret_extra;
+} ArrayMapState;
 
 /*
  * fmgr macros for array objects
@@ -147,7 +156,8 @@ extern ArrayType *array_set_slice(ArrayType *array, int nSubscripts,
 				int arraylen, int elmlen, bool elmbyval, char elmalign,
 				bool *isNull);
 
-extern Datum array_map(FunctionCallInfo fcinfo, Oid inpType, Oid retType);
+extern Datum array_map(FunctionCallInfo fcinfo, Oid inpType, Oid retType,
+					   ArrayMapState *amstate);
 
 extern ArrayType *construct_array(Datum *elems, int nelems,
 				Oid elmtype,
