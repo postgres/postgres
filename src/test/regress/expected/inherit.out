@@ -538,7 +538,7 @@ SELECT relname, d.* FROM ONLY d, pg_class where d.tableoid = pg_class.oid;
 CREATE TEMP TABLE z (b TEXT, PRIMARY KEY(aa, b)) inherits (a);
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "z_pkey" for table "z"
 INSERT INTO z VALUES (NULL, 'text'); -- should fail
-ERROR:  ExecInsert: Fail to add null value in not null attribute aa
+ERROR:  null value for attribute "aa" violates NOT NULL constraint
 -- Check UPDATE with inherited target and an inherited source table
 create temp table foo(f1 int, f2 int);
 create temp table foo2(f3 int) inherits (foo);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.79 2003/02/09 06:56:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.80 2003/07/21 17:05:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -666,7 +666,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
 			listscan = lnext(listscan);
 
 			if (!IsA(clause, OpExpr))
-				elog(ERROR, "ExecInitIndexScan: indxqual not an opclause!");
+				elog(ERROR, "indxqual is not an OpExpr");
 
 			opfuncid = clause->opfuncid;
 
@@ -768,8 +768,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
 				 * scan-attribute...
 				 */
 				if (scanvar == LEFT_OP)
-					elog(ERROR, "ExecInitIndexScan: %s",
-						 "both left and right op's are rel-vars");
+					elog(ERROR, "both left and right operands are rel-vars");
 
 				/*
 				 * if the rightop is a "rel-var", then it means that it is
@@ -805,8 +804,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
 			 * attribute...
 			 */
 			if (scanvar == NO_OP)
-				elog(ERROR, "ExecInitIndexScan: %s",
-					 "neither leftop nor rightop refer to scan relation");
+				elog(ERROR, "neither left nor right operand refer to scan relation");
 
 			/*
 			 * initialize the scan key's fields appropriately
@@ -878,7 +876,10 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
 	currentRelation = heap_open(reloid, AccessShareLock);
 
 	if (!RelationGetForm(currentRelation)->relhasindex)
-		elog(ERROR, "indexes of the relation %u was inactivated", reloid);
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("indexes of relation %u were deactivated",
+						reloid)));
 
 	indexstate->ss.ss_currentRelation = currentRelation;
 	indexstate->ss.ss_currentScanDesc = NULL;		/* no heap scan here */

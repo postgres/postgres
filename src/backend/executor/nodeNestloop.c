@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeNestloop.c,v 1.32 2003/05/05 17:57:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeNestloop.c,v 1.33 2003/07/21 17:05:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -333,7 +333,7 @@ ExecInitNestLoop(NestLoop *node, EState *estate)
 							   ExecGetResultType(innerPlanState(nlstate)));
 			break;
 		default:
-			elog(ERROR, "ExecInitNestLoop: unsupported join type %d",
+			elog(ERROR, "unrecognized join type: %d",
 				 (int) node->join.jointype);
 	}
 

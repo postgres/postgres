@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeLimit.c,v 1.14 2002/12/15 16:17:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeLimit.c,v 1.15 2003/07/21 17:05:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -149,7 +149,7 @@ ExecLimit(LimitState *node)
 				 */
 				slot = ExecProcNode(outerPlan);
 				if (TupIsNull(slot))
-					elog(ERROR, "ExecLimit: subplan failed to run backwards");
+					elog(ERROR, "LIMIT subplan failed to run backwards");
 				node->subSlot = slot;
 				node->position--;
 			}
@@ -164,7 +164,7 @@ ExecLimit(LimitState *node)
 			 */
 			slot = ExecProcNode(outerPlan);
 			if (TupIsNull(slot))
-				elog(ERROR, "ExecLimit: subplan failed to run backwards");
+				elog(ERROR, "LIMIT subplan failed to run backwards");
 			node->subSlot = slot;
 			node->lstate = LIMIT_INWINDOW;
 			/* position does not change 'cause we didn't advance it before */
@@ -195,7 +195,7 @@ ExecLimit(LimitState *node)
 			break;
 
 		default:
-			elog(ERROR, "ExecLimit: impossible state %d",
+			elog(ERROR, "impossible LIMIT state: %d",
 				 (int) node->lstate);
 			slot = NULL;		/* keep compiler quiet */
 			break;

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/executor/execAmi.c,v 1.71 2003/05/27 17:49:45 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/executor/execAmi.c,v 1.72 2003/07/21 17:05:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -160,9 +160,8 @@ ExecReScan(PlanState *node, ExprContext *exprCtxt)
 			break;
 
 		default:
-			elog(ERROR, "ExecReScan: node type %d not supported",
-				 nodeTag(node));
-			return;
+			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(node));
+			break;
 	}
 
 	if (node->chgParam != NULL)
@@ -208,8 +207,7 @@ ExecMarkPos(PlanState *node)
 
 		default:
 			/* don't make hard error unless caller asks to restore... */
-			elog(DEBUG2, "ExecMarkPos: node type %d not supported",
-				 nodeTag(node));
+			elog(DEBUG2, "unrecognized node type: %d", (int) nodeTag(node));
 			break;
 	}
 }
@@ -249,8 +247,7 @@ ExecRestrPos(PlanState *node)
 			break;
 
 		default:
-			elog(ERROR, "ExecRestrPos: node type %d not supported",
-				 nodeTag(node));
+			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(node));
 			break;
 	}
 }

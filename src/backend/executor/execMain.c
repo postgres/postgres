@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.209 2003/05/08 18:16:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.210 2003/07/21 17:05:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -410,8 +410,8 @@ ExecCheckRTEPerms(RangeTblEntry *rte, CmdType operation)
 				aclcheck_result = CHECK(ACL_DELETE);
 				break;
 			default:
-				elog(ERROR, "ExecCheckRTEPerms: bogus operation %d",
-					 operation);
+				elog(ERROR, "unrecognized operation code: %d",
+					 (int) operation);
 				aclcheck_result = ACLCHECK_OK;	/* keep compiler quiet */
 				break;
 		}
@@ -455,7 +455,9 @@ ExecCheckXactReadOnly(Query *parsetree, CmdType operation)
 	return;
 
 fail:
-	elog(ERROR, "transaction is read-only");
+	ereport(ERROR,
+			(errcode(ERRCODE_READ_ONLY_SQL_TRANSACTION),
+			 errmsg("transaction is read-only")));
 }
 
 
@@ -833,16 +835,22 @@ initResultRelInfo(ResultRelInfo *resultRelInfo,
 	switch (resultRelationDesc->rd_rel->relkind)
 	{
 		case RELKIND_SEQUENCE:
-			elog(ERROR, "You can't change sequence relation %s",
-				 RelationGetRelationName(resultRelationDesc));
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("cannot change sequence relation \"%s\"",
+							RelationGetRelationName(resultRelationDesc))));
 			break;
 		case RELKIND_TOASTVALUE:
-			elog(ERROR, "You can't change toast relation %s",
-				 RelationGetRelationName(resultRelationDesc));
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("cannot change toast relation \"%s\"",
+							RelationGetRelationName(resultRelationDesc))));
 			break;
 		case RELKIND_VIEW:
-			elog(ERROR, "You can't change view relation %s",
-				 RelationGetRelationName(resultRelationDesc));
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("cannot change view relation \"%s\"",
+							RelationGetRelationName(resultRelationDesc))));
 			break;
 	}
 
@@ -1056,11 +1064,11 @@ lnext:	;
 										  "ctid",
 										  &datum,
 										  &isNull))
-					elog(ERROR, "ExecutePlan: NO (junk) `ctid' was found!");
+					elog(ERROR, "could not find junk ctid column");
 
 				/* shouldn't ever get a null result... */
 				if (isNull)
-					elog(ERROR, "ExecutePlan: (junk) `ctid' is NULL!");
+					elog(ERROR, "ctid is NULL");
 
 				tupleid = (ItemPointer) DatumGetPointer(datum);
 				tuple_ctid = *tupleid;	/* make sure we don't free the
@@ -1085,13 +1093,12 @@ lnext:	;
 											  erm->resname,
 											  &datum,
 											  &isNull))
-						elog(ERROR, "ExecutePlan: NO (junk) `%s' was found!",
+						elog(ERROR, "could not find junk \"%s\" column",
 							 erm->resname);
 
 					/* shouldn't ever get a null result... */
 					if (isNull)
-						elog(ERROR, "ExecutePlan: (junk) `%s' is NULL!",
-							 erm->resname);
+						elog(ERROR, "\"%s\" is NULL", erm->resname);
 
 					tuple.t_self = *((ItemPointer) DatumGetPointer(datum));
 					test = heap_mark4update(erm->relation, &tuple, &buffer,
@@ -1108,7 +1115,9 @@ lnext:	;
 
 						case HeapTupleUpdated:
 							if (XactIsoLevel == XACT_SERIALIZABLE)
-								elog(ERROR, "Can't serialize access due to concurrent update");
+								ereport(ERROR,
+										(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
+										 errmsg("cannot serialize access due to concurrent update")));
 							if (!(ItemPointerEquals(&(tuple.t_self),
 								  (ItemPointer) DatumGetPointer(datum))))
 							{
@@ -1129,7 +1138,8 @@ lnext:	;
 							goto lnext;
 
 						default:
-							elog(ERROR, "Unknown status %u from heap_mark4update", test);
+							elog(ERROR, "unrecognized heap_mark4update status: %u",
+								 test);
 							return (NULL);
 					}
 				}
@@ -1178,7 +1188,8 @@ lnext:	;
 				break;
 
 			default:
-				elog(LOG, "ExecutePlan: unknown operation in queryDesc");
+				elog(ERROR, "unrecognized operation code: %d",
+					 (int) operation);
 				result = NULL;
 				break;
 		}
@@ -1321,7 +1332,7 @@ ExecInsert(TupleTableSlot *slot,
 	 * Check the constraints of the tuple
 	 */
 	if (resultRelationDesc->rd_att->constr)
-		ExecConstraints("ExecInsert", resultRelInfo, slot, estate);
+		ExecConstraints(resultRelInfo, slot, estate);
 
 	/*
 	 * insert the tuple
@@ -1403,7 +1414,9 @@ ldelete:;
 
 		case HeapTupleUpdated:
 			if (XactIsoLevel == XACT_SERIALIZABLE)
-				elog(ERROR, "Can't serialize access due to concurrent update");
+				ereport(ERROR,
+						(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
+						 errmsg("cannot serialize access due to concurrent update")));
 			else if (!(ItemPointerEquals(tupleid, &ctid)))
 			{
 				TupleTableSlot *epqslot = EvalPlanQual(estate,
@@ -1419,7 +1432,7 @@ ldelete:;
 			return;
 
 		default:
-			elog(ERROR, "Unknown status %u from heap_delete", result);
+			elog(ERROR, "unrecognized heap_delete status: %u", result);
 			return;
 	}
 
@@ -1466,10 +1479,7 @@ ExecUpdate(TupleTableSlot *slot,
 	 * abort the operation if not running transactions
 	 */
 	if (IsBootstrapProcessingMode())
-	{
-		elog(WARNING, "ExecUpdate: UPDATE can't run without transactions");
-		return;
-	}
+		elog(ERROR, "cannot UPDATE during bootstrap");
 
 	/*
 	 * get the heap tuple out of the tuple table slot
@@ -1519,7 +1529,7 @@ ExecUpdate(TupleTableSlot *slot,
 	 */
 lreplace:;
 	if (resultRelationDesc->rd_att->constr)
-		ExecConstraints("ExecUpdate", resultRelInfo, slot, estate);
+		ExecConstraints(resultRelInfo, slot, estate);
 
 	/*
 	 * replace the heap tuple
@@ -1538,7 +1548,9 @@ lreplace:;
 
 		case HeapTupleUpdated:
 			if (XactIsoLevel == XACT_SERIALIZABLE)
-				elog(ERROR, "Can't serialize access due to concurrent update");
+				ereport(ERROR,
+						(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
+						 errmsg("cannot serialize access due to concurrent update")));
 			else if (!(ItemPointerEquals(tupleid, &ctid)))
 			{
 				TupleTableSlot *epqslot = EvalPlanQual(estate,
@@ -1558,7 +1570,7 @@ lreplace:;
 			return;
 
 		default:
-			elog(ERROR, "Unknown status %u from heap_update", result);
+			elog(ERROR, "unrecognized heap_update status: %u", result);
 			return;
 	}
 
@@ -1591,7 +1603,7 @@ lreplace:;
 	ExecARUpdateTriggers(estate, resultRelInfo, tupleid, tuple);
 }
 
-static char *
+static const char *
 ExecRelCheck(ResultRelInfo *resultRelInfo,
 			 TupleTableSlot *slot, EState *estate)
 {
@@ -1646,11 +1658,11 @@ ExecRelCheck(ResultRelInfo *resultRelInfo,
 	}
 
 	/* NULL result means no error */
-	return (char *) NULL;
+	return NULL;
 }
 
 void
-ExecConstraints(const char *caller, ResultRelInfo *resultRelInfo,
+ExecConstraints(ResultRelInfo *resultRelInfo,
 				TupleTableSlot *slot, EState *estate)
 {
 	Relation	rel = resultRelInfo->ri_RelationDesc;
@@ -1668,18 +1680,22 @@ ExecConstraints(const char *caller, ResultRelInfo *resultRelInfo,
 		{
 			if (rel->rd_att->attrs[attrChk - 1]->attnotnull &&
 				heap_attisnull(tuple, attrChk))
-				elog(ERROR, "%s: Fail to add null value in not null attribute %s",
-					 caller, NameStr(rel->rd_att->attrs[attrChk - 1]->attname));
+				ereport(ERROR,
+						(errcode(ERRCODE_NOT_NULL_VIOLATION),
+						 errmsg("null value for attribute \"%s\" violates NOT NULL constraint",
+								NameStr(rel->rd_att->attrs[attrChk - 1]->attname))));
 		}
 	}
 
 	if (constr->num_check > 0)
 	{
-		char	   *failed;
+		const char	   *failed;
 
 		if ((failed = ExecRelCheck(resultRelInfo, slot, estate)) != NULL)
-			elog(ERROR, "%s: rejected due to CHECK constraint \"%s\" on \"%s\"",
-				 caller, failed, RelationGetRelationName(rel));
+			ereport(ERROR,
+					(errcode(ERRCODE_CHECK_VIOLATION),
+					 errmsg("new row for relation \"%s\" violates CHECK constraint \"%s\"",
+							RelationGetRelationName(rel), failed)));
 	}
 }
 
@@ -1721,7 +1737,7 @@ EvalPlanQual(EState *estate, Index rti, ItemPointer tid)
 			}
 		}
 		if (relation == NULL)
-			elog(ERROR, "EvalPlanQual: can't find RTE %d", (int) rti);
+			elog(ERROR, "cannot find RowMark for RT index %u", rti);
 	}
 
 	/*
@@ -1738,8 +1754,9 @@ EvalPlanQual(EState *estate, Index rti, ItemPointer tid)
 		{
 			TransactionId xwait = SnapshotDirty->xmax;
 
+			/* xmin should not be dirty... */
 			if (TransactionIdIsValid(SnapshotDirty->xmin))
-				elog(ERROR, "EvalPlanQual: t_xmin is uncommitted ?!");
+				elog(ERROR, "t_xmin is uncommitted in tuple to be updated");
 
 			/*
 			 * If tuple is being updated by other transaction then we have

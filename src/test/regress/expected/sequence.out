@@ -9,7 +9,7 @@ INSERT INTO serialTest VALUES ('foo');
 INSERT INTO serialTest VALUES ('bar');
 INSERT INTO serialTest VALUES ('force', 100);
 INSERT INTO serialTest VALUES ('wrong', NULL);
-ERROR:  ExecInsert: Fail to add null value in not null attribute f2
+ERROR:  null value for attribute "f2" violates NOT NULL constraint
  
 SELECT * FROM serialTest;
   f1   | f2  

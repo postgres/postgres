@@ -3,7 +3,7 @@
 --
 create table inserttest (col1 int4, col2 int4 NOT NULL, col3 text default 'testing');
 insert into inserttest (col1, col2, col3) values (DEFAULT, DEFAULT, DEFAULT);
-ERROR:  ExecInsert: Fail to add null value in not null attribute col2
+ERROR:  null value for attribute "col2" violates NOT NULL constraint
 insert into inserttest (col2, col3) values (3, DEFAULT);
 insert into inserttest (col1, col2, col3) values (DEFAULT, 5, DEFAULT);
 insert into inserttest values (DEFAULT, 5, 'test');

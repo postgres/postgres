@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: elog.h,v 1.51 2003/07/21 01:59:11 tgl Exp $
+ * $Id: elog.h,v 1.52 2003/07/21 17:05:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -124,6 +124,8 @@
 /* Class 22 - Data Exception */
 #define ERRCODE_DATA_EXCEPTION				MAKE_SQLSTATE('2','2', '0','0','0')
 #define ERRCODE_ARRAY_ELEMENT_ERROR			MAKE_SQLSTATE('2','2', '0','2','E')
+/* SQL99's actual definition of "array element error" is subscript error */
+#define ERRCODE_ARRAY_SUBSCRIPT_ERROR		ERRCODE_ARRAY_ELEMENT_ERROR
 #define ERRCODE_CHARACTER_NOT_IN_REPERTOIRE	MAKE_SQLSTATE('2','2', '0','2','1')
 #define ERRCODE_DATETIME_FIELD_OVERFLOW		MAKE_SQLSTATE('2','2', '0','0','8')
 #define ERRCODE_DIVISION_BY_ZERO			MAKE_SQLSTATE('2','2', '0','1','2')
@@ -215,6 +217,7 @@
 #define ERRCODE_E_R_I_E_INVALID_SQLSTATE_RETURNED	MAKE_SQLSTATE('3','9', '0','0','1')
 #define ERRCODE_E_R_I_E_NULL_VALUE_NOT_ALLOWED	MAKE_SQLSTATE('3','9', '0','0','4')
 #define ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED	MAKE_SQLSTATE('3','9', 'P','0','1')
+#define ERRCODE_E_R_I_E_SRF_PROTOCOL_VIOLATED	MAKE_SQLSTATE('3','9', 'P','0','2')
 
 /* Class 3D - Invalid Catalog Name */
 #define ERRCODE_INVALID_CATALOG_NAME		MAKE_SQLSTATE('3','D', '0','0','0')

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.57 2003/05/05 17:57:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.58 2003/07/21 17:05:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -129,7 +129,7 @@ MJFormSkipQuals(List *qualList, List **ltQuals, List **gtQuals,
 		 * The two ops should be identical, so use either one for lookup.
 		 */
 		if (!IsA(ltop, OpExpr))
-			elog(ERROR, "MJFormSkipQuals: op not an OpExpr!");
+			elog(ERROR, "mergejoin clause is not an OpExpr");
 
 		/*
 		 * Lookup the operators, and replace the data in the copied
@@ -398,7 +398,7 @@ ExecMergeJoin(MergeJoinState *node)
 			doFillInner = true;
 			break;
 		default:
-			elog(ERROR, "ExecMergeJoin: unsupported join type %d",
+			elog(ERROR, "unrecognized join type: %d",
 				 (int) node->js.jointype);
 			doFillOuter = false;	/* keep compiler quiet */
 			doFillInner = false;
@@ -1384,13 +1384,11 @@ ExecMergeJoin(MergeJoinState *node)
 				break;
 
 				/*
-				 * if we get here it means our code is fouled up and so we
-				 * just end the join prematurely.
+				 * broken state value?
 				 */
 			default:
-				elog(WARNING, "ExecMergeJoin: invalid join state %d, aborting",
-					 node->mj_JoinState);
-				return NULL;
+				elog(ERROR, "unrecognized mergejoin state: %d",
+					 (int) node->mj_JoinState);
 		}
 	}
 }
@@ -1473,10 +1471,12 @@ ExecInitMergeJoin(MergeJoin *node, EState *estate)
 
 			/*
 			 * Can't handle right or full join with non-nil extra
-			 * joinclauses.
+			 * joinclauses.  This should have been caught by planner.
 			 */
 			if (node->join.joinqual != NIL)
-				elog(ERROR, "RIGHT JOIN is only supported with mergejoinable join conditions");
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("RIGHT JOIN is only supported with mergejoinable join conditions")));
 			break;
 		case JOIN_FULL:
 			mergestate->mj_NullOuterTupleSlot =
@@ -1491,10 +1491,12 @@ ExecInitMergeJoin(MergeJoin *node, EState *estate)
 			 * joinclauses.
 			 */
 			if (node->join.joinqual != NIL)
-				elog(ERROR, "FULL JOIN is only supported with mergejoinable join conditions");
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("FULL JOIN is only supported with mergejoinable join conditions")));
 			break;
 		default:
-			elog(ERROR, "ExecInitMergeJoin: unsupported join type %d",
+			elog(ERROR, "unrecognized join type: %d",
 				 (int) node->join.jointype);
 	}
 

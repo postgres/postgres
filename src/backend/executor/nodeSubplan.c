@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubplan.c,v 1.50 2003/06/27 00:33:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubplan.c,v 1.51 2003/07/21 17:05:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,7 +52,7 @@ ExecSubPlan(SubPlanState *node,
 	SubPlan	   *subplan = (SubPlan *) node->xprstate.expr;
 
 	if (subplan->setParam != NIL)
-		elog(ERROR, "ExecSubPlan: can't set parent params from subquery");
+		elog(ERROR, "cannot set parent params from subquery");
 
 	if (subplan->useHashTable)
 		return ExecHashSubPlan(node, econtext, isNull);
@@ -76,7 +76,7 @@ ExecHashSubPlan(SubPlanState *node,
 
 	/* Shouldn't have any direct correlation Vars */
 	if (subplan->parParam != NIL || node->args != NIL)
-		elog(ERROR, "ExecHashSubPlan: direct correlation not supported");
+		elog(ERROR, "hashed subplan with direct correlation not supported");
 
 	/*
 	 * If first time through or we need to rescan the subplan, build
@@ -284,7 +284,9 @@ ExecScanSubPlan(SubPlanState *node,
 		{
 			/* cannot allow multiple input tuples for EXPR sublink */
 			if (found)
-				elog(ERROR, "More than one tuple returned by a subselect used as an expression.");
+				ereport(ERROR,
+						(errcode(ERRCODE_CARDINALITY_VIOLATION),
+						 errmsg("more than one tuple returned by a subselect used as an expression")));
 			found = true;
 
 			/*
@@ -324,7 +326,9 @@ ExecScanSubPlan(SubPlanState *node,
 
 		/* cannot allow multiple input tuples for MULTIEXPR sublink either */
 		if (subLinkType == MULTIEXPR_SUBLINK && found)
-			elog(ERROR, "More than one tuple returned by a subselect used as an expression.");
+			ereport(ERROR,
+					(errcode(ERRCODE_CARDINALITY_VIOLATION),
+					 errmsg("more than one tuple returned by a subselect used as an expression")));
 
 		found = true;
 
@@ -836,7 +840,7 @@ ExecInitSubPlan(SubPlanState *node, EState *estate)
 			/* Lookup the associated hash function */
 			hashfn = get_op_hash_function(opexpr->opno);
 			if (!OidIsValid(hashfn))
-				elog(ERROR, "Could not find hash function for hash operator %u",
+				elog(ERROR, "could not find hash function for hash operator %u",
 					 opexpr->opno);
 			fmgr_info(hashfn, &node->hashfunctions[i-1]);
 
@@ -908,7 +912,7 @@ ExecSetParamPlan(SubPlanState *node, ExprContext *econtext)
 
 	if (subLinkType == ANY_SUBLINK ||
 		subLinkType == ALL_SUBLINK)
-		elog(ERROR, "ExecSetParamPlan: ANY/ALL subselect unsupported");
+		elog(ERROR, "ANY/ALL subselect unsupported as initplan");
 
 	if (planstate->chgParam != NULL)
 		ExecReScan(planstate, NULL);
@@ -952,7 +956,9 @@ ExecSetParamPlan(SubPlanState *node, ExprContext *econtext)
 		if (found &&
 			(subLinkType == EXPR_SUBLINK ||
 			 subLinkType == MULTIEXPR_SUBLINK))
-			elog(ERROR, "More than one tuple returned by a subselect used as an expression.");
+			ereport(ERROR,
+					(errcode(ERRCODE_CARDINALITY_VIOLATION),
+					 errmsg("more than one tuple returned by a subselect used as an expression")));
 
 		found = true;
 
@@ -1046,6 +1052,9 @@ ExecEndSubPlan(SubPlanState *node)
 	}
 }
 
+/*
+ * Mark an initplan as needing recalculation
+ */
 void
 ExecReScanSetParamPlan(SubPlanState *node, PlanState *parent)
 {
@@ -1054,12 +1063,13 @@ ExecReScanSetParamPlan(SubPlanState *node, PlanState *parent)
 	EState	   *estate = parent->state;
 	List	   *lst;
 
+	/* sanity checks */
 	if (subplan->parParam != NIL)
-		elog(ERROR, "ExecReScanSetParamPlan: direct correlated subquery unsupported, yet");
+		elog(ERROR, "direct correlated subquery unsupported as initplan");
 	if (subplan->setParam == NIL)
-		elog(ERROR, "ExecReScanSetParamPlan: setParam list is empty");
+		elog(ERROR, "setParam list of initplan is empty");
 	if (bms_is_empty(planstate->plan->extParam))
-		elog(ERROR, "ExecReScanSetParamPlan: extParam set of plan is empty");
+		elog(ERROR, "extParam set of initplan is empty");
 
 	/*
 	 * Don't actually re-scan: ExecSetParamPlan does it if needed.

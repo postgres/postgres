@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execProcnode.c,v 1.36 2003/05/05 17:57:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execProcnode.c,v 1.37 2003/07/21 17:05:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -214,8 +214,7 @@ ExecInitNode(Plan *node, EState *estate)
 			break;
 
 		default:
-			elog(ERROR, "ExecInitNode: node type %d unsupported",
-				 (int) nodeTag(node));
+			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(node));
 			result = NULL;		/* keep compiler quiet */
 			break;
 	}
@@ -374,8 +373,7 @@ ExecProcNode(PlanState *node)
 			break;
 
 		default:
-			elog(ERROR, "ExecProcNode: node type %d unsupported",
-				 (int) nodeTag(node));
+			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(node));
 			result = NULL;
 			break;
 	}
@@ -467,8 +465,7 @@ ExecCountSlotsNode(Plan *node)
 			return ExecCountSlotsLimit((Limit *) node);
 
 		default:
-			elog(ERROR, "ExecCountSlotsNode: node type %d unsupported",
-				 (int) nodeTag(node));
+			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(node));
 			break;
 	}
 
@@ -596,8 +593,7 @@ ExecEndNode(PlanState *node)
 			break;
 
 		default:
-			elog(ERROR, "ExecEndNode: node type %d unsupported",
-				 (int) nodeTag(node));
+			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(node));
 			break;
 	}
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.98 2003/05/09 18:08:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.99 2003/07/21 17:05:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,19 +66,21 @@ SPI_connect(void)
 	if (_SPI_stack == NULL)
 	{
 		if (_SPI_connected != -1)
-			elog(FATAL, "SPI_connect: no connection(s) expected");
+			elog(ERROR, "SPI stack corrupted");
 		new_SPI_stack = (_SPI_connection *) malloc(sizeof(_SPI_connection));
 	}
 	else
 	{
-		if (_SPI_connected <= -1)
-			elog(FATAL, "SPI_connect: some connection(s) expected");
+		if (_SPI_connected < 0)
+			elog(ERROR, "SPI stack corrupted");
 		new_SPI_stack = (_SPI_connection *) realloc(_SPI_stack,
 						 (_SPI_connected + 2) * sizeof(_SPI_connection));
 	}
 
 	if (new_SPI_stack == NULL)
-		elog(ERROR, "Memory exhausted in SPI_connect");
+		ereport(ERROR,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
 
 	/*
 	 * We' returning to procedure where _SPI_curid == _SPI_connected - 1
@@ -158,7 +160,9 @@ SPI_finish(void)
 						 (_SPI_connected + 1) * sizeof(_SPI_connection));
 		/* This could only fail with a pretty stupid malloc package ... */
 		if (new_SPI_stack == NULL)
-			elog(ERROR, "Memory exhausted in SPI_finish");
+			ereport(ERROR,
+					(errcode(ERRCODE_OUT_OF_MEMORY),
+					 errmsg("out of memory")));
 		_SPI_stack = new_SPI_stack;
 		_SPI_current = &(_SPI_stack[_SPI_connected]);
 	}
@@ -320,7 +324,7 @@ SPI_copytuple(HeapTuple tuple)
 	if (_SPI_curid + 1 == _SPI_connected)		/* connected */
 	{
 		if (_SPI_current != &(_SPI_stack[_SPI_curid + 1]))
-			elog(FATAL, "SPI: stack corrupted");
+			elog(ERROR, "SPI stack corrupted");
 		oldcxt = MemoryContextSwitchTo(_SPI_current->savedcxt);
 	}
 
@@ -347,7 +351,7 @@ SPI_copytupledesc(TupleDesc tupdesc)
 	if (_SPI_curid + 1 == _SPI_connected)		/* connected */
 	{
 		if (_SPI_current != &(_SPI_stack[_SPI_curid + 1]))
-			elog(FATAL, "SPI: stack corrupted");
+			elog(ERROR, "SPI stack corrupted");
 		oldcxt = MemoryContextSwitchTo(_SPI_current->savedcxt);
 	}
 
@@ -376,7 +380,7 @@ SPI_copytupleintoslot(HeapTuple tuple, TupleDesc tupdesc)
 	if (_SPI_curid + 1 == _SPI_connected)		/* connected */
 	{
 		if (_SPI_current != &(_SPI_stack[_SPI_curid + 1]))
-			elog(FATAL, "SPI: stack corrupted");
+			elog(ERROR, "SPI stack corrupted");
 		oldcxt = MemoryContextSwitchTo(_SPI_current->savedcxt);
 	}
 
@@ -414,7 +418,7 @@ SPI_modifytuple(Relation rel, HeapTuple tuple, int natts, int *attnum,
 	if (_SPI_curid + 1 == _SPI_connected)		/* connected */
 	{
 		if (_SPI_current != &(_SPI_stack[_SPI_curid + 1]))
-			elog(FATAL, "SPI: stack corrupted");
+			elog(ERROR, "SPI stack corrupted");
 		oldcxt = MemoryContextSwitchTo(_SPI_current->savedcxt);
 	}
 	SPI_result = 0;
@@ -654,7 +658,7 @@ SPI_palloc(Size size)
 	if (_SPI_curid + 1 == _SPI_connected)		/* connected */
 	{
 		if (_SPI_current != &(_SPI_stack[_SPI_curid + 1]))
-			elog(FATAL, "SPI: stack corrupted");
+			elog(ERROR, "SPI stack corrupted");
 		oldcxt = MemoryContextSwitchTo(_SPI_current->savedcxt);
 	}
 
@@ -716,14 +720,20 @@ SPI_cursor_open(const char *name, void *plan, Datum *Values, const char *Nulls)
 
 	/* Ensure that the plan contains only one regular SELECT query */
 	if (length(ptlist) != 1 || length(qtlist) != 1)
-		elog(ERROR, "cannot open multi-query plan as cursor");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_CURSOR_DEFINITION),
+				 errmsg("cannot open multi-query plan as cursor")));
 	queryTree = (Query *) lfirst((List *) lfirst(qtlist));
 	planTree = (Plan *) lfirst(ptlist);
 
 	if (queryTree->commandType != CMD_SELECT)
-		elog(ERROR, "plan in SPI_cursor_open() is not a SELECT");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_CURSOR_DEFINITION),
+				 errmsg("cannot open non-SELECT query as cursor")));
 	if (queryTree->into != NULL)
-		elog(ERROR, "plan in SPI_cursor_open() must NOT be a SELECT INTO");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_CURSOR_DEFINITION),
+				 errmsg("cannot open SELECT INTO query as cursor")));
 
 	/* Increment CommandCounter to see changes made by now */
 	CommandCounterIncrement();
@@ -888,12 +898,12 @@ spi_dest_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	 * _SPI_connected
 	 */
 	if (_SPI_curid != _SPI_connected || _SPI_connected < 0)
-		elog(FATAL, "SPI: improper call to spi_dest_startup");
+		elog(ERROR, "improper call to spi_dest_startup");
 	if (_SPI_current != &(_SPI_stack[_SPI_curid]))
-		elog(FATAL, "SPI: stack corrupted in spi_dest_startup");
+		elog(ERROR, "SPI stack corrupted");
 
 	if (_SPI_current->tuptable != NULL)
-		elog(FATAL, "SPI: improper call to spi_dest_startup");
+		elog(ERROR, "improper call to spi_dest_startup");
 
 	oldcxt = _SPI_procmem();	/* switch to procedure memory context */
 
@@ -930,13 +940,13 @@ spi_printtup(HeapTuple tuple, TupleDesc tupdesc, DestReceiver *self)
 	 * _SPI_connected
 	 */
 	if (_SPI_curid != _SPI_connected || _SPI_connected < 0)
-		elog(FATAL, "SPI: improper call to spi_printtup");
+		elog(ERROR, "improper call to spi_printtup");
 	if (_SPI_current != &(_SPI_stack[_SPI_curid]))
-		elog(FATAL, "SPI: stack corrupted in spi_printtup");
+		elog(ERROR, "SPI stack corrupted");
 
 	tuptable = _SPI_current->tuptable;
 	if (tuptable == NULL)
-		elog(FATAL, "SPI: improper call to spi_printtup");
+		elog(ERROR, "improper call to spi_printtup");
 
 	oldcxt = MemoryContextSwitchTo(tuptable->tuptabcxt);
 
@@ -1217,7 +1227,7 @@ _SPI_pquery(QueryDesc *queryDesc, bool runit, int tcount)
 	if (operation == CMD_SELECT && queryDesc->dest->mydest == SPI)
 	{
 		if (_SPI_checktuples())
-			elog(FATAL, "SPI_select: # of processed tuples check failed");
+			elog(ERROR, "consistency check on SPI tuple count failed");
 	}
 
 	if (queryDesc->dest->mydest == SPI)
@@ -1274,7 +1284,7 @@ _SPI_cursor_operation(Portal portal, bool forward, int count,
 					   dest);
 
 	if (dest->mydest == SPI && _SPI_checktuples())
-		elog(FATAL, "SPI_fetch: # of processed tuples check failed");
+		elog(ERROR, "consistency check on SPI tuple count failed");
 
 	/* Put the result into place for access by caller */
 	SPI_processed = _SPI_current->processed;
@@ -1308,7 +1318,7 @@ _SPI_begin_call(bool execmem)
 		return SPI_ERROR_UNCONNECTED;
 	_SPI_curid++;
 	if (_SPI_current != &(_SPI_stack[_SPI_curid]))
-		elog(FATAL, "SPI: stack corrupted");
+		elog(ERROR, "SPI stack corrupted");
 
 	if (execmem)				/* switch to the Executor memory context */
 		_SPI_execmem();

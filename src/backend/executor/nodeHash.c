@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHash.c,v 1.76 2003/06/22 22:04:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHash.c,v 1.77 2003/07/21 17:05:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -248,7 +248,7 @@ ExecHashTableCreate(Hash *node, List *hashOperators)
 
 		hashfn = get_op_hash_function(lfirsto(ho));
 		if (!OidIsValid(hashfn))
-			elog(ERROR, "Could not find hash function for hash operator %u",
+			elog(ERROR, "could not find hash function for hash operator %u",
 				 lfirsto(ho));
 		fmgr_info(hashfn, &hashtable->hashfunctions[i]);
 		i++;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.134 2003/06/29 00:33:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.135 2003/07/21 17:05:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -175,8 +175,10 @@ ExecEvalArrayRef(ArrayRefExprState *astate,
 	foreach(elt, astate->refupperindexpr)
 	{
 		if (i >= MAXDIM)
-			elog(ERROR, "ExecEvalArrayRef: can only handle %d dimensions",
-				 MAXDIM);
+			ereport(ERROR,
+					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+					 errmsg("number of array dimensions exceeds the maximum allowed, %d",
+							MAXDIM)));
 
 		upper.indx[i++] = DatumGetInt32(ExecEvalExpr((ExprState *) lfirst(elt),
 													 econtext,
@@ -197,8 +199,10 @@ ExecEvalArrayRef(ArrayRefExprState *astate,
 		foreach(elt, astate->reflowerindexpr)
 		{
 			if (j >= MAXDIM)
-				elog(ERROR, "ExecEvalArrayRef: can only handle %d dimensions",
-					 MAXDIM);
+				ereport(ERROR,
+						(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+						 errmsg("number of array dimensions exceeds the maximum allowed, %d",
+								MAXDIM)));
 
 			lower.indx[j++] = DatumGetInt32(ExecEvalExpr((ExprState *) lfirst(elt),
 														 econtext,
@@ -217,9 +221,9 @@ ExecEvalArrayRef(ArrayRefExprState *astate,
 				return PointerGetDatum(array_source);
 			}
 		}
+		/* this can't happen unless parser messed up */
 		if (i != j)
-			elog(ERROR,
-				 "ExecEvalArrayRef: upper and lower indices mismatch");
+			elog(ERROR, "upper and lower index lists are not same length");
 		lIndex = lower.indx;
 	}
 	else
@@ -300,7 +304,7 @@ static Datum
 ExecEvalAggref(AggrefExprState *aggref, ExprContext *econtext, bool *isNull)
 {
 	if (econtext->ecxt_aggvalues == NULL)		/* safety check */
-		elog(ERROR, "ExecEvalAggref: no aggregates in this expression context");
+		elog(ERROR, "no aggregates in this expression context");
 
 	*isNull = econtext->ecxt_aggnulls[aggref->aggno];
 	return econtext->ecxt_aggvalues[aggref->aggno];
@@ -478,7 +482,7 @@ ExecEvalParam(Param *expression, ExprContext *econtext, bool *isNull)
 								matchFound = true;
 							break;
 						default:
-							elog(ERROR, "ExecEvalParam: invalid paramkind %d",
+							elog(ERROR, "unrecognized paramkind: %d",
 								 thisParamKind);
 					}
 				}
@@ -490,11 +494,15 @@ ExecEvalParam(Param *expression, ExprContext *econtext, bool *isNull)
 		if (!matchFound)
 		{
 			if (thisParamKind == PARAM_NAMED)
-				elog(ERROR, "ExecEvalParam: Unknown value for parameter %s",
-					 thisParamName);
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_OBJECT),
+						 errmsg("no value found for parameter \"%s\"",
+								thisParamName)));
 			else
-				elog(ERROR, "ExecEvalParam: Unknown value for parameter %d",
-					 thisParamId);
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_OBJECT),
+						 errmsg("no value found for parameter %d",
+								thisParamId)));
 		}
 
 		*isNull = paramList->isnull;
@@ -525,13 +533,10 @@ GetAttributeByNum(TupleTableSlot *slot,
 	Datum		retval;
 
 	if (!AttributeNumberIsValid(attrno))
-		elog(ERROR, "GetAttributeByNum: Invalid attribute number");
-
-	if (!AttrNumberIsForUserDefinedAttr(attrno))
-		elog(ERROR, "GetAttributeByNum: cannot access system attributes here");
+		elog(ERROR, "invalid attribute number: %d", attrno);
 
 	if (isNull == (bool *) NULL)
-		elog(ERROR, "GetAttributeByNum: a NULL isNull flag was passed");
+		elog(ERROR, "a NULL isNull pointer was passed");
 
 	if (TupIsNull(slot))
 	{
@@ -559,10 +564,10 @@ GetAttributeByName(TupleTableSlot *slot, char *attname, bool *isNull)
 	int			i;
 
 	if (attname == NULL)
-		elog(ERROR, "GetAttributeByName: Invalid attribute name");
+		elog(ERROR, "invalid attribute name");
 
 	if (isNull == (bool *) NULL)
-		elog(ERROR, "GetAttributeByName: a NULL isNull flag was passed");
+		elog(ERROR, "a NULL isNull pointer was passed");
 
 	if (TupIsNull(slot))
 	{
@@ -584,7 +589,7 @@ GetAttributeByName(TupleTableSlot *slot, char *attname, bool *isNull)
 	}
 
 	if (attrno == InvalidAttrNumber)
-		elog(ERROR, "GetAttributeByName: attribute %s not found", attname);
+		elog(ERROR, "attribute \"%s\" does not exist", attname);
 
 	retval = heap_getattr(slot->val,
 						  attrno,
@@ -611,7 +616,7 @@ init_fcache(Oid foid, FuncExprState *fcache, MemoryContext fcacheCxt)
 
 	/* Safety check (should never fail, as parser should check sooner) */
 	if (length(fcache->args) > FUNC_MAX_ARGS)
-		elog(ERROR, "init_fcache: too many arguments");
+		elog(ERROR, "too many arguments to function");
 
 	/* Set up the primary fmgr lookup information */
 	fmgr_info_cxt(foid, &(fcache->func), fcacheCxt);
@@ -654,7 +659,9 @@ ExecEvalFuncArgs(FunctionCallInfo fcinfo,
 			 * it.
 			 */
 			if (argIsDone != ExprSingleResult)
-				elog(ERROR, "Functions and operators can take only one set argument");
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("functions and operators can take at most one set argument")));
 			argIsDone = thisArgIsDone;
 		}
 		i++;
@@ -704,7 +711,9 @@ ExecMakeFunctionResult(FuncExprState *fcache,
 			if (isDone)
 				*isDone = ExprEndResult;
 			else
-				elog(ERROR, "Set-valued function called in context that cannot accept a set");
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("set-valued function called in context that cannot accept a set")));
 			return (Datum) 0;
 		}
 		hasSetArg = (argDone != ExprSingleResult);
@@ -746,7 +755,9 @@ ExecMakeFunctionResult(FuncExprState *fcache,
 		 * to accept one.
 		 */
 		if (isDone == NULL)
-			elog(ERROR, "Set-valued function called in context that cannot accept a set");
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("set-valued function called in context that cannot accept a set")));
 
 		/*
 		 * This loop handles the situation where we have both a set
@@ -931,7 +942,9 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 		argDone = ExecEvalFuncArgs(&fcinfo, fcache->args, econtext);
 		/* We don't allow sets in the arguments of the table function */
 		if (argDone != ExprSingleResult)
-			elog(ERROR, "Set-valued function called in context that cannot accept a set");
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("set-valued function called in context that cannot accept a set")));
 
 		/*
 		 * If function is strict, and there are any NULL arguments, skip
@@ -1038,11 +1051,15 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 					 * TupleTableSlot; use its descriptor
 					 */
 					slot = (TupleTableSlot *) DatumGetPointer(result);
-					if (fcinfo.isnull ||
-						!slot ||
-						!IsA(slot, TupleTableSlot) ||
+					if (fcinfo.isnull || !slot)
+						ereport(ERROR,
+								(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+								 errmsg("function returning tuple cannot return NULL")));
+					if (!IsA(slot, TupleTableSlot) ||
 						!slot->ttc_tupleDescriptor)
-						elog(ERROR, "ExecMakeTableFunctionResult: Invalid result from function returning tuple");
+						ereport(ERROR,
+								(errcode(ERRCODE_DATATYPE_MISMATCH),
+								 errmsg("function returning tuple did not return a valid tuple slot")));
 					tupdesc = CreateTupleDescCopy(slot->ttc_tupleDescriptor);
 					returnsTuple = true;
 				}
@@ -1076,7 +1093,9 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 					!slot ||
 					!IsA(slot, TupleTableSlot) ||
 					TupIsNull(slot))
-					elog(ERROR, "ExecMakeTableFunctionResult: Invalid result from function returning tuple");
+					ereport(ERROR,
+							(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+							 errmsg("function returning tuple cannot return NULL")));
 				tuple = slot->val;
 			}
 			else
@@ -1101,13 +1120,17 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 		{
 			/* check we're on the same page as the function author */
 			if (!first_time || rsinfo.isDone != ExprSingleResult)
-				elog(ERROR, "ExecMakeTableFunctionResult: Materialize-mode protocol not followed");
+				ereport(ERROR,
+						(errcode(ERRCODE_E_R_I_E_SRF_PROTOCOL_VIOLATED),
+						 errmsg("table-function protocol for materialize mode was not followed")));
 			/* Done evaluating the set result */
 			break;
 		}
 		else
-			elog(ERROR, "ExecMakeTableFunctionResult: unknown returnMode %d",
-				 (int) rsinfo.returnMode);
+			ereport(ERROR,
+					(errcode(ERRCODE_E_R_I_E_SRF_PROTOCOL_VIOLATED),
+					 errmsg("unrecognized table-function returnMode: %d",
+							(int) rsinfo.returnMode)));
 
 		first_time = false;
 	}
@@ -1217,7 +1240,9 @@ ExecEvalDistinct(FuncExprState *fcache,
 	fcinfo.flinfo = &(fcache->func);
 	argDone = ExecEvalFuncArgs(&fcinfo, argList, econtext);
 	if (argDone != ExprSingleResult)
-		elog(ERROR, "IS DISTINCT FROM does not support set arguments");
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 errmsg("IS DISTINCT FROM does not support set arguments")));
 	Assert(fcinfo.nargs == 2);
 
 	if (fcinfo.argnull[0] && fcinfo.argnull[1])
@@ -1283,7 +1308,9 @@ ExecEvalScalarArrayOp(ScalarArrayOpExprState *sstate,
 	fcinfo.flinfo = &(sstate->fxprstate.func);
 	argDone = ExecEvalFuncArgs(&fcinfo, sstate->fxprstate.args, econtext);
 	if (argDone != ExprSingleResult)
-		elog(ERROR, "op ANY/ALL (array) does not support set arguments");
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 errmsg("op ANY/ALL (array) does not support set arguments")));
 	Assert(fcinfo.nargs == 2);
 
 	/*
@@ -1615,7 +1642,9 @@ ExecEvalArray(ArrayExprState *astate, ExprContext *econtext,
 
 			dvalues[i++] = ExecEvalExpr(e, econtext, &eisnull, NULL);
 			if (eisnull)
-				elog(ERROR, "Arrays cannot have NULL elements");
+				ereport(ERROR,
+						(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+						 errmsg("arrays cannot have NULL elements")));
 		}
 
 		/* setup for 1-D array of the given length */
@@ -1641,7 +1670,10 @@ ExecEvalArray(ArrayExprState *astate, ExprContext *econtext,
 		int			i;
 
 		if (ndims <= 0 || ndims > MAXDIM)
-			elog(ERROR, "Arrays cannot have more than %d dimensions", MAXDIM);
+			ereport(ERROR,
+					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+					 errmsg("number of array dimensions exceeds the maximum allowed, %d",
+							MAXDIM)));
 
 		/* loop through and get data area from each element */
 		foreach(element, astate->elements)
@@ -1654,7 +1686,9 @@ ExecEvalArray(ArrayExprState *astate, ExprContext *econtext,
 
 			arraydatum = ExecEvalExpr(e, econtext, &eisnull, NULL);
 			if (eisnull)
-				elog(ERROR, "Arrays cannot have NULL elements");
+				ereport(ERROR,
+						(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+						 errmsg("arrays cannot have NULL elements")));
 
 			array = DatumGetArrayTypeP(arraydatum);
 
@@ -1671,19 +1705,15 @@ ExecEvalArray(ArrayExprState *astate, ExprContext *econtext,
 			else
 			{
 				/* Check other sub-arrays are compatible */
-				if (elem_ndims != ARR_NDIM(array))
-					elog(ERROR, "Multidimensional arrays must have array "
-						 "expressions with matching number of dimensions");
-
-				if (memcmp(elem_dims, ARR_DIMS(array),
+				if (elem_ndims != ARR_NDIM(array) ||
+					memcmp(elem_dims, ARR_DIMS(array),
+						   elem_ndims * sizeof(int)) != 0 ||
+					memcmp(elem_lbs, ARR_LBOUND(array),
 						   elem_ndims * sizeof(int)) != 0)
-					elog(ERROR, "Multidimensional arrays must have array "
-						 "expressions with matching dimensions");
-
-				if (memcmp(elem_lbs, ARR_LBOUND(array),
-						   elem_ndims * sizeof(int)) != 0)
-					elog(ERROR, "Multidimensional arrays must have array "
-						 "expressions with matching dimensions");
+					ereport(ERROR,
+							(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
+							 errmsg("multidimensional arrays must have array "
+									"expressions with matching dimensions")));
 			}
 
 			elem_ndatabytes = ARR_SIZE(array) - ARR_OVERHEAD(elem_ndims);
@@ -1790,7 +1820,9 @@ ExecEvalNullIf(FuncExprState *fcache, ExprContext *econtext,
 	fcinfo.flinfo = &(fcache->func);
 	argDone = ExecEvalFuncArgs(&fcinfo, argList, econtext);
 	if (argDone != ExprSingleResult)
-		elog(ERROR, "NULLIF does not support set arguments");
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 errmsg("NULLIF does not support set arguments")));
 	Assert(fcinfo.nargs == 2);
 
 	/* if either argument is NULL they can't be equal */
@@ -1850,7 +1882,7 @@ ExecEvalNullTest(GenericExprState *nstate,
 			else
 				return BoolGetDatum(true);
 		default:
-			elog(ERROR, "ExecEvalNullTest: unexpected nulltesttype %d",
+			elog(ERROR, "unrecognized nulltesttype: %d",
 				 (int) ntest->nulltesttype);
 			return (Datum) 0;	/* keep compiler quiet */
 	}
@@ -1935,7 +1967,7 @@ ExecEvalBooleanTest(GenericExprState *bstate,
 			else
 				return BoolGetDatum(true);
 		default:
-			elog(ERROR, "ExecEvalBooleanTest: unexpected booltesttype %d",
+			elog(ERROR, "unrecognized booltesttype: %d",
 				 (int) btest->booltesttype);
 			return (Datum) 0;	/* keep compiler quiet */
 	}
@@ -1969,8 +2001,10 @@ ExecEvalCoerceToDomain(CoerceToDomainState *cstate, ExprContext *econtext,
 		{
 			case DOM_CONSTRAINT_NOTNULL:
 				if (*isNull)
-					elog(ERROR, "Domain %s does not allow NULL values",
-						 format_type_be(ctest->resulttype));
+					ereport(ERROR,
+							(errcode(ERRCODE_NOT_NULL_VIOLATION),
+							 errmsg("domain %s does not allow NULL values",
+									format_type_be(ctest->resulttype))));
 				break;
 			case DOM_CONSTRAINT_CHECK:
 			{
@@ -1996,16 +2030,19 @@ ExecEvalCoerceToDomain(CoerceToDomainState *cstate, ExprContext *econtext,
 
 				if (!conIsNull &&
 					!DatumGetBool(conResult))
-					elog(ERROR, "ExecEvalCoerceToDomain: Domain %s constraint %s failed",
-						 format_type_be(ctest->resulttype), con->name);
-
+					ereport(ERROR,
+							(errcode(ERRCODE_CHECK_VIOLATION),
+							 errmsg("value for domain %s violates CHECK constraint \"%s\"",
+									format_type_be(ctest->resulttype),
+									con->name)));
 				econtext->domainValue_datum = save_datum;
 				econtext->domainValue_isNull = save_isNull;
 
 				break;
 			}
 			default:
-				elog(ERROR, "ExecEvalCoerceToDomain: Constraint type unknown");
+				elog(ERROR, "unrecognized constraint type: %d",
+					 (int) con->constrainttype);
 				break;
 		}
 	}
@@ -2074,9 +2111,9 @@ ExecEvalFieldSelect(GenericExprState *fstate,
  *		*isDone: set to indicator of set-result status
  *
  * A caller that can only accept a singleton (non-set) result should pass
- * NULL for isDone; if the expression computes a set result then an elog()
- * error will be reported.	If the caller does pass an isDone pointer then
- * *isDone is set to one of these three states:
+ * NULL for isDone; if the expression computes a set result then an error
+ * will be reported via ereport.  If the caller does pass an isDone pointer
+ * then *isDone is set to one of these three states:
  *		ExprSingleResult		singleton result (not a set)
  *		ExprMultipleResult		return value is one element of a set
  *		ExprEndResult			there are no more elements in the set
@@ -2182,8 +2219,8 @@ ExecEvalExpr(ExprState *expression,
 						retDatum = ExecEvalNot(state, econtext, isNull);
 						break;
 					default:
-						elog(ERROR, "ExecEvalExpr: unknown boolop %d",
-							 ((BoolExpr *) expr)->boolop);
+						elog(ERROR, "unrecognized boolop: %d",
+							 (int) ((BoolExpr *) expr)->boolop);
 						retDatum = 0;	/* keep compiler quiet */
 						break;
 				}
@@ -2251,8 +2288,8 @@ ExecEvalExpr(ExprState *expression,
 												   isNull);
 			break;
 		default:
-			elog(ERROR, "ExecEvalExpr: unknown expression type %d",
-				 nodeTag(expression));
+			elog(ERROR, "unrecognized node type: %d",
+				 (int) nodeTag(expression));
 			retDatum = 0;		/* keep compiler quiet */
 			break;
 	}
@@ -2346,14 +2383,19 @@ ExecInitExpr(Expr *node, PlanState *parent)
 					/*
 					 * Complain if the aggregate's argument contains any
 					 * aggregates; nested agg functions are semantically
-					 * nonsensical.  (This probably was caught earlier,
+					 * nonsensical.  (This should have been caught earlier,
 					 * but we defend against it here anyway.)
 					 */
 					if (naggs != aggstate->numaggs)
-						elog(ERROR, "Aggregate function calls may not be nested");
+						ereport(ERROR,
+								(errcode(ERRCODE_GROUPING_ERROR),
+								 errmsg("aggregate function calls may not be nested")));
 				}
 				else
-					elog(ERROR, "ExecInitExpr: Aggref not expected here");
+				{
+					/* planner messed up */
+					elog(ERROR, "aggref found in non-Agg plan node");
+				}
 				state = (ExprState *) astate;
 			}
 			break;
@@ -2440,7 +2482,7 @@ ExecInitExpr(Expr *node, PlanState *parent)
 				SubPlanState *sstate = makeNode(SubPlanState);
 
 				if (!parent)
-					elog(ERROR, "ExecInitExpr: SubPlan not expected here");
+					elog(ERROR, "SubPlan found with no parent plan");
 
 				/*
 				 * Here we just add the SubPlanState nodes to
@@ -2611,8 +2653,8 @@ ExecInitExpr(Expr *node, PlanState *parent)
 				return (ExprState *) FastListValue(&outlist);
 			}
 		default:
-			elog(ERROR, "ExecInitExpr: unknown expression type %d",
-				 nodeTag(node));
+			elog(ERROR, "unrecognized node type: %d",
+				 (int) nodeTag(node));
 			state = NULL;		/* keep compiler quiet */
 			break;
 	}
@@ -2635,7 +2677,7 @@ ExecInitExprInitPlan(SubPlan *node, PlanState *parent)
 	SubPlanState *sstate = makeNode(SubPlanState);
 
 	if (!parent)
-		elog(ERROR, "ExecInitExpr: SubPlan not expected here");
+		elog(ERROR, "SubPlan found with no parent plan");
 
 	/* The subplan's state will be initialized later */
 	sstate->sub_estate = NULL;
@@ -2886,7 +2928,9 @@ ExecTargetList(List *targetlist,
 		{
 			/* We have a set-valued expression in the tlist */
 			if (isDone == NULL)
-				elog(ERROR, "Set-valued function called in context that cannot accept a set");
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("set-valued function called in context that cannot accept a set")));
 			if (itemIsDone[resind] == ExprMultipleResult)
 			{
 				/* we have undone sets in the tlist, set flag */

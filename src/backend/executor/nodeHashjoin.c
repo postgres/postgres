@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.52 2003/06/22 22:04:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.53 2003/07/21 17:05:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -368,7 +368,7 @@ ExecInitHashJoin(HashJoin *node, EState *estate)
 									  ExecGetResultType(innerPlanState(hjstate)));
 			break;
 		default:
-			elog(ERROR, "ExecInitHashJoin: unsupported join type %d",
+			elog(ERROR, "unrecognized join type: %d",
 				 (int) node->join.jointype);
 	}
 
@@ -553,7 +553,9 @@ ExecHashJoinGetSavedTuple(HashJoinState *hjstate,
 	if (nread == 0)
 		return NULL;			/* end of file */
 	if (nread != sizeof(HeapTupleData))
-		elog(ERROR, "Read from hashjoin temp file failed");
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("read from hashjoin temp file failed: %m")));
 	heapTuple = palloc(HEAPTUPLESIZE + htup.t_len);
 	memcpy((char *) heapTuple, (char *) &htup, sizeof(HeapTupleData));
 	heapTuple->t_datamcxt = CurrentMemoryContext;
@@ -561,7 +563,9 @@ ExecHashJoinGetSavedTuple(HashJoinState *hjstate,
 		((char *) heapTuple + HEAPTUPLESIZE);
 	nread = BufFileRead(file, (void *) heapTuple->t_data, htup.t_len);
 	if (nread != (size_t) htup.t_len)
-		elog(ERROR, "Read from hashjoin temp file failed");
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("read from hashjoin temp file failed: %m")));
 	return ExecStoreTuple(heapTuple, tupleSlot, InvalidBuffer, true);
 }
 
@@ -617,12 +621,16 @@ ExecHashJoinNewBatch(HashJoinState *hjstate)
 	 * start reading them.
 	 */
 	if (BufFileSeek(hashtable->outerBatchFile[newbatch - 1], 0, 0L, SEEK_SET))
-		elog(ERROR, "Failed to rewind hash temp file");
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("failed to rewind hashjoin temp file: %m")));
 
 	innerFile = hashtable->innerBatchFile[newbatch - 1];
 
 	if (BufFileSeek(innerFile, 0, 0L, SEEK_SET))
-		elog(ERROR, "Failed to rewind hash temp file");
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("failed to rewind hashjoin temp file: %m")));
 
 	/*
 	 * Reload the hash table with the new inner batch
@@ -671,10 +679,14 @@ ExecHashJoinSaveTuple(HeapTuple heapTuple,
 
 	written = BufFileWrite(file, (void *) heapTuple, sizeof(HeapTupleData));
 	if (written != sizeof(HeapTupleData))
-		elog(ERROR, "Write to hashjoin temp file failed");
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("write to hashjoin temp file failed: %m")));
 	written = BufFileWrite(file, (void *) heapTuple->t_data, heapTuple->t_len);
 	if (written != (size_t) heapTuple->t_len)
-		elog(ERROR, "Write to hashjoin temp file failed");
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("write to hashjoin temp file failed: %m")));
 }
 
 void

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.202 2003/07/20 21:56:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.203 2003/07/21 17:04:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1581,7 +1581,7 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 			 * Check the constraints of the tuple
 			 */
 			if (rel->rd_att->constr)
-				ExecConstraints("CopyFrom", resultRelInfo, slot, estate);
+				ExecConstraints(resultRelInfo, slot, estate);
 
 			/*
 			 * OK, store the tuple and create index entries for it

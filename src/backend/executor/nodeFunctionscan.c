@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeFunctionscan.c,v 1.18 2003/06/15 17:59:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeFunctionscan.c,v 1.19 2003/07/21 17:05:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,7 +88,9 @@ FunctionNext(FunctionScanState *node)
 		 */
 		if (funcTupdesc &&
 			tupledesc_mismatch(node->tupdesc, funcTupdesc))
-			elog(ERROR, "Query-specified return tuple and actual function return tuple do not match");
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg("query-specified return tuple and actual function return tuple do not match")));
 	}
 
 	/*
@@ -201,7 +203,7 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate)
 
 		funcrelid = typeidTypeRelid(funcrettype);
 		if (!OidIsValid(funcrelid))
-			elog(ERROR, "Invalid typrelid for complex type %u",
+			elog(ERROR, "invalid typrelid for complex type %u",
 				 funcrettype);
 		rel = relation_open(funcrelid, AccessShareLock);
 		tupdesc = CreateTupleDescCopy(RelationGetDescr(rel));

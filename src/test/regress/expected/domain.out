@@ -111,26 +111,26 @@ create table nulltest
            , col5 dcheck CHECK (col5 IN ('c', 'd'))
            );
 INSERT INTO nulltest DEFAULT VALUES;
-ERROR:  Domain dnotnull does not allow NULL values
+ERROR:  domain dnotnull does not allow NULL values
 INSERT INTO nulltest values ('a', 'b', 'c', 'd', 'c');  -- Good
 insert into nulltest values ('a', 'b', 'c', 'd', NULL);
-ERROR:  Domain dcheck does not allow NULL values
+ERROR:  domain dcheck does not allow NULL values
 insert into nulltest values ('a', 'b', 'c', 'd', 'a');
-ERROR:  ExecInsert: rejected due to CHECK constraint "nulltest_col5" on "nulltest"
+ERROR:  new row for relation "nulltest" violates CHECK constraint "nulltest_col5"
 INSERT INTO nulltest values (NULL, 'b', 'c', 'd', 'd');
-ERROR:  Domain dnotnull does not allow NULL values
+ERROR:  domain dnotnull does not allow NULL values
 INSERT INTO nulltest values ('a', NULL, 'c', 'd', 'c');
-ERROR:  Domain dnotnull does not allow NULL values
+ERROR:  domain dnotnull does not allow NULL values
 INSERT INTO nulltest values ('a', 'b', NULL, 'd', 'c');
-ERROR:  ExecInsert: Fail to add null value in not null attribute col3
+ERROR:  null value for attribute "col3" violates NOT NULL constraint
 INSERT INTO nulltest values ('a', 'b', 'c', NULL, 'd'); -- Good
 -- Test copy
 COPY nulltest FROM stdin; --fail
-ERROR:  Domain dcheck does not allow NULL values
+ERROR:  domain dcheck does not allow NULL values
 CONTEXT:  COPY FROM, line 1
 -- Last row is bad
 COPY nulltest FROM stdin;
-ERROR:  CopyFrom: rejected due to CHECK constraint "nulltest_col5" on "nulltest"
+ERROR:  new row for relation "nulltest" violates CHECK constraint "nulltest_col5"
 CONTEXT:  COPY FROM, line 3
 select * from nulltest;
  col1 | col2 | col3 | col4 | col5 
@@ -147,11 +147,11 @@ SELECT cast('1' as dnotnull);
 (1 row)
 
 SELECT cast(NULL as dnotnull); -- fail
-ERROR:  Domain dnotnull does not allow NULL values
+ERROR:  domain dnotnull does not allow NULL values
 SELECT cast(cast(NULL as dnull) as dnotnull); -- fail
-ERROR:  Domain dnotnull does not allow NULL values
+ERROR:  domain dnotnull does not allow NULL values
 SELECT cast(col4 as dnotnull) from nulltest; -- fail
-ERROR:  Domain dnotnull does not allow NULL values
+ERROR:  domain dnotnull does not allow NULL values
 -- cleanup
 drop table nulltest;
 drop domain dnotnull restrict;
@@ -208,7 +208,7 @@ alter domain dnotnulltest set not null;
 alter domain dnotnulltest set not null; -- fails
 NOTICE:  "dnotnulltest" is already set to NOT NULL
 update domnotnull set col1 = null; -- fails
-ERROR:  Domain dnotnulltest does not allow NULL values
+ERROR:  domain dnotnulltest does not allow NULL values
 alter domain dnotnulltest drop not null;
 alter domain dnotnulltest drop not null; -- fails
 NOTICE:  "dnotnulltest" is already set to NULL
@@ -255,13 +255,13 @@ ERROR:  relation "domcontest" attribute "col1" contains values that violate the 
 alter domain con add constraint t check (VALUE < 34);
 alter domain con add check (VALUE > 0);
 insert into domcontest values (-5); -- fails
-ERROR:  ExecEvalCoerceToDomain: Domain con constraint $1 failed
+ERROR:  value for domain con violates CHECK constraint "$1"
 insert into domcontest values (42); -- fails
-ERROR:  ExecEvalCoerceToDomain: Domain con constraint t failed
+ERROR:  value for domain con violates CHECK constraint "t"
 insert into domcontest values (5);
 alter domain con drop constraint t;
 insert into domcontest values (-5); --fails
-ERROR:  ExecEvalCoerceToDomain: Domain con constraint $1 failed
+ERROR:  value for domain con violates CHECK constraint "$1"
 insert into domcontest values (42);
 -- Confirm ALTER DOMAIN with RULES.
 create table domtab (col1 integer);
@@ -278,7 +278,7 @@ select * from domview;
 
 alter domain dom set not null;
 select * from domview; -- fail
-ERROR:  Domain dom does not allow NULL values
+ERROR:  domain dom does not allow NULL values
 alter domain dom drop not null;
 select * from domview;
  col1 
@@ -289,7 +289,7 @@ select * from domview;
 
 alter domain dom add constraint domchkgt6 check(value > 6);
 select * from domview; --fail
-ERROR:  ExecEvalCoerceToDomain: Domain dom constraint domchkgt6 failed
+ERROR:  value for domain dom violates CHECK constraint "domchkgt6"
 alter domain dom drop constraint domchkgt6 restrict;
 select * from domview;
  col1 

@@ -45,7 +45,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.110 2003/07/01 19:10:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.111 2003/07/21 17:05:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1233,7 +1233,7 @@ ExecInitAgg(Agg *node, EState *estate)
 								  ObjectIdGetDatum(aggref->aggfnoid),
 								  0, 0, 0);
 		if (!HeapTupleIsValid(aggTuple))
-			elog(ERROR, "ExecAgg: cache lookup failed for aggregate %u",
+			elog(ERROR, "cache lookup failed for aggregate %u",
 				 aggref->aggfnoid);
 		aggform = (Form_pg_aggregate) GETSTRUCT(aggTuple);
 
@@ -1311,8 +1311,10 @@ ExecInitAgg(Agg *node, EState *estate)
 		if (peraggstate->transfn.fn_strict && peraggstate->initValueIsNull)
 		{
 			if (!IsBinaryCoercible(inputType, aggtranstype))
-				elog(ERROR, "Aggregate %u needs to have compatible input type and transition type",
-					 aggref->aggfnoid);
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+						 errmsg("aggregate %u needs to have compatible input type and transition type",
+								aggref->aggfnoid)));
 		}
 
 		if (aggref->aggdistinct)
@@ -1357,7 +1359,7 @@ GetAggInitVal(Datum textInitVal, Oid transtype)
 						 ObjectIdGetDatum(transtype),
 						 0, 0, 0);
 	if (!HeapTupleIsValid(tup))
-		elog(ERROR, "GetAggInitVal: cache lookup failed on aggregate transition function return type %u", transtype);
+		elog(ERROR, "cache lookup failed for type %u", transtype);
 
 	typinput = ((Form_pg_type) GETSTRUCT(tup))->typinput;
 	typelem = ((Form_pg_type) GETSTRUCT(tup))->typelem;
@@ -1494,7 +1496,7 @@ ExecReScanAgg(AggState *node, ExprContext *exprCtxt)
 Datum
 aggregate_dummy(PG_FUNCTION_ARGS)
 {
-	elog(ERROR, "Aggregate function %u called as normal function",
+	elog(ERROR, "aggregate function %u called as normal function",
 		 fcinfo->flinfo->fn_oid);
 	return (Datum) 0;			/* keep compiler quiet */
 }

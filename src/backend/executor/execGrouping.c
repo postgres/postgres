@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execGrouping.c,v 1.3 2003/06/22 22:04:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execGrouping.c,v 1.4 2003/07/21 17:05:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -249,8 +249,8 @@ execTuplesHashPrepare(TupleDesc tupdesc,
 		eq_function = oprfuncid(optup);
 		ReleaseSysCache(optup);
 		hash_function = get_op_hash_function(eq_opr);
-		if (!OidIsValid(hash_function))
-			elog(ERROR, "Could not find hash function for hash operator %u",
+		if (!OidIsValid(hash_function))	/* should not happen */
+			elog(ERROR, "could not find hash function for hash operator %u",
 				 eq_opr);
 		fmgr_info(eq_function, &(*eqfunctions)[i]);
 		fmgr_info(hash_function, &(*hashfunctions)[i]);

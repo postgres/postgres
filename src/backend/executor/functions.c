@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.67 2003/07/01 00:04:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.68 2003/07/21 17:05:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -165,8 +165,7 @@ init_sql_fcache(FmgrInfo *finfo)
 									ObjectIdGetDatum(foid),
 									0, 0, 0);
 	if (!HeapTupleIsValid(procedureTuple))
-		elog(ERROR, "init_sql_fcache: Cache lookup failed for procedure %u",
-			 foid);
+		elog(ERROR, "cache lookup failed for function %u", foid);
 	procedureStruct = (Form_pg_proc) GETSTRUCT(procedureTuple);
 
 	/*
@@ -178,9 +177,11 @@ init_sql_fcache(FmgrInfo *finfo)
 	if (rettype == ANYARRAYOID || rettype == ANYELEMENTOID)
 	{
 		rettype = get_fn_expr_rettype(finfo);
-		if (rettype == InvalidOid)
-			elog(ERROR, "could not determine actual result type for function declared %s",
-				 format_type_be(procedureStruct->prorettype));
+		if (rettype == InvalidOid) /* this probably should not happen */
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg("could not determine actual result type for function declared %s",
+							format_type_be(procedureStruct->prorettype))));
 	}
 
 	/* Now look up the actual result type */
@@ -188,8 +189,7 @@ init_sql_fcache(FmgrInfo *finfo)
 							   ObjectIdGetDatum(rettype),
 							   0, 0, 0);
 	if (!HeapTupleIsValid(typeTuple))
-		elog(ERROR, "init_sql_fcache: Cache lookup failed for type %u",
-			 rettype);
+		elog(ERROR, "cache lookup failed for type %u", rettype);
 	typeStruct = (Form_pg_type) GETSTRUCT(typeTuple);
 
 	/*
@@ -249,8 +249,10 @@ init_sql_fcache(FmgrInfo *finfo)
 			{
 				argtype = get_fn_expr_argtype(finfo, argnum);
 				if (argtype == InvalidOid)
-					elog(ERROR, "could not determine actual type of argument declared %s",
-						 format_type_be(argOidVect[argnum]));
+					ereport(ERROR,
+							(errcode(ERRCODE_DATATYPE_MISMATCH),
+							 errmsg("could not determine actual type of argument declared %s",
+									format_type_be(argOidVect[argnum]))));
 				argOidVect[argnum] = argtype;
 				haspolyarg = true;
 			}
@@ -264,8 +266,7 @@ init_sql_fcache(FmgrInfo *finfo)
 						  Anum_pg_proc_prosrc,
 						  &isNull);
 	if (isNull)
-		elog(ERROR, "init_sql_fcache: null prosrc for procedure %u",
-			 foid);
+		elog(ERROR, "null prosrc for function %u", foid);
 	src = DatumGetCString(DirectFunctionCall1(textout, tmp));
 
 	fcache->func_state = init_execution_state(src, argOidVect, nargs,
@@ -563,7 +564,9 @@ fmgr_sql(PG_FUNCTION_ARGS)
 			if (rsi && IsA(rsi, ReturnSetInfo))
 				rsi->isDone = ExprEndResult;
 			else
-				elog(ERROR, "Set-valued function called in context that cannot accept a set");
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("set-valued function called in context that cannot accept a set")));
 			fcinfo->isnull = true;
 			result = (Datum) 0;
 
@@ -598,7 +601,9 @@ fmgr_sql(PG_FUNCTION_ARGS)
 		if (rsi && IsA(rsi, ReturnSetInfo))
 			rsi->isDone = ExprMultipleResult;
 		else
-			elog(ERROR, "Set-valued function called in context that cannot accept a set");
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("set-valued function called in context that cannot accept a set")));
 
 		/*
 		 * Ensure we will get shut down cleanly if the exprcontext is not
