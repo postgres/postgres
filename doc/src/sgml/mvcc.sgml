@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/mvcc.sgml,v 2.44 2004/08/14 22:18:23 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/mvcc.sgml,v 2.45 2004/11/15 06:32:14 neilc Exp $
 -->
 
  <chapter id="mvcc">
@@ -410,7 +410,7 @@ ERROR:  could not serialize access due to concurrent update
     The intuitive meaning (and mathematical definition) of
     <quote>serializable</> execution is that any two successfully committed
     concurrent transactions will appear to have executed strictly serially,
-    one after the other --- although which one appeared to occur first may
+    one after the other &mdash; although which one appeared to occur first may
     not be predictable in advance.  It is important to realize that forbidding
     the undesirable behaviors listed in <xref linkend="mvcc-isolevel-table">
     is not sufficient to guarantee true serializability, and in fact
@@ -524,7 +524,7 @@ SELECT SUM(value) FROM mytab WHERE class = 2;
     even if the name contains the word
     <quote>row</quote>; the names of the lock modes are historical.
     To some extent the names reflect the typical usage of each lock
-    mode --- but the semantics are all the same.  The only real difference
+    mode &mdash; but the semantics are all the same.  The only real difference
     between one lock mode and another is the set of lock modes with
     which each conflicts.  Two transactions cannot hold locks of conflicting
     modes on the same table at the same time.  (However, a transaction
@@ -895,7 +895,7 @@ UPDATE accounts SET balance = balance - 100.00 WHERE acctnum = 22222;
     of transactions not counted by the first.  Doing the two sums in a
     single serializable transaction will give an accurate picture of the
     effects of transactions that committed before the serializable transaction
-    started --- but one might legitimately wonder whether the answer is still
+    started &mdash; but one might legitimately wonder whether the answer is still
     relevant by the time it is delivered.  If the serializable transaction
     itself applied some changes before trying to make the consistency check,
     the usefulness of the check becomes even more debatable, since now it

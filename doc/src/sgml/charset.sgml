@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.45 2004/09/17 21:59:56 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.46 2004/11/15 06:32:13 neilc Exp $ -->
 
 <chapter id="charset">
  <title>Localization</>
@@ -829,12 +829,13 @@ RESET client_encoding;
     </para>
 
     <para>
-     If the conversion of a particular character is not possible --
-     suppose you chose <literal>EUC_JP</literal> for the server and
-     <literal>LATIN1</literal> for the client, then some Japanese
-     characters cannot be converted to <literal>LATIN1</literal> -- it
-     is transformed to its hexadecimal byte values in parentheses,
-     e.g., <literal>(826C)</literal>.
+     If the conversion of a particular character is not possible
+     &mdash; suppose you chose <literal>EUC_JP</literal> for the
+     server and <literal>LATIN1</literal> for the client, then some
+     Japanese characters cannot be converted to
+     <literal>LATIN1</literal> &mdash; it is transformed to its
+     hexadecimal byte values in parentheses, e.g.,
+     <literal>(826C)</literal>.
     </para>
    </sect2>
 

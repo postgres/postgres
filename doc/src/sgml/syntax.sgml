@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.96 2004/10/26 22:16:12 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.97 2004/11/15 06:32:14 neilc Exp $
 -->
 
 <chapter id="sql-syntax">
@@ -725,9 +725,10 @@ SELECT 5 ! - 6;
 <programlisting>
 SELECT 5 ! (- 6);
 </programlisting>
-    because the parser has no idea -- until it is too late -- that
-    <token>!</token> is defined as a postfix operator, not an infix one.
-    To get the desired behavior in this case, you must write
+    because the parser has no idea &mdash; until it is too late
+    &mdash; that <token>!</token> is defined as a postfix operator,
+    not an infix one.  To get the desired behavior in this case, you
+    must write
 <programlisting>
 SELECT (5 !) - 6;
 </programlisting>
@@ -1259,7 +1260,7 @@ sqrt(2)
     The first form of aggregate expression invokes the aggregate
     across all input rows for which the given expression yields a
     non-null value.  (Actually, it is up to the aggregate function
-    whether to ignore null values or not --- but all the standard ones do.)
+    whether to ignore null values or not &mdash; but all the standard ones do.)
     The second form is the same as the first, since
     <literal>ALL</literal> is the default.  The third form invokes the
     aggregate for all distinct non-null values of the expression found
@@ -1546,7 +1547,7 @@ SELECT ROW(1,2.5,'this is a test');
    <para>
     By default, the value created by a <literal>ROW</> expression is of
     an anonymous record type.  If necessary, it can be cast to a named
-    composite type --- either the rowtype of a table, or a composite type
+    composite type &mdash; either the rowtype of a table, or a composite type
     created with <command>CREATE TYPE AS</>.  An explicit cast may be needed
     to avoid ambiguity.  For example:
 <programlisting>

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.88 2004/09/20 22:48:25 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.89 2004/11/15 06:32:14 neilc Exp $
 -->
 
  <sect1 id="xfunc">
@@ -702,7 +702,7 @@ CREATE FUNCTION square_root(double precision) RETURNS double precision
     compiled into dynamically loadable objects (also called shared
     libraries) and are loaded by the server on demand.  The dynamic
     loading feature is what distinguishes <quote>C language</> functions
-    from <quote>internal</> functions --- the actual coding conventions
+    from <quote>internal</> functions &mdash; the actual coding conventions
     are essentially the same for both.  (Hence, the standard internal
     function library is a rich source of coding examples for user-defined
     C functions.)
@@ -1170,7 +1170,7 @@ memcpy(destination-&gt;data, buffer, 40);
     <title>Calling Conventions Version 0 for C-Language Functions</title>
 
     <para>
-     We present the <quote>old style</quote> calling convention first --- although
+     We present the <quote>old style</quote> calling convention first &mdash; although
      this approach is now deprecated, it's easier to get a handle on
      initially.  In the version-0 method, the arguments and result
      of the C function are just declared in normal C style, but being
@@ -1971,7 +1971,7 @@ AttInMetadata *TupleDescGetAttInMetadata(TupleDesc tupdesc)
 </programlisting>
      if you plan to work with C strings.  If you are writing a function
      returning set, you can save the results of these functions in the
-     <structname>FuncCallContext</> structure --- use the
+     <structname>FuncCallContext</> structure &mdash; use the
      <structfield>tuple_desc</> or <structfield>attinmeta</> field
      respectively.
     </para>

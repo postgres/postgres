@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/xaggr.sgml,v 1.24 2003/11/29 19:51:38 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/xaggr.sgml,v 1.25 2004/11/15 06:32:14 neilc Exp $
 -->
 
  <sect1 id="xaggr">
@@ -67,7 +67,7 @@ SELECT complex_sum(a) FROM test_complex;
   <para>
    The above definition of <function>sum</function> will return zero (the initial
    state condition) if there are no nonnull input values.
-   Perhaps we want to return null in that case instead --- the SQL standard
+   Perhaps we want to return null in that case instead &mdash; the SQL standard
    expects <function>sum</function> to behave that way.  We can do this simply by
    omitting the <literal>initcond</literal> phrase, so that the initial state
    condition is null.  Ordinarily this would mean that the <literal>sfunc</literal>

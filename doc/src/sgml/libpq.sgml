@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.167 2004/10/30 23:09:59 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.168 2004/11/15 06:32:13 neilc Exp $
 -->
 
  <chapter id="libpq">
@@ -2252,7 +2252,7 @@ unsigned char *PQescapeBytea(const unsigned char *from,
   <listitem>
   <para>
    Converts an escaped string representation of binary data into binary
-   data --- the reverse of <function>PQescapeBytea</function>.
+   data &mdash; the reverse of <function>PQescapeBytea</function>.
    This is needed when retrieving <type>bytea</type> data in text format,
    but not when retrieving it in binary format.
 

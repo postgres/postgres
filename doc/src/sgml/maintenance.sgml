@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.37 2004/08/05 23:32:10 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.38 2004/11/15 06:32:14 neilc Exp $
 -->
 
 <chapter id="maintenance">
@@ -117,7 +117,7 @@ $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.37 2004/08/05 23:32:10 tgl 
     may be useful to set up periodic <application>cron</> tasks that
     <command>VACUUM</command> only selected tables, skipping tables that are known not to
     change often. This is only likely to be helpful if you have both
-    large heavily-updated tables and large seldom-updated tables --- the
+    large heavily-updated tables and large seldom-updated tables &mdash; the
     extra cost of vacuuming a small table isn't enough to be worth
     worrying about.
    </para>
@@ -151,7 +151,7 @@ $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.37 2004/08/05 23:32:10 tgl 
     The standard form of <command>VACUUM</> is best used with the goal
     of maintaining a fairly level steady-state usage of disk space. If
     you need to return disk space to the operating system you can use
-    <command>VACUUM FULL</> --- but what's the point of releasing disk
+    <command>VACUUM FULL</> &mdash; but what's the point of releasing disk
     space that will only have to be allocated again soon?  Moderately
     frequent standard <command>VACUUM</> runs are a better approach
     than infrequent <command>VACUUM FULL</> runs for maintaining
@@ -278,7 +278,7 @@ $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.37 2004/08/05 23:32:10 tgl 
     (32 bits at this writing) a cluster that runs for a long time (more
     than 4 billion transactions) will suffer <firstterm>transaction ID
     wraparound</>: the XID counter wraps around to zero, and all of a sudden
-    transactions that were in the past appear to be in the future --- which
+    transactions that were in the past appear to be in the future &mdash; which
     means their outputs become invisible.  In short, catastrophic data loss.
     (Actually the data is still there, but that's cold comfort if you can't
     get at it.)
@@ -337,7 +337,7 @@ $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.37 2004/08/05 23:32:10 tgl 
     is exactly one billion transactions: if you wait longer, it's possible
     that a row version that was not quite old enough to be reassigned last time
     is now more than two billion transactions old and has wrapped around
-    into the future --- i.e., is lost to you.  (Of course, it'll reappear
+    into the future &mdash; i.e., is lost to you.  (Of course, it'll reappear
     after another two billion transactions, but that's no help.)
    </para>
 

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/array.sgml,v 1.38 2004/08/08 05:55:55 joe Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/array.sgml,v 1.39 2004/11/15 06:32:13 neilc Exp $ -->
 
 <sect1 id="arrays">
  <title>Arrays</title>
@@ -49,7 +49,7 @@ CREATE TABLE tictactoe (
 </programlisting>
 
   However, the current implementation does not enforce the array size
-  limits --- the behavior is the same as for arrays of unspecified
+  limits &mdash; the behavior is the same as for arrays of unspecified
   length.
  </para>
 

@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.91 2004/11/05 19:15:48 tgl Exp $
+ $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.92 2004/11/15 06:32:13 neilc Exp $
  -->
 
 <chapter id="catalogs">
@@ -16,7 +16,7 @@
    Normally, one should not change the system catalogs by hand, there
    are always SQL commands to do that.  (For example, <command>CREATE
    DATABASE</command> inserts a row into the
-   <structname>pg_database</structname> catalog --- and actually
+   <structname>pg_database</structname> catalog &mdash; and actually
    creates the database on disk.)  There are some exceptions for
    particularly esoteric operations, such as adding index access methods.
   </para>
@@ -2509,7 +2509,7 @@
    not in its <structname>pg_opclass</structname> row, but in the associated
    rows in <structname>pg_amop</structname> and
    <structname>pg_amproc</structname>.  Those rows are considered to be
-   part of the operator class definition --- this is not unlike the way
+   part of the operator class definition &mdash; this is not unlike the way
    that a relation is defined by a single <structname>pg_class</structname>
    row plus associated rows in <structname>pg_attribute</structname> and
    other tables.
@@ -4275,7 +4275,7 @@
   <para>
    <structname>pg_stats</structname> is also designed to present the
    information in a more readable format than the underlying catalog
-   --- at the cost that its schema must be extended whenever new slot types
+   &mdash; at the cost that its schema must be extended whenever new slot types
    are defined for <structname>pg_statistic</structname>.
   </para>
 

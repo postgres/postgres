@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.67 2004/11/10 21:54:23 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.68 2004/11/15 06:32:13 neilc Exp $
 -->
 
 <chapter id="client-authentication">
@@ -14,7 +14,7 @@ $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.67 2004/11/10 21:54:23 pete
   specifies which <productname>PostgreSQL</productname> user name it
   wants to connect as, much the same way one logs into a Unix computer
   as a particular user. Within the SQL environment the active database
-  user name determines access privileges to database objects -- see
+  user name determines access privileges to database objects &mdash; see
   <xref linkend="user-manag"> for more information. Therefore, it is
   essential to restrict which database users can connect.
  </para>

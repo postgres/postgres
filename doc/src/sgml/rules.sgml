@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/rules.sgml,v 1.35 2004/05/16 23:22:07 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/rules.sgml,v 1.36 2004/11/15 06:32:14 neilc Exp $ -->
 
 <Chapter Id="rules">
 <Title>The Rule System</Title>
@@ -546,7 +546,7 @@ SELECT shoelace.sl_name, shoelace.sl_avail,
     the remaining range-table entries in the top query (in this example there
     are no more), and it will recursively check the range-table entries in
     the added subquery to see if any of them reference views.  (But it
-    won't expand <literal>*OLD*</> or <literal>*NEW*</> --- otherwise we'd have infinite recursion!)
+    won't expand <literal>*OLD*</> or <literal>*NEW*</> &mdash; otherwise we'd have infinite recursion!)
     In this example, there are no rewrite rules for <literal>shoelace_data</> or <literal>unit</>,
     so rewriting is complete and the above is the final result given to
     the planner.

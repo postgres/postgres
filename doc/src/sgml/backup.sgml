@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.50 2004/11/14 06:10:12 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.51 2004/11/15 06:32:13 neilc Exp $
 -->
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -499,7 +499,7 @@ tar -cf backup.tar /usr/local/pgsql/data
     the administrator specify a shell command to be executed to copy a
     completed segment file to wherever it needs to go.  The command could be
     as simple as a <application>cp</>, or it could invoke a complex shell
-    script --- it's all up to you.
+    script &mdash; it's all up to you.
    </para>
 
    <para>
@@ -725,7 +725,7 @@ SELECT pg_stop_backup();
     last base backup, the interval between base backups should usually be
     chosen based on how much storage you want to expend on archived WAL
     files.  You should also consider how long you are prepared to spend
-    recovering, if recovery should be necessary --- the system will have to
+    recovering, if recovery should be necessary &mdash; the system will have to
     replay all those WAL segments, and that could take awhile if it has
     been a long time since the last base backup.
    </para>

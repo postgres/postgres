@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/datetime.sgml,v 2.42 2004/08/10 00:55:03 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/datetime.sgml,v 2.43 2004/11/15 06:32:13 neilc Exp $
 -->
 
  <appendix id="datetime-appendix">
@@ -370,7 +370,7 @@ $PostgreSQL: pgsql/doc/src/sgml/datetime.sgml,v 2.42 2004/08/10 00:55:03 tgl Exp
     <xref linkend="datetime-timezone-input-table"> shows the time zone
     abbreviations recognized by <productname>PostgreSQL</productname>
     in date/time input values.  Note that these names are <emphasis>not</>
-    used for date/time output --- display is driven by the currently
+    used for date/time output &mdash; display is driven by the currently
     selected <xref linkend="guc-timezone"> parameter setting.  (It is
     likely that future releases will make some use of <varname>timezone</>
     for input as well.)

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/lock.sgml,v 1.43 2004/10/01 16:39:47 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/lock.sgml,v 1.44 2004/11/15 06:32:15 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -71,7 +71,7 @@ where <replaceable class="PARAMETER">lockmode</replaceable> is one of:
    TABLE</> statement before executing any data modification
    statement.  A serializable transaction's view of data will be
    frozen when its first data modification statement begins.  A later
-   <command>LOCK TABLE</> will still prevent concurrent writes --- but it
+   <command>LOCK TABLE</> will still prevent concurrent writes &mdash; but it
    won't ensure that what the transaction reads corresponds to the
    latest committed values.
   </para>
@@ -85,7 +85,7 @@ where <replaceable class="PARAMETER">lockmode</replaceable> is one of:
    mode, and then be unable to also acquire <literal>ROW EXCLUSIVE</>
    mode to actually perform their updates.  (Note that a transaction's
    own locks never conflict, so a transaction can acquire <literal>ROW
-   EXCLUSIVE</> mode when it holds <literal>SHARE</> mode --- but not
+   EXCLUSIVE</> mode when it holds <literal>SHARE</> mode &mdash; but not
    if anyone else holds <literal>SHARE</> mode.)  To avoid deadlocks,
    make sure all transactions acquire locks on the same objects in the
    same order, and if multiple lock modes are involved for a single

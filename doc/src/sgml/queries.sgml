@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/queries.sgml,v 1.30 2004/05/16 23:22:07 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/queries.sgml,v 1.31 2004/11/15 06:32:14 neilc Exp $ -->
 
 <chapter id="queries">
  <title>Queries</title>
@@ -135,7 +135,7 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
     not only that table but all of its subtable successors, unless the
     key word <literal>ONLY</> precedes the table name.  However, the
     reference produces only the columns that appear in the named table
-    --- any columns added in subtables are ignored.
+    &mdash; any columns added in subtables are ignored.
    </para>
 
    <sect3 id="queries-join">
@@ -505,7 +505,7 @@ SELECT * FROM some_very_long_table_name s JOIN another_fairly_long_name a ON s.i
 
     <para>
      The alias becomes the new name of the table reference for the
-     current query -- it is no longer possible to refer to the table
+     current query &mdash; it is no longer possible to refer to the table
      by the original name.  Thus
 <programlisting>
 SELECT * FROM my_table AS m WHERE my_table.a > 5;

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/advanced.sgml,v 1.45 2004/08/08 21:33:11 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/advanced.sgml,v 1.46 2004/11/15 06:32:13 neilc Exp $
 -->
 
  <chapter id="tutorial-advanced">
@@ -439,9 +439,9 @@ SELECT name, altitude
     indicates that the query should be run over only the
     <classname>cities</classname> table, and not tables below
     <classname>cities</classname> in the inheritance hierarchy.  Many
-    of the commands that we have already discussed --
+    of the commands that we have already discussed &mdash;
     <command>SELECT</command>, <command>UPDATE</command>, and
-    <command>DELETE</command> -- support this <literal>ONLY</literal>
+    <command>DELETE</command> &mdash; support this <literal>ONLY</literal>
     notation.
    </para>
 

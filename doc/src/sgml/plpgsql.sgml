@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.48 2004/10/04 05:42:18 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.49 2004/11/15 06:32:14 neilc Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -129,7 +129,7 @@ $$ LANGUAGE plpgsql;
         a parameter as the name of a table or column in an SQL command.  To get
         around this restriction, you can construct dynamic commands using
         the <application>PL/pgSQL</application> <command>EXECUTE</command>
-        statement --- at the price of constructing a new execution plan on
+        statement &mdash; at the price of constructing a new execution plan on
         every execution.
    </para>
 
@@ -499,7 +499,7 @@ $$ LANGUAGE plpgsql;
      control.  <application>PL/pgSQL</>'s <command>BEGIN</>/<command>END</>
      are only for grouping; they do not start or end a transaction.
      Functions and trigger procedures are always executed within a transaction
-     established by an outer query --- they cannot start or commit that
+     established by an outer query &mdash; they cannot start or commit that
      transaction, since there would be no context for them to execute in.
      However, a block containing an <literal>EXCEPTION</> clause effectively
      forms a subtransaction that can be rolled back without affecting the
@@ -2359,7 +2359,7 @@ RAISE EXCEPTION 'Nonexistent ID --> %', user_id;
         <command>CREATE FUNCTION</> command, declaring it as a function with
         no arguments and a return type of <type>trigger</type>.  Note that
         the function must be declared with no arguments even if it expects
-        to receive arguments specified in <command>CREATE TRIGGER</> ---
+        to receive arguments specified in <command>CREATE TRIGGER</> &mdash;
         trigger arguments are passed via <varname>TG_ARGV</>, as described
         below.
   </para>

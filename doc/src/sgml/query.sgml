@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/query.sgml,v 1.39 2004/08/30 21:29:12 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/query.sgml,v 1.40 2004/11/15 06:32:14 neilc Exp $
 -->
 
  <chapter id="tutorial-sql">
@@ -37,7 +37,7 @@ $PostgreSQL: pgsql/doc/src/sgml/query.sgml,v 1.39 2004/08/30 21:29:12 tgl Exp $
 </screen>
 
     This creates the scripts and compiles the C files containing user-defined
-    functions and types.  (You must use GNU make for this --- it may be named
+    functions and types.  (You must use GNU make for this &mdash; it may be named
     something different on your system, often <application>gmake</>.)
     Then, to start the tutorial, do the following:
 
@@ -150,7 +150,7 @@ CREATE TABLE weather (
     a type for storing single precision floating-point numbers.
     <type>date</type> should be self-explanatory.  (Yes, the column of
     type <type>date</type> is also named <literal>date</literal>.
-    This may be convenient or confusing -- you choose.)
+    This may be convenient or confusing &mdash; you choose.)
    </para>
 
    <para>

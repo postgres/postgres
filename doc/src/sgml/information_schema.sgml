@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/information_schema.sgml,v 1.17 2004/06/13 17:51:08 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/information_schema.sgml,v 1.18 2004/11/15 06:32:13 neilc Exp $ -->
 
 <chapter id="information-schema">
  <title>The Information Schema</title>
@@ -11,7 +11,7 @@
   The information schema consists of a set of views that contain
   information about the objects defined in the current database.  The
   information schema is defined in the SQL standard and can therefore
-  be expected to be portable and remain stable --- unlike the system
+  be expected to be portable and remain stable &mdash; unlike the system
   catalogs, which are specific to
   <productname>PostgreSQL</productname> and are modelled after
   implementation concerns.  The information schema views do not,

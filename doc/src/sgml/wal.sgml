@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/wal.sgml,v 1.30 2004/11/15 04:35:57 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/wal.sgml,v 1.31 2004/11/15 06:32:14 neilc Exp $ -->
 
 <chapter id="wal">
  <title>Write-Ahead Logging (<acronym>WAL</acronym>)</title>
@@ -87,7 +87,7 @@
     we simply install a prior physical backup of the database, and
     replay the WAL log just as far as the desired time.  What's more,
     the physical backup doesn't have to be an instantaneous snapshot
-    of the database state --- if it is made over some period of time,
+    of the database state &mdash; if it is made over some period of time,
     then replaying the WAL log for that period will fix any internal
     inconsistencies.
    </para>
@@ -306,7 +306,7 @@
   <para>
    To deal with the case where <filename>pg_control</filename> is
    corrupted, we should support the possibility of scanning existing log
-   segments in reverse order -- newest to oldest -- in order to find the
+   segments in reverse order &mdash; newest to oldest &mdash; in order to find the
    latest checkpoint.  This has not been implemented yet.
    <filename>pg_control</filename> is small enough (less than one disk page)
    that it is not subject to partial-write problems, and as of this writing

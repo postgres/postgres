@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/dfunc.sgml,v 1.27 2003/11/29 19:51:36 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/dfunc.sgml,v 1.28 2004/11/15 06:32:13 neilc Exp $
 -->
 
 <sect2 id="dfunc">
@@ -38,8 +38,8 @@ $PostgreSQL: pgsql/doc/src/sgml/dfunc.sgml,v 1.27 2003/11/29 19:51:36 pgsql Exp 
   in memory when they are loaded by the executable.  (Object files
   intended for executables are usually not compiled that way.)  The
   command to link a shared library contains special flags to
-  distinguish it from linking an executable. --- At least this is the
-  theory.  On some systems the practice is much uglier.
+  distinguish it from linking an executable (at least in theory
+  &mdash; on some systems the practice is much uglier).
  </para>
 
  <para>

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/xoper.sgml,v 1.31 2003/11/29 19:51:38 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/xoper.sgml,v 1.32 2004/11/15 06:32:14 neilc Exp $
 -->
 
  <sect1 id="xoper">
@@ -132,7 +132,7 @@ SELECT (a + b) AS c FROM test_complex;
      <literal>tab2.y = tab1.x</>, because the index-scan machinery expects
      to see the indexed column on the left of the operator it is given.
      <ProductName>PostgreSQL</ProductName> will <emphasis>not</> simply
-     assume that this is a valid transformation --- the creator of the
+     assume that this is a valid transformation &mdash; the creator of the
      <literal>=</> operator must specify that it is valid, by marking the
      operator with commutator information.
     </para>

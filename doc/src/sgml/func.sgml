@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.222 2004/11/08 15:57:05 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.223 2004/11/15 06:32:13 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -2793,7 +2793,7 @@ substring('foobar' from '#"o_b#"%' for '#')    <lineannotation>NULL</lineannotat
      if it is a member of the regular set described by the regular
      expression.  As with <function>LIKE</function>, pattern characters
      match string characters exactly unless they are special characters
-     in the regular expression language --- but regular expressions use
+     in the regular expression language &mdash; but regular expressions use
      different special characters than <function>LIKE</function> does.
      Unlike <function>LIKE</function> patterns, a
      regular expression is allowed to match anywhere within a string, unless
@@ -8425,7 +8425,7 @@ SELECT relname FROM pg_class WHERE pg_table_is_visible(oid);
 SELECT pg_type_is_visible('myschema.widget'::regtype);
 </programlisting>
     Note that it would not make much sense to test an unqualified name in
-    this way --- if the name can be recognized at all, it must be visible.
+    this way &mdash; if the name can be recognized at all, it must be visible.
    </para>
 
    <indexterm zone="functions-info">

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.31 2004/10/21 21:33:59 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.32 2004/11/15 06:32:13 neilc Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -350,7 +350,7 @@ DROP TABLE products;
     identifiers are also 32-bit quantities.  This creates a hard limit
     of 2<superscript>32</> (4 billion) <acronym>SQL</acronym> commands
     within a single transaction.  In practice this limit is not a
-    problem --- note that the limit is on number of
+    problem &mdash; note that the limit is on number of
     <acronym>SQL</acronym> commands, not number of rows processed.
    </para>
  </sect1>

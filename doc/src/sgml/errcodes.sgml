@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/errcodes.sgml,v 1.9 2004/10/01 16:39:46 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/errcodes.sgml,v 1.10 2004/11/15 06:32:13 neilc Exp $ -->
 
 <appendix id="errcodes-appendix">
  <title><productname>PostgreSQL</productname> Error Codes</title>
@@ -125,7 +125,7 @@
 
 <row>
 <entry>Class 02</entry>
-<entry>No Data --- this is also a warning class per SQL99</entry>
+<entry>No Data &mdash; this is also a warning class per SQL99</entry>
 </row>
 
 <row>

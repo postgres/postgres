@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/protocol.sgml,v 1.54 2004/09/23 23:35:07 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/protocol.sgml,v 1.55 2004/11/15 06:32:14 neilc Exp $ -->
 
 <chapter id="protocol">
  <title>Frontend/Backend Protocol</title>
@@ -775,7 +775,7 @@
     ErrorResponse, then reads and discards messages until a Sync is reached,
     then issues ReadyForQuery and returns to normal message processing.
     (But note that no skipping occurs if an error is detected
-    <emphasis>while</> processing Sync --- this ensures that there is one
+    <emphasis>while</> processing Sync &mdash; this ensures that there is one
     and only one ReadyForQuery sent for each Sync.)
    </para>
 
@@ -1034,7 +1034,7 @@
     value changes for any of the parameters the backend believes the
     frontend should know about.  Most commonly this occurs in response
     to a <command>SET</> SQL command executed by the frontend, and
-    this case is effectively synchronous --- but it is also possible
+    this case is effectively synchronous &mdash; but it is also possible
     for parameter status changes to occur because the administrator
     changed a configuration file and then sent the
     <systemitem>SIGHUP</systemitem> signal to the postmaster.  Also,
@@ -1119,7 +1119,7 @@
    </para>
 
    <Para>
-    The cancellation signal may or may not have any effect --- for
+    The cancellation signal may or may not have any effect &mdash; for
     example, if it arrives after the backend has finished processing
     the query, then it will have no effect.  If the cancellation is
     effective, it results in the current command being terminated

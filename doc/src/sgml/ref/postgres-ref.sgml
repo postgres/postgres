@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/postgres-ref.sgml,v 1.44 2004/10/08 01:36:32 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/postgres-ref.sgml,v 1.45 2004/11/15 06:32:15 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -393,7 +393,7 @@ PostgreSQL documentation
    <literal>SIGQUIT</literal> to terminate without the normal cleanup.
    These signals <emphasis>should not</emphasis> be used by users.  It is also
    unwise to send <literal>SIGKILL</literal> to a <command>postgres</command>
-   process --- the <command>postmaster</command> will interpret this as
+   process &mdash; the <command>postmaster</command> will interpret this as
    a crash in <command>postgres</command>, and will force all the sibling
    <command>postgres</command> processes to quit as part of its standard
    crash-recovery procedure.

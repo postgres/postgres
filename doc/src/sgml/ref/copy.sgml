@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.57 2004/04/21 00:34:18 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.58 2004/11/15 06:32:15 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -538,7 +538,7 @@ COPY <replaceable class="parameter">tablename</replaceable> [ ( <replaceable cla
       <term>Signature</term>
       <listitem>
        <para>
-11-byte sequence <literal>PGCOPY\n\377\r\n\0</> --- note that the zero byte
+11-byte sequence <literal>PGCOPY\n\377\r\n\0</> &mdash; note that the zero byte
 is a required part of the signature.  (The signature is designed to allow
 easy identification of files that have been munged by a non-8-bit-clean
 transfer.  This signature will be changed by end-of-line-translation
@@ -638,7 +638,7 @@ distribution).
     <para>
 If OIDs are included in the file, the OID field immediately follows the
 field-count word.  It is a normal field except that it's not included
-in the field-count.  In particular it has a length word --- this will allow
+in the field-count.  In particular it has a length word &mdash; this will allow
 handling of 4-byte vs. 8-byte OIDs without too much pain, and will allow
 OIDs to be shown as null if that ever proves desirable.
     </para>

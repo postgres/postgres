@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/declare.sgml,v 1.31 2004/06/17 12:41:02 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/declare.sgml,v 1.32 2004/11/15 06:32:15 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -78,7 +78,7 @@ DECLARE <replaceable class="parameter">name</replaceable> [ BINARY ] [ INSENSITI
     specifies whether data is to be retrieved in text or binary format.
     This choice overrides the way that the cursor is defined.  The concept
     of a binary cursor as such is thus obsolete when using extended query
-    protocol --- any cursor can be treated as either text or binary.
+    protocol &mdash; any cursor can be treated as either text or binary.
    </para>
   </note>
  </refsect1>

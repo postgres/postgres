@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/sql.sgml,v 1.32 2003/11/29 19:51:37 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/sql.sgml,v 1.33 2004/11/15 06:32:14 neilc Exp $
 -->
 
  <chapter id="sql-intro">
@@ -1314,7 +1314,7 @@ SELECT COUNT(PNO)
      <para>
       <acronym>SQL</acronym> allows one to partition the tuples of a table
       into groups. Then the
-      aggregate operators described above can be applied to the groups ---
+      aggregate operators described above can be applied to the groups &mdash;
       i.e. the value of the aggregate operator is no longer calculated over
       all the values of the specified column but over all values of a
       group. Thus the aggregate operator is evaluated separately for every

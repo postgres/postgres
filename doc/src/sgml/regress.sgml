@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/regress.sgml,v 1.41 2004/08/09 05:34:39 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/regress.sgml,v 1.42 2004/11/15 06:32:14 neilc Exp $ -->
 
  <chapter id="regress">
   <title id="regress-title">Regression Tests</title>
@@ -211,7 +211,7 @@ gmake installcheck
      fail if you run the test on the day of a daylight-saving time
      changeover, or the day after one.  These queries expect that
      the intervals between midnight yesterday, midnight today and
-     midnight tomorrow are exactly twenty-four hours --- which is wrong
+     midnight tomorrow are exactly twenty-four hours &mdash; which is wrong
      if daylight-saving time went into or out of effect meanwhile.
     </para>
 

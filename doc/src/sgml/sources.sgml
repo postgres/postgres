@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/sources.sgml,v 2.14 2004/05/08 02:13:31 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/sources.sgml,v 2.15 2004/11/15 06:32:14 neilc Exp $
 -->
 
  <chapter id="source">
@@ -117,7 +117,7 @@ less -x4
     error).  The <function>errcode</> call specifies the SQLSTATE error code
     using a macro defined in <filename>src/include/utils/errcodes.h</>.  The
     <function>errmsg</> call provides the primary message text.  Notice the
-    extra set of parentheses surrounding the auxiliary function calls ---
+    extra set of parentheses surrounding the auxiliary function calls &mdash;
     these are annoying but syntactically necessary.
    </para>
 
