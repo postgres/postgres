@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.70 2000/05/29 05:44:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.71 2000/06/01 22:21:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -326,6 +326,12 @@ other			.
 				}
 <xd>{xdstop}	{
 					BEGIN(INITIAL);
+					if (strlen(literalbuf) >= NAMEDATALEN)
+					{
+						elog(NOTICE, "identifier \"%s\" will be truncated to \"%.*s\"",
+							 literalbuf, NAMEDATALEN-1, literalbuf);
+						literalbuf[NAMEDATALEN-1] = '\0';
+					}
 					yylval.str = pstrdup(literalbuf);
 					return IDENT;
 				}
