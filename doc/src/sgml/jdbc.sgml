@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.31 2001/11/26 19:07:11 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.32 2001/11/27 01:20:17 barry Exp $
 -->
 
  <chapter id="jdbc">
@@ -379,9 +379,8 @@ db.close();
     Any time you want to issue <acronym>SQL</acronym> statements to
     the database, you require a <classname>Statement</classname> or 
     <classname>PreparedStatement</classname> instance. Once you have 
-    a <classname>Statement</classname> or <classname>PreparedStatement
-    </classname>, you
-    can use issue a
+    a <classname>Statement</classname> or 
+    <classname>PreparedStatement</classname>, you can use issue a
     query. This will return a <classname>ResultSet</classname>
     instance, which contains the entire result.  <xref
     linkend="jdbc-query-example"> illustrates this process.
@@ -406,7 +405,7 @@ st.close();
     </para>
 
     <para>
-     This example will issues the same query as before using 
+     This example will issue the same query as before using 
      a <classname>PreparedStatement</classname>
      and a bind value in the query.
 <programlisting>
@@ -430,7 +429,8 @@ st.close();
 
     <para>
      The following must be considered when using the
-     <classname>Statement</classname> interface:
+     <classname>Statement</classname> or 
+     <classname>PreparedStatement</classname> interface:
 
      <itemizedlist>
       <listitem>
@@ -440,7 +440,8 @@ st.close();
         open the connection and use it for the connection's
         lifetime. But you have to remember that only one
         <classname>ResultSet</classname> can exist per
-        <classname>Statement</classname> at a given time.
+        <classname>Statement</classname> or 
+        <classname>PreparedStatement</classname> at a given time.
        </para>
       </listitem>
 
@@ -464,7 +465,8 @@ st.close();
       <listitem>
        <para>
         When you are done using the <classname>Statement</classname>
-        you should close the <classname>Statement</classname>.
+        or <classname>PreparedStatement</classname>
+        you should close it.
        </para>
       </listitem>
      </itemizedlist>
@@ -532,6 +534,8 @@ st.close();
     update, or delete statement.
    </para>
 
+  <example id="jdbc-delete-example">
+   <title>Simple Delete Example</title>
    <para>
      This example will issue a simple delete and print out the number
      of rows deleted.
@@ -544,6 +548,7 @@ System.out.println(rowsDeleted + " rows deleted");
 st.close();
 </programlisting>
    </para>
+  </example>
   </sect1>
 
   <sect1 id="jdbc-ddl">
@@ -557,6 +562,8 @@ st.close();
     however it doesn't return a result.
    </para>
 
+  <example id="jdbc-drop-table-example">
+   <title>Drop Table Example</title>
    <para>
      This example will drop a table.
 <programlisting>
@@ -565,18 +572,20 @@ ResultSet rs = st.executeQuery("DROP TABLE mytable");
 st.close();
 </programlisting>
    </para>
+  </example>
   </sect1>
 
  <sect1 id="jdbc-binary-data">
   <title>Storing Binary Data</title>
 
   <para>
-    <application>PostgreSQL</application> provides two distinct way to 
+    <application>PostgreSQL</application> provides two distinct ways to 
     store binary data.  Binary data can be stored in a table using 
     <application>PostgreSQL's</application> binary datatype 
     <type>bytea</type>, or by using the <firstterm>Large Object</firstterm>
     feature which stores the binary data in a separate table in a special 
-    format, and refers to from your own tables by an <type>OID</type> value.
+    format, and refers to that table by storing a value of type 
+    <type>OID</type> in your table.
   </para>
 
   <para>
@@ -598,8 +607,8 @@ st.close();
   </para>
 
   <para>
-    7.2 is the first release that the <acronym>JDBC</acronym> Driver 
-    supports the <type>bytea</type> datatype.  The introduction of 
+    7.2 is the first release of the <acronym>JDBC</acronym> Driver 
+    that supports the <type>bytea</type> datatype.  The introduction of 
     this functionality in 7.2 has introduced a change in behavior 
     as compared to previous releases.  In 7.2 the methods 
     <function>getBytes()</function>, <function>setBytes()</function>, 
@@ -702,7 +711,7 @@ ps.close();
    </para>
 
    <para>
-    Here you can see how the Large Object is retrieved as an
+    Here the binary data was retrieved as an
     <classname>byte[]</classname>.  You could have used a 
     <classname>InputStream</classname> object instead.  
    </para>
@@ -721,6 +730,8 @@ CREATE TABLE imagesLO (imgname text, imgOID OID);
 <programlisting>
 // All LargeObject API calls must be within a transaction
 conn.setAutoCommit(false);
+
+// Get the Large Object Manager to perform operations with
 LargeObjectManager lobj = ((org.postgresql.Connection)conn).getLargeObjectAPI();
 
 //create a new large object
@@ -760,6 +771,8 @@ fis.close();
 <programlisting>
 // All LargeObject API calls must be within a transaction
 conn.setAutoCommit(false);
+
+// Get the Large Object Manager to perform operations with
 LargeObjectManager lobj = ((org.postgresql.Connection)conn).getLargeObjectAPI();
 
 PreparedStatement ps = con.prepareStatement("SELECT imgOID FROM imagesLO WHERE imgname=?");
@@ -775,7 +788,7 @@ if (rs != null) {
 	byte buf[] = new byte[obj.size()];
 	obj.read(buf, 0, obj.size());
 	//do something with the data read here
-	}
+
 	// Close the object
 	obj.close();
     }
