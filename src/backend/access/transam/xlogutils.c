@@ -238,15 +238,14 @@ static XLogRelDesc		   *_xlrelarr = NULL;
 static Form_pg_class		_xlpgcarr = NULL;
 static int					_xlast = 0;
 static int					_xlcnt = 0;
-#define	_XLOG_INITRELCACHESIZE	32
-#define	_XLOG_MAXRELCACHESIZE	512
+#define	_XLOG_RELCACHESIZE	512
 
 static void
 _xl_init_rel_cache(void)
 {
 	HASHCTL			ctl;
 
-	_xlcnt = _XLOG_INITRELCACHESIZE;
+	_xlcnt = _XLOG_RELCACHESIZE;
 	_xlast = 0;
 	_xlrelarr = (XLogRelDesc*) malloc(sizeof(XLogRelDesc) * _xlcnt);
 	memset(_xlrelarr, 0, sizeof(XLogRelDesc) * _xlcnt);
@@ -261,7 +260,7 @@ _xl_init_rel_cache(void)
 	ctl.datasize = sizeof(XLogRelDesc*);
 	ctl.hash = tag_hash;
 
-	_xlrelcache = hash_create(_XLOG_INITRELCACHESIZE, &ctl,
+	_xlrelcache = hash_create(_XLOG_RELCACHESIZE, &ctl,
 								HASH_ELEM | HASH_FUNCTION);
 }
 
@@ -297,6 +296,8 @@ _xl_remove_hash_entry(XLogRelDesc **edata, int dummy)
 static XLogRelDesc*
 _xl_new_reldesc(void)
 {
+	XLogRelDesc	   *res;
+
 	_xlast++;
 	if (_xlast < _xlcnt)
 	{
@@ -304,27 +305,13 @@ _xl_new_reldesc(void)
 		return(&(_xlrelarr[_xlast]));
 	}
 
-	if ( 2 * _xlcnt <= _XLOG_MAXRELCACHESIZE)
-	{
-		_xlrelarr = (XLogRelDesc*) realloc(_xlrelarr, 
-						2 * sizeof(XLogRelDesc) * _xlcnt);
-		memset(&(_xlrelarr[_xlcnt]), 0, sizeof(XLogRelDesc) * _xlcnt);
-		_xlpgcarr = (Form_pg_class) realloc(_xlpgcarr, 
-						2 * sizeof(FormData_pg_class) * _xlcnt);
-		memset(&(_xlpgcarr[_xlcnt]), 0, sizeof(FormData_pg_class) * _xlcnt);
-		_xlcnt += _xlcnt;
-		_xlrelarr[_xlast].reldata.rd_rel = &(_xlpgcarr[_xlast]);
-		return(&(_xlrelarr[_xlast]));
-	}
-	else /* reuse */
-	{
-		XLogRelDesc	   *res = _xlrelarr[0].moreRecently;
+	/* reuse */
+	res = _xlrelarr[0].moreRecently;
 
-		_xl_remove_hash_entry(&res, 0);
+	_xl_remove_hash_entry(&res, 0);
 
-		_xlast--;
-		return(res);
-	}
+	_xlast--;
+	return(res);
 }
 
 extern void CreateDummyCaches(void);
