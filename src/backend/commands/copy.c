@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.230 2004/08/29 05:06:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.231 2004/09/10 18:39:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1611,6 +1611,11 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 	}
 
 	/*
+	 * Prepare to catch AFTER triggers.
+	 */
+	AfterTriggerBeginQuery();
+
+	/*
 	 * Check BEFORE STATEMENT insertion triggers. It's debateable whether
 	 * we should do this for COPY, since it's not really an "INSERT"
 	 * statement as such. However, executing these triggers maintains
@@ -1973,6 +1978,11 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 	 * Execute AFTER STATEMENT insertion triggers
 	 */
 	ExecASInsertTriggers(estate, resultRelInfo);
+
+	/*
+	 * Handle queued AFTER triggers
+	 */
+	AfterTriggerEndQuery();
 
 	pfree(values);
 	pfree(nulls);

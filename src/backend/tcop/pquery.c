@@ -8,13 +8,14 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.85 2004/08/29 05:06:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.86 2004/09/10 18:40:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
+#include "commands/trigger.h"
 #include "executor/executor.h"
 #include "miscadmin.h"
 #include "tcop/tcopprot.h"
@@ -137,6 +138,11 @@ ProcessQuery(Query *parsetree,
 	queryDesc = CreateQueryDesc(parsetree, plan, dest, params, false);
 
 	/*
+	 * Set up to collect AFTER triggers
+	 */
+	AfterTriggerBeginQuery();
+
+	/*
 	 * Call ExecStart to prepare the plan for execution
 	 */
 	ExecutorStart(queryDesc, false, false);
@@ -184,6 +190,9 @@ ProcessQuery(Query *parsetree,
 	 * Now, we close down all the scans and free allocated resources.
 	 */
 	ExecutorEnd(queryDesc);
+
+	/* And take care of any queued AFTER triggers */
+	AfterTriggerEndQuery();
 
 	FreeQueryDesc(queryDesc);
 }
@@ -289,6 +298,13 @@ PortalStart(Portal portal, ParamListInfo params)
 											None_Receiver,
 											params,
 											false);
+
+				/*
+				 * We do *not* call AfterTriggerBeginQuery() here.  We
+				 * assume that a SELECT cannot queue any triggers.  It
+				 * would be messy to support triggers since the execution
+				 * of the portal may be interleaved with other queries.
+				 */
 
 				/*
 				 * Call ExecStart to prepare the plan for execution
@@ -1144,8 +1160,8 @@ DoPortalRunFetch(Portal portal,
 				return PortalRunSelect(portal, false, 1L, dest);
 			}
 			else
-/* count == 0 */
 			{
+				/* count == 0 */
 				/* Rewind to start, return zero rows */
 				DoPortalRewind(portal);
 				return PortalRunSelect(portal, true, 0L, dest);
@@ -1173,8 +1189,8 @@ DoPortalRunFetch(Portal portal,
 				return PortalRunSelect(portal, false, 1L, dest);
 			}
 			else
-/* count == 0 */
 			{
+				/* count == 0 */
 				/* Same as FETCH FORWARD 0, so fall out of switch */
 				fdirection = FETCH_FORWARD;
 			}

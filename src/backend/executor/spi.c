@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.125 2004/08/29 05:06:42 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.126 2004/09/10 18:39:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,7 @@
 
 #include "access/printtup.h"
 #include "catalog/heap.h"
+#include "commands/trigger.h"
 #include "executor/spi_priv.h"
 #include "tcop/tcopprot.h"
 #include "utils/lsyscache.h"
@@ -1434,6 +1435,8 @@ _SPI_pquery(QueryDesc *queryDesc, bool runit,
 		ResetUsage();
 #endif
 
+	AfterTriggerBeginQuery();
+
 	ExecutorStart(queryDesc, useCurrentSnapshot, false);
 
 	ExecutorRun(queryDesc, ForwardScanDirection, (long) tcount);
@@ -1447,6 +1450,11 @@ _SPI_pquery(QueryDesc *queryDesc, bool runit,
 			elog(ERROR, "consistency check on SPI tuple count failed");
 	}
 
+	ExecutorEnd(queryDesc);
+
+	/* Take care of any queued AFTER triggers */
+	AfterTriggerEndQuery();
+
 	if (queryDesc->dest->mydest == SPI)
 	{
 		SPI_processed = _SPI_current->processed;
@@ -1458,8 +1466,6 @@ _SPI_pquery(QueryDesc *queryDesc, bool runit,
 		/* Don't return SPI_OK_SELECT if we discarded the result */
 		res = SPI_OK_UTILITY;
 	}
-
-	ExecutorEnd(queryDesc);
 
 	FreeQueryDesc(queryDesc);
 

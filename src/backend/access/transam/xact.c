@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.186 2004/09/06 17:56:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.187 2004/09/10 18:39:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -138,7 +138,6 @@ static void CleanupSubTransaction(void);
 static void StartAbortedSubTransaction(void);
 static void PushTransaction(void);
 static void PopTransaction(void);
-static void CommitTransactionToLevel(int level);
 static char *CleanupAbortedSubTransactions(bool returnName);
 
 static void AtSubAbort_Memory(void);
@@ -1219,7 +1218,7 @@ StartTransaction(void)
 	 */
 	AtStart_Inval();
 	AtStart_Cache();
-	DeferredTriggerBeginXact();
+	AfterTriggerBeginXact();
 
 	/*
 	 * done with start processing, set current transaction state to "in
@@ -1253,7 +1252,7 @@ CommitTransaction(void)
 	 * committed. He'll invoke all trigger deferred until XACT before we
 	 * really start on committing the transaction.
 	 */
-	DeferredTriggerEndXact();
+	AfterTriggerEndXact();
 
 	/*
 	 * Similarly, let ON COMMIT management do its thing before we start to
@@ -1454,7 +1453,7 @@ AbortTransaction(void)
 	/*
 	 * do abort processing
 	 */
-	DeferredTriggerAbortXact();
+	AfterTriggerAbortXact();
 	AtAbort_Portals();
 	AtEOXact_LargeObject(false);	/* 'false' means it's abort */
 	AtAbort_Notify();
@@ -1672,12 +1671,6 @@ CommitTransactionCommand(void)
 			 * default state.
 			 */
 		case TBLOCK_END:
-			/* commit all open subtransactions */
-			if (s->nestingLevel > 1)
-				CommitTransactionToLevel(2);
-			s = CurrentTransactionState;
-			Assert(s->parent == NULL);
-			/* and now the outer transaction */
 			CommitTransaction();
 			s->blockState = TBLOCK_DEFAULT;
 			break;
@@ -1732,11 +1725,10 @@ CommitTransactionCommand(void)
 			break;
 
 			/*
-			 * We were issued a RELEASE command, so we end the current
-			 * subtransaction and return to the parent transaction.
-			 *
-			 * Since RELEASE can exit multiple levels of subtransaction, we
-			 * must loop here until we get out of all SUBEND'ed levels.
+			 * We were issued a COMMIT or RELEASE command, so we end the
+			 * current subtransaction and return to the parent transaction.
+			 * Lather, rinse, and repeat until we get out of all SUBEND'ed
+			 * subtransaction levels.
 			 */
 		case TBLOCK_SUBEND:
 			do
@@ -1745,6 +1737,13 @@ CommitTransactionCommand(void)
 				PopTransaction();
 				s = CurrentTransactionState;	/* changed by pop */
 			} while (s->blockState == TBLOCK_SUBEND);
+			/* If we had a COMMIT command, finish off the main xact too */
+			if (s->blockState == TBLOCK_END)
+			{
+				Assert(s->parent == NULL);
+				CommitTransaction();
+				s->blockState = TBLOCK_DEFAULT;
+			}
 			break;
 
 			/*
@@ -2238,7 +2237,6 @@ EndTransactionBlock(void)
 			 * the default state.
 			 */
 		case TBLOCK_INPROGRESS:
-		case TBLOCK_SUBINPROGRESS:
 			s->blockState = TBLOCK_END;
 			result = true;
 			break;
@@ -2252,6 +2250,22 @@ EndTransactionBlock(void)
 			 */
 		case TBLOCK_ABORT:
 			s->blockState = TBLOCK_ENDABORT;
+			break;
+
+			/*
+			 * We are in a live subtransaction block.  Set up to subcommit
+			 * all open subtransactions and then commit the main transaction.
+			 */
+		case TBLOCK_SUBINPROGRESS:
+			while (s->parent != NULL)
+			{
+				Assert(s->blockState == TBLOCK_SUBINPROGRESS);
+				s->blockState = TBLOCK_SUBEND;
+				s = s->parent;
+			}
+			Assert(s->blockState == TBLOCK_INPROGRESS);
+			s->blockState = TBLOCK_END;
+			result = true;
 			break;
 
 			/*
@@ -2699,8 +2713,12 @@ ReleaseCurrentSubTransaction(void)
 	if (s->blockState != TBLOCK_SUBINPROGRESS)
 		elog(ERROR, "ReleaseCurrentSubTransaction: unexpected state %s",
 			 BlockStateAsString(s->blockState));
+	Assert(s->state == TRANS_INPROGRESS);
 	MemoryContextSwitchTo(CurTransactionContext);
-	CommitTransactionToLevel(GetCurrentTransactionNestLevel());
+	CommitSubTransaction();
+	PopTransaction();
+	s = CurrentTransactionState; /* changed by pop */
+	Assert(s->state == TRANS_INPROGRESS);
 }
 
 /*
@@ -2825,28 +2843,6 @@ AbortOutOfAnyTransaction(void)
 
 	/* Should be out of all subxacts now */
 	Assert(s->parent == NULL);
-}
-
-/*
- * CommitTransactionToLevel
- *
- * Commit everything from the current transaction level
- * up to the specified level (inclusive).
- */
-static void
-CommitTransactionToLevel(int level)
-{
-	TransactionState s = CurrentTransactionState;
-
-	Assert(s->state == TRANS_INPROGRESS);
-
-	while (s->nestingLevel >= level)
-	{
-		CommitSubTransaction();
-		PopTransaction();
-		s = CurrentTransactionState;	/* changed by pop */
-		Assert(s->state == TRANS_INPROGRESS);
-	}
 }
 
 /*
@@ -2975,7 +2971,7 @@ StartSubTransaction(void)
 	 */
 	AtSubStart_Inval();
 	AtSubStart_Notify();
-	DeferredTriggerBeginSubXact();
+	AfterTriggerBeginSubXact();
 
 	s->state = TRANS_INPROGRESS;
 
@@ -3011,7 +3007,7 @@ CommitSubTransaction(void)
 	AtSubCommit_childXids();
 
 	/* Post-commit cleanup */
-	DeferredTriggerEndSubXact(true);
+	AfterTriggerEndSubXact(true);
 	AtSubCommit_Portals(s->parent->transactionIdData,
 						s->parent->curTransactionOwner);
 	AtEOSubXact_LargeObject(true, s->transactionIdData,
@@ -3101,7 +3097,7 @@ AbortSubTransaction(void)
 	 */
 	AtSubAbort_Memory();
 
-	DeferredTriggerEndSubXact(false);
+	AfterTriggerEndSubXact(false);
 	AtSubAbort_Portals(s->parent->transactionIdData,
 					   s->parent->curTransactionOwner);
 	AtEOSubXact_LargeObject(false, s->transactionIdData,

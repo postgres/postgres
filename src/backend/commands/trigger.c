@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.171 2004/09/08 23:47:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.172 2004/09/10 18:39:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,7 +48,7 @@ static HeapTuple GetTupleForTrigger(EState *estate,
 static HeapTuple ExecCallTriggerFunc(TriggerData *trigdata,
 					FmgrInfo *finfo,
 					MemoryContext per_tuple_context);
-static void DeferredTriggerSaveEvent(ResultRelInfo *relinfo, int event,
+static void AfterTriggerSaveEvent(ResultRelInfo *relinfo, int event,
 				   bool row_trigger, HeapTuple oldtup, HeapTuple newtup);
 
 
@@ -1219,8 +1219,8 @@ ExecASInsertTriggers(EState *estate, ResultRelInfo *relinfo)
 	TriggerDesc *trigdesc = relinfo->ri_TrigDesc;
 
 	if (trigdesc && trigdesc->n_after_statement[TRIGGER_EVENT_INSERT] > 0)
-		DeferredTriggerSaveEvent(relinfo, TRIGGER_EVENT_INSERT,
-								 false, NULL, NULL);
+		AfterTriggerSaveEvent(relinfo, TRIGGER_EVENT_INSERT,
+							  false, NULL, NULL);
 }
 
 HeapTuple
@@ -1272,8 +1272,8 @@ ExecARInsertTriggers(EState *estate, ResultRelInfo *relinfo,
 	TriggerDesc *trigdesc = relinfo->ri_TrigDesc;
 
 	if (trigdesc && trigdesc->n_after_row[TRIGGER_EVENT_INSERT] > 0)
-		DeferredTriggerSaveEvent(relinfo, TRIGGER_EVENT_INSERT,
-								 true, NULL, trigtuple);
+		AfterTriggerSaveEvent(relinfo, TRIGGER_EVENT_INSERT,
+							  true, NULL, trigtuple);
 }
 
 void
@@ -1332,8 +1332,8 @@ ExecASDeleteTriggers(EState *estate, ResultRelInfo *relinfo)
 	TriggerDesc *trigdesc = relinfo->ri_TrigDesc;
 
 	if (trigdesc && trigdesc->n_after_statement[TRIGGER_EVENT_DELETE] > 0)
-		DeferredTriggerSaveEvent(relinfo, TRIGGER_EVENT_DELETE,
-								 false, NULL, NULL);
+		AfterTriggerSaveEvent(relinfo, TRIGGER_EVENT_DELETE,
+							  false, NULL, NULL);
 }
 
 bool
@@ -1399,8 +1399,8 @@ ExecARDeleteTriggers(EState *estate, ResultRelInfo *relinfo,
 												   (CommandId) 0,
 												   NULL);
 
-		DeferredTriggerSaveEvent(relinfo, TRIGGER_EVENT_DELETE,
-								 true, trigtuple, NULL);
+		AfterTriggerSaveEvent(relinfo, TRIGGER_EVENT_DELETE,
+							  true, trigtuple, NULL);
 		heap_freetuple(trigtuple);
 	}
 }
@@ -1461,8 +1461,8 @@ ExecASUpdateTriggers(EState *estate, ResultRelInfo *relinfo)
 	TriggerDesc *trigdesc = relinfo->ri_TrigDesc;
 
 	if (trigdesc && trigdesc->n_after_statement[TRIGGER_EVENT_UPDATE] > 0)
-		DeferredTriggerSaveEvent(relinfo, TRIGGER_EVENT_UPDATE,
-								 false, NULL, NULL);
+		AfterTriggerSaveEvent(relinfo, TRIGGER_EVENT_UPDATE,
+							  false, NULL, NULL);
 }
 
 HeapTuple
@@ -1535,8 +1535,8 @@ ExecARUpdateTriggers(EState *estate, ResultRelInfo *relinfo,
 												   (CommandId) 0,
 												   NULL);
 
-		DeferredTriggerSaveEvent(relinfo, TRIGGER_EVENT_UPDATE,
-								 true, trigtuple, newtuple);
+		AfterTriggerSaveEvent(relinfo, TRIGGER_EVENT_UPDATE,
+							  true, trigtuple, newtuple);
 		heap_freetuple(trigtuple);
 	}
 }
@@ -1635,87 +1635,35 @@ ltrmark:;
 
 
 /* ----------
- * Deferred trigger stuff
+ * After-trigger stuff
  *
- * The DeferredTriggersData struct holds data about pending deferred
- * trigger events during the current transaction tree.	The struct and
- * most of its subsidiary data are kept in TopTransactionContext; however
+ * The AfterTriggersData struct holds data about pending AFTER trigger events
+ * during the current transaction tree.  (BEFORE triggers are fired
+ * immediately so we don't need any persistent state about them.)  The struct
+ * and most of its subsidiary data are kept in TopTransactionContext; however
  * the individual event records are kept in CurTransactionContext, so that
  * they will easily go away during subtransaction abort.
  *
- * DeferredTriggersData has the following fields:
- *
- * state keeps track of the deferred state of each trigger
- * (including the global state).  This is saved and restored across
- * failed subtransactions.
- *
- * events is the head of the list of events.
- *
- * tail_thisxact points to the tail of the list, for the current
- * transaction (whether main transaction or subtransaction).  We always
- * append to the list using this pointer.
- *
- * events_imm points to the last element scanned by the last
- * deferredTriggerInvokeEvents call.  We can use this to avoid rescanning
- * unnecessarily; if it's NULL, the scan should start at the head of the
- * list.  Its name comes from the fact that it's set to the last event fired
- * by the last call to immediate triggers.
- *
- * tail_stack and imm_stack are stacks of pointer, which hold the pointers
- * to the tail and the "immediate" events as of the start of a subtransaction.
- * We use to revert them when aborting the subtransaction.
- *
- * state_stack is a stack of pointers to saved copies of the deferred-trigger
- * state data; each subtransaction level that modifies that state first
- * saves a copy, which we use to restore the state if we abort.
- *
- * We use GetCurrentTransactionNestLevel() to determine the correct array
- * index in these stacks.  numalloc is the number of allocated entries in
- * each stack.  (By not keeping our own stack pointer, we can avoid trouble
- * in cases where errors during subxact abort cause multiple invocations
- * of DeferredTriggerEndSubXact() at the same nesting depth.)
+ * Because the list of pending events can grow large, we go to some effort
+ * to minimize memory consumption.  We do not use the generic List mechanism
+ * but thread the events manually.
  *
  * XXX We need to be able to save the per-event data in a file if it grows too
  * large.
  * ----------
  */
 
-/* Per-item data */
-typedef struct DeferredTriggerEventItem
+/* Per-trigger SET CONSTRAINT status */
+typedef struct SetConstraintTriggerData
 {
-	Oid			dti_tgoid;
-	TransactionId dti_done_xid;
-	int32		dti_state;
-} DeferredTriggerEventItem;
+	Oid			sct_tgoid;
+	bool		sct_tgisdeferred;
+} SetConstraintTriggerData;
 
-typedef struct DeferredTriggerEventData *DeferredTriggerEvent;
-
-/* Per-event data */
-typedef struct DeferredTriggerEventData
-{
-	DeferredTriggerEvent dte_next;		/* list link */
-	int32		dte_event;
-	Oid			dte_relid;
-	TransactionId dte_done_xid;
-	ItemPointerData dte_oldctid;
-	ItemPointerData dte_newctid;
-	int32		dte_n_items;
-	/* dte_item is actually a variable-size array, of length dte_n_items */
-	DeferredTriggerEventItem dte_item[1];
-} DeferredTriggerEventData;
-
-/* Per-trigger status data */
-typedef struct DeferredTriggerStatusData
-{
-	Oid			dts_tgoid;
-	bool		dts_tgisdeferred;
-} DeferredTriggerStatusData;
-
-typedef struct DeferredTriggerStatusData *DeferredTriggerStatus;
-
+typedef struct SetConstraintTriggerData *SetConstraintTrigger;
 
 /*
- * Trigger deferral status data.
+ * SET CONSTRAINT intra-transaction status.
  *
  * We make this a single palloc'd object so it can be copied and freed easily.
  *
@@ -1724,62 +1672,148 @@ typedef struct DeferredTriggerStatusData *DeferredTriggerStatus;
  *
  * trigstates[] stores per-trigger tgisdeferred settings.
  */
-typedef struct DeferredTriggerStateData
+typedef struct SetConstraintStateData
 {
 	bool		all_isset;
 	bool		all_isdeferred;
 	int			numstates;		/* number of trigstates[] entries in use */
 	int			numalloc;		/* allocated size of trigstates[] */
-	DeferredTriggerStatusData trigstates[1];	/* VARIABLE LENGTH ARRAY */
-} DeferredTriggerStateData;
+	SetConstraintTriggerData trigstates[1];	/* VARIABLE LENGTH ARRAY */
+} SetConstraintStateData;
 
-typedef DeferredTriggerStateData *DeferredTriggerState;
+typedef SetConstraintStateData *SetConstraintState;
 
-/* Per-transaction data */
-typedef struct DeferredTriggersData
+
+/*
+ * Per-trigger-event data
+ *
+ * Note: ate_firing_id is meaningful when either AFTER_TRIGGER_DONE
+ * or AFTER_TRIGGER_IN_PROGRESS is set.  It indicates which trigger firing
+ * cycle the trigger was or will be fired in.
+ */
+typedef struct AfterTriggerEventData *AfterTriggerEvent;
+
+typedef struct AfterTriggerEventData
 {
-	DeferredTriggerState state;
-	DeferredTriggerEvent events;
-	DeferredTriggerEvent tail_thisxact;
-	DeferredTriggerEvent events_imm;
-	DeferredTriggerEvent *tail_stack;
-	DeferredTriggerEvent *imm_stack;
-	DeferredTriggerState *state_stack;
-	int			numalloc;
-} DeferredTriggersData;
+	AfterTriggerEvent ate_next;			/* list link */
+	TriggerEvent ate_event;				/* event type and status bits */
+	CommandId	ate_firing_id;			/* ID for firing cycle */
+	Oid			ate_tgoid;				/* the trigger's ID */
+	Oid			ate_relid;				/* the relation it's on */
+	ItemPointerData ate_oldctid;		/* specific tuple(s) involved */
+	ItemPointerData ate_newctid;
+} AfterTriggerEventData;
 
-typedef DeferredTriggersData *DeferredTriggers;
+/* A list of events */
+typedef struct AfterTriggerEventList
+{
+	AfterTriggerEvent head;
+	AfterTriggerEvent tail;
+} AfterTriggerEventList;
 
-static DeferredTriggers deferredTriggers;
+
+/*
+ * All per-transaction data for the AFTER TRIGGERS module.
+ *
+ * AfterTriggersData has the following fields:
+ *
+ * firing_counter is incremented for each call of afterTriggerInvokeEvents.
+ * We mark firable events with the current firing cycle's ID so that we can
+ * tell which ones to work on.  This ensures sane behavior if a trigger
+ * function chooses to do SET CONSTRAINTS: the inner SET CONSTRAINTS will
+ * only fire those events that weren't already scheduled for firing.
+ *
+ * state keeps track of the transaction-local effects of SET CONSTRAINTS.
+ * This is saved and restored across failed subtransactions.
+ *
+ * events is the current list of deferred events.  This is global across
+ * all subtransactions of the current transaction.  In a subtransaction
+ * abort, we know that the events added by the subtransaction are at the
+ * end of the list, so it is relatively easy to discard them.
+ *
+ * query_depth is the current depth of nested AfterTriggerBeginQuery calls
+ * (-1 when the stack is empty).
+ *
+ * query_stack[query_depth] is a list of AFTER trigger events queued by the
+ * current query (and the query_stack entries below it are lists of trigger
+ * events queued by calling queries).  None of these are valid until the
+ * matching AfterTriggerEndQuery call occurs.  At that point we fire
+ * immediate-mode triggers, and append any deferred events to the main events
+ * list.
+ *
+ * maxquerydepth is just the allocated length of query_stack.
+ *
+ * state_stack is a stack of pointers to saved copies of the SET CONSTRAINTS
+ * state data; each subtransaction level that modifies that state first
+ * saves a copy, which we use to restore the state if we abort.
+ *
+ * events_stack is a stack of copies of the events head/tail pointers,
+ * which we use to restore those values during subtransaction abort.
+ *
+ * depth_stack is a stack of copies of subtransaction-start-time query_depth,
+ * which we similarly use to clean up at subtransaction abort.
+ *
+ * firing_stack is a stack of copies of subtransaction-start-time
+ * firing_counter.  We use this to recognize which deferred triggers were
+ * fired (or marked for firing) within an aborted subtransaction.
+ *
+ * We use GetCurrentTransactionNestLevel() to determine the correct array
+ * index in these stacks.  maxtransdepth is the number of allocated entries in
+ * each stack.  (By not keeping our own stack pointer, we can avoid trouble
+ * in cases where errors during subxact abort cause multiple invocations
+ * of AfterTriggerEndSubXact() at the same nesting depth.)
+ */
+typedef struct AfterTriggersData
+{
+	CommandId	firing_counter;			/* next firing ID to assign */
+	SetConstraintState state;			/* the active S C state */
+	AfterTriggerEventList events;		/* deferred-event list */
+	int			query_depth;			/* current query list index */
+	AfterTriggerEventList *query_stack;	/* events pending from each query */
+	int			maxquerydepth;			/* allocated len of above array */
+
+	/* these fields are just for resetting at subtrans abort: */
+
+	SetConstraintState *state_stack;	/* stacked S C states */
+	AfterTriggerEventList *events_stack; /* stacked list pointers */
+	int		   *depth_stack;			/* stacked query_depths */
+	CommandId  *firing_stack;			/* stacked firing_counters */
+	int			maxtransdepth;			/* allocated len of above arrays */
+} AfterTriggersData;
+
+typedef AfterTriggersData *AfterTriggers;
+
+static AfterTriggers afterTriggers;
 
 
-static void DeferredTriggerExecute(DeferredTriggerEvent event, int itemno,
-					Relation rel, TriggerDesc *trigdesc, FmgrInfo *finfo,
-					   MemoryContext per_tuple_context);
-static DeferredTriggerState DeferredTriggerStateCreate(int numalloc);
-static DeferredTriggerState DeferredTriggerStateCopy(DeferredTriggerState state);
-static DeferredTriggerState DeferredTriggerStateAddItem(DeferredTriggerState state,
+static void AfterTriggerExecute(AfterTriggerEvent event,
+								Relation rel, TriggerDesc *trigdesc,
+								FmgrInfo *finfo,
+								MemoryContext per_tuple_context);
+static SetConstraintState SetConstraintStateCreate(int numalloc);
+static SetConstraintState SetConstraintStateCopy(SetConstraintState state);
+static SetConstraintState SetConstraintStateAddItem(SetConstraintState state,
 							Oid tgoid, bool tgisdeferred);
 
 
 /* ----------
- * deferredTriggerCheckState()
+ * afterTriggerCheckState()
  *
  *	Returns true if the trigger identified by tgoid is actually
  *	in state DEFERRED.
  * ----------
  */
 static bool
-deferredTriggerCheckState(Oid tgoid, int32 itemstate)
+afterTriggerCheckState(Oid tgoid, TriggerEvent eventstate)
 {
-	DeferredTriggerState state = deferredTriggers->state;
+	SetConstraintState state = afterTriggers->state;
 	int			i;
 
 	/*
 	 * For not-deferrable triggers (i.e. normal AFTER ROW triggers and
 	 * constraints declared NOT DEFERRABLE), the state is always false.
 	 */
-	if ((itemstate & TRIGGER_DEFERRED_DEFERRABLE) == 0)
+	if ((eventstate & AFTER_TRIGGER_DEFERRABLE) == 0)
 		return false;
 
 	/*
@@ -1787,8 +1821,8 @@ deferredTriggerCheckState(Oid tgoid, int32 itemstate)
 	 */
 	for (i = 0; i < state->numstates; i++)
 	{
-		if (state->trigstates[i].dts_tgoid == tgoid)
-			return state->trigstates[i].dts_tgisdeferred;
+		if (state->trigstates[i].sct_tgoid == tgoid)
+			return state->trigstates[i].sct_tgisdeferred;
 	}
 
 	/*
@@ -1800,37 +1834,43 @@ deferredTriggerCheckState(Oid tgoid, int32 itemstate)
 	/*
 	 * Otherwise return the default state for the trigger.
 	 */
-	return ((itemstate & TRIGGER_DEFERRED_INITDEFERRED) != 0);
+	return ((eventstate & AFTER_TRIGGER_INITDEFERRED) != 0);
 }
 
 
 /* ----------
- * deferredTriggerAddEvent()
+ * afterTriggerAddEvent()
  *
- *	Add a new trigger event to the queue.
+ *	Add a new trigger event to the current query's queue.
  * ----------
  */
 static void
-deferredTriggerAddEvent(DeferredTriggerEvent event)
+afterTriggerAddEvent(AfterTriggerEvent event)
 {
-	Assert(event->dte_next == NULL);
+	AfterTriggerEventList *events;
 
-	if (deferredTriggers->tail_thisxact == NULL)
+	Assert(event->ate_next == NULL);
+
+	/* Must be inside a query */
+	Assert(afterTriggers->query_depth >= 0);
+
+	events = &afterTriggers->query_stack[afterTriggers->query_depth];
+	if (events->tail == NULL)
 	{
 		/* first list entry */
-		deferredTriggers->events = event;
-		deferredTriggers->tail_thisxact = event;
+		events->head = event;
+		events->tail = event;
 	}
 	else
 	{
-		deferredTriggers->tail_thisxact->dte_next = event;
-		deferredTriggers->tail_thisxact = event;
+		events->tail->ate_next = event;
+		events->tail = event;
 	}
 }
 
 
 /* ----------
- * DeferredTriggerExecute()
+ * AfterTriggerExecute()
  *
  *	Fetch the required tuples back from the heap and fire one
  *	single trigger function.
@@ -1840,7 +1880,6 @@ deferredTriggerAddEvent(DeferredTriggerEvent event)
  *	fmgr lookup cache space at the caller level.
  *
  *	event: event currently being fired.
- *	itemno: item within event currently being fired.
  *	rel: open relation for event.
  *	trigdesc: working copy of rel's trigger info.
  *	finfo: array of fmgr lookup cache entries (one per trigger in trigdesc).
@@ -1848,11 +1887,11 @@ deferredTriggerAddEvent(DeferredTriggerEvent event)
  * ----------
  */
 static void
-DeferredTriggerExecute(DeferredTriggerEvent event, int itemno,
+AfterTriggerExecute(AfterTriggerEvent event,
 					Relation rel, TriggerDesc *trigdesc, FmgrInfo *finfo,
-					   MemoryContext per_tuple_context)
+					MemoryContext per_tuple_context)
 {
-	Oid			tgoid = event->dte_item[itemno].dti_tgoid;
+	Oid			tgoid = event->ate_tgoid;
 	TriggerData LocTriggerData;
 	HeapTupleData oldtuple;
 	HeapTupleData newtuple;
@@ -1864,26 +1903,26 @@ DeferredTriggerExecute(DeferredTriggerEvent event, int itemno,
 	/*
 	 * Fetch the required OLD and NEW tuples.
 	 */
-	if (ItemPointerIsValid(&(event->dte_oldctid)))
+	if (ItemPointerIsValid(&(event->ate_oldctid)))
 	{
-		ItemPointerCopy(&(event->dte_oldctid), &(oldtuple.t_self));
+		ItemPointerCopy(&(event->ate_oldctid), &(oldtuple.t_self));
 		if (!heap_fetch(rel, SnapshotAny, &oldtuple, &oldbuffer, false, NULL))
-			elog(ERROR, "failed to fetch old tuple for deferred trigger");
+			elog(ERROR, "failed to fetch old tuple for AFTER trigger");
 	}
 
-	if (ItemPointerIsValid(&(event->dte_newctid)))
+	if (ItemPointerIsValid(&(event->ate_newctid)))
 	{
-		ItemPointerCopy(&(event->dte_newctid), &(newtuple.t_self));
+		ItemPointerCopy(&(event->ate_newctid), &(newtuple.t_self));
 		if (!heap_fetch(rel, SnapshotAny, &newtuple, &newbuffer, false, NULL))
-			elog(ERROR, "failed to fetch new tuple for deferred trigger");
+			elog(ERROR, "failed to fetch new tuple for AFTER trigger");
 	}
 
 	/*
 	 * Setup the trigger information
 	 */
 	LocTriggerData.type = T_TriggerData;
-	LocTriggerData.tg_event = (event->dte_event & TRIGGER_EVENT_OPMASK) |
-		(event->dte_event & TRIGGER_EVENT_ROW);
+	LocTriggerData.tg_event =
+		event->ate_event & (TRIGGER_EVENT_OPMASK | TRIGGER_EVENT_ROW);
 	LocTriggerData.tg_relation = rel;
 
 	LocTriggerData.tg_trigger = NULL;
@@ -1898,7 +1937,7 @@ DeferredTriggerExecute(DeferredTriggerEvent event, int itemno,
 	if (LocTriggerData.tg_trigger == NULL)
 		elog(ERROR, "could not find trigger %u", tgoid);
 
-	switch (event->dte_event & TRIGGER_EVENT_OPMASK)
+	switch (event->ate_event & TRIGGER_EVENT_OPMASK)
 	{
 		case TRIGGER_EVENT_INSERT:
 			LocTriggerData.tg_trigtuple = &newtuple;
@@ -1916,6 +1955,8 @@ DeferredTriggerExecute(DeferredTriggerEvent event, int itemno,
 			break;
 	}
 
+	MemoryContextReset(per_tuple_context);
+
 	/*
 	 * Call the trigger and throw away any eventually returned updated
 	 * tuple.
@@ -1929,290 +1970,409 @@ DeferredTriggerExecute(DeferredTriggerEvent event, int itemno,
 	/*
 	 * Release buffers
 	 */
-	if (ItemPointerIsValid(&(event->dte_oldctid)))
+	if (ItemPointerIsValid(&(event->ate_oldctid)))
 		ReleaseBuffer(oldbuffer);
-	if (ItemPointerIsValid(&(event->dte_newctid)))
+	if (ItemPointerIsValid(&(event->ate_newctid)))
 		ReleaseBuffer(newbuffer);
 }
 
 
-/* ----------
- * deferredTriggerInvokeEvents()
+/*
+ * afterTriggerMarkEvents()
  *
- *	Scan the event queue for not yet invoked triggers. Check if they
- *	should be invoked now and do so.
+ *	Scan the given event list for not yet invoked events.  Mark the ones
+ *	that can be invoked now with the current firing ID.
+ *
+ *	If move_list isn't NULL, events that are not to be invoked now are
+ *	removed from the given list and appended to move_list.
+ *
+ *	When immediate_only is TRUE, do not invoke currently-deferred triggers.
+ *	(This will be FALSE only at main transaction exit.)
+ *
+ *	Returns TRUE if any invokable events were found.
+ */
+static bool
+afterTriggerMarkEvents(AfterTriggerEventList *events,
+					   AfterTriggerEventList *move_list,
+					   bool immediate_only)
+{
+	bool		found = false;
+	AfterTriggerEvent event,
+				prev_event;
+
+	prev_event = NULL;
+	event = events->head;
+
+	while (event != NULL)
+	{
+		bool		defer_it = false;
+		AfterTriggerEvent next_event;
+
+		if (!(event->ate_event &
+			  (AFTER_TRIGGER_DONE | AFTER_TRIGGER_IN_PROGRESS)))
+		{
+			/*
+			 * This trigger hasn't been called or scheduled yet. Check if we
+			 * should call it now.
+			 */
+			if (immediate_only &&
+				afterTriggerCheckState(event->ate_tgoid, event->ate_event))
+			{
+				defer_it = true;
+			}
+			else
+			{
+				/*
+				 * Mark it as to be fired in this firing cycle.
+				 */
+				event->ate_firing_id = afterTriggers->firing_counter;
+				event->ate_event |= AFTER_TRIGGER_IN_PROGRESS;
+				found = true;
+			}
+		}
+
+		/*
+		 * If it's deferred, move it to move_list, if requested.
+		 */
+		next_event = event->ate_next;
+
+		if (defer_it && move_list != NULL)
+		{
+			/* Delink it from input list */
+			if (prev_event)
+				prev_event->ate_next = next_event;
+			else
+				events->head = next_event;
+			/* and add it to move_list */
+			event->ate_next = NULL;
+			if (move_list->tail == NULL)
+			{
+				/* first list entry */
+				move_list->head = event;
+				move_list->tail = event;
+			}
+			else
+			{
+				move_list->tail->ate_next = event;
+				move_list->tail = event;
+			}
+		}
+		else
+		{
+			/* Keep it in input list */
+			prev_event = event;
+		}
+
+		event = next_event;
+	}
+
+	/* Update list tail pointer in case we moved tail event */
+	events->tail = prev_event;
+
+	return found;
+}
+
+/* ----------
+ * afterTriggerInvokeEvents()
+ *
+ *	Scan the given event list for events that are marked as to be fired
+ *	in the current firing cycle, and fire them.
+ *
+ *	When delete_ok is TRUE, it's okay to delete fully-processed events.
+ *	The events list pointers are updated.
  * ----------
  */
 static void
-deferredTriggerInvokeEvents(bool immediate_only)
+afterTriggerInvokeEvents(AfterTriggerEventList *events,
+						 CommandId firing_id,
+						 bool delete_ok)
 {
-	DeferredTriggerEvent event,
+	AfterTriggerEvent event,
 				prev_event;
 	MemoryContext per_tuple_context;
 	Relation	rel = NULL;
 	TriggerDesc *trigdesc = NULL;
 	FmgrInfo   *finfo = NULL;
 
-	/*
-	 * If immediate_only is true, we remove fully-processed events from
-	 * the event queue to recycle space.  If immediate_only is false, we
-	 * are going to discard the whole event queue on return anyway, so no
-	 * need to bother with "retail" pfree's.
-	 *
-	 * If immediate_only is true, we need only scan from where the end of the
-	 * queue was at the previous deferredTriggerInvokeEvents call; any
-	 * non-deferred events before that point are already fired. (But if
-	 * the deferral state changes, we must reset the saved position to the
-	 * beginning of the queue, so as to process all events once with the
-	 * new states.	See DeferredTriggerSetState.)
-	 */
-
 	/* Make a per-tuple memory context for trigger function calls */
 	per_tuple_context =
 		AllocSetContextCreate(CurrentMemoryContext,
-							  "DeferredTriggerTupleContext",
+							  "AfterTriggerTupleContext",
 							  ALLOCSET_DEFAULT_MINSIZE,
 							  ALLOCSET_DEFAULT_INITSIZE,
 							  ALLOCSET_DEFAULT_MAXSIZE);
 
-	/*
-	 * If immediate_only is true, then the only events that could need
-	 * firing are those since events_imm.  (But if events_imm is NULL, we
-	 * must scan the entire list.)
-	 */
-	if (immediate_only && deferredTriggers->events_imm != NULL)
-	{
-		prev_event = deferredTriggers->events_imm;
-		event = prev_event->dte_next;
-	}
-	else
-	{
-		prev_event = NULL;
-		event = deferredTriggers->events;
-	}
+	prev_event = NULL;
+	event = events->head;
 
 	while (event != NULL)
 	{
-		bool		still_deferred_ones = false;
-		DeferredTriggerEvent next_event;
-		int			i;
+		AfterTriggerEvent next_event;
 
 		/*
-		 * Skip executing cancelled events, and events already done,
-		 * unless they were done by a subtransaction that later aborted.
+		 * Is it one for me to fire?
 		 */
-		if (!(event->dte_event & TRIGGER_DEFERRED_CANCELED) &&
-			!(event->dte_event & TRIGGER_DEFERRED_DONE &&
-			  TransactionIdIsValid(event->dte_done_xid) &&
-			  !TransactionIdDidAbort(event->dte_done_xid)))
+		if ((event->ate_event & AFTER_TRIGGER_IN_PROGRESS) &&
+			event->ate_firing_id == firing_id)
 		{
-			MemoryContextReset(per_tuple_context);
+			/*
+			 * So let's fire it... but first, open the correct
+			 * relation if this is not the same relation as before.
+			 */
+			if (rel == NULL || rel->rd_id != event->ate_relid)
+			{
+				if (rel)
+					heap_close(rel, NoLock);
+				if (trigdesc)
+					FreeTriggerDesc(trigdesc);
+				if (finfo)
+					pfree(finfo);
+
+				/*
+				 * We assume that an appropriate lock is still held by
+				 * the executor, so grab no new lock here.
+				 */
+				rel = heap_open(event->ate_relid, NoLock);
+
+				/*
+				 * Copy relation's trigger info so that we have a
+				 * stable copy no matter what the called triggers do.
+				 */
+				trigdesc = CopyTriggerDesc(rel->trigdesc);
+
+				if (trigdesc == NULL)		/* should not happen */
+					elog(ERROR, "relation %u has no triggers",
+						 event->ate_relid);
+
+				/*
+				 * Allocate space to cache fmgr lookup info for
+				 * triggers.
+				 */
+				finfo = (FmgrInfo *)
+					palloc0(trigdesc->numtriggers * sizeof(FmgrInfo));
+			}
 
 			/*
-			 * Check each trigger item in the event.
+			 * Fire it.  Note that the AFTER_TRIGGER_IN_PROGRESS flag is still
+			 * set, so recursive examinations of the event list won't try
+			 * to re-fire it.
 			 */
-			for (i = 0; i < event->dte_n_items; i++)
-			{
-				if (event->dte_item[i].dti_state & TRIGGER_DEFERRED_DONE &&
-				 TransactionIdIsValid(event->dte_item[i].dti_done_xid) &&
-				!(TransactionIdDidAbort(event->dte_item[i].dti_done_xid)))
-					continue;
+			AfterTriggerExecute(event, rel, trigdesc, finfo,
+								per_tuple_context);
 
-				/*
-				 * This trigger item hasn't been called yet. Check if we
-				 * should call it now.
-				 */
-				if (immediate_only &&
-				  deferredTriggerCheckState(event->dte_item[i].dti_tgoid,
-											event->dte_item[i].dti_state))
-				{
-					still_deferred_ones = true;
-					continue;
-				}
-
-				/*
-				 * So let's fire it... but first, open the correct
-				 * relation if this is not the same relation as before.
-				 */
-				if (rel == NULL || rel->rd_id != event->dte_relid)
-				{
-					if (rel)
-						heap_close(rel, NoLock);
-					FreeTriggerDesc(trigdesc);
-					if (finfo)
-						pfree(finfo);
-
-					/*
-					 * We assume that an appropriate lock is still held by
-					 * the executor, so grab no new lock here.
-					 */
-					rel = heap_open(event->dte_relid, NoLock);
-
-					/*
-					 * Copy relation's trigger info so that we have a
-					 * stable copy no matter what the called triggers do.
-					 */
-					trigdesc = CopyTriggerDesc(rel->trigdesc);
-
-					if (trigdesc == NULL)		/* should not happen */
-						elog(ERROR, "relation %u has no triggers",
-							 event->dte_relid);
-
-					/*
-					 * Allocate space to cache fmgr lookup info for
-					 * triggers.
-					 */
-					finfo = (FmgrInfo *)
-						palloc0(trigdesc->numtriggers * sizeof(FmgrInfo));
-				}
-
-				DeferredTriggerExecute(event, i, rel, trigdesc, finfo,
-									   per_tuple_context);
-
-				event->dte_item[i].dti_state |= TRIGGER_DEFERRED_DONE;
-				event->dte_item[i].dti_done_xid = GetCurrentTransactionId();
-			}					/* end loop over items within event */
+			/*
+			 * Mark the event as done.
+			 */
+			event->ate_event &= ~AFTER_TRIGGER_IN_PROGRESS;
+			event->ate_event |= AFTER_TRIGGER_DONE;
 		}
 
 		/*
-		 * If it's now completely done, throw it away.
+		 * If it's now done, throw it away, if allowed.
 		 *
-		 * NB: it's possible the trigger calls above added more events to the
+		 * NB: it's possible the trigger call above added more events to the
 		 * queue, or that calls we will do later will want to add more, so
-		 * we have to be careful about maintaining list validity here.
+		 * we have to be careful about maintaining list validity at all
+		 * points here.
 		 */
-		next_event = event->dte_next;
+		next_event = event->ate_next;
 
-		if (still_deferred_ones || !immediate_only)
+		if ((event->ate_event & AFTER_TRIGGER_DONE) && delete_ok)
 		{
-			/* Not done, keep in list */
-			prev_event = event;
+			/* Delink it from list and free it */
+			if (prev_event)
+				prev_event->ate_next = next_event;
+			else
+				events->head = next_event;
+			pfree(event);
 		}
 		else
 		{
-			/*
-			 * We can drop an item if it's done, but only if we're not
-			 * inside a subtransaction because it could abort later on. We
-			 * will want to check the item again if it does.
-			 */
-			if (!IsSubTransaction())
-			{
-				/* delink it from list and free it */
-				if (prev_event)
-					prev_event->dte_next = next_event;
-				else
-					deferredTriggers->events = next_event;
-				pfree(event);
-			}
-			else
-			{
-				/*
-				 * Mark the event-as-a-whole done, but keep it in the list.
-				 */
-				event->dte_event |= TRIGGER_DEFERRED_DONE;
-				event->dte_done_xid = GetCurrentTransactionId();
-				prev_event = event;
-			}
+			/* Keep it in list */
+			prev_event = event;
 		}
 
 		event = next_event;
 	}
 
 	/* Update list tail pointer in case we just deleted tail event */
-	deferredTriggers->tail_thisxact = prev_event;
-
-	/* Set the immediate event pointer for next time */
-	deferredTriggers->events_imm = prev_event;
+	events->tail = prev_event;
 
 	/* Release working resources */
 	if (rel)
 		heap_close(rel, NoLock);
-	FreeTriggerDesc(trigdesc);
+	if (trigdesc)
+		FreeTriggerDesc(trigdesc);
 	if (finfo)
 		pfree(finfo);
 	MemoryContextDelete(per_tuple_context);
 }
 
+
 /* ----------
- * DeferredTriggerBeginXact()
+ * AfterTriggerBeginXact()
  *
  *	Called at transaction start (either BEGIN or implicit for single
  *	statement outside of transaction block).
  * ----------
  */
 void
-DeferredTriggerBeginXact(void)
+AfterTriggerBeginXact(void)
 {
-	Assert(deferredTriggers == NULL);
-
-	deferredTriggers = (DeferredTriggers)
-		MemoryContextAlloc(TopTransactionContext,
-						   sizeof(DeferredTriggersData));
+	Assert(afterTriggers == NULL);
 
 	/*
-	 * If unspecified, constraints default to IMMEDIATE, per SQL
+	 * Build empty after-trigger state structure
 	 */
-	deferredTriggers->state = DeferredTriggerStateCreate(8);
-	deferredTriggers->events = NULL;
-	deferredTriggers->events_imm = NULL;
-	deferredTriggers->tail_thisxact = NULL;
-	deferredTriggers->tail_stack = NULL;
-	deferredTriggers->imm_stack = NULL;
-	deferredTriggers->state_stack = NULL;
-	deferredTriggers->numalloc = 0;
+	afterTriggers = (AfterTriggers)
+		MemoryContextAlloc(TopTransactionContext,
+						   sizeof(AfterTriggersData));
+
+	afterTriggers->firing_counter = FirstCommandId;
+	afterTriggers->state = SetConstraintStateCreate(8);
+	afterTriggers->events.head = NULL;
+	afterTriggers->events.tail = NULL;
+	afterTriggers->query_depth = -1;
+
+	/* We initialize the query stack to a reasonable size */
+	afterTriggers->query_stack = (AfterTriggerEventList *)
+		MemoryContextAlloc(TopTransactionContext,
+						   8 * sizeof(AfterTriggerEventList));
+	afterTriggers->maxquerydepth = 8;
+
+	/* Subtransaction stack is empty until/unless needed */
+	afterTriggers->state_stack = NULL;
+	afterTriggers->events_stack = NULL;
+	afterTriggers->depth_stack = NULL;
+	afterTriggers->firing_stack = NULL;
+	afterTriggers->maxtransdepth = 0;
 }
 
 
 /* ----------
- * DeferredTriggerEndQuery()
+ * AfterTriggerBeginQuery()
  *
- *	Called after one query sent down by the user has completely been
- *	processed. At this time we invoke all outstanding IMMEDIATE triggers.
+ *	Called just before we start processing a single query within a
+ *	transaction (or subtransaction).  Set up to record AFTER trigger
+ *	events queued by the query.  Note that it is allowed to have
+ *	nested queries within a (sub)transaction.
  * ----------
  */
 void
-DeferredTriggerEndQuery(void)
+AfterTriggerBeginQuery(void)
 {
-	/*
-	 * Ignore call if we aren't in a transaction.
-	 */
-	if (deferredTriggers == NULL)
-		return;
+	/* Must be inside a transaction */
+	Assert(afterTriggers != NULL);
 
-	deferredTriggerInvokeEvents(true);
+	/* Increase the query stack depth */
+	afterTriggers->query_depth++;
+
+	/*
+	 * Allocate more space in the query stack if needed.
+	 */
+	if (afterTriggers->query_depth >= afterTriggers->maxquerydepth)
+	{
+		/* repalloc will keep the stack in the same context */
+		int		new_alloc = afterTriggers->maxquerydepth * 2;
+
+		afterTriggers->query_stack = (AfterTriggerEventList *)
+			repalloc(afterTriggers->query_stack,
+					 new_alloc * sizeof(AfterTriggerEventList));
+		afterTriggers->maxquerydepth = new_alloc;
+	}
+
+	/* Initialize this query's list to empty */
+	afterTriggers->query_stack[afterTriggers->query_depth].head = NULL;
+	afterTriggers->query_stack[afterTriggers->query_depth].tail = NULL;
 }
 
 
 /* ----------
- * DeferredTriggerEndXact()
+ * AfterTriggerEndQuery()
+ *
+ *	Called after one query has been completely processed. At this time
+ *	we invoke all AFTER IMMEDIATE trigger events queued by the query, and
+ *	transfer deferred trigger events to the global deferred-trigger list.
+ * ----------
+ */
+void
+AfterTriggerEndQuery(void)
+{
+	AfterTriggerEventList *events;
+
+	/* Must be inside a transaction */
+	Assert(afterTriggers != NULL);
+
+	/* Must be inside a query, too */
+	Assert(afterTriggers->query_depth >= 0);
+
+	/*
+	 * Process all immediate-mode triggers queued by the query, and move
+	 * the deferred ones to the main list of deferred events.
+	 *
+	 * Notice that we decide which ones will be fired, and put the deferred
+	 * ones on the main list, before anything is actually fired.  This
+	 * ensures reasonably sane behavior if a trigger function does
+	 * SET CONSTRAINTS ... IMMEDIATE: all events we have decided to defer
+	 * will be available for it to fire.
+	 *
+	 * If we find no firable events, we don't have to increment firing_counter.
+	 */
+	events = &afterTriggers->query_stack[afterTriggers->query_depth];
+	if (afterTriggerMarkEvents(events, &afterTriggers->events, true))
+	{
+		CommandId		firing_id = afterTriggers->firing_counter++;
+
+		/* OK to delete the immediate events after processing them */
+		afterTriggerInvokeEvents(events, firing_id, true);
+	}
+
+	afterTriggers->query_depth--;
+}
+
+
+/* ----------
+ * AfterTriggerEndXact()
  *
  *	Called just before the current transaction is committed. At this
  *	time we invoke all DEFERRED triggers and tidy up.
  * ----------
  */
 void
-DeferredTriggerEndXact(void)
+AfterTriggerEndXact(void)
 {
+	AfterTriggerEventList *events;
+
+	/* Must be inside a transaction */
+	Assert(afterTriggers != NULL);
+
+	/* ... but not inside a query */
+	Assert(afterTriggers->query_depth == -1);
+
 	/*
-	 * Ignore call if we aren't in a transaction.
+	 * Run all the remaining triggers.  Loop until they are all gone,
+	 * just in case some trigger queues more for us to do.
 	 */
-	if (deferredTriggers == NULL)
-		return;
+	events = &afterTriggers->events;
+	while (afterTriggerMarkEvents(events, NULL, false))
+	{
+		CommandId		firing_id = afterTriggers->firing_counter++;
 
-	deferredTriggerInvokeEvents(false);
+		afterTriggerInvokeEvents(events, firing_id, true);
+	}
 
 	/*
-	 * Forget everything we know about deferred triggers.
+	 * Forget everything we know about AFTER triggers.
 	 *
 	 * Since all the info is in TopTransactionContext or children thereof, we
 	 * need do nothing special to reclaim memory.
 	 */
-	deferredTriggers = NULL;
+	afterTriggers = NULL;
 }
 
 
 /* ----------
- * DeferredTriggerAbortXact()
+ * AfterTriggerAbortXact()
  *
  *	The current transaction has entered the abort state.
  *	All outstanding triggers are canceled so we simply throw
@@ -2220,139 +2380,147 @@ DeferredTriggerEndXact(void)
  * ----------
  */
 void
-DeferredTriggerAbortXact(void)
+AfterTriggerAbortXact(void)
 {
 	/*
-	 * Ignore call if we aren't in a transaction.
+	 * Ignore call if we aren't in a transaction.  (Need this to survive
+	 * repeat call in case of error during transaction abort.)
 	 */
-	if (deferredTriggers == NULL)
+	if (afterTriggers == NULL)
 		return;
 
 	/*
-	 * Forget everything we know about deferred triggers.
+	 * Forget everything we know about AFTER triggers.
 	 *
 	 * Since all the info is in TopTransactionContext or children thereof, we
 	 * need do nothing special to reclaim memory.
 	 */
-	deferredTriggers = NULL;
+	afterTriggers = NULL;
 }
 
 /*
- * DeferredTriggerBeginSubXact()
+ * AfterTriggerBeginSubXact()
  *
  *	Start a subtransaction.
  */
 void
-DeferredTriggerBeginSubXact(void)
+AfterTriggerBeginSubXact(void)
 {
 	int			my_level = GetCurrentTransactionNestLevel();
 
 	/*
-	 * Ignore call if the transaction is in aborted state.
+	 * Ignore call if the transaction is in aborted state.  (Probably
+	 * shouldn't happen?)
 	 */
-	if (deferredTriggers == NULL)
+	if (afterTriggers == NULL)
 		return;
 
 	/*
 	 * Allocate more space in the stacks if needed.
 	 */
-	while (my_level >= deferredTriggers->numalloc)
+	while (my_level >= afterTriggers->maxtransdepth)
 	{
-		if (deferredTriggers->numalloc == 0)
+		if (afterTriggers->maxtransdepth == 0)
 		{
 			MemoryContext old_cxt;
 
 			old_cxt = MemoryContextSwitchTo(TopTransactionContext);
 
 #define DEFTRIG_INITALLOC 8
-			deferredTriggers->tail_stack = (DeferredTriggerEvent *)
-				palloc(DEFTRIG_INITALLOC * sizeof(DeferredTriggerEvent));
-			deferredTriggers->imm_stack = (DeferredTriggerEvent *)
-				palloc(DEFTRIG_INITALLOC * sizeof(DeferredTriggerEvent));
-			deferredTriggers->state_stack = (DeferredTriggerState *)
-				palloc(DEFTRIG_INITALLOC * sizeof(DeferredTriggerState));
-			deferredTriggers->numalloc = DEFTRIG_INITALLOC;
+			afterTriggers->state_stack = (SetConstraintState *)
+				palloc(DEFTRIG_INITALLOC * sizeof(SetConstraintState));
+			afterTriggers->events_stack = (AfterTriggerEventList *)
+				palloc(DEFTRIG_INITALLOC * sizeof(AfterTriggerEventList));
+			afterTriggers->depth_stack = (int *)
+				palloc(DEFTRIG_INITALLOC * sizeof(int));
+			afterTriggers->firing_stack = (CommandId *)
+				palloc(DEFTRIG_INITALLOC * sizeof(CommandId));
+			afterTriggers->maxtransdepth = DEFTRIG_INITALLOC;
 
 			MemoryContextSwitchTo(old_cxt);
 		}
 		else
 		{
 			/* repalloc will keep the stacks in the same context */
-			int		new_alloc = deferredTriggers->numalloc * 2;
+			int		new_alloc = afterTriggers->maxtransdepth * 2;
 
-			deferredTriggers->tail_stack = (DeferredTriggerEvent *)
-				repalloc(deferredTriggers->tail_stack,
-						 new_alloc * sizeof(DeferredTriggerEvent));
-			deferredTriggers->imm_stack = (DeferredTriggerEvent *)
-				repalloc(deferredTriggers->imm_stack,
-						 new_alloc * sizeof(DeferredTriggerEvent));
-			deferredTriggers->state_stack = (DeferredTriggerState *)
-				repalloc(deferredTriggers->state_stack,
-						 new_alloc * sizeof(DeferredTriggerState));
-			deferredTriggers->numalloc = new_alloc;
+			afterTriggers->state_stack = (SetConstraintState *)
+				repalloc(afterTriggers->state_stack,
+						 new_alloc * sizeof(SetConstraintState));
+			afterTriggers->events_stack = (AfterTriggerEventList *)
+				repalloc(afterTriggers->events_stack,
+						 new_alloc * sizeof(AfterTriggerEventList));
+			afterTriggers->depth_stack = (int *)
+				repalloc(afterTriggers->depth_stack,
+						 new_alloc * sizeof(int));
+			afterTriggers->firing_stack = (CommandId *)
+				repalloc(afterTriggers->firing_stack,
+						 new_alloc * sizeof(CommandId));
+			afterTriggers->maxtransdepth = new_alloc;
 		}
 	}
 
 	/*
-	 * Push the current information into the stack.
+	 * Push the current information into the stack.  The SET CONSTRAINTS
+	 * state is not saved until/unless changed.
 	 */
-	deferredTriggers->tail_stack[my_level] = deferredTriggers->tail_thisxact;
-	deferredTriggers->imm_stack[my_level] = deferredTriggers->events_imm;
-	/* State is not saved until/unless changed */
-	deferredTriggers->state_stack[my_level] = NULL;
+	afterTriggers->state_stack[my_level] = NULL;
+	afterTriggers->events_stack[my_level] = afterTriggers->events;
+	afterTriggers->depth_stack[my_level] = afterTriggers->query_depth;
+	afterTriggers->firing_stack[my_level] = afterTriggers->firing_counter;
 }
 
 /*
- * DeferredTriggerEndSubXact()
+ * AfterTriggerEndSubXact()
  *
  *	The current subtransaction is ending.
  */
 void
-DeferredTriggerEndSubXact(bool isCommit)
+AfterTriggerEndSubXact(bool isCommit)
 {
 	int			my_level = GetCurrentTransactionNestLevel();
-	DeferredTriggerState state;
+	SetConstraintState state;
+	AfterTriggerEvent event;
+	CommandId	subxact_firing_id;
 
 	/*
-	 * Ignore call if the transaction is in aborted state.
+	 * Ignore call if the transaction is in aborted state.  (Probably unneeded)
 	 */
-	if (deferredTriggers == NULL)
+	if (afterTriggers == NULL)
 		return;
 
 	/*
 	 * Pop the prior state if needed.
 	 */
-	Assert(my_level < deferredTriggers->numalloc);
+	Assert(my_level < afterTriggers->maxtransdepth);
 
 	if (isCommit)
 	{
 		/* If we saved a prior state, we don't need it anymore */
-		state = deferredTriggers->state_stack[my_level];
+		state = afterTriggers->state_stack[my_level];
 		if (state != NULL)
 			pfree(state);
 		/* this avoids double pfree if error later: */
-		deferredTriggers->state_stack[my_level] = NULL;
+		afterTriggers->state_stack[my_level] = NULL;
+		Assert(afterTriggers->query_depth ==
+			   afterTriggers->depth_stack[my_level]);
 	}
 	else
 	{
 		/*
 		 * Aborting --- restore the pointers from the stacks.
 		 */
-		deferredTriggers->tail_thisxact =
-			deferredTriggers->tail_stack[my_level];
-		deferredTriggers->events_imm =
-			deferredTriggers->imm_stack[my_level];
+		afterTriggers->events = afterTriggers->events_stack[my_level];
+		afterTriggers->query_depth = afterTriggers->depth_stack[my_level];
 
 		/*
-		 * Cleanup the head and the tail of the list.
+		 * Cleanup the tail of the list.
 		 */
-		if (deferredTriggers->tail_thisxact == NULL)
-			deferredTriggers->events = NULL;
-		else
-			deferredTriggers->tail_thisxact->dte_next = NULL;
+		if (afterTriggers->events.tail != NULL)
+			afterTriggers->events.tail->ate_next = NULL;
 
 		/*
-		 * We don't need to free the items, since the
+		 * We don't need to free the subtransaction's items, since the
 		 * CurTransactionContext will be reset shortly.
 		 */
 
@@ -2360,24 +2528,46 @@ DeferredTriggerEndSubXact(bool isCommit)
 		 * Restore the trigger state.  If the saved state is NULL, then
 		 * this subxact didn't save it, so it doesn't need restoring.
 		 */
-		state = deferredTriggers->state_stack[my_level];
+		state = afterTriggers->state_stack[my_level];
 		if (state != NULL)
 		{
-			pfree(deferredTriggers->state);
-			deferredTriggers->state = state;
+			pfree(afterTriggers->state);
+			afterTriggers->state = state;
 		}
 		/* this avoids double pfree if error later: */
-		deferredTriggers->state_stack[my_level] = NULL;
+		afterTriggers->state_stack[my_level] = NULL;
+
+		/*
+		 * Scan for any remaining deferred events that were marked DONE
+		 * or IN PROGRESS by this subxact or a child, and un-mark them.
+		 * We can recognize such events because they have a firing ID
+		 * greater than or equal to the firing_counter value we saved at
+		 * subtransaction start.  (This essentially assumes that the
+		 * current subxact includes all subxacts started after it.)
+		 */
+		subxact_firing_id = afterTriggers->firing_stack[my_level];
+		for (event = afterTriggers->events.head;
+			 event != NULL;
+			 event = event->ate_next)
+		{
+			if (event->ate_event &
+				(AFTER_TRIGGER_DONE | AFTER_TRIGGER_IN_PROGRESS))
+			{
+				if (event->ate_firing_id >= subxact_firing_id)
+					event->ate_event &=
+						~(AFTER_TRIGGER_DONE | AFTER_TRIGGER_IN_PROGRESS);
+			}
+		}
 	}
 }
 
 /*
- * Create an empty DeferredTriggerState with room for numalloc trigstates
+ * Create an empty SetConstraintState with room for numalloc trigstates
  */
-static DeferredTriggerState
-DeferredTriggerStateCreate(int numalloc)
+static SetConstraintState
+SetConstraintStateCreate(int numalloc)
 {
-	DeferredTriggerState state;
+	SetConstraintState state;
 
 	/* Behave sanely with numalloc == 0 */
 	if (numalloc <= 0)
@@ -2386,10 +2576,10 @@ DeferredTriggerStateCreate(int numalloc)
 	/*
 	 * We assume that zeroing will correctly initialize the state values.
 	 */
-	state = (DeferredTriggerState)
+	state = (SetConstraintState)
 		MemoryContextAllocZero(TopTransactionContext,
-							   sizeof(DeferredTriggerStateData) +
-					  (numalloc - 1) *sizeof(DeferredTriggerStatusData));
+							   sizeof(SetConstraintStateData) +
+					  (numalloc - 1) *sizeof(SetConstraintTriggerData));
 
 	state->numalloc = numalloc;
 
@@ -2397,67 +2587,67 @@ DeferredTriggerStateCreate(int numalloc)
 }
 
 /*
- * Copy a DeferredTriggerState
+ * Copy a SetConstraintState
  */
-static DeferredTriggerState
-DeferredTriggerStateCopy(DeferredTriggerState origstate)
+static SetConstraintState
+SetConstraintStateCopy(SetConstraintState origstate)
 {
-	DeferredTriggerState state;
+	SetConstraintState state;
 
-	state = DeferredTriggerStateCreate(origstate->numstates);
+	state = SetConstraintStateCreate(origstate->numstates);
 
 	state->all_isset = origstate->all_isset;
 	state->all_isdeferred = origstate->all_isdeferred;
 	state->numstates = origstate->numstates;
 	memcpy(state->trigstates, origstate->trigstates,
-		   origstate->numstates * sizeof(DeferredTriggerStatusData));
+		   origstate->numstates * sizeof(SetConstraintTriggerData));
 
 	return state;
 }
 
 /*
- * Add a per-trigger item to a DeferredTriggerState.  Returns possibly-changed
+ * Add a per-trigger item to a SetConstraintState.  Returns possibly-changed
  * pointer to the state object (it will change if we have to repalloc).
  */
-static DeferredTriggerState
-DeferredTriggerStateAddItem(DeferredTriggerState state,
-							Oid tgoid, bool tgisdeferred)
+static SetConstraintState
+SetConstraintStateAddItem(SetConstraintState state,
+						  Oid tgoid, bool tgisdeferred)
 {
 	if (state->numstates >= state->numalloc)
 	{
 		int			newalloc = state->numalloc * 2;
 
 		newalloc = Max(newalloc, 8);	/* in case original has size 0 */
-		state = (DeferredTriggerState)
+		state = (SetConstraintState)
 			repalloc(state,
-					 sizeof(DeferredTriggerStateData) +
-					 (newalloc - 1) *sizeof(DeferredTriggerStatusData));
+					 sizeof(SetConstraintStateData) +
+					 (newalloc - 1) *sizeof(SetConstraintTriggerData));
 		state->numalloc = newalloc;
 		Assert(state->numstates < state->numalloc);
 	}
 
-	state->trigstates[state->numstates].dts_tgoid = tgoid;
-	state->trigstates[state->numstates].dts_tgisdeferred = tgisdeferred;
+	state->trigstates[state->numstates].sct_tgoid = tgoid;
+	state->trigstates[state->numstates].sct_tgisdeferred = tgisdeferred;
 	state->numstates++;
 
 	return state;
 }
 
 /* ----------
- * DeferredTriggerSetState()
+ * AfterTriggerSetState()
  *
- *	Called for the SET CONSTRAINTS ... utility command.
+ *	Execute the SET CONSTRAINTS ... utility command.
  * ----------
  */
 void
-DeferredTriggerSetState(ConstraintsSetStmt *stmt)
+AfterTriggerSetState(ConstraintsSetStmt *stmt)
 {
 	int			my_level = GetCurrentTransactionNestLevel();
 
 	/*
-	 * Ignore call if we aren't in a transaction.
+	 * Ignore call if we aren't in a transaction.  (Shouldn't happen?)
 	 */
-	if (deferredTriggers == NULL)
+	if (afterTriggers == NULL)
 		return;
 
 	/*
@@ -2466,10 +2656,10 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 	 * aborts.
 	 */
 	if (my_level > 1 &&
-		deferredTriggers->state_stack[my_level] == NULL)
+		afterTriggers->state_stack[my_level] == NULL)
 	{
-		deferredTriggers->state_stack[my_level] =
-			DeferredTriggerStateCopy(deferredTriggers->state);
+		afterTriggers->state_stack[my_level] =
+			SetConstraintStateCopy(afterTriggers->state);
 	}
 
 	/*
@@ -2480,13 +2670,13 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 		/*
 		 * Forget any previous SET CONSTRAINTS commands in this transaction.
 		 */
-		deferredTriggers->state->numstates = 0;
+		afterTriggers->state->numstates = 0;
 
 		/*
 		 * Set the per-transaction ALL state to known.
 		 */
-		deferredTriggers->state->all_isset = true;
-		deferredTriggers->state->all_isdeferred = stmt->deferred;
+		afterTriggers->state->all_isset = true;
+		afterTriggers->state->all_isdeferred = stmt->deferred;
 	}
 	else
 	{
@@ -2569,29 +2759,28 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 		heap_close(tgrel, AccessShareLock);
 
 		/*
-		 * Inside of a transaction block set the trigger states of
-		 * individual triggers on transaction level.
+		 * Set the trigger states of individual triggers for this xact.
 		 */
 		foreach(l, oidlist)
 		{
 			Oid			tgoid = lfirst_oid(l);
-			DeferredTriggerState state = deferredTriggers->state;
+			SetConstraintState state = afterTriggers->state;
 			bool		found = false;
 			int			i;
 
 			for (i = 0; i < state->numstates; i++)
 			{
-				if (state->trigstates[i].dts_tgoid == tgoid)
+				if (state->trigstates[i].sct_tgoid == tgoid)
 				{
-					state->trigstates[i].dts_tgisdeferred = stmt->deferred;
+					state->trigstates[i].sct_tgisdeferred = stmt->deferred;
 					found = true;
 					break;
 				}
 			}
 			if (!found)
 			{
-				deferredTriggers->state =
-					DeferredTriggerStateAddItem(state, tgoid, stmt->deferred);
+				afterTriggers->state =
+					SetConstraintStateAddItem(state, tgoid, stmt->deferred);
 			}
 		}
 	}
@@ -2600,20 +2789,35 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 	 * SQL99 requires that when a constraint is set to IMMEDIATE, any
 	 * deferred checks against that constraint must be made when the SET
 	 * CONSTRAINTS command is executed -- i.e. the effects of the SET
-	 * CONSTRAINTS command applies retroactively. This happens "for free"
-	 * since we have already made the necessary modifications to the
-	 * constraints, and deferredTriggerEndQuery() is called by
-	 * finish_xact_command().  But we must reset
-	 * deferredTriggerInvokeEvents' tail pointer to make it rescan the
-	 * entire list, in case some deferred events are now immediately
-	 * invokable.
+	 * CONSTRAINTS command apply retroactively.  We've updated the
+	 * constraints state, so scan the list of previously deferred events
+	 * to fire any that have now become immediate.
+	 *
+	 * Obviously, if this was SET ... DEFERRED then it can't have converted
+	 * any unfired events to immediate, so we need do nothing in that case.
 	 */
-	deferredTriggers->events_imm = NULL;
+	if (!stmt->deferred)
+	{
+		AfterTriggerEventList *events = &afterTriggers->events;
+
+		if (afterTriggerMarkEvents(events, NULL, true))
+		{
+			CommandId		firing_id = afterTriggers->firing_counter++;
+
+			/*
+			 * We can delete fired events if we are at top transaction
+			 * level, but we'd better not if inside a subtransaction, since
+			 * the subtransaction could later get rolled back.
+			 */
+			afterTriggerInvokeEvents(events, firing_id,
+									 !IsSubTransaction());
+		}
+	}
 }
 
 
 /* ----------
- * DeferredTriggerSaveEvent()
+ * AfterTriggerSaveEvent()
  *
  *	Called by ExecA[RS]...Triggers() to add the event to the queue.
  *
@@ -2622,23 +2826,20 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
  * ----------
  */
 static void
-DeferredTriggerSaveEvent(ResultRelInfo *relinfo, int event, bool row_trigger,
-						 HeapTuple oldtup, HeapTuple newtup)
+AfterTriggerSaveEvent(ResultRelInfo *relinfo, int event, bool row_trigger,
+					  HeapTuple oldtup, HeapTuple newtup)
 {
 	Relation	rel = relinfo->ri_RelationDesc;
 	TriggerDesc *trigdesc = relinfo->ri_TrigDesc;
-	MemoryContext oldcxt;
-	DeferredTriggerEvent new_event;
-	int			new_size;
+	AfterTriggerEvent new_event;
 	int			i;
 	int			ntriggers;
-	int			n_enabled_triggers = 0;
 	int		   *tgindx;
 	ItemPointerData oldctid;
 	ItemPointerData newctid;
 
-	if (deferredTriggers == NULL)
-		elog(ERROR, "DeferredTriggerSaveEvent() called outside of transaction");
+	if (afterTriggers == NULL)
+		elog(ERROR, "AfterTriggerSaveEvent() called outside of transaction");
 
 	/*
 	 * Get the CTID's of OLD and NEW
@@ -2652,6 +2853,9 @@ DeferredTriggerSaveEvent(ResultRelInfo *relinfo, int event, bool row_trigger,
 	else
 		ItemPointerSetInvalid(&(newctid));
 
+	/*
+	 * Scan the appropriate set of triggers
+	 */
 	if (row_trigger)
 	{
 		ntriggers = trigdesc->n_after_row[event];
@@ -2663,137 +2867,80 @@ DeferredTriggerSaveEvent(ResultRelInfo *relinfo, int event, bool row_trigger,
 		tgindx = trigdesc->tg_after_statement[event];
 	}
 
-	/*
-	 * Count the number of triggers that are actually enabled. Since we
-	 * only add enabled triggers to the queue, we only need allocate
-	 * enough space to hold them (and not any disabled triggers that may
-	 * be associated with the relation).
-	 */
 	for (i = 0; i < ntriggers; i++)
 	{
 		Trigger    *trigger = &trigdesc->triggers[tgindx[i]];
 
-		if (trigger->tgenabled)
-			n_enabled_triggers++;
-	}
-
-	/*
-	 * If all the triggers on this relation are disabled, we're done.
-	 */
-	if (n_enabled_triggers == 0)
-		return;
-
-	/*
-	 * Create a new event.	We use the CurTransactionContext so the event
-	 * will automatically go away if the subtransaction aborts.
-	 */
-	oldcxt = MemoryContextSwitchTo(CurTransactionContext);
-
-	new_size = offsetof(DeferredTriggerEventData, dte_item[0]) +
-		n_enabled_triggers * sizeof(DeferredTriggerEventItem);
-
-	new_event = (DeferredTriggerEvent) palloc(new_size);
-	new_event->dte_next = NULL;
-	new_event->dte_event = event & TRIGGER_EVENT_OPMASK;
-	new_event->dte_done_xid = InvalidTransactionId;
-	if (row_trigger)
-		new_event->dte_event |= TRIGGER_EVENT_ROW;
-	new_event->dte_relid = rel->rd_id;
-	ItemPointerCopy(&oldctid, &(new_event->dte_oldctid));
-	ItemPointerCopy(&newctid, &(new_event->dte_newctid));
-	new_event->dte_n_items = ntriggers;
-	for (i = 0; i < ntriggers; i++)
-	{
-		DeferredTriggerEventItem *ev_item;
-		Trigger    *trigger = &trigdesc->triggers[tgindx[i]];
-
+		/* Ignore disabled triggers */
 		if (!trigger->tgenabled)
 			continue;
 
-		ev_item = &(new_event->dte_item[i]);
-		ev_item->dti_tgoid = trigger->tgoid;
-		ev_item->dti_done_xid = InvalidTransactionId;
-		ev_item->dti_state =
-			((trigger->tgdeferrable) ?
-			 TRIGGER_DEFERRED_DEFERRABLE : 0) |
-			((trigger->tginitdeferred) ?
-			 TRIGGER_DEFERRED_INITDEFERRED : 0);
+		/*
+		 * If it is an RI UPDATE trigger, and the referenced keys have
+		 * not changed, short-circuit queuing of the event; there's no
+		 * need to fire the trigger.
+		 */
+		if ((event & TRIGGER_EVENT_OPMASK) == TRIGGER_EVENT_UPDATE)
+		{
+			bool		is_ri_trigger;
 
-		if (row_trigger && (trigdesc->n_before_row[event] > 0))
-			ev_item->dti_state |= TRIGGER_DEFERRED_HAS_BEFORE;
-		else if (!row_trigger && (trigdesc->n_before_statement[event] > 0))
-			ev_item->dti_state |= TRIGGER_DEFERRED_HAS_BEFORE;
-	}
-
-	MemoryContextSwitchTo(oldcxt);
-
-	switch (event & TRIGGER_EVENT_OPMASK)
-	{
-		case TRIGGER_EVENT_INSERT:
-			/* nothing to do */
-			break;
-
-		case TRIGGER_EVENT_UPDATE:
-
-			/*
-			 * Check if one of the referenced keys is changed.
-			 */
-			for (i = 0; i < ntriggers; i++)
+			switch (trigger->tgfoid)
 			{
-				Trigger    *trigger = &trigdesc->triggers[tgindx[i]];
-				bool		is_ri_trigger;
-				bool		key_unchanged;
+				case F_RI_FKEY_NOACTION_UPD:
+				case F_RI_FKEY_CASCADE_UPD:
+				case F_RI_FKEY_RESTRICT_UPD:
+				case F_RI_FKEY_SETNULL_UPD:
+				case F_RI_FKEY_SETDEFAULT_UPD:
+					is_ri_trigger = true;
+					break;
+
+				default:
+					is_ri_trigger = false;
+					break;
+			}
+
+			if (is_ri_trigger)
+			{
 				TriggerData LocTriggerData;
 
-				/*
-				 * We are interested in RI_FKEY triggers only.
-				 */
-				switch (trigger->tgfoid)
-				{
-					case F_RI_FKEY_NOACTION_UPD:
-					case F_RI_FKEY_CASCADE_UPD:
-					case F_RI_FKEY_RESTRICT_UPD:
-					case F_RI_FKEY_SETNULL_UPD:
-					case F_RI_FKEY_SETDEFAULT_UPD:
-						is_ri_trigger = true;
-						break;
-
-					default:
-						is_ri_trigger = false;
-						break;
-				}
-				if (!is_ri_trigger)
-					continue;
-
 				LocTriggerData.type = T_TriggerData;
-				LocTriggerData.tg_event = TRIGGER_EVENT_UPDATE;
+				LocTriggerData.tg_event =
+					TRIGGER_EVENT_UPDATE | TRIGGER_EVENT_ROW;
 				LocTriggerData.tg_relation = rel;
 				LocTriggerData.tg_trigtuple = oldtup;
 				LocTriggerData.tg_newtuple = newtup;
 				LocTriggerData.tg_trigger = trigger;
 
-				key_unchanged = RI_FKey_keyequal_upd(&LocTriggerData);
-
-				if (key_unchanged)
+				if (RI_FKey_keyequal_upd(&LocTriggerData))
 				{
-					/*
-					 * The key hasn't changed, so no need later to invoke
-					 * the trigger at all.
-					 */
-					new_event->dte_item[i].dti_state |= TRIGGER_DEFERRED_DONE;
-					new_event->dte_item[i].dti_done_xid = GetCurrentTransactionId();
+					/* key unchanged, so skip queuing this event */
+					continue;
 				}
 			}
+		}
 
-			break;
+		/*
+		 * Create a new event.	We use the CurTransactionContext so the event
+		 * will automatically go away if the subtransaction aborts.
+		 */
+		new_event = (AfterTriggerEvent)
+			MemoryContextAlloc(CurTransactionContext,
+							   sizeof(AfterTriggerEventData));
+		new_event->ate_next = NULL;
+		new_event->ate_event =
+			(event & TRIGGER_EVENT_OPMASK) |
+			(row_trigger ? TRIGGER_EVENT_ROW : 0) |
+			(trigger->tgdeferrable ? AFTER_TRIGGER_DEFERRABLE : 0) |
+			(trigger->tginitdeferred ? AFTER_TRIGGER_INITDEFERRED : 0);
+		new_event->ate_firing_id = 0;
+		new_event->ate_tgoid = trigger->tgoid;
+		new_event->ate_relid = rel->rd_id;
+		ItemPointerCopy(&oldctid, &(new_event->ate_oldctid));
+		ItemPointerCopy(&newctid, &(new_event->ate_newctid));
 
-		case TRIGGER_EVENT_DELETE:
-			/* nothing to do */
-			break;
+		/*
+		 * Add the new event to the queue.
+		 */
+		afterTriggerAddEvent(new_event);
 	}
-
-	/*
-	 * Add the new event to the queue.
-	 */
-	deferredTriggerAddEvent(new_event);
 }

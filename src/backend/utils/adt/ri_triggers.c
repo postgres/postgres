@@ -17,7 +17,7 @@
  *
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/ri_triggers.c,v 1.71 2004/08/29 05:06:49 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/ri_triggers.c,v 1.72 2004/09/10 18:40:04 tgl Exp $
  *
  * ----------
  */
@@ -2454,7 +2454,7 @@ RI_FKey_setdefault_upd(PG_FUNCTION_ARGS)
  *
  *	Check if we have a key change on update.
  *
- *	This is not a real trigger procedure. It is used by the deferred
+ *	This is not a real trigger procedure. It is used by the AFTER
  *	trigger queue manager to detect "triggered data change violation".
  * ----------
  */

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/set_constraints.sgml,v 1.11 2004/09/08 20:47:37 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/set_constraints.sgml,v 1.12 2004/09/10 18:39:53 tgl Exp $ -->
 <refentry id="SQL-SET-CONSTRAINTS">
  <refmeta>
   <refentrytitle id="SQL-SET-CONSTRAINTS-title">SET CONSTRAINTS</refentrytitle>
@@ -34,13 +34,13 @@ SET CONSTRAINTS { ALL | <replaceable class="parameter">name</replaceable> [, ...
 
   <para>
    Upon creation, a constraint is given one of three
-   characteristics: <literal>INITIALLY DEFERRED</literal>,
-   <literal>INITIALLY IMMEDIATE DEFERRABLE</literal>, or
-   <literal>INITIALLY IMMEDIATE NOT DEFERRABLE</literal>. The third
-   class is not affected by the <command>SET CONSTRAINTS</command>
-   command.  The first two classes start every transaction in the
-   indicated mode, but their behavior can be changed within a transaction
-   by <command>SET CONSTRAINTS</command>.
+   characteristics: <literal>DEFERRABLE INITIALLY DEFERRED</literal>,
+   <literal>DEFERRABLE INITIALLY IMMEDIATE</literal>, or
+   <literal>NOT DEFERRABLE</literal>. The third
+   class is always <literal>IMMEDIATE</literal> and is not affected by the
+   <command>SET CONSTRAINTS</command> command.  The first two classes start
+   every transaction in the indicated mode, but their behavior can be changed
+   within a transaction by <command>SET CONSTRAINTS</command>.
   </para>
 
   <para>
@@ -52,19 +52,22 @@ SET CONSTRAINTS { ALL | <replaceable class="parameter">name</replaceable> [, ...
   </para>
 
   <para>
-   When you change the mode of a constraint from <literal>DEFERRED</literal>
+   When <command>SET CONSTRAINTS</command> changes the mode of a constraint
+   from <literal>DEFERRED</literal>
    to <literal>IMMEDIATE</literal>, the new mode takes effect
    retroactively: any outstanding data modifications that would have
    been checked at the end of the transaction are instead checked during the
    execution of the <command>SET CONSTRAINTS</command> command.
    If any such constraint is violated, the <command>SET CONSTRAINTS</command>
-   fails (and does not change the constraint mode).
+   fails (and does not change the constraint mode).  Thus, <command>SET
+   CONSTRAINTS</command> can be used to force checking of constraints to
+   occur at a specific point in a transaction.
   </para>
 
   <para>
    Currently, only foreign key constraints are affected by this
    setting. Check and unique constraints are always effectively
-   initially immediate not deferrable.
+   not deferrable.
   </para>
  </refsect1>
 
@@ -76,11 +79,7 @@ SET CONSTRAINTS { ALL | <replaceable class="parameter">name</replaceable> [, ...
    current transaction. Thus, if you execute this command outside of a
    transaction block
    (<command>BEGIN</command>/<command>COMMIT</command> pair), it will
-   not appear to have any effect.  If you wish to change the behavior
-   of a constraint without needing to issue a <command>SET
-   CONSTRAINTS</command> command in every transaction, specify
-   <literal>INITIALLY DEFERRED</literal> or <literal>INITIALLY
-   IMMEDIATE</literal> when you create the constraint.
+   not appear to have any effect.
   </para>
  </refsect1>
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.124 2004/08/29 05:06:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.125 2004/09/10 18:39:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
 #include "catalog/pg_type.h"
 #include "commands/explain.h"
 #include "commands/prepare.h"
+#include "commands/trigger.h"
 #include "executor/executor.h"
 #include "executor/instrument.h"
 #include "lib/stringinfo.h"
@@ -206,6 +207,10 @@ ExplainOnePlan(QueryDesc *queryDesc, ExplainStmt *stmt,
 
 	gettimeofday(&starttime, NULL);
 
+	/* If analyzing, we need to cope with queued triggers */
+	if (stmt->analyze)
+		AfterTriggerBeginQuery();
+
 	/* call ExecutorStart to prepare the plan for execution */
 	ExecutorStart(queryDesc, false, !stmt->analyze);
 
@@ -255,12 +260,16 @@ ExplainOnePlan(QueryDesc *queryDesc, ExplainStmt *stmt,
 	}
 
 	/*
-	 * Close down the query and free resources.  Include time for this in
-	 * the total runtime.
+	 * Close down the query and free resources; also run any queued
+	 * AFTER triggers.  Include time for this in the total runtime.
 	 */
 	gettimeofday(&starttime, NULL);
 
 	ExecutorEnd(queryDesc);
+
+	if (stmt->analyze)
+		AfterTriggerEndQuery();
+
 	FreeQueryDesc(queryDesc);
 
 	CommandCounterIncrement();

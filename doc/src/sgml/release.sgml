@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.294 2004/08/30 00:47:31 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.295 2004/09/10 18:39:54 tgl Exp $
 -->
 
 <appendix id="release">
@@ -334,6 +334,16 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.294 2004/08/30 00:47:31 tgl Exp
        Also changed behavior with respect to whitespace surrounding array
        elements: trailing whitespace is now ignored, for symmetry with leading
        whitespace (which has always been ignored).
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Non-deferred AFTER triggers are now fired immediately after completion
+       of the triggering query, rather than upon finishing the current
+       interactive command.  This makes a difference when the triggering query
+       occurred within a function: the trigger is invoked before the function
+       proceeds to its next operation.
       </para>
      </listitem>
     </itemizedlist>
@@ -1426,6 +1436,18 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.294 2004/08/30 00:47:31 tgl Exp
 
     <listitem>
      <para>
+      Non-deferred AFTER triggers are now fired immediately after completion
+      of the triggering query, rather than upon finishing the current
+      interactive command.  This makes a difference when the triggering query
+      occurred within a function: the trigger is invoked before the function
+      proceeds to its next operation.  For example, if a function inserts
+      a new row into a table, any non-deferred foreign key checks occur
+      before proceeding with the function.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
       Allow function parameters to be declared with names (Dennis Bjorklund)
      </para>
      <para>
@@ -1483,7 +1505,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.294 2004/08/30 00:47:31 tgl Exp
 
     <listitem>
      <para>
-      New plperl server-side language (Command Prompt, Andrew Dunstan)
+      Major overhaul of plperl server-side language (Command Prompt, Andrew Dunstan)
      </para>
     </listitem>
 

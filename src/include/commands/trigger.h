@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/trigger.h,v 1.48 2004/08/29 05:06:56 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/commands/trigger.h,v 1.49 2004/09/10 18:40:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,11 +45,12 @@ typedef struct TriggerData
 #define TRIGGER_EVENT_ROW				0x00000004
 #define TRIGGER_EVENT_BEFORE			0x00000008
 
-#define TRIGGER_DEFERRED_DONE			0x00000010
-#define TRIGGER_DEFERRED_CANCELED		0x00000020
-#define TRIGGER_DEFERRED_DEFERRABLE		0x00000040
-#define TRIGGER_DEFERRED_INITDEFERRED	0x00000080
-#define TRIGGER_DEFERRED_HAS_BEFORE		0x00000100
+/* More TriggerEvent flags, used only within trigger.c */
+
+#define AFTER_TRIGGER_DONE				0x00000010
+#define AFTER_TRIGGER_IN_PROGRESS		0x00000020
+#define AFTER_TRIGGER_DEFERRABLE		0x00000040
+#define AFTER_TRIGGER_INITDEFERRED		0x00000080
 
 #define TRIGGER_FIRED_BY_INSERT(event)	\
 		(((TriggerEvent) (event) & TRIGGER_EVENT_OPMASK) == \
@@ -151,14 +152,15 @@ extern void ExecARUpdateTriggers(EState *estate,
 					 ItemPointer tupleid,
 					 HeapTuple newtuple);
 
-extern void DeferredTriggerBeginXact(void);
-extern void DeferredTriggerEndQuery(void);
-extern void DeferredTriggerEndXact(void);
-extern void DeferredTriggerAbortXact(void);
-extern void DeferredTriggerBeginSubXact(void);
-extern void DeferredTriggerEndSubXact(bool isCommit);
+extern void AfterTriggerBeginXact(void);
+extern void AfterTriggerBeginQuery(void);
+extern void AfterTriggerEndQuery(void);
+extern void AfterTriggerEndXact(void);
+extern void AfterTriggerAbortXact(void);
+extern void AfterTriggerBeginSubXact(void);
+extern void AfterTriggerEndSubXact(bool isCommit);
 
-extern void DeferredTriggerSetState(ConstraintsSetStmt *stmt);
+extern void AfterTriggerSetState(ConstraintsSetStmt *stmt);
 
 
 /*

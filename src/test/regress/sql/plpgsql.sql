@@ -1699,3 +1699,54 @@ select blockme();
 reset statement_timeout;
 
 select * from foo;
+
+--
+-- test foreign key error trapping
+--
+
+create temp table master(f1 int primary key);
+
+create temp table slave(f1 int references master deferrable);
+
+insert into master values(1);
+insert into slave values(1);
+insert into slave values(2);	-- fails
+
+create function trap_foreign_key(int) returns int as $$
+begin
+	begin	-- start a subtransaction
+		insert into slave values($1);
+	exception
+		when foreign_key_violation then
+			raise notice 'caught foreign_key_violation';
+			return 0;
+	end;
+	return 1;
+end$$ language plpgsql;
+
+create function trap_foreign_key_2() returns int as $$
+begin
+	begin	-- start a subtransaction
+		set constraints all immediate;
+	exception
+		when foreign_key_violation then
+			raise notice 'caught foreign_key_violation';
+			return 0;
+	end;
+	return 1;
+end$$ language plpgsql;
+
+select trap_foreign_key(1);
+select trap_foreign_key(2);	-- detects FK violation
+
+begin;
+  set constraints all deferred;
+  select trap_foreign_key(2);	-- should not detect FK violation
+  savepoint x;
+    set constraints all immediate; -- fails
+  rollback to x;
+  select trap_foreign_key_2();  -- detects FK violation
+commit;				-- still fails
+
+drop function trap_foreign_key(int);
+drop function trap_foreign_key_2();

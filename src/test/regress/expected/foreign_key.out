@@ -646,6 +646,7 @@ SELECT * from FKTABLE;
 UPDATE PKTABLE set ptest2=5 where ptest2=2;
 ERROR:  insert or update on table "fktable" violates foreign key constraint "constrname3"
 DETAIL:  Key (ftest1,ftest2,ftest3)=(1,-1,3) is not present in table "pktable".
+CONTEXT:  SQL query "UPDATE ONLY "public"."fktable" SET "ftest2" = DEFAULT WHERE "ftest1" = $1 AND "ftest2" = $2 AND "ftest3" = $3"
 -- Try to update something that will set default
 UPDATE PKTABLE set ptest1=0, ptest2=5, ptest3=10 where ptest2=2;
 UPDATE PKTABLE set ptest2=10 where ptest2=4;
