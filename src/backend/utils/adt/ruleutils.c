@@ -3,7 +3,7 @@
  *			  out of its tuple
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.51 2000/06/09 01:11:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.52 2000/06/10 05:17:23 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -114,7 +114,7 @@ static bool check_if_rte_used(Node *node, Index rt_index, int levelsup);
 static bool check_if_rte_used_walker(Node *node,
 						 check_if_rte_used_context *context);
 
-#define inherit_marker(rte)  ((rte)->inh ? "*" : "")
+#define only_marker(rte)  ((rte)->inh ? "" : "ONLY ")
 
 
 /* ----------
@@ -994,8 +994,8 @@ get_select_query_def(Query *query, deparse_context *context)
 				appendStringInfo(buf, sep);
 				sep = ", ";
 				appendStringInfo(buf, "%s%s",
-								 quote_identifier(rte->relname),
-								 inherit_marker(rte));
+								 only_marker(rte),
+								 quote_identifier(rte->relname));
 
 				/*
 				 * NOTE: SQL92 says you can't write column aliases unless
@@ -1171,8 +1171,8 @@ get_update_query_def(Query *query, deparse_context *context)
 	 */
 	rte = rt_fetch(query->resultRelation, query->rtable);
 	appendStringInfo(buf, "UPDATE %s%s SET ",
-					 quote_identifier(rte->relname),
-					 inherit_marker(rte));
+					 only_marker(rte),
+					 quote_identifier(rte->relname));
 
 	/* Add the comma separated list of 'attname = value' */
 	sep = "";
@@ -1212,8 +1212,8 @@ get_delete_query_def(Query *query, deparse_context *context)
 	 */
 	rte = rt_fetch(query->resultRelation, query->rtable);
 	appendStringInfo(buf, "DELETE FROM %s%s",
-					 quote_identifier(rte->relname),
-					 inherit_marker(rte));
+					 only_marker(rte),
+					 quote_identifier(rte->relname));
 
 	/* Add a WHERE clause if given */
 	if (query->qual != NULL)
