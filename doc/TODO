@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Nov 25 23:38:01 EST 1999
+Last updated:		Mon Nov 29 21:13:08 EST 1999
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -242,6 +242,7 @@ INDEXES
 * Allow SELECT * FROM tab WHERE int2col = 4 use int2col index, int8,
   float4, numeric/decimal too [optimizer]
 * -Allow optimizer to prefer plans that match ORDER BY(Tom)
+* Include heap CTID in btree index keys, remove equal-key cruft from btree
 
 CACHE
 
