@@ -1,89 +1,98 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Oct 17 08:18:16 EDT 1997
+Last updated:		Sun Feb  1 15:08:57 EST 1998
 
 Current maintainer:	Bruce Momjian (maillist@candle.pha.pa.us)
 
 The most recent version of this document can be viewed at
 the PostgreSQL WWW site, http://www.postgreSQL.org.
 
-THE CHANGES FOR 6.2 AND 6.2.1 APPEAR AT THE END OF THIS DOCUMENT
+THE CHANGES FOR 6.3 APPEAR AT THE END OF THIS DOCUMENT
+
+A dash(-) marks changes to be in the next release.
 
 Developers who have claimed items are:
 -------------------------------------
 	* Bruce is Bruce Momjian<maillist@candle.pha.pa.us>
 	* Bryan is Bryan Henderson<bryanh@giraffe.netgate.net>
+	* D'Arcy is D'Arcy J.M. Cain <darcy@druid.net>
 	* Dan is Dan McGuirk <mcguirk@indirect.com>
 	* Daniel is Daniel Kalchev <daniel@digsys.bg>
 	* Darren is Darren King <darrenk@insightdist.com>
 	* Edmund is Edmund Mergl <E.Mergl@bawue.de>
 	* Erich Stamberger <eberger@gewi.kfunigraz.ac.at>
 	* Gerhard is Gerhard Reithofer <gerhardr@tech-edv.co.at>
+	* Goran is Goran Thyni <goran@bildbasen.se>
+	* Henry is Henry B. Hotz <hotz@jpl.nasa.gov>
 	* Igor is Igor <igor@sba.miami.edu>
+	* Jan is Jan Wieck <wieck@sapserv.debis.de>
 	* Jun is Jun Kuwamura <juk@rccm.co.jp>
 	* Kurt is "Kurt J. Lidl" <lidl@va.pubnix.com>
+ 	* Marc is Marc Fournier <scrappy@hub.org>
  	* Martin is Martin S. Utesch <utesch@aut.tu-freiberg.de>
 	* Oleg is Oleg Bartunov <oleg@sai.msu.su>
 	* Paul is Paul M. Aoki <aoki@CS.Berkeley.EDU>
 	* Patrick is Patrick van Kleef <pvk@pobox.com>
+	* Peter is Peter T Mount <psqlhack@maidast.demon.co.uk>
 	* Raymond is Raymond Toy <toy@rtp.ericsson.se>
 	* Soo-Ho Ok <shok@detc.dongeui-tc.ac.kr>
 	* Stefan Simkovics <ssimkovi@rainbow.studorg.tuwien.ac.at>
 	* Sven is Sven Verdoolaege <skimo@breughel.ufsia.ac.be>
 	* Tatsuo is Tatsuo Ishii <t-ishii@sra.co.jp>
 	* Thomas is Thomas Lockhart <tgl@mythos.jpl.nasa.gov>
+	* Todd is Todd Brandys is <brandys@eng3.hep.uiuc.edu>
 	* Vadim is "Vadim B. Mikheev" <vadim@sable.krasnoyarsk.su>
 	* Vivek is Vivek Khera <khera@kci.kciLink.com>
 
 RELIABILITY
 -----------
-* -Overhaul mdmgr/smgr to fix double unlinking and double opens, cleanup(Erich)
-* -Overhaul bufmgr/lockmgr/transaction manager(Vadim)
-* Fix CLUSTER
+* Overhaul mdmgr/smgr to fix double unlinking and double opens, cleanup
+* Overhaul bufmgr/lockmgr/transaction manager
+* -Fix CLUSTER
 * Remove EXTEND?
-* Fix all NULL features, allow psql to print nulls meaningfully
-* Fix compile and security of Kerberos/GSSAPI code (Daniel Kalchev?)
-* COUNT on VIEW always returns zero (maybe because there is no oid for views?)
+* -Aggregates on VIEW always returns zero (maybe because there is no oid for views?)
 * CREATE VIEW requires super-user priviledge
-* can lo_export()/lo_import() read/write anywhere, causing a security problem?
+* Can lo_export()/lo_import() read/write anywhere, causing a security problem?
 * Tables that start with xinv confused to be large objects
 * Two and three dimmensional arrays display improperly, missing {}
-* Add GROUP BY and HAVING to INSERT INTO table SELECT * FROM table2
+* -Add GROUP BY to INSERT INTO table SELECT * FROM table2
 * lo_unlink() crashes server
-* Allow variable casts with BETWEEN 'today'::asbtime AND 'today'::abstime
 * Prevent auto-table reference, like SELECT table.col WHERE col = 3 (?)
-* Remove un-needed malloc() calls and replace with palloc().
+* -Remove un-needed malloc() calls and replace with palloc().
 * SELECT * FROM table WHERE int4_column = '1' fails
 * SELECT a[1] FROM test fails, it needs test.a[1]
-* SELECT COUNT(*) FROM TAB1, TAB2 fails
-* SELECT SUM(2+2) FROM table dumps core
+* -SELECT COUNT(*) FROM TAB1, TAB2 fails
+* -SELECT SUM(2+2) FROM table dumps core
 * UPDATE table SET table.value = 3 fails
-* UPDATE key_table SET keyval=max(reftab.NUM)+1 WHERE tblname='reftab' fails
-* INSERT INTO ... SELECT DISTINCT ... generates error on DISTINCT
-* INSERT INTO table SELECT id, count(*) FROM table2 GROUP BY id generate error
+* -UPDATE key_table SET keyval=count(reftab.num) fails
+* -INSERT INTO ... SELECT DISTINCT ... does not accept DISTINCT
+* -INSERT INTO table SELECT id, count(*) FROM table2 GROUP BY id generates error
+* Make pg_dump preserve inheritance column order, do non-inherits first
+* User who can create databases can modify pg_database table
 
 ENHANCEMENTS
 ------------
 * Replace table-level locking with row or page-level locking(Vadim)
-* PRIMARY KEY during table creation
+* -PRIMARY KEY during table creation(Thomas)
 * Add SERIAL type
-* Preserve GRANT/REVOKE/pg_group in pg_dump
-* Transaction log
+* -Preserve GRANT/REVOKE/pg_group in pg_dump
+* Transaction log, so re-do log can be on a separate disk
+* Allow transaction commits with rollback with no-fsync performance
 * More access control over who can create tables and access the database
-* Add full ANSI SQL capabilities (Stefan)
-	* add subselects, possibility using temporary SQL functions
+* Add full ANSI SQL capabilities
+	* -add subselects(Vadim)
 	* Implement HAVING clause
-	* Implement EXISTS qualifier
-	* report "Not implemented" if valid syntax is supplied
+	* -Implement EXISTS qualifier
+	* -report "Not implemented" if valid syntax is supplied
 	* add OUTER joins, left and right (Thomas)
 	* make VIEWs updateable where possible
-	* add UNIONS, INTERSECTS, SUBTRACTS
-	* add temporary tables
+	* -add UNIONS(Bruce)
+	* add INTERSECTS, SUBTRACTS
+	* add temporary tables(Bruce)
 	* add sql3 recursive unions
 	* add the concept of dataspaces
-	* allow conversion type casts on SELECT target fields
 	* add DECIMAL, NUMERIC, DOUBLE PRECISION, BIT, BIT VARYING
-	 	* NCHAR (as distinguished from ordinary varchar),
+ 	* NCHAR (as distinguished from ordinary varchar),
 * Allow compression of large fields or a compressed field type
 * Fix the rules system(Jan?,Soo-Ho)
 	* robust
@@ -92,9 +101,9 @@ ENHANCEMENTS
 * Full set of text operations and functions
 	* word searches, concat,max() on text, char
 * Large objects
-	* overwriting blocks has problems
-	* there are other problems, too.
-	* Fix large object mapping scheme
+	* -overwriting blocks has problems(Peter)
+	* -there are other problems, too.(Peter)
+	* Fix large object mapping scheme, own reltype
 	* not to stuff everything as files in a single directory
 * Better interface for adding to pg_group
 * Make MONEY/DECIMAL have a defined precision
@@ -102,194 +111,253 @@ ENHANCEMENTS
 * Threaded version of the server or libpq
 * Allow libpq to cancel query requests
 * Add REGEX internationalization
-* Add other language types for built-in functions
-	* expand to allow tcl, perl, java,
+* -Add other language types for built-in functions
+	* expand to allow tcl, perl, java
 	* generalize the function manager switch to pass 
 		* function sources to interpreter engines.
-* remove time-travel feature(Vadim)
-* reduce system column overhead(Vadmin)
-* remove pg_time table(Vadim)
+* -remove time-travel feature(Vadim)
+* -reduce system column overhead(Vadmin)
+* -remove pg_time table(Vadim)
 * allow row re-use without vacuum, maybe?(Vadim)
-* can't vacuum large objects
-* can't reduce index file size with vacuum
-* Remove restriction that ORDER BY field must be in SELECT list(?)
-* Allow queries about owner of tables, like:
-        * SELECT u.usesysid FROM postgres.pg_user u;
+* Remove restriction that ORDER BY field must be in SELECT list
 * Add word index for text fields, maybe with trigrams, i.e.:
     * ' (cat | dog) & ! fox ' meaning text has cat or dog, but not fox
-* Allow readline-type or editor command editing of multi-line SQL commands
 * Populate backend status area and write program to dump status data
 * Add ALTER TABLE DROP COLUMN feature
-* Remove stale files upon startup(Vivek)
-* Add command to show privileges
 * Allow INSERT INTO ... SELECT to convert column types
-* Add syslog functionality
+* Add syslog functionality(Marc)
 * Add STDDEV/VARIANCE() function for standard deviation computation/variance
-* Add table/column/function discription table indexed by oid
-* add pg_type attribute to identify types that need length (bpchar, varchar)
+* -Add table/column/function discription table indexed by oid
+* -add pg_type attribute to identify types that need length (bpchar, varchar)
 * add UNIQUE capability to non-btree indexes
-* make large objects have their own reltype
 * make number of backends a config parameter, storage/sinvaladt.h:MaxBackendId
 * certain indexes will not shrink, i.e. oid indexes with many inserts
 * make NULL's come out at the beginning or end depending on the ORDER BY direction
 * change the library/backend interface to use network byte order
-* allow unix domain sockets for local connections for performance and security
-* Add PAGER for psql's \dt and \d tablename
-* Make timezone set-able by client applications(Thomas)
+* -allow unix domain sockets for local connections for performance and security
+* -Add PAGER for psql's \dt, \d, \z tablename
+* -Make timezone set-able by client applications(Thomas)
 * Restore unused oid's on backend exit if no one else has gotten oids
+* remove non-standard types from the system, and make them loadable
+* -make reads queue behind a write waiting for a lock(Bruce)
+* -add LOCK statement(Bruce)
+* -add report of offending line when COPY command fails
+* have UPDATE/DELETE clean out indexes
+* -allow varchar() to only store used bytes, not maximum
+* allow WHERE restriction on ctid
+* allow pg_descriptions when creating types, tables, columns, and functions
+* Fix compile and security of Kerberos/GSSAPI code
+* Allow psql to print nulls as distinct from ""(?)
+* Allow variable casts with BETWEEN 'today'::asbtime AND 'today'::abstime
+* Allow VIEW permissions to be set separately from the underlying tables
+* Allow text, char(), and varchar() overhead to be only 2 bytes, not 4 bytes
 
 PERFORMANCE
 -----------
-* Use indexes in ORDER BY
-* Allow LIKE/wildcard matches to use indexes if the wildcard character is not first
+* Use indexes in ORDER BY, min(), max()
+* -Allow LIKE/wildcard matches to use indexes if the wildcard character is not first
 * Optimizing disjunctive queries
 * Fix bushy-plans (Martin)
 * Other optimizer bugs
-* Is fsync use optimized?
+* Prevent fsync in SELECT-only queries
 * Cache most recent query plan(s?)
 * Shared catalog cache, reduce lseek()'s by caching table size in shared area
 * Allow compression of log and meta data
 * Add FILLFACTOR to index creation
 * Allow indexes to be used with OR clauses(Vadim)
 * update pg_statistic table to remove operator column
+* make index creation use psort code, because it is now faster(Vadim)
+* remove fork()/exec() of backend and make it just fork()
 
 DOCUMENTATION
 -------------
 * Update usermanual source(many)
-* remove time-travel in documentation(Bruce)
 * added features used in grammer but not in docs, like :: and CAST
-* update libpq++ manual page
-
-PORTABILITY
------------
- 
-
----------------------------------------------------------------------------
-
-                     CHANGES IN THE 6.2.1 RELEASE
-
-Changes in this release
------------------------
-Allow TIME and TYPE column names(Thomas)
-Allow larger range of true/false as boolean values(Thomas)
-Support output of "now" and "current"(Thomas)
-Handle DEFAULT with INSERT of NULL properly(Vadim)
-Fix for relation reference counts problem in buffer manager(Vadim)
-Allow strings to span lines, like ANSI(Thomas)
-Fix for backward cursor with ORDER BY(Vadim)
-Fix avg(cash) computation(Thomas)
-Fix for specifying a column twice in ORDER/GROUP BY(Vadim)
-Documented new libpq function to return affected rows, PQcmdTuples(Bruce)
-Trigger function for inserting user names for INSERT/UPDATE(Brook Milligan)
+* update libpq++ and pginterface manual page
+* Add keyword list to documentation, already in /tools
 
 
-                     CHANGES IN THE 6.2 RELEASE
+=============================================================================
+
+CHANGES IN THE 6.3 RELEASE
+--------------------------
+
+Developers who have claimed items are:
+-------------------------------------
+	* Billy is Billy G. Allie <Bill.Allie@mug.org>
+	* Brook is Brook Milligan
+	* Bruce is Bruce Momjian <maillist@candle.pha.pa.us>
+	* D'Arcy is D'Arcy J.M. Cain <darcy@druid.net>
+	* Dan is Dan McGuirk <mcguirk@indirect.com>
+	* Darren is Darren King <darrenk@insightdist.com>
+	* Goran is Goran Thyni <goran@bildbasen.se>
+	* Henry is Henry B. Hotz <hotz@jpl.nasa.gov>
+	* James is James Hughes <jamesh@interpath.com>
+	* Jan is Jan Wieck <wieck@sapserv.debis.de>
+	* Jeroen is Jeroen van Vianen <jeroenv@design.nl>
+	* Marc is Marc Fournier <scrappy@hub.org>
+	* Martin is Martin S. Utesch <utesch@aut.tu-freiberg.de>
+	* Matt is Matt Maycock <maycock@intelliquest.com>
+	* Peter is Peter T Mount <psqlhack@maidast.demon.co.uk>
+	* Phil is Phil Thompson <phil@river-bank.demon.co.uk>
+	* Ryan is Ryan Kirkpatrick <rkirkpat@nag.cs.colorado.edu>
+	* Tatsuo is Tatsuo Ishii <t-ishii@sra.co.jp>
+	* Thomas is Thomas Lockhart <lockhart@alumni.caltech.edu>
+	* TomH is Tom I Helbekkmo <tih@Hamartun.Priv.NO>
+	* TomS is Tom Szybist
+	* Todd is Todd Brandys is <brandys@eng3.hep.uiuc.edu>
+	* Travis is Travis Melhiser <melhiser@viper.co.union.nc.us>
+	* Vadim is "Vadim B. Mikheev" <vadim@sable.krasnoyarsk.su>
 
 Bug Fixes
 ---------
-Fix problems with pg_dump for inheritance, sequences, archive tables(Bruce)
-Fix compile errors on overflow due to shifts, unsigned, and bad prototypes
-	 from Solaris(Diab Jerius)
-Fix bugs in geometric line arithmetic (bad intersection calculations)(Thomas)
-Check for geometric intersections at endpoints to avoid rounding ugliness(Thomas)
-Catch non-functional delete attempts(Vadim)
-Change time function names to be more consistent(Michael Reifenberg)
-Check for zero divides(Michael Reifenberg)
-Fix very old bug which made tuples changed/inserted by a commnd
-	visible to the command itself (so we had multiple update of 
-	updated tuples, etc)(Vadim)
-Fix for SELECT null, 'fail' FROM pg_am (Patrick)
-SELECT NULL as EMPTY_FIELD now allowed(Patrick)
-Remove un-needed signal stuff from contrib/pginterface
-Fix OR (where x <> 1 or x isnull didn't return tuples with x NULL) (Vadim)
-Fix time_cmp function (Vadim)
-Fix handling of functions with non-attribute first argument in 
-	WHERE clauses (Vadim)
-Fix GROUP BY when order of entries is different from order
-	in target list (Vadim)
-Fix pg_dump for aggregates without sfunc1 (Vadim)
+Fix binary cursors broken by MOVE implementation(Vadim)
+Fix for tcl library crash(Jan)
+Fix for array handling, from Gerhard Hintermayer
+Fix acl error, and remove duplicate pqtrace(Bruce)
+Fix psql \e for empty file(Bruce)
+Fix for textcat on varchar() fields(Bruce)
+Fix for DBT Sendproc (Zeugswetter Andres)
+Fix vacuum analyze syntax problem(Bruce)
+Fix for international identifiers(Tatsuo)
+Fix aggregates on inherited tables(Bruce)
+Fix substr() for out-of-bounds data
+Fix for select 1=1 or 2=2, select 1=1 and 2=2, and select sum(2+2)(Bruce)
+Fix notty output to show status result.  -q option still turns it off(Bruce)
+Fix for count(*), aggs with views and multiple tables and sum(3)(Bruce)
+Fix cluster(Bruce)
+Fix for PQtrace start/stop several times(Bruce)
+Fix a variety of locking problems like newer lock waiters getting
+	lock before older waiters, and having readlock people not share
+	locks if a writer is waiting for a lock, and waiting writers not
+	getting priority over waiting readers(Bruce)
+Fix crashes in psql when executing queries from external files(James)
+Fix problem with multiple order by columns, with the first one having
+	NULL values(Jeroen)
+Use correct hash table support functions for float8 and int4(Thomas)
+Re-enable JOIN= option in CREATE OPERATOR statement (Thomas)
+Change precedence for boolean operators to match expected behavior(Thomas)
+Generate elog(ERROR) on over-large integer(Bruce)
+Allow multiple-argument functions in constraint clauses(Thomas)
+Check boolean input literals for 'true','false','yes','no','1','0'
+	and throw elog(ERROR) if unrecognized(Thomas)
+
 
 Enhancements
 ------------
-Default genetic optimizer GEQO parameter is now 8(Bruce)
-Allow use parameters in target list having aggregates in functions(Vadim)
-Added JDBC driver as an interface(Adrian & Peter)
-pg_password utility
-Return number of tuples inserted/affected by INSERT/UPDATE/DELETE etc.(Vadim)
-Triggers implemented with CREATE TRIGGER (SQL3)(Vadim)
-SPI (Server Programming Interface) allows execution of queries inside 
-	C-functions (Vadim)
-NOT NULL implemented (SQL92)(Robson Paniago de Miranda)
-Include reserved words for string handling, outer joins, and unions(Thomas)
-Implement extended comments ("/* ... */") using exclusive states(Thomas)
-Add "//" single-line comments(Bruce)
-Remove some restrictions on characters in operator names(Thomas)
-DEFAULT and CONSTRAINT for tables implemented (SQL92)(Vadim & Thomas)
-Add text concatenation operator and function (SQL92)(Thomas)
-Support WITH TIME ZONE syntax (SQL92)(Thomas)
-Support INTERVAL <unit> TO <unit> syntax (SQL92)(Thomas)
-Define types DOUBLE PRECISION, INTERVAL, CHARACTER,
-	and CHARACTER VARYING (SQL92)(Thomas)
-Define type FLOAT(p) and rudimentary DECIMAL(p,s), NUMERIC(p,s) (SQL92)(Thomas)
-Define EXTRACT(), POSITION(), SUBSTRING(), and TRIM() (SQL92)(Thomas)
-Define CURRENT_DATE, CURRENT_TIME, CURRENT_TIMESTAMP (SQL92)(Thomas)
-Add syntax and warnings for UNION, HAVING, INNER and OUTER JOIN (SQL92)(Thomas)
-Add more reserved words, mostly for SQL92 compliance(Thomas)
-Allow hh:mm:ss time entry for timespan/reltime types(Thomas)
-Add center() routines for lseg, path, polygon(Thomas)
-Add distance() routines for circle-polygon, polygon-polygon(Thomas)
-Check explicitly for points and polygons contained within polygons
-	using an axis-crossing algorithm(Thomas)
-Add routine to convert circle-box(Thomas)
-Merge conflicting operators for different geometric data types(Thomas)
-Replace distance operator "<===>" with "<->"(Thomas)
-Replace "above" operator "!^" with ">^" and "below" operator "!|" with "<^"(Thomas)
-Add routines for text trimming on both ends, substring, and string position(Thomas)
-Added conversion routines circle(box) and poly(circle)(Thomas)
-Allow internal sorts to be stored in memory rather than in files(Bruce & Vadim)
-Allow functions and operators on internally-identical types to succeed(Bruce)
-Speed up backend startup after profiling analysis(Bruce)
-Inline frequently called functions for performance(Bruce)
-Reduce open() calls(Bruce)
-psql:  Add PAGER for \h and \?,\C fix
-Fix for psql pager when no tty(Bruce)
-New entab utility(Bruce)
-General trigger functions for referential integrity (Vadim)
-General trigger functions for time travel (Vadim)
-General trigger functions for AUTOINCREMENT/IDENTITY feature (Vadim)
-MOVE implementation (Vadim)
+Real deadlock detection, no more timeouts(Bruce)
+<NOT DONE YET> Subselects with EXISTS, IN, ALL, ANY keywords (Vadim, Bruce, Thomas)
+Add SQL92 "constants" CURRENT_DATE, CURRENT_TIME, CURRENT_TIMESTAMP, 
+	CURRENT_USER(Thomas)
+Speedup by inlining some frequently-called functions
+Modify constraint syntax to be SQL92-compliant(Thomas)
+Implement SQL92 PRIMARY KEY and UNIQUE clauses using indices(Thomas)
+Recognize SQL92 syntax for FOREIGN KEY. Throw elog notice(Thomas)
+Allow NOT NULL UNIQUE constraint clause (each allowed separately before)(Thomas)
+Allow Postgres-style casting ("::") of non-constants(Thomas)
+Add support for SQL3 TRUE and FALSE boolean constants(Thomas)
+Support SQL92 syntax for IS TRUE/IS FALSE/IS NOT TRUE/IS NOT FALSE(Thomas)
+Allow shorter strings for boolean literals (e.g. "t", "tr", "tru")(Thomas)
+Allow SQL92 delimited identifiers(Thomas)
+Implement SQL92 binary and hexadecimal string decoding (b'10' and x'1F')(Thomas)
+Support SQL92 syntax for type coercion of literal strings
+	(e.g. "DATETIME 'now'")(Thomas)
+Add conversions for int2, int4, and OID types to and from text(Thomas)
+Use shared lock when building indices(Vadim)
+Free memory allocated for an user query inside transaction block after
+	this query is done, was turned off in <= 6.2.1(Vadim)
+New SQL statement CREATE PROCEDURAL LANGUAGE(Jan)
+New PostgreSQL Procedural Language (PL) backend interface(Jan)
+Rename pg_dump -H option to -h(Bruce)
+Add Java support for passwords, European dates(Peter)
+Use indices for LIKE and ~, !~ operations(Bruce)
+Add hash functions for datetime and timespan(Thomas)
+Time Travel removed(Vadim, Bruce)
+Add paging for \d and \z, and fix \i(Bruce)
+Add Unix domain socket support to backend and to frontend library(Goran)
+Implement CREATE DATABASE/WITH LOCATION and initlocation utility(Thomas)
+Allow more SQL92 and/or Postgres reserved words as column identifiers(Thomas)
+Augment support for SQL92 SET TIME ZONE...(Thomas)
+SET/SHOW/RESET TIME ZONE uses TZ backend environment variable(Thomas)
+Implement SET keyword = DEFAULT and SET TIME ZONE DEFAULT(Thomas)
+Enable SET TIME ZONE using TZ environment variable(Thomas)
+Add PGDATESTYLE environment variable to frontend and backend initialization(Thomas)
+Add PGTZ, PGCOSTHEAP, PGCOSTINDEX, PGRPLANS, PGGEQO
+	frontend library initialization environment variables(Thomas)
+Regression tests time zone automatically set with "setenv PGTZ PST8PDT"(Thomas)
+Add pg_description table for info on tables, columns, operators, types, and
+	aggregates(Bruce)
+Increase 16 char limit on system table/index names to 32 characters(Bruce)
+Rename system indices(Bruce)
+Add 'GERMAN' option to SET DATESTYLE(Thomas)
+Define an "ISO-style" timespan output format with "hh:mm:ss" fields(Thomas)
+Allow fractional values for delta times (e.g. '2.5 days')(Thomas)
+Validate numeric input more carefully for delta times(Thomas)
+Implement day of year as possible input to date_part()(Thomas)
+Define timespan_finite() and text_timespan() functions(Thomas)
+Remove archive stuff(Bruce)
+Allow for a pg_password authentication database that is separate from
+	the system password file(Todd)
+Dump ACLs, GRANT, REVOKE permissions(Matt)
+Define text, varchar, and bpchar string length functions(Thomas)
+Fix Query handling for inheritance, and cost computations(Bruce)
+Implement CREATE TABLE/AS SELECT (alternative to SELECT/INTO)(Thomas)
+Allow NOT, IS NULL, IS NOT NULL in constraints(Thomas)
+Implement UNIONs for SELECT(Bruce)
+Add UNION, GROUP, DISTINCT to INSERT(Bruce)
+varchar() stores only necessary bytes on disk(Bruce)
+Fix for BLOBs(Peter)
+Mega-Patch for JDBC...see README_6.3 for list of changes(Peter)
+Allow installation data block size and max tuple size configuration(Darren)
+Remove unused "option" from PQconnectdb()
+New LOCK command and lock manual page describing deadlocks(Bruce)
+Add new psql \da, \dd, \df, \do, \dS, and \dT commands(Bruce)
+Enhance psql \z to show sequences(Bruce)
+Show NOT NULL and DEFAULT in psql \d table(Bruce)
+New psql .psqlrc file startup(Andrew)
+Modify sample startup script in contrib/linux to show syslog(Thomas)
+New types for IP and MAC addresses in contrib/ip_and_mac(TomH)
+Unix system time conversions with date/time types in contrib/unixdate(Thomas)
+Update of contrib stuff(Massimo)
+Add Unix socket support to DBD::Pg(Goran)
+New python interface (PyGreSQL 2.0)(D'Arcy)
+New frontend/backend protocol has a version number, network byte order(Phil)
+Security features in pg_hba.conf enhanced and documented, many cleanups(Phil)
+New HTML and Postscript documentation(Thomas)
+
 
 Source Tree Changes
 -------------------
-HPUX 10 patches (Vladimir Turin)
-Added SCO support, (Daniel Harris)
-mkLinux patches (Tatsuo Ishii)
-Change geometric box terminology from "length" to "width"(Thomas)
-Deprecate temporary unstored slope fields in geometric code(Thomas)
-Remove restart instructions from INSTALL(Bruce)
-Look in /usr/ucb first for install(Bruce)
-Fix c++ copy example code(Thomas)
-Add -o to psql manual page(Bruce)
-Prevent relname unallocated string length from being copied into database(Bruce)
-Cleanup for NAMEDATALEN use(Bruce)
-Fix pg_proc names over 15 chars in output(Bruce)
-Add strNcpy() function(Bruce)
-remove some (void) casts that are unnecessary(Bruce)
-new interfaces directory(Marc)
-Replace fopen() calls with calls to fd.c functions(Bruce)
-Make functions static where possible(Bruce)
-enclose unused functions in #ifdef NOT_USED(Bruce)
-Remove call to difftime() in timestamp support to fix SunOS(Bruce & Thomas)
-Changes for Digital Unix
-Portability fix for pg_dumpall(Bruce)
-Rename pg_attribute.attnvals to attdisbursion(Bruce)
-"intro/unix" manual page now "pgintro"(Bruce)
-"built-in" manual page now "pgbuiltin"(Bruce)
-"drop" manual page now "drop_table"(Bruce)
-Add "create_trigger", "drop_trigger" manual pages(Thomas)
-Add constraints regression test(Vadim & Thomas)
-Add comments syntax regression test(Thomas)
-Add PGINDENT and support program(Bruce)
-Massive commit to run PGINDENT on all *.c and *.h files(Bruce)
-Files moved to /src/tools directory(Bruce)
-SPI and Trigger programming guides (Vadim & D'Arcy)
+Add new html development tools, and flow chart in /tools/backend
+Fix for SCO compiles
+Stratus computer port "Gillies, Robert" <GilliesR@Nichols.com>
+Added support for shlib for BSD44_derived & i386_solaris
+Make configure more automated(Brook)
+Add script to check regression test results
+Break parser functions into smaller files, group together(Bruce)
+Rename heap_create to heap_create_and_catalog, rename heap_creatr
+	to heap_create()(Bruce)
+Sparc/Linux patch for locking(TomS)
+Remove PORTNAME and reorganize port-specific stuff(Marc)
+Add optimizer README file(Bruce)
+Remove some recursion in optimizer and clean up some code there(Bruce)
+Fix for NetBSD locking(Henry)
+Fix for libptcl make(Tatsuo)
+AIX patch(Darren)
+Change IS TRUE, IS FALSE, ... to expressions using "=" rather than
+	function calls to istrue() or isfalse() to allow optimization(Thomas)
+Various fixes NetBSD/Sparc related(TomH)
+Alpha linux locking(Travis,Ryan)
+Change elog(WARN) to elog(ERROR)(Bruce)
+FAQ for FreeBSD(Marc)
+Bring in the PostODBC source tree as part of our standard distribution(Marc)
+A minor patch for HP/UX 10 vs 9(Stan)
+New pg_attribute.atttypmod for type-specific info like varchar length(Bruce)
+Unixware patches(Billy)
+New i386 'lock' for spin lock asm(Billy)
+Support for multiplexed backends is removed
+Start an OpenBSD port
+Start an AUX port
+Start a Cygnus port
+Add string functions to regression suite(Thomas)
+Expand a few function names formerly truncated to 16 characters(Thomas)

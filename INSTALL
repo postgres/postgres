@@ -2,7 +2,7 @@ POSTGRESQL INSTALLATION INSTRUCTIONS
 Copyright (c) 1997 Regents of  the University of California
 
 This is file /usr/src/pgsql/INSTALL.  It contains notes on how to install
-PostgreSQL v6.2.1.  Up to date information on PostgreSQL may be found at
+PostgreSQL v6.3.  Up to date information on PostgreSQL may be found at
 http://www.postgresql.org.
 
 PostgreSQL is an RDBMS database server.  It is not completely ANSI SQL
@@ -110,7 +110,7 @@ PostgreSQL:
 
       To check for disk space, use command "df -k".
 
-  4) Ftp file ftp://ftp.postgresql.org/pub/postgresql-v6.2.1.tar.gz from the
+  4) Ftp file ftp://ftp.postgresql.org/pub/postgresql-v6.3.tar.gz from the
      Internet.  Store it in your home directory.
 
   5) Some platforms use flex.  If your system uses flex then make sure
@@ -149,11 +149,10 @@ PostgreSQL:
      to change often every few weeks with no notice besides a quick comment
      in the HACKERS mailing list.  Full releases always require a dump/reload
      from previous releases.  It is therefore a bad idea to skip this
-     step.  Also, do not use the pg_dumpall script from v6.0 or everything
-     will be owned by the Postgres super user.  Type (with the gunzip line
-     and the following line typed as one line):
+     step.  Type (with the gunzip line and the following line typed as one
+     line):
         cd
-        gunzip -c postgresql-v6.2.1.tar.gz |
+        gunzip -c postgresql-v6.3.tar.gz |
             tar xvf - src/bin/pg_dump/pg_dumpall
         chmod a+x src/bin/pg_dump/pg_dumpall
         src/bin/pg_dump/pg_dumpall > db.out
@@ -218,7 +217,7 @@ PostgreSQL:
 
  10) Unzip and untar the new source file.  Type
         cd /usr/src/pgsql
-        gunzip -c ~/postgresql-v6.2.1.tar.gz | tar xvf -
+        gunzip -c ~/postgresql-v6.3.tar.gz | tar xvf -
 
  11) Configure the source code for your system.  It is this step at which
      you can specify your actual source path and installation paths for
@@ -358,9 +357,10 @@ PostgreSQL:
      location of this file will change accordingly.)  This file should be
      made read only again once you are finsihed.
 
-     If you are upgrading from v6.0 you can copy file pg_hba.conf from
-     your old database on top of the one in your new database, rather than
-     redoing this from scratch.
+     If you are upgrading, you can NOT copy file pg_hba.conf from your
+     old database on top of the one in your new database.  You will
+     have to re-do your changes.
+
 
  18) If you wish to skip the regression tests then skip to step 21.
      However, we think skipping the tests is a BAD idea!
@@ -405,7 +405,7 @@ PostgreSQL:
      PostgreSQL.
 
      For a i686/Linux-ELF platform, no tests failed since this is the
-     v6.2.1 regression testing reference platform.
+     v6.3 regression testing reference platform.
 
      For the SPARC/Linux-ELF platform, using the 970525 beta version of
      PostgreSQL v6.2 the following tests "failed":
@@ -417,7 +417,7 @@ PostgreSQL:
      the differences and then decide if those differences will affect your
      intended use of PostgreSQL.  However, keep in mind that this is likely
      to be the most solid release of PostgreSQL to date, incorporating many
-     bug fixes from v6.1, and that previous versions of PostgreSQL have been
+     bug fixes from v6.2.1, and that previous versions of PostgreSQL have been
      in use successfully for some time now.
 
      After running the tests, type
@@ -525,7 +525,7 @@ PostgreSQL:
         rm -rf /usr/local/pgsql_6_0
         # Also delete old database directory tree if it is not in
         #  /usr/local/pgsql_6_0/data
-        rm ~/postgresql-v6.2.1.tar.gz
+        rm ~/postgresql-v6.3.tar.gz
 
  26) You will probably want to print out the documentation.  Here is how
      you might do it if you have Ghostscript on your system and are
@@ -552,7 +552,7 @@ PostgreSQL:
      supported platforms.  We therefore ask you to let us know if you did
      or did not get PostgreSQL to work on you system.  Please send a
      mail message to pgsql-ports@postgresql.org telling us the following:
-       - The version of PostgreSQL (v6.2.1, 6.1.1, beta 970703, etc.).
+       - The version of PostgreSQL (v6.3, 6.2.1, beta 970703, etc.).
        - Your operating system (i.e. RedHat v4.0 Linux v2.0.26).
        - Your hardware (SPARC, i486, etc.).
        - Did you compile, install and run the regression tests cleanly?

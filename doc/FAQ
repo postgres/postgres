@@ -1,8 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Wed Oct 15 23:16:48 EDT 1997
-   Version: 6.2.1
+   Last updated: Sun Feb 1 16:13:28 EST 1998
    
    Current maintainer: Bruce Momjian (maillist@candle.pha.pa.us)
    
@@ -14,8 +13,6 @@
    
    Irix-specific questions are answered in
    http://postgreSQL.org/docs/FAQ-irix.shtml.
-   
-   Changes in this version (* = modified, + = new):
      _________________________________________________________________
    
 Questions answered:
@@ -29,14 +26,15 @@ Questions answered:
    1.5) Support for PostgreSQL
    1.6) Latest release of PostgreSQL
    1.7) Is there a commercial version of PostgreSQL?
-   1.8) What version of SQL does PostgreSQL use?
-   1.9) What documentation is available for PostgreSQL?
+   1.8) What documentation is available for PostgreSQL?
+   1.9) What version of SQL does PostgreSQL use?
    1.10) Does PostgreSQL work with databases from earlier versions of
    postgres?
    1.11) Are there ODBC drivers for PostgreSQL?
    1.12) What tools are available for hooking postgres to Web pages?
    1.13) Does PostgreSQL have a graphical user interface? A report
    generator? A embedded query language interface?
+   1.14) What is a good book to learn SQL?
    
   2) Installation/Configuration questions
   
@@ -91,6 +89,9 @@ Questions answered:
    3.22) What is Genetic Query Optimization?
    3.23) How do you remove a column from a table?
    3.24) How do SELECT only the first few rows of a query?
+   3.25) Why can't I create a column named "time"?
+   3.26) How much database disk space is required to store data from a
+   typical flat file?
    
   4) Questions about extending PostgreSQL
   
@@ -242,8 +243,10 @@ Section 1: General Questions
   1.6) Latest release of PostgreSQL
   
    The latest release of PostgreSQL is version 6.2.1, which was released
-   on October 17th, 1997. For information about what is new in 6.2.1, see
-   our TODO list on our WWW page.
+   on October 17th, 1997. We are testing 6.3 beta. For information about
+   what is new in 6.3, see our TODO list on our WWW page.
+   
+   We plan to have major releases every three months.
    
   1.7) Is there a commercial version of PostgreSQL?
   
@@ -279,6 +282,8 @@ Section 1: General Questions
   
    PostgreSQL v1.09 is compatible with databases created with v1.01.
    
+   Upgrading to 6.3 from earlier releases requires a dump and restore.
+   
    Upgrading to 6.2.1 from pre-6.2 requires a dump and restore.
    
    Upgrading to 6.2.1 from 6.2 does not require a dump, but see the
@@ -286,7 +291,7 @@ Section 1: General Questions
    
    Those ugrading from versions earlier than 1.09 must upgrade to 1.09
    first without a dump/reload, then dump the data from 1.09, and then
-   load it into 6.2.1.
+   load it into 6.2.1 or 6.3 beta.
    
   1.11) Are there ODBC drivers for PostgreSQL?
   
@@ -312,15 +317,15 @@ Section 1: General Questions
    
   1.12) What tools are available for hooking postgres to Web pages?
   
-   For web integration, PHP/FI is an excellent interface. The URL for
-   that is http://www.vex.net/php/
+   A nice introduction to Database-backed Web pages can be seen at:
+   http://www.webtools.com
+   
+   For web integration, PHP is an excellent interface. The URL for that
+   is http://php.iquest.net
    
    PHP is great for simple stuff, but for more complex stuff, some still
    use the perl interface and CGI.pm.
    
-   An example of using WWW with C to talk to Postgres is can be tried at:
-     * http://postgreSQL.org/~mlc
-       
    An WWW gatway based on WDB using perl can be downloaded from:
      * http://www.eol.ists.ca/~dunlop/wdb -p95
        
@@ -331,6 +336,11 @@ Section 1: General Questions
    reported some success at using 'pgbrowse' and 'onyx' as frontends to
    PostgreSQL. Several contributions are working on tk based frontend
    tools. Ask on the mailing list.
+   
+  1.14) What is a good book to learn SQL?
+  
+   Many of our users like The Practical SQL Handbook, Bowman et al,
+   Addison Wesley.
      _________________________________________________________________
    
 Section 2: Installation Questions
@@ -409,9 +419,9 @@ Section 2: Installation Questions
    this parameter too high, the process will not start or crash
    unexpectedly. Each buffer is 8K and the defualt is 64 buffers.
    
-   You can also use the postmaster -S option to increase the maximum
-   amount of memory used by each backend process for temporary sorts.
-   Each buffer is 1K and the defualt is 512 buffers.
+   You can also use the postgres -S option to increase the maximum amount
+   of memory used by each backend process for temporary sorts. Each
+   buffer is 1K and the defualt is 512 buffers.
    
   2.12) What debugging features are available in PostgreSQL?
   
@@ -600,10 +610,10 @@ BYTEA           bytea           variable-length array of bytes
    these fields or when doing other internal operations.
    
    The last four types above are "varlena" types (i.e. the first four
-   bytes is the length, followed by the data). CHAR(#) and VARCHAR(#)
-   allocate the maximum number of bytes no matter how much data is stored
-   in the field. TEXT and BYTEA are the only character types that have
-   variable length on the disk.
+   bytes are the length, followed by the data). CHAR(#) allocates the
+   maximum number of bytes no matter how much data is stored in the
+   field. TEXT, VARCHAR(#), and BYTEA all have variable length on the
+   disk.
    
   3.13) In a query, how do I detect if a field is NULL?
   
@@ -708,7 +718,7 @@ BYTEA           bytea           variable-length array of bytes
    separate tables. These oids can be used to identify specific user rows
    and used in joins. It is recommended you use column type oid to store
    oid values. See the sql(l) manual page to see the other internal
-   columns.
+   columns. You can create an index on the oid field for faster access.
    
    Tids are used to indentify specific physical rows with block and
    offset values. Tids change after rows are modified or reloaded. They
@@ -750,7 +760,7 @@ BYTEA           bytea           variable-length array of bytes
         DROP TABLE old_table;
         ALTER TABLE new_table RENAME TO old_table;
 
-  3.23) How do SELECT only the first few rows of a query?
+  3.24) How do SELECT only the first few rows of a query?
   
    See the fetch manual page.
    
@@ -758,6 +768,41 @@ BYTEA           bytea           variable-length array of bytes
    client. The entire query must be evaluated, even if you only want just
    first few rows. Consider a query that has and ORDER BY. There is no
    way to return any rows until the entire query is evaluated and sorted.
+   
+  3.25) Why can't I create a column named "time"?
+  
+   6.2.1 has added some new restricted keywords as we make PostgreSQL
+   more ANSI-92 compilant. The next release will have this restriction
+   removed. There is a patch on ftp.postgresql.org that will allow this
+   feature now.
+   
+  3.26)How much database disk space is required to store data from a typical
+  flat file?
+  
+   Consider a file with 300,000 lines with two integers on each line. The
+   flat file is 2.4MB. The size of the PostgreSQL database file
+   containing this data can be estimated:
+
+40 bytes + each row header (approximate)
+ 8 bytes + two int fields @ 4 bytes each
+ 4 bytes + pointer on page to tuple
+-------- =
+52 bytes per row
+
+The data page size in PostgreSQL is 8192(8k) bytes, so:
+
+8192 bytes per page
+-------------------  =  157 rows per database page (rounded up)
+ 52 bytes per row
+
+300000 data rows
+-----------------  =   1911 database pages
+157 rows per page
+
+1911 database pages * 8192 bytes per page  =  15,654,912 or 15.5MB
+
+Indexes do not contain as much overhead, but do contain the data that
+is being indexed, so they can be large also.
      _________________________________________________________________
    
 Section 4: Extending PostgreSQL
@@ -803,4 +848,4 @@ Section 5: Bugs
    You can also fill out the "bug-template" file and send it to:
      * bugs@postgreSQL.org
        
-   This is the address of the developers mailing list. 
+   This is the address of the developers mailing list.
