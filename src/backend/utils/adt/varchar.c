@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.18 1998/01/07 22:08:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.19 1998/01/08 03:05:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -132,8 +132,11 @@ varcharin(char *s, int dummy, int typlen)
 	if (s == NULL)
 		return ((char *) NULL);
 
-	len = strlen(s) + VARHDRSZ;
-	if (typlen != -1 && len > typlen)
+	if (typelen == -1)	/* we will remove this soon to make compact storage */
+						/* change varcharlen at the same time to use VARSIZE */
+		len = strlen(s) + VARHDRSZ;
+/*	if (typlen != -1 && len > typlen) */
+	else
 		len = typlen;	/* clip the string at max length */
 
 	if (len > 4096)
@@ -194,7 +197,7 @@ bpcharlen(char *arg)
 		elog(ERROR, "Bad (null) char() external representation", NULL);
 
 	return(bcTruelen(arg));
-} /* bpcharlen() */
+}
 
 bool
 bpchareq(char *arg1, char *arg2)
@@ -327,13 +330,29 @@ bpcharcmp(char *arg1, char *arg2)
  *	Comparison Functions used for varchar
  *****************************************************************************/
 
+static int
+vcTruelen(char *arg)
+{
+	char	   *s = arg + VARHDRSZ;
+	int			i;
+	int			len;
+
+	len = *(int32 *) arg - VARHDRSZ;
+	for (i = 0; i < len; i++)
+	{
+		if (*s++ == '\0')
+			break;
+	}
+	return i;
+}
+
 int32
 varcharlen(char *arg)
 {
 	if (!PointerIsValid(arg))
 		elog(ERROR, "Bad (null) varchar() external representation", NULL);
 
-	return VARSIZE(arg) - VARHDRSZ;
+	return(vcTruelen(arg));
 }
 
 bool
