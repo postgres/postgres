@@ -5,7 +5,7 @@
  *	  wherein you authenticate a user by seeing what IP address the system
  *	  says he comes from and possibly using ident).
  *
- *  $Id: hba.c,v 1.40 1999/04/16 04:59:03 tgl Exp $
+ *  $Id: hba.c,v 1.41 1999/05/09 00:54:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -966,9 +966,9 @@ GetCharSetByHost(char *TableName, int host, const char *DataDir)
 	map_file = (char *) palloc(bufsize);
 	snprintf(map_file, bufsize, "%s/%s", DataDir, CHARSET_FILE);
 #ifndef __CYGWIN32__
-	file = fopen(map_file, "r");
+	file = AllocateFile(map_file, "r");
 #else
-	file = fopen(map_file, "rb");
+	file = AllocateFile(map_file, "rb");
 #endif
 	if (file == NULL)
 	{
@@ -1049,7 +1049,7 @@ GetCharSetByHost(char *TableName, int host, const char *DataDir)
 			}
 		}
 	}
-	fclose(file);
+	FreeFile(file);
 	pfree(map_file);
 
 	for (i = 0; i < ChIndex; i++)

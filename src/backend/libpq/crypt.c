@@ -9,7 +9,7 @@
  * Dec 17, 1997 - Todd A. Brandys
  *	Orignal Version Completed.
  *
- * $Id: crypt.c,v 1.15 1999/02/13 23:15:42 momjian Exp $
+ * $Id: crypt.c,v 1.16 1999/05/09 00:54:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -174,7 +174,7 @@ crypt_loadpwdfile()
 			pwd_cache = (char **) realloc((void *) pwd_cache, sizeof(char *) * (pwd_cache_count + 1));
 			pwd_cache[pwd_cache_count++] = pstrdup(buffer);
 		}
-		fclose(pwd_file);
+		FreeFile(pwd_file);
 
 		/*
 		 * Now sort the entries in the cache for faster searching later.

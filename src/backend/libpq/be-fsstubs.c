@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.29 1999/05/03 19:09:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.30 1999/05/09 00:54:30 tgl Exp $
  *
  * NOTES
  *	  This should be moved to a more appropriate place.  It is here
@@ -99,7 +99,7 @@ lo_close(int fd)
 {
 	MemoryContext currentContext;
 
-	if (fd >= MAX_LOBJ_FDS)
+	if (fd < 0 || fd >= MAX_LOBJ_FDS)
 	{
 		elog(ERROR, "lo_close: large obj descriptor (%d) out of range", fd);
 		return -2;
@@ -131,14 +131,34 @@ lo_close(int fd)
 int
 lo_read(int fd, char *buf, int len)
 {
-	Assert(cookies[fd] != NULL);
+	if (fd < 0 || fd >= MAX_LOBJ_FDS)
+	{
+		elog(ERROR, "lo_read: large obj descriptor (%d) out of range", fd);
+		return -2;
+	}
+	if (cookies[fd] == NULL)
+	{
+		elog(ERROR, "lo_read: invalid large obj descriptor (%d)", fd);
+		return -3;
+	}
+
 	return inv_read(cookies[fd], buf, len);
 }
 
 int
 lo_write(int fd, char *buf, int len)
 {
-	Assert(cookies[fd] != NULL);
+	if (fd < 0 || fd >= MAX_LOBJ_FDS)
+	{
+		elog(ERROR, "lo_write: large obj descriptor (%d) out of range", fd);
+		return -2;
+	}
+	if (cookies[fd] == NULL)
+	{
+		elog(ERROR, "lo_write: invalid large obj descriptor (%d)", fd);
+		return -3;
+	}
+
 	return inv_write(cookies[fd], buf, len);
 }
 
@@ -149,10 +169,15 @@ lo_lseek(int fd, int offset, int whence)
 	MemoryContext currentContext;
 	int			ret;
 
-	if (fd >= MAX_LOBJ_FDS)
+	if (fd < 0 || fd >= MAX_LOBJ_FDS)
 	{
-		elog(ERROR, "lo_seek: large obj descriptor (%d) out of range", fd);
+		elog(ERROR, "lo_lseek: large obj descriptor (%d) out of range", fd);
 		return -2;
+	}
+	if (cookies[fd] == NULL)
+	{
+		elog(ERROR, "lo_lseek: invalid large obj descriptor (%d)", fd);
+		return -3;
 	}
 
 	currentContext = MemoryContextSwitchTo((MemoryContext) fscxt);
@@ -197,7 +222,7 @@ lo_creat(int mode)
 int
 lo_tell(int fd)
 {
-	if (fd >= MAX_LOBJ_FDS)
+	if (fd < 0 || fd >= MAX_LOBJ_FDS)
 	{
 		elog(ERROR, "lo_tell: large object descriptor (%d) out of range", fd);
 		return -2;
@@ -255,7 +280,7 @@ lowrite(int fd, struct varlena * wbuf)
 Oid
 lo_import(text *filename)
 {
-	int			fd;
+	File		fd;
 	int			nbytes,
 				tmp;
 
@@ -269,13 +294,13 @@ lo_import(text *filename)
 	 */
 	StrNCpy(fnamebuf, VARDATA(filename), VARSIZE(filename) - VARHDRSZ + 1);
 #ifndef __CYGWIN32__
-	fd = open(fnamebuf, O_RDONLY, 0666);
+	fd = PathNameOpenFile(fnamebuf, O_RDONLY, 0666);
 #else
-	fd = open(fnamebuf, O_RDONLY | O_BINARY, 0666);
+	fd = PathNameOpenFile(fnamebuf, O_RDONLY | O_BINARY, 0666);
 #endif
 	if (fd < 0)
 	{							/* error */
-		elog(ERROR, "be_lo_import: can't open unix file\"%s\"\n",
+		elog(ERROR, "be_lo_import: can't open unix file \"%s\"\n",
 			 fnamebuf);
 	}
 
@@ -298,7 +323,7 @@ lo_import(text *filename)
 	/*
 	 * read in from the Unix file and write to the inversion file
 	 */
-	while ((nbytes = read(fd, buf, BUFSIZE)) > 0)
+	while ((nbytes = FileRead(fd, buf, BUFSIZE)) > 0)
 	{
 		tmp = inv_write(lobj, buf, nbytes);
 		if (tmp < nbytes)
@@ -308,7 +333,7 @@ lo_import(text *filename)
 		}
 	}
 
-	close(fd);
+	FileClose(fd);
 	inv_close(lobj);
 
 	return lobjOid;
@@ -321,7 +346,7 @@ lo_import(text *filename)
 int4
 lo_export(Oid lobjId, text *filename)
 {
-	int			fd;
+	File		fd;
 	int			nbytes,
 				tmp;
 
@@ -331,7 +356,7 @@ lo_export(Oid lobjId, text *filename)
 	mode_t		oumask;
 
 	/*
-	 * create an inversion "object"
+	 * open the inversion "object"
 	 */
 	lobj = inv_open(lobjId, INV_READ);
 	if (lobj == NULL)
@@ -343,17 +368,17 @@ lo_export(Oid lobjId, text *filename)
 	/*
 	 * open the file to be written to
 	 */
-	oumask = umask((mode_t) 0);
 	StrNCpy(fnamebuf, VARDATA(filename), VARSIZE(filename) - VARHDRSZ + 1);
+	oumask = umask((mode_t) 0);
 #ifndef __CYGWIN32__
-	fd = open(fnamebuf, O_CREAT | O_WRONLY | O_TRUNC, 0666);
+	fd = PathNameOpenFile(fnamebuf, O_CREAT | O_WRONLY | O_TRUNC, 0666);
 #else
-	fd = open(fnamebuf, O_CREAT | O_WRONLY | O_TRUNC | O_BINARY, 0666);
+	fd = PathNameOpenFile(fnamebuf, O_CREAT | O_WRONLY | O_TRUNC | O_BINARY, 0666);
 #endif
 	umask(oumask);
 	if (fd < 0)
 	{							/* error */
-		elog(ERROR, "lo_export: can't open unix file\"%s\"",
+		elog(ERROR, "lo_export: can't open unix file \"%s\"",
 			 fnamebuf);
 	}
 
@@ -362,7 +387,7 @@ lo_export(Oid lobjId, text *filename)
 	 */
 	while ((nbytes = inv_read(lobj, buf, BUFSIZE)) > 0)
 	{
-		tmp = write(fd, buf, nbytes);
+		tmp = FileWrite(fd, buf, nbytes);
 		if (tmp < nbytes)
 		{
 			elog(ERROR, "lo_export: error while writing \"%s\"",
@@ -371,7 +396,7 @@ lo_export(Oid lobjId, text *filename)
 	}
 
 	inv_close(lobj);
-	close(fd);
+	FileClose(fd);
 
 	return 1;
 }
