@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Jan 22 19:50:01 EST 2001
+Last updated:		Mon Jan 22 20:21:13 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -316,6 +316,7 @@ SOURCE CODE
 * -Allow libedit to be used in place of libreadline
 * -BSD/OS does not support locale because there is no LC_MESSAGES (Bruce)
 * Remove unused pg_variable table
+* Experiment with multi-threaded backend [thread]
 
 ---------------------------------------------------------------------------
 
