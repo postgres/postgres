@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.165 2002/11/19 23:21:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.166 2002/11/23 03:59:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1290,14 +1290,6 @@ _equalCreateTrigStmt(CreateTrigStmt *a, CreateTrigStmt *b)
 	if (a->row != b->row)
 		return false;
 	if (strcmp(a->actions, b->actions) != 0)
-		return false;
-	if (!equalstr(a->lang, b->lang))
-		return false;
-	if (!equalstr(a->text, b->text))
-		return false;
-	if (!equal(a->attr, b->attr))
-		return false;
-	if (!equalstr(a->when, b->when))
 		return false;
 	if (a->isconstraint != b->isconstraint)
 		return false;

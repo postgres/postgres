@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.180 2002/11/13 00:39:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.181 2002/11/23 03:59:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -877,6 +877,15 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 		}
 	}
 
+	/*
+	 * Check BEFORE STATEMENT insertion triggers. It's debateable
+	 * whether we should do this for COPY, since it's not really an
+	 * "INSERT" statement as such. However, executing these triggers
+	 * maintains consistency with the EACH ROW triggers that we already
+	 * fire on COPY.
+	 */
+	ExecBSInsertTriggers(estate, resultRelInfo);
+
 	if (!binary)
 	{
 		file_has_oids = oids;	/* must rely on user to tell us this... */
@@ -1223,8 +1232,7 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 				ExecInsertIndexTuples(slot, &(tuple->t_self), estate, false);
 
 			/* AFTER ROW INSERT Triggers */
-			if (resultRelInfo->ri_TrigDesc)
-				ExecARInsertTriggers(estate, resultRelInfo, tuple);
+			ExecARInsertTriggers(estate, resultRelInfo, tuple);
 		}
 	}
 
@@ -1232,6 +1240,11 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 	 * Done, clean up
 	 */
 	copy_lineno = 0;
+
+	/*
+	 * Execute AFTER STATEMENT insertion triggers
+	 */
+	ExecASInsertTriggers(estate, resultRelInfo);
 
 	MemoryContextSwitchTo(oldcontext);
 

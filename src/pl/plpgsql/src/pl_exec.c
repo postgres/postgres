@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.69 2002/11/13 00:39:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.70 2002/11/23 03:59:09 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -430,9 +430,9 @@ plpgsql_exec_trigger(PLpgSQL_function * func,
 	PLpgSQL_function *save_efunc;
 	PLpgSQL_stmt *save_estmt;
 	char	   *save_etext;
-	PLpgSQL_rec *rec_new;
-	PLpgSQL_rec *rec_old;
 	PLpgSQL_var *var;
+	PLpgSQL_rec *rec_new,
+				*rec_old;
 	HeapTuple	rettup;
 
 	/*
@@ -511,8 +511,7 @@ plpgsql_exec_trigger(PLpgSQL_function * func,
 	}
 
 	/*
-	 * Put the trig and new tuples into the records and set the tg_op
-	 * variable
+	 * Put the OLD and NEW tuples into record variables
 	 */
 	rec_new = (PLpgSQL_rec *) (estate.datums[func->new_varno]);
 	rec_new->freetup = false;
@@ -520,15 +519,23 @@ plpgsql_exec_trigger(PLpgSQL_function * func,
 	rec_old = (PLpgSQL_rec *) (estate.datums[func->old_varno]);
 	rec_old->freetup = false;
 	rec_old->freetupdesc = false;
-	var = (PLpgSQL_var *) (estate.datums[func->tg_op_varno]);
 
-	if (TRIGGER_FIRED_BY_INSERT(trigdata->tg_event))
+	if (TRIGGER_FIRED_FOR_STATEMENT(trigdata->tg_event))
+	{
+		/*
+		 * Per-statement triggers don't use OLD/NEW variables
+		 */
+		rec_new->tup = NULL;
+		rec_new->tupdesc = NULL;
+		rec_old->tup = NULL;
+		rec_old->tupdesc = NULL;
+	}
+	else if (TRIGGER_FIRED_BY_INSERT(trigdata->tg_event))
 	{
 		rec_new->tup = trigdata->tg_trigtuple;
 		rec_new->tupdesc = trigdata->tg_relation->rd_att;
 		rec_old->tup = NULL;
 		rec_old->tupdesc = NULL;
-		var->value = DirectFunctionCall1(textin, CStringGetDatum("INSERT"));
 	}
 	else if (TRIGGER_FIRED_BY_UPDATE(trigdata->tg_event))
 	{
@@ -536,7 +543,6 @@ plpgsql_exec_trigger(PLpgSQL_function * func,
 		rec_new->tupdesc = trigdata->tg_relation->rd_att;
 		rec_old->tup = trigdata->tg_trigtuple;
 		rec_old->tupdesc = trigdata->tg_relation->rd_att;
-		var->value = DirectFunctionCall1(textin, CStringGetDatum("UPDATE"));
 	}
 	else if (TRIGGER_FIRED_BY_DELETE(trigdata->tg_event))
 	{
@@ -544,22 +550,27 @@ plpgsql_exec_trigger(PLpgSQL_function * func,
 		rec_new->tupdesc = NULL;
 		rec_old->tup = trigdata->tg_trigtuple;
 		rec_old->tupdesc = trigdata->tg_relation->rd_att;
-		var->value = DirectFunctionCall1(textin, CStringGetDatum("DELETE"));
 	}
 	else
-	{
-		rec_new->tup = NULL;
-		rec_new->tupdesc = NULL;
-		rec_old->tup = NULL;
-		rec_old->tupdesc = NULL;
-		var->value = DirectFunctionCall1(textin, CStringGetDatum("UNKNOWN"));
-	}
-	var->isnull = false;
-	var->freeval = true;
+		elog(ERROR, "Unknown trigger action: not INSERT, DELETE, or UPDATE");
 
 	/*
-	 * Fill all the other special tg_ variables
+	 * Assign the special tg_ variables
 	 */
+
+	var = (PLpgSQL_var *) (estate.datums[func->tg_op_varno]);
+	var->isnull = false;
+	var->freeval = false;
+
+	if (TRIGGER_FIRED_BY_INSERT(trigdata->tg_event))
+		var->value = DirectFunctionCall1(textin, CStringGetDatum("INSERT"));
+	else if (TRIGGER_FIRED_BY_UPDATE(trigdata->tg_event))
+		var->value = DirectFunctionCall1(textin, CStringGetDatum("UPDATE"));
+	else if (TRIGGER_FIRED_BY_DELETE(trigdata->tg_event))
+		var->value = DirectFunctionCall1(textin, CStringGetDatum("DELETE"));
+	else
+		elog(ERROR, "Unknown trigger action: not INSERT, DELETE, or UPDATE");
+
 	var = (PLpgSQL_var *) (estate.datums[func->tg_name_varno]);
 	var->isnull = false;
 	var->freeval = true;
@@ -574,7 +585,7 @@ plpgsql_exec_trigger(PLpgSQL_function * func,
 	else if (TRIGGER_FIRED_AFTER(trigdata->tg_event))
 		var->value = DirectFunctionCall1(textin, CStringGetDatum("AFTER"));
 	else
-		var->value = DirectFunctionCall1(textin, CStringGetDatum("UNKNOWN"));
+		elog(ERROR, "Unknown trigger execution time: not BEFORE or AFTER");
 
 	var = (PLpgSQL_var *) (estate.datums[func->tg_level_varno]);
 	var->isnull = false;
@@ -584,7 +595,7 @@ plpgsql_exec_trigger(PLpgSQL_function * func,
 	else if (TRIGGER_FIRED_FOR_STATEMENT(trigdata->tg_event))
 		var->value = DirectFunctionCall1(textin, CStringGetDatum("STATEMENT"));
 	else
-		var->value = DirectFunctionCall1(textin, CStringGetDatum("UNKNOWN"));
+		elog(ERROR, "Unknown trigger event type: not ROW or STATEMENT");
 
 	var = (PLpgSQL_var *) (estate.datums[func->tg_relid_varno]);
 	var->isnull = false;
@@ -671,13 +682,15 @@ plpgsql_exec_trigger(PLpgSQL_function * func,
 
 	/*
 	 * Check that the returned tuple structure has the same attributes,
-	 * the relation that fired the trigger has.
+	 * the relation that fired the trigger has. A per-statement trigger
+	 * always needs to return NULL, so we ignore any return value the
+	 * function itself produces (XXX: is this a good idea?)
 	 *
 	 * XXX This way it is possible, that the trigger returns a tuple where
 	 * attributes don't have the correct atttypmod's length. It's up to
 	 * the trigger's programmer to ensure that this doesn't happen. Jan
 	 */
-	if (estate.retisnull)
+	if (estate.retisnull || TRIGGER_FIRED_FOR_STATEMENT(trigdata->tg_event))
 		rettup = NULL;
 	else
 	{

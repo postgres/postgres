@@ -7,22 +7,12 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	pg_dump will read the system catalogs in a database and
- *	dump out a script that reproduces
- *	the schema of the database in terms of
- *		  user-defined types
- *		  user-defined functions
- *		  tables
- *		  indexes
- *		  aggregates
- *		  operators
- *		  privileges
- *
- * the output script is SQL that is understood by PostgreSQL
- *
+ *	pg_dump will read the system catalogs in a database and dump out a
+ *	script that reproduces the schema in terms of SQL that is understood
+ *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.307 2002/11/15 02:52:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.308 2002/11/23 03:59:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -6345,7 +6335,11 @@ dumpTriggers(Archive *fout, TableInfo *tblinfo, int numTables)
 
 			}
 
-			appendPQExpBuffer(query, "    FOR EACH ROW\n    ");
+			if (TRIGGER_FOR_ROW(tgtype))
+				appendPQExpBuffer(query, "    FOR EACH ROW\n    ");
+			else
+				appendPQExpBuffer(query, "    FOR EACH STATEMENT\n    ");
+
 			/* In 7.3, result of regproc is already quoted */
 			if (g_fout->remoteVersion >= 70300)
 				appendPQExpBuffer(query, "EXECUTE PROCEDURE %s (",

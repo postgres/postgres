@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_trigger.sgml,v 1.29 2002/11/21 23:34:43 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_trigger.sgml,v 1.30 2002/11/23 03:59:06 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -21,8 +21,9 @@ PostgreSQL documentation
    <date>2000-03-25</date>
   </refsynopsisdivinfo>
   <synopsis>
-CREATE TRIGGER <replaceable class="PARAMETER">name</replaceable> { BEFORE | AFTER } { <replaceable class="PARAMETER">event</replaceable> [OR ...] }
-    ON <replaceable class="PARAMETER">table</replaceable> FOR EACH { ROW | STATEMENT }
+CREATE TRIGGER <replaceable class="PARAMETER">name</replaceable> {
+    BEFORE | AFTER } { <replaceable class="PARAMETER">event</replaceable> [ OR ... ] }
+    ON <replaceable class="PARAMETER">table</replaceable> [ FOR EACH { ROW | STATEMENT } ]
     EXECUTE PROCEDURE <replaceable class="PARAMETER">func</replaceable> ( <replaceable class="PARAMETER">arguments</replaceable> )
   </synopsis>
   
@@ -45,11 +46,26 @@ CREATE TRIGGER <replaceable class="PARAMETER">name</replaceable> { BEFORE | AFTE
        </para>
       </listitem>
      </varlistentry>
+
+     <varlistentry>
+      <term>BEFORE</term>
+      <term>AFTER</term>
+      <listitem>
+       <para>
+		Determines whether the function is called before or after the
+		event.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry>
       <term><replaceable class="parameter">event</replaceable></term>
       <listitem>
        <para>
-	One of INSERT, DELETE or UPDATE.
+		One of <command>INSERT</command>, <command>DELETE</command> or
+		<command>UPDATE</command>; this specifies the event that will
+		fire the trigger. Multiple events can be specified using
+		<literal>OR</literal>.
        </para>
       </listitem>
      </varlistentry>
@@ -57,10 +73,26 @@ CREATE TRIGGER <replaceable class="PARAMETER">name</replaceable> { BEFORE | AFTE
       <term><replaceable class="parameter">table</replaceable></term>
       <listitem>
        <para>
-	The name (optionally schema-qualified) of the table the trigger is for.
+		The name (optionally schema-qualified) of the table the
+		trigger is for.
        </para>
       </listitem>
      </varlistentry>
+
+	 <varlistentry>
+	  <term>FOR EACH ROW</term>
+	  <term>FOR EACH STATEMENT</term>
+
+	  <listitem>
+	   <para>
+		This specifies whether the trigger procedure should be fired
+		once for every row affected by the trigger event, or just once
+		per SQL statement. If neither is specified, <literal>FOR EACH
+		STATEMENT</literal> is the default.
+	   </para>
+	  </listitem>
+	 </varlistentry>
+
      <varlistentry>
       <term><replaceable class="parameter">func</replaceable></term>
       <listitem>
@@ -74,11 +106,15 @@ CREATE TRIGGER <replaceable class="PARAMETER">name</replaceable> { BEFORE | AFTE
       <term><replaceable class="parameter">arguments</replaceable></term>
       <listitem>
        <para>
-        An optional comma-separated list of arguments to be provided to the
-	function when the trigger is executed, along with the standard trigger
-	data such as old and new tuple contents.  The arguments are literal
-	string constants.  Simple names and numeric constants may be written
-	here too, but they will all be converted to strings.
+    An optional comma-separated list of arguments to be provided to
+	the function when the trigger is executed, along with the standard
+	trigger data such as old and new tuple contents.  The arguments
+	are literal string constants.  Simple names and numeric constants
+	may be written here too, but they will all be converted to
+	strings. Note that these arguments are not provided as normal
+	function parameters (since a trigger procedure must be declared to
+	take zero parameters), but are instead accessed through the
+	<literal>TG_ARGV</literal> array.
        </para>
       </listitem>
      </varlistentry>
@@ -121,7 +157,7 @@ CREATE TRIGGER
 
   <para>
    <command>CREATE TRIGGER</command> will enter a new trigger into the current
-   data base.  The trigger will be associated with the relation
+   database.  The trigger will be associated with the relation
    <replaceable class="parameter">table</replaceable> and will execute
    the specified function <replaceable class="parameter">func</replaceable>.
   </para>
@@ -142,14 +178,26 @@ CREATE TRIGGER
   </para>
 
   <para>
+   A trigger that executes <literal>FOR EACH ROW</literal> of the
+   specified operation is called once for every row that the operation
+   modifies. For example, a <command>DELETE</command> that affects 10
+   rows will cause any <literal>ON DELETE</literal> triggers on the
+   target relation to be called 10 separate times, once for each
+   deleted tuple. In contrast, a trigger that executes <literal>FOR
+   EACH STATEMENT</literal> of the specified operation only executes
+   once for any given operation, regardless of how many rows it
+   modifies.
+  </para>
+
+  <para>
    If multiple triggers of the same kind are defined for the same event,
    they will be fired in alphabetical order by name.
   </para>
 
   <para>
-  <command>SELECT</command> does not modify any rows so you can not
-  create <command>SELECT</command> triggers. Rules and views are more
-  appropriate in such cases.
+   <command>SELECT</command> does not modify any rows so you can not
+   create <command>SELECT</command> triggers. Rules and views are more
+   appropriate in such cases.
   </para>
 
   <para>
@@ -174,10 +222,6 @@ CREATE TRIGGER
    of old dump files, <command>CREATE TRIGGER</> will accept a function
    declared as returning <type>opaque</>, but it will issue a NOTICE and
    change the function's declared return type to <type>trigger</>.
-  </para>
-
-  <para>
-   As of the current release, <literal>STATEMENT</literal> triggers are not implemented.
   </para>
 
   <para>
@@ -265,13 +309,6 @@ CREATE TABLE distributors (
          procedures to be written in any number of user-defined
          languages, access to the data is handled in a
          language-specific way.
-        </para>
-       </listitem>
-
-       <listitem>
-        <para>
-         <productname>PostgreSQL</productname> only has row-level
-         triggers, no statement-level triggers.
         </para>
        </listitem>
 

@@ -13,7 +13,7 @@
  *
  *	These three procedures are the external interfaces to the executor.
  *	In each case, the query descriptor and the execution state is required
- *	 as arguments
+ *	as arguments
  *
  *	ExecutorStart() must be called at the beginning of any execution of any
  *	query plan and ExecutorEnd() should always be called at the end of
@@ -27,7 +27,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.186 2002/11/13 00:44:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.187 2002/11/23 03:59:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -908,12 +908,12 @@ ExecutePlan(EState *estate,
 			ScanDirection direction,
 			DestReceiver *destfunc)
 {
-	JunkFilter *junkfilter;
-	TupleTableSlot *slot;
-	ItemPointer tupleid = NULL;
-	ItemPointerData tuple_ctid;
-	long		current_tuple_count;
-	TupleTableSlot *result;
+	JunkFilter			*junkfilter;
+	TupleTableSlot		*slot;
+	ItemPointer			 tupleid = NULL;
+	ItemPointerData		 tuple_ctid;
+	long				 current_tuple_count;
+	TupleTableSlot		*result;
 
 	/*
 	 * initialize local variables
@@ -926,6 +926,24 @@ ExecutePlan(EState *estate,
 	 * Set the direction.
 	 */
 	estate->es_direction = direction;
+
+	/*
+	 * Process BEFORE EACH STATEMENT triggers
+	 */
+	switch (operation)
+	{
+		case CMD_UPDATE:
+			ExecBSUpdateTriggers(estate, estate->es_result_relation_info);
+			break;
+		case CMD_DELETE:
+			ExecBSDeleteTriggers(estate, estate->es_result_relation_info);
+			break;
+		case CMD_INSERT:
+			ExecBSInsertTriggers(estate, estate->es_result_relation_info);
+			break;
+		default:
+			/* do nothing */
+	}
 
 	/*
 	 * Loop until we've processed the proper number of tuples from the
@@ -1125,6 +1143,24 @@ lnext:	;
 	}
 
 	/*
+	 * Process AFTER EACH STATEMENT triggers
+	 */
+	switch (operation)
+	{
+		case CMD_UPDATE:
+			ExecASUpdateTriggers(estate, estate->es_result_relation_info);
+			break;
+		case CMD_DELETE:
+			ExecASDeleteTriggers(estate, estate->es_result_relation_info);
+			break;
+		case CMD_INSERT:
+			ExecASInsertTriggers(estate, estate->es_result_relation_info);
+			break;
+		default:
+			/* do nothing */
+	}
+
+	/*
 	 * here, result is either a slot containing a tuple in the case of a
 	 * SELECT or NULL otherwise.
 	 */
@@ -1205,7 +1241,7 @@ ExecInsert(TupleTableSlot *slot,
 
 	/* BEFORE ROW INSERT Triggers */
 	if (resultRelInfo->ri_TrigDesc &&
-	  resultRelInfo->ri_TrigDesc->n_before_row[TRIGGER_EVENT_INSERT] > 0)
+		resultRelInfo->ri_TrigDesc->n_before_row[TRIGGER_EVENT_INSERT] > 0)
 	{
 		HeapTuple	newtuple;
 
@@ -1256,8 +1292,7 @@ ExecInsert(TupleTableSlot *slot,
 		ExecInsertIndexTuples(slot, &(tuple->t_self), estate, false);
 
 	/* AFTER ROW INSERT Triggers */
-	if (resultRelInfo->ri_TrigDesc)
-		ExecARInsertTriggers(estate, resultRelInfo, tuple);
+	ExecARInsertTriggers(estate, resultRelInfo, tuple);
 }
 
 /* ----------------------------------------------------------------
@@ -1346,8 +1381,7 @@ ldelete:;
 	 */
 
 	/* AFTER ROW DELETE Triggers */
-	if (resultRelInfo->ri_TrigDesc)
-		ExecARDeleteTriggers(estate, resultRelInfo, tupleid);
+	ExecARDeleteTriggers(estate, resultRelInfo, tupleid);
 }
 
 /* ----------------------------------------------------------------
@@ -1498,8 +1532,7 @@ lreplace:;
 		ExecInsertIndexTuples(slot, &(tuple->t_self), estate, false);
 
 	/* AFTER ROW UPDATE Triggers */
-	if (resultRelInfo->ri_TrigDesc)
-		ExecARUpdateTriggers(estate, resultRelInfo, tupleid, tuple);
+	ExecARUpdateTriggers(estate, resultRelInfo, tupleid, tuple);
 }
 
 static char *

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.54 2002/11/15 02:50:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.55 2002/11/23 03:59:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3321,11 +3321,7 @@ createForeignKeyTriggers(Relation rel, FkConstraint *fkconstraint,
 	fk_trigger->actions[0] = 'i';
 	fk_trigger->actions[1] = 'u';
 	fk_trigger->actions[2] = '\0';
-	fk_trigger->lang = NULL;
-	fk_trigger->text = NULL;
 
-	fk_trigger->attr = NIL;
-	fk_trigger->when = NULL;
 	fk_trigger->isconstraint = true;
 	fk_trigger->deferrable = fkconstraint->deferrable;
 	fk_trigger->initdeferred = fkconstraint->initdeferred;
@@ -3374,11 +3370,7 @@ createForeignKeyTriggers(Relation rel, FkConstraint *fkconstraint,
 	fk_trigger->row = true;
 	fk_trigger->actions[0] = 'd';
 	fk_trigger->actions[1] = '\0';
-	fk_trigger->lang = NULL;
-	fk_trigger->text = NULL;
 
-	fk_trigger->attr = NIL;
-	fk_trigger->when = NULL;
 	fk_trigger->isconstraint = true;
 	fk_trigger->deferrable = fkconstraint->deferrable;
 	fk_trigger->initdeferred = fkconstraint->initdeferred;
@@ -3445,11 +3437,6 @@ createForeignKeyTriggers(Relation rel, FkConstraint *fkconstraint,
 	fk_trigger->row = true;
 	fk_trigger->actions[0] = 'u';
 	fk_trigger->actions[1] = '\0';
-	fk_trigger->lang = NULL;
-	fk_trigger->text = NULL;
-
-	fk_trigger->attr = NIL;
-	fk_trigger->when = NULL;
 	fk_trigger->isconstraint = true;
 	fk_trigger->deferrable = fkconstraint->deferrable;
 	fk_trigger->initdeferred = fkconstraint->initdeferred;

@@ -180,7 +180,7 @@ class pgdbCursor:
 	def execute(self, operation, params = None):
 		# "The parameters may also be specified as list of
 		# tuples to e.g. insert multiple rows in a single
-		# operation, but this kind of usage is depreciated:
+		# operation, but this kind of usage is deprecated:
 		if params and type(params) == types.ListType and \
 					type(params[0]) == types.TupleType:
 			self.executemany(operation, params)

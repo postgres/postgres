@@ -1,7 +1,7 @@
 /* ----------
  * pg_lzcompress.h -
  *
- * $Header: /cvsroot/pgsql/src/include/utils/pg_lzcompress.h,v 1.8 2001/11/05 17:46:36 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/include/utils/pg_lzcompress.h,v 1.9 2002/11/23 03:59:09 momjian Exp $
  *
  *	Definitions for the builtin LZ compressor
  * ----------
@@ -89,7 +89,7 @@ typedef struct PGLZ_Header
  *		match_size_good		The initial GOOD match size when starting history
  *							lookup. When looking up the history to find a
  *							match that could be expressed as a tag, the
- *							algorithm does not allways walk back entirely.
+ *							algorithm does not always walk back entirely.
  *							A good match fast is usually better than the
  *							best possible one very late. For each iteration
  *							in the lookup, this value is lowered so the
@@ -147,7 +147,7 @@ typedef struct PGLZ_DecompState
  *									This is the default strategy if none
  *									is given to pglz_compress().
  *
- *		PGLZ_strategy_allways		Starts compression on any infinitely
+ *		PGLZ_strategy_always		Starts compression on any infinitely
  *									small input and does fallback to
  *									uncompressed storage only if output
  *									would be larger than input.
@@ -158,7 +158,7 @@ typedef struct PGLZ_DecompState
  * ----------
  */
 extern PGLZ_Strategy *PGLZ_strategy_default;
-extern PGLZ_Strategy *PGLZ_strategy_allways;
+extern PGLZ_Strategy *PGLZ_strategy_always;
 extern PGLZ_Strategy *PGLZ_strategy_never;
 
 

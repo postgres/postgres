@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rel.h,v 1.63 2002/09/04 20:31:46 momjian Exp $
+ * $Id: rel.h,v 1.64 2002/11/23 03:59:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,7 +71,7 @@ typedef struct TriggerDesc
 	 * trigger can appear in more than one class, for each class we
 	 * provide a list of integer indexes into the triggers array.
 	 */
-#define TRIGGER_NUM_EVENT_CLASSES  4
+#define TRIGGER_NUM_EVENT_CLASSES  3
 
 	uint16		n_before_statement[TRIGGER_NUM_EVENT_CLASSES];
 	uint16		n_before_row[TRIGGER_NUM_EVENT_CLASSES];

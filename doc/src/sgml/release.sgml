@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.166 2002/11/23 02:41:03 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.167 2002/11/23 03:59:06 momjian Exp $
 -->
 
 <appendix id="release">
@@ -4619,7 +4619,7 @@ Enhancements
  * pg_dump now output the schema and/or the data, with many fixes to
    enhance completeness.
  * psql used in place of monitor in administration shell scripts.
-   monitor to be depreciated in next release.
+   monitor to be deprecated in next release.
  * date/time functions enhanced
  * NULL insert/update/comparison fixed/enhanced
  * TCL/TK lib and shell fixed to work with both tck7.4/tk4.0 and tcl7.5/tk4.1

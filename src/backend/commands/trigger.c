@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.139 2002/11/13 00:39:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.140 2002/11/23 03:59:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,7 @@ static HeapTuple ExecCallTriggerFunc(TriggerData *trigdata,
 					FmgrInfo *finfo,
 					MemoryContext per_tuple_context);
 static void DeferredTriggerSaveEvent(ResultRelInfo *relinfo, int event,
-						 HeapTuple oldtup, HeapTuple newtup);
+						 bool row_trigger, HeapTuple oldtup, HeapTuple newtup);
 static void DeferredTriggerExecute(DeferredTriggerEvent event, int itemno,
 					   Relation rel, TriggerDesc *trigdesc, FmgrInfo *finfo,
 					   MemoryContext per_tuple_context);
@@ -147,12 +147,14 @@ CreateTrigger(CreateTrigStmt *stmt, bool forConstraint)
 	{
 		/* foreign key constraint trigger */
 
-		aclresult = pg_class_aclcheck(RelationGetRelid(rel), GetUserId(), ACL_REFERENCES);
+		aclresult = pg_class_aclcheck(RelationGetRelid(rel), GetUserId(),
+									  ACL_REFERENCES);
 		if (aclresult != ACLCHECK_OK)
 			aclcheck_error(aclresult, RelationGetRelationName(rel));
 		if (constrrelid != InvalidOid)
 		{
-			aclresult = pg_class_aclcheck(constrrelid, GetUserId(), ACL_REFERENCES);
+			aclresult = pg_class_aclcheck(constrrelid, GetUserId(),
+										  ACL_REFERENCES);
 			if (aclresult != ACLCHECK_OK)
 				aclcheck_error(aclresult, get_rel_name(constrrelid));
 		}
@@ -160,7 +162,8 @@ CreateTrigger(CreateTrigStmt *stmt, bool forConstraint)
 	else
 	{
 		/* real trigger */
-		aclresult = pg_class_aclcheck(RelationGetRelid(rel), GetUserId(), ACL_TRIGGER);
+		aclresult = pg_class_aclcheck(RelationGetRelid(rel), GetUserId(),
+									  ACL_TRIGGER);
 		if (aclresult != ACLCHECK_OK)
 			aclcheck_error(aclresult, RelationGetRelationName(rel));
 	}
@@ -195,10 +198,8 @@ CreateTrigger(CreateTrigStmt *stmt, bool forConstraint)
 		TRIGGER_SETT_BEFORE(tgtype);
 	if (stmt->row)
 		TRIGGER_SETT_ROW(tgtype);
-	else
-		elog(ERROR, "CreateTrigger: STATEMENT triggers are unimplemented, yet");
 
-	for (i = 0; i < 3 && stmt->actions[i]; i++)
+	for (i = 0; i < 2 && stmt->actions[i]; i++)
 	{
 		switch (stmt->actions[i])
 		{
@@ -1131,6 +1132,64 @@ ExecCallTriggerFunc(TriggerData *trigdata,
 	return (HeapTuple) DatumGetPointer(result);
 }
 
+void
+ExecBSInsertTriggers(EState *estate, ResultRelInfo *relinfo)
+{
+	TriggerDesc	*trigdesc;
+	int			 ntrigs;
+	int			*tgindx;
+	int			 i;
+	TriggerData LocTriggerData;
+
+	trigdesc = relinfo->ri_TrigDesc;
+
+	if (trigdesc == NULL)
+		return;
+
+	ntrigs = trigdesc->n_before_statement[TRIGGER_EVENT_INSERT];
+	tgindx = trigdesc->tg_before_statement[TRIGGER_EVENT_INSERT];
+
+	if (ntrigs == 0)
+		return;
+
+	/* Allocate cache space for fmgr lookup info, if not done yet */
+	if (relinfo->ri_TrigFunctions == NULL)
+		relinfo->ri_TrigFunctions = (FmgrInfo *)
+			palloc0(trigdesc->numtriggers * sizeof(FmgrInfo));
+
+	LocTriggerData.type = T_TriggerData;
+	LocTriggerData.tg_event = TRIGGER_EVENT_INSERT |
+							  TRIGGER_EVENT_BEFORE;
+	LocTriggerData.tg_relation	= relinfo->ri_RelationDesc;
+	LocTriggerData.tg_newtuple	= NULL;
+	LocTriggerData.tg_trigtuple	= NULL;
+	for (i = 0; i < ntrigs; i++)
+	{
+		Trigger    *trigger = &trigdesc->triggers[tgindx[i]];
+		HeapTuple	newtuple;
+
+		if (!trigger->tgenabled)
+			continue;
+		LocTriggerData.tg_trigger = trigger;
+		newtuple = ExecCallTriggerFunc(&LocTriggerData,
+								   relinfo->ri_TrigFunctions + tgindx[i],
+									   GetPerTupleMemoryContext(estate));
+
+		if (newtuple)
+			elog(ERROR, "BEFORE STATEMENT trigger cannot return a value.");
+	}
+}
+
+void
+ExecASInsertTriggers(EState *estate, ResultRelInfo *relinfo)
+{
+	TriggerDesc *trigdesc = relinfo->ri_TrigDesc;
+
+	if (trigdesc && trigdesc->n_after_statement[TRIGGER_EVENT_INSERT] > 0)
+		DeferredTriggerSaveEvent(relinfo, TRIGGER_EVENT_INSERT,
+								 false, NULL, NULL);
+}
+
 HeapTuple
 ExecBRInsertTriggers(EState *estate, ResultRelInfo *relinfo,
 					 HeapTuple trigtuple)
@@ -1149,7 +1208,9 @@ ExecBRInsertTriggers(EState *estate, ResultRelInfo *relinfo,
 			palloc0(trigdesc->numtriggers * sizeof(FmgrInfo));
 
 	LocTriggerData.type = T_TriggerData;
-	LocTriggerData.tg_event = TRIGGER_EVENT_INSERT | TRIGGER_EVENT_ROW | TRIGGER_EVENT_BEFORE;
+	LocTriggerData.tg_event = TRIGGER_EVENT_INSERT |
+							  TRIGGER_EVENT_ROW |
+							  TRIGGER_EVENT_BEFORE;
 	LocTriggerData.tg_relation = relinfo->ri_RelationDesc;
 	LocTriggerData.tg_newtuple = NULL;
 	for (i = 0; i < ntrigs; i++)
@@ -1177,9 +1238,67 @@ ExecARInsertTriggers(EState *estate, ResultRelInfo *relinfo,
 {
 	TriggerDesc *trigdesc = relinfo->ri_TrigDesc;
 
-	if (trigdesc->n_after_row[TRIGGER_EVENT_INSERT] > 0)
+	if (trigdesc && trigdesc->n_after_row[TRIGGER_EVENT_INSERT] > 0)
 		DeferredTriggerSaveEvent(relinfo, TRIGGER_EVENT_INSERT,
-								 NULL, trigtuple);
+								 true, NULL, trigtuple);
+}
+
+void
+ExecBSDeleteTriggers(EState *estate, ResultRelInfo *relinfo)
+{
+	TriggerDesc	*trigdesc;
+	int			 ntrigs;
+	int			*tgindx;
+	int			 i;
+	TriggerData LocTriggerData;
+
+	trigdesc = relinfo->ri_TrigDesc;
+
+	if (trigdesc == NULL)
+		return;
+
+	ntrigs = trigdesc->n_before_statement[TRIGGER_EVENT_DELETE];
+	tgindx = trigdesc->tg_before_statement[TRIGGER_EVENT_DELETE];
+
+	if (ntrigs == 0)
+		return;
+
+	/* Allocate cache space for fmgr lookup info, if not done yet */
+	if (relinfo->ri_TrigFunctions == NULL)
+		relinfo->ri_TrigFunctions = (FmgrInfo *)
+			palloc0(trigdesc->numtriggers * sizeof(FmgrInfo));
+
+	LocTriggerData.type = T_TriggerData;
+	LocTriggerData.tg_event = TRIGGER_EVENT_DELETE |
+							  TRIGGER_EVENT_BEFORE;
+	LocTriggerData.tg_relation	= relinfo->ri_RelationDesc;
+	LocTriggerData.tg_newtuple	= NULL;
+	LocTriggerData.tg_trigtuple	= NULL;
+	for (i = 0; i < ntrigs; i++)
+	{
+		Trigger    *trigger = &trigdesc->triggers[tgindx[i]];
+		HeapTuple	newtuple;
+
+		if (!trigger->tgenabled)
+			continue;
+		LocTriggerData.tg_trigger = trigger;
+		newtuple = ExecCallTriggerFunc(&LocTriggerData,
+								   relinfo->ri_TrigFunctions + tgindx[i],
+									   GetPerTupleMemoryContext(estate));
+
+		if (newtuple)
+			elog(ERROR, "BEFORE STATEMENT trigger cannot return a value.");
+	}
+}
+
+void
+ExecASDeleteTriggers(EState *estate, ResultRelInfo *relinfo)
+{
+	TriggerDesc *trigdesc = relinfo->ri_TrigDesc;
+
+	if (trigdesc && trigdesc->n_after_statement[TRIGGER_EVENT_DELETE] > 0)
+		DeferredTriggerSaveEvent(relinfo, TRIGGER_EVENT_DELETE,
+								 false, NULL, NULL);
 }
 
 bool
@@ -1205,7 +1324,9 @@ ExecBRDeleteTriggers(EState *estate, ResultRelInfo *relinfo,
 			palloc0(trigdesc->numtriggers * sizeof(FmgrInfo));
 
 	LocTriggerData.type = T_TriggerData;
-	LocTriggerData.tg_event = TRIGGER_EVENT_DELETE | TRIGGER_EVENT_ROW | TRIGGER_EVENT_BEFORE;
+	LocTriggerData.tg_event = TRIGGER_EVENT_DELETE |
+							  TRIGGER_EVENT_ROW |
+							  TRIGGER_EVENT_BEFORE;
 	LocTriggerData.tg_relation = relinfo->ri_RelationDesc;
 	LocTriggerData.tg_newtuple = NULL;
 	for (i = 0; i < ntrigs; i++)
@@ -1235,15 +1356,73 @@ ExecARDeleteTriggers(EState *estate, ResultRelInfo *relinfo,
 {
 	TriggerDesc *trigdesc = relinfo->ri_TrigDesc;
 
-	if (trigdesc->n_after_row[TRIGGER_EVENT_DELETE] > 0)
+	if (trigdesc && trigdesc->n_after_row[TRIGGER_EVENT_DELETE] > 0)
 	{
 		HeapTuple	trigtuple = GetTupleForTrigger(estate, relinfo,
 												   tupleid, NULL);
 
 		DeferredTriggerSaveEvent(relinfo, TRIGGER_EVENT_DELETE,
-								 trigtuple, NULL);
+								 true, trigtuple, NULL);
 		heap_freetuple(trigtuple);
 	}
+}
+
+void
+ExecBSUpdateTriggers(EState *estate, ResultRelInfo *relinfo)
+{
+	TriggerDesc	*trigdesc;
+	int			 ntrigs;
+	int			*tgindx;
+	int			 i;
+	TriggerData LocTriggerData;
+
+	trigdesc = relinfo->ri_TrigDesc;
+
+	if (trigdesc == NULL)
+		return;
+
+	ntrigs = trigdesc->n_before_statement[TRIGGER_EVENT_UPDATE];
+	tgindx = trigdesc->tg_before_statement[TRIGGER_EVENT_UPDATE];
+
+	if (ntrigs == 0)
+		return;
+
+	/* Allocate cache space for fmgr lookup info, if not done yet */
+	if (relinfo->ri_TrigFunctions == NULL)
+		relinfo->ri_TrigFunctions = (FmgrInfo *)
+			palloc0(trigdesc->numtriggers * sizeof(FmgrInfo));
+
+	LocTriggerData.type = T_TriggerData;
+	LocTriggerData.tg_event = TRIGGER_EVENT_UPDATE |
+							  TRIGGER_EVENT_BEFORE;
+	LocTriggerData.tg_relation	= relinfo->ri_RelationDesc;
+	LocTriggerData.tg_newtuple	= NULL;
+	LocTriggerData.tg_trigtuple	= NULL;
+	for (i = 0; i < ntrigs; i++)
+	{
+		Trigger    *trigger = &trigdesc->triggers[tgindx[i]];
+		HeapTuple	newtuple;
+
+		if (!trigger->tgenabled)
+			continue;
+		LocTriggerData.tg_trigger = trigger;
+		newtuple = ExecCallTriggerFunc(&LocTriggerData,
+								   relinfo->ri_TrigFunctions + tgindx[i],
+									   GetPerTupleMemoryContext(estate));
+
+		if (newtuple)
+			elog(ERROR, "BEFORE STATEMENT trigger cannot return a value.");
+	}
+}
+
+void
+ExecASUpdateTriggers(EState *estate, ResultRelInfo *relinfo)
+{
+	TriggerDesc *trigdesc = relinfo->ri_TrigDesc;
+
+	if (trigdesc && trigdesc->n_after_statement[TRIGGER_EVENT_UPDATE] > 0)
+		DeferredTriggerSaveEvent(relinfo, TRIGGER_EVENT_UPDATE,
+								 false, NULL, NULL);
 }
 
 HeapTuple
@@ -1265,8 +1444,8 @@ ExecBRUpdateTriggers(EState *estate, ResultRelInfo *relinfo,
 		return NULL;
 
 	/*
-	 * In READ COMMITTED isolevel it's possible that newtuple was changed
-	 * due to concurrent update.
+	 * In READ COMMITTED isolation level it's possible that newtuple was
+	 * changed due to concurrent update.
 	 */
 	if (newSlot != NULL)
 		intuple = newtuple = ExecRemoveJunk(estate->es_junkFilter, newSlot);
@@ -1306,13 +1485,13 @@ ExecARUpdateTriggers(EState *estate, ResultRelInfo *relinfo,
 {
 	TriggerDesc *trigdesc = relinfo->ri_TrigDesc;
 
-	if (trigdesc->n_after_row[TRIGGER_EVENT_UPDATE] > 0)
+	if (trigdesc && trigdesc->n_after_row[TRIGGER_EVENT_UPDATE] > 0)
 	{
 		HeapTuple	trigtuple = GetTupleForTrigger(estate, relinfo,
 												   tupleid, NULL);
 
 		DeferredTriggerSaveEvent(relinfo, TRIGGER_EVENT_UPDATE,
-								 trigtuple, newtuple);
+								 true, trigtuple, newtuple);
 		heap_freetuple(trigtuple);
 	}
 }
@@ -1344,7 +1523,7 @@ ltrmark:;
 			case HeapTupleSelfUpdated:
 				/* treat it as deleted; do not process */
 				ReleaseBuffer(buffer);
-				return (NULL);
+				return NULL;
 
 			case HeapTupleMayBeUpdated:
 				break;
@@ -1371,12 +1550,12 @@ ltrmark:;
 				 * if tuple was deleted or PlanQual failed for updated
 				 * tuple - we have not process this tuple!
 				 */
-				return (NULL);
+				return NULL;
 
 			default:
 				ReleaseBuffer(buffer);
 				elog(ERROR, "Unknown status %u from heap_mark4update", test);
-				return (NULL);
+				return NULL;
 		}
 	}
 	else
@@ -1466,7 +1645,7 @@ deferredTriggerCheckState(Oid tgoid, int32 itemstate)
 
 	/*
 	 * Not deferrable triggers (i.e. normal AFTER ROW triggers and
-	 * constraints declared NOT DEFERRABLE, the state is allways false.
+	 * constraints declared NOT DEFERRABLE, the state is always false.
 	 */
 	if ((itemstate & TRIGGER_DEFERRED_DEFERRABLE) == 0)
 		return false;
@@ -1590,7 +1769,7 @@ DeferredTriggerExecute(DeferredTriggerEvent event, int itemno,
 	 */
 	LocTriggerData.type = T_TriggerData;
 	LocTriggerData.tg_event = (event->dte_event & TRIGGER_EVENT_OPMASK) |
-		TRIGGER_EVENT_ROW;
+							  (event->dte_event & TRIGGER_EVENT_ROW);
 	LocTriggerData.tg_relation = rel;
 
 	LocTriggerData.tg_trigger = NULL;
@@ -2139,7 +2318,7 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
  * ----------
  */
 static void
-DeferredTriggerSaveEvent(ResultRelInfo *relinfo, int event,
+DeferredTriggerSaveEvent(ResultRelInfo *relinfo, int event, bool row_trigger,
 						 HeapTuple oldtup, HeapTuple newtup)
 {
 	Relation	rel = relinfo->ri_RelationDesc;
@@ -2152,7 +2331,6 @@ DeferredTriggerSaveEvent(ResultRelInfo *relinfo, int event,
 	int		   *tgindx;
 	ItemPointerData oldctid;
 	ItemPointerData newctid;
-	TriggerData LocTriggerData;
 
 	if (deftrig_cxt == NULL)
 		elog(ERROR,
@@ -2175,14 +2353,25 @@ DeferredTriggerSaveEvent(ResultRelInfo *relinfo, int event,
 	 */
 	oldcxt = MemoryContextSwitchTo(deftrig_cxt);
 
-	ntriggers = trigdesc->n_after_row[event];
-	tgindx = trigdesc->tg_after_row[event];
+	if (row_trigger)
+	{
+		ntriggers = trigdesc->n_after_row[event];
+		tgindx = trigdesc->tg_after_row[event];
+	}
+	else
+	{
+		ntriggers = trigdesc->n_after_statement[event];
+		tgindx = trigdesc->tg_after_statement[event];
+	}
+
 	new_size = offsetof(DeferredTriggerEventData, dte_item[0]) +
 		ntriggers * sizeof(DeferredTriggerEventItem);
 
 	new_event = (DeferredTriggerEvent) palloc(new_size);
 	new_event->dte_next = NULL;
 	new_event->dte_event = event & TRIGGER_EVENT_OPMASK;
+	if (row_trigger)
+		new_event->dte_event |= TRIGGER_EVENT_ROW;
 	new_event->dte_relid = rel->rd_id;
 	ItemPointerCopy(&oldctid, &(new_event->dte_oldctid));
 	ItemPointerCopy(&newctid, &(new_event->dte_newctid));
@@ -2190,15 +2379,21 @@ DeferredTriggerSaveEvent(ResultRelInfo *relinfo, int event,
 	for (i = 0; i < ntriggers; i++)
 	{
 		Trigger    *trigger = &trigdesc->triggers[tgindx[i]];
+		DeferredTriggerEventItem *ev_item = &(new_event->dte_item[i]);
 
-		new_event->dte_item[i].dti_tgoid = trigger->tgoid;
-		new_event->dte_item[i].dti_state =
+		ev_item->dti_tgoid = trigger->tgoid;
+		ev_item->dti_state = 
 			((trigger->tgdeferrable) ?
 			 TRIGGER_DEFERRED_DEFERRABLE : 0) |
 			((trigger->tginitdeferred) ?
-			 TRIGGER_DEFERRED_INITDEFERRED : 0) |
-			((trigdesc->n_before_row[event] > 0) ?
-			 TRIGGER_DEFERRED_HAS_BEFORE : 0);
+			 TRIGGER_DEFERRED_INITDEFERRED : 0);
+
+		if (row_trigger && (trigdesc->n_before_row[event] > 0))
+			ev_item->dti_state |= TRIGGER_DEFERRED_HAS_BEFORE;
+		else if (!row_trigger && (trigdesc->n_before_statement[event] > 0))
+		{
+			ev_item->dti_state |= TRIGGER_DEFERRED_HAS_BEFORE;
+		}
 	}
 
 	MemoryContextSwitchTo(oldcxt);
@@ -2219,6 +2414,7 @@ DeferredTriggerSaveEvent(ResultRelInfo *relinfo, int event,
 				Trigger    *trigger = &trigdesc->triggers[tgindx[i]];
 				bool		is_ri_trigger;
 				bool		key_unchanged;
+				TriggerData LocTriggerData;
 
 				/*
 				 * We are interested in RI_FKEY triggers only.

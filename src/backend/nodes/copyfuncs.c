@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.219 2002/11/19 23:21:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.220 2002/11/23 03:59:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2482,14 +2482,6 @@ _copyCreateTrigStmt(CreateTrigStmt *from)
 	newnode->before = from->before;
 	newnode->row = from->row;
 	memcpy(newnode->actions, from->actions, sizeof(from->actions));
-	if (from->lang)
-		newnode->lang = pstrdup(from->lang);
-	if (from->text)
-		newnode->text = pstrdup(from->text);
-
-	Node_Copy(from, newnode, attr);
-	if (from->when)
-		newnode->when = pstrdup(from->when);
 	newnode->isconstraint = from->isconstraint;
 	newnode->deferrable = from->deferrable;
 	newnode->initdeferred = from->initdeferred;

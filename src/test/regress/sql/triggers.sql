@@ -93,7 +93,7 @@ DROP TABLE fkeys2;
 
 -- -- I've disabled the funny_dup17 test because the new semantics
 -- -- of AFTER ROW triggers, which get now fired at the end of a
--- -- query allways, cause funny_dup17 to enter an endless loop.
+-- -- query always, cause funny_dup17 to enter an endless loop.
 -- --
 -- --      Jan
 --
@@ -196,3 +196,55 @@ select * from tttest where price_on <= 35 and price_off > 35 and price_id = 5;
 
 drop table tttest;
 drop sequence ttdummy_seq;
+
+--
+-- tests for per-statement triggers
+--
+
+CREATE TABLE log_table (tstamp timestamp default timeofday()::timestamp);
+
+CREATE TABLE main_table (a int, b int);
+
+COPY main_table (a,b) FROM stdin;
+5	10
+20	20
+30	10
+50	35
+80	15
+\.
+
+CREATE FUNCTION trigger_func() RETURNS trigger LANGUAGE 'plpgsql' AS '
+BEGIN
+	RAISE NOTICE ''trigger_func() called: action = %, when = %, level = %'', TG_OP, TG_WHEN, TG_LEVEL;
+	RETURN NULL;
+END;';
+
+CREATE TRIGGER before_ins_stmt_trig BEFORE INSERT ON main_table
+FOR EACH STATEMENT EXECUTE PROCEDURE trigger_func();
+
+CREATE TRIGGER after_ins_stmt_trig AFTER INSERT ON main_table
+FOR EACH STATEMENT EXECUTE PROCEDURE trigger_func();
+
+--
+-- if neither 'FOR EACH ROW' nor 'FOR EACH STATEMENT' was specified,
+-- CREATE TRIGGER should default to 'FOR EACH STATEMENT'
+--
+CREATE TRIGGER before_upd_stmt_trig AFTER UPDATE ON main_table
+EXECUTE PROCEDURE trigger_func();
+
+CREATE TRIGGER before_upd_row_trig AFTER UPDATE ON main_table
+FOR EACH ROW EXECUTE PROCEDURE trigger_func();
+
+INSERT INTO main_table DEFAULT VALUES;
+
+UPDATE main_table SET a = a + 1 WHERE b < 30;
+-- UPDATE that effects zero rows should still call per-statement trigger
+UPDATE main_table SET a = a + 2 WHERE b > 100;
+
+-- COPY should fire per-row and per-statement INSERT triggers
+COPY main_table (a, b) FROM stdin;
+30	40
+50	60
+\.
+
+SELECT * FROM main_table ORDER BY a;

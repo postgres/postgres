@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.380 2002/11/18 17:12:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.381 2002/11/23 03:59:08 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1371,7 +1371,7 @@ opt_using:
 /*****************************************************************************
  *
  *		QUERY :
- *				CREATE relname
+ *				CREATE TABLE relname
  *
  *****************************************************************************/
 
@@ -2028,11 +2028,6 @@ CreateTrigStmt:
 					n->before = $4;
 					n->row = $8;
 					memcpy (n->actions, $5, 4);
-					n->lang = NULL;		/* unused */
-					n->text = NULL;		/* unused */
-					n->attr = NULL;		/* unused */
-					n->when = NULL;		/* unused */
-
 					n->isconstraint  = FALSE;
 					n->deferrable	 = FALSE;
 					n->initdeferred  = FALSE;
@@ -2053,11 +2048,6 @@ CreateTrigStmt:
 					n->before = FALSE;
 					n->row = TRUE;
 					memcpy (n->actions, $6, 4);
-					n->lang = NULL;		/* unused */
-					n->text = NULL;		/* unused */
-					n->attr = NULL;		/* unused */
-					n->when = NULL;		/* unused */
-
 					n->isconstraint  = TRUE;
 					n->deferrable = ($10 & 1) != 0;
 					n->initdeferred = ($10 & 2) != 0;
@@ -2075,17 +2065,17 @@ TriggerActionTime:
 TriggerEvents:
 			TriggerOneEvent
 				{
-					char *e = palloc (4);
+					char *e = palloc(4);
 					e[0] = $1; e[1] = 0; $$ = e;
 				}
 			| TriggerOneEvent OR TriggerOneEvent
 				{
-					char *e = palloc (4);
+					char *e = palloc(4);
 					e[0] = $1; e[1] = $3; e[2] = 0; $$ = e;
 				}
 			| TriggerOneEvent OR TriggerOneEvent OR TriggerOneEvent
 				{
-					char *e = palloc (4);
+					char *e = palloc(4);
 					e[0] = $1; e[1] = $3; e[2] = $5; e[3] = 0;
 					$$ = e;
 				}
@@ -2101,6 +2091,14 @@ TriggerForSpec:
 			FOR TriggerForOpt TriggerForType
 				{
 					$$ = $3;
+				}
+			| /* EMPTY */
+				{
+					/*
+					 * If ROW/STATEMENT not specified, default to
+					 * STATEMENT, per SQL
+					 */
+					$$ = FALSE;
 				}
 		;
 
@@ -2124,7 +2122,7 @@ TriggerFuncArg:
 			ICONST
 				{
 					char buf[64];
-					snprintf (buf, sizeof(buf), "%d", $1);
+					snprintf(buf, sizeof(buf), "%d", $1);
 					$$ = makeString(pstrdup(buf));
 				}
 			| FCONST								{ $$ = makeString($1); }

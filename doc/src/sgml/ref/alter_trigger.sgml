@@ -153,8 +153,8 @@ ALTER TRIGGER emp_stamp ON emp RENAME TO emp_track_chgs;
    </refsect2info>
    <title>SQL92</title>
    <para>
-    The clause to rename triggers is a
-    <productname>PostgreSQL</productname> extension from SQL92.
+    <command>ALTER TRIGGER</command> is a <productname>PostgreSQL</>
+    extension of SQL92.
    </para>
   </refsect2>
  </refsect1>

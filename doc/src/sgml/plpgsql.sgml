@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/plpgsql.sgml,v 1.11 2002/11/15 03:22:30 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/plpgsql.sgml,v 1.12 2002/11/23 03:59:05 momjian Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -674,24 +674,25 @@ RENAME this_var TO that_var;
   <title>Expressions</title>
 
     <para>
-     All expressions used in <application>PL/pgSQL</application> statements
-     are processed using the server's regular SQL executor. Expressions that
-     appear to contain 
-     constants may in fact require run-time evaluation
-     (e.g. <literal>'now'</literal>  for the 
-     <type>timestamp</type> type) so
-     it is impossible for the <application>PL/pgSQL</application> parser
-     to identify real constant values other than the NULL keyword. All
-     expressions are evaluated internally by executing a query
+     All expressions used in <application>PL/pgSQL</application>
+     statements are processed using the server's regular
+     <acronym>SQL</acronym> executor. Expressions that appear to
+     contain constants may in fact require run-time evaluation
+     (e.g. <literal>'now'</literal> for the <type>timestamp</type>
+     type) so it is impossible for the
+     <application>PL/pgSQL</application> parser to identify real
+     constant values other than the NULL keyword. All expressions are
+     evaluated internally by executing a query
 <synopsis>
 SELECT <replaceable>expression</replaceable>
 </synopsis>
-     using the <acronym>SPI</acronym> manager. In the expression, occurrences
-     of <application>PL/pgSQL</application> variable 
+     using the <acronym>SPI</acronym> manager. In the expression,
+     occurrences of <application>PL/pgSQL</application> variable
      identifiers are replaced by parameters and the actual values from
      the variables are passed to the executor in the parameter array.
-     This allows the query plan for the SELECT to be prepared just once
-     and then re-used for subsequent evaluations.
+     This allows the query plan for the <command>SELECT</command> to
+     be prepared just once and then re-used for subsequent
+     evaluations.
     </para>
 
     <para>
@@ -1100,41 +1101,43 @@ GET DIAGNOSTICS <replaceable>variable</replaceable> = <replaceable>item</replace
 	 <itemizedlist>
 	  <listitem>
 	   <para>
-		A SELECT INTO statement sets <literal>FOUND</literal>
-		true if it returns a row, false if no row is returned.
+		A <command>SELECT INTO</command> statement sets
+		<literal>FOUND</literal> true if it returns a row, false if no
+		row is returned.
 	   </para>
 	  </listitem>
 	  <listitem>
 	   <para>
-		A PERFORM statement sets <literal>FOUND</literal>
+		A <command>PERFORM</> statement sets <literal>FOUND</literal>
 		true if it produces (discards) a row, false if no row is
 		produced.
 	   </para>
 	  </listitem>
 	  <listitem>
 	   <para>
-		UPDATE, INSERT, and DELETE statements set
-		<literal>FOUND</literal> true if at least one row is
-		affected, false if no row is affected.
+		<command>UPDATE</>, <command>INSERT</>, and <command>DELETE</>
+		statements set <literal>FOUND</literal> true if at least one
+		row is affected, false if no row is affected.
 	   </para>
 	  </listitem>
 	  <listitem>
 	   <para>
-		A FETCH statement sets <literal>FOUND</literal>
+		A <command>FETCH</> statement sets <literal>FOUND</literal>
 		true if it returns a row, false if no row is returned.
 	   </para>
 	  </listitem>
 	  <listitem>
 	   <para>
-		A FOR statement sets <literal>FOUND</literal>
-		true if it iterates one or more times, else false.
-		This applies to all three variants of the FOR statement
-		(integer FOR loops, record-set FOR loops, and dynamic
-		record-set FOR loops). <literal>FOUND</literal> is only set
-		when the FOR loop exits: inside the execution of the loop,
-		<literal>FOUND</literal> is not modified by the FOR statement,
-		although it may be changed by the execution of other
-		statements within the loop body.
+		A <command>FOR</> statement sets <literal>FOUND</literal> true
+		if it iterates one or more times, else false.  This applies to
+		all three variants of the <command>FOR</> statement (integer
+		<command>FOR</> loops, record-set <command>FOR</> loops, and
+		dynamic record-set <command>FOR</>
+		loops). <literal>FOUND</literal> is only set when the
+		<command>FOR</> loop exits: inside the execution of the loop,
+		<literal>FOUND</literal> is not modified by the
+		<command>FOR</> statement, although it may be changed by the
+		execution of other statements within the loop body.
 	   </para>
 	  </listitem>
 	 </itemizedlist>
@@ -1975,7 +1978,7 @@ RAISE EXCEPTION ''Inexistent ID --> %'',user_id;
 	<application>PL/pgSQL</application> can be used to define trigger
 	procedures. A trigger procedure is created with the
 	<command>CREATE FUNCTION</> command as a function with no
-	arguments and a return type of <type>TRIGGER</type>.  Note that
+	arguments and a return type of <type>trigger</type>.  Note that
 	the function must be declared with no arguments even if it expects
 	to receive arguments specified in <command>CREATE TRIGGER</> ---
 	trigger arguments are passed via <varname>TG_ARGV</>, as described
@@ -1992,8 +1995,9 @@ RAISE EXCEPTION ''Inexistent ID --> %'',user_id;
      <term><varname>NEW</varname></term>
      <listitem>
       <para>
-       Data type <type>RECORD</type>; variable holding the new database row for INSERT/UPDATE
-       operations in ROW level triggers.
+       Data type <type>RECORD</type>; variable holding the new
+       database row for INSERT/UPDATE operations in ROW level
+       triggers. This variable is NULL in STATEMENT level triggers.
       </para>
      </listitem>
     </varlistentry>
@@ -2002,8 +2006,9 @@ RAISE EXCEPTION ''Inexistent ID --> %'',user_id;
      <term><varname>OLD</varname></term>
      <listitem>
       <para>
-       Data type <type>RECORD</type>; variable holding the old database row for UPDATE/DELETE
-       operations in ROW level triggers.
+       Data type <type>RECORD</type>; variable holding the old
+       database row for UPDATE/DELETE operations in ROW level
+       triggers. This variable is NULL in STATEMENT level triggers.
       </para>
      </listitem>
     </varlistentry>
@@ -2098,22 +2103,23 @@ RAISE EXCEPTION ''Inexistent ID --> %'',user_id;
 
    <para>
     A trigger function must return either NULL or a record/row value
-    having exactly the structure of the table the trigger was fired for.
-    Triggers fired BEFORE may return NULL to signal the trigger manager
-    to skip the rest of the operation for this row (ie, subsequent triggers
-    are not fired, and the INSERT/UPDATE/DELETE does not occur for this
-    row).  If a non-NULL value is returned then the operation proceeds with
-    that row value.  Note that returning a row value different from the
-    original value of NEW alters the row that will be inserted or updated.
-    It is possible to replace single values directly
-    in NEW and return that, or to build a complete new record/row to
-    return.
+    having exactly the structure of the table the trigger was fired
+    for. The return value of a BEFORE or AFTER STATEMENT level
+    trigger, or an AFTER ROW level trigger is ignored; it may as well
+    return NULL. However, any of these types of triggers can still
+    abort the entire trigger operation by raising an error.
    </para>
 
    <para>
-    The return value of a trigger fired AFTER is ignored; it may as well
-    always return a NULL value.  But an AFTER trigger can still abort the
-    operation by raising an error.
+    ROW level triggers fired BEFORE may return NULL to signal the
+    trigger manager to skip the rest of the operation for this row
+    (ie, subsequent triggers are not fired, and the
+    INSERT/UPDATE/DELETE does not occur for this row).  If a non-NULL
+    value is returned then the operation proceeds with that row value.
+    Note that returning a row value different from the original value
+    of NEW alters the row that will be inserted or updated.  It is
+    possible to replace single values directly in NEW and return that,
+    or to build a complete new record/row to return.
    </para>
 
    <example>
@@ -2143,7 +2149,7 @@ CREATE FUNCTION emp_stamp () RETURNS TRIGGER AS '
             RAISE EXCEPTION ''% cannot have NULL salary'', NEW.empname;
         END IF;
 
-        -- Who works for us when she must pay for?
+        -- Who works for us when she must pay for it?
         IF NEW.salary < 0 THEN
             RAISE EXCEPTION ''% cannot have a negative salary'', NEW.empname;
         END IF;

@@ -1,7 +1,7 @@
 /* ----------
  * pg_lzcompress.c -
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/pg_lzcompress.c,v 1.15 2002/09/04 20:31:28 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/pg_lzcompress.c,v 1.16 2002/11/23 03:59:08 momjian Exp $
  *
  *		This is an implementation of LZ compression for PostgreSQL.
  *		It uses a simple history table and generates 2-3 byte tags
@@ -87,7 +87,7 @@
  *				OOOO LLLL  OOOO OOOO
  *
  *			This limits the offset to 1-4095 (12 bits) and the length
- *			to 3-18 (4 bits) because 3 is allways added to it. To emit
+ *			to 3-18 (4 bits) because 3 is always added to it. To emit
  *			a tag of 2 bytes with a length of 2 only saves one control
  *			bit. But we lose one byte in the possible length of a tag.
  *
@@ -230,7 +230,7 @@ static PGLZ_Strategy strategy_default_data = {
 PGLZ_Strategy *PGLZ_strategy_default = &strategy_default_data;
 
 
-static PGLZ_Strategy strategy_allways_data = {
+static PGLZ_Strategy strategy_always_data = {
 	0,							/* Chunks of any size are compressed							*/
 	0,							/* */
 	0,							/* We want to save at least one single
@@ -239,7 +239,7 @@ static PGLZ_Strategy strategy_allways_data = {
 								 * bytes is found		  */
 	6							/* Look harder for a good match.								*/
 };
-PGLZ_Strategy *PGLZ_strategy_allways = &strategy_allways_data;
+PGLZ_Strategy *PGLZ_strategy_always = &strategy_always_data;
 
 
 static PGLZ_Strategy strategy_never_data = {
@@ -247,7 +247,7 @@ static PGLZ_Strategy strategy_never_data = {
 	0,							/* */
 	0,							/* */
 	0,							/* Zero indicates "store uncompressed
-								 * allways"                  */
+								 * always"                  */
 	0							/* */
 };
 PGLZ_Strategy *PGLZ_strategy_never = &strategy_never_data;
@@ -716,7 +716,7 @@ pglz_decompress(PGLZ_Header *source, char *dest)
 
 				/*
 				 * Now we copy the bytes specified by the tag from OUTPUT
-				 * to OUTPUT. It is dangerous and platform dependant to
+				 * to OUTPUT. It is dangerous and platform dependent to
 				 * use memcpy() here, because the copied areas could
 				 * overlap extremely!
 				 */
