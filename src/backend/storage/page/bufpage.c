@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.50 2002/09/04 20:31:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.51 2003/01/11 05:01:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -409,8 +409,7 @@ PageIndexTupleDelete(Page page, OffsetNumber offnum)
 	unsigned	offset;
 	int			nbytes;
 	int			offidx;
-	int			nline,
-				i;
+	int			nline;
 
 	/*
 	 * As with PageRepairFragmentation, paranoia seems justified.
@@ -479,11 +478,12 @@ PageIndexTupleDelete(Page page, OffsetNumber offnum)
 	 */
 	if (!PageIsEmpty(page))
 	{
+		int i;
 		nline--;				/* there's one less than when we started */
-		for (i = nline; --i >= 0;)
+		for (i = 1; i <= nline; i++)
 		{
-			if (PageGetItemId(phdr, i + 1)->lp_off <= offset)
-				PageGetItemId(phdr, i + 1)->lp_off += size;
+			if (PageGetItemId(phdr, i)->lp_off <= offset)
+				PageGetItemId(phdr, i)->lp_off += size;
 		}
 	}
 }
