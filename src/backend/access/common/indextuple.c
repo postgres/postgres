@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.39 1999/10/23 03:13:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.40 2000/01/11 03:33:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,9 +44,8 @@ index_formtuple(TupleDesc tupleDescriptor,
 	uint16		tupmask = 0;
 	int			numberOfAttributes = tupleDescriptor->natts;
 
-	/* XXX shouldn't this test be '>' ? */
-	if (numberOfAttributes >= INDEX_MAX_KEYS)
-		elog(ERROR, "index_formtuple: numberOfAttributes %d >= %d",
+	if (numberOfAttributes > INDEX_MAX_KEYS)
+		elog(ERROR, "index_formtuple: numberOfAttributes %d > %d",
 			 numberOfAttributes, INDEX_MAX_KEYS);
 
 	for (i = 0; i < numberOfAttributes && !hasnull; i++)

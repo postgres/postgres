@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.17 2000/01/10 17:14:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.18 2000/01/11 03:33:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -258,10 +258,10 @@ ExtendIndex(char *indexRelationName, Expr *predicate, List *rangetable)
 	relationId = index->indrelid;
 	indproc = index->indproc;
 
-	for (i = 0; i < INDEX_MAX_KEYS; i++)
+	for (i = INDEX_MAX_KEYS-1; i >= 0; i--)
 		if (index->indkey[i] == InvalidAttrNumber)
 			break;
-	numberOfAttributes = i;
+	numberOfAttributes = i+1;
 
 	if (VARSIZE(&index->indpred) != 0)
 	{

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-pqexec.c,v 1.27 2000/01/11 02:30:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-pqexec.c,v 1.28 2000/01/11 03:33:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,8 +80,8 @@ PQfn(int fnid,
 	 */
 	retval = (char *)
 		fmgr(fnid, arg[0], arg[1], arg[2], arg[3],
-			 arg[4], arg[5], arg[6], arg[7]);
-			 arg[8], arg[9], arg[10], arg[11]);
+			 arg[4], arg[5], arg[6], arg[7],
+			 arg[8], arg[9], arg[10], arg[11],
 			 arg[12], arg[13], arg[14], arg[15]);
 
 	/* ----------------
