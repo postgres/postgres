@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xoper.sgml,v 1.27 2003/10/21 22:51:14 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xoper.sgml,v 1.28 2003/10/22 03:50:27 tgl Exp $
 -->
 
  <sect1 id="xoper">
@@ -41,7 +41,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/xoper.sgml,v 1.27 2003/10/21 22:51:14 tgl E
 CREATE FUNCTION complex_add(complex, complex)
     RETURNS complex
     AS '<replaceable>filename</replaceable>', 'complex_add'
-    LANGUAGE C;
+    LANGUAGE C IMMUTABLE STRICT;
 
 CREATE OPERATOR + (
     leftarg = complex,
@@ -113,7 +113,7 @@ SELECT (a + b) AS c FROM test_complex;
     </para>
 
     <para>
-     The left operand type of a commuted operator is the same as the
+     The left operand type of a commutable operator is the same as the
      right operand type of its commutator, and vice versa.  So the name of
      the commutator operator is all that <ProductName>PostgreSQL</ProductName>
      needs to be given to look up the commutator, and that's all that needs to
@@ -132,7 +132,7 @@ SELECT (a + b) AS c FROM test_complex;
      <literal>tab2.y = tab1.x</>, because the indexscan machinery expects
      to see the indexed column on the left of the operator it is given.
      <ProductName>PostgreSQL</ProductName> will <emphasis>not</> simply
-     assume that this is a valid transformation --- the definer of the
+     assume that this is a valid transformation --- the creator of the
      <literal>=</> operator must specify that it is valid, by marking the
      operator with commutator information.
     </para>
