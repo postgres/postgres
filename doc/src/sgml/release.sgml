@@ -34,7 +34,7 @@ A dump/restore is <emphasis>not</emphasis> required for those running
 
 <para>
 <programlisting>
-Add NT README file.
+Add NT README file
 Portability fixes for linux_ppc, Irix, linux_alpha, OpenBSD, alpha
 Remove QUERY_LIMIT, use SELECT...LIMIT
 Fix for EXPLAIN on inheritance(Tom)
@@ -48,7 +48,7 @@ Fix to prevent too large tuple from being created(Bruce)
 plpgsql fixes
 Allow port numbers 32k - 64k(Bruce)
 Add ^ precidence(Bruce)
-Rename sort files called pg_temp to pg_sorttemp
+Rename sort files called pg_temp to pg_sorttemp(Bruce)
 Fix for microseconds in time values(Tom)
 Tutorial source cleanup
 New linux_m68k port
