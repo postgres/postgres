@@ -1,5 +1,0 @@
-
-This directory contains our feeble collection of tests. To test foo.sql do
-	psql -q < foo.sql >! foo.out
-	diff foo.out results/foo.sql.out
-
