@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sat Aug 17 11:09:40 EDT 2002
+Last updated:		Mon Aug 19 22:16:31 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -346,7 +346,7 @@ Dependency Checking
 * Propagate column or table renaming to foreign key constraints
 * -Automatically drop constraints/functions when object is dropped
 * -Make foreign key constraints clearer in dump file
-* Make other constraints clearer in dump file
+* -Make other constraints clearer in dump file
 * -Make foreign keys easier to identify
 * Flush cached query plans when their underlying catalog data changes
 * Use dependency information to dump data in proper order
