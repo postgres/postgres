@@ -6,7 +6,8 @@ CREATE FUNCTION "recordchange" () RETURNS trigger AS
 
 CREATE TABLE "MirrorHost" (
 "MirrorHostId" serial,
-"HostName" varchar NOT NULL
+"HostName" varchar NOT NULL,
+PRIMARY KEY("MirrorHostId")
 );
 
 

@@ -19,7 +19,7 @@
 #    GNU General Public License for more details.
 #
 ##############################################################################
-# $Id: DBMirror.pl,v 1.2 2002/10/18 18:41:19 momjian Exp $ 
+# $Id: DBMirror.pl,v 1.3 2002/10/19 02:16:40 momjian Exp $ 
 #
 ##############################################################################
 
@@ -387,7 +387,7 @@ sub mirrorInsert($$$$$) {
 
         
     #Now build the insert query.
-    my $insertQuery = "INSERT INTO \"$tableName\" (";
+    my $insertQuery = "INSERT INTO $tableName (";
     my $valuesQuery = ") VALUES (";
     foreach $column (keys (%recordValues)) {
 	if($firstIteration==0) {
@@ -468,7 +468,7 @@ sub mirrorDelete($$$$$) {
     %dataHash = extractData($pendingResult,$currentTuple);
 
     my $counter=0;
-    my $deleteQuery = "DELETE FROM \"$tableName\" WHERE ";
+    my $deleteQuery = "DELETE FROM $tableName WHERE ";
     foreach $currentField (keys %dataHash) {
       if($firstField==0) {
 	$deleteQuery .= " AND ";
@@ -553,7 +553,7 @@ sub mirrorUpdate($$$$$) {
 
     my $counter;
     my $quotedValue;
-    my $updateQuery = "UPDATE \"$tableName\" SET ";
+    my $updateQuery = "UPDATE $tableName SET ";
     my $currentField;
 
 

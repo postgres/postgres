@@ -1,6 +1,6 @@
 /****************************************************************************
  * pending.c
- * $Id: pending.c,v 1.5 2002/09/26 05:24:30 momjian Exp $
+ * $Id: pending.c,v 1.6 2002/10/19 02:16:40 momjian Exp $
  *
  * This file contains a trigger for Postgresql-7.x to record changes to tables
  * to a pending table for mirroring.
@@ -22,7 +22,7 @@
 
 #include <executor/spi.h>
 #include <commands/trigger.h>
-
+#include <utils/lsyscache.h>
 enum FieldUsage
 {
 	PRIMARY = 0, NONPRIMARY, ALL, NUM_FIELDUSAGE
@@ -46,7 +46,7 @@ char *packageData(HeapTuple tTupleData, TupleDesc tTupleDecs,
 
 #define BUFFER_SIZE 256
 #define MAX_OID_LEN 10
-
+#define DEBUG_OUTPUT
 
 extern Datum recordchange(PG_FUNCTION_ARGS);
 
@@ -69,7 +69,8 @@ recordchange(PG_FUNCTION_ARGS)
 	HeapTuple	retTuple = NULL;
 	char	   *tblname;
 	char		op = 0;
-
+	char 	   *schemaname;
+	char	   *fullyqualtblname;
 	if (fcinfo->context != NULL)
 	{
 
@@ -81,6 +82,16 @@ recordchange(PG_FUNCTION_ARGS)
 		trigdata = (TriggerData *) fcinfo->context;
 		/* Extract the table name */
 		tblname = SPI_getrelname(trigdata->tg_relation);
+#ifndef NOSCHEMAS
+		schemaname = get_namespace_name(RelationGetNamespace(trigdata->tg_relation));
+		fullyqualtblname = SPI_palloc(strlen(tblname) + 
+					      strlen(schemaname) + 4);
+ 		sprintf(fullyqualtblname,"\"%s\".\"%s\"",
+			schemaname,tblname);
+#else
+		fullyqualtblname = SPI_palloc(strlen(tblname+3));
+		sprintf(fullyqualtblname,"\"%s\"",tblname);
+#endif
 		tupdesc = trigdata->tg_relation->rd_att;
 		if (TRIGGER_FIRED_BY_UPDATE(trigdata->tg_event))
 		{
@@ -103,7 +114,7 @@ recordchange(PG_FUNCTION_ARGS)
 			op = 'd';
 		}
 
-		if (storePending(tblname, beforeTuple, afterTuple, tupdesc, trigdata, op))
+		if (storePending(fullyqualtblname, beforeTuple, afterTuple, tupdesc, trigdata, op))
 		{
 			/* An error occoured. Skip the operation. */
 			elog(ERROR, "Operation could not be mirrored");
@@ -113,6 +124,7 @@ recordchange(PG_FUNCTION_ARGS)
 #if defined DEBUG_OUTPUT
 		elog(NOTICE, "Returning on success");
 #endif
+		SPI_pfree(fullyqualtblname);
 		SPI_finish();
 		return PointerGetDatum(retTuple);
 	}
@@ -417,7 +429,7 @@ packageData(HeapTuple tTupleData, TupleDesc tTupleDesc,
 #if defined DEBUG_OUTPUT
 		elog(NOTICE, cpFieldName);
 #endif
-		while (iDataBlockSize - iUsedDataBlock < strlen(cpFieldName) + 4)
+		while (iDataBlockSize - iUsedDataBlock < strlen(cpFieldName) + 6)
 		{
 			cpDataBlock = SPI_repalloc(cpDataBlock, iDataBlockSize + BUFFER_SIZE);
 			iDataBlockSize = iDataBlockSize + BUFFER_SIZE;
@@ -436,7 +448,7 @@ packageData(HeapTuple tTupleData, TupleDesc tTupleDesc,
 		}
 		else
 		{
-			*cpFormatedPtr = ' ';
+			sprintf(cpFormatedPtr," ");
 			iUsedDataBlock++;
 			cpFormatedPtr++;
 			continue;
@@ -484,7 +496,8 @@ packageData(HeapTuple tTupleData, TupleDesc tTupleDesc,
 	if (tpPKeys != NULL)
 		SPI_pfree(tpPKeys);
 #if defined DEBUG_OUTPUT
-	elog(NOTICE, "Returning");
+	elog(NOTICE, "Returning: DataBlockSize:%d iUsedDataBlock:%d",iDataBlockSize,
+			iUsedDataBlock);
 #endif
 	memset(cpDataBlock + iUsedDataBlock, 0, iDataBlockSize - iUsedDataBlock);
 
