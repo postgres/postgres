@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.159 2001/08/10 18:57:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.160 2001/08/17 23:50:00 inoue Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -2017,10 +2017,15 @@ reindex_relation(Oid relid, bool force)
 		upd_pg_class_inplace = true;
 
 	/*
+	 *	Ensure to hold an exclusive lock throughout the
+	 *	transaction. The lock could be less intensive
+	 *	but now it's AccessExclusiveLock for simplicity.
+	 */
+	rel = heap_open(relid, AccessExclusiveLock);
+	/*
 	 * ignore the indexes of the target system relation while processing
 	 * reindex.
 	 */
-	rel = RelationIdGetRelation(relid);
 	if (!IsIgnoringSystemIndexes() && IsSystemRelationName(NameStr(rel->rd_rel->relname)))
 		deactivate_needed = true;
 #ifndef ENABLE_REINDEX_NAILED_RELATIONS
@@ -2055,7 +2060,10 @@ reindex_relation(Oid relid, bool force)
 		else
 			elog(ERROR, "the target relation %u is shared", relid);
 	}
-	RelationClose(rel);
+	/*
+	 *	Continue to hold the lock.
+	 */
+	heap_close(rel, NoLock);
 
 	old = SetReindexProcessing(true);
 	if (deactivate_needed)
