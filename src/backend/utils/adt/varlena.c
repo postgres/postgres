@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.92.2.1 2003/04/23 18:19:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.92.2.2 2003/11/30 20:52:37 joe Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -174,10 +174,10 @@ byteaout(PG_FUNCTION_ARGS)
 	{
 		if (*vp == '\\')
 			len += 2;
-		else if (isprint((unsigned char) *vp))
-			len++;
-		else
+		else if ((unsigned char) *vp < 0x20 || (unsigned char) *vp > 0x7e)
 			len += 4;
+		else
+			len++;
 	}
 	rp = result = (char *) palloc(len);
 	vp = vlena->vl_dat;
@@ -188,9 +188,7 @@ byteaout(PG_FUNCTION_ARGS)
 			*rp++ = '\\';
 			*rp++ = '\\';
 		}
-		else if (isprint((unsigned char) *vp))
-			*rp++ = *vp;
-		else
+		else if ((unsigned char) *vp < 0x20 || (unsigned char) *vp > 0x7e)
 		{
 			val = *vp;
 			rp[0] = '\\';
@@ -201,6 +199,8 @@ byteaout(PG_FUNCTION_ARGS)
 			rp[1] = DIG(val & 03);
 			rp += 4;
 		}
+		else
+			*rp++ = *vp;
 	}
 	*rp = '\0';
 	PG_RETURN_CSTRING(result);

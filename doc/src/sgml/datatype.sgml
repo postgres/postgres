@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.106.2.3 2003/01/29 01:09:03 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.106.2.4 2003/11/30 20:52:37 joe Exp $
 -->
 
  <chapter id="datatype">
@@ -1035,7 +1035,8 @@ SELECT b, char_length(b) FROM test2;
     strings are distinguished from characters strings by two
     characteristics: First, binary strings specifically allow storing
     octets of zero value and other <quote>non-printable</quote>
-    octets.  Second, operations on binary strings process the actual
+    octets (defined as octets outside the range 32 to 126).
+    Second, operations on binary strings process the actual
     bytes, whereas the encoding and processing of character strings
     depends on locale settings.
    </para>
@@ -1089,12 +1090,23 @@ SELECT b, char_length(b) FROM test2;
        <entry><literal>\\</literal></entry>
       </row>
 
+      <row>
+       <entry>0 to 31 and 127 to 255</entry>
+       <entry><quote>non-printable</quote> octets</entry>
+       <entry><literal>'\\<replaceable>xxx'</></literal> (octal value)</entry>
+       <entry><literal>SELECT '\\001'::bytea;</literal></entry>
+       <entry><literal>\001</literal></entry>
+      </row>
+
      </tbody>
     </tgroup>
    </table>
 
    <para>
-    Note that the result in each of the examples in <xref linkend="datatype-binary-sqlesc"> was exactly one
+    The requirement to escape <quote>non-printable</quote> octets actually
+    varies depending on locale settings. In some instances you can get away
+    with leaving them unescaped. Note that the result in each of the
+    examples in <xref linkend="datatype-binary-sqlesc"> was exactly one
     octet in length, even though the output representation of the zero
     octet and backslash are more than one character. <type>Bytea</type>
     output octets are also escaped. In general, each
@@ -1140,7 +1152,7 @@ SELECT b, char_length(b) FROM test2;
       <row>
        <entry>32 to 126</entry>
        <entry><quote>printable</quote> octets</entry>
-       <entry>ASCII representation</entry>
+       <entry>client character set representation</entry>
        <entry><literal>SELECT '\\176'::bytea;</literal></entry>
        <entry><literal>~</literal></entry>
       </row>
