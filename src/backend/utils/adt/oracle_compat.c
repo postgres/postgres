@@ -2,25 +2,29 @@
  * oracle_compat.c
  *	Oracle compatible functions.
  *
- * Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
  *	Author: Edmund Mergl <E.Mergl@bawue.de>
  *	Multibyte enhancement: Tatsuo Ishii <ishii@postgresql.org>
  *
  *
  * IDENTIFICATION
- *	$Header: /cvsroot/pgsql/src/backend/utils/adt/oracle_compat.c,v 1.43 2002/09/04 20:31:28 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/oracle_compat.c,v 1.44 2003/05/23 22:33:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
-
 #include "postgres.h"
 
 #include <ctype.h>
 
 #include "utils/builtins.h"
-
 #include "mb/pg_wchar.h"
+
+
+static text *dotrim(const char *string, int stringlen,
+					const char *set, int setlen,
+					bool doltrim, bool dortrim);
+
 
 /********************************************************************
  *
@@ -349,86 +353,192 @@ btrim(PG_FUNCTION_ARGS)
 	text	   *string = PG_GETARG_TEXT_P(0);
 	text	   *set = PG_GETARG_TEXT_P(1);
 	text	   *ret;
-	char	   *ptr,
-			   *end,
-			   *ptr2,
-			   *end2;
-	int			m;
 
-	char	  **mp;
-	int			mplen;
-	char	   *p;
-	int			mblen;
-	int			len;
-
-	if ((m = VARSIZE(string) - VARHDRSZ) <= 0 ||
-		(VARSIZE(set) - VARHDRSZ) <= 0)
-		PG_RETURN_TEXT_P(string);
-
-	ptr = VARDATA(string);
-
-	len = m;
-	mp = (char **) palloc(len * sizeof(char *));
-	p = ptr;
-	mplen = 0;
-
-	/* build the mb pointer array */
-	while (len > 0)
-	{
-		mp[mplen++] = p;
-		mblen = pg_mblen(p);
-		p += mblen;
-		len -= mblen;
-	}
-	mplen--;
-	end2 = VARDATA(set) + VARSIZE(set) - VARHDRSZ - 1;
-
-	while (m > 0)
-	{
-		int			str_len = pg_mblen(ptr);
-
-		ptr2 = VARDATA(set);
-		while (ptr2 <= end2)
-		{
-			int			set_len = pg_mblen(ptr2);
-
-			if (str_len == set_len &&
-				memcmp(ptr, ptr2, str_len) == 0)
-				break;
-			ptr2 += set_len;
-		}
-		if (ptr2 > end2)
-			break;
-		ptr += str_len;
-		m -= str_len;
-	}
-
-	while (m > 0)
-	{
-		int			str_len;
-
-		end = mp[mplen--];
-		str_len = pg_mblen(end);
-		ptr2 = VARDATA(set);
-		while (ptr2 <= end2)
-		{
-			int			set_len = pg_mblen(ptr2);
-
-			if (str_len == set_len &&
-				memcmp(end, ptr2, str_len) == 0)
-				break;
-			ptr2 += set_len;
-		}
-		if (ptr2 > end2)
-			break;
-		m -= str_len;
-	}
-	pfree(mp);
-	ret = (text *) palloc(VARHDRSZ + m);
-	VARATT_SIZEP(ret) = VARHDRSZ + m;
-	memcpy(VARDATA(ret), ptr, m);
+	ret = dotrim(VARDATA(string), VARSIZE(string) - VARHDRSZ,
+				 VARDATA(set), VARSIZE(set) - VARHDRSZ,
+				 true, true);
 
 	PG_RETURN_TEXT_P(ret);
+}
+
+/********************************************************************
+ *
+ * btrim1 --- btrim with set fixed as ' '
+ *
+ ********************************************************************/
+
+Datum
+btrim1(PG_FUNCTION_ARGS)
+{
+	text	   *string = PG_GETARG_TEXT_P(0);
+	text	   *ret;
+
+	ret = dotrim(VARDATA(string), VARSIZE(string) - VARHDRSZ,
+				 " ", 1,
+				 true, true);
+
+	PG_RETURN_TEXT_P(ret);
+}
+
+/*
+ * Common implementation for btrim, ltrim, rtrim
+ */
+static text *
+dotrim(const char *string, int stringlen,
+	   const char *set, int setlen,
+	   bool doltrim, bool dortrim)
+{
+	text	   *result;
+	int			i;
+
+	/* Nothing to do if either string or set is empty */
+	if (stringlen > 0 && setlen > 0)
+	{
+		if (pg_database_encoding_max_length() > 1)
+		{
+			/*
+			 * In the multibyte-encoding case, build arrays of pointers to
+			 * character starts, so that we can avoid inefficient checks in
+			 * the inner loops.
+			 */
+			const char **stringchars;
+			const char **setchars;
+			int		   *stringmblen;
+			int		   *setmblen;
+			int			stringnchars;
+			int			setnchars;
+			int			resultndx;
+			int			resultnchars;
+			const char *p;
+			int			len;
+			int			mblen;
+			const char *str_pos;
+			int			str_len;
+
+			stringchars = (const char **) palloc(stringlen * sizeof(char *));
+			stringmblen = (int *) palloc(stringlen * sizeof(int));
+			stringnchars = 0;
+			p = string;
+			len = stringlen;
+			while (len > 0)
+			{
+				stringchars[stringnchars] = p;
+				stringmblen[stringnchars] = mblen = pg_mblen(p);
+				stringnchars++;
+				p += mblen;
+				len -= mblen;
+			}
+
+			setchars = (const char **) palloc(setlen * sizeof(char *));
+			setmblen = (int *) palloc(setlen * sizeof(int));
+			setnchars = 0;
+			p = set;
+			len = setlen;
+			while (len > 0)
+			{
+				setchars[setnchars] = p;
+				setmblen[setnchars] = mblen = pg_mblen(p);
+				setnchars++;
+				p += mblen;
+				len -= mblen;
+			}
+
+			resultndx = 0;		/* index in stringchars[] */
+			resultnchars = stringnchars;
+
+			if (doltrim)
+			{
+				while (resultnchars > 0)
+				{
+					str_pos = stringchars[resultndx];
+					str_len = stringmblen[resultndx];
+					for (i = 0; i < setnchars; i++)
+					{
+						if (str_len == setmblen[i] &&
+							memcmp(str_pos, setchars[i], str_len) == 0)
+							break;
+					}
+					if (i >= setnchars)
+						break;	/* no match here */
+					string += str_len;
+					stringlen -= str_len;
+					resultndx++;
+					resultnchars--;
+				}
+			}
+
+			if (dortrim)
+			{
+				while (resultnchars > 0)
+				{
+					str_pos = stringchars[resultndx + resultnchars - 1];
+					str_len = stringmblen[resultndx + resultnchars - 1];
+					for (i = 0; i < setnchars; i++)
+					{
+						if (str_len == setmblen[i] &&
+							memcmp(str_pos, setchars[i], str_len) == 0)
+							break;
+					}
+					if (i >= setnchars)
+						break;	/* no match here */
+					stringlen -= str_len;
+					resultnchars--;
+				}
+			}
+
+			pfree(stringchars);
+			pfree(stringmblen);
+			pfree(setchars);
+			pfree(setmblen);
+		}
+		else
+		{
+			/*
+			 * In the single-byte-encoding case, we don't need such overhead.
+			 */
+			if (doltrim)
+			{
+				while (stringlen > 0)
+				{
+					char	str_ch = *string;
+
+					for (i = 0; i < setlen; i++)
+					{
+						if (str_ch == set[i])
+							break;
+					}
+					if (i >= setlen)
+						break;	/* no match here */
+					string++;
+					stringlen--;
+				}
+			}
+
+			if (dortrim)
+			{
+				while (stringlen > 0)
+				{
+					char	str_ch = string[stringlen - 1];
+
+					for (i = 0; i < setlen; i++)
+					{
+						if (str_ch == set[i])
+							break;
+					}
+					if (i >= setlen)
+						break;	/* no match here */
+					stringlen--;
+				}
+			}
+		}
+	}
+
+	/* Return selected portion of string */
+	result = (text *) palloc(VARHDRSZ + stringlen);
+	VARATT_SIZEP(result) = VARHDRSZ + stringlen;
+	memcpy(VARDATA(result), string, stringlen);
+
+	return result;
 }
 
 /********************************************************************
@@ -525,44 +635,32 @@ ltrim(PG_FUNCTION_ARGS)
 	text	   *string = PG_GETARG_TEXT_P(0);
 	text	   *set = PG_GETARG_TEXT_P(1);
 	text	   *ret;
-	char	   *ptr,
-			   *ptr2,
-			   *end2;
-	int			m;
 
-	if ((m = VARSIZE(string) - VARHDRSZ) <= 0 ||
-		(VARSIZE(set) - VARHDRSZ) <= 0)
-		PG_RETURN_TEXT_P(string);
-
-	ptr = VARDATA(string);
-	end2 = VARDATA(set) + VARSIZE(set) - VARHDRSZ - 1;
-
-	while (m > 0)
-	{
-		int			str_len = pg_mblen(ptr);
-
-		ptr2 = VARDATA(set);
-		while (ptr2 <= end2)
-		{
-			int			set_len = pg_mblen(ptr2);
-
-			if (str_len == set_len &&
-				memcmp(ptr, ptr2, str_len) == 0)
-				break;
-			ptr2 += set_len;
-		}
-		if (ptr2 > end2)
-			break;
-		ptr += str_len;
-		m -= str_len;
-	}
-	ret = (text *) palloc(VARHDRSZ + m);
-	VARATT_SIZEP(ret) = VARHDRSZ + m;
-	memcpy(VARDATA(ret), ptr, m);
+	ret = dotrim(VARDATA(string), VARSIZE(string) - VARHDRSZ,
+				 VARDATA(set), VARSIZE(set) - VARHDRSZ,
+				 true, false);
 
 	PG_RETURN_TEXT_P(ret);
 }
 
+/********************************************************************
+ *
+ * ltrim1 --- ltrim with set fixed as ' '
+ *
+ ********************************************************************/
+
+Datum
+ltrim1(PG_FUNCTION_ARGS)
+{
+	text	   *string = PG_GETARG_TEXT_P(0);
+	text	   *ret;
+
+	ret = dotrim(VARDATA(string), VARSIZE(string) - VARHDRSZ,
+				 " ", 1,
+				 true, false);
+
+	PG_RETURN_TEXT_P(ret);
+}
 
 /********************************************************************
  *
@@ -586,64 +684,28 @@ rtrim(PG_FUNCTION_ARGS)
 	text	   *set = PG_GETARG_TEXT_P(1);
 	text	   *ret;
 
-	char	   *ptr,
-			   *end,
-			   *ptr2,
-			   *end2;
-	int			m;
+	ret = dotrim(VARDATA(string), VARSIZE(string) - VARHDRSZ,
+				 VARDATA(set), VARSIZE(set) - VARHDRSZ,
+				 false, true);
 
-	char	  **mp;
-	int			mplen;
-	char	   *p;
-	int			mblen;
-	int			len;
+	PG_RETURN_TEXT_P(ret);
+}
 
-	if ((m = VARSIZE(string) - VARHDRSZ) <= 0 ||
-		(VARSIZE(set) - VARHDRSZ) <= 0)
-		PG_RETURN_TEXT_P(string);
+/********************************************************************
+ *
+ * rtrim1 --- rtrim with set fixed as ' '
+ *
+ ********************************************************************/
 
-	ptr = VARDATA(string);
+Datum
+rtrim1(PG_FUNCTION_ARGS)
+{
+	text	   *string = PG_GETARG_TEXT_P(0);
+	text	   *ret;
 
-	len = m;
-	mp = (char **) palloc(len * sizeof(char *));
-	p = ptr;
-	mplen = 0;
-
-	/* build the mb pointer array */
-	while (len > 0)
-	{
-		mp[mplen++] = p;
-		mblen = pg_mblen(p);
-		p += mblen;
-		len -= mblen;
-	}
-	mplen--;
-	end2 = VARDATA(set) + VARSIZE(set) - VARHDRSZ - 1;
-
-	while (m > 0)
-	{
-		int			str_len;
-
-		end = mp[mplen--];
-		str_len = pg_mblen(end);
-		ptr2 = VARDATA(set);
-		while (ptr2 <= end2)
-		{
-			int			set_len = pg_mblen(ptr2);
-
-			if (str_len == set_len &&
-				memcmp(end, ptr2, str_len) == 0)
-				break;
-			ptr2 += set_len;
-		}
-		if (ptr2 > end2)
-			break;
-		m -= str_len;
-	}
-	pfree(mp);
-	ret = (text *) palloc(VARHDRSZ + m);
-	VARATT_SIZEP(ret) = VARHDRSZ + m;
-	memcpy(VARDATA(ret), ptr, m);
+	ret = dotrim(VARDATA(string), VARSIZE(string) - VARHDRSZ,
+				 " ", 1,
+				 false, true);
 
 	PG_RETURN_TEXT_P(ret);
 }

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.300 2003/05/15 15:50:19 petere Exp $
+ * $Id: pg_proc.h,v 1.301 2003/05/23 22:33:22 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2134,9 +2134,9 @@ DESCR("left-pad string to length");
 DATA(insert OID =  874 (  rpad		   PGNSP PGUID 12 f f t f i 3 25 "25 23 25"  rpad - _null_ ));
 DESCR("right-pad string to length");
 DATA(insert OID =  875 (  ltrim		   PGNSP PGUID 12 f f t f i 2 25 "25 25"	ltrim - _null_ ));
-DESCR("left-pad string to length");
+DESCR("trim selected characters from left end of string");
 DATA(insert OID =  876 (  rtrim		   PGNSP PGUID 12 f f t f i 2 25 "25 25"	rtrim - _null_ ));
-DESCR("right-pad string to length");
+DESCR("trim selected characters from right end of string");
 DATA(insert OID =  877 (  substr	   PGNSP PGUID 12 f f t f i 3 25 "25 23 23"  text_substr - _null_ ));
 DESCR("return portion of string");
 DATA(insert OID =  878 (  translate    PGNSP PGUID 12 f f t f i 3 25 "25 25 25"  translate - _null_ ));
@@ -2145,16 +2145,16 @@ DATA(insert OID =  879 (  lpad		   PGNSP PGUID 14 f f t f i 2 25 "25 23"	"select
 DESCR("left-pad string to length");
 DATA(insert OID =  880 (  rpad		   PGNSP PGUID 14 f f t f i 2 25 "25 23"	"select rpad($1, $2, \' \')" - _null_ ));
 DESCR("right-pad string to length");
-DATA(insert OID =  881 (  ltrim		   PGNSP PGUID 14 f f t f i 1 25 "25"  "select ltrim($1, \' \')" - _null_ ));
-DESCR("remove initial characters from string");
-DATA(insert OID =  882 (  rtrim		   PGNSP PGUID 14 f f t f i 1 25 "25"  "select rtrim($1, \' \')" - _null_ ));
-DESCR("remove trailing characters from string");
+DATA(insert OID =  881 (  ltrim		   PGNSP PGUID 12 f f t f i 1 25 "25"  ltrim1 - _null_ ));
+DESCR("trim spaces from left end of string");
+DATA(insert OID =  882 (  rtrim		   PGNSP PGUID 12 f f t f i 1 25 "25"  rtrim1 - _null_ ));
+DESCR("trim spaces from right end of string");
 DATA(insert OID =  883 (  substr	   PGNSP PGUID 12 f f t f i 2 25 "25 23"	text_substr_no_len - _null_ ));
 DESCR("return portion of string");
 DATA(insert OID =  884 (  btrim		   PGNSP PGUID 12 f f t f i 2 25 "25 25"	btrim - _null_ ));
-DESCR("trim both ends of string");
-DATA(insert OID =  885 (  btrim		   PGNSP PGUID 14 f f t f i 1 25 "25"  "select btrim($1, \' \')" - _null_ ));
-DESCR("trim both ends of string");
+DESCR("trim selected characters from both ends of string");
+DATA(insert OID =  885 (  btrim		   PGNSP PGUID 12 f f t f i 1 25 "25"  btrim1 - _null_ ));
+DESCR("trim spaces from both ends of string");
 
 DATA(insert OID =  936 (  substring    PGNSP PGUID 12 f f t f i 3 25 "25 23 23"  text_substr - _null_ ));
 DESCR("return portion of string");

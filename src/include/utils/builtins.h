@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.217 2003/05/15 15:50:20 petere Exp $
+ * $Id: builtins.h,v 1.218 2003/05/23 22:33:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -608,9 +608,12 @@ extern Datum initcap(PG_FUNCTION_ARGS);
 extern Datum lpad(PG_FUNCTION_ARGS);
 extern Datum rpad(PG_FUNCTION_ARGS);
 extern Datum btrim(PG_FUNCTION_ARGS);
+extern Datum btrim1(PG_FUNCTION_ARGS);
 extern Datum byteatrim(PG_FUNCTION_ARGS);
 extern Datum ltrim(PG_FUNCTION_ARGS);
+extern Datum ltrim1(PG_FUNCTION_ARGS);
 extern Datum rtrim(PG_FUNCTION_ARGS);
+extern Datum rtrim1(PG_FUNCTION_ARGS);
 extern Datum translate(PG_FUNCTION_ARGS);
 extern Datum chr(PG_FUNCTION_ARGS);
 extern Datum repeat(PG_FUNCTION_ARGS);
