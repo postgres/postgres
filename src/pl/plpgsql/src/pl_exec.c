@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.52 2001/11/15 23:31:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.53 2002/02/26 00:00:08 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1621,7 +1621,7 @@ exec_stmt_raise(PLpgSQL_execstate * estate, PLpgSQL_stmt_raise * stmt)
 					{
 						fno = SPI_fnumber(rec->tupdesc, recfield->fieldname);
 						if (fno == SPI_ERROR_NOATTRIBUTE)
-							elog(ERROR, "record %s has no field %s", rec->refname, recfield->fieldname);
+							elog(ERROR, "record \"%s\" has no field named \"%s\"", rec->refname, recfield->fieldname);
 						extval = SPI_getvalue(rec->tup, rec->tupdesc, fno);
 						if (extval == NULL)
 							extval = "<NULL>";
@@ -1786,10 +1786,10 @@ exec_prepare_plan(PLpgSQL_execstate * estate,
 				rec = (PLpgSQL_rec *) (estate->datums[recfield->recno]);
 
 				if (!HeapTupleIsValid(rec->tup))
-					elog(ERROR, "record %s is unassigned yet", rec->refname);
+					elog(ERROR, "record \"%s\" is unassigned yet", rec->refname);
 				fno = SPI_fnumber(rec->tupdesc, recfield->fieldname);
 				if (fno == SPI_ERROR_NOATTRIBUTE)
-					elog(ERROR, "record %s has no field %s", rec->refname, recfield->fieldname);
+					elog(ERROR, "record \"%s\" has no field named \"%s\"", rec->refname, recfield->fieldname);
 				argtypes[i] = SPI_gettypeid(rec->tupdesc, fno);
 				break;
 
@@ -1871,10 +1871,10 @@ exec_stmt_execsql(PLpgSQL_execstate * estate,
 				rec = (PLpgSQL_rec *) (estate->datums[recfield->recno]);
 
 				if (!HeapTupleIsValid(rec->tup))
-					elog(ERROR, "record %s is unassigned yet", rec->refname);
+					elog(ERROR, "record \"%s\" is unassigned yet", rec->refname);
 				fno = SPI_fnumber(rec->tupdesc, recfield->fieldname);
 				if (fno == SPI_ERROR_NOATTRIBUTE)
-					elog(ERROR, "record %s has no field %s", rec->refname, recfield->fieldname);
+					elog(ERROR, "record \"%s\" has no field named \"%s\"", rec->refname, recfield->fieldname);
 
 				if (expr->plan_argtypes[i] != SPI_gettypeid(rec->tupdesc, fno))
 					elog(ERROR, "type of %s.%s doesn't match that when preparing the plan", rec->refname, recfield->fieldname);
@@ -2415,10 +2415,10 @@ exec_stmt_open(PLpgSQL_execstate * estate, PLpgSQL_stmt_open * stmt)
 				rec = (PLpgSQL_rec *) (estate->datums[recfield->recno]);
 
 				if (!HeapTupleIsValid(rec->tup))
-					elog(ERROR, "record %s is unassigned yet", rec->refname);
+					elog(ERROR, "record \"%s\" is unassigned yet", rec->refname);
 				fno = SPI_fnumber(rec->tupdesc, recfield->fieldname);
 				if (fno == SPI_ERROR_NOATTRIBUTE)
-					elog(ERROR, "record %s has no field %s", rec->refname, recfield->fieldname);
+					elog(ERROR, "record \"%s\" has no field named \"%s\"", rec->refname, recfield->fieldname);
 
 				if (query->plan_argtypes[i] != SPI_gettypeid(rec->tupdesc, fno))
 					elog(ERROR, "type of %s.%s doesn't match that when preparing the plan", rec->refname, recfield->fieldname);
@@ -2711,7 +2711,7 @@ exec_assign_value(PLpgSQL_execstate * estate,
 			 * structure.
 			 */
 			if (!HeapTupleIsValid(rec->tup))
-				elog(ERROR, "record %s is unassigned yet - don't know its tuple structure", rec->refname);
+				elog(ERROR, "record \"%s\" is unassigned yet - don't know its tuple structure", rec->refname);
 
 			/*
 			 * Get the number of the records field to change and the
@@ -2719,7 +2719,7 @@ exec_assign_value(PLpgSQL_execstate * estate,
 			 */
 			fno = SPI_fnumber(rec->tupdesc, recfield->fieldname);
 			if (fno == SPI_ERROR_NOATTRIBUTE)
-				elog(ERROR, "record %s has no field %s", rec->refname, recfield->fieldname);
+				elog(ERROR, "record \"%s\" has no field named \"%s\"", rec->refname, recfield->fieldname);
 			fno--;
 			natts = rec->tupdesc->natts;
 
@@ -2914,10 +2914,10 @@ exec_run_select(PLpgSQL_execstate * estate,
 				rec = (PLpgSQL_rec *) (estate->datums[recfield->recno]);
 
 				if (!HeapTupleIsValid(rec->tup))
-					elog(ERROR, "record %s is unassigned yet", rec->refname);
+					elog(ERROR, "record \"%s\" is unassigned yet", rec->refname);
 				fno = SPI_fnumber(rec->tupdesc, recfield->fieldname);
 				if (fno == SPI_ERROR_NOATTRIBUTE)
-					elog(ERROR, "record %s has no field %s", rec->refname, recfield->fieldname);
+					elog(ERROR, "record \"%s\" has no field named \"%s\"", rec->refname, recfield->fieldname);
 
 				if (expr->plan_argtypes[i] != SPI_gettypeid(rec->tupdesc, fno))
 					elog(ERROR, "type of %s.%s doesn't match that when preparing the plan", rec->refname, recfield->fieldname);
@@ -3052,10 +3052,10 @@ exec_eval_simple_expr(PLpgSQL_execstate * estate,
 				rec = (PLpgSQL_rec *) (estate->datums[recfield->recno]);
 
 				if (!HeapTupleIsValid(rec->tup))
-					elog(ERROR, "record %s is unassigned yet", rec->refname);
+					elog(ERROR, "record \"%s\" is unassigned yet", rec->refname);
 				fno = SPI_fnumber(rec->tupdesc, recfield->fieldname);
 				if (fno == SPI_ERROR_NOATTRIBUTE)
-					elog(ERROR, "record %s has no field %s", rec->refname, recfield->fieldname);
+					elog(ERROR, "record \"%s\" has no field named \"%s\"", rec->refname, recfield->fieldname);
 
 				if (expr->plan_argtypes[i] != SPI_gettypeid(rec->tupdesc, fno))
 					elog(ERROR, "type of %s.%s doesn't match that when preparing the plan", rec->refname, recfield->fieldname);
