@@ -1,9 +1,0 @@
-pg_dumpaccounts
-
-This is a little utility script derived from pg_dumpall. It just
-dumps the global pg_shadow and pg_group as pg_dumpall does without
-dumping any of the databases. This is useful for installations 
-that have many databases with different backup schedules, where
-pg_dumpall will never be run and thus, the users and groups will
-never be backed up.
-
