@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.86 2003/12/21 17:52:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.87 2004/04/21 18:24:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -108,8 +108,7 @@ _bt_search(Relation rel, int keysz, ScanKey scankey, bool nextkey,
 		new_stack->bts_parent = stack_in;
 
 		/* drop the read lock on the parent page, acquire one on the child */
-		_bt_relbuf(rel, *bufP);
-		*bufP = _bt_getbuf(rel, blkno, BT_READ);
+		*bufP = _bt_relandgetbuf(rel, *bufP, blkno, BT_READ);
 
 		/* okay, all set to move down a level */
 		stack_in = new_stack;
@@ -178,8 +177,7 @@ _bt_moveright(Relation rel,
 		/* step right one page */
 		BlockNumber rblkno = opaque->btpo_next;
 
-		_bt_relbuf(rel, buf);
-		buf = _bt_getbuf(rel, rblkno, access);
+		buf = _bt_relandgetbuf(rel, buf, rblkno, access);
 		page = BufferGetPage(buf);
 		opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 	}
@@ -933,8 +931,7 @@ _bt_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 				}
 				/* step right one page */
 				blkno = opaque->btpo_next;
-				_bt_relbuf(rel, *bufP);
-				*bufP = _bt_getbuf(rel, blkno, BT_READ);
+				*bufP = _bt_relandgetbuf(rel, *bufP, blkno, BT_READ);
 				page = BufferGetPage(*bufP);
 				opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 				if (!P_IGNORE(opaque))
@@ -1041,8 +1038,7 @@ _bt_walk_left(Relation rel, Buffer buf)
 		obknum = BufferGetBlockNumber(buf);
 		/* step left */
 		blkno = lblkno = opaque->btpo_prev;
-		_bt_relbuf(rel, buf);
-		buf = _bt_getbuf(rel, blkno, BT_READ);
+		buf = _bt_relandgetbuf(rel, buf, blkno, BT_READ);
 		page = BufferGetPage(buf);
 		opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 
@@ -1069,15 +1065,13 @@ _bt_walk_left(Relation rel, Buffer buf)
 			if (P_RIGHTMOST(opaque) || ++tries > 4)
 				break;
 			blkno = opaque->btpo_next;
-			_bt_relbuf(rel, buf);
-			buf = _bt_getbuf(rel, blkno, BT_READ);
+			buf = _bt_relandgetbuf(rel, buf, blkno, BT_READ);
 			page = BufferGetPage(buf);
 			opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 		}
 
 		/* Return to the original page to see what's up */
-		_bt_relbuf(rel, buf);
-		buf = _bt_getbuf(rel, obknum, BT_READ);
+		buf = _bt_relandgetbuf(rel, buf, obknum, BT_READ);
 		page = BufferGetPage(buf);
 		opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 		if (P_ISDELETED(opaque))
@@ -1094,8 +1088,7 @@ _bt_walk_left(Relation rel, Buffer buf)
 					elog(ERROR, "fell off the end of \"%s\"",
 						 RelationGetRelationName(rel));
 				blkno = opaque->btpo_next;
-				_bt_relbuf(rel, buf);
-				buf = _bt_getbuf(rel, blkno, BT_READ);
+				buf = _bt_relandgetbuf(rel, buf, blkno, BT_READ);
 				page = BufferGetPage(buf);
 				opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 				if (!P_ISDELETED(opaque))
@@ -1177,8 +1170,7 @@ _bt_get_endpoint(Relation rel, uint32 level, bool rightmost)
 			if (blkno == P_NONE)
 				elog(ERROR, "fell off the end of \"%s\"",
 					 RelationGetRelationName(rel));
-			_bt_relbuf(rel, buf);
-			buf = _bt_getbuf(rel, blkno, BT_READ);
+			buf = _bt_relandgetbuf(rel, buf, blkno, BT_READ);
 			page = BufferGetPage(buf);
 			opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 		}
@@ -1199,8 +1191,7 @@ _bt_get_endpoint(Relation rel, uint32 level, bool rightmost)
 		itup = &(btitem->bti_itup);
 		blkno = ItemPointerGetBlockNumber(&(itup->t_tid));
 
-		_bt_relbuf(rel, buf);
-		buf = _bt_getbuf(rel, blkno, BT_READ);
+		buf = _bt_relandgetbuf(rel, buf, blkno, BT_READ);
 		page = BufferGetPage(buf);
 		opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 	}

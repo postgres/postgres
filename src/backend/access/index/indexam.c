@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/index/indexam.c,v 1.72 2003/11/29 19:51:40 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/index/indexam.c,v 1.73 2004/04/21 18:24:24 tgl Exp $
  *
  * INTERFACE ROUTINES
  *		index_open		- open an index relation by relation OID
@@ -316,6 +316,13 @@ index_rescan(IndexScanDesc scan, ScanKey key)
 	SCAN_CHECKS;
 	GET_SCAN_PROCEDURE(rescan, amrescan);
 
+	/* Release any held pin on a heap page */
+	if (BufferIsValid(scan->xs_cbuf))
+	{
+		ReleaseBuffer(scan->xs_cbuf);
+		scan->xs_cbuf = InvalidBuffer;
+	}
+
 	scan->kill_prior_tuple = false;		/* for safety */
 	scan->keys_are_unique = false;		/* may be set by index AM */
 	scan->got_tuple = false;
@@ -419,13 +426,6 @@ index_getnext(IndexScanDesc scan, ScanDirection direction)
 
 	SCAN_CHECKS;
 
-	/* Release any previously held pin */
-	if (BufferIsValid(scan->xs_cbuf))
-	{
-		ReleaseBuffer(scan->xs_cbuf);
-		scan->xs_cbuf = InvalidBuffer;
-	}
-
 	/*
 	 * If we already got a tuple and it must be unique, there's no need to
 	 * make the index AM look through any additional tuples.  (This can
@@ -508,14 +508,22 @@ index_getnext(IndexScanDesc scan, ScanDirection direction)
 		scan->kill_prior_tuple = false;
 
 		if (!found)
+		{
+			/* Release any held pin on a heap page */
+			if (BufferIsValid(scan->xs_cbuf))
+			{
+				ReleaseBuffer(scan->xs_cbuf);
+				scan->xs_cbuf = InvalidBuffer;
+			}
 			return NULL;		/* failure exit */
+		}
 
 		/*
 		 * Fetch the heap tuple and see if it matches the snapshot.
 		 */
-		if (heap_fetch(scan->heapRelation, scan->xs_snapshot,
-					   heapTuple, &scan->xs_cbuf, true,
-					   &scan->xs_pgstat_info))
+		if (heap_release_fetch(scan->heapRelation, scan->xs_snapshot,
+							   heapTuple, &scan->xs_cbuf, true,
+							   &scan->xs_pgstat_info))
 			break;
 
 		/* Skip if no tuple at this location */
@@ -527,7 +535,7 @@ index_getnext(IndexScanDesc scan, ScanDirection direction)
 		 * if the tuple is dead to all transactions.  If so, signal the
 		 * index AM to not return it on future indexscans.
 		 *
-		 * We told heap_fetch to keep a pin on the buffer, so we can
+		 * We told heap_release_fetch to keep a pin on the buffer, so we can
 		 * re-access the tuple here.  But we must re-lock the buffer
 		 * first. Also, it's just barely possible for an update of hint
 		 * bits to occur here.
@@ -542,8 +550,6 @@ index_getnext(IndexScanDesc scan, ScanDirection direction)
 		if (sv_infomask != heapTuple->t_data->t_infomask)
 			SetBufferCommitInfoNeedsSave(scan->xs_cbuf);
 		LockBuffer(scan->xs_cbuf, BUFFER_LOCK_UNLOCK);
-		ReleaseBuffer(scan->xs_cbuf);
-		scan->xs_cbuf = InvalidBuffer;
 	}
 
 	/* Success exit */

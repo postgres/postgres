@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.164 2004/04/01 21:28:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.165 2004/04/21 18:24:23 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -889,6 +889,28 @@ heap_fetch(Relation relation,
 		   bool keep_buf,
 		   PgStat_Info *pgstat_info)
 {
+	/* Assume *userbuf is undefined on entry */
+	*userbuf = InvalidBuffer;
+	return heap_release_fetch(relation, snapshot, tuple,
+							  userbuf, keep_buf, pgstat_info);
+}
+
+/*
+ *	heap_release_fetch		- retrieve tuple with given tid
+ *
+ * This has the same API as heap_fetch except that if *userbuf is not
+ * InvalidBuffer on entry, that buffer will be released before reading
+ * the new page.  This saves a separate ReleaseBuffer step and hence
+ * one entry into the bufmgr when looping through multiple fetches.
+ */
+bool
+heap_release_fetch(Relation relation,
+				   Snapshot snapshot,
+				   HeapTuple tuple,
+				   Buffer *userbuf,
+				   bool keep_buf,
+				   PgStat_Info *pgstat_info)
+{
 	ItemPointer tid = &(tuple->t_self);
 	ItemId		lp;
 	Buffer		buffer;
@@ -898,9 +920,10 @@ heap_fetch(Relation relation,
 
 	/*
 	 * get the buffer from the relation descriptor. Note that this does a
-	 * buffer pin.
+	 * buffer pin, and releases the old *userbuf if not InvalidBuffer.
 	 */
-	buffer = ReadBuffer(relation, ItemPointerGetBlockNumber(tid));
+	buffer = ReleaseAndReadBuffer(*userbuf, relation,
+								  ItemPointerGetBlockNumber(tid));
 
 	if (!BufferIsValid(buffer))
 		elog(ERROR, "ReadBuffer(\"%s\", %lu) failed",

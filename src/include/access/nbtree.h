@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.76 2004/02/03 17:34:03 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.77 2004/04/21 18:24:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -446,6 +446,8 @@ extern void _bt_metapinit(Relation rel, bool markvalid);
 extern Buffer _bt_getroot(Relation rel, int access);
 extern Buffer _bt_gettrueroot(Relation rel);
 extern Buffer _bt_getbuf(Relation rel, BlockNumber blkno, int access);
+extern Buffer _bt_relandgetbuf(Relation rel, Buffer obuf,
+							   BlockNumber blkno, int access);
 extern void _bt_relbuf(Relation rel, Buffer buf);
 extern void _bt_wrtbuf(Relation rel, Buffer buf);
 extern void _bt_wrtnorelbuf(Relation rel, Buffer buf);

@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.113 2004/02/10 03:42:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.114 2004/04/21 18:24:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -919,9 +919,7 @@ _bt_restscan(IndexScanDesc scan)
 		for (;;)
 		{
 			blkno = opaque->btpo_next;
-			if (nextbuf != InvalidBuffer)
-				_bt_relbuf(rel, nextbuf);
-			nextbuf = _bt_getbuf(rel, blkno, BT_READ);
+			nextbuf = _bt_relandgetbuf(rel, nextbuf, blkno, BT_READ);
 			page = BufferGetPage(nextbuf);
 			opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 			if (!P_IGNORE(opaque))

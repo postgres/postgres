@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtpage.c,v 1.74 2003/12/21 01:23:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtpage.c,v 1.75 2004/04/21 18:24:25 tgl Exp $
  *
  *	NOTES
  *	   Postgres btree pages look like ordinary relation pages.	The opaque
@@ -262,11 +262,15 @@ _bt_getroot(Relation rel, int access)
 		Assert(rootblkno != P_NONE);
 		rootlevel = metad->btm_fastlevel;
 
-		_bt_relbuf(rel, metabuf);		/* done with the meta page */
+		/*
+		 * We are done with the metapage; arrange to release it via
+		 * first _bt_relandgetbuf call
+		 */
+		rootbuf = metabuf;
 
 		for (;;)
 		{
-			rootbuf = _bt_getbuf(rel, rootblkno, BT_READ);
+			rootbuf = _bt_relandgetbuf(rel, rootbuf, rootblkno, BT_READ);
 			rootpage = BufferGetPage(rootbuf);
 			rootopaque = (BTPageOpaque) PageGetSpecialPointer(rootpage);
 
@@ -278,8 +282,6 @@ _bt_getroot(Relation rel, int access)
 				elog(ERROR, "no live root page found in \"%s\"",
 					 RelationGetRelationName(rel));
 			rootblkno = rootopaque->btpo_next;
-
-			_bt_relbuf(rel, rootbuf);
 		}
 
 		/* Note: can't check btpo.level on deleted pages */
@@ -352,11 +354,15 @@ _bt_gettrueroot(Relation rel)
 	rootblkno = metad->btm_root;
 	rootlevel = metad->btm_level;
 
-	_bt_relbuf(rel, metabuf);	/* done with the meta page */
+	/*
+	 * We are done with the metapage; arrange to release it via
+	 * first _bt_relandgetbuf call
+	 */
+	rootbuf = metabuf;
 
 	for (;;)
 	{
-		rootbuf = _bt_getbuf(rel, rootblkno, BT_READ);
+		rootbuf = _bt_relandgetbuf(rel, rootbuf, rootblkno, BT_READ);
 		rootpage = BufferGetPage(rootbuf);
 		rootopaque = (BTPageOpaque) PageGetSpecialPointer(rootpage);
 
@@ -368,8 +374,6 @@ _bt_gettrueroot(Relation rel)
 			elog(ERROR, "no live root page found in \"%s\"",
 				 RelationGetRelationName(rel));
 		rootblkno = rootopaque->btpo_next;
-
-		_bt_relbuf(rel, rootbuf);
 	}
 
 	/* Note: can't check btpo.level on deleted pages */
@@ -489,6 +493,28 @@ _bt_getbuf(Relation rel, BlockNumber blkno, int access)
 	}
 
 	/* ref count and lock type are correct */
+	return buf;
+}
+
+/*
+ *	_bt_relandgetbuf() -- release a locked buffer and get another one.
+ *
+ * This is equivalent to _bt_relbuf followed by _bt_getbuf, with the
+ * exception that blkno may not be P_NEW.  Also, if obuf is InvalidBuffer
+ * then it reduces to just _bt_getbuf; allowing this case simplifies some
+ * callers. The motivation for using this is to avoid two entries to the
+ * bufmgr when one will do.
+ */
+Buffer
+_bt_relandgetbuf(Relation rel, Buffer obuf, BlockNumber blkno, int access)
+{
+	Buffer		buf;
+
+	Assert(blkno != P_NEW);
+	if (BufferIsValid(obuf))
+		LockBuffer(obuf, BUFFER_LOCK_UNLOCK);
+	buf = ReleaseAndReadBuffer(obuf, rel, blkno);
+	LockBuffer(buf, access);
 	return buf;
 }
 

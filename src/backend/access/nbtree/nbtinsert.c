@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.111 2004/01/07 18:56:24 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.112 2004/04/21 18:24:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -297,9 +297,7 @@ _bt_check_unique(Relation rel, BTItem btitem, Relation heapRel,
 			for (;;)
 			{
 				nblkno = opaque->btpo_next;
-				if (nbuf != InvalidBuffer)
-					_bt_relbuf(rel, nbuf);
-				nbuf = _bt_getbuf(rel, nblkno, BT_READ);
+				nbuf = _bt_relandgetbuf(rel, nbuf, nblkno, BT_READ);
 				page = BufferGetPage(nbuf);
 				opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 				if (!P_IGNORE(opaque))
@@ -454,9 +452,7 @@ _bt_insertonpg(Relation rel,
 			{
 				BlockNumber rblkno = lpageop->btpo_next;
 
-				if (rbuf != InvalidBuffer)
-					_bt_relbuf(rel, rbuf);
-				rbuf = _bt_getbuf(rel, rblkno, BT_WRITE);
+				rbuf = _bt_relandgetbuf(rel, rbuf, rblkno, BT_WRITE);
 				page = BufferGetPage(rbuf);
 				lpageop = (BTPageOpaque) PageGetSpecialPointer(page);
 				if (!P_IGNORE(lpageop))
@@ -1357,7 +1353,7 @@ _bt_getstackbuf(Relation rel, BTStack stack, int access)
 		if (P_RIGHTMOST(opaque))
 		{
 			_bt_relbuf(rel, buf);
-			return (InvalidBuffer);
+			return InvalidBuffer;
 		}
 		blkno = opaque->btpo_next;
 		start = InvalidOffsetNumber;
