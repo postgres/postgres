@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/information_schema.sgml,v 1.10.2.2 2004/04/22 08:34:13 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/information_schema.sgml,v 1.10.2.3 2004/06/13 17:51:16 tgl Exp $ -->
 
 <chapter id="information-schema">
  <title>The Information Schema</title>
@@ -1011,7 +1011,7 @@
   </para>
 
   <table>
-   <title><literal>domain_constraints</literal> Columns</title>
+   <title><literal>data_type_privileges</literal> Columns</title>
 
    <tgroup cols="3">
     <thead>
