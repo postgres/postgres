@@ -5,7 +5,7 @@
 # Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/interfaces/libpq++/examples/Attic/Makefile,v 1.14 2002/06/20 20:29:54 momjian Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/libpq++/examples/Attic/Makefile,v 1.15 2002/07/27 20:10:05 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -30,8 +30,6 @@ all: $(PROGS)
 
 $(PROGS): % : %.cc
 	$(CXX) $(CXXFLAGS) -o $@ $@.cc $(LDFLAGS)
-
-.PHONY: submake
 
 clean: 
 	rm -f $(PROGS)

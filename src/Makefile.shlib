@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.59 2002/07/16 05:46:35 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.60 2002/07/27 20:10:04 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -332,7 +332,7 @@ $(shlib) lib$(NAME).a: $(OBJS) $(DLLINIT)
 	$(DLLWRAP) -o $(shlib) --dllname $(shlib) --def $(NAME).def $(OBJS) $(DLLINIT) $(DLLLIBS) $(SHLIB_LINK)
 	$(DLLTOOL) --dllname $(shlib) --def $(NAME).def --output-lib lib$(NAME).a
 
-$(DLLINIT):
+$(DLLINIT): $(DLLINIT:%.o=%.c)
 	$(MAKE) -C $(@D) $(@F)
 
 endif # PORTNAME == win

@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.81 2002/07/18 02:02:29 ishii Exp $
+# $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.82 2002/07/27 20:10:04 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -29,7 +29,7 @@ endif
 
 ##########################################################################
 
-all: postgres $(POSTGRES_IMP)
+all: submake-libpgport postgres $(POSTGRES_IMP)
 ifeq ($(enable_nls), yes)
 	$(MAKE) -C po all
 endif
@@ -41,13 +41,11 @@ postgres: $(OBJS)
 
 else # win
 
-# No points for style here. How about encapsulating some of these
-# commands into variables?
 postgres: $(OBJS) $(DLLINIT) postgres.def libpostgres.a
-	dlltool --dllname $@$(X) --output-exp $@.exp --def postgres.def
-	gcc $(LDFLAGS) -g -o $@$(X) -Wl,--base-file,$@.base $@.exp $(OBJS) $(DLLLIBS)
-	dlltool --dllname $@$(X) --base-file $@.base --output-exp $@.exp --def postgres.def
-	gcc $(LDFLAGS) -g -o $@$(X) $@.exp $(OBJS) $(DLLLIBS)
+	$(DLLTOOL) --dllname $@$(X) --output-exp $@.exp --def postgres.def
+	$(CC) $(LDFLAGS) -o $@$(X) -Wl,--base-file,$@.base $@.exp $(OBJS) $(DLLLIBS)
+	$(DLLTOOL) --dllname $@$(X) --base-file $@.base --output-exp $@.exp --def postgres.def
+	$(CC) $(LDFLAGS) -o $@$(X) $@.exp $(OBJS) $(DLLLIBS)
 	rm $@.exp $@.base
 
 endif # win
@@ -73,7 +71,7 @@ libpostgres.a: $(OBJS) $(DLLINIT) postgres.def
 endif # MAKE_DLL
 
 
-$(DLLINIT):
+$(DLLINIT): $(DLLINIT:%.o=%.c)
 	$(MAKE) -C $(@D) $(@F)
 
 # The postgres.o target is needed by the rule in Makefile.global that

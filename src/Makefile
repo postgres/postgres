@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/Makefile,v 1.25 2002/07/18 22:15:10 tgl Exp $
+# $Header: /cvsroot/pgsql/src/Makefile,v 1.26 2002/07/27 20:10:04 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -14,6 +14,7 @@ include Makefile.global
 
 
 all install installdirs uninstall dep depend distprep:
+	$(MAKE) -C port $@
 	$(MAKE) -C backend $@
 	$(MAKE) -C include $@
 	$(MAKE) -C interfaces $@
@@ -24,6 +25,7 @@ install-all-headers:
 	$(MAKE) -C include $@
 
 clean:
+	$(MAKE) -C port $@
 	$(MAKE) -C backend $@
 	$(MAKE) -C include $@
 	$(MAKE) -C interfaces $@
@@ -32,6 +34,7 @@ clean:
 	$(MAKE) -C test $@
 
 distclean maintainer-clean:
+	-$(MAKE) -C port $@
 	-$(MAKE) -C backend $@
 	-$(MAKE) -C include $@
 	-$(MAKE) -C interfaces $@

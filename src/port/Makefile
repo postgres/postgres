@@ -7,7 +7,7 @@
 # with broken/missing library files.
 
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/port/Makefile,v 1.2 2002/07/19 17:35:11 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/port/Makefile,v 1.3 2002/07/27 20:10:05 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -15,9 +15,12 @@ subdir = src/port
 top_builddir = ../..
 include $(top_builddir)/src/Makefile.global
 
+ifdef LIBOBJS
+all: libpgport.a
+endif
 
-#
-# The backend/port directory removes these files.
-#
-#distclean clean:
-#	rm -f $(OBJS)
+libpgport.a: $(LIBOBJS)
+	$(AR) crs $@ $^
+
+clean distclean maintainer-clean:
+	rm -f libpgport.a $(LIBOBJS)

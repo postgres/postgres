@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.151 2002/07/19 17:35:10 momjian Exp $
+# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.152 2002/07/27 20:10:04 petere Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -294,6 +294,7 @@ ifeq ($(enable_rpath), yes)
 LDFLAGS += $(rpath)
 endif
 
+
 ##########################################################################
 #
 # Some variables needed to find some client interfaces
@@ -301,6 +302,14 @@ endif
 libpq_srcdir = $(top_srcdir)/src/interfaces/libpq
 libpq_builddir = $(top_builddir)/src/interfaces/libpq
 libpq = -L$(libpq_builddir) -lpq
+
+submake-libpq:
+	$(MAKE) -C $(libpq_builddir) all
+
+submake-libpgport:
+	$(MAKE) -C $(top_builddir)/src/port all
+
+.PHONY: submake-libpq submake-libpgport
 
 
 ##########################################################################
@@ -346,23 +355,14 @@ endif
 #
 # substitute implementations of the C library
 
-GETHOSTNAME = @GETHOSTNAME@
-GETRUSAGE   = @GETRUSAGE@
-INET_ATON   = @INET_ATON@
-ISINF       = @ISINF@
-MEMCMP      = @MEMCMP@
-MISSING_RANDOM = @MISSING_RANDOM@
-QSORT       = @QSORT@
-SNPRINTF    = @SNPRINTF@
-SRANDOM     = @SRANDOM@
-STRCASECMP  = @STRCASECMP@
-STRDUP      = @STRDUP@
-STRERROR    = @STRERROR@
-STRTOL      = @STRTOL@
-STRTOUL     = @STRTOUL@
+LIBOBJS = @LIBOBJS@
+
+ifneq (,$(LIBOBJS))
+LIBS += -lpgport
+LDFLAGS := -L$(top_builddir)/src/port $(LDFLAGS)
+endif
 
 # Not really standard libc functions, used by the backend.
-DLLINIT     = @DLLINIT@
 TAS         = @TAS@
 
 

@@ -3,7 +3,7 @@ Frequently Asked Questions (FAQ) for PostgreSQL 7.2
 Sun Solaris specific
 to be read in conjunction with the installation instructions
 ============================================================
-last updated:        $Date: 2002/07/15 21:34:04 $
+last updated:        $Date: 2002/07/27 20:10:03 $
 
 current maintainer:  Peter Eisentraut <peter_e@gmx.net>
 
@@ -88,15 +88,15 @@ to work on Solaris 7:
 On Solaris 7 and older, the 64-bit version of libc has a buggy vsnprintf
 routine, which leads to erratic core dumps in PostgreSQL.  The simplest known
 workaround is to force PostgreSQL to use its own version of vsnprintf rather
-than the library copy.  To do this, after you run 'configure' edit two files
+than the library copy.  To do this, after you run 'configure' edit a file
 produced by configure:
 
-(1) In src/Makefile.global, change the line
-	SNPRINTF = 
+In src/Makefile.global, change the line
+    LIBOBJS =
 to read
-	SNPRINTF = $(top_builddir)/src/backend/port/snprint.o
+    LIBOBJS = snprintf.o
 
-(2) In src/backend/port/Makefile, add "snprintf.o" to OBJS.  (Skip this
-step if you see "$(SNPRINTF)" already listed in OBJS.)
+(There might be other files already listed in this variable.  Order
+does not matter.)
 
 Then build as usual.

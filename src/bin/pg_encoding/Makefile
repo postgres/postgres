@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1998, PostgreSQL Global Development Group
 #
-# $Header: /cvsroot/pgsql/src/bin/pg_encoding/Attic/Makefile,v 1.14 2001/03/23 05:46:05 ishii Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_encoding/Attic/Makefile,v 1.15 2002/07/27 20:10:05 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -14,22 +14,10 @@ include $(top_builddir)/src/Makefile.global
 
 OBJS= pg_encoding.o
 
-all: submake pg_encoding
-
-ifdef STRTOUL
-OBJS+=$(top_builddir)/src/backend/port/strtoul.o
-
-$(top_builddir)/src/backend/port/strtoul.o:
-	$(MAKE) -C $(top_builddir)/src/backend/port strtoul.o
-endif
+all: submake-libpq submake-libpgport pg_encoding
 
 pg_encoding: $(OBJS)
 	$(CC) $(CFLAGS) $^ $(libpq) $(LDFLAGS) $(LIBS) -o $@
-
-.PHONY: submake
-
-submake:
-	$(MAKE) -C $(libpq_builddir) all
 
 install: all installdirs
 	$(INSTALL_PROGRAM) pg_encoding$(X) $(DESTDIR)$(bindir)/pg_encoding$(X)
@@ -40,12 +28,5 @@ installdirs:
 uninstall:
 	rm -f $(DESTDIR)$(bindir)/pg_encoding$(X)
 
-depend dep:
-	$(CC) -MM $(CFLAGS) *.c >depend
-
 clean distclean maintainer-clean:
 	rm -f pg_encoding$(X) pg_encoding.o
-
-ifeq (depend,$(wildcard depend))
-include depend
-endif

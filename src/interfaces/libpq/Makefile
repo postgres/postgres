@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.63 2002/07/18 03:59:49 momjian Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.64 2002/07/27 20:10:05 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -22,7 +22,7 @@ override CPPFLAGS := -I$(srcdir) $(CPPFLAGS) -DFRONTEND -DSYSCONFDIR='"$(sysconf
 
 OBJS= fe-auth.o fe-connect.o fe-exec.o fe-misc.o fe-print.o fe-lobj.o \
       pqexpbuffer.o dllist.o md5.o pqsignal.o fe-secure.o \
-      $(notdir $(INET_ATON)) $(notdir $(SNPRINTF)) $(notdir $(STRERROR))
+      $(filter inet_aton.o snprintf.o strerror.o, $(LIBOBJS))
 
 ifdef MULTIBYTE
 OBJS+= wchar.o encnames.o
@@ -54,20 +54,8 @@ md5.c: $(backend_src)/libpq/md5.c
 # symlink the source files in here and build our own object file.
 # this only gets done if configure finds system doesn't have inet_aton()
 
-ifdef INET_ATON
-$(basename $(notdir $(INET_ATON))).c: $(basename $(INET_ATON)).c
+inet_aton.c snprintf.c strerror.c: %.c : $(top_srcdir)/src/port/%.c
 	rm -f $@ && $(LN_S) $< .
-endif
-
-ifdef SNPRINTF
-$(basename $(notdir $(SNPRINTF))).c: $(basename $(SNPRINTF)).c
-	rm -f $@ && $(LN_S) $< .
-endif
-
-ifdef STRERROR
-$(basename $(notdir $(STRERROR))).c: $(basename $(STRERROR)).c
-	rm -f $@ && $(LN_S) $< .
-endif
 
 ifdef MULTIBYTE
 wchar.c : % : $(backend_src)/utils/mb/%

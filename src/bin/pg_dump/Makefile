@@ -5,7 +5,7 @@
 # Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/pg_dump/Makefile,v 1.35 2002/07/15 21:34:05 momjian Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_dump/Makefile,v 1.36 2002/07/27 20:10:05 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -14,12 +14,11 @@ top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
 OBJS= pg_backup_archiver.o pg_backup_db.o pg_backup_custom.o \
-      pg_backup_files.o pg_backup_null.o pg_backup_tar.o sprompt.o \
-      $(STRDUP) $(STRTOUL)
+      pg_backup_files.o pg_backup_null.o pg_backup_tar.o sprompt.o
 
 override CPPFLAGS := -I$(libpq_srcdir) $(CPPFLAGS)
 
-all: submake pg_dump pg_restore pg_dumpall
+all: submake-libpq submake-libpgport pg_dump pg_restore pg_dumpall
 
 pg_dump: pg_dump.o common.o $(OBJS) $(libpq_builddir)/libpq.a 
 	$(CC) $(CFLAGS) pg_dump.o common.o $(OBJS) $(libpq) $(LDFLAGS) $(LIBS) -o $@
@@ -34,10 +33,6 @@ pg_dumpall: pg_dumpall.sh
 	  $< >$@
 	chmod a+x $@
 
-.PHONY: submake
-submake:
-	$(MAKE) -C $(libpq_builddir) all
-
 install: all installdirs
 	$(INSTALL_PROGRAM) pg_dump$(X) $(DESTDIR)$(bindir)/pg_dump$(X)
 	$(INSTALL_PROGRAM) pg_restore$(X) $(DESTDIR)$(bindir)/pg_restore$(X)
@@ -49,12 +44,5 @@ installdirs:
 uninstall:
 	rm -f $(addprefix $(DESTDIR)$(bindir)/, pg_dump$(X) pg_restore$(X) pg_dumpall)
 
-depend dep:
-	$(CC) -MM $(CFLAGS) *.c >depend
-
 clean distclean maintainer-clean:
 	rm -f pg_dump$(X) pg_restore$(X) $(OBJS) pg_dump.o common.o pg_restore.o pg_dumpall
-
-ifeq (depend,$(wildcard depend))
-include depend
-endif

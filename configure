@@ -7365,6 +7365,7 @@ fi
 ##
 ## Header files
 ##
+
 echo "$as_me:$LINENO: checking for ANSI C header files" >&5
 echo $ECHO_N "checking for ANSI C header files... $ECHO_C" >&6
 if test "${ac_cv_header_stdc+set}" = set; then
@@ -9127,6 +9128,7 @@ fi
 ## Types, structures, compiler characteristics
 ##
 
+
 echo "$as_me:$LINENO: checking for an ANSI C-conforming const" >&5
 echo $ECHO_N "checking for an ANSI C-conforming const... $ECHO_C" >&6
 if test "${ac_cv_c_const+set}" = set; then
@@ -10203,6 +10205,7 @@ fi
 ##
 ## Functions, global variables
 ##
+
 echo "$as_me:$LINENO: checking for int timezone" >&5
 echo $ECHO_N "checking for int timezone... $ECHO_C" >&6
 if test "${pgac_cv_var_int_timezone+set}" = set; then
@@ -10404,24 +10407,55 @@ _ACEOF
 fi
 
 # SunOS doesn't handle negative byte comparisons properly with +/- return
-echo "$as_me:$LINENO: checking for 8-bit clean memcmp" >&5
-echo $ECHO_N "checking for 8-bit clean memcmp... $ECHO_C" >&6
-if test "${pgac_cv_func_memcmp_clean+set}" = set; then
+echo "$as_me:$LINENO: checking for working memcmp" >&5
+echo $ECHO_N "checking for working memcmp... $ECHO_C" >&6
+if test "${ac_cv_func_memcmp_working+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   if test "$cross_compiling" = yes; then
-  pgac_cv_func_memcmp_clean=no
+  ac_cv_func_memcmp_working=no
 else
   cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 #include "confdefs.h"
 
-main()
+#ifdef F77_DUMMY_MAIN
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+#endif
+int
+main ()
 {
-  char c0 = 0x40, c1 = 0x80, c2 = 0x81;
-  exit(memcmp(&c0, &c2, 1) < 0 && memcmp(&c1, &c2, 1) < 0 ? 0 : 1);
-}
 
+  /* Some versions of memcmp are not 8-bit clean.  */
+  char c0 = 0x40, c1 = 0x80, c2 = 0x81;
+  if (memcmp(&c0, &c2, 1) >= 0 || memcmp(&c1, &c2, 1) >= 0)
+    exit (1);
+
+  /* The Next x86 OpenStep bug shows up only when comparing 16 bytes
+     or more and with at least one buffer not starting on a 4-byte boundary.
+     William Lewis provided this test program.   */
+  {
+    char foo[21];
+    char bar[21];
+    int i;
+    for (i = 0; i < 4; i++)
+      {
+        char *a = foo + i;
+        char *b = bar + i;
+        strcpy (a, "--------01111111");
+        strcpy (b, "--------10000000");
+        if (memcmp (a, b, 16) >= 0)
+          exit (1);
+      }
+    exit (0);
+  }
+
+  ;
+  return 0;
+}
 _ACEOF
 rm -f conftest$ac_exeext
 if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
@@ -10434,24 +10468,20 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  pgac_cv_func_memcmp_clean=yes
+  ac_cv_func_memcmp_working=yes
 else
   echo "$as_me: program exited with status $ac_status" >&5
 echo "$as_me: failed program was:" >&5
 cat conftest.$ac_ext >&5
 ( exit $ac_status )
-pgac_cv_func_memcmp_clean=no
+ac_cv_func_memcmp_working=no
 fi
 rm -f core core.* *.core conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
 fi
 fi
-echo "$as_me:$LINENO: result: $pgac_cv_func_memcmp_clean" >&5
-echo "${ECHO_T}$pgac_cv_func_memcmp_clean" >&6
-if test $pgac_cv_func_memcmp_clean = no ; then
-  MEMCMP=memcmp.o
-else
-  MEMCMP=
-fi
+echo "$as_me:$LINENO: result: $ac_cv_func_memcmp_working" >&5
+echo "${ECHO_T}$ac_cv_func_memcmp_working" >&6
+test $ac_cv_func_memcmp_working = no && LIBOBJS="$LIBOBJS memcmp.$ac_objext"
 
 
 
@@ -10670,7 +10700,7 @@ fi
 # also decide to use snprintf.c if snprintf() is present but does not
 # have working "long long int" support -- see below.
 
-SNPRINTF=''
+pgac_need_repl_snprintf=no
 
 for ac_func in snprintf
 do
@@ -10745,7 +10775,7 @@ if test `eval echo '${'$as_ac_var'}'` = yes; then
 _ACEOF
 
 else
-  SNPRINTF='$(top_builddir)/src/port/snprintf.o'
+  pgac_need_repl_snprintf=yes
 fi
 done
 
@@ -10823,10 +10853,9 @@ if test `eval echo '${'$as_ac_var'}'` = yes; then
 _ACEOF
 
 else
-  SNPRINTF='$(top_builddir)/src/port/snprintf.o'
+  pgac_need_repl_snprintf=yes
 fi
 done
-
 
 
 
@@ -11017,9 +11046,8 @@ cat >>confdefs.h <<\_ACEOF
 #define HAVE_ISINF 1
 _ACEOF
 
-  ISINF=
 else
-  ISINF='isinf.o'
+  LIBOBJS="$LIBOBJS isinf.$ac_objext"
   # Look for a way to implement a substitute for isinf()
 
 
@@ -11105,7 +11133,14 @@ fi
 
 
 
-for ac_func in getrusage
+
+
+
+
+
+
+
+for ac_func in gethostname getrusage inet_aton random srandom strcasecmp strdup strerror strtol strtoul
 do
 as_ac_var=`echo "ac_cv_func_$ac_func" | $as_tr_sh`
 echo "$as_me:$LINENO: checking for $ac_func" >&5
@@ -11178,736 +11213,16 @@ if test `eval echo '${'$as_ac_var'}'` = yes; then
 _ACEOF
 
 else
-  GETRUSAGE='$(top_builddir)/src/port/getrusage.o'
+  LIBOBJS="$LIBOBJS $ac_func.$ac_objext"
 fi
 done
 
 
 
-for ac_func in srandom
-do
-as_ac_var=`echo "ac_cv_func_$ac_func" | $as_tr_sh`
-echo "$as_me:$LINENO: checking for $ac_func" >&5
-echo $ECHO_N "checking for $ac_func... $ECHO_C" >&6
-if eval "test \"\${$as_ac_var+set}\" = set"; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  cat >conftest.$ac_ext <<_ACEOF
-#line $LINENO "configure"
-#include "confdefs.h"
-/* System header to define __stub macros and hopefully few prototypes,
-    which can conflict with char $ac_func (); below.  */
-#include <assert.h>
-/* Override any gcc2 internal prototype to avoid an error.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
-char $ac_func ();
-char (*f) ();
-
-#ifdef F77_DUMMY_MAIN
-#  ifdef __cplusplus
-     extern "C"
-#  endif
-   int F77_DUMMY_MAIN() { return 1; }
-#endif
-int
-main ()
-{
-/* The GNU C library defines this for functions which it implements
-    to always fail with ENOSYS.  Some functions are actually named
-    something starting with __ and the normal name is an alias.  */
-#if defined (__stub_$ac_func) || defined (__stub___$ac_func)
-choke me
-#else
-f = $ac_func;
-#endif
-
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-         { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  eval "$as_ac_var=yes"
-else
-  echo "$as_me: failed program was:" >&5
-cat conftest.$ac_ext >&5
-eval "$as_ac_var=no"
-fi
-rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
-fi
-echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_var'}'`" >&5
-echo "${ECHO_T}`eval echo '${'$as_ac_var'}'`" >&6
-if test `eval echo '${'$as_ac_var'}'` = yes; then
-  cat >>confdefs.h <<_ACEOF
-#define `echo "HAVE_$ac_func" | $as_tr_cpp` 1
-_ACEOF
-
-else
-  SRANDOM='$(top_builddir)/src/port/srandom.o'
-fi
-done
-
-
-
-for ac_func in gethostname
-do
-as_ac_var=`echo "ac_cv_func_$ac_func" | $as_tr_sh`
-echo "$as_me:$LINENO: checking for $ac_func" >&5
-echo $ECHO_N "checking for $ac_func... $ECHO_C" >&6
-if eval "test \"\${$as_ac_var+set}\" = set"; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  cat >conftest.$ac_ext <<_ACEOF
-#line $LINENO "configure"
-#include "confdefs.h"
-/* System header to define __stub macros and hopefully few prototypes,
-    which can conflict with char $ac_func (); below.  */
-#include <assert.h>
-/* Override any gcc2 internal prototype to avoid an error.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
-char $ac_func ();
-char (*f) ();
-
-#ifdef F77_DUMMY_MAIN
-#  ifdef __cplusplus
-     extern "C"
-#  endif
-   int F77_DUMMY_MAIN() { return 1; }
-#endif
-int
-main ()
-{
-/* The GNU C library defines this for functions which it implements
-    to always fail with ENOSYS.  Some functions are actually named
-    something starting with __ and the normal name is an alias.  */
-#if defined (__stub_$ac_func) || defined (__stub___$ac_func)
-choke me
-#else
-f = $ac_func;
-#endif
-
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-         { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  eval "$as_ac_var=yes"
-else
-  echo "$as_me: failed program was:" >&5
-cat conftest.$ac_ext >&5
-eval "$as_ac_var=no"
-fi
-rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
-fi
-echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_var'}'`" >&5
-echo "${ECHO_T}`eval echo '${'$as_ac_var'}'`" >&6
-if test `eval echo '${'$as_ac_var'}'` = yes; then
-  cat >>confdefs.h <<_ACEOF
-#define `echo "HAVE_$ac_func" | $as_tr_cpp` 1
-_ACEOF
-
-else
-  GETHOSTNAME='$(top_builddir)/src/port/gethostname.o'
-fi
-done
-
-
-
-for ac_func in random
-do
-as_ac_var=`echo "ac_cv_func_$ac_func" | $as_tr_sh`
-echo "$as_me:$LINENO: checking for $ac_func" >&5
-echo $ECHO_N "checking for $ac_func... $ECHO_C" >&6
-if eval "test \"\${$as_ac_var+set}\" = set"; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  cat >conftest.$ac_ext <<_ACEOF
-#line $LINENO "configure"
-#include "confdefs.h"
-/* System header to define __stub macros and hopefully few prototypes,
-    which can conflict with char $ac_func (); below.  */
-#include <assert.h>
-/* Override any gcc2 internal prototype to avoid an error.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
-char $ac_func ();
-char (*f) ();
-
-#ifdef F77_DUMMY_MAIN
-#  ifdef __cplusplus
-     extern "C"
-#  endif
-   int F77_DUMMY_MAIN() { return 1; }
-#endif
-int
-main ()
-{
-/* The GNU C library defines this for functions which it implements
-    to always fail with ENOSYS.  Some functions are actually named
-    something starting with __ and the normal name is an alias.  */
-#if defined (__stub_$ac_func) || defined (__stub___$ac_func)
-choke me
-#else
-f = $ac_func;
-#endif
-
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-         { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  eval "$as_ac_var=yes"
-else
-  echo "$as_me: failed program was:" >&5
-cat conftest.$ac_ext >&5
-eval "$as_ac_var=no"
-fi
-rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
-fi
-echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_var'}'`" >&5
-echo "${ECHO_T}`eval echo '${'$as_ac_var'}'`" >&6
-if test `eval echo '${'$as_ac_var'}'` = yes; then
-  cat >>confdefs.h <<_ACEOF
-#define `echo "HAVE_$ac_func" | $as_tr_cpp` 1
-_ACEOF
-
-else
-  MISSING_RANDOM='$(top_builddir)/src/port/random.o'
-fi
-done
-
-
-
-for ac_func in inet_aton
-do
-as_ac_var=`echo "ac_cv_func_$ac_func" | $as_tr_sh`
-echo "$as_me:$LINENO: checking for $ac_func" >&5
-echo $ECHO_N "checking for $ac_func... $ECHO_C" >&6
-if eval "test \"\${$as_ac_var+set}\" = set"; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  cat >conftest.$ac_ext <<_ACEOF
-#line $LINENO "configure"
-#include "confdefs.h"
-/* System header to define __stub macros and hopefully few prototypes,
-    which can conflict with char $ac_func (); below.  */
-#include <assert.h>
-/* Override any gcc2 internal prototype to avoid an error.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
-char $ac_func ();
-char (*f) ();
-
-#ifdef F77_DUMMY_MAIN
-#  ifdef __cplusplus
-     extern "C"
-#  endif
-   int F77_DUMMY_MAIN() { return 1; }
-#endif
-int
-main ()
-{
-/* The GNU C library defines this for functions which it implements
-    to always fail with ENOSYS.  Some functions are actually named
-    something starting with __ and the normal name is an alias.  */
-#if defined (__stub_$ac_func) || defined (__stub___$ac_func)
-choke me
-#else
-f = $ac_func;
-#endif
-
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-         { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  eval "$as_ac_var=yes"
-else
-  echo "$as_me: failed program was:" >&5
-cat conftest.$ac_ext >&5
-eval "$as_ac_var=no"
-fi
-rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
-fi
-echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_var'}'`" >&5
-echo "${ECHO_T}`eval echo '${'$as_ac_var'}'`" >&6
-if test `eval echo '${'$as_ac_var'}'` = yes; then
-  cat >>confdefs.h <<_ACEOF
-#define `echo "HAVE_$ac_func" | $as_tr_cpp` 1
-_ACEOF
-
-else
-  INET_ATON='$(top_builddir)/src/port/inet_aton.o'
-fi
-done
-
-
-
-for ac_func in strerror
-do
-as_ac_var=`echo "ac_cv_func_$ac_func" | $as_tr_sh`
-echo "$as_me:$LINENO: checking for $ac_func" >&5
-echo $ECHO_N "checking for $ac_func... $ECHO_C" >&6
-if eval "test \"\${$as_ac_var+set}\" = set"; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  cat >conftest.$ac_ext <<_ACEOF
-#line $LINENO "configure"
-#include "confdefs.h"
-/* System header to define __stub macros and hopefully few prototypes,
-    which can conflict with char $ac_func (); below.  */
-#include <assert.h>
-/* Override any gcc2 internal prototype to avoid an error.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
-char $ac_func ();
-char (*f) ();
-
-#ifdef F77_DUMMY_MAIN
-#  ifdef __cplusplus
-     extern "C"
-#  endif
-   int F77_DUMMY_MAIN() { return 1; }
-#endif
-int
-main ()
-{
-/* The GNU C library defines this for functions which it implements
-    to always fail with ENOSYS.  Some functions are actually named
-    something starting with __ and the normal name is an alias.  */
-#if defined (__stub_$ac_func) || defined (__stub___$ac_func)
-choke me
-#else
-f = $ac_func;
-#endif
-
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-         { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  eval "$as_ac_var=yes"
-else
-  echo "$as_me: failed program was:" >&5
-cat conftest.$ac_ext >&5
-eval "$as_ac_var=no"
-fi
-rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
-fi
-echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_var'}'`" >&5
-echo "${ECHO_T}`eval echo '${'$as_ac_var'}'`" >&6
-if test `eval echo '${'$as_ac_var'}'` = yes; then
-  cat >>confdefs.h <<_ACEOF
-#define `echo "HAVE_$ac_func" | $as_tr_cpp` 1
-_ACEOF
-
-else
-  STRERROR='$(top_builddir)/src/port/strerror.o'
-fi
-done
-
-
-
-for ac_func in strdup
-do
-as_ac_var=`echo "ac_cv_func_$ac_func" | $as_tr_sh`
-echo "$as_me:$LINENO: checking for $ac_func" >&5
-echo $ECHO_N "checking for $ac_func... $ECHO_C" >&6
-if eval "test \"\${$as_ac_var+set}\" = set"; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  cat >conftest.$ac_ext <<_ACEOF
-#line $LINENO "configure"
-#include "confdefs.h"
-/* System header to define __stub macros and hopefully few prototypes,
-    which can conflict with char $ac_func (); below.  */
-#include <assert.h>
-/* Override any gcc2 internal prototype to avoid an error.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
-char $ac_func ();
-char (*f) ();
-
-#ifdef F77_DUMMY_MAIN
-#  ifdef __cplusplus
-     extern "C"
-#  endif
-   int F77_DUMMY_MAIN() { return 1; }
-#endif
-int
-main ()
-{
-/* The GNU C library defines this for functions which it implements
-    to always fail with ENOSYS.  Some functions are actually named
-    something starting with __ and the normal name is an alias.  */
-#if defined (__stub_$ac_func) || defined (__stub___$ac_func)
-choke me
-#else
-f = $ac_func;
-#endif
-
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-         { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  eval "$as_ac_var=yes"
-else
-  echo "$as_me: failed program was:" >&5
-cat conftest.$ac_ext >&5
-eval "$as_ac_var=no"
-fi
-rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
-fi
-echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_var'}'`" >&5
-echo "${ECHO_T}`eval echo '${'$as_ac_var'}'`" >&6
-if test `eval echo '${'$as_ac_var'}'` = yes; then
-  cat >>confdefs.h <<_ACEOF
-#define `echo "HAVE_$ac_func" | $as_tr_cpp` 1
-_ACEOF
-
-else
-  STRDUP='$(top_builddir)/src/port/strdup.o'
-fi
-done
-
-
-
-for ac_func in strtol
-do
-as_ac_var=`echo "ac_cv_func_$ac_func" | $as_tr_sh`
-echo "$as_me:$LINENO: checking for $ac_func" >&5
-echo $ECHO_N "checking for $ac_func... $ECHO_C" >&6
-if eval "test \"\${$as_ac_var+set}\" = set"; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  cat >conftest.$ac_ext <<_ACEOF
-#line $LINENO "configure"
-#include "confdefs.h"
-/* System header to define __stub macros and hopefully few prototypes,
-    which can conflict with char $ac_func (); below.  */
-#include <assert.h>
-/* Override any gcc2 internal prototype to avoid an error.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
-char $ac_func ();
-char (*f) ();
-
-#ifdef F77_DUMMY_MAIN
-#  ifdef __cplusplus
-     extern "C"
-#  endif
-   int F77_DUMMY_MAIN() { return 1; }
-#endif
-int
-main ()
-{
-/* The GNU C library defines this for functions which it implements
-    to always fail with ENOSYS.  Some functions are actually named
-    something starting with __ and the normal name is an alias.  */
-#if defined (__stub_$ac_func) || defined (__stub___$ac_func)
-choke me
-#else
-f = $ac_func;
-#endif
-
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-         { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  eval "$as_ac_var=yes"
-else
-  echo "$as_me: failed program was:" >&5
-cat conftest.$ac_ext >&5
-eval "$as_ac_var=no"
-fi
-rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
-fi
-echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_var'}'`" >&5
-echo "${ECHO_T}`eval echo '${'$as_ac_var'}'`" >&6
-if test `eval echo '${'$as_ac_var'}'` = yes; then
-  cat >>confdefs.h <<_ACEOF
-#define `echo "HAVE_$ac_func" | $as_tr_cpp` 1
-_ACEOF
-
-else
-  STRTOL='$(top_builddir)/src/port/strtol.o'
-fi
-done
-
-
-
-for ac_func in strtoul
-do
-as_ac_var=`echo "ac_cv_func_$ac_func" | $as_tr_sh`
-echo "$as_me:$LINENO: checking for $ac_func" >&5
-echo $ECHO_N "checking for $ac_func... $ECHO_C" >&6
-if eval "test \"\${$as_ac_var+set}\" = set"; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  cat >conftest.$ac_ext <<_ACEOF
-#line $LINENO "configure"
-#include "confdefs.h"
-/* System header to define __stub macros and hopefully few prototypes,
-    which can conflict with char $ac_func (); below.  */
-#include <assert.h>
-/* Override any gcc2 internal prototype to avoid an error.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
-char $ac_func ();
-char (*f) ();
-
-#ifdef F77_DUMMY_MAIN
-#  ifdef __cplusplus
-     extern "C"
-#  endif
-   int F77_DUMMY_MAIN() { return 1; }
-#endif
-int
-main ()
-{
-/* The GNU C library defines this for functions which it implements
-    to always fail with ENOSYS.  Some functions are actually named
-    something starting with __ and the normal name is an alias.  */
-#if defined (__stub_$ac_func) || defined (__stub___$ac_func)
-choke me
-#else
-f = $ac_func;
-#endif
-
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-         { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  eval "$as_ac_var=yes"
-else
-  echo "$as_me: failed program was:" >&5
-cat conftest.$ac_ext >&5
-eval "$as_ac_var=no"
-fi
-rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
-fi
-echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_var'}'`" >&5
-echo "${ECHO_T}`eval echo '${'$as_ac_var'}'`" >&6
-if test `eval echo '${'$as_ac_var'}'` = yes; then
-  cat >>confdefs.h <<_ACEOF
-#define `echo "HAVE_$ac_func" | $as_tr_cpp` 1
-_ACEOF
-
-else
-  STRTOUL='$(top_builddir)/src/port/strtoul.o'
-fi
-done
-
-
-
-for ac_func in strcasecmp
-do
-as_ac_var=`echo "ac_cv_func_$ac_func" | $as_tr_sh`
-echo "$as_me:$LINENO: checking for $ac_func" >&5
-echo $ECHO_N "checking for $ac_func... $ECHO_C" >&6
-if eval "test \"\${$as_ac_var+set}\" = set"; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  cat >conftest.$ac_ext <<_ACEOF
-#line $LINENO "configure"
-#include "confdefs.h"
-/* System header to define __stub macros and hopefully few prototypes,
-    which can conflict with char $ac_func (); below.  */
-#include <assert.h>
-/* Override any gcc2 internal prototype to avoid an error.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
-char $ac_func ();
-char (*f) ();
-
-#ifdef F77_DUMMY_MAIN
-#  ifdef __cplusplus
-     extern "C"
-#  endif
-   int F77_DUMMY_MAIN() { return 1; }
-#endif
-int
-main ()
-{
-/* The GNU C library defines this for functions which it implements
-    to always fail with ENOSYS.  Some functions are actually named
-    something starting with __ and the normal name is an alias.  */
-#if defined (__stub_$ac_func) || defined (__stub___$ac_func)
-choke me
-#else
-f = $ac_func;
-#endif
-
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-         { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  eval "$as_ac_var=yes"
-else
-  echo "$as_me: failed program was:" >&5
-cat conftest.$ac_ext >&5
-eval "$as_ac_var=no"
-fi
-rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
-fi
-echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_var'}'`" >&5
-echo "${ECHO_T}`eval echo '${'$as_ac_var'}'`" >&6
-if test `eval echo '${'$as_ac_var'}'` = yes; then
-  cat >>confdefs.h <<_ACEOF
-#define `echo "HAVE_$ac_func" | $as_tr_cpp` 1
-_ACEOF
-
-else
-  STRCASECMP='$(top_builddir)/src/port/strcasecmp.o'
-fi
-done
-
-
-
-# Set path of dllinit.c for cygwin
-DLLINIT=""
+# Solaris has a very slow qsort in certain cases.
 case $host_os in
-  cygwin*) DLLINIT='$(top_builddir)/src/backend/port/dllinit.o' ;;
+  solaris*) LIBOBJS="$LIBOBJS qsort.$ac_objext" ;;
 esac
-
-
-# Set path of qsort for solaris, which has a very slow qsort in certain cases.
-QSORT=""
-case $host_os in
-  solaris*) DLLINIT='$(top_builddir)/src/backend/port/qsort.o' ;;
-esac
-
 
 # On HPUX 9, rint() is not in regular libm.a but in /lib/pa1.1/libm.a;
 # this hackery with HPUXMATHLIB allows us to cope.
@@ -12519,407 +11834,6 @@ _ACEOF
 fi
 
 
-# This test makes sure that run tests work at all.  Sometimes a shared
-# library is found by the linker, but the runtime linker can't find it.
-# This check should come after all modifications of compiler or linker
-# variables, and before any other run tests.
-echo "$as_me:$LINENO: checking test program" >&5
-echo $ECHO_N "checking test program... $ECHO_C" >&6
-if test "$cross_compiling" = yes; then
-  echo "$as_me:$LINENO: result: cross-compiling" >&5
-echo "${ECHO_T}cross-compiling" >&6
-else
-  cat >conftest.$ac_ext <<_ACEOF
-#line $LINENO "configure"
-#include "confdefs.h"
-int main() { return 0; }
-_ACEOF
-rm -f conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } && { ac_try='./conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  echo "$as_me:$LINENO: result: ok" >&5
-echo "${ECHO_T}ok" >&6
-else
-  echo "$as_me: program exited with status $ac_status" >&5
-echo "$as_me: failed program was:" >&5
-cat conftest.$ac_ext >&5
-( exit $ac_status )
-echo "$as_me:$LINENO: result: failed" >&5
-echo "${ECHO_T}failed" >&6
-{ { echo "$as_me:$LINENO: error:
-*** Could not execute a simple test program.  This may be a problem
-*** related to locating shared libraries.  Check the file 'config.log'
-*** for the exact reason." >&5
-echo "$as_me: error:
-*** Could not execute a simple test program.  This may be a problem
-*** related to locating shared libraries.  Check the file 'config.log'
-*** for the exact reason." >&2;}
-   { (exit 1); exit 1; }; }
-fi
-rm -f core core.* *.core conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
-fi
-
-
-
-echo "$as_me:$LINENO: checking whether long int is 64 bits" >&5
-echo $ECHO_N "checking whether long int is 64 bits... $ECHO_C" >&6
-if test "${pgac_cv_type_long_int_64+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  if test "$cross_compiling" = yes; then
-  pgac_cv_type_long_int_64=no
-{ echo "$as_me:$LINENO: WARNING: 64 bit arithmetic disabled when cross-compiling" >&5
-echo "$as_me: WARNING: 64 bit arithmetic disabled when cross-compiling" >&2;}
-else
-  cat >conftest.$ac_ext <<_ACEOF
-#line $LINENO "configure"
-#include "confdefs.h"
-typedef long int int64;
-
-/*
- * These are globals to discourage the compiler from folding all the
- * arithmetic tests down to compile-time constants.
- */
-int64 a = 20000001;
-int64 b = 40000005;
-
-int does_int64_work()
-{
-  int64 c,d;
-
-  if (sizeof(int64) != 8)
-    return 0;			/* definitely not the right size */
-
-  /* Do perfunctory checks to see if 64-bit arithmetic seems to work */
-  c = a * b;
-  d = (c + b) / b;
-  if (d != a+1)
-    return 0;
-  return 1;
-}
-main() {
-  exit(! does_int64_work());
-}
-_ACEOF
-rm -f conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } && { ac_try='./conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  pgac_cv_type_long_int_64=yes
-else
-  echo "$as_me: program exited with status $ac_status" >&5
-echo "$as_me: failed program was:" >&5
-cat conftest.$ac_ext >&5
-( exit $ac_status )
-pgac_cv_type_long_int_64=no
-fi
-rm -f core core.* *.core conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
-fi
-fi
-echo "$as_me:$LINENO: result: $pgac_cv_type_long_int_64" >&5
-echo "${ECHO_T}$pgac_cv_type_long_int_64" >&6
-
-HAVE_LONG_INT_64=$pgac_cv_type_long_int_64
-if test x"$pgac_cv_type_long_int_64" = xyes ; then
-
-cat >>confdefs.h <<\_ACEOF
-#define HAVE_LONG_INT_64
-_ACEOF
-
-fi
-
-
-if test x"$HAVE_LONG_INT_64" = x"no" ; then
-  echo "$as_me:$LINENO: checking whether long long int is 64 bits" >&5
-echo $ECHO_N "checking whether long long int is 64 bits... $ECHO_C" >&6
-if test "${pgac_cv_type_long_long_int_64+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  if test "$cross_compiling" = yes; then
-  pgac_cv_type_long_long_int_64=no
-{ echo "$as_me:$LINENO: WARNING: 64 bit arithmetic disabled when cross-compiling" >&5
-echo "$as_me: WARNING: 64 bit arithmetic disabled when cross-compiling" >&2;}
-else
-  cat >conftest.$ac_ext <<_ACEOF
-#line $LINENO "configure"
-#include "confdefs.h"
-typedef long long int int64;
-
-/*
- * These are globals to discourage the compiler from folding all the
- * arithmetic tests down to compile-time constants.
- */
-int64 a = 20000001;
-int64 b = 40000005;
-
-int does_int64_work()
-{
-  int64 c,d;
-
-  if (sizeof(int64) != 8)
-    return 0;			/* definitely not the right size */
-
-  /* Do perfunctory checks to see if 64-bit arithmetic seems to work */
-  c = a * b;
-  d = (c + b) / b;
-  if (d != a+1)
-    return 0;
-  return 1;
-}
-main() {
-  exit(! does_int64_work());
-}
-_ACEOF
-rm -f conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } && { ac_try='./conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  pgac_cv_type_long_long_int_64=yes
-else
-  echo "$as_me: program exited with status $ac_status" >&5
-echo "$as_me: failed program was:" >&5
-cat conftest.$ac_ext >&5
-( exit $ac_status )
-pgac_cv_type_long_long_int_64=no
-fi
-rm -f core core.* *.core conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
-fi
-fi
-echo "$as_me:$LINENO: result: $pgac_cv_type_long_long_int_64" >&5
-echo "${ECHO_T}$pgac_cv_type_long_long_int_64" >&6
-
-HAVE_LONG_LONG_INT_64=$pgac_cv_type_long_long_int_64
-if test x"$pgac_cv_type_long_long_int_64" = xyes ; then
-
-cat >>confdefs.h <<\_ACEOF
-#define HAVE_LONG_LONG_INT_64
-_ACEOF
-
-fi
-
-fi
-
-
-
-if [ x"$HAVE_LONG_LONG_INT_64" = xyes ] ; then
-  cat >conftest.$ac_ext <<_ACEOF
-#line $LINENO "configure"
-#include "confdefs.h"
-
-#define INT64CONST(x)  x##LL
-long long int foo = INT64CONST(0x1234567890123456);
-
-#ifdef F77_DUMMY_MAIN
-#  ifdef __cplusplus
-     extern "C"
-#  endif
-   int F77_DUMMY_MAIN() { return 1; }
-#endif
-int
-main ()
-{
-
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext
-if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
-  (eval $ac_compile) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-         { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-
-cat >>confdefs.h <<\_ACEOF
-#define HAVE_LL_CONSTANTS 1
-_ACEOF
-
-else
-  echo "$as_me: failed program was:" >&5
-cat conftest.$ac_ext >&5
-fi
-rm -f conftest.$ac_objext conftest.$ac_ext
-fi
-
-
-
-if [ x"$HAVE_LONG_LONG_INT_64" = xyes ] ; then
-  if [ x$SNPRINTF = x ] ; then
-    echo "$as_me:$LINENO: checking whether snprintf handles 'long long int' as %lld" >&5
-echo $ECHO_N "checking whether snprintf handles 'long long int' as %lld... $ECHO_C" >&6
-    if test "$cross_compiling" = yes; then
-   echo "$as_me:$LINENO: result: assuming not on target machine" >&5
-echo "${ECHO_T}assuming not on target machine" >&6
-	# Force usage of our own snprintf, since we cannot test foreign snprintf
-	SNPRINTF='$(top_builddir)/src/port/snprintf.o'
-	INT64_FORMAT='"%lld"'
-
-else
-  cat >conftest.$ac_ext <<_ACEOF
-#line $LINENO "configure"
-#include "confdefs.h"
-#include <stdio.h>
-typedef long long int int64;
-#define INT64_FORMAT "%lld"
-
-int64 a = 20000001;
-int64 b = 40000005;
-
-int does_int64_snprintf_work()
-{
-  int64 c;
-  char buf[100];
-
-  if (sizeof(int64) != 8)
-    return 0;			/* doesn't look like the right size */
-
-  c = a * b;
-  snprintf(buf, 100, INT64_FORMAT, c);
-  if (strcmp(buf, "800000140000005") != 0)
-    return 0;			/* either multiply or snprintf is busted */
-  return 1;
-}
-main() {
-  exit(! does_int64_snprintf_work());
-}
-_ACEOF
-rm -f conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } && { ac_try='./conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-   echo "$as_me:$LINENO: result: yes" >&5
-echo "${ECHO_T}yes" >&6
-	  INT64_FORMAT='"%lld"'
-
-else
-  echo "$as_me: program exited with status $ac_status" >&5
-echo "$as_me: failed program was:" >&5
-cat conftest.$ac_ext >&5
-( exit $ac_status )
- echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-    echo "$as_me:$LINENO: checking whether snprintf handles 'long long int' as %qd" >&5
-echo $ECHO_N "checking whether snprintf handles 'long long int' as %qd... $ECHO_C" >&6
-    if test "$cross_compiling" = yes; then
-   echo "$as_me:$LINENO: result: assuming not on target machine" >&5
-echo "${ECHO_T}assuming not on target machine" >&6
-	# Force usage of our own snprintf, since we cannot test foreign snprintf
-	SNPRINTF='$(top_builddir)/src/port/snprintf.o'
-	INT64_FORMAT='"%lld"'
-
-else
-  cat >conftest.$ac_ext <<_ACEOF
-#line $LINENO "configure"
-#include "confdefs.h"
-#include <stdio.h>
-typedef long long int int64;
-#define INT64_FORMAT "%qd"
-
-int64 a = 20000001;
-int64 b = 40000005;
-
-int does_int64_snprintf_work()
-{
-  int64 c;
-  char buf[100];
-
-  if (sizeof(int64) != 8)
-    return 0;     /* doesn't look like the right size */
-
-  c = a * b;
-  snprintf(buf, 100, INT64_FORMAT, c);
-  if (strcmp(buf, "800000140000005") != 0)
-    return 0;     /* either multiply or snprintf is busted */
-  return 1;
-}
-main() {
-  exit(! does_int64_snprintf_work());
-}
-_ACEOF
-rm -f conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } && { ac_try='./conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-   echo "$as_me:$LINENO: result: yes" >&5
-echo "${ECHO_T}yes" >&6
-    INT64_FORMAT='"%qd"'
-
-else
-  echo "$as_me: program exited with status $ac_status" >&5
-echo "$as_me: failed program was:" >&5
-cat conftest.$ac_ext >&5
-( exit $ac_status )
- echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-	# Force usage of our own snprintf, since system snprintf is broken
-	SNPRINTF='$(top_builddir)/src/port/snprintf.o'
-	INT64_FORMAT='"%lld"'
-
-fi
-rm -f core core.* *.core conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
-fi
-fi
-rm -f core core.* *.core conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
-fi
-  else
-    # here if we previously decided we needed to use our own snprintf
-    INT64_FORMAT='"%lld"'
-  fi
-else
-  # Here if we are not using 'long long int' at all
-  INT64_FORMAT='"%ld"'
-fi
-
-
-cat >>confdefs.h <<_ACEOF
-#define INT64_FORMAT $INT64_FORMAT
-_ACEOF
-
-
-
-
 
 for ac_func in strtoll strtoq
 do
@@ -13232,6 +12146,410 @@ done
 fi
 done
 
+
+
+# This test makes sure that run tests work at all.  Sometimes a shared
+# library is found by the linker, but the runtime linker can't find it.
+# This check should come after all modifications of compiler or linker
+# variables, and before any other run tests.
+echo "$as_me:$LINENO: checking test program" >&5
+echo $ECHO_N "checking test program... $ECHO_C" >&6
+if test "$cross_compiling" = yes; then
+  echo "$as_me:$LINENO: result: cross-compiling" >&5
+echo "${ECHO_T}cross-compiling" >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
+int main() { return 0; }
+_ACEOF
+rm -f conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && { ac_try='./conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  echo "$as_me:$LINENO: result: ok" >&5
+echo "${ECHO_T}ok" >&6
+else
+  echo "$as_me: program exited with status $ac_status" >&5
+echo "$as_me: failed program was:" >&5
+cat conftest.$ac_ext >&5
+( exit $ac_status )
+echo "$as_me:$LINENO: result: failed" >&5
+echo "${ECHO_T}failed" >&6
+{ { echo "$as_me:$LINENO: error:
+*** Could not execute a simple test program.  This may be a problem
+*** related to locating shared libraries.  Check the file 'config.log'
+*** for the exact reason." >&5
+echo "$as_me: error:
+*** Could not execute a simple test program.  This may be a problem
+*** related to locating shared libraries.  Check the file 'config.log'
+*** for the exact reason." >&2;}
+   { (exit 1); exit 1; }; }
+fi
+rm -f core core.* *.core conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
+fi
+
+
+
+echo "$as_me:$LINENO: checking whether long int is 64 bits" >&5
+echo $ECHO_N "checking whether long int is 64 bits... $ECHO_C" >&6
+if test "${pgac_cv_type_long_int_64+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  if test "$cross_compiling" = yes; then
+  pgac_cv_type_long_int_64=no
+{ echo "$as_me:$LINENO: WARNING: 64 bit arithmetic disabled when cross-compiling" >&5
+echo "$as_me: WARNING: 64 bit arithmetic disabled when cross-compiling" >&2;}
+else
+  cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
+typedef long int int64;
+
+/*
+ * These are globals to discourage the compiler from folding all the
+ * arithmetic tests down to compile-time constants.
+ */
+int64 a = 20000001;
+int64 b = 40000005;
+
+int does_int64_work()
+{
+  int64 c,d;
+
+  if (sizeof(int64) != 8)
+    return 0;			/* definitely not the right size */
+
+  /* Do perfunctory checks to see if 64-bit arithmetic seems to work */
+  c = a * b;
+  d = (c + b) / b;
+  if (d != a+1)
+    return 0;
+  return 1;
+}
+main() {
+  exit(! does_int64_work());
+}
+_ACEOF
+rm -f conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && { ac_try='./conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  pgac_cv_type_long_int_64=yes
+else
+  echo "$as_me: program exited with status $ac_status" >&5
+echo "$as_me: failed program was:" >&5
+cat conftest.$ac_ext >&5
+( exit $ac_status )
+pgac_cv_type_long_int_64=no
+fi
+rm -f core core.* *.core conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
+fi
+fi
+echo "$as_me:$LINENO: result: $pgac_cv_type_long_int_64" >&5
+echo "${ECHO_T}$pgac_cv_type_long_int_64" >&6
+
+HAVE_LONG_INT_64=$pgac_cv_type_long_int_64
+if test x"$pgac_cv_type_long_int_64" = xyes ; then
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_LONG_INT_64
+_ACEOF
+
+fi
+
+
+if test x"$HAVE_LONG_INT_64" = x"no" ; then
+  echo "$as_me:$LINENO: checking whether long long int is 64 bits" >&5
+echo $ECHO_N "checking whether long long int is 64 bits... $ECHO_C" >&6
+if test "${pgac_cv_type_long_long_int_64+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  if test "$cross_compiling" = yes; then
+  pgac_cv_type_long_long_int_64=no
+{ echo "$as_me:$LINENO: WARNING: 64 bit arithmetic disabled when cross-compiling" >&5
+echo "$as_me: WARNING: 64 bit arithmetic disabled when cross-compiling" >&2;}
+else
+  cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
+typedef long long int int64;
+
+/*
+ * These are globals to discourage the compiler from folding all the
+ * arithmetic tests down to compile-time constants.
+ */
+int64 a = 20000001;
+int64 b = 40000005;
+
+int does_int64_work()
+{
+  int64 c,d;
+
+  if (sizeof(int64) != 8)
+    return 0;			/* definitely not the right size */
+
+  /* Do perfunctory checks to see if 64-bit arithmetic seems to work */
+  c = a * b;
+  d = (c + b) / b;
+  if (d != a+1)
+    return 0;
+  return 1;
+}
+main() {
+  exit(! does_int64_work());
+}
+_ACEOF
+rm -f conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && { ac_try='./conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  pgac_cv_type_long_long_int_64=yes
+else
+  echo "$as_me: program exited with status $ac_status" >&5
+echo "$as_me: failed program was:" >&5
+cat conftest.$ac_ext >&5
+( exit $ac_status )
+pgac_cv_type_long_long_int_64=no
+fi
+rm -f core core.* *.core conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
+fi
+fi
+echo "$as_me:$LINENO: result: $pgac_cv_type_long_long_int_64" >&5
+echo "${ECHO_T}$pgac_cv_type_long_long_int_64" >&6
+
+HAVE_LONG_LONG_INT_64=$pgac_cv_type_long_long_int_64
+if test x"$pgac_cv_type_long_long_int_64" = xyes ; then
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_LONG_LONG_INT_64
+_ACEOF
+
+fi
+
+fi
+
+
+
+if [ x"$HAVE_LONG_LONG_INT_64" = xyes ] ; then
+  cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
+
+#define INT64CONST(x)  x##LL
+long long int foo = INT64CONST(0x1234567890123456);
+
+#ifdef F77_DUMMY_MAIN
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+#endif
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_LL_CONSTANTS 1
+_ACEOF
+
+else
+  echo "$as_me: failed program was:" >&5
+cat conftest.$ac_ext >&5
+fi
+rm -f conftest.$ac_objext conftest.$ac_ext
+fi
+
+
+
+if test x"$HAVE_LONG_LONG_INT_64" = xyes ; then
+  if test $pgac_need_repl_snprintf = no; then
+    echo "$as_me:$LINENO: checking whether snprintf handles 'long long int' as %lld" >&5
+echo $ECHO_N "checking whether snprintf handles 'long long int' as %lld... $ECHO_C" >&6
+    if test "$cross_compiling" = yes; then
+   echo "$as_me:$LINENO: result: cannot test (not on host machine)" >&5
+echo "${ECHO_T}cannot test (not on host machine)" >&6
+	# Force usage of our own snprintf, since we cannot test foreign snprintf
+        pgac_need_repl_snprintf=yes
+	INT64_FORMAT='"%lld"'
+
+else
+  cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
+#include <stdio.h>
+typedef long long int int64;
+#define INT64_FORMAT "%lld"
+
+int64 a = 20000001;
+int64 b = 40000005;
+
+int does_int64_snprintf_work()
+{
+  int64 c;
+  char buf[100];
+
+  if (sizeof(int64) != 8)
+    return 0;			/* doesn't look like the right size */
+
+  c = a * b;
+  snprintf(buf, 100, INT64_FORMAT, c);
+  if (strcmp(buf, "800000140000005") != 0)
+    return 0;			/* either multiply or snprintf is busted */
+  return 1;
+}
+main() {
+  exit(! does_int64_snprintf_work());
+}
+_ACEOF
+rm -f conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && { ac_try='./conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+   echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+	  INT64_FORMAT='"%lld"'
+
+else
+  echo "$as_me: program exited with status $ac_status" >&5
+echo "$as_me: failed program was:" >&5
+cat conftest.$ac_ext >&5
+( exit $ac_status )
+ echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+    echo "$as_me:$LINENO: checking whether snprintf handles 'long long int' as %qd" >&5
+echo $ECHO_N "checking whether snprintf handles 'long long int' as %qd... $ECHO_C" >&6
+    if test "$cross_compiling" = yes; then
+   echo "$as_me:$LINENO: result: cannot test (not on host machine)" >&5
+echo "${ECHO_T}cannot test (not on host machine)" >&6
+	# Force usage of our own snprintf, since we cannot test foreign snprintf
+        pgac_need_repl_snprintf=yes
+	INT64_FORMAT='"%lld"'
+
+else
+  cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
+#include <stdio.h>
+typedef long long int int64;
+#define INT64_FORMAT "%qd"
+
+int64 a = 20000001;
+int64 b = 40000005;
+
+int does_int64_snprintf_work()
+{
+  int64 c;
+  char buf[100];
+
+  if (sizeof(int64) != 8)
+    return 0;     /* doesn't look like the right size */
+
+  c = a * b;
+  snprintf(buf, 100, INT64_FORMAT, c);
+  if (strcmp(buf, "800000140000005") != 0)
+    return 0;     /* either multiply or snprintf is busted */
+  return 1;
+}
+main() {
+  exit(! does_int64_snprintf_work());
+}
+_ACEOF
+rm -f conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && { ac_try='./conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+   echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+    INT64_FORMAT='"%qd"'
+
+else
+  echo "$as_me: program exited with status $ac_status" >&5
+echo "$as_me: failed program was:" >&5
+cat conftest.$ac_ext >&5
+( exit $ac_status )
+ echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+	# Force usage of our own snprintf, since system snprintf is broken
+        pgac_need_repl_snprintf=yes
+	INT64_FORMAT='"%lld"'
+
+fi
+rm -f core core.* *.core conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
+fi
+fi
+rm -f core core.* *.core conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
+fi
+  else
+    # here if we previously decided we needed to use our own snprintf
+    INT64_FORMAT='"%lld"'
+  fi
+else
+  # Here if we are not using 'long long int' at all
+  INT64_FORMAT='"%ld"'
+fi
+
+
+cat >>confdefs.h <<_ACEOF
+#define INT64_FORMAT $INT64_FORMAT
+_ACEOF
+
+
+if test $pgac_need_repl_snprintf = yes; then
+  LIBOBJS="$LIBOBJS snprintf.$ac_objext"
+fi
 
 
 echo "$as_me:$LINENO: checking for unsigned long" >&5
@@ -17577,21 +16895,7 @@ s,@python_moduledir@,$python_moduledir,;t t
 s,@python_moduleexecdir@,$python_moduleexecdir,;t t
 s,@python_includespec@,$python_includespec,;t t
 s,@python_libspec@,$python_libspec,;t t
-s,@MEMCMP@,$MEMCMP,;t t
-s,@SNPRINTF@,$SNPRINTF,;t t
-s,@ISINF@,$ISINF,;t t
-s,@GETRUSAGE@,$GETRUSAGE,;t t
-s,@SRANDOM@,$SRANDOM,;t t
-s,@GETHOSTNAME@,$GETHOSTNAME,;t t
-s,@MISSING_RANDOM@,$MISSING_RANDOM,;t t
-s,@INET_ATON@,$INET_ATON,;t t
-s,@STRERROR@,$STRERROR,;t t
-s,@STRDUP@,$STRDUP,;t t
-s,@STRTOL@,$STRTOL,;t t
-s,@STRTOUL@,$STRTOUL,;t t
-s,@STRCASECMP@,$STRCASECMP,;t t
-s,@DLLINIT@,$DLLINIT,;t t
-s,@QSORT@,$QSORT,;t t
+s,@LIBOBJS@,$LIBOBJS,;t t
 s,@HPUXMATHLIB@,$HPUXMATHLIB,;t t
 s,@HAVE_POSIX_SIGNALS@,$HAVE_POSIX_SIGNALS,;t t
 s,@MSGFMT@,$MSGFMT,;t t

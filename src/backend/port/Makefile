@@ -13,7 +13,7 @@
 # be converted to Method 2.  
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/port/Makefile,v 1.17 2002/07/19 17:35:11 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/port/Makefile,v 1.18 2002/07/27 20:10:05 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -21,13 +21,7 @@ subdir = src/backend/port
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
-OBJS=$(GETHOSTNAME) $(GETRUSAGE) $(INET_ATON) $(ISINF) $(MEMCMP) \
-        $(MISSING_RANDOM) $(QSORT) $(SNPRINTF) $(SRANDOM) $(STRCASECMP) \
-	$(STRDUP) $(STRERROR) $(STRTOL) $(STRTOUL)
-
 OBJS+=dynloader.o pg_sema.o pg_shmem.o
-
-OBJS+=$(DLLINIT)
 
 OBJS+=$(TAS)
 
@@ -65,7 +59,7 @@ tas.o: tas.s
 	$(CC) $(CFLAGS) -c $<
 
 # IPC test program
-ipc_test: ipc_test.o pg_sema.o pg_shmem.o $(MEMCMP) $(SNPRINTF) $(STRERROR)
+ipc_test: ipc_test.o pg_sema.o pg_shmem.o
 	$(CC) $(CFLAGS) $(LDFLAGS) $(export_dynamic) $^ $(LIBS) -o $@
 
 distclean clean:

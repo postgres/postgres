@@ -1,5 +1,5 @@
 # Macros that test various C library quirks
-# $Header: /cvsroot/pgsql/config/c-library.m4,v 1.13 2002/03/30 00:59:52 petere Exp $
+# $Header: /cvsroot/pgsql/config/c-library.m4,v 1.14 2002/07/27 20:10:03 petere Exp $
 
 
 # PGAC_VAR_INT_TIMEZONE
@@ -34,30 +34,6 @@ gettimeofday(tp,tzp);],
 if test x"$pgac_cv_func_gettimeofday_1arg" = xyes ; then
   AC_DEFINE(GETTIMEOFDAY_1ARG,, [Set to 1 if gettimeofday() takes only 1 argument])
 fi])# PGAC_FUNC_GETTIMEOFDAY_1ARG
-
-
-# PGAC_FUNC_MEMCMP
-# ----------------
-# Check if memcmp() properly handles negative bytes and returns +/-.
-# SunOS does not.
-# AC_FUNC_MEMCMP
-AC_DEFUN([PGAC_FUNC_MEMCMP],
-[AC_CACHE_CHECK(for 8-bit clean memcmp, pgac_cv_func_memcmp_clean,
-[AC_TRY_RUN([
-main()
-{
-  char c0 = 0x40, c1 = 0x80, c2 = 0x81;
-  exit(memcmp(&c0, &c2, 1) < 0 && memcmp(&c1, &c2, 1) < 0 ? 0 : 1);
-}
-], pgac_cv_func_memcmp_clean=yes, pgac_cv_func_memcmp_clean=no,
-pgac_cv_func_memcmp_clean=no)])
-if test $pgac_cv_func_memcmp_clean = no ; then
-  MEMCMP=memcmp.o
-else
-  MEMCMP=
-fi
-AC_SUBST(MEMCMP)dnl
-])
 
 
 # PGAC_UNION_SEMUN
