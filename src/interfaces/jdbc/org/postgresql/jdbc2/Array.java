@@ -172,7 +172,7 @@ public class Array implements java.sql.Array
 				retVal = new Timestamp[ count ];
 				StringBuffer sbuf = null;
 				for ( ; count > 0; count-- )
-					((java.sql.Timestamp[])retVal)[i++] = ResultSet.toTimestamp( arrayContents[(int)index], rs );
+					((java.sql.Timestamp[])retVal)[i++] = ResultSet.toTimestamp( arrayContents[(int)index++], rs );
 				break;
 
 				// Other datatypes not currently supported.  If you are really using other types ask
