@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.88 2003/05/25 05:30:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.89 2003/05/26 00:55:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1968,7 +1968,6 @@ float84ge(PG_FUNCTION_ARGS)
 /* ========== PRIVATE ROUTINES ========== */
 
 #ifndef HAVE_CBRT
-/* I doubt this is still needed by any platform.  2003-05-25 */
 static double
 cbrt(double x)
 {
