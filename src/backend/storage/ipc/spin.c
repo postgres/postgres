@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/spin.c,v 1.5 1997/08/19 21:33:08 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/spin.c,v 1.6 1997/08/21 13:43:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -98,20 +98,6 @@ SpinRelease(SPINLOCK lock)
 
 static bool AttachSpinLocks(IPCKey key);
 static bool SpinIsLocked(SPINLOCK lock);
-
-
-static bool
-AttachSpinLocks(IPCKey key)
-{
-    /* the spin lock shared memory must have been attached by now */
-    return(TRUE);
-}
-
-static bool
-SpinIsLocked(SPINLOCK lock)
-{
-    return(!LockIsFree(lock));
-}
 
 /*
  * SpinAcquire -- try to grab a spinlock
