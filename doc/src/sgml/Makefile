@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.42 2001/10/09 18:45:59 petere Exp $
+#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.43 2001/11/08 23:46:29 petere Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -26,7 +26,7 @@ endif
 ifndef JADE
 JADE = jade
 endif
-SGMLINCLUDE = -D $(srcdir) -D $(srcdir)/ref -D $(srcdir)/../graphics
+SGMLINCLUDE = -D $(srcdir) -D $(srcdir)/ref
 
 ifndef NSGMLS
 NSGMLS = nsgmls
@@ -35,6 +35,9 @@ endif
 ifndef SGMLSPL
 SGMLSPL = sgmlspl
 endif
+
+CONVERT = convert
+EPSTOPDF = epstopdf
 
 
 # docbook2man generates man pages from docbook refentry source code.
@@ -89,9 +92,8 @@ $(addsuffix .html, $(ALLBOOKS)): %.html: %.sgml $(ALLSGML) stylesheet.dsl
 	$(JADE.html) book-decl.sgml $<
 	ln -sf index.html $@
 
-tutorial.html: clientserver.gif
 programmer.html: catalogs.gif connections.gif
-postgres.html: clientserver.gif catalogs.gif connections.gif
+postgres.html: catalogs.gif connections.gif
 
 
 COLLATEINDEX = $(PERL) $(DOCBOOKSTYLE)/bin/collateindex.pl -f -g -t 'Index'
@@ -117,9 +119,12 @@ endif
 $(addsuffix .rtf, $(ALLBOOKS)): %.rtf: %.sgml $(ALLSGML) stylesheet.dsl
 	$(JADE) $(JADEFLAGS) $(SGMLINCLUDE) -c $(CATALOG) -d stylesheet.dsl -t rtf -V rtf-backend -i output-print book-decl.sgml $<
 
-# TeX and DVI
-$(addsuffix .tex, $(ALLBOOKS)): %.tex: %.sgml $(ALLSGML) stylesheet.dsl
-	$(JADE) $(JADEFLAGS) $(SGMLINCLUDE) -c $(CATALOG) -d stylesheet.dsl -t tex -V tex-backend -i output-print book-decl.sgml $<
+# TeX
+# Regular TeX and pdfTeX have slightly differing requirements, so we
+# need to distinguish the path we're taking.
+
+$(addsuffix .tex-ps, $(ALLBOOKS)): %.tex-ps: %.sgml $(ALLSGML) stylesheet.dsl
+	$(JADE) $(JADEFLAGS) $(SGMLINCLUDE) -c $(CATALOG) -d stylesheet.dsl -t tex -V tex-backend -i output-print -V texdvi-output -o $@ book-decl.sgml $<
 # TeX transforms '--' into en-dashes.  This hack should go away when
 # OpenJade is fixed (ver. 1.4?)
 	$(PERL) -pi -e 's/\-\-/\\mbox{}-\\mbox{}-\\mbox{}/g' $@
@@ -127,7 +132,19 @@ $(addsuffix .tex, $(ALLBOOKS)): %.tex: %.sgml $(ALLSGML) stylesheet.dsl
 	$(PERL) -pi -e 's/\>\>/\\mbox{}>\\mbox{}>\\mbox{}/g' $@
 	$(PERL) -pi -e "s/\'\'/\\\\mbox{}'\\\\mbox{}'\\\\mbox{}/g" $@
 
-%.dvi: %.tex
+programmer.tex-ps: catalogs.eps connections.eps
+
+$(addsuffix .tex-pdf, $(ALLBOOKS)): %.tex-pdf: %.sgml $(ALLSGML) stylesheet.dsl
+	$(JADE) $(JADEFLAGS) $(SGMLINCLUDE) -c $(CATALOG) -d stylesheet.dsl -t tex -V tex-backend -i output-print -V texpdf-output -o $@ book-decl.sgml $<
+	$(PERL) -pi -e 's/\-\-/\\mbox{}-\\mbox{}-\\mbox{}/g' $@
+	$(PERL) -pi -e 's/\<\</\\mbox{}<\\mbox{}<\\mbox{}/g' $@
+	$(PERL) -pi -e 's/\>\>/\\mbox{}>\\mbox{}>\\mbox{}/g' $@
+	$(PERL) -pi -e "s/\'\'/\\\\mbox{}'\\\\mbox{}'\\\\mbox{}/g" $@
+
+programmer.tex-pdf: catalogs.pdf connections.pdf
+
+%.dvi: %.tex-ps
+	@rm $*.aux $*.log
 	jadetex $<
 	jadetex $<
 	jadetex $<
@@ -136,16 +153,30 @@ $(addsuffix .tex, $(ALLBOOKS)): %.tex: %.sgml $(ALLSGML) stylesheet.dsl
 %.ps: %.dvi
 	dvips -o $@ $<
 
-%.pdf: %.tex
+%.pdf: %.tex-pdf
+	@rm $*.aux $*.log $*.out
 	pdfjadetex $<
 	pdfjadetex $<
 	pdfjadetex $<
+
+
+# This generates an XML version of the flow-object tree.  It's useful
+# for debugging DSSSL code, and possibly to interface to some other
+# tools that can make use of this.
+$(addsuffix .fot, $(ALLBOOKS)): %.fot: %.sgml $(ALLSGML) stylesheet.dsl
+	$(JADE) $(JADEFLAGS) $(SGMLINCLUDE) -c $(CATALOG) -d stylesheet.dsl -t fot -i output-print -o $@ book-decl.sgml $<
 
 
 # Graphics
 
 %.gif:
 	cp $(srcdir)/../graphics/$@ .
+
+%.eps: %.gif
+	$(CONVERT) $< eps:$@
+
+%.pdf: %.eps
+	$(EPSTOPDF) $<
 
 
 ##
@@ -201,6 +232,6 @@ clean distclean maintainer-clean:
 # man
 	rm -rf *.1 *.$(DEFAULTSECTION) man1 man$(DEFAULTSECTION) manpage.refs manpage.links manpage.log
 # print
-	rm -f *.rtf *.tex *.dvi *.aux *.log *.ps *.pdf *.out
+	rm -f *.rtf *.tex-ps *.tex-pdf *.dvi *.aux *.log *.ps *.pdf *.out *.eps *.fot
 # index
 	rm -f HTML.index bookindex.sgml setindex.sgml

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/stylesheet.dsl,v 1.15 2001/10/22 18:14:47 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/stylesheet.dsl,v 1.16 2001/11/08 23:46:29 petere Exp $ -->
 <!DOCTYPE style-sheet PUBLIC "-//James Clark//DTD DSSSL Style Sheet//EN" [
 
 <!-- must turn on one of these with -i on the jade command line -->
@@ -24,15 +24,34 @@
  <style-specification use="docbook">
   <style-specification-body> 
 
+<!-- general customization ......................................... -->
+
+<!-- (applicable to all output formats) -->
+
 (define pgsql-docs-list "pgsql-docs@postgresql.org")
 
+;; Don't show manpage volume numbers
 (define %refentry-xref-manvolnum% #f)
-(define %callout-graphics% #f)
-(define %show-comments% #f)
 
+;; Don't use graphics for callouts.  (We could probably do that, but
+;; it needs extra work.)
+(define %callout-graphics%      #f)
+
+;; Don't show comments.  (We ought to show them, at least during the
+;; development stage.)
+(define %show-comments%         #f)
+
+;; Don't append period if run-in title ends with any of these
+;; characters.  We had to add the colon here.  This is fixed in
+;; stylesheets version 1.71, so it can be removed sometime.
 (define %content-title-end-punct% 
   '(#\. #\! #\? #\:))
 
+;; No automatic punctuation after honorific name parts
+(define %honorific-punctuation% "")
+
+;; Change display of some elements
+(element envar ($mono-seq$))
 (element lineannotation ($italic-seq$))
 (element structfield ($mono-seq$))
 (element structname ($mono-seq$))
@@ -40,10 +59,62 @@
 (element type ($mono-seq$))
 
 
-;; The rules in the default stylesheet for productname format it as
-;; a paragraph.  This may be suitable for productname directly
-;; within *info, but it's nonsense when productname is used
-;; inline, as we do.
+;; Bibliography things
+
+;; Use the titles of bibliography entries in cross-references
+(define biblio-xref-title       #t)
+
+;; Process bibliography entry components in the order shown below, not
+;; in the order they appear in the document.  (I suppose this should
+;; be made to fit some publishing standard.)
+(define %biblioentry-in-entry-order% #f)
+
+(define (biblioentry-inline-elements)
+  (list
+   (normalize "authorgroup")
+   (normalize "title")
+   (normalize "subtitle")   
+   (normalize "volumenum")
+   (normalize "edition")
+   (normalize "othercredit")
+   (normalize "contrib")
+   (normalize "editor")
+   (normalize "publishername")
+   (normalize "confgroup")
+   (normalize "publisher")
+   (normalize "isbn")
+   (normalize "issn")
+   (normalize "pubsnumber")
+   (normalize "date")
+   (normalize "pubdate")
+   (normalize "pagenums")))
+
+(mode biblioentry-inline-mode
+
+  (element confgroup
+    (make sequence
+      (literal "Proc. ")
+      (next-match)))
+
+  (element isbn
+    (make sequence
+      (literal "ISBN ")
+      (process-children)))
+
+  (element issn
+    (make sequence
+      (literal "ISSN ")
+      (process-children)))
+
+  (element pagenums
+    (make sequence
+      (literal "p. ")
+      (process-children))))
+
+
+;; The rules in the default stylesheet for productname format it as a
+;; paragraph.  This may be suitable for productname directly within
+;; *info, but it's nonsense when productname is used inline, as we do.
 (mode set-titlepage-recto-mode
   (element (para productname) ($charseq$)))
 (mode set-titlepage-verso-mode
@@ -55,10 +126,11 @@
 ;; Add more here if needed...
 
 
-<![ %output-html; [
-;; customize the html stylesheet
+<!-- HTML output customization ..................................... -->
 
-(define %section-autolabel% #t)
+<![ %output-html; [
+
+(define %section-autolabel%     #t)
 (define %generate-legalnotice-link% #t)
 (define %html-ext%              ".html")
 (define %root-filename%         "index")
@@ -75,17 +147,19 @@
 	((string=? (gi nd) (normalize "chapter")) 2)
 	(else 1)))
 
-;; Put a horizontal line in the set TOC
+;; Put a horizontal line in the set TOC (just like the book TOC looks)
 (define (set-titlepage-separator side)
   (if (equal? side 'recto)
       (make empty-element gi: "HR")
       (empty-sosofo)))
 
-;; Put date of creation into header
+;; Put date of creation into HTML header
 (define %html-header-tags% 
   (list (list "META" '("NAME" "creation") (list "CONTENT" (time->string (time) #t)))))
 
+;; Create an index
 (define html-index #t)
+
 
 ;; Block elements are allowed in PARA in DocBook, but not in P in
 ;; HTML.  With %fix-para-wrappers% turned on, the stylesheets attempt
@@ -135,24 +209,49 @@
 
 ]]> <!-- %output-html -->
 
+
+<!-- Print output customization .................................... -->
+
 <![ %output-print; [
-;; customize the print stylesheet
 
 (define %section-autolabel%     #t)
 (define %default-quadding%      'justify)
-(define bop-footnotes           #t)
+
+;; Don't know how well hyphenation works with other backends.  Might
+;; turn this on if desired.
 (define %hyphenation%
   (if tex-backend #t #f))
+
+;; Put footnotes at the bottom of the page (rather than end of
+;; section), and put the URLs of links into footnotes.
+;;
+;; bop-footnotes only works with TeX, otherwise it's ignored.  But
+;; when both of these are #t and TeX is used, you need at least
+;; stylesheets 1.73 because otherwise you don't get any footnotes at
+;; all for the links.
+(define bop-footnotes           #t)
+(define %footnote-ulinks%       #t)
+
 (define %refentry-new-page%     #t)
 (define %refentry-keep%         #f)
 
-(define %graphic-default-extension%
-  (cond (tex-backend "eps")
-        (rtf-backend "ai"))) ;; ApplixWare?
 
-(define %footnote-ulinks%
-  (and tex-backend
-       (>= (string->number "1.73") 1.73)))
+;; Default graphic format: Jadetex wants eps, pdfjadetex wants pdf.
+;; (Note that pdfjadetex will not accept eps, that's why we need to
+;; create a different .tex file for each.)  What works with RTF?
+
+(define texpdf-output #f) ;; override from command line
+
+(define %graphic-default-extension%
+  (cond (tex-backend (if texpdf-output "pdf" "eps"))
+	(rtf-backend "gif")
+	(else "XXX")))
+
+;; Need to add pdf here so that the above works.  Default setup
+;; doesn't know about PDF.
+(define preferred-mediaobject-extensions
+  (list "eps" "ps" "jpg" "jpeg" "pdf" "png"))
+
 
 ;; Format legalnotice justified and with space between paragraphs.
 (mode book-titlepage-verso-mode
@@ -164,10 +263,32 @@
       font-size: (* 0.8 (inherited-font-size))
       space-before: (* 0.8 %para-sep%)
       space-after: (* 0.8 %para-sep%)
+      first-line-start-indent: (if (is-first-para)
+				   (* 0.8 %para-indent-firstpara%)
+				   (* 0.8 %para-indent%))
       (process-children))))
 
 
-;; Fix spacing bug in variablelists
+;; Fix spacing problems in variablelists
+
+(element (varlistentry term)
+  (make paragraph
+    space-before: (if (first-sibling?)
+		      %para-sep%
+		      0pt)
+    keep-with-next?: #t
+    (process-children)))
+
+(define %varlistentry-indent% 2em)
+
+(element (varlistentry listitem)
+  (make sequence
+    start-indent: (+ (inherited-start-indent) %varlistentry-indent%)
+    (process-children)))
+
+
+;; Whitespace fixes for itemizedlists and orderedlists
+
 (define (process-listitem-content)
   (if (absolute-first-sibling?)
       (make sequence
@@ -175,8 +296,8 @@
       (next-match)))
 
 
-;; Default stylesheets format simplelists are tables.  This just
-;; spells trouble for Jade.
+;; Default stylesheets format simplelists as tables.  This spells
+;; trouble for Jade.  So we just format them as plain lines.
 
 (define %simplelist-indent% 1em)
 
@@ -227,11 +348,231 @@
 	 quadding: 'start
 	 (process-children))))))
 
+
+;; Jadetex doesn't handle links to the content of tables, so
+;; indexterms that point to table entries will go nowhere.  We fix
+;; this by pointing the index entry to the table itself instead, which
+;; should be equally useful in practice.
+
+(define (find-parent-table nd)
+  (let ((table (ancestor-member nd ($table-element-list$))))
+    (if (node-list-empty? table)
+	nd
+	table)))	 
+
+;; (The function below overrides the one in print/dbindex.dsl.)
+
+(define (indexentry-link nd)
+  (let* ((id        (attribute-string (normalize "role") nd))
+         (prelim-target (find-indexterm id))
+         (target    (find-parent-table prelim-target))
+         (preferred (not (node-list-empty?
+                          (select-elements (children (current-node))
+                                           (normalize "emphasis")))))
+         (sosofo    (if (node-list-empty? target)
+                        (literal "?")
+                        (make link
+                          destination: (node-list-address target)
+                          (with-mode toc-page-number-mode
+                            (process-node-list target))))))
+    (if preferred
+        (make sequence
+          font-weight: 'bold
+          sosofo)
+        sosofo)))
+
+
+;; By default, the part and reference title pages get wrong page
+;; numbers: The first title page gets roman numerals carried over from
+;; preface/toc -- we want arabic numerals.  We also need to make sure
+;; that page-number-restart is set of #f explicitly, because otherwise
+;; it will carry over from the previous component, which is not good.
+;;
+;; (This looks worse than it is.  It's copied from print/dbttlpg.dsl
+;; and common/dbcommon.dsl and modified in minor detail.)
+
+(define (first-part?)
+  (let* ((book (ancestor (normalize "book")))
+	 (nd   (ancestor-member (current-node)
+				(append
+				 (component-element-list)
+				 (division-element-list))))
+	 (bookch (children book)))
+    (let loop ((nl bookch))
+      (if (node-list-empty? nl)
+	  #f
+	  (if (equal? (gi (node-list-first nl)) (normalize "part"))
+	      (if (node-list=? (node-list-first nl) nd)
+		  #t
+		  #f)
+	      (loop (node-list-rest nl)))))))
+
+(define (first-reference?)
+  (let* ((book (ancestor (normalize "book")))
+	 (nd   (ancestor-member (current-node)
+				(append
+				 (component-element-list)
+				 (division-element-list))))
+	 (bookch (children book)))
+    (let loop ((nl bookch))
+      (if (node-list-empty? nl)
+	  #f
+	  (if (equal? (gi (node-list-first nl)) (normalize "reference"))
+	      (if (node-list=? (node-list-first nl) nd)
+		  #t
+		  #f)
+	      (loop (node-list-rest nl)))))))
+
+
+(define (part-titlepage elements #!optional (side 'recto))
+  (let ((nodelist (titlepage-nodelist 
+		   (if (equal? side 'recto)
+		       (reference-titlepage-recto-elements)
+		       (reference-titlepage-verso-elements))
+		   elements))
+        ;; partintro is a special case...
+	(partintro (node-list-first
+		    (node-list-filter-by-gi elements (list (normalize "partintro"))))))
+    (if (reference-titlepage-content? elements side)
+	(make simple-page-sequence
+	  page-n-columns: %titlepage-n-columns%
+	  ;; Make sure that page number format is correct.
+	  page-number-format: ($page-number-format$)
+	  ;; Make sure that the page number is set to 1 if this is the
+	  ;; first part in the book
+	  page-number-restart?: (first-part?)
+	  input-whitespace-treatment: 'collapse
+	  use: default-text-style
+	  
+	  ;; This hack is required for the RTF backend. If an external-graphic
+	  ;; is the first thing on the page, RTF doesn't seem to do the right
+	  ;; thing (the graphic winds up on the baseline of the first line
+	  ;; of the page, left justified).  This "one point rule" fixes
+	  ;; that problem.
+	  (make paragraph
+	    line-spacing: 1pt
+	    (literal ""))
+      
+	  (let loop ((nl nodelist) (lastnode (empty-node-list)))
+	    (if (node-list-empty? nl)
+		(empty-sosofo)
+		(make sequence
+		  (if (or (node-list-empty? lastnode)
+			  (not (equal? (gi (node-list-first nl))
+				       (gi lastnode))))
+		      (reference-titlepage-before (node-list-first nl) side)
+		      (empty-sosofo))
+		  (cond
+		   ((equal? (gi (node-list-first nl)) (normalize "subtitle"))
+		    (reference-titlepage-subtitle (node-list-first nl) side))
+		   ((equal? (gi (node-list-first nl)) (normalize "title"))
+		    (reference-titlepage-title (node-list-first nl) side))
+		   (else
+		    (reference-titlepage-default (node-list-first nl) side)))
+		  (loop (node-list-rest nl) (node-list-first nl)))))
+
+	  (if (and %generate-reference-toc%
+		   %generate-reference-toc-on-titlepage%
+		   (equal? side 'recto))
+	      (make display-group
+		(build-toc (current-node)
+			   (toc-depth (current-node))))
+	      (empty-sosofo))
+
+	  ;; PartIntro is a special case
+	  (if (and (equal? side 'recto)
+		   (not (node-list-empty? partintro))
+		   %generate-partintro-on-titlepage%)
+	      ($process-partintro$ partintro #f)
+	      (empty-sosofo)))
+
+	(empty-sosofo))))
+
+
+(define (reference-titlepage elements #!optional (side 'recto))
+  (let ((nodelist (titlepage-nodelist 
+		   (if (equal? side 'recto)
+		       (reference-titlepage-recto-elements)
+		       (reference-titlepage-verso-elements))
+		   elements))
+        ;; partintro is a special case...
+	(partintro (node-list-first
+		    (node-list-filter-by-gi elements (list (normalize "partintro"))))))
+    (if (reference-titlepage-content? elements side)
+	(make simple-page-sequence
+	  page-n-columns: %titlepage-n-columns%
+	  ;; Make sure that page number format is correct.
+	  page-number-format: ($page-number-format$)
+	  ;; Make sure that the page number is set to 1 if this is the
+	  ;; first part in the book
+	  page-number-restart?: (first-reference?)
+	  input-whitespace-treatment: 'collapse
+	  use: default-text-style
+	  
+	  ;; This hack is required for the RTF backend. If an external-graphic
+	  ;; is the first thing on the page, RTF doesn't seem to do the right
+	  ;; thing (the graphic winds up on the baseline of the first line
+	  ;; of the page, left justified).  This "one point rule" fixes
+	  ;; that problem.
+	  (make paragraph
+	    line-spacing: 1pt
+	    (literal ""))
+      
+	  (let loop ((nl nodelist) (lastnode (empty-node-list)))
+	    (if (node-list-empty? nl)
+		(empty-sosofo)
+		(make sequence
+		  (if (or (node-list-empty? lastnode)
+			  (not (equal? (gi (node-list-first nl))
+				       (gi lastnode))))
+		      (reference-titlepage-before (node-list-first nl) side)
+		      (empty-sosofo))
+		  (cond
+		   ((equal? (gi (node-list-first nl)) (normalize "author"))
+		    (reference-titlepage-author (node-list-first nl) side))
+		   ((equal? (gi (node-list-first nl)) (normalize "authorgroup"))
+		    (reference-titlepage-authorgroup (node-list-first nl) side))
+		   ((equal? (gi (node-list-first nl)) (normalize "corpauthor"))
+		    (reference-titlepage-corpauthor (node-list-first nl) side))
+		   ((equal? (gi (node-list-first nl)) (normalize "editor"))
+		    (reference-titlepage-editor (node-list-first nl) side))
+		   ((equal? (gi (node-list-first nl)) (normalize "subtitle"))
+		    (reference-titlepage-subtitle (node-list-first nl) side))
+		   ((equal? (gi (node-list-first nl)) (normalize "title"))
+		    (reference-titlepage-title (node-list-first nl) side))
+		   (else
+		    (reference-titlepage-default (node-list-first nl) side)))
+		  (loop (node-list-rest nl) (node-list-first nl)))))
+
+	  (if (and %generate-reference-toc%
+		   %generate-reference-toc-on-titlepage%
+		   (equal? side 'recto))
+	      (make display-group
+		(build-toc (current-node)
+			   (toc-depth (current-node))))
+	      (empty-sosofo))
+
+	  ;; PartIntro is a special case
+	  (if (and (equal? side 'recto)
+		   (not (node-list-empty? partintro))
+		   %generate-partintro-on-titlepage%)
+	      ($process-partintro$ partintro #f)
+	      (empty-sosofo)))
+
+	(empty-sosofo))))
+
 ]]> <!-- %output-print -->
 
+
+<!-- Plain text output customization ............................... -->
+
+<!--
+This is used for making the INSTALL file and others.  We customize the
+HTML stylesheets to be suitable for dumping plain text (via Netscape,
+Lynx, or similar).
+-->
+
 <![ %output-text; [
-;; customize HTML stylesheet to be suitable for dumping plain text
-;; (for INSTALL file)
 
 (define %section-autolabel% #f)
 (define %chapter-autolabel% #f)
