@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.78 2000/11/08 22:10:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.79 2000/11/10 03:53:45 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -569,12 +569,14 @@ mdblindwrt(RelFileNode rnode,
 		elog(DEBUG, "mdblindwrt: write() failed: %m");
 		status = SM_FAIL;
 	}
+#ifndef XLOG
 	else if (dofsync &&
 			 pg_fsync(fd) < 0)
 	{
 		elog(DEBUG, "mdblindwrt: fsync() failed: %m");
 		status = SM_FAIL;
 	}
+#endif
 
 	if (close(fd) < 0)
 	{

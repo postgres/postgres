@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.65 2000/10/28 16:20:56 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.66 2000/11/10 03:53:44 vadim Exp $
  *
  * NOTES:
  *
@@ -192,6 +192,7 @@ static File fileNameOpenFile(FileName fileName, int fileFlags, int fileMode);
 static char *filepath(char *filename);
 static long pg_nofile(void);
 
+#ifndef XLOG
 /*
  * pg_fsync --- same as fsync except does nothing if -F switch was given
  */
@@ -203,6 +204,7 @@ pg_fsync(int fd)
 	else
 		return 0;
 }
+#endif
 
 /*
  * BasicOpenFile --- same as open(2) except can free other FDs if needed
@@ -663,7 +665,16 @@ fileNameOpenFile(FileName fileName,
 	vfdP->fileFlags = fileFlags & ~(O_TRUNC | O_EXCL);
 	vfdP->fileMode = fileMode;
 	vfdP->seekPos = 0;
+#ifdef XLOG
+	/*
+	 * Have to fsync file on commit. Alternative way - log
+	 * file creation and fsync log before actual file creation.
+	 */
+	if (fileFlags & O_CREAT)
+		vfdP->fdstate = FD_DIRTY;
+#else
 	vfdP->fdstate = 0x0;
+#endif
 
 	return file;
 }

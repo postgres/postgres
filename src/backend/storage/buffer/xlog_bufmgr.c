@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/Attic/xlog_bufmgr.c,v 1.2 2000/11/08 22:09:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/Attic/xlog_bufmgr.c,v 1.3 2000/11/10 03:53:44 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1065,6 +1065,9 @@ void
 BufmgrCommit(void)
 {
 	LocalBufferSync();
+	/*
+	 * All files created in current transaction will be fsync-ed
+	 */
 	smgrcommit();
 }
 
