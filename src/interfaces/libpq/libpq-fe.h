@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.86 2002/09/04 20:31:47 momjian Exp $
+ * $Id: libpq-fe.h,v 1.87 2002/11/10 00:14:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -249,9 +249,9 @@ extern PQnoticeProcessor PQsetNoticeProcessor(PGconn *conn,
 
 /* Quoting strings before inclusion in queries. */
 extern size_t PQescapeString(char *to, const char *from, size_t length);
-extern unsigned char *PQescapeBytea(unsigned char *bintext, size_t binlen,
+extern unsigned char *PQescapeBytea(const unsigned char *bintext, size_t binlen,
 			  size_t *bytealen);
-extern unsigned char *PQunescapeBytea(unsigned char *strtext,
+extern unsigned char *PQunescapeBytea(const unsigned char *strtext,
 				size_t *retbuflen);
 
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.122 2002/09/04 20:31:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.123 2002/11/10 00:14:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -118,9 +118,9 @@ PQescapeString(char *to, const char *from, size_t length)
  *		anything >= 0x80 ---> \\ooo (where ooo is an octal expression)
  */
 unsigned char *
-PQescapeBytea(unsigned char *bintext, size_t binlen, size_t *bytealen)
+PQescapeBytea(const unsigned char *bintext, size_t binlen, size_t *bytealen)
 {
-	unsigned char *vp;
+	const unsigned char *vp;
 	unsigned char *rp;
 	unsigned char *result;
 	size_t		i;
@@ -202,12 +202,12 @@ PQescapeBytea(unsigned char *bintext, size_t binlen, size_t *bytealen)
  *		6	\\
  */
 unsigned char *
-PQunescapeBytea(unsigned char *strtext, size_t *retbuflen)
+PQunescapeBytea(const unsigned char *strtext, size_t *retbuflen)
 {
 	size_t		buflen;
 	unsigned char *buffer,
-			   *sp,
 			   *bp;
+	const unsigned char *sp;
 	unsigned int state = 0;
 
 	if (strtext == NULL)

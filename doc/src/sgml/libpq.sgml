@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.99 2002/11/08 05:03:11 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.100 2002/11/10 00:14:22 momjian Exp $
 -->
 
  <chapter id="libpq">
@@ -926,7 +926,7 @@ strings overlap.
    <function>PQescapeBytea</function>
    Escapes a binary string (<type>bytea</type> type) for use within an SQL query.
    <synopsis>
-    unsigned char *PQescapeBytea(unsigned char *from,
+    unsigned char *PQescapeBytea(const unsigned char *from,
                                          size_t from_length,
                                          size_t *to_length);
    </synopsis>
@@ -970,7 +970,7 @@ strings overlap.
    Converts an escaped string representation of binary data into binary
    data - the reverse of <function>PQescapeBytea</function>.
    <synopsis>
-    unsigned char *PQunescapeBytea(unsigned char *from, size_t *to_length);
+    unsigned char *PQunescapeBytea(const unsigned char *from, size_t *to_length);
    </synopsis>
 
    The <parameter>from</parameter> parameter points to an escaped string
