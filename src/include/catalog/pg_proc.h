@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.118 2000/01/26 05:57:58 momjian Exp $
+ * $Id: pg_proc.h,v 1.119 2000/01/31 14:02:27 wieck Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2142,9 +2142,9 @@ DATA(insert OID = 1652 (  RI_FKey_setdefault_del PGUID 11 f t f 0 f 0 "" 100 0 0
 DESCR("referential integrity ON DELETE SET DEFAULT");
 DATA(insert OID = 1653 (  RI_FKey_setdefault_upd PGUID 11 f t f 0 f 0 "" 100 0 0 100  RI_FKey_setdefault_upd - ));
 DESCR("referential integrity ON UPDATE SET DEFAULT");
-DATA(insert OID = 1654 (  RI_FKey_noaction_del PGUID 11 f t f 0 f 0 "" 100 0 0 100  RI_FKey_setdefault_del - ));
+DATA(insert OID = 1654 (  RI_FKey_noaction_del PGUID 11 f t f 0 f 0 "" 100 0 0 100  RI_FKey_noaction_del - ));
 DESCR("referential integrity ON DELETE NO ACTION");
-DATA(insert OID = 1655 (  RI_FKey_noaction_upd PGUID 11 f t f 0 f 0 "" 100 0 0 100  RI_FKey_setdefault_upd - ));
+DATA(insert OID = 1655 (  RI_FKey_noaction_upd PGUID 11 f t f 0 f 0 "" 100 0 0 100  RI_FKey_noaction_upd - ));
 DESCR("referential integrity ON UPDATE NO ACTION");
 
 /* for mac type support */
