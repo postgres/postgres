@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/Attic/beos.c,v 1.7 2001/03/22 03:59:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/Attic/beos.c,v 1.7.2.1 2001/08/07 18:36:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,23 +49,8 @@ pg_dlsym(void *handle, char *funcname)
 	/* Checking that "Handle" is valid */
 	if ((handle) && ((*(int *) (handle)) >= 0))
 	{
-		/* Loading symbol */
-		if (get_image_symbol(*((int *) (handle)), funcname, B_SYMBOL_TYPE_TEXT, (void **) &fpt) == B_OK);
-		{
-
-			/*
-			 * Sometime the loader return B_OK for an inexistant function
-			 * with an invalid address !!! Check that the return address
-			 * is in the image range
-			 */
-			image_info	info;
-
-			get_image_info(*((int *) (handle)), &info);
-			if ((fpt < info.text) ||(fpt >= (info.text +info.text_size)))
-				return NULL;
-			return fpt;
-		}
-		elog(NOTICE, "loading symbol '%s' failed ", funcname);
+		beos_dl_sym(*((int *) (handle)),funcname,(void **) &fpt);
+		return fpt;
 	}
 	elog(NOTICE, "add-on not loaded correctly");
 	return NULL;
