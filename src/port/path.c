@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/path.c,v 1.19 2004/06/10 22:26:24 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/path.c,v 1.20 2004/06/11 17:09:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -252,7 +252,7 @@ set_pglocale_pgservice(const char *argv0, const char *app)
 {
 	char path[MAXPGPATH];
 	char my_exec_path[MAXPGPATH];
-	char env_path[MAXPGPATH + strlen("PGLOCALEDIR=")]; /* longer than PGSYSCONFDIR */
+	char env_path[MAXPGPATH + sizeof("PGLOCALEDIR=")]; /* longer than PGSYSCONFDIR */
 
 	/* don't set LC_ALL in the backend */
 	if (strcmp(app, "postgres") != 0)
