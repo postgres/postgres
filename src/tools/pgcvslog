@@ -147,9 +147,40 @@ awk '   BEGIN   { slot = 0; oldslot=0; save_working = ""; html="'"$HTML"'"}
 		}
 	}
 	END	{
-			# dump out the last filename
+			# If there are a different number of narrative
+			# lines, they can not possibly be the same.
+			if (slot != oldslot)
+				same = "N";
+			else
+			{
+				same = "Y";
+				for (i=1; i <= slot; i++)
+				{
+					if (oldnarr[i] != narr[i])
+					{
+						same = "N";
+						break;
+					}
+				}
+			}
 
+			# dump out the old narrative if it is new
+			if (same == "N")
+			{
+				if (oldslot)
+					for (i=1; i <= oldslot; i++)
+					{
+						print oldnarr[i];
+						if (html == "Y" && 
+						    oldnarr[i] != "<HR>" &&
+						    oldnarr[i] !~ "^<DIV ")
+							print "<BR>";
+					}
+			}
+
+			# dump out the last filename
 			print save_working;
+
 			if (html == "Y")
 				print "<BR>";
 
@@ -158,8 +189,8 @@ awk '   BEGIN   { slot = 0; oldslot=0; save_working = ""; html="'"$HTML"'"}
 			{
 				print narr[i];
 				if (html == "Y" && 
-				    oldnarr[i] != "<HR>" &&
-				    oldnarr[i] !~ "^<DIV ")
+				    narr[i] != "<HR>" &&
+				    narr[i] !~ "^<DIV ")
 					print "<BR>";
 			}
 		}' |
