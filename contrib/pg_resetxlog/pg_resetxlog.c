@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/contrib/pg_resetxlog/Attic/pg_resetxlog.c,v 1.3 2001/03/22 03:59:10 momjian Exp $
+ * $Header: /cvsroot/pgsql/contrib/pg_resetxlog/Attic/pg_resetxlog.c,v 1.4 2001/05/30 14:18:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,8 +92,8 @@
 
 
 #define XLogFileName(path, log, seg)	\
-			snprintf(path, MAXPGPATH, "%s%c%08X%08X",	\
-					 XLogDir, SEP_CHAR, log, seg)
+			snprintf(path, MAXPGPATH, "%s/%08X%08X",	\
+					 XLogDir, log, seg)
 
 /*
  * _INTL_MAXLOGRECSZ: max space needed for a record including header and
@@ -811,7 +811,7 @@ KillExistingXLOG(void)
 		if (strlen(xlde->d_name) == 16 &&
 			strspn(xlde->d_name, "0123456789ABCDEF") == 16)
 		{
-			sprintf(path, "%s%c%s", XLogDir, SEP_CHAR, xlde->d_name);
+			sprintf(path, "%s/%s", XLogDir, xlde->d_name);
 			if (unlink(path) < 0)
 			{
 				perror(path);
@@ -947,17 +947,16 @@ main(int argc, char **argv)
 
 	DataDir = argv[argn++];
 
-	snprintf(XLogDir, MAXPGPATH, "%s%cpg_xlog", DataDir, SEP_CHAR);
+	snprintf(XLogDir, MAXPGPATH, "%s/pg_xlog", DataDir);
 
-	snprintf(ControlFilePath, MAXPGPATH, "%s%cglobal%cpg_control",
-			 DataDir, SEP_CHAR, SEP_CHAR);
+	snprintf(ControlFilePath, MAXPGPATH, "%s/global/pg_control", DataDir);
 
 	/*
 	 * Check for a postmaster lock file --- if there is one, refuse to
 	 * proceed, on grounds we might be interfering with a live
 	 * installation.
 	 */
-	snprintf(path, MAXPGPATH, "%s%cpostmaster.pid", DataDir, SEP_CHAR);
+	snprintf(path, MAXPGPATH, "%s/postmaster.pid", DataDir);
 
 	if ((fd = open(path, O_RDONLY)) < 0)
 	{
