@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.29 2001/11/26 05:57:57 barry Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.30 2001/11/26 18:51:19 momjian Exp $
 -->
 
  <chapter id="jdbc">
@@ -573,7 +573,7 @@ st.close();
   <para>
     <application>PostgreSQL</application> provides two distinct way to 
     store binary data.  Binary data can be stored in a table using 
-    <applicaiton>PostgreSQL's</application> binary datatype 
+    <application>PostgreSQL's</application> binary datatype 
     <type>bytea</type>, or by using the <firstterm>Large Object</firstterm>
     feature which stores the binary data in a separate table in a special 
     format, and refers to from your own tables by an <type>OID</type> value.
