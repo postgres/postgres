@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.18 1999/02/13 23:14:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.19 1999/03/28 20:31:57 vadim Exp $
  *
  *	NOTES
  *	   Postgres btree pages look like ordinary relation pages.	The opaque
@@ -421,6 +421,8 @@ _bt_pageinit(Page page, Size size)
 	MemSet(page, 0, size);
 
 	PageInit(page, size, sizeof(BTPageOpaqueData));
+	((BTPageOpaque) PageGetSpecialPointer(page))->btpo_parent = 
+		InvalidBlockNumber;
 }
 
 /*

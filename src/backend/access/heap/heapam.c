@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.41 1999/02/13 23:14:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.42 1999/03/28 20:31:56 vadim Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1270,7 +1270,7 @@ l2:
 	newtup->t_data->t_cmin = GetCurrentCommandId();
 	StoreInvalidTransactionId(&(newtup->t_data->t_xmax));
 	newtup->t_data->t_infomask &= ~(HEAP_XACT_MASK);
-	newtup->t_data->t_infomask |= HEAP_XMAX_INVALID;
+	newtup->t_data->t_infomask |= (HEAP_XMAX_INVALID | HEAP_UPDATED);
 
 	/* logically delete old item */
 	TransactionIdStore(GetCurrentTransactionId(), &(oldtup.t_data->t_xmax));

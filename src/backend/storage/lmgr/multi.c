@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Attic/multi.c,v 1.27 1999/02/13 23:18:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Attic/multi.c,v 1.28 1999/03/28 20:32:25 vadim Exp $
  *
  * NOTES:
  *	 (1) The lock.c module assumes that the caller here is doing
@@ -33,55 +33,6 @@ static bool MultiAcquire(LOCKMETHOD lockmethod, LOCKTAG *tag,
 			 LOCKMODE lockmode, PG_LOCK_LEVEL level);
 static bool MultiRelease(LOCKMETHOD lockmethod, LOCKTAG *tag,
 			 LOCKMODE lockmode, PG_LOCK_LEVEL level);
-
-#ifdef LowLevelLocking
-
-static MASK MultiConflicts[] = {
-	(int) NULL,
-
-/* RowShareLock */
-	(1 << ExclusiveLock),
-
-/* RowExclusiveLock */
-	(1 << ExclusiveLock) | (1 << ShareRowExclusiveLock) | (1 << ShareLock),
-
-/* ShareLock */
-	(1 << ExclusiveLock) | (1 << ShareRowExclusiveLock) |
-	(1 << RowExclusiveLock),
-
-/* ShareRowExclusiveLock */
-	(1 << ExclusiveLock) | (1 << ShareRowExclusiveLock) |
-	(1 << ShareLock) | (1 << RowExclusiveLock),
-
-/* ExclusiveLock */
-	(1 << ExclusiveLock) | (1 << ShareRowExclusiveLock) | (1 << ShareLock) |
-	(1 << RowExclusiveLock) | (1 << RowShareLock),
-
-/* ObjShareLock */
-	(1 << ObjExclusiveLock),
-
-/* ObjExclusiveLock */
-	(1 << ObjExclusiveLock) | (1 << ObjShareLock),
-
-/* ExtendLock */
-	(1 << ExtendLock)
-
-};
-
-/*
- * write locks have higher priority than read locks and extend locks.  May
- * want to treat INTENT locks differently.
- */
-static int	MultiPrios[] = {
-	(int) NULL,
-	2,
-	1,
-	2,
-	1,
-	1
-};
-
-#else
 
 /*
  * INTENT indicates to higher level that a lower level lock has been
@@ -120,8 +71,6 @@ static int	MultiPrios[] = {
 	1,
 	1
 };
-
-#endif	 /* !LowLevelLocking */
 
 /*
  * Lock table identifier for this lock table.  The multi-level

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.96 1999/02/21 03:48:33 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.97 1999/03/28 20:32:01 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,6 +65,9 @@ static Portal vc_portal;
 
 static int	MESSAGE_LEVEL;		/* message level */
 
+static TransactionId	XmaxRecent;
+extern void		GetXmaxRecent(TransactionId *xid);
+
 #define swapLong(a,b)	{long tmp; tmp=a; a=b; b=tmp;}
 #define swapInt(a,b)	{int tmp; tmp=a; a=b; b=tmp;}
 #define swapDatum(a,b)	{Datum tmp; tmp=a; a=b; b=tmp;}
@@ -98,9 +101,11 @@ static void vc_free(VRelList vrl);
 static void vc_getindices(Oid relid, int *nindices, Relation **Irel);
 static void vc_clsindices(int nindices, Relation *Irel);
 static void vc_mkindesc(Relation onerel, int nindices, Relation *Irel, IndDesc **Idesc);
-static char *vc_find_eq(char *bot, int nelem, int size, char *elm, int (*compar) (char *, char *));
-static int	vc_cmp_blk(char *left, char *right);
-static int	vc_cmp_offno(char *left, char *right);
+static void *vc_find_eq(void *bot, int nelem, int size, void *elm, 
+						int (*compar) (const void *, const void *));
+static int	vc_cmp_blk(const void *left, const void *right);
+static int	vc_cmp_offno(const void *left, const void *right);
+static int	vc_cmp_vtlinks(const void *left, const void *right);
 static bool vc_enough_space(VPageDescr vpd, Size len);
 
 void
@@ -502,6 +507,8 @@ vc_vacone(Oid relid, bool analyze, List *va_cols)
 	/* we require the relation to be locked until the indices are cleaned */
 	LockRelation(onerel, AccessExclusiveLock);
 
+	GetXmaxRecent(&XmaxRecent);
+
 	/* scan it */
 	vacuum_pages.vpl_num_pages = fraged_pages.vpl_num_pages = 0;
 	vc_scanheap(vacrelstats, onerel, &vacuum_pages, &fraged_pages);
@@ -595,6 +602,7 @@ vc_scanheap(VRelStats *vacrelstats, Relation onerel,
 				vp;
 	uint32		tups_vacuumed,
 				num_tuples,
+				nkeep,
 				nunused,
 				ncrash,
 				empty_pages,
@@ -609,21 +617,23 @@ vc_scanheap(VRelStats *vacrelstats, Relation onerel,
 	struct rusage ru0,
 				ru1;
 	bool		do_shrinking = true;
+	VTupleLink	vtlinks = (VTupleLink) palloc(100 * sizeof(VTupleLinkData));
+	int			num_vtlinks = 0;
+	int			free_vtlinks = 100;
 
 	getrusage(RUSAGE_SELF, &ru0);
 
-	tups_vacuumed = num_tuples = nunused = ncrash = empty_pages =
+	relname = (RelationGetRelationName(onerel))->data;
+	elog(MESSAGE_LEVEL, "--Relation %s--", relname);
+
+	tups_vacuumed = num_tuples = nkeep = nunused = ncrash = empty_pages =
 		new_pages = changed_pages = empty_end_pages = 0;
 	free_size = usable_free_size = 0;
-
-	relname = (RelationGetRelationName(onerel))->data;
 
 	nblocks = RelationGetNumberOfBlocks(onerel);
 
 	vpc = (VPageDescr) palloc(sizeof(VPageDescrData) + MaxOffsetNumber * sizeof(OffsetNumber));
 	vpc->vpd_offsets_used = 0;
-
-	elog(MESSAGE_LEVEL, "--Relation %s--", relname);
 
 	for (blkno = 0; blkno < nblocks; blkno++)
 	{
@@ -686,6 +696,34 @@ vc_scanheap(VRelStats *vacrelstats, Relation onerel,
 			{
 				if (tuple.t_data->t_infomask & HEAP_XMIN_INVALID)
 					tupgone = true;
+				else if (tuple.t_data->t_infomask & HEAP_MOVED_OFF)
+				{
+					if (TransactionIdDidCommit((TransactionId)
+												tuple.t_data->t_cmin))
+					{
+						tuple.t_data->t_infomask |= HEAP_XMIN_INVALID;
+						tupgone = true;
+					}
+					else
+					{
+						tuple.t_data->t_infomask |= HEAP_XMIN_COMMITTED;
+						pgchanged = true;
+					}
+				}
+				else if (tuple.t_data->t_infomask & HEAP_MOVED_IN)
+				{
+					if (!TransactionIdDidCommit((TransactionId)
+												tuple.t_data->t_cmin))
+					{
+						tuple.t_data->t_infomask |= HEAP_XMIN_INVALID;
+						tupgone = true;
+					}
+					else
+					{
+						tuple.t_data->t_infomask |= HEAP_XMIN_COMMITTED;
+						pgchanged = true;
+					}
+				}
 				else
 				{
 					if (TransactionIdDidAbort(tuple.t_data->t_xmin))
@@ -722,22 +760,37 @@ vc_scanheap(VRelStats *vacrelstats, Relation onerel,
 				!(tuple.t_data->t_infomask & HEAP_XMAX_INVALID))
 			{
 				if (tuple.t_data->t_infomask & HEAP_XMAX_COMMITTED)
-					tupgone = true;
+				{
+					if (tuple.t_data->t_infomask & HEAP_MARKED_FOR_UPDATE)
+					{
+						pgchanged = true;
+						tuple.t_data->t_infomask |= HEAP_XMAX_INVALID;
+					}
+					else
+						tupgone = true;
+				}
 				else if (TransactionIdDidAbort(tuple.t_data->t_xmax))
 				{
 					tuple.t_data->t_infomask |= HEAP_XMAX_INVALID;
 					pgchanged = true;
 				}
 				else if (TransactionIdDidCommit(tuple.t_data->t_xmax))
-					tupgone = true;
+				{
+					if (tuple.t_data->t_infomask & HEAP_MARKED_FOR_UPDATE)
+					{
+						tuple.t_data->t_infomask |= HEAP_XMAX_INVALID;
+						pgchanged = true;
+					}
+					else
+						tupgone = true;
+				}
 				else if (!TransactionIdIsInProgress(tuple.t_data->t_xmax))
 				{
-
 					/*
 					 * Not Aborted, Not Committed, Not in Progress - so it
 					 * from crashed process. - vadim 06/02/97
 					 */
-					tuple.t_data->t_infomask |= HEAP_XMAX_INVALID;;
+					tuple.t_data->t_infomask |= HEAP_XMAX_INVALID;
 					pgchanged = true;
 				}
 				else
@@ -745,6 +798,41 @@ vc_scanheap(VRelStats *vacrelstats, Relation onerel,
 					elog(NOTICE, "Rel %s: TID %u/%u: DeleteTransactionInProgress %u - can't shrink relation",
 						 relname, blkno, offnum, tuple.t_data->t_xmax);
 					do_shrinking = false;
+				}
+				/*
+				 * If tuple is recently deleted then
+				 * we must not remove it from relation.
+				 */
+				if (tupgone && tuple.t_data->t_xmax >= XmaxRecent && 
+					tuple.t_data->t_infomask & HEAP_XMIN_COMMITTED)
+				{
+					tupgone = false;
+					nkeep++;
+					if (!(tuple.t_data->t_infomask & HEAP_XMAX_COMMITTED))
+					{
+						tuple.t_data->t_infomask |= HEAP_XMAX_COMMITTED;
+						pgchanged = true;
+					}
+					/*
+					 * If we do shrinking and this tuple is updated one
+					 * then remember it to construct updated tuple
+					 * dependencies.
+					 */
+					if (do_shrinking && !(ItemPointerEquals(&(tuple.t_self), 
+												&(tuple.t_data->t_ctid))))
+					{
+						if (free_vtlinks == 0)
+						{
+							free_vtlinks = 1000;
+							vtlinks = (VTupleLink) repalloc(vtlinks, 
+											(free_vtlinks + num_vtlinks) * 
+											sizeof(VTupleLinkData));
+						}
+						vtlinks[num_vtlinks].new_tid = tuple.t_data->t_ctid;
+						vtlinks[num_vtlinks].this_tid = tuple.t_self;
+						free_vtlinks--;
+						num_vtlinks++;
+					}
 				}
 			}
 
@@ -859,13 +947,31 @@ vc_scanheap(VRelStats *vacrelstats, Relation onerel,
 		}
 	}
 
+	if (usable_free_size > 0 && num_vtlinks > 0)
+	{
+		qsort((char *) vtlinks, num_vtlinks, sizeof (VTupleLinkData), 
+			vc_cmp_vtlinks);
+		vacrelstats->vtlinks = vtlinks;
+		vacrelstats->num_vtlinks = num_vtlinks;
+	}
+	else
+	{
+		vacrelstats->vtlinks = NULL;
+		vacrelstats->num_vtlinks = 0;
+		pfree(vtlinks);
+	}
+
 	getrusage(RUSAGE_SELF, &ru1);
 
 	elog(MESSAGE_LEVEL, "Pages %u: Changed %u, Reapped %u, Empty %u, New %u; \
-Tup %u: Vac %u, Crash %u, UnUsed %u, MinLen %u, MaxLen %u; Re-using: Free/Avail. Space %u/%u; EndEmpty/Avail. Pages %u/%u. Elapsed %u/%u sec.",
-		 nblocks, changed_pages, vacuum_pages->vpl_num_pages, empty_pages, new_pages,
-		 num_tuples, tups_vacuumed, ncrash, nunused, min_tlen, max_tlen,
-		 free_size, usable_free_size, empty_end_pages, fraged_pages->vpl_num_pages,
+Tup %u: Vac %u, Keep/VTL %u/%u, Crash %u, UnUsed %u, MinLen %u, MaxLen %u; \
+Re-using: Free/Avail. Space %u/%u; EndEmpty/Avail. Pages %u/%u. \
+Elapsed %u/%u sec.",
+		 nblocks, changed_pages, vacuum_pages->vpl_num_pages, empty_pages, 
+		 new_pages, num_tuples, tups_vacuumed, 
+		 nkeep, vacrelstats->num_vtlinks, ncrash, 
+		 nunused, min_tlen, max_tlen, free_size, usable_free_size, 
+		 empty_end_pages, fraged_pages->vpl_num_pages,
 		 ru1.ru_stime.tv_sec - ru0.ru_stime.tv_sec,
 		 ru1.ru_utime.tv_sec - ru0.ru_utime.tv_sec);
 
@@ -917,7 +1023,7 @@ vc_rpfheap(VRelStats *vacrelstats, Relation onerel,
 			   *idcur;
 	int			last_fraged_block,
 				last_vacuum_block,
-				i;
+				i = 0;
 	Size		tuple_len;
 	int			num_moved,
 				num_fraged_pages,
@@ -1022,6 +1128,280 @@ vc_rpfheap(VRelStats *vacrelstats, Relation onerel,
 			tuple_len = tuple.t_len = ItemIdGetLength(itemid);
 			ItemPointerSet(&(tuple.t_self), blkno, offnum);
 
+			if (!(tuple.t_data->t_infomask & HEAP_XMIN_COMMITTED))
+			{
+				if ((TransactionId)tuple.t_data->t_cmin != myXID)
+					elog(ERROR, "Invalid XID in t_cmin");
+				if (tuple.t_data->t_infomask & HEAP_MOVED_OFF)
+					continue;	/* already removed by me */
+				if (tuple.t_data->t_infomask & HEAP_MOVED_IN)
+					break;
+				elog(ERROR, "HEAP_MOVED_OFF/HEAP_MOVED_IN was expected");
+			}
+
+			/*
+			 * If this tuple is in the chain of tuples created in 
+			 * updates by "recent" transactions then we have to 
+			 * move all chain of tuples to another places.
+			 */
+			if ((tuple.t_data->t_infomask & HEAP_UPDATED && 
+				 tuple.t_data->t_xmin >= XmaxRecent) ||
+				(!(tuple.t_data->t_infomask & HEAP_XMAX_INVALID) && 
+				 !(ItemPointerEquals(&(tuple.t_self), &(tuple.t_data->t_ctid)))))
+			{
+				Buffer			Cbuf = buf;
+				Page			Cpage;
+				ItemId			Citemid;
+				ItemPointerData	Ctid;
+				HeapTupleData	tp = tuple;
+				Size			tlen = tuple_len;
+				VTupleMove		vtmove = (VTupleMove) 
+									palloc(100 * sizeof(VTupleMoveData));
+				int				num_vtmove = 0;
+				int				free_vtmove = 100;
+				VPageDescr		to_vpd = fraged_pages->vpl_pagedesc[0];
+				int				to_item = 0;
+				bool			freeCbuf = false;
+				int				ti;
+
+				if (vacrelstats->vtlinks == NULL)
+					elog(ERROR, "No one parent tuple was found");
+				if (cur_buffer != InvalidBuffer)
+				{
+					WriteBuffer(cur_buffer);
+					cur_buffer = InvalidBuffer;
+				}
+				/*
+				 * If this tuple is in the begin/middle of the chain
+				 * then we have to move to the end of chain.
+				 */
+				while (!(tp.t_data->t_infomask & HEAP_XMAX_INVALID) && 
+					!(ItemPointerEquals(&(tp.t_self), &(tp.t_data->t_ctid))))
+				{
+					Ctid = tp.t_data->t_ctid;
+					if (freeCbuf)
+						ReleaseBuffer(Cbuf);
+					freeCbuf = true;
+					Cbuf = ReadBuffer(onerel, 
+							ItemPointerGetBlockNumber(&Ctid));
+					Cpage = BufferGetPage(Cbuf);
+					Citemid = PageGetItemId(Cpage, 
+							ItemPointerGetOffsetNumber(&Ctid));
+					if (!ItemIdIsUsed(Citemid))
+						elog(ERROR, "Child itemid marked as unused");
+					tp.t_data = (HeapTupleHeader) PageGetItem(Cpage, Citemid);
+					tp.t_self = Ctid;
+					tlen = tp.t_len = ItemIdGetLength(Citemid);
+				}
+				/* first, can chain be moved ? */
+				for ( ; ; )
+				{
+					if (!vc_enough_space(to_vpd, tlen))
+					{
+						if (to_vpd != last_fraged_page &&
+							!vc_enough_space(to_vpd, vacrelstats->min_tlen))
+						{
+							Assert(num_fraged_pages > to_item + 1);
+							memmove(fraged_pages->vpl_pagedesc + to_item,
+									fraged_pages->vpl_pagedesc + to_item + 1,
+									sizeof(VPageDescr *) * (num_fraged_pages - to_item - 1));
+							num_fraged_pages--;
+							Assert(last_fraged_page == fraged_pages->vpl_pagedesc[num_fraged_pages - 1]);
+						}
+						for (i = 0; i < num_fraged_pages; i++)
+						{
+							if (vc_enough_space(fraged_pages->vpl_pagedesc[i], tlen))
+								break;
+						}
+						if (i == num_fraged_pages)	/* can't move item anywhere */
+						{
+							for (i = 0; i < num_vtmove; i++)
+							{
+								Assert(vtmove[i].vpd->vpd_offsets_used > 0);
+								(vtmove[i].vpd->vpd_offsets_used)--;
+							}
+							num_vtmove = 0;
+							break;
+						}
+						to_item = i;
+						to_vpd = fraged_pages->vpl_pagedesc[to_item];
+					}
+					to_vpd->vpd_free -= DOUBLEALIGN(tlen);
+					if (to_vpd->vpd_offsets_used >= to_vpd->vpd_offsets_free)
+						to_vpd->vpd_free -= DOUBLEALIGN(sizeof(ItemIdData));
+					(to_vpd->vpd_offsets_used)++;
+					if (free_vtmove == 0)
+					{
+						free_vtmove = 1000;
+						vtmove = (VTupleMove) repalloc(vtmove, 
+										(free_vtmove + num_vtmove) * 
+										sizeof(VTupleMoveData));
+					}
+					vtmove[num_vtmove].tid = tp.t_self;
+					vtmove[num_vtmove].vpd = to_vpd;
+					if (to_vpd->vpd_offsets_used == 1)
+						vtmove[num_vtmove].cleanVpd = true;
+					else
+						vtmove[num_vtmove].cleanVpd = false;
+					free_vtmove--;
+					num_vtmove++;
+					/*
+					 * All done ?
+					 */
+					if (!(tp.t_data->t_infomask & HEAP_UPDATED) || 
+							tp.t_data->t_xmin < XmaxRecent)
+						break;
+					/*
+					 * Well, try to find tuple with old row version
+					 */
+					for ( ; ; )
+					{
+						Buffer			Pbuf;
+						Page			Ppage;
+						ItemId			Pitemid;
+						HeapTupleData	Ptp;
+						VTupleLinkData	vtld,
+									   *vtlp;
+
+						vtld.new_tid = tp.t_self;
+						vtlp = (VTupleLink) 
+								vc_find_eq((void *) (vacrelstats->vtlinks),
+								vacrelstats->num_vtlinks, 
+								sizeof(VTupleLinkData), 
+								(void *) &vtld,
+								vc_cmp_vtlinks);
+						if (vtlp == NULL)
+							elog(ERROR, "Parent tuple was not found");
+						tp.t_self = vtlp->this_tid;
+						Pbuf = ReadBuffer(onerel, 
+								ItemPointerGetBlockNumber(&(tp.t_self)));
+						Ppage = BufferGetPage(Pbuf);
+						Pitemid = PageGetItemId(Ppage, 
+								ItemPointerGetOffsetNumber(&(tp.t_self)));
+						if (!ItemIdIsUsed(Pitemid))
+							elog(ERROR, "Parent itemid marked as unused");
+						Ptp.t_data = (HeapTupleHeader) PageGetItem(Ppage, Pitemid);
+						Assert(Ptp.t_data->t_xmax == tp.t_data->t_xmin);
+						/*
+						 * If this tuple is updated version of row and
+						 * it was created by the same transaction then
+						 * no one is interested in this tuple -
+						 * mark it as removed.
+						 */
+						if (Ptp.t_data->t_infomask & HEAP_UPDATED && 
+							Ptp.t_data->t_xmin == Ptp.t_data->t_xmax)
+						{
+							TransactionIdStore(myXID, 
+								(TransactionId*) &(Ptp.t_data->t_cmin));
+							Ptp.t_data->t_infomask &= 
+								~(HEAP_XMIN_COMMITTED|HEAP_XMIN_INVALID|HEAP_MOVED_IN);
+							Ptp.t_data->t_infomask |= HEAP_MOVED_OFF;
+							WriteBuffer(Pbuf);
+							continue;
+						}
+						tp.t_data = Ptp.t_data;
+						tlen = tp.t_len = ItemIdGetLength(Pitemid);
+						if (freeCbuf)
+							ReleaseBuffer(Cbuf);
+						Cbuf = Pbuf;
+						freeCbuf = true;
+						break;
+					}
+				}
+				if (freeCbuf)
+					ReleaseBuffer(Cbuf);
+				if (num_vtmove == 0)			/* chain can't be moved */
+				{
+					pfree(vtmove);
+					break;
+				}
+				ItemPointerSetInvalid(&Ctid);
+				for (ti = 0; ti < num_vtmove; ti++)
+				{
+					/* Get tuple from chain */
+					tuple.t_self = vtmove[ti].tid;
+					Cbuf = ReadBuffer(onerel, 
+							ItemPointerGetBlockNumber(&(tuple.t_self)));
+					Cpage = BufferGetPage(Cbuf);
+					Citemid = PageGetItemId(Cpage, 
+							ItemPointerGetOffsetNumber(&(tuple.t_self)));
+					tuple.t_data = (HeapTupleHeader) PageGetItem(Cpage, Citemid);
+					tuple_len = tuple.t_len = ItemIdGetLength(Citemid);
+					/* Get page to move in */
+					cur_buffer = ReadBuffer(onerel, vtmove[ti].vpd->vpd_blkno);
+					ToPage = BufferGetPage(cur_buffer);
+					/* if this page was not used before - clean it */
+					if (!PageIsEmpty(ToPage) && vtmove[i].cleanVpd)
+						vc_vacpage(ToPage, vtmove[ti].vpd);
+					heap_copytuple_with_tuple(&tuple, &newtup);
+					RelationInvalidateHeapTuple(onerel, &tuple);
+					TransactionIdStore(myXID, (TransactionId*) &(newtup.t_data->t_cmin));
+					newtup.t_data->t_infomask &= 
+						~(HEAP_XMIN_COMMITTED|HEAP_XMIN_INVALID|HEAP_MOVED_OFF);
+					newtup.t_data->t_infomask |= HEAP_MOVED_IN;
+					newoff = PageAddItem(ToPage, (Item) newtup.t_data, tuple_len,
+								 InvalidOffsetNumber, LP_USED);
+					if (newoff == InvalidOffsetNumber)
+					{
+						elog(ERROR, "\
+moving chain: failed to add item with len = %u to page %u",
+					 tuple_len, vtmove[ti].vpd->vpd_blkno);
+					}
+					newitemid = PageGetItemId(ToPage, newoff);
+					pfree(newtup.t_data);
+					newtup.t_data = (HeapTupleHeader) PageGetItem(ToPage, newitemid);
+					ItemPointerSet(&(newtup.t_self), vtmove[i].vpd->vpd_blkno, newoff);
+					/*
+					 * Set t_ctid pointing to itself for last tuple in
+					 * chain and to next tuple in chain otherwise.
+					 */
+					if (!ItemPointerIsValid(&Ctid))
+						newtup.t_data->t_ctid = newtup.t_self;
+					else
+						newtup.t_data->t_ctid = Ctid;
+					Ctid = newtup.t_self;
+
+					TransactionIdStore(myXID, (TransactionId*) &(tuple.t_data->t_cmin));
+					tuple.t_data->t_infomask &= 
+						~(HEAP_XMIN_COMMITTED|HEAP_XMIN_INVALID|HEAP_MOVED_IN);
+					tuple.t_data->t_infomask |= HEAP_MOVED_OFF;
+
+					num_moved++;
+					if (Cbuf == buf)
+						vpc->vpd_offsets[vpc->vpd_offsets_free++] = 
+								ItemPointerGetOffsetNumber(&(tuple.t_self));
+
+					if (Irel != (Relation *) NULL)
+					{
+						for (i = 0, idcur = Idesc; i < nindices; i++, idcur++)
+						{
+							FormIndexDatum(idcur->natts,
+								   (AttrNumber *) &(idcur->tform->indkey[0]),
+									   &newtup,
+									   tupdesc,
+									   idatum,
+									   inulls,
+									   idcur->finfoP);
+							iresult = index_insert(Irel[i],
+												   idatum,
+												   inulls,
+												   &newtup.t_self,
+												   onerel);
+							if (iresult)
+								pfree(iresult);
+						}
+					}
+					WriteBuffer(cur_buffer);
+					if (Cbuf == buf)
+						ReleaseBuffer(Cbuf);
+					else
+						WriteBuffer(Cbuf);
+				}
+				cur_buffer = InvalidBuffer;
+				pfree(vtmove);
+				continue;
+			}
+
 			/* try to find new page for this tuple */
 			if (cur_buffer == InvalidBuffer ||
 				!vc_enough_space(cur_page, tuple_len))
@@ -1070,13 +1450,14 @@ vc_rpfheap(VRelStats *vacrelstats, Relation onerel,
 
 			RelationInvalidateHeapTuple(onerel, &tuple);
 
-			/* store transaction information */
-			TransactionIdStore(myXID, &(newtup.t_data->t_xmin));
-			newtup.t_data->t_cmin = myCID;
-			StoreInvalidTransactionId(&(newtup.t_data->t_xmax));
-			/* set xmin to unknown and xmax to invalid */
-			newtup.t_data->t_infomask &= ~(HEAP_XACT_MASK);
-			newtup.t_data->t_infomask |= HEAP_XMAX_INVALID;
+			/* 
+			 * Mark new tuple as moved_in by vacuum and 
+			 * store vacuum XID in t_cmin !!! 
+			 */
+			TransactionIdStore(myXID, (TransactionId*) &(newtup.t_data->t_cmin));
+			newtup.t_data->t_infomask &= 
+				~(HEAP_XMIN_COMMITTED|HEAP_XMIN_INVALID|HEAP_MOVED_OFF);
+			newtup.t_data->t_infomask |= HEAP_MOVED_IN;
 
 			/* add tuple to the page */
 			newoff = PageAddItem(ToPage, (Item) newtup.t_data, tuple_len,
@@ -1094,11 +1475,14 @@ failed to add item with len = %u to page %u (free space %u, nusd %u, noff %u)",
 			ItemPointerSet(&(newtup.t_data->t_ctid), cur_page->vpd_blkno, newoff);
 			newtup.t_self = newtup.t_data->t_ctid;
 
-			/* now logically delete end-tuple */
-			TransactionIdStore(myXID, &(tuple.t_data->t_xmax));
-			tuple.t_data->t_cmax = myCID;
-			/* set xmax to unknown */
-			tuple.t_data->t_infomask &= ~(HEAP_XMAX_INVALID | HEAP_XMAX_COMMITTED);
+			/* 
+			 * Mark old tuple as moved_off by vacuum and 
+			 * store vacuum XID in t_cmin !!! 
+			 */
+			TransactionIdStore(myXID, (TransactionId*) &(tuple.t_data->t_cmin));
+			tuple.t_data->t_infomask &= 
+				~(HEAP_XMIN_COMMITTED|HEAP_XMIN_INVALID|HEAP_MOVED_IN);
+			tuple.t_data->t_infomask |= HEAP_MOVED_OFF;
 
 			cur_page->vpd_offsets_used++;
 			num_moved++;
@@ -1131,6 +1515,8 @@ failed to add item with len = %u to page %u (free space %u, nusd %u, noff %u)",
 
 		if (vpc->vpd_offsets_free > 0)	/* some tuples were moved */
 		{
+			qsort((char *) (vpc->vpd_offsets), vpc->vpd_offsets_free, 
+									sizeof(OffsetNumber), vc_cmp_offno);
 			vc_reappage(&Nvpl, vpc);
 			WriteBuffer(buf);
 		}
@@ -1167,7 +1553,7 @@ failed to add item with len = %u to page %u (free space %u, nusd %u, noff %u)",
 	}
 
 	/*
-	 * Clean uncleaned reapped pages from vacuum_pages list and set xmin
+	 * Clean uncleaned reapped pages from vacuum_pages list list and set xmin
 	 * committed for inserted tuples
 	 */
 	checked_moved = 0;
@@ -1178,16 +1564,10 @@ failed to add item with len = %u to page %u (free space %u, nusd %u, noff %u)",
 		page = BufferGetPage(buf);
 		if ((*vpp)->vpd_offsets_used == 0)		/* this page was not used */
 		{
-
-			/*
-			 * noff == 0 in empty pages only - such pages should be
-			 * re-used
-			 */
-			Assert((*vpp)->vpd_offsets_free > 0);
-			vc_vacpage(page, *vpp);
+			if (!PageIsEmpty(page))
+				vc_vacpage(page, *vpp);
 		}
-		else
-/* this page was used */
+		else	/* this page was used */
 		{
 			num_tuples = 0;
 			max_offset = PageGetMaxOffsetNumber(page);
@@ -1199,10 +1579,19 @@ failed to add item with len = %u to page %u (free space %u, nusd %u, noff %u)",
 				if (!ItemIdIsUsed(itemid))
 					continue;
 				tuple.t_data = (HeapTupleHeader) PageGetItem(page, itemid);
-				if (TransactionIdEquals((TransactionId) tuple.t_data->t_xmin, myXID))
+				if (!(tuple.t_data->t_infomask & HEAP_XMIN_COMMITTED))
 				{
-					tuple.t_data->t_infomask |= HEAP_XMIN_COMMITTED;
-					num_tuples++;
+					if ((TransactionId)tuple.t_data->t_cmin != myXID)
+						elog(ERROR, "Invalid XID in t_cmin (2)");
+					if (tuple.t_data->t_infomask & HEAP_MOVED_IN)
+					{
+						tuple.t_data->t_infomask |= HEAP_XMIN_COMMITTED;
+						num_tuples++;
+					}
+					else if (tuple.t_data->t_infomask & HEAP_MOVED_OFF)
+						tuple.t_data->t_infomask |= HEAP_XMIN_INVALID;
+					else
+						elog(ERROR, "HEAP_MOVED_OFF/HEAP_MOVED_IN was expected (2)");
 				}
 			}
 			Assert((*vpp)->vpd_offsets_used == num_tuples);
@@ -1244,16 +1633,13 @@ Elapsed %u/%u sec.",
 		}
 
 		/*
-		 * clean moved tuples from last page in Nvpl list if some tuples
-		 * left there
+		 * clean moved tuples from last page in Nvpl list
 		 */
-		if (vpc->vpd_offsets_free > 0 && offnum <= maxoff)
+		if (vpc->vpd_blkno == blkno - 1 && vpc->vpd_offsets_free > 0)
 		{
-			Assert(vpc->vpd_blkno == blkno - 1);
 			buf = ReadBuffer(onerel, vpc->vpd_blkno);
 			page = BufferGetPage(buf);
 			num_tuples = 0;
-			maxoff = offnum;
 			for (offnum = FirstOffsetNumber;
 				 offnum < maxoff;
 				 offnum = OffsetNumberNext(offnum))
@@ -1262,9 +1648,20 @@ Elapsed %u/%u sec.",
 				if (!ItemIdIsUsed(itemid))
 					continue;
 				tuple.t_data = (HeapTupleHeader) PageGetItem(page, itemid);
-				Assert(TransactionIdEquals((TransactionId) tuple.t_data->t_xmax, myXID));
-				itemid->lp_flags &= ~LP_USED;
-				num_tuples++;
+
+				if (!(tuple.t_data->t_infomask & HEAP_XMIN_COMMITTED))
+				{
+					if ((TransactionId)tuple.t_data->t_cmin != myXID)
+						elog(ERROR, "Invalid XID in t_cmin (3)");
+					if (tuple.t_data->t_infomask & HEAP_MOVED_OFF)
+					{
+						itemid->lp_flags &= ~LP_USED;
+						num_tuples++;
+					}
+					else
+						elog(ERROR, "HEAP_MOVED_OFF was expected");
+				}
+
 			}
 			Assert(vpc->vpd_offsets_free == num_tuples);
 			PageRepairFragmentation(page);
@@ -1298,6 +1695,8 @@ Elapsed %u/%u sec.",
 	}
 
 	pfree(vpc);
+	if (vacrelstats->vtlinks != NULL)
+		pfree(vacrelstats->vtlinks);
 
 }	/* vc_rpfheap */
 
@@ -1522,8 +1921,8 @@ vc_tidreapped(ItemPointer itemptr, VPageList vpl)
 	ioffno = ItemPointerGetOffsetNumber(itemptr);
 
 	vp = &vpd;
-	vpp = (VPageDescr *) vc_find_eq((char *) (vpl->vpl_pagedesc),
-					vpl->vpl_num_pages, sizeof(VPageDescr), (char *) &vp,
+	vpp = (VPageDescr *) vc_find_eq((void *) (vpl->vpl_pagedesc),
+					vpl->vpl_num_pages, sizeof(VPageDescr), (void *) &vp,
 									vc_cmp_blk);
 
 	if (vpp == (VPageDescr *) NULL)
@@ -1537,8 +1936,8 @@ vc_tidreapped(ItemPointer itemptr, VPageList vpl)
 		return vp;
 	}
 
-	voff = (OffsetNumber *) vc_find_eq((char *) (vp->vpd_offsets),
-			vp->vpd_offsets_free, sizeof(OffsetNumber), (char *) &ioffno,
+	voff = (OffsetNumber *) vc_find_eq((void *) (vp->vpd_offsets),
+			vp->vpd_offsets_free, sizeof(OffsetNumber), (void *) &ioffno,
 									   vc_cmp_offno);
 
 	if (voff == (OffsetNumber *) NULL)
@@ -1998,8 +2397,9 @@ vc_free(VRelList vrl)
 	MemoryContextSwitchTo(old);
 }
 
-static char *
-vc_find_eq(char *bot, int nelem, int size, char *elm, int (*compar) (char *, char *))
+static void *
+vc_find_eq(void *bot, int nelem, int size, void *elm, 
+			int (*compar) (const void *, const void *))
 {
 	int			res;
 	int			last = nelem - 1;
@@ -2053,7 +2453,7 @@ vc_find_eq(char *bot, int nelem, int size, char *elm, int (*compar) (char *, cha
 }	/* vc_find_eq */
 
 static int
-vc_cmp_blk(char *left, char *right)
+vc_cmp_blk(const void *left, const void *right)
 {
 	BlockNumber lblk,
 				rblk;
@@ -2070,7 +2470,7 @@ vc_cmp_blk(char *left, char *right)
 }	/* vc_cmp_blk */
 
 static int
-vc_cmp_offno(char *left, char *right)
+vc_cmp_offno(const void *left, const void *right)
 {
 
 	if (*(OffsetNumber *) left < *(OffsetNumber *) right)
@@ -2081,6 +2481,33 @@ vc_cmp_offno(char *left, char *right)
 
 }	/* vc_cmp_offno */
 
+static int
+vc_cmp_vtlinks(const void *left, const void *right)
+{
+
+	if (((VTupleLink)left)->new_tid.ip_blkid.bi_hi < 
+		((VTupleLink)right)->new_tid.ip_blkid.bi_hi)
+		return -1;
+	if (((VTupleLink)left)->new_tid.ip_blkid.bi_hi > 
+		((VTupleLink)right)->new_tid.ip_blkid.bi_hi)
+		return 1;
+	/* bi_hi-es are equal */
+	if (((VTupleLink)left)->new_tid.ip_blkid.bi_lo < 
+		((VTupleLink)right)->new_tid.ip_blkid.bi_lo)
+		return -1;
+	if (((VTupleLink)left)->new_tid.ip_blkid.bi_lo > 
+		((VTupleLink)right)->new_tid.ip_blkid.bi_lo)
+		return 1;
+	/* bi_lo-es are equal */
+	if (((VTupleLink)left)->new_tid.ip_posid < 
+		((VTupleLink)right)->new_tid.ip_posid)
+		return -1;
+	if (((VTupleLink)left)->new_tid.ip_posid > 
+		((VTupleLink)right)->new_tid.ip_posid)
+		return 1;
+	return 0;
+
+}
 
 static void
 vc_getindices(Oid relid, int *nindices, Relation **Irel)
@@ -2230,7 +2657,7 @@ vc_enough_space(VPageDescr vpd, Size len)
 		return true;			/* and len <= free_space */
 
 	/* ok. noff_usd >= noff_free and so we'll have to allocate new itemid */
-	if (len <= vpd->vpd_free - sizeof(ItemIdData))
+	if (len + DOUBLEALIGN(sizeof(ItemIdData)) <= vpd->vpd_free)
 		return true;
 
 	return false;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.37 1999/02/22 06:16:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.38 1999/03/28 20:32:22 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -636,12 +636,13 @@ TransactionIdIsInProgress(TransactionId xid)
 Snapshot
 GetSnapshotData(bool serializable)
 {
-	Snapshot	snapshot = (Snapshot) malloc(sizeof(SnapshotData));
-	ShmemIndexEnt *result;
-	PROC	   *proc;
-	TransactionId cid = GetCurrentTransactionId();
-	uint32		count = 0;
-	uint32		have = 32;
+	Snapshot		snapshot = (Snapshot) malloc(sizeof(SnapshotData));
+	ShmemIndexEnt  *result;
+	PROC		   *proc;
+	TransactionId	cid = GetCurrentTransactionId();
+	TransactionId	xid;
+	uint32			count = 0;
+	uint32			have = 32;
 
 	Assert(ShmemIndex);
 
@@ -669,19 +670,20 @@ GetSnapshotData(bool serializable)
 			strncmp(result->key, "PID ", 4) != 0)
 			continue;
 		proc = (PROC *) MAKE_PTR(result->location);
-		if (proc == MyProc || proc->xid < FirstTransactionId)
+		xid = proc->xid;	/* we don't use spin-locking in xact.c ! */
+		if (proc == MyProc || xid < FirstTransactionId)
 			continue;
-		if (proc->xid < snapshot->xmin)
-			snapshot->xmin = proc->xid;
-		else if (proc->xid > snapshot->xmax)
-			snapshot->xmax = proc->xid;
+		if (xid < snapshot->xmin)
+			snapshot->xmin = xid;
+		else if (xid > snapshot->xmax)
+			snapshot->xmax = xid;
 		if (have == 0)
 		{
 			snapshot->xip = (TransactionId *) realloc(snapshot->xip,
 								   (count + 32) * sizeof(TransactionId));
 			have = 32;
 		}
-		snapshot->xip[count] = proc->xid;
+		snapshot->xip[count] = xid;
 		have--;
 		count++;
 	}
@@ -690,5 +692,50 @@ GetSnapshotData(bool serializable)
 	free(snapshot->xip);
 	free(snapshot);
 	elog(ERROR, "GetSnapshotData: ShmemIndex corrupted");
+	return NULL;
+}
+
+/*
+ * GetXmaxRecent -- returns oldest transaction that was running
+ * 					when all current transaction was started.
+ * 					It's used by vacuum to decide what deleted
+ * 					tuples must be preserved in a table.
+ *
+ * And yet another strange func for this place...	- vadim 03/18/99
+ */
+void
+GetXmaxRecent(TransactionId *XmaxRecent)
+{
+	ShmemIndexEnt  *result;
+	PROC		   *proc;
+	TransactionId	xmin;
+
+	Assert(ShmemIndex);
+
+	ReadNewTransactionId(XmaxRecent);
+
+	SpinAcquire(ShmemIndexLock);
+
+	hash_seq((HTAB *) NULL);
+	while ((result = (ShmemIndexEnt *) hash_seq(ShmemIndex)) != NULL)
+	{
+		if (result == (ShmemIndexEnt *) TRUE)
+		{
+			SpinRelease(ShmemIndexLock);
+			return;
+		}
+		if (result->location == INVALID_OFFSET ||
+			strncmp(result->key, "PID ", 4) != 0)
+			continue;
+		proc = (PROC *) MAKE_PTR(result->location);
+		xmin = proc->xmin;	/* we don't use spin-locking in xact.c ! */
+		if (proc == MyProc || xmin < FirstTransactionId)
+			continue;
+		if (xmin < *XmaxRecent)
+			*XmaxRecent = xmin;
+	}
+
+	SpinRelease(ShmemIndexLock);
+	elog(ERROR, "GetXmaxRecent: ShmemIndex corrupted");
 	return NULL;
 }

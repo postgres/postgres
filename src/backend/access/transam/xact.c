@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.32 1999/02/13 23:14:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.33 1999/03/28 20:31:59 vadim Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -933,7 +933,10 @@ CommitTransaction()
 	 * 11/26/96
 	 */
 	if (MyProc != (PROC *) NULL)
+	{
 		MyProc->xid = InvalidTransactionId;
+		MyProc->xmin = InvalidTransactionId;
+	}
 }
 
 /* --------------------------------
@@ -951,7 +954,10 @@ AbortTransaction()
 	 * 11/26/96
 	 */
 	if (MyProc != (PROC *) NULL)
+	{
 		MyProc->xid = InvalidTransactionId;
+		MyProc->xmin = InvalidTransactionId;
+	}
 
 	/* ----------------
 	 *	check the current transaction state

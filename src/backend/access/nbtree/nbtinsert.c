@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.35 1999/02/13 23:14:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.36 1999/03/28 20:31:56 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -853,6 +853,8 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright)
 	lopaque->btpo_next = BufferGetBlockNumber(rbuf);
 	ropaque->btpo_next = oopaque->btpo_next;
 
+	lopaque->btpo_parent = ropaque->btpo_parent = oopaque->btpo_parent;
+
 	/*
 	 * If the page we're splitting is not the rightmost page at its level
 	 * in the tree, then the first (0) entry on the page is the high key
@@ -1103,6 +1105,7 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 	/* get a new root page */
 	rootbuf = _bt_getbuf(rel, P_NEW, BT_WRITE);
 	rootpage = BufferGetPage(rootbuf);
+	rootbknum = BufferGetBlockNumber(rootbuf);
 	_bt_pageinit(rootpage, BufferGetPageSize(rootbuf));
 
 	/* set btree special data */
@@ -1118,6 +1121,10 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 	rbkno = BufferGetBlockNumber(rbuf);
 	lpage = BufferGetPage(lbuf);
 	rpage = BufferGetPage(rbuf);
+
+	((BTPageOpaque) PageGetSpecialPointer(lpage))->btpo_parent = 
+	((BTPageOpaque) PageGetSpecialPointer(rpage))->btpo_parent = 
+		rootbknum;
 
 	/*
 	 * step over the high key on the left page while building the left
@@ -1156,11 +1163,13 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 	pfree(new_item);
 
 	/* write and let go of the root buffer */
-	rootbknum = BufferGetBlockNumber(rootbuf);
 	_bt_wrtbuf(rel, rootbuf);
 
 	/* update metadata page with new root block number */
 	_bt_metaproot(rel, rootbknum, 0);
+
+	WriteNoReleaseBuffer(lbuf);
+	WriteNoReleaseBuffer(rbuf);
 }
 
 /*
@@ -1559,6 +1568,7 @@ _bt_shift(Relation rel, Buffer buf, BTStack stack, int keysz,
 		pageop->btpo_flags |= BTP_CHAIN;
 	pageop->btpo_prev = npageop->btpo_prev;		/* restore prev */
 	pageop->btpo_next = nbknum; /* next points to the new page */
+	pageop->btpo_parent = npageop->btpo_parent;
 
 	/* init shifted page opaque */
 	npageop->btpo_prev = bknum = BufferGetBlockNumber(buf);

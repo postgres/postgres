@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/Attic/nbtscan.c,v 1.19 1999/02/13 23:14:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/Attic/nbtscan.c,v 1.20 1999/03/28 20:31:58 vadim Exp $
  *
  *
  * NOTES
@@ -43,8 +43,7 @@ typedef BTScanListData *BTScanList;
 
 static BTScanList BTScans = (BTScanList) NULL;
 
-static void _bt_scandel(IndexScanDesc scan, int op, BlockNumber blkno, OffsetNumber offno);
-static bool _bt_scantouched(IndexScanDesc scan, BlockNumber blkno, OffsetNumber offno);
+static void _bt_scandel(IndexScanDesc scan, BlockNumber blkno, OffsetNumber offno);
 
 /*
  *	_bt_regscan() -- register a new scan.
@@ -91,7 +90,7 @@ _bt_dropscan(IndexScanDesc scan)
  *					  for a given deletion or insertion
  */
 void
-_bt_adjscans(Relation rel, ItemPointer tid, int op)
+_bt_adjscans(Relation rel, ItemPointer tid)
 {
 	BTScanList	l;
 	Oid			relid;
@@ -100,41 +99,25 @@ _bt_adjscans(Relation rel, ItemPointer tid, int op)
 	for (l = BTScans; l != (BTScanList) NULL; l = l->btsl_next)
 	{
 		if (relid == RelationGetRelid(l->btsl_scan->relation))
-			_bt_scandel(l->btsl_scan, op,
+			_bt_scandel(l->btsl_scan,
 						ItemPointerGetBlockNumber(tid),
 						ItemPointerGetOffsetNumber(tid));
 	}
 }
 
 /*
- *	_bt_scandel() -- adjust a single scan
+ *	_bt_scandel() -- adjust a single scan on deletion
  *
- * because each index page is always maintained as an ordered array of
- * index tuples, the index tuples on a given page shift beneath any
- * given scan.	an index modification "behind" a scan position (i.e.,
- * same page, lower or equal offset number) will therefore force us to
- * adjust the scan in the following ways:
- *
- * - on insertion, we shift the scan forward by one item.
- * - on deletion, we shift the scan backward by one item.
- *
- * note that:
- *
- * - we need not worry about the actual ScanDirection of the scan
- * itself, since the problem is that the "current" scan position has
- * shifted.
- * - modifications "ahead" of our scan position do not change the
- * array index of the current scan position and so can be ignored.
  */
 static void
-_bt_scandel(IndexScanDesc scan, int op, BlockNumber blkno, OffsetNumber offno)
+_bt_scandel(IndexScanDesc scan, BlockNumber blkno, OffsetNumber offno)
 {
-	ItemPointer current;
-	Buffer		buf;
-	BTScanOpaque so;
-
-	if (!_bt_scantouched(scan, blkno, offno))
-		return;
+	ItemPointer		current;
+	Buffer			buf;
+	BTScanOpaque	so;
+	OffsetNumber	start;
+	Page			page;
+	BTPageOpaque	opaque;
 
 	so = (BTScanOpaque) scan->opaque;
 	buf = so->btso_curbuf;
@@ -144,33 +127,23 @@ _bt_scandel(IndexScanDesc scan, int op, BlockNumber blkno, OffsetNumber offno)
 		&& ItemPointerGetBlockNumber(current) == blkno
 		&& ItemPointerGetOffsetNumber(current) >= offno)
 	{
-		switch (op)
+		page = BufferGetPage(buf);
+		opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+		start = P_RIGHTMOST(opaque) ? P_HIKEY : P_FIRSTKEY;
+		if (ItemPointerGetOffsetNumber(current) == start)
+			ItemPointerSetInvalid(&(so->curHeapIptr));
+		else
 		{
-/*
- * Problems occure when current scan page is splitted!
- * We saw "Non-functional updates" (ie index tuples were read twice)
- * and partial updates ("good" tuples were not read at all) - due to
- * losing scan position here. Look @ nbtree.c:btgettuple()
- * what we do now...		- vadim 07/29/98
-			case BT_INSERT:
-				_bt_step(scan, &buf, ForwardScanDirection);
-				break;
- */
-			case BT_DELETE:
-				_bt_step(scan, &buf, BackwardScanDirection);
-				break;
-			default:
-				elog(ERROR, "_bt_scandel: bad operation '%d'", op);
-				/* NOTREACHED */
-		}
-		so->btso_curbuf = buf;
-		if (ItemPointerIsValid(current))
-		{
-			Page		page = BufferGetPage(buf);
-			BTItem		btitem = (BTItem) PageGetItem(page,
-			   PageGetItemId(page, ItemPointerGetOffsetNumber(current)));
+			_bt_step(scan, &buf, BackwardScanDirection);
+			so->btso_curbuf = buf;
+			if (ItemPointerIsValid(current))
+			{
+				Page		pg = BufferGetPage(buf);
+				BTItem		btitem = (BTItem) PageGetItem(pg,
+				   PageGetItemId(pg, ItemPointerGetOffsetNumber(current)));
 
-			so->curHeapIptr = btitem->bti_itup.t_tid;
+				so->curHeapIptr = btitem->bti_itup.t_tid;
+			}
 		}
 	}
 
@@ -179,65 +152,39 @@ _bt_scandel(IndexScanDesc scan, int op, BlockNumber blkno, OffsetNumber offno)
 		&& ItemPointerGetBlockNumber(current) == blkno
 		&& ItemPointerGetOffsetNumber(current) >= offno)
 	{
-		ItemPointerData tmp;
 
-		tmp = *current;
-		*current = scan->currentItemData;
-		scan->currentItemData = tmp;
-		so->btso_curbuf = so->btso_mrkbuf;
-		so->btso_mrkbuf = buf;
-		buf = so->btso_curbuf;
-		switch (op)
-		{
-/*
- * ...comments are above...
-			case BT_INSERT:
-				_bt_step(scan, &buf, ForwardScanDirection);
-				break;
- */
-			case BT_DELETE:
-				_bt_step(scan, &buf, BackwardScanDirection);
-				break;
-			default:
-				elog(ERROR, "_bt_scandel: bad operation '%d'", op);
-				/* NOTREACHED */
-		}
-		so->btso_curbuf = so->btso_mrkbuf;
-		so->btso_mrkbuf = buf;
-		tmp = *current;
-		*current = scan->currentItemData;
-		scan->currentItemData = tmp;
-		if (ItemPointerIsValid(current))
-		{
-			Page		page = BufferGetPage(buf);
-			BTItem		btitem = (BTItem) PageGetItem(page,
-			   PageGetItemId(page, ItemPointerGetOffsetNumber(current)));
+		page = BufferGetPage(so->btso_mrkbuf);
+		opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+		start = P_RIGHTMOST(opaque) ? P_HIKEY : P_FIRSTKEY;
 
-			so->mrkHeapIptr = btitem->bti_itup.t_tid;
+		if (ItemPointerGetOffsetNumber(current) == start)
+			ItemPointerSetInvalid(&(so->mrkHeapIptr));
+		else
+		{
+			ItemPointerData tmp;
+
+			tmp = *current;
+			*current = scan->currentItemData;
+			scan->currentItemData = tmp;
+			so->btso_curbuf = so->btso_mrkbuf;
+			so->btso_mrkbuf = buf;
+			buf = so->btso_curbuf;
+
+			_bt_step(scan, &buf, BackwardScanDirection);
+
+			so->btso_curbuf = so->btso_mrkbuf;
+			so->btso_mrkbuf = buf;
+			tmp = *current;
+			*current = scan->currentItemData;
+			scan->currentItemData = tmp;
+			if (ItemPointerIsValid(current))
+			{
+				Page		pg = BufferGetPage(buf);
+				BTItem		btitem = (BTItem) PageGetItem(pg,
+				   PageGetItemId(pg, ItemPointerGetOffsetNumber(current)));
+
+				so->mrkHeapIptr = btitem->bti_itup.t_tid;
+			}
 		}
 	}
-}
-
-/*
- *	_bt_scantouched() -- check to see if a scan is affected by a given
- *						 change to the index
- */
-static bool
-_bt_scantouched(IndexScanDesc scan, BlockNumber blkno, OffsetNumber offno)
-{
-	ItemPointer current;
-
-	current = &(scan->currentItemData);
-	if (ItemPointerIsValid(current)
-		&& ItemPointerGetBlockNumber(current) == blkno
-		&& ItemPointerGetOffsetNumber(current) >= offno)
-		return true;
-
-	current = &(scan->currentMarkData);
-	if (ItemPointerIsValid(current)
-		&& ItemPointerGetBlockNumber(current) == blkno
-		&& ItemPointerGetOffsetNumber(current) >= offno)
-		return true;
-
-	return false;
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.51 1999/02/21 01:41:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.52 1999/03/28 20:32:26 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@
  *		This is so that we can support more backends. (system-wide semaphore
  *		sets run out pretty fast.)				  -ay 4/95
  *
- * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.51 1999/02/21 01:41:45 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.52 1999/03/28 20:32:26 vadim Exp $
  */
 #include <sys/time.h>
 #include <unistd.h>
@@ -300,9 +300,7 @@ InitProcess(IPCKey key)
 
 	MyProc->pid = MyProcPid;
 	MyProc->xid = InvalidTransactionId;
-#ifdef LowLevelLocking
 	MyProc->xmin = InvalidTransactionId;
-#endif
 
 	/* ----------------
 	 * Start keeping spin lock stats from here on.	Any botch before

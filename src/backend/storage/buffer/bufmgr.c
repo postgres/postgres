@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.49 1999/02/21 03:49:21 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.50 1999/03/28 20:32:17 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -95,7 +95,7 @@ static BufferDesc *BufferAlloc(Relation reln, BlockNumber blockNum,
 static int	FlushBuffer(Buffer buffer, bool release);
 static void BufferSync(void);
 static int	BufferReplace(BufferDesc *bufHdr, bool bufferLockHeld);
-static void PrintBufferDescs(void);
+void PrintBufferDescs(void);
 
 /* not static but used by vacuum only ... */
 int			BlowawayRelationBuffers(Relation rel, BlockNumber block);
@@ -1208,23 +1208,24 @@ int
 BufferPoolCheckLeak()
 {
 	int			i;
-	int			error = 0;
+	int			result = 0;
 
 	for (i = 1; i <= NBuffers; i++)
 	{
 		if (BufferIsValid(i))
 		{
+			BufferDesc *buf = &(BufferDescriptors[i - 1]);
+
 			elog(NOTICE,
-			"buffer leak [%d] detected in BufferPoolCheckLeak()", i - 1);
-			error = 1;
+			"Buffer Leak: [%03d] (freeNext=%d, freePrev=%d, \
+relname=%s, blockNum=%d, flags=0x%x, refcount=%d %d)",
+				 i - 1, buf->freeNext, buf->freePrev,
+				 buf->sb_relname, buf->tag.blockNum, buf->flags,
+				 buf->refcount, PrivateRefCount[i - 1]);
+			result = 1;
 		}
 	}
-	if (error)
-	{
-		PrintBufferDescs();
-		return 1;
-	}
-	return 0;
+	return (result);
 }
 
 /* ------------------------------------------------
@@ -1465,7 +1466,7 @@ DropBuffers(Oid dbid)
  *		use only.
  * -----------------------------------------------------------------
  */
-static void
+void
 PrintBufferDescs()
 {
 	int			i;
@@ -1474,16 +1475,14 @@ PrintBufferDescs()
 	if (IsUnderPostmaster)
 	{
 		SpinAcquire(BufMgrLock);
-#ifdef NOT_USED
 		for (i = 0; i < NBuffers; ++i, ++buf)
 		{
-			elog(NOTICE, "[%02d] (freeNext=%d, freePrev=%d, relname=%s, \
+			elog(DEBUG, "[%02d] (freeNext=%d, freePrev=%d, relname=%s, \
 blockNum=%d, flags=0x%x, refcount=%d %d)",
 				 i, buf->freeNext, buf->freePrev,
 				 buf->sb_relname, buf->tag.blockNum, buf->flags,
 				 buf->refcount, PrivateRefCount[i]);
 		}
-#endif
 		SpinRelease(BufMgrLock);
 	}
 	else

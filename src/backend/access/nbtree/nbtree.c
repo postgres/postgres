@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.36 1999/02/21 03:48:27 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.37 1999/03/28 20:31:58 vadim Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -372,11 +372,6 @@ btinsert(Relation rel, Datum *datum, char *nulls, ItemPointer ht_ctid, Relation 
 	pfree(btitem);
 	pfree(itup);
 
-#ifdef NOT_USED
-	/* adjust any active scans that will be affected by this insertion */
-	_bt_adjscans(rel, &(res->pointerData), BT_INSERT);
-#endif
-
 	return res;
 }
 
@@ -396,15 +391,9 @@ btgettuple(IndexScanDesc scan, ScanDirection dir)
 
 	if (ItemPointerIsValid(&(scan->currentItemData)))
 	{
-
 		/*
-		 * Now we don't adjust scans on insertion (comments in
-		 * nbtscan.c:_bt_scandel()) and I hope that we will unlock current
-		 * index page before leaving index in LLL: this means that current
-		 * index tuple could be moved right before we get here and we have
-		 * to restore our scan position. We save heap TID pointed by
-		 * current index tuple and use it. This will work untill we start
-		 * to re-use (move heap tuples) without vacuum... - vadim 07/29/98
+		 * Restore scan position using heap TID returned 
+		 * by previous call to btgettuple().
 		 */
 		_bt_restscan(scan);
 		res = _bt_next(scan, dir);
@@ -612,16 +601,12 @@ void
 btdelete(Relation rel, ItemPointer tid)
 {
 	/* adjust any active scans that will be affected by this deletion */
-	_bt_adjscans(rel, tid, BT_DELETE);
+	_bt_adjscans(rel, tid);
 
 	/* delete the data from the page */
 	_bt_pagedel(rel, tid);
 }
 
-/*
- * Reasons are in btgettuple... We have to find index item that
- * points to heap tuple returned by previous call to btgettuple().
- */
 static void
 _bt_restscan(IndexScanDesc scan)
 {
@@ -636,6 +621,20 @@ _bt_restscan(IndexScanDesc scan)
 	ItemPointerData target = so->curHeapIptr;
 	BTItem		item;
 	BlockNumber blkno;
+
+	/*
+	 * We use this as flag when first index tuple on page
+	 * is deleted but we do not move left (this would
+	 * slowdown vacuum) - so we set current->ip_posid
+	 * before first index tuple on the current page
+	 * (_bt_step will move it right)...
+	 */
+	if (!ItemPointerIsValid(&target))
+	{
+		ItemPointerSetOffsetNumber(&(scan->currentItemData), 
+			OffsetNumberPrev(P_RIGHTMOST(opaque) ? P_HIKEY : P_FIRSTKEY));
+		return;
+	}
 
 	if (maxoff >= offnum)
 	{

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.25 1999/02/13 23:20:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.26 1999/03/28 20:32:29 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -86,11 +86,26 @@ HeapTupleSatisfiesItself(HeapTupleHeader tuple)
 
 	if (!(tuple->t_infomask & HEAP_XMIN_COMMITTED))
 	{
-		if (tuple->t_infomask & HEAP_XMIN_INVALID)		/* xid invalid or
-														 * aborted */
+		if (tuple->t_infomask & HEAP_XMIN_INVALID)
 			return false;
 
-		if (TransactionIdIsCurrentTransactionId(tuple->t_xmin))
+		if (tuple->t_infomask & HEAP_MOVED_OFF)
+		{
+			if (TransactionIdDidCommit((TransactionId)tuple->t_cmin))
+			{
+				tuple->t_infomask |= HEAP_XMIN_INVALID;
+				return false;
+			}
+		}
+		else if (tuple->t_infomask & HEAP_MOVED_IN)
+		{
+			if (!TransactionIdDidCommit((TransactionId)tuple->t_cmin))
+			{
+				tuple->t_infomask |= HEAP_XMIN_INVALID;
+				return false;
+			}
+		}
+		else if (TransactionIdIsCurrentTransactionId(tuple->t_xmin))
 		{
 			if (tuple->t_infomask & HEAP_XMAX_INVALID)	/* xid invalid */
 				return true;
@@ -98,14 +113,12 @@ HeapTupleSatisfiesItself(HeapTupleHeader tuple)
 				return true;
 			return false;
 		}
-
-		if (!TransactionIdDidCommit(tuple->t_xmin))
+		else if (!TransactionIdDidCommit(tuple->t_xmin))
 		{
 			if (TransactionIdDidAbort(tuple->t_xmin))
 				tuple->t_infomask |= HEAP_XMIN_INVALID; /* aborted */
 			return false;
 		}
-
 		tuple->t_infomask |= HEAP_XMIN_COMMITTED;
 	}
 	/* the tuple was inserted validly */
@@ -200,11 +213,26 @@ HeapTupleSatisfiesNow(HeapTupleHeader tuple)
 
 	if (!(tuple->t_infomask & HEAP_XMIN_COMMITTED))
 	{
-		if (tuple->t_infomask & HEAP_XMIN_INVALID)		/* xid invalid or
-														 * aborted */
+		if (tuple->t_infomask & HEAP_XMIN_INVALID)
 			return false;
 
-		if (TransactionIdIsCurrentTransactionId(tuple->t_xmin))
+		if (tuple->t_infomask & HEAP_MOVED_OFF)
+		{
+			if (TransactionIdDidCommit((TransactionId)tuple->t_cmin))
+			{
+				tuple->t_infomask |= HEAP_XMIN_INVALID;
+				return false;
+			}
+		}
+		else if (tuple->t_infomask & HEAP_MOVED_IN)
+		{
+			if (!TransactionIdDidCommit((TransactionId)tuple->t_cmin))
+			{
+				tuple->t_infomask |= HEAP_XMIN_INVALID;
+				return false;
+			}
+		}
+		else if (TransactionIdIsCurrentTransactionId(tuple->t_xmin))
 		{
 			if (CommandIdGEScanCommandId(tuple->t_cmin))
 				return false;	/* inserted after scan started */
@@ -222,18 +250,12 @@ HeapTupleSatisfiesNow(HeapTupleHeader tuple)
 			else
 				return false;	/* deleted before scan started */
 		}
-
-		/*
-		 * this call is VERY expensive - requires a log table lookup.
-		 */
-
-		if (!TransactionIdDidCommit(tuple->t_xmin))
+		else if (!TransactionIdDidCommit(tuple->t_xmin))
 		{
 			if (TransactionIdDidAbort(tuple->t_xmin))
 				tuple->t_infomask |= HEAP_XMIN_INVALID; /* aborted */
 			return false;
 		}
-
 		tuple->t_infomask |= HEAP_XMIN_COMMITTED;
 	}
 
@@ -288,7 +310,23 @@ HeapTupleSatisfiesUpdate(HeapTuple tuple)
 		if (th->t_infomask & HEAP_XMIN_INVALID)	/* xid invalid or aborted */
 			return HeapTupleInvisible;
 
-		if (TransactionIdIsCurrentTransactionId(th->t_xmin))
+		if (th->t_infomask & HEAP_MOVED_OFF)
+		{
+			if (TransactionIdDidCommit((TransactionId)th->t_cmin))
+			{
+				th->t_infomask |= HEAP_XMIN_INVALID;
+				return HeapTupleInvisible;
+			}
+		}
+		else if (th->t_infomask & HEAP_MOVED_IN)
+		{
+			if (!TransactionIdDidCommit((TransactionId)th->t_cmin))
+			{
+				th->t_infomask |= HEAP_XMIN_INVALID;
+				return HeapTupleInvisible;
+			}
+		}
+		else if (TransactionIdIsCurrentTransactionId(th->t_xmin))
 		{
 			if (CommandIdGEScanCommandId(th->t_cmin) && !heapisoverride())
 				return HeapTupleInvisible;	/* inserted after scan started */
@@ -306,19 +344,12 @@ HeapTupleSatisfiesUpdate(HeapTuple tuple)
 			else
 				return HeapTupleInvisible;	/* updated before scan started */
 		}
-
-		/*
-		 * This call is VERY expensive - requires a log table lookup.
-		 * Actually, this should be done by query before...
-		 */
-
-		if (!TransactionIdDidCommit(th->t_xmin))
+		else if (!TransactionIdDidCommit(th->t_xmin))
 		{
 			if (TransactionIdDidAbort(th->t_xmin))
 				th->t_infomask |= HEAP_XMIN_INVALID; /* aborted */
 			return HeapTupleInvisible;
 		}
-
 		th->t_infomask |= HEAP_XMIN_COMMITTED;
 	}
 
@@ -375,10 +406,26 @@ HeapTupleSatisfiesDirty(HeapTupleHeader tuple)
 
 	if (!(tuple->t_infomask & HEAP_XMIN_COMMITTED))
 	{
-		if (tuple->t_infomask & HEAP_XMIN_INVALID)	/* xid invalid or aborted */
+		if (tuple->t_infomask & HEAP_XMIN_INVALID)
 			return false;
 
-		if (TransactionIdIsCurrentTransactionId(tuple->t_xmin))
+		if (tuple->t_infomask & HEAP_MOVED_OFF)
+		{
+			if (TransactionIdDidCommit((TransactionId)tuple->t_cmin))
+			{
+				tuple->t_infomask |= HEAP_XMIN_INVALID;
+				return false;
+			}
+		}
+		else if (tuple->t_infomask & HEAP_MOVED_IN)
+		{
+			if (!TransactionIdDidCommit((TransactionId)tuple->t_cmin))
+			{
+				tuple->t_infomask |= HEAP_XMIN_INVALID;
+				return false;
+			}
+		}
+		else if (TransactionIdIsCurrentTransactionId(tuple->t_xmin))
 		{
 			if (tuple->t_infomask & HEAP_XMAX_INVALID)	/* xid invalid */
 				return true;
@@ -390,8 +437,7 @@ HeapTupleSatisfiesDirty(HeapTupleHeader tuple)
 
 			return false;
 		}
-
-		if (!TransactionIdDidCommit(tuple->t_xmin))
+		else if (!TransactionIdDidCommit(tuple->t_xmin))
 		{
 			if (TransactionIdDidAbort(tuple->t_xmin))
 			{
@@ -401,7 +447,6 @@ HeapTupleSatisfiesDirty(HeapTupleHeader tuple)
 			SnapshotDirty->xmin = tuple->t_xmin;
 			return true;						/* in insertion by other */
 		}
-
 		tuple->t_infomask |= HEAP_XMIN_COMMITTED;
 	}
 
@@ -451,11 +496,26 @@ HeapTupleSatisfiesSnapshot(HeapTupleHeader tuple, Snapshot snapshot)
 
 	if (!(tuple->t_infomask & HEAP_XMIN_COMMITTED))
 	{
-		if (tuple->t_infomask & HEAP_XMIN_INVALID)		/* xid invalid or
-														 * aborted */
+		if (tuple->t_infomask & HEAP_XMIN_INVALID)
 			return false;
 
-		if (TransactionIdIsCurrentTransactionId(tuple->t_xmin))
+		if (tuple->t_infomask & HEAP_MOVED_OFF)
+		{
+			if (TransactionIdDidCommit((TransactionId)tuple->t_cmin))
+			{
+				tuple->t_infomask |= HEAP_XMIN_INVALID;
+				return false;
+			}
+		}
+		else if (tuple->t_infomask & HEAP_MOVED_IN)
+		{
+			if (!TransactionIdDidCommit((TransactionId)tuple->t_cmin))
+			{
+				tuple->t_infomask |= HEAP_XMIN_INVALID;
+				return false;
+			}
+		}
+		else if (TransactionIdIsCurrentTransactionId(tuple->t_xmin))
 		{
 			if (CommandIdGEScanCommandId(tuple->t_cmin))
 				return false;	/* inserted after scan started */
@@ -473,18 +533,12 @@ HeapTupleSatisfiesSnapshot(HeapTupleHeader tuple, Snapshot snapshot)
 			else
 				return false;	/* deleted before scan started */
 		}
-
-		/*
-		 * this call is VERY expensive - requires a log table lookup.
-		 */
-
-		if (!TransactionIdDidCommit(tuple->t_xmin))
+		else if (!TransactionIdDidCommit(tuple->t_xmin))
 		{
 			if (TransactionIdDidAbort(tuple->t_xmin))
 				tuple->t_infomask |= HEAP_XMIN_INVALID; /* aborted */
 			return false;
 		}
-
 		tuple->t_infomask |= HEAP_XMIN_COMMITTED;
 	}
 
