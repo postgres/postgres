@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.20 1997/09/12 04:07:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.21 1997/10/25 01:08:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -488,7 +488,7 @@ Async_Listen(char *relname, int pid)
 	 * unlisten prior to dying.
 	 */
 	relnamei = malloc(NAMEDATALEN);		/* persists to process exit */
-	strNcpy(relnamei, relname, NAMEDATALEN - 1);
+	StrNCpy(relnamei, relname, NAMEDATALEN);
 	on_exitpg(Async_UnlistenOnExit, (caddr_t) relnamei);
 }
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.7 1997/09/08 02:30:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.8 1997/10/25 01:10:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -133,7 +133,7 @@ regprocout(RegProcedure proid)
 							  RelationGetTupleDescriptor(proc), &isnull);
 			if (!isnull)
 			{
-				strNcpy(result, s, 16);
+				StrNCpy(result, s, 16);
 				break;
 			}
 			elog(FATAL, "regprocout: null procedure %d", proid);

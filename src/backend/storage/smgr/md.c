@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.22 1997/09/18 20:21:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.23 1997/10/25 01:10:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -172,7 +172,7 @@ mdunlink(Relation reln)
 	 * do this.
 	 */
 
-	strNcpy(fname, RelationGetRelationName(reln)->data, NAMEDATALEN - 1);
+	StrNCpy(fname, RelationGetRelationName(reln)->data, NAMEDATALEN);
 
 	if (FileNameUnlink(fname) < 0)
 		return (SM_FAIL);

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tioga/Attic/tgRecipe.c,v 1.6 1997/09/08 21:48:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tioga/Attic/tgRecipe.c,v 1.7 1997/10/25 01:10:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -108,7 +108,7 @@ first character\n", ARRAY_LEFT_DELIM);
 												 * extra character for \0
 												 * anyway */
 		word = (char *) malloc(nextlen);
-		strNcpy(word, beginQuote + 1, nextlen - 1);
+		StrNCpy(word, beginQuote + 1, nextlen);
 		addArr_TgString(result, (TgString *) & word);
 		free(word);
 		str = endQuote + 1;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.26 1997/09/18 20:19:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.27 1997/10/25 01:08:45 momjian Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -489,7 +489,7 @@ BuildDescForRelation(List *schema, char *relname)
 		}
 		else
 		{
-			strNcpy(typename, entry->typename->name, NAMEDATALEN - 1);
+			StrNCpy(typename, entry->typename->name, NAMEDATALEN);
 			attdim = 0;
 		}
 

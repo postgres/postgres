@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.49 1997/09/18 20:22:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.50 1997/10/25 01:10:16 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1088,7 +1088,7 @@ PostgresMain(int argc, char *argv[])
 				 *	o - send output (stdout and stderr) to the given file
 				 * ----------------
 				 */
-				strNcpy(OutputFileName, optarg, MAXPGPATH);
+				StrNCpy(OutputFileName, optarg, MAXPGPATH);
 				break;
 
 			case 'p':			/* started by postmaster */
@@ -1391,7 +1391,7 @@ PostgresMain(int argc, char *argv[])
 	if (IsUnderPostmaster == false)
 	{
 		puts("\nPOSTGRES backend interactive interface");
-		puts("$Revision: 1.49 $ $Date: 1997/09/18 20:22:03 $");
+		puts("$Revision: 1.50 $ $Date: 1997/10/25 01:10:16 $");
 	}
 
 	/* ----------------

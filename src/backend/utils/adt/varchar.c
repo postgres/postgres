@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.10 1997/09/08 02:31:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.11 1997/10/25 01:10:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,7 +106,7 @@ bpcharout(char *s)
 	{
 		len = *(int32 *) s - 4;
 		result = (char *) palloc(len + 1);
-		strNcpy(result, s + 4, len);	/* these are blank-padded */
+		StrNCpy(result, s + 4, len+1);	/* these are blank-padded */
 	}
 	return (result);
 }
@@ -145,7 +145,7 @@ varcharin(char *s, int dummy, int typlen)
 
 	result = (char *) palloc(typlen);
 	*(int32 *) result = typlen;
-	strncpy(result + 4, s, len);
+	strncpy(result + 4, s, len+1);
 
 	return (result);
 }
@@ -166,7 +166,7 @@ varcharout(char *s)
 	{
 		len = *(int32 *) s - 4;
 		result = (char *) palloc(len + 1);
-		strNcpy(result, s + 4, len);
+		StrNCpy(result, s + 4, len+1);
 	}
 	return (result);
 }

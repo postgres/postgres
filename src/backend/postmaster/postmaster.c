@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.58 1997/09/18 20:21:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.59 1997/10/25 01:09:55 momjian Exp $
  *
  * NOTES
  *
@@ -717,7 +717,7 @@ ConnStartup(Port *port, int *status,
 
 	msgType = (MsgType) ntohl(port->buf.msgtype);
 
-	strNcpy(namebuf, sp.user, NAMEDATALEN - 1);
+	StrNCpy(namebuf, sp.user, NAMEDATALEN);
 	if (!namebuf[0])
 	{
 		strncpy(errormsg,
@@ -1232,15 +1232,15 @@ DoExec(StartupInfo *packet, int portFd)
 	sprintf(portbuf, "-P%d", portFd);
 	av[ac++] = portbuf;
 
-	strNcpy(argbuf, packet->options, ARGV_SIZE);
+	StrNCpy(argbuf, packet->options, ARGV_SIZE);
 	strncat(argbuf, ExtraOptions, ARGV_SIZE);
 	argbuf[(2 * ARGV_SIZE)] = '\0';
 	split_opts(av, &ac, argbuf);
 
 	if (packet->database[0])
-		strNcpy(dbbuf, packet->database, ARGV_SIZE);
+		StrNCpy(dbbuf, packet->database, ARGV_SIZE);
 	else
-		strNcpy(dbbuf, packet->user, NAMEDATALEN - 1);
+		StrNCpy(dbbuf, packet->user, NAMEDATALEN);
 	av[ac++] = dbbuf;
 
 	av[ac] = (char *) NULL;

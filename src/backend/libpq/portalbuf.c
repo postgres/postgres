@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/portalbuf.c,v 1.7 1997/09/08 21:43:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/portalbuf.c,v 1.8 1997/10/25 01:09:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -384,7 +384,7 @@ void
 pbuf_setportalinfo(PortalEntry *entry, char *pname)
 {
 	if (entry)
-		strNcpy(entry->name, pname, PortalNameLength - 1);
+		StrNCpy(entry->name, pname, PortalNameLength);
 }
 
 /* --------------------------------

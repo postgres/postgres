@@ -2,7 +2,7 @@
  * Routines for handling of 'SET var TO', 'SHOW var' and 'RESET var'
  * statements.
  *
- * $Id: variable.c,v 1.16 1997/09/08 21:47:59 momjian Exp $
+ * $Id: variable.c,v 1.17 1997/10/25 01:10:22 momjian Exp $
  *
  */
 
@@ -73,7 +73,7 @@ get_token(char **tok, char **val, const char *str)
 	}
 
 	*tok = (char *) PALLOC(len + 1);
-	strNcpy(*tok, start, len);
+	StrNCpy(*tok, start, len+1);
 
 	/* skip white spaces */
 	while (isspace(*str))
@@ -119,7 +119,7 @@ get_token(char **tok, char **val, const char *str)
 	}
 
 	*val = (char *) PALLOC(len + 1);
-	strNcpy(*val, start, len);
+	StrNCpy(*val, start, len+1);
 
 	/* skip white spaces */
 	while (isspace(*str))

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/filename.c,v 1.10 1997/09/08 02:30:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/filename.c,v 1.11 1997/10/25 01:10:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,7 +59,7 @@ filename_in(char *file)
 		else
 		{
 			/* Someone else's directory */
-			char		name[16],
+			char		name[17],
 					   *p;
 			struct passwd *pw;
 			int			len;
@@ -72,7 +72,7 @@ filename_in(char *file)
 			else
 			{
 				len = (p - file) - 1;
-				strNcpy(name, file + 1, len);
+				StrNCpy(name, file + 1, len+1);
 			}
 			/* printf("name: %s\n"); */
 			if ((pw = getpwnam(name)) == NULL)
@@ -102,7 +102,7 @@ filename_in(char *file)
 		else
 		{
 			len = (p - file) - 1;
-			strNcpy(environment, file + 1, len);
+			StrNCpy(environment, file + 1, len+1);
 		}
 		envirp = getenv(environment);
 		if (envirp)

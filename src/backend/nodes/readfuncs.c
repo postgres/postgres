@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.9 1997/09/08 21:44:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.10 1997/10/25 01:09:30 momjian Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -92,7 +92,7 @@ _readQuery()
 		NotifyStmt *n = makeNode(NotifyStmt);
 
 		n->relname = palloc(length + 1);
-		strNcpy(n->relname, token, length);
+		StrNCpy(n->relname, token, length+1);
 		local_node->utilityStmt = (Node *) n;
 	}
 
@@ -111,7 +111,7 @@ _readQuery()
 	else
 	{
 		local_node->uniqueFlag = palloc(length + 1);
-		strNcpy(local_node->uniqueFlag, token, length);
+		StrNCpy(local_node->uniqueFlag, token, length+1);
 	}
 
 	token = lsptok(NULL, &length);		/* skip :targetlist */
@@ -1067,7 +1067,7 @@ _readAggreg()
 	token = lsptok(NULL, &length);		/* eat :aggname */
 	token = lsptok(NULL, &length);		/* get aggname */
 	local_node->aggname = (char *) palloc(length + 1);
-	strNcpy(local_node->aggname, token, length);
+	StrNCpy(local_node->aggname, token, length+1);
 
 	token = lsptok(NULL, &length);		/* eat :basetype */
 	token = lsptok(NULL, &length);		/* get basetype */

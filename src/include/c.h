@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.22 1997/09/18 18:48:32 momjian Exp $
+ * $Id: c.h,v 1.23 1997/10/25 01:10:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,7 +29,7 @@
  *		5)		IsValid macros for system types
  *		6)		offsetof, lengthof, endof
  *		7)		exception handling definitions, Assert, Trap, etc macros
- *		8)		Min, Max, Abs, strNcpy macros
+ *		8)		Min, Max, Abs, StrNCpy macros
  *		9)		externs
  *		10)		 Berkeley-specific defs
  *		11)		system-specific hacks
@@ -686,11 +686,15 @@ typedef struct Exception
 #define Abs(x)			((x) >= 0 ? (x) : -(x))
 
 /*
- * strNcpy --
+ * StrNCpy --
  *		Does string copy, and forces terminating NULL
  */
 /* we do this so if the macro is used in an if action, it will work */
-#define strNcpy(dst,src,len)	(strncpy((dst),(src),(len)),*((dst)+(len))='\0')
+#define StrNCpy(dst,src,len)	do { \
+							strncpy((dst),(src),(len)); \
+							if (len > 0) \
+								*((dst)+(len)-1)='\0'; \
+							} while (0)
 
 /* Get a bit mask of the bits set in non-int32 aligned addresses */
 #define INT_ALIGN_MASK (sizeof(int32) - 1)

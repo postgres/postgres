@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/portal.c,v 1.9 1997/09/08 21:43:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/portal.c,v 1.10 1997/10/25 01:09:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -154,7 +154,7 @@ PQpnames(char **pnames, int rule_p)
 		{
 			if (!rule_p || portals[i]->portal->rule_p)
 			{
-				strncpy(pnames[cur_pname], portals[i]->name, PortalNameLength);
+				strncpy(pnames[cur_pname], portals[i]->name, PortalNameLength+1);
 				++cur_pname;
 			}
 		}
@@ -730,7 +730,7 @@ PQappendNotify(char *relname, int pid)
 		pqNotifyList = DLNewList();
 
 	p = (PQNotifyList *) pbuf_alloc(sizeof(PQNotifyList));
-	strNcpy(p->relname, relname, NAMEDATALEN - 1);
+	StrNCpy(p->relname, relname, NAMEDATALEN);
 	p->be_pid = pid;
 	p->valid = 1;
 	DLAddTail(pqNotifyList, DLNewElem(p));

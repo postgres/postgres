@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/recipe.c,v 1.9 1997/09/08 21:42:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/recipe.c,v 1.10 1997/10/25 01:08:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1344,7 +1344,7 @@ replaceTeeScans(Plan *plan, Query *parsetree, TeeInfo * teeInfo)
 		if ((strlen(rte->refname) < 4) ||
 			(strcmp(rte->relname, rte->refname) != 0))
 			continue;
-		strNcpy(prefix, rte->refname, 4);
+		StrNCpy(prefix, rte->refname, 5);
 		if (strcmp(prefix, "tee_") == 0)
 		{
 			/* okay, we found a tee node entry in the range table */
