@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Feb 19 22:50:15 EST 2002
+Last updated:		Thu Feb 21 00:10:15 EST 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -33,8 +33,7 @@ REPORTING
 * Allow elog() to return error codes, module name, file name, line
   number, not just messages (Peter E)
 * Add error codes (Peter E)
-* Change DEBUG startup tag to NOTICE;  change NOTICE to output to client
-  only if client exists (Bruce)
+* Change DEBUG startup tag to NOTICE (Bruce)
 * Show location of syntax error in query [yacc]
 
 
@@ -50,7 +49,7 @@ PERMISSIONS
 * Make single-user local access permissions the default by limiting
   permissions on the socket file (Peter E)
 * Use thread-safe crypt() in libpq, if available
-
+* -Allow permissions for functions (Peter E)
 
 ADMIN
 -----
@@ -397,7 +396,7 @@ WRITE-AHEAD LOG
   partial page writes
 * Turn off after-change writes if fsync is disabled (?)
 * Add WAL index reliability improvement to non-btree indexes
-* Reorder postgresql.conf WAL items in order of importance
+* -Reorder postgresql.conf WAL items in order of importance (Bruce)
 * Remove wal_files postgresql.conf option because WAL files are now recycled
 * Find proper defaults for postgresql.conf WAL entries
 * Add checkpoint_min_warning postgresql.conf option to warn about checkpoints
@@ -466,6 +465,7 @@ SOURCE CODE
 * Change representation of whole-tuple parameters to functions
 * Evaluate AIX cs() spinlock macro for performance optimizations (Tatsuo)
 * Clarify use of 'application' and 'command' tags in SGML docs
+* Allow ability to easily build only certain interfaces (Marc)
 
 
 ---------------------------------------------------------------------------
