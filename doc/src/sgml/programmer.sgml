@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/programmer.sgml,v 1.39 2002/01/07 02:29:13 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/programmer.sgml,v 1.40 2002/08/22 03:17:38 momjian Exp $
 
 PostgreSQL Programmer's Guide.
 -->
@@ -29,7 +29,6 @@ PostgreSQL Programmer's Guide.
 
   &libpq;
   &lobj;
-  &libpqpp;
   &libpgtcl;
   &libpgeasy;
   &ecpg;
