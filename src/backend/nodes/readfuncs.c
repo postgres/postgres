@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.54 1999/02/11 14:58:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.55 1999/02/12 05:56:46 momjian Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -1333,12 +1333,6 @@ _readRelOptInfo()
 	 * Path *.	Since i don't know, i'll just print the addresses for now.
 	 * This can be changed later, if necessary.
 	 */
-
-	token = lsptok(NULL, &length);		/* get :unorderpath */
-	token = lsptok(NULL, &length);		/* get @ */
-	token = lsptok(NULL, &length);		/* now read it */
-
-	sscanf(token, "%x", (unsigned int *) &local_node->unorderedpath);
 
 	token = lsptok(NULL, &length);		/* get :cheapestpath */
 	token = lsptok(NULL, &length);		/* get @ */

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relation.h,v 1.19 1999/02/11 14:59:03 momjian Exp $
+ * $Id: relation.h,v 1.20 1999/02/12 05:57:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,10 +41,6 @@ typedef List *Relid;
  *		targetlist - List of TargetList nodes
  *		pathlist - List of Path nodes, one for each possible method of
  *				   generating the relation
- *		unorderedpath - a Path node generating this relation whose resulting
- *						tuples are unordered (this isn't necessarily a
- *						sequential scan path, e.g., scanning with a hash index
- *						leaves the tuples unordered)
  *		cheapestpath -	least expensive Path (regardless of final order)
  *		pruneable - flag to let the planner know whether it can prune the plan
  *					space of this RelOptInfo or not.
@@ -88,7 +84,6 @@ typedef struct RelOptInfo
 	/* materialization information */
 	List	   *targetlist;
 	List	   *pathlist;		/* Path structures */
-	struct Path *unorderedpath;
 	struct Path *cheapestpath;
 	bool		pruneable;
 

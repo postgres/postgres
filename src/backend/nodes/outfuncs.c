@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: outfuncs.c,v 1.69 1999/02/11 14:58:49 momjian Exp $
+ *  $Id: outfuncs.c,v 1.70 1999/02/12 05:56:46 momjian Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -879,8 +879,7 @@ _outRelOptInfo(StringInfo str, RelOptInfo *node)
 	 */
 
 	appendStringInfo(str, 
-			" :unorderedpath @ 0x%x :cheapestpath @ 0x%x :pruneable %s :restrictinfo ",
-			(int) node->unorderedpath,
+			" :cheapestpath @ 0x%x :pruneable %s :restrictinfo ",
 			(int) node->cheapestpath,
 			node->pruneable ? "true" : "false");
 	_outNode(str, node->restrictinfo);

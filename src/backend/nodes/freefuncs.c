@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/Attic/freefuncs.c,v 1.7 1999/02/11 14:58:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/Attic/freefuncs.c,v 1.8 1999/02/12 05:56:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -724,7 +724,6 @@ _freeRelOptInfo(RelOptInfo *node)
 
 	freeObject(node->targetlist);
 	freeObject(node->pathlist);
-	freeObject(node->unorderedpath);
 	freeObject(node->cheapestpath);
 
 	if (node->classlist)

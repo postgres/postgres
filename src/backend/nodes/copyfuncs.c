@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.67 1999/02/11 14:58:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.68 1999/02/12 05:56:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1026,7 +1026,6 @@ _copyRelOptInfo(RelOptInfo * from)
 	newnode->width = from->width;
 	Node_Copy(from, newnode, targetlist);
 	Node_Copy(from, newnode, pathlist);
-	Node_Copy(from, newnode, unorderedpath);
 	Node_Copy(from, newnode, cheapestpath);
 	newnode->pruneable = from->pruneable;
 

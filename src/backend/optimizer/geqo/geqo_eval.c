@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_eval.c,v 1.27 1999/02/10 21:02:34 momjian Exp $
+ * $Id: geqo_eval.c,v 1.28 1999/02/12 05:56:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -161,8 +161,7 @@ gimme_tree(Query *root, Gene *tour, int rel_count, int num_gene, RelOptInfo *out
 			new_rel = (RelOptInfo *) lfirst(new_rels);
 			rel_count++;
 
-			/* process new_rel->cheapestpath, new_rel->unorderedpath */
-			geqo_rel_paths(new_rel);
+			geqo_set_cheapest(new_rel);
 
 			/* processing of other new_rel attributes */
 			if (new_rel->size <= 0)
@@ -282,7 +281,6 @@ init_join_rel(RelOptInfo *outer_rel, RelOptInfo *inner_rel, JoinInfo * joininfo)
 	joinrel->width = 0;
 /*	  joinrel->targetlist = NIL;*/
 	joinrel->pathlist = NIL;
-	joinrel->unorderedpath = (Path *) NULL;
 	joinrel->cheapestpath = (Path *) NULL;
 	joinrel->pruneable = true;
 	joinrel->classlist = NULL;

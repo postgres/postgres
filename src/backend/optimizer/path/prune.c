@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/prune.c,v 1.27 1999/02/11 14:58:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/prune.c,v 1.28 1999/02/12 05:56:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,42 +77,28 @@ prune_joinrel(RelOptInfo *rel, List *other_rels)
 										 rel->pathlist,
 										 other_rel->pathlist);
 		else
-			result = nconc(result, lcons(other_rel, NIL));
+			result = lappend(result, other_rel);
 	}
 	return result;
 }
 
 /*
- * prune-rel-paths--
+ * rels-set-cheapest
  *	  For each relation entry in 'rel-list' (which corresponds to a join
- *	  relation), set pointers to the unordered path and cheapest paths
- *	  (if the unordered path isn't the cheapest, it is pruned), and
- *	  reset the relation's size field to reflect the join.
- *
- * Returns nothing of interest.
- *
+ *	  relation), set pointers to the cheapest path
  */
 void
-prune_rel_paths(List *rel_list)
+rels_set_cheapest(List *rel_list)
 {
 	List	   *x = NIL;
-	List	   *y = NIL;
-	Path	   *path = NULL;
 	RelOptInfo *rel = (RelOptInfo *) NULL;
-	JoinPath   *cheapest = (JoinPath *) NULL;
+	JoinPath	*cheapest;
 
 	foreach(x, rel_list)
 	{
 		rel = (RelOptInfo *) lfirst(x);
-		rel->size = 0;
-		foreach(y, rel->pathlist)
-		{
-			path = (Path *) lfirst(y);
 
-			if (!path->pathorder->ord.sortop)
-				break;
-		}
-		cheapest = (JoinPath *) prune_rel_path(rel, path);
+		cheapest = (JoinPath *) set_cheapest(rel, rel->pathlist);
 		if (IsA_JoinPath(cheapest))
 			rel->size = compute_joinrel_size(cheapest);
 		else
@@ -120,33 +106,6 @@ prune_rel_paths(List *rel_list)
 	}
 }
 
-
-/*
- * prune-rel-path--
- *	  Compares the unordered path for a relation with the cheapest path. If
- *	  the unordered path is not cheapest, it is pruned.
- *
- *	  Resets the pointers in 'rel' for unordered and cheapest paths.
- *
- * Returns the cheapest path.
- *
- */
-Path *
-prune_rel_path(RelOptInfo *rel, Path *unorderedpath)
-{
-	Path	   *cheapest = set_cheapest(rel, rel->pathlist);
-
-	/* don't prune if not pruneable  -- JMH, 11/23/92 */
-	if (unorderedpath != cheapest && rel->pruneable)
-	{
-		rel->unorderedpath = (Path *) NULL;
-		rel->pathlist = lremove(unorderedpath, rel->pathlist);
-	}
-	else
-		rel->unorderedpath = (Path *) unorderedpath;
-
-	return cheapest;
-}
 
 /*
  * merge-joinrels--

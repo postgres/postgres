@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.11 1999/02/09 17:03:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.12 1999/02/12 05:56:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,6 @@ get_base_rel(Query *root, int relid)
 		rel->width = 0;
 		rel->targetlist = NIL;
 		rel->pathlist = NIL;
-		rel->unorderedpath = (Path *) NULL;
 		rel->cheapestpath = (Path *) NULL;
 		rel->pruneable = true;
 		rel->classlist = NULL;

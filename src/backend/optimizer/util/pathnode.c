@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.32 1999/02/12 02:37:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.33 1999/02/12 05:56:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -159,12 +159,21 @@ better_path(Path *new_path, List *unique_paths, bool *is_new)
 	List	   *temp = NIL;
 	int			better_key;
 	int			better_sort;
-	
+
+#ifdef OPTDUP_DEBUG
+	printf("better_path entry\n");
+	printf("new\n");
+	pprint(new_path);
+	printf("unique_paths\n");
+	pprint(unique_paths);
+#endif
+
 	foreach(temp, unique_paths)
 	{
 		path = (Path *) lfirst(temp);
 
-#ifdef OPTDUP_DEBUG
+#if 0
+/*def OPTDUP_DEBUG*/
 		if (!pathkeys_match(new_path->pathkeys, path->pathkeys, &better_key) ||
 		    better_key != 0)
 		{
@@ -210,6 +219,13 @@ better_path(Path *new_path, List *unique_paths, bool *is_new)
 				  (better_key != 2 && better_sort == 1)) &&
 				  new_path->path_cost <= path->path_cost))
 			{
+#ifdef OPTDUP_DEBUG
+				printf("replace with new %p old %p better key %d better sort %d\n", &new_path, &path, better_key, better_sort);
+				printf("old\n");
+				pprint(path);
+				printf("new\n");
+				pprint(new_path);
+#endif
 				*is_new = false;
 				return path;
 			}
@@ -223,12 +239,12 @@ better_path(Path *new_path, List *unique_paths, bool *is_new)
 				  (better_key != 1 && better_sort == 2)) &&
 				  new_path->path_cost >= path->path_cost))
 			{
-#ifdef OPTDB_DEBUG
-				printf("better key %d better sort %d\n", better_key, better_sort);
-				printf("new\n");
-				pprint(new_path);
+#ifdef OPTDUP_DEBUG
+				printf("skip new %p old %p better key %d better sort %d\n", &new_path, &path, better_key, better_sort);
 				printf("old\n");
 				pprint(path);
+				printf("new\n");
+				pprint(new_path);
 #endif
 				*is_new = false;
 				return NULL;
@@ -236,6 +252,12 @@ better_path(Path *new_path, List *unique_paths, bool *is_new)
 		}
 	}
 
+#ifdef OPTDUP_DEBUG
+				printf("add new %p old %p better key %d better sort %d\n", &new_path, &path, better_key, better_sort);
+				printf("new\n");
+				pprint(new_path);
+#endif
+	
 	*is_new = true;
 	return NULL;
 }
