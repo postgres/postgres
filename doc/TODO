@@ -1,7 +1,7 @@
 ====================================================
 TODO list (FAQ) for PostgreSQL
 ====================================================
-last updated:		Sun Jul 13 23:13:24 EDT 1997
+last updated:		Mon Jul 21 18:01:37 EDT 1997
 
 current maintainer:	Bruce Momjian (maillist@candle.pha.pa.us)
 
@@ -128,6 +128,7 @@ make number of backends a config parameter, storage/sinvaladt.h:MaxBackendId
 certain indexes will not shrink, i.e. oid indexes with many inserts
 make NULL's come out at the beginning or end depending on the ORDER BY direction
 change the library/backend interface to use network byte order
+allow unix domain sockets for local connections for performance and security
 
 PERFORMANCE
 -----------

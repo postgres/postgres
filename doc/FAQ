@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Mon Jul 14 12:27:39 EDT 1997
+   Last updated: Mon Jul 21 18:04:00 EDT 1997
    Version: 6.1.1
    
    Current maintainer: Bruce Momjian (maillist@candle.pha.pa.us)
@@ -255,9 +255,9 @@ Section 1: General Questions
      
   1.6) Latest release of PostgreSQL
   
-   The latest release of PostgreSQL is version 6.1.1, which will be
-   released in July, 1997. For information about what is new in 6.1.1,
-   see our TODO list on our WWW page.
+   The latest release of PostgreSQL is version 6.1.1, which was released
+   on July 22, 1997. For information about what is new in 6.1.1, see our
+   TODO list on our WWW page.
    
    We expect a 7.0 release in several months that will remove time-travel
    and reduce by 50% the size of on-disk system columns maintained for
@@ -304,9 +304,10 @@ Section 1: General Questions
    
    Upgrading to 6.1 requires a dump and restore from previous releases.
    
-   Upgrading from 6.1 to 6.1.1 requires a compile of the new release,
-   recompile of all your custom applications to use the new libpq, and
-   then an install while the postmaster is temporarily stopped.
+   Upgrading from 6.1 to 6.1.1 requires running configure, compile of the
+   new release, recompile of all your custom applications to use the new
+   libpq, and then an install while the postmaster is temporarily
+   stopped.
    
    Those ugrading from versions earlier than 1.09 must upgrade to 1.09
    first without a dump/reload, then dump the data from 1.09, and then
@@ -647,7 +648,7 @@ BYTEA           bytea           variable-length array of bytes
    index. You need to define a function which acts on the multiple
    columns, then use create index with that function.
    
-   In 6.1, this feature is available.
+   This feature is available in 6.1 and later releases.
    
   3.25) What are the temp_XXX files in my database directory?
   
