@@ -58,7 +58,7 @@ static void		_SortToc(ArchiveHandle* AH, TocSortCompareFn fn);
 static int		_tocSortCompareByOIDNum(const void *p1, const void *p2);
 static int		_tocSortCompareByIDNum(const void *p1, const void *p2);
 static ArchiveHandle* 	_allocAH(const char* FileSpec, const ArchiveFormat fmt, 
-				int compression, ArchiveMode mode);
+				const int compression, ArchiveMode mode);
 static int 		_printTocEntry(ArchiveHandle* AH, TocEntry* te, RestoreOptions *ropt);
 
 static void		_reconnectAsOwner(ArchiveHandle* AH, const char *dbname, TocEntry* te);
