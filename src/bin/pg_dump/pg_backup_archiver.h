@@ -17,7 +17,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.35 2001/06/27 21:21:37 petere Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.36 2001/07/03 20:21:48 petere Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *	-	Initial version.
@@ -316,8 +316,8 @@ extern char *ConnectedUser(ArchiveHandle *AH);
 extern int	ConnectedUserIsSuperuser(ArchiveHandle *AH);
 
 int			ahwrite(const void *ptr, size_t size, size_t nmemb, ArchiveHandle *AH);
-int			ahprintf(ArchiveHandle *AH, const char *fmt,...);
+int			ahprintf(ArchiveHandle *AH, const char *fmt,...) __attribute__((format(printf,2,3)));
 
-void		ahlog(ArchiveHandle *AH, int level, const char *fmt,...);
+void		ahlog(ArchiveHandle *AH, int level, const char *fmt,...) __attribute__((format(printf,3,4)));
 
 #endif

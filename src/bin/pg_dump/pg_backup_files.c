@@ -20,7 +20,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_files.c,v 1.11 2001/06/27 21:21:37 petere Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_files.c,v 1.12 2001/07/03 20:21:48 petere Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *
@@ -74,7 +74,7 @@ typedef struct
 	char	   *filename;
 } lclTocEntry;
 
-static char *modulename = "file archiver";
+static char *modulename = gettext_noop("file archiver");
 static void _LoadBlobs(ArchiveHandle *AH, RestoreOptions *ropt);
 static void _getBlobTocEntry(ArchiveHandle *AH, int *oid, char *fname);
 
@@ -120,7 +120,7 @@ InitArchiveFmt_Files(ArchiveHandle *AH)
 	{
 
 		write_msg(modulename, "WARNING:\n"
-				  "  This format is for demonstration purposes, it is not intended for\n"
+				  "  This format is for demonstration purposes; it is not intended for\n"
 				  "  normal use. Files will be written in the current working directory.\n");
 
 		if (AH->fSpec && strcmp(AH->fSpec, "") != 0)

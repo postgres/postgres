@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.28 2001/06/27 21:21:37 petere Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.29 2001/07/03 20:21:48 petere Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *
@@ -91,7 +91,7 @@ static void _fixupOidInfo(TocEntry *te);
 static Oid _findMaxOID(const char *((*deps)[]));
 
 const char *progname;
-static char *modulename = "archiver";
+static char *modulename = gettext_noop("archiver");
 
 static void _write_msg(const char *modulename, const char *fmt, va_list ap);
 static void _die_horribly(ArchiveHandle *AH, const char *modulename, const char *fmt, va_list ap);
@@ -170,7 +170,7 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 	 */
 	if (ropt->useDB)
 	{
-		ahlog(AH, 1, "Connecting to database for restore\n");
+		ahlog(AH, 1, "connecting to database for restore\n");
 		if (AH->version < K_VERS_1_3)
 			die_horribly(AH, modulename, "direct database connections are not supported in pre-1.3 archives\n");
 
@@ -219,7 +219,7 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 		if (impliedDataOnly)
 		{
 			ropt->dataOnly = impliedDataOnly;
-			ahlog(AH, 1, "Implied data-only restore\n");
+			ahlog(AH, 1, "implied data-only restore\n");
 		}
 	}
 
@@ -247,8 +247,9 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 		{
 			reqs = _tocEntryRequired(te, ropt);
 			if (((reqs & 1) != 0) && te->dropStmt)
-			{					/* We want the schema */
-				ahlog(AH, 1, "Dropping %s %s\n", te->desc, te->name);
+			{
+				/* We want the schema */
+				ahlog(AH, 1, "dropping %s %s\n", te->desc, te->name);
 				/* Reconnect if necessary */
 				_reconnectAsOwner(AH, "-", te);
 				/* Drop it */
@@ -284,14 +285,14 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 			/* Reconnect if necessary */
 			_reconnectAsOwner(AH, "-", te);
 
-			ahlog(AH, 1, "Creating %s %s\n", te->desc, te->name);
+			ahlog(AH, 1, "creating %s %s\n", te->desc, te->name);
 			_printTocEntry(AH, te, ropt, false);
 			defnDumped = true;
 
 			/* If we created a DB, connect to it... */
 			if (strcmp(te->desc, "DATABASE") == 0)
 			{
-				ahlog(AH, 1, "Connecting to new DB '%s' as %s\n", te->name, te->owner);
+				ahlog(AH, 1, "connecting to new database %s as user %s\n", te->name, te->owner);
 				_reconnectAsUser(AH, te->name, te->owner);
 			}
 		}	
@@ -346,7 +347,7 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 						 */
 						_reconnectAsOwner(AH, "-", te);
 
-						ahlog(AH, 1, "Restoring data for %s \n", te->name);
+						ahlog(AH, 1, "restoring data for table %s\n", te->name);
 
 						/*
 						 * If we have a copy statement, use it. As of V1.3, these
@@ -367,7 +368,7 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 				}
 			} else if (!defnDumped) {
 				/* If we haven't already dumped the defn part, do so now */ 
-				ahlog(AH, 1, "Executing %s %s\n", te->desc, te->name);
+				ahlog(AH, 1, "executing %s %s\n", te->desc, te->name);
 				_printTocEntry(AH, te, ropt, false);
 			}
 		}
@@ -391,18 +392,18 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 			if (strcmp(te->desc, "TABLE DATA") == 0)
 			{
 
-				ahlog(AH, 2, "Checking if we loaded %s\n", te->name);
+				ahlog(AH, 2, "checking whether we loaded %s\n", te->name);
 
 				reqs = _tocEntryRequired(te, ropt);
 
 				if ((reqs & 2) != 0)	/* We loaded the data */
 				{
-					ahlog(AH, 1, "Fixing up BLOB ref for %s\n", te->name);
+					ahlog(AH, 1, "fixing up BLOB reference for %s\n", te->name);
 					FixupBlobRefs(AH, te->name);
 				}
 			}
 			else
-				ahlog(AH, 2, "Ignoring BLOB xrefs for %s %s\n", te->desc, te->name);
+				ahlog(AH, 2, "ignoring BLOB cross-references for %s %s\n", te->desc, te->name);
 
 			te = te->next;
 		}
@@ -489,7 +490,7 @@ _disableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te, RestoreOptions *rop
 		}
 	}
 
-	ahlog(AH, 1, "Disabling triggers\n");
+	ahlog(AH, 1, "disabling triggers\n");
 
 	/*
 	 * Disable them. This is a hack. Needs to be done via an appropriate
@@ -549,7 +550,7 @@ _enableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt
 		}
 	}
 
-	ahlog(AH, 1, "Enabling triggers\n");
+	ahlog(AH, 1, "enabling triggers\n");
 
 	/*
 	 * Enable them. This is a hack. Needs to be done via an appropriate
@@ -752,14 +753,14 @@ EndRestoreBlobs(ArchiveHandle *AH)
 {
 	if (AH->txActive)
 	{
-		ahlog(AH, 2, "Committing BLOB transactions\n");
+		ahlog(AH, 2, "committing BLOB transactions\n");
 		CommitTransaction(AH);
 	}
 
 	if (AH->blobTxActive)
 		CommitTransactionXref(AH);
 
-	ahlog(AH, 1, "Restored %d BLOBs\n", AH->blobCount);
+	ahlog(AH, 1, "restored %d BLOBs\n", AH->blobCount);
 }
 
 
@@ -769,7 +770,7 @@ EndRestoreBlobs(ArchiveHandle *AH)
 void
 StartRestoreBlob(ArchiveHandle *AH, Oid oid)
 {
-	int			loOid;
+	Oid			loOid;
 
 	AH->blobCount++;
 
@@ -787,7 +788,7 @@ StartRestoreBlob(ArchiveHandle *AH, Oid oid)
 	 */
 	if (!AH->txActive)
 	{
-		ahlog(AH, 2, "Starting BLOB transactions\n");
+		ahlog(AH, 2, "starting BLOB transactions\n");
 		StartTransaction(AH);
 	}
 	if (!AH->blobTxActive)
@@ -797,7 +798,7 @@ StartRestoreBlob(ArchiveHandle *AH, Oid oid)
 	if (loOid == 0)
 		die_horribly(AH, modulename, "could not create BLOB\n");
 
-	ahlog(AH, 2, "Restoring BLOB oid %d as %d\n", oid, loOid);
+	ahlog(AH, 2, "restoring BLOB oid %u as %u\n", oid, loOid);
 
 	InsertBlobXref(AH, oid, loOid);
 
@@ -819,7 +820,7 @@ EndRestoreBlob(ArchiveHandle *AH, Oid oid)
 	 */
 	if (((AH->blobCount / BLOB_BATCH_SIZE) * BLOB_BATCH_SIZE) == AH->blobCount)
 	{
-		ahlog(AH, 2, "Committing BLOB transactions\n");
+		ahlog(AH, 2, "committing BLOB transactions\n");
 		CommitTransaction(AH);
 		CommitTransactionXref(AH);
 	}
@@ -1166,7 +1167,7 @@ ahlog(ArchiveHandle *AH, int level, const char *fmt,...)
 		return;
 
 	va_start(ap, fmt);
-	vfprintf(stderr, fmt, ap);
+	_write_msg(NULL, fmt, ap);
 	va_end(ap);
 }
 
@@ -1193,7 +1194,7 @@ ahwrite(const void *ptr, size_t size, size_t nmemb, ArchiveHandle *AH)
 	if (AH->writingBlob)
 	{
 		res = lo_write(AH->connection, AH->loFd, (void *) ptr, size * nmemb);
-		ahlog(AH, 5, "Wrote %d bytes of BLOB data (result = %d)\n", size * nmemb, res);
+		ahlog(AH, 5, "wrote %d bytes of BLOB data (result = %d)\n", size * nmemb, res);
 		if (res < size * nmemb)
 			die_horribly(AH, modulename, "could not write to large object (result: %d, expected: %d)\n",
 						 res, size * nmemb);
@@ -1239,7 +1240,7 @@ static void
 _write_msg(const char *modulename, const char *fmt, va_list ap)
 {
 	if (modulename)
-		fprintf(stderr, "%s[%s]: ", progname, gettext(modulename));
+		fprintf(stderr, "%s: [%s] ", progname, gettext(modulename));
 	else
 		fprintf(stderr, "%s: ", progname);
 	vfprintf(stderr, gettext(fmt), ap);
@@ -1260,6 +1261,8 @@ static void
 _die_horribly(ArchiveHandle *AH, const char *modulename, const char *fmt, va_list ap)
 {
 	_write_msg(modulename, fmt, ap);
+	if (AH->public.verbose)
+		write_msg(NULL, "*** aborted because of error\n");
 
 	if (AH)
 		if (AH->connection)
@@ -1813,7 +1816,7 @@ ReadToc(ArchiveHandle *AH)
 		if (AH->ReadExtraTocPtr)
 			(*AH->ReadExtraTocPtr) (AH, te);
 
-		ahlog(AH, 3, "Read TOC entry %d (id %d) for %s %s\n", i, te->id, te->desc, te->name);
+		ahlog(AH, 3, "read TOC entry %d (id %d) for %s %s\n", i, te->id, te->desc, te->name);
 
 		te->prev = AH->toc->prev;
 		AH->toc->prev->next = te;
@@ -2052,7 +2055,7 @@ ReadHead(ArchiveHandle *AH)
 		AH->createDate = mktime(&crtm);
 
 		if (AH->createDate == (time_t) -1)
-			write_msg(modulename, "WARNING: bad creation date in header\n");
+			write_msg(modulename, "WARNING: invalid creation date in header\n");
 	}
 
 }

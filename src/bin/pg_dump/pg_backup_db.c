@@ -5,7 +5,7 @@
  *	Implements the basic DB functions used by the archiver.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.20 2001/06/27 21:21:37 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.21 2001/07/03 20:21:48 petere Exp $
  *
  * NOTES
  *
@@ -20,7 +20,6 @@
  *-------------------------------------------------------------------------
  */
 
-#include "pg_dump.h"
 #include "pg_backup.h"
 #include "pg_backup_archiver.h"
 #include "pg_backup_db.h"
@@ -38,7 +37,7 @@
 #include "strdup.h"
 #endif
 
-static const char *modulename = "archiver (db)";
+static const char *modulename = gettext_noop("archiver (db)");
 
 static void _check_database_version(ArchiveHandle *AH, bool ignoreVersion);
 static PGconn *_connectDB(ArchiveHandle *AH, const char *newdbname, char *newUser);
@@ -275,7 +274,7 @@ _connectDB(ArchiveHandle *AH, const char *reqdb, char *requser)
 	else
 		newuser = (char *) requser;
 
-	ahlog(AH, 1, "Connecting to %s as %s\n", newdb, newuser);
+	ahlog(AH, 1, "connecting to database %s as user %s\n", newdb, newuser);
 
 	if (AH->requirePassword)
 	{
@@ -347,7 +346,7 @@ ConnectDatabase(Archive *AHX,
 	bool		need_pass = false;
 
 	if (AH->connection)
-		die_horribly(AH, modulename, "already connected to database\n");
+		die_horribly(AH, modulename, "already connected to a database\n");
 
 	if (!dbname && !(dbname = getenv("PGDATABASE")))
 		die_horribly(AH, modulename, "no database name specified\n");
@@ -449,7 +448,7 @@ _executeSqlCommand(ArchiveHandle *AH, PGconn *conn, PQExpBuffer qry, char *desc)
 	/* fprintf(stderr, "Executing: '%s'\n\n", qry->data); */
 	res = PQexec(conn, qry->data);
 	if (!res)
-		die_horribly(AH, modulename, "%s: no result from backend\n", desc);
+		die_horribly(AH, modulename, "%s: no result from server\n", desc);
 
 	if (PQresultStatus(res) != PGRES_COMMAND_OK && PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
@@ -701,7 +700,7 @@ FixupBlobRefs(ArchiveHandle *AH, char *tablename)
 	if ((n = PQntuples(res)) == 0)
 	{
 		/* We're done */
-		ahlog(AH, 1, "No OID attributes in table %s\n", tablename);
+		ahlog(AH, 1, "no OID type columns in table %s\n", tablename);
 		PQclear(res);
 		return;
 	}
@@ -710,7 +709,7 @@ FixupBlobRefs(ArchiveHandle *AH, char *tablename)
 	{
 		attr = PQgetvalue(res, i, 0);
 
-		ahlog(AH, 1, " - %s.%s\n", tablename, attr);
+		ahlog(AH, 1, "fixing BLOB cross-references for %s.%s\n", tablename, attr);
 
 		resetPQExpBuffer(tblQry);
 
@@ -725,7 +724,7 @@ FixupBlobRefs(ArchiveHandle *AH, char *tablename)
 				  "(select * from %s x where x.oldOid = \"%s\".\"%s\");",
 						  BLOB_XREF_TABLE, tablename, attr);
 
-		ahlog(AH, 10, " - sql:\n%s\n", tblQry->data);
+		ahlog(AH, 10, "SQL: %s\n", tblQry->data);
 
 		uRes = PQexec(AH->blobConnection, tblQry->data);
 		if (!uRes)
@@ -757,7 +756,7 @@ CreateBlobXrefTable(ArchiveHandle *AH)
 	if (!AH->blobConnection)
 		AH->blobConnection = _connectDB(AH, NULL, NULL);
 
-	ahlog(AH, 1, "Creating table for BLOBS xrefs\n");
+	ahlog(AH, 1, "creating table for BLOB cross-references\n");
 
 	appendPQExpBuffer(qry, "Create Temporary Table %s(oldOid oid, newOid oid);", BLOB_XREF_TABLE);
 

@@ -19,7 +19,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_custom.c,v 1.12 2001/06/27 21:21:37 petere Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_custom.c,v 1.13 2001/07/03 20:21:48 petere Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *
@@ -102,7 +102,7 @@ static void _EndDataCompressor(ArchiveHandle *AH, TocEntry *te);
 static int	_getFilePos(ArchiveHandle *AH, lclContext *ctx);
 static int	_DoDeflate(ArchiveHandle *AH, lclContext *ctx, int flush);
 
-static char *modulename = "custom archiver";
+static char *modulename = gettext_noop("custom archiver");
 
 
 
@@ -193,7 +193,7 @@ InitArchiveFmt_Custom(ArchiveHandle *AH)
 		else
 			AH->FH = stdin;
 		if (!AH->FH)
-			die_horribly(AH, modulename, "could not open archive file %s: %s", AH->fSpec, strerror(errno));
+			die_horribly(AH, modulename, "could not open archive file %s: %s\n", AH->fSpec, strerror(errno));
 
 		ctx->hasSeek = (fseek(AH->FH, 0, SEEK_CUR) == 0);
 

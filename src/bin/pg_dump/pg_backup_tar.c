@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.16 2001/06/27 21:21:37 petere Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.17 2001/07/03 20:21:48 petere Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *
@@ -101,7 +101,7 @@ typedef struct
 	char	   *filename;
 } lclTocEntry;
 
-static char *modulename = "tar archiver";
+static char *modulename = gettext_noop("tar archiver");
 
 static void _LoadBlobs(ArchiveHandle *AH, RestoreOptions *ropt);
 
@@ -698,7 +698,7 @@ _PrintTocData(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt)
 static void
 _LoadBlobs(ArchiveHandle *AH, RestoreOptions *ropt)
 {
-	int			oid;
+	Oid			oid;
 	lclContext *ctx = (lclContext *) AH->formatData;
 	TAR_MEMBER *th;
 	int			cnt;
@@ -711,11 +711,11 @@ _LoadBlobs(ArchiveHandle *AH, RestoreOptions *ropt)
 	{
 		ctx->FH = th;
 
-		oid = atoi(&th->targetFile[5]);
+		oid = (Oid)strtoul(&th->targetFile[5], NULL, 10);
 
 		if (strncmp(th->targetFile, "blob_", 5) == 0 && oid != 0)
 		{
-			ahlog(AH, 1, " - Restoring BLOB oid %d\n", oid);
+			ahlog(AH, 1, "restoring BLOB oid %u\n", oid);
 
 			StartRestoreBlob(AH, oid);
 
@@ -1088,7 +1088,7 @@ _tarPositionTo(ArchiveHandle *AH, const char *filename)
 	/* Go to end of current file, if any */
 	if (ctx->tarFHpos != 0)
 	{
-		ahlog(AH, 4, "Moving from %d (%x) to next member at file position %d (%x)\n",
+		ahlog(AH, 4, "moving from position %d (%x) to next member at file position %d (%x)\n",
 			  ctx->tarFHpos, ctx->tarFHpos,
 			  ctx->tarNextMember, ctx->tarNextMember);
 
@@ -1096,7 +1096,7 @@ _tarPositionTo(ArchiveHandle *AH, const char *filename)
 			_tarReadRaw(AH, &c, 1, NULL, ctx->tarFH);
 	}
 
-	ahlog(AH, 4, "Now at file position %d (%x)\n", ctx->tarFHpos, ctx->tarFHpos);
+	ahlog(AH, 4, "now at file position %d (%x)\n", ctx->tarFHpos, ctx->tarFHpos);
 
 	/* We are at the start of the file. or at the next member */
 
@@ -1115,7 +1115,7 @@ _tarPositionTo(ArchiveHandle *AH, const char *filename)
 
 	while (filename != NULL && strcmp(th->targetFile, filename) != 0)
 	{
-		ahlog(AH, 4, "Skipping member %s\n", th->targetFile);
+		ahlog(AH, 4, "skipping tar member %s\n", th->targetFile);
 
 		id = atoi(th->targetFile);
 		if ((TocIDRequired(AH, id, AH->ropt) & 2) != 0)
@@ -1202,7 +1202,7 @@ _tarGetHeader(ArchiveHandle *AH, TAR_MEMBER *th)
 	sscanf(&h[124], "%12o", &len);
 	sscanf(&h[148], "%8o", &sum);
 
-	ahlog(AH, 3, "TOC Entry %s at %d (len=%d, chk=%d)\n", &name[0], hPos, len, sum);
+	ahlog(AH, 3, "TOC Entry %s at %d (length %d, checksum %d)\n", &name[0], hPos, len, sum);
 
 	if (chk != sum)
 		die_horribly(AH, modulename,

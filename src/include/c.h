@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.95 2001/06/03 14:53:56 petere Exp $
+ * $Id: c.h,v 1.96 2001/07/03 20:21:50 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,6 +73,8 @@
 #else
 #define gettext(x) (x)
 #endif
+#define gettext_noop(x) (x)
+
 
 /* ----------------------------------------------------------------
  *				Section 1: hacks to cope with non-ANSI C compilers

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.56 2001/06/27 21:21:36 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.57 2001/07/03 20:21:47 petere Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -179,7 +179,7 @@ findParentsByOid(TableInfo *tblinfo, int numTables,
 								   inhinfo[i].inhparent,
 								   oid);
 
-					exit(2);
+					exit_nicely();
 				}
 				(**parentIndexes)[j] = parentInd;
 				result[j++] = tblinfo[parentInd].relname;
@@ -219,7 +219,7 @@ parseNumericArray(const char *str, char **array, int arraysize)
 				if (argNum >= arraysize)
 				{
 					write_msg(NULL, "parseNumericArray: too many numbers\n");
-					exit(2);
+					exit_nicely();
 				}
 				temp[j] = '\0';
 				array[argNum++] = strdup(temp);
@@ -234,7 +234,7 @@ parseNumericArray(const char *str, char **array, int arraysize)
 				j >= sizeof(temp) - 1)
 			{
 				write_msg(NULL, "parseNumericArray: bogus number\n");
-				exit(2);
+				exit_nicely();
 			}
 			temp[j++] = s;
 		}
@@ -297,69 +297,57 @@ dumpSchema(Archive *fout,
 	IndInfo    *indinfo = NULL;
 
 	if (g_verbose)
-		fprintf(stderr, "%s reading user-defined types %s\n",
-				g_comment_start, g_comment_end);
+		write_msg(NULL, "reading user-defined types\n");
 	tinfo = getTypes(&numTypes);
 
 	if (g_verbose)
-		fprintf(stderr, "%s reading user-defined functions %s\n",
-				g_comment_start, g_comment_end);
+		write_msg(NULL, "reading user-defined functions\n");
 	finfo = getFuncs(&numFuncs);
 
 	if (g_verbose)
-		fprintf(stderr, "%s reading user-defined aggregates %s\n",
-				g_comment_start, g_comment_end);
+		write_msg(NULL, "reading user-defined aggregate functions\n");
 	agginfo = getAggregates(&numAggregates);
 
 	if (g_verbose)
-		fprintf(stderr, "%s reading user-defined operators %s\n",
-				g_comment_start, g_comment_end);
+		write_msg(NULL, "reading user-defined operators\n");
 	oprinfo = getOperators(&numOperators);
 
 	if (g_verbose)
-		fprintf(stderr, "%s reading user-defined tables %s\n",
-				g_comment_start, g_comment_end);
+		write_msg(NULL, "reading user-defined tables\n");
 	tblinfo = getTables(&numTables, finfo, numFuncs);
 
 	if (g_verbose)
-		fprintf(stderr, "%s reading indexes information %s\n",
-				g_comment_start, g_comment_end);
+		write_msg(NULL, "reading index information\n");
 	indinfo = getIndexes(&numIndexes);
 
 	if (g_verbose)
-		fprintf(stderr, "%s reading table inheritance information %s\n",
-				g_comment_start, g_comment_end);
+		write_msg(NULL, "reading table inheritance information\n");
 	inhinfo = getInherits(&numInherits);
 
 	if (g_verbose)
-		fprintf(stderr, "%s finding the attribute names and types for each table %s\n",
-				g_comment_start, g_comment_end);
+		write_msg(NULL, "finding the column names and types for each table\n");
 	getTableAttrs(tblinfo, numTables);
 
 	if (g_verbose)
-		fprintf(stderr, "%s flagging inherited attributes in subtables %s\n",
-				g_comment_start, g_comment_end);
+		write_msg(NULL, "flagging inherited columns in subtables\n");
 	flagInhAttrs(tblinfo, numTables, inhinfo, numInherits);
 
 	if (!tablename && !dataOnly)
 	{
 		if (g_verbose)
-			fprintf(stderr, "%s dumping out database comment %s\n",
-					g_comment_start, g_comment_end);
+			write_msg(NULL, "dumping out database comment\n");
 		dumpDBComment(fout);
 	}
 
 	if (!tablename && fout)
 	{
 		if (g_verbose)
-			fprintf(stderr, "%s dumping out user-defined types %s\n",
-					g_comment_start, g_comment_end);
+			write_msg(NULL, "dumping out user-defined types\n");
 		dumpTypes(fout, finfo, numFuncs, tinfo, numTypes);
 	}
 
 	if (g_verbose)
-		fprintf(stderr, "%s dumping out tables %s\n",
-				g_comment_start, g_comment_end);
+		write_msg(NULL, "dumping out tables\n");
 
 	dumpTables(fout, tblinfo, numTables, indinfo, numIndexes, inhinfo, numInherits,
 	   tinfo, numTypes, tablename, aclsSkip, oids, schemaOnly, dataOnly);
@@ -367,40 +355,35 @@ dumpSchema(Archive *fout,
 	if (fout && !dataOnly)
 	{
 		if (g_verbose)
-			fprintf(stderr, "%s dumping out indexes %s\n",
-					g_comment_start, g_comment_end);
+			write_msg(NULL, "dumping out indexes\n");
 		dumpIndexes(fout, indinfo, numIndexes, tblinfo, numTables, tablename);
 	}
 
 	if (!tablename && !dataOnly)
 	{
 		if (g_verbose)
-			fprintf(stderr, "%s dumping out user-defined procedural languages %s\n",
-					g_comment_start, g_comment_end);
+			write_msg(NULL, "dumping out user-defined procedural languages\n");
 		dumpProcLangs(fout, finfo, numFuncs, tinfo, numTypes);
 	}
 
 	if (!tablename && !dataOnly)
 	{
 		if (g_verbose)
-			fprintf(stderr, "%s dumping out user-defined functions %s\n",
-					g_comment_start, g_comment_end);
+			write_msg(NULL, "dumping out user-defined functions\n");
 		dumpFuncs(fout, finfo, numFuncs, tinfo, numTypes);
 	}
 
 	if (!tablename && !dataOnly)
 	{
 		if (g_verbose)
-			fprintf(stderr, "%s dumping out user-defined aggregates %s\n",
-					g_comment_start, g_comment_end);
+			write_msg(NULL, "dumping out user-defined aggregate functions\n");
 		dumpAggs(fout, agginfo, numAggregates, tinfo, numTypes);
 	}
 
 	if (!tablename && !dataOnly)
 	{
 		if (g_verbose)
-			fprintf(stderr, "%s dumping out user-defined operators %s\n",
-					g_comment_start, g_comment_end);
+			write_msg(NULL, "dumping out user-defined operators\n");
 		dumpOprs(fout, oprinfo, numOperators, tinfo, numTypes);
 	}
 
@@ -490,7 +473,7 @@ flagInhAttrs(TableInfo *tblinfo, int numTables,
 					/* shouldn't happen unless findParentsByOid is broken */
 					write_msg(NULL, "failed sanity check, table \"%s\" not found by flagInhAttrs\n",
 							  tblinfo[i].parentRels[k]);
-					exit(2);
+					exit_nicely();
 				};
 
 				inhAttrInd = strInArray(tblinfo[i].attnames[j],

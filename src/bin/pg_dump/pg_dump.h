@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_dump.h,v 1.64 2001/06/27 21:21:37 petere Exp $
+ * $Id: pg_dump.h,v 1.65 2001/07/03 20:21:50 petere Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -275,5 +275,6 @@ extern void dumpTables(Archive *fout, TableInfo *tbinfo, int numTables,
 extern void dumpIndexes(Archive *fout, IndInfo *indinfo, int numIndexes,
 			TableInfo *tbinfo, int numTables, const char *tablename);
 extern const char *fmtId(const char *identifier, bool force_quotes);
+extern void exit_nicely(void);
 
 #endif	 /* PG_DUMP_H */

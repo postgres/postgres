@@ -34,7 +34,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_restore.c,v 1.21 2001/06/27 21:21:37 petere Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_restore.c,v 1.22 2001/07/03 20:21:50 petere Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *
@@ -248,7 +248,7 @@ main(int argc, char **argv)
 
 			case 'u':
 				opts->requirePassword = true;
-				opts->username = simple_prompt("Username: ", 100, true);
+				opts->username = simple_prompt("User name: ", 100, true);
 				break;
 
 			case 'U':
