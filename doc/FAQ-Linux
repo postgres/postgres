@@ -1,0 +1,387 @@
+====================================================
+Frequently Asked Questions (FAQ) for Postgres95
+Linux Specific
+TO BE READ IN CONJUNCTION WITH THE NORMAL FAQ
+====================================================
+last updated:           Mon Oct 14 11:00:00 BST 1996
+
+current maintainer:     Andrew C.R. Martin (martin@biochem.ucl.ac.uk)
+original author:        Andrew C.R. Martin (martin@biochem.ucl.ac.uk)
+
+
+Changes in this version (* = modified, + = new):
+*1.3)   [REDHAT] Why do I get problems with missing libdl and dlfcn.h?
+*1.14)  [DEBIAN] Where is libtermcap?
+
+
+This file is divided approximately as follows:
+0.*)    Bugs in Postgres95 V1.08
+1.*)    Installing Postgres95
+2.*)    Compiling accessory programs
+3.*)    Runtime Problems
+4.*)    Spurious Problems in Need of Verification
+
+
+Questions answered:
+0.1)    What bugs do I need to fix before Postgres95 will compile
+        under Linux?
+1.1)    What changes do I need to make to src/Makefile.global
+1.2)    Why do I get problems with missing libreadline?
+1.3)    [REDHAT] Why do I get problems with missing libdl and dlfcn.h?
+1.4)    [SLACKWARE 3.1] Why do I get problems with missing libdl and dlfcn.h?
+1.5)    My compile of the backend dies complaining about the include file
+        dlfcn.h missing
+1.6)    GCC complains about an ignored option -fpic
+1.7)    I get warnings of the form
+        warning: cast from pointer to integer of different size
+1.8)    [SuSE-Linux 4.2] Where is curses and termcap?
+1.9)    Why do I get problems with ld.so?
+1.10)   Why do I get `yy_flush_buffer undefined' errors?
+1.11)   How do I compile Postgres95 on an a.out system?
+1.12)   Why does make fail with:
+        yacc -d /disk2/postgres95/src/backend/parser/gram.y
+        make: /usr/bin/make: cannot execute binary file
+1.13)   What are the references in X11_LIB to libsocket and libnsl in
+        src/Makefile.global?
+1.14)   [DEBIAN] Where is libtermcap?
+2.1)    The linker fails to find libX11 when compiling pgtclsh
+3.1)    I get an error reporting _fUnKy_POSTPORT_sTuFf_ undefined when 
+        running scripts like createuser
+3.2)    I run postmaster and after that system says 'Bad system call(Core 
+        dumped)'
+3.3)    When I try to start the Postmaster, why do I get an error of the form
+        Failed Assertion("!(file != 0):(null)", File:
+        "/usr/local/postgres95/src/backend/storage/file/fd.c", Line: 257)
+        !(file != 0) (0)
+        initdb: could not create template database
+        initdb: cleaning up.
+3.4)    Why doesn't createuser work?
+4.1)    Why doesn't the postmaster start the first time?
+
+----------------------------------------------------------------------
+Section 0:      Bugs in Postgres95 V1.08
+----------------------------------------------------------------------
+0.1)    What bugs do I need to fix before Postgres95 will compile
+        under Linux?
+
+        a) Fix the bug in src/Makefile.global:
+           Change
+                # Globally pass PORTNAME
+                CFLAGS+= -DPORTNAME_$(PORTNAME)
+                CFLAGS += -I ../../backend/port/$(PORTNAME)
+           to
+                # Globally pass PORTNAME
+                CFLAGS+= -DPORTNAME_$(PORTNAME)
+                CFLAGS += -I../../backend/port/$(PORTNAME)
+
+           (i.e. remove the space after the -I)
+
+
+        b) Add the missing prototype to src/bin/pg_dump/pg_dump.h
+           After the line
+                extern int findLastBuiltinOid();
+           add
+                extern void setMaxOid(FILE *fout);
+
+
+----------------------------------------------------------------------
+Section 1:      Compiling Postgres95
+----------------------------------------------------------------------
+
+1.1)    What changes do I need to make to src/Makefile.global
+
+        You *must* set the following variables:
+                PORTNAME=       linux
+
+        You will also need to change the following to match your own
+        installation:
+                SRCDIR
+                POSTGRESDIR
+
+        If you switch on the USE_TCL option, you will need to set these:
+                TCL_INCDIR=
+                TCL_LIBDIR=
+                TCL_LIB=
+                TK_INCDIR=
+                TK_LIBDIR=
+                TK_LIB=
+                X11_INCDIR=
+                X11_LIBDIR=
+                X11_LIB=
+
+        On my Slackware3.0 system, these are:
+                TCL_INCDIR=     /usr/include/tcl
+                TCL_LIBDIR=     /usr/lib
+                TCL_LIB=        -ltcl
+                TK_INCDIR=      /usr/include/tcl
+                TK_LIBDIR=      /usr/lib
+                TK_LIB=         -ltk
+                X11_INCDIR=     /usr/include/X11
+                X11_LIBDIR=     /usr/X386/lib
+                X11_LIB=        -lX11
+ 
+        You may also make any other changes you need as documented in
+        the INSTALL file and in Makefile.global
+
+
+1.2)    Why do I get problems with missing libreadline?
+
+        Linux systems generally don't come with the GNU readline library
+        installed. Either comment out the USE_READLINE variable in   
+        src/Makefile.global or install the GNU readline library.
+
+1.3)    [REDHAT] Why do I get problems with missing libdl and dlfcn.h?
+
+        The libdl library is used for dynamic linking of user-supplied
+        functions at run-time. For some reason this library was missed out
+        from the Redhat distribution.
+
+        You can obtain the library and the header file from:
+        
+                ftp://tsx-11.mit.edu/packages/GCC/ld.so-1.7.14.tar.gz
+
+        Alternatively, you may find precompiled binaries in 
+        distributions/debian/buzz/binary-i386/base/ld.so-1.7.14-4.deb
+        on the same site, or follow the instructions given for question 1.2 for
+        correcting the same error with early releases of Slackware 3.1.
+
+1.4)    [SLACKWARE 3.1] Why do I get problems with missing libdl and dlfcn.h?
+
+        See the answer to question 1.1. Slackware up to version 3.0 was 
+        supplied with this library and include file and they seem to be
+        back in again in the latest versions of 3.1, but the early 3.1
+        releases (before 9th September 1996) had them missing and many 
+        CD-ROM versions will have been pressed from the first 3.1 releases.
+
+        The easiest fix is to obtain the file ldso.tgz from the a4 disk of
+        a more recent Slackware 3.1 distribution and unpack this file
+        from the root (/) directory, then do
+
+                sh install/doinst.sh
+
+        to complete the installation. Follow this with
+
+                ldconfig
+
+        If you want to install manually, you must first install the file
+        dlfcn.h in /usr/include.
+
+        Second, install the file libdl.so.1.7.14 (or whatever the latest
+        release is) in /lib, then do:
+
+                cd /lib
+                ln -sf libdl.so.1.7.14 libdl.so.1
+                ln -sf libdl.so.1 libdl.so
+
+        On some systems (depending on your GCC configuration) it may be
+        necessary to do:
+
+                cd /usr/lib
+                ln -sf /lib/libdl.so .
+
+        Finally
+
+                ldconfig
+
+
+1.5)    My compile of the backend dies complaining about the include file 
+        dlfcn.h missing
+
+        See the answer to question 1.2. Don't forget that if you are using
+        an a.out system you must first have installed the dld package
+        (which is not supplied with most a.out systems) to have dlfcn.h
+        at all. See Question 1.11.
+
+
+1.6)    GCC complains about an ignored option -fpic
+
+        Earlier versions of GCC accepted either -fpic or -fPIC.
+        It appears that more recent versions (V2.7.2?) require -fPIC. 
+        If you are using an ELF version of Linux, this can safely be 
+        ignored as -fPIC is the default.
+
+        You can correct this by editing
+        src/mk/port/postgres.mk.linux
+
+
+1.7)    I get warnings of the form 
+        warning: cast from pointer to integer of different size
+
+        These can safely be ignored
+
+1.8)    [SuSE-Linux 4.2] Where is curses and termcap?
+
+        SuSE-Linux has ncurses but not curses. Edit src/bin/psql/Makefile and 
+        Change
+                LIBCURSES=   -lcurses
+        to
+                LIBCURSES=   -lncurses
+
+        SuSE-Linux has the termcap library is in /usr/lib/termcap instead of 
+        in /usr/lib
+        Edit src/bin/psql/Makefile and
+        Change
+                ifeq ($(PORTNAME), linux)
+                LD_ADD += -ltermcap
+                else
+        to
+                ifeq ($(PORTNAME), linux)
+                LD_ADD += -L/usr/lib/termcap -ltermcap
+                else
+
+1.9)    Why do I get problems with ld.so?
+
+        If you get problems with ld.so, another library required under
+        ELF for dynamic loading, then you have messed up your installation
+        or (more likely) upgrade of Linux.
+
+        See the answers to Question 1.2. You may need to install
+        ld.so.x.y.z in /lib and run ldconfig.
+
+        The most recent stable release of the ld package is 1.7.14
+        At the time of writing, 1.8.x versions of ld are experimental.
+
+1.10)   Why do I get `yy_flush_buffer undefined' errors?
+
+        This isn't really Linux specific, but is common on older Linux
+        installations. You must have a recent version of flex (2.5.2 or later)
+        to compile Postgres95. Note that flex 2.5.3 has a bug: see
+        Question 3.4.
+
+1.11)   How do I compile Postgres95 on an a.out system?
+
+        First, you must install the dld library. This may be obtained
+        from Sunsite as:
+        Linux/libs/dld.3.2.7.tar.gz
+
+        Second, comment out the LINUX_ELF line in src/mk/port/postgres.mk.linux
+
+1.12)   Why does make fail with:
+        yacc -d /disk2/postgres95/src/backend/parser/gram.y
+        make: /usr/bin/make: cannot execute binary file
+
+        yacc is generally implemented as a script which invokes bison -y
+        For some reason (certain versions of make? certain versions of 
+        bash?) make is unable to execute this script file.
+
+        To correct this, simply edit src/mk/port/postgres.mk.linux
+        and, at the end of the file, change:
+                # YACC = bison -y
+        to
+                YACC = bison -y
+
+1.13)   What are the references in X11_LIB to libsocket and libnsl in
+        src/Makefile.global?
+
+        These are Sun Solaris specific and shouldn't be in Makefile.global
+        The compile (including pgtclsh) seems to go OK even though 
+        these don't exist...
+
+1.14)   [DEBIAN] Where is libtermcap?
+
+        Debian Linux comes without the termcap library and uses ncurses
+        (which uses terminfo instead). There is no need to change the 
+        LIBCURSES variable in src/bin/psql/Makefile since Debian provides 
+        a link from libncurses to libcurses (unlike SuSE-Linux --- see
+        Question 1.8).
+
+        Edit src/bin/psql/Makefile and change:
+
+                ifeq ($(PORTNAME), linux)
+                LD_ADD += -ltermcap
+                else
+
+        to
+
+                ifeq ($(PORTNAME), linux)
+                CFLAGS += 
+                else
+
+
+
+
+----------------------------------------------------------------------
+Section 2:      Compiling accessory programs
+----------------------------------------------------------------------
+
+2.1)    The linker fails to find libX11 when compiling pgtclsh
+
+        Modify the src/Makefile.global to change
+                X11_LIBDIR = /usr/lib
+        to
+                X11_LIBDIR = /usr/X11R6/lib
+
+
+----------------------------------------------------------------------
+Section 3:      Runtime Problems
+----------------------------------------------------------------------
+
+3.1)    I get an error reporting _fUnKy_POSTPORT_sTuFf_ undefined when 
+        running scripts like createuser
+
+        This is a bug in V1.06-V1.07 of Postgres and is fixed in V1.08
+
+3.2)    I run postmaster and after that system says 'Bad system call(Core 
+        dumped)'
+
+        This indicates that you have no compiled shared memory support 
+        into your kernel. You need to recompile the Linux kernel to add this 
+        feature.
+
+
+3.3)    When I try to start the Postmaster, why do I get an error of the form
+        Failed Assertion("!(file != 0):(null)", File: 
+        "/usr/local/postgres95/src/backend/storage/file/fd.c", Line: 257)
+        !(file != 0) (0)
+        initdb: could not create template database
+        initdb: cleaning up.
+
+        Your permissions on the file /dev/null are wrong. 
+
+        ls -l /dev/null should give you something like:
+
+                crw-rw-rw-  1 root  wheel    2,   2 Oct  8 18:41 /dev/null
+
+        Correct the permissions using:
+
+                chmod a+rw /dev/null
+
+3.4)    Why doesn't createuser work?
+
+        There is a problem with Version 2.5.3 of GNU flex and createuser. 
+        Your options are to downgrade flex to V2.5.2, apply a patch to
+        V2.5.3 (supplied in doc/README.flex) or wait for V2.5.4 which 
+        will fix the bug.
+
+
+
+----------------------------------------------------------------------
+Section 4:      Spurious Problems in Need of Verification
+----------------------------------------------------------------------
+
+4.1)    Why doesn't the postmaster start the first time?
+
+        Pawko Olszewski <alder@amg.com.pl> reported a problem that, using
+        Linux kernel 2.0.18, the postmaster wouldn't start the first time 
+        it is run using
+
+                postmaster -B 256
+
+        but if run as
+
+                postmaster -B 64
+
+        killed and then restarted as
+
+                postmaster -B 256
+
+        everything was OK.
+
+        I haven't been able to repeat this problem! Nobody else has
+        reported anything similar.
+
+****************************************************************************
+Dr. Andrew C.R. Martin,         University College London & SciTech Software
+EMAIL: martin@biochem.ucl.ac.uk                Tel:(Work) +44(0)171 419 3890
+URL: http://www.biochem.ucl.ac.uk/~martin          (Home) +44(0)1372 275775
+****************************************************************************

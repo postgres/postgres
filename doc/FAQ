@@ -1,6 +1,6 @@
 Frequently Asked Questions (FAQ) for Postgres95
 
-Last updated: Fri Sep 27 17:48:23 EDT 1996
+Last updated: Mon Oct 14 08:05:23 EDT 1996
 Version: 2.0
 
 Current maintainer: Bruce Momjian (maillist@candle.pha.pa.us)
@@ -8,9 +8,15 @@ Current maintainer: Bruce Momjian (maillist@candle.pha.pa.us)
 The most recent version of this document can be viewed at the postgres95 Web
 site, http://www.ki.net/postgres95.
 
+Linux-specific questions are answered in
+http://www.ki.net/postgres95/docs/FAQ-Linux.phtml.
+
+Irix-specific questions are answered in
+http://www.ki.net/postgres95/docs/FAQ-Irix.phtml.
+
 Changes in this version (* = modified, + = new):
 
-   * *3.23) How do I create a serial field?
+   * *3.41) What is the meaning of some of the terms used in Postgres?
 
 ----------------------------------------------------------------------------
 
@@ -241,7 +247,7 @@ home page at:
 
 1.6) Latest release of Postgres95
 
-The latest release of postgres95 is version 1.07.
+The latest release of postgres95 is version 1.08.
 
 1.7) Is there a commercial version of Postgres95?
 
@@ -277,7 +283,7 @@ eventually we can also add the missing features listed above.
 
 1.10) Does Postgres95 work with databases from earlier versions of postgres?
 
-Postgres95 v1.07 is compatible with databases created with v1.01. Those
+Postgres95 v1.08 is compatible with databases created with v1.01. Those
 upgrading from 1.0 should read the directions in the MIGRATION_1.0_TO_1.02
 directory.
 
@@ -546,7 +552,7 @@ sending a mail to:
    * majordomo@listserv.direct.net
 
 OpenLink ODBC is currently in beta under Linux. You can get it from
-http://www.openlinksw.com/postgre s.html. It works with our standard ODBC
+http://www.openlinksw.com/postgres.html. It works with our standard ODBC
 client software so you'll have Postgres ODBC available on every client
 platform we support (Win, Mac, Unix, VMS).
 
@@ -626,8 +632,8 @@ Place the word 'EXPLAIN' at the beginning of the query, for example:
 Postgres does not allow the user to specifiy a user column as type SERIAL.
 Instead, you can use each row's oid field as a unique value. However, if you
 need to dump and reload the database, you need to be using postgres version
-1.07 or 2.* with pgdump's -o option or COPY's WITH OIDS option to preserver
-the oids.
+1.07 or later or 2.* with pgdump's -o option or COPY's WITH OIDS option to
+preserver the oids.
 
 Another valid way of doing this is to create a function:
 
@@ -771,7 +777,8 @@ INSERTed rows get a timestamp too, so rows that were not in the table at the
 desired time will not appear.
 
 Vacuum removes rows that are no longer current. This time-warp feature is
-used by the engine for rollback and crash recovery.
+used by the engine for rollback and crash recovery. Expiration times can be
+set with purge.
 
 3.38) How do I tune the database engine for better performance?
 
@@ -852,6 +859,8 @@ common usage. Here are some:
    * retrieve, select
    * replace, update
    * oid, serial value
+   * portal, cursor
+   * range variable, table name, table alias
 
 Please let me know if you think of any more.
 
