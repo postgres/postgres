@@ -1,4 +1,4 @@
-subdir = contrib/tree
+subdir = contrib/ltree
 top_builddir = ../..
 include $(top_builddir)/src/Makefile.global
 
