@@ -692,7 +692,7 @@ mylog("SQLGetData: enter, stmt=%u\n", stmt);
 			mylog("     value = '%s'\n", value);
 		}
 	}
-	else { /* its a SOCKET result (backend data) */
+	else { /* it's a SOCKET result (backend data) */
 		if (stmt->currTuple == -1 || ! res || ! res->tupleField) {
 			stmt->errormsg = "Not positioned on a valid row for GetData.";
 			stmt->errornumber = STMT_INVALID_CURSOR_STATE_ERROR;

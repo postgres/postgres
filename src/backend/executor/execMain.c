@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.103 1999/12/16 22:19:44 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.104 2000/01/05 18:23:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1007,7 +1007,7 @@ lnext:	;
 		/*
 		 * now that we have a tuple, do the appropriate thing with it..
 		 * either return it to the user, add it to a relation someplace,
-		 * delete it from a relation, or modify some of it's attributes.
+		 * delete it from a relation, or modify some of its attributes.
 		 */
 
 		switch (operation)

@@ -1719,7 +1719,7 @@ DeferredTriggerSaveEvent(Relation rel, int event,
 
 			/* ----------
 			 * Look at the previous event to the same tuple if
-			 * any of it's triggers has already been executed.
+			 * any of its triggers has already been executed.
 			 * Such a situation would potentially violate RI
 			 * so we abort the transaction.
 			 * ----------
@@ -1795,7 +1795,7 @@ DeferredTriggerSaveEvent(Relation rel, int event,
 
 			/* ----------
 			 * Look at the previous event to the same tuple if
-			 * any of it's triggers has already been executed.
+			 * any of its triggers has already been executed.
 			 * Such a situation would potentially violate RI
 			 * so we abort the transaction.
 			 * ----------

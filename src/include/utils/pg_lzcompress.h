@@ -1,7 +1,7 @@
 /* ----------
  * pg_lzcompress.h -
  *
- * $Header: /cvsroot/pgsql/src/include/utils/pg_lzcompress.h,v 1.3 1999/11/25 01:28:07 wieck Exp $
+ * $Header: /cvsroot/pgsql/src/include/utils/pg_lzcompress.h,v 1.4 2000/01/05 18:23:52 momjian Exp $
  *
  *	Definitions for the builtin LZ compressor
  * ----------
@@ -81,7 +81,7 @@ typedef struct PGLZ_Header {
  *
  *		min_comp_rate		Minimum compression rate (0-99%), the output
  *							must be smaller than the input. If that isn't
- *							the case, the compressor will throw away it's
+ *							the case, the compressor will throw away its
  *							output and copy the original, uncompressed data
  *							to the output buffer.
  *

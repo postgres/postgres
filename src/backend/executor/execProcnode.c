@@ -4,22 +4,22 @@
  *	 contains dispatch functions which call the appropriate "initialize",
  *	 "get a tuple", and "cleanup" routines for the given node type.
  *	 If the node has children, then it will presumably call ExecInitNode,
- *	 ExecProcNode, or ExecEndNode on it's subnodes and do the appropriate
+ *	 ExecProcNode, or ExecEndNode on its subnodes and do the appropriate
  *	 processing..
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execProcnode.c,v 1.16 1999/11/23 20:06:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execProcnode.c,v 1.17 2000/01/05 18:23:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 /*
  *	 INTERFACE ROUTINES
- *		ExecInitNode	-		initialize a plan node and it's subplans
+ *		ExecInitNode	-		initialize a plan node and its subplans
  *		ExecProcNode	-		get a tuple by executing the plan node
- *		ExecEndNode		-		shut down a plan node and it's subplans
+ *		ExecEndNode		-		shut down a plan node and its subplans
  *
  *	 NOTES
  *		This used to be three files.  It is now all combined into

@@ -224,7 +224,7 @@ Int2 pgtype_to_sqltype(StatementClass *stmt, Int4 type)
 	default:                
 
 		/*	first, check to see if 'type' is in list.  If not, look up with query.
-			Add oid, name to list.  If its already in list, just return.
+			Add oid, name to list.  If it's already in list, just return.
 		*/
 		if (type == stmt->hdbc->lobj_type)	/* hack until permanent type is available */
 			return SQL_LONGVARBINARY;

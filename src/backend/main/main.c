@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.27 1999/07/17 20:17:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.28 2000/01/05 18:23:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,7 +31,7 @@
 
 #define NOROOTEXEC "\
 \n\"root\" execution of the PostgreSQL backend is not permitted.\n\n\
-The backend must be started under it's own userid to prevent\n\
+The backend must be started under its own userid to prevent\n\
 a possible system security compromise. See the INSTALL file for\n\
 more information on how to properly start the postmaster.\n\n"
 

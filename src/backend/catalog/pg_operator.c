@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.45 1999/12/16 22:19:39 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.46 2000/01/05 18:23:45 momjian Exp $
  *
  * NOTES
  *	  these routines moved here from commands/define.c and somewhat cleaned up.
@@ -406,7 +406,7 @@ OperatorShellMake(char *operatorName,
  *	 resultType -- defer this, since it must be determined from
  *				   the pg_procedure catalog
  *	 commutatorObjectId -- if this is NULL, enter ObjectId=0
- *					  else if this already exists, enter it's ObjectId
+ *					  else if this already exists, enter its ObjectId
  *					  else if this does not yet exist, and is not
  *						the same as the main operatorName, then create
  *						a shell and enter the new ObjectId

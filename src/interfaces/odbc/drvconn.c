@@ -157,7 +157,7 @@ dialog:
 	}
 
 	/*	Password is not a required parameter unless authentication asks for it.
-		For now, I think its better to just let the application ask over and over until
+		For now, I think it's better to just let the application ask over and over until
 		a password is entered (the user can always hit Cancel to get out)
 	*/
 	if( ci->username[0] == '\0' ||

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/aset.c,v 1.21 1999/08/24 20:11:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/aset.c,v 1.22 2000/01/05 18:23:50 momjian Exp $
  *
  * NOTE:
  *	This is a new (Feb. 05, 1999) implementation of the allocation set
@@ -232,7 +232,7 @@ AllocSetAlloc(AllocSet set, Size size)
 
 	/*
 	 * If one is found, remove it from the free list, make it again a
-	 * member of the alloc set and return it's data address.
+	 * member of the alloc set and return its data address.
 	 *
 	 */
 	if (chunk != NULL)

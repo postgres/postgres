@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMaterial.c,v 1.27 1999/12/10 03:55:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMaterial.c,v 1.28 2000/01/05 18:23:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -252,7 +252,7 @@ ExecInitMaterial(Material *node, EState *estate, Plan *parent)
 	tupType = ExecGetScanType(&matstate->csstate);
 
 	/* ----------------
-	 *	ExecCreatR wants it's second argument to be an object id of
+	 *	ExecCreatR wants its second argument to be an object id of
 	 *	a relation in the range table or a _NONAME_RELATION_ID
 	 *	indicating that the relation is not in the range table.
 	 *

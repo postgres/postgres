@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.56 1999/12/10 03:55:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.57 2000/01/05 18:23:44 momjian Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -36,7 +36,7 @@
  *		they always have been, and user aborts are now handled by
  *		UserAbortTransactionBlock().  Both of them rely on AbortTransaction()
  *		to do all the real work.  The only difference is what state we
- *		enter after AbortTransaction() does it's work:
+ *		enter after AbortTransaction() does its work:
  *
  *		* AbortTransactionBlock() leaves us in TBLOCK_ABORT and
  *		* UserAbortTransactionBlock() leaves us in TBLOCK_ENDABORT

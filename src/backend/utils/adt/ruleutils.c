@@ -1,9 +1,9 @@
 /**********************************************************************
  * get_ruledef.c	- Function to get a rules definition text
- *			  out of it's tuple
+ *			  out of its tuple
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.36 1999/12/24 06:43:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.37 2000/01/05 18:23:50 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1847,8 +1847,8 @@ get_relation_name(Oid relid)
 
 
 /* ----------
- * get_attribute_name			- Get an attribute name by it's
- *					  relations Oid and it's attnum
+ * get_attribute_name			- Get an attribute name by its
+ *					  relations Oid and its attnum
  * ----------
  */
 static char *

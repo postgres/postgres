@@ -112,7 +112,7 @@ void initialize_readline(PGconn ** conn)
 
 /* This is a list of all "things" in Pgsql, which can show up after CREATE or
    DROP; and there is also a query to get a list of them.
-   The %s will be replaced by the text entered so far, the %d by it's length.
+   The %s will be replaced by the text entered so far, the %d by its length.
    If you change the order here or insert things, make sure to also adjust the
    referencing macros below.
 */

@@ -783,7 +783,7 @@ QueryInfo qi;
 	self->status = STMT_EXECUTING;
 
 
-	//	If its a SELECT statement, use a cursor.
+	//	If it's a SELECT statement, use a cursor.
 	//	Note that the declare cursor has already been prepended to the statement
 	//	in copy_statement...
 	if (self->statement_type == STMT_TYPE_SELECT) {
@@ -822,7 +822,7 @@ QueryInfo qi;
 		
 	}
 	else  { // not a SELECT statement so don't use a cursor 		 
-		mylog("      its NOT a select statement: stmt=%u\n", self);
+		mylog("      it's NOT a select statement: stmt=%u\n", self);
 		self->result = CC_send_query(conn, self->stmt_with_params, NULL);
 		
 		//	If we are in autocommit, we must send the commit.

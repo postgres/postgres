@@ -1373,8 +1373,8 @@ ConnInfo *ci;
 
 
 	/*	Only show oid if option AND there are other columns AND 
-		its not being called by SQLStatistics .
-		Always show OID if its a system table
+		it's not being called by SQLStatistics .
+		Always show OID if it's a system table
 	*/
 
 	if (result != SQL_ERROR && ! stmt->internal) {

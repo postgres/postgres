@@ -347,7 +347,7 @@ char tempBuf[TEXT_FIELD_SIZE+5];
 
     } else {
 
-		/*	for SQL_C_CHAR, its probably ok to leave currency symbols in.  But
+		/*	for SQL_C_CHAR, it's probably ok to leave currency symbols in.  But
 			to convert to numeric types, it is necessary to get rid of those.
 		*/
 		if (field_type == PG_TYPE_MONEY)
@@ -626,7 +626,7 @@ int lobj_fd, retval;
 				memcpy(&new_statement[npos], esc, strlen(esc));
 				npos += strlen(esc);
 			}
-			else {		/* its not a valid literal so just copy */
+			else {		/* it's not a valid literal so just copy */
 				*end = '}';	
 				new_statement[npos++] = old_statement[opos];
 				continue;
@@ -680,7 +680,7 @@ int lobj_fd, retval;
 			continue;
 		}
 
-		/*	If no buffer, and its not null, then what the hell is it? 
+		/*	If no buffer, and it's not null, then what the hell is it? 
 			Just leave it alone then.
 		*/
 		if ( ! buffer) {

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.68 1999/11/22 02:03:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.69 2000/01/05 18:23:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -242,7 +242,7 @@ ReadBufferWithBufferLock(Relation reln,
 	if (!bufHdr)
 		return InvalidBuffer;
 
-	/* if its already in the buffer pool, we're done */
+	/* if it's already in the buffer pool, we're done */
 	if (found)
 	{
 

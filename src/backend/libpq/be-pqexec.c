@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-pqexec.c,v 1.24 1999/07/17 20:17:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-pqexec.c,v 1.25 2000/01/05 18:23:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -290,7 +290,7 @@ strparse(char *s, char **fields, int *offsets, int maxfields)
 }
 
 /* ----------------
- *		pqtest_PQfn converts it's string into a PQArgBlock and
+ *		pqtest_PQfn converts its string into a PQArgBlock and
  *		calls the specified function, which is assumed to return
  *		an integer value.
  * ----------------
@@ -376,7 +376,7 @@ pqtest_PQfn(char *q)
 }
 
 /* ----------------
- *		pqtest looks at the first character of it's test argument
+ *		pqtest looks at the first character of its test argument
  *		and decides which of pqtest_PQexec or pqtest_PQfn to call.
  * ----------------
  */

@@ -447,7 +447,7 @@ RETCODE result;
 				continue;
 			}
 
-			/*	otherwise, its probably an expression */
+			/*	otherwise, it's probably an expression */
 			in_expr = TRUE;
 			fi[stmt->nfld-1]->expr = TRUE;
 			fi[stmt->nfld-1]->name[0] = '\0';
@@ -523,7 +523,7 @@ RETCODE result;
 			continue;
 		} 
 
-		/*	its a dot, resolve to table or alias */
+		/*	it's a dot, resolve to table or alias */
 		else if (fi[i]->dot[0]) {
 			for (k = 0; k < stmt->ntab; k++) {
 				if ( ! stricmp(ti[k]->name, fi[i]->dot)) {

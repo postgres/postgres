@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.15 1999/11/22 17:56:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.16 2000/01/05 18:23:53 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1911,7 +1911,7 @@ exec_assign_value(PLpgSQL_execstate * estate,
 			 * ----------
 			 */
 			if (!HeapTupleIsValid(rec->tup))
-				elog(ERROR, "record %s is unassigned yet - don't know it's tuple structure", rec->refname);
+				elog(ERROR, "record %s is unassigned yet - don't know its tuple structure", rec->refname);
 
 			/* ----------
 			 * Get the number of the records field to change and the
@@ -1952,7 +1952,7 @@ exec_assign_value(PLpgSQL_execstate * estate,
 				}
 
 				/* ----------
-				 * This is the field to change. Get it's type
+				 * This is the field to change. Get its type
 				 * and cast the value we insert to that type.
 				 * ----------
 				 */
@@ -2045,7 +2045,7 @@ exec_eval_expr(PLpgSQL_execstate * estate,
 		elog(ERROR, "query \"%s\" didn't return a single value", expr->query);
 
 	/* ----------
-	 * Return the result and it's type
+	 * Return the result and its type
 	 * ----------
 	 */
 	*rettype = SPI_gettypeid(SPI_tuptable->tupdesc, 1);
@@ -2299,7 +2299,7 @@ exec_move_row(PLpgSQL_execstate * estate,
 	bool		isnull;
 
 	/* ----------
-	 * Record is simple - just put the tuple and it's descriptor
+	 * Record is simple - just put the tuple and its descriptor
 	 * into the record
 	 * ----------
 	 */

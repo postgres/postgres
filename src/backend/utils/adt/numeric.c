@@ -5,7 +5,7 @@
  *
  *	1998 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.20 1999/09/29 21:13:25 wieck Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.21 2000/01/05 18:23:50 momjian Exp $
  *
  * ----------
  */
@@ -391,7 +391,7 @@ numeric(Numeric num, int32 typmod)
 	/* ----------
 	 * If the number is in bounds and due to the present result scale
 	 * no rounding could be necessary, make a copy of the input and
-	 * modify it's header fields.
+	 * modify its header fields.
 	 * ----------
 	 */
 	if (num->n_weight < maxweight && scale >= num->n_rscale)
