@@ -554,7 +554,7 @@ output_statement(char * stmt, int mode)
                 PARTIAL, POSITION, PRECISION, PRIMARY, PRIOR, PRIVILEGES, PROCEDURE, PUBLIC,
                 READ, REFERENCES, RELATIVE, REVOKE, RIGHT, ROLLBACK,
                 SCROLL, SECOND_P, SELECT, SET, SUBSTRING,
-                TABLE, THEN, TIME, TIMESTAMP, TIMEZONE_HOUR, TIMEZONE_MINUTE,
+                TABLE, TEMP, THEN, TIME, TIMESTAMP, TIMEZONE_HOUR, TIMEZONE_MINUTE,
 		TO, TRAILING, TRANSACTION, TRIM, TRUE_P,
                 UNION, UNIQUE, UPDATE, USER, USING,
                 VALUES, VARCHAR, VARYING, VIEW,
@@ -637,7 +637,7 @@ output_statement(char * stmt, int mode)
 %type  <str> 	opt_decimal Character character opt_varying opt_charset
 %type  <str>	opt_collate Datetime datetime opt_timezone opt_interval
 %type  <str>	numeric a_expr_or_null row_expr row_descriptor row_list
-%type  <str>	SelectStmt SubSelect result
+%type  <str>	SelectStmt SubSelect result OptTemp
 %type  <str>	opt_table opt_union opt_unique sort_clause sortby_list
 %type  <str>	sortby OptUseOp opt_inh_star relation_name_list name_list
 %type  <str>	group_clause having_clause from_clause c_list 
@@ -1095,11 +1095,15 @@ copy_delimiter:  USING DELIMITERS Sconst		{ $$ = cat2_str(make1_str("using delim
  *
  *****************************************************************************/
 
-CreateStmt:  CREATE TABLE relation_name '(' OptTableElementList ')'
+CreateStmt:  CREATE OptTemp TABLE relation_name '(' OptTableElementList ')'
 				OptInherit
 				{
-					$$ = cat4_str(make1_str("create table"), $3,  make3_str(make1_str("("), $5, make1_str(")")), $7);
+					$$ = cat5_str(make1_str("create"), $2, make1_str("table"), make3_str(make1_str("("), $6, make1_str(")")), $8);
 				}
+		;
+
+OptTemp:	  TEMP		{ $$ = make1_str("temp"); }
+		| /* EMPTY */	{ $$ = make1_str(""); }
 		;
 
 OptTableElementList:  OptTableElementList ',' OptTableElement
@@ -1461,9 +1465,9 @@ OptInherit:  INHERITS '(' relation_name_list ')' { $$ = make3_str(make1_str("inh
 		| /*EMPTY*/ { $$ = make1_str(""); }
 		;
 
-CreateAsStmt:  CREATE TABLE relation_name OptCreateAs AS SubSelect
+CreateAsStmt:  CREATE OptTemp TABLE relation_name OptCreateAs AS SubSelect
 		{
-			$$ = cat5_str(make1_str("create table"), $3, $4, make1_str("as"), $6); 
+			$$ = cat5_str(cat3_str(make1_str("create"), $2, make1_str("table")), $4, $5, make1_str("as"), $7); 
 		}
 		;
 
@@ -2691,7 +2695,7 @@ SubSelect:     SELECT opt_unique res_target_list2
 				}
 		;
 
-result:  INTO opt_table relation_name			{ $$= cat3_str(make1_str("into"), $2, $3); }
+result:  INTO OptTemp opt_table relation_name		{ $$= cat4_str(make1_str("into"), $2, $3, $4); }
 		| INTO into_list			{ $$ = make1_str(""); }
 		| /*EMPTY*/				{ $$ = make1_str(""); }
 		;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.8 1999/01/18 17:17:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.9 1999/02/04 04:58:04 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -212,6 +212,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"stdout", STDOUT},
 	{"substring", SUBSTRING},
 	{"table", TABLE},
+	{"temp", TEMP},
 	{"then", THEN},
 	{"time", TIME},
 	{"timestamp", TIMESTAMP},

@@ -395,3 +395,8 @@ Fri Jan 29 18:03:52 CET 1999
 	- Fixed bug that caused function names to be translated to lower case.
 	- Set ecpg version to 2.4.8
  
+Tue Feb  2 07:40:52 CET 1999
+
+	- Brought preproc.y in sync again with gram.y.
+	- Set ecpg version to 2.4.9
+
