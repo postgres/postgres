@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.59 2001/05/01 03:00:28 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.60 2001/05/02 17:04:53 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1449,13 +1449,19 @@ env PGOPTIONS='-c geqo=off' psql
       <row>
        <entry><varname>SHMMAX</></>
        <entry>Maximum size of shared memory segment (bytes)</>
-       <entry>512 kB + 8192 * buffers + extra ... infinity</entry>
+       <entry>700 kB + 8192 * buffers + extra ... infinity</entry>
       </row>
 
       <row>
        <entry><varname>SHMMIN</></>
        <entry>Minimum size of shared memory segment (bytes)</>
        <entry>1 (at most about 256 kB)</>
+      </row>
+
+      <row>
+       <entry><varname>SHMALL</></>
+       <entry>Total amount of shared memory available (bytes or pages)</>
+       <entry>if bytes, same as SHMMAX; if pages, ceil(SHMMAX/PAGE_SIZE)</>
       </row>
 
       <row>
@@ -1588,42 +1594,37 @@ env PGOPTIONS='-c geqo=off' psql
         <para>
          By default, only 4 MB of shared memory is supported. Keep in
          mind that shared memory is not pageable; it is locked in RAM.
-	 The shared memory parameters are:
+	 
+	 To increase the number of shared buffers supported by the
+	 postmaster, add the following to your kernel config file. A
+	 <varname>SHMALL</> value of 1024 represents 4MB of shared
+	 memory. The following increases the maximum shared memory area
+	 to 32 MB:
 <programlisting>
-#define SHMMAX		/* max shared memory segment size (bytes) */
-#define SHMMIN		/* min shared memory segment size (bytes) */
-#define SHMMNI		/* max number of shared memory identifiers */
-#define SHMSEG		/* max shared memory segments per process */
-#define SHMALL		/* max amount of shared memory (pages) */
-</programlisting>
-
-	 To increase the number of buffers supported by the postmaster, add the
-	 following to your kernel config file.  A <varname>SHMALL</> value of 1024 
-	 represents 4MB of shared memory.  Increase it accordingly:
-<programlisting>
-options "SHMALL=4096"
+options "SHMALL=8192"
 options "SHMMAX=\(SHMALL*PAGE_SIZE\)"
 </programlisting>
         </para>
        </formalpara>
 
        <para>
-        For those running 4.1 or later, just recompile the kernel and
-        reboot. For those running earlier releases, use
-        <application>bpatch</> to find the <varname>sysptsize</> value
-        for the current kernel. This is computed dynamically at
-        bootup.
+        For those running 4.1 or later, just make the above changes,
+        recompile the kernel, and reboot. For those running earlier
+        releases, use <application>bpatch</> to find the
+        <varname>sysptsize</> value in the current kernel. This is
+        computed dynamically at bootup.
 <screen>
 $ <userinput>bpatch -r sysptsize</>
 <computeroutput>0x9 = 9</>
 </screen>
-        Next, change <varname>SYSPTSIZE</> to a hard-coded value. Use
-        the bpatch value, plus add 1 for every additional 4 MB of
+        Next, add <varname>SYSPTSIZE</> as a hard-coded value in the
+        kernel config file. Increase the value you found using
+        <application>bpatch</>. Add 1 for every additional 4 MB of
         shared memory you desire.
 <programlisting>
-options "SYSPTSIZE=13"
+options "SYSPTSIZE=16"
 </programlisting>
-        <varname>sysptsize</> can not be changed by sysctl on the fly.
+        <varname>sysptsize</> can not be changed by sysctl.
        </para>
 
        <formalpara>
@@ -1635,17 +1636,6 @@ options "SYSPTSIZE=13"
         </para>
        </formalpara>
 
-       <para>
-        The defaults are in <filename>/sys/sys/sem.h</>:
-<programlisting>
-#define SEMMNI  10              /* # of semaphore identifiers */
-
-#define SEMMNS  60              /* # of semaphores in system */
-
-#define SEMUME  10              /* max # of undo entries per process */
-
-#define SEMMNU  30              /* # of undo structures in system */
-</programlisting>
         Set the values you want in your kernel config file, e.g.:
 <programlisting>
 options "SEMMNI=40"
