@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.47 2000/12/28 13:00:17 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.48 2001/01/12 21:53:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -301,7 +301,7 @@ nextval(PG_FUNCTION_ARGS)
 	elm->last = result;			/* last returned number */
 	elm->cached = last;			/* last fetched number */
 
-	START_CRIT_CODE;
+	START_CRIT_SECTION();
 	if (logit)
 	{
 		xl_seq_rec	xlrec;
@@ -338,7 +338,7 @@ nextval(PG_FUNCTION_ARGS)
 	seq->is_called = 't';
 	Assert(log >= 0);
 	seq->log_cnt = log;			/* how much is logged */
-	END_CRIT_CODE;
+	END_CRIT_SECTION();
 
 	LockBuffer(buf, BUFFER_LOCK_UNLOCK);
 
@@ -398,7 +398,7 @@ do_setval(char *seqname, int32 next, bool iscalled)
 	elm->last = next;			/* last returned number */
 	elm->cached = next;			/* last cached number (forget cached values) */
 
-	START_CRIT_CODE;
+	START_CRIT_SECTION();
 	{
 		xl_seq_rec	xlrec;
 		XLogRecPtr	recptr;
@@ -429,7 +429,7 @@ do_setval(char *seqname, int32 next, bool iscalled)
 	seq->last_value = next;		/* last fetched number */
 	seq->is_called = iscalled ? 't' : 'f';
 	seq->log_cnt = (iscalled) ? 0 : 1;
-	END_CRIT_CODE;
+	END_CRIT_SECTION();
 
 	LockBuffer(buf, BUFFER_LOCK_UNLOCK);
 

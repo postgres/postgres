@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/aset.c,v 1.36 2001/01/06 21:59:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/aset.c,v 1.37 2001/01/12 21:54:01 tgl Exp $
  *
  * NOTE:
  *	This is a new (Feb. 05, 1999) implementation of the allocation set
@@ -384,6 +384,11 @@ AllocSetReset(MemoryContext context)
 	AllocSetCheck(context);
 #endif
 
+	/* Clear chunk freelists */
+	MemSet(set->freelist, 0, sizeof(set->freelist));
+	/* New blocks list is either empty or just the keeper block */
+	set->blocks = set->keeper;
+
 	while (block != NULL)
 	{
 		AllocBlock	next = block->next;
@@ -411,11 +416,6 @@ AllocSetReset(MemoryContext context)
 		}
 		block = next;
 	}
-
-	/* Now blocks list is either empty or just the keeper block */
-	set->blocks = set->keeper;
-	/* Clear chunk freelists in any case */
-	MemSet(set->freelist, 0, sizeof(set->freelist));
 }
 
 /*
@@ -439,6 +439,11 @@ AllocSetDelete(MemoryContext context)
 	AllocSetCheck(context);
 #endif
 
+	/* Make it look empty, just in case... */
+	MemSet(set->freelist, 0, sizeof(set->freelist));
+	set->blocks = NULL;
+	set->keeper = NULL;
+
 	while (block != NULL)
 	{
 		AllocBlock	next = block->next;
@@ -450,11 +455,6 @@ AllocSetDelete(MemoryContext context)
 		free(block);
 		block = next;
 	}
-
-	/* Make it look empty, just in case... */
-	set->blocks = NULL;
-	MemSet(set->freelist, 0, sizeof(set->freelist));
-	set->keeper = NULL;
 }
 
 /*
@@ -605,15 +605,16 @@ AllocSetAlloc(MemoryContext context, Size size)
 				}
 
 				chunk = (AllocChunk) (block->freeptr);
+
+				block->freeptr += (availchunk + ALLOC_CHUNKHDRSZ);
+				availspace -= (availchunk + ALLOC_CHUNKHDRSZ);
+
 				chunk->size = availchunk;
 #ifdef MEMORY_CONTEXT_CHECKING
 				chunk->requested_size = 0; /* mark it free */
 #endif
 				chunk->aset = (void *) set->freelist[a_fidx];
 				set->freelist[a_fidx] = chunk;
-
-				block->freeptr += (availchunk + ALLOC_CHUNKHDRSZ);
-				availspace -= (availchunk + ALLOC_CHUNKHDRSZ);
 			}
 
 			/* Mark that we need to create a new block */
@@ -696,6 +697,10 @@ AllocSetAlloc(MemoryContext context, Size size)
 	 * OK, do the allocation
 	 */
 	chunk = (AllocChunk) (block->freeptr);
+
+	block->freeptr += (chunk_size + ALLOC_CHUNKHDRSZ);
+	Assert(block->freeptr <= block->endptr);
+
 	chunk->aset = (void *) set;
 	chunk->size = chunk_size;
 #ifdef MEMORY_CONTEXT_CHECKING
@@ -704,9 +709,6 @@ AllocSetAlloc(MemoryContext context, Size size)
 	if (size < chunk->size)
 		((char *) AllocChunkGetPointer(chunk))[size] = 0x7E;
 #endif	
-
-	block->freeptr += (chunk_size + ALLOC_CHUNKHDRSZ);
-	Assert(block->freeptr <= block->endptr);
 
 	AllocAllocInfo(set, chunk);
 	return AllocChunkGetPointer(chunk);

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.48 2001/01/09 06:24:32 vadim Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.49 2001/01/12 21:53:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,7 +42,7 @@
 int			XLOGbuffers = 8;
 int			XLOGfiles = 0;	/* how many files to pre-allocate */
 XLogRecPtr	MyLastRecPtr = {0, 0};
-uint32		CritSectionCount = 0;
+volatile uint32 CritSectionCount = 0;
 bool		InRecovery = false;
 StartUpID	ThisStartUpID = 0;
 XLogRecPtr	RedoRecPtr;
@@ -382,7 +382,7 @@ begin:;
 	if (len == 0 || len > MAXLOGRECSZ)
 		elog(STOP, "XLogInsert: invalid record len %u", len);
 
-	START_CRIT_CODE;
+	START_CRIT_SECTION();
 
 	/* obtain xlog insert lock */
 	if (TAS(&(XLogCtl->insert_lck)))	/* busy */
@@ -447,7 +447,7 @@ begin:;
 	if (repeat)
 	{
 		S_UNLOCK(&(XLogCtl->insert_lck));
-		END_CRIT_CODE;
+		END_CRIT_SECTION();
 		goto begin;
 	}
 
@@ -618,7 +618,7 @@ begin:;
 		S_UNLOCK(&(XLogCtl->info_lck));
 	}
 
-	END_CRIT_CODE;
+	END_CRIT_SECTION();
 	return (RecPtr);
 }
 
@@ -647,7 +647,7 @@ XLogFlush(XLogRecPtr record)
 	if (XLByteLE(record, LgwrResult.Flush))
 		return;
 
-	START_CRIT_CODE;
+	START_CRIT_SECTION();
 
 	WriteRqst = LgwrRqst.Write;
 	for (;;)
@@ -659,7 +659,7 @@ XLogFlush(XLogRecPtr record)
 			if (XLByteLE(record, LgwrResult.Flush))
 			{
 				S_UNLOCK(&(XLogCtl->info_lck));
-				END_CRIT_CODE;
+				END_CRIT_SECTION();
 				return;
 			}
 			if (XLByteLT(XLogCtl->LgwrRqst.Flush, record))
@@ -705,7 +705,7 @@ XLogFlush(XLogRecPtr record)
 				if (XLByteLE(record, LgwrResult.Flush))
 				{
 					S_UNLOCK(&(XLogCtl->lgwr_lck));
-					END_CRIT_CODE;
+					END_CRIT_SECTION();
 					return;
 				}
 				if (XLByteLT(LgwrResult.Write, WriteRqst))
@@ -715,7 +715,7 @@ XLogFlush(XLogRecPtr record)
 					S_UNLOCK(&(XLogCtl->lgwr_lck));
 					if (XLByteLT(LgwrResult.Flush, record))
 						elog(STOP, "XLogFlush: request is not satisfied");
-					END_CRIT_CODE;
+					END_CRIT_SECTION();
 					return;
 				}
 				break;
@@ -756,7 +756,7 @@ XLogFlush(XLogRecPtr record)
 
 	S_UNLOCK(&(XLogCtl->lgwr_lck));
 
-	END_CRIT_CODE;
+	END_CRIT_SECTION();
 	return;
 
 }
@@ -2081,7 +2081,7 @@ CreateCheckPoint(bool shutdown)
 	if (MyLastRecPtr.xrecoff != 0)
 		elog(ERROR, "CreateCheckPoint: cannot be called inside transaction block");
  
-	START_CRIT_CODE;
+	START_CRIT_SECTION();
 
 	/* Grab lock, using larger than normal sleep between tries (1 sec) */
 	while (TAS(&(XLogCtl->chkp_lck)))
@@ -2230,7 +2230,7 @@ CreateCheckPoint(bool shutdown)
 	S_UNLOCK(&(XLogCtl->chkp_lck));
 
 	MyLastRecPtr.xrecoff = 0;	/* to avoid commit record */
-	END_CRIT_CODE;
+	END_CRIT_SECTION();
 
 	return;
 }

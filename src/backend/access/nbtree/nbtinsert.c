@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.72 2000/12/29 20:47:16 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.73 2001/01/12 21:53:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -518,7 +518,7 @@ _bt_insertonpg(Relation rel,
 	}
 	else
 	{
-		START_CRIT_CODE;
+		START_CRIT_SECTION();
 		_bt_pgaddtup(rel, page, itemsz, btitem, newitemoff, "page");
 		itup_off = newitemoff;
 		itup_blkno = BufferGetBlockNumber(buf);
@@ -563,7 +563,7 @@ _bt_insertonpg(Relation rel,
 			PageSetSUI(page, ThisStartUpID);
 		}
 
-		END_CRIT_CODE;
+		END_CRIT_SECTION();
 		/* Write out the updated page and release pin/lock */
 		_bt_wrtbuf(rel, buf);
 	}
@@ -774,7 +774,7 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 	 * NO ELOG(ERROR) till right sibling is updated.
 	 *
 	 */
-	START_CRIT_CODE;
+	START_CRIT_SECTION();
 	{
 		xl_btree_split	xlrec;
 		int				flag = (newitemonleft) ? 
@@ -863,7 +863,7 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 	/* write and release the old right sibling */
 	if (!P_RIGHTMOST(ropaque))
 		_bt_wrtbuf(rel, sbuf);
-	END_CRIT_CODE;
+	END_CRIT_SECTION();
 
 	/* split's done */
 	return rbuf;
@@ -1160,7 +1160,7 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 	metad = BTPageGetMeta(metapg);
 
 	/* NO ELOG(ERROR) from here till newroot op is logged */
-	START_CRIT_CODE;
+	START_CRIT_SECTION();
 
 	/* set btree special data */
 	rootopaque = (BTPageOpaque) PageGetSpecialPointer(rootpage);
@@ -1253,7 +1253,7 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 		PageSetSUI(metapg, ThisStartUpID);
 
 	}
-	END_CRIT_CODE;
+	END_CRIT_SECTION();
 
 	/* write and let go of the new root buffer */
 	_bt_wrtbuf(rel, rootbuf);

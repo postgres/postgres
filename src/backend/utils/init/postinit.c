@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.76 2000/12/18 00:44:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.77 2001/01/12 21:54:00 tgl Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -395,11 +395,12 @@ ShutdownPostgres(void)
 	 * We don't want to do any inessential cleanup, since that just raises
 	 * the odds of failure --- but there's some stuff we need to do.
 	 *
-	 * Release any spinlocks that we may hold.  This is a kluge to improve
-	 * the odds that we won't get into a self-made stuck spinlock scenario
-	 * while trying to shut down.
+	 * Release any spinlocks or buffer context locks we might be holding.
+	 * This is a kluge to improve the odds that we won't get into a self-made
+	 * stuck-spinlock scenario while trying to shut down.
 	 */
 	ProcReleaseSpins(NULL);
+	UnlockBuffers();
 	/*
 	 * In case a transaction is open, delete any files it created.  This
 	 * has to happen before bufmgr shutdown, so having smgr register a

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.69 2000/12/08 22:21:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.70 2001/01/12 21:53:58 tgl Exp $
  *
  * NOTES:
  *
@@ -770,7 +770,11 @@ FileClose(File file)
 	 * Delete the file if it was temporary
 	 */
 	if (VfdCache[file].fdstate & FD_TEMPORARY)
+	{
+		/* reset flag so that die() interrupt won't cause problems */
+		VfdCache[file].fdstate &= ~FD_TEMPORARY;
 		unlink(VfdCache[file].fileName);
+	}
 
 	/*
 	 * Return the Vfd slot to the free list
@@ -1049,7 +1053,8 @@ AllocateFile(char *name, char *mode)
 TryAgain:
 	if ((file = fopen(name, mode)) != NULL)
 	{
-		allocatedFiles[numAllocatedFiles++] = file;
+		allocatedFiles[numAllocatedFiles] = file;
+		numAllocatedFiles++;
 		return file;
 	}
 
@@ -1080,7 +1085,8 @@ FreeFile(FILE *file)
 	{
 		if (allocatedFiles[i] == file)
 		{
-			allocatedFiles[i] = allocatedFiles[--numAllocatedFiles];
+			numAllocatedFiles--;
+			allocatedFiles[i] = allocatedFiles[numAllocatedFiles];
 			break;
 		}
 	}

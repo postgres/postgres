@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/temprel.c,v 1.32 2000/12/22 23:12:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/temprel.c,v 1.33 2001/01/12 21:54:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -263,8 +263,6 @@ AtEOXact_temp_relations(bool isCommit)
 			temp_rel->created_in_cur_xact)
 		{
 			/* This entry must be removed */
-			pfree(temp_rel);
-			/* remove from linked list */
 			if (prev != NIL)
 			{
 				lnext(prev) = lnext(l);
@@ -277,6 +275,7 @@ AtEOXact_temp_relations(bool isCommit)
 				pfree(l);
 				l = temp_rels;
 			}
+			pfree(temp_rel);
 		}
 		else
 		{

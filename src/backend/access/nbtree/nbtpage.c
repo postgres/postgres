@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.45 2000/12/29 20:47:17 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.46 2001/01/12 21:53:55 tgl Exp $
  *
  *	NOTES
  *	   Postgres btree pages look like ordinary relation pages.	The opaque
@@ -165,7 +165,7 @@ _bt_getroot(Relation rel, int access)
 			rootpage = BufferGetPage(rootbuf);
 
 			/* NO ELOG(ERROR) till meta is updated */
-			START_CRIT_CODE;
+			START_CRIT_SECTION();
 
 			metad->btm_root = rootblkno;
 			metad->btm_level = 1;
@@ -197,7 +197,7 @@ _bt_getroot(Relation rel, int access)
 				PageSetSUI(metapg, ThisStartUpID);
 			}
 
-			END_CRIT_CODE;
+			END_CRIT_SECTION();
 
 			_bt_wrtnorelbuf(rel, rootbuf);
 
@@ -410,7 +410,7 @@ _bt_pagedel(Relation rel, ItemPointer tid)
 	buf = _bt_getbuf(rel, blkno, BT_WRITE);
 	page = BufferGetPage(buf);
 
-	START_CRIT_CODE;
+	START_CRIT_SECTION();
 	PageIndexTupleDelete(page, offno);
 	/* XLOG stuff */
 	{
@@ -435,7 +435,7 @@ _bt_pagedel(Relation rel, ItemPointer tid)
 		PageSetLSN(page, recptr);
 		PageSetSUI(page, ThisStartUpID);
 	}
-	END_CRIT_CODE;
+	END_CRIT_SECTION();
 
 	/* write the buffer and release the lock */
 	_bt_wrtbuf(rel, buf);

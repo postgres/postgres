@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.181 2000/12/30 15:19:55 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.182 2001/01/12 21:53:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1427,7 +1427,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 					Cpage = BufferGetPage(Cbuf);
 
 					/* NO ELOG(ERROR) TILL CHANGES ARE LOGGED */
-					START_CRIT_CODE;
+					START_CRIT_SECTION();
 
 					Citemid = PageGetItemId(Cpage,
 							ItemPointerGetOffsetNumber(&(tuple.t_self)));
@@ -1512,7 +1512,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 						PageSetLSN(ToPage, recptr);
 						PageSetSUI(ToPage, ThisStartUpID);
 					}
-					END_CRIT_CODE;
+					END_CRIT_SECTION();
 
 					if (((int) destvacpage->blkno) > last_move_dest_block)
 						last_move_dest_block = destvacpage->blkno;
@@ -1637,7 +1637,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 			newtup.t_data->t_infomask |= HEAP_MOVED_IN;
 
 			/* NO ELOG(ERROR) TILL CHANGES ARE LOGGED */
-			START_CRIT_CODE;
+			START_CRIT_SECTION();
 
 			/* add tuple to the page */
 			newoff = PageAddItem(ToPage, (Item) newtup.t_data, tuple_len,
@@ -1675,7 +1675,7 @@ failed to add item with len = %lu to page %u (free space %lu, nusd %u, noff %u)"
 				PageSetLSN(ToPage, recptr);
 				PageSetSUI(ToPage, ThisStartUpID);
 			}
-			END_CRIT_CODE;
+			END_CRIT_SECTION();
 
 			cur_page->offsets_used++;
 			num_moved++;
@@ -1905,7 +1905,7 @@ failed to add item with len = %lu to page %u (free space %lu, nusd %u, noff %u)"
 
 			buf = ReadBuffer(onerel, vacpage->blkno);
 			LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
-			START_CRIT_CODE;
+			START_CRIT_SECTION();
 			page = BufferGetPage(buf);
 			num_tuples = 0;
 			for (offnum = FirstOffsetNumber;
@@ -1941,7 +1941,7 @@ failed to add item with len = %lu to page %u (free space %lu, nusd %u, noff %u)"
 				PageSetLSN(page, recptr);
 				PageSetSUI(page, ThisStartUpID);
 			}
-			END_CRIT_CODE;
+			END_CRIT_SECTION();
 			LockBuffer(buf, BUFFER_LOCK_UNLOCK);
 			WriteBuffer(buf);
 		}
@@ -2056,7 +2056,7 @@ vacuum_page(Relation onerel, Buffer buffer, VacPage vacpage)
 	/* There shouldn't be any tuples moved onto the page yet! */
 	Assert(vacpage->offsets_used == 0);
 
-	START_CRIT_CODE;
+	START_CRIT_SECTION();
 	for (i = 0; i < vacpage->offsets_free; i++)
 	{
 		itemid = &(((PageHeader) page)->pd_linp[vacpage->offsets[i] - 1]);
@@ -2070,7 +2070,7 @@ vacuum_page(Relation onerel, Buffer buffer, VacPage vacpage)
 		PageSetLSN(page, recptr);
 		PageSetSUI(page, ThisStartUpID);
 	}
-	END_CRIT_CODE;
+	END_CRIT_SECTION();
 
 }
 

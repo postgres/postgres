@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.199 2001/01/07 04:17:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.200 2001/01/12 21:53:59 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -982,7 +982,7 @@ die(SIGNAL_ARGS)
 
 /*
  * This is split out of die() so that it can be invoked later from
- * END_CRIT_CODE.
+ * END_CRIT_SECTION().
  */
 void
 ForceProcDie(void)
@@ -1683,7 +1683,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.199 $ $Date: 2001/01/07 04:17:29 $\n");
+		puts("$Revision: 1.200 $ $Date: 2001/01/12 21:53:59 $\n");
 	}
 
 	/*

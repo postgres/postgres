@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.90 2001/01/09 09:38:57 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.91 2001/01/12 21:53:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,7 +48,7 @@
  *		This is so that we can support more backends. (system-wide semaphore
  *		sets run out pretty fast.)				  -ay 4/95
  *
- * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.90 2001/01/09 09:38:57 inoue Exp $
+ * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.91 2001/01/12 21:53:59 tgl Exp $
  */
 #include "postgres.h"
 
@@ -241,7 +241,6 @@ InitProcess(void)
 	MemSet(MyProc->sLocks, 0, sizeof(MyProc->sLocks));
 	MyProc->sLocks[ProcStructLock] = 1;
 
-
 	if (IsUnderPostmaster)
 	{
 		IpcSemaphoreId	semId;
@@ -264,23 +263,16 @@ InitProcess(void)
 	else
 		MyProc->sem.semId = -1;
 
-	/* ----------------------
-	 * Release the lock.
-	 * ----------------------
-	 */
-	SpinRelease(ProcStructLock);
-
 	MyProc->pid = MyProcPid;
 	MyProc->databaseId = MyDatabaseId;
 	MyProc->xid = InvalidTransactionId;
 	MyProc->xmin = InvalidTransactionId;
 
-	/* ----------------
-	 * Start keeping spin lock stats from here on.	Any botch before
-	 * this initialization is forever botched
-	 * ----------------
+	/* ----------------------
+	 * Release the lock.
+	 * ----------------------
 	 */
-	MemSet(MyProc->sLocks, 0, MAX_SPINS * sizeof(*MyProc->sLocks));
+	SpinRelease(ProcStructLock);
 
 	/* -------------------------
 	 * Install ourselves in the shmem index table.	The name to
@@ -411,15 +403,6 @@ static void
 ProcKill(int exitStatus, Datum pid)
 {
 	PROC	   *proc;
-
-	/* --------------------
-	 * If this is a FATAL exit the postmaster will have to kill all the
-	 * existing backends and reinitialize shared memory.  So we don't
-	 * need to do anything here.
-	 * --------------------
-	 */
-	if (exitStatus != 0)
-		return;
 
 	if ((int) pid == MyProcPid)
 	{

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.91 2000/12/28 13:00:08 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.92 2001/01/12 21:53:56 tgl Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -678,7 +678,7 @@ RecordTransactionCommit()
 		rdata.len = SizeOfXactCommit;
 		rdata.next = NULL;
 
-		START_CRIT_CODE;
+		START_CRIT_SECTION();
 		/*
 		 * SHOULD SAVE ARRAY OF RELFILENODE-s TO DROP
 		 */
@@ -697,7 +697,7 @@ RecordTransactionCommit()
 		TransactionIdCommit(xid);
 
 		MyProc->logRec.xrecoff = 0;
-		END_CRIT_CODE;
+		END_CRIT_SECTION();
 	}
 
 	if (leak)
@@ -800,12 +800,12 @@ RecordTransactionAbort(void)
 		rdata.len = SizeOfXactAbort;
 		rdata.next = NULL;
 
-		START_CRIT_CODE;
+		START_CRIT_SECTION();
 		recptr = XLogInsert(RM_XACT_ID, XLOG_XACT_ABORT, &rdata);
 
 		TransactionIdAbort(xid);
 		MyProc->logRec.xrecoff = 0;
-		END_CRIT_CODE;
+		END_CRIT_SECTION();
 	}
 
 	/*

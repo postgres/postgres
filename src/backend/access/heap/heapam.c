@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.106 2001/01/07 22:14:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.107 2001/01/12 21:53:54 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1359,7 +1359,7 @@ heap_insert(Relation relation, HeapTuple tup)
 	buffer = RelationGetBufferForTuple(relation, tup->t_len);
 
 	/* NO ELOG(ERROR) from here till changes are logged */
-	START_CRIT_CODE;
+	START_CRIT_SECTION();
 	RelationPutHeapTuple(relation, buffer, tup);
 
 	/* XLOG stuff */
@@ -1405,7 +1405,7 @@ heap_insert(Relation relation, HeapTuple tup)
 		PageSetLSN(page, recptr);
 		PageSetSUI(page, ThisStartUpID);
 	}
-	END_CRIT_CODE;
+	END_CRIT_SECTION();
 
 	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 	WriteBuffer(buffer);
@@ -1503,7 +1503,7 @@ l1:
 		return result;
 	}
 
-	START_CRIT_CODE;
+	START_CRIT_SECTION();
 	/* store transaction information of xact deleting the tuple */
 	TransactionIdStore(GetCurrentTransactionId(), &(tp.t_data->t_xmax));
 	tp.t_data->t_cmax = GetCurrentCommandId();
@@ -1532,7 +1532,7 @@ l1:
 		PageSetLSN(dp, recptr);
 		PageSetSUI(dp, ThisStartUpID);
 	}
-	END_CRIT_CODE;
+	END_CRIT_SECTION();
 
 #ifdef TUPLE_TOASTER_ACTIVE
 	/* ----------
@@ -1702,7 +1702,7 @@ l2:
 	}
 
 	/* NO ELOG(ERROR) from here till changes are logged */
-	START_CRIT_CODE;
+	START_CRIT_SECTION();
 
 	RelationPutHeapTuple(relation, newbuf, newtup);	/* insert new tuple */
 	if (buffer == newbuf)
@@ -1734,7 +1734,7 @@ l2:
 		PageSetLSN(BufferGetPage(buffer), recptr);
 		PageSetSUI(BufferGetPage(buffer), ThisStartUpID);
 	}
-	END_CRIT_CODE;
+	END_CRIT_SECTION();
 
 	if (newbuf != buffer)
 		LockBuffer(newbuf, BUFFER_LOCK_UNLOCK);

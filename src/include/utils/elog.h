@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: elog.h,v 1.22 2001/01/07 04:17:28 tgl Exp $
+ * $Id: elog.h,v 1.23 2001/01/12 21:54:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,16 +34,15 @@ extern int Use_syslog;
  * ProcDiePending will be honored at critical section exit,
  * but QueryCancel is only checked at specified points.
  */
-extern uint32 CritSectionCount;	/* duplicates access/xlog.h */
+extern volatile uint32 CritSectionCount;	/* duplicates access/xlog.h */
 extern volatile bool ProcDiePending;
 extern void ForceProcDie(void);	/* in postgres.c */
 
-#define	START_CRIT_CODE		(CritSectionCount++)
+#define	START_CRIT_SECTION()  (CritSectionCount++)
 
-#define END_CRIT_CODE	\
+#define END_CRIT_SECTION() \
 	do { \
-		if (CritSectionCount == 0) \
-			elog(STOP, "Not in critical section"); \
+		Assert(CritSectionCount > 0); \
 		CritSectionCount--; \
 		if (CritSectionCount == 0 && ProcDiePending) \
 			ForceProcDie(); \

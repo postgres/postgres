@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.102 2001/01/08 18:31:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.103 2001/01/12 21:53:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -404,8 +404,7 @@ BufferAlloc(Relation reln,
 			 */
 			if ((buf->flags & BM_IO_ERROR) != 0)
 			{
-				PrivateRefCount[BufferDescriptorGetBuffer(buf) - 1] = 0;
-				buf->refcount--;
+				UnpinBuffer(buf);
 				buf = (BufferDesc *) NULL;
 				continue;
 			}
@@ -869,8 +868,10 @@ WaitIO(BufferDesc *buf, SPINLOCK spinlock)
 	while ((buf->flags & BM_IO_IN_PROGRESS) != 0)
 	{
 		SpinRelease(spinlock);
+		START_CRIT_SECTION();	/* don't want to die() holding the lock... */
 		S_LOCK(&(buf->io_in_progress_lock));
 		S_UNLOCK(&(buf->io_in_progress_lock));
+		END_CRIT_SECTION();
 		SpinAcquire(spinlock);
 	}
 }
@@ -921,13 +922,10 @@ ResetBufferUsage()
  *		ResetBufferPool
  *
  *		This routine is supposed to be called when a transaction aborts.
- *		it will release all the buffer pins held by the transaction.
+ *		It will release all the buffer pins held by the transaction.
  *		Currently, we also call it during commit if BufferPoolCheckLeak
  *		detected a problem --- in that case, isCommit is TRUE, and we
  *		only clean up buffer pin counts.
- *
- * During abort, we also forget any pending fsync requests.  Dirtied buffers
- * will still get written, eventually, but there will be no fsync for them.
  *
  * ----------------------------------------------
  */
@@ -943,6 +941,7 @@ ResetBufferPool(bool isCommit)
 			BufferDesc *buf = &BufferDescriptors[i];
 
 			SpinAcquire(BufMgrLock);
+			PrivateRefCount[i] = 0;
 			Assert(buf->refcount > 0);
 			buf->refcount--;
 			if (buf->refcount == 0)
@@ -952,7 +951,6 @@ ResetBufferPool(bool isCommit)
 			}
 			SpinRelease(BufMgrLock);
 		}
-		PrivateRefCount[i] = 0;
 	}
 
 	ResetLocalBufferPool();
@@ -1900,7 +1898,7 @@ SetBufferCommitInfoNeedsSave(Buffer buffer)
 }
 
 void
-UnlockBuffers()
+UnlockBuffers(void)
 {
 	BufferDesc *buf;
 	int			i;
@@ -1912,6 +1910,8 @@ UnlockBuffers()
 
 		Assert(BufferIsValid(i + 1));
 		buf = &(BufferDescriptors[i]);
+
+		START_CRIT_SECTION();	/* don't want to die() holding the lock... */
 
 		S_LOCK(&(buf->cntx_lock));
 
@@ -1940,6 +1940,8 @@ UnlockBuffers()
 		S_UNLOCK(&(buf->cntx_lock));
 
 		BufferLocks[i] = 0;
+
+		END_CRIT_SECTION();
 	}
 }
 
@@ -1955,6 +1957,8 @@ LockBuffer(Buffer buffer, int mode)
 
 	buf = &(BufferDescriptors[buffer - 1]);
 	buflock = &(BufferLocks[buffer - 1]);
+
+	START_CRIT_SECTION();		/* don't want to die() holding the lock... */
 
 	S_LOCK(&(buf->cntx_lock));
 
@@ -1979,6 +1983,7 @@ LockBuffer(Buffer buffer, int mode)
 		else
 		{
 			S_UNLOCK(&(buf->cntx_lock));
+			END_CRIT_SECTION();
 			elog(ERROR, "UNLockBuffer: buffer %lu is not locked", buffer);
 		}
 	}
@@ -1990,7 +1995,9 @@ LockBuffer(Buffer buffer, int mode)
 		while (buf->ri_lock || buf->w_lock)
 		{
 			S_UNLOCK(&(buf->cntx_lock));
+			END_CRIT_SECTION();
 			S_LOCK_SLEEP(&(buf->cntx_lock), i++);
+			START_CRIT_SECTION();
 			S_LOCK(&(buf->cntx_lock));
 		}
 		(buf->r_locks)++;
@@ -2016,7 +2023,9 @@ LockBuffer(Buffer buffer, int mode)
 				buf->ri_lock = true;
 			}
 			S_UNLOCK(&(buf->cntx_lock));
+			END_CRIT_SECTION();
 			S_LOCK_SLEEP(&(buf->cntx_lock), i++);
+			START_CRIT_SECTION();
 			S_LOCK(&(buf->cntx_lock));
 		}
 		buf->w_lock = true;
@@ -2038,10 +2047,12 @@ LockBuffer(Buffer buffer, int mode)
 	else
 	{
 		S_UNLOCK(&(buf->cntx_lock));
+		END_CRIT_SECTION();
 		elog(ERROR, "LockBuffer: unknown lock mode %d", mode);
 	}
 
 	S_UNLOCK(&(buf->cntx_lock));
+	END_CRIT_SECTION();
 }
 
 /*
@@ -2062,7 +2073,9 @@ static bool IsForInput;
  *	BM_IO_IN_PROGRESS mask is not set for the buffer
  *	The buffer is Pinned
  *
-*/
+ * Because BufMgrLock is held, we are already in a CRIT_SECTION here,
+ * and do not need another.
+ */
 static void
 StartBufferIO(BufferDesc *buf, bool forInput)
 {
@@ -2094,7 +2107,9 @@ StartBufferIO(BufferDesc *buf, bool forInput)
  *	BufMgrLock is held
  *	The buffer is Pinned
  *
-*/
+ * Because BufMgrLock is held, we are already in a CRIT_SECTION here,
+ * and do not need another.
+ */
 static void
 TerminateBufferIO(BufferDesc *buf)
 {
@@ -2110,7 +2125,9 @@ TerminateBufferIO(BufferDesc *buf)
  *	BufMgrLock is held
  *	The buffer is Pinned
  *
-*/
+ * Because BufMgrLock is held, we are already in a CRIT_SECTION here,
+ * and do not need another.
+ */
 static void
 ContinueBufferIO(BufferDesc *buf, bool forInput)
 {
@@ -2132,7 +2149,7 @@ InitBufferIO(void)
  *	This function is called from ProcReleaseSpins().
  *	BufMgrLock isn't held when this function is called.
  *
- *	If I/O was in progress, BM_IO_ERROR is always set.
+ *	If I/O was in progress, we always set BM_IO_ERROR.
  */
 void
 AbortBufferIO(void)
@@ -2141,8 +2158,8 @@ AbortBufferIO(void)
 
 	if (buf)
 	{
-		Assert(buf->flags & BM_IO_IN_PROGRESS);
 		SpinAcquire(BufMgrLock);
+		Assert(buf->flags & BM_IO_IN_PROGRESS);
 		if (IsForInput)
 			Assert(!(buf->flags & BM_DIRTY) && !(buf->cntxDirty));
 		else

@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/spin.c,v 1.27 2000/12/11 00:49:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/spin.c,v 1.28 2001/01/12 21:53:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -144,8 +144,21 @@ SpinAcquire(SPINLOCK lockid)
 	SLock	   *slckP = &(SLockArray[lockid]);
 
 	PRINT_SLDEBUG("SpinAcquire", lockid, slckP);
+	/*
+	 * Lock out die() until we exit the critical section protected by the
+	 * spinlock.  This ensures that die() will not interrupt manipulations
+	 * of data structures in shared memory.  We don't want die() to
+	 * interrupt this routine between S_LOCK and PROC_INCR_SLOCK, either,
+	 * so must do it before acquiring the lock, not after.
+	 */
+	START_CRIT_SECTION();
+	/*
+	 * Acquire the lock, then record that we have done so (for recovery
+	 * in case of elog(ERROR) during the critical section).
+	 */
 	S_LOCK(&(slckP->shlock));
 	PROC_INCR_SLOCK(lockid);
+
     PRINT_SLDEBUG("SpinAcquire/done", lockid, slckP);
 }
 
@@ -154,15 +167,22 @@ SpinRelease(SPINLOCK lockid)
 {
 	SLock	   *slckP = &(SLockArray[lockid]);
 
+    PRINT_SLDEBUG("SpinRelease", lockid, slckP);
 	/*
 	 * Check that we are actually holding the lock we are releasing. This
 	 * can be done only after MyProc has been initialized.
 	 */
     Assert(!MyProc || MyProc->sLocks[lockid] > 0);
-
+	/*
+	 * Record that we no longer hold the spinlock, and release it.
+	 */
 	PROC_DECR_SLOCK(lockid);
-    PRINT_SLDEBUG("SpinRelease", lockid, slckP);
 	S_UNLOCK(&(slckP->shlock));
+	/*
+	 * Exit the critical section entered in SpinAcquire().
+	 */
+	END_CRIT_SECTION();
+
     PRINT_SLDEBUG("SpinRelease/done", lockid, slckP);
 }
 
@@ -187,7 +207,7 @@ SpinRelease(SPINLOCK lockid)
  *
  * Note that the SpinLockIds array is not in shared memory; it is filled
  * by the postmaster and then inherited through fork() by backends.  This
- * is OK because its contents do not change after system startup.
+ * is OK because its contents do not change after shmem initialization.
  */
 
 #define SPINLOCKS_PER_SET  PROC_NSEMS_PER_SET
@@ -285,6 +305,8 @@ SpinFreeAllSemaphores(void)
 		if (SpinLockIds[i] >= 0)
 			IpcSemaphoreKill(SpinLockIds[i]);
 	}
+	free(SpinLockIds);
+	SpinLockIds = NULL;
 }
 
 /*
@@ -295,6 +317,8 @@ SpinFreeAllSemaphores(void)
 void
 SpinAcquire(SPINLOCK lock)
 {
+	/* See the TAS() version of this routine for commentary */
+	START_CRIT_SECTION();
 	IpcSemaphoreLock(SpinLockIds[0], lock);
 	PROC_INCR_SLOCK(lock);
 }
@@ -307,15 +331,18 @@ SpinAcquire(SPINLOCK lock)
 void
 SpinRelease(SPINLOCK lock)
 {
+	/* See the TAS() version of this routine for commentary */
 #ifdef USE_ASSERT_CHECKING
 	/* Check it's locked */
 	int			semval;
 
 	semval = IpcSemaphoreGetValue(SpinLockIds[0], lock);
 	Assert(semval < 1);
+    Assert(!MyProc || MyProc->sLocks[lockid] > 0);
 #endif
 	PROC_DECR_SLOCK(lock);
 	IpcSemaphoreUnlock(SpinLockIds[0], lock);
+	END_CRIT_SECTION();
 }
 
 /*
