@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/user.sgml,v 1.24 2001/01/13 23:58:55 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/user.sgml,v 1.25 2001/01/22 23:34:33 petere Exp $
 -->
 
 <book id="user">
@@ -44,6 +44,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/user.sgml,v 1.24 2001/01/13 23:58:55 
 
  &intro;
  &syntax;
+ &queries;
  &datatype;
  &func;
  &typeconv;
