@@ -62,9 +62,6 @@ elog_elog(level, message)
 
 
 int
-elog_NOIND()
-
-int
 elog_DEBUG()
 
 int

@@ -23,12 +23,6 @@ elog_ERROR(void)
 }
 
 int
-elog_NOIND(void)
-{
-	return NOIND;
-}
-
-int
 elog_NOTICE(void)
 {
 	return NOTICE;

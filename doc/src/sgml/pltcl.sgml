@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/pltcl.sgml,v 2.10 2001/05/12 22:51:35 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/pltcl.sgml,v 2.11 2001/06/09 02:19:07 tgl Exp $
 -->
 
  <chapter id="pltcl">
@@ -348,7 +348,7 @@ CREATE TRIGGER trig_mytab_modcount BEFORE INSERT OR UPDATE ON mytab
       <listitem>
        <para>
 	Fire a log message. Possible levels are NOTICE, ERROR,
-	FATAL, DEBUG and NOIND
+	FATAL, and DEBUG
 	as for the <function>elog</function> C function.
        </para>
       </listitem>

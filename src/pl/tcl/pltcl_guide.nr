@@ -268,7 +268,7 @@ the body of a PL/Tcl procedure:
 elog level msg
 .br
 Fire a log message. Possible levels are NOTICE, WARN, ERROR, 
-FATAL, DEBUG and NOIND
+FATAL, and DEBUG
 like for the elog() C function.
 
 .ti -4
