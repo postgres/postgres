@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.50 2000/04/12 17:15:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.51 2000/06/06 17:02:38 tgl Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -456,8 +456,10 @@ InitCatalogCache()
 /*
  * SearchSysCacheTupleCopy
  *
- *	This is like SearchSysCacheTuple, except it returns a copy of the tuple
- *	that the user is required to pfree().
+ *	This is like SearchSysCacheTuple, except it returns a palloc'd copy of
+ *	the tuple.  The caller should heap_freetuple() the returned copy when
+ *	done with it.  This routine should be used when the caller intends to
+ *	continue to access the tuple for more than a very short period of time.
  */
 HeapTuple
 SearchSysCacheTupleCopy(int cacheId,	/* cache selection code */
@@ -485,7 +487,11 @@ SearchSysCacheTupleCopy(int cacheId,	/* cache selection code */
  *	Returns the cache copy of the tuple if one is found, NULL if not.
  *	The tuple is the 'cache' copy.
  *
- *	XXX The tuple that is returned is NOT supposed to be pfree'd!
+ *	CAUTION: The tuple that is returned must NOT be freed by the caller!
+ *
+ *	CAUTION: The returned tuple may be flushed from the cache during
+ *	subsequent cache lookup operations, or by shared cache invalidation.
+ *	Callers should not expect the pointer to remain valid for long.
  */
 HeapTuple
 SearchSysCacheTuple(int cacheId,/* cache selection code */
