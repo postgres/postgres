@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.91 2002/08/15 02:56:19 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.92 2002/08/15 03:00:59 momjian Exp $
 -->
 
  <chapter id="libpq">
@@ -942,8 +942,8 @@ strings overlap.
    characters in this binary string (a terminating zero byte is
    neither necessary nor counted).  The <parameter>to_length</parameter>
    parameter shall point to a buffer suitable to hold the resultant
-   escaped string length. The result string length does not
-   include the terminating zero byte of the result.
+   escaped string length. The result string length includes the terminating
+   zero byte of the result.
   </para>
 
   <para>
