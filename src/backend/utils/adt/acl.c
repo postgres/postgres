@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.94 2003/08/04 02:40:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.95 2003/08/14 14:19:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,8 +61,8 @@ static AclMode convert_schema_priv_string(text *priv_type_text);
  * RETURNS:
  *		the string position in 's' that points to the next non-space character
  *		in 's', after any quotes.  Also:
- *		- loads the identifier into 'name'.  (If no identifier is found, 'name'
- *		  contains an empty string.)  name must be NAMEDATALEN bytes.
+ *		- loads the identifier into 'n'.  (If no identifier is found, 'n'
+ *		  contains an empty string.)  'n' must be NAMEDATALEN bytes.
  */
 static const char *
 getid(const char *s, char *n)
@@ -74,7 +74,7 @@ getid(const char *s, char *n)
 
 	while (isspace((unsigned char) *s))
 		s++;
-	/* This test had better match what putid() does, below */
+	/* This code had better match what putid() does, below */
 	for (;
 		 *s != '\0' &&
 		 (isalnum((unsigned char) *s) ||
@@ -84,18 +84,26 @@ getid(const char *s, char *n)
 		 s++)
 	{
 		if (*s == '"')
-			in_quotes = !in_quotes;
-		else
 		{
-			if (len >= NAMEDATALEN - 1)
-				ereport(ERROR,
-						(errcode(ERRCODE_NAME_TOO_LONG),
-						 errmsg("identifier too long"),
-				 errdetail("Identifier must be less than %d characters.",
-						   NAMEDATALEN)));
-
-			n[len++] = *s;
+			/* safe to look at next char (could be '\0' though) */
+			if (*(s + 1) != '"')
+			{
+				in_quotes = !in_quotes;
+				continue;
+			}
+			/* it's an escaped double quote; skip the escaping char */
+			s++;
 		}
+
+		/* Add the character to the string */
+		if (len >= NAMEDATALEN - 1)
+			ereport(ERROR,
+					(errcode(ERRCODE_NAME_TOO_LONG),
+					 errmsg("identifier too long"),
+					 errdetail("Identifier must be less than %d characters.",
+							   NAMEDATALEN)));
+
+		n[len++] = *s;
 	}
 	n[len] = '\0';
 	while (isspace((unsigned char) *s))
@@ -104,8 +112,9 @@ getid(const char *s, char *n)
 }
 
 /*
- * Write a user or group Name at *p, surrounding it with double quotes if
- * needed.	There must be at least NAMEDATALEN+2 bytes available at *p.
+ * Write a user or group Name at *p, adding double quotes if needed.
+ * There must be at least (2*NAMEDATALEN)+2 bytes available at *p.
+ * This needs to be kept in sync with copyAclUserName in pg_dump/dumputils.c
  */
 static void
 putid(char *p, const char *s)
@@ -125,7 +134,12 @@ putid(char *p, const char *s)
 	if (!safe)
 		*p++ = '"';
 	for (src = s; *src; src++)
+	{
+		/* A double quote character in a username is encoded as "" */
+		if (*src == '"')
+			*p++ = '"';
 		*p++ = *src;
+	}
 	if (!safe)
 		*p++ = '"';
 	*p = '\0';
@@ -358,7 +372,7 @@ aclitemout(PG_FUNCTION_ARGS)
 
 	out = palloc(strlen("group =/") +
 				 2 * N_ACL_RIGHTS +
-				 2 * (NAMEDATALEN + 2) +
+				 2 * (2 * NAMEDATALEN + 2) +
 				 1);
 
 	p = out;

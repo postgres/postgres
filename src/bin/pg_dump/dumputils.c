@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/bin/pg_dump/dumputils.c,v 1.8 2003/08/04 02:40:09 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/pg_dump/dumputils.c,v 1.9 2003/08/14 14:19:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -557,23 +557,28 @@ static char *
 copyAclUserName(PQExpBuffer output, char *input)
 {
 	resetPQExpBuffer(output);
+
 	while (*input && *input != '=')
 	{
+		/* If user name isn't quoted, then just add it to the output buffer */
 		if (*input != '"')
 			appendPQExpBufferChar(output, *input++);
 		else
 		{
+			/* Otherwise, it's a quoted username */ 
 			input++;
-			while (*input != '"')
+			/* Loop until we come across an unescaped quote */
+			while (!(*input == '"' && *(input + 1) != '"'))
 			{
 				if (*input == '\0')
 					return input;		/* really a syntax error... */
 
 				/*
-				 * There is no quoting convention here, thus we can't cope
-				 * with usernames containing double quotes.  Keep this
+				 * Quoting convention is to escape " as "".  Keep this
 				 * code in sync with putid() in backend's acl.c.
 				 */
+				if (*input == '"' && *(input + 1) == '"')
+					input++;
 				appendPQExpBufferChar(output, *input++);
 			}
 			input++;
