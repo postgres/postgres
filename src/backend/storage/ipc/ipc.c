@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.66 2001/03/23 04:49:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.67 2001/05/08 19:00:26 momjian Exp $
  *
  * NOTES
  *
@@ -566,7 +566,6 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, uint32 size, int permission)
 
 	if (shmid < 0)
 	{
-
 		/*
 		 * Fail quietly if error indicates a collision with existing
 		 * segment. One would expect EEXIST, given that we said IPC_EXCL,
