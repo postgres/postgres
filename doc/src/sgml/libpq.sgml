@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.171 2004/12/13 18:05:08 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.172 2004/12/20 18:15:05 tgl Exp $
 -->
 
  <chapter id="libpq">
@@ -860,10 +860,11 @@ Parameters reported as of the current release include
 <literal>client_encoding</>,
 <literal>is_superuser</>,
 <literal>session_authorization</>,
-<literal>DateStyle</>, and
+<literal>DateStyle</>,
+<literal>TimeZone</>, and
 <literal>integer_datetimes</>.
-(<literal>server_encoding</> and <literal>integer_datetimes</> were not
-reported by releases before 8.0.)
+(<literal>server_encoding</>, <literal>TimeZone</>, and
+<literal>integer_datetimes</> were not reported by releases before 8.0.)
 Note that
 <literal>server_version</>,
 <literal>server_encoding</> and

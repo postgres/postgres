@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.250 2004/11/24 19:51:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.251 2004/12/20 18:15:07 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -1728,7 +1728,8 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"TimeZone", PGC_USERSET, CLIENT_CONN_LOCALE,
 			gettext_noop("Sets the time zone for displaying and interpreting time stamps."),
-			NULL
+			NULL,
+			GUC_REPORT
 		},
 		&timezone_string,
 		"UNKNOWN", assign_timezone, show_timezone
