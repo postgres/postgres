@@ -1,12 +1,13 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "postgres.h"
+#include "libpq/pqcomm.h"
+
 #ifdef        HAVE_ENDIAN_H
 #  include    <endian.h>
 #endif
 
-#include "postgres.h"
-#include "libpq/pqcomm.h"
 
 /* --------------------------------------------------------------------- */
 /* Is the other way around than system ntoh/hton, so we roll our own
