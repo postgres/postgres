@@ -1,9 +1,3 @@
-/* Force _GNU_SOURCE on; plperl is broken with Perl 5.8.0 otherwise */
-#ifndef _GNU_SOURCE
-#define _GNU_SOURCE 1
-#endif
-
-
 #if defined(__i386__) || defined(__x86_64__)
 typedef unsigned char slock_t;
 
