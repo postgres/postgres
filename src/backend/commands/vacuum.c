@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.30 1997/04/23 06:25:43 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.31 1997/04/30 03:05:43 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -733,8 +733,8 @@ vc_scanheap (VRelStats *vacrelstats, Relation onerel,
 		    tupgone = true;
 		}
 		else {
-		    elog (MESSAGE_LEVEL, "Rel %.*s: InsertTransactionInProgress %u for TID %u/%u",
-			NAMEDATALEN, relname, htup->t_xmin, blkno, offnum);
+		    elog (MESSAGE_LEVEL, "Rel %.*s: TID %u/%u: InsertTransactionInProgress %u",
+			NAMEDATALEN, relname, blkno, offnum, htup->t_xmin);
 		}
 	    }
 
@@ -765,8 +765,9 @@ vc_scanheap (VRelStats *vacrelstats, Relation onerel,
 	     */
 	    if ( !TransactionIdIsValid((TransactionId)htup->t_xmin) )
 	    {
-		elog (NOTICE, "TID %u/%u: INSERT_TRANSACTION_ID IS INVALID. \
+		elog (NOTICE, "Rel %.*s: TID %u/%u: INSERT_TRANSACTION_ID IS INVALID. \
 DELETE_TRANSACTION_ID_VALID %d, TUPGONE %d.", 
+			NAMEDATALEN, relname, blkno, offnum, 
 			TransactionIdIsValid((TransactionId)htup->t_xmax),
 			tupgone);
 	    }
@@ -779,9 +780,10 @@ DELETE_TRANSACTION_ID_VALID %d, TUPGONE %d.",
 	    if ( !ItemPointerIsValid (itemptr) || 
 	    		BlockIdGetBlockNumber(&(itemptr->ip_blkid)) != blkno )
 	    {
-	    	elog (NOTICE, "ITEM POINTER IS INVALID: %u/%u FOR %u/%u. TUPGONE %d.", 
+	    	elog (NOTICE, "Rel %.*s: TID %u/%u: TID IN TUPLEHEADER %u/%u IS NOT THE SAME. TUPGONE %d.", 
+	    		NAMEDATALEN, relname, blkno, offnum,
 	    		BlockIdGetBlockNumber(&(itemptr->ip_blkid)), 
-	    		itemptr->ip_posid, blkno, offnum, tupgone);
+	    		itemptr->ip_posid, tupgone);
 	    }
 
 	    /*
@@ -789,13 +791,14 @@ DELETE_TRANSACTION_ID_VALID %d, TUPGONE %d.",
 	     */
 	    if ( htup->t_len != itemid->lp_len )
 	    {
-	    	elog (NOTICE, "PAGEHEADER' LEN %u IS NOT THE SAME AS HTUP' %u FOR %u/%u.TUPGONE %d.", 
-	    		itemid->lp_len, htup->t_len, blkno, offnum, tupgone);
+	    	elog (NOTICE, "Rel %.*s: TID %u/%u: TUPLE_LEN IN PAGEHEADER %u IS NOT THE SAME AS IN TUPLEHEADER %u. TUPGONE %d.", 
+	    		NAMEDATALEN, relname, blkno, offnum, 
+	    		itemid->lp_len, htup->t_len, tupgone);
 	    }
 	    if ( !OidIsValid(htup->t_oid) )
 	    {
-	    	elog (NOTICE, "OID IS INVALID FOR %u/%u.TUPGONE %d.", 
-	    		blkno, offnum, tupgone);
+	    	elog (NOTICE, "Rel %.*s: TID %u/%u: OID IS INVALID. TUPGONE %d.", 
+	    		NAMEDATALEN, relname, blkno, offnum, tupgone);
 	    }
 	    
 	    if (tupgone) {
