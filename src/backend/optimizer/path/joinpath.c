@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.71 2002/09/04 20:31:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.71.2.1 2005/01/23 02:24:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -253,7 +253,8 @@ sort_inner_and_outer(Query *root,
 												   cur_mergeclauses,
 												   innerrel);
 		/* Build pathkeys representing output sort order. */
-		merge_pathkeys = build_join_pathkeys(root, joinrel, outerkeys);
+		merge_pathkeys = build_join_pathkeys(root, joinrel, jointype,
+											 outerkeys);
 
 		/*
 		 * And now we can make the path.  We only consider the cheapest-
@@ -371,7 +372,7 @@ match_unsorted_outer(Query *root,
 		 * as a nestloop, and even if some of the mergeclauses are
 		 * implemented by qpquals rather than as true mergeclauses):
 		 */
-		merge_pathkeys = build_join_pathkeys(root, joinrel,
+		merge_pathkeys = build_join_pathkeys(root, joinrel, jointype,
 											 outerpath->pathkeys);
 
 		if (nestjoinOK)
