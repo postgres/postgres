@@ -170,7 +170,7 @@ pg_dumpall > outputfile
        if you need to do this.
        To make the backup, you can use the "pg_dumpall" command from the
        version you are currently running. For best results, however, try
-       to use the "pg_dumpall" command from PostgreSQL 7.4beta4, since
+       to use the "pg_dumpall" command from PostgreSQL 7.4beta5, since
        this version contains bug fixes and improvements over older
        versions. While this advice might seem idiosyncratic since you
        haven't installed the new version yet, it is advisable to follow
@@ -196,7 +196,7 @@ kill -INT `cat /usr/local/pgsql/data/postmaster.pid`
        like this:
 mv /usr/local/pgsql /usr/local/pgsql.old
        
-   After you have installed PostgreSQL 7.4beta4, create a new database
+   After you have installed PostgreSQL 7.4beta5, create a new database
    directory and start the new server. Remember that you must execute
    these commands while logged in to the special database user account
    (which you already have if you are upgrading).
