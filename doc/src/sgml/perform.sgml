@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.34 2003/10/10 02:08:42 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.35 2003/10/17 01:14:26 tgl Exp $
 -->
 
  <chapter id="performance-tips">
@@ -284,16 +284,16 @@ EXPLAIN ANALYZE SELECT * FROM tenk1 t1, tenk2 t2 WHERE t1.unique1 &lt; 50 AND t1
                                    QUERY PLAN
 -------------------------------------------------------------------------------
  Nested Loop  (cost=0.00..327.02 rows=49 width=296)
-                                 (actual time=1.18..29.82 rows=50 loops=1)
+                                 (actual time=1.181..29.822 rows=50 loops=1)
    -&gt;  Index Scan using tenk1_unique1 on tenk1 t1
                   (cost=0.00..179.33 rows=49 width=148)
-                                 (actual time=0.63..8.91 rows=50 loops=1)
+                                 (actual time=0.630..8.917 rows=50 loops=1)
          Index Cond: (unique1 &lt; 50)
    -&gt;  Index Scan using tenk2_unique2 on tenk2 t2
                   (cost=0.00..3.01 rows=1 width=148)
-                                 (actual time=0.29..0.32 rows=1 loops=50)
+                                 (actual time=0.295..0.324 rows=1 loops=50)
          Index Cond: ("outer".unique2 = t2.unique2)
- Total runtime: 31.60 msec
+ Total runtime: 31.604 ms
 </screen>
 
     Note that the <quote>actual time</quote> values are in milliseconds of

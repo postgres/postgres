@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/explain.sgml,v 1.30 2003/09/12 00:12:47 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/explain.sgml,v 1.31 2003/10/17 01:14:26 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -210,10 +210,10 @@ EXPLAIN ANALYZE EXECUTE query(100, 200);
 
                                                        QUERY PLAN                                                        
 -------------------------------------------------------------------------------------------------------------------------
- HashAggregate  (cost=39.53..39.53 rows=1 width=8) (actual time=0.66..0.67 rows=7 loops=1)
-   -&gt;  Index Scan using test_pkey on test  (cost=0.00..32.97 rows=1311 width=8) (actual time=0.05..0.39 rows=99 loops=1)
+ HashAggregate  (cost=39.53..39.53 rows=1 width=8) (actual time=0.661..0.672 rows=7 loops=1)
+   -&gt;  Index Scan using test_pkey on test  (cost=0.00..32.97 rows=1311 width=8) (actual time=0.050..0.395 rows=99 loops=1)
          Index Cond: ((id &gt; $1) AND (id &lt; $2))
- Total runtime: 0.85 msec
+ Total runtime: 0.851 ms
 (4 rows)
 </programlisting>
   </para>
