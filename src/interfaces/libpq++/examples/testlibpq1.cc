@@ -51,7 +51,7 @@ int main()
   cout << endl << endl;
 
   // next, print out the instances
-  for (i=0; i < data.Tuples(); i++) {
+  for (int i=0; i < data.Tuples(); i++) {
        for (int j=0; j < nFields; j++)
             cout << setiosflags(ios::right) << setw(15) << data.GetValue(i,j);
        cout << endl;
