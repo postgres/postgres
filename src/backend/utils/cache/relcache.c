@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.125 2001/01/06 21:53:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.126 2001/01/08 18:34:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1557,7 +1557,13 @@ RelationNameGetRelation(const char *relationName)
 /* --------------------------------
  * RelationClose - close an open relation
  *
- *	 Actually, we just decrement the refcount.
+ *	Actually, we just decrement the refcount.
+ *
+ *	NOTE: if compiled with -DRELCACHE_FORCE_RELEASE then relcache entries
+ *	will be freed as soon as their refcount goes to zero.  In combination
+ *	with aset.c's CLOBBER_FREED_MEMORY option, this provides a good test
+ *	to catch references to already-released relcache entries.  It slows
+ *	things down quite a bit, however.
  * --------------------------------
  */
 void
@@ -1565,6 +1571,11 @@ RelationClose(Relation relation)
 {
 	/* Note: no locking manipulations needed */
 	RelationDecrementReferenceCount(relation);
+
+#ifdef RELCACHE_FORCE_RELEASE
+	if (RelationHasReferenceCountZero(relation) && !relation->rd_myxactonly)
+		RelationClearRelation(relation, false);
+#endif
 }
 
 #ifdef	ENABLE_REINDEX_NAILED_RELATIONS
@@ -1603,6 +1614,7 @@ RelationReloadClassinfo(Relation relation)
 	return;
 }
 #endif /* ENABLE_REINDEX_NAILED_RELATIONS */
+
 /* --------------------------------
  * RelationClearRelation
  *
@@ -1611,9 +1623,6 @@ RelationReloadClassinfo(Relation relation)
  *	 usually used when we are notified of a change to an open relation
  *	 (one with refcount > 0).  However, this routine just does whichever
  *	 it's told to do; callers must determine which they want.
- *
- *	 If we detect a change in the relation's TupleDesc, rules, or triggers
- *	 while rebuilding, we complain unless refcount is 0.
  * --------------------------------
  */
 static void
