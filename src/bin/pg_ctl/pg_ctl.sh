@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pg_ctl/Attic/pg_ctl.sh,v 1.21 2001/07/11 04:57:34 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pg_ctl/Attic/pg_ctl.sh,v 1.22 2001/07/11 16:16:52 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -79,7 +79,7 @@ fi
 if echo "$0" | grep '/' > /dev/null 2>&1 
 then
         # explicit dir name given
-        self_path=`echo $0 | sed 's,/[^/]*$,,'`       # (dirname command is not portable)
+        self_path=`echo "$0" | sed 's,/[^/]*$,,'`       # (dirname command is not portable)
 else
         # look for it in PATH ('which' command is not portable)
         for dir in `echo "$PATH" | sed 's/:/ /g'`
@@ -116,7 +116,7 @@ shutdown_mode=smart
 
 while [ "$#" -gt 0 ]
 do
-    case $1 in
+    case "$1" in
 	-h|--help|-\?)
 	    echo "$help"
 	    exit 0
@@ -127,16 +127,17 @@ do
 	    ;;
 	-D)
 	    shift
-	    PGDATA="$1"
+	    # pass environment into new postmaster
+	    export PGDATA="$1"
 	    ;;
 	-l)
-	    logfile=$2
+	    logfile="$2"
 	    shift;;
 	-l*)
 	    logfile=`echo "$1" | sed 's/^-l//'`
 	    ;;
 	-m)
-	    shutdown_mode=$2
+	    shutdown_mode="$2"
 	    shift;;
 	-m*)
 	    shutdown_mode=`echo "$1" | sed 's/^-m//'`
@@ -197,7 +198,7 @@ if [ -z "$PGDATA" ];then
 fi
 
 if [ -z "$wait" ]; then
-    case $op in
+    case "$op" in
 	start)      wait=no;;
 	stop)       wait=yes;;
 	restart)    wait=no;;   # must wait on shutdown anyhow
@@ -205,7 +206,7 @@ if [ -z "$wait" ]; then
 fi
 
 
-case $shutdown_mode in
+case "$shutdown_mode" in
     s|smart)
 	sig="-TERM"
 	;;
@@ -227,7 +228,7 @@ DEFPOSTOPTS=$PGDATA/postmaster.opts.default
 POSTOPTSFILE=$PGDATA/postmaster.opts
 PIDFILE=$PGDATA/postmaster.pid
 
-if [ $op = "status" ];then
+if [ "$op" = "status" ];then
     if [ -f $PIDFILE ];then
 	PID=`sed -n 1p $PIDFILE`
 	if [ $PID -lt 0 ];then
@@ -245,7 +246,7 @@ if [ $op = "status" ];then
     fi
 fi
 
-if [ $op = "stop" -o $op = "restart" ];then
+if [ "$op" = "stop" -o "$op" = "restart" ];then
     if [ -f $PIDFILE ];then
 	PID=`sed -n 1p $PIDFILE`
 	if [ $PID -lt 0 ];then
@@ -255,7 +256,7 @@ if [ $op = "stop" -o $op = "restart" ];then
 	    exit 1
 	fi
 
-	kill $sig $PID
+	kill "$sig" $PID
 
 	# wait for postmaster to shut down
 	if [ "$wait" = yes -o "$op" = restart ];then
@@ -284,7 +285,7 @@ if [ $op = "stop" -o $op = "restart" ];then
     else # ! -f $PIDFILE
 	echo "$CMDNAME: cannot find $PIDFILE" 1>&2
 	echo "Is postmaster running?" 1>&2
-	if [ $op = "restart" ];then
+	if [ "$op" = "restart" ];then
 	    echo "starting postmaster anyway" 1>&2
 	else
 	    exit 1
@@ -292,7 +293,7 @@ if [ $op = "stop" -o $op = "restart" ];then
     fi
 fi # stop or restart
 
-if [ $op = "start" -o $op = "restart" ];then
+if [ "$op" = "start" -o "$op" = "restart" ];then
     oldpid=""
     if [ -f $PIDFILE ];then
 	echo "$CMDNAME: Another postmaster may be running.  Trying to start postmaster anyway." 1>&2
@@ -301,7 +302,7 @@ if [ $op = "start" -o $op = "restart" ];then
 
     # no -o given
     if [ -z "$POSTOPTS" ];then
-	if [ $op = "start" ];then
+	if [ "$op" = "start" ];then
 	    # if we are in start mode, then look for postmaster.opts.default
 	    if [ -f $DEFPOSTOPTS ]; then
 		eval set X "`cat $DEFPOSTOPTS`"; shift
@@ -309,15 +310,12 @@ if [ $op = "start" -o $op = "restart" ];then
 	else
 	    # if we are in restart mode, then look for postmaster.opts
 	    eval set X "`cat $POSTOPTSFILE`"; shift
-            po_path=$1
+            po_path="$1"
             shift
 	fi
     else # -o given
         eval set X "$POSTOPTS"; shift
     fi
-
-    # pass environment into new postmaster
-    export PGDATA
 
     if [ -n "$logfile" ]; then
         "$po_path" "$@" </dev/null >>$logfile 2>&1 &
