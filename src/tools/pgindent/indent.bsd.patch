@@ -23,9 +23,6 @@ to 1000.  The second patch allows it to understand 0x7fU and 0LL constants.
   {
       "switch", 1,
       "case", 2,
-
-*** ./lexi.c.orig	Wed May 26 10:50:54 1999
---- ./lexi.c	Wed May 26 10:51:08 1999
 ***************
 *** 186,192 ****
   				*e_token++ = *buf_ptr++;
@@ -44,9 +41,6 @@ to 1000.  The second patch allows it to understand 0x7fU and 0LL constants.
   		*e_token++ = *buf_ptr++;
   	}
   	else
-
-*** ./lexi.c.orig	Wed Apr 18 17:15:17 2001
---- ./lexi.c	Mon Sep  3 19:05:17 2001
 ***************
 *** 186,194 ****
   				*e_token++ = *buf_ptr++;
