@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.203 2002/11/27 08:30:27 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.204 2002/12/12 21:50:01 momjian Exp $ */
 
 /* Copyright comment */
 %{
@@ -4703,7 +4703,8 @@ ECPGRelease: TransactionStmt SQL_RELEASE
 			fprintf(yyout, "ECPGtrans(__LINE__, %s, \"%s\");",
 					connection ? connection : "NULL", $1);
 			whenever_action(0);
-			fprintf(yyout, "ECPGdisconnect(__LINE__, \"\");");
+			fprintf(yyout, "ECPGdisconnect(__LINE__, %s);",
+					connection ? connection : "\"CURRENT\"");
 			whenever_action(0);
 			free($1);
 		}
