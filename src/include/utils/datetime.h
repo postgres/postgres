@@ -9,16 +9,16 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: datetime.h,v 1.33 2002/09/04 20:31:45 momjian Exp $
+ * $Id: datetime.h,v 1.34 2003/01/16 00:26:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef DATETIME_H
 #define DATETIME_H
 
-#include <time.h>
-#include <math.h>
 #include <limits.h>
+#include <math.h>
+#include <time.h>
 
 #include "utils/timestamp.h"
 
@@ -292,5 +292,7 @@ extern int	DecodeUnits(int field, char *lowtoken, int *val);
 extern bool ClearDateCache(bool, bool, bool);
 
 extern int	j2day(int jd);
+
+extern bool CheckDateTokenTables(void);
 
 #endif   /* DATETIME_H */

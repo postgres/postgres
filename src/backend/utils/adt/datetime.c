@@ -8,21 +8,21 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.97 2002/11/13 17:24:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.98 2003/01/16 00:26:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include <ctype.h>
-#include <math.h>
 #include <errno.h>
 #include <float.h>
 #include <limits.h>
+#include <math.h>
 
 #include "miscadmin.h"
-#include "utils/guc.h"
 #include "utils/datetime.h"
+#include "utils/guc.h"
 
 
 static int DecodeNumber(int flen, char *field,
@@ -37,7 +37,7 @@ static int	DecodeTimezone(char *str, int *tzp);
 static datetkn *datebsearch(char *key, datetkn *base, unsigned int nel);
 static int	DecodeDate(char *str, int fmask, int *tmask, struct tm * tm);
 static int	DecodePosixTimezone(char *str, int *val);
-void		TrimTrailingZeros(char *str);
+static void TrimTrailingZeros(char *str);
 
 
 int			day_tab[2][13] = {
@@ -69,14 +69,16 @@ char	   *days[] = {"Sunday", "Monday", "Tuesday", "Wednesday",
 #define TOVAL(tp, v)	((tp)->value = ((v) < 0? NEG((-(v))/15): POS(v)/15))
 
 /*
- * datetktbl holds date/time keywords. Note that this table must be strictly
- * ordered to allow an O(ln(N)) search algorithm.
+ * datetktbl holds date/time keywords.
  *
- * The text field is not guaranteed to be NULL-terminated.
+ * Note that this table must be strictly alphabetically ordered to allow an
+ * O(ln(N)) search algorithm to be used.
+ *
+ * The text field is NOT guaranteed to be NULL-terminated.
  *
  * To keep this table reasonably small, we divide the lexval for TZ and DTZ
  * entries by 15 (so they are on 15 minute boundaries) and truncate the text
- * field at MAXTOKLEN characters.
+ * field at TOKMAXLEN characters.
  * Formerly, we divided by 10 rather than 15 but there are a few time zones
  * which are 30 or 45 minutes away from an even hour, most are on an hour
  * boundary, and none on other boundaries.
@@ -88,11 +90,11 @@ char	   *days[] = {"Sunday", "Monday", "Tuesday", "Wednesday",
 static datetkn datetktbl[] = {
 /*	text, token, lexval */
 	{EARLY, RESERV, DTK_EARLY}, /* "-infinity" reserved for "early time" */
+	{"abstime", IGNORE_DTF, 0}, /* for pre-v6.1 "Invalid Abstime" */
 	{"acsst", DTZ, POS(42)},	/* Cent. Australia */
 	{"acst", DTZ, NEG(16)},		/* Atlantic/Porto Acre */
 	{"act", TZ, NEG(20)},		/* Atlantic/Porto Acre */
 	{DA_D, ADBC, AD},			/* "ad" for years >= 0 */
-	{"abstime", IGNORE_DTF, 0}, /* for pre-v6.1 "Invalid Abstime" */
 	{"adt", DTZ, NEG(12)},		/* Atlantic Daylight Time */
 	{"aesst", DTZ, POS(44)},	/* E. Australia */
 	{"aest", TZ, POS(40)},		/* Australia Eastern Std Time */
@@ -101,16 +103,18 @@ static datetkn datetktbl[] = {
 	{"akdt", DTZ, NEG(32)},		/* Alaska Daylight Time */
 	{"akst", DTZ, NEG(36)},		/* Alaska Standard Time */
 	{"allballs", RESERV, DTK_ZULU},		/* 00:00:00 */
-	{"almt", TZ, POS(24)},		/* Almaty Time */
 	{"almst", TZ, POS(28)},		/* Almaty Savings Time */
+	{"almt", TZ, POS(24)},		/* Almaty Time */
 	{"am", AMPM, AM},
 	{"amst", DTZ, POS(20)},		/* Armenia Summer Time (Yerevan) */
-	{"amt", TZ, POS(16)},		/* Armenia Time (Yerevan) */
 #if 0
 	{"amst", DTZ, NEG(12)},		/* Porto Velho */
 #endif
+	{"amt", TZ, POS(16)},		/* Armenia Time (Yerevan) */
 	{"anast", DTZ, POS(52)},	/* Anadyr Summer Time (Russia) */
 	{"anat", TZ, POS(48)},		/* Anadyr Time (Russia) */
+	{"apr", MONTH, 4},
+	{"april", MONTH, 4},
 #if 0
 	aqtst
 	aqtt
@@ -122,8 +126,6 @@ static datetkn datetktbl[] = {
 	ast							/* Atlantic Standard Time, Arabia Standard
 								 * Time, Acre Standard Time */
 #endif
-	{"apr", MONTH, 4},
-	{"april", MONTH, 4},
 	{"ast", TZ, NEG(16)},		/* Atlantic Std Time (Canada) */
 	{"at", IGNORE_DTF, 0},		/* "at" (throwaway) */
 	{"aug", MONTH, 8},
@@ -181,12 +183,12 @@ static datetkn datetktbl[] = {
 #endif
 	{"cot", TZ, NEG(20)},		/* Columbia Time */
 	{"cst", TZ, NEG(24)},		/* Central Standard Time */
+	{DCURRENT, RESERV, DTK_CURRENT},	/* "current" is always now */
 #if 0
 	cvst
 #endif
 	{"cvt", TZ, POS(28)},		/* Christmas Island Time (Indian Ocean) */
 	{"cxt", TZ, POS(28)},		/* Christmas Island Time (Indian Ocean) */
-	{DCURRENT, RESERV, DTK_CURRENT},	/* "current" is always now */
 	{"d", UNITS, DTK_DAY},		/* "day of month" for ISO input */
 	{"davt", TZ, POS(28)},		/* Davis Time (Antarctica) */
 	{"ddut", TZ, POS(40)},		/* Dumont-d'Urville Time (Antarctica) */
@@ -414,8 +416,8 @@ static datetkn datetktbl[] = {
 	syot
 #endif
 	{"t", ISOTIME, DTK_TIME},	/* Filler for ISO time fields */
-	{"that", TZ, NEG(40)},		/* Tahiti Time */
 	{"tft", TZ, POS(20)},		/* Kerguelen Time */
+	{"that", TZ, NEG(40)},		/* Tahiti Time */
 	{"thu", DOW, 4},
 	{"thur", DOW, 4},
 	{"thurs", DOW, 4},
@@ -516,9 +518,9 @@ static datetkn deltatktbl[] = {
 	{DDAY, UNITS, DTK_DAY},		/* "day" relative */
 	{"days", UNITS, DTK_DAY},	/* "days" relative */
 	{"dec", UNITS, DTK_DECADE}, /* "decade" relative */
-	{"decs", UNITS, DTK_DECADE},	/* "decades" relative */
 	{DDECADE, UNITS, DTK_DECADE},		/* "decade" relative */
 	{"decades", UNITS, DTK_DECADE},		/* "decades" relative */
+	{"decs", UNITS, DTK_DECADE},	/* "decades" relative */
 	{"h", UNITS, DTK_HOUR},		/* "hour" relative */
 	{DHOUR, UNITS, DTK_HOUR},	/* "hour" relative */
 	{"hours", UNITS, DTK_HOUR}, /* "hours" relative */
@@ -533,7 +535,6 @@ static datetkn deltatktbl[] = {
 	{"millisecon", UNITS, DTK_MILLISEC},		/* relative */
 	{"mils", UNITS, DTK_MILLENNIUM},	/* "millennia" relative */
 	{"min", UNITS, DTK_MINUTE}, /* "minute" relative */
-	{"mins", UNITS, DTK_MINUTE},	/* "minutes" relative */
 	{"mins", UNITS, DTK_MINUTE},	/* "minutes" relative */
 	{DMINUTE, UNITS, DTK_MINUTE},		/* "minute" relative */
 	{"minutes", UNITS, DTK_MINUTE},		/* "minutes" relative */
@@ -555,7 +556,6 @@ static datetkn deltatktbl[] = {
 	{"seconds", UNITS, DTK_SECOND},
 	{"secs", UNITS, DTK_SECOND},
 	{DTIMEZONE, UNITS, DTK_TZ}, /* "timezone" time offset */
-	{"timezone", UNITS, DTK_TZ},	/* "timezone" time offset */
 	{"timezone_h", UNITS, DTK_TZ_HOUR}, /* timezone hour units */
 	{"timezone_m", UNITS, DTK_TZ_MINUTE},		/* timezone minutes units */
 	{"undefined", RESERV, DTK_INVALID}, /* pre-v6.1 invalid time */
@@ -576,9 +576,9 @@ static datetkn deltatktbl[] = {
 
 static unsigned int szdeltatktbl = sizeof deltatktbl / sizeof deltatktbl[0];
 
-datetkn    *datecache[MAXDATEFIELDS] = {NULL};
+static datetkn    *datecache[MAXDATEFIELDS] = {NULL};
 
-datetkn    *deltacache[MAXDATEFIELDS] = {NULL};
+static datetkn    *deltacache[MAXDATEFIELDS] = {NULL};
 
 
 /*
@@ -653,7 +653,7 @@ j2day(int date)
 /* TrimTrailingZeros()
  * ... resulting from printing numbers with full precision.
  */
-void
+static void
 TrimTrailingZeros(char *str)
 {
 	int			len = strlen(str);
@@ -3689,4 +3689,41 @@ ClearDateCache(bool newval, bool doit, bool interactive)
 	}
 
 	return true;
+}
+
+/*
+ * We've been burnt by stupid errors in the ordering of the datetkn tables
+ * once too often.  Arrange to check them during postmaster start.
+ */
+static bool
+CheckDateTokenTable(const char *tablename, datetkn *base, unsigned int nel)
+{
+	bool		ok = true;
+	unsigned int i;
+
+	for (i = 1; i < nel; i++)
+	{
+		if (strncmp(base[i-1].token, base[i].token, TOKMAXLEN) >= 0)
+		{
+			elog(LOG, "Ordering error in %s table: \"%.*s\" >= \"%.*s\"",
+				 tablename,
+				 TOKMAXLEN, base[i-1].token,
+				 TOKMAXLEN, base[i].token);
+			ok = false;
+		}
+	}
+	return ok;
+}
+
+bool
+CheckDateTokenTables(void)
+{
+	bool		ok = true;
+
+	ok &= CheckDateTokenTable("datetktbl", datetktbl, szdatetktbl);
+	ok &= CheckDateTokenTable("deltatktbl", deltatktbl, szdeltatktbl);
+	ok &= CheckDateTokenTable("australian_datetktbl",
+							  australian_datetktbl,
+							  australian_szdatetktbl);
+	return ok;
 }
