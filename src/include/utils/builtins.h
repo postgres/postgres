@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.34 1998/01/16 23:21:07 momjian Exp $
+ * $Id: builtins.h,v 1.35 1998/02/02 03:11:37 scrappy Exp $
  *
  * NOTES
  *	  This should normally only be included by fmgr.h.
@@ -177,7 +177,7 @@ extern int	namestrcmp(Name name, char *str);
 
 /* numutils.c */
 /* XXX hack.  HP-UX has a ltoa (with different arguments) already. */
-#ifdef hpux
+#ifdef __hpux
 #define ltoa pg_ltoa
 #endif							/* hpux */
 extern int32 pg_atoi(char *s, int size, int c);
