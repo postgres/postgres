@@ -64,3 +64,24 @@ decode('6b77b4d63006dee605b156e27403979358deb9e7154616d959f1652bd5ff92cc', 'hex'
 decode('37363534333231204e6f77206973207468652074696d6520666f722000', 'hex'),
 'bf-cbc'), 'hex');
 
+-- blowfish-448 
+SELECT encode(encrypt(
+decode('fedcba9876543210', 'hex'),
+decode('f0e1d2c3b4a5968778695a4b3c2d1e0f001122334455667704689104c2fd3b2f584023641aba61761f1f1f1f0e0e0e0effffffffffffffff', 'hex'),
+'bf-ecb/pad:none'), 'hex');
+-- result: c04504012e4e1f53
+
+-- empty data
+select encode(	encrypt('', 'foo', 'bf'), 'hex');
+-- 10 bytes key
+select encode(	encrypt('foo', '0123456789', 'bf'), 'hex');
+-- 22 bytes key
+select encode(	encrypt('foo', '0123456789012345678901', 'bf'), 'hex');
+
+-- decrypt
+select decrypt(encrypt('foo', '0123456', 'bf'), '0123456', 'bf');
+
+-- iv
+select encode(encrypt_iv('foo', '0123456', 'abcd', 'bf'), 'hex');
+select decrypt_iv(decode('95c7e89322525d59', 'hex'), '0123456', 'abcd', 'bf');
+

@@ -15,3 +15,12 @@ SELECT decode('666f6f', 'hex');
  foo
 (1 row)
 
+-- check error handling
+select gen_salt('foo');
+ERROR:  gen_salt: Unknown salt algorithm
+select digest('foo', 'foo');
+ERROR:  Cannot use "foo": No such hash algorithm
+select hmac('foo', 'foo', 'foo');
+ERROR:  Cannot use "foo": No such hash algorithm
+select encrypt('foo', 'foo', 'foo');
+ERROR:  Cannot use "foo": No such cipher algorithm

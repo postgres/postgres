@@ -1,0 +1,56 @@
+--
+-- 3DES cipher
+--
+-- test vector from somewhere
+SELECT encode(encrypt(
+decode('80 00 00 00 00 00 00 00', 'hex'),
+decode('01 01 01 01 01 01 01 01
+	01 01 01 01 01 01 01 01
+	01 01 01 01 01 01 01 01', 'hex'),
+'3des-ecb/pad:none'), 'hex');
+      encode      
+------------------
+ 95f8a5e5dd31d900
+(1 row)
+
+-- val 95 F8 A5 E5 DD 31 D9 00
+select encode(	encrypt('', 'foo', '3des'), 'hex');
+      encode      
+------------------
+ 9b641a6936249eb4
+(1 row)
+
+-- 10 bytes key
+select encode(	encrypt('foo', '0123456789', '3des'), 'hex');
+      encode      
+------------------
+ 6f02b7076a366504
+(1 row)
+
+-- 22 bytes key
+select encode(	encrypt('foo', '0123456789012345678901', '3des'), 'hex');
+      encode      
+------------------
+ a44360e699269817
+(1 row)
+
+-- decrypt
+select decrypt(encrypt('foo', '0123456', '3des'), '0123456', '3des');
+ decrypt 
+---------
+ foo
+(1 row)
+
+-- iv
+select encode(encrypt_iv('foo', '0123456', 'abcd', '3des'), 'hex');
+      encode      
+------------------
+ df27c264fb24ed7a
+(1 row)
+
+select decrypt_iv(decode('df27c264fb24ed7a', 'hex'), '0123456', 'abcd', '3des');
+ decrypt_iv 
+------------
+ foo
+(1 row)
+

@@ -1,0 +1,48 @@
+--
+-- DES cipher
+--
+-- no official test vectors atm
+-- from blowfish.sql
+SELECT encode(encrypt(
+decode('0123456789abcdef', 'hex'),
+decode('fedcba9876543210', 'hex'),
+'des-ecb/pad:none'), 'hex');
+      encode      
+------------------
+ ed39d950fa74bcc4
+(1 row)
+
+-- empty data
+select encode(	encrypt('', 'foo', 'des'), 'hex');
+      encode      
+------------------
+ 752111e37a2d7ac3
+(1 row)
+
+-- 8 bytes key
+select encode(	encrypt('foo', '01234589', 'des'), 'hex');
+      encode      
+------------------
+ dec0f9c602b647a8
+(1 row)
+
+-- decrypt
+select decrypt(encrypt('foo', '0123456', 'des'), '0123456', 'des');
+ decrypt 
+---------
+ foo
+(1 row)
+
+-- iv
+select encode(encrypt_iv('foo', '0123456', 'abcd', 'des'), 'hex');
+      encode      
+------------------
+ 50735067b073bb93
+(1 row)
+
+select decrypt_iv(decode('50735067b073bb93', 'hex'), '0123456', 'abcd', 'des');
+ decrypt_iv 
+------------
+ foo
+(1 row)
+

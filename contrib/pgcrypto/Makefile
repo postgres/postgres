@@ -1,5 +1,5 @@
 #
-# $PostgreSQL: pgsql/contrib/pgcrypto/Makefile,v 1.13 2005/03/21 05:17:16 neilc Exp $
+# $PostgreSQL: pgsql/contrib/pgcrypto/Makefile,v 1.14 2005/03/21 05:24:51 neilc Exp $
 #
 
 # either 'builtin', 'openssl'
@@ -26,12 +26,14 @@ ifeq ($(cryptolib), builtin)
 CRYPTO_CFLAGS =
 CRYPTO_LDFLAGS =
 SRCS = md5.c sha1.c internal.c blf.c rijndael.c
+EXTRA_TESTS = 
 endif
 
 ifeq ($(cryptolib), openssl)
 CRYPTO_CFLAGS = -I/usr/include/openssl
 CRYPTO_LDFLAGS = -lcrypto
 SRCS = openssl.c
+EXTRA_TESTS = des 3des cast5
 endif
 
 ifeq ($(cryptsrc), builtin)
@@ -63,6 +65,7 @@ PG_CPPFLAGS	= $(CRYPTO_CFLAGS) -I$(srcdir)
 SHLIB_LINK 	= $(CRYPTO_LDFLAGS)
 
 REGRESS = init md5 sha1 hmac-md5 hmac-sha1 blowfish rijndael \
+		$(EXTRA_TESTS) \
 		crypt-des crypt-md5 crypt-blowfish crypt-xdes 
 
 

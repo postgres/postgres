@@ -67,3 +67,45 @@ decode('000102030405060708090a0b0c0d0e0f101112131415161718191a1b', 'hex'),
  4facb6a041d53e0a5a73289170901fe7
 (1 row)
 
+-- empty data
+select encode(	encrypt('', 'foo', 'aes'), 'hex');
+              encode              
+----------------------------------
+ b48cc3338a2eb293b6007ef72c360d48
+(1 row)
+
+-- 10 bytes key
+select encode(	encrypt('foo', '0123456789', 'aes'), 'hex');
+              encode              
+----------------------------------
+ f397f03d2819b7172b68d0706fda4693
+(1 row)
+
+-- 22 bytes key
+select encode(	encrypt('foo', '0123456789012345678901', 'aes'), 'hex');
+              encode              
+----------------------------------
+ 5c9db77af02b4678117bcd8a71ae7f53
+(1 row)
+
+-- decrypt
+select decrypt(encrypt('foo', '0123456', 'aes'), '0123456', 'aes');
+ decrypt 
+---------
+ foo
+(1 row)
+
+-- iv
+select encode(encrypt_iv('foo', '0123456', 'abcd', 'aes'), 'hex');
+              encode              
+----------------------------------
+ 2c24cb7da91d6d5699801268b0f5adad
+(1 row)
+
+select decrypt_iv(decode('2c24cb7da91d6d5699801268b0f5adad', 'hex'),
+		'0123456', 'abcd', 'aes'); 
+ decrypt_iv 
+------------
+ foo
+(1 row)
+

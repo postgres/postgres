@@ -106,3 +106,55 @@ decode('37363534333231204e6f77206973207468652074696d6520666f722000', 'hex'),
  3ea6357a0ee7fad6d0c4b63464f2aafa40c2e91b4b7e1bba8114932fd92b5c8f111e7e50e7b2e541
 (1 row)
 
+-- blowfish-448 
+SELECT encode(encrypt(
+decode('fedcba9876543210', 'hex'),
+decode('f0e1d2c3b4a5968778695a4b3c2d1e0f001122334455667704689104c2fd3b2f584023641aba61761f1f1f1f0e0e0e0effffffffffffffff', 'hex'),
+'bf-ecb/pad:none'), 'hex');
+      encode      
+------------------
+ c04504012e4e1f53
+(1 row)
+
+-- result: c04504012e4e1f53
+-- empty data
+select encode(	encrypt('', 'foo', 'bf'), 'hex');
+      encode      
+------------------
+ 1871949bb2311c8e
+(1 row)
+
+-- 10 bytes key
+select encode(	encrypt('foo', '0123456789', 'bf'), 'hex');
+      encode      
+------------------
+ 42f58af3b2c03f46
+(1 row)
+
+-- 22 bytes key
+select encode(	encrypt('foo', '0123456789012345678901', 'bf'), 'hex');
+      encode      
+------------------
+ 86ab6f0bc72b5f22
+(1 row)
+
+-- decrypt
+select decrypt(encrypt('foo', '0123456', 'bf'), '0123456', 'bf');
+ decrypt 
+---------
+ foo
+(1 row)
+
+-- iv
+select encode(encrypt_iv('foo', '0123456', 'abcd', 'bf'), 'hex');
+      encode      
+------------------
+ 95c7e89322525d59
+(1 row)
+
+select decrypt_iv(decode('95c7e89322525d59', 'hex'), '0123456', 'abcd', 'bf');
+ decrypt_iv 
+------------
+ foo
+(1 row)
+
