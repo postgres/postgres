@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.12 1997/04/02 04:04:11 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.13 1997/05/31 16:52:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -530,6 +530,9 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 		 */
 		intoName = parseTree->into;
 		archiveMode = 'n';
+
+		/* fixup to prevent zero-length columns in create */
+		setVarAttrLenForCreateTable(tupType, targetList, rangeTable);
 		
 		intoRelationId = heap_create(intoName,
 					     intoName, /* not used */
@@ -537,6 +540,8 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 					     DEFAULT_SMGR,
 					     tupType);
 		
+		resetVarAttrLenForCreateTable(tupType);
+
 		/* ----------------
 		 *  XXX rather than having to call setheapoverride(true)
 		 *	and then back to false, we should change the

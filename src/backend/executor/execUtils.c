@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.7 1997/01/10 09:58:53 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.8 1997/05/31 16:52:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,6 +55,8 @@
 #include "catalog/index.h"
 #include "catalog/catname.h"
 #include "catalog/pg_proc.h"
+#include "catalog/pg_type.h"
+#include "parser/parsetree.h"
 
 /* ----------------------------------------------------------------
  *      global counters for number of tuples processed, retrieved,
@@ -1121,4 +1123,70 @@ ExecInsertIndexTuples(TupleTableSlot *slot,
 	if (result) pfree(result);
     }
     if (econtext != NULL) pfree(econtext);
+}
+
+/* ----------------------------------------------------------------
+ * setVarAttrLenForCreateTable -
+ *    called when we do a SELECT * INTO TABLE tab
+ *    needed for attributes that have a defined length, like bpchar and
+ *    varchar
+ * ----------------------------------------------------------------
+ */
+void
+setVarAttrLenForCreateTable(TupleDesc tupType, List *targetList,
+							List *rangeTable)
+{
+    List 		*tl;
+    TargetEntry		*tle;
+    Node 		*expr;
+    int			varno;
+
+    tl = targetList;
+
+    for (varno = 0; varno < tupType->natts; varno++) {
+	tle = lfirst(tl);
+
+	if (tupType->attrs[varno]->atttypid == BPCHAROID ||
+	    tupType->attrs[varno]->atttypid == VARCHAROID) {
+	    expr = tle->expr;
+	    if (expr && IsA(expr,Var)) {
+		Var		*var;
+		RangeTblEntry	*rtentry;
+		Relation	rd;
+
+		var = (Var *)expr;
+		rtentry = rt_fetch(var->varno, rangeTable);
+		rd = heap_open(rtentry->relid);
+			/* set length to that defined in relation */
+		tupType->attrs[varno]->attlen =
+				(*rd->rd_att->attrs[var->varattno-1]).attlen;
+		heap_close(rd);
+	    }
+	    else
+		elog(WARN, "setVarAttrLenForCreateTable: can't get length for variable-length field");
+        }
+	tl = lnext(tl);
+    }
+}
+
+
+/* ----------------------------------------------------------------
+ * resetVarAttrLenForCreateTable -
+ *    called when we do a SELECT * INTO TABLE tab
+ *    needed for attributes that have a defined length, like bpchar and
+ *    varchar
+ *    resets length to -1 for those types
+ * ----------------------------------------------------------------
+ */
+void
+resetVarAttrLenForCreateTable(TupleDesc tupType)
+{
+    int			varno;
+
+    for (varno = 0; varno < tupType->natts; varno++) {
+	if (tupType->attrs[varno]->atttypid == BPCHAROID ||
+	    tupType->attrs[varno]->atttypid == VARCHAROID)
+		/* set length to original -1 */
+	    tupType->attrs[varno]->attlen = -1;
+    }
 }

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: executor.h,v 1.7 1996/12/26 17:53:40 momjian Exp $
+ * $Id: executor.h,v 1.8 1997/05/31 16:52:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -174,6 +174,9 @@ extern IndexTuple ExecFormIndexTuple(HeapTuple heapTuple,
 	Relation heapRelation, Relation indexRelation, IndexInfo *indexInfo);
 extern void ExecInsertIndexTuples(TupleTableSlot *slot, ItemPointer tupleid,
 				      EState *estate, bool is_update);
+extern void resetVarAttrLenForCreateTable(TupleDesc tupType);
+extern void setVarAttrLenForCreateTable(TupleDesc tupType,
+			List *targetList, List *rangeTable);
 
 
 /* ----------------------------------------------------------------
