@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.28 2001/03/05 18:42:56 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.29 2001/03/06 05:22:18 pjw Exp $
 Postgres documentation
 -->
 
@@ -565,7 +565,7 @@ $ pg_dump -Ft --blobs mydb > db.tar
    To reload this database (with BLOBs) to an existing db called newdb:
 
    <programlisting>
-$ pg_restore db.tar --db=newdb
+$ pg_restore db.tar --dbname=newdb
    </programlisting>
   </para>
 
