@@ -3,19 +3,24 @@ Frequently Asked Questions (FAQ) for Postgres95
 Linux Specific
 TO BE READ IN CONJUNCTION WITH THE NORMAL FAQ
 ====================================================
-last updated:           Mon Oct 14 11:00:00 BST 1996
+last updated:           Mon Oct 28 10:25:00 BST 1996
 
 current maintainer:     Andrew C.R. Martin (martin@biochem.ucl.ac.uk)
 original author:        Andrew C.R. Martin (martin@biochem.ucl.ac.uk)
 
 
-Changes in this version (* = modified, + = new):
+Changes in this version (* = modified, + = new, - = removed):
+-0.*)   Bugs in Postgres95 V1.08
 *1.3)   [REDHAT] Why do I get problems with missing libdl and dlfcn.h?
-*1.14)  [DEBIAN] Where is libtermcap?
+*1.4)   [SLACKWARE 3.1] Why do I get problems with missing libdl and dlfcn.h?
+*1.5)   My compile of the backend dies complaining about the include file 
+        dlfcn.h missing
+*1.9)   Why do I get problems with ld.so?
+*1.13)  What are the references in X11_LIB to libsocket and libnsl in
+        src/Makefile.global?
 
 
 This file is divided approximately as follows:
-0.*)    Bugs in Postgres95 V1.08
 1.*)    Installing Postgres95
 2.*)    Compiling accessory programs
 3.*)    Runtime Problems
@@ -23,8 +28,6 @@ This file is divided approximately as follows:
 
 
 Questions answered:
-0.1)    What bugs do I need to fix before Postgres95 will compile
-        under Linux?
 1.1)    What changes do I need to make to src/Makefile.global
 1.2)    Why do I get problems with missing libreadline?
 1.3)    [REDHAT] Why do I get problems with missing libdl and dlfcn.h?
@@ -56,33 +59,11 @@ Questions answered:
         initdb: could not create template database
         initdb: cleaning up.
 3.4)    Why doesn't createuser work?
+3.5)    Why do I get an error like:
+        IpcMemoryCreate: memKey=155356396 , size=760632 ,
+        permission=384IpcMemoryCreate: shmget(..., create, ...)
+        failed: Invalid argument
 4.1)    Why doesn't the postmaster start the first time?
-
-----------------------------------------------------------------------
-Section 0:      Bugs in Postgres95 V1.08
-----------------------------------------------------------------------
-0.1)    What bugs do I need to fix before Postgres95 will compile
-        under Linux?
-
-        a) Fix the bug in src/Makefile.global:
-           Change
-                # Globally pass PORTNAME
-                CFLAGS+= -DPORTNAME_$(PORTNAME)
-                CFLAGS += -I ../../backend/port/$(PORTNAME)
-           to
-                # Globally pass PORTNAME
-                CFLAGS+= -DPORTNAME_$(PORTNAME)
-                CFLAGS += -I../../backend/port/$(PORTNAME)
-
-           (i.e. remove the space after the -I)
-
-
-        b) Add the missing prototype to src/bin/pg_dump/pg_dump.h
-           After the line
-                extern int findLastBuiltinOid();
-           add
-                extern void setMaxOid(FILE *fout);
-
 
 ----------------------------------------------------------------------
 Section 1:      Compiling Postgres95
@@ -130,28 +111,57 @@ Section 1:      Compiling Postgres95
         installed. Either comment out the USE_READLINE variable in   
         src/Makefile.global or install the GNU readline library.
 
+        Note that Debian Linux (like FreeBSD) does come with readline
+        installed.
+
 1.3)    [REDHAT] Why do I get problems with missing libdl and dlfcn.h?
 
         The libdl library is used for dynamic linking of user-supplied
         functions at run-time. For some reason this library was missed out
-        from the Redhat distribution.
+        from the Redhat distribution. It seems that the latest Redhat 4.0
+        (Colgate) fixes this.
 
-        You can obtain the library and the header file from:
+        RedHat now have a new ld.so RPM package on their FTP site.
+        Simply grab:
+
+                ftp://ftp.redhat.com/pub/redhat/devel/i386/RedHat/RPMS/ld.so-1.7.14-4.i386.rpm
+
+        Install the RPM file in the usual way and off you go!
+
+        There has been one report of a corrupted system resulting from
+        programs accessing these libraries while updating them (not
+        altogether surprising). Consequently it is a good idea to reboot 
+        the system before installing the new libraries and to
+        have as little running as possible during this upgrade. Going
+        into single-user mode is probably a good idea!
+
+        If you want to do it the hard way, you can obtain the library and the 
+        header file from:
         
-                ftp://tsx-11.mit.edu/packages/GCC/ld.so-1.7.14.tar.gz
+                ftp://tsx-11.mit.edu/pub/linux/packages/GCC/ld.so-1.7.14.tar.gz
 
         Alternatively, you may find precompiled binaries in 
         distributions/debian/buzz/binary-i386/base/ld.so-1.7.14-4.deb
         on the same site, or follow the instructions given for question 1.2 for
         correcting the same error with early releases of Slackware 3.1.
+        Don't use this method unless you know what you are doing!
+
+
 
 1.4)    [SLACKWARE 3.1] Why do I get problems with missing libdl and dlfcn.h?
 
-        See the answer to question 1.1. Slackware up to version 3.0 was 
+        See the answer to question 1.3. Slackware up to version 3.0 was 
         supplied with this library and include file and they seem to be
         back in again in the latest versions of 3.1, but the early 3.1
         releases (before 9th September 1996) had them missing and many 
         CD-ROM versions will have been pressed from the first 3.1 releases.
+
+        There has been one report of a corrupted system resulting from
+        programs accessing these libraries while updating them (not
+        altogether surprising). Consequently it is a good idea to reboot 
+        the system before installing the new libraries and to
+        have as little running as possible during this upgrade. Going
+        into single-user mode is probably a good idea!
 
         The easiest fix is to obtain the file ldso.tgz from the a4 disk of
         a more recent Slackware 3.1 distribution and unpack this file
@@ -187,7 +197,7 @@ Section 1:      Compiling Postgres95
 1.5)    My compile of the backend dies complaining about the include file 
         dlfcn.h missing
 
-        See the answer to question 1.2. Don't forget that if you are using
+        See the answer to question 1.3/1.4. Don't forget that if you are using
         an a.out system you must first have installed the dld package
         (which is not supplied with most a.out systems) to have dlfcn.h
         at all. See Question 1.11.
@@ -229,13 +239,18 @@ Section 1:      Compiling Postgres95
                 LD_ADD += -L/usr/lib/termcap -ltermcap
                 else
 
+        In fact, since ncurses uses terminfo rather than termcap, it should
+        be possible to change this line to
+                LD_ADD += 
+        since you shouldn't need the termcap library.
+
 1.9)    Why do I get problems with ld.so?
 
         If you get problems with ld.so, another library required under
         ELF for dynamic loading, then you have messed up your installation
         or (more likely) upgrade of Linux.
 
-        See the answers to Question 1.2. You may need to install
+        See the answers to Question 1.3/1.4. You may need to install
         ld.so.x.y.z in /lib and run ldconfig.
 
         The most recent stable release of the ld package is 1.7.14
@@ -273,9 +288,8 @@ Section 1:      Compiling Postgres95
 1.13)   What are the references in X11_LIB to libsocket and libnsl in
         src/Makefile.global?
 
-        These are Sun Solaris specific and shouldn't be in Makefile.global
-        The compile (including pgtclsh) seems to go OK even though 
-        these don't exist...
+        This was a problem in 1.08 (they are Sun Solaris specific). 
+        It is fixed in 1.09.
 
 1.14)   [DEBIAN] Where is libtermcap?
 
@@ -353,6 +367,13 @@ Section 3:      Runtime Problems
         V2.5.3 (supplied in doc/README.flex) or wait for V2.5.4 which 
         will fix the bug.
 
+3.5)    Why do I get an error like:
+        IpcMemoryCreate: memKey=155356396 , size=760632 ,
+        permission=384IpcMemoryCreate: shmget(..., create, ...)
+        failed: Invalid argument
+
+        You haven't build IPC support into your Linux kernel. You
+        will have to rebuild the kernel and switch on this option.
 
 
 ----------------------------------------------------------------------
@@ -380,8 +401,10 @@ Section 4:      Spurious Problems in Need of Verification
         I haven't been able to repeat this problem! Nobody else has
         reported anything similar.
 
+
 ****************************************************************************
 Dr. Andrew C.R. Martin,         University College London & SciTech Software
 EMAIL: martin@biochem.ucl.ac.uk                Tel:(Work) +44(0)171 419 3890
 URL: http://www.biochem.ucl.ac.uk/~martin          (Home) +44(0)1372 275775
 ****************************************************************************
+

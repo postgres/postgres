@@ -3,59 +3,30 @@ Frequently Asked Questions (FAQ) for Postgres95
 IRIX Specific
 TO BE READ IN CONJUNCTION WITH THE NORMAL FAQ
 ====================================================
-last updated:           Fri Oct 11 14:45:00 BST 1996
+last updated:           Fri Oct 25 18:40:00 BST 1996
 
 current maintainer:     Andrew C.R. Martin (martin@biochem.ucl.ac.uk)
 original author:        Andrew C.R. Martin (martin@biochem.ucl.ac.uk)
 
 
-Changes in this version (* = modified, + = new):
-+3.1)   How do I compile a C program to create a function for extending
-        Postgres95
-
+Changes in this version (* = modified, + = new, - = removed):
+-0.*)   Bugs in Postgres95 V1.08
+*1.3)   What are the references in X11_LIB to libsocket and libnsl in
+        src/Makefile.global?
 
 This file is divided approximately as follows:
-0.*)    Bugs in Postgres95 V1.08
 1.*)    Installing Postgres95
 2.*)    Uninstalling Postgres95
 3.*)    Extending Postgres95
 
 
 Questions answered:
-0.1)    What bugs do I need to fix before Postgres95 will compile
-        under Irix?
 1.1)    What extra items do I need to install Postgres95 under Irix?
 1.2)    What changes do I need to make to src/Makefile.global?
 1.3)    What are the references in X11_LIB to libsocket and libnsl in
         src/Makefile.global?
 1.4)    Are there any other changes I should make?
 2.1)    Why can't I move the executable files?
-
-----------------------------------------------------------------------
-Section 0:      Bugs in Postgres95 V1.08
-----------------------------------------------------------------------
-0.1)    What bugs do I need to fix before Postgres95 will compile
-        under Irix?
-
-        a) Fix the bug in src/Makefile.global:
-           Change
-                # Globally pass PORTNAME
-                CFLAGS+= -DPORTNAME_$(PORTNAME)
-                CFLAGS += -I ../../backend/port/$(PORTNAME)
-           to 
-                # Globally pass PORTNAME
-                CFLAGS+= -DPORTNAME_$(PORTNAME)
-                CFLAGS += -I../../backend/port/$(PORTNAME)
-
-           (i.e. remove the space after the -I)
-
-
-        b) Add the missing prototype to src/bin/pg_dump/pg_dump.h
-           After the line
-                extern int findLastBuiltinOid();
-           add
-                extern void setMaxOid(FILE *fout);
-
 
 ----------------------------------------------------------------------
 Section 1:      Installing Postgres95
@@ -99,9 +70,8 @@ Section 1:      Installing Postgres95
 1.3)    What are the references in X11_LIB to libsocket and libnsl in
         src/Makefile.global?
 
-        These are Sun Solaris specific and shouldn't be in Makefile.global
-        The compile (including pgtclsh) seems to go OK even though 
-        these don't exist...
+        This was a problem in 1.08 (they are Sun Solaris specific). 
+        It is fixed in 1.09.
 
 1.4)    Are there any other changes I should make?
 
@@ -148,8 +118,10 @@ Section 3:      Extending Postgres95
         cc -I/usr/local/postgres95/include/ -I/usr/local/postgres95/src/backend 
                 -shared -o funcs.so funcs.c
 
+
 ****************************************************************************
 Dr. Andrew C.R. Martin,         University College London & SciTech Software
 EMAIL: martin@biochem.ucl.ac.uk                Tel:(Work) +44(0)171 419 3890
 URL: http://www.biochem.ucl.ac.uk/~martin          (Home) +44(0)1372 275775
 ****************************************************************************
+
