@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $Header: /cvsroot/pgsql/src/bin/ipcclean/Attic/ipcclean.sh,v 1.9 2001/02/10 06:12:15 momjian Exp $
+# $Header: /cvsroot/pgsql/src/bin/ipcclean/Attic/ipcclean.sh,v 1.10 2001/02/10 10:27:28 petere Exp $
 #
 
 CMDNAME=`basename $0`
@@ -38,8 +38,6 @@ EffectiveUser=`id -n -u 2>/dev/null || whoami 2>/dev/null`
 # This is based on RedHat 5.2.
 #
 if [ `uname` = 'Linux' ]; then
-    ipcs_id=
-    ipcs_lpid=
     did_anything=
 
     if ps x | grep -s '[p]ostmaster' >/dev/null 2>&1 ; then
@@ -48,34 +46,36 @@ if [ `uname` = 'Linux' ]; then
     fi
 
     # shared memory
-    for val in `ipcs -m -p | grep '^[0-9]' | awk '{printf "%s %s\n", $1, $3, $4}'`
+    for val in `ipcs -m -p | grep '^[0-9]' | awk '{printf "%s:%s:%s\n", $1, $3, $4}'`
     do
-        if [ -z "$ipcs_id" ]; then
-            ipcs_id=$val
-            # Note: We can do -n here, because we know the platform.
-            echo -n "Shared memory $ipcs_id ... "
-            continue
-        fi
+	save_IFS=$IFS
+	IFS=:
+	set X $val
+	shift
+	IFS=$save_IFS
+	ipcs_shmid=$1
+	ipcs_cpid=$2
+	ipcs_lpid=$3
 
-        ipcs_lpid=$val
+        # Note: We can do -n here, because we know the platform.
+        echo -n "Shared memory $ipcs_shmid ... "
 
         # Don't do anything if process still running.
         # (This check is conceptually phony, but it's
         # useful anyway in practice.)
-        ps hj$ipcs_lpid >/dev/null 2>&1
+        ps hj $ipcs_cpid $ipcs_lpid >/dev/null 2>&1
         if [ $? -eq 0 ]; then
-            echo "skipped. Process still exists (pid $ipcs_lpid)."
+            echo "skipped; process still exists (pid $ipcs_cpid or $ipcs_lpid)."
+	    continue
+	fi
+
+        # try remove
+        ipcrm shm $ipcs_shmid
+        if [ $? -eq 0 ]; then
+            did_anything=t
         else
-            # try remove
-            ipcrm shm $ipcs_id
-            if [ $? -eq 0 ]; then
-                did_anything=t
-            else
-                exit
-            fi
+            exit
         fi
-        ipcs_id=
-        ipcs_lpid=
     done
 
     # semaphores
