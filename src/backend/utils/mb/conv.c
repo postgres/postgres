@@ -6,7 +6,7 @@
  * WIN1250 client encoding support contributed by Pavel Behal
  * SJIS UDC (NEC selection IBM kanji) support contributed by Eiji Tokuya
  *
- * $Id: conv.c,v 1.29 2001/09/22 08:44:48 ishii Exp $
+ * $Id: conv.c,v 1.30 2001/09/25 01:27:03 ishii Exp $
  *
  *
  */
@@ -806,8 +806,8 @@ mic2ascii(unsigned char *mic, unsigned char *p, int len)
 		else
 		{						/* should be ASCII */
 			*p++ = c1;
+			mic++;
 		}
-		mic++;
 	}
 	*p = '\0';
 }
