@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.197 2004/12/31 21:59:34 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.198 2005/01/14 21:08:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -206,6 +206,7 @@ static IndexList *ILHead = NULL;
 int
 BootstrapMain(int argc, char *argv[])
 {
+	char	   *progname = argv[0];
 	int			i;
 	char	   *dbname;
 	int			flag;
@@ -228,9 +229,9 @@ BootstrapMain(int argc, char *argv[])
 	/* Compute paths, if we didn't inherit them from postmaster */
 	if (my_exec_path[0] == '\0')
 	{
-		if (find_my_exec(argv[0], my_exec_path) < 0)
+		if (find_my_exec(progname, my_exec_path) < 0)
 			elog(FATAL, "%s: could not locate my own executable path",
-				 argv[0]);
+				 progname);
 	}
 
 	/*
@@ -351,7 +352,7 @@ BootstrapMain(int argc, char *argv[])
 	/* Acquire configuration parameters, unless inherited from postmaster */
 	if (!IsUnderPostmaster)
 	{
-		if (!SelectConfigFiles(userDoption, argv[0]))
+		if (!SelectConfigFiles(userDoption, progname))
 			proc_exit(1);
 	}
 
