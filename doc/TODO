@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Aug 25 00:10:58 EDT 2003
+Last updated:		Wed Sep  3 17:27:18 EDT 2003
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -52,7 +52,7 @@ Administration
 * Allow configuration files to be specified in a different directory
 * -Add start time to pg_stat_activity
 * Allow limits on per-db/user connections
-* Have standalone backend read postgresql.conf
+* -Have standalone backend read postgresql.conf (Tom)
 * Add group object ownership, so groups can rename/drop/grant on objects,
   so we can implement roles
 * Add the concept of dataspaces/tablespaces [tablespaces]
@@ -489,7 +489,7 @@ Source Code
 * Acquire lock on a relation before building a relcache entry for it
 * Research interaction of setitimer() and sleep() used by statement_timeout
 * Add checks for fclose() failure
-* Change CVS $Id: TODO,v 1.1125 2003/08/25 04:10:59 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1125 2003/08/25 04:10:59 momjian Exp $
+* Change CVS $Id: TODO,v 1.1126 2003/09/03 21:27:21 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1126 2003/09/03 21:27:21 momjian Exp $
 * Exit postmaster if postgresql.conf can not be opened
 * Rename /scripts directory because they are all C programs now
 * Allow the regression tests to start postmaster with -i so the tests
