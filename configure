@@ -4235,28 +4235,21 @@ echo "${ECHO_T}no" >&6
 echo "$as_me: error: distutils module not found" >&2;}
    { (exit 1); exit 1; }; }
 fi
-echo "$as_me:$LINENO: checking Python installation directories" >&5
-echo $ECHO_N "checking Python installation directories... $ECHO_C" >&6
+echo "$as_me:$LINENO: checking Python configuration directory" >&5
+echo $ECHO_N "checking Python configuration directory... $ECHO_C" >&6
 python_version=`${PYTHON} -c "import sys; print sys.version[:3]"`
-python_prefix=`${PYTHON} -c "import sys; print sys.prefix"`
-python_execprefix=`${PYTHON} -c "import sys; print sys.exec_prefix"`
 python_configdir=`${PYTHON} -c "from distutils.sysconfig import get_python_lib as f; import os; print os.path.join(f(plat_specific=1,standard_lib=1),'config')"`
 python_includespec=`${PYTHON} -c "import distutils.sysconfig; print '-I'+distutils.sysconfig.get_python_inc()"`
 
 # This should be enough of a message.
-if test "$python_prefix" != "$python_execprefix"; then
-  echo "$as_me:$LINENO: result: $python_prefix/lib/python${python_version} and $python_execprefix/lib/python${python_version}" >&5
-echo "${ECHO_T}$python_prefix/lib/python${python_version} and $python_execprefix/lib/python${python_version}" >&6
-else
-  echo "$as_me:$LINENO: result: $python_prefix/lib/python${python_version}" >&5
-echo "${ECHO_T}$python_prefix/lib/python${python_version}" >&6
-fi
+echo "$as_me:$LINENO: result: $python_configdir" >&5
+echo "${ECHO_T}$python_configdir" >&6
 
 
 echo "$as_me:$LINENO: checking how to link an embedded Python application" >&5
 echo $ECHO_N "checking how to link an embedded Python application... $ECHO_C" >&6
 
-python_libspec=`${PYTHON} -c "import distutils.sysconfig,string;print string.join(filter(None,distutils.sysconfig.get_config_vars('LIBS','LIBC','LIBM','LOCALMODLIBS','BASEMODLIBS')))"`
+python_libspec=`${PYTHON} -c "import distutils.sysconfig,string; print '-lpython${python_version} '+string.join(filter(None,distutils.sysconfig.get_config_vars('LIBS','LIBC','LIBM','LOCALMODLIBS','BASEMODLIBS')))"`
 
 echo "$as_me:$LINENO: result: ${python_libspec}" >&5
 echo "${ECHO_T}${python_libspec}" >&6
@@ -18897,11 +18890,9 @@ s,@perl_privlibexp@,$perl_privlibexp,;t t
 s,@perl_useshrplib@,$perl_useshrplib,;t t
 s,@perl_embed_ldflags@,$perl_embed_ldflags,;t t
 s,@PYTHON@,$PYTHON,;t t
-s,@python_prefix@,$python_prefix,;t t
-s,@python_execprefix@,$python_execprefix,;t t
+s,@python_version@,$python_version,;t t
 s,@python_configdir@,$python_configdir,;t t
 s,@python_includespec@,$python_includespec,;t t
-s,@python_version@,$python_version,;t t
 s,@python_libspec@,$python_libspec,;t t
 s,@LIBOBJS@,$LIBOBJS,;t t
 s,@HAVE_IPV6@,$HAVE_IPV6,;t t
