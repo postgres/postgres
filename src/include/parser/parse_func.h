@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_func.h,v 1.6 1998/02/05 03:40:10 scrappy Exp $
+ * $Id: parse_func.h,v 1.7 1998/02/05 04:08:44 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,7 @@ extern Node *ParseNestedFuncOrColumn(ParseState *pstate, Attr *attr,
 extern Node *ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 	int *curr_resno, int precedence);
 
-extern void func_error(char *funcname, int nargs, Oid *argtypes);
+extern void func_error(char *caller, char *funcname, int nargs, Oid *argtypes);
 
 #endif							/* PARSE_FUNC_H */
 
