@@ -232,12 +232,7 @@ src/test/regress/README for more details)
      % gmake all runtest
 
 This will run a whole slew of regression tests and might take an hour
-to run.  When it's done, the output is in the file obj/regress.out.  You
-can compare this to a sample run that we supply in the file
-sample.regress.out. (You should get roughly the same output except for
-some pathnames.)
-
-     % diff expected.out regress.out
+to run.  
 
 PLAYING WITH POSTGRESQL
 -----------------------
