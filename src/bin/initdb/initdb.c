@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/bin/initdb/initdb.c,v 1.8 2003/11/14 17:19:35 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/initdb/initdb.c,v 1.9 2003/11/14 17:30:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -204,22 +204,24 @@ static void *xmalloc(size_t);
 
 #define PG_CMD_OPEN \
 do { \
-		  pg = popen(cmd,PG_BINARY_W); \
-		  if (pg == NULL)  \
-			exit_nicely(); \
+	fflush(stdout); \
+	fflush(stderr); \
+	pg = popen(cmd, PG_BINARY_W); \
+	if (pg == NULL) \
+		exit_nicely(); \
 } while (0)
 
 #define PG_CMD_CLOSE \
 do { \
-		 if ((pclose(pg) >> 8) & 0xff) \
-			exit_nicely(); \
+	if ((pclose(pg) >> 8) & 0xff) \
+		exit_nicely(); \
 } while (0)
 
 #define PG_CMD_PUTLINE \
 do { \
-		 if (fputs(*line, pg) < 0) \
-		   exit_nicely(); \
-		 fflush(pg); \
+	if (fputs(*line, pg) < 0) \
+		exit_nicely(); \
+	fflush(pg); \
 } while (0)
 
 #ifndef WIN32
@@ -861,6 +863,10 @@ find_postgres(char *path)
 #endif
 
 	snprintf(cmd, sizeof(cmd), "\"%s/postgres\" -V 2>%s", path, DEVNULL);
+
+	/* flush output buffers in case popen does not... */
+	fflush(stdout);
+	fflush(stderr);
 
 	if ((pgver = popen(cmd, "r")) == NULL)
 		return FIND_EXEC_ERR;
