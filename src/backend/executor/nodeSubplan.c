@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubplan.c,v 1.47 2003/06/22 22:04:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubplan.c,v 1.48 2003/06/24 23:14:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,23 +28,6 @@
 #include "utils/datum.h"
 #include "utils/lsyscache.h"
 
-
-typedef struct ArrayBuildState
-{
-	MemoryContext mcontext;		/* where all the temp stuff is kept */
-	Datum	   *dvalues;		/* array of accumulated Datums */
-	/*
-	 * The allocated size of dvalues[] is always a multiple of
-	 * ARRAY_ELEMS_CHUNKSIZE
-	 */
-#define ARRAY_ELEMS_CHUNKSIZE	64
-	int			nelems;			/* number of valid Datums in dvalues[] */
-	Oid			element_type;	/* data type of the Datums */
-	int16		typlen;			/* needed info about datatype */
-	bool		typbyval;
-	char		typalign;
-} ArrayBuildState;
-
 static Datum ExecHashSubPlan(SubPlanState *node,
 							 ExprContext *econtext,
 							 bool *isNull);
@@ -54,13 +37,6 @@ static Datum ExecScanSubPlan(SubPlanState *node,
 static void buildSubPlanHash(SubPlanState *node);
 static bool findPartialMatch(TupleHashTable hashtable, TupleTableSlot *slot);
 static bool tupleAllNulls(HeapTuple tuple);
-static ArrayBuildState *accumArrayResult(ArrayBuildState *astate,
-										 Datum dvalue, bool disnull,
-										 Oid element_type,
-										 MemoryContext rcontext);
-static Datum makeArrayResult(ArrayBuildState *astate,
-							 MemoryContext rcontext);
-
 
 /* ----------------------------------------------------------------
  *		ExecSubPlan
@@ -224,6 +200,7 @@ ExecScanSubPlan(SubPlanState *node,
 	PlanState  *planstate = node->planstate;
 	SubLinkType subLinkType = subplan->subLinkType;
 	bool		useOr = subplan->useOr;
+	bool		isExpr = subplan->isExpr;
 	MemoryContext oldcontext;
 	TupleTableSlot *slot;
 	Datum		result;
@@ -294,6 +271,11 @@ ExecScanSubPlan(SubPlanState *node,
 		bool		rownull = false;
 		int			col = 1;
 		List	   *plst;
+		int			numelems;
+		int			elemnum;
+		Datum		dvalue;
+		Datum	   *dvalues = NULL;
+		bool		disnull;
 
 		if (subLinkType == EXISTS_SUBLINK)
 		{
@@ -331,9 +313,6 @@ ExecScanSubPlan(SubPlanState *node,
 
 		if (subLinkType == ARRAY_SUBLINK)
 		{
-			Datum	dvalue;
-			bool	disnull;
-
 			found = true;
 			/* stash away current value */
 			dvalue = heap_getattr(tup, 1, tdesc, &disnull);
@@ -351,98 +330,163 @@ ExecScanSubPlan(SubPlanState *node,
 		found = true;
 
 		/*
-		 * For ALL, ANY, and MULTIEXPR sublinks, iterate over combining
-		 * operators for columns of tuple.
+		 * When isExpr is true, we have either a scalar expression or an
+		 * array. In the former case, this is no different than the !isExpr
+		 * case. In the latter case, iterate over the elements as if they
+		 * were from multiple input tuples.
 		 */
-		plst = subplan->paramIds;
-		foreach(lst, node->exprs)
+		if (!isExpr)
+			numelems = 1;
+		else
 		{
-			ExprState  *exprstate = (ExprState *) lfirst(lst);
-			int			paramid = lfirsti(plst);
-			ParamExecData *prmdata;
-			Datum		expresult;
-			bool		expnull;
+			Oid		expr_typeid = tdesc->attrs[0]->atttypid;
 
-			/*
-			 * Load up the Param representing this column of the sub-select.
-			 */
-			prmdata = &(econtext->ecxt_param_exec_vals[paramid]);
-			Assert(prmdata->execPlan == NULL);
-			prmdata->value = heap_getattr(tup, col, tdesc,
-										  &(prmdata->isnull));
-
-			/*
-			 * Now we can eval the combining operator for this column.
-			 */
-			expresult = ExecEvalExprSwitchContext(exprstate, econtext,
-												  &expnull, NULL);
-
-			/*
-			 * Combine the result into the row result as appropriate.
-			 */
-			if (col == 1)
+			if (expr_typeid != subplan->exprtype)
 			{
-				rowresult = expresult;
-				rownull = expnull;
+				subplan->exprtype = expr_typeid;
+				subplan->elemtype = get_element_type(expr_typeid);
+
+				if (subplan->elemtype != InvalidOid)
+					get_typlenbyvalalign(subplan->elemtype,
+										 &subplan->elmlen,
+										 &subplan->elmbyval,
+										 &subplan->elmalign);
 			}
-			else if (useOr)
+
+			/* get current value */
+			dvalue = heap_getattr(tup, 1, tdesc, &disnull);
+
+			/* XXX this will need work if/when arrays support NULL elements */
+			if (!disnull)
 			{
-				/* combine within row per OR semantics */
-				if (expnull)
-					rownull = true;
-				else if (DatumGetBool(expresult))
+				if (subplan->elemtype != InvalidOid)
 				{
-					rowresult = BoolGetDatum(true);
-					rownull = false;
-					break;		/* needn't look at any more columns */
+					ArrayType   *v = DatumGetArrayTypeP(dvalue);
+
+					deconstruct_array(v, subplan->elemtype, subplan->elmlen,
+									  subplan->elmbyval, subplan->elmalign,
+					  				  &dvalues, &numelems);
+				}
+				else
+				{
+					numelems = 1;
+					dvalues = (Datum *) palloc(numelems * sizeof(Datum));
+					dvalues[0] = dvalue;
 				}
 			}
 			else
 			{
-				/* combine within row per AND semantics */
-				if (expnull)
-					rownull = true;
-				else if (!DatumGetBool(expresult))
+				numelems = 1;
+				dvalues = (Datum *) palloc(numelems * sizeof(Datum));
+				dvalues[0] = (Datum) 0;
+			}
+
+		}
+
+		for (elemnum = 0; elemnum < numelems; elemnum++)
+		{
+			/*
+			 * For ALL, ANY, and MULTIEXPR sublinks, iterate over combining
+			 * operators for columns of tuple.
+			 */
+			col = 1;
+			plst = subplan->paramIds;
+			foreach(lst, node->exprs)
+			{
+				ExprState  *exprstate = (ExprState *) lfirst(lst);
+				int			paramid = lfirsti(plst);
+				ParamExecData *prmdata;
+				Datum		expresult;
+				bool		expnull;
+
+				/*
+				 * Load up the Param representing this column of the sub-select.
+				 */
+				prmdata = &(econtext->ecxt_param_exec_vals[paramid]);
+				Assert(prmdata->execPlan == NULL);
+
+				if (!isExpr)
+					prmdata->value = heap_getattr(tup, col, tdesc,
+												  &(prmdata->isnull));
+				else
 				{
-					rowresult = BoolGetDatum(false);
-					rownull = false;
-					break;		/* needn't look at any more columns */
+					prmdata->value = dvalues[elemnum];
+					prmdata->isnull = disnull;
+				}
+
+				/*
+				 * Now we can eval the combining operator for this column.
+				 */
+				expresult = ExecEvalExprSwitchContext(exprstate, econtext,
+													  &expnull, NULL);
+
+				/*
+				 * Combine the result into the row result as appropriate.
+				 */
+				if (col == 1)
+				{
+					rowresult = expresult;
+					rownull = expnull;
+				}
+				else if (useOr)
+				{
+					/* combine within row per OR semantics */
+					if (expnull)
+						rownull = true;
+					else if (DatumGetBool(expresult))
+					{
+						rowresult = BoolGetDatum(true);
+						rownull = false;
+						break;		/* needn't look at any more columns */
+					}
+				}
+				else
+				{
+					/* combine within row per AND semantics */
+					if (expnull)
+						rownull = true;
+					else if (!DatumGetBool(expresult))
+					{
+						rowresult = BoolGetDatum(false);
+						rownull = false;
+						break;		/* needn't look at any more columns */
+					}
+				}
+
+				plst = lnext(plst);
+				col++;
+			}
+
+			if (subLinkType == ANY_SUBLINK)
+			{
+				/* combine across rows per OR semantics */
+				if (rownull)
+					*isNull = true;
+				else if (DatumGetBool(rowresult))
+				{
+					result = BoolGetDatum(true);
+					*isNull = false;
+					break;			/* needn't look at any more rows */
 				}
 			}
-
-			plst = lnext(plst);
-			col++;
-		}
-
-		if (subLinkType == ANY_SUBLINK)
-		{
-			/* combine across rows per OR semantics */
-			if (rownull)
-				*isNull = true;
-			else if (DatumGetBool(rowresult))
+			else if (subLinkType == ALL_SUBLINK)
 			{
-				result = BoolGetDatum(true);
-				*isNull = false;
-				break;			/* needn't look at any more rows */
+				/* combine across rows per AND semantics */
+				if (rownull)
+					*isNull = true;
+				else if (!DatumGetBool(rowresult))
+				{
+					result = BoolGetDatum(false);
+					*isNull = false;
+					break;			/* needn't look at any more rows */
+				}
 			}
-		}
-		else if (subLinkType == ALL_SUBLINK)
-		{
-			/* combine across rows per AND semantics */
-			if (rownull)
-				*isNull = true;
-			else if (!DatumGetBool(rowresult))
+			else
 			{
-				result = BoolGetDatum(false);
-				*isNull = false;
-				break;			/* needn't look at any more rows */
+				/* must be MULTIEXPR_SUBLINK */
+				result = rowresult;
+				*isNull = rownull;
 			}
-		}
-		else
-		{
-			/* must be MULTIEXPR_SUBLINK */
-			result = rowresult;
-			*isNull = rownull;
 		}
 	}
 
@@ -480,6 +524,7 @@ static void
 buildSubPlanHash(SubPlanState *node)
 {
 	SubPlan	   *subplan = (SubPlan *) node->xprstate.expr;
+	bool		isExpr = subplan->isExpr;
 	PlanState  *planstate = node->planstate;
 	int			ncols = length(node->exprs);
 	ExprContext *innerecontext = node->innerecontext;
@@ -487,6 +532,7 @@ buildSubPlanHash(SubPlanState *node)
 	MemoryContext oldcontext;
 	int			nbuckets;
 	TupleTableSlot *slot;
+	TupleTableSlot *arrslot = NULL;
 
 	Assert(subplan->subLinkType == ANY_SUBLINK);
 	Assert(!subplan->useOr);
@@ -566,43 +612,139 @@ buildSubPlanHash(SubPlanState *node)
 	{
 		HeapTuple	tup = slot->val;
 		TupleDesc	tdesc = slot->ttc_tupleDescriptor;
-		int			col = 1;
+		TupleDesc	arrtdesc = NULL;
 		List	   *plst;
 		bool		isnew;
+		int			numelems;
+		int			elemnum;
+		Datum		dvalue;
+		Datum	   *dvalues = NULL;
+		bool		disnull;
 
 		/*
-		 * Load up the Params representing the raw sub-select outputs,
-		 * then form the projection tuple to store in the hashtable.
+		 * When isExpr is true, we have either a scalar expression or an
+		 * array. In the former case, this is no different than the !isExpr
+		 * case. In the latter case, iterate over the elements as if they
+		 * were from multiple input tuples.
 		 */
-		foreach(plst, subplan->paramIds)
+		if (!isExpr)
+			numelems = 1;
+		else
 		{
-			int			paramid = lfirsti(plst);
-			ParamExecData *prmdata;
+			Oid		expr_typeid = tdesc->attrs[0]->atttypid;
 
-			prmdata = &(innerecontext->ecxt_param_exec_vals[paramid]);
-			Assert(prmdata->execPlan == NULL);
-			prmdata->value = heap_getattr(tup, col, tdesc,
-										  &(prmdata->isnull));
-			col++;
-		}
-		slot = ExecProject(node->projRight, NULL);
-		tup = slot->val;
+			if (expr_typeid != subplan->exprtype)
+			{
+				subplan->exprtype = expr_typeid;
+				subplan->elemtype = get_element_type(expr_typeid);
 
-		/*
-		 * If result contains any nulls, store separately or not at all.
-		 * (Since we know the projection tuple has no junk columns, we
-		 * can just look at the overall hasnull info bit, instead of
-		 * groveling through the columns.)
-		 */
-		if (HeapTupleNoNulls(tup))
-		{
-			(void) LookupTupleHashEntry(node->hashtable, slot, &isnew);
-			node->havehashrows = true;
+				if (subplan->elemtype != InvalidOid)
+					get_typlenbyvalalign(subplan->elemtype,
+										 &subplan->elmlen,
+										 &subplan->elmbyval,
+										 &subplan->elmalign);
+			}
+
+			/* get current value */
+			dvalue = heap_getattr(tup, 1, tdesc, &disnull);
+
+			if (subplan->elemtype != InvalidOid)
+			{
+				TupleTable	tupleTable;
+				ArrayType   *v = DatumGetArrayTypeP(dvalue);
+
+				arrtdesc = CreateTemplateTupleDesc(1, false);
+				TupleDescInitEntry(arrtdesc, 1, "elem", subplan->elemtype,
+															-1, 0, false);
+
+				tupleTable = ExecCreateTupleTable(1);
+				arrslot = ExecAllocTableSlot(tupleTable);
+				ExecSetSlotDescriptor(arrslot, arrtdesc, true);
+
+				/* XXX this will need work if/when arrays support NULL elements */
+				if (!disnull)
+				{
+					deconstruct_array(v, subplan->elemtype, subplan->elmlen,
+									  subplan->elmbyval, subplan->elmalign,
+					  				  &dvalues, &numelems);
+				}
+				else
+				{
+					numelems = 1;
+					dvalues = (Datum *) palloc(numelems * sizeof(Datum));
+					dvalues[0] = (Datum) 0;
+				}
+			}
+			else
+			{
+				numelems = 1;
+				dvalues = (Datum *) palloc(numelems * sizeof(Datum));
+				dvalues[0] = dvalue;
+			}
+
 		}
-		else if (node->hashnulls)
+
+		for (elemnum = 0; elemnum < numelems; elemnum++)
 		{
-			(void) LookupTupleHashEntry(node->hashnulls, slot, &isnew);
-			node->havenullrows = true;
+			int	col = 1;
+
+			if (!isExpr || subplan->elemtype == InvalidOid)
+			{
+				/*
+				 * Load up the Params representing the raw sub-select outputs,
+				 * then form the projection tuple to store in the hashtable.
+				 */
+				foreach(plst, subplan->paramIds)
+				{
+					int			paramid = lfirsti(plst);
+					ParamExecData *prmdata;
+
+					prmdata = &(innerecontext->ecxt_param_exec_vals[paramid]);
+					Assert(prmdata->execPlan == NULL);
+
+					prmdata->value = heap_getattr(tup, col, tdesc,
+												  &(prmdata->isnull));
+
+					col++;
+				}
+				slot = ExecProject(node->projRight, NULL);
+				tup = slot->val;
+			}
+			else
+			{
+				/*
+				 * For array type expressions, we need to build up our own
+				 * tuple and slot
+				 */
+				char		nullflag;
+
+				nullflag = disnull ? 'n' : ' ';
+				tup = heap_formtuple(arrtdesc, &dvalues[elemnum], &nullflag);
+				arrslot = ExecStoreTuple(tup, arrslot, InvalidBuffer, true);
+			}
+
+			/*
+			 * If result contains any nulls, store separately or not at all.
+			 * (Since we know the projection tuple has no junk columns, we
+			 * can just look at the overall hasnull info bit, instead of
+			 * groveling through the columns.)
+			 */
+			if (HeapTupleNoNulls(tup))
+			{
+				if (!isExpr)
+					(void) LookupTupleHashEntry(node->hashtable, slot, &isnew);
+				else
+					(void) LookupTupleHashEntry(node->hashtable, arrslot, &isnew);
+				node->havehashrows = true;
+			}
+			else if (node->hashnulls)
+			{
+				if (!isExpr)
+					(void) LookupTupleHashEntry(node->hashnulls, slot, &isnew);
+				else
+					(void) LookupTupleHashEntry(node->hashnulls, arrslot, &isnew);
+				node->havenullrows = true;
+			}
 		}
 
 		/*
@@ -619,6 +761,8 @@ buildSubPlanHash(SubPlanState *node)
 	 * have the potential for a double free attempt.
 	 */
 	ExecClearTuple(node->projRight->pi_slot);
+	if (arrslot)
+		ExecClearTuple(arrslot);
 
 	MemoryContextSwitchTo(oldcontext);
 }
@@ -1098,102 +1242,4 @@ ExecReScanSetParamPlan(SubPlanState *node, PlanState *parent)
 		prm->execPlan = node;
 		parent->chgParam = bms_add_member(parent->chgParam, paramid);
 	}
-}
-
-/*
- * accumArrayResult - accumulate one (more) Datum for an ARRAY_SUBLINK
- *
- *	astate is working state (NULL on first call)
- *	rcontext is where to keep working state
- */
-static ArrayBuildState *
-accumArrayResult(ArrayBuildState *astate,
-				 Datum dvalue, bool disnull,
-				 Oid element_type,
-				 MemoryContext rcontext)
-{
-	MemoryContext arr_context,
-				  oldcontext;
-
-	if (astate == NULL)
-	{
-		/* First time through --- initialize */
-
-		/* Make a temporary context to hold all the junk */
-		arr_context = AllocSetContextCreate(rcontext,
-											"ARRAY_SUBLINK Result",
-											ALLOCSET_DEFAULT_MINSIZE,
-											ALLOCSET_DEFAULT_INITSIZE,
-											ALLOCSET_DEFAULT_MAXSIZE);
-		oldcontext = MemoryContextSwitchTo(arr_context);
-		astate = (ArrayBuildState *) palloc(sizeof(ArrayBuildState));
-		astate->mcontext = arr_context;
-		astate->dvalues = (Datum *)
-			palloc(ARRAY_ELEMS_CHUNKSIZE * sizeof(Datum));
-		astate->nelems = 0;
-		astate->element_type = element_type;
-		get_typlenbyvalalign(element_type,
-							 &astate->typlen,
-							 &astate->typbyval,
-							 &astate->typalign);
-	}
-	else
-	{
-		oldcontext = MemoryContextSwitchTo(astate->mcontext);
-		Assert(astate->element_type == element_type);
-		/* enlarge dvalues[] if needed */
-		if ((astate->nelems % ARRAY_ELEMS_CHUNKSIZE) == 0)
-			astate->dvalues = (Datum *)
-				repalloc(astate->dvalues,
-						 (astate->nelems + ARRAY_ELEMS_CHUNKSIZE) * sizeof(Datum));
-	}
-
-	if (disnull)
-		elog(ERROR, "NULL elements not allowed in Arrays");
-
-	/* Use datumCopy to ensure pass-by-ref stuff is copied into mcontext */
-	astate->dvalues[astate->nelems++] =
-		datumCopy(dvalue, astate->typbyval, astate->typlen);
-
-	MemoryContextSwitchTo(oldcontext);
-
-	return astate;
-}
-
-/*
- * makeArrayResult - produce final result of ARRAY_SUBLINK
- *
- *	astate is working state (not NULL)
- *	rcontext is where to construct result
- */
-static Datum
-makeArrayResult(ArrayBuildState *astate,
-				MemoryContext rcontext)
-{
-	ArrayType  *result;
-	int			dims[1];
-	int			lbs[1];
-	MemoryContext oldcontext;
-
-	/* Build the final array result in rcontext */
-	oldcontext = MemoryContextSwitchTo(rcontext);
-
-	dims[0] = astate->nelems;
-	lbs[0] = 1;
-
-	result = construct_md_array(astate->dvalues,
-								1,
-								dims,
-								lbs,
-								astate->element_type,
-								astate->typlen,
-								astate->typbyval,
-								astate->typalign);
-
-	MemoryContextSwitchTo(oldcontext);
-
-	/* Clean up all the junk */
-	MemoryContextDelete(astate->mcontext);
-
-	return PointerGetDatum(result);
 }

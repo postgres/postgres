@@ -45,7 +45,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.107 2003/06/22 22:04:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.108 2003/06/24 23:14:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,6 +58,7 @@
 #include "executor/executor.h"
 #include "executor/nodeAgg.h"
 #include "miscadmin.h"
+#include "nodes/makefuncs.h"
 #include "optimizer/clauses.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
@@ -212,7 +213,7 @@ static TupleTableSlot *agg_retrieve_direct(AggState *aggstate);
 static void agg_fill_hash_table(AggState *aggstate);
 static TupleTableSlot *agg_retrieve_hash_table(AggState *aggstate);
 static Datum GetAggInitVal(Datum textInitVal, Oid transtype);
-
+static Oid resolve_type(Oid type_to_resolve, Oid context_type);
 
 /*
  * Initialize all aggregates for a new group of input values.
@@ -351,14 +352,12 @@ advance_transition_function(AggState *aggstate,
 	fcinfo.context = NULL;
 	fcinfo.resultinfo = NULL;
 	fcinfo.isnull = false;
-
 	fcinfo.flinfo = &peraggstate->transfn;
 	fcinfo.nargs = 2;
 	fcinfo.arg[0] = pergroupstate->transValue;
 	fcinfo.argnull[0] = pergroupstate->transValueIsNull;
 	fcinfo.arg[1] = newVal;
 	fcinfo.argnull[1] = isNull;
-
 	newVal = FunctionCallInvoke(&fcinfo);
 
 	/*
@@ -1187,7 +1186,21 @@ ExecInitAgg(Agg *node, EState *estate)
 		AclResult	aclresult;
 		Oid			transfn_oid,
 					finalfn_oid;
+		FuncExpr   *transfnexpr,
+				   *finalfnexpr;
 		Datum		textInitVal;
+		List	   *fargs;
+		Oid			agg_rt_type;
+		Oid		   *transfn_arg_types;
+		List	   *transfn_args = NIL;
+		int			transfn_nargs;
+		Oid			transfn_ret_type;
+		Oid		   *finalfn_arg_types = NULL;
+		List	   *finalfn_args = NIL;
+		Oid			finalfn_ret_type = InvalidOid;
+		int			finalfn_nargs = 0;
+		Node	   *arg0;
+		Node	   *arg1;
 		int			i;
 
 		/* Planner should have assigned aggregate to correct level */
@@ -1238,6 +1251,166 @@ ExecInitAgg(Agg *node, EState *estate)
 						&peraggstate->transtypeLen,
 						&peraggstate->transtypeByVal);
 
+		peraggstate->transfn_oid = transfn_oid = aggform->aggtransfn;
+		peraggstate->finalfn_oid = finalfn_oid = aggform->aggfinalfn;
+
+		/* get the runtime aggregate argument type */
+		fargs = aggref->args;
+		agg_rt_type = exprType((Node *) nth(0, fargs));
+
+		/* get the transition function argument and return types */
+		transfn_ret_type = get_func_rettype(transfn_oid);
+		transfn_arg_types = get_func_argtypes(transfn_oid, &transfn_nargs);
+
+		/* resolve any polymorphic types */
+		if (transfn_nargs == 2)
+		/* base type was not ANY */
+		{
+			if (transfn_arg_types[1] == ANYARRAYOID ||
+				transfn_arg_types[1] == ANYELEMENTOID)
+				transfn_arg_types[1] = agg_rt_type;
+
+			transfn_arg_types[0] = resolve_type(transfn_arg_types[0],
+														agg_rt_type);
+
+			/*
+			 * Build arg list to use on the transfn FuncExpr node. We really
+			 * only care that the node type is correct so that the transfn
+			 * can discover the actual argument types at runtime using 
+			 * get_fn_expr_argtype()
+			 */
+			arg0 = (Node *) makeRelabelType((Expr *) NULL, transfn_arg_types[0],
+															-1, COERCE_DONTCARE);
+			arg1 = (Node *) makeRelabelType((Expr *) NULL, transfn_arg_types[1],
+															-1, COERCE_DONTCARE);
+			transfn_args = makeList2(arg0, arg1);
+
+			/*
+			 * the state transition function always returns the same type
+			 * as its first argument
+			 */
+			if (transfn_ret_type == ANYARRAYOID ||
+				transfn_ret_type == ANYELEMENTOID)
+				transfn_ret_type = transfn_arg_types[0];
+		}
+		else if (transfn_nargs == 1)
+		/*
+		 * base type was ANY, therefore the aggregate return type should
+		 * be non-polymorphic
+		 */
+		{
+			Oid	finaltype = get_func_rettype(aggref->aggfnoid);
+
+			/*
+			 * this should have been prevented in AggregateCreate,
+			 * but check anyway
+			 */
+			if (finaltype == ANYARRAYOID || finaltype == ANYELEMENTOID)
+				elog(ERROR, "aggregate with base type ANY must have a " \
+							"non-polymorphic return type");
+
+			/* see if we have a final function */
+			if (OidIsValid(finalfn_oid))
+			{
+				finalfn_arg_types = get_func_argtypes(finalfn_oid, &finalfn_nargs);
+				if (finalfn_nargs != 1)
+					elog(ERROR, "final function takes unexpected number " \
+								"of arguments: %d", finalfn_nargs);
+
+				/*
+				 * final function argument is always the same as the state
+				 * function return type
+				 */
+				if (finalfn_arg_types[0] != ANYARRAYOID &&
+					finalfn_arg_types[0] != ANYELEMENTOID)
+				{
+					/* if it is not ambiguous, use it */
+					transfn_ret_type = finalfn_arg_types[0];
+				}
+				else
+				{
+					/* if it is ambiguous, try to derive it */
+					finalfn_ret_type = finaltype;
+					finalfn_arg_types[0] = resolve_type(finalfn_arg_types[0],
+															finalfn_ret_type);
+					transfn_ret_type = finalfn_arg_types[0];
+				}
+			}
+			else
+				transfn_ret_type = finaltype;
+
+			transfn_arg_types[0] = resolve_type(transfn_arg_types[0],
+														transfn_ret_type);
+
+			/*
+			 * Build arg list to use on the transfn FuncExpr node. We really
+			 * only care that the node type is correct so that the transfn
+			 * can discover the actual argument types at runtime using 
+			 * get_fn_expr_argtype()
+			 */
+			arg0 = (Node *) makeRelabelType((Expr *) NULL, transfn_arg_types[0],
+															-1, COERCE_DONTCARE);
+			transfn_args = makeList1(arg0);
+		}
+		else
+			elog(ERROR, "state transition function takes unexpected number " \
+						"of arguments: %d", transfn_nargs);
+
+		if (OidIsValid(finalfn_oid))
+		{
+			/* get the final function argument and return types */
+			if (finalfn_ret_type == InvalidOid)
+				finalfn_ret_type = get_func_rettype(finalfn_oid);
+
+			if (!finalfn_arg_types)
+			{
+				finalfn_arg_types = get_func_argtypes(finalfn_oid, &finalfn_nargs);
+				if (finalfn_nargs != 1)
+					elog(ERROR, "final function takes unexpected number " \
+								"of arguments: %d", finalfn_nargs);
+			}
+
+			/*
+			 * final function argument is always the same as the state
+			 * function return type, which by now should have been resolved
+			 */
+			if (finalfn_arg_types[0] == ANYARRAYOID ||
+				finalfn_arg_types[0] == ANYELEMENTOID)
+				finalfn_arg_types[0] = transfn_ret_type;
+
+			/*
+			 * Build arg list to use on the finalfn FuncExpr node. We really
+			 * only care that the node type is correct so that the finalfn
+			 * can discover the actual argument type at runtime using 
+			 * get_fn_expr_argtype()
+			 */
+			arg0 = (Node *) makeRelabelType((Expr *) NULL, finalfn_arg_types[0],
+															-1, COERCE_DONTCARE);
+			finalfn_args = makeList1(arg0);
+
+			finalfn_ret_type = resolve_type(finalfn_ret_type,
+												finalfn_arg_types[0]);
+		}
+
+		fmgr_info(transfn_oid, &peraggstate->transfn);
+		transfnexpr = (FuncExpr *) make_funcclause(transfn_oid,
+						  transfn_ret_type,
+						  false,			/* cannot be a set */
+						  COERCE_DONTCARE,	/* to match any user expr */
+						  transfn_args);
+		peraggstate->transfn.fn_expr = (Node *) transfnexpr;
+
+		if (OidIsValid(finalfn_oid))
+		{
+			fmgr_info(finalfn_oid, &peraggstate->finalfn);
+			finalfnexpr = (FuncExpr *) make_funcclause(finalfn_oid,
+						  finalfn_ret_type,
+						  false,			/* cannot be a set */
+						  COERCE_DONTCARE,	/* to match any user expr */
+						  finalfn_args);
+			peraggstate->finalfn.fn_expr = (Node *) finalfnexpr;
+		}
+
 		/*
 		 * initval is potentially null, so don't try to access it as a
 		 * struct field. Must do it the hard way with SysCacheGetAttr.
@@ -1250,14 +1423,7 @@ ExecInitAgg(Agg *node, EState *estate)
 			peraggstate->initValue = (Datum) 0;
 		else
 			peraggstate->initValue = GetAggInitVal(textInitVal,
-												   aggform->aggtranstype);
-
-		peraggstate->transfn_oid = transfn_oid = aggform->aggtransfn;
-		peraggstate->finalfn_oid = finalfn_oid = aggform->aggfinalfn;
-
-		fmgr_info(transfn_oid, &peraggstate->transfn);
-		if (OidIsValid(finalfn_oid))
-			fmgr_info(finalfn_oid, &peraggstate->finalfn);
+												   transfn_arg_types[0]);
 
 		/*
 		 * If the transfn is strict and the initval is NULL, make sure
@@ -1468,4 +1634,37 @@ aggregate_dummy(PG_FUNCTION_ARGS)
 	elog(ERROR, "Aggregate function %u called as normal function",
 		 fcinfo->flinfo->fn_oid);
 	return (Datum) 0;			/* keep compiler quiet */
+}
+
+static Oid
+resolve_type(Oid type_to_resolve, Oid context_type)
+{
+	Oid		resolved_type;
+
+	if (context_type == ANYARRAYOID || context_type == ANYELEMENTOID)
+		resolved_type = type_to_resolve;
+	else if (type_to_resolve == ANYARRAYOID)
+	/* any array */
+	{
+		Oid		context_type_arraytype = get_array_type(context_type);
+
+		if (context_type_arraytype != InvalidOid)
+			resolved_type = context_type_arraytype;
+		else
+			resolved_type = context_type;
+	}
+	else if (type_to_resolve == ANYELEMENTOID)
+	/* any element */
+	{
+		Oid		context_type_elemtype = get_element_type(context_type);
+
+		if (context_type_elemtype != InvalidOid)
+			resolved_type = context_type_elemtype;
+		else
+			resolved_type = context_type;
+	}
+	else
+		resolved_type = type_to_resolve;
+
+	return resolved_type;
 }

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_oper.h,v 1.25 2003/04/29 22:13:11 tgl Exp $
+ * $Id: parse_oper.h,v 1.26 2003/06/24 23:14:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,6 +44,7 @@ extern Operator ordering_oper(Oid argtype, bool noError);
 /* Convenience routines for common calls on the above */
 extern Oid	compatible_oper_opid(List *op, Oid arg1, Oid arg2, bool noError);
 extern Oid	equality_oper_funcid(Oid argtype);
+extern Oid  ordering_oper_funcid(Oid argtype);
 extern Oid	ordering_oper_opid(Oid argtype);
 
 /* Extract operator OID or underlying-function OID from an Operator tuple */

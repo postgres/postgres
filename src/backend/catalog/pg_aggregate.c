@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.56 2002/09/18 21:35:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.57 2003/06/24 23:14:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,10 +50,16 @@ AggregateCreate(const char *aggName,
 	Oid			finalfn = InvalidOid;	/* can be omitted */
 	Oid			finaltype;
 	Oid			fnArgs[FUNC_MAX_ARGS];
-	int			nargs;
+	int			nargs_transfn;
+	int			nargs_finalfn;
 	Oid			procOid;
 	TupleDesc	tupDesc;
 	int			i;
+	Oid			rettype;
+	Oid		   *true_oid_array_transfn;
+	Oid		   *true_oid_array_finalfn;
+	bool		retset;
+	FuncDetailCode fdresult;
 	ObjectAddress myself,
 				referenced;
 
@@ -68,24 +74,49 @@ AggregateCreate(const char *aggName,
 	MemSet(fnArgs, 0, FUNC_MAX_ARGS * sizeof(Oid));
 	fnArgs[0] = aggTransType;
 	if (aggBaseType == ANYOID)
-		nargs = 1;
+		nargs_transfn = 1;
 	else
 	{
 		fnArgs[1] = aggBaseType;
-		nargs = 2;
+		nargs_transfn = 2;
 	}
-	transfn = LookupFuncName(aggtransfnName, nargs, fnArgs);
+
+	/*
+	 * func_get_detail looks up the function in the catalogs, does
+	 * disambiguation for polymorphic functions, handles inheritance, and
+	 * returns the funcid and type and set or singleton status of the
+	 * function's return value.  it also returns the true argument types
+	 * to the function.
+	 */
+	fdresult = func_get_detail(aggtransfnName, NIL, nargs_transfn, fnArgs,
+							   &transfn, &rettype, &retset,
+							   &true_oid_array_transfn);
+
+	/* only valid case is a normal function */
+	if (fdresult != FUNCDETAIL_NORMAL)
+		func_error("AggregateCreate", aggtransfnName, nargs_transfn, fnArgs, NULL);
+
 	if (!OidIsValid(transfn))
-		func_error("AggregateCreate", aggtransfnName, nargs, fnArgs, NULL);
+		func_error("AggregateCreate", aggtransfnName, nargs_transfn, fnArgs, NULL);
+
+	/*
+	 * enforce consistency with ANYARRAY and ANYELEMENT argument
+	 * and return types, possibly modifying return type along the way
+	 */
+	rettype = enforce_generic_type_consistency(fnArgs, true_oid_array_transfn,
+													   nargs_transfn, rettype);
+
+	if (rettype != aggTransType)
+		elog(ERROR, "return type of transition function %s is not %s",
+		 NameListToString(aggtransfnName), format_type_be(aggTransType));
+
 	tup = SearchSysCache(PROCOID,
 						 ObjectIdGetDatum(transfn),
 						 0, 0, 0);
 	if (!HeapTupleIsValid(tup))
-		func_error("AggregateCreate", aggtransfnName, nargs, fnArgs, NULL);
+		func_error("AggregateCreate", aggtransfnName,
+						nargs_transfn, fnArgs, NULL);
 	proc = (Form_pg_proc) GETSTRUCT(tup);
-	if (proc->prorettype != aggTransType)
-		elog(ERROR, "return type of transition function %s is not %s",
-		 NameListToString(aggtransfnName), format_type_be(aggTransType));
 
 	/*
 	 * If the transfn is strict and the initval is NULL, make sure input
@@ -105,17 +136,26 @@ AggregateCreate(const char *aggName,
 	{
 		MemSet(fnArgs, 0, FUNC_MAX_ARGS * sizeof(Oid));
 		fnArgs[0] = aggTransType;
-		finalfn = LookupFuncName(aggfinalfnName, 1, fnArgs);
+		nargs_finalfn = 1;
+
+		fdresult = func_get_detail(aggfinalfnName, NIL, 1, fnArgs,
+								   &finalfn, &rettype, &retset,
+								   &true_oid_array_finalfn);
+
+		/* only valid case is a normal function */
+		if (fdresult != FUNCDETAIL_NORMAL)
+			func_error("AggregateCreate", aggfinalfnName, 1, fnArgs, NULL);
+
 		if (!OidIsValid(finalfn))
 			func_error("AggregateCreate", aggfinalfnName, 1, fnArgs, NULL);
-		tup = SearchSysCache(PROCOID,
-							 ObjectIdGetDatum(finalfn),
-							 0, 0, 0);
-		if (!HeapTupleIsValid(tup))
-			func_error("AggregateCreate", aggfinalfnName, 1, fnArgs, NULL);
-		proc = (Form_pg_proc) GETSTRUCT(tup);
-		finaltype = proc->prorettype;
-		ReleaseSysCache(tup);
+
+		/*
+		 * enforce consistency with ANYARRAY and ANYELEMENT argument
+		 * and return types, possibly modifying return type along the way
+		 */
+		finaltype = enforce_generic_type_consistency(fnArgs,
+													 true_oid_array_finalfn,
+													 nargs_finalfn, rettype);
 	}
 	else
 	{
@@ -125,6 +165,27 @@ AggregateCreate(const char *aggName,
 		finaltype = aggTransType;
 	}
 	Assert(OidIsValid(finaltype));
+
+	/*
+	 * special disallowed cases:
+	 * 1)	if finaltype is polymorphic, basetype cannot be ANY
+	 * 2)	if finaltype is polymorphic, both args to transfn must be
+	 *		polymorphic
+	 */
+	if (finaltype == ANYARRAYOID || finaltype == ANYELEMENTOID)
+	{
+		if (aggBaseType == ANYOID)
+			elog(ERROR, "aggregate with base type ANY must have a " \
+						"non-polymorphic return type");
+
+		if (nargs_transfn > 1 && (
+			(true_oid_array_transfn[0] != ANYARRAYOID &&
+			 true_oid_array_transfn[0] != ANYELEMENTOID) ||
+			(true_oid_array_transfn[1] != ANYARRAYOID &&
+			 true_oid_array_transfn[1] != ANYELEMENTOID)))
+			elog(ERROR, "aggregate with polymorphic return type requires " \
+						"state function with both arguments polymorphic");
+	}
 
 	/*
 	 * Everything looks okay.  Try to create the pg_proc entry for the

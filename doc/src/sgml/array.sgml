@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/array.sgml,v 1.25 2003/03/13 01:30:26 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/array.sgml,v 1.26 2003/06/24 23:14:42 momjian Exp $ -->
 
 <sect1 id="arrays">
  <title>Arrays</title>
@@ -60,14 +60,74 @@ INSERT INTO sal_emp
 </programlisting>
  </para>
 
+ <para>
+  A limitation of the present array implementation is that individual
+  elements of an array cannot be SQL null values.  The entire array can be set
+  to null, but you can't have an array with some elements null and some
+  not.
+ </para>
+ <para>
+  This can lead to surprising results. For example, the result of the
+  previous two inserts looks like this:
+<programlisting>
+SELECT * FROM sal_emp;
+ name  |      pay_by_quarter       |      schedule
+-------+---------------------------+--------------------
+ Bill  | {10000,10000,10000,10000} | {{meeting},{""}}
+ Carol | {20000,25000,25000,25000} | {{talk},{meeting}}
+(2 rows)
+</programlisting>
+  Because the <literal>[2][2]</literal> element of
+  <structfield>schedule</structfield> is missing in each of the
+  <command>INSERT</command> statements, the <literal>[1][2]</literal>
+  element is discarded.
+ </para>
+
  <note>
   <para>
-   A limitation of the present array implementation is that individual
-   elements of an array cannot be SQL null values.  The entire array can be set
-   to null, but you can't have an array with some elements null and some
-   not.  Fixing this is on the to-do list.
+   Fixing this is on the to-do list.
   </para>
  </note>
+
+ <para>
+  The <command>ARRAY</command> expression syntax may also be used:
+<programlisting>
+INSERT INTO sal_emp
+    VALUES ('Bill',
+    ARRAY[10000, 10000, 10000, 10000],
+    ARRAY[['meeting', 'lunch'], ['','']]);
+
+INSERT INTO sal_emp
+    VALUES ('Carol',
+    ARRAY[20000, 25000, 25000, 25000],
+    ARRAY[['talk', 'consult'], ['meeting', '']]);
+SELECT * FROM sal_emp;
+ name  |      pay_by_quarter       |           schedule
+-------+---------------------------+-------------------------------
+ Bill  | {10000,10000,10000,10000} | {{meeting,lunch},{"",""}}
+ Carol | {20000,25000,25000,25000} | {{talk,consult},{meeting,""}}
+(2 rows)
+</programlisting>
+  Note that with this syntax, multidimensional arrays must have matching
+  extents for each dimension. This eliminates the missing-array-elements
+  problem above. For example:
+<programlisting>
+INSERT INTO sal_emp
+    VALUES ('Carol',
+    ARRAY[20000, 25000, 25000, 25000],
+    ARRAY[['talk', 'consult'], ['meeting']]);
+ERROR:  Multidimensional arrays must have array expressions with matching dimensions
+</programlisting>
+  Also notice that string literals are single quoted instead of double quoted.
+ </para>
+
+ <note>
+  <para>
+   The examples in the rest of this section are based on the
+   <command>ARRAY</command> expression syntax <command>INSERT</command>s.
+  </para>
+ </note>
+
  </sect2>
 
  <sect2>
@@ -132,11 +192,30 @@ SELECT schedule[1:2][1] FROM sal_emp WHERE name = 'Bill';
 </programlisting>
 
   with the same result.  An array subscripting operation is always taken to
-  represent an array slice if any of the subscripts are written in the
-  form
+  represent an array slice if any of the subscripts are written in the form
   <literal><replaceable>lower</replaceable>:<replaceable>upper</replaceable></literal>.
   A lower bound of 1 is assumed for any subscript where only one value
-  is specified.
+  is specified; another example follows:
+<programlisting>
+SELECT schedule[1:2][2] FROM sal_emp WHERE name = 'Bill';
+         schedule
+---------------------------
+ {{meeting,lunch},{"",""}}
+(1 row)
+</programlisting>
+ </para>
+
+ <para>
+  Additionally, we can also access a single arbitrary array element of 
+  a one-dimensional array with the <function>array_subscript</function>
+  function:
+<programlisting>
+SELECT array_subscript(pay_by_quarter, 2) FROM sal_emp WHERE name = 'Bill';
+ array_subscript
+-----------------
+           10000
+(1 row)
+</programlisting>
  </para>
 
  <para>
@@ -147,7 +226,23 @@ UPDATE sal_emp SET pay_by_quarter = '{25000,25000,27000,27000}'
     WHERE name = 'Carol';
 </programlisting>
 
-  or updated at a single element:
+  or using the <command>ARRAY</command> expression syntax:
+
+<programlisting>
+UPDATE sal_emp SET pay_by_quarter = ARRAY[25000,25000,27000,27000]
+    WHERE name = 'Carol';
+</programlisting>
+
+  <note>
+   <para>
+    Anywhere you can use the <quote>curly braces</quote> array syntax,
+    you can also use the <command>ARRAY</command> expression syntax. The
+    remainder of this section will illustrate only one or the other, but
+    not both.
+   </para>
+  </note>
+
+  An array may also be updated at a single element:
 
 <programlisting>
 UPDATE sal_emp SET pay_by_quarter[4] = 15000
@@ -160,6 +255,14 @@ UPDATE sal_emp SET pay_by_quarter[4] = 15000
 UPDATE sal_emp SET pay_by_quarter[1:2] = '{27000,27000}'
     WHERE name = 'Carol';
 </programlisting>
+
+  A one-dimensional array may also be updated with the
+  <function>array_assign</function> function:
+
+<programlisting>
+UPDATE sal_emp SET pay_by_quarter = array_assign(pay_by_quarter, 4, 15000)
+    WHERE name = 'Bill';
+</programListing>
  </para>
 
  <para>
@@ -179,6 +282,88 @@ UPDATE sal_emp SET pay_by_quarter[1:2] = '{27000,27000}'
  </para>
 
  <para>
+  An array can also be enlarged by using the concatenation operator,
+  <command>||</command>.
+<programlisting>
+SELECT ARRAY[1,2] || ARRAY[3,4];
+   ?column?
+---------------
+ {{1,2},{3,4}}
+(1 row)
+
+SELECT ARRAY[5,6] || ARRAY[[1,2],[3,4]];
+      ?column?
+---------------------
+ {{5,6},{1,2},{3,4}}
+(1 row)
+</programlisting>
+
+  The concatenation operator allows a single element to be pushed on to the
+  beginning or end of a one-dimensional array. It also allows two
+  <replaceable>N</>-dimensional arrays, or an <replaceable>N</>-dimensional
+  and an <replaceable>N+1</>-dimensional array. In the former case, the two
+  <replaceable>N</>-dimension arrays become outer elements of an
+  <replaceable>N+1</>-dimensional array. In the latter, the
+  <replaceable>N</>-dimensional array is added as either the first or last
+  outer element of the <replaceable>N+1</>-dimensional array.
+
+  The array is extended in the direction of the push. Hence, by pushing
+  onto the beginning of an array with a one-based subscript, a zero-based
+  subscript array is created:
+
+<programlisting>
+SELECT array_dims(t.f) FROM (SELECT 1 || ARRAY[2,3] AS f) AS t;
+ array_dims
+------------
+ [0:2]
+(1 row)
+</programlisting>
+ </para>
+
+ <para>
+  An array can also be enlarged by using the functions
+  <function>array_prepend</function>, <function>array_append</function>,
+  or <function>array_cat</function>. The first two only support one-dimensional
+  arrays, but <function>array_cat</function> supports multidimensional arrays.
+
+  Note that the concatenation operator discussed above is preferred over
+  direct use of these functions. In fact, the functions are primarily for use
+  in implementing the concatenation operator. However, they may be directly
+  useful in the creation of user-defined aggregates. Some examples:
+
+<programlisting>
+SELECT array_prepend(1, ARRAY[2,3]);
+ array_prepend
+---------------
+ {1,2,3}
+(1 row)
+
+SELECT array_append(ARRAY[1,2], 3);
+ array_append
+--------------
+ {1,2,3}
+(1 row)
+
+SELECT array_cat(ARRAY[1,2], ARRAY[3,4]);
+   array_cat
+---------------
+ {{1,2},{3,4}}
+(1 row)
+
+SELECT array_cat(ARRAY[[1,2],[3,4]], ARRAY[5,6]);
+      array_cat
+---------------------
+ {{1,2},{3,4},{5,6}}
+(1 row)
+
+SELECT array_cat(ARRAY[5,6], ARRAY[[1,2],[3,4]]);
+      array_cat
+---------------------
+ {{5,6},{1,2},{3,4}}
+</programlisting>
+ </para>
+
+ <para>
   The syntax for <command>CREATE TABLE</command> allows fixed-length
   arrays to be defined:
 
@@ -191,6 +376,16 @@ CREATE TABLE tictactoe (
   However, the current implementation does not enforce the array size
   limits --- the behavior is the same as for arrays of unspecified
   length.
+ </para>
+
+ <para>
+  An alternative syntax for one-dimensional arrays may be used.
+  <structfield>pay_by_quarter</structfield> could have been defined as:
+<programlisting>
+    pay_by_quarter  integer ARRAY[4],
+</programlisting>
+  This syntax may <emphasis>only</emphasis> be used with the integer
+  constant to denote the array size.
  </para>
 
  <para>
@@ -300,6 +495,72 @@ SELECT * FROM sal_emp WHERE pay_by_quarter **= 10000;
    is not ignored, however: after skipping leading whitespace, everything
    up to the next right brace or delimiter is taken as the item value.
   </para>
+
+  <para>
+   As illustrated earlier in this chapter, arrays may also be represented
+   using the <command>ARRAY</command> expression syntax. This representation
+   of an array value consists of items that are interpreted according to the
+   I/O conversion rules for the array's element type, plus decoration that
+   indicates the array structure. The decoration consists of the keyword
+   <command>ARRAY</command> and square brackets (<literal>[</> and
+   <literal>]</>) around the array values, plus delimiter characters between
+   adjacent items. The delimiter character is always a comma (<literal>,</>).
+   When representing multidimensional arrays, the keyword
+   <command>ARRAY</command> is only necessary for the outer level. For example,
+   <literal>'{{"hello world", "happy birthday"}}'</literal> could be written as:
+<programlisting>
+SELECT ARRAY[['hello world', 'happy birthday']];
+               array
+------------------------------------
+ {{"hello world","happy birthday"}}
+(1 row)
+</programlisting>
+  or it also could be written as:
+<programlisting>
+SELECT ARRAY[ARRAY['hello world', 'happy birthday']];
+               array
+------------------------------------
+ {{"hello world","happy birthday"}}
+(1 row)
+</programlisting>
+  </para>
+
+  <para>
+   A final method to represent an array, is through an
+   <command>ARRAY</command> sub-select expression. For example:
+<programlisting>
+SELECT ARRAY(SELECT oid FROM pg_proc WHERE proname LIKE 'bytea%');
+                          ?column?
+-------------------------------------------------------------
+ {2011,1954,1948,1952,1951,1244,1950,2005,1949,1953,2006,31}
+(1 row)
+</programlisting>
+  The sub-select may <emphasis>only</emphasis> return a single column. The
+  resulting one-dimensional array will have an element for each row in the
+  sub-select result, with an element type matching that of the sub-select's
+  target column.
+  </para>
+
+  <para>
+   Arrays may be cast from one type to another in similar fashion to other
+   data types:
+
+<programlisting>
+SELECT ARRAY[1,2,3]::oid[];
+  array
+---------
+ {1,2,3}
+(1 row)
+
+SELECT CAST(ARRAY[1,2,3] AS float8[]);
+  array
+---------
+ {1,2,3}
+(1 row)
+</programlisting>
+
+  </para>
+
  </sect2>
 
  <sect2>
@@ -316,6 +577,14 @@ SELECT * FROM sal_emp WHERE pay_by_quarter **= 10000;
    Alternatively, you can use backslash-escaping to protect all data characters
    that would otherwise be taken as array syntax or ignorable white space.
   </para>
+
+ <note>
+  <para>
+   The discussion in the preceding paragraph with respect to double quoting does
+   not pertain to the <command>ARRAY</command> expression syntax. In that case,
+   each element is quoted exactly as any other literal value of the element type.
+  </para>
+ </note>
 
   <para>
    The array output routine will put double quotes around element values

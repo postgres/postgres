@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.139 2003/06/06 15:04:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.140 2003/06/24 23:14:43 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -130,6 +130,28 @@ get_rightop(Expr *clause)
 		return lfirst(lnext(expr->args));
 	else
 		return NULL;
+}
+
+/*****************************************************************************
+ *              FUNCTION clause functions
+ *****************************************************************************/
+
+/*
+ * make_funcclause
+ *		Creates a function clause given its function info and argument list.
+ */
+Expr *
+make_funcclause(Oid funcid, Oid funcresulttype, bool funcretset,
+							CoercionForm funcformat, List *funcargs)
+{
+	FuncExpr   *expr = makeNode(FuncExpr);
+
+	expr->funcid = funcid;
+	expr->funcresulttype = funcresulttype;
+	expr->funcretset = funcretset;
+	expr->funcformat = funcformat;
+	expr->args = funcargs;
+	return (Expr *) expr;
 }
 
 /*****************************************************************************

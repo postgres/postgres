@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: primnodes.h,v 1.83 2003/06/06 15:04:03 tgl Exp $
+ * $Id: primnodes.h,v 1.84 2003/06/24 23:14:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -226,6 +226,7 @@ typedef struct Aggref
 	Index		agglevelsup;	/* > 0 if agg belongs to outer query */
 	bool		aggstar;		/* TRUE if argument was really '*' */
 	bool		aggdistinct;	/* TRUE if it's agg(DISTINCT ...) */
+	List	   *args;			/* arguments to the aggregate */
 } Aggref;
 
 /* ----------------
@@ -358,15 +359,19 @@ typedef struct BoolExpr
 /* ----------------
  * SubLink
  *
- * A SubLink represents a subselect appearing in an expression, and in some
- * cases also the combining operator(s) just above it.	The subLinkType
- * indicates the form of the expression represented:
+ * A SubLink represents a subselect, or an expression, appearing in an
+ * expression, and in some cases also the combining operator(s) just above
+ * it.	The subLinkType indicates the form of the expression represented:
  *	EXISTS_SUBLINK		EXISTS(SELECT ...)
  *	ALL_SUBLINK			(lefthand) op ALL (SELECT ...)
  *	ANY_SUBLINK			(lefthand) op ANY (SELECT ...)
  *	MULTIEXPR_SUBLINK	(lefthand) op (SELECT ...)
  *	EXPR_SUBLINK		(SELECT with single targetlist item ...)
  *	ARRAY_SUBLINK		ARRAY(SELECT with single targetlist item ...)
+ * If an expression is used in place of the subselect, it is transformed
+ * into a simple "(SELECT expr)" in gram.y. This is to allow arrays to be
+ * used as if they were the result of a single column subselect. If the
+ * expression is scalar, it is treated as a one element array.
  * For ALL, ANY, and MULTIEXPR, the lefthand is a list of expressions of the
  * same length as the subselect's targetlist.  MULTIEXPR will *always* have
  * a list with more than one entry; if the subselect has just one target
@@ -415,6 +420,8 @@ typedef struct SubLink
 	SubLinkType subLinkType;	/* EXISTS, ALL, ANY, MULTIEXPR, EXPR */
 	bool		useOr;			/* TRUE to combine column results with
 								 * "OR" not "AND" */
+	bool		isExpr;			/* TRUE if the subselect is really derived
+								 * from a single expression */
 	List	   *lefthand;		/* list of outer-query expressions on the
 								 * left */
 	List	   *operName;		/* originally specified operator name */
@@ -456,6 +463,15 @@ typedef struct SubPlan
 	SubLinkType subLinkType;	/* EXISTS, ALL, ANY, MULTIEXPR, EXPR */
 	bool		useOr;			/* TRUE to combine column results with
 								 * "OR" not "AND" */
+	bool		isExpr;			/* TRUE if the subselect is really derived
+								 * from a single expression */
+	/* runtime cache for single array expressions */
+	Oid			exprtype;		/* array and element type, and other info
+								 * needed deconstruct the array */
+	Oid			elemtype;
+	int16		elmlen;
+	bool		elmbyval;
+	char		elmalign;
 	/* The combining operators, transformed to executable expressions: */
 	List	   *exprs;			/* list of OpExpr expression trees */
 	List	   *paramIds;		/* IDs of Params embedded in the above */

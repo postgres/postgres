@@ -130,15 +130,11 @@ SELECT ARRAY[ARRAY['hello'],ARRAY['world']];
 SELECT ARRAY(select f2 from arrtest_f order by f2) AS "ARRAY";
 
 -- functions
-SELECT singleton_array(42) AS "{42}";
-SELECT array_append(singleton_array(42), 6) AS "{42,6}";
-SELECT array_prepend(6, singleton_array(42)) AS "{6,42}";
+SELECT array_append(array[42], 6) AS "{42,6}";
+SELECT array_prepend(6, array[42]) AS "{6,42}";
 SELECT array_cat(ARRAY[1,2], ARRAY[3,4]) AS "{{1,2},{3,4}}";
 SELECT array_cat(ARRAY[1,2], ARRAY[[3,4],[5,6]]) AS "{{1,2},{3,4},{5,6}}";
 SELECT array_cat(ARRAY[[3,4],[5,6]], ARRAY[1,2]) AS "{{3,4},{5,6},{1,2}}";
-SELECT array_subscript(n, 2) AS "1.2" FROM arrtest2;
-SELECT array_assign(n, 2, 9.99) AS "{1.1,9.99,1.3}" FROM arrtest2;
-SELECT array_subscript(array_assign(n, 2, 9.99), 2) AS "9.99" FROM arrtest2;
 
 -- operators
 SELECT a FROM arrtest WHERE b = ARRAY[[[113,142],[1,147]]];

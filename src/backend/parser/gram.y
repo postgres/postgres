@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.417 2003/06/17 23:12:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.418 2003/06/24 23:14:43 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -5490,6 +5490,7 @@ r_expr:  row IN_P select_with_parens
 				{
 					SubLink *n = makeNode(SubLink);
 					n->subLinkType = ANY_SUBLINK;
+					n->isExpr = false;
 					n->lefthand = $1;
 					n->operName = makeList1(makeString("="));
 					n->subselect = $3;
@@ -5500,6 +5501,7 @@ r_expr:  row IN_P select_with_parens
 					/* Make an IN node */
 					SubLink *n = makeNode(SubLink);
 					n->subLinkType = ANY_SUBLINK;
+					n->isExpr = false;
 					n->lefthand = $1;
 					n->operName = makeList1(makeString("="));
 					n->subselect = $4;
@@ -5511,6 +5513,7 @@ r_expr:  row IN_P select_with_parens
 				{
 					SubLink *n = makeNode(SubLink);
 					n->subLinkType = $3;
+					n->isExpr = false;
 					n->lefthand = $1;
 					n->operName = $2;
 					n->subselect = $4;
@@ -5521,6 +5524,7 @@ r_expr:  row IN_P select_with_parens
 				{
 					SubLink *n = makeNode(SubLink);
 					n->subLinkType = MULTIEXPR_SUBLINK;
+					n->isExpr = false;
 					n->lefthand = $1;
 					n->operName = $2;
 					n->subselect = $3;
@@ -5904,6 +5908,7 @@ a_expr:		c_expr									{ $$ = $1; }
 					{
 							SubLink *n = (SubLink *)$3;
 							n->subLinkType = ANY_SUBLINK;
+							n->isExpr = false;
 							n->lefthand = makeList1($1);
 							n->operName = makeList1(makeString("="));
 							$$ = (Node *)n;
@@ -5931,6 +5936,7 @@ a_expr:		c_expr									{ $$ = $1; }
 					{
 						/* Make an IN node */
 						SubLink *n = (SubLink *)$4;
+						n->isExpr = false;
 						n->subLinkType = ANY_SUBLINK;
 						n->lefthand = makeList1($1);
 						n->operName = makeList1(makeString("="));
@@ -5957,9 +5963,36 @@ a_expr:		c_expr									{ $$ = $1; }
 				{
 					SubLink *n = makeNode(SubLink);
 					n->subLinkType = $3;
+					n->isExpr = false;
 					n->lefthand = makeList1($1);
 					n->operName = $2;
 					n->subselect = $4;
+					$$ = (Node *)n;
+				}
+			| a_expr qual_all_Op sub_type '(' a_expr ')' %prec Op
+				{
+					SubLink *n = makeNode(SubLink);
+					SelectStmt *s = makeNode(SelectStmt);
+					ResTarget *r = makeNode(ResTarget);
+
+					r->name = NULL;
+					r->indirection = NIL;
+					r->val = (Node *)$5;
+
+					s->distinctClause = NIL;
+					s->targetList = makeList1(r);
+					s->into = NULL;
+					s->intoColNames = NIL;
+					s->fromClause = NIL;
+					s->whereClause = NULL;
+					s->groupClause = NIL;
+					s->havingClause = NULL;
+
+					n->subLinkType = $3;
+					n->isExpr = true;
+					n->lefthand = makeList1($1);
+					n->operName = $2;
+					n->subselect = (Node *) s;
 					$$ = (Node *)n;
 				}
 			| UNIQUE select_with_parens %prec Op
@@ -6538,6 +6571,7 @@ c_expr:		columnref								{ $$ = (Node *) $1; }
 				{
 					SubLink *n = makeNode(SubLink);
 					n->subLinkType = EXPR_SUBLINK;
+					n->isExpr = false;
 					n->lefthand = NIL;
 					n->operName = NIL;
 					n->subselect = $1;
@@ -6547,6 +6581,7 @@ c_expr:		columnref								{ $$ = (Node *) $1; }
 				{
 					SubLink *n = makeNode(SubLink);
 					n->subLinkType = EXISTS_SUBLINK;
+					n->isExpr = false;
 					n->lefthand = NIL;
 					n->operName = NIL;
 					n->subselect = $2;
@@ -6556,6 +6591,7 @@ c_expr:		columnref								{ $$ = (Node *) $1; }
 				{
 					SubLink *n = makeNode(SubLink);
 					n->subLinkType = ARRAY_SUBLINK;
+					n->isExpr = false;
 					n->lefthand = NIL;
 					n->operName = NIL;
 					n->subselect = $2;
@@ -6730,6 +6766,7 @@ trim_list:	a_expr FROM expr_list					{ $$ = lappend($3, $1); }
 in_expr:	select_with_parens
 				{
 					SubLink *n = makeNode(SubLink);
+					n->isExpr = false;
 					n->subselect = $1;
 					/* other fields will be filled later */
 					$$ = (Node *)n;

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.305 2003/06/24 22:21:23 momjian Exp $
+ * $Id: pg_proc.h,v 1.306 2003/06/24 23:14:47 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -758,6 +758,8 @@ DATA(insert OID = 359 (  btnamecmp		   PGNSP PGUID 12 f f t f i 2 23 "19 19"	btn
 DESCR("btree less-equal-greater");
 DATA(insert OID = 360 (  bttextcmp		   PGNSP PGUID 12 f f t f i 2 23 "25 25"	bttextcmp - _null_ ));
 DESCR("btree less-equal-greater");
+DATA(insert OID = 382 (  btarraycmp		   PGNSP PGUID 12 f f t f i 2 23 "2277 2277"	btarraycmp - _null_ ));
+DESCR("btree less-equal-greater");
 
 DATA(insert OID = 361 (  lseg_distance	   PGNSP PGUID 12 f f t f i 2 701 "601 601"  lseg_distance - _null_ ));
 DESCR("distance between");
@@ -988,14 +990,23 @@ DESCR("greater-than");
 DATA(insert OID = 743 (  text_ge		   PGNSP PGUID 12 f f t f i 2 16 "25 25"	text_ge - _null_ ));
 DESCR("greater-than-or-equal");
 
-DATA(insert OID = 744 (  array_eq		   PGNSP PGUID 12 f f t f i 2 16 "2277 2277" array_eq - _null_ ));
-DESCR("array equal");
-
 DATA(insert OID = 745 (  current_user	   PGNSP PGUID 12 f f t f s 0 19 "" current_user - _null_ ));
 DESCR("current user name");
 DATA(insert OID = 746 (  session_user	   PGNSP PGUID 12 f f t f s 0 19 "" session_user - _null_ ));
 DESCR("session user name");
 
+DATA(insert OID = 744 (  array_eq		   PGNSP PGUID 12 f f t f i 2 16 "2277 2277" array_eq - _null_ ));
+DESCR("array equal");
+DATA(insert OID = 390 (  array_ne		   PGNSP PGUID 12 f f t f i 2 16 "2277 2277" array_ne - _null_ ));
+DESCR("array not equal");
+DATA(insert OID = 391 (  array_lt		   PGNSP PGUID 12 f f t f i 2 16 "2277 2277" array_lt - _null_ ));
+DESCR("array less than");
+DATA(insert OID = 392 (  array_gt		   PGNSP PGUID 12 f f t f i 2 16 "2277 2277" array_gt - _null_ ));
+DESCR("array greater than");
+DATA(insert OID = 393 (  array_le		   PGNSP PGUID 12 f f t f i 2 16 "2277 2277" array_le - _null_ ));
+DESCR("array less than or equal");
+DATA(insert OID = 396 (  array_ge		   PGNSP PGUID 12 f f t f i 2 16 "2277 2277" array_ge - _null_ ));
+DESCR("array greater than or equal");
 DATA(insert OID = 747 (  array_dims		   PGNSP PGUID 12 f f t f i 1 25 "2277" array_dims - _null_ ));
 DESCR("array dimensions");
 DATA(insert OID = 750 (  array_in		   PGNSP PGUID 12 f f t f s 3 2277 "2275 26 23"  array_in - _null_ ));
@@ -1006,22 +1017,18 @@ DATA(insert OID = 2091 (  array_lower	   PGNSP PGUID 12 f f t f i 2 23 "2277 23"
 DESCR("array lower dimension");
 DATA(insert OID = 2092 (  array_upper	   PGNSP PGUID 12 f f t f i 2 23 "2277 23" array_upper - _null_ ));
 DESCR("array upper dimension");
-DATA(insert OID = 377 (  singleton_array  PGNSP PGUID 12 f f t f i 1 2277 "2283" singleton_array - _null_ ));
-DESCR("create array from single element");
 DATA(insert OID = 378 (  array_append	   PGNSP PGUID 12 f f t f i 2 2277 "2277 2283" array_push - _null_ ));
 DESCR("append element onto end of array");
 DATA(insert OID = 379 (  array_prepend	   PGNSP PGUID 12 f f t f i 2 2277 "2283 2277" array_push - _null_ ));
 DESCR("prepend element onto front of array");
-DATA(insert OID = 380 (  array_accum	   PGNSP PGUID 12 f f f f i 2 2277 "2277 2283" array_accum - _null_ ));
-DESCR("push element onto end of array, creating array if needed");
-DATA(insert OID = 381 (  array_assign	   PGNSP PGUID 12 f f t f i 3 2277 "2277 23 2283" array_assign - _null_ ));
-DESCR("assign specific array element");
-DATA(insert OID = 382 (  array_subscript  PGNSP PGUID 12 f f t f i 2 2283 "2277 23" array_subscript - _null_ ));
-DESCR("return specific array element");
 DATA(insert OID = 383 (  array_cat	       PGNSP PGUID 12 f f t f i 2 2277 "2277 2277" array_cat - _null_ ));
 DESCR("concatenate two arrays");
 DATA(insert OID = 384  (  array_coerce	   PGNSP PGUID 12 f f t f i 1 2277 "2277" array_type_coerce - _null_ ));
 DESCR("coerce array type to another array type");
+DATA(insert OID = 394 (  string_to_array   PGNSP PGUID 12 f f t f i 2 1009 "25 25" text_to_array - _null_ ));
+DESCR("split delimited text into text[]");
+DATA(insert OID = 395 (  array_to_string   PGNSP PGUID 12 f f t f i 2 25 "2277 25" array_to_text - _null_ ));
+DESCR("concatenate array elements, using delimiter, into text");
 
 DATA(insert OID = 760 (  smgrin			   PGNSP PGUID 12 f f t f s 1 210 "2275"  smgrin - _null_ ));
 DESCR("I/O");
@@ -1322,6 +1329,8 @@ DATA(insert OID = 1036 (  aclremove		   PGNSP PGUID 12 f f t f s 2 1034 "1034 10
 DESCR("remove ACL item");
 DATA(insert OID = 1037 (  aclcontains	   PGNSP PGUID 12 f f t f s 2 16 "1034 1033"	aclcontains - _null_ ));
 DESCR("does ACL contain item?");
+DATA(insert OID = 1062 (  aclitemeq	       PGNSP PGUID 12 f f t f s 2 16 "1033 1033"	aclitem_eq - _null_ ));
+DESCR("equality operator for ACL items");
 DATA(insert OID = 1365 (  makeaclitem	   PGNSP PGUID 12 f f t f s 5 1033 "23 23 23 25 16"	makeaclitem - _null_ ));
 DESCR("make ACL item");
 DATA(insert OID = 1038 (  seteval		   PGNSP PGUID 12 f f t t v 1 23 "26"  seteval - _null_ ));

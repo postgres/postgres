@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.76 2003/06/06 15:04:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.77 2003/06/24 23:14:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -83,7 +83,7 @@ typedef struct finalize_primnode_context
 
 static List *convert_sublink_opers(List *lefthand, List *operOids,
 								   List *targetlist, int rtindex,
-								   List **righthandIds);
+								   bool isExpr, List **righthandIds);
 static bool subplan_is_hashable(SubLink *slink, SubPlan *node);
 static Node *replace_correlation_vars_mutator(Node *node, void *context);
 static Node *process_sublinks_mutator(Node *node, bool *isTopQual);
@@ -299,6 +299,12 @@ make_subplan(SubLink *slink, List *lefthand, bool isTopQual)
 	 */
 	node->subLinkType = slink->subLinkType;
 	node->useOr = slink->useOr;
+	node->isExpr = slink->isExpr;
+	node->exprtype = InvalidOid;
+	node->elemtype = InvalidOid;
+	node->elmlen = 0;
+	node->elmbyval = false;
+	node->elmalign = '\0';
 	node->exprs = NIL;
 	node->paramIds = NIL;
 	node->useHashTable = false;
@@ -374,7 +380,7 @@ make_subplan(SubLink *slink, List *lefthand, bool isTopQual)
 		exprs = convert_sublink_opers(lefthand,
 									  slink->operOids,
 									  plan->targetlist,
-									  0,
+									  0, node->isExpr,
 									  &node->paramIds);
 		node->setParam = listCopy(node->paramIds);
 		PlannerInitPlan = lappend(PlannerInitPlan, node);
@@ -457,7 +463,7 @@ make_subplan(SubLink *slink, List *lefthand, bool isTopQual)
 		node->exprs = convert_sublink_opers(lefthand,
 											slink->operOids,
 											plan->targetlist,
-											0,
+											0, node->isExpr,
 											&node->paramIds);
 
 		/*
@@ -499,7 +505,7 @@ make_subplan(SubLink *slink, List *lefthand, bool isTopQual)
 static List *
 convert_sublink_opers(List *lefthand, List *operOids,
 					  List *targetlist, int rtindex,
-					  List **righthandIds)
+					  bool isExpr, List **righthandIds)
 {
 	List	   *result = NIL;
 	List	   *lst;
@@ -554,13 +560,38 @@ convert_sublink_opers(List *lefthand, List *operOids,
 		 * are not expecting to have to resolve unknown Params, so
 		 * it's okay to pass a null pstate.)
 		 */
-		result = lappend(result,
-						 make_op_expr(NULL,
-									  tup,
-									  leftop,
-									  rightop,
-									  exprType(leftop),
-									  te->resdom->restype));
+		if (!isExpr)
+		{
+			result = lappend(result,
+							 make_op_expr(NULL,
+										  tup,
+										  leftop,
+										  rightop,
+										  exprType(leftop),
+										  te->resdom->restype));
+		}
+		else
+		{
+			Oid		exprtype = te->resdom->restype;
+			Oid		elemtype = get_element_type(exprtype);
+
+			if (elemtype != InvalidOid)
+				result = lappend(result,
+								 make_op_expr(NULL,
+											  tup,
+											  leftop,
+											  rightop,
+											  exprType(leftop),
+											  elemtype));
+			else
+				result = lappend(result,
+								 make_op_expr(NULL,
+											  tup,
+											  leftop,
+											  rightop,
+											  exprType(leftop),
+											  exprtype));
+		}
 
 		ReleaseSysCache(tup);
 
@@ -671,13 +702,17 @@ convert_IN_to_join(Query *parse, SubLink *sublink)
 	/*
 	 * The sublink type must be "= ANY" --- that is, an IN operator.
 	 * (We require the operator name to be unqualified, which may be
-	 * overly paranoid, or may not be.)
+	 * overly paranoid, or may not be.) It must not be an Expression
+	 * sublink.
 	 */
 	if (sublink->subLinkType != ANY_SUBLINK)
 		return NULL;
 	if (length(sublink->operName) != 1 ||
 		strcmp(strVal(lfirst(sublink->operName)), "=") != 0)
 		return NULL;
+	if (sublink->isExpr)
+		return NULL;
+
 	/*
 	 * The sub-select must not refer to any Vars of the parent query.
 	 * (Vars of higher levels should be okay, though.)
@@ -730,7 +765,7 @@ convert_IN_to_join(Query *parse, SubLink *sublink)
 	exprs = convert_sublink_opers(sublink->lefthand,
 								  sublink->operOids,
 								  subselect->targetList,
-								  rtindex,
+								  rtindex, sublink->isExpr,
 								  &ininfo->sub_targetlist);
 	return (Node *) make_ands_explicit(exprs);
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.149 2003/06/06 15:04:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.150 2003/06/24 23:14:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -336,6 +336,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		aggref->target = lfirst(fargs);
 		aggref->aggstar = agg_star;
 		aggref->aggdistinct = agg_distinct;
+		aggref->args = fargs;
 
 		/* parse_agg.c does additional aggregate-specific processing */
 		transformAggregateCall(pstate, aggref);

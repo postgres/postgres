@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.236 2003/06/20 13:36:34 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.237 2003/06/24 23:14:49 momjian Exp $ */
 
 /* Copyright comment */
 %{
@@ -4595,7 +4595,7 @@ type_declaration: S_TYPEDEF
 			    $3.type_enum != ECPGt_char &&
 	        	    $3.type_enum != ECPGt_unsigned_char &&
 			    atoi(this->type->type_index) >= 0)
-				mmerror(PARSE_ERROR, ET_ERROR, "No multi-dimensional array support for simple data types");
+				mmerror(PARSE_ERROR, ET_ERROR, "No multidimensional array support for simple data types");
 
 			types = this;
 		}
@@ -5415,7 +5415,7 @@ ECPGTypedef: TYPE_P
 					$5.type_enum != ECPGt_char &&
 					$5.type_enum != ECPGt_unsigned_char &&
 					atoi(this->type->type_index) >= 0)
-					mmerror(PARSE_ERROR, ET_ERROR, "No multi-dimensional array support for simple data types");
+					mmerror(PARSE_ERROR, ET_ERROR, "No multidimensional array support for simple data types");
 
 				types = this;
 			}
@@ -5482,7 +5482,7 @@ ECPGVar: SQL_VAR
 
 					default:
 						if (atoi(length) >= 0)
-							mmerror(PARSE_ERROR, ET_ERROR, "No multi-dimensional array support for simple data types");
+							mmerror(PARSE_ERROR, ET_ERROR, "No multidimensional array support for simple data types");
 
 						if (atoi(dimension) < 0)
 							type = ECPGmake_simple_type($5.type_enum, make_str("1"));

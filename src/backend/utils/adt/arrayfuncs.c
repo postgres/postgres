@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.89 2003/05/09 23:01:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.90 2003/06/24 23:14:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,8 +21,10 @@
 #include "catalog/pg_type.h"
 #include "libpq/pqformat.h"
 #include "parser/parse_coerce.h"
+#include "parser/parse_oper.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
+#include "utils/datum.h"
 #include "utils/memutils.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
@@ -70,16 +72,6 @@
 
 #define RETURN_NULL(type)  do { *isNull = true; return (type) 0; } while (0)
 
-/* I/O function selector for system_cache_lookup */
-typedef enum IOFuncSelector
-{
-	IOFunc_input,
-	IOFunc_output,
-	IOFunc_receive,
-	IOFunc_send
-} IOFuncSelector;
-
-
 static int	ArrayCount(char *str, int *dim, char typdelim);
 static Datum *ReadArrayStr(char *arrayStr, int nitems, int ndim, int *dim,
 			 FmgrInfo *inputproc, Oid typelem, int32 typmod,
@@ -93,10 +85,6 @@ static Datum *ReadArrayBinary(StringInfo buf, int nitems,
 static void CopyArrayEls(char *p, Datum *values, int nitems,
 			 int typlen, bool typbyval, char typalign,
 			 bool freedata);
-static void system_cache_lookup(Oid element_type, IOFuncSelector which_func,
-								int *typlen, bool *typbyval,
-								char *typdelim, Oid *typelem,
-								Oid *proc, char *typalign);
 static Datum ArrayCast(char *value, bool byval, int len);
 static int ArrayCastAndSet(Datum src,
 				int typlen, bool typbyval, char typalign,
@@ -119,7 +107,7 @@ static void array_insert_slice(int ndim, int *dim, int *lb,
 				   char *destPtr,
 				   int *st, int *endp, char *srcPtr,
 				   int typlen, bool typbyval, char typalign);
-
+static int array_cmp(FunctionCallInfo fcinfo);
 
 /*---------------------------------------------------------------------
  * array_in :
@@ -154,12 +142,49 @@ array_in(PG_FUNCTION_ARGS)
 				dim[MAXDIM],
 				lBound[MAXDIM];
 	char		typalign;
+	ArrayMetaState *my_extra;
 
-	/* Get info about element type, including its input conversion proc */
-	system_cache_lookup(element_type, IOFunc_input,
-						&typlen, &typbyval, &typdelim,
-						&typelem, &typinput, &typalign);
-	fmgr_info(typinput, &inputproc);
+	/*
+	 * We arrange to look up info about element type, including its input
+	 * conversion proc only once per series of calls, assuming the element
+	 * type doesn't change underneath us.
+	 */
+	my_extra = (ArrayMetaState *) fcinfo->flinfo->fn_extra;
+	if (my_extra == NULL)
+	{
+		fcinfo->flinfo->fn_extra = MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
+													 sizeof(ArrayMetaState));
+		my_extra = (ArrayMetaState *) fcinfo->flinfo->fn_extra;
+		my_extra->element_type = InvalidOid;
+	}
+
+	if (my_extra->element_type != element_type)
+	{
+		/* Get info about element type, including its input conversion proc */
+		get_type_metadata(element_type, IOFunc_input,
+							&typlen, &typbyval, &typdelim,
+							&typelem, &typinput, &typalign);
+		fmgr_info(typinput, &inputproc);
+
+		my_extra->element_type = element_type;
+		my_extra->typlen = typlen;
+		my_extra->typbyval = typbyval;
+		my_extra->typdelim = typdelim;
+		my_extra->typelem = typelem;
+		my_extra->typiofunc = typinput;
+		my_extra->typalign = typalign;
+		my_extra->proc = inputproc;
+	}
+	else
+	{
+		typlen = my_extra->typlen;
+		typbyval = my_extra->typbyval;
+		typdelim = my_extra->typdelim;
+		typelem = my_extra->typelem;
+		typinput = my_extra->typiofunc;
+		typalign = my_extra->typalign;
+		inputproc = my_extra->proc;
+	}
 
 	/* Make a modifiable copy of the input */
 	/* XXX why are we allocating an extra 2 bytes here? */
@@ -636,12 +661,51 @@ array_out(PG_FUNCTION_ARGS)
 				indx[MAXDIM];
 	int			ndim,
 			   *dim;
+	ArrayMetaState *my_extra;
 
 	element_type = ARR_ELEMTYPE(v);
-	system_cache_lookup(element_type, IOFunc_output,
-						&typlen, &typbyval, &typdelim,
-						&typelem, &typoutput, &typalign);
-	fmgr_info(typoutput, &outputproc);
+
+	/*
+	 * We arrange to look up info about element type, including its input
+	 * conversion proc only once per series of calls, assuming the element
+	 * type doesn't change underneath us.
+	 */
+	my_extra = (ArrayMetaState *) fcinfo->flinfo->fn_extra;
+	if (my_extra == NULL)
+	{
+		fcinfo->flinfo->fn_extra = MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
+													 sizeof(ArrayMetaState));
+		my_extra = (ArrayMetaState *) fcinfo->flinfo->fn_extra;
+		my_extra->element_type = InvalidOid;
+	}
+
+	if (my_extra->element_type != element_type)
+	{
+		/* Get info about element type, including its output conversion proc */
+		get_type_metadata(element_type, IOFunc_output,
+							&typlen, &typbyval, &typdelim,
+							&typelem, &typoutput, &typalign);
+		fmgr_info(typoutput, &outputproc);
+
+		my_extra->element_type = element_type;
+		my_extra->typlen = typlen;
+		my_extra->typbyval = typbyval;
+		my_extra->typdelim = typdelim;
+		my_extra->typelem = typelem;
+		my_extra->typiofunc = typoutput;
+		my_extra->typalign = typalign;
+		my_extra->proc = outputproc;
+	}
+	else
+	{
+		typlen = my_extra->typlen;
+		typbyval = my_extra->typbyval;
+		typdelim = my_extra->typdelim;
+		typelem = my_extra->typelem;
+		typoutput = my_extra->typiofunc;
+		typalign = my_extra->typalign;
+		outputproc = my_extra->proc;
+	}
 
 	ndim = ARR_NDIM(v);
 	dim = ARR_DIMS(v);
@@ -800,6 +864,7 @@ array_recv(PG_FUNCTION_ARGS)
 				dim[MAXDIM],
 				lBound[MAXDIM];
 	char		typalign;
+	ArrayMetaState *my_extra;
 
 	/* Get the array header information */
 	ndim = pq_getmsgint(buf, 4);
@@ -831,14 +896,50 @@ array_recv(PG_FUNCTION_ARGS)
 		PG_RETURN_ARRAYTYPE_P(retval);
 	}
 
-	/* Get info about element type, including its receive conversion proc */
-	system_cache_lookup(element_type, IOFunc_receive,
-						&typlen, &typbyval, &typdelim,
-						&typelem, &typreceive, &typalign);
-	if (!OidIsValid(typreceive))
-		elog(ERROR, "No binary input function available for type %s",
-			 format_type_be(element_type));
-	fmgr_info(typreceive, &receiveproc);
+	/*
+	 * We arrange to look up info about element type, including its receive
+	 * conversion proc only once per series of calls, assuming the element
+	 * type doesn't change underneath us.
+	 */
+	my_extra = (ArrayMetaState *) fcinfo->flinfo->fn_extra;
+	if (my_extra == NULL)
+	{
+		fcinfo->flinfo->fn_extra = MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
+													 sizeof(ArrayMetaState));
+		my_extra = (ArrayMetaState *) fcinfo->flinfo->fn_extra;
+		my_extra->element_type = InvalidOid;
+	}
+
+	if (my_extra->element_type != element_type)
+	{
+		/* Get info about element type, including its receive conversion proc */
+		get_type_metadata(element_type, IOFunc_receive,
+							&typlen, &typbyval, &typdelim,
+							&typelem, &typreceive, &typalign);
+		if (!OidIsValid(typreceive))
+			elog(ERROR, "No binary input function available for type %s",
+				 format_type_be(element_type));
+		fmgr_info(typreceive, &receiveproc);
+
+		my_extra->element_type = element_type;
+		my_extra->typlen = typlen;
+		my_extra->typbyval = typbyval;
+		my_extra->typdelim = typdelim;
+		my_extra->typelem = typelem;
+		my_extra->typiofunc = typreceive;
+		my_extra->typalign = typalign;
+		my_extra->proc = receiveproc;
+	}
+	else
+	{
+		typlen = my_extra->typlen;
+		typbyval = my_extra->typbyval;
+		typdelim = my_extra->typdelim;
+		typelem = my_extra->typelem;
+		typreceive = my_extra->typiofunc;
+		typalign = my_extra->typalign;
+		receiveproc = my_extra->proc;
+	}
 
 	dataPtr = ReadArrayBinary(buf, nitems, &receiveproc, typelem,
 							  typlen, typbyval, typalign,
@@ -976,15 +1077,54 @@ array_send(PG_FUNCTION_ARGS)
 	int			ndim,
 			   *dim;
 	StringInfoData buf;
+	ArrayMetaState *my_extra;
 
 	/* Get information about the element type and the array dimensions */
 	element_type = ARR_ELEMTYPE(v);
-	system_cache_lookup(element_type, IOFunc_send, &typlen, &typbyval,
-						&typdelim, &typelem, &typsend, &typalign);
-	if (!OidIsValid(typsend))
-		elog(ERROR, "No binary output function available for type %s",
-			 format_type_be(element_type));
-	fmgr_info(typsend, &sendproc);
+
+	/*
+	 * We arrange to look up info about element type, including its send
+	 * proc only once per series of calls, assuming the element
+	 * type doesn't change underneath us.
+	 */
+	my_extra = (ArrayMetaState *) fcinfo->flinfo->fn_extra;
+	if (my_extra == NULL)
+	{
+		fcinfo->flinfo->fn_extra = MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
+													 sizeof(ArrayMetaState));
+		my_extra = (ArrayMetaState *) fcinfo->flinfo->fn_extra;
+		my_extra->element_type = InvalidOid;
+	}
+
+	if (my_extra->element_type != element_type)
+	{
+		/* Get info about element type, including its send proc */
+		get_type_metadata(element_type, IOFunc_send, &typlen, &typbyval,
+							&typdelim, &typelem, &typsend, &typalign);
+		if (!OidIsValid(typsend))
+			elog(ERROR, "No binary output function available for type %s",
+				 format_type_be(element_type));
+		fmgr_info(typsend, &sendproc);
+
+		my_extra->element_type = element_type;
+		my_extra->typlen = typlen;
+		my_extra->typbyval = typbyval;
+		my_extra->typdelim = typdelim;
+		my_extra->typelem = typelem;
+		my_extra->typiofunc = typsend;
+		my_extra->typalign = typalign;
+		my_extra->proc = sendproc;
+	}
+	else
+	{
+		typlen = my_extra->typlen;
+		typbyval = my_extra->typbyval;
+		typdelim = my_extra->typdelim;
+		typelem = my_extra->typelem;
+		typsend = my_extra->typiofunc;
+		typalign = my_extra->typalign;
+		sendproc = my_extra->proc;
+	}
 
 	ndim = ARR_NDIM(v);
 	dim = ARR_DIMS(v);
@@ -1476,6 +1616,26 @@ array_set(ArrayType *array,
 	array = DatumGetArrayTypeP(PointerGetDatum(array));
 
 	ndim = ARR_NDIM(array);
+
+	/*
+	 * if number of dims is zero, i.e. an empty array, create an array
+	 * with nSubscripts dimensions, and set the lower bounds to the supplied
+	 * subscripts
+	 */
+	if (ndim == 0)
+	{
+		Oid		elmtype = ARR_ELEMTYPE(array);
+
+		for (i = 0; i < nSubscripts; i++)
+		{
+			dim[i] = 1;
+			lb[i] = indx[i];
+		}
+
+		return construct_md_array(&dataValue, nSubscripts, dim, lb, elmtype,
+												elmlen, elmbyval, elmalign);
+	}
+
 	if (ndim != nSubscripts || ndim <= 0 || ndim > MAXDIM)
 		elog(ERROR, "Invalid array subscripts");
 
@@ -1632,6 +1792,31 @@ array_set_slice(ArrayType *array,
 	/* note: we assume srcArray contains no toasted elements */
 
 	ndim = ARR_NDIM(array);
+
+	/*
+	 * if number of dims is zero, i.e. an empty array, create an array
+	 * with nSubscripts dimensions, and set the upper and lower bounds
+	 * to the supplied subscripts
+	 */
+	if (ndim == 0)
+	{
+		Datum  *dvalues;
+		int		nelems;
+		Oid		elmtype = ARR_ELEMTYPE(array);
+
+		deconstruct_array(srcArray, elmtype, elmlen, elmbyval, elmalign,
+														&dvalues, &nelems);
+
+		for (i = 0; i < nSubscripts; i++)
+		{
+			dim[i] = 1 + upperIndx[i] - lowerIndx[i];
+			lb[i] = lowerIndx[i];
+		}
+
+		return construct_md_array(dvalues, nSubscripts, dim, lb, elmtype,
+												 elmlen, elmbyval, elmalign);
+	}
+
 	if (ndim < nSubscripts || ndim <= 0 || ndim > MAXDIM)
 		elog(ERROR, "Invalid array subscripts");
 
@@ -1811,6 +1996,13 @@ array_map(FunctionCallInfo fcinfo, Oid inpType, Oid retType)
 	Oid			typelem;
 	Oid			proc;
 	char	   *s;
+	typedef struct {
+		ArrayMetaState *inp_extra;
+		ArrayMetaState *ret_extra;
+	} am_extra;
+	am_extra  *my_extra;
+	ArrayMetaState *inp_extra;
+	ArrayMetaState *ret_extra;
 
 	/* Get input array */
 	if (fcinfo->nargs < 1)
@@ -1829,11 +2021,81 @@ array_map(FunctionCallInfo fcinfo, Oid inpType, Oid retType)
 	if (nitems <= 0)
 		PG_RETURN_ARRAYTYPE_P(v);
 
-	/* Lookup source and result types. Unneeded variables are reused. */
-	system_cache_lookup(inpType, IOFunc_input, &inp_typlen, &inp_typbyval,
-						&typdelim, &typelem, &proc, &inp_typalign);
-	system_cache_lookup(retType, IOFunc_input, &typlen, &typbyval,
-						&typdelim, &typelem, &proc, &typalign);
+	/*
+	 * We arrange to look up info about input and return element types only
+	 * once per series of calls, assuming the element type doesn't change
+	 * underneath us.
+	 */
+	my_extra = (am_extra *) fcinfo->flinfo->fn_extra;
+	if (my_extra == NULL)
+	{
+		fcinfo->flinfo->fn_extra = MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
+													 sizeof(am_extra));
+		my_extra = (am_extra *) fcinfo->flinfo->fn_extra;
+
+		my_extra->inp_extra = MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
+													 sizeof(ArrayMetaState));
+		inp_extra = my_extra->inp_extra;
+		inp_extra->element_type = InvalidOid;
+
+		my_extra->ret_extra = MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
+													 sizeof(ArrayMetaState));
+		ret_extra = my_extra->ret_extra;
+		ret_extra->element_type = InvalidOid;
+	}
+	else
+	{
+		inp_extra = my_extra->inp_extra;
+		ret_extra = my_extra->ret_extra;
+	}
+
+	if (inp_extra->element_type != inpType)
+	{
+		/* Lookup source and result types. Unneeded variables are reused. */
+		get_type_metadata(inpType, IOFunc_input, &inp_typlen, &inp_typbyval,
+							&typdelim, &typelem, &proc, &inp_typalign);
+
+		inp_extra->element_type = inpType;
+		inp_extra->typlen = inp_typlen;
+		inp_extra->typbyval = inp_typbyval;
+		inp_extra->typdelim = typdelim;
+		inp_extra->typelem = typelem;
+		inp_extra->typiofunc = proc;
+		inp_extra->typalign = inp_typalign;
+	}
+	else
+	{
+		inp_typlen = inp_extra->typlen;
+		inp_typbyval = inp_extra->typbyval;
+		typdelim = inp_extra->typdelim;
+		typelem = inp_extra->typelem;
+		proc = inp_extra->typiofunc;
+		inp_typalign = inp_extra->typalign;
+	}
+
+	if (ret_extra->element_type != retType)
+	{
+		/* Lookup source and result types. Unneeded variables are reused. */
+		get_type_metadata(retType, IOFunc_input, &typlen, &typbyval,
+							&typdelim, &typelem, &proc, &typalign);
+
+		ret_extra->element_type = retType;
+		ret_extra->typlen = typlen;
+		ret_extra->typbyval = typbyval;
+		ret_extra->typdelim = typdelim;
+		ret_extra->typelem = typelem;
+		ret_extra->typiofunc = proc;
+		ret_extra->typalign = typalign;
+	}
+	else
+	{
+		typlen = ret_extra->typlen;
+		typbyval = ret_extra->typbyval;
+		typdelim = ret_extra->typdelim;
+		typelem = ret_extra->typelem;
+		proc = ret_extra->typiofunc;
+		typalign = ret_extra->typalign;
+	}
 
 	/* Allocate temporary array for new values */
 	values = (Datum *) palloc(nitems * sizeof(Datum));
@@ -2049,8 +2311,6 @@ deconstruct_array(ArrayType *array,
  *		  compares two arrays for equality
  * result :
  *		  returns true if the arrays are equal, false otherwise.
- *
- * XXX bitwise equality is pretty bogus ...
  *-----------------------------------------------------------------------------
  */
 Datum
@@ -2058,12 +2318,118 @@ array_eq(PG_FUNCTION_ARGS)
 {
 	ArrayType  *array1 = PG_GETARG_ARRAYTYPE_P(0);
 	ArrayType  *array2 = PG_GETARG_ARRAYTYPE_P(1);
+	char	   *p1 = (char *) ARR_DATA_PTR(array1);
+	char	   *p2 = (char *) ARR_DATA_PTR(array2);
+	int			ndims1 = ARR_NDIM(array1);
+	int			ndims2 = ARR_NDIM(array2);
+	int		   *dims1 = ARR_DIMS(array1);
+	int		   *dims2 = ARR_DIMS(array2);
+	int			nitems1 = ArrayGetNItems(ndims1, dims1);
+	int			nitems2 = ArrayGetNItems(ndims2, dims2);
+	Oid			element_type = ARR_ELEMTYPE(array1);
+	FmgrInfo   *ae_fmgr_info = fcinfo->flinfo;
 	bool		result = true;
+	int			typlen;
+	bool		typbyval;
+	char		typdelim;
+	Oid			typelem;
+	char		typalign;
+	Oid			typiofunc;
+	int			i;
+	ArrayMetaState *my_extra;
+	FunctionCallInfoData locfcinfo;
 
-	if (ARR_SIZE(array1) != ARR_SIZE(array2))
+	/* fast path if the arrays do not have the same number of elements */
+	if (nitems1 != nitems2)
 		result = false;
-	else if (memcmp(array1, array2, ARR_SIZE(array1)) != 0)
-		result = false;
+	else
+	{
+		/*
+		 * We arrange to look up the equality function only once per series of
+		 * calls, assuming the element type doesn't change underneath us.
+		 */
+		my_extra = (ArrayMetaState *) ae_fmgr_info->fn_extra;
+		if (my_extra == NULL)
+		{
+			ae_fmgr_info->fn_extra = MemoryContextAlloc(ae_fmgr_info->fn_mcxt,
+													 sizeof(ArrayMetaState));
+			my_extra = (ArrayMetaState *) ae_fmgr_info->fn_extra;
+			my_extra->element_type = InvalidOid;
+		}
+
+		if (my_extra->element_type != element_type)
+		{
+			Oid		opfuncid = equality_oper_funcid(element_type);
+
+			if (OidIsValid(opfuncid))
+				fmgr_info_cxt(opfuncid, &my_extra->proc, ae_fmgr_info->fn_mcxt);
+			else
+				elog(ERROR,
+					 "array_eq: cannot find equality operator for type: %u",
+					 element_type);
+
+			get_type_metadata(element_type, IOFunc_output,
+							  &typlen, &typbyval, &typdelim,
+							  &typelem, &typiofunc, &typalign);
+			
+			my_extra->element_type = element_type;
+			my_extra->typlen = typlen;
+			my_extra->typbyval = typbyval;
+			my_extra->typdelim = typdelim;
+			my_extra->typelem = typelem;
+			my_extra->typiofunc = typiofunc;
+			my_extra->typalign = typalign;
+		}
+		else
+		{
+			typlen = my_extra->typlen;
+			typbyval = my_extra->typbyval;
+			typdelim = my_extra->typdelim;
+			typelem = my_extra->typelem;
+			typiofunc = my_extra->typiofunc;
+			typalign = my_extra->typalign;
+		}
+
+		/*
+		 * apply the operator to each pair of array elements.
+		 */
+		MemSet(&locfcinfo, 0, sizeof(locfcinfo));
+		locfcinfo.flinfo = &my_extra->proc;
+		locfcinfo.nargs = 2;
+
+		/* Loop over source data */
+		for (i = 0; i < nitems1; i++)
+		{
+			Datum	elt1;
+			Datum	elt2;
+			bool	oprresult;
+
+			/* Get element pair */
+			elt1 = fetch_att(p1, typbyval, typlen);
+			elt2 = fetch_att(p2, typbyval, typlen);
+
+			p1 = att_addlength(p1, typlen, PointerGetDatum(p1));
+			p1 = (char *) att_align(p1, typalign);
+
+			p2 = att_addlength(p2, typlen, PointerGetDatum(p2));
+			p2 = (char *) att_align(p2, typalign);
+
+			/*
+			 * Apply the operator to the element pair
+			 */
+			locfcinfo.arg[0] = elt1;
+			locfcinfo.arg[1] = elt2;
+			locfcinfo.argnull[0] = false;
+			locfcinfo.argnull[1] = false;
+			locfcinfo.isnull = false;
+			oprresult = DatumGetBool(FunctionCallInvoke(&locfcinfo));
+			if (!oprresult)
+			{
+				result = false;
+				break;
+			}
+		}
+	}
 
 	/* Avoid leaking memory when handed toasted input. */
 	PG_FREE_IF_COPY(array1, 0);
@@ -2073,52 +2439,189 @@ array_eq(PG_FUNCTION_ARGS)
 }
 
 
+/*-----------------------------------------------------------------------------
+ * array-array bool operators:
+ *		Given two arrays, iterate comparison operators
+ *		over the array. Uses logic similar to text comparison
+ *		functions, except element-by-element instead of
+ *		character-by-character.
+ *----------------------------------------------------------------------------
+ */
+Datum
+array_ne(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_BOOL(!DatumGetBool(array_eq(fcinfo)));
+}
+
+Datum
+array_lt(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_BOOL(array_cmp(fcinfo) < 0);
+}
+
+Datum
+array_gt(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_BOOL(array_cmp(fcinfo) > 0);
+}
+
+Datum
+array_le(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_BOOL(array_cmp(fcinfo) <= 0);
+}
+
+Datum
+array_ge(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_BOOL(array_cmp(fcinfo) >= 0);
+}
+
+Datum
+btarraycmp(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_INT32(array_cmp(fcinfo));
+}
+
+/*
+ * array_cmp()
+ * Internal comparison function for arrays.
+ *
+ * Returns -1, 0 or 1
+ */
+static int
+array_cmp(FunctionCallInfo fcinfo)
+{
+	ArrayType  *array1 = PG_GETARG_ARRAYTYPE_P(0);
+	ArrayType  *array2 = PG_GETARG_ARRAYTYPE_P(1);
+	FmgrInfo   *ac_fmgr_info = fcinfo->flinfo;
+	Datum		opresult;
+	int			result = 0;
+	Oid			element_type = InvalidOid;
+	int			typlen;
+	bool		typbyval;
+	char		typdelim;
+	Oid			typelem;
+	char		typalign;
+	Oid			typiofunc;
+	Datum	   *dvalues1;
+	int			nelems1;
+	Datum	   *dvalues2;
+	int			nelems2;
+	int			min_nelems;
+	int			i;
+	typedef struct
+	{
+		Oid				element_type;
+		int				typlen;
+		bool			typbyval;
+		char			typdelim;
+		Oid				typelem;
+		Oid				typiofunc;
+		char			typalign;
+		FmgrInfo		eqproc;
+		FmgrInfo		ordproc;
+	} ac_extra;
+	ac_extra *my_extra;
+
+	element_type = ARR_ELEMTYPE(array1);
+
+	/*
+	 * We arrange to look up the element type operator function only once
+	 * per series of calls, assuming the element type and opname don't
+	 * change underneath us.
+	 */
+	my_extra = (ac_extra *) ac_fmgr_info->fn_extra;
+	if (my_extra == NULL)
+	{
+		ac_fmgr_info->fn_extra = MemoryContextAlloc(ac_fmgr_info->fn_mcxt,
+														 sizeof(ac_extra));
+		my_extra = (ac_extra *) ac_fmgr_info->fn_extra;
+		my_extra->element_type = InvalidOid;
+	}
+
+	if (my_extra->element_type != element_type)
+	{
+		Oid		eqfuncid = equality_oper_funcid(element_type);
+		Oid		ordfuncid = ordering_oper_funcid(element_type);
+
+		fmgr_info_cxt(eqfuncid, &my_extra->eqproc, ac_fmgr_info->fn_mcxt);
+		fmgr_info_cxt(ordfuncid, &my_extra->ordproc, ac_fmgr_info->fn_mcxt);
+
+		if (my_extra->eqproc.fn_nargs != 2)
+			elog(ERROR, "Equality operator does not take 2 arguments: %u",
+																 eqfuncid);
+		if (my_extra->ordproc.fn_nargs != 2)
+			elog(ERROR, "Ordering operator does not take 2 arguments: %u",
+																 ordfuncid);
+
+		get_type_metadata(element_type, IOFunc_output,
+						  &typlen, &typbyval, &typdelim,
+						  &typelem, &typiofunc, &typalign);
+		
+		my_extra->element_type = element_type;
+		my_extra->typlen = typlen;
+		my_extra->typbyval = typbyval;
+		my_extra->typdelim = typdelim;
+		my_extra->typelem = typelem;
+		my_extra->typiofunc = InvalidOid;
+		my_extra->typalign = typalign;
+	}
+	else
+	{
+		typlen = my_extra->typlen;
+		typbyval = my_extra->typbyval;
+		typalign = my_extra->typalign;
+	}
+
+	/* extract a C array of arg array datums */
+	deconstruct_array(array1, element_type, typlen, typbyval, typalign,
+													&dvalues1, &nelems1);
+
+	deconstruct_array(array2, element_type, typlen, typbyval, typalign,
+													&dvalues2, &nelems2);
+
+	min_nelems = Min(nelems1, nelems2);
+	for (i = 0; i < min_nelems; i++)
+	{
+		/* are they equal */
+		opresult = FunctionCall2(&my_extra->eqproc,
+								 dvalues1[i], dvalues2[i]);
+
+		if (!DatumGetBool(opresult))
+		{
+			/* nope, see if arg1 is less than arg2 */
+			opresult = FunctionCall2(&my_extra->ordproc,
+									 dvalues1[i], dvalues2[i]);
+			if (DatumGetBool(opresult))
+			{
+				/* arg1 is less than arg2 */
+				result = -1;
+				break;
+			}
+			else
+			{
+				/* arg1 is greater than arg2 */
+				result = 1;
+				break;
+			}
+		}
+	}
+
+	if ((result == 0) && (nelems1 != nelems2))
+		result = (nelems1 < nelems2) ? -1 : 1;
+
+	/* Avoid leaking memory when handed toasted input. */
+	PG_FREE_IF_COPY(array1, 0);
+	PG_FREE_IF_COPY(array2, 1);
+
+	return result;
+}
+
+
 /***************************************************************************/
 /******************|		  Support  Routines			  |*****************/
 /***************************************************************************/
-
-static void
-system_cache_lookup(Oid element_type,
-					IOFuncSelector which_func,
-					int *typlen,
-					bool *typbyval,
-					char *typdelim,
-					Oid *typelem,
-					Oid *proc,
-					char *typalign)
-{
-	HeapTuple	typeTuple;
-	Form_pg_type typeStruct;
-
-	typeTuple = SearchSysCache(TYPEOID,
-							   ObjectIdGetDatum(element_type),
-							   0, 0, 0);
-	if (!HeapTupleIsValid(typeTuple))
-		elog(ERROR, "cache lookup failed for type %u", element_type);
-	typeStruct = (Form_pg_type) GETSTRUCT(typeTuple);
-
-	*typlen = typeStruct->typlen;
-	*typbyval = typeStruct->typbyval;
-	*typdelim = typeStruct->typdelim;
-	*typelem = typeStruct->typelem;
-	*typalign = typeStruct->typalign;
-	switch (which_func)
-	{
-		case IOFunc_input:
-			*proc = typeStruct->typinput;
-			break;
-		case IOFunc_output:
-			*proc = typeStruct->typoutput;
-			break;
-		case IOFunc_receive:
-			*proc = typeStruct->typreceive;
-			break;
-		case IOFunc_send:
-			*proc = typeStruct->typsend;
-			break;
-	}
-	ReleaseSysCache(typeTuple);
-}
 
 /*
  * Fetch array element at pointer, converted correctly to a Datum
@@ -2423,6 +2926,18 @@ array_type_coerce(PG_FUNCTION_ARGS)
 		if (tgt_elem_type == InvalidOid)
 			elog(ERROR, "Target type is not an array");
 
+		/*
+		 * We don't deal with domain constraints yet, so bail out.
+		 * This isn't currently a problem, because we also don't
+		 * support arrays of domain type elements either. But in the
+		 * future we might. At that point consideration should be given
+		 * to removing the check below and adding a domain constraints
+		 * check to the coercion.
+		 */
+		if (getBaseType(tgt_elem_type) != tgt_elem_type)
+			elog(ERROR, "array coercion to domain type elements not " \
+						"currently supported");
+
 		if (!find_coercion_pathway(tgt_elem_type, src_elem_type,
 								   COERCION_EXPLICIT, &funcId))
 		{
@@ -2439,10 +2954,16 @@ array_type_coerce(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * If it's binary-compatible, return the array unmodified.
+	 * If it's binary-compatible, modify the element type in the array header,
+	 * but otherwise leave the array as we received it.
 	 */
 	if (my_extra->coerce_finfo.fn_oid == InvalidOid)
-		PG_RETURN_ARRAYTYPE_P(src);
+	{
+		ArrayType  *result = DatumGetArrayTypePCopy(PG_GETARG_DATUM(0));
+		
+		ARR_ELEMTYPE(result) = my_extra->desttype;
+		PG_RETURN_ARRAYTYPE_P(result);
+	}
 
 	/*
 	 * Use array_map to apply the function to each array element.
@@ -2453,4 +2974,119 @@ array_type_coerce(PG_FUNCTION_ARGS)
 	locfcinfo.arg[0] = PointerGetDatum(src);
 
 	return array_map(&locfcinfo, my_extra->srctype, my_extra->desttype);
+}
+
+/*
+ * accumArrayResult - accumulate one (more) Datum for an ARRAY_SUBLINK
+ *
+ *	astate is working state (NULL on first call)
+ *	rcontext is where to keep working state
+ */
+ArrayBuildState *
+accumArrayResult(ArrayBuildState *astate,
+				 Datum dvalue, bool disnull,
+				 Oid element_type,
+				 MemoryContext rcontext)
+{
+	MemoryContext arr_context,
+				  oldcontext;
+
+	if (astate == NULL)
+	{
+		/* First time through --- initialize */
+
+		/* Make a temporary context to hold all the junk */
+		arr_context = AllocSetContextCreate(rcontext,
+											"accumArrayResult",
+											ALLOCSET_DEFAULT_MINSIZE,
+											ALLOCSET_DEFAULT_INITSIZE,
+											ALLOCSET_DEFAULT_MAXSIZE);
+		oldcontext = MemoryContextSwitchTo(arr_context);
+		astate = (ArrayBuildState *) palloc(sizeof(ArrayBuildState));
+		astate->mcontext = arr_context;
+		astate->dvalues = (Datum *)
+			palloc(ARRAY_ELEMS_CHUNKSIZE * sizeof(Datum));
+		astate->nelems = 0;
+		astate->element_type = element_type;
+		get_typlenbyvalalign(element_type,
+							 &astate->typlen,
+							 &astate->typbyval,
+							 &astate->typalign);
+	}
+	else
+	{
+		oldcontext = MemoryContextSwitchTo(astate->mcontext);
+		Assert(astate->element_type == element_type);
+		/* enlarge dvalues[] if needed */
+		if ((astate->nelems % ARRAY_ELEMS_CHUNKSIZE) == 0)
+			astate->dvalues = (Datum *)
+				repalloc(astate->dvalues,
+						 (astate->nelems + ARRAY_ELEMS_CHUNKSIZE) * sizeof(Datum));
+	}
+
+	if (disnull)
+		elog(ERROR, "NULL elements not allowed in Arrays");
+
+	/* Use datumCopy to ensure pass-by-ref stuff is copied into mcontext */
+	astate->dvalues[astate->nelems++] =
+		datumCopy(dvalue, astate->typbyval, astate->typlen);
+
+	MemoryContextSwitchTo(oldcontext);
+
+	return astate;
+}
+
+/*
+ * makeArrayResult - produce final result of accumArrayResult
+ *
+ *	astate is working state (not NULL)
+ *	rcontext is where to construct result
+ */
+Datum
+makeArrayResult(ArrayBuildState *astate,
+				MemoryContext rcontext)
+{
+	int			dims[1];
+	int			lbs[1];
+
+	dims[0] = astate->nelems;
+	lbs[0] = 1;
+
+	return makeMdArrayResult(astate, 1, dims, lbs, rcontext);
+}
+
+/*
+ * makeMdArrayResult - produce md final result of accumArrayResult
+ *
+ *	astate is working state (not NULL)
+ *	rcontext is where to construct result
+ */
+Datum
+makeMdArrayResult(ArrayBuildState *astate,
+				int ndims,
+				int *dims,
+				int *lbs,
+				MemoryContext rcontext)
+{
+	ArrayType  *result;
+	MemoryContext oldcontext;
+
+	/* Build the final array result in rcontext */
+	oldcontext = MemoryContextSwitchTo(rcontext);
+
+	result = construct_md_array(astate->dvalues,
+								ndims,
+								dims,
+								lbs,
+								astate->element_type,
+								astate->typlen,
+								astate->typbyval,
+								astate->typalign);
+
+	MemoryContextSwitchTo(oldcontext);
+
+	/* Clean up all the junk */
+	MemoryContextDelete(astate->mcontext);
+
+	return PointerGetDatum(result);
 }
