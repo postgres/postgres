@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.305.2.5 2003/05/03 22:19:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.305.2.6 2003/05/16 13:57:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -561,6 +561,13 @@ main(int argc, char **argv)
 		res = PQexec(g_conn, "SET TRANSACTION ISOLATION LEVEL SERIALIZABLE");
 		if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
 			exit_horribly(g_fout, NULL, "could not set transaction isolation level to serializable: %s",
+						  PQerrorMessage(g_conn));
+		PQclear(res);
+
+		/* Set the datestyle to ISO to ensure the dump's portability */
+		res = PQexec(g_conn, "SET DATESTYLE = ISO");
+		if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
+            exit_horribly(g_fout, NULL, "could not set datestyle to ISO: %s",
 						  PQerrorMessage(g_conn));
 		PQclear(res);
 	}
