@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.73 1999/05/11 03:28:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.74 1999/05/12 07:22:51 thomas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -136,16 +136,17 @@ Oid	param_type(int t); /* used in parse_expr.c */
 		ClusterStmt, ExplainStmt, VariableSetStmt, VariableShowStmt, VariableResetStmt,
 		CreateUserStmt, AlterUserStmt, DropUserStmt, RuleActionStmt
 
-%type <str>	opt_database1, opt_database2, location, encoding
+%type <str>		opt_database1, opt_database2, location, encoding
 
-%type <str>	opt_lmode
+%type <ival>	opt_lock, lock_type
+%type <boolean>	opt_lmode
 
 %type <pboolean> user_createdb_clause, user_createuser_clause
-%type <str>   user_passwd_clause
-%type <str>   user_valid_clause
-%type <list>  user_group_list, user_group_clause
+%type <str>		user_passwd_clause
+%type <str>		user_valid_clause
+%type <list>	user_group_list, user_group_clause
 
-%type <boolean> TriggerActionTime, TriggerForSpec, PLangTrusted
+%type <boolean>	TriggerActionTime, TriggerForSpec, PLangTrusted
 
 %type <str>		TriggerEvents, TriggerFuncArg
 
@@ -157,6 +158,7 @@ Oid	param_type(int t); /* used in parse_expr.c */
 		all_Op, MathOp, opt_name, opt_unique,
 		OptUseOp, opt_class, SpecialRuleRelation
 
+%type <str>		opt_level
 %type <str>		privileges, operation_commalist, grantee
 %type <chr>		operation, TriggerOneEvent
 
@@ -175,7 +177,7 @@ Oid	param_type(int t); /* used in parse_expr.c */
 %type <node>	func_return
 %type <boolean>	set_opt
 
-%type <boolean>	TriggerForOpt, TriggerForType, OptTemp
+%type <boolean>	TriggerForOpt, TriggerForType, OptTemp, OptTempType, OptTempScope
 
 %type <list>	for_update_clause, update_list
 %type <boolean>	opt_union
@@ -274,13 +276,13 @@ Oid	param_type(int t); /* used in parse_expr.c */
 %token	ABSOLUTE, ACTION, ADD, ALL, ALTER, AND, ANY, AS, ASC,
 		BEGIN_TRANS, BETWEEN, BOTH, BY,
 		CASCADE, CASE, CAST, CHAR, CHARACTER, CHECK, CLOSE,
-		COALESCE, COLLATE, COLUMN, COMMIT, 
+		COALESCE, COLLATE, COLUMN, COMMIT,
 		CONSTRAINT, CREATE, CROSS, CURRENT, CURRENT_DATE, CURRENT_TIME, 
 		CURRENT_TIMESTAMP, CURRENT_USER, CURSOR,
 		DAY_P, DECIMAL, DECLARE, DEFAULT, DELETE, DESC, DISTINCT, DOUBLE, DROP,
 		ELSE, END_TRANS, EXCEPT, EXECUTE, EXISTS, EXTRACT,
 		FALSE_P, FETCH, FLOAT, FOR, FOREIGN, FROM, FULL,
-		GRANT, GROUP, HAVING, HOUR_P,
+		GLOBAL, GRANT, GROUP, HAVING, HOUR_P,
 		IN, INNER_P, INSENSITIVE, INSERT, INTERSECT, INTERVAL, INTO, IS,
 		ISOLATION, JOIN, KEY, LANGUAGE, LEADING, LEFT, LEVEL, LIKE, LOCAL,
 		MATCH, MINUTE_P, MONTH_P, NAMES,
@@ -299,7 +301,7 @@ Oid	param_type(int t); /* used in parse_expr.c */
 %token	TRIGGER
 
 /* Keywords (in SQL92 non-reserved words) */
-%token	TYPE_P
+%token	COMMITTED, SERIALIZABLE, TYPE_P
 
 /* Keywords for Postgres support (not in SQL92 reserved words)
  *
@@ -307,17 +309,20 @@ Oid	param_type(int t); /* used in parse_expr.c */
  * when some sort of pg_privileges relation is introduced.
  * - Todd A. Brandys 1998-01-01?
  */
-%token	ABORT_TRANS, AFTER, AGGREGATE, ANALYZE, BACKWARD, BEFORE, BINARY, 
+%token	ABORT_TRANS, ACCESS, AFTER, AGGREGATE, ANALYZE,
+		BACKWARD, BEFORE, BINARY, 
 		CACHE, CLUSTER, COPY, CREATEDB, CREATEUSER, CYCLE,
-		DATABASE, DELIMITERS, DO, EACH, ENCODING, EXPLAIN, EXTEND,
+		DATABASE, DELIMITERS, DO,
+		EACH, ENCODING, EXCLUSIVE, EXPLAIN, EXTEND,
 		FORWARD, FUNCTION, HANDLER,
 		INCREMENT, INDEX, INHERITS, INSTEAD, ISNULL,
 		LANCOMPILER, LIMIT, LISTEN, LOAD, LOCATION, LOCK_P,
-		MAXVALUE, MINVALUE, MOVE,
+		MAXVALUE, MINVALUE, MODE, MOVE,
 		NEW, NOCREATEDB, NOCREATEUSER, NONE, NOTHING, NOTIFY, NOTNULL,
 		OFFSET, OIDS, OPERATOR, PASSWORD, PROCEDURAL,
 		RENAME, RESET, RETURNS, ROW, RULE,
-		SEQUENCE, SERIAL, SETOF, SHOW, START, STATEMENT, STDIN, STDOUT, TRUSTED, 
+		SEQUENCE, SERIAL, SETOF, SHARE, SHOW, START, STATEMENT, STDIN, STDOUT,
+		TRUSTED, 
 		UNLISTEN, UNTIL, VACUUM, VALID, VERBOSE, VERSION
 
 /* Special keywords, not in the query language - see the "lex" file */
@@ -557,22 +562,11 @@ VariableSetStmt:  SET ColId TO var_value
 					n->value = $4;
 					$$ = (Node *) n;
 				}
-		| SET TRANSACTION ISOLATION LEVEL READ ColId
-				{
-					VariableSetStmt *n = makeNode(VariableSetStmt);
-					n->name  = "XactIsoLevel";
-					n->value = $6;
-					if (strcasecmp(n->value, "COMMITTED"))
-						elog(ERROR,"parser: syntax error at or near \"%s\"", n->value);
-					$$ = (Node *) n;
-				}
-		| SET TRANSACTION ISOLATION LEVEL ColId
+		| SET TRANSACTION ISOLATION LEVEL opt_level
 				{
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->name  = "XactIsoLevel";
 					n->value = $5;
-					if (strcasecmp(n->value, "SERIALIZABLE"))
-						elog(ERROR,"parser: syntax error at or near \"%s\"", n->value);
 					$$ = (Node *) n;
 				}
 		| SET NAMES encoding
@@ -586,6 +580,10 @@ VariableSetStmt:  SET ColId TO var_value
 					elog(ERROR, "SET NAMES is not supported");
 #endif
 				}
+		;
+
+opt_level:  READ COMMITTED					{ $$ = "committed"; }
+		| SERIALIZABLE						{ $$ = "serializable"; }
 		;
 
 var_value:  Sconst			{ $$ = $1; }
@@ -767,10 +765,24 @@ CreateStmt:  CREATE OptTemp TABLE relation_name '(' OptTableElementList ')'
 				}
 		;
 
-OptTemp:
-			TEMP							{ $$ = TRUE; }
+OptTemp:  OptTempType						{ $$ = $1; }
+			| OptTempScope OptTempType		{ $$ = $2; }
+		;
+
+OptTempType:  TEMP							{ $$ = TRUE; }
 			| TEMPORARY						{ $$ = TRUE; }
 			| /*EMPTY*/						{ $$ = FALSE; }
+		;
+
+OptTempScope:  GLOBAL
+				{
+					elog(ERROR, "GLOBAL TEMPORARY TABLE is not currently supported");
+					$$ = TRUE;
+				}
+			| LOCAL
+				{
+					 $$ = FALSE;
+				}
 		;
 
 OptTableElementList:  OptTableElementList ',' OptTableElement
@@ -2580,77 +2592,30 @@ DeleteStmt:  DELETE FROM relation_name
 				}
 		;
 
-LockStmt:	LOCK_P opt_table relation_name
+LockStmt:	LOCK_P opt_table relation_name opt_lock
 				{
 					LockStmt *n = makeNode(LockStmt);
 
 					n->relname = $3;
-					n->mode = AccessExclusiveLock;
-					$$ = (Node *)n;
-				}
-		|	LOCK_P opt_table relation_name IN opt_lmode ROW IDENT IDENT
-				{
-					LockStmt *n = makeNode(LockStmt);
-
-					n->relname = $3;
-					if (strcasecmp($8, "MODE"))
-						elog(ERROR,"parser: syntax error at or near \"%s\"", $8);
-					if ($5 != NULL)
-					{
-						if (strcasecmp($5, "SHARE"))
-							elog(ERROR,"parser: syntax error at or near \"%s\"", $5);
-						if (strcasecmp($7, "EXCLUSIVE"))
-							elog(ERROR,"parser: syntax error at or near \"%s\"", $7);
-						n->mode = ShareRowExclusiveLock;
-					}
-					else
-					{
-						if (strcasecmp($7, "SHARE") == 0)
-							n->mode = RowShareLock;
-						else if (strcasecmp($7, "EXCLUSIVE") == 0)
-							n->mode = RowExclusiveLock;
-						else
-							elog(ERROR,"parser: syntax error at or near \"%s\"", $7);
-					}
-					$$ = (Node *)n;
-				}
-		|	LOCK_P opt_table relation_name IN IDENT IDENT IDENT
-				{
-					LockStmt *n = makeNode(LockStmt);
-
-					n->relname = $3;
-					if (strcasecmp($7, "MODE"))
-						elog(ERROR,"parser: syntax error at or near \"%s\"", $7);
-					if (strcasecmp($5, "ACCESS"))
-						elog(ERROR,"parser: syntax error at or near \"%s\"", $5);
-					if (strcasecmp($6, "SHARE") == 0)
-						n->mode = AccessShareLock;
-					else if (strcasecmp($6, "EXCLUSIVE") == 0)
-						n->mode = AccessExclusiveLock;
-					else
-						elog(ERROR,"parser: syntax error at or near \"%s\"", $6);
-					$$ = (Node *)n;
-				}
-		|	LOCK_P opt_table relation_name IN IDENT IDENT
-				{
-					LockStmt *n = makeNode(LockStmt);
-
-					n->relname = $3;
-					if (strcasecmp($6, "MODE"))
-						elog(ERROR,"parser: syntax error at or near \"%s\"", $6);
-					if (strcasecmp($5, "SHARE") == 0)
-						n->mode = ShareLock;
-					else if (strcasecmp($5, "EXCLUSIVE") == 0)
-						n->mode = ExclusiveLock;
-					else
-						elog(ERROR,"parser: syntax error at or near \"%s\"", $5);
+					n->mode = $4;
 					$$ = (Node *)n;
 				}
 		;
 
-opt_lmode:	IDENT		{ $$ = $1; }
-		| /*EMPTY*/		{ $$ = NULL; }
+opt_lock:  lock_type MODE		{ $$ = $1; }
+		| /*EMPTY*/				{ $$ = AccessExclusiveLock; }
 		;
+
+lock_type:  SHARE ROW EXCLUSIVE	{ $$ = ShareRowExclusiveLock; }
+		| ROW opt_lmode			{ $$ = ($2? RowShareLock: RowExclusiveLock); }
+		| ACCESS opt_lmode		{ $$ = ($2? AccessShareLock: AccessExclusiveLock); }
+		| opt_lmode				{ $$ = ($1? ShareLock: ExclusiveLock); }
+		;
+
+opt_lmode:	SHARE				{ $$ = TRUE; }
+		| EXCLUSIVE				{ $$ = FALSE; }
+		;
+
 
 /*****************************************************************************
  *
@@ -5173,12 +5138,14 @@ TypeId:  ColId
 ColId:  IDENT							{ $$ = $1; }
 		| datetime						{ $$ = $1; }
 		| ABSOLUTE						{ $$ = "absolute"; }
+		| ACCESS						{ $$ = "access"; }
 		| ACTION						{ $$ = "action"; }
 		| AFTER							{ $$ = "after"; }
 		| AGGREGATE						{ $$ = "aggregate"; }
 		| BACKWARD						{ $$ = "backward"; }
 		| BEFORE						{ $$ = "before"; }
 		| CACHE							{ $$ = "cache"; }
+		| COMMITTED						{ $$ = "committed"; }
 		| CREATEDB						{ $$ = "createdb"; }
 		| CREATEUSER					{ $$ = "createuser"; }
 		| CYCLE							{ $$ = "cycle"; }
@@ -5187,6 +5154,7 @@ ColId:  IDENT							{ $$ = $1; }
 		| DOUBLE						{ $$ = "double"; }
 		| EACH							{ $$ = "each"; }
 		| ENCODING						{ $$ = "encoding"; }
+		| EXCLUSIVE						{ $$ = "exclusive"; }
 		| FORWARD						{ $$ = "forward"; }
 		| FUNCTION						{ $$ = "function"; }
 		| HANDLER						{ $$ = "handler"; }
@@ -5203,6 +5171,7 @@ ColId:  IDENT							{ $$ = $1; }
 		| MATCH							{ $$ = "match"; }
 		| MAXVALUE						{ $$ = "maxvalue"; }
 		| MINVALUE						{ $$ = "minvalue"; }
+		| MODE							{ $$ = "mode"; }
 		| NEXT							{ $$ = "next"; }
 		| NOCREATEDB					{ $$ = "nocreatedb"; }
 		| NOCREATEUSER					{ $$ = "nocreateuser"; }
@@ -5226,6 +5195,8 @@ ColId:  IDENT							{ $$ = $1; }
 		| SCROLL						{ $$ = "scroll"; }
 		| SEQUENCE						{ $$ = "sequence"; }
 		| SERIAL						{ $$ = "serial"; }
+		| SERIALIZABLE					{ $$ = "serializable"; }
+		| SHARE							{ $$ = "share"; }
 		| START							{ $$ = "start"; }
 		| STATEMENT						{ $$ = "statement"; }
 		| STDIN							{ $$ = "stdin"; }
@@ -5269,9 +5240,11 @@ ColLabel:  ColId						{ $$ = $1; }
 		| EXTEND						{ $$ = "extend"; }
 		| FALSE_P						{ $$ = "false"; }
 		| FOREIGN						{ $$ = "foreign"; }
+		| GLOBAL						{ $$ = "global"; }
 		| GROUP							{ $$ = "group"; }
 		| LISTEN						{ $$ = "listen"; }
 		| LOAD							{ $$ = "load"; }
+		| LOCAL							{ $$ = "local"; }
 		| LOCK_P						{ $$ = "lock"; }
 		| MOVE							{ $$ = "move"; }
 		| NEW							{ $$ = "new"; }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.56 1999/04/19 16:00:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.57 1999/05/12 07:22:52 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,6 +31,7 @@ static ScanKeyword ScanKeywords[] = {
 	/* name, value */
 	{"abort", ABORT_TRANS},
 	{"absolute", ABSOLUTE},
+	{"access", ACCESS},
 	{"action", ACTION},
 	{"add", ADD},
 	{"after", AFTER},
@@ -62,6 +63,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"collate", COLLATE},
 	{"column", COLUMN},
 	{"commit", COMMIT},
+	{"committed", COMMITTED},
 	{"constraint", CONSTRAINT},
 	{"copy", COPY},
 	{"create", CREATE},
@@ -92,7 +94,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"end", END_TRANS},
 	/***S*I***/
 	{"except", EXCEPT},
-
+	{"exclusive", EXCLUSIVE},
 	{"execute", EXECUTE},
 	{"exists", EXISTS},
 	{"explain", EXPLAIN},
@@ -107,6 +109,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"from", FROM},
 	{"full", FULL},
 	{"function", FUNCTION},
+	{"global", GLOBAL},
 	{"grant", GRANT},
 	{"group", GROUP},
 	{"handler", HANDLER},
@@ -122,7 +125,6 @@ static ScanKeyword ScanKeywords[] = {
 	{"instead", INSTEAD},
 	/***S*I***/
 	{"intersect", INTERSECT},
-
 	{"interval", INTERVAL},
 	{"into", INTO},
 	{"is", IS},
@@ -146,6 +148,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"maxvalue", MAXVALUE},
 	{"minute", MINUTE_P},
 	{"minvalue", MINVALUE},
+	{"mode", MODE},
 	{"month", MONTH_P},
 	{"move", MOVE},
 	{"names", NAMES},
@@ -202,8 +205,10 @@ static ScanKeyword ScanKeywords[] = {
 	{"select", SELECT},
 	{"sequence", SEQUENCE},
 	{"serial", SERIAL},
+	{"serializable", SERIALIZABLE},
 	{"set", SET},
 	{"setof", SETOF},
+	{"share", SHARE},
 	{"show", SHOW},
 	{"start", START},
 	{"statement", STATEMENT},
