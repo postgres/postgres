@@ -4,13 +4,13 @@ DBNAME=pltcl_test
 export DBNAME
 
 echo "**** Destroy old database $DBNAME ****"
-destroydb $DBNAME
+dropdb $DBNAME
 
 echo "**** Create test database $DBNAME ****"
 createdb $DBNAME
 
 echo "**** Create procedural language pltcl ****"
-psql -q -n $DBNAME <test_mklang.sql
+createlang pltcl $DBNAME
 
 echo "**** Create tables, functions and triggers ****"
 psql -q -n $DBNAME <test_setup.sql
