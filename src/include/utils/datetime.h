@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: datetime.h,v 1.22 2001/09/28 08:09:14 thomas Exp $
+ * $Id: datetime.h,v 1.23 2001/10/23 20:17:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,8 +78,13 @@
 
 /*
  * Fields for time decoding.
+ *
  * Can't have more of these than there are bits in an unsigned int
- *	since these are turned into bit masks during parsing and decoding.
+ * since these are turned into bit masks during parsing and decoding.
+ *
+ * Furthermore, the values for YEAR, MONTH, DAY, HOUR, MINUTE, SECOND
+ * must be in the range 0..14 so that the associated bitmasks can fit
+ * into the left half of an INTERVAL's typmod value.
  */
 
 #define RESERV	0
