@@ -417,6 +417,17 @@ RETCODE result;
 		p = "N";
         break;
 
+	case SQL_OJ_CAPABILITIES: /* ODBC 2.01 */
+		len = 4;
+		value = (SQL_OJ_LEFT |
+				SQL_OJ_RIGHT |
+				SQL_OJ_FULL |
+				SQL_OJ_NESTED |
+				SQL_OJ_NOT_ORDERED |
+				SQL_OJ_INNER |
+				SQL_OJ_ALL_COMPARISON_OPS);
+		break;
+
     case SQL_ORDER_BY_COLUMNS_IN_SELECT: /* ODBC 2.0 */
 		p = (PROTOCOL_62(ci) || PROTOCOL_63(ci)) ? "Y" : "N";		
         break;
