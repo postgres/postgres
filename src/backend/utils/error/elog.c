@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.111 2003/05/28 18:19:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.112 2003/06/30 16:47:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,6 +68,7 @@
 ErrorContextCallback *error_context_stack = NULL;
 
 /* GUC parameters */
+PGErrorVerbosity Log_error_verbosity = PGERROR_VERBOSE;
 bool		Log_timestamp;		/* show timestamps in stderr output */
 bool		Log_pid;			/* show PIDs in stderr output */
 
@@ -918,23 +919,52 @@ send_message_to_server_log(ErrorData *edata)
 
 	appendStringInfo(&buf, "%s:  ", error_severity(edata->elevel));
 
+	if (Log_error_verbosity >= PGERROR_VERBOSE)
+	{
+		/* unpack MAKE_SQLSTATE code */
+		char	tbuf[12];
+		int		ssval;
+		int		i;
+
+		ssval = edata->sqlerrcode;
+		for (i = 0; i < 5; i++)
+		{
+			tbuf[i] = PGUNSIXBIT(ssval);
+			ssval >>= 6;
+		}
+		tbuf[i] = '\0';
+		appendStringInfo(&buf, "%s: ", tbuf);
+	}
+
 	if (edata->message)
-		appendStringInfo(&buf, "%s\n", edata->message);
+		appendStringInfoString(&buf, edata->message);
 	else
-		appendStringInfoString(&buf, "missing error text\n");
+		appendStringInfoString(&buf, gettext("missing error text"));
 
-	/* XXX showing of additional info should perhaps be optional */
-	/* XXX ought to localize the label strings, probably */
+	if (edata->cursorpos > 0)
+		appendStringInfo(&buf, gettext(" at character %d"), edata->cursorpos);
 
-	if (edata->detail)
-		appendStringInfo(&buf, "DETAIL:  %s\n", edata->detail);
-	if (edata->hint)
-		appendStringInfo(&buf, "HINT:  %s\n", edata->hint);
-	if (edata->context)
-		appendStringInfo(&buf, "CONTEXT:  %s\n", edata->context);
-	if (edata->funcname && edata->filename)
-		appendStringInfo(&buf, "IN:  %s (%s:%d)\n",
-						 edata->funcname, edata->filename, edata->lineno);
+	appendStringInfoChar(&buf, '\n');
+
+	if (Log_error_verbosity >= PGERROR_DEFAULT)
+	{
+		if (edata->detail)
+			appendStringInfo(&buf, gettext("DETAIL:  %s\n"), edata->detail);
+		if (edata->hint)
+			appendStringInfo(&buf, gettext("HINT:  %s\n"), edata->hint);
+		if (edata->context)
+			appendStringInfo(&buf, gettext("CONTEXT:  %s\n"), edata->context);
+		if (Log_error_verbosity >= PGERROR_VERBOSE)
+		{
+			if (edata->funcname && edata->filename)
+				appendStringInfo(&buf, gettext("LOCATION:  %s, %s:%d\n"),
+								 edata->funcname, edata->filename,
+								 edata->lineno);
+			else if (edata->filename)
+				appendStringInfo(&buf, gettext("LOCATION:  %s:%d\n"),
+								 edata->filename, edata->lineno);
+		}
+	}
 
 	/*
 	 * If the user wants the query that generated this error logged, do so.
@@ -942,7 +972,8 @@ send_message_to_server_log(ErrorData *edata)
 	 * for queries triggered by extended query protocol; how to improve?
 	 */
 	if (edata->elevel >= log_min_error_statement && debug_query_string != NULL)
-		appendStringInfo(&buf, "STATEMENT:  %s\n", debug_query_string);
+		appendStringInfo(&buf, gettext("STATEMENT:  %s\n"),
+						 debug_query_string);
 
 
 #ifdef HAVE_SYSLOG
@@ -992,11 +1023,10 @@ send_message_to_server_log(ErrorData *edata)
 		 * Timestamp and PID are only used for stderr output --- we assume
 		 * the syslog daemon will supply them for us in the other case.
 		 */
-		if (Log_timestamp)
-			fprintf(stderr, "%s", print_timestamp());
-		if (Log_pid)
-			fprintf(stderr, "%s", print_pid());
-		fprintf(stderr, "%s", buf.data);
+		fprintf(stderr, "%s%s%s",
+				Log_timestamp ? print_timestamp() : "",
+				Log_pid ? print_pid() : "",
+				buf.data);
 	}
 
 	pfree(buf.data);

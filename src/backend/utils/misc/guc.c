@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.132 2003/06/27 19:08:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.133 2003/06/30 16:47:01 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -94,6 +94,8 @@ static const char *assign_min_error_statement(const char *newval, bool doit,
 						   bool interactive);
 static const char *assign_msglvl(int *var, const char *newval,
 			  bool doit, bool interactive);
+static const char *assign_log_error_verbosity(const char *newval, bool doit,
+											  bool interactive);
 static bool assign_phony_autocommit(bool newval, bool doit, bool interactive);
 
 
@@ -134,9 +136,10 @@ int			client_min_messages = NOTICE;
  * cases provide the value for SHOW to display.  The real state is elsewhere
  * and is kept in sync by assign_hooks.
  */
-static char *log_min_error_statement_str;
-static char *log_min_messages_str;
 static char *client_min_messages_str;
+static char *log_min_messages_str;
+static char *log_error_verbosity_str;
+static char *log_min_error_statement_str;
 static bool phony_autocommit;
 static bool session_auth_is_superuser;
 static double phony_random_seed;
@@ -821,6 +824,16 @@ static struct config_string
 	},
 
 	{
+		{"log_min_messages", PGC_SUSET}, &log_min_messages_str,
+		"notice", assign_log_min_messages, NULL
+	},
+
+	{
+		{"log_error_verbosity", PGC_SUSET}, &log_error_verbosity_str,
+		"default", assign_log_error_verbosity, NULL
+	},
+
+	{
 		{"log_min_error_statement", PGC_SUSET}, &log_min_error_statement_str,
 		"panic", assign_min_error_statement, NULL
 	},
@@ -907,11 +920,6 @@ static struct config_string
 		{"server_version", PGC_INTERNAL, GUC_REPORT},
 		&server_version_string,
 		PG_VERSION, NULL, NULL
-	},
-
-	{
-		{"log_min_messages", PGC_SUSET}, &log_min_messages_str,
-		"notice", assign_log_min_messages, NULL
 	},
 
 	/* Not for general use --- used by SET SESSION AUTHORIZATION */
@@ -3462,6 +3470,29 @@ assign_msglvl(int *var, const char *newval, bool doit, bool interactive)
 	{
 		if (doit)
 			(*var) = PANIC;
+	}
+	else
+		return NULL;			/* fail */
+	return newval;				/* OK */
+}
+
+static const char *
+assign_log_error_verbosity(const char *newval, bool doit, bool interactive)
+{
+	if (strcasecmp(newval, "terse") == 0)
+	{
+		if (doit)
+			Log_error_verbosity = PGERROR_TERSE;
+	}
+	else if (strcasecmp(newval, "default") == 0)
+	{
+		if (doit)
+			Log_error_verbosity = PGERROR_DEFAULT;
+	}
+	else if (strcasecmp(newval, "verbose") == 0)
+	{
+		if (doit)
+			Log_error_verbosity = PGERROR_VERBOSE;
 	}
 	else
 		return NULL;			/* fail */

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.188 2003/06/27 18:20:50 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.189 2003/06/30 16:47:01 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1513,7 +1513,7 @@ SET ENABLE_SEQSCAN TO OFF;
      <title>When To Log</title>
 
        <para>
-        Here is a list of the various message types:
+        Here is a list of the various message severity levels:
         <variablelist>
          <varlistentry>
           <term><literal>DEBUG[1-5]</literal></term>
@@ -1597,31 +1597,11 @@ SET ENABLE_SEQSCAN TO OFF;
      <variablelist>
 
      <varlistentry>
-      <term><varname>LOG_MIN_MESSAGES</varname> (<type>string</type>)</term>
-      <listitem>
-       <para>
-        This controls which message levels are written to the server
-        log.  Valid values are <literal>DEBUG5</>, <literal>DEBUG4</>,
-        <literal>DEBUG3</>, <literal>DEBUG2</>, <literal>DEBUG1</>,
-        <literal>INFO</>, <literal>NOTICE</>, <literal>WARNING</>,
-        <literal>ERROR</>, <literal>LOG</>, <literal>FATAL</>, and
-        <literal>PANIC</>.  Each level includes all the levels that
-        follow it.  The later the level, the fewer messages are sent
-        to the log.  The default is <literal>NOTICE</>.  Note that
-        <literal>LOG</> has a different rank here than in
-        <literal>CLIENT_MIN_MESSAGES</>.  Also see that section for an
-        explanation of the various values.
-       </para>
-
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
       <term><varname>CLIENT_MIN_MESSAGES</varname> (<type>string</type>)</term>
       <listitem>
        <para>
-        This controls which message levels are send to the client.
-        client.  Valid values are <literal>DEBUG5</>,
+        Controls which message levels are sent to the client.
+        Valid values are <literal>DEBUG5</>,
         <literal>DEBUG4</>, <literal>DEBUG3</>, <literal>DEBUG2</>,
         <literal>DEBUG1</>, <literal>LOG</>, <literal>NOTICE</>,
         <literal>WARNING</>, and <literal>ERROR</>.  Each level
@@ -1632,7 +1612,36 @@ SET ENABLE_SEQSCAN TO OFF;
        </para>
       </listitem>
      </varlistentry>
-     
+
+     <varlistentry>
+      <term><varname>LOG_MIN_MESSAGES</varname> (<type>string</type>)</term>
+      <listitem>
+       <para>
+        Controls which message levels are written to the server log.
+	Valid values are <literal>DEBUG5</>, <literal>DEBUG4</>,
+        <literal>DEBUG3</>, <literal>DEBUG2</>, <literal>DEBUG1</>,
+        <literal>INFO</>, <literal>NOTICE</>, <literal>WARNING</>,
+        <literal>ERROR</>, <literal>LOG</>, <literal>FATAL</>, and
+        <literal>PANIC</>.  Each level includes all the levels that
+        follow it.  The later the level, the fewer messages are sent
+        to the log.  The default is <literal>NOTICE</>.  Note that
+        <literal>LOG</> has a different rank here than in
+        <literal>CLIENT_MIN_MESSAGES</>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>LOG_ERROR_VERBOSITY</varname> (<type>string</type>)</term>
+      <listitem>
+       <para>
+        Controls the amount of detail written in the server log for each
+	message that is logged.  Valid values are <literal>TERSE</>,
+	<literal>DEFAULT</>, and <literal>VERBOSE</>, each adding more
+	fields to displayed messages.
+       </para>
+      </listitem>
+     </varlistentry>
 
      <varlistentry>
       <term><varname>LOG_MIN_ERROR_STATEMENT</varname> (<type>string</type>)</term>
@@ -1643,7 +1652,7 @@ SET ENABLE_SEQSCAN TO OFF;
         statements that cause an error of the specified level, or a
         higher level, are logged.  The default is
         <literal>PANIC</literal> (effectively turning this feature
-        off). Valid values are <literal>DEBUG5</literal>,
+        off for normal use). Valid values are <literal>DEBUG5</literal>,
         <literal>DEBUG4</literal>, <literal>DEBUG3</literal>,
         <literal>DEBUG2</literal>, <literal>DEBUG1</literal>,
         <literal>INFO</literal>, <literal>NOTICE</literal>,
@@ -1654,12 +1663,6 @@ SET ENABLE_SEQSCAN TO OFF;
         logged. Enabling this option can be helpful in tracking down
         the source of any errors that appear in the server log.
        </para>
-
-       <para>
-        It is recommended you enable <varname>LOG_PID</varname> as well
-        so you can more easily match the error statement with the error
-        message.
-       </para>
       </listitem>
      </varlistentry>
      
@@ -1668,12 +1671,12 @@ SET ENABLE_SEQSCAN TO OFF;
        <listitem>
         <para>
          Sets a minimum statement execution time (in milliseconds)
-         above which a statement will be logged.  All SQL statements
+         above which a statement will be logged.  All SQL statements
          that run longer than the time specified will be logged together
-         with the duration, in seconds.  The default is <literal>0</literal>
-         (turning this feature off).  For example, if you set it
+         with their actual duration.  Setting this to zero (the default)
+	 disables time-based logging.  For example, if you set it
          to <literal>250</literal> then all SQL statements that run longer
-         than 250ms will be logged along with the duration.  Enabling this
+         than 250ms will be logged.  Enabling this
          option can be useful in tracking down unoptimized queries in
          your applications.
         </para>
@@ -1688,8 +1691,8 @@ SET ENABLE_SEQSCAN TO OFF;
         will automatically run in background and any controlling terminals
         are disassociated.  Thus, no messages are written to standard
         output or standard error (same effect as <command>postmaster</>'s <option>-S</option>
-        option). Unless some logging system such as
-        <application>syslog</> is enabled, using this option is
+        option). Unless
+        <application>syslog</> logging is enabled, using this option is
         discouraged since it makes it impossible to see error messages.
        </para>
       </listitem>
