@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.1.1.1 1996/07/09 06:21:19 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.2 1996/10/05 20:30:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -133,11 +133,7 @@ static void ClearPendingNotify(void);
  *      none
  */
 void
-#if defined(PORTNAME_linux)
-Async_NotifyHandler(int i)
-#else
-Async_NotifyHandler()
-#endif
+Async_NotifyHandler(SIGNAL_ARGS)
 {
     extern TransactionState CurrentTransactionState;
     
