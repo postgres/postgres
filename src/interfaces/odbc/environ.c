@@ -1,4 +1,5 @@
-/* Module:			environ.c
+/*-------
+ * Module:			environ.c
  *
  * Description:		This module contains routines related to
  *					the environment, such as storing connection handles,
@@ -9,7 +10,7 @@
  * API functions:	SQLAllocEnv, SQLFreeEnv, SQLError
  *
  * Comments:		See "notice.txt" for copyright and license information.
- *
+ *-------
  */
 
 #include "environ.h"
@@ -54,6 +55,7 @@ SQLAllocEnv(HENV FAR *phenv)
 	return SQL_SUCCESS;
 }
 
+
 RETCODE SQL_API
 SQLFreeEnv(HENV henv)
 {
@@ -73,8 +75,8 @@ SQLFreeEnv(HENV henv)
 	return SQL_ERROR;
 }
 
-/*		Returns the next SQL error information. */
 
+/*		Returns the next SQL error information. */
 RETCODE SQL_API
 SQLError(
 		 HENV henv,
@@ -208,24 +210,19 @@ SQLError(
 					case STMT_INVALID_CURSOR_POSITION:
 						strcpy(szSqlState, "S1109");
 						break;
-
 					case STMT_VALUE_OUT_OF_RANGE:
 						strcpy(szSqlState, "22003");
 						break;
-
 					case STMT_OPERATION_INVALID:
 						strcpy(szSqlState, "S1011");
 						break;
-
 					case STMT_EXEC_ERROR:
 					default:
 						strcpy(szSqlState, "S1000");
 						/* also a general error */
 						break;
 				}
-
 			mylog("       szSqlState = '%s', szError='%s'\n", szSqlState, szErrorMsg);
-
 		}
 		else
 		{
@@ -237,10 +234,11 @@ SQLError(
 				szErrorMsg[0] = '\0';
 
 			mylog("       returning NO_DATA_FOUND\n");
+
 			return SQL_NO_DATA_FOUND;
 		}
-		return SQL_SUCCESS;
 
+		return SQL_SUCCESS;
 	}
 	else if (SQL_NULL_HDBC != hdbc)
 	{
@@ -310,7 +308,6 @@ SQLError(
 						break;
 					case CONN_TRANSACT_IN_PROGRES:
 						strcpy(szSqlState, "S1010");
-
 						/*
 						 * when the user tries to switch commit mode in a
 						 * transaction
@@ -324,18 +321,15 @@ SQLError(
 					case STMT_NOT_IMPLEMENTED_ERROR:
 						strcpy(szSqlState, "S1C00");
 						break;
-
 					case CONN_VALUE_OUT_OF_RANGE:
 					case STMT_VALUE_OUT_OF_RANGE:
 						strcpy(szSqlState, "22003");
 						break;
-
 					default:
 						strcpy(szSqlState, "S1000");
 						/* general error */
 						break;
 				}
-
 		}
 		else
 		{
@@ -349,8 +343,8 @@ SQLError(
 
 			return SQL_NO_DATA_FOUND;
 		}
-		return SQL_SUCCESS;
 
+		return SQL_SUCCESS;
 	}
 	else if (SQL_NULL_HENV != henv)
 	{
@@ -419,15 +413,10 @@ SQLError(
 }
 
 
-/*********************************************************************/
 /*
  * EnvironmentClass implementation
  */
-
-
-
-EnvironmentClass
-		   *
+EnvironmentClass *
 EN_Constructor(void)
 {
 	EnvironmentClass *rv;
@@ -451,8 +440,10 @@ EN_Destructor(EnvironmentClass *self)
 
 	mylog("in EN_Destructor, self=%u\n", self);
 
-	/* the error messages are static strings distributed throughout */
-	/* the source--they should not be freed */
+	/*
+	 * the error messages are static strings distributed throughout
+	 * the source--they should not be freed
+	 */
 
 	/* Free any connections belonging to this environment */
 	for (lf = 0; lf < MAX_CONNECTIONS; lf++)
@@ -465,6 +456,7 @@ EN_Destructor(EnvironmentClass *self)
 	mylog("exit EN_Destructor: rv = %d\n", rv);
 	return rv;
 }
+
 
 char
 EN_get_error(EnvironmentClass *self, int *number, char **message)
@@ -480,6 +472,7 @@ EN_get_error(EnvironmentClass *self, int *number, char **message)
 	else
 		return 0;
 }
+
 
 char
 EN_add_connection(EnvironmentClass *self, ConnectionClass *conn)
@@ -504,6 +497,7 @@ EN_add_connection(EnvironmentClass *self, ConnectionClass *conn)
 	return FALSE;
 }
 
+
 char
 EN_remove_connection(EnvironmentClass *self, ConnectionClass *conn)
 {
@@ -518,6 +512,7 @@ EN_remove_connection(EnvironmentClass *self, ConnectionClass *conn)
 
 	return FALSE;
 }
+
 
 void
 EN_log_error(char *func, char *desc, EnvironmentClass *self)

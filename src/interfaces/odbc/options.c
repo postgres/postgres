@@ -1,4 +1,5 @@
-/* Module:			options.c
+/*--------
+ * Module:			options.c
  *
  * Description:		This module contains routines for getting/setting
  *					connection and statement options.
@@ -9,7 +10,7 @@
  *					SQLGetStmtOption
  *
  * Comments:		See "notice.txt" for copyright and license information.
- *
+ *--------
  */
 
 #ifdef HAVE_CONFIG_H
@@ -43,7 +44,6 @@ RETCODE set_statement_option(ConnectionClass *conn,
 					 UDWORD vParam);
 
 
-
 RETCODE
 set_statement_option(ConnectionClass *conn,
 					 StatementClass *stmt,
@@ -52,7 +52,6 @@ set_statement_option(ConnectionClass *conn,
 {
 	static char *func = "set_statement_option";
 	char		changed = FALSE;
-
 
 	switch (fOption)
 	{
@@ -68,12 +67,10 @@ set_statement_option(ConnectionClass *conn,
 			break;
 
 		case SQL_CONCURRENCY:
-
 			/*
 			 * positioned update isn't supported so cursor concurrency is
 			 * read-only
 			 */
-
 			if (conn)
 				conn->stmtOptions.scroll_concurrency = vParam;
 			if (stmt)
@@ -104,7 +101,6 @@ set_statement_option(ConnectionClass *conn,
 			 */
 
 		case SQL_CURSOR_TYPE:
-
 			/*
 			 * if declare/fetch, then type can only be forward. otherwise,
 			 * it can only be forward or static.
@@ -113,18 +109,15 @@ set_statement_option(ConnectionClass *conn,
 
 			if (globals.lie)
 			{
-
 				if (conn)
 					conn->stmtOptions.cursor_type = vParam;
 				if (stmt)
 					stmt->options.cursor_type = vParam;
-
 			}
 			else
 			{
 				if (globals.use_declarefetch)
 				{
-
 					if (conn)
 						conn->stmtOptions.cursor_type = SQL_CURSOR_FORWARD_ONLY;
 					if (stmt)
@@ -137,7 +130,6 @@ set_statement_option(ConnectionClass *conn,
 				{
 					if (vParam == SQL_CURSOR_FORWARD_ONLY || vParam == SQL_CURSOR_STATIC)
 					{
-
 						if (conn)
 							conn->stmtOptions.cursor_type = vParam;		/* valid type */
 						if (stmt)
@@ -145,7 +137,6 @@ set_statement_option(ConnectionClass *conn,
 					}
 					else
 					{
-
 						if (conn)
 							conn->stmtOptions.cursor_type = SQL_CURSOR_STATIC;
 						if (stmt)
@@ -167,14 +158,20 @@ set_statement_option(ConnectionClass *conn,
 
 			break;
 
-			/*
-			 * if (globals.lie) stmt->keyset_size = vParam; else {
-			 * stmt->errornumber = STMT_NOT_IMPLEMENTED_ERROR;
-			 * stmt->errormsg = "Driver does not support keyset size
-			 * option"; SC_log_error(func, "", stmt); return SQL_ERROR; }
+			/*-------
+			 *	if (globals.lie)
+			 *		stmt->keyset_size = vParam;
+			 *	else
+			 *	{
+			 *		stmt->errornumber = STMT_NOT_IMPLEMENTED_ERROR;
+			 *		stmt->errormsg = "Driver does not support keyset size option";
+			 *		SC_log_error(func, "", stmt);
+			 *		return SQL_ERROR;
+			 *	}
+			 *-------
 			 */
 
-		case SQL_MAX_LENGTH:	/* ignored, but saved */
+		case SQL_MAX_LENGTH:		/* ignored, but saved */
 			mylog("SetStmtOption(): SQL_MAX_LENGTH, vParam = %d\n", vParam);
 			if (conn)
 				conn->stmtOptions.maxLength = vParam;
@@ -182,7 +179,7 @@ set_statement_option(ConnectionClass *conn,
 				stmt->options.maxLength = vParam;
 			break;
 
-		case SQL_MAX_ROWS:		/* ignored, but saved */
+		case SQL_MAX_ROWS:			/* ignored, but saved */
 			mylog("SetStmtOption(): SQL_MAX_ROWS, vParam = %d\n", vParam);
 			if (conn)
 				conn->stmtOptions.maxRows = vParam;
@@ -190,16 +187,16 @@ set_statement_option(ConnectionClass *conn,
 				stmt->options.maxRows = vParam;
 			break;
 
-		case SQL_NOSCAN:		/* ignored */
+		case SQL_NOSCAN:			/* ignored */
 			mylog("SetStmtOption: SQL_NOSCAN, vParam = %d\n", vParam);
 			break;
 
-		case SQL_QUERY_TIMEOUT:/* ignored */
+		case SQL_QUERY_TIMEOUT:		/* ignored */
 			mylog("SetStmtOption: SQL_QUERY_TIMEOUT, vParam = %d\n", vParam);
 			/* "0" returned in SQLGetStmtOption */
 			break;
 
-		case SQL_RETRIEVE_DATA:/* ignored, but saved */
+		case SQL_RETRIEVE_DATA:		/* ignored, but saved */
 			mylog("SetStmtOption(): SQL_RETRIEVE_DATA, vParam = %d\n", vParam);
 			if (conn)
 				conn->stmtOptions.retrieve_data = vParam;
@@ -209,7 +206,6 @@ set_statement_option(ConnectionClass *conn,
 
 		case SQL_ROWSET_SIZE:
 			mylog("SetStmtOption(): SQL_ROWSET_SIZE, vParam = %d\n", vParam);
-
 
 			/*
 			 * Save old rowset size for SQLExtendedFetch purposes If the
@@ -230,7 +226,6 @@ set_statement_option(ConnectionClass *conn,
 				conn->stmtOptions.rowset_size = vParam;
 			if (stmt)
 				stmt->options.rowset_size = vParam;
-
 			break;
 
 		case SQL_SIMULATE_CURSOR:		/* NOT SUPPORTED */
@@ -249,7 +244,6 @@ set_statement_option(ConnectionClass *conn,
 			return SQL_ERROR;
 
 		case SQL_USE_BOOKMARKS:
-
 			if (stmt)
 				stmt->options.use_bookmarks = vParam;
 			if (conn)
@@ -298,7 +292,6 @@ set_statement_option(ConnectionClass *conn,
 }
 
 
-
 /* Implements only SQL_AUTOCOMMIT */
 RETCODE SQL_API
 SQLSetConnectOption(
@@ -320,14 +313,12 @@ SQLSetConnectOption(
 		return SQL_INVALID_HANDLE;
 	}
 
-
 	switch (fOption)
 	{
-
-			/*
-			 * Statement Options (apply to all stmts on the connection and
-			 * become defaults for new stmts)
-			 */
+		/*
+		 * Statement Options (apply to all stmts on the connection and
+		 * become defaults for new stmts)
+		 */
 		case SQL_ASYNC_ENABLE:
 		case SQL_BIND_TYPE:
 		case SQL_CONCURRENCY:
@@ -362,15 +353,14 @@ SQLSetConnectOption(
 
 			break;
 
-			/**********************************/
-			/*****	Connection Options	*******/
-			/**********************************/
+		/*
+		 *	Connection Options
+		 */
 
 		case SQL_ACCESS_MODE:	/* ignored */
 			break;
 
 		case SQL_AUTOCOMMIT:
-
 			if (CC_is_in_trans(conn))
 			{
 				conn->errormsg = "Cannot switch commit mode while a transaction is in progress";
@@ -397,13 +387,12 @@ SQLSetConnectOption(
 					CC_log_error(func, "", conn);
 					return SQL_ERROR;
 			}
-
 			break;
 
 		case SQL_CURRENT_QUALIFIER:		/* ignored */
 			break;
 
-		case SQL_LOGIN_TIMEOUT:/* ignored */
+		case SQL_LOGIN_TIMEOUT:	/* ignored */
 			break;
 
 		case SQL_PACKET_SIZE:	/* ignored */
@@ -412,10 +401,10 @@ SQLSetConnectOption(
 		case SQL_QUIET_MODE:	/* ignored */
 			break;
 
-		case SQL_TXN_ISOLATION:/* ignored */
+		case SQL_TXN_ISOLATION:	/* ignored */
 			break;
 
-			/* These options should be handled by driver manager */
+		/* These options should be handled by driver manager */
 		case SQL_ODBC_CURSORS:
 		case SQL_OPT_TRACE:
 		case SQL_OPT_TRACEFILE:
@@ -434,7 +423,6 @@ SQLSetConnectOption(
 				CC_log_error(func, option, conn);
 				return SQL_ERROR;
 			}
-
 	}
 
 	if (changed)
@@ -447,7 +435,6 @@ SQLSetConnectOption(
 		return SQL_SUCCESS;
 }
 
-/*		-		-		-		-		-		-		-		-		- */
 
 /* This function just can tell you whether you are in Autcommit mode or not */
 RETCODE SQL_API
@@ -469,7 +456,7 @@ SQLGetConnectOption(
 
 	switch (fOption)
 	{
-		case SQL_ACCESS_MODE:	/* NOT SUPPORTED */
+		case SQL_ACCESS_MODE:		/* NOT SUPPORTED */
 			*((UDWORD *) pvParam) = SQL_MODE_READ_WRITE;
 			break;
 
@@ -484,23 +471,23 @@ SQLGetConnectOption(
 
 			break;
 
-		case SQL_LOGIN_TIMEOUT:/* NOT SUPPORTED */
+		case SQL_LOGIN_TIMEOUT:		/* NOT SUPPORTED */
 			*((UDWORD *) pvParam) = 0;
 			break;
 
-		case SQL_PACKET_SIZE:	/* NOT SUPPORTED */
+		case SQL_PACKET_SIZE:		/* NOT SUPPORTED */
 			*((UDWORD *) pvParam) = globals.socket_buffersize;
 			break;
 
-		case SQL_QUIET_MODE:	/* NOT SUPPORTED */
+		case SQL_QUIET_MODE:		/* NOT SUPPORTED */
 			*((UDWORD *) pvParam) = (UDWORD) NULL;
 			break;
 
-		case SQL_TXN_ISOLATION:/* NOT SUPPORTED */
+		case SQL_TXN_ISOLATION:		/* NOT SUPPORTED */
 			*((UDWORD *) pvParam) = SQL_TXN_SERIALIZABLE;
 			break;
 
-			/* These options should be handled by driver manager */
+		/* These options should be handled by driver manager */
 		case SQL_ODBC_CURSORS:
 		case SQL_OPT_TRACE:
 		case SQL_OPT_TRACEFILE:
@@ -520,13 +507,11 @@ SQLGetConnectOption(
 				return SQL_ERROR;
 				break;
 			}
-
 	}
 
 	return SQL_SUCCESS;
 }
 
-/*		-		-		-		-		-		-		-		-		- */
 
 RETCODE SQL_API
 SQLSetStmtOption(
@@ -539,10 +524,11 @@ SQLSetStmtOption(
 
 	mylog("%s: entering...\n", func);
 
-	/* thought we could fake Access out by just returning SQL_SUCCESS */
-	/* all the time, but it tries to set a huge value for SQL_MAX_LENGTH */
-	/* and expects the driver to reduce it to the real value */
-
+	/*
+	 *	Though we could fake Access out by just returning SQL_SUCCESS
+	 * 	all the time, but it tries to set a huge value for SQL_MAX_LENGTH
+	 * 	and expects the driver to reduce it to the real value.
+	 */
 	if (!stmt)
 	{
 		SC_log_error(func, "", NULL);
@@ -552,8 +538,6 @@ SQLSetStmtOption(
 	return set_statement_option(NULL, stmt, fOption, vParam);
 }
 
-
-/*		-		-		-		-		-		-		-		-		- */
 
 RETCODE SQL_API
 SQLGetStmtOption(
@@ -567,10 +551,11 @@ SQLGetStmtOption(
 
 	mylog("%s: entering...\n", func);
 
-	/* thought we could fake Access out by just returning SQL_SUCCESS */
-	/* all the time, but it tries to set a huge value for SQL_MAX_LENGTH */
-	/* and expects the driver to reduce it to the real value */
-
+	/*
+	 * thought we could fake Access out by just returning SQL_SUCCESS
+	 * all the time, but it tries to set a huge value for SQL_MAX_LENGTH
+	 * and expects the driver to reduce it to the real value
+	 */
 	if (!stmt)
 	{
 		SC_log_error(func, "", NULL);
@@ -689,5 +674,3 @@ SQLGetStmtOption(
 
 	return SQL_SUCCESS;
 }
-
-/*		-		-		-		-		-		-		-		-		- */

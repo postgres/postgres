@@ -1,4 +1,5 @@
-/* Module:			connection.c
+/*------
+ * Module:			connection.c
  *
  * Description:		This module contains routines related to
  *					connecting to and disconnecting from the Postgres DBMS.
@@ -9,7 +10,7 @@
  *					SQLBrowseConnect(NI)
  *
  * Comments:		See "notice.txt" for copyright and license information.
- *
+ *-------
  */
 /* Multibyte support	Eiji Tokuya 2001-03-15 */
 
@@ -83,8 +84,6 @@ SQLAllocConnect(
 }
 
 
-/*		-		-		-		-		-		-		-		-		- */
-
 RETCODE SQL_API
 SQLConnect(
 		   HDBC hdbc,
@@ -140,7 +139,6 @@ SQLConnect(
 	return SQL_SUCCESS;
 }
 
-/*		-		-		-		-		-		-		-		-		- */
 
 RETCODE SQL_API
 SQLBrowseConnect(
@@ -158,7 +156,6 @@ SQLBrowseConnect(
 	return SQL_SUCCESS;
 }
 
-/*		-		-		-		-		-		-		-		-		- */
 
 /* Drop any hstmts open on hdbc and disconnect from database */
 RETCODE SQL_API
@@ -199,8 +196,6 @@ SQLDisconnect(
 }
 
 
-/*		-		-		-		-		-		-		-		-		- */
-
 RETCODE SQL_API
 SQLFreeConnect(
 			   HDBC hdbc)
@@ -235,11 +230,8 @@ SQLFreeConnect(
 
 
 /*
-*
-*		IMPLEMENTATION CONNECTION CLASS
-*
-*/
-
+ *		IMPLEMENTATION CONNECTION CLASS
+ */
 ConnectionClass *
 CC_Constructor()
 {
@@ -249,7 +241,6 @@ CC_Constructor()
 
 	if (rv != NULL)
 	{
-
 		rv->henv = NULL;		/* not yet associated with an environment */
 
 		rv->errormsg = NULL;
@@ -301,7 +292,6 @@ CC_Constructor()
 char
 CC_Destructor(ConnectionClass *self)
 {
-
 	mylog("enter CC_Destructor, self=%u\n", self);
 
 	if (self->status == CONN_EXECUTING)
@@ -343,6 +333,7 @@ CC_Destructor(ConnectionClass *self)
 	return 1;
 }
 
+
 /*	Return how many cursors are opened on this connection */
 int
 CC_cursor_count(ConnectionClass *self)
@@ -365,6 +356,7 @@ CC_cursor_count(ConnectionClass *self)
 	return count;
 }
 
+
 void
 CC_clear_error(ConnectionClass *self)
 {
@@ -373,8 +365,11 @@ CC_clear_error(ConnectionClass *self)
 	self->errormsg_created = FALSE;
 }
 
-/*	Used to cancel a transaction */
-/*	We are almost always in the middle of a transaction. */
+
+/*
+ *	Used to cancel a transaction.
+ *	We are almost always in the middle of a transaction.
+ */
 char
 CC_abort(ConnectionClass *self)
 {
@@ -398,6 +393,7 @@ CC_abort(ConnectionClass *self)
 
 	return TRUE;
 }
+
 
 /* This is called by SQLDisconnect also */
 char
@@ -434,7 +430,6 @@ CC_cleanup(ConnectionClass *self)
 		stmt = self->stmts[i];
 		if (stmt)
 		{
-
 			stmt->hdbc = NULL;	/* prevent any more dbase interactions */
 
 			SC_Destructor(stmt);
@@ -455,6 +450,7 @@ CC_cleanup(ConnectionClass *self)
 	mylog("exit CC_Cleanup\n");
 	return TRUE;
 }
+
 
 int
 CC_set_translation(ConnectionClass *self)
@@ -499,6 +495,7 @@ CC_set_translation(ConnectionClass *self)
 	return TRUE;
 }
 
+
 char
 CC_connect(ConnectionClass *self, char do_password)
 {
@@ -521,7 +518,6 @@ CC_connect(ConnectionClass *self, char do_password)
 
 	else
 	{
-
 		qlog("Global Options: Version='%s', fetch=%d, socket=%d, unknown_sizes=%d, max_varchar_size=%d, max_longvarchar_size=%d\n",
 			 POSTGRESDRIVERVERSION,
 			 globals.fetch_max,
@@ -646,14 +642,13 @@ CC_connect(ConnectionClass *self, char do_password)
 	mylog("gonna do authentication\n");
 
 
-	/* *************************************************** */
-	/* Now get the authentication request from backend */
-	/* *************************************************** */
+	/*
+	 * Now get the authentication request from backend
+	 */
 
 	if (!PROTOCOL_62(ci))
 		do
 		{
-
 			if (do_password)
 				beresp = 'R';
 			else
@@ -743,8 +738,10 @@ CC_connect(ConnectionClass *self, char do_password)
 
 	CC_clear_error(self);		/* clear any password error */
 
-	/* send an empty query in order to find out whether the specified */
-	/* database really exists on the server machine */
+	/*
+	 * send an empty query in order to find out whether the specified
+	 * database really exists on the server machine
+	 */
 	mylog("sending an empty query...\n");
 
 	res = CC_send_query(self, " ", NULL);
@@ -764,9 +761,9 @@ CC_connect(ConnectionClass *self, char do_password)
 
 	CC_set_translation(self);
 
-	/**********************************************/
-	/*******   Send any initial settings  *********/
-	/**********************************************/
+	/*
+	 *	Send any initial settings
+	 */
 
 	/*
 	 * Since these functions allocate statements, and since the connection
@@ -788,6 +785,7 @@ CC_connect(ConnectionClass *self, char do_password)
 	return 1;
 
 }
+
 
 char
 CC_add_statement(ConnectionClass *self, StatementClass *stmt)
@@ -821,6 +819,7 @@ CC_add_statement(ConnectionClass *self, StatementClass *stmt)
 	return TRUE;
 }
 
+
 char
 CC_remove_statement(ConnectionClass *self, StatementClass *stmt)
 {
@@ -838,9 +837,11 @@ CC_remove_statement(ConnectionClass *self, StatementClass *stmt)
 	return FALSE;
 }
 
-/*	Create a more informative error message by concatenating the connection
-	error message with its socket error message.
-*/
+
+/*
+ *	Create a more informative error message by concatenating the connection
+ *	error message with its socket error message.
+ */
 char *
 CC_create_errormsg(ConnectionClass *self)
 {
@@ -897,14 +898,15 @@ CC_get_error(ConnectionClass *self, int *number, char **message)
 }
 
 
-/*	The "result_in" is only used by QR_next_tuple() to fetch another group of rows into
-	the same existing QResultClass (this occurs when the tuple cache is depleted and
-	needs to be re-filled).
-
-	The "cursor" is used by SQLExecute to associate a statement handle as the cursor name
-	(i.e., C3326857) for SQL select statements.  This cursor is then used in future
-	'declare cursor C3326857 for ...' and 'fetch 100 in C3326857' statements.
-*/
+/*
+ *	The "result_in" is only used by QR_next_tuple() to fetch another group of rows into
+ *	the same existing QResultClass (this occurs when the tuple cache is depleted and
+ *	needs to be re-filled).
+ *
+ *	The "cursor" is used by SQLExecute to associate a statement handle as the cursor name
+ *	(i.e., C3326857) for SQL select statements.  This cursor is then used in future
+ *	'declare cursor C3326857 for ...' and 'fetch 100 in C3326857' statements.
+ */
 QResultClass *
 CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi)
 {
@@ -915,10 +917,8 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi)
 	SocketClass *sock = self->sock;
 	/* ERROR_MSG_LENGTH is suffcient */
 	static char msgbuffer[ERROR_MSG_LENGTH + 1];
-	char		cmdbuffer[ERROR_MSG_LENGTH + 1]; /* QR_set_command() dups
-												 * this string so dont
-												 * need static */
-
+	/* QR_set_command() dups this string so doesn't need static */
+	char		cmdbuffer[ERROR_MSG_LENGTH + 1];
 
 	mylog("send_query(): conn=%u, query='%s'\n", self, query);
 	qlog("conn=%u, query='%s'\n", self, query);
@@ -1004,7 +1004,6 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi)
 				}
 				else
 				{
-
 					char		clear = 0;
 
 					mylog("send_query: ok - 'C' - %s\n", cmdbuffer);
@@ -1203,6 +1202,7 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi)
 	}
 }
 
+
 int
 CC_send_function(ConnectionClass *self, int fnid, void *result_buf, int *actual_result_len, int result_is_int, LO_ARG *args, int nargs)
 {
@@ -1241,7 +1241,6 @@ CC_send_function(ConnectionClass *self, int fnid, void *result_buf, int *actual_
 
 	for (i = 0; i < nargs; ++i)
 	{
-
 		mylog("  arg[%d]: len = %d, isint = %d, integer = %d, ptr = %u\n", i, args[i].len, args[i].isint, args[i].u.integer, args[i].u.ptr);
 
 		SOCK_put_int(sock, args[i].len, 4);
@@ -1373,9 +1372,10 @@ CC_send_settings(ConnectionClass *self)
 
 	mylog("%s: entering...\n", func);
 
-/*	This function must use the local odbc API functions since the odbc state
-	has not transitioned to "connected" yet.
-*/
+/*
+ *	This function must use the local odbc API functions since the odbc state
+ *	has not transitioned to "connected" yet.
+ */
 
 	result = SQLAllocStmt(self, &hstmt);
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
@@ -1457,10 +1457,12 @@ CC_send_settings(ConnectionClass *self)
 	return status;
 }
 
-/*	This function is just a hack to get the oid of our Large Object oid type.
-	If a real Large Object oid type is made part of Postgres, this function
-	will go away and the define 'PG_TYPE_LO' will be updated.
-*/
+
+/*
+ *	This function is just a hack to get the oid of our Large Object oid type.
+ *	If a real Large Object oid type is made part of Postgres, this function
+ *	will go away and the define 'PG_TYPE_LO' will be updated.
+ */
 void
 CC_lookup_lo(ConnectionClass *self)
 {
@@ -1471,9 +1473,10 @@ CC_lookup_lo(ConnectionClass *self)
 
 	mylog("%s: entering...\n", func);
 
-/*	This function must use the local odbc API functions since the odbc state
-	has not transitioned to "connected" yet.
-*/
+/*
+ *	This function must use the local odbc API functions since the odbc state
+ *	has not transitioned to "connected" yet.
+ */
 	result = SQLAllocStmt(self, &hstmt);
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 		return;
@@ -1506,10 +1509,12 @@ CC_lookup_lo(ConnectionClass *self)
 	result = SQLFreeStmt(hstmt, SQL_DROP);
 }
 
-/*	This function initializes the version of PostgreSQL from
-	connInfo.protocol that we're connected to.
-	h-inoue 01-2-2001
-*/
+
+/*
+ *	This function initializes the version of PostgreSQL from
+ *	connInfo.protocol that we're connected to.
+ *	h-inoue 01-2-2001
+ */
 void
 CC_initialize_pg_version(ConnectionClass *self)
 {
@@ -1534,10 +1539,12 @@ CC_initialize_pg_version(ConnectionClass *self)
 	}
 }
 
-/*	This function gets the version of PostgreSQL that we're connected to.
-	This is used to return the correct info in SQLGetInfo
-	DJP - 25-1-2001
-*/
+
+/*
+ *	This function gets the version of PostgreSQL that we're connected to.
+ *	This is used to return the correct info in SQLGetInfo
+ *	DJP - 25-1-2001
+ */
 void
 CC_lookup_pg_version(ConnectionClass *self)
 {
@@ -1551,9 +1558,10 @@ CC_lookup_pg_version(ConnectionClass *self)
 
 	mylog("%s: entering...\n", func);
 
-/*	This function must use the local odbc API functions since the odbc state
-	has not transitioned to "connected" yet.
-*/
+/*
+ *	This function must use the local odbc API functions since the odbc state
+ *	has not transitioned to "connected" yet.
+ */
 	result = SQLAllocStmt(self, &hstmt);
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 		return;
@@ -1581,8 +1589,10 @@ CC_lookup_pg_version(ConnectionClass *self)
 		return;
 	}
 
-	/* Extract the Major and Minor numbers from the string. */
-	/* This assumes the string starts 'Postgresql X.X' */
+	/*
+	 *	Extract the Major and Minor numbers from the string.
+	 * 	This assumes the string starts 'Postgresql X.X'
+	 */
 	strcpy(szVersion, "0.0");
 	if (sscanf(self->pg_version, "%*s %d.%d", &major, &minor) >= 2)
 	{
@@ -1599,6 +1609,7 @@ CC_lookup_pg_version(ConnectionClass *self)
 
 	result = SQLFreeStmt(hstmt, SQL_DROP);
 }
+
 
 void
 CC_log_error(char *func, char *desc, ConnectionClass *self)

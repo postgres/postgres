@@ -1,4 +1,5 @@
-/* Module:			info.c
+/*--------
+ * Module:			info.c
  *
  * Description:		This module contains routines related to
  *					ODBC informational functions.
@@ -12,7 +13,7 @@
  *					SQLTablePrivileges(NI), SQLColumnPrivileges(NI)
  *
  * Comments:		See "notice.txt" for copyright and license information.
- *
+ *--------
  */
 
 #ifdef HAVE_CONFIG_H
@@ -55,8 +56,6 @@
 
 extern GLOBAL_VALUES globals;
 
-
-/*		-		-		-		-		-		-		-		-		- */
 
 RETCODE SQL_API
 SQLGetInfo(
@@ -154,7 +153,6 @@ SQLGetInfo(
 			break;
 
 		case SQL_CORRELATION_NAME:		/* ODBC 1.0 */
-
 			/*
 			 * Saying no correlation name makes Query not work right.
 			 * value = SQL_CN_NONE;
@@ -182,11 +180,10 @@ SQLGetInfo(
 			break;
 
 		case SQL_DATABASE_NAME:/* Support for old ODBC 1.0 Apps */
-
 			/*
 			 * Returning the database name causes problems in MS Query. It
-			 * generates query like: "SELECT DISTINCT a FROM byronncrap3
-			 * crap3"
+			 * generates query like: "SELECT DISTINCT a FROM byronnbad3
+			 * bad3"
 			 *
 			 * p = CC_get_database(conn);
 			 */
@@ -198,7 +195,6 @@ SQLGetInfo(
 			break;
 
 		case SQL_DBMS_VER:		/* ODBC 1.0 */
-
 			/*
 			 * The ODBC spec wants ##.##.#### ...whatever... so prepend
 			 * the driver
@@ -256,7 +252,6 @@ SQLGetInfo(
 			break;
 
 		case SQL_IDENTIFIER_CASE:		/* ODBC 1.0 */
-
 			/*
 			 * are identifiers case-sensitive (yes, but only when quoted.
 			 * If not quoted, they default to lowercase)
@@ -275,7 +270,6 @@ SQLGetInfo(
 			break;
 
 		case SQL_LIKE_ESCAPE_CLAUSE:	/* ODBC 2.0 */
-
 			/*
 			 * is there a character that escapes '%' and '_' in a LIKE
 			 * clause? not as far as I can tell
@@ -356,18 +350,18 @@ SQLGetInfo(
 		case SQL_MAX_ROW_SIZE:	/* ODBC 2.0 */
 			len = 4;
 			if (PG_VERSION_GE(conn, 7.1))
-			{					/* Large Rowa in 7.1+ */
+			{
+				/* Large Rowa in 7.1+ */
 				value = MAX_ROW_SIZE;
 			}
 			else
-			{					/* Without the Toaster we're limited to
-								 * the blocksize */
+			{
+				/* Without the Toaster we're limited to the blocksize */
 				value = BLCKSZ;
 			}
 			break;
 
 		case SQL_MAX_ROW_SIZE_INCLUDES_LONG:	/* ODBC 2.0 */
-
 			/*
 			 * does the preceding value include LONGVARCHAR and
 			 * LONGVARBINARY fields?   Well, it does include longvarchar,
@@ -379,15 +373,14 @@ SQLGetInfo(
 		case SQL_MAX_STATEMENT_LEN:		/* ODBC 2.0 */
 			/* maybe this should be 0? */
 			len = 4;
+			/* Long Queries in 7.0+ */
 			if (PG_VERSION_GE(conn, 7.0))
-			{					/* Long Queries in 7.0+ */
 				value = MAX_STATEMENT_LEN;
-			}
-			else if (PG_VERSION_GE(conn, 6.5))	/* Prior to 7.0 we used
-												 * 2*BLCKSZ */
+			/* Prior to 7.0 we used 2*BLCKSZ */
+			else if (PG_VERSION_GE(conn, 6.5))	
 				value = (2 * BLCKSZ);
 			else
-/* Prior to 6.5 we used BLCKSZ */
+				/* Prior to 6.5 we used BLCKSZ */
 				value = BLCKSZ;
 
 			break;
@@ -417,9 +410,8 @@ SQLGetInfo(
 			break;
 
 		case SQL_NEED_LONG_DATA_LEN:	/* ODBC 2.0 */
-
 			/*
-			 * Dont need the length, SQLPutData can handle any size and
+			 * Don't need the length, SQLPutData can handle any size and
 			 * multiple calls
 			 */
 			p = "N";
@@ -463,7 +455,8 @@ SQLGetInfo(
 		case SQL_OJ_CAPABILITIES:		/* ODBC 2.01 */
 			len = 4;
 			if (PG_VERSION_GE(conn, 7.1))
-			{					/* OJs in 7.1+ */
+			{
+				/* OJs in 7.1+ */
 				value = (SQL_OJ_LEFT |
 						 SQL_OJ_RIGHT |
 						 SQL_OJ_FULL |
@@ -473,9 +466,8 @@ SQLGetInfo(
 						 SQL_OJ_ALL_COMPARISON_OPS);
 			}
 			else
-			{					/* OJs not in <7.1 */
+				/* OJs not in <7.1 */
 				value = 0;
-			}
 			break;
 
 		case SQL_ORDER_BY_COLUMNS_IN_SELECT:	/* ODBC 2.0 */
@@ -484,13 +476,11 @@ SQLGetInfo(
 
 		case SQL_OUTER_JOINS:	/* ODBC 1.0 */
 			if (PG_VERSION_GE(conn, 7.1))
-			{					/* OJs in 7.1+ */
+				/* OJs in 7.1+ */
 				p = "Y";
-			}
 			else
-			{					/* OJs not in <7.1 */
+				/* OJs not in <7.1 */
 				p = "N";
-			}
 			break;
 
 		case SQL_OWNER_TERM:	/* ODBC 1.0 */
@@ -547,7 +537,6 @@ SQLGetInfo(
 			break;
 
 		case SQL_ROW_UPDATES:	/* ODBC 1.0 */
-
 			/*
 			 * Driver doesn't support keyset-driven or mixed cursors, so
 			 * not much point in saying row updates are supported
@@ -635,7 +624,6 @@ SQLGetInfo(
 			break;
 
 		case SQL_TXN_CAPABLE:	/* ODBC 1.0 */
-
 			/*
 			 * Postgres can deal with create or drop table statements in a
 			 * transaction
@@ -677,7 +665,8 @@ SQLGetInfo(
 	 * what length would be required if a real buffer had been passed in.
 	 */
 	if (p)
-	{							/* char/binary data */
+	{
+		/* char/binary data */
 		len = strlen(p);
 
 		if (rgbInfoValue)
@@ -692,13 +681,11 @@ SQLGetInfo(
 			}
 		}
 	}
-
 	else
-	{							/* numeric data */
-
+	{
+		/* numeric data */
 		if (rgbInfoValue)
 		{
-
 			if (len == 2)
 				*((WORD *) rgbInfoValue) = (WORD) value;
 			else if (len == 4)
@@ -712,8 +699,6 @@ SQLGetInfo(
 	return result;
 }
 
-/*		-		-		-		-		-		-		-		-		- */
-
 
 RETCODE SQL_API
 SQLGetTypeInfo(
@@ -725,7 +710,7 @@ SQLGetTypeInfo(
 	TupleNode  *row;
 	int			i;
 
-/* Int4 type; */
+	/* Int4 type; */
 	Int4		pgType;
 	Int2		sqlType;
 
@@ -736,7 +721,6 @@ SQLGetTypeInfo(
 		SC_log_error(func, "", NULL);
 		return SQL_INVALID_HANDLE;
 	}
-
 
 	stmt->manual_result = TRUE;
 	stmt->result = QR_Constructor();
@@ -801,7 +785,6 @@ SQLGetTypeInfo(
 		}
 	}
 
-
 	stmt->status = STMT_FINISHED;
 	stmt->currTuple = -1;
 	stmt->rowset_start = -1;
@@ -810,7 +793,6 @@ SQLGetTypeInfo(
 	return SQL_SUCCESS;
 }
 
-/*		-		-		-		-		-		-		-		-		- */
 
 RETCODE SQL_API
 SQLGetFunctions(
@@ -824,7 +806,6 @@ SQLGetFunctions(
 
 	if (fFunction == SQL_API_ALL_FUNCTIONS)
 	{
-
 		if (globals.lie)
 		{
 			int			i;
@@ -910,13 +891,10 @@ SQLGetFunctions(
 	}
 	else
 	{
-
 		if (globals.lie)
 			*pfExists = TRUE;
-
 		else
 		{
-
 			switch (fFunction)
 			{
 				case SQL_API_SQLALLOCCONNECT:
@@ -1094,10 +1072,8 @@ SQLGetFunctions(
 			}
 		}
 	}
-
 	return SQL_SUCCESS;
 }
-
 
 
 RETCODE SQL_API
@@ -1161,13 +1137,12 @@ SQLTables(
 	}
 	tbl_stmt = (StatementClass *) htbl_stmt;
 
-	/* ********************************************************************** */
-	/* Create the query to find out the tables */
-	/* ********************************************************************** */
-
+	/*
+	 * Create the query to find out the tables
+	 */
 	if (PG_VERSION_GE(conn, 7.1))
-	{							/* view is represented by its relkind
-								 * since 7.1 */
+	{
+		/* view is represented by its relkind since 7.1 */
 		strcpy(tables_query, "select relname, usename, relkind from pg_class, pg_user");
 		strcat(tables_query, " where relkind in ('r', 'v')");
 	}
@@ -1180,15 +1155,12 @@ SQLTables(
 	my_strcat(tables_query, " and usename like '%.*s'", szTableOwner, cbTableOwner);
 	my_strcat(tables_query, " and relname like '%.*s'", szTableName, cbTableName);
 
-
 	/* Parse the extra systable prefix	*/
 	strcpy(prefixes, globals.extra_systable_prefixes);
 	i = 0;
 	prefix[i] = strtok(prefixes, ";");
 	while (prefix[i] && i < 32)
-	{
 		prefix[++i] = strtok(NULL, ";");
-	}
 
 	/* Parse the desired table types to return */
 	show_system_tables = FALSE;
@@ -1216,7 +1188,6 @@ SQLTables(
 				show_regular_tables = TRUE;
 			else if (strstr(table_type[i], "VIEW"))
 				show_views = TRUE;
-
 			i++;
 		}
 	}
@@ -1243,20 +1214,16 @@ SQLTables(
 			strcat(tables_query, prefix[i]);
 			i++;
 		}
-
 		strcat(tables_query, "'");
 	}
 
-
 	/* match users */
-	if (PG_VERSION_LT(conn, 7.1))		/* filter out large objects in
-										 * older versions */
+	if (PG_VERSION_LT(conn, 7.1))
+		/* filter out large objects in older versions */
 		strcat(tables_query, " and relname !~ '^xinv[0-9]+'");
 
 	strcat(tables_query, " and usesysid = relowner");
 	strcat(tables_query, " order by relname");
-
-	/* ********************************************************************** */
 
 	result = SQLExecDirect(htbl_stmt, tables_query, strlen(tables_query));
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
@@ -1330,7 +1297,6 @@ SQLTables(
 	result = SQLFetch(htbl_stmt);
 	while ((result == SQL_SUCCESS) || (result == SQL_SUCCESS_WITH_INFO))
 	{
-
 		/*
 		 * Determine if this table name is a system table. If treating
 		 * system tables as regular tables, then no need to do this test.
@@ -1338,12 +1304,12 @@ SQLTables(
 		systable = FALSE;
 		if (!atoi(ci->show_system_tables))
 		{
-
 			if (strncmp(table_name, POSTGRES_SYS_PREFIX, strlen(POSTGRES_SYS_PREFIX)) == 0)
 				systable = TRUE;
 
 			else
-			{					/* Check extra system table prefixes */
+			{
+				/* Check extra system table prefixes */
 				i = 0;
 				while (prefix[i])
 				{
@@ -1359,8 +1325,8 @@ SQLTables(
 		}
 
 		/* Determine if the table name is a view */
-		if (PG_VERSION_GE(conn, 7.1))	/* view is represented by its
-										 * relkind since 7.1 */
+		if (PG_VERSION_GE(conn, 7.1))
+			/* view is represented by its relkind since 7.1 */
 			view = (relkind_or_hasrules[0] == 'v');
 		else
 			view = (relkind_or_hasrules[0] == '1');
@@ -1379,16 +1345,18 @@ SQLTables(
 			(view && show_views) ||
 			(regular_table && show_regular_tables))
 		{
-
 			row = (TupleNode *) malloc(sizeof(TupleNode) + (5 - 1) *sizeof(TupleField));
 
 			set_tuplefield_string(&row->tuple[0], "");
 
-			/* I have to hide the table owner from Access, otherwise it */
-			/* insists on referring to the table as 'owner.table'. */
-			/* (this is valid according to the ODBC SQL grammar, but */
-			/* Postgres won't support it.) */
-			/* set_tuplefield_string(&row->tuple[1], table_owner); */
+			/*
+			 * I have to hide the table owner from Access, otherwise it
+			 * insists on referring to the table as 'owner.table'.
+			 * (this is valid according to the ODBC SQL grammar, but
+			 * Postgres won't support it.)
+			 *
+			 * set_tuplefield_string(&row->tuple[1], table_owner);
+			 */
 
 			mylog("SQLTables: table_name = '%s'\n", table_name);
 
@@ -1410,8 +1378,10 @@ SQLTables(
 		return SQL_ERROR;
 	}
 
-	/* also, things need to think that this statement is finished so */
-	/* the results can be retrieved. */
+	/*
+	 * also, things need to think that this statement is finished so
+	 * the results can be retrieved.
+	 */
 	stmt->status = STMT_FINISHED;
 
 	/* set up the current tuple pointer for SQLFetch */
@@ -1423,8 +1393,6 @@ SQLTables(
 	mylog("SQLTables(): EXIT,  stmt=%u\n", stmt);
 	return SQL_SUCCESS;
 }
-
-
 
 
 RETCODE SQL_API
@@ -1479,13 +1447,10 @@ SQLColumns(
 	conn = (ConnectionClass *) (stmt->hdbc);
 	ci = &stmt->hdbc->connInfo;
 
-	/* ********************************************************************** */
-
 	/*
 	 * Create the query to find out the columns (Note: pre 6.3 did not
 	 * have the atttypmod field)
 	 */
-	/* ********************************************************************** */
 	sprintf(columns_query, "select u.usename, c.relname, a.attname, a.atttypid"
 	   ", t.typname, a.attnum, a.attlen, %s, a.attnotnull, c.relhasrules"
 			" from pg_user u, pg_class c, pg_attribute a, pg_type t"
@@ -1497,10 +1462,11 @@ SQLColumns(
 	my_strcat(columns_query, " and u.usename like '%.*s'", szTableOwner, cbTableOwner);
 	my_strcat(columns_query, " and a.attname like '%.*s'", szColumnName, cbColumnName);
 
-	/* give the output in the order the columns were defined */
-	/* when the table was created */
+	/*
+	 * give the output in the order the columns were defined
+	 * when the table was created
+	 */
 	strcat(columns_query, " order by attnum");
-	/* ********************************************************************** */
 
 	result = SQLAllocStmt(stmt->hdbc, &hcol_stmt);
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
@@ -1673,9 +1639,7 @@ SQLColumns(
 	QR_set_field_info(stmt->result, 12, "DISPLAY_SIZE", PG_TYPE_INT4, 4);
 	QR_set_field_info(stmt->result, 13, "FIELD_TYPE", PG_TYPE_INT4, 4);
 
-
 	result = SQLFetch(hcol_stmt);
-
 
 	/*
 	 * Only show oid if option AND there are other columns AND it's not
@@ -1685,12 +1649,10 @@ SQLColumns(
 
 	if (result != SQL_ERROR && !stmt->internal)
 	{
-
 		if (relhasrules[0] != '1' &&
 			(atoi(ci->show_oid_column) ||
 			 strncmp(table_name, POSTGRES_SYS_PREFIX, strlen(POSTGRES_SYS_PREFIX)) == 0))
 		{
-
 			/* For OID fields */
 			the_type = PG_TYPE_OID;
 			row = (TupleNode *) malloc(sizeof(TupleNode) +
@@ -1718,7 +1680,6 @@ SQLColumns(
 
 			QR_add_tuple(stmt->result, row);
 		}
-
 	}
 
 	while ((result == SQL_SUCCESS) || (result == SQL_SUCCESS_WITH_INFO))
@@ -1776,11 +1737,9 @@ SQLColumns(
 			}
 		}
 
-
 		if ((field_type == PG_TYPE_VARCHAR) ||
 			(field_type == PG_TYPE_BPCHAR))
 		{
-
 			useStaticPrecision = FALSE;
 
 			if (mod_length >= 4)
@@ -1827,8 +1786,10 @@ SQLColumns(
 		return SQL_ERROR;
 	}
 
-	/* Put the row version column at the end so it might not be */
-	/* mistaken for a key field. */
+	/*
+	 * Put the row version column at the end so it might not be
+	 * mistaken for a key field.
+	 */
 	if (relhasrules[0] != '1' && !stmt->internal && atoi(ci->row_versioning))
 	{
 		/* For Row Versioning fields */
@@ -1855,8 +1816,10 @@ SQLColumns(
 		QR_add_tuple(stmt->result, row);
 	}
 
-	/* also, things need to think that this statement is finished so */
-	/* the results can be retrieved. */
+	/*
+	 * also, things need to think that this statement is finished so
+	 * the results can be retrieved.
+	 */
 	stmt->status = STMT_FINISHED;
 
 	/* set up the current tuple pointer for SQLFetch */
@@ -1868,6 +1831,7 @@ SQLColumns(
 	mylog("SQLColumns(): EXIT,  stmt=%u\n", stmt);
 	return SQL_SUCCESS;
 }
+
 
 RETCODE SQL_API
 SQLSpecialColumns(
@@ -1892,8 +1856,6 @@ SQLSpecialColumns(
 	RETCODE		result;
 	char		relhasrules[MAX_INFO_STRING];
 
-
-
 	mylog("%s: entering...stmt=%u\n", func, stmt);
 
 	if (!stmt)
@@ -1905,10 +1867,9 @@ SQLSpecialColumns(
 
 	stmt->manual_result = TRUE;
 
-
-	/* ********************************************************************** */
-	/* Create the query to find out if this is a view or not... */
-	/* ********************************************************************** */
+	/*
+	 * Create the query to find out if this is a view or not...
+	 */
 	sprintf(columns_query, "select c.relhasrules "
 			"from pg_user u, pg_class c where "
 			"u.usesysid = c.relowner");
@@ -1988,7 +1949,6 @@ SQLSpecialColumns(
 		}
 		else if (fColType == SQL_ROWVER)
 		{
-
 			Int2		the_type = PG_TYPE_INT4;
 
 			if (atoi(ci->row_versioning))
@@ -2009,8 +1969,6 @@ SQLSpecialColumns(
 		}
 	}
 
-
-
 	stmt->status = STMT_FINISHED;
 	stmt->currTuple = -1;
 	stmt->rowset_start = -1;
@@ -2019,6 +1977,7 @@ SQLSpecialColumns(
 	mylog("SQLSpecialColumns(): EXIT,  stmt=%u\n", stmt);
 	return SQL_SUCCESS;
 }
+
 
 RETCODE SQL_API
 SQLStatistics(
@@ -2104,9 +2063,10 @@ SQLStatistics(
 	QR_set_field_info(stmt->result, 11, "PAGES", PG_TYPE_INT4, 4);
 	QR_set_field_info(stmt->result, 12, "FILTER_CONDITION", PG_TYPE_TEXT, MAX_INFO_STRING);
 
-
-	/* only use the table name... the owner should be redundant, and */
-	/* we never use qualifiers. */
+	/*
+	 * only use the table name... the owner should be redundant, and
+	 * we never use qualifiers.
+	 */
 	table_name = make_string(szTableName, cbTableName, NULL);
 	if (!table_name)
 	{
@@ -2116,8 +2076,10 @@ SQLStatistics(
 		return SQL_ERROR;
 	}
 
-	/* we need to get a list of the field names first, */
-	/* so we can return them later. */
+	/*
+	 * we need to get a list of the field names first,
+	 * so we can return them later.
+	 */
 	result = SQLAllocStmt(stmt->hdbc, &hcol_stmt);
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 	{
@@ -2172,6 +2134,7 @@ SQLStatistics(
 
 		result = SQLFetch(hcol_stmt);
 	}
+
 	if (result != SQL_NO_DATA_FOUND || total_columns == 0)
 	{
 		stmt->errormsg = SC_create_errormsg(hcol_stmt); /* "Couldn't get column
@@ -2205,14 +2168,15 @@ SQLStatistics(
 	result = SQLExecDirect(hindx_stmt, index_query, strlen(index_query));
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 	{
-		stmt->errormsg = SC_create_errormsg(hindx_stmt);		/* "Couldn't execute
-																 * index query
-																 * (w/SQLExecDirect) in
-																 * SQLStatistics."; */
+		/*
+		 *	"Couldn't execute index query (w/SQLExecDirect) in
+		 *	SQLStatistics.";
+		 */
+		stmt->errormsg = SC_create_errormsg(hindx_stmt);
+		
 		stmt->errornumber = indx_stmt->errornumber;
 		SQLFreeStmt(hindx_stmt, SQL_DROP);
 		goto SEEYA;
-
 	}
 
 	/* bind the index name column */
@@ -2314,7 +2278,6 @@ SQLStatistics(
 	result = SQLFetch(hindx_stmt);
 	while ((result == SQL_SUCCESS) || (result == SQL_SUCCESS_WITH_INFO))
 	{
-
 		/* If only requesting unique indexs, then just return those. */
 		if (fUnique == SQL_INDEX_ALL ||
 			(fUnique == SQL_INDEX_UNIQUE && atoi(isunique)))
@@ -2323,7 +2286,6 @@ SQLStatistics(
 			/* add a row in this table for each field in the index */
 			while (i < 16 && fields_vector[i] != 0)
 			{
-
 				row = (TupleNode *) malloc(sizeof(TupleNode) +
 										   (13 - 1) *sizeof(TupleField));
 
@@ -2380,8 +2342,8 @@ SQLStatistics(
 	}
 	if (result != SQL_NO_DATA_FOUND)
 	{
-		stmt->errormsg = SC_create_errormsg(hindx_stmt);		/* "SQLFetch failed in
-																 * SQLStatistics."; */
+		/* "SQLFetch failed in SQLStatistics."; */
+		stmt->errormsg = SC_create_errormsg(hindx_stmt);		
 		stmt->errornumber = indx_stmt->errornumber;
 		SQLFreeStmt(hindx_stmt, SQL_DROP);
 		goto SEEYA;
@@ -2389,8 +2351,10 @@ SQLStatistics(
 
 	SQLFreeStmt(hindx_stmt, SQL_DROP);
 
-	/* also, things need to think that this statement is finished so */
-	/* the results can be retrieved. */
+	/*
+	 * also, things need to think that this statement is finished so
+	 * the results can be retrieved.
+	 */
 	stmt->status = STMT_FINISHED;
 
 	/* set up the current tuple pointer for SQLFetch */
@@ -2418,6 +2382,7 @@ SEEYA:
 		return SQL_SUCCESS;
 }
 
+
 RETCODE SQL_API
 SQLColumnPrivileges(
 					HSTMT hstmt,
@@ -2434,15 +2399,17 @@ SQLColumnPrivileges(
 
 	mylog("%s: entering...\n", func);
 
-/*	Neither Access or Borland care about this. */
+	/*	Neither Access or Borland care about this. */
 
 	SC_log_error(func, "Function not implemented", (StatementClass *) hstmt);
 	return SQL_ERROR;
 }
 
 
-/* SQLPrimaryKeys()
- * Retrieve the primary key columns for the specified table.
+/*
+ *	SQLPrimaryKeys()
+ *
+ *	Retrieve the primary key columns for the specified table.
  */
 RETCODE SQL_API
 SQLPrimaryKeys(
@@ -2572,7 +2539,6 @@ SQLPrimaryKeys(
 
 	while ((result == SQL_SUCCESS) || (result == SQL_SUCCESS_WITH_INFO))
 	{
-
 		row = (TupleNode *) malloc(sizeof(TupleNode) + (result_cols - 1) *sizeof(TupleField));
 
 		set_tuplefield_null(&row->tuple[0]);
@@ -2608,8 +2574,10 @@ SQLPrimaryKeys(
 	SQLFreeStmt(htbl_stmt, SQL_DROP);
 
 
-	/* also, things need to think that this statement is finished so */
-	/* the results can be retrieved. */
+	/*
+	 * also, things need to think that this statement is finished so
+	 * the results can be retrieved.
+	 */
 	stmt->status = STMT_FINISHED;
 
 	/* set up the current tuple pointer for SQLFetch */
@@ -2620,6 +2588,7 @@ SQLPrimaryKeys(
 	mylog("SQLPrimaryKeys(): EXIT, stmt=%u\n", stmt);
 	return SQL_SUCCESS;
 }
+
 
 RETCODE SQL_API
 SQLForeignKeys(
@@ -2667,14 +2636,11 @@ SQLForeignKeys(
 
 #if (ODBCVER >= 0x0300)
 	SWORD		defer_type;
-
 #endif
 	char		pkey[MAX_INFO_STRING];
 	Int2		result_cols;
 
-
-	mylog("%s: entering...stmt=%u\n", func, stmt);
-
+ 	mylog("%s: entering...stmt=%u\n", func, stmt);
 
 	if (!stmt)
 	{
@@ -2723,8 +2689,10 @@ SQLForeignKeys(
 	QR_set_field_info(stmt->result, 14, "DEFERRABILITY", PG_TYPE_INT2, 2);
 #endif	 /* ODBCVER >= 0x0300 */
 
-	/* also, things need to think that this statement is finished so */
-	/* the results can be retrieved. */
+	/*
+	 * also, things need to think that this statement is finished so
+	 * the results can be retrieved.
+	 */
 	stmt->status = STMT_FINISHED;
 
 	/* set up the current tuple pointer for SQLFetch */
@@ -2898,7 +2866,6 @@ SQLForeignKeys(
 
 		while (result == SQL_SUCCESS)
 		{
-
 			/* Compute the number of keyparts. */
 			num_keys = (trig_nargs - 4) / 2;
 
@@ -2913,7 +2880,6 @@ SQLForeignKeys(
 			/* If there is a pk table specified, then check it. */
 			if (pk_table_needed[0] != '\0')
 			{
-
 				/* If it doesn't match, then continue */
 				if (strcmp(pk_table, pk_table_needed))
 				{
@@ -2932,7 +2898,6 @@ SQLForeignKeys(
 				return SQL_ERROR;
 			}
 
-
 			/* Check that the key listed is the primary key */
 			keyresult = SQLFetch(hpkey_stmt);
 
@@ -2949,7 +2914,6 @@ SQLForeignKeys(
 					num_keys = 0;
 					break;
 				}
-
 				/* Get to next primary key */
 				for (k = 0; k < 2; k++)
 					pkey_ptr += strlen(pkey_ptr) + 1;
@@ -3002,7 +2966,6 @@ SQLForeignKeys(
 
 			for (k = 0; k < num_keys; k++)
 			{
-
 				row = (TupleNode *) malloc(sizeof(TupleNode) + (result_cols - 1) *sizeof(TupleField));
 
 				mylog("%s: pk_table = '%s', pkey_ptr = '%s'\n", func, pk_table, pkey_ptr);
@@ -3050,7 +3013,6 @@ SQLForeignKeys(
 	 */
 	else if (pk_table_needed[0] != '\0')
 	{
-
 		sprintf(tables_query, "SELECT	pg_trigger.tgargs, "
 				"		pg_trigger.tgnargs, "
 				"		pg_trigger.tgdeferrable, "
@@ -3172,7 +3134,6 @@ SQLForeignKeys(
 
 		while (result == SQL_SUCCESS)
 		{
-
 			/* Calculate the number of key parts */
 			num_keys = (trig_nargs - 4) / 2;;
 
@@ -3216,7 +3177,6 @@ SQLForeignKeys(
 			for (i = 0; i < 5; i++)
 				pkey_ptr += strlen(pkey_ptr) + 1;
 
-
 			/* Get to first foreign table */
 			fk_table = trig_args;
 			fk_table += strlen(fk_table) + 1;
@@ -3228,7 +3188,6 @@ SQLForeignKeys(
 
 			for (k = 0; k < num_keys; k++)
 			{
-
 				mylog("pkey_ptr = '%s', fk_table = '%s', fkey_ptr = '%s'\n", pkey_ptr, fk_table, fkey_ptr);
 
 				row = (TupleNode *) malloc(sizeof(TupleNode) + (result_cols - 1) *sizeof(TupleField));
@@ -3270,7 +3229,6 @@ SQLForeignKeys(
 					fkey_ptr += strlen(fkey_ptr) + 1;
 				}
 			}
-
 			result = SQLFetch(htbl_stmt);
 		}
 	}
@@ -3288,7 +3246,6 @@ SQLForeignKeys(
 	mylog("SQLForeignKeys(): EXIT, stmt=%u\n", stmt);
 	return SQL_SUCCESS;
 }
-
 
 
 RETCODE SQL_API
@@ -3311,6 +3268,7 @@ SQLProcedureColumns(
 	return SQL_ERROR;
 }
 
+
 RETCODE SQL_API
 SQLProcedures(
 			  HSTMT hstmt,
@@ -3328,6 +3286,7 @@ SQLProcedures(
 	SC_log_error(func, "Function not implemented", (StatementClass *) hstmt);
 	return SQL_ERROR;
 }
+
 
 RETCODE SQL_API
 SQLTablePrivileges(

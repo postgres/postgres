@@ -1,20 +1,24 @@
-/* Module:			parse.c
+/*--------
+ * Module:			parse.c
  *
- * Description:		This module contains routines related to parsing SQL statements.
- *					This can be useful for two reasons:
+ * Description:		This module contains routines related to parsing SQL
+ *					statements.  This can be useful for two reasons:
  *
- *					1. So the query does not actually have to be executed to return data about it
+ *					1. So the query does not actually have to be executed
+ *					to return data about it
  *
- *					2. To be able to return information about precision, nullability, aliases, etc.
- *					   in the functions SQLDescribeCol and SQLColAttributes.  Currently, Postgres
- *					   doesn't return any information about these things in a query.
+ *					2. To be able to return information about precision,
+ *					nullability, aliases, etc. in the functions
+ *					SQLDescribeCol and SQLColAttributes.  Currently,
+ *					Postgres doesn't return any information about
+ *					these things in a query.
  *
  * Classes:			none
  *
  * API functions:	none
  *
  * Comments:		See "notice.txt" for copyright and license information.
- *
+ *--------
  */
 /* Multibyte support	Eiji Tokuya 2001-03-15 */
 
@@ -49,6 +53,7 @@
 char	   *getNextToken(char *s, char *token, int smax, char *delim, char *quote, char *dquote, char *numeric);
 void		getColInfo(COL_INFO *col_info, FIELD_INFO *fi, int k);
 char		searchColInfo(COL_INFO *col_info, FIELD_INFO *fi);
+
 
 char *
 getNextToken(char *s, char *token, int smax, char *delim, char *quote, char *dquote, char *numeric)
@@ -87,7 +92,6 @@ getNextToken(char *s, char *token, int smax, char *delim, char *quote, char *dqu
 	while (!isspace((unsigned char) s[i]) && s[i] != ',' &&
 		   s[i] != '\0' && out != smax)
 	{
-
 		/* Handle quoted stuff */
 		if (out == 0 && (s[i] == '\"' || s[i] == '\''))
 		{
@@ -225,12 +229,12 @@ getColInfo(COL_INFO *col_info, FIELD_INFO *fi, int k)
 	fi->display_size = atoi(QR_get_value_manual(col_info->result, k, 12));
 }
 
+
 char
 searchColInfo(COL_INFO *col_info, FIELD_INFO *fi)
 {
 	int		k, cmp;
 	char		*col;
-
 
 	for (k = 0; k < QR_get_num_tuples(col_info->result); k++)
 	{
@@ -289,7 +293,6 @@ parse_statement(StatementClass *stmt)
 	StatementClass *col_stmt;
 	RETCODE		result;
 
-
 	mylog("%s: entering...\n", func);
 
 	ptr = stmt->statement;
@@ -301,7 +304,6 @@ parse_statement(StatementClass *stmt)
 
 	while ((ptr = getNextToken(ptr, token, sizeof(token), &delim, &quote, &dquote, &numeric)) != NULL)
 	{
-
 		unquoted = !(quote || dquote);
 
 		mylog("unquoted=%d, quote=%d, dquote=%d, numeric=%d, delim='%c', token='%s', ptr='%s'\n", unquoted, quote, dquote, numeric, delim, token, ptr);
@@ -345,7 +347,6 @@ parse_statement(StatementClass *stmt)
 						 !stricmp(token, "group") ||
 						 !stricmp(token, "having")))
 		{
-
 			in_select = FALSE;
 			in_from = FALSE;
 			in_where = TRUE;
@@ -356,7 +357,6 @@ parse_statement(StatementClass *stmt)
 
 		if (in_select)
 		{
-
 			if (in_distinct)
 			{
 				mylog("in distinct\n");
@@ -378,7 +378,8 @@ parse_statement(StatementClass *stmt)
 			}
 
 			if (in_expr || in_func)
-			{					/* just eat the expression */
+			{
+				/* just eat the expression */
 				mylog("in_expr=%d or func=%d\n", in_expr, in_func);
 				if (quote || dquote)
 					continue;
@@ -389,7 +390,6 @@ parse_statement(StatementClass *stmt)
 					in_expr = FALSE;
 					in_field = FALSE;
 				}
-
 				else if (token[0] == '(')
 				{
 					blevel++;
@@ -414,7 +414,6 @@ parse_statement(StatementClass *stmt)
 
 			if (!in_field)
 			{
-
 				if (!token[0])
 					continue;
 
@@ -462,7 +461,6 @@ parse_statement(StatementClass *stmt)
 					blevel = 1;
 					continue;
 				}
-
 				else
 				{
 					strcpy(fi[stmt->nfld]->name, token);
@@ -478,9 +476,9 @@ parse_statement(StatementClass *stmt)
 				continue;
 			}
 
-			/**************************/
-			/* We are in a field now */
-			/**************************/
+			/*
+			 * We are in a field now
+			 */
 			if (in_dot)
 			{
 				stmt->nfld--;
@@ -494,7 +492,6 @@ parse_statement(StatementClass *stmt)
 					mylog("in_dot: got comma\n");
 					in_field = FALSE;
 				}
-
 				continue;
 			}
 
@@ -547,12 +544,10 @@ parse_statement(StatementClass *stmt)
 			fi[stmt->nfld - 1]->expr = TRUE;
 			fi[stmt->nfld - 1]->name[0] = '\0';
 			mylog("*** setting expression\n");
-
 		}
 
 		if (in_from)
 		{
-
 			if (!in_table)
 			{
 				if (!token[0])
@@ -603,17 +598,15 @@ parse_statement(StatementClass *stmt)
 		}
 	}
 
-
-	/*************************************************/
-	/* Resolve any possible field names with tables */
-	/*************************************************/
+	/*
+	 * Resolve any possible field names with tables
+	 */
 
 	parse = TRUE;
 
 	/* Resolve field names with tables */
 	for (i = 0; i < stmt->nfld; i++)
 	{
-
 		if (fi[i]->func || fi[i]->expr || fi[i]->numeric)
 		{
 			fi[i]->ti = NULL;
@@ -621,7 +614,6 @@ parse_statement(StatementClass *stmt)
 			parse = FALSE;
 			continue;
 		}
-
 		else if (fi[i]->quote)
 		{						/* handle as text */
 			fi[i]->ti = NULL;
@@ -629,7 +621,6 @@ parse_statement(StatementClass *stmt)
 			fi[i]->precision = 0;
 			continue;
 		}
-
 		/* it's a dot, resolve to table or alias */
 		else if (fi[i]->dot[0])
 		{
@@ -665,15 +656,13 @@ parse_statement(StatementClass *stmt)
 		mylog("Table %d: name='%s', alias='%s'\n", i, ti[i]->name, ti[i]->alias);
 
 
-	/******************************************************/
-	/* Now save the SQLColumns Info for the parse tables */
-	/******************************************************/
-
+	/*
+	 * Now save the SQLColumns Info for the parse tables
+	 */
 
 	/* Call SQLColumns for each table and store the result */
 	for (i = 0; i < stmt->ntab; i++)
 	{
-
 		/* See if already got it */
 		char		found = FALSE;
 
@@ -689,7 +678,6 @@ parse_statement(StatementClass *stmt)
 
 		if (!found)
 		{
-
 			mylog("PARSE: Getting SQLColumns for table[%d]='%s'\n", i, ti[i]->name);
 
 			result = SQLAllocStmt(stmt->hdbc, &hcol_stmt);
@@ -713,7 +701,6 @@ parse_statement(StatementClass *stmt)
 				mylog("      Success\n");
 				if (!(conn->ntables % COL_INCR))
 				{
-
 					mylog("PARSE: Allocing col_info at ntables=%d\n", conn->ntables);
 
 					conn->col_info = (COL_INFO **) realloc(conn->col_info, (conn->ntables + COL_INCR) * sizeof(COL_INFO *));
@@ -762,18 +749,13 @@ parse_statement(StatementClass *stmt)
 		mylog("associate col_info: i=%d, k=%d\n", i, k);
 	}
 
-
 	mylog("Done SQLColumns\n");
 
-	/******************************************************/
-	/* Now resolve the fields to point to column info	 */
-	/******************************************************/
-
-
-
+	/*
+	 * Now resolve the fields to point to column info
+	 */
 	for (i = 0; i < stmt->nfld;)
 	{
-
 		/* Dont worry about functions or quotes */
 		if (fi[i]->func || fi[i]->quote || fi[i]->numeric)
 		{
@@ -784,7 +766,6 @@ parse_statement(StatementClass *stmt)
 		/* Stars get expanded to all fields in the table */
 		else if (fi[i]->name[0] == '*')
 		{
-
 			char		do_all_tables;
 			int			total_cols,
 						old_alloc,
@@ -810,7 +791,6 @@ parse_statement(StatementClass *stmt)
 			increased_cols = total_cols - 1;
 
 			/* Allocate some more field pointers if necessary */
-			/*------------------------------------------------------------- */
 			old_alloc = ((stmt->nfld - 1) / FLD_INCR + 1) * FLD_INCR;
 			new_size = stmt->nfld + increased_cols;
 
@@ -830,8 +810,6 @@ parse_statement(StatementClass *stmt)
 				stmt->fi = fi;
 			}
 
-			/*------------------------------------------------------------- */
-
 			/*
 			 * copy any other fields (if there are any) up past the
 			 * expansion
@@ -843,21 +821,16 @@ parse_statement(StatementClass *stmt)
 			}
 			mylog("done copying fields\n");
 
-			/*------------------------------------------------------------- */
 			/* Set the new number of fields */
 			stmt->nfld += increased_cols;
 			mylog("stmt->nfld now at %d\n", stmt->nfld);
 
 
-			/*------------------------------------------------------------- */
 			/* copy the new field info */
-
-
 			do_all_tables = (fi[i]->ti ? FALSE : TRUE);
 
 			for (k = 0; k < (do_all_tables ? stmt->ntab : 1); k++)
 			{
-
 				TABLE_INFO *the_ti = do_all_tables ? ti[k] : fi[i]->ti;
 
 				cols = QR_get_num_tuples(the_ti->col_info->result);
@@ -890,8 +863,6 @@ parse_statement(StatementClass *stmt)
 				i += cols;
 				mylog("i now at %d\n", i);
 			}
-
-			/*------------------------------------------------------------- */
 		}
 
 		/*
@@ -901,7 +872,6 @@ parse_statement(StatementClass *stmt)
 		 */
 		else if (fi[i]->ti)
 		{
-
 			if (!searchColInfo(fi[i]->ti->col_info, fi[i]))
 				parse = FALSE;
 
@@ -925,12 +895,10 @@ parse_statement(StatementClass *stmt)
 		}
 	}
 
-
 	if (!parse)
 		stmt->parse_status = STMT_PARSE_INCOMPLETE;
 	else
 		stmt->parse_status = STMT_PARSE_COMPLETE;
-
 
 	mylog("done parse_statement: parse=%d, parse_status=%d\n", parse, stmt->parse_status);
 	return parse;

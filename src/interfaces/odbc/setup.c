@@ -1,4 +1,5 @@
-/* Module:			setup.c
+/*-------
+ * Module:			setup.c
  *
  * Description:		This module contains the setup functions for
  *					adding/modifying a Data Source in the ODBC.INI portion
@@ -9,7 +10,7 @@
  * API functions:	ConfigDSN
  *
  * Comments:		See "notice.txt" for copyright and license information.
- *
+ *-------
  */
 
 #include  "psqlodbc.h"
@@ -28,7 +29,7 @@
 extern HINSTANCE NEAR s_hModule;/* Saved module handle. */
 extern GLOBAL_VALUES globals;
 
-/* Constants --------------------------------------------------------------- */
+/* Constants */
 #define MIN(x,y)	  ((x) < (y) ? (x) : (y))
 
 #ifdef WIN32
@@ -40,7 +41,7 @@ extern GLOBAL_VALUES globals;
 #define MAXDSNAME		(32+1)	/* Max data source name length */
 
 
-/* Globals ----------------------------------------------------------------- */
+/* Globals */
 /* NOTE:  All these are used by the dialog procedures */
 typedef struct tagSETUPDLG
 {
@@ -55,24 +56,26 @@ typedef struct tagSETUPDLG
 
 
 
-/* Prototypes -------------------------------------------------------------- */
+/* Prototypes */
 void INTFUNC CenterDialog(HWND hdlg);
 int CALLBACK ConfigDlgProc(HWND hdlg, WORD wMsg, WPARAM wParam, LPARAM lParam);
 void INTFUNC ParseAttributes(LPCSTR lpszAttributes, LPSETUPDLG lpsetupdlg);
 BOOL INTFUNC SetDSNAttributes(HWND hwnd, LPSETUPDLG lpsetupdlg);
 
 
-/* ConfigDSN ---------------------------------------------------------------
-  Description:	ODBC Setup entry point
-				This entry point is called by the ODBC Installer
-				(see file header for more details)
-  Input		 :	hwnd ----------- Parent window handle
-				fRequest ------- Request type (i.e., add, config, or remove)
-				lpszDriver ----- Driver name
-				lpszAttributes - data source attribute string
-  Output	 :	TRUE success, FALSE otherwise
---------------------------------------------------------------------------*/
-
+/*--------
+ *	ConfigDSN
+ *
+ *  Description:	ODBC Setup entry point
+ *				This entry point is called by the ODBC Installer
+ *				(see file header for more details)
+ *  Input	 :	hwnd ----------- Parent window handle
+ *				fRequest ------- Request type (i.e., add, config, or remove)
+ *				lpszDriver ----- Driver name
+ *				lpszAttributes - data source attribute string
+ *  Output	 :	TRUE success, FALSE otherwise
+ *--------
+ */
 BOOL		CALLBACK
 ConfigDSN(HWND hwnd,
 		  WORD fRequest,
@@ -111,7 +114,6 @@ ConfigDSN(HWND hwnd,
 		else
 			fSuccess = SQLRemoveDSNFromIni(lpsetupdlg->ci.dsn);
 	}
-
 	/* Add or Configure data source */
 	else
 	{
@@ -134,7 +136,6 @@ ConfigDSN(HWND hwnd,
 											   ConfigDlgProc,
 											 (LONG) (LPSTR) lpsetupdlg));
 		}
-
 		else if (lpsetupdlg->ci.dsn[0])
 			fSuccess = SetDSNAttributes(hwnd, lpsetupdlg);
 		else
@@ -148,11 +149,14 @@ ConfigDSN(HWND hwnd,
 }
 
 
-/* CenterDialog ------------------------------------------------------------
-		Description:  Center the dialog over the frame window
-		Input	   :  hdlg -- Dialog window handle
-		Output	   :  None
---------------------------------------------------------------------------*/
+/*-------
+ * CenterDialog
+ *
+ *		Description:  Center the dialog over the frame window
+ *		Input	   :  hdlg -- Dialog window handle
+ *		Output	   :  None
+ *-------
+ */
 void		INTFUNC
 CenterDialog(HWND hdlg)
 {
@@ -198,23 +202,22 @@ CenterDialog(HWND hdlg)
 	return;
 }
 
-/* ConfigDlgProc -----------------------------------------------------------
-  Description:	Manage add data source name dialog
-  Input		 :	hdlg --- Dialog window handle
-				wMsg --- Message
-				wParam - Message parameter
-				lParam - Message parameter
-  Output	 :	TRUE if message processed, FALSE otherwise
---------------------------------------------------------------------------*/
-
-
+/*-------
+ * ConfigDlgProc
+ *  Description:	Manage add data source name dialog
+ *  Input	 :	hdlg --- Dialog window handle
+ *				wMsg --- Message
+ *				wParam - Message parameter
+ *				lParam - Message parameter
+ *  Output	 :	TRUE if message processed, FALSE otherwise
+ *-------
+ */
 int			CALLBACK
 ConfigDlgProc(HWND hdlg,
 			  WORD wMsg,
 			  WPARAM wParam,
 			  LPARAM lParam)
 {
-
 	switch (wMsg)
 	{
 			/* Initialize the dialog */
@@ -241,10 +244,8 @@ ConfigDlgProc(HWND hdlg,
 				/* Fill in any defaults */
 				getDSNdefaults(ci);
 
-
 				/* Initialize dialog fields */
 				SetDlgStuff(hdlg, ci);
-
 
 				if (lpsetupdlg->fDefault)
 				{
@@ -260,13 +261,10 @@ ConfigDlgProc(HWND hdlg,
 				return TRUE;	/* Focus was not set */
 			}
 
-
-			/* Process buttons */
+		/* Process buttons */
 		case WM_COMMAND:
-
 			switch (GET_WM_COMMAND_ID(wParam, lParam))
 			{
-
 					/*
 					 * Ensure the OK button is enabled only when a data
 					 * source name
@@ -281,12 +279,11 @@ ConfigDlgProc(HWND hdlg,
 						EnableWindow(GetDlgItem(hdlg, IDOK),
 									 GetDlgItemText(hdlg, IDC_DSNAME,
 												szItem, sizeof(szItem)));
-
 						return TRUE;
 					}
 					break;
 
-					/* Accept results */
+				/* Accept results */
 				case IDOK:
 					{
 						LPSETUPDLG	lpsetupdlg;
@@ -297,8 +294,6 @@ ConfigDlgProc(HWND hdlg,
 							GetDlgItemText(hdlg, IDC_DSNAME,
 										   lpsetupdlg->ci.dsn,
 										   sizeof(lpsetupdlg->ci.dsn));
-
-
 						/* Get Dialog Values */
 						GetDlgStuff(hdlg, &lpsetupdlg->ci);
 
@@ -306,13 +301,12 @@ ConfigDlgProc(HWND hdlg,
 						SetDSNAttributes(hdlg, lpsetupdlg);
 					}
 
-					/* Return to caller */
+				/* Return to caller */
 				case IDCANCEL:
 					EndDialog(hdlg, wParam);
 					return TRUE;
 
 				case IDC_DRIVER:
-
 					DialogBoxParam(s_hModule, MAKEINTRESOURCE(DLG_OPTIONS_DRV),
 								hdlg, driver_optionsProc, (LPARAM) NULL);
 
@@ -330,7 +324,6 @@ ConfigDlgProc(HWND hdlg,
 						return TRUE;
 					}
 			}
-
 			break;
 	}
 
@@ -339,11 +332,14 @@ ConfigDlgProc(HWND hdlg,
 }
 
 
-/* ParseAttributes ---------------------------------------------------------
-  Description:	Parse attribute string moving values into the aAttr array
-  Input		 :	lpszAttributes - Pointer to attribute string
-  Output	 :	None (global aAttr normally updated)
---------------------------------------------------------------------------*/
+/*-------
+ * ParseAttributes
+ *
+ *  Description:	Parse attribute string moving values into the aAttr array
+ *  Input	 :	lpszAttributes - Pointer to attribute string
+ *  Output	 :	None (global aAttr normally updated)
+ *-------
+ */
 void		INTFUNC
 ParseAttributes(LPCSTR lpszAttributes, LPSETUPDLG lpsetupdlg)
 {
@@ -356,8 +352,8 @@ ParseAttributes(LPCSTR lpszAttributes, LPSETUPDLG lpsetupdlg)
 	memset(&lpsetupdlg->ci, 0, sizeof(ConnInfo));
 
 	for (lpsz = lpszAttributes; *lpsz; lpsz++)
-	{							/* Extract key name (e.g., DSN), it must
-								 * be terminated by an equals */
+	{
+		/* Extract key name (e.g., DSN), it must be terminated by an equals */
 		lpszStart = lpsz;
 		for (;; lpsz++)
 		{
@@ -370,15 +366,14 @@ ParseAttributes(LPCSTR lpszAttributes, LPSETUPDLG lpsetupdlg)
 		cbKey = lpsz - lpszStart;
 		if (cbKey < sizeof(aszKey))
 		{
-
 			_fmemcpy(aszKey, lpszStart, cbKey);
 			aszKey[cbKey] = '\0';
 		}
 
 		/* Locate end of key value */
 		lpszStart = ++lpsz;
-		for (; *lpsz; lpsz++);
-
+		for (; *lpsz; lpsz++)
+			;
 
 		/* lpsetupdlg->aAttr[iElement].fSupplied = TRUE; */
 		_fmemcpy(value, lpszStart, MIN(lpsz - lpszStart + 1, MAXPGPATH));
@@ -392,12 +387,14 @@ ParseAttributes(LPCSTR lpszAttributes, LPSETUPDLG lpsetupdlg)
 }
 
 
-/* SetDSNAttributes --------------------------------------------------------
-  Description:	Write data source attributes to ODBC.INI
-  Input		 :	hwnd - Parent window handle (plus globals)
-  Output	 :	TRUE if successful, FALSE otherwise
---------------------------------------------------------------------------*/
-
+/*--------
+ * SetDSNAttributes
+ *
+ *  Description:	Write data source attributes to ODBC.INI
+ *  Input	 :	hwnd - Parent window handle (plus globals)
+ *  Output	 :	TRUE if successful, FALSE otherwise
+ *--------
+ */
 BOOL		INTFUNC
 SetDSNAttributes(HWND hwndParent, LPSETUPDLG lpsetupdlg)
 {
@@ -425,10 +422,8 @@ SetDSNAttributes(HWND hwndParent, LPSETUPDLG lpsetupdlg)
 		return FALSE;
 	}
 
-
 	/* Update ODBC.INI */
 	writeDSNinfo(&lpsetupdlg->ci);
-
 
 	/* If the data source name has changed, remove the old name */
 	if (lstrcmpi(lpsetupdlg->szDSN, lpsetupdlg->ci.dsn))

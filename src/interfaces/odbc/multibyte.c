@@ -1,10 +1,10 @@
-/*
+/*--------
  * Module :			multibyte.c
  *
  * Description:		Mlutibyte related additional function.
  *
  *					Create 2001-03-03 Eiji Tokuya
- *
+ *--------
  */
 
 #include <string.h>
@@ -12,6 +12,7 @@
 
 int			multibyte_client_encoding;	/* Multibyte Client Encoding. */
 int			multibyte_status;	/* Multibyte Odds and ends character. */
+
 
 unsigned char *
 multibyte_strchr(unsigned char *s, unsigned char c)
@@ -36,7 +37,6 @@ multibyte_strchr(unsigned char *s, unsigned char c)
 				}
 				break;
 
-
 /* Chinese Big5 Support. */
 			case BIG5:
 				{
@@ -59,11 +59,13 @@ multibyte_strchr(unsigned char *s, unsigned char c)
 	return (s + i);
 }
 
+
 void
 multibyte_init(void)
 {
 	multibyte_status = 0;
 }
+
 
 unsigned char *
 check_client_encoding(unsigned char *str)
@@ -81,19 +83,21 @@ check_client_encoding(unsigned char *str)
 	return ("OHTER");
 }
 
-/*
+
+/*--------
  * Multibyte Status Function.
  *	Input	char
  *	Output	0	: 1 Byte Character.
  *			1	: MultibyteCharacter Last Byte.
  *			N	: MultibyteCharacter Fast or Middle Byte.
+ *--------
  */
 int
 multibyte_char_check(unsigned char s)
 {
 	switch (multibyte_client_encoding)
 	{
-/* Japanese Shift-JIS(CP932) Support. */
+			/* Japanese Shift-JIS(CP932) Support. */
 			case SJIS:
 			{
 				if (multibyte_status < 2 && s > 0x80 && !(s > 0x9f && s < 0xE0))
@@ -105,20 +109,19 @@ multibyte_char_check(unsigned char s)
 			}
 			break;
 
-
-/* Chinese Big5(CP950) Support. */
-		case BIG5:
-			{
-				if (multibyte_status < 2 && s > 0xA0)
-					multibyte_status = 2;
-				else if (multibyte_status == 2)
-					multibyte_status = 1;
-				else
-					multibyte_status = 0;
-			}
-			break;
-		default:
-			multibyte_status = 0;
+			/* Chinese Big5(CP950) Support. */
+			case BIG5:
+				{
+					if (multibyte_status < 2 && s > 0xA0)
+						multibyte_status = 2;
+					else if (multibyte_status == 2)
+						multibyte_status = 1;
+					else
+						multibyte_status = 0;
+				}
+				break;
+			default:
+				multibyte_status = 0;
 	}
 #ifdef _DEBUG
 	qlog("multibyte_client_encoding = %d   s = 0x%02X   multibyte_stat = %d\n", multibyte_client_encoding, s, multibyte_status);

@@ -1,17 +1,19 @@
-/* Module:			pgtypes.c
+/*--------
+ * Module:			pgtypes.c
  *
  * Description:		This module contains routines for getting information
- *					about the supported Postgres data types.  Only the function
- *					pgtype_to_sqltype() returns an unknown condition.  All other
- *					functions return a suitable default so that even data types that
- *					are not directly supported can be used (it is handled as char data).
+ *					about the supported Postgres data types.  Only the
+ *					function pgtype_to_sqltype() returns an unknown condition.
+ *					All other functions return a suitable default so that
+ *					even data types that are not directly supported can be
+ *					used (it is handled as char data).
  *
  * Classes:			n/a
  *
  * API functions:	none
  *
  * Comments:		See "notice.txt" for copyright and license information.
- *
+ *--------
  */
 
 #ifdef HAVE_CONFIG_H
@@ -40,15 +42,18 @@ extern GLOBAL_VALUES globals;
 
 Int4		getCharPrecision(StatementClass *stmt, Int4 type, int col, int handle_unknown_size_as);
 
+/*
+ * these are the types we support.	all of the pgtype_ functions should
+ * return values for each one of these.
+ * Even types not directly supported are handled as character types
+ * so all types should work (points, etc.)
+ */
 
-/* these are the types we support.	all of the pgtype_ functions should */
-/* return values for each one of these.									*/
-/* Even types not directly supported are handled as character types
-   so all types should work (points, etc.) */
+/*
+ * ALL THESE TYPES ARE NO LONGER REPORTED in SQLGetTypeInfo.  Instead, all
+ *  the SQL TYPES are reported and mapped to a corresponding Postgres Type
+ */
 
-/* ALL THESE TYPES ARE NO LONGER REPORTED in SQLGetTypeInfo.  Instead, all
-   the SQL TYPES are reported and mapped to a corresponding Postgres Type
-*/
 /*
 Int4 pgtypes_defined[]	= {
 				PG_TYPE_CHAR,
@@ -102,6 +107,7 @@ Int2		sqlTypes[] = {
 	0
 };
 
+
 Int4
 sqltype_to_pgtype(SWORD fSqlType)
 {
@@ -109,7 +115,6 @@ sqltype_to_pgtype(SWORD fSqlType)
 
 	switch (fSqlType)
 	{
-
 		case SQL_BINARY:
 			pgType = PG_TYPE_BYTEA;
 			break;
@@ -185,15 +190,19 @@ sqltype_to_pgtype(SWORD fSqlType)
 	return pgType;
 }
 
-/*	There are two ways of calling this function:
-	1.	When going through the supported PG types (SQLGetTypeInfo)
-	2.	When taking any type id (SQLColumns, SQLGetData)
 
-	The first type will always work because all the types defined are returned here.
-	The second type will return a default based on global parameter when it does not
-	know.	This allows for supporting
-	types that are unknown.  All other pg routines in here return a suitable default.
-*/
+/*
+ *	There are two ways of calling this function:
+ *
+ *	1.	When going through the supported PG types (SQLGetTypeInfo)
+ *
+ *	2.	When taking any type id (SQLColumns, SQLGetData)
+ *
+ *	The first type will always work because all the types defined are returned here.
+ *	The second type will return a default based on global parameter when it does not
+ *	know.	This allows for supporting
+ *	types that are unknown.  All other pg routines in here return a suitable default.
+ */
 Int2
 pgtype_to_sqltype(StatementClass *stmt, Int4 type)
 {
@@ -228,7 +237,7 @@ pgtype_to_sqltype(StatementClass *stmt, Int4 type)
 		case PG_TYPE_INT4:
 			return SQL_INTEGER;
 
-			/* Change this to SQL_BIGINT for ODBC v3 bjm 2001-01-23 */
+		/* Change this to SQL_BIGINT for ODBC v3 bjm 2001-01-23 */
 		case PG_TYPE_INT8:
 			return SQL_CHAR;
 
@@ -253,19 +262,19 @@ pgtype_to_sqltype(StatementClass *stmt, Int4 type)
 			return globals.bools_as_char ? SQL_CHAR : SQL_BIT;
 
 		default:
-
 			/*
 			 * first, check to see if 'type' is in list.  If not, look up
 			 * with query. Add oid, name to list.  If it's already in
 			 * list, just return.
 			 */
-			if (type == stmt->hdbc->lobj_type)	/* hack until permanent
-												 * type is available */
+			/* hack until permanent type is available */
+			if (type == stmt->hdbc->lobj_type)	
 				return SQL_LONGVARBINARY;
 
 			return globals.unknowns_as_longvarchar ? SQL_LONGVARCHAR : SQL_VARCHAR;
 	}
 }
+
 
 Int2
 pgtype_to_ctype(StatementClass *stmt, Int4 type)
@@ -305,21 +314,21 @@ pgtype_to_ctype(StatementClass *stmt, Int4 type)
 			return SQL_C_BINARY;
 
 		default:
-
-			if (type == stmt->hdbc->lobj_type)	/* hack until permanent
-												 * type is available */
+			/* hack until permanent type is available */
+			if (type == stmt->hdbc->lobj_type)
 				return SQL_C_BINARY;
 
 			return SQL_C_CHAR;
 	}
 }
 
+
 char *
 pgtype_to_name(StatementClass *stmt, Int4 type)
 {
 	switch (type)
 	{
-			case PG_TYPE_CHAR:return "char";
+		case PG_TYPE_CHAR:return "char";
 		case PG_TYPE_CHAR2:
 			return "char2";
 		case PG_TYPE_CHAR4:
@@ -369,8 +378,8 @@ pgtype_to_name(StatementClass *stmt, Int4 type)
 			return PG_TYPE_LO_NAME;
 
 		default:
-			if (type == stmt->hdbc->lobj_type)	/* hack until permanent
-												 * type is available */
+				/* hack until permanent type is available */
+			if (type == stmt->hdbc->lobj_type)	
 				return PG_TYPE_LO_NAME;
 
 			/*
@@ -380,6 +389,7 @@ pgtype_to_name(StatementClass *stmt, Int4 type)
 			return "unknown";
 	}
 }
+
 
 static Int2
 getNumericScale(StatementClass *stmt, Int4 type, int col)
@@ -417,6 +427,7 @@ getNumericScale(StatementClass *stmt, Int4 type, int col)
 				PG_NUMERIC_MAX_SCALE);
 }
 
+
 static Int4
 getNumericPrecision(StatementClass *stmt, Int4 type, int col)
 {
@@ -452,6 +463,7 @@ getNumericPrecision(StatementClass *stmt, Int4 type, int col)
 				QR_get_display_size(result, col) :
 				PG_NUMERIC_MAX_PRECISION);
 }
+
 
 Int4
 getCharPrecision(StatementClass *stmt, Int4 type, int col, int handle_unknown_size_as)
@@ -524,19 +536,19 @@ getCharPrecision(StatementClass *stmt, Int4 type, int col, int handle_unknown_si
 		return p;
 }
 
-/*	For PG_TYPE_VARCHAR, PG_TYPE_BPCHAR, PG_TYPE_NUMERIC, SQLColumns will
-	override this length with the atttypmod length from pg_attribute .
 
-	If col >= 0, then will attempt to get the info from the result set.
-	This is used for functions SQLDescribeCol and SQLColAttributes.
-*/
+/*
+ *	For PG_TYPE_VARCHAR, PG_TYPE_BPCHAR, PG_TYPE_NUMERIC, SQLColumns will
+ *	override this length with the atttypmod length from pg_attribute .
+ *
+ *	If col >= 0, then will attempt to get the info from the result set.
+ *	This is used for functions SQLDescribeCol and SQLColAttributes.
+ */
 Int4
 pgtype_precision(StatementClass *stmt, Int4 type, int col, int handle_unknown_size_as)
 {
-
 	switch (type)
 	{
-
 		case PG_TYPE_CHAR:
 			return 1;
 		case PG_TYPE_CHAR2:
@@ -597,10 +609,10 @@ pgtype_precision(StatementClass *stmt, Int4 type, int col, int handle_unknown_si
 	}
 }
 
+
 Int4
 pgtype_display_size(StatementClass *stmt, Int4 type, int col, int handle_unknown_size_as)
 {
-
 	switch (type)
 	{
 		case PG_TYPE_INT2:
@@ -628,22 +640,22 @@ pgtype_display_size(StatementClass *stmt, Int4 type, int col, int handle_unknown
 		case PG_TYPE_FLOAT8:
 			return 22;
 
-			/* Character types use regular precision */
+		/* Character types use regular precision */
 		default:
 			return pgtype_precision(stmt, type, col, handle_unknown_size_as);
 	}
 }
 
-/*	For PG_TYPE_VARCHAR, PG_TYPE_BPCHAR, SQLColumns will
-	override this length with the atttypmod length from pg_attribute
-*/
+
+/*
+ *	For PG_TYPE_VARCHAR, PG_TYPE_BPCHAR, SQLColumns will
+ *	override this length with the atttypmod length from pg_attribute
+ */
 Int4
 pgtype_length(StatementClass *stmt, Int4 type, int col, int handle_unknown_size_as)
 {
-
 	switch (type)
 	{
-
 		case PG_TYPE_INT2:
 			return 2;
 
@@ -674,19 +686,18 @@ pgtype_length(StatementClass *stmt, Int4 type, int col, int handle_unknown_size_
 		case PG_TYPE_TIMESTAMP:
 			return 16;
 
-
-			/* Character types (and NUMERIC) use the default precision */
+		/* Character types (and NUMERIC) use the default precision */
 		default:
 			return pgtype_precision(stmt, type, col, handle_unknown_size_as);
 	}
 }
+
 
 Int2
 pgtype_scale(StatementClass *stmt, Int4 type, int col)
 {
 	switch (type)
 	{
-
 		case PG_TYPE_INT2:
 		case PG_TYPE_OID:
 		case PG_TYPE_XID:
@@ -697,10 +708,10 @@ pgtype_scale(StatementClass *stmt, Int4 type, int col)
 		case PG_TYPE_MONEY:
 		case PG_TYPE_BOOL:
 
-			/*
-			 * Number of digits to the right of the decimal point in
-			 * "yyyy-mm=dd hh:mm:ss[.f...]"
-			 */
+		/*
+		 * Number of digits to the right of the decimal point in
+		 * "yyyy-mm=dd hh:mm:ss[.f...]"
+		 */
 		case PG_TYPE_ABSTIME:
 		case PG_TYPE_DATETIME:
 		case PG_TYPE_TIMESTAMP:
@@ -729,11 +740,11 @@ pgtype_radix(StatementClass *stmt, Int4 type)
 		case PG_TYPE_MONEY:
 		case PG_TYPE_FLOAT8:
 			return 10;
-
 		default:
 			return -1;
 	}
 }
+
 
 Int2
 pgtype_nullable(StatementClass *stmt, Int4 type)
@@ -741,12 +752,12 @@ pgtype_nullable(StatementClass *stmt, Int4 type)
 	return SQL_NULLABLE;		/* everything should be nullable */
 }
 
+
 Int2
 pgtype_auto_increment(StatementClass *stmt, Int4 type)
 {
 	switch (type)
 	{
-
 		case PG_TYPE_INT2:
 		case PG_TYPE_OID:
 		case PG_TYPE_XID:
@@ -770,6 +781,7 @@ pgtype_auto_increment(StatementClass *stmt, Int4 type)
 	}
 }
 
+
 Int2
 pgtype_case_sensitive(StatementClass *stmt, Int4 type)
 {
@@ -792,6 +804,7 @@ pgtype_case_sensitive(StatementClass *stmt, Int4 type)
 	}
 }
 
+
 Int2
 pgtype_money(StatementClass *stmt, Int4 type)
 {
@@ -803,6 +816,7 @@ pgtype_money(StatementClass *stmt, Int4 type)
 			return FALSE;
 	}
 }
+
 
 Int2
 pgtype_searchable(StatementClass *stmt, Int4 type)
@@ -824,6 +838,7 @@ pgtype_searchable(StatementClass *stmt, Int4 type)
 			return SQL_ALL_EXCEPT_LIKE;
 	}
 }
+
 
 Int2
 pgtype_unsigned(StatementClass *stmt, Int4 type)
@@ -848,12 +863,12 @@ pgtype_unsigned(StatementClass *stmt, Int4 type)
 	}
 }
 
+
 char *
 pgtype_literal_prefix(StatementClass *stmt, Int4 type)
 {
 	switch (type)
 	{
-
 			case PG_TYPE_INT2:
 			case PG_TYPE_OID:
 			case PG_TYPE_XID:
@@ -868,13 +883,13 @@ pgtype_literal_prefix(StatementClass *stmt, Int4 type)
 			return "'";
 	}
 }
+
 
 char *
 pgtype_literal_suffix(StatementClass *stmt, Int4 type)
 {
 	switch (type)
 	{
-
 			case PG_TYPE_INT2:
 			case PG_TYPE_OID:
 			case PG_TYPE_XID:
@@ -890,13 +905,14 @@ pgtype_literal_suffix(StatementClass *stmt, Int4 type)
 	}
 }
 
+
 char *
 pgtype_create_params(StatementClass *stmt, Int4 type)
 {
 	switch (type)
 	{
-			case PG_TYPE_CHAR:
-			case PG_TYPE_VARCHAR:return "max. length";
+		case PG_TYPE_CHAR:
+		case PG_TYPE_VARCHAR:return "max. length";
 		default:
 			return NULL;
 	}
@@ -906,8 +922,10 @@ pgtype_create_params(StatementClass *stmt, Int4 type)
 Int2
 sqltype_to_default_ctype(Int2 sqltype)
 {
-	/* from the table on page 623 of ODBC 2.0 Programmer's Reference */
-	/* (Appendix D) */
+	/*
+	 *	from the table on page 623 of ODBC 2.0 Programmer's Reference
+	 * 	(Appendix D)
+	 */
 	switch (sqltype)
 	{
 		case SQL_CHAR:
@@ -951,7 +969,8 @@ sqltype_to_default_ctype(Int2 sqltype)
 		case SQL_TIMESTAMP:
 			return SQL_C_TIMESTAMP;
 
-		default:				/* should never happen */
+		default:
+			/* should never happen */
 			return SQL_C_CHAR;
 	}
 }

@@ -1,4 +1,5 @@
-/* Module:			dlg_specific.c
+/*-------
+ * Module:			dlg_specific.c
  *
  * Description:		This module contains any specific code for handling
  *					dialog boxes such as driver/datasource options.  Both the
@@ -12,7 +13,7 @@
  * API functions:	none
  *
  * Comments:		See "notice.txt" for copyright and license information.
- *
+ *-------
  */
 /* Multibyte support	Eiji Tokuya 2001-03-15 */
 
@@ -50,11 +51,11 @@
 
 extern GLOBAL_VALUES globals;
 
+
 #ifdef WIN32
 void
 SetDlgStuff(HWND hdlg, ConnInfo *ci)
 {
-
 	/*
 	 * If driver attribute NOT present, then set the datasource name and
 	 * description
@@ -72,6 +73,7 @@ SetDlgStuff(HWND hdlg, ConnInfo *ci)
 	SetDlgItemText(hdlg, IDC_PORT, ci->port);
 }
 
+
 void
 GetDlgStuff(HWND hdlg, ConnInfo *ci)
 {
@@ -83,7 +85,6 @@ GetDlgStuff(HWND hdlg, ConnInfo *ci)
 	GetDlgItemText(hdlg, IDC_PASSWORD, ci->password, sizeof(ci->password));
 	GetDlgItemText(hdlg, IDC_PORT, ci->port, sizeof(ci->port));
 }
-
 
 
 int			CALLBACK
@@ -141,7 +142,6 @@ driver_optionsProc(HWND hdlg,
 			switch (GET_WM_COMMAND_ID(wParam, lParam))
 			{
 				case IDOK:
-
 					globals.commlog = IsDlgButtonChecked(hdlg, DRV_COMMLOG);
 					globals.disable_optimizer = IsDlgButtonChecked(hdlg, DRV_OPTIMIZER);
 					globals.ksqo = IsDlgButtonChecked(hdlg, DRV_KSQO);
@@ -228,11 +228,11 @@ driver_optionsProc(HWND hdlg,
 
 					break;
 			}
-
 	}
 
 	return FALSE;
 }
+
 
 int			CALLBACK
 ds_optionsProc(HWND hdlg,
@@ -267,11 +267,9 @@ ds_optionsProc(HWND hdlg,
 			else if (strncmp(ci->protocol, PG63, strlen(PG63)) == 0)
 				CheckDlgButton(hdlg, DS_PG63, 1);
 			else
-/* latest */
+				/* latest */
 				CheckDlgButton(hdlg, DS_PG64, 1);
-
-
-
+				
 			CheckDlgButton(hdlg, DS_SHOWOIDCOLUMN, atoi(ci->show_oid_column));
 			CheckDlgButton(hdlg, DS_FAKEOIDINDEX, atoi(ci->fake_oid_index));
 			CheckDlgButton(hdlg, DS_ROWVERSIONING, atoi(ci->row_versioning));
@@ -283,7 +281,6 @@ ds_optionsProc(HWND hdlg,
 			SetDlgItemText(hdlg, DS_CONNSETTINGS, ci->conn_settings);
 			break;
 
-
 		case WM_COMMAND:
 			switch (GET_WM_COMMAND_ID(wParam, lParam))
 			{
@@ -292,9 +289,7 @@ ds_optionsProc(HWND hdlg,
 					EnableWindow(GetDlgItem(hdlg, DS_FAKEOIDINDEX), IsDlgButtonChecked(hdlg, DS_SHOWOIDCOLUMN));
 					return TRUE;
 
-
 				case IDOK:
-
 					ci = (ConnInfo *) GetWindowLong(hdlg, DWL_USER);
 					mylog("IDOK: got ci = %u\n", ci);
 
@@ -307,7 +302,7 @@ ds_optionsProc(HWND hdlg,
 					else if (IsDlgButtonChecked(hdlg, DS_PG63))
 						strcpy(ci->protocol, PG63);
 					else
-/* latest */
+						/* latest */
 						strcpy(ci->protocol, PG64);
 
 					sprintf(ci->show_system_tables, "%d", IsDlgButtonChecked(hdlg, DS_SHOWSYSTEMTABLES));
@@ -321,7 +316,6 @@ ds_optionsProc(HWND hdlg,
 					/* Datasource Connection Settings */
 					GetDlgItemText(hdlg, DS_CONNSETTINGS, ci->conn_settings, sizeof(ci->conn_settings));
 
-
 					/* fall through */
 
 				case IDCANCEL:
@@ -334,6 +328,7 @@ ds_optionsProc(HWND hdlg,
 }
 
 #endif	 /* WIN32 */
+
 
 void
 makeConnectString(char *connect_string, ConnInfo *ci)
@@ -365,10 +360,10 @@ makeConnectString(char *connect_string, ConnInfo *ci)
 			encoded_conn_settings);
 }
 
+
 void
 copyAttributes(ConnInfo *ci, char *attribute, char *value)
 {
-
 	if (stricmp(attribute, "DSN") == 0)
 		strcpy(ci->dsn, value);
 
@@ -415,8 +410,8 @@ copyAttributes(ConnInfo *ci, char *attribute, char *value)
 	}
 
 	mylog("copyAttributes: DSN='%s',server='%s',dbase='%s',user='%s',passwd='%s',port='%s',onlyread='%s',protocol='%s', conn_settings='%s')\n", ci->dsn, ci->server, ci->database, ci->username, ci->password, ci->port, ci->onlyread, ci->protocol, ci->conn_settings);
-
 }
+
 
 void
 getDSNdefaults(ConnInfo *ci)
@@ -450,8 +445,10 @@ getDSNinfo(ConnInfo *ci, char overwrite)
 	char	   *DSN = ci->dsn;
 	char		encoded_conn_settings[LARGE_REGISTRY_LEN];
 
-/*	If a driver keyword was present, then dont use a DSN and return. */
-/*	If DSN is null and no driver, then use the default datasource. */
+/*
+ *	If a driver keyword was present, then dont use a DSN and return.
+ *	If DSN is null and no driver, then use the default datasource.
+ */
 	if (DSN[0] == '\0')
 	{
 		if (ci->driver[0] != '\0')
@@ -514,10 +511,8 @@ getDSNinfo(ConnInfo *ci, char overwrite)
 	if (ci->translation_option[0] == '\0' || overwrite)
 		SQLGetPrivateProfileString(DSN, INI_TRANSLATIONOPTION, "", ci->translation_option, sizeof(ci->translation_option), ODBC_INI);
 
-
 	/* Allow override of odbcinst.ini parameters here */
 	getGlobalDefaults(DSN, ODBC_INI, TRUE);
-
 
 	qlog("DSN info: DSN='%s',server='%s',port='%s',dbase='%s',user='%s',passwd='%s'\n",
 		 DSN,
@@ -546,7 +541,6 @@ getDSNinfo(ConnInfo *ci, char overwrite)
 	qlog("          translation_dll='%s',translation_option='%s'\n",
 		 ci->translation_dll,
 		 ci->translation_option);
-
 }
 
 
@@ -626,14 +620,14 @@ writeDSNinfo(ConnInfo *ci)
 }
 
 
-/*	This function reads the ODBCINST.INI portion of
-	the registry and gets any driver defaults.
-*/
+/*
+ *	This function reads the ODBCINST.INI portion of
+ *	the registry and gets any driver defaults.
+ */
 void
 getGlobalDefaults(char *section, char *filename, char override)
 {
 	char		temp[256];
-
 
 	/* Fetch Count is stored in driver section */
 	SQLGetPrivateProfileString(section, INI_FETCH, "",
@@ -648,7 +642,6 @@ getGlobalDefaults(char *section, char *filename, char override)
 	else if (!override)
 		globals.fetch_max = FETCH_MAX;
 
-
 	/* Socket Buffersize is stored in driver section */
 	SQLGetPrivateProfileString(section, INI_SOCKET, "",
 							   temp, sizeof(temp), filename);
@@ -656,7 +649,6 @@ getGlobalDefaults(char *section, char *filename, char override)
 		globals.socket_buffersize = atoi(temp);
 	else if (!override)
 		globals.socket_buffersize = SOCK_BUFFER_SIZE;
-
 
 	/* Debug is stored in the driver section */
 	SQLGetPrivateProfileString(section, INI_DEBUG, "",
@@ -666,7 +658,6 @@ getGlobalDefaults(char *section, char *filename, char override)
 	else if (!override)
 		globals.debug = DEFAULT_DEBUG;
 
-
 	/* CommLog is stored in the driver section */
 	SQLGetPrivateProfileString(section, INI_COMMLOG, "",
 							   temp, sizeof(temp), filename);
@@ -674,7 +665,6 @@ getGlobalDefaults(char *section, char *filename, char override)
 		globals.commlog = atoi(temp);
 	else if (!override)
 		globals.commlog = DEFAULT_COMMLOG;
-
 
 	/* Optimizer is stored in the driver section only */
 	SQLGetPrivateProfileString(section, INI_OPTIMIZER, "",
@@ -734,8 +724,6 @@ getGlobalDefaults(char *section, char *filename, char override)
 	else if (!override)
 		globals.cancel_as_freestmt = DEFAULT_CANCELASFREESTMT;
 
-
-
 	/* UseDeclareFetch is stored in the driver section only */
 	SQLGetPrivateProfileString(section, INI_USEDECLAREFETCH, "",
 							   temp, sizeof(temp), filename);
@@ -743,7 +731,6 @@ getGlobalDefaults(char *section, char *filename, char override)
 		globals.use_declarefetch = atoi(temp);
 	else if (!override)
 		globals.use_declarefetch = DEFAULT_USEDECLAREFETCH;
-
 
 	/* Max Varchar Size */
 	SQLGetPrivateProfileString(section, INI_MAXVARCHARSIZE, "",
@@ -804,7 +791,6 @@ getGlobalDefaults(char *section, char *filename, char override)
 	/* Dont allow override of an override! */
 	if (!override)
 	{
-
 		/*
 		 * ConnSettings is stored in the driver section and per datasource
 		 * for override
@@ -831,14 +817,14 @@ getGlobalDefaults(char *section, char *filename, char override)
 			strcpy(globals.protocol, temp);
 		else
 			strcpy(globals.protocol, DEFAULT_PROTOCOL);
-
 	}
 }
 
 
-/*	This function writes any global parameters (that can be manipulated)
-	to the ODBCINST.INI portion of the registry
-*/
+/*
+ *	This function writes any global parameters (that can be manipulated)
+ *	to the ODBCINST.INI portion of the registry
+ */
 void
 updateGlobals(void)
 {

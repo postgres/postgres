@@ -1,4 +1,5 @@
-/* Module:			statement.c
+/*-------
+ * Module:			statement.c
  *
  * Description:		This module contains functions related to creating
  *					and manipulating a statement.
@@ -8,7 +9,7 @@
  * API functions:	SQLAllocStmt, SQLFreeStmt
  *
  * Comments:		See "notice.txt" for copyright and license information.
- *
+ *-------
  */
 
 #ifdef HAVE_CONFIG_H
@@ -43,6 +44,7 @@ extern GLOBAL_VALUES globals;
 #endif
 #endif
 #define PRN_NULLCHECK
+
 
 /*	Map sql commands to statement types */
 static struct
@@ -126,11 +128,8 @@ SQLAllocStmt(HDBC hdbc,
 
 	*phstmt = (HSTMT) stmt;
 
-	/*
-	 * Copy default statement options based from Connection options
-	 */
+	/* Copy default statement options based from Connection options */
 	stmt->options = conn->stmtOptions;
-
 
 	/* Save the handle for later */
 	stmt->phstmt = phstmt;
@@ -180,29 +179,27 @@ SQLFreeStmt(HSTMT hstmt,
 
 		/* Destroy the statement and free any results, cursors, etc. */
 		SC_Destructor(stmt);
-
 	}
 	else if (fOption == SQL_UNBIND)
 	{
 		SC_unbind_cols(stmt);
-
 	}
 	else if (fOption == SQL_CLOSE)
 	{
-		/* this should discard all the results, but leave the statement */
-		/* itself in place (it can be executed again) */
+		/*
+		 * this should discard all the results, but leave the statement
+		 * itself in place (it can be executed again)
+		 */
 		if (!SC_recycle_statement(stmt))
 		{
 			/* errormsg passed in above */
 			SC_log_error(func, "", stmt);
 			return SQL_ERROR;
 		}
-
 	}
 	else if (fOption == SQL_RESET_PARAMS)
 	{
 		SC_free_params(stmt, STMT_FREE_PARAMS_ALL);
-
 	}
 	else
 	{
@@ -216,8 +213,7 @@ SQLFreeStmt(HSTMT hstmt,
 }
 
 
-
-/**********************************************************************
+/*
  * StatementClass implementation
  */
 void
@@ -233,6 +229,7 @@ InitializeStatementOptions(StatementOptions *opt)
 	opt->retrieve_data = SQL_RD_ON;
 	opt->use_bookmarks = SQL_UB_OFF;
 }
+
 
 StatementClass *
 SC_Constructor(void)
@@ -288,7 +285,6 @@ SC_Constructor(void)
 		rv->nfld = 0;
 		rv->parse_status = STMT_PARSE_NONE;
 
-
 		/* Clear Statement Options -- defaults will be set in AllocStmt */
 		memset(&rv->options, 0, sizeof(StatementOptions));
 
@@ -298,10 +294,10 @@ SC_Constructor(void)
 	return rv;
 }
 
+
 char
 SC_Destructor(StatementClass *self)
 {
-
 	mylog("SC_Destructor: self=%u, self->result=%u, self->hdbc=%u\n", self, self->result, self->hdbc);
 	if (STMT_EXECUTING == self->status)
 	{
@@ -325,17 +321,12 @@ SC_Destructor(StatementClass *self)
 
 	/*
 	 * the memory pointed to by the bindings is not deallocated by the
-	 * driver
-	 */
-
-	/*
-	 * by by the application that uses that driver, so we don't have to
+	 * driver but by the application that uses that driver, so we don't have to
 	 * care
 	 */
 	/* about that here. */
 	if (self->bindings)
 		free(self->bindings);
-
 
 	/* Free the parsed table information */
 	if (self->ti)
@@ -358,7 +349,6 @@ SC_Destructor(StatementClass *self)
 		free(self->fi);
 	}
 
-
 	free(self);
 
 	mylog("SC_Destructor: EXIT\n");
@@ -366,9 +356,11 @@ SC_Destructor(StatementClass *self)
 	return TRUE;
 }
 
-/*	Free parameters and free the memory from the
-	data-at-execution parameters that was allocated in SQLPutData.
-*/
+
+/*
+ *	Free parameters and free the memory from the
+ *	data-at-execution parameters that was allocated in SQLPutData.
+ */
 void
 SC_free_params(StatementClass *self, char option)
 {
@@ -383,7 +375,6 @@ SC_free_params(StatementClass *self, char option)
 	{
 		if (self->parameters[i].data_at_exec == TRUE)
 		{
-
 			if (self->parameters[i].EXEC_used)
 			{
 				free(self->parameters[i].EXEC_used);
@@ -430,9 +421,10 @@ statement_type(char *statement)
 }
 
 
-/*	Called from SQLPrepare if STMT_PREMATURE, or
-	from SQLExecute if STMT_FINISHED, or
-	from SQLFreeStmt(SQL_CLOSE)
+/*
+ *	Called from SQLPrepare if STMT_PREMATURE, or
+ *	from SQLExecute if STMT_FINISHED, or
+ *	from SQLFreeStmt(SQL_CLOSE)
  */
 char
 SC_recycle_statement(StatementClass *self)
@@ -472,7 +464,6 @@ SC_recycle_statement(StatementClass *self)
 			conn = SC_get_conn(self);
 			if (!CC_is_in_autocommit(conn) && CC_is_in_trans(conn))
 			{
-
 				QResultClass *res = CC_send_query(conn, "ABORT", NULL);
 
 				QR_Destructor(res);
@@ -523,10 +514,9 @@ SC_recycle_statement(StatementClass *self)
 	}
 	self->inaccurate_result = FALSE;
 
-	/****************************************************************/
-	/* Reset only parameters that have anything to do with results */
-	/****************************************************************/
-
+	/*
+	 * Reset only parameters that have anything to do with results
+	 */
 	self->status = STMT_READY;
 	self->manual_result = FALSE;/* very important */
 
@@ -542,13 +532,16 @@ SC_recycle_statement(StatementClass *self)
 
 	self->lobj_fd = -1;
 
-	/* Free any data at exec params before the statement is executed */
-	/* again.  If not, then there will be a memory leak when */
-	/* the next SQLParamData/SQLPutData is called. */
+	/*
+	 * Free any data at exec params before the statement is executed
+	 * again.  If not, then there will be a memory leak when
+	 * the next SQLParamData/SQLPutData is called.
+	 */
 	SC_free_params(self, STMT_FREE_PARAMS_DATA_AT_EXEC_ONLY);
 
 	return TRUE;
 }
+
 
 /* Pre-execute a statement (SQLPrepare/SQLDescribeCol) */
 void
@@ -586,6 +579,7 @@ SC_pre_execute(StatementClass *self)
 	}
 }
 
+
 /* This is only called from SQLFreeStmt(SQL_UNBIND) */
 char
 SC_unbind_cols(StatementClass *self)
@@ -607,6 +601,7 @@ SC_unbind_cols(StatementClass *self)
 	return 1;
 }
 
+
 void
 SC_clear_error(StatementClass *self)
 {
@@ -616,8 +611,10 @@ SC_clear_error(StatementClass *self)
 }
 
 
-/*	This function creates an error msg which is the concatenation */
-/*	of the result, statement, connection, and socket messages. */
+/*
+ *	This function creates an error msg which is the concatenation
+ *	of the result, statement, connection, and socket messages.
+ */
 char *
 SC_create_errormsg(StatementClass *self)
 {
@@ -654,12 +651,13 @@ SC_create_errormsg(StatementClass *self)
 	return msg;
 }
 
+
 char
 SC_get_error(StatementClass *self, int *number, char **message)
 {
 	char		rv;
 
-/*	Create a very informative errormsg if it hasn't been done yet. */
+	/*	Create a very informative errormsg if it hasn't been done yet. */
 	if (!self->errormsg_created)
 	{
 		self->errormsg = SC_create_errormsg(self);
@@ -679,15 +677,18 @@ SC_get_error(StatementClass *self, int *number, char **message)
 	return rv;
 }
 
-/*	Currently, the driver offers very simple bookmark support -- it is
-	just the current row number.  But it could be more sophisticated
-	someday, such as mapping a key to a 32 bit value
-*/
+
+/*
+ *	Currently, the driver offers very simple bookmark support -- it is
+ *	just the current row number.  But it could be more sophisticated
+ *	someday, such as mapping a key to a 32 bit value
+ */
 unsigned long
 SC_get_bookmark(StatementClass *self)
 {
 	return (self->currTuple + 1);
 }
+
 
 RETCODE
 SC_fetch(StatementClass *self)
@@ -702,7 +703,7 @@ SC_fetch(StatementClass *self)
 	char	   *value;
 	ColumnInfoClass *ci;
 
-/* TupleField *tupleField; */
+	/* TupleField *tupleField; */
 
 	self->last_fetch_count = 0;
 	ci = QR_get_fields(res);	/* the column info */
@@ -711,11 +712,9 @@ SC_fetch(StatementClass *self)
 
 	if (self->manual_result || !globals.use_declarefetch)
 	{
-
 		if (self->currTuple >= QR_get_num_tuples(res) - 1 ||
 			(self->options.maxRows > 0 && self->currTuple == self->options.maxRows - 1))
 		{
-
 			/*
 			 * if at the end of the tuples, return "no data found" and set
 			 * the cursor past the end of the result set
@@ -729,7 +728,6 @@ SC_fetch(StatementClass *self)
 	}
 	else
 	{
-
 		/* read from the cache or the physical next tuple */
 		retval = QR_next_tuple(res);
 		if (retval < 0)
@@ -739,7 +737,6 @@ SC_fetch(StatementClass *self)
 		}
 		else if (retval > 0)
 			(self->currTuple)++;/* all is well */
-
 		else
 		{
 			mylog("SQLFetch: error\n");
@@ -772,7 +769,6 @@ SC_fetch(StatementClass *self)
 
 	for (lf = 0; lf < num_cols; lf++)
 	{
-
 		mylog("fetch: cols=%d, lf=%d, self = %u, self->bindings = %u, buffer[] = %u\n", num_cols, lf, self, self->bindings, self->bindings[lf].buffer);
 
 		/* reset for SQLGetData */
@@ -828,13 +824,13 @@ SC_fetch(StatementClass *self)
 					result = SQL_SUCCESS_WITH_INFO;
 					break;
 
-				case COPY_GENERAL_ERROR:		/* error msg already
-												 * filled in */
+				/* error msg already filled in */
+				case COPY_GENERAL_ERROR:
 					SC_log_error(func, "", self);
 					result = SQL_ERROR;
 					break;
 
-					/* This would not be meaningful in SQLFetch. */
+				/* This would not be meaningful in SQLFetch. */
 				case COPY_NO_DATA_FOUND:
 					break;
 
@@ -908,12 +904,9 @@ SC_execute(StatementClass *self)
 			CC_set_in_trans(conn);
 	}
 
-
-
 	oldstatus = conn->status;
 	conn->status = CONN_EXECUTING;
 	self->status = STMT_EXECUTING;
-
 
 	/* If it's a SELECT statement, use a cursor. */
 
@@ -924,11 +917,9 @@ SC_execute(StatementClass *self)
 	/* in copy_statement... */
 	if (self->statement_type == STMT_TYPE_SELECT)
 	{
-
 		char		fetch[128];
 
 		mylog("       Sending SELECT statement on stmt=%u, cursor_name='%s'\n", self, self->cursor_name);
-
 
 		/* send the declare/select */
 		self->result = CC_send_query(conn, self->stmt_with_params, NULL);
@@ -936,7 +927,6 @@ SC_execute(StatementClass *self)
 		if (globals.use_declarefetch && self->result != NULL &&
 			QR_command_successful(self->result))
 		{
-
 			QR_Destructor(self->result);
 
 			/*
@@ -954,20 +944,15 @@ SC_execute(StatementClass *self)
 			 * will correct for any discrepancies in sizes and adjust the
 			 * cache accordingly.
 			 */
-
 			sprintf(fetch, "fetch %d in %s", qi.row_size, self->cursor_name);
 
 			self->result = CC_send_query(conn, fetch, &qi);
 		}
-
 		mylog("     done sending the query:\n");
-
-
-
 	}
 	else
-	{							/* not a SELECT statement so don't use a
-								 * cursor */
+	{
+		/* not a SELECT statement so don't use a cursor */
 		mylog("      it's NOT a select statement: stmt=%u\n", self);
 		self->result = CC_send_query(conn, self->stmt_with_params, NULL);
 
@@ -986,7 +971,6 @@ SC_execute(StatementClass *self)
 			QR_Destructor(res);
 			CC_set_no_trans(conn);
 		}
-
 	}
 
 	conn->status = oldstatus;
@@ -995,7 +979,6 @@ SC_execute(StatementClass *self)
 	/* Check the status of the result */
 	if (self->result)
 	{
-
 		was_ok = QR_command_successful(self->result);
 		was_nonfatal = QR_command_nonfatal(self->result);
 
@@ -1004,8 +987,8 @@ SC_execute(StatementClass *self)
 		else
 			self->errornumber = was_nonfatal ? STMT_INFO_ONLY : STMT_ERROR_TAKEN_FROM_BACKEND;
 
-		self->currTuple = -1;	/* set cursor before the first tuple in
-								 * the list */
+		/* set cursor before the first tuple in the list */
+		self->currTuple = -1;
 		self->current_col = -1;
 		self->rowset_start = -1;
 
@@ -1029,9 +1012,8 @@ SC_execute(StatementClass *self)
 			CC_abort(conn);
 	}
 	else
-	{							/* Bad Error -- The error message will be
-								 * in the Connection */
-
+	{
+		/* Bad Error -- The error message will be in the Connection */
 		if (self->statement_type == STMT_TYPE_CREATE)
 		{
 			self->errornumber = STMT_CREATE_TABLE_ERROR;
@@ -1068,6 +1050,7 @@ SC_execute(StatementClass *self)
 		return SQL_ERROR;
 	}
 }
+
 
 void
 SC_log_error(char *func, char *desc, StatementClass *self)

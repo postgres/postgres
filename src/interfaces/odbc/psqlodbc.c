@@ -1,15 +1,16 @@
-/* Module:			psqlodbc.c
+/*--------
+ * Module:			psqlodbc.c
  *
- * Description:		This module contains the main entry point (DllMain) for the library.
- *					It also contains functions to get and set global variables for the
- *					driver in the registry.
+ * Description:		This module contains the main entry point (DllMain)
+ *					for the library.  It also contains functions to get
+ *					and set global variables for the driver in the registry.
  *
  * Classes:			n/a
  *
  * API functions:	none
  *
  * Comments:		See "notice.txt" for copyright and license information.
- *
+ *--------
  */
 
 #ifdef HAVE_CONFIG_H
@@ -59,7 +60,6 @@ DllMain(HANDLE hInst, ULONG ul_reason_for_call, LPVOID lpReserved)
 			if (LOBYTE(wsaData.wVersion) != 1 ||
 				HIBYTE(wsaData.wVersion) != 1)
 			{
-
 				WSACleanup();
 				return FALSE;
 			}
@@ -71,9 +71,7 @@ DllMain(HANDLE hInst, ULONG ul_reason_for_call, LPVOID lpReserved)
 			break;
 
 		case DLL_PROCESS_DETACH:
-
 			WSACleanup();
-
 			return TRUE;
 
 		case DLL_THREAD_DETACH:
@@ -111,7 +109,8 @@ init(void)
 
 #else							/* not __GNUC__ */
 
-/* These two functions do shared library initialziation on UNIX, well at least
+/*
+ * These two functions do shared library initialziation on UNIX, well at least
  * on Linux. I don't know about other systems.
  */
 BOOL
@@ -131,12 +130,14 @@ _fini(void)
 
 #endif	 /* not WIN32 */
 
-/*	This function is used to cause the Driver Manager to
-	call functions by number rather than name, which is faster.
-	The ordinal value of this function must be 199 to have the
-	Driver Manager do this.  Also, the ordinal values of the
-	functions must match the value of fFunction in SQLGetFunctions()
-*/
+
+/*
+ *	This function is used to cause the Driver Manager to
+ *	call functions by number rather than name, which is faster.
+ *	The ordinal value of this function must be 199 to have the
+ *	Driver Manager do this.  Also, the ordinal values of the
+ *	functions must match the value of fFunction in SQLGetFunctions()
+ */
 RETCODE SQL_API
 SQLDummyOrdinal(void)
 {

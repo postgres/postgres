@@ -1,4 +1,5 @@
-/* Module:		   convert.c
+/*-------
+ * Module:		   convert.c
  *
  * Description:    This module contains routines related to
  *				   converting parameters and columns into requested data types.
@@ -12,7 +13,7 @@
  * API functions:  none
  *
  * Comments:	   See "notice.txt" for copyright and license information.
- *
+ *-------
  */
 /* Multibyte support  Eiji Tokuya	2001-03-15	*/
 
@@ -64,11 +65,11 @@ typedef signed char SCHAR;
 
 extern GLOBAL_VALUES globals;
 
-/*	How to map ODBC scalar functions {fn func(args)} to Postgres
- *	This is just a simple substitution
- *	List augmented from
- *	 http://www.merant.com/datadirect/download/docs/odbc16/Odbcref/rappc.htm
- * - thomas 2000-04-03
+/*
+ *	How to map ODBC scalar functions {fn func(args)} to Postgres.
+ *	This is just a simple substitution.  List augmented from:
+ *	http://www.merant.com/datadirect/download/docs/odbc16/Odbcref/rappc.htm
+ * 	- thomas 2000-04-03
  */
 char	   *mapFuncs[][2] = {
 /*	{ "ASCII",		 "ascii"	  }, */
@@ -141,21 +142,24 @@ unsigned int conv_from_octal(unsigned char *s);
 unsigned int conv_from_hex(unsigned char *s);
 char	   *conv_to_octal(unsigned char val);
 
-/********		A Guide for date/time/timestamp conversions    **************
+/*---------
+ *			A Guide for date/time/timestamp conversions
+ *
+ *			field_type		fCType				Output
+ *			----------		------				----------
+ *			PG_TYPE_DATE	SQL_C_DEFAULT		SQL_C_DATE
+ *			PG_TYPE_DATE	SQL_C_DATE			SQL_C_DATE
+ *			PG_TYPE_DATE	SQL_C_TIMESTAMP		SQL_C_TIMESTAMP		(time = 0 (midnight))
+ *			PG_TYPE_TIME	SQL_C_DEFAULT		SQL_C_TIME
+ *			PG_TYPE_TIME	SQL_C_TIME			SQL_C_TIME
+ *			PG_TYPE_TIME	SQL_C_TIMESTAMP		SQL_C_TIMESTAMP		(date = current date)
+ *			PG_TYPE_ABSTIME SQL_C_DEFAULT		SQL_C_TIMESTAMP
+ *			PG_TYPE_ABSTIME SQL_C_DATE			SQL_C_DATE			(time is truncated)
+ *			PG_TYPE_ABSTIME SQL_C_TIME			SQL_C_TIME			(date is truncated)
+ *			PG_TYPE_ABSTIME SQL_C_TIMESTAMP		SQL_C_TIMESTAMP
+ *---------
+ */
 
-			field_type		fCType				Output
-			----------		------				----------
-			PG_TYPE_DATE	SQL_C_DEFAULT		SQL_C_DATE
-			PG_TYPE_DATE	SQL_C_DATE			SQL_C_DATE
-			PG_TYPE_DATE	SQL_C_TIMESTAMP		SQL_C_TIMESTAMP		(time = 0 (midnight))
-			PG_TYPE_TIME	SQL_C_DEFAULT		SQL_C_TIME
-			PG_TYPE_TIME	SQL_C_TIME			SQL_C_TIME
-			PG_TYPE_TIME	SQL_C_TIMESTAMP		SQL_C_TIMESTAMP		(date = current date)
-			PG_TYPE_ABSTIME SQL_C_DEFAULT		SQL_C_TIMESTAMP
-			PG_TYPE_ABSTIME SQL_C_DATE			SQL_C_DATE			(time is truncated)
-			PG_TYPE_ABSTIME SQL_C_TIME			SQL_C_TIME			(date is truncated)
-			PG_TYPE_ABSTIME SQL_C_TIMESTAMP		SQL_C_TIMESTAMP
-******************************************************************************/
 
 
 /*	This is called by SQLFetch() */
@@ -167,6 +171,7 @@ copy_and_convert_field_bindinfo(StatementClass *stmt, Int4 field_type, void *val
 	return copy_and_convert_field(stmt, field_type, value, (Int2) bic->returntype, (PTR) bic->buffer,
 							 (SDWORD) bic->buflen, (SDWORD *) bic->used);
 }
+
 
 /*	This is called by SQLGetData() */
 int
@@ -187,17 +192,18 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 	int			result = COPY_OK;
 	char		tempBuf[TEXT_FIELD_SIZE + 5];
 
-/*	rgbValueOffset is *ONLY* for character and binary data */
-/*	pcbValueOffset is for computing any pcbValue location */
+	/*---------
+	 *	rgbValueOffset is *ONLY* for character and binary data.
+	 *	pcbValueOffset is for computing any pcbValue location
+	 *---------
+	 */
 
 	if (bind_size > 0)
 	{
-
 		pcbValueOffset = rgbValueOffset = (bind_size * bind_row);
 	}
 	else
 	{
-
 		pcbValueOffset = bind_row * sizeof(SDWORD);
 		rgbValueOffset = bind_row * cbValueMax;
 
@@ -215,13 +221,14 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 
 	if (!value)
 	{
-		/* handle a null just by returning SQL_NULL_DATA in pcbValue, */
-		/* and doing nothing to the buffer.							  */
+		/*
+		 * handle a null just by returning SQL_NULL_DATA in pcbValue,
+		 * and doing nothing to the buffer.
+		 */
 		if (pcbValue)
 			*(SDWORD *) ((char *) pcbValue + pcbValueOffset) = SQL_NULL_DATA;
 		return COPY_OK;
 	}
-
 
 	if (stmt->hdbc->DataSourceToDriver != NULL)
 	{
@@ -234,21 +241,19 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 									   NULL, 0, NULL);
 	}
 
-
-	/********************************************************************
-		First convert any specific postgres types into more
-		useable data.
-
-		NOTE: Conversions from PG char/varchar of a date/time/timestamp
-		value to SQL_C_DATE,SQL_C_TIME, SQL_C_TIMESTAMP not supported
-	*********************************************************************/
+	/*
+	 *	First convert any specific postgres types into more
+	 *	useable data.
+	 *
+	 *	NOTE: Conversions from PG char/varchar of a date/time/timestamp
+	 *	value to SQL_C_DATE,SQL_C_TIME, SQL_C_TIMESTAMP not supported
+	 */
 	switch (field_type)
 	{
-
-			/*
-			 * $$$ need to add parsing for date/time/timestamp strings in
-			 * PG_TYPE_CHAR,VARCHAR $$$
-			 */
+		/*
+		 * $$$ need to add parsing for date/time/timestamp strings in
+		 * PG_TYPE_CHAR,VARCHAR $$$
+		 */
 		case PG_TYPE_DATE:
 			sscanf(value, "%4d-%2d-%2d", &st.y, &st.m, &st.d);
 			break;
@@ -261,13 +266,13 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 		case PG_TYPE_DATETIME:
 		case PG_TYPE_TIMESTAMP:
 			if (strnicmp(value, "invalid", 7) != 0)
-			{
 				sscanf(value, "%4d-%2d-%2d %2d:%2d:%2d", &st.y, &st.m, &st.d, &st.hh, &st.mm, &st.ss);
-
-			}
 			else
-			{					/* The timestamp is invalid so set
-								 * something conspicuous, like the epoch */
+			{
+				/*
+				 * The timestamp is invalid so set
+				 * something conspicuous, like the epoch
+				 */
 				t = 0;
 				tim = localtime(&t);
 				st.m = tim->tm_mon + 1;
@@ -290,7 +295,7 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 			}
 			break;
 
-			/* This is for internal use by SQLStatistics() */
+		/* This is for internal use by SQLStatistics() */
 		case PG_TYPE_INT2VECTOR:
 			{
 				int			nval,
@@ -369,15 +374,11 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 		mylog("copy_and_convert, SQL_C_DEFAULT: fCType = %d\n", fCType);
 	}
 
-
 	rgbValueBindRow = (char *) rgbValue + rgbValueOffset;
 
 	if (fCType == SQL_C_CHAR)
 	{
-
-
 		/* Special character formatting as required */
-
 		/*
 		 * These really should return error if cbValueMax is not big
 		 * enough.
@@ -456,7 +457,6 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 
 				if (cbValueMax > 0)
 				{
-
 					copy_len = (len >= cbValueMax) ? cbValueMax - 1 : len;
 
 					/* Copy the data */
@@ -483,7 +483,6 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 	}
 	else
 	{
-
 		/*
 		 * for SQL_C_CHAR, it's probably ok to leave currency symbols in.
 		 * But to convert to numeric types, it is necessary to get rid of
@@ -633,7 +632,6 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 
 				if (stmt->current_col >= 0)
 				{
-
 					/* No more data left for this column */
 					if (stmt->bindings[stmt->current_col].data_left == 0)
 						return COPY_NO_DATA_FOUND;
@@ -690,10 +688,11 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 }
 
 
-/*	This function inserts parameters into an SQL statements.
-	It will also modify a SELECT statement for use with declare/fetch cursors.
-	This function no longer does any dynamic memory allocation!
-*/
+/*
+ *	This function inserts parameters into an SQL statements.
+ *	It will also modify a SELECT statement for use with declare/fetch cursors.
+ *	This function no longer does any dynamic memory allocation!
+ */
 int
 copy_statement_with_parameters(StatementClass *stmt)
 {
@@ -760,7 +759,6 @@ copy_statement_with_parameters(StatementClass *stmt)
 
 	for (opos = 0; opos < oldstmtlen; opos++)
 	{
-
 		/* Squeeze carriage-return/linefeed pairs to linefeed only */
 		if (old_statement[opos] == '\r' && opos + 1 < oldstmtlen &&
 			old_statement[opos + 1] == '\n')
@@ -782,10 +780,8 @@ copy_statement_with_parameters(StatementClass *stmt)
 
 #ifdef MULTIBYTE
 			char	   *end = multibyte_strchr(begin, '}');
-
 #else
 			char	   *end = strchr(begin, '}');
-
 #endif
 
 			if (!end)
@@ -807,12 +803,9 @@ copy_statement_with_parameters(StatementClass *stmt)
 			}
 
 			opos += end - begin + 1;
-
 			*end = '}';
-
 			continue;
 		}
-
 		/*
 		 * Can you have parameter markers inside of quotes?  I dont think
 		 * so. All the queries I've seen expect the driver to put quotes
@@ -829,12 +822,9 @@ copy_statement_with_parameters(StatementClass *stmt)
 			continue;
 		}
 
-
-
-		/****************************************************/
-		/* Its a '?' parameter alright				  */
-		/****************************************************/
-
+		/*
+		 * Its a '?' parameter alright
+		 */
 		param_number++;
 
 		if (param_number >= stmt->parameters_allocated)
@@ -905,7 +895,6 @@ copy_statement_with_parameters(StatementClass *stmt)
 		buf = NULL;
 		param_string[0] = '\0';
 		cbuf[0] = '\0';
-
 
 		/* Convert input C type to a neutral format */
 		switch (param_ctype)
@@ -1113,13 +1102,10 @@ copy_statement_with_parameters(StatementClass *stmt)
 
 				if (stmt->parameters[param_number].data_at_exec)
 				{
-
 					lobj_oid = stmt->parameters[param_number].lobj_oid;
-
 				}
 				else
 				{
-
 					/* begin transaction if needed */
 					if (!CC_is_in_trans(stmt->hdbc))
 					{
@@ -1264,14 +1250,11 @@ copy_statement_with_parameters(StatementClass *stmt)
 					new_statement[npos++] = '\'';		/* Close Quote */
 
 				break;
-
 		}
-
 	}							/* end, for */
 
 	/* make sure new_statement is always null-terminated */
 	new_statement[npos] = '\0';
-
 
 	if (stmt->hdbc->DriverToDataSource != NULL)
 	{
@@ -1284,9 +1267,9 @@ copy_statement_with_parameters(StatementClass *stmt)
 									   NULL, 0, NULL);
 	}
 
-
 	return SQL_SUCCESS;
 }
+
 
 char *
 mapFunction(char *func)
@@ -1300,7 +1283,10 @@ mapFunction(char *func)
 	return NULL;
 }
 
-/* convert_escape()
+
+/*
+ * convert_escape()
+ *
  * This function returns a pointer to static memory!
  */
 char *
@@ -1330,7 +1316,6 @@ convert_escape(char *value)
 	}
 	else if (strcmp(key, "fn") == 0)
 	{
-
 		/*
 		 * Function invocation Separate off the func name, skipping
 		 * trailing whitespace.
@@ -1381,7 +1366,6 @@ convert_escape(char *value)
 	}
 
 	return escape;
-
 }
 
 
@@ -1405,9 +1389,10 @@ convert_money(char *s)
 }
 
 
-
-/*	This function parses a character string for date/time info and fills in SIMPLE_TIME */
-/*	It does not zero out SIMPLE_TIME in case it is desired to initialize it with a value */
+/*
+ *	This function parses a character string for date/time info and fills in SIMPLE_TIME
+ *	It does not zero out SIMPLE_TIME in case it is desired to initialize it with a value
+ */
 char
 parse_datetime(char *buf, SIMPLE_TIME *st)
 {
@@ -1465,6 +1450,7 @@ parse_datetime(char *buf, SIMPLE_TIME *st)
 	return FALSE;
 }
 
+
 /*	Change linefeed to carriage-return/linefeed */
 int
 convert_linefeeds(char *si, char *dst, size_t max)
@@ -1493,9 +1479,11 @@ convert_linefeeds(char *si, char *dst, size_t max)
 	return out;
 }
 
-/*	Change carriage-return/linefeed to just linefeed
-	Plus, escape any special characters.
-*/
+
+/*
+ *	Change carriage-return/linefeed to just linefeed
+ *	Plus, escape any special characters.
+ */
 char *
 convert_special_chars(char *si, char *dst, int used)
 {
@@ -1537,6 +1525,7 @@ convert_special_chars(char *si, char *dst, int used)
 	return p;
 }
 
+
 /*	!!! Need to implement this function !!!  */
 int
 convert_pgbinary_to_char(char *value, char *rgbValue, int cbValueMax)
@@ -1546,6 +1535,7 @@ convert_pgbinary_to_char(char *value, char *rgbValue, int cbValueMax)
 	strncpy_null(rgbValue, value, cbValueMax);
 	return 0;
 }
+
 
 unsigned int
 conv_from_octal(unsigned char *s)
@@ -1560,6 +1550,7 @@ conv_from_octal(unsigned char *s)
 
 }
 
+
 unsigned int
 conv_from_hex(unsigned char *s)
 {
@@ -1569,7 +1560,6 @@ conv_from_hex(unsigned char *s)
 
 	for (i = 1; i <= 2; i++)
 	{
-
 		if (s[i] >= 'a' && s[i] <= 'f')
 			val = s[i] - 'a' + 10;
 		else if (s[i] >= 'A' && s[i] <= 'F')
@@ -1582,6 +1572,7 @@ conv_from_hex(unsigned char *s)
 
 	return y;
 }
+
 
 /*	convert octal escapes to bytes */
 int
@@ -1629,13 +1620,13 @@ conv_to_octal(unsigned char val)
 	return x;
 }
 
+
 /*	convert non-ascii bytes to octal escape sequences */
 int
 convert_to_pgbinary(unsigned char *in, char *out, int len)
 {
 	int			i,
 				o = 0;
-
 
 	for (i = 0; i < len; i++)
 	{
@@ -1647,7 +1638,6 @@ convert_to_pgbinary(unsigned char *in, char *out, int len)
 			strcpy(&out[o], conv_to_octal(in[i]));
 			o += 5;
 		}
-
 	}
 
 	mylog("convert_to_pgbinary: returning %d, out='%.*s'\n", o, o, out);
@@ -1705,21 +1695,22 @@ decode(char *in, char *out)
 }
 
 
-
-/*	1. get oid (from 'value')
-	2. open the large object
-	3. read from the large object (handle multiple GetData)
-	4. close when read less than requested?  -OR-
-		lseek/read each time
-		handle case where application receives truncated and
-		decides not to continue reading.
-
-	CURRENTLY, ONLY LONGVARBINARY is handled, since that is the only
-	data type currently mapped to a PG_TYPE_LO.  But, if any other types
-	are desired to map to a large object (PG_TYPE_LO), then that would
-	need to be handled here.  For example, LONGVARCHAR could possibly be
-	mapped to PG_TYPE_LO someday, instead of PG_TYPE_TEXT as it is now.
-*/
+/*-------
+ *	1. get oid (from 'value')
+ *	2. open the large object
+ *	3. read from the large object (handle multiple GetData)
+ *	4. close when read less than requested?  -OR-
+ *		lseek/read each time
+ *		handle case where application receives truncated and
+ *		decides not to continue reading.
+ *
+ *	CURRENTLY, ONLY LONGVARBINARY is handled, since that is the only
+ *	data type currently mapped to a PG_TYPE_LO.  But, if any other types
+ *	are desired to map to a large object (PG_TYPE_LO), then that would
+ *	need to be handled here.  For example, LONGVARCHAR could possibly be
+ *	mapped to PG_TYPE_LO someday, instead of PG_TYPE_TEXT as it is now.
+ *-------
+ */
 int
 convert_lo(StatementClass *stmt, void *value, Int2 fCType, PTR rgbValue,
 		   SDWORD cbValueMax, SDWORD *pcbValue)
@@ -1731,7 +1722,7 @@ convert_lo(StatementClass *stmt, void *value, Int2 fCType, PTR rgbValue,
 	BindInfoClass *bindInfo = NULL;
 
 
-/*	If using SQLGetData, then current_col will be set */
+	/*	If using SQLGetData, then current_col will be set */
 	if (stmt->current_col >= 0)
 	{
 		bindInfo = &stmt->bindings[stmt->current_col];
@@ -1745,7 +1736,6 @@ convert_lo(StatementClass *stmt, void *value, Int2 fCType, PTR rgbValue,
 
 	if (!bindInfo || bindInfo->data_left == -1)
 	{
-
 		/* begin transaction if needed */
 		if (!CC_is_in_trans(stmt->hdbc))
 		{
@@ -1784,7 +1774,6 @@ convert_lo(StatementClass *stmt, void *value, Int2 fCType, PTR rgbValue,
 		retval = lo_lseek(stmt->hdbc, stmt->lobj_fd, 0L, SEEK_END);
 		if (retval >= 0)
 		{
-
 			left = lo_tell(stmt->hdbc, stmt->lobj_fd);
 			if (bindInfo)
 				bindInfo->data_left = left;
@@ -1849,10 +1838,8 @@ convert_lo(StatementClass *stmt, void *value, Int2 fCType, PTR rgbValue,
 	if (pcbValue)
 		*pcbValue = left < 0 ? SQL_NO_TOTAL : left;
 
-
 	if (bindInfo && bindInfo->data_left > 0)
 		bindInfo->data_left -= retval;
-
 
 	if (!bindInfo || bindInfo->data_left == 0)
 	{
@@ -1886,7 +1873,5 @@ convert_lo(StatementClass *stmt, void *value, Int2 fCType, PTR rgbValue,
 		stmt->lobj_fd = -1;		/* prevent further reading */
 	}
 
-
 	return result;
-
 }

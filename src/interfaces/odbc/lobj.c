@@ -1,4 +1,5 @@
-/* Module:			lobj.c
+/*--------
+ * Module:			lobj.c
  *
  * Description:		This module contains routines related to manipulating
  *					large objects.
@@ -8,12 +9,13 @@
  * API functions:	none
  *
  * Comments:		See "notice.txt" for copyright and license information.
- *
+ *--------
  */
 
 #include "lobj.h"
 #include "psqlodbc.h"
 #include "connection.h"
+
 
 Oid
 lo_creat(ConnectionClass *conn, int mode)
@@ -30,9 +32,8 @@ lo_creat(ConnectionClass *conn, int mode)
 		return 0;				/* invalid oid */
 	else
 		return retval;
-
-
 }
+
 
 int
 lo_open(ConnectionClass *conn, int lobjId, int mode)
@@ -40,8 +41,7 @@ lo_open(ConnectionClass *conn, int lobjId, int mode)
 	int			fd;
 	int			result_len;
 	LO_ARG		argv[2];
-
-
+ 
 	argv[0].isint = 1;
 	argv[0].len = 4;
 	argv[0].u.integer = lobjId;
@@ -59,6 +59,7 @@ lo_open(ConnectionClass *conn, int lobjId, int mode)
 	return fd;
 }
 
+
 int
 lo_close(ConnectionClass *conn, int fd)
 {
@@ -66,17 +67,14 @@ lo_close(ConnectionClass *conn, int fd)
 	int			retval,
 				result_len;
 
-
 	argv[0].isint = 1;
 	argv[0].len = 4;
 	argv[0].u.integer = fd;
 
 	if (!CC_send_function(conn, LO_CLOSE, &retval, &result_len, 1, argv, 1))
 		return -1;
-
 	else
 		return retval;
-
 }
 
 
@@ -85,7 +83,6 @@ lo_read(ConnectionClass *conn, int fd, char *buf, int len)
 {
 	LO_ARG		argv[2];
 	int			result_len;
-
 
 	argv[0].isint = 1;
 	argv[0].len = 4;
@@ -97,10 +94,10 @@ lo_read(ConnectionClass *conn, int fd, char *buf, int len)
 
 	if (!CC_send_function(conn, LO_READ, (int *) buf, &result_len, 0, argv, 2))
 		return -1;
-
 	else
 		return result_len;
 }
+
 
 int
 lo_write(ConnectionClass *conn, int fd, char *buf, int len)
@@ -108,7 +105,6 @@ lo_write(ConnectionClass *conn, int fd, char *buf, int len)
 	LO_ARG		argv[2];
 	int			retval,
 				result_len;
-
 
 	if (len <= 0)
 		return 0;
@@ -123,10 +119,10 @@ lo_write(ConnectionClass *conn, int fd, char *buf, int len)
 
 	if (!CC_send_function(conn, LO_WRITE, &retval, &result_len, 1, argv, 2))
 		return -1;
-
 	else
 		return retval;
 }
+
 
 int
 lo_lseek(ConnectionClass *conn, int fd, int offset, int whence)
@@ -134,7 +130,6 @@ lo_lseek(ConnectionClass *conn, int fd, int offset, int whence)
 	LO_ARG		argv[3];
 	int			retval,
 				result_len;
-
 
 	argv[0].isint = 1;
 	argv[0].len = 4;
@@ -150,10 +145,10 @@ lo_lseek(ConnectionClass *conn, int fd, int offset, int whence)
 
 	if (!CC_send_function(conn, LO_LSEEK, &retval, &result_len, 1, argv, 3))
 		return -1;
-
 	else
 		return retval;
 }
+
 
 int
 lo_tell(ConnectionClass *conn, int fd)
@@ -162,17 +157,16 @@ lo_tell(ConnectionClass *conn, int fd)
 	int			retval,
 				result_len;
 
-
 	argv[0].isint = 1;
 	argv[0].len = 4;
 	argv[0].u.integer = fd;
 
 	if (!CC_send_function(conn, LO_TELL, &retval, &result_len, 1, argv, 1))
 		return -1;
-
 	else
 		return retval;
 }
+
 
 int
 lo_unlink(ConnectionClass *conn, Oid lobjId)
@@ -181,14 +175,12 @@ lo_unlink(ConnectionClass *conn, Oid lobjId)
 	int			retval,
 				result_len;
 
-
 	argv[0].isint = 1;
 	argv[0].len = 4;
 	argv[0].u.integer = lobjId;
 
 	if (!CC_send_function(conn, LO_UNLINK, &retval, &result_len, 1, argv, 1))
 		return -1;
-
 	else
 		return retval;
 }

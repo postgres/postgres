@@ -1,4 +1,5 @@
-/* Module:			execute.c
+/*-------
+ * Module:			execute.c
  *
  * Description:		This module contains routines related to
  *					preparing and executing an SQL statement.
@@ -9,7 +10,7 @@
  *					SQLCancel, SQLNativeSql, SQLParamData, SQLPutData
  *
  * Comments:		See "notice.txt" for copyright and license information.
- *
+ *-------
  */
 
 #ifdef HAVE_CONFIG_H
@@ -126,14 +127,10 @@ SQLPrepare(HSTMT hstmt,
 	}
 
 	return SQL_SUCCESS;
-
-
 }
 
-/*		-		-		-		-		-		-		-		-		- */
 
 /*		Performs the equivalent of SQLPrepare, followed by SQLExecute. */
-
 RETCODE SQL_API
 SQLExecDirect(
 			  HSTMT hstmt,
@@ -155,8 +152,10 @@ SQLExecDirect(
 	if (stmt->statement)
 		free(stmt->statement);
 
-	/* keep a copy of the un-parametrized statement, in case */
-	/* they try to execute this statement again */
+	/*
+	 * keep a copy of the un-parametrized statement, in case
+	 * they try to execute this statement again
+	 */
 	stmt->statement = make_string(szSqlStr, cbSqlStr, NULL);
 	if (!stmt->statement)
 	{
@@ -170,9 +169,11 @@ SQLExecDirect(
 
 	stmt->prepare = FALSE;
 
-	/* If an SQLPrepare was performed prior to this, but was left in  */
-	/* the premature state because an error occurred prior to SQLExecute */
-	/* then set the statement to finished so it can be recycled. */
+	/*
+	 * If an SQLPrepare was performed prior to this, but was left in
+	 * the premature state because an error occurred prior to SQLExecute
+	 * then set the statement to finished so it can be recycled.
+	 */
 	if (stmt->status == STMT_PREMATURE)
 		stmt->status = STMT_FINISHED;
 
@@ -195,7 +196,8 @@ SQLExecDirect(
 	return result;
 }
 
-/*		Execute a prepared SQL statement */
+
+/*	Execute a prepared SQL statement */
 RETCODE SQL_API
 SQLExecute(
 		   HSTMT hstmt)
@@ -205,7 +207,6 @@ SQLExecute(
 	ConnectionClass *conn;
 	int			i,
 				retval;
-
 
 	mylog("%s: entering...\n", func);
 
@@ -280,14 +281,12 @@ SQLExecute(
 	if ((stmt->prepare && stmt->status != STMT_READY) ||
 		(stmt->status != STMT_ALLOCATED && stmt->status != STMT_READY))
 	{
-
 		stmt->errornumber = STMT_STATUS_ERROR;
 		stmt->errormsg = "The handle does not point to a statement that is ready to be executed";
 		SC_log_error(func, "", stmt);
 		mylog("%s: problem with statement\n", func);
 		return SQL_ERROR;
 	}
-
 
 	/* Check if statement has any data-at-execute parameters when it is not in SC_pre_execute. */
 	if (!stmt->pre_executing)
@@ -336,15 +335,10 @@ SQLExecute(
 
 	mylog("   stmt_with_params = '%s'\n", stmt->stmt_with_params);
 
-
 	return SC_execute(stmt);
-
 }
 
 
-
-
-/*		-		-		-		-		-		-		-		-		- */
 RETCODE SQL_API
 SQLTransact(
 			HENV henv,
@@ -380,7 +374,6 @@ SQLTransact(
 			if (conn && conn->henv == henv)
 				if (SQLTransact(henv, (HDBC) conn, fType) != SQL_SUCCESS)
 					return SQL_ERROR;
-
 		}
 		return SQL_SUCCESS;
 	}
@@ -388,15 +381,9 @@ SQLTransact(
 	conn = (ConnectionClass *) hdbc;
 
 	if (fType == SQL_COMMIT)
-	{
 		stmt_string = "COMMIT";
-
-	}
 	else if (fType == SQL_ROLLBACK)
-	{
 		stmt_string = "ROLLBACK";
-
-	}
 	else
 	{
 		conn->errornumber = CONN_INVALID_ARGUMENT_NO;
@@ -408,7 +395,6 @@ SQLTransact(
 	/* If manual commit and in transaction, then proceed. */
 	if (!CC_is_in_autocommit(conn) && CC_is_in_trans(conn))
 	{
-
 		mylog("SQLTransact: sending on conn %d '%s'\n", conn, stmt_string);
 
 		res = CC_send_query(conn, stmt_string, NULL);
@@ -433,7 +419,6 @@ SQLTransact(
 	return SQL_SUCCESS;
 }
 
-/*		-		-		-		-		-		-		-		-		- */
 
 RETCODE SQL_API
 SQLCancel(
@@ -464,8 +449,6 @@ SQLCancel(
 	 */
 	if (stmt->data_at_exec < 0)
 	{
-
-
 		/*
 		 * MAJOR HACK for Windows to reset the driver manager's cursor
 		 * state: Because of what seems like a bug in the Odbc driver
@@ -507,14 +490,14 @@ SQLCancel(
 	stmt->put_data = FALSE;
 
 	return SQL_SUCCESS;
-
 }
 
-/*		-		-		-		-		-		-		-		-		- */
 
-/*		Returns the SQL string as modified by the driver. */
-/*		Currently, just copy the input string without modification */
-/*		observing buffer limits and truncation. */
+/*
+ *	Returns the SQL string as modified by the driver.
+ *	Currently, just copy the input string without modification
+ *	observing buffer limits and truncation.
+ */
 RETCODE SQL_API
 SQLNativeSql(
 			 HDBC hdbc,
@@ -564,11 +547,11 @@ SQLNativeSql(
 	return result;
 }
 
-/*		-		-		-		-		-		-		-		-		- */
 
-/*		Supplies parameter data at execution time.		Used in conjuction with */
-/*		SQLPutData. */
-
+/*
+ *	Supplies parameter data at execution time.
+ *	Used in conjuction with SQLPutData.
+ */
 RETCODE SQL_API
 SQLParamData(
 			 HSTMT hstmt,
@@ -636,10 +619,8 @@ SQLParamData(
 
 			CC_set_no_trans(stmt->hdbc);
 		}
-
 		stmt->lobj_fd = -1;
 	}
-
 
 	/* Done, now copy the params and then execute the statement */
 	if (stmt->data_at_exec == 0)
@@ -675,11 +656,11 @@ SQLParamData(
 	return SQL_NEED_DATA;
 }
 
-/*		-		-		-		-		-		-		-		-		- */
 
-/*		Supplies parameter data at execution time.		Used in conjunction with */
-/*		SQLParamData. */
-
+/*
+ *	Supplies parameter data at execution time.
+ *	Used in conjunction with SQLParamData.
+ */
 RETCODE SQL_API
 SQLPutData(
 		   HSTMT hstmt,
@@ -701,7 +682,6 @@ SQLPutData(
 		return SQL_INVALID_HANDLE;
 	}
 
-
 	if (stmt->current_exec_param < 0)
 	{
 		stmt->errornumber = STMT_SEQUENCE_ERROR;
@@ -714,7 +694,6 @@ SQLPutData(
 
 	if (!stmt->put_data)
 	{							/* first call */
-
 		mylog("SQLPutData: (1) cbValue = %d\n", cbValue);
 
 		stmt->put_data = TRUE;
@@ -733,11 +712,9 @@ SQLPutData(
 		if (cbValue == SQL_NULL_DATA)
 			return SQL_SUCCESS;
 
-
 		/* Handle Long Var Binary with Large Objects */
 		if (current_param->SQLType == SQL_LONGVARBINARY)
 		{
-
 			/* begin transaction if needed */
 			if (!CC_is_in_trans(stmt->hdbc))
 			{
@@ -775,8 +752,10 @@ SQLPutData(
 				return SQL_ERROR;
 			}
 
-			/* major hack -- to allow convert to see somethings there */
-			/* have to modify convert to handle this better */
+			/*
+			 * major hack -- to allow convert to see somethings there
+			 * have to modify convert to handle this better
+			 */
 			current_param->EXEC_buffer = (char *) &current_param->lobj_oid;
 
 			/* store the fd */
@@ -791,11 +770,10 @@ SQLPutData(
 
 			retval = lo_write(stmt->hdbc, stmt->lobj_fd, rgbValue, cbValue);
 			mylog("lo_write: cbValue=%d, wrote %d bytes\n", cbValue, retval);
-
 		}
 		else
-		{						/* for handling fields */
-
+		{
+			/* for handling fields */
 			if (cbValue == SQL_NTS)
 			{
 				current_param->EXEC_buffer = strdup(rgbValue);
@@ -841,25 +819,21 @@ SQLPutData(
 			}
 		}
 	}
-
 	else
-	{							/* calling SQLPutData more than once */
-
+	{
+		/* calling SQLPutData more than once */
 		mylog("SQLPutData: (>1) cbValue = %d\n", cbValue);
 
 		if (current_param->SQLType == SQL_LONGVARBINARY)
 		{
-
 			/* the large object fd is in EXEC_buffer */
 			retval = lo_write(stmt->hdbc, stmt->lobj_fd, rgbValue, cbValue);
 			mylog("lo_write(2): cbValue = %d, wrote %d bytes\n", cbValue, retval);
 
 			*current_param->EXEC_used += cbValue;
-
 		}
 		else
 		{
-
 			buffer = current_param->EXEC_buffer;
 
 			if (cbValue == SQL_NTS)
@@ -880,11 +854,9 @@ SQLPutData(
 
 				/* reassign buffer incase realloc moved it */
 				current_param->EXEC_buffer = buffer;
-
 			}
 			else if (cbValue > 0)
 			{
-
 				old_pos = *current_param->EXEC_used;
 
 				*current_param->EXEC_used += cbValue;
@@ -906,17 +878,14 @@ SQLPutData(
 
 				/* reassign buffer incase realloc moved it */
 				current_param->EXEC_buffer = buffer;
-
 			}
 			else
 			{
 				SC_log_error(func, "bad cbValue", stmt);
 				return SQL_ERROR;
 			}
-
 		}
 	}
-
 
 	return SQL_SUCCESS;
 }

@@ -1,4 +1,5 @@
-/* GetPrivateProfileString()
+/*-------
+ * GetPrivateProfileString()
  *
  * approximate implementation of
  * Windows NT System Services version of GetPrivateProfileString()
@@ -15,6 +16,7 @@
  * are allowed (that is an anachronism anyway)
  * Added code to search for ODBC_INI file in users home directory on
  * Unix
+ *-------
  */
 
 #ifndef WIN32
@@ -46,7 +48,7 @@
 
 DWORD
 GetPrivateProfileString(char *theSection,		/* section name */
-						char *theKey,	/* search key name */
+						char *theKey,			/* search key name */
 						char *theDefault,		/* default value if not
 												 * found */
 						char *theReturnBuffer,	/* return value stored
@@ -110,7 +112,6 @@ GetPrivateProfileString(char *theSection,		/* section name */
 		aFile = (FILE *) (buf ? fopen(buf, PG_BINARY_R) : NULL);
 	}
 
-
 	aLength = (theDefault == NULL) ? 0 : strlen(theDefault);
 
 	if (theReturnBufferLength == 0 || theReturnBuffer == NULL)
@@ -123,7 +124,6 @@ GetPrivateProfileString(char *theSection,		/* section name */
 	if (aFile == NULL)
 	{
 		/* no ini file specified, return the default */
-
 		++aLength;				/* room for NULL char */
 		aLength = theReturnBufferLength < aLength ?
 			theReturnBufferLength : aLength;
@@ -131,7 +131,6 @@ GetPrivateProfileString(char *theSection,		/* section name */
 		theReturnBuffer[aLength - 1] = '\0';
 		return aLength - 1;
 	}
-
 
 	while (fgets(aLine, sizeof(aLine), aFile) != NULL)
 	{
@@ -147,7 +146,6 @@ GetPrivateProfileString(char *theSection,		/* section name */
 				break;
 
 			case '[':			/* section marker */
-
 				if ((aString = strchr(aLine, ']')))
 				{
 					aStart = aLine + 1;
@@ -159,30 +157,25 @@ GetPrivateProfileString(char *theSection,		/* section name */
 					*(aString + 1) = '\0';
 
 					/* accept as matched if NULL key or exact match */
-
 					if (!theSection || !strcmp(aStart, theSection))
 						aSectionFound = TRUE;
 					else
 						aSectionFound = FALSE;
 				}
-
 				break;
 
 			default:
 
 				/* try to match value keys if in proper section */
-
 				if (aSectionFound)
 				{
 					/* try to match requested key */
-
 					if ((aString = aValue = strchr(aLine, '=')))
 					{
 						*aValue = '\0';
 						++aValue;
 
 						/* strip leading blanks in value field */
-
 						while (*aValue == ' ' && aValue < aLine + sizeof(aLine))
 							*aValue++ = '\0';
 						if (aValue >= aLine + sizeof(aLine))
@@ -196,7 +189,6 @@ GetPrivateProfileString(char *theSection,		/* section name */
 						aStart++;
 
 					/* strip trailing blanks from key */
-
 					if (aString)
 					{
 						while (--aString >= aStart && *aString == ' ')
@@ -204,16 +196,13 @@ GetPrivateProfileString(char *theSection,		/* section name */
 					}
 
 					/* see if key is matched */
-
 					if (theKey == NULL || !strcmp(theKey, aStart))
 					{
 						/* matched -- first, terminate value part */
-
 						aKeyFound = TRUE;
 						aLength = strlen(aValue);
 
 						/* remove trailing blanks from aValue if any */
-
 						aString = aValue + aLength - 1;
 
 						while (--aString > aValue && *aString == ' ')
@@ -223,7 +212,6 @@ GetPrivateProfileString(char *theSection,		/* section name */
 						}
 
 						/* unquote value if quoted */
-
 						if (aLength >= 2 && aValue[0] == '"' &&
 							aValue[aLength - 1] == '"')
 						{
@@ -236,7 +224,6 @@ GetPrivateProfileString(char *theSection,		/* section name */
 						else
 						{
 							/* single quotes allowed also... */
-
 							if (aLength >= 2 && aValue[0] == '\'' &&
 								aValue[aLength - 1] == '\'')
 							{
@@ -247,13 +234,11 @@ GetPrivateProfileString(char *theSection,		/* section name */
 						}
 
 						/* compute maximum length copyable */
-
 						aLineLength = (aLength <
 						theReturnBufferLength - aReturnLength) ? aLength :
 							theReturnBufferLength - aReturnLength;
 
 						/* do the copy to return buffer */
-
 						if (aLineLength)
 						{
 							strncpy(&theReturnBuffer[aReturnLength],
@@ -270,11 +255,9 @@ GetPrivateProfileString(char *theSection,		/* section name */
 							fclose(aFile);
 							aFile = NULL;
 						}
-
 						return aReturnLength > 0 ? aReturnLength - 1 : 0;
 					}
 				}
-
 				break;
 		}
 	}
@@ -283,7 +266,8 @@ GetPrivateProfileString(char *theSection,		/* section name */
 		fclose(aFile);
 
 	if (!aKeyFound)
-	{							/* key wasn't found return default */
+	{
+		/* key wasn't found return default */
 		++aLength;				/* room for NULL char */
 		aLength = theReturnBufferLength < aLength ?
 			theReturnBufferLength : aLength;
@@ -294,9 +278,10 @@ GetPrivateProfileString(char *theSection,		/* section name */
 	return aReturnLength > 0 ? aReturnLength - 1 : 0;
 }
 
+
 DWORD
 WritePrivateProfileString(char *theSection,		/* section name */
-						  char *theKey, /* write key name */
+						  char *theKey, 		/* write key name */
 						  char *theBuffer,		/* input buffer */
 						  char *theIniFileName) /* pathname of ini file to
 												 * write */
@@ -304,14 +289,16 @@ WritePrivateProfileString(char *theSection,		/* section name */
 	return 0;
 }
 
+
 #if 0
-/* Ok. What the hell's the default behaviour for a null input buffer, and null
+/*
+ * Ok. What the hell's the default behaviour for a null input buffer, and null
  * section name. For now if either are null I ignore the request, until
  * I find out different.
  */
 DWORD
 WritePrivateProfileString(char *theSection,		/* section name */
-						  char *theKey, /* write key name */
+						  char *theKey, 		/* write key name */
 						  char *theBuffer,		/* input buffer */
 						  char *theIniFileName) /* pathname of ini file to
 												 * write */
@@ -353,11 +340,12 @@ WritePrivateProfileString(char *theSection,		/* section name */
 	if (ptr == NULL || *ptr == '\0')
 		ptr = "/home";
 
-	/* This doesn't make it so we find an ini file but allows normal */
-	/* processing to continue further on down. The likelihood is that */
-	/* the file won't be found and thus the default value will be */
-	/* returned. */
-	/* */
+	/*
+	 * This doesn't make it so we find an ini file but allows normal
+	 * processing to continue further on down. The likelihood is that
+	 * the file won't be found and thus the default value will be
+	 * returned.
+	 */
 	if (MAXPGPATH - 1 < strlen(ptr) + j)
 	{
 		if (MAXPGPATH - 1 < strlen(ptr))
@@ -368,9 +356,10 @@ WritePrivateProfileString(char *theSection,		/* section name */
 
 	sprintf(buf, "%s/%s", ptr, theIniFileName);
 
-	/* This code makes it so that a file in the users home dir */
-	/* overrides a the "default" file as passed in */
-	/* */
+	/*
+	 * This code makes it so that a file in the users home dir
+	 * overrides a the "default" file as passed in
+	 */
 	aFile = (FILE *) (buf ? fopen(buf, "r+") : NULL);
 	if (!aFile)
 	{
@@ -380,13 +369,13 @@ WritePrivateProfileString(char *theSection,		/* section name */
 			return 0;
 	}
 
-
 	aLength = strlen(theBuffer);
 
-	/* We have to search for theKey, because if it already */
-	/* exists we have to overwrite it. If it doesn't exist */
-	/* we just write a new line to the file. */
-	/* */
+	/*
+	 * We have to search for theKey, because if it already
+	 * exists we have to overwrite it. If it doesn't exist
+	 * we just write a new line to the file.
+	 */
 	while (fgets(aLine, sizeof(aLine), aFile) != NULL)
 	{
 		aLineLength = strlen(aLine);
@@ -401,7 +390,6 @@ WritePrivateProfileString(char *theSection,		/* section name */
 				break;
 
 			case '[':			/* section marker */
-
 				if ((aString = strchr(aLine, ']')))
 				{
 					*aString = '\0';
@@ -411,13 +399,10 @@ WritePrivateProfileString(char *theSection,		/* section name */
 					if (!strcmp(aLine + 1, theSection))
 						aSectionFound = TRUE;
 				}
-
 				break;
 
 			default:
-
 				/* try to match value keys if in proper section */
-
 				if (aSectionFound)
 				{
 					/* try to match requested key */
@@ -428,7 +413,6 @@ WritePrivateProfileString(char *theSection,		/* section name */
 						++aValue;
 
 						/* strip leading blanks in value field */
-
 						while (*aValue == ' ' && aValue < aLine + sizeof(aLine))
 							*aValue++ = '\0';
 						if (aValue >= aLine + sizeof(aLine))
@@ -438,7 +422,6 @@ WritePrivateProfileString(char *theSection,		/* section name */
 						aValue = "";
 
 					/* strip trailing blanks from key */
-
 					if (aString)
 					{
 						while (--aString >= aLine && *aString == ' ')
@@ -446,7 +429,6 @@ WritePrivateProfileString(char *theSection,		/* section name */
 					}
 
 					/* see if key is matched */
-
 					if (!strcmp(theKey, aLine))
 					{
 						keyFound = TRUE;
@@ -460,7 +442,6 @@ WritePrivateProfileString(char *theSection,		/* section name */
 					}
 				}
 		}
-
 		break;
 	}
 }

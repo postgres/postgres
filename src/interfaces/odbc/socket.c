@@ -1,4 +1,5 @@
-/* Module:			socket.c
+/*-------
+ * Module:			socket.c
  *
  * Description:		This module contains functions for low level socket
  *					operations (connecting/reading/writing to the backend)
@@ -8,7 +9,7 @@
  * API functions:	none
  *
  * Comments:		See "notice.txt" for copyright and license information.
- *
+ *-------
  */
 
 #ifdef HAVE_CONFIG_H
@@ -42,6 +43,7 @@ SOCK_clear_error(SocketClass *self)
 	self->errormsg = NULL;
 }
 
+
 SocketClass *
 SOCK_Constructor()
 {
@@ -70,15 +72,13 @@ SOCK_Constructor()
 			free(rv);
 			return NULL;
 		}
-
 		rv->errormsg = NULL;
 		rv->errornumber = 0;
-
 		rv->reverse = FALSE;
 	}
 	return rv;
-
 }
+
 
 void
 SOCK_Destructor(SocketClass *self)
@@ -97,7 +97,6 @@ SOCK_Destructor(SocketClass *self)
 		free(self->buffer_out);
 
 	free(self);
-
 }
 
 
@@ -149,7 +148,6 @@ SOCK_connect_to(SocketClass *self, unsigned short port, char *hostname)
 	if (connect(self->socket, (struct sockaddr *) & (sadr),
 				sizeof(sadr)) < 0)
 	{
-
 		self->errornumber = SOCKET_COULD_NOT_CONNECT;
 		self->errormsg = "Could not connect to remote socket.";
 		closesocket(self->socket);
@@ -194,9 +192,10 @@ SOCK_put_n_char(SocketClass *self, char *buffer, int len)
 }
 
 
-/*	bufsize must include room for the null terminator
-	will read at most bufsize-1 characters + null.
-*/
+/*
+ *	bufsize must include room for the null terminator
+ *	will read at most bufsize-1 characters + null.
+ */
 void
 SOCK_get_string(SocketClass *self, char *buffer, int bufsize)
 {
@@ -297,15 +296,16 @@ SOCK_flush_output(SocketClass *self)
 	self->buffer_filled_out = 0;
 }
 
+
 unsigned char
 SOCK_get_next_byte(SocketClass *self)
 {
-
 	if (self->buffer_read_in >= self->buffer_filled_in)
 	{
-		/* there are no more bytes left in the buffer so */
-		/* reload the buffer */
-
+		/*
+		 * there are no more bytes left in the buffer so
+		 * reload the buffer
+		 */
 		self->buffer_read_in = 0;
 		self->buffer_filled_in = recv(self->socket, (char *) self->buffer_in, globals.socket_buffersize, 0);
 
@@ -328,6 +328,7 @@ SOCK_get_next_byte(SocketClass *self)
 	}
 	return self->buffer_in[self->buffer_read_in++];
 }
+
 
 void
 SOCK_put_next_byte(SocketClass *self, unsigned char next_byte)

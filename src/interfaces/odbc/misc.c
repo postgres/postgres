@@ -1,4 +1,5 @@
-/* Module:			misc.c
+/*-------
+ * Module:			misc.c
  *
  * Description:		This module contains miscellaneous routines
  *					such as for debugging/logging and string functions.
@@ -8,7 +9,7 @@
  * API functions:	none
  *
  * Comments:		See "notice.txt" for copyright and license information.
- *
+ *-------
  */
 
 #include <stdio.h>
@@ -30,6 +31,7 @@
 
 extern GLOBAL_VALUES globals;
 void		generate_filename(char *, char *, char *);
+
 
 void
 generate_filename(char *dirname, char *prefix, char *filename)
@@ -56,8 +58,8 @@ generate_filename(char *dirname, char *prefix, char *filename)
 	return;
 }
 
-#ifdef MY_LOG
 
+#ifdef MY_LOG
 void
 mylog(char *fmt,...)
 {
@@ -83,12 +85,10 @@ mylog(char *fmt,...)
 		va_end(args);
 	}
 }
-
 #endif
 
 
 #ifdef Q_LOG
-
 void
 qlog(char *fmt,...)
 {
@@ -114,7 +114,6 @@ qlog(char *fmt,...)
 		va_end(args);
 	}
 }
-
 #endif
 
 /*	Undefine these because windows.h will redefine and cause a warning */
@@ -137,7 +136,10 @@ qlog(char *fmt,...)
 #endif
 
 
-/*	returns STRCPY_FAIL, STRCPY_TRUNCATED, or #bytes copied (not including null term) */
+/*
+ *	returns STRCPY_FAIL, STRCPY_TRUNCATED, or #bytes copied
+ *	(not including null term)
+ */
 int
 my_strcpy(char *dst, int dst_len, char *src, int src_len)
 {
@@ -154,7 +156,6 @@ my_strcpy(char *dst, int dst_len, char *src, int src_len)
 
 	if (src_len <= 0)
 		return STRCPY_FAIL;
-
 	else
 	{
 		if (src_len < dst_len)
@@ -173,10 +174,13 @@ my_strcpy(char *dst, int dst_len, char *src, int src_len)
 	return strlen(dst);
 }
 
-/* strncpy copies up to len characters, and doesn't terminate */
-/* the destination string if src has len characters or more. */
-/* instead, I want it to copy up to len-1 characters and always */
-/* terminate the destination string. */
+
+/*
+ * strncpy copies up to len characters, and doesn't terminate
+ * the destination string if src has len characters or more.
+ * instead, I want it to copy up to len-1 characters and always
+ * terminate the destination string.
+ */
 char *
 strncpy_null(char *dst, const char *src, int len)
 {
@@ -185,7 +189,6 @@ strncpy_null(char *dst, const char *src, int len)
 
 	if (NULL != dst)
 	{
-
 		/* Just in case, check for special lengths */
 		if (len == SQL_NULL_DATA)
 		{
@@ -204,9 +207,14 @@ strncpy_null(char *dst, const char *src, int len)
 	return dst;
 }
 
-/*	Create a null terminated string (handling the SQL_NTS thing): */
-/*		1. If buf is supplied, place the string in there (assumes enough space) and return buf. */
-/*		2. If buf is not supplied, malloc space and return this string */
+
+/*------
+ *	Create a null terminated string (handling the SQL_NTS thing):
+ *		1. If buf is supplied, place the string in there
+ *		   (assumes enough space) and return buf.
+ *		2. If buf is not supplied, malloc space and return this string
+ *------
+ */
 char *
 make_string(char *s, int len, char *buf)
 {
@@ -234,14 +242,16 @@ make_string(char *s, int len, char *buf)
 	return NULL;
 }
 
-/*	Concatenate a single formatted argument to a given buffer handling the SQL_NTS thing. */
-/*	"fmt" must contain somewhere in it the single form '%.*s' */
-/*	This is heavily used in creating queries for info routines (SQLTables, SQLColumns). */
-/*	This routine could be modified to use vsprintf() to handle multiple arguments. */
+
+/*
+ *	Concatenate a single formatted argument to a given buffer handling the SQL_NTS thing.
+ *	"fmt" must contain somewhere in it the single form '%.*s'.
+ *	This is heavily used in creating queries for info routines (SQLTables, SQLColumns).
+ *	This routine could be modified to use vsprintf() to handle multiple arguments.
+ */
 char *
 my_strcat(char *buf, char *fmt, char *s, int len)
 {
-
 	if (s && (len > 0 || (len == SQL_NTS && strlen(s) > 0)))
 	{
 		int			length = (len > 0) ? len : strlen(s);
@@ -253,6 +263,7 @@ my_strcat(char *buf, char *fmt, char *s, int len)
 	}
 	return NULL;
 }
+
 
 void
 remove_newlines(char *string)
@@ -266,6 +277,7 @@ remove_newlines(char *string)
 			string[i] = ' ';
 	}
 }
+
 
 char *
 trim(char *s)

@@ -1,4 +1,5 @@
-/* Module:			bind.c
+/*-------
+ * Module:			bind.c
  *
  * Description:		This module contains routines related to binding
  *					columns and parameters.
@@ -9,7 +10,7 @@
  *					SQLParamOptions(NI)
  *
  * Comments:		See "notice.txt" for copyright and license information.
- *
+ *-------
  */
 
 #ifdef HAVE_CONFIG_H
@@ -33,8 +34,8 @@
 #include "sqlext.h"
 #endif
 
-/*		Bind parameters on a statement handle */
 
+/*		Bind parameters on a statement handle */
 RETCODE SQL_API
 SQLBindParameter(
 				 HSTMT hstmt,
@@ -112,8 +113,8 @@ SQLBindParameter(
 		}
 	}
 
-	ipar--;						/* use zero based column numbers for the
-								 * below part */
+	/* use zero based column numbers for the below part */
+	ipar--;
 
 	/* store the given info */
 	stmt->parameters[ipar].buflen = cbValueMax;
@@ -158,9 +159,8 @@ SQLBindParameter(
 	return SQL_SUCCESS;
 }
 
-/*		-		-		-		-		-		-		-		-		- */
 
-/*		Associate a user-supplied buffer with a database column. */
+/*  Associate a user-supplied buffer with a database column. */
 RETCODE SQL_API
 SQLBindCol(
 		   HSTMT hstmt,
@@ -197,7 +197,6 @@ SQLBindCol(
 	/* If the bookmark column is being bound, then just save it */
 	if (icol == 0)
 	{
-
 		if (rgbValue == NULL)
 		{
 			stmt->bookmark.buffer = NULL;
@@ -220,10 +219,12 @@ SQLBindCol(
 		return SQL_SUCCESS;
 	}
 
-	/* allocate enough bindings if not already done */
-	/* Most likely, execution of a statement would have setup the  */
-	/* necessary bindings. But some apps call BindCol before any */
-	/* statement is executed. */
+	/*
+	 * Allocate enough bindings if not already done.
+	 * Most likely, execution of a statement would have setup the
+	 * necessary bindings. But some apps call BindCol before any
+	 * statement is executed.
+	 */
 	if (icol > stmt->bindings_allocated)
 		extend_bindings(stmt, icol);
 
@@ -236,8 +237,8 @@ SQLBindCol(
 		return SQL_ERROR;
 	}
 
-	icol--;						/* use zero based col numbers from here
-								 * out */
+	/* use zero based col numbers from here out */
+	icol--;
 
 	/* Reset for SQLGetData */
 	stmt->bindings[icol].data_left = -1;
@@ -264,15 +265,15 @@ SQLBindCol(
 	return SQL_SUCCESS;
 }
 
-/*		-		-		-		-		-		-		-		-		- */
 
-/*	Returns the description of a parameter marker. */
-/*	This function is listed as not being supported by SQLGetFunctions() because it is  */
-/*	used to describe "parameter markers" (not bound parameters), in which case,  */
-/*	the dbms should return info on the markers.  Since Postgres doesn't support that, */
-/*	it is best to say this function is not supported and let the application assume a  */
-/*	data type (most likely varchar). */
-
+/*
+ *	Returns the description of a parameter marker.
+ *	This function is listed as not being supported by SQLGetFunctions() because it is
+ *	used to describe "parameter markers" (not bound parameters), in which case,
+ *	the dbms should return info on the markers.  Since Postgres doesn't support that,
+ *	it is best to say this function is not supported and let the application assume a
+ *	data type (most likely varchar).
+ */
 RETCODE SQL_API
 SQLDescribeParam(
 				 HSTMT hstmt,
@@ -323,10 +324,8 @@ SQLDescribeParam(
 	return SQL_SUCCESS;
 }
 
-/*		-		-		-		-		-		-		-		-		- */
 
-/*		Sets multiple values (arrays) for the set of parameter markers. */
-
+/*	Sets multiple values (arrays) for the set of parameter markers. */
 RETCODE SQL_API
 SQLParamOptions(
 				HSTMT hstmt,
@@ -341,15 +340,16 @@ SQLParamOptions(
 	return SQL_ERROR;
 }
 
-/*		-		-		-		-		-		-		-		-		- */
 
-/*	This function should really talk to the dbms to determine the number of  */
-/*	"parameter markers" (not bound parameters) in the statement.  But, since */
-/*	Postgres doesn't support that, the driver should just count the number of markers */
-/*	and return that.  The reason the driver just can't say this function is unsupported */
-/*	like it does for SQLDescribeParam is that some applications don't care and try  */
-/*	to call it anyway. */
-/*	If the statement does not have parameters, it should just return 0. */
+/*
+ *	This function should really talk to the dbms to determine the number of
+ *	"parameter markers" (not bound parameters) in the statement.  But, since
+ *	Postgres doesn't support that, the driver should just count the number of markers
+ *	and return that.  The reason the driver just can't say this function is unsupported
+ *	like it does for SQLDescribeParam is that some applications don't care and try
+ *	to call it anyway.
+ *	If the statement does not have parameters, it should just return 0.
+ */
 RETCODE SQL_API
 SQLNumParams(
 			 HSTMT hstmt,
@@ -387,10 +387,8 @@ SQLNumParams(
 	}
 	else
 	{
-
 		for (i = 0; i < strlen(stmt->statement); i++)
 		{
-
 			if (stmt->statement[i] == '?' && !in_quote)
 				(*pcpar)++;
 			else
@@ -399,12 +397,12 @@ SQLNumParams(
 					in_quote = (in_quote ? FALSE : TRUE);
 			}
 		}
-
 		return SQL_SUCCESS;
 	}
 }
 
-/********************************************************************
+
+/*
  *	 Bindings Implementation
  */
 BindInfoClass *
@@ -428,6 +426,7 @@ create_empty_bindings(int num_columns)
 	return new_bindings;
 }
 
+
 void
 extend_bindings(StatementClass *stmt, int num_columns)
 {
@@ -437,11 +436,12 @@ extend_bindings(StatementClass *stmt, int num_columns)
 
 	mylog("%s: entering ... stmt=%u, bindings_allocated=%d, num_columns=%d\n", func, stmt, stmt->bindings_allocated, num_columns);
 
-	/* if we have too few, allocate room for more, and copy the old */
-	/* entries into the new structure */
+	/*
+	 * if we have too few, allocate room for more, and copy the old
+	 * entries into the new structure
+	 */
 	if (stmt->bindings_allocated < num_columns)
 	{
-
 		new_bindings = create_empty_bindings(num_columns);
 		if (!new_bindings)
 		{
@@ -466,11 +466,12 @@ extend_bindings(StatementClass *stmt, int num_columns)
 
 		stmt->bindings = new_bindings;
 		stmt->bindings_allocated = num_columns;
-
 	}
-	/* There is no reason to zero out extra bindings if there are */
-	/* more than needed.  If an app has allocated extra bindings,  */
-	/* let it worry about it by unbinding those columns. */
+	/*
+	 * There is no reason to zero out extra bindings if there are
+	 * more than needed.  If an app has allocated extra bindings,
+	 * let it worry about it by unbinding those columns.
+	 */
 
 	/* SQLBindCol(1..) ... SQLBindCol(10...)   # got 10 bindings */
 	/* SQLExecDirect(...)  # returns 5 cols */

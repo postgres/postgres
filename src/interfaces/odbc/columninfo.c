@@ -1,4 +1,5 @@
-/* Module:			columninfo.c
+/*-------
+ * Module:			columninfo.c
  *
  * Description:		This module contains routines related to
  *					reading and storing the field information from a query.
@@ -8,7 +9,7 @@
  * API functions:	none
  *
  * Comments:		See "notice.txt" for copyright and license information.
- *
+ *-------
  */
 
 #include "columninfo.h"
@@ -37,6 +38,7 @@ CI_Constructor()
 	return rv;
 }
 
+
 void
 CI_Destructor(ColumnInfoClass *self)
 {
@@ -45,10 +47,12 @@ CI_Destructor(ColumnInfoClass *self)
 	free(self);
 }
 
-/*	Read in field descriptions.
-	If self is not null, then also store the information.
-	If self is null, then just read, don't store.
-*/
+
+/*
+ *	Read in field descriptions.
+ *	If self is not null, then also store the information.
+ *	If self is null, then just read, don't store.
+ */
 char
 CI_read_fields(ColumnInfoClass *self, ConnectionClass *conn)
 {
@@ -71,14 +75,12 @@ CI_read_fields(ColumnInfoClass *self, ConnectionClass *conn)
 	mylog("num_fields = %d\n", new_num_fields);
 
 	if (self)
-	{							/* according to that allocate memory */
+		/* according to that allocate memory */
 		CI_set_num_fields(self, new_num_fields);
-	}
 
 	/* now read in the descriptions */
 	for (lf = 0; lf < new_num_fields; lf++)
 	{
-
 		SOCK_get_string(sock, new_field_name, 2 * MAX_COLUMN_LEN);
 		new_adtid = (Oid) SOCK_get_int(sock, 4);
 		new_adtsize = (Int2) SOCK_get_int(sock, 2);
@@ -86,7 +88,6 @@ CI_read_fields(ColumnInfoClass *self, ConnectionClass *conn)
 		/* If 6.4 protocol, then read the atttypmod field */
 		if (PG_VERSION_GE(conn, 6.4))
 		{
-
 			mylog("READING ATTTYPMOD\n");
 			new_atttypmod = (Int4) SOCK_get_int(sock, 4);
 
@@ -105,7 +106,6 @@ CI_read_fields(ColumnInfoClass *self, ConnectionClass *conn)
 
 	return (SOCK_get_errcode(sock) == 0);
 }
-
 
 
 void
@@ -143,6 +143,7 @@ CI_free_memory(ColumnInfoClass *self)
 	self->atttypmod = NULL;
 }
 
+
 void
 CI_set_num_fields(ColumnInfoClass *self, int new_num_fields)
 {
@@ -158,11 +159,11 @@ CI_set_num_fields(ColumnInfoClass *self, int new_num_fields)
 	self->atttypmod = (Int4 *) malloc(sizeof(Int4) * self->num_fields);
 }
 
+
 void
 CI_set_field_info(ColumnInfoClass *self, int field_num, char *new_name,
 				  Oid new_adtid, Int2 new_adtsize, Int4 new_atttypmod)
 {
-
 	/* check bounds */
 	if ((field_num < 0) || (field_num >= self->num_fields))
 		return;

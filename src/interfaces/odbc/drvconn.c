@@ -1,4 +1,5 @@
-/* Module:			drvconn.c
+/*-------
+ * Module:			drvconn.c
  *
  * Description:		This module contains only routines related to
  *					implementing SQLDriverConnect.
@@ -8,7 +9,7 @@
  * API functions:	SQLDriverConnect
  *
  * Comments:		See "notice.txt" for copyright and license information.
- *
+ *-------
  */
 
 #ifdef HAVE_CONFIG_H
@@ -110,9 +111,11 @@ SQLDriverConnect(
 	/* Parse the connect string and fill in conninfo for this hdbc. */
 	dconn_get_connect_attributes(connStrIn, ci);
 
-	/* If the ConnInfo in the hdbc is missing anything, */
-	/* this function will fill them in from the registry (assuming */
-	/* of course there is a DSN given -- if not, it does nothing!) */
+	/*
+	 * If the ConnInfo in the hdbc is missing anything,
+	 * this function will fill them in from the registry (assuming
+	 * of course there is a DSN given -- if not, it does nothing!)
+	 */
 	getDSNinfo(ci, CONN_DONT_OVERWRITE);
 
 	/* Fill in any default parameters if they are not there. */
@@ -147,7 +150,6 @@ dialog:
 				ci->port[0] == '\0' ||
 				password_required)
 			{
-
 				dialog_result = dconn_DoDialog(hwnd, ci);
 				if (dialog_result != SQL_SUCCESS)
 					return dialog_result;
@@ -173,11 +175,10 @@ dialog:
 		ci->database[0] == '\0' ||
 		ci->port[0] == '\0')
 	{
-/*		(password_required && ci->password[0] == '\0')) */
+	/*	(password_required && ci->password[0] == '\0')) */
 
 		return SQL_NO_DATA_FOUND;
 	}
-
 
 	/* do the actual connect */
 	retval = CC_connect(conn, password_required);
@@ -206,9 +207,9 @@ dialog:
 		return SQL_ERROR;
 	}
 
-	/*********************************************/
-	/* Create the Output Connection String	 */
-	/*********************************************/
+	/*
+	 * Create the Output Connection String
+	 */
 	result = SQL_SUCCESS;
 
 	makeConnectString(connStrOut, ci);
@@ -216,7 +217,6 @@ dialog:
 
 	if (szConnStrOut)
 	{
-
 		/*
 		 * Return the completed string to the caller. The correct method
 		 * is to only construct the connect string if a dialog was put up,
@@ -246,6 +246,7 @@ dialog:
 	mylog("SQLDRiverConnect: returning %d\n", result);
 	return result;
 }
+
 
 #ifdef WIN32
 RETCODE
@@ -296,7 +297,6 @@ dconn_FDriverConnectProc(
 
 			SetWindowLong(hdlg, DWL_USER, lParam);		/* Save the ConnInfo for
 														 * the "OK" */
-
 			SetDlgStuff(hdlg, ci);
 
 			if (ci->database[0] == '\0')
@@ -309,38 +309,29 @@ dconn_FDriverConnectProc(
 				SetFocus(GetDlgItem(hdlg, IDC_USER));
 			else if (ci->focus_password)
 				SetFocus(GetDlgItem(hdlg, IDC_PASSWORD));
-
-
 			break;
 
 		case WM_COMMAND:
 			switch (GET_WM_COMMAND_ID(wParam, lParam))
 			{
 				case IDOK:
-
 					ci = (ConnInfo *) GetWindowLong(hdlg, DWL_USER);
 
 					GetDlgStuff(hdlg, ci);
-
 
 				case IDCANCEL:
 					EndDialog(hdlg, GET_WM_COMMAND_ID(wParam, lParam) == IDOK);
 					return TRUE;
 
 				case IDC_DRIVER:
-
 					DialogBoxParam(s_hModule, MAKEINTRESOURCE(DLG_OPTIONS_DRV),
 								hdlg, driver_optionsProc, (LPARAM) NULL);
-
-
 					break;
 
 				case IDC_DATASOURCE:
-
 					ci = (ConnInfo *) GetWindowLong(hdlg, DWL_USER);
 					DialogBoxParam(s_hModule, MAKEINTRESOURCE(DLG_OPTIONS_DS),
 								   hdlg, ds_optionsProc, (LPARAM) ci);
-
 					break;
 			}
 	}
@@ -349,6 +340,7 @@ dconn_FDriverConnectProc(
 }
 
 #endif	 /* WIN32 */
+
 
 void
 dconn_get_connect_attributes(UCHAR FAR *connect_string, ConnInfo *ci)
@@ -392,7 +384,6 @@ dconn_get_connect_attributes(UCHAR FAR *connect_string, ConnInfo *ci)
 		copyAttributes(ci, attribute, value);
 
 	}
-
 
 	free(our_connect_string);
 }
