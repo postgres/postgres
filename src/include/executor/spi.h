@@ -80,7 +80,7 @@ extern void *SPI_saveplan(void *plan);
 extern int	SPI_fnumber(TupleDesc tupdesc, char *fname);
 extern char *SPI_fname(TupleDesc tupdesc, int fnumber);
 extern char *SPI_getvalue(HeapTuple tuple, TupleDesc tupdesc, int fnumber);
-extern char *SPI_getbinval(HeapTuple tuple, TupleDesc tupdesc, int fnumber, bool * isnull);
+extern Datum SPI_getbinval(HeapTuple tuple, TupleDesc tupdesc, int fnumber, bool * isnull);
 extern char *SPI_gettype(TupleDesc tupdesc, int fnumber);
 extern Oid	SPI_gettypeid(TupleDesc tupdesc, int fnumber);
 extern char *SPI_getrelname(Relation rel);

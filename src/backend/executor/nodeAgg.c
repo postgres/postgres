@@ -638,7 +638,7 @@ aggGetAttr(TupleTableSlot *slot,
 		return (Datum) tempSlot;
 	}
 
-	result = (Datum)
+	result = 
 		heap_getattr(heapTuple, /* tuple containing attribute */
 					 buffer,	/* buffer associated with tuple */
 					 attnum,	/* attribute number of desired attribute */

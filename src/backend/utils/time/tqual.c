@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.7 1997/09/08 21:49:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.8 1997/09/12 04:08:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,9 +32,11 @@ static AbsoluteTime TimeQualGetStartTime(TimeQual qual);
 static bool TimeQualIncludesNow(TimeQual qual);
 static bool TimeQualIndicatesDisableValidityChecking(TimeQual qual);
 static bool TimeQualIsLegal(TimeQual qual);
+#ifndef NO_ASSERT_CHECKING
 static bool TimeQualIsRanged(TimeQual qual);
-static bool TimeQualIsSnapshot(TimeQual qual);
 static bool TimeQualIsValid(TimeQual qual);
+#endif
+static bool TimeQualIsSnapshot(TimeQual qual);
 
 /*
  * TimeQualMode --
@@ -133,6 +135,7 @@ HeapTupleSatisfiesUpperUnboundedInternalTimeQual(HeapTuple tuple,
  * TimeQualIsValid --
  *		True iff time qualification is valid.
  */
+#ifndef NO_ASSERT_CHECKING
 static bool
 TimeQualIsValid(TimeQual qual)
 {
@@ -179,6 +182,7 @@ TimeQualIsValid(TimeQual qual)
 	}
 	return (true);
 }
+#endif
 
 /*
  * TimeQualIsLegal --
@@ -332,6 +336,7 @@ TimeQualIsSnapshot(TimeQual qual)
  * Note:
  *		Assumes time qualification is valid.
  */
+#ifndef NO_ASSERT_CHECKING
 static bool
 TimeQualIsRanged(TimeQual qual)
 {
@@ -344,6 +349,7 @@ TimeQualIsRanged(TimeQual qual)
 
 	return ((bool) !(((InternalTimeQual) qual)->mode & TimeQualAt));
 }
+#endif
 
 /*
  * TimeQualIndicatesDisableValidityChecking --

@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/Attic/catalog_utils.c,v 1.25 1997/09/08 21:46:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/Attic/catalog_utils.c,v 1.26 1997/09/12 04:07:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1378,8 +1378,8 @@ findsupers(Oid relid, Oid **supervec)
 		{
 			qentry = (SuperQE *) palloc(sizeof(SuperQE));
 
-			d = (Datum) fastgetattr(inhtup, Anum_pg_inherits_inhparent,
-									inhtupdesc, &isNull);
+			d = fastgetattr(inhtup, Anum_pg_inherits_inhparent,
+							inhtupdesc, &isNull);
 			qentry->sqe_relid = DatumGetObjectId(d);
 
 			/* put this one on the queue */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.24 1997/09/08 21:40:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.25 1997/09/12 04:07:06 momjian Exp $
  *
  * NOTES
  *	  The old interface functions have been converted to macros
@@ -372,25 +372,25 @@ heap_sysattrbyval(AttrNumber attno)
  *		heap_getsysattr
  * ----------------
  */
-char	   *
+Datum
 heap_getsysattr(HeapTuple tup, Buffer b, int attnum)
 {
 	switch (attnum)
 	{
 			case SelfItemPointerAttributeNumber:
-			return ((char *) &tup->t_ctid);
+			return ((Datum) &tup->t_ctid);
 		case ObjectIdAttributeNumber:
-			return ((char *) (long) tup->t_oid);
+			return ((Datum) (long) tup->t_oid);
 		case MinTransactionIdAttributeNumber:
-			return ((char *) (long) tup->t_xmin);
+			return ((Datum) (long) tup->t_xmin);
 		case MinCommandIdAttributeNumber:
-			return ((char *) (long) tup->t_cmin);
+			return ((Datum) (long) tup->t_cmin);
 		case MaxTransactionIdAttributeNumber:
-			return ((char *) (long) tup->t_xmax);
+			return ((Datum) (long) tup->t_xmax);
 		case MaxCommandIdAttributeNumber:
-			return ((char *) (long) tup->t_cmax);
+			return ((Datum) (long) tup->t_cmax);
 		case ChainItemPointerAttributeNumber:
-			return ((char *) &tup->t_chain);
+			return ((Datum) &tup->t_chain);
 		case AnchorItemPointerAttributeNumber:
 			elog(WARN, "heap_getsysattr: t_anchor does not exist!");
 			break;
@@ -409,7 +409,7 @@ heap_getsysattr(HeapTuple tup, Buffer b, int attnum)
 			if (!AbsoluteTimeIsBackwardCompatiblyValid(tup->t_tmin) &&
 				TransactionIdDidCommit(tup->t_xmin))
 				tup->t_tmin = TransactionIdGetCommitTime(tup->t_xmin);
-			return ((char *) (long) tup->t_tmin);
+			return ((Datum) (long) tup->t_tmin);
 		case MaxAbsoluteTimeAttributeNumber:
 			if (!AbsoluteTimeIsBackwardCompatiblyReal(tup->t_tmax))
 			{
@@ -418,9 +418,9 @@ heap_getsysattr(HeapTuple tup, Buffer b, int attnum)
 				else
 					tup->t_tmax = CURRENT_ABSTIME;
 			}
-			return ((char *) (long) tup->t_tmax);
+			return ((Datum) (long) tup->t_tmax);
 		case VersionTypeAttributeNumber:
-			return ((char *) (long) tup->t_vtype);
+			return ((Datum) (long) tup->t_vtype);
 		default:
 			elog(WARN, "heap_getsysattr: undefined attnum %d", attnum);
 	}
@@ -444,7 +444,7 @@ heap_getsysattr(HeapTuple tup, Buffer b, int attnum)
  *		the same attribute descriptor will go much quicker. -cim 5/4/91
  * ----------------
  */
-char	   *
+Datum
 fastgetattr(HeapTuple tup,
 			int attnum,
 			TupleDesc tupleDesc,
@@ -479,7 +479,7 @@ fastgetattr(HeapTuple tup,
 		attnum--;
 		if (att[attnum]->attcacheoff > 0)
 		{
-			return (char *)
+			return (Datum)
 				fetchatt(&(att[attnum]),
 				  (char *) tup + tup->t_hoff + att[attnum]->attcacheoff);
 		}
@@ -489,7 +489,7 @@ fastgetattr(HeapTuple tup,
 			/*
 			 * first attribute is always at position zero
 			 */
-			return ((char *) fetchatt(&(att[0]), (char *) tup + tup->t_hoff));
+			return ((Datum) fetchatt(&(att[0]), (char *) tup + tup->t_hoff));
 		}
 
 		tp = (char *) tup + tup->t_hoff;
@@ -543,13 +543,13 @@ fastgetattr(HeapTuple tup,
 	{
 		if (att[attnum]->attcacheoff > 0)
 		{
-			return (char *)
+			return (Datum)
 				fetchatt(&(att[attnum]),
 						 tp + att[attnum]->attcacheoff);
 		}
 		else if (attnum == 0)
 		{
-			return (char *)
+			return (Datum)
 				fetchatt(&(att[0]), (char *) tup + tup->t_hoff);
 		}
 		else if (!HeapTupleAllFixed(tup))
@@ -618,7 +618,7 @@ fastgetattr(HeapTuple tup,
 		}
 
 		return
-			(char *) fetchatt(&(att[attnum]), tp + att[attnum]->attcacheoff);
+			(Datum) fetchatt(&(att[attnum]), tp + att[attnum]->attcacheoff);
 	}
 	else
 	{
@@ -729,7 +729,7 @@ fastgetattr(HeapTuple tup,
 					off = LONGALIGN(off);
 				break;
 		}
-		return ((char *) fetchatt(&(att[attnum]), tp + off));
+		return ((Datum) fetchatt(&(att[attnum]), tp + off));
 	}
 }
 
@@ -782,11 +782,11 @@ heap_deformtuple(HeapTuple tuple,
 	{
 		bool		isnull;
 
-		values[i] = (Datum) heap_getattr(tuple,
-										 InvalidBuffer,
-										 i + 1,
-										 tdesc,
-										 &isnull);
+		values[i] = heap_getattr(tuple,
+								 InvalidBuffer,
+								 i + 1,
+								 tdesc,
+								 &isnull);
 		if (isnull)
 			nulls[i] = 'n';
 		else
@@ -936,15 +936,12 @@ heap_modifytuple(HeapTuple tuple,
 
 		if (repl[attoff] == ' ')
 		{
-			char	   *attr;
-
-			attr =
+			value[attoff] =
 				heap_getattr(tuple,
 							 InvalidBuffer,
 							 AttrOffsetGetAttrNumber(attoff),
 							 RelationGetTupleDescriptor(relation),
 							 &isNull);
-			value[attoff] = PointerGetDatum(attr);
 			nulls[attoff] = (isNull) ? 'n' : ' ';
 
 		}

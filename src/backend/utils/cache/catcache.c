@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.13 1997/09/08 21:48:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.14 1997/09/12 04:08:28 momjian Exp $
  *
  * Notes:
  *		XXX This needs to use exception.h to handle recovery when
@@ -387,40 +387,40 @@ CatalogCacheComputeTupleHashIndex(struct catcache * cacheInOutP,
 			cacheInOutP->cc_skey[3].sk_argument =
 				(cacheInOutP->cc_key[3] == ObjectIdAttributeNumber)
 				? (Datum) tuple->t_oid
-				: (Datum) fastgetattr(tuple,
-									  cacheInOutP->cc_key[3],
-									RelationGetTupleDescriptor(relation),
-									  &isNull);
+				: fastgetattr(tuple,
+							  cacheInOutP->cc_key[3],
+							  RelationGetTupleDescriptor(relation),
+							  &isNull);
 			Assert(!isNull);
 			/* FALLTHROUGH */
 		case 3:
 			cacheInOutP->cc_skey[2].sk_argument =
 				(cacheInOutP->cc_key[2] == ObjectIdAttributeNumber)
 				? (Datum) tuple->t_oid
-				: (Datum) fastgetattr(tuple,
-									  cacheInOutP->cc_key[2],
-									RelationGetTupleDescriptor(relation),
-									  &isNull);
+				: fastgetattr(tuple,
+							  cacheInOutP->cc_key[2],
+							  RelationGetTupleDescriptor(relation),
+							  &isNull);
 			Assert(!isNull);
 			/* FALLTHROUGH */
 		case 2:
 			cacheInOutP->cc_skey[1].sk_argument =
 				(cacheInOutP->cc_key[1] == ObjectIdAttributeNumber)
 				? (Datum) tuple->t_oid
-				: (Datum) fastgetattr(tuple,
-									  cacheInOutP->cc_key[1],
-									RelationGetTupleDescriptor(relation),
-									  &isNull);
+				: fastgetattr(tuple,
+							  cacheInOutP->cc_key[1],
+							  RelationGetTupleDescriptor(relation),
+							  &isNull);
 			Assert(!isNull);
 			/* FALLTHROUGH */
 		case 1:
 			cacheInOutP->cc_skey[0].sk_argument =
 				(cacheInOutP->cc_key[0] == ObjectIdAttributeNumber)
 				? (Datum) tuple->t_oid
-				: (Datum) fastgetattr(tuple,
-									  cacheInOutP->cc_key[0],
-									RelationGetTupleDescriptor(relation),
-									  &isNull);
+				: fastgetattr(tuple,
+							  cacheInOutP->cc_key[0],
+							  RelationGetTupleDescriptor(relation),
+							  &isNull);
 			Assert(!isNull);
 			break;
 		default:

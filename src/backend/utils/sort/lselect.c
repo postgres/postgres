@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/lselect.c,v 1.7 1997/09/08 02:32:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/lselect.c,v 1.8 1997/09/12 04:08:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -197,8 +197,8 @@ puttuple(struct leftist ** treep,
 int
 tuplecmp(HeapTuple ltup, HeapTuple rtup, LeftistContext context)
 {
-	register char *lattr,
-			   *rattr;
+	register Datum lattr,
+				rattr;
 	int			nkey = 0;
 	int			result = 0;
 	bool		isnull;

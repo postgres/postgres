@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.33 1997/09/08 21:42:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.34 1997/09/12 04:07:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -270,8 +270,7 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 
 		for (i = 0; i < attr_count; i++)
 		{
-			value = (Datum)
-				heap_getattr(tuple, InvalidBuffer, i + 1, tupDesc, &isnull);
+			value = heap_getattr(tuple, InvalidBuffer, i + 1, tupDesc, &isnull);
 			if (!binary)
 			{
 				if (!isnull)

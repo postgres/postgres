@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.16 1997/09/08 21:41:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.17 1997/09/12 04:07:15 momjian Exp $
  *
  * INTERFACE ROUTINES
  *		index_open		- open an index relation by relationId
@@ -385,11 +385,11 @@ GetIndexValue(HeapTuple tuple,
 
 		for (i = 0; i < FIgetnArgs(fInfo); i++)
 		{
-			attData[i] = (Datum) heap_getattr(tuple,
-											  buffer,
-											  attrNums[i],
-											  hTupDesc,
-											  attNull);
+			attData[i] = heap_getattr(tuple,
+									  buffer,
+									  attrNums[i],
+									  hTupDesc,
+									  attNull);
 		}
 		returnVal = (Datum) fmgr_array_args(FIgetProcOid(fInfo),
 											FIgetnArgs(fInfo),
@@ -400,8 +400,8 @@ GetIndexValue(HeapTuple tuple,
 	}
 	else
 	{
-		returnVal = (Datum) heap_getattr(tuple, buffer, attrNums[attOff],
-										 hTupDesc, attNull);
+		returnVal = heap_getattr(tuple, buffer, attrNums[attOff],
+								 hTupDesc, attNull);
 	}
 	return returnVal;
 }

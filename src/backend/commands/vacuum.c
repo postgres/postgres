@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.46 1997/09/08 21:42:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.47 1997/09/12 04:07:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -308,8 +308,7 @@ vc_getrels(NameData *VacRelP)
 		 * Berkeley.
 		 */
 
-		d = (Datum) heap_getattr(pgctup, buf, Anum_pg_class_relname,
-								 pgcdesc, &n);
+		d = heap_getattr(pgctup, buf, Anum_pg_class_relname, pgcdesc, &n);
 		rname = (char *) d;
 
 		/* skip archive relations */
@@ -334,8 +333,7 @@ vc_getrels(NameData *VacRelP)
 			continue;
 		}
 
-		d = (Datum) heap_getattr(pgctup, buf, Anum_pg_class_relsmgr,
-								 pgcdesc, &n);
+		d = heap_getattr(pgctup, buf, Anum_pg_class_relsmgr, pgcdesc, &n);
 		smgrno = DatumGetInt16(d);
 
 		/* skip write-once storage managers */
@@ -345,8 +343,7 @@ vc_getrels(NameData *VacRelP)
 			continue;
 		}
 
-		d = (Datum) heap_getattr(pgctup, buf, Anum_pg_class_relkind,
-								 pgcdesc, &n);
+		d = heap_getattr(pgctup, buf, Anum_pg_class_relkind, pgcdesc, &n);
 
 		rkind = DatumGetChar(d);
 
@@ -1714,8 +1711,8 @@ vc_attrstats(Relation onerel, VRelStats *vacrelstats, HeapTuple htup)
 		VacAttrStats *stats = &vacattrstats[i];
 		bool		value_hit = true;
 
-		value = (Datum) heap_getattr(htup, InvalidBuffer,
-								  stats->attr->attnum, tupDesc, &isnull);
+		value = heap_getattr(htup, InvalidBuffer,
+							 stats->attr->attnum, tupDesc, &isnull);
 
 		if (!VacAttrStatsEqValid(stats))
 			continue;
@@ -2289,8 +2286,8 @@ vc_getindices(Oid relid, int *nindices, Relation **Irel)
 
 	while (HeapTupleIsValid(pgitup = heap_getnext(pgiscan, 0, NULL)))
 	{
-		d = (Datum) heap_getattr(pgitup, InvalidBuffer, Anum_pg_index_indexrelid,
-								 pgidesc, &n);
+		d = heap_getattr(pgitup, InvalidBuffer, Anum_pg_index_indexrelid,
+						 pgidesc, &n);
 		i++;
 		if (i % 10 == 0)
 			ioid = (Oid *) repalloc(ioid, (i + 10) * sizeof(Oid));

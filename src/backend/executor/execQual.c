@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.16 1997/09/08 21:43:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.17 1997/09/12 04:07:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -305,12 +305,11 @@ ExecEvalVar(Var *variable, ExprContext *econtext, bool *isNull)
 		return (Datum) tempSlot;
 	}
 
-	result = (Datum)
-		heap_getattr(heapTuple, /* tuple containing attribute */
-					 buffer,	/* buffer associated with tuple */
-					 attnum,	/* attribute number of desired attribute */
-					 tuple_type,/* tuple descriptor of tuple */
-					 isNull);	/* return: is attribute null? */
+	result = heap_getattr(heapTuple, /* tuple containing attribute */
+						  buffer,	/* buffer associated with tuple */
+						  attnum,	/* attribute number of desired attribute */
+					 	  tuple_type,/* tuple descriptor of tuple */
+						  isNull);	/* return: is attribute null? */
 
 	/* ----------------
 	 *	return null if att is null
@@ -530,12 +529,11 @@ GetAttributeByNum(TupleTableSlot *slot,
 		return (char *) NULL;
 	}
 
-	retval = (Datum)
-		heap_getattr(slot->val,
-					 slot->ttc_buffer,
-					 attrno,
-					 slot->ttc_tupleDescriptor,
-					 isNull);
+	retval = heap_getattr(slot->val,
+						  slot->ttc_buffer,
+						  attrno,
+						  slot->ttc_tupleDescriptor,
+						  isNull);
 	if (*isNull)
 		return (char *) NULL;
 	return (char *) retval;
@@ -595,12 +593,11 @@ GetAttributeByName(TupleTableSlot *slot, char *attname, bool *isNull)
 	if (attrno == InvalidAttrNumber)
 		elog(WARN, "GetAttributeByName: attribute %s not found", attname);
 
-	retval = (Datum)
-		heap_getattr(slot->val,
-					 slot->ttc_buffer,
-					 attrno,
-					 tupdesc,
-					 isNull);
+	retval = heap_getattr(slot->val,
+						  slot->ttc_buffer,
+						  attrno,
+						  tupdesc,
+						  isNull);
 	if (*isNull)
 		return (char *) NULL;
 	return (char *) retval;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.17 1997/09/08 02:19:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.18 1997/09/12 04:07:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,8 +76,8 @@ printtup(HeapTuple tuple, TupleDesc typeinfo)
 	int			i,
 				j,
 				k;
-	char	   *outputstr,
-			   *attr;
+	char	   *outputstr;
+	Datum		attr;
 	bool		isnull;
 	Oid			typoutput;
 
@@ -176,8 +176,8 @@ void
 debugtup(HeapTuple tuple, TupleDesc typeinfo)
 {
 	register int i;
-	char	   *attr,
-			   *value;
+	Datum	    attr;
+	char	   *value;
 	bool		isnull;
 	Oid			typoutput;
 
@@ -212,7 +212,7 @@ printtup_internal(HeapTuple tuple, TupleDesc typeinfo)
 	int			i,
 				j,
 				k;
-	char	   *attr;
+	Datum		attr;
 	bool		isnull;
 
 	/* ----------------
@@ -308,9 +308,10 @@ printtup_internal(HeapTuple tuple, TupleDesc typeinfo)
 				else
 				{
 					pq_putint(len, sizeof(int32));
-					pq_putnchar(attr, len);
+					pq_putnchar(DatumGetPointer(attr), len);
 #ifdef IPORTAL_DEBUG
-					fprintf(stderr, "byref length %d data %x\n", len, attr);
+					fprintf(stderr, "byref length %d data %x\n", len,
+												DatumGetPointer(attr));
 #endif
 				}
 			}

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeUnique.c,v 1.10 1997/09/08 21:43:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeUnique.c,v 1.11 1997/09/12 04:07:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -182,8 +182,8 @@ ExecUnique(Unique *node)
 			 */
 			bool		isNull1,
 						isNull2;
-			char	   *attr1,
-					   *attr2;
+			Datum		attr1,
+						attr2;
 			char	   *val1,
 					   *val2;
 

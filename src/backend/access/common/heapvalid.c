@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/Attic/heapvalid.c,v 1.18 1997/09/08 02:19:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/Attic/heapvalid.c,v 1.19 1997/09/12 04:07:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,10 +42,10 @@ heap_keytest(HeapTuple t,
 
 	for (; nkeys--; keys++)
 	{
-		atp = (Datum) heap_getattr(t, InvalidBuffer,
-								   keys->sk_attno,
-								   tupdesc,
-								   &isnull);
+		atp = heap_getattr(t, InvalidBuffer,
+						   keys->sk_attno,
+						   tupdesc,
+						   &isnull);
 
 		if (isnull)
 			/* XXX eventually should check if SK_ISNULL */

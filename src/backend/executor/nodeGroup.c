@@ -13,7 +13,7 @@
  *	  columns. (ie. tuples from the same group are consecutive)
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeGroup.c,v 1.9 1997/09/08 21:43:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeGroup.c,v 1.10 1997/09/12 04:07:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -388,8 +388,8 @@ sameGroup(TupleTableSlot *oldslot,
 {
 	bool		isNull1,
 				isNull2;
-	char	   *attr1,
-			   *attr2;
+	Datum		attr1,
+			    attr2;
 	char	   *val1,
 			   *val2;
 	int			i;

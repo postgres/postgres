@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.7 1997/09/08 21:48:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.8 1997/09/12 04:08:35 momjian Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -494,7 +494,7 @@ SearchSysCacheGetAttribute(int cacheId,
 	int32		attributeLength,
 				attributeByValue;
 	bool		isNull;
-	char	   *attributeValue;
+	Datum		attributeValue;
 	void	   *returnValue;
 
 	tp = SearchSysCacheTuple(cacheId, key1, key2, key3, key4);
@@ -562,7 +562,7 @@ SearchSysCacheGetAttribute(int cacheId,
 		: attributeLength;		/* fixed length */
 
 		tmp = (char *) palloc(size);
-		memmove(tmp, attributeValue, size);
+		memmove(tmp, (void *)attributeValue, size);
 		returnValue = (void *) tmp;
 	}
 

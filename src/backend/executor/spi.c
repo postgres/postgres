@@ -319,7 +319,7 @@ SPI_fname(TupleDesc tupdesc, int fnumber)
 char	   *
 SPI_getvalue(HeapTuple tuple, TupleDesc tupdesc, int fnumber)
 {
-	char	   *val;
+	Datum		val;
 	bool		isnull;
 	Oid			foutoid;
 
@@ -346,10 +346,10 @@ SPI_getvalue(HeapTuple tuple, TupleDesc tupdesc, int fnumber)
 	return (fmgr(foutoid, val, gettypelem(tupdesc->attrs[fnumber - 1]->atttypid)));
 }
 
-char	   *
+Datum
 SPI_getbinval(HeapTuple tuple, TupleDesc tupdesc, int fnumber, bool * isnull)
 {
-	char	   *val;
+	Datum	val;
 
 	*isnull = true;
 	SPI_result = 0;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-dumpdata.c,v 1.8 1997/09/08 21:43:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-dumpdata.c,v 1.9 1997/09/12 04:07:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -213,7 +213,7 @@ void
 be_printtup(HeapTuple tuple, TupleDesc typeinfo)
 {
 	int			i;
-	char	   *attr;
+	Datum		attr;
 	bool		isnull;
 	Oid			typoutput;
 

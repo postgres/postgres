@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.25 1997/09/08 21:46:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.26 1997/09/12 04:08:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -230,7 +230,7 @@ parser_typecast(Value *expr, TypeName *typename, int typlen)
 		case T_Integer:
 			const_string = (char *) palloc(256);
 			string_palloced = true;
-			sprintf(const_string, "%d", expr->val.ival);
+			sprintf(const_string, "%ld", expr->val.ival);
 			break;
 		default:
 			elog(WARN,
@@ -405,7 +405,7 @@ parser_typecast2(Node *expr, Oid exprType, Type tp, int typlen)
 		case CASHOID:			/* money */
 			const_string = (char *) palloc(256);
 			string_palloced = true;
-			sprintf(const_string, "%d",
+			sprintf(const_string, "%ld",
 					(long) ((Const *) expr)->constvalue);
 			break;
 		case TEXTOID:			/* text */
