@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/view.c,v 1.82 2004/05/26 04:41:13 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/view.c,v 1.83 2004/06/18 06:13:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -134,8 +134,8 @@ DefineVirtualRelation(const RangeVar *relation, List *tlist, bool replace)
 	else
 	{
 		/*
-		 * now create the parameters for keys/inheritance etc. All of them
-		 * are nil...
+		 * now set the parameters for keys/inheritance etc. All of these
+		 * are uninteresting for views...
 		 */
 		createStmt->relation = (RangeVar *) relation;
 		createStmt->tableElts = attrList;
@@ -143,6 +143,7 @@ DefineVirtualRelation(const RangeVar *relation, List *tlist, bool replace)
 		createStmt->constraints = NIL;
 		createStmt->hasoids = MUST_NOT_HAVE_OIDS;
 		createStmt->oncommit = ONCOMMIT_NOOP;
+		createStmt->tablespacename = NULL;
 
 		/*
 		 * finally create the relation (this will error out if there's an

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/catalog.c,v 1.51 2004/01/06 18:07:31 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/catalog.c,v 1.52 2004/06/18 06:13:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,11 @@
 #include "catalog/catalog.h"
 #include "catalog/catname.h"
 #include "catalog/pg_namespace.h"
+#include "catalog/pg_tablespace.h"
 #include "miscadmin.h"
+
+
+#define OIDCHARS	10			/* max chars printed by %u */
 
 
 /*
@@ -28,22 +32,36 @@
  *
  * Result is a palloc'd string.
  */
-
 char *
 relpath(RelFileNode rnode)
 {
+	int			pathlen;
 	char	   *path;
 
-	if (rnode.tblNode == (Oid) 0)		/* "global tablespace" */
+	if (rnode.spcNode == GLOBALTABLESPACE_OID)
 	{
 		/* Shared system relations live in {datadir}/global */
-		path = (char *) palloc(strlen(DataDir) + 8 + sizeof(NameData) + 1);
-		sprintf(path, "%s/global/%u", DataDir, rnode.relNode);
+		Assert(rnode.dbNode == 0);
+		pathlen = strlen(DataDir) + 8 + OIDCHARS + 1;
+		path = (char *) palloc(pathlen);
+		snprintf(path, pathlen, "%s/global/%u",
+				 DataDir, rnode.relNode);
+	}
+	else if (rnode.spcNode == DEFAULTTABLESPACE_OID)
+	{
+		/* The default tablespace is {datadir}/base */
+		pathlen = strlen(DataDir) + 6 + OIDCHARS + 1 + OIDCHARS + 1;
+		path = (char *) palloc(pathlen);
+		snprintf(path, pathlen, "%s/base/%u/%u",
+				 DataDir, rnode.dbNode, rnode.relNode);
 	}
 	else
 	{
-		path = (char *) palloc(strlen(DataDir) + 6 + 2 * sizeof(NameData) + 3);
-		sprintf(path, "%s/base/%u/%u", DataDir, rnode.tblNode, rnode.relNode);
+		/* All other tablespaces are accessed via symlinks */
+		pathlen = strlen(DataDir) + 16 + OIDCHARS + 1 + OIDCHARS + 1 + OIDCHARS + 1;
+		path = (char *) palloc(pathlen);
+		snprintf(path, pathlen, "%s/pg_tablespaces/%u/%u/%u",
+				 DataDir, rnode.spcNode, rnode.dbNode, rnode.relNode);
 	}
 	return path;
 }
@@ -52,23 +70,39 @@ relpath(RelFileNode rnode)
  * GetDatabasePath			- construct path to a database dir
  *
  * Result is a palloc'd string.
+ *
+ * XXX this must agree with relpath()!
  */
-
 char *
-GetDatabasePath(Oid tblNode)
+GetDatabasePath(Oid dbNode, Oid spcNode)
 {
+	int			pathlen;
 	char	   *path;
 
-	if (tblNode == (Oid) 0)		/* "global tablespace" */
+	if (spcNode == GLOBALTABLESPACE_OID)
 	{
 		/* Shared system relations live in {datadir}/global */
-		path = (char *) palloc(strlen(DataDir) + 8);
-		sprintf(path, "%s/global", DataDir);
+		Assert(dbNode == 0);
+		pathlen = strlen(DataDir) + 7 + 1;
+		path = (char *) palloc(pathlen);
+		snprintf(path, pathlen, "%s/global",
+				 DataDir);
+	}
+	else if (spcNode == DEFAULTTABLESPACE_OID)
+	{
+		/* The default tablespace is {datadir}/base */
+		pathlen = strlen(DataDir) + 6 + OIDCHARS + 1;
+		path = (char *) palloc(pathlen);
+		snprintf(path, pathlen, "%s/base/%u",
+				 DataDir, dbNode);
 	}
 	else
 	{
-		path = (char *) palloc(strlen(DataDir) + 6 + sizeof(NameData) + 1);
-		sprintf(path, "%s/base/%u", DataDir, tblNode);
+		/* All other tablespaces are accessed via symlinks */
+		pathlen = strlen(DataDir) + 16 + OIDCHARS + 1 + OIDCHARS + 1;
+		path = (char *) palloc(pathlen);
+		snprintf(path, pathlen, "%s/pg_tablespaces/%u/%u",
+				 DataDir, spcNode, dbNode);
 	}
 	return path;
 }

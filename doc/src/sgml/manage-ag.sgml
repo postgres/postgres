@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/manage-ag.sgml,v 2.29 2003/11/29 19:51:37 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/manage-ag.sgml,v 2.30 2004/06/18 06:13:02 tgl Exp $
 -->
 
 <chapter id="managing-databases">
@@ -299,6 +299,11 @@ ALTER DATABASE mydb SET geqo TO off;
   <title>Alternative Locations</title>
 
    <para>
+    XXX this is entirely dead now, and needs to be replaced by a DBA-level
+    description of tablespaces.
+   </para>
+
+   <para>
     It is possible to create a database in a location other than the
     default location for the installation. But remember that all database access
     occurs through the 
@@ -368,21 +373,6 @@ CREATE DATABASE <replaceable>name</> WITH LOCATION '<replaceable>location</>';
     Databases created in alternative locations can be
     accessed and dropped like any other database.
    </para>
-
-   <note>
-    <para>
-     It can also be possible to specify absolute paths directly to the
-     <command>CREATE DATABASE</> command without defining environment
-     variables. This is disallowed by default because it is a security
-     risk. To allow it, you must compile <productname>PostgreSQL</> with
-     the C preprocessor macro <literal>ALLOW_ABSOLUTE_DBPATHS</>
-     defined. One way to do this is to run the compilation step like
-     this:
-<programlisting>
-gmake CPPFLAGS=-DALLOW_ABSOLUTE_DBPATHS all
-</programlisting>
-    </para>
-   </note>
  </sect1>
 
  <sect1 id="manage-ag-dropdb">

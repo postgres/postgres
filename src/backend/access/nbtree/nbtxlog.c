@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.13 2004/06/02 17:28:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.14 2004/06/18 06:13:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -803,8 +803,8 @@ btree_undo(XLogRecPtr lsn, XLogRecord *record)
 static void
 out_target(char *buf, xl_btreetid *target)
 {
-	sprintf(buf + strlen(buf), "node %u/%u; tid %u/%u",
-			target->node.tblNode, target->node.relNode,
+	sprintf(buf + strlen(buf), "rel %u/%u/%u; tid %u/%u",
+			target->node.spcNode, target->node.dbNode, target->node.relNode,
 			ItemPointerGetBlockNumber(&(target->tid)),
 			ItemPointerGetOffsetNumber(&(target->tid)));
 }
@@ -884,8 +884,9 @@ btree_desc(char *buf, uint8 xl_info, char *rec)
 			{
 				xl_btree_delete *xlrec = (xl_btree_delete *) rec;
 
-				sprintf(buf + strlen(buf), "delete: node %u/%u; blk %u",
-				 xlrec->node.tblNode, xlrec->node.relNode, xlrec->block);
+				sprintf(buf + strlen(buf), "delete: rel %u/%u/%u; blk %u",
+						xlrec->node.spcNode, xlrec->node.dbNode,
+						xlrec->node.relNode, xlrec->block);
 				break;
 			}
 		case XLOG_BTREE_DELETE_PAGE:
@@ -903,8 +904,9 @@ btree_desc(char *buf, uint8 xl_info, char *rec)
 			{
 				xl_btree_newroot *xlrec = (xl_btree_newroot *) rec;
 
-				sprintf(buf + strlen(buf), "newroot: node %u/%u; root %u lev %u",
-						xlrec->node.tblNode, xlrec->node.relNode,
+				sprintf(buf + strlen(buf), "newroot: rel %u/%u/%u; root %u lev %u",
+						xlrec->node.spcNode, xlrec->node.dbNode,
+						xlrec->node.relNode,
 						xlrec->rootblk, xlrec->level);
 				break;
 			}
@@ -912,8 +914,9 @@ btree_desc(char *buf, uint8 xl_info, char *rec)
 			{
 				xl_btree_newmeta *xlrec = (xl_btree_newmeta *) rec;
 
-				sprintf(buf + strlen(buf), "newmeta: node %u/%u; root %u lev %u fast %u lev %u",
-						xlrec->node.tblNode, xlrec->node.relNode,
+				sprintf(buf + strlen(buf), "newmeta: rel %u/%u/%u; root %u lev %u fast %u lev %u",
+						xlrec->node.spcNode, xlrec->node.dbNode,
+						xlrec->node.relNode,
 						xlrec->meta.root, xlrec->meta.level,
 						xlrec->meta.fastroot, xlrec->meta.fastlevel);
 				break;
@@ -922,9 +925,9 @@ btree_desc(char *buf, uint8 xl_info, char *rec)
 			{
 				xl_btree_newpage *xlrec = (xl_btree_newpage *) rec;
 
-				sprintf(buf + strlen(buf), "newpage: node %u/%u; page %u",
-						xlrec->node.tblNode, xlrec->node.relNode,
-						xlrec->blkno);
+				sprintf(buf + strlen(buf), "newpage: rel %u/%u/%u; page %u",
+						xlrec->node.spcNode, xlrec->node.dbNode,
+						xlrec->node.relNode, xlrec->blkno);
 				break;
 			}
 		default:

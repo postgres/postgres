@@ -9,13 +9,12 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.135 2004/06/10 22:26:18 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.136 2004/06/18 06:13:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
-#include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/stat.h>
@@ -26,9 +25,12 @@
 #include "catalog/catalog.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_shadow.h"
+#include "catalog/pg_tablespace.h"
 #include "catalog/indexing.h"
 #include "commands/comment.h"
 #include "commands/dbcommands.h"
+#include "commands/tablespace.h"
+#include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "storage/fd.h"
 #include "storage/freespace.h"
@@ -41,32 +43,24 @@
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
-#include "mb/pg_wchar.h"		/* encoding check */
-
 
 /* non-export function prototypes */
 static bool get_db_info(const char *name, Oid *dbIdP, int4 *ownerIdP,
 			int *encodingP, bool *dbIsTemplateP, Oid *dbLastSysOidP,
 			TransactionId *dbVacuumXidP, TransactionId *dbFrozenXidP,
-			char *dbpath);
+			Oid *dbTablespace);
 static bool have_createdb_privilege(void);
-static char *resolve_alt_dbpath(const char *dbpath, Oid dboid);
-static bool remove_dbdirs(const char *real_loc, const char *altloc);
+static void remove_dbtablespaces(Oid db_id);
+
 
 /*
  * CREATE DATABASE
  */
-
 void
 createdb(const CreatedbStmt *stmt)
 {
-	char	   *nominal_loc;
-	char	   *alt_loc;
-	char	   *target_dir;
-	char		src_loc[MAXPGPATH];
-#ifndef WIN32
-	char		buf[2 * MAXPGPATH + 100];
-#endif
+	HeapScanDesc scan;
+	Relation	rel;
 	Oid			src_dboid;
 	AclId		src_owner;
 	int			src_encoding;
@@ -74,7 +68,8 @@ createdb(const CreatedbStmt *stmt)
 	Oid			src_lastsysoid;
 	TransactionId src_vacuumxid;
 	TransactionId src_frozenxid;
-	char		src_dbpath[MAXPGPATH];
+	Oid			src_deftablespace;
+	Oid			dst_deftablespace;
 	Relation	pg_database_rel;
 	HeapTuple	tuple;
 	TupleDesc	pg_database_dsc;
@@ -83,36 +78,41 @@ createdb(const CreatedbStmt *stmt)
 	Oid			dboid;
 	AclId		datdba;
 	ListCell   *option;
+	DefElem	   *dtablespacename = NULL;
 	DefElem    *downer = NULL;
-	DefElem    *dpath = NULL;
 	DefElem    *dtemplate = NULL;
 	DefElem    *dencoding = NULL;
 	char	   *dbname = stmt->dbname;
 	char	   *dbowner = NULL;
-	char	   *dbpath = NULL;
 	char	   *dbtemplate = NULL;
 	int			encoding = -1;
+#ifndef WIN32
+	char		buf[2 * MAXPGPATH + 100];
+#endif
+
+	/* don't call this in a transaction block */
+	PreventTransactionChain((void *) stmt, "CREATE DATABASE");
 
 	/* Extract options from the statement node tree */
 	foreach(option, stmt->options)
 	{
 		DefElem    *defel = (DefElem *) lfirst(option);
 
-		if (strcmp(defel->defname, "owner") == 0)
+		if (strcmp(defel->defname, "tablespace") == 0)
+		{
+			if (dtablespacename)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("conflicting or redundant options")));
+			dtablespacename = defel;
+		}
+		else if (strcmp(defel->defname, "owner") == 0)
 		{
 			if (downer)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("conflicting or redundant options")));
 			downer = defel;
-		}
-		else if (strcmp(defel->defname, "location") == 0)
-		{
-			if (dpath)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options")));
-			dpath = defel;
 		}
 		else if (strcmp(defel->defname, "template") == 0)
 		{
@@ -130,6 +130,13 @@ createdb(const CreatedbStmt *stmt)
 						 errmsg("conflicting or redundant options")));
 			dencoding = defel;
 		}
+		else if (strcmp(defel->defname, "location") == 0)
+		{
+			ereport(WARNING,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("LOCATION is not supported anymore"),
+					 errhint("Consider using tablespaces instead.")));
+		}
 		else
 			elog(ERROR, "option \"%s\" not recognized",
 				 defel->defname);
@@ -137,8 +144,6 @@ createdb(const CreatedbStmt *stmt)
 
 	if (downer && downer->arg)
 		dbowner = strVal(downer->arg);
-	if (dpath && dpath->arg)
-		dbpath = strVal(dpath->arg);
 	if (dtemplate && dtemplate->arg)
 		dbtemplate = strVal(dtemplate->arg);
 	if (dencoding && dencoding->arg)
@@ -195,17 +200,6 @@ createdb(const CreatedbStmt *stmt)
 					 errmsg("must be superuser to create database for another user")));
 	}
 
-	/* don't call this in a transaction block */
-	PreventTransactionChain((void *) stmt, "CREATE DATABASE");
-
-	/* alternate location requires symlinks */
-#ifndef HAVE_SYMLINK
-	if (dbpath != NULL)
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-		   errmsg("cannot use an alternative location on this platform")));
-#endif
-
 	/*
 	 * Check for db name conflict.	There is a race condition here, since
 	 * another backend could create the same DB name before we commit.
@@ -227,8 +221,7 @@ createdb(const CreatedbStmt *stmt)
 
 	if (!get_db_info(dbtemplate, &src_dboid, &src_owner, &src_encoding,
 					 &src_istemplate, &src_lastsysoid,
-					 &src_vacuumxid, &src_frozenxid,
-					 src_dbpath))
+					 &src_vacuumxid, &src_frozenxid, &src_deftablespace))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
 				 errmsg("template database \"%s\" does not exist", dbtemplate)));
@@ -245,14 +238,6 @@ createdb(const CreatedbStmt *stmt)
 					 errmsg("permission denied to copy database \"%s\"",
 							dbtemplate)));
 	}
-
-	/*
-	 * Determine physical path of source database
-	 */
-	alt_loc = resolve_alt_dbpath(src_dbpath, src_dboid);
-	if (!alt_loc)
-		alt_loc = GetDatabasePath(src_dboid);
-	strcpy(src_loc, alt_loc);
 
 	/*
 	 * The source DB can't have any active backends, except this one
@@ -276,44 +261,38 @@ createdb(const CreatedbStmt *stmt)
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("invalid server encoding %d", encoding)));
 
+	/* Resolve default tablespace for new database */
+	if (dtablespacename && dtablespacename->arg)
+	{
+		char	   *tablespacename;
+        AclResult   aclresult;
+
+		tablespacename = strVal(dtablespacename->arg);
+		dst_deftablespace = get_tablespace_oid(tablespacename);
+		if (!OidIsValid(dst_deftablespace))
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("tablespace \"%s\" does not exist",
+							tablespacename)));
+		/* check permissions */
+        aclresult = pg_tablespace_aclcheck(dst_deftablespace, GetUserId(),
+										   ACL_CREATE);
+        if (aclresult != ACLCHECK_OK)
+            aclcheck_error(aclresult, ACL_KIND_TABLESPACE,
+                           tablespacename);
+	}
+	else
+	{
+		/* Use template database's default tablespace */
+		dst_deftablespace = src_deftablespace;
+		/* Note there is no additional permission check in this path */
+	}
+
 	/*
 	 * Preassign OID for pg_database tuple, so that we can compute db
 	 * path.
 	 */
 	dboid = newoid();
-
-	/*
-	 * Compute nominal location (where we will try to access the
-	 * database), and resolve alternate physical location if one is
-	 * specified.
-	 *
-	 * If an alternate location is specified but is the same as the normal
-	 * path, just drop the alternate-location spec (this seems friendlier
-	 * than erroring out).	We must test this case to avoid creating a
-	 * circular symlink below.
-	 */
-	nominal_loc = GetDatabasePath(dboid);
-	alt_loc = resolve_alt_dbpath(dbpath, dboid);
-
-	if (alt_loc && strcmp(alt_loc, nominal_loc) == 0)
-	{
-		alt_loc = NULL;
-		dbpath = NULL;
-	}
-
-	if (strchr(nominal_loc, '\''))
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_NAME),
-				 errmsg("database path may not contain single quotes")));
-	if (alt_loc && strchr(alt_loc, '\''))
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_NAME),
-				 errmsg("database path may not contain single quotes")));
-	if (strchr(src_loc, '\''))
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_NAME),
-				 errmsg("database path may not contain single quotes")));
-	/* ... otherwise we'd be open to shell exploits below */
 
 	/*
 	 * Force dirty buffers out to disk, to ensure source database is
@@ -324,74 +303,89 @@ createdb(const CreatedbStmt *stmt)
 
 	/*
 	 * Close virtual file descriptors so the kernel has more available for
-	 * the mkdir() and system() calls below.
+	 * the system() calls below.
 	 */
 	closeAllVfds();
 
 	/*
-	 * Check we can create the target directory --- but then remove it
-	 * because we rely on cp(1) to create it for real.
-	 */
-	target_dir = alt_loc ? alt_loc : nominal_loc;
-
-	if (mkdir(target_dir, S_IRWXU) != 0)
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not create database directory \"%s\": %m",
-						target_dir)));
-	if (rmdir(target_dir) != 0)
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not remove temporary directory \"%s\": %m",
-						target_dir)));
-
-	/* Make the symlink, if needed */
-	if (alt_loc)
-	{
-#ifdef HAVE_SYMLINK				/* already throws error above */
-		if (symlink(alt_loc, nominal_loc) != 0)
-#endif
-			ereport(ERROR,
-					(errcode_for_file_access(),
-					 errmsg("could not link file \"%s\" to \"%s\": %m",
-							nominal_loc, alt_loc)));
-	}
-
-	/*
-	 * Copy the template database to the new location
+	 * Iterate through all tablespaces of the template database, and
+	 * copy each one to the new database.
 	 *
-	 * XXX use of cp really makes this code pretty grotty, particularly
-	 * with respect to lack of ability to report errors well.  Someday
-	 * rewrite to do it for ourselves.
+	 * If we are trying to change the default tablespace of the template,
+	 * we require that the template not have any files in the new default
+	 * tablespace.  This avoids the need to merge two subdirectories.
+	 * This could probably be improved later.
 	 */
-#ifndef WIN32
-	/* We might need to use cp -R one day for portability */
-	snprintf(buf, sizeof(buf), "cp -r '%s' '%s'", src_loc, target_dir);
-	if (system(buf) != 0)
+	rel = heap_openr(TableSpaceRelationName, AccessShareLock);
+	scan = heap_beginscan(rel, SnapshotNow, 0, NULL);
+	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
-		if (remove_dbdirs(nominal_loc, alt_loc))
+		Oid		srctablespace = HeapTupleGetOid(tuple);
+		Oid		dsttablespace;
+		char   *srcpath;
+		char   *dstpath;
+		struct stat st;
+
+		/* No need to copy global tablespace */
+		if (srctablespace == GLOBALTABLESPACE_OID)
+			continue;
+
+		srcpath = GetDatabasePath(src_dboid, srctablespace);
+
+		if (stat(srcpath, &st) < 0 || !S_ISDIR(st.st_mode))
+		{
+			/* Assume we can ignore it */
+			pfree(srcpath);
+			continue;
+		}
+
+		if (srctablespace == src_deftablespace)
+			dsttablespace = dst_deftablespace;
+		else
+			dsttablespace = srctablespace;
+
+		dstpath = GetDatabasePath(dboid, dsttablespace);
+
+		if (stat(dstpath, &st) == 0 || errno != ENOENT)
+		{
+			remove_dbtablespaces(dboid);
+			ereport(ERROR,
+					(errmsg("could not initialize database directory"),
+					 errdetail("Directory \"%s\" already exists.", dstpath)));
+		}
+
+#ifndef WIN32
+		/*
+		 * Copy this subdirectory to the new location
+		 *
+		 * XXX use of cp really makes this code pretty grotty, particularly
+		 * with respect to lack of ability to report errors well.  Someday
+		 * rewrite to do it for ourselves.
+		 */
+
+		/* We might need to use cp -R one day for portability */
+		snprintf(buf, sizeof(buf), "cp -r '%s' '%s'",
+				 srcpath, dstpath);
+		if (system(buf) != 0)
+		{
+			remove_dbtablespaces(dboid);
 			ereport(ERROR,
 					(errmsg("could not initialize database directory"),
 					 errdetail("Failing system command was: %s", buf),
 					 errhint("Look in the postmaster's stderr log for more information.")));
-		else
-			ereport(ERROR,
-					(errmsg("could not initialize database directory; delete failed as well"),
-					 errdetail("Failing system command was: %s", buf),
-					 errhint("Look in the postmaster's stderr log for more information.")));
-	}
+		}
 #else	/* WIN32 */
-	if (copydir(src_loc, target_dir) != 0)
-	{
-		/* copydir should already have given details of its troubles */
-		if (remove_dbdirs(nominal_loc, alt_loc))
+		if (copydir(srcpath, dstpath) != 0)
+		{
+			/* copydir should already have given details of its troubles */
+			remove_dbtablespaces(dboid);
 			ereport(ERROR,
 					(errmsg("could not initialize database directory")));
-		else
-			ereport(ERROR,
-					(errmsg("could not initialize database directory; delete failed as well")));
-	}
+		}
 #endif	/* WIN32 */
+	}
+	heap_endscan(scan);
+	heap_close(rel, AccessShareLock);
 
 	/*
 	 * Now OK to grab exclusive lock on pg_database.
@@ -403,7 +397,7 @@ createdb(const CreatedbStmt *stmt)
 	{
 		/* Don't hold lock while doing recursive remove */
 		heap_close(pg_database_rel, AccessExclusiveLock);
-		remove_dbdirs(nominal_loc, alt_loc);
+		remove_dbtablespaces(dboid);
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_DATABASE),
 				 errmsg("database \"%s\" already exists", dbname)));
@@ -427,9 +421,7 @@ createdb(const CreatedbStmt *stmt)
 	new_record[Anum_pg_database_datlastsysoid - 1] = ObjectIdGetDatum(src_lastsysoid);
 	new_record[Anum_pg_database_datvacuumxid - 1] = TransactionIdGetDatum(src_vacuumxid);
 	new_record[Anum_pg_database_datfrozenxid - 1] = TransactionIdGetDatum(src_frozenxid);
-	/* do not set datpath to null, GetRawDatabaseInfo won't cope */
-	new_record[Anum_pg_database_datpath - 1] =
-		DirectFunctionCall1(textin, CStringGetDatum(dbpath ? dbpath : ""));
+	new_record[Anum_pg_database_dattablespace - 1] = ObjectIdGetDatum(dst_deftablespace);
 
 	/*
 	 * We deliberately set datconfig and datacl to defaults (NULL), rather
@@ -471,13 +463,12 @@ dropdb(const char *dbname)
 	int4		db_owner;
 	bool		db_istemplate;
 	Oid			db_id;
-	char	   *alt_loc;
-	char	   *nominal_loc;
-	char		dbpath[MAXPGPATH];
 	Relation	pgdbrel;
 	SysScanDesc pgdbscan;
 	ScanKeyData key;
 	HeapTuple	tup;
+
+	PreventTransactionChain((void *) dbname, "DROP DATABASE");
 
 	AssertArg(dbname);
 
@@ -485,8 +476,6 @@ dropdb(const char *dbname)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_IN_USE),
 				 errmsg("cannot drop the currently open database")));
-
-	PreventTransactionChain((void *) dbname, "DROP DATABASE");
 
 	/*
 	 * Obtain exclusive lock on pg_database.  We need this to ensure that
@@ -500,7 +489,7 @@ dropdb(const char *dbname)
 	pgdbrel = heap_openr(DatabaseRelationName, AccessExclusiveLock);
 
 	if (!get_db_info(dbname, &db_id, &db_owner, NULL,
-					 &db_istemplate, NULL, NULL, NULL, dbpath))
+					 &db_istemplate, NULL, NULL, NULL, NULL))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
 				 errmsg("database \"%s\" does not exist", dbname)));
@@ -518,9 +507,6 @@ dropdb(const char *dbname)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("cannot drop a template database")));
-
-	nominal_loc = GetDatabasePath(db_id);
-	alt_loc = resolve_alt_dbpath(dbpath, db_id);
 
 	/*
 	 * Check for active backends in the target database.
@@ -585,9 +571,9 @@ dropdb(const char *dbname)
 	FreeSpaceMapForgetDatabase(db_id);
 
 	/*
-	 * Remove the database's subdirectory and everything in it.
+	 * Remove all tablespace subdirs belonging to the database.
 	 */
-	remove_dbdirs(nominal_loc, alt_loc);
+	remove_dbtablespaces(db_id);
 
 	/*
 	 * Force dirty buffers out to disk, so that newly-connecting backends
@@ -831,7 +817,7 @@ static bool
 get_db_info(const char *name, Oid *dbIdP, int4 *ownerIdP,
 			int *encodingP, bool *dbIsTemplateP, Oid *dbLastSysOidP,
 			TransactionId *dbVacuumXidP, TransactionId *dbFrozenXidP,
-			char *dbpath)
+			Oid *dbTablespace)
 {
 	Relation	relation;
 	ScanKeyData scanKey;
@@ -880,28 +866,9 @@ get_db_info(const char *name, Oid *dbIdP, int4 *ownerIdP,
 		/* limit of frozen XIDs */
 		if (dbFrozenXidP)
 			*dbFrozenXidP = dbform->datfrozenxid;
-		/* database path (as registered in pg_database) */
-		if (dbpath)
-		{
-			Datum		datum;
-			bool		isnull;
-
-			datum = heap_getattr(tuple,
-								 Anum_pg_database_datpath,
-								 RelationGetDescr(relation),
-								 &isnull);
-			if (!isnull)
-			{
-				text	   *pathtext = DatumGetTextP(datum);
-				int			pathlen = VARSIZE(pathtext) - VARHDRSZ;
-
-				Assert(pathlen >= 0 && pathlen < MAXPGPATH);
-				strncpy(dbpath, VARDATA(pathtext), pathlen);
-				*(dbpath + pathlen) = '\0';
-			}
-			else
-				strcpy(dbpath, "");
-		}
+		/* default tablespace for this database */
+		if (dbTablespace)
+			*dbTablespace = dbform->dattablespace;
 	}
 
 	systable_endscan(scan);
@@ -930,105 +897,60 @@ have_createdb_privilege(void)
 	return retval;
 }
 
-
-static char *
-resolve_alt_dbpath(const char *dbpath, Oid dboid)
+/*
+ * Remove tablespace directories
+ *
+ * We don't know what tablespaces db_id is using, so iterate through all
+ * tablespaces removing <tablespace>/db_id
+ */
+static void
+remove_dbtablespaces(Oid db_id)
 {
-	const char *prefix;
-	char	   *ret;
-	size_t		len;
+	Relation rel;
+	HeapScanDesc scan;
+	HeapTuple tuple;
+	char buf[MAXPGPATH + 100];
 
-	if (dbpath == NULL || dbpath[0] == '\0')
-		return NULL;
-
-	if (first_dir_separator(dbpath))
+	rel = heap_openr(TableSpaceRelationName, AccessShareLock);
+	scan = heap_beginscan(rel, SnapshotNow, 0, NULL);
+	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
-		if (!is_absolute_path(dbpath))
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("relative paths are not allowed as database locations")));
-#ifndef ALLOW_ABSOLUTE_DBPATHS
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-		errmsg("absolute paths are not allowed as database locations")));
-#endif
-		prefix = dbpath;
-	}
-	else
-	{
-		/* must be environment variable */
-		char	   *var = getenv(dbpath);
+		Oid		dsttablespace = HeapTupleGetOid(tuple);
+		char   *dstpath;
+		struct stat st;
 
-		if (!var)
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-			   errmsg("postmaster environment variable \"%s\" not found",
-					  dbpath)));
-		if (!is_absolute_path(var))
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_NAME),
-					 errmsg("postmaster environment variable \"%s\" must be absolute path",
-							dbpath)));
-		prefix = var;
-	}
+		/* Don't mess with the global tablespace */
+		if (dsttablespace == GLOBALTABLESPACE_OID)
+			continue;
 
-	len = strlen(prefix) + 6 + sizeof(Oid) * 8 + 1;
-	if (len >= MAXPGPATH - 100)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_NAME),
-				 errmsg("alternative path is too long")));
+		dstpath = GetDatabasePath(db_id, dsttablespace);
 
-	ret = palloc(len);
-	snprintf(ret, len, "%s/base/%u", prefix, dboid);
-
-	return ret;
-}
-
-
-static bool
-remove_dbdirs(const char *nominal_loc, const char *alt_loc)
-{
-	const char *target_dir;
-	char		buf[MAXPGPATH + 100];
-	bool		success = true;
-
-	target_dir = alt_loc ? alt_loc : nominal_loc;
-
-	/*
-	 * Close virtual file descriptors so the kernel has more available for
-	 * the system() call below.
-	 */
-	closeAllVfds();
-
-	if (alt_loc)
-	{
-		/* remove symlink */
-		if (unlink(nominal_loc) != 0)
+		if (stat(dstpath, &st) < 0 || !S_ISDIR(st.st_mode))
 		{
-			ereport(WARNING,
-					(errcode_for_file_access(),
-					 errmsg("could not remove file \"%s\": %m", nominal_loc)));
-			success = false;
+			/* Assume we can ignore it */
+			pfree(dstpath);
+			continue;
 		}
-	}
 
 #ifndef WIN32
-	snprintf(buf, sizeof(buf), "rm -rf '%s'", target_dir);
+		snprintf(buf, sizeof(buf), "rm -rf '%s'", dstpath);
 #else
-	snprintf(buf, sizeof(buf), "rmdir /s /q \"%s\"", target_dir);
+		snprintf(buf, sizeof(buf), "rmdir /s /q \"%s\"", dstpath);
 #endif
-
-	if (system(buf) != 0)
-	{
-		ereport(WARNING,
+		if (system(buf) != 0)
+		{
+			ereport(WARNING,
 				(errmsg("could not remove database directory \"%s\"",
-						target_dir),
+						dstpath),
 				 errdetail("Failing system command was: %s", buf),
 				 errhint("Look in the postmaster's stderr log for more information.")));
-		success = false;
+		}
+
+		pfree(dstpath);
 	}
 
-	return success;
+	heap_endscan(scan);
+	heap_close(rel, AccessShareLock);
 }
 
 
@@ -1075,7 +997,7 @@ get_database_oid(const char *dbname)
 /*
  * get_database_name - given a database OID, look up the name
  *
- * Returns InvalidOid if database name not found.
+ * Returns a palloc'd string, or NULL if no such database.
  *
  * This is not actually used in this file, but is exported for use elsewhere.
  */

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/grant.sgml,v 1.40 2004/06/01 21:49:21 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/grant.sgml,v 1.41 2004/06/18 06:13:05 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -27,6 +27,10 @@ GRANT { { SELECT | INSERT | UPDATE | DELETE | RULE | REFERENCES | TRIGGER }
 
 GRANT { { CREATE | TEMPORARY | TEMP } [,...] | ALL [ PRIVILEGES ] }
     ON DATABASE <replaceable>dbname</replaceable> [, ...]
+    TO { <replaceable class="PARAMETER">username</replaceable> | GROUP <replaceable class="PARAMETER">groupname</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
+
+GRANT { CREATE | ALL [ PRIVILEGES ] }
+    ON TABLESPACE <replaceable>tablespacename</> [, ...]
     TO { <replaceable class="PARAMETER">username</replaceable> | GROUP <replaceable class="PARAMETER">groupname</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
 
 GRANT { EXECUTE | ALL [ PRIVILEGES ] }
@@ -87,7 +91,7 @@ GRANT { { CREATE | USAGE } [,...] | ALL [ PRIVILEGES ] }
   <para>
    Depending on the type of object, the initial default privileges may
    include granting some privileges to <literal>PUBLIC</literal>.
-   The default is no public access for tables and schemas;
+   The default is no public access for tables, schemas, and tablespaces;
    <literal>TEMP</> table creation privilege for databases;
    <literal>EXECUTE</> privilege for functions; and
    <literal>USAGE</> privilege for languages.
@@ -185,6 +189,12 @@ GRANT { { CREATE | USAGE } [,...] | ALL [ PRIVILEGES ] }
        For databases, allows new schemas to be created within the database.
       </para>
       <para>
+       For tablespaces, allows tables to be created within the tablespace,
+       and allows databases and schemas to be created that have the tablespace
+       as their default tablespace.  (Note that revoking this privilege
+       will not alter the behavior of existing databases and schemas.)
+      </para>
+      <para>
        For schemas, allows new objects to be created within the schema.
        To rename an existing object, you must own the object <emphasis>and</>
        have this privilege for the containing schema.
@@ -223,7 +233,7 @@ GRANT { { CREATE | USAGE } [,...] | ALL [ PRIVILEGES ] }
        of privilege that is applicable to procedural languages.
       </para>
       <para>
-       For schemas, allows access to objects contained in the specified 
+       For schemas, allows access to objects contained in the specified
        schema (assuming that the objects' own privilege requirements are
        also met).  Essentially this allows the grantee to <quote>look up</>
        objects within the schema.
@@ -385,7 +395,7 @@ GRANT ALL PRIVILEGES ON kinds TO manuel;
 
  <refsect1 id="sql-grant-compatibility">
   <title>Compatibility</title>
-    
+
    <para>
     According to the SQL standard, the <literal>PRIVILEGES</literal>
     key word in <literal>ALL PRIVILEGES</literal> is required.  The
@@ -412,7 +422,7 @@ GRANT <replaceable class="PARAMETER">privileges</replaceable>
 
    <para>
     The <literal>RULE</literal> privilege, and privileges on
-    databases, schemas, languages, and sequences are
+    databases, tablespaces, schemas, languages, and sequences are
     <productname>PostgreSQL</productname> extensions.
    </para>
  </refsect1>

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.461 2004/06/09 19:08:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.462 2004/06/18 06:13:31 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -136,12 +136,12 @@ static void doNegateFloat(Value *v);
 		AnalyzeStmt ClosePortalStmt ClusterStmt CommentStmt
 		ConstraintsSetStmt CopyStmt CreateAsStmt CreateCastStmt
 		CreateDomainStmt CreateGroupStmt CreateOpClassStmt CreatePLangStmt
-		CreateSchemaStmt CreateSeqStmt CreateStmt
+		CreateSchemaStmt CreateSeqStmt CreateStmt CreateTableSpaceStmt
 		CreateAssertStmt CreateTrigStmt CreateUserStmt
 		CreatedbStmt DeclareCursorStmt DefineStmt DeleteStmt
 		DropGroupStmt DropOpClassStmt DropPLangStmt DropStmt
 		DropAssertStmt DropTrigStmt DropRuleStmt DropCastStmt
-		DropUserStmt DropdbStmt ExplainStmt FetchStmt
+		DropUserStmt DropdbStmt DropTableSpaceStmt ExplainStmt FetchStmt
 		GrantStmt IndexStmt InsertStmt ListenStmt LoadStmt
 		LockStmt NotifyStmt ExplainableStmt PreparableStmt
 		CreateFunctionStmt ReindexStmt RemoveAggrStmt
@@ -324,6 +324,7 @@ static void doNegateFloat(Value *v);
 
 %type <list>	constraints_set_list
 %type <boolean> constraints_set_mode
+%type <str>		OptTableSpace OptTableSpaceOwner
 
 
 /*
@@ -384,7 +385,7 @@ static void doNegateFloat(Value *v);
 	ORDER OUT_P OUTER_P OVERLAPS OVERLAY OWNER
 
 	PARTIAL PASSWORD PATH_P PENDANT PLACING POSITION
-	PRECISION PRESERVE PREPARE PRIMARY 
+	PRECISION PRESERVE PREPARE PRIMARY
 	PRIOR PRIVILEGES PROCEDURAL PROCEDURE
 
 	QUOTE
@@ -398,7 +399,7 @@ static void doNegateFloat(Value *v);
 	SHOW SIMILAR SIMPLE SMALLINT SOME STABLE START STATEMENT
 	STATISTICS STDIN STDOUT STORAGE STRICT_P SUBSTRING SYSID
 
-	TABLE TEMP TEMPLATE TEMPORARY THEN TIME TIMESTAMP
+	TABLE TABLESPACE TEMP TEMPLATE TEMPORARY THEN TIME TIMESTAMP
 	TO TOAST TRAILING TRANSACTION TREAT TRIGGER TRIM TRUE_P
 	TRUNCATE TRUSTED TYPE_P
 
@@ -513,6 +514,7 @@ stmt :
 			| CreateSchemaStmt
 			| CreateSeqStmt
 			| CreateStmt
+			| CreateTableSpaceStmt
 			| CreateTrigStmt
 			| CreateUserStmt
 			| CreatedbStmt
@@ -527,6 +529,7 @@ stmt :
 			| DropPLangStmt
 			| DropRuleStmt
 			| DropStmt
+			| DropTableSpaceStmt
 			| DropTrigStmt
 			| DropUserStmt
 			| DropdbStmt
@@ -781,7 +784,7 @@ DropGroupStmt:
  *****************************************************************************/
 
 CreateSchemaStmt:
-			CREATE SCHEMA OptSchemaName AUTHORIZATION UserId OptSchemaEltList
+			CREATE SCHEMA OptSchemaName AUTHORIZATION UserId OptTableSpace OptSchemaEltList
 				{
 					CreateSchemaStmt *n = makeNode(CreateSchemaStmt);
 					/* One can omit the schema name or the authorization id. */
@@ -790,16 +793,18 @@ CreateSchemaStmt:
 					else
 						n->schemaname = $5;
 					n->authid = $5;
-					n->schemaElts = $6;
+					n->tablespacename = $6;
+					n->schemaElts = $7;
 					$$ = (Node *)n;
 				}
-			| CREATE SCHEMA ColId OptSchemaEltList
+			| CREATE SCHEMA ColId OptTableSpace OptSchemaEltList
 				{
 					CreateSchemaStmt *n = makeNode(CreateSchemaStmt);
 					/* ...but not both */
 					n->schemaname = $3;
 					n->authid = NULL;
-					n->schemaElts = $4;
+					n->tablespacename = $4;
+					n->schemaElts = $5;
 					$$ = (Node *)n;
 				}
 		;
@@ -1277,7 +1282,7 @@ alter_table_cmd:
 					n->name = $3;
 					$$ = (Node *)n;
 				}
-			/* ALTER TABLE <name> SET WITHOUT CLUSTER */ 
+			/* ALTER TABLE <name> SET WITHOUT CLUSTER */
 			| SET WITHOUT CLUSTER
 				{
 					AlterTableCmd *n = makeNode(AlterTableCmd);
@@ -1464,7 +1469,7 @@ opt_using:
  *****************************************************************************/
 
 CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
-			OptInherit OptWithOids OnCommitOption
+			OptInherit OptWithOids OnCommitOption OptTableSpace
 				{
 					CreateStmt *n = makeNode(CreateStmt);
 					$4->istemp = $2;
@@ -1474,10 +1479,11 @@ CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
 					n->constraints = NIL;
 					n->hasoids = $9;
 					n->oncommit = $10;
+					n->tablespacename = $11;
 					$$ = (Node *)n;
 				}
 		| CREATE OptTemp TABLE qualified_name OF qualified_name
-			'(' OptTableElementList ')' OptWithOids OnCommitOption
+			'(' OptTableElementList ')' OptWithOids OnCommitOption OptTableSpace
 				{
 					/* SQL99 CREATE TABLE OF <UDT> (cols) seems to be satisfied
 					 * by our inheritance capabilities. Let's try it...
@@ -1490,6 +1496,7 @@ CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
 					n->constraints = NIL;
 					n->hasoids = $10;
 					n->oncommit = $11;
+					n->tablespacename = $12;
 					$$ = (Node *)n;
 				}
 		;
@@ -1901,6 +1908,10 @@ OnCommitOption:  ON COMMIT DROP				{ $$ = ONCOMMIT_DROP; }
 			| /*EMPTY*/						{ $$ = ONCOMMIT_NOOP; }
 		;
 
+OptTableSpace:   TABLESPACE name					{ $$ = $2; }
+			| /*EMPTY*/								{ $$ = NULL; }
+		;
+
 
 /*
  * Note: CREATE TABLE ... AS SELECT ... is just another spelling for
@@ -1979,12 +1990,13 @@ CreateAsElement:
  *****************************************************************************/
 
 CreateSeqStmt:
-			CREATE OptTemp SEQUENCE qualified_name OptSeqList
+			CREATE OptTemp SEQUENCE qualified_name OptSeqList OptTableSpace
 				{
 					CreateSeqStmt *n = makeNode(CreateSeqStmt);
 					$4->istemp = $2;
 					n->sequence = $4;
 					n->options = $5;
+					n->tablespacename = $6;
 					$$ = (Node *)n;
 				}
 		;
@@ -2132,6 +2144,45 @@ DropPLangStmt:
 opt_procedural:
 			PROCEDURAL								{}
 			| /*EMPTY*/								{}
+		;
+
+/*****************************************************************************
+ *
+ * 		QUERY:
+ *             CREATE TABLESPACE tablespace LOCATION '/path/to/tablespace/'
+ *
+ *****************************************************************************/
+
+CreateTableSpaceStmt: CREATE TABLESPACE name OptTableSpaceOwner LOCATION Sconst
+				{
+					CreateTableSpaceStmt *n = makeNode(CreateTableSpaceStmt);
+					n->tablespacename = $3;
+					n->owner = $4;
+					n->location = $6;
+					$$ = (Node *) n;
+				}
+		;
+
+OptTableSpaceOwner: OWNER name			{ $$ = $2; }
+			| /*EMPTY */				{ $$ = NULL; }
+		;
+
+/*****************************************************************************
+ *
+ * 		QUERY :
+ *				DROP TABLESPACE <tablespace>
+ *
+ *		No need for drop behaviour as we cannot implement dependencies for
+ *		objects in other databases; we can only support RESTRICT.
+ *
+ ****************************************************************************/
+
+DropTableSpaceStmt: DROP TABLESPACE name
+				{
+					DropTableSpaceStmt *n = makeNode(DropTableSpaceStmt);
+					n->tablespacename = $3;
+					$$ = (Node *) n;
+				}
 		;
 
 /*****************************************************************************
@@ -2735,7 +2786,7 @@ CommentStmt:
 					n->objargs = NIL;
 					n->comment = $7;
 					$$ = (Node *) n;
-				}				
+				}
 		;
 
 comment_type:
@@ -3026,6 +3077,13 @@ privilege_target:
 					n->objs = $2;
 					$$ = n;
 				}
+			| TABLESPACE name_list
+				{
+					PrivTarget *n = makeNode(PrivTarget);
+					n->objtype = ACL_OBJECT_TABLESPACE;
+					n->objs = $2;
+					$$ = n;
+				}
 		;
 
 
@@ -3092,12 +3150,14 @@ function_with_argtypes:
  *		QUERY:
  *				create index <indexname> on <relname>
  *				  [ using <access> ] "(" ( <col> [ using <opclass> ] )+ ")"
- *				  [ where <predicate> ]
+ *				  [ tablespace <tablespacename> ] [ where <predicate> ]
  *
+ * Note: we cannot put TABLESPACE clause after WHERE clause unless we are
+ * willing to make TABLESPACE a fully reserved word.
  *****************************************************************************/
 
 IndexStmt:	CREATE index_opt_unique INDEX index_name ON qualified_name
-			access_method_clause '(' index_params ')' where_clause
+			access_method_clause '(' index_params ')' OptTableSpace where_clause
 				{
 					IndexStmt *n = makeNode(IndexStmt);
 					n->unique = $2;
@@ -3105,7 +3165,8 @@ IndexStmt:	CREATE index_opt_unique INDEX index_name ON qualified_name
 					n->relation = $6;
 					n->accessMethod = $7;
 					n->indexParams = $9;
-					n->whereClause = $11;
+					n->tableSpace = $11;
+					n->whereClause = $12;
 					$$ = (Node *)n;
 				}
 		;
@@ -3896,7 +3957,15 @@ createdb_opt_list:
 		;
 
 createdb_opt_item:
-			LOCATION opt_equal Sconst
+			TABLESPACE opt_equal name
+				{
+					$$ = makeDefElem("tablespace", (Node *)makeString($3));
+				}
+			| TABLESPACE opt_equal DEFAULT
+				{
+					$$ = makeDefElem("tablespace", NULL);
+				}
+			| LOCATION opt_equal Sconst
 				{
 					$$ = makeDefElem("location", (Node *)makeString($3));
 				}
@@ -6801,7 +6870,7 @@ subquery_Op:
 					{ $$ = list_make1(makeString("!~~*")); }
 /* cannot put SIMILAR TO here, because SIMILAR TO is a hack.
  * the regular expression is preprocessed by a function (similar_escape),
- * and the ~ operator for posix regular expressions is used. 
+ * and the ~ operator for posix regular expressions is used.
  *        x SIMILAR TO y     ->    x ~ similar_escape(y)
  * this transformation is made on the fly by the parser upwards.
  * however the SubLink structure which handles any/some/all stuff
@@ -6978,7 +7047,7 @@ in_expr:	select_with_parens
  *	COALESCE(a,b,...)
  * same as CASE WHEN a IS NOT NULL THEN a WHEN b IS NOT NULL THEN b ... END
  * - thomas 1998-11-09
- * 
+ *
  * NULLIF and COALESCE have become first class nodes to
  * prevent double evaluation of arguments.
  * - Kris Jurka 2003-02-11
@@ -7565,6 +7634,7 @@ unreserved_keyword:
 			| STORAGE
 			| SYSID
 			| STRICT_P
+			| TABLESPACE
 			| TEMP
 			| TEMPLATE
 			| TEMPORARY

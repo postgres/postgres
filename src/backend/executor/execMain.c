@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.233 2004/05/30 23:40:26 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.234 2004/06/18 06:13:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -779,6 +779,7 @@ InitPlan(QueryDesc *queryDesc, bool explainOnly)
 
 		intoRelationId = heap_create_with_catalog(intoName,
 												  namespaceId,
+												  InvalidOid,
 												  tupdesc,
 												  RELKIND_RELATION,
 												  false,

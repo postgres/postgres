@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/buf_internals.h,v 1.70 2004/04/21 18:06:29 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/buf_internals.h,v 1.71 2004/06/18 06:14:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,7 +53,8 @@ typedef struct buftag
 
 #define CLEAR_BUFFERTAG(a) \
 ( \
-	(a).rnode.tblNode = InvalidOid, \
+	(a).rnode.spcNode = InvalidOid, \
+	(a).rnode.dbNode = InvalidOid, \
 	(a).rnode.relNode = InvalidOid, \
 	(a).blockNum = InvalidBlockNumber \
 )

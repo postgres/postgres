@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.59 2004/06/10 17:55:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.60 2004/06/18 06:13:23 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -1110,8 +1110,8 @@ DefineCompositeType(const RangeVar *typevar, List *coldeflist)
 			 errmsg("composite type must have at least one attribute")));
 
 	/*
-	 * now create the parameters for keys/inheritance etc. All of them are
-	 * nil...
+	 * now set the parameters for keys/inheritance etc. All of these
+	 * are uninteresting for composite types...
 	 */
 	createStmt->relation = (RangeVar *) typevar;
 	createStmt->tableElts = coldeflist;
@@ -1119,6 +1119,7 @@ DefineCompositeType(const RangeVar *typevar, List *coldeflist)
 	createStmt->constraints = NIL;
 	createStmt->hasoids = MUST_NOT_HAVE_OIDS;
 	createStmt->oncommit = ONCOMMIT_NOOP;
+	createStmt->tablespacename = NULL;
 
 	/*
 	 * finally create the relation...

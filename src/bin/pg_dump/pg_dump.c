@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.374 2004/06/07 20:35:57 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.375 2004/06/18 06:14:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1164,13 +1164,13 @@ dumpDatabase(Archive *AH)
 				i_oid,
 				i_dba,
 				i_encoding,
-				i_datpath;
+				i_tablespace;
 	CatalogId	dbCatId;
 	DumpId		dbDumpId;
 	const char *datname,
 			   *dba,
 			   *encoding,
-			   *datpath;
+			   *tablespace;
 
 	datname = PQdb(g_conn);
 
@@ -1181,31 +1181,34 @@ dumpDatabase(Archive *AH)
 	selectSourceSchema("pg_catalog");
 
 	/* Get the database owner and parameters from pg_database */
-	if (g_fout->remoteVersion >= 70100)
+	if (g_fout->remoteVersion >= 70500)
 	{
 		appendPQExpBuffer(dbQry, "SELECT tableoid, oid, "
 						  "(SELECT usename FROM pg_user WHERE usesysid = datdba) as dba, "
 						  "pg_encoding_to_char(encoding) as encoding, "
-						  "datpath "
+						  "(SELECT spcname FROM pg_tablespace t WHERE t.oid = dattablespace) as tablespace "
+						  "FROM pg_database "
+						  "WHERE datname = ");
+		appendStringLiteral(dbQry, datname, true);
+	}
+	else if (g_fout->remoteVersion >= 70100)
+	{
+		appendPQExpBuffer(dbQry, "SELECT tableoid, oid, "
+						  "(SELECT usename FROM pg_user WHERE usesysid = datdba) as dba, "
+						  "pg_encoding_to_char(encoding) as encoding, "
+						  "NULL as tablespace "
 						  "FROM pg_database "
 						  "WHERE datname = ");
 		appendStringLiteral(dbQry, datname, true);
 	}
 	else
 	{
-		/*
-		 * In 7.0, datpath is either the same as datname, or the user-given
-		 * location with "/" and the datname appended.  We must strip this
-		 * junk off to produce a correct LOCATION value.
-		 */
 		appendPQExpBuffer(dbQry, "SELECT "
 						  "(SELECT oid FROM pg_class WHERE relname = 'pg_database') AS tableoid, "
 						  "oid, "
 						  "(SELECT usename FROM pg_user WHERE usesysid = datdba) as dba, "
 						  "pg_encoding_to_char(encoding) as encoding, "
-						  "CASE WHEN length(datpath) > length(datname) THEN "
-						  "substr(datpath,1,length(datpath)-length(datname)-1) "
-						  "ELSE '' END as datpath "
+						  "NULL as tablespace "
 						  "FROM pg_database "
 						  "WHERE datname = ");
 		appendStringLiteral(dbQry, datname, true);
@@ -1234,25 +1237,24 @@ dumpDatabase(Archive *AH)
 	i_oid = PQfnumber(res, "oid");
 	i_dba = PQfnumber(res, "dba");
 	i_encoding = PQfnumber(res, "encoding");
-	i_datpath = PQfnumber(res, "datpath");
+	i_tablespace = PQfnumber(res, "tablespace");
 
 	dbCatId.tableoid = atooid(PQgetvalue(res, 0, i_tableoid));
 	dbCatId.oid = atooid(PQgetvalue(res, 0, i_oid));
 	dba = PQgetvalue(res, 0, i_dba);
 	encoding = PQgetvalue(res, 0, i_encoding);
-	datpath = PQgetvalue(res, 0, i_datpath);
+	tablespace = PQgetvalue(res, 0, i_tablespace);
 
 	appendPQExpBuffer(creaQry, "CREATE DATABASE %s WITH TEMPLATE = template0",
 					  fmtId(datname));
-	if (strlen(datpath) > 0)
-	{
-		appendPQExpBuffer(creaQry, " LOCATION = ");
-		appendStringLiteral(creaQry, datpath, true);
-	}
 	if (strlen(encoding) > 0)
 	{
 		appendPQExpBuffer(creaQry, " ENCODING = ");
 		appendStringLiteral(creaQry, encoding, true);
+	}
+	if (strlen(tablespace) > 0 && strcmp(tablespace, "default") != 0)
+	{
+		appendPQExpBuffer(creaQry, " TABLESPACE = %s", fmtId(tablespace));
 	}
 	appendPQExpBuffer(creaQry, ";\n");
 
@@ -1303,7 +1305,7 @@ dumpTimestamp(Archive *AH, char *msg)
 	if (strftime(buf, 256, "%Y-%m-%d %H:%M:%S %Z", localtime(&now)) != 0)
  	{
 		PQExpBuffer qry = createPQExpBuffer();
-	
+
 		appendPQExpBuffer(qry, "-- ");
 		appendPQExpBuffer(qry, msg);
 		appendPQExpBuffer(qry, " ");
@@ -1471,6 +1473,7 @@ getNamespaces(int *numNamespaces)
 	int			i_oid;
 	int			i_nspname;
 	int			i_usename;
+	int			i_nsptablespace;
 	int			i_nspacl;
 
 	/*
@@ -1488,6 +1491,7 @@ getNamespaces(int *numNamespaces)
 		nsinfo[0].dobj.name = strdup("");
 		nsinfo[0].usename = strdup("");
 		nsinfo[0].nspacl = strdup("");
+		nsinfo[0].nsptablespace = strdup("");
 
 		selectDumpableNamespace(&nsinfo[0]);
 
@@ -1498,6 +1502,7 @@ getNamespaces(int *numNamespaces)
 		nsinfo[1].dobj.name = strdup("pg_catalog");
 		nsinfo[1].usename = strdup("");
 		nsinfo[1].nspacl = strdup("");
+		nsinfo[0].nsptablespace = strdup("");
 
 		selectDumpableNamespace(&nsinfo[1]);
 
@@ -1516,10 +1521,21 @@ getNamespaces(int *numNamespaces)
 	 * we fetch all namespaces including system ones, so that every object
 	 * we read in can be linked to a containing namespace.
 	 */
-	appendPQExpBuffer(query, "SELECT tableoid, oid, nspname, "
-	"(select usename from pg_user where nspowner = usesysid) as usename, "
-					  "nspacl "
-					  "FROM pg_namespace");
+	if (g_fout->remoteVersion >= 70500)
+	{
+		appendPQExpBuffer(query, "SELECT tableoid, oid, nspname, "
+		"(select usename from pg_user where nspowner = usesysid) as usename, "
+						  "nspacl, "
+						 "(SELECT spcname FROM pg_tablespace t WHERE t.oid = nsptablespace) AS nsptablespace "
+						  "FROM pg_namespace");
+	}
+	else
+	{
+		appendPQExpBuffer(query, "SELECT tableoid, oid, nspname, "
+		"(select usename from pg_user where nspowner = usesysid) as usename, "
+						  "nspacl, NULL AS nsptablespace "
+						  "FROM pg_namespace");
+	}
 
 	res = PQexec(g_conn, query->data);
 	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
@@ -1533,6 +1549,7 @@ getNamespaces(int *numNamespaces)
 	i_nspname = PQfnumber(res, "nspname");
 	i_usename = PQfnumber(res, "usename");
 	i_nspacl = PQfnumber(res, "nspacl");
+	i_nsptablespace = PQfnumber(res, "nsptablespace");
 
 	for (i = 0; i < ntups; i++)
 	{
@@ -1543,6 +1560,7 @@ getNamespaces(int *numNamespaces)
 		nsinfo[i].dobj.name = strdup(PQgetvalue(res, i, i_nspname));
 		nsinfo[i].usename = strdup(PQgetvalue(res, i, i_usename));
 		nsinfo[i].nspacl = strdup(PQgetvalue(res, i, i_nspacl));
+		nsinfo[i].nsptablespace = strdup(PQgetvalue(res, i, i_nsptablespace));
 
 		/* Decide whether to dump this namespace */
 		selectDumpableNamespace(&nsinfo[i]);
@@ -2329,6 +2347,7 @@ getTables(int *numTables)
 	int			i_relhasoids;
 	int			i_owning_tab;
 	int			i_owning_col;
+	int			i_reltablespace;
 
 	/* Make sure we are in proper schema */
 	selectSourceSchema("pg_catalog");
@@ -2349,7 +2368,7 @@ getTables(int *numTables)
 	 * columns, etc.
 	 */
 
-	if (g_fout->remoteVersion >= 70300)
+	if (g_fout->remoteVersion >= 70500)
 	{
 		/*
 		 * Left join to pick up dependency info linking sequences to their
@@ -2362,7 +2381,34 @@ getTables(int *numTables)
 						  "relchecks, reltriggers, "
 						  "relhasindex, relhasrules, relhasoids, "
 						  "d.refobjid as owning_tab, "
-						  "d.refobjsubid as owning_col "
+						  "d.refobjsubid as owning_col, "
+						  "(SELECT spcname FROM pg_tablespace t WHERE t.oid = c.reltablespace) AS reltablespace "
+						  "from pg_class c "
+						  "left join pg_depend d on "
+						  "(c.relkind = '%c' and "
+						"d.classid = c.tableoid and d.objid = c.oid and "
+						  "d.objsubid = 0 and "
+						"d.refclassid = c.tableoid and d.deptype = 'i') "
+						  "where relkind in ('%c', '%c', '%c') "
+						  "order by c.oid",
+						  RELKIND_SEQUENCE,
+					   RELKIND_RELATION, RELKIND_SEQUENCE, RELKIND_VIEW);
+	}
+	else if (g_fout->remoteVersion >= 70300)
+	{
+		/*
+		 * Left join to pick up dependency info linking sequences to their
+		 * serial column, if any
+		 */
+		appendPQExpBuffer(query,
+						  "SELECT c.tableoid, c.oid, relname, "
+						  "relacl, relkind, relnamespace, "
+						  "(select usename from pg_user where relowner = usesysid) as usename, "
+						  "relchecks, reltriggers, "
+						  "relhasindex, relhasrules, relhasoids, "
+						  "d.refobjid as owning_tab, "
+						  "d.refobjsubid as owning_col, "
+						  "NULL as reltablespace "
 						  "from pg_class c "
 						  "left join pg_depend d on "
 						  "(c.relkind = '%c' and "
@@ -2383,7 +2429,8 @@ getTables(int *numTables)
 						  "relchecks, reltriggers, "
 						  "relhasindex, relhasrules, relhasoids, "
 						  "NULL::oid as owning_tab, "
-						  "NULL::int4 as owning_col "
+						  "NULL::int4 as owning_col, "
+						  "NULL as reltablespace "
 						  "from pg_class "
 						  "where relkind in ('%c', '%c', '%c') "
 						  "order by oid",
@@ -2400,7 +2447,8 @@ getTables(int *numTables)
 						  "relhasindex, relhasrules, "
 						  "'t'::bool as relhasoids, "
 						  "NULL::oid as owning_tab, "
-						  "NULL::int4 as owning_col "
+						  "NULL::int4 as owning_col, "
+						  "NULL as reltablespace "
 						  "from pg_class "
 						  "where relkind in ('%c', '%c', '%c') "
 						  "order by oid",
@@ -2427,7 +2475,8 @@ getTables(int *numTables)
 						  "relhasindex, relhasrules, "
 						  "'t'::bool as relhasoids, "
 						  "NULL::oid as owning_tab, "
-						  "NULL::int4 as owning_col "
+						  "NULL::int4 as owning_col, "
+						  "NULL as reltablespace "
 						  "from pg_class c "
 						  "where relkind in ('%c', '%c') "
 						  "order by oid",
@@ -2467,6 +2516,7 @@ getTables(int *numTables)
 	i_relhasoids = PQfnumber(res, "relhasoids");
 	i_owning_tab = PQfnumber(res, "owning_tab");
 	i_owning_col = PQfnumber(res, "owning_col");
+	i_reltablespace = PQfnumber(res, "reltablespace");
 
 	for (i = 0; i < ntups; i++)
 	{
@@ -2495,6 +2545,7 @@ getTables(int *numTables)
 			tblinfo[i].owning_tab = atooid(PQgetvalue(res, i, i_owning_tab));
 			tblinfo[i].owning_col = atoi(PQgetvalue(res, i, i_owning_col));
 		}
+		tblinfo[i].reltablespace = strdup(PQgetvalue(res, i, i_reltablespace));
 
 		/* other fields were zeroed above */
 
@@ -2768,6 +2819,7 @@ getIndexes(TableInfo tblinfo[], int numTables)
 			indxinfo[j].indextable = tbinfo;
 			indxinfo[j].indexdef = strdup(PQgetvalue(res, j, i_indexdef));
 			indxinfo[j].indnkeys = atoi(PQgetvalue(res, j, i_indnkeys));
+
 			/*
 			 * In pre-7.4 releases, indkeys may contain more entries than
 			 * indnkeys says (since indnkeys will be 1 for a functional
@@ -2805,7 +2857,7 @@ getIndexes(TableInfo tblinfo[], int numTables)
 				constrinfo[j].conindex = indxinfo[j].dobj.dumpId;
 				constrinfo[j].coninherited = false;
 				constrinfo[j].separate = true;
-				
+
 				indxinfo[j].indexconstraint = constrinfo[j].dobj.dumpId;
 
 				/* If pre-7.3 DB, better make sure table comes first */
@@ -4341,8 +4393,15 @@ dumpNamespace(Archive *fout, NamespaceInfo *nspinfo)
 	{
 		appendPQExpBuffer(delq, "DROP SCHEMA %s;\n", qnspname);
 
-		appendPQExpBuffer(q, "CREATE SCHEMA %s AUTHORIZATION %s;\n",
+		appendPQExpBuffer(q, "CREATE SCHEMA %s AUTHORIZATION %s",
 						  qnspname, fmtId(nspinfo->usename));
+
+		/* Add tablespace qualifier, if not default */
+		if (strlen(nspinfo->nsptablespace) != 0)
+			appendPQExpBuffer(q, " TABLESPACE %s",
+							  fmtId(nspinfo->nsptablespace));
+
+		appendPQExpBuffer(q, ";\n");
 
 		ArchiveEntry(fout, nspinfo->dobj.catId, nspinfo->dobj.dumpId,
 					 nspinfo->dobj.name,
@@ -5118,7 +5177,7 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 		if (strcmp(prosrc, "-") != 0)
 		{
 			appendPQExpBuffer(asPart, ", ");
-			/* 
+			/*
 			 * where we have bin, use dollar quoting if allowed and src
 			 * contains quote or backslash; else use regular quoting.
 			 */
@@ -5281,7 +5340,7 @@ dumpCast(Archive *fout, CastInfo *cast)
 	 * Skip cast if function isn't from pg_ and that namespace is
 	 * not dumped.
 	 */
-	if (funcInfo && 
+	if (funcInfo &&
 		strncmp(funcInfo->dobj.namespace->dobj.name, "pg_", 3) != 0 &&
 		!funcInfo->dobj.namespace->dump)
 		return;
@@ -6001,14 +6060,14 @@ dumpConversion(Archive *fout, ConvInfo *convinfo)
 					  fmtId(convinfo->dobj.name));
 
 	appendPQExpBuffer(q, "CREATE %sCONVERSION %s FOR ",
-					(condefault) ? "DEFAULT " : "",	
+					(condefault) ? "DEFAULT " : "",
 					fmtId(convinfo->dobj.name));
 	appendStringLiteral(q, conforencoding, true);
 	appendPQExpBuffer(q, " TO ");
 	appendStringLiteral(q, contoencoding, true);
 	/* regproc is automatically quoted in 7.3 and above */
 	appendPQExpBuffer(q, " FROM %s;\n", conproc);
-	
+
 	ArchiveEntry(fout, convinfo->dobj.catId, convinfo->dobj.dumpId,
 				 convinfo->dobj.name,
 				 convinfo->dobj.namespace->dobj.name, convinfo->usename,
@@ -6560,6 +6619,15 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 								  fmtId(parentRel->dobj.name));
 			}
 			appendPQExpBuffer(q, ")");
+		}
+
+		/* Output tablespace clause if necessary */
+		if (strlen(tbinfo->reltablespace) != 0 &&
+			strcmp(tbinfo->reltablespace,
+				   tbinfo->dobj.namespace->nsptablespace) != 0)
+		{
+			appendPQExpBuffer(q, " TABLESPACE %s",
+							  fmtId(tbinfo->reltablespace));
 		}
 
 		appendPQExpBuffer(q, ";\n");
@@ -7227,8 +7295,19 @@ dumpSequence(Archive *fout, TableInfo *tbinfo)
 			appendPQExpBuffer(query, "    NO MINVALUE\n");
 
 		appendPQExpBuffer(query,
-						  "    CACHE %s%s;\n",
+						  "    CACHE %s%s",
 						  cache, (cycled ? "\n    CYCLE" : ""));
+
+		/* Output tablespace clause if necessary */
+		if (strlen(tbinfo->reltablespace) != 0 &&
+			strcmp(tbinfo->reltablespace,
+				   tbinfo->dobj.namespace->nsptablespace) != 0)
+		{
+			appendPQExpBuffer(query, " TABLESPACE %s",
+							  fmtId(tbinfo->reltablespace));
+		}
+
+		appendPQExpBuffer(query, ";\n");
 
 		ArchiveEntry(fout, tbinfo->dobj.catId, tbinfo->dobj.dumpId,
 					 tbinfo->dobj.name,

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.305 2004/06/10 17:55:58 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.306 2004/06/18 06:13:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -874,6 +874,7 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 		seqstmt = makeNode(CreateSeqStmt);
 		seqstmt->sequence = makeRangeVar(snamespace, sname);
 		seqstmt->options = NIL;
+		seqstmt->tablespacename = NULL;
 
 		cxt->blist = lappend(cxt->blist, seqstmt);
 
@@ -1199,6 +1200,7 @@ transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt)
 
 		index->relation = cxt->relation;
 		index->accessMethod = DEFAULT_INDEX_TYPE;
+		index->tableSpace = NULL;
 		index->indexParams = NIL;
 		index->whereClause = NULL;
 

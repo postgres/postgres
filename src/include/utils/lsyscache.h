@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/lsyscache.h,v 1.87 2004/06/06 00:41:28 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/lsyscache.h,v 1.88 2004/06/18 06:14:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,6 +63,7 @@ extern Oid	get_relname_relid(const char *relname, Oid relnamespace);
 extern Oid	get_system_catalog_relid(const char *catname);
 extern char *get_rel_name(Oid relid);
 extern Oid	get_rel_namespace(Oid relid);
+extern Oid	get_rel_tablespace(Oid relid);
 extern Oid	get_rel_type_id(Oid relid);
 extern char get_rel_relkind(Oid relid);
 extern bool get_typisdefined(Oid typid);
@@ -105,6 +106,7 @@ extern void free_attstatsslot(Oid atttype,
 				  Datum *values, int nvalues,
 				  float4 *numbers, int nnumbers);
 extern char *get_namespace_name(Oid nspid);
+extern Oid	get_namespace_tablespace(Oid nspid);
 extern int32 get_usesysid(const char *username);
 
 #define is_array_type(typid)  (get_element_type(typid) != InvalidOid)

@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/test/regress/GNUmakefile,v 1.46 2004/03/03 04:22:47 momjian Exp $
+#    $PostgreSQL: pgsql/src/test/regress/GNUmakefile,v 1.47 2004/06/18 06:14:25 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -67,7 +67,7 @@ all: $(DLOBJS)
 
 # Build test input and expected files
 
-file_list := copy create_function_1 create_function_2 misc constraints
+file_list := copy create_function_1 create_function_2 misc constraints tablespace
 input_files  := $(foreach file, $(file_list), sql/$(file).sql)
 output_files := $(foreach file, $(file_list), expected/$(file).out)
 
@@ -81,10 +81,13 @@ abs_srcdir := $(shell cd $(srcdir) && pwd -W)
 abs_builddir := $(shell pwd -W)
 endif
 
+testtablespace := $(abs_builddir)/testtablespace
+
 
 define sed-command
 sed -e 's,@abs_srcdir@,$(abs_srcdir),g' \
     -e 's,@abs_builddir@,$(abs_builddir),g' \
+    -e 's,@testtablespace@,$(testtablespace),g' \
     -e 's/@DLSUFFIX@/$(DLSUFFIX)/g' $< >$@
 endef
 
@@ -125,9 +128,13 @@ all-spi:
 ##
 
 check: all
+	-rm -rf ./testtablespace
+	mkdir ./testtablespace
 	$(SHELL) ./pg_regress --temp-install --top-builddir=$(top_builddir) --schedule=$(srcdir)/parallel_schedule --multibyte=$(MULTIBYTE) $(MAXCONNOPT)
 
 installcheck: all
+	-rm -rf ./testtablespace
+	mkdir ./testtablespace
 	$(SHELL) ./pg_regress --schedule=$(srcdir)/serial_schedule --multibyte=$(MULTIBYTE)
 
 
@@ -152,6 +159,7 @@ clean distclean maintainer-clean:
 	$(MAKE) -C $(contribdir)/spi clean
 	rm -f $(output_files) $(input_files) $(DLOBJS) regress.o pg_regress
 # things created by various check targets
+	rm -rf testtablespace
 	rm -rf results tmp_check log
 	rm -f regression.diffs regression.out regress.out run_check.out
 ifeq ($(PORTNAME), cygwin)

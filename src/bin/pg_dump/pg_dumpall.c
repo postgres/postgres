@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.41 2004/06/10 16:35:17 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.42 2004/06/18 06:14:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,6 +46,7 @@ static void help(void);
 
 static void dumpUsers(PGconn *conn);
 static void dumpGroups(PGconn *conn);
+static void dumpTablespaces(PGconn *conn);
 static void dumpCreateDB(PGconn *conn);
 static void dumpDatabaseConfig(PGconn *conn, const char *dbname);
 static void dumpUserConfig(PGconn *conn, const char *username);
@@ -231,6 +232,8 @@ main(int argc, char *argv[])
 	{
 		dumpUsers(conn);
 		dumpGroups(conn);
+		if (server_version >= 70500)
+			dumpTablespaces(conn);
 	}
 
 	if (!globals_only)
@@ -411,7 +414,68 @@ dumpGroups(PGconn *conn)
 	printf("\n\n");
 }
 
+/*
+ * Dump tablespaces.
+ */
+static void
+dumpTablespaces(PGconn *conn)
+{
+	PGresult   *res;
+	int			i;
 
+	printf("--\n-- Tablespaces\n--\n\n");
+
+	/*
+	 * Get all tablespaces except for the system default and global
+	 * tablespaces
+	 */
+	res = executeQuery(conn, "SELECT spcname, "
+					   "pg_catalog.pg_get_userbyid(spcowner) AS spcowner, "
+					   "spclocation, spcacl "
+					   "FROM pg_catalog.pg_tablespace "
+					   "WHERE spcname NOT IN ('default', 'global')");
+
+	for (i = 0; i < PQntuples(res); i++)
+	{
+		PQExpBuffer buf = createPQExpBuffer();
+		char	*spcname = PQgetvalue(res, i, 0);
+		char	*spcowner = PQgetvalue(res, i, 1);
+		char	*spclocation = PQgetvalue(res, i, 2);
+		char	*spcacl = PQgetvalue(res, i, 3);
+		char	*fspcname;
+
+		/* needed for buildACLCommands() */
+		fspcname = strdup(fmtId(spcname));
+
+		if (output_clean)
+			appendPQExpBuffer(buf, "DROP TABLESPACE %s;\n", fspcname);
+
+		appendPQExpBuffer(buf, "CREATE TABLESPACE %s", fspcname);
+		appendPQExpBuffer(buf, " OWNER %s", fmtId(spcowner));
+
+		appendPQExpBuffer(buf, " LOCATION ");
+		appendStringLiteral(buf, spclocation, true);
+		appendPQExpBuffer(buf, ";\n");
+
+		if (!skip_acls &&
+			!buildACLCommands(fspcname, "TABLESPACE", spcacl, spcowner,
+							  server_version, buf))
+		{
+			fprintf(stderr, _("%s: could not parse ACL list (%s) for tablespace \"%s\"\n"),
+					progname, spcacl, fspcname);
+			PQfinish(conn);
+			exit(1);
+		}
+
+		printf("%s", buf->data);
+
+		free(fspcname);
+		destroyPQExpBuffer(buf);
+	}
+
+	PQclear(res);
+	printf("\n\n");
+}
 
 /*
  * Dump commands to create each database.
@@ -432,12 +496,22 @@ dumpCreateDB(PGconn *conn)
 
 	printf("--\n-- Database creation\n--\n\n");
 
-	if (server_version >= 70300)
+	if (server_version >= 70500)
 		res = executeQuery(conn,
 						   "SELECT datname, "
 						   "coalesce(usename, (select usename from pg_shadow where usesysid=(select datdba from pg_database where datname='template0'))), "
 						   "pg_encoding_to_char(d.encoding), "
-						   "datistemplate, datpath, datacl "
+						   "datistemplate, datacl, "
+						   "(SELECT spcname FROM pg_tablespace t WHERE t.oid = d.dattablespace) AS dattablespace "
+		"FROM pg_database d LEFT JOIN pg_shadow u ON (datdba = usesysid) "
+						   "WHERE datallowconn ORDER BY 1");
+	else if (server_version >= 70300)
+		res = executeQuery(conn,
+						   "SELECT datname, "
+						   "coalesce(usename, (select usename from pg_shadow where usesysid=(select datdba from pg_database where datname='template0'))), "
+						   "pg_encoding_to_char(d.encoding), "
+						   "datistemplate, datacl, "
+						   "'default' AS dattablespace "
 		"FROM pg_database d LEFT JOIN pg_shadow u ON (datdba = usesysid) "
 						   "WHERE datallowconn ORDER BY 1");
 	else if (server_version >= 70100)
@@ -447,16 +521,13 @@ dumpCreateDB(PGconn *conn)
 				"(select usename from pg_shadow where usesysid=datdba), "
 						   "(select usename from pg_shadow where usesysid=(select datdba from pg_database where datname='template0'))), "
 						   "pg_encoding_to_char(d.encoding), "
-						   "datistemplate, datpath, '' as datacl "
+						   "datistemplate, '' as datacl, "
+						   "'default' AS dattablespace "
 						   "FROM pg_database d "
 						   "WHERE datallowconn ORDER BY 1");
 	else
 	{
 		/*
-		 * In 7.0, datpath is either the same as datname, or the user-given
-		 * location with "/" and the datname appended.  We must strip this
-		 * junk off to produce a correct LOCATION value.
-		 *
 		 * Note: 7.0 fails to cope with sub-select in COALESCE, so just
 		 * deal with getting a NULL by not printing any OWNER clause.
 		 */
@@ -465,10 +536,8 @@ dumpCreateDB(PGconn *conn)
 				"(select usename from pg_shadow where usesysid=datdba), "
 						   "pg_encoding_to_char(d.encoding), "
 						   "'f' as datistemplate, "
-						   "CASE WHEN length(datpath) > length(datname) THEN "
-						   "substr(datpath,1,length(datpath)-length(datname)-1) "
-						   "ELSE '' END as datpath, "
-						   "'' as datacl "
+						   "'' as datacl, "
+						   "'default' AS dattablespace "
 						   "FROM pg_database d "
 						   "ORDER BY 1");
 	}
@@ -480,8 +549,8 @@ dumpCreateDB(PGconn *conn)
 		char	   *dbowner = PQgetvalue(res, i, 1);
 		char	   *dbencoding = PQgetvalue(res, i, 2);
 		char	   *dbistemplate = PQgetvalue(res, i, 3);
-		char	   *dbpath = PQgetvalue(res, i, 4);
-		char	   *dbacl = PQgetvalue(res, i, 5);
+		char	   *dbacl = PQgetvalue(res, i, 4);
+		char	   *dbtablespace = PQgetvalue(res, i, 5);
 		char	   *fdbname;
 
 		if (strcmp(dbname, "template1") == 0)
@@ -496,19 +565,20 @@ dumpCreateDB(PGconn *conn)
 			appendPQExpBuffer(buf, "DROP DATABASE %s;\n", fdbname);
 
 		appendPQExpBuffer(buf, "CREATE DATABASE %s", fdbname);
-		if (strlen(dbowner) != 0)
-			appendPQExpBuffer(buf, " WITH OWNER = %s",
-							  fmtId(dbowner));
-		appendPQExpBuffer(buf, " TEMPLATE = template0");
 
-		if (strlen(dbpath) != 0)
-		{
-			appendPQExpBuffer(buf, " LOCATION = ");
-			appendStringLiteral(buf, dbpath, true);
-		}
+		appendPQExpBuffer(buf, " WITH TEMPLATE = template0");
+
+		if (strlen(dbowner) != 0)
+			appendPQExpBuffer(buf, " OWNER = %s",
+							  fmtId(dbowner));
 
 		appendPQExpBuffer(buf, " ENCODING = ");
 		appendStringLiteral(buf, dbencoding, true);
+
+		/* Output tablespace if it isn't default */
+		if (strcmp(dbtablespace, "default") != 0)
+			appendPQExpBuffer(buf, " TABLESPACE = %s",
+							  fmtId(dbtablespace));
 
 		appendPQExpBuffer(buf, ";\n");
 

@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.87 2004/06/16 01:26:33 tgl Exp $
+ $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.88 2004/06/18 06:13:02 tgl Exp $
  -->
 
 <chapter id="catalogs">
@@ -176,6 +176,11 @@
      <row>
       <entry><link linkend="catalog-pg-statistic"><structname>pg_statistic</structname></link></entry>
       <entry>planner statistics</entry>
+     </row>
+
+     <row>
+      <entry><link linkend="catalog-pg-tablespace"><structname>pg_tablespace</structname></link></entry>
+      <entry>tablespaces within this database cluster</entry>
      </row>
 
      <row>
@@ -1059,6 +1064,17 @@
      </row>
 
      <row>
+      <entry><structfield>reltablespace</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-tablespace"><structname>pg_tablespace</structname></link>.oid</literal></entry>
+      <entry>
+       The tablespace in which this relation is stored.  If zero,
+       the database's default tablespace is implied.  (Not meaningful
+       if the relation has no on-disk file.)
+      </entry>
+     </row>
+
+     <row>
       <entry><structfield>relpages</structfield></entry>
       <entry><type>int4</type></entry>
       <entry></entry>
@@ -1602,13 +1618,15 @@
      </row>
 
      <row>
-      <entry><structfield>datpath</structfield></entry>
-      <entry><type>text</type></entry>
-      <entry></entry>
+      <entry><structfield>dattablespace</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-tablespace"><structname>pg_tablespace</structname></link>.oid</literal></entry>
       <entry>
-       If the database is stored at an alternative location then this
-       records the location.  It's either an environment variable name
-       or an absolute path, depending how it was entered.
+       The default tablespace for the database.
+       Within this database, all tables for which
+       <structname>pg_class</>.<structfield>reltablespace</> is zero
+       will be stored in this tablespace; in particular, all the non-shared
+       system catalogs will be there.
       </entry>
      </row>
 
@@ -2384,6 +2402,17 @@
       <entry><type>int4</type></entry>
       <entry><literal><link linkend="catalog-pg-shadow"><structname>pg_shadow</structname></link>.usesysid</literal></entry>
       <entry>Owner of the namespace</entry>
+     </row>
+
+     <row>
+      <entry><structfield>nsptablespace</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-tablespace"><structname>pg_tablespace</structname></link>.oid</literal></entry>
+      <entry>
+       The default tablespace in which to place relations created in this
+       namespace.  If zero, the database's default tablespace is implied.
+       (Changing this does not affect pre-existing relations.)
+      </entry>
      </row>
 
      <row>
@@ -3229,6 +3258,73 @@
    </tgroup>
   </table>
 
+ </sect1>
+
+
+ <sect1 id="catalog-pg-tablespace">
+  <title><structname>pg_tablespace</structname></title>
+
+  <indexterm zone="catalog-pg-tablespace">
+   <primary>pg_tablespace</primary>
+  </indexterm>
+
+  <para>
+   The catalog <structname>pg_tablespace</structname> stores information
+   about the available tablespaces.  Tables can be placed in particular
+   tablespaces to aid administration of disk layout.
+  </para>
+
+  <para>
+   Unlike most system catalogs, <structname>pg_tablespace</structname>
+   is shared across all databases of a cluster: there is only one
+   copy of <structname>pg_tablespace</structname> per cluster, not
+   one per database.
+  </para>
+
+  <table>
+   <title><structname>pg_tablespace</> Columns</title>
+
+   <tgroup cols=4>
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><structfield>spcname</structfield></entry>
+      <entry><type>name</type></entry>
+      <entry></entry>
+      <entry>Tablespace name</entry>
+     </row>
+
+     <row>
+      <entry><structfield>spcowner</structfield></entry>
+      <entry><type>int4</type></entry>
+      <entry><literal><link linkend="catalog-pg-shadow"><structname>pg_shadow</structname></link>.usesysid</literal></entry>
+      <entry>Owner of the tablespace, usually the user who created it</entry>
+     </row>
+
+     <row>
+      <entry><structfield>spclocation</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry></entry>
+      <entry>Location (directory path) of the tablespace</entry>
+     </row>
+
+     <row>
+      <entry><structfield>spcacl</structfield></entry>
+      <entry><type>aclitem[]</type></entry>
+      <entry></entry>
+      <entry>Access privileges</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
  </sect1>
 
 

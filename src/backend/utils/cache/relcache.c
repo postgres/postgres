@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.204 2004/05/30 23:40:37 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.205 2004/06/18 06:13:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -260,6 +260,7 @@ static void RelationBuildTupleDesc(RelationBuildDescInfo buildinfo,
 					   Relation relation);
 static Relation RelationBuildDesc(RelationBuildDescInfo buildinfo,
 				  Relation oldrelation);
+static void RelationInitPhysicalAddr(Relation relation);
 static void AttrDefaultFetch(Relation relation);
 static void CheckConstraintFetch(Relation relation);
 static List *insert_ordered_oid(List *list, Oid datum);
@@ -873,11 +874,10 @@ RelationBuildDesc(RelationBuildDescInfo buildinfo,
 	 */
 	RelationInitLockInfo(relation);		/* see lmgr.c */
 
-	if (relation->rd_rel->relisshared)
-		relation->rd_node.tblNode = InvalidOid;
-	else
-		relation->rd_node.tblNode = MyDatabaseId;
-	relation->rd_node.relNode = relation->rd_rel->relfilenode;
+	/*
+	 * initialize physical addressing information for the relation
+	 */
+	RelationInitPhysicalAddr(relation);
 
 	/* make sure relation is marked as having no open file yet */
 	relation->rd_smgr = NULL;
@@ -890,6 +890,23 @@ RelationBuildDesc(RelationBuildDescInfo buildinfo,
 	MemoryContextSwitchTo(oldcxt);
 
 	return relation;
+}
+
+/*
+ * Initialize the physical addressing info (RelFileNode) for a relcache entry
+ */
+static void
+RelationInitPhysicalAddr(Relation relation)
+{
+	if (relation->rd_rel->reltablespace)
+		relation->rd_node.spcNode = relation->rd_rel->reltablespace;
+	else
+		relation->rd_node.spcNode = MyDatabaseTableSpace;
+	if (relation->rd_rel->relisshared)
+		relation->rd_node.dbNode = InvalidOid;
+	else
+		relation->rd_node.dbNode = MyDatabaseId;
+	relation->rd_node.relNode = relation->rd_rel->relfilenode;
 }
 
 /*
@@ -1343,18 +1360,17 @@ formrdesc(const char *relationName,
 	 * initialize relation id from info in att array (my, this is ugly)
 	 */
 	RelationGetRelid(relation) = relation->rd_att->attrs[0]->attrelid;
+	relation->rd_rel->relfilenode = RelationGetRelid(relation);
 
 	/*
-	 * initialize the relation's lock manager and RelFileNode information
+	 * initialize the relation lock manager information
 	 */
 	RelationInitLockInfo(relation);		/* see lmgr.c */
 
-	if (relation->rd_rel->relisshared)
-		relation->rd_node.tblNode = InvalidOid;
-	else
-		relation->rd_node.tblNode = MyDatabaseId;
-	relation->rd_node.relNode =
-		relation->rd_rel->relfilenode = RelationGetRelid(relation);
+	/*
+	 * initialize physical addressing information for the relation
+	 */
+	RelationInitPhysicalAddr(relation);
 
 	/*
 	 * initialize the rel-has-index flag, using hardwired knowledge
@@ -1570,7 +1586,8 @@ RelationReloadClassinfo(Relation relation)
 			 relation->rd_id);
 	relp = (Form_pg_class) GETSTRUCT(pg_class_tuple);
 	memcpy((char *) relation->rd_rel, (char *) relp, CLASS_TUPLE_SIZE);
-	relation->rd_node.relNode = relp->relfilenode;
+	/* Now we can recalculate physical address */
+	RelationInitPhysicalAddr(relation);
 	heap_freetuple(pg_class_tuple);
 	relation->rd_targblock = InvalidBlockNumber;
 	/* Okay, now it's valid again */
@@ -2040,8 +2057,9 @@ Relation
 RelationBuildLocalRelation(const char *relname,
 						   Oid relnamespace,
 						   TupleDesc tupDesc,
-						   Oid relid, Oid dbid,
-						   RelFileNode rnode,
+						   Oid relid,
+						   Oid reltablespace,
+						   bool shared_relation,
 						   bool nailit)
 {
 	Relation	rel;
@@ -2125,19 +2143,22 @@ RelationBuildLocalRelation(const char *relname,
 
 	/*
 	 * Insert relation physical and logical identifiers (OIDs) into the
-	 * right places.
+	 * right places.  Note that the physical ID (relfilenode) is initially
+	 * the same as the logical ID (OID).
 	 */
-	rel->rd_rel->relisshared = (dbid == InvalidOid);
+	rel->rd_rel->relisshared = shared_relation;
 
 	RelationGetRelid(rel) = relid;
 
 	for (i = 0; i < natts; i++)
 		rel->rd_att->attrs[i]->attrelid = relid;
 
-	rel->rd_node = rnode;
-	rel->rd_rel->relfilenode = rnode.relNode;
+	rel->rd_rel->relfilenode = relid;
+	rel->rd_rel->reltablespace = reltablespace;
 
 	RelationInitLockInfo(rel);	/* see lmgr.c */
+
+	RelationInitPhysicalAddr(rel);
 
 	/*
 	 * Okay to insert into the relcache hash tables.
@@ -3053,16 +3074,12 @@ load_relcache_init_file(void)
 		MemSet(&rel->pgstat_info, 0, sizeof(rel->pgstat_info));
 
 		/*
-		 * Make sure database ID is correct.  This is needed in case the
-		 * pg_internal.init file was copied from some other database by
-		 * CREATE DATABASE.
+		 * Recompute lock and physical addressing info.  This is needed in
+		 * case the pg_internal.init file was copied from some other database
+		 * by CREATE DATABASE.
 		 */
-		if (rel->rd_rel->relisshared)
-			rel->rd_node.tblNode = InvalidOid;
-		else
-			rel->rd_node.tblNode = MyDatabaseId;
-
 		RelationInitLockInfo(rel);
+		RelationInitPhysicalAddr(rel);
 	}
 
 	/*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.121 2004/06/10 17:55:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.122 2004/06/18 06:13:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,6 +27,7 @@
 #include "commands/dbcommands.h"
 #include "commands/defrem.h"
 #include "commands/tablecmds.h"
+#include "commands/tablespace.h"
 #include "executor/executor.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
@@ -64,6 +65,8 @@ static bool relationHasPrimaryKey(Relation rel);
  * 'indexRelationName': the name for the new index, or NULL to indicate
  *		that a nonconflicting default name should be picked.
  * 'accessMethodName': name of the AM to use.
+ * 'tableSpaceName': name of the tablespace to create the index in.
+ *		NULL specifies using the same tablespace as the parent relation.
  * 'attributeList': a list of IndexElem specifying columns and expressions
  *		to index on.
  * 'predicate': the partial-index condition, or NULL if none.
@@ -83,6 +86,7 @@ void
 DefineIndex(RangeVar *heapRelation,
 			char *indexRelationName,
 			char *accessMethodName,
+			char *tableSpaceName,
 			List *attributeList,
 			Expr *predicate,
 			List *rangetable,
@@ -98,6 +102,7 @@ DefineIndex(RangeVar *heapRelation,
 	Oid			accessMethodId;
 	Oid			relationId;
 	Oid			namespaceId;
+	Oid			tablespaceId;
 	Relation	rel;
 	HeapTuple	tuple;
 	Form_pg_am	accessMethodForm;
@@ -149,6 +154,29 @@ DefineIndex(RangeVar *heapRelation,
 		if (aclresult != ACLCHECK_OK)
 			aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
 						   get_namespace_name(namespaceId));
+	}
+
+	/* Determine tablespace to use */
+	if (tableSpaceName)
+	{
+		AclResult   aclresult;
+
+		tablespaceId = get_tablespace_oid(tableSpaceName);
+		if (!OidIsValid(tablespaceId))
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("tablespace \"%s\" does not exist",
+							tableSpaceName)));
+		/* check permissions */
+		aclresult = pg_tablespace_aclcheck(tablespaceId, GetUserId(),
+										   ACL_CREATE);
+		if (aclresult != ACLCHECK_OK)
+			aclcheck_error(aclresult, ACL_KIND_TABLESPACE,
+						   tableSpaceName);
+	} else {
+		/* Use the parent rel's tablespace */
+		tablespaceId = get_rel_tablespace(relationId);
+		/* Note there is no additional permission check in this path */
 	}
 
 	/*
@@ -335,7 +363,7 @@ DefineIndex(RangeVar *heapRelation,
 						indexRelationName, RelationGetRelationName(rel))));
 
 	index_create(relationId, indexRelationName,
-				 indexInfo, accessMethodId, classObjectId,
+				 indexInfo, accessMethodId, tablespaceId, classObjectId,
 				 primary, isconstraint,
 				 allowSystemTableMods, skip_build);
 

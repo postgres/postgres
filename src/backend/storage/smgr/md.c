@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/smgr/md.c,v 1.107 2004/06/02 17:28:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/smgr/md.c,v 1.108 2004/06/18 06:13:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -363,8 +363,9 @@ mdopen(SMgrRelation reln, bool allowNotFound)
 				return NULL;
 			ereport(ERROR,
 					(errcode_for_file_access(),
-					 errmsg("could not open relation %u/%u: %m",
-							reln->smgr_rnode.tblNode,
+					 errmsg("could not open relation %u/%u/%u: %m",
+							reln->smgr_rnode.spcNode,
+							reln->smgr_rnode.dbNode,
 							reln->smgr_rnode.relNode)));
 		}
 	}
@@ -765,9 +766,10 @@ mdsync(void)
 				{
 					ereport(LOG,
 							(errcode_for_file_access(),
-							 errmsg("could not fsync segment %u of relation %u/%u: %m",
+							 errmsg("could not fsync segment %u of relation %u/%u/%u: %m",
 									entry->segno,
-									entry->rnode.tblNode,
+									entry->rnode.spcNode,
+									entry->rnode.dbNode,
 									entry->rnode.relNode)));
 					return false;
 				}
@@ -945,9 +947,10 @@ _mdfd_getseg(SMgrRelation reln, BlockNumber blkno, bool allowNotFound)
 					return NULL;
 				ereport(ERROR,
 						(errcode_for_file_access(),
-						 errmsg("could not open segment %u of relation %u/%u (target block %u): %m",
+						 errmsg("could not open segment %u of relation %u/%u/%u (target block %u): %m",
 								nextsegno,
-								reln->smgr_rnode.tblNode,
+								reln->smgr_rnode.spcNode,
+								reln->smgr_rnode.dbNode,
 								reln->smgr_rnode.relNode,
 								blkno)));
 			}

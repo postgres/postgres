@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/indexing.h,v 1.81 2003/11/29 22:40:58 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/indexing.h,v 1.82 2004/06/18 06:14:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,6 +70,8 @@
 #define ShadowNameIndex				"pg_shadow_usename_index"
 #define ShadowSysidIndex			"pg_shadow_usesysid_index"
 #define StatisticRelidAttnumIndex	"pg_statistic_relid_att_index"
+#define TablespaceNameIndex			"pg_tablespace_spcname_index"
+#define TablespaceOidIndex			"pg_tablespace_oid_index"
 #define TriggerConstrNameIndex		"pg_trigger_tgconstrname_index"
 #define TriggerConstrRelidIndex		"pg_trigger_tgconstrrelid_index"
 #define TriggerRelidNameIndex		"pg_trigger_tgrelid_tgname_index"
@@ -166,6 +168,8 @@ DECLARE_UNIQUE_INDEX(pg_rewrite_rel_rulename_index on pg_rewrite using btree(ev_
 DECLARE_UNIQUE_INDEX(pg_shadow_usename_index on pg_shadow using btree(usename name_ops));
 DECLARE_UNIQUE_INDEX(pg_shadow_usesysid_index on pg_shadow using btree(usesysid int4_ops));
 DECLARE_UNIQUE_INDEX(pg_statistic_relid_att_index on pg_statistic using btree(starelid oid_ops, staattnum int2_ops));
+DECLARE_UNIQUE_INDEX(pg_tablespace_oid_index on pg_tablespace using btree(oid oid_ops));
+DECLARE_UNIQUE_INDEX(pg_tablespace_spcname_index on pg_tablespace using btree(spcname name_ops));
 /* This following index is not used for a cache and is not unique */
 DECLARE_INDEX(pg_trigger_tgconstrname_index on pg_trigger using btree(tgconstrname name_ops));
 /* This following index is not used for a cache and is not unique */

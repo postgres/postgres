@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.115 2004/04/22 17:38:14 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.116 2004/06/18 06:13:05 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -71,7 +71,7 @@ PostgreSQL documentation
       </para>
       </listitem>
     </varlistentry>
-	
+
     <varlistentry>
       <term><option>-c <replaceable class="parameter">command</replaceable></></term>
       <term><option>--command <replaceable class="parameter">command</replaceable></></term>
@@ -208,7 +208,7 @@ PostgreSQL documentation
       </para>
       </listitem>
     </varlistentry>
- 
+
     <varlistentry>
       <term><option>-l</></term>
       <term><option>--list</></term>
@@ -287,7 +287,7 @@ PostgreSQL documentation
       </para>
       </listitem>
     </varlistentry>
- 
+
     <varlistentry>
       <term><option>-s</></term>
       <term><option>--single-step</></term>
@@ -343,7 +343,7 @@ PostgreSQL documentation
       </para>
       </listitem>
     </varlistentry>
- 
+
     <varlistentry>
       <term><option>-u</></term>
       <listitem>
@@ -370,7 +370,7 @@ PostgreSQL documentation
       Connect to the database as the user <replaceable
       class="parameter">username</replaceable> instead of the default.
       (You must have permission to do so, of course.)
-      </para> 
+      </para>
       </listitem>
     </varlistentry>
 
@@ -491,7 +491,7 @@ PostgreSQL documentation
     not belong to any option it will be interpreted as the database name
     (or the user name, if the database name is also given). Not all
     these options are required, defaults do apply. If you omit the host
-    name, <application>psql</> will connect via a Unix domain socket 
+    name, <application>psql</> will connect via a Unix domain socket
     to a server on the local host, or via TCP/IP to <literal>localhost</> on machines
     that don't have unix domain sockets. The default port number is compile-time determined.
     Since the database server uses the same default, you will not have
@@ -565,9 +565,9 @@ testdb=>
     </para>
 
     <para>
-    The format of a <application>psql</application> command is the backslash, 
+    The format of a <application>psql</application> command is the backslash,
     followed immediately by a command verb, then any arguments. The arguments
-    are separated from the command verb and each other by any number of 
+    are separated from the command verb and each other by any number of
     whitespace characters.
     </para>
 
@@ -629,10 +629,10 @@ testdb=>
         <term><literal>\a</literal></term>
         <listitem>
         <para>
-	If the current table output format is unaligned, it is switched to aligned.
-	If it is not unaligned, it is set to unaligned. This command is
-	kept for backwards compatibility. See <command>\pset</command> for a
-	general solution.
+        If the current table output format is unaligned, it is switched to aligned.
+        If it is not unaligned, it is set to unaligned. This command is
+        kept for backwards compatibility. See <command>\pset</command> for a
+        general solution.
         </para>
         </listitem>
       </varlistentry>
@@ -641,16 +641,16 @@ testdb=>
        <term><literal>\cd [ <replaceable>directory</replaceable> ]</literal></term>
        <listitem>
         <para>
-	 Changes the current working directory to
-	 <replaceable>directory</replaceable>. Without argument, changes
-	 to the current user's home directory.
+         Changes the current working directory to
+         <replaceable>directory</replaceable>. Without argument, changes
+         to the current user's home directory.
         </para>
 
-	<tip>
-	 <para>
-	  To print your current working directory, use <literal>\!pwd</literal>.
-	 </para>
-	</tip>
+        <tip>
+         <para>
+          To print your current working directory, use <literal>\!pwd</literal>.
+         </para>
+        </tip>
        </listitem>
       </varlistentry>
 
@@ -673,43 +673,43 @@ testdb=>
         <term><literal>\connect</literal> (or <literal>\c</literal>) <literal>[ <replaceable class="parameter">dbname</replaceable> [ <replaceable class="parameter">username</replaceable> ] ]</literal></term>
         <listitem>
         <para>
-	Establishes a connection to a new database and/or under a user
-	name. The previous connection is closed. If <replaceable
-	class="parameter">dbname</replaceable> is <literal>-</literal>
-	the current database name is assumed.
-	</para>
+        Establishes a connection to a new database and/or under a user
+        name. The previous connection is closed. If <replaceable
+        class="parameter">dbname</replaceable> is <literal>-</literal>
+        the current database name is assumed.
+        </para>
 
-	<para>
-	If <replaceable class="parameter">username</replaceable> is
-	omitted the current user name is assumed. </para>
+        <para>
+        If <replaceable class="parameter">username</replaceable> is
+        omitted the current user name is assumed. </para>
 
-	<para>
-	As a special rule, <command>\connect</command> without any
-	arguments will connect to the default database as the default
-	user (as you would have gotten by starting
-	<application>psql</application> without any arguments).
-	</para>
+        <para>
+        As a special rule, <command>\connect</command> without any
+        arguments will connect to the default database as the default
+        user (as you would have gotten by starting
+        <application>psql</application> without any arguments).
+        </para>
 
-	<para>
-	If the connection attempt failed (wrong user name, access
-	denied, etc.), the previous connection will be kept if and only
-	if <application>psql</application> is in interactive mode. When
-	executing a non-interactive script, processing will immediately
-	stop with an error. This distinction was chosen as a user
-	convenience against typos on the one hand, and a safety
-	mechanism that scripts are not accidentally acting on the wrong
-	database on the other hand.
-	</para>
+        <para>
+        If the connection attempt failed (wrong user name, access
+        denied, etc.), the previous connection will be kept if and only
+        if <application>psql</application> is in interactive mode. When
+        executing a non-interactive script, processing will immediately
+        stop with an error. This distinction was chosen as a user
+        convenience against typos on the one hand, and a safety
+        mechanism that scripts are not accidentally acting on the wrong
+        database on the other hand.
+        </para>
         </listitem>
       </varlistentry>
 
       <varlistentry>
         <term><literal>\copy <replaceable class="parameter">table</replaceable>
-	[ ( <replaceable class="parameter">column_list</replaceable> ) ]
+        [ ( <replaceable class="parameter">column_list</replaceable> ) ]
         { <literal>from</literal> | <literal>to</literal> }
-	{ <replaceable class="parameter">filename</replaceable> | stdin | stdout | pstdin | pstdout }
-        [ with ] 
-            [ oids ] 
+        { <replaceable class="parameter">filename</replaceable> | stdin | stdout | pstdin | pstdout }
+        [ with ]
+            [ oids ]
             [ delimiter [ as ] '<replaceable class="parameter">character</replaceable>' ]
             [ null [ as ] '<replaceable class="parameter">string</replaceable>' ]
             [ csv [ quote [ as ] '<replaceable class="parameter">character</replaceable>' ]
@@ -729,37 +729,37 @@ testdb=>
         This means that file accessibility and privileges are those of
         the local user, not the server, and no SQL superuser
         privileges are required.
-	</para>
+        </para>
 
-	<para>
-	The syntax of the command is similar to that of the
-	<acronym>SQL</acronym> <xref linkend="sql-copy"
-	endterm="sql-copy-title"> command.  Note that, because of this,
-	special parsing rules apply to the <command>\copy</command>
-	command. In particular, the variable substitution rules and
-	backslash escapes do not apply.
-	</para>
+        <para>
+        The syntax of the command is similar to that of the
+        <acronym>SQL</acronym> <xref linkend="sql-copy"
+        endterm="sql-copy-title"> command.  Note that, because of this,
+        special parsing rules apply to the <command>\copy</command>
+        command. In particular, the variable substitution rules and
+        backslash escapes do not apply.
+        </para>
 
-	<para>
-	<literal>\copy <replaceable
-	class="parameter">table</replaceable> from <replaceable
-	class="parameter">stdin | stdout</replaceable></literal>
-	reads/writes based on the command input and output respectively.
-	All rows are read from the same source that issued the command,
-	continuing until <literal>\.</literal> is read or the stream
-	reaches <acronym>EOF</>. Output is sent to the same place as
-	command output. To read/write from
-	<application>psql</application>'s standard input or output, use
-	<literal>pstdin</> or <literal>pstdout</>. This option is useful
-	for populating tables in-line within a SQL script file.
-	</para>
+        <para>
+        <literal>\copy <replaceable
+        class="parameter">table</replaceable> from <replaceable
+        class="parameter">stdin | stdout</replaceable></literal>
+        reads/writes based on the command input and output respectively.
+        All rows are read from the same source that issued the command,
+        continuing until <literal>\.</literal> is read or the stream
+        reaches <acronym>EOF</>. Output is sent to the same place as
+        command output. To read/write from
+        <application>psql</application>'s standard input or output, use
+        <literal>pstdin</> or <literal>pstdout</>. This option is useful
+        for populating tables in-line within a SQL script file.
+        </para>
 
         <tip>
         <para>
-	This operation is not as efficient as the <acronym>SQL</acronym>
-	<command>COPY</command> command because all data must pass
-	through the client/server connection. For large
-	amounts of data the <acronym>SQL</acronym> command may be preferable.
+        This operation is not as efficient as the <acronym>SQL</acronym>
+        <command>COPY</command> command because all data must pass
+        through the client/server connection. For large
+        amounts of data the <acronym>SQL</acronym> command may be preferable.
         </para>
         </tip>
 
@@ -782,32 +782,32 @@ testdb=>
 
         <listitem>
         <para>
-	For each relation (table, view, index, or sequence) matching the
-	<replaceable class="parameter">pattern</replaceable>, show all
-	columns, their types, and any special
-	attributes such as <literal>NOT NULL</literal> or defaults, if
-	any. Associated indexes, constraints, rules, and triggers are
-	also shown, as is the view definition if the relation is a view.
-	(<quote>Matching the pattern</> is defined below.)
-	</para>
+        For each relation (table, view, index, or sequence) matching the
+        <replaceable class="parameter">pattern</replaceable>, show all
+        columns, their types, and any special
+        attributes such as <literal>NOT NULL</literal> or defaults, if
+        any. Associated indexes, constraints, rules, and triggers are
+        also shown, as is the view definition if the relation is a view.
+        (<quote>Matching the pattern</> is defined below.)
+        </para>
 
-	<para>
-	The command form <literal>\d+</literal> is identical, except that
-	more information is displayed: any comments associated with the
-	columns of the table are shown, as is the presence of OIDs in the
-	table.
-	</para>
+        <para>
+        The command form <literal>\d+</literal> is identical, except that
+        more information is displayed: any comments associated with the
+        columns of the table are shown, as is the presence of OIDs in the
+        table.
+        </para>
 
-	<note>
-	<para>
-	If <command>\d</command> is used without a
-	<replaceable class="parameter">pattern</replaceable> argument, it is
-	equivalent to <command>\dtvs</command> which will show a list of
-	all tables, views, and sequences. This is purely a convenience
-	measure.
-	</para>
-	</note>
-	</listitem>
+        <note>
+        <para>
+        If <command>\d</command> is used without a
+        <replaceable class="parameter">pattern</replaceable> argument, it is
+        equivalent to <command>\dtvs</command> which will show a list of
+        all tables, views, and sequences. This is purely a convenience
+        measure.
+        </para>
+        </note>
+        </listitem>
       </varlistentry>
 
       <varlistentry>
@@ -825,13 +825,26 @@ testdb=>
 
 
       <varlistentry>
+        <term><literal>\db [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
+
+        <listitem>
+        <para>
+        Lists all available tablespaces. If <replaceable
+        class="parameter">pattern</replaceable>
+        is specified, only tablespaces whose names match the pattern are shown.
+        </para>
+        </listitem>
+      </varlistentry>
+
+
+      <varlistentry>
         <term><literal>\dc [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
         <listitem>
         <para>
         Lists all available conversions between character-set encodings.
-	If <replaceable class="parameter">pattern</replaceable>
+        If <replaceable class="parameter">pattern</replaceable>
         is specified, only conversions whose names match the pattern are
-	listed.
+        listed.
         </para>
         </listitem>
       </varlistentry>
@@ -853,8 +866,8 @@ testdb=>
         <para>
         Shows the descriptions of objects matching the <replaceable
         class="parameter">pattern</replaceable>, or of all visible objects if
-	no argument is given.  But in either case, only objects that have
-	a description are listed.
+        no argument is given.  But in either case, only objects that have
+        a description are listed.
         (<quote>Object</quote> covers aggregates, functions, operators,
         types, relations (tables, views, indexes, sequences, large
         objects), rules, and triggers.) For example:
@@ -899,7 +912,7 @@ testdb=>
         return types. If <replaceable
         class="parameter">pattern</replaceable>
         is specified, only functions whose names match the pattern are shown.
-	If the form <literal>\df+</literal> is used, additional information about
+        If the form <literal>\df+</literal> is used, additional information about
         each function, including language and description, is shown.
         </para>
 
@@ -912,8 +925,8 @@ testdb=>
 
         <para>
         To reduce clutter, <literal>\df</> does not show data type I/O
-	functions.  This is implemented by ignoring functions that accept
-	or return type <type>cstring</>.
+        functions.  This is implemented by ignoring functions that accept
+        or return type <type>cstring</>.
         </para>
         </note>
 
@@ -936,36 +949,36 @@ testdb=>
       <varlistentry>
         <term><literal>\distvS [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
 
-	<listitem>
-	<para>
-	This is not the actual command name: the letters
-	<literal>i</literal>, <literal>s</literal>, <literal>t</literal>,
-	<literal>v</literal>, <literal>S</literal> stand for index,
-	sequence, table, view, and system table, respectively. You can
-	specify any or all of these letters, in any order, to obtain a
-	listing of all the matching objects.  The letter S restricts the
-	listing to system objects; without <literal>S</literal>, only
-	non-system objects are shown.  If <literal>+</literal> is appended
-	to the command name, each object is listed with its associated
-	description, if any.
-	</para>
+        <listitem>
+        <para>
+        This is not the actual command name: the letters
+        <literal>i</literal>, <literal>s</literal>, <literal>t</literal>,
+        <literal>v</literal>, <literal>S</literal> stand for index,
+        sequence, table, view, and system table, respectively. You can
+        specify any or all of these letters, in any order, to obtain a
+        listing of all the matching objects.  The letter S restricts the
+        listing to system objects; without <literal>S</literal>, only
+        non-system objects are shown.  If <literal>+</literal> is appended
+        to the command name, each object is listed with its associated
+        description, if any.
+        </para>
 
-	<para>
-	If <replaceable class="parameter">pattern</replaceable> is
-	specified, only objects whose names match the pattern are listed.
-	</para>
-	</listitem>
+        <para>
+        If <replaceable class="parameter">pattern</replaceable> is
+        specified, only objects whose names match the pattern are listed.
+        </para>
+        </listitem>
       </varlistentry>
 
 
       <varlistentry>
         <term><literal>\dl</literal></term>
-	<listitem>
-	<para>
-	This is an alias for <command>\lo_list</command>, which shows a
-	list of large objects.
-	</para>
-	</listitem>
+        <listitem>
+        <para>
+        This is an alias for <command>\lo_list</command>, which shows a
+        list of large objects.
+        </para>
+        </listitem>
       </varlistentry>
 
 
@@ -988,8 +1001,8 @@ testdb=>
         <listitem>
         <para>
         Lists available operators with their operand and return types.
-	If <replaceable class="parameter">pattern</replaceable> is
-	specified, only operators whose names match the pattern are listed.
+        If <replaceable class="parameter">pattern</replaceable> is
+        specified, only operators whose names match the pattern are listed.
         </para>
         </listitem>
       </varlistentry>
@@ -997,21 +1010,21 @@ testdb=>
 
       <varlistentry>
         <term><literal>\dp [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
-	<listitem>
-	<para>
+        <listitem>
+        <para>
         Produces a list of all available tables, views and sequences with their
         associated access privileges.
-	If <replaceable class="parameter">pattern</replaceable> is
-	specified, only tables, views and sequences whose names match the pattern are listed.
-	</para>
+        If <replaceable class="parameter">pattern</replaceable> is
+        specified, only tables, views and sequences whose names match the pattern are listed.
+        </para>
 
-	<para>
-	The commands <xref linkend="SQL-GRANT"> and
-	<xref linkend="SQL-REVOKE">
-	are used to set access privileges.  See <xref linkend="SQL-GRANT">
-	for more information.
-	</para>
-	</listitem>
+        <para>
+        The commands <xref linkend="SQL-GRANT"> and
+        <xref linkend="SQL-REVOKE">
+        are used to set access privileges.  See <xref linkend="SQL-GRANT">
+        for more information.
+        </para>
+        </listitem>
       </varlistentry>
 
 
@@ -1076,7 +1089,7 @@ testdb=>
       <varlistentry>
         <term><literal>\echo <replaceable class="parameter">text</replaceable> [ ... ]</literal></term>
         <listitem>
-	<para>
+        <para>
         Prints the arguments to the standard output, separated by one
         space and followed by a newline. This can be useful to
         intersperse information in the output of scripts. For example:
@@ -1086,16 +1099,16 @@ Tue Oct 26 21:40:57 CEST 1999
 </programlisting>
         If the first argument is an unquoted <literal>-n</literal> the the trailing
         newline is not written.
-	</para>
+        </para>
 
-	<tip>
-	<para>
-	If you use the <command>\o</command> command to redirect your
-	query output you may wish to use <command>\qecho</command>
-	instead of this command.
-	</para>
-	</tip>
-	</listitem>
+        <tip>
+        <para>
+        If you use the <command>\o</command> command to redirect your
+        query output you may wish to use <command>\qecho</command>
+        instead of this command.
+        </para>
+        </tip>
+        </listitem>
       </varlistentry>
 
 
@@ -1155,13 +1168,13 @@ Tue Oct 26 21:40:57 CEST 1999
         <acronym>SQL</acronym> commands is shown.
         </para>
 
-	<note>
-	<para>
-	To simplify typing, commands that consists of several words do
-	not have to be quoted. Thus it is fine to type <userinput>\help
-	alter table</userinput>.
-	</para>
-	</note>	
+        <note>
+        <para>
+        To simplify typing, commands that consists of several words do
+        not have to be quoted. Thus it is fine to type <userinput>\help
+        alter table</userinput>.
+        </para>
+        </note>
         </listitem>
       </varlistentry>
 
@@ -1170,11 +1183,11 @@ Tue Oct 26 21:40:57 CEST 1999
         <term><literal>\H</literal></term>
         <listitem>
         <para>
-	Turns on <acronym>HTML</acronym> query output format. If the
-	<acronym>HTML</acronym> format is already on, it is switched
-	back to the default aligned text format. This command is for
-	compatibility and convenience, but see <command>\pset</command>
-	about setting other output options.
+        Turns on <acronym>HTML</acronym> query output format. If the
+        <acronym>HTML</acronym> format is already on, it is switched
+        back to the default aligned text format. This command is for
+        compatibility and convenience, but see <command>\pset</command>
+        about setting other output options.
         </para>
         </listitem>
       </varlistentry>
@@ -1188,13 +1201,13 @@ Tue Oct 26 21:40:57 CEST 1999
         class="parameter">filename</replaceable> and executes it as
         though it had been typed on the keyboard.
         </para>
-	<note>
-	<para>
-	If you want to see the lines on the screen as they are read you
-	must set the variable <varname>ECHO</varname> to
-	<literal>all</literal>.
-	</para>
-	</note>
+        <note>
+        <para>
+        If you want to see the lines on the screen as they are read you
+        must set the variable <varname>ECHO</varname> to
+        <literal>all</literal>.
+        </para>
+        </note>
         </listitem>
       </varlistentry>
 
@@ -1215,83 +1228,83 @@ Tue Oct 26 21:40:57 CEST 1999
       <varlistentry>
         <term><literal>\lo_export <replaceable class="parameter">loid</replaceable> <replaceable class="parameter">filename</replaceable></literal></term>
 
-	<listitem>
-	<para>
-	Reads the large object with <acronym>OID</acronym> <replaceable
-	class="parameter">loid</replaceable> from the database and
-	writes it to <replaceable
-	class="parameter">filename</replaceable>. Note that this is
-	subtly different from the server function
-	<function>lo_export</function>, which acts with the permissions
-	of the user that the database server runs as and on the server's
-	file system.
-	</para>
-	<tip>
-	<para>
-	Use <command>\lo_list</command> to find out the large object's
-	<acronym>OID</acronym>.
-	</para>
-	</tip>
-	</listitem>
+        <listitem>
+        <para>
+        Reads the large object with <acronym>OID</acronym> <replaceable
+        class="parameter">loid</replaceable> from the database and
+        writes it to <replaceable
+        class="parameter">filename</replaceable>. Note that this is
+        subtly different from the server function
+        <function>lo_export</function>, which acts with the permissions
+        of the user that the database server runs as and on the server's
+        file system.
+        </para>
+        <tip>
+        <para>
+        Use <command>\lo_list</command> to find out the large object's
+        <acronym>OID</acronym>.
+        </para>
+        </tip>
+        </listitem>
       </varlistentry>
 
 
       <varlistentry>
         <term><literal>\lo_import <replaceable class="parameter">filename</replaceable> [ <replaceable class="parameter">comment</replaceable> ]</literal></term>
 
-	<listitem>
-	<para>
-	Stores the file into a <productname>PostgreSQL</productname>
-	large object. Optionally, it associates the given
-	comment with the object. Example:
+        <listitem>
+        <para>
+        Stores the file into a <productname>PostgreSQL</productname>
+        large object. Optionally, it associates the given
+        comment with the object. Example:
 <programlisting>
 foo=> <userinput>\lo_import '/home/peter/pictures/photo.xcf' 'a picture of me'</userinput>
 lo_import 152801
 </programlisting>
-	The response indicates that the large object received object ID
-	152801 which one ought to remember if one wants to access the
-	object ever again. For that reason it is recommended to always
-	associate a human-readable comment with every object. Those can
-	then be seen with the <command>\lo_list</command> command.
-	</para>
+        The response indicates that the large object received object ID
+        152801 which one ought to remember if one wants to access the
+        object ever again. For that reason it is recommended to always
+        associate a human-readable comment with every object. Those can
+        then be seen with the <command>\lo_list</command> command.
+        </para>
 
-	<para>
-	Note that this command is subtly different from the server-side
-	<function>lo_import</function> because it acts as the local user
-	on the local file system, rather than the server's user and file
-	system.
-	</para>
-	</listitem>
+        <para>
+        Note that this command is subtly different from the server-side
+        <function>lo_import</function> because it acts as the local user
+        on the local file system, rather than the server's user and file
+        system.
+        </para>
+        </listitem>
       </varlistentry>
 
       <varlistentry>
         <term><literal>\lo_list</literal></term>
-	<listitem>
-	<para>
-	Shows a list of all <productname>PostgreSQL</productname>
-	large objects currently stored in the database,
-	along with any comments provided for them.
-	</para>
-	</listitem>
+        <listitem>
+        <para>
+        Shows a list of all <productname>PostgreSQL</productname>
+        large objects currently stored in the database,
+        along with any comments provided for them.
+        </para>
+        </listitem>
       </varlistentry>
 
       <varlistentry>
         <term><literal>\lo_unlink <replaceable class="parameter">loid</replaceable></literal></term>
 
-	<listitem>
-	<para>
-	Deletes the large object with <acronym>OID</acronym>
-	<replaceable class="parameter">loid</replaceable> from the
-	database.
-	</para>
+        <listitem>
+        <para>
+        Deletes the large object with <acronym>OID</acronym>
+        <replaceable class="parameter">loid</replaceable> from the
+        database.
+        </para>
 
-	<tip>
-	<para>
-	Use <command>\lo_list</command> to find out the large object's
-	<acronym>OID</acronym>.
-	</para>
-	</tip>
-	</listitem>
+        <tip>
+        <para>
+        Use <command>\lo_list</command> to find out the large object's
+        <acronym>OID</acronym>.
+        </para>
+        </tip>
+        </listitem>
       </varlistentry>
 
 
@@ -1307,20 +1320,20 @@ lo_import 152801
         specified, the query output will be reset to the standard output.
         </para>
 
-	<para>
-	<quote>Query results</quote> includes all tables, command
-	responses, and notices obtained from the database server, as
-	well as output of various backslash commands that query the
-	database (such as <command>\d</command>), but not error
-	messages.
-	</para>
+        <para>
+        <quote>Query results</quote> includes all tables, command
+        responses, and notices obtained from the database server, as
+        well as output of various backslash commands that query the
+        database (such as <command>\d</command>), but not error
+        messages.
+        </para>
 
-	<tip>
-	<para>
-	To intersperse text output in between query results, use
-	<command>\qecho</command>.
-	</para>
-	</tip>
+        <tip>
+        <para>
+        To intersperse text output in between query results, use
+        <command>\qecho</command>.
+        </para>
+        </tip>
         </listitem>
       </varlistentry>
 
@@ -1338,210 +1351,210 @@ lo_import 152801
       <varlistentry>
         <term><literal>\pset <replaceable class="parameter">parameter</replaceable> [ <replaceable class="parameter">value</replaceable> ]</literal></term>
 
-	<listitem>
-	<para>
-	This command sets options affecting the output of query result
-	tables. <replaceable class="parameter">parameter</replaceable>
-	describes which option is to be set. The semantics of
-	<replaceable class="parameter">value</replaceable> depend
-	thereon.
-	</para>
-
-	<para>
-	Adjustable printing options are:
-	<variablelist>
-	  <varlistentry>
-	  <term><literal>format</literal></term>
-	  <listitem>
-	  <para>
-	  Sets the output format to one of <literal>unaligned</literal>,
-	  <literal>aligned</literal>, <literal>html</literal>, or
-	  <literal>latex</literal>. Unique abbreviations are allowed.
-	  (That would mean one letter is enough.)
-	  </para>
-
-	  <para>
-	  <quote>Unaligned</quote> writes all columns of a row on a
-	  line, separated by the currently active field separator. This
-	  is intended to create output that might be intended to be read
-	  in by other programs (tab-separated, comma-separated).
-	  <quote>Aligned</quote> mode is the standard, human-readable,
-	  nicely formatted text output that is default. The
-	  <quote><acronym>HTML</acronym></quote> and
-	  <quote>LaTeX</quote> modes put out tables that are intended to
-	  be included in documents using the respective mark-up
-	  language. They are not complete documents! (This might not be
-	  so dramatic in <acronym>HTML</acronym>, but in LaTeX you must
-	  have a complete document wrapper.)
-	  </para>
-	  </listitem>
-          </varlistentry>
-
-	  <varlistentry>
-	  <term><literal>border</literal></term>
-	  <listitem>
-	  <para>
-	  The second argument must be a number. In general, the higher
-	  the number the more borders and lines the tables will have,
-	  but this depends on the particular format. In
-	  <acronym>HTML</acronym> mode, this will translate directly
-	  into the <literal>border=...</literal> attribute, in the
-	  others only values 0 (no border), 1 (internal dividing lines),
-	  and 2 (table frame) make sense.
-	  </para>
-	  </listitem>
-	  </varlistentry>
-
-	  <varlistentry>
-	  <term><literal>expanded</literal> (or <literal>x</literal>)</term>
-	  <listitem>
-	  <para>
-	  Toggles between regular and expanded format. When expanded
-	  format is enabled, all output has two columns with the column
-	  name on the left and the data on the right. This mode is
-	  useful if the data wouldn't fit on the screen in the normal
-	  <quote>horizontal</quote> mode.
-	  </para>
-
-	  <para>
-	  Expanded mode is supported by all four output formats.
-	  </para>
-	  </listitem>
-	  </varlistentry>
-
-	  <varlistentry>
-	  <term><literal>null</literal></term>
-	  <listitem>
-	  <para>
-	  The second argument is a string that should be printed
-	  whenever a column is null. The default is not to print
-	  anything, which can easily be mistaken for, say, an empty
-	  string. Thus, one might choose to write <literal>\pset null
-	  '(null)'</literal>.
-	  </para>
-	  </listitem>
-	  </varlistentry>
-
-	  <varlistentry>
-	  <term><literal>fieldsep</literal></term>
-	  <listitem>
-	  <para>
-	  Specifies the field separator to be used in unaligned output
-	  mode. That way one can create, for example, tab- or
-	  comma-separated output, which other programs might prefer. To
-	  set a tab as field separator, type <literal>\pset fieldsep
-	  '\t'</literal>. The default field separator is
-	  <literal>'|'</literal> (a vertical bar).
-	  </para>
-	  </listitem>
-	  </varlistentry>
-
-	  <varlistentry>
-	  <term><literal>footer</literal></term>
-	  <listitem>
-	  <para>
-	  Toggles the display of the default footer <literal>(x
-	  rows)</literal>.
-	  </para>
-	  </listitem>
-	  </varlistentry>
-
-	  <varlistentry>
-	  <term><literal>recordsep</literal></term>
-	  <listitem>
-	  <para>
-          Specifies the record (line) separator to use in unaligned
-          output mode. The default is a newline character.
-	  </para>
-	  </listitem>
-	  </varlistentry>
-
-	  <varlistentry>
-	  <term><literal>tuples_only</literal> (or <literal>t</literal>)</term>
-	  <listitem>
-	  <para>
-	  Toggles between tuples only and full display. Full display may
-	  show extra information such as column headers, titles, and
-	  various footers. In tuples only mode, only actual table data
-	  is shown.
-	  </para>
-	  </listitem>
-	  </varlistentry>
-
-	  <varlistentry>
-	  <term><literal>title [ <replaceable class="parameter">text</replaceable> ]</literal></term>
-	  <listitem>
-	  <para>
-	  Sets the table title for any subsequently printed tables. This
-	  can be used to give your output descriptive tags. If no
-	  argument is given, the title is unset.
-	  </para>
-	  </listitem>
-	  </varlistentry>
-
-	  <varlistentry>
-	  <term><literal>tableattr</literal> (or <literal>T</literal>) <literal>[ <replaceable class="parameter">text</replaceable> ]</literal></term>
-	  <listitem>
-	  <para>
-	  Allows you to specify any attributes to be placed inside the
-	  <acronym>HTML</acronym> <sgmltag>table</sgmltag> tag. This
-	  could for example be <literal>cellpadding</literal> or
-	  <literal>bgcolor</literal>. Note that you probably don't want
-	  to specify <literal>border</literal> here, as that is already
-	  taken care of by <literal>\pset border</literal>.
-	  </para>
-	  </listitem>
-	  </varlistentry>
-
-
-	  <varlistentry>
-	  <term><literal>pager</literal></term>
-	  <listitem>
-	  <para>
-	  Controls use of a pager for query and <application>psql</>
-	  help output. If the environment variable <envar>PAGER</envar>
-	  is set, the output is piped to the specified program.
-	  Otherwise a platform-dependent default (such as
-	  <filename>more</filename>) is used.
-	  </para>
-
-	  <para>
-	  When the pager is off, the pager is not used. When the pager
-	  is on, the pager is used only when appropriate, i.e. the
-	  output is to a terminal and will not fit on the screen.
-	  (<application>psql</> does not do a perfect job of estimating
-	  when to use the pager.) <literal>\pset pager</> turns the
-	  pager on and off. Pager can also be set to <literal>always</>,
-	  which causes the pager to be always used.
-	  </para>
-	  </listitem>
-	  </varlistentry>
-	</variablelist>
+        <listitem>
+        <para>
+        This command sets options affecting the output of query result
+        tables. <replaceable class="parameter">parameter</replaceable>
+        describes which option is to be set. The semantics of
+        <replaceable class="parameter">value</replaceable> depend
+        thereon.
         </para>
 
         <para>
-	Illustrations on how these different formats look can be seen in
-	the <xref linkend="APP-PSQL-examples"
-	endterm="APP-PSQL-examples-title"> section.
-	</para>
+        Adjustable printing options are:
+        <variablelist>
+          <varlistentry>
+          <term><literal>format</literal></term>
+          <listitem>
+          <para>
+          Sets the output format to one of <literal>unaligned</literal>,
+          <literal>aligned</literal>, <literal>html</literal>, or
+          <literal>latex</literal>. Unique abbreviations are allowed.
+          (That would mean one letter is enough.)
+          </para>
 
-	<tip>
-	<para>
-	There are various shortcut commands for <command>\pset</command>. See
-	<command>\a</command>, <command>\C</command>, <command>\H</command>,
-	<command>\t</command>, <command>\T</command>, and <command>\x</command>.
-	</para>
-	</tip>
+          <para>
+          <quote>Unaligned</quote> writes all columns of a row on a
+          line, separated by the currently active field separator. This
+          is intended to create output that might be intended to be read
+          in by other programs (tab-separated, comma-separated).
+          <quote>Aligned</quote> mode is the standard, human-readable,
+          nicely formatted text output that is default. The
+          <quote><acronym>HTML</acronym></quote> and
+          <quote>LaTeX</quote> modes put out tables that are intended to
+          be included in documents using the respective mark-up
+          language. They are not complete documents! (This might not be
+          so dramatic in <acronym>HTML</acronym>, but in LaTeX you must
+          have a complete document wrapper.)
+          </para>
+          </listitem>
+          </varlistentry>
 
-	<note>
-	<para>
-	It is an error to call <command>\pset</command> without
-	arguments. In the future this call might show the current status
-	of all printing options.
-	</para>
-	</note>
+          <varlistentry>
+          <term><literal>border</literal></term>
+          <listitem>
+          <para>
+          The second argument must be a number. In general, the higher
+          the number the more borders and lines the tables will have,
+          but this depends on the particular format. In
+          <acronym>HTML</acronym> mode, this will translate directly
+          into the <literal>border=...</literal> attribute, in the
+          others only values 0 (no border), 1 (internal dividing lines),
+          and 2 (table frame) make sense.
+          </para>
+          </listitem>
+          </varlistentry>
 
-	</listitem>
+          <varlistentry>
+          <term><literal>expanded</literal> (or <literal>x</literal>)</term>
+          <listitem>
+          <para>
+          Toggles between regular and expanded format. When expanded
+          format is enabled, all output has two columns with the column
+          name on the left and the data on the right. This mode is
+          useful if the data wouldn't fit on the screen in the normal
+          <quote>horizontal</quote> mode.
+          </para>
+
+          <para>
+          Expanded mode is supported by all four output formats.
+          </para>
+          </listitem>
+          </varlistentry>
+
+          <varlistentry>
+          <term><literal>null</literal></term>
+          <listitem>
+          <para>
+          The second argument is a string that should be printed
+          whenever a column is null. The default is not to print
+          anything, which can easily be mistaken for, say, an empty
+          string. Thus, one might choose to write <literal>\pset null
+          '(null)'</literal>.
+          </para>
+          </listitem>
+          </varlistentry>
+
+          <varlistentry>
+          <term><literal>fieldsep</literal></term>
+          <listitem>
+          <para>
+          Specifies the field separator to be used in unaligned output
+          mode. That way one can create, for example, tab- or
+          comma-separated output, which other programs might prefer. To
+          set a tab as field separator, type <literal>\pset fieldsep
+          '\t'</literal>. The default field separator is
+          <literal>'|'</literal> (a vertical bar).
+          </para>
+          </listitem>
+          </varlistentry>
+
+          <varlistentry>
+          <term><literal>footer</literal></term>
+          <listitem>
+          <para>
+          Toggles the display of the default footer <literal>(x
+          rows)</literal>.
+          </para>
+          </listitem>
+          </varlistentry>
+
+          <varlistentry>
+          <term><literal>recordsep</literal></term>
+          <listitem>
+          <para>
+          Specifies the record (line) separator to use in unaligned
+          output mode. The default is a newline character.
+          </para>
+          </listitem>
+          </varlistentry>
+
+          <varlistentry>
+          <term><literal>tuples_only</literal> (or <literal>t</literal>)</term>
+          <listitem>
+          <para>
+          Toggles between tuples only and full display. Full display may
+          show extra information such as column headers, titles, and
+          various footers. In tuples only mode, only actual table data
+          is shown.
+          </para>
+          </listitem>
+          </varlistentry>
+
+          <varlistentry>
+          <term><literal>title [ <replaceable class="parameter">text</replaceable> ]</literal></term>
+          <listitem>
+          <para>
+          Sets the table title for any subsequently printed tables. This
+          can be used to give your output descriptive tags. If no
+          argument is given, the title is unset.
+          </para>
+          </listitem>
+          </varlistentry>
+
+          <varlistentry>
+          <term><literal>tableattr</literal> (or <literal>T</literal>) <literal>[ <replaceable class="parameter">text</replaceable> ]</literal></term>
+          <listitem>
+          <para>
+          Allows you to specify any attributes to be placed inside the
+          <acronym>HTML</acronym> <sgmltag>table</sgmltag> tag. This
+          could for example be <literal>cellpadding</literal> or
+          <literal>bgcolor</literal>. Note that you probably don't want
+          to specify <literal>border</literal> here, as that is already
+          taken care of by <literal>\pset border</literal>.
+          </para>
+          </listitem>
+          </varlistentry>
+
+
+          <varlistentry>
+          <term><literal>pager</literal></term>
+          <listitem>
+          <para>
+          Controls use of a pager for query and <application>psql</>
+          help output. If the environment variable <envar>PAGER</envar>
+          is set, the output is piped to the specified program.
+          Otherwise a platform-dependent default (such as
+          <filename>more</filename>) is used.
+          </para>
+
+          <para>
+          When the pager is off, the pager is not used. When the pager
+          is on, the pager is used only when appropriate, i.e. the
+          output is to a terminal and will not fit on the screen.
+          (<application>psql</> does not do a perfect job of estimating
+          when to use the pager.) <literal>\pset pager</> turns the
+          pager on and off. Pager can also be set to <literal>always</>,
+          which causes the pager to be always used.
+          </para>
+          </listitem>
+          </varlistentry>
+        </variablelist>
+        </para>
+
+        <para>
+        Illustrations on how these different formats look can be seen in
+        the <xref linkend="APP-PSQL-examples"
+        endterm="APP-PSQL-examples-title"> section.
+        </para>
+
+        <tip>
+        <para>
+        There are various shortcut commands for <command>\pset</command>. See
+        <command>\a</command>, <command>\C</command>, <command>\H</command>,
+        <command>\t</command>, <command>\T</command>, and <command>\x</command>.
+        </para>
+        </tip>
+
+        <note>
+        <para>
+        It is an error to call <command>\pset</command> without
+        arguments. In the future this call might show the current status
+        of all printing options.
+        </para>
+        </note>
+
+        </listitem>
       </varlistentry>
 
 
@@ -1559,9 +1572,9 @@ lo_import 152801
         <term><literal>\qecho <replaceable class="parameter">text</replaceable> [ ... ] </literal></term>
         <listitem>
         <para>
-	This command is identical to <command>\echo</command> except
-	that all output will be written to the query output channel, as
-	set by <command>\o</command>.
+        This command is identical to <command>\echo</command> except
+        that all output will be written to the query output channel, as
+        set by <command>\o</command>.
         </para>
         </listitem>
       </varlistentry>
@@ -1589,14 +1602,14 @@ lo_import 152801
         <acronym>GNU</acronym> history library.
         </para>
 
-	<note>
-	<para>
-	In the current version, it is no longer necessary to save the
-	command history, since that will be done automatically on
-	program termination. The history is also loaded automatically
-	every time <application>psql</application> starts up.
-	</para>
-	</note>
+        <note>
+        <para>
+        In the current version, it is no longer necessary to save the
+        command history, since that will be done automatically on
+        program termination. The history is also loaded automatically
+        every time <application>psql</application> starts up.
+        </para>
+        </note>
         </listitem>
       </varlistentry>
 
@@ -1604,37 +1617,37 @@ lo_import 152801
       <varlistentry>
         <term><literal>\set [ <replaceable class="parameter">name</replaceable> [ <replaceable class="parameter">value</replaceable> [ ... ] ] ]</literal></term>
 
-	<listitem>
-	<para>
-	Sets the internal variable <replaceable
-	class="parameter">name</replaceable> to <replaceable
-	class="parameter">value</replaceable> or, if more than one value
-	is given, to the concatenation of all of them. If no second
-	argument is given, the variable is just set with no value. To
-	unset a variable, use the <command>\unset</command> command.
-	</para>
+        <listitem>
+        <para>
+        Sets the internal variable <replaceable
+        class="parameter">name</replaceable> to <replaceable
+        class="parameter">value</replaceable> or, if more than one value
+        is given, to the concatenation of all of them. If no second
+        argument is given, the variable is just set with no value. To
+        unset a variable, use the <command>\unset</command> command.
+        </para>
 
-	<para>
-	Valid variable names can contain characters, digits, and
-	underscores. See the section <xref
-	linkend="APP-PSQL-variables"
-	endterm="APP-PSQL-variables-title"> below for details.
-	Variable names are case-sensitive.
-	</para>
+        <para>
+        Valid variable names can contain characters, digits, and
+        underscores. See the section <xref
+        linkend="APP-PSQL-variables"
+        endterm="APP-PSQL-variables-title"> below for details.
+        Variable names are case-sensitive.
+        </para>
 
-	<para>
-	Although you are welcome to set any variable to anything you
-	want, <application>psql</application> treats several variables
-	as special. They are documented in the section about variables.
-	</para>
+        <para>
+        Although you are welcome to set any variable to anything you
+        want, <application>psql</application> treats several variables
+        as special. They are documented in the section about variables.
+        </para>
 
-	<note>
-	<para>
-	This command is totally separate from the <acronym>SQL</acronym>
-	command <xref linkend="SQL-SET" endterm="SQL-SET-title">.
-	</para>
-	</note>
-	</listitem>
+        <note>
+        <para>
+        This command is totally separate from the <acronym>SQL</acronym>
+        command <xref linkend="SQL-SET" endterm="SQL-SET-title">.
+        </para>
+        </note>
+        </listitem>
       </varlistentry>
 
 
@@ -1691,7 +1704,7 @@ lo_import 152801
         <listitem>
         <para>
         Toggles extended table formatting mode. As such it is equivalent to
-	<literal>\pset expanded</literal>.
+        <literal>\pset expanded</literal>.
        </para>
        </listitem>
       </varlistentry>
@@ -1703,20 +1716,20 @@ lo_import 152801
         <para>
         Produces a list of all available tables, views and sequences with their
         associated access privileges.
-	If a <replaceable class="parameter">pattern</replaceable> is
-	specified, only tables,views and sequences whose names match the pattern are listed.
-	</para>
+        If a <replaceable class="parameter">pattern</replaceable> is
+        specified, only tables,views and sequences whose names match the pattern are listed.
+        </para>
 
-	<para>
-	The commands <xref linkend="SQL-GRANT"> and
-	<xref linkend="SQL-REVOKE">
-	are used to set access privileges.  See <xref linkend="SQL-GRANT">
-	for more information.
-	</para>
+        <para>
+        The commands <xref linkend="SQL-GRANT"> and
+        <xref linkend="SQL-REVOKE">
+        are used to set access privileges.  See <xref linkend="SQL-GRANT">
+        for more information.
+        </para>
 
-	<para>
-	This is an alias for <command>\dp</command> (<quote>display
-	privileges</quote>).
+        <para>
+        This is an alias for <command>\dp</command> (<quote>display
+        privileges</quote>).
         </para>
         </listitem>
       </varlistentry>
@@ -1764,7 +1777,7 @@ lo_import 152801
    A pattern that contains an (unquoted) dot is interpreted as a schema
    name pattern followed by an object name pattern.  For example,
    <literal>\dt foo*.bar*</> displays all tables in schemas whose name
-   starts with <literal>foo</> and whose table name 
+   starts with <literal>foo</> and whose table name
    starts with <literal>bar</>.  If no dot appears, then the pattern
    matches only objects that are visible in the current schema search path.
   </para>
@@ -1847,96 +1860,96 @@ bar
        <secondary>psql</secondary>
       </indexterm>
         <term><varname>AUTOCOMMIT</varname></term>
-	<listitem>
-	<para>
-	When <literal>on</> (the default), each SQL command is automatically
-	committed upon successful completion.  To postpone commit in this
-	mode, you must enter a <command>BEGIN</> or <command>START
-	TRANSACTION</> SQL command.  When <literal>off</> or unset, SQL
-	commands are not committed until you explicitly issue
-	<command>COMMIT</> or <command>END</>.  The autocommit-off
-	mode works by issuing an implicit <command>BEGIN</> for you, just
-	before any command that is not already in a transaction block and
-	is not itself a <command>BEGIN</> or other transaction-control
-	command.
-	</para>
+        <listitem>
+        <para>
+        When <literal>on</> (the default), each SQL command is automatically
+        committed upon successful completion.  To postpone commit in this
+        mode, you must enter a <command>BEGIN</> or <command>START
+        TRANSACTION</> SQL command.  When <literal>off</> or unset, SQL
+        commands are not committed until you explicitly issue
+        <command>COMMIT</> or <command>END</>.  The autocommit-off
+        mode works by issuing an implicit <command>BEGIN</> for you, just
+        before any command that is not already in a transaction block and
+        is not itself a <command>BEGIN</> or other transaction-control
+        command.
+        </para>
 
-	<note>
-	<para>
-	 In autocommit-off mode, you must explicitly abandon any failed
-	 transaction by entering <command>ABORT</> or <command>ROLLBACK</>.
-	 Also keep in mind that if you exit the session
-	 without committing, your work will be lost.
-	</para>
-	</note>
+        <note>
+        <para>
+         In autocommit-off mode, you must explicitly abandon any failed
+         transaction by entering <command>ABORT</> or <command>ROLLBACK</>.
+         Also keep in mind that if you exit the session
+         without committing, your work will be lost.
+        </para>
+        </note>
 
-	<note>
-	<para>
-	 The autocommit-on mode is <productname>PostgreSQL</>'s traditional
-	 behavior, but autocommit-off is closer to the SQL spec.  If you
-	 prefer autocommit-off, you may wish to set it in the system-wide
-         <filename>psqlrc</filename> or your 
+        <note>
+        <para>
+         The autocommit-on mode is <productname>PostgreSQL</>'s traditional
+         behavior, but autocommit-off is closer to the SQL spec.  If you
+         prefer autocommit-off, you may wish to set it in the system-wide
+         <filename>psqlrc</filename> or your
          <filename>.psqlrc</filename> file.
-	</para>
-	</note>
-	</listitem>
+        </para>
+        </note>
+        </listitem>
       </varlistentry>
 
       <varlistentry>
         <term><varname>DBNAME</varname></term>
-	<listitem>
-	<para>
+        <listitem>
+        <para>
         The name of the database you are currently connected to. This is
         set every time you connect to a database (including program
         start-up), but can be unset.
-	</para>
-	</listitem>
+        </para>
+        </listitem>
       </varlistentry>
 
       <varlistentry>
         <term><varname>ECHO</varname></term>
-	<listitem>
-	<para>
-	If set to <literal>all</literal>, all lines
-	entered or from a script are written to the standard output
-	before they are parsed or executed. To select this behavior on program
-	start-up, use the switch <option>-a</option>. If set to
-	<literal>queries</literal>,
-	<application>psql</application> merely prints all queries as
-	they are sent to the server. The switch for this is
-	<option>-e</option>.
-	</para>
-	</listitem>
+        <listitem>
+        <para>
+        If set to <literal>all</literal>, all lines
+        entered or from a script are written to the standard output
+        before they are parsed or executed. To select this behavior on program
+        start-up, use the switch <option>-a</option>. If set to
+        <literal>queries</literal>,
+        <application>psql</application> merely prints all queries as
+        they are sent to the server. The switch for this is
+        <option>-e</option>.
+        </para>
+        </listitem>
       </varlistentry>
 
       <varlistentry>
         <term><varname>ECHO_HIDDEN</varname></term>
-	<listitem>
-	<para>
-	When this variable is set and a backslash command queries the
-	database, the query is first shown. This way you can study the
-	<productname>PostgreSQL</productname> internals and provide
-	similar functionality in your own programs. (To select this behavior
-	on program start-up, use the switch <option>-E</option>.)  If you set
-	the variable to the value <literal>noexec</literal>, the queries are
-	just shown but are not actually sent to the server and executed.
-	</para>
-	</listitem>
+        <listitem>
+        <para>
+        When this variable is set and a backslash command queries the
+        database, the query is first shown. This way you can study the
+        <productname>PostgreSQL</productname> internals and provide
+        similar functionality in your own programs. (To select this behavior
+        on program start-up, use the switch <option>-E</option>.)  If you set
+        the variable to the value <literal>noexec</literal>, the queries are
+        just shown but are not actually sent to the server and executed.
+        </para>
+        </listitem>
       </varlistentry>
 
       <varlistentry>
         <term><varname>ENCODING</varname></term>
-	<listitem>
-	<para>
+        <listitem>
+        <para>
         The current client character set encoding.
-	</para>
-	</listitem>
+        </para>
+        </listitem>
       </varlistentry>
 
       <varlistentry>
         <term><varname>HISTCONTROL</varname></term>
-	<listitem>
-	<para>
+        <listitem>
+        <para>
          If this variable is set to <literal>ignorespace</literal>,
          lines which begin with a space are not entered into the history
          list. If set to a value of <literal>ignoredups</literal>, lines
@@ -1944,47 +1957,47 @@ bar
          <literal>ignoreboth</literal> combines the two options. If
          unset, or if set to any other value than those above, all lines
          read in interactive mode are saved on the history list.
-	</para>
+        </para>
         <note>
         <para>
         This feature was shamelessly plagiarized from
         <application>Bash</application>.
         </para>
         </note>
-	</listitem>
+        </listitem>
       </varlistentry>
 
       <varlistentry>
         <term><varname>HISTSIZE</varname></term>
-	<listitem>
-	<para>
+        <listitem>
+        <para>
         The number of commands to store in the command history. The
         default value is 500.
-	</para>
+        </para>
         <note>
         <para>
         This feature was shamelessly plagiarized from
         <application>Bash</application>.
         </para>
         </note>
-	</listitem>
+        </listitem>
       </varlistentry>
 
       <varlistentry>
         <term><varname>HOST</varname></term>
-	<listitem>
-	<para>
+        <listitem>
+        <para>
         The database server host you are currently connected to. This is
         set every time you connect to a database (including program
         start-up), but can be unset.
-	</para>
-	</listitem>
+        </para>
+        </listitem>
       </varlistentry>
 
       <varlistentry>
         <term><varname>IGNOREEOF</varname></term>
-	<listitem>
-	<para>
+        <listitem>
+        <para>
          If unset, sending an <acronym>EOF</> character (usually
          <keycombo action="simul"><keycap>Control</><keycap>D</></>)
          to an interactive session of <application>psql</application>
@@ -1992,125 +2005,125 @@ bar
          that many <acronym>EOF</> characters are ignored before the
          application terminates.  If the variable is set but has no
          numeric value, the default is 10.
-	</para>
+        </para>
         <note>
         <para>
         This feature was shamelessly plagiarized from
         <application>Bash</application>.
         </para>
         </note>
-	</listitem>
+        </listitem>
       </varlistentry>
 
       <varlistentry>
         <term><varname>LASTOID</varname></term>
-	<listitem>
-	<para>
+        <listitem>
+        <para>
         The value of the last affected OID, as returned from an
         <command>INSERT</command> or <command>lo_insert</command>
         command. This variable is only guaranteed to be valid until
         after the result of the next <acronym>SQL</acronym> command has
         been displayed.
-	</para>
-	</listitem>
+        </para>
+        </listitem>
       </varlistentry>
 
       <varlistentry>
         <term><varname>ON_ERROR_STOP</varname></term>
-	<listitem>
-	<para>
-	By default, if non-interactive scripts encounter an error, such
-	as a malformed <acronym>SQL</acronym> command or internal
-	meta-command, processing continues. This has been the
-	traditional behavior of <application>psql</application> but it
-	is sometimes not desirable. If this variable is set, script
-	processing will immediately terminate. If the script was called
-	from another script it will terminate in the same fashion. If
-	the outermost script was not called from an interactive
-	<application>psql</application> session but rather using the
-	<option>-f</option> option, <application>psql</application> will
-	return error code 3, to distinguish this case from fatal error
-	conditions (error code 1).
-	</para>
-	</listitem>
+        <listitem>
+        <para>
+        By default, if non-interactive scripts encounter an error, such
+        as a malformed <acronym>SQL</acronym> command or internal
+        meta-command, processing continues. This has been the
+        traditional behavior of <application>psql</application> but it
+        is sometimes not desirable. If this variable is set, script
+        processing will immediately terminate. If the script was called
+        from another script it will terminate in the same fashion. If
+        the outermost script was not called from an interactive
+        <application>psql</application> session but rather using the
+        <option>-f</option> option, <application>psql</application> will
+        return error code 3, to distinguish this case from fatal error
+        conditions (error code 1).
+        </para>
+        </listitem>
       </varlistentry>
 
       <varlistentry>
         <term><varname>PORT</varname></term>
-	<listitem>
-	<para>
+        <listitem>
+        <para>
         The database server port to which you are currently connected.
         This is set every time you connect to a database (including
         program start-up), but can be unset.
-	</para>
-	</listitem>
+        </para>
+        </listitem>
       </varlistentry>
 
       <varlistentry>
         <term><varname>PROMPT1</varname></term>
         <term><varname>PROMPT2</varname></term>
         <term><varname>PROMPT3</varname></term>
-	<listitem>
-	<para>
-	These specify what the prompts <application>psql</application>
-	issues should look like. See <xref
-	linkend="APP-PSQL-prompting"
-	endterm="APP-PSQL-prompting-title"> below.
-	</para>
-	</listitem>
+        <listitem>
+        <para>
+        These specify what the prompts <application>psql</application>
+        issues should look like. See <xref
+        linkend="APP-PSQL-prompting"
+        endterm="APP-PSQL-prompting-title"> below.
+        </para>
+        </listitem>
       </varlistentry>
 
       <varlistentry>
         <term><varname>QUIET</varname></term>
-	<listitem>
-	<para>
-	This variable is equivalent to the command line option
-	<option>-q</option>. It is probably not too useful in
-	interactive mode.
-	</para>
-	</listitem>
+        <listitem>
+        <para>
+        This variable is equivalent to the command line option
+        <option>-q</option>. It is probably not too useful in
+        interactive mode.
+        </para>
+        </listitem>
       </varlistentry>
 
       <varlistentry>
         <term><varname>SINGLELINE</varname></term>
-	<listitem>
-	<para>
-	This variable is equivalent to the command line option
-	<option>-S</option>.
-	</para>
-	</listitem>
+        <listitem>
+        <para>
+        This variable is equivalent to the command line option
+        <option>-S</option>.
+        </para>
+        </listitem>
       </varlistentry>
 
       <varlistentry>
         <term><varname>SINGLESTEP</varname></term>
-	<listitem>
-	<para>
-	This variable is equivalent to the command line option
-	<option>-s</option>.
-	</para>
-	</listitem>
+        <listitem>
+        <para>
+        This variable is equivalent to the command line option
+        <option>-s</option>.
+        </para>
+        </listitem>
       </varlistentry>
 
       <varlistentry>
         <term><varname>USER</varname></term>
-	<listitem>
-	<para>
+        <listitem>
+        <para>
         The database user you are currently connected as. This is set
         every time you connect to a database (including program
         start-up), but can be unset.
-	</para>
-	</listitem>
+        </para>
+        </listitem>
       </varlistentry>
 
       <varlistentry>
         <term><varname>VERBOSITY</varname></term>
-	<listitem>
-	<para>
-	This variable can be set to the values <literal>default</>,
-	<literal>verbose</>, or <literal>terse</> to control the verbosity
-	of error reports.
-	</para>
-	</listitem>
+        <listitem>
+        <para>
+        This variable can be set to the values <literal>default</>,
+        <literal>verbose</>, or <literal>terse</> to control the verbosity
+        of error reports.
+        </para>
+        </listitem>
       </varlistentry>
 
     </variablelist>
@@ -2211,7 +2224,7 @@ testdb=> <userinput>\set content '\'' `sed -e "s/'/\\\\\\'/g" < my_file.txt` '\'
     <variablelist>
       <varlistentry>
         <term><literal>%M</literal></term>
-	<listitem>
+        <listitem>
          <para>
           The full host name (with domain name) of the database server,
           or <literal>[local]</literal> if the connection is over a Unix
@@ -2225,7 +2238,7 @@ testdb=> <userinput>\set content '\'' `sed -e "s/'/\\\\\\'/g" < my_file.txt` '\'
 
       <varlistentry>
         <term><literal>%m</literal></term>
-	<listitem>
+        <listitem>
          <para>
           The host name of the database server, truncated at the
           first dot, or <literal>[local]</literal> if the connection is
@@ -2236,12 +2249,12 @@ testdb=> <userinput>\set content '\'' `sed -e "s/'/\\\\\\'/g" < my_file.txt` '\'
 
       <varlistentry>
         <term><literal>%&gt;</literal></term>
-	<listitem><para>The port number at which the database server is listening.</para></listitem>
+        <listitem><para>The port number at which the database server is listening.</para></listitem>
       </varlistentry>
 
       <varlistentry>
         <term><literal>%n</literal></term>
-	<listitem>
+        <listitem>
          <para>
           The database session user name.  (The expansion of this
           value might change during a database session as the result
@@ -2253,18 +2266,18 @@ testdb=> <userinput>\set content '\'' `sed -e "s/'/\\\\\\'/g" < my_file.txt` '\'
 
       <varlistentry>
         <term><literal>%/</literal></term>
-	<listitem><para>The name of the current database.</para></listitem>
+        <listitem><para>The name of the current database.</para></listitem>
       </varlistentry>
 
       <varlistentry>
         <term><literal>%~</literal></term>
-	<listitem><para>Like <literal>%/</literal>, but the output is <literal>~</literal>
+        <listitem><para>Like <literal>%/</literal>, but the output is <literal>~</literal>
          (tilde) if the database is your default database.</para></listitem>
       </varlistentry>
 
       <varlistentry>
         <term><literal>%#</literal></term>
-	<listitem>
+        <listitem>
          <para>
           If the session user is a database superuser, then a
           <literal>#</literal>, otherwise a <literal>&gt;</literal>.
@@ -2277,75 +2290,75 @@ testdb=> <userinput>\set content '\'' `sed -e "s/'/\\\\\\'/g" < my_file.txt` '\'
 
       <varlistentry>
         <term><literal>%R</literal></term>
-	<listitem>
-	<para>
-	In prompt 1 normally <literal>=</literal>, but <literal>^</literal> if
-	in single-line mode, and <literal>!</literal> if the session is
-	disconnected from the database (which can happen if
-	<command>\connect</command> fails). In prompt 2 the sequence is
-	replaced by <literal>-</literal>, <literal>*</literal>, a single quote,
-	or a double quote, depending on whether
-	<application>psql</application> expects more input because the
-	command wasn't terminated yet, because you are inside a
-	<literal>/* ... */</literal> comment, or because you are inside
-	a quote. In prompt 3 the sequence doesn't produce anything.
-	</para>
-	</listitem>
+        <listitem>
+        <para>
+        In prompt 1 normally <literal>=</literal>, but <literal>^</literal> if
+        in single-line mode, and <literal>!</literal> if the session is
+        disconnected from the database (which can happen if
+        <command>\connect</command> fails). In prompt 2 the sequence is
+        replaced by <literal>-</literal>, <literal>*</literal>, a single quote,
+        or a double quote, depending on whether
+        <application>psql</application> expects more input because the
+        command wasn't terminated yet, because you are inside a
+        <literal>/* ... */</literal> comment, or because you are inside
+        a quote. In prompt 3 the sequence doesn't produce anything.
+        </para>
+        </listitem>
       </varlistentry>
 
       <varlistentry>
         <term><literal>%x</literal></term>
-	<listitem>
-	<para>
-	Transaction status: an empty string when not in a transaction
-	block, or <literal>*</> when in a transaction block, or
-	<literal>!</> when in a failed transaction block, or <literal>?</>
-	when the transaction state is indeterminate (for example, because
-	there is no connection).
-	</para>
-	</listitem>
+        <listitem>
+        <para>
+        Transaction status: an empty string when not in a transaction
+        block, or <literal>*</> when in a transaction block, or
+        <literal>!</> when in a failed transaction block, or <literal>?</>
+        when the transaction state is indeterminate (for example, because
+        there is no connection).
+        </para>
+        </listitem>
       </varlistentry>
 
       <varlistentry>
         <term><literal>%</literal><replaceable class="parameter">digits</replaceable></term>
-	<listitem>
-	<para>
-	The character with the indicated numeric code is substituted.
-	If <replaceable class="parameter">digits</replaceable> starts
-	with <literal>0x</literal> the rest of the characters are
-	interpreted as hexadecimal; otherwise if the first digit is
-	<literal>0</literal> the digits are interpreted as octal;
-	otherwise the digits are read as a decimal number.
-	</para>
-	</listitem>
+        <listitem>
+        <para>
+        The character with the indicated numeric code is substituted.
+        If <replaceable class="parameter">digits</replaceable> starts
+        with <literal>0x</literal> the rest of the characters are
+        interpreted as hexadecimal; otherwise if the first digit is
+        <literal>0</literal> the digits are interpreted as octal;
+        otherwise the digits are read as a decimal number.
+        </para>
+        </listitem>
       </varlistentry>
 
       <varlistentry>
         <term><literal>%:</literal><replaceable class="parameter">name</replaceable><literal>:</literal></term>
-	<listitem>
-	<para>
-	The value of the <application>psql</application> variable
-	<replaceable class="parameter">name</replaceable>. See the
-	section <xref linkend="APP-PSQL-variables"
-	endterm="APP-PSQL-variables-title"> for details.
-	</para>
-	</listitem>
+        <listitem>
+        <para>
+        The value of the <application>psql</application> variable
+        <replaceable class="parameter">name</replaceable>. See the
+        section <xref linkend="APP-PSQL-variables"
+        endterm="APP-PSQL-variables-title"> for details.
+        </para>
+        </listitem>
       </varlistentry>
 
       <varlistentry>
         <term><literal>%`</literal><replaceable class="parameter">command</replaceable><literal>`</literal></term>
-	<listitem>
-	<para>
-	The output of <replaceable
-	class="parameter">command</replaceable>, similar to ordinary
-	<quote>back-tick</quote> substitution.
-	</para>
-	</listitem>
+        <listitem>
+        <para>
+        The output of <replaceable
+        class="parameter">command</replaceable>, similar to ordinary
+        <quote>back-tick</quote> substitution.
+        </para>
+        </listitem>
       </varlistentry>
 
       <varlistentry>
         <term><literal>%[</literal> ... <literal>%]</literal></term>
-	<listitem>
+        <listitem>
          <para>
          Prompts may contain terminal control characters which, for
          example, change the color, background, or style of the prompt
@@ -2360,8 +2373,8 @@ testdb=> \set PROMPT1 '%[%033[1;33;40m%]%n@%/%R%[%033[0m%#%] '
 </programlisting>
          results in a boldfaced (<literal>1;</literal>) yellow-on-black
          (<literal>33;40</literal>) prompt on VT100-compatible, color-capable
-	 terminals.
-    	</para>
+         terminals.
+        </para>
         </listitem>
       </varlistentry>
 
@@ -2505,10 +2518,10 @@ $endif
     <para>
      Before starting up, <application>psql</application> attempts to
      read and execute commands from the the system-wide
-     <filename>psqlrc</filename> file and the  
+     <filename>psqlrc</filename> file and the
      <filename>$HOME/.psqlrc</filename> file in the user's home
-     directory.  See <filename><replaceable>PREFIX</>/share/psqlrc.sample</> 
-     for information on setting up the system-wide file.  It could be used 
+     directory.  See <filename><replaceable>PREFIX</>/share/psqlrc.sample</>
+     for information on setting up the system-wide file.  It could be used
      to set up the client or the server to taste (using the <command>\set
      </command> and <command>SET</command> commands).
     </para>

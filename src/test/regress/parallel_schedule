@@ -16,7 +16,7 @@ test: point lseg box path polygon circle date time timetz timestamp timestamptz 
 # Depends on point, lseg, box, path, polygon and circle
 test: geometry
 # Depends on interval, timetz, timestamp, timestamptz, reltime and abstime
-test: horology	
+test: horology
 
 # ----------
 # These four each depend on the previous one
@@ -78,3 +78,6 @@ test: limit plpgsql copy2 temp domain rangefuncs prepare without_oid conversion 
 
 # run stats by itself because its delay may be insufficient under heavy load
 test: stats
+
+# run tablespace by itself
+test: tablespace

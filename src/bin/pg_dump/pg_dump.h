@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.h,v 1.108 2004/03/03 21:28:55 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.h,v 1.109 2004/06/18 06:14:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -98,6 +98,7 @@ typedef struct _namespaceInfo
 	DumpableObject dobj;
 	char	   *usename;		/* name of owner, or empty string */
 	char	   *nspacl;
+	char	   *nsptablespace;	/* default tablespace */
 	bool		dump;			/* true if need to dump definition */
 } NamespaceInfo;
 
@@ -168,6 +169,7 @@ typedef struct _tableInfo
 	char	   *usename;		/* name of owner, or empty string */
 	char	   *relacl;
 	char		relkind;
+	char	   *reltablespace;	/* relation tablespace */
 	bool		hasindex;		/* does it have any indexes? */
 	bool		hasrules;		/* does it have any rules? */
 	bool		hasoids;		/* does it have OIDs? */

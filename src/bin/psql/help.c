@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.87 2004/05/07 00:24:58 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.88 2004/06/18 06:14:04 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -211,6 +211,7 @@ slashUsage(unsigned short int pager)
 	fprintf(output, _("  \\d{t|i|s|v|S} [PATTERN] (add \"+\" for more detail)\n"
 					  "                 list tables/indexes/sequences/views/system tables\n"));
 	fprintf(output, _("  \\da [PATTERN]  list aggregate functions\n"));
+	fprintf(output, _("  \\db [PATTERN]  list tablespaces\n"));
 	fprintf(output, _("  \\dc [PATTERN]  list conversions\n"));
 	fprintf(output, _("  \\dC            list casts\n"));
 	fprintf(output, _("  \\dd [PATTERN]  show comment for object\n"));
@@ -308,7 +309,7 @@ helpSQL(const char *topic, unsigned short int pager)
 		size_t		len;
 		int			nl_count = 0;
 		char		*ch;
-		
+
 		/* don't care about trailing spaces */
 		len = strlen(topic);
 		while (topic[len - 1] == ' ')

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/localbuf.c,v 1.55 2004/05/31 20:31:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/localbuf.c,v 1.56 2004/06/18 06:13:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -236,10 +236,10 @@ AtEOXact_LocalBuffers(bool isCommit)
 
 			if (isCommit)
 				elog(WARNING,
-					 "local buffer leak: [%03d] (rel=%u/%u, blockNum=%u, flags=0x%x, refcount=%u %d)",
+					 "local buffer leak: [%03d] (rel=%u/%u/%u, blockNum=%u, flags=0x%x, refcount=%u %d)",
 					 i,
-					 buf->tag.rnode.tblNode, buf->tag.rnode.relNode,
-					 buf->tag.blockNum, buf->flags,
+					 buf->tag.rnode.spcNode, buf->tag.rnode.dbNode,
+					 buf->tag.rnode.relNode, buf->tag.blockNum, buf->flags,
 					 buf->refcount, LocalRefCount[i]);
 
 			LocalRefCount[i] = 0;

@@ -74,7 +74,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/inval.c,v 1.61 2004/05/06 16:10:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/inval.c,v 1.62 2004/06/18 06:13:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -308,7 +308,7 @@ AddRelcacheInvalidationMessage(InvalidationListHeader *hdr,
 	/* We assume dbId need not be checked because it will never change */
 	/* relfilenode fields must be checked to support reassignment */
 	ProcessMessageList(hdr->rclist,
-					   if (msg->rc.relId == relId && 
+					   if (msg->rc.relId == relId &&
 						   RelFileNodeEquals(msg->rc.physId, physId)) return);
 
 	/* OK, add the item */
@@ -555,14 +555,18 @@ PrepareForTupleInvalidation(Relation relation, HeapTuple tuple,
 			databaseId = InvalidOid;
 		else
 			databaseId = MyDatabaseId;
-		rnode.tblNode = databaseId;			/* XXX change for tablespaces */
+		if (classtup->reltablespace)
+			rnode.spcNode = classtup->reltablespace;
+		else
+			rnode.spcNode = MyDatabaseTableSpace;
+		rnode.dbNode = databaseId;
 		rnode.relNode = classtup->relfilenode;
 		/*
 		 * Note: during a pg_class row update that assigns a new relfilenode
-		 * value, we will be called on both the old and new tuples, and thus
-		 * will broadcast invalidation messages showing both the old and new
-		 * relfilenode values.  This ensures that other backends will close
-		 * smgr references to the old relfilenode file.
+		 * or reltablespace value, we will be called on both the old and new
+		 * tuples, and thus will broadcast invalidation messages showing both
+		 * the old and new RelFileNode values.  This ensures that other
+		 * backends will close smgr references to the old file.
 		 */
 	}
 	else if (tupleRelId == RelOid_pg_attribute)
@@ -580,7 +584,8 @@ PrepareForTupleInvalidation(Relation relation, HeapTuple tuple,
 		 */
 		databaseId = MyDatabaseId;
 		/* We assume no smgr cache flush is needed, either */
-		rnode.tblNode = InvalidOid;
+		rnode.spcNode = InvalidOid;
+		rnode.dbNode = InvalidOid;
 		rnode.relNode = InvalidOid;
 	}
 	else
@@ -760,7 +765,11 @@ CacheInvalidateRelcacheByTuple(HeapTuple classTuple)
 		databaseId = InvalidOid;
 	else
 		databaseId = MyDatabaseId;
-	rnode.tblNode = databaseId;			/* XXX change for tablespaces */
+	if (classtup->reltablespace)
+		rnode.spcNode = classtup->reltablespace;
+	else
+		rnode.spcNode = MyDatabaseTableSpace;
+	rnode.dbNode = databaseId;
 	rnode.relNode = classtup->relfilenode;
 
 	RegisterRelcacheInvalidation(databaseId, relationId, rnode);

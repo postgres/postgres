@@ -56,13 +56,14 @@ SELECT relname, relhasindex
  pg_rewrite          | t
  pg_shadow           | t
  pg_statistic        | t
+ pg_tablespace       | t
  pg_trigger          | t
  pg_type             | t
  road                | t
  shighway            | t
  tenk1               | t
  tenk2               | t
-(52 rows)
+(53 rows)
 
 --
 -- another sanity check: every system catalog that has OIDs should have

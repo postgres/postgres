@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.270 2004/06/10 17:55:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.271 2004/06/18 06:13:19 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -43,6 +43,7 @@
 #include "catalog/pg_statistic.h"
 #include "catalog/pg_type.h"
 #include "commands/tablecmds.h"
+#include "commands/tablespace.h"
 #include "commands/trigger.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
@@ -203,15 +204,14 @@ SystemAttributeByName(const char *attname, bool relhasoids)
 Relation
 heap_create(const char *relname,
 			Oid relnamespace,
+			Oid reltablespace,
 			TupleDesc tupDesc,
 			bool shared_relation,
 			bool storage_create,
 			bool allow_system_table_mods)
 {
 	Oid			relid;
-	Oid			dbid = shared_relation ? InvalidOid : MyDatabaseId;
 	bool		nailme = false;
-	RelFileNode rnode;
 	Relation	rel;
 
 	/*
@@ -260,6 +260,8 @@ heap_create(const char *relname,
 			relid = RelOid_pg_group;
 		else if (strcmp(DatabaseRelationName, relname) == 0)
 			relid = RelOid_pg_database;
+		else if (strcmp(TableSpaceRelationName, relname) == 0)
+			relid = RelOid_pg_tablespace;
 		else
 			relid = newoid();
 	}
@@ -267,20 +269,14 @@ heap_create(const char *relname,
 		relid = newoid();
 
 	/*
-	 * For now, the physical identifier of the relation is the same as the
-	 * logical identifier.
-	 */
-	rnode.tblNode = dbid;
-	rnode.relNode = relid;
-
-	/*
 	 * build the relcache entry.
 	 */
 	rel = RelationBuildLocalRelation(relname,
 									 relnamespace,
 									 tupDesc,
-									 relid, dbid,
-									 rnode,
+									 relid,
+									 reltablespace,
+									 shared_relation,
 									 nailme);
 
 	/*
@@ -296,6 +292,16 @@ heap_create(const char *relname,
 void
 heap_storage_create(Relation rel)
 {
+	/*
+	 * We may be using the target table space for the first time in this
+	 * database, so create a per-database subdirectory if needed.
+	 *
+	 * XXX it might be better to do this right in smgrcreate...
+	 */
+	TablespaceCreateDbspace(rel->rd_node.spcNode, rel->rd_node.dbNode);
+	/*
+	 * Now we can make the file.
+	 */
 	Assert(rel->rd_smgr == NULL);
 	rel->rd_smgr = smgropen(rel->rd_node);
 	smgrcreate(rel->rd_smgr, rel->rd_istemp, false);
@@ -692,6 +698,7 @@ AddNewRelationType(const char *typeName,
 Oid
 heap_create_with_catalog(const char *relname,
 						 Oid relnamespace,
+						 Oid reltablespace,
 						 TupleDesc tupdesc,
 						 char relkind,
 						 bool shared_relation,
@@ -726,6 +733,7 @@ heap_create_with_catalog(const char *relname,
 	 */
 	new_rel_desc = heap_create(relname,
 							   relnamespace,
+							   reltablespace,
 							   tupdesc,
 							   shared_relation,
 							   (relkind != RELKIND_VIEW &&

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.116 2004/05/07 00:24:58 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.117 2004/06/18 06:14:04 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -300,6 +300,9 @@ exec_command(const char *cmd,
 				break;
 			case 'a':
 				success = describeAggregates(pattern, show_verbose);
+				break;
+			case 'b':
+				success = describeTablespaces(pattern);
 				break;
 			case 'c':
 				success = listConversions(pattern);

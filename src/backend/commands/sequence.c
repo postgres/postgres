@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/sequence.c,v 1.111 2004/05/26 04:41:11 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/sequence.c,v 1.112 2004/06/18 06:13:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -180,6 +180,7 @@ DefineSequence(CreateSeqStmt *seq)
 	stmt->constraints = NIL;
 	stmt->hasoids = MUST_NOT_HAVE_OIDS;
 	stmt->oncommit = ONCOMMIT_NOOP;
+	stmt->tablespacename = seq->tablespacename;
 
 	seqoid = DefineRelation(stmt, RELKIND_SEQUENCE);
 
@@ -1071,8 +1072,8 @@ seq_redo(XLogRecPtr lsn, XLogRecord *record)
 
 	buffer = XLogReadBuffer(true, reln, 0);
 	if (!BufferIsValid(buffer))
-		elog(PANIC, "seq_redo: can't read block of %u/%u",
-			 xlrec->node.tblNode, xlrec->node.relNode);
+		elog(PANIC, "seq_redo: can't read block 0 of rel %u/%u/%u",
+			 xlrec->node.spcNode, xlrec->node.dbNode, xlrec->node.relNode);
 
 	page = (Page) BufferGetPage(buffer);
 
@@ -1114,6 +1115,6 @@ seq_desc(char *buf, uint8 xl_info, char *rec)
 		return;
 	}
 
-	sprintf(buf + strlen(buf), "node %u/%u",
-			xlrec->node.tblNode, xlrec->node.relNode);
+	sprintf(buf + strlen(buf), "rel %u/%u/%u",
+			xlrec->node.spcNode, xlrec->node.dbNode, xlrec->node.relNode);
 }

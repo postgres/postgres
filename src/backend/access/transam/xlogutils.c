@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlogutils.c,v 1.30 2004/02/11 22:55:24 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlogutils.c,v 1.31 2004/06/18 06:13:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -354,7 +354,7 @@ XLogOpenRelation(bool redo, RmgrId rmid, RelFileNode rnode)
 		 * though, since we are presumably running by ourselves and can't
 		 * have any lock conflicts ...
 		 */
-		res->reldata.rd_lockInfo.lockRelId.dbId = rnode.tblNode;
+		res->reldata.rd_lockInfo.lockRelId.dbId = rnode.dbNode;
 		res->reldata.rd_lockInfo.lockRelId.relId = rnode.relNode;
 
 		hentry = (XLogRelCacheEntry *)

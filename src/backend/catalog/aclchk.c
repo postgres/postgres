@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.103 2004/06/01 21:49:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.104 2004/06/18 06:13:19 tgl Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -31,6 +31,7 @@
 #include "catalog/pg_operator.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_shadow.h"
+#include "catalog/pg_tablespace.h"
 #include "catalog/pg_type.h"
 #include "miscadmin.h"
 #include "parser/parse_func.h"
@@ -45,6 +46,7 @@ static void ExecuteGrantStmt_Database(GrantStmt *stmt);
 static void ExecuteGrantStmt_Function(GrantStmt *stmt);
 static void ExecuteGrantStmt_Language(GrantStmt *stmt);
 static void ExecuteGrantStmt_Namespace(GrantStmt *stmt);
+static void ExecuteGrantStmt_Tablespace(GrantStmt *stmt);
 
 static const char *privilege_to_string(AclMode privilege);
 
@@ -207,11 +209,15 @@ ExecuteGrantStmt(GrantStmt *stmt)
 		case ACL_OBJECT_NAMESPACE:
 			ExecuteGrantStmt_Namespace(stmt);
 			break;
+		case ACL_OBJECT_TABLESPACE:
+			ExecuteGrantStmt_Tablespace(stmt);
+			break;
 		default:
 			elog(ERROR, "unrecognized GrantStmt.objtype: %d",
 				 (int) stmt->objtype);
 	}
 }
+
 
 static void
 ExecuteGrantStmt_Relation(GrantStmt *stmt)
@@ -1009,6 +1015,163 @@ ExecuteGrantStmt_Namespace(GrantStmt *stmt)
 	}
 }
 
+static void
+ExecuteGrantStmt_Tablespace(GrantStmt *stmt)
+{
+	AclMode		privileges;
+	bool		all_privs;
+	ListCell   *i;
+
+	if (linitial_int(stmt->privileges) == ACL_ALL_RIGHTS)
+	{
+		all_privs = true;
+		privileges = ACL_ALL_RIGHTS_TABLESPACE;
+	}
+	else
+	{
+		all_privs = false;
+		privileges = ACL_NO_RIGHTS;
+		foreach(i, stmt->privileges)
+		{
+			AclMode		priv = lfirst_int(i);
+
+			if (priv & ~((AclMode) ACL_ALL_RIGHTS_TABLESPACE))
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_GRANT_OPERATION),
+						 errmsg("invalid privilege type %s for tablespace",
+								privilege_to_string(priv))));
+			privileges |= priv;
+		}
+	}
+
+	foreach(i, stmt->objects)
+	{
+		char	   *spcname = strVal(lfirst(i));
+		Relation	relation;
+		ScanKeyData entry[1];
+		HeapScanDesc scan;
+		HeapTuple	tuple;
+		Form_pg_tablespace pg_tablespace_tuple;
+		Datum		aclDatum;
+		bool		isNull;
+		AclMode		my_goptions;
+		AclMode		this_privileges;
+		Acl		   *old_acl;
+		Acl		   *new_acl;
+		AclId		grantorId;
+		AclId		ownerId;
+		HeapTuple	newtuple;
+		Datum		values[Natts_pg_tablespace];
+		char		nulls[Natts_pg_tablespace];
+		char		replaces[Natts_pg_tablespace];
+
+		relation = heap_openr(TableSpaceRelationName, RowExclusiveLock);
+		ScanKeyInit(&entry[0],
+					Anum_pg_tablespace_spcname,
+					BTEqualStrategyNumber, F_NAMEEQ,
+					CStringGetDatum(spcname));
+		scan = heap_beginscan(relation, SnapshotNow, 1, entry);
+		tuple = heap_getnext(scan, ForwardScanDirection);
+		if (!HeapTupleIsValid(tuple))
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("tablespace \"%s\" does not exist", spcname)));
+		pg_tablespace_tuple = (Form_pg_tablespace) GETSTRUCT(tuple);
+
+		ownerId = pg_tablespace_tuple->spcowner;
+		grantorId = select_grantor(ownerId);
+
+		/*
+		 * Must be owner or have some privilege on the object (per spec,
+		 * any privilege will get you by here).  The owner is always
+		 * treated as having all grant options.
+		 */
+		if (pg_tablespace_ownercheck(HeapTupleGetOid(tuple), GetUserId()))
+			my_goptions = ACL_ALL_RIGHTS_TABLESPACE;
+		else
+		{
+			AclMode		my_rights;
+
+			my_rights = pg_tablespace_aclmask(HeapTupleGetOid(tuple),
+											  GetUserId(),
+											  ACL_ALL_RIGHTS_TABLESPACE | ACL_GRANT_OPTION_FOR(ACL_ALL_RIGHTS_TABLESPACE),
+											  ACLMASK_ALL);
+			if (my_rights == ACL_NO_RIGHTS)
+				aclcheck_error(ACLCHECK_NO_PRIV, ACL_KIND_TABLESPACE,
+							   spcname);
+			my_goptions = ACL_OPTION_TO_PRIVS(my_rights);
+		}
+
+		/*
+		 * Restrict the operation to what we can actually grant or revoke,
+		 * and issue a warning if appropriate.  (For REVOKE this isn't quite
+		 * what the spec says to do: the spec seems to want a warning only
+		 * if no privilege bits actually change in the ACL.  In practice
+		 * that behavior seems much too noisy, as well as inconsistent with
+		 * the GRANT case.)
+		 */
+		this_privileges = privileges & my_goptions;
+		if (stmt->is_grant)
+		{
+			if (this_privileges == 0)
+				ereport(WARNING,
+						(errcode(ERRCODE_WARNING_PRIVILEGE_NOT_GRANTED),
+						 errmsg("no privileges were granted")));
+			else if (!all_privs && this_privileges != privileges)
+				ereport(WARNING,
+						(errcode(ERRCODE_WARNING_PRIVILEGE_NOT_GRANTED),
+						 errmsg("not all privileges were granted")));
+		}
+		else
+		{
+			if (this_privileges == 0)
+				ereport(WARNING,
+						(errcode(ERRCODE_WARNING_PRIVILEGE_NOT_REVOKED),
+						 errmsg("no privileges could be revoked")));
+			else if (!all_privs && this_privileges != privileges)
+				ereport(WARNING,
+						(errcode(ERRCODE_WARNING_PRIVILEGE_NOT_REVOKED),
+						 errmsg("not all privileges could be revoked")));
+		}
+
+		/*
+		 * If there's no ACL, substitute the proper default.
+		 */
+		aclDatum = heap_getattr(tuple, Anum_pg_tablespace_spcacl,
+								RelationGetDescr(relation), &isNull);
+		if (isNull)
+			old_acl = acldefault(ACL_OBJECT_TABLESPACE, ownerId);
+		else
+			/* get a detoasted copy of the ACL */
+			old_acl = DatumGetAclPCopy(aclDatum);
+
+		new_acl = merge_acl_with_grant(old_acl, stmt->is_grant,
+									   stmt->grant_option, stmt->behavior,
+									   stmt->grantees, this_privileges,
+									   grantorId, ownerId);
+
+		/* finished building new ACL value, now insert it */
+		MemSet(values, 0, sizeof(values));
+		MemSet(nulls, ' ', sizeof(nulls));
+		MemSet(replaces, ' ', sizeof(replaces));
+
+		replaces[Anum_pg_tablespace_spcacl - 1] = 'r';
+		values[Anum_pg_tablespace_spcacl - 1] = PointerGetDatum(new_acl);
+
+		newtuple = heap_modifytuple(tuple, relation, values, nulls, replaces);
+
+		simple_heap_update(relation, &newtuple->t_self, newtuple);
+
+		/* keep the catalog indexes up to date */
+		CatalogUpdateIndexes(relation, newtuple);
+
+		pfree(new_acl);
+
+		heap_endscan(scan);
+		heap_close(relation, RowExclusiveLock);
+	}
+}
+
 
 static const char *
 privilege_to_string(AclMode privilege)
@@ -1112,7 +1275,9 @@ static const char *const no_priv_msg[MAX_ACL_KIND] =
 	/* ACL_KIND_OPCLASS */
 	gettext_noop("permission denied for operator class %s"),
 	/* ACL_KIND_CONVERSION */
-	gettext_noop("permission denied for conversion %s")
+	gettext_noop("permission denied for conversion %s"),
+	/* ACL_KIND_TABLESPACE */
+	gettext_noop("permission denied for tablespace %s")
 };
 
 static const char *const not_owner_msg[MAX_ACL_KIND] =
@@ -1134,7 +1299,9 @@ static const char *const not_owner_msg[MAX_ACL_KIND] =
 	/* ACL_KIND_OPCLASS */
 	gettext_noop("must be owner of operator class %s"),
 	/* ACL_KIND_CONVERSION */
-	gettext_noop("must be owner of conversion %s")
+	gettext_noop("must be owner of conversion %s"),
+	/* ACL_KIND_TABLESPACE */
+	gettext_noop("must be owner of tablespace %s")
 };
 
 
@@ -1545,6 +1712,80 @@ pg_namespace_aclmask(Oid nsp_oid, AclId userid,
 	return result;
 }
 
+/*
+ * Exported routine for examining a user's privileges for a tablespace
+ */
+AclMode
+pg_tablespace_aclmask(Oid spc_oid, AclId userid,
+					  AclMode mask, AclMaskHow how)
+{
+	AclMode		result;
+	Relation	pg_tablespace;
+	ScanKeyData entry[1];
+	HeapScanDesc scan;
+	HeapTuple	tuple;
+	Datum		aclDatum;
+	bool		isNull;
+	Acl		   *acl;
+	AclId		ownerId;
+
+	/*
+	 * Only shared relations can be stored in global space; don't let
+	 * even superusers override this
+	 */
+	if (spc_oid == GLOBALTABLESPACE_OID && !IsBootstrapProcessingMode())
+		return 0;
+
+	/* Otherwise, superusers bypass all permission checking. */
+	if (superuser_arg(userid))
+		return mask;
+
+	/*
+	 * Get the tablespace's ACL from pg_tablespace
+	 *
+	 * There's no syscache for pg_tablespace, so must look the hard way
+	 */
+	pg_tablespace = heap_openr(TableSpaceRelationName, AccessShareLock);
+	ScanKeyInit(&entry[0],
+				ObjectIdAttributeNumber,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(spc_oid));
+	scan = heap_beginscan(pg_tablespace, SnapshotNow, 1, entry);
+	tuple = heap_getnext(scan, ForwardScanDirection);
+	if (!HeapTupleIsValid(tuple))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("tablespace with OID %u does not exist", spc_oid)));
+
+	ownerId = ((Form_pg_tablespace) GETSTRUCT(tuple))->spcowner;
+
+	aclDatum = heap_getattr(tuple, Anum_pg_tablespace_spcacl,
+							RelationGetDescr(pg_tablespace), &isNull);
+
+	if (isNull)
+	{
+		/* No ACL, so build default ACL */
+		acl = acldefault(ACL_OBJECT_TABLESPACE, ownerId);
+		aclDatum = (Datum) 0;
+	}
+	else
+	{
+		/* detoast ACL if necessary */
+		acl = DatumGetAclP(aclDatum);
+	}
+
+	result = aclmask(acl, userid, ownerId, mask, how);
+
+	/* if we have a detoasted copy, free it */
+	if (acl && (Pointer) acl != DatumGetPointer(aclDatum))
+		pfree(acl);
+
+	heap_endscan(scan);
+	heap_close(pg_tablespace, AccessShareLock);
+
+	return result;
+}
+
 
 /*
  * Exported routine for checking a user's access privileges to a table
@@ -1605,6 +1846,18 @@ AclResult
 pg_namespace_aclcheck(Oid nsp_oid, AclId userid, AclMode mode)
 {
 	if (pg_namespace_aclmask(nsp_oid, userid, mode, ACLMASK_ANY) != 0)
+		return ACLCHECK_OK;
+	else
+		return ACLCHECK_NO_PRIV;
+}
+
+/*
+ * Exported routine for checking a user's access privileges to a tablespace
+ */
+AclResult
+pg_tablespace_aclcheck(Oid spc_oid, AclId userid, AclMode mode)
+{
+	if (pg_tablespace_aclmask(spc_oid, userid, mode, ACLMASK_ANY) != 0)
 		return ACLCHECK_OK;
 	else
 		return ACLCHECK_NO_PRIV;
@@ -1752,6 +2005,45 @@ pg_namespace_ownercheck(Oid nsp_oid, AclId userid)
 }
 
 /*
+ * Ownership check for a tablespace (specified by OID).
+ */
+bool
+pg_tablespace_ownercheck(Oid spc_oid, AclId userid)
+{
+	Relation	pg_tablespace;
+	ScanKeyData entry[1];
+	HeapScanDesc scan;
+	HeapTuple	spctuple;
+	int32		spcowner;
+
+	/* Superusers bypass all permission checking. */
+	if (superuser_arg(userid))
+		return true;
+
+	/* There's no syscache for pg_tablespace, so must look the hard way */
+	pg_tablespace = heap_openr(TableSpaceRelationName, AccessShareLock);
+	ScanKeyInit(&entry[0],
+				ObjectIdAttributeNumber,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(spc_oid));
+	scan = heap_beginscan(pg_tablespace, SnapshotNow, 1, entry);
+
+	spctuple = heap_getnext(scan, ForwardScanDirection);
+
+	if (!HeapTupleIsValid(spctuple))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("tablespace with OID %u does not exist", spc_oid)));
+
+	spcowner = ((Form_pg_tablespace) GETSTRUCT(spctuple))->spcowner;
+
+	heap_endscan(scan);
+	heap_close(pg_tablespace, AccessShareLock);
+
+	return userid == spcowner;
+}
+
+/*
  * Ownership check for an operator class (specified by OID).
  */
 bool
@@ -1780,9 +2072,8 @@ pg_opclass_ownercheck(Oid opc_oid, AclId userid)
 	return userid == owner_id;
 }
 
-
 /*
- * Ownership check for database (specified as OID)
+ * Ownership check for a database (specified by OID).
  */
 bool
 pg_database_ownercheck(Oid db_oid, AclId userid)

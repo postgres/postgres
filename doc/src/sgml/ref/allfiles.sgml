@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/allfiles.sgml,v 1.56 2004/04/20 01:11:49 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/allfiles.sgml,v 1.57 2004/06/18 06:13:05 tgl Exp $
 PostgreSQL documentation
 Complete list of usable sgml source files in this directory.
 -->
@@ -44,6 +44,7 @@ Complete list of usable sgml source files in this directory.
 <!entity createSequence     system "create_sequence.sgml">
 <!entity createTable        system "create_table.sgml">
 <!entity createTableAs      system "create_table_as.sgml">
+<!entity createTableSpace   system "create_tablespace.sgml">
 <!entity createTrigger      system "create_trigger.sgml">
 <!entity createType         system "create_type.sgml">
 <!entity createUser         system "create_user.sgml">
@@ -66,6 +67,7 @@ Complete list of usable sgml source files in this directory.
 <!entity dropSchema         system "drop_schema.sgml">
 <!entity dropSequence       system "drop_sequence.sgml">
 <!entity dropTable          system "drop_table.sgml">
+<!entity dropTableSpace     system "drop_tablespace.sgml">
 <!entity dropTrigger        system "drop_trigger.sgml">
 <!entity dropType           system "drop_type.sgml">
 <!entity dropUser           system "drop_user.sgml">

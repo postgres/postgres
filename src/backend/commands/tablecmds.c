@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.115 2004/06/10 18:34:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.116 2004/06/18 06:13:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,6 +33,7 @@
 #include "commands/cluster.h"
 #include "commands/defrem.h"
 #include "commands/tablecmds.h"
+#include "commands/tablespace.h"
 #include "commands/trigger.h"
 #include "executor/executor.h"
 #include "lib/stringinfo.h"
@@ -258,6 +259,7 @@ DefineRelation(CreateStmt *stmt, char relkind)
 	Oid			namespaceId;
 	List	   *schema = stmt->tableElts;
 	Oid			relationId;
+	Oid			tablespaceId;
 	Relation	rel;
 	TupleDesc	descriptor;
 	List	   *inheritOids;
@@ -299,6 +301,31 @@ DefineRelation(CreateStmt *stmt, char relkind)
 		if (aclresult != ACLCHECK_OK)
 			aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
 						   get_namespace_name(namespaceId));
+	}
+
+	/*
+	 * Select tablespace to use.  If not specified, use containing schema's
+	 * default tablespace (which may in turn default to database's default).
+	 */
+	if (stmt->tablespacename)
+	{
+		AclResult   aclresult;
+
+		tablespaceId = get_tablespace_oid(stmt->tablespacename);
+		if (!OidIsValid(tablespaceId))
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("tablespace \"%s\" does not exist",
+							stmt->tablespacename)));
+		/* check permissions */
+		aclresult = pg_tablespace_aclcheck(tablespaceId, GetUserId(),
+										   ACL_CREATE);
+		if (aclresult != ACLCHECK_OK)
+			aclcheck_error(aclresult, ACL_KIND_TABLESPACE,
+						   stmt->tablespacename);
+	} else {
+		tablespaceId = get_namespace_tablespace(namespaceId);
+		/* note no permission check on tablespace in this case */
 	}
 
 	/*
@@ -379,6 +406,7 @@ DefineRelation(CreateStmt *stmt, char relkind)
 
 	relationId = heap_create_with_catalog(relname,
 										  namespaceId,
+										  tablespaceId,
 										  descriptor,
 										  relkind,
 										  false,
@@ -1770,7 +1798,7 @@ ATController(Relation rel, List *cmds, bool recurse)
 /*
  * ATPrepCmd
  *
- * Traffic cop for ALTER TABLE Phase 1 operations, including simple 
+ * Traffic cop for ALTER TABLE Phase 1 operations, including simple
  * recursion and permission checks.
  *
  * Caller must have acquired AccessExclusiveLock on relation already.
@@ -2679,7 +2707,7 @@ find_composite_type_dependencies(Oid typeOid, const char *origTblName)
 }
 
 
-/* 
+/*
  * ALTER TABLE ADD COLUMN
  *
  * Adds an additional attribute to a relation making the assumption that
@@ -3521,6 +3549,7 @@ ATExecAddIndex(AlteredTableInfo *tab, Relation rel,
 	DefineIndex(stmt->relation,		/* relation */
 				stmt->idxname,		/* index name */
 				stmt->accessMethod, /* am name */
+				stmt->tableSpace,
 				stmt->indexParams,	/* parameters */
 				(Expr *) stmt->whereClause,
 				stmt->rangetable,
@@ -3566,7 +3595,7 @@ ATExecAddConstraint(AlteredTableInfo *tab, Relation rel, Node *newConstraint)
 														list_make1(constr));
 					/* Add each constraint to Phase 3's queue */
 					foreach(lcon, newcons)
-					{ 
+					{
 						CookedConstraint *ccon = (CookedConstraint *) lfirst(lcon);
 						NewConstraint *newcon;
 
@@ -3643,7 +3672,7 @@ ATAddForeignKeyConstraint(AlteredTableInfo *tab, Relation rel,
 	int16		fkattnum[INDEX_MAX_KEYS];
 	Oid			pktypoid[INDEX_MAX_KEYS];
 	Oid			fktypoid[INDEX_MAX_KEYS];
-	Oid         opclasses[INDEX_MAX_KEYS];
+	Oid			opclasses[INDEX_MAX_KEYS];
 	int			i;
 	int			numfks,
 				numpks;
@@ -3791,7 +3820,7 @@ ATAddForeignKeyConstraint(AlteredTableInfo *tab, Relation rel,
 		 * will be incurred to check FK validity.
 		 */
 		if (!op_in_opclass(oprid(o), opclasses[i]))
-			ereport(WARNING, 
+			ereport(WARNING,
 					(errmsg("foreign key constraint \"%s\" "
 							"will require costly sequential scans",
 							fkconstraint->constr_name),
@@ -4565,7 +4594,7 @@ ATPrepAlterColumnType(List **wqueue,
 	/*
 	 * Add a work queue item to make ATRewriteTable update the column
 	 * contents.
-	 */ 
+	 */
 	newval = (NewColumnValue *) palloc0(sizeof(NewColumnValue));
 	newval->attnum = attnum;
 	newval->expr = (Expr *) transform;
@@ -5272,6 +5301,7 @@ AlterTableCreateToastTable(Oid relOid, bool silent)
 	 */
 	toast_relid = heap_create_with_catalog(toast_relname,
 										   PG_TOAST_NAMESPACE,
+										   rel->rd_rel->reltablespace,
 										   tupdesc,
 										   RELKIND_TOASTVALUE,
 										   shared_relation,
@@ -5309,7 +5339,9 @@ AlterTableCreateToastTable(Oid relOid, bool silent)
 	classObjectId[1] = INT4_BTREE_OPS_OID;
 
 	toast_idxid = index_create(toast_relid, toast_idxname, indexInfo,
-							   BTREE_AM_OID, classObjectId,
+							   BTREE_AM_OID,
+							   rel->rd_rel->reltablespace,
+							   classObjectId,
 							   true, false, true, false);
 
 	/*

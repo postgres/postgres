@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_namespace.c,v 1.8 2003/11/29 19:51:46 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_namespace.c,v 1.9 2004/06/18 06:13:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,7 @@
  * ---------------
  */
 Oid
-NamespaceCreate(const char *nspName, int32 ownerSysId)
+NamespaceCreate(const char *nspName, int32 ownerSysId, Oid nspTablespace)
 {
 	Relation	nspdesc;
 	HeapTuple	tup;
@@ -59,6 +59,7 @@ NamespaceCreate(const char *nspName, int32 ownerSysId)
 	namestrcpy(&nname, nspName);
 	values[Anum_pg_namespace_nspname - 1] = NameGetDatum(&nname);
 	values[Anum_pg_namespace_nspowner - 1] = Int32GetDatum(ownerSysId);
+	values[Anum_pg_namespace_nsptablespace - 1] = Int32GetDatum(nspTablespace);
 	nulls[Anum_pg_namespace_nspacl - 1] = 'n';
 
 	nspdesc = heap_openr(NamespaceRelationName, RowExclusiveLock);

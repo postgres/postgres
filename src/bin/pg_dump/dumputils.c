@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.c,v 1.12 2004/03/23 22:06:08 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.c,v 1.13 2004/06/18 06:14:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -144,7 +144,7 @@ appendStringLiteral(PQExpBuffer buf, const char *str, bool escapeAll)
 
 /*
  * Convert a string value to a dollar quoted literal and append it to
- * the given buffer. If the dqprefix parameter is not NULL then the 
+ * the given buffer. If the dqprefix parameter is not NULL then the
  * dollar quote delimiter will begin with that (after the opening $).
  *
  * No escaping is done at all on str, in compliance with the rules
@@ -162,7 +162,7 @@ appendStringLiteralDQ(PQExpBuffer buf, const char *str, const char *dqprefix)
 	if (dqprefix)
 		appendPQExpBuffer(delimBuf, dqprefix);
 
-	/* 
+	/*
 	 * Make sure we choose a delimiter which (without the trailing $)
 	 * is not present in the string being quoted. We don't check with the
 	 * trailing $ because a string ending in $foo must not be quoted with
@@ -191,7 +191,7 @@ appendStringLiteralDQ(PQExpBuffer buf, const char *str, const char *dqprefix)
  * otherwise use standard quoting.
  */
 void
-appendStringLiteralDQOpt(PQExpBuffer buf, const char *str, 
+appendStringLiteralDQOpt(PQExpBuffer buf, const char *str,
 						 bool escapeAll, const char *dqprefix)
 {
 	if (strchr(str, '\'') == NULL && strchr(str, '\\') == NULL)
@@ -586,6 +586,8 @@ parseAclItem(const char *item, const char *type, const char *name,
 		CONVERT_PRIV('C', "CREATE");
 		CONVERT_PRIV('T', "TEMPORARY");
 	}
+	else if (strcmp(type, "TABLESPACE") == 0)
+		CONVERT_PRIV('C', "CREATE");
 	else
 		abort();
 
@@ -624,7 +626,7 @@ copyAclUserName(PQExpBuffer output, char *input)
 			appendPQExpBufferChar(output, *input++);
 		else
 		{
-			/* Otherwise, it's a quoted username */ 
+			/* Otherwise, it's a quoted username */
 			input++;
 			/* Loop until we come across an unescaped quote */
 			while (!(*input == '"' && *(input + 1) != '"'))

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_database.sgml,v 1.38 2004/03/23 02:47:35 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_database.sgml,v 1.39 2004/06/18 06:13:05 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -22,9 +22,9 @@ PostgreSQL documentation
 <synopsis>
 CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
     [ [ WITH ] [ OWNER [=] <replaceable class="parameter">dbowner</replaceable> ]
-           [ LOCATION [=] '<replaceable class="parameter">dbpath</replaceable>' ]
            [ TEMPLATE [=] <replaceable class="parameter">template</replaceable> ]
-           [ ENCODING [=] <replaceable class="parameter">encoding</replaceable> ] ]
+           [ ENCODING [=] <replaceable class="parameter">encoding</replaceable> ]
+           [ TABLESPACE [=] <replaceable class="parameter">tablespace</replaceable> ] ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -51,29 +51,6 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
   </para>
 
   <para>
-   An alternative location can be specified in order to,
-   for example, store the database on a different disk.
-   The path must have been prepared with the 
-   <xref linkend="APP-INITLOCATION" endterm="APP-INITLOCATION-title">
-   command.
-  </para>
-
-  <para>
-   If the path name does not contain a slash, it is interpreted
-   as an environment variable name, which must be known to the
-   server process. This way the database administrator can
-   exercise control over locations in which databases can be created.
-   (A customary choice is, e.g., <envar>PGDATA2</envar>.)
-   If the server is compiled with <literal>ALLOW_ABSOLUTE_DBPATHS</literal>
-   (not so by default), absolute path names, as identified by
-   a leading slash
-   (e.g., <filename>/usr/local/pgsql/data</filename>),
-   are allowed as well.
-   In either case, the final path name must be absolute and must not
-   contain any single quotes.
-  </para>
-
-  <para>
    By default, the new database will be created by cloning the standard
    system database <literal>template1</>.  A different template can be
    specified by writing <literal>TEMPLATE
@@ -83,13 +60,7 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
    version of <productname>PostgreSQL</productname>.  This is useful
    if you wish to avoid copying
    any installation-local objects that may have been added to
-   <literal>template1</>. 
-  </para>
-
-  <para>
-   The optional encoding parameter allows selection of the database
-   encoding.  When not specified, it defaults to the encoding used by
-   the selected template database.
+   <literal>template1</>.
   </para>
  </refsect1>
 
@@ -101,7 +72,7 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
       <term><replaceable class="parameter">name</replaceable></term>
       <listitem>
        <para>
-	The name of a database to create.
+        The name of a database to create.
        </para>
       </listitem>
      </varlistentry>
@@ -110,18 +81,8 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
       <listitem>
        <para>
         The name of the database user who will own the new database,
-	or <literal>DEFAULT</literal> to use the default (namely, the
-	user executing the command).
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><replaceable class="parameter">dbpath</replaceable></term>
-      <listitem>
-       <para>
-	An alternate file-system location in which to store the new database,
-	specified as a string literal;
-	or <literal>DEFAULT</literal> to use the default location.
+        or <literal>DEFAULT</literal> to use the default (namely, the
+        user executing the command).
        </para>
       </listitem>
      </varlistentry>
@@ -130,8 +91,8 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
       <listitem>
        <para>
         The name of the template from which to create the new database,
-	or <literal>DEFAULT</literal> to use the default template
-	(<literal>template1</literal>).
+        or <literal>DEFAULT</literal> to use the default template
+        (<literal>template1</literal>).
        </para>
       </listitem>
      </varlistentry>
@@ -139,12 +100,24 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
       <term><replaceable class="parameter">encoding</replaceable></term>
       <listitem>
        <para>
-    Character set encoding to use in the new database.  Specify
-	a string constant (e.g., <literal>'SQL_ASCII'</literal>),
-	or an integer encoding number, or <literal>DEFAULT</literal>
-	to use the default encoding. The character sets supported by the
-	<productname>PostgreSQL</productname> server are described in
-	<xref linkend="multibyte-charset-supported">.
+        Character set encoding to use in the new database.  Specify
+        a string constant (e.g., <literal>'SQL_ASCII'</literal>),
+        or an integer encoding number, or <literal>DEFAULT</literal>
+        to use the default encoding. The character sets supported by the
+        <productname>PostgreSQL</productname> server are described in
+        <xref linkend="multibyte-charset-supported">.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><replaceable class="parameter">tablespace</replaceable></term>
+      <listitem>
+       <para>
+        Specifies the default tablespace for the new database.
+        If not specified, the same tablespace that is default for
+        the template database is used.  See
+        <xref linkend="sql-createtablespace" endterm="sql-createtablespace-title">
+        for more information.
        </para>
       </listitem>
      </varlistentry>
@@ -167,9 +140,7 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
    <para>
     Errors along the line of <quote>could not initialize database directory</>
     are most likely related to insufficient permissions on the data
-    directory, a full disk, or other file system problems.  When using an
-    alternate location, the user under
-    which the database server is running must have access to the location.
+    directory, a full disk, or other file system problems.
    </para>
 
    <para>
@@ -180,13 +151,6 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
     The program <xref linkend="APP-CREATEDB" endterm="APP-CREATEDB-title"> is a
     wrapper program around this command, provided for convenience.
    </para>
-
-  <para>
-   There are security issues involved with using alternate database
-   locations specified with absolute path names; this is why the feature
-   is not enabled by default.  See <xref
-   linkend="manage-ag-alternate-locs"> for more information.
-  </para>
 
   <para>
    Although it is possible to copy a database other than <literal>template1</>
@@ -205,24 +169,6 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
 
 <programlisting>
 CREATE DATABASE lusiadas;
-</programlisting>
-  </para>
-
-  <para>
-   To create a new database in an alternate area
-   <filename>~/private_db</filename>, execute the following from the
-   shell:
-
-<programlisting>
-mkdir private_db
-initlocation ~/private_db
-</programlisting>
-
-   Then execute the following from within a
-   <application>psql</application> session:
-
-<programlisting>
-CREATE DATABASE elsewhere WITH LOCATION '/home/olly/private_db';
 </programlisting>
   </para>
  </refsect1>

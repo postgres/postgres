@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.81 2004/05/19 23:10:43 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.82 2004/06/18 06:13:05 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -28,6 +28,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable class="PAR
 [ INHERITS ( <replaceable>parent_table</replaceable> [, ... ] ) ]
 [ WITH OIDS | WITHOUT OIDS ]
 [ ON COMMIT { PRESERVE ROWS | DELETE ROWS | DROP } ]
+[ TABLESPACE <replaceable class="PARAMETER">tablespace</replaceable> ]
 
 where <replaceable class="PARAMETER">column_constraint</replaceable> is:
 
@@ -48,7 +49,7 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
     [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ] [ ON DELETE <replaceable class="parameter">action</replaceable> ] [ ON UPDATE <replaceable class="parameter">action</replaceable> ] }
 [ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]
 </synopsis>
-  
+
  </refsynopsisdiv>
 
  <refsect1 id="SQL-CREATETABLE-description">
@@ -321,7 +322,7 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
      </para>
     </listitem>
    </varlistentry>
-   
+
    <varlistentry>
     <term><literal>UNIQUE</> (column constraint)</term>
     <term><literal>UNIQUE ( <replaceable class="PARAMETER">column_name</replaceable> [, ... ] )</> (table constraint)</term>
@@ -405,9 +406,9 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
     <term><literal>REFERENCES <replaceable class="parameter">reftable</replaceable> [ ( <replaceable class="parameter">refcolumn</replaceable> ) ] [ MATCH <replaceable class="parameter">matchtype</replaceable> ] [ ON DELETE <replaceable class="parameter">action</replaceable> ] [ ON UPDATE <replaceable class="parameter">action</replaceable> ]</literal> (column constraint)</term>
 
    <term><literal>FOREIGN KEY ( <replaceable class="parameter">column</replaceable> [, ... ] )
-    REFERENCES <replaceable class="parameter">reftable</replaceable> [ ( <replaceable class="parameter">refcolumn</replaceable> [, ... ] ) ] 
+    REFERENCES <replaceable class="parameter">reftable</replaceable> [ ( <replaceable class="parameter">refcolumn</replaceable> [, ... ] ) ]
     [ MATCH <replaceable class="parameter">matchtype</replaceable> ]
-    [ ON DELETE <replaceable class="parameter">action</replaceable> ] 
+    [ ON DELETE <replaceable class="parameter">action</replaceable> ]
     [ ON UPDATE <replaceable class="parameter">action</replaceable> ]</literal>
     (table constraint)</term>
 
@@ -514,7 +515,7 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
      </para>
     </listitem>
    </varlistentry>
-   
+
    <varlistentry>
     <term><literal>DEFERRABLE</literal></term>
     <term><literal>NOT DEFERRABLE</literal></term>
@@ -553,7 +554,7 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
     <listitem>
      <para>
       The behavior of temporary tables at the end of a transaction
-      block can be controlled using <literal>ON COMMIT</literal>. 
+      block can be controlled using <literal>ON COMMIT</literal>.
       The three options are:
 
       <variablelist>
@@ -561,19 +562,19 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
         <term><literal>PRESERVE ROWS</literal></term>
         <listitem>
          <para>
-	  No special action is taken at the ends of transactions.
-	  This is the default behavior.
+          No special action is taken at the ends of transactions.
+          This is the default behavior.
          </para>
-     	</listitem>
+        </listitem>
        </varlistentry>
-           
+
        <varlistentry>
         <term><literal>DELETE ROWS</literal></term>
         <listitem>
          <para>
           All rows in the temporary table will be deleted at the
           end of each transaction block.  Essentially, an automatic
-	  <xref linkend="sql-truncate"> is done at each commit.
+          <xref linkend="sql-truncate"> is done at each commit.
          </para>
         </listitem>
        </varlistentry>
@@ -583,7 +584,7 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
         <listitem>
          <para>
           The temporary table will be dropped at the end of the current
-	  transaction block.
+          transaction block.
          </para>
         </listitem>
        </varlistentry>
@@ -591,8 +592,20 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
      </para>
     </listitem>
    </varlistentry>
+
+   <varlistentry>
+    <term><literal>TABLESPACE <replaceable class="PARAMETER">tablespace</replaceable></literal></term>
+    <listitem>
+     <para>
+      The <replaceable class="PARAMETER">tablespace</replaceable> is the name
+      of the tablespace in which the new table is to be created. If not
+      supplied, the default tablespace of the table's schema will be used.
+     </para>
+    </listitem>
+   </varlistentry>
+
   </variablelist>
- </refsect1>    
+ </refsect1>
 
  <refsect1 id="SQL-CREATETABLE-notes">
   <title>Notes</title>
@@ -696,7 +709,7 @@ CREATE TABLE films (
 );
 </programlisting>
   </para>
-  
+
   <para>
    Define a check column constraint:
 
@@ -719,7 +732,7 @@ CREATE TABLE distributors (
 );
 </programlisting>
   </para>
- 
+
   <para>
    Define a primary key table constraint for the table
    <structname>films</>.  Primary key table constraints can be defined
@@ -749,7 +762,7 @@ CREATE TABLE distributors (
     did     integer,
     name    varchar(40),
     PRIMARY KEY(did)
-); 
+);
 </programlisting>
 
 <programlisting>
@@ -812,7 +825,7 @@ CREATE TABLE distributors (
   </para>
 
  </refsect1>
- 
+
  <refsect1 id="SQL-CREATETABLE-compatibility">
   <title id="SQL-CREATETABLE-compatibility-title">Compatibility</title>
 
@@ -827,7 +840,7 @@ CREATE TABLE distributors (
    <para>
     Although the syntax of <literal>CREATE TEMPORARY TABLE</literal>
     resembles that of the SQL standard, the effect is not the same.  In the
-    standard, 
+    standard,
     temporary tables are defined just once and automatically exist (starting
     with empty contents) in every session that needs them.
     <productname>PostgreSQL</productname> instead
@@ -889,7 +902,7 @@ CREATE TABLE distributors (
     column, its presence is simply noise.
    </para>
   </refsect2>
-   
+
   <refsect2>
    <title>Inheritance</title>
 
@@ -923,6 +936,15 @@ CREATE TABLE distributors (
     DROP COLUMN</>, so it seems cleaner to ignore this spec restriction.
    </para>
   </refsect2>
+
+  <refsect2>
+   <title>TABLESPACE</title>
+
+   <para>
+    The <productname>PostgreSQL</productname> concept of tablespaces is not
+    standard.
+   </para>
+  </refsect2>
  </refsect1>
 
 
@@ -932,6 +954,7 @@ CREATE TABLE distributors (
   <simplelist type="inline">
    <member><xref linkend="sql-altertable" endterm="sql-altertable-title"></member>
    <member><xref linkend="sql-droptable" endterm="sql-droptable-title"></member>
+   <member><xref linkend="sql-createtablespace" endterm="sql-createtablespace-title"></member>
   </simplelist>
  </refsect1>
 </refentry>

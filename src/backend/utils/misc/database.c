@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/database.c,v 1.60 2004/01/22 20:57:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/database.c,v 1.61 2004/06/18 06:13:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,7 @@
 #include "catalog/catname.h"
 #include "catalog/catalog.h"
 #include "catalog/pg_database.h"
+#include "catalog/pg_tablespace.h"
 #include "miscadmin.h"
 #include "utils/syscache.h"
 
@@ -29,12 +30,13 @@ static bool PhonyHeapTupleSatisfiesNow(HeapTupleHeader tuple);
 
 
 /* --------------------------------
- *	GetRawDatabaseInfo() -- Find the OID and path of the database.
+ *	GetRawDatabaseInfo() -- Find the OID and tablespace of the database.
  *
- *		The database's oid forms half of the unique key for the system
- *		caches and lock tables.  We therefore want it initialized before
- *		we open any relations, since opening relations puts things in the
- *		cache.	To get around this problem, this code opens and scans the
+ *		We need both the OID and the default tablespace in order to find
+ *		the database's system catalogs.  Moreover the database's OID forms
+ *		half of the unique key for the system caches and lock tables, so
+ *		we must have it before we can use any of the cache mechanisms.
+ *		To get around these problems, this code opens and scans the
  *		pg_database relation by hand.
  *
  *		This code knows way more than it should about the layout of
@@ -43,19 +45,21 @@ static bool PhonyHeapTupleSatisfiesNow(HeapTupleHeader tuple);
  * --------------------------------
  */
 void
-GetRawDatabaseInfo(const char *name, Oid *db_id, char *path)
+GetRawDatabaseInfo(const char *name, Oid *db_id, Oid *db_tablespace)
 {
 	int			dbfd;
 	int			nbytes;
-	int			pathlen;
 	HeapTupleData tup;
+	Form_pg_database tup_db;
 	Page		pg;
 	char	   *dbfname;
-	Form_pg_database tup_db;
 	RelFileNode rnode;
 
-	rnode.tblNode = 0;
+	/* hard-wired path to pg_database */
+	rnode.spcNode = GLOBALTABLESPACE_OID;
+	rnode.dbNode = 0;
 	rnode.relNode = RelOid_pg_database;
+
 	dbfname = relpath(rnode);
 
 	if ((dbfd = open(dbfname, O_RDONLY | PG_BINARY, 0)) < 0)
@@ -121,7 +125,7 @@ GetRawDatabaseInfo(const char *name, Oid *db_id, char *path)
 			 * committed and dead tuples to be marked with correct states.
 			 *
 			 * XXX wouldn't it be better to let new backends read the
-			 * database OID from a flat file, handled the same way we
+			 * database info from a flat file, handled the same way we
 			 * handle the password relation?
 			 */
 			if (!PhonyHeapTupleSatisfiesNow(tup.t_data))
@@ -134,15 +138,9 @@ GetRawDatabaseInfo(const char *name, Oid *db_id, char *path)
 
 			if (strcmp(name, NameStr(tup_db->datname)) == 0)
 			{
-				/* Found it; extract the OID and the database path. */
+				/* Found it; extract the db's OID and tablespace. */
 				*db_id = HeapTupleGetOid(&tup);
-				pathlen = VARSIZE(&(tup_db->datpath)) - VARHDRSZ;
-				if (pathlen < 0)
-					pathlen = 0;	/* pure paranoia */
-				if (pathlen >= MAXPGPATH)
-					pathlen = MAXPGPATH - 1;	/* more paranoia */
-				strncpy(path, VARDATA(&(tup_db->datpath)), pathlen);
-				path[pathlen] = '\0';
+				*db_tablespace = tup_db->dattablespace;
 				goto done;
 			}
 		}
@@ -150,7 +148,7 @@ GetRawDatabaseInfo(const char *name, Oid *db_id, char *path)
 
 	/* failed to find it... */
 	*db_id = InvalidOid;
-	*path = '\0';
+	*db_tablespace = InvalidOid;
 
 done:
 	close(dbfd);

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.258 2004/06/09 19:08:18 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.259 2004/06/18 06:14:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -742,6 +742,7 @@ typedef enum ObjectType
 	OBJECT_SCHEMA,
 	OBJECT_SEQUENCE,
 	OBJECT_TABLE,
+	OBJECT_TABLESPACE,
 	OBJECT_TRIGGER,
 	OBJECT_TYPE,
 	OBJECT_USER,
@@ -761,6 +762,7 @@ typedef struct CreateSchemaStmt
 	NodeTag		type;
 	char	   *schemaname;		/* the name of the schema to create */
 	char	   *authid;			/* the owner of the created schema */
+	char	   *tablespacename;	/* default tablespace for schema, or NULL */
 	List	   *schemaElts;		/* schema components (list of parsenodes) */
 } CreateSchemaStmt;
 
@@ -857,7 +859,8 @@ typedef enum GrantObjectType
 	ACL_OBJECT_DATABASE,		/* database */
 	ACL_OBJECT_FUNCTION,		/* function */
 	ACL_OBJECT_LANGUAGE,		/* procedural language */
-	ACL_OBJECT_NAMESPACE		/* namespace */
+	ACL_OBJECT_NAMESPACE,		/* namespace */
+	ACL_OBJECT_TABLESPACE		/* tablespace */
 } GrantObjectType;
 
 typedef struct GrantStmt
@@ -941,6 +944,7 @@ typedef struct CreateStmt
 	List	   *constraints;	/* constraints (list of Constraint nodes) */
 	ContainsOids   hasoids;		/* should it have OIDs? */
 	OnCommitAction oncommit;	/* what do we do at COMMIT? */
+	char	   *tablespacename;	/* table space to use, or NULL */
 } CreateStmt;
 
 /* ----------
@@ -1029,6 +1033,26 @@ typedef struct FkConstraint
 	bool		initdeferred;	/* INITIALLY DEFERRED */
 	bool		skip_validation;	/* skip validation of existing rows? */
 } FkConstraint;
+
+
+/* ----------------------
+ *      Create/Drop Table Space Statements
+ * ----------------------
+ */
+
+typedef struct CreateTableSpaceStmt
+{
+	NodeTag		type;
+	char	   *tablespacename;
+	char	   *owner;
+	char	   *location;
+} CreateTableSpaceStmt;
+
+typedef struct DropTableSpaceStmt
+{
+	NodeTag		type;
+	char	   *tablespacename;
+} DropTableSpaceStmt;
 
 /* ----------------------
  *		Create/Drop TRIGGER Statements
@@ -1142,6 +1166,7 @@ typedef struct CreateSeqStmt
 	NodeTag		type;
 	RangeVar   *sequence;		/* the sequence to create */
 	List	   *options;
+	char	   *tablespacename;	/* tablespace, or NULL for default */
 } CreateSeqStmt;
 
 typedef struct AlterSeqStmt
@@ -1322,6 +1347,7 @@ typedef struct IndexStmt
 	char	   *idxname;		/* name of new index, or NULL for default */
 	RangeVar   *relation;		/* relation to build index on */
 	char	   *accessMethod;	/* name of access method (eg. btree) */
+	char	   *tableSpace;		/* tablespace, or NULL to use parent's */
 	List	   *indexParams;	/* a list of IndexElem */
 	Node	   *whereClause;	/* qualification (partial-index predicate) */
 	List	   *rangetable;		/* range table for qual and/or

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.218 2004/05/29 22:48:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.219 2004/06/18 06:13:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,6 +36,7 @@
 #include "commands/schemacmds.h"
 #include "commands/sequence.h"
 #include "commands/tablecmds.h"
+#include "commands/tablespace.h"
 #include "commands/trigger.h"
 #include "commands/typecmds.h"
 #include "commands/user.h"
@@ -258,6 +259,7 @@ check_xact_readonly(Node *parsetree)
 		case T_CreateSchemaStmt:
 		case T_CreateSeqStmt:
 		case T_CreateStmt:
+		case T_CreateTableSpaceStmt:
 		case T_CreateTrigStmt:
 		case T_CompositeTypeStmt:
 		case T_CreateUserStmt:
@@ -266,6 +268,7 @@ check_xact_readonly(Node *parsetree)
 		case T_DropCastStmt:
 		case T_DropStmt:
 		case T_DropdbStmt:
+		case T_DropTableSpaceStmt:
 		case T_RemoveFuncStmt:
 		case T_DropGroupStmt:
 		case T_DropPLangStmt:
@@ -402,6 +405,14 @@ ProcessUtility(Node *parsetree,
 				CommandCounterIncrement();
 				AlterTableCreateToastTable(relOid, true);
 			}
+			break;
+
+		case T_CreateTableSpaceStmt:
+			CreateTableSpace((CreateTableSpaceStmt *) parsetree);
+			break;
+
+		case T_DropTableSpaceStmt:
+			DropTableSpace((DropTableSpaceStmt *) parsetree);
 			break;
 
 		case T_DropStmt:
@@ -636,6 +647,7 @@ ProcessUtility(Node *parsetree,
 				DefineIndex(stmt->relation,		/* relation */
 							stmt->idxname,		/* index name */
 							stmt->accessMethod, /* am name */
+							stmt->tableSpace,
 							stmt->indexParams,	/* parameters */
 							(Expr *) stmt->whereClause,
 							stmt->rangetable,
@@ -1153,6 +1165,14 @@ CreateCommandTag(Node *parsetree)
 			tag = "CREATE TABLE";
 			break;
 
+		case T_CreateTableSpaceStmt:
+			tag = "CREATE TABLESPACE";
+			break;
+
+		case T_DropTableSpaceStmt:
+			tag = "DROP TABLESPACE";
+			break;
+
 		case T_DropStmt:
 			switch (((DropStmt *) parsetree)->removeType)
 			{
@@ -1223,6 +1243,9 @@ CreateCommandTag(Node *parsetree)
 					break;
 				case OBJECT_SCHEMA:
 					tag = "ALTER SCHEMA";
+					break;
+				case OBJECT_TABLESPACE:
+					tag = "ALTER TABLESPACE";
 					break;
 				case OBJECT_TRIGGER:
 					tag = "ALTER TRIGGER";

@@ -4,7 +4,7 @@
 #    Makefile for backend/commands
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/commands/Makefile,v 1.33 2003/11/29 19:51:47 pgsql Exp $
+#    $PostgreSQL: pgsql/src/backend/commands/Makefile,v 1.34 2004/06/18 06:13:22 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -17,8 +17,8 @@ OBJS = aggregatecmds.o alter.o analyze.o async.o cluster.o comment.o  \
 	dbcommands.o define.o explain.o functioncmds.o \
 	indexcmds.o lockcmds.o operatorcmds.o opclasscmds.o \
 	portalcmds.o prepare.o proclang.o \
-	schemacmds.o sequence.o tablecmds.o trigger.o typecmds.o user.o \
-	vacuum.o vacuumlazy.o variable.o view.o
+	schemacmds.o sequence.o tablecmds.o tablespace.o trigger.o \
+	typecmds.o user.o vacuum.o vacuumlazy.o variable.o view.o
 
 all: SUBSYS.o
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.170 2004/06/11 16:43:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.171 2004/06/18 06:13:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -654,7 +654,7 @@ BufferSync(int percent, int maxpages)
 	 */
 	dirty_buffers = (BufferDesc **) palloc(NBuffers * sizeof(BufferDesc *));
 	buftags = (BufferTag *) palloc(NBuffers * sizeof(BufferTag));
-	
+
 	LWLockAcquire(BufMgrLock, LW_EXCLUSIVE);
 	num_buffer_dirty = StrategyDirtyBufferList(dirty_buffers, buftags,
 											   NBuffers);
@@ -832,9 +832,10 @@ AtEOXact_Buffers(bool isCommit)
 			if (isCommit)
 				elog(WARNING,
 					 "buffer refcount leak: [%03d] "
-					 "(rel=%u/%u, blockNum=%u, flags=0x%x, refcount=%u %d)",
+					 "(rel=%u/%u/%u, blockNum=%u, flags=0x%x, refcount=%u %d)",
 					 i,
-					 buf->tag.rnode.tblNode, buf->tag.rnode.relNode,
+					 buf->tag.rnode.spcNode, buf->tag.rnode.dbNode,
+					 buf->tag.rnode.relNode,
 					 buf->tag.blockNum, buf->flags,
 					 buf->refcount, PrivateRefCount[i]);
 
@@ -1137,9 +1138,10 @@ recheck:
 			{
 				/* the sole pin should be ours */
 				if (bufHdr->refcount != 1 || PrivateRefCount[i - 1] == 0)
-					elog(FATAL, "block %u of %u/%u is still referenced (private %d, global %u)",
+					elog(FATAL, "block %u of %u/%u/%u is still referenced (private %d, global %u)",
 						 bufHdr->tag.blockNum,
-						 bufHdr->tag.rnode.tblNode,
+						 bufHdr->tag.rnode.spcNode,
+						 bufHdr->tag.rnode.dbNode,
 						 bufHdr->tag.rnode.relNode,
 						 PrivateRefCount[i - 1], bufHdr->refcount);
 				/* Make sure it will be released */
@@ -1180,13 +1182,7 @@ DropBuffers(Oid dbid)
 	{
 		bufHdr = &BufferDescriptors[i - 1];
 recheck:
-
-		/*
-		 * We know that currently database OID is tblNode but this
-		 * probably will be changed in future and this func will be used
-		 * to drop tablespace buffers.
-		 */
-		if (bufHdr->tag.rnode.tblNode == dbid)
+		if (bufHdr->tag.rnode.dbNode == dbid)
 		{
 			/*
 			 * If there is I/O in progress, better wait till it's done;
@@ -1243,10 +1239,11 @@ PrintBufferDescs(void)
 		for (i = 0; i < NBuffers; ++i, ++buf)
 		{
 			elog(LOG,
-				 "[%02d] (freeNext=%d, freePrev=%d, rel=%u/%u, "
+				 "[%02d] (freeNext=%d, freePrev=%d, rel=%u/%u/%u, "
 				 "blockNum=%u, flags=0x%x, refcount=%u %d)",
 				 i, buf->freeNext, buf->freePrev,
-				 buf->tag.rnode.tblNode, buf->tag.rnode.relNode,
+				 buf->tag.rnode.spcNode, buf->tag.rnode.dbNode,
+				 buf->tag.rnode.relNode,
 				 buf->tag.blockNum, buf->flags,
 				 buf->refcount, PrivateRefCount[i]);
 		}
@@ -1257,9 +1254,9 @@ PrintBufferDescs(void)
 		/* interactive backend */
 		for (i = 0; i < NBuffers; ++i, ++buf)
 		{
-			printf("[%-2d] (%u/%u, %u) flags=0x%x, refcount=%u %d)\n",
-				   i, buf->tag.rnode.tblNode, buf->tag.rnode.relNode,
-				   buf->tag.blockNum,
+			printf("[%-2d] (%u/%u/%u, %u) flags=0x%x, refcount=%u %d)\n",
+				   i, buf->tag.rnode.spcNode, buf->tag.rnode.dbNode,
+				   buf->tag.rnode.relNode, buf->tag.blockNum,
 				   buf->flags, buf->refcount, PrivateRefCount[i]);
 		}
 	}
@@ -1278,10 +1275,11 @@ PrintPinnedBufs(void)
 	{
 		if (PrivateRefCount[i] > 0)
 			elog(WARNING,
-				 "[%02d] (freeNext=%d, freePrev=%d, rel=%u/%u, "
+				 "[%02d] (freeNext=%d, freePrev=%d, rel=%u/%u/%u, "
 				 "blockNum=%u, flags=0x%x, refcount=%u %d)",
 				 i, buf->freeNext, buf->freePrev,
-				 buf->tag.rnode.tblNode, buf->tag.rnode.relNode,
+				 buf->tag.rnode.spcNode, buf->tag.rnode.dbNode,
+				 buf->tag.rnode.relNode,
 				 buf->tag.blockNum, buf->flags,
 				 buf->refcount, PrivateRefCount[i]);
 	}
@@ -1464,11 +1462,11 @@ IncrBufferRefCount_Debug(char *file, int line, Buffer buffer)
 		BufferDesc *buf = &BufferDescriptors[buffer - 1];
 
 		fprintf(stderr,
-				"PIN(Incr) %d rel = %u/%u, blockNum = %u, "
+				"PIN(Incr) %d rel = %u/%u/%u, blockNum = %u, "
 				"refcount = %d, file: %s, line: %d\n",
 				buffer,
-				buf->tag.rnode.tblNode, buf->tag.rnode.relNode,
-				buf->tag.blockNum,
+				buf->tag.rnode.spcNode, buf->tag.rnode.dbNode,
+				buf->tag.rnode.relNode, buf->tag.blockNum,
 				PrivateRefCount[buffer - 1], file, line);
 	}
 }
@@ -1484,11 +1482,11 @@ ReleaseBuffer_Debug(char *file, int line, Buffer buffer)
 		BufferDesc *buf = &BufferDescriptors[buffer - 1];
 
 		fprintf(stderr,
-				"UNPIN(Rel) %d rel = %u/%u, blockNum = %u, "
+				"UNPIN(Rel) %d rel = %u/%u/%u, blockNum = %u, "
 				"refcount = %d, file: %s, line: %d\n",
 				buffer,
-				buf->tag.rnode.tblNode, buf->tag.rnode.relNode,
-				buf->tag.blockNum,
+				buf->tag.rnode.spcNode, buf->tag.rnode.dbNode,
+				buf->tag.rnode.relNode, buf->tag.blockNum,
 				PrivateRefCount[buffer - 1], file, line);
 	}
 }
@@ -1513,11 +1511,11 @@ ReleaseAndReadBuffer_Debug(char *file,
 		BufferDesc *buf = &BufferDescriptors[buffer - 1];
 
 		fprintf(stderr,
-				"UNPIN(Rel&Rd) %d rel = %u/%u, blockNum = %u, "
+				"UNPIN(Rel&Rd) %d rel = %u/%u/%u, blockNum = %u, "
 				"refcount = %d, file: %s, line: %d\n",
 				buffer,
-				buf->tag.rnode.tblNode, buf->tag.rnode.relNode,
-				buf->tag.blockNum,
+				buf->tag.rnode.spcNode, buf->tag.rnode.dbNode,
+				buf->tag.rnode.relNode, buf->tag.blockNum,
 				PrivateRefCount[buffer - 1], file, line);
 	}
 	if (ShowPinTrace && BufferIsLocal(buffer) && is_userbuffer(buffer))
@@ -1525,11 +1523,11 @@ ReleaseAndReadBuffer_Debug(char *file,
 		BufferDesc *buf = &BufferDescriptors[b - 1];
 
 		fprintf(stderr,
-				"PIN(Rel&Rd) %d rel = %u/%u, blockNum = %u, "
+				"PIN(Rel&Rd) %d rel = %u/%u/%u, blockNum = %u, "
 				"refcount = %d, file: %s, line: %d\n",
 				b,
-				buf->tag.rnode.tblNode, buf->tag.rnode.relNode,
-				buf->tag.blockNum,
+				buf->tag.rnode.spcNode, buf->tag.rnode.dbNode,
+				buf->tag.rnode.relNode, buf->tag.blockNum,
 				PrivateRefCount[b - 1], file, line);
 	}
 	return b;
@@ -1890,9 +1888,10 @@ AbortBufferIO(void)
 			{
 				ereport(WARNING,
 						(errcode(ERRCODE_IO_ERROR),
-						 errmsg("could not write block %u of %u/%u",
+						 errmsg("could not write block %u of %u/%u/%u",
 								buf->tag.blockNum,
-								buf->tag.rnode.tblNode,
+								buf->tag.rnode.spcNode,
+								buf->tag.rnode.dbNode,
 								buf->tag.rnode.relNode),
 						 errdetail("Multiple failures --- write error may be permanent.")));
 			}
@@ -1912,7 +1911,9 @@ buffer_write_error_callback(void *arg)
 	BufferDesc *bufHdr = (BufferDesc *) arg;
 
 	if (bufHdr != NULL)
-		errcontext("writing block %u of relation %u/%u",
+		errcontext("writing block %u of relation %u/%u/%u",
 				   bufHdr->tag.blockNum,
-				   bufHdr->tag.rnode.tblNode, bufHdr->tag.rnode.relNode);
+				   bufHdr->tag.rnode.spcNode,
+				   bufHdr->tag.rnode.dbNode,
+				   bufHdr->tag.rnode.relNode);
 }

@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.224 2004/06/09 19:08:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.225 2004/06/18 06:13:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -835,6 +835,7 @@ _equalCreateStmt(CreateStmt *a, CreateStmt *b)
 	COMPARE_NODE_FIELD(constraints);
 	COMPARE_SCALAR_FIELD(hasoids);
 	COMPARE_SCALAR_FIELD(oncommit);
+	COMPARE_STRING_FIELD(tablespacename);
 
 	return true;
 }
@@ -904,6 +905,7 @@ _equalIndexStmt(IndexStmt *a, IndexStmt *b)
 	COMPARE_STRING_FIELD(idxname);
 	COMPARE_NODE_FIELD(relation);
 	COMPARE_STRING_FIELD(accessMethod);
+	COMPARE_STRING_FIELD(tableSpace);
 	COMPARE_NODE_FIELD(indexParams);
 	COMPARE_NODE_FIELD(whereClause);
 	COMPARE_NODE_FIELD(rangetable);
@@ -1164,6 +1166,7 @@ _equalCreateSeqStmt(CreateSeqStmt *a, CreateSeqStmt *b)
 {
 	COMPARE_NODE_FIELD(sequence);
 	COMPARE_NODE_FIELD(options);
+	COMPARE_STRING_FIELD(tablespacename);
 
 	return true;
 }
@@ -1199,6 +1202,24 @@ static bool
 _equalVariableResetStmt(VariableResetStmt *a, VariableResetStmt *b)
 {
 	COMPARE_STRING_FIELD(name);
+
+	return true;
+}
+
+static bool
+_equalCreateTableSpaceStmt(CreateTableSpaceStmt *a, CreateTableSpaceStmt *b)
+{
+	COMPARE_STRING_FIELD(tablespacename);
+	COMPARE_STRING_FIELD(owner);
+	COMPARE_STRING_FIELD(location);
+
+	return true;
+}
+
+static bool
+_equalDropTableSpaceStmt(DropTableSpaceStmt *a, DropTableSpaceStmt *b)
+{
+	COMPARE_STRING_FIELD(tablespacename);
 
 	return true;
 }
@@ -1352,6 +1373,7 @@ _equalCreateSchemaStmt(CreateSchemaStmt *a, CreateSchemaStmt *b)
 {
 	COMPARE_STRING_FIELD(schemaname);
 	COMPARE_STRING_FIELD(authid);
+	COMPARE_STRING_FIELD(tablespacename);
 	COMPARE_NODE_FIELD(schemaElts);
 
 	return true;
@@ -2051,6 +2073,12 @@ equal(void *a, void *b)
 			break;
 		case T_VariableResetStmt:
 			retval = _equalVariableResetStmt(a, b);
+			break;
+		case T_CreateTableSpaceStmt:
+			retval = _equalCreateTableSpaceStmt(a, b);
+			break;
+		case T_DropTableSpaceStmt:
+			retval = _equalDropTableSpaceStmt(a, b);
 			break;
 		case T_CreateTrigStmt:
 			retval = _equalCreateTrigStmt(a, b);

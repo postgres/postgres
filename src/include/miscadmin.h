@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.162 2004/05/29 22:48:22 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.163 2004/06/18 06:14:10 tgl Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to other files.
@@ -150,6 +150,8 @@ extern char postgres_exec_path[];
  */
 extern DLLIMPORT Oid MyDatabaseId;
 
+extern DLLIMPORT Oid MyDatabaseTableSpace;
+
 /*
  * Date/Time Configuration
  *
@@ -224,7 +226,7 @@ extern void check_stack_depth(void);
 extern char *DatabasePath;
 
 /* in utils/misc/database.c */
-extern void GetRawDatabaseInfo(const char *name, Oid *db_id, char *path);
+extern void GetRawDatabaseInfo(const char *name, Oid *db_id, Oid *db_tablespace);
 
 /* now in utils/init/miscinit.c */
 extern void SetDatabasePath(const char *path);

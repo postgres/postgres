@@ -1,0 +1,36 @@
+-- create a tablespace we can use
+CREATE TABLESPACE testspace LOCATION '@testtablespace@';
+
+-- create a schema in the tablespace
+CREATE SCHEMA testschema TABLESPACE testspace;
+
+-- sanity check
+SELECT nspname, spcname FROM pg_catalog.pg_tablespace t, pg_catalog.pg_namespace n
+	where n.nsptablespace = t.oid and n.nspname = 'testschema';
+
+-- try a table
+CREATE TABLE testschema.foo (i int);
+SELECT relname, spcname FROM pg_catalog.pg_tablespace t, pg_catalog.pg_class c
+    where c.reltablespace = t.oid AND c.relname = 'foo';
+
+INSERT INTO testschema.foo VALUES(1);
+INSERT INTO testschema.foo VALUES(2);
+
+-- index
+CREATE INDEX foo_idx on testschema.foo(i);
+SELECT relname, spcname FROM pg_catalog.pg_tablespace t, pg_catalog.pg_class c
+    where c.reltablespace = t.oid AND c.relname = 'foo_idx';
+
+-- Will fail with bad path
+CREATE TABLESPACE badspace LOCATION '/no/such/location';
+
+-- No such tablespace
+CREATE TABLE bar (i int) TABLESPACE nosuchspace;
+
+-- Fail, not empty
+DROP TABLESPACE testspace;
+
+DROP SCHEMA testschema CASCADE;
+
+-- Should succeed
+DROP TABLESPACE testspace;

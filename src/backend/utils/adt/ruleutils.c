@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.172 2004/06/16 01:26:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.173 2004/06/18 06:13:49 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -53,6 +53,7 @@
 #include "catalog/pg_operator.h"
 #include "catalog/pg_shadow.h"
 #include "catalog/pg_trigger.h"
+#include "commands/tablespace.h"
 #include "executor/spi.h"
 #include "lib/stringinfo.h"
 #include "nodes/makefuncs.h"
@@ -766,6 +767,23 @@ pg_get_indexdef_worker(Oid indexrelid, int colno, int prettyFlags)
 	if (!colno)
 	{
 		appendStringInfoChar(&buf, ')');
+
+		/*
+		 * If the index is in a different tablespace from its parent,
+		 * tell about that
+		 */
+		if (OidIsValid(idxrelrec->reltablespace) &&
+			idxrelrec->reltablespace != get_rel_tablespace(indrelid))
+		{
+			char	*spcname = get_tablespace_name(idxrelrec->reltablespace);
+
+			if (spcname)		/* just paranoia... */
+			{
+				appendStringInfo(&buf, " TABLESPACE %s",
+								 quote_identifier(spcname));
+				pfree(spcname);
+			}
+		}
 
 		/*
 		 * If it's a partial index, decompile and append the predicate

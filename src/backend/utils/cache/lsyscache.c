@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.113 2004/06/06 00:41:27 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.114 2004/06/18 06:13:52 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -978,6 +978,34 @@ get_rel_namespace(Oid relid)
 		Oid			result;
 
 		result = reltup->relnamespace;
+		ReleaseSysCache(tp);
+		return result;
+	}
+	else
+		return InvalidOid;
+}
+
+/*
+ * get_rel_tablespace
+ *		Returns the pg_tablespace OID associated with a given relation.
+ *
+ * Note: failure return is InvalidOid, which cannot be distinguished from
+ * "default tablespace for this database", but that seems OK.
+ */
+Oid
+get_rel_tablespace(Oid relid)
+{
+	HeapTuple	tp;
+
+	tp = SearchSysCache(RELOID,
+						ObjectIdGetDatum(relid),
+						0, 0, 0);
+	if (HeapTupleIsValid(tp))
+	{
+		Form_pg_class reltup = (Form_pg_class) GETSTRUCT(tp);
+		Oid			result;
+
+		result = reltup->reltablespace;
 		ReleaseSysCache(tp);
 		return result;
 	}
@@ -1978,6 +2006,34 @@ get_namespace_name(Oid nspid)
 	}
 	else
 		return NULL;
+}
+
+/*
+ * get_namespace_tablespace
+ *		Returns the default tablespace of a given namespace
+ *
+ * Note: failure return is InvalidOid, which cannot be distinguished from
+ * "default tablespace for this database", but that seems OK.
+ */
+Oid
+get_namespace_tablespace(Oid nspid)
+{
+	HeapTuple	tp;
+
+	tp = SearchSysCache(NAMESPACEOID,
+						ObjectIdGetDatum(nspid),
+						0, 0, 0);
+	if (HeapTupleIsValid(tp))
+	{
+		Form_pg_namespace nsptup = (Form_pg_namespace) GETSTRUCT(tp);
+		Oid			result;
+
+		result = nsptup->nsptablespace;
+		ReleaseSysCache(tp);
+		return result;
+	}
+	else
+		return InvalidOid;
 }
 
 /*				---------- PG_SHADOW CACHE ----------					 */

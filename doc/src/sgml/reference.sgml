@@ -1,5 +1,5 @@
 <!-- reference.sgml
-$PostgreSQL: pgsql/doc/src/sgml/reference.sgml,v 1.47 2004/04/20 01:14:55 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/reference.sgml,v 1.48 2004/06/18 06:13:02 tgl Exp $
 
 PostgreSQL Reference Manual
 -->
@@ -76,6 +76,7 @@ PostgreSQL Reference Manual
    &createSequence;
    &createTable;
    &createTableAs;
+   &createTableSpace;
    &createTrigger;
    &createType;
    &createUser;
@@ -98,6 +99,7 @@ PostgreSQL Reference Manual
    &dropSchema;
    &dropSequence;
    &dropTable;
+   &dropTableSpace;
    &dropTrigger;
    &dropType;
    &dropUser;

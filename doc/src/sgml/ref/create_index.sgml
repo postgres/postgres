@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_index.sgml,v 1.47 2004/04/20 12:53:28 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_index.sgml,v 1.48 2004/06/18 06:13:05 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -22,6 +22,7 @@ PostgreSQL documentation
 <synopsis>
 CREATE [ UNIQUE ] INDEX <replaceable class="parameter">name</replaceable> ON <replaceable class="parameter">table</replaceable> [ USING <replaceable class="parameter">method</replaceable> ]
     ( { <replaceable class="parameter">column</replaceable> | ( <replaceable class="parameter">expression</replaceable> ) } [ <replaceable class="parameter">opclass</replaceable> ] [, ...] )
+    [ TABLESPACE <replaceable class="parameter">tablespace</replaceable> ]
     [ WHERE <replaceable class="parameter">predicate</replaceable> ]
 </synopsis>
  </refsynopsisdiv>
@@ -78,7 +79,7 @@ CREATE [ UNIQUE ] INDEX <replaceable class="parameter">name</replaceable> ON <re
 
   <para>
    Indexes are not used for <literal>IS NULL</> clauses by default.
-   The best way to use indexes in such cases is to create a partial index 
+   The best way to use indexes in such cases is to create a partial index
    using an <literal>IS NULL</> comparison.
   </para>
 
@@ -109,11 +110,11 @@ CREATE [ UNIQUE ] INDEX <replaceable class="parameter">name</replaceable> ON <re
       <term><literal>UNIQUE</literal></term>
       <listitem>
        <para>
-	Causes the system to check for
-	duplicate values in the table when the index is created (if data
-	already exist) and each time data is added. Attempts to
-	insert or update data which would result in duplicate entries
-	will generate an error.
+        Causes the system to check for
+        duplicate values in the table when the index is created (if data
+        already exist) and each time data is added. Attempts to
+        insert or update data which would result in duplicate entries
+        will generate an error.
        </para>
       </listitem>
      </varlistentry>
@@ -122,9 +123,9 @@ CREATE [ UNIQUE ] INDEX <replaceable class="parameter">name</replaceable> ON <re
       <term><replaceable class="parameter">name</replaceable></term>
       <listitem>
        <para>
-	The name of the index to be created.  No schema name can be included
-	here; the index is always created in the same schema as its parent
-	table.
+        The name of the index to be created.  No schema name can be included
+        here; the index is always created in the same schema as its parent
+        table.
        </para>
       </listitem>
      </varlistentry>
@@ -133,7 +134,7 @@ CREATE [ UNIQUE ] INDEX <replaceable class="parameter">name</replaceable> ON <re
       <term><replaceable class="parameter">table</replaceable></term>
       <listitem>
        <para>
-	The name (possibly schema-qualified) of the table to be indexed.
+        The name (possibly schema-qualified) of the table to be indexed.
        </para>
       </listitem>
      </varlistentry>
@@ -154,7 +155,7 @@ CREATE [ UNIQUE ] INDEX <replaceable class="parameter">name</replaceable> ON <re
       <term><replaceable class="parameter">column</replaceable></term>
       <listitem>
        <para>
-	The name of a column of the table.
+        The name of a column of the table.
        </para>
       </listitem>
      </varlistentry>
@@ -163,10 +164,10 @@ CREATE [ UNIQUE ] INDEX <replaceable class="parameter">name</replaceable> ON <re
       <term><replaceable class="parameter">expression</replaceable></term>
       <listitem>
        <para>
-	An expression based on one or more columns of the table.  The
-	expression usually must be written with surrounding parentheses,
-	as shown in the syntax.  However, the parentheses may be omitted
-	if the expression has the form of a function call.
+        An expression based on one or more columns of the table.  The
+        expression usually must be written with surrounding parentheses,
+        as shown in the syntax.  However, the parentheses may be omitted
+        if the expression has the form of a function call.
        </para>
       </listitem>
      </varlistentry>
@@ -175,7 +176,17 @@ CREATE [ UNIQUE ] INDEX <replaceable class="parameter">name</replaceable> ON <re
       <term><replaceable class="parameter">opclass</replaceable></term>
       <listitem>
        <para>
-	The name of an operator class. See below for details.
+        The name of an operator class. See below for details.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="parameter">tablespace</replaceable></term>
+      <listitem>
+       <para>
+        The tablespace in which to create the index.  If not specified,
+        the tablespace of the parent table is used.
        </para>
       </listitem>
      </varlistentry>
@@ -184,10 +195,11 @@ CREATE [ UNIQUE ] INDEX <replaceable class="parameter">name</replaceable> ON <re
       <term><replaceable class="parameter">predicate</replaceable></term>
       <listitem>
        <para>
-	The constraint expression for a partial index.
+        The constraint expression for a partial index.
        </para>
       </listitem>
      </varlistentry>
+
     </variablelist>
  </refsect1>
 
@@ -260,7 +272,7 @@ SELECT * FROM points
 -->
 
  </refsect1>
- 
+
  <refsect1>
   <title>Compatibility</title>
 

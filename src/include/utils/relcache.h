@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/relcache.h,v 1.39 2004/02/10 01:55:27 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/relcache.h,v 1.40 2004/06/18 06:14:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,8 +51,9 @@ extern void RelationCacheInitializePhase3(void);
 extern Relation RelationBuildLocalRelation(const char *relname,
 						   Oid relnamespace,
 						   TupleDesc tupDesc,
-						   Oid relid, Oid dbid,
-						   RelFileNode rnode,
+						   Oid relid,
+						   Oid reltablespace,
+						   bool shared_relation,
 						   bool nailit);
 
 /*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/acl.c,v 1.105 2004/06/01 21:49:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/acl.c,v 1.106 2004/06/18 06:13:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -538,6 +538,10 @@ acldefault(GrantObjectType objtype, AclId ownerid)
 		case ACL_OBJECT_NAMESPACE:
 			world_default = ACL_NO_RIGHTS;
 			owner_default = ACL_ALL_RIGHTS_NAMESPACE;
+			break;
+		case ACL_OBJECT_TABLESPACE:
+			world_default = ACL_NO_RIGHTS;
+			owner_default = ACL_ALL_RIGHTS_TABLESPACE;
 			break;
 		default:
 			elog(ERROR, "unrecognized objtype: %d", (int) objtype);

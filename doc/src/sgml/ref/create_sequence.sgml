@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_sequence.sgml,v 1.39 2003/11/29 19:51:38 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_sequence.sgml,v 1.40 2004/06/18 06:13:05 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -12,7 +12,7 @@ PostgreSQL documentation
  <refnamediv>
   <refname>CREATE SEQUENCE</refname>
   <refpurpose>define a new sequence generator</refpurpose>
- </refnamediv> 
+ </refnamediv>
 
  <indexterm zone="sql-createsequence">
   <primary>CREATE SEQUENCE</primary>
@@ -23,6 +23,7 @@ PostgreSQL documentation
 CREATE [ TEMPORARY | TEMP ] SEQUENCE <replaceable class="parameter">name</replaceable> [ INCREMENT [ BY ] <replaceable class="parameter">increment</replaceable> ]
     [ MINVALUE <replaceable class="parameter">minvalue</replaceable> | NO MINVALUE ] [ MAXVALUE <replaceable class="parameter">maxvalue</replaceable> | NO MAXVALUE ]
     [ START [ WITH ] <replaceable class="parameter">start</replaceable> ] [ CACHE <replaceable class="parameter">cache</replaceable> ] [ [ NO ] CYCLE ]
+    [ TABLESPACE <replaceable class="parameter">tablespace</replaceable> ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -193,6 +194,19 @@ SELECT * FROM <replaceable>name</replaceable>;
      </para>
     </listitem>
    </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">tablespace</replaceable></term>
+    <listitem>
+     <para>
+      The optional clause <literal>TABLESPACE</> <replaceable
+      class="parameter">tablespace</replaceable> specifies
+      the tablespace in which to create the sequence.  If this clause
+      is not supplied, the tablespace of the sequence's schema will be used.
+     </para>
+    </listitem>
+   </varlistentry>
+
   </variablelist>
  </refsect1>
 
@@ -268,7 +282,7 @@ CREATE SEQUENCE serial START 101;
    Select the next number from this sequence:
 <programlisting>
 SELECT nextval('serial');
-    
+
  nextval
 ---------
      114

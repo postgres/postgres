@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_schema.sgml,v 1.11 2004/01/11 05:46:58 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_schema.sgml,v 1.12 2004/06/18 06:13:05 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -12,7 +12,7 @@ PostgreSQL documentation
  <refnamediv>
   <refname>CREATE SCHEMA</refname>
   <refpurpose>define a new schema</refpurpose>
- </refnamediv> 
+ </refnamediv>
 
  <indexterm zone="sql-createschema">
   <primary>CREATE SCHEMA</primary>
@@ -20,8 +20,8 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-CREATE SCHEMA <replaceable class="parameter">schemaname</replaceable> [ AUTHORIZATION <replaceable class="parameter">username</replaceable> ] [ <replaceable class="parameter">schema_element</replaceable> [ ... ] ]
-CREATE SCHEMA AUTHORIZATION <replaceable class="parameter">username</replaceable> [ <replaceable class="parameter">schema_element</replaceable> [ ... ] ]
+CREATE SCHEMA <replaceable class="parameter">schemaname</replaceable> [ AUTHORIZATION <replaceable class="parameter">username</replaceable> ] [ TABLESPACE <replaceable class="parameter">tablespace</replaceable> ] [ <replaceable class="parameter">schema_element</replaceable> [ ... ] ]
+CREATE SCHEMA AUTHORIZATION <replaceable class="parameter">username</replaceable> [ TABLESPACE <replaceable class="parameter">tablespace</replaceable> ] [ <replaceable class="parameter">schema_element</replaceable> [ ... ] ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -54,7 +54,7 @@ CREATE SCHEMA AUTHORIZATION <replaceable class="parameter">username</replaceable
    all the created objects will be owned by that user.
   </para>
  </refsect1>
-  
+
  <refsect1>
   <title>Parameters</title>
 
@@ -63,8 +63,8 @@ CREATE SCHEMA AUTHORIZATION <replaceable class="parameter">username</replaceable
       <term><replaceable class="parameter">schemaname</replaceable></term>
       <listitem>
        <para>
-	The name of a schema to be created.  If this is omitted, the user name
-	is used as the schema name.
+        The name of a schema to be created.  If this is omitted, the user name
+        is used as the schema name.
        </para>
       </listitem>
      </varlistentry>
@@ -74,8 +74,19 @@ CREATE SCHEMA AUTHORIZATION <replaceable class="parameter">username</replaceable
       <listitem>
        <para>
         The name of the user who will own the schema.  If omitted,
-	defaults to the user executing the command.  Only superusers
-	may create schemas owned by users other than themselves.
+        defaults to the user executing the command.  Only superusers
+        may create schemas owned by users other than themselves.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="parameter">tablespace</replaceable></term>
+      <listitem>
+       <para>
+        The name of the tablespace that is to be the default tablespace
+        for all new objects created in the schema. If not supplied, the schema
+        will inherit the default tablespace of the database.
        </para>
       </listitem>
      </varlistentry>
@@ -102,8 +113,10 @@ CREATE SCHEMA AUTHORIZATION <replaceable class="parameter">username</replaceable
 
   <para>
    To create a schema, the invoking user must have the
-   <literal>CREATE</> privilege for the current database.  (Of course,
-   superusers bypass this check.)
+   <literal>CREATE</> privilege for the current database.
+   Also, the <literal>TABLESPACE</> option requires having
+   <literal>CREATE</> privilege for the specified tablespace.
+   (Of course, superusers bypass these checks.)
   </para>
  </refsect1>
 
@@ -181,7 +194,8 @@ CREATE VIEW hollywood.winners AS
   <simplelist type="inline">
    <member><xref linkend="sql-alterschema" endterm="sql-alterschema-title"></member>
    <member><xref linkend="sql-dropschema" endterm="sql-dropschema-title"></member>
-  </simplelist>
+    <member><xref linkend="sql-createtablespace" endterm="sql-createtablespace-title"></member>
+ </simplelist>
  </refsect1>
 
 </refentry>

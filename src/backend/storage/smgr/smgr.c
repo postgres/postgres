@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgr.c,v 1.73 2004/06/02 17:28:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgr.c,v 1.74 2004/06/18 06:13:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -227,8 +227,9 @@ smgrclose(SMgrRelation reln)
 	if (! (*(smgrsw[reln->smgr_which].smgr_close)) (reln))
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not close relation %u/%u: %m",
-						reln->smgr_rnode.tblNode,
+				 errmsg("could not close relation %u/%u/%u: %m",
+						reln->smgr_rnode.spcNode,
+						reln->smgr_rnode.dbNode,
 						reln->smgr_rnode.relNode)));
 
 	if (hash_search(SMgrRelationHash,
@@ -308,8 +309,9 @@ smgrcreate(SMgrRelation reln, bool isTemp, bool isRedo)
 	if (! (*(smgrsw[reln->smgr_which].smgr_create)) (reln, isRedo))
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not create relation %u/%u: %m",
-						reln->smgr_rnode.tblNode,
+				 errmsg("could not create relation %u/%u/%u: %m",
+						reln->smgr_rnode.spcNode,
+						reln->smgr_rnode.dbNode,
 						reln->smgr_rnode.relNode)));
 
 	if (isRedo)
@@ -427,8 +429,9 @@ smgr_internal_unlink(RelFileNode rnode, int which, bool isTemp, bool isRedo)
 	if (! (*(smgrsw[which].smgr_unlink)) (rnode, isRedo))
 		ereport(WARNING,
 				(errcode_for_file_access(),
-				 errmsg("could not unlink relation %u/%u: %m",
-						rnode.tblNode,
+				 errmsg("could not unlink relation %u/%u/%u: %m",
+						rnode.spcNode,
+						rnode.dbNode,
 						rnode.relNode)));
 }
 
@@ -447,8 +450,9 @@ smgrextend(SMgrRelation reln, BlockNumber blocknum, char *buffer, bool isTemp)
 													 isTemp))
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not extend relation %u/%u: %m",
-						reln->smgr_rnode.tblNode,
+				 errmsg("could not extend relation %u/%u/%u: %m",
+						reln->smgr_rnode.spcNode,
+						reln->smgr_rnode.dbNode,
 						reln->smgr_rnode.relNode),
 				 errhint("Check free disk space.")));
 }
@@ -467,9 +471,10 @@ smgrread(SMgrRelation reln, BlockNumber blocknum, char *buffer)
 	if (! (*(smgrsw[reln->smgr_which].smgr_read)) (reln, blocknum, buffer))
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not read block %u of relation %u/%u: %m",
+				 errmsg("could not read block %u of relation %u/%u/%u: %m",
 						blocknum,
-						reln->smgr_rnode.tblNode,
+						reln->smgr_rnode.spcNode,
+						reln->smgr_rnode.dbNode,
 						reln->smgr_rnode.relNode)));
 }
 
@@ -491,9 +496,10 @@ smgrwrite(SMgrRelation reln, BlockNumber blocknum, char *buffer, bool isTemp)
 													isTemp))
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not write block %u of relation %u/%u: %m",
+				 errmsg("could not write block %u of relation %u/%u/%u: %m",
 						blocknum,
-						reln->smgr_rnode.tblNode,
+						reln->smgr_rnode.spcNode,
+						reln->smgr_rnode.dbNode,
 						reln->smgr_rnode.relNode)));
 }
 
@@ -520,8 +526,9 @@ smgrnblocks(SMgrRelation reln)
 	if (nblocks == InvalidBlockNumber)
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not count blocks of relation %u/%u: %m",
-						reln->smgr_rnode.tblNode,
+				 errmsg("could not count blocks of relation %u/%u/%u: %m",
+						reln->smgr_rnode.spcNode,
+						reln->smgr_rnode.dbNode,
 						reln->smgr_rnode.relNode)));
 
 	return nblocks;
@@ -552,8 +559,9 @@ smgrtruncate(SMgrRelation reln, BlockNumber nblocks, bool isTemp)
 	if (newblks == InvalidBlockNumber)
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not truncate relation %u/%u to %u blocks: %m",
-						reln->smgr_rnode.tblNode,
+				 errmsg("could not truncate relation %u/%u/%u to %u blocks: %m",
+						reln->smgr_rnode.spcNode,
+						reln->smgr_rnode.dbNode,
 						reln->smgr_rnode.relNode,
 						nblocks)));
 
@@ -607,8 +615,9 @@ smgrimmedsync(SMgrRelation reln)
 	if (! (*(smgrsw[reln->smgr_which].smgr_immedsync)) (reln))
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not sync relation %u/%u: %m",
-						reln->smgr_rnode.tblNode,
+				 errmsg("could not sync relation %u/%u/%u: %m",
+						reln->smgr_rnode.spcNode,
+						reln->smgr_rnode.dbNode,
 						reln->smgr_rnode.relNode)));
 }
 
@@ -775,8 +784,9 @@ smgr_redo(XLogRecPtr lsn, XLogRecord *record)
 		if (newblks == InvalidBlockNumber)
 			ereport(WARNING,
 					(errcode_for_file_access(),
-					 errmsg("could not truncate relation %u/%u to %u blocks: %m",
-							reln->smgr_rnode.tblNode,
+					 errmsg("could not truncate relation %u/%u/%u to %u blocks: %m",
+							reln->smgr_rnode.spcNode,
+							reln->smgr_rnode.dbNode,
 							reln->smgr_rnode.relNode,
 							xlrec->blkno)));
 	}
@@ -800,16 +810,17 @@ smgr_desc(char *buf, uint8 xl_info, char *rec)
 	{
 		xl_smgr_create *xlrec = (xl_smgr_create *) rec;
 
-		sprintf(buf + strlen(buf), "file create: %u/%u",
-				xlrec->rnode.tblNode, xlrec->rnode.relNode);
+		sprintf(buf + strlen(buf), "file create: %u/%u/%u",
+				xlrec->rnode.spcNode, xlrec->rnode.dbNode,
+				xlrec->rnode.relNode);
 	}
 	else if (info == XLOG_SMGR_TRUNCATE)
 	{
 		xl_smgr_truncate *xlrec = (xl_smgr_truncate *) rec;
 
-		sprintf(buf + strlen(buf), "file truncate: %u/%u to %u blocks",
-				xlrec->rnode.tblNode, xlrec->rnode.relNode,
-				xlrec->blkno);
+		sprintf(buf + strlen(buf), "file truncate: %u/%u/%u to %u blocks",
+				xlrec->rnode.spcNode, xlrec->rnode.dbNode,
+				xlrec->rnode.relNode, xlrec->blkno);
 	}
 	else
 		strcat(buf, "UNKNOWN");
