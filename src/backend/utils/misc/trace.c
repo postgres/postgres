@@ -81,8 +81,6 @@ static char *opt_names[] = {
  */
 int			pg_options[NUM_PG_OPTIONS] = {0};
 
-static int	openlog_done = 0;
-
 /*
  * Print a timestamp and a message to stdout if the trace flag
  * indexed by the flag value is set.

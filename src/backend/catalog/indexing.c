@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.29 1998/09/01 16:21:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.30 1998/09/02 23:05:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,12 +109,12 @@ CatalogIndexInsert(Relation *idescs,
 	HeapTuple	index_tup;
 	TupleDesc	heapDescriptor;
 	Form_pg_index index_form;
-	Datum		datum;
+	Datum		datum[INDEX_MAX_KEYS];
+	char		nulls[INDEX_MAX_KEYS];
 	int			natts;
 	AttrNumber *attnumP;
 	FuncIndexInfo finfo,
 			   *finfoP;
-	char		nulls[INDEX_MAX_KEYS];
 	int			i;
 
 	heapDescriptor = RelationGetDescr(heapRelation);
@@ -152,11 +152,11 @@ CatalogIndexInsert(Relation *idescs,
 					   (AttrNumber *) index_form->indkey,
 					   heapTuple,
 					   heapDescriptor,
-					   &datum,
+					   datum,
 					   nulls,
 					   finfoP);
 
-		indexRes = index_insert(idescs[i], &datum, nulls,
+		indexRes = index_insert(idescs[i], datum, nulls,
 								&heapTuple->t_ctid, heapRelation);
 		if (indexRes)
 			pfree(indexRes);

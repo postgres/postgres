@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.80 1998/09/01 04:28:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.81 1998/09/02 23:05:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1156,7 +1156,7 @@ failed to add item with len = %u to page %u (free space %u, nusd %u, noff %u)",
 					iresult = index_insert(Irel[i],
 										   idatum,
 										   inulls,
-										   &(newtup->t_ctid),
+										   &newtup->t_ctid,
 										   onerel);
 					if (iresult)
 						pfree(iresult);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.27 1998/09/01 04:30:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.28 1998/09/02 23:05:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -467,7 +467,6 @@ MakeTargetEntryAttr(ParseState *pstate,
 	int			resdomno;
 	List	   *attrs = att->attrs;
 	TargetEntry *tent;
-	Oid			relid;
 
 	attrname = strVal(lfirst(att->attrs));
 

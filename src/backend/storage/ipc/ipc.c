@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.33 1998/09/01 04:31:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.34 1998/09/02 23:05:30 momjian Exp $
  *
  * NOTES
  *
@@ -65,7 +65,6 @@ static struct ONEXIT
 
 static int	on_proc_exit_index,
 			on_shmem_exit_index;
-static void IpcConfigTip(void);
 
 typedef struct _PrivateMemStruct
 {
@@ -739,6 +738,7 @@ LockIsFree(int lockid)
 
 #endif	 /* HAS_TEST_AND_SET */
 
+#ifdef NOT_USED
 static void
 IpcConfigTip(void)
 {
@@ -746,3 +746,4 @@ IpcConfigTip(void)
 	fprintf(stderr, "shared memory or System V IPC semaphore configuration.\n");
 	fprintf(stderr, "See the FAQ for more detailed information\n");
 }
+#endif

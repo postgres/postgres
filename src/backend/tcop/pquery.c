@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.18 1998/09/01 04:32:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.19 1998/09/02 23:05:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -210,7 +210,7 @@ ProcessQueryDesc(QueryDesc *queryDesc)
 	Query	   *parseTree;
 	Plan	   *plan;
 	int			operation;
-	char	   *tag;
+	char	   *tag = NULL;
 	EState	   *state;
 	TupleDesc	attinfo;
 
