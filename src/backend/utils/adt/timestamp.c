@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.41 2001/01/03 16:48:02 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.42 2001/01/17 16:46:56 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -341,9 +341,9 @@ timestamp2tm(Timestamp dt, int *tzp, struct tm * tm, double *fsec, char **tzn)
 				*tzn = (char *) tm->tm_zone;
 # elif defined(HAVE_INT_TIMEZONE)
 #  ifdef __CYGWIN__
-			*tzp = (tm->tm_isdst ? (_timezone - 3600) : _timezone);
+			*tzp = ((tm->tm_isdst > 0) ? (_timezone - 3600) : _timezone);
 #  else
-			*tzp = (tm->tm_isdst ? (timezone - 3600) : timezone);
+			*tzp = ((tm->tm_isdst > 0) ? (timezone - 3600) : timezone);
 #  endif
 			if (tzn != NULL)
 				*tzn = tzname[(tm->tm_isdst > 0)];
@@ -1086,9 +1086,9 @@ timestamp_pl_span(PG_FUNCTION_ARGS)
 # elif defined(HAVE_INT_TIMEZONE)
 
 #  ifdef __CYGWIN__
-					tz = (tm->tm_isdst ? (_timezone - 3600) : _timezone);
+					tz = ((tm->tm_isdst > 0) ? (_timezone - 3600) : _timezone);
 #  else
-					tz = (tm->tm_isdst ? (timezone - 3600) : timezone);
+					tz = ((tm->tm_isdst > 0) ? (timezone - 3600) : timezone);
 #  endif
 
 # endif
@@ -1735,9 +1735,9 @@ timestamp_trunc(PG_FUNCTION_ARGS)
 # elif defined(HAVE_INT_TIMEZONE)
 
 #  ifdef __CYGWIN__
-				tz = (tm->tm_isdst ? (_timezone - 3600) : _timezone);
+				tz = ((tm->tm_isdst > 0) ? (_timezone - 3600) : _timezone);
 #  else
-				tz = (tm->tm_isdst ? (timezone - 3600) : timezone);
+				tz = ((tm->tm_isdst > 0) ? (timezone - 3600) : timezone);
 #  endif
 
 # endif

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.57 2000/12/03 20:45:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.58 2001/01/17 16:46:56 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2229,21 +2229,27 @@ EncodeTimeSpan(struct tm * tm, double fsec, int style, char *str)
 				sprintf(cp, "%d year%s",
 						tm->tm_year, ((tm->tm_year != 1) ? "s" : ""));
 				cp += strlen(cp);
+				is_before = (tm->tm_year < 0);
 				is_nonzero = TRUE;
 			}
 
 			if (tm->tm_mon != 0)
 			{
-				sprintf(cp, "%s%d mon%s", (is_nonzero ? " " : ""),
+				sprintf(cp, "%s%s%d mon%s", (is_nonzero ? " " : ""),
+						((is_before && (tm->tm_mon > 0)) ? "+" : ""),
 						tm->tm_mon, ((tm->tm_mon != 1) ? "s" : ""));
 				cp += strlen(cp);
+				is_before = (tm->tm_mon < 0);
 				is_nonzero = TRUE;
 			}
 
 			if (tm->tm_mday != 0)
 			{
-				sprintf(cp, "%s%d", (is_nonzero ? " " : ""), tm->tm_mday);
+				sprintf(cp, "%s%s%d day%s", (is_nonzero ? " " : ""),
+						((is_before && (tm->tm_mday > 0)) ? "+" : ""),
+						tm->tm_mday, ((tm->tm_mday != 1) ? "s" : ""));
 				cp += strlen(cp);
+				is_before = (tm->tm_mday < 0);
 				is_nonzero = TRUE;
 			}
 			{
@@ -2251,7 +2257,7 @@ EncodeTimeSpan(struct tm * tm, double fsec, int style, char *str)
 							 || (tm->tm_sec < 0) || (fsec < 0));
 
 				sprintf(cp, "%s%s%02d:%02d", (is_nonzero ? " " : ""),
-						(minus ? "-" : "+"),
+						(minus ? "-" : (is_nonzero ? "+" : "")),
 						abs(tm->tm_hour), abs(tm->tm_min));
 				cp += strlen(cp);
 				/* Mark as "non-zero" since the fields are now filled in */
@@ -2283,59 +2289,59 @@ EncodeTimeSpan(struct tm * tm, double fsec, int style, char *str)
 
 			if (tm->tm_year != 0)
 			{
-				is_before = (tm->tm_year < 0);
-				if (is_before)
-					tm->tm_year = -tm->tm_year;
-				sprintf(cp, "%d year%s",
-						tm->tm_year, ((tm->tm_year != 1) ? "s" : ""));
+				int year = ((tm->tm_year < 0) ? -(tm->tm_year) : tm->tm_year);
+
+				sprintf(cp, "%d year%s", year,
+						((year != 1) ? "s" : ""));
 				cp += strlen(cp);
+				is_before = (tm->tm_year < 0);
 				is_nonzero = TRUE;
 			}
 
 			if (tm->tm_mon != 0)
 			{
+				int mon = ((is_before && (tm->tm_mon > 0)) ? -(tm->tm_mon) : tm->tm_mon);
+
+				sprintf(cp, "%s%d mon%s", (is_nonzero ? " " : ""), mon,
+						((mon != 1) ? "s" : ""));
+				cp += strlen(cp);
 				if (! is_nonzero)
 					is_before = (tm->tm_mon < 0);
-				if (is_before)
-					tm->tm_mon = -tm->tm_mon;
-				sprintf(cp, "%s%d mon%s", (is_nonzero ? " " : ""),
-						tm->tm_mon, ((tm->tm_mon != 1) ? "s" : ""));
-				cp += strlen(cp);
 				is_nonzero = TRUE;
 			}
 
 			if (tm->tm_mday != 0)
 			{
+				int day = ((is_before && (tm->tm_mday > 0)) ? -(tm->tm_mday) : tm->tm_mday);
+
+				sprintf(cp, "%s%d day%s", (is_nonzero ? " " : ""), day,
+						((day != 1) ? "s" : ""));
+				cp += strlen(cp);
 				if (! is_nonzero)
 					is_before = (tm->tm_mday < 0);
-				if (is_before)
-					tm->tm_mday = -tm->tm_mday;
-				sprintf(cp, "%s%d day%s", (is_nonzero ? " " : ""),
-				 tm->tm_mday, ((tm->tm_mday != 1) ? "s" : ""));
-				cp += strlen(cp);
 				is_nonzero = TRUE;
 			}
 			if (tm->tm_hour != 0)
 			{
+				int hour = ((is_before && (tm->tm_hour > 0)) ? -(tm->tm_hour) : tm->tm_hour);
+
+				sprintf(cp, "%s%d hour%s", (is_nonzero ? " " : ""), hour,
+						((hour != 1) ? "s" : ""));
+				cp += strlen(cp);
 				if (! is_nonzero)
 					is_before = (tm->tm_hour < 0);
-				if (is_before)
-					tm->tm_hour = -tm->tm_hour;
-				sprintf(cp, "%s%d hour%s", (is_nonzero ? " " : ""),
-				 tm->tm_hour, ((tm->tm_hour != 1) ? "s" : ""));
-				cp += strlen(cp);
 				is_nonzero = TRUE;
 			}
 
 			if (tm->tm_min != 0)
 			{
+				int min = ((is_before && (tm->tm_min > 0)) ? -(tm->tm_min) : tm->tm_min);
+
+				sprintf(cp, "%s%d min%s", (is_nonzero ? " " : ""), min,
+						((min != 1) ? "s" : ""));
+				cp += strlen(cp);
 				if (! is_nonzero)
 					is_before = (tm->tm_min < 0);
-				if (is_before)
-					tm->tm_min = -tm->tm_min;
-				sprintf(cp, "%s%d min%s", (is_nonzero ? " " : ""),
-				   tm->tm_min, ((tm->tm_min != 1) ? "s" : ""));
-				cp += strlen(cp);
 				is_nonzero = TRUE;
 			}
 
@@ -2343,25 +2349,24 @@ EncodeTimeSpan(struct tm * tm, double fsec, int style, char *str)
 			if (fsec != 0)
 			{
 				fsec += tm->tm_sec;
+				sprintf(cp, "%s%.2f secs", (is_nonzero ? " " : ""),
+						((is_before && (fsec > 0)) ? -(fsec) : fsec));
+				cp += strlen(cp);
 				if (! is_nonzero)
 					is_before = (fsec < 0);
-				if (is_before)
-					fsec = -fsec;
-				sprintf(cp, "%s%.2f secs", (is_nonzero ? " " : ""), fsec);
-				cp += strlen(cp);
 				is_nonzero = TRUE;
 
 				/* otherwise, integer seconds only? */
 			}
 			else if (tm->tm_sec != 0)
 			{
+				int sec = ((is_before && (tm->tm_sec > 0)) ? -(tm->tm_sec) : tm->tm_sec);
+
+				sprintf(cp, "%s%d sec%s", (is_nonzero ? " " : ""), sec,
+						((sec != 1) ? "s" : ""));
+				cp += strlen(cp);
 				if (! is_nonzero)
 					is_before = (tm->tm_sec < 0);
-				if (is_before)
-					tm->tm_sec = -tm->tm_sec;
-				sprintf(cp, "%s%d sec%s", (is_nonzero ? " " : ""),
-				   tm->tm_sec, ((tm->tm_sec != 1) ? "s" : ""));
-				cp += strlen(cp);
 				is_nonzero = TRUE;
 			}
 			break;
@@ -2374,7 +2379,7 @@ EncodeTimeSpan(struct tm * tm, double fsec, int style, char *str)
 		cp += strlen(cp);
 	}
 
-	if (is_before)
+	if (is_before && (style == USE_POSTGRES_DATES))
 	{
 		strcat(cp, " ago");
 		cp += strlen(cp);
