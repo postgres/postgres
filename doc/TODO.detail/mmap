@@ -575,3 +575,1191 @@ shm_open()
 TIP 2: you can get off all lists at once with the unregister command
     (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
 
+From pgsql-hackers-owner+M24146@postgresql.org Tue Jun 25 02:27:29 2002
+Return-path: <pgsql-hackers-owner+M24146@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g5P6RSF12626
+	for <pgman@candle.pha.pa.us>; Tue, 25 Jun 2002 02:27:28 -0400 (EDT)
+Received: from localhost.localdomain (postgresql.org [64.49.215.8])
+	by localhost (Postfix) with ESMTP
+	id 2C72F475EF6; Tue, 25 Jun 2002 02:27:28 -0400 (EDT)
+Mailbox-Line: From cjs@cynic.net  Tue Jun 25 02:27:28 2002
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP
+	id 42AAB475B26; Tue, 25 Jun 2002 02:07:04 -0400 (EDT)
+Received: from localhost.localdomain (postgresql.org [64.49.215.8])
+	by localhost (Postfix) with ESMTP id A8D13475A06
+	for <pgsql-hackers@postgresql.org>; Tue, 25 Jun 2002 02:07:01 -0400 (EDT)
+Mailbox-Line: From cjs@cynic.net  Tue Jun 25 02:07:01 2002
+Received: from academic.cynic.net (academic.cynic.net [63.144.177.3])
+	by postgresql.org (Postfix) with ESMTP id F3C264760A1
+	for <pgsql-hackers@postgresql.org>; Tue, 25 Jun 2002 01:05:49 -0400 (EDT)
+Received: from angelic-academic.cvpn.cynic.net (angelic-academic.cvpn.cynic.net [198.73.220.224])
+	by academic.cynic.net (Postfix) with ESMTP
+	id 5F61CF820; Tue, 25 Jun 2002 05:05:47 +0000 (UTC)
+Date: Tue, 25 Jun 2002 14:05:45 +0900 (JST)
+From: Curt Sampson <cjs@cynic.net>
+To: "J. R. Nield" <jrnield@usol.com>
+cc: Bruce Momjian <pgman@candle.pha.pa.us>, Tom Lane <tgl@sss.pgh.pa.us>,
+   PostgreSQL Hacker <pgsql-hackers@postgresql.org>
+Subject: [HACKERS] Buffer Management
+In-Reply-To: <1024951786.1793.865.camel@localhost.localdomain>
+Message-ID: <Pine.NEB.4.43.0206251232130.17448-100000@angelic.cynic.net>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Spam-Status: No, hits=-5.3 required=5.0
+	tests=IN_REP_TO,X_NOT_PRESENT
+	version=2.30
+Status: OR
+
+I'm splitting off this buffer mangement stuff into a separate thread.
+
+On 24 Jun 2002, J. R. Nield wrote:
+
+> I'll back off on that. I don't know if we want to use the OS buffer
+> manager, but shouldn't we try to have our buffer manager group writes
+> together by files, and pro-actively get them out to disk?
+
+The only way the postgres buffer manager can "get [data] out to disk"
+is to do an fsync(). For data files (as opposed to log files), this can
+only slow down overall system throughput, as this would only disrupt the
+OS's write management.
+
+> Right now, it
+> looks like all our write requests are delayed as long as possible and
+> the order in which they are written is pretty-much random, as is the
+> backend that writes the block, so there is no locality of reference even
+> when the blocks are adjacent on disk, and the write calls are spread-out
+> over all the backends.
+
+It doesn't matter. The OS will introduce locality of reference with its
+write algorithms. Take a look at
+
+    http://www.cs.wisc.edu/~solomon/cs537/disksched.html
+
+for an example. Most OSes use the elevator or one-way elevator
+algorithm.  So it doesn't matter whether it's one back-end or many
+writing, and it doesn't matter in what order they do the write.
+
+> Would it not be the case that things like read-ahead, grouping writes,
+> and caching written data are probably best done by PostgreSQL, because
+> only our buffer manager can understand when they will be useful or when
+> they will thrash the cache?
+
+Operating systems these days are not too bad at guessing guessing what
+you're doing. Pretty much every OS I've seen will do read-ahead when
+it detects you're doing sequential reads, at least in the forward
+direction. And Solaris is even smart enough to mark the pages you've
+read as "not needed" so that they quickly get flushed from the cache,
+rather than blowing out your entire cache if you go through a large
+file.
+
+> Would O_DSYNC|O_RSYNC turn off the cache?
+
+No. I suppose there's nothing to stop it doing so, in some
+implementations, but the interface is not designed for direct I/O.
+
+> Since you know a lot about NetBSD internals, I'd be interested in
+> hearing about what postgresql looks like to the NetBSD buffer manager.
+
+Well, looks like pretty much any program, or group of programs,
+doing a lot of I/O. :-)
+
+> Am I right that strings of successive writes get randomized?
+
+No; as I pointed out, they in fact get de-randomized as much as
+possible. The more proceses you have throwing out requests, the better
+the throughput will be in fact.
+
+> What do our cache-hit percentages look like? I'm going to do some
+> experimenting with this.
+
+Well, that depends on how much memory you have and what your working
+set is. :-)
+
+cjs
+-- 
+Curt Sampson  <cjs@cynic.net>   +81 90 7737 2974   http://www.netbsd.org
+    Don't you know, in this new Dark Age, we're all light.  --XTC
+
+
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 6: Have you searched our list archives?
+
+http://archives.postgresql.org
+
+
+
+From cjs@cynic.net Tue Jun 25 09:52:23 2002
+Return-path: <cjs@cynic.net>
+Received: from academic.cynic.net (academic.cynic.net [63.144.177.3])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g5PDqKF07478
+	for <pgman@candle.pha.pa.us>; Tue, 25 Jun 2002 09:52:22 -0400 (EDT)
+Received: from angelic-academic.cvpn.cynic.net (angelic-academic.cvpn.cynic.net [198.73.220.224])
+	by academic.cynic.net (Postfix) with ESMTP
+	id D9242F820; Tue, 25 Jun 2002 13:52:18 +0000 (UTC)
+Date: Tue, 25 Jun 2002 22:52:14 +0900 (JST)
+From: Curt Sampson <cjs@cynic.net>
+To: "J. R. Nield" <jrnield@usol.com>
+cc: Bruce Momjian <pgman@candle.pha.pa.us>, Tom Lane <tgl@sss.pgh.pa.us>,
+   PostgreSQL Hacker <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Buffer Management
+In-Reply-To: <Pine.NEB.4.43.0206251232130.17448-100000@angelic.cynic.net>
+Message-ID: <Pine.NEB.4.43.0206252239230.670-100000@angelic.cynic.net>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Status: OR
+
+
+So, while we're at it, what's the current state of people's thinking
+on using mmap rather than shared memory for data file buffers? I
+see some pretty powerful advantages to this approach, and I'm not
+(yet :-)) convinced that the disadvantages are as bad as people think.
+I think I can address most of the concerns in doc/TODO.detail/mmap.
+
+Is this worth pursuing a bit? (I.e., should I spend an hour or two
+writing up the advantages and thoughts on how to get around the
+problems?) Anybody got objections that aren't in doc/TODO.detail/mmap?
+
+cjs
+-- 
+Curt Sampson  <cjs@cynic.net>   +81 90 7737 2974   http://www.netbsd.org
+    Don't you know, in this new Dark Age, we're all light.  --XTC
+
+
+From tgl@sss.pgh.pa.us Tue Jun 25 10:09:07 2002
+Return-path: <tgl@sss.pgh.pa.us>
+Received: from sss.pgh.pa.us (root@[192.204.191.242])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g5PE96F08922
+	for <pgman@candle.pha.pa.us>; Tue, 25 Jun 2002 10:09:06 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.11.4/8.11.4) with ESMTP id g5PE92107301;
+	Tue, 25 Jun 2002 10:09:02 -0400 (EDT)
+To: Curt Sampson <cjs@cynic.net>
+cc: "J. R. Nield" <jrnield@usol.com>, Bruce Momjian <pgman@candle.pha.pa.us>,
+   PostgreSQL Hacker <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Buffer Management 
+In-Reply-To: <Pine.NEB.4.43.0206252239230.670-100000@angelic.cynic.net> 
+References: <Pine.NEB.4.43.0206252239230.670-100000@angelic.cynic.net>
+Comments: In-reply-to Curt Sampson <cjs@cynic.net>
+	message dated "Tue, 25 Jun 2002 22:52:14 +0900"
+Date: Tue, 25 Jun 2002 10:09:02 -0400
+Message-ID: <7298.1025014142@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Status: ORr
+
+Curt Sampson <cjs@cynic.net> writes:
+> So, while we're at it, what's the current state of people's thinking
+> on using mmap rather than shared memory for data file buffers?
+
+There seem to be a couple of different threads in doc/TODO.detail/mmap.
+
+One envisions mmap as a one-for-one replacement for our current use of
+SysV shared memory, the main selling point being to get out from under
+kernels that don't have SysV support or have it configured too small.
+This might be worth doing, and I think it'd be relatively easy to do
+now that the shared memory support is isolated in one file and there's
+provisions for selecting a shmem implementation at configure time.
+The only thing you'd really have to think about is how to replace the
+current behavior that uses shmem attach counts to discover whether any
+old backends are left over from a previous crashed postmaster.  I dunno
+if mmap offers any comparable facility.
+
+The other discussion seemed to be considering how to mmap individual
+data files right into backends' address space.  I do not believe this
+can possibly work, because of loss of control over visibility of data
+changes to other backends, timing of write-backs, etc.
+
+But as long as you stay away from interpretation #2 and go with
+mmap-as-a-shmget-substitute, it might be worthwhile.
+
+(Hey Marc, can one do mmap in a BSD jail?)
+
+			regards, tom lane
+
+From pgsql-hackers-owner+M24158@postgresql.org Tue Jun 25 10:20:42 2002
+Return-path: <pgsql-hackers-owner+M24158@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g5PEKgF10228
+	for <pgman@candle.pha.pa.us>; Tue, 25 Jun 2002 10:20:42 -0400 (EDT)
+Received: from localhost.localdomain (postgresql.org [64.49.215.8])
+	by localhost (Postfix) with ESMTP
+	id 7259547609E; Tue, 25 Jun 2002 10:20:35 -0400 (EDT)
+Mailbox-Line: From cjs@cynic.net  Tue Jun 25 10:20:35 2002
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP
+	id 8E79647604C; Tue, 25 Jun 2002 10:20:33 -0400 (EDT)
+Received: from localhost.localdomain (postgresql.org [64.49.215.8])
+	by localhost (Postfix) with ESMTP id C3EB1476002
+	for <pgsql-hackers@postgresql.org>; Tue, 25 Jun 2002 10:20:30 -0400 (EDT)
+Mailbox-Line: From cjs@cynic.net  Tue Jun 25 10:20:30 2002
+Received: from academic.cynic.net (academic.cynic.net [63.144.177.3])
+	by postgresql.org (Postfix) with ESMTP id 887F9475B2F
+	for <pgsql-hackers@postgresql.org>; Tue, 25 Jun 2002 10:20:16 -0400 (EDT)
+Received: from angelic-academic.cvpn.cynic.net (angelic-academic.cvpn.cynic.net [198.73.220.224])
+	by academic.cynic.net (Postfix) with ESMTP
+	id 16CCDF820; Tue, 25 Jun 2002 14:20:19 +0000 (UTC)
+Date: Tue, 25 Jun 2002 23:20:15 +0900 (JST)
+From: Curt Sampson <cjs@cynic.net>
+To: Tom Lane <tgl@sss.pgh.pa.us>
+cc: "J. R. Nield" <jrnield@usol.com>, Bruce Momjian <pgman@candle.pha.pa.us>,
+   PostgreSQL Hacker <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Buffer Management 
+In-Reply-To: <7298.1025014142@sss.pgh.pa.us>
+Message-ID: <Pine.NEB.4.43.0206252318020.670-100000@angelic.cynic.net>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Spam-Status: No, hits=-5.3 required=5.0
+	tests=IN_REP_TO,X_NOT_PRESENT
+	version=2.30
+Status: OR
+
+On Tue, 25 Jun 2002, Tom Lane wrote:
+
+> The only thing you'd really have to think about is how to replace the
+> current behavior that uses shmem attach counts to discover whether any
+> old backends are left over from a previous crashed postmaster.  I dunno
+> if mmap offers any comparable facility.
+
+Sure. Just mmap a file, and it will be persistent.
+
+> The other discussion seemed to be considering how to mmap individual
+> data files right into backends' address space.  I do not believe this
+> can possibly work, because of loss of control over visibility of data
+> changes to other backends, timing of write-backs, etc.
+
+I don't understand why there would be any loss of visibility of changes.
+If two backends mmap the same block of a file, and it's shared, that's
+the same block of physical memory that they're accessing. Changes don't
+even need to "propagate," because the memory is truly shared. You'd keep
+your locks in the page itself as well, of course.
+
+Can you describe the problem in more detail?
+
+> But as long as you stay away from interpretation #2 and go with
+> mmap-as-a-shmget-substitute, it might be worthwhile.
+
+It's #2 that I was really looking at. :-)
+
+cjs
+-- 
+Curt Sampson  <cjs@cynic.net>   +81 90 7737 2974   http://www.netbsd.org
+    Don't you know, in this new Dark Age, we're all light.  --XTC
+
+
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 2: you can get off all lists at once with the unregister command
+    (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
+
+
+
+From pgsql-hackers-owner+M24159@postgresql.org Tue Jun 25 10:25:21 2002
+Return-path: <pgsql-hackers-owner+M24159@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g5PEPKF10831
+	for <pgman@candle.pha.pa.us>; Tue, 25 Jun 2002 10:25:20 -0400 (EDT)
+Received: from localhost.localdomain (postgresql.org [64.49.215.8])
+	by localhost (Postfix) with ESMTP
+	id AA2EF475C46; Tue, 25 Jun 2002 10:25:13 -0400 (EDT)
+Mailbox-Line: From pgman@candle.pha.pa.us  Tue Jun 25 10:25:13 2002
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP
+	id 9657447603B; Tue, 25 Jun 2002 10:23:23 -0400 (EDT)
+Received: from localhost.localdomain (postgresql.org [64.49.215.8])
+	by localhost (Postfix) with ESMTP id 364D0475FC2
+	for <pgsql-hackers@postgresql.org>; Tue, 25 Jun 2002 10:23:18 -0400 (EDT)
+Mailbox-Line: From pgman@candle.pha.pa.us  Tue Jun 25 10:23:18 2002
+Received: from candle.pha.pa.us (216-55-132-35.dsl.san-diego.abac.net [216.55.132.35])
+	by postgresql.org (Postfix) with ESMTP id C063F47594B
+	for <pgsql-hackers@postgresql.org>; Tue, 25 Jun 2002 10:20:35 -0400 (EDT)
+Received: (from pgman@localhost)
+	by candle.pha.pa.us (8.11.6/8.10.1) id g5PEKT310222;
+	Tue, 25 Jun 2002 10:20:29 -0400 (EDT)
+From: Bruce Momjian <pgman@candle.pha.pa.us>
+Message-ID: <200206251420.g5PEKT310222@candle.pha.pa.us>
+Subject: Re: [HACKERS] Buffer Management
+In-Reply-To: <7298.1025014142@sss.pgh.pa.us>
+To: Tom Lane <tgl@sss.pgh.pa.us>
+Date: Tue, 25 Jun 2002 10:20:29 -0400 (EDT)
+cc: Curt Sampson <cjs@cynic.net>, "J. R. Nield" <jrnield@usol.com>,
+   PostgreSQL Hacker <pgsql-hackers@postgresql.org>
+X-Mailer: ELM [version 2.4ME+ PL97 (25)]
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=US-ASCII
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Spam-Status: No, hits=-3.4 required=5.0
+	tests=IN_REP_TO
+	version=2.30
+Status: OR
+
+Tom Lane wrote:
+> Curt Sampson <cjs@cynic.net> writes:
+> > So, while we're at it, what's the current state of people's thinking
+> > on using mmap rather than shared memory for data file buffers?
+> 
+> There seem to be a couple of different threads in doc/TODO.detail/mmap.
+> 
+> One envisions mmap as a one-for-one replacement for our current use of
+> SysV shared memory, the main selling point being to get out from under
+> kernels that don't have SysV support or have it configured too small.
+> This might be worth doing, and I think it'd be relatively easy to do
+> now that the shared memory support is isolated in one file and there's
+> provisions for selecting a shmem implementation at configure time.
+> The only thing you'd really have to think about is how to replace the
+> current behavior that uses shmem attach counts to discover whether any
+> old backends are left over from a previous crashed postmaster.  I dunno
+> if mmap offers any comparable facility.
+> 
+> The other discussion seemed to be considering how to mmap individual
+> data files right into backends' address space.  I do not believe this
+> can possibly work, because of loss of control over visibility of data
+> changes to other backends, timing of write-backs, etc.
+
+Agreed.  Also, there was in intresting thread that mmap'ing /dev/zero is
+the same as anonmap for OS's that don't have anonmap.  That should cover
+most of them.  The only downside I can see is that SysV shared memory is
+locked into RAM on some/most OS's while mmap anon probably isn't. 
+Locking in RAM is good in most cases, bad in others.
+
+This will also work well when we have non-SysV semaphore support, like
+Posix semaphores, so we would be able to run with no SysV stuff.
+
+-- 
+  Bruce Momjian                        |  http://candle.pha.pa.us
+  pgman@candle.pha.pa.us               |  (610) 853-3000
+  +  If your life is a hard drive,     |  830 Blythe Avenue
+  +  Christ can be your backup.        |  Drexel Hill, Pennsylvania 19026
+
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 4: Don't 'kill -9' the postmaster
+
+
+
+From pgsql-hackers-owner+M24160@postgresql.org Tue Jun 25 10:27:40 2002
+Return-path: <pgsql-hackers-owner+M24160@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g5PEReF11147
+	for <pgman@candle.pha.pa.us>; Tue, 25 Jun 2002 10:27:40 -0400 (EDT)
+Received: from localhost.localdomain (postgresql.org [64.49.215.8])
+	by localhost (Postfix) with ESMTP
+	id B33CD476047; Tue, 25 Jun 2002 10:27:16 -0400 (EDT)
+Mailbox-Line: From lkindness@csl.co.uk  Tue Jun 25 10:27:16 2002
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP
+	id 3091247606D; Tue, 25 Jun 2002 10:23:24 -0400 (EDT)
+Received: from localhost.localdomain (postgresql.org [64.49.215.8])
+	by localhost (Postfix) with ESMTP id 6C39D476002
+	for <pgsql-hackers@postgresql.org>; Tue, 25 Jun 2002 10:23:19 -0400 (EDT)
+Mailbox-Line: From lkindness@csl.co.uk  Tue Jun 25 10:23:19 2002
+Received: from internet.csl.co.uk (internet.csl.co.uk [194.130.52.3])
+	by postgresql.org (Postfix) with ESMTP id AC203475C46
+	for <pgsql-hackers@postgresql.org>; Tue, 25 Jun 2002 10:20:49 -0400 (EDT)
+Received: from euphrates.csl.co.uk (host-194-67.csl.co.uk [194.130.52.67])
+	by internet.csl.co.uk (8.12.1/8.12.1) with ESMTP id g5PEKonH023514;
+	Tue, 25 Jun 2002 15:20:50 +0100
+Received: from kelvin.csl.co.uk by euphrates.csl.co.uk (8.9.3/ConceptI 2.4)
+	id PAA08847; Tue, 25 Jun 2002 15:20:52 +0100 (BST)
+Received: by kelvin.csl.co.uk (8.11.6) id g5PEKoT28846; Tue, 25 Jun 2002 15:20:50 +0100
+From: Lee Kindness <lkindness@csl.co.uk>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <15640.31809.970880.320561@kelvin.csl.co.uk>
+Date: Tue, 25 Jun 2002 15:20:49 +0100
+To: Tom Lane <tgl@sss.pgh.pa.us>
+Subject: Re: [HACKERS] Buffer Management 
+In-Reply-To: <7298.1025014142@sss.pgh.pa.us>
+References: <Pine.NEB.4.43.0206252239230.670-100000@angelic.cynic.net>
+	<7298.1025014142@sss.pgh.pa.us>
+X-Mailer: VM 7.00 under 21.4 (patch 6) "Common Lisp" XEmacs Lucid
+cc: Lee Kindness <lkindness@csl.co.uk>, pgsql-hackers@postgresql.org
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Spam-Status: No, hits=-3.4 required=5.0
+	tests=IN_REP_TO
+	version=2.30
+Status: OR
+
+Tom Lane writes:
+ > There seem to be a couple of different threads in
+ > doc/TODO.detail/mmap.
+ > [ snip ]
+
+A place where mmap could be easily used and would offer a good
+performance increase is for COPY FROM.
+
+Lee.
+
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 5: Have you checked our extensive FAQ?
+
+http://www.postgresql.org/users-lounge/docs/faq.html
+
+
+
+From cjs@cynic.net Tue Jun 25 10:24:49 2002
+Return-path: <cjs@cynic.net>
+Received: from academic.cynic.net (academic.cynic.net [63.144.177.3])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g5PEOmF10749
+	for <pgman@candle.pha.pa.us>; Tue, 25 Jun 2002 10:24:49 -0400 (EDT)
+Received: from angelic-academic.cvpn.cynic.net (angelic-academic.cvpn.cynic.net [198.73.220.224])
+	by academic.cynic.net (Postfix) with ESMTP
+	id F2629F820; Tue, 25 Jun 2002 14:24:47 +0000 (UTC)
+Date: Tue, 25 Jun 2002 23:24:44 +0900 (JST)
+From: Curt Sampson <cjs@cynic.net>
+To: Bruce Momjian <pgman@candle.pha.pa.us>
+cc: Tom Lane <tgl@sss.pgh.pa.us>, "J. R. Nield" <jrnield@usol.com>,
+   PostgreSQL Hacker <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Buffer Management
+In-Reply-To: <200206251420.g5PEKT310222@candle.pha.pa.us>
+Message-ID: <Pine.NEB.4.43.0206252323580.670-100000@angelic.cynic.net>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Status: OR
+
+On Tue, 25 Jun 2002, Bruce Momjian wrote:
+
+> The only downside I can see is that SysV shared memory is
+> locked into RAM on some/most OS's while mmap anon probably isn't.
+
+It is if you mlock() it. :-)
+
+cjs
+-- 
+Curt Sampson  <cjs@cynic.net>   +81 90 7737 2974   http://www.netbsd.org
+    Don't you know, in this new Dark Age, we're all light.  --XTC
+
+
+From tgl@sss.pgh.pa.us Tue Jun 25 10:29:53 2002
+Return-path: <tgl@sss.pgh.pa.us>
+Received: from sss.pgh.pa.us (root@[192.204.191.242])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g5PETpF11341
+	for <pgman@candle.pha.pa.us>; Tue, 25 Jun 2002 10:29:52 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.11.4/8.11.4) with ESMTP id g5PETn107501;
+	Tue, 25 Jun 2002 10:29:49 -0400 (EDT)
+To: Curt Sampson <cjs@cynic.net>
+cc: "J. R. Nield" <jrnield@usol.com>, Bruce Momjian <pgman@candle.pha.pa.us>,
+   PostgreSQL Hacker <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Buffer Management 
+In-Reply-To: <Pine.NEB.4.43.0206252318020.670-100000@angelic.cynic.net> 
+References: <Pine.NEB.4.43.0206252318020.670-100000@angelic.cynic.net>
+Comments: In-reply-to Curt Sampson <cjs@cynic.net>
+	message dated "Tue, 25 Jun 2002 23:20:15 +0900"
+Date: Tue, 25 Jun 2002 10:29:49 -0400
+Message-ID: <7498.1025015389@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Status: ORr
+
+Curt Sampson <cjs@cynic.net> writes:
+> On Tue, 25 Jun 2002, Tom Lane wrote:
+>> The other discussion seemed to be considering how to mmap individual
+>> data files right into backends' address space.  I do not believe this
+>> can possibly work, because of loss of control over visibility of data
+>> changes to other backends, timing of write-backs, etc.
+
+> I don't understand why there would be any loss of visibility of changes.
+> If two backends mmap the same block of a file, and it's shared, that's
+> the same block of physical memory that they're accessing.
+
+Is it?  You have a mighty narrow conception of the range of
+implementations that's possible for mmap.
+
+But the main problem is that mmap doesn't let us control when changes to
+the memory buffer will get reflected back to disk --- AFAICT, the OS is
+free to do the write-back at any instant after you dirty the page, and
+that completely breaks the WAL algorithm.  (WAL = write AHEAD log;
+the log entry describing a change must hit disk before the data page
+change itself does.)
+
+			regards, tom lane
+
+From pgsql-hackers-owner+M24164@postgresql.org Tue Jun 25 10:44:39 2002
+Return-path: <pgsql-hackers-owner+M24164@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g5PEicF14506
+	for <pgman@candle.pha.pa.us>; Tue, 25 Jun 2002 10:44:38 -0400 (EDT)
+Received: from localhost.localdomain (postgresql.org [64.49.215.8])
+	by localhost (Postfix) with ESMTP
+	id E20F8476322; Tue, 25 Jun 2002 10:44:27 -0400 (EDT)
+Mailbox-Line: From tgl@sss.pgh.pa.us  Tue Jun 25 10:44:27 2002
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP
+	id 47B4847609E; Tue, 25 Jun 2002 10:34:29 -0400 (EDT)
+Received: from localhost.localdomain (postgresql.org [64.49.215.8])
+	by localhost (Postfix) with ESMTP id 52A5F475E5F
+	for <pgsql-hackers@postgresql.org>; Tue, 25 Jun 2002 10:34:25 -0400 (EDT)
+Mailbox-Line: From tgl@sss.pgh.pa.us  Tue Jun 25 10:34:25 2002
+Received: from sss.pgh.pa.us (unknown [192.204.191.242])
+	by postgresql.org (Postfix) with ESMTP id 458BB476239
+	for <pgsql-hackers@postgresql.org>; Tue, 25 Jun 2002 10:32:12 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.11.4/8.11.4) with ESMTP id g5PEWA107527;
+	Tue, 25 Jun 2002 10:32:10 -0400 (EDT)
+To: Bruce Momjian <pgman@candle.pha.pa.us>
+cc: Curt Sampson <cjs@cynic.net>, "J. R. Nield" <jrnield@usol.com>,
+   PostgreSQL Hacker <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Buffer Management 
+In-Reply-To: <200206251420.g5PEKT310222@candle.pha.pa.us> 
+References: <200206251420.g5PEKT310222@candle.pha.pa.us>
+Comments: In-reply-to Bruce Momjian <pgman@candle.pha.pa.us>
+	message dated "Tue, 25 Jun 2002 10:20:29 -0400"
+Date: Tue, 25 Jun 2002 10:32:10 -0400
+Message-ID: <7524.1025015530@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Spam-Status: No, hits=-5.3 required=5.0
+	tests=IN_REP_TO,X_NOT_PRESENT
+	version=2.30
+Status: ORr
+
+Bruce Momjian <pgman@candle.pha.pa.us> writes:
+> This will also work well when we have non-SysV semaphore support, like
+> Posix semaphores, so we would be able to run with no SysV stuff.
+
+You do realize that we can use Posix semaphores today?  The Darwin (OS X)
+port uses 'em now.  That's one reason I am more interested in mmap as
+a shmget substitute than I used to be.
+
+			regards, tom lane
+
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 5: Have you checked our extensive FAQ?
+
+http://www.postgresql.org/users-lounge/docs/faq.html
+
+
+
+From pgsql-hackers-owner+M24167@postgresql.org Tue Jun 25 11:02:20 2002
+Return-path: <pgsql-hackers-owner+M24167@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g5PF2JF16153
+	for <pgman@candle.pha.pa.us>; Tue, 25 Jun 2002 11:02:20 -0400 (EDT)
+Received: from localhost.localdomain (postgresql.org [64.49.215.8])
+	by localhost (Postfix) with ESMTP
+	id 7FB0F47630C; Tue, 25 Jun 2002 11:02:11 -0400 (EDT)
+Mailbox-Line: From pgman@candle.pha.pa.us  Tue Jun 25 11:02:11 2002
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP
+	id B755E475C22; Tue, 25 Jun 2002 10:59:45 -0400 (EDT)
+Received: from localhost.localdomain (postgresql.org [64.49.215.8])
+	by localhost (Postfix) with ESMTP id 7D058476387
+	for <pgsql-hackers@postgresql.org>; Tue, 25 Jun 2002 10:59:38 -0400 (EDT)
+Mailbox-Line: From pgman@candle.pha.pa.us  Tue Jun 25 10:59:38 2002
+Received: from candle.pha.pa.us (216-55-132-35.dsl.san-diego.abac.net [216.55.132.35])
+	by postgresql.org (Postfix) with ESMTP id 49F8C475DC6
+	for <pgsql-hackers@postgresql.org>; Tue, 25 Jun 2002 10:56:00 -0400 (EDT)
+Received: (from pgman@localhost)
+	by candle.pha.pa.us (8.11.6/8.10.1) id g5PEtst15464;
+	Tue, 25 Jun 2002 10:55:54 -0400 (EDT)
+From: Bruce Momjian <pgman@candle.pha.pa.us>
+Message-ID: <200206251455.g5PEtst15464@candle.pha.pa.us>
+Subject: Re: [HACKERS] Buffer Management
+In-Reply-To: <7524.1025015530@sss.pgh.pa.us>
+To: Tom Lane <tgl@sss.pgh.pa.us>
+Date: Tue, 25 Jun 2002 10:55:54 -0400 (EDT)
+cc: Curt Sampson <cjs@cynic.net>, "J. R. Nield" <jrnield@usol.com>,
+   PostgreSQL Hacker <pgsql-hackers@postgresql.org>
+X-Mailer: ELM [version 2.4ME+ PL97 (25)]
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=US-ASCII
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Spam-Status: No, hits=-3.4 required=5.0
+	tests=IN_REP_TO
+	version=2.30
+Status: OR
+
+Tom Lane wrote:
+> Bruce Momjian <pgman@candle.pha.pa.us> writes:
+> > This will also work well when we have non-SysV semaphore support, like
+> > Posix semaphores, so we would be able to run with no SysV stuff.
+> 
+> You do realize that we can use Posix semaphores today?  The Darwin (OS X)
+> port uses 'em now.  That's one reason I am more interested in mmap as
+
+No, I didn't realize we had gotten that far.
+
+-- 
+  Bruce Momjian                        |  http://candle.pha.pa.us
+  pgman@candle.pha.pa.us               |  (610) 853-3000
+  +  If your life is a hard drive,     |  830 Blythe Avenue
+  +  Christ can be your backup.        |  Drexel Hill, Pennsylvania 19026
+
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 2: you can get off all lists at once with the unregister command
+    (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
+
+
+
+From pgsql-hackers-owner+M24168@postgresql.org Tue Jun 25 11:05:13 2002
+Return-path: <pgsql-hackers-owner+M24168@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g5PF5CF16398
+	for <pgman@candle.pha.pa.us>; Tue, 25 Jun 2002 11:05:13 -0400 (EDT)
+Received: from localhost.localdomain (postgresql.org [64.49.215.8])
+	by localhost (Postfix) with ESMTP
+	id 30D2847634D; Tue, 25 Jun 2002 11:05:04 -0400 (EDT)
+Mailbox-Line: From pgman@candle.pha.pa.us  Tue Jun 25 11:05:04 2002
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP
+	id B49B5475EFA; Tue, 25 Jun 2002 10:59:47 -0400 (EDT)
+Received: from localhost.localdomain (postgresql.org [64.49.215.8])
+	by localhost (Postfix) with ESMTP id A0F20475978
+	for <pgsql-hackers@postgresql.org>; Tue, 25 Jun 2002 10:59:43 -0400 (EDT)
+Mailbox-Line: From pgman@candle.pha.pa.us  Tue Jun 25 10:59:43 2002
+Received: from candle.pha.pa.us (216-55-132-35.dsl.san-diego.abac.net [216.55.132.35])
+	by postgresql.org (Postfix) with ESMTP id 8160E4762F0
+	for <pgsql-hackers@postgresql.org>; Tue, 25 Jun 2002 10:57:03 -0400 (EDT)
+Received: (from pgman@localhost)
+	by candle.pha.pa.us (8.11.6/8.10.1) id g5PEuwO15564;
+	Tue, 25 Jun 2002 10:56:58 -0400 (EDT)
+From: Bruce Momjian <pgman@candle.pha.pa.us>
+Message-ID: <200206251456.g5PEuwO15564@candle.pha.pa.us>
+Subject: Re: [HACKERS] Buffer Management
+In-Reply-To: <7498.1025015389@sss.pgh.pa.us>
+To: Tom Lane <tgl@sss.pgh.pa.us>
+Date: Tue, 25 Jun 2002 10:56:58 -0400 (EDT)
+cc: Curt Sampson <cjs@cynic.net>, "J. R. Nield" <jrnield@usol.com>,
+   PostgreSQL Hacker <pgsql-hackers@postgresql.org>
+X-Mailer: ELM [version 2.4ME+ PL97 (25)]
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=US-ASCII
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Spam-Status: No, hits=-2.3 required=5.0
+	tests=IN_REP_TO,DOUBLE_CAPSWORD
+	version=2.30
+Status: OR
+
+Tom Lane wrote:
+> Curt Sampson <cjs@cynic.net> writes:
+> > On Tue, 25 Jun 2002, Tom Lane wrote:
+> >> The other discussion seemed to be considering how to mmap individual
+> >> data files right into backends' address space.  I do not believe this
+> >> can possibly work, because of loss of control over visibility of data
+> >> changes to other backends, timing of write-backs, etc.
+> 
+> > I don't understand why there would be any loss of visibility of changes.
+> > If two backends mmap the same block of a file, and it's shared, that's
+> > the same block of physical memory that they're accessing.
+> 
+> Is it?  You have a mighty narrow conception of the range of
+> implementations that's possible for mmap.
+> 
+> But the main problem is that mmap doesn't let us control when changes to
+> the memory buffer will get reflected back to disk --- AFAICT, the OS is
+> free to do the write-back at any instant after you dirty the page, and
+> that completely breaks the WAL algorithm.  (WAL = write AHEAD log;
+> the log entry describing a change must hit disk before the data page
+> change itself does.)
+
+Can we mmap WAL without problems?  Not sure if there is any gain to it
+because we just write it and rarely read from it.
+
+-- 
+  Bruce Momjian                        |  http://candle.pha.pa.us
+  pgman@candle.pha.pa.us               |  (610) 853-3000
+  +  If your life is a hard drive,     |  830 Blythe Avenue
+  +  Christ can be your backup.        |  Drexel Hill, Pennsylvania 19026
+
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 2: you can get off all lists at once with the unregister command
+    (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
+
+
+
+From tgl@sss.pgh.pa.us Tue Jun 25 11:00:20 2002
+Return-path: <tgl@sss.pgh.pa.us>
+Received: from sss.pgh.pa.us (root@[192.204.191.242])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g5PF0JF15955
+	for <pgman@candle.pha.pa.us>; Tue, 25 Jun 2002 11:00:19 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.11.4/8.11.4) with ESMTP id g5PF0J107808;
+	Tue, 25 Jun 2002 11:00:19 -0400 (EDT)
+To: Bruce Momjian <pgman@candle.pha.pa.us>
+cc: Curt Sampson <cjs@cynic.net>, "J. R. Nield" <jrnield@usol.com>,
+   PostgreSQL Hacker <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Buffer Management 
+In-Reply-To: <200206251456.g5PEuwO15564@candle.pha.pa.us> 
+References: <200206251456.g5PEuwO15564@candle.pha.pa.us>
+Comments: In-reply-to Bruce Momjian <pgman@candle.pha.pa.us>
+	message dated "Tue, 25 Jun 2002 10:56:58 -0400"
+Date: Tue, 25 Jun 2002 11:00:19 -0400
+Message-ID: <7805.1025017219@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Status: ORr
+
+Bruce Momjian <pgman@candle.pha.pa.us> writes:
+> Can we mmap WAL without problems?  Not sure if there is any gain to it
+> because we just write it and rarely read from it.
+
+Perhaps, but I don't see any point to it.
+
+			regards, tom lane
+
+From pgsql-hackers-owner+M24171@postgresql.org Tue Jun 25 11:14:23 2002
+Return-path: <pgsql-hackers-owner+M24171@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g5PFENF17356
+	for <pgman@candle.pha.pa.us>; Tue, 25 Jun 2002 11:14:23 -0400 (EDT)
+Received: from localhost.localdomain (postgresql.org [64.49.215.8])
+	by localhost (Postfix) with ESMTP
+	id 8EAA3476244; Tue, 25 Jun 2002 11:14:09 -0400 (EDT)
+Mailbox-Line: From pgman@candle.pha.pa.us  Tue Jun 25 11:14:09 2002
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP
+	id C32024762B0; Tue, 25 Jun 2002 11:10:33 -0400 (EDT)
+Received: from localhost.localdomain (postgresql.org [64.49.215.8])
+	by localhost (Postfix) with ESMTP id 1F81C4762A2
+	for <pgsql-hackers@postgresql.org>; Tue, 25 Jun 2002 11:10:31 -0400 (EDT)
+Mailbox-Line: From pgman@candle.pha.pa.us  Tue Jun 25 11:10:31 2002
+Received: from candle.pha.pa.us (216-55-132-35.dsl.san-diego.abac.net [216.55.132.35])
+	by postgresql.org (Postfix) with ESMTP id CE09D475B33
+	for <pgsql-hackers@postgresql.org>; Tue, 25 Jun 2002 11:02:10 -0400 (EDT)
+Received: (from pgman@localhost)
+	by candle.pha.pa.us (8.11.6/8.10.1) id g5PF25r16113;
+	Tue, 25 Jun 2002 11:02:05 -0400 (EDT)
+From: Bruce Momjian <pgman@candle.pha.pa.us>
+Message-ID: <200206251502.g5PF25r16113@candle.pha.pa.us>
+Subject: Re: [HACKERS] Buffer Management
+In-Reply-To: <7805.1025017219@sss.pgh.pa.us>
+To: Tom Lane <tgl@sss.pgh.pa.us>
+Date: Tue, 25 Jun 2002 11:02:05 -0400 (EDT)
+cc: Curt Sampson <cjs@cynic.net>, "J. R. Nield" <jrnield@usol.com>,
+   PostgreSQL Hacker <pgsql-hackers@postgresql.org>
+X-Mailer: ELM [version 2.4ME+ PL97 (25)]
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=US-ASCII
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Spam-Status: No, hits=-3.4 required=5.0
+	tests=IN_REP_TO
+	version=2.30
+Status: OR
+
+Tom Lane wrote:
+> Bruce Momjian <pgman@candle.pha.pa.us> writes:
+> > Can we mmap WAL without problems?  Not sure if there is any gain to it
+> > because we just write it and rarely read from it.
+> 
+> Perhaps, but I don't see any point to it.
+
+Agreed.  I have been poking around google looking for an article I read
+months ago saying that mmap of files is slighly faster in low memory
+usage situations, but much slower in high memory usage situations
+because the kernel doesn't know as much about the file access in mmap as
+it does with stdio.  I will find it.  :-)
+
+-- 
+  Bruce Momjian                        |  http://candle.pha.pa.us
+  pgman@candle.pha.pa.us               |  (610) 853-3000
+  +  If your life is a hard drive,     |  830 Blythe Avenue
+  +  Christ can be your backup.        |  Drexel Hill, Pennsylvania 19026
+
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 1: subscribe and unsubscribe commands go to majordomo@postgresql.org
+
+
+
+From pgsql-hackers-owner+M24179@postgresql.org Tue Jun 25 12:13:40 2002
+Return-path: <pgsql-hackers-owner+M24179@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g5PGDdF22106
+	for <pgman@candle.pha.pa.us>; Tue, 25 Jun 2002 12:13:39 -0400 (EDT)
+Received: from localhost.localdomain (postgresql.org [64.49.215.8])
+	by localhost (Postfix) with ESMTP
+	id 962BD4762AF; Tue, 25 Jun 2002 12:13:32 -0400 (EDT)
+Mailbox-Line: From brad@bradm.net  Tue Jun 25 12:13:32 2002
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP
+	id 06727476181; Tue, 25 Jun 2002 12:13:31 -0400 (EDT)
+Received: from localhost.localdomain (postgresql.org [64.49.215.8])
+	by localhost (Postfix) with ESMTP id AB1CB4760F7
+	for <pgsql-hackers@postgresql.org>; Tue, 25 Jun 2002 12:13:28 -0400 (EDT)
+Mailbox-Line: From brad@bradm.net  Tue Jun 25 12:13:28 2002
+Received: from bradm.net (208-59-250-198.c3-0.smr-ubr1.sbo-smr.ma.cable.rcn.com [208.59.250.198])
+	by postgresql.org (Postfix) with ESMTP id 594BD476083
+	for <pgsql-hackers@postgresql.org>; Tue, 25 Jun 2002 12:13:27 -0400 (EDT)
+Received: (from brad@localhost)
+	by bradm.net (8.11.6/8.11.6) id g5PGCjA14829;
+	Tue, 25 Jun 2002 12:12:45 -0400
+Date: Tue, 25 Jun 2002 12:12:45 -0400
+From: Bradley McLean <brad@bradm.net>
+To: Tom Lane <tgl@sss.pgh.pa.us>
+cc: Mario Weilguni <mario.weilguni@icomedias.com>,
+   Curt Sampson <cjs@cynic.net>, "J. R. Nield" <jrnield@usol.com>,
+   Bruce Momjian <pgman@candle.pha.pa.us>,
+   PostgreSQL Hacker <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Buffer Management
+Message-ID: <20020625121245.A14762@nia.bradm.net>
+References: <4D618F6493CE064A844A5D496733D667038E68@freedom.icomedias.com> <7703.1025016772@sss.pgh.pa.us>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+User-Agent: Mutt/1.2.5.1i
+In-Reply-To: <7703.1025016772@sss.pgh.pa.us>; from tgl@sss.pgh.pa.us on Tue, Jun 25, 2002 at 10:52:52AM -0400
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Spam-Status: No, hits=-4.2 required=5.0
+	tests=IN_REP_TO,X_NOT_PRESENT,DOUBLE_CAPSWORD
+	version=2.30
+Status: OR
+
+* Tom Lane (tgl@sss.pgh.pa.us) [020625 11:00]:
+> 
+> msync can force not-yet-written changes down to disk.  It does not
+> prevent the OS from choosing to write changes *before* you invoke msync.
+> 
+> Our problem is that we want to enforce the write ordering "WAL before
+> data file".  To do that, we write and fsync (or DSYNC, or something)
+> a WAL entry before we issue the write() against the data file.  We
+> don't really care if the kernel delays the data file write beyond that
+> point, but we can be certain that the data file write did not occur
+> too early.
+> 
+> msync is designed to ensure exactly the opposite constraint: it can
+> guarantee that no changes remain unwritten after time T, but it can't
+> guarantee that changes aren't written before time T.
+
+Okay, so instead of looking for constraints from the OS on the data file,
+use the constraints on the WAL file.  It would work at the cost of a buffer
+copy?  Er, maybe two:
+
+mmap the data file and WAL separately.
+Copy the data file page to the WAL mmap area.
+Modify the page.
+msync() the WAL.
+Copy the page to the data file mmap area.
+msync() or not the data file.
+
+(This is half baked, just thought I'd see if it stirred further thought).
+
+As another approach, how expensive is re-MMAPing portions of the files
+compared to the copies.
+
+-Brad
+
+> 
+> 			regards, tom lane
+> 
+> 
+> 
+> ---------------------------(end of broadcast)---------------------------
+> TIP 3: if posting/reading through Usenet, please send an appropriate
+> subscribe-nomail command to majordomo@postgresql.org so that your
+> message can get through to the mailing list cleanly
+> 
+
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 4: Don't 'kill -9' the postmaster
+
+
+
+From cjs@cynic.net Wed Jun 26 00:13:45 2002
+Return-path: <cjs@cynic.net>
+Received: from academic.cynic.net (academic.cynic.net [63.144.177.3])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g5Q4Dig27201
+	for <pgman@candle.pha.pa.us>; Wed, 26 Jun 2002 00:13:45 -0400 (EDT)
+Received: from angelic-academic.cvpn.cynic.net (angelic-academic.cvpn.cynic.net [198.73.220.224])
+	by academic.cynic.net (Postfix) with ESMTP
+	id B95E5F820; Wed, 26 Jun 2002 04:13:45 +0000 (UTC)
+Date: Wed, 26 Jun 2002 13:13:42 +0900 (JST)
+From: Curt Sampson <cjs@cynic.net>
+To: Tom Lane <tgl@sss.pgh.pa.us>
+cc: "J. R. Nield" <jrnield@usol.com>, Bruce Momjian <pgman@candle.pha.pa.us>,
+   PostgreSQL Hacker <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Buffer Management 
+In-Reply-To: <7498.1025015389@sss.pgh.pa.us>
+Message-ID: <Pine.NEB.4.43.0206261149170.670-100000@angelic.cynic.net>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Status: OR
+
+On Tue, 25 Jun 2002, Tom Lane wrote:
+
+> Curt Sampson <cjs@cynic.net> writes:
+>
+> > I don't understand why there would be any loss of visibility of changes.
+> > If two backends mmap the same block of a file, and it's shared, that's
+> > the same block of physical memory that they're accessing.
+>
+> Is it?  You have a mighty narrow conception of the range of
+> implementations that's possible for mmap.
+
+It's certainly possible to implement something that you call mmap
+that is not. But if you are using the posix-defined MAP_SHARED flag,
+the behaviour above is what you see. It might be implemented slightly
+differently internally, but that's no concern of postgres. And I find
+it pretty unlikely that it would be implemented otherwise without good
+reason.
+
+Note that your proposal of using mmap to replace sysv shared memory
+relies on the behaviour I've described too. As well, if you're replacing
+sysv shared memory with an mmap'd file, you may end up doing excessive
+disk I/O on systems without the MAP_NOSYNC option. (Without this option,
+the update thread/daemon may ensure that every buffer is flushed to the
+backing store on disk every 30 seconds or so. You might be able to get
+around this by using a small file-backed area for things that need to
+persist after a crash, and a larger anonymous area for things that don't
+need to persist after a crash.)
+
+> But the main problem is that mmap doesn't let us control when changes to
+> the memory buffer will get reflected back to disk --- AFAICT, the OS is
+> free to do the write-back at any instant after you dirty the page, and
+> that completely breaks the WAL algorithm.  (WAL = write AHEAD log;
+> the log entry describing a change must hit disk before the data page
+> change itself does.)
+
+Hm. Well ,we could try not to write the data to the page until
+after we receive notification that our WAL data is committed to
+stable storage. However, new the data has to be availble to all of
+the backends at the exact time that the commit happens. Perhaps a
+shared list of pending writes?
+
+Another option would be to just let it write, but on startup, scan
+all of the data blocks in the database for tuples that have a
+transaction ID later than the last one we updated to, and remove
+them. That could pretty darn expensive on a large database, though.
+
+cjs
+-- 
+Curt Sampson  <cjs@cynic.net>   +81 90 7737 2974   http://www.netbsd.org
+    Don't you know, in this new Dark Age, we're all light.  --XTC
+
+
+From tgl@sss.pgh.pa.us Wed Jun 26 09:22:05 2002
+Return-path: <tgl@sss.pgh.pa.us>
+Received: from sss.pgh.pa.us (root@[192.204.191.242])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g5QDM3g26028
+	for <pgman@candle.pha.pa.us>; Wed, 26 Jun 2002 09:22:04 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.11.4/8.11.4) with ESMTP id g5QDLxv01699;
+	Wed, 26 Jun 2002 09:21:59 -0400 (EDT)
+To: Curt Sampson <cjs@cynic.net>
+cc: "J. R. Nield" <jrnield@usol.com>, Bruce Momjian <pgman@candle.pha.pa.us>,
+   PostgreSQL Hacker <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Buffer Management 
+In-Reply-To: <Pine.NEB.4.43.0206261149170.670-100000@angelic.cynic.net> 
+References: <Pine.NEB.4.43.0206261149170.670-100000@angelic.cynic.net>
+Comments: In-reply-to Curt Sampson <cjs@cynic.net>
+	message dated "Wed, 26 Jun 2002 13:13:42 +0900"
+Date: Wed, 26 Jun 2002 09:21:59 -0400
+Message-ID: <1696.1025097719@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Status: ORr
+
+Curt Sampson <cjs@cynic.net> writes:
+> Note that your proposal of using mmap to replace sysv shared memory
+> relies on the behaviour I've described too.
+
+True, but I was not envisioning mapping an actual file --- at least
+on HPUX, the only way to generate an arbitrary-sized shared memory
+region is to use MAP_ANONYMOUS and not have the mmap'd area connected
+to any file at all.  It's not farfetched to think that this aspect
+of mmap might work differently from mapping pieces of actual files.
+
+In practice of course we'd have to restrict use of any such
+implementation to platforms where mmap behaves reasonably ... according
+to our definition of "reasonably".
+
+			regards, tom lane
+
+From pgsql-hackers-owner+M24252@postgresql.org Wed Jun 26 16:14:36 2002
+Return-path: <pgsql-hackers-owner+M24252@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g5QKEag03467
+	for <pgman@candle.pha.pa.us>; Wed, 26 Jun 2002 16:14:36 -0400 (EDT)
+Received: from localhost.localdomain (postgresql.org [64.49.215.8])
+	by localhost (Postfix) with ESMTP
+	id B10E9476B4D; Wed, 26 Jun 2002 15:16:32 -0400 (EDT)
+Mailbox-Line: From pgman@candle.pha.pa.us  Wed Jun 26 15:16:32 2002
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP
+	id 6635E476DC0; Wed, 26 Jun 2002 14:31:10 -0400 (EDT)
+Received: from localhost.localdomain (postgresql.org [64.49.215.8])
+	by localhost (Postfix) with ESMTP id 13F884765BD
+	for <pgsql-hackers@postgresql.org>; Wed, 26 Jun 2002 14:22:36 -0400 (EDT)
+Mailbox-Line: From pgman@candle.pha.pa.us  Wed Jun 26 14:22:36 2002
+Received: from candle.pha.pa.us (216-55-132-35.dsl.san-diego.abac.net [216.55.132.35])
+	by postgresql.org (Postfix) with ESMTP id 3F02D476EB3
+	for <pgsql-hackers@postgresql.org>; Wed, 26 Jun 2002 13:11:37 -0400 (EDT)
+Received: (from pgman@localhost)
+	by candle.pha.pa.us (8.11.6/8.10.1) id g5QHBJM15565;
+	Wed, 26 Jun 2002 13:11:19 -0400 (EDT)
+From: Bruce Momjian <pgman@candle.pha.pa.us>
+Message-ID: <200206261711.g5QHBJM15565@candle.pha.pa.us>
+Subject: Re: [HACKERS] Buffer Management
+In-Reply-To: <1696.1025097719@sss.pgh.pa.us>
+To: Tom Lane <tgl@sss.pgh.pa.us>
+Date: Wed, 26 Jun 2002 13:11:19 -0400 (EDT)
+cc: Curt Sampson <cjs@cynic.net>, "J. R. Nield" <jrnield@usol.com>,
+   PostgreSQL Hacker <pgsql-hackers@postgresql.org>
+X-Mailer: ELM [version 2.4ME+ PL97 (25)]
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=US-ASCII
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Spam-Status: No, hits=-3.4 required=5.0
+	tests=IN_REP_TO
+	version=2.30
+Status: OR
+
+Tom Lane wrote:
+> Curt Sampson <cjs@cynic.net> writes:
+> > Note that your proposal of using mmap to replace sysv shared memory
+> > relies on the behaviour I've described too.
+> 
+> True, but I was not envisioning mapping an actual file --- at least
+> on HPUX, the only way to generate an arbitrary-sized shared memory
+> region is to use MAP_ANONYMOUS and not have the mmap'd area connected
+> to any file at all.  It's not farfetched to think that this aspect
+> of mmap might work differently from mapping pieces of actual files.
+> 
+> In practice of course we'd have to restrict use of any such
+> implementation to platforms where mmap behaves reasonably ... according
+> to our definition of "reasonably".
+
+Yes, I am told mapping /dev/zero is the same as the anon map.
+
+-- 
+  Bruce Momjian                        |  http://candle.pha.pa.us
+  pgman@candle.pha.pa.us               |  (610) 853-3000
+  +  If your life is a hard drive,     |  830 Blythe Avenue
+  +  Christ can be your backup.        |  Drexel Hill, Pennsylvania 19026
+
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 6: Have you searched our list archives?
+
+http://archives.postgresql.org
+
+
+
+From pgsql-hackers-owner+M24292@postgresql.org Wed Jun 26 23:39:10 2002
+Return-path: <pgsql-hackers-owner+M24292@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g5R3d9g02161
+	for <pgman@candle.pha.pa.us>; Wed, 26 Jun 2002 23:39:09 -0400 (EDT)
+Received: from localhost.localdomain (postgresql.org [64.49.215.8])
+	by localhost (Postfix) with ESMTP
+	id 88BF4476287; Wed, 26 Jun 2002 23:38:56 -0400 (EDT)
+Mailbox-Line: From cjs@cynic.net  Wed Jun 26 23:38:56 2002
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP
+	id 3C069476954; Wed, 26 Jun 2002 23:38:17 -0400 (EDT)
+Received: from localhost.localdomain (postgresql.org [64.49.215.8])
+	by localhost (Postfix) with ESMTP id A0397476941
+	for <pgsql-hackers@postgresql.org>; Wed, 26 Jun 2002 23:38:12 -0400 (EDT)
+Mailbox-Line: From cjs@cynic.net  Wed Jun 26 23:38:12 2002
+Received: from academic.cynic.net (academic.cynic.net [63.144.177.3])
+	by postgresql.org (Postfix) with ESMTP id 2AA24475C40
+	for <pgsql-hackers@postgresql.org>; Wed, 26 Jun 2002 23:37:18 -0400 (EDT)
+Received: from angelic-academic.cvpn.cynic.net (angelic-academic.cvpn.cynic.net [198.73.220.224])
+	by academic.cynic.net (Postfix) with ESMTP
+	id 179D5F822; Thu, 27 Jun 2002 03:37:20 +0000 (UTC)
+Date: Thu, 27 Jun 2002 12:37:18 +0900 (JST)
+From: Curt Sampson <cjs@cynic.net>
+To: Tom Lane <tgl@sss.pgh.pa.us>
+cc: "J. R. Nield" <jrnield@usol.com>, Bruce Momjian <pgman@candle.pha.pa.us>,
+   PostgreSQL Hacker <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Buffer Management 
+In-Reply-To: <1696.1025097719@sss.pgh.pa.us>
+Message-ID: <Pine.NEB.4.43.0206271228170.6613-100000@angelic.cynic.net>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Spam-Status: No, hits=-5.3 required=5.0
+	tests=IN_REP_TO,X_NOT_PRESENT
+	version=2.30
+Status: OR
+
+On Wed, 26 Jun 2002, Tom Lane wrote:
+
+> Curt Sampson <cjs@cynic.net> writes:
+> > Note that your proposal of using mmap to replace sysv shared memory
+> > relies on the behaviour I've described too.
+>
+> True, but I was not envisioning mapping an actual file --- at least
+> on HPUX, the only way to generate an arbitrary-sized shared memory
+> region is to use MAP_ANONYMOUS and not have the mmap'd area connected
+> to any file at all.  It's not farfetched to think that this aspect
+> of mmap might work differently from mapping pieces of actual files.
+
+I find it somewhat farfetched, for a couple of reasons:
+
+    1. Memory mapped with the MAP_SHARED flag is shared memory,
+    anonymous or not. POSIX is pretty explicit about how this works,
+    and the "standard" for mmap that predates POSIX is the same.
+    Anonymous memory does not behave differently.
+
+    You could just as well say that some systems might exist such
+    that one process can write() a block to a file, and then another
+    might read() it afterwards but not see the changes. Postgres
+    should not try to deal with hypothetical systems that are so
+    completely broken.
+
+    2. Mmap is implemented as part of a unified buffer cache system
+    on all of today's operating systems that I know of. The memory
+    is backed by swap space when anonymous, and by a specified file
+    when not anonymous; but the way these two are handled is
+    *exactly* the same internally.
+
+    Even on older systems without unified buffer cache, the behaviour
+    is the same between anonymous and file-backed mmap'd memory.
+    And there would be no point in making it otherwise. Mmap is
+    designed to let you share memory; why make a broken implementation
+    under certain circumstances?
+
+> In practice of course we'd have to restrict use of any such
+> implementation to platforms where mmap behaves reasonably ... according
+> to our definition of "reasonably".
+
+Of course. As we do already with regular I/O.
+
+cjs
+-- 
+Curt Sampson  <cjs@cynic.net>   +81 90 7737 2974   http://www.netbsd.org
+    Don't you know, in this new Dark Age, we're all light.  --XTC
+
+
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 3: if posting/reading through Usenet, please send an appropriate
+subscribe-nomail command to majordomo@postgresql.org so that your
+message can get through to the mailing list cleanly
+
+
+
