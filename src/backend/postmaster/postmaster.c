@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.189 2000/11/21 21:16:00 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.190 2000/11/25 04:13:17 momjian Exp $
  *
  * NOTES
  *
@@ -114,7 +114,7 @@ static Dllist *PortList;
 
 /* The socket number we are listening for connections on */
 int PostPortNumber;
-char * UnixSocketName;
+char * UnixSocketDir;
 char * Virtual_host;
 
 /*
@@ -456,7 +456,7 @@ PostmasterMain(int argc, char *argv[])
 				break;
 			case 'k':
 				/* Set PGUNIXSOCKET by hand. */
-				UnixSocketName = optarg;
+				UnixSocketDir = optarg;
 				break;
 #ifdef USE_SSL
 			case 'l':
@@ -606,7 +606,7 @@ PostmasterMain(int argc, char *argv[])
 	if (NetServer)
 	{
 		status = StreamServerPort(AF_INET, Virtual_host,
-						(unsigned short) PostPortNumber, UnixSocketName,
+						(unsigned short) PostPortNumber, UnixSocketDir,
 						&ServerSock_INET);
 		if (status != STATUS_OK)
 		{
@@ -618,7 +618,7 @@ PostmasterMain(int argc, char *argv[])
 
 #ifdef HAVE_UNIX_SOCKETS
 	status = StreamServerPort(AF_UNIX, Virtual_host,
-						(unsigned short) PostPortNumber, UnixSocketName, 
+						(unsigned short) PostPortNumber, UnixSocketDir, 
 						&ServerSock_UNIX);
 	if (status != STATUS_OK)
 	{
