@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.87 2002/02/19 20:11:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.88 2002/02/25 04:06:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -97,7 +97,6 @@ static Index CatalogCacheComputeHashIndex(CatCache *cache,
 static Index CatalogCacheComputeTupleHashIndex(CatCache *cache,
 								  HeapTuple tuple);
 static void CatalogCacheInitializeCache(CatCache *cache);
-static Datum cc_hashname(PG_FUNCTION_ARGS);
 #ifdef CATCACHE_STATS
 static void CatCachePrintStats(void);
 #endif
@@ -116,7 +115,7 @@ GetCCHashFunc(Oid keytype)
 		case CHAROID:
 			return hashchar;
 		case NAMEOID:
-			return cc_hashname;
+			return hashname;
 		case INT2OID:
 			return hashint2;
 		case INT2VECTOROID:
@@ -136,23 +135,6 @@ GetCCHashFunc(Oid keytype)
 			return (PGFunction) NULL;
 	}
 }
-
-static Datum
-cc_hashname(PG_FUNCTION_ARGS)
-{
-	/*
-	 * We need our own variant of hashname because we want to accept
-	 * null-terminated C strings as search values for name fields. So, we
-	 * have to make sure the data is correctly padded before we compute
-	 * the hash value.
-	 */
-	NameData	my_n;
-
-	namestrcpy(&my_n, NameStr(*PG_GETARG_NAME(0)));
-
-	return DirectFunctionCall1(hashname, NameGetDatum(&my_n));
-}
-
 
 #ifdef CATCACHE_STATS
 

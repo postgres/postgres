@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hash.h,v 1.42 2001/11/05 17:46:31 momjian Exp $
+ * $Id: hash.h,v 1.43 2002/02/25 04:06:52 momjian Exp $
  *
  * NOTES
  *		modeled after Margo Seltzer's hash implementation for unix.
@@ -265,7 +265,7 @@ extern Datum hashoidvector(PG_FUNCTION_ARGS);
 extern Datum hashint2vector(PG_FUNCTION_ARGS);
 extern Datum hashname(PG_FUNCTION_ARGS);
 extern Datum hashvarlena(PG_FUNCTION_ARGS);
-extern Datum hash_any(char *keydata, int keylen);
+extern Datum hash_any(const char *keydata, int keylen);
 
 
 /* private routines */
