@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/move.sgml,v 1.26 2003/11/29 19:51:39 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/move.sgml,v 1.27 2004/03/23 22:39:22 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -50,7 +50,8 @@ MOVE [ <replaceable class="PARAMETER">direction</replaceable> { FROM | IN } ] <r
 MOVE <replaceable class="parameter">count</replaceable>
 </screen>
    The <replaceable class="parameter">count</replaceable> is the number
-   of rows moved over (possibly zero).
+   of rows that a <command>FETCH</command> command with the same parameters
+   would have returned (possibly zero).
   </para>
  </refsect1>
 
