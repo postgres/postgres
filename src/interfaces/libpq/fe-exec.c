@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.113 2001/10/25 05:50:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.113.2.1 2002/04/08 06:21:31 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -115,6 +115,7 @@ PQescapeString(char *to, const char *from, size_t length)
  *		'\0' == ASCII  0 == \\000
  *		'\'' == ASCII 39 == \'
  *		'\\' == ASCII 92 == \\\\
+ *		anything >= 0x80 ---> \\ooo (where ooo is an octal expression)
  */
 unsigned char *
 PQescapeBytea(unsigned char *bintext, size_t binlen, size_t *bytealen)
@@ -131,40 +132,39 @@ PQescapeBytea(unsigned char *bintext, size_t binlen, size_t *bytealen)
 	len = 1;
 
 	vp = bintext;
-	for (i = binlen; i != 0; i--, vp++)
+	for (i = binlen; i > 0; i--, vp++)
 	{
-		if (*vp == 0)
-			len += 5;
-		else if (*vp == 39)
+		if (*vp == 0 || *vp >= 0x80)
+			len += 5;	/* '5' is for '\\ooo' */
+		else if (*vp == '\'')
 			len += 2;
-		else if (*vp == 92)
+		else if (*vp == '\\')
 			len += 4;
 		else
 			len++;
 	}
 
 	rp = result = (unsigned char *) malloc(len);
+	if (rp == NULL)
+		return NULL;
+
 	vp = bintext;
 	*bytealen = len;
 
-	for (i = binlen; i != 0; i--, vp++)
+	for (i = binlen; i > 0; i--, vp++)
 	{
-		if (*vp == 0)
+		if (*vp == 0 || *vp >= 0x80)
 		{
-			rp[0] = '\\';
-			rp[1] = '\\';
-			rp[2] = '0';
-			rp[3] = '0';
-			rp[4] = '0';
+			(void)sprintf(rp,"\\\\%03o",*vp);
 			rp += 5;
 		}
-		else if (*vp == 39)
+		else if (*vp == '\'')
 		{
 			rp[0] = '\\';
 			rp[1] = '\'';
 			rp += 2;
 		}
-		else if (*vp == 92)
+		else if (*vp == '\\')
 		{
 			rp[0] = '\\';
 			rp[1] = '\\';
