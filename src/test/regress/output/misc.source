@@ -609,6 +609,9 @@ SELECT user_relns() AS user_relns
  iexit
  ihighway
  inet_tbl
+ inhe
+ inhf
+ inhx
  insert_seq
  insert_tbl
  int2_tbl
@@ -657,7 +660,7 @@ SELECT user_relns() AS user_relns
  toyemp
  varchar_tbl
  xacttest
-(93 rows)
+(96 rows)
 
 --SELECT name(equipment(hobby_construct(text 'skywalking', text 'mer'))) AS equip_name;
 SELECT hobbies_by_name('basketball');

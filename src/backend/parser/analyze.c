@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.275 2003/06/16 02:03:37 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.276 2003/06/25 03:40:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,7 @@
 #include "catalog/pg_index.h"
 #include "catalog/pg_type.h"
 #include "commands/prepare.h"
+#include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/var.h"
@@ -37,6 +38,7 @@
 #include "parser/parse_type.h"
 #include "parser/parse_expr.h"
 #include "rewrite/rewriteManip.h"
+#include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
@@ -112,13 +114,15 @@ static Query *transformCreateStmt(ParseState *pstate, CreateStmt *stmt,
 static Query *transformAlterTableStmt(ParseState *pstate, AlterTableStmt *stmt,
 						List **extras_before, List **extras_after);
 static void transformColumnDefinition(ParseState *pstate,
-						  CreateStmtContext *cxt,
-						  ColumnDef *column);
+									  CreateStmtContext *cxt,
+									  ColumnDef *column);
 static void transformTableConstraint(ParseState *pstate,
-						 CreateStmtContext *cxt,
-						 Constraint *constraint);
+									 CreateStmtContext *cxt,
+									 Constraint *constraint);
+static void transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
+								 InhRelation *inhrelation);
 static void transformIndexConstraints(ParseState *pstate,
-						  CreateStmtContext *cxt);
+									  CreateStmtContext *cxt);
 static void transformFKConstraints(ParseState *pstate,
 								   CreateStmtContext *cxt,
 								   bool isAddConstraint);
@@ -880,6 +884,11 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt,
 				cxt.fkconstraints = lappend(cxt.fkconstraints, element);
 				break;
 
+			case T_InhRelation:
+				transformInhRelation(pstate, &cxt,
+									 (InhRelation *) element);
+				break;
+
 			default:
 				elog(ERROR, "parser: unrecognized node (internal error)");
 		}
@@ -1144,6 +1153,123 @@ transformTableConstraint(ParseState *pstate, CreateStmtContext *cxt,
 			elog(ERROR, "parser: unrecognized constraint (internal error)");
 			break;
 	}
+}
+
+/*
+ * transformInhRelation
+ *
+ * Change the LIKE <subtable> portion of a CREATE TABLE statement into the
+ * column definitions which recreate the user defined column portions of <subtable>.
+ */
+static void
+transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
+					 InhRelation *inhRelation)
+{
+	AttrNumber	parent_attno;
+
+	Relation	relation;
+	TupleDesc	tupleDesc;
+	TupleConstr *constr;
+	AclResult	aclresult;
+
+	relation = heap_openrv(inhRelation->relation, AccessShareLock);
+
+	if (relation->rd_rel->relkind != RELKIND_RELATION)
+		elog(ERROR, "CREATE TABLE: inherited relation \"%s\" is not a table",
+			 inhRelation->relation->relname);
+
+	/*
+	 * Check for SELECT privilages 
+	 */
+	aclresult = pg_class_aclcheck(RelationGetRelid(relation), GetUserId(),
+								  ACL_SELECT);
+	if (aclresult != ACLCHECK_OK)
+		aclcheck_error(aclresult, RelationGetRelationName(relation));
+
+	tupleDesc = RelationGetDescr(relation);
+	constr = tupleDesc->constr;
+
+	/*
+	 * Insert the inherited attributes into the cxt for the
+	 * new table definition.
+	 */
+	for (parent_attno = 1; parent_attno <= tupleDesc->natts;
+		 parent_attno++)
+	{
+		Form_pg_attribute attribute = tupleDesc->attrs[parent_attno - 1];
+		char	   *attributeName = NameStr(attribute->attname);
+		ColumnDef  *def;
+		TypeName   *typename;
+
+		/*
+		 * Ignore dropped columns in the parent.
+		 */
+		if (attribute->attisdropped)
+			continue;
+
+		/*
+		 * Create a new inherited column.
+		 *
+		 * For constraints, ONLY the NOT NULL constraint is inherited
+		 * by the new column definition per SQL99.
+		 */
+		def = makeNode(ColumnDef);
+		def->colname = pstrdup(attributeName);
+		typename = makeNode(TypeName);
+		typename->typeid = attribute->atttypid;
+		typename->typmod = attribute->atttypmod;
+		def->typename = typename;
+		def->inhcount = 0;
+		def->is_local = false;
+		def->is_not_null = attribute->attnotnull;
+		def->raw_default = NULL;
+		def->cooked_default = NULL;
+		def->constraints = NIL;
+		def->support = NULL;
+
+		/*
+		 * Add to column list
+		 */
+		cxt->columns = lappend(cxt->columns, def);
+
+		/*
+		 * Copy default if any, and the default has been requested
+		 */
+		if (attribute->atthasdef && inhRelation->including_defaults)
+		{
+			char	   *this_default = NULL;
+			AttrDefault *attrdef;
+			int			i;
+
+			/* Find default in constraint structure */
+			Assert(constr != NULL);
+			attrdef = constr->defval;
+			for (i = 0; i < constr->num_defval; i++)
+			{
+				if (attrdef[i].adnum == parent_attno)
+				{
+					this_default = attrdef[i].adbin;
+					break;
+				}
+			}
+			Assert(this_default != NULL);
+
+			/*
+			 * If default expr could contain any vars, we'd need to
+			 * fix 'em, but it can't; so default is ready to apply to
+			 * child.
+			 */
+
+			def->cooked_default = pstrdup(this_default);
+		}
+	}
+
+	/*
+	 * Close the parent rel, but keep our AccessShareLock on it until
+	 * xact commit.  That will prevent someone else from deleting or
+	 * ALTERing the parent before the child is committed.
+	 */
+	heap_close(relation, NoLock);
 }
 
 static void

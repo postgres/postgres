@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.196 2003/06/24 23:14:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.197 2003/06/25 03:40:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -781,6 +781,15 @@ _equalCreateStmt(CreateStmt *a, CreateStmt *b)
 	COMPARE_NODE_FIELD(constraints);
 	COMPARE_SCALAR_FIELD(hasoids);
 	COMPARE_SCALAR_FIELD(oncommit);
+
+	return true;
+}
+
+static bool
+_equalInhRelation(InhRelation *a, InhRelation *b)
+{
+	COMPARE_NODE_FIELD(relation);
+	COMPARE_SCALAR_FIELD(including_defaults);
 
 	return true;
 }
@@ -1806,6 +1815,9 @@ equal(void *a, void *b)
 			break;
 		case T_CreateStmt:
 			retval = _equalCreateStmt(a, b);
+			break;
+		case T_InhRelation:
+			retval = _equalInhRelation(a,b);
 			break;
 		case T_DefineStmt:
 			retval = _equalDefineStmt(a, b);

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.140 2003/04/08 23:20:04 tgl Exp $
+ * $Id: nodes.h,v 1.141 2003/06/25 03:40:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -280,6 +280,7 @@ typedef enum NodeTag
 	T_InsertDefault,
 	T_CreateOpClassItem,
 	T_CompositeTypeStmt,
+	T_InhRelation,
 
 	/*
 	 * TAGS FOR FUNCTION-CALL CONTEXT AND RESULTINFO NODES (see fmgr.h)

@@ -308,7 +308,7 @@ T121	WITH (excluding RECURSIVE) in query expression			NO
 T131	Recursive query			NO	
 T141	SIMILAR predicate			YES	
 T151	DISTINCT predicate			YES	
-T171	LIKE clause in table definition			NO	
+T171	LIKE clause in table definition			YES	
 T191	Referential action RESTRICT			YES	
 T201	Comparable data types for referential constraints			YES	
 T211	Basic trigger capability			NO	

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.418 2003/06/24 23:14:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.419 2003/06/25 03:40:18 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -164,6 +164,8 @@ static void doNegateFloat(Value *v);
 %type <ival>	opt_lock lock_type cast_context
 %type <boolean>	opt_force opt_or_replace transaction_access_mode
 				opt_grant_grant_option opt_revoke_grant_option
+
+%type <boolean>	like_including_defaults
 
 %type <list>	user_list
 
@@ -336,11 +338,11 @@ static void doNegateFloat(Value *v);
 	CREATEUSER CROSS CURRENT_DATE CURRENT_TIME
 	CURRENT_TIMESTAMP CURRENT_USER CURSOR CYCLE
 
-	DATABASE DAY_P DEALLOCATE DEC DECIMAL_P DECLARE DEFAULT
+	DATABASE DAY_P DEALLOCATE DEC DECIMAL_P DECLARE DEFAULT DEFAULTS
 	DEFERRABLE DEFERRED DEFINER DELETE_P DELIMITER DELIMITERS
     DESC DISTINCT DO DOMAIN_P DOUBLE_P DROP
 
-	EACH ELSE ENCODING ENCRYPTED END_P ESCAPE EXCEPT
+	EACH ELSE ENCODING ENCRYPTED END_P ESCAPE EXCEPT EXCLUDING
 	EXCLUSIVE EXECUTE EXISTS EXPLAIN EXTERNAL EXTRACT
 
 	FALSE_P FETCH FIRST_P FLOAT_P FOR FORCE FOREIGN FORWARD
@@ -350,7 +352,7 @@ static void doNegateFloat(Value *v);
 
 	HANDLER HAVING HOLD HOUR_P
 
-	ILIKE IMMEDIATE IMMUTABLE IMPLICIT_P IN_P INCREMENT
+	ILIKE IMMEDIATE IMMUTABLE IMPLICIT_P IN_P INCLUDING INCREMENT
 	INDEX INHERITS INITIALLY INNER_P INOUT INPUT_P
 	INSENSITIVE INSERT INSTEAD INT_P INTEGER INTERSECT
 	INTERVAL INTO INVOKER IS ISNULL ISOLATION
@@ -1642,16 +1644,29 @@ ConstraintAttr:
 		;
 
 
-/* SQL99 supports wholesale borrowing of a table definition via the LIKE clause.
+/*
+ * SQL99 supports wholesale borrowing of a table definition via the LIKE clause.
  * This seems to be a poor man's inheritance capability, with the resulting
  * tables completely decoupled except for the original commonality in definitions.
- * Seems to have much in common with CREATE TABLE AS. - thomas 2002-06-19
+ *
+ * This is very similar to CREATE TABLE AS except for the INCLUDING DEFAULTS extension
+ * which is a part of SQL 200N
  */
-TableLikeClause:  LIKE any_name
+TableLikeClause:
+			LIKE qualified_name like_including_defaults
 				{
-					elog(ERROR, "LIKE in table definitions not yet supported");
-					$$ = NULL;
+					InhRelation *n = makeNode(InhRelation);
+					n->relation = $2;
+					n->including_defaults = $3;
+
+					$$ = (Node *)n;
 				}
+		;
+
+like_including_defaults:
+				INCLUDING DEFAULTS		{ $$ = true; }
+				| EXCLUDING DEFAULTS		{ $$ = false; }
+				| /* EMPTY */				{ $$ = false; }
 		;
 
 
@@ -7230,6 +7245,7 @@ unreserved_keyword:
 			| DAY_P
 			| DEALLOCATE
 			| DECLARE
+			| DEFAULTS
 			| DEFERRED
 			| DEFINER
 			| DELETE_P
@@ -7242,6 +7258,7 @@ unreserved_keyword:
 			| ENCODING
 			| ENCRYPTED
 			| ESCAPE
+			| EXCLUDING
 			| EXCLUSIVE
 			| EXECUTE
 			| EXPLAIN
@@ -7258,6 +7275,7 @@ unreserved_keyword:
 			| IMMEDIATE
 			| IMMUTABLE
 			| IMPLICIT_P
+			| INCLUDING
 			| INCREMENT
 			| INDEX
 			| INHERITS

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.139 2003/05/15 16:35:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.140 2003/06/25 03:40:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -102,6 +102,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"decimal", DECIMAL_P},
 	{"declare", DECLARE},
 	{"default", DEFAULT},
+	{"defaults", DEFAULTS},
 	{"deferrable", DEFERRABLE},
 	{"deferred", DEFERRED},
 	{"definer", DEFINER},
@@ -121,6 +122,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"end", END_P},
 	{"escape", ESCAPE},
 	{"except", EXCEPT},
+	{"excluding", EXCLUDING},
 	{"exclusive", EXCLUSIVE},
 	{"execute", EXECUTE},
 	{"exists", EXISTS},
@@ -151,6 +153,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"immutable", IMMUTABLE},
 	{"implicit", IMPLICIT_P},
 	{"in", IN_P},
+	{"including", INCLUDING},
 	{"increment", INCREMENT},
 	{"index", INDEX},
 	{"inherits", INHERITS},

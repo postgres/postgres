@@ -119,3 +119,26 @@ insert into bar2 values(4,4,4);
 update bar set f2 = f2 + 100 where f1 in (select f1 from foo);
 
 SELECT relname, bar.* FROM bar, pg_class where bar.tableoid = pg_class.oid;
+
+
+/* Test inheritance of structure (LIKE) */
+CREATE TABLE inhx (xx text DEFAULT 'text');
+
+/*
+ * Test double inheritance
+ *
+ * Ensure that defaults are NOT included unless
+ * INCLUDING DEFAULTS is specified 
+ */
+CREATE TABLE inhe (ee text, LIKE inhx) inherits (b);
+INSERT INTO inhe VALUES ('ee-col1', 'ee-col2', DEFAULT, 'ee-col4');
+SELECT * FROM inhe; /* Columns aa, bb, xx value NULL, ee */
+SELECT * FROM inhx; /* Empty set since LIKE inherits structure only */
+SELECT * FROM b; /* Has ee entry */
+SELECT * FROM a; /* Has ee entry */
+
+CREATE TABLE inhf (LIKE inhx, LIKE inhx); /* Throw error */
+
+CREATE TABLE inhf (LIKE inhx INCLUDING DEFAULTS);
+INSERT INTO inhf DEFAULT VALUES;
+SELECT * FROM inhf; /* Single entry with value 'text' */

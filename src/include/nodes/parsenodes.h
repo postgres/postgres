@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.238 2003/05/28 16:04:02 tgl Exp $
+ * $Id: parsenodes.h,v 1.239 2003/06/25 03:40:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -349,6 +349,16 @@ typedef struct ColumnDef
 	List	   *constraints;	/* other constraints on column */
 	RangeVar   *support;		/* supporting relation, if any */
 } ColumnDef;
+
+/*
+ * inhRelation - Relations a CREATE TABLE is to inherit attributes of
+ */
+typedef struct InhRelation
+{
+	NodeTag		type;
+	RangeVar   *relation;
+	bool		including_defaults;
+} InhRelation;
 
 /*
  * IndexElem - index parameters (used in CREATE INDEX)
@@ -851,7 +861,7 @@ typedef struct CreateStmt
 	NodeTag		type;
 	RangeVar   *relation;		/* relation to create */
 	List	   *tableElts;		/* column definitions (list of ColumnDef) */
-	List	   *inhRelations;	/* relations to inherit from */
+	List	   *inhRelations;	/* relations to inherit from (list of inhRelation) */
 	List	   *constraints;	/* constraints (list of Constraint nodes) */
 	bool		hasoids;		/* should it have OIDs? */
 	OnCommitAction oncommit;	/* what do we do at COMMIT? */
