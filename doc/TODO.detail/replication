@@ -1,0 +1,907 @@
+From goran@kirra.net Mon Dec 20 14:30:54 1999
+Received: from villa.bildbasen.se (villa.bildbasen.se [193.45.225.97])
+	by candle.pha.pa.us (8.9.0/8.9.0) with SMTP id PAA29058
+	for <pgman@candle.pha.pa.us>; Mon, 20 Dec 1999 15:30:17 -0500 (EST)
+Received: (qmail 2485 invoked from network); 20 Dec 1999 20:29:53 -0000
+Received: from a112.dial.kiruna.se (HELO kirra.net) (193.45.238.12)
+  by villa.bildbasen.se with SMTP; 20 Dec 1999 20:29:53 -0000
+Sender: goran
+Message-ID: <385E9192.226CC37D@kirra.net>
+Date: Mon, 20 Dec 1999 21:29:06 +0100
+From: Goran Thyni <goran@kirra.net>
+Organization: kirra.net
+X-Mailer: Mozilla 4.6 [en] (X11; U; Linux 2.2.13 i586)
+X-Accept-Language: sv, en
+MIME-Version: 1.0
+To: Bruce Momjian <pgman@candle.pha.pa.us>
+CC: "neil d. quiogue" <nquiogue@ieee.org>,
+        PostgreSQL-development <pgsql-hackers@postgreSQL.org>
+Subject: Re: [HACKERS] Re: QUESTION: Replication
+References: <199912201508.KAA20572@candle.pha.pa.us>
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: 8bit
+Status: OR
+
+Bruce Momjian wrote:
+> We need major work in this area, or at least a plan and an FAQ item.
+> We are getting major questions on this, and I don't know enough even to
+> make an FAQ item telling people their options.
+
+My 2 cents, or 2 ören since I'm a Swede, on this:
+
+It is pretty simple to build a replication with pg_dump, transfer,
+empty replic and reload.
+But if we want "live replicas" we better base our efforts on a
+mechanism using WAL-logs to rollforward the replicas.
+
+regards, 
+-----------------
+Göran Thyni
+On quiet nights you can hear Windows NT reboot!
+
+From owner-pgsql-hackers@hub.org Fri Dec 24 10:01:18 1999
+Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id LAA11295
+	for <pgman@candle.pha.pa.us>; Fri, 24 Dec 1999 11:01:17 -0500 (EST)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.1 $) with ESMTP id KAA20310 for <pgman@candle.pha.pa.us>; Fri, 24 Dec 1999 10:39:18 -0500 (EST)
+Received: from localhost (majordom@localhost)
+	by hub.org (8.9.3/8.9.3) with SMTP id KAA61760;
+	Fri, 24 Dec 1999 10:31:13 -0500 (EST)
+	(envelope-from owner-pgsql-hackers)
+Received: by hub.org (bulk_mailer v1.5); Fri, 24 Dec 1999 10:30:48 -0500
+Received: (from majordom@localhost)
+	by hub.org (8.9.3/8.9.3) id KAA58879
+	for pgsql-hackers-outgoing; Fri, 24 Dec 1999 10:29:51 -0500 (EST)
+	(envelope-from owner-pgsql-hackers@postgreSQL.org)
+Received: from bocs170n.black-oak.COM ([38.149.137.131])
+	by hub.org (8.9.3/8.9.3) with ESMTP id KAA58795
+	for <pgsql-hackers@postgreSQL.org>; Fri, 24 Dec 1999 10:29:00 -0500 (EST)
+	(envelope-from DWalker@black-oak.com)
+From: DWalker@black-oak.com
+To: pgsql-hackers@postgreSQL.org
+Subject: [HACKERS] database replication
+Date: Fri, 24 Dec 1999 10:27:59 -0500
+Message-ID: <OFD38C9424.B391F434-ON85256851.0054F41A@black-oak.COM>
+X-Priority: 3 (Normal)
+X-MIMETrack: Serialize by Router on notes01n/BOCS(Release 5.0.1|July 16, 1999) at 12/24/99
+	10:28:01 AM
+MIME-Version: 1.0
+MIME-Version: 1.0
+Content-Type: text/html; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
+Sender: owner-pgsql-hackers@postgreSQL.org
+Status: OR
+
+<P>I've been toying with the idea of implementing database replication for =
+the last few days. &nbsp;The system I'm proposing will be a seperate progra=
+m which can be run on any machine and will most likely be implemented in Py=
+thon. &nbsp;What I'm looking for at this point are gaping holes in my think=
+ing/logic/etc. &nbsp;Here's what I'm thinking...</P><P>&nbsp;</P><P>1) I wa=
+nt to make this program an additional layer over PostgreSQL. &nbsp;I really=
+ don't want to hack server code if I can get away with it. &nbsp;At this po=
+int I don't feel I need to.</P><P>2) The replication system will need to ad=
+d at least one field to each table in each database that needs to be replic=
+ated. &nbsp;This field will be a date/time stamp which identifies the &quot=
+;last update&quot; of the record. &nbsp;This field will be called PGR=5FTIM=
+E for lack of a better name. &nbsp;Because this field will be used from wit=
+hin programs and triggers it can be longer so as to not mistake it for a us=
+er field.</P><P>3) For each table to be replicated the replication system w=
+ill programatically add one plpgsql function and trigger to modify the PGR=
+=5FTIME field on both UPDATEs and INSERTs. &nbsp;The name of this function =
+and trigger will be along the lines of &lt;table=5Fname&gt;=5Freplication=
+=5Fupdate=5Ftrigger and &lt;table=5Fname&gt;=5Freplication=5Fupdate=5Ffunct=
+ion. &nbsp;The function is a simple two-line chunk of code to set the field=
+ PGR=5FTIME equal to NOW. &nbsp;The trigger is called before each insert/up=
+date. &nbsp;When looking at the Docs I see that times are stored in Zulu (G=
+T) time. &nbsp;Because of this I don't have to worry about time zones and t=
+he like. &nbsp;I need direction on this part (such as &quot;hey dummy, look=
+ at page N of file X.&quot;).</P><P>4) At this point we have tables which c=
+an, at a basic level, tell the replication system when they were last updat=
+ed.</P><P>5) The replication system will have a database of its own to reco=
+rd the last replication event, hold configuration, logs, etc. &nbsp;I'd pre=
+fer to store the configuration in a PostgreSQL table but it could just as e=
+asily be stored in a text file on the filesystem somewhere.</P><P>6) To han=
+dle replication I basically check the local &quot;last replication time&quo=
+t; and compare it against the remote PGR=5FTIME fields. &nbsp;If the remote=
+ PGR=5FTIME is greater than the last replication time then change the local=
+ copy of the database, otherwise, change the remote end of the database. &n=
+bsp;At this point I don't have a way to know WHICH field changed between th=
+e two replicas so either I do ROW level replication or I check each field. =
+&nbsp;I check PGR=5FTIME to determine which field is the most current. &nbs=
+p;Some fine tuning of this process will have to occur no doubt.</P><P>7) Th=
+e commandline utility, fired off by something like cron, could run several =
+times during the day -- command line parameters can be implemented to say P=
+USH ALL CHANGES TO SERVER A, or PULL ALL CHANGES FROM SERVER B.</P><P>&nbsp=
+;</P><P>Questions/Concerns:</P><P>1) How far do I go with this? &nbsp;Do I =
+start manhandling the system catalogs (pg=5F* tables)?</P><P>2) As to #2 an=
+d #3 above, I really don't like tools automagically changing my tables but =
+at this point I don't see a way around it. &nbsp;I guess this is where the =
+testing comes into play.</P><P>3) Security: the replication app will have t=
+o have pretty good rights to the database so it can add the nessecary funct=
+ions and triggers, modify table schema, etc. &nbsp;</P><P>&nbsp;</P><P>&nbs=
+p; So, any &quot;you're insane and should run home to momma&quot; comments?=
+</P><P>&nbsp;</P><P>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; Damond=
+</P><P></P>=
+
+************
+
+From owner-pgsql-hackers@hub.org Fri Dec 24 18:31:03 1999
+Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id TAA26244
+	for <pgman@candle.pha.pa.us>; Fri, 24 Dec 1999 19:31:02 -0500 (EST)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.1 $) with ESMTP id TAA12730 for <pgman@candle.pha.pa.us>; Fri, 24 Dec 1999 19:30:05 -0500 (EST)
+Received: from localhost (majordom@localhost)
+	by hub.org (8.9.3/8.9.3) with SMTP id TAA57851;
+	Fri, 24 Dec 1999 19:23:31 -0500 (EST)
+	(envelope-from owner-pgsql-hackers)
+Received: by hub.org (bulk_mailer v1.5); Fri, 24 Dec 1999 19:22:54 -0500
+Received: (from majordom@localhost)
+	by hub.org (8.9.3/8.9.3) id TAA57710
+	for pgsql-hackers-outgoing; Fri, 24 Dec 1999 19:21:56 -0500 (EST)
+	(envelope-from owner-pgsql-hackers@postgreSQL.org)
+Received: from Mail.austin.rr.com (sm2.texas.rr.com [24.93.35.55])
+	by hub.org (8.9.3/8.9.3) with ESMTP id TAA57680
+	for <pgsql-hackers@postgresql.org>; Fri, 24 Dec 1999 19:21:25 -0500 (EST)
+	(envelope-from ELOEHR@austin.rr.com)
+Received: from austin.rr.com ([24.93.40.248]) by Mail.austin.rr.com  with Microsoft SMTPSVC(5.5.1877.197.19);
+  Fri, 24 Dec 1999 18:12:50 -0600
+Message-ID: <38640E2D.75136600@austin.rr.com>
+Date: Fri, 24 Dec 1999 18:22:05 -0600
+From: Ed Loehr <ELOEHR@austin.rr.com>
+X-Mailer: Mozilla 4.7 [en] (X11; U; Linux 2.2.12-20smp i686)
+X-Accept-Language: en
+MIME-Version: 1.0
+To: DWalker@black-oak.com
+CC: pgsql-hackers@postgreSQL.org
+Subject: Re: [HACKERS] database replication
+References: <OFD38C9424.B391F434-ON85256851.0054F41A@black-oak.COM>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Sender: owner-pgsql-hackers@postgreSQL.org
+Status: OR
+
+DWalker@black-oak.com wrote:
+
+> 6) To handle replication I basically check the local "last
+> replication time" and compare it against the remote PGR_TIME
+> fields.  If the remote PGR_TIME is greater than the last replication
+> time then change the local copy of the database, otherwise, change
+> the remote end of the database.  At this point I don't have a way to
+> know WHICH field changed between the two replicas so either I do ROW
+> level replication or I check each field.  I check PGR_TIME to
+> determine which field is the most current.  Some fine tuning of this
+> process will have to occur no doubt.
+
+Interesting idea.  I can see how this might sync up two databases
+somehow.  For true replication, however, I would always want every
+replicated database to be, at the very least, internally consistent
+(i.e., referential integrity), even if it was a little behind on
+processing transactions.  In this method, its not clear how
+consistency is every achieved/guaranteed at any point in time if the
+input stream of changes is continuous.  If the input stream ceased,
+then I can see how this approach might eventually catch up and totally
+resync everything, but it looks *very* computationally  expensive.
+
+But I might have missed something.  How would internal consistency be
+maintained?
+
+
+> 7) The commandline utility, fired off by something like cron, could
+> run several times during the day -- command line parameters can be
+> implemented to say PUSH ALL CHANGES TO SERVER A, or PULL ALL CHANGES
+> FROM SERVER B.
+
+My two cents is that, while I can see this kind of database syncing as
+valuable, this is not the kind of "replication" I had in mind.  This
+may already possible by simply copying the database.  What replication
+means to me is a live, continuously streaming sequence of updates from
+one database to another where the replicated database is always
+internally consistent, available for read-only queries, and never "too
+far" out of sync with the source/primary database.
+
+What does replication mean to others?
+
+Cheers,
+Ed Loehr
+
+
+
+************
+
+From owner-pgsql-hackers@hub.org Fri Dec 24 21:31:10 1999
+Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id WAA02578
+	for <pgman@candle.pha.pa.us>; Fri, 24 Dec 1999 22:31:09 -0500 (EST)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.1 $) with ESMTP id WAA16641 for <pgman@candle.pha.pa.us>; Fri, 24 Dec 1999 22:18:56 -0500 (EST)
+Received: from localhost (majordom@localhost)
+	by hub.org (8.9.3/8.9.3) with SMTP id WAA89135;
+	Fri, 24 Dec 1999 22:11:12 -0500 (EST)
+	(envelope-from owner-pgsql-hackers)
+Received: by hub.org (bulk_mailer v1.5); Fri, 24 Dec 1999 22:10:56 -0500
+Received: (from majordom@localhost)
+	by hub.org (8.9.3/8.9.3) id WAA89019
+	for pgsql-hackers-outgoing; Fri, 24 Dec 1999 22:09:59 -0500 (EST)
+	(envelope-from owner-pgsql-hackers@postgreSQL.org)
+Received: from bocs170n.black-oak.COM ([38.149.137.131])
+	by hub.org (8.9.3/8.9.3) with ESMTP id WAA88957;
+	Fri, 24 Dec 1999 22:09:11 -0500 (EST)
+	(envelope-from dwalker@black-oak.com)
+Received: from gcx80 ([151.196.99.113])
+          by bocs170n.black-oak.COM (Lotus Domino Release 5.0.1)
+          with SMTP id 1999122422080835:6 ;
+          Fri, 24 Dec 1999 22:08:08 -0500 
+Message-ID: <001b01bf4e9e$647287d0$af63a8c0@walkers.org>
+From: "Damond Walker" <dwalker@black-oak.com>
+To: <owner-pgsql-hackers@postgreSQL.org>
+Cc: <pgsql-hackers@postgreSQL.org>
+References: <OFD38C9424.B391F434-ON85256851.0054F41A@black-oak.COM> <38640E2D.75136600@austin.rr.com>
+Subject: Re: [HACKERS] database replication
+Date: Fri, 24 Dec 1999 22:07:55 -0800
+MIME-Version: 1.0
+X-Priority: 3 (Normal)
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook Express 5.00.2314.1300
+X-MimeOLE: Produced By Microsoft MimeOLE V5.00.2314.1300
+X-MIMETrack: Itemize by SMTP Server on notes01n/BOCS(Release 5.0.1|July 16, 1999) at 12/24/99
+	10:08:09 PM,
+	Serialize by Router on notes01n/BOCS(Release 5.0.1|July 16, 1999) at 12/24/99
+	10:08:11 PM,
+	Serialize complete at 12/24/99 10:08:11 PM
+Content-Transfer-Encoding: 7bit
+Content-Type: text/plain;
+	charset="iso-8859-1"
+Sender: owner-pgsql-hackers@postgreSQL.org
+Status: OR
+
+>
+> Interesting idea.  I can see how this might sync up two databases
+> somehow.  For true replication, however, I would always want every
+> replicated database to be, at the very least, internally consistent
+> (i.e., referential integrity), even if it was a little behind on
+> processing transactions.  In this method, its not clear how
+> consistency is every achieved/guaranteed at any point in time if the
+> input stream of changes is continuous.  If the input stream ceased,
+> then I can see how this approach might eventually catch up and totally
+> resync everything, but it looks *very* computationally  expensive.
+>
+
+    What's the typical unit of work for the database?  Are we talking about
+update transactions which span the entire DB?  Or are we talking about
+updating maybe 1% or less of the database everyday?  I'd think it would be
+more towards the latter than the former.  So, yes, this process would be
+computationally expensive but how many records would actually have to be
+sent back and forth?
+
+> But I might have missed something.  How would internal consistency be
+> maintained?
+>
+
+    Updates that occur at site A will be moved to site B and vice versa.
+Consistency would be maintained.  The only problem that I can see right off
+the bat would be what if site A and site B made changes to a row and then
+site C was brought into the picture?  Which one wins?
+
+    Someone *has* to win when it comes to this type of thing.  You really
+DON'T want to start merging row changes...
+
+>
+> My two cents is that, while I can see this kind of database syncing as
+> valuable, this is not the kind of "replication" I had in mind.  This
+> may already possible by simply copying the database.  What replication
+> means to me is a live, continuously streaming sequence of updates from
+> one database to another where the replicated database is always
+> internally consistent, available for read-only queries, and never "too
+> far" out of sync with the source/primary database.
+>
+
+    Sounds like you're talking about distributed transactions to me.  That's
+an entirely different subject all-together.  What you describe can be done
+by copying a database...but as you say, this would only work in a read-only
+situation.
+
+
+                Damond
+
+
+************
+
+From owner-pgsql-hackers@hub.org Sat Dec 25 16:35:07 1999
+Received: from hub.org (hub.org [216.126.84.1])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id RAA28890
+	for <pgman@candle.pha.pa.us>; Sat, 25 Dec 1999 17:35:05 -0500 (EST)
+Received: from localhost (majordom@localhost)
+	by hub.org (8.9.3/8.9.3) with SMTP id RAA86997;
+	Sat, 25 Dec 1999 17:29:10 -0500 (EST)
+	(envelope-from owner-pgsql-hackers)
+Received: by hub.org (bulk_mailer v1.5); Sat, 25 Dec 1999 17:28:09 -0500
+Received: (from majordom@localhost)
+	by hub.org (8.9.3/8.9.3) id RAA86863
+	for pgsql-hackers-outgoing; Sat, 25 Dec 1999 17:27:11 -0500 (EST)
+	(envelope-from owner-pgsql-hackers@postgreSQL.org)
+Received: from mtiwmhc08.worldnet.att.net (mtiwmhc08.worldnet.att.net [204.127.131.19])
+	by hub.org (8.9.3/8.9.3) with ESMTP id RAA86798
+	for <pgsql-hackers@postgreSQL.org>; Sat, 25 Dec 1999 17:26:34 -0500 (EST)
+	(envelope-from pgsql@rkirkpat.net)
+Received: from [192.168.3.100] ([12.74.72.219])
+          by mtiwmhc08.worldnet.att.net (InterMail v03.02.07.07 118-134)
+          with ESMTP id <19991225222554.VIOL28505@[12.74.72.219]>;
+          Sat, 25 Dec 1999 22:25:54 +0000
+Date: Sat, 25 Dec 1999 15:25:47 -0700 (MST)
+From: Ryan Kirkpatrick <pgsql@rkirkpat.net>
+X-Sender: rkirkpat@excelsior.rkirkpat.net
+To: DWalker@black-oak.com
+cc: pgsql-hackers@postgreSQL.org
+Subject: Re: [HACKERS] database replication
+In-Reply-To: <OFD38C9424.B391F434-ON85256851.0054F41A@black-oak.COM>
+Message-ID: <Pine.LNX.4.10.9912251433310.1551-100000@excelsior.rkirkpat.net>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Sender: owner-pgsql-hackers@postgreSQL.org
+Status: OR
+
+On Fri, 24 Dec 1999 DWalker@black-oak.com wrote:
+
+> I've been toying with the idea of implementing database replication
+> for the last few days.
+
+	I too have been thinking about this some over the last year or
+two, just trying to find a quick and easy way to do it. I am not so
+interested in replication, as in synchronization, as in between a desktop
+machine and a laptop, so I can keep the databases on each in sync with
+each other. For this sort of purpose, both the local and remote databases
+would be "idle" at the time of syncing.
+
+> 2) The replication system will need to add at least one field to each
+> table in each database that needs to be replicated. This field will be
+> a date/time stamp which identifies the "last update" of the record.  
+> This field will be called PGR_TIME for lack of a better name.  
+> Because this field will be used from within programs and triggers it
+> can be longer so as to not mistake it for a user field.
+
+	How about a single, seperate table with the fields of 'database',
+'tablename', 'oid', 'last_changed', that would store the same data as your
+PGR_TIME field. It would be seperated from the actually data tables, and
+therefore would be totally transparent to any database interface
+applications. The 'oid' field would hold each row's OID, a nice, unique
+identification number for the row, while the other fields would tell which
+table and database the oid is in. Then this table can be compared with the
+this table on a remote machine to quickly find updates and changes, then
+each differences can be dealt with in turn.
+
+> 3) For each table to be replicated the replication system will
+> programatically add one plpgsql function and trigger to modify the
+> PGR_TIME field on both UPDATEs and INSERTs.  The name of this function
+> and trigger will be along the lines of
+> <table_name>_replication_update_trigger and
+> <table_name>_replication_update_function.  The function is a simple
+> two-line chunk of code to set the field PGR_TIME equal to NOW.  The
+> trigger is called before each insert/update.  When looking at the Docs
+> I see that times are stored in Zulu (GT) time.  Because of this I
+> don't have to worry about time zones and the like.  I need direction
+> on this part (such as "hey dummy, look at page N of file X.").
+
+	I like this idea, better than any I have come up with yet. Though,
+how are you going to handle DELETEs? 
+
+> 6) To handle replication I basically check the local "last replication
+> time" and compare it against the remote PGR_TIME fields.  If the
+> remote PGR_TIME is greater than the last replication time then change
+> the local copy of the database, otherwise, change the remote end of
+> the database.  At this point I don't have a way to know WHICH field
+> changed between the two replicas so either I do ROW level replication
+> or I check each field.  I check PGR_TIME to determine which field is
+> the most current.  Some fine tuning of this process will have to occur
+> no doubt.
+
+	Yea, this is indeed the sticky part, and would indeed require some
+fine-tunning. Basically, the way I see it, is if the two timestamps for a
+single row do not match (or even if the row and therefore timestamp is
+missing on one side or the other altogether):
+	local ts > remote ts => Local row is exported to remote.
+	remote ts > local ts => Remote row is exported to local.
+	local ts > last sync time && no remote ts => 
+		Local row is inserted on remote.
+	local ts < last sync time && no remote ts =>
+		Local row is deleted.
+	remote ts > last sync time && no local ts =>
+		Remote row is inserted on local.
+	remote ts < last sync time && no local ts =>
+		Remote row is deleted.
+where the synchronization process is running on the local machine. By
+exported, I mean the local values are sent to the remote machine, and the
+row on that remote machine is updated to the local values. How does this
+sound?
+
+> 7) The commandline utility, fired off by something like cron, could
+> run several times during the day -- command line parameters can be
+> implemented to say PUSH ALL CHANGES TO SERVER A, or PULL ALL CHANGES
+> FROM SERVER B.
+
+	Or run manually for my purposes. Also, maybe follow it
+with a vacuum run on both sides for all databases, as this is going to
+potenitally cause lots of table changes that could stand with a cleanup. 
+
+> 1) How far do I go with this?  Do I start manhandling the system catalogs (pg_* tables)?
+
+	Initially, I would just stick to user table data... If you have
+changes in triggers and other meta-data/executable code, you are going to
+want to make syncs of that stuff manually anyway. At least I would want
+to.
+
+> 2) As to #2 and #3 above, I really don't like tools automagically
+> changing my tables but at this point I don't see a way around it.  I
+> guess this is where the testing comes into play.
+
+	Hence the reason for the seperate table with just a row's
+identification and last update time. Only modifications to the synced
+database is the update trigger, which should be pretty harmless.
+
+> 3) Security: the replication app will have to have pretty good rights
+> to the database so it can add the nessecary functions and triggers,
+> modify table schema, etc.
+
+	Just run the sync program as the postgres super user, and there
+are no problems. :)
+
+>   So, any "you're insane and should run home to momma" comments?
+
+	No, not at all. Though it probably should be remaned from
+replication to synchronization. The former is usually associated with a
+continuous stream of updates between the local and remote databases, so
+they are almost always in sync, and have a queuing ability if their
+connection is loss for span of time as well. Very complex and difficult to
+implement, and would require hacking server code. :( Something only Sybase
+and Oracle have (as far as I know), and from what I have seen of Sybase's
+replication server support (dated by 5yrs) it was a pain to setup and get
+running correctly.
+	The latter, synchronization, is much more managable, and can still
+be useful, especially when you have a large database you want in two
+places, mainly for read only purposes at one end or the other, but don't
+want to waste the time/bandwidth to move and load the entire database each
+time it changes on one end or the other. Same idea as mirroring software
+for FTP sites, just transfers the changes, and nothing more.
+	I also like the idea of using Python. I have been using it
+recently for some database interfaces (to PostgreSQL of course :), and it
+is a very nice language to work with. Some worries about performance of
+the program though, as python is only an interpreted lanuage, and I have
+yet to really be impressed with the speed of execution of my database
+interfaces yet.
+	Anyway, it sound like a good project, and finally one where I
+actually have a clue of what is going on, and the skills to help. So, if
+you are interested in pursing this project, I would be more than glad to
+help. TTYL.
+
+---------------------------------------------------------------------------
+|   "For to me to live is Christ, and to die is gain."                    |
+|                                            --- Philippians 1:21 (KJV)   |
+---------------------------------------------------------------------------
+|   Ryan Kirkpatrick  |  Boulder, Colorado  |  http://www.rkirkpat.net/   |
+---------------------------------------------------------------------------
+
+
+
+************
+
+From owner-pgsql-hackers@hub.org Sun Dec 26 08:31:09 1999
+Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id JAA17976
+	for <pgman@candle.pha.pa.us>; Sun, 26 Dec 1999 09:31:07 -0500 (EST)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.1 $) with ESMTP id JAA23337 for <pgman@candle.pha.pa.us>; Sun, 26 Dec 1999 09:28:36 -0500 (EST)
+Received: from localhost (majordom@localhost)
+	by hub.org (8.9.3/8.9.3) with SMTP id JAA90738;
+	Sun, 26 Dec 1999 09:21:58 -0500 (EST)
+	(envelope-from owner-pgsql-hackers)
+Received: by hub.org (bulk_mailer v1.5); Sun, 26 Dec 1999 09:19:19 -0500
+Received: (from majordom@localhost)
+	by hub.org (8.9.3/8.9.3) id JAA90498
+	for pgsql-hackers-outgoing; Sun, 26 Dec 1999 09:18:21 -0500 (EST)
+	(envelope-from owner-pgsql-hackers@postgreSQL.org)
+Received: from bocs170n.black-oak.COM ([38.149.137.131])
+	by hub.org (8.9.3/8.9.3) with ESMTP id JAA90452
+	for <pgsql-hackers@postgreSQL.org>; Sun, 26 Dec 1999 09:17:54 -0500 (EST)
+	(envelope-from dwalker@black-oak.com)
+Received: from vmware98 ([151.196.99.113])
+          by bocs170n.black-oak.COM (Lotus Domino Release 5.0.1)
+          with SMTP id 1999122609164808:7 ;
+          Sun, 26 Dec 1999 09:16:48 -0500 
+Message-ID: <002201bf4fb3$623f0220$b263a8c0@vmware98.walkers.org>
+From: "Damond Walker" <dwalker@black-oak.com>
+To: "Ryan Kirkpatrick" <pgsql@rkirkpat.net>
+Cc: <pgsql-hackers@postgreSQL.org>
+Subject: Re: [HACKERS] database replication
+Date: Sun, 26 Dec 1999 10:10:41 -0500
+MIME-Version: 1.0
+X-Priority: 3 (Normal)
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook Express 4.72.3110.1
+X-MimeOLE: Produced By Microsoft MimeOLE V4.72.3110.3
+X-MIMETrack: Itemize by SMTP Server on notes01n/BOCS(Release 5.0.1|July 16, 1999) at 12/26/99
+	09:16:51 AM,
+	Serialize by Router on notes01n/BOCS(Release 5.0.1|July 16, 1999) at 12/26/99
+	09:16:54 AM,
+	Serialize complete at 12/26/99 09:16:54 AM
+Content-Transfer-Encoding: 7bit
+Content-Type: text/plain;
+	charset="iso-8859-1"
+Sender: owner-pgsql-hackers@postgreSQL.org
+Status: OR
+
+>
+>     I too have been thinking about this some over the last year or
+>two, just trying to find a quick and easy way to do it. I am not so
+>interested in replication, as in synchronization, as in between a desktop
+>machine and a laptop, so I can keep the databases on each in sync with
+>each other. For this sort of purpose, both the local and remote databases
+>would be "idle" at the time of syncing.
+>
+
+    I don't think it would matter if the databases are idle or not to be
+honest with you.  At any single point in time when you replicate I'd figure
+that the database would be in a consistent state.  So, you should be able to
+replicate (or sync) a remote database that is in use.  After all, you're
+getting a snapshot of the database as it stands at 8:45 PM.  At 8:46 PM it
+may be totally different...but the next time syncing takes place those
+changes would appear in your local copy.
+
+    The one problem you may run into is if the remote host is running a
+large batch process.  It's very likely that you will get 50% of their
+changes when you replicate...but then again, that's why you can schedule the
+event to work around such things.
+
+>     How about a single, seperate table with the fields of 'database',
+>'tablename', 'oid', 'last_changed', that would store the same data as your
+>PGR_TIME field. It would be seperated from the actually data tables, and
+>therefore would be totally transparent to any database interface
+>applications. The 'oid' field would hold each row's OID, a nice, unique
+>identification number for the row, while the other fields would tell which
+>table and database the oid is in. Then this table can be compared with the
+>this table on a remote machine to quickly find updates and changes, then
+>each differences can be dealt with in turn.
+>
+
+    The problem with OID's is that they are unique at the local level but if
+you try and use them between servers you can run into overlap.  Also, if a
+database is under heavy use this table could quickly become VERY large.  Add
+indexes to this table to help performance and you're taking up even more
+disk space.
+
+    Using the PGR_TIME field with an index will allow us to find rows which
+have changed VERY quickly.  All we need to do now is somehow programatically
+find the primary key for a table so the person setting up replication (or
+syncing) doesn't have to have an indepth knowledge of the schema in order to
+setup a syncing schedule.
+
+>
+>     I like this idea, better than any I have come up with yet. Though,
+>how are you going to handle DELETEs?
+>
+
+    Oops...how about defining a trigger for this?  With deletion I guess we
+would have to move a flag into another table saying we deleted record 'X'
+with this primary key from this table.
+
+>
+>     Yea, this is indeed the sticky part, and would indeed require some
+>fine-tunning. Basically, the way I see it, is if the two timestamps for a
+>single row do not match (or even if the row and therefore timestamp is
+>missing on one side or the other altogether):
+>     local ts > remote ts => Local row is exported to remote.
+>     remote ts > local ts => Remote row is exported to local.
+>     local ts > last sync time && no remote ts =>
+>          Local row is inserted on remote.
+>     local ts < last sync time && no remote ts =>
+>          Local row is deleted.
+>     remote ts > last sync time && no local ts =>
+>          Remote row is inserted on local.
+>     remote ts < last sync time && no local ts =>
+>          Remote row is deleted.
+>where the synchronization process is running on the local machine. By
+>exported, I mean the local values are sent to the remote machine, and the
+>row on that remote machine is updated to the local values. How does this
+>sound?
+>
+
+    The replication part will be the most complex...that much is for
+certain...
+
+    I've been writing systems in Lotus Notes/Domino for the last year or so
+and I've grown quite spoiled with what it can do in regards to replication.
+It's not real-time but you have to gear your applications to this type of
+thing (it's possible to create documents, fire off email to notify people of
+changes and have the email arrive before the replicated documents do).
+Replicating large Notes/Domino databases takes quite a while....I don't see
+any kind of replication or syncing running in a blink of an eye.
+
+    Having said that, a good algo will have to be written to cut down on
+network traffic and to keep database conversations down to a minimum.  This
+will be appreciated by people with low bandwidth connections I'm sure
+(dial-ups, fractional T1's, etc).
+
+>     Or run manually for my purposes. Also, maybe follow it
+>with a vacuum run on both sides for all databases, as this is going to
+>potenitally cause lots of table changes that could stand with a cleanup.
+>
+
+    What would a vacuum do to a system being used by many people?
+
+>     No, not at all. Though it probably should be remaned from
+>replication to synchronization. The former is usually associated with a
+>continuous stream of updates between the local and remote databases, so
+>they are almost always in sync, and have a queuing ability if their
+>connection is loss for span of time as well. Very complex and difficult to
+>implement, and would require hacking server code. :( Something only Sybase
+>and Oracle have (as far as I know), and from what I have seen of Sybase's
+>replication server support (dated by 5yrs) it was a pain to setup and get
+>running correctly.
+
+    It could probably be named either way...but the one thing I really don't
+want to do is start hacking server code.  The PostgreSQL people have enough
+to do without worrying about trying to meld anything I've done to their
+server.   :)
+
+    Besides, I like the idea of having it operate as a stand-alone product.
+The only PostgreSQL feature we would require would be triggers and
+plpgsql...what was the earliest version of PostgreSQL that supported
+plpgsql?  Even then I don't see the triggers being that complex to boot.
+
+>     I also like the idea of using Python. I have been using it
+>recently for some database interfaces (to PostgreSQL of course :), and it
+>is a very nice language to work with. Some worries about performance of
+>the program though, as python is only an interpreted lanuage, and I have
+>yet to really be impressed with the speed of execution of my database
+>interfaces yet.
+
+    The only thing we'd need for Python is the Python extensions for
+PostgreSQL...which in turn requires libpq and that's about it.  So, it
+should be able to run on any platform supported by Python and libpq.  Using
+TK for the interface components will require NT people to get additional
+software from the 'net.  At least it did with older version of Windows
+Python.  Unix folks should be happy....assuming they have X running on the
+machine doing the replication or syncing.  Even then I wrote a curses based
+Python interface awhile back which allows buttons, progress bars, input
+fields, etc (I called it tinter and it's available at
+http://iximd.com/~dwalker).  It's a simple interface and could probably be
+cleaned up a bit but it works.  :)
+
+>     Anyway, it sound like a good project, and finally one where I
+>actually have a clue of what is going on, and the skills to help. So, if
+>you are interested in pursing this project, I would be more than glad to
+>help. TTYL.
+>
+
+
+    That would be a Good Thing.  Have webspace somewhere?  If I can get
+permission from the "powers that be" at the office I could host a website on
+our (Domino) webserver.
+
+                Damond
+
+
+************
+
+From owner-pgsql-hackers@hub.org Sun Dec 26 19:11:48 1999
+Received: from hub.org (hub.org [216.126.84.1])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id UAA26661
+	for <pgman@candle.pha.pa.us>; Sun, 26 Dec 1999 20:11:46 -0500 (EST)
+Received: from localhost (majordom@localhost)
+	by hub.org (8.9.3/8.9.3) with SMTP id UAA14959;
+	Sun, 26 Dec 1999 20:08:15 -0500 (EST)
+	(envelope-from owner-pgsql-hackers)
+Received: by hub.org (bulk_mailer v1.5); Sun, 26 Dec 1999 20:07:27 -0500
+Received: (from majordom@localhost)
+	by hub.org (8.9.3/8.9.3) id UAA14820
+	for pgsql-hackers-outgoing; Sun, 26 Dec 1999 20:06:28 -0500 (EST)
+	(envelope-from owner-pgsql-hackers@postgreSQL.org)
+Received: from mtiwmhc02.worldnet.att.net (mtiwmhc02.worldnet.att.net [204.127.131.37])
+	by hub.org (8.9.3/8.9.3) with ESMTP id UAA14749
+	for <pgsql-hackers@postgreSQL.org>; Sun, 26 Dec 1999 20:05:39 -0500 (EST)
+	(envelope-from rkirkpat@rkirkpat.net)
+Received: from [192.168.3.100] ([12.74.72.56])
+          by mtiwmhc02.worldnet.att.net (InterMail v03.02.07.07 118-134)
+          with ESMTP id <19991227010506.WJVW1914@[12.74.72.56]>;
+          Mon, 27 Dec 1999 01:05:06 +0000
+Date: Sun, 26 Dec 1999 18:05:02 -0700 (MST)
+From: Ryan Kirkpatrick <pgsql@rkirkpat.net>
+X-Sender: rkirkpat@excelsior.rkirkpat.net
+To: Damond Walker <dwalker@black-oak.com>
+cc: pgsql-hackers@postgreSQL.org
+Subject: Re: [HACKERS] database replication
+In-Reply-To: <002201bf4fb3$623f0220$b263a8c0@vmware98.walkers.org>
+Message-ID: <Pine.LNX.4.10.9912261742550.7666-100000@excelsior.rkirkpat.net>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Sender: owner-pgsql-hackers@postgreSQL.org
+Status: OR
+
+On Sun, 26 Dec 1999, Damond Walker wrote:
+
+> >     How about a single, seperate table with the fields of 'database',
+> >'tablename', 'oid', 'last_changed', that would store the same data as your
+> >PGR_TIME field. It would be seperated from the actually data tables, and
+...
+>     The problem with OID's is that they are unique at the local level but if
+> you try and use them between servers you can run into overlap.  
+
+	Yea, forgot about that point, but became dead obvious once you
+mentioned it. Boy, I feel stupid now. :)
+
+>     Using the PGR_TIME field with an index will allow us to find rows which
+> have changed VERY quickly.  All we need to do now is somehow programatically
+> find the primary key for a table so the person setting up replication (or
+> syncing) doesn't have to have an indepth knowledge of the schema in order to
+> setup a syncing schedule.
+
+	Hmm... Yea, maybe look to see which field(s) has a primary, unique
+index on it? Then use those field(s) as a primary key. Just require that
+any table to be synchronized to have some set of fields that uniquely
+identify each row. Either that, or add another field to each table with
+our own, cross system consistent, identification system. Don't know which
+would be more efficient and easier to work with.
+	The former could potentially get sticky if it takes a lots of
+fields to generate a unique key value, but has the smallest effect on the
+table to be synced. The latter could be difficult to keep straight between
+systems (local vs. remote), and would require a trigger on inserts to
+generate a new, unique id number, that does not exist locally or
+remotely (nasty issue there), but would remove the uniqueness
+requirement.
+
+>     Oops...how about defining a trigger for this?  With deletion I guess we
+> would have to move a flag into another table saying we deleted record 'X'
+> with this primary key from this table.
+
+	Or, according to my logic below, if a row is missing on one side
+or the other, then just compare the remaining row's timestamp to the last
+synchronization time (stored in a seperate table/db elsewhere). The
+results of the comparsion and the state of row existences tell one if the
+row was inserted or deleted since the last sync, and what should be done
+to perform the sync.
+
+> >     Yea, this is indeed the sticky part, and would indeed require some
+> >fine-tunning. Basically, the way I see it, is if the two timestamps for a
+> >single row do not match (or even if the row and therefore timestamp is
+> >missing on one side or the other altogether):
+> >     local ts > remote ts => Local row is exported to remote.
+> >     remote ts > local ts => Remote row is exported to local.
+> >     local ts > last sync time && no remote ts =>
+> >          Local row is inserted on remote.
+> >     local ts < last sync time && no remote ts =>
+> >          Local row is deleted.
+> >     remote ts > last sync time && no local ts =>
+> >          Remote row is inserted on local.
+> >     remote ts < last sync time && no local ts =>
+> >          Remote row is deleted.
+> >where the synchronization process is running on the local machine. By
+> >exported, I mean the local values are sent to the remote machine, and the
+> >row on that remote machine is updated to the local values. How does this
+> >sound?
+
+>     Having said that, a good algo will have to be written to cut down on
+> network traffic and to keep database conversations down to a minimum.  This
+> will be appreciated by people with low bandwidth connections I'm sure
+> (dial-ups, fractional T1's, etc).
+
+	Of course! In reflection, the assigned identification number I
+mentioned above might be the best then, instead of having to transfer the
+entire set of key fields back and forth.
+
+>     What would a vacuum do to a system being used by many people?
+
+	Probably lock them out of tables while they are vacuumed... Maybe
+not really required in the end, possibly optional?
+
+>     It could probably be named either way...but the one thing I really don't
+> want to do is start hacking server code.  The PostgreSQL people have enough
+> to do without worrying about trying to meld anything I've done to their
+> server.   :)
+
+	Yea, they probably would appreciate that. They already have enough
+on thier plate for 7.x as it is! :)
+
+>     Besides, I like the idea of having it operate as a stand-alone product.
+> The only PostgreSQL feature we would require would be triggers and
+> plpgsql...what was the earliest version of PostgreSQL that supported
+> plpgsql?  Even then I don't see the triggers being that complex to boot.
+
+	No, provided that we don't do the identification number idea
+(which the more I think about it, probably will not work). As for what
+version support plpgsql, I don't know, one of the more hard-core pgsql
+hackers can probably tell us that.
+
+>     The only thing we'd need for Python is the Python extensions for
+> PostgreSQL...which in turn requires libpq and that's about it.  So, it
+> should be able to run on any platform supported by Python and libpq.  
+
+	Of course. If it ran on NT as well as Linux/Unix, that would be
+even better. :)
+
+> Unix folks should be happy....assuming they have X running on the
+> machine doing the replication or syncing.  Even then I wrote a curses
+> based Python interface awhile back which allows buttons, progress
+> bars, input fields, etc (I called it tinter and it's available at
+> http://iximd.com/~dwalker).  It's a simple interface and could
+> probably be cleaned up a bit but it works.  :)
+
+	Why would we want any type of GUI (X11 or curses) for this sync
+program. I imagine just a command line program with a few options (local
+machine, remote machine, db name, etc...), and nothing else.
+	Though I will take a look at your curses interface, as I have been
+wanting to make a curses interface to a few db interfaces I have, in a
+simple as manner as possible.
+
+>     That would be a Good Thing.  Have webspace somewhere?  If I can get
+> permission from the "powers that be" at the office I could host a website on
+> our (Domino) webserver.
+
+	Yea, I got my own web server (www.rkirkpat.net) with 1GB+ of disk
+space available, sitting on a decent speed DSL. Even can setup of a
+virtual server if we want (i.e. pgsync.rkirkpat.net :). CVS repository,
+email lists, etc... possible with some effort (and time). 
+	So, where should we start? TTYL.
+
+	PS. The current pages on my web site are very out of date at the
+moment (save for the pgsql information). I hope to have updated ones up
+within the week. 
+
+---------------------------------------------------------------------------
+|   "For to me to live is Christ, and to die is gain."                    |
+|                                            --- Philippians 1:21 (KJV)   |
+---------------------------------------------------------------------------
+|   Ryan Kirkpatrick  |  Boulder, Colorado  |  http://www.rkirkpat.net/   |
+---------------------------------------------------------------------------
+
+
+************
+
+From owner-pgsql-hackers@hub.org Mon Dec 27 12:33:32 1999
+Received: from hub.org (hub.org [216.126.84.1])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id NAA24817
+	for <pgman@candle.pha.pa.us>; Mon, 27 Dec 1999 13:33:29 -0500 (EST)
+Received: from localhost (majordom@localhost)
+	by hub.org (8.9.3/8.9.3) with SMTP id NAA53391;
+	Mon, 27 Dec 1999 13:29:02 -0500 (EST)
+	(envelope-from owner-pgsql-hackers)
+Received: by hub.org (bulk_mailer v1.5); Mon, 27 Dec 1999 13:28:38 -0500
+Received: (from majordom@localhost)
+	by hub.org (8.9.3/8.9.3) id NAA53248
+	for pgsql-hackers-outgoing; Mon, 27 Dec 1999 13:27:40 -0500 (EST)
+	(envelope-from owner-pgsql-hackers@postgreSQL.org)
+Received: from gtv.ca (h139-142-238-17.cg.fiberone.net [139.142.238.17])
+	by hub.org (8.9.3/8.9.3) with ESMTP id NAA53170
+	for <pgsql-hackers@hub.org>; Mon, 27 Dec 1999 13:26:40 -0500 (EST)
+	(envelope-from aaron@genisys.ca)
+Received: from stilborne (24.67.90.252.ab.wave.home.com [24.67.90.252])
+	by gtv.ca (8.9.3/8.8.7) with SMTP id MAA01200
+	for <pgsql-hackers@hub.org>; Mon, 27 Dec 1999 12:36:39 -0700
+From: "Aaron J. Seigo" <aaron@gtv.ca>
+To: pgsql-hackers@hub.org
+Subject: Re: [HACKERS] database replication
+Date: Mon, 27 Dec 1999 11:23:19 -0700
+X-Mailer: KMail [version 1.0.28]
+Content-Type: text/plain
+References: <199912271135.TAA10184@netrinsics.com>
+In-Reply-To: <199912271135.TAA10184@netrinsics.com>
+MIME-Version: 1.0
+Message-Id: <99122711245600.07929@stilborne>
+Content-Transfer-Encoding: 8bit
+Sender: owner-pgsql-hackers@postgreSQL.org
+Status: OR
+
+hi..
+
+> Before anyone starts implementing any database replication, I'd strongly
+> suggest doing some research, first:
+> 
+> http://sybooks.sybase.com:80/onlinebooks/group-rs/rsg1150e/rs_admin/@Generic__BookView;cs=default;ts=default
+
+good idea, but perhaps sybase isn't the best study case.. here's some extremely
+detailed online coverage of Oracle 8i's replication, from the oracle online
+library:
+
+http://bach.towson.edu/oracledocs/DOC/server803/A54651_01/toc.htm
+
+-- 
+Aaron J. Seigo
+Sys Admin
+
+************
+

@@ -155,7 +155,7 @@ EXOTIC FEATURES
 
 * Add sql3 recursive unions
 * Add the concept of dataspaces
-* Add replication of distributed databases
+* Add replication of distributed databases [replication]
 * Allow queries across multiple databases
 * Allow nested transactions (Vadim)
 
@@ -198,7 +198,7 @@ FSYNC
 
 INDEXES
 
-* Use indexes in ORDER BY for min(), max()
+* Use indexes to find min() and max()
 * Use index to restrict rows returned by multi-key index when used with
   non-consecutive keys or OR clauses, so fewer heap accesses
 * Allow SELECT * FROM tab WHERE int2col = 4 use int2col index, int8,

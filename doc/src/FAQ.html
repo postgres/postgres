@@ -628,7 +628,7 @@ support configured in your kernel at all.<P>
 accessing my PostgreSQL database?</H4><P>
 
 By default, PostgreSQL only allows connections from the local machine
-using unix domain sockets.  Other machines will not be able to connect
+using Unix domain sockets.  Other machines will not be able to connect
 unless you add the <I>-i</I> flag to the <I>postmaster,</I>
 <B>and</B> enable host-based authentication by modifying the file
 <I>$PGDATA/pg_hba.conf</I> accordingly.  This will allow TCP/IP connections.
@@ -852,8 +852,11 @@ Maximum size for a table?                unlimited on all operating systems
 Maximum size for a row?                  8k, configurable to 32k
 Maximum number of rows in a table?	 unlimited
 Maximum number of columns table?         unlimited
-Maximun number of indexes on a table?	 unlimited
+Maximum number of indexes on a table?	 unlimited
 </PRE>
+
+Of course, these are not actually unlimited, but limited to available
+disk space.<P>
 
 To change the maximum row size, edit <I>include/config.h</I> and change
 <SMALL>BLCKSZ.</SMALL> To use attributes larger than 8K, you can also
