@@ -7,7 +7,7 @@
  *
  * 1999/1/15 Tatsuo Ishii
  *
- * $Id: big5.c,v 1.2 2002/09/04 20:31:31 momjian Exp $
+ * $Id: big5.c,v 1.3 2003/01/29 01:01:05 tgl Exp $
  */
 
 /* can be used in either frontend or backend */
@@ -299,7 +299,7 @@ BIG5toCNS(unsigned short big5, unsigned char *lc)
 	{
 		/* level 1 */
 
-		for (i = 0; i < sizeof(b1c4) / sizeof(unsigned short); i++)
+		for (i = 0; i < sizeof(b1c4) / (sizeof(unsigned short) * 2); i++)
 		{
 			if (b1c4[i][0] == big5)
 			{
@@ -320,7 +320,7 @@ BIG5toCNS(unsigned short big5, unsigned char *lc)
 	else
 	{
 		/* level 2 */
-		for (i = 0; i < sizeof(b2c3) / sizeof(unsigned short); i++)
+		for (i = 0; i < sizeof(b2c3) / (sizeof(unsigned short) * 2); i++)
 		{
 			if (b2c3[i][0] == big5)
 			{
@@ -359,14 +359,14 @@ CNStoBIG5(unsigned short cns, unsigned char lc)
 			big5 = BinarySearchRange(cnsPlane2ToBig5Level2, 47, cns);
 			break;
 		case LC_CNS11643_3:
-			for (i = 0; i < sizeof(b2c3) / sizeof(unsigned short); i++)
+			for (i = 0; i < sizeof(b2c3) / (sizeof(unsigned short) * 2); i++)
 			{
 				if (b2c3[i][1] == cns)
 					return (b2c3[i][0]);
 			}
 			break;
 		case LC_CNS11643_4:
-			for (i = 0; i < sizeof(b1c4) / sizeof(unsigned short); i++)
+			for (i = 0; i < sizeof(b1c4) / (sizeof(unsigned short) * 2); i++)
 			{
 				if (b1c4[i][1] == cns)
 					return (b1c4[i][0]);
