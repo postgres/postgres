@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.146 2003/10/04 03:14:13 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.147 2003/10/24 15:30:52 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1587,22 +1587,6 @@ gunzip -c postgres.ps.gz \
        </row>
        <row>
 	<entry><systemitem class="osname">Linux</></entry>
-	<entry><systemitem>armv4l</></entry>
-	<entry>7.2</entry>
-	<entry>2001-12-10,
-	 Mark Knox (<email>segfault@hardline.org</email>)</entry>
-	<entry>2.2.x</entry>
-       </row>
-       <row>
-	<entry><systemitem class="osname">Linux</></entry>
-	<entry><systemitem>MIPS</></entry>
-	<entry>7.2</entry>
-	<entry>2001-11-15,
-	 Hisao Shibuya (<email>shibuya@alpha.or.jp</>)</entry>
-	<entry>2.0.x; <productname>Cobalt Qube2</></entry>
-       </row>
-       <row>
-	<entry><systemitem class="osname">Linux</></entry>
 	<entry><systemitem>PlayStation 2</></entry>
 	<entry>7.3</entry>
 	<entry>2002-11-19,
@@ -1653,59 +1637,11 @@ gunzip -c postgres.ps.gz \
        </row>
        <row>
 	<entry><systemitem class="osname">NetBSD</></entry>
-	<entry><systemitem>Alpha</></entry>
-	<entry>7.2</entry>
-	<entry>2001-11-20,
-	 Thomas Thai (<email>tom@minnesota.com</email>)</entry>
-	<entry>1.5W</entry>
-       </row>
-       <row>
-	<entry><systemitem class="osname">NetBSD</></entry>
 	<entry><systemitem>arm32</></entry>
 	<entry>7.3</entry>
 	<entry>2002-11-19,
 	 Patrick Welche (<email>prlw1@newn.cam.ac.uk</email>)</entry>
 	<entry>1.6</entry>
-       </row>
-       <row>
-	<entry><systemitem class="osname">NetBSD</></entry>
-	<entry><systemitem>m68k</></entry>
-	<entry>7.0</entry>
-	<entry>2000-04-10,
-	 Henry B. Hotz (<email>hotz@jpl.nasa.gov</email>)</entry>
-	<entry>Mac 8xx</entry>
-       </row>
-      <row>
-       <entry><systemitem class="osname">NetBSD</></entry>
-       <entry><systemitem>MIPS</></entry>
-       <entry>7.2.1</entry>
-       <entry>2002-06-13,
-        Warwick Hunter (<email>whunter@agile.tv</email>)</entry>
-       <entry>1.5.3</entry>
-      </row>
-       <row>
-	<entry><systemitem class="osname">NetBSD</></entry>
-	<entry><systemitem>PPC</></entry>
-	<entry>7.2</entry>
-	<entry>2001-11-28,
-	 Bill Studenmund (<email>wrstuden@netbsd.org</email>)</entry>
-	<entry>1.5</entry>
-       </row>
-       <row>
-	<entry><systemitem class="osname">NetBSD</></entry>
-	<entry><systemitem>Sparc</></entry>
-	<entry>7.2</entry>
-	<entry>2001-12-03,
-	 Matthew Green (<email>mrg@eterna.com.au</email>)</entry>
-	<entry>32- and 64-bit builds</entry>
-       </row>
-       <row>
-        <entry><systemitem class="osname">NetBSD</></entry>
-        <entry><systemitem>VAX</></entry>
-        <entry>7.1</entry>
-        <entry>2001-03-30,
-	 Tom I. Helbekkmo (<email>tih@kpnQwest.no</email>)</entry>
-        <entry>1.5</entry>
        </row>
        <row>
 	<entry><systemitem class="osname">NetBSD</></entry>
@@ -1754,13 +1690,6 @@ gunzip -c postgres.ps.gz \
 	<entry>2002-11-20,
 	 Martin Renters (<email>martin@datafax.com</email>)</entry>
 	<entry>5.8; see also <filename>doc/FAQ_Solaris</filename></entry>
-       </row>
-       <row>
-        <entry><systemitem class="osname">SunOS 4</></entry>
-        <entry><systemitem>Sparc</></entry>
-        <entry>7.2</entry>
-        <entry>2001-12-04, Tatsuo Ishii (<email>t-ishii@sra.co.jp</email>)</entry>
-        <entry></entry>
        </row>
        <row>
 	<entry><systemitem class="osname">Tru64 UNIX</></entry>
@@ -1844,6 +1773,22 @@ gunzip -c postgres.ps.gz \
       <entry>1998-03-01, Brian E Gallew (<email>geek+@cmu.edu</email>)</entry>
       <entry>no recent reports</entry>
      </row>
+       <row>
+	<entry><systemitem class="osname">Linux</></entry>
+	<entry><systemitem>armv4l</></entry>
+	<entry>7.2</entry>
+	<entry>2001-12-10,
+	 Mark Knox (<email>segfault@hardline.org</email>)</entry>
+	<entry>2.2.x</entry>
+       </row>
+       <row>
+	<entry><systemitem class="osname">Linux</></entry>
+	<entry><systemitem>MIPS</></entry>
+	<entry>7.2</entry>
+	<entry>2001-11-15,
+	 Hisao Shibuya (<email>shibuya@alpha.or.jp</>)</entry>
+	<entry>2.0.x; <productname>Cobalt Qube2</></entry>
+       </row>
      <row>
       <entry><systemitem class="osname">MkLinux DR1</></entry>
       <entry><systemitem>PPC750</></entry>
@@ -1851,6 +1796,54 @@ gunzip -c postgres.ps.gz \
       <entry>2001-04-03, Tatsuo Ishii (<email>t-ishii@sra.co.jp</email>)</entry>
       <entry>7.1 needs OS update?</entry>
      </row>
+       <row>
+	<entry><systemitem class="osname">NetBSD</></entry>
+	<entry><systemitem>Alpha</></entry>
+	<entry>7.2</entry>
+	<entry>2001-11-20,
+	 Thomas Thai (<email>tom@minnesota.com</email>)</entry>
+	<entry>1.5W</entry>
+       </row>
+       <row>
+	<entry><systemitem class="osname">NetBSD</></entry>
+	<entry><systemitem>m68k</></entry>
+	<entry>7.0</entry>
+	<entry>2000-04-10,
+	 Henry B. Hotz (<email>hotz@jpl.nasa.gov</email>)</entry>
+	<entry>Mac 8xx</entry>
+       </row>
+       <row>
+        <entry><systemitem class="osname">NetBSD</></entry>
+        <entry><systemitem>MIPS</></entry>
+        <entry>7.2.1</entry>
+        <entry>2002-06-13,
+         Warwick Hunter (<email>whunter@agile.tv</email>)</entry>
+        <entry>1.5.3</entry>
+       </row>
+       <row>
+	<entry><systemitem class="osname">NetBSD</></entry>
+	<entry><systemitem>PPC</></entry>
+	<entry>7.2</entry>
+	<entry>2001-11-28,
+	 Bill Studenmund (<email>wrstuden@netbsd.org</email>)</entry>
+	<entry>1.5</entry>
+       </row>
+       <row>
+	<entry><systemitem class="osname">NetBSD</></entry>
+	<entry><systemitem>Sparc</></entry>
+	<entry>7.2</entry>
+	<entry>2001-12-03,
+	 Matthew Green (<email>mrg@eterna.com.au</email>)</entry>
+	<entry>32- and 64-bit builds</entry>
+       </row>
+       <row>
+        <entry><systemitem class="osname">NetBSD</></entry>
+        <entry><systemitem>VAX</></entry>
+        <entry>7.1</entry>
+        <entry>2001-03-30,
+	 Tom I. Helbekkmo (<email>tih@kpnQwest.no</email>)</entry>
+        <entry>1.5</entry>
+       </row>
      <row>
       <entry><systemitem class="osname">NeXTSTEP</></entry>
       <entry><systemitem>x86</></entry>
@@ -1875,6 +1868,13 @@ gunzip -c postgres.ps.gz \
       <entry>2001-11-20, Igor Kovalenko (<email>Igor.Kovalenko@motorola.com</email>)</entry>
       <entry>patches available in archives, but too late for 7.2</entry>
      </row>
+       <row>
+        <entry><systemitem class="osname">SunOS 4</></entry>
+        <entry><systemitem>Sparc</></entry>
+        <entry>7.2</entry>
+        <entry>2001-12-04, Tatsuo Ishii (<email>t-ishii@sra.co.jp</email>)</entry>
+        <entry></entry>
+       </row>
      <row>
       <entry><systemitem class="osname">System V R4</></entry>
       <entry><systemitem>m88k</></entry>
