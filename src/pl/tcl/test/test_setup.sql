@@ -319,7 +319,7 @@ create function check_primkey() returns trigger as '
 	    # Lookup the fields type in pg_attribute
 	    #
 	    set n [spi_exec "select T.typname			\\
-	        from pg_type T, pg_attribute A, pg_class C	\\
+	        from pg_catalog.pg_type T, pg_catalog.pg_attribute A, pg_catalog.pg_class C	\\
 		where C.relname  = ''[quote $keyrel]''		\\
 		  and C.oid      = A.attrelid			\\
 		  and A.attname  = ''[quote $key]''		\\
@@ -343,7 +343,7 @@ create function check_primkey() returns trigger as '
 	#
 	# Lookup and remember the table name for later error messages
 	#
-	spi_exec "select relname from pg_class			\\
+	spi_exec "select relname from pg_catalog.pg_class	\\
 		where oid = ''$TG_relid''::oid"
 	set GD($planrel) $relname
     }
