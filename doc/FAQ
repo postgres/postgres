@@ -182,12 +182,10 @@
    
         Server
         
-   The database server can run on Windows NT and later using Cygwin, the
-   Cygnus Unix/NT porting library. See pgsql/doc/FAQ_MSWIN in the
-   distribution or the MS Windows FAQ on our web site. The database
-   server does not run on MS Windows 9X because Cygwin does not support
-   the required features on those platforms. We have no plan to do a
-   native port to any Microsoft platform.
+   The database server can run on Windows NT, Win2k, and Win98 using
+   Cygwin, the Cygnus Unix/NT porting library. See pgsql/doc/FAQ_MSWIN in
+   the distribution or the MS Windows FAQ on our web site. We have no
+   plan to do a native port to any Microsoft platform.
    
     1.5) Where can I get PostgreSQL?
     
