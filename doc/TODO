@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sun Feb 24 22:37:24 EST 2002
+Last updated:		Mon Feb 25 01:22:48 EST 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -64,7 +64,7 @@ ADMIN
 * Remove behavior of postmaster -o after making postmaster/postgres
   flags unique
 * Allow logging of query durations
-* Prevent SIGHUP and 'pg_ctl reload' from changing command line
+* -Prevent SIGHUP and 'pg_ctl reload' from changing command line
   specified parameters to postgresql.conf defaults
 
 
@@ -165,13 +165,13 @@ COMMANDS
 
 * Add SIMILAR TO to allow character classes, 'pg_[a-c]%'
 * Add BETWEEN ASYMMETRIC/SYMMETRIC
-* Remove LIMIT #,# and force use LIMIT and OFFSET clauses in 7.3 (Bruce)
+* -Remove LIMIT #,# and force use LIMIT and OFFSET clauses in 7.3 (Bruce)
 * Allow LIMIT/OFFSET to use expressions
 * Disallow TRUNCATE on tables that are involved in referential constraints
 * Add OR REPLACE clauses to non-FUNCTION object creation
 * CREATE TABLE AS can not determine column lengths from expressions [atttypmod]
 * Allow UPDATE to handle complex aggregates [update]
-* Prevent create/drop scripts from allowing extra args (Bruce)
+* -Prevent create/drop scripts from allowing extra args (Bruce)
 * Allow command blocks to ignore certain types of errors
 * Add checks for missing parameters to shell script, to prevent
   over-shifting
@@ -244,7 +244,7 @@ CLIENTS
 
 * Have pg_dump use LEFT OUTER JOIN in multi-table SELECTs
   or multiple SELECTS to avoid bad system catalog entries
-* Have pg_dump -C dump database location and encoding information
+* -Have pg_dump -C dump database location and encoding information
 * Allow psql \d to show foreign keys
 * Allow psql \d to show temporary table structure
 * Allow psql to show transaction status if backend protocol changes made
@@ -364,7 +364,6 @@ VACUUM
 * Improve speed with indexes (perhaps recreate index instead) [vacuum]
 * Reduce lock time by moving tuples with read lock, then write
   lock and truncate table [vacuum]
-* Add LAZY VACUUM (Vadim) [performance]
 * Provide automatic scheduling of background vacuum (Tom)
 
 LOCKING
@@ -451,7 +450,6 @@ SOURCE CODE
 * Move some things from /contrib into main tree
 * Remove warnings created by -Wcast-align
 * Move platform-specific ps status display info from ps_status.c to ports
-* Allow ps status display to work on Solaris/SVr4-based systems
 * Make one version of simple_prompt() in code (Bruce, Tom)
 * Compile in syslog functionaility by default (?)
 * Modify regression tests to prevent failures do to minor numeric rounding
