@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.86 2000/10/07 00:58:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.87 2000/11/16 17:27:10 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -838,6 +838,7 @@ parser_typecast_constant(Value *expr, TypeName *typename)
 			break;
 		case T_Float:
 		case T_String:
+		case T_BitString:
 			const_string = expr->val.str;
 			break;
 		case T_Null:
