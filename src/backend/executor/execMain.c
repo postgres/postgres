@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.74 1999/02/07 14:20:11 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.75 1999/02/07 16:17:11 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1124,7 +1124,7 @@ ExecAppend(TupleTableSlot *slot,
 
 	if (resultRelationDesc->rd_att->constr)
 	{
-		ExecConstraints("ExecAppend", resultRelationDesc, tuple);
+		ExecConstraints("ExecAppend", resultRelationDesc, tuple, estate);
 	}
 
 	/******************
@@ -1327,7 +1327,7 @@ ExecReplace(TupleTableSlot *slot,
 
 	if (resultRelationDesc->rd_att->constr)
 	{
-		ExecConstraints("ExecReplace", resultRelationDesc, tuple);
+		ExecConstraints("ExecReplace", resultRelationDesc, tuple, estate);
 	}
 
 	/*
@@ -1472,7 +1472,7 @@ ExecAttrDefault(Relation rel, HeapTuple tuple)
 #endif
 
 static char *
-ExecRelCheck(Relation rel, HeapTuple tuple)
+ExecRelCheck(Relation rel, HeapTuple tuple, EState *estate)
 {
 	int			ncheck = rel->rd_att->constr->num_check;
 	ConstrCheck *check = rel->rd_att->constr->check;
@@ -1505,13 +1505,23 @@ ExecRelCheck(Relation rel, HeapTuple tuple)
 	econtext->ecxt_param_exec_vals = NULL;		/* exec param values */
 	econtext->ecxt_range_table = rtlist;		/* range table */
 
+	if (estate->es_result_relation_constraints == NULL)
+	{
+		estate->es_result_relation_constraints =
+				(List **)palloc(ncheck * sizeof(List *));
+
+		for (i = 0; i < ncheck; i++)
+		{
+			qual = (List *) stringToNode(check[i].ccbin);
+			estate->es_result_relation_constraints[i] = qual;
+		}
+	}
+
 	for (i = 0; i < ncheck; i++)
 	{
-		qual = (List *) stringToNode(check[i].ccbin);
+		qual = estate->es_result_relation_constraints[i];
 
 		res = ExecQual(qual, econtext);
-
-		freeObject(qual);
 
 		if (!res)
 			return check[i].ccname;
@@ -1528,7 +1538,7 @@ ExecRelCheck(Relation rel, HeapTuple tuple)
 }
 
 void
-ExecConstraints(char *caller, Relation rel, HeapTuple tuple)
+ExecConstraints(char *caller, Relation rel, HeapTuple tuple, EState *estate)
 {
 
 	Assert(rel->rd_att->constr);
@@ -1549,7 +1559,7 @@ ExecConstraints(char *caller, Relation rel, HeapTuple tuple)
 	{
 		char	   *failed;
 
-		if ((failed = ExecRelCheck(rel, tuple)) != NULL)
+		if ((failed = ExecRelCheck(rel, tuple, estate)) != NULL)
 			elog(ERROR, "%s: rejected due to CHECK constraint %s", caller, failed);
 	}
 

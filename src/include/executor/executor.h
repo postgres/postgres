@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: executor.h,v 1.28 1998/11/27 19:33:32 vadim Exp $
+ * $Id: executor.h,v 1.29 1999/02/07 16:17:12 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,7 +85,8 @@ extern HeapTuple ExecRemoveJunk(JunkFilter *junkfilter, TupleTableSlot *slot);
 extern TupleDesc ExecutorStart(QueryDesc *queryDesc, EState *estate);
 extern TupleTableSlot *ExecutorRun(QueryDesc *queryDesc, EState *estate, int feature, int count);
 extern void ExecutorEnd(QueryDesc *queryDesc, EState *estate);
-extern void ExecConstraints(char *caller, Relation rel, HeapTuple tuple);
+extern void ExecConstraints(char *caller, Relation rel, HeapTuple tuple, 
+											EState *estate);
 #ifdef QUERY_LIMIT
 extern int ExecutorLimit(int limit);
 extern int ExecutorGetLimit(void);

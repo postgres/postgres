@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.22 1999/01/29 09:23:13 vadim Exp $
+ * $Id: execnodes.h,v 1.23 1999/02/07 16:17:14 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -199,6 +199,7 @@ typedef struct EState
 	Snapshot		es_snapshot;
 	List		   *es_range_table;
 	RelationInfo   *es_result_relation_info;
+	List		  **es_result_relation_constraints;
 	Relation		es_into_relation_descriptor;
 	ParamListInfo	es_param_list_info;
 	ParamExecData  *es_param_exec_vals;	/* this is for subselects */

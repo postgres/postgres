@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.71 1999/02/03 21:16:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.72 1999/02/07 16:17:10 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -505,6 +505,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 	Node	  **indexPred = NULL;
 	TupleDesc	rtupdesc;
 	ExprContext *econtext = NULL;
+	EState		*estate = makeNode(EState);	/* for ExecConstraints() */
 
 #ifndef OMIT_PARTIAL_INDEX
 	TupleTable	tupleTable;
@@ -805,7 +806,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 			 */
 
 			if (rel->rd_att->constr)
-				ExecConstraints("CopyFrom", rel, tuple);
+				ExecConstraints("CopyFrom", rel, tuple, estate);
 
 			heap_insert(rel, tuple);
 
