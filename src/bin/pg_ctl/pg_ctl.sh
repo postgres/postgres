@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pg_ctl/Attic/pg_ctl.sh,v 1.16 2000/11/29 20:59:53 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pg_ctl/Attic/pg_ctl.sh,v 1.17 2000/12/30 06:10:43 ishii Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -215,7 +215,7 @@ if [ $op = "stop" -o $op = "restart" ];then
 
 	kill $sig $PID
 
-	# wait for postmaster shutting down
+	# wait for postmaster to shut down
 	if [ "$wait" = 1 -o $op = "restart" ];then
 	    cnt=0
 	    $ECHO_N "Waiting for postmaster to shut down.."$ECHO_C
@@ -226,7 +226,8 @@ if [ $op = "stop" -o $op = "restart" ];then
 		    $ECHO_N "."$ECHO_C
 		    cnt=`expr $cnt + 1`
 		    if [ $cnt -gt 60 ];then
-			echo "$CMDNAME: postmaster does not shut down"
+			echo "failed."
+			echo "postmaster does not shut down."
 			exit 1
 		    fi
 		else
@@ -234,10 +235,10 @@ if [ $op = "stop" -o $op = "restart" ];then
 		fi
 		sleep 1
 	    done
-	    echo "done"
+	    echo "done."
 	fi
 
-	echo "postmaster successfully shut down"
+	echo "postmaster successfully shut down."
 
     else
 	echo "$CMDNAME: cannot find $PIDFILE"
@@ -281,7 +282,7 @@ if [ $op = "start" -o $op = "restart" ];then
         fi
     fi
 
-    # wait for postmaster starting up
+    # wait for postmaster to start up
     if [ "$wait" = 1 ];then
 	cnt=0
 	$ECHO_N "Waiting for postmaster to start up.."$ECHO_C
