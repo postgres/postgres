@@ -31,7 +31,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.47 2004/10/15 22:39:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.48 2004/10/25 15:42:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -554,9 +554,12 @@ lazy_scan_index(Relation indrel, LVRelStats *vacrelstats)
 	vac_init_rusage(&ru0);
 
 	/*
-	 * If index is unsafe for concurrent access, must lock it.
+	 * Acquire appropriate type of lock on index: must be exclusive if
+	 * index AM isn't concurrent-safe.
 	 */
-	if (!indrel->rd_am->amconcurrent)
+	if (indrel->rd_am->amconcurrent)
+		LockRelation(indrel, RowExclusiveLock);
+	else
 		LockRelation(indrel, AccessExclusiveLock);
 
 	/*
@@ -576,7 +579,9 @@ lazy_scan_index(Relation indrel, LVRelStats *vacrelstats)
 	/*
 	 * Release lock acquired above.
 	 */
-	if (!indrel->rd_am->amconcurrent)
+	if (indrel->rd_am->amconcurrent)
+		UnlockRelation(indrel, RowExclusiveLock);
+	else
 		UnlockRelation(indrel, AccessExclusiveLock);
 
 	if (!stats)
@@ -619,9 +624,12 @@ lazy_vacuum_index(Relation indrel, LVRelStats *vacrelstats)
 	vac_init_rusage(&ru0);
 
 	/*
-	 * If index is unsafe for concurrent access, must lock it.
+	 * Acquire appropriate type of lock on index: must be exclusive if
+	 * index AM isn't concurrent-safe.
 	 */
-	if (!indrel->rd_am->amconcurrent)
+	if (indrel->rd_am->amconcurrent)
+		LockRelation(indrel, RowExclusiveLock);
+	else
 		LockRelation(indrel, AccessExclusiveLock);
 
 	/* Do bulk deletion */
@@ -636,7 +644,9 @@ lazy_vacuum_index(Relation indrel, LVRelStats *vacrelstats)
 	/*
 	 * Release lock acquired above.
 	 */
-	if (!indrel->rd_am->amconcurrent)
+	if (indrel->rd_am->amconcurrent)
+		UnlockRelation(indrel, RowExclusiveLock);
+	else
 		UnlockRelation(indrel, AccessExclusiveLock);
 
 	if (!stats)
