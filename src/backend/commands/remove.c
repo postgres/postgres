@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.33 1999/05/25 16:08:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.33.2.1 1999/08/02 05:56:59 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,25 +15,15 @@
 
 #include "access/heapam.h"
 #include "catalog/catname.h"
-#include "catalog/pg_aggregate.h"
 #include "catalog/pg_language.h"
-#include "catalog/pg_operator.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "commands/defrem.h"
-#include "fmgr.h"
 #include "miscadmin.h"
 #include "parser/parse_func.h"
-#include "storage/bufmgr.h"
 #include "utils/acl.h"
-#include "utils/builtins.h"
 #include "utils/syscache.h"
 
-#ifndef HAVE_MEMMOVE
-#include <regex/utils.h>
-#else
-#include <string.h>
-#endif
 
 /*
  * RemoveOperator

@@ -3,7 +3,7 @@
 * geqo_recombination.c
 *	 misc recombination procedures
 *
-* $Id: geqo_recombination.c,v 1.7 1999/02/13 23:16:12 momjian Exp $
+* $Id: geqo_recombination.c,v 1.7.2.1 1999/08/02 05:57:06 scrappy Exp $
 *
 *-------------------------------------------------------------------------
 */
@@ -19,24 +19,8 @@
 /* -- parts of this are adapted from D. Whitley's Genitor algorithm -- */
 
 #include "postgres.h"
-
-#include "nodes/pg_list.h"
-#include "nodes/relation.h"
-#include "nodes/primnodes.h"
-
-#include "utils/palloc.h"
-#include "utils/elog.h"
-
-#include "optimizer/internal.h"
-#include "optimizer/paths.h"
-#include "optimizer/pathnode.h"
-#include "optimizer/clauses.h"
-#include "optimizer/cost.h"
-
-#include "optimizer/geqo_gene.h"
-#include "optimizer/geqo.h"
-#include "optimizer/geqo_recombination.h"
 #include "optimizer/geqo_random.h"
+#include "optimizer/geqo_recombination.h"
 
 
 /*

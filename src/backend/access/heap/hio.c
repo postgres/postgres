@@ -7,19 +7,15 @@
  *
  *
  * IDENTIFICATION
- *	  $Id: hio.c,v 1.22 1999/07/03 01:56:16 momjian Exp $
+ *	  $Id: hio.c,v 1.22.2.1 1999/08/02 05:56:37 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#include <postgres.h>
+#include "postgres.h"
 
-#include <storage/bufpage.h>
-#include <access/hio.h>
-#include <access/htup.h>
-#include <access/heapam.h>
-#include <storage/bufmgr.h>
-#include <utils/memutils.h>
+#include "access/heapam.h"
+#include "access/hio.h"
 
 /*
  * amputunique	- place tuple at tid
@@ -54,7 +50,7 @@ RelationPutHeapTuple(Relation relation,
 	IncrHeapAccessStat(global_RelationPutHeapTuple);
 
 	pageHeader = (Page) BufferGetPage(buffer);
-	len = (unsigned) DOUBLEALIGN(tuple->t_len); /* be conservative */
+	len = (unsigned) MAXALIGN(tuple->t_len); /* be conservative */
 	Assert((int) len <= PageGetFreeSpace(pageHeader));
 
 	offnum = PageAddItem((Page) pageHeader, (Item) tuple->t_data,
@@ -147,7 +143,7 @@ RelationPutHeapTupleAtEnd(Relation relation, HeapTuple tuple)
 
 	LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
 	pageHeader = (Page) BufferGetPage(buffer);
-	len = (unsigned) DOUBLEALIGN(tuple->t_len); /* be conservative */
+	len = (unsigned) MAXALIGN(tuple->t_len); /* be conservative */
 
 	/*
 	 * Note that this is true if the above returned a bogus page, which it

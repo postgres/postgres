@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashpage.c,v 1.20 1999/05/25 16:06:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashpage.c,v 1.20.2.1 1999/08/02 05:56:34 scrappy Exp $
  *
  * NOTES
  *	  Postgres hash pages look like ordinary relation pages.  The opaque
@@ -23,20 +23,12 @@
  *-------------------------------------------------------------------------
  */
 
-#include <postgres.h>
+#include "postgres.h"
 
-#include <access/hash.h>
-#include <storage/bufmgr.h>
-#include <miscadmin.h>
-#include <utils/memutils.h>
-#include <storage/lmgr.h>
-#include <access/genam.h>
+#include "access/genam.h"
+#include "access/hash.h"
+#include "miscadmin.h"
 
-#ifndef HAVE_MEMMOVE
-#include <regex/utils.h>
-#else
-#include <string.h>
-#endif
 
 static void _hash_setpagelock(Relation rel, BlockNumber blkno, int access);
 static void _hash_unsetpagelock(Relation rel, BlockNumber blkno, int access);
@@ -104,8 +96,8 @@ _hash_metapinit(Relation rel)
 	for (i = metap->hashm_bshift; i > 0; --i)
 	{
 		if ((1 << i) < (metap->hashm_bsize -
-						(DOUBLEALIGN(sizeof(PageHeaderData)) +
-						 DOUBLEALIGN(sizeof(HashPageOpaqueData)))))
+						(MAXALIGN(sizeof(PageHeaderData)) +
+						 MAXALIGN(sizeof(HashPageOpaqueData)))))
 			break;
 	}
 	Assert(i);
@@ -613,7 +605,7 @@ _hash_splitpage(Relation rel,
 			itemsz = IndexTupleDSize(hitem->hash_itup)
 				+ (sizeof(HashItemData) - sizeof(IndexTupleData));
 
-			itemsz = DOUBLEALIGN(itemsz);
+			itemsz = MAXALIGN(itemsz);
 
 			if (PageGetFreeSpace(npage) < itemsz)
 			{

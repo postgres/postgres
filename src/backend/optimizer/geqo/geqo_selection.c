@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_selection.c,v 1.7 1999/02/13 23:16:13 momjian Exp $
+ * $Id: geqo_selection.c,v 1.7.2.1 1999/08/02 05:57:07 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,24 +36,9 @@
 #include <math.h>
 
 #include "postgres.h"
-
-#include "nodes/pg_list.h"
-#include "nodes/relation.h"
-#include "nodes/primnodes.h"
-
-#include "utils/palloc.h"
-#include "utils/elog.h"
-
-#include "optimizer/internal.h"
-#include "optimizer/paths.h"
-#include "optimizer/pathnode.h"
-#include "optimizer/clauses.h"
-#include "optimizer/cost.h"
-
-#include "optimizer/geqo_gene.h"
-#include "optimizer/geqo_selection.h"
 #include "optimizer/geqo_copy.h"
 #include "optimizer/geqo_random.h"
+#include "optimizer/geqo_selection.h"
 
 static int	linear(int max, double bias);
 

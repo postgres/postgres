@@ -2,24 +2,25 @@
  * Routines for handling of 'SET var TO',
  *	'SHOW var' and 'RESET var' statements.
  *
- * $Id: variable.c,v 1.23 1999/07/07 09:36:45 momjian Exp $
+ * $Id: variable.c,v 1.23.2.1 1999/08/02 05:57:00 scrappy Exp $
  *
  */
 
-#include <stdio.h>
-#include <string.h>
 #include <ctype.h>
 #include <time.h>
+
 #include "postgres.h"
-#include "miscadmin.h"
-#include "commands/variable.h"
-#include "utils/builtins.h"
-#include "optimizer/internal.h"
 #include "access/xact.h"
+#include "commands/variable.h"
+#include "miscadmin.h"
+#include "optimizer/internal.h"
+#include "utils/builtins.h"
 #include "utils/tqual.h"
+
 #ifdef MULTIBYTE
 #include "mb/pg_wchar.h"
 #endif
+
 static bool show_date(void);
 static bool reset_date(void);
 static bool parse_date(const char *);

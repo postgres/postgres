@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/Attic/transsup.c,v 1.21.2.1 1999/08/02 05:24:46 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/Attic/transsup.c,v 1.21.2.2 1999/08/02 05:56:46 scrappy Exp $
  *
  * NOTES
  *	  This file contains support functions for the high

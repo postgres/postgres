@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.46 1999/07/09 04:51:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.46.2.1 1999/08/02 05:56:36 scrappy Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -73,27 +73,18 @@
  *-------------------------------------------------------------------------
  */
 
-#include <postgres.h>
+#include "postgres.h"
 
-#include <storage/bufpage.h>
-#include <access/heapam.h>
-#include <miscadmin.h>
-#include <utils/relcache.h>
-#include <access/valid.h>
-#include <access/hio.h>
-#include <storage/lmgr.h>
-#include <storage/smgr.h>
-#include <catalog/catalog.h>
-#include <access/transam.h>
-#include <access/xact.h>
-#include <utils/inval.h>
-#include <utils/memutils.h>
+#include "access/heapam.h"
+#include "access/hio.h"
+#include "access/valid.h"
+#include "catalog/catalog.h"
+#include "miscadmin.h"
+#include "storage/smgr.h"
+#include "utils/builtins.h"
+#include "utils/inval.h"
+#include "utils/relcache.h"
 
-#ifndef HAVE_MEMMOVE
-#include <regex/utils.h>
-#else
-#include <string.h>
-#endif
 
 /* ----------------------------------------------------------------
  *						 heap support routines
@@ -1289,7 +1280,7 @@ l2:
 							 HEAP_XMAX_INVALID | HEAP_MARKED_FOR_UPDATE);
 
 	/* insert new item */
-	if ((unsigned) DOUBLEALIGN(newtup->t_len) <= PageGetFreeSpace((Page) dp))
+	if ((unsigned) MAXALIGN(newtup->t_len) <= PageGetFreeSpace((Page) dp))
 		RelationPutHeapTuple(relation, buffer, newtup);
 	else
 	{

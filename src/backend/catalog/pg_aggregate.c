@@ -7,27 +7,20 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.20 1999/02/13 23:14:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.20.2.1 1999/08/02 05:56:55 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <postgres.h>
+#include "postgres.h"
 
-#include <access/heapam.h>
-#include <utils/builtins.h>
-#include <fmgr.h>
-#include <catalog/catname.h>
-#include <utils/syscache.h>
-#include <catalog/pg_operator.h>
-#include <catalog/pg_proc.h>
-#include <catalog/pg_type.h>
-#include <catalog/pg_aggregate.h>
-#include <miscadmin.h>
-#ifndef HAVE_MEMMOVE
-#include <regex/utils.h>
-#else
-#include <string.h>
-#endif
+#include "access/heapam.h"
+#include "catalog/catname.h"
+#include "catalog/pg_aggregate.h"
+#include "catalog/pg_proc.h"
+#include "catalog/pg_type.h"
+#include "miscadmin.h"
+#include "utils/builtins.h"
+#include "utils/syscache.h"
 
 /* ----------------
  * AggregateCreate

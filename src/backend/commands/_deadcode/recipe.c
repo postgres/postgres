@@ -7,28 +7,28 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/_deadcode/Attic/recipe.c,v 1.4 1999/05/25 22:40:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/_deadcode/Attic/recipe.c,v 1.4.2.1 1999/08/02 05:57:01 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <postgres.h>
+#include "postgres.h"
 
-#include <nodes/parsenodes.h>
-#include <nodes/plannodes.h>
-#include <nodes/execnodes.h>
-#include <nodes/makefuncs.h>
-#include <catalog/pg_type.h>
-#include <commands/recipe.h>
-#include <libpq/libpq-be.h>
-#include <parser/parse_node.h>
-#include <utils/builtins.h>
-#include <utils/relcache.h>		/* for RelationNameGetRelation */
-#include <rewrite/rewriteHandler.h>
-#include <rewrite/rewriteManip.h>
-#include <tcop/pquery.h>
-#include <tcop/dest.h>
-#include <optimizer/planner.h>
-#include <executor/executor.h>
+#include "catalog/pg_type.h"
+#include "commands/recipe.h"
+#include "executor/executor.h"
+#include "libpq/libpq-be.h"
+#include "nodes/execnodes.h"
+#include "nodes/makefuncs.h"
+#include "nodes/parsenodes.h"
+#include "nodes/plannodes.h"
+#include "optimizer/planner.h"
+#include "parser/parse_node.h"
+#include "rewrite/rewriteHandler.h"
+#include "rewrite/rewriteManip.h"
+#include "tcop/dest.h"
+#include "tcop/pquery.h"
+#include "utils/builtins.h"
+#include "utils/relcache.h"
 
 /* from tcop/postgres.c */
 extern CommandDest whereToSendOutput;
@@ -43,7 +43,7 @@ beginRecipe(RecipeStmt *stmt)
 
 #else
 
-#include <tioga/tgRecipe.h>
+#include "tioga/tgRecipe.h"
 
 #define DEBUG_RECIPE 1
 

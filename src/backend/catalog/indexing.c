@@ -8,11 +8,10 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.38 1999/05/25 16:08:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.38.2.1 1999/08/02 05:56:54 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <string.h>
 
 #include "postgres.h"
 
@@ -23,12 +22,7 @@
 #include "catalog/index.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_index.h"
-#include "catalog/pg_proc.h"
-#include "fmgr.h"
 #include "miscadmin.h"
-#include "nodes/execnodes.h"
-#include "storage/bufmgr.h"
-#include "utils/builtins.h"
 #include "utils/syscache.h"
 #include "utils/temprel.h"
 

@@ -6,7 +6,7 @@
 *	 PX operator according to Syswerda
 *	 (The Genetic Algorithms Handbook, L Davis, ed)
 *
-* $Id: geqo_px.c,v 1.6 1999/02/13 23:16:12 momjian Exp $
+* $Id: geqo_px.c,v 1.6.2.1 1999/08/02 05:57:06 scrappy Exp $
 *
 *-------------------------------------------------------------------------
 */
@@ -34,24 +34,8 @@
 /*************************************************************/
 
 #include "postgres.h"
-
-#include "nodes/pg_list.h"
-#include "nodes/relation.h"
-#include "nodes/primnodes.h"
-
-#include "utils/palloc.h"
-#include "utils/elog.h"
-
-#include "optimizer/internal.h"
-#include "optimizer/paths.h"
-#include "optimizer/pathnode.h"
-#include "optimizer/clauses.h"
-#include "optimizer/cost.h"
-
-#include "optimizer/geqo_gene.h"
-#include "optimizer/geqo.h"
-#include "optimizer/geqo_recombination.h"
 #include "optimizer/geqo_random.h"
+#include "optimizer/geqo_recombination.h"
 
 
 /* px

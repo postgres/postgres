@@ -5,21 +5,15 @@
  *
  *-------------------------------------------------------------------------
  */
-#include <stdio.h>
-#include <string.h>
 
-#include <postgres.h>
-#include <miscadmin.h>
+#include "postgres.h"
 
-#include <storage/bufmgr.h>
-#include <storage/bufpage.h>
-#include <storage/lmgr.h>
-#include <access/heapam.h>
-#include <nodes/parsenodes.h>
-#include <commands/creatinh.h>
-#include <commands/sequence.h>
-#include <utils/builtins.h>
-#include <utils/acl.h>
+#include "access/heapam.h"
+#include "commands/creatinh.h"
+#include "commands/sequence.h"
+#include "miscadmin.h"
+#include "utils/acl.h"
+#include "utils/builtins.h"
 
 #define SEQ_MAGIC	  0x1717
 

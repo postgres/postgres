@@ -4,7 +4,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_copy.c,v 1.5 1999/02/13 23:16:04 momjian Exp $
+ * $Id: geqo_copy.c,v 1.5.2.1 1999/08/02 05:57:04 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,21 +33,6 @@
 /*************************************************************/
 
 #include "postgres.h"
-
-#include "nodes/pg_list.h"
-#include "nodes/relation.h"
-#include "nodes/primnodes.h"
-
-#include "utils/palloc.h"
-#include "utils/elog.h"
-
-#include "optimizer/internal.h"
-#include "optimizer/paths.h"
-#include "optimizer/pathnode.h"
-#include "optimizer/clauses.h"
-#include "optimizer/cost.h"
-
-#include "optimizer/geqo_gene.h"
 #include "optimizer/geqo_copy.h"
 
 /* geqo_copy

@@ -5,28 +5,22 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: view.c,v 1.33 1999/05/25 16:08:28 momjian Exp $
+ *	$Id: view.c,v 1.33.2.1 1999/08/02 05:57:00 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <stdio.h>
-#include <string.h>
 
-#include <postgres.h>
+#include "postgres.h"
 
-#include <catalog/heap.h>
-#include <access/heapam.h>
-#include <access/xact.h>
-#include <utils/builtins.h>
-#include <nodes/relation.h>
-#include <parser/parse_relation.h>
-#include <parser/parse_type.h>
-#include <rewrite/rewriteDefine.h>
-#include <rewrite/rewriteHandler.h>
-#include <rewrite/rewriteManip.h>
-#include <rewrite/rewriteRemove.h>
-#include <commands/creatinh.h>
-#include <commands/view.h>
+#include "access/xact.h"
+#include "catalog/heap.h"
+#include "commands/creatinh.h"
+#include "commands/view.h"
+#include "parser/parse_relation.h"
+#include "parser/parse_type.h"
+#include "rewrite/rewriteDefine.h"
+#include "rewrite/rewriteManip.h"
+#include "rewrite/rewriteRemove.h"
 
 /*---------------------------------------------------------------------
  * DefineVirtualRelation

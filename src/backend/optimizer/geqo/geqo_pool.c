@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_pool.c,v 1.12 1999/05/25 16:09:18 momjian Exp $
+ * $Id: geqo_pool.c,v 1.12.2.1 1999/08/02 05:57:06 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,24 +21,9 @@
 /* -- parts of this are adapted from D. Whitley's Genitor algorithm -- */
 
 #include "postgres.h"
-
-#include "nodes/pg_list.h"
-#include "nodes/relation.h"
-#include "nodes/primnodes.h"
-
-#include "utils/palloc.h"
-#include "utils/elog.h"
-
-#include "optimizer/internal.h"
-#include "optimizer/paths.h"
-#include "optimizer/pathnode.h"
-#include "optimizer/clauses.h"
-#include "optimizer/cost.h"
-
-#include "optimizer/geqo_gene.h"
 #include "optimizer/geqo.h"
-#include "optimizer/geqo_pool.h"
 #include "optimizer/geqo_copy.h"
+#include "optimizer/geqo_pool.h"
 #include "optimizer/geqo_recombination.h"
 
 

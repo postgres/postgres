@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.27 1999/06/10 14:17:06 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.27.2.1 1999/08/02 05:56:46 scrappy Exp $
  *
  * NOTES
  *	  This file contains the high level access-method interface to the
@@ -16,15 +16,11 @@
  *-------------------------------------------------------------------------
  */
 
-#include <postgres.h>
+#include "postgres.h"
 
-#include <access/transam.h>
-#include <access/xact.h>
-#include <access/heapam.h>
-#include <utils/mcxt.h>
-#include <catalog/catname.h>
-#include <storage/spin.h>
-#include <commands/vacuum.h>
+#include "access/heapam.h"
+#include "catalog/catname.h"
+#include "commands/vacuum.h"
 
 static int	RecoveryCheckingEnabled(void);
 static void TransRecover(Relation logRelation);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/Attic/stats.c,v 1.16.2.1 1999/08/02 05:24:37 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/Attic/stats.c,v 1.16.2.2 1999/08/02 05:56:37 scrappy Exp $
  *
  * NOTES
  *	  initam should be moved someplace else.

@@ -8,17 +8,15 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.25 1999/05/10 00:44:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.25.2.1 1999/08/02 05:56:51 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#include <stdio.h>
 #include <time.h>
 
 #include "postgres.h"
 
-#include "miscadmin.h"
 
 #include "access/attnum.h"
 #include "access/funcindex.h"
@@ -34,6 +32,7 @@
 #include "catalog/pg_attribute.h"
 #include "catalog/pg_class.h"
 #include "commands/defrem.h"
+#include "miscadmin.h"
 #include "nodes/nodes.h"
 #include "nodes/parsenodes.h"
 #include "nodes/pg_list.h"

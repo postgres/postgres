@@ -5,7 +5,7 @@
 *
 * Copyright (c) 1994, Regents of the University of California
 *
-* $Id: geqo_params.c,v 1.17 1999/05/22 23:27:19 tgl Exp $
+* $Id: geqo_params.c,v 1.17.2.1 1999/08/02 05:57:06 scrappy Exp $
 *
 *-------------------------------------------------------------------------
 */
@@ -18,32 +18,24 @@
    =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
  */
 
-#include <stdio.h>
 #include <time.h>
 #include <math.h>
 #include <ctype.h>
-#include <string.h>
 
 #include "postgres.h"
 #include "miscadmin.h"
-
 #include "nodes/pg_list.h"
-#include "nodes/relation.h"
 #include "nodes/primnodes.h"
-
-#include "utils/palloc.h"
-#include "utils/elog.h"
-
-#include "optimizer/internal.h"
-#include "optimizer/paths.h"
-#include "optimizer/pathnode.h"
+#include "nodes/relation.h"
 #include "optimizer/clauses.h"
 #include "optimizer/cost.h"
-
-#include "optimizer/geqo_gene.h"
 #include "optimizer/geqo.h"
-
+#include "optimizer/geqo_gene.h"
+#include "optimizer/internal.h"
+#include "optimizer/pathnode.h"
+#include "optimizer/paths.h"
 #include "storage/fd.h"
+
 
 /*
  * Parameter values read from the config file (or defaulted) are stored here

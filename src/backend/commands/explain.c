@@ -4,25 +4,19 @@
  *
  * Copyright (c) 1994-5, Regents of the University of California
  *
- *	  $Id: explain.c,v 1.38 1999/06/17 23:45:32 tgl Exp $
+ *	  $Id: explain.c,v 1.38.2.1 1999/08/02 05:56:58 scrappy Exp $
  *
  */
-#include <stdio.h>
-#include <string.h>
 
-#include <postgres.h>
+#include "postgres.h"
 
-#include <nodes/plannodes.h>
-#include <nodes/print.h>
-#include <tcop/tcopprot.h>
-#include <lib/stringinfo.h>
-#include <commands/explain.h>
-#include <parser/parsetree.h>
-#include <parser/parse_node.h>
-#include <optimizer/planner.h>
-#include <access/xact.h>
-#include <utils/relcache.h>
-#include <rewrite/rewriteHandler.h>
+#include "commands/explain.h"
+#include "lib/stringinfo.h"
+#include "nodes/print.h"
+#include "optimizer/planner.h"
+#include "parser/parsetree.h"
+#include "rewrite/rewriteHandler.h"
+#include "utils/relcache.h"
 
 typedef struct ExplainState
 {

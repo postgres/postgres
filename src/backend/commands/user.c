@@ -5,33 +5,27 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: user.c,v 1.28 1999/05/25 16:08:27 momjian Exp $
+ * $Id: user.c,v 1.28.2.1 1999/08/02 05:56:59 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <stdio.h>
-#include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
 
-#include <postgres.h>
+#include "postgres.h"
 
-#include <miscadmin.h>
-#include <catalog/catname.h>
-#include <catalog/pg_database.h>
-#include <catalog/pg_shadow.h>
-#include <libpq/crypt.h>
-#include <access/heapam.h>
-#include <access/xact.h>
-#include <storage/bufmgr.h>
-#include <storage/lmgr.h>
-#include <tcop/tcopprot.h>
-#include <utils/acl.h>
-#include <utils/rel.h>
-#include <utils/syscache.h>
-#include <commands/user.h>
+#include "access/heapam.h"
+#include "catalog/catname.h"
+#include "catalog/pg_database.h"
+#include "catalog/pg_shadow.h"
+#include "commands/user.h"
+#include "libpq/crypt.h"
+#include "miscadmin.h"
+#include "tcop/tcopprot.h"
+#include "utils/acl.h"
+#include "utils/syscache.h"
 
 static void CheckPgUserAclNotNull(void);
 

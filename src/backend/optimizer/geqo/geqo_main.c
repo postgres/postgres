@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_main.c,v 1.16 1999/05/25 16:09:16 momjian Exp $
+ * $Id: geqo_main.c,v 1.16.2.1 1999/08/02 05:57:05 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,28 +22,10 @@
 /* -- parts of this are adapted from D. Whitley's Genitor algorithm -- */
 
 #include "postgres.h"
-
-#include "nodes/pg_list.h"
-#include "nodes/relation.h"
-#include "nodes/plannodes.h"
-#include "nodes/primnodes.h"
-
-#include "utils/palloc.h"
-#include "utils/elog.h"
-
-#include "optimizer/internal.h"
-#include "optimizer/paths.h"
-#include "optimizer/pathnode.h"
-#include "optimizer/clauses.h"
-#include "optimizer/cost.h"
-
-#include "optimizer/geqo_gene.h"
 #include "optimizer/geqo.h"
+#include "optimizer/geqo_misc.h"
 #include "optimizer/geqo_pool.h"
 #include "optimizer/geqo_selection.h"
-#include "optimizer/geqo_recombination.h"
-#include "optimizer/geqo_mutation.h"
-#include "optimizer/geqo_misc.h"
 
 
 /* define edge recombination crossover [ERX] per default */

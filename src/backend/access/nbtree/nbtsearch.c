@@ -7,25 +7,15 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.45 1999/05/25 18:20:30 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.45.2.1 1999/08/02 05:56:42 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#include <postgres.h>
+#include "postgres.h"
 
-#include <access/genam.h>
-#include <fmgr.h>
-#include <storage/bufpage.h>
-#include <access/nbtree.h>
-#include <catalog/pg_proc.h>
-
-#ifndef HAVE_MEMMOVE
-#include <regex/utils.h>
-#else
-#include <string.h>
-#endif
-
+#include "access/genam.h"
+#include "access/nbtree.h"
 
 static BTStack _bt_searchr(Relation rel, int keysz, ScanKey scankey,
 			Buffer *bufP, BTStack stack_in);

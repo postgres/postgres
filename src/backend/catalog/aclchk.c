@@ -7,38 +7,30 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.22 1999/06/19 05:05:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.22.2.1 1999/08/02 05:56:53 scrappy Exp $
  *
  * NOTES
  *	  See acl.h.
  *
  *-------------------------------------------------------------------------
  */
-#include <string.h>
 #include "postgres.h"
 
-#include "utils/acl.h"			/* where declarations for this file go */
 #include "access/heapam.h"
-#include "access/htup.h"
-#include "access/tupmacs.h"
-#include "catalog/indexing.h"
 #include "catalog/catalog.h"
 #include "catalog/catname.h"
+#include "catalog/indexing.h"
 #include "catalog/pg_aggregate.h"
 #include "catalog/pg_group.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_shadow.h"
 #include "catalog/pg_type.h"
-#include "fmgr.h"
+#include "miscadmin.h"
 #include "parser/parse_agg.h"
 #include "parser/parse_func.h"
-#include "storage/bufmgr.h"
-#include "utils/builtins.h"
-#include "utils/memutils.h"
+#include "utils/acl.h"
 #include "utils/syscache.h"
-#include "utils/tqual.h"
-#include "miscadmin.h"
 
 static int32 aclcheck(char *relname, Acl *acl, AclId id, AclIdType idtype, AclMode mode);
 

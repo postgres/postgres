@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_misc.c,v 1.19 1999/05/25 22:41:20 momjian Exp $
+ * $Id: geqo_misc.c,v 1.19.2.1 1999/08/02 05:57:05 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,26 +19,8 @@
  */
 
 
-#include <stdio.h>
 
 #include "postgres.h"
-
-#include "nodes/pg_list.h"
-#include "nodes/relation.h"
-#include "nodes/primnodes.h"
-
-#include "utils/palloc.h"
-#include "utils/elog.h"
-
-#include "optimizer/internal.h"
-#include "optimizer/paths.h"
-#include "optimizer/pathnode.h"
-#include "optimizer/clauses.h"
-#include "optimizer/cost.h"
-
-#include "optimizer/geqo_gene.h"
-#include "optimizer/geqo_pool.h"
-#include "optimizer/geqo_recombination.h"
 #include "optimizer/geqo_misc.h"
 
 static float avg_pool(Pool *pool);

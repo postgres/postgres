@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: xid.c,v 1.22.2.1 1999/08/02 05:24:46 scrappy Exp $
+ *	$Id: xid.c,v 1.22.2.2 1999/08/02 05:56:49 scrappy Exp $
  *
  * OLD COMMENTS
  * XXX WARNING

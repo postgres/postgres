@@ -8,40 +8,37 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootscanner.l,v 1.12 1999/02/13 23:14:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootscanner.l,v 1.12.2.1 1999/08/02 05:56:52 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <time.h>
-#include <string.h>
 
 #include "postgres.h"
 
-#include "storage/block.h"
-#include "storage/off.h"
-#include "storage/itemptr.h"
-#include "catalog/pg_attribute.h"
 #include "access/attnum.h"
-#include "nodes/pg_list.h"
-#include "access/tupdesc.h"
-#include "access/itup.h"
 #include "access/funcindex.h"
-#include "storage/fd.h"
-#include "catalog/pg_am.h"
-#include "catalog/pg_class.h"
-#include "nodes/nodes.h"
-#include "rewrite/prs2lock.h"
+#include "access/htup.h"
+#include "access/itup.h"
 #include "access/skey.h"
 #include "access/strat.h"
-#include "utils/rel.h"
+#include "access/tupdesc.h"
 #include "bootstrap/bootstrap.h"
-
-#include "nodes/primnodes.h"
-#include "utils/nabstime.h"
-#include "access/htup.h"
+#include "catalog/pg_am.h"
+#include "catalog/pg_attribute.h"
+#include "catalog/pg_class.h"
+#include "nodes/nodes.h"
 #include "nodes/parsenodes.h"
-
+#include "nodes/pg_list.h"
+#include "nodes/primnodes.h"
 #include "parser/scansup.h"
+#include "rewrite/prs2lock.h"
+#include "storage/block.h"
+#include "storage/fd.h"
+#include "storage/itemptr.h"
+#include "storage/off.h"
+#include "utils/nabstime.h"
+#include "utils/rel.h"
 
 #include "bootstrap_tokens.h"
 

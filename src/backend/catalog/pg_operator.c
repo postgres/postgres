@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.37 1999/05/25 16:08:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.37.2.1 1999/08/02 05:56:55 scrappy Exp $
  *
  * NOTES
  *	  these routines moved here from commands/define.c and somewhat cleaned up.
@@ -21,19 +21,11 @@
 #include "catalog/pg_operator.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
-#include "fmgr.h"
 #include "miscadmin.h"
-#include "parser/parse_oper.h"
-#include "storage/bufmgr.h"
+#include "parser/parse_func.h"
 #include "utils/builtins.h"
 #include "utils/syscache.h"
-#include "utils/tqual.h"
 
-#ifndef HAVE_MEMMOVE
-#include <regex/utils.h>
-#else
-#include <string.h>
-#endif
 
 static Oid OperatorGetWithOpenRelation(Relation pg_operator_desc,
 							const char *operatorName,

@@ -3,7 +3,7 @@
 * geqo_erx.c
 *	 edge recombination crossover [ER]
 *
-* $Id: geqo_erx.c,v 1.11 1999/02/13 23:16:06 momjian Exp $
+* $Id: geqo_erx.c,v 1.11.2.1 1999/08/02 05:57:04 scrappy Exp $
 *
 *-------------------------------------------------------------------------
 */
@@ -32,22 +32,6 @@
 
 
 #include "postgres.h"
-
-#include "nodes/pg_list.h"
-#include "nodes/relation.h"
-#include "nodes/primnodes.h"
-
-#include "utils/palloc.h"
-#include "utils/elog.h"
-
-#include "optimizer/internal.h"
-#include "optimizer/paths.h"
-#include "optimizer/pathnode.h"
-#include "optimizer/clauses.h"
-#include "optimizer/cost.h"
-
-#include "optimizer/geqo_gene.h"
-#include "optimizer/geqo.h"
 #include "optimizer/geqo_recombination.h"
 #include "optimizer/geqo_random.h"
 

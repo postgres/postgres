@@ -7,23 +7,20 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.29 1999/05/25 16:08:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.29.2.1 1999/08/02 05:56:55 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include "access/heapam.h"
-#include "access/relscan.h"
 #include "catalog/catname.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
-#include "fmgr.h"
 #include "miscadmin.h"
-#include "optimizer/internal.h"
 #include "optimizer/planner.h"
-#include "parser/parse_node.h"
+#include "parser/parse_type.h"
 #include "tcop/tcopprot.h"
 #include "utils/builtins.h"
 #include "utils/fmgrtab.h"
@@ -31,11 +28,6 @@
 #include "utils/sets.h"
 #include "utils/syscache.h"
 
-#ifndef HAVE_MEMMOVE
-#include <regex/utils.h>
-#else
-#include <string.h>
-#endif
 
 /* ----------------------------------------------------------------
  *		ProcedureCreate

@@ -7,19 +7,16 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.22 1999/06/06 20:19:33 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.22.2.1 1999/08/02 05:56:47 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#include <postgres.h>
+#include "postgres.h"
 
-#include <access/transam.h>
-#include <storage/spin.h>
-#include <access/xact.h>
-#include <access/heapam.h>
-#include <catalog/catname.h>
-#include <storage/proc.h>
+#include "access/heapam.h"
+#include "catalog/catname.h"
+#include "storage/proc.h"
 
 static void GetNewObjectIdBlock(Oid *oid_return, int oid_block_size);
 static void VariableRelationGetNextOid(Oid *oid_return);

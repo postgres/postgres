@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_eval.c,v 1.39 1999/05/25 22:41:19 momjian Exp $
+ * $Id: geqo_eval.c,v 1.39.2.1 1999/08/02 05:57:05 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,9 +18,9 @@
    =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
  */
 
-#include "postgres.h"
-
 #include <math.h>
+
+#include "postgres.h"
 #ifdef HAVE_LIMITS_H
 #include <limits.h>
 #ifndef MAXINT
@@ -30,24 +30,11 @@
 #include <values.h>
 #endif
 
-#include "nodes/pg_list.h"
-#include "nodes/relation.h"
-#include "nodes/primnodes.h"
-
-#include "utils/palloc.h"
-#include "utils/elog.h"
+#include "optimizer/cost.h"
+#include "optimizer/geqo.h"
+#include "optimizer/paths.h"
 #include "utils/portal.h"
 
-#include "optimizer/internal.h"
-#include "optimizer/paths.h"
-#include "optimizer/pathnode.h"
-#include "optimizer/clauses.h"
-#include "optimizer/cost.h"
-#include "optimizer/tlist.h"
-#include "optimizer/joininfo.h"
-
-#include "optimizer/geqo_gene.h"
-#include "optimizer/geqo.h"
 
 /*
  * Variables set by geqo_eval_startup for use within a single GEQO run

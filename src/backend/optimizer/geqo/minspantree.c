@@ -7,7 +7,7 @@
 *
 *
 * IDENTIFICATION
-*	 $Header: /cvsroot/pgsql/src/backend/optimizer/geqo/Attic/minspantree.c,v 1.12 1999/05/25 22:41:22 momjian Exp $
+*	 $Header: /cvsroot/pgsql/src/backend/optimizer/geqo/Attic/minspantree.c,v 1.12.2.1 1999/08/02 05:57:07 scrappy Exp $
 *
 *-------------------------------------------------------------------------
 */
@@ -16,20 +16,13 @@
 
 #include "postgres.h"
 
+
 #include "nodes/pg_list.h"
-#include "nodes/relation.h"
 #include "nodes/primnodes.h"
-
-#include "utils/palloc.h"
-
+#include "nodes/relation.h"
 #include "optimizer/cost.h"
-
-/*
- include "optimizer/geqo/tsp.h"
- */
-
-#include "optimizer/geqo/geqo_gene.h"
 #include "optimizer/geqo/geqo.h"
+#include "optimizer/geqo/geqo_gene.h"
 
 /*
  * minspantree

@@ -7,36 +7,27 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.4 1999/05/25 16:08:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.4.2.1 1999/08/02 05:56:58 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <string.h>
 
-#include <postgres.h>
+#include "postgres.h"
 
-#include <access/attnum.h>
-#include <access/genam.h>
-#include <access/heapam.h>
-#include <utils/builtins.h>
-#include <utils/syscache.h>
-#include <catalog/heap.h>
-#include <catalog/index.h>
-#include <catalog/pg_index.h>
-#include <catalog/pg_proc.h>
-#include <catalog/pg_type.h>
-#include <catalog/pg_opclass.h>
-#include <nodes/plannodes.h>
-#include <nodes/primnodes.h>
-#include <nodes/relation.h>
-#include <utils/relcache.h>
-#include <utils/lsyscache.h>
-#include <commands/defrem.h>
-#include <parser/parsetree.h>	/* for getrelid() */
-#include <optimizer/prep.h>
-#include <optimizer/clauses.h>
-#include <storage/lmgr.h>
-#include <fmgr.h>
+#include "access/genam.h"
+#include "access/heapam.h"
+#include "catalog/heap.h"
+#include "catalog/index.h"
+#include "catalog/pg_index.h"
+#include "catalog/pg_opclass.h"
+#include "catalog/pg_proc.h"
+#include "catalog/pg_type.h"
+#include "commands/defrem.h"
+#include "optimizer/clauses.h"
+#include "optimizer/prep.h"
+#include "parser/parsetree.h"
+#include "utils/builtins.h"
+#include "utils/syscache.h"
 
 #define IsFuncIndex(ATTR_LIST) (((IndexElem*)lfirst(ATTR_LIST))->args!=NULL)
 

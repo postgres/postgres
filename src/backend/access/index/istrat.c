@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.33.2.1 1999/08/02 05:24:39 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.33.2.2 1999/08/02 05:56:39 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
