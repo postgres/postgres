@@ -9,7 +9,7 @@
  *
  * Copyright (c) 2002, PostgreSQL Global Development Group
  *
- * $Id: funcapi.h,v 1.6 2002/08/29 17:14:33 tgl Exp $
+ * $Id: funcapi.h,v 1.7 2002/08/30 19:56:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -147,8 +147,12 @@ extern TupleTableSlot *TupleDescGetSlot(TupleDesc tupdesc);
 extern AttInMetadata *TupleDescGetAttInMetadata(TupleDesc tupdesc);
 extern HeapTuple BuildTupleFromCStrings(AttInMetadata *attinmeta, char **values);
 
+/*
+ * Note we pass shouldFree = false; this is needed because the tuple will
+ * typically be in a shorter-lived memory context than the TupleTableSlot.
+ */
 #define TupleGetDatum(_slot, _tuple) \
-	PointerGetDatum(ExecStoreTuple(_tuple, _slot, InvalidBuffer, true))
+	PointerGetDatum(ExecStoreTuple(_tuple, _slot, InvalidBuffer, false))
 
 
 /*----------
