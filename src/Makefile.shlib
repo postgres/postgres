@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.21 2000/06/28 18:29:13 petere Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.22 2000/07/07 01:23:43 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -143,9 +143,9 @@ endif
 
 ifeq ($(PORTNAME), linux)
   shlib			:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
-  LDFLAGS_SL		:= -Bdynamic -shared -soname $(shlib)
-  LDFLAGS_ODBC		:= -Bsymbolic -lc -lm
-  SHLIB_LINK		+= -lc
+  LD			:= $(CC)
+  LDFLAGS_SL		:= -shared -Wl,-soname,$(shlib)
+  LDFLAGS_ODBC		:= -lm
   CFLAGS		+= $(CFLAGS_SL)
 endif
 

@@ -33,8 +33,6 @@
 
 GLOBAL_VALUES globals;
 
-BOOL _init(void);
-BOOL _fini(void);
 RETCODE SQL_API SQLDummyOrdinal(void);
 
 #ifdef WIN32
@@ -96,6 +94,20 @@ WSADATA wsaData;
 #ifndef FALSE
 #define FALSE	(BOOL)0
 #endif
+
+#ifdef __GNUC__
+
+/* This function is called at library initialization time.  */
+
+static BOOL
+__attribute__((constructor))
+init(void)
+{
+	getGlobalDefaults(DBMS_NAME, ODBCINST_INI, FALSE);
+	return TRUE;
+}
+
+#else
 
 /* These two functions do shared library initialziation on UNIX, well at least
  * on Linux. I don't know about other systems.
