@@ -1,5 +1,5 @@
 /*
- * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.3 1996/11/12 11:09:13 bryanh Exp $
+ * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.4 1996/12/09 01:24:53 bryanh Exp $
  */
 
 #include <float.h>		/* faked on sunos */
@@ -7,7 +7,6 @@
 #include <string.h>   /* for memset() */
 
 #include <postgres.h>
-#include "libpq-fe.h"
 
 #include "utils/geo-decls.h"	/* includes <math.h> */
 #include "executor/executor.h"  /* For GetAttributeByName */
@@ -16,6 +15,8 @@
 #define LDELIM		'('
 #define RDELIM		')'
 #define	DELIM		','
+
+typedef void *TUPLE;
 
 extern double *regress_dist_ptpath (Point *pt, PATH *path);
 extern double *regress_path_dist (PATH *p1, PATH *p2);
