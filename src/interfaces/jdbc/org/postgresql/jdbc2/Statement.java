@@ -281,6 +281,15 @@ public class Statement extends org.postgresql.Statement implements java.sql.Stat
 	if(escapeProcessing)
 	    sql=connection.EscapeSQL(sql);
 
+        // New in 7.1, if we have a previous resultset then force it to close
+        // This brings us nearer to compliance, and helps memory management.
+        // Internal stuff will call ExecSQL directly, bypassing this.
+        if(result!=null) {
+          java.sql.ResultSet rs = getResultSet();
+          if(rs!=null)
+            rs.close();
+        }
+
         // New in 7.1, pass Statement so that ExecSQL can customise to it
 	result = connection.ExecSQL(sql,this);
 

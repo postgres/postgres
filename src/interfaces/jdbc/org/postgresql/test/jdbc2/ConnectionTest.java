@@ -10,7 +10,7 @@ import java.sql.*;
  *
  * PS: Do you know how difficult it is to type on a train? ;-)
  *
- * $Id: ConnectionTest.java,v 1.1 2001/02/07 09:13:20 peter Exp $
+ * $Id: ConnectionTest.java,v 1.2 2001/02/13 16:39:05 peter Exp $
  */
 
 public class ConnectionTest extends TestCase {
@@ -127,7 +127,7 @@ public class ConnectionTest extends TestCase {
   }
 
   /**
-   * Simple test to see if isClosed works
+   * Simple test to see if isClosed works.
    */
   public void testIsClosed() {
     try {
@@ -146,4 +146,92 @@ public class ConnectionTest extends TestCase {
     }
   }
 
+  /**
+   * Test the warnings system
+   */
+  public void testWarnings() {
+    try {
+      Connection con = JDBC2Tests.openDB();
+
+      String testStr = "This Is OuR TeSt message";
+
+      // The connection must be ours!
+      assert(con instanceof org.postgresql.Connection);
+
+      // Clear any existing warnings
+      con.clearWarnings();
+
+      // Set the test warning
+      ((org.postgresql.Connection)con).addWarning(testStr);
+
+      // Retrieve it
+      SQLWarning warning = con.getWarnings();
+      assert(warning!=null);
+      assert(warning.getMessage().equals(testStr));
+
+      // Finally test clearWarnings() this time there must be something to delete
+      con.clearWarnings();
+      assert(con.getWarnings()==null);
+
+      JDBC2Tests.closeDB(con);
+    } catch(SQLException ex) {
+      assert(ex.getMessage(),false);
+    }
+  }
+
+  /**
+   * Transaction Isolation Levels
+   */
+  public void testTransactionIsolation() {
+    try {
+      Connection con = JDBC2Tests.openDB();
+
+      con.setAutoCommit(false);
+
+      // These are the currently available ones
+      con.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
+      assert(con.getTransactionIsolation()==Connection.TRANSACTION_SERIALIZABLE);
+
+      con.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
+      assert(con.getTransactionIsolation()==Connection.TRANSACTION_READ_COMMITTED);
+
+      // Now turn on AutoCommit. Transaction Isolation doesn't work outside of
+      // a transaction, so they should return READ_COMMITTED at all times!
+      con.setAutoCommit(true);
+      con.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
+      assert(con.getTransactionIsolation()==Connection.TRANSACTION_READ_COMMITTED);
+
+      con.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
+      assert(con.getTransactionIsolation()==Connection.TRANSACTION_READ_COMMITTED);
+
+      JDBC2Tests.closeDB(con);
+    } catch(SQLException ex) {
+      assert(ex.getMessage(),false);
+    }
+  }
+
+  /**
+   * JDBC2 Type mappings
+   */
+  public void testTypeMaps() {
+    try {
+      Connection con = JDBC2Tests.openDB();
+
+      // preserve the current map
+      java.util.Map oldmap = con.getTypeMap();
+
+      // now change it for an empty one
+      java.util.Map newmap = new java.util.HashMap();
+      con.setTypeMap(newmap);
+      assert(con.getTypeMap()==newmap);
+
+      // restore the old one
+      con.setTypeMap(oldmap);
+      assert(con.getTypeMap()==oldmap);
+
+      JDBC2Tests.closeDB(con);
+    } catch(SQLException ex) {
+      assert(ex.getMessage(),false);
+    }
+  }
 }

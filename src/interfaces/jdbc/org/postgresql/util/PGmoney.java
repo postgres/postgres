@@ -12,7 +12,7 @@ public class PGmoney extends PGobject implements Serializable,Cloneable
    * The value of the field
    */
   public double val;
-  
+
   /**
    * @param value of field
    */
@@ -20,7 +20,7 @@ public class PGmoney extends PGobject implements Serializable,Cloneable
     this();
     val = value;
   }
-  
+
   /**
    * This is called mainly from the other geometric types, when a
    * point is imbeded within their definition.
@@ -32,7 +32,7 @@ public class PGmoney extends PGobject implements Serializable,Cloneable
     this();
     setValue(value);
   }
-  
+
   /**
    * Required by the driver
    */
@@ -40,7 +40,7 @@ public class PGmoney extends PGobject implements Serializable,Cloneable
   {
     setType("money");
   }
-  
+
   /**
    * @param s Definition of this point in PostgreSQL's syntax
    * @exception SQLException on conversion failure
@@ -51,10 +51,12 @@ public class PGmoney extends PGobject implements Serializable,Cloneable
       String s1;
       boolean negative;
 
-      negative = (s.charAt(0) == '-') ;
+      negative = (s.charAt(0) == '(') ;
 
-      s1 = s.substring(negative ? 2 : 1);
-  
+      // Remove any () (for negative) & currency symbol
+      s1 = PGtokenizer.removePara(s).substring(1);
+
+      // Strip out any , in currency
       int pos = s1.indexOf(',');
       while (pos != -1) {
         s1 = s1.substring(0,pos) + s1.substring(pos +1);
@@ -68,7 +70,7 @@ public class PGmoney extends PGobject implements Serializable,Cloneable
       throw new PSQLException("postgresql.money",e);
     }
   }
-  
+
   /**
    * @param obj Object to compare with
    * @return true if the two boxes are identical
@@ -81,7 +83,7 @@ public class PGmoney extends PGobject implements Serializable,Cloneable
     }
     return false;
   }
-  
+
   /**
    * This must be overidden to allow the object to be cloned
    */
@@ -89,7 +91,7 @@ public class PGmoney extends PGobject implements Serializable,Cloneable
   {
     return new PGmoney(val);
   }
-  
+
   /**
    * @return the PGpoint in the syntax expected by org.postgresql
    */

@@ -16,12 +16,12 @@ public class Field
   public int oid;		// OID of the type
   public int mod;		// type modifier of this field
   public String name;		// Name of this field
-  
+
   protected Connection conn;	// Connection Instantation
-  
+
   public int sql_type = -1;	// The entry in java.sql.Types for this field
   public String type_name = null;// The sql type name
-  
+
   /**
    * Construct a field based on the information fed to it.
    *
@@ -38,7 +38,7 @@ public class Field
     this.length = length;
     this.mod = mod;
   }
-  
+
     /**
      * Constructor without mod parameter.
      *
@@ -51,7 +51,7 @@ public class Field
     {
 	this(conn,name,oid,length,0);
     }
-    
+
   /**
    * @return the oid of this Field's data type
    */
@@ -59,7 +59,7 @@ public class Field
   {
     return oid;
   }
-  
+
   /**
    * the ResultSet and ResultMetaData both need to handle the SQL
    * type, which is gained from another query.  Note that we cannot
@@ -72,7 +72,7 @@ public class Field
   {
     if(sql_type == -1) {
       type_name = (String)conn.fieldCache.get(new Integer(oid));
-      
+
       // it's not in the cache, so perform a query, and add the result to
       // the cache
       if(type_name==null) {
@@ -84,12 +84,12 @@ public class Field
 	conn.fieldCache.put(new Integer(oid),type_name);
 	result.close();
       }
-      
+
       sql_type = getSQLType(type_name);
     }
     return sql_type;
   }
-  
+
   /**
    * This returns the SQL type. It is called by the Field and DatabaseMetaData classes
    * @param type_name PostgreSQL type name
@@ -103,7 +103,7 @@ public class Field
 	sql_type=typei[i];
     return sql_type;
   }
-  
+
   /**
    * This table holds the org.postgresql names for the types supported.
    * Any types that map to Types.OTHER (eg POINT) don't go into this table.
@@ -128,7 +128,7 @@ public class Field
     "time",
     "abstime","timestamp"
   };
-  
+
   /**
    * This table holds the JDBC type for each entry above.
    *
@@ -140,7 +140,7 @@ public class Field
     Types.SMALLINT,
     Types.INTEGER,Types.INTEGER,
     Types.BIGINT,
-    Types.DECIMAL,Types.DECIMAL,
+    Types.DOUBLE,Types.DOUBLE,
     Types.NUMERIC,
     Types.REAL,
     Types.DOUBLE,
@@ -151,7 +151,7 @@ public class Field
     Types.TIME,
     Types.TIMESTAMP,Types.TIMESTAMP
   };
-  
+
   /**
    * We also need to get the type name as returned by the back end.
    * This is held in type_name AFTER a call to getSQLType.  Since

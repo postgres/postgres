@@ -17,7 +17,7 @@ import org.postgresql.largeobject.*;
 import org.postgresql.util.*;
 
 /**
- * $Id: Connection.java,v 1.6 2001/01/31 08:26:02 peter Exp $
+ * $Id: Connection.java,v 1.7 2001/02/13 16:39:02 peter Exp $
  *
  * A Connection represents a session with a specific database.  Within the
  * context of a Connection, SQL statements are executed and results are
@@ -39,7 +39,15 @@ public class Connection extends org.postgresql.Connection implements java.sql.Co
   // This is a cache of the DatabaseMetaData instance for this connection
   protected DatabaseMetaData metadata;
 
+  /**
+   * The current type mappings
+   */
   protected java.util.Map typemap;
+
+  /**
+   * Cache of the current isolation level
+   */
+  protected int isolationLevel = java.sql.Connection.TRANSACTION_READ_COMMITTED;
 
   /**
    * SQL statements without parameters are normally executed using
@@ -179,8 +187,10 @@ public class Connection extends org.postgresql.Connection implements java.sql.Co
       return;
     if (autoCommit)
       ExecSQL("end");
-    else
+    else {
       ExecSQL("begin");
+      doIsolationLevel();
+    }
     this.autoCommit = autoCommit;
   }
 
@@ -213,6 +223,7 @@ public class Connection extends org.postgresql.Connection implements java.sql.Co
     ExecSQL("commit");
     autoCommit = true;
     ExecSQL("begin");
+    doIsolationLevel();
     autoCommit = false;
   }
 
@@ -231,6 +242,7 @@ public class Connection extends org.postgresql.Connection implements java.sql.Co
     ExecSQL("rollback");
     autoCommit = true;
     ExecSQL("begin");
+    doIsolationLevel();
     autoCommit = false;
   }
 
@@ -258,7 +270,18 @@ public class Connection extends org.postgresql.Connection implements java.sql.Co
   }
 
   /**
-   * Tests to see if a Connection is closed
+   * Tests to see if a Connection is closed.
+   *
+   * Peter Feb 7 2000: Now I've discovered that this doesn't actually obey the
+   * specifications. Under JDBC2.1, this should only be valid _after_ close()
+   * has been called. It's result is not guraranteed to be valid before, and
+   * client code should not use it to see if a connection is open. The spec says
+   * that the client should monitor the SQLExceptions thrown when their queries
+   * fail because the connection is dead.
+   *
+   * I don't like this definition. As it doesn't hurt breaking it here, our
+   * isClosed() implementation does test the connection, so for PostgreSQL, you
+   * can rely on isClosed() returning a valid result.
    *
    * @return the status of the connection
    * @exception SQLException (why?)
@@ -371,9 +394,19 @@ public class Connection extends org.postgresql.Connection implements java.sql.Co
    */
   public void setTransactionIsolation(int level) throws SQLException
   {
+    isolationLevel = level;
+    doIsolationLevel();
+  }
+
+  /**
+   * Helper method used by setTransactionIsolation(), commit(), rollback()
+   * and setAutoCommit(). This sets the current isolation level.
+   */
+  private void doIsolationLevel() throws SQLException
+  {
     String q = "SET TRANSACTION ISOLATION LEVEL";
 
-    switch(level) {
+    switch(isolationLevel) {
 
       case java.sql.Connection.TRANSACTION_READ_COMMITTED:
         ExecSQL(q + " READ COMMITTED");
@@ -384,7 +417,7 @@ public class Connection extends org.postgresql.Connection implements java.sql.Co
 	return;
 
       default:
-        throw new PSQLException("postgresql.con.isolevel",new Integer(level));
+        throw new PSQLException("postgresql.con.isolevel",new Integer(isolationLevel));
     }
   }
 
@@ -396,14 +429,17 @@ public class Connection extends org.postgresql.Connection implements java.sql.Co
    */
   public int getTransactionIsolation() throws SQLException
   {
+      clearWarnings();
       ExecSQL("show xactisolevel");
 
       SQLWarning w = getWarnings();
       if (w != null) {
-	  if (w.getMessage().indexOf("READ COMMITTED") != -1) return java.sql.Connection.TRANSACTION_READ_COMMITTED; else
-	      if (w.getMessage().indexOf("READ UNCOMMITTED") != -1) return java.sql.Connection.TRANSACTION_READ_UNCOMMITTED; else
-		  if (w.getMessage().indexOf("REPEATABLE READ") != -1) return java.sql.Connection.TRANSACTION_REPEATABLE_READ; else
-		      if (w.getMessage().indexOf("SERIALIZABLE") != -1) return java.sql.Connection.TRANSACTION_SERIALIZABLE;
+        String m = w.getMessage();
+        clearWarnings();
+	  if (m.indexOf("READ COMMITTED") != -1) return java.sql.Connection.TRANSACTION_READ_COMMITTED; else
+	      if (m.indexOf("READ UNCOMMITTED") != -1) return java.sql.Connection.TRANSACTION_READ_UNCOMMITTED; else
+		  if (m.indexOf("REPEATABLE READ") != -1) return java.sql.Connection.TRANSACTION_REPEATABLE_READ; else
+		      if (m.indexOf("SERIALIZABLE") != -1) return java.sql.Connection.TRANSACTION_SERIALIZABLE;
       }
       return java.sql.Connection.TRANSACTION_READ_COMMITTED;
   }

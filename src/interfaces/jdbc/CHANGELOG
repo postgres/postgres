@@ -1,3 +1,31 @@
+Tue Feb 13 16:33:00 GMT 2001 peter@retep.org.uk
+        - More TestCases implemented. Refined the test suite api's.
+        - Removed need for SimpleDateFormat in ResultSet.getDate() improving
+          performance.
+        - Rewrote ResultSet.getTime() so that it uses JDK api's better.
+
+Tue Feb 13 10:25:00 GMT 2001 peter@retep.org.uk
+        - Added MiscTest to hold reported problems from users.
+        - Fixed PGMoney.
+        - JBuilder4/JDBCExplorer now works with Money fields. Patched Field &
+          ResultSet (lots of methods) for this one. Also changed cash/money to
+          return type DOUBLE not DECIMAL. This broke JBuilder as zero scale
+          BigDecimal's can't have decimal places!
+        - When a Statement is reused, the previous ResultSet is now closed.
+        - Removed deprecated call in ResultSet.getTime()
+
+Thu Feb 08 18:53:00 GMT 2001 peter@retep.org.uk
+        - Changed a couple of settings in DatabaseMetaData where 7.1 now
+          supports those features
+        - Implemented the DatabaseMetaData TestCase.
+
+Wed Feb 07 18:06:00 GMT 2001 peter@retep.org.uk
+        - Added comment to Connection.isClosed() explaining why we deviate from
+          the JDBC2 specification.
+        - Fixed bug where the Isolation Level is lost while in autocommit mode.
+        - Fixed bug where several calls to getTransactionIsolationLevel()
+          returned the first call's result.
+
 Tue Feb 06 19:00:00 GMT 2001 peter@retep.org.uk
         - Completed first two TestCase's for the test suite. JUnit is now
           recognised by ant.

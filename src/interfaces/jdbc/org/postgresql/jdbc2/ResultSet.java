@@ -131,7 +131,10 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
   public void close() throws SQLException
   {
     //release resources held (memory for tuples)
-    rows.setSize(0);
+    if(rows!=null) {
+      rows.setSize(0);
+      rows=null;
+    }
   }
 
   /**
@@ -157,16 +160,13 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
    */
   public String getString(int columnIndex) throws SQLException
   {
-    //byte[] bytes = getBytes(columnIndex);
-    //
-    //if (bytes == null)
-    //return null;
-    //return new String(bytes);
     if (columnIndex < 1 || columnIndex > fields.length)
       throw new PSQLException("postgresql.res.colrange");
+
     wasNullFlag = (this_row[columnIndex - 1] == null);
     if(wasNullFlag)
       return null;
+
     String encoding = connection.getEncoding();
     if (encoding == null)
         return new String(this_row[columnIndex - 1]);
@@ -230,7 +230,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
    */
   public short getShort(int columnIndex) throws SQLException
   {
-    String s = getString(columnIndex);
+    String s = getFixedString(columnIndex);
 
     if (s != null)
       {
@@ -253,7 +253,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
    */
   public int getInt(int columnIndex) throws SQLException
   {
-    String s = getString(columnIndex);
+    String s = getFixedString(columnIndex);
 
     if (s != null)
       {
@@ -276,7 +276,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
    */
   public long getLong(int columnIndex) throws SQLException
   {
-    String s = getString(columnIndex);
+    String s = getFixedString(columnIndex);
 
     if (s != null)
       {
@@ -299,7 +299,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
    */
   public float getFloat(int columnIndex) throws SQLException
   {
-    String s = getString(columnIndex);
+    String s = getFixedString(columnIndex);
 
     if (s != null)
       {
@@ -322,7 +322,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
    */
   public double getDouble(int columnIndex) throws SQLException
   {
-    String s = getString(columnIndex);
+    String s = getFixedString(columnIndex);
 
     if (s != null)
       {
@@ -348,14 +348,14 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
    */
   public BigDecimal getBigDecimal(int columnIndex, int scale) throws SQLException
   {
-    String s = getString(columnIndex);
+    String s = getFixedString(columnIndex);
     BigDecimal val;
 
     if (s != null)
       {
 
-	try
-	  {
+        try
+          {
 	    val = new BigDecimal(s);
 	  } catch (NumberFormatException e) {
 	    throw new PSQLException ("postgresql.res.badbigdec",s);
@@ -418,12 +418,8 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
     String s = getString(columnIndex);
     if(s==null)
       return null;
-    SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
-    try {
-      return new java.sql.Date(df.parse(s).getTime());
-    } catch (ParseException e) {
-      throw new PSQLException("postgresql.res.baddate",new Integer(e.getErrorOffset()),s);
-    }
+
+    return java.sql.Date.valueOf(s);
   }
 
   /**
@@ -438,21 +434,10 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
   {
     String s = getString(columnIndex);
 
-    if (s != null)
-      {
-	try
-	  {
-	    if (s.length() != 5 && s.length() != 8)
-	      throw new NumberFormatException("Wrong Length!");
-	    int hr = Integer.parseInt(s.substring(0,2));
-	    int min = Integer.parseInt(s.substring(3,5));
-	    int sec = (s.length() == 5) ? 0 : Integer.parseInt(s.substring(6));
-	    return new Time(hr, min, sec);
-	  } catch (NumberFormatException e) {
-	    throw new PSQLException ("postgresql.res.badtime",s);
-	  }
-      }
-    return null;		// SQL NULL
+    if(s==null)
+      return null; // SQL NULL
+
+    return java.sql.Time.valueOf(s);
   }
 
   /**
@@ -945,11 +930,8 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 
     public java.math.BigDecimal getBigDecimal(int columnIndex) throws SQLException
     {
-      try {
-        return new BigDecimal(getDouble(columnIndex));
-      } catch(NumberFormatException nfe) {
-        throw new PSQLException("postgresql.res.badbigdec",nfe.toString());
-      }
+      // Now must call BigDecimal with a scale otherwise JBuilder barfs
+      return getBigDecimal(columnIndex,0);
     }
 
     public java.math.BigDecimal getBigDecimal(String columnName) throws SQLException

@@ -356,6 +356,10 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
           StringBuffer strBuf = new StringBuffer("'");
           strBuf.append(df.format(x)).append('.').append(x.getNanos()/10000000).append("+00'");
 	  set(parameterIndex, strBuf.toString());
+
+          // The above works, but so does the following. I'm leaving the above in, but this seems
+          // to be identical. Pays to read the docs ;-)
+          //set(parameterIndex,"'"+x.toString()+"'");
 	}
 
 	/**
