@@ -1,4 +1,4 @@
-/* $Id: pg_wchar.h,v 1.13 2000/01/18 05:08:31 ishii Exp $ */
+/* $Id: pg_wchar.h,v 1.14 2000/04/20 22:40:18 tgl Exp $ */
 
 #ifndef PG_WCHAR_H
 #define PG_WCHAR_H
@@ -112,10 +112,10 @@ extern int	pg_mbcliplen(const unsigned char *, int, int);
 extern pg_encoding_conv_tbl *pg_get_encent_by_encoding(int);
 extern bool show_client_encoding(void);
 extern bool reset_client_encoding(void);
-extern bool parse_client_encoding(const char *);
+extern bool parse_client_encoding(char *);
 extern bool show_server_encoding(void);
 extern bool reset_server_encoding(void);
-extern bool parse_server_encoding(const char *);
+extern bool parse_server_encoding(char *);
 extern int	pg_set_client_encoding(int);
 extern int	pg_get_client_encoding(void);
 extern unsigned char *pg_client_to_server(unsigned char *, int);
