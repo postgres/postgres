@@ -1,4 +1,4 @@
-$Header: /cvsroot/pgsql/src/backend/storage/lmgr/README,v 1.10 2002/04/15 23:46:13 momjian Exp $
+$Header: /cvsroot/pgsql/src/backend/storage/lmgr/README,v 1.11 2002/07/19 00:17:40 momjian Exp $
 
 
 LOCKING OVERVIEW
@@ -7,38 +7,40 @@ Postgres uses three types of interprocess locks:
 
 * Spinlocks.  These are intended for *very* short-term locks.  If a lock
 is to be held more than a few dozen instructions, or across any sort of
-kernel call (or even a call to a nontrivial subroutine), don't use a spinlock.
-Spinlocks are primarily used as infrastructure for lightweight locks.
-They are implemented using a hardware atomic-test-and-set instruction,
-if available.  Waiting processes busy-loop until they can get the lock.
-There is no provision for deadlock detection, automatic release on error,
-or any other nicety.  There is a timeout if the lock cannot be gotten after
-a minute or so (which is approximately forever in comparison to the intended
-lock hold time, so this is certainly an error condition).
+kernel call (or even a call to a nontrivial subroutine), don't use a
+spinlock. Spinlocks are primarily used as infrastructure for lightweight
+locks. They are implemented using a hardware atomic-test-and-set
+instruction, if available.  Waiting processes busy-loop until they can
+get the lock. There is no provision for deadlock detection, automatic
+release on error, or any other nicety.  There is a timeout if the lock
+cannot be gotten after a minute or so (which is approximately forever in
+comparison to the intended lock hold time, so this is certainly an error
+condition).
 
-* Lightweight locks (LWLocks).  These locks are typically used to interlock
-access to datastructures in shared memory.  LWLocks support both exclusive
-and shared lock modes (for read/write and read-only access to a shared object).
-There is no provision for deadlock detection, but the LWLock manager will
-automatically release held LWLocks during elog() recovery, so it is safe to
-raise an error while holding LWLocks.  Obtaining or releasing an LWLock is
-quite fast (a few dozen instructions) when there is no contention for the
-lock.  When a process has to wait for an LWLock, it blocks on a SysV semaphore
-so as to not consume CPU time.  Waiting processes will be granted the lock
-in arrival order.  There is no timeout.
+* Lightweight locks (LWLocks).  These locks are typically used to
+interlock access to datastructures in shared memory.  LWLocks support
+both exclusive and shared lock modes (for read/write and read-only
+access to a shared object). There is no provision for deadlock
+detection, but the LWLock manager will automatically release held
+LWLocks during elog() recovery, so it is safe to raise an error while
+holding LWLocks.  Obtaining or releasing an LWLock is quite fast (a few
+dozen instructions) when there is no contention for the lock.  When a
+process has to wait for an LWLock, it blocks on a SysV semaphore so as
+to not consume CPU time.  Waiting processes will be granted the lock in
+arrival order.  There is no timeout.
 
-* Regular locks (a/k/a heavyweight locks).  The regular lock manager supports
-a variety of lock modes with table-driven semantics, and it has full deadlock
-detection and automatic release at transaction end.  Regular locks should be
-used for all user-driven lock requests.
+* Regular locks (a/k/a heavyweight locks).  The regular lock manager
+supports a variety of lock modes with table-driven semantics, and it has
+full deadlock detection and automatic release at transaction end. 
+Regular locks should be used for all user-driven lock requests.
 
-Acquisition of either a spinlock or a lightweight lock causes query cancel
-and die() interrupts to be held off until all such locks are released.
-No such restriction exists for regular locks, however.  Also note that we
-can accept query cancel and die() interrupts while waiting for a regular
-lock, but we will not accept them while waiting for spinlocks or LW locks.
-It is therefore not a good idea to use LW locks when the wait time might
-exceed a few seconds.
+Acquisition of either a spinlock or a lightweight lock causes query
+cancel and die() interrupts to be held off until all such locks are
+released. No such restriction exists for regular locks, however.  Also
+note that we can accept query cancel and die() interrupts while waiting
+for a regular lock, but we will not accept them while waiting for
+spinlocks or LW locks. It is therefore not a good idea to use LW locks
+when the wait time might exceed a few seconds.
 
 The rest of this README file discusses the regular lock manager in detail.
 
@@ -46,9 +48,9 @@ The rest of this README file discusses the regular lock manager in detail.
 LOCK DATA STRUCTURES
 
 There are two fundamental lock structures: the per-lockable-object LOCK
-struct, and the per-lock-holder HOLDER struct.  A LOCK object exists
+struct, and the per-lock-holder PROCLOCK struct.  A LOCK object exists
 for each lockable object that currently has locks held or requested on it.
-A HOLDER struct exists for each transaction that is holding or requesting
+A PROCLOCK struct exists for each transaction that is holding or requesting
 lock(s) on each LOCK object.
 
 Lock methods describe the overall locking behavior.  Currently there are
@@ -102,9 +104,9 @@ waitMask -
     is 1 if and only if requested[i] > granted[i].
 
 lockHolders -
-    This is a shared memory queue of all the HOLDER structs associated with
-    the lock object.  Note that both granted and waiting HOLDERs are in this
-    list (indeed, the same HOLDER might have some already-granted locks and
+    This is a shared memory queue of all the PROCLOCK structs associated with
+    the lock object.  Note that both granted and waiting PROCLOCKs are in this
+    list (indeed, the same PROCLOCK might have some already-granted locks and
     be waiting for more!).
 
 waitProcs -
@@ -144,22 +146,22 @@ zero, the lock object is no longer needed and can be freed.
 
 ---------------------------------------------------------------------------
 
-The lock manager's HOLDER objects contain:
+The lock manager's PROCLOCK objects contain:
 
 tag -
     The key fields that are used for hashing entries in the shared memory
-    holder hash table.  This is declared as a separate struct to ensure that
+    PROCLOCK hash table.  This is declared as a separate struct to ensure that
     we always zero out the correct number of bytes.
 
     tag.lock
-        SHMEM offset of the LOCK object this holder is for.
+        SHMEM offset of the LOCK object this PROCLOCK is for.
 
     tag.proc
-        SHMEM offset of PROC of backend process that owns this holder.
+        SHMEM offset of PROC of backend process that owns this PROCLOCK.
 
     tag.xid
-        XID of transaction this holder is for, or InvalidTransactionId
-        if the holder is for session-level locking.
+        XID of transaction this PROCLOCK is for, or InvalidTransactionId
+        if the PROCLOCK is for session-level locking.
 
     Note that this structure will support multiple transactions running
     concurrently in one backend, which may be handy if we someday decide
@@ -169,18 +171,18 @@ tag -
     transaction operations like VACUUM.
 
 holding -
-    The number of successfully acquired locks of each type for this holder.
+    The number of successfully acquired locks of each type for this PROCLOCK.
     This should be <= the corresponding granted[] value of the lock object!
 
 nHolding -
     Sum of the holding[] array.
 
 lockLink -
-    List link for shared memory queue of all the HOLDER objects for the
+    List link for shared memory queue of all the PROCLOCK objects for the
     same LOCK.
 
 procLink -
-    List link for shared memory queue of all the HOLDER objects for the
+    List link for shared memory queue of all the PROCLOCK objects for the
     same backend.
 
 ---------------------------------------------------------------------------
@@ -193,47 +195,48 @@ fairly standard in essence, but there are many special considerations
 needed to deal with Postgres' generalized locking model.
 
 A key design consideration is that we want to make routine operations
-(lock grant and release) run quickly when there is no deadlock, and avoid
-the overhead of deadlock handling as much as possible.  We do this using
-an "optimistic waiting" approach: if a process cannot acquire the lock
-it wants immediately, it goes to sleep without any deadlock check.  But
-it also sets a delay timer, with a delay of DeadlockTimeout milliseconds
-(typically set to one second).  If the delay expires before the process is
-granted the lock it wants, it runs the deadlock detection/breaking code.
-Normally this code will determine that there is no deadlock condition,
-and then the process will go back to sleep and wait quietly until it is
-granted the lock.  But if a deadlock condition does exist, it will be
-resolved, usually by aborting the detecting process' transaction.  In this
-way, we avoid deadlock handling overhead whenever the wait time for a lock
-is less than DeadlockTimeout, while not imposing an unreasonable delay of
-detection when there is an error.
+(lock grant and release) run quickly when there is no deadlock, and
+avoid the overhead of deadlock handling as much as possible.  We do this
+using an "optimistic waiting" approach: if a process cannot acquire the
+lock it wants immediately, it goes to sleep without any deadlock check. 
+But it also sets a delay timer, with a delay of DeadlockTimeout
+milliseconds (typically set to one second).  If the delay expires before
+the process is granted the lock it wants, it runs the deadlock
+detection/breaking code. Normally this code will determine that there is
+no deadlock condition, and then the process will go back to sleep and
+wait quietly until it is granted the lock.  But if a deadlock condition
+does exist, it will be resolved, usually by aborting the detecting
+process' transaction.  In this way, we avoid deadlock handling overhead
+whenever the wait time for a lock is less than DeadlockTimeout, while
+not imposing an unreasonable delay of detection when there is an error.
 
 Lock acquisition (routines LockAcquire and ProcSleep) follows these rules:
 
-1. A lock request is granted immediately if it does not conflict with any
-existing or waiting lock request, or if the process already holds an
+1. A lock request is granted immediately if it does not conflict with
+any existing or waiting lock request, or if the process already holds an
 instance of the same lock type (eg, there's no penalty to acquire a read
-lock twice).  Note that a process never conflicts with itself, eg one can
-obtain read lock when one already holds exclusive lock.
+lock twice).  Note that a process never conflicts with itself, eg one
+can obtain read lock when one already holds exclusive lock.
 
-2. Otherwise the process joins the lock's wait queue.  Normally it will be
-added to the end of the queue, but there is an exception: if the process
-already holds locks on this same lockable object that conflict with the
-request of any pending waiter, then the process will be inserted in the
-wait queue just ahead of the first such waiter.  (If we did not make this
-check, the deadlock detection code would adjust the queue order to resolve
-the conflict, but it's relatively cheap to make the check in ProcSleep and
-avoid a deadlock timeout delay in this case.)  Note special case when
-inserting before the end of the queue: if the process's request does not
-conflict with any existing lock nor any waiting request before its insertion
-point, then go ahead and grant the lock without waiting.
+2. Otherwise the process joins the lock's wait queue.  Normally it will
+be added to the end of the queue, but there is an exception: if the
+process already holds locks on this same lockable object that conflict
+with the request of any pending waiter, then the process will be
+inserted in the wait queue just ahead of the first such waiter.  (If we
+did not make this check, the deadlock detection code would adjust the
+queue order to resolve the conflict, but it's relatively cheap to make
+the check in ProcSleep and avoid a deadlock timeout delay in this case.)
+ Note special case when inserting before the end of the queue: if the
+process's request does not conflict with any existing lock nor any
+waiting request before its insertion point, then go ahead and grant the
+lock without waiting.
 
 When a lock is released, the lock release routine (ProcLockWakeup) scans
 the lock object's wait queue.  Each waiter is awoken if (a) its request
 does not conflict with already-granted locks, and (b) its request does
 not conflict with the requests of prior un-wakable waiters.  Rule (b)
-ensures that conflicting requests are granted in order of arrival.
-There are cases where a later waiter must be allowed to go in front of
+ensures that conflicting requests are granted in order of arrival. There
+are cases where a later waiter must be allowed to go in front of
 conflicting earlier waiters to avoid deadlock, but it is not
 ProcLockWakeup's responsibility to recognize these cases; instead, the
 deadlock detection code will re-order the wait queue when necessary.
@@ -242,35 +245,36 @@ To perform deadlock checking, we use the standard method of viewing the
 various processes as nodes in a directed graph (the waits-for graph or
 WFG).  There is a graph edge leading from process A to process B if A
 waits for B, ie, A is waiting for some lock and B holds a conflicting
-lock.  There is a deadlock condition if and only if the WFG contains
-a cycle.  We detect cycles by searching outward along waits-for edges
-to see if we return to our starting point.  There are three possible
+lock.  There is a deadlock condition if and only if the WFG contains a
+cycle.  We detect cycles by searching outward along waits-for edges to
+see if we return to our starting point.  There are three possible
 outcomes:
 
 1. All outgoing paths terminate at a running process (which has no
 outgoing edge).
 
-2. A deadlock is detected by looping back to the start point.  We resolve
-such a deadlock by canceling the start point's lock request and reporting
-an error in that transaction, which normally leads to transaction abort
-and release of that transaction's held locks.  Note that it's sufficient
-to cancel one request to remove the cycle; we don't need to kill all the
-transactions involved.
+2. A deadlock is detected by looping back to the start point.  We
+resolve such a deadlock by canceling the start point's lock request and
+reporting an error in that transaction, which normally leads to
+transaction abort and release of that transaction's held locks.  Note
+that it's sufficient to cancel one request to remove the cycle; we don't
+need to kill all the transactions involved.
 
 3. Some path(s) loop back to a node other than the start point.  This
-indicates a deadlock, but one that does not involve our starting process.
-We ignore this condition on the grounds that resolving such a deadlock
-is the responsibility of the processes involved --- killing our start-
-point process would not resolve the deadlock.  So, cases 1 and 3 both
-report "no deadlock".
+indicates a deadlock, but one that does not involve our starting
+process. We ignore this condition on the grounds that resolving such a
+deadlock is the responsibility of the processes involved --- killing our
+start- point process would not resolve the deadlock.  So, cases 1 and 3
+both report "no deadlock".
 
 Postgres' situation is a little more complex than the standard discussion
 of deadlock detection, for two reasons:
 
 1. A process can be waiting for more than one other process, since there
-might be multiple holders of (non-conflicting) lock types that all conflict
-with the waiter's request.  This creates no real difficulty however; we
-simply need to be prepared to trace more than one outgoing edge.
+might be multiple PROCLOCKs of (non-conflicting) lock types that all
+conflict with the waiter's request.  This creates no real difficulty
+however; we simply need to be prepared to trace more than one outgoing
+edge.
 
 2. If a process A is behind a process B in some lock's wait queue, and
 their requested locks conflict, then we must say that A waits for B, since
@@ -409,16 +413,18 @@ LockWaitCancel (abort a waiter due to outside factors) must run
 ProcLockWakeup, in case the canceled waiter was soft-blocking other
 waiters.
 
-4. We can minimize excess rearrangement-trial work by being careful to scan
-the wait queue from the front when looking for soft edges.  For example,
-if we have queue order A,B,C and C has deadlock conflicts with both A and B,
-we want to generate the "C before A" constraint first, rather than wasting
-time with "C before B", which won't move C far enough up.  So we look for
-soft edges outgoing from C starting at the front of the wait queue.
+4. We can minimize excess rearrangement-trial work by being careful to
+scan the wait queue from the front when looking for soft edges.  For
+example, if we have queue order A,B,C and C has deadlock conflicts with
+both A and B, we want to generate the "C before A" constraint first,
+rather than wasting time with "C before B", which won't move C far
+enough up.  So we look for soft edges outgoing from C starting at the
+front of the wait queue.
 
 5. The working data structures needed by the deadlock detection code can
 be limited to numbers of entries computed from MaxBackends.  Therefore,
-we can allocate the worst-case space needed during backend startup.
-This seems a safer approach than trying to allocate workspace on the fly;
-we don't want to risk having the deadlock detector run out of memory,
-else we really have no guarantees at all that deadlock will be detected.
+we can allocate the worst-case space needed during backend startup. This
+seems a safer approach than trying to allocate workspace on the fly; we
+don't want to risk having the deadlock detector run out of memory, else
+we really have no guarantees at all that deadlock will be detected.
+

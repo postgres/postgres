@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/deadlock.c,v 1.11 2002/07/18 23:06:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/deadlock.c,v 1.12 2002/07/19 00:17:40 momjian Exp $
  *
  *	Interface:
  *
@@ -377,7 +377,7 @@ FindLockCycleRecurse(PGPROC *checkProc,
 {
 	PGPROC	   *proc;
 	LOCK	   *lock;
-	HOLDER	   *holder;
+	PROCLOCK	   *holder;
 	SHM_QUEUE  *lockHolders;
 	LOCKMETHODTABLE *lockMethodTable;
 	PROC_QUEUE *waitQueue;
@@ -427,8 +427,8 @@ FindLockCycleRecurse(PGPROC *checkProc,
 	 */
 	lockHolders = &(lock->lockHolders);
 
-	holder = (HOLDER *) SHMQueueNext(lockHolders, lockHolders,
-									 offsetof(HOLDER, lockLink));
+	holder = (PROCLOCK *) SHMQueueNext(lockHolders, lockHolders,
+									 offsetof(PROCLOCK, lockLink));
 
 	while (holder)
 	{
@@ -451,8 +451,8 @@ FindLockCycleRecurse(PGPROC *checkProc,
 			}
 		}
 
-		holder = (HOLDER *) SHMQueueNext(lockHolders, &holder->lockLink,
-										 offsetof(HOLDER, lockLink));
+		holder = (PROCLOCK *) SHMQueueNext(lockHolders, &holder->lockLink,
+										 offsetof(PROCLOCK, lockLink));
 	}
 
 	/*

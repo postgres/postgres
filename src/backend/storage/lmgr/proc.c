@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.123 2002/07/18 23:06:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.124 2002/07/19 00:17:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -501,7 +501,7 @@ int
 ProcSleep(LOCKMETHODTABLE *lockMethodTable,
 		  LOCKMODE lockmode,
 		  LOCK *lock,
-		  HOLDER *holder)
+		  PROCLOCK *holder)
 {
 	LWLockId	masterLock = lockMethodTable->masterLock;
 	PROC_QUEUE *waitQueue = &(lock->waitProcs);
