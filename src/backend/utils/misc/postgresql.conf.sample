@@ -31,6 +31,7 @@
 #ssl = false
 
 #max_connections = 32
+#superuser_reserved_connections = 2
 
 #port = 5432 
 #hostname_lookup = false

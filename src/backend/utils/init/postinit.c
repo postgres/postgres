@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.110 2002/08/29 07:22:28 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.111 2002/08/29 21:02:12 momjian Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -395,6 +395,16 @@ InitPostgres(const char *dbname, const char *username)
 	/* close the transaction we started above */
 	if (!bootstrap)
 		CommitTransactionCommand();
+
+	/*
+	 * Check a normal user hasn't connected to a superuser reserved slot.
+	 * Do this here since we need the user information and that only happens
+	 * after we've started bringing the shared memory online. So we wait
+	 * until we've registered exit handlers and potentially shut an open
+	 * transaction down for an as safety conscious rejection as possible.
+	 */
+	if (CountEmptyBackendSlots() < ReservedBackends && !superuser())
+		elog(ERROR, "Non-superuser connection limit exceeded");
 }
 
 /*

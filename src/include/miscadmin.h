@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.106 2002/06/20 20:29:42 momjian Exp $
+ * $Id: miscadmin.h,v 1.107 2002/08/29 21:02:12 momjian Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to
@@ -179,6 +179,7 @@ extern bool NetServer;
 extern bool EnableSSL;
 extern bool SilentMode;
 extern int	MaxBackends;
+extern int	ReservedBackends;
 extern int	NBuffers;
 extern int	PostPortNumber;
 extern int	Unix_socket_permissions;

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: sinvaladt.h,v 1.32 2002/06/20 20:29:52 momjian Exp $
+ * $Id: sinvaladt.h,v 1.33 2002/08/29 21:02:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,6 +85,7 @@ typedef struct SISeg
 	int			lastBackend;	/* index of last active procState entry,
 								 * +1 */
 	int			maxBackends;	/* size of procState array */
+	int			freeBackends;	/* number of empty procState slots */
 
 	/*
 	 * Circular buffer holding shared-inval messages

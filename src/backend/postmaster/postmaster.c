@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.285 2002/08/18 03:03:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.286 2002/08/29 21:02:12 momjian Exp $
  *
  * NOTES
  *
@@ -150,6 +150,18 @@ char	   *VirtualHost;
  * semaphores, even if you never actually use that many backends.
  */
 int			MaxBackends = DEF_MAXBACKENDS;
+
+/*
+ * ReservedBackends is the number of backends reserved for superuser use.
+ * This number is taken out of the pool size given by MaxBackends so
+ * number of backend slots available to none super users is
+ * (MaxBackends - ReservedBackends). Note, existing super user
+ * connections are not taken into account once this lower limit has
+ * been reached, i.e. superuser connections made before the lower limit
+ * is reached always count towards that limit and are not taken from
+ * ReservedBackends.
+ */
+int			ReservedBackends = 2;
 
 
 static char *progname = (char *) NULL;
@@ -566,6 +578,12 @@ PostmasterMain(int argc, char *argv[])
 	SetDataDir(potential_DataDir);
 
 	ProcessConfigFile(PGC_POSTMASTER);
+
+	/*
+	 * Force an exit if ReservedBackends is not less than MaxBackends.
+	 */
+	if (ReservedBackends >= MaxBackends)
+		elog(FATAL,"superuser_reserved_connections must be less than max_connections.");
 
 	/*
 	 * Now that we are done processing the postmaster arguments, reset

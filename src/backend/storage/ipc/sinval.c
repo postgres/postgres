@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.49 2002/06/20 20:29:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.50 2002/08/29 21:02:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -537,4 +537,28 @@ BackendIdGetProc(BackendId procId)
 	}
 
 	return NULL;
+}
+
+/*
+ * CountEmptyBackendSlots - count empty slots in backend process table
+ *
+ * Doesn't count since the procState array could be large and we've already
+ * allowed for that by running a freeBackends counter in the SI segment.
+ * Unlike CountActiveBackends() we do not need to interrogate the
+ * backends to determine the free slot count.
+ * Goes for a lock despite being a trival look up in case other backends
+ * are busy starting or exiting since there is scope for confusion.
+ */
+int
+CountEmptyBackendSlots(void)
+{
+	int count;
+
+	LWLockAcquire(SInvalLock, LW_SHARED);
+
+	count = shmInvalBuffer->freeBackends;
+
+	LWLockRelease(SInvalLock);
+
+	return count;
 }

@@ -5,7 +5,7 @@
  * command, configuration file, and command line options.
  * See src/backend/utils/misc/README for more information.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.86 2002/08/29 17:14:33 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.87 2002/08/29 21:02:12 momjian Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -537,11 +537,18 @@ static struct config_int
 	/*
 	 * Note: There is some postprocessing done in PostmasterMain() to make
 	 * sure the buffers are at least twice the number of backends, so the
-	 * constraints here are partially unused.
+	 * constraints here are partially unused. Similarly, the superuser
+	 * reserved number is checked to ensure it is less than the max
+	 * backends number.
 	 */
 	{
 		{ "max_connections", PGC_POSTMASTER }, &MaxBackends,
 		DEF_MAXBACKENDS, 1, INT_MAX, NULL, NULL
+	},
+
+	{
+		{ "superuser_reserved_connections", PGC_POSTMASTER }, &ReservedBackends,
+		2, 0, INT_MAX, NULL, NULL
 	},
 
 	{

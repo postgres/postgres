@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.47 2002/06/20 20:29:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.48 2002/08/29 21:02:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,6 +60,7 @@ SIBufferInit(int maxBackends)
 	segP->maxMsgNum = 0;
 	segP->lastBackend = 0;
 	segP->maxBackends = maxBackends;
+	segP->freeBackends = maxBackends;
 
 	/* The buffer[] array is initially all unused, so we need not fill it */
 
@@ -91,6 +92,13 @@ SIBackendInit(SISeg *segP)
 	int			index;
 	ProcState  *stateP = NULL;
 
+	if (segP->freeBackends == 0)
+	{
+		/* out of procState slots */
+		MyBackendId = InvalidBackendId;
+		return 0;
+	}
+
 	/* Look for a free entry in the procState array */
 	for (index = 0; index < segP->lastBackend; index++)
 	{
@@ -103,18 +111,9 @@ SIBackendInit(SISeg *segP)
 
 	if (stateP == NULL)
 	{
-		if (segP->lastBackend < segP->maxBackends)
-		{
-			stateP = &segP->procState[segP->lastBackend];
-			Assert(stateP->nextMsgNum < 0);
-			segP->lastBackend++;
-		}
-		else
-		{
-			/* out of procState slots */
-			MyBackendId = InvalidBackendId;
-			return 0;
-		}
+		stateP = &segP->procState[segP->lastBackend];
+		Assert(stateP->nextMsgNum < 0);
+		segP->lastBackend++;
 	}
 
 	MyBackendId = (stateP - &segP->procState[0]) + 1;
@@ -122,6 +121,9 @@ SIBackendInit(SISeg *segP)
 #ifdef	INVALIDDEBUG
 	elog(DEBUG1, "SIBackendInit: backend id %d", MyBackendId);
 #endif   /* INVALIDDEBUG */
+
+	/* Reduce free slot count */
+	segP->freeBackends--;
 
 	/* mark myself active, with all extant messages already read */
 	stateP->nextMsgNum = segP->maxMsgNum;
@@ -165,6 +167,9 @@ CleanupInvalidationState(int status, Datum arg)
 			break;
 	}
 	segP->lastBackend = i;
+
+	/* Adjust free slot count */
+	segP->freeBackends++;
 
 	LWLockRelease(SInvalLock);
 }
