@@ -23,6 +23,7 @@
 
 #if defined(alpha)
 #  define USE_POSIX_TIME 
+#  define USE_POSIX_SIGNALS
 #  define DISABLE_XOPEN_NLS 
 #  define NEED_ISINF 
 #  define HAS_LONG_LONG
@@ -32,6 +33,8 @@
 #if defined(dgux)
 #  define LINUX_ELF
 #  define NEED_UNION_SEMUN 
+#  define __USE_POSIX_SIGNALS
+#  define -DUSE_POSIX_SIGNALS
 #endif
 
 #if defined(ultrix4)
@@ -41,9 +44,12 @@
 #endif
 
 #if defined(linux)
-#  ifndef __USE_POSIX
-#    define __USE_POSIX
-#  endif
+/* __USE_POSIX, __USE_BSD, and __USE_BSD_SIGNAL used to be defined either
+   here or with -D compile options, but __ macros should be set and used by C
+   library macros, not Postgres code.  __USE_POSIX is set by features.h,
+   __USE_BSD is set by bsd/signal.h, and __USE_BSD_SIGNAL appears not to
+   be used.
+*/
 #  define USE_POSIX_TIME
 #  define HAVE_TZSET
 #  define NEED_CBRT
@@ -59,11 +65,13 @@
 
 #if defined(i386_solaris) 
 #  define USE_POSIX_TIME 
+#  define USE_POSIX_SIGNALS
 #  define NEED_ISINF 
 #  define NEED_RUSAGE 
 #  define NO_EMPTY_STMTS
 #  define HAVE_TZSET
 #  define NEED_UNION_SEMUN 
+#  define SYSV_DIRENT
 #endif
 
 #if defined(sparc) && !defined(sparc_solaris)
@@ -73,21 +81,25 @@
 
 #if defined(sparc_solaris)
 #  define USE_POSIX_TIME 
+#  define USE_POSIX_SIGNALS
 #  define NEED_ISINF 
 #  define NEED_RUSAGE 
 #  define NO_EMPTY_STMTS
 #  define USE_POSIX_TIME
 #  define HAVE_TZSET
 #  define NEED_UNION_SEMUN 
+#  define SYSV_DIRENT
 #endif
 
 #if defined(svr4) 
 #  define USE_POSIX_TIME 
+#  define USE_POSIX_SIGNALS
 #  define NEED_ISINF 
 #  define NEED_RUSAGE 
 #  define NO_EMPTY_STMTS
 #  define HAVE_TZSET
 #  define NEED_UNION_SEMUN 
+#  define SYSV_DIRENT
 #endif
 
 #if defined(next)
@@ -122,14 +134,17 @@
 #  define NEED_UNION_SEMUN 
 #  define NEED_SYS_SELECT_H
 #  define HAVE_TZSET
+#  define HAVE_ANSI_CPP
 #endif
 
 #if defined(irix5)
 #  define USE_POSIX_TIME 
+#  define USE_POSIX_SIGNALS
 #  define NEED_ISINF 
 #  define NO_EMPTY_STMTS
 #  define NO_VFORK
 #  define HAVE_TZSET
+#  define SYSV_DIRENT
 #endif
 
 /*
