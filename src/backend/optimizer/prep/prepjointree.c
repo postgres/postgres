@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.18 2004/05/26 04:41:26 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.19 2004/05/26 18:35:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -897,12 +897,15 @@ simplify_jointree(Query *parse, Node *jtnode)
 	{
 		FromExpr   *f = (FromExpr *) jtnode;
 		List	   *newlist = NIL;
+		int			children_remaining;
 		ListCell   *l;
 
+		children_remaining = list_length(f->fromlist);
 		foreach(l, f->fromlist)
 		{
 			Node	   *child = (Node *) lfirst(l);
 
+			children_remaining--;
 			/* Recursively simplify this child... */
 			child = simplify_jointree(parse, child);
 			/* Now, is it a FromExpr? */
@@ -917,16 +920,7 @@ simplify_jointree(Query *parse, Node *jtnode)
 				 */
 				FromExpr   *subf = (FromExpr *) child;
 				int			childlen = length(subf->fromlist);
-				int			myothers;
-				ListCell   *l2;
-
-				/*
-				 * XXX: This is a quick hack, not sure of the proper
-				 * fix.
-				 */
-				myothers = length(newlist);
-				for_each_cell(l2, lnext(l))
-					myothers++;
+				int			myothers = length(newlist) + children_remaining;
 
 				if (childlen <= 1 ||
 					(childlen + myothers) <= from_collapse_limit)
