@@ -6,7 +6,7 @@
  *
  *	1999 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.6 1999/12/06 19:52:36 wieck Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.7 1999/12/07 00:11:35 wieck Exp $
  *
  * ----------
  */
@@ -31,6 +31,7 @@
 #include "catalog/catname.h"
 #include "commands/trigger.h"
 #include "executor/spi.h"
+#include "executor/spi_priv.h"
 #include "utils/builtins.h"
 #include "utils/mcxt.h"
 #include "utils/syscache.h"
@@ -334,17 +335,15 @@ RI_FKey_check (FmgrInfo *proinfo)
 			heap_close(pk_rel, NoLock);
 
 			/* ----------
-			 * If we're called on UPDATE, check if there was a change
-			 * in the foreign key at all.
+			 * Note:
+			 * We cannot avoid the check on UPDATE, even if old and new
+			 * key are the same. Otherwise, someone could DELETE the PK
+			 * that consists of the DEFAULT values, and if there are any
+			 * references, a ON DELETE SET DEFAULT action would update
+			 * the references to exactly these values but we wouldn't see
+			 * that weired case (this is the only place to see it).
 			 * ----------
 			 */
-			if (TRIGGER_FIRED_BY_UPDATE(trigdata->tg_event))
-			{
-				if (ri_KeysEqual(fk_rel, old_row, new_row, &qkey,
-														RI_KEYPAIR_FK_IDX))
-					return NULL;
-			}
-
 			if (SPI_connect() != SPI_OK_CONNECT)
 				elog(NOTICE, "SPI_connect() failed in RI_FKey_check()");
 
@@ -1454,7 +1453,7 @@ RI_FKey_setnull_del (FmgrInfo *proinfo)
 				 * Prepare, save and remember the new plan.
 				 * ----------
 				 */
-				qplan = SPI_prepare(querystr, qkey.nkeypairs * 2, queryoids);
+				qplan = SPI_prepare(querystr, qkey.nkeypairs, queryoids);
 				qplan = SPI_saveplan(qplan);
 				ri_HashPreparedPlan(&qkey, qplan);
 			}
@@ -1673,7 +1672,7 @@ RI_FKey_setnull_upd (FmgrInfo *proinfo)
 				 * Prepare, save and remember the new plan.
 				 * ----------
 				 */
-				qplan = SPI_prepare(querystr, qkey.nkeypairs * 2, queryoids);
+				qplan = SPI_prepare(querystr, qkey.nkeypairs, queryoids);
 				qplan = SPI_saveplan(qplan);
 				ri_HashPreparedPlan(&qkey, qplan);
 			}
@@ -1735,12 +1734,239 @@ RI_FKey_setnull_upd (FmgrInfo *proinfo)
 HeapTuple
 RI_FKey_setdefault_del (FmgrInfo *proinfo)
 {
-	TriggerData			*trigdata;
+	TriggerData		   *trigdata;
+	int					tgnargs;
+	char			  **tgargs;
+	Relation			fk_rel;
+	Relation			pk_rel;
+	HeapTuple			old_row;
+	RI_QueryKey			qkey;
+	void			   *qplan;
+	Datum				upd_values[RI_MAX_NUMKEYS];
+	char				upd_nulls[RI_MAX_NUMKEYS + 1];
+	bool				isnull;
+	int					i;
 
 	trigdata = CurrentTriggerData;
 	CurrentTriggerData	= NULL;
 
-	elog(ERROR, "RI_FKey_setdefault_del() called\n");
+	/* ----------
+	 * Check that this is a valid trigger call on the right time and event.
+	 * ----------
+	 */
+	if (trigdata == NULL)
+		elog(ERROR, "RI_FKey_setdefault_del() not fired by trigger manager");
+	if (!TRIGGER_FIRED_AFTER(trigdata->tg_event) || 
+				!TRIGGER_FIRED_FOR_ROW(trigdata->tg_event))
+		elog(ERROR, "RI_FKey_setdefault_del() must be fired AFTER ROW");
+	if (!TRIGGER_FIRED_BY_DELETE(trigdata->tg_event))
+		elog(ERROR, "RI_FKey_setdefault_del() must be fired for DELETE");
+
+	/* ----------
+	 * Check for the correct # of call arguments 
+	 * ----------
+	 */
+	tgnargs = trigdata->tg_trigger->tgnargs;
+	tgargs  = trigdata->tg_trigger->tgargs;
+	if (tgnargs < 4 || (tgnargs % 2) != 0)
+		elog(ERROR, "wrong # of arguments in call to RI_FKey_setdefault_del()");
+	if (tgnargs > RI_MAX_ARGUMENTS)
+		elog(ERROR, "too many keys (%d max) in call to RI_FKey_setdefault_del()",
+						RI_MAX_NUMKEYS);
+
+	/* ----------
+	 * Nothing to do if no column names to compare given
+	 * ----------
+	 */
+	if (tgnargs == 4)
+		return NULL;
+
+	/* ----------
+	 * Get the relation descriptors of the FK and PK tables and
+	 * the old tuple.
+	 * ----------
+	 */
+	fk_rel	= heap_openr(tgargs[RI_FK_RELNAME_ARGNO], NoLock);
+	pk_rel  = trigdata->tg_relation;
+	old_row = trigdata->tg_trigtuple;
+
+	switch (ri_DetermineMatchType(tgargs[RI_MATCH_TYPE_ARGNO]))
+	{
+		/* ----------
+		 * SQL3 11.9 <referential constraint definition>
+		 *	Gereral rules 6) a) iii):
+		 * 		MATCH <UNSPECIFIED> or MATCH FULL
+		 *			... ON DELETE SET DEFAULT
+		 * ----------
+		 */
+		case RI_MATCH_TYPE_UNSPECIFIED:
+		case RI_MATCH_TYPE_FULL:
+			ri_BuildQueryKeyFull(&qkey, trigdata->tg_trigger->tgoid,
+									RI_PLAN_SETNULL_DEL_DOUPDATE,
+									fk_rel, pk_rel,
+									tgnargs, tgargs);
+
+			switch (ri_NullCheck(pk_rel, old_row, &qkey, RI_KEYPAIR_PK_IDX))
+			{
+				case RI_KEYS_ALL_NULL:
+				case RI_KEYS_SOME_NULL:
+					/* ----------
+					 * No update - MATCH FULL means there cannot be any
+					 * reference to old key if it contains NULL
+					 * ----------
+					 */
+					heap_close(fk_rel, NoLock);
+					return NULL;
+					
+				case RI_KEYS_NONE_NULL:
+					/* ----------
+					 * Have a full qualified key - continue below
+					 * ----------
+					 */
+					break;
+			}
+			heap_close(fk_rel, NoLock);
+
+			if (SPI_connect() != SPI_OK_CONNECT)
+				elog(NOTICE, "SPI_connect() failed in RI_FKey_setdefault_del()");
+
+			/* ----------
+			 * Prepare a plan for the set defalt delete operation.
+			 * Unfortunately we need to do it on every invocation
+			 * because the default value could potentially change
+			 * between calls.
+			 * ----------
+			 */
+			{
+				char		buf[256];
+				char		querystr[8192];
+				char		qualstr[8192];
+				char		*querysep;
+				char		*qualsep;
+				Oid			queryoids[RI_MAX_NUMKEYS];
+				Plan		*spi_plan;
+				AttrDefault	*defval;
+				TargetEntry	*spi_qptle;
+				int			i, j;
+
+				/* ----------
+				 * The query string built is
+				 *    UPDATE <fktable> SET fkatt1 = NULL [, ...]
+				 *			WHERE fkatt1 = $1 [AND ...]
+				 * The type id's for the $ parameters are those of the
+				 * corresponding PK attributes. Thus, SPI_prepare could
+				 * eventually fail if the parser cannot identify some way
+				 * how to compare these two types by '='.
+				 * ----------
+				 */
+				sprintf(querystr, "UPDATE \"%s\" SET", 
+									tgargs[RI_FK_RELNAME_ARGNO]);
+				qualstr[0] = '\0';
+				querysep = "";
+				qualsep = "WHERE";
+				for (i = 0; i < qkey.nkeypairs; i++)
+				{
+					sprintf(buf, "%s \"%s\" = NULL", querysep, 
+										tgargs[4 + i * 2]);
+					strcat(querystr, buf);
+					sprintf(buf, " %s \"%s\" = $%d", qualsep,
+										tgargs[4 + i * 2], i + 1);
+					strcat(qualstr, buf);
+					querysep = ",";
+					qualsep = "AND";
+					queryoids[i] = SPI_gettypeid(pk_rel->rd_att,
+									qkey.keypair[i][RI_KEYPAIR_PK_IDX]);
+				}
+				strcat(querystr, qualstr);
+
+				/* ----------
+				 * Prepare the plan
+				 * ----------
+				 */
+				qplan = SPI_prepare(querystr, qkey.nkeypairs, queryoids);
+
+				/* ----------
+				 * Now replace the CONST NULL targetlist expressions
+				 * in the generated plan by (any) default values found
+				 * in the tuple constructor.
+				 * ----------
+				 */
+				spi_plan = (Plan *)lfirst(((_SPI_plan *)qplan)->ptlist);
+				if (fk_rel->rd_att->constr != NULL)
+					defval = fk_rel->rd_att->constr->defval;
+				else
+					defval = NULL;
+				for (i = 0; i < qkey.nkeypairs && defval != NULL; i++)
+				{
+					/* ----------
+					 * For each key attribute lookup the tuple constructor
+					 * for a corresponding default value
+					 * ----------
+					 */
+					for (j = 0; j < fk_rel->rd_att->constr->num_defval; j++)
+					{
+						if (defval[j].adnum == 
+											qkey.keypair[i][RI_KEYPAIR_FK_IDX])
+						{
+							/* ----------
+							 * That's the one - push the expression
+							 * from defval.adbin into the plan's targetlist
+							 * ----------
+							 */
+							spi_qptle = (TargetEntry *)
+										nth(i, spi_plan->targetlist);
+							spi_qptle->expr = stringToNode(defval[j].adbin);
+
+							break;
+						}
+					}
+				}
+			}
+
+			/* ----------
+			 * We have a plan now. Build up the arguments for SPI_execp()
+			 * from the key values in the deleted PK tuple.
+			 * ----------
+			 */
+			for (i = 0; i < qkey.nkeypairs; i++)
+			{
+				upd_values[i] = SPI_getbinval(old_row,
+									pk_rel->rd_att,
+									qkey.keypair[i][RI_KEYPAIR_PK_IDX],
+									&isnull);
+				if (isnull) 
+					upd_nulls[i] = 'n';
+				else
+					upd_nulls[i] = ' ';
+			}
+			upd_nulls[i] = '\0';
+
+			/* ----------
+			 * Now update the existing references
+			 * ----------
+			 */
+			if (SPI_execp(qplan, upd_values, upd_nulls, 0) != SPI_OK_UPDATE)
+				elog(ERROR, "SPI_execp() failed in RI_FKey_setdefault_del()");
+			
+			if (SPI_finish() != SPI_OK_FINISH)
+				elog(NOTICE, "SPI_finish() failed in RI_FKey_setdefault_del()");
+
+			return NULL;
+
+		/* ----------
+		 * Handle MATCH PARTIAL set null delete.
+		 * ----------
+		 */
+		case RI_MATCH_TYPE_PARTIAL:
+			elog(ERROR, "MATCH PARTIAL not yet supported");
+			return NULL;
+	}
+
+	/* ----------
+	 * Never reached
+	 * ----------
+	 */
+	elog(ERROR, "internal error #8 in ri_triggers.c");
 	return NULL;
 }
 
@@ -1754,12 +1980,249 @@ RI_FKey_setdefault_del (FmgrInfo *proinfo)
 HeapTuple
 RI_FKey_setdefault_upd (FmgrInfo *proinfo)
 {
-	TriggerData			*trigdata;
+	TriggerData		   *trigdata;
+	int					tgnargs;
+	char			  **tgargs;
+	Relation			fk_rel;
+	Relation			pk_rel;
+	HeapTuple			new_row;
+	HeapTuple			old_row;
+	RI_QueryKey			qkey;
+	void			   *qplan;
+	Datum				upd_values[RI_MAX_NUMKEYS];
+	char				upd_nulls[RI_MAX_NUMKEYS + 1];
+	bool				isnull;
+	int					i;
 
 	trigdata = CurrentTriggerData;
 	CurrentTriggerData	= NULL;
 
-	elog(ERROR, "RI_FKey_setdefault_upd() called\n");
+	/* ----------
+	 * Check that this is a valid trigger call on the right time and event.
+	 * ----------
+	 */
+	if (trigdata == NULL)
+		elog(ERROR, "RI_FKey_setdefault_upd() not fired by trigger manager");
+	if (!TRIGGER_FIRED_AFTER(trigdata->tg_event) || 
+				!TRIGGER_FIRED_FOR_ROW(trigdata->tg_event))
+		elog(ERROR, "RI_FKey_setdefault_upd() must be fired AFTER ROW");
+	if (!TRIGGER_FIRED_BY_UPDATE(trigdata->tg_event))
+		elog(ERROR, "RI_FKey_setdefault_upd() must be fired for UPDATE");
+
+	/* ----------
+	 * Check for the correct # of call arguments 
+	 * ----------
+	 */
+	tgnargs = trigdata->tg_trigger->tgnargs;
+	tgargs  = trigdata->tg_trigger->tgargs;
+	if (tgnargs < 4 || (tgnargs % 2) != 0)
+		elog(ERROR, "wrong # of arguments in call to RI_FKey_setdefault_upd()");
+	if (tgnargs > RI_MAX_ARGUMENTS)
+		elog(ERROR, "too many keys (%d max) in call to RI_FKey_setdefault_upd()",
+						RI_MAX_NUMKEYS);
+
+	/* ----------
+	 * Nothing to do if no column names to compare given
+	 * ----------
+	 */
+	if (tgnargs == 4)
+		return NULL;
+
+	/* ----------
+	 * Get the relation descriptors of the FK and PK tables and
+	 * the old tuple.
+	 * ----------
+	 */
+	fk_rel	= heap_openr(tgargs[RI_FK_RELNAME_ARGNO], NoLock);
+	pk_rel  = trigdata->tg_relation;
+	new_row = trigdata->tg_newtuple;
+	old_row = trigdata->tg_trigtuple;
+
+	switch (ri_DetermineMatchType(tgargs[RI_MATCH_TYPE_ARGNO]))
+	{
+		/* ----------
+		 * SQL3 11.9 <referential constraint definition>
+		 *	Gereral rules 7) a) iii):
+		 * 		MATCH <UNSPECIFIED> or MATCH FULL
+		 *			... ON UPDATE SET DEFAULT
+		 * ----------
+		 */
+		case RI_MATCH_TYPE_UNSPECIFIED:
+		case RI_MATCH_TYPE_FULL:
+			ri_BuildQueryKeyFull(&qkey, trigdata->tg_trigger->tgoid,
+									RI_PLAN_SETNULL_DEL_DOUPDATE,
+									fk_rel, pk_rel,
+									tgnargs, tgargs);
+
+			switch (ri_NullCheck(pk_rel, old_row, &qkey, RI_KEYPAIR_PK_IDX))
+			{
+				case RI_KEYS_ALL_NULL:
+				case RI_KEYS_SOME_NULL:
+					/* ----------
+					 * No update - MATCH FULL means there cannot be any
+					 * reference to old key if it contains NULL
+					 * ----------
+					 */
+					heap_close(fk_rel, NoLock);
+					return NULL;
+					
+				case RI_KEYS_NONE_NULL:
+					/* ----------
+					 * Have a full qualified key - continue below
+					 * ----------
+					 */
+					break;
+			}
+			heap_close(fk_rel, NoLock);
+
+			/* ----------
+			 * No need to do anything if old and new keys are equal
+			 * ----------
+			 */
+			if (ri_KeysEqual(pk_rel, old_row, new_row, &qkey,
+													RI_KEYPAIR_PK_IDX))
+				return NULL;
+
+			if (SPI_connect() != SPI_OK_CONNECT)
+				elog(NOTICE, "SPI_connect() failed in RI_FKey_setdefault_upd()");
+
+			/* ----------
+			 * Prepare a plan for the set defalt delete operation.
+			 * Unfortunately we need to do it on every invocation
+			 * because the default value could potentially change
+			 * between calls.
+			 * ----------
+			 */
+			{
+				char		buf[256];
+				char		querystr[8192];
+				char		qualstr[8192];
+				char		*querysep;
+				char		*qualsep;
+				Oid			queryoids[RI_MAX_NUMKEYS];
+				Plan		*spi_plan;
+				AttrDefault	*defval;
+				TargetEntry	*spi_qptle;
+				int			i, j;
+
+				/* ----------
+				 * The query string built is
+				 *    UPDATE <fktable> SET fkatt1 = NULL [, ...]
+				 *			WHERE fkatt1 = $1 [AND ...]
+				 * The type id's for the $ parameters are those of the
+				 * corresponding PK attributes. Thus, SPI_prepare could
+				 * eventually fail if the parser cannot identify some way
+				 * how to compare these two types by '='.
+				 * ----------
+				 */
+				sprintf(querystr, "UPDATE \"%s\" SET", 
+									tgargs[RI_FK_RELNAME_ARGNO]);
+				qualstr[0] = '\0';
+				querysep = "";
+				qualsep = "WHERE";
+				for (i = 0; i < qkey.nkeypairs; i++)
+				{
+					sprintf(buf, "%s \"%s\" = NULL", querysep, 
+										tgargs[4 + i * 2]);
+					strcat(querystr, buf);
+					sprintf(buf, " %s \"%s\" = $%d", qualsep,
+										tgargs[4 + i * 2], i + 1);
+					strcat(qualstr, buf);
+					querysep = ",";
+					qualsep = "AND";
+					queryoids[i] = SPI_gettypeid(pk_rel->rd_att,
+									qkey.keypair[i][RI_KEYPAIR_PK_IDX]);
+				}
+				strcat(querystr, qualstr);
+
+				/* ----------
+				 * Prepare the plan
+				 * ----------
+				 */
+				qplan = SPI_prepare(querystr, qkey.nkeypairs, queryoids);
+
+				/* ----------
+				 * Now replace the CONST NULL targetlist expressions
+				 * in the generated plan by (any) default values found
+				 * in the tuple constructor.
+				 * ----------
+				 */
+				spi_plan = (Plan *)lfirst(((_SPI_plan *)qplan)->ptlist);
+				if (fk_rel->rd_att->constr != NULL)
+					defval = fk_rel->rd_att->constr->defval;
+				else
+					defval = NULL;
+				for (i = 0; i < qkey.nkeypairs && defval != NULL; i++)
+				{
+					/* ----------
+					 * For each key attribute lookup the tuple constructor
+					 * for a corresponding default value
+					 * ----------
+					 */
+					for (j = 0; j < fk_rel->rd_att->constr->num_defval; j++)
+					{
+						if (defval[j].adnum == 
+											qkey.keypair[i][RI_KEYPAIR_FK_IDX])
+						{
+							/* ----------
+							 * That's the one - push the expression
+							 * from defval.adbin into the plan's targetlist
+							 * ----------
+							 */
+							spi_qptle = (TargetEntry *)
+										nth(i, spi_plan->targetlist);
+							spi_qptle->expr = stringToNode(defval[j].adbin);
+
+							break;
+						}
+					}
+				}
+			}
+
+			/* ----------
+			 * We have a plan now. Build up the arguments for SPI_execp()
+			 * from the key values in the deleted PK tuple.
+			 * ----------
+			 */
+			for (i = 0; i < qkey.nkeypairs; i++)
+			{
+				upd_values[i] = SPI_getbinval(old_row,
+									pk_rel->rd_att,
+									qkey.keypair[i][RI_KEYPAIR_PK_IDX],
+									&isnull);
+				if (isnull) 
+					upd_nulls[i] = 'n';
+				else
+					upd_nulls[i] = ' ';
+			}
+			upd_nulls[i] = '\0';
+
+			/* ----------
+			 * Now update the existing references
+			 * ----------
+			 */
+			if (SPI_execp(qplan, upd_values, upd_nulls, 0) != SPI_OK_UPDATE)
+				elog(ERROR, "SPI_execp() failed in RI_FKey_setdefault_upd()");
+			
+			if (SPI_finish() != SPI_OK_FINISH)
+				elog(NOTICE, "SPI_finish() failed in RI_FKey_setdefault_upd()");
+
+			return NULL;
+
+		/* ----------
+		 * Handle MATCH PARTIAL set null delete.
+		 * ----------
+		 */
+		case RI_MATCH_TYPE_PARTIAL:
+			elog(ERROR, "MATCH PARTIAL not yet supported");
+			return NULL;
+	}
+
+	/* ----------
+	 * Never reached
+	 * ----------
+	 */
+	elog(ERROR, "internal error #9 in ri_triggers.c");
 	return NULL;
 }
 
