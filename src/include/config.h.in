@@ -145,7 +145,14 @@ int isinf(double x);
 int  gethostname(char *name, int namelen);
 #endif
 
-/* Set to 1 if you have int timezone */
+/* Set to 1 if struct tm has a tm_zone member */
+#undef HAVE_TM_ZONE
+
+/* Set to 1 if you have int timezone.
+ * NOTE: if both tm_zone and a global timezone variable exist,
+ * using the tm_zone field should probably be preferred,
+ * since global variables are inherently not thread-safe.
+ */
 #undef HAVE_INT_TIMEZONE
 
 /* Set to 1 if you have cbrt() */
