@@ -1,19 +1,23 @@
-$Header: /cvsroot/pgsql/contrib/vacuumlo/Attic/README.vacuumlo,v 1.1 2000/06/19 14:02:16 momjian Exp $
+$Header: /cvsroot/pgsql/contrib/vacuumlo/Attic/README.vacuumlo,v 1.2 2000/11/21 17:54:21 tgl Exp $
 
 This is a simple utility that will remove any orphaned large objects out of a
-PostgreSQL database.
+PostgreSQL database.  An orphaned LO is considered to be any LO whose OID
+does not appear in any OID data column of the database.
+
 
 Compiling
 --------
 
 Simply run make. A single executable "vacuumlo" is created.
 
-Useage
-------
+
+Usage
+-----
 
 vacuumlo [-v] database [db2 ... dbn]
 
 The -v flag outputs some progress messages to stdout.
+
 
 Method
 ------
@@ -21,15 +25,19 @@ Method
 First, it builds a temporary table which contains all of the oid's of the
 large objects in that database.
 
-It then scans through any columns in the database that are of type 'oid', and
-removes any entries from the temporary table.
+It then scans through all columns in the database that are of type 'oid',
+and removes any matching entries from the temporary table.
 
-Finally, it runs through the first table, and removes from the second table, any
-oid's it finds. What is left are the orphans, and these are removed.
+The remaining entries in the temp table identify orphaned LOs.  These are
+removed.
+
+
+Notes
+-----
 
 I decided to place this in contrib as it needs further testing, but hopefully,
-this (or a variant of it) would make it into the backed as a "vacuum lo" command
-in a later release.
+this (or a variant of it) would make it into the backend as a "vacuum lo"
+command in a later release.
 
 Peter Mount <peter@retep.org.uk>
 http://www.retep.org.uk

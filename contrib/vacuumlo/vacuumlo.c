@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/contrib/vacuumlo/vacuumlo.c,v 1.6 2000/10/24 01:38:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/contrib/vacuumlo/vacuumlo.c,v 1.7 2000/11/21 17:54:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,13 +24,15 @@
 #include "libpq-fe.h"
 #include "libpq/libpq-fs.h"
 
+#define atooid(x)  ((Oid) strtoul((x), NULL, 10))
+
 #define BUFSIZE			1024
 
 int			vacuumlo(char *, int);
 
 
 /*
- * This vacuums a database. It returns 1 on success, -1 on failure.
+ * This vacuums LOs of one database. It returns 0 on success, -1 on failure.
  */
 int
 vacuumlo(char *database, int verbose)
@@ -39,7 +41,8 @@ vacuumlo(char *database, int verbose)
 	PGresult   *res,
 			   *res2;
 	char		buf[BUFSIZE];
-	int			matched = 0;	/* Number matched per scan */
+	int			matched;
+	int			deleted;
 	int			i;
 
 	conn = PQsetdb(NULL, NULL, NULL, NULL, database);
@@ -47,8 +50,9 @@ vacuumlo(char *database, int verbose)
 	/* check to see that the backend connection was successfully made */
 	if (PQstatus(conn) == CONNECTION_BAD)
 	{
-		fprintf(stderr, "Connection to database '%s' failed.\n", database);
+		fprintf(stderr, "Connection to database '%s' failed:\n", database);
 		fprintf(stderr, "%s", PQerrorMessage(conn));
+		PQfinish(conn);
 		return -1;
 	}
 
@@ -56,23 +60,49 @@ vacuumlo(char *database, int verbose)
 		fprintf(stdout, "Connected to %s\n", database);
 
 	/*
-	 * First we create and populate the lo temp table
+	 * First we create and populate the LO temp table
 	 */
 	buf[0] = '\0';
 	strcat(buf, "SELECT DISTINCT loid AS lo ");
 	strcat(buf, "INTO TEMP TABLE vacuum_l ");
 	strcat(buf, "FROM pg_largeobject ");
-	if (!(res = PQexec(conn, buf)))
+	res = PQexec(conn, buf);
+	if (PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
-		fprintf(stderr, "Failed to create temp table.\n");
+		fprintf(stderr, "Failed to create temp table:\n");
+		fprintf(stderr, "%s", PQerrorMessage(conn));
+		PQclear(res);
+		PQfinish(conn);
+		return -1;
+	}
+	PQclear(res);
+	/*
+	 * Vacuum the temp table so that planner will generate decent plans
+	 * for the DELETEs below.
+	 */
+	buf[0] = '\0';
+	strcat(buf, "VACUUM ANALYZE vacuum_l ");
+	res = PQexec(conn, buf);
+	if (PQresultStatus(res) != PGRES_COMMAND_OK)
+	{
+		fprintf(stderr, "Failed to vacuum temp table:\n");
+		fprintf(stderr, "%s", PQerrorMessage(conn));
+		PQclear(res);
 		PQfinish(conn);
 		return -1;
 	}
 	PQclear(res);
 
 	/*
-	 * Now find any candidate tables who have columns of type oid (the
-	 * column oid is ignored, as it has attnum < 1)
+	 * Now find any candidate tables who have columns of type oid.
+	 *
+	 * NOTE: the temp table formed above is ignored, because its real
+	 * table name will be pg_something.  Also, pg_largeobject will be
+	 * ignored.  If either of these were scanned, obviously we'd end up
+	 * with nothing to delete...
+	 *
+	 * NOTE: the system oid column is ignored, as it has attnum < 1.
+	 * This shouldn't matter for correctness, but it saves time.
 	 */
 	buf[0] = '\0';
 	strcat(buf, "SELECT c.relname, a.attname ");
@@ -81,13 +111,18 @@ vacuumlo(char *database, int verbose)
 	strcat(buf, "      AND a.attrelid = c.oid ");
 	strcat(buf, "      AND a.atttypid = t.oid ");
 	strcat(buf, "      AND t.typname = 'oid' ");
+	strcat(buf, "      AND c.relkind = 'r'");
 	strcat(buf, "      AND c.relname NOT LIKE 'pg_%'");
-	if (!(res = PQexec(conn, buf)))
+	res = PQexec(conn, buf);
+	if (PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
-		fprintf(stderr, "Failed to create temp table.\n");
+		fprintf(stderr, "Failed to find OID columns:\n");
+		fprintf(stderr, "%s", PQerrorMessage(conn));
+		PQclear(res);
 		PQfinish(conn);
 		return -1;
 	}
+
 	for (i = 0; i < PQntuples(res); i++)
 	{
 		char	   *table,
@@ -97,50 +132,36 @@ vacuumlo(char *database, int verbose)
 		field = PQgetvalue(res, i, 1);
 
 		if (verbose)
-		{
-			fprintf(stdout, "Checking %s in %s: ", field, table);
-			fflush(stdout);
-		}
+			fprintf(stdout, "Checking %s in %s\n", field, table);
 
-		res2 = PQexec(conn, "begin");
-		PQclear(res2);
-
-		buf[0] = '\0';
-		strcat(buf, "DELETE FROM vacuum_l ");
-		strcat(buf, "WHERE lo IN (");
-		strcat(buf, "SELECT ");
-		strcat(buf, field);
-		strcat(buf, " FROM ");
-		strcat(buf, table);
-		strcat(buf, ");");
-		if (!(res2 = PQexec(conn, buf)))
-		{
-			fprintf(stderr, "Failed to check %s in table %s\n", field, table);
-			PQclear(res);
-			PQfinish(conn);
-			return -1;
-		}
+		/*
+		 * We use a DELETE with implicit join for efficiency.  This
+		 * is a Postgres-ism and not portable to other DBMSs, but
+		 * then this whole program is a Postgres-ism.
+		 */
+		sprintf(buf, "DELETE FROM vacuum_l WHERE lo = \"%s\".\"%s\" ",
+				table, field);
+		res2 = PQexec(conn, buf);
 		if (PQresultStatus(res2) != PGRES_COMMAND_OK)
 		{
-			fprintf(stderr,
-					"Failed to check %s in table %s\n%s\n",
-					field, table,
-					PQerrorMessage(conn)
-				);
+			fprintf(stderr, "Failed to check %s in table %s:\n",
+					field, table);
+			fprintf(stderr, "%s", PQerrorMessage(conn));
 			PQclear(res2);
 			PQclear(res);
 			PQfinish(conn);
 			return -1;
 		}
 		PQclear(res2);
-
-		res2 = PQexec(conn, "end");
-		PQclear(res2);
-
 	}
 	PQclear(res);
 
-	/* Start the transaction */
+	/*
+	 * Run the actual deletes in a single transaction.  Note that this
+	 * would be a bad idea in pre-7.1 Postgres releases (since rolling
+	 * back a table delete used to cause problems), but it should
+	 * be safe now.
+	 */
 	res = PQexec(conn, "begin");
 	PQclear(res);
 
@@ -150,25 +171,35 @@ vacuumlo(char *database, int verbose)
 	buf[0] = '\0';
 	strcat(buf, "SELECT lo ");
 	strcat(buf, "FROM vacuum_l");
-	if (!(res = PQexec(conn, buf)))
+	res = PQexec(conn, buf);
+	if (PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
-		fprintf(stderr, "Failed to read temp table.\n");
+		fprintf(stderr, "Failed to read temp table:\n");
+		fprintf(stderr, "%s", PQerrorMessage(conn));
+		PQclear(res);
 		PQfinish(conn);
 		return -1;
 	}
+
 	matched = PQntuples(res);
+	deleted = 0;
 	for (i = 0; i < matched; i++)
 	{
-		Oid			lo = (Oid) atoi(PQgetvalue(res, i, 0));
+		Oid			lo = atooid(PQgetvalue(res, i, 0));
 
 		if (verbose)
 		{
-			fprintf(stdout, "\rRemoving lo %6d \n", lo);
+			fprintf(stdout, "\rRemoving lo %6u   ", lo);
 			fflush(stdout);
 		}
 
 		if (lo_unlink(conn, lo) < 0)
-			fprintf(stderr, "Failed to remove lo %d\n", lo);
+		{
+			fprintf(stderr, "\nFailed to remove lo %u: ", lo);
+			fprintf(stderr, "%s", PQerrorMessage(conn));
+		}
+		else
+			deleted++;
 	}
 	PQclear(res);
 
@@ -177,10 +208,12 @@ vacuumlo(char *database, int verbose)
 	 */
 	res = PQexec(conn, "end");
 	PQclear(res);
+
 	PQfinish(conn);
 
 	if (verbose)
-		fprintf(stdout, "\rRemoved %d large objects from %s.\n", matched, database);
+		fprintf(stdout, "\rRemoved %d large objects from %s.\n",
+				deleted, database);
 
 	return 0;
 }
@@ -204,7 +237,7 @@ main(int argc, char **argv)
 		if (strcmp("-v", argv[arg]) == 0)
 			verbose = !verbose;
 		else
-			rc += vacuumlo(argv[arg], verbose);
+			rc += (vacuumlo(argv[arg], verbose) != 0);
 	}
 
 	return rc;
