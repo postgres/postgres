@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/tuptoaster.c,v 1.41 2003/11/29 19:51:40 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/tuptoaster.c,v 1.42 2004/06/04 20:35:21 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -281,15 +281,26 @@ toast_delete(Relation rel, HeapTuple oldtup)
 	Form_pg_attribute *att;
 	int			numAttrs;
 	int			i;
-	Datum		value;
-	bool		isnull;
+	Datum		toast_values[MaxHeapAttributeNumber];
+	char		toast_nulls[MaxHeapAttributeNumber];
 
 	/*
-	 * Get the tuple descriptor, the number of and attribute descriptors.
+	 * Get the tuple descriptor and break down the tuple into fields.
+	 *
+	 * NOTE: it's debatable whether to use heap_deformtuple() here or
+	 * just heap_getattr() only the varlena columns.  The latter could
+	 * win if there are few varlena columns and many non-varlena ones.
+	 * However, heap_deformtuple costs only O(N) while the heap_getattr
+	 * way would cost O(N^2) if there are many varlena columns, so it
+	 * seems better to err on the side of linear cost.  (We won't even
+	 * be here unless there's at least one varlena column, by the way.)
 	 */
 	tupleDesc = rel->rd_att;
-	numAttrs = tupleDesc->natts;
 	att = tupleDesc->attrs;
+	numAttrs = tupleDesc->natts;
+
+	Assert(numAttrs <= MaxHeapAttributeNumber);
+	heap_deformtuple(oldtup, tupleDesc, toast_values, toast_nulls);
 
 	/*
 	 * Check for external stored attributes and delete them from the
@@ -299,8 +310,9 @@ toast_delete(Relation rel, HeapTuple oldtup)
 	{
 		if (att[i]->attlen == -1)
 		{
-			value = heap_getattr(oldtup, i + 1, tupleDesc, &isnull);
-			if (!isnull && VARATT_IS_EXTERNAL(value))
+			Datum	value = toast_values[i];
+
+			if (toast_nulls[i] != 'n' && VARATT_IS_EXTERNAL(value))
 				toast_delete_datum(rel, value);
 		}
 	}
@@ -321,8 +333,6 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 	Form_pg_attribute *att;
 	int			numAttrs;
 	int			i;
-	bool		old_isnull;
-	bool		new_isnull;
 
 	bool		need_change = false;
 	bool		need_free = false;
@@ -333,18 +343,24 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 
 	char		toast_action[MaxHeapAttributeNumber];
 	char		toast_nulls[MaxHeapAttributeNumber];
+	char		toast_oldnulls[MaxHeapAttributeNumber];
 	Datum		toast_values[MaxHeapAttributeNumber];
+	Datum		toast_oldvalues[MaxHeapAttributeNumber];
 	int32		toast_sizes[MaxHeapAttributeNumber];
 	bool		toast_free[MaxHeapAttributeNumber];
 	bool		toast_delold[MaxHeapAttributeNumber];
 
 	/*
-	 * Get the tuple descriptor, the number of and attribute descriptors
-	 * and the location of the tuple values.
+	 * Get the tuple descriptor and break down the tuple(s) into fields.
 	 */
 	tupleDesc = rel->rd_att;
-	numAttrs = tupleDesc->natts;
 	att = tupleDesc->attrs;
+	numAttrs = tupleDesc->natts;
+
+	Assert(numAttrs <= MaxHeapAttributeNumber);
+	heap_deformtuple(newtup, tupleDesc, toast_values, toast_nulls);
+	if (oldtup != NULL)
+		heap_deformtuple(oldtup, tupleDesc, toast_oldvalues, toast_oldnulls);
 
 	/* ----------
 	 * Then collect information about the values given
@@ -353,12 +369,15 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 	 *		' '		default handling
 	 *		'p'		already processed --- don't touch it
 	 *		'x'		incompressible, but OK to move off
+	 *
+	 * NOTE: toast_sizes[i] is only made valid for varlena attributes with
+	 *		toast_action[i] different from 'p'.
 	 * ----------
 	 */
 	memset(toast_action, ' ', numAttrs * sizeof(char));
-	memset(toast_nulls, ' ', numAttrs * sizeof(char));
 	memset(toast_free, 0, numAttrs * sizeof(bool));
 	memset(toast_delold, 0, numAttrs * sizeof(bool));
+
 	for (i = 0; i < numAttrs; i++)
 	{
 		varattrib  *old_value;
@@ -369,27 +388,24 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 			/*
 			 * For UPDATE get the old and new values of this attribute
 			 */
-			old_value = (varattrib *) DatumGetPointer(
-					heap_getattr(oldtup, i + 1, tupleDesc, &old_isnull));
-			toast_values[i] =
-				heap_getattr(newtup, i + 1, tupleDesc, &new_isnull);
+			old_value = (varattrib *) DatumGetPointer(toast_oldvalues[i]);
 			new_value = (varattrib *) DatumGetPointer(toast_values[i]);
 
 			/*
 			 * If the old value is an external stored one, check if it has
 			 * changed so we have to delete it later.
 			 */
-			if (!old_isnull && att[i]->attlen == -1 &&
+			if (att[i]->attlen == -1 && toast_oldnulls[i] != 'n' &&
 				VARATT_IS_EXTERNAL(old_value))
 			{
-				if (new_isnull || !VARATT_IS_EXTERNAL(new_value) ||
+				if (toast_nulls[i] == 'n' || !VARATT_IS_EXTERNAL(new_value) ||
 					old_value->va_content.va_external.va_valueid !=
 					new_value->va_content.va_external.va_valueid ||
 					old_value->va_content.va_external.va_toastrelid !=
 					new_value->va_content.va_external.va_toastrelid)
 				{
 					/*
-					 * The old external store value isn't needed any more
+					 * The old external stored value isn't needed any more
 					 * after the update
 					 */
 					toast_delold[i] = true;
@@ -413,23 +429,21 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 			/*
 			 * For INSERT simply get the new value
 			 */
-			toast_values[i] =
-				heap_getattr(newtup, i + 1, tupleDesc, &new_isnull);
+			new_value = (varattrib *) DatumGetPointer(toast_values[i]);
 		}
 
 		/*
 		 * Handle NULL attributes
 		 */
-		if (new_isnull)
+		if (toast_nulls[i] == 'n')
 		{
 			toast_action[i] = 'p';
-			toast_nulls[i] = 'n';
 			has_nulls = true;
 			continue;
 		}
 
 		/*
-		 * Now look at varsize attributes
+		 * Now look at varlena attributes
 		 */
 		if (att[i]->attlen == -1)
 		{
@@ -461,10 +475,9 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 		else
 		{
 			/*
-			 * Not a variable size attribute, plain storage always
+			 * Not a varlena attribute, plain storage always
 			 */
 			toast_action[i] = 'p';
-			toast_sizes[i] = att[i]->attlen;
 		}
 	}
 
@@ -768,8 +781,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 	if (need_delold)
 		for (i = 0; i < numAttrs; i++)
 			if (toast_delold[i])
-				toast_delete_datum(rel,
-					heap_getattr(oldtup, i + 1, tupleDesc, &old_isnull));
+				toast_delete_datum(rel, toast_oldvalues[i]);
 }
 
 

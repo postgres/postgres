@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execJunk.c,v 1.40 2004/05/26 04:41:14 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execJunk.c,v 1.41 2004/06/04 20:35:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -246,12 +246,15 @@ ExecRemoveJunk(JunkFilter *junkfilter, TupleTableSlot *slot)
 	TupleDesc	cleanTupType;
 	TupleDesc	tupType;
 	int			cleanLength;
-	bool		isNull;
 	int			i;
 	Datum	   *values;
 	char	   *nulls;
+	Datum	   *old_values;
+	char	   *old_nulls;
 	Datum		values_array[64];
+	Datum		old_values_array[64];
 	char		nulls_array[64];
+	char		old_nulls_array[64];
 
 	/*
 	 * get info from the slot and the junk filter
@@ -265,11 +268,15 @@ ExecRemoveJunk(JunkFilter *junkfilter, TupleTableSlot *slot)
 
 	/*
 	 * Create the arrays that will hold the attribute values and the null
-	 * information for the new "clean" tuple.
+	 * information for the old tuple and new "clean" tuple.
 	 *
 	 * Note: we use memory on the stack to optimize things when we are
 	 * dealing with a small number of attributes. for large tuples we just
 	 * use palloc.
+	 *
+	 * Note: we could use just one set of arrays if we were willing to
+	 * assume that the resno mapping is monotonic... I think it is, but
+	 * won't take the risk of breaking things right now.
 	 */
 	if (cleanLength > 64)
 	{
@@ -281,35 +288,51 @@ ExecRemoveJunk(JunkFilter *junkfilter, TupleTableSlot *slot)
 		values = values_array;
 		nulls = nulls_array;
 	}
+	if (tupType->natts > 64)
+	{
+		old_values = (Datum *) palloc(tupType->natts * sizeof(Datum));
+		old_nulls = (char *) palloc(tupType->natts * sizeof(char));
+	}
+	else
+	{
+		old_values = old_values_array;
+		old_nulls = old_nulls_array;
+	}
 
 	/*
-	 * Exctract one by one all the values of the "clean" tuple.
+	 * Extract all the values of the old tuple.
+	 */
+	heap_deformtuple(tuple, tupType, old_values, old_nulls);
+
+	/*
+	 * Transpose into proper fields of the new tuple.
 	 */
 	for (i = 0; i < cleanLength; i++)
 	{
-		values[i] = heap_getattr(tuple, cleanMap[i], tupType, &isNull);
+		int j = cleanMap[i] - 1;
 
-		if (isNull)
-			nulls[i] = 'n';
-		else
-			nulls[i] = ' ';
+		values[i] = old_values[j];
+		nulls[i] = old_nulls[j];
 	}
 
 	/*
 	 * Now form the new tuple.
 	 */
-	cleanTuple = heap_formtuple(cleanTupType,
-								values,
-								nulls);
+	cleanTuple = heap_formtuple(cleanTupType, values, nulls);
 
 	/*
 	 * We are done.  Free any space allocated for 'values' and 'nulls' and
 	 * return the new tuple.
 	 */
-	if (cleanLength > 64)
+	if (values != values_array)
 	{
 		pfree(values);
 		pfree(nulls);
+	}
+	if (old_values != old_values_array)
+	{
+		pfree(old_values);
+		pfree(old_nulls);
 	}
 
 	return cleanTuple;

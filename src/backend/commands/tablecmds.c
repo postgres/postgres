@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.109 2004/06/02 21:01:08 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.110 2004/06/04 20:35:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2342,10 +2342,10 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap)
 		newslot = MakeTupleTableSlot();
 		ExecSetSlotDescriptor(newslot, newTupDesc, false);
 
-		/* Preallocate values/nulls arrays (+1 in case natts==0) */
+		/* Preallocate values/nulls arrays */
 		i = Max(newTupDesc->natts, oldTupDesc->natts);
-		values = (Datum *) palloc(i * sizeof(Datum) + 1);
-		nulls = (char *) palloc(i * sizeof(char) + 1);
+		values = (Datum *) palloc(i * sizeof(Datum));
+		nulls = (char *) palloc(i * sizeof(char));
 		memset(values, 0, i * sizeof(Datum));
 		memset(nulls, 'n', i * sizeof(char));
 
@@ -2363,24 +2363,14 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap)
 				 * Extract data from old tuple.  We can force to null any
 				 * columns that are deleted according to the new tuple.
 				 */
-				int		natts = oldTupDesc->natts;
-				bool	isNull;
+				int		natts = newTupDesc->natts;
+
+				heap_deformtuple(tuple, oldTupDesc, values, nulls);
 
 				for (i = 0; i < natts; i++)
 				{
 					if (newTupDesc->attrs[i]->attisdropped)
 						nulls[i] = 'n';
-					else
-					{
-						values[i] = heap_getattr(tuple,
-												 i + 1,
-												 oldTupDesc,
-												 &isNull);
-						if (isNull)
-							nulls[i] = 'n';
-						else
-							nulls[i] = ' ';
-					}
 				}
 
 				/*
@@ -2393,6 +2383,7 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap)
 				foreach(l, tab->newvals)
 				{
 					NewColumnValue   *ex = lfirst(l);
+					bool	isNull;
 
 					values[ex->attnum - 1] = ExecEvalExpr(ex->exprstate,
 														  econtext,

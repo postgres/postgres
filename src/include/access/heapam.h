@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/heapam.h,v 1.89 2004/04/21 18:24:26 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/heapam.h,v 1.90 2004/06/04 20:35:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -184,9 +184,9 @@ extern XLogRecPtr log_heap_move(Relation reln, Buffer oldbuf,
 			  Buffer newbuf, HeapTuple newtup);
 
 /* in common/heaptuple.c */
-extern Size ComputeDataSize(TupleDesc tupleDesc, Datum *value, char *nulls);
+extern Size ComputeDataSize(TupleDesc tupleDesc, Datum *values, char *nulls);
 extern void DataFill(char *data, TupleDesc tupleDesc,
-		 Datum *value, char *nulls, uint16 *infomask,
+		 Datum *values, char *nulls, uint16 *infomask,
 		 bits8 *bit);
 extern int	heap_attisnull(HeapTuple tup, int attnum);
 extern Datum nocachegetattr(HeapTuple tup, int attnum,
@@ -194,9 +194,14 @@ extern Datum nocachegetattr(HeapTuple tup, int attnum,
 extern HeapTuple heap_copytuple(HeapTuple tuple);
 extern void heap_copytuple_with_tuple(HeapTuple src, HeapTuple dest);
 extern HeapTuple heap_formtuple(TupleDesc tupleDescriptor,
-			   Datum *value, char *nulls);
+			   Datum *values, char *nulls);
 extern HeapTuple heap_modifytuple(HeapTuple tuple,
-		Relation relation, Datum *replValue, char *replNull, char *repl);
+								  Relation relation,
+								  Datum *replValues,
+								  char *replNulls,
+								  char *replActions);
+extern void heap_deformtuple(HeapTuple tuple, TupleDesc tupleDesc,
+							 Datum *values, char *nulls);
 extern void heap_freetuple(HeapTuple tuple);
 extern HeapTuple heap_addheader(int natts, bool withoid, Size structlen, void *structure);
 
