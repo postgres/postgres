@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.56.2.1 1999/07/30 04:13:44 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.56.2.2 1999/10/31 19:56:33 momjian Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the
@@ -145,6 +145,7 @@ endif
 #
 USE_TCL= @USE_TCL@
 USE_TK= @USE_TK@
+WISH= @WISH@
 
 USE_PERL= @USE_PERL@
 

@@ -6,7 +6,7 @@
 # Copyright (c) 1994, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pgaccess/Attic/Makefile.in,v 1.2.2.1 1999/10/31 12:34:10 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pgaccess/Attic/Makefile,v 1.1.4.5 1999/10/31 19:56:37 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -16,7 +16,7 @@ include $(SRCDIR)/Makefile.global
 all: pgaccess
 
 pgaccess: pgaccess.sh
-	sed -e 's;__wish__;@wish@;' pgaccess.sh |	\
+	sed -e 's;__wish__;$(WISH);' pgaccess.sh |	\
 	sed -e 's;__POSTGRESDIR__;$(POSTGRESDIR);' 	\
 			> pgaccess
 
@@ -30,6 +30,8 @@ install:
 	$(INSTALL) $(INSTLOPTS) lib/help/*.hlp $(POSTGRESDIR)/pgaccess/lib/help
 	@if [ ! -d $(POSTGRESDIR)/pgaccess/lib/languages ]; then mkdir $(POSTGRESDIR)/pgaccess/lib/languages; fi
 	$(INSTALL) $(INSTLOPTS) lib/languages/[a-z]* $(POSTGRESDIR)/pgaccess/lib/languages
+	@if [ ! -d $(POSTGRESDIR)/pgaccess/images ]; then mkdir $(POSTGRESDIR)/pgaccess/images; fi
+	$(INSTALL) $(INSTLOPTS) images/*.gif $(POSTGRESDIR)/pgaccess/images
 
 clean:
 	rm -f pgaccess
