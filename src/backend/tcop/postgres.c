@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.291 2002/09/04 20:31:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.292 2002/09/16 01:24:41 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1071,12 +1071,14 @@ ProcessInterrupts(void)
 		ProcDiePending = false;
 		QueryCancelPending = false;		/* ProcDie trumps QueryCancel */
 		ImmediateInterruptOK = false;	/* not idle anymore */
+		DisableNotifyInterrupt();
 		elog(FATAL, "This connection has been terminated by the administrator.");
 	}
 	if (QueryCancelPending)
 	{
 		QueryCancelPending = false;
 		ImmediateInterruptOK = false;	/* not idle anymore */
+		DisableNotifyInterrupt();
 		elog(ERROR, "Query was cancelled.");
 	}
 	/* If we get here, do nothing (probably, QueryCancelPending was reset) */
@@ -1689,7 +1691,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.291 $ $Date: 2002/09/04 20:31:26 $\n");
+		puts("$Revision: 1.292 $ $Date: 2002/09/16 01:24:41 $\n");
 	}
 
 	/*
@@ -1736,6 +1738,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 		QueryCancelPending = false;
 		InterruptHoldoffCount = 1;
 		CritSectionCount = 0;	/* should be unnecessary, but... */
+		DisableNotifyInterrupt();
 		debug_query_string = NULL;
 
 		/*

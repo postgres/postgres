@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.90 2002/09/02 02:47:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.91 2002/09/16 01:24:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -592,6 +592,10 @@ Async_NotifyHandler(SIGNAL_ARGS)
 	 * which would likely lead to corruption of stdio buffers if they were
 	 * ever turned on.
 	 */
+
+	/* Don't joggle the elbow of proc_exit */
+	if (proc_exit_inprogress)
+		return;
 
 	if (notifyInterruptEnabled)
 	{
