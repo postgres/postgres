@@ -3,7 +3,7 @@
   build file to allow ant (http://jakarta.apache.org/ant/) to be used
   to build the PostgreSQL JDBC Driver.
 
-  $Id: build.xml,v 1.12 2001/05/19 02:48:54 momjian Exp $
+  $Id: build.xml,v 1.13 2001/05/23 19:30:35 momjian Exp $
 
 -->
 
@@ -139,8 +139,8 @@
 
   <!-- This builds the jar file containing the driver -->
   <target name="jar" depends="compile,examples">
-    <jar jarfile="${jars}/postgresql.jar" basedir="${dest}" includes="${package}/**" excludes="${package}/test/**,${package}/*.properties"/>
-    <jar jarfile="${jars}/postgresql-examples.jar" basedir="${dest}" includes="example/**" />
+    <jar jarfile="${jars}/postgresql.jar" basedir="${dest}" includes="${package}/**/*.class" excludes="${package}/test/**"/>
+    <jar jarfile="${jars}/postgresql-examples.jar" basedir="${dest}" includes="example/**/*.class" />
   </target>
 
   <!--
