@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.91 2002/04/03 05:39:29 petere Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.92 2002/04/21 19:08:02 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2088,6 +2088,17 @@ WriteControlFile(void)
 	ControlFile->catalog_version_no = CATALOG_VERSION_NO;
 	ControlFile->blcksz = BLCKSZ;
 	ControlFile->relseg_size = RELSEG_SIZE;
+
+	ControlFile->nameDataLen = NAMEDATALEN;
+	ControlFile->funcMaxArgs = FUNC_MAX_ARGS;
+
+#ifdef HAVE_INT64_TIMESTAMP
+	ControlFile->enableIntTimes = TRUE;
+#else
+	ControlFile->enableIntTimes = FALSE;
+#endif
+
+	ControlFile->localeBuflen = LOCALE_NAME_BUFLEN;
 	localeptr = setlocale(LC_COLLATE, NULL);
 	if (!localeptr)
 		elog(PANIC, "invalid LC_COLLATE setting");
@@ -2106,7 +2117,7 @@ WriteControlFile(void)
 		elog(WARNING, "Initializing database with %s collation order."
 			 "\n\tThis locale setting will prevent use of index optimization for"
 			 "\n\tLIKE and regexp searches.  If you are concerned about speed of"
-		  "\n\tsuch queries, you may wish to set LC_COLLATE to \"C\" and"
+			 "\n\tsuch queries, you may wish to set LC_COLLATE to \"C\" and"
 			 "\n\tre-initdb.  For more information see the Administrator's Guide.",
 			 ControlFile->lc_collate);
 
@@ -2207,7 +2218,7 @@ ReadControlFile(void)
 	if (ControlFile->catalog_version_no != CATALOG_VERSION_NO)
 		elog(PANIC,
 			 "The database cluster was initialized with CATALOG_VERSION_NO %d,\n"
-		   "\tbut the backend was compiled with CATALOG_VERSION_NO %d.\n"
+			 "\tbut the backend was compiled with CATALOG_VERSION_NO %d.\n"
 			 "\tIt looks like you need to initdb.",
 			 ControlFile->catalog_version_no, CATALOG_VERSION_NO);
 	if (ControlFile->blcksz != BLCKSZ)
@@ -2220,11 +2231,47 @@ ReadControlFile(void)
 		elog(PANIC,
 			 "The database cluster was initialized with RELSEG_SIZE %d,\n"
 			 "\tbut the backend was compiled with RELSEG_SIZE %d.\n"
-			 "\tIt looks like you need to initdb.",
+			 "\tIt looks like you need to recompile or initdb.",
 			 ControlFile->relseg_size, RELSEG_SIZE);
+
+	if (ControlFile->nameDataLen != NAMEDATALEN)
+		elog(PANIC,
+			 "The database cluster was initialized with NAMEDATALEN %d,\n"
+			 "\tbut the backend was compiled with NAMEDATALEN %d.\n"
+			 "\tIt looks like you need to recompile or initdb.",
+			 ControlFile->nameDataLen, NAMEDATALEN);
+
+	if (ControlFile->funcMaxArgs != FUNC_MAX_ARGS)
+		elog(PANIC,
+			 "The database cluster was initialized with FUNC_MAX_ARGS %d,\n"
+			 "\tbut the backend was compiled with FUNC_MAX_ARGS %d.\n"
+			 "\tIt looks like you need to recompile or initdb.",
+			 ControlFile->funcMaxArgs, FUNC_MAX_ARGS);
+
+#ifdef HAVE_INT64_TIMESTAMP
+	if (ControlFile->enableIntTimes != TRUE)
+		elog(PANIC,
+			 "The database cluster was initialized without HAVE_INT64_TIMESTAMP\n"
+			 "\tbut the backend was compiled with HAVE_INT64_TIMESTAMP.\n"
+			 "\tIt looks like you need to recompile or initdb.");
+#else
+	if (ControlFile->enableIntTimes != FALSE)
+		elog(PANIC,
+			 "The database cluster was initialized with HAVE_INT64_TIMESTAMP\n"
+			 "\tbut the backend was compiled without HAVE_INT64_TIMESTAMP.\n"
+			 "\tIt looks like you need to recompile or initdb.");
+#endif
+
+	if (ControlFile->localeBuflen != LOCALE_NAME_BUFLEN)
+		elog(PANIC,
+			 "The database cluster was initialized with LOCALE_NAME_BUFLEN %d,\n"
+			 "\tbut the backend was compiled with LOCALE_NAME_BUFLEN %d.\n"
+			 "\tIt looks like you need to initdb.",
+			 ControlFile->localeBuflen, LOCALE_NAME_BUFLEN);
+
 	if (setlocale(LC_COLLATE, ControlFile->lc_collate) == NULL)
 		elog(PANIC,
-		   "The database cluster was initialized with LC_COLLATE '%s',\n"
+			 "The database cluster was initialized with LC_COLLATE '%s',\n"
 			 "\twhich is not recognized by setlocale().\n"
 			 "\tIt looks like you need to initdb.",
 			 ControlFile->lc_collate);
