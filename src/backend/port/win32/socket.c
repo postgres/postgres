@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/win32/socket.c,v 1.5 2004/08/30 02:54:38 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/win32/socket.c,v 1.6 2004/09/07 14:31:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -93,7 +93,7 @@ TranslateSocketError(void)
 static int
 pgwin32_poll_signals(void)
 {
-	if (WaitForSingleObject(pgwin32_signal_event, 0) == WAIT_OBJECT_0)
+	if (WaitForSingleObjectEx(pgwin32_signal_event, 0, TRUE) == WAIT_OBJECT_0)
 	{
 		pgwin32_dispatch_queued_signals();
 		errno = EINTR;
@@ -130,9 +130,9 @@ pgwin32_waitforsinglesocket(SOCKET s, int what)
 
 	events[0] = pgwin32_signal_event;
 	events[1] = waitevent;
-	r = WaitForMultipleObjects(2, events, FALSE, INFINITE);
+	r = WaitForMultipleObjectsEx(2, events, FALSE, INFINITE, TRUE);
 
-	if (r == WAIT_OBJECT_0)
+	if (r == WAIT_OBJECT_0 || r == WAIT_IO_COMPLETION)
 	{
 		pgwin32_dispatch_queued_signals();
 		errno = EINTR;
@@ -419,8 +419,8 @@ pgwin32_select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, c
 	}
 
 	events[numevents] = pgwin32_signal_event;
-	r = WaitForMultipleObjectsEx(numevents + 1, events, FALSE, timeoutval, FALSE);
-	if (r != WSA_WAIT_TIMEOUT && r != (WAIT_OBJECT_0 + numevents))
+	r = WaitForMultipleObjectsEx(numevents + 1, events, FALSE, timeoutval, TRUE);
+	if (r != WAIT_TIMEOUT && r != WAIT_IO_COMPLETION && r != (WAIT_OBJECT_0 + numevents))
 	{
 		/*
 		 * We scan all events, even those not signalled, in case more than
