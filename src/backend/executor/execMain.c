@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.86 1999/06/06 15:14:40 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.87 1999/06/09 12:23:42 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1673,6 +1673,7 @@ EvalPlanQual(EState *estate, Index rti, ItemPointer tid)
 			Assert(oldepq->rti != 0);
 			/* stop execution */
 			ExecEndNode(epq->plan, epq->plan);
+		    epqstate->es_tupleTable->next = 0;
 			pfree(epqstate->es_evTuple[epq->rti - 1]);
 			epqstate->es_evTuple[epq->rti - 1] = NULL;
 			/* push current PQ to freePQ stack */
@@ -1741,7 +1742,10 @@ EvalPlanQual(EState *estate, Index rti, ItemPointer tid)
 	 * ability to use ExecReScan instead of ExecInitNode, so...
 	 */
 	if (endNode)
+	{
 		ExecEndNode(epq->plan, epq->plan);
+	    epqstate->es_tupleTable->next = 0;
+	}
 
 	/* free old RTE' tuple */
 	if (epqstate->es_evTuple[epq->rti - 1] != NULL)
@@ -1774,7 +1778,11 @@ EvalPlanQual(EState *estate, Index rti, ItemPointer tid)
 			TransactionId xwait = SnapshotDirty->xmax;
 
 			if (TransactionIdIsValid(SnapshotDirty->xmin))
-				elog(ERROR, "EvalPlanQual: t_xmin is uncommitted ?!");
+			{
+				elog(NOTICE, "EvalPlanQual: t_xmin is uncommitted ?!");
+				Assert(!TransactionIdIsValid(SnapshotDirty->xmin));
+				elog(ERROR, "Aborting this transaction");
+			}
 
 			/*
 			 * If tuple is being updated by other transaction then we have
@@ -1836,6 +1844,7 @@ EvalPlanQual(EState *estate, Index rti, ItemPointer tid)
 			   estate->es_origPlan->nParamExec * sizeof(ParamExecData));
 	memset(epqstate->es_evTupleNull, false,
 		   length(estate->es_range_table) * sizeof(bool));
+    Assert(epqstate->es_tupleTable->next == 0);
 	ExecInitNode(epq->plan, epqstate, NULL);
 
 	/*
@@ -1866,6 +1875,7 @@ lpqnext:;
 	if (TupIsNull(slot))
 	{
 		ExecEndNode(epq->plan, epq->plan);
+	    epqstate->es_tupleTable->next = 0;
 		pfree(epqstate->es_evTuple[epq->rti - 1]);
 		epqstate->es_evTuple[epq->rti - 1] = NULL;
 		/* pop old PQ from the stack */
