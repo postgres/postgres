@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.57 2003/09/25 06:57:59 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.57.2.1 2003/11/25 19:17:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -417,7 +417,7 @@ ExecInitHashJoin(HashJoin *node, EState *estate)
 	 */
 	hjstate->hj_InnerHashKeys = (List *)
 		ExecInitExpr((Expr *) hashNode->hashkeys,
-					 innerPlanState(hjstate));
+					 (PlanState *) hjstate);
 	((HashState *) innerPlanState(hjstate))->hashkeys =
 		hjstate->hj_InnerHashKeys;
 
