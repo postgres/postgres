@@ -58,19 +58,76 @@ typedef signed char SCHAR;
 
 extern GLOBAL_VALUES globals;
 
-/*	How to map ODBC scalar functions {fn func(args)} to Postgres */
-/*	This is just a simple substitution */
-char *mapFuncs[][2] = {   
-	{ "CONCAT",      "textcat" },
-	{ "LCASE",       "lower"   },
-	{ "LOCATE",      "strpos"  },
-	{ "LENGTH",      "textlen" },
-	{ "LTRIM",       "ltrim"   },
-	{ "RTRIM",       "rtrim"   },
-	{ "SUBSTRING",   "substr"  },
-	{ "UCASE",       "upper"   },
-	{ "NOW",         "now"     },
-	{    0,             0      }
+/*	How to map ODBC scalar functions {fn func(args)} to Postgres
+ *	This is just a simple substitution
+ *	List augmented from
+ *	 http://www.merant.com/datadirect/download/docs/odbc16/Odbcref/rappc.htm
+ * - thomas 2000-04-03
+ */
+char *mapFuncs[][2] = {
+//	{ "ASCII",       "ascii"      },
+	{ "CHAR",        "ichar"      },
+	{ "CONCAT",      "textcat"    },
+//	{ "DIFFERENCE",  "difference" },
+//	{ "INSERT",      "insert"     },
+	{ "LCASE",       "lower"      },
+	{ "LEFT",        "ltrunc"     },
+	{ "LOCATE",      "strpos"     },
+	{ "LENGTH",      "char_length"},
+//	{ "LTRIM",       "ltrim"      },
+	{ "RIGHT",       "rtrunc"     },
+//	{ "REPEAT",      "repeat"     },
+//	{ "REPLACE",     "replace"    },
+//	{ "RTRIM",       "rtrim"      },
+//	{ "SOUNDEX",     "soundex"    },
+	{ "SUBSTRING",   "substr"     },
+	{ "UCASE",       "upper"      },
+
+//	{ "ABS",         "abs"        },
+//	{ "ACOS",        "acos"       },
+//	{ "ASIN",        "asin"       },
+//	{ "ATAN",        "atan"       },
+//	{ "ATAN2",       "atan2"      },
+	{ "CEILING",     "ceil"       },
+//	{ "COS",         "cos"        },
+//	{ "COT",         "cot"        },
+//	{ "DEGREES",     "degrees"    },
+//	{ "EXP",         "exp"        },
+//	{ "FLOOR",       "floor"      },
+	{ "LOG",         "ln"         },
+	{ "LOG10",       "log"        },
+//	{ "MOD",         "mod"        },
+//	{ "PI",          "pi"         },
+	{ "POWER",       "pow"        },
+//	{ "RADIANS",     "radians"    },
+	{ "RAND",        "random"     },
+//	{ "ROUND",       "round"      },
+//	{ "SIGN",        "sign"       },
+//	{ "SIN",         "sin"        },
+//	{ "SQRT",        "sqrt"       },
+//	{ "TAN",         "tan"        },
+//	{ "TRUNCATE",    "truncate"   },
+
+//	{ "CURDATE",     "curdate"    },
+//	{ "CURTIME",     "curtime"    },
+//	{ "DAYNAME",     "dayname"    },
+//	{ "DAYOFMONTH",  "dayofmonth" },
+//	{ "DAYOFWEEK",   "dayofweek"  },
+//	{ "DAYOFYEAR",   "dayofyear"  },
+//	{ "HOUR",        "hour"       },
+//	{ "MINUTE",      "minute"     },
+//	{ "MONTH",       "month"      },
+//	{ "MONTHNAME",   "monthname"  },
+//	{ "NOW",         "now"        },
+//	{ "QUARTER",     "quarter"    },
+//	{ "SECOND",      "second"     },
+//	{ "WEEK",        "week"       },
+//	{ "YEAR",        "year"       },
+
+//	{ "DATABASE",    "database"   },
+	{ "IFNULL",      "coalesce"   },
+	{ "USER",        "odbc_user"  },
+	{    0,             0         }
 };
 
 char *mapFunction(char *func);
@@ -584,7 +641,7 @@ int
 copy_statement_with_parameters(StatementClass *stmt)
 {
 static char *func="copy_statement_with_parameters";
-unsigned int opos, npos;
+unsigned int opos, npos, oldstmtlen;
 char param_string[128], tmp[256], cbuf[TEXT_FIELD_SIZE+5];
 int param_number;
 Int2 param_ctype, param_sqltype;
@@ -629,14 +686,17 @@ int lobj_fd, retval;
 
     param_number = -1;
 
-    for (opos = 0; opos < strlen(old_statement); opos++) {
+	oldstmtlen = strlen(old_statement);
+
+    for (opos = 0; opos <  oldstmtlen; opos++) {
 
 		//	Squeeze carriage-returns/linfeed pairs to linefeed only
-		if (old_statement[opos] == '\r' && opos+1<strlen(old_statement) && old_statement[opos+1] == '\n') {
+		if (old_statement[opos] == '\r' && opos+1 < oldstmtlen &&
+			old_statement[opos+1] == '\n') {
 			continue;
 		}
 
-		//	Handle literals (date, time, timestamp)
+		//	Handle literals (date, time, timestamp) and ODBC scalar functions
 		else if (old_statement[opos] == '{') {
 			char *esc;
 			char *begin = &old_statement[opos + 1];
@@ -1056,37 +1116,69 @@ int i;
 	return NULL;
 }
 
-//	This function returns a pointer to static memory!
+/* convert_escape()
+ * This function returns a pointer to static memory!
+ */
 char *
 convert_escape(char *value)
 {
-char key[32], val[256];
 static char escape[1024];
-char func[32], the_rest[1024];
-char *mapFunc;
+char key[33];
 
-	sscanf(value, "%s %[^\r]", key, val);
+	/* Separate off the key, skipping leading and trailing whitespace */
+	while ((*value != '\0') && isspace(*value)) value++;
+	sscanf(value, "%32s", key);
+	while ((*value != '\0') && (! isspace(*value))) value++;
+	while ((*value != '\0') && isspace(*value)) value++;
 
-	mylog("convert_escape: key='%s', val='%s'\n", key, val);
+	mylog("convert_escape: key='%s', val='%s'\n", key, value);
 
-	if ( ! strcmp(key, "d") ||
-		 ! strcmp(key, "t") ||
-		 ! strcmp(key, "ts")) {
-
-		strcpy(escape, val);
+	if ( (strcmp(key, "d") == 0) ||
+		 (strcmp(key, "t") == 0) ||
+		 (strcmp(key, "ts") == 0)) {
+		/* Literal; return the escape part as-is */
+		strncpy(escape, value, sizeof(escape)-1);
 	}
-	else if ( ! strcmp(key, "fn")) {
-		sscanf(val, "%[^(]%[^\r]", func, the_rest);
-		mapFunc = mapFunction(func);
-		if ( ! mapFunc)
-			return NULL;
-		else {
-			strcpy(escape, mapFunc);
-			strcat(escape, the_rest);
-		}
+	else if (strcmp(key, "fn") == 0) {
+		/* Function invocation
+		 * Separate off the func name,
+		 * skipping trailing whitespace.
+		 */
+		char *funcEnd = value;
+		char svchar;
+		char *mapFunc;
 
+		while ((*funcEnd != '\0') && (*funcEnd != '(') &&
+			   (! isspace(*funcEnd))) funcEnd++;
+		svchar = *funcEnd;
+		*funcEnd = '\0';
+		sscanf(value, "%32s", key);
+		*funcEnd = svchar;
+		while ((*funcEnd != '\0') && isspace(*funcEnd)) funcEnd++;
+
+		/* We expect left parenthensis here,
+		 * else return fn body as-is since it is
+		 * one of those "function constants".
+		 */
+		if (*funcEnd != '(') {
+			strncpy(escape, value, sizeof(escape)-1);
+			return escape;
+		}
+		mapFunc = mapFunction(key);
+		/* We could have mapFunction() return key if not in table...
+		 * - thomas 2000-04-03
+		 */
+		if (mapFunc == NULL) {
+			/* If unrecognized function name, return fn body as-is */
+			strncpy(escape, value, sizeof(escape)-1);
+			return escape;
+		}
+		/* copy mapped name and remaining input string */
+		strcpy(escape, mapFunc);
+		strncat(escape, funcEnd, sizeof(escape)-strlen(mapFunc));
 	}
 	else {
+		/* Bogus key, leave untranslated */
 		return NULL;
 	}
 
