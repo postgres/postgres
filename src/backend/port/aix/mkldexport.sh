@@ -17,7 +17,19 @@
 #
 
 # setting this to nm -B might be better
-NM=/usr/ucb/nm
+# ... due to changes in AIX 4.x ...
+# ... let us search in different directories - Gerhard Reithofer
+if [ -x /usr/ucb/nm ]
+then NM=/usr/ucb/nm
+elif [ -x /usr/bin/nm ]
+then NM=/usr/bin/nm
+elif [ -x /usr/ccs/bin/nm ]
+then NM=/usr/ccs/bin/nm
+elif [ -x /usr/usg/bin/nm ]
+then NM=/usr/usg/bin/nm
+else echo "Fatal error: cannot find `nm' ... please check your installation."
+     exit 1
+fi
 
 CMDNAME=`basename $0`
 if [ -z "$1" ]; then
