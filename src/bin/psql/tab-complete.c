@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.120 2005/01/01 05:43:08 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.121 2005/01/23 15:58:50 momjian Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -411,6 +411,7 @@ static const pgsql_thing_t words_after_create[] = {
 	{"AGGREGATE", NULL, &Query_for_list_of_aggregates},
 	{"CAST", NULL, NULL},		/* Casts have complex structures for
 								 * names, so skip it */
+	/* CREATE CONSTRAINT TRIGGER is not supported here because it is designed to be used only by pg_dump. */
 	{"CONVERSION", "SELECT pg_catalog.quote_ident(conname) FROM pg_catalog.pg_conversion WHERE substring(pg_catalog.quote_ident(conname),1,%d)='%s'"},
 	{"DATABASE", Query_for_list_of_databases},
 	{"DOMAIN", NULL, &Query_for_list_of_domains},
