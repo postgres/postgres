@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.60 2005/02/10 06:08:22 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.61 2005/02/14 00:54:26 neilc Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -2677,7 +2677,7 @@ CREATE OR REPLACE FUNCTION process_emp_audit() RETURNS TRIGGER AS $emp_audit$
         END IF;
         RETURN NULL; -- result is ignored since this is an AFTER trigger
     END;
-$emp_audit$ language plpgsql;
+$emp_audit$ LANGUAGE plpgsql;
 
 CREATE TRIGGER emp_audit
 AFTER INSERT OR UPDATE OR DELETE ON emp
