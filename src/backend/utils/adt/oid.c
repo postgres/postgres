@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/oid.c,v 1.26 1999/07/16 03:14:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/oid.c,v 1.27 1999/07/16 05:00:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

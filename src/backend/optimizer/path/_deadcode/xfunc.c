@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/_deadcode/Attic/xfunc.c,v 1.7 1999/07/16 03:13:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/_deadcode/Attic/xfunc.c,v 1.8 1999/07/16 04:59:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,8 +20,8 @@
 
 #include "postgres.h"
 
-#include "access/htup.h"
 #include "access/heapam.h"
+#include "access/htup.h"
 #include "catalog/pg_language.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"

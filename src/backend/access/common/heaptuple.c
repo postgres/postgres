@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.55 1999/07/15 23:02:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.56 1999/07/16 04:58:21 momjian Exp $
  *
  * NOTES
  *	  The old interface functions have been converted to macros
@@ -23,6 +23,7 @@
 #include "catalog/pg_type.h"
 
 #ifndef HAVE_MEMMOVE
+#include <regex/utils.h>
 #else
 #include <string.h>
 #endif

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/not_in.c,v 1.18 1999/07/16 03:14:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/not_in.c,v 1.19 1999/07/16 05:00:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

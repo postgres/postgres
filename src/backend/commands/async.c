@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.50 1999/07/16 03:12:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.51 1999/07/16 04:58:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,17 +85,17 @@
 
 #include "postgres.h"
 
-#include "commands/async.h"
 #include "access/heapam.h"
 #include "catalog/catname.h"
 #include "catalog/pg_listener.h"
+#include "commands/async.h"
 #include "lib/dllist.h"
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
+#include "utils/ps_status.h"
 #include "utils/syscache.h"
 #include "utils/trace.h"
-#include "utils/ps_status.h"
 
 /* stuff that we really ought not be touching directly :-( */
 extern TransactionState CurrentTransactionState;

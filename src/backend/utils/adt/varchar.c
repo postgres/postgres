@@ -7,16 +7,17 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.51 1999/07/16 03:14:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.52 1999/07/16 05:00:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <stdio.h>
 #include <string.h>
+
 #include "postgres.h"
 #include "access/htup.h"
-#include "utils/builtins.h"
 #include "catalog/pg_type.h"
+#include "utils/builtins.h"
 
 #ifdef CYR_RECODE
 char	   *convertstr(char *, int, int);

@@ -7,15 +7,14 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.42 1999/07/15 22:39:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.43 1999/07/16 04:59:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#include "postgres.h"
-
 #include <math.h>
 
+#include "postgres.h"
 #ifdef HAVE_LIMITS_H
 #include <limits.h>
 #ifndef MAXINT
@@ -26,6 +25,7 @@
 #include <values.h>
 #endif
 #endif
+
 
 #include "optimizer/cost.h"
 #include "optimizer/internal.h"

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: execAmi.c,v 1.39 1999/07/16 03:12:50 momjian Exp $
+ *	$Id: execAmi.c,v 1.40 1999/07/16 04:58:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,28 +28,28 @@
 
 #include "postgres.h"
 
-#include "executor/executor.h"
-#include "executor/nodeSeqscan.h"
-#include "executor/nodeIndexscan.h"
-#include "executor/nodeSort.h"
-#include "executor/nodeMaterial.h"
-#include "executor/nodeNestloop.h"
-#include "executor/nodeHashjoin.h"
-#include "executor/nodeHash.h"
-#include "executor/nodeGroup.h"
 
-#include "executor/nodeAgg.h"
-#include "executor/nodeGroup.h"
-#include "executor/nodeResult.h"
-#include "executor/nodeUnique.h"
-#include "executor/nodeMergejoin.h"
-#include "executor/nodeAppend.h"
-#include "executor/nodeSubplan.h"
-#include "executor/execdebug.h"
-#include "optimizer/internal.h"
 #include "access/genam.h"
 #include "access/heapam.h"
 #include "catalog/heap.h"
+#include "executor/execdebug.h"
+#include "executor/executor.h"
+#include "executor/nodeAgg.h"
+#include "executor/nodeAppend.h"
+#include "executor/nodeGroup.h"
+#include "executor/nodeGroup.h"
+#include "executor/nodeHash.h"
+#include "executor/nodeHashjoin.h"
+#include "executor/nodeIndexscan.h"
+#include "executor/nodeMaterial.h"
+#include "executor/nodeMergejoin.h"
+#include "executor/nodeNestloop.h"
+#include "executor/nodeResult.h"
+#include "executor/nodeSeqscan.h"
+#include "executor/nodeSort.h"
+#include "executor/nodeSubplan.h"
+#include "executor/nodeUnique.h"
+#include "optimizer/internal.h"
 
 static Pointer ExecBeginScan(Relation relation, int nkeys, ScanKey skeys,
 			  bool isindex, ScanDirection dir, Snapshot snapshot);

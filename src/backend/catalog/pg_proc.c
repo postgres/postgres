@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.31 1999/07/15 22:38:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.32 1999/07/16 04:58:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,15 +20,16 @@
 #include "catalog/pg_type.h"
 #include "miscadmin.h"
 #include "optimizer/planner.h"
+#include "parser/parse_type.h"
 #include "tcop/tcopprot.h"
 #include "utils/builtins.h"
 #include "utils/fmgrtab.h"
 #include "utils/lsyscache.h"
 #include "utils/sets.h"
 #include "utils/syscache.h"
-#include "parser/parse_type.h"
 
 #ifndef HAVE_MEMMOVE
+#include <regex/utils.h>
 #else
 #include <string.h>
 #endif

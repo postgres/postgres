@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/spin.c,v 1.19 1999/07/15 22:39:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/spin.c,v 1.20 1999/07/16 04:59:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,12 +26,13 @@
  */
 #include <errno.h>
 #include "postgres.h"
-#include "storage/s_lock.h"
-#include "storage/proc.h"
 
 #ifndef HAS_TEST_AND_SET
 #include <sys/sem.h>
 #endif
+
+#include "storage/proc.h"
+#include "storage/s_lock.h"
 
 /* globals used in this file */
 IpcSemaphoreId SpinLockId;

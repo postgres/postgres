@@ -7,14 +7,14 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/hashutils.c,v 1.17 1999/07/15 22:39:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/hashutils.c,v 1.18 1999/07/16 04:59:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
-#include "optimizer/paths.h"
 #include "optimizer/clauses.h"
+#include "optimizer/paths.h"
 
 
 static HashInfo *match_hashop_hashinfo(Oid hashop, List *hashinfo_list);

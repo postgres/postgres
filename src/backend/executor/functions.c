@@ -8,22 +8,21 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.28 1999/07/15 22:39:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.29 1999/07/16 04:58:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <string.h>
 #include "postgres.h"
 
-
+#include "access/heapam.h"
+#include "executor/execdefs.h"
+#include "executor/executor.h"
+#include "executor/functions.h"
 #include "tcop/pquery.h"
 #include "tcop/tcopprot.h"
 #include "tcop/utility.h"
 #include "utils/datum.h"
-#include "access/heapam.h"
-#include "executor/executor.h"
-#include "executor/execdefs.h"
-#include "executor/functions.h"
 
 #undef new
 

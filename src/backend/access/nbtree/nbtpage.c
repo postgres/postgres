@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.28 1999/07/15 23:03:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.29 1999/07/16 04:58:29 momjian Exp $
  *
  *	NOTES
  *	   Postgres btree pages look like ordinary relation pages.	The opaque
@@ -23,14 +23,14 @@
 #include <time.h>
 
 #include "postgres.h"
-
-#include "access/nbtree.h"
-#include "miscadmin.h"
-
 #ifndef HAVE_MEMMOVE
+#include <regex/utils.h>
 #else
 #include <string.h>
 #endif
+
+#include "access/nbtree.h"
+#include "miscadmin.h"
 
 #define BTREE_METAPAGE	0
 #define BTREE_MAGIC		0x053162

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.24 1999/07/15 22:39:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.25 1999/07/16 04:59:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,10 +19,10 @@
 #include "catalog/pg_aggregate.h"
 #include "optimizer/clauses.h"
 #include "parser/parse_agg.h"
-#include "parser/parse_expr.h"
 #include "parser/parse_coerce.h"
-#include "utils/syscache.h"
+#include "parser/parse_expr.h"
 #include "utils/lsyscache.h"
+#include "utils/syscache.h"
 
 static bool contain_agg_clause(Node *clause);
 static bool contain_agg_clause_walker(Node *node, void *context);

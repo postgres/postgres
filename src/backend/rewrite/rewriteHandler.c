@@ -6,31 +6,31 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.52 1999/07/16 03:13:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.53 1999/07/16 04:59:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <string.h>
 #include "postgres.h"
-#include "miscadmin.h"
-#include "parser/parse_type.h"
-#include "parser/parsetree.h"
-#include "parser/parse_relation.h"
 
-#include "parser/parse_target.h"
 
-#include "parser/analyze.h"
-#include "optimizer/clauses.h"
-#include "optimizer/prep.h"
 
-#include "rewrite/rewriteManip.h"
-#include "rewrite/locks.h"
+
 
 #include "access/heapam.h"
-
-#include "utils/lsyscache.h"
-#include "utils/acl.h"
 #include "catalog/pg_type.h"
+#include "miscadmin.h"
+#include "optimizer/clauses.h"
+#include "optimizer/prep.h"
+#include "parser/analyze.h"
+#include "parser/parse_relation.h"
+#include "parser/parse_target.h"
+#include "parser/parse_type.h"
+#include "parser/parsetree.h"
+#include "rewrite/locks.h"
+#include "rewrite/rewriteManip.h"
+#include "utils/acl.h"
+#include "utils/lsyscache.h"
 
 
 static RewriteInfo *gatherRewriteMeta(Query *parsetree,

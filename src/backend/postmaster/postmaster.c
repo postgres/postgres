@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.111 1999/07/16 03:13:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.112 1999/07/16 04:59:38 momjian Exp $
  *
  * NOTES
  *
@@ -38,32 +38,33 @@
 #include <netdb.h>
 #endif
 
+#include "postgres.h"
+
 #ifndef MAXHOSTNAMELEN
 #define MAXHOSTNAMELEN 256
 #endif
 
-#include "postgres.h"
+#if !defined(NO_UNISTD_H)
+#include <unistd.h>
+#endif	 /* !NO_UNISTD_H */
 
 #include <signal.h>
 #include <string.h>
 #include <stdlib.h>
 #include <time.h>
 
-#if !defined(NO_UNISTD_H)
-#include <unistd.h>
-#endif	 /* !NO_UNISTD_H */
 
-#include <ctype.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/time.h>
-#include <sys/socket.h>
 #ifdef HAVE_LIMITS_H
 #include <limits.h>
 #else
 #include <values.h>
 #endif
 #include <sys/wait.h>
+#include <ctype.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <sys/socket.h>
 
 #include <errno.h>
 #include <fcntl.h>
@@ -77,24 +78,25 @@
 #include "getopt.h"
 #endif
 
-#include "storage/ipc.h"
-#include "libpq/libpq.h"
-#include "libpq/auth.h"
-#include "libpq/pqcomm.h"
-#include "libpq/pqsignal.h"
-#include "libpq/crypt.h"
-#include "miscadmin.h"
-#include "version.h"
-#include "lib/dllist.h"
-#include "tcop/tcopprot.h"
-#include "commands/async.h"
-#include "nodes/nodes.h"
-#include "storage/proc.h"
 #ifndef HAVE_GETHOSTNAME
 #include "port-protos.h"
 #endif
+
+#include "commands/async.h"
+#include "lib/dllist.h"
+#include "libpq/auth.h"
+#include "libpq/crypt.h"
+#include "libpq/libpq.h"
+#include "libpq/pqcomm.h"
+#include "libpq/pqsignal.h"
+#include "miscadmin.h"
+#include "nodes/nodes.h"
 #include "storage/fd.h"
+#include "storage/ipc.h"
+#include "storage/proc.h"
+#include "tcop/tcopprot.h"
 #include "utils/trace.h"
+#include "version.h"
 
 #if !defined(MAXINT)
 #define MAXINT		   INT_MAX

@@ -6,7 +6,7 @@
 *	 CX operator according to Oliver et al
 *	 (Proc 2nd Int'l Conf on GA's)
 *
-* $Id: geqo_cx.c,v 1.8 1999/07/15 22:39:19 momjian Exp $
+* $Id: geqo_cx.c,v 1.9 1999/07/16 04:59:07 momjian Exp $
 *
 *-------------------------------------------------------------------------
 */
@@ -35,10 +35,6 @@
 
 
 #include "postgres.h"
-
-
-
-
 #include "optimizer/geqo_recombination.h"
 #include "optimizer/geqo_random.h"
 

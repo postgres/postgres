@@ -31,8 +31,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-#ifdef NOT_USED
-#endif
 
 #include "postgres.h"
 
@@ -79,7 +77,7 @@ typedef unsigned long ulong_long;
  * causing nast effects.
  **************************************************************/
 
-/*static char _id[] = "$Id: snprintf.c,v 1.23 1999/07/15 22:39:39 momjian Exp $";*/
+/*static char _id[] = "$Id: snprintf.c,v 1.24 1999/07/16 04:59:36 momjian Exp $";*/
 static char *end;
 static int	SnprfOverflow;
 

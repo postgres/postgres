@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.45 1999/07/15 23:03:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.46 1999/07/16 04:58:33 momjian Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -144,14 +144,14 @@
  */
 #include "postgres.h"
 
-#include "utils/inval.h"
-#include "utils/portal.h"
-#include "storage/proc.h"
 #include "catalog/heap.h"
-#include "utils/relcache.h"
 #include "commands/async.h"
 #include "commands/sequence.h"
 #include "libpq/be-fsstubs.h"
+#include "storage/proc.h"
+#include "utils/inval.h"
+#include "utils/portal.h"
+#include "utils/relcache.h"
 
 extern bool	SharedBufferChanged;
 

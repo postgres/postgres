@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/indexnode.c,v 1.18 1999/07/16 03:13:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/indexnode.c,v 1.19 1999/07/16 04:59:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,8 +16,8 @@
 #include "postgres.h"
 
 
-#include "optimizer/plancat.h"
 #include "optimizer/pathnode.h"
+#include "optimizer/plancat.h"
 
 
 static List *find_secondary_index(Query *root, Oid relid);

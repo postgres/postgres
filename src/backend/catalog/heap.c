@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.91 1999/07/15 22:38:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.92 1999/07/16 04:58:36 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -42,8 +42,8 @@
 #include "catalog/pg_relcheck.h"
 #include "commands/trigger.h"
 #include "optimizer/tlist.h"
-#include "parser/parse_expr.h"
 #include "parser/parse_coerce.h"
+#include "parser/parse_expr.h"
 #include "rewrite/rewriteRemove.h"
 #include "storage/smgr.h"
 #include "tcop/tcopprot.h"
@@ -53,6 +53,7 @@
 #include "utils/temprel.h"
 
 #ifndef HAVE_MEMMOVE
+#include <regex/utils.h>
 #else
 #include <string.h>
 #endif

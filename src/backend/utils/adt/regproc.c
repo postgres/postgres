@@ -7,22 +7,22 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.40 1999/07/16 03:14:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.41 1999/07/16 05:00:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <string.h>
 #include "postgres.h"
-#include "miscadmin.h"
-#include "access/heapam.h"
-#include "access/genam.h"
-#include "utils/syscache.h"
 
+#include "access/genam.h"
+#include "access/heapam.h"
 #include "catalog/catname.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
+#include "miscadmin.h"
 #include "utils/builtins.h"
+#include "utils/syscache.h"
 
 /*****************************************************************************
  *	 USER I/O ROUTINES														 *

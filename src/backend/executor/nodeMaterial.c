@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMaterial.c,v 1.24 1999/07/16 03:12:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMaterial.c,v 1.25 1999/07/16 04:58:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,11 +21,11 @@
 #include "postgres.h"
 
 
+#include "access/heapam.h"
+#include "catalog/heap.h"
 #include "executor/executor.h"
 #include "executor/nodeMaterial.h"
-#include "catalog/heap.h"
 #include "optimizer/internal.h"
-#include "access/heapam.h"
 
 /* ----------------------------------------------------------------
  *		ExecMaterial

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: analyze.c,v 1.113 1999/07/15 22:39:33 momjian Exp $
+ *	$Id: analyze.c,v 1.114 1999/07/16 04:59:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,16 +16,16 @@
 #include <string.h>
 
 #include "postgres.h"
+
 #include "access/heapam.h"
+#include "catalog/pg_type.h"
 #include "nodes/makefuncs.h"
+#include "parse.h"
 #include "parser/analyze.h"
 #include "parser/parse_agg.h"
 #include "parser/parse_clause.h"
 #include "parser/parse_relation.h"
 #include "parser/parse_target.h"
-#include "catalog/pg_type.h"
-#include "parse.h"
-
 #include "utils/builtins.h"
 
 static Query *transformStmt(ParseState *pstate, Node *stmt);

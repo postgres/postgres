@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.7 1999/07/16 03:12:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.8 1999/07/16 04:58:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,18 +17,18 @@
 
 #include "access/genam.h"
 #include "access/heapam.h"
-#include "utils/builtins.h"
-#include "utils/syscache.h"
 #include "catalog/heap.h"
 #include "catalog/index.h"
 #include "catalog/pg_index.h"
+#include "catalog/pg_opclass.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
-#include "catalog/pg_opclass.h"
 #include "commands/defrem.h"
-#include "parser/parsetree.h"
-#include "optimizer/prep.h"
 #include "optimizer/clauses.h"
+#include "optimizer/prep.h"
+#include "parser/parsetree.h"
+#include "utils/builtins.h"
+#include "utils/syscache.h"
 
 #define IsFuncIndex(ATTR_LIST) (((IndexElem*)lfirst(ATTR_LIST))->args!=NULL)
 

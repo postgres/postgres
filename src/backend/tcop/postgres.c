@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.122 1999/07/16 03:13:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.123 1999/07/16 04:59:53 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -25,6 +25,9 @@
 #include <sys/types.h>
 #include <fcntl.h>
 #include <sys/param.h>
+
+#include "postgres.h"
+
 #ifndef MAXHOSTNAMELEN
 #include <netdb.h>
 #endif
@@ -41,13 +44,11 @@
 #ifdef __CYGWIN32__
 #endif
 
-#include "postgres.h"
-#include "miscadmin.h"
-
 #include "commands/async.h"
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
 #include "libpq/pqsignal.h"
+#include "miscadmin.h"
 #include "nodes/print.h"
 #include "optimizer/cost.h"
 #include "optimizer/planner.h"
@@ -59,20 +60,12 @@
 #include "tcop/utility.h"
 #include "utils/ps_status.h"
 #include "utils/temprel.h"
-#include "../backend/parser/parse.h"
-
-#ifdef NOT_USED
-#endif
-
-#ifdef NOT_USED
-#endif
-
-#ifdef NOT_USED
-#endif
-
 #include "utils/trace.h"
 
+#include "../backend/parser/parse.h"
+
 #ifdef MULTIBYTE
+#include "mb/pg_wchar.h"
 #endif
 
 /*
@@ -1502,7 +1495,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.122 $ $Date: 1999/07/16 03:13:50 $\n");
+		puts("$Revision: 1.123 $ $Date: 1999/07/16 04:59:53 $\n");
 	}
 
 	/* ----------------

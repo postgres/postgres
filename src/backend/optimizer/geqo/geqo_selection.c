@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_selection.c,v 1.9 1999/07/15 22:39:21 momjian Exp $
+ * $Id: geqo_selection.c,v 1.10 1999/07/16 04:59:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,13 +36,9 @@
 #include <math.h>
 
 #include "postgres.h"
-
-
-
-
-#include "optimizer/geqo_selection.h"
 #include "optimizer/geqo_copy.h"
 #include "optimizer/geqo_random.h"
+#include "optimizer/geqo_selection.h"
 
 static int	linear(int max, double bias);
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.26 1999/07/16 03:14:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.27 1999/07/16 05:00:38 momjian Exp $
  *
  * Note - this code is real crufty...
  *
@@ -15,15 +15,14 @@
  */
 #include "postgres.h"
 
-#include "miscadmin.h"
-
 #include "catalog/catalog.h"
+#include "catalog/catname.h"
 #include "catalog/heap.h"
+#include "miscadmin.h"
 #include "storage/sinval.h"
 #include "utils/catcache.h"
 #include "utils/inval.h"
 #include "utils/relcache.h"
-#include "catalog/catname.h"
 
 static InvalidationEntry InvalidationEntryAllocate(uint16 size);
 static void LocalInvalidInvalidate(LocalInvalid invalid, void (*function) ());

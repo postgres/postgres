@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.38 1999/07/15 23:03:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.39 1999/07/16 04:59:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,13 +15,13 @@
 #include <string.h>
 #include "postgres.h"
 
-#include "utils/memutils.h"
-#include "utils/acl.h"
-#include "utils/syscache.h"
 #include "catalog/catalog.h"
 #include "catalog/pg_shadow.h"
 #include "catalog/pg_type.h"
 #include "miscadmin.h"
+#include "utils/acl.h"
+#include "utils/memutils.h"
+#include "utils/syscache.h"
 
 static char *getid(char *s, char *n);
 static int32 aclitemeq(AclItem *a1, AclItem *a2);

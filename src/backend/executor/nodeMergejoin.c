@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.27 1999/05/25 16:08:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.28 1999/07/16 04:58:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,10 +68,10 @@
 
 #include "access/heapam.h"
 #include "catalog/pg_operator.h"
-#include "executor/executor.h"
-#include "executor/execdefs.h"
-#include "executor/nodeMergejoin.h"
 #include "executor/execdebug.h"
+#include "executor/execdefs.h"
+#include "executor/executor.h"
+#include "executor/nodeMergejoin.h"
 #include "utils/lsyscache.h"
 #include "utils/psort.h"
 

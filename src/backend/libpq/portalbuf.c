@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/portalbuf.c,v 1.19 1999/07/16 03:12:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/portalbuf.c,v 1.20 1999/07/16 04:59:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

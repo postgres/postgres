@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/read.c,v 1.16 1999/07/15 15:19:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/read.c,v 1.17 1999/07/16 04:59:06 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+
 #include "postgres.h"
 #include "nodes/pg_list.h"
 #include "nodes/readfuncs.h"

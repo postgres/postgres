@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.33 1999/07/16 03:14:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.34 1999/07/16 05:00:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,13 +21,13 @@
 
 #include "postgres.h"
 
-#include "access/heapam.h"
-#include "utils/builtins.h"
 
+#include "access/heapam.h"
 #include "catalog/catname.h"
-#include "utils/syscache.h"
-#include "utils/lsyscache.h"
 #include "catalog/pg_statistic.h"
+#include "utils/builtins.h"
+#include "utils/lsyscache.h"
+#include "utils/syscache.h"
 
 /* N is not a valid var/constant or relation id */
 #define NONVALUE(N)		((N) == -1)

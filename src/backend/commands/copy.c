@@ -6,34 +6,35 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.83 1999/07/15 23:03:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.84 1999/07/16 04:58:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include <string.h>
 #include <unistd.h>
+#include <sys/stat.h>
 
 #include "postgres.h"
 
-#include "access/heapam.h"
-#include "miscadmin.h"
-#include "utils/builtins.h"
-#include "utils/acl.h"
-#include <sys/stat.h>
-#include "catalog/pg_index.h"
-#include "utils/syscache.h"
-#include "executor/executor.h"
-#include "catalog/index.h"
 #include "access/genam.h"
-#include "catalog/pg_type.h"
+#include "access/heapam.h"
 #include "catalog/catname.h"
+#include "catalog/index.h"
+#include "catalog/pg_index.h"
 #include "catalog/pg_shadow.h"
+#include "catalog/pg_type.h"
 #include "commands/copy.h"
 #include "commands/trigger.h"
+#include "executor/executor.h"
 #include "libpq/libpq.h"
+#include "miscadmin.h"
+#include "utils/acl.h"
+#include "utils/builtins.h"
+#include "utils/syscache.h"
 
 #ifdef MULTIBYTE
+#include "mb/pg_wchar.h"
 #endif
 
 #define ISOCTAL(c) (((c) >= '0') && ((c) <= '7'))

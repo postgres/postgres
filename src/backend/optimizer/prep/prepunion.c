@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.35 1999/07/15 22:39:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.36 1999/07/16 04:59:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,15 +17,15 @@
 #include "postgres.h"
 
 
-#include "parser/parsetree.h"
-#include "parser/parse_clause.h"
 
-#include "utils/lsyscache.h"
 
-#include "optimizer/prep.h"
 #include "optimizer/plancat.h"
-#include "optimizer/planner.h"
 #include "optimizer/planmain.h"
+#include "optimizer/planner.h"
+#include "optimizer/prep.h"
+#include "parser/parse_clause.h"
+#include "parser/parsetree.h"
+#include "utils/lsyscache.h"
 
 static List *plan_inherit_query(Relids relids, Index rt_index,
 				   RangeTblEntry *rt_entry, Query *parse, List *tlist,

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.32 1999/07/16 03:12:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.33 1999/07/16 04:58:40 momjian Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -42,17 +42,17 @@
 #include "access/heapam.h"
 #include "catalog/catname.h"
 #include "catalog/pg_aggregate.h"
+#include "catalog/pg_language.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_proc.h"
-#include "catalog/pg_type.h"
-#include "catalog/pg_language.h"
-#include "utils/syscache.h"
-#include "fmgr.h"
-#include "utils/builtins.h"
-#include "commands/defrem.h"
-#include "tcop/dest.h"
 #include "catalog/pg_shadow.h"
+#include "catalog/pg_type.h"
+#include "commands/defrem.h"
+#include "fmgr.h"
 #include "optimizer/cost.h"
+#include "tcop/dest.h"
+#include "utils/builtins.h"
+#include "utils/syscache.h"
 
 static char *defGetString(DefElem *def);
 static int	defGetTypeLength(DefElem *def);

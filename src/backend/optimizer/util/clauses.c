@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.39 1999/07/15 23:03:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.40 1999/07/16 04:59:23 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -19,16 +19,13 @@
 #include "postgres.h"
 
 #include "catalog/pg_operator.h"
-#include "nodes/plannodes.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
-
-
-#include "utils/lsyscache.h"
-
+#include "nodes/plannodes.h"
 #include "optimizer/clauses.h"
 #include "optimizer/internal.h"
 #include "optimizer/var.h"
+#include "utils/lsyscache.h"
 
 
 static bool fix_opid_walker(Node *node, void *context);

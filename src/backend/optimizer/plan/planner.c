@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.59 1999/07/15 22:39:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.60 1999/07/16 04:59:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,30 +16,24 @@
 
 #include "postgres.h"
 
-#include "nodes/makefuncs.h"
-#include "catalog/pg_type.h"
-#include "parser/parse_expr.h"
-
-#include "utils/lsyscache.h"
+#include "access/genam.h"
 #include "access/heapam.h"
-
+#include "catalog/pg_type.h"
+#include "executor/executor.h"
+#include "nodes/makefuncs.h"
+#include "optimizer/clauses.h"
 #include "optimizer/internal.h"
+#include "optimizer/planmain.h"
 #include "optimizer/planner.h"
 #include "optimizer/prep.h"
-#include "optimizer/planmain.h"
 #include "optimizer/subselect.h"
-
-/* DATA STRUCTURE CREATION/MANIPULATION ROUTINES */
-#include "optimizer/clauses.h"
 #include "optimizer/tlist.h"
 #include "optimizer/var.h"
-
-#include "executor/executor.h"
-
-#include "utils/builtins.h"
-#include "utils/syscache.h"
-#include "access/genam.h"
+#include "parser/parse_expr.h"
 #include "parser/parse_oper.h"
+#include "utils/builtins.h"
+#include "utils/lsyscache.h"
+#include "utils/syscache.h"
 
 static List *make_subplanTargetList(Query *parse, List *tlist,
 					   AttrNumber **groupColIdx);

@@ -26,26 +26,25 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.91 1999/07/16 03:12:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.92 1999/07/16 04:58:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <string.h>
 #include "postgres.h"
-#include "miscadmin.h"
 
-#include "executor/executor.h"
-#include "executor/execdefs.h"
-#include "executor/execdebug.h"
-#include "utils/builtins.h"
-#include "utils/acl.h"
-#include "utils/syscache.h"
-#include "parser/parsetree.h"
-/* #include "access/localam.h" */
-#include "optimizer/var.h"
 #include "access/heapam.h"
 #include "catalog/heap.h"
 #include "commands/trigger.h"
+#include "executor/execdebug.h"
+#include "executor/execdefs.h"
+#include "executor/executor.h"
+#include "miscadmin.h"
+#include "optimizer/var.h"
+#include "parser/parsetree.h"
+#include "utils/acl.h"
+#include "utils/builtins.h"
+#include "utils/syscache.h"
 
 void ExecCheckPerms(CmdType operation, int resultRelation, List *rangeTable,
 			   Query *parseTree);

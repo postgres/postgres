@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.35 1999/07/16 03:13:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.36 1999/07/16 05:00:07 momjian Exp $
  *
  * NOTES
  *	 This code is actually (almost) unused.
@@ -31,14 +31,15 @@
 #include <string.h>
 
 #include "postgres.h"
-#include "miscadmin.h"
 #ifdef HAVE_FLOAT_H
 #include <float.h>
 #endif
 #ifdef HAVE_LIMITS_H
 #include <limits.h>
 #endif
+
 #include "access/xact.h"
+#include "miscadmin.h"
 #include "utils/builtins.h"
 #include "utils/dt.h"
 

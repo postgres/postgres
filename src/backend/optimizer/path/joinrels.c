@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.36 1999/07/15 22:39:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.37 1999/07/16 04:59:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,10 +15,10 @@
 
 
 #include "optimizer/cost.h"
-#include "optimizer/paths.h"
-#include "optimizer/tlist.h"
 #include "optimizer/joininfo.h"
 #include "optimizer/pathnode.h"
+#include "optimizer/paths.h"
+#include "optimizer/tlist.h"
 
 static List *new_joininfo_list(List *joininfo_list, Relids join_relids);
 static bool nonoverlap_sets(List *s1, List *s2);

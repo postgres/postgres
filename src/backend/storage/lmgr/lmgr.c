@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.31 1999/07/16 03:13:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.32 1999/07/16 04:59:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,9 +25,9 @@
 
 
 
-#include "catalog/catalog.h"
 
 #include "access/transam.h"
+#include "catalog/catalog.h"
 
 extern Oid	MyDatabaseId;
 

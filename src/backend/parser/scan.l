@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.50 1999/07/08 00:00:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.51 1999/07/16 04:59:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,12 +24,12 @@
 
 #include "postgres.h"
 #include "miscadmin.h"
-#include "nodes/pg_list.h"
 #include "nodes/parsenodes.h"
+#include "nodes/pg_list.h"
+#include "parse.h"
 #include "parser/gramparse.h"
 #include "parser/keywords.h"
 #include "parser/scansup.h"
-#include "parse.h"
 #include "utils/builtins.h"
 
 #ifdef  YY_READ_BUF_SIZE

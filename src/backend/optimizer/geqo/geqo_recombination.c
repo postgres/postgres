@@ -3,7 +3,7 @@
 * geqo_recombination.c
 *	 misc recombination procedures
 *
-* $Id: geqo_recombination.c,v 1.10 1999/07/15 22:39:21 momjian Exp $
+* $Id: geqo_recombination.c,v 1.11 1999/07/16 04:59:13 momjian Exp $
 *
 *-------------------------------------------------------------------------
 */
@@ -19,12 +19,8 @@
 /* -- parts of this are adapted from D. Whitley's Genitor algorithm -- */
 
 #include "postgres.h"
-
-
-
-
-#include "optimizer/geqo_recombination.h"
 #include "optimizer/geqo_random.h"
+#include "optimizer/geqo_recombination.h"
 
 
 /*

@@ -8,6 +8,7 @@
 #include <string.h>
 #include "postgres.h"
 
+
 #include "access/genam.h"
 #include "access/heapam.h"
 #include "catalog/catalog.h"
@@ -17,15 +18,12 @@
 #include "catalog/pg_proc.h"
 #include "catalog/pg_trigger.h"
 #include "commands/trigger.h"
-#include "utils/inval.h"
-#include "utils/builtins.h"
-#include "utils/syscache.h"
 #include "executor/executor.h"
-
-#ifndef NO_SECURITY
 #include "miscadmin.h"
 #include "utils/acl.h"
-#endif
+#include "utils/builtins.h"
+#include "utils/inval.h"
+#include "utils/syscache.h"
 
 DLLIMPORT TriggerData *CurrentTriggerData = NULL;
 

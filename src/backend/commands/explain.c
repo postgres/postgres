@@ -4,7 +4,7 @@
  *
  * Copyright (c) 1994-5, Regents of the University of California
  *
- *	  $Id: explain.c,v 1.40 1999/07/15 23:03:08 momjian Exp $
+ *	  $Id: explain.c,v 1.41 1999/07/16 04:58:40 momjian Exp $
  *
  */
 #include <stdio.h>
@@ -12,13 +12,13 @@
 
 #include "postgres.h"
 
-#include "nodes/print.h"
-#include "lib/stringinfo.h"
 #include "commands/explain.h"
-#include "parser/parsetree.h"
+#include "lib/stringinfo.h"
+#include "nodes/print.h"
 #include "optimizer/planner.h"
-#include "utils/relcache.h"
+#include "parser/parsetree.h"
 #include "rewrite/rewriteHandler.h"
+#include "utils/relcache.h"
 
 typedef struct ExplainState
 {

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.51 1999/07/16 03:14:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.52 1999/07/16 05:00:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,9 +15,9 @@
 #include <string.h>
 
 #include "postgres.h"
-#include "utils/builtins.h"
 
 #include "mb/pg_wchar.h"
+#include "utils/builtins.h"
 
 static int	text_cmp(text *arg1, text *arg2);
 

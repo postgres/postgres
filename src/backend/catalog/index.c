@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.83 1999/07/15 22:38:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.84 1999/07/16 04:58:37 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -18,6 +18,12 @@
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
+
+#ifndef HAVE_MEMMOVE
+#include <regex/utils.h>
+#else
+#include <string.h>
+#endif
 
 #include "access/genam.h"
 #include "access/heapam.h"
@@ -40,11 +46,6 @@
 #include "utils/relcache.h"
 #include "utils/syscache.h"
 #include "utils/temprel.h"
-
-#ifndef HAVE_MEMMOVE
-#else
-#include <string.h>
-#endif
 
 /*
  * macros used in guessing how many tuples are on a page.

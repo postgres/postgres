@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.60 1999/07/16 03:13:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.61 1999/07/16 04:59:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,17 +24,17 @@
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
-#include "optimizer/restrictinfo.h"
 #include "optimizer/cost.h"
 #include "optimizer/keys.h"
 #include "optimizer/ordering.h"
+#include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
 #include "optimizer/plancat.h"
-#include "optimizer/pathnode.h"
-#include "parser/parsetree.h"
+#include "optimizer/restrictinfo.h"
+#include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_oper.h"
-#include "parser/parse_coerce.h"
+#include "parser/parsetree.h"
 #include "utils/lsyscache.h"
 
 

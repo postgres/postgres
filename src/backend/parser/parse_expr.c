@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.51 1999/07/15 22:39:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.52 1999/07/16 04:59:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,11 +22,11 @@
 #include "parse.h"
 #include "parser/analyze.h"
 #include "parser/gramparse.h"
+#include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_func.h"
 #include "parser/parse_relation.h"
 #include "parser/parse_target.h"
-#include "parser/parse_coerce.h"
 #include "utils/builtins.h"
 
 static Node *parser_typecast(Value *expr, TypeName *typename, int32 atttypmod);

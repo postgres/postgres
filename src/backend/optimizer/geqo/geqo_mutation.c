@@ -4,7 +4,7 @@
 *
 *	 TSP mutation routines
 *
-* $Id: geqo_mutation.c,v 1.7 1999/07/15 22:39:20 momjian Exp $
+* $Id: geqo_mutation.c,v 1.8 1999/07/16 04:59:10 momjian Exp $
 *
 *-------------------------------------------------------------------------
 */
@@ -32,12 +32,8 @@
 /*************************************************************/
 
 #include "postgres.h"
-
-
-
-
-#include "optimizer/geqo_random.h"
 #include "optimizer/geqo_mutation.h"
+#include "optimizer/geqo_random.h"
 
 void
 geqo_mutation(Gene *tour, int num_gene)

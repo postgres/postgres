@@ -8,14 +8,14 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/char.c,v 1.24 1999/07/15 15:20:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/char.c,v 1.25 1999/07/16 05:00:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <stdio.h>				/* for sprintf() */
 #include <string.h>
 #include "postgres.h"
-#include "utils/builtins.h"		/* where the declarations go */
+#include "utils/builtins.h"
 
 /*****************************************************************************
  *	 USER I/O ROUTINES														 *

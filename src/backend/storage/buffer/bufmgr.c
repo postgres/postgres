@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.59 1999/07/16 03:13:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.60 1999/07/16 04:59:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,14 +48,11 @@
 #include <signal.h>
 
 #include "postgres.h"
-
-/* declarations split between these three files */
-
+#include "executor/execdebug.h"
+#include "miscadmin.h"
 #include "storage/s_lock.h"
 #include "storage/smgr.h"
-#include "miscadmin.h"
 #include "utils/relcache.h"
-#include "executor/execdebug.h"
 
 extern SPINLOCK BufMgrLock;
 extern long int ReadBufferCount;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.60 1999/07/15 23:03:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.61 1999/07/16 04:59:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,20 +16,16 @@
 
 #include "postgres.h"
 
-#include "utils/syscache.h"
-
-#include "nodes/nodeFuncs.h"
-
 #include "nodes/makefuncs.h"
-
-#include "utils/lsyscache.h"
-
-#include "optimizer/restrictinfo.h"
-#include "optimizer/cost.h"
+#include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
-#include "optimizer/planmain.h"
-#include "optimizer/tlist.h"
+#include "optimizer/cost.h"
 #include "optimizer/internal.h"
+#include "optimizer/planmain.h"
+#include "optimizer/restrictinfo.h"
+#include "optimizer/tlist.h"
+#include "utils/lsyscache.h"
+#include "utils/syscache.h"
 
 
 #define NONAME_SORT		1

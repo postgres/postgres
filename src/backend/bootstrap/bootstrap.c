@@ -7,7 +7,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.63 1999/07/16 03:12:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.64 1999/07/16 04:58:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,13 +18,13 @@
 #include <setjmp.h>
 #include <string.h>
 #ifdef __CYGWIN32__
+#include <getopt.h>
 #endif
 
 #define BOOTSTRAP_INCLUDE		/* mask out stuff in tcop/tcopprot.h */
 
 #include "postgres.h"
 
-#include "miscadmin.h"
 
 #include "access/genam.h"
 #include "access/heapam.h"
@@ -33,12 +33,14 @@
 #include "catalog/index.h"
 #include "catalog/pg_type.h"
 #include "libpq/pqsignal.h"
+#include "miscadmin.h"
 #include "tcop/tcopprot.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/portal.h"
 
 #ifndef HAVE_MEMMOVE
+#include <regex/utils.h>
 #endif
 
 #define ALLOC(t, c)		(t *)calloc((unsigned)(c), sizeof(t))

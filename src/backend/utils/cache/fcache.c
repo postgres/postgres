@@ -7,24 +7,24 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.24 1999/07/16 03:14:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.25 1999/07/16 05:00:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
-
-
-#include "utils/syscache.h"
-#include "catalog/pg_type.h"
-#include "catalog/pg_proc.h"
-#include "catalog/pg_language.h"
-#include "parser/parsetree.h"
-#include "utils/builtins.h"
-#include "utils/fcache2.h"
 #ifndef HAVE_MEMMOVE
+#include <regex/utils.h>
 #else
 #include <string.h>
 #endif
+
+#include "catalog/pg_language.h"
+#include "catalog/pg_proc.h"
+#include "catalog/pg_type.h"
+#include "parser/parsetree.h"
+#include "utils/builtins.h"
+#include "utils/fcache2.h"
+#include "utils/syscache.h"
 
 static Oid	GetDynamicFuncArgType(Var *arg, ExprContext *econtext);
 static FunctionCachePtr init_fcache(Oid foid,

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.47 1999/07/15 22:39:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.48 1999/07/16 04:58:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,9 +46,9 @@
 #include "access/heapam.h"
 #include "catalog/catname.h"
 #include "catalog/index.h"
+#include "catalog/pg_index.h"
 #include "executor/execdebug.h"
 #include "executor/executor.h"
-#include "catalog/pg_index.h"
 
 static void ExecGetIndexKeyInfo(Form_pg_index indexTuple, int *numAttsOutP,
 					AttrNumber **attsOutP, FuncIndexInfoPtr fInfoP);

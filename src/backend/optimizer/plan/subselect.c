@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.20 1999/07/15 22:39:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.21 1999/07/16 04:59:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,9 +15,9 @@
 #include "catalog/pg_type.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
-#include "optimizer/subselect.h"
-#include "optimizer/planner.h"
 #include "optimizer/clauses.h"
+#include "optimizer/planner.h"
+#include "optimizer/subselect.h"
 
 int			PlannerQueryLevel;	/* level of current query */
 List	   *PlannerInitPlan;	/* init subplans for current query */

@@ -6,18 +6,18 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.36 1999/07/16 03:13:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.37 1999/07/16 04:59:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <string.h>
 #include "postgres.h"
-#include "parser/parsetree.h"
-#include "utils/lsyscache.h"
-#include "utils/builtins.h"
-#include "rewrite/rewriteManip.h"
 
 #include "optimizer/clauses.h"
+#include "parser/parsetree.h"
+#include "rewrite/rewriteManip.h"
+#include "utils/builtins.h"
+#include "utils/lsyscache.h"
 
 static void ResolveNew(RewriteInfo *info, List *targetlist,
 		   Node **node, int sublevels_up);

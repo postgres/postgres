@@ -21,11 +21,11 @@
 
 #include "access/heapam.h"
 #include "catalog/pg_aggregate.h"
-#include "parser/parse_type.h"
 #include "executor/executor.h"
 #include "executor/nodeAgg.h"
-#include "utils/syscache.h"
 #include "optimizer/clauses.h"
+#include "parser/parse_type.h"
+#include "utils/syscache.h"
 
 /*
  * AggFuncInfo -

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: be-dumpdata.c,v 1.28 1999/07/15 23:03:13 momjian Exp $
+ *	$Id: be-dumpdata.c,v 1.29 1999/07/16 04:58:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,11 +31,11 @@
 
 #include "postgres.h"
 
+#include "access/heapam.h"
+#include "access/printtup.h"
+#include "catalog/catalog.h"
 #include "lib/dllist.h"
 #include "libpq/libpq.h"
-#include "access/heapam.h"
-#include "catalog/catalog.h"
-#include "access/printtup.h"
 
 /* ----------------
  *		backend portal stack for recursive PQexec calls

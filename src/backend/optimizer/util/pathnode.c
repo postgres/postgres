@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.45 1999/07/16 03:13:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.46 1999/07/16 04:59:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,13 +16,13 @@
 #include "postgres.h"
 
 
-#include "optimizer/pathnode.h"
-#include "optimizer/restrictinfo.h"
-#include "optimizer/plancat.h"
+
 #include "optimizer/cost.h"
 #include "optimizer/keys.h"
 #include "optimizer/ordering.h"
-
+#include "optimizer/pathnode.h"
+#include "optimizer/plancat.h"
+#include "optimizer/restrictinfo.h"
 #include "parser/parsetree.h"
 
 static Path *better_path(Path *new_path, List *unique_paths, bool *is_new);

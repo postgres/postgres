@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.49 1999/07/16 03:13:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.50 1999/07/16 04:59:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,9 +18,9 @@
 #include <sys/file.h>
 
 #include "postgres.h"
-#include "miscadmin.h"
 
 #include "catalog/catalog.h"
+#include "miscadmin.h"
 #include "storage/smgr.h"
 
 #undef DIAGNOSTIC

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execProcnode.c,v 1.14 1999/03/23 16:50:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execProcnode.c,v 1.15 1999/07/16 04:58:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,23 +74,23 @@
  */
 #include "postgres.h"
 
-#include "miscadmin.h"
-#include "tcop/tcopprot.h"
 #include "executor/executor.h"
-#include "executor/nodeResult.h"
-#include "executor/nodeAppend.h"
-#include "executor/nodeSeqscan.h"
-#include "executor/nodeIndexscan.h"
-#include "executor/nodeNestloop.h"
-#include "executor/nodeMergejoin.h"
-#include "executor/nodeMaterial.h"
-#include "executor/nodeSort.h"
-#include "executor/nodeUnique.h"
-#include "executor/nodeGroup.h"
 #include "executor/nodeAgg.h"
+#include "executor/nodeAppend.h"
+#include "executor/nodeGroup.h"
 #include "executor/nodeHash.h"
 #include "executor/nodeHashjoin.h"
+#include "executor/nodeIndexscan.h"
+#include "executor/nodeMaterial.h"
+#include "executor/nodeMergejoin.h"
+#include "executor/nodeNestloop.h"
+#include "executor/nodeResult.h"
+#include "executor/nodeSeqscan.h"
+#include "executor/nodeSort.h"
 #include "executor/nodeSubplan.h"
+#include "executor/nodeUnique.h"
+#include "miscadmin.h"
+#include "tcop/tcopprot.h"
 
 /* ------------------------------------------------------------------------
  *		ExecInitNode

@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.27 1999/07/15 22:39:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.28 1999/07/16 04:58:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -119,9 +119,8 @@
 #include <string.h>
 
 #include "postgres.h"
-
-
 #include "executor/executor.h"
+
 #undef ExecStoreTuple
 
 #include "catalog/pg_type.h"

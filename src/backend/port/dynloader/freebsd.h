@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: freebsd.h,v 1.4 1999/07/16 03:13:10 momjian Exp $
+ * $Id: freebsd.h,v 1.5 1999/07/16 04:59:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,7 +15,7 @@
 
 #include <sys/types.h>
 #include <nlist.h>
-#include "link.h"
+#include <link.h>
 
 #include "postgres.h"
 

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: view.c,v 1.35 1999/07/15 23:03:08 momjian Exp $
+ *	$Id: view.c,v 1.36 1999/07/16 04:58:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -14,15 +14,15 @@
 
 #include "postgres.h"
 
-#include "catalog/heap.h"
 #include "access/xact.h"
+#include "catalog/heap.h"
+#include "commands/creatinh.h"
+#include "commands/view.h"
 #include "parser/parse_relation.h"
 #include "parser/parse_type.h"
 #include "rewrite/rewriteDefine.h"
 #include "rewrite/rewriteManip.h"
 #include "rewrite/rewriteRemove.h"
-#include "commands/creatinh.h"
-#include "commands/view.h"
 
 /*---------------------------------------------------------------------
  * DefineVirtualRelation

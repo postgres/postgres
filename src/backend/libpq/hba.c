@@ -5,7 +5,7 @@
  *	  wherein you authenticate a user by seeing what IP address the system
  *	  says he comes from and possibly using ident).
  *
- *	$Id: hba.c,v 1.45 1999/07/15 23:03:13 momjian Exp $
+ *	$Id: hba.c,v 1.46 1999/07/16 04:59:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,8 +21,8 @@
 #include <unistd.h>
 
 #include "postgres.h"
-#include "miscadmin.h"
 #include "libpq/libpq.h"
+#include "miscadmin.h"
 
 /* Some standard C libraries, including GNU, have an isblank() function.
    Others, including Solaris, do not.  So we have our own.

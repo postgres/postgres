@@ -7,15 +7,15 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/joininfo.c,v 1.22 1999/07/15 22:39:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/joininfo.c,v 1.23 1999/07/16 04:59:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 
-#include "optimizer/joininfo.h"
 #include "optimizer/clauses.h"
+#include "optimizer/joininfo.h"
 
 
 /*

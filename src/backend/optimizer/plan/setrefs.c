@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.52 1999/07/15 22:39:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.53 1999/07/16 04:59:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,14 +16,13 @@
 #include "postgres.h"
 
 
-#include "nodes/nodeFuncs.h"
-#include "nodes/makefuncs.h"
 
+#include "nodes/makefuncs.h"
+#include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/planmain.h"
 #include "optimizer/tlist.h"
 #include "optimizer/var.h"
-#include "optimizer/tlist.h"
 
 static void set_join_tlist_references(Join *join);
 static void set_nonamescan_tlist_references(SeqScan *nonamescan);

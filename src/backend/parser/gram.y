@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.90 1999/07/15 15:19:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.91 1999/07/16 04:59:29 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -37,18 +37,18 @@
 
 #include "postgres.h"
 #include "access/htup.h"
+#include "access/xact.h"
+#include "catalog/catname.h"
+#include "catalog/pg_type.h"
 #include "nodes/parsenodes.h"
 #include "nodes/print.h"
+#include "parser/analyze.h"
 #include "parser/gramparse.h"
 #include "parser/parse_type.h"
-#include "utils/acl.h"
-#include "catalog/catname.h"
-#include "access/xact.h"
-#include "storage/lmgr.h"
-#include "utils/numeric.h"
-#include "parser/analyze.h"
-#include "catalog/pg_type.h"
 #include "storage/bufpage.h"
+#include "storage/lmgr.h"
+#include "utils/acl.h"
+#include "utils/numeric.h"
 
 #ifdef MULTIBYTE
 #include "mb/pg_wchar.h"

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_pool.c,v 1.15 1999/07/15 22:39:21 momjian Exp $
+ * $Id: geqo_pool.c,v 1.16 1999/07/16 04:59:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,13 +21,9 @@
 /* -- parts of this are adapted from D. Whitley's Genitor algorithm -- */
 
 #include "postgres.h"
-
-
-
-
 #include "optimizer/geqo.h"
-#include "optimizer/geqo_pool.h"
 #include "optimizer/geqo_copy.h"
+#include "optimizer/geqo_pool.h"
 #include "optimizer/geqo_recombination.h"
 
 

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: outfuncs.c,v 1.87 1999/07/15 15:19:08 momjian Exp $
+ *	$Id: outfuncs.c,v 1.88 1999/07/16 04:59:05 momjian Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -24,21 +24,19 @@
 
 #include "access/heapam.h"
 #include "access/htup.h"
-#include "utils/syscache.h"
-#include "utils/lsyscache.h"
+#include "catalog/pg_type.h"
 #include "fmgr.h"
-#include "utils/datum.h"
-
-#include "nodes/nodes.h"
+#include "lib/stringinfo.h"
 #include "nodes/execnodes.h"
+#include "nodes/nodes.h"
+#include "nodes/parsenodes.h"
 #include "nodes/pg_list.h"
 #include "nodes/plannodes.h"
-#include "nodes/parsenodes.h"
 #include "nodes/primnodes.h"
 #include "nodes/relation.h"
-
-#include "catalog/pg_type.h"
-#include "lib/stringinfo.h"
+#include "utils/datum.h"
+#include "utils/lsyscache.h"
+#include "utils/syscache.h"
 
 #include "../parse.h"
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.39 1999/07/15 22:39:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.40 1999/07/16 04:59:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,11 +16,11 @@
 #include "postgres.h"
 
 
-#include "optimizer/planmain.h"
-#include "optimizer/subselect.h"
-#include "optimizer/prep.h"
-#include "optimizer/paths.h"
 #include "optimizer/clauses.h"
+#include "optimizer/paths.h"
+#include "optimizer/planmain.h"
+#include "optimizer/prep.h"
+#include "optimizer/subselect.h"
 #include "optimizer/tlist.h"
 
 

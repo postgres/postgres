@@ -7,10 +7,16 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.29 1999/07/16 03:12:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.30 1999/07/16 04:58:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
+#ifndef HAVE_MEMMOVE
+#include <regex/utils.h>
+#else
+#include <string.h>
+#endif
+
 #include "postgres.h"
 
 #include "access/heapam.h"
@@ -22,13 +28,7 @@
 #include "commands/rename.h"
 #include "miscadmin.h"
 #include "optimizer/prep.h"
-#ifndef NO_SECURITY
 #include "utils/acl.h"
-#endif	 /* !NO_SECURITY */
-#ifndef HAVE_MEMMOVE
-#else
-#include <string.h>
-#endif
 
 /*
  *		renameatt		- changes the name of a attribute in a relation

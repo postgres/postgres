@@ -14,9 +14,9 @@
 #include "postgres.h"
 
 #include "access/heapam.h"
-#include "tcop/pquery.h"
 #include "executor/executor.h"
 #include "executor/nodeSubplan.h"
+#include "tcop/pquery.h"
 
 /* ----------------------------------------------------------------
  *		ExecSubPlan(node)

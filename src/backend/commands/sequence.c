@@ -9,13 +9,13 @@
 #include <string.h>
 
 #include "postgres.h"
-#include "miscadmin.h"
 
 #include "access/heapam.h"
 #include "commands/creatinh.h"
 #include "commands/sequence.h"
-#include "utils/builtins.h"
+#include "miscadmin.h"
 #include "utils/acl.h"
+#include "utils/builtins.h"
 
 #define SEQ_MAGIC	  0x1717
 

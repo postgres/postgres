@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/localbuf.c,v 1.24 1999/07/16 03:13:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/localbuf.c,v 1.25 1999/07/16 04:59:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,11 +28,9 @@
 
 #include "postgres.h"
 
-/* declarations split between these three files */
-
+#include "executor/execdebug.h"
 #include "storage/smgr.h"
 #include "utils/relcache.h"
-#include "executor/execdebug.h"
 
 extern long int LocalBufferFlushCount;
 

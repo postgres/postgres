@@ -4,7 +4,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	  $Id: nabstime.c,v 1.58 1999/07/15 23:03:27 momjian Exp $
+ *	  $Id: nabstime.c,v 1.59 1999/07/16 05:00:14 momjian Exp $
  *
  */
 #include <stdio.h>
@@ -13,7 +13,6 @@
 #include <sys/types.h>
 
 #include "postgres.h"
-#include "miscadmin.h"
 #ifdef HAVE_FLOAT_H
 #include <float.h>
 #endif
@@ -23,8 +22,10 @@
 #ifndef USE_POSIX_TIME
 #include <sys/timeb.h>
 #endif
-#include "utils/builtins.h"
+
 #include "access/xact.h"
+#include "miscadmin.h"
+#include "utils/builtins.h"
 
 static AbsoluteTime tm2abstime(struct tm * tm, int tz);
 

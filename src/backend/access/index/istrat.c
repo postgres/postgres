@@ -8,14 +8,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.34 1999/07/15 22:38:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.35 1999/07/16 04:58:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
-#include "miscadmin.h"
 #include "access/heapam.h"
 #include "access/istrat.h"
 #include "catalog/catname.h"
@@ -23,6 +22,7 @@
 #include "catalog/pg_amproc.h"
 #include "catalog/pg_index.h"
 #include "catalog/pg_operator.h"
+#include "miscadmin.h"
 #include "utils/syscache.h"
 
 #ifdef USE_ASSERT_CHECKING

@@ -12,11 +12,12 @@
 
 #include "postgres.h"
 
+#include "access/genam.h"
 #include "access/gist.h"
 #include "access/gistscan.h"
-#include "access/genam.h"
 
 #ifndef HAVE_MEMMOVE
+#include <regex/utils.h>
 #else
 #include <string.h>
 #endif

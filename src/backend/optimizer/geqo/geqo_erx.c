@@ -3,7 +3,7 @@
 * geqo_erx.c
 *	 edge recombination crossover [ER]
 *
-* $Id: geqo_erx.c,v 1.14 1999/07/15 22:39:19 momjian Exp $
+* $Id: geqo_erx.c,v 1.15 1999/07/16 04:59:08 momjian Exp $
 *
 *-------------------------------------------------------------------------
 */
@@ -32,10 +32,6 @@
 
 
 #include "postgres.h"
-
-
-
-
 #include "optimizer/geqo_recombination.h"
 #include "optimizer/geqo_random.h"
 

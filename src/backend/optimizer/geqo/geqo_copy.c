@@ -4,7 +4,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_copy.c,v 1.7 1999/07/15 22:39:18 momjian Exp $
+ * $Id: geqo_copy.c,v 1.8 1999/07/16 04:59:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,8 +33,6 @@
 /*************************************************************/
 
 #include "postgres.h"
-
-
 #include "optimizer/geqo_copy.h"
 
 /* geqo_copy

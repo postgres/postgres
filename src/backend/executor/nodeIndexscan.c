@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.39 1999/07/16 03:12:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.40 1999/07/16 04:58:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,16 +30,16 @@
  */
 #include "postgres.h"
 
-#include "executor/executor.h"
-#include "executor/execdebug.h"
-#include "executor/nodeIndexscan.h"
 
+
+#include "access/genam.h"
+#include "access/heapam.h"
+#include "executor/execdebug.h"
+#include "executor/executor.h"
+#include "executor/nodeIndexscan.h"
+#include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
 #include "parser/parsetree.h"
-
-#include "access/heapam.h"
-#include "access/genam.h"
-#include "nodes/nodeFuncs.h"
 
 /* ----------------
  *		Misc stuff to move to executor.h soon -cim 6/5/90

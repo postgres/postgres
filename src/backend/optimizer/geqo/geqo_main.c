@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_main.c,v 1.18 1999/07/15 22:39:20 momjian Exp $
+ * $Id: geqo_main.c,v 1.19 1999/07/16 04:59:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,14 +22,10 @@
 /* -- parts of this are adapted from D. Whitley's Genitor algorithm -- */
 
 #include "postgres.h"
-
-
-
-
 #include "optimizer/geqo.h"
+#include "optimizer/geqo_misc.h"
 #include "optimizer/geqo_pool.h"
 #include "optimizer/geqo_selection.h"
-#include "optimizer/geqo_misc.h"
 
 
 /* define edge recombination crossover [ERX] per default */

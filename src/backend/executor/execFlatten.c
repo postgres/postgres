@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/Attic/execFlatten.c,v 1.10 1999/07/15 22:39:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/Attic/execFlatten.c,v 1.11 1999/07/16 04:58:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,8 +26,8 @@
  *	 node does the actual flattening work.
  */
 #include "postgres.h"
-#include "executor/executor.h"
 #include "executor/execFlatten.h"
+#include "executor/executor.h"
 
 #ifdef SETS_FIXED
 static bool FjoinBumpOuterNodes(TargetEntry *tlist, ExprContext *econtext,

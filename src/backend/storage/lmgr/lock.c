@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.59 1999/07/16 03:13:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.60 1999/07/16 04:59:48 momjian Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -36,11 +36,11 @@
 #include <signal.h>
 
 #include "postgres.h"
+#include "access/xact.h"
 #include "miscadmin.h"
 #include "storage/proc.h"
-#include "access/xact.h"
-#include "utils/trace.h"
 #include "utils/ps_status.h"
+#include "utils/trace.h"
 
 static int	WaitOnLock(LOCKMETHOD lockmethod, LOCK *lock, LOCKMODE lockmode);
 

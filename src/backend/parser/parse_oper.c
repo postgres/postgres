@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.27 1999/07/15 22:39:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.28 1999/07/16 04:59:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,11 +18,11 @@
 #include "access/heapam.h"
 #include "catalog/catname.h"
 #include "catalog/pg_operator.h"
+#include "parser/parse_coerce.h"
+#include "parser/parse_func.h"
 #include "parser/parse_oper.h"
 #include "parser/parse_type.h"
-#include "parser/parse_coerce.h"
 #include "utils/syscache.h"
-#include "parser/parse_func.h"
 
 static Oid *oper_select_candidate(int nargs, Oid *input_typeids,
 					  CandidateList candidates);

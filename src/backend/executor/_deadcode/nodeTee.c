@@ -14,7 +14,7 @@
  *		ExecInitTee
  *		ExecEndTee
  *
- *	$Id: nodeTee.c,v 1.4 1999/07/15 15:19:02 momjian Exp $
+ *	$Id: nodeTee.c,v 1.5 1999/07/16 04:58:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,16 +23,16 @@
 #include <sys/file.h>
 #include "postgres.h"
 
-#include "utils/relcache.h"
-#include "storage/bufmgr.h"
-#include "storage/smgr.h"
-#include "optimizer/internal.h"
-#include "executor/executor.h"
-#include "executor/nodeTee.h"
+#include "access/heapam.h"
 #include "catalog/catalog.h"
 #include "catalog/heap.h"
+#include "executor/executor.h"
+#include "executor/nodeTee.h"
+#include "optimizer/internal.h"
+#include "storage/bufmgr.h"
+#include "storage/smgr.h"
 #include "tcop/pquery.h"
-#include "access/heapam.h"
+#include "utils/relcache.h"
 
 /* ------------------------------------------------------------------
  *		ExecInitTee

@@ -9,43 +9,40 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.63 1999/07/15 22:39:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.64 1999/07/16 04:59:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
+
 #include "access/heapam.h"
 #include "catalog/catalog.h"
 #include "catalog/pg_type.h"
-
 #include "commands/async.h"
 #include "commands/cluster.h"
 #include "commands/command.h"
 #include "commands/copy.h"
 #include "commands/creatinh.h"
 #include "commands/dbcommands.h"
-#include "commands/sequence.h"
 #include "commands/defrem.h"
-#include "commands/rename.h"
-#include "commands/view.h"
-#include "commands/vacuum.h"
 #include "commands/explain.h"
-#include "commands/trigger.h"
 #include "commands/proclang.h"
+#include "commands/rename.h"
+#include "commands/sequence.h"
+#include "commands/trigger.h"
+#include "commands/vacuum.h"
 #include "commands/variable.h"
+#include "commands/view.h"
+#include "miscadmin.h"
+#include "rewrite/rewriteDefine.h"
+#include "rewrite/rewriteRemove.h"
+#include "tcop/utility.h"
+#include "utils/acl.h"
+#include "utils/acl.h"
+#include "utils/ps_status.h"
+#include "utils/syscache.h"
 
 #include "../backend/parser/parse.h"
-#include "utils/acl.h"
-#include "rewrite/rewriteRemove.h"
-#include "rewrite/rewriteDefine.h"
-#include "tcop/utility.h"
-#include "utils/ps_status.h"
-
-#ifndef NO_SECURITY
-#include "miscadmin.h"
-#include "utils/acl.h"
-#include "utils/syscache.h"
-#endif
 
 void		DefineUser(CreateUserStmt *stmt, CommandDest);
 void		AlterUser(AlterUserStmt *stmt, CommandDest);

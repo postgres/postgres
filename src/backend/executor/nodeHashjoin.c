@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.24 1999/07/16 03:12:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.25 1999/07/16 04:58:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

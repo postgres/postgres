@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: portal.c,v 1.25 1999/07/16 03:12:56 momjian Exp $
+ *	$Id: portal.c,v 1.26 1999/07/16 04:59:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

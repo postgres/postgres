@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.23 1999/07/16 03:14:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.24 1999/07/16 05:00:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,9 +19,9 @@
 #include "postgres.h"
 
 #include "access/heapam.h"
-#include "catalog/pg_proc.h"
 #include "catalog/catname.h"
 #include "catalog/indexing.h"
+#include "catalog/pg_proc.h"
 #include "utils/sets.h"
 #include "utils/syscache.h"
 

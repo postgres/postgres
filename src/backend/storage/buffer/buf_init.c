@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.26 1999/07/16 03:13:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.27 1999/07/16 04:59:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,24 +19,23 @@
 
 #include "postgres.h"
 
-/* declarations split between these three files */
+
+#include "catalog/catalog.h"
+#include "executor/execdebug.h"
+#include "miscadmin.h"
 #include "storage/buf.h"
 #include "storage/buf_internals.h"
 #include "storage/bufmgr.h"
-
 #include "storage/fd.h"
 #include "storage/ipc.h"
+#include "storage/lmgr.h"
 #include "storage/s_lock.h"
 #include "storage/shmem.h"
-#include "storage/spin.h"
 #include "storage/smgr.h"
-#include "storage/lmgr.h"
-#include "miscadmin.h"
+#include "storage/spin.h"
 #include "utils/builtins.h"
 #include "utils/hsearch.h"
 #include "utils/memutils.h"
-#include "executor/execdebug.h"
-#include "catalog/catalog.h"
 
 /*
  *	if BMTRACE is defined, we trace the last 200 buffer allocations and

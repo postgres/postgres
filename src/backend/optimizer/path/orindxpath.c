@@ -7,22 +7,22 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/orindxpath.c,v 1.27 1999/07/15 22:39:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/orindxpath.c,v 1.28 1999/07/16 04:59:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 
+
+
 #include "nodes/nodeFuncs.h"
-
-#include "optimizer/internal.h"
 #include "optimizer/clauses.h"
-#include "optimizer/restrictinfo.h"
-#include "optimizer/paths.h"
 #include "optimizer/cost.h"
+#include "optimizer/internal.h"
+#include "optimizer/paths.h"
 #include "optimizer/plancat.h"
-
+#include "optimizer/restrictinfo.h"
 #include "parser/parsetree.h"
 
 

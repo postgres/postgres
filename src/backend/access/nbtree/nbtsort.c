@@ -5,7 +5,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Id: nbtsort.c,v 1.43 1999/07/15 22:38:49 momjian Exp $
+ *	  $Id: nbtsort.c,v 1.44 1999/07/16 04:58:30 momjian Exp $
  *
  * NOTES
  *
@@ -54,6 +54,7 @@
 #include "access/nbtree.h"
 
 #ifndef HAVE_MEMMOVE
+#include <regex/utils.h>
 #else
 #include <string.h>
 #endif

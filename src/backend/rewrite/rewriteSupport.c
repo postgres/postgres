@@ -7,19 +7,19 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteSupport.c,v 1.35 1999/07/16 03:13:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteSupport.c,v 1.36 1999/07/16 04:59:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
+
 #include "access/heapam.h"
 #include "catalog/catname.h"
 #include "catalog/indexing.h"
+#include "rewrite/rewriteSupport.h"
 #include "utils/catcache.h"
 #include "utils/syscache.h"
-
-#include "rewrite/rewriteSupport.h"
 
 /*
  * RuleIdGetActionInfo -

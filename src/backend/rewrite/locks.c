@@ -6,19 +6,19 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/Attic/locks.c,v 1.20 1999/07/16 03:13:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/Attic/locks.c,v 1.21 1999/07/16 04:59:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
-#include "utils/syscache.h"
-#include "rewrite/locks.h"
 
 #include "access/heapam.h"
-#include "utils/syscache.h"
+#include "catalog/pg_shadow.h"
+#include "rewrite/locks.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
-#include "catalog/pg_shadow.h"
+#include "utils/syscache.h"
+#include "utils/syscache.h"
 
 
 /*

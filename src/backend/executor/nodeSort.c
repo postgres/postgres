@@ -7,13 +7,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSort.c,v 1.21 1999/07/15 22:39:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSort.c,v 1.22 1999/07/16 04:58:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include "postgres.h"
 #include <string.h>
 
+#include "postgres.h"
 #include "executor/executor.h"
 #include "executor/execdebug.h"
 #include "executor/nodeSort.h"

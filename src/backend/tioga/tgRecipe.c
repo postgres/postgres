@@ -11,16 +11,16 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tioga/Attic/tgRecipe.c,v 1.13 1999/07/16 03:13:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tioga/Attic/tgRecipe.c,v 1.14 1999/07/16 04:59:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include <stdlib.h>
 #include "postgres.h"
-#include "tioga/tgRecipe.h"
 
 #include "catalog/catalog.h"
+#include "tioga/tgRecipe.h"
 
 static Arr_TgString *TextArray2ArrTgString(char *str);
 

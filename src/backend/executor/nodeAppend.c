@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAppend.c,v 1.22 1999/07/16 03:12:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAppend.c,v 1.23 1999/07/16 04:58:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,8 +57,8 @@
 
 
 #include "access/heapam.h"
-#include "executor/executor.h"
 #include "executor/execdebug.h"
+#include "executor/executor.h"
 #include "executor/nodeAppend.h"
 #include "parser/parsetree.h"
 

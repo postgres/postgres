@@ -15,7 +15,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqformat.c,v 1.5 1999/07/15 22:39:15 momjian Exp $
+ *	$Id: pqformat.c,v 1.6 1999/07/16 04:59:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,9 +45,11 @@
  */
 #include "postgres.h"
 
-#include "libpq/pqformat.h"
 #include "libpq/libpq.h"
+#include "libpq/pqformat.h"
+
 #ifdef MULTIBYTE
+#include "mb/pg_wchar.h"
 #endif
 #include <string.h>
 #ifdef HAVE_ENDIAN_H

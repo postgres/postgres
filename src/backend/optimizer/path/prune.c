@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/prune.c,v 1.41 1999/07/15 22:39:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/prune.c,v 1.42 1999/07/16 04:59:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,8 +15,8 @@
 
 
 #include "optimizer/cost.h"
-#include "optimizer/paths.h"
 #include "optimizer/pathnode.h"
+#include "optimizer/paths.h"
 
 
 

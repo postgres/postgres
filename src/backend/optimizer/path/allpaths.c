@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.48 1999/07/15 22:39:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.49 1999/07/16 04:59:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,15 +16,11 @@
 
 #include "postgres.h"
 
-
-#include "optimizer/internal.h"
-
-#include "optimizer/paths.h"
-#include "optimizer/pathnode.h"
 #include "optimizer/cost.h"
-
-
 #include "optimizer/geqo.h"
+#include "optimizer/internal.h"
+#include "optimizer/pathnode.h"
+#include "optimizer/paths.h"
 
 #ifdef GEQO
 bool		_use_geqo_ = true;
