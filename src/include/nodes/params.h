@@ -6,14 +6,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: params.h,v 1.2 1996/10/31 09:49:13 scrappy Exp $
+ * $Id: params.h,v 1.3 1996/11/04 08:52:57 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef PARAMS_H
 #define PARAMS_H
 
-#include "access/attnum.h"
+#include <access/attnum.h>
 
 /* ----------------------------------------------------------------
  *

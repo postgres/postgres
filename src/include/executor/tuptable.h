@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tuptable.h,v 1.3 1996/11/03 12:12:42 scrappy Exp $
+ * $Id: tuptable.h,v 1.4 1996/11/04 08:52:47 scrappy Exp $
  *
  * NOTES
  *    The tuple table interface is getting pretty ugly.
@@ -17,8 +17,9 @@
 #ifndef TUPTABLE_H
 #define TUPTABLE_H
 
-#include "access/htup.h"
-#include "storage/buf.h"
+#include <storage/buf.h>
+#include <access/tupdesc.h>
+#include <access/htup.h>
 
 /* ----------------
  *	Note:  the executor tuple table is managed and manipulated by special

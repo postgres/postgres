@@ -6,14 +6,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hashjoin.h,v 1.2 1996/10/19 06:27:33 scrappy Exp $
+ * $Id: hashjoin.h,v 1.3 1996/11/04 08:52:46 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef	HASHJOIN_H
 #define HASHJOIN_H
 
-#include "storage/ipc.h"
+#include <storage/ipc.h>
 
 /* -----------------
  *  have to use relative address as pointers in the hashtable
