@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.9 1996/08/26 06:31:31 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.10 1996/08/26 19:59:15 scrappy Exp $
  *
  * HISTORY
  *    AUTHOR		DATE		MAJOR EVENT
@@ -667,7 +667,7 @@ IndexStmt:  CREATE INDEX index_name ON relation_name
 		    n->relname = $5;
 		    n->accessMethod = $6;
 		    n->indexParams = $8;
-		    n->withClause = $11;
+		    n->withClause = $10;
 		    n->whereClause = NULL;
 		    $$ = (Node *)n;
 		}
