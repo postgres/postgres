@@ -6,7 +6,7 @@
  * copyright (c) Oliver Elphick <olly@lfix.co.uk>, 2001;
  * licence: BSD
  *
- * $PostgreSQL: pgsql/src/bin/pg_controldata/pg_controldata.c,v 1.19 2004/08/29 05:06:53 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_controldata/pg_controldata.c,v 1.20 2004/09/23 00:47:44 neilc Exp $
  */
 #include "postgres.h"
 
@@ -14,8 +14,6 @@
 #include <time.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <locale.h>
-#include <errno.h>
 
 #include "catalog/pg_control.h"
 
@@ -30,15 +28,15 @@ usage(const char *progname)
 		(
 		 _(
 		   "Usage:\n"
-		   "  %s [OPTION]\n\n"
+		   "  %s [OPTION] [DATADIR]\n\n"
 		   "Options:\n"
-		"  DATADIR        show cluster control information for DATADIR\n"
 		   "  --help         show this help, then exit\n"
 		   "  --version      output version information, then exit\n"
 		   ),
 		 progname
 		);
-	printf(_("\nIf no data directory is specified, the environment variable PGDATA\nis used.\n\n"));
+	printf(_("\nIf no data directory (DATADIR) is specified, "
+			 "the environment variable PGDATA\nis used.\n\n"));
 	printf(_("Report bugs to <pgsql-bugs@postgresql.org>.\n"));
 }
 
