@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2003, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.66 2004/04/12 16:19:18 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.67 2004/04/19 17:42:58 momjian Exp $
  * ----------
  */
 #include "postgres.h"
@@ -1730,13 +1730,6 @@ pgstat_mainChild(PGSTAT_FORK_ARGS)
 				{
 					if (errno == EINTR)
 						continue;
-#ifdef WIN32
-					if (WSAGetLastError() == WSAECONNRESET) /* EOF on the pipe! (win32 socket based implementation) */
-					{
-						pipeEOF = true;
-						break;
-					}
-#endif
 					ereport(LOG,
 							(errcode_for_socket_access(),
 							 errmsg("could not read from statistics collector pipe: %m")));

@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/interfaces/libpq/Makefile,v 1.100 2004/03/24 03:54:16 momjian Exp $
+# $PostgreSQL: pgsql/src/interfaces/libpq/Makefile,v 1.101 2004/04/19 17:42:59 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -78,4 +78,4 @@ uninstall: uninstall-lib
 	rm -f $(DESTDIR)$(includedir)/libpq-fe.h $(DESTDIR)$(includedir_internal)/libpq-int.h $(DESTDIR)$(includedir_internal)/pqexpbuffer.h
 
 clean distclean maintainer-clean: clean-lib
-	rm -f $(OBJS) crypt.c getaddrinfo.c inet_aton.c noblock.c snprintf.c strerror.c path.c thread.c dllist.c md5.c ip.c encnames.c wchar.c
+	rm -f $(OBJS) crypt.c getaddrinfo.c inet_aton.c noblock.c snprintf.c strerror.c open.c path.c thread.c dllist.c md5.c ip.c encnames.c wchar.c

@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/main/main.c,v 1.76 2004/03/15 16:14:26 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/main/main.c,v 1.77 2004/04/19 17:42:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,7 +50,9 @@ int
 main(int argc, char *argv[])
 {
 	int			len;
+#ifndef WIN32
 	struct passwd *pw;
+#endif
 	char	   *pw_name_persist;
 
 	/*

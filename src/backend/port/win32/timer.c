@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/win32/timer.c,v 1.1 2004/02/18 16:25:12 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/win32/timer.c,v 1.2 2004/04/19 17:42:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,9 +43,9 @@ int setitimer(int which, const struct itimerval *value, struct itimerval *ovalue
 		timerHandle = CreateWaitableTimer(NULL, TRUE, NULL);
 		if (timerHandle == NULL)
 			ereport(FATAL,
-					(errmsg_internal("failed to create waitable timer: %i",GetLastError())));
+					(errmsg_internal("failed to create waitable timer: %i",(int)GetLastError())));
 	}
-	
+
 	if (value->it_value.tv_sec == 0 &&
 		value->it_value.tv_usec == 0) {
 		/* Turn timer off */
@@ -55,11 +55,11 @@ int setitimer(int which, const struct itimerval *value, struct itimerval *ovalue
 
 	/* Negative time to SetWaitableTimer means relative time */
 	dueTime.QuadPart = -(value->it_value.tv_usec*10 + value->it_value.tv_sec*10000000L);
-	
+
 	/* Turn timer on, or change timer */
-	if (!SetWaitableTimer(timerHandle, &dueTime, 0, timer_completion, NULL, FALSE)) 
+	if (!SetWaitableTimer(timerHandle, &dueTime, 0, timer_completion, NULL, FALSE))
 		ereport(FATAL,
-				(errmsg_internal("failed to set waitable timer: %i",GetLastError())));
+				(errmsg_internal("failed to set waitable timer: %i",(int)GetLastError())));
 
 	return 0;
 }

@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/sysv_shmem.c,v 1.32 2004/02/25 19:41:22 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/sysv_shmem.c,v 1.33 2004/04/19 17:42:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -259,7 +259,7 @@ PGSharedMemoryCreate(uint32 size, bool makePrivate, int port)
 		PGSharedMemoryDetach();
 		UsedShmemSegAddr = origUsedShmemSegAddr;
 #endif
-		elog(DEBUG3,"Attaching to %x",UsedShmemSegAddr);
+		elog(DEBUG3,"Attaching to %p",UsedShmemSegAddr);
 		hdr = PGSharedMemoryAttach((IpcMemoryKey) UsedShmemSegID, &shmid);
 		if (hdr == NULL)
 			elog(FATAL, "could not attach to proper memory at fixed address: shmget(key=%d, addr=%p) failed: %m",

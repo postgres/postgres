@@ -10,7 +10,7 @@
  * didn't really belong there.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-print.c,v 1.50 2004/01/09 02:02:43 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-print.c,v 1.51 2004/04/19 17:42:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -183,11 +183,7 @@ PQprint(FILE *fout,
 				  - (po->header != 0) * 2		/* row count and newline */
 				  )))
 			{
-#ifdef WIN32
-				fout = _popen(pagerenv, "w");
-#else
 				fout = popen(pagerenv, "w");
-#endif
 				if (fout)
 				{
 					usePipe = 1;

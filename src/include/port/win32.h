@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.21 2004/04/12 16:19:18 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.22 2004/04/19 17:42:59 momjian Exp $ */
 
 /* undefine and redefine after #include */
 #undef mkdir
@@ -6,6 +6,7 @@
 #undef ERROR
 #include <windows.h>
 #include <winsock.h>
+#include <process.h>
 #undef near
 
 /* Must be here to avoid conflicting with prototype in windows.h */
@@ -191,14 +192,6 @@ int setitimer(int which, const struct itimerval *value, struct itimerval *ovalue
  * Supplement to <sys/stat.h>.
  */
 #define lstat slat
-
-#define S_ISDIR(m) (((m) & _S_IFMT) == _S_IFDIR)
-#define S_ISREG(m) (((m) & _S_IFMT) == _S_IFREG)
-
-#define S_IRUSR _S_IREAD
-#define S_IWUSR _S_IWRITE
-#define S_IXUSR _S_IEXEC
-#define S_IRWXU (_S_IREAD | _S_IWRITE | _S_IEXEC)
 
 /*
  * Supplement to <errno.h>.

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/port.h,v 1.24 2004/04/05 03:16:21 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/port.h,v 1.25 2004/04/19 17:42:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,7 +48,7 @@ extern off_t ftello(FILE *stream);
 #define pipewrite(a,b,c)	write(a,b,c)
 #else
 extern int pgpipe(int handles[2]);
-#define piperead(a,b,c)		recv(a,b,c,0)
+extern int piperead(int s, char* buf, int len);
 #define pipewrite(a,b,c)	send(a,b,c,0)
 #endif
 
@@ -68,6 +68,11 @@ extern int	pgunlink(const char *path);
 #ifndef _MSC_VER
 extern int	win32_open(const char*,int,...);
 #define 	open(a,b,...)	win32_open(a,b,##__VA_ARGS__)
+#endif
+
+#ifndef __BORLANDC__
+#define popen(a,b) _popen(a,b)
+#define pclose(a) _pclose(a)
 #endif
 
 extern int	copydir(char *fromdir, char *todir);

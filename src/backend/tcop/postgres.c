@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.399 2004/04/11 00:54:44 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.400 2004/04/19 17:42:58 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -2456,7 +2456,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 				/*
 				 * wait N seconds to allow attach from a debugger
 				 */
-				sleep(atoi(optarg));
+				pg_usleep(atoi(optarg)*1000000L);
 				break;
 
 			case 'x':

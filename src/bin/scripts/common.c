@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/common.c,v 1.6 2003/11/29 19:52:07 pgsql Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/common.c,v 1.7 2004/04/19 17:42:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,10 +35,15 @@ get_user_name(const char *progname)
 	return pw->pw_name;
 #else
 	static char username[128];	/* remains after function exit */
+	DWORD len = sizeof(username)-1;
 
-	GetUserName(username, sizeof(username)-1);
+	if (!GetUserName(username, &len))
+	{
+		perror(progname);
+		exit(1);
+	}
 	return username;
-#endif	
+#endif
 }
 
 

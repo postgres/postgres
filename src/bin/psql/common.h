@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/common.h,v 1.34 2004/01/25 03:07:22 neilc Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/common.h,v 1.35 2004/04/19 17:42:58 momjian Exp $
  */
 #ifndef COMMON_H
 #define COMMON_H
@@ -59,12 +59,6 @@ extern const char *session_username(void);
  * character of the numeric character code.
  */
 extern char parse_char(char **buf);
-
-/* Used for all Win32 popen/pclose calls */
-#ifdef WIN32
-#define popen(x,y) _popen(x,y)
-#define pclose(x) _pclose(x)
-#endif
 
 extern char *expand_tilde(char **filename);
 

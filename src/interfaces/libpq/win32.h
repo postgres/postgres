@@ -22,8 +22,6 @@
 #define write(a,b,c) _write(a,b,c)
 #endif
 
-#define popen(a,b) _popen(a,b)
-#define pclose(a) _pclose(a)
 #define vsnprintf(a,b,c,d) _vsnprintf(a,b,c,d)
 #define snprintf _snprintf
 

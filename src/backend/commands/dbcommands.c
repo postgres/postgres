@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.131 2004/02/10 01:55:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.132 2004/04/19 17:42:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,7 +64,9 @@ createdb(const CreatedbStmt *stmt)
 	char	   *alt_loc;
 	char	   *target_dir;
 	char		src_loc[MAXPGPATH];
+#ifndef WIN32
 	char		buf[2 * MAXPGPATH + 100];
+#endif
 	Oid			src_dboid;
 	AclId		src_owner;
 	int			src_encoding;

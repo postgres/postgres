@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.138 2004/03/22 04:16:57 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.139 2004/04/19 17:42:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2830,7 +2830,7 @@ StartupXLOG(void)
 	/* This is just to allow attaching to startup process with a debugger */
 #ifdef XLOG_REPLAY_DELAY
 	if (ControlFile->state != DB_SHUTDOWNED)
-		sleep(60);
+		pg_usleep(60000000L);
 #endif
 
 	/*
@@ -3360,7 +3360,7 @@ CreateCheckPoint(bool shutdown, bool force)
 	while (!LWLockConditionalAcquire(CheckpointLock, LW_EXCLUSIVE))
 	{
 		CHECK_FOR_INTERRUPTS();
-		sleep(1);
+		pg_usleep(1000000L);
 	}
 
 	/*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.123 2004/02/10 01:55:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.124 2004/04/19 17:42:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -213,11 +213,11 @@ SetDataDir(const char *dir)
 	 * generating funny-looking paths to individual files.
 	 */
 	newlen = strlen(new);
-	if (newlen > 1 && new[newlen - 1] == '/'
+	if (newlen > 1 && (new[newlen - 1] == '/'
 #ifdef WIN32
 		|| new[newlen - 1] == '\\'
 #endif
-		)
+		))
 		new[newlen - 1] = '\0';
 
 	if (DataDir)

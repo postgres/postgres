@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/copy.c,v 1.44 2004/04/19 17:22:31 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/copy.c,v 1.45 2004/04/19 17:42:58 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "copy.h"
@@ -26,7 +26,7 @@
 #include "prompt.h"
 #include "stringutils.h"
 
-#ifdef WIN32
+#if defined(WIN32) && (!defined(__MINGW32__))
 #define strcasecmp(x,y) stricmp(x,y)
 #define __S_ISTYPE(mode, mask)	(((mode) & S_IFMT) == (mask))
 #define S_ISDIR(mode)	 __S_ISTYPE((mode), S_IFDIR)

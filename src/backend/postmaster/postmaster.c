@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.380 2004/04/12 16:19:18 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.381 2004/04/19 17:42:58 momjian Exp $
  *
  * NOTES
  *
@@ -314,8 +314,6 @@ static unsigned long tmpBackendFileNum = 0;
 void read_backend_variables(unsigned long id, Port *port);
 static bool write_backend_variables(Port *port);
 
-size_t 		ShmemBackendArraySize(void);
-void 		ShmemBackendArrayAllocation(void);
 static void	ShmemBackendArrayAdd(Backend *bn);
 static void ShmemBackendArrayRemove(pid_t pid);
 #endif
@@ -2561,7 +2559,7 @@ BackendRun(Port *port)
 	 * PGOPTIONS, but it is not honored until after authentication.)
 	 */
 	if (PreAuthDelay > 0)
-		sleep(PreAuthDelay);
+		pg_usleep(PreAuthDelay*1000000L);
 
 	/* Will exit on failure */
 	BackendInit(port);
@@ -3455,8 +3453,8 @@ static void ShmemBackendArrayAdd(Backend *bn)
 		}
 	}
 
-	/* FIXME: [fork/exec] some sort of error */
-	abort();
+	ereport(FATAL,
+			(errmsg_internal("unable to add backend entry")));
 }
 
 static void ShmemBackendArrayRemove(pid_t pid)
@@ -3472,7 +3470,6 @@ static void ShmemBackendArrayRemove(pid_t pid)
 		}
 	}
 
-	/* Something stronger than WARNING here? */
 	ereport(WARNING,
 			(errmsg_internal("unable to find backend entry with pid %d",
 							 pid)));
@@ -3565,8 +3562,9 @@ static void win32_AddChild(pid_t pid, HANDLE handle)
 		++win32_numChildren;
 	}
 	else
-		/* FIXME: [fork/exec] some sort of error */
-		abort();
+		ereport(FATAL,
+				(errmsg_internal("unable to add child entry with pid %lu",
+								 pid)));
 }
 
 static void win32_RemoveChild(pid_t pid)
@@ -3588,7 +3586,6 @@ static void win32_RemoveChild(pid_t pid)
 		}
 	}
 
-	/* Something stronger than WARNING here? */
 	ereport(WARNING,
 			(errmsg_internal("unable to find child entry with pid %lu",
 							 pid)));

@@ -5,6 +5,7 @@
  *
  *-------------------------------------------------------------------------
  */
+#include "c.h"
 
 /*
  * Copyright (c) 1993 Martin Birgmeier
@@ -38,7 +39,7 @@ unsigned short _rand48_mult[3] = {
 };
 unsigned short _rand48_add = RAND48_ADD;
 
-void
+static void
 _dorand48(unsigned short xseed[3])
 {
 	unsigned long accu;

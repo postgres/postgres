@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/win32/shmem.c,v 1.4 2004/02/12 20:37:34 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/win32/shmem.c,v 1.5 2004/04/19 17:42:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,7 @@ static DWORD s_segsize = 0;
 int
 shmdt(const void *shmaddr)
 {
-	if (UnmapViewOfFile(shmaddr))
+	if (UnmapViewOfFile((LPCVOID*)shmaddr))
 		return 0;
 	else
 		return -1;

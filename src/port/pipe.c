@@ -10,7 +10,7 @@
  *	must be replaced with recv/send.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/pipe.c,v 1.1 2004/01/09 04:58:09 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/pipe.c,v 1.2 2004/04/19 17:42:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,4 +52,14 @@ pgpipe(int handles[2])
 	}
 	closesocket(s);
 	return 0;
+}
+
+
+int piperead(int s, char* buf, int len)
+{
+	int ret = recv(s,buf,len,0);
+	if (ret < 0 && WSAGetLastError() == WSAECONNRESET)
+		/* EOF on the pipe! (win32 socket based implementation) */
+		ret = 0;
+	return ret;
 }
