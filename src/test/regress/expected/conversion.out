@@ -52,7 +52,7 @@ SELECT CONVERT('foo', 'MULE_INTERNAL', 'SQL_ASCII');
 (1 row)
 
 -- KOI8R --> MULE_INTERNAL
-SELECT CONVERT('foo' USING koi8r_to_mic);
+SELECT CONVERT('foo' USING koi8_r_to_mic);
  convert 
 ---------
  foo
@@ -65,7 +65,7 @@ SELECT CONVERT('foo', 'KOI8R', 'MULE_INTERNAL');
 (1 row)
 
 -- MULE_INTERNAL --> KOI8R
-SELECT CONVERT('foo' USING mic_to_koi8r);
+SELECT CONVERT('foo' USING mic_to_koi8_r);
  convert 
 ---------
  foo
@@ -104,7 +104,7 @@ SELECT CONVERT('foo', 'MULE_INTERNAL', 'ISO-8859-5');
 (1 row)
 
 -- WIN1251 --> MULE_INTERNAL
-SELECT CONVERT('foo' USING win1251_to_mic);
+SELECT CONVERT('foo' USING windows_1251_to_mic);
  convert 
 ---------
  foo
@@ -117,7 +117,7 @@ SELECT CONVERT('foo', 'WIN1251', 'MULE_INTERNAL');
 (1 row)
 
 -- MULE_INTERNAL --> WIN1251
-SELECT CONVERT('foo' USING mic_to_win1251);
+SELECT CONVERT('foo' USING mic_to_windows_1251);
  convert 
 ---------
  foo
@@ -130,7 +130,7 @@ SELECT CONVERT('foo', 'MULE_INTERNAL', 'WIN1251');
 (1 row)
 
 -- ALT --> MULE_INTERNAL
-SELECT CONVERT('foo' USING win866_to_mic);
+SELECT CONVERT('foo' USING windows_866_to_mic);
  convert 
 ---------
  foo
@@ -143,7 +143,7 @@ SELECT CONVERT('foo', 'ALT', 'MULE_INTERNAL');
 (1 row)
 
 -- MULE_INTERNAL --> ALT
-SELECT CONVERT('foo' USING mic_to_win866);
+SELECT CONVERT('foo' USING mic_to_windows_866);
  convert 
 ---------
  foo
@@ -156,7 +156,7 @@ SELECT CONVERT('foo', 'MULE_INTERNAL', 'ALT');
 (1 row)
 
 -- KOI8R --> WIN1251
-SELECT CONVERT('foo' USING koi8r_to_win1251);
+SELECT CONVERT('foo' USING koi8_r_to_windows_1251);
  convert 
 ---------
  foo
@@ -169,7 +169,7 @@ SELECT CONVERT('foo', 'KOI8R', 'WIN1251');
 (1 row)
 
 -- WIN1251 --> KOI8R
-SELECT CONVERT('foo' USING win1251_to_koi8r);
+SELECT CONVERT('foo' USING windows_1251_to_koi8_r);
  convert 
 ---------
  foo
@@ -182,7 +182,7 @@ SELECT CONVERT('foo', 'WIN1251', 'KOI8R');
 (1 row)
 
 -- KOI8R --> ALT
-SELECT CONVERT('foo' USING koi8r_to_win866);
+SELECT CONVERT('foo' USING koi8_r_to_windows_866);
  convert 
 ---------
  foo
@@ -195,7 +195,7 @@ SELECT CONVERT('foo', 'KOI8R', 'ALT');
 (1 row)
 
 -- ALT --> KOI8R
-SELECT CONVERT('foo' USING win866_to_koi8r);
+SELECT CONVERT('foo' USING windows_866_to_koi8_r);
  convert 
 ---------
  foo
@@ -208,7 +208,7 @@ SELECT CONVERT('foo', 'ALT', 'KOI8R');
 (1 row)
 
 -- ALT --> WIN1251
-SELECT CONVERT('foo' USING win866_to_win1251);
+SELECT CONVERT('foo' USING windows_866_to_windows_1251);
  convert 
 ---------
  foo
@@ -221,7 +221,7 @@ SELECT CONVERT('foo', 'ALT', 'WIN1251');
 (1 row)
 
 -- WIN1251 --> ALT
-SELECT CONVERT('foo' USING win1251_to_win866);
+SELECT CONVERT('foo' USING windows_1251_to_windows_866);
  convert 
 ---------
  foo
@@ -234,7 +234,7 @@ SELECT CONVERT('foo', 'WIN1251', 'ALT');
 (1 row)
 
 -- ISO-8859-5 --> KOI8R
-SELECT CONVERT('foo' USING iso_8859_5_to_koi8r);
+SELECT CONVERT('foo' USING iso_8859_5_to_koi8_r);
  convert 
 ---------
  foo
@@ -247,7 +247,7 @@ SELECT CONVERT('foo', 'ISO-8859-5', 'KOI8R');
 (1 row)
 
 -- KOI8R --> ISO-8859-5
-SELECT CONVERT('foo' USING koi8r_to_iso_8859_5);
+SELECT CONVERT('foo' USING koi8_r_to_iso_8859_5);
  convert 
 ---------
  foo
@@ -260,7 +260,7 @@ SELECT CONVERT('foo', 'KOI8R', 'ISO-8859-5');
 (1 row)
 
 -- ISO-8859-5 --> WIN1251
-SELECT CONVERT('foo' USING iso_8859_5_to_win1251);
+SELECT CONVERT('foo' USING iso_8859_5_to_windows_1251);
  convert 
 ---------
  foo
@@ -273,7 +273,7 @@ SELECT CONVERT('foo', 'ISO-8859-5', 'WIN1251');
 (1 row)
 
 -- WIN1251 --> ISO-8859-5
-SELECT CONVERT('foo' USING win1251_to_iso_8859_5);
+SELECT CONVERT('foo' USING windows_1251_to_iso_8859_5);
  convert 
 ---------
  foo
@@ -286,7 +286,7 @@ SELECT CONVERT('foo', 'WIN1251', 'ISO-8859-5');
 (1 row)
 
 -- ISO-8859-5 --> ALT
-SELECT CONVERT('foo' USING iso_8859_5_to_win866);
+SELECT CONVERT('foo' USING iso_8859_5_to_windows_866);
  convert 
 ---------
  foo
@@ -299,7 +299,7 @@ SELECT CONVERT('foo', 'ISO-8859-5', 'ALT');
 (1 row)
 
 -- ALT --> ISO-8859-5
-SELECT CONVERT('foo' USING win866_to_iso_8859_5);
+SELECT CONVERT('foo' USING windows_866_to_iso_8859_5);
  convert 
 ---------
  foo
@@ -546,7 +546,7 @@ SELECT CONVERT('foo', 'MULE_INTERNAL', 'LATIN2');
 (1 row)
 
 -- WIN1250 --> MULE_INTERNAL
-SELECT CONVERT('foo' USING win1250_to_mic);
+SELECT CONVERT('foo' USING windows_1250_to_mic);
  convert 
 ---------
  foo
@@ -559,7 +559,7 @@ SELECT CONVERT('foo', 'WIN1250', 'MULE_INTERNAL');
 (1 row)
 
 -- MULE_INTERNAL --> WIN1250
-SELECT CONVERT('foo' USING mic_to_win1250);
+SELECT CONVERT('foo' USING mic_to_windows_1250);
  convert 
 ---------
  foo
@@ -572,7 +572,7 @@ SELECT CONVERT('foo', 'MULE_INTERNAL', 'WIN1250');
 (1 row)
 
 -- LATIN2 --> WIN1250
-SELECT CONVERT('foo' USING iso_8859_2_to_win1250);
+SELECT CONVERT('foo' USING iso_8859_2_to_windows_1250);
  convert 
 ---------
  foo
@@ -585,7 +585,7 @@ SELECT CONVERT('foo', 'LATIN2', 'WIN1250');
 (1 row)
 
 -- WIN1250 --> LATIN2
-SELECT CONVERT('foo' USING win1250_to_iso_8859_2);
+SELECT CONVERT('foo' USING windows_1250_to_iso_8859_2);
  convert 
 ---------
  foo
@@ -728,7 +728,7 @@ SELECT CONVERT('foo', 'UNICODE', 'BIG5');
 (1 row)
 
 -- UNICODE --> KOI8R
-SELECT CONVERT('foo' USING utf_8_to_koi8r);
+SELECT CONVERT('foo' USING utf_8_to_koi8_r);
  convert 
 ---------
  foo
@@ -741,7 +741,7 @@ SELECT CONVERT('foo', 'UNICODE', 'KOI8R');
 (1 row)
 
 -- KOI8R --> UNICODE
-SELECT CONVERT('foo' USING koi8r_to_utf_8);
+SELECT CONVERT('foo' USING koi8_r_to_utf_8);
  convert 
 ---------
  foo
@@ -754,7 +754,7 @@ SELECT CONVERT('foo', 'KOI8R', 'UNICODE');
 (1 row)
 
 -- UNICODE --> WIN1251
-SELECT CONVERT('foo' USING utf_8_to_win1251);
+SELECT CONVERT('foo' USING utf_8_to_windows_1251);
  convert 
 ---------
  foo
@@ -767,7 +767,7 @@ SELECT CONVERT('foo', 'UNICODE', 'WIN1251');
 (1 row)
 
 -- WIN1251 --> UNICODE
-SELECT CONVERT('foo' USING win1251_to_utf_8);
+SELECT CONVERT('foo' USING windows_1251_to_utf_8);
  convert 
 ---------
  foo
@@ -780,7 +780,7 @@ SELECT CONVERT('foo', 'WIN1251', 'UNICODE');
 (1 row)
 
 -- UNICODE --> ALT
-SELECT CONVERT('foo' USING utf_8_to_win866);
+SELECT CONVERT('foo' USING utf_8_to_windows_866);
  convert 
 ---------
  foo
@@ -793,7 +793,7 @@ SELECT CONVERT('foo', 'UNICODE', 'ALT');
 (1 row)
 
 -- ALT --> UNICODE
-SELECT CONVERT('foo' USING win866_to_utf_8);
+SELECT CONVERT('foo' USING windows_866_to_utf_8);
  convert 
 ---------
  foo
@@ -1430,7 +1430,7 @@ SELECT CONVERT('foo', 'UNICODE', 'UHC');
 (1 row)
 
 -- UNICODE --> WIN1250
-SELECT CONVERT('foo' USING utf_8_to_win1250);
+SELECT CONVERT('foo' USING utf_8_to_windows_1250);
  convert 
 ---------
  foo
@@ -1443,7 +1443,7 @@ SELECT CONVERT('foo', 'UNICODE', 'WIN1250');
 (1 row)
 
 -- WIN1250 --> UNICODE
-SELECT CONVERT('foo' USING win1250_to_utf_8);
+SELECT CONVERT('foo' USING windows_1250_to_utf_8);
  convert 
 ---------
  foo
@@ -1456,7 +1456,7 @@ SELECT CONVERT('foo', 'WIN1250', 'UNICODE');
 (1 row)
 
 -- UNICODE --> WIN1256
-SELECT CONVERT('foo' USING utf_8_to_win1256);
+SELECT CONVERT('foo' USING utf_8_to_windows_1256);
  convert 
 ---------
  foo
@@ -1469,7 +1469,7 @@ SELECT CONVERT('foo', 'UNICODE', 'WIN1256');
 (1 row)
 
 -- WIN1256 --> UNICODE
-SELECT CONVERT('foo' USING win1256_to_utf_8);
+SELECT CONVERT('foo' USING windows_1256_to_utf_8);
  convert 
 ---------
  foo
@@ -1482,7 +1482,7 @@ SELECT CONVERT('foo', 'WIN1256', 'UNICODE');
 (1 row)
 
 -- UNICODE --> WIN874
-SELECT CONVERT('foo' USING utf_8_to_win874);
+SELECT CONVERT('foo' USING utf_8_to_windows_874);
  convert 
 ---------
  foo
@@ -1495,7 +1495,7 @@ SELECT CONVERT('foo', 'UNICODE', 'WIN874');
 (1 row)
 
 -- WIN874 --> UNICODE
-SELECT CONVERT('foo' USING win874_to_utf_8);
+SELECT CONVERT('foo' USING windows_874_to_utf_8);
  convert 
 ---------
  foo

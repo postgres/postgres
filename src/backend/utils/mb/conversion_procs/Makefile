@@ -4,7 +4,7 @@
 #    Makefile for utils/mb/conversion_procs
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/Makefile,v 1.6 2002/09/04 15:45:50 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/Makefile,v 1.7 2002/09/24 20:14:58 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -30,26 +30,26 @@ DIRS = \
 CONVERSIONS = \
 		ascii_to_mic	SQL_ASCII MULE_INTERNAL ascii_to_mic ascii_and_mic \
 		mic_to_ascii	MULE_INTERNAL SQL_ASCII mic_to_ascii ascii_and_mic \
-		koi8r_to_mic	KOI8R MULE_INTERNAL koi8r_to_mic cyrillic_and_mic \
-		mic_to_koi8r	MULE_INTERNAL KOI8R mic_to_koi8r cyrillic_and_mic \
+		koi8_r_to_mic	KOI8R MULE_INTERNAL koi8r_to_mic cyrillic_and_mic \
+		mic_to_koi8_r	MULE_INTERNAL KOI8R mic_to_koi8r cyrillic_and_mic \
 		iso_8859_5_to_mic	ISO-8859-5 MULE_INTERNAL iso_to_mic cyrillic_and_mic \
 		mic_to_iso_8859_5	MULE_INTERNAL ISO-8859-5 mic_to_iso cyrillic_and_mic \
-		win1251_to_mic	WIN1251 MULE_INTERNAL win1251_to_mic cyrillic_and_mic \
-		mic_to_win1251	MULE_INTERNAL WIN1251 mic_to_win1251 cyrillic_and_mic \
-		win866_to_mic	ALT MULE_INTERNAL alt_to_mic cyrillic_and_mic \
-		mic_to_win866	MULE_INTERNAL ALT mic_to_alt cyrillic_and_mic \
-		koi8r_to_win1251   KOI8R WIN1251 koi8r_to_win1251 cyrillic_and_mic \
-		win1251_to_koi8r   WIN1251 KOI8R win1251_to_koi8r cyrillic_and_mic \
-		koi8r_to_win866	KOI8R ALT koi8r_to_alt cyrillic_and_mic \
-		win866_to_koi8r	ALT KOI8R alt_to_koi8r cyrillic_and_mic \
-		win866_to_win1251	ALT WIN1251 alt_to_win1251 cyrillic_and_mic \
-		win1251_to_win866	WIN1251	ALT win1251_to_alt cyrillic_and_mic \
-		iso_8859_5_to_koi8r	ISO-8859-5 KOI8R iso_to_koi8r cyrillic_and_mic \
-		koi8r_to_iso_8859_5	KOI8R ISO-8859-5 koi8r_to_iso cyrillic_and_mic \
-		iso_8859_5_to_win1251	ISO-8859-5 WIN1251 iso_to_win1251 cyrillic_and_mic \
-		win1251_to_iso_8859_5	WIN1251 ISO-8859-5 win1251_to_iso cyrillic_and_mic \
-		iso_8859_5_to_win866	ISO-8859-5 ALT iso_to_alt cyrillic_and_mic \
-		win866_to_iso_8859_5	ALT ISO-8859-5 alt_to_iso cyrillic_and_mic \
+		windows_1251_to_mic	WIN1251 MULE_INTERNAL win1251_to_mic cyrillic_and_mic \
+		mic_to_windows_1251	MULE_INTERNAL WIN1251 mic_to_win1251 cyrillic_and_mic \
+		windows_866_to_mic	ALT MULE_INTERNAL alt_to_mic cyrillic_and_mic \
+		mic_to_windows_866	MULE_INTERNAL ALT mic_to_alt cyrillic_and_mic \
+		koi8_r_to_windows_1251   KOI8R WIN1251 koi8r_to_win1251 cyrillic_and_mic \
+		windows_1251_to_koi8_r   WIN1251 KOI8R win1251_to_koi8r cyrillic_and_mic \
+		koi8_r_to_windows_866	KOI8R ALT koi8r_to_alt cyrillic_and_mic \
+		windows_866_to_koi8_r	ALT KOI8R alt_to_koi8r cyrillic_and_mic \
+		windows_866_to_windows_1251	ALT WIN1251 alt_to_win1251 cyrillic_and_mic \
+		windows_1251_to_windows_866	WIN1251	ALT win1251_to_alt cyrillic_and_mic \
+		iso_8859_5_to_koi8_r	ISO-8859-5 KOI8R iso_to_koi8r cyrillic_and_mic \
+		koi8_r_to_iso_8859_5	KOI8R ISO-8859-5 koi8r_to_iso cyrillic_and_mic \
+		iso_8859_5_to_windows_1251	ISO-8859-5 WIN1251 iso_to_win1251 cyrillic_and_mic \
+		windows_1251_to_iso_8859_5	WIN1251 ISO-8859-5 win1251_to_iso cyrillic_and_mic \
+		iso_8859_5_to_windows_866	ISO-8859-5 ALT iso_to_alt cyrillic_and_mic \
+		windows_866_to_iso_8859_5	ALT ISO-8859-5 alt_to_iso cyrillic_and_mic \
 		euc_cn_to_mic	EUC_CN MULE_INTERNAL euc_cn_to_mic euc_cn_and_mic \
 		mic_to_euc_cn	MULE_INTERNAL EUC_CN mic_to_euc_cn euc_cn_and_mic \
 		euc_jp_to_sjis	EUC_JP SJIS euc_jp_to_sjis euc_jp_and_sjis \
@@ -68,10 +68,10 @@ CONVERSIONS = \
 		mic_to_big5	MULE_INTERNAL BIG5 mic_to_big5 euc_tw_and_big5 \
 		iso_8859_2_to_mic	LATIN2 MULE_INTERNAL latin2_to_mic latin2_and_win1250 \
 		mic_to_iso_8859_2	MULE_INTERNAL LATIN2 mic_to_latin2 latin2_and_win1250 \
-		win1250_to_mic	WIN1250 MULE_INTERNAL win1250_to_mic latin2_and_win1250 \
-		mic_to_win1250	MULE_INTERNAL WIN1250 mic_to_win1250 latin2_and_win1250 \
-		iso_8859_2_to_win1250  LATIN2 WIN1250 latin2_to_win1250 latin2_and_win1250 \
-		win1250_to_iso_8859_2  WIN1250 LATIN2 win1250_to_latin2 latin2_and_win1250 \
+		windows_1250_to_mic	WIN1250 MULE_INTERNAL win1250_to_mic latin2_and_win1250 \
+		mic_to_windows_1250	MULE_INTERNAL WIN1250 mic_to_win1250 latin2_and_win1250 \
+		iso_8859_2_to_windows_1250  LATIN2 WIN1250 latin2_to_win1250 latin2_and_win1250 \
+		windows_1250_to_iso_8859_2  WIN1250 LATIN2 win1250_to_latin2 latin2_and_win1250 \
 		iso_8859_1_to_mic	LATIN1 MULE_INTERNAL latin1_to_mic latin_and_mic \
 		mic_to_iso_8859_1	MULE_INTERNAL LATIN1 mic_to_latin1 latin_and_mic \
 		iso_8859_3_to_mic	LATIN3 MULE_INTERNAL latin3_to_mic latin_and_mic \
@@ -82,12 +82,12 @@ CONVERSIONS = \
 		utf_8_to_ascii UNICODE SQL_ASCII utf8_to_ascii utf8_and_ascii \
 		big5_to_utf_8 BIG5 UNICODE big5_to_utf8 utf8_and_big5 \
 		utf_8_to_big5 UNICODE BIG5 utf8_to_big5 utf8_and_big5 \
-		utf_8_to_koi8r	UNICODE KOI8R utf8_to_koi8r utf8_and_cyrillic \
-		koi8r_to_utf_8	KOI8R UNICODE koi8r_to_utf8 utf8_and_cyrillic \
-		utf_8_to_win1251	UNICODE WIN1251 utf8_to_win1251 utf8_and_cyrillic \
-		win1251_to_utf_8	WIN1251 UNICODE win1251_to_utf8 utf8_and_cyrillic \
-		utf_8_to_win866	UNICODE ALT utf8_to_alt utf8_and_cyrillic \
-		win866_to_utf_8	ALT UNICODE alt_to_utf8 utf8_and_cyrillic \
+		utf_8_to_koi8_r	UNICODE KOI8R utf8_to_koi8r utf8_and_cyrillic \
+		koi8_r_to_utf_8	KOI8R UNICODE koi8r_to_utf8 utf8_and_cyrillic \
+		utf_8_to_windows_1251	UNICODE WIN1251 utf8_to_win1251 utf8_and_cyrillic \
+		windows_1251_to_utf_8	WIN1251 UNICODE win1251_to_utf8 utf8_and_cyrillic \
+		utf_8_to_windows_866	UNICODE ALT utf8_to_alt utf8_and_cyrillic \
+		windows_866_to_utf_8	ALT UNICODE alt_to_utf8 utf8_and_cyrillic \
 		euc_cn_to_utf_8 EUC_CN UNICODE euc_cn_to_utf8 utf8_and_euc_cn \
 		utf_8_to_euc_cn UNICODE EUC_CN utf8_to_euc_cn utf8_and_euc_cn \
 		euc_jp_to_utf_8 EUC_JP UNICODE euc_jp_to_utf8 utf8_and_euc_jp \
@@ -136,12 +136,12 @@ CONVERSIONS = \
 		utf_8_to_tcvn UNICODE TCVN utf8_to_tcvn utf8_and_tcvn \
 		uhc_to_utf_8 UHC UNICODE uhc_to_utf8 utf8_and_uhc \
 		utf_8_to_uhc UNICODE UHC utf8_to_uhc utf8_and_uhc \
-		utf_8_to_win1250  UNICODE WIN1250 utf_to_win1250 utf8_and_win1250 \
-		win1250_to_utf_8  WIN1250 UNICODE win1250_to_utf utf8_and_win1250 \
-		utf_8_to_win1256  UNICODE WIN1256 utf_to_win1256 utf8_and_win1256 \
-		win1256_to_utf_8  WIN1256 UNICODE win1256_to_utf utf8_and_win1256 \
-		utf_8_to_win874  UNICODE WIN874 utf_to_win874 utf8_and_win874 \
-		win874_to_utf_8  WIN874 UNICODE win874_to_utf utf8_and_win874
+		utf_8_to_windows_1250  UNICODE WIN1250 utf_to_win1250 utf8_and_win1250 \
+		windows_1250_to_utf_8  WIN1250 UNICODE win1250_to_utf utf8_and_win1250 \
+		utf_8_to_windows_1256  UNICODE WIN1256 utf_to_win1256 utf8_and_win1256 \
+		windows_1256_to_utf_8  WIN1256 UNICODE win1256_to_utf utf8_and_win1256 \
+		utf_8_to_windows_874  UNICODE WIN874 utf_to_win874 utf8_and_win874 \
+		windows_874_to_utf_8  WIN874 UNICODE win874_to_utf utf8_and_win874
 
 all: $(SQLSCRIPT)
 	@for dir in $(DIRS); do $(MAKE) -C $$dir $@ || exit; done

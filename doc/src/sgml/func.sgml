@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.125 2002/09/22 17:27:23 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.126 2002/09/24 20:14:58 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -861,13 +861,15 @@ PostgreSQL documentation
        <entry><function>convert</function>(<parameter>string</parameter>
        using <parameter>conversion_name</parameter>)</entry>
        <entry><type>text</type></entry>
-       <entry>Change encoding using specified conversion name.
-       Conversions can be defined by <command>CREATE CONVERSION</command>.
-       Also there are some pre-defined conversion names. 
-       See <xref linkend="conversion-names"> for available
-       conversion names. </entry>
-       <entry><literal>convert('PostgreSQL' using iso8859_1_to_utf8)</literal></entry>
-       <entry><literal>'PostgreSQL' in UNICODE(UTF-8) encoding</literal></entry>
+       <entry>
+        Change encoding using specified conversion name.  Conversions
+        can be defined by <command>CREATE CONVERSION</command>.  Also
+        there are some pre-defined conversion names. See <xref
+        linkend="conversion-names"> for available conversion
+        names.
+       </entry>
+       <entry><literal>convert('PostgreSQL' using iso_8859_1_to_utf_8)</literal></entry>
+       <entry><literal>'PostgreSQL'</literal> in UNICODE (UTF-8) encoding</entry>
       </row>
 
       <row>
@@ -1291,18 +1293,29 @@ PostgreSQL documentation
 
    <para>
     The <function>to_ascii</function> function supports conversion from
-    LATIN1, LATIN2, WIN1250 (CP1250) only.
+    <literal>LATIN1</>, <literal>LATIN2</>, and <literal>WIN1250</> only.
    </para>
 
 
    <table id="conversion-names">
-    <title>Available conversion names</title>
+    <title>Built-in Conversions</title>
     <tgroup cols="3">
      <thead>
       <row>
-       <entry>conversion</entry>
-       <entry>source encoding</entry>
-       <entry>destination encoding</entry>
+       <entry>Conversion Name
+        <footnote>
+         <para>
+          The conversion names follow a standard naming scheme: The
+          official name of the source encoding with all
+          non-alphanumeric characters replaced by underscores followed
+          by <literal>_to_</literal> followed by the equally processed
+          destination encoding name. Therefore the names might deviate
+          from the customary encoding names.
+         </para>
+        </footnote>
+       </entry>
+       <entry>Source Encoding</entry>
+       <entry>Destination Encoding</entry>
       </row>
      </thead>
 
@@ -1464,7 +1477,7 @@ PostgreSQL documentation
       </row>
 
       <row>
-       <entry><literal>iso_8859_2_to_win1250</literal></entry>
+       <entry><literal>iso_8859_2_to_windows_1250</literal></entry>
        <entry><literal>LATIN2</literal></entry>
        <entry><literal>WIN1250</literal></entry>
       </row>
@@ -1494,7 +1507,7 @@ PostgreSQL documentation
       </row>
 
       <row>
-       <entry><literal>iso_8859_5_to_koi8r</literal></entry>
+       <entry><literal>iso_8859_5_to_koi8_r</literal></entry>
        <entry><literal>ISO_8859_5</literal></entry>
        <entry><literal>KOI8</literal></entry>
       </row>
@@ -1512,13 +1525,13 @@ PostgreSQL documentation
       </row>
 
       <row>
-       <entry><literal>iso_8859_5_to_win1251</literal></entry>
+       <entry><literal>iso_8859_5_to_windows_1251</literal></entry>
        <entry><literal>ISO_8859_5</literal></entry>
        <entry><literal>WIN</literal></entry>
       </row>
 
       <row>
-       <entry><literal>iso_8859_5_to_win866</literal></entry>
+       <entry><literal>iso_8859_5_to_windows_866</literal></entry>
        <entry><literal>ISO_8859_5</literal></entry>
        <entry><literal>ALT</literal></entry>
       </row>
@@ -1554,31 +1567,31 @@ PostgreSQL documentation
       </row>
 
       <row>
-       <entry><literal>koi8r_to_iso_8859_5</literal></entry>
+       <entry><literal>koi8_r_to_iso_8859_5</literal></entry>
        <entry><literal>KOI8</literal></entry>
        <entry><literal>ISO_8859_5</literal></entry>
       </row>
 
       <row>
-       <entry><literal>koi8r_to_mic</literal></entry>
+       <entry><literal>koi8_r_to_mic</literal></entry>
        <entry><literal>KOI8</literal></entry>
        <entry><literal>MULE_INTERNAL</literal></entry>
       </row>
 
       <row>
-       <entry><literal>koi8r_to_utf_8</literal></entry>
+       <entry><literal>koi8_r_to_utf_8</literal></entry>
        <entry><literal>KOI8</literal></entry>
        <entry><literal>UNICODE</literal></entry>
       </row>
 
       <row>
-       <entry><literal>koi8r_to_win1251</literal></entry>
+       <entry><literal>koi8_r_to_windows_1251</literal></entry>
        <entry><literal>KOI8</literal></entry>
        <entry><literal>WIN</literal></entry>
       </row>
 
       <row>
-       <entry><literal>koi8r_to_win866</literal></entry>
+       <entry><literal>koi8_r_to_windows_866</literal></entry>
        <entry><literal>KOI8</literal></entry>
        <entry><literal>ALT</literal></entry>
       </row>
@@ -1650,7 +1663,7 @@ PostgreSQL documentation
       </row>
 
       <row>
-       <entry><literal>mic_to_koi8r</literal></entry>
+       <entry><literal>mic_to_koi8_r</literal></entry>
        <entry><literal>MULE_INTERNAL</literal></entry>
        <entry><literal>KOI8</literal></entry>
       </row>
@@ -1662,19 +1675,19 @@ PostgreSQL documentation
       </row>
 
       <row>
-       <entry><literal>mic_to_win1250</literal></entry>
+       <entry><literal>mic_to_windows_1250</literal></entry>
        <entry><literal>MULE_INTERNAL</literal></entry>
        <entry><literal>WIN1250</literal></entry>
       </row>
 
       <row>
-       <entry><literal>mic_to_win1251</literal></entry>
+       <entry><literal>mic_to_windows_1251</literal></entry>
        <entry><literal>MULE_INTERNAL</literal></entry>
        <entry><literal>WIN</literal></entry>
       </row>
 
       <row>
-       <entry><literal>mic_to_win866</literal></entry>
+       <entry><literal>mic_to_windows_866</literal></entry>
        <entry><literal>MULE_INTERNAL</literal></entry>
        <entry><literal>ALT</literal></entry>
       </row>
@@ -1848,7 +1861,7 @@ PostgreSQL documentation
       </row>
 
       <row>
-       <entry><literal>utf_8_to_koi8r</literal></entry>
+       <entry><literal>utf_8_to_koi8_r</literal></entry>
        <entry><literal>UNICODE</literal></entry>
        <entry><literal>KOI8</literal></entry>
       </row>
@@ -1872,121 +1885,121 @@ PostgreSQL documentation
       </row>
 
       <row>
-       <entry><literal>utf_8_to_win1250</literal></entry>
+       <entry><literal>utf_8_to_windows_1250</literal></entry>
        <entry><literal>UNICODE</literal></entry>
        <entry><literal>WIN1250</literal></entry>
       </row>
 
       <row>
-       <entry><literal>utf_8_to_win1251</literal></entry>
+       <entry><literal>utf_8_to_windows_1251</literal></entry>
        <entry><literal>UNICODE</literal></entry>
        <entry><literal>WIN</literal></entry>
       </row>
 
       <row>
-       <entry><literal>utf_8_to_win1256</literal></entry>
+       <entry><literal>utf_8_to_windows_1256</literal></entry>
        <entry><literal>UNICODE</literal></entry>
        <entry><literal>WIN1256</literal></entry>
       </row>
 
       <row>
-       <entry><literal>utf_8_to_win866</literal></entry>
+       <entry><literal>utf_8_to_windows_866</literal></entry>
        <entry><literal>UNICODE</literal></entry>
        <entry><literal>ALT</literal></entry>
       </row>
 
       <row>
-       <entry><literal>utf_8_to_win874</literal></entry>
+       <entry><literal>utf_8_to_windows_874</literal></entry>
        <entry><literal>UNICODE</literal></entry>
        <entry><literal>WIN874</literal></entry>
       </row>
 
       <row>
-       <entry><literal>win1250_to_iso_8859_2</literal></entry>
+       <entry><literal>windows_1250_to_iso_8859_2</literal></entry>
        <entry><literal>WIN1250</literal></entry>
        <entry><literal>LATIN2</literal></entry>
       </row>
 
       <row>
-       <entry><literal>win1250_to_mic</literal></entry>
+       <entry><literal>windows_1250_to_mic</literal></entry>
        <entry><literal>WIN1250</literal></entry>
        <entry><literal>MULE_INTERNAL</literal></entry>
       </row>
 
       <row>
-       <entry><literal>win1250_to_utf_8</literal></entry>
+       <entry><literal>windows_1250_to_utf_8</literal></entry>
        <entry><literal>WIN1250</literal></entry>
        <entry><literal>UNICODE</literal></entry>
       </row>
 
       <row>
-       <entry><literal>win1251_to_iso_8859_5</literal></entry>
+       <entry><literal>windows_1251_to_iso_8859_5</literal></entry>
        <entry><literal>WIN</literal></entry>
        <entry><literal>ISO_8859_5</literal></entry>
       </row>
 
       <row>
-       <entry><literal>win1251_to_koi8r</literal></entry>
+       <entry><literal>windows_1251_to_koi8_r</literal></entry>
        <entry><literal>WIN</literal></entry>
        <entry><literal>KOI8</literal></entry>
       </row>
 
       <row>
-       <entry><literal>win1251_to_mic</literal></entry>
+       <entry><literal>windows_1251_to_mic</literal></entry>
        <entry><literal>WIN</literal></entry>
        <entry><literal>MULE_INTERNAL</literal></entry>
       </row>
 
       <row>
-       <entry><literal>win1251_to_utf_8</literal></entry>
+       <entry><literal>windows_1251_to_utf_8</literal></entry>
        <entry><literal>WIN</literal></entry>
        <entry><literal>UNICODE</literal></entry>
       </row>
 
       <row>
-       <entry><literal>win1251_to_win866</literal></entry>
+       <entry><literal>windows_1251_to_windows_866</literal></entry>
        <entry><literal>WIN</literal></entry>
        <entry><literal>ALT</literal></entry>
       </row>
 
       <row>
-       <entry><literal>win1256_to_utf_8</literal></entry>
+       <entry><literal>windows_1256_to_utf_8</literal></entry>
        <entry><literal>WIN1256</literal></entry>
        <entry><literal>UNICODE</literal></entry>
       </row>
 
       <row>
-       <entry><literal>win866_to_iso_8859_5</literal></entry>
+       <entry><literal>windows_866_to_iso_8859_5</literal></entry>
        <entry><literal>ALT</literal></entry>
        <entry><literal>ISO_8859_5</literal></entry>
       </row>
 
       <row>
-       <entry><literal>win866_to_koi8r</literal></entry>
+       <entry><literal>windows_866_to_koi8_r</literal></entry>
        <entry><literal>ALT</literal></entry>
        <entry><literal>KOI8</literal></entry>
       </row>
 
       <row>
-       <entry><literal>win866_to_mic</literal></entry>
+       <entry><literal>windows_866_to_mic</literal></entry>
        <entry><literal>ALT</literal></entry>
        <entry><literal>MULE_INTERNAL</literal></entry>
       </row>
 
       <row>
-       <entry><literal>win866_to_utf_8</literal></entry>
+       <entry><literal>windows_866_to_utf_8</literal></entry>
        <entry><literal>ALT</literal></entry>
        <entry><literal>UNICODE</literal></entry>
       </row>
 
       <row>
-       <entry><literal>win866_to_win1251</literal></entry>
+       <entry><literal>windows_866_to_windows_1251</literal></entry>
        <entry><literal>ALT</literal></entry>
        <entry><literal>WIN</literal></entry>
       </row>
 
       <row>
-       <entry><literal>win874_to_utf_8</literal></entry>
+       <entry><literal>windows_874_to_utf_8</literal></entry>
        <entry><literal>WIN874</literal></entry>
        <entry><literal>UNICODE</literal></entry>
       </row>
@@ -2310,7 +2323,7 @@ PostgreSQL documentation
 
    <indexterm zone="functions-sql99-regexp">
     <primary>regular expressions</primary>
-    <seealso>pattern matching</seealso>
+    <!-- <seealso>pattern matching</seealso> breaks index build -->
    </indexterm>
 
    <indexterm>
