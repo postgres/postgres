@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/truncate.sgml,v 1.8 2002/05/18 15:44:47 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/truncate.sgml,v 1.9 2002/12/06 03:15:07 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -83,12 +83,6 @@ TRUNCATE TABLE
    table. It has the same effect as an unqualified
    <command>DELETE</command> but since it does not actually scan the
    table it is faster. This is most useful on large tables.
-  </para>
-
-  <para>
-   <command>TRUNCATE</command> cannot be executed inside a transaction
-   block (<command>BEGIN</>/<command>COMMIT</> pair), because there is
-   no way to roll it back.
   </para>
  </refsect1>
 
