@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Wed Oct 29 15:19:43 EST 2003
+   Last updated: Fri Nov 7 12:01:57 EST 2003
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -349,7 +349,7 @@
           Web page comparing PostgreSQL to MySQL at
           http://openacs.org/philosophy/why-not-mysql.html Also, MySQL is
           is a company that distributes its products via open source, not
-          an open source development community ilke PostgreSQL.
+          an open source development community like PostgreSQL.
           
    Reliability
           We realize that a DBMS must be reliable, or it is worthless. We
