@@ -4,7 +4,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Attic/scan.l,v 1.26 2003/05/29 22:30:02 tgl Exp $
+ *    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Attic/scan.l,v 1.27 2003/06/17 04:35:03 tgl Exp $
  *
  *    This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -168,25 +168,59 @@ dump			{ return O_DUMP;			}
 
     /* ----------
      * Special word rules
+	 *
+	 * We set plpgsql_error_lineno in each rule so that errors reported
+	 * in the pl_comp.c subroutines will point to the right place.
      * ----------
      */
-{identifier}					{ return plpgsql_parse_word(yytext);	}
-{identifier}{space}*\.{space}*{identifier}	{ return plpgsql_parse_dblword(yytext);	}
-{identifier}{space}*\.{space}*{identifier}{space}*\.{space}*{identifier}	{ return plpgsql_parse_tripword(yytext); }
-{identifier}{space}*%TYPE		{ return plpgsql_parse_wordtype(yytext);	}
-{identifier}{space}*\.{space}*{identifier}{space}*%TYPE	{ return plpgsql_parse_dblwordtype(yytext); }
-{identifier}{space}*\.{space}*{identifier}{space}*\.{space}*{identifier}{space}*%TYPE	{ return plpgsql_parse_tripwordtype(yytext); }
-{identifier}{space}*%ROWTYPE	{ return plpgsql_parse_wordrowtype(yytext);	}
-{identifier}{space}*\.{space}*{identifier}{space}*%ROWTYPE	{ return plpgsql_parse_dblwordrowtype(yytext);	}
-
-\${digit}+						{ return plpgsql_parse_word(yytext);	}
-\${digit}+{space}*\.{space}*{identifier}	{ return plpgsql_parse_dblword(yytext);	}
-\${digit}+{space}*\.{space}*{identifier}{space}*\.{space}*{identifier}	{ return plpgsql_parse_tripword(yytext); }
-\${digit}+{space}*%TYPE			{ return plpgsql_parse_wordtype(yytext);	}
-\${digit}+{space}*\.{space}*{identifier}{space}*%TYPE	{ return plpgsql_parse_dblwordtype(yytext); }
-\${digit}+{space}*\.{space}*{identifier}{space}*\.{space}*{identifier}{space}*%TYPE	{ return plpgsql_parse_tripwordtype(yytext); }
-\${digit}+{space}*%ROWTYPE		{ return plpgsql_parse_wordrowtype(yytext);	}
-\${digit}+{space}*\.{space}*{identifier}{space}*%ROWTYPE	{ return plpgsql_parse_dblwordrowtype(yytext);	}
+{identifier}					{
+	plpgsql_error_lineno = plpgsql_scanner_lineno();
+	return plpgsql_parse_word(yytext); }
+{identifier}{space}*\.{space}*{identifier}	{
+	plpgsql_error_lineno = plpgsql_scanner_lineno();
+	return plpgsql_parse_dblword(yytext); }
+{identifier}{space}*\.{space}*{identifier}{space}*\.{space}*{identifier}	{
+	plpgsql_error_lineno = plpgsql_scanner_lineno();
+	return plpgsql_parse_tripword(yytext); }
+{identifier}{space}*%TYPE		{
+	plpgsql_error_lineno = plpgsql_scanner_lineno();
+	return plpgsql_parse_wordtype(yytext); }
+{identifier}{space}*\.{space}*{identifier}{space}*%TYPE	{
+	plpgsql_error_lineno = plpgsql_scanner_lineno();
+	return plpgsql_parse_dblwordtype(yytext); }
+{identifier}{space}*\.{space}*{identifier}{space}*\.{space}*{identifier}{space}*%TYPE	{
+	plpgsql_error_lineno = plpgsql_scanner_lineno();
+	return plpgsql_parse_tripwordtype(yytext); }
+{identifier}{space}*%ROWTYPE	{
+	plpgsql_error_lineno = plpgsql_scanner_lineno();
+	return plpgsql_parse_wordrowtype(yytext); }
+{identifier}{space}*\.{space}*{identifier}{space}*%ROWTYPE	{
+	plpgsql_error_lineno = plpgsql_scanner_lineno();
+	return plpgsql_parse_dblwordrowtype(yytext); }
+\${digit}+						{
+	plpgsql_error_lineno = plpgsql_scanner_lineno();
+	return plpgsql_parse_word(yytext); }
+\${digit}+{space}*\.{space}*{identifier}	{
+	plpgsql_error_lineno = plpgsql_scanner_lineno();
+	return plpgsql_parse_dblword(yytext); }
+\${digit}+{space}*\.{space}*{identifier}{space}*\.{space}*{identifier}	{
+	plpgsql_error_lineno = plpgsql_scanner_lineno();
+	return plpgsql_parse_tripword(yytext); }
+\${digit}+{space}*%TYPE			{
+	plpgsql_error_lineno = plpgsql_scanner_lineno();
+	return plpgsql_parse_wordtype(yytext); }
+\${digit}+{space}*\.{space}*{identifier}{space}*%TYPE	{
+	plpgsql_error_lineno = plpgsql_scanner_lineno();
+	return plpgsql_parse_dblwordtype(yytext); }
+\${digit}+{space}*\.{space}*{identifier}{space}*\.{space}*{identifier}{space}*%TYPE	{
+	plpgsql_error_lineno = plpgsql_scanner_lineno();
+	return plpgsql_parse_tripwordtype(yytext); }
+\${digit}+{space}*%ROWTYPE		{
+	plpgsql_error_lineno = plpgsql_scanner_lineno();
+	return plpgsql_parse_wordrowtype(yytext); }
+\${digit}+{space}*\.{space}*{identifier}{space}*%ROWTYPE	{
+	plpgsql_error_lineno = plpgsql_scanner_lineno();
+	return plpgsql_parse_dblwordrowtype(yytext); }
 
 {digit}+		{ return T_NUMBER;			}
 
