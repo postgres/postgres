@@ -1,7 +1,7 @@
 #include <pgtypes_numeric.h>
 
 #ifndef dec_t
-#define dec_t Numeric
+#define dec_t Decimal
 #endif /* dec_t */
 
 int decadd(dec_t *, dec_t *, dec_t *);

@@ -172,6 +172,9 @@ get_type(enum ECPGttype type)
 		case ECPGt_const:		/* constant string quoted */
 			return ("ECPGt_const");
 			break;
+		case ECPGt_decimal:
+			return ("ECPGt_decimal");
+			break;
 		case ECPGt_numeric:
 			return ("ECPGt_numeric");
 			break;

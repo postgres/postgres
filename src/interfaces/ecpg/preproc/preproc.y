@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.243 2003/06/29 16:52:58 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.244 2003/07/01 12:40:51 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -4453,7 +4453,7 @@ single_vt_type: common_type
 			else if (strcmp($1, "decimal") == 0)
 			{
 				$$.type_enum = ECPGt_decimal;
-				$$.type_str = make_str("Numeric");
+				$$.type_str = make_str("Decimal");
 				$$.type_dimension = make_str("-1");
 				$$.type_index = make_str("-1");
 				$$.type_sizeof = NULL;
@@ -4751,11 +4751,19 @@ common_type: simple_type
 		}
 		| ECPGColLabelCommon '(' precision opt_scale ')'
 		{
-			if (strcmp($1, "numeric") != 0 && strcmp($1, "decimal") != 0)
+			if (strcmp($1, "numeric") == 0)
+			{
+				$$.type_enum = ECPGt_numeric;
+				$$.type_str = make_str("Numeric");
+			}
+			else if (strcmp($1, "decimal") == 0)
+			{
+				$$.type_enum = ECPGt_decimal;
+				$$.type_str = make_str("Decimal");
+			}
+			else
 				mmerror(PARSE_ERROR, ET_ERROR, "Only numeric/decimal have precision/scale argument");
 			
-			$$.type_enum = (strcmp($1, "numeric") != 0) ? ECPGt_decimal : ECPGt_numeric;
-			$$.type_str = make_str("Numeric");
 			$$.type_dimension = make_str("-1");
 			$$.type_index = make_str("-1");
 			$$.type_sizeof = NULL;
@@ -4807,7 +4815,7 @@ var_type:	common_type
 			else if (strcmp($1, "decimal") == 0)
 			{
 				$$.type_enum = ECPGt_decimal;
-				$$.type_str = make_str("Numeric");
+				$$.type_str = make_str("Deciaml");
 				$$.type_dimension = make_str("-1");
 				$$.type_index = make_str("-1");
 				$$.type_sizeof = NULL;
@@ -5076,21 +5084,6 @@ variable: opt_pointer ECPGColLabelCommon opt_array_bounds opt_initializer
 					$$ = cat_str(4, $1, mm_strdup($2), $3.str, $4);
 					break;
 
-				case ECPGt_decimal: /* this is used by informix and need to be initialized */
-					if (atoi(dimension) < 0)
-						type = ECPGmake_simple_type(ECPGt_numeric, make_str("1"));
-					else
-						type = ECPGmake_array_type(ECPGmake_simple_type(ECPGt_numeric, make_str("1")), dimension);
-
-					if (strlen($4) == 0)
-					{
-						$4 = mm_alloc(sizeof(" = {0, 0, 0, 0, 0, NULL, NULL}"));
-						strcpy($4, " = {0, 0, 0, 0, 0, NULL, NULL}");
-					}
-					
-					$$ = cat_str(4, $1, mm_strdup($2), $3.str, $4);
-					
-					break;
 				default:
 					if (atoi(dimension) < 0)
 						type = ECPGmake_simple_type(actual_type[struct_level].type_enum, make_str("1"));

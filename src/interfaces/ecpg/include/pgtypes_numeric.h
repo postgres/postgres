@@ -9,6 +9,8 @@
 #define NUMERIC_MIN_DISPLAY_SCALE       0
 #define NUMERIC_MIN_SIG_DIGITS          16
 
+#define DECSIZE 30
+
 typedef unsigned char NumericDigit;
 typedef struct 
 {
@@ -21,7 +23,17 @@ typedef struct
 		NumericDigit *digits;	/* decimal digits */
 } Numeric;
 
-Numeric *PGTYPESnew(void);
+typedef struct 
+{
+		int ndigits;		/* number of digits in digits[] - can be 0! */
+		int weight;		/* weight of first digit */
+		int rscale;		/* result scale */
+		int dscale;		/* display scale */
+		int sign;		/* NUMERIC_POS, NUMERIC_NEG, or NUMERIC_NAN */
+		NumericDigit digits[DECSIZE];	/* decimal digits */
+} Decimal;
+
+Numeric *PGTYPESnumeric_new(void);
 void PGTYPESnumeric_free(Numeric *);
 Numeric *PGTYPESnumeric_from_asc(char *, char **);
 char *PGTYPESnumeric_to_asc(Numeric *, int);
@@ -37,5 +49,7 @@ int PGTYPESnumeric_from_double(double, Numeric *);
 int PGTYPESnumeric_to_double(Numeric *, double *);
 int PGTYPESnumeric_to_int(Numeric *, int *);
 int PGTYPESnumeric_to_long(Numeric *, long *);
+int PGTYPESnumeric_to_decimal(Numeric *, Decimal *);
+int PGTYPESnumeric_from_decimal(Decimal *, Numeric *);
 
 #endif /* PGTYPES_NUMERIC */

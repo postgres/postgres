@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.8 2003/06/26 01:45:04 momjian Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.9 2003/07/01 12:40:51 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -85,6 +85,7 @@ static struct sqlca_t sqlca =
 
 #ifdef USE_THREADS
 static pthread_mutex_t debug_mutex    = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t debug_init_mutex    = PTHREAD_MUTEX_INITIALIZER;
 #endif
 static int simple_debug = 0;
 static FILE *debugstream = NULL;
@@ -204,7 +205,7 @@ void
 ECPGdebug(int n, FILE *dbgs)
 {
 #ifdef USE_THREADS
-	pthread_mutex_lock(&debug_mutex);
+	pthread_mutex_lock(&debug_init_mutex);
 #endif
 
 	simple_debug = n;
@@ -212,7 +213,7 @@ ECPGdebug(int n, FILE *dbgs)
 	ECPGlog("ECPGdebug: set to %d\n", simple_debug);
 
 #ifdef USE_THREADS
-	pthread_mutex_unlock(&debug_mutex);
+	pthread_mutex_unlock(&debug_init_mutex);
 #endif
 }
 
@@ -241,6 +242,7 @@ ECPGlog(const char *format,...)
 		va_start(ap, format);
 		vfprintf(debugstream, f, ap);
 		va_end(ap);
+		fflush(debugstream);
 
 		ECPGfree(f);
 	}
@@ -286,6 +288,9 @@ ECPGset_informix_null(enum ECPGttype type, void *ptr)
 			break;
 		case ECPGt_varchar:
 			*(((struct ECPGgeneric_varchar *) ptr)->arr) = 0x00;
+			break;
+		case ECPGt_decimal:
+			((Decimal *) ptr)->sign = NUMERIC_NAN;
 			break;
 		case ECPGt_numeric:
 			((Numeric *) ptr)->sign = NUMERIC_NAN;
@@ -344,6 +349,9 @@ ECPGis_informix_null(enum ECPGttype type, void *ptr)
 			break;
 		case ECPGt_varchar:
 			if (*(((struct ECPGgeneric_varchar *) ptr)->arr) == 0x00) return true;
+			break;
+		case ECPGt_decimal:
+			if (((Decimal *) ptr)->sign == NUMERIC_NAN) return true;
 			break;
 		case ECPGt_numeric:
 			if (((Numeric *) ptr)->sign == NUMERIC_NAN) return true;

@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/src/interfaces/ecpg/test/Makefile,v 1.37 2003/06/25 10:44:21 meskes Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/ecpg/test/Makefile,v 1.38 2003/07/01 12:40:52 meskes Exp $
 
 subdir = src/interfaces/ecpg/test
 top_builddir = ../../../..
@@ -22,7 +22,7 @@ test_informix: test_informix.o
 	$(ECPG) $<
 
 test_informix.c: test_informix.pgc
-	$(ECPG) -C INFORMIX $<
+	$(ECPG) -C INFORMIX -r no_indicator $<
 clean:
 	rm -f $(TESTS) $(TESTS:%=%.o) $(TESTS:%=%.c) log
 	

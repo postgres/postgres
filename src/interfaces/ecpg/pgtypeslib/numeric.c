@@ -126,7 +126,7 @@ alloc_var(Numeric *var, int ndigits)
 }
 
 Numeric * 
-PGTYPESnew(void)
+PGTYPESnumeric_new(void)
 {
 	Numeric *var;
 		
@@ -1489,3 +1489,45 @@ PGTYPESnumeric_to_long(Numeric* nv, long* lp) {
 	return 0;
 }
 
+int
+PGTYPESnumeric_to_decimal(Numeric *src, Decimal *dst) {
+	int i;
+
+	if (src->ndigits > DECSIZE) {
+		errno = PGTYPES_NUM_OVERFLOW;
+		return -1;
+	}
+	
+	dst->weight = src->weight;
+	dst->rscale = src->rscale;
+	dst->dscale = src->dscale;
+	dst->sign = src->sign;
+	dst->ndigits = src->ndigits;
+
+	for (i = 0; i < src->ndigits; i++) {
+		dst->digits[i] = src->digits[i];
+	}
+
+	return 0;
+}
+
+int
+PGTYPESnumeric_from_decimal(Decimal *src, Numeric *dst) {
+	int i;
+
+	zero_var(dst);
+
+	dst->weight = src->weight;
+	dst->rscale = src->rscale;
+	dst->dscale = src->dscale;
+	dst->sign = src->sign;
+
+	if (alloc_var(dst, src->ndigits) != 0)
+		return -1;
+
+	for (i = 0; i < src->ndigits; i++) {
+		dst->digits[i] = src->digits[i];
+	}
+
+	return 0;
+}

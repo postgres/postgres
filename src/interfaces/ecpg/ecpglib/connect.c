@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.9 2003/06/26 11:37:05 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.10 2003/07/01 12:40:51 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -18,14 +18,10 @@ static pthread_mutex_t connections_mutex = PTHREAD_MUTEX_INITIALIZER;
 static struct connection *all_connections   = NULL;
 static struct connection *actual_connection = NULL;
 
-struct connection *
-ECPGget_connection(const char *connection_name)
+static struct connection *
+ecpg_get_connection_nr(const char *connection_name)
 {
   struct connection *ret = NULL;
-
-#ifdef USE_THREADS
-  pthread_mutex_lock(&connections_mutex);
-#endif
 
   if( (connection_name == NULL) || (strcmp(connection_name, "CURRENT") == 0) )
     {
@@ -43,11 +39,25 @@ ECPGget_connection(const char *connection_name)
       ret = con;
     }
 
+  return( ret );
+}
+
+struct connection *
+ECPGget_connection(const char *connection_name)
+{
+  struct connection *ret = NULL;
+#ifdef USE_THREADS
+  pthread_mutex_lock(&connections_mutex);
+#endif
+  
+  ret = ecpg_get_connection_nr(connection_name);
+
 #ifdef USE_THREADS
   pthread_mutex_unlock(&connections_mutex);
 #endif
 
-  return( ret );
+  return (ret);
+	
 }
 
 static void
@@ -546,7 +556,7 @@ ECPGdisconnect(int lineno, const char *connection_name)
 	}
 	else
 	{
-		con = ECPGget_connection(connection_name);
+		con = ecpg_get_connection_nr(connection_name);
 
 		if (!ECPGinit(con, connection_name, lineno))
 		  {

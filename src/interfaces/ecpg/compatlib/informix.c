@@ -11,50 +11,115 @@
 
 char * ECPGalloc(long, int);
 
-/* we start with the numeric functions */
-int
-decadd(Numeric *arg1, Numeric *arg2, Numeric *sum)
+static int
+deccall2(Decimal *arg1, Decimal *arg2, int (*ptr)(Numeric *, Numeric *))
 {
-	Numeric *temp_sum = malloc(sizeof(Numeric)) ;
+	Numeric *a1, *a2;
 	int i;
-	
-	if (temp_sum == NULL)
+
+	if ((a1 = PGTYPESnumeric_new()) == NULL)
 		return -1211;
 	
-	i = PGTYPESnumeric_add(arg1, arg2, temp_sum);
-
-	if (i == 0) /* No error */
+	if ((a2 = PGTYPESnumeric_new()) == NULL)
 	{
-
-		if (PGTYPESnumeric_copy(temp_sum, sum) !=0)
-			return -1211;
-
-		free(temp_sum);
-		return 0;
-	}
-	else
-	{
-		free(temp_sum);
-		
-		if (errno == PGTYPES_NUM_OVERFLOW)
-			return -1200;
+		PGTYPESnumeric_free(a1);
+		return -1211;
 	}
 
-	return -1201;	
-}
-
-int
-deccmp(Numeric *arg1, Numeric *arg2)
-{
-	int i = PGTYPESnumeric_cmp(arg1, arg2);
+	if (PGTYPESnumeric_from_decimal(arg1, a1) != 0)
+	{
+		PGTYPESnumeric_free(a1);
+		PGTYPESnumeric_free(a2);
+		return -1211;
+	}
+	
+	if (PGTYPESnumeric_from_decimal(arg2, a2) != 0)
+	{
+		PGTYPESnumeric_free(a1);
+		PGTYPESnumeric_free(a2);
+		return -1211;
+	}
+	
+	i = (*ptr)(a1, a2);
+	
+	PGTYPESnumeric_free(a1);
+	PGTYPESnumeric_free(a2);
 	
 	return (i);
 }
 
-void
-deccopy(Numeric *src, Numeric *target)
+static int
+deccall3(Decimal *arg1, Decimal *arg2, Decimal *result, int (*ptr)(Numeric *, Numeric *, Numeric *))
 {
-	PGTYPESnumeric_copy(src, target);
+	Numeric *a1, *a2, *nres;
+	int i;
+
+	if ((a1 = PGTYPESnumeric_new()) == NULL)
+		return -1211;
+	
+	if ((a2 = PGTYPESnumeric_new()) == NULL)
+	{
+		PGTYPESnumeric_free(a1);
+		return -1211;
+	}
+
+	if ((nres = PGTYPESnumeric_new()) == NULL)
+	{
+		PGTYPESnumeric_free(a1);
+		PGTYPESnumeric_free(a2);
+		return -1211;
+	}
+
+	if (PGTYPESnumeric_from_decimal(arg1, a1) != 0)
+	{
+		PGTYPESnumeric_free(a1);
+		PGTYPESnumeric_free(a2);
+		PGTYPESnumeric_free(nres);
+		return -1211;
+	}
+	
+	if (PGTYPESnumeric_from_decimal(arg2, a2) != 0)
+	{
+		PGTYPESnumeric_free(a1);
+		PGTYPESnumeric_free(a2);
+		PGTYPESnumeric_free(nres);
+		return -1211;
+	}
+	
+	i = (*ptr)(a1, a2, nres);
+	
+	if (i == 0) /* No error */
+		PGTYPESnumeric_to_decimal(nres, result);
+
+	PGTYPESnumeric_free(nres);
+	PGTYPESnumeric_free(a1);
+	PGTYPESnumeric_free(a2);
+	
+	return (i);
+}
+/* we start with the numeric functions */
+int
+decadd(Decimal *arg1, Decimal *arg2, Decimal *sum)
+{
+	deccall3(arg1, arg2, sum, PGTYPESnumeric_add);
+
+	if (errno == PGTYPES_NUM_OVERFLOW)
+		return -1200;
+	else if (errno != 0)
+		return -1201;	
+	else return 0;
+}
+
+int
+deccmp(Decimal *arg1, Decimal *arg2)
+{
+	return(deccall2(arg1, arg2, PGTYPESnumeric_cmp));
+}
+
+void
+deccopy(Decimal *src, Decimal *target)
+{
+	memcpy(target, src, sizeof(Decimal));
 }
 
 static char *
@@ -77,11 +142,12 @@ strndup(const char *str, size_t len)
 }
 
 int
-deccvasc(char *cp, int len, Numeric *np)
+deccvasc(char *cp, int len, Decimal *np)
 {
-	char *str = strndup(cp, len); /* Numeric_in always converts the complete string */
+	char *str = strndup(cp, len); /* Decimal_in always converts the complete string */
 	int ret = 0;
 	Numeric *result;
+	
 	
 	if (!str)
 		ret = -1201;
@@ -102,129 +168,136 @@ deccvasc(char *cp, int len, Numeric *np)
 		}
 		else
 		{
-			if (PGTYPESnumeric_copy(result, np) !=0)
-				ret = -1211;
+			if (PGTYPESnumeric_to_decimal(result, np) !=0)
+				ret = -1200;
 
 			free(result);
 		}
 	}
 	
+	free(str);
 	return ret;
 }
 
 int
-deccvdbl(double dbl, Numeric *np)
+deccvdbl(double dbl, Decimal *np)
 {
-	return(PGTYPESnumeric_from_double(dbl, np));
-}
-
-int
-deccvint(int in, Numeric *np)
-{
-	return(PGTYPESnumeric_from_int(in, np));
-}
-
-int
-deccvlong(long lng, Numeric *np)
-{
-	return(PGTYPESnumeric_from_long(lng, np));	
-}
-
-int
-decdiv(Numeric *n1, Numeric *n2, Numeric *n3)
-{
-	Numeric *temp = malloc(sizeof(Numeric));
-	int i, ret = 0;
-
-	if (temp == NULL)
-		return -1211;
+	Numeric *nres = PGTYPESnumeric_new();
+	int result = 1;
 	
-	i = PGTYPESnumeric_div(n1, n2, temp);
+	if (nres == NULL)
+		return -1211;
+
+	result = PGTYPESnumeric_from_double(dbl, nres);
+	if (result == 0)
+		result = PGTYPESnumeric_to_decimal(nres, np);
+
+	PGTYPESnumeric_free(nres);
+	return(result);
+}
+
+int
+deccvint(int in, Decimal *np)
+{
+	Numeric *nres = PGTYPESnumeric_new();
+	int result = 1;
+	
+	if (nres == NULL)
+		return -1211;
+
+	result = PGTYPESnumeric_from_int(in, nres);
+	if (result == 0)
+		result = PGTYPESnumeric_to_decimal(nres, np);
+
+	PGTYPESnumeric_free(nres);
+	return(result);
+}
+
+int
+deccvlong(long lng, Decimal *np)
+{
+	Numeric *nres = PGTYPESnumeric_new();
+	int result = 1;
+	
+	if (nres == NULL)
+		return -1211;
+
+	result = PGTYPESnumeric_from_long(lng, nres);
+	if (result == 0)
+		result = PGTYPESnumeric_to_decimal(nres, np);
+
+	PGTYPESnumeric_free(nres);
+	return(result);
+}
+
+int
+decdiv(Decimal *n1, Decimal *n2, Decimal *n3)
+{
+	int i = deccall3(n1, n2, n3, PGTYPESnumeric_div);
 
 	if (i != 0)
 		switch (errno)
 		{
-			case PGTYPES_NUM_DIVIDE_ZERO: ret = -1202;
+			case PGTYPES_NUM_DIVIDE_ZERO: return -1202;
 						  break;
-			case PGTYPES_NUM_OVERFLOW:    ret = -1200;
+			case PGTYPES_NUM_OVERFLOW:    return  -1200;
 						  break;
-			default:		  ret = -1201;
+			default:		  return -1201;
 						  break;
 		}
-	else
-		if (PGTYPESnumeric_copy(temp, n3) !=0)
-			ret = -1211;
-		
-	free(temp);
-	return ret;
+
+	return 0;
 }
 
 int 
-decmul(Numeric *n1, Numeric *n2, Numeric *n3)
+decmul(Decimal *n1, Decimal *n2, Decimal *n3)
 {
-	Numeric *temp = malloc(sizeof(Numeric));
-	int i, ret = 0;
+	int i = deccall3(n1, n2, n3, PGTYPESnumeric_mul);
 	
-	if (temp == NULL)
-		return -1211;
-	
-	i = PGTYPESnumeric_mul(n1, n2, temp);
+	if (i != 0)
+		switch (errno)
+		{
+			case PGTYPES_NUM_OVERFLOW:    return -1200;
+						  break;
+			default:		  return -1201;
+						  break;
+		}
+
+	return 0;
+}
+
+int
+decsub(Decimal *n1, Decimal *n2, Decimal *n3)
+{
+	int i = deccall3(n1, n2, n3, PGTYPESnumeric_sub);
 
 	if (i != 0)
 		switch (errno)
 		{
-			case PGTYPES_NUM_OVERFLOW:    ret = -1200;
+			case PGTYPES_NUM_OVERFLOW:    return -1200;
 						  break;
-			default:		  ret = -1201;
+			default:		  return -1201;
 						  break;
 		}
-	else
-		if (PGTYPESnumeric_copy(temp, n3) !=0)
-			ret = -1211;
-		
-	free(temp);
 
-	return ret;
+	return 0;
 }
 
 int
-decsub(Numeric *n1, Numeric *n2, Numeric *n3)
-{
-	Numeric *temp = malloc(sizeof(Numeric));
-	int i, ret = 0;
-	
-	if (temp == NULL)
-		return -1211;
-	
-	i = PGTYPESnumeric_sub(n1, n2, temp);
-
-	if (i != 0)
-		switch (errno)
-		{
-			case PGTYPES_NUM_OVERFLOW:    ret = -1200;
-						  break;
-			default:		  ret = -1201;
-						  break;
-		}
-	else
-		if (PGTYPESnumeric_copy(temp, n3) !=0)
-			ret = -1211;
-		
-	free(temp);
-
-	return ret;
-}
-
-int
-dectoasc(Numeric *np, char *cp, int len, int right)
+dectoasc(Decimal *np, char *cp, int len, int right)
 {
 	char *str;
+	Numeric *nres;
+
+	if (PGTYPESnumeric_from_decimal(np, nres) != 0)
+		return -1211;
 	
 	if (right >= 0)
-		str = PGTYPESnumeric_to_asc(np, right);
+		str = PGTYPESnumeric_to_asc(nres, right);
 	else
-		str = PGTYPESnumeric_to_asc(np, 0);
+		str = PGTYPESnumeric_to_asc(nres, 0);
 
+	PGTYPESnumeric_free(nres);
 	if (!str)
 		return -1;
 	
@@ -236,15 +309,36 @@ dectoasc(Numeric *np, char *cp, int len, int right)
 }
 
 int
-dectodbl(Numeric *np, double *dblp)
+dectodbl(Decimal *np, double *dblp)
 {
-	return(PGTYPESnumeric_to_double(np, dblp));
+	Numeric *nres = PGTYPESnumeric_new();;
+	int i;
+
+	if (nres == NULL)
+		return -1211;
+			
+	if (PGTYPESnumeric_from_decimal(np, nres) != 0)
+		return -1211;
+	
+	i = PGTYPESnumeric_to_double(nres, dblp);
+	PGTYPESnumeric_free(nres);
+
+	return i;
 }
 
 int
-dectoint(Numeric *np, int *ip)
+dectoint(Decimal *np, int *ip)
 {
-	int ret = PGTYPESnumeric_to_int(np, ip);
+	int ret;
+	Numeric *nres = PGTYPESnumeric_new();
+
+	if (nres == NULL)
+		return -1211;
+			
+	if (PGTYPESnumeric_from_decimal(np, nres) != 0)
+		return -1211;
+	
+	ret = PGTYPESnumeric_to_int(nres, ip);
 
 	if (ret == PGTYPES_NUM_OVERFLOW)
 		ret = -1200;
@@ -253,9 +347,18 @@ dectoint(Numeric *np, int *ip)
 }
 
 int
-dectolong(Numeric *np, long *lngp)	
+dectolong(Decimal *np, long *lngp)	
 {
-	int ret = PGTYPESnumeric_to_long(np, lngp);
+	int ret;
+	Numeric *nres = PGTYPESnumeric_new();;
+
+	if (nres == NULL)
+		return -1211;
+			
+	if (PGTYPESnumeric_from_decimal(np, nres) != 0)
+		return -1211;
+	
+	ret = PGTYPESnumeric_to_long(nres, lngp);
 
 	if (ret == PGTYPES_NUM_OVERFLOW)
 		ret = -1200;

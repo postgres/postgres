@@ -5,7 +5,7 @@ void openit(void);
 int main()
 {
 	$int i = 14; 
-	$decimal j;
+	$decimal j, m, n;
 	FILE *dbgs;
 
 	if ((dbgs = fopen("log", "w")) != NULL)
@@ -41,7 +41,10 @@ int main()
 		}
 	}
 
-	$delete from test where i=87;
+	deccvint(7, &j);
+	deccvint(14, &m);
+	decadd(&j, &m, &n);
+	$delete from test where i=:n;
 	printf("delete: %ld\n", sqlca.sqlcode);
 
 	$commit;

@@ -4,7 +4,7 @@
 #define CLONGTYPE	ECPGt_long
 #define CFLOATTYPE	ECPGt_float
 #define CDOUBLETYPE	ECPGt_double
-#define CDECIMALTYPE	ECPGt_numeric
+#define CDECIMALTYPE	ECPGt_decimal
 #define CFIXCHARTYPE	108
 #define CSTRINGTYPE	ECPGt_char
 #define CDATETYPE	ECPGt_date

@@ -18,16 +18,16 @@ main()
 	exec sql whenever sqlerror do sqlprint();
 
 	exec sql connect to mm;
-	exec sql create table test (text char(5), num decimal(14,7));
+	exec sql create table test (text char(5), num numeric(14,7));
 	
-	value1 = PGTYPESnew();
+	value1 = PGTYPESnumeric_new();
 	PGTYPESnumeric_from_int(1407, value1);
 	text = PGTYPESnumeric_to_asc(value1, 0);
 	printf("long = %s\n", text);
 		
 	value1 = PGTYPESnumeric_from_asc("2369.7", NULL);
 	value2 = PGTYPESnumeric_from_asc("10.0", NULL);
-	res = PGTYPESnew();
+	res = PGTYPESnumeric_new();
 	PGTYPESnumeric_add(value1, value2, res);
 	text = PGTYPESnumeric_to_asc(res, 0);
 	printf("add = %s\n", text);

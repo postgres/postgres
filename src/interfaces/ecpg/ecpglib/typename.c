@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/typename.c,v 1.7 2003/06/20 12:01:46 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/typename.c,v 1.8 2003/07/01 12:40:51 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -48,6 +48,8 @@ ECPGtype_name(enum ECPGttype typ)
 			return "varchar";
 		case ECPGt_char_variable:
 			return "char";
+		case ECPGt_decimal:
+			return "Decimal";
 		case ECPGt_numeric:
 			return "Numeric";
 		case ECPGt_date:

@@ -1533,6 +1533,14 @@ Sun Jun 29 11:22:48 CEST 2003
 	  around. PostgreSQL numeric type remains the same.
 	- In INFORMIX_SE mode with autcommit set, make all cursors be "with
 	  hold". Is this really they way SE behaves?
+	  
+Tue Jul  1 11:57:56 CEST 2003
+
+	- Use ISO dates in pgtypeslib by default.
+	- Applied patch by Philip Yarra to fix some thread issues.
+	- Added a new data type "decimal" which is mostly the same as our
+	  "numeric" but uses a fixed length array to store the digits. This is
+	  for compatibility with Informix and maybe others.
 	- Set ecpg version to 3.0.0
 	- Set ecpg library to 4.0.0
 	- Set pgtypes library to 1.0.0
