@@ -513,7 +513,8 @@ plperl_func_handler(FmgrInfo *proinfo,
 		{
 			free(prodesc->proname);
 			free(prodesc);
-			elog(ERROR, "plperl: cache lookup from pg_proc failed");
+			elog(ERROR, "plperl: cache lookup for proc %u failed",
+				 proinfo->fn_oid);
 		}
 		procStruct = (Form_pg_proc) GETSTRUCT(procTup);
 
@@ -528,7 +529,8 @@ plperl_func_handler(FmgrInfo *proinfo,
 		{
 			free(prodesc->proname);
 			free(prodesc);
-			elog(ERROR, "plperl: cache lookup for return type failed");
+			elog(ERROR, "plperl: cache lookup for return type %u failed",
+				 procStruct->prorettype);
 		}
 		typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
 
@@ -558,7 +560,8 @@ plperl_func_handler(FmgrInfo *proinfo,
 			{
 				free(prodesc->proname);
 				free(prodesc);
-				elog(ERROR, "plperl: cache lookup for argument type failed");
+				elog(ERROR, "plperl: cache lookup for argument type %u failed",
+					 procStruct->proargtypes[i]);
 			}
 			typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
 
@@ -745,7 +748,8 @@ plperl_trigger_handler(FmgrInfo *proinfo)
 		{
 			free(prodesc->proname);
 			free(prodesc);
-			elog(ERROR, "plperl: cache lookup from pg_proc failed");
+			elog(ERROR, "plperl: cache lookup for proc %u failed",
+				 proinfo->fn_oid);
 		}
 		procStruct = (Form_pg_proc) GETSTRUCT(procTup);
 
@@ -1064,9 +1068,9 @@ plperl_trigger_handler(FmgrInfo *proinfo)
 									  0, 0, 0);
 		if (!HeapTupleIsValid(typeTup))
 		{
-			elog(ERROR, "plperl: Cache lookup for attribute '%s' type %ld failed",
+			elog(ERROR, "plperl: Cache lookup for attribute '%s' type %u failed",
 				 ret_values[--i],
-				 ObjectIdGetDatum(tupdesc->attrs[attnum - 1]->atttypid));
+				 tupdesc->attrs[attnum - 1]->atttypid);
 		}
 		typinput = (Oid) (((Form_pg_type) GETSTRUCT(typeTup))->typinput);
 		typelem = (Oid) (((Form_pg_type) GETSTRUCT(typeTup))->typelem);
@@ -2081,8 +2085,8 @@ plperl_set_tuple_values(Tcl_Interp *interp, char *arrayname,
 									  0, 0, 0);
 		if (!HeapTupleIsValid(typeTup))
 		{
-			elog(ERROR, "plperl: Cache lookup for attribute '%s' type %ld failed",
-				 attname, ObjectIdGetDatum(tupdesc->attrs[i]->atttypid));
+			elog(ERROR, "plperl: Cache lookup for attribute '%s' type %u failed",
+				 attname, tupdesc->attrs[i]->atttypid);
 		}
 
 		typoutput = (Oid) (((Form_pg_type) GETSTRUCT(typeTup))->typoutput);
@@ -2157,8 +2161,8 @@ plperl_build_tuple_argument(HeapTuple tuple, TupleDesc tupdesc)
 									  0, 0, 0);
 		if (!HeapTupleIsValid(typeTup))
 		{
-			elog(ERROR, "plperl: Cache lookup for attribute '%s' type %ld failed",
-				 attname, ObjectIdGetDatum(tupdesc->attrs[i]->atttypid));
+			elog(ERROR, "plperl: Cache lookup for attribute '%s' type %u failed",
+				 attname, tupdesc->attrs[i]->atttypid);
 		}
 
 		typoutput = (Oid) (((Form_pg_type) GETSTRUCT(typeTup))->typoutput);
