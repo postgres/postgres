@@ -42,10 +42,12 @@ NULL=nul
 DEBUG=1
 OUTDIR=.\Debug
 INTDIR=.\Debug
-!else
+!ELSE
 OUTDIR=.\Release
 INTDIR=.\Release
-!endif
+!ENDIF
+
+OUTFILENAME=blibpq
 
 USERDEFINES=FRONTEND;NDEBUG;WIN32;_WINDOWS;HAVE_VSNPRINTF;HAVE_STRDUP;
 
@@ -59,47 +61,13 @@ CPP_PROJ	= $(CPP_PROJ) -Od -r- -k -v -y -vi- -D_DEBUG
 CPP_PROJ	= $(CPP_PROJ) -O -Oi -OS -DNDEBUG
 !endif
 
-LIB32=tlib.exe
-LIB32_FLAGS= 
-LIB32_OBJS= \
-	"$(OUTDIR)\win32.obj" \
-	"$(INTDIR)\getaddrinfo.obj" \
-	"$(INTDIR)\thread.obj" \
-	"$(INTDIR)\inet_aton.obj" \
-	"$(INTDIR)\crypt.obj" \
-	"$(INTDIR)\noblock.obj" \
-	"$(INTDIR)\pgstrcasecmp.obj" \
-	"$(INTDIR)\md5.obj" \
-	"$(INTDIR)\ip.obj" \
-	"$(INTDIR)\fe-auth.obj" \
-	"$(INTDIR)\fe-protocol2.obj" \
-	"$(INTDIR)\fe-protocol3.obj" \
-	"$(INTDIR)\fe-connect.obj" \
-	"$(INTDIR)\fe-exec.obj" \
-	"$(INTDIR)\fe-lobj.obj" \
-	"$(INTDIR)\fe-misc.obj" \
-	"$(INTDIR)\fe-print.obj" \
-	"$(INTDIR)\fe-secure.obj" \
-	"$(INTDIR)\pqexpbuffer.obj" \
-	"$(INTDIR)\pqsignal.obj" \
-	"$(INTDIR)\wchar.obj" \
-	"$(INTDIR)\encnames.obj"
-
-
-RSC=brcc32.exe
-RSC_PROJ=-l 0x409 -i$(BCB)\include -fo"$(INTDIR)\libpq.res"
-
-LINK32=ilink32.exe
-LINK32_FLAGS = -Gn -L$(BCB)\lib;$(INTDIR); -x -Tpd -v
-LINK32_OBJS= "$(INTDIR)\libpqdll.obj"
-
-ALL: config "$(OUTDIR)" "$(OUTDIR)\blibpq.dll" "$(OUTDIR)\blibpq.lib"
-
 CLEAN :
 	-@erase "$(INTDIR)\getaddrinfo.obj"
+	-@erase "$(INTDIR)\pgstrcasecmp.obj"
 	-@erase "$(INTDIR)\thread.obj"
 	-@erase "$(INTDIR)\inet_aton.obj"
 	-@erase "$(INTDIR)\crypt.obj"
+	-@erase "$(INTDIR)\noblock.obj"
 	-@erase "$(INTDIR)\md5.obj"
 	-@erase "$(INTDIR)\ip.obj"
 	-@erase "$(INTDIR)\fe-auth.obj"
@@ -117,14 +85,50 @@ CLEAN :
 	-@erase "$(OUTDIR)\win32.obj"
 	-@erase "$(INTDIR)\wchar.obj"
 	-@erase "$(INTDIR)\encnames.obj"
-	-@erase "$(INTDIR)\noblock.obj"
-	-@erase "$(INTDIR)\pgstrcasecmp.obj"
+	-@erase "$(INTDIR)\pthread-win32.obj"
+	-@erase "$(OUTDIR)\$(OUTFILENAME).lib"
+	-@erase "$(OUTDIR)\$(OUTFILENAME)dll.lib"
 	-@erase "$(OUTDIR)\libpq.res"
-	-@erase "$(OUTDIR)\blibpq.lib"
-	-@erase "$(OUTDIR)\blibpqdll.lib"
-	-@erase "$(OUTDIR)\blibpq.dll"
-	-@erase "$(OUTDIR)\blibpq.tds"
+	-@erase "$(OUTDIR)\$(OUTFILENAME).dll"
+	-@erase "$(OUTDIR)\$(OUTFILENAME).tds"
 	-@erase "$(INTDIR)\pg_config_paths.h"
+
+LIB32=tlib.exe
+LIB32_FLAGS= 
+LIB32_OBJS= \
+	"$(INTDIR)\win32.obj" \
+	"$(INTDIR)\getaddrinfo.obj" \
+	"$(INTDIR)\pgstrcasecmp.obj" \
+	"$(INTDIR)\thread.obj" \
+	"$(INTDIR)\inet_aton.obj" \
+	"$(INTDIR)\crypt.obj" \
+	"$(INTDIR)\noblock.obj" \
+	"$(INTDIR)\md5.obj" \
+	"$(INTDIR)\ip.obj" \
+	"$(INTDIR)\fe-auth.obj" \
+	"$(INTDIR)\fe-protocol2.obj" \
+	"$(INTDIR)\fe-protocol3.obj" \
+	"$(INTDIR)\fe-connect.obj" \
+	"$(INTDIR)\fe-exec.obj" \
+	"$(INTDIR)\fe-lobj.obj" \
+	"$(INTDIR)\fe-misc.obj" \
+	"$(INTDIR)\fe-print.obj" \
+	"$(INTDIR)\fe-secure.obj" \
+	"$(INTDIR)\pqexpbuffer.obj" \
+	"$(INTDIR)\pqsignal.obj" \
+	"$(INTDIR)\wchar.obj" \
+	"$(INTDIR)\encnames.obj" \
+	"$(INTDIR)\pthread-win32.obj"
+
+
+RSC=brcc32.exe
+RSC_PROJ=-l 0x409 -i$(BCB)\include -fo"$(INTDIR)\libpq.res"
+
+LINK32=ilink32.exe
+LINK32_FLAGS = -Gn -L$(BCB)\lib;$(INTDIR); -x -Tpd -v
+LINK32_OBJS= "$(INTDIR)\libpqdll.obj"
+
+ALL: config "$(OUTDIR)" "$(OUTDIR)\blibpq.dll" "$(OUTDIR)\blibpq.lib"
 
 config: ..\..\include\pg_config.h pthread.h pg_config_paths.h
 
