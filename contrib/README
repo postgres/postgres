@@ -52,6 +52,10 @@ intarray -
 	by Teodor Sigaev <teodor@stack.net> and Oleg Bartunov
 	<oleg@sai.msu.su>.
 
+ipc_check -
+	Simple test script to help in configuring IPC.
+	FreeBSD only, for now.
+
 isbn_issn -
 	PostgreSQL type extensions for ISBN (books) and ISSN (serials)
 	by Garrett A. Wollman <wollman@khavrinen.lcs.mit.edu>
@@ -86,7 +90,7 @@ oid2name -
 	by B Palmer <bpalmer@crimelabs.net>
 
 pg_controldata -
-	Dump internal database site structures
+	Dump contents of pg_control (database master file)
 	by Oliver Elphick <olly@lfix.co.uk>
 
 pg_dumplo -
@@ -96,6 +100,10 @@ pg_dumplo -
 pg_logger -
 	Stdin-to-syslog gateway for PostgreSQL
 	by Nathan Myers <ncm@nospam.cantrip.org>
+
+pg_resetxlog -
+	Reset the WAL log (pg_xlog) to recover from crash or format change
+	by Tom Lane <tgl@sss.pgh.pa.us>
 
 pgbench -
 	TPC-B like benchmarking tool

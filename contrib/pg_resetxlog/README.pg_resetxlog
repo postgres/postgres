@@ -1,0 +1,39 @@
+pg_resetxlog is a program to clear the WAL transaction log (stored in
+$PGDATA/pg_xlog/), replacing whatever had been in it with just a dummy
+shutdown-checkpoint record.  It also regenerates the pg_control file
+if necessary.
+
+THIS PROGRAM WILL DESTROY VALUABLE LOG DATA!!!  Don't run it unless you
+really need it!!!
+
+pg_resetxlog is primarily intended for disaster recovery --- that is,
+if your pg_control and/or xlog are hosed badly enough that Postgres refuses
+to start up, this program will get you past that problem and let you get to
+your data files.  But realize that without the xlog, your data files may be
+corrupt due to partially-applied transactions, incomplete index-file
+updates, etc.  You should dump your data, check it for accuracy, then initdb
+and reload.
+
+A secondary purpose is to cope with xlog format changes without requiring
+initdb.  To use pg_resetxlog for this purpose, just be sure that you have
+cleanly shut down your old postmaster (if you're not sure, see the contrib
+module pg_controldata and run it to be sure the DB state is SHUTDOWN).
+Then run pg_resetxlog, and finally install and start the new version of
+the database software.
+
+To run the program, make sure your postmaster is not running, then
+(as the Postgres admin user) do
+
+	pg_resetxlog $PGDATA
+
+As a safety measure, the target data directory must be specified on the
+command line, it cannot be defaulted.
+
+If pg_resetxlog complains that it can't reconstruct valid data for pg_control,
+you can force it to invent plausible data values with
+
+	pg_resetxlog -f $PGDATA
+
+If this turns out to be necessary then you *definitely* should plan on
+immediate dump, initdb, reload --- any modifications you do to the database
+after "pg_resetxlog -f" would be likely to corrupt things even worse.
