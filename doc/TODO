@@ -122,6 +122,8 @@ add pg_type attribute to identify types that need length (bpchar, varchar)
 add UNIQUE capability to non-btree indexes
 make pg_dumpall preserve table ownership, not just database ownership
 make large objects have their own reltype
+make number of backends a config parameter, storage/sinvaladt.h:MaxBackendId
+certain indexes will not shrink, i.e. oid indexes with many inserts
 
 PERFORMANCE
 -----------
