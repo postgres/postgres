@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.16 1996/08/06 00:40:12 julian Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.17 1996/08/10 05:02:53 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -133,7 +133,7 @@ slashUsage(PsqlSettings *ps)
   fprintf(stderr,"\t \\C [<captn>] -- set html3 caption (currently '%s')\n", ps->opt.caption? ps->opt.caption: "");
   fprintf(stderr,"\t \\c <dbname>  -- connect to new database (currently '%s')\n", PQdb(ps->db));
   fprintf(stderr,"\t \\d [<table>] -- list tables in database or columns in <table>,* for all\n");
-  fprintf(stderr,"\t \\e [<fname>] -- edit the current query buffer or <fname>, \E execute too\n");
+  fprintf(stderr,"\t \\e [<fname>] -- edit the current query buffer or <fname>, \\E execute too\n");
   fprintf(stderr,"\t \\f [<sep>]   -- change field separater (currently '%s')\n", ps->opt.fieldSep);
   fprintf(stderr,"\t \\g [<fname>] -- send query to backend [and place results in <fname>]\n");
   fprintf(stderr,"\t \\g |<cmd>    -- send query to backend and pipe results into <cmd>\n");
