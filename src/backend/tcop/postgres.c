@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.438 2004/11/20 00:48:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.439 2004/11/24 19:50:59 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -2205,7 +2205,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	bool		secure;
 	int			errs = 0;
 	int			debug_flag = -1;		/* -1 means not given */
-	List	   *guc_names = NIL;		/* for possibly-SUSET options */
+	List	   *guc_names = NIL;		/* for SUSET options */
 	List	   *guc_values = NIL;
 	GucContext	ctx;
 	GucSource	gucsource;
@@ -2456,8 +2456,15 @@ PostgresMain(int argc, char *argv[], const char *username)
 
 				/*
 				 * s - report usage statistics (timings) after each query
+				 *
+				 * Since log options are SUSET, we need to postpone unless
+				 * still in secure context
 				 */
-				PendingConfigOption("log_statement_stats", "true");
+				if (ctx == PGC_BACKEND)
+					PendingConfigOption("log_statement_stats", "true");
+				else
+					SetConfigOption("log_statement_stats", "true",
+									ctx, gucsource);
 				break;
 
 			case 't':
@@ -2490,7 +2497,12 @@ PostgresMain(int argc, char *argv[], const char *username)
 						break;
 				}
 				if (tmp)
-					PendingConfigOption(tmp, "true");
+				{
+					if (ctx == PGC_BACKEND)
+						PendingConfigOption(tmp, "true");
+					else
+						SetConfigOption(tmp, "true", ctx, gucsource);
+				}
 				break;
 
 			case 'v':
@@ -2527,7 +2539,14 @@ PostgresMain(int argc, char *argv[], const char *username)
 											optarg)));
 					}
 
-					PendingConfigOption(name, value);
+					/*
+					 * If a SUSET option, must postpone evaluation, unless
+					 * we are still reading secure switches.
+					 */
+					if (ctx == PGC_BACKEND && IsSuperuserConfigOption(name))
+						PendingConfigOption(name, value);
+					else
+						SetConfigOption(name, value, ctx, gucsource);
 					free(name);
 					if (value)
 						free(value);
@@ -2537,6 +2556,32 @@ PostgresMain(int argc, char *argv[], const char *username)
 			default:
 				errs++;
 				break;
+		}
+	}
+
+	/*
+	 * Process any additional GUC variable settings passed in startup
+	 * packet.  These are handled exactly like command-line variables.
+	 */
+	if (MyProcPort != NULL)
+	{
+		ListCell   *gucopts = list_head(MyProcPort->guc_options);
+
+		while (gucopts)
+		{
+			char	   *name;
+			char	   *value;
+
+			name = lfirst(gucopts);
+			gucopts = lnext(gucopts);
+
+			value = lfirst(gucopts);
+			gucopts = lnext(gucopts);
+
+			if (IsSuperuserConfigOption(name))
+				PendingConfigOption(name, value);
+			else
+				SetConfigOption(name, value, PGC_BACKEND, PGC_S_CLIENT);
 		}
 	}
 
@@ -2677,10 +2722,8 @@ PostgresMain(int argc, char *argv[], const char *username)
 	SetProcessingMode(NormalProcessing);
 
 	/*
-	 * Now that we know if client is a superuser, we can apply GUC options
-	 * that came from the client.  (For option switches that are definitely
-	 * not SUSET, we just went ahead and applied them above, but anything
-	 * that is or might be SUSET has to be postponed to here.)
+	 * Now that we know if client is a superuser, we can try to apply SUSET
+	 * GUC options that came from the client.
 	 */
 	ctx = am_superuser ? PGC_SUSET : PGC_USERSET;
 
@@ -2704,39 +2747,17 @@ PostgresMain(int argc, char *argv[], const char *username)
 	}
 
 	/*
-	 * Process any additional GUC variable settings passed in startup
-	 * packet.
-	 */
-	if (MyProcPort != NULL)
-	{
-		ListCell   *gucopts = list_head(MyProcPort->guc_options);
-
-		while (gucopts)
-		{
-			char	   *name;
-			char	   *value;
-
-			name = lfirst(gucopts);
-			gucopts = lnext(gucopts);
-
-			value = lfirst(gucopts);
-			gucopts = lnext(gucopts);
-
-			SetConfigOption(name, value, ctx, PGC_S_CLIENT);
-		}
-
-		/*
-		 * set up handler to log session end.
-		 */
-		if (IsUnderPostmaster && Log_disconnections)
-			on_proc_exit(log_disconnections, 0);
-	}
-
-	/*
 	 * Now all GUC states are fully set up.  Report them to client if
 	 * appropriate.
 	 */
 	BeginReportingGUCOptions();
+
+	/*
+	 * Also set up handler to log session end; we have to wait till now
+	 * to be sure Log_disconnections has its final value.
+	 */
+	if (IsUnderPostmaster && Log_disconnections)
+		on_proc_exit(log_disconnections, 0);
 
 	/*
 	 * Send this backend's cancellation info to the frontend.

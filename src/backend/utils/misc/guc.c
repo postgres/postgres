@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.249 2004/11/14 19:35:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.250 2004/11/24 19:51:03 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -3864,6 +3864,21 @@ GetConfigOptionResetString(const char *name)
 	return NULL;
 }
 
+/*
+ * Detect whether the given configuration option can only be set by
+ * a superuser.
+ */
+bool
+IsSuperuserConfigOption(const char *name)
+{
+	struct config_generic *record;
+
+	record = find_option(name, ERROR);
+	/* On an unrecognized name, don't error, just return false. */
+	if (record == NULL)
+		return false;
+	return (record->context == PGC_SUSET);
+}
 
 
 /*
