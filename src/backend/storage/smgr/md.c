@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.11 1997/02/14 04:17:08 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.12 1997/05/06 02:03:20 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -99,7 +99,6 @@ int
 mdcreate(Relation reln)
 {
     int fd, vfd;
-    int tmp;
     char *path;
     extern bool IsBootstrapProcessingMode();
 
@@ -111,16 +110,19 @@ mdcreate(Relation reln)
      *  create succeeded.  During bootstrap processing, we skip that check,
      *  because pg_time, pg_variable, and pg_log get created before their
      *  .bki file entries are processed.
+     *
+     *  As the result of this pretence it was possible to have in
+     *  pg_class > 1 records with the same relname. Actually, it
+     *  should be fixed in upper levels, too, but... -	vadim 05/06/97
      */
 
-    if (fd < 0) {
-	if ((fd = FileNameOpenFile(path, O_RDWR, 0600)) >= 0) {
-	    if (!IsBootstrapProcessingMode() &&
-		FileRead(fd, (char *) &tmp, sizeof(tmp)) != 0) {
-		FileClose(fd);
-		return (-1);
-	    }
-	}
+    if (fd < 0)
+    {
+	if ( !IsBootstrapProcessingMode() )
+	    return (-1);
+	fd = FileNameOpenFile(path, O_RDWR, 0600);	/* Bootstrap */
+	if ( fd < 0 )
+	    return (-1);
     }
 
     if (CurFd >= Nfds) {
