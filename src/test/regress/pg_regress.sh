@@ -1,5 +1,5 @@
 #! /bin/sh
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/pg_regress.sh,v 1.29 2002/11/13 16:40:23 tgl Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/pg_regress.sh,v 1.30 2003/04/28 04:29:12 tgl Exp $
 
 me=`basename $0`
 : ${TMPDIR=/tmp}
@@ -137,6 +137,7 @@ do
         --host=*)
                 PGHOST=`expr "x$1" : "x--host=\(.*\)"`
                 export PGHOST
+                unset PGHOSTADDR
                 shift;;
         --port=*)
                 PGPORT=`expr "x$1" : "x--port=\(.*\)"`
@@ -279,8 +280,10 @@ then
     if [ "$unix_sockets" = no ]; then
         PGHOST=$hostname
         export PGHOST
+        unset PGHOSTADDR
     else
         unset PGHOST
+        unset PGHOSTADDR
     fi
     PGPORT=65432
     export PGPORT
@@ -397,6 +400,7 @@ else # not temp-install
     if [ "$unix_sockets" = no ]; then
         PGHOST=$hostname
         export PGHOST
+        unset PGHOSTADDR
     fi
 
     if [ -n "$PGPORT" ]; then

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.120 2003/04/22 00:08:06 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.121 2003/04/28 04:29:11 tgl Exp $
 -->
 
  <chapter id="libpq">
@@ -114,21 +114,26 @@ PGconn *PQconnectdb(const char *conninfo);
       used.
      </para>
      <para>
-      Using <literal>hostaddr</> instead of <literal>host</> allows the application to avoid a host
-      name look-up, which may be important in applications with time
-      constraints. However, Kerberos authentication requires the host
-      name. The following therefore applies: If <literal>host</> is specified without
-      <literal>hostaddr</>, a host name lookup is forced. If <literal>hostaddr</> is specified without
-      <literal>host</>, the value for <literal>hostaddr</> gives the remote address; if Kerberos is
-      used, this causes a reverse name query. If both <literal>host</> and <literal>hostaddr</> are
-      specified, the value for <literal>hostaddr</> gives the remote address; the value
-      for <literal>host</> is ignored, unless Kerberos is used, in which case that value
-      is used for Kerberos authentication. Note that authentication is likely
-      to fail if <application>libpq</application> is passed a host name that is not the name of the
-      machine at <literal>hostaddr</>.
+      Using <literal>hostaddr</> instead of <literal>host</> allows the
+      application to avoid a host name look-up, which may be important in
+      applications with time constraints. However, Kerberos authentication
+      requires the host name. The following therefore applies: If
+      <literal>host</> is specified without <literal>hostaddr</>, a host name
+      lookup is forced. If <literal>hostaddr</> is specified without
+      <literal>host</>, the value for <literal>hostaddr</> gives the remote
+      address; if Kerberos is used, this causes a reverse name query. If both
+      <literal>host</> and <literal>hostaddr</> are specified, the value for
+      <literal>hostaddr</> gives the remote address; the value for
+      <literal>host</> is ignored, unless Kerberos is used, in which case that
+      value is used for Kerberos authentication. (Note that authentication is
+      likely to fail if <application>libpq</application> is passed a host name
+      that is not the name of the machine at <literal>hostaddr</>.)  Also,
+      <literal>host</> rather than <literal>hostaddr</> is used to identify
+      the connection in <filename>$HOME/.pgpass</>.
      </para>
      <para>
-      Without either a host name or host address, <application>libpq</application> will connect using a
+      Without either a host name or host address,
+      <application>libpq</application> will connect using a
       local Unix domain socket.
      </para>
      </listitem>
@@ -176,7 +181,8 @@ PGconn *PQconnectdb(const char *conninfo);
      <listitem>
      <para>
       Maximum wait for connection, in seconds (write as a decimal integer
-      string). Zero or not specified means infinite.
+      string). Zero or not specified means wait indefinitely.  It is not
+      recommended to set the timeout to less than 2 seconds.
      </para>
      </listitem>
     </varlistentry>
@@ -2321,7 +2327,7 @@ information into simple client applications, for example.
 <indexterm>
  <primary><envar>PGHOST</envar></primary>
 </indexterm>
-<envar>PGHOST</envar> sets the default server name.
+<envar>PGHOST</envar> sets the database server name.
 If this begins with a slash, it specifies Unix-domain communication
 rather than TCP/IP communication; the value is the name of the
 directory in which the socket file is stored (default <filename>/tmp</filename>).
@@ -2330,9 +2336,21 @@ directory in which the socket file is stored (default <filename>/tmp</filename>)
 <listitem>
 <para>
 <indexterm>
+ <primary><envar>PGHOSTADDR</envar></primary>
+</indexterm>
+<envar>PGHOSTADDR</envar> specifies the numeric IP address of the database
+server.  This can be set instead of <envar>PGHOST</envar> to avoid DNS
+lookup overhead. See the documentation of
+these parameters, under <function>PQconnectdb</function> above, for details
+on their interaction.
+</para>
+</listitem>
+<listitem>
+<para>
+<indexterm>
  <primary><envar>PGPORT</envar></primary>
 </indexterm>
-<envar>PGPORT</envar> sets the default TCP port number or Unix-domain
+<envar>PGPORT</envar> sets the TCP port number or Unix-domain
 socket file extension for communicating with the
 <productname>PostgreSQL</productname> server.
 </para>
@@ -2342,7 +2360,7 @@ socket file extension for communicating with the
 <indexterm>
  <primary><envar>PGDATABASE</envar></primary>
 </indexterm>
-<envar>PGDATABASE</envar>  sets the default 
+<envar>PGDATABASE</envar>  sets the 
 <productname>PostgreSQL</productname> database name.
 </para>
 </listitem>
@@ -2369,6 +2387,19 @@ file (see <xref linkend="libpq-pgpass">).
 </listitem>
 <listitem>
 <para>
+<indexterm>
+ <primary><envar>PGSERVICE</envar></primary>
+</indexterm>
+<envar>PGSERVICE</envar>
+sets the service name to be looked up in <filename>pg_service.conf</filename>.
+This offers a shorthand way of setting all the parameters.
+</para>
+</listitem>
+<listitem>
+<para>
+<indexterm>
+ <primary><envar>PGREALM</envar></primary>
+</indexterm>
 <envar>PGREALM</envar> sets the Kerberos realm to  use  with  
 <productname>PostgreSQL</productname>, if  it is different from the local realm.
 If <envar>PGREALM</envar> is set, <application>libpq</application>
@@ -2380,12 +2411,18 @@ used if Kerberos authentication is selected by the server.
 </listitem>
 <listitem>
 <para>
+<indexterm>
+ <primary><envar>PGOPTIONS</envar></primary>
+</indexterm>
 <envar>PGOPTIONS</envar> sets additional run-time  options  for  
 the <productname>PostgreSQL</productname> server.
 </para>
 </listitem>
 <listitem>
 <para>
+<indexterm>
+ <primary><envar>PGREQUIRESSL</envar></primary>
+</indexterm>
 <envar>PGREQUIRESSL</envar> sets whether or not the connection must be
 made over <acronym>SSL</acronym>. If set to
 <quote>1</quote>, <application>libpq</>
@@ -2397,10 +2434,14 @@ This option is only available if
 </listitem>
 <listitem>
 <para>
+<indexterm>
+ <primary><envar>PGCONNECT_TIMEOUT</envar></primary>
+</indexterm>
 <envar>PGCONNECT_TIMEOUT</envar> sets the maximum number of seconds
 that <application>libpq</application> will wait when attempting to
-connect to the <productname>PostgreSQL</productname> server. This
-option should be set to at least 2 seconds.
+connect to the <productname>PostgreSQL</productname> server.  If unset
+or set to zero, <application>libpq</application> will wait indefinitely.
+It is not recommended to set the timeout to less than 2 seconds.
 </para>
 </listitem>
 </itemizedlist>
@@ -2413,6 +2454,9 @@ behavior for every <productname>PostgreSQL</productname> session.
 <itemizedlist>
 <listitem>
 <para>
+<indexterm>
+ <primary><envar>PGDATESTYLE</envar></primary>
+</indexterm>
 <envar>PGDATESTYLE</envar>
 sets the default style of date/time representation.
 (Equivalent to <literal>SET datestyle TO ...</literal>.)
@@ -2420,6 +2464,9 @@ sets the default style of date/time representation.
 </listitem>
 <listitem>
 <para>
+<indexterm>
+ <primary><envar>PGTZ</envar></primary>
+</indexterm>
 <envar>PGTZ</envar>
 sets the default time zone.
 (Equivalent to <literal>SET timezone TO ...</literal>.)
@@ -2427,6 +2474,9 @@ sets the default time zone.
 </listitem>
 <listitem>
 <para>
+<indexterm>
+ <primary><envar>PGCLIENTENCODING</envar></primary>
+</indexterm>
 <envar>PGCLIENTENCODING</envar>
 sets the default client character set encoding.
 (Equivalent to <literal>SET client_encoding TO ...</literal>.)
@@ -2434,6 +2484,9 @@ sets the default client character set encoding.
 </listitem>
 <listitem>
 <para>
+<indexterm>
+ <primary><envar>PGGEQO</envar></primary>
+</indexterm>
 <envar>PGGEQO</envar>
 sets the default mode for the genetic query optimizer.
 (Equivalent to <literal>SET geqo TO ...</literal>.)

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.237 2003/04/25 19:45:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.238 2003/04/28 04:29:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -172,6 +172,8 @@ static const struct EnvironmentOptions
 };
 
 
+static bool connectOptions1(PGconn *conn, const char *conninfo);
+static bool connectOptions2(PGconn *conn);
 static int	connectDBStart(PGconn *conn);
 static int	connectDBComplete(PGconn *conn);
 static PGconn *makeEmptyPGconn(void);
@@ -264,16 +266,54 @@ PGconn *
 PQconnectStart(const char *conninfo)
 {
 	PGconn	   *conn;
-	PQconninfoOption *connOptions;
-	char	   *tmp;
 
 	/*
 	 * Allocate memory for the conn structure
 	 */
-
 	conn = makeEmptyPGconn();
 	if (conn == NULL)
 		return (PGconn *) NULL;
+
+	/*
+	 * Parse the conninfo string
+	 */
+	if (!connectOptions1(conn, conninfo))
+		return conn;
+
+	/*
+	 * Compute derived options
+	 */
+	if (!connectOptions2(conn))
+		return conn;
+
+	/*
+	 * Connect to the database
+	 */
+	if (!connectDBStart(conn))
+	{
+		/* Just in case we failed to set it in connectDBStart */
+		conn->status = CONNECTION_BAD;
+	}
+
+	return conn;
+}
+
+/*
+ *		connectOptions1
+ *
+ * Internal subroutine to set up connection parameters given an already-
+ * created PGconn and a conninfo string.  Derived settings should be
+ * processed by calling connectOptions2 next.  (We split them because
+ * PQsetdbLogin overrides defaults in between.)
+ *
+ * Returns true if OK, false if trouble (in which case errorMessage is set
+ * and so is conn->status).
+ */
+static bool
+connectOptions1(PGconn *conn, const char *conninfo)
+{
+	PQconninfoOption *connOptions;
+	char	   *tmp;
 
 	/*
 	 * Parse the conninfo string
@@ -283,11 +323,14 @@ PQconnectStart(const char *conninfo)
 	{
 		conn->status = CONNECTION_BAD;
 		/* errorMessage is already set */
-		return conn;
+		return false;
 	}
 
 	/*
 	 * Move option values into conn structure
+	 *
+	 * Don't put anything cute here --- intelligence should be in
+	 * connectOptions2 ...
 	 */
 	tmp = conninfo_getval(connOptions, "hostaddr");
 	conn->pghostaddr = tmp ? strdup(tmp) : NULL;
@@ -305,15 +348,6 @@ PQconnectStart(const char *conninfo)
 	conn->pguser = tmp ? strdup(tmp) : NULL;
 	tmp = conninfo_getval(connOptions, "password");
 	conn->pgpass = tmp ? strdup(tmp) : NULL;
-	if (conn->pgpass == NULL || conn->pgpass[0] == '\0')
-	{
-		if (conn->pgpass)
-			free(conn->pgpass);
-		conn->pgpass = PasswordFromFile(conn->pghost, conn->pgport,
-										conn->dbName, conn->pguser);
-		if (conn->pgpass == NULL)
-			conn->pgpass = strdup(DefaultPassword);
-	}
 	tmp = conninfo_getval(connOptions, "connect_timeout");
 	conn->connect_timeout = tmp ? strdup(tmp) : NULL;
 #ifdef USE_SSL
@@ -327,6 +361,33 @@ PQconnectStart(const char *conninfo)
 	 */
 	PQconninfoFree(connOptions);
 
+	return true;
+}
+
+/*
+ *		connectOptions2
+ *
+ * Compute derived connection options after absorbing all user-supplied info.
+ *
+ * Returns true if OK, false if trouble (in which case errorMessage is set
+ * and so is conn->status).
+ */
+static bool
+connectOptions2(PGconn *conn)
+{
+	/*
+	 * Supply default password if none given
+	 */
+	if (conn->pgpass == NULL || conn->pgpass[0] == '\0')
+	{
+		if (conn->pgpass)
+			free(conn->pgpass);
+		conn->pgpass = PasswordFromFile(conn->pghost, conn->pgport,
+										conn->dbName, conn->pguser);
+		if (conn->pgpass == NULL)
+			conn->pgpass = strdup(DefaultPassword);
+	}
+
 	/*
 	 * Allow unix socket specification in the host name
 	 */
@@ -338,16 +399,19 @@ PQconnectStart(const char *conninfo)
 		conn->pghost = NULL;
 	}
 
+#ifdef NOT_USED
 	/*
-	 * Connect to the database
+	 * parse dbName to get all additional info in it, if any
 	 */
-	if (!connectDBStart(conn))
+	if (update_db_info(conn) != 0)
 	{
-		/* Just in case we failed to set it in connectDBStart */
 		conn->status = CONNECTION_BAD;
+		/* errorMessage is already set */
+		return false;
 	}
+#endif
 
-	return conn;
+	return true;
 }
 
 /*
@@ -384,36 +448,9 @@ PQconndefaults(void)
  * at the specified host and port.
  *
  * returns a PGconn* which is needed for all subsequent libpq calls
+ *
  * if the status field of the connection returned is CONNECTION_BAD,
- * then some fields may be null'ed out instead of having valid values
- *
- *	Uses these environment variables:
- *
- *	  PGHOST	   identifies host to which to connect if <pghost> argument
- *				   is NULL or a null string.
- *
- *	  PGPORT	   identifies TCP port to which to connect if <pgport> argument
- *				   is NULL or a null string.
- *
- *	  PGTTY		   identifies tty to which to send messages if <pgtty> argument
- *				   is NULL or a null string.  (No longer used by backend.)
- *
- *	  PGOPTIONS    identifies connection options if <pgoptions> argument is
- *				   NULL or a null string.
- *
- *	  PGUSER	   Postgres username to associate with the connection.
- *
- *	  PGPASSWORD   The user's password.
- *
- *	  PGDATABASE   name of database to which to connect if <pgdatabase>
- *				   argument is NULL or a null string
- *
- *	  None of the above need be defined.  There are defaults for all of them.
- *
- * To support "delimited identifiers" for database names, only convert
- * the database name to lower case if it is not surrounded by double quotes.
- * Otherwise, strip the double quotes but leave the reset of the string intact.
- * - thomas 1997-11-08
+ * then only the errorMessage is likely to be useful.
  * ----------------
  */
 PGconn *
@@ -422,112 +459,84 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions,
 			 const char *pwd)
 {
 	PGconn	   *conn;
-	char	   *tmp;			/* An error message from some service we
-								 * call. */
-	bool		error = FALSE;	/* We encountered an error. */
 
+	/*
+	 * Allocate memory for the conn structure
+	 */
 	conn = makeEmptyPGconn();
 	if (conn == NULL)
 		return (PGconn *) NULL;
 
-	if (pghost)
-		conn->pghost = strdup(pghost);
-	else if ((tmp = getenv("PGHOST")) != NULL)
-		conn->pghost = strdup(tmp);
-
-	if (pgport == NULL || pgport[0] == '\0')
-	{
-		tmp = getenv("PGPORT");
-		if (tmp == NULL || tmp[0] == '\0')
-			tmp = DEF_PGPORT_STR;
-		conn->pgport = strdup(tmp);
-	}
-	else
-		conn->pgport = strdup(pgport);
+	/*
+	 * Parse an empty conninfo string in order to set up the same defaults
+	 * that PQconnectdb() would use.
+	 */
+	if (!connectOptions1(conn, ""))
+		return conn;
 
 	/*
-	 * We don't allow unix socket path as a function parameter. This
-	 * allows unix socket specification in the host name.
+	 * Absorb specified options into conn structure, overriding defaults
 	 */
-	if (conn->pghost && is_absolute_path(conn->pghost))
+	if (pghost && pghost[0] != '\0')
 	{
-		if (conn->pgunixsocket)
-			free(conn->pgunixsocket);
-		conn->pgunixsocket = conn->pghost;
-		conn->pghost = NULL;
+		if (conn->pghost)
+			free(conn->pghost);
+		conn->pghost = strdup(pghost);
 	}
 
-	if (pgtty == NULL)
+	if (pgport && pgport[0] != '\0')
 	{
-		if ((tmp = getenv("PGTTY")) == NULL)
-			tmp = DefaultTty;
-		conn->pgtty = strdup(tmp);
+		if (conn->pgport)
+			free(conn->pgport);
+		conn->pgport = strdup(pgport);
 	}
-	else
-		conn->pgtty = strdup(pgtty);
 
-	if (pgoptions == NULL)
+	if (pgoptions && pgoptions[0] != '\0')
 	{
-		if ((tmp = getenv("PGOPTIONS")) == NULL)
-			tmp = DefaultOption;
-		conn->pgoptions = strdup(tmp);
-	}
-	else
+		if (conn->pgoptions)
+			free(conn->pgoptions);
 		conn->pgoptions = strdup(pgoptions);
-
-	if (login)
-		conn->pguser = strdup(login);
-	else if ((tmp = getenv("PGUSER")) != NULL)
-		conn->pguser = strdup(tmp);
-	else
-	{
-		/* fe-auth.c has not been fixed to support PQExpBuffers, so: */
-		conn->pguser = fe_getauthname(conn->errorMessage.data);
-		conn->errorMessage.len = strlen(conn->errorMessage.data);
 	}
 
-	if (conn->pguser == NULL)
+	if (pgtty && pgtty[0] != '\0')
 	{
-		error = TRUE;
-		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("could not determine the PostgreSQL user name to use\n"));
+		if (conn->pgtty)
+			free(conn->pgtty);
+		conn->pgtty = strdup(pgtty);
 	}
 
-	if (dbName == NULL)
+	if (dbName && dbName[0] != '\0')
 	{
-		if ((tmp = getenv("PGDATABASE")) != NULL)
-			conn->dbName = strdup(tmp);
-		else if (conn->pguser)
-			conn->dbName = strdup(conn->pguser);
-	}
-	else
+		if (conn->dbName)
+			free(conn->dbName);
 		conn->dbName = strdup(dbName);
-
-	if (pwd)
-		conn->pgpass = strdup(pwd);
-	else if ((tmp = getenv("PGPASSWORD")) != NULL)
-		conn->pgpass = strdup(tmp);
-	else if ((tmp = PasswordFromFile(conn->pghost, conn->pgport,
-									 conn->dbName, conn->pguser)) != NULL)
-		conn->pgpass = tmp;
-	else
-		conn->pgpass = strdup(DefaultPassword);
-
-	if ((tmp = getenv("PGCONNECT_TIMEOUT")) != NULL)
-		conn->connect_timeout = strdup(tmp);
-
-#ifdef USE_SSL
-	if ((tmp = getenv("PGREQUIRESSL")) != NULL)
-		conn->require_ssl = (tmp[0] == '1') ? true : false;
-#endif
-
-	if (error)
-		conn->status = CONNECTION_BAD;
-	else
-	{
-		if (connectDBStart(conn))
-			(void) connectDBComplete(conn);
 	}
+
+	if (login && login[0] != '\0')
+	{
+		if (conn->pguser)
+			free(conn->pguser);
+		conn->pguser = strdup(login);
+	}
+
+	if (pwd && pwd[0] != '\0')
+	{
+		if (conn->pgpass)
+			free(conn->pgpass);
+		conn->pgpass = strdup(pwd);
+	}
+
+	/*
+	 * Compute derived options
+	 */
+	if (!connectOptions2(conn))
+		return conn;
+
+	/*
+	 * Connect to the database
+	 */
+	if (connectDBStart(conn))
+		(void) connectDBComplete(conn);
 
 	return conn;
 }
@@ -537,7 +546,6 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions,
 /*
  * update_db_info -
  * get all additional info out of dbName
- *
  */
 static int
 update_db_info(PGconn *conn)
@@ -771,10 +779,10 @@ connectFailureMessage(PGconn *conn, int errorno)
 									 "\tTCP/IP connections on port %s?\n"
 										),
 						  SOCK_STRERROR(errorno),
-						  conn->pghost
-						  ? conn->pghost
-						  : (conn->pghostaddr
-							 ? conn->pghostaddr
+						  conn->pghostaddr
+						  ? conn->pghostaddr
+						  : (conn->pghost
+							 ? conn->pghost
 							 : "???"),
 						  conn->pgport);
 }
@@ -799,20 +807,12 @@ connectDBStart(PGconn *conn)
 	const char *unix_node = "unix";
 	int			ret;
 
-	/* Initialize hint structure */
-	MemSet(&hint, 0, sizeof(hint));
-	hint.ai_socktype = SOCK_STREAM;
-
 	if (!conn)
 		return 0;
 
-#ifdef NOT_USED
-	/*
-	 * parse dbName to get all additional info in it, if any
-	 */
-	if (update_db_info(conn) != 0)
-		goto connect_errReturn;
-#endif
+	/* Initialize hint structure */
+	MemSet(&hint, 0, sizeof(hint));
+	hint.ai_socktype = SOCK_STREAM;
 
 	/* Ensure our buffers are empty */
 	conn->inStart = conn->inCursor = conn->inEnd = 0;
@@ -2116,7 +2116,7 @@ conninfo_parse(const char *conninfo, PQExpBuffer errorMessage)
 	char	   *cp2;
 	PQconninfoOption *options;
 	PQconninfoOption *option;
-	char		errortmp[INITIAL_EXPBUFFER_SIZE];
+	char		errortmp[PQERRORMSG_LENGTH];
 
 	/* Make a working copy of PQconninfoOptions */
 	options = malloc(sizeof(PQconninfoOptions));
@@ -2270,16 +2270,15 @@ conninfo_parse(const char *conninfo, PQExpBuffer errorMessage)
 
 	}
 
+	/* Done with the modifiable input string */
+	free(buf);
+
 	/* Now check for service info */
 	if (parseServiceInfo(options, errorMessage))
 	{
 		PQconninfoFree(options);
-		free(buf);
 		return NULL;
 	}
-
-	/* Done with the modifiable input string */
-	free(buf);
 
 	/*
 	 * Get the fallback resources for parameters not specified in the
