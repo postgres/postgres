@@ -4,8 +4,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.2\n"
-"POT-Creation-Date: 2001-12-08 04:18-0500\n"
-"PO-Revision-Date: 2001-12-09 03:39-0500\n"
+"POT-Creation-Date: 2001-12-26 04:16-0500\n"
+"PO-Revision-Date: 2001-12-27 15:23-0500\n"
 "Last-Translator: Serguei A. Mokhov <stgunya@yahoo.com>\n"
 "Language-Team: Serguei A. Mokhov <stgunya@yahoo.com>\n"
 "MIME-Version: 1.0\n"
@@ -23,12 +23,12 @@ msgstr "heap_attisnull: отрицательный attnum не определён"
 #: ../access/common/heaptuple.c:457
 #, c-format
 msgid "heap_getsysattr: invalid attnum %d"
-msgstr ""
+msgstr "heap_getsysattr: неверный attnum: %d"
 
 #: ../access/common/heaptuple.c:582
 #, c-format
 msgid "heap_formtuple: numberOfAttributes of %d > %d"
-msgstr "heap_formtuple: numberOfAttributes для %d > %d"
+msgstr "heap_formtuple: numberOfAttributes (число атрибютов) для %d > %d"
 
 #: ../access/common/heaptuple.c:685
 #, c-format
@@ -38,7 +38,7 @@ msgstr "heap_modifytuple: значение repl: \\%3d"
 #: ../access/common/indextuple.c:55
 #, c-format
 msgid "index_formtuple: numberOfAttributes %d > %d"
-msgstr "index_formtuple: numberOfAttributes для %d > %d"
+msgstr "index_formtuple: numberOfAttributes (число атрибютов) для %d > %d"
 
 #: ../access/common/indextuple.c:162
 #, c-format
@@ -101,11 +101,11 @@ msgstr ""
 
 #: ../access/hash/hash.c:471
 msgid "hash_redo: unimplemented"
-msgstr ""
+msgstr "hash_redo: ещё не сделано"
 
 #: ../access/hash/hash.c:477
 msgid "hash_undo: unimplemented"
-msgstr ""
+msgstr "hash_undo: ещё не сделано"
 
 #: ../access/hash/hashinsert.c:51
 msgid "Hash indices valid for only one index key."
@@ -118,20 +118,20 @@ msgstr ""
 #: ../access/hash/hashinsert.c:231
 #, c-format
 msgid "_hash_pgaddtup: failed to add index item to %s"
-msgstr ""
+msgstr "_hash_pgaddtup: не удалось добавить элемент индекса к %s"
 
 #: ../access/hash/hashovfl.c:61
 msgid "_hash_addovflpage: problem with _hash_getovfladdr."
-msgstr ""
+msgstr "_hash_addovflpage: проблема с _hash_getovfladdr."
 
 #: ../access/hash/hashovfl.c:196
 msgid "overflow_page: problem with _hash_initbitmap."
-msgstr ""
+msgstr "overflow_page: проблема с _hash_initbitmap."
 
 #: ../access/hash/hashovfl.c:568
 #, c-format
 msgid "_hash_squeezebucket: failed to add index item to %s"
-msgstr ""
+msgstr "_hash_squeezebucket: не удалось добавить элемент индекса к %s"
 
 #: ../access/hash/hashpage.c:93
 #, c-format
@@ -140,7 +140,7 @@ msgstr ""
 
 #: ../access/hash/hashpage.c:151
 msgid "Problem with _hash_initbitmap."
-msgstr ""
+msgstr "Проблема с _hash_initbitmap."
 
 #: ../access/hash/hashpage.c:196
 msgid "_hash_getbuf: internal error: hash AM does not use P_NEW"
@@ -556,7 +556,7 @@ msgstr ""
 #: ../access/nbtree/nbtinsert.c:246
 #, c-format
 msgid "Cannot insert a duplicate key into unique index %s"
-msgstr ""
+msgstr "Не возможно вставить повторныц ключ в уникальный индекс %s"
 
 #: ../access/nbtree/nbtinsert.c:362
 #, c-format
@@ -583,6 +583,8 @@ msgid ""
 "_bt_getstackbuf: my bits moved right off the end of the world!\n"
 "\tRecreate index %s."
 msgstr ""
+"_bt_getstackbuf: моя крыша съехала и рассыпалась на битики!\n"
+"\tПересоздайте индекс %s."
 
 #: ../access/nbtree/nbtinsert.c:555
 #, c-format
@@ -908,7 +910,7 @@ msgstr ""
 #: ../access/transam/clog.c:547 ../access/transam/clog.c:599
 #, c-format
 msgid "open of %s failed: %m"
-msgstr ""
+msgstr "не удалось открыть %s: %m"
 
 #: ../access/transam/clog.c:548
 #, c-format
@@ -925,7 +927,7 @@ msgstr ""
 msgid "read of clog file %u, offset %u failed: %m"
 msgstr ""
 
-#: ../access/transam/clog.c:603 ../access/transam/xlog.c:1308
+#: ../access/transam/clog.c:603 ../access/transam/xlog.c:1312
 #, c-format
 msgid "creation of file %s failed: %m"
 msgstr ""
@@ -947,7 +949,7 @@ msgstr ""
 #: ../access/transam/clog.c:906
 #, c-format
 msgid "removing commit log file %s"
-msgstr ""
+msgstr "удаление commit-лог-файла %s"
 
 #: ../access/transam/clog.c:915
 #, c-format
@@ -1022,202 +1024,202 @@ msgstr ""
 msgid "XLogInsert: invalid record length %u"
 msgstr ""
 
-#: ../access/transam/xlog.c:763 ../access/transam/xlog.c:2550
+#: ../access/transam/xlog.c:767 ../access/transam/xlog.c:2554
 #: ../tcop/postgres.c:488 ../utils/adt/varchar.c:87 ../utils/adt/varchar.c:431
 #: ../utils/adt/varlena.c:192 scan.l:59
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: ../access/transam/xlog.c:995
+#: ../access/transam/xlog.c:999
 #, c-format
 msgid "XLogWrite: write request %X/%X is past end of log %X/%X"
 msgstr ""
 
-#: ../access/transam/xlog.c:1012 ../access/transam/xlog.c:1126
-#: ../access/transam/xlog.c:3241
+#: ../access/transam/xlog.c:1016 ../access/transam/xlog.c:1130
+#: ../access/transam/xlog.c:3256
 #, c-format
 msgid "close of log file %u, segment %u failed: %m"
 msgstr ""
 
-#: ../access/transam/xlog.c:1025
+#: ../access/transam/xlog.c:1029
 msgid "XLogWrite: new log file created - consider increasing WAL_FILES"
 msgstr ""
 
-#: ../access/transam/xlog.c:1051
+#: ../access/transam/xlog.c:1055
 msgid "XLogWrite: time for a checkpoint, signaling postmaster"
 msgstr ""
 
-#: ../access/transam/xlog.c:1070
+#: ../access/transam/xlog.c:1074
 #, c-format
 msgid "lseek of log file %u, segment %u, offset %u failed: %m"
 msgstr ""
 
-#: ../access/transam/xlog.c:1082
+#: ../access/transam/xlog.c:1086
 #, c-format
 msgid "write of log file %u, segment %u, offset %u failed: %m"
 msgstr ""
 
-#: ../access/transam/xlog.c:1173
+#: ../access/transam/xlog.c:1177
 #, c-format
 msgid "XLogFlush%s%s: request %X/%X; write %X/%X; flush %X/%X\n"
 msgstr ""
 
-#: ../access/transam/xlog.c:1238
+#: ../access/transam/xlog.c:1242
 #, c-format
 msgid "XLogFlush: request %X/%X is not satisfied --- flushed only to %X/%X"
 msgstr ""
 
-#: ../access/transam/xlog.c:1286 ../access/transam/xlog.c:1367
-#: ../access/transam/xlog.c:1477 ../access/transam/xlog.c:1481
+#: ../access/transam/xlog.c:1290 ../access/transam/xlog.c:1371
+#: ../access/transam/xlog.c:1481 ../access/transam/xlog.c:1485
 #, c-format
 msgid "open of %s (log file %u, segment %u) failed: %m"
-msgstr ""
+msgstr "не удалось открыть %s (лог-файл: %u, сегмент: %u): %m"
 
-#: ../access/transam/xlog.c:1335
+#: ../access/transam/xlog.c:1339
 #, c-format
 msgid "ZeroFill failed to write %s: %m"
 msgstr ""
 
-#: ../access/transam/xlog.c:1340
+#: ../access/transam/xlog.c:1344
 #, c-format
 msgid "fsync of file %s failed: %m"
 msgstr ""
 
-#: ../access/transam/xlog.c:1445
+#: ../access/transam/xlog.c:1449
 #, c-format
 msgid ""
 "link from %s to %s (initialization of log file %u, segment %u) failed: %m"
 msgstr ""
 
-#: ../access/transam/xlog.c:1450
+#: ../access/transam/xlog.c:1454
 #, c-format
 msgid ""
 "rename from %s to %s (initialization of log file %u, segment %u) failed: %m"
 msgstr ""
 
-#: ../access/transam/xlog.c:1542
+#: ../access/transam/xlog.c:1546
 #, c-format
 msgid "could not open transaction log directory (%s): %m"
 msgstr ""
 
-#: ../access/transam/xlog.c:1557
+#: ../access/transam/xlog.c:1561
 #, c-format
 msgid "archiving transaction log file %s"
 msgstr ""
 
-#: ../access/transam/xlog.c:1559
+#: ../access/transam/xlog.c:1563
 msgid "archiving log files is not implemented!"
 msgstr "архивация логов не поддерживается!"
 
-#: ../access/transam/xlog.c:1573
+#: ../access/transam/xlog.c:1577
 #, c-format
 msgid "recycled transaction log file %s"
 msgstr ""
 
-#: ../access/transam/xlog.c:1579
+#: ../access/transam/xlog.c:1583
 #, c-format
 msgid "removing transaction log file %s"
-msgstr ""
+msgstr "удаление лог-файла транзакций: %s"
 
-#: ../access/transam/xlog.c:1588
+#: ../access/transam/xlog.c:1592
 #, c-format
 msgid "could not read transaction log directory (%s): %m"
 msgstr ""
 
-#: ../access/transam/xlog.c:1661
+#: ../access/transam/xlog.c:1665
 #, c-format
 msgid "ReadRecord: bad resource manager data checksum in record at %X/%X"
 msgstr ""
 
-#: ../access/transam/xlog.c:1683
+#: ../access/transam/xlog.c:1687
 #, c-format
 msgid "ReadRecord: bad checksum of backup block %d in record at %X/%X"
 msgstr ""
 
-#: ../access/transam/xlog.c:1752
+#: ../access/transam/xlog.c:1756
 #, c-format
 msgid "ReadRecord: invalid record offset at %X/%X"
 msgstr ""
 
-#: ../access/transam/xlog.c:1775
+#: ../access/transam/xlog.c:1779
 #, c-format
 msgid "ReadRecord: lseek of log file %u, segment %u, offset %u failed: %m"
 msgstr ""
 
-#: ../access/transam/xlog.c:1781 ../access/transam/xlog.c:1865
+#: ../access/transam/xlog.c:1785 ../access/transam/xlog.c:1869
 #, c-format
 msgid "ReadRecord: read of log file %u, segment %u, offset %u failed: %m"
 msgstr ""
 
-#: ../access/transam/xlog.c:1791
+#: ../access/transam/xlog.c:1795
 #, c-format
 msgid "ReadRecord: contrecord is requested by %X/%X"
 msgstr ""
 
-#: ../access/transam/xlog.c:1805
+#: ../access/transam/xlog.c:1809
 #, c-format
 msgid "ReadRecord: record with zero length at %X/%X"
 msgstr ""
 
-#: ../access/transam/xlog.c:1829
+#: ../access/transam/xlog.c:1833
 #, c-format
 msgid "ReadRecord: record length %u at %X/%X too long"
 msgstr ""
 
-#: ../access/transam/xlog.c:1835
+#: ../access/transam/xlog.c:1839
 #, c-format
 msgid "ReadRecord: invalid resource manager id %u at %X/%X"
 msgstr ""
 
-#: ../access/transam/xlog.c:1873
+#: ../access/transam/xlog.c:1877
 #, c-format
 msgid ""
 "ReadRecord: there is no ContRecord flag in log file %u, segment %u, offset %u"
 msgstr ""
 
-#: ../access/transam/xlog.c:1881
+#: ../access/transam/xlog.c:1885
 #, c-format
 msgid ""
 "ReadRecord: invalid ContRecord length %u in log file %u, segment %u, offset %"
 "u"
 msgstr ""
 
-#: ../access/transam/xlog.c:1945
+#: ../access/transam/xlog.c:1949
 #, c-format
 msgid ""
 "ReadRecord: invalid magic number %04X in log file %u, segment %u, offset %u"
 msgstr ""
 
-#: ../access/transam/xlog.c:1951
+#: ../access/transam/xlog.c:1955
 #, c-format
 msgid ""
 "ReadRecord: invalid info bits %04X in log file %u, segment %u, offset %u"
 msgstr ""
 
-#: ../access/transam/xlog.c:1959
+#: ../access/transam/xlog.c:1963
 #, c-format
 msgid ""
 "ReadRecord: unexpected pageaddr %X/%X in log file %u, segment %u, offset %u"
 msgstr ""
 
 #. translator: SUI = startup id
-#: ../access/transam/xlog.c:1981
+#: ../access/transam/xlog.c:1985
 #, c-format
 msgid ""
 "ReadRecord: out-of-sequence SUI %u (after %u) in log file %u, segment %u, "
 "offset %u"
 msgstr ""
 
-#: ../access/transam/xlog.c:2033
+#: ../access/transam/xlog.c:2037
 msgid "invalid LC_COLLATE setting"
 msgstr ""
 
-#: ../access/transam/xlog.c:2037
+#: ../access/transam/xlog.c:2041
 msgid "invalid LC_CTYPE setting"
 msgstr ""
 
-#: ../access/transam/xlog.c:2046
+#: ../access/transam/xlog.c:2050
 #, c-format
 msgid ""
 "Initializing database with %s collation order.\n"
@@ -1227,36 +1229,36 @@ msgid ""
 "\tre-initdb.  For more information see the Administrator's Guide."
 msgstr ""
 
-#: ../access/transam/xlog.c:2072
+#: ../access/transam/xlog.c:2076
 msgid "sizeof(ControlFileData) is larger than BLCKSZ; fix either one"
 msgstr ""
 
-#: ../access/transam/xlog.c:2080
+#: ../access/transam/xlog.c:2084
 #, c-format
 msgid "WriteControlFile: could not create control file (%s): %m"
 msgstr ""
 
-#: ../access/transam/xlog.c:2089
+#: ../access/transam/xlog.c:2093
 #, c-format
 msgid "WriteControlFile: write to control file failed: %m"
 msgstr ""
 
-#: ../access/transam/xlog.c:2093
+#: ../access/transam/xlog.c:2097
 #, c-format
 msgid "WriteControlFile: fsync of control file failed: %m"
 msgstr ""
 
-#: ../access/transam/xlog.c:2109 ../access/transam/xlog.c:2206
+#: ../access/transam/xlog.c:2113 ../access/transam/xlog.c:2210
 #, c-format
 msgid "could not open control file (%s): %m"
 msgstr ""
 
-#: ../access/transam/xlog.c:2112
+#: ../access/transam/xlog.c:2116
 #, c-format
 msgid "read from control file failed: %m"
 msgstr ""
 
-#: ../access/transam/xlog.c:2124
+#: ../access/transam/xlog.c:2128
 #, c-format
 msgid ""
 "The database cluster was initialized with PG_CONTROL_VERSION %d,\n"
@@ -1264,11 +1266,11 @@ msgid ""
 "\tIt looks like you need to initdb."
 msgstr ""
 
-#: ../access/transam/xlog.c:2137
+#: ../access/transam/xlog.c:2141
 msgid "invalid checksum in control file"
 msgstr ""
 
-#: ../access/transam/xlog.c:2153
+#: ../access/transam/xlog.c:2157
 #, c-format
 msgid ""
 "The database cluster was initialized with CATALOG_VERSION_NO %d,\n"
@@ -1276,7 +1278,7 @@ msgid ""
 "\tIt looks like you need to initdb."
 msgstr ""
 
-#: ../access/transam/xlog.c:2159
+#: ../access/transam/xlog.c:2163
 #, c-format
 msgid ""
 "The database cluster was initialized with BLCKSZ %d,\n"
@@ -1284,7 +1286,7 @@ msgid ""
 "\tIt looks like you need to initdb."
 msgstr ""
 
-#: ../access/transam/xlog.c:2165
+#: ../access/transam/xlog.c:2169
 #, c-format
 msgid ""
 "The database cluster was initialized with RELSEG_SIZE %d,\n"
@@ -1292,7 +1294,7 @@ msgid ""
 "\tIt looks like you need to initdb."
 msgstr ""
 
-#: ../access/transam/xlog.c:2172
+#: ../access/transam/xlog.c:2176
 #, c-format
 msgid ""
 "The database cluster was initialized with LC_COLLATE '%s',\n"
@@ -1300,7 +1302,7 @@ msgid ""
 "\tIt looks like you need to initdb."
 msgstr ""
 
-#: ../access/transam/xlog.c:2178
+#: ../access/transam/xlog.c:2182
 #, c-format
 msgid ""
 "The database cluster was initialized with LC_CTYPE '%s',\n"
@@ -1308,7 +1310,7 @@ msgid ""
 "\tIt looks like you need to initdb."
 msgstr ""
 
-#: ../access/transam/xlog.c:2186
+#: ../access/transam/xlog.c:2190
 #, c-format
 msgid ""
 "The database cluster was initialized with LC_COLLATE '%s' and\n"
@@ -1316,203 +1318,203 @@ msgid ""
 "\tIt looks like you need to initdb or recompile."
 msgstr ""
 
-#: ../access/transam/xlog.c:2214
+#: ../access/transam/xlog.c:2218
 #, c-format
 msgid "write to control file failed: %m"
 msgstr ""
 
-#: ../access/transam/xlog.c:2218
+#: ../access/transam/xlog.c:2222
 #, c-format
 msgid "fsync of control file failed: %m"
 msgstr ""
 
-#: ../access/transam/xlog.c:2358
+#: ../access/transam/xlog.c:2362
 #, c-format
 msgid "BootStrapXLOG failed to write log file: %m"
 msgstr ""
 
-#: ../access/transam/xlog.c:2362
+#: ../access/transam/xlog.c:2366
 #, c-format
 msgid "BootStrapXLOG failed to fsync log file: %m"
 msgstr ""
 
-#: ../access/transam/xlog.c:2428
+#: ../access/transam/xlog.c:2432
 msgid "control file context is broken"
 msgstr ""
 
-#: ../access/transam/xlog.c:2431
+#: ../access/transam/xlog.c:2435
 #, c-format
 msgid "database system was shut down at %s"
-msgstr ""
+msgstr "система была отключена: %s"
 
-#: ../access/transam/xlog.c:2434
+#: ../access/transam/xlog.c:2438
 #, c-format
 msgid "database system shutdown was interrupted at %s"
-msgstr ""
+msgstr "отключение системы было прервано: %s"
 
-#: ../access/transam/xlog.c:2437
+#: ../access/transam/xlog.c:2441
 #, c-format
 msgid ""
 "database system was interrupted being in recovery at %s\n"
-"\tThis propably means that some data blocks are corrupted\n"
+"\tThis probably means that some data blocks are corrupted\n"
 "\tand you will have to use the last backup for recovery."
 msgstr ""
 
-#: ../access/transam/xlog.c:2442
+#: ../access/transam/xlog.c:2446
 #, c-format
 msgid "database system was interrupted at %s"
-msgstr ""
+msgstr "система была прервана: %s"
 
-#: ../access/transam/xlog.c:2453
+#: ../access/transam/xlog.c:2457
 #, c-format
 msgid "checkpoint record is at %X/%X"
-msgstr ""
+msgstr "контрольная точка: %X/%X"
 
-#: ../access/transam/xlog.c:2462
+#: ../access/transam/xlog.c:2466
 #, c-format
 msgid "using previous checkpoint record at %X/%X"
-msgstr ""
+msgstr "используется предыдущая контрольная точка: %X/%X"
 
-#: ../access/transam/xlog.c:2467
+#: ../access/transam/xlog.c:2471
 msgid "unable to locate a valid checkpoint record"
-msgstr ""
-
-#: ../access/transam/xlog.c:2473
-#, c-format
-msgid "redo record is at %X/%X; undo record is at %X/%X; shutdown %s"
-msgstr ""
+msgstr "не в состоянии найти корректную контрольную точку"
 
 #: ../access/transam/xlog.c:2477
 #, c-format
-msgid "next transaction id: %u; next oid: %u"
-msgstr ""
+msgid "redo record is at %X/%X; undo record is at %X/%X; shutdown %s"
+msgstr "redo-запись: %X/%X; undo-запись: %X/%X; отключение: %s"
 
-#: ../access/transam/xlog.c:2480
+#: ../access/transam/xlog.c:2481
+#, c-format
+msgid "next transaction id: %u; next oid: %u"
+msgstr "id следующей транзакции: %u; следующий OID: %u"
+
+#: ../access/transam/xlog.c:2484
 msgid "invalid next transaction id"
 msgstr ""
 
-#: ../access/transam/xlog.c:2491
+#: ../access/transam/xlog.c:2495
 msgid "invalid redo in checkpoint record"
 msgstr ""
 
-#: ../access/transam/xlog.c:2499
+#: ../access/transam/xlog.c:2503
 msgid "invalid redo/undo record in shutdown checkpoint"
 msgstr ""
 
-#: ../access/transam/xlog.c:2508
+#: ../access/transam/xlog.c:2512
 msgid ""
 "database system was not properly shut down; automatic recovery in progress"
 msgstr ""
 
-#: ../access/transam/xlog.c:2528
+#: ../access/transam/xlog.c:2532
 #, c-format
 msgid "redo starts at %X/%X"
 msgstr ""
 
-#: ../access/transam/xlog.c:2559
+#: ../access/transam/xlog.c:2563
 #, c-format
 msgid "redo done at %X/%X"
 msgstr ""
 
-#: ../access/transam/xlog.c:2565
+#: ../access/transam/xlog.c:2569
 msgid "redo is not required"
 msgstr ""
 
-#: ../access/transam/xlog.c:2647
+#: ../access/transam/xlog.c:2651
 #, c-format
 msgid "undo starts at %X/%X"
 msgstr ""
 
-#: ../access/transam/xlog.c:2657
+#: ../access/transam/xlog.c:2661
 #, c-format
 msgid "undo done at %X/%X"
 msgstr ""
 
-#: ../access/transam/xlog.c:2661
+#: ../access/transam/xlog.c:2665
 msgid "undo is not required"
 msgstr ""
 
-#: ../access/transam/xlog.c:2695
+#: ../access/transam/xlog.c:2699
 msgid "database system is ready"
-msgstr ""
+msgstr "система готова к использованию"
 
-#: ../access/transam/xlog.c:2727
+#: ../access/transam/xlog.c:2731
 msgid "invalid primary checkpoint link in control file"
 msgstr ""
 
-#: ../access/transam/xlog.c:2728
+#: ../access/transam/xlog.c:2732
 msgid "invalid secondary checkpoint link in control file"
 msgstr ""
 
-#: ../access/transam/xlog.c:2737
+#: ../access/transam/xlog.c:2741
 msgid "invalid primary checkpoint record"
 msgstr ""
 
-#: ../access/transam/xlog.c:2738
+#: ../access/transam/xlog.c:2742
 msgid "invalid secondary checkpoint record"
 msgstr ""
 
-#: ../access/transam/xlog.c:2744
+#: ../access/transam/xlog.c:2748
 msgid "invalid resource manager id in primary checkpoint record"
 msgstr ""
 
-#: ../access/transam/xlog.c:2745
+#: ../access/transam/xlog.c:2749
 msgid "invalid resource manager id in secondary checkpoint record"
 msgstr ""
 
-#: ../access/transam/xlog.c:2752
+#: ../access/transam/xlog.c:2756
 msgid "invalid xl_info in primary checkpoint record"
 msgstr ""
 
-#: ../access/transam/xlog.c:2753
+#: ../access/transam/xlog.c:2757
 msgid "invalid xl_info in secondary checkpoint record"
 msgstr ""
 
-#: ../access/transam/xlog.c:2759
+#: ../access/transam/xlog.c:2763
 msgid "invalid length of primary checkpoint record"
 msgstr ""
 
-#: ../access/transam/xlog.c:2760
+#: ../access/transam/xlog.c:2764
 msgid "invalid length of secondary checkpoint record"
 msgstr ""
 
-#: ../access/transam/xlog.c:2808
+#: ../access/transam/xlog.c:2812
 msgid "shutting down"
-msgstr ""
+msgstr "отключение в процессе"
 
-#: ../access/transam/xlog.c:2819
+#: ../access/transam/xlog.c:2823
 msgid "database system is shut down"
-msgstr ""
+msgstr "система отключена"
 
-#: ../access/transam/xlog.c:2837
+#: ../access/transam/xlog.c:2841
 msgid "CreateCheckPoint: cannot be called inside transaction block"
 msgstr ""
 
-#: ../access/transam/xlog.c:2935
+#: ../access/transam/xlog.c:2949
 msgid "active transaction while database system is shutting down"
 msgstr ""
 
-#: ../access/transam/xlog.c:2982
+#: ../access/transam/xlog.c:2997
 msgid ""
 "concurrent transaction log activity while database system is shutting down"
 msgstr ""
 
-#: ../access/transam/xlog.c:3220
+#: ../access/transam/xlog.c:3235
 #, c-format
 msgid "bogus wal_sync_method %s"
 msgstr ""
 
-#: ../access/transam/xlog.c:3236 ../access/transam/xlog.c:3262
+#: ../access/transam/xlog.c:3251 ../access/transam/xlog.c:3277
 #, c-format
 msgid "fsync of log file %u, segment %u failed: %m"
 msgstr ""
 
-#: ../access/transam/xlog.c:3268
+#: ../access/transam/xlog.c:3283
 #, c-format
 msgid "fdatasync of log file %u, segment %u failed: %m"
 msgstr ""
 
-#: ../access/transam/xlog.c:3276
+#: ../access/transam/xlog.c:3291
 #, c-format
 msgid "bogus wal_sync_method %d"
 msgstr ""
@@ -1541,7 +1543,7 @@ msgid ""
 msgstr ""
 "Использование:\n"
 "  postgres -boot [-d] [-D дирданных] [-F] [-o файл] [-x номер] имябд\n"
-"  -d               режим debug\n"
+"  -d               режим отладки\n"
 "  -D дирданных     директория с данными\n"
 "  -F               выключить fsync\n"
 "  -o файл          направить debug-вывод в файл\n"
@@ -1556,6 +1558,11 @@ msgid ""
 "PGDATA environment variable.\n"
 "\n"
 msgstr ""
+"Модуль %s не в состоянии найти данные системы.\n"
+"Вы должны указать директорию, которая содержит данные\n"
+"путём указания опции -D при запуске или установив переменную\n"
+"окружения PGDATA.\n"
+"\n"
 
 #: ../bootstrap/bootstrap.c:395
 #, c-format
@@ -1607,7 +1614,7 @@ msgstr ""
 
 #: ../bootstrap/bootstrap.c:670
 msgid "row inserted"
-msgstr ""
+msgstr "запись добавлена"
 
 #: ../bootstrap/bootstrap.c:693
 #, c-format
@@ -1659,11 +1666,11 @@ msgstr "внешний тип: %s"
 #: ../bootstrap/bootstrap.c:869
 #, c-format
 msgid "Error: unknown type '%s'.\n"
-msgstr ""
+msgstr "Ошибка: неизвестный тип '%s'.\n"
 
 #: ../bootstrap/bootstrap.c:885
 msgid "AllocateAttribute: malloc failed"
-msgstr ""
+msgstr "AllocateAttribute: malloc не удался"
 
 #: ../bootstrap/bootstrap.c:1036
 msgid ""
@@ -1673,11 +1680,11 @@ msgstr ""
 
 #: bootparse.y:58
 msgid "start transaction"
-msgstr ""
+msgstr "начало транзации"
 
 #: bootparse.y:67
 msgid "commit transaction"
-msgstr ""
+msgstr "подтверждение транзакции (COMMIT)"
 
 #: bootparse.y:160
 #, c-format
@@ -1722,27 +1729,27 @@ msgstr ""
 
 #: bootparse.y:303
 msgid "too many columns"
-msgstr ""
+msgstr "слишком много колонок"
 
 #: bootscanner.l:127
 #, c-format
 msgid "syntax error at line %d: unexpected character %s"
-msgstr ""
+msgstr "синтаксическая ошибка. Строка: %d, недозволенный символ: %s"
 
 #: bootscanner.l:143
 #, c-format
 msgid "syntax error at line %d: unexpected token %s"
-msgstr ""
+msgstr "синтаксическая ошибка. Строка: %d: неожиданный токен: %s"
 
 #: ../catalog/aclchk.c:56
 #, c-format
 msgid "acl size = %d, # acls = %d"
-msgstr ""
+msgstr "размер acl = %d, число acl'ов = %d"
 
 #: ../catalog/aclchk.c:60
 #, c-format
 msgid "\tacl[%d]: %s"
-msgstr ""
+msgstr "\tacl[%d]: %s"
 
 #: ../catalog/aclchk.c:97 ../commands/trigger.c:80 ../tcop/utility.c:375
 #: ../tcop/utility.c:692 ../tcop/utility.c:851 ../utils/init/miscinit.c:494
@@ -1899,7 +1906,7 @@ msgstr ""
 #: ../catalog/heap.c:397
 #, c-format
 msgid "column name \"%s\" is duplicated"
-msgstr ""
+msgstr "повторное имя колонки: \"%s\""
 
 #: ../catalog/heap.c:734
 #, c-format
@@ -1923,12 +1930,12 @@ msgstr ""
 
 #: ../catalog/heap.c:1076
 msgid "TRUNCATE TABLE cannot run inside a transaction block"
-msgstr ""
+msgstr "Нельзя выполнять TRUNCATE TABLE внутри транзакционного блока"
 
 #: ../catalog/heap.c:1186
 #, c-format
 msgid "DeleteTypeTuple: type \"%s\" does not exist"
-msgstr ""
+msgstr "DeleteTypeTuple: тип \"%s\" не существует"
 
 #: ../catalog/heap.c:1226
 #, c-format
@@ -1943,7 +1950,7 @@ msgstr ""
 #: ../catalog/heap.c:1306
 #, c-format
 msgid "heap_drop_with_catalog: FlushRelationBuffers returned %d"
-msgstr ""
+msgstr "heap_drop_with_catalog: FlushRelationBuffers возвратила %d"
 
 #: ../catalog/heap.c:1448 ../parser/parse_relation.c:923
 #: ../utils/adt/ruleutils.c:2737
@@ -2005,7 +2012,7 @@ msgstr ""
 #: ../catalog/index.c:117
 #, c-format
 msgid "index named \"%s\" already exists"
-msgstr ""
+msgstr "индекс с именем \"%s\" уже существует"
 
 #: ../catalog/index.c:123
 #, c-format
@@ -2030,25 +2037,25 @@ msgstr "Тип %u не существует"
 #: ../catalog/index.c:266
 #, c-format
 msgid "cannot create index: column %d does not exist"
-msgstr ""
+msgstr "нельзя создать индекс: колонка %d не существует"
 
 #: ../catalog/index.c:679
 msgid "must index at least one column"
-msgstr ""
+msgstr "покрайней мере одна колонка должна быть индексирована"
 
 #: ../catalog/index.c:683
 msgid "User-defined indexes on system catalogs are not supported"
-msgstr ""
+msgstr "Пользовательские индексы на системные каталоги не поддерживаются"
 
 #: ../catalog/index.c:864 ../catalog/index.c:912
 #, c-format
 msgid "index_drop: cache lookup failed for index %u"
-msgstr ""
+msgstr "index_drop: поиск в кэше индекса %u не удался"
 
 #: ../catalog/index.c:924
 #, c-format
 msgid "index_drop: FlushRelationBuffers returned %d"
-msgstr ""
+msgstr "index_drop: FlushRelationBuffers возвратила %d"
 
 #: ../catalog/index.c:1142
 #, c-format
@@ -2103,11 +2110,11 @@ msgstr ""
 #: ../catalog/index.c:1832
 #, c-format
 msgid "IndexGetRelation: can't find index id %u"
-msgstr ""
+msgstr "IndexGetRelation: не получается найти индекс с id %u"
 
 #: ../catalog/index.c:1881
 msgid "REINDEX cannot run inside a transaction block"
-msgstr ""
+msgstr "Нельзя вызывать REINDEX внутри блока транзакции"
 
 #: ../catalog/index.c:1895
 msgid "reindex_index: can't open index relation"
@@ -2116,7 +2123,7 @@ msgstr ""
 #: ../catalog/index.c:1907
 #, c-format
 msgid "reindex_index: index %u not found in pg_index"
-msgstr ""
+msgstr "reindex_index: индекс %u не найден в pg_index"
 
 #: ../catalog/index.c:1921
 msgid "reindex_index: can't open heap relation"
@@ -2135,7 +2142,7 @@ msgstr ""
 #: ../catalog/indexing.c:162
 #, c-format
 msgid "CatalogIndexInsert: index %u not found"
-msgstr ""
+msgstr "CatalogIndexInsert: индекс %u не найден"
 
 #: ../catalog/pg_aggregate.c:75
 msgid "no aggregate name supplied"
@@ -2148,7 +2155,7 @@ msgstr ""
 #: ../catalog/pg_aggregate.c:91
 #, c-format
 msgid "data type %s does not exist"
-msgstr ""
+msgstr "тип данных %s не существует"
 
 #: ../catalog/pg_aggregate.c:102
 #, c-format
@@ -2158,7 +2165,7 @@ msgstr ""
 #: ../catalog/pg_aggregate.c:110
 #, c-format
 msgid "data type %s does not exit"
-msgstr ""
+msgstr "тип данных %s не существует"
 
 #: ../catalog/pg_aggregate.c:133
 #, c-format
@@ -2173,11 +2180,11 @@ msgstr ""
 
 #: ../catalog/pg_aggregate.c:203
 msgid "AggregateCreate: heap_formtuple failed"
-msgstr ""
+msgstr "AggregateCreate: heap_formtuple не удалась"
 
 #: ../catalog/pg_aggregate.c:205
 msgid "AggregateCreate: heap_insert failed"
-msgstr ""
+msgstr "AggregateCreate: heap_insert не удалась"
 
 #: ../catalog/pg_aggregate.c:238
 #, c-format
@@ -2194,7 +2201,7 @@ msgstr ""
 #: ../catalog/pg_largeobject.c:128
 #, c-format
 msgid "LargeObjectDrop: large object %u not found"
-msgstr ""
+msgstr "LargeObjectDrop: большой объект %u не найден"
 
 #: ../catalog/pg_operator.c:229
 #, c-format
@@ -2223,7 +2230,7 @@ msgstr "OperatorShellMake: неверные типы операндов"
 #: ../catalog/pg_operator.c:505
 #, c-format
 msgid "OperatorDef: operator \"%s\" already defined"
-msgstr ""
+msgstr "OperatorDef: оператор \"%s\" уже определён"
 
 #: ../catalog/pg_operator.c:529
 #, c-format
@@ -2276,21 +2283,21 @@ msgstr ""
 #: ../catalog/pg_proc.c:89
 #, c-format
 msgid "language '%s' does not exist"
-msgstr ""
+msgstr "язык '%s' не существует"
 
 #: ../catalog/pg_proc.c:99 ../commands/comment.c:636 ../commands/remove.c:298
 #, c-format
 msgid "functions cannot have more than %d arguments"
-msgstr ""
+msgstr "функции не могут иметь число аргументов более %d"
 
 #: ../catalog/pg_proc.c:105
 msgid "SQL functions cannot have arguments of type \"opaque\""
-msgstr ""
+msgstr "SQL-функции не могут иметь аргументы типа \"opaque\""
 
 #: ../catalog/pg_proc.c:113
 #, c-format
 msgid "argument type %s does not exist"
-msgstr ""
+msgstr "тип аргумента %s не существует"
 
 #: ../catalog/pg_proc.c:116
 #, c-format
@@ -2299,7 +2306,7 @@ msgstr ""
 
 #: ../catalog/pg_proc.c:121
 msgid "functions cannot accept set arguments"
-msgstr ""
+msgstr "функции не принимают аргументы-множества (set)"
 
 #: ../catalog/pg_proc.c:159
 msgid "lookup for procedure by source needs fix (Jan)"
@@ -2307,17 +2314,17 @@ msgstr ""
 
 #: ../catalog/pg_proc.c:167
 msgid "SQL functions cannot return type \"opaque\""
-msgstr ""
+msgstr "SQL-функции не могут возвращать значение типа \"opaque\""
 
 #: ../catalog/pg_proc.c:176
 #, c-format
 msgid "ProcedureCreate: type %s is not yet defined"
-msgstr ""
+msgstr "ProcedureCreate: тип %s ещё не определён"
 
 #: ../catalog/pg_proc.c:180
 #, c-format
 msgid "could not create type %s"
-msgstr ""
+msgstr "не получилось создать тип %s"
 
 #: ../catalog/pg_proc.c:184
 #, c-format
@@ -2426,7 +2433,7 @@ msgstr ""
 #: ../commands/_deadcode/recipe.c:188
 #, c-format
 msgid "beginRecipe: eyes[%d] = %s\n"
-msgstr ""
+msgstr "beginRecipe: eyes[%d] = %s\n"
 
 #: ../commands/_deadcode/recipe.c:240
 #, c-format
@@ -2538,12 +2545,12 @@ msgstr ""
 #: ../commands/analyze.c:217
 #, c-format
 msgid "Analyzing %s"
-msgstr ""
+msgstr "Анализируется %s"
 
 #: ../commands/analyze.c:244
 #, c-format
 msgid "ANALYZE: there is no attribute %s in %s"
-msgstr ""
+msgstr "ANALYZE: нет атрибута %s в %s"
 
 #: ../commands/analyze.c:417 ../utils/adt/ruleutils.c:1880
 #: ../utils/adt/ruleutils.c:1915 ../utils/adt/ruleutils.c:2237
@@ -2554,17 +2561,17 @@ msgstr ""
 #: ../commands/analyze.c:620
 #, c-format
 msgid "acquire_sample_rows: ReadBuffer(%s,%u) failed"
-msgstr ""
+msgstr "acquire_sample_rows: ReadBuffer(%s,%u) не удался"
 
 #: ../commands/async.c:153
 #, c-format
 msgid "Async_Notify: %s"
-msgstr ""
+msgstr "Async_Notify: %s"
 
 #: ../commands/async.c:201
 #, c-format
 msgid "Async_Listen: %s"
-msgstr ""
+msgstr "Async_Listen: %s"
 
 #: ../commands/async.c:224
 #, c-format
@@ -2574,15 +2581,15 @@ msgstr ""
 #: ../commands/async.c:303
 #, c-format
 msgid "Async_Unlisten %s"
-msgstr ""
+msgstr "Async_Unlisten %s"
 
 #: ../commands/async.c:361
 msgid "Async_UnlistenAll"
-msgstr ""
+msgstr "Async_UnlistenAll"
 
 #: ../commands/async.c:463
 msgid "AtCommit_Notify"
-msgstr ""
+msgstr "AtCommit_Notify"
 
 #: ../commands/async.c:495
 msgid "AtCommit_Notify: notifying self"
@@ -2595,7 +2602,7 @@ msgstr ""
 
 #: ../commands/async.c:558
 msgid "AtCommit_Notify: done"
-msgstr ""
+msgstr "AtCommit_Notify: завершено"
 
 #: ../commands/async.c:631
 msgid "Async_NotifyHandler: perform async notify"
@@ -2603,7 +2610,7 @@ msgstr ""
 
 #: ../commands/async.c:636
 msgid "Async_NotifyHandler: done"
-msgstr ""
+msgstr "Async_NotifyHandler: завершено"
 
 #: ../commands/async.c:703
 msgid "EnableNotifyInterrupt: perform async notify"
@@ -2611,25 +2618,25 @@ msgstr ""
 
 #: ../commands/async.c:708
 msgid "EnableNotifyInterrupt: done"
-msgstr ""
+msgstr "EnableNotifyInterrupt: завершено"
 
 #: ../commands/async.c:759
 msgid "ProcessIncomingNotify"
-msgstr ""
+msgstr "ProcessIncomingNotify"
 
 #: ../commands/async.c:795
 #, c-format
 msgid "ProcessIncomingNotify: received %s from %d"
-msgstr ""
+msgstr "ProcessIncomingNotify: получено %s от %d"
 
 #: ../commands/async.c:837
 msgid "ProcessIncomingNotify: done"
-msgstr ""
+msgstr "ProcessIncomingNotify: завершено"
 
 #: ../commands/async.c:864
 #, c-format
 msgid "NOTIFY for %s"
-msgstr ""
+msgstr "NOTIFY для %s"
 
 #: ../commands/cluster.c:97
 #, c-format
@@ -2643,7 +2650,7 @@ msgstr ""
 
 #: ../commands/command.c:113
 msgid "PerformPortalFetch: missing portal name"
-msgstr ""
+msgstr "PerformPortalFetch: отсутствует имя портала"
 
 #: ../commands/command.c:123
 #, c-format
@@ -2652,7 +2659,7 @@ msgstr ""
 
 #: ../commands/command.c:245
 msgid "PerformPortalClose: missing portal name"
-msgstr ""
+msgstr "PerformPortalClose: отсутствует имя портала"
 
 #: ../commands/command.c:255
 #, c-format
@@ -2670,7 +2677,7 @@ msgstr ""
 #: ../commands/command.c:1195 ../commands/command.c:1511
 #: ../commands/command.c:1584 ../commands/command.c:1662
 msgid "ALTER TABLE: permission denied"
-msgstr ""
+msgstr "ALTER TABLE: нет доступа"
 
 #: ../commands/command.c:337 ../commands/command.c:558
 #: ../commands/command.c:727 ../commands/command.c:1068
@@ -2872,7 +2879,7 @@ msgstr ""
 #: ../commands/comment.c:447
 #, c-format
 msgid "database '%s' does not exist"
-msgstr ""
+msgstr "база '%s' не существует"
 
 #: ../commands/comment.c:453
 #, c-format
@@ -2887,7 +2894,7 @@ msgstr ""
 #: ../commands/comment.c:498
 #, c-format
 msgid "rule '%s' does not exist"
-msgstr ""
+msgstr "правило '%s' не существует"
 
 #: ../commands/comment.c:531
 #, c-format
@@ -2897,7 +2904,7 @@ msgstr ""
 #: ../commands/comment.c:540 ../commands/comment.c:574
 #, c-format
 msgid "type '%s' does not exist"
-msgstr ""
+msgstr "тип '%s' не существует"
 
 #: ../commands/comment.c:584
 #, c-format
@@ -2912,7 +2919,7 @@ msgstr ""
 #: ../commands/comment.c:653
 #, c-format
 msgid "CommentProc: type '%s' not found"
-msgstr ""
+msgstr "CommentProc: тип '%s' не найден"
 
 #: ../commands/comment.c:660
 #, c-format
@@ -2937,7 +2944,7 @@ msgstr ""
 #: ../commands/comment.c:754
 #, c-format
 msgid "operator '%s' does not exist"
-msgstr ""
+msgstr "оператор '%s' не существует"
 
 #: ../commands/comment.c:761
 #, c-format
@@ -2962,7 +2969,7 @@ msgstr ""
 #: ../commands/copy.c:116
 #, c-format
 msgid "CopySendData: %m"
-msgstr ""
+msgstr "CopySendData: %m"
 
 #: ../commands/copy.c:278 ../commands/trigger.c:319 ../executor/execMain.c:424
 #: ../executor/execMain.c:454 ../storage/ipc/shmqueue.c:234
@@ -2970,7 +2977,7 @@ msgstr ""
 #: ../tcop/utility.c:876 ../tcop/utility.c:891
 #, c-format
 msgid "%s: %s"
-msgstr ""
+msgstr "%s: %s"
 
 #: ../commands/copy.c:280
 msgid ""
@@ -3460,6 +3467,9 @@ msgid ""
 "\n"
 "NOTIFY\n"
 msgstr ""
+"ПЛАН ЗАПРОСА:\n"
+"\n"
+"NOTIFY\n"
 
 #: ../commands/explain.c:99
 msgid ""
@@ -3467,6 +3477,9 @@ msgid ""
 "\n"
 "UTILITY\n"
 msgstr ""
+"ПЛАН ЗАПРОСА:\n"
+"\n"
+"UTILITY\n"
 
 #: ../commands/explain.c:155
 #, c-format
@@ -3475,6 +3488,9 @@ msgid ""
 "\n"
 "%s"
 msgstr ""
+"DUMP ЗАПРОСА:\n"
+"\n"
+"%s"
 
 #: ../commands/explain.c:168
 #, c-format
@@ -3483,6 +3499,9 @@ msgid ""
 "\n"
 "%s"
 msgstr ""
+"ПЛАН ЗАПРОСА:\n"
+"\n"
+"%s"
 
 #: ../commands/indexcmds.c:87
 msgid "DefineIndex: must specify at least one attribute"
@@ -3813,7 +3832,7 @@ msgstr ""
 #: ../commands/sequence.c:461 ../commands/sequence.c:785
 #: ../commands/sequence.c:799 ../commands/sequence.c:802
 msgid ")"
-msgstr ""
+msgstr ")"
 
 #: ../commands/sequence.c:336
 #, c-format
@@ -3851,7 +3870,7 @@ msgstr ""
 
 #: ../commands/sequence.c:461
 msgid ","
-msgstr ""
+msgstr ","
 
 #: ../commands/sequence.c:505
 #, c-format
@@ -4109,17 +4128,17 @@ msgstr ""
 #: ../commands/user.c:130
 #, c-format
 msgid "Invalid user name '%s'"
-msgstr ""
+msgstr "Неверное имя пользователя '%s'"
 
 #: ../commands/user.c:133
 #, c-format
 msgid "Invalid user password '%s'"
-msgstr ""
+msgstr "Неверный пароль '%s'"
 
 #: ../commands/user.c:168
 #, c-format
 msgid "%s: %m"
-msgstr ""
+msgstr "%s: %m"
 
 #: ../commands/user.c:176
 #, c-format
@@ -4249,7 +4268,7 @@ msgstr ""
 #: ../commands/user.c:1045
 #, c-format
 msgid "%s: permission denied"
-msgstr ""
+msgstr "%s: нет доступа"
 
 #: ../commands/user.c:1057
 #, c-format
@@ -4923,7 +4942,7 @@ msgstr ""
 #: ../executor/nodeIndexscan.c:852 ../executor/nodeIndexscan.c:915
 #, c-format
 msgid "ExecInitIndexScan: %s"
-msgstr ""
+msgstr "ExecInitIndexScan: %s"
 
 #: ../executor/nodeIndexscan.c:1002
 #, c-format
@@ -5273,7 +5292,7 @@ msgstr ""
 msgid "_outNode: don't know how to print type %d "
 msgstr "_outNode: не известно как печатать тип %d "
 
-#: ../nodes/print.c:211
+#: ../nodes/print.c:230
 #, c-format
 msgid "Cache lookup for type %u failed"
 msgstr "Поиск в кзше типа %u не удался"
@@ -5639,31 +5658,31 @@ msgstr ""
 msgid "is_simple_subquery: subquery is bogus"
 msgstr ""
 
-#: ../optimizer/plan/planner.c:517
+#: ../optimizer/plan/planner.c:526
 #, c-format
 msgid "resolvenew_in_jointree: unexpected node type %d"
 msgstr ""
 
-#: ../optimizer/plan/planner.c:596
+#: ../optimizer/plan/planner.c:605
 #, c-format
 msgid "preprocess_jointree: unexpected node type %d"
 msgstr ""
 
-#: ../optimizer/plan/planner.c:682
+#: ../optimizer/plan/planner.c:691
 #, c-format
 msgid "preprocess_qual_conditions: unexpected node type %d"
 msgstr ""
 
-#: ../optimizer/plan/planner.c:797 ../parser/analyze.c:2067
+#: ../optimizer/plan/planner.c:806 ../parser/analyze.c:2067
 #: ../parser/analyze.c:2234 ../parser/analyze.c:2695
 msgid "SELECT FOR UPDATE is not allowed with UNION/INTERSECT/EXCEPT"
 msgstr ""
 
-#: ../optimizer/plan/planner.c:850
+#: ../optimizer/plan/planner.c:859
 msgid "SELECT FOR UPDATE is not allowed in subselects"
 msgstr ""
 
-#: ../optimizer/plan/planner.c:1452 ../optimizer/plan/planner.c:1458
+#: ../optimizer/plan/planner.c:1461 ../optimizer/plan/planner.c:1467
 msgid "postprocess_setop_tlist: resjunk output columns not implemented"
 msgstr ""
 
@@ -5730,46 +5749,46 @@ msgstr ""
 msgid "generate_nonunion_plan: bogus operation code"
 msgstr ""
 
-#: ../optimizer/util/clauses.c:78
+#: ../optimizer/util/clauses.c:79
 #, c-format
 msgid "make_clause: unsupported type %d"
 msgstr ""
 
-#: ../optimizer/util/clauses.c:441
+#: ../optimizer/util/clauses.c:442
 msgid "Aggregate function calls may not be nested"
 msgstr ""
 
-#: ../optimizer/util/clauses.c:655
+#: ../optimizer/util/clauses.c:689
 #, c-format
 msgid "Sub-SELECT uses un-GROUPed attribute %s.%s from outer query"
 msgstr ""
 
-#: ../optimizer/util/clauses.c:946
+#: ../optimizer/util/clauses.c:980
 msgid "CommuteClause: applied to non-binary-operator clause"
 msgstr ""
 
-#: ../optimizer/util/clauses.c:954
+#: ../optimizer/util/clauses.c:988
 #, c-format
 msgid "CommuteClause: no commutator for operator %u"
 msgstr ""
 
-#: ../optimizer/util/clauses.c:1179
+#: ../optimizer/util/clauses.c:1213
 #, c-format
 msgid "eval_const_expressions: unexpected opType %d"
 msgstr ""
 
-#: ../optimizer/util/clauses.c:1445 ../utils/cache/lsyscache.c:536
+#: ../optimizer/util/clauses.c:1479 ../utils/cache/lsyscache.c:536
 #: ../utils/cache/lsyscache.c:557
 #, c-format
 msgid "Function OID %u does not exist"
 msgstr ""
 
-#: ../optimizer/util/clauses.c:1796
+#: ../optimizer/util/clauses.c:1830
 #, c-format
 msgid "expression_tree_walker: Unexpected node type %d"
 msgstr ""
 
-#: ../optimizer/util/clauses.c:2171
+#: ../optimizer/util/clauses.c:2205
 #, c-format
 msgid "expression_tree_mutator: Unexpected node type %d"
 msgstr ""
@@ -6095,7 +6114,7 @@ msgstr ""
 msgid "Misplaced NOT DEFERRABLE clause"
 msgstr ""
 
-#: ../parser/analyze.c:3120 ../parser/analyze.c:3138 gram.y:1914 gram.y:1927
+#: ../parser/analyze.c:3120 ../parser/analyze.c:3138 gram.y:1924 gram.y:1937
 msgid "INITIALLY DEFERRED constraint must be DEFERRABLE"
 msgstr ""
 
@@ -6432,12 +6451,12 @@ msgstr ""
 msgid "Cannot pass result of sub-select %s to a function"
 msgstr ""
 
-#: ../parser/parse_func.c:1714
+#: ../parser/parse_func.c:1715
 #, c-format
 msgid "Function '%s(%s)' does not exist%s%s"
 msgstr ""
 
-#: ../parser/parse_func.c:1720
+#: ../parser/parse_func.c:1721
 #, c-format
 msgid "%s: function '%s(%s)' does not exist%s%s"
 msgstr ""
@@ -6732,176 +6751,180 @@ msgstr "ALTER SCHEMA пока не поддерживается"
 msgid "SET must have at least one argument"
 msgstr "SET должен иметь как минимум один аргумент"
 
-#: gram.y:1263 gram.y:1268 gram.y:3601 gram.y:3606
+#: gram.y:893 gram.y:904
+msgid "Time zone interval must be HOUR or HOUR TO MINUTE"
+msgstr ""
+
+#: gram.y:1273 gram.y:1278 gram.y:3611 gram.y:3616
 msgid "GLOBAL TEMPORARY TABLE is not currently supported"
 msgstr "GLOBAL TEMPORARY TABLE в данный момент не поддерживается"
 
-#: gram.y:1303
+#: gram.y:1313
 #, c-format
 msgid "CREATE TABLE / COLLATE %s not yet implemented; clause ignored"
 msgstr "CREATE TABLE / COLLATE %s пока не поддерживается; выражение проигнорировано"
 
-#: gram.y:1559
+#: gram.y:1569
 msgid "FOREIGN KEY/MATCH PARTIAL not yet implemented"
 msgstr "FOREIGN KEY / MATCH PARTIAL пока не поддерживается"
 
-#: gram.y:1614
+#: gram.y:1624
 msgid "CREATE TABLE AS may not specify INTO"
 msgstr "CREATE TABLE AS не может указывать INTO"
 
-#: gram.y:2173
+#: gram.y:2183
 msgid "FETCH / RELATIVE at current position is not supported"
 msgstr "FETCH / RELATIVE в текущей позиции не поддерживается"
 
-#: gram.y:2301
+#: gram.y:2311
 msgid "FETCH / ABSOLUTE not supported, using RELATIVE"
 msgstr "FETCH / ABSOLUTE не поддерживается, используется RELATIVE"
 
-#: gram.y:2418
+#: gram.y:2428
 msgid ""
 "WITH GRANT OPTION is not supported.  Only relation owners can set privileges"
 msgstr ""
 
-#: gram.y:2607
+#: gram.y:2617
 msgid "CREATE FUNCTION / OUT parameters are not supported"
 msgstr "CREATE FUNCTION / OUT параметры не поддерживаются"
 
-#: gram.y:2612
+#: gram.y:2622
 msgid "CREATE FUNCTION / INOUT parameters are not supported"
 msgstr "CREATE FUNCTION / INOUT параметры не поддерживаются"
 
-#: gram.y:2701
+#: gram.y:2711
 msgid "parser: argument type missing (use NONE for unary operators)"
 msgstr ""
 
-#: gram.y:2961
+#: gram.y:2971
 msgid "COMMIT / CHAIN not yet supported"
 msgstr "COMMIT / CHAIN не поддерживается"
 
-#: gram.y:3081
+#: gram.y:3091
 #, c-format
 msgid "%s is not a valid encoding name"
 msgstr "%s не является верным именем кодировки"
 
-#: ../utils/adt/ascii.c:33 gram.y:3084 gram.y:3096
+#: ../utils/adt/ascii.c:33 gram.y:3094 gram.y:3106
 msgid "Multi-byte support is not enabled"
 msgstr ""
 
-#: gram.y:3093
+#: gram.y:3103
 #, c-format
 msgid "%d is not a valid encoding code"
 msgstr "%d не является верным кодом кодировки"
 
-#: gram.y:3679
+#: gram.y:3689
 msgid "LIMIT must not be negative"
 msgstr "LIMIT должен быть неотрицательным"
 
-#: gram.y:3720
+#: gram.y:3730
 msgid "OFFSET must not be negative"
 msgstr "OFFSET должен быть неотрицательным"
 
-#: gram.y:3825
+#: gram.y:3835
 msgid ""
 "sub-SELECT in FROM must have an alias\n"
 "\tFor example, FROM (SELECT ...) [AS] foo"
 msgstr ""
 
-#: gram.y:4125
+#: gram.y:4135
 msgid "precision for FLOAT must be at least 1"
 msgstr "точность для FLOAT должна быть как минимум 1"
 
-#: gram.y:4131
+#: gram.y:4141
 msgid "precision for FLOAT must be less than 16"
 msgstr "точность для FLOAT должна быть меньше 16"
 
-#: gram.y:4142 gram.y:4153
+#: gram.y:4152 gram.y:4163
 #, c-format
 msgid "NUMERIC precision %d must be between 1 and %d"
 msgstr ""
 
-#: gram.y:4145
+#: gram.y:4155
 #, c-format
 msgid "NUMERIC scale %d must be between 0 and precision %d"
 msgstr ""
 
-#: gram.y:4168 gram.y:4179
+#: gram.y:4178 gram.y:4189
 #, c-format
 msgid "DECIMAL precision %d must be between 1 and %d"
 msgstr ""
 
-#: gram.y:4171
+#: gram.y:4181
 #, c-format
 msgid "DECIMAL scale %d must be between 0 and precision %d"
 msgstr ""
 
-#: gram.y:4201 gram.y:4239
+#: gram.y:4211 gram.y:4249
 #, c-format
 msgid "length for type '%s' must be at least 1"
 msgstr ""
 
-#: gram.y:4204 gram.y:4242
+#: gram.y:4214 gram.y:4252
 #, c-format
 msgid "length for type '%s' cannot exceed %d"
 msgstr ""
 
-#: gram.y:4316
+#: gram.y:4326
 #, c-format
 msgid "TIMESTAMP(%d)%s precision must be between %d and %d"
 msgstr ""
 
-#: gram.y:4344
+#: gram.y:4358
 #, c-format
 msgid "TIME(%d)%s precision must be between %d and %d"
 msgstr ""
 
-#: gram.y:4471
+#: gram.y:4486
 msgid "Wrong number of parameters on left side of OVERLAPS expression"
 msgstr ""
 
-#: gram.y:4476
+#: gram.y:4491
 msgid "Wrong number of parameters on right side of OVERLAPS expression"
 msgstr ""
 
-#: gram.y:5037
+#: gram.y:5057
 #, c-format
 msgid "CURRENT_TIME(%d) precision must be between %d and %d"
 msgstr ""
 
-#: gram.y:5091
+#: gram.y:5113
 #, c-format
 msgid "CURRENT_TIMESTAMP(%d) precision must be between %d and %d"
 msgstr ""
 
-#: gram.y:6017
+#: gram.y:6039
 msgid "OLD used in non-rule query"
 msgstr ""
 
-#: gram.y:6024
+#: gram.y:6046
 msgid "NEW used in non-rule query"
 msgstr ""
 
-#: gram.y:6108
+#: gram.y:6130
 msgid "Unequal number of entries in row expression"
 msgstr ""
 
-#: gram.y:6136
+#: gram.y:6158
 #, c-format
 msgid "Operator '%s' not implemented for row expressions"
 msgstr ""
 
-#: gram.y:6171
+#: gram.y:6193
 msgid "Multiple ORDER BY clauses not allowed"
 msgstr ""
 
-#: gram.y:6177
+#: gram.y:6199
 msgid "Multiple FOR UPDATE clauses not allowed"
 msgstr ""
 
-#: gram.y:6183
+#: gram.y:6205
 msgid "Multiple OFFSET clauses not allowed"
 msgstr ""
 
-#: gram.y:6189
+#: gram.y:6211
 msgid "Multiple LIMIT clauses not allowed"
 msgstr ""
 
@@ -6958,7 +6981,7 @@ msgstr ""
 #: ../port/dynloader/ultrix4.c:61
 #, c-format
 msgid "  %s"
-msgstr ""
+msgstr "  %s"
 
 #: ../port/dynloader/linux.c:31
 msgid "dynamic load not supported"
@@ -7020,17 +7043,21 @@ msgid ""
 "but unable to open file \"%s\": %s\n"
 "\n"
 msgstr ""
+"Модуль %s не нашёл систему баз данных.\n"
+"Система ожидалась в PGDATA дириктории - \"%s\",\n"
+"но не получилось открыть файл \"%s\": %s\n"
+"\n"
 
 #: ../postmaster/postmaster.c:431 ../postmaster/postmaster.c:442
 #: ../postmaster/postmaster.c:584 ../postmaster/postmaster.c:640
 #, c-format
 msgid "Try '%s --help' for more information.\n"
-msgstr ""
+msgstr "Наберите '%s --help' для более детальной информации.\n"
 
 #: ../postmaster/postmaster.c:441
 #, c-format
 msgid "invalid argument -- %s"
-msgstr ""
+msgstr "неверный аргумент -- %s"
 
 #: ../postmaster/postmaster.c:468
 msgid "Assert checking is not compiled in."
@@ -7039,12 +7066,12 @@ msgstr ""
 #: ../postmaster/postmaster.c:570 ../tcop/postgres.c:1430
 #, c-format
 msgid "--%s requires argument"
-msgstr ""
+msgstr "--%s требует параметр"
 
 #: ../postmaster/postmaster.c:572 ../tcop/postgres.c:1432
 #, c-format
 msgid "-c %s requires argument"
-msgstr ""
+msgstr "-c %s требует параметр"
 
 #: ../postmaster/postmaster.c:599
 msgid ""
@@ -7072,7 +7099,7 @@ msgstr ""
 #: ../postmaster/postmaster.c:790
 #, c-format
 msgid "fork failed: %s"
-msgstr ""
+msgstr "fork не удался: %s"
 
 #: ../postmaster/postmaster.c:808
 #, c-format
@@ -7085,6 +7112,8 @@ msgid ""
 "%s is the PostgreSQL server.\n"
 "\n"
 msgstr ""
+"%s является PostgreSQL сервером.\n"
+"\n"
 
 #: ../postmaster/postmaster.c:829
 #, c-format
@@ -7093,85 +7122,92 @@ msgid ""
 "  %s [options...]\n"
 "\n"
 msgstr ""
+"Использование:\n"
+"  %s [опции...]\n"
+"\n"
 
 #: ../postmaster/postmaster.c:830
 msgid "Options:\n"
-msgstr ""
+msgstr "Опции:\n"
 
 #: ../postmaster/postmaster.c:832
 msgid "  -A 1|0          enable/disable run-time assert checking\n"
-msgstr ""
+msgstr "  -A 1|0          включить/выключить проверку исключительных ситуаций\n"
 
 #: ../postmaster/postmaster.c:834
 #, c-format
 msgid "  -B NBUFFERS     number of shared buffers (default %d)\n"
-msgstr ""
+msgstr "  -B ЧБУФЕРОВ     чмсло общих буферов (по умолчанию: %d)\n"
 
 #: ../postmaster/postmaster.c:835
 msgid "  -c NAME=VALUE   set run-time parameter\n"
-msgstr ""
+msgstr "  -c ИМЯ=ЗНАЧ.   установить параметр выполнения (run-time)\n"
 
 #: ../postmaster/postmaster.c:836
 msgid "  -d 1-5          debugging level\n"
-msgstr ""
+msgstr "  -d 1-5          уровень отладки\n"
 
 #: ../postmaster/postmaster.c:837
 msgid "  -D DATADIR      database directory\n"
-msgstr ""
+msgstr "  -D ДИРДАННЫХ    директория с данными\n"
 
 #: ../postmaster/postmaster.c:838
 msgid "  -F              turn fsync off\n"
-msgstr ""
+msgstr "  -F              выуключить fsync\n"
 
 #: ../postmaster/postmaster.c:839
 msgid "  -h HOSTNAME     host name or IP address to listen on\n"
-msgstr ""
+msgstr "  -h ХОСТ         имя хоста или IP-адрес для прослушивания\n"
 
 #: ../postmaster/postmaster.c:840
 msgid "  -i              enable TCP/IP connections\n"
-msgstr ""
+msgstr "  -i              подключить TCP/IP соединения\n"
 
 #: ../postmaster/postmaster.c:841
 msgid "  -k DIRECTORY    Unix-domain socket location\n"
-msgstr ""
+msgstr "  -k ДИРЕКТОРИЯ   Местонахождния unix-domain сокетов\n"
 
 #: ../postmaster/postmaster.c:843
 msgid "  -l              enable SSL connections\n"
-msgstr ""
+msgstr "  -l              включить SSL-подсоединения\n"
 
 #: ../postmaster/postmaster.c:845
 #, c-format
 msgid "  -N MAX-CONNECT  maximum number of allowed connections (default %d)\n"
-msgstr ""
+msgstr "  -N MAX-CONNECT  максимально доступное число подсоединений (по умолчанию: %d)\n"
 
 #: ../postmaster/postmaster.c:847
 msgid "  -o OPTIONS      pass 'OPTIONS' to each backend server\n"
-msgstr ""
+msgstr "  -o ОПЦИИ        передать 'ОПЦИИ' каждому бэк-енду (серверу)\n"
 
 #: ../postmaster/postmaster.c:848
 #, c-format
 msgid "  -p PORT         port number to listen on (default %d)\n"
-msgstr ""
+msgstr "  -p ПОРТ         номер порта для прослушивания (по умолчанию: %d)\n"
 
 #: ../postmaster/postmaster.c:849
 msgid ""
 "  -S              silent mode (start in background without logging output)\n"
 msgstr ""
+"  -S              тихий режим (запустить на заднем плане без логов результатов)\n"
 
 #: ../postmaster/postmaster.c:851
 msgid ""
 "\n"
 "Developer options:\n"
 msgstr ""
+"\n"
+"Опции разработчика:\n"
 
 #: ../postmaster/postmaster.c:852
 msgid ""
 "  -n              do not reinitialize shared memory after abnormal exit\n"
 msgstr ""
+"  -n              не переинициализировать общую память после ненормального завершения\n"
 
 #: ../postmaster/postmaster.c:853
 msgid "  -s              send SIGSTOP to all backend servers if one dies\n"
-msgstr ""
+msgstr "  -s              послать сигнал SIGSTOP всем бэк-ендам (серверам) езли один из них падает\n"
 
 #: ../postmaster/postmaster.c:855
 msgid ""
@@ -7253,12 +7289,12 @@ msgstr ""
 
 #: ../postmaster/postmaster.c:1296
 msgid "ConnCreate: malloc failed"
-msgstr ""
+msgstr "ConnCreate: malloc не удался"
 
 #: ../postmaster/postmaster.c:1418
 #, c-format
 msgid "pmdie %d"
-msgstr ""
+msgstr "pmdie %d"
 
 #: ../postmaster/postmaster.c:1432
 msgid "smart shutdown request"
@@ -7760,11 +7796,11 @@ msgstr ""
 #: ../storage/file/fd.c:466
 #, c-format
 msgid "RE_OPEN FAILED: %d"
-msgstr ""
+msgstr "RE_OPEN НЕ УДАЛСЯ: %d"
 
 #: ../storage/file/fd.c:471
 msgid "RE_OPEN SUCCESS"
-msgstr ""
+msgstr "RE_OPEN УСПЕШЕН"
 
 #: ../storage/file/fd.c:495
 #, c-format
@@ -7787,12 +7823,12 @@ msgstr ""
 #: ../storage/file/fd.c:588
 #, c-format
 msgid "FreeVfd: %d (%s)"
-msgstr ""
+msgstr "FreeVfd: %d (%s)"
 
 #: ../storage/file/fd.c:638
 #, c-format
 msgid "FileAccess %d (%s)"
-msgstr ""
+msgstr "FileAccess %d (%s)"
 
 #: ../storage/file/fd.c:690
 msgid "fileNameOpenFile: NULL fname"
@@ -7801,7 +7837,7 @@ msgstr ""
 #: ../storage/file/fd.c:692
 #, c-format
 msgid "fileNameOpenFile: %s %x %o"
-msgstr ""
+msgstr "fileNameOpenFile: %s %x %o"
 
 #: ../storage/file/fd.c:712
 #, c-format
@@ -7820,27 +7856,27 @@ msgstr ""
 #: ../storage/file/fd.c:831
 #, c-format
 msgid "FileClose: %d (%s)"
-msgstr ""
+msgstr "FileClose: %d (%s)"
 
 #: ../storage/file/fd.c:880
 #, c-format
 msgid "FileUnlink: %d (%s)"
-msgstr ""
+msgstr "FileUnlink: %d (%s)"
 
 #: ../storage/file/fd.c:896
 #, c-format
 msgid "FileRead: %d (%s) %ld %d %p"
-msgstr ""
+msgstr "FileRead: %d (%s) %ld %d %p"
 
 #: ../storage/file/fd.c:917
 #, c-format
 msgid "FileWrite: %d (%s) %ld %d %p"
-msgstr ""
+msgstr "FileWrite: %d (%s) %ld %d %p"
 
 #: ../storage/file/fd.c:943
 #, c-format
 msgid "FileSeek: %d (%s) %ld %ld %d"
-msgstr ""
+msgstr "FileSeek: %d (%s) %ld %ld %d"
 
 #: ../storage/file/fd.c:953 ../storage/file/fd.c:974
 #, c-format
@@ -7855,17 +7891,17 @@ msgstr ""
 #: ../storage/file/fd.c:1001
 #, c-format
 msgid "FileTell %d (%s)"
-msgstr ""
+msgstr "FileTell %d (%s)"
 
 #: ../storage/file/fd.c:1014
 #, c-format
 msgid "FileTruncate %d (%s)"
-msgstr ""
+msgstr "FileTruncate %d (%s)"
 
 #: ../storage/file/fd.c:1113
 #, c-format
 msgid "FileMarkDirty: %d (%s)"
-msgstr ""
+msgstr "FileMarkDirty: %d (%s)"
 
 #: ../storage/file/fd.c:1143
 #, c-format
@@ -7918,17 +7954,17 @@ msgstr ""
 #: ../storage/ipc/ipc.c:135
 #, c-format
 msgid "proc_exit(%d)"
-msgstr ""
+msgstr "proc_exit(%d)"
 
 #: ../storage/ipc/ipc.c:154
 #, c-format
 msgid "exit(%d)"
-msgstr ""
+msgstr "exit(%d)"
 
 #: ../storage/ipc/ipc.c:168
 #, c-format
 msgid "shmem_exit(%d)"
-msgstr ""
+msgstr "shmem_exit(%d)"
 
 #: ../storage/ipc/ipc.c:194
 msgid "Out of on_proc_exit slots"
@@ -7944,7 +7980,7 @@ msgstr ""
 
 #: ../storage/ipc/shmem.c:157
 msgid "ShmemAlloc: out of memory"
-msgstr ""
+msgstr "ShmemAlloc: не хватает памяти"
 
 #: ../storage/ipc/shmem.c:203
 msgid "InitShmemIndex: couldn't initialize Shmem Index"
@@ -8071,6 +8107,8 @@ msgid ""
 "%s: lock(%lx) tbl(%d) rel(%u) db(%u) obj(%u) grantMask(%x) req(%d,%d,%d,%d,%"
 "d,%d,%d)=%d grant(%d,%d,%d,%d,%d,%d,%d)=%d wait(%d) type(%s)"
 msgstr ""
+"%s: lock(%lx) tbl(%d) rel(%u) db(%u) obj(%u) grantMask(%x) req(%d,%d,%d,%d,%"
+"d,%d,%d)=%d grant(%d,%d,%d,%d,%d,%d,%d)=%d wait(%d) type(%s)"
 
 #: ../storage/lmgr/lock.c:137
 #, c-format
@@ -8078,6 +8116,8 @@ msgid ""
 "%s: holder(%lx) lock(%lx) tbl(%d) proc(%lx) xid(%u) hold(%d,%d,%d,%d,%d,%d,%"
 "d)=%d"
 msgstr ""
+"%s: holder(%lx) lock(%lx) tbl(%d) proc(%lx) xid(%u) hold(%d,%d,%d,%d,%d,%d,%"
+"d)=%d"
 
 #: ../storage/lmgr/lock.c:251
 #, c-format
@@ -8489,7 +8529,7 @@ msgstr ""
 #: ../tcop/postgres.c:371
 #, c-format
 msgid "query: %s"
-msgstr ""
+msgstr "запрос: %s"
 
 #: ../tcop/postgres.c:430
 msgid "parse tree:"
@@ -8514,33 +8554,33 @@ msgstr ""
 
 #: ../tcop/postgres.c:542
 msgid "plan:"
-msgstr ""
+msgstr "план:"
 
 #: ../tcop/postgres.c:546
 #, c-format
 msgid "plan: %s"
-msgstr ""
+msgstr "план: %s"
 
 #: ../tcop/postgres.c:745
 #, c-format
 msgid "ProcessUtility: %s"
-msgstr ""
+msgstr "ProcessUtility: %s"
 
 #: ../tcop/postgres.c:747
 msgid "ProcessUtility"
-msgstr ""
+msgstr "ProcessUtility"
 
 #: ../tcop/postgres.c:780
 msgid "ProcessQuery"
-msgstr ""
+msgstr "ProcessQuery"
 
 #: ../tcop/postgres.c:839
 msgid "StartTransactionCommand"
-msgstr ""
+msgstr "StartTransactionCommand"
 
 #: ../tcop/postgres.c:851
 msgid "CommitTransactionCommand"
-msgstr ""
+msgstr "CommitTransactionCommand"
 
 #: ../tcop/postgres.c:878
 msgid ""
@@ -8598,11 +8638,11 @@ msgstr ""
 
 #: ../tcop/postgres.c:1605
 msgid "InitPostgres"
-msgstr ""
+msgstr "InitPostgres"
 
 #: ../tcop/postgres.c:1688
 msgid "AbortCurrentTransaction"
-msgstr ""
+msgstr "AbortCurrentTransaction"
 
 #: ../tcop/postgres.c:1877
 msgid "unknown frontend message was received"
@@ -8614,6 +8654,8 @@ msgid ""
 "%s\n"
 "%s"
 msgstr ""
+"%s\n"
+"%s"
 
 #: ../tcop/postgres.c:2031
 #, c-format
@@ -9139,11 +9181,11 @@ msgstr ""
 msgid "INTERVAL time zone '%s' not legal (month specified)"
 msgstr ""
 
-#: ../utils/adt/datetime.c:1069 ../utils/adt/datetime.c:1450
+#: ../utils/adt/datetime.c:1070 ../utils/adt/datetime.c:1451
 msgid "'CURRENT' is no longer supported"
 msgstr ""
 
-#: ../utils/adt/datetime.c:1228 ../utils/adt/datetime.c:1685
+#: ../utils/adt/datetime.c:1229 ../utils/adt/datetime.c:1686
 #: ../utils/adt/formatting.c:3053
 #, c-format
 msgid "Inconsistent use of year %04d and 'BC'"
@@ -9217,7 +9259,7 @@ msgstr ""
 msgid "Input '%s' is out of range for float4"
 msgstr ""
 
-#: ../utils/adt/float.c:269 ../utils/adt/numeric.c:1685
+#: ../utils/adt/float.c:269 ../utils/adt/numeric.c:1665
 #, c-format
 msgid "Bad float8 input format '%s'"
 msgstr ""
@@ -9316,11 +9358,11 @@ msgstr ""
 msgid "%s: expected 3-element float8 array"
 msgstr ""
 
-#: ../utils/adt/float.c:1681
+#: ../utils/adt/float.c:1695
 msgid "float48div: divide by zero"
 msgstr ""
 
-#: ../utils/adt/float.c:1741
+#: ../utils/adt/float.c:1755
 msgid "float84div: divide by zero"
 msgstr ""
 
@@ -9459,12 +9501,12 @@ msgstr ""
 #: ../utils/adt/formatting.c:1557
 #, c-format
 msgid "\t%c: %s, "
-msgstr ""
+msgstr "\t%c: %s, "
 
 #: ../utils/adt/formatting.c:1563
 #, c-format
 msgid "\t(%d) %c %d"
-msgstr ""
+msgstr "\t(%d) %c %d"
 
 #: ../utils/adt/formatting.c:1566
 #, c-format
@@ -9564,7 +9606,7 @@ msgstr ""
 #: ../utils/adt/formatting.c:3670
 #, c-format
 msgid "SIGN_WROTE: %d, CURRENT: %d, NUMBER_P: '%s', INOUT: '%s'"
-msgstr ""
+msgstr "SIGN_WROTE: %d, CURRENT: %d, NUMBER_P: '%s', INOUT: '%s'"
 
 #: ../utils/adt/formatting.c:3685
 #, c-format
@@ -9616,6 +9658,18 @@ msgid ""
 "\tZERO_END: %d\n"
 "\tLAST_RELEVANT: %s"
 msgstr ""
+"\n"
+"\tNUM: '%s'\n"
+"\tPRE: %d\n"
+"\tPOST: %d\n"
+"\tNUM_COUNT: %d\n"
+"\tNUM_PRE: %d\n"
+"\tSIGN_POS: %d\n"
+"\tSIGN_WROTE: %s\n"
+"\tZERO: %s\n"
+"\tZERO_START: %d\n"
+"\tZERO_END: %d\n"
+"\tLAST_RELEVANT: %s"
 
 #: ../utils/adt/formatting.c:4265
 #, c-format
@@ -9818,72 +9872,72 @@ msgstr ""
 msgid "int4notin: unknown attribute %s for relation %s"
 msgstr ""
 
-#: ../utils/adt/numeric.c:1500
+#: ../utils/adt/numeric.c:1480
 msgid "Cannot convert NaN to int4"
 msgstr ""
 
-#: ../utils/adt/numeric.c:1550
+#: ../utils/adt/numeric.c:1530
 msgid "Cannot convert NaN to int8"
 msgstr ""
 
-#: ../utils/adt/numeric.c:1601
+#: ../utils/adt/numeric.c:1581
 msgid "Cannot convert NaN to int2"
 msgstr ""
 
-#: ../utils/adt/numeric.c:1767
+#: ../utils/adt/numeric.c:1747
 msgid "do_numeric_accum: expected 3-element numeric array"
 msgstr ""
 
-#: ../utils/adt/numeric.c:1858
+#: ../utils/adt/numeric.c:1838
 msgid "numeric_avg: expected 3-element numeric array"
 msgstr ""
 
-#: ../utils/adt/numeric.c:1893
+#: ../utils/adt/numeric.c:1874
 msgid "numeric_variance: expected 3-element numeric array"
 msgstr ""
 
-#: ../utils/adt/numeric.c:1960
+#: ../utils/adt/numeric.c:1953
 msgid "numeric_stddev: expected 3-element numeric array"
 msgstr ""
 
-#: ../utils/adt/numeric.c:2142
+#: ../utils/adt/numeric.c:2146
 msgid "int2_avg_accum: expected 2-element int8 array"
 msgstr ""
 
-#: ../utils/adt/numeric.c:2162
+#: ../utils/adt/numeric.c:2166
 msgid "int4_avg_accum: expected 2-element int8 array"
 msgstr ""
 
-#: ../utils/adt/numeric.c:2180
+#: ../utils/adt/numeric.c:2184
 msgid "int8_avg: expected 2-element int8 array"
 msgstr ""
 
-#: ../utils/adt/numeric.c:2371 ../utils/adt/numeric.c:2386
-#: ../utils/adt/numeric.c:2404 ../utils/adt/numeric.c:2408
-#: ../utils/adt/numeric.c:2419
+#: ../utils/adt/numeric.c:2375 ../utils/adt/numeric.c:2390
+#: ../utils/adt/numeric.c:2408 ../utils/adt/numeric.c:2412
+#: ../utils/adt/numeric.c:2423
 #, c-format
 msgid "Bad numeric input format '%s'"
 msgstr ""
 
-#: ../utils/adt/numeric.c:2738
+#: ../utils/adt/numeric.c:2742
 #, c-format
 msgid ""
 "overflow on numeric ABS(value) >= 10^%d for field with precision %d scale %d"
 msgstr ""
 
-#: ../utils/adt/numeric.c:3148
+#: ../utils/adt/numeric.c:3152
 msgid "division by zero on numeric"
 msgstr ""
 
-#: ../utils/adt/numeric.c:3453
+#: ../utils/adt/numeric.c:3496
 msgid "math error on numeric - cannot compute SQRT of negative value"
 msgstr ""
 
-#: ../utils/adt/numeric.c:3539
+#: ../utils/adt/numeric.c:3582
 msgid "argument for EXP() too big"
 msgstr ""
 
-#: ../utils/adt/numeric.c:3606
+#: ../utils/adt/numeric.c:3649
 msgid "math error on numeric - cannot compute LN of value <= zero"
 msgstr ""
 
@@ -9941,6 +9995,15 @@ msgid ""
 "LC_MONETARY:\t%s\n"
 "LC_MESSAGES:\t%s\n"
 msgstr ""
+"ТЕКУЩЕЕ ОКРУЖЕНИИ ДЛЯ ЛОКАЛИ:\n"
+"\n"
+"LANG:   \t%s\n"
+"LC_CTYPE:\t%s\n"
+"LC_NUMERIC:\t%s\n"
+"LC_TIME:\t%s\n"
+"LC_COLLATE:\t%s\n"
+"LC_MONETARY:\t%s\n"
+"LC_MESSAGES:\t%s\n"
 
 #: ../utils/adt/pg_locale.c:98
 #, c-format
@@ -9954,6 +10017,14 @@ msgid ""
 "LC_COLLATE:\t%s\n"
 "LC_MONETARY:\t%s\n"
 msgstr ""
+"ТЕКУЩЕЕ ОКРУЖЕНИИ ДЛЯ ЛОКАЛИ:\n"
+"\n"
+"LANG:   \t%s\n"
+"LC_CTYPE:\t%s\n"
+"LC_NUMERIC:\t%s\n"
+"LC_TIME:\t%s\n"
+"LC_COLLATE:\t%s\n"
+"LC_MONETARY:\t%s\n"
 
 #: ../utils/adt/pg_locale.c:122
 #, c-format
@@ -10994,7 +11065,7 @@ msgstr ""
 #: ../utils/adt/varbit.c:1200
 #, c-format
 msgid "S. %d %d em=%2x sm=%2x r=%d"
-msgstr ""
+msgstr "S. %d %d em=%2x sm=%2x r=%d"
 
 #: ../utils/adt/varchar.c:120 ../utils/adt/varchar.c:132
 #: ../utils/adt/varchar.c:232 ../utils/adt/varchar.c:245
@@ -11389,7 +11460,7 @@ msgstr ""
 #. translator: This must fit in fmt_fixedbuf.
 #: ../utils/error/elog.c:199 ../utils/error/elog.c:295
 msgid "elog: out of memory"
-msgstr ""
+msgstr "elog: не достаточно памяти"
 
 #: ../utils/error/elog.c:417
 msgid "elog: error during error recovery, giving up!"
@@ -11398,7 +11469,7 @@ msgstr ""
 #: ../utils/error/elog.c:462
 #, c-format
 msgid "DebugFileOpen: open of %s: %m"
-msgstr ""
+msgstr "DebugFileOpen: открытие %s: %m"
 
 #: ../utils/error/elog.c:471
 #, c-format
@@ -11425,23 +11496,23 @@ msgstr ""
 
 #: ../utils/error/elog.c:735
 msgid "DEBUG:  "
-msgstr ""
+msgstr "DEBUG:  "
 
 #: ../utils/error/elog.c:738
 msgid "NOTICE:  "
-msgstr ""
+msgstr "NOTICE:  "
 
 #: ../utils/error/elog.c:741
 msgid "ERROR:  "
-msgstr ""
+msgstr "ERROR:  "
 
 #: ../utils/error/elog.c:744
 msgid "FATAL 1:  "
-msgstr ""
+msgstr "FATAL 1:  "
 
 #: ../utils/error/elog.c:747
 msgid "FATAL 2:  "
-msgstr ""
+msgstr "FATAL 2:  "
 
 #: ../utils/fmgr/dfmgr.c:98
 #, c-format
@@ -11714,7 +11785,7 @@ msgstr ""
 #: ../utils/misc/guc.c:1276 ../utils/misc/guc.c:1282 ../utils/misc/guc.c:1289
 #: guc-file.l:148 guc-file.l:267 guc-file.l:308
 msgid "out of memory"
-msgstr ""
+msgstr "не хватает памяти"
 
 #: ../utils/init/miscinit.c:149
 #, c-format
@@ -11923,7 +11994,7 @@ msgstr ""
 #: guc-file.l:159
 #, c-format
 msgid "': %s"
-msgstr ""
+msgstr "': %s"
 
 #: guc-file.l:259
 #, c-format
