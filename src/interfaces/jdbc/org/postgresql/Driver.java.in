@@ -51,38 +51,6 @@ public class Driver implements java.sql.Driver
 	}
 
 	/*
-	 * Construct a new driver and register it with DriverManager
-	 *
-	 * @exception SQLException for who knows what!
-	 */
-	public Driver() throws SQLException
-	{
-		// Set the connectClass variable so that future calls will handle the correct
-		// base class
-		//if (System.getProperty("java.version").startsWith("1.1")) {
-		//connectClass = "postgresql.jdbc1.Connection";
-		//} else {
-		//connectClass = "postgresql.jdbc2.Connection";
-		//}
-
-		// Ok, when the above code was introduced in 6.5 it's intention was to allow
-		// the driver to automatically detect which version of JDBC was being used
-		// and to detect the version of the JVM accordingly.
-		//
-		// It did this by using the java.version parameter.
-		//
-		// However, it was quickly discovered that not all JVM's returned an easily
-		// parseable version number (ie "1.2") and some don't return a value at all.
-		// The latter came from a discussion on the advanced java list.
-		//
-		// So, to solve this, I've moved the decision out of the driver, and it's now
-		// a compile time parameter.
-		//
-		// For this to work, the Makefile creates a pseudo class which contains the class
-		// name that will actually make the connection.
-	}
-
-	/*
 	 * Try to make a database connection to the given URL.	The driver
 	 * should return "null" if it realizes it is the wrong kind of
 	 * driver to connect to the given URL.	This will be common, as
@@ -209,22 +177,9 @@ public class Driver implements java.sql.Driver
 	 */
 	public DriverPropertyInfo[] getPropertyInfo(String url, Properties info) throws SQLException
 	{
+                //This method isn't really implemented
 		Properties p = parseURL(url, info);
-
-		// naughty, but its best for speed. If anyone adds a property here, then
-		// this _MUST_ be increased to accomodate them.
-		DriverPropertyInfo d, dpi[] = new DriverPropertyInfo[0];
-		//int i=0;
-
-		//dpi[i++] = d = new DriverPropertyInfo("auth",p.getProperty("auth","default"));
-		//d.description = "determines if password authentication is used";
-		//d.choices = new String[4];
-		//d.choices[0]="default";	// Get value from org.postgresql.auth property, defaults to trust
-		//d.choices[1]="trust"; // No password authentication
-		//d.choices[2]="password";	// Password authentication
-		//d.choices[3]="ident"; // Ident (RFC 1413) protocol
-
-		return dpi;
+		return new DriverPropertyInfo[0];
 	}
 
 	/*
@@ -394,7 +349,7 @@ public class Driver implements java.sql.Driver
 	}
 
 	/*
-	 * @return the port number portion of the URL or -1 if no port was specified
+	 * @return the port number portion of the URL or the default if no port was specified
 	 */
 	public int port()
 	{
