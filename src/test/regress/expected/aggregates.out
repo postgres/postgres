@@ -1,132 +1,135 @@
-QUERY: SELECT avg(four) AS avg_1 FROM onek;
-avg_1
------
-    1
-(1 row)
-
-QUERY: SELECT avg(a) AS avg_32 FROM aggtest WHERE a < 100;
-avg_32
-------
-    32
-(1 row)
-
-QUERY: SELECT avg(b) AS avg_107_943 FROM aggtest;
-avg_107_943
------------
-    107.943
-(1 row)
-
-QUERY: SELECT avg(gpa) AS avg_3_4 FROM student;
-avg_3_4
+--
+-- AGGREGATES
+--
+SELECT avg(four) AS avg_1 FROM onek;
+ avg_1 
 -------
-    3.4
+     1
 (1 row)
 
-QUERY: SELECT sum(four) AS sum_1500 FROM onek;
-sum_1500
+SELECT avg(a) AS avg_32 FROM aggtest WHERE a < 100;
+ avg_32 
 --------
-    1500
+     32
 (1 row)
 
-QUERY: SELECT sum(a) AS sum_198 FROM aggtest;
-sum_198
--------
-    198
+SELECT avg(b) AS avg_107_943 FROM aggtest;
+ avg_107_943 
+-------------
+     107.943
 (1 row)
 
-QUERY: SELECT sum(b) AS avg_431_773 FROM aggtest;
-avg_431_773
------------
-    431.773
+SELECT avg(gpa) AS avg_3_4 FROM student;
+ avg_3_4 
+---------
+     3.4
 (1 row)
 
-QUERY: SELECT sum(gpa) AS avg_6_8 FROM student;
-avg_6_8
--------
-    6.8
-(1 row)
-
-QUERY: SELECT max(four) AS max_3 FROM onek;
-max_3
------
-    3
-(1 row)
-
-QUERY: SELECT max(a) AS max_100 FROM aggtest;
-max_100
--------
-    100
-(1 row)
-
-QUERY: SELECT max(aggtest.b) AS max_324_78 FROM aggtest;
-max_324_78
+SELECT sum(four) AS sum_1500 FROM onek;
+ sum_1500 
 ----------
-    324.78
+     1500
 (1 row)
 
-QUERY: SELECT max(student.gpa) AS max_3_7 FROM student;
-max_3_7
+SELECT sum(a) AS sum_198 FROM aggtest;
+ sum_198 
+---------
+     198
+(1 row)
+
+SELECT sum(b) AS avg_431_773 FROM aggtest;
+ avg_431_773 
+-------------
+     431.773
+(1 row)
+
+SELECT sum(gpa) AS avg_6_8 FROM student;
+ avg_6_8 
+---------
+     6.8
+(1 row)
+
+SELECT max(four) AS max_3 FROM onek;
+ max_3 
 -------
-    3.7
+     3
 (1 row)
 
-QUERY: SELECT count(four) AS cnt_1000 FROM onek;
-cnt_1000
---------
-    1000
+SELECT max(a) AS max_100 FROM aggtest;
+ max_100 
+---------
+     100
 (1 row)
 
-QUERY: SELECT count(DISTINCT four) AS cnt_4 FROM onek;
-cnt_4
------
-    4
+SELECT max(aggtest.b) AS max_324_78 FROM aggtest;
+ max_324_78 
+------------
+     324.78
 (1 row)
 
-QUERY: select ten, count(*), sum(four) from onek group by ten;
-ten|count|sum
----+-----+---
-  0|  100|100
-  1|  100|200
-  2|  100|100
-  3|  100|200
-  4|  100|100
-  5|  100|200
-  6|  100|100
-  7|  100|200
-  8|  100|100
-  9|  100|200
+SELECT max(student.gpa) AS max_3_7 FROM student;
+ max_3_7 
+---------
+     3.7
+(1 row)
+
+SELECT count(four) AS cnt_1000 FROM onek;
+ cnt_1000 
+----------
+     1000
+(1 row)
+
+SELECT count(DISTINCT four) AS cnt_4 FROM onek;
+ cnt_4 
+-------
+     4
+(1 row)
+
+select ten, count(*), sum(four) from onek group by ten;
+ ten | count | sum 
+-----+-------+-----
+   0 |   100 | 100
+   1 |   100 | 200
+   2 |   100 | 100
+   3 |   100 | 200
+   4 |   100 | 100
+   5 |   100 | 200
+   6 |   100 | 100
+   7 |   100 | 200
+   8 |   100 | 100
+   9 |   100 | 200
 (10 rows)
 
-QUERY: select ten, count(four), sum(DISTINCT four) from onek group by ten;
-ten|count|sum
----+-----+---
-  0|  100|  2
-  1|  100|  4
-  2|  100|  2
-  3|  100|  4
-  4|  100|  2
-  5|  100|  4
-  6|  100|  2
-  7|  100|  4
-  8|  100|  2
-  9|  100|  4
+select ten, count(four), sum(DISTINCT four) from onek group by ten;
+ ten | count | sum 
+-----+-------+-----
+   0 |   100 |   2
+   1 |   100 |   4
+   2 |   100 |   2
+   3 |   100 |   4
+   4 |   100 |   2
+   5 |   100 |   4
+   6 |   100 |   2
+   7 |   100 |   4
+   8 |   100 |   2
+   9 |   100 |   4
 (10 rows)
 
-QUERY: SELECT newavg(four) AS avg_1 FROM onek;
-avg_1
------
-    1
+SELECT newavg(four) AS avg_1 FROM onek;
+ avg_1 
+-------
+     1
 (1 row)
 
-QUERY: SELECT newsum(four) AS sum_1500 FROM onek;
-sum_1500
---------
-    1500
+SELECT newsum(four) AS sum_1500 FROM onek;
+ sum_1500 
+----------
+     1500
 (1 row)
 
-QUERY: SELECT newcnt(four) AS cnt_1000 FROM onek;
-cnt_1000
---------
-    1000
+SELECT newcnt(four) AS cnt_1000 FROM onek;
+ cnt_1000 
+----------
+     1000
 (1 row)
 

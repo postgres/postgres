@@ -1,94 +1,152 @@
-QUERY: CREATE TABLE JOIN_TBL (
+--
+-- JOIN
+-- Test join clauses
+--
+CREATE TABLE JOIN1_TBL (
   i integer,
   j integer,
-  x text
+  t text
 );
-QUERY: CREATE TABLE JOIN2_TBL (
+CREATE TABLE JOIN2_TBL (
   i integer,
   k integer
 );
-QUERY: INSERT INTO JOIN_TBL VALUES (1, 3, 'one');
-QUERY: INSERT INTO JOIN_TBL VALUES (2, 2, 'two');
-QUERY: INSERT INTO JOIN_TBL VALUES (3, 1, 'three');
-QUERY: INSERT INTO JOIN_TBL VALUES (4, 0, 'four');
-QUERY: INSERT INTO JOIN2_TBL VALUES (1, -1);
-QUERY: INSERT INTO JOIN2_TBL VALUES (2, 2);
-QUERY: INSERT INTO JOIN2_TBL VALUES (3, -3);
-QUERY: INSERT INTO JOIN2_TBL VALUES (2, 4);
-QUERY: SELECT '' AS "xxx", *
-  FROM JOIN_TBL CROSS JOIN JOIN2_TBL;
-xxx|i|j|x    |i| k
----+-+-+-----+-+--
-   |1|3|one  |1|-1
-   |2|2|two  |1|-1
-   |3|1|three|1|-1
-   |4|0|four |1|-1
-   |1|3|one  |2| 2
-   |2|2|two  |2| 2
-   |3|1|three|2| 2
-   |4|0|four |2| 2
-   |1|3|one  |3|-3
-   |2|2|two  |3|-3
-   |3|1|three|3|-3
-   |4|0|four |3|-3
-   |1|3|one  |2| 4
-   |2|2|two  |2| 4
-   |3|1|three|2| 4
-   |4|0|four |2| 4
+CREATE TABLE JOIN3_TBL (
+  i integer,
+  j integer,
+  y integer
+);
+CREATE TABLE JOIN4_TBL (
+  k integer,
+  z integer
+);
+INSERT INTO JOIN1_TBL VALUES (1, 3, 'one');
+INSERT INTO JOIN1_TBL VALUES (2, 2, 'two');
+INSERT INTO JOIN1_TBL VALUES (3, 1, 'three');
+INSERT INTO JOIN1_TBL VALUES (4, 0, 'four');
+INSERT INTO JOIN2_TBL VALUES (1, -1);
+INSERT INTO JOIN2_TBL VALUES (2, 2);
+INSERT INTO JOIN2_TBL VALUES (3, -3);
+INSERT INTO JOIN2_TBL VALUES (2, 4);
+--
+-- CROSS JOIN
+-- Qualifications are not allowed on cross joins,
+-- which degenerate into a standard unqualified inner join.
+--
+SELECT '' AS "xxx", *
+  FROM JOIN1_TBL CROSS JOIN JOIN2_TBL;
+ xxx | i | j |   t   | i | k  
+-----+---+---+-------+---+----
+     | 1 | 3 | one   | 1 | -1
+     | 2 | 2 | two   | 1 | -1
+     | 3 | 1 | three | 1 | -1
+     | 4 | 0 | four  | 1 | -1
+     | 1 | 3 | one   | 2 |  2
+     | 2 | 2 | two   | 2 |  2
+     | 3 | 1 | three | 2 |  2
+     | 4 | 0 | four  | 2 |  2
+     | 1 | 3 | one   | 3 | -3
+     | 2 | 2 | two   | 3 | -3
+     | 3 | 1 | three | 3 | -3
+     | 4 | 0 | four  | 3 | -3
+     | 1 | 3 | one   | 2 |  4
+     | 2 | 2 | two   | 2 |  4
+     | 3 | 1 | three | 2 |  4
+     | 4 | 0 | four  | 2 |  4
 (16 rows)
 
-QUERY: SELECT '' AS "xxx", *
-  FROM JOIN_TBL NATURAL JOIN JOIN2_TBL;
+SELECT '' AS "xxx", i, k, t
+  FROM JOIN1_TBL CROSS JOIN JOIN2_TBL;
+ERROR:  Column 'i' is ambiguous
+SELECT '' AS "xxx", ii, tt, kk
+  FROM JOIN1_TBL CROSS JOIN JOIN2_TBL AS JT (ii, jj, tt, ii2, kk);
+ERROR:  parser: parse error at or near "("
+SELECT '' AS "xxx", jt.ii, jt.jj, jt.kk
+  FROM JOIN1_TBL CROSS JOIN JOIN2_TBL AS JT (ii, jj, tt, ii2, kk);
+ERROR:  parser: parse error at or near "("
+--
+--
+-- Inner joins (equi-joins)
+--
+--
+--
+-- Inner joins (equi-joins) with USING clause
+-- The USING syntax changes the shape of the resulting table
+-- by including a column in the USING clause only once in the result.
+--
+-- Inner equi-join on all columns with the same name
+SELECT '' AS "xxx", *
+  FROM JOIN1_TBL NATURAL JOIN JOIN2_TBL;
 ERROR:  JOIN expressions are not yet implemented
-QUERY: SELECT '' AS "xxx", *
-  FROM JOIN_TBL INNER JOIN JOIN2_TBL USING (i);
+-- Inner equi-join on specified column
+SELECT '' AS "xxx", *
+  FROM JOIN1_TBL INNER JOIN JOIN2_TBL USING (i);
 ERROR:  JOIN expressions are not yet implemented
-QUERY: SELECT '' AS "xxx", *
-  FROM JOIN_TBL JOIN JOIN2_TBL ON (JOIN_TBL.i = JOIN2_TBL.i);
+-- Same as above, slightly different syntax
+SELECT '' AS "xxx", *
+  FROM JOIN1_TBL JOIN JOIN2_TBL USING (i);
 ERROR:  JOIN expressions are not yet implemented
-QUERY: SELECT '' AS "xxx", *
-  FROM JOIN_TBL JOIN JOIN2_TBL ON (JOIN_TBL.i = JOIN2_TBL.k);
+--
+-- Inner joins (equi-joins)
+--
+SELECT '' AS "xxx", *
+  FROM JOIN1_TBL JOIN JOIN2_TBL ON (JOIN1_TBL.i = JOIN2_TBL.i);
 ERROR:  JOIN expressions are not yet implemented
-QUERY: SELECT '' AS "xxx", *
-  FROM JOIN_TBL CROSS JOIN JOIN2_TBL;
-xxx|i|j|x    |i| k
----+-+-+-----+-+--
-   |1|3|one  |1|-1
-   |2|2|two  |1|-1
-   |3|1|three|1|-1
-   |4|0|four |1|-1
-   |1|3|one  |2| 2
-   |2|2|two  |2| 2
-   |3|1|three|2| 2
-   |4|0|four |2| 2
-   |1|3|one  |3|-3
-   |2|2|two  |3|-3
-   |3|1|three|3|-3
-   |4|0|four |3|-3
-   |1|3|one  |2| 4
-   |2|2|two  |2| 4
-   |3|1|three|2| 4
-   |4|0|four |2| 4
+SELECT '' AS "xxx", *
+  FROM JOIN1_TBL JOIN JOIN2_TBL ON (JOIN1_TBL.i = JOIN2_TBL.k);
+ERROR:  JOIN expressions are not yet implemented
+SELECT '' AS "xxx", *
+  FROM JOIN1_TBL CROSS JOIN JOIN2_TBL;
+ xxx | i | j |   t   | i | k  
+-----+---+---+-------+---+----
+     | 1 | 3 | one   | 1 | -1
+     | 2 | 2 | two   | 1 | -1
+     | 3 | 1 | three | 1 | -1
+     | 4 | 0 | four  | 1 | -1
+     | 1 | 3 | one   | 2 |  2
+     | 2 | 2 | two   | 2 |  2
+     | 3 | 1 | three | 2 |  2
+     | 4 | 0 | four  | 2 |  2
+     | 1 | 3 | one   | 3 | -3
+     | 2 | 2 | two   | 3 | -3
+     | 3 | 1 | three | 3 | -3
+     | 4 | 0 | four  | 3 | -3
+     | 1 | 3 | one   | 2 |  4
+     | 2 | 2 | two   | 2 |  4
+     | 3 | 1 | three | 2 |  4
+     | 4 | 0 | four  | 2 |  4
 (16 rows)
 
-QUERY: SELECT '' AS "xxx", *
-  FROM JOIN_TBL JOIN JOIN2_TBL ON (JOIN_TBL.i <= JOIN2_TBL.k);
+--
+-- Non-equi-joins
+--
+SELECT '' AS "xxx", *
+  FROM JOIN1_TBL JOIN JOIN2_TBL ON (JOIN1_TBL.i <= JOIN2_TBL.k);
 ERROR:  JOIN expressions are not yet implemented
-QUERY: SELECT '' AS "xxx", *
-  FROM JOIN_TBL OUTER JOIN JOIN2_TBL USING (i);
+--
+-- Outer joins
+--
+SELECT '' AS "xxx", *
 NOTICE:  OUTER JOIN not yet implemented
+  FROM JOIN1_TBL OUTER JOIN JOIN2_TBL USING (i);
 ERROR:  JOIN expressions are not yet implemented
-QUERY: SELECT '' AS "xxx", *
-  FROM JOIN_TBL LEFT OUTER JOIN JOIN2_TBL USING (i);
+SELECT '' AS "xxx", *
 NOTICE:  LEFT OUTER JOIN not yet implemented
+  FROM JOIN1_TBL LEFT OUTER JOIN JOIN2_TBL USING (i);
 ERROR:  JOIN expressions are not yet implemented
-QUERY: SELECT '' AS "xxx", *
-  FROM JOIN_TBL RIGHT OUTER JOIN JOIN2_TBL USING (i);
+SELECT '' AS "xxx", *
 NOTICE:  RIGHT OUTER JOIN not yet implemented
+  FROM JOIN1_TBL RIGHT OUTER JOIN JOIN2_TBL USING (i);
 ERROR:  JOIN expressions are not yet implemented
-QUERY: SELECT '' AS "xxx", *
-  FROM JOIN_TBL FULL OUTER JOIN JOIN2_TBL USING (i);
+SELECT '' AS "xxx", *
 NOTICE:  FULL OUTER JOIN not yet implemented
+  FROM JOIN1_TBL FULL OUTER JOIN JOIN2_TBL USING (i);
 ERROR:  JOIN expressions are not yet implemented
-QUERY: DROP TABLE JOIN_TBL;
-QUERY: DROP TABLE JOIN2_TBL;
+--
+-- More complicated constructs
+--
+--
+-- Clean up
+--
+DROP TABLE JOIN1_TBL;
+DROP TABLE JOIN2_TBL;

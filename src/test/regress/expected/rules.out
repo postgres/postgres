@@ -1,874 +1,949 @@
-QUERY: create table rtest_t1 (a int4, b int4);
-QUERY: create table rtest_t2 (a int4, b int4);
-QUERY: create table rtest_t3 (a int4, b int4);
-QUERY: create view rtest_v1 as select * from rtest_t1;
-QUERY: create rule rtest_v1_ins as on insert to rtest_v1 do instead
+--
+-- RULES
+-- From Jan's original setup_ruletest.sql and run_ruletest.sql
+-- - thomas 1998-09-13
+--
+--
+-- Tables and rules for the view test
+--
+create table rtest_t1 (a int4, b int4);
+create table rtest_t2 (a int4, b int4);
+create table rtest_t3 (a int4, b int4);
+create view rtest_v1 as select * from rtest_t1;
+create rule rtest_v1_ins as on insert to rtest_v1 do instead
 	insert into rtest_t1 values (new.a, new.b);
-QUERY: create rule rtest_v1_upd as on update to rtest_v1 do instead
+create rule rtest_v1_upd as on update to rtest_v1 do instead
 	update rtest_t1 set a = new.a, b = new.b
 	where a = old.a;
-QUERY: create rule rtest_v1_del as on delete to rtest_v1 do instead
+create rule rtest_v1_del as on delete to rtest_v1 do instead
 	delete from rtest_t1 where a = old.a;
-QUERY: create table rtest_system (sysname text, sysdesc text);
-QUERY: create table rtest_interface (sysname text, ifname text);
-QUERY: create table rtest_person (pname text, pdesc text);
-QUERY: create table rtest_admin (pname text, sysname text);
-QUERY: create rule rtest_sys_upd as on update to rtest_system do (
-	update rtest_interface set sysname = new.sysname
+--
+-- Tables and rules for the constraint update/delete test
+--
+-- Note:
+-- 	Now that we have multiple action rule support, we check
+-- 	both possible syntaxes to define them (The last action
+--  can but must not have a semicolon at the end).
+--
+create table rtest_system (sysname text, sysdesc text);
+create table rtest_interface (sysname text, ifname text);
+create table rtest_person (pname text, pdesc text);
+create table rtest_admin (pname text, sysname text);
+create rule rtest_sys_upd as on update to rtest_system do (
+	update rtest_interface set sysname = new.sysname 
 		where sysname = old.sysname;
-	update rtest_admin set sysname = new.sysname
+	update rtest_admin set sysname = new.sysname 
 		where sysname = old.sysname
 	);
-QUERY: create rule rtest_sys_del as on delete to rtest_system do (
+create rule rtest_sys_del as on delete to rtest_system do (
 	delete from rtest_interface where sysname = old.sysname;
 	delete from rtest_admin where sysname = old.sysname;
 	);
-QUERY: create rule rtest_pers_upd as on update to rtest_person do
+create rule rtest_pers_upd as on update to rtest_person do 
 	update rtest_admin set pname = new.pname where pname = old.pname;
-QUERY: create rule rtest_pers_del as on delete to rtest_person do
+create rule rtest_pers_del as on delete to rtest_person do 
 	delete from rtest_admin where pname = old.pname;
-QUERY: create table rtest_emp (ename char(20), salary money);
-QUERY: create table rtest_emplog (ename char(20), who name, action char(10), newsal money, oldsal money);
-QUERY: create table rtest_empmass (ename char(20), salary money);
-QUERY: create rule rtest_emp_ins as on insert to rtest_emp do
+--
+-- Tables and rules for the logging test
+--
+create table rtest_emp (ename char(20), salary money);
+create table rtest_emplog (ename char(20), who name, action char(10), newsal money, oldsal money);
+create table rtest_empmass (ename char(20), salary money);
+create rule rtest_emp_ins as on insert to rtest_emp do
 	insert into rtest_emplog values (new.ename, current_user,
 			'hired', new.salary, '0.00');
-QUERY: create rule rtest_emp_upd as on update to rtest_emp where new.salary != old.salary do
+create rule rtest_emp_upd as on update to rtest_emp where new.salary != old.salary do
 	insert into rtest_emplog values (new.ename, current_user,
 			'honored', new.salary, old.salary);
-QUERY: create rule rtest_emp_del as on delete to rtest_emp do
+create rule rtest_emp_del as on delete to rtest_emp do
 	insert into rtest_emplog values (old.ename, current_user,
 			'fired', '0.00', old.salary);
-QUERY: create table rtest_t4 (a int4, b text);
-QUERY: create table rtest_t5 (a int4, b text);
-QUERY: create table rtest_t6 (a int4, b text);
-QUERY: create table rtest_t7 (a int4, b text);
-QUERY: create table rtest_t8 (a int4, b text);
-QUERY: create table rtest_t9 (a int4, b text);
-QUERY: create rule rtest_t4_ins1 as on insert to rtest_t4
+--
+-- Tables and rules for the multiple cascaded qualified instead
+-- rule test 
+--
+create table rtest_t4 (a int4, b text);
+create table rtest_t5 (a int4, b text);
+create table rtest_t6 (a int4, b text);
+create table rtest_t7 (a int4, b text);
+create table rtest_t8 (a int4, b text);
+create table rtest_t9 (a int4, b text);
+create rule rtest_t4_ins1 as on insert to rtest_t4
 		where new.a >= 10 and new.a < 20 do instead
 	insert into rtest_t5 values (new.a, new.b);
-QUERY: create rule rtest_t4_ins2 as on insert to rtest_t4
+create rule rtest_t4_ins2 as on insert to rtest_t4
 		where new.a >= 20 and new.a < 30 do
 	insert into rtest_t6 values (new.a, new.b);
-QUERY: create rule rtest_t5_ins as on insert to rtest_t5
+create rule rtest_t5_ins as on insert to rtest_t5
 		where new.a > 15 do
 	insert into rtest_t7 values (new.a, new.b);
-QUERY: create rule rtest_t6_ins as on insert to rtest_t6
+create rule rtest_t6_ins as on insert to rtest_t6
 		where new.a > 25 do instead
 	insert into rtest_t8 values (new.a, new.b);
-QUERY: create table rtest_order1 (a int4);
-QUERY: create table rtest_order2 (a int4, b int4, c text);
-QUERY: create sequence rtest_seq;
-QUERY: create rule rtest_order_r3 as on insert to rtest_order1 do instead
+--
+-- Tables and rules for the rule fire order test
+--
+create table rtest_order1 (a int4);
+create table rtest_order2 (a int4, b int4, c text);
+create sequence rtest_seq;
+create rule rtest_order_r3 as on insert to rtest_order1 do instead
 	insert into rtest_order2 values (new.a, nextval('rtest_seq'),
 		'rule 3 - this should run 3rd or 4th');
-QUERY: create rule rtest_order_r4 as on insert to rtest_order1
+create rule rtest_order_r4 as on insert to rtest_order1
 		where a < 100 do instead
 	insert into rtest_order2 values (new.a, nextval('rtest_seq'),
 		'rule 4 - this should run 2nd');
-QUERY: create rule rtest_order_r2 as on insert to rtest_order1 do
+create rule rtest_order_r2 as on insert to rtest_order1 do
 	insert into rtest_order2 values (new.a, nextval('rtest_seq'),
 		'rule 2 - this should run 1st');
-QUERY: create rule rtest_order_r1 as on insert to rtest_order1 do instead
+create rule rtest_order_r1 as on insert to rtest_order1 do instead
 	insert into rtest_order2 values (new.a, nextval('rtest_seq'),
 		'rule 1 - this should run 3rd or 4th');
-QUERY: create table rtest_nothn1 (a int4, b text);
-QUERY: create table rtest_nothn2 (a int4, b text);
-QUERY: create table rtest_nothn3 (a int4, b text);
-QUERY: create table rtest_nothn4 (a int4, b text);
-QUERY: create rule rtest_nothn_r1 as on insert to rtest_nothn1
+--
+-- Tables and rules for the instead nothing test
+--
+create table rtest_nothn1 (a int4, b text);
+create table rtest_nothn2 (a int4, b text);
+create table rtest_nothn3 (a int4, b text);
+create table rtest_nothn4 (a int4, b text);
+create rule rtest_nothn_r1 as on insert to rtest_nothn1
 	where new.a >= 10 and new.a < 20 do instead (select 1);
-QUERY: create rule rtest_nothn_r2 as on insert to rtest_nothn1
+create rule rtest_nothn_r2 as on insert to rtest_nothn1
 	where new.a >= 30 and new.a < 40 do instead nothing;
-QUERY: create rule rtest_nothn_r3 as on insert to rtest_nothn2
+create rule rtest_nothn_r3 as on insert to rtest_nothn2
 	where new.a >= 100 do instead
 	insert into rtest_nothn3 values (new.a, new.b);
-QUERY: create rule rtest_nothn_r4 as on insert to rtest_nothn2
+create rule rtest_nothn_r4 as on insert to rtest_nothn2
 	do instead nothing;
-QUERY: insert into rtest_t2 values (1, 21);
-QUERY: insert into rtest_t2 values (2, 22);
-QUERY: insert into rtest_t2 values (3, 23);
-QUERY: insert into rtest_t3 values (1, 31);
-QUERY: insert into rtest_t3 values (2, 32);
-QUERY: insert into rtest_t3 values (3, 33);
-QUERY: insert into rtest_t3 values (4, 34);
-QUERY: insert into rtest_t3 values (5, 35);
-QUERY: insert into rtest_v1 values (1, 11);
-QUERY: insert into rtest_v1 values (2, 12);
-QUERY: select * from rtest_v1;
-a| b
--+--
-1|11
-2|12
+--
+-- Tests on a view that is select * of a table
+-- and has insert/update/delete instead rules to
+-- behave close like the real table.
+--
+--
+-- We need test date later
+--
+insert into rtest_t2 values (1, 21);
+insert into rtest_t2 values (2, 22);
+insert into rtest_t2 values (3, 23);
+insert into rtest_t3 values (1, 31);
+insert into rtest_t3 values (2, 32);
+insert into rtest_t3 values (3, 33);
+insert into rtest_t3 values (4, 34);
+insert into rtest_t3 values (5, 35);
+-- insert values
+insert into rtest_v1 values (1, 11);
+insert into rtest_v1 values (2, 12);
+select * from rtest_v1;
+ a | b  
+---+----
+ 1 | 11
+ 2 | 12
 (2 rows)
 
-QUERY: delete from rtest_v1 where a = 1;
-QUERY: select * from rtest_v1;
-a| b
--+--
-2|12
+-- delete with constant expression
+delete from rtest_v1 where a = 1;
+select * from rtest_v1;
+ a | b  
+---+----
+ 2 | 12
 (1 row)
 
-QUERY: insert into rtest_v1 values (1, 11);
-QUERY: delete from rtest_v1 where b = 12;
-QUERY: select * from rtest_v1;
-a| b
--+--
-1|11
+insert into rtest_v1 values (1, 11);
+delete from rtest_v1 where b = 12;
+select * from rtest_v1;
+ a | b  
+---+----
+ 1 | 11
 (1 row)
 
-QUERY: insert into rtest_v1 values (2, 12);
-QUERY: insert into rtest_v1 values (2, 13);
-QUERY: select * from rtest_v1;
-a| b
--+--
-1|11
-2|12
-2|13
+insert into rtest_v1 values (2, 12);
+insert into rtest_v1 values (2, 13);
+select * from rtest_v1;
+ a | b  
+---+----
+ 1 | 11
+ 2 | 12
+ 2 | 13
 (3 rows)
 
 ** Remember the delete rule on rtest_v1: It says
 ** DO INSTEAD DELETE FROM rtest_t1 WHERE a = old.a
 ** So this time both rows with a = 2 must get deleted
-QUERY: delete from rtest_v1 where b = 12;
-QUERY: select * from rtest_v1;
-a| b
--+--
-1|11
+\p
+** Remember the delete rule on rtest_v1: It says
+** DO INSTEAD DELETE FROM rtest_t1 WHERE a = old.a
+** So this time both rows with a = 2 must get deleted
+\r
+delete from rtest_v1 where b = 12;
+select * from rtest_v1;
+ a | b  
+---+----
+ 1 | 11
 (1 row)
 
-QUERY: delete from rtest_v1;
-QUERY: insert into rtest_v1 select * from rtest_t2;
-QUERY: select * from rtest_v1;
-a| b
--+--
-1|21
-2|22
-3|23
+delete from rtest_v1;
+-- insert select
+insert into rtest_v1 select * from rtest_t2;
+select * from rtest_v1;
+ a | b  
+---+----
+ 1 | 21
+ 2 | 22
+ 3 | 23
 (3 rows)
 
-QUERY: delete from rtest_v1;
-QUERY: insert into rtest_v1 (b, a) select b, a from rtest_t2;
-QUERY: select * from rtest_v1;
-a| b
--+--
-1|21
-2|22
-3|23
+delete from rtest_v1;
+-- same with swapped targetlist
+insert into rtest_v1 (b, a) select b, a from rtest_t2;
+select * from rtest_v1;
+ a | b  
+---+----
+ 1 | 21
+ 2 | 22
+ 3 | 23
 (3 rows)
 
-QUERY: insert into rtest_v1 (a) select a from rtest_t3;
-QUERY: select * from rtest_v1;
-a| b
--+--
-1|21
-2|22
-3|23
-1|  
-2|  
-3|  
-4|  
-5|  
+-- now with only one target attribute
+insert into rtest_v1 (a) select a from rtest_t3;
+select * from rtest_v1;
+ a | b  
+---+----
+ 1 | 21
+ 2 | 22
+ 3 | 23
+ 1 |   
+ 2 |   
+ 3 |   
+ 4 |   
+ 5 |   
 (8 rows)
 
-QUERY: select * from rtest_v1 where b isnull;
-a|b
--+-
-1| 
-2| 
-3| 
-4| 
-5| 
+select * from rtest_v1 where b isnull;
+ a | b 
+---+---
+ 1 |  
+ 2 |  
+ 3 |  
+ 4 |  
+ 5 |  
 (5 rows)
 
-QUERY: update rtest_t1 set a = a + 10 where b isnull;
-QUERY: delete from rtest_v1 where b isnull;
-QUERY: select * from rtest_v1;
-a| b
--+--
-1|21
-2|22
-3|23
+-- let attribute a differ (must be done on rtest_t1 - see above)
+update rtest_t1 set a = a + 10 where b isnull;
+delete from rtest_v1 where b isnull;
+select * from rtest_v1;
+ a | b  
+---+----
+ 1 | 21
+ 2 | 22
+ 3 | 23
 (3 rows)
 
-QUERY: update rtest_v1 set b = 42 where a = 2;
-QUERY: select * from rtest_v1;
-a| b
--+--
-1|21
-3|23
-2|42
+-- now updates with constant expression
+update rtest_v1 set b = 42 where a = 2;
+select * from rtest_v1;
+ a | b  
+---+----
+ 1 | 21
+ 3 | 23
+ 2 | 42
 (3 rows)
 
-QUERY: update rtest_v1 set b = 99 where b = 42;
-QUERY: select * from rtest_v1;
-a| b
--+--
-1|21
-3|23
-2|99
+update rtest_v1 set b = 99 where b = 42;
+select * from rtest_v1;
+ a | b  
+---+----
+ 1 | 21
+ 3 | 23
+ 2 | 99
 (3 rows)
 
-QUERY: update rtest_v1 set b = 88 where b < 50;
-QUERY: select * from rtest_v1;
-a| b
--+--
-2|99
-1|88
-3|88
+update rtest_v1 set b = 88 where b < 50;
+select * from rtest_v1;
+ a | b  
+---+----
+ 2 | 99
+ 1 | 88
+ 3 | 88
 (3 rows)
 
-QUERY: delete from rtest_v1;
-QUERY: insert into rtest_v1 select rtest_t2.a, rtest_t3.b where rtest_t2.a = rtest_t3.a;
-QUERY: select * from rtest_v1;
-a| b
--+--
-1|31
-2|32
-3|33
+delete from rtest_v1;
+insert into rtest_v1 select rtest_t2.a, rtest_t3.b where rtest_t2.a = rtest_t3.a;
+select * from rtest_v1;
+ a | b  
+---+----
+ 1 | 31
+ 2 | 32
+ 3 | 33
 (3 rows)
 
-QUERY: update rtest_v1 set b = rtest_t2.b where a = rtest_t2.a;
-QUERY: select * from rtest_v1;
-a| b
--+--
-1|21
-2|22
-3|23
+-- updates in a mergejoin
+update rtest_v1 set b = rtest_t2.b where a = rtest_t2.a;
+select * from rtest_v1;
+ a | b  
+---+----
+ 1 | 21
+ 2 | 22
+ 3 | 23
 (3 rows)
 
-QUERY: insert into rtest_v1 select * from rtest_t3;
-QUERY: select * from rtest_v1;
-a| b
--+--
-1|21
-2|22
-3|23
-1|31
-2|32
-3|33
-4|34
-5|35
+insert into rtest_v1 select * from rtest_t3;
+select * from rtest_v1;
+ a | b  
+---+----
+ 1 | 21
+ 2 | 22
+ 3 | 23
+ 1 | 31
+ 2 | 32
+ 3 | 33
+ 4 | 34
+ 5 | 35
 (8 rows)
 
-QUERY: update rtest_t1 set a = a + 10 where b > 30;
-QUERY: select * from rtest_v1;
- a| b
---+--
- 1|21
- 2|22
- 3|23
-11|31
-12|32
-13|33
-14|34
-15|35
+update rtest_t1 set a = a + 10 where b > 30;
+select * from rtest_v1;
+ a  | b  
+----+----
+  1 | 21
+  2 | 22
+  3 | 23
+ 11 | 31
+ 12 | 32
+ 13 | 33
+ 14 | 34
+ 15 | 35
 (8 rows)
 
-QUERY: update rtest_v1 set a = rtest_t3.a + 20 where b = rtest_t3.b;
-QUERY: select * from rtest_v1;
- a| b
---+--
- 1|21
- 2|22
- 3|23
-21|31
-22|32
-23|33
-24|34
-25|35
+update rtest_v1 set a = rtest_t3.a + 20 where b = rtest_t3.b;
+select * from rtest_v1;
+ a  | b  
+----+----
+  1 | 21
+  2 | 22
+  3 | 23
+ 21 | 31
+ 22 | 32
+ 23 | 33
+ 24 | 34
+ 25 | 35
 (8 rows)
 
-QUERY: insert into rtest_system values ('orion', 'Linux Jan Wieck');
-QUERY: insert into rtest_system values ('notjw', 'WinNT Jan Wieck (notebook)');
-QUERY: insert into rtest_system values ('neptun', 'Fileserver');
-QUERY: insert into rtest_interface values ('orion', 'eth0');
-QUERY: insert into rtest_interface values ('orion', 'eth1');
-QUERY: insert into rtest_interface values ('notjw', 'eth0');
-QUERY: insert into rtest_interface values ('neptun', 'eth0');
-QUERY: insert into rtest_person values ('jw', 'Jan Wieck');
-QUERY: insert into rtest_person values ('bm', 'Bruce Momjian');
-QUERY: insert into rtest_admin values ('jw', 'orion');
-QUERY: insert into rtest_admin values ('jw', 'notjw');
-QUERY: insert into rtest_admin values ('bm', 'neptun');
-QUERY: update rtest_system set sysname = 'pluto' where sysname = 'neptun';
-QUERY: select * from rtest_interface;
-sysname|ifname
--------+------
-orion  |eth0  
-orion  |eth1  
-notjw  |eth0  
-pluto  |eth0  
+--
+-- Test for constraint updates/deletes
+--
+insert into rtest_system values ('orion', 'Linux Jan Wieck');
+insert into rtest_system values ('notjw', 'WinNT Jan Wieck (notebook)');
+insert into rtest_system values ('neptun', 'Fileserver');
+insert into rtest_interface values ('orion', 'eth0');
+insert into rtest_interface values ('orion', 'eth1');
+insert into rtest_interface values ('notjw', 'eth0');
+insert into rtest_interface values ('neptun', 'eth0');
+insert into rtest_person values ('jw', 'Jan Wieck');
+insert into rtest_person values ('bm', 'Bruce Momjian');
+insert into rtest_admin values ('jw', 'orion');
+insert into rtest_admin values ('jw', 'notjw');
+insert into rtest_admin values ('bm', 'neptun');
+update rtest_system set sysname = 'pluto' where sysname = 'neptun';
+select * from rtest_interface;
+ sysname | ifname 
+---------+--------
+ orion   | eth0
+ orion   | eth1
+ notjw   | eth0
+ pluto   | eth0
 (4 rows)
 
-QUERY: select * from rtest_admin;
-pname|sysname
------+-------
-jw   |orion  
-jw   |notjw  
-bm   |pluto  
+select * from rtest_admin;
+ pname | sysname 
+-------+---------
+ jw    | orion
+ jw    | notjw
+ bm    | pluto
 (3 rows)
 
-QUERY: update rtest_person set pname = 'jwieck' where pdesc = 'Jan Wieck';
-QUERY: select * from rtest_admin order by pname, sysname;
-pname |sysname
-------+-------
-bm    |pluto  
-jwieck|notjw  
-jwieck|orion  
+update rtest_person set pname = 'jwieck' where pdesc = 'Jan Wieck';
+-- Note: use ORDER BY here to ensure consistent output across all systems.
+-- The above UPDATE affects two rows with equal keys, so they could be
+-- updated in either order depending on the whim of the local qsort().
+select * from rtest_admin order by pname, sysname;
+ pname  | sysname 
+--------+---------
+ bm     | pluto
+ jwieck | notjw
+ jwieck | orion
 (3 rows)
 
-QUERY: delete from rtest_system where sysname = 'orion';
-QUERY: select * from rtest_interface;
-sysname|ifname
--------+------
-notjw  |eth0  
-pluto  |eth0  
+delete from rtest_system where sysname = 'orion';
+select * from rtest_interface;
+ sysname | ifname 
+---------+--------
+ notjw   | eth0
+ pluto   | eth0
 (2 rows)
 
-QUERY: select * from rtest_admin;
-pname |sysname
-------+-------
-bm    |pluto  
-jwieck|notjw  
+select * from rtest_admin;
+ pname  | sysname 
+--------+---------
+ bm     | pluto
+ jwieck | notjw
 (2 rows)
 
-QUERY: insert into rtest_emp values ('wiech', '5000.00');
-QUERY: insert into rtest_emp values ('gates', '80000.00');
-QUERY: update rtest_emp set ename = 'wiecx' where ename = 'wiech';
-QUERY: update rtest_emp set ename = 'wieck', salary = '6000.00' where ename = 'wiecx';
-QUERY: update rtest_emp set salary = '7000.00' where ename = 'wieck';
-QUERY: delete from rtest_emp where ename = 'gates';
-QUERY: select ename, who = current_user as "matches user", action, newsal, oldsal from rtest_emplog order by ename, action, newsal;
-ename               |matches user|action    |newsal    |oldsal    
---------------------+------------+----------+----------+----------
-gates               |t           |fired     |$0.00     |$80,000.00
-gates               |t           |hired     |$80,000.00|$0.00     
-wiech               |t           |hired     |$5,000.00 |$0.00     
-wieck               |t           |honored   |$6,000.00 |$5,000.00 
-wieck               |t           |honored   |$7,000.00 |$6,000.00 
+--
+-- Rule qualification test
+--
+insert into rtest_emp values ('wiech', '5000.00');
+insert into rtest_emp values ('gates', '80000.00');
+update rtest_emp set ename = 'wiecx' where ename = 'wiech';
+update rtest_emp set ename = 'wieck', salary = '6000.00' where ename = 'wiecx';
+update rtest_emp set salary = '7000.00' where ename = 'wieck';
+delete from rtest_emp where ename = 'gates';
+select ename, who = current_user as "matches user", action, newsal, oldsal from rtest_emplog order by ename, action, newsal;
+        ename         | matches user |   action   |   newsal   |   oldsal   
+----------------------+--------------+------------+------------+------------
+ gates                | t            | fired      |      $0.00 | $80,000.00
+ gates                | t            | hired      | $80,000.00 |      $0.00
+ wiech                | t            | hired      |  $5,000.00 |      $0.00
+ wieck                | t            | honored    |  $6,000.00 |  $5,000.00
+ wieck                | t            | honored    |  $7,000.00 |  $6,000.00
 (5 rows)
 
-QUERY: insert into rtest_empmass values ('meyer', '4000.00');
-QUERY: insert into rtest_empmass values ('maier', '5000.00');
-QUERY: insert into rtest_empmass values ('mayr', '6000.00');
-QUERY: insert into rtest_emp select * from rtest_empmass;
-QUERY: select ename, who = current_user as "matches user", action, newsal, oldsal from rtest_emplog order by ename, action, newsal;
-ename               |matches user|action    |newsal    |oldsal    
---------------------+------------+----------+----------+----------
-gates               |t           |fired     |$0.00     |$80,000.00
-gates               |t           |hired     |$80,000.00|$0.00     
-maier               |t           |hired     |$5,000.00 |$0.00     
-mayr                |t           |hired     |$6,000.00 |$0.00     
-meyer               |t           |hired     |$4,000.00 |$0.00     
-wiech               |t           |hired     |$5,000.00 |$0.00     
-wieck               |t           |honored   |$6,000.00 |$5,000.00 
-wieck               |t           |honored   |$7,000.00 |$6,000.00 
+insert into rtest_empmass values ('meyer', '4000.00');
+insert into rtest_empmass values ('maier', '5000.00');
+insert into rtest_empmass values ('mayr', '6000.00');
+insert into rtest_emp select * from rtest_empmass;
+select ename, who = current_user as "matches user", action, newsal, oldsal from rtest_emplog order by ename, action, newsal;
+        ename         | matches user |   action   |   newsal   |   oldsal   
+----------------------+--------------+------------+------------+------------
+ gates                | t            | fired      |      $0.00 | $80,000.00
+ gates                | t            | hired      | $80,000.00 |      $0.00
+ maier                | t            | hired      |  $5,000.00 |      $0.00
+ mayr                 | t            | hired      |  $6,000.00 |      $0.00
+ meyer                | t            | hired      |  $4,000.00 |      $0.00
+ wiech                | t            | hired      |  $5,000.00 |      $0.00
+ wieck                | t            | honored    |  $6,000.00 |  $5,000.00
+ wieck                | t            | honored    |  $7,000.00 |  $6,000.00
 (8 rows)
 
-QUERY: update rtest_empmass set salary = salary + '1000.00';
-QUERY: update rtest_emp set salary = rtest_empmass.salary where ename = rtest_empmass.ename;
-QUERY: select ename, who = current_user as "matches user", action, newsal, oldsal from rtest_emplog order by ename, action, newsal;
-ename               |matches user|action    |newsal    |oldsal    
---------------------+------------+----------+----------+----------
-gates               |t           |fired     |$0.00     |$80,000.00
-gates               |t           |hired     |$80,000.00|$0.00     
-maier               |t           |hired     |$5,000.00 |$0.00     
-maier               |t           |honored   |$6,000.00 |$5,000.00 
-mayr                |t           |hired     |$6,000.00 |$0.00     
-mayr                |t           |honored   |$7,000.00 |$6,000.00 
-meyer               |t           |hired     |$4,000.00 |$0.00     
-meyer               |t           |honored   |$5,000.00 |$4,000.00 
-wiech               |t           |hired     |$5,000.00 |$0.00     
-wieck               |t           |honored   |$6,000.00 |$5,000.00 
-wieck               |t           |honored   |$7,000.00 |$6,000.00 
+update rtest_empmass set salary = salary + '1000.00';
+update rtest_emp set salary = rtest_empmass.salary where ename = rtest_empmass.ename;
+select ename, who = current_user as "matches user", action, newsal, oldsal from rtest_emplog order by ename, action, newsal;
+        ename         | matches user |   action   |   newsal   |   oldsal   
+----------------------+--------------+------------+------------+------------
+ gates                | t            | fired      |      $0.00 | $80,000.00
+ gates                | t            | hired      | $80,000.00 |      $0.00
+ maier                | t            | hired      |  $5,000.00 |      $0.00
+ maier                | t            | honored    |  $6,000.00 |  $5,000.00
+ mayr                 | t            | hired      |  $6,000.00 |      $0.00
+ mayr                 | t            | honored    |  $7,000.00 |  $6,000.00
+ meyer                | t            | hired      |  $4,000.00 |      $0.00
+ meyer                | t            | honored    |  $5,000.00 |  $4,000.00
+ wiech                | t            | hired      |  $5,000.00 |      $0.00
+ wieck                | t            | honored    |  $6,000.00 |  $5,000.00
+ wieck                | t            | honored    |  $7,000.00 |  $6,000.00
 (11 rows)
 
-QUERY: delete from rtest_emp where ename = rtest_empmass.ename;
-QUERY: select ename, who = current_user as "matches user", action, newsal, oldsal from rtest_emplog order by ename, action, newsal;
-ename               |matches user|action    |newsal    |oldsal    
---------------------+------------+----------+----------+----------
-gates               |t           |fired     |$0.00     |$80,000.00
-gates               |t           |hired     |$80,000.00|$0.00     
-maier               |t           |fired     |$0.00     |$6,000.00 
-maier               |t           |hired     |$5,000.00 |$0.00     
-maier               |t           |honored   |$6,000.00 |$5,000.00 
-mayr                |t           |fired     |$0.00     |$7,000.00 
-mayr                |t           |hired     |$6,000.00 |$0.00     
-mayr                |t           |honored   |$7,000.00 |$6,000.00 
-meyer               |t           |fired     |$0.00     |$5,000.00 
-meyer               |t           |hired     |$4,000.00 |$0.00     
-meyer               |t           |honored   |$5,000.00 |$4,000.00 
-wiech               |t           |hired     |$5,000.00 |$0.00     
-wieck               |t           |honored   |$6,000.00 |$5,000.00 
-wieck               |t           |honored   |$7,000.00 |$6,000.00 
+delete from rtest_emp where ename = rtest_empmass.ename;
+select ename, who = current_user as "matches user", action, newsal, oldsal from rtest_emplog order by ename, action, newsal;
+        ename         | matches user |   action   |   newsal   |   oldsal   
+----------------------+--------------+------------+------------+------------
+ gates                | t            | fired      |      $0.00 | $80,000.00
+ gates                | t            | hired      | $80,000.00 |      $0.00
+ maier                | t            | fired      |      $0.00 |  $6,000.00
+ maier                | t            | hired      |  $5,000.00 |      $0.00
+ maier                | t            | honored    |  $6,000.00 |  $5,000.00
+ mayr                 | t            | fired      |      $0.00 |  $7,000.00
+ mayr                 | t            | hired      |  $6,000.00 |      $0.00
+ mayr                 | t            | honored    |  $7,000.00 |  $6,000.00
+ meyer                | t            | fired      |      $0.00 |  $5,000.00
+ meyer                | t            | hired      |  $4,000.00 |      $0.00
+ meyer                | t            | honored    |  $5,000.00 |  $4,000.00
+ wiech                | t            | hired      |  $5,000.00 |      $0.00
+ wieck                | t            | honored    |  $6,000.00 |  $5,000.00
+ wieck                | t            | honored    |  $7,000.00 |  $6,000.00
 (14 rows)
 
-QUERY: insert into rtest_t4 values (1, 'Record should go to rtest_t4');
-QUERY: insert into rtest_t4 values (2, 'Record should go to rtest_t4');
-QUERY: insert into rtest_t4 values (10, 'Record should go to rtest_t5');
-QUERY: insert into rtest_t4 values (15, 'Record should go to rtest_t5');
-QUERY: insert into rtest_t4 values (19, 'Record should go to rtest_t5 and t7');
-QUERY: insert into rtest_t4 values (20, 'Record should go to rtest_t4 and t6');
-QUERY: insert into rtest_t4 values (26, 'Record should go to rtest_t4 and t8');
-QUERY: insert into rtest_t4 values (28, 'Record should go to rtest_t4 and t8');
-QUERY: insert into rtest_t4 values (30, 'Record should go to rtest_t4');
-QUERY: insert into rtest_t4 values (40, 'Record should go to rtest_t4');
-QUERY: select * from rtest_t4;
- a|b                                  
---+-----------------------------------
- 1|Record should go to rtest_t4       
- 2|Record should go to rtest_t4       
-20|Record should go to rtest_t4 and t6
-26|Record should go to rtest_t4 and t8
-28|Record should go to rtest_t4 and t8
-30|Record should go to rtest_t4       
-40|Record should go to rtest_t4       
+--
+-- Multiple cascaded qualified instead rule test
+--
+insert into rtest_t4 values (1, 'Record should go to rtest_t4');
+insert into rtest_t4 values (2, 'Record should go to rtest_t4');
+insert into rtest_t4 values (10, 'Record should go to rtest_t5');
+insert into rtest_t4 values (15, 'Record should go to rtest_t5');
+insert into rtest_t4 values (19, 'Record should go to rtest_t5 and t7');
+insert into rtest_t4 values (20, 'Record should go to rtest_t4 and t6');
+insert into rtest_t4 values (26, 'Record should go to rtest_t4 and t8');
+insert into rtest_t4 values (28, 'Record should go to rtest_t4 and t8');
+insert into rtest_t4 values (30, 'Record should go to rtest_t4');
+insert into rtest_t4 values (40, 'Record should go to rtest_t4');
+select * from rtest_t4;
+ a  |                  b                  
+----+-------------------------------------
+  1 | Record should go to rtest_t4
+  2 | Record should go to rtest_t4
+ 20 | Record should go to rtest_t4 and t6
+ 26 | Record should go to rtest_t4 and t8
+ 28 | Record should go to rtest_t4 and t8
+ 30 | Record should go to rtest_t4
+ 40 | Record should go to rtest_t4
 (7 rows)
 
-QUERY: select * from rtest_t5;
- a|b                                  
---+-----------------------------------
-10|Record should go to rtest_t5       
-15|Record should go to rtest_t5       
-19|Record should go to rtest_t5 and t7
+select * from rtest_t5;
+ a  |                  b                  
+----+-------------------------------------
+ 10 | Record should go to rtest_t5
+ 15 | Record should go to rtest_t5
+ 19 | Record should go to rtest_t5 and t7
 (3 rows)
 
-QUERY: select * from rtest_t6;
- a|b                                  
---+-----------------------------------
-20|Record should go to rtest_t4 and t6
+select * from rtest_t6;
+ a  |                  b                  
+----+-------------------------------------
+ 20 | Record should go to rtest_t4 and t6
 (1 row)
 
-QUERY: select * from rtest_t7;
- a|b                                  
---+-----------------------------------
-19|Record should go to rtest_t5 and t7
+select * from rtest_t7;
+ a  |                  b                  
+----+-------------------------------------
+ 19 | Record should go to rtest_t5 and t7
 (1 row)
 
-QUERY: select * from rtest_t8;
- a|b                                  
---+-----------------------------------
-26|Record should go to rtest_t4 and t8
-28|Record should go to rtest_t4 and t8
+select * from rtest_t8;
+ a  |                  b                  
+----+-------------------------------------
+ 26 | Record should go to rtest_t4 and t8
+ 28 | Record should go to rtest_t4 and t8
 (2 rows)
 
-QUERY: delete from rtest_t4;
-QUERY: delete from rtest_t5;
-QUERY: delete from rtest_t6;
-QUERY: delete from rtest_t7;
-QUERY: delete from rtest_t8;
-QUERY: insert into rtest_t9 values (1, 'Record should go to rtest_t4');
-QUERY: insert into rtest_t9 values (2, 'Record should go to rtest_t4');
-QUERY: insert into rtest_t9 values (10, 'Record should go to rtest_t5');
-QUERY: insert into rtest_t9 values (15, 'Record should go to rtest_t5');
-QUERY: insert into rtest_t9 values (19, 'Record should go to rtest_t5 and t7');
-QUERY: insert into rtest_t9 values (20, 'Record should go to rtest_t4 and t6');
-QUERY: insert into rtest_t9 values (26, 'Record should go to rtest_t4 and t8');
-QUERY: insert into rtest_t9 values (28, 'Record should go to rtest_t4 and t8');
-QUERY: insert into rtest_t9 values (30, 'Record should go to rtest_t4');
-QUERY: insert into rtest_t9 values (40, 'Record should go to rtest_t4');
-QUERY: insert into rtest_t4 select * from rtest_t9 where a < 20;
-QUERY: select * from rtest_t4;
-a|b                           
--+----------------------------
-1|Record should go to rtest_t4
-2|Record should go to rtest_t4
+delete from rtest_t4;
+delete from rtest_t5;
+delete from rtest_t6;
+delete from rtest_t7;
+delete from rtest_t8;
+insert into rtest_t9 values (1, 'Record should go to rtest_t4');
+insert into rtest_t9 values (2, 'Record should go to rtest_t4');
+insert into rtest_t9 values (10, 'Record should go to rtest_t5');
+insert into rtest_t9 values (15, 'Record should go to rtest_t5');
+insert into rtest_t9 values (19, 'Record should go to rtest_t5 and t7');
+insert into rtest_t9 values (20, 'Record should go to rtest_t4 and t6');
+insert into rtest_t9 values (26, 'Record should go to rtest_t4 and t8');
+insert into rtest_t9 values (28, 'Record should go to rtest_t4 and t8');
+insert into rtest_t9 values (30, 'Record should go to rtest_t4');
+insert into rtest_t9 values (40, 'Record should go to rtest_t4');
+insert into rtest_t4 select * from rtest_t9 where a < 20;
+select * from rtest_t4;
+ a |              b               
+---+------------------------------
+ 1 | Record should go to rtest_t4
+ 2 | Record should go to rtest_t4
 (2 rows)
 
-QUERY: select * from rtest_t5;
- a|b                                  
---+-----------------------------------
-10|Record should go to rtest_t5       
-15|Record should go to rtest_t5       
-19|Record should go to rtest_t5 and t7
+select * from rtest_t5;
+ a  |                  b                  
+----+-------------------------------------
+ 10 | Record should go to rtest_t5
+ 15 | Record should go to rtest_t5
+ 19 | Record should go to rtest_t5 and t7
 (3 rows)
 
-QUERY: select * from rtest_t6;
-a|b
--+-
+select * from rtest_t6;
+ a | b 
+---+---
 (0 rows)
 
-QUERY: select * from rtest_t7;
- a|b                                  
---+-----------------------------------
-19|Record should go to rtest_t5 and t7
+select * from rtest_t7;
+ a  |                  b                  
+----+-------------------------------------
+ 19 | Record should go to rtest_t5 and t7
 (1 row)
 
-QUERY: select * from rtest_t8;
-a|b
--+-
+select * from rtest_t8;
+ a | b 
+---+---
 (0 rows)
 
-QUERY: insert into rtest_t4 select * from rtest_t9 where b ~ 'and t8';
-QUERY: select * from rtest_t4;
- a|b                                  
---+-----------------------------------
- 1|Record should go to rtest_t4       
- 2|Record should go to rtest_t4       
-26|Record should go to rtest_t4 and t8
-28|Record should go to rtest_t4 and t8
+insert into rtest_t4 select * from rtest_t9 where b ~ 'and t8';
+select * from rtest_t4;
+ a  |                  b                  
+----+-------------------------------------
+  1 | Record should go to rtest_t4
+  2 | Record should go to rtest_t4
+ 26 | Record should go to rtest_t4 and t8
+ 28 | Record should go to rtest_t4 and t8
 (4 rows)
 
-QUERY: select * from rtest_t5;
- a|b                                  
---+-----------------------------------
-10|Record should go to rtest_t5       
-15|Record should go to rtest_t5       
-19|Record should go to rtest_t5 and t7
+select * from rtest_t5;
+ a  |                  b                  
+----+-------------------------------------
+ 10 | Record should go to rtest_t5
+ 15 | Record should go to rtest_t5
+ 19 | Record should go to rtest_t5 and t7
 (3 rows)
 
-QUERY: select * from rtest_t6;
-a|b
--+-
+select * from rtest_t6;
+ a | b 
+---+---
 (0 rows)
 
-QUERY: select * from rtest_t7;
- a|b                                  
---+-----------------------------------
-19|Record should go to rtest_t5 and t7
+select * from rtest_t7;
+ a  |                  b                  
+----+-------------------------------------
+ 19 | Record should go to rtest_t5 and t7
 (1 row)
 
-QUERY: select * from rtest_t8;
- a|b                                  
---+-----------------------------------
-26|Record should go to rtest_t4 and t8
-28|Record should go to rtest_t4 and t8
+select * from rtest_t8;
+ a  |                  b                  
+----+-------------------------------------
+ 26 | Record should go to rtest_t4 and t8
+ 28 | Record should go to rtest_t4 and t8
 (2 rows)
 
-QUERY: insert into rtest_t4 select a + 1, b from rtest_t9 where a in (20, 30, 40);
-QUERY: select * from rtest_t4;
- a|b                                  
---+-----------------------------------
- 1|Record should go to rtest_t4       
- 2|Record should go to rtest_t4       
-26|Record should go to rtest_t4 and t8
-28|Record should go to rtest_t4 and t8
-21|Record should go to rtest_t4 and t6
-31|Record should go to rtest_t4       
-41|Record should go to rtest_t4       
+insert into rtest_t4 select a + 1, b from rtest_t9 where a in (20, 30, 40);
+select * from rtest_t4;
+ a  |                  b                  
+----+-------------------------------------
+  1 | Record should go to rtest_t4
+  2 | Record should go to rtest_t4
+ 26 | Record should go to rtest_t4 and t8
+ 28 | Record should go to rtest_t4 and t8
+ 21 | Record should go to rtest_t4 and t6
+ 31 | Record should go to rtest_t4
+ 41 | Record should go to rtest_t4
 (7 rows)
 
-QUERY: select * from rtest_t5;
- a|b                                  
---+-----------------------------------
-10|Record should go to rtest_t5       
-15|Record should go to rtest_t5       
-19|Record should go to rtest_t5 and t7
+select * from rtest_t5;
+ a  |                  b                  
+----+-------------------------------------
+ 10 | Record should go to rtest_t5
+ 15 | Record should go to rtest_t5
+ 19 | Record should go to rtest_t5 and t7
 (3 rows)
 
-QUERY: select * from rtest_t6;
- a|b                                  
---+-----------------------------------
-21|Record should go to rtest_t4 and t6
+select * from rtest_t6;
+ a  |                  b                  
+----+-------------------------------------
+ 21 | Record should go to rtest_t4 and t6
 (1 row)
 
-QUERY: select * from rtest_t7;
- a|b                                  
---+-----------------------------------
-19|Record should go to rtest_t5 and t7
+select * from rtest_t7;
+ a  |                  b                  
+----+-------------------------------------
+ 19 | Record should go to rtest_t5 and t7
 (1 row)
 
-QUERY: select * from rtest_t8;
- a|b                                  
---+-----------------------------------
-26|Record should go to rtest_t4 and t8
-28|Record should go to rtest_t4 and t8
+select * from rtest_t8;
+ a  |                  b                  
+----+-------------------------------------
+ 26 | Record should go to rtest_t4 and t8
+ 28 | Record should go to rtest_t4 and t8
 (2 rows)
 
-QUERY: insert into rtest_order1 values (1);
-QUERY: select * from rtest_order2;
-a|b|c                                  
--+-+-----------------------------------
-1|1|rule 2 - this should run 1st       
-1|2|rule 4 - this should run 2nd       
-1|3|rule 3 - this should run 3rd or 4th
-1|4|rule 1 - this should run 3rd or 4th
+--
+-- Check that the ordering of rules fired is correct
+--
+insert into rtest_order1 values (1);
+select * from rtest_order2;
+ a | b |                  c                  
+---+---+-------------------------------------
+ 1 | 1 | rule 2 - this should run 1st
+ 1 | 2 | rule 4 - this should run 2nd
+ 1 | 3 | rule 3 - this should run 3rd or 4th
+ 1 | 4 | rule 1 - this should run 3rd or 4th
 (4 rows)
 
-QUERY: insert into rtest_nothn1 values (1, 'want this');
-QUERY: insert into rtest_nothn1 values (2, 'want this');
-QUERY: insert into rtest_nothn1 values (10, 'don''t want this');
-QUERY: insert into rtest_nothn1 values (19, 'don''t want this');
-QUERY: insert into rtest_nothn1 values (20, 'want this');
-QUERY: insert into rtest_nothn1 values (29, 'want this');
-QUERY: insert into rtest_nothn1 values (30, 'don''t want this');
-QUERY: insert into rtest_nothn1 values (39, 'don''t want this');
-QUERY: insert into rtest_nothn1 values (40, 'want this');
-QUERY: insert into rtest_nothn1 values (50, 'want this');
-QUERY: insert into rtest_nothn1 values (60, 'want this');
-QUERY: select * from rtest_nothn1;
- a|b        
---+---------
- 1|want this
- 2|want this
-20|want this
-29|want this
-40|want this
-50|want this
-60|want this
+--
+-- Check if instead nothing w/without qualification works
+--
+insert into rtest_nothn1 values (1, 'want this');
+insert into rtest_nothn1 values (2, 'want this');
+insert into rtest_nothn1 values (10, 'don''t want this');
+insert into rtest_nothn1 values (19, 'don''t want this');
+insert into rtest_nothn1 values (20, 'want this');
+insert into rtest_nothn1 values (29, 'want this');
+insert into rtest_nothn1 values (30, 'don''t want this');
+insert into rtest_nothn1 values (39, 'don''t want this');
+insert into rtest_nothn1 values (40, 'want this');
+insert into rtest_nothn1 values (50, 'want this');
+insert into rtest_nothn1 values (60, 'want this');
+select * from rtest_nothn1;
+ a  |     b     
+----+-----------
+  1 | want this
+  2 | want this
+ 20 | want this
+ 29 | want this
+ 40 | want this
+ 50 | want this
+ 60 | want this
 (7 rows)
 
-QUERY: insert into rtest_nothn2 values (10, 'too small');
-QUERY: insert into rtest_nothn2 values (50, 'too small');
-QUERY: insert into rtest_nothn2 values (100, 'OK');
-QUERY: insert into rtest_nothn2 values (200, 'OK');
-QUERY: select * from rtest_nothn2;
-a|b
--+-
+insert into rtest_nothn2 values (10, 'too small');
+insert into rtest_nothn2 values (50, 'too small');
+insert into rtest_nothn2 values (100, 'OK');
+insert into rtest_nothn2 values (200, 'OK');
+select * from rtest_nothn2;
+ a | b 
+---+---
 (0 rows)
 
-QUERY: select * from rtest_nothn3;
-  a|b 
----+--
-100|OK
-200|OK
+select * from rtest_nothn3;
+  a  | b  
+-----+----
+ 100 | OK
+ 200 | OK
 (2 rows)
 
-QUERY: delete from rtest_nothn1;
-QUERY: delete from rtest_nothn2;
-QUERY: delete from rtest_nothn3;
-QUERY: insert into rtest_nothn4 values (1, 'want this');
-QUERY: insert into rtest_nothn4 values (2, 'want this');
-QUERY: insert into rtest_nothn4 values (10, 'don''t want this');
-QUERY: insert into rtest_nothn4 values (19, 'don''t want this');
-QUERY: insert into rtest_nothn4 values (20, 'want this');
-QUERY: insert into rtest_nothn4 values (29, 'want this');
-QUERY: insert into rtest_nothn4 values (30, 'don''t want this');
-QUERY: insert into rtest_nothn4 values (39, 'don''t want this');
-QUERY: insert into rtest_nothn4 values (40, 'want this');
-QUERY: insert into rtest_nothn4 values (50, 'want this');
-QUERY: insert into rtest_nothn4 values (60, 'want this');
-QUERY: insert into rtest_nothn1 select * from rtest_nothn4;
-QUERY: select * from rtest_nothn1;
- a|b        
---+---------
- 1|want this
- 2|want this
-20|want this
-29|want this
-40|want this
-50|want this
-60|want this
+delete from rtest_nothn1;
+delete from rtest_nothn2;
+delete from rtest_nothn3;
+insert into rtest_nothn4 values (1, 'want this');
+insert into rtest_nothn4 values (2, 'want this');
+insert into rtest_nothn4 values (10, 'don''t want this');
+insert into rtest_nothn4 values (19, 'don''t want this');
+insert into rtest_nothn4 values (20, 'want this');
+insert into rtest_nothn4 values (29, 'want this');
+insert into rtest_nothn4 values (30, 'don''t want this');
+insert into rtest_nothn4 values (39, 'don''t want this');
+insert into rtest_nothn4 values (40, 'want this');
+insert into rtest_nothn4 values (50, 'want this');
+insert into rtest_nothn4 values (60, 'want this');
+insert into rtest_nothn1 select * from rtest_nothn4;
+select * from rtest_nothn1;
+ a  |     b     
+----+-----------
+  1 | want this
+  2 | want this
+ 20 | want this
+ 29 | want this
+ 40 | want this
+ 50 | want this
+ 60 | want this
 (7 rows)
 
-QUERY: delete from rtest_nothn4;
-QUERY: insert into rtest_nothn4 values (10, 'too small');
-QUERY: insert into rtest_nothn4 values (50, 'too small');
-QUERY: insert into rtest_nothn4 values (100, 'OK');
-QUERY: insert into rtest_nothn4 values (200, 'OK');
-QUERY: insert into rtest_nothn2 select * from rtest_nothn4;
-QUERY: select * from rtest_nothn2;
-a|b
--+-
+delete from rtest_nothn4;
+insert into rtest_nothn4 values (10, 'too small');
+insert into rtest_nothn4 values (50, 'too small');
+insert into rtest_nothn4 values (100, 'OK');
+insert into rtest_nothn4 values (200, 'OK');
+insert into rtest_nothn2 select * from rtest_nothn4;
+select * from rtest_nothn2;
+ a | b 
+---+---
 (0 rows)
 
-QUERY: select * from rtest_nothn3;
-  a|b 
----+--
-100|OK
-200|OK
+select * from rtest_nothn3;
+  a  | b  
+-----+----
+ 100 | OK
+ 200 | OK
 (2 rows)
 
-QUERY: create table rtest_view1 (a int4, b text, v bool);
-QUERY: create table rtest_view2 (a int4);
-QUERY: create table rtest_view3 (a int4, b text);
-QUERY: create table rtest_view4 (a int4, b text, c int4);
-QUERY: create view rtest_vview1 as select a, b from rtest_view1 X
+create table rtest_view1 (a int4, b text, v bool);
+create table rtest_view2 (a int4);
+create table rtest_view3 (a int4, b text);
+create table rtest_view4 (a int4, b text, c int4);
+create view rtest_vview1 as select a, b from rtest_view1 X 
 	where 0 < (select count(*) from rtest_view2 Y where Y.a = X.a);
-QUERY: create view rtest_vview2 as select a, b from rtest_view1 where v;
-QUERY: create view rtest_vview3 as select a, b from rtest_vview2 X
+create view rtest_vview2 as select a, b from rtest_view1 where v;
+create view rtest_vview3 as select a, b from rtest_vview2 X
 	where 0 < (select count(*) from rtest_view2 Y where Y.a = X.a);
-QUERY: create view rtest_vview4 as select X.a, X.b, count(Y.a) as refcount
+create view rtest_vview4 as select X.a, X.b, count(Y.a) as refcount
 	from rtest_view1 X, rtest_view2 Y
 	where X.a = Y.a
 	group by X.a, X.b;
-QUERY: create function rtest_viewfunc1(int4) returns int4 as
+create function rtest_viewfunc1(int4) returns int4 as
 	'select count(*) from rtest_view2 where a = $1'
 	language 'sql';
-QUERY: create view rtest_vview5 as select a, b, rtest_viewfunc1(a) as refcount
+create view rtest_vview5 as select a, b, rtest_viewfunc1(a) as refcount
 	from rtest_view1;
-QUERY: insert into rtest_view1 values (1, 'item 1', 't');
-QUERY: insert into rtest_view1 values (2, 'item 2', 't');
-QUERY: insert into rtest_view1 values (3, 'item 3', 't');
-QUERY: insert into rtest_view1 values (4, 'item 4', 'f');
-QUERY: insert into rtest_view1 values (5, 'item 5', 't');
-QUERY: insert into rtest_view1 values (6, 'item 6', 'f');
-QUERY: insert into rtest_view1 values (7, 'item 7', 't');
-QUERY: insert into rtest_view1 values (8, 'item 8', 't');
-QUERY: insert into rtest_view2 values (2);
-QUERY: insert into rtest_view2 values (2);
-QUERY: insert into rtest_view2 values (4);
-QUERY: insert into rtest_view2 values (5);
-QUERY: insert into rtest_view2 values (7);
-QUERY: insert into rtest_view2 values (7);
-QUERY: insert into rtest_view2 values (7);
-QUERY: insert into rtest_view2 values (7);
-QUERY: select * from rtest_vview1;
-a|b     
--+------
-2|item 2
-4|item 4
-5|item 5
-7|item 7
+insert into rtest_view1 values (1, 'item 1', 't');
+insert into rtest_view1 values (2, 'item 2', 't');
+insert into rtest_view1 values (3, 'item 3', 't');
+insert into rtest_view1 values (4, 'item 4', 'f');
+insert into rtest_view1 values (5, 'item 5', 't');
+insert into rtest_view1 values (6, 'item 6', 'f');
+insert into rtest_view1 values (7, 'item 7', 't');
+insert into rtest_view1 values (8, 'item 8', 't');
+insert into rtest_view2 values (2);
+insert into rtest_view2 values (2);
+insert into rtest_view2 values (4);
+insert into rtest_view2 values (5);
+insert into rtest_view2 values (7);
+insert into rtest_view2 values (7);
+insert into rtest_view2 values (7);
+insert into rtest_view2 values (7);
+select * from rtest_vview1;
+ a |   b    
+---+--------
+ 2 | item 2
+ 4 | item 4
+ 5 | item 5
+ 7 | item 7
 (4 rows)
 
-QUERY: select * from rtest_vview2;
-a|b     
--+------
-1|item 1
-2|item 2
-3|item 3
-5|item 5
-7|item 7
-8|item 8
+select * from rtest_vview2;
+ a |   b    
+---+--------
+ 1 | item 1
+ 2 | item 2
+ 3 | item 3
+ 5 | item 5
+ 7 | item 7
+ 8 | item 8
 (6 rows)
 
-QUERY: select * from rtest_vview3;
-a|b     
--+------
-2|item 2
-5|item 5
-7|item 7
+select * from rtest_vview3;
+ a |   b    
+---+--------
+ 2 | item 2
+ 5 | item 5
+ 7 | item 7
 (3 rows)
 
-QUERY: select * from rtest_vview4;
-a|b     |refcount
--+------+--------
-2|item 2|       2
-4|item 4|       1
-5|item 5|       1
-7|item 7|       4
+select * from rtest_vview4;
+ a |   b    | refcount 
+---+--------+----------
+ 2 | item 2 |        2
+ 4 | item 4 |        1
+ 5 | item 5 |        1
+ 7 | item 7 |        4
 (4 rows)
 
-QUERY: select * from rtest_vview5;
-a|b     |refcount
--+------+--------
-1|item 1|       0
-2|item 2|       2
-3|item 3|       0
-4|item 4|       1
-5|item 5|       1
-6|item 6|       0
-7|item 7|       4
-8|item 8|       0
+select * from rtest_vview5;
+ a |   b    | refcount 
+---+--------+----------
+ 1 | item 1 |        0
+ 2 | item 2 |        2
+ 3 | item 3 |        0
+ 4 | item 4 |        1
+ 5 | item 5 |        1
+ 6 | item 6 |        0
+ 7 | item 7 |        4
+ 8 | item 8 |        0
 (8 rows)
 
-QUERY: insert into rtest_view3 select * from rtest_vview1 where a < 7;
-QUERY: select * from rtest_view3;
-a|b     
--+------
-2|item 2
-4|item 4
-5|item 5
+insert into rtest_view3 select * from rtest_vview1 where a < 7;
+select * from rtest_view3;
+ a |   b    
+---+--------
+ 2 | item 2
+ 4 | item 4
+ 5 | item 5
 (3 rows)
 
-QUERY: delete from rtest_view3;
-QUERY: insert into rtest_view3 select * from rtest_vview2 where a != 5 and b !~ '2';
-QUERY: select * from rtest_view3;
-a|b     
--+------
-1|item 1
-3|item 3
-7|item 7
-8|item 8
+delete from rtest_view3;
+insert into rtest_view3 select * from rtest_vview2 where a != 5 and b !~ '2';
+select * from rtest_view3;
+ a |   b    
+---+--------
+ 1 | item 1
+ 3 | item 3
+ 7 | item 7
+ 8 | item 8
 (4 rows)
 
-QUERY: delete from rtest_view3;
-QUERY: insert into rtest_view3 select * from rtest_vview3;
-QUERY: select * from rtest_view3;
-a|b     
--+------
-2|item 2
-5|item 5
-7|item 7
+delete from rtest_view3;
+insert into rtest_view3 select * from rtest_vview3;
+select * from rtest_view3;
+ a |   b    
+---+--------
+ 2 | item 2
+ 5 | item 5
+ 7 | item 7
 (3 rows)
 
-QUERY: delete from rtest_view3;
-QUERY: insert into rtest_view4 select * from rtest_vview4 where 3 > refcount;
-QUERY: select * from rtest_view4;
-a|b     |c
--+------+-
-2|item 2|2
-4|item 4|1
-5|item 5|1
+delete from rtest_view3;
+insert into rtest_view4 select * from rtest_vview4 where 3 > refcount;
+select * from rtest_view4;
+ a |   b    | c 
+---+--------+---
+ 2 | item 2 | 2
+ 4 | item 4 | 1
+ 5 | item 5 | 1
 (3 rows)
 
-QUERY: delete from rtest_view4;
-QUERY: insert into rtest_view4 select * from rtest_vview5 where a > 2 and refcount = 0;
-QUERY: select * from rtest_view4;
-a|b     |c
--+------+-
-3|item 3|0
-6|item 6|0
-8|item 8|0
+delete from rtest_view4;
+insert into rtest_view4 select * from rtest_vview5 where a > 2 and refcount = 0;
+select * from rtest_view4;
+ a |   b    | c 
+---+--------+---
+ 3 | item 3 | 0
+ 6 | item 6 | 0
+ 8 | item 8 | 0
 (3 rows)
 
-QUERY: delete from rtest_view4;
-QUERY: create table rtest_comp (
+delete from rtest_view4;
+--
+-- Test for computations in views
+--
+create table rtest_comp (
 	part	text,
 	unit	char(4),
 	size	float
 );
-QUERY: create table rtest_unitfact (
+create table rtest_unitfact (
 	unit	char(4),
 	factor	float
 );
-QUERY: create view rtest_vcomp as
+create view rtest_vcomp as 
 	select X.part, (X.size * Y.factor) as size_in_cm
 			from rtest_comp X, rtest_unitfact Y
 			where X.unit = Y.unit;
-QUERY: insert into rtest_unitfact values ('m', 100.0);
-QUERY: insert into rtest_unitfact values ('cm', 1.0);
-QUERY: insert into rtest_unitfact values ('inch', 2.54);
-QUERY: insert into rtest_comp values ('p1', 'm', 5.0);
-QUERY: insert into rtest_comp values ('p2', 'm', 3.0);
-QUERY: insert into rtest_comp values ('p3', 'cm', 5.0);
-QUERY: insert into rtest_comp values ('p4', 'cm', 15.0);
-QUERY: insert into rtest_comp values ('p5', 'inch', 7.0);
-QUERY: insert into rtest_comp values ('p6', 'inch', 4.4);
-QUERY: select * from rtest_vcomp order by part;
-part|size_in_cm
-----+----------
-p1  |       500
-p2  |       300
-p3  |         5
-p4  |        15
-p5  |     17.78
-p6  |    11.176
+insert into rtest_unitfact values ('m', 100.0);
+insert into rtest_unitfact values ('cm', 1.0);
+insert into rtest_unitfact values ('inch', 2.54);
+insert into rtest_comp values ('p1', 'm', 5.0);
+insert into rtest_comp values ('p2', 'm', 3.0);
+insert into rtest_comp values ('p3', 'cm', 5.0);
+insert into rtest_comp values ('p4', 'cm', 15.0);
+insert into rtest_comp values ('p5', 'inch', 7.0);
+insert into rtest_comp values ('p6', 'inch', 4.4);
+select * from rtest_vcomp order by part;
+ part | size_in_cm 
+------+------------
+ p1   |        500
+ p2   |        300
+ p3   |          5
+ p4   |         15
+ p5   |      17.78
+ p6   |     11.176
 (6 rows)
 
-QUERY: select * from rtest_vcomp where size_in_cm > 10.0 order by size_in_cm using >;
-part|size_in_cm
-----+----------
-p1  |       500
-p2  |       300
-p5  |     17.78
-p4  |        15
-p6  |    11.176
+select * from rtest_vcomp where size_in_cm > 10.0 order by size_in_cm using >;
+ part | size_in_cm 
+------+------------
+ p1   |        500
+ p2   |        300
+ p5   |      17.78
+ p4   |         15
+ p6   |     11.176
 (5 rows)
 
-QUERY: CREATE TABLE shoe_data (
-	shoename   char(10),      
-	sh_avail   integer,       
-	slcolor    char(10),      
-	slminlen   float,         
-	slmaxlen   float,         
-	slunit     char(8)        
+--
+-- In addition run the (slightly modified) queries from the
+-- programmers manual section on the rule system.
+--
+CREATE TABLE shoe_data (
+	shoename   char(10),      -- primary key
+	sh_avail   integer,       -- available # of pairs
+	slcolor    char(10),      -- preferred shoelace color
+	slminlen   float,         -- miminum shoelace length
+	slmaxlen   float,         -- maximum shoelace length
+	slunit     char(8)        -- length unit
 );
-QUERY: CREATE TABLE shoelace_data (
-	sl_name    char(10),      
-	sl_avail   integer,       
-	sl_color   char(10),      
-	sl_len     float,         
-	sl_unit    char(8)        
+CREATE TABLE shoelace_data (
+	sl_name    char(10),      -- primary key
+	sl_avail   integer,       -- available # of pairs
+	sl_color   char(10),      -- shoelace color
+	sl_len     float,         -- shoelace length
+	sl_unit    char(8)        -- length unit
 );
-QUERY: CREATE TABLE unit (
-	un_name    char(8),       
-	un_fact    float          
+CREATE TABLE unit (
+	un_name    char(8),       -- the primary key
+	un_fact    float          -- factor to transform to cm
 );
-QUERY: CREATE VIEW shoe AS
+CREATE VIEW shoe AS
 	SELECT sh.shoename,
 		   sh.sh_avail,
 		   sh.slcolor,
@@ -879,7 +954,7 @@ QUERY: CREATE VIEW shoe AS
 		   sh.slunit
 	  FROM shoe_data sh, unit un
 	 WHERE sh.slunit = un.un_name;
-QUERY: CREATE VIEW shoelace AS
+CREATE VIEW shoelace AS
 	SELECT s.sl_name,
 		   s.sl_avail,
 		   s.sl_color,
@@ -888,7 +963,7 @@ QUERY: CREATE VIEW shoelace AS
 		   s.sl_len * u.un_fact AS sl_len_cm
 	  FROM shoelace_data s, unit u
 	 WHERE s.sl_unit = u.un_name;
-QUERY: CREATE VIEW shoe_ready AS
+CREATE VIEW shoe_ready AS
 	SELECT rsh.shoename,
 		   rsh.sh_avail,
 		   rsl.sl_name,
@@ -898,48 +973,52 @@ QUERY: CREATE VIEW shoe_ready AS
 	 WHERE rsl.sl_color = rsh.slcolor
 	   AND rsl.sl_len_cm >= rsh.slminlen_cm
 	   AND rsl.sl_len_cm <= rsh.slmaxlen_cm;
-QUERY: INSERT INTO unit VALUES ('cm', 1.0);
-QUERY: INSERT INTO unit VALUES ('m', 100.0);
-QUERY: INSERT INTO unit VALUES ('inch', 2.54);
-QUERY: INSERT INTO shoe_data VALUES ('sh1', 2, 'black', 70.0, 90.0, 'cm');
-QUERY: INSERT INTO shoe_data VALUES ('sh2', 0, 'black', 30.0, 40.0, 'inch');
-QUERY: INSERT INTO shoe_data VALUES ('sh3', 4, 'brown', 50.0, 65.0, 'cm');
-QUERY: INSERT INTO shoe_data VALUES ('sh4', 3, 'brown', 40.0, 50.0, 'inch');
-QUERY: INSERT INTO shoelace_data VALUES ('sl1', 5, 'black', 80.0, 'cm');
-QUERY: INSERT INTO shoelace_data VALUES ('sl2', 6, 'black', 100.0, 'cm');
-QUERY: INSERT INTO shoelace_data VALUES ('sl3', 0, 'black', 35.0 , 'inch');
-QUERY: INSERT INTO shoelace_data VALUES ('sl4', 8, 'black', 40.0 , 'inch');
-QUERY: INSERT INTO shoelace_data VALUES ('sl5', 4, 'brown', 1.0 , 'm');
-QUERY: INSERT INTO shoelace_data VALUES ('sl6', 0, 'brown', 0.9 , 'm');
-QUERY: INSERT INTO shoelace_data VALUES ('sl7', 7, 'brown', 60 , 'cm');
-QUERY: INSERT INTO shoelace_data VALUES ('sl8', 1, 'brown', 40 , 'inch');
-QUERY: SELECT * FROM shoelace ORDER BY sl_name;
-sl_name   |sl_avail|sl_color  |sl_len|sl_unit |sl_len_cm
-----------+--------+----------+------+--------+---------
-sl1       |       5|black     |    80|cm      |       80
-sl2       |       6|black     |   100|cm      |      100
-sl3       |       0|black     |    35|inch    |     88.9
-sl4       |       8|black     |    40|inch    |    101.6
-sl5       |       4|brown     |     1|m       |      100
-sl6       |       0|brown     |   0.9|m       |       90
-sl7       |       7|brown     |    60|cm      |       60
-sl8       |       1|brown     |    40|inch    |    101.6
+INSERT INTO unit VALUES ('cm', 1.0);
+INSERT INTO unit VALUES ('m', 100.0);
+INSERT INTO unit VALUES ('inch', 2.54);
+INSERT INTO shoe_data VALUES ('sh1', 2, 'black', 70.0, 90.0, 'cm');
+INSERT INTO shoe_data VALUES ('sh2', 0, 'black', 30.0, 40.0, 'inch');
+INSERT INTO shoe_data VALUES ('sh3', 4, 'brown', 50.0, 65.0, 'cm');
+INSERT INTO shoe_data VALUES ('sh4', 3, 'brown', 40.0, 50.0, 'inch');
+INSERT INTO shoelace_data VALUES ('sl1', 5, 'black', 80.0, 'cm');
+INSERT INTO shoelace_data VALUES ('sl2', 6, 'black', 100.0, 'cm');
+INSERT INTO shoelace_data VALUES ('sl3', 0, 'black', 35.0 , 'inch');
+INSERT INTO shoelace_data VALUES ('sl4', 8, 'black', 40.0 , 'inch');
+INSERT INTO shoelace_data VALUES ('sl5', 4, 'brown', 1.0 , 'm');
+INSERT INTO shoelace_data VALUES ('sl6', 0, 'brown', 0.9 , 'm');
+INSERT INTO shoelace_data VALUES ('sl7', 7, 'brown', 60 , 'cm');
+INSERT INTO shoelace_data VALUES ('sl8', 1, 'brown', 40 , 'inch');
+-- SELECTs in doc
+SELECT * FROM shoelace ORDER BY sl_name;
+  sl_name   | sl_avail |  sl_color  | sl_len | sl_unit  | sl_len_cm 
+------------+----------+------------+--------+----------+-----------
+ sl1        |        5 | black      |     80 | cm       |        80
+ sl2        |        6 | black      |    100 | cm       |       100
+ sl3        |        0 | black      |     35 | inch     |      88.9
+ sl4        |        8 | black      |     40 | inch     |     101.6
+ sl5        |        4 | brown      |      1 | m        |       100
+ sl6        |        0 | brown      |    0.9 | m        |        90
+ sl7        |        7 | brown      |     60 | cm       |        60
+ sl8        |        1 | brown      |     40 | inch     |     101.6
 (8 rows)
 
-QUERY: SELECT * FROM shoe_ready WHERE total_avail >= 2;
-shoename  |sh_avail|sl_name   |sl_avail|total_avail
-----------+--------+----------+--------+-----------
-sh1       |       2|sl1       |       5|          2
-sh3       |       4|sl7       |       7|          4
+SELECT * FROM shoe_ready WHERE total_avail >= 2;
+  shoename  | sh_avail |  sl_name   | sl_avail | total_avail 
+------------+----------+------------+----------+-------------
+ sh1        |        2 | sl1        |        5 |           2
+ sh3        |        4 | sl7        |        7 |           4
 (2 rows)
 
-QUERY:     CREATE TABLE shoelace_log (
-        sl_name    char(10),      
-        sl_avail   integer,       
-        log_who    name,          
-        log_when   datetime       
+    CREATE TABLE shoelace_log (
+        sl_name    char(10),      -- shoelace changed
+        sl_avail   integer,       -- new available value
+        log_who    name,          -- who did it
+        log_when   datetime       -- when
     );
-QUERY:     CREATE RULE log_shoelace AS ON UPDATE TO shoelace_data
+-- Want "log_who" to be CURRENT_USER,
+-- but that is non-portable for the regression test
+-- - thomas 1999-02-21
+    CREATE RULE log_shoelace AS ON UPDATE TO shoelace_data
         WHERE NEW.sl_avail != OLD.sl_avail
         DO INSERT INTO shoelace_log VALUES (
                                         NEW.sl_name,
@@ -947,14 +1026,14 @@ QUERY:     CREATE RULE log_shoelace AS ON UPDATE TO shoelace_data
                                         'Al Bundy',
                                         'epoch'::text
                                     );
-QUERY: UPDATE shoelace_data SET sl_avail = 6 WHERE  sl_name = 'sl7';
-QUERY: SELECT * FROM shoelace_log;
-sl_name   |sl_avail|log_who |log_when
-----------+--------+--------+--------
-sl7       |       6|Al Bundy|epoch   
+UPDATE shoelace_data SET sl_avail = 6 WHERE  sl_name = 'sl7';
+SELECT * FROM shoelace_log;
+  sl_name   | sl_avail | log_who  | log_when 
+------------+----------+----------+----------
+ sl7        |        6 | Al Bundy | epoch
 (1 row)
 
-QUERY:     CREATE RULE shoelace_ins AS ON INSERT TO shoelace
+    CREATE RULE shoelace_ins AS ON INSERT TO shoelace
         DO INSTEAD
         INSERT INTO shoelace_data VALUES (
                NEW.sl_name,
@@ -962,7 +1041,7 @@ QUERY:     CREATE RULE shoelace_ins AS ON INSERT TO shoelace
                NEW.sl_color,
                NEW.sl_len,
                NEW.sl_unit);
-QUERY:     CREATE RULE shoelace_upd AS ON UPDATE TO shoelace
+    CREATE RULE shoelace_upd AS ON UPDATE TO shoelace
         DO INSTEAD
         UPDATE shoelace_data SET
                sl_name = NEW.sl_name,
@@ -971,154 +1050,157 @@ QUERY:     CREATE RULE shoelace_upd AS ON UPDATE TO shoelace
                sl_len = NEW.sl_len,
                sl_unit = NEW.sl_unit
          WHERE sl_name = OLD.sl_name;
-QUERY:     CREATE RULE shoelace_del AS ON DELETE TO shoelace
+    CREATE RULE shoelace_del AS ON DELETE TO shoelace
         DO INSTEAD
         DELETE FROM shoelace_data
          WHERE sl_name = OLD.sl_name;
-QUERY:     CREATE TABLE shoelace_arrive (
+    CREATE TABLE shoelace_arrive (
         arr_name    char(10),
         arr_quant   integer
     );
-QUERY:     CREATE TABLE shoelace_ok (
+    CREATE TABLE shoelace_ok (
         ok_name     char(10),
         ok_quant    integer
     );
-QUERY:     CREATE RULE shoelace_ok_ins AS ON INSERT TO shoelace_ok
+    CREATE RULE shoelace_ok_ins AS ON INSERT TO shoelace_ok
         DO INSTEAD
         UPDATE shoelace SET
                sl_avail = sl_avail + NEW.ok_quant
          WHERE sl_name = NEW.ok_name;
-QUERY: INSERT INTO shoelace_arrive VALUES ('sl3', 10);
-QUERY: INSERT INTO shoelace_arrive VALUES ('sl6', 20);
-QUERY: INSERT INTO shoelace_arrive VALUES ('sl8', 20);
-QUERY: SELECT * FROM shoelace ORDER BY sl_name;
-sl_name   |sl_avail|sl_color  |sl_len|sl_unit |sl_len_cm
-----------+--------+----------+------+--------+---------
-sl1       |       5|black     |    80|cm      |       80
-sl2       |       6|black     |   100|cm      |      100
-sl3       |       0|black     |    35|inch    |     88.9
-sl4       |       8|black     |    40|inch    |    101.6
-sl5       |       4|brown     |     1|m       |      100
-sl6       |       0|brown     |   0.9|m       |       90
-sl7       |       6|brown     |    60|cm      |       60
-sl8       |       1|brown     |    40|inch    |    101.6
+INSERT INTO shoelace_arrive VALUES ('sl3', 10);
+INSERT INTO shoelace_arrive VALUES ('sl6', 20);
+INSERT INTO shoelace_arrive VALUES ('sl8', 20);
+SELECT * FROM shoelace ORDER BY sl_name;
+  sl_name   | sl_avail |  sl_color  | sl_len | sl_unit  | sl_len_cm 
+------------+----------+------------+--------+----------+-----------
+ sl1        |        5 | black      |     80 | cm       |        80
+ sl2        |        6 | black      |    100 | cm       |       100
+ sl3        |        0 | black      |     35 | inch     |      88.9
+ sl4        |        8 | black      |     40 | inch     |     101.6
+ sl5        |        4 | brown      |      1 | m        |       100
+ sl6        |        0 | brown      |    0.9 | m        |        90
+ sl7        |        6 | brown      |     60 | cm       |        60
+ sl8        |        1 | brown      |     40 | inch     |     101.6
 (8 rows)
 
-QUERY: insert into shoelace_ok select * from shoelace_arrive;
-QUERY: SELECT * FROM shoelace ORDER BY sl_name;
-sl_name   |sl_avail|sl_color  |sl_len|sl_unit |sl_len_cm
-----------+--------+----------+------+--------+---------
-sl1       |       5|black     |    80|cm      |       80
-sl2       |       6|black     |   100|cm      |      100
-sl3       |      10|black     |    35|inch    |     88.9
-sl4       |       8|black     |    40|inch    |    101.6
-sl5       |       4|brown     |     1|m       |      100
-sl6       |      20|brown     |   0.9|m       |       90
-sl7       |       6|brown     |    60|cm      |       60
-sl8       |      21|brown     |    40|inch    |    101.6
+insert into shoelace_ok select * from shoelace_arrive;
+SELECT * FROM shoelace ORDER BY sl_name;
+  sl_name   | sl_avail |  sl_color  | sl_len | sl_unit  | sl_len_cm 
+------------+----------+------------+--------+----------+-----------
+ sl1        |        5 | black      |     80 | cm       |        80
+ sl2        |        6 | black      |    100 | cm       |       100
+ sl3        |       10 | black      |     35 | inch     |      88.9
+ sl4        |        8 | black      |     40 | inch     |     101.6
+ sl5        |        4 | brown      |      1 | m        |       100
+ sl6        |       20 | brown      |    0.9 | m        |        90
+ sl7        |        6 | brown      |     60 | cm       |        60
+ sl8        |       21 | brown      |     40 | inch     |     101.6
 (8 rows)
 
-QUERY: SELECT * FROM shoelace_log ORDER BY sl_name;
-sl_name   |sl_avail|log_who |log_when
-----------+--------+--------+--------
-sl3       |      10|Al Bundy|epoch   
-sl6       |      20|Al Bundy|epoch   
-sl7       |       6|Al Bundy|epoch   
-sl8       |      21|Al Bundy|epoch   
+SELECT * FROM shoelace_log ORDER BY sl_name;
+  sl_name   | sl_avail | log_who  | log_when 
+------------+----------+----------+----------
+ sl3        |       10 | Al Bundy | epoch
+ sl6        |       20 | Al Bundy | epoch
+ sl7        |        6 | Al Bundy | epoch
+ sl8        |       21 | Al Bundy | epoch
 (4 rows)
 
-QUERY:     CREATE VIEW shoelace_obsolete AS
+    CREATE VIEW shoelace_obsolete AS
 	SELECT * FROM shoelace WHERE NOT EXISTS
 	    (SELECT shoename FROM shoe WHERE slcolor = sl_color);
-QUERY:     CREATE VIEW shoelace_candelete AS
+    CREATE VIEW shoelace_candelete AS
 	SELECT * FROM shoelace_obsolete WHERE sl_avail = 0;
-QUERY: insert into shoelace values ('sl9', 0, 'pink', 35.0, 'inch', 0.0);
-QUERY: insert into shoelace values ('sl10', 1000, 'magenta', 40.0, 'inch', 0.0);
-QUERY: SELECT * FROM shoelace_obsolete;
-sl_name   |sl_avail|sl_color  |sl_len|sl_unit |sl_len_cm
-----------+--------+----------+------+--------+---------
-sl9       |       0|pink      |    35|inch    |     88.9
-sl10      |    1000|magenta   |    40|inch    |    101.6
+insert into shoelace values ('sl9', 0, 'pink', 35.0, 'inch', 0.0);
+insert into shoelace values ('sl10', 1000, 'magenta', 40.0, 'inch', 0.0);
+SELECT * FROM shoelace_obsolete;
+  sl_name   | sl_avail |  sl_color  | sl_len | sl_unit  | sl_len_cm 
+------------+----------+------------+--------+----------+-----------
+ sl9        |        0 | pink       |     35 | inch     |      88.9
+ sl10       |     1000 | magenta    |     40 | inch     |     101.6
 (2 rows)
 
-QUERY: SELECT * FROM shoelace_candelete;
-sl_name   |sl_avail|sl_color  |sl_len|sl_unit |sl_len_cm
-----------+--------+----------+------+--------+---------
-sl9       |       0|pink      |    35|inch    |     88.9
+SELECT * FROM shoelace_candelete;
+  sl_name   | sl_avail |  sl_color  | sl_len | sl_unit  | sl_len_cm 
+------------+----------+------------+--------+----------+-----------
+ sl9        |        0 | pink       |     35 | inch     |      88.9
 (1 row)
 
-QUERY: DELETE FROM shoelace WHERE EXISTS
+DELETE FROM shoelace WHERE EXISTS
     (SELECT * FROM shoelace_candelete
              WHERE sl_name = shoelace.sl_name);
-QUERY: SELECT * FROM shoelace ORDER BY sl_name;
-sl_name   |sl_avail|sl_color  |sl_len|sl_unit |sl_len_cm
-----------+--------+----------+------+--------+---------
-sl1       |       5|black     |    80|cm      |       80
-sl10      |    1000|magenta   |    40|inch    |    101.6
-sl2       |       6|black     |   100|cm      |      100
-sl3       |      10|black     |    35|inch    |     88.9
-sl4       |       8|black     |    40|inch    |    101.6
-sl5       |       4|brown     |     1|m       |      100
-sl6       |      20|brown     |   0.9|m       |       90
-sl7       |       6|brown     |    60|cm      |       60
-sl8       |      21|brown     |    40|inch    |    101.6
+SELECT * FROM shoelace ORDER BY sl_name;
+  sl_name   | sl_avail |  sl_color  | sl_len | sl_unit  | sl_len_cm 
+------------+----------+------------+--------+----------+-----------
+ sl1        |        5 | black      |     80 | cm       |        80
+ sl10       |     1000 | magenta    |     40 | inch     |     101.6
+ sl2        |        6 | black      |    100 | cm       |       100
+ sl3        |       10 | black      |     35 | inch     |      88.9
+ sl4        |        8 | black      |     40 | inch     |     101.6
+ sl5        |        4 | brown      |      1 | m        |       100
+ sl6        |       20 | brown      |    0.9 | m        |        90
+ sl7        |        6 | brown      |     60 | cm       |        60
+ sl8        |       21 | brown      |     40 | inch     |     101.6
 (9 rows)
 
-QUERY: SELECT viewname, definition FROM pg_views ORDER BY viewname;
-viewname          |definition                                                                                                                                                                                                                                                                                                                                                                                         
-------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-iexit             |SELECT ih.name, ih.thepath, interpt_pp(ih.thepath, r.thepath) AS exit FROM ihighway ih, ramp r WHERE (ih.thepath ## r.thepath);                                                                                                                                                                                                                                                                    
-pg_indexes        |SELECT c.relname AS tablename, i.relname AS indexname, pg_get_indexdef(x.indexrelid) AS indexdef FROM pg_index x, pg_class c, pg_class i WHERE ((c.oid = x.indrelid) AND (i.oid = x.indexrelid));                                                                                                                                                                                                  
-pg_rules          |SELECT c.relname AS tablename, r.rulename, pg_get_ruledef(r.rulename) AS definition FROM pg_rewrite r, pg_class c WHERE ((r.rulename !~ '^_RET'::text) AND (c.oid = r.ev_class));                                                                                                                                                                                                                  
-pg_tables         |SELECT c.relname AS tablename, pg_get_userbyid(c.relowner) AS tableowner, c.relhasindex AS hasindexes, c.relhasrules AS hasrules, (c.reltriggers > 0) AS hastriggers FROM pg_class c WHERE (((c.relkind = 'r'::"char") OR (c.relkind = 's'::"char")) AND (NOT (EXISTS (SELECT pg_rewrite.rulename FROM pg_rewrite WHERE ((pg_rewrite.ev_class = c.oid) AND (pg_rewrite.ev_type = '1'::"char"))))));
-pg_user           |SELECT pg_shadow.usename, pg_shadow.usesysid, pg_shadow.usecreatedb, pg_shadow.usetrace, pg_shadow.usesuper, pg_shadow.usecatupd, '********'::text AS passwd, pg_shadow.valuntil FROM pg_shadow;                                                                                                                                                                                                   
-pg_views          |SELECT c.relname AS viewname, pg_get_userbyid(c.relowner) AS viewowner, pg_get_viewdef(c.relname) AS definition FROM pg_class c WHERE (c.relhasrules AND (EXISTS (SELECT r.rulename FROM pg_rewrite r WHERE ((r.ev_class = c.oid) AND (r.ev_type = '1'::"char")))));                                                                                                                               
-rtest_v1          |SELECT rtest_t1.a, rtest_t1.b FROM rtest_t1;                                                                                                                                                                                                                                                                                                                                                       
-rtest_vcomp       |SELECT x.part, (x.size * y.factor) AS size_in_cm FROM rtest_comp x, rtest_unitfact y WHERE (x.unit = y.unit);                                                                                                                                                                                                                                                                                      
-rtest_vview1      |SELECT x.a, x.b FROM rtest_view1 x WHERE (0 < (SELECT count(*) AS count FROM rtest_view2 y WHERE (y.a = x.a)));                                                                                                                                                                                                                                                                                    
-rtest_vview2      |SELECT rtest_view1.a, rtest_view1.b FROM rtest_view1 WHERE rtest_view1.v;                                                                                                                                                                                                                                                                                                                          
-rtest_vview3      |SELECT x.a, x.b FROM rtest_vview2 x WHERE (0 < (SELECT count(*) AS count FROM rtest_view2 y WHERE (y.a = x.a)));                                                                                                                                                                                                                                                                                   
-rtest_vview4      |SELECT x.a, x.b, count(y.a) AS refcount FROM rtest_view1 x, rtest_view2 y WHERE (x.a = y.a) GROUP BY x.a, x.b;                                                                                                                                                                                                                                                                                     
-rtest_vview5      |SELECT rtest_view1.a, rtest_view1.b, rtest_viewfunc1(rtest_view1.a) AS refcount FROM rtest_view1;                                                                                                                                                                                                                                                                                                  
-shoe              |SELECT sh.shoename, sh.sh_avail, sh.slcolor, sh.slminlen, (sh.slminlen * un.un_fact) AS slminlen_cm, sh.slmaxlen, (sh.slmaxlen * un.un_fact) AS slmaxlen_cm, sh.slunit FROM shoe_data sh, unit un WHERE (sh.slunit = un.un_name);                                                                                                                                                                  
-shoe_ready        |SELECT rsh.shoename, rsh.sh_avail, rsl.sl_name, rsl.sl_avail, int4smaller(rsh.sh_avail, rsl.sl_avail) AS total_avail FROM shoe rsh, shoelace rsl WHERE (((rsl.sl_color = rsh.slcolor) AND (rsl.sl_len_cm >= rsh.slminlen_cm)) AND (rsl.sl_len_cm <= rsh.slmaxlen_cm));                                                                                                                             
-shoelace          |SELECT s.sl_name, s.sl_avail, s.sl_color, s.sl_len, s.sl_unit, (s.sl_len * u.un_fact) AS sl_len_cm FROM shoelace_data s, unit u WHERE (s.sl_unit = u.un_name);                                                                                                                                                                                                                                     
-shoelace_candelete|SELECT shoelace_obsolete.sl_name, shoelace_obsolete.sl_avail, shoelace_obsolete.sl_color, shoelace_obsolete.sl_len, shoelace_obsolete.sl_unit, shoelace_obsolete.sl_len_cm FROM shoelace_obsolete WHERE (shoelace_obsolete.sl_avail = 0);                                                                                                                                                          
-shoelace_obsolete |SELECT shoelace.sl_name, shoelace.sl_avail, shoelace.sl_color, shoelace.sl_len, shoelace.sl_unit, shoelace.sl_len_cm FROM shoelace WHERE (NOT (EXISTS (SELECT shoe.shoename FROM shoe WHERE (shoe.slcolor = shoelace.sl_color))));                                                                                                                                                                 
-street            |SELECT r.name, r.thepath, c.cname FROM road r, real_city c WHERE (c.outline ## r.thepath);                                                                                                                                                                                                                                                                                                         
-toyemp            |SELECT emp.name, emp.age, emp."location", (12 * emp.salary) AS annualsal FROM emp;                                                                                                                                                                                                                                                                                                                 
+--
+-- Check that ruleutils are working
+--
+SELECT viewname, definition FROM pg_views ORDER BY viewname;
+      viewname      |                                                                                                                                                                                             definition                                                                                                                                                                                              
+--------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ iexit              | SELECT ih.name, ih.thepath, interpt_pp(ih.thepath, r.thepath) AS exit FROM ihighway ih, ramp r WHERE (ih.thepath ## r.thepath);
+ pg_indexes         | SELECT c.relname AS tablename, i.relname AS indexname, pg_get_indexdef(x.indexrelid) AS indexdef FROM pg_index x, pg_class c, pg_class i WHERE ((c.oid = x.indrelid) AND (i.oid = x.indexrelid));
+ pg_rules           | SELECT c.relname AS tablename, r.rulename, pg_get_ruledef(r.rulename) AS definition FROM pg_rewrite r, pg_class c WHERE ((r.rulename !~ '^_RET'::text) AND (c.oid = r.ev_class));
+ pg_tables          | SELECT c.relname AS tablename, pg_get_userbyid(c.relowner) AS tableowner, c.relhasindex AS hasindexes, c.relhasrules AS hasrules, (c.reltriggers > 0) AS hastriggers FROM pg_class c WHERE (((c.relkind = 'r'::"char") OR (c.relkind = 's'::"char")) AND (NOT (EXISTS (SELECT pg_rewrite.rulename FROM pg_rewrite WHERE ((pg_rewrite.ev_class = c.oid) AND (pg_rewrite.ev_type = '1'::"char"))))));
+ pg_user            | SELECT pg_shadow.usename, pg_shadow.usesysid, pg_shadow.usecreatedb, pg_shadow.usetrace, pg_shadow.usesuper, pg_shadow.usecatupd, '********'::text AS passwd, pg_shadow.valuntil FROM pg_shadow;
+ pg_views           | SELECT c.relname AS viewname, pg_get_userbyid(c.relowner) AS viewowner, pg_get_viewdef(c.relname) AS definition FROM pg_class c WHERE (c.relhasrules AND (EXISTS (SELECT r.rulename FROM pg_rewrite r WHERE ((r.ev_class = c.oid) AND (r.ev_type = '1'::"char")))));
+ rtest_v1           | SELECT rtest_t1.a, rtest_t1.b FROM rtest_t1;
+ rtest_vcomp        | SELECT x.part, (x.size * y.factor) AS size_in_cm FROM rtest_comp x, rtest_unitfact y WHERE (x.unit = y.unit);
+ rtest_vview1       | SELECT x.a, x.b FROM rtest_view1 x WHERE (0 < (SELECT count(*) AS count FROM rtest_view2 y WHERE (y.a = x.a)));
+ rtest_vview2       | SELECT rtest_view1.a, rtest_view1.b FROM rtest_view1 WHERE rtest_view1.v;
+ rtest_vview3       | SELECT x.a, x.b FROM rtest_vview2 x WHERE (0 < (SELECT count(*) AS count FROM rtest_view2 y WHERE (y.a = x.a)));
+ rtest_vview4       | SELECT x.a, x.b, count(y.a) AS refcount FROM rtest_view1 x, rtest_view2 y WHERE (x.a = y.a) GROUP BY x.a, x.b;
+ rtest_vview5       | SELECT rtest_view1.a, rtest_view1.b, rtest_viewfunc1(rtest_view1.a) AS refcount FROM rtest_view1;
+ shoe               | SELECT sh.shoename, sh.sh_avail, sh.slcolor, sh.slminlen, (sh.slminlen * un.un_fact) AS slminlen_cm, sh.slmaxlen, (sh.slmaxlen * un.un_fact) AS slmaxlen_cm, sh.slunit FROM shoe_data sh, unit un WHERE (sh.slunit = un.un_name);
+ shoe_ready         | SELECT rsh.shoename, rsh.sh_avail, rsl.sl_name, rsl.sl_avail, int4smaller(rsh.sh_avail, rsl.sl_avail) AS total_avail FROM shoe rsh, shoelace rsl WHERE (((rsl.sl_color = rsh.slcolor) AND (rsl.sl_len_cm >= rsh.slminlen_cm)) AND (rsl.sl_len_cm <= rsh.slmaxlen_cm));
+ shoelace           | SELECT s.sl_name, s.sl_avail, s.sl_color, s.sl_len, s.sl_unit, (s.sl_len * u.un_fact) AS sl_len_cm FROM shoelace_data s, unit u WHERE (s.sl_unit = u.un_name);
+ shoelace_candelete | SELECT shoelace_obsolete.sl_name, shoelace_obsolete.sl_avail, shoelace_obsolete.sl_color, shoelace_obsolete.sl_len, shoelace_obsolete.sl_unit, shoelace_obsolete.sl_len_cm FROM shoelace_obsolete WHERE (shoelace_obsolete.sl_avail = 0);
+ shoelace_obsolete  | SELECT shoelace.sl_name, shoelace.sl_avail, shoelace.sl_color, shoelace.sl_len, shoelace.sl_unit, shoelace.sl_len_cm FROM shoelace WHERE (NOT (EXISTS (SELECT shoe.shoename FROM shoe WHERE (shoe.slcolor = shoelace.sl_color))));
+ street             | SELECT r.name, r.thepath, c.cname FROM road r, real_city c WHERE (c.outline ## r.thepath);
+ toyemp             | SELECT emp.name, emp.age, emp."location", (12 * emp.salary) AS annualsal FROM emp;
 (20 rows)
 
-QUERY: SELECT tablename, rulename, definition FROM pg_rules
+SELECT tablename, rulename, definition FROM pg_rules 
 	ORDER BY tablename, rulename;
-tablename    |rulename       |definition                                                                                                                                                                                                                                            
--------------+---------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-rtest_emp    |rtest_emp_del  |CREATE RULE rtest_emp_del AS ON DELETE TO rtest_emp DO INSERT INTO rtest_emplog (ename, who, "action", newsal, oldsal) VALUES (old.ename, getpgusername(), 'fired'::bpchar, '$0.00'::money, old.salary);                                              
-rtest_emp    |rtest_emp_ins  |CREATE RULE rtest_emp_ins AS ON INSERT TO rtest_emp DO INSERT INTO rtest_emplog (ename, who, "action", newsal, oldsal) VALUES (new.ename, getpgusername(), 'hired'::bpchar, new.salary, '$0.00'::money);                                              
-rtest_emp    |rtest_emp_upd  |CREATE RULE rtest_emp_upd AS ON UPDATE TO rtest_emp WHERE (new.salary <> old.salary) DO INSERT INTO rtest_emplog (ename, who, "action", newsal, oldsal) VALUES (new.ename, getpgusername(), 'honored'::bpchar, new.salary, old.salary);               
-rtest_nothn1 |rtest_nothn_r1 |CREATE RULE rtest_nothn_r1 AS ON INSERT TO rtest_nothn1 WHERE ((new.a >= 10) AND (new.a < 20)) DO INSTEAD SELECT 1;                                                                                                                                   
-rtest_nothn1 |rtest_nothn_r2 |CREATE RULE rtest_nothn_r2 AS ON INSERT TO rtest_nothn1 WHERE ((new.a >= 30) AND (new.a < 40)) DO INSTEAD NOTHING;                                                                                                                                    
-rtest_nothn2 |rtest_nothn_r3 |CREATE RULE rtest_nothn_r3 AS ON INSERT TO rtest_nothn2 WHERE (new.a >= 100) DO INSTEAD INSERT INTO rtest_nothn3 (a, b) VALUES (new.a, new.b);                                                                                                        
-rtest_nothn2 |rtest_nothn_r4 |CREATE RULE rtest_nothn_r4 AS ON INSERT TO rtest_nothn2 DO INSTEAD NOTHING;                                                                                                                                                                           
-rtest_order1 |rtest_order_r1 |CREATE RULE rtest_order_r1 AS ON INSERT TO rtest_order1 DO INSTEAD INSERT INTO rtest_order2 (a, b, c) VALUES (new.a, nextval('rtest_seq'::text), 'rule 1 - this should run 3rd or 4th'::text);                                                        
-rtest_order1 |rtest_order_r2 |CREATE RULE rtest_order_r2 AS ON INSERT TO rtest_order1 DO INSERT INTO rtest_order2 (a, b, c) VALUES (new.a, nextval('rtest_seq'::text), 'rule 2 - this should run 1st'::text);                                                                       
-rtest_order1 |rtest_order_r3 |CREATE RULE rtest_order_r3 AS ON INSERT TO rtest_order1 DO INSTEAD INSERT INTO rtest_order2 (a, b, c) VALUES (new.a, nextval('rtest_seq'::text), 'rule 3 - this should run 3rd or 4th'::text);                                                        
-rtest_order1 |rtest_order_r4 |CREATE RULE rtest_order_r4 AS ON INSERT TO rtest_order1 WHERE (rtest_order2.a < 100) DO INSTEAD INSERT INTO rtest_order2 (a, b, c) VALUES (new.a, nextval('rtest_seq'::text), 'rule 4 - this should run 2nd'::text);                                  
-rtest_person |rtest_pers_del |CREATE RULE rtest_pers_del AS ON DELETE TO rtest_person DO DELETE FROM rtest_admin WHERE (rtest_admin.pname = old.pname);                                                                                                                             
-rtest_person |rtest_pers_upd |CREATE RULE rtest_pers_upd AS ON UPDATE TO rtest_person DO UPDATE rtest_admin SET pname = new.pname WHERE (rtest_admin.pname = old.pname);                                                                                                            
-rtest_system |rtest_sys_del  |CREATE RULE rtest_sys_del AS ON DELETE TO rtest_system DO (DELETE FROM rtest_interface WHERE (rtest_interface.sysname = old.sysname); DELETE FROM rtest_admin WHERE (rtest_admin.sysname = old.sysname); );                                           
-rtest_system |rtest_sys_upd  |CREATE RULE rtest_sys_upd AS ON UPDATE TO rtest_system DO (UPDATE rtest_interface SET sysname = new.sysname WHERE (rtest_interface.sysname = old.sysname); UPDATE rtest_admin SET sysname = new.sysname WHERE (rtest_admin.sysname = old.sysname); ); 
-rtest_t4     |rtest_t4_ins1  |CREATE RULE rtest_t4_ins1 AS ON INSERT TO rtest_t4 WHERE ((new.a >= 10) AND (new.a < 20)) DO INSTEAD INSERT INTO rtest_t5 (a, b) VALUES (new.a, new.b);                                                                                               
-rtest_t4     |rtest_t4_ins2  |CREATE RULE rtest_t4_ins2 AS ON INSERT TO rtest_t4 WHERE ((new.a >= 20) AND (new.a < 30)) DO INSERT INTO rtest_t6 (a, b) VALUES (new.a, new.b);                                                                                                       
-rtest_t5     |rtest_t5_ins   |CREATE RULE rtest_t5_ins AS ON INSERT TO rtest_t5 WHERE (new.a > 15) DO INSERT INTO rtest_t7 (a, b) VALUES (new.a, new.b);                                                                                                                            
-rtest_t6     |rtest_t6_ins   |CREATE RULE rtest_t6_ins AS ON INSERT TO rtest_t6 WHERE (new.a > 25) DO INSTEAD INSERT INTO rtest_t8 (a, b) VALUES (new.a, new.b);                                                                                                                    
-rtest_v1     |rtest_v1_del   |CREATE RULE rtest_v1_del AS ON DELETE TO rtest_v1 DO INSTEAD DELETE FROM rtest_t1 WHERE (rtest_t1.a = old.a);                                                                                                                                         
-rtest_v1     |rtest_v1_ins   |CREATE RULE rtest_v1_ins AS ON INSERT TO rtest_v1 DO INSTEAD INSERT INTO rtest_t1 (a, b) VALUES (new.a, new.b);                                                                                                                                       
-rtest_v1     |rtest_v1_upd   |CREATE RULE rtest_v1_upd AS ON UPDATE TO rtest_v1 DO INSTEAD UPDATE rtest_t1 SET a = new.a, b = new.b WHERE (rtest_t1.a = old.a);                                                                                                                     
-shoelace     |shoelace_del   |CREATE RULE shoelace_del AS ON DELETE TO shoelace DO INSTEAD DELETE FROM shoelace_data WHERE (shoelace_data.sl_name = old.sl_name);                                                                                                                   
-shoelace     |shoelace_ins   |CREATE RULE shoelace_ins AS ON INSERT TO shoelace DO INSTEAD INSERT INTO shoelace_data (sl_name, sl_avail, sl_color, sl_len, sl_unit) VALUES (new.sl_name, new.sl_avail, new.sl_color, new.sl_len, new.sl_unit);                                      
-shoelace     |shoelace_upd   |CREATE RULE shoelace_upd AS ON UPDATE TO shoelace DO INSTEAD UPDATE shoelace_data SET sl_name = new.sl_name, sl_avail = new.sl_avail, sl_color = new.sl_color, sl_len = new.sl_len, sl_unit = new.sl_unit WHERE (shoelace_data.sl_name = old.sl_name);
-shoelace_data|log_shoelace   |CREATE RULE log_shoelace AS ON UPDATE TO shoelace_data WHERE (new.sl_avail <> old.sl_avail) DO INSERT INTO shoelace_log (sl_name, sl_avail, log_who, log_when) VALUES (new.sl_name, new.sl_avail, 'Al Bundy'::name, datetime('epoch'::text));         
-shoelace_ok  |shoelace_ok_ins|CREATE RULE shoelace_ok_ins AS ON INSERT TO shoelace_ok DO INSTEAD UPDATE shoelace SET sl_avail = (shoelace.sl_avail + new.ok_quant) WHERE (shoelace.sl_name = new.ok_name);                                                                          
+   tablename   |    rulename     |                                                                                                                       definition                                                                                                                       
+---------------+-----------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ rtest_emp     | rtest_emp_del   | CREATE RULE rtest_emp_del AS ON DELETE TO rtest_emp DO INSERT INTO rtest_emplog (ename, who, "action", newsal, oldsal) VALUES (old.ename, getpgusername(), 'fired'::bpchar, '$0.00'::money, old.salary);
+ rtest_emp     | rtest_emp_ins   | CREATE RULE rtest_emp_ins AS ON INSERT TO rtest_emp DO INSERT INTO rtest_emplog (ename, who, "action", newsal, oldsal) VALUES (new.ename, getpgusername(), 'hired'::bpchar, new.salary, '$0.00'::money);
+ rtest_emp     | rtest_emp_upd   | CREATE RULE rtest_emp_upd AS ON UPDATE TO rtest_emp WHERE (new.salary <> old.salary) DO INSERT INTO rtest_emplog (ename, who, "action", newsal, oldsal) VALUES (new.ename, getpgusername(), 'honored'::bpchar, new.salary, old.salary);
+ rtest_nothn1  | rtest_nothn_r1  | CREATE RULE rtest_nothn_r1 AS ON INSERT TO rtest_nothn1 WHERE ((new.a >= 10) AND (new.a < 20)) DO INSTEAD SELECT 1;
+ rtest_nothn1  | rtest_nothn_r2  | CREATE RULE rtest_nothn_r2 AS ON INSERT TO rtest_nothn1 WHERE ((new.a >= 30) AND (new.a < 40)) DO INSTEAD NOTHING;
+ rtest_nothn2  | rtest_nothn_r3  | CREATE RULE rtest_nothn_r3 AS ON INSERT TO rtest_nothn2 WHERE (new.a >= 100) DO INSTEAD INSERT INTO rtest_nothn3 (a, b) VALUES (new.a, new.b);
+ rtest_nothn2  | rtest_nothn_r4  | CREATE RULE rtest_nothn_r4 AS ON INSERT TO rtest_nothn2 DO INSTEAD NOTHING;
+ rtest_order1  | rtest_order_r1  | CREATE RULE rtest_order_r1 AS ON INSERT TO rtest_order1 DO INSTEAD INSERT INTO rtest_order2 (a, b, c) VALUES (new.a, nextval('rtest_seq'::text), 'rule 1 - this should run 3rd or 4th'::text);
+ rtest_order1  | rtest_order_r2  | CREATE RULE rtest_order_r2 AS ON INSERT TO rtest_order1 DO INSERT INTO rtest_order2 (a, b, c) VALUES (new.a, nextval('rtest_seq'::text), 'rule 2 - this should run 1st'::text);
+ rtest_order1  | rtest_order_r3  | CREATE RULE rtest_order_r3 AS ON INSERT TO rtest_order1 DO INSTEAD INSERT INTO rtest_order2 (a, b, c) VALUES (new.a, nextval('rtest_seq'::text), 'rule 3 - this should run 3rd or 4th'::text);
+ rtest_order1  | rtest_order_r4  | CREATE RULE rtest_order_r4 AS ON INSERT TO rtest_order1 WHERE (rtest_order2.a < 100) DO INSTEAD INSERT INTO rtest_order2 (a, b, c) VALUES (new.a, nextval('rtest_seq'::text), 'rule 4 - this should run 2nd'::text);
+ rtest_person  | rtest_pers_del  | CREATE RULE rtest_pers_del AS ON DELETE TO rtest_person DO DELETE FROM rtest_admin WHERE (rtest_admin.pname = old.pname);
+ rtest_person  | rtest_pers_upd  | CREATE RULE rtest_pers_upd AS ON UPDATE TO rtest_person DO UPDATE rtest_admin SET pname = new.pname WHERE (rtest_admin.pname = old.pname);
+ rtest_system  | rtest_sys_del   | CREATE RULE rtest_sys_del AS ON DELETE TO rtest_system DO (DELETE FROM rtest_interface WHERE (rtest_interface.sysname = old.sysname); DELETE FROM rtest_admin WHERE (rtest_admin.sysname = old.sysname); );
+ rtest_system  | rtest_sys_upd   | CREATE RULE rtest_sys_upd AS ON UPDATE TO rtest_system DO (UPDATE rtest_interface SET sysname = new.sysname WHERE (rtest_interface.sysname = old.sysname); UPDATE rtest_admin SET sysname = new.sysname WHERE (rtest_admin.sysname = old.sysname); );
+ rtest_t4      | rtest_t4_ins1   | CREATE RULE rtest_t4_ins1 AS ON INSERT TO rtest_t4 WHERE ((new.a >= 10) AND (new.a < 20)) DO INSTEAD INSERT INTO rtest_t5 (a, b) VALUES (new.a, new.b);
+ rtest_t4      | rtest_t4_ins2   | CREATE RULE rtest_t4_ins2 AS ON INSERT TO rtest_t4 WHERE ((new.a >= 20) AND (new.a < 30)) DO INSERT INTO rtest_t6 (a, b) VALUES (new.a, new.b);
+ rtest_t5      | rtest_t5_ins    | CREATE RULE rtest_t5_ins AS ON INSERT TO rtest_t5 WHERE (new.a > 15) DO INSERT INTO rtest_t7 (a, b) VALUES (new.a, new.b);
+ rtest_t6      | rtest_t6_ins    | CREATE RULE rtest_t6_ins AS ON INSERT TO rtest_t6 WHERE (new.a > 25) DO INSTEAD INSERT INTO rtest_t8 (a, b) VALUES (new.a, new.b);
+ rtest_v1      | rtest_v1_del    | CREATE RULE rtest_v1_del AS ON DELETE TO rtest_v1 DO INSTEAD DELETE FROM rtest_t1 WHERE (rtest_t1.a = old.a);
+ rtest_v1      | rtest_v1_ins    | CREATE RULE rtest_v1_ins AS ON INSERT TO rtest_v1 DO INSTEAD INSERT INTO rtest_t1 (a, b) VALUES (new.a, new.b);
+ rtest_v1      | rtest_v1_upd    | CREATE RULE rtest_v1_upd AS ON UPDATE TO rtest_v1 DO INSTEAD UPDATE rtest_t1 SET a = new.a, b = new.b WHERE (rtest_t1.a = old.a);
+ shoelace      | shoelace_del    | CREATE RULE shoelace_del AS ON DELETE TO shoelace DO INSTEAD DELETE FROM shoelace_data WHERE (shoelace_data.sl_name = old.sl_name);
+ shoelace      | shoelace_ins    | CREATE RULE shoelace_ins AS ON INSERT TO shoelace DO INSTEAD INSERT INTO shoelace_data (sl_name, sl_avail, sl_color, sl_len, sl_unit) VALUES (new.sl_name, new.sl_avail, new.sl_color, new.sl_len, new.sl_unit);
+ shoelace      | shoelace_upd    | CREATE RULE shoelace_upd AS ON UPDATE TO shoelace DO INSTEAD UPDATE shoelace_data SET sl_name = new.sl_name, sl_avail = new.sl_avail, sl_color = new.sl_color, sl_len = new.sl_len, sl_unit = new.sl_unit WHERE (shoelace_data.sl_name = old.sl_name);
+ shoelace_data | log_shoelace    | CREATE RULE log_shoelace AS ON UPDATE TO shoelace_data WHERE (new.sl_avail <> old.sl_avail) DO INSERT INTO shoelace_log (sl_name, sl_avail, log_who, log_when) VALUES (new.sl_name, new.sl_avail, 'Al Bundy'::name, datetime('epoch'::text));
+ shoelace_ok   | shoelace_ok_ins | CREATE RULE shoelace_ok_ins AS ON INSERT TO shoelace_ok DO INSTEAD UPDATE shoelace SET sl_avail = (shoelace.sl_avail + new.ok_quant) WHERE (shoelace.sl_name = new.ok_name);
 (27 rows)
 

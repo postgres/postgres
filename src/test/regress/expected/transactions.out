@@ -1,35 +1,42 @@
-QUERY: BEGIN;
-QUERY: SELECT *
+--
+-- TRANSACTIONS
+--
+BEGIN;
+SELECT * 
    INTO TABLE xacttest
    FROM aggtest;
-QUERY: INSERT INTO xacttest (a, b) VALUES (777, 777.777);
-QUERY: END;
-QUERY: SELECT a FROM xacttest WHERE a > 100;
-  a
----
-777
+INSERT INTO xacttest (a, b) VALUES (777, 777.777);
+END;
+-- should retrieve one value--
+SELECT a FROM xacttest WHERE a > 100;
+  a  
+-----
+ 777
 (1 row)
 
-QUERY: BEGIN;
-QUERY: CREATE TABLE disappear (a int4);
-QUERY: DELETE FROM aggtest;
-QUERY: SELECT * FROM aggtest;
-a|b
--+-
+BEGIN;
+CREATE TABLE disappear (a int4);
+DELETE FROM aggtest;
+-- should be empty
+SELECT * FROM aggtest;
+ a | b 
+---+---
 (0 rows)
 
-QUERY: ABORT;
-QUERY: SELECT oid FROM pg_class WHERE relname = 'disappear';
-oid
----
+ABORT;
+-- should not exist 
+SELECT oid FROM pg_class WHERE relname = 'disappear';
+ oid 
+-----
 (0 rows)
 
-QUERY: SELECT * FROM aggtest;
-  a|      b
----+-------
- 56|    7.8
-100| 99.097
-  0|0.09561
- 42| 324.78
+-- should have members again 
+SELECT * FROM aggtest;
+  a  |    b    
+-----+---------
+  56 |     7.8
+ 100 |  99.097
+   0 | 0.09561
+  42 |  324.78
 (4 rows)
 

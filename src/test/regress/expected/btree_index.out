@@ -1,96 +1,100 @@
-QUERY: SELECT b.*
+--
+-- BTREE_INDEX
+-- test retrieval of min/max keys for each index
+--
+SELECT b.*
    FROM bt_i4_heap b
    WHERE b.seqno < 1;
-seqno|    random
------+----------
-    0|1935401906
+ seqno |   random   
+-------+------------
+     0 | 1935401906
 (1 row)
 
-QUERY: SELECT b.*
+SELECT b.*
    FROM bt_i4_heap b
    WHERE b.seqno >= 9999;
-seqno|    random
------+----------
- 9999|1227676208
+ seqno |   random   
+-------+------------
+  9999 | 1227676208
 (1 row)
 
-QUERY: SELECT b.*
+SELECT b.*
    FROM bt_i4_heap b
    WHERE b.seqno = 4500;
-seqno|    random
------+----------
- 4500|2080851358
+ seqno |   random   
+-------+------------
+  4500 | 2080851358
 (1 row)
 
-QUERY: SELECT b.*
+SELECT b.*
    FROM bt_name_heap b
    WHERE b.seqno < '1'::name;
-seqno|    random
------+----------
-    0|1935401906
+ seqno |   random   
+-------+------------
+ 0     | 1935401906
 (1 row)
 
-QUERY: SELECT b.*
+SELECT b.*
    FROM bt_name_heap b
    WHERE b.seqno >= '9999'::name;
-seqno|    random
------+----------
- 9999|1227676208
+ seqno |   random   
+-------+------------
+ 9999  | 1227676208
 (1 row)
 
-QUERY: SELECT b.*
+SELECT b.*
    FROM bt_name_heap b
    WHERE b.seqno = '4500'::name;
-seqno|    random
------+----------
- 4500|2080851358
+ seqno |   random   
+-------+------------
+ 4500  | 2080851358
 (1 row)
 
-QUERY: SELECT b.*
+SELECT b.*
    FROM bt_txt_heap b
    WHERE b.seqno < '1'::text;
-seqno|    random
------+----------
-    0|1935401906
+ seqno |   random   
+-------+------------
+ 0     | 1935401906
 (1 row)
 
-QUERY: SELECT b.*
+SELECT b.*
    FROM bt_txt_heap b
    WHERE b.seqno >= '9999'::text;
-seqno|    random
------+----------
- 9999|1227676208
+ seqno |   random   
+-------+------------
+ 9999  | 1227676208
 (1 row)
 
-QUERY: SELECT b.*
+SELECT b.*
    FROM bt_txt_heap b
    WHERE b.seqno = '4500'::text;
-seqno|    random
------+----------
- 4500|2080851358
+ seqno |   random   
+-------+------------
+ 4500  | 2080851358
 (1 row)
 
-QUERY: SELECT b.*
+SELECT b.*
    FROM bt_f8_heap b
    WHERE b.seqno < '1'::float8;
-seqno|    random
------+----------
-    0|1935401906
+ seqno |   random   
+-------+------------
+     0 | 1935401906
 (1 row)
 
-QUERY: SELECT b.*
+SELECT b.*
    FROM bt_f8_heap b
    WHERE b.seqno >= '9999'::float8;
-seqno|    random
------+----------
- 9999|1227676208
+ seqno |   random   
+-------+------------
+  9999 | 1227676208
 (1 row)
 
-QUERY: SELECT b.*
+SELECT b.*
    FROM bt_f8_heap b
    WHERE b.seqno = '4500'::float8;
-seqno|    random
------+----------
- 4500|2080851358
+ seqno |   random   
+-------+------------
+  4500 | 2080851358
 (1 row)
 

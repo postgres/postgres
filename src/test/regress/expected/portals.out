@@ -1,675 +1,678 @@
-QUERY: BEGIN;
-QUERY: DECLARE foo1 CURSOR FOR SELECT * FROM tenk1;
-QUERY: DECLARE foo2 CURSOR FOR SELECT * FROM tenk2;
-QUERY: DECLARE foo3 CURSOR FOR SELECT * FROM tenk1;
-QUERY: DECLARE foo4 CURSOR FOR SELECT * FROM tenk2;
-QUERY: DECLARE foo5 CURSOR FOR SELECT * FROM tenk1;
-QUERY: DECLARE foo6 CURSOR FOR SELECT * FROM tenk2;
-QUERY: DECLARE foo7 CURSOR FOR SELECT * FROM tenk1;
-QUERY: DECLARE foo8 CURSOR FOR SELECT * FROM tenk2;
-QUERY: DECLARE foo9 CURSOR FOR SELECT * FROM tenk1;
-QUERY: DECLARE foo10 CURSOR FOR SELECT * FROM tenk2;
-QUERY: DECLARE foo11 CURSOR FOR SELECT * FROM tenk1;
-QUERY: DECLARE foo12 CURSOR FOR SELECT * FROM tenk2;
-QUERY: DECLARE foo13 CURSOR FOR SELECT * FROM tenk1;
-QUERY: DECLARE foo14 CURSOR FOR SELECT * FROM tenk2;
-QUERY: DECLARE foo15 CURSOR FOR SELECT * FROM tenk1;
-QUERY: DECLARE foo16 CURSOR FOR SELECT * FROM tenk2;
-QUERY: DECLARE foo17 CURSOR FOR SELECT * FROM tenk1;
-QUERY: DECLARE foo18 CURSOR FOR SELECT * FROM tenk2;
-QUERY: DECLARE foo19 CURSOR FOR SELECT * FROM tenk1;
-QUERY: DECLARE foo20 CURSOR FOR SELECT * FROM tenk2;
-QUERY: DECLARE foo21 CURSOR FOR SELECT * FROM tenk1;
-QUERY: DECLARE foo22 CURSOR FOR SELECT * FROM tenk2;
-QUERY: DECLARE foo23 CURSOR FOR SELECT * FROM tenk1;
-QUERY: FETCH 1 in foo1;
-unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
--------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
-   8800|      0|  0|   0|  0|     0|      0|     800|        800|     3800|    8800|  0|   1|MAAAAA  |AAAAAA  |AAAAxx 
+--
+-- PORTALS
+--
+BEGIN;
+DECLARE foo1 CURSOR FOR SELECT * FROM tenk1;
+DECLARE foo2 CURSOR FOR SELECT * FROM tenk2;
+DECLARE foo3 CURSOR FOR SELECT * FROM tenk1;
+DECLARE foo4 CURSOR FOR SELECT * FROM tenk2;
+DECLARE foo5 CURSOR FOR SELECT * FROM tenk1;
+DECLARE foo6 CURSOR FOR SELECT * FROM tenk2;
+DECLARE foo7 CURSOR FOR SELECT * FROM tenk1;
+DECLARE foo8 CURSOR FOR SELECT * FROM tenk2;
+DECLARE foo9 CURSOR FOR SELECT * FROM tenk1;
+DECLARE foo10 CURSOR FOR SELECT * FROM tenk2;
+DECLARE foo11 CURSOR FOR SELECT * FROM tenk1;
+DECLARE foo12 CURSOR FOR SELECT * FROM tenk2;
+DECLARE foo13 CURSOR FOR SELECT * FROM tenk1;
+DECLARE foo14 CURSOR FOR SELECT * FROM tenk2;
+DECLARE foo15 CURSOR FOR SELECT * FROM tenk1;
+DECLARE foo16 CURSOR FOR SELECT * FROM tenk2;
+DECLARE foo17 CURSOR FOR SELECT * FROM tenk1;
+DECLARE foo18 CURSOR FOR SELECT * FROM tenk2;
+DECLARE foo19 CURSOR FOR SELECT * FROM tenk1;
+DECLARE foo20 CURSOR FOR SELECT * FROM tenk2;
+DECLARE foo21 CURSOR FOR SELECT * FROM tenk1;
+DECLARE foo22 CURSOR FOR SELECT * FROM tenk2;
+DECLARE foo23 CURSOR FOR SELECT * FROM tenk1;
+FETCH 1 in foo1;
+ unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 
+---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------
+    8800 |       0 |   0 |    0 |   0 |      0 |       0 |      800 |         800 |      3800 |     8800 |   0 |    1 | MAAAAA   | AAAAAA   | AAAAxx
 (1 row)
 
-QUERY: FETCH 2 in foo2;
-unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
--------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
-   8800|      0|  0|   0|  0|     0|      0|     800|        800|     3800|    8800|  0|   1|MAAAAA  |AAAAAA  |AAAAxx 
-   1891|      1|  1|   3|  1|    11|     91|     891|       1891|     1891|    1891|182| 183|TUAAAA  |BAAAAA  |HHHHxx 
+FETCH 2 in foo2;
+ unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 
+---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------
+    8800 |       0 |   0 |    0 |   0 |      0 |       0 |      800 |         800 |      3800 |     8800 |   0 |    1 | MAAAAA   | AAAAAA   | AAAAxx
+    1891 |       1 |   1 |    3 |   1 |     11 |      91 |      891 |        1891 |      1891 |     1891 | 182 |  183 | TUAAAA   | BAAAAA   | HHHHxx
 (2 rows)
 
-QUERY: FETCH 3 in foo3;
-unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
--------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
-   8800|      0|  0|   0|  0|     0|      0|     800|        800|     3800|    8800|  0|   1|MAAAAA  |AAAAAA  |AAAAxx 
-   1891|      1|  1|   3|  1|    11|     91|     891|       1891|     1891|    1891|182| 183|TUAAAA  |BAAAAA  |HHHHxx 
-   3420|      2|  0|   0|  0|     0|     20|     420|       1420|     3420|    3420| 40|  41|OBAAAA  |CAAAAA  |OOOOxx 
+FETCH 3 in foo3;
+ unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 
+---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------
+    8800 |       0 |   0 |    0 |   0 |      0 |       0 |      800 |         800 |      3800 |     8800 |   0 |    1 | MAAAAA   | AAAAAA   | AAAAxx
+    1891 |       1 |   1 |    3 |   1 |     11 |      91 |      891 |        1891 |      1891 |     1891 | 182 |  183 | TUAAAA   | BAAAAA   | HHHHxx
+    3420 |       2 |   0 |    0 |   0 |      0 |      20 |      420 |        1420 |      3420 |     3420 |  40 |   41 | OBAAAA   | CAAAAA   | OOOOxx
 (3 rows)
 
-QUERY: FETCH 4 in foo4;
-unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
--------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
-   8800|      0|  0|   0|  0|     0|      0|     800|        800|     3800|    8800|  0|   1|MAAAAA  |AAAAAA  |AAAAxx 
-   1891|      1|  1|   3|  1|    11|     91|     891|       1891|     1891|    1891|182| 183|TUAAAA  |BAAAAA  |HHHHxx 
-   3420|      2|  0|   0|  0|     0|     20|     420|       1420|     3420|    3420| 40|  41|OBAAAA  |CAAAAA  |OOOOxx 
-   9850|      3|  0|   2|  0|    10|     50|     850|       1850|     4850|    9850|100| 101|WOAAAA  |DAAAAA  |VVVVxx 
+FETCH 4 in foo4;
+ unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 
+---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------
+    8800 |       0 |   0 |    0 |   0 |      0 |       0 |      800 |         800 |      3800 |     8800 |   0 |    1 | MAAAAA   | AAAAAA   | AAAAxx
+    1891 |       1 |   1 |    3 |   1 |     11 |      91 |      891 |        1891 |      1891 |     1891 | 182 |  183 | TUAAAA   | BAAAAA   | HHHHxx
+    3420 |       2 |   0 |    0 |   0 |      0 |      20 |      420 |        1420 |      3420 |     3420 |  40 |   41 | OBAAAA   | CAAAAA   | OOOOxx
+    9850 |       3 |   0 |    2 |   0 |     10 |      50 |      850 |        1850 |      4850 |     9850 | 100 |  101 | WOAAAA   | DAAAAA   | VVVVxx
 (4 rows)
 
-QUERY: FETCH 5 in foo5;
-unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
--------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
-   8800|      0|  0|   0|  0|     0|      0|     800|        800|     3800|    8800|  0|   1|MAAAAA  |AAAAAA  |AAAAxx 
-   1891|      1|  1|   3|  1|    11|     91|     891|       1891|     1891|    1891|182| 183|TUAAAA  |BAAAAA  |HHHHxx 
-   3420|      2|  0|   0|  0|     0|     20|     420|       1420|     3420|    3420| 40|  41|OBAAAA  |CAAAAA  |OOOOxx 
-   9850|      3|  0|   2|  0|    10|     50|     850|       1850|     4850|    9850|100| 101|WOAAAA  |DAAAAA  |VVVVxx 
-   7164|      4|  0|   0|  4|     4|     64|     164|       1164|     2164|    7164|128| 129|OPAAAA  |EAAAAA  |AAAAxx 
+FETCH 5 in foo5;
+ unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 
+---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------
+    8800 |       0 |   0 |    0 |   0 |      0 |       0 |      800 |         800 |      3800 |     8800 |   0 |    1 | MAAAAA   | AAAAAA   | AAAAxx
+    1891 |       1 |   1 |    3 |   1 |     11 |      91 |      891 |        1891 |      1891 |     1891 | 182 |  183 | TUAAAA   | BAAAAA   | HHHHxx
+    3420 |       2 |   0 |    0 |   0 |      0 |      20 |      420 |        1420 |      3420 |     3420 |  40 |   41 | OBAAAA   | CAAAAA   | OOOOxx
+    9850 |       3 |   0 |    2 |   0 |     10 |      50 |      850 |        1850 |      4850 |     9850 | 100 |  101 | WOAAAA   | DAAAAA   | VVVVxx
+    7164 |       4 |   0 |    0 |   4 |      4 |      64 |      164 |        1164 |      2164 |     7164 | 128 |  129 | OPAAAA   | EAAAAA   | AAAAxx
 (5 rows)
 
-QUERY: FETCH 6 in foo6;
-unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
--------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
-   8800|      0|  0|   0|  0|     0|      0|     800|        800|     3800|    8800|  0|   1|MAAAAA  |AAAAAA  |AAAAxx 
-   1891|      1|  1|   3|  1|    11|     91|     891|       1891|     1891|    1891|182| 183|TUAAAA  |BAAAAA  |HHHHxx 
-   3420|      2|  0|   0|  0|     0|     20|     420|       1420|     3420|    3420| 40|  41|OBAAAA  |CAAAAA  |OOOOxx 
-   9850|      3|  0|   2|  0|    10|     50|     850|       1850|     4850|    9850|100| 101|WOAAAA  |DAAAAA  |VVVVxx 
-   7164|      4|  0|   0|  4|     4|     64|     164|       1164|     2164|    7164|128| 129|OPAAAA  |EAAAAA  |AAAAxx 
-   8009|      5|  1|   1|  9|     9|      9|       9|          9|     3009|    8009| 18|  19|BWAAAA  |FAAAAA  |HHHHxx 
+FETCH 6 in foo6;
+ unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 
+---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------
+    8800 |       0 |   0 |    0 |   0 |      0 |       0 |      800 |         800 |      3800 |     8800 |   0 |    1 | MAAAAA   | AAAAAA   | AAAAxx
+    1891 |       1 |   1 |    3 |   1 |     11 |      91 |      891 |        1891 |      1891 |     1891 | 182 |  183 | TUAAAA   | BAAAAA   | HHHHxx
+    3420 |       2 |   0 |    0 |   0 |      0 |      20 |      420 |        1420 |      3420 |     3420 |  40 |   41 | OBAAAA   | CAAAAA   | OOOOxx
+    9850 |       3 |   0 |    2 |   0 |     10 |      50 |      850 |        1850 |      4850 |     9850 | 100 |  101 | WOAAAA   | DAAAAA   | VVVVxx
+    7164 |       4 |   0 |    0 |   4 |      4 |      64 |      164 |        1164 |      2164 |     7164 | 128 |  129 | OPAAAA   | EAAAAA   | AAAAxx
+    8009 |       5 |   1 |    1 |   9 |      9 |       9 |        9 |           9 |      3009 |     8009 |  18 |   19 | BWAAAA   | FAAAAA   | HHHHxx
 (6 rows)
 
-QUERY: FETCH 7 in foo7;
-unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
--------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
-   8800|      0|  0|   0|  0|     0|      0|     800|        800|     3800|    8800|  0|   1|MAAAAA  |AAAAAA  |AAAAxx 
-   1891|      1|  1|   3|  1|    11|     91|     891|       1891|     1891|    1891|182| 183|TUAAAA  |BAAAAA  |HHHHxx 
-   3420|      2|  0|   0|  0|     0|     20|     420|       1420|     3420|    3420| 40|  41|OBAAAA  |CAAAAA  |OOOOxx 
-   9850|      3|  0|   2|  0|    10|     50|     850|       1850|     4850|    9850|100| 101|WOAAAA  |DAAAAA  |VVVVxx 
-   7164|      4|  0|   0|  4|     4|     64|     164|       1164|     2164|    7164|128| 129|OPAAAA  |EAAAAA  |AAAAxx 
-   8009|      5|  1|   1|  9|     9|      9|       9|          9|     3009|    8009| 18|  19|BWAAAA  |FAAAAA  |HHHHxx 
-   5057|      6|  1|   1|  7|    17|     57|      57|       1057|       57|    5057|114| 115|NMAAAA  |GAAAAA  |OOOOxx 
+FETCH 7 in foo7;
+ unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 
+---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------
+    8800 |       0 |   0 |    0 |   0 |      0 |       0 |      800 |         800 |      3800 |     8800 |   0 |    1 | MAAAAA   | AAAAAA   | AAAAxx
+    1891 |       1 |   1 |    3 |   1 |     11 |      91 |      891 |        1891 |      1891 |     1891 | 182 |  183 | TUAAAA   | BAAAAA   | HHHHxx
+    3420 |       2 |   0 |    0 |   0 |      0 |      20 |      420 |        1420 |      3420 |     3420 |  40 |   41 | OBAAAA   | CAAAAA   | OOOOxx
+    9850 |       3 |   0 |    2 |   0 |     10 |      50 |      850 |        1850 |      4850 |     9850 | 100 |  101 | WOAAAA   | DAAAAA   | VVVVxx
+    7164 |       4 |   0 |    0 |   4 |      4 |      64 |      164 |        1164 |      2164 |     7164 | 128 |  129 | OPAAAA   | EAAAAA   | AAAAxx
+    8009 |       5 |   1 |    1 |   9 |      9 |       9 |        9 |           9 |      3009 |     8009 |  18 |   19 | BWAAAA   | FAAAAA   | HHHHxx
+    5057 |       6 |   1 |    1 |   7 |     17 |      57 |       57 |        1057 |        57 |     5057 | 114 |  115 | NMAAAA   | GAAAAA   | OOOOxx
 (7 rows)
 
-QUERY: FETCH 8 in foo8;
-unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
--------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
-   8800|      0|  0|   0|  0|     0|      0|     800|        800|     3800|    8800|  0|   1|MAAAAA  |AAAAAA  |AAAAxx 
-   1891|      1|  1|   3|  1|    11|     91|     891|       1891|     1891|    1891|182| 183|TUAAAA  |BAAAAA  |HHHHxx 
-   3420|      2|  0|   0|  0|     0|     20|     420|       1420|     3420|    3420| 40|  41|OBAAAA  |CAAAAA  |OOOOxx 
-   9850|      3|  0|   2|  0|    10|     50|     850|       1850|     4850|    9850|100| 101|WOAAAA  |DAAAAA  |VVVVxx 
-   7164|      4|  0|   0|  4|     4|     64|     164|       1164|     2164|    7164|128| 129|OPAAAA  |EAAAAA  |AAAAxx 
-   8009|      5|  1|   1|  9|     9|      9|       9|          9|     3009|    8009| 18|  19|BWAAAA  |FAAAAA  |HHHHxx 
-   5057|      6|  1|   1|  7|    17|     57|      57|       1057|       57|    5057|114| 115|NMAAAA  |GAAAAA  |OOOOxx 
-   6701|      7|  1|   1|  1|     1|      1|     701|        701|     1701|    6701|  2|   3|TXAAAA  |HAAAAA  |VVVVxx 
+FETCH 8 in foo8;
+ unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 
+---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------
+    8800 |       0 |   0 |    0 |   0 |      0 |       0 |      800 |         800 |      3800 |     8800 |   0 |    1 | MAAAAA   | AAAAAA   | AAAAxx
+    1891 |       1 |   1 |    3 |   1 |     11 |      91 |      891 |        1891 |      1891 |     1891 | 182 |  183 | TUAAAA   | BAAAAA   | HHHHxx
+    3420 |       2 |   0 |    0 |   0 |      0 |      20 |      420 |        1420 |      3420 |     3420 |  40 |   41 | OBAAAA   | CAAAAA   | OOOOxx
+    9850 |       3 |   0 |    2 |   0 |     10 |      50 |      850 |        1850 |      4850 |     9850 | 100 |  101 | WOAAAA   | DAAAAA   | VVVVxx
+    7164 |       4 |   0 |    0 |   4 |      4 |      64 |      164 |        1164 |      2164 |     7164 | 128 |  129 | OPAAAA   | EAAAAA   | AAAAxx
+    8009 |       5 |   1 |    1 |   9 |      9 |       9 |        9 |           9 |      3009 |     8009 |  18 |   19 | BWAAAA   | FAAAAA   | HHHHxx
+    5057 |       6 |   1 |    1 |   7 |     17 |      57 |       57 |        1057 |        57 |     5057 | 114 |  115 | NMAAAA   | GAAAAA   | OOOOxx
+    6701 |       7 |   1 |    1 |   1 |      1 |       1 |      701 |         701 |      1701 |     6701 |   2 |    3 | TXAAAA   | HAAAAA   | VVVVxx
 (8 rows)
 
-QUERY: FETCH 9 in foo9;
-unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
--------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
-   8800|      0|  0|   0|  0|     0|      0|     800|        800|     3800|    8800|  0|   1|MAAAAA  |AAAAAA  |AAAAxx 
-   1891|      1|  1|   3|  1|    11|     91|     891|       1891|     1891|    1891|182| 183|TUAAAA  |BAAAAA  |HHHHxx 
-   3420|      2|  0|   0|  0|     0|     20|     420|       1420|     3420|    3420| 40|  41|OBAAAA  |CAAAAA  |OOOOxx 
-   9850|      3|  0|   2|  0|    10|     50|     850|       1850|     4850|    9850|100| 101|WOAAAA  |DAAAAA  |VVVVxx 
-   7164|      4|  0|   0|  4|     4|     64|     164|       1164|     2164|    7164|128| 129|OPAAAA  |EAAAAA  |AAAAxx 
-   8009|      5|  1|   1|  9|     9|      9|       9|          9|     3009|    8009| 18|  19|BWAAAA  |FAAAAA  |HHHHxx 
-   5057|      6|  1|   1|  7|    17|     57|      57|       1057|       57|    5057|114| 115|NMAAAA  |GAAAAA  |OOOOxx 
-   6701|      7|  1|   1|  1|     1|      1|     701|        701|     1701|    6701|  2|   3|TXAAAA  |HAAAAA  |VVVVxx 
-   4321|      8|  1|   1|  1|     1|     21|     321|        321|     4321|    4321| 42|  43|FKAAAA  |IAAAAA  |AAAAxx 
+FETCH 9 in foo9;
+ unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 
+---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------
+    8800 |       0 |   0 |    0 |   0 |      0 |       0 |      800 |         800 |      3800 |     8800 |   0 |    1 | MAAAAA   | AAAAAA   | AAAAxx
+    1891 |       1 |   1 |    3 |   1 |     11 |      91 |      891 |        1891 |      1891 |     1891 | 182 |  183 | TUAAAA   | BAAAAA   | HHHHxx
+    3420 |       2 |   0 |    0 |   0 |      0 |      20 |      420 |        1420 |      3420 |     3420 |  40 |   41 | OBAAAA   | CAAAAA   | OOOOxx
+    9850 |       3 |   0 |    2 |   0 |     10 |      50 |      850 |        1850 |      4850 |     9850 | 100 |  101 | WOAAAA   | DAAAAA   | VVVVxx
+    7164 |       4 |   0 |    0 |   4 |      4 |      64 |      164 |        1164 |      2164 |     7164 | 128 |  129 | OPAAAA   | EAAAAA   | AAAAxx
+    8009 |       5 |   1 |    1 |   9 |      9 |       9 |        9 |           9 |      3009 |     8009 |  18 |   19 | BWAAAA   | FAAAAA   | HHHHxx
+    5057 |       6 |   1 |    1 |   7 |     17 |      57 |       57 |        1057 |        57 |     5057 | 114 |  115 | NMAAAA   | GAAAAA   | OOOOxx
+    6701 |       7 |   1 |    1 |   1 |      1 |       1 |      701 |         701 |      1701 |     6701 |   2 |    3 | TXAAAA   | HAAAAA   | VVVVxx
+    4321 |       8 |   1 |    1 |   1 |      1 |      21 |      321 |         321 |      4321 |     4321 |  42 |   43 | FKAAAA   | IAAAAA   | AAAAxx
 (9 rows)
 
-QUERY: FETCH 10 in foo10;
-unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
--------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
-   8800|      0|  0|   0|  0|     0|      0|     800|        800|     3800|    8800|  0|   1|MAAAAA  |AAAAAA  |AAAAxx 
-   1891|      1|  1|   3|  1|    11|     91|     891|       1891|     1891|    1891|182| 183|TUAAAA  |BAAAAA  |HHHHxx 
-   3420|      2|  0|   0|  0|     0|     20|     420|       1420|     3420|    3420| 40|  41|OBAAAA  |CAAAAA  |OOOOxx 
-   9850|      3|  0|   2|  0|    10|     50|     850|       1850|     4850|    9850|100| 101|WOAAAA  |DAAAAA  |VVVVxx 
-   7164|      4|  0|   0|  4|     4|     64|     164|       1164|     2164|    7164|128| 129|OPAAAA  |EAAAAA  |AAAAxx 
-   8009|      5|  1|   1|  9|     9|      9|       9|          9|     3009|    8009| 18|  19|BWAAAA  |FAAAAA  |HHHHxx 
-   5057|      6|  1|   1|  7|    17|     57|      57|       1057|       57|    5057|114| 115|NMAAAA  |GAAAAA  |OOOOxx 
-   6701|      7|  1|   1|  1|     1|      1|     701|        701|     1701|    6701|  2|   3|TXAAAA  |HAAAAA  |VVVVxx 
-   4321|      8|  1|   1|  1|     1|     21|     321|        321|     4321|    4321| 42|  43|FKAAAA  |IAAAAA  |AAAAxx 
-   3043|      9|  1|   3|  3|     3|     43|      43|       1043|     3043|    3043| 86|  87|BNAAAA  |JAAAAA  |HHHHxx 
+FETCH 10 in foo10;
+ unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 
+---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------
+    8800 |       0 |   0 |    0 |   0 |      0 |       0 |      800 |         800 |      3800 |     8800 |   0 |    1 | MAAAAA   | AAAAAA   | AAAAxx
+    1891 |       1 |   1 |    3 |   1 |     11 |      91 |      891 |        1891 |      1891 |     1891 | 182 |  183 | TUAAAA   | BAAAAA   | HHHHxx
+    3420 |       2 |   0 |    0 |   0 |      0 |      20 |      420 |        1420 |      3420 |     3420 |  40 |   41 | OBAAAA   | CAAAAA   | OOOOxx
+    9850 |       3 |   0 |    2 |   0 |     10 |      50 |      850 |        1850 |      4850 |     9850 | 100 |  101 | WOAAAA   | DAAAAA   | VVVVxx
+    7164 |       4 |   0 |    0 |   4 |      4 |      64 |      164 |        1164 |      2164 |     7164 | 128 |  129 | OPAAAA   | EAAAAA   | AAAAxx
+    8009 |       5 |   1 |    1 |   9 |      9 |       9 |        9 |           9 |      3009 |     8009 |  18 |   19 | BWAAAA   | FAAAAA   | HHHHxx
+    5057 |       6 |   1 |    1 |   7 |     17 |      57 |       57 |        1057 |        57 |     5057 | 114 |  115 | NMAAAA   | GAAAAA   | OOOOxx
+    6701 |       7 |   1 |    1 |   1 |      1 |       1 |      701 |         701 |      1701 |     6701 |   2 |    3 | TXAAAA   | HAAAAA   | VVVVxx
+    4321 |       8 |   1 |    1 |   1 |      1 |      21 |      321 |         321 |      4321 |     4321 |  42 |   43 | FKAAAA   | IAAAAA   | AAAAxx
+    3043 |       9 |   1 |    3 |   3 |      3 |      43 |       43 |        1043 |      3043 |     3043 |  86 |   87 | BNAAAA   | JAAAAA   | HHHHxx
 (10 rows)
 
-QUERY: FETCH 11 in foo11;
-unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
--------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
-   8800|      0|  0|   0|  0|     0|      0|     800|        800|     3800|    8800|  0|   1|MAAAAA  |AAAAAA  |AAAAxx 
-   1891|      1|  1|   3|  1|    11|     91|     891|       1891|     1891|    1891|182| 183|TUAAAA  |BAAAAA  |HHHHxx 
-   3420|      2|  0|   0|  0|     0|     20|     420|       1420|     3420|    3420| 40|  41|OBAAAA  |CAAAAA  |OOOOxx 
-   9850|      3|  0|   2|  0|    10|     50|     850|       1850|     4850|    9850|100| 101|WOAAAA  |DAAAAA  |VVVVxx 
-   7164|      4|  0|   0|  4|     4|     64|     164|       1164|     2164|    7164|128| 129|OPAAAA  |EAAAAA  |AAAAxx 
-   8009|      5|  1|   1|  9|     9|      9|       9|          9|     3009|    8009| 18|  19|BWAAAA  |FAAAAA  |HHHHxx 
-   5057|      6|  1|   1|  7|    17|     57|      57|       1057|       57|    5057|114| 115|NMAAAA  |GAAAAA  |OOOOxx 
-   6701|      7|  1|   1|  1|     1|      1|     701|        701|     1701|    6701|  2|   3|TXAAAA  |HAAAAA  |VVVVxx 
-   4321|      8|  1|   1|  1|     1|     21|     321|        321|     4321|    4321| 42|  43|FKAAAA  |IAAAAA  |AAAAxx 
-   3043|      9|  1|   3|  3|     3|     43|      43|       1043|     3043|    3043| 86|  87|BNAAAA  |JAAAAA  |HHHHxx 
-   1314|     10|  0|   2|  4|    14|     14|     314|       1314|     1314|    1314| 28|  29|OYAAAA  |KAAAAA  |OOOOxx 
+FETCH 11 in foo11;
+ unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 
+---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------
+    8800 |       0 |   0 |    0 |   0 |      0 |       0 |      800 |         800 |      3800 |     8800 |   0 |    1 | MAAAAA   | AAAAAA   | AAAAxx
+    1891 |       1 |   1 |    3 |   1 |     11 |      91 |      891 |        1891 |      1891 |     1891 | 182 |  183 | TUAAAA   | BAAAAA   | HHHHxx
+    3420 |       2 |   0 |    0 |   0 |      0 |      20 |      420 |        1420 |      3420 |     3420 |  40 |   41 | OBAAAA   | CAAAAA   | OOOOxx
+    9850 |       3 |   0 |    2 |   0 |     10 |      50 |      850 |        1850 |      4850 |     9850 | 100 |  101 | WOAAAA   | DAAAAA   | VVVVxx
+    7164 |       4 |   0 |    0 |   4 |      4 |      64 |      164 |        1164 |      2164 |     7164 | 128 |  129 | OPAAAA   | EAAAAA   | AAAAxx
+    8009 |       5 |   1 |    1 |   9 |      9 |       9 |        9 |           9 |      3009 |     8009 |  18 |   19 | BWAAAA   | FAAAAA   | HHHHxx
+    5057 |       6 |   1 |    1 |   7 |     17 |      57 |       57 |        1057 |        57 |     5057 | 114 |  115 | NMAAAA   | GAAAAA   | OOOOxx
+    6701 |       7 |   1 |    1 |   1 |      1 |       1 |      701 |         701 |      1701 |     6701 |   2 |    3 | TXAAAA   | HAAAAA   | VVVVxx
+    4321 |       8 |   1 |    1 |   1 |      1 |      21 |      321 |         321 |      4321 |     4321 |  42 |   43 | FKAAAA   | IAAAAA   | AAAAxx
+    3043 |       9 |   1 |    3 |   3 |      3 |      43 |       43 |        1043 |      3043 |     3043 |  86 |   87 | BNAAAA   | JAAAAA   | HHHHxx
+    1314 |      10 |   0 |    2 |   4 |     14 |      14 |      314 |        1314 |      1314 |     1314 |  28 |   29 | OYAAAA   | KAAAAA   | OOOOxx
 (11 rows)
 
-QUERY: FETCH 12 in foo12;
-unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
--------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
-   8800|      0|  0|   0|  0|     0|      0|     800|        800|     3800|    8800|  0|   1|MAAAAA  |AAAAAA  |AAAAxx 
-   1891|      1|  1|   3|  1|    11|     91|     891|       1891|     1891|    1891|182| 183|TUAAAA  |BAAAAA  |HHHHxx 
-   3420|      2|  0|   0|  0|     0|     20|     420|       1420|     3420|    3420| 40|  41|OBAAAA  |CAAAAA  |OOOOxx 
-   9850|      3|  0|   2|  0|    10|     50|     850|       1850|     4850|    9850|100| 101|WOAAAA  |DAAAAA  |VVVVxx 
-   7164|      4|  0|   0|  4|     4|     64|     164|       1164|     2164|    7164|128| 129|OPAAAA  |EAAAAA  |AAAAxx 
-   8009|      5|  1|   1|  9|     9|      9|       9|          9|     3009|    8009| 18|  19|BWAAAA  |FAAAAA  |HHHHxx 
-   5057|      6|  1|   1|  7|    17|     57|      57|       1057|       57|    5057|114| 115|NMAAAA  |GAAAAA  |OOOOxx 
-   6701|      7|  1|   1|  1|     1|      1|     701|        701|     1701|    6701|  2|   3|TXAAAA  |HAAAAA  |VVVVxx 
-   4321|      8|  1|   1|  1|     1|     21|     321|        321|     4321|    4321| 42|  43|FKAAAA  |IAAAAA  |AAAAxx 
-   3043|      9|  1|   3|  3|     3|     43|      43|       1043|     3043|    3043| 86|  87|BNAAAA  |JAAAAA  |HHHHxx 
-   1314|     10|  0|   2|  4|    14|     14|     314|       1314|     1314|    1314| 28|  29|OYAAAA  |KAAAAA  |OOOOxx 
-   1504|     11|  0|   0|  4|     4|      4|     504|       1504|     1504|    1504|  8|   9|WFAAAA  |LAAAAA  |VVVVxx 
+FETCH 12 in foo12;
+ unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 
+---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------
+    8800 |       0 |   0 |    0 |   0 |      0 |       0 |      800 |         800 |      3800 |     8800 |   0 |    1 | MAAAAA   | AAAAAA   | AAAAxx
+    1891 |       1 |   1 |    3 |   1 |     11 |      91 |      891 |        1891 |      1891 |     1891 | 182 |  183 | TUAAAA   | BAAAAA   | HHHHxx
+    3420 |       2 |   0 |    0 |   0 |      0 |      20 |      420 |        1420 |      3420 |     3420 |  40 |   41 | OBAAAA   | CAAAAA   | OOOOxx
+    9850 |       3 |   0 |    2 |   0 |     10 |      50 |      850 |        1850 |      4850 |     9850 | 100 |  101 | WOAAAA   | DAAAAA   | VVVVxx
+    7164 |       4 |   0 |    0 |   4 |      4 |      64 |      164 |        1164 |      2164 |     7164 | 128 |  129 | OPAAAA   | EAAAAA   | AAAAxx
+    8009 |       5 |   1 |    1 |   9 |      9 |       9 |        9 |           9 |      3009 |     8009 |  18 |   19 | BWAAAA   | FAAAAA   | HHHHxx
+    5057 |       6 |   1 |    1 |   7 |     17 |      57 |       57 |        1057 |        57 |     5057 | 114 |  115 | NMAAAA   | GAAAAA   | OOOOxx
+    6701 |       7 |   1 |    1 |   1 |      1 |       1 |      701 |         701 |      1701 |     6701 |   2 |    3 | TXAAAA   | HAAAAA   | VVVVxx
+    4321 |       8 |   1 |    1 |   1 |      1 |      21 |      321 |         321 |      4321 |     4321 |  42 |   43 | FKAAAA   | IAAAAA   | AAAAxx
+    3043 |       9 |   1 |    3 |   3 |      3 |      43 |       43 |        1043 |      3043 |     3043 |  86 |   87 | BNAAAA   | JAAAAA   | HHHHxx
+    1314 |      10 |   0 |    2 |   4 |     14 |      14 |      314 |        1314 |      1314 |     1314 |  28 |   29 | OYAAAA   | KAAAAA   | OOOOxx
+    1504 |      11 |   0 |    0 |   4 |      4 |       4 |      504 |        1504 |      1504 |     1504 |   8 |    9 | WFAAAA   | LAAAAA   | VVVVxx
 (12 rows)
 
-QUERY: FETCH 13 in foo13;
-unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
--------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
-   8800|      0|  0|   0|  0|     0|      0|     800|        800|     3800|    8800|  0|   1|MAAAAA  |AAAAAA  |AAAAxx 
-   1891|      1|  1|   3|  1|    11|     91|     891|       1891|     1891|    1891|182| 183|TUAAAA  |BAAAAA  |HHHHxx 
-   3420|      2|  0|   0|  0|     0|     20|     420|       1420|     3420|    3420| 40|  41|OBAAAA  |CAAAAA  |OOOOxx 
-   9850|      3|  0|   2|  0|    10|     50|     850|       1850|     4850|    9850|100| 101|WOAAAA  |DAAAAA  |VVVVxx 
-   7164|      4|  0|   0|  4|     4|     64|     164|       1164|     2164|    7164|128| 129|OPAAAA  |EAAAAA  |AAAAxx 
-   8009|      5|  1|   1|  9|     9|      9|       9|          9|     3009|    8009| 18|  19|BWAAAA  |FAAAAA  |HHHHxx 
-   5057|      6|  1|   1|  7|    17|     57|      57|       1057|       57|    5057|114| 115|NMAAAA  |GAAAAA  |OOOOxx 
-   6701|      7|  1|   1|  1|     1|      1|     701|        701|     1701|    6701|  2|   3|TXAAAA  |HAAAAA  |VVVVxx 
-   4321|      8|  1|   1|  1|     1|     21|     321|        321|     4321|    4321| 42|  43|FKAAAA  |IAAAAA  |AAAAxx 
-   3043|      9|  1|   3|  3|     3|     43|      43|       1043|     3043|    3043| 86|  87|BNAAAA  |JAAAAA  |HHHHxx 
-   1314|     10|  0|   2|  4|    14|     14|     314|       1314|     1314|    1314| 28|  29|OYAAAA  |KAAAAA  |OOOOxx 
-   1504|     11|  0|   0|  4|     4|      4|     504|       1504|     1504|    1504|  8|   9|WFAAAA  |LAAAAA  |VVVVxx 
-   5222|     12|  0|   2|  2|     2|     22|     222|       1222|      222|    5222| 44|  45|WSAAAA  |MAAAAA  |AAAAxx 
+FETCH 13 in foo13;
+ unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 
+---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------
+    8800 |       0 |   0 |    0 |   0 |      0 |       0 |      800 |         800 |      3800 |     8800 |   0 |    1 | MAAAAA   | AAAAAA   | AAAAxx
+    1891 |       1 |   1 |    3 |   1 |     11 |      91 |      891 |        1891 |      1891 |     1891 | 182 |  183 | TUAAAA   | BAAAAA   | HHHHxx
+    3420 |       2 |   0 |    0 |   0 |      0 |      20 |      420 |        1420 |      3420 |     3420 |  40 |   41 | OBAAAA   | CAAAAA   | OOOOxx
+    9850 |       3 |   0 |    2 |   0 |     10 |      50 |      850 |        1850 |      4850 |     9850 | 100 |  101 | WOAAAA   | DAAAAA   | VVVVxx
+    7164 |       4 |   0 |    0 |   4 |      4 |      64 |      164 |        1164 |      2164 |     7164 | 128 |  129 | OPAAAA   | EAAAAA   | AAAAxx
+    8009 |       5 |   1 |    1 |   9 |      9 |       9 |        9 |           9 |      3009 |     8009 |  18 |   19 | BWAAAA   | FAAAAA   | HHHHxx
+    5057 |       6 |   1 |    1 |   7 |     17 |      57 |       57 |        1057 |        57 |     5057 | 114 |  115 | NMAAAA   | GAAAAA   | OOOOxx
+    6701 |       7 |   1 |    1 |   1 |      1 |       1 |      701 |         701 |      1701 |     6701 |   2 |    3 | TXAAAA   | HAAAAA   | VVVVxx
+    4321 |       8 |   1 |    1 |   1 |      1 |      21 |      321 |         321 |      4321 |     4321 |  42 |   43 | FKAAAA   | IAAAAA   | AAAAxx
+    3043 |       9 |   1 |    3 |   3 |      3 |      43 |       43 |        1043 |      3043 |     3043 |  86 |   87 | BNAAAA   | JAAAAA   | HHHHxx
+    1314 |      10 |   0 |    2 |   4 |     14 |      14 |      314 |        1314 |      1314 |     1314 |  28 |   29 | OYAAAA   | KAAAAA   | OOOOxx
+    1504 |      11 |   0 |    0 |   4 |      4 |       4 |      504 |        1504 |      1504 |     1504 |   8 |    9 | WFAAAA   | LAAAAA   | VVVVxx
+    5222 |      12 |   0 |    2 |   2 |      2 |      22 |      222 |        1222 |       222 |     5222 |  44 |   45 | WSAAAA   | MAAAAA   | AAAAxx
 (13 rows)
 
-QUERY: FETCH 14 in foo14;
-unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
--------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
-   8800|      0|  0|   0|  0|     0|      0|     800|        800|     3800|    8800|  0|   1|MAAAAA  |AAAAAA  |AAAAxx 
-   1891|      1|  1|   3|  1|    11|     91|     891|       1891|     1891|    1891|182| 183|TUAAAA  |BAAAAA  |HHHHxx 
-   3420|      2|  0|   0|  0|     0|     20|     420|       1420|     3420|    3420| 40|  41|OBAAAA  |CAAAAA  |OOOOxx 
-   9850|      3|  0|   2|  0|    10|     50|     850|       1850|     4850|    9850|100| 101|WOAAAA  |DAAAAA  |VVVVxx 
-   7164|      4|  0|   0|  4|     4|     64|     164|       1164|     2164|    7164|128| 129|OPAAAA  |EAAAAA  |AAAAxx 
-   8009|      5|  1|   1|  9|     9|      9|       9|          9|     3009|    8009| 18|  19|BWAAAA  |FAAAAA  |HHHHxx 
-   5057|      6|  1|   1|  7|    17|     57|      57|       1057|       57|    5057|114| 115|NMAAAA  |GAAAAA  |OOOOxx 
-   6701|      7|  1|   1|  1|     1|      1|     701|        701|     1701|    6701|  2|   3|TXAAAA  |HAAAAA  |VVVVxx 
-   4321|      8|  1|   1|  1|     1|     21|     321|        321|     4321|    4321| 42|  43|FKAAAA  |IAAAAA  |AAAAxx 
-   3043|      9|  1|   3|  3|     3|     43|      43|       1043|     3043|    3043| 86|  87|BNAAAA  |JAAAAA  |HHHHxx 
-   1314|     10|  0|   2|  4|    14|     14|     314|       1314|     1314|    1314| 28|  29|OYAAAA  |KAAAAA  |OOOOxx 
-   1504|     11|  0|   0|  4|     4|      4|     504|       1504|     1504|    1504|  8|   9|WFAAAA  |LAAAAA  |VVVVxx 
-   5222|     12|  0|   2|  2|     2|     22|     222|       1222|      222|    5222| 44|  45|WSAAAA  |MAAAAA  |AAAAxx 
-   6243|     13|  1|   3|  3|     3|     43|     243|        243|     1243|    6243| 86|  87|DGAAAA  |NAAAAA  |HHHHxx 
+FETCH 14 in foo14;
+ unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 
+---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------
+    8800 |       0 |   0 |    0 |   0 |      0 |       0 |      800 |         800 |      3800 |     8800 |   0 |    1 | MAAAAA   | AAAAAA   | AAAAxx
+    1891 |       1 |   1 |    3 |   1 |     11 |      91 |      891 |        1891 |      1891 |     1891 | 182 |  183 | TUAAAA   | BAAAAA   | HHHHxx
+    3420 |       2 |   0 |    0 |   0 |      0 |      20 |      420 |        1420 |      3420 |     3420 |  40 |   41 | OBAAAA   | CAAAAA   | OOOOxx
+    9850 |       3 |   0 |    2 |   0 |     10 |      50 |      850 |        1850 |      4850 |     9850 | 100 |  101 | WOAAAA   | DAAAAA   | VVVVxx
+    7164 |       4 |   0 |    0 |   4 |      4 |      64 |      164 |        1164 |      2164 |     7164 | 128 |  129 | OPAAAA   | EAAAAA   | AAAAxx
+    8009 |       5 |   1 |    1 |   9 |      9 |       9 |        9 |           9 |      3009 |     8009 |  18 |   19 | BWAAAA   | FAAAAA   | HHHHxx
+    5057 |       6 |   1 |    1 |   7 |     17 |      57 |       57 |        1057 |        57 |     5057 | 114 |  115 | NMAAAA   | GAAAAA   | OOOOxx
+    6701 |       7 |   1 |    1 |   1 |      1 |       1 |      701 |         701 |      1701 |     6701 |   2 |    3 | TXAAAA   | HAAAAA   | VVVVxx
+    4321 |       8 |   1 |    1 |   1 |      1 |      21 |      321 |         321 |      4321 |     4321 |  42 |   43 | FKAAAA   | IAAAAA   | AAAAxx
+    3043 |       9 |   1 |    3 |   3 |      3 |      43 |       43 |        1043 |      3043 |     3043 |  86 |   87 | BNAAAA   | JAAAAA   | HHHHxx
+    1314 |      10 |   0 |    2 |   4 |     14 |      14 |      314 |        1314 |      1314 |     1314 |  28 |   29 | OYAAAA   | KAAAAA   | OOOOxx
+    1504 |      11 |   0 |    0 |   4 |      4 |       4 |      504 |        1504 |      1504 |     1504 |   8 |    9 | WFAAAA   | LAAAAA   | VVVVxx
+    5222 |      12 |   0 |    2 |   2 |      2 |      22 |      222 |        1222 |       222 |     5222 |  44 |   45 | WSAAAA   | MAAAAA   | AAAAxx
+    6243 |      13 |   1 |    3 |   3 |      3 |      43 |      243 |         243 |      1243 |     6243 |  86 |   87 | DGAAAA   | NAAAAA   | HHHHxx
 (14 rows)
 
-QUERY: FETCH 15 in foo15;
-unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
--------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
-   8800|      0|  0|   0|  0|     0|      0|     800|        800|     3800|    8800|  0|   1|MAAAAA  |AAAAAA  |AAAAxx 
-   1891|      1|  1|   3|  1|    11|     91|     891|       1891|     1891|    1891|182| 183|TUAAAA  |BAAAAA  |HHHHxx 
-   3420|      2|  0|   0|  0|     0|     20|     420|       1420|     3420|    3420| 40|  41|OBAAAA  |CAAAAA  |OOOOxx 
-   9850|      3|  0|   2|  0|    10|     50|     850|       1850|     4850|    9850|100| 101|WOAAAA  |DAAAAA  |VVVVxx 
-   7164|      4|  0|   0|  4|     4|     64|     164|       1164|     2164|    7164|128| 129|OPAAAA  |EAAAAA  |AAAAxx 
-   8009|      5|  1|   1|  9|     9|      9|       9|          9|     3009|    8009| 18|  19|BWAAAA  |FAAAAA  |HHHHxx 
-   5057|      6|  1|   1|  7|    17|     57|      57|       1057|       57|    5057|114| 115|NMAAAA  |GAAAAA  |OOOOxx 
-   6701|      7|  1|   1|  1|     1|      1|     701|        701|     1701|    6701|  2|   3|TXAAAA  |HAAAAA  |VVVVxx 
-   4321|      8|  1|   1|  1|     1|     21|     321|        321|     4321|    4321| 42|  43|FKAAAA  |IAAAAA  |AAAAxx 
-   3043|      9|  1|   3|  3|     3|     43|      43|       1043|     3043|    3043| 86|  87|BNAAAA  |JAAAAA  |HHHHxx 
-   1314|     10|  0|   2|  4|    14|     14|     314|       1314|     1314|    1314| 28|  29|OYAAAA  |KAAAAA  |OOOOxx 
-   1504|     11|  0|   0|  4|     4|      4|     504|       1504|     1504|    1504|  8|   9|WFAAAA  |LAAAAA  |VVVVxx 
-   5222|     12|  0|   2|  2|     2|     22|     222|       1222|      222|    5222| 44|  45|WSAAAA  |MAAAAA  |AAAAxx 
-   6243|     13|  1|   3|  3|     3|     43|     243|        243|     1243|    6243| 86|  87|DGAAAA  |NAAAAA  |HHHHxx 
-   5471|     14|  1|   3|  1|    11|     71|     471|       1471|      471|    5471|142| 143|LCAAAA  |OAAAAA  |OOOOxx 
+FETCH 15 in foo15;
+ unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 
+---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------
+    8800 |       0 |   0 |    0 |   0 |      0 |       0 |      800 |         800 |      3800 |     8800 |   0 |    1 | MAAAAA   | AAAAAA   | AAAAxx
+    1891 |       1 |   1 |    3 |   1 |     11 |      91 |      891 |        1891 |      1891 |     1891 | 182 |  183 | TUAAAA   | BAAAAA   | HHHHxx
+    3420 |       2 |   0 |    0 |   0 |      0 |      20 |      420 |        1420 |      3420 |     3420 |  40 |   41 | OBAAAA   | CAAAAA   | OOOOxx
+    9850 |       3 |   0 |    2 |   0 |     10 |      50 |      850 |        1850 |      4850 |     9850 | 100 |  101 | WOAAAA   | DAAAAA   | VVVVxx
+    7164 |       4 |   0 |    0 |   4 |      4 |      64 |      164 |        1164 |      2164 |     7164 | 128 |  129 | OPAAAA   | EAAAAA   | AAAAxx
+    8009 |       5 |   1 |    1 |   9 |      9 |       9 |        9 |           9 |      3009 |     8009 |  18 |   19 | BWAAAA   | FAAAAA   | HHHHxx
+    5057 |       6 |   1 |    1 |   7 |     17 |      57 |       57 |        1057 |        57 |     5057 | 114 |  115 | NMAAAA   | GAAAAA   | OOOOxx
+    6701 |       7 |   1 |    1 |   1 |      1 |       1 |      701 |         701 |      1701 |     6701 |   2 |    3 | TXAAAA   | HAAAAA   | VVVVxx
+    4321 |       8 |   1 |    1 |   1 |      1 |      21 |      321 |         321 |      4321 |     4321 |  42 |   43 | FKAAAA   | IAAAAA   | AAAAxx
+    3043 |       9 |   1 |    3 |   3 |      3 |      43 |       43 |        1043 |      3043 |     3043 |  86 |   87 | BNAAAA   | JAAAAA   | HHHHxx
+    1314 |      10 |   0 |    2 |   4 |     14 |      14 |      314 |        1314 |      1314 |     1314 |  28 |   29 | OYAAAA   | KAAAAA   | OOOOxx
+    1504 |      11 |   0 |    0 |   4 |      4 |       4 |      504 |        1504 |      1504 |     1504 |   8 |    9 | WFAAAA   | LAAAAA   | VVVVxx
+    5222 |      12 |   0 |    2 |   2 |      2 |      22 |      222 |        1222 |       222 |     5222 |  44 |   45 | WSAAAA   | MAAAAA   | AAAAxx
+    6243 |      13 |   1 |    3 |   3 |      3 |      43 |      243 |         243 |      1243 |     6243 |  86 |   87 | DGAAAA   | NAAAAA   | HHHHxx
+    5471 |      14 |   1 |    3 |   1 |     11 |      71 |      471 |        1471 |       471 |     5471 | 142 |  143 | LCAAAA   | OAAAAA   | OOOOxx
 (15 rows)
 
-QUERY: FETCH 16 in foo16;
-unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
--------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
-   8800|      0|  0|   0|  0|     0|      0|     800|        800|     3800|    8800|  0|   1|MAAAAA  |AAAAAA  |AAAAxx 
-   1891|      1|  1|   3|  1|    11|     91|     891|       1891|     1891|    1891|182| 183|TUAAAA  |BAAAAA  |HHHHxx 
-   3420|      2|  0|   0|  0|     0|     20|     420|       1420|     3420|    3420| 40|  41|OBAAAA  |CAAAAA  |OOOOxx 
-   9850|      3|  0|   2|  0|    10|     50|     850|       1850|     4850|    9850|100| 101|WOAAAA  |DAAAAA  |VVVVxx 
-   7164|      4|  0|   0|  4|     4|     64|     164|       1164|     2164|    7164|128| 129|OPAAAA  |EAAAAA  |AAAAxx 
-   8009|      5|  1|   1|  9|     9|      9|       9|          9|     3009|    8009| 18|  19|BWAAAA  |FAAAAA  |HHHHxx 
-   5057|      6|  1|   1|  7|    17|     57|      57|       1057|       57|    5057|114| 115|NMAAAA  |GAAAAA  |OOOOxx 
-   6701|      7|  1|   1|  1|     1|      1|     701|        701|     1701|    6701|  2|   3|TXAAAA  |HAAAAA  |VVVVxx 
-   4321|      8|  1|   1|  1|     1|     21|     321|        321|     4321|    4321| 42|  43|FKAAAA  |IAAAAA  |AAAAxx 
-   3043|      9|  1|   3|  3|     3|     43|      43|       1043|     3043|    3043| 86|  87|BNAAAA  |JAAAAA  |HHHHxx 
-   1314|     10|  0|   2|  4|    14|     14|     314|       1314|     1314|    1314| 28|  29|OYAAAA  |KAAAAA  |OOOOxx 
-   1504|     11|  0|   0|  4|     4|      4|     504|       1504|     1504|    1504|  8|   9|WFAAAA  |LAAAAA  |VVVVxx 
-   5222|     12|  0|   2|  2|     2|     22|     222|       1222|      222|    5222| 44|  45|WSAAAA  |MAAAAA  |AAAAxx 
-   6243|     13|  1|   3|  3|     3|     43|     243|        243|     1243|    6243| 86|  87|DGAAAA  |NAAAAA  |HHHHxx 
-   5471|     14|  1|   3|  1|    11|     71|     471|       1471|      471|    5471|142| 143|LCAAAA  |OAAAAA  |OOOOxx 
-   5006|     15|  0|   2|  6|     6|      6|       6|       1006|        6|    5006| 12|  13|OKAAAA  |PAAAAA  |VVVVxx 
+FETCH 16 in foo16;
+ unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 
+---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------
+    8800 |       0 |   0 |    0 |   0 |      0 |       0 |      800 |         800 |      3800 |     8800 |   0 |    1 | MAAAAA   | AAAAAA   | AAAAxx
+    1891 |       1 |   1 |    3 |   1 |     11 |      91 |      891 |        1891 |      1891 |     1891 | 182 |  183 | TUAAAA   | BAAAAA   | HHHHxx
+    3420 |       2 |   0 |    0 |   0 |      0 |      20 |      420 |        1420 |      3420 |     3420 |  40 |   41 | OBAAAA   | CAAAAA   | OOOOxx
+    9850 |       3 |   0 |    2 |   0 |     10 |      50 |      850 |        1850 |      4850 |     9850 | 100 |  101 | WOAAAA   | DAAAAA   | VVVVxx
+    7164 |       4 |   0 |    0 |   4 |      4 |      64 |      164 |        1164 |      2164 |     7164 | 128 |  129 | OPAAAA   | EAAAAA   | AAAAxx
+    8009 |       5 |   1 |    1 |   9 |      9 |       9 |        9 |           9 |      3009 |     8009 |  18 |   19 | BWAAAA   | FAAAAA   | HHHHxx
+    5057 |       6 |   1 |    1 |   7 |     17 |      57 |       57 |        1057 |        57 |     5057 | 114 |  115 | NMAAAA   | GAAAAA   | OOOOxx
+    6701 |       7 |   1 |    1 |   1 |      1 |       1 |      701 |         701 |      1701 |     6701 |   2 |    3 | TXAAAA   | HAAAAA   | VVVVxx
+    4321 |       8 |   1 |    1 |   1 |      1 |      21 |      321 |         321 |      4321 |     4321 |  42 |   43 | FKAAAA   | IAAAAA   | AAAAxx
+    3043 |       9 |   1 |    3 |   3 |      3 |      43 |       43 |        1043 |      3043 |     3043 |  86 |   87 | BNAAAA   | JAAAAA   | HHHHxx
+    1314 |      10 |   0 |    2 |   4 |     14 |      14 |      314 |        1314 |      1314 |     1314 |  28 |   29 | OYAAAA   | KAAAAA   | OOOOxx
+    1504 |      11 |   0 |    0 |   4 |      4 |       4 |      504 |        1504 |      1504 |     1504 |   8 |    9 | WFAAAA   | LAAAAA   | VVVVxx
+    5222 |      12 |   0 |    2 |   2 |      2 |      22 |      222 |        1222 |       222 |     5222 |  44 |   45 | WSAAAA   | MAAAAA   | AAAAxx
+    6243 |      13 |   1 |    3 |   3 |      3 |      43 |      243 |         243 |      1243 |     6243 |  86 |   87 | DGAAAA   | NAAAAA   | HHHHxx
+    5471 |      14 |   1 |    3 |   1 |     11 |      71 |      471 |        1471 |       471 |     5471 | 142 |  143 | LCAAAA   | OAAAAA   | OOOOxx
+    5006 |      15 |   0 |    2 |   6 |      6 |       6 |        6 |        1006 |         6 |     5006 |  12 |   13 | OKAAAA   | PAAAAA   | VVVVxx
 (16 rows)
 
-QUERY: FETCH 17 in foo17;
-unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
--------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
-   8800|      0|  0|   0|  0|     0|      0|     800|        800|     3800|    8800|  0|   1|MAAAAA  |AAAAAA  |AAAAxx 
-   1891|      1|  1|   3|  1|    11|     91|     891|       1891|     1891|    1891|182| 183|TUAAAA  |BAAAAA  |HHHHxx 
-   3420|      2|  0|   0|  0|     0|     20|     420|       1420|     3420|    3420| 40|  41|OBAAAA  |CAAAAA  |OOOOxx 
-   9850|      3|  0|   2|  0|    10|     50|     850|       1850|     4850|    9850|100| 101|WOAAAA  |DAAAAA  |VVVVxx 
-   7164|      4|  0|   0|  4|     4|     64|     164|       1164|     2164|    7164|128| 129|OPAAAA  |EAAAAA  |AAAAxx 
-   8009|      5|  1|   1|  9|     9|      9|       9|          9|     3009|    8009| 18|  19|BWAAAA  |FAAAAA  |HHHHxx 
-   5057|      6|  1|   1|  7|    17|     57|      57|       1057|       57|    5057|114| 115|NMAAAA  |GAAAAA  |OOOOxx 
-   6701|      7|  1|   1|  1|     1|      1|     701|        701|     1701|    6701|  2|   3|TXAAAA  |HAAAAA  |VVVVxx 
-   4321|      8|  1|   1|  1|     1|     21|     321|        321|     4321|    4321| 42|  43|FKAAAA  |IAAAAA  |AAAAxx 
-   3043|      9|  1|   3|  3|     3|     43|      43|       1043|     3043|    3043| 86|  87|BNAAAA  |JAAAAA  |HHHHxx 
-   1314|     10|  0|   2|  4|    14|     14|     314|       1314|     1314|    1314| 28|  29|OYAAAA  |KAAAAA  |OOOOxx 
-   1504|     11|  0|   0|  4|     4|      4|     504|       1504|     1504|    1504|  8|   9|WFAAAA  |LAAAAA  |VVVVxx 
-   5222|     12|  0|   2|  2|     2|     22|     222|       1222|      222|    5222| 44|  45|WSAAAA  |MAAAAA  |AAAAxx 
-   6243|     13|  1|   3|  3|     3|     43|     243|        243|     1243|    6243| 86|  87|DGAAAA  |NAAAAA  |HHHHxx 
-   5471|     14|  1|   3|  1|    11|     71|     471|       1471|      471|    5471|142| 143|LCAAAA  |OAAAAA  |OOOOxx 
-   5006|     15|  0|   2|  6|     6|      6|       6|       1006|        6|    5006| 12|  13|OKAAAA  |PAAAAA  |VVVVxx 
-   5387|     16|  1|   3|  7|     7|     87|     387|       1387|      387|    5387|174| 175|FZAAAA  |QAAAAA  |AAAAxx 
+FETCH 17 in foo17;
+ unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 
+---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------
+    8800 |       0 |   0 |    0 |   0 |      0 |       0 |      800 |         800 |      3800 |     8800 |   0 |    1 | MAAAAA   | AAAAAA   | AAAAxx
+    1891 |       1 |   1 |    3 |   1 |     11 |      91 |      891 |        1891 |      1891 |     1891 | 182 |  183 | TUAAAA   | BAAAAA   | HHHHxx
+    3420 |       2 |   0 |    0 |   0 |      0 |      20 |      420 |        1420 |      3420 |     3420 |  40 |   41 | OBAAAA   | CAAAAA   | OOOOxx
+    9850 |       3 |   0 |    2 |   0 |     10 |      50 |      850 |        1850 |      4850 |     9850 | 100 |  101 | WOAAAA   | DAAAAA   | VVVVxx
+    7164 |       4 |   0 |    0 |   4 |      4 |      64 |      164 |        1164 |      2164 |     7164 | 128 |  129 | OPAAAA   | EAAAAA   | AAAAxx
+    8009 |       5 |   1 |    1 |   9 |      9 |       9 |        9 |           9 |      3009 |     8009 |  18 |   19 | BWAAAA   | FAAAAA   | HHHHxx
+    5057 |       6 |   1 |    1 |   7 |     17 |      57 |       57 |        1057 |        57 |     5057 | 114 |  115 | NMAAAA   | GAAAAA   | OOOOxx
+    6701 |       7 |   1 |    1 |   1 |      1 |       1 |      701 |         701 |      1701 |     6701 |   2 |    3 | TXAAAA   | HAAAAA   | VVVVxx
+    4321 |       8 |   1 |    1 |   1 |      1 |      21 |      321 |         321 |      4321 |     4321 |  42 |   43 | FKAAAA   | IAAAAA   | AAAAxx
+    3043 |       9 |   1 |    3 |   3 |      3 |      43 |       43 |        1043 |      3043 |     3043 |  86 |   87 | BNAAAA   | JAAAAA   | HHHHxx
+    1314 |      10 |   0 |    2 |   4 |     14 |      14 |      314 |        1314 |      1314 |     1314 |  28 |   29 | OYAAAA   | KAAAAA   | OOOOxx
+    1504 |      11 |   0 |    0 |   4 |      4 |       4 |      504 |        1504 |      1504 |     1504 |   8 |    9 | WFAAAA   | LAAAAA   | VVVVxx
+    5222 |      12 |   0 |    2 |   2 |      2 |      22 |      222 |        1222 |       222 |     5222 |  44 |   45 | WSAAAA   | MAAAAA   | AAAAxx
+    6243 |      13 |   1 |    3 |   3 |      3 |      43 |      243 |         243 |      1243 |     6243 |  86 |   87 | DGAAAA   | NAAAAA   | HHHHxx
+    5471 |      14 |   1 |    3 |   1 |     11 |      71 |      471 |        1471 |       471 |     5471 | 142 |  143 | LCAAAA   | OAAAAA   | OOOOxx
+    5006 |      15 |   0 |    2 |   6 |      6 |       6 |        6 |        1006 |         6 |     5006 |  12 |   13 | OKAAAA   | PAAAAA   | VVVVxx
+    5387 |      16 |   1 |    3 |   7 |      7 |      87 |      387 |        1387 |       387 |     5387 | 174 |  175 | FZAAAA   | QAAAAA   | AAAAxx
 (17 rows)
 
-QUERY: FETCH 18 in foo18;
-unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
--------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
-   8800|      0|  0|   0|  0|     0|      0|     800|        800|     3800|    8800|  0|   1|MAAAAA  |AAAAAA  |AAAAxx 
-   1891|      1|  1|   3|  1|    11|     91|     891|       1891|     1891|    1891|182| 183|TUAAAA  |BAAAAA  |HHHHxx 
-   3420|      2|  0|   0|  0|     0|     20|     420|       1420|     3420|    3420| 40|  41|OBAAAA  |CAAAAA  |OOOOxx 
-   9850|      3|  0|   2|  0|    10|     50|     850|       1850|     4850|    9850|100| 101|WOAAAA  |DAAAAA  |VVVVxx 
-   7164|      4|  0|   0|  4|     4|     64|     164|       1164|     2164|    7164|128| 129|OPAAAA  |EAAAAA  |AAAAxx 
-   8009|      5|  1|   1|  9|     9|      9|       9|          9|     3009|    8009| 18|  19|BWAAAA  |FAAAAA  |HHHHxx 
-   5057|      6|  1|   1|  7|    17|     57|      57|       1057|       57|    5057|114| 115|NMAAAA  |GAAAAA  |OOOOxx 
-   6701|      7|  1|   1|  1|     1|      1|     701|        701|     1701|    6701|  2|   3|TXAAAA  |HAAAAA  |VVVVxx 
-   4321|      8|  1|   1|  1|     1|     21|     321|        321|     4321|    4321| 42|  43|FKAAAA  |IAAAAA  |AAAAxx 
-   3043|      9|  1|   3|  3|     3|     43|      43|       1043|     3043|    3043| 86|  87|BNAAAA  |JAAAAA  |HHHHxx 
-   1314|     10|  0|   2|  4|    14|     14|     314|       1314|     1314|    1314| 28|  29|OYAAAA  |KAAAAA  |OOOOxx 
-   1504|     11|  0|   0|  4|     4|      4|     504|       1504|     1504|    1504|  8|   9|WFAAAA  |LAAAAA  |VVVVxx 
-   5222|     12|  0|   2|  2|     2|     22|     222|       1222|      222|    5222| 44|  45|WSAAAA  |MAAAAA  |AAAAxx 
-   6243|     13|  1|   3|  3|     3|     43|     243|        243|     1243|    6243| 86|  87|DGAAAA  |NAAAAA  |HHHHxx 
-   5471|     14|  1|   3|  1|    11|     71|     471|       1471|      471|    5471|142| 143|LCAAAA  |OAAAAA  |OOOOxx 
-   5006|     15|  0|   2|  6|     6|      6|       6|       1006|        6|    5006| 12|  13|OKAAAA  |PAAAAA  |VVVVxx 
-   5387|     16|  1|   3|  7|     7|     87|     387|       1387|      387|    5387|174| 175|FZAAAA  |QAAAAA  |AAAAxx 
-   5785|     17|  1|   1|  5|     5|     85|     785|       1785|      785|    5785|170| 171|NOAAAA  |RAAAAA  |HHHHxx 
+FETCH 18 in foo18;
+ unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 
+---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------
+    8800 |       0 |   0 |    0 |   0 |      0 |       0 |      800 |         800 |      3800 |     8800 |   0 |    1 | MAAAAA   | AAAAAA   | AAAAxx
+    1891 |       1 |   1 |    3 |   1 |     11 |      91 |      891 |        1891 |      1891 |     1891 | 182 |  183 | TUAAAA   | BAAAAA   | HHHHxx
+    3420 |       2 |   0 |    0 |   0 |      0 |      20 |      420 |        1420 |      3420 |     3420 |  40 |   41 | OBAAAA   | CAAAAA   | OOOOxx
+    9850 |       3 |   0 |    2 |   0 |     10 |      50 |      850 |        1850 |      4850 |     9850 | 100 |  101 | WOAAAA   | DAAAAA   | VVVVxx
+    7164 |       4 |   0 |    0 |   4 |      4 |      64 |      164 |        1164 |      2164 |     7164 | 128 |  129 | OPAAAA   | EAAAAA   | AAAAxx
+    8009 |       5 |   1 |    1 |   9 |      9 |       9 |        9 |           9 |      3009 |     8009 |  18 |   19 | BWAAAA   | FAAAAA   | HHHHxx
+    5057 |       6 |   1 |    1 |   7 |     17 |      57 |       57 |        1057 |        57 |     5057 | 114 |  115 | NMAAAA   | GAAAAA   | OOOOxx
+    6701 |       7 |   1 |    1 |   1 |      1 |       1 |      701 |         701 |      1701 |     6701 |   2 |    3 | TXAAAA   | HAAAAA   | VVVVxx
+    4321 |       8 |   1 |    1 |   1 |      1 |      21 |      321 |         321 |      4321 |     4321 |  42 |   43 | FKAAAA   | IAAAAA   | AAAAxx
+    3043 |       9 |   1 |    3 |   3 |      3 |      43 |       43 |        1043 |      3043 |     3043 |  86 |   87 | BNAAAA   | JAAAAA   | HHHHxx
+    1314 |      10 |   0 |    2 |   4 |     14 |      14 |      314 |        1314 |      1314 |     1314 |  28 |   29 | OYAAAA   | KAAAAA   | OOOOxx
+    1504 |      11 |   0 |    0 |   4 |      4 |       4 |      504 |        1504 |      1504 |     1504 |   8 |    9 | WFAAAA   | LAAAAA   | VVVVxx
+    5222 |      12 |   0 |    2 |   2 |      2 |      22 |      222 |        1222 |       222 |     5222 |  44 |   45 | WSAAAA   | MAAAAA   | AAAAxx
+    6243 |      13 |   1 |    3 |   3 |      3 |      43 |      243 |         243 |      1243 |     6243 |  86 |   87 | DGAAAA   | NAAAAA   | HHHHxx
+    5471 |      14 |   1 |    3 |   1 |     11 |      71 |      471 |        1471 |       471 |     5471 | 142 |  143 | LCAAAA   | OAAAAA   | OOOOxx
+    5006 |      15 |   0 |    2 |   6 |      6 |       6 |        6 |        1006 |         6 |     5006 |  12 |   13 | OKAAAA   | PAAAAA   | VVVVxx
+    5387 |      16 |   1 |    3 |   7 |      7 |      87 |      387 |        1387 |       387 |     5387 | 174 |  175 | FZAAAA   | QAAAAA   | AAAAxx
+    5785 |      17 |   1 |    1 |   5 |      5 |      85 |      785 |        1785 |       785 |     5785 | 170 |  171 | NOAAAA   | RAAAAA   | HHHHxx
 (18 rows)
 
-QUERY: FETCH 19 in foo19;
-unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
--------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
-   8800|      0|  0|   0|  0|     0|      0|     800|        800|     3800|    8800|  0|   1|MAAAAA  |AAAAAA  |AAAAxx 
-   1891|      1|  1|   3|  1|    11|     91|     891|       1891|     1891|    1891|182| 183|TUAAAA  |BAAAAA  |HHHHxx 
-   3420|      2|  0|   0|  0|     0|     20|     420|       1420|     3420|    3420| 40|  41|OBAAAA  |CAAAAA  |OOOOxx 
-   9850|      3|  0|   2|  0|    10|     50|     850|       1850|     4850|    9850|100| 101|WOAAAA  |DAAAAA  |VVVVxx 
-   7164|      4|  0|   0|  4|     4|     64|     164|       1164|     2164|    7164|128| 129|OPAAAA  |EAAAAA  |AAAAxx 
-   8009|      5|  1|   1|  9|     9|      9|       9|          9|     3009|    8009| 18|  19|BWAAAA  |FAAAAA  |HHHHxx 
-   5057|      6|  1|   1|  7|    17|     57|      57|       1057|       57|    5057|114| 115|NMAAAA  |GAAAAA  |OOOOxx 
-   6701|      7|  1|   1|  1|     1|      1|     701|        701|     1701|    6701|  2|   3|TXAAAA  |HAAAAA  |VVVVxx 
-   4321|      8|  1|   1|  1|     1|     21|     321|        321|     4321|    4321| 42|  43|FKAAAA  |IAAAAA  |AAAAxx 
-   3043|      9|  1|   3|  3|     3|     43|      43|       1043|     3043|    3043| 86|  87|BNAAAA  |JAAAAA  |HHHHxx 
-   1314|     10|  0|   2|  4|    14|     14|     314|       1314|     1314|    1314| 28|  29|OYAAAA  |KAAAAA  |OOOOxx 
-   1504|     11|  0|   0|  4|     4|      4|     504|       1504|     1504|    1504|  8|   9|WFAAAA  |LAAAAA  |VVVVxx 
-   5222|     12|  0|   2|  2|     2|     22|     222|       1222|      222|    5222| 44|  45|WSAAAA  |MAAAAA  |AAAAxx 
-   6243|     13|  1|   3|  3|     3|     43|     243|        243|     1243|    6243| 86|  87|DGAAAA  |NAAAAA  |HHHHxx 
-   5471|     14|  1|   3|  1|    11|     71|     471|       1471|      471|    5471|142| 143|LCAAAA  |OAAAAA  |OOOOxx 
-   5006|     15|  0|   2|  6|     6|      6|       6|       1006|        6|    5006| 12|  13|OKAAAA  |PAAAAA  |VVVVxx 
-   5387|     16|  1|   3|  7|     7|     87|     387|       1387|      387|    5387|174| 175|FZAAAA  |QAAAAA  |AAAAxx 
-   5785|     17|  1|   1|  5|     5|     85|     785|       1785|      785|    5785|170| 171|NOAAAA  |RAAAAA  |HHHHxx 
-   6621|     18|  1|   1|  1|     1|     21|     621|        621|     1621|    6621| 42|  43|RUAAAA  |SAAAAA  |OOOOxx 
+FETCH 19 in foo19;
+ unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 
+---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------
+    8800 |       0 |   0 |    0 |   0 |      0 |       0 |      800 |         800 |      3800 |     8800 |   0 |    1 | MAAAAA   | AAAAAA   | AAAAxx
+    1891 |       1 |   1 |    3 |   1 |     11 |      91 |      891 |        1891 |      1891 |     1891 | 182 |  183 | TUAAAA   | BAAAAA   | HHHHxx
+    3420 |       2 |   0 |    0 |   0 |      0 |      20 |      420 |        1420 |      3420 |     3420 |  40 |   41 | OBAAAA   | CAAAAA   | OOOOxx
+    9850 |       3 |   0 |    2 |   0 |     10 |      50 |      850 |        1850 |      4850 |     9850 | 100 |  101 | WOAAAA   | DAAAAA   | VVVVxx
+    7164 |       4 |   0 |    0 |   4 |      4 |      64 |      164 |        1164 |      2164 |     7164 | 128 |  129 | OPAAAA   | EAAAAA   | AAAAxx
+    8009 |       5 |   1 |    1 |   9 |      9 |       9 |        9 |           9 |      3009 |     8009 |  18 |   19 | BWAAAA   | FAAAAA   | HHHHxx
+    5057 |       6 |   1 |    1 |   7 |     17 |      57 |       57 |        1057 |        57 |     5057 | 114 |  115 | NMAAAA   | GAAAAA   | OOOOxx
+    6701 |       7 |   1 |    1 |   1 |      1 |       1 |      701 |         701 |      1701 |     6701 |   2 |    3 | TXAAAA   | HAAAAA   | VVVVxx
+    4321 |       8 |   1 |    1 |   1 |      1 |      21 |      321 |         321 |      4321 |     4321 |  42 |   43 | FKAAAA   | IAAAAA   | AAAAxx
+    3043 |       9 |   1 |    3 |   3 |      3 |      43 |       43 |        1043 |      3043 |     3043 |  86 |   87 | BNAAAA   | JAAAAA   | HHHHxx
+    1314 |      10 |   0 |    2 |   4 |     14 |      14 |      314 |        1314 |      1314 |     1314 |  28 |   29 | OYAAAA   | KAAAAA   | OOOOxx
+    1504 |      11 |   0 |    0 |   4 |      4 |       4 |      504 |        1504 |      1504 |     1504 |   8 |    9 | WFAAAA   | LAAAAA   | VVVVxx
+    5222 |      12 |   0 |    2 |   2 |      2 |      22 |      222 |        1222 |       222 |     5222 |  44 |   45 | WSAAAA   | MAAAAA   | AAAAxx
+    6243 |      13 |   1 |    3 |   3 |      3 |      43 |      243 |         243 |      1243 |     6243 |  86 |   87 | DGAAAA   | NAAAAA   | HHHHxx
+    5471 |      14 |   1 |    3 |   1 |     11 |      71 |      471 |        1471 |       471 |     5471 | 142 |  143 | LCAAAA   | OAAAAA   | OOOOxx
+    5006 |      15 |   0 |    2 |   6 |      6 |       6 |        6 |        1006 |         6 |     5006 |  12 |   13 | OKAAAA   | PAAAAA   | VVVVxx
+    5387 |      16 |   1 |    3 |   7 |      7 |      87 |      387 |        1387 |       387 |     5387 | 174 |  175 | FZAAAA   | QAAAAA   | AAAAxx
+    5785 |      17 |   1 |    1 |   5 |      5 |      85 |      785 |        1785 |       785 |     5785 | 170 |  171 | NOAAAA   | RAAAAA   | HHHHxx
+    6621 |      18 |   1 |    1 |   1 |      1 |      21 |      621 |         621 |      1621 |     6621 |  42 |   43 | RUAAAA   | SAAAAA   | OOOOxx
 (19 rows)
 
-QUERY: FETCH 20 in foo20;
-unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
--------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
-   8800|      0|  0|   0|  0|     0|      0|     800|        800|     3800|    8800|  0|   1|MAAAAA  |AAAAAA  |AAAAxx 
-   1891|      1|  1|   3|  1|    11|     91|     891|       1891|     1891|    1891|182| 183|TUAAAA  |BAAAAA  |HHHHxx 
-   3420|      2|  0|   0|  0|     0|     20|     420|       1420|     3420|    3420| 40|  41|OBAAAA  |CAAAAA  |OOOOxx 
-   9850|      3|  0|   2|  0|    10|     50|     850|       1850|     4850|    9850|100| 101|WOAAAA  |DAAAAA  |VVVVxx 
-   7164|      4|  0|   0|  4|     4|     64|     164|       1164|     2164|    7164|128| 129|OPAAAA  |EAAAAA  |AAAAxx 
-   8009|      5|  1|   1|  9|     9|      9|       9|          9|     3009|    8009| 18|  19|BWAAAA  |FAAAAA  |HHHHxx 
-   5057|      6|  1|   1|  7|    17|     57|      57|       1057|       57|    5057|114| 115|NMAAAA  |GAAAAA  |OOOOxx 
-   6701|      7|  1|   1|  1|     1|      1|     701|        701|     1701|    6701|  2|   3|TXAAAA  |HAAAAA  |VVVVxx 
-   4321|      8|  1|   1|  1|     1|     21|     321|        321|     4321|    4321| 42|  43|FKAAAA  |IAAAAA  |AAAAxx 
-   3043|      9|  1|   3|  3|     3|     43|      43|       1043|     3043|    3043| 86|  87|BNAAAA  |JAAAAA  |HHHHxx 
-   1314|     10|  0|   2|  4|    14|     14|     314|       1314|     1314|    1314| 28|  29|OYAAAA  |KAAAAA  |OOOOxx 
-   1504|     11|  0|   0|  4|     4|      4|     504|       1504|     1504|    1504|  8|   9|WFAAAA  |LAAAAA  |VVVVxx 
-   5222|     12|  0|   2|  2|     2|     22|     222|       1222|      222|    5222| 44|  45|WSAAAA  |MAAAAA  |AAAAxx 
-   6243|     13|  1|   3|  3|     3|     43|     243|        243|     1243|    6243| 86|  87|DGAAAA  |NAAAAA  |HHHHxx 
-   5471|     14|  1|   3|  1|    11|     71|     471|       1471|      471|    5471|142| 143|LCAAAA  |OAAAAA  |OOOOxx 
-   5006|     15|  0|   2|  6|     6|      6|       6|       1006|        6|    5006| 12|  13|OKAAAA  |PAAAAA  |VVVVxx 
-   5387|     16|  1|   3|  7|     7|     87|     387|       1387|      387|    5387|174| 175|FZAAAA  |QAAAAA  |AAAAxx 
-   5785|     17|  1|   1|  5|     5|     85|     785|       1785|      785|    5785|170| 171|NOAAAA  |RAAAAA  |HHHHxx 
-   6621|     18|  1|   1|  1|     1|     21|     621|        621|     1621|    6621| 42|  43|RUAAAA  |SAAAAA  |OOOOxx 
-   6969|     19|  1|   1|  9|     9|     69|     969|        969|     1969|    6969|138| 139|BIAAAA  |TAAAAA  |VVVVxx 
+FETCH 20 in foo20;
+ unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 
+---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------
+    8800 |       0 |   0 |    0 |   0 |      0 |       0 |      800 |         800 |      3800 |     8800 |   0 |    1 | MAAAAA   | AAAAAA   | AAAAxx
+    1891 |       1 |   1 |    3 |   1 |     11 |      91 |      891 |        1891 |      1891 |     1891 | 182 |  183 | TUAAAA   | BAAAAA   | HHHHxx
+    3420 |       2 |   0 |    0 |   0 |      0 |      20 |      420 |        1420 |      3420 |     3420 |  40 |   41 | OBAAAA   | CAAAAA   | OOOOxx
+    9850 |       3 |   0 |    2 |   0 |     10 |      50 |      850 |        1850 |      4850 |     9850 | 100 |  101 | WOAAAA   | DAAAAA   | VVVVxx
+    7164 |       4 |   0 |    0 |   4 |      4 |      64 |      164 |        1164 |      2164 |     7164 | 128 |  129 | OPAAAA   | EAAAAA   | AAAAxx
+    8009 |       5 |   1 |    1 |   9 |      9 |       9 |        9 |           9 |      3009 |     8009 |  18 |   19 | BWAAAA   | FAAAAA   | HHHHxx
+    5057 |       6 |   1 |    1 |   7 |     17 |      57 |       57 |        1057 |        57 |     5057 | 114 |  115 | NMAAAA   | GAAAAA   | OOOOxx
+    6701 |       7 |   1 |    1 |   1 |      1 |       1 |      701 |         701 |      1701 |     6701 |   2 |    3 | TXAAAA   | HAAAAA   | VVVVxx
+    4321 |       8 |   1 |    1 |   1 |      1 |      21 |      321 |         321 |      4321 |     4321 |  42 |   43 | FKAAAA   | IAAAAA   | AAAAxx
+    3043 |       9 |   1 |    3 |   3 |      3 |      43 |       43 |        1043 |      3043 |     3043 |  86 |   87 | BNAAAA   | JAAAAA   | HHHHxx
+    1314 |      10 |   0 |    2 |   4 |     14 |      14 |      314 |        1314 |      1314 |     1314 |  28 |   29 | OYAAAA   | KAAAAA   | OOOOxx
+    1504 |      11 |   0 |    0 |   4 |      4 |       4 |      504 |        1504 |      1504 |     1504 |   8 |    9 | WFAAAA   | LAAAAA   | VVVVxx
+    5222 |      12 |   0 |    2 |   2 |      2 |      22 |      222 |        1222 |       222 |     5222 |  44 |   45 | WSAAAA   | MAAAAA   | AAAAxx
+    6243 |      13 |   1 |    3 |   3 |      3 |      43 |      243 |         243 |      1243 |     6243 |  86 |   87 | DGAAAA   | NAAAAA   | HHHHxx
+    5471 |      14 |   1 |    3 |   1 |     11 |      71 |      471 |        1471 |       471 |     5471 | 142 |  143 | LCAAAA   | OAAAAA   | OOOOxx
+    5006 |      15 |   0 |    2 |   6 |      6 |       6 |        6 |        1006 |         6 |     5006 |  12 |   13 | OKAAAA   | PAAAAA   | VVVVxx
+    5387 |      16 |   1 |    3 |   7 |      7 |      87 |      387 |        1387 |       387 |     5387 | 174 |  175 | FZAAAA   | QAAAAA   | AAAAxx
+    5785 |      17 |   1 |    1 |   5 |      5 |      85 |      785 |        1785 |       785 |     5785 | 170 |  171 | NOAAAA   | RAAAAA   | HHHHxx
+    6621 |      18 |   1 |    1 |   1 |      1 |      21 |      621 |         621 |      1621 |     6621 |  42 |   43 | RUAAAA   | SAAAAA   | OOOOxx
+    6969 |      19 |   1 |    1 |   9 |      9 |      69 |      969 |         969 |      1969 |     6969 | 138 |  139 | BIAAAA   | TAAAAA   | VVVVxx
 (20 rows)
 
-QUERY: FETCH 21 in foo21;
-unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
--------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
-   8800|      0|  0|   0|  0|     0|      0|     800|        800|     3800|    8800|  0|   1|MAAAAA  |AAAAAA  |AAAAxx 
-   1891|      1|  1|   3|  1|    11|     91|     891|       1891|     1891|    1891|182| 183|TUAAAA  |BAAAAA  |HHHHxx 
-   3420|      2|  0|   0|  0|     0|     20|     420|       1420|     3420|    3420| 40|  41|OBAAAA  |CAAAAA  |OOOOxx 
-   9850|      3|  0|   2|  0|    10|     50|     850|       1850|     4850|    9850|100| 101|WOAAAA  |DAAAAA  |VVVVxx 
-   7164|      4|  0|   0|  4|     4|     64|     164|       1164|     2164|    7164|128| 129|OPAAAA  |EAAAAA  |AAAAxx 
-   8009|      5|  1|   1|  9|     9|      9|       9|          9|     3009|    8009| 18|  19|BWAAAA  |FAAAAA  |HHHHxx 
-   5057|      6|  1|   1|  7|    17|     57|      57|       1057|       57|    5057|114| 115|NMAAAA  |GAAAAA  |OOOOxx 
-   6701|      7|  1|   1|  1|     1|      1|     701|        701|     1701|    6701|  2|   3|TXAAAA  |HAAAAA  |VVVVxx 
-   4321|      8|  1|   1|  1|     1|     21|     321|        321|     4321|    4321| 42|  43|FKAAAA  |IAAAAA  |AAAAxx 
-   3043|      9|  1|   3|  3|     3|     43|      43|       1043|     3043|    3043| 86|  87|BNAAAA  |JAAAAA  |HHHHxx 
-   1314|     10|  0|   2|  4|    14|     14|     314|       1314|     1314|    1314| 28|  29|OYAAAA  |KAAAAA  |OOOOxx 
-   1504|     11|  0|   0|  4|     4|      4|     504|       1504|     1504|    1504|  8|   9|WFAAAA  |LAAAAA  |VVVVxx 
-   5222|     12|  0|   2|  2|     2|     22|     222|       1222|      222|    5222| 44|  45|WSAAAA  |MAAAAA  |AAAAxx 
-   6243|     13|  1|   3|  3|     3|     43|     243|        243|     1243|    6243| 86|  87|DGAAAA  |NAAAAA  |HHHHxx 
-   5471|     14|  1|   3|  1|    11|     71|     471|       1471|      471|    5471|142| 143|LCAAAA  |OAAAAA  |OOOOxx 
-   5006|     15|  0|   2|  6|     6|      6|       6|       1006|        6|    5006| 12|  13|OKAAAA  |PAAAAA  |VVVVxx 
-   5387|     16|  1|   3|  7|     7|     87|     387|       1387|      387|    5387|174| 175|FZAAAA  |QAAAAA  |AAAAxx 
-   5785|     17|  1|   1|  5|     5|     85|     785|       1785|      785|    5785|170| 171|NOAAAA  |RAAAAA  |HHHHxx 
-   6621|     18|  1|   1|  1|     1|     21|     621|        621|     1621|    6621| 42|  43|RUAAAA  |SAAAAA  |OOOOxx 
-   6969|     19|  1|   1|  9|     9|     69|     969|        969|     1969|    6969|138| 139|BIAAAA  |TAAAAA  |VVVVxx 
-   9460|     20|  0|   0|  0|     0|     60|     460|       1460|     4460|    9460|120| 121|WZAAAA  |UAAAAA  |AAAAxx 
+FETCH 21 in foo21;
+ unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 
+---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------
+    8800 |       0 |   0 |    0 |   0 |      0 |       0 |      800 |         800 |      3800 |     8800 |   0 |    1 | MAAAAA   | AAAAAA   | AAAAxx
+    1891 |       1 |   1 |    3 |   1 |     11 |      91 |      891 |        1891 |      1891 |     1891 | 182 |  183 | TUAAAA   | BAAAAA   | HHHHxx
+    3420 |       2 |   0 |    0 |   0 |      0 |      20 |      420 |        1420 |      3420 |     3420 |  40 |   41 | OBAAAA   | CAAAAA   | OOOOxx
+    9850 |       3 |   0 |    2 |   0 |     10 |      50 |      850 |        1850 |      4850 |     9850 | 100 |  101 | WOAAAA   | DAAAAA   | VVVVxx
+    7164 |       4 |   0 |    0 |   4 |      4 |      64 |      164 |        1164 |      2164 |     7164 | 128 |  129 | OPAAAA   | EAAAAA   | AAAAxx
+    8009 |       5 |   1 |    1 |   9 |      9 |       9 |        9 |           9 |      3009 |     8009 |  18 |   19 | BWAAAA   | FAAAAA   | HHHHxx
+    5057 |       6 |   1 |    1 |   7 |     17 |      57 |       57 |        1057 |        57 |     5057 | 114 |  115 | NMAAAA   | GAAAAA   | OOOOxx
+    6701 |       7 |   1 |    1 |   1 |      1 |       1 |      701 |         701 |      1701 |     6701 |   2 |    3 | TXAAAA   | HAAAAA   | VVVVxx
+    4321 |       8 |   1 |    1 |   1 |      1 |      21 |      321 |         321 |      4321 |     4321 |  42 |   43 | FKAAAA   | IAAAAA   | AAAAxx
+    3043 |       9 |   1 |    3 |   3 |      3 |      43 |       43 |        1043 |      3043 |     3043 |  86 |   87 | BNAAAA   | JAAAAA   | HHHHxx
+    1314 |      10 |   0 |    2 |   4 |     14 |      14 |      314 |        1314 |      1314 |     1314 |  28 |   29 | OYAAAA   | KAAAAA   | OOOOxx
+    1504 |      11 |   0 |    0 |   4 |      4 |       4 |      504 |        1504 |      1504 |     1504 |   8 |    9 | WFAAAA   | LAAAAA   | VVVVxx
+    5222 |      12 |   0 |    2 |   2 |      2 |      22 |      222 |        1222 |       222 |     5222 |  44 |   45 | WSAAAA   | MAAAAA   | AAAAxx
+    6243 |      13 |   1 |    3 |   3 |      3 |      43 |      243 |         243 |      1243 |     6243 |  86 |   87 | DGAAAA   | NAAAAA   | HHHHxx
+    5471 |      14 |   1 |    3 |   1 |     11 |      71 |      471 |        1471 |       471 |     5471 | 142 |  143 | LCAAAA   | OAAAAA   | OOOOxx
+    5006 |      15 |   0 |    2 |   6 |      6 |       6 |        6 |        1006 |         6 |     5006 |  12 |   13 | OKAAAA   | PAAAAA   | VVVVxx
+    5387 |      16 |   1 |    3 |   7 |      7 |      87 |      387 |        1387 |       387 |     5387 | 174 |  175 | FZAAAA   | QAAAAA   | AAAAxx
+    5785 |      17 |   1 |    1 |   5 |      5 |      85 |      785 |        1785 |       785 |     5785 | 170 |  171 | NOAAAA   | RAAAAA   | HHHHxx
+    6621 |      18 |   1 |    1 |   1 |      1 |      21 |      621 |         621 |      1621 |     6621 |  42 |   43 | RUAAAA   | SAAAAA   | OOOOxx
+    6969 |      19 |   1 |    1 |   9 |      9 |      69 |      969 |         969 |      1969 |     6969 | 138 |  139 | BIAAAA   | TAAAAA   | VVVVxx
+    9460 |      20 |   0 |    0 |   0 |      0 |      60 |      460 |        1460 |      4460 |     9460 | 120 |  121 | WZAAAA   | UAAAAA   | AAAAxx
 (21 rows)
 
-QUERY: FETCH 22 in foo22;
-unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
--------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
-   8800|      0|  0|   0|  0|     0|      0|     800|        800|     3800|    8800|  0|   1|MAAAAA  |AAAAAA  |AAAAxx 
-   1891|      1|  1|   3|  1|    11|     91|     891|       1891|     1891|    1891|182| 183|TUAAAA  |BAAAAA  |HHHHxx 
-   3420|      2|  0|   0|  0|     0|     20|     420|       1420|     3420|    3420| 40|  41|OBAAAA  |CAAAAA  |OOOOxx 
-   9850|      3|  0|   2|  0|    10|     50|     850|       1850|     4850|    9850|100| 101|WOAAAA  |DAAAAA  |VVVVxx 
-   7164|      4|  0|   0|  4|     4|     64|     164|       1164|     2164|    7164|128| 129|OPAAAA  |EAAAAA  |AAAAxx 
-   8009|      5|  1|   1|  9|     9|      9|       9|          9|     3009|    8009| 18|  19|BWAAAA  |FAAAAA  |HHHHxx 
-   5057|      6|  1|   1|  7|    17|     57|      57|       1057|       57|    5057|114| 115|NMAAAA  |GAAAAA  |OOOOxx 
-   6701|      7|  1|   1|  1|     1|      1|     701|        701|     1701|    6701|  2|   3|TXAAAA  |HAAAAA  |VVVVxx 
-   4321|      8|  1|   1|  1|     1|     21|     321|        321|     4321|    4321| 42|  43|FKAAAA  |IAAAAA  |AAAAxx 
-   3043|      9|  1|   3|  3|     3|     43|      43|       1043|     3043|    3043| 86|  87|BNAAAA  |JAAAAA  |HHHHxx 
-   1314|     10|  0|   2|  4|    14|     14|     314|       1314|     1314|    1314| 28|  29|OYAAAA  |KAAAAA  |OOOOxx 
-   1504|     11|  0|   0|  4|     4|      4|     504|       1504|     1504|    1504|  8|   9|WFAAAA  |LAAAAA  |VVVVxx 
-   5222|     12|  0|   2|  2|     2|     22|     222|       1222|      222|    5222| 44|  45|WSAAAA  |MAAAAA  |AAAAxx 
-   6243|     13|  1|   3|  3|     3|     43|     243|        243|     1243|    6243| 86|  87|DGAAAA  |NAAAAA  |HHHHxx 
-   5471|     14|  1|   3|  1|    11|     71|     471|       1471|      471|    5471|142| 143|LCAAAA  |OAAAAA  |OOOOxx 
-   5006|     15|  0|   2|  6|     6|      6|       6|       1006|        6|    5006| 12|  13|OKAAAA  |PAAAAA  |VVVVxx 
-   5387|     16|  1|   3|  7|     7|     87|     387|       1387|      387|    5387|174| 175|FZAAAA  |QAAAAA  |AAAAxx 
-   5785|     17|  1|   1|  5|     5|     85|     785|       1785|      785|    5785|170| 171|NOAAAA  |RAAAAA  |HHHHxx 
-   6621|     18|  1|   1|  1|     1|     21|     621|        621|     1621|    6621| 42|  43|RUAAAA  |SAAAAA  |OOOOxx 
-   6969|     19|  1|   1|  9|     9|     69|     969|        969|     1969|    6969|138| 139|BIAAAA  |TAAAAA  |VVVVxx 
-   9460|     20|  0|   0|  0|     0|     60|     460|       1460|     4460|    9460|120| 121|WZAAAA  |UAAAAA  |AAAAxx 
-     59|     21|  1|   3|  9|    19|     59|      59|         59|       59|      59|118| 119|HCAAAA  |VAAAAA  |HHHHxx 
+FETCH 22 in foo22;
+ unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 
+---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------
+    8800 |       0 |   0 |    0 |   0 |      0 |       0 |      800 |         800 |      3800 |     8800 |   0 |    1 | MAAAAA   | AAAAAA   | AAAAxx
+    1891 |       1 |   1 |    3 |   1 |     11 |      91 |      891 |        1891 |      1891 |     1891 | 182 |  183 | TUAAAA   | BAAAAA   | HHHHxx
+    3420 |       2 |   0 |    0 |   0 |      0 |      20 |      420 |        1420 |      3420 |     3420 |  40 |   41 | OBAAAA   | CAAAAA   | OOOOxx
+    9850 |       3 |   0 |    2 |   0 |     10 |      50 |      850 |        1850 |      4850 |     9850 | 100 |  101 | WOAAAA   | DAAAAA   | VVVVxx
+    7164 |       4 |   0 |    0 |   4 |      4 |      64 |      164 |        1164 |      2164 |     7164 | 128 |  129 | OPAAAA   | EAAAAA   | AAAAxx
+    8009 |       5 |   1 |    1 |   9 |      9 |       9 |        9 |           9 |      3009 |     8009 |  18 |   19 | BWAAAA   | FAAAAA   | HHHHxx
+    5057 |       6 |   1 |    1 |   7 |     17 |      57 |       57 |        1057 |        57 |     5057 | 114 |  115 | NMAAAA   | GAAAAA   | OOOOxx
+    6701 |       7 |   1 |    1 |   1 |      1 |       1 |      701 |         701 |      1701 |     6701 |   2 |    3 | TXAAAA   | HAAAAA   | VVVVxx
+    4321 |       8 |   1 |    1 |   1 |      1 |      21 |      321 |         321 |      4321 |     4321 |  42 |   43 | FKAAAA   | IAAAAA   | AAAAxx
+    3043 |       9 |   1 |    3 |   3 |      3 |      43 |       43 |        1043 |      3043 |     3043 |  86 |   87 | BNAAAA   | JAAAAA   | HHHHxx
+    1314 |      10 |   0 |    2 |   4 |     14 |      14 |      314 |        1314 |      1314 |     1314 |  28 |   29 | OYAAAA   | KAAAAA   | OOOOxx
+    1504 |      11 |   0 |    0 |   4 |      4 |       4 |      504 |        1504 |      1504 |     1504 |   8 |    9 | WFAAAA   | LAAAAA   | VVVVxx
+    5222 |      12 |   0 |    2 |   2 |      2 |      22 |      222 |        1222 |       222 |     5222 |  44 |   45 | WSAAAA   | MAAAAA   | AAAAxx
+    6243 |      13 |   1 |    3 |   3 |      3 |      43 |      243 |         243 |      1243 |     6243 |  86 |   87 | DGAAAA   | NAAAAA   | HHHHxx
+    5471 |      14 |   1 |    3 |   1 |     11 |      71 |      471 |        1471 |       471 |     5471 | 142 |  143 | LCAAAA   | OAAAAA   | OOOOxx
+    5006 |      15 |   0 |    2 |   6 |      6 |       6 |        6 |        1006 |         6 |     5006 |  12 |   13 | OKAAAA   | PAAAAA   | VVVVxx
+    5387 |      16 |   1 |    3 |   7 |      7 |      87 |      387 |        1387 |       387 |     5387 | 174 |  175 | FZAAAA   | QAAAAA   | AAAAxx
+    5785 |      17 |   1 |    1 |   5 |      5 |      85 |      785 |        1785 |       785 |     5785 | 170 |  171 | NOAAAA   | RAAAAA   | HHHHxx
+    6621 |      18 |   1 |    1 |   1 |      1 |      21 |      621 |         621 |      1621 |     6621 |  42 |   43 | RUAAAA   | SAAAAA   | OOOOxx
+    6969 |      19 |   1 |    1 |   9 |      9 |      69 |      969 |         969 |      1969 |     6969 | 138 |  139 | BIAAAA   | TAAAAA   | VVVVxx
+    9460 |      20 |   0 |    0 |   0 |      0 |      60 |      460 |        1460 |      4460 |     9460 | 120 |  121 | WZAAAA   | UAAAAA   | AAAAxx
+      59 |      21 |   1 |    3 |   9 |     19 |      59 |       59 |          59 |        59 |       59 | 118 |  119 | HCAAAA   | VAAAAA   | HHHHxx
 (22 rows)
 
-QUERY: FETCH 23 in foo23;
-unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
--------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
-   8800|      0|  0|   0|  0|     0|      0|     800|        800|     3800|    8800|  0|   1|MAAAAA  |AAAAAA  |AAAAxx 
-   1891|      1|  1|   3|  1|    11|     91|     891|       1891|     1891|    1891|182| 183|TUAAAA  |BAAAAA  |HHHHxx 
-   3420|      2|  0|   0|  0|     0|     20|     420|       1420|     3420|    3420| 40|  41|OBAAAA  |CAAAAA  |OOOOxx 
-   9850|      3|  0|   2|  0|    10|     50|     850|       1850|     4850|    9850|100| 101|WOAAAA  |DAAAAA  |VVVVxx 
-   7164|      4|  0|   0|  4|     4|     64|     164|       1164|     2164|    7164|128| 129|OPAAAA  |EAAAAA  |AAAAxx 
-   8009|      5|  1|   1|  9|     9|      9|       9|          9|     3009|    8009| 18|  19|BWAAAA  |FAAAAA  |HHHHxx 
-   5057|      6|  1|   1|  7|    17|     57|      57|       1057|       57|    5057|114| 115|NMAAAA  |GAAAAA  |OOOOxx 
-   6701|      7|  1|   1|  1|     1|      1|     701|        701|     1701|    6701|  2|   3|TXAAAA  |HAAAAA  |VVVVxx 
-   4321|      8|  1|   1|  1|     1|     21|     321|        321|     4321|    4321| 42|  43|FKAAAA  |IAAAAA  |AAAAxx 
-   3043|      9|  1|   3|  3|     3|     43|      43|       1043|     3043|    3043| 86|  87|BNAAAA  |JAAAAA  |HHHHxx 
-   1314|     10|  0|   2|  4|    14|     14|     314|       1314|     1314|    1314| 28|  29|OYAAAA  |KAAAAA  |OOOOxx 
-   1504|     11|  0|   0|  4|     4|      4|     504|       1504|     1504|    1504|  8|   9|WFAAAA  |LAAAAA  |VVVVxx 
-   5222|     12|  0|   2|  2|     2|     22|     222|       1222|      222|    5222| 44|  45|WSAAAA  |MAAAAA  |AAAAxx 
-   6243|     13|  1|   3|  3|     3|     43|     243|        243|     1243|    6243| 86|  87|DGAAAA  |NAAAAA  |HHHHxx 
-   5471|     14|  1|   3|  1|    11|     71|     471|       1471|      471|    5471|142| 143|LCAAAA  |OAAAAA  |OOOOxx 
-   5006|     15|  0|   2|  6|     6|      6|       6|       1006|        6|    5006| 12|  13|OKAAAA  |PAAAAA  |VVVVxx 
-   5387|     16|  1|   3|  7|     7|     87|     387|       1387|      387|    5387|174| 175|FZAAAA  |QAAAAA  |AAAAxx 
-   5785|     17|  1|   1|  5|     5|     85|     785|       1785|      785|    5785|170| 171|NOAAAA  |RAAAAA  |HHHHxx 
-   6621|     18|  1|   1|  1|     1|     21|     621|        621|     1621|    6621| 42|  43|RUAAAA  |SAAAAA  |OOOOxx 
-   6969|     19|  1|   1|  9|     9|     69|     969|        969|     1969|    6969|138| 139|BIAAAA  |TAAAAA  |VVVVxx 
-   9460|     20|  0|   0|  0|     0|     60|     460|       1460|     4460|    9460|120| 121|WZAAAA  |UAAAAA  |AAAAxx 
-     59|     21|  1|   3|  9|    19|     59|      59|         59|       59|      59|118| 119|HCAAAA  |VAAAAA  |HHHHxx 
-   8020|     22|  0|   0|  0|     0|     20|      20|         20|     3020|    8020| 40|  41|MWAAAA  |WAAAAA  |OOOOxx 
+FETCH 23 in foo23;
+ unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 
+---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------
+    8800 |       0 |   0 |    0 |   0 |      0 |       0 |      800 |         800 |      3800 |     8800 |   0 |    1 | MAAAAA   | AAAAAA   | AAAAxx
+    1891 |       1 |   1 |    3 |   1 |     11 |      91 |      891 |        1891 |      1891 |     1891 | 182 |  183 | TUAAAA   | BAAAAA   | HHHHxx
+    3420 |       2 |   0 |    0 |   0 |      0 |      20 |      420 |        1420 |      3420 |     3420 |  40 |   41 | OBAAAA   | CAAAAA   | OOOOxx
+    9850 |       3 |   0 |    2 |   0 |     10 |      50 |      850 |        1850 |      4850 |     9850 | 100 |  101 | WOAAAA   | DAAAAA   | VVVVxx
+    7164 |       4 |   0 |    0 |   4 |      4 |      64 |      164 |        1164 |      2164 |     7164 | 128 |  129 | OPAAAA   | EAAAAA   | AAAAxx
+    8009 |       5 |   1 |    1 |   9 |      9 |       9 |        9 |           9 |      3009 |     8009 |  18 |   19 | BWAAAA   | FAAAAA   | HHHHxx
+    5057 |       6 |   1 |    1 |   7 |     17 |      57 |       57 |        1057 |        57 |     5057 | 114 |  115 | NMAAAA   | GAAAAA   | OOOOxx
+    6701 |       7 |   1 |    1 |   1 |      1 |       1 |      701 |         701 |      1701 |     6701 |   2 |    3 | TXAAAA   | HAAAAA   | VVVVxx
+    4321 |       8 |   1 |    1 |   1 |      1 |      21 |      321 |         321 |      4321 |     4321 |  42 |   43 | FKAAAA   | IAAAAA   | AAAAxx
+    3043 |       9 |   1 |    3 |   3 |      3 |      43 |       43 |        1043 |      3043 |     3043 |  86 |   87 | BNAAAA   | JAAAAA   | HHHHxx
+    1314 |      10 |   0 |    2 |   4 |     14 |      14 |      314 |        1314 |      1314 |     1314 |  28 |   29 | OYAAAA   | KAAAAA   | OOOOxx
+    1504 |      11 |   0 |    0 |   4 |      4 |       4 |      504 |        1504 |      1504 |     1504 |   8 |    9 | WFAAAA   | LAAAAA   | VVVVxx
+    5222 |      12 |   0 |    2 |   2 |      2 |      22 |      222 |        1222 |       222 |     5222 |  44 |   45 | WSAAAA   | MAAAAA   | AAAAxx
+    6243 |      13 |   1 |    3 |   3 |      3 |      43 |      243 |         243 |      1243 |     6243 |  86 |   87 | DGAAAA   | NAAAAA   | HHHHxx
+    5471 |      14 |   1 |    3 |   1 |     11 |      71 |      471 |        1471 |       471 |     5471 | 142 |  143 | LCAAAA   | OAAAAA   | OOOOxx
+    5006 |      15 |   0 |    2 |   6 |      6 |       6 |        6 |        1006 |         6 |     5006 |  12 |   13 | OKAAAA   | PAAAAA   | VVVVxx
+    5387 |      16 |   1 |    3 |   7 |      7 |      87 |      387 |        1387 |       387 |     5387 | 174 |  175 | FZAAAA   | QAAAAA   | AAAAxx
+    5785 |      17 |   1 |    1 |   5 |      5 |      85 |      785 |        1785 |       785 |     5785 | 170 |  171 | NOAAAA   | RAAAAA   | HHHHxx
+    6621 |      18 |   1 |    1 |   1 |      1 |      21 |      621 |         621 |      1621 |     6621 |  42 |   43 | RUAAAA   | SAAAAA   | OOOOxx
+    6969 |      19 |   1 |    1 |   9 |      9 |      69 |      969 |         969 |      1969 |     6969 | 138 |  139 | BIAAAA   | TAAAAA   | VVVVxx
+    9460 |      20 |   0 |    0 |   0 |      0 |      60 |      460 |        1460 |      4460 |     9460 | 120 |  121 | WZAAAA   | UAAAAA   | AAAAxx
+      59 |      21 |   1 |    3 |   9 |     19 |      59 |       59 |          59 |        59 |       59 | 118 |  119 | HCAAAA   | VAAAAA   | HHHHxx
+    8020 |      22 |   0 |    0 |   0 |      0 |      20 |       20 |          20 |      3020 |     8020 |  40 |   41 | MWAAAA   | WAAAAA   | OOOOxx
 (23 rows)
 
-QUERY: FETCH backward 1 in foo23;
-unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
--------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
-     59|     21|  1|   3|  9|    19|     59|      59|         59|       59|      59|118| 119|HCAAAA  |VAAAAA  |HHHHxx 
+FETCH backward 1 in foo23;
+ unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 
+---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------
+      59 |      21 |   1 |    3 |   9 |     19 |      59 |       59 |          59 |        59 |       59 | 118 |  119 | HCAAAA   | VAAAAA   | HHHHxx
 (1 row)
 
-QUERY: FETCH backward 2 in foo22;
-unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
--------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
-   9460|     20|  0|   0|  0|     0|     60|     460|       1460|     4460|    9460|120| 121|WZAAAA  |UAAAAA  |AAAAxx 
-   6969|     19|  1|   1|  9|     9|     69|     969|        969|     1969|    6969|138| 139|BIAAAA  |TAAAAA  |VVVVxx 
+FETCH backward 2 in foo22;
+ unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 
+---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------
+    9460 |      20 |   0 |    0 |   0 |      0 |      60 |      460 |        1460 |      4460 |     9460 | 120 |  121 | WZAAAA   | UAAAAA   | AAAAxx
+    6969 |      19 |   1 |    1 |   9 |      9 |      69 |      969 |         969 |      1969 |     6969 | 138 |  139 | BIAAAA   | TAAAAA   | VVVVxx
 (2 rows)
 
-QUERY: FETCH backward 3 in foo21;
-unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
--------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
-   6969|     19|  1|   1|  9|     9|     69|     969|        969|     1969|    6969|138| 139|BIAAAA  |TAAAAA  |VVVVxx 
-   6621|     18|  1|   1|  1|     1|     21|     621|        621|     1621|    6621| 42|  43|RUAAAA  |SAAAAA  |OOOOxx 
-   5785|     17|  1|   1|  5|     5|     85|     785|       1785|      785|    5785|170| 171|NOAAAA  |RAAAAA  |HHHHxx 
+FETCH backward 3 in foo21;
+ unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 
+---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------
+    6969 |      19 |   1 |    1 |   9 |      9 |      69 |      969 |         969 |      1969 |     6969 | 138 |  139 | BIAAAA   | TAAAAA   | VVVVxx
+    6621 |      18 |   1 |    1 |   1 |      1 |      21 |      621 |         621 |      1621 |     6621 |  42 |   43 | RUAAAA   | SAAAAA   | OOOOxx
+    5785 |      17 |   1 |    1 |   5 |      5 |      85 |      785 |        1785 |       785 |     5785 | 170 |  171 | NOAAAA   | RAAAAA   | HHHHxx
 (3 rows)
 
-QUERY: FETCH backward 4 in foo20;
-unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
--------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
-   6621|     18|  1|   1|  1|     1|     21|     621|        621|     1621|    6621| 42|  43|RUAAAA  |SAAAAA  |OOOOxx 
-   5785|     17|  1|   1|  5|     5|     85|     785|       1785|      785|    5785|170| 171|NOAAAA  |RAAAAA  |HHHHxx 
-   5387|     16|  1|   3|  7|     7|     87|     387|       1387|      387|    5387|174| 175|FZAAAA  |QAAAAA  |AAAAxx 
-   5006|     15|  0|   2|  6|     6|      6|       6|       1006|        6|    5006| 12|  13|OKAAAA  |PAAAAA  |VVVVxx 
+FETCH backward 4 in foo20;
+ unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 
+---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------
+    6621 |      18 |   1 |    1 |   1 |      1 |      21 |      621 |         621 |      1621 |     6621 |  42 |   43 | RUAAAA   | SAAAAA   | OOOOxx
+    5785 |      17 |   1 |    1 |   5 |      5 |      85 |      785 |        1785 |       785 |     5785 | 170 |  171 | NOAAAA   | RAAAAA   | HHHHxx
+    5387 |      16 |   1 |    3 |   7 |      7 |      87 |      387 |        1387 |       387 |     5387 | 174 |  175 | FZAAAA   | QAAAAA   | AAAAxx
+    5006 |      15 |   0 |    2 |   6 |      6 |       6 |        6 |        1006 |         6 |     5006 |  12 |   13 | OKAAAA   | PAAAAA   | VVVVxx
 (4 rows)
 
-QUERY: FETCH backward 5 in foo19;
-unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
--------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
-   5785|     17|  1|   1|  5|     5|     85|     785|       1785|      785|    5785|170| 171|NOAAAA  |RAAAAA  |HHHHxx 
-   5387|     16|  1|   3|  7|     7|     87|     387|       1387|      387|    5387|174| 175|FZAAAA  |QAAAAA  |AAAAxx 
-   5006|     15|  0|   2|  6|     6|      6|       6|       1006|        6|    5006| 12|  13|OKAAAA  |PAAAAA  |VVVVxx 
-   5471|     14|  1|   3|  1|    11|     71|     471|       1471|      471|    5471|142| 143|LCAAAA  |OAAAAA  |OOOOxx 
-   6243|     13|  1|   3|  3|     3|     43|     243|        243|     1243|    6243| 86|  87|DGAAAA  |NAAAAA  |HHHHxx 
+FETCH backward 5 in foo19;
+ unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 
+---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------
+    5785 |      17 |   1 |    1 |   5 |      5 |      85 |      785 |        1785 |       785 |     5785 | 170 |  171 | NOAAAA   | RAAAAA   | HHHHxx
+    5387 |      16 |   1 |    3 |   7 |      7 |      87 |      387 |        1387 |       387 |     5387 | 174 |  175 | FZAAAA   | QAAAAA   | AAAAxx
+    5006 |      15 |   0 |    2 |   6 |      6 |       6 |        6 |        1006 |         6 |     5006 |  12 |   13 | OKAAAA   | PAAAAA   | VVVVxx
+    5471 |      14 |   1 |    3 |   1 |     11 |      71 |      471 |        1471 |       471 |     5471 | 142 |  143 | LCAAAA   | OAAAAA   | OOOOxx
+    6243 |      13 |   1 |    3 |   3 |      3 |      43 |      243 |         243 |      1243 |     6243 |  86 |   87 | DGAAAA   | NAAAAA   | HHHHxx
 (5 rows)
 
-QUERY: FETCH backward 6 in foo18;
-unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
--------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
-   5387|     16|  1|   3|  7|     7|     87|     387|       1387|      387|    5387|174| 175|FZAAAA  |QAAAAA  |AAAAxx 
-   5006|     15|  0|   2|  6|     6|      6|       6|       1006|        6|    5006| 12|  13|OKAAAA  |PAAAAA  |VVVVxx 
-   5471|     14|  1|   3|  1|    11|     71|     471|       1471|      471|    5471|142| 143|LCAAAA  |OAAAAA  |OOOOxx 
-   6243|     13|  1|   3|  3|     3|     43|     243|        243|     1243|    6243| 86|  87|DGAAAA  |NAAAAA  |HHHHxx 
-   5222|     12|  0|   2|  2|     2|     22|     222|       1222|      222|    5222| 44|  45|WSAAAA  |MAAAAA  |AAAAxx 
-   1504|     11|  0|   0|  4|     4|      4|     504|       1504|     1504|    1504|  8|   9|WFAAAA  |LAAAAA  |VVVVxx 
+FETCH backward 6 in foo18;
+ unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 
+---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------
+    5387 |      16 |   1 |    3 |   7 |      7 |      87 |      387 |        1387 |       387 |     5387 | 174 |  175 | FZAAAA   | QAAAAA   | AAAAxx
+    5006 |      15 |   0 |    2 |   6 |      6 |       6 |        6 |        1006 |         6 |     5006 |  12 |   13 | OKAAAA   | PAAAAA   | VVVVxx
+    5471 |      14 |   1 |    3 |   1 |     11 |      71 |      471 |        1471 |       471 |     5471 | 142 |  143 | LCAAAA   | OAAAAA   | OOOOxx
+    6243 |      13 |   1 |    3 |   3 |      3 |      43 |      243 |         243 |      1243 |     6243 |  86 |   87 | DGAAAA   | NAAAAA   | HHHHxx
+    5222 |      12 |   0 |    2 |   2 |      2 |      22 |      222 |        1222 |       222 |     5222 |  44 |   45 | WSAAAA   | MAAAAA   | AAAAxx
+    1504 |      11 |   0 |    0 |   4 |      4 |       4 |      504 |        1504 |      1504 |     1504 |   8 |    9 | WFAAAA   | LAAAAA   | VVVVxx
 (6 rows)
 
-QUERY: FETCH backward 7 in foo17;
-unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
--------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
-   5006|     15|  0|   2|  6|     6|      6|       6|       1006|        6|    5006| 12|  13|OKAAAA  |PAAAAA  |VVVVxx 
-   5471|     14|  1|   3|  1|    11|     71|     471|       1471|      471|    5471|142| 143|LCAAAA  |OAAAAA  |OOOOxx 
-   6243|     13|  1|   3|  3|     3|     43|     243|        243|     1243|    6243| 86|  87|DGAAAA  |NAAAAA  |HHHHxx 
-   5222|     12|  0|   2|  2|     2|     22|     222|       1222|      222|    5222| 44|  45|WSAAAA  |MAAAAA  |AAAAxx 
-   1504|     11|  0|   0|  4|     4|      4|     504|       1504|     1504|    1504|  8|   9|WFAAAA  |LAAAAA  |VVVVxx 
-   1314|     10|  0|   2|  4|    14|     14|     314|       1314|     1314|    1314| 28|  29|OYAAAA  |KAAAAA  |OOOOxx 
-   3043|      9|  1|   3|  3|     3|     43|      43|       1043|     3043|    3043| 86|  87|BNAAAA  |JAAAAA  |HHHHxx 
+FETCH backward 7 in foo17;
+ unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 
+---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------
+    5006 |      15 |   0 |    2 |   6 |      6 |       6 |        6 |        1006 |         6 |     5006 |  12 |   13 | OKAAAA   | PAAAAA   | VVVVxx
+    5471 |      14 |   1 |    3 |   1 |     11 |      71 |      471 |        1471 |       471 |     5471 | 142 |  143 | LCAAAA   | OAAAAA   | OOOOxx
+    6243 |      13 |   1 |    3 |   3 |      3 |      43 |      243 |         243 |      1243 |     6243 |  86 |   87 | DGAAAA   | NAAAAA   | HHHHxx
+    5222 |      12 |   0 |    2 |   2 |      2 |      22 |      222 |        1222 |       222 |     5222 |  44 |   45 | WSAAAA   | MAAAAA   | AAAAxx
+    1504 |      11 |   0 |    0 |   4 |      4 |       4 |      504 |        1504 |      1504 |     1504 |   8 |    9 | WFAAAA   | LAAAAA   | VVVVxx
+    1314 |      10 |   0 |    2 |   4 |     14 |      14 |      314 |        1314 |      1314 |     1314 |  28 |   29 | OYAAAA   | KAAAAA   | OOOOxx
+    3043 |       9 |   1 |    3 |   3 |      3 |      43 |       43 |        1043 |      3043 |     3043 |  86 |   87 | BNAAAA   | JAAAAA   | HHHHxx
 (7 rows)
 
-QUERY: FETCH backward 8 in foo16;
-unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
--------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
-   5471|     14|  1|   3|  1|    11|     71|     471|       1471|      471|    5471|142| 143|LCAAAA  |OAAAAA  |OOOOxx 
-   6243|     13|  1|   3|  3|     3|     43|     243|        243|     1243|    6243| 86|  87|DGAAAA  |NAAAAA  |HHHHxx 
-   5222|     12|  0|   2|  2|     2|     22|     222|       1222|      222|    5222| 44|  45|WSAAAA  |MAAAAA  |AAAAxx 
-   1504|     11|  0|   0|  4|     4|      4|     504|       1504|     1504|    1504|  8|   9|WFAAAA  |LAAAAA  |VVVVxx 
-   1314|     10|  0|   2|  4|    14|     14|     314|       1314|     1314|    1314| 28|  29|OYAAAA  |KAAAAA  |OOOOxx 
-   3043|      9|  1|   3|  3|     3|     43|      43|       1043|     3043|    3043| 86|  87|BNAAAA  |JAAAAA  |HHHHxx 
-   4321|      8|  1|   1|  1|     1|     21|     321|        321|     4321|    4321| 42|  43|FKAAAA  |IAAAAA  |AAAAxx 
-   6701|      7|  1|   1|  1|     1|      1|     701|        701|     1701|    6701|  2|   3|TXAAAA  |HAAAAA  |VVVVxx 
+FETCH backward 8 in foo16;
+ unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 
+---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------
+    5471 |      14 |   1 |    3 |   1 |     11 |      71 |      471 |        1471 |       471 |     5471 | 142 |  143 | LCAAAA   | OAAAAA   | OOOOxx
+    6243 |      13 |   1 |    3 |   3 |      3 |      43 |      243 |         243 |      1243 |     6243 |  86 |   87 | DGAAAA   | NAAAAA   | HHHHxx
+    5222 |      12 |   0 |    2 |   2 |      2 |      22 |      222 |        1222 |       222 |     5222 |  44 |   45 | WSAAAA   | MAAAAA   | AAAAxx
+    1504 |      11 |   0 |    0 |   4 |      4 |       4 |      504 |        1504 |      1504 |     1504 |   8 |    9 | WFAAAA   | LAAAAA   | VVVVxx
+    1314 |      10 |   0 |    2 |   4 |     14 |      14 |      314 |        1314 |      1314 |     1314 |  28 |   29 | OYAAAA   | KAAAAA   | OOOOxx
+    3043 |       9 |   1 |    3 |   3 |      3 |      43 |       43 |        1043 |      3043 |     3043 |  86 |   87 | BNAAAA   | JAAAAA   | HHHHxx
+    4321 |       8 |   1 |    1 |   1 |      1 |      21 |      321 |         321 |      4321 |     4321 |  42 |   43 | FKAAAA   | IAAAAA   | AAAAxx
+    6701 |       7 |   1 |    1 |   1 |      1 |       1 |      701 |         701 |      1701 |     6701 |   2 |    3 | TXAAAA   | HAAAAA   | VVVVxx
 (8 rows)
 
-QUERY: FETCH backward 9 in foo15;
-unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
--------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
-   6243|     13|  1|   3|  3|     3|     43|     243|        243|     1243|    6243| 86|  87|DGAAAA  |NAAAAA  |HHHHxx 
-   5222|     12|  0|   2|  2|     2|     22|     222|       1222|      222|    5222| 44|  45|WSAAAA  |MAAAAA  |AAAAxx 
-   1504|     11|  0|   0|  4|     4|      4|     504|       1504|     1504|    1504|  8|   9|WFAAAA  |LAAAAA  |VVVVxx 
-   1314|     10|  0|   2|  4|    14|     14|     314|       1314|     1314|    1314| 28|  29|OYAAAA  |KAAAAA  |OOOOxx 
-   3043|      9|  1|   3|  3|     3|     43|      43|       1043|     3043|    3043| 86|  87|BNAAAA  |JAAAAA  |HHHHxx 
-   4321|      8|  1|   1|  1|     1|     21|     321|        321|     4321|    4321| 42|  43|FKAAAA  |IAAAAA  |AAAAxx 
-   6701|      7|  1|   1|  1|     1|      1|     701|        701|     1701|    6701|  2|   3|TXAAAA  |HAAAAA  |VVVVxx 
-   5057|      6|  1|   1|  7|    17|     57|      57|       1057|       57|    5057|114| 115|NMAAAA  |GAAAAA  |OOOOxx 
-   8009|      5|  1|   1|  9|     9|      9|       9|          9|     3009|    8009| 18|  19|BWAAAA  |FAAAAA  |HHHHxx 
+FETCH backward 9 in foo15;
+ unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 
+---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------
+    6243 |      13 |   1 |    3 |   3 |      3 |      43 |      243 |         243 |      1243 |     6243 |  86 |   87 | DGAAAA   | NAAAAA   | HHHHxx
+    5222 |      12 |   0 |    2 |   2 |      2 |      22 |      222 |        1222 |       222 |     5222 |  44 |   45 | WSAAAA   | MAAAAA   | AAAAxx
+    1504 |      11 |   0 |    0 |   4 |      4 |       4 |      504 |        1504 |      1504 |     1504 |   8 |    9 | WFAAAA   | LAAAAA   | VVVVxx
+    1314 |      10 |   0 |    2 |   4 |     14 |      14 |      314 |        1314 |      1314 |     1314 |  28 |   29 | OYAAAA   | KAAAAA   | OOOOxx
+    3043 |       9 |   1 |    3 |   3 |      3 |      43 |       43 |        1043 |      3043 |     3043 |  86 |   87 | BNAAAA   | JAAAAA   | HHHHxx
+    4321 |       8 |   1 |    1 |   1 |      1 |      21 |      321 |         321 |      4321 |     4321 |  42 |   43 | FKAAAA   | IAAAAA   | AAAAxx
+    6701 |       7 |   1 |    1 |   1 |      1 |       1 |      701 |         701 |      1701 |     6701 |   2 |    3 | TXAAAA   | HAAAAA   | VVVVxx
+    5057 |       6 |   1 |    1 |   7 |     17 |      57 |       57 |        1057 |        57 |     5057 | 114 |  115 | NMAAAA   | GAAAAA   | OOOOxx
+    8009 |       5 |   1 |    1 |   9 |      9 |       9 |        9 |           9 |      3009 |     8009 |  18 |   19 | BWAAAA   | FAAAAA   | HHHHxx
 (9 rows)
 
-QUERY: FETCH backward 10 in foo14;
-unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
--------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
-   5222|     12|  0|   2|  2|     2|     22|     222|       1222|      222|    5222| 44|  45|WSAAAA  |MAAAAA  |AAAAxx 
-   1504|     11|  0|   0|  4|     4|      4|     504|       1504|     1504|    1504|  8|   9|WFAAAA  |LAAAAA  |VVVVxx 
-   1314|     10|  0|   2|  4|    14|     14|     314|       1314|     1314|    1314| 28|  29|OYAAAA  |KAAAAA  |OOOOxx 
-   3043|      9|  1|   3|  3|     3|     43|      43|       1043|     3043|    3043| 86|  87|BNAAAA  |JAAAAA  |HHHHxx 
-   4321|      8|  1|   1|  1|     1|     21|     321|        321|     4321|    4321| 42|  43|FKAAAA  |IAAAAA  |AAAAxx 
-   6701|      7|  1|   1|  1|     1|      1|     701|        701|     1701|    6701|  2|   3|TXAAAA  |HAAAAA  |VVVVxx 
-   5057|      6|  1|   1|  7|    17|     57|      57|       1057|       57|    5057|114| 115|NMAAAA  |GAAAAA  |OOOOxx 
-   8009|      5|  1|   1|  9|     9|      9|       9|          9|     3009|    8009| 18|  19|BWAAAA  |FAAAAA  |HHHHxx 
-   7164|      4|  0|   0|  4|     4|     64|     164|       1164|     2164|    7164|128| 129|OPAAAA  |EAAAAA  |AAAAxx 
-   9850|      3|  0|   2|  0|    10|     50|     850|       1850|     4850|    9850|100| 101|WOAAAA  |DAAAAA  |VVVVxx 
+FETCH backward 10 in foo14;
+ unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 
+---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------
+    5222 |      12 |   0 |    2 |   2 |      2 |      22 |      222 |        1222 |       222 |     5222 |  44 |   45 | WSAAAA   | MAAAAA   | AAAAxx
+    1504 |      11 |   0 |    0 |   4 |      4 |       4 |      504 |        1504 |      1504 |     1504 |   8 |    9 | WFAAAA   | LAAAAA   | VVVVxx
+    1314 |      10 |   0 |    2 |   4 |     14 |      14 |      314 |        1314 |      1314 |     1314 |  28 |   29 | OYAAAA   | KAAAAA   | OOOOxx
+    3043 |       9 |   1 |    3 |   3 |      3 |      43 |       43 |        1043 |      3043 |     3043 |  86 |   87 | BNAAAA   | JAAAAA   | HHHHxx
+    4321 |       8 |   1 |    1 |   1 |      1 |      21 |      321 |         321 |      4321 |     4321 |  42 |   43 | FKAAAA   | IAAAAA   | AAAAxx
+    6701 |       7 |   1 |    1 |   1 |      1 |       1 |      701 |         701 |      1701 |     6701 |   2 |    3 | TXAAAA   | HAAAAA   | VVVVxx
+    5057 |       6 |   1 |    1 |   7 |     17 |      57 |       57 |        1057 |        57 |     5057 | 114 |  115 | NMAAAA   | GAAAAA   | OOOOxx
+    8009 |       5 |   1 |    1 |   9 |      9 |       9 |        9 |           9 |      3009 |     8009 |  18 |   19 | BWAAAA   | FAAAAA   | HHHHxx
+    7164 |       4 |   0 |    0 |   4 |      4 |      64 |      164 |        1164 |      2164 |     7164 | 128 |  129 | OPAAAA   | EAAAAA   | AAAAxx
+    9850 |       3 |   0 |    2 |   0 |     10 |      50 |      850 |        1850 |      4850 |     9850 | 100 |  101 | WOAAAA   | DAAAAA   | VVVVxx
 (10 rows)
 
-QUERY: FETCH backward 11 in foo13;
-unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
--------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
-   1504|     11|  0|   0|  4|     4|      4|     504|       1504|     1504|    1504|  8|   9|WFAAAA  |LAAAAA  |VVVVxx 
-   1314|     10|  0|   2|  4|    14|     14|     314|       1314|     1314|    1314| 28|  29|OYAAAA  |KAAAAA  |OOOOxx 
-   3043|      9|  1|   3|  3|     3|     43|      43|       1043|     3043|    3043| 86|  87|BNAAAA  |JAAAAA  |HHHHxx 
-   4321|      8|  1|   1|  1|     1|     21|     321|        321|     4321|    4321| 42|  43|FKAAAA  |IAAAAA  |AAAAxx 
-   6701|      7|  1|   1|  1|     1|      1|     701|        701|     1701|    6701|  2|   3|TXAAAA  |HAAAAA  |VVVVxx 
-   5057|      6|  1|   1|  7|    17|     57|      57|       1057|       57|    5057|114| 115|NMAAAA  |GAAAAA  |OOOOxx 
-   8009|      5|  1|   1|  9|     9|      9|       9|          9|     3009|    8009| 18|  19|BWAAAA  |FAAAAA  |HHHHxx 
-   7164|      4|  0|   0|  4|     4|     64|     164|       1164|     2164|    7164|128| 129|OPAAAA  |EAAAAA  |AAAAxx 
-   9850|      3|  0|   2|  0|    10|     50|     850|       1850|     4850|    9850|100| 101|WOAAAA  |DAAAAA  |VVVVxx 
-   3420|      2|  0|   0|  0|     0|     20|     420|       1420|     3420|    3420| 40|  41|OBAAAA  |CAAAAA  |OOOOxx 
-   1891|      1|  1|   3|  1|    11|     91|     891|       1891|     1891|    1891|182| 183|TUAAAA  |BAAAAA  |HHHHxx 
+FETCH backward 11 in foo13;
+ unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 
+---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------
+    1504 |      11 |   0 |    0 |   4 |      4 |       4 |      504 |        1504 |      1504 |     1504 |   8 |    9 | WFAAAA   | LAAAAA   | VVVVxx
+    1314 |      10 |   0 |    2 |   4 |     14 |      14 |      314 |        1314 |      1314 |     1314 |  28 |   29 | OYAAAA   | KAAAAA   | OOOOxx
+    3043 |       9 |   1 |    3 |   3 |      3 |      43 |       43 |        1043 |      3043 |     3043 |  86 |   87 | BNAAAA   | JAAAAA   | HHHHxx
+    4321 |       8 |   1 |    1 |   1 |      1 |      21 |      321 |         321 |      4321 |     4321 |  42 |   43 | FKAAAA   | IAAAAA   | AAAAxx
+    6701 |       7 |   1 |    1 |   1 |      1 |       1 |      701 |         701 |      1701 |     6701 |   2 |    3 | TXAAAA   | HAAAAA   | VVVVxx
+    5057 |       6 |   1 |    1 |   7 |     17 |      57 |       57 |        1057 |        57 |     5057 | 114 |  115 | NMAAAA   | GAAAAA   | OOOOxx
+    8009 |       5 |   1 |    1 |   9 |      9 |       9 |        9 |           9 |      3009 |     8009 |  18 |   19 | BWAAAA   | FAAAAA   | HHHHxx
+    7164 |       4 |   0 |    0 |   4 |      4 |      64 |      164 |        1164 |      2164 |     7164 | 128 |  129 | OPAAAA   | EAAAAA   | AAAAxx
+    9850 |       3 |   0 |    2 |   0 |     10 |      50 |      850 |        1850 |      4850 |     9850 | 100 |  101 | WOAAAA   | DAAAAA   | VVVVxx
+    3420 |       2 |   0 |    0 |   0 |      0 |      20 |      420 |        1420 |      3420 |     3420 |  40 |   41 | OBAAAA   | CAAAAA   | OOOOxx
+    1891 |       1 |   1 |    3 |   1 |     11 |      91 |      891 |        1891 |      1891 |     1891 | 182 |  183 | TUAAAA   | BAAAAA   | HHHHxx
 (11 rows)
 
-QUERY: FETCH backward 12 in foo12;
-unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
--------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
-   1314|     10|  0|   2|  4|    14|     14|     314|       1314|     1314|    1314| 28|  29|OYAAAA  |KAAAAA  |OOOOxx 
-   3043|      9|  1|   3|  3|     3|     43|      43|       1043|     3043|    3043| 86|  87|BNAAAA  |JAAAAA  |HHHHxx 
-   4321|      8|  1|   1|  1|     1|     21|     321|        321|     4321|    4321| 42|  43|FKAAAA  |IAAAAA  |AAAAxx 
-   6701|      7|  1|   1|  1|     1|      1|     701|        701|     1701|    6701|  2|   3|TXAAAA  |HAAAAA  |VVVVxx 
-   5057|      6|  1|   1|  7|    17|     57|      57|       1057|       57|    5057|114| 115|NMAAAA  |GAAAAA  |OOOOxx 
-   8009|      5|  1|   1|  9|     9|      9|       9|          9|     3009|    8009| 18|  19|BWAAAA  |FAAAAA  |HHHHxx 
-   7164|      4|  0|   0|  4|     4|     64|     164|       1164|     2164|    7164|128| 129|OPAAAA  |EAAAAA  |AAAAxx 
-   9850|      3|  0|   2|  0|    10|     50|     850|       1850|     4850|    9850|100| 101|WOAAAA  |DAAAAA  |VVVVxx 
-   3420|      2|  0|   0|  0|     0|     20|     420|       1420|     3420|    3420| 40|  41|OBAAAA  |CAAAAA  |OOOOxx 
-   1891|      1|  1|   3|  1|    11|     91|     891|       1891|     1891|    1891|182| 183|TUAAAA  |BAAAAA  |HHHHxx 
-   8800|      0|  0|   0|  0|     0|      0|     800|        800|     3800|    8800|  0|   1|MAAAAA  |AAAAAA  |AAAAxx 
+FETCH backward 12 in foo12;
+ unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 
+---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------
+    1314 |      10 |   0 |    2 |   4 |     14 |      14 |      314 |        1314 |      1314 |     1314 |  28 |   29 | OYAAAA   | KAAAAA   | OOOOxx
+    3043 |       9 |   1 |    3 |   3 |      3 |      43 |       43 |        1043 |      3043 |     3043 |  86 |   87 | BNAAAA   | JAAAAA   | HHHHxx
+    4321 |       8 |   1 |    1 |   1 |      1 |      21 |      321 |         321 |      4321 |     4321 |  42 |   43 | FKAAAA   | IAAAAA   | AAAAxx
+    6701 |       7 |   1 |    1 |   1 |      1 |       1 |      701 |         701 |      1701 |     6701 |   2 |    3 | TXAAAA   | HAAAAA   | VVVVxx
+    5057 |       6 |   1 |    1 |   7 |     17 |      57 |       57 |        1057 |        57 |     5057 | 114 |  115 | NMAAAA   | GAAAAA   | OOOOxx
+    8009 |       5 |   1 |    1 |   9 |      9 |       9 |        9 |           9 |      3009 |     8009 |  18 |   19 | BWAAAA   | FAAAAA   | HHHHxx
+    7164 |       4 |   0 |    0 |   4 |      4 |      64 |      164 |        1164 |      2164 |     7164 | 128 |  129 | OPAAAA   | EAAAAA   | AAAAxx
+    9850 |       3 |   0 |    2 |   0 |     10 |      50 |      850 |        1850 |      4850 |     9850 | 100 |  101 | WOAAAA   | DAAAAA   | VVVVxx
+    3420 |       2 |   0 |    0 |   0 |      0 |      20 |      420 |        1420 |      3420 |     3420 |  40 |   41 | OBAAAA   | CAAAAA   | OOOOxx
+    1891 |       1 |   1 |    3 |   1 |     11 |      91 |      891 |        1891 |      1891 |     1891 | 182 |  183 | TUAAAA   | BAAAAA   | HHHHxx
+    8800 |       0 |   0 |    0 |   0 |      0 |       0 |      800 |         800 |      3800 |     8800 |   0 |    1 | MAAAAA   | AAAAAA   | AAAAxx
 (11 rows)
 
-QUERY: FETCH backward 13 in foo11;
-unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
--------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
-   3043|      9|  1|   3|  3|     3|     43|      43|       1043|     3043|    3043| 86|  87|BNAAAA  |JAAAAA  |HHHHxx 
-   4321|      8|  1|   1|  1|     1|     21|     321|        321|     4321|    4321| 42|  43|FKAAAA  |IAAAAA  |AAAAxx 
-   6701|      7|  1|   1|  1|     1|      1|     701|        701|     1701|    6701|  2|   3|TXAAAA  |HAAAAA  |VVVVxx 
-   5057|      6|  1|   1|  7|    17|     57|      57|       1057|       57|    5057|114| 115|NMAAAA  |GAAAAA  |OOOOxx 
-   8009|      5|  1|   1|  9|     9|      9|       9|          9|     3009|    8009| 18|  19|BWAAAA  |FAAAAA  |HHHHxx 
-   7164|      4|  0|   0|  4|     4|     64|     164|       1164|     2164|    7164|128| 129|OPAAAA  |EAAAAA  |AAAAxx 
-   9850|      3|  0|   2|  0|    10|     50|     850|       1850|     4850|    9850|100| 101|WOAAAA  |DAAAAA  |VVVVxx 
-   3420|      2|  0|   0|  0|     0|     20|     420|       1420|     3420|    3420| 40|  41|OBAAAA  |CAAAAA  |OOOOxx 
-   1891|      1|  1|   3|  1|    11|     91|     891|       1891|     1891|    1891|182| 183|TUAAAA  |BAAAAA  |HHHHxx 
-   8800|      0|  0|   0|  0|     0|      0|     800|        800|     3800|    8800|  0|   1|MAAAAA  |AAAAAA  |AAAAxx 
+FETCH backward 13 in foo11;
+ unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 
+---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------
+    3043 |       9 |   1 |    3 |   3 |      3 |      43 |       43 |        1043 |      3043 |     3043 |  86 |   87 | BNAAAA   | JAAAAA   | HHHHxx
+    4321 |       8 |   1 |    1 |   1 |      1 |      21 |      321 |         321 |      4321 |     4321 |  42 |   43 | FKAAAA   | IAAAAA   | AAAAxx
+    6701 |       7 |   1 |    1 |   1 |      1 |       1 |      701 |         701 |      1701 |     6701 |   2 |    3 | TXAAAA   | HAAAAA   | VVVVxx
+    5057 |       6 |   1 |    1 |   7 |     17 |      57 |       57 |        1057 |        57 |     5057 | 114 |  115 | NMAAAA   | GAAAAA   | OOOOxx
+    8009 |       5 |   1 |    1 |   9 |      9 |       9 |        9 |           9 |      3009 |     8009 |  18 |   19 | BWAAAA   | FAAAAA   | HHHHxx
+    7164 |       4 |   0 |    0 |   4 |      4 |      64 |      164 |        1164 |      2164 |     7164 | 128 |  129 | OPAAAA   | EAAAAA   | AAAAxx
+    9850 |       3 |   0 |    2 |   0 |     10 |      50 |      850 |        1850 |      4850 |     9850 | 100 |  101 | WOAAAA   | DAAAAA   | VVVVxx
+    3420 |       2 |   0 |    0 |   0 |      0 |      20 |      420 |        1420 |      3420 |     3420 |  40 |   41 | OBAAAA   | CAAAAA   | OOOOxx
+    1891 |       1 |   1 |    3 |   1 |     11 |      91 |      891 |        1891 |      1891 |     1891 | 182 |  183 | TUAAAA   | BAAAAA   | HHHHxx
+    8800 |       0 |   0 |    0 |   0 |      0 |       0 |      800 |         800 |      3800 |     8800 |   0 |    1 | MAAAAA   | AAAAAA   | AAAAxx
 (10 rows)
 
-QUERY: FETCH backward 14 in foo10;
-unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
--------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
-   4321|      8|  1|   1|  1|     1|     21|     321|        321|     4321|    4321| 42|  43|FKAAAA  |IAAAAA  |AAAAxx 
-   6701|      7|  1|   1|  1|     1|      1|     701|        701|     1701|    6701|  2|   3|TXAAAA  |HAAAAA  |VVVVxx 
-   5057|      6|  1|   1|  7|    17|     57|      57|       1057|       57|    5057|114| 115|NMAAAA  |GAAAAA  |OOOOxx 
-   8009|      5|  1|   1|  9|     9|      9|       9|          9|     3009|    8009| 18|  19|BWAAAA  |FAAAAA  |HHHHxx 
-   7164|      4|  0|   0|  4|     4|     64|     164|       1164|     2164|    7164|128| 129|OPAAAA  |EAAAAA  |AAAAxx 
-   9850|      3|  0|   2|  0|    10|     50|     850|       1850|     4850|    9850|100| 101|WOAAAA  |DAAAAA  |VVVVxx 
-   3420|      2|  0|   0|  0|     0|     20|     420|       1420|     3420|    3420| 40|  41|OBAAAA  |CAAAAA  |OOOOxx 
-   1891|      1|  1|   3|  1|    11|     91|     891|       1891|     1891|    1891|182| 183|TUAAAA  |BAAAAA  |HHHHxx 
-   8800|      0|  0|   0|  0|     0|      0|     800|        800|     3800|    8800|  0|   1|MAAAAA  |AAAAAA  |AAAAxx 
+FETCH backward 14 in foo10;
+ unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 
+---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------
+    4321 |       8 |   1 |    1 |   1 |      1 |      21 |      321 |         321 |      4321 |     4321 |  42 |   43 | FKAAAA   | IAAAAA   | AAAAxx
+    6701 |       7 |   1 |    1 |   1 |      1 |       1 |      701 |         701 |      1701 |     6701 |   2 |    3 | TXAAAA   | HAAAAA   | VVVVxx
+    5057 |       6 |   1 |    1 |   7 |     17 |      57 |       57 |        1057 |        57 |     5057 | 114 |  115 | NMAAAA   | GAAAAA   | OOOOxx
+    8009 |       5 |   1 |    1 |   9 |      9 |       9 |        9 |           9 |      3009 |     8009 |  18 |   19 | BWAAAA   | FAAAAA   | HHHHxx
+    7164 |       4 |   0 |    0 |   4 |      4 |      64 |      164 |        1164 |      2164 |     7164 | 128 |  129 | OPAAAA   | EAAAAA   | AAAAxx
+    9850 |       3 |   0 |    2 |   0 |     10 |      50 |      850 |        1850 |      4850 |     9850 | 100 |  101 | WOAAAA   | DAAAAA   | VVVVxx
+    3420 |       2 |   0 |    0 |   0 |      0 |      20 |      420 |        1420 |      3420 |     3420 |  40 |   41 | OBAAAA   | CAAAAA   | OOOOxx
+    1891 |       1 |   1 |    3 |   1 |     11 |      91 |      891 |        1891 |      1891 |     1891 | 182 |  183 | TUAAAA   | BAAAAA   | HHHHxx
+    8800 |       0 |   0 |    0 |   0 |      0 |       0 |      800 |         800 |      3800 |     8800 |   0 |    1 | MAAAAA   | AAAAAA   | AAAAxx
 (9 rows)
 
-QUERY: FETCH backward 15 in foo9;
-unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
--------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
-   6701|      7|  1|   1|  1|     1|      1|     701|        701|     1701|    6701|  2|   3|TXAAAA  |HAAAAA  |VVVVxx 
-   5057|      6|  1|   1|  7|    17|     57|      57|       1057|       57|    5057|114| 115|NMAAAA  |GAAAAA  |OOOOxx 
-   8009|      5|  1|   1|  9|     9|      9|       9|          9|     3009|    8009| 18|  19|BWAAAA  |FAAAAA  |HHHHxx 
-   7164|      4|  0|   0|  4|     4|     64|     164|       1164|     2164|    7164|128| 129|OPAAAA  |EAAAAA  |AAAAxx 
-   9850|      3|  0|   2|  0|    10|     50|     850|       1850|     4850|    9850|100| 101|WOAAAA  |DAAAAA  |VVVVxx 
-   3420|      2|  0|   0|  0|     0|     20|     420|       1420|     3420|    3420| 40|  41|OBAAAA  |CAAAAA  |OOOOxx 
-   1891|      1|  1|   3|  1|    11|     91|     891|       1891|     1891|    1891|182| 183|TUAAAA  |BAAAAA  |HHHHxx 
-   8800|      0|  0|   0|  0|     0|      0|     800|        800|     3800|    8800|  0|   1|MAAAAA  |AAAAAA  |AAAAxx 
+FETCH backward 15 in foo9;
+ unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 
+---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------
+    6701 |       7 |   1 |    1 |   1 |      1 |       1 |      701 |         701 |      1701 |     6701 |   2 |    3 | TXAAAA   | HAAAAA   | VVVVxx
+    5057 |       6 |   1 |    1 |   7 |     17 |      57 |       57 |        1057 |        57 |     5057 | 114 |  115 | NMAAAA   | GAAAAA   | OOOOxx
+    8009 |       5 |   1 |    1 |   9 |      9 |       9 |        9 |           9 |      3009 |     8009 |  18 |   19 | BWAAAA   | FAAAAA   | HHHHxx
+    7164 |       4 |   0 |    0 |   4 |      4 |      64 |      164 |        1164 |      2164 |     7164 | 128 |  129 | OPAAAA   | EAAAAA   | AAAAxx
+    9850 |       3 |   0 |    2 |   0 |     10 |      50 |      850 |        1850 |      4850 |     9850 | 100 |  101 | WOAAAA   | DAAAAA   | VVVVxx
+    3420 |       2 |   0 |    0 |   0 |      0 |      20 |      420 |        1420 |      3420 |     3420 |  40 |   41 | OBAAAA   | CAAAAA   | OOOOxx
+    1891 |       1 |   1 |    3 |   1 |     11 |      91 |      891 |        1891 |      1891 |     1891 | 182 |  183 | TUAAAA   | BAAAAA   | HHHHxx
+    8800 |       0 |   0 |    0 |   0 |      0 |       0 |      800 |         800 |      3800 |     8800 |   0 |    1 | MAAAAA   | AAAAAA   | AAAAxx
 (8 rows)
 
-QUERY: FETCH backward 16 in foo8;
-unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
--------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
-   5057|      6|  1|   1|  7|    17|     57|      57|       1057|       57|    5057|114| 115|NMAAAA  |GAAAAA  |OOOOxx 
-   8009|      5|  1|   1|  9|     9|      9|       9|          9|     3009|    8009| 18|  19|BWAAAA  |FAAAAA  |HHHHxx 
-   7164|      4|  0|   0|  4|     4|     64|     164|       1164|     2164|    7164|128| 129|OPAAAA  |EAAAAA  |AAAAxx 
-   9850|      3|  0|   2|  0|    10|     50|     850|       1850|     4850|    9850|100| 101|WOAAAA  |DAAAAA  |VVVVxx 
-   3420|      2|  0|   0|  0|     0|     20|     420|       1420|     3420|    3420| 40|  41|OBAAAA  |CAAAAA  |OOOOxx 
-   1891|      1|  1|   3|  1|    11|     91|     891|       1891|     1891|    1891|182| 183|TUAAAA  |BAAAAA  |HHHHxx 
-   8800|      0|  0|   0|  0|     0|      0|     800|        800|     3800|    8800|  0|   1|MAAAAA  |AAAAAA  |AAAAxx 
+FETCH backward 16 in foo8;
+ unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 
+---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------
+    5057 |       6 |   1 |    1 |   7 |     17 |      57 |       57 |        1057 |        57 |     5057 | 114 |  115 | NMAAAA   | GAAAAA   | OOOOxx
+    8009 |       5 |   1 |    1 |   9 |      9 |       9 |        9 |           9 |      3009 |     8009 |  18 |   19 | BWAAAA   | FAAAAA   | HHHHxx
+    7164 |       4 |   0 |    0 |   4 |      4 |      64 |      164 |        1164 |      2164 |     7164 | 128 |  129 | OPAAAA   | EAAAAA   | AAAAxx
+    9850 |       3 |   0 |    2 |   0 |     10 |      50 |      850 |        1850 |      4850 |     9850 | 100 |  101 | WOAAAA   | DAAAAA   | VVVVxx
+    3420 |       2 |   0 |    0 |   0 |      0 |      20 |      420 |        1420 |      3420 |     3420 |  40 |   41 | OBAAAA   | CAAAAA   | OOOOxx
+    1891 |       1 |   1 |    3 |   1 |     11 |      91 |      891 |        1891 |      1891 |     1891 | 182 |  183 | TUAAAA   | BAAAAA   | HHHHxx
+    8800 |       0 |   0 |    0 |   0 |      0 |       0 |      800 |         800 |      3800 |     8800 |   0 |    1 | MAAAAA   | AAAAAA   | AAAAxx
 (7 rows)
 
-QUERY: FETCH backward 17 in foo7;
-unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
--------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
-   8009|      5|  1|   1|  9|     9|      9|       9|          9|     3009|    8009| 18|  19|BWAAAA  |FAAAAA  |HHHHxx 
-   7164|      4|  0|   0|  4|     4|     64|     164|       1164|     2164|    7164|128| 129|OPAAAA  |EAAAAA  |AAAAxx 
-   9850|      3|  0|   2|  0|    10|     50|     850|       1850|     4850|    9850|100| 101|WOAAAA  |DAAAAA  |VVVVxx 
-   3420|      2|  0|   0|  0|     0|     20|     420|       1420|     3420|    3420| 40|  41|OBAAAA  |CAAAAA  |OOOOxx 
-   1891|      1|  1|   3|  1|    11|     91|     891|       1891|     1891|    1891|182| 183|TUAAAA  |BAAAAA  |HHHHxx 
-   8800|      0|  0|   0|  0|     0|      0|     800|        800|     3800|    8800|  0|   1|MAAAAA  |AAAAAA  |AAAAxx 
+FETCH backward 17 in foo7;
+ unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 
+---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------
+    8009 |       5 |   1 |    1 |   9 |      9 |       9 |        9 |           9 |      3009 |     8009 |  18 |   19 | BWAAAA   | FAAAAA   | HHHHxx
+    7164 |       4 |   0 |    0 |   4 |      4 |      64 |      164 |        1164 |      2164 |     7164 | 128 |  129 | OPAAAA   | EAAAAA   | AAAAxx
+    9850 |       3 |   0 |    2 |   0 |     10 |      50 |      850 |        1850 |      4850 |     9850 | 100 |  101 | WOAAAA   | DAAAAA   | VVVVxx
+    3420 |       2 |   0 |    0 |   0 |      0 |      20 |      420 |        1420 |      3420 |     3420 |  40 |   41 | OBAAAA   | CAAAAA   | OOOOxx
+    1891 |       1 |   1 |    3 |   1 |     11 |      91 |      891 |        1891 |      1891 |     1891 | 182 |  183 | TUAAAA   | BAAAAA   | HHHHxx
+    8800 |       0 |   0 |    0 |   0 |      0 |       0 |      800 |         800 |      3800 |     8800 |   0 |    1 | MAAAAA   | AAAAAA   | AAAAxx
 (6 rows)
 
-QUERY: FETCH backward 18 in foo6;
-unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
--------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
-   7164|      4|  0|   0|  4|     4|     64|     164|       1164|     2164|    7164|128| 129|OPAAAA  |EAAAAA  |AAAAxx 
-   9850|      3|  0|   2|  0|    10|     50|     850|       1850|     4850|    9850|100| 101|WOAAAA  |DAAAAA  |VVVVxx 
-   3420|      2|  0|   0|  0|     0|     20|     420|       1420|     3420|    3420| 40|  41|OBAAAA  |CAAAAA  |OOOOxx 
-   1891|      1|  1|   3|  1|    11|     91|     891|       1891|     1891|    1891|182| 183|TUAAAA  |BAAAAA  |HHHHxx 
-   8800|      0|  0|   0|  0|     0|      0|     800|        800|     3800|    8800|  0|   1|MAAAAA  |AAAAAA  |AAAAxx 
+FETCH backward 18 in foo6;
+ unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 
+---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------
+    7164 |       4 |   0 |    0 |   4 |      4 |      64 |      164 |        1164 |      2164 |     7164 | 128 |  129 | OPAAAA   | EAAAAA   | AAAAxx
+    9850 |       3 |   0 |    2 |   0 |     10 |      50 |      850 |        1850 |      4850 |     9850 | 100 |  101 | WOAAAA   | DAAAAA   | VVVVxx
+    3420 |       2 |   0 |    0 |   0 |      0 |      20 |      420 |        1420 |      3420 |     3420 |  40 |   41 | OBAAAA   | CAAAAA   | OOOOxx
+    1891 |       1 |   1 |    3 |   1 |     11 |      91 |      891 |        1891 |      1891 |     1891 | 182 |  183 | TUAAAA   | BAAAAA   | HHHHxx
+    8800 |       0 |   0 |    0 |   0 |      0 |       0 |      800 |         800 |      3800 |     8800 |   0 |    1 | MAAAAA   | AAAAAA   | AAAAxx
 (5 rows)
 
-QUERY: FETCH backward 19 in foo5;
-unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
--------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
-   9850|      3|  0|   2|  0|    10|     50|     850|       1850|     4850|    9850|100| 101|WOAAAA  |DAAAAA  |VVVVxx 
-   3420|      2|  0|   0|  0|     0|     20|     420|       1420|     3420|    3420| 40|  41|OBAAAA  |CAAAAA  |OOOOxx 
-   1891|      1|  1|   3|  1|    11|     91|     891|       1891|     1891|    1891|182| 183|TUAAAA  |BAAAAA  |HHHHxx 
-   8800|      0|  0|   0|  0|     0|      0|     800|        800|     3800|    8800|  0|   1|MAAAAA  |AAAAAA  |AAAAxx 
+FETCH backward 19 in foo5;
+ unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 
+---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------
+    9850 |       3 |   0 |    2 |   0 |     10 |      50 |      850 |        1850 |      4850 |     9850 | 100 |  101 | WOAAAA   | DAAAAA   | VVVVxx
+    3420 |       2 |   0 |    0 |   0 |      0 |      20 |      420 |        1420 |      3420 |     3420 |  40 |   41 | OBAAAA   | CAAAAA   | OOOOxx
+    1891 |       1 |   1 |    3 |   1 |     11 |      91 |      891 |        1891 |      1891 |     1891 | 182 |  183 | TUAAAA   | BAAAAA   | HHHHxx
+    8800 |       0 |   0 |    0 |   0 |      0 |       0 |      800 |         800 |      3800 |     8800 |   0 |    1 | MAAAAA   | AAAAAA   | AAAAxx
 (4 rows)
 
-QUERY: FETCH backward 20 in foo4;
-unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
--------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
-   3420|      2|  0|   0|  0|     0|     20|     420|       1420|     3420|    3420| 40|  41|OBAAAA  |CAAAAA  |OOOOxx 
-   1891|      1|  1|   3|  1|    11|     91|     891|       1891|     1891|    1891|182| 183|TUAAAA  |BAAAAA  |HHHHxx 
-   8800|      0|  0|   0|  0|     0|      0|     800|        800|     3800|    8800|  0|   1|MAAAAA  |AAAAAA  |AAAAxx 
+FETCH backward 20 in foo4;
+ unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 
+---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------
+    3420 |       2 |   0 |    0 |   0 |      0 |      20 |      420 |        1420 |      3420 |     3420 |  40 |   41 | OBAAAA   | CAAAAA   | OOOOxx
+    1891 |       1 |   1 |    3 |   1 |     11 |      91 |      891 |        1891 |      1891 |     1891 | 182 |  183 | TUAAAA   | BAAAAA   | HHHHxx
+    8800 |       0 |   0 |    0 |   0 |      0 |       0 |      800 |         800 |      3800 |     8800 |   0 |    1 | MAAAAA   | AAAAAA   | AAAAxx
 (3 rows)
 
-QUERY: FETCH backward 21 in foo3;
-unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
--------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
-   1891|      1|  1|   3|  1|    11|     91|     891|       1891|     1891|    1891|182| 183|TUAAAA  |BAAAAA  |HHHHxx 
-   8800|      0|  0|   0|  0|     0|      0|     800|        800|     3800|    8800|  0|   1|MAAAAA  |AAAAAA  |AAAAxx 
+FETCH backward 21 in foo3;
+ unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 
+---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------
+    1891 |       1 |   1 |    3 |   1 |     11 |      91 |      891 |        1891 |      1891 |     1891 | 182 |  183 | TUAAAA   | BAAAAA   | HHHHxx
+    8800 |       0 |   0 |    0 |   0 |      0 |       0 |      800 |         800 |      3800 |     8800 |   0 |    1 | MAAAAA   | AAAAAA   | AAAAxx
 (2 rows)
 
-QUERY: FETCH backward 22 in foo2;
-unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
--------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
-   8800|      0|  0|   0|  0|     0|      0|     800|        800|     3800|    8800|  0|   1|MAAAAA  |AAAAAA  |AAAAxx 
+FETCH backward 22 in foo2;
+ unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 
+---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------
+    8800 |       0 |   0 |    0 |   0 |      0 |       0 |      800 |         800 |      3800 |     8800 |   0 |    1 | MAAAAA   | AAAAAA   | AAAAxx
 (1 row)
 
-QUERY: FETCH backward 23 in foo1;
-unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
--------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
+FETCH backward 23 in foo1;
+ unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 
+---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------
 (0 rows)
 
-QUERY: CLOSE foo1;
-QUERY: CLOSE foo2;
-QUERY: CLOSE foo3;
-QUERY: CLOSE foo4;
-QUERY: CLOSE foo5;
-QUERY: CLOSE foo6;
-QUERY: CLOSE foo7;
-QUERY: CLOSE foo8;
-QUERY: CLOSE foo9;
-QUERY: CLOSE foo10;
-QUERY: CLOSE foo11;
-QUERY: CLOSE foo12;
-QUERY: end;
+CLOSE foo1;
+CLOSE foo2;
+CLOSE foo3;
+CLOSE foo4;
+CLOSE foo5;
+CLOSE foo6;
+CLOSE foo7;
+CLOSE foo8;
+CLOSE foo9;
+CLOSE foo10;
+CLOSE foo11;
+CLOSE foo12;
+end;
