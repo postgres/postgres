@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.6 2001/06/11 00:52:09 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.7 2001/06/22 18:53:36 tgl Exp $
 -->
 
  <chapter id="performance-tips">
@@ -110,7 +110,7 @@ select * from pg_class where relname = 'tenk1';
     </programlisting>
 
     you'll find out that tenk1 has 233 disk
-    pages and 10000 tuples.  So the cost is estimated at 233 block
+    pages and 10000 tuples.  So the cost is estimated at 233 page
     reads, defined as 1.0 apiece, plus 10000 * cpu_tuple_cost which is
     currently 0.01 (try <command>show cpu_tuple_cost</command>).
    </para>
@@ -248,6 +248,19 @@ Hash Join  (cost=173.44..557.03 rows=47 width=296)
     10000 times.  Note, however, that we are NOT charging 10000 times 173.32;
     the hash table setup is only done once in this plan type.
    </para>
+
+   <para>
+    It is worth noting that EXPLAIN results should not be extrapolated
+    to situations other than the one you are actually testing; for example,
+    results on a toy-sized table can't be assumed to apply to large tables.
+    The planner's cost estimates are not linear and so it may well choose
+    a different plan for a larger or smaller table.  An extreme example
+    is that on a table that only occupies one disk page, you'll nearly
+    always get a sequential scan plan whether indexes are available or not.
+    The planner realizes that it's going to take one disk page read to
+    process the table in any case, so there's no value in expending additional
+    page reads to look at an index.
+   </para>
   </sect1>
 
  <sect1 id="explicit-joins">
@@ -375,10 +388,13 @@ SELECT * FROM d LEFT JOIN
 
    <para>
     Turn off auto-commit and just do one commit at
-    the end.  Otherwise <productname>Postgres</productname> is doing a
-    lot of work for each record
-    added.  In general when you are doing bulk inserts, you want
-    to turn off some of the database features to gain speed.
+    the end.  (In plain SQL, this means issuing <command>BEGIN</command>
+    at the start and <command>COMMIT</command> at the end.  Some client
+    libraries may do this behind your back, in which case you need to
+    make sure the library does it when you want it done.)
+    If you allow each insertion to be committed separately,
+    <productname>Postgres</productname> is doing a lot of work for each
+    record added.
    </para>
   </sect2>
 
@@ -387,10 +403,11 @@ SELECT * FROM d LEFT JOIN
 
    <para>
     Use <command>COPY FROM STDIN</command> to load all the records in one
-    command, instead
-    of a series of INSERT commands.  This reduces parsing, planning, etc
+    command, instead of using
+    a series of <command>INSERT</command> commands.  This reduces parsing,
+    planning, etc
     overhead a great deal. If you do this then it's not necessary to fool
-    around with autocommit, since it's only one command anyway.
+    around with auto-commit, since it's only one command anyway.
    </para>
   </sect2>
 
@@ -399,16 +416,32 @@ SELECT * FROM d LEFT JOIN
 
    <para>
     If you are loading a freshly created table, the fastest way is to
-    create the table, bulk-load with COPY, then create any indexes needed
+    create the table, bulk-load with <command>COPY</command>, then create any
+    indexes needed 
     for the table.  Creating an index on pre-existing data is quicker than
     updating it incrementally as each record is loaded.
    </para>
 
    <para>
     If you are augmenting an existing table, you can <command>DROP
-     INDEX</command>, load the table, then recreate the index. Of
+    INDEX</command>, load the table, then recreate the index. Of
     course, the database performance for other users may be adversely 
-    affected during the time that the index is missing.
+    affected during the time that the index is missing.  One should also
+    think twice before dropping UNIQUE indexes, since the error checking
+    afforded by the UNIQUE constraint will be lost while the index is missing.
+   </para>
+  </sect2>
+
+  <sect2 id="populate-analyze">
+   <title>ANALYZE Afterwards</title>
+
+   <para>
+    It's a good idea to run <command>ANALYZE</command> or <command>VACUUM
+    ANALYZE</command> anytime you've added or updated a lot of data,
+    including just after initially populating a table.  This ensures that
+    the planner has up-to-date statistics about the table.  With no statistics
+    or obsolete statistics, the planner may make poor choices of query plans,
+    leading to bad performance on queries that use your table.
    </para>
   </sect2>
   </sect1>
