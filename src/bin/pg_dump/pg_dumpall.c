@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.37 2004/06/05 04:27:48 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.38 2004/06/07 20:35:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,6 +50,7 @@ static void dumpDatabaseConfig(PGconn *conn, const char *dbname);
 static void dumpUserConfig(PGconn *conn, const char *username);
 static void makeAlterConfigCommand(const char *arrayitem, const char *type, const char *name);
 static void dumpDatabases(PGconn *conn);
+static void dumpTimestamp(char *msg);
 
 static int	runPgDump(const char *dbname);
 static PGconn *connectDatabase(const char *dbname, const char *pghost, const char *pgport,
@@ -220,6 +221,9 @@ main(int argc, char *argv[])
 	conn = connectDatabase("template1", pghost, pgport, pguser, force_password);
 
 	printf("--\n-- PostgreSQL database cluster dump\n--\n\n");
+	if (verbose)
+			dumpTimestamp("Started on");
+
 	printf("\\connect \"template1\"\n\n");
 
 	if (!data_only)
@@ -237,6 +241,8 @@ main(int argc, char *argv[])
 
 	PQfinish(conn);
 
+	if (verbose)
+		dumpTimestamp("Completed on");
 	printf("--\n-- PostgreSQL database cluster dump complete\n--\n\n");
 
 	exit(0);
@@ -807,4 +813,18 @@ executeQuery(PGconn *conn, const char *query)
 	}
 
 	return res;
+}
+
+
+/*
+ * dumpTimestamp
+ */
+static void
+dumpTimestamp(char *msg)
+{
+	char buf[256];
+	time_t now = time(NULL);
+
+	if (strftime(buf, 256, "%Y-%m-%d %H:%M:%S %Z", localtime(&now)) != 0)
+		printf("-- %s %s\n\n", msg, buf);
 }

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.70 2004/05/31 13:37:52 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.71 2004/06/07 20:35:57 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -403,7 +403,8 @@ PostgreSQL documentation
        <para>
 	Specifies verbose mode.  This will cause
 	<application>pg_dump</application> to output detailed object
-        comments in the dump file, and progress messages to standard error.
+        comments and start/stop times to the dump file, and progress 
+        messages to standard error.
        </para>
       </listitem>
      </varlistentry>

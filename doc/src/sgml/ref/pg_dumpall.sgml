@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.43 2003/11/29 19:51:39 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.44 2004/06/07 20:35:57 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -192,8 +192,9 @@ PostgreSQL documentation
       <listitem>
        <para>
 	Specifies verbose mode.  This will cause
-	<application>pg_dumpall</application> to print progress
-	messages to standard error.
+	<application>pg_dumpall</application> to output start/stop
+        times to the dump file, and progress messages to standard error.
+        It will also enable verbose output in <application>pg_dump</>.
        </para>
       </listitem>
      </varlistentry>
