@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.158 2001/01/24 19:42:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.159 2001/02/12 20:07:21 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -68,15 +68,15 @@
 
 
 static void AddNewRelationTuple(Relation pg_class_desc,
-					Relation new_rel_desc, Oid new_rel_oid,
-					int natts,
-					char relkind, char *temp_relname);
+					Relation new_rel_desc, Oid new_rel_oid, Oid new_type_oid,
+					int natts, char relkind, char *temp_relname);
 static void DeleteAttributeTuples(Relation rel);
 static void DeleteRelationTuple(Relation rel);
 static void DeleteTypeTuple(Relation rel);
 static void RelationRemoveIndexes(Relation relation);
 static void RelationRemoveInheritance(Relation relation);
-static void AddNewRelationType(char *typeName, Oid new_rel_oid);
+static void AddNewRelationType(char *typeName, Oid new_rel_oid,
+							   Oid new_type_oid);
 static void StoreAttrDefault(Relation rel, AttrNumber attnum, char *adbin,
 				 bool updatePgAttribute);
 static void StoreRelCheck(Relation rel, char *ccname, char *ccbin);
@@ -317,6 +317,7 @@ heap_create(char *relname,
 	strcpy(RelationGetPhysicalRelationName(rel), relname);
 	rel->rd_rel->relkind = RELKIND_UNCATALOGED;
 	rel->rd_rel->relnatts = natts;
+	rel->rd_rel->reltype = InvalidOid;
 	if (tupDesc->constr)
 		rel->rd_rel->relchecks = tupDesc->constr->num_check;
 
@@ -324,12 +325,6 @@ heap_create(char *relname,
 		rel->rd_att->attrs[i]->attrelid = relid;
 
 	RelationGetRelid(rel) = relid;
-
-	if (nailme)
-	{
-		/* for system relations, set the reltype field here */
-		rel->rd_rel->reltype = relid;
-	}
 
 	rel->rd_node.tblNode = tblNode;
 	rel->rd_node.relNode = relid;
@@ -373,17 +368,16 @@ heap_storage_create(Relation rel)
  *		   performs a scan to ensure that no relation with the
  *		   same name already exists.
  *
- *		3) heap_create_with_catalog() is called to create the new relation
- *		   on disk.
+ *		3) heap_create() is called to create the new relation on disk.
  *
- *		4) TypeDefine() is called to define a new type corresponding
+ *		4) AddNewRelationTuple() is called to register the
+ *		   relation in pg_class.
+ *
+ *		5) TypeCreate() is called to define a new type corresponding
  *		   to the new relation.
  *
- *		5) AddNewAttributeTuples() is called to register the
+ *		6) AddNewAttributeTuples() is called to register the
  *		   new relation's schema in pg_attribute.
- *
- *		6) AddNewRelationTuple() is called to register the
- *		   relation itself in the catalogs.
  *
  *		7) StoreConstraints is called ()		- vadim 08/22/97
  *
@@ -656,6 +650,7 @@ static void
 AddNewRelationTuple(Relation pg_class_desc,
 					Relation new_rel_desc,
 					Oid new_rel_oid,
+					Oid new_type_oid,
 					int natts,
 					char relkind,
 					char *temp_relname)
@@ -665,7 +660,7 @@ AddNewRelationTuple(Relation pg_class_desc,
 	Relation	idescs[Num_pg_class_indices];
 
 	/* ----------------
-	 *	first we munge some of the information in our
+	 *	first we update some of the information in our
 	 *	uncataloged relation's relation descriptor.
 	 * ----------------
 	 */
@@ -694,6 +689,7 @@ AddNewRelationTuple(Relation pg_class_desc,
 	new_rel_reltup->reltuples = 1000;
 
 	new_rel_reltup->relowner = GetUserId();
+	new_rel_reltup->reltype = new_type_oid;
 	new_rel_reltup->relkind = relkind;
 	new_rel_reltup->relnatts = natts;
 
@@ -705,6 +701,8 @@ AddNewRelationTuple(Relation pg_class_desc,
 	tup = heap_addheader(Natts_pg_class_fixed,
 						 CLASS_TUPLE_SIZE,
 						 (char *) new_rel_reltup);
+
+	/* force tuple to have the desired OID */
 	tup->t_data->t_oid = new_rel_oid;
 
 	/*
@@ -738,10 +736,8 @@ AddNewRelationTuple(Relation pg_class_desc,
  * --------------------------------
  */
 static void
-AddNewRelationType(char *typeName, Oid new_rel_oid)
+AddNewRelationType(char *typeName, Oid new_rel_oid, Oid new_type_oid)
 {
-	Oid			new_type_oid;
-
 	/*
 	 * The sizes are set to oid size because it makes implementing sets
 	 * MUCH easier, and no one (we hope) uses these fields to figure out
@@ -750,23 +746,25 @@ AddNewRelationType(char *typeName, Oid new_rel_oid)
 	 * actually get is the oid of a tuple in the pg_proc catalog, so the
 	 * size of the "set" is the size of an oid. Similarly, byval being
 	 * true makes sets much easier, and it isn't used by anything else.
-	 * Note the assumption that OIDs are the same size as int4s.
+	 *
+	 * XXX Note the assumption that OIDs are the same size as int4s.
 	 */
-	new_type_oid = TypeCreate(typeName, /* type name */
-							  new_rel_oid,		/* relation oid */
-							  sizeof(Oid),		/* internal size */
-							  sizeof(Oid),		/* external size */
-							  'c',		/* type-type (catalog) */
-							  ',',		/* default array delimiter */
-							  "int4in", /* input procedure */
-							  "int4out",		/* output procedure */
-							  "int4in", /* receive procedure */
-							  "int4out",		/* send procedure */
-							  NULL,		/* array element type - irrelevent */
-							  "-",		/* default type value */
-							  (bool) 1, /* passed by value */
-							  'i',		/* default alignment */
-							  'p');		/* Not TOASTable */
+	TypeCreate(typeName,		/* type name */
+			   new_type_oid,	/* preassigned oid for type */
+			   new_rel_oid,		/* relation oid */
+			   sizeof(Oid),		/* internal size */
+			   sizeof(Oid),		/* external size */
+			   'c',				/* type-type (catalog) */
+			   ',',				/* default array delimiter */
+			   "int4in",		/* input procedure */
+			   "int4out",		/* output procedure */
+			   "int4in",		/* receive procedure */
+			   "int4out",		/* send procedure */
+			   NULL,			/* array element type - irrelevant */
+			   "-",				/* default type value */
+			   true,			/* passed by value */
+			   'i',				/* default alignment */
+			   'p');			/* Not TOASTable */
 }
 
 /* --------------------------------
@@ -785,6 +783,7 @@ heap_create_with_catalog(char *relname,
 	Relation	pg_class_desc;
 	Relation	new_rel_desc;
 	Oid			new_rel_oid;
+	Oid			new_type_oid;
 	int			natts = tupdesc->natts;
 	char	   *temp_relname = NULL;
 
@@ -814,18 +813,10 @@ heap_create_with_catalog(char *relname,
 	}
 
 	/* ----------------
-	 *	RelnameFindRelid couldn't detect simultaneous
-	 *	creation. Uniqueness will be really checked by unique
-	 *	indexes of system tables but we couldn't check it here.
-	 *	We have to postpone creating the disk file for this
-	 *	relation.
-	 *	Another boolean parameter "storage_create" was added
-	 *	to heap_create() function. If the parameter is false
-	 *	heap_create() only registers an uncataloged relation
-	 *	to relation cache and heap_storage_create() should be
-	 *	called later.
-	 *	We could pull its relation oid from the newly formed
-	 *	relation descriptor.
+	 *	Tell heap_create not to create a physical file; we'll do that
+	 *	below after all our catalog updates are done.  (This isn't really
+	 *	necessary anymore, but we may as well avoid the cycles of creating
+	 *	and deleting the file in case we fail.)
 	 *
 	 *	Note: The call to heap_create() changes relname for
 	 *	temp tables; it becomes the true physical relname.
@@ -836,24 +827,18 @@ heap_create_with_catalog(char *relname,
 	new_rel_desc = heap_create(relname, tupdesc, istemp, false,
 							   allow_system_table_mods);
 
+	/* Fetch the relation OID assigned by heap_create */
 	new_rel_oid = new_rel_desc->rd_att->attrs[0]->attrelid;
 
-	/* ----------------
-	 *	since defining a relation also defines a complex type,
-	 *	we add a new system type corresponding to the new relation.
-	 * ----------------
-	 */
-	AddNewRelationType(relname, new_rel_oid);
+	/* Assign an OID for the relation's tuple type */
+	new_type_oid = newoid();
 
 	/* ----------------
-	 *	now add tuples to pg_attribute for the attributes in
-	 *	our new relation.
-	 * ----------------
-	 */
-	AddNewAttributeTuples(new_rel_oid, tupdesc);
-
-	/* ----------------
-	 *	now update the information in pg_class.
+	 *	now create an entry in pg_class for the relation.
+	 *
+	 *	NOTE: we could get a unique-index failure here, in case someone else
+	 *	is creating the same relation name in parallel but hadn't committed
+	 *	yet when we checked for a duplicate name above.
 	 * ----------------
 	 */
 	pg_class_desc = heap_openr(RelationRelationName, RowExclusiveLock);
@@ -861,9 +846,27 @@ heap_create_with_catalog(char *relname,
 	AddNewRelationTuple(pg_class_desc,
 						new_rel_desc,
 						new_rel_oid,
+						new_type_oid,
 						natts,
 						relkind,
 						temp_relname);
+
+	/* ----------------
+	 *	since defining a relation also defines a complex type,
+	 *	we add a new system type corresponding to the new relation.
+	 *
+	 *	NOTE: we could get a unique-index failure here, in case the same name
+	 *	has already been used for a type.
+	 * ----------------
+	 */
+	AddNewRelationType(relname, new_rel_oid, new_type_oid);
+
+	/* ----------------
+	 *	now add tuples to pg_attribute for the attributes in
+	 *	our new relation.
+	 * ----------------
+	 */
+	AddNewAttributeTuples(new_rel_oid, tupdesc);
 
 	StoreConstraints(new_rel_desc);
 
@@ -912,7 +915,6 @@ heap_create_with_catalog(char *relname,
  *		attribute catalog (needed?).  (Anything else?)
  *
  *		get proper relation from relation catalog (if not arg)
- *		check if relation is vital (strcmp()/reltype?)
  *		scan attribute catalog deleting attributes of reldesc
  *				(necessary?)
  *		delete relation from relation catalog

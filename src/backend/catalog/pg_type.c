@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.58 2001/01/24 19:42:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.59 2001/02/12 20:07:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,18 +46,17 @@ TypeGetWithOpenRelation(Relation pg_type_desc,
 	HeapScanDesc scan;
 	HeapTuple	tup;
 	Oid			typoid;
-
-	static ScanKeyData typeKey[1] = {
-		{0, Anum_pg_type_typname, F_NAMEEQ}
-	};
+	ScanKeyData typeKey[1];
 
 	/* ----------------
 	 *	initialize the scan key and begin a scan of pg_type
 	 * ----------------
 	 */
-	fmgr_info(F_NAMEEQ, &typeKey[0].sk_func);
-	typeKey[0].sk_nargs = typeKey[0].sk_func.fn_nargs;
-	typeKey[0].sk_argument = PointerGetDatum(typeName);
+	ScanKeyEntryInitialize(typeKey,
+						   0,
+						   Anum_pg_type_typname,
+						   F_NAMEEQ,
+						   PointerGetDatum(typeName));
 
 	scan = heap_beginscan(pg_type_desc,
 						  0,
@@ -269,10 +268,16 @@ TypeShellMake(char *typeName)
  *		TypeCreate
  *
  *		This does all the necessary work needed to define a new type.
+ *
+ * NOTE: if assignedTypeOid is not InvalidOid, then that OID is assigned to
+ * the new type (which, therefore, cannot already exist as a shell type).
+ * This hack is only intended for use in creating a relation's associated
+ * type, where we need to have created the relation tuple already.
  * ----------------------------------------------------------------
  */
 Oid
 TypeCreate(char *typeName,
+		   Oid assignedTypeOid,
 		   Oid relationOid,		/* only for 'c'atalog typeTypes */
 		   int16 internalSize,
 		   int16 externalSize,
@@ -292,35 +297,28 @@ TypeCreate(char *typeName,
 				j;
 	Relation	pg_type_desc;
 	HeapScanDesc pg_type_scan;
-
 	Oid			typeObjectId;
 	Oid			elementObjectId = InvalidOid;
-
 	HeapTuple	tup;
 	char		nulls[Natts_pg_type];
 	char		replaces[Natts_pg_type];
 	Datum		values[Natts_pg_type];
-
 	char	   *procname;
 	char	   *procs[4];
 	bool		defined;
 	NameData	name;
 	TupleDesc	tupDesc;
 	Oid			argList[FUNC_MAX_ARGS];
-
-	static ScanKeyData typeKey[1] = {
-		{0, Anum_pg_type_typname, F_NAMEEQ}
-	};
-
-	fmgr_info(F_NAMEEQ, &typeKey[0].sk_func);
-	typeKey[0].sk_nargs = typeKey[0].sk_func.fn_nargs;
+	ScanKeyData typeKey[1];
 
 	/* ----------------
-	 *	check that the type is not already defined.
+	 *	check that the type is not already defined.  It might exist as
+	 *	a shell type, however (but only if assignedTypeOid is not given).
 	 * ----------------
 	 */
 	typeObjectId = TypeGet(typeName, &defined);
-	if (OidIsValid(typeObjectId) && defined)
+	if (OidIsValid(typeObjectId) &&
+		(defined || assignedTypeOid != InvalidOid))
 		elog(ERROR, "TypeCreate: type %s already defined", typeName);
 
 	/* ----------------
@@ -468,7 +466,12 @@ TypeCreate(char *typeName,
 	 */
 	pg_type_desc = heap_openr(TypeRelationName, RowExclusiveLock);
 
-	typeKey[0].sk_argument = PointerGetDatum(typeName);
+	ScanKeyEntryInitialize(typeKey,
+						   0,
+						   Anum_pg_type_typname,
+						   F_NAMEEQ,
+						   PointerGetDatum(typeName));
+
 	pg_type_scan = heap_beginscan(pg_type_desc,
 								  0,
 								  SnapshotSelf, /* cache? */
@@ -484,6 +487,10 @@ TypeCreate(char *typeName,
 	tup = heap_getnext(pg_type_scan, 0);
 	if (HeapTupleIsValid(tup))
 	{
+		/* should not happen given prior test? */
+		if (assignedTypeOid != InvalidOid)
+			elog(ERROR, "TypeCreate: type %s already defined", typeName);
+
 		tup = heap_modifytuple(tup,
 							   pg_type_desc,
 							   values,
@@ -501,6 +508,9 @@ TypeCreate(char *typeName,
 		tup = heap_formtuple(tupDesc,
 							 values,
 							 nulls);
+
+		/* preassign tuple Oid, if one was given */
+		tup->t_data->t_oid = assignedTypeOid;
 
 		heap_insert(pg_type_desc, tup);
 

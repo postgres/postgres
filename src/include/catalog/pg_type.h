@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.100 2001/01/24 19:43:22 momjian Exp $
+ * $Id: pg_type.h,v 1.101 2001/02/12 20:07:20 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -420,6 +420,7 @@ DESCR("numeric(precision, decimal), arbitrary precision number");
 extern Oid	TypeGet(char *typeName, bool *defined);
 extern Oid	TypeShellMake(char *typeName);
 extern Oid TypeCreate(char *typeName,
+		   Oid assignedTypeOid,
 		   Oid relationOid,
 		   int16 internalSize,
 		   int16 externalSize,
@@ -431,7 +432,8 @@ extern Oid TypeCreate(char *typeName,
 		   char *sendProcedure,
 		   char *elementTypeName,
 		   char *defaultTypeValue,
-		   bool passedByValue, char alignment,
+		   bool passedByValue,
+		   char alignment,
 		   char storage);
 extern void TypeRename(const char *oldTypeName, const char *newTypeName);
 extern char *makeArrayTypeName(char *typeName);
