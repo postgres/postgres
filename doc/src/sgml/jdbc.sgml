@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.33 2001/11/27 13:02:33 ishii Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.34 2001/11/29 05:35:51 barry Exp $
 -->
 
  <chapter id="jdbc">
@@ -514,6 +514,17 @@ st.close();
         <classname>ResultSet</classname>, the currently open
         <classname>ResultSet</classname> instance is closed
         automatically.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        <classname>ResultSet</classname> is currently read only.
+        You can not update data through the <classname>ResultSet</classname>.
+        If you want to update data you need to do it the old fashioned way
+        by issuing a <acronym>SQL</acronym> update statement.  This is 
+        in conformance with the <acronym>JDBC</acronym> specification 
+        which does not require drivers to provide this functionality.
        </para>
       </listitem>
      </itemizedlist>
