@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/src/makefiles/Attic/Makefile.win,v 1.14 2001/08/29 19:14:40 petere Exp $
+# $Header: /cvsroot/pgsql/src/makefiles/Attic/Makefile.win,v 1.15 2001/09/06 02:58:33 momjian Exp $
 LDFLAGS+= -g
 DLLTOOL= dlltool
 DLLWRAP= dllwrap
@@ -25,6 +25,10 @@ override CPPFLAGS+= -DBUILDING_DLL=1
 endif
 
 ifeq ($(findstring ecpg/lib,$(subdir)), ecpg/lib)
+override CPPFLAGS+= -DBUILDING_DLL=1
+endif
+
+ifeq ($(findstring interfaces/libpq++,$(subdir)), interfaces/libpq++)
 override CPPFLAGS+= -DBUILDING_DLL=1
 endif
 
