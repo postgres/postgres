@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pgtclsh/Attic/Makefile,v 1.8 1997/09/27 19:13:56 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pgtclsh/Attic/Makefile,v 1.9 1997/09/27 19:28:40 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -17,7 +17,7 @@ include ../../Makefile.global
 CFLAGS+=  -I$(TCL_INCDIR) -I$(TK_INCDIR) -I$(X11_INCDIR) -I$(SRCDIR)/interfaces/libpgtcl
 
 # try to find libpgtcl.a in either directory
-LIBPGTCL= -L$(SRCDIR)/libpgtcl -L$(LIBDIR) -lpgtcl
+LIBPGTCL= -L$(SRCDIR)/interfaces/libpgtcl -L$(LIBDIR) -lpgtcl
 LIBPQ= -L$(LIBPQDIR) -L$(LIBDIR) -lpq
 
 all: pgtclsh pgtksh
