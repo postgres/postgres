@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.21 1997/09/13 03:12:55 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.22 1997/09/24 17:48:25 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,8 +91,9 @@ quote			'
 xqstart			{quote}
 xqstop			{quote}
 xqdouble		{quote}{quote}
-xqinside		[^\']*
-xqliteral		[\\].
+xqinside		[^\\']*
+xqembedded		"\\'"
+xqliteral		[\\](.|\n)
 
 xcline			[\/][\*].*[\*][\/]{space}*\n*
 xcstart			[\/][\*]{op_and_self}*
@@ -132,6 +133,14 @@ other			.
 /* DO NOT PUT ANY COMMENTS IN THE FOLLOWING SECTION.
  * AT&T lex does not properly handle C-style comments in this second lex block.
  * So, put comments here. tgl - 1997-09-08
+ *
+ * Quoted strings must allow some special characters such as single-quote
+ *  and newline.
+ * Embedded single-quotes are implemented both in the SQL/92-standard
+ *  style of two adjacent single quotes "''" and in the Postgres/Java style
+ *  of escaped-quote "\'".
+ * Other embedded escaped characters are matched explicitly and the leading
+ *  backslash is dropped from the string. - thomas 1997-09-24
  */
 
 %%
@@ -163,6 +172,14 @@ other			.
 					memcpy(literal+llen, yytext, yyleng+1);
 					llen += yyleng;
 				}
+<xq>{xqembedded} {
+					if ((llen+yyleng-1) > (MAX_PARSE_BUFFER - 1))
+						elog(WARN,"quoted string parse buffer of %d chars exceeded",MAX_PARSE_BUFFER);
+					memcpy(literal+llen, yytext, yyleng+1);
+					*(literal+llen) = '\'';
+					llen += yyleng;
+				}
+
 <xq>{xqliteral} {
 					if ((llen+yyleng-1) > (MAX_PARSE_BUFFER - 1))
 						elog(WARN,"quoted string parse buffer of %d chars exceeded",MAX_PARSE_BUFFER);
