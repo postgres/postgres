@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.44 1999/05/25 16:07:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.45 1999/05/25 18:20:30 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,6 @@
 #include <access/genam.h>
 #include <fmgr.h>
 #include <storage/bufpage.h>
-#include <storage/bufmgr.h>
 #include <access/nbtree.h>
 #include <catalog/pg_proc.h>
 

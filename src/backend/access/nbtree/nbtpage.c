@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.21 1999/05/25 16:07:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.22 1999/05/25 18:20:29 vadim Exp $
  *
  *	NOTES
  *	   Postgres btree pages look like ordinary relation pages.	The opaque
@@ -27,7 +27,6 @@
 #include <storage/bufpage.h>
 #include <access/nbtree.h>
 #include <miscadmin.h>
-#include <storage/bufmgr.h>
 #include <storage/lmgr.h>
 
 #ifndef HAVE_MEMMOVE
@@ -36,26 +35,17 @@
 #include <string.h>
 #endif
 
-static void _bt_setpagelock(Relation rel, BlockNumber blkno, int access);
-static void _bt_unsetpagelock(Relation rel, BlockNumber blkno, int access);
-
 #define BTREE_METAPAGE	0
 #define BTREE_MAGIC		0x053162
 
-#ifdef BTREE_VERSION_1
 #define BTREE_VERSION	1
-#else
-#define BTREE_VERSION	0
-#endif
 
 typedef struct BTMetaPageData
 {
 	uint32		btm_magic;
 	uint32		btm_version;
 	BlockNumber btm_root;
-#ifdef BTREE_VERSION_1
 	int32		btm_level;
-#endif
 } BTMetaPageData;
 
 #define BTPageGetMeta(p) \
@@ -108,9 +98,7 @@ _bt_metapinit(Relation rel)
 	metad.btm_magic = BTREE_MAGIC;
 	metad.btm_version = BTREE_VERSION;
 	metad.btm_root = P_NONE;
-#ifdef BTREE_VERSION_1
 	metad.btm_level = 0;
-#endif
 	memmove((char *) BTPageGetMeta(pg), (char *) &metad, sizeof(metad));
 
 	op = (BTPageOpaque) PageGetSpecialPointer(pg);
@@ -246,9 +234,7 @@ _bt_getroot(Relation rel, int access)
 			rootblkno = BufferGetBlockNumber(rootbuf);
 			rootpg = BufferGetPage(rootbuf);
 			metad->btm_root = rootblkno;
-#ifdef BTREE_VERSION_1
 			metad->btm_level = 1;
-#endif
 			_bt_pageinit(rootpg, BufferGetPageSize(rootbuf));
 			rootopaque = (BTPageOpaque) PageGetSpecialPointer(rootpg);
 			rootopaque->btpo_flags |= (BTP_LEAF | BTP_ROOT);
@@ -257,8 +243,8 @@ _bt_getroot(Relation rel, int access)
 			/* swap write lock for read lock, if appropriate */
 			if (access != BT_WRITE)
 			{
-				_bt_setpagelock(rel, rootblkno, BT_READ);
-				_bt_unsetpagelock(rel, rootblkno, BT_WRITE);
+				LockBuffer(rootbuf, BUFFER_LOCK_UNLOCK);
+				LockBuffer(rootbuf, BT_READ);
 			}
 
 			/* okay, metadata is correct */
@@ -322,31 +308,24 @@ _bt_getbuf(Relation rel, BlockNumber blkno, int access)
 	Buffer		buf;
 	Page		page;
 
-	/*
-	 * If we want a new block, we can't set a lock of the appropriate type
-	 * until we've instantiated the buffer.
-	 */
-
 	if (blkno != P_NEW)
 	{
-		if (access == BT_WRITE)
-			_bt_setpagelock(rel, blkno, BT_WRITE);
-		else
-			_bt_setpagelock(rel, blkno, BT_READ);
-
 		buf = ReadBuffer(rel, blkno);
+		LockBuffer(buf, access);
 	}
 	else
 	{
+		/*
+		 * Extend bufmgr code is unclean and so we have to
+		 * use locking here.
+		 */
+		LockPage(rel, 0, ExclusiveLock);
 		buf = ReadBuffer(rel, blkno);
+		UnlockPage(rel, 0, ExclusiveLock);
 		blkno = BufferGetBlockNumber(buf);
 		page = BufferGetPage(buf);
 		_bt_pageinit(page, BufferGetPageSize(buf));
-
-		if (access == BT_WRITE)
-			_bt_setpagelock(rel, blkno, BT_WRITE);
-		else
-			_bt_setpagelock(rel, blkno, BT_READ);
+		LockBuffer(buf, access);
 	}
 
 	/* ref count and lock type are correct */
@@ -359,16 +338,7 @@ _bt_getbuf(Relation rel, BlockNumber blkno, int access)
 void
 _bt_relbuf(Relation rel, Buffer buf, int access)
 {
-	BlockNumber blkno;
-
-	blkno = BufferGetBlockNumber(buf);
-
-	/* access had better be one of read or write */
-	if (access == BT_WRITE)
-		_bt_unsetpagelock(rel, blkno, BT_WRITE);
-	else
-		_bt_unsetpagelock(rel, blkno, BT_READ);
-
+	LockBuffer(buf, BUFFER_LOCK_UNLOCK);
 	ReleaseBuffer(buf);
 }
 
@@ -382,11 +352,8 @@ _bt_relbuf(Relation rel, Buffer buf, int access)
 void
 _bt_wrtbuf(Relation rel, Buffer buf)
 {
-	BlockNumber blkno;
-
-	blkno = BufferGetBlockNumber(buf);
+	LockBuffer(buf, BUFFER_LOCK_UNLOCK);
 	WriteBuffer(buf);
-	_bt_unsetpagelock(rel, blkno, BT_WRITE);
 }
 
 /*
@@ -399,9 +366,6 @@ _bt_wrtbuf(Relation rel, Buffer buf)
 void
 _bt_wrtnorelbuf(Relation rel, Buffer buf)
 {
-	BlockNumber blkno;
-
-	blkno = BufferGetBlockNumber(buf);
 	WriteNoReleaseBuffer(buf);
 }
 
@@ -452,12 +416,10 @@ _bt_metaproot(Relation rel, BlockNumber rootbknum, int level)
 	Assert(metaopaque->btpo_flags & BTP_META);
 	metad = BTPageGetMeta(metap);
 	metad->btm_root = rootbknum;
-#ifdef BTREE_VERSION_1
-	if (level == 0)				/* called from _do_insert */
+	if (level == 0)						/* called from _do_insert */
 		metad->btm_level += 1;
 	else
 		metad->btm_level = level;		/* called from btsort */
-#endif
 	_bt_wrtbuf(rel, metabuf);
 }
 
@@ -579,32 +541,6 @@ _bt_getstackbuf(Relation rel, BTStack stack, int access)
 				return buf;
 			}
 		}
-	}
-}
-
-static void
-_bt_setpagelock(Relation rel, BlockNumber blkno, int access)
-{
-
-	if (USELOCKING)
-	{
-		if (access == BT_WRITE)
-			LockPage(rel, blkno, ExclusiveLock);
-		else
-			LockPage(rel, blkno, ShareLock);
-	}
-}
-
-static void
-_bt_unsetpagelock(Relation rel, BlockNumber blkno, int access)
-{
-
-	if (USELOCKING)
-	{
-		if (access == BT_WRITE)
-			UnlockPage(rel, blkno, ExclusiveLock);
-		else
-			UnlockPage(rel, blkno, ShareLock);
 	}
 }
 

@@ -5,7 +5,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Id: nbtsort.c,v 1.39 1999/05/25 16:07:34 momjian Exp $
+ *	  $Id: nbtsort.c,v 1.40 1999/05/25 18:20:31 vadim Exp $
  *
  * NOTES
  *
@@ -52,7 +52,6 @@
 #include "postgres.h"
 
 #include "access/nbtree.h"
-#include "storage/bufmgr.h"
 #include "storage/bufpage.h"
 #include "utils/memutils.h"
 

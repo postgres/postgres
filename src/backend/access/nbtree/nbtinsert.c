@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.40 1999/05/25 16:07:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.41 1999/05/25 18:20:28 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,6 @@
 #include <access/nbtree.h>
 #include <access/heapam.h>
 #include <access/xact.h>
-#include <storage/bufmgr.h>
 #include <fmgr.h>
 
 #ifndef HAVE_MEMMOVE
@@ -64,14 +63,11 @@ _bt_doinsert(Relation rel, BTItem btitem, bool index_is_unique, Relation heapRel
 	/* find the page containing this key */
 	stack = _bt_search(rel, natts, itup_scankey, &buf);
 
-	blkno = BufferGetBlockNumber(buf);
-
 	/* trade in our read lock for a write lock */
-	_bt_relbuf(rel, buf, BT_READ);
+	LockBuffer(buf, BUFFER_LOCK_UNLOCK);
+	LockBuffer(buf, BT_WRITE);
 
 l1:
-	buf = _bt_getbuf(rel, blkno, BT_WRITE);
-
 	/*
 	 * If the page was split between the time that we surrendered our read
 	 * lock and acquired our write lock, then this page may no longer be
@@ -81,6 +77,7 @@ l1:
 	 */
 
 	buf = _bt_moveright(rel, buf, natts, itup_scankey, BT_WRITE);
+	blkno = BufferGetBlockNumber(buf);
 
 	/* if we're not allowing duplicates, make sure the key isn't */
 	/* already in the node */
@@ -99,13 +96,13 @@ l1:
 		/* key on the page before trying to compare it */
 		if (!PageIsEmpty(page) && offset <= maxoff)
 		{
-			TupleDesc	itupdesc;
-			BTItem		cbti;
-			HeapTupleData htup;
-			BTPageOpaque opaque;
-			Buffer		nbuf;
-			BlockNumber blkno;
-			bool		chtup = true;
+			TupleDesc		itupdesc;
+			BTItem			cbti;
+			HeapTupleData	htup;
+			BTPageOpaque 	opaque;
+			Buffer			nbuf;
+			BlockNumber 	nblkno;
+			bool			chtup = true;
 
 			itupdesc = RelationGetDescr(rel);
 			nbuf = InvalidBuffer;
@@ -157,7 +154,8 @@ l1:
 							_bt_relbuf(rel, nbuf, BT_READ);
 						_bt_relbuf(rel, buf, BT_WRITE);
 						XactLockTableWait(xwait);
-						goto l1;/* continue from the begin */
+						buf = _bt_getbuf(rel, blkno, BT_WRITE);
+						goto l1;	/* continue from the begin */
 					}
 					elog(ERROR, "Cannot insert a duplicate key into a unique index");
 				}
@@ -177,12 +175,12 @@ l1:
 					 * min key of the right page is the same, ooh - so
 					 * many dead duplicates...
 					 */
-					blkno = opaque->btpo_next;
+					nblkno = opaque->btpo_next;
 					if (nbuf != InvalidBuffer)
 						_bt_relbuf(rel, nbuf, BT_READ);
-					for (nbuf = InvalidBuffer;;)
+					for (nbuf = InvalidBuffer; ; )
 					{
-						nbuf = _bt_getbuf(rel, blkno, BT_READ);
+						nbuf = _bt_getbuf(rel, nblkno, BT_READ);
 						page = BufferGetPage(nbuf);
 						maxoff = PageGetMaxOffsetNumber(page);
 						opaque = (BTPageOpaque) PageGetSpecialPointer(page);
@@ -193,10 +191,10 @@ l1:
 						}
 						else
 						{		/* Empty or "pseudo"-empty page - get next */
-							blkno = opaque->btpo_next;
+							nblkno = opaque->btpo_next;
 							_bt_relbuf(rel, nbuf, BT_READ);
 							nbuf = InvalidBuffer;
-							if (blkno == P_NONE)
+							if (nblkno == P_NONE)
 								break;
 						}
 					}

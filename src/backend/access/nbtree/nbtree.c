@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.38 1999/05/25 16:07:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.39 1999/05/25 18:20:29 vadim Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -394,7 +394,7 @@ btgettuple(IndexScanDesc scan, ScanDirection dir)
 
 		/*
 		 * Restore scan position using heap TID returned by previous call
-		 * to btgettuple().
+		 * to btgettuple(). _bt_restscan() locks buffer.
 		 */
 		_bt_restscan(scan);
 		res = _bt_next(scan, dir);
@@ -402,9 +402,15 @@ btgettuple(IndexScanDesc scan, ScanDirection dir)
 	else
 		res = _bt_first(scan, dir);
 
-	/* Save heap TID to use it in _bt_restscan */
+	/* 
+	 * Save heap TID to use it in _bt_restscan.
+	 * Unlock buffer before leaving index !
+	 */
 	if (res)
+	{
 		((BTScanOpaque) scan->opaque)->curHeapIptr = res->heap_iptr;
+		LockBuffer(((BTScanOpaque) scan->opaque)->btso_curbuf, BUFFER_LOCK_UNLOCK);
+	}
 
 	return (char *) res;
 }
@@ -437,18 +443,18 @@ btrescan(IndexScanDesc scan, bool fromEnd, ScanKey scankey)
 
 	so = (BTScanOpaque) scan->opaque;
 
-	/* we hold a read lock on the current page in the scan */
+	/* we don't hold a read lock on the current page in the scan */
 	if (ItemPointerIsValid(iptr = &(scan->currentItemData)))
 	{
-		_bt_relbuf(scan->relation, so->btso_curbuf, BT_READ);
+		ReleaseBuffer(so->btso_curbuf);
 		so->btso_curbuf = InvalidBuffer;
 		ItemPointerSetInvalid(iptr);
 	}
 
-	/* and we hold a read lock on the last marked item in the scan */
+	/* and we don't hold a read lock on the last marked item in the scan */
 	if (ItemPointerIsValid(iptr = &(scan->currentMarkData)))
 	{
-		_bt_relbuf(scan->relation, so->btso_mrkbuf, BT_READ);
+		ReleaseBuffer(so->btso_mrkbuf);
 		so->btso_mrkbuf = InvalidBuffer;
 		ItemPointerSetInvalid(iptr);
 	}
@@ -489,10 +495,10 @@ btmovescan(IndexScanDesc scan, Datum v)
 
 	so = (BTScanOpaque) scan->opaque;
 
-	/* release any locks we still hold */
+	/* we don't hold a read lock on the current page in the scan */
 	if (ItemPointerIsValid(iptr = &(scan->currentItemData)))
 	{
-		_bt_relbuf(scan->relation, so->btso_curbuf, BT_READ);
+		ReleaseBuffer(so->btso_curbuf);
 		so->btso_curbuf = InvalidBuffer;
 		ItemPointerSetInvalid(iptr);
 	}
@@ -512,11 +518,11 @@ btendscan(IndexScanDesc scan)
 
 	so = (BTScanOpaque) scan->opaque;
 
-	/* release any locks we still hold */
+	/* we don't hold any read locks */
 	if (ItemPointerIsValid(iptr = &(scan->currentItemData)))
 	{
 		if (BufferIsValid(so->btso_curbuf))
-			_bt_relbuf(scan->relation, so->btso_curbuf, BT_READ);
+			ReleaseBuffer(so->btso_curbuf);
 		so->btso_curbuf = InvalidBuffer;
 		ItemPointerSetInvalid(iptr);
 	}
@@ -524,7 +530,7 @@ btendscan(IndexScanDesc scan)
 	if (ItemPointerIsValid(iptr = &(scan->currentMarkData)))
 	{
 		if (BufferIsValid(so->btso_mrkbuf))
-			_bt_relbuf(scan->relation, so->btso_mrkbuf, BT_READ);
+			ReleaseBuffer(so->btso_mrkbuf);
 		so->btso_mrkbuf = InvalidBuffer;
 		ItemPointerSetInvalid(iptr);
 	}
@@ -547,20 +553,19 @@ btmarkpos(IndexScanDesc scan)
 
 	so = (BTScanOpaque) scan->opaque;
 
-	/* release lock on old marked data, if any */
+	/* we don't hold any read locks */
 	if (ItemPointerIsValid(iptr = &(scan->currentMarkData)))
 	{
-		_bt_relbuf(scan->relation, so->btso_mrkbuf, BT_READ);
+		ReleaseBuffer(so->btso_mrkbuf);
 		so->btso_mrkbuf = InvalidBuffer;
 		ItemPointerSetInvalid(iptr);
 	}
 
-	/* bump lock on currentItemData and copy to currentMarkData */
+	/* bump pin on current buffer */
 	if (ItemPointerIsValid(&(scan->currentItemData)))
 	{
-		so->btso_mrkbuf = _bt_getbuf(scan->relation,
-								   BufferGetBlockNumber(so->btso_curbuf),
-									 BT_READ);
+		so->btso_mrkbuf = ReadBuffer(scan->relation,
+									 BufferGetBlockNumber(so->btso_curbuf));
 		scan->currentMarkData = scan->currentItemData;
 		so->mrkHeapIptr = so->curHeapIptr;
 	}
@@ -577,20 +582,19 @@ btrestrpos(IndexScanDesc scan)
 
 	so = (BTScanOpaque) scan->opaque;
 
-	/* release lock on current data, if any */
+	/* we don't hold any read locks */
 	if (ItemPointerIsValid(iptr = &(scan->currentItemData)))
 	{
-		_bt_relbuf(scan->relation, so->btso_curbuf, BT_READ);
+		ReleaseBuffer(so->btso_curbuf);
 		so->btso_curbuf = InvalidBuffer;
 		ItemPointerSetInvalid(iptr);
 	}
 
-	/* bump lock on currentMarkData and copy to currentItemData */
+	/* bump pin on marked buffer */
 	if (ItemPointerIsValid(&(scan->currentMarkData)))
 	{
-		so->btso_curbuf = _bt_getbuf(scan->relation,
-								   BufferGetBlockNumber(so->btso_mrkbuf),
-									 BT_READ);
+		so->btso_curbuf = ReadBuffer(scan->relation,
+									 BufferGetBlockNumber(so->btso_mrkbuf));
 
 		scan->currentItemData = scan->currentMarkData;
 		so->curHeapIptr = so->mrkHeapIptr;
@@ -623,6 +627,7 @@ _bt_restscan(IndexScanDesc scan)
 	BTItem		item;
 	BlockNumber blkno;
 
+	LockBuffer(buf, BT_READ);
 	/*
 	 * We use this as flag when first index tuple on page is deleted but
 	 * we do not move left (this would slowdown vacuum) - so we set

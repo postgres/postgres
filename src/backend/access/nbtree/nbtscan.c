@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/Attic/nbtscan.c,v 1.21 1999/05/25 16:07:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/Attic/nbtscan.c,v 1.22 1999/05/25 18:20:30 vadim Exp $
  *
  *
  * NOTES
@@ -30,7 +30,6 @@
 #include <postgres.h>
 
 #include <storage/bufpage.h>
-#include <storage/bufmgr.h>
 #include <access/nbtree.h>
 
 typedef struct BTScanListData
@@ -134,6 +133,11 @@ _bt_scandel(IndexScanDesc scan, BlockNumber blkno, OffsetNumber offno)
 			ItemPointerSetInvalid(&(so->curHeapIptr));
 		else
 		{
+			/* 
+			 * We have to lock buffer before _bt_step 
+			 * and unlock it after that.
+			 */
+			LockBuffer(buf, BT_READ);
 			_bt_step(scan, &buf, BackwardScanDirection);
 			so->btso_curbuf = buf;
 			if (ItemPointerIsValid(current))
@@ -143,6 +147,7 @@ _bt_scandel(IndexScanDesc scan, BlockNumber blkno, OffsetNumber offno)
 				 PageGetItemId(pg, ItemPointerGetOffsetNumber(current)));
 
 				so->curHeapIptr = btitem->bti_itup.t_tid;
+				LockBuffer(buf, BUFFER_LOCK_UNLOCK);
 			}
 		}
 	}
@@ -169,6 +174,7 @@ _bt_scandel(IndexScanDesc scan, BlockNumber blkno, OffsetNumber offno)
 			so->btso_curbuf = so->btso_mrkbuf;
 			so->btso_mrkbuf = buf;
 			buf = so->btso_curbuf;
+			LockBuffer(buf, BT_READ);	/* as above */
 
 			_bt_step(scan, &buf, BackwardScanDirection);
 
@@ -184,6 +190,7 @@ _bt_scandel(IndexScanDesc scan, BlockNumber blkno, OffsetNumber offno)
 				 PageGetItemId(pg, ItemPointerGetOffsetNumber(current)));
 
 				so->mrkHeapIptr = btitem->bti_itup.t_tid;
+				LockBuffer(buf, BUFFER_LOCK_UNLOCK);	/* as above */
 			}
 		}
 	}
