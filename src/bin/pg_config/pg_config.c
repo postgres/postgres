@@ -17,7 +17,7 @@
  *
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_config/pg_config.c,v 1.6 2004/08/29 05:06:52 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_config/pg_config.c,v 1.7 2004/10/06 17:21:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,14 +38,14 @@ help()
 	printf(_("  %s OPTION...\n\n"), progname);
 	printf(_("Options:\n"));
 	printf(_("  --bindir              show location of user executables\n"));
-	printf(_("  --includedir          show location of C header files of the client\n"));
-	printf(_("                        interfaces\n"));
+	printf(_("  --includedir          show location of C header files of the client\n"
+		 "                        interfaces\n"));
 	printf(_("  --includedir-server   show location of C header files for the server\n"));
 	printf(_("  --libdir              show location of object code libraries\n"));
 	printf(_("  --pkglibdir           show location of dynamically loadable modules\n"));
 	printf(_("  --pgxs                show location of extension makefile\n"));
-	printf(_("  --configure           show options given to 'configure' script when\n"));
-	printf(_("                        PostgreSQL was built\n"));
+	printf(_("  --configure           show options given to 'configure' script when\n"
+		 "                        PostgreSQL was built\n"));
 	printf(_("  --version             show the PostgreSQL version, then exit\n"));
 	printf(_("  --help                show this help, then exit\n\n"));
 	printf(_("Report bugs to <pgsql-bugs@postgresql.org>.\n"));
