@@ -359,13 +359,13 @@ static unsigned char BF_atoi64[0x60] = {
 };
 
 #define BF_safe_atoi64(dst, src) \
-{ \
+do { \
 	tmp = (unsigned char)(src); \
 	if ((unsigned int)(tmp -= 0x20) >= 0x60) return -1; \
 	tmp = BF_atoi64[tmp]; \
 	if (tmp > 63) return -1; \
 	(dst) = tmp; \
-}
+} while (0)
 
 static int BF_decode(BF_word *dst, const char *src, int size)
 {

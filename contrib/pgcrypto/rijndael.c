@@ -255,25 +255,25 @@ gen_tabs(void)
 /* initialise the key schedule from the user supplied key   */
 
 #define loop4(i)                                    \
-{   t = ls_box(rotr(t,  8)) ^ rco_tab[i];           \
+do {   t = ls_box(rotr(t,  8)) ^ rco_tab[i];           \
     t ^= e_key[4 * i];     e_key[4 * i + 4] = t;    \
     t ^= e_key[4 * i + 1]; e_key[4 * i + 5] = t;    \
     t ^= e_key[4 * i + 2]; e_key[4 * i + 6] = t;    \
     t ^= e_key[4 * i + 3]; e_key[4 * i + 7] = t;    \
-}
+} while (0)
 
 #define loop6(i)                                    \
-{   t = ls_box(rotr(t,  8)) ^ rco_tab[i];           \
+do {   t = ls_box(rotr(t,  8)) ^ rco_tab[i];           \
     t ^= e_key[6 * i];     e_key[6 * i + 6] = t;    \
     t ^= e_key[6 * i + 1]; e_key[6 * i + 7] = t;    \
     t ^= e_key[6 * i + 2]; e_key[6 * i + 8] = t;    \
     t ^= e_key[6 * i + 3]; e_key[6 * i + 9] = t;    \
     t ^= e_key[6 * i + 4]; e_key[6 * i + 10] = t;   \
     t ^= e_key[6 * i + 5]; e_key[6 * i + 11] = t;   \
-}
+} while (0)
 
 #define loop8(i)                                    \
-{   t = ls_box(rotr(t,  8)) ^ rco_tab[i];           \
+do {   t = ls_box(rotr(t,  8)) ^ rco_tab[i];           \
     t ^= e_key[8 * i];     e_key[8 * i + 8] = t;    \
     t ^= e_key[8 * i + 1]; e_key[8 * i + 9] = t;    \
     t ^= e_key[8 * i + 2]; e_key[8 * i + 10] = t;   \
@@ -283,7 +283,7 @@ gen_tabs(void)
     t ^= e_key[8 * i + 5]; e_key[8 * i + 13] = t;   \
     t ^= e_key[8 * i + 6]; e_key[8 * i + 14] = t;   \
     t ^= e_key[8 * i + 7]; e_key[8 * i + 15] = t;   \
-}
+} while (0)
 
 rijndael_ctx *
 rijndael_set_key(rijndael_ctx *ctx, const u4byte *in_key, const u4byte key_len,
