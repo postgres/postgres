@@ -6,99 +6,92 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.10 1996/10/23 07:39:53 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.11 1996/11/02 02:01:47 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#include "postgres.h"
+#include <postgres.h>
 
-#include "catalog/pg_attribute.h"
-#include "access/attnum.h"   
-#include "nodes/pg_list.h"
-#include "access/tupdesc.h"  
-#include "storage/fd.h"
-#include "catalog/pg_am.h"
-#include "catalog/pg_class.h"
-#include "nodes/nodes.h"
-#include "rewrite/prs2lock.h"
-#include "access/skey.h"
-#include "access/strat.h"
-#include "utils/rel.h"
+#include <catalog/pg_attribute.h>
+#include <access/attnum.h>   
+#include <nodes/pg_list.h>
+#include <access/tupdesc.h>  
+#include <storage/fd.h>
+#include <catalog/pg_am.h>
+#include <catalog/pg_class.h>
+#include <nodes/nodes.h>
+#include <rewrite/prs2lock.h>
+#include <access/skey.h>
+#include <access/strat.h>
+#include <utils/rel.h>
  
-#include "storage/block.h"
-#include "storage/off.h"
-#include "storage/itemptr.h"
+#include <storage/block.h>
+#include <storage/off.h>
+#include <storage/itemptr.h>
 #include <time.h>
-#include "utils/nabstime.h"
-#include "access/htup.h"
+#include <utils/nabstime.h>
+#include <access/htup.h>
 
-#include "utils/tqual.h"
-#include "storage/buf.h" 
-#include "access/relscan.h"
-#include "access/heapam.h"
+#include <utils/tqual.h>
+#include <storage/buf.h> 
+#include <access/relscan.h>
+#include <access/heapam.h>
 
-#include "access/itup.h" 
+#include <access/itup.h> 
 
 #include <stdio.h>
 
-#include "tcop/dest.h"
+#include <tcop/dest.h>
 
-#include "fmgr.h"
+#include <fmgr.h>
 
-#include "utils/palloc.h"
+#include <utils/palloc.h>
 
-#include "miscadmin.h"
+#include <miscadmin.h>
 
-#include "utils/geo-decls.h"
-#include "utils/builtins.h"
+#include <utils/geo-decls.h>
+#include <utils/builtins.h>
 
 #include <sys/stat.h>
 
-#include "access/funcindex.h"
+#include <access/funcindex.h>
 
-#include "catalog/pg_index.h"
+#include <catalog/pg_index.h>
 
-#include "utils/syscache.h"
+#include <utils/syscache.h>
 
-#include "nodes/params.h"
-#include "access/sdir.h" 
-#include "executor/hashjoin.h"
-#include "nodes/primnodes.h"  
-#include "nodes/memnodes.h"
-#include "executor/tuptable.h"
-#include "nodes/execnodes.h" 
+#include <nodes/params.h>
+#include <access/sdir.h> 
+#include <executor/hashjoin.h>
+#include <nodes/primnodes.h>  
+#include <nodes/memnodes.h>
+#include <executor/tuptable.h>
+#include <nodes/execnodes.h> 
 
-#include "utils/memutils.h"
+#include <utils/memutils.h>
 
-#include "nodes/plannodes.h"
-#include "nodes/parsenodes.h"
-#include "executor/execdesc.h"
-#include "executor/executor.h"
+#include <nodes/plannodes.h>
+#include <nodes/parsenodes.h>
+#include <executor/execdesc.h>
+#include <executor/executor.h>
 
-#include "storage/ipc.h"
-#include "storage/bufmgr.h"
-#include "access/transam.h"
+#include <storage/ipc.h>
+#include <storage/bufmgr.h>
+#include <access/transam.h>
 
-#include "catalog/index.h"
+#include <catalog/index.h>
 
-#include "access/genam.h"
+#include <access/genam.h>
 
-#include "catalog/pg_type.h"
+#include <catalog/pg_type.h>
 
-#include "catalog/catname.h"
+#include <catalog/catname.h>
 
-#define ISOCTAL(c)    (((c) >= '0') && ((c) <= '7'))
-#define VALUE(c)        ((c) - '0')
 
-/*
- * New copy code.
- * 
- * This code "knows" the following about tuples:
- * 
- */
+#define ISOCTAL(c) (((c) >= '0') && ((c) <= '7'))
+#define VALUE(c) ((c) - '0')
 
-static bool reading_from_input = false;
 
 /* non-export function prototypes */
 static void CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim);
@@ -108,60 +101,111 @@ static Oid GetTypeElement(Oid type);
 static Oid GetInputFunction(Oid type);
 static Oid IsTypeByVal(Oid type);
 static void GetIndexRelations(Oid main_relation_oid,
-			      int *n_indices,
-			      Relation **index_rels);
+                              int *n_indices,
+                              Relation **index_rels);
 static char *CopyReadAttribute(FILE *fp, bool *isnull, char *delim);
 static void CopyAttributeOut(FILE *fp, char *string, char *delim);
 static int CountTuples(Relation relation);
 
 extern FILE *Pfout, *Pfin;
 
+/*
+ *   DoCopy executes a the SQL COPY statement.
+ */
+
 void
-DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe, char *filename, 
-       char *delim)
-{
+DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe, 
+       char *filename, char *delim) {
+/*----------------------------------------------------------------------------
+  Either unload or reload contents of class <relname>, depending on <from>.
+
+  If <pipe> is false, transfer is between the class and the file named
+  <filename>.  Otherwise, transfer is between the class and our regular
+  input/output stream.  The latter could be either stdin/stdout or a 
+  socket, depending on whether we're running under Postmaster control.
+
+  Iff <binary>, unload or reload in the binary format, as opposed to the
+  more wasteful but more robust and portable text format.  
+
+  If in the text format, delimit columns with delimiter <delim>.  
+
+  When loading in the text format from an input stream (as opposed to
+  a file), recognize a "." on a line by itself as EOF.  Also recognize
+  a stream EOF.  When unloading in the text format to an output stream,
+  write a "." on a line by itself at the end of the data.
+
+  Iff <oids>, unload or reload the format that includes OID information.
+
+  Do not allow a Postgres user without superuser privilege to read from
+  or write to a file. 
+
+  Do not allow the copy if user doesn't have proper permission to access
+  the class.
+----------------------------------------------------------------------------*/
+
     FILE *fp;
     Relation rel;
-    reading_from_input = pipe;
-    
+    extern char *UserName;    /* defined in global.c */
+    const AclMode required_access = from ? ACL_WR : ACL_RD;
+
     rel = heap_openr(relname);
-    if (rel == NULL) elog(WARN, "Copy: class %s does not exist.", relname);
+    if (rel == NULL) elog(WARN, "COPY command failed.  Class %s "
+                          "does not exist.", relname);
     
-    if (from) {
-	if (pipe && IsUnderPostmaster) ReceiveCopyBegin();
-	if (IsUnderPostmaster) {
-	    fp = pipe ? Pfin : fopen(filename, "r");
-	}else {
-	    fp = pipe ? stdin : fopen(filename, "r");
-	}
-	if (fp == NULL) {
-	    elog(WARN, "COPY: file %s could not be open for reading", filename);
-	}
-	CopyFrom(rel, binary, oids, fp, delim);
-    }else {
-	
-	mode_t oumask = umask((mode_t) 0);
-	
-	if (pipe && IsUnderPostmaster) SendCopyBegin();
-	if (IsUnderPostmaster) {
-	    fp = pipe ? Pfout : fopen(filename, "w");
-	    
-	}else {
-	    fp = pipe ? stdout : fopen(filename, "w");
-	}
-	(void) umask(oumask);
-	if (fp == NULL)  {
-	    elog(WARN, "COPY: file %s could not be open for writing", filename);
-	}
-	CopyTo(rel, binary, oids, fp, delim);
-    }
-    if (!pipe) {
-	fclose(fp);
-    }else if (!from && !binary) {
-	fputs("\\.\n", fp);
-	if (IsUnderPostmaster) fflush(Pfout);
+    if (!pg_aclcheck(relname, UserName, required_access))
+        elog(WARN, "%s %s", relname, ACL_NO_PRIV_WARNING);
+        /* Above should not return */
+    else if (!superuser() && !pipe)
+        elog(WARN, "You must have Postgres superuser privilege to do a COPY "
+             "directly to or from a file.  Anyone can COPY to stdout or "
+             "from stdin.  Psql's \\copy command also works for anyone.");
+        /* Above should not return. */
+    else {
+        if (from) {  /* copy from file to database */
+            if (pipe) {
+                if (IsUnderPostmaster) {
+                    ReceiveCopyBegin();
+                    fp = Pfin;
+                } else fp = stdin;
+            } else {
+                fp = fopen(filename, "r");
+                if (fp == NULL) 
+                    elog(WARN, "COPY command, running in backend with "
+                         "effective uid %d, could not open file '%s' for ",
+                         "reading.  Errno = %s (%d).", 
+                         geteuid(), filename, strerror(errno), errno);
+                    /* Above should not return */
+            }
+            CopyFrom(rel, binary, oids, fp, delim);
+        } else {  /* copy from database to file */
+            if (pipe) {
+                if (IsUnderPostmaster) {
+                    SendCopyBegin();
+                    fp = Pfout;
+                } else fp = stdout;
+            } else {
+                mode_t oumask;  /* Pre-existing umask value */
+                (void) umask((mode_t) 0);
+                fp = fopen(filename, "w");
+                (void) umask(oumask);
+                if (fp == NULL) 
+                    elog(WARN, "COPY command, running in backend with "
+                         "effective uid %d, could not open file '%s' for ",
+                         "writing.  Errno = %s (%d).", 
+                         geteuid(), filename, strerror(errno), errno);
+                    /* Above should not return */
+            }
+            CopyTo(rel, binary, oids, fp, delim);
+        }
+        if (!pipe) fclose(fp);
+        else if (!from && !binary) {
+            fputs("\\.\n", fp);
+            if (IsUnderPostmaster) fflush(Pfout);
+        }
     }
 }
+
+
 
 static void
 CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
@@ -176,8 +220,14 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
     Oid out_func_oid;
     Oid *elements;
     Datum value;
-    bool isnull = (bool) true;
-    char *nulls = NULL;
+    bool isnull;  /* The attribute we are copying is null */
+    char *nulls;
+        /* <nulls> is a (dynamically allocated) array with one character
+           per attribute in the instance being copied.  nulls[I-1] is
+           'n' if Attribute Number I is null, and ' ' otherwise.
+
+           <nulls> is meaningful only if we are doing a binary copy.
+           */
     char *string;
     int32 ntuples;
     TupleDesc tupDesc;
@@ -189,23 +239,24 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
     tupDesc = rel->rd_att;
 
     if (!binary) {
-	out_functions = (func_ptr *) palloc(attr_count * sizeof(func_ptr));
-	elements = (Oid *) palloc(attr_count * sizeof(Oid));
-	for (i = 0; i < attr_count; i++) {
-	    out_func_oid = (Oid) GetOutputFunction(attr[i]->atttypid);
-	    fmgr_info(out_func_oid, &out_functions[i], &dummy);
-	    elements[i] = GetTypeElement(attr[i]->atttypid);
-	}
+        out_functions = (func_ptr *) palloc(attr_count * sizeof(func_ptr));
+        elements = (Oid *) palloc(attr_count * sizeof(Oid));
+        for (i = 0; i < attr_count; i++) {
+            out_func_oid = (Oid) GetOutputFunction(attr[i]->atttypid);
+            fmgr_info(out_func_oid, &out_functions[i], &dummy);
+            elements[i] = GetTypeElement(attr[i]->atttypid);
+        }
+        nulls = NULL;  /* meaningless, but compiler doesn't know that */
     }else {
-	elements = NULL;
-	out_functions = NULL;
-	nulls = (char *) palloc(attr_count);
-	for (i = 0; i < attr_count; i++) nulls[i] = ' ';
-	
-	/* XXX expensive */
-	
-	ntuples = CountTuples(rel);
-	fwrite(&ntuples, sizeof(int32), 1, fp);
+        elements = NULL;
+        out_functions = NULL;
+        nulls = (char *) palloc(attr_count);
+        for (i = 0; i < attr_count; i++) nulls[i] = ' ';
+        
+        /* XXX expensive */
+        
+        ntuples = CountTuples(rel);
+        fwrite(&ntuples, sizeof(int32), 1, fp);
     }
     
     for (tuple = heap_getnext(scandesc, 0, NULL);
@@ -213,69 +264,69 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
          tuple = heap_getnext(scandesc, 0, NULL)) {
 
         if (oids && !binary) {
-            	fputs(oidout(tuple->t_oid),fp);
-		fputc(delim[0], fp);
-	}
-	
-	for (i = 0; i < attr_count; i++) {
-	    value = (Datum) 
-		heap_getattr(tuple, InvalidBuffer, i+1, tupDesc, &isnull);
-	    if (!binary) {
-		if (!isnull) {
-		    string = (char *) (out_functions[i]) (value, elements[i]);
-		    CopyAttributeOut(fp, string, delim);
-		    pfree(string);
-		}
-		else
-		    fputs("\\N", fp);	/* null indicator */
+                fputs(oidout(tuple->t_oid),fp);
+                fputc(delim[0], fp);
+        }
+        
+        for (i = 0; i < attr_count; i++) {
+            value = (Datum) 
+                heap_getattr(tuple, InvalidBuffer, i+1, tupDesc, &isnull);
+            if (!binary) {
+                if (!isnull) {
+                    string = (char *) (out_functions[i]) (value, elements[i]);
+                    CopyAttributeOut(fp, string, delim);
+                    pfree(string);
+                }
+                else
+                    fputs("\\N", fp);   /* null indicator */
 
-		if (i == attr_count - 1) {
-		    fputc('\n', fp);
-		}else {
-		    /* when copying out, only use the first char of the delim
-		       string */
-		    fputc(delim[0], fp);
-		}
-	    }else {
-		/*
-		 * only interesting thing heap_getattr tells us in this case
-		 * is if we have a null attribute or not.
-		 */
-		if (isnull) nulls[i] = 'n';
-	    }
-	}
-	
-	if (binary) {
-	    int32 null_ct = 0, length;
-	    
-	    for (i = 0; i < attr_count; i++) {
-		if (nulls[i] == 'n') null_ct++;
-	    }
-	    
-	    length = tuple->t_len - tuple->t_hoff;
-	    fwrite(&length, sizeof(int32), 1, fp);
+                if (i == attr_count - 1) {
+                    fputc('\n', fp);
+                }else {
+                    /* when copying out, only use the first char of the delim
+                       string */
+                    fputc(delim[0], fp);
+                }
+            }else {
+                /*
+                 * only interesting thing heap_getattr tells us in this case
+                 * is if we have a null attribute or not.
+                 */
+                if (isnull) nulls[i] = 'n';
+            }
+        }
+        
+        if (binary) {
+            int32 null_ct = 0, length;
+            
+            for (i = 0; i < attr_count; i++) {
+                if (nulls[i] == 'n') null_ct++;
+            }
+            
+            length = tuple->t_len - tuple->t_hoff;
+            fwrite(&length, sizeof(int32), 1, fp);
             if (oids)
-		fwrite((char *) &tuple->t_oid, sizeof(int32), 1, fp);
+                fwrite((char *) &tuple->t_oid, sizeof(int32), 1, fp);
 
-	    fwrite(&null_ct, sizeof(int32), 1, fp);
-	    if (null_ct > 0) {
-		for (i = 0; i < attr_count; i++) {
-		    if (nulls[i] == 'n') {
-			fwrite(&i, sizeof(int32), 1, fp);
-			nulls[i] = ' ';
-		    }
-		}
-	    }
-	    fwrite((char *) tuple + tuple->t_hoff, length, 1, fp);
-	}
+            fwrite(&null_ct, sizeof(int32), 1, fp);
+            if (null_ct > 0) {
+                for (i = 0; i < attr_count; i++) {
+                    if (nulls[i] == 'n') {
+                        fwrite(&i, sizeof(int32), 1, fp);
+                        nulls[i] = ' ';
+                    }
+                }
+            }
+            fwrite((char *) tuple + tuple->t_hoff, length, 1, fp);
+        }
     }
     
     heap_endscan(scandesc);
     if (binary) {
-	pfree(nulls);
+        pfree(nulls);
     }else {
-	pfree(out_functions);
-	pfree(elements);
+        pfree(out_functions);
+        pfree(elements);
     }
     
     heap_close(rel);
@@ -337,93 +388,93 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
     
     if (rel->rd_rel->relhasindex) {
         GetIndexRelations(rel->rd_id, &n_indices, &index_rels);
-	if (n_indices > 0) {
-	    has_index = true;
-	    itupdescArr = 
-		(TupleDesc *)palloc(n_indices * sizeof(TupleDesc));
-	    pgIndexP =
-		(IndexTupleForm *)palloc(n_indices * sizeof(IndexTupleForm));
-	    indexNatts = (int *) palloc(n_indices * sizeof(int));
-	    finfo = (FuncIndexInfo *) palloc(n_indices * sizeof(FuncIndexInfo));
-	    finfoP = (FuncIndexInfo **) palloc(n_indices * sizeof(FuncIndexInfo *));
-	    indexPred = (Node **) palloc(n_indices * sizeof(Node*));
-	    econtext = NULL;
-	    for (i = 0; i < n_indices; i++) {
-		itupdescArr[i] = RelationGetTupleDescriptor(index_rels[i]);
-		pgIndexTup =
-		    SearchSysCacheTuple(INDEXRELID,
-					ObjectIdGetDatum(index_rels[i]->rd_id),
-					0,0,0);
-		Assert(pgIndexTup);
-		pgIndexP[i] = (IndexTupleForm)GETSTRUCT(pgIndexTup);
-		for (attnumP = &(pgIndexP[i]->indkey[0]), natts = 0;
-		     *attnumP != InvalidAttrNumber;
-		     attnumP++, natts++);
-		if (pgIndexP[i]->indproc != InvalidOid) {
-		    FIgetnArgs(&finfo[i]) = natts;
-		    natts = 1;
-		    FIgetProcOid(&finfo[i]) = pgIndexP[i]->indproc;
-		    *(FIgetname(&finfo[i])) = '\0';
-		    finfoP[i] = &finfo[i];
-		} else
-		    finfoP[i] = (FuncIndexInfo *) NULL;
-		indexNatts[i] = natts;
-		if (VARSIZE(&pgIndexP[i]->indpred) != 0) {
-		    predString = fmgr(F_TEXTOUT, &pgIndexP[i]->indpred);
-		    indexPred[i] = stringToNode(predString);
-		    pfree(predString);
-		    /* make dummy ExprContext for use by ExecQual */
-		    if (econtext == NULL) {
+        if (n_indices > 0) {
+            has_index = true;
+            itupdescArr = 
+                (TupleDesc *)palloc(n_indices * sizeof(TupleDesc));
+            pgIndexP =
+                (IndexTupleForm *)palloc(n_indices * sizeof(IndexTupleForm));
+            indexNatts = (int *) palloc(n_indices * sizeof(int));
+            finfo = (FuncIndexInfo *) palloc(n_indices * sizeof(FuncIndexInfo));
+            finfoP = (FuncIndexInfo **) palloc(n_indices * sizeof(FuncIndexInfo *));
+            indexPred = (Node **) palloc(n_indices * sizeof(Node*));
+            econtext = NULL;
+            for (i = 0; i < n_indices; i++) {
+                itupdescArr[i] = RelationGetTupleDescriptor(index_rels[i]);
+                pgIndexTup =
+                    SearchSysCacheTuple(INDEXRELID,
+                                        ObjectIdGetDatum(index_rels[i]->rd_id),
+                                        0,0,0);
+                Assert(pgIndexTup);
+                pgIndexP[i] = (IndexTupleForm)GETSTRUCT(pgIndexTup);
+                for (attnumP = &(pgIndexP[i]->indkey[0]), natts = 0;
+                     *attnumP != InvalidAttrNumber;
+                     attnumP++, natts++);
+                if (pgIndexP[i]->indproc != InvalidOid) {
+                    FIgetnArgs(&finfo[i]) = natts;
+                    natts = 1;
+                    FIgetProcOid(&finfo[i]) = pgIndexP[i]->indproc;
+                    *(FIgetname(&finfo[i])) = '\0';
+                    finfoP[i] = &finfo[i];
+                } else
+                    finfoP[i] = (FuncIndexInfo *) NULL;
+                indexNatts[i] = natts;
+                if (VARSIZE(&pgIndexP[i]->indpred) != 0) {
+                    predString = fmgr(F_TEXTOUT, &pgIndexP[i]->indpred);
+                    indexPred[i] = stringToNode(predString);
+                    pfree(predString);
+                    /* make dummy ExprContext for use by ExecQual */
+                    if (econtext == NULL) {
 #ifndef OMIT_PARTIAL_INDEX
-			tupleTable = ExecCreateTupleTable(1); 
-			slot =   ExecAllocTableSlot(tupleTable);
-			econtext = makeNode(ExprContext);
-			econtext->ecxt_scantuple = slot;
-			rtupdesc = RelationGetTupleDescriptor(rel);
-			slot->ttc_tupleDescriptor = rtupdesc;
-			/*
-			 * There's no buffer associated with heap tuples here,
-			 * so I set the slot's buffer to NULL.  Currently, it
-			 * appears that the only way a buffer could be needed
-			 * would be if the partial index predicate referred to
-			 * the "lock" system attribute.  If it did, then
-			 * heap_getattr would call HeapTupleGetRuleLock, which
-			 * uses the buffer's descriptor to get the relation id.
-			 * Rather than try to fix this, I'll just disallow
-			 * partial indexes on "lock", which wouldn't be useful
-			 * anyway. --Nels, Nov '92
-			 */
-			/* SetSlotBuffer(slot, (Buffer) NULL); */
-			/* SetSlotShouldFree(slot, false); */
-			slot->ttc_buffer = (Buffer)NULL;
-			slot->ttc_shouldFree = false;
+                        tupleTable = ExecCreateTupleTable(1); 
+                        slot =   ExecAllocTableSlot(tupleTable);
+                        econtext = makeNode(ExprContext);
+                        econtext->ecxt_scantuple = slot;
+                        rtupdesc = RelationGetTupleDescriptor(rel);
+                        slot->ttc_tupleDescriptor = rtupdesc;
+                        /*
+                         * There's no buffer associated with heap tuples here,
+                         * so I set the slot's buffer to NULL.  Currently, it
+                         * appears that the only way a buffer could be needed
+                         * would be if the partial index predicate referred to
+                         * the "lock" system attribute.  If it did, then
+                         * heap_getattr would call HeapTupleGetRuleLock, which
+                         * uses the buffer's descriptor to get the relation id.
+                         * Rather than try to fix this, I'll just disallow
+                         * partial indexes on "lock", which wouldn't be useful
+                         * anyway. --Nels, Nov '92
+                         */
+                        /* SetSlotBuffer(slot, (Buffer) NULL); */
+                        /* SetSlotShouldFree(slot, false); */
+                        slot->ttc_buffer = (Buffer)NULL;
+                        slot->ttc_shouldFree = false;
 #endif /* OMIT_PARTIAL_INDEX */    
-		    }
-		} else {
-		    indexPred[i] = NULL;
-		}
-	    }
-	}
+                    }
+                } else {
+                    indexPred[i] = NULL;
+                }
+            }
+        }
     }
     
     if (!binary)
-	{
-	    in_functions = (func_ptr *) palloc(attr_count * sizeof(func_ptr));
-	    elements = (Oid *) palloc(attr_count * sizeof(Oid));
-	    for (i = 0; i < attr_count; i++)
-		{
-		    in_func_oid = (Oid) GetInputFunction(attr[i]->atttypid);
-		    fmgr_info(in_func_oid, &in_functions[i], &dummy);
-		    elements[i] = GetTypeElement(attr[i]->atttypid);
-		}
-	}
+        {
+            in_functions = (func_ptr *) palloc(attr_count * sizeof(func_ptr));
+            elements = (Oid *) palloc(attr_count * sizeof(Oid));
+            for (i = 0; i < attr_count; i++)
+                {
+                    in_func_oid = (Oid) GetInputFunction(attr[i]->atttypid);
+                    fmgr_info(in_func_oid, &in_functions[i], &dummy);
+                    elements[i] = GetTypeElement(attr[i]->atttypid);
+                }
+        }
     else
-	{
-		in_functions = NULL;
-		elements = NULL;
-	    fread(&ntuples, sizeof(int32), 1, fp);
-	    if (ntuples != 0) reading_to_eof = false;
-	}
+        {
+                in_functions = NULL;
+                elements = NULL;
+            fread(&ntuples, sizeof(int32), 1, fp);
+            if (ntuples != 0) reading_to_eof = false;
+        }
     
     values       = (Datum *) palloc(sizeof(Datum) * attr_count);
     nulls        = (char *) palloc(attr_count);
@@ -431,175 +482,175 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
     byval        = (bool *) palloc(attr_count * sizeof(bool));
     
     for (i = 0; i < attr_count; i++) {
-	nulls[i] = ' ';
-	index_nulls[i] = ' ';
-	byval[i] = (bool) IsTypeByVal(attr[i]->atttypid);
+        nulls[i] = ' ';
+        index_nulls[i] = ' ';
+        byval[i] = (bool) IsTypeByVal(attr[i]->atttypid);
     }
     
     while (!done) {
-	if (!binary) {
-	    if (oids) {
-		string = CopyReadAttribute(fp, &isnull, delim);
-		if (string == NULL)
-		    done = 1;
-		else {
-		    loaded_oid = oidin(string);
-		    if (loaded_oid < BootstrapObjectIdData)
-			elog(WARN, "COPY TEXT: Invalid Oid");
-		}
-	    }
-	    for (i = 0; i < attr_count && !done; i++) {
-		string = CopyReadAttribute(fp, &isnull, delim);
-		if (isnull) {
-		    values[i] = PointerGetDatum(NULL);
-		    nulls[i] = 'n';
-		}else if (string == NULL) {
-		    done = 1;
-		}else {
-		    values[i] =
-			(Datum)(in_functions[i])(string,
-						 elements[i],
-						 attr[i]->attlen);
-		    /*
-		     * Sanity check - by reference attributes cannot return
-		     * NULL
-		     */
-		    if (!PointerIsValid(values[i]) &&
-			!(rel->rd_att->attrs[i]->attbyval)) {
-			elog(WARN, "copy from: Bad file format");
-		    }
-		}
-	    }
-	}else { /* binary */
-	    fread(&len, sizeof(int32), 1, fp);
-	    if (feof(fp)) {
-		done = 1;
-	    }else {
-		if (oids) {
-		    fread(&loaded_oid, sizeof(int32), 1, fp);
-		    if (loaded_oid < BootstrapObjectIdData)
-			elog(WARN, "COPY BINARY: Invalid Oid");
-		}
-		fread(&null_ct, sizeof(int32), 1, fp);
-		if (null_ct > 0) {
-		    for (i = 0; i < null_ct; i++) {
-			fread(&null_id, sizeof(int32), 1, fp);
-			nulls[null_id] = 'n';
-		    }
-		}
-		
-		string = (char *) palloc(len);
-		fread(string, len, 1, fp);
-		
-		ptr = string;
-		
-		for (i = 0; i < attr_count; i++) {
-		    if (byval[i] && nulls[i] != 'n') {
-			
-			switch(attr[i]->attlen) {
-			case sizeof(char):
-			    values[i] = (Datum) *(unsigned char *) ptr;
-			    ptr += sizeof(char);
-			    break;
-			case sizeof(short):
-			    ptr = (char *) SHORTALIGN(ptr);
-			    values[i] = (Datum) *(unsigned short *) ptr; 
-			    ptr += sizeof(short);
-			    break;
-			case sizeof(int32):
-			    ptr = (char *) INTALIGN(ptr);
-			    values[i] = (Datum) *(uint32 *) ptr;
-			    ptr += sizeof(int32);
-			    break;
-			default:
-			    elog(WARN, "COPY BINARY: impossible size!");
-			    break;
-			}
-		    }else if (nulls[i] != 'n') {
-			switch (attr[i]->attlen) {
-			case -1:
-			    if (attr[i]->attalign == 'd') 
-				ptr = (char *)DOUBLEALIGN(ptr);
-			    else
-				ptr = (char *)INTALIGN(ptr);
-			    values[i] = (Datum) ptr;
-			    ptr += * (uint32 *) ptr;
-			    break;
-			case sizeof(char):
-			    values[i] = (Datum)ptr;
-			    ptr += attr[i]->attlen;
-			    break;
-			case sizeof(short):
-			    ptr = (char*)SHORTALIGN(ptr);
-			    values[i] = (Datum)ptr;
-			    ptr += attr[i]->attlen;
-			    break;
-			case sizeof(int32):
-			    ptr = (char*)INTALIGN(ptr);
-			    values[i] = (Datum)ptr;
-			    ptr += attr[i]->attlen;
-			    break;
-			default:
-			    if (attr[i]->attalign == 'd')
-				ptr = (char *)DOUBLEALIGN(ptr);
-			    else 
-				ptr = (char *)LONGALIGN(ptr);
-			    values[i] = (Datum) ptr;
-			    ptr += attr[i]->attlen;
-			}
-		    }
-		}
-	    }
-	}
-	if (done) continue;
-	    
-	tupDesc = CreateTupleDesc(attr_count, attr);
-	tuple = heap_formtuple(tupDesc, values, nulls);
-	if (oids)
-	    tuple->t_oid = loaded_oid;
-	heap_insert(rel, tuple);
-	    
-	if (has_index) {
-	    for (i = 0; i < n_indices; i++) {
-		if (indexPred[i] != NULL) {
+        if (!binary) {
+            if (oids) {
+                string = CopyReadAttribute(fp, &isnull, delim);
+                if (string == NULL)
+                    done = 1;
+                else {
+                    loaded_oid = oidin(string);
+                    if (loaded_oid < BootstrapObjectIdData)
+                        elog(WARN, "COPY TEXT: Invalid Oid");
+                }
+            }
+            for (i = 0; i < attr_count && !done; i++) {
+                string = CopyReadAttribute(fp, &isnull, delim);
+                if (isnull) {
+                    values[i] = PointerGetDatum(NULL);
+                    nulls[i] = 'n';
+                }else if (string == NULL) {
+                    done = 1;
+                }else {
+                    values[i] =
+                        (Datum)(in_functions[i])(string,
+                                                 elements[i],
+                                                 attr[i]->attlen);
+                    /*
+                     * Sanity check - by reference attributes cannot return
+                     * NULL
+                     */
+                    if (!PointerIsValid(values[i]) &&
+                        !(rel->rd_att->attrs[i]->attbyval)) {
+                        elog(WARN, "copy from: Bad file format");
+                    }
+                }
+            }
+        }else { /* binary */
+            fread(&len, sizeof(int32), 1, fp);
+            if (feof(fp)) {
+                done = 1;
+            }else {
+                if (oids) {
+                    fread(&loaded_oid, sizeof(int32), 1, fp);
+                    if (loaded_oid < BootstrapObjectIdData)
+                        elog(WARN, "COPY BINARY: Invalid Oid");
+                }
+                fread(&null_ct, sizeof(int32), 1, fp);
+                if (null_ct > 0) {
+                    for (i = 0; i < null_ct; i++) {
+                        fread(&null_id, sizeof(int32), 1, fp);
+                        nulls[null_id] = 'n';
+                    }
+                }
+                
+                string = (char *) palloc(len);
+                fread(string, len, 1, fp);
+                
+                ptr = string;
+                
+                for (i = 0; i < attr_count; i++) {
+                    if (byval[i] && nulls[i] != 'n') {
+                        
+                        switch(attr[i]->attlen) {
+                        case sizeof(char):
+                            values[i] = (Datum) *(unsigned char *) ptr;
+                            ptr += sizeof(char);
+                            break;
+                        case sizeof(short):
+                            ptr = (char *) SHORTALIGN(ptr);
+                            values[i] = (Datum) *(unsigned short *) ptr; 
+                            ptr += sizeof(short);
+                            break;
+                        case sizeof(int32):
+                            ptr = (char *) INTALIGN(ptr);
+                            values[i] = (Datum) *(uint32 *) ptr;
+                            ptr += sizeof(int32);
+                            break;
+                        default:
+                            elog(WARN, "COPY BINARY: impossible size!");
+                            break;
+                        }
+                    }else if (nulls[i] != 'n') {
+                        switch (attr[i]->attlen) {
+                        case -1:
+                            if (attr[i]->attalign == 'd') 
+                                ptr = (char *)DOUBLEALIGN(ptr);
+                            else
+                                ptr = (char *)INTALIGN(ptr);
+                            values[i] = (Datum) ptr;
+                            ptr += * (uint32 *) ptr;
+                            break;
+                        case sizeof(char):
+                            values[i] = (Datum)ptr;
+                            ptr += attr[i]->attlen;
+                            break;
+                        case sizeof(short):
+                            ptr = (char*)SHORTALIGN(ptr);
+                            values[i] = (Datum)ptr;
+                            ptr += attr[i]->attlen;
+                            break;
+                        case sizeof(int32):
+                            ptr = (char*)INTALIGN(ptr);
+                            values[i] = (Datum)ptr;
+                            ptr += attr[i]->attlen;
+                            break;
+                        default:
+                            if (attr[i]->attalign == 'd')
+                                ptr = (char *)DOUBLEALIGN(ptr);
+                            else 
+                                ptr = (char *)LONGALIGN(ptr);
+                            values[i] = (Datum) ptr;
+                            ptr += attr[i]->attlen;
+                        }
+                    }
+                }
+            }
+        }
+        if (done) continue;
+            
+        tupDesc = CreateTupleDesc(attr_count, attr);
+        tuple = heap_formtuple(tupDesc, values, nulls);
+        if (oids)
+            tuple->t_oid = loaded_oid;
+        heap_insert(rel, tuple);
+            
+        if (has_index) {
+            for (i = 0; i < n_indices; i++) {
+                if (indexPred[i] != NULL) {
 #ifndef OMIT_PARTIAL_INDEX
-		    /* if tuple doesn't satisfy predicate,
-		     * don't update index
-		     */
-		    slot->val = tuple;
-		    /*SetSlotContents(slot, tuple); */
-		    if (ExecQual((List*)indexPred[i], econtext) == false)
-			continue;
-#endif /* OMIT_PARTIAL_INDEX */    	
-		}
-		FormIndexDatum(indexNatts[i],
-			       (AttrNumber *)&(pgIndexP[i]->indkey[0]),
-			       tuple,
-			       tupDesc,
-			       InvalidBuffer,
-			       &idatum,
-			       index_nulls,
-			       finfoP[i]);
-		indexRes = index_insert(index_rels[i], &idatum, index_nulls,
-					&(tuple->t_ctid));
-		if (indexRes) pfree(indexRes);
-	    }
-	}
-	    
-	if (binary) pfree(string);
-	    
-	for (i = 0; i < attr_count; i++) {
-	    if (!byval[i] && nulls[i] != 'n') {
-		if (!binary) pfree((void*)values[i]);
-	    }else if (nulls[i] == 'n') {
-		nulls[i] = ' ';
-	    }
-	}
-	    
-	pfree(tuple);
-	tuples_read++;
-	    
-	if (!reading_to_eof && ntuples == tuples_read) done = true;
+                    /* if tuple doesn't satisfy predicate,
+                     * don't update index
+                     */
+                    slot->val = tuple;
+                    /*SetSlotContents(slot, tuple); */
+                    if (ExecQual((List*)indexPred[i], econtext) == false)
+                        continue;
+#endif /* OMIT_PARTIAL_INDEX */         
+                }
+                FormIndexDatum(indexNatts[i],
+                               (AttrNumber *)&(pgIndexP[i]->indkey[0]),
+                               tuple,
+                               tupDesc,
+                               InvalidBuffer,
+                               &idatum,
+                               index_nulls,
+                               finfoP[i]);
+                indexRes = index_insert(index_rels[i], &idatum, index_nulls,
+                                        &(tuple->t_ctid));
+                if (indexRes) pfree(indexRes);
+            }
+        }
+            
+        if (binary) pfree(string);
+            
+        for (i = 0; i < attr_count; i++) {
+            if (!byval[i] && nulls[i] != 'n') {
+                if (!binary) pfree((void*)values[i]);
+            }else if (nulls[i] == 'n') {
+                nulls[i] = ' ';
+            }
+        }
+            
+        pfree(tuple);
+        tuples_read++;
+            
+        if (!reading_to_eof && ntuples == tuples_read) done = true;
     }
     pfree(values);
     if (!binary) pfree(in_functions);
@@ -608,17 +659,19 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
     heap_close(rel);
 }
 
+
+
 static Oid
 GetOutputFunction(Oid type)
 {
     HeapTuple    typeTuple;
     
     typeTuple = SearchSysCacheTuple(TYPOID,
-				    ObjectIdGetDatum(type),
-				    0,0,0);
+                                    ObjectIdGetDatum(type),
+                                    0,0,0);
     
     if (HeapTupleIsValid(typeTuple))
-	return((int) ((TypeTupleForm) GETSTRUCT(typeTuple))->typoutput);
+        return((int) ((TypeTupleForm) GETSTRUCT(typeTuple))->typoutput);
     
     elog(WARN, "GetOutputFunction: Cache lookup of type %d failed", type);
     return(InvalidOid);
@@ -630,12 +683,12 @@ GetTypeElement(Oid type)
     HeapTuple    typeTuple;
     
     typeTuple = SearchSysCacheTuple(TYPOID,
-				    ObjectIdGetDatum(type),
-				    0,0,0);
+                                    ObjectIdGetDatum(type),
+                                    0,0,0);
 
     
     if (HeapTupleIsValid(typeTuple))
-	return((int) ((TypeTupleForm) GETSTRUCT(typeTuple))->typelem);
+        return((int) ((TypeTupleForm) GETSTRUCT(typeTuple))->typelem);
     
     elog(WARN, "GetOutputFunction: Cache lookup of type %d failed", type);
     return(InvalidOid);
@@ -647,11 +700,11 @@ GetInputFunction(Oid type)
     HeapTuple    typeTuple;
     
     typeTuple = SearchSysCacheTuple(TYPOID,
-				    ObjectIdGetDatum(type),
-				    0,0,0);
+                                    ObjectIdGetDatum(type),
+                                    0,0,0);
     
     if (HeapTupleIsValid(typeTuple))
-	return((int) ((TypeTupleForm) GETSTRUCT(typeTuple))->typinput);
+        return((int) ((TypeTupleForm) GETSTRUCT(typeTuple))->typinput);
     
     elog(WARN, "GetInputFunction: Cache lookup of type %d failed", type);
     return(InvalidOid);
@@ -663,8 +716,8 @@ IsTypeByVal(Oid type)
     HeapTuple    typeTuple;
     
     typeTuple = SearchSysCacheTuple(TYPOID,
-				    ObjectIdGetDatum(type),
-				    0,0,0);
+                                    ObjectIdGetDatum(type),
+                                    0,0,0);
     
     if (HeapTupleIsValid(typeTuple))
         return((int) ((TypeTupleForm) GETSTRUCT(typeTuple))->typbyval);
@@ -689,8 +742,8 @@ typedef struct rel_list {
 
 static void
 GetIndexRelations(Oid main_relation_oid,
-		  int *n_indices,
-		  Relation **index_rels)
+                  int *n_indices,
+                  Relation **index_rels)
 {
     RelationList *head, *scan;
     Relation pg_index_rel;
@@ -714,19 +767,19 @@ GetIndexRelations(Oid main_relation_oid,
     for (tuple = heap_getnext(scandesc, 0, NULL);
          tuple != NULL; 
          tuple = heap_getnext(scandesc, 0, NULL)) {
-	
-	index_relation_oid =
-	    (Oid) DatumGetInt32(heap_getattr(tuple, InvalidBuffer, 2,
-					     tupDesc, &isnull));
-	if (index_relation_oid == main_relation_oid) {
-	    scan->index_rel_oid =
-		(Oid) DatumGetInt32(heap_getattr(tuple, InvalidBuffer,
-						 Anum_pg_index_indexrelid,
-						 tupDesc, &isnull));
-	    (*n_indices)++;
-	    scan->next = (RelationList *) palloc(sizeof(RelationList));
-	    scan = scan->next;
-	}
+        
+        index_relation_oid =
+            (Oid) DatumGetInt32(heap_getattr(tuple, InvalidBuffer, 2,
+                                             tupDesc, &isnull));
+        if (index_relation_oid == main_relation_oid) {
+            scan->index_rel_oid =
+                (Oid) DatumGetInt32(heap_getattr(tuple, InvalidBuffer,
+                                                 Anum_pg_index_indexrelid,
+                                                 tupDesc, &isnull));
+            (*n_indices)++;
+            scan->next = (RelationList *) palloc(sizeof(RelationList));
+            scan = scan->next;
+        }
     }
     
     heap_endscan(scandesc);
@@ -739,13 +792,13 @@ GetIndexRelations(Oid main_relation_oid,
     *index_rels = (Relation *) palloc(*n_indices * sizeof(Relation));
     
     for (i = 0, scan = head; i < *n_indices; i++, scan = scan->next) {
-	(*index_rels)[i] = index_open(scan->index_rel_oid);
+        (*index_rels)[i] = index_open(scan->index_rel_oid);
     }
     
     for (i = 0, scan = head; i < *n_indices + 1; i++) {
-	scan = head->next;
-	pfree(head);
-	head = scan;
+        scan = head->next;
+        pfree(head);
+        head = scan;
     }
 }
 
@@ -760,12 +813,12 @@ inString(char c, char* s)
     int i;
 
     if (s) {
-	i = 0;
-	while (s[i] != '\0') {
-	    if (s[i] == c)
-		return 1;
-	    i++;
-	}
+        i = 0;
+        while (s[i] != '\0') {
+            if (s[i] == c)
+                return 1;
+            i++;
+        }
     }
     return 0;
 }
@@ -785,17 +838,17 @@ CopyReadAttribute(FILE *fp, bool *isnull, char *delim)
     int done = 0;
     int i = 0;
     
-    *isnull = (bool) false;	/* set default */
+    *isnull = (bool) false;     /* set default */
     if (feof(fp))
-	return(NULL);
+        return(NULL);
     
     while (!done) {
-	c = getc(fp);
-	    
-	if (feof(fp))
-	    return(NULL);
-	else if (c == '\\') {
-	    c = getc(fp);
+        c = getc(fp);
+            
+        if (feof(fp))
+            return(NULL);
+        else if (c == '\\') {
+            c = getc(fp);
             if (feof(fp))
                 return(NULL);
             switch (c) {
@@ -847,22 +900,22 @@ CopyReadAttribute(FILE *fp, bool *isnull, char *delim)
                 c = '\v';
                 break;
               case 'N':
-	        attribute[0] = '\0'; /* just to be safe */
-	        *isnull = (bool) true;
-	        break;
+                attribute[0] = '\0'; /* just to be safe */
+                *isnull = (bool) true;
+                break;
               case '.':
                 c = getc(fp);
-	        if (c != '\n')
-		    elog(WARN, "CopyReadAttribute - end of record marker corrupted");
-		return(NULL);
-		break;
+                if (c != '\n')
+                    elog(WARN, "CopyReadAttribute - end of record marker corrupted");
+                return(NULL);
+                break;
             }
-	}else if (inString(c,delim) || c == '\n') {
-	    done = 1;
-	}
-	if (!done) attribute[i++] = c;
-	if (i == EXT_ATTLEN - 1)
-	    elog(WARN, "CopyReadAttribute - attribute length too long");
+        }else if (inString(c,delim) || c == '\n') {
+            done = 1;
+        }
+        if (!done) attribute[i++] = c;
+        if (i == EXT_ATTLEN - 1)
+            elog(WARN, "CopyReadAttribute - attribute length too long");
     }
     attribute[i] = '\0';
     return(&attribute[0]);
@@ -879,7 +932,7 @@ CopyAttributeOut(FILE *fp, char *string, char *delim)
     if (len && (string[0] == '{') && (string[len-1] == '}'))
       is_array = true;
 
-    for ( ; (c = *string) != 0; string++) {
+    for ( ; (c = *string) != '\0'; string++) {
       if (c == delim[0] || c == '\n' ||
           (c == '\\' && !is_array))
           fputc('\\', fp);

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.3 1996/10/31 09:07:41 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.4 1996/11/02 02:01:48 bryanh Exp $
  *
  * DESCRIPTION
  *    The "DefineFoo" routines take the parse tree and pick out the
@@ -34,19 +34,16 @@
  */
 #include <string.h>
 #include <ctype.h>
-#include <math.h>
 
 #include <postgres.h>
 
 #include <access/heapam.h>
-#include <access/htup.h>
 #include <utils/tqual.h>
 #include <catalog/catname.h>
 #include <catalog/pg_aggregate.h>
 #include <catalog/pg_operator.h>
 #include <catalog/pg_proc.h>
 #include <catalog/pg_type.h>
-#include <catalog/pg_user.h>    /* superuser() uses this */
 #include <utils/syscache.h>
 #include <nodes/pg_list.h>
 #include <nodes/parsenodes.h>
@@ -64,24 +61,6 @@ static char *defGetString(DefElem *def);
 static int  defGetTypeLength(DefElem *def);
 
 #define DEFAULT_TYPDELIM        ','
-
-
-bool
-superuser(void) {
-/*--------------------------------------------------------------------------
-    The Postgres user running this command has Postgres superuser 
-    privileges.
---------------------------------------------------------------------------*/
-    HeapTuple utup;
-    char *userName;
-
-    userName = GetPgUserName();
-    utup = SearchSysCacheTuple(USENAME, PointerGetDatum(userName),
-			       0,0,0);
-    Assert(utup != NULL);
-    return ((Form_pg_user)GETSTRUCT(utup))->usesuper;
-}
-
 
 
 void
