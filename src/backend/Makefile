@@ -34,97 +34,12 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.15 1996/11/12 06:46:04 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.16 1996/11/18 02:23:41 bryanh Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR = ..
 include ../Makefile.global
-
-
-##########################################################################
-# Determine linker flags for this platform (mainly, the libraries with
-# which to link).
-##########################################################################
-
-# All systems except NEXTSTEP require the math library.
-# Loader flags for system-dependent libraries are appended in
-#	src/backend/port/$(PORTNAME)/Makefile.inc
-#
-ifneq ($(PORTNAME), next)
-LDADD+=	-lm
-endif
-
-ifeq ($(PORTNAME), aix)
-LDADD+= -ll -lld
-endif
-
-ifeq ($(PORTNAME), alpha)
-LDADD+= -lln
-endif
-
-ifeq ($(PORTNAME), bsdi)
-  ifeq ($(PRE_BSDI_2_1), false)
-    LDADD+= -ldl -lipc
-  else
-    LDADD+= -ldld -lipc
-  endif
-endif
-
-ifeq ($(PORTNAME), hpux)
-# HP-UX needs:
-# -W l,-E	export symbols for linking with the shared libraries 
-#		dynamic loader
-# -W p,-H400000	expand cpp #define table size so the Nodes files don't 
-#		break it
-#
-# -W p,-H400000
-ifeq ($(CC), cc)
-CFLAGS+= -W l,-E 
-LDFLAGS+= -W l,-E
-LDADD+= -ll -ldld
-else
-ifeq ($(CC), gcc)
-LDADD+= -ll /usr/lib/libdld.sl
-endif
-endif
-endif
-
-ifeq ($(PORTNAME), i386_solaris)
-LDADD+= -ll -ldl
-endif
-
-ifeq ($(PORTNAME), irix5)
-LDADD+= -ll
-endif
-
-ifeq ($(PORTNAME), linux)
-ifdef LINUX_ELF
-LDADD+= -ldl
-else
-LDADD+= -ldld
-endif
-endif
-
-ifeq ($(PORTNAME), sparc)
-LDADD+= -lln -ldl
-endif
-
-ifeq ($(PORTNAME), sparc_solaris)
-LDADD+= -ll -ldl
-endif
-
-ifeq ($(PORTNAME), svr4)
-LDADD+= -ll -ldl
-# the following is special for Reliant UNIX SVR4 (formerly SINIX)
-LDFLAGS+= -LD-Blargedynsym
-endif
-
-ifeq ($(PORTNAME), ultrix4)
-LDADD+= -ldl -lln
-endif
-
-#############################################################################
 
 OBJS = access/SUBSYS.o bootstrap/SUBSYS.o catalog/SUBSYS.o  \
        commands/SUBSYS.o executor/SUBSYS.o  \

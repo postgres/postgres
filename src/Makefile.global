@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.70 1996/11/17 20:30:32 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.71 1996/11/18 02:23:16 bryanh Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the 
@@ -261,24 +261,8 @@ include $(SRCDIR)/Makefile.custom
 endif
 
 #############################################################################
-# include port specific rules and variables. For instance:
+# include port specific rules and variables.
 #
-# signal(2) handling - this is here because it affects some of 
-# the frontend commands as well as the backend server.
-#
-# Ultrix and SunOS provide BSD signal(2) semantics by default.
-#
-# SVID2 and POSIX signal(2) semantics differ from BSD signal(2) 
-# semantics.  We can use the POSIX sigaction(2) on systems that
-# allow us to request restartable signals (SA_RESTART).
-#
-# Some systems don't allow restartable signals at all unless we 
-# link to a special BSD library.
-#
-# We devoutly hope that there aren't any systems that provide
-# neither POSIX signals nor BSD signals.  The alternative 
-# is to do signal-handler reinstallation, which doesn't work well 
-# at all.
 #
 # HISTORY: Before October 1996, this file included the following line:
 #     -include $(MKDIR)/port/postgres.mk.$(PORTNAME)
@@ -309,8 +293,6 @@ SLSUFF= .so
 
 #----------------------------------------------------------------------
 ifeq ($(PORTNAME), BSD44_derived)
-MK_PORT= BSD44_derived
-
 # cc is gcc, but never mind about that...
 CC= gcc
 
@@ -319,7 +301,7 @@ RANLIB=	/usr/bin/ranlib
 
 # FreeBSD 2.1R with new Flex v2.5.2 in /usr/local
 LEX= flex
-LDADD+= -L/usr/local/lib -lfl
+LDADD_BE= -L/usr/local/lib -lfl
 
 CFLAGS_SL= -fpic -DPIC
 
@@ -337,13 +319,11 @@ endif
 #--------------------------------------------------------------------------
 
 ifeq ($(PORTNAME), aix)
-MK_PORT= aix
-
 # might want to try installbsd instead 
 INSTALL= /usr/ucb/install
 
 # the -lm is because "pow" is defined in libbsd.a and we want pow(3m)
-LDADD_BE= -lm -lbsd
+LDADD_BE= -lm -lbsd -ll -lld
 
 # MAKE_EXPORTS is required for svr4 loaders that want a file of
 # symbol names to tell them what to export/import.
@@ -357,7 +337,7 @@ MAKE_EXPORTS= true
 # The HAVE_ANSI_CPP flag indicates that cc isn't ANSI but also doesn't
 # have a Reiser (pcc-style) cpp.
 #
-CFLAGS_BE+= -qchars=signed -qmaxmem=4000 -DHAVE_ANSI_CPP
+CFLAGS_BE= -qchars=signed -qmaxmem=4000
 
 
 EXPSUFF= .exp
@@ -377,9 +357,6 @@ endif
 #---------------------------------------------------------------------------
 
 ifeq ($(PORTNAME), alpha)
-MK_PORT= alpha
-CFLAGS_BE+= -DUSE_POSIX_SIGNALS
-
 # NOFIXADE disallows unaligned access.
 #   on Ultrix and OSF/1 it invokes an explicit syscall.
 #   on HP-UX it turns off certain compiler options.
@@ -387,18 +364,17 @@ CFLAGS_BE+= -DUSE_POSIX_SIGNALS
 # which is where the work is done on HP-UX.  It only affects the
 # backend on Ultrix and OSF/1.
 ifdef ENFORCE_ALIGNMENT
-CFLAGS_BE+= -DNOFIXADE
+CFLAGS_BE= -DNOFIXADE
 else
-CFLAGS_BE+= -DNOPRINTADE
+CFLAGS_BE= -DNOPRINTADE
 endif
+LDADD_BE= -lln
 
 # use the regex library
 USE_REGEX= 1
 
 %.so:  %.o
 	$(LD) -shared -expect_unresolved '*' -o $@ $<
-
-CLEANFILES+= so_locations
 
 DASH_N=
 BACKSLASH_C= '\\\\c'
@@ -408,8 +384,6 @@ endif
 #---------------------------------------------------------------------------
 
 ifeq ($(PORTNAME), bsdi)
-MK_PORT= bsdi
-
 CC= gcc
 
 PRE_BSDI_2_1= false
@@ -424,7 +398,7 @@ ifeq ($(PRE_BSDI_2_1), false)
 # cc is gcc v1.42
 # gcc is gcc v2.7.2
   LEX= lex
-  LD_ADD+= -ltermcap
+  LDADD_BE= -ltermcap -ldl -lipc
 else
 # cc is gcc v1.42
 # gcc is gcc v2.6.3
@@ -432,7 +406,7 @@ else
 # use the regex library
   USE_REGEX= 1
   CFLAGS_BE= -DPRE_BSDI_2_1
-  LDADD_BE= -ldld -lcompat
+  LDADD_BE= -ldld -lcompat -lipc
 endif
 
 endif
@@ -440,15 +414,12 @@ endif
 #--------------------------------------------------------------------------
 
 ifeq ($(PORTNAME), dgux)
-MK_PORT= linux
-
 CFLAGS_SL= -fpic
 %.so: %.o
 	$(CC) -shared -o $@ $<
 
 CC= gcc
 
-CFLAGS_BE= -D__USE_POSIX_SIGNALS -DUSE_POSIX_SIGNALS
 LDADD_BE= -ldl -lfl
 
 LEX= flex
@@ -461,16 +432,25 @@ endif
 #----------------------------------------------------------------------------
 
 ifeq ($(PORTNAME), hpux)
-MK_PORT= hpux
+# -W l,-E	export symbols for linking with the shared libraries 
+#		dynamic loader
 
-LDADD_BE= -lBSD
+LDADD_BE= -lBSD -ll
+ifeq $(CC), cc)
+  CFLAGS_BE= -W l,-E
+  LDFLAGS_BE= -W l,-E
+  LDADD_BE+= -ldld
+endif
+ifeq ($(CC), gcc)
+  LDADD_BE+= /usr/lib/libdld.sl
+endif
 
 ifdef ENFORCE_ALIGNMENT
-CFLAGS_BE= -DNOFIXADE
+   CFLAGS_BE= -DNOFIXADE
 else
-HPUX_VERS:= $(shell uname -r)
-HPUX_MAJOR= ${HPUX_VERS:R:E}
-HPUX_MINOR= ${HPUX_VERS:E}
+   HPUX_VERS:= $(shell uname -r)
+   HPUX_MAJOR= ${HPUX_VERS:R:E}
+   HPUX_MINOR= ${HPUX_VERS:E}
    ifeq ($(HPUX_MAJOR), 08)
       CFLAGS_BE+= +u -DHP_S500_ALIGN
       LDFLAGS_BE+= +u
@@ -509,12 +489,8 @@ endif
 #--------------------------------------------------------------------------
 
 ifeq ($(PORTNAME), i386_solaris)
-MK_PORT= i386_solaris
-
 # cc won't work!
 CC= gcc
-
-CFLAGS_BE+= -DUSE_POSIX_SIGNALS
 
 # RANLIB is not used on solaris
 RANLIB= touch
@@ -526,10 +502,10 @@ INSTALL= /usr/ucb/install
 # everything to compile.  :-/
 #
 # The extra -I flag is to scoop up extra BSD-emulating headers.
-CFLAGS_BE+= -DSYSV_DIRENT -I$(SRCDIR)/backend/port/sparc_solaris
-LDADD_BE+= -lsocket -lnsl
-
-LD_ADD+= $(LDADD_BE)
+# This needs to be fixed.  Things other than the backend should not be
+# accessing headers in the backend directory.
+CFLAGS_BE= -I$(SRCDIR)/backend/port/sparc_solaris
+LDADD_BE= -lsocket -lnsl -ll -ldl
 
 ifeq ($(CC), cc)
 CFLAGS_SL= -K PIC
@@ -548,9 +524,7 @@ endif
 #----------------------------------------------------------------------------
 
 ifeq ($(PORTNAME), irix5)
-MK_PORT= irix5
-
-CFLAGS_BE+= -DUSE_POSIX_SIGNALS
+LDADD_BE= -ll
 
 # RANLIB is not used on IRIX 5
 RANLIB= touch
@@ -560,14 +534,6 @@ INSTALL= /sbin/bsdinst
 INSTLOPTS=      -m 444
 INSTL_EXE_OPTS= -m 555
 INSTL_LIB_OPTS= -m 664
-
-#
-# Random things that must be passed everywhere to enable 
-# everything to compile.  :-/
-#
-CFLAGS_BE+= -DSYSV_DIRENT 
-
-LD_ADD+= $(LDADD_BE)
 
 %.so: %.o
 	$(LD) -G -Bdynamic -o $@ $<
@@ -580,13 +546,13 @@ endif
 #---------------------------------------------------------------------------
 
 ifeq ($(PORTNAME), linux)
-MK_PORT= linux
-
 ifndef LINUX_ELF
 SLSUFF= .o
+LDADD_BE= -ldld
 else
 SLSUFF= .so
-LDFLAGS+= -rdynamic
+LDADD_BE= -ldl
+LDFLAGS_BE= -rdynamic
 endif
 MK_NO_LORDER= true
 
@@ -601,8 +567,7 @@ CFLAGS_SL= -fpic
 
 # The Linux gnulib #defines the problem away for you and calls 
 # the BSD routines if you give it the right flags.
-CFLAGS_BE= -D__USE_BSD -D__USE_BSD_SIGNAL
-LDADD_BE= -lbsd
+LDADD_BE+= -lbsd
 
 LEX= flex
 
@@ -611,8 +576,6 @@ endif
 #---------------------------------------------------------------------------
 
 ifeq ($(PORTNAME), sparc)
-MK_PORT= sparc
-
 # cc won't work!
 CC= gcc
 
@@ -624,6 +587,7 @@ CFLAGS_SL= -PIC
 else
 CFLAGS_SL= -fPIC
 endif
+LDADD_BE= -lln -ldl
 
 %.so: %.o
 	$(LD) -dc -dp -Bdynamic -o $@ $<
@@ -632,12 +596,10 @@ endif
 #----------------------------------------------------------------------------
 
 ifeq ($(PORTNAME), sparc_solaris)
-MK_PORT= sparc_solaris
-
 # cc won't work!
 CC= gcc
 
-CFLAGS_BE+= -DUSE_POSIX_SIGNALS
+LDADD_BE= -ll -ldl
 
 # RANLIB is not used on solaris
 RANLIB= touch
@@ -649,10 +611,8 @@ INSTALL= /usr/ucb/install
 # everything to compile.  :-/
 #
 # The extra -I flag is to scoop up extra BSD-emulating headers.
-CFLAGS_BE+= -DSYSV_DIRENT -I$(SRCDIR)/backend/port/sparc_solaris
+CFLAGS_BE= -I$(SRCDIR)/backend/port/sparc_solaris
 LDADD_BE+= -lsocket -lnsl
-
-LD_ADD+= $(LDADD_BE)
 
 ifeq ($(CC), cc)
 CFLAGS_SL= -K PIC
@@ -671,12 +631,8 @@ endif
 #-----------------------------------------------------------------------------
 
 ifeq ($(PORTNAME), svr4)
-MK_PORT= svr4
-
 CFLAGS+= -W0
 YACC= bison -y
-
-CFLAGS_BE+= -DUSE_POSIX_SIGNALS
 
 # MAKE_EXPORTS is required for svr4 loaders that want a file of
 # symbol names to tell them what to export/import.
@@ -693,16 +649,9 @@ INSTALL= /home/tools/bin/install
 # everything to compile.  :-/
 #
 # The extra -I flag is to scoop up extra BSD-emulating headers.
-CFLAGS_BE+= -DSYSV_DIRENT -I$(SRCDIR)/backend/port/svr4
-LDADD_BE+= -lsocket -lnsl -lc /usr/ucblib/libucb.a
-
-LD_ADD+= $(LDADD_BE)
-
-ifeq ($(CC), cc)
-#CFLAGS_SL= -K PIC
-else
-#CFLAGS_SL= -fPIC
-endif
+CFLAGS_BE+= -I$(SRCDIR)/backend/port/svr4
+LDADD_BE= -lsocket -lnsl -lc /usr/ucblib/libucb.a -ll -ldl
+LDFLAGS_BE= -LD-Blargedynsym
 
 %.so: %.o
 	$(LD) -G -Bdynamic -o $@ $<
@@ -714,11 +663,10 @@ endif
 #---------------------------------------------------------------------------
 
 ifeq ($(PORTNAME), ultrix4)
-MK_PORT= ultrix4
-
 ifdef ENFORCE_ALIGNMENT
 CFLAGS_BE= -DNOFIXADE
 endif
+LDADD_BE= -ldl -lln
 
 # install creates intermediate directories
 NO_BEFOREINSTL= true
@@ -732,6 +680,9 @@ SLSUFF= .o
 endif
 
 
+ifneq ($(PORTNAME), next)
+LDADD_BE+= -lm
+endif
 
 # This goes here so that customization in Makefile.custom is effective
 ##############################################################################
@@ -785,7 +736,6 @@ endif
 
 ifdef COPT
    CFLAGS+= $(COPT)
-   LDFLAGS+= $(COPT)
 else
    ifndef CFLAGS_OPT
       CFLAGS_OPT= -O
