@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.45 2004/11/04 22:25:12 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.46 2004/11/17 16:34:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1284,7 +1284,7 @@ main(int argc, char **argv)
 
 						strcpy(pgdata_D, optarg);
 						canonicalize_path(pgdata_D);
-						snprintf(env_var, strlen(pgdata_D) + 8, "PGDATA=%s",
+						snprintf(env_var, strlen(optarg) + 8, "PGDATA=%s",
 								 pgdata_D);
 						putenv(env_var);
 
@@ -1294,7 +1294,8 @@ main(int argc, char **argv)
 						 *	postmaster 'ps' display
 						 */
 						pgdata_opt = xmalloc(strlen(pgdata_D) + 7);
-						snprintf(pgdata_opt, strlen(pgdata_D) + 7, "-D \"%s\" ",
+						snprintf(pgdata_opt, strlen(pgdata_D) + 7,
+								 "-D \"%s\" ",
 								 pgdata_D);
 						break;
 					}
