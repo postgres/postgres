@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.10 1997/04/23 06:04:46 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.11 1997/08/20 01:12:04 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,6 +54,7 @@ static ScanKeyword ScanKeywords[] = {
 	{ "by",			BY		},
 	{ "cast",		CAST		},
 	{ "change",		CHANGE		},
+	{ "check",		CHECK		},
 	{ "close",		CLOSE		},
 	{ "cluster",		CLUSTER		},
 	{ "column",		COLUMN		},
@@ -64,6 +65,7 @@ static ScanKeyword ScanKeywords[] = {
 	{ "cursor",		CURSOR		},
 	{ "database",		DATABASE	},
 	{ "declare",		DECLARE		},
+	{ "default",		DEFAULT		},
 	{ "delete",		DELETE		},
 	{ "delimiters",         DELIMITERS      },
 	{ "desc",		DESC		},

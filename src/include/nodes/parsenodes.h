@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.17 1997/08/19 04:46:15 vadim Exp $
+ * $Id: parsenodes.h,v 1.18 1997/08/20 01:12:38 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -136,6 +136,7 @@ typedef struct CreateStmt {
     ArchType		archiveType;	/* archive mode (ARCH_NONE if none */
     int			location;	/* smgrid (-1 if none) */
     int			archiveLoc;	/* smgrid (-1 if none) */
+    List		*check;		/* list of CHECK constr */
 } CreateStmt;
 
 /* ----------------------
@@ -607,7 +608,8 @@ typedef struct ColumnDef {
     NodeTag		type;
     char		*colname;	/* name of column */
     TypeName		*typename;	/* type of column */
-    bool                is_not_null;    /* flag to NOT NULL constraint */
+    bool		is_not_null;	/* flag to NOT NULL constraint */
+    char		*defval;	/* default value of column */
 } ColumnDef;
 
 /*

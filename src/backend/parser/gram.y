@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.36 1997/08/19 04:44:01 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.37 1997/08/20 01:12:02 vadim Exp $
  *
  * HISTORY
  *    AUTHOR		DATE		MAJOR EVENT
@@ -48,6 +48,11 @@ static char saved_relname[NAMEDATALEN];  /* need this for complex attributes */
 static bool QueryIsRule = FALSE;
 static Node *saved_In_Expr;
 extern List *parsetree;
+
+extern int CurScanPosition(void);
+extern int DefaultStartPosition;
+extern int CheckStartPosition;
+extern char *parseString;
 
 /*
  * If you need access to certain yacc-generated variables and find that 
@@ -113,7 +118,7 @@ static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr);
 %type <str>	relation_name, copy_file_name, copy_delimiter, def_name,
 	database_name, access_method_clause, access_method, attr_name,
 	class, index_name, name, file_name, recipe_name,
-	var_name, aggr_argtype
+	var_name, aggr_argtype, OptDefault, CheckElem
 
 %type <str>	opt_id, opt_portal_name,
 	before_clause, after_clause, all_Op, MathOp, opt_name, opt_unique,
@@ -124,14 +129,14 @@ static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr);
 %type <chr>	operation
 
 %type <list>	stmtblock, stmtmulti,
-	relation_name_list, OptTableElementList,
-	tableElementList, OptInherit, definition,
+	relation_name_list, OptTableElementList, tableElementList, 
+	OptInherit, OptCheck, CheckList, definition,
 	opt_with, def_args, def_name_list, func_argtypes,
 	oper_argtypes, OptStmtList, OptStmtBlock, OptStmtMulti,
 	opt_column_list, columnList, opt_va_list, va_list,
-	sort_clause, sortby_list, index_params, index_list,
-	name_list, from_clause, from_list, opt_array_bounds, nest_array_bounds,
-	expr_list, attrs, res_target_list, res_target_list2,
+	sort_clause, sortby_list, index_params, index_list, name_list, 
+	from_clause, from_list, opt_array_bounds, nest_array_bounds,
+	expr_list, default_expr_list, attrs, res_target_list, res_target_list2,
 	def_list, opt_indirection, group_clause, groupby_list
 
 %type <boolean>	opt_inh_star, opt_binary, opt_instead, opt_with_copy,
@@ -154,8 +159,9 @@ static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr);
 %type <defelt>	def_elem
 %type <node>	def_arg, columnElem, where_clause, 
 		a_expr, a_expr_or_null, AexprConst,
+		default_expr, default_expr_or_null,
 		in_expr_nodes, not_in_expr_nodes,
-		having_clause
+		having_clause, default_expr
 %type <value>	NumConst
 %type <attr>	event_object, attr
 %type <sortgroupby>	groupby
@@ -182,9 +188,9 @@ static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr);
 %token	ABORT_TRANS, ACL, ADD, AFTER, AGGREGATE, ALL, ALTER, ANALYZE, 
 	AND, APPEND, ARCHIVE, ARCH_STORE, AS, ASC, 
 	BACKWARD, BEFORE, BEGIN_TRANS, BETWEEN, BINARY, BY, 
-	CAST, CHANGE, CLOSE, CLUSTER, COLUMN, COMMIT, COPY, CREATE,
-	CURRENT, CURSOR, DATABASE, DECLARE, DELETE, DELIMITERS, DESC, 
-	DISTINCT, DO, DROP, END_TRANS,
+	CAST, CHANGE, CHECK, CLOSE, CLUSTER, COLUMN, COMMIT, COPY, CREATE,
+	CURRENT, CURSOR, DATABASE, DECLARE, DEFAULT, DELETE, 
+	DELIMITERS, DESC, DISTINCT, DO, DROP, END_TRANS,
 	EXTEND, FETCH, FOR, FORWARD, FROM, FUNCTION, GRANT, GROUP, 
 	HAVING, HEAVY, IN, INDEX, INHERITS, INSERT, INSTEAD, INTO, IS,
 	ISNULL, LANGUAGE, LIGHT, LISTEN, LOAD, MERGE, MOVE, NEW, 
@@ -333,20 +339,123 @@ AddAttrStmt:  ALTER TABLE relation_name opt_inh_star ADD COLUMN columnDef
 		}
 	;
 
-columnDef:  Id Typename opt_null
+columnDef:  Id Typename OptDefault opt_null
 		{  
 		    $$ = makeNode(ColumnDef);
 		    $$->colname = $1;
 		    $$->typename = $2;
-                    $$->is_not_null = $3;
+		    $$->defval = $3;
+		    $$->is_not_null = $4;
 		}
 	;
 
-opt_null:   PNULL                         { $$ = false; }
-            | NOT PNULL                   { $$ = true; }
-            | NOTNULL                     { $$ = true; }
-            | /* EMPTY */                 { $$ = false; }
-        ;
+OptDefault:  DEFAULT default_expr	{ 
+				    int deflen = CurScanPosition() - DefaultStartPosition;
+				    char *defval;
+				    
+				    defval = (char*) palloc (deflen + 1);
+				    memcpy (defval, 
+				    		parseString + DefaultStartPosition, 
+				    		deflen);
+				    defval[deflen] = 0;
+				    $$ = defval;
+				}
+	|  /*EMPTY*/		{ $$ = NULL; }
+	;
+
+default_expr_or_null: default_expr
+		{ $$ = $1;}
+	| Pnull
+		{	
+		    A_Const *n = makeNode(A_Const);
+		    n->val.type = T_Null;
+		    $$ = (Node *)n;
+		}
+
+default_expr:	AexprConst
+		{
+		    if (nodeTag($1) != T_A_Const)
+		    	elog (WARN, "Cannot handle parameter in DEFAULT");
+		    $$ = $1;
+		}
+	| '-' default_expr %prec UMINUS
+		{   $$ = makeA_Expr(OP, "-", NULL, $2); }
+	| default_expr '+' default_expr
+		{   $$ = makeA_Expr(OP, "+", $1, $3); }
+	| default_expr '-' default_expr
+		{   $$ = makeA_Expr(OP, "-", $1, $3); }
+	| default_expr '/' default_expr
+		{   $$ = makeA_Expr(OP, "/", $1, $3); }
+	| default_expr '*' default_expr
+		{   $$ = makeA_Expr(OP, "*", $1, $3); }
+	| default_expr '<' default_expr
+		{   $$ = makeA_Expr(OP, "<", $1, $3); }
+	| default_expr '>' default_expr
+		{   $$ = makeA_Expr(OP, ">", $1, $3); }
+	| default_expr '=' default_expr
+		{   $$ = makeA_Expr(OP, "=", $1, $3); }
+	| ':' default_expr
+		{   $$ = makeA_Expr(OP, ":", NULL, $2); }
+	| ';' default_expr
+		{   $$ = makeA_Expr(OP, ";", NULL, $2); }
+	| '|' default_expr
+		{   $$ = makeA_Expr(OP, "|", NULL, $2); }
+	| AexprConst TYPECAST Typename
+		{ 
+		    /* AexprConst can be either A_Const or ParamNo */
+		    if (nodeTag($1) == T_A_Const) {
+			((A_Const *)$1)->typename = $3;
+		    }else {
+		    	elog (WARN, "Cannot handle parameter in DEFAULT");
+		    }
+		    $$ = (Node *)$1;
+		}
+	| CAST AexprConst AS Typename
+		{
+		    /* AexprConst can be either A_Const or ParamNo */
+		    if (nodeTag($2) == T_A_Const) {
+			((A_Const *)$2)->typename = $4;
+		    }else {
+		    	elog (WARN, "Cannot handle parameter in DEFAULT");
+		    }
+		    $$ = (Node *)$2;
+		}
+	| '(' default_expr ')'
+		{   $$ = $2; }
+	| default_expr Op default_expr
+		{   $$ = makeA_Expr(OP, $2, $1, $3); }
+	| Op default_expr
+		{   $$ = makeA_Expr(OP, $1, NULL, $2); }
+	| default_expr Op
+		{   $$ = makeA_Expr(OP, $2, $1, NULL); }
+	| name '(' ')'
+		{
+		    FuncCall *n = makeNode(FuncCall);
+		    n->funcname = $1;
+		    n->args = NIL;
+		    $$ = (Node *)n;
+		}
+	| name '(' default_expr_list ')'
+		{
+		    FuncCall *n = makeNode(FuncCall);
+		    n->funcname = $1;
+		    n->args = $3;
+		    $$ = (Node *)n;
+		}
+	;
+
+default_expr_list: default_expr_or_null
+		{ $$ = lcons($1, NIL); }
+	|  default_expr_list ',' default_expr_or_null
+		{ $$ = lappend($1, $3); }
+	;
+
+opt_null:	PNULL		{ $$ = false; }
+	| NOT PNULL		{ $$ = true; }
+	| NOTNULL		{ $$ = true; }
+	| /* EMPTY */		{ $$ = false; }
+	;
+
 	
 /*****************************************************************************
  *	
@@ -425,15 +534,17 @@ copy_delimiter: USING DELIMITERS Sconst { $$ = $3;}
  *****************************************************************************/
 
 CreateStmt:  CREATE TABLE relation_name '(' OptTableElementList ')'
-		OptInherit OptArchiveType OptLocation OptArchiveLocation
+		OptInherit OptCheck OptArchiveType OptLocation 
+		OptArchiveLocation
 		{
 		    CreateStmt *n = makeNode(CreateStmt);
 		    n->relname = $3;
 		    n->tableElts = $5;
 		    n->inhRelnames = $7;
-		    n->archiveType = $8;
-		    n->location = $9;
-		    n->archiveLoc = $10;
+		    n->check = $8;
+		    n->archiveType = $9;
+		    n->location = $10;
+		    n->archiveLoc = $11;
 		    $$ = (Node *)n;
 		}
 	;
@@ -475,6 +586,29 @@ OptInherit:  INHERITS '(' relation_name_list ')'	{ $$ = $3; }
 	|  /*EMPTY*/					{ $$ = NIL; }
 	;
 
+OptCheck:  CheckList		{ $$ = $1; }
+	| 		{ $$ = NULL; }
+	;
+
+CheckList :
+	  CheckList ',' CheckElem
+		{ $$ = lappend($1, $3); }
+	| CheckElem
+		{ $$ = lcons($1, NIL); }
+	;
+
+CheckElem:  CHECK a_expr	{ 
+				    int chklen = CurScanPosition() - CheckStartPosition;
+				    char *check;
+				    
+				    check = (char*) palloc (chklen + 1);
+				    memcpy (check, 
+				    		parseString + CheckStartPosition, 
+				    		chklen);
+				    check[chklen] = 0;
+				    $$ = check;
+				}
+	;
 
 /*****************************************************************************
  *
