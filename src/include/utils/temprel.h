@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: temprel.h,v 1.16 2001/06/18 16:13:21 momjian Exp $
+ * $Id: temprel.h,v 1.17 2001/06/19 12:03:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,11 +15,6 @@
 #define TEMPREL_H
 
 #include "access/htup.h"
-
-#define PG_TEMP_REL_PREFIX "pg_temp"
-
-#define is_temp_relname(relname) \
-		(strncmp(relname, PG_TEMP_REL_PREFIX, strlen(PG_TEMP_REL_PREFIX)) == 0)
 
 extern void create_temp_relation(const char *relname,
 					 HeapTuple pg_class_tuple);

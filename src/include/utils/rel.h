@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rel.h,v 1.47 2001/06/19 05:11:50 tgl Exp $
+ * $Id: rel.h,v 1.48 2001/06/19 12:03:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -188,43 +188,6 @@ typedef Relation *RelationPtr;
 #define RelationGetFile(relation) ((relation)->rd_fd)
 
 /*
- * RelationGetRelationName
- *
- *	  Returns the relation's logical name (as seen by the user).
- *
- * If the rel is a temp rel, the temp name will be returned.  Therefore,
- * this name is not unique.  But it is the name to use in heap_openr(),
- * for example.
- */
-#define RelationGetRelationName(relation) \
-(\
-	(strncmp(RelationGetPhysicalRelationName(relation), \
-			 "pg_temp", 7) != 0) \
-	? \
-		RelationGetPhysicalRelationName(relation) \
-	: \
-		get_temp_rel_by_physicalname( \
-			RelationGetPhysicalRelationName(relation)) \
-)
-
-
-/*
- * RelationGetPhysicalRelationName
- *
- *	  Returns the rel's physical name, ie, the name appearing in pg_class.
- *
- * While this name is unique across all rels in the database, it is not
- * necessarily useful for accessing the rel, since a temp table of the
- * same name might mask the rel.  It is useful mainly for determining if
- * the rel is a shared system rel or not.
- *
- * The macro is rather unfortunately named, since the pg_class name no longer
- * has anything to do with the file name used for physical storage of the rel.
- */
-#define RelationGetPhysicalRelationName(relation) \
-	(NameStr((relation)->rd_rel->relname))
-
-/*
  * RelationGetNumberOfAttributes
  *
  *	  Returns the number of attributes.
@@ -253,5 +216,49 @@ typedef Relation *RelationPtr;
 extern void RelationSetIndexSupport(Relation relation,
 						IndexStrategy strategy,
 						RegProcedure *support);
+
+/*
+ * Handle temp relations
+ */
+#define PG_TEMP_REL_PREFIX "pg_temp"
+
+#define is_temp_relname(relname) \
+		(strncmp(relname, PG_TEMP_REL_PREFIX, strlen(PG_TEMP_REL_PREFIX)) == 0)
+
+/*
+ * RelationGetPhysicalRelationName
+ *
+ *	  Returns the rel's physical name, ie, the name appearing in pg_class.
+ *
+ * While this name is unique across all rels in the database, it is not
+ * necessarily useful for accessing the rel, since a temp table of the
+ * same name might mask the rel.  It is useful mainly for determining if
+ * the rel is a shared system rel or not.
+ *
+ * The macro is rather unfortunately named, since the pg_class name no longer
+ * has anything to do with the file name used for physical storage of the rel.
+ */
+#define RelationGetPhysicalRelationName(relation) \
+	(NameStr((relation)->rd_rel->relname))
+
+/*
+ * RelationGetRelationName
+ *
+ *	  Returns the relation's logical name (as seen by the user).
+ *
+ * If the rel is a temp rel, the temp name will be returned.  Therefore,
+ * this name is not unique.  But it is the name to use in heap_openr(),
+ * for example.
+ */
+#define RelationGetRelationName(relation) \
+(\
+	!is_temp_relname(relation) \
+	? \
+		RelationGetPhysicalRelationName(relation) \
+	: \
+		get_temp_rel_by_physicalname( \
+			RelationGetPhysicalRelationName(relation)) \
+)
+
 
 #endif	 /* REL_H */
