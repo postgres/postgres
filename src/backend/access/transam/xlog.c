@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.32 2000/11/21 21:15:57 petere Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.33 2000/11/21 22:27:26 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -565,7 +565,7 @@ XLogFlush(XLogRecPtr record)
 					XLogWrite(usebuf);
 					S_UNLOCK(&(XLogCtl->lgwr_lck));
 					if (XLByteLT(LgwrResult.Flush, record))
-						elog(STOP, "XLogFlush: request is not satisfyed");
+						elog(STOP, "XLogFlush: request is not satisfied");
 					return;
 				}
 				break;
@@ -578,8 +578,8 @@ XLogFlush(XLogRecPtr record)
 				 (LgwrResult.Write.xrecoff - 1) / XLogSegSize != logSeg))
 	{
 		if (close(logFile) != 0)
-			elog(STOP, "Close(logfile %u seg %u) failed: %d",
-				 logId, logSeg, errno);
+			elog(STOP, "close(logfile %u seg %u) failed: %m",
+				 logId, logSeg);
 		logFile = -1;
 	}
 
@@ -592,8 +592,8 @@ XLogFlush(XLogRecPtr record)
 	}
 
 	if (fsync(logFile) != 0)
-		elog(STOP, "Fsync(logfile %u seg %u) failed: %d",
-			 logId, logSeg, errno);
+		elog(STOP, "fsync(logfile %u seg %u) failed: %m",
+			 logId, logSeg);
 	LgwrResult.Flush = LgwrResult.Write;
 
 	for (i = 0;;)
@@ -686,8 +686,8 @@ XLogWrite(char *buffer)
 			if (wcnt > 0)
 			{
 				if (fsync(logFile) != 0)
-					elog(STOP, "Fsync(logfile %u seg %u) failed: %d",
-						 logId, logSeg, errno);
+					elog(STOP, "fsync(logfile %u seg %u) failed: %m",
+						 logId, logSeg);
 				if (LgwrResult.Write.xlogid != logId)
 					LgwrResult.Flush.xrecoff = XLogFileSize;
 				else
@@ -707,8 +707,8 @@ XLogWrite(char *buffer)
 			if (logFile >= 0)
 			{
 				if (close(logFile) != 0)
-					elog(STOP, "Close(logfile %u seg %u) failed: %d",
-						 logId, logSeg, errno);
+					elog(STOP, "close(logfile %u seg %u) failed: %m",
+						 logId, logSeg);
 				logFile = -1;
 			}
 			logId = LgwrResult.Write.xlogid;
@@ -740,8 +740,8 @@ XLogWrite(char *buffer)
 		{
 			logOff = (LgwrResult.Write.xrecoff - BLCKSZ) % XLogSegSize;
 			if (lseek(logFile, (off_t) logOff, SEEK_SET) < 0)
-				elog(STOP, "Lseek(logfile %u seg %u off %u) failed: %d",
-					 logId, logSeg, logOff, errno);
+				elog(STOP, "lseek(logfile %u seg %u off %u) failed: %m",
+					 logId, logSeg, logOff);
 		}
 
 		if (buffer != NULL && XLByteLT(LgwrRqst.Write, LgwrResult.Write))
@@ -750,8 +750,8 @@ XLogWrite(char *buffer)
 			from = XLogCtl->pages + Write->curridx * BLCKSZ;
 
 		if (write(logFile, from, BLCKSZ) != BLCKSZ)
-			elog(STOP, "Write(logfile %u seg %u off %u) failed: %d",
-				 logId, logSeg, logOff, errno);
+			elog(STOP, "write(logfile %u seg %u off %u) failed: %m",
+				 logId, logSeg, logOff);
 
 		wcnt++;
 		logOff += BLCKSZ;
@@ -768,8 +768,8 @@ XLogWrite(char *buffer)
 		XLByteLE(LgwrRqst.Flush, LgwrResult.Write))
 	{
 		if (fsync(logFile) != 0)
-			elog(STOP, "Fsync(logfile %u seg %u) failed: %d",
-				 logId, logSeg, errno);
+			elog(STOP, "fsync(logfile %u seg %u) failed: %m",
+				 logId, logSeg);
 		LgwrResult.Flush = LgwrResult.Write;
 	}
 
@@ -807,8 +807,8 @@ XLogFileInit(uint32 log, uint32 seg, bool *usexistent)
 		if (fd < 0)
 		{
 			if (errno != ENOENT)
-				elog(STOP, "InitOpen(logfile %u seg %u) failed: %d",
-					logId, logSeg, errno);
+				elog(STOP, "InitOpen(logfile %u seg %u) failed: %m",
+					logId, logSeg);
 		}
 		else
 			return(fd);
@@ -821,24 +821,24 @@ XLogFileInit(uint32 log, uint32 seg, bool *usexistent)
 
 	fd = BasicOpenFile(tpath, O_RDWR | O_CREAT | O_EXCL | PG_BINARY, S_IRUSR | S_IWUSR);
 	if (fd < 0)
-		elog(STOP, "InitCreate(logfile %u seg %u) failed: %d",
-			 logId, logSeg, errno);
+		elog(STOP, "InitCreate(logfile %u seg %u) failed: %m",
+			 logId, logSeg);
 
 	if (lseek(fd, XLogSegSize - 1, SEEK_SET) != (off_t) (XLogSegSize - 1))
-		elog(STOP, "Lseek(logfile %u seg %u) failed: %d",
-			 logId, logSeg, errno);
+		elog(STOP, "lseek(logfile %u seg %u) failed: %m",
+			 logId, logSeg);
 
 	if (write(fd, "", 1) != 1)
-		elog(STOP, "Init(logfile %u seg %u) failed: %d",
-			 logId, logSeg, errno);
+		elog(STOP, "write(logfile %u seg %u) failed: %m",
+			 logId, logSeg);
 
 	if (fsync(fd) != 0)
-		elog(STOP, "Fsync(logfile %u seg %u) failed: %d",
-			 logId, logSeg, errno);
+		elog(STOP, "fsync(logfile %u seg %u) failed: %m",
+			 logId, logSeg);
 
 	if (lseek(fd, 0, SEEK_SET) < 0)
-		elog(STOP, "Lseek(logfile %u seg %u off %u) failed: %d",
-			 log, seg, 0, errno);
+		elog(STOP, "lseek(logfile %u seg %u off %u) failed: %m",
+			 log, seg, 0);
 
 	close(fd);
 	link(tpath, path);
@@ -846,8 +846,8 @@ XLogFileInit(uint32 log, uint32 seg, bool *usexistent)
 
 	fd = BasicOpenFile(path, O_RDWR | PG_BINARY, S_IRUSR | S_IWUSR);
 	if (fd < 0)
-		elog(STOP, "InitReopen(logfile %u seg %u) failed: %d",
-			 logId, logSeg, errno);
+		elog(STOP, "InitReopen(logfile %u seg %u) failed: %m",
+			 logId, logSeg);
 
 	return (fd);
 }
@@ -865,13 +865,13 @@ XLogFileOpen(uint32 log, uint32 seg, bool econt)
 	{
 		if (econt && errno == ENOENT)
 		{
-			elog(LOG, "Open(logfile %u seg %u) failed: file doesn't exist",
+			elog(LOG, "open(logfile %u seg %u) failed: %m",
 				 logId, logSeg);
 			return (fd);
 		}
 		abort();
-		elog(STOP, "Open(logfile %u seg %u) failed: %d",
-			 logId, logSeg, errno);
+		elog(STOP, "open(logfile %u seg %u) failed: %m",
+			 logId, logSeg);
 	}
 
 	return (fd);
@@ -892,7 +892,7 @@ MoveOfflineLogs(char *archdir, uint32 _logId, uint32 _logSeg)
 
 	xldir = opendir(XLogDir);
 	if (xldir == NULL)
-		elog(STOP, "MoveOfflineLogs: cannot open xlog dir: %d", errno);
+		elog(STOP, "MoveOfflineLogs: cannot open xlog dir: %m");
 
 	sprintf(lastoff, "%08X%08X", _logId, _logSeg);
 
@@ -916,7 +916,7 @@ MoveOfflineLogs(char *archdir, uint32 _logId, uint32 _logSeg)
 		errno = 0;
 	}
 	if (errno)
-		elog(STOP, "MoveOfflineLogs: cannot read xlog dir: %d", errno);
+		elog(STOP, "MoveOfflineLogs: cannot read xlog dir: %m");
 	closedir(xldir);
 }
 
@@ -970,11 +970,11 @@ ReadRecord(XLogRecPtr *RecPtr, char *buffer)
 	{
 		readOff = (RecPtr->xrecoff % XLogSegSize) / BLCKSZ;
 		if (lseek(readFile, (off_t) (readOff * BLCKSZ), SEEK_SET) < 0)
-			elog(STOP, "ReadRecord: lseek(logfile %u seg %u off %u) failed: %d",
-				 readId, readSeg, readOff, errno);
+			elog(STOP, "ReadRecord: lseek(logfile %u seg %u off %u) failed: %m",
+				 readId, readSeg, readOff);
 		if (read(readFile, readBuf, BLCKSZ) != BLCKSZ)
-			elog(STOP, "ReadRecord: read(logfile %u seg %u off %u) failed: %d",
-				 readId, readSeg, readOff, errno);
+			elog(STOP, "ReadRecord: read(logfile %u seg %u off %u) failed: %m",
+				 readId, readSeg, readOff);
 		if (((XLogPageHeader) readBuf)->xlp_magic != XLOG_PAGE_MAGIC)
 		{
 			elog(emode, "ReadRecord: invalid magic number %u in logfile %u seg %u off %u",
@@ -1040,8 +1040,8 @@ got_record:;
 					goto next_record_is_invalid;
 			}
 			if (read(readFile, readBuf, BLCKSZ) != BLCKSZ)
-				elog(STOP, "ReadRecord: read(logfile %u seg %u off %u) failed: %d",
-					 readId, readSeg, readOff, errno);
+				elog(STOP, "ReadRecord: read(logfile %u seg %u off %u) failed: %m",
+					 readId, readSeg, readOff);
 			if (((XLogPageHeader) readBuf)->xlp_magic != XLOG_PAGE_MAGIC)
 			{
 				elog(emode, "ReadRecord: invalid magic number %u in logfile %u seg %u off %u",
@@ -1132,19 +1132,19 @@ next_record_is_invalid:;
 			 readId, readSeg, readOff, EndRecPtr.xrecoff % BLCKSZ);
 		readFile = XLogFileOpen(readId, readSeg, false);
 		if (lseek(readFile, (off_t) (readOff * BLCKSZ), SEEK_SET) < 0)
-			elog(STOP, "ReadRecord: lseek(logfile %u seg %u off %u) failed: %d",
-				 readId, readSeg, readOff, errno);
+			elog(STOP, "ReadRecord: lseek(logfile %u seg %u off %u) failed: %m",
+				 readId, readSeg, readOff);
 		if (read(readFile, readBuf, BLCKSZ) != BLCKSZ)
-			elog(STOP, "ReadRecord: read(logfile %u seg %u off %u) failed: %d",
-				 readId, readSeg, readOff, errno);
+			elog(STOP, "ReadRecord: read(logfile %u seg %u off %u) failed: %m",
+				 readId, readSeg, readOff);
 		memset(readBuf + EndRecPtr.xrecoff % BLCKSZ, 0,
 			   BLCKSZ - EndRecPtr.xrecoff % BLCKSZ);
 		if (lseek(readFile, (off_t) (readOff * BLCKSZ), SEEK_SET) < 0)
-			elog(STOP, "ReadRecord: lseek(logfile %u seg %u off %u) failed: %d",
-				 readId, readSeg, readOff, errno);
+			elog(STOP, "ReadRecord: lseek(logfile %u seg %u off %u) failed: %m",
+				 readId, readSeg, readOff);
 		if (write(readFile, readBuf, BLCKSZ) != BLCKSZ)
-			elog(STOP, "ReadRecord: write(logfile %u seg %u off %u) failed: %d",
-				 readId, readSeg, readOff, errno);
+			elog(STOP, "ReadRecord: write(logfile %u seg %u off %u) failed: %m",
+				 readId, readSeg, readOff);
 		readOff++;
 	}
 	else
@@ -1165,21 +1165,21 @@ next_record_is_invalid:;
 		memset(readBuf, 0, BLCKSZ);
 		readFile = XLogFileOpen(readId, readSeg, false);
 		if (lseek(readFile, (off_t) readOff, SEEK_SET) < 0)
-			elog(STOP, "ReadRecord: lseek(logfile %u seg %u off %u) failed: %d",
-				 readId, readSeg, readOff, errno);
+			elog(STOP, "ReadRecord: lseek(logfile %u seg %u off %u) failed: %m",
+				 readId, readSeg, readOff);
 		while (readOff < XLogSegSize)
 		{
 			if (write(readFile, readBuf, BLCKSZ) != BLCKSZ)
-				elog(STOP, "ReadRecord: write(logfile %u seg %u off %u) failed: %d",
-					 readId, readSeg, readOff, errno);
+				elog(STOP, "ReadRecord: write(logfile %u seg %u off %u) failed: %m",
+					 readId, readSeg, readOff);
 			readOff += BLCKSZ;
 		}
 	}
 	if (readFile >= 0)
 	{
 		if (fsync(readFile) < 0)
-			elog(STOP, "ReadRecord: fsync(logfile %u seg %u) failed: %d",
-				 readId, readSeg, errno);
+			elog(STOP, "ReadRecord: fsync(logfile %u seg %u) failed: %m",
+				 readId, readSeg);
 		close(readFile);
 		readFile = -1;
 	}
@@ -1217,13 +1217,13 @@ UpdateControlFile()
 
 	fd = BasicOpenFile(ControlFilePath, O_RDWR | PG_BINARY, S_IRUSR | S_IWUSR);
 	if (fd < 0)
-		elog(STOP, "Open(cntlfile) failed: %d", errno);
+		elog(STOP, "open(cntlfile) failed: %m");
 
 	if (write(fd, ControlFile, BLCKSZ) != BLCKSZ)
-		elog(STOP, "Write(cntlfile) failed: %d", errno);
+		elog(STOP, "write(cntlfile) failed: %m");
 
 	if (fsync(fd) != 0)
-		elog(STOP, "Fsync(cntlfile) failed: %d", errno);
+		elog(STOP, "fsync(cntlfile) failed: %m");
 
 	close(fd);
 
@@ -1276,8 +1276,8 @@ BootStrapXLOG()
 
 	fd = BasicOpenFile(ControlFilePath, O_RDWR | O_CREAT | O_EXCL | PG_BINARY, S_IRUSR | S_IWUSR);
 	if (fd < 0)
-		elog(STOP, "BootStrapXLOG failed to create control file (%s): %d",
-			 ControlFilePath, errno);
+		elog(STOP, "BootStrapXLOG failed to create control file (%s): %m",
+			 ControlFilePath);
 
 	checkPoint.redo.xlogid = 0;
 	checkPoint.redo.xrecoff = SizeOfXLogPHD;
@@ -1309,10 +1309,10 @@ BootStrapXLOG()
 	logFile = XLogFileInit(0, 0, &usexistent);
 
 	if (write(logFile, buffer, BLCKSZ) != BLCKSZ)
-		elog(STOP, "BootStrapXLOG failed to write logfile: %d", errno);
+		elog(STOP, "BootStrapXLOG failed to write logfile: %m");
 
 	if (fsync(logFile) != 0)
-		elog(STOP, "BootStrapXLOG failed to fsync logfile: %d", errno);
+		elog(STOP, "BootStrapXLOG failed to fsync logfile: %m");
 
 	close(logFile);
 	logFile = -1;
@@ -1330,10 +1330,10 @@ BootStrapXLOG()
 	ControlFile->catalog_version_no = CATALOG_VERSION_NO;
 
 	if (write(fd, ControlFile, BLCKSZ) != BLCKSZ)
-		elog(STOP, "BootStrapXLOG failed to write control file: %d", errno);
+		elog(STOP, "BootStrapXLOG failed to write control file: %m");
 
 	if (fsync(fd) != 0)
-		elog(STOP, "BootStrapXLOG failed to fsync control file: %d", errno);
+		elog(STOP, "BootStrapXLOG failed to fsync control file: %m");
 
 	close(fd);
 }
@@ -1341,14 +1341,15 @@ BootStrapXLOG()
 static char *
 str_time(time_t tnow)
 {
-	char	   *result = ctime(&tnow);
-	char	   *p = strchr(result, '\n');
+	static char buf[20];
 
-	if (p != NULL)
-		*p = 0;
+	strftime(buf, sizeof(buf),
+			 "%Y-%m-%d %H:%M:%S",
+			 localtime(&tnow));
 
-	return (result);
+	return buf;
 }
+
 
 /*
  * This func must be called ONCE on system startup
@@ -1368,7 +1369,7 @@ StartupXLOG()
 #endif
 	int			fd;
 
-	elog(LOG, "Data Base System is starting up at %s", str_time(time(NULL)));
+	elog(LOG, "starting up");
 
 	XLogCtl->xlblocks = (XLogRecPtr *) (((char *) XLogCtl) + sizeof(XLogCtlData));
 	XLogCtl->pages = ((char *) XLogCtl->xlblocks + sizeof(XLogRecPtr) * XLOGbuffers);
@@ -1392,10 +1393,10 @@ StartupXLOG()
 	 */
 	fd = BasicOpenFile(ControlFilePath, O_RDWR | PG_BINARY, S_IRUSR | S_IWUSR);
 	if (fd < 0)
-		elog(STOP, "Open(\"%s\") failed: %d", ControlFilePath, errno);
+		elog(STOP, "open(\"%s\") failed: %m", ControlFilePath);
 
 	if (read(fd, ControlFile, BLCKSZ) != BLCKSZ)
-		elog(STOP, "Read(\"%s\") failed: %d", ControlFilePath, errno);
+		elog(STOP, "read(\"%s\") failed: %m", ControlFilePath);
 
 	close(fd);
 
@@ -1404,7 +1405,7 @@ StartupXLOG()
 		ControlFile->state < DB_SHUTDOWNED ||
 		ControlFile->state > DB_IN_PRODUCTION ||
 		!XRecOffIsValid(ControlFile->checkPoint.xrecoff))
-		elog(STOP, "Control file context is broken");
+		elog(STOP, "control file context is broken");
 
 	/* Check for incompatible database */
 	if (ControlFile->blcksz != BLCKSZ)
@@ -1418,20 +1419,20 @@ StartupXLOG()
 			 ControlFile->catalog_version_no, CATALOG_VERSION_NO);
 
 	if (ControlFile->state == DB_SHUTDOWNED)
-		elog(LOG, "Data Base System was shutted down at %s",
+		elog(LOG, "database system was shut down at %s",
 			 str_time(ControlFile->time));
 	else if (ControlFile->state == DB_SHUTDOWNING)
-		elog(LOG, "Data Base System was interrupted when shutting down at %s",
+		elog(LOG, "database system shutdown was interrupted at %s",
 			 str_time(ControlFile->time));
 	else if (ControlFile->state == DB_IN_RECOVERY)
 	{
-		elog(LOG, "Data Base System was interrupted being in recovery at %s\n"
+		elog(LOG, "database system was interrupted being in recovery at %s\n"
 			 "\tThis propably means that some data blocks are corrupted\n"
-			 "\tAnd you will have to use last backup for recovery",
+			 "\tand you will have to use last backup for recovery.",
 			 str_time(ControlFile->time));
 	}
 	else if (ControlFile->state == DB_IN_PRODUCTION)
-		elog(LOG, "Data Base System was interrupted being in production at %s",
+		elog(LOG, "database system was interrupted at %s",
 			 str_time(ControlFile->time));
 
 #ifdef XLOG
@@ -1482,7 +1483,7 @@ StartupXLOG()
 		if (checkPoint.Shutdown)
 			elog(STOP, "Invalid Redo/Undo record in shutdown checkpoint");
 		if (ControlFile->state == DB_SHUTDOWNED)
-			elog(STOP, "Invalid Redo/Undo record in Shutdowned state");
+			elog(STOP, "Invalid Redo/Undo record in shut down state");
 		InRecovery = true;
 	}
 	else if (ControlFile->state != DB_SHUTDOWNED)
@@ -1493,8 +1494,8 @@ StartupXLOG()
 	/* REDO */
 	if (InRecovery)
 	{
-		elog(LOG, "The DataBase system was not properly shut down\n"
-			 "\tAutomatic recovery is in progress...");
+		elog(LOG, "database system was not properly shut down; "
+			 "automatic recovery in progress...");
 		ControlFile->state = DB_IN_RECOVERY;
 		ControlFile->time = time(NULL);
 		UpdateControlFile();
@@ -1515,7 +1516,7 @@ StartupXLOG()
 		if (record->xl_len != 0)
 		{
 			InRedo = true;
-			elog(LOG, "Redo starts at (%u, %u)",
+			elog(LOG, "redo starts at (%u, %u)",
 				 ReadRecPtr.xlogid, ReadRecPtr.xrecoff);
 			do
 			{
@@ -1539,13 +1540,13 @@ StartupXLOG()
 				RmgrTable[record->xl_rmid].rm_redo(EndRecPtr, record);
 				record = ReadRecord(NULL, buffer);
 			} while (record->xl_len != 0);
-			elog(LOG, "Redo done at (%u, %u)",
+			elog(LOG, "redo done at (%u, %u)",
 				 ReadRecPtr.xlogid, ReadRecPtr.xrecoff);
 			LastRec = ReadRecPtr;
 			InRedo = false;
 		}
 		else
-			elog(LOG, "Redo is not required");
+			elog(LOG, "redo is not required");
 	}
 
 	/* Init xlog buffer cache */
@@ -1579,7 +1580,7 @@ StartupXLOG()
 		RecPtr = ReadRecPtr;
 		if (XLByteLT(checkPoint.undo, RecPtr))
 		{
-			elog(LOG, "Undo starts at (%u, %u)",
+			elog(LOG, "undo starts at (%u, %u)",
 				 RecPtr.xlogid, RecPtr.xrecoff);
 			do
 			{
@@ -1589,11 +1590,11 @@ StartupXLOG()
 					RmgrTable[record->xl_rmid].rm_undo(EndRecPtr, record);
 				RecPtr = record->xl_prev;
 			} while (XLByteLE(checkPoint.undo, RecPtr));
-			elog(LOG, "Undo done at (%u, %u)",
+			elog(LOG, "undo done at (%u, %u)",
 				 ReadRecPtr.xlogid, ReadRecPtr.xrecoff);
 		}
 		else
-			elog(LOG, "Undo is not required");
+			elog(LOG, "undo is not required");
 	}
 #endif
 
@@ -1614,7 +1615,7 @@ StartupXLOG()
 	ThisStartUpID++;
 	XLogCtl->ThisStartUpID = ThisStartUpID;
 
-	elog(LOG, "Data Base System is in production state at %s", str_time(time(NULL)));
+	elog(LOG, "database system is in production state");
 
 	return;
 }
@@ -1635,14 +1636,14 @@ SetThisStartUpID(void)
 void
 ShutdownXLOG()
 {
-	elog(LOG, "Data Base System shutting down at %s", str_time(time(NULL)));
+	elog(LOG, "shutting down");
 
 #ifdef XLOG
 	CreateDummyCaches();
 #endif
 	CreateCheckPoint(true);
 
-	elog(LOG, "Data Base System shut down at %s", str_time(time(NULL)));
+	elog(LOG, "database system is shut down");
 }
 
 extern XLogRecPtr	GetUndoRecPtr(void);
