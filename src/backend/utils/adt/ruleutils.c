@@ -3,7 +3,7 @@
  *			  out of it's tuple
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.13 1999/05/12 17:59:31 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.14 1999/05/25 08:49:33 wieck Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -679,7 +679,7 @@ make_ruledef(HeapTuple ruletup, TupleDesc rulettc)
 	/* If the rule has an event qualification, add it */
 	if (ev_qual == NULL)
 		ev_qual = "";
-	if (strlen(ev_qual) > 0)
+	if (strlen(ev_qual) > 0 && strcmp(ev_qual, "<>") != 0)
 	{
 		Node	   *qual;
 		Query	   *query;
