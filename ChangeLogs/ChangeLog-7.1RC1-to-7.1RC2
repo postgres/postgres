@@ -1,0 +1,310 @@
+2001-04-01 00:42  pjw
+
+	* src/bin/pg_dump/: pg_backup.h, pg_backup_archiver.c,
+	pg_backup_archiver.h, pg_backup_custom.c, pg_backup_files.c,
+	pg_backup_tar.c, pg_dump.c: Patch to put rudimentary dependency
+	support into pg_dump. This addresses the UDT/function order
+	problem.
+	
+	    - Rudimentary support for dependencies in archives.
+	      Uses dependencies to modify the OID used in sorting TOC
+	      entries. This will NOT handle multi-level dependencies,
+	      but will manage simple relationships like UDTs & their
+	functions.
+	
+	    - Treat OIDs with more respect (avoid using ints, use macros
+	      for conversion & comparison).
+
+2001-03-31 18:14  tgl
+
+	* src/interfaces/libpq/fe-connect.c: On Cygwin, do initial
+	connect() call in blocking mode, per report from Jason Tishler.
+
+2001-03-31 18:13  tgl
+
+	* src/interfaces/libpq/fe-misc.c: pqWait() should check for
+	exception status as well as read or write ready.  It appears that
+	most (all?) Unixen will consider a socket to be read or write ready
+	if it has an error condition, but of course Microsoft does things
+	differently.
+
+2001-03-30 15:50  tgl
+
+	* src/: backend/commands/creatinh.c,
+	test/regress/expected/create_table.out,
+	test/regress/expected/inherit.out: Re-allow specification of a new
+	default value for an inherited column in CREATE TABLE, but give a
+	warning notice.  Clean up inconsistent handling of defaults and NOT
+	NULL flags from multiply-inherited columns.  Per pghackers
+	discussion 28-Mar through 30-Mar.
+
+2001-03-30 07:08  darcy
+
+	* src/interfaces/python/pgdb.py: Marc-Andre is changing where
+	DateTime goes.	This change allows the module to work either way. 
+	Change submitted by Andrew Kuchling <akuchlin@mems-exchange.org>
+
+2001-03-30 07:04  darcy
+
+	* src/interfaces/python/pgdb.py: Correct indenting in _quote()
+	function.  Fix submitted by Andrew Kuchling
+	<akuchlin@mems-exchange.org>
+
+2001-03-30 00:25  tgl
+
+	* src/include/storage/itemptr.h: Add appropriately ifdef'd hack to
+	make ARM compiler allocate ItemPointerData as six bytes not eight. 
+	This fixes a regression test failure but more importantly avoids
+	wasting four bytes of pad space in every tuple header.	Also add
+	some commentary about what's going on.
+
+2001-03-29 23:50  tgl
+
+	* src/bin/psql/tab-complete.c: random_seed => seed ...
+
+2001-03-29 17:09  momjian
+
+	* src/bin/pgaccess/lib/languages/chinese_big5: Put proper pgaccess
+	Chinese big5 file in place.
+
+2001-03-29 14:03  petere
+
+	* src/backend/commands/variable.c: Rename 'random_seed' back to
+	'seed'.
+
+2001-03-29 13:25  petere
+
+	* doc/src/sgml/manage-ag.sgml: small fixes
+
+2001-03-29 04:58  meskes
+
+	* src/interfaces/ecpg/: ChangeLog, include/ecpgtype.h: Applied bug
+	fix by Adriaan Joubert <a.joubert@albourne.com>
+
+2001-03-28 15:46  tgl
+
+	* doc/src/sgml/mvcc.sgml: Correct erroneous description of MVCC
+	Read Committed semantics.
+
+2001-03-27 13:02  tgl
+
+	* src/backend/optimizer/prep/prepunion.c: Quick hack to fix Oliver
+	Elphick's problem with subselects in an inheritance query: make
+	duplicate copies of subplans in adjust_inherited_attrs.  When we
+	redesign querytrees we really gotta do something about this issue
+	of whether querytrees are read-only and can share substructure or
+	not.
+
+2001-03-27 12:12  tgl
+
+	* src/backend/optimizer/util/clauses.c: Repair pgindent damage to
+	comments.
+
+2001-03-27 11:34  momjian
+
+	* doc/src/Makefile: > Kinda looks like Ian broke the
+	compile-in-source-dir case while
+	> making the compile-in-separate-dir case work.  Tut tut.
+	
+	Yes.  My apologies.  This patch is one way to fix things.
+	
+	Ian
+
+2001-03-27 09:56  momjian
+
+	* doc/FAQ_AIX, src/Makefile.shlib,
+	src/backend/port/aix/mkldexport.sh: The following patch updates the
+	FAQ_AIX and makes C++ code work with more recent versions of the
+	IBM C++ compiler (now called VisualAge C++).  The C++ part was
+	previously broken (g++ and xlC), thus this is zero risk.  Only AIX
+	specific parts are touched (1 Makefile.shlib line (link with
+	$(COMPILER ) instead of $(CC) and one shell script line (parameter
+	-C to nm to not demangle C++ symbo ls for .exp file)).
+	
+	I thus ask you to please apply this patch before release.
+	
+	With or without this patch RC1 on AIX 4.3.2 RS6000 passes "gmake
+	check" for both  the native compiler vac.C 5.0.1 and gcc 2.95.2 :-)
+	
+	Andreas
+
+2001-03-27 05:53  darcy
+
+	* src/interfaces/python/setup.py: Add changes from Mikhail Terekhov
+	<terekhov@emc.com>.
+	
+	Use Extension method from distutils.
+	
+	Cleaned up mismatched indentation styles while I was at it.
+
+2001-03-27 00:45  ishii
+
+	* src/bin/: initdb/initdb.sh, scripts/createdb: Add checking for
+	valid database encoding.
+
+2001-03-26 23:00  momjian
+
+	* src/interfaces/odbc/: bind.c, bind.h, columninfo.c, columninfo.h,
+	connection.c, connection.h, convert.c, convert.h, dlg_specific.c,
+	dlg_specific.h, drvconn.c, environ.c, environ.h, execute.c, gpps.c,
+	gpps.h, info.c, iodbc.h, isql.h, isqlext.h, lobj.c, lobj.h, misc.c,
+	misc.h, multibyte.c, multibyte.h, options.c, parse.c, pgtypes.c,
+	pgtypes.h, psqlodbc.c, psqlodbc.h, qresult.c, qresult.h, results.c,
+	setup.c, socket.c, socket.h, statement.c, statement.h, tuple.c,
+	tuple.h, tuplelist.c, tuplelist.h: ODBC source code cleanup. 
+	Mostly alignment of #define constants.
+
+2001-03-26 20:16  tgl
+
+	* src/backend/storage/buffer/s_lock.c: Spell __volatile__
+	correctly.
+
+2001-03-26 12:51  momjian
+
+	* src/test/regress/resultmap: OpenBSD resultmap change:
+	
+	I posted this to the list a few days ago,  but it was not
+	addressed.  Can someone please make the changes to the
+	src/test/regress/resultmap?
+	
+	Thanks.
+	
+	- brandon
+
+2001-03-26 12:00  momjian
+
+	* src/backend/tcop/postgres.c: Add period to message.
+
+2001-03-26 11:59  momjian
+
+	* src/backend/tcop/postgres.c: Change message to _the_
+	administrator.	There is only one administrative account.
+	
+		This connection has been terminated by the administrator.
+
+2001-03-26 10:21  tgl
+
+	* src/include/config.h.win32: Add #define HAVE_ATEXIT, per report
+	from Magnus.
+
+2001-03-26 10:18  tgl
+
+	* src/bin/psql/mainloop.c: pqsignal call needs to be #ifndef WIN32,
+	per report from Magnus.
+
+2001-03-26 04:34  inoue
+
+	* src/interfaces/odbc/GNUmakefile: Add multibyte support
+
+2001-03-26 03:32  ishii
+
+	* doc/README.mb.jp: Fix typo
+
+2001-03-25 18:23  tgl
+
+	* src/backend/: access/heap/heapam.c, commands/vacuum.c,
+	storage/large_object/inv_api.c, utils/mb/wstrncmp.c: Fix unportable
+	assumptions about alignment of local char[n] variables.
+
+2001-03-25 17:40  tgl
+
+	* src/include/access/htup.h: Improve comments for xlog item size
+	#defines.
+
+2001-03-25 17:23  darcy
+
+	* src/interfaces/python/: Announce, ChangeLog: Update the changes
+	for version 3.2.
+
+2001-03-25 17:22  darcy
+
+	* src/interfaces/python/README: Document the --with-python flag as
+	a simpler way of installing the PyGreSQL module when installing
+	PostgreSQL.
+	
+	Document the location of the WIN32 binaries.
+
+2001-03-25 14:44  petere
+
+	* src/interfaces/python/: GNUmakefile, Setup.in.raw: Pick up any
+	extra -I options for Python build.
+
+2001-03-25 14:30  tgl
+
+	* src/interfaces/odbc/socket.c: Fix unportable assumptions about
+	alignment of local char[n] variables.
+
+2001-03-25 13:14  tgl
+
+	* doc/src/sgml/func.sgml: The regexp pattern characters ^ and $
+	should be explained as matching at the beginning and end of the
+	input string, not the beginning and end of "a line", since Postgres
+	does not allow them to match at newline characters in the data.
+
+2001-03-25 12:52  tgl
+
+	* src/include/storage/s_lock.h: Re-order declarations to un-break
+	the non-HAS_TEST_AND_SET case.
+
+2001-03-25 05:16  petere
+
+	* doc/src/sgml/pltcl.sgml: spell fix
+
+2001-03-25 03:32  petere
+
+	* doc/src/: Makefile, sgml/Makefile: Allow building documentation
+	outside source tree.  from Ian Lance Taylor
+
+2001-03-24 19:45  tgl
+
+	* src/backend/access/heap/tuptoaster.c: Fix code that incorrectly
+	assumed a 'char foo[N]' local variable would be aligned on a word
+	boundary.  Per report from Steve Nicolai.
+
+2001-03-24 18:32  petere
+
+	* src/test/regress/pg_regress.sh: Make less misleading message for
+	failed + ignored tests.
+
+2001-03-24 18:11  tgl
+
+	* src/bin/pg_dump/pg_backup_null.c: Portability fix from Steve
+	Nicolai.
+
+2001-03-24 18:03  petere
+
+	* doc/src/sgml/: catalogs.sgml, datatype.sgml, perform.sgml,
+	protocol.sgml, queries.sgml, sql.sgml, xaggr.sgml, xindex.sgml,
+	y2k.sgml, ref/psql-ref.sgml, ref/select.sgml: minor copy editing
+
+2001-03-24 08:21  petere
+
+	* doc/src/sgml/reference.sgml, src/bin/pg_dump/Makefile: Disable
+	pg_upgrade.
+
+2001-03-24 01:17  tgl
+
+	* src/makefiles/Makefile.hpux: Hadn't built on a PARISC 1.1 box in
+	a long time ... but when I did, it turned out that the libpq
+	makefile chokes on '-L /lib/pa1.1'.  Need to remove the space so
+	filter rule works.
+
+2001-03-23 22:40  tgl
+
+	* doc/src/sgml/problems.sgml: Update info about mailing lists, make
+	a few other minor improvements.
+
+2001-03-23 21:36  thomas
+
+	* doc/src/sgml/installation.sgml: Update to the current state of
+	platform support.  Still need some tested for the 7.1 release.
+
+2001-03-23 21:35  thomas
+
+	* doc/src/sgml/ref/create_type.sgml: Fix up wording slightly. No
+	change in content.
+
+2001-03-23 19:48  scrappy
+
+	* ChangeLogs/ChangeLog-7.1beta6-7.1RC1: 
+	update the ChangeLog in preparation for release ...
