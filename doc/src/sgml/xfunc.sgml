@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.16 2000/05/20 11:24:37 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.17 2000/05/27 18:18:31 tgl Exp $
 -->
 
  <chapter id="xfunc">
@@ -1012,7 +1012,7 @@ LANGUAGE 'c';
 
      <para>
       For functions written in C, the SQL name declared in
-      <command>CREATE FUNC TION</command>
+      <command>CREATE FUNCTION</command>
       must be exactly the same as the actual name of the function in the
       C code (hence it must be a legal C function name).
      </para>
