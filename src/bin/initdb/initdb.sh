@@ -26,7 +26,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.54 1998/08/24 01:38:06 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.55 1998/09/09 18:16:36 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -425,7 +425,7 @@ echo "UPDATE pg_type SET typname = 'pg_user' WHERE typname = 'xpg_user';" |\
 	postgres $PGSQL_OPT template1 > /dev/null
 mv $PGDATA/base/template1/xpg_user $PGDATA/base/template1/pg_user
 
-echo "CREATE RULE _RETpg_user AS ON SELECT TO pg_user DO INSTEAD	\
+echo "CREATE RULE \"_RETpg_user\" AS ON SELECT TO pg_user DO INSTEAD	\
 	    SELECT usename, usesysid, usecreatedb, usetrace,		\
 	           usesuper, usecatupd, '********'::text as passwd,	\
 		   valuntil FROM pg_shadow;" | \
@@ -433,33 +433,33 @@ echo "CREATE RULE _RETpg_user AS ON SELECT TO pg_user DO INSTEAD	\
 echo "REVOKE ALL on pg_shadow FROM public" | \
 	postgres $PGSQL_OPT template1 > /dev/null
 
-echo "Creating view pg_rule"
-echo "CREATE TABLE xpg_rule (		\
+echo "Creating view pg_rules"
+echo "CREATE TABLE xpg_rules (		\
 	    rulename	name,		\
 	    definition	text);" | postgres $PGSQL_OPT template1 > /dev/null
-#move it into pg_rule
-echo "UPDATE pg_class SET relname = 'pg_rule' WHERE relname = 'xpg_rule';" |\
+#move it into pg_rules
+echo "UPDATE pg_class SET relname = 'pg_rules' WHERE relname = 'xpg_rules';" |\
 	postgres $PGSQL_OPT template1 > /dev/null
-echo "UPDATE pg_type SET typname = 'pg_rule' WHERE typname = 'xpg_rule';" |\
+echo "UPDATE pg_type SET typname = 'pg_rules' WHERE typname = 'xpg_rules';" |\
 	postgres $PGSQL_OPT template1 > /dev/null
-mv $PGDATA/base/template1/xpg_rule $PGDATA/base/template1/pg_rule
+mv $PGDATA/base/template1/xpg_rules $PGDATA/base/template1/pg_rules
 
-echo "CREATE RULE _RETpg_rule AS ON SELECT TO pg_rule DO INSTEAD	\
+echo "CREATE RULE \"_RETpg_rules\" AS ON SELECT TO pg_rules DO INSTEAD	\
 	    SELECT rulename, pg_get_ruledef(rulename) AS definition	\
 	      FROM pg_rewrite;" | postgres $PGSQL_OPT template1 > /dev/null
 
-echo "Creating view pg_view"
-echo "CREATE TABLE xpg_view (		\
+echo "Creating view pg_views"
+echo "CREATE TABLE xpg_views (		\
 	    viewname	name,		\
 	    definition	text);" | postgres $PGSQL_OPT template1 > /dev/null
-#move it into pg_view
-echo "UPDATE pg_class SET relname = 'pg_view' WHERE relname = 'xpg_view';" |\
+#move it into pg_views
+echo "UPDATE pg_class SET relname = 'pg_views' WHERE relname = 'xpg_views';" |\
 	postgres $PGSQL_OPT template1 > /dev/null
-echo "UPDATE pg_type SET typname = 'pg_view' WHERE typname = 'xpg_view';" |\
+echo "UPDATE pg_type SET typname = 'pg_views' WHERE typname = 'xpg_views';" |\
 	postgres $PGSQL_OPT template1 > /dev/null
-mv $PGDATA/base/template1/xpg_view $PGDATA/base/template1/pg_view
+mv $PGDATA/base/template1/xpg_views $PGDATA/base/template1/pg_views
 
-echo "CREATE RULE _RETpg_view AS ON SELECT TO pg_view DO INSTEAD	\
+echo "CREATE RULE \"_RETpg_views\" AS ON SELECT TO pg_views DO INSTEAD	\
 	    SELECT relname AS viewname, 				\
 	           pg_get_viewdef(relname) AS definition		\
 	      FROM pg_class WHERE relhasrules AND			\
