@@ -18,10 +18,9 @@ INSERT INTO PATH_TBL VALUES ('1,2 ,3,4');
 
 INSERT INTO PATH_TBL VALUES ('[1,2,3, 4]');
 
--- obsolete v6.0 format (closed,count,x1,y1,...)
-INSERT INTO PATH_TBL VALUES ('(0,2,11,12,13,14)');
+INSERT INTO PATH_TBL VALUES ('[11,12,13,14]');
 
-INSERT INTO PATH_TBL VALUES ('(1,2,11,12,13,14)');
+INSERT INTO PATH_TBL VALUES ('(11,12,13,14)');
 
 -- bad values for parser testing
 INSERT INTO PATH_TBL VALUES ('[(,2),(3,4)]');

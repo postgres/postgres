@@ -47,7 +47,7 @@ SELECT '' AS three, p.* FROM POINT_TBL p
    WHERE not on_pb(p.f1,'(0,0,100,100)'::box);
 
 SELECT '' AS two, p.* FROM POINT_TBL p
-   WHERE on_ppath(p.f1,'(0,3,0,0,-10,0,-10,10)'::path);
+   WHERE on_ppath(p.f1,'[(0,0),(-10,0),(-10,10)]'::path);
 
 SELECT '' AS six, p.f1, p.f1 <===> '(0,0)'::point AS dist
    FROM POINT_TBL p

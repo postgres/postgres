@@ -144,20 +144,20 @@ INSERT INTO e_star (class, e)
    VALUES ('e', '-4'::int2);
 
 INSERT INTO f_star (class, a, c, e, f)
-   VALUES ('f', 19, 'hi claire'::char16, '-5'::int2, '(1,2,3,4)'::polygon);
+   VALUES ('f', 19, 'hi claire'::char16, '-5'::int2, '(1,3),(2,4)'::polygon);
 
 INSERT INTO f_star (class, a, c, e)
    VALUES ('f', 20, 'hi mike'::char16, '-6'::int2);
 
 INSERT INTO f_star (class, a, c, f)
-   VALUES ('f', 21, 'hi marcel'::char16, '(11,22,33,44,55,66)'::polygon);
+   VALUES ('f', 21, 'hi marcel'::char16, '(11,44),(22,55),(33,66)'::polygon);
 
 INSERT INTO f_star (class, a, e, f)
-   VALUES ('f', 22, '-7'::int2, '(111,222,333,444,555,666,777,888)'::polygon);
+   VALUES ('f', 22, '-7'::int2, '(111,555),(222,666),(333,777),(444,888)'::polygon);
 
 INSERT INTO f_star (class, c, e, f)
    VALUES ('f', 'hi keith'::char16, '-8'::int2, 
-	   '(1111,2222,3333,4444)'::polygon);
+	   '(1111,3333),(2222,4444)'::polygon);
 
 INSERT INTO f_star (class, a, c)
    VALUES ('f', 24, 'hi marc'::char16);
@@ -166,17 +166,17 @@ INSERT INTO f_star (class, a, e)
    VALUES ('f', 25, '-9'::int2);
 
 INSERT INTO f_star (class, a, f)
-   VALUES ('f', 26, '(11111,22222,33333,44444)'::polygon); 
+   VALUES ('f', 26, '(11111,33333),(22222,44444)'::polygon); 
 
 INSERT INTO f_star (class, c, e)
    VALUES ('f', 'hi allison'::char16, '-10'::int2);
 
 INSERT INTO f_star (class, c, f)
    VALUES ('f', 'hi jeff'::char16,
-           '(111111,222222,333333,444444)'::polygon);
+           '(111111,333333),(222222,444444)'::polygon);
 
 INSERT INTO f_star (class, e, f)
-   VALUES ('f', '-11'::int2, '(1111111,2222222,3333333,4444444)'::polygon);
+   VALUES ('f', '-11'::int2, '(1111111,3333333),(2222222,4444444)'::polygon);
 
 INSERT INTO f_star (class, a) VALUES ('f', 27);
 
@@ -185,7 +185,7 @@ INSERT INTO f_star (class, c) VALUES ('f', 'hi carl'::char16);
 INSERT INTO f_star (class, e) VALUES ('f', '-12'::int2);
 
 INSERT INTO f_star (class, f) 
-   VALUES ('f', '(11111111,22222222,33333333,44444444)'::polygon);
+   VALUES ('f', '(11111111,33333333),(22222222,44444444)'::polygon);
 
 INSERT INTO f_star (class) VALUES ('f');
 
@@ -223,8 +223,8 @@ CREATE TABLE iportaltest (
 );
 
 INSERT INTO iportaltest (i, d, p)
-   VALUES (1, 3.567, '(3.0,4.0,1.0,2.0)'::polygon);
+   VALUES (1, 3.567, '(3.0,1.0),(4.0,2.0)'::polygon);
 
 INSERT INTO iportaltest (i, d, p)
-   VALUES (2, 89.05, '(4.0,3.0,2.0,1.0)'::polygon);
+   VALUES (2, 89.05, '(4.0,2.0),(3.0,1.0)'::polygon);
 
