@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.92 2000/07/07 19:24:41 petere Exp $
+ * $Id: pg_type.h,v 1.93 2000/07/22 03:34:28 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -76,11 +76,11 @@ CATALOG(pg_type) BOOTSTRAP
 	 * If typelem is not 0 then it identifies another row in pg_type.
 	 * The current type can then be subscripted like an array yielding
 	 * values of type typelem. A non-zero typelem does not guarantee
-	 * this type to be an array type; ordinary fixed-length types can
-	 * also be subscripted (e.g., oidvector). Variable-length types
-	 * can *not* be turned into pseudo-arrays like that. Hence, the
-	 * way to determine whether a type is an array type is typelem !=
-	 * 0 and typlen < 0.
+	 * this type to be a "real" array type; some ordinary fixed-length
+	 * types can also be subscripted (e.g., oidvector). Variable-length
+	 * types can *not* be turned into pseudo-arrays like that. Hence,
+	 * the way to determine whether a type is a "true" array type is
+	 * typelem != 0 and typlen < 0.
 	 */
 	Oid			typelem;
 	regproc		typinput;
@@ -282,7 +282,7 @@ DESCR("filename used in system tables");
 DATA(insert OID = 628 (  line	   PGUID 32  48 f b t \054 0 701 line_in line_out line_in line_out d p _null_ ));
 DESCR("geometric line '(pt1,pt2)'");
 #define LINEOID			628
-DATA(insert OID = 629 (  _line	   PGUID  -1 -1 f b t \054 0 628 array_in array_out array_in array_out d p _null_ ));
+DATA(insert OID = 629 (  _line	   PGUID  -1 -1 f b t \054 0 628 array_in array_out array_in array_out d x _null_ ));
 DESCR("");
 
 /* OIDS 700 - 799 */
@@ -309,11 +309,11 @@ DESCR("");
 DATA(insert OID = 718 (  circle    PGUID  24 47 f b t \054 0	0 circle_in circle_out circle_in circle_out d p _null_ ));
 DESCR("geometric circle '(center,radius)'");
 #define CIRCLEOID		718
-DATA(insert OID = 719 (  _circle   PGUID  -1 -1 f b t \054 0  718 array_in array_out array_in array_out d p _null_ ));
+DATA(insert OID = 719 (  _circle   PGUID  -1 -1 f b t \054 0  718 array_in array_out array_in array_out d x _null_ ));
 DATA(insert OID = 790 (  money	   PGUID   4 24 f b t \054 0	0 cash_in cash_out cash_in cash_out i p _null_ ));
 DESCR("$d,ddd.cc, money");
 #define CASHOID 790
-DATA(insert OID = 791 (  _money    PGUID  -1 -1 f b t \054 0  790 array_in array_out array_in array_out i p _null_ ));
+DATA(insert OID = 791 (  _money    PGUID  -1 -1 f b t \054 0  790 array_in array_out array_in array_out i x _null_ ));
 
 /* OIDS 800 - 899 */
 DATA(insert OID = 829 ( macaddr    PGUID  6 -1 f b t \054 0 0 macaddr_in macaddr_out macaddr_in macaddr_out i p _null_ ));
@@ -328,34 +328,34 @@ DESCR("network IP address/netmask, network address");
 /* OIDS 900 - 999 */
 
 /* OIDS 1000 - 1099 */
-DATA(insert OID = 1000 (  _bool		 PGUID -1  -1 f b t \054 0	16 array_in array_out array_in array_out i p _null_ ));
-DATA(insert OID = 1001 (  _bytea	 PGUID -1  -1 f b t \054 0	17 array_in array_out array_in array_out i p _null_ ));
-DATA(insert OID = 1002 (  _char		 PGUID -1  -1 f b t \054 0	18 array_in array_out array_in array_out i p _null_ ));
-DATA(insert OID = 1003 (  _name		 PGUID -1  -1 f b t \054 0	19 array_in array_out array_in array_out i p _null_ ));
-DATA(insert OID = 1005 (  _int2		 PGUID -1  -1 f b t \054 0	21 array_in array_out array_in array_out i p _null_ ));
-DATA(insert OID = 1006 (  _int2vector PGUID -1	-1 f b t \054 0 22 array_in array_out array_in array_out i p _null_ ));
-DATA(insert OID = 1007 (  _int4		 PGUID -1  -1 f b t \054 0	23 array_in array_out array_in array_out i p _null_ ));
-DATA(insert OID = 1008 (  _regproc	 PGUID -1  -1 f b t \054 0	24 array_in array_out array_in array_out i p _null_ ));
-DATA(insert OID = 1009 (  _text		 PGUID -1  -1 f b t \054 0	25 array_in array_out array_in array_out i p _null_ ));
-DATA(insert OID = 1028 (  _oid		 PGUID -1  -1 f b t \054 0	26 array_in array_out array_in array_out i p _null_ ));
-DATA(insert OID = 1010 (  _tid		 PGUID -1  -1 f b t \054 0	27 array_in array_out array_in array_out i p _null_ ));
-DATA(insert OID = 1011 (  _xid		 PGUID -1  -1 f b t \054 0	28 array_in array_out array_in array_out i p _null_ ));
-DATA(insert OID = 1012 (  _cid		 PGUID -1  -1 f b t \054 0	29 array_in array_out array_in array_out i p _null_ ));
-DATA(insert OID = 1013 (  _oidvector PGUID -1  -1 f b t \054 0	30 array_in array_out array_in array_out i p _null_ ));
-DATA(insert OID = 1014 (  _bpchar	 PGUID -1  -1 f b t \054 0 1042 array_in array_out array_in array_out i p _null_ ));
-DATA(insert OID = 1015 (  _varchar	 PGUID -1  -1 f b t \054 0 1043 array_in array_out array_in array_out i p _null_ ));
-DATA(insert OID = 1016 (  _int8		 PGUID -1  -1 f b t \054 0	20 array_in array_out array_in array_out d p _null_ ));
-DATA(insert OID = 1017 (  _point	 PGUID -1  -1 f b t \054 0 600 array_in array_out array_in array_out d p _null_ ));
-DATA(insert OID = 1018 (  _lseg		 PGUID -1  -1 f b t \054 0 601 array_in array_out array_in array_out d p _null_ ));
-DATA(insert OID = 1019 (  _path		 PGUID -1  -1 f b t \054 0 602 array_in array_out array_in array_out d p _null_ ));
-DATA(insert OID = 1020 (  _box		 PGUID -1  -1 f b t \073 0 603 array_in array_out array_in array_out d p _null_ ));
-DATA(insert OID = 1021 (  _float4	 PGUID -1  -1 f b t \054 0 700 array_in array_out array_in array_out i p _null_ ));
-DATA(insert OID = 1022 (  _float8	 PGUID -1  -1 f b t \054 0 701 array_in array_out array_in array_out d p _null_ ));
-DATA(insert OID = 1023 (  _abstime	 PGUID -1  -1 f b t \054 0 702 array_in array_out array_in array_out i p _null_ ));
-DATA(insert OID = 1024 (  _reltime	 PGUID -1  -1 f b t \054 0 703 array_in array_out array_in array_out i p _null_ ));
-DATA(insert OID = 1025 (  _tinterval PGUID -1  -1 f b t \054 0 704 array_in array_out array_in array_out i p _null_ ));
-DATA(insert OID = 1026 (  _filename  PGUID -1  -1 f b t \054 0 605 array_in array_out array_in array_out i p _null_ ));
-DATA(insert OID = 1027 (  _polygon	 PGUID -1  -1 f b t \054 0 604 array_in array_out array_in array_out d p _null_ ));
+DATA(insert OID = 1000 (  _bool		 PGUID -1  -1 f b t \054 0	16 array_in array_out array_in array_out i x _null_ ));
+DATA(insert OID = 1001 (  _bytea	 PGUID -1  -1 f b t \054 0	17 array_in array_out array_in array_out i x _null_ ));
+DATA(insert OID = 1002 (  _char		 PGUID -1  -1 f b t \054 0	18 array_in array_out array_in array_out i x _null_ ));
+DATA(insert OID = 1003 (  _name		 PGUID -1  -1 f b t \054 0	19 array_in array_out array_in array_out i x _null_ ));
+DATA(insert OID = 1005 (  _int2		 PGUID -1  -1 f b t \054 0	21 array_in array_out array_in array_out i x _null_ ));
+DATA(insert OID = 1006 (  _int2vector PGUID -1 -1 f b t \054 0	22 array_in array_out array_in array_out i x _null_ ));
+DATA(insert OID = 1007 (  _int4		 PGUID -1  -1 f b t \054 0	23 array_in array_out array_in array_out i x _null_ ));
+DATA(insert OID = 1008 (  _regproc	 PGUID -1  -1 f b t \054 0	24 array_in array_out array_in array_out i x _null_ ));
+DATA(insert OID = 1009 (  _text		 PGUID -1  -1 f b t \054 0	25 array_in array_out array_in array_out i x _null_ ));
+DATA(insert OID = 1028 (  _oid		 PGUID -1  -1 f b t \054 0	26 array_in array_out array_in array_out i x _null_ ));
+DATA(insert OID = 1010 (  _tid		 PGUID -1  -1 f b t \054 0	27 array_in array_out array_in array_out i x _null_ ));
+DATA(insert OID = 1011 (  _xid		 PGUID -1  -1 f b t \054 0	28 array_in array_out array_in array_out i x _null_ ));
+DATA(insert OID = 1012 (  _cid		 PGUID -1  -1 f b t \054 0	29 array_in array_out array_in array_out i x _null_ ));
+DATA(insert OID = 1013 (  _oidvector PGUID -1  -1 f b t \054 0	30 array_in array_out array_in array_out i x _null_ ));
+DATA(insert OID = 1014 (  _bpchar	 PGUID -1  -1 f b t \054 0 1042 array_in array_out array_in array_out i x _null_ ));
+DATA(insert OID = 1015 (  _varchar	 PGUID -1  -1 f b t \054 0 1043 array_in array_out array_in array_out i x _null_ ));
+DATA(insert OID = 1016 (  _int8		 PGUID -1  -1 f b t \054 0	20 array_in array_out array_in array_out d x _null_ ));
+DATA(insert OID = 1017 (  _point	 PGUID -1  -1 f b t \054 0 600 array_in array_out array_in array_out d x _null_ ));
+DATA(insert OID = 1018 (  _lseg		 PGUID -1  -1 f b t \054 0 601 array_in array_out array_in array_out d x _null_ ));
+DATA(insert OID = 1019 (  _path		 PGUID -1  -1 f b t \054 0 602 array_in array_out array_in array_out d x _null_ ));
+DATA(insert OID = 1020 (  _box		 PGUID -1  -1 f b t \073 0 603 array_in array_out array_in array_out d x _null_ ));
+DATA(insert OID = 1021 (  _float4	 PGUID -1  -1 f b t \054 0 700 array_in array_out array_in array_out i x _null_ ));
+DATA(insert OID = 1022 (  _float8	 PGUID -1  -1 f b t \054 0 701 array_in array_out array_in array_out d x _null_ ));
+DATA(insert OID = 1023 (  _abstime	 PGUID -1  -1 f b t \054 0 702 array_in array_out array_in array_out i x _null_ ));
+DATA(insert OID = 1024 (  _reltime	 PGUID -1  -1 f b t \054 0 703 array_in array_out array_in array_out i x _null_ ));
+DATA(insert OID = 1025 (  _tinterval PGUID -1  -1 f b t \054 0 704 array_in array_out array_in array_out i x _null_ ));
+DATA(insert OID = 1026 (  _filename  PGUID -1  -1 f b t \054 0 605 array_in array_out array_in array_out i x _null_ ));
+DATA(insert OID = 1027 (  _polygon	 PGUID -1  -1 f b t \054 0 604 array_in array_out array_in array_out d x _null_ ));
 /*
  *	Note: the size of aclitem needs to match sizeof(AclItem) in acl.h.
  *	Thanks to some padding, this will be 8 on all platforms.
@@ -364,10 +364,10 @@ DATA(insert OID = 1027 (  _polygon	 PGUID -1  -1 f b t \054 0 604 array_in array
 #define ACLITEMSIZE 8
 DATA(insert OID = 1033 (  aclitem	 PGUID 8   -1 f b t \054 0 0 aclitemin aclitemout aclitemin aclitemout i p _null_ ));
 DESCR("access control list");
-DATA(insert OID = 1034 (  _aclitem	 PGUID -1 -1 f b t \054 0 1033 array_in array_out array_in array_out i p _null_ ));
-DATA(insert OID = 1040 (  _macaddr	 PGUID -1 -1 f b t \054 0  829 array_in array_out array_in array_out i p _null_ ));
-DATA(insert OID = 1041 (  _inet    PGUID -1 -1 f b t \054 0  869 array_in array_out array_in array_out i p _null_ ));
-DATA(insert OID = 651  (  _cidr    PGUID -1 -1 f b t \054 0  650 array_in array_out array_in array_out i p _null_ ));
+DATA(insert OID = 1034 (  _aclitem	 PGUID -1 -1 f b t \054 0 1033 array_in array_out array_in array_out i x _null_ ));
+DATA(insert OID = 1040 (  _macaddr	 PGUID -1 -1 f b t \054 0  829 array_in array_out array_in array_out i x _null_ ));
+DATA(insert OID = 1041 (  _inet    PGUID -1 -1 f b t \054 0  869 array_in array_out array_in array_out i x _null_ ));
+DATA(insert OID = 651  (  _cidr    PGUID -1 -1 f b t \054 0  650 array_in array_out array_in array_out i x _null_ ));
 DATA(insert OID = 1042 ( bpchar		 PGUID -1  -1 f b t \054 0	0 bpcharin bpcharout bpcharin bpcharout i p _null_ ));
 DESCR("char(length), blank-padded string, fixed storage length");
 #define BPCHAROID		1042
@@ -383,33 +383,33 @@ DESCR("hh:mm:ss, ANSI SQL time");
 #define TIMEOID			1083
 
 /* OIDS 1100 - 1199 */
-DATA(insert OID = 1182 ( _date		 PGUID	-1 -1 f b t \054 0	1082 array_in array_out array_in array_out i p _null_ ));
-DATA(insert OID = 1183 ( _time		 PGUID	-1 -1 f b t \054 0	1083 array_in array_out array_in array_out d p _null_ ));
+DATA(insert OID = 1182 ( _date		 PGUID	-1 -1 f b t \054 0	1082 array_in array_out array_in array_out i x _null_ ));
+DATA(insert OID = 1183 ( _time		 PGUID	-1 -1 f b t \054 0	1083 array_in array_out array_in array_out d x _null_ ));
 DATA(insert OID = 1184 ( timestamp	 PGUID	8  47 f b t \054 0	0 timestamp_in timestamp_out timestamp_in timestamp_out d p _null_ ));
 DESCR("date and time");
 #define TIMESTAMPOID	1184
-DATA(insert OID = 1185 ( _timestamp  PGUID	-1 -1 f b t \054 0	1184 array_in array_out array_in array_out d p _null_ ));
+DATA(insert OID = 1185 ( _timestamp  PGUID	-1 -1 f b t \054 0	1184 array_in array_out array_in array_out d x _null_ ));
 DATA(insert OID = 1186 ( interval	 PGUID 12  47 f b t \054 0	0 interval_in interval_out interval_in interval_out d p _null_ ));
 DESCR("@ <number> <units>, time interval");
 #define INTERVALOID		1186
-DATA(insert OID = 1187 ( _interval	 PGUID	-1 -1 f b t \054 0	1186 array_in array_out array_in array_out d p _null_ ));
+DATA(insert OID = 1187 ( _interval	 PGUID	-1 -1 f b t \054 0	1186 array_in array_out array_in array_out d x _null_ ));
 
 /* OIDS 1200 - 1299 */
-DATA(insert OID = 1231 (  _numeric	 PGUID -1  -1 f b t \054 0	1700 array_in array_out array_in array_out i p _null_ ));
+DATA(insert OID = 1231 (  _numeric	 PGUID -1  -1 f b t \054 0	1700 array_in array_out array_in array_out i x _null_ ));
 DATA(insert OID = 1266 ( timetz		 PGUID 12  22 f b t \054 0	0 timetz_in timetz_out timetz_in timetz_out d p _null_ ));
 DESCR("hh:mm:ss, ANSI SQL time");
 #define TIMETZOID		1266
-DATA(insert OID = 1270 ( _timetz	 PGUID	-1 -1 f b t \054 0	1266 array_in array_out array_in array_out d p _null_ ));
+DATA(insert OID = 1270 ( _timetz	 PGUID	-1 -1 f b t \054 0	1266 array_in array_out array_in array_out d x _null_ ));
 
 /* OIDS 1500 - 1599 */
 DATA(insert OID = 1560 ( bit		 PGUID -1  -1 f b t \054 0	0 zpbit_in zpbit_out zpbit_in zpbit_out i p _null_ ));
 DESCR("fixed-length bit string");
 #define ZPBITOID	 1560
-DATA(insert OID = 1561 ( _bit		 PGUID	-1 -1 f b t \054 0	1560 array_in array_out array_in array_out i p _null_ ));
+DATA(insert OID = 1561 ( _bit		 PGUID	-1 -1 f b t \054 0	1560 array_in array_out array_in array_out i x _null_ ));
 DATA(insert OID = 1562 ( varbit		 PGUID -1  -1 f b t \054 0	0 varbit_in varbit_out varbit_in varbit_out i p _null_ ));
 DESCR("fixed-length bit string");
 #define VARBITOID	  1562
-DATA(insert OID = 1563 ( _varbit	 PGUID	-1 -1 f b t \054 0	1562 array_in array_out array_in array_out i p _null_ ));
+DATA(insert OID = 1563 ( _varbit	 PGUID	-1 -1 f b t \054 0	1562 array_in array_out array_in array_out i x _null_ ));
 
 /* OIDS 1600 - 1699 */
 DATA(insert OID = 1625 ( lztext		 PGUID -1  -1 f b t \054 0	0 lztextin lztextout lztextin lztextout i x _null_ ));

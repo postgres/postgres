@@ -47,15 +47,18 @@ array_iterator(Oid elemtype, Oid proc, int and, ArrayType *array, Datum value)
 	FmgrInfo	finfo;
 
 	/* Sanity checks */
-	if ((array == (ArrayType *) NULL)
-		|| (ARR_IS_LO(array) == true))
+	if (array == (ArrayType *) NULL)
 	{
 		/* elog(NOTICE, "array_iterator: array is null"); */
 		return (0);
 	}
+
+	/* detoast input if necessary */
+	array = DatumGetArrayTypeP(PointerGetDatum(array));
+
 	ndim = ARR_NDIM(array);
 	dim = ARR_DIMS(array);
-	nitems = getNitems(ndim, dim);
+	nitems = ArrayGetNItems(ndim, dim);
 	if (nitems == 0)
 	{
 		/* elog(NOTICE, "array_iterator: nitems = 0"); */

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.45 2000/07/17 03:04:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.46 2000/07/22 03:34:26 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -691,10 +691,10 @@ DefineType(char *typeName, List *parameters)
 			   "array_in",		/* receive procedure */
 			   "array_out",		/* send procedure */
 			   typeName,		/* element type name */
-			   defaultValue,	/* default type value */
+			   NULL,			/* never a default type value */
 			   false,			/* never passed by value */
-			   alignment,
-			   'p');			/* ARRAY doesn't support TOAST yet */
+			   alignment,		/* NB: must be 'i' or 'd' for arrays... */
+			   'x');			/* ARRAY is always toastable */
 
 	pfree(shadow_type);
 }

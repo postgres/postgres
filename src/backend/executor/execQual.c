@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.74 2000/07/17 03:04:51 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.75 2000/07/22 03:34:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,9 +67,15 @@ static Datum ExecMakeFunctionResult(Node *node, List *arguments,
 /*
  *	  ExecEvalArrayRef
  *
- *	   This function takes an ArrayRef and returns a Const Node if it
- *	   is an array reference or returns the changed Array Node if it is
- *		   an array assignment.
+ *	   This function takes an ArrayRef and returns the extracted Datum
+ *	   if it's a simple reference, or the modified array value if it's
+ *	   an array assignment (read array element insertion).
+ *
+ * NOTE: we deliberately refrain from applying DatumGetArrayTypeP() here,
+ * even though that might seem natural, because this code needs to support
+ * both varlena arrays and fixed-length array types.  DatumGetArrayTypeP()
+ * only works for the varlena kind.  The routines we call in arrayfuncs.c
+ * have to know the difference (that's what they need refattrlength for).
  */
 static Datum
 ExecEvalArrayRef(ArrayRef *arrayRef,
@@ -77,7 +83,8 @@ ExecEvalArrayRef(ArrayRef *arrayRef,
 				 bool *isNull,
 				 bool *isDone)
 {
-	ArrayType  *array_scanner;
+	ArrayType  *array_source;
+	ArrayType  *resultArray;
 	List	   *elt;
 	int			i = 0,
 				j = 0;
@@ -90,7 +97,7 @@ ExecEvalArrayRef(ArrayRef *arrayRef,
 
 	if (arrayRef->refexpr != NULL)
 	{
-		array_scanner = (ArrayType *)
+		array_source = (ArrayType *)
 			DatumGetPointer(ExecEvalExpr(arrayRef->refexpr,
 										 econtext,
 										 isNull,
@@ -110,7 +117,7 @@ ExecEvalArrayRef(ArrayRef *arrayRef,
 		 * the INSERT column list. This is a kluge, but it's not real
 		 * clear what the semantics ought to be...
 		 */
-		array_scanner = NULL;
+		array_source = NULL;
 	}
 
 	foreach(elt, arrayRef->refupperindexpr)
@@ -162,43 +169,45 @@ ExecEvalArrayRef(ArrayRef *arrayRef,
 		if (*isNull)
 			return (Datum) NULL;
 
-		if (array_scanner == NULL)
+		if (array_source == NULL)
 			return sourceData;	/* XXX do something else? */
 
-		/*
-		 * XXX shouldn't we copy the array value before modifying it??
-		 *
-		 * Or perhaps these array routines should deliver a modified copy
-		 * instead of changing the source in-place.
-		 */
 		if (lIndex == NULL)
-			return PointerGetDatum(array_set(array_scanner, i,
-											 upper.indx,
-											 sourceData,
-											 arrayRef->refelembyval,
-											 arrayRef->refelemlength,
-											 arrayRef->refattrlength,
-											 isNull));
-		return PointerGetDatum(array_assgn(array_scanner, i,
-										   upper.indx, lower.indx,
-										   (ArrayType *) DatumGetPointer(sourceData),
-										   arrayRef->refelembyval,
-										   arrayRef->refelemlength,
-										   isNull));
+			resultArray = array_set(array_source, i,
+									upper.indx,
+									sourceData,
+									arrayRef->refelembyval,
+									arrayRef->refelemlength,
+									arrayRef->refattrlength,
+									isNull);
+		else
+			resultArray = array_set_slice(array_source, i,
+										  upper.indx, lower.indx,
+										  (ArrayType *) DatumGetPointer(sourceData),
+										  arrayRef->refelembyval,
+										  arrayRef->refelemlength,
+										  arrayRef->refattrlength,
+										  isNull);
+		return PointerGetDatum(resultArray);
 	}
 
 	if (lIndex == NULL)
-		return array_ref(array_scanner, i,
+		return array_ref(array_source, i,
 						 upper.indx,
 						 arrayRef->refelembyval,
 						 arrayRef->refelemlength,
 						 arrayRef->refattrlength,
 						 isNull);
-	return PointerGetDatum(array_clip(array_scanner, i,
+	else
+	{
+		resultArray = array_get_slice(array_source, i,
 									  upper.indx, lower.indx,
 									  arrayRef->refelembyval,
 									  arrayRef->refelemlength,
-									  isNull));
+									  arrayRef->refattrlength,
+									  isNull);
+		return PointerGetDatum(resultArray);
+	}
 }
 
 
