@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/aset.c,v 1.14 1999/02/13 23:20:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/aset.c,v 1.15 1999/05/22 23:19:37 tgl Exp $
  *
  * NOTE:
  *	This is a new (Feb. 05, 1999) implementation of the allocation set
@@ -16,7 +16,7 @@
  *	many small allocations in a few bigger blocks. AllocSetFree() does
  *	never free() memory really. It just add's the free'd area to some
  *	list for later reuse by AllocSetAlloc(). All memory blocks are free()'d
- *	on AllocSetReset() at once, what happens when the memory context gets
+ *	at once on AllocSetReset(), which happens when the memory context gets
  *	destroyed.
  *				Jan Wieck
  *-------------------------------------------------------------------------
@@ -38,8 +38,36 @@
 #undef realloc
 
 
-#define	ALLOC_BLOCK_SIZE	8192
-#define	ALLOC_CHUNK_LIMIT	512
+/*--------------------
+ * Chunk freelist k holds chunks of size 1 << (k + ALLOC_MINBITS),
+ * for k = 0 .. ALLOCSET_NUM_FREELISTS-2.
+ * The last freelist holds all larger chunks.
+ *
+ * CAUTION: ALLOC_MINBITS must be large enough so that
+ * 1<<ALLOC_MINBITS is at least MAXALIGN,
+ * or we may fail to align the smallest chunks adequately.
+ * 16-byte alignment is enough on all currently known machines.
+ *--------------------
+ */
+
+#define ALLOC_MINBITS		4	/* smallest chunk size is 16 bytes */
+#define	ALLOC_SMALLCHUNK_LIMIT	(1 << (ALLOCSET_NUM_FREELISTS-2+ALLOC_MINBITS))
+/* Size of largest chunk that we use a fixed size for */
+
+/*--------------------
+ * The first block allocated for an allocset has size ALLOC_MIN_BLOCK_SIZE.
+ * Each time we have to allocate another block, we double the block size
+ * (if possible, and without exceeding ALLOC_MAX_BLOCK_SIZE), so as to reduce
+ * the load on "malloc".
+ *
+ * Blocks allocated to hold oversize chunks do not follow this rule, however;
+ * they are just however big they need to be.
+ *--------------------
+ */
+
+#define	ALLOC_MIN_BLOCK_SIZE	8192
+#define	ALLOC_MAX_BLOCK_SIZE	(8 * 1024 * 1024)
+
 
 #define ALLOC_BLOCKHDRSZ	MAXALIGN(sizeof(AllocBlockData))
 #define ALLOC_CHUNKHDRSZ	MAXALIGN(sizeof(AllocChunkData))
@@ -65,11 +93,14 @@ AllocSetFreeIndex(Size size)
 {
 	int idx = 0;
 
-	size = (size - 1) >> 4;
-	while (size != 0 && idx < 7)
+	if (size > 0)
 	{
-		idx++;
-		size >>= 1;
+		size = (size - 1) >> ALLOC_MINBITS;
+		while (size != 0 && idx < ALLOCSET_NUM_FREELISTS-1)
+		{
+			idx++;
+			size >>= 1;
+		}
 	}
 
 	return idx;
@@ -174,6 +205,7 @@ AllocSetAlloc(AllocSet set, Size size)
 	AllocChunk		freeref = NULL;
 	int				fidx;
 	Size			chunk_size;
+	Size			blksize;
 
 	AssertArg(AllocSetIsValid(set));
 
@@ -191,7 +223,7 @@ AllocSetAlloc(AllocSet set, Size size)
 	}
 
 	/*
-	 * If found, remove it from the free list, make it again
+	 * If one is found, remove it from the free list, make it again
 	 * a member of the alloc set and return it's data address.
 	 *
 	 */
@@ -207,26 +239,49 @@ AllocSetAlloc(AllocSet set, Size size)
 	}
 
 	/*
-	 * If requested size exceeds smallchunk limit, allocate a separate,
-	 * entire used block for this allocation
+	 * Choose the actual chunk size to allocate.
+	 */
+	if (size > ALLOC_SMALLCHUNK_LIMIT)
+		chunk_size = MAXALIGN(size);
+	else
+		chunk_size = 1 << (fidx + ALLOC_MINBITS);
+	Assert(chunk_size >= size);
+
+	/*
+	 * If there is enough room in the active allocation block,
+	 * always allocate the chunk there.
+	 */
+
+	if ((block = set->blocks) != NULL)
+	{
+		Size		have_free = block->endptr - block->freeptr;
+
+		if (have_free < (chunk_size + ALLOC_CHUNKHDRSZ))
+			block = NULL;
+	}
+
+	/*
+	 * Otherwise, if requested size exceeds smallchunk limit,
+	 * allocate an entire separate block for this allocation
 	 *
 	 */
-	if (size > ALLOC_CHUNK_LIMIT)
+	if (block == NULL && size > ALLOC_SMALLCHUNK_LIMIT)
 	{
-		Size	blksize;
-
-		chunk_size = MAXALIGN(size);
 		blksize = chunk_size + ALLOC_BLOCKHDRSZ + ALLOC_CHUNKHDRSZ;
 		block = (AllocBlock) malloc(blksize);
 		if (block == NULL)
 			elog(FATAL, "Memory exhausted in AllocSetAlloc()");
 		block->aset = set;
-		block->freeptr = block->endptr = ((char *)block) + ALLOC_BLOCKHDRSZ;
+		block->freeptr = block->endptr = ((char *)block) + blksize;
 
 		chunk = (AllocChunk) (((char *)block) + ALLOC_BLOCKHDRSZ);
 		chunk->aset = set;
 		chunk->size = chunk_size;
 
+		/*
+		 * Try to stick the block underneath the active allocation block,
+		 * so that we don't lose the use of the space remaining therein.
+		 */
 		if (set->blocks != NULL)
 		{
 			block->next = set->blocks->next;
@@ -241,33 +296,61 @@ AllocSetAlloc(AllocSet set, Size size)
 		return AllocChunkGetPointer(chunk);
 	}
 
-	chunk_size = 16 << fidx;
-
-	if ((block = set->blocks) != NULL)
-	{
-		Size		have_free = block->endptr - block->freeptr;
-
-		if (have_free < (chunk_size + ALLOC_CHUNKHDRSZ))
-			block = NULL;
-	}
-
+	/*
+	 * Time to create a new regular block?
+	 */
 	if (block == NULL)
 	{
-		block = (AllocBlock) malloc(ALLOC_BLOCK_SIZE);
+		if (set->blocks == NULL)
+		{
+			blksize = ALLOC_MIN_BLOCK_SIZE;
+			block = (AllocBlock) malloc(blksize);
+		}
+		else
+		{
+			/* Get size of prior block */
+			blksize = set->blocks->endptr - ((char *) set->blocks);
+			/* Special case: if very first allocation was for a large chunk,
+			 * could have a funny-sized top block.  Do something reasonable.
+			 */
+			if (blksize < ALLOC_MIN_BLOCK_SIZE)
+				blksize = ALLOC_MIN_BLOCK_SIZE;
+			/* Crank it up, but not past max */
+			blksize <<= 1;
+			if (blksize > ALLOC_MAX_BLOCK_SIZE)
+				blksize = ALLOC_MAX_BLOCK_SIZE;
+			/* Try to allocate it */
+			block = (AllocBlock) malloc(blksize);
+			/*
+			 * We could be asking for pretty big blocks here, so cope if
+			 * malloc fails.  But give up if there's less than a meg or so
+			 * available...
+			 */
+			while (block == NULL && blksize > 1024*1024)
+			{
+				blksize >>= 1;
+				block = (AllocBlock) malloc(blksize);
+			}
+		}
+
 		if (block == NULL)
 			elog(FATAL, "Memory exhausted in AllocSetAlloc()");
 		block->aset = set;
-		block->next = set->blocks;
 		block->freeptr = ((char *)block) + ALLOC_BLOCKHDRSZ;
-		block->endptr = ((char *)block) + ALLOC_BLOCK_SIZE;
+		block->endptr = ((char *)block) + blksize;
+		block->next = set->blocks;
 
 		set->blocks = block;
 	}
 
+	/*
+	 * OK, do the allocation
+	 */
 	chunk = (AllocChunk)(block->freeptr);
 	chunk->aset = (void *)set;
 	chunk->size = chunk_size;
 	block->freeptr += (chunk_size + ALLOC_CHUNKHDRSZ);
+	Assert(block->freeptr <= block->endptr);
 
 	return AllocChunkGetPointer(chunk);
 }
@@ -325,14 +408,14 @@ AllocSetRealloc(AllocSet set, AllocPointer pointer, Size size)
 	 * Maybe the allocated area already is >= the new size.
 	 *
 	 */
-	if (AllocPointerGetSize(pointer) >= size)
+	oldsize = AllocPointerGetSize(pointer);
+	if (oldsize >= size)
 		return pointer;
 
 	/* allocate new pointer */
 	newPointer = AllocSetAlloc(set, size);
 
 	/* fill new memory */
-	oldsize = AllocPointerGetSize(pointer);
 	memmove(newPointer, pointer, (oldsize < size) ? oldsize : size);
 
 	/* free old pointer */

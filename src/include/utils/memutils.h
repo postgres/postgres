@@ -15,7 +15,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: memutils.h,v 1.23 1999/03/25 19:05:19 tgl Exp $
+ * $Id: memutils.h,v 1.24 1999/05/22 23:19:36 tgl Exp $
  *
  * NOTES
  *	  some of the information in this file will be moved to
@@ -96,7 +96,7 @@ extern void OrderedElemPushInto(OrderedElem elem, OrderedSet Set);
  *		an allocation is requested for a set, memory is allocated and a
  *		pointer is returned.  Subsequently, this memory may be freed or
  *		reallocated.  In addition, an allocation set may be reset which
- *		will cause all allocated memory to be freed.
+ *		will cause all memory allocated within it to be freed.
  *
  *		Allocations may occur in four different modes.	The mode of
  *		allocation does not affect the behavior of allocations except in
@@ -109,7 +109,7 @@ extern void OrderedElemPushInto(OrderedElem elem, OrderedSet Set);
  *		and freed very frequently.	This is a good choice when allocation
  *		characteristics are unknown.  This is the default mode.
  *
- *		"Static" mode attemts to allocate space as efficiently as possible
+ *		"Static" mode attempts to allocate space as efficiently as possible
  *		without regard to freeing memory.  This mode should be chosen only
  *		when it is known that many allocations will occur but that very
  *		little of the allocated memory will be explicitly freed.
@@ -129,7 +129,7 @@ extern void OrderedElemPushInto(OrderedElem elem, OrderedSet Set);
  *		Allocation sets are not automatically reset on a system reset.
  *		Higher level code is responsible for cleaning up.
  *
- *		There may other modes in the future.
+ *		There may be other modes in the future.
  */
 
 /*
@@ -176,7 +176,9 @@ typedef AllocBlockData *AllocBlock;
  *		The prefix of each piece of memory in an AllocBlock
  */
 typedef struct AllocChunkData {
+	/* aset is the owning aset if allocated, or the freelist link if free */
 	void						*aset;
+	/* size is always the chunk size */
 	Size						size;
 } AllocChunkData;
 
@@ -189,7 +191,8 @@ typedef AllocChunkData *AllocChunk;
 typedef struct AllocSetData
 {
 	struct AllocBlockData		*blocks;
-	struct AllocChunkData		*freelist[8];
+#define ALLOCSET_NUM_FREELISTS	8
+	struct AllocChunkData		*freelist[ALLOCSET_NUM_FREELISTS];
 	/* Note: this will change in the future to support other modes */
 } AllocSetData;
 
