@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.151 2001/12/04 17:19:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.152 2002/01/03 23:19:30 tgl Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -716,6 +716,7 @@ AlterTableAlterColumnStatistics(const char *relationName,
 	Relation	attrelation;
 	HeapTuple	tuple;
 
+	/* we allow this on system tables */
 #ifndef NO_SECURITY
 	if (!pg_ownercheck(GetUserId(), relationName, RELNAME))
 		elog(ERROR, "ALTER TABLE: permission denied");
@@ -1190,6 +1191,9 @@ AlterTableAddConstraint(char *relationName,
 	Oid			myrelid;
 	List	   *listptr;
 
+	if (!allowSystemTableMods && IsSystemRelationName(relationName))
+		elog(ERROR, "ALTER TABLE: relation \"%s\" is a system catalog",
+			 relationName);
 #ifndef NO_SECURITY
 	if (!pg_ownercheck(GetUserId(), relationName, RELNAME))
 		elog(ERROR, "ALTER TABLE: permission denied");
@@ -1506,6 +1510,9 @@ AlterTableDropConstraint(const char *relationName,
 	Relation	rel;
 	int			deleted;
 
+	if (!allowSystemTableMods && IsSystemRelationName(relationName))
+		elog(ERROR, "ALTER TABLE: relation \"%s\" is a system catalog",
+			 relationName);
 #ifndef NO_SECURITY
 	if (!pg_ownercheck(GetUserId(), relationName, RELNAME))
 		elog(ERROR, "ALTER TABLE: permission denied");
@@ -1886,9 +1893,7 @@ needs_toast_table(Relation rel)
 }
 
 /*
- *
  * LOCK TABLE
- *
  */
 void
 LockTableCommand(LockStmt *lockstmt)

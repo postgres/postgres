@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.61 2001/11/20 02:46:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.62 2002/01/03 23:19:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,6 +73,7 @@ DefineIndex(char *heapRelationName,
 	Oid		   *classObjectId;
 	Oid			accessMethodId;
 	Oid			relationId;
+	Relation	rel;
 	HeapTuple	tuple;
 	Form_pg_am	accessMethodForm;
 	IndexInfo  *indexInfo;
@@ -90,11 +91,24 @@ DefineIndex(char *heapRelationName,
 			 INDEX_MAX_KEYS);
 
 	/*
-	 * compute heap relation id
+	 * Open heap relation, acquire a suitable lock on it, remember its OID
 	 */
-	if ((relationId = RelnameFindRelid(heapRelationName)) == InvalidOid)
-		elog(ERROR, "DefineIndex: relation \"%s\" not found",
+	rel = heap_openr(heapRelationName, ShareLock);
+
+	/* Note: during bootstrap may see uncataloged relation */
+	if (rel->rd_rel->relkind != RELKIND_RELATION &&
+		rel->rd_rel->relkind != RELKIND_UNCATALOGED)
+		elog(ERROR, "DefineIndex: relation \"%s\" is not a table",
 			 heapRelationName);
+
+	relationId = RelationGetRelid(rel);
+
+	heap_close(rel, NoLock);
+
+	if (!IsBootstrapProcessingMode() &&
+		IsSystemRelationName(heapRelationName) &&
+		!IndexesAreActive(relationId, false))
+		elog(ERROR, "Existing indexes are inactive. REINDEX first");
 
 	/*
 	 * look up the access method, verify it can handle the requested
@@ -130,9 +144,6 @@ DefineIndex(char *heapRelationName,
 		fix_opids((Node *) cnfPred);
 		CheckPredicate(cnfPred, rangetable, relationId);
 	}
-
-	if (!IsBootstrapProcessingMode() && IsSystemRelationName(heapRelationName) && !IndexesAreActive(relationId, false))
-		elog(ERROR, "Existing indexes are inactive. REINDEX first");
 
 	/*
 	 * Prepare arguments for index_create, primarily an IndexInfo

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.123 2001/11/20 02:46:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.124 2002/01/03 23:21:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -531,6 +531,13 @@ ProcessUtility(Node *parsetree,
 				IndexStmt  *stmt = (IndexStmt *) parsetree;
 
 				set_ps_display(commandTag = "CREATE");
+
+				relname = stmt->relname;
+				if (!allowSystemTableMods && IsSystemRelationName(relname))
+					elog(ERROR, "CREATE INDEX: relation \"%s\" is a system catalog",
+						 relname);
+				if (!pg_ownercheck(GetUserId(), relname, RELNAME))
+					elog(ERROR, "permission denied");
 
 				DefineIndex(stmt->relname,		/* relation name */
 							stmt->idxname,		/* index name */

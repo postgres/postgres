@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.99 2001/11/16 16:31:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.100 2002/01/03 23:21:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -104,6 +104,10 @@ CreateTrigger(CreateTrigStmt *stmt)
 	}
 
 	rel = heap_openr(stmt->relname, AccessExclusiveLock);
+
+	if (rel->rd_rel->relkind != RELKIND_RELATION)
+		elog(ERROR, "CreateTrigger: relation \"%s\" is not a table",
+			 stmt->relname);
 
 	TRIGGER_CLEAR_TYPE(tgtype);
 	if (stmt->before)
@@ -315,10 +319,19 @@ DropTrigger(DropTrigStmt *stmt)
 	int			found = 0;
 	int			tgfound = 0;
 
+	if (!allowSystemTableMods && IsSystemRelationName(stmt->relname))
+		elog(ERROR, "DropTrigger: can't drop trigger for system relation %s",
+			 stmt->relname);
+
 	if (!pg_ownercheck(GetUserId(), stmt->relname, RELNAME))
-		elog(ERROR, "%s: %s", stmt->relname, aclcheck_error_strings[ACLCHECK_NOT_OWNER]);
+		elog(ERROR, "%s: %s", stmt->relname,
+			 aclcheck_error_strings[ACLCHECK_NOT_OWNER]);
 
 	rel = heap_openr(stmt->relname, AccessExclusiveLock);
+
+	if (rel->rd_rel->relkind != RELKIND_RELATION)
+		elog(ERROR, "DropTrigger: relation \"%s\" is not a table",
+			 stmt->relname);
 
 	/*
 	 * Search pg_trigger, delete target trigger, count remaining triggers
