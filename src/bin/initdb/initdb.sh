@@ -26,7 +26,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.9 1996/10/04 20:07:10 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.10 1996/10/05 03:24:47 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -57,34 +57,50 @@ noclean=0
 template_only=0
 POSTGRES_SUPERUSERNAME=$USER
 
-for ARG ; do
-# We would normally use e.g. ${ARG#--username=} to parse the options, but
-# there is a bug in some shells that makes that not work (BSD4.4 sh,
-# September 1996 -- supposed to be fixed in later release).  So we bypass
-# the bug with this sed mess.
+while [ "$#" -gt 0 ]
+do
+# ${ARG#--username=} is not reliable or available on all platforms
 
-    username_sed=`echo $ARG | sed s/^--username=//`
-    pgdata_sed=`echo $ARG | sed s/^--pgdata=//`
-
-    if [ $ARG = "--debug" -o $ARG = "-d" ]; then
-        debug=1
-        echo "Running with debug mode on."
-    elif [ $ARG = "--noclean" -o $ARG = "-n" ]; then
-        noclean=1
-        echo "Running with noclean mode on.  Mistakes will not be cleaned up."
-    elif [ $ARG = "--template" ]; then
-        template_only=1
-        echo "updating template1 database only."
-    elif [ $username_sed. != $ARG. ]; then
-        POSTGRES_SUPERUSERNAME=$username_sed
-    elif [ $pgdata_sed. != $ARG. ]; then
-        PGDATA=$pgdata_sed
-    else    
-        echo "Unrecognized option '$ARG'.  Syntax is:"
-        echo "initdb [--template] [--debug] [--noclean]" \
-             "[--username=SUPERUSER] [--pgdata=DATADIR]"
-        exit 100
-    fi
+    case "$1" in
+	--debug|-d)
+		debug=1
+		echo "Running with debug mode on."
+		;;
+	--noclean|-n)
+		noclean=1
+		echo "Running with noclean mode on.  Mistakes will not be cleaned up."
+		;;
+	--template|-t)
+		template_only=1
+		echo "updating template1 database only."
+		;;
+	--username=*)
+		POSTGRES_SUPERUSERNAME="`echo $1 | sed s/^--username=//`"
+		;;
+	-u)
+		shift
+		POSTGRES_SUPERUSERNAME="$1"
+		;;
+	-u*)
+		POSTGRES_SUPERUSERNAME="`echo $1 | sed s/^-u//`"
+		;;
+	--pgdata=*)
+		PGDATA="`echo $1 | sed s/^--pgdata=//`"
+		;;
+	-r)
+		shift
+		PGDATA="$1"
+		;;
+	-r*)
+		PGDATA="`echo $1 | sed s/^-r//`"
+		;;
+	*)
+		echo "Unrecognized option '$1'.  Syntax is:"
+		echo "initdb [-t | --template] [-d | --debug] [-n | --noclean]" \
+		     "[-u SUPSERUSER | --username=SUPERUSER] [-r DATADIR | --pgdata=DATADIR]"
+		exit 100
+	esac
+	shift
 done
 
 if [ "$debug" -eq 1 ]; then
