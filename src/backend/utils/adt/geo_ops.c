@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.7 1997/05/19 03:49:39 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.8 1997/05/22 00:07:21 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -986,7 +986,8 @@ path_close(PATH *path)
 {
     PATH *result;
 
-    if (PointerIsValid((char *)(result = path_copy(path))))
+    result = path_copy(path);
+    if (PointerIsValid((char *)result))
 	result->closed = TRUE;
 
     return(result);
@@ -997,7 +998,8 @@ path_open(PATH *path)
 {
     PATH *result;
 
-    if (PointerIsValid((char *)(result = path_copy(path))))
+    result = path_copy(path);
+    if (PointerIsValid((char *)result))
 	result->closed = FALSE;
 
     return(result);
@@ -2639,7 +2641,7 @@ poly_path(POLYGON *poly)
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.7 1997/05/19 03:49:39 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.8 1997/05/22 00:07:21 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
