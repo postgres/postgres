@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.101 2002/08/23 01:28:17 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.102 2002/08/23 02:54:18 momjian Exp $
 -->
 
  <chapter id="datatype">
@@ -921,7 +921,7 @@ SELECT b, char_length(b) FROM test2;
     exists <emphasis>only</emphasis> for storage of internal catalog
     names and is not intended for use by the general user.  Its length
     is currently defined as 64 bytes (63 usable characters plus terminator)
-    but should be referenced using the macro
+    but should be referenced using the constant
     <symbol>NAMEDATALEN</symbol>.  The length is set at compile time
     (and is therefore adjustable for special uses); the default
     maximum length may change in a future release.  The type

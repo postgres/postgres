@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_operator.sgml,v 1.30 2002/08/10 19:01:53 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_operator.sgml,v 1.31 2002/08/23 02:54:18 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -215,7 +215,7 @@ CREATE OPERATOR
 
   <para>
    The operator <replaceable class="parameter">name</replaceable>
-   is a sequence of up to <symbol>NAMEDATALEN</>-1 (31 by default) characters
+   is a sequence of up to <symbol>NAMEDATALEN</>-1 (63 by default) characters
    from the following list:
    <literallayout>
 + - * / &lt; &gt; = ~ ! @ # % ^ &amp; | ` ? $
