@@ -56,7 +56,7 @@
  * Since all the bookkeeping and buffer memory is allocated with palloc(),
  * and the underlying file(s) are made with OpenTemporaryFile, all resources
  * for a logical tape set are certain to be cleaned up even if processing
- * is aborted by elog(ERROR).  To avoid confusion, the caller should take
+ * is aborted by ereport(ERROR).  To avoid confusion, the caller should take
  * care that all calls for a single LogicalTapeSet are made in the same
  * palloc context.
  *
@@ -64,7 +64,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/logtape.c,v 1.9 2003/03/27 16:51:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/logtape.c,v 1.10 2003/07/25 20:17:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -189,21 +189,25 @@ static void ltsDumpBuffer(LogicalTapeSet *lts, LogicalTape *lt);
  * "holes" in file), since BufFile doesn't allow that.  The first write pass
  * must write blocks sequentially.
  *
- * No need for an error return convention; we elog() on any error.
+ * No need for an error return convention; we ereport() on any error.
  */
 static void
 ltsWriteBlock(LogicalTapeSet *lts, long blocknum, void *buffer)
 {
 	if (BufFileSeekBlock(lts->pfile, blocknum) != 0 ||
 		BufFileWrite(lts->pfile, buffer, BLCKSZ) != BLCKSZ)
-		elog(ERROR, "ltsWriteBlock: failed to write block %ld of temporary file\n\t\tPerhaps out of disk space?",
-			 blocknum);
+		ereport(ERROR,
+				/* XXX is it okay to assume errno is correct? */
+				(errcode_for_file_access(),
+				 errmsg("could not write block %ld of temporary file: %m",
+						blocknum),
+				 errhint("Perhaps out of disk space?")));
 }
 
 /*
  * Read a block-sized buffer from the specified block of the underlying file.
  *
- * No need for an error return convention; we elog() on any error.	This
+ * No need for an error return convention; we ereport() on any error.	This
  * module should never attempt to read a block it doesn't know is there.
  */
 static void
@@ -211,8 +215,11 @@ ltsReadBlock(LogicalTapeSet *lts, long blocknum, void *buffer)
 {
 	if (BufFileSeekBlock(lts->pfile, blocknum) != 0 ||
 		BufFileRead(lts->pfile, buffer, BLCKSZ) != BLCKSZ)
-		elog(ERROR, "ltsReadBlock: failed to read block %ld of temporary file",
-			 blocknum);
+		ereport(ERROR,
+				/* XXX is it okay to assume errno is correct? */
+				(errcode_for_file_access(),
+				 errmsg("could not read block %ld of temporary file: %m",
+						blocknum)));
 }
 
 /*
@@ -543,7 +550,7 @@ ltsDumpBuffer(LogicalTapeSet *lts, LogicalTape *lt)
 /*
  * Write to a logical tape.
  *
- * There are no error returns; we elog() on failure.
+ * There are no error returns; we ereport() on failure.
  */
 void
 LogicalTapeWrite(LogicalTapeSet *lts, int tapenum,
@@ -566,7 +573,7 @@ LogicalTapeWrite(LogicalTapeSet *lts, int tapenum,
 			else
 			{
 				/* Hmm, went directly from reading to writing? */
-				elog(ERROR, "LogicalTapeWrite: impossible state");
+				elog(ERROR, "invalid logtape state: should be dirty");
 			}
 			lt->numFullBlocks++;
 			lt->curBlockNumber++;
@@ -828,7 +835,7 @@ LogicalTapeBackspace(LogicalTapeSet *lts, int tapenum, size_t size)
 		long		datablocknum = ltsRecallPrevBlockNum(lts, lt->indirect);
 
 		if (datablocknum == -1L)
-			elog(ERROR, "LogicalTapeBackspace: unexpected end of tape");
+			elog(ERROR, "unexpected end of tape");
 		lt->curBlockNumber--;
 		if (nblocks == 0)
 		{
@@ -885,7 +892,7 @@ LogicalTapeSeek(LogicalTapeSet *lts, int tapenum,
 		long		datablocknum = ltsRecallPrevBlockNum(lts, lt->indirect);
 
 		if (datablocknum == -1L)
-			elog(ERROR, "LogicalTapeSeek: unexpected end of tape");
+			elog(ERROR, "unexpected end of tape");
 		if (--lt->curBlockNumber == blocknum)
 			ltsReadBlock(lts, datablocknum, (void *) lt->buffer);
 	}
@@ -895,7 +902,7 @@ LogicalTapeSeek(LogicalTapeSet *lts, int tapenum,
 														 lt->frozen);
 
 		if (datablocknum == -1L)
-			elog(ERROR, "LogicalTapeSeek: unexpected end of tape");
+			elog(ERROR, "unexpected end of tape");
 		if (++lt->curBlockNumber == blocknum)
 			ltsReadBlock(lts, datablocknum, (void *) lt->buffer);
 	}

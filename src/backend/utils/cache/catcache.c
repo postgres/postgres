@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.104 2003/06/22 22:04:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.105 2003/07/25 20:17:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -158,8 +158,7 @@ GetCCHashEqFuncs(Oid keytype, PGFunction *hashfunc, RegProcedure *eqfunc)
 			*eqfunc = F_OIDVECTOREQ;
 			break;
 		default:
-			elog(FATAL, "GetCCHashEqFuncs: type %u unsupported as catcache key",
-				 keytype);
+			elog(FATAL, "type %u not supported as catcache key", keytype);
 			break;
 	}
 }
@@ -202,7 +201,7 @@ CatalogCacheComputeHashValue(CatCache *cache, int nkeys, ScanKey cur_skey)
 											   cur_skey[0].sk_argument));
 			break;
 		default:
-			elog(FATAL, "CCComputeHashValue: %d nkeys", nkeys);
+			elog(FATAL, "wrong number of hash keys: %d", nkeys);
 			break;
 	}
 
@@ -267,8 +266,7 @@ CatalogCacheComputeTupleHashValue(CatCache *cache, HeapTuple tuple)
 			Assert(!isNull);
 			break;
 		default:
-			elog(FATAL, "CCComputeTupleHashValue: %d cc_nkeys",
-				 cache->cc_nkeys);
+			elog(FATAL, "wrong number of hash keys: %d", cache->cc_nkeys);
 			break;
 	}
 
@@ -291,14 +289,14 @@ CatCachePrintStats(void)
 	long		cc_lsearches = 0;
 	long		cc_lhits = 0;
 
-	elog(DEBUG2, "Catcache stats dump: %d/%d tuples in catcaches",
+	elog(DEBUG2, "catcache stats dump: %d/%d tuples in catcaches",
 		 CacheHdr->ch_ntup, CacheHdr->ch_maxtup);
 
 	for (cache = CacheHdr->ch_caches; cache; cache = cache->cc_next)
 	{
 		if (cache->cc_ntup == 0 && cache->cc_searches == 0)
 			continue;			/* don't print unused caches */
-		elog(DEBUG2, "Catcache %s/%s: %d tup, %ld srch, %ld+%ld=%ld hits, %ld+%ld=%ld loads, %ld invals, %ld discards, %ld lsrch, %ld lhits",
+		elog(DEBUG2, "catcache %s/%s: %d tup, %ld srch, %ld+%ld=%ld hits, %ld+%ld=%ld loads, %ld invals, %ld discards, %ld lsrch, %ld lhits",
 			 cache->cc_relname,
 			 cache->cc_indname,
 			 cache->cc_ntup,
@@ -322,7 +320,7 @@ CatCachePrintStats(void)
 		cc_lsearches += cache->cc_lsearches;
 		cc_lhits += cache->cc_lhits;
 	}
-	elog(DEBUG2, "Catcache totals: %d tup, %ld srch, %ld+%ld=%ld hits, %ld+%ld=%ld loads, %ld invals, %ld discards, %ld lsrch, %ld lhits",
+	elog(DEBUG2, "catcache totals: %d tup, %ld srch, %ld+%ld=%ld hits, %ld+%ld=%ld loads, %ld invals, %ld discards, %ld lsrch, %ld lhits",
 		 CacheHdr->ch_ntup,
 		 cc_searches,
 		 cc_hits,
@@ -557,7 +555,7 @@ AtEOXact_CatCache(bool isCommit)
 			if (cl->refcount != 0)
 			{
 				if (isCommit)
-					elog(WARNING, "Cache reference leak: cache %s (%d), list %p has count %d",
+					elog(WARNING, "cache reference leak: cache %s (%d), list %p has count %d",
 						 ccp->cc_relname, ccp->id, cl, cl->refcount);
 				cl->refcount = 0;
 			}
@@ -580,7 +578,7 @@ AtEOXact_CatCache(bool isCommit)
 		if (ct->refcount != 0)
 		{
 			if (isCommit)
-				elog(WARNING, "Cache reference leak: cache %s (%d), tuple %u has count %d",
+				elog(WARNING, "cache reference leak: cache %s (%d), tuple %u has count %d",
 					 ct->my_cache->cc_relname, ct->my_cache->id,
 					 HeapTupleGetOid(&ct->tuple),
 					 ct->refcount);
@@ -947,7 +945,7 @@ CatalogCacheInitializeCache(CatCache *cache)
 		else
 		{
 			if (cache->cc_key[i] != ObjectIdAttributeNumber)
-				elog(FATAL, "CatalogCacheInit: only sys attr supported is OID");
+				elog(FATAL, "only sys attr supported in caches is OID");
 			keytype = OIDOID;
 		}
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.101 2003/07/01 19:10:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.102 2003/07/25 20:17:52 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -74,7 +74,7 @@ op_requires_recheck(Oid opno, Oid opclass)
 						ObjectIdGetDatum(opclass),
 						0, 0);
 	if (!HeapTupleIsValid(tp))
-		elog(ERROR, "op_requires_recheck: op %u is not a member of opclass %u",
+		elog(ERROR, "operator %u is not a member of opclass %u",
 			 opno, opclass);
 	amop_tup = (Form_pg_amop) GETSTRUCT(tp);
 
@@ -487,7 +487,7 @@ op_mergejoin_crossops(Oid opno, Oid *ltop, Oid *gtop,
 						ObjectIdGetDatum(opno),
 						0, 0, 0);
 	if (!HeapTupleIsValid(tp))	/* shouldn't happen */
-		elog(ERROR, "op_mergejoin_crossops: operator %u not found", opno);
+		elog(ERROR, "cache lookup failed for operator %u", opno);
 	optup = (Form_pg_operator) GETSTRUCT(tp);
 	*ltop = optup->oprltcmpop;
 	*gtop = optup->oprgtcmpop;
@@ -495,14 +495,14 @@ op_mergejoin_crossops(Oid opno, Oid *ltop, Oid *gtop,
 
 	/* Check < op provided */
 	if (!OidIsValid(*ltop))
-		elog(ERROR, "op_mergejoin_crossops: mergejoin operator %u has no matching < operator",
+		elog(ERROR, "mergejoin operator %u has no matching < operator",
 			 opno);
 	if (ltproc)
 		*ltproc = get_opcode(*ltop);
 
 	/* Check > op provided */
 	if (!OidIsValid(*gtop))
-		elog(ERROR, "op_mergejoin_crossops: mergejoin operator %u has no matching > operator",
+		elog(ERROR, "mergejoin operator %u has no matching > operator",
 			 opno);
 	if (gtproc)
 		*gtproc = get_opcode(*gtop);
@@ -543,7 +543,7 @@ op_strict(Oid opno)
 	RegProcedure funcid = get_opcode(opno);
 
 	if (funcid == (RegProcedure) InvalidOid)
-		elog(ERROR, "Operator OID %u does not exist", opno);
+		elog(ERROR, "operator %u does not exist", opno);
 
 	return func_strict((Oid) funcid);
 }
@@ -559,7 +559,7 @@ op_volatile(Oid opno)
 	RegProcedure funcid = get_opcode(opno);
 
 	if (funcid == (RegProcedure) InvalidOid)
-		elog(ERROR, "Operator OID %u does not exist", opno);
+		elog(ERROR, "operator %u does not exist", opno);
 
 	return func_volatile((Oid) funcid);
 }
@@ -711,7 +711,7 @@ get_func_rettype(Oid funcid)
 						ObjectIdGetDatum(funcid),
 						0, 0, 0);
 	if (!HeapTupleIsValid(tp))
-		elog(ERROR, "Function OID %u does not exist", funcid);
+		elog(ERROR, "cache lookup failed for function %u", funcid);
 
 	result = ((Form_pg_proc) GETSTRUCT(tp))->prorettype;
 	ReleaseSysCache(tp);
@@ -736,7 +736,7 @@ get_func_signature(Oid funcid, Oid *argtypes, int *nargs)
 						ObjectIdGetDatum(funcid),
 						0, 0, 0);
 	if (!HeapTupleIsValid(tp))
-		elog(ERROR, "Function OID %u does not exist", funcid);
+		elog(ERROR, "cache lookup failed for function %u", funcid);
 
 	procstruct = (Form_pg_proc) GETSTRUCT(tp);
 
@@ -762,7 +762,7 @@ get_func_retset(Oid funcid)
 						ObjectIdGetDatum(funcid),
 						0, 0, 0);
 	if (!HeapTupleIsValid(tp))
-		elog(ERROR, "Function OID %u does not exist", funcid);
+		elog(ERROR, "cache lookup failed for function %u", funcid);
 
 	result = ((Form_pg_proc) GETSTRUCT(tp))->proretset;
 	ReleaseSysCache(tp);
@@ -783,7 +783,7 @@ func_strict(Oid funcid)
 						ObjectIdGetDatum(funcid),
 						0, 0, 0);
 	if (!HeapTupleIsValid(tp))
-		elog(ERROR, "Function OID %u does not exist", funcid);
+		elog(ERROR, "cache lookup failed for function %u", funcid);
 
 	result = ((Form_pg_proc) GETSTRUCT(tp))->proisstrict;
 	ReleaseSysCache(tp);
@@ -804,7 +804,7 @@ func_volatile(Oid funcid)
 						ObjectIdGetDatum(funcid),
 						0, 0, 0);
 	if (!HeapTupleIsValid(tp))
-		elog(ERROR, "Function OID %u does not exist", funcid);
+		elog(ERROR, "cache lookup failed for function %u", funcid);
 
 	result = ((Form_pg_proc) GETSTRUCT(tp))->provolatile;
 	ReleaseSysCache(tp);
@@ -842,7 +842,7 @@ get_system_catalog_relid(const char *catname)
 						   ObjectIdGetDatum(PG_CATALOG_NAMESPACE),
 						   0, 0);
 	if (!OidIsValid(relid))
-		elog(ERROR, "get_system_catalog_relid: cannot find %s", catname);
+		elog(ERROR, "cache lookup failed for system relation %s", catname);
 
 	return relid;
 }
@@ -1264,7 +1264,7 @@ get_typdefault(Oid typid)
 							   ObjectIdGetDatum(typid),
 							   0, 0, 0);
 	if (!HeapTupleIsValid(typeTuple))
-		elog(ERROR, "get_typdefault: failed to lookup type %u", typid);
+		elog(ERROR, "cache lookup failed for type %u", typid);
 	type = (Form_pg_type) GETSTRUCT(typeTuple);
 
 	/*
@@ -1343,7 +1343,7 @@ getBaseType(Oid typid)
 							 ObjectIdGetDatum(typid),
 							 0, 0, 0);
 		if (!HeapTupleIsValid(tup))
-			elog(ERROR, "getBaseType: failed to lookup type %u", typid);
+			elog(ERROR, "cache lookup failed for type %u", typid);
 		typTup = (Form_pg_type) GETSTRUCT(tup);
 		if (typTup->typtype != 'd')
 		{
@@ -1593,15 +1593,19 @@ getTypeInputInfo(Oid type, Oid *typInput, Oid *typElem)
 							   ObjectIdGetDatum(type),
 							   0, 0, 0);
 	if (!HeapTupleIsValid(typeTuple))
-		elog(ERROR, "Cache lookup of type %u failed", type);
+		elog(ERROR, "cache lookup failed for type %u", type);
 	pt = (Form_pg_type) GETSTRUCT(typeTuple);
 
 	if (!pt->typisdefined)
-		elog(ERROR, "Type %s is only a shell",
-			 format_type_be(type));
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("type %s is only a shell",
+						format_type_be(type))));
 	if (!OidIsValid(pt->typinput))
-		elog(ERROR, "No input function available for type %s",
-			 format_type_be(type));
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_FUNCTION),
+				 errmsg("no input function available for type %s",
+						format_type_be(type))));
 
 	*typInput = pt->typinput;
 	*typElem = pt->typelem;
@@ -1625,15 +1629,19 @@ getTypeOutputInfo(Oid type, Oid *typOutput, Oid *typElem,
 							   ObjectIdGetDatum(type),
 							   0, 0, 0);
 	if (!HeapTupleIsValid(typeTuple))
-		elog(ERROR, "Cache lookup of type %u failed", type);
+		elog(ERROR, "cache lookup failed for type %u", type);
 	pt = (Form_pg_type) GETSTRUCT(typeTuple);
 
 	if (!pt->typisdefined)
-		elog(ERROR, "Type %s is only a shell",
-			 format_type_be(type));
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("type %s is only a shell",
+						format_type_be(type))));
 	if (!OidIsValid(pt->typoutput))
-		elog(ERROR, "No output function available for type %s",
-			 format_type_be(type));
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_FUNCTION),
+				 errmsg("no output function available for type %s",
+						format_type_be(type))));
 
 	*typOutput = pt->typoutput;
 	*typElem = pt->typelem;
@@ -1657,15 +1665,19 @@ getTypeBinaryInputInfo(Oid type, Oid *typReceive, Oid *typElem)
 							   ObjectIdGetDatum(type),
 							   0, 0, 0);
 	if (!HeapTupleIsValid(typeTuple))
-		elog(ERROR, "Cache lookup of type %u failed", type);
+		elog(ERROR, "cache lookup failed for type %u", type);
 	pt = (Form_pg_type) GETSTRUCT(typeTuple);
 
 	if (!pt->typisdefined)
-		elog(ERROR, "Type %s is only a shell",
-			 format_type_be(type));
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("type %s is only a shell",
+						format_type_be(type))));
 	if (!OidIsValid(pt->typreceive))
-		elog(ERROR, "No binary input function available for type %s",
-			 format_type_be(type));
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_FUNCTION),
+				 errmsg("no binary input function available for type %s",
+						format_type_be(type))));
 
 	*typReceive = pt->typreceive;
 	*typElem = pt->typelem;
@@ -1689,15 +1701,19 @@ getTypeBinaryOutputInfo(Oid type, Oid *typSend, Oid *typElem,
 							   ObjectIdGetDatum(type),
 							   0, 0, 0);
 	if (!HeapTupleIsValid(typeTuple))
-		elog(ERROR, "Cache lookup of type %u failed", type);
+		elog(ERROR, "cache lookup failed for type %u", type);
 	pt = (Form_pg_type) GETSTRUCT(typeTuple);
 
 	if (!pt->typisdefined)
-		elog(ERROR, "Type %s is only a shell",
-			 format_type_be(type));
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("type %s is only a shell",
+						format_type_be(type))));
 	if (!OidIsValid(pt->typsend))
-		elog(ERROR, "No binary output function available for type %s",
-			 format_type_be(type));
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_FUNCTION),
+				 errmsg("no binary output function available for type %s",
+						format_type_be(type))));
 
 	*typSend = pt->typsend;
 	*typElem = pt->typelem;
@@ -1791,7 +1807,7 @@ get_attstatsslot(HeapTuple statstuple,
 							  Anum_pg_statistic_stavalues1 + i,
 							  &isnull);
 		if (isnull)
-			elog(ERROR, "get_attstatsslot: stavalues is null");
+			elog(ERROR, "stavalues is null");
 		statarray = DatumGetArrayTypeP(val);
 
 		/* Need to get info about the array element type */
@@ -1799,8 +1815,7 @@ get_attstatsslot(HeapTuple statstuple,
 								   ObjectIdGetDatum(atttype),
 								   0, 0, 0);
 		if (!HeapTupleIsValid(typeTuple))
-			elog(ERROR, "get_attstatsslot: Cache lookup failed for type %u",
-				 atttype);
+			elog(ERROR, "cache lookup failed for type %u", atttype);
 		typeForm = (Form_pg_type) GETSTRUCT(typeTuple);
 
 		/* Deconstruct array into Datum elements */
@@ -1841,7 +1856,7 @@ get_attstatsslot(HeapTuple statstuple,
 							  Anum_pg_statistic_stanumbers1 + i,
 							  &isnull);
 		if (isnull)
-			elog(ERROR, "get_attstatsslot: stanumbers is null");
+			elog(ERROR, "stanumbers is null");
 		statarray = DatumGetArrayTypeP(val);
 
 		/*
@@ -1852,7 +1867,7 @@ get_attstatsslot(HeapTuple statstuple,
 		narrayelem = ARR_DIMS(statarray)[0];
 		if (ARR_NDIM(statarray) != 1 || narrayelem <= 0 ||
 			ARR_ELEMTYPE(statarray) != FLOAT4OID)
-			elog(ERROR, "get_attstatsslot: stanumbers is not a 1-D float4 array");
+			elog(ERROR, "stanumbers is not a 1-D float4 array");
 		*numbers = (float4 *) palloc(narrayelem * sizeof(float4));
 		memcpy(*numbers, ARR_DATA_PTR(statarray), narrayelem * sizeof(float4));
 		*nnumbers = narrayelem;
@@ -1939,7 +1954,9 @@ get_usesysid(const char *username)
 							 PointerGetDatum(username),
 							 0, 0, 0);
 	if (!HeapTupleIsValid(userTup))
-		elog(ERROR, "user \"%s\" does not exist", username);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("user \"%s\" does not exist", username)));
 
 	result = ((Form_pg_shadow) GETSTRUCT(userTup))->usesysid;
 

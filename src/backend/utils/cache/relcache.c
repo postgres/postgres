@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.185 2003/05/28 16:03:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.186 2003/07/25 20:17:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -167,7 +167,9 @@ do { \
 										   HASH_ENTER, \
 										   &found); \
 	if (idhentry == NULL) \
-		elog(ERROR, "out of memory for relation descriptor cache"); \
+		ereport(ERROR, \
+				(errcode(ERRCODE_OUT_OF_MEMORY), \
+				 errmsg("out of memory"))); \
 	/* used to give notice if found -- now just keep quiet */ \
 	idhentry->reldesc = RELATION; \
 	nodentry = (RelNodeCacheEnt*)hash_search(RelationNodeCache, \
@@ -175,7 +177,9 @@ do { \
 										   HASH_ENTER, \
 										   &found); \
 	if (nodentry == NULL) \
-		elog(ERROR, "out of memory for relation descriptor cache"); \
+		ereport(ERROR, \
+				(errcode(ERRCODE_OUT_OF_MEMORY), \
+				 errmsg("out of memory"))); \
 	/* used to give notice if found -- now just keep quiet */ \
 	nodentry->reldesc = RELATION; \
 	if (IsSystemNamespace(RelationGetNamespace(RELATION))) \
@@ -187,7 +191,9 @@ do { \
 												   HASH_ENTER, \
 												   &found); \
 		if (namehentry == NULL) \
-			elog(ERROR, "out of memory for relation descriptor cache"); \
+			ereport(ERROR, \
+					(errcode(ERRCODE_OUT_OF_MEMORY), \
+					 errmsg("out of memory"))); \
 		/* used to give notice if found -- now just keep quiet */ \
 		namehentry->reldesc = RELATION; \
 	} \
@@ -233,12 +239,12 @@ do { \
 										   (void *)&(RELATION->rd_id), \
 										   HASH_REMOVE, NULL); \
 	if (idhentry == NULL) \
-		elog(WARNING, "trying to delete a rd_id reldesc that does not exist."); \
+		elog(WARNING, "trying to delete a rd_id reldesc that does not exist"); \
 	nodentry = (RelNodeCacheEnt*)hash_search(RelationNodeCache, \
 										   (void *)&(RELATION->rd_node), \
 										   HASH_REMOVE, NULL); \
 	if (nodentry == NULL) \
-		elog(WARNING, "trying to delete a rd_node reldesc that does not exist."); \
+		elog(WARNING, "trying to delete a rd_node reldesc that does not exist"); \
 	if (IsSystemNamespace(RelationGetNamespace(RELATION))) \
 	{ \
 		char *relname = RelationGetRelationName(RELATION); \
@@ -247,7 +253,7 @@ do { \
 												   relname, \
 												   HASH_REMOVE, NULL); \
 		if (namehentry == NULL) \
-			elog(WARNING, "trying to delete a relname reldesc that does not exist."); \
+			elog(WARNING, "trying to delete a relname reldesc that does not exist"); \
 	} \
 } while(0)
 
@@ -353,7 +359,8 @@ ScanPgRelation(RelationBuildDescInfo buildinfo)
 			break;
 
 		default:
-			elog(ERROR, "ScanPgRelation: bad buildinfo");
+			elog(ERROR, "unrecognized buildinfo type: %d",
+				 buildinfo.infotype);
 			return NULL;		/* keep compiler quiet */
 	}
 
@@ -507,7 +514,7 @@ RelationBuildTupleDesc(RelationBuildDescInfo buildinfo,
 
 		if (attp->attnum <= 0 ||
 			attp->attnum > relation->rd_rel->relnatts)
-			elog(ERROR, "Bogus attribute number %d for %s",
+			elog(ERROR, "invalid attribute number %d for %s",
 				 attp->attnum, RelationGetRelationName(relation));
 
 		relation->rd_att->attrs[attp->attnum - 1] =
@@ -961,7 +968,7 @@ RelationInitIndexAccessInfo(Relation relation)
 						   ObjectIdGetDatum(RelationGetRelid(relation)),
 						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "RelationInitIndexAccessInfo: no pg_index entry for index %u",
+		elog(ERROR, "cache lookup failed for index %u",
 			 RelationGetRelid(relation));
 	oldcontext = MemoryContextSwitchTo(CacheMemoryContext);
 	relation->rd_indextuple = heap_copytuple(tuple);
@@ -976,7 +983,7 @@ RelationInitIndexAccessInfo(Relation relation)
 						   ObjectIdGetDatum(relation->rd_rel->relam),
 						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "RelationInitIndexAccessInfo: cache lookup failed for AM %u",
+		elog(ERROR, "cache lookup failed for access method %u",
 			 relation->rd_rel->relam);
 	aform = (Form_pg_am) MemoryContextAlloc(CacheMemoryContext, sizeof *aform);
 	memcpy(aform, GETSTRUCT(tuple), sizeof *aform);
@@ -985,7 +992,7 @@ RelationInitIndexAccessInfo(Relation relation)
 
 	natts = relation->rd_rel->relnatts;
 	if (natts != relation->rd_index->indnatts)
-		elog(ERROR, "RelationInitIndexAccessInfo: relnatts disagrees with indnatts for index %u",
+		elog(ERROR, "relnatts disagrees with indnatts for index %u",
 			 RelationGetRelid(relation));
 	amstrategies = aform->amstrategies;
 	amsupport = aform->amsupport;
@@ -1099,7 +1106,7 @@ IndexSupportInitialize(Form_pg_index iform,
 		OpClassCacheEnt *opcentry;
 
 		if (!OidIsValid(iform->indclass[attIndex]))
-			elog(ERROR, "IndexSupportInitialize: bogus pg_index tuple");
+			elog(ERROR, "bogus pg_index tuple");
 
 		/* look up the info for this opclass, using a cache */
 		opcentry = LookupOpclassInfo(iform->indclass[attIndex],
@@ -1206,7 +1213,9 @@ LookupOpclassInfo(Oid operatorClassOid,
 											   (void *) &operatorClassOid,
 											   HASH_ENTER, &found);
 	if (opcentry == NULL)
-		elog(ERROR, "out of memory for operator class cache");
+		ereport(ERROR,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
 
 	if (found && opcentry->valid)
 	{
@@ -1280,7 +1289,7 @@ LookupOpclassInfo(Oid operatorClassOid,
 
 			if (amopform->amopstrategy <= 0 ||
 				(StrategyNumber) amopform->amopstrategy > numStrats)
-				elog(ERROR, "Bogus amopstrategy number %d for opclass %u",
+				elog(ERROR, "invalid amopstrategy number %d for opclass %u",
 					 amopform->amopstrategy, operatorClassOid);
 			opcentry->operatorOids[amopform->amopstrategy - 1] =
 				amopform->amopopr;
@@ -1315,7 +1324,7 @@ LookupOpclassInfo(Oid operatorClassOid,
 
 			if (amprocform->amprocnum <= 0 ||
 				(StrategyNumber) amprocform->amprocnum > numSupport)
-				elog(ERROR, "Bogus amproc number %d for opclass %u",
+				elog(ERROR, "invalid amproc number %d for opclass %u",
 					 amprocform->amprocnum, operatorClassOid);
 
 			opcentry->supportProcs[amprocform->amprocnum - 1] =
@@ -1659,10 +1668,8 @@ RelationReloadClassinfo(Relation relation)
 	buildinfo.i.info_id = relation->rd_id;
 	pg_class_tuple = ScanPgRelation(buildinfo);
 	if (!HeapTupleIsValid(pg_class_tuple))
-	{
-		elog(ERROR, "RelationReloadClassinfo system relation id=%d doesn't exist", relation->rd_id);
-		return;
-	}
+		elog(ERROR, "could not find tuple for system relation %u",
+			 relation->rd_id);
 	RelationCacheDelete(relation);
 	relp = (Form_pg_class) GETSTRUCT(pg_class_tuple);
 	memcpy((char *) relation->rd_rel, (char *) relp, CLASS_TUPLE_SIZE);
@@ -1787,7 +1794,7 @@ RelationClearRelation(Relation relation, bool rebuild)
 			if (old_rulescxt)
 				MemoryContextDelete(old_rulescxt);
 			pfree(relation);
-			elog(ERROR, "RelationClearRelation: relation %u deleted while still in use",
+			elog(ERROR, "relation %u deleted while still in use",
 				 buildinfo.i.info_id);
 		}
 		RelationSetReferenceCount(relation, old_refcnt);
@@ -1870,7 +1877,7 @@ RelationForgetRelation(Oid rid)
 		return;					/* not in cache, nothing to do */
 
 	if (!RelationHasReferenceCountZero(relation))
-		elog(ERROR, "RelationForgetRelation: relation %u is still open", rid);
+		elog(ERROR, "relation %u is still open", rid);
 
 	/* Unconditionally destroy the relcache entry */
 	RelationClearRelation(relation, false);
@@ -2008,7 +2015,7 @@ AtEOXact_RelationCache(bool commit)
 		/*
 		 * During transaction abort, we must also reset relcache entry ref
 		 * counts to their normal not-in-a-transaction state.  A ref count
-		 * may be too high because some routine was exited by elog()
+		 * may be too high because some routine was exited by ereport()
 		 * between incrementing and decrementing the count.
 		 *
 		 * During commit, we should not have to do this, but it's still
@@ -2027,7 +2034,7 @@ AtEOXact_RelationCache(bool commit)
 			if (relation->rd_refcnt != expected_refcnt &&
 				!IsBootstrapProcessingMode())
 			{
-				elog(WARNING, "Relcache reference leak: relation \"%s\" has refcnt %d instead of %d",
+				elog(WARNING, "relcache reference leak: relation \"%s\" has refcnt %d instead of %d",
 					 RelationGetRelationName(relation),
 					 relation->rd_refcnt, expected_refcnt);
 				RelationSetReferenceCount(relation, expected_refcnt);
@@ -2324,8 +2331,8 @@ RelationCacheInitializePhase2(void)
 							ObjectIdGetDatum(RelationGetRelid(relation)),
 								  0, 0, 0);
 			if (!HeapTupleIsValid(htup))
-				elog(FATAL, "RelationCacheInitializePhase2: no pg_class entry for %s",
-					 RelationGetRelationName(relation));
+				elog(FATAL, "cache lookup failed for relation %u",
+					 RelationGetRelid(relation));
 			relp = (Form_pg_class) GETSTRUCT(htup);
 
 			/*
@@ -2466,21 +2473,22 @@ AttrDefaultFetch(Relation relation)
 	{
 		Form_pg_attrdef adform = (Form_pg_attrdef) GETSTRUCT(htup);
 
-		found++;
 		for (i = 0; i < ndef; i++)
 		{
 			if (adform->adnum != attrdef[i].adnum)
 				continue;
 			if (attrdef[i].adbin != NULL)
-				elog(WARNING, "AttrDefaultFetch: second record found for attr %s in rel %s",
+				elog(WARNING, "multiple attrdef records found for attr %s of rel %s",
 					 NameStr(relation->rd_att->attrs[adform->adnum - 1]->attname),
 					 RelationGetRelationName(relation));
+			else
+				found++;
 
 			val = fastgetattr(htup,
 							  Anum_pg_attrdef_adbin,
 							  adrel->rd_att, &isnull);
 			if (isnull)
-				elog(WARNING, "AttrDefaultFetch: adbin IS NULL for attr %s in rel %s",
+				elog(WARNING, "null adbin for attr %s of rel %s",
 					 NameStr(relation->rd_att->attrs[adform->adnum - 1]->attname),
 					 RelationGetRelationName(relation));
 			else
@@ -2491,16 +2499,15 @@ AttrDefaultFetch(Relation relation)
 		}
 
 		if (i >= ndef)
-			elog(WARNING, "AttrDefaultFetch: unexpected record found for attr %d in rel %s",
-				 adform->adnum,
-				 RelationGetRelationName(relation));
+			elog(WARNING, "unexpected attrdef record found for attr %d of rel %s",
+				 adform->adnum, RelationGetRelationName(relation));
 	}
 
 	systable_endscan(adscan);
 	heap_close(adrel, AccessShareLock);
 
 	if (found != ndef)
-		elog(WARNING, "AttrDefaultFetch: %d record(s) not found for rel %s",
+		elog(WARNING, "%d attrdef record(s) missing for rel %s",
 			 ndef - found, RelationGetRelationName(relation));
 }
 
@@ -2533,8 +2540,8 @@ CheckConstraintFetch(Relation relation)
 		if (conform->contype != CONSTRAINT_CHECK)
 			continue;
 
-		if (found == ncheck)
-			elog(ERROR, "CheckConstraintFetch: unexpected record found for rel %s",
+		if (found >= ncheck)
+			elog(ERROR, "unexpected constraint record found for rel %s",
 				 RelationGetRelationName(relation));
 
 		check[found].ccname = MemoryContextStrdup(CacheMemoryContext,
@@ -2545,7 +2552,7 @@ CheckConstraintFetch(Relation relation)
 						  Anum_pg_constraint_conbin,
 						  conrel->rd_att, &isnull);
 		if (isnull)
-			elog(ERROR, "CheckConstraintFetch: conbin IS NULL for rel %s",
+			elog(ERROR, "null conbin for rel %s",
 				 RelationGetRelationName(relation));
 
 		check[found].ccbin = MemoryContextStrdup(CacheMemoryContext,
@@ -2558,7 +2565,7 @@ CheckConstraintFetch(Relation relation)
 	heap_close(conrel, AccessShareLock);
 
 	if (found != ncheck)
-		elog(ERROR, "CheckConstraintFetch: %d record(s) not found for rel %s",
+		elog(ERROR, "%d constraint record(s) missing for rel %s",
 			 ncheck - found, RelationGetRelationName(relation));
 }
 
@@ -3172,7 +3179,11 @@ write_relcache_init_file(void)
 		 * We used to consider this a fatal error, but we might as well
 		 * continue with backend startup ...
 		 */
-		elog(WARNING, "Cannot create init file %s: %m\n\tContinuing anyway, but there's something wrong.", tempfilename);
+		ereport(WARNING,
+				(errcode_for_file_access(),
+				 errmsg("could not create init file \"%s\": %m",
+						tempfilename),
+				 errdetail("Continuing anyway, but there's something wrong.")));
 		return;
 	}
 
@@ -3196,28 +3207,28 @@ write_relcache_init_file(void)
 
 		/* first, write the relation descriptor length */
 		if (fwrite(&len, 1, sizeof(len), fp) != sizeof(len))
-			elog(FATAL, "cannot write init file -- descriptor length");
+			elog(FATAL, "could not write init file");
 
 		/* next, write out the Relation structure */
 		if (fwrite(rel, 1, len, fp) != len)
-			elog(FATAL, "cannot write init file -- reldesc");
+			elog(FATAL, "could not write init file");
 
 		/* next write the relation tuple form */
 		len = sizeof(FormData_pg_class);
 		if (fwrite(&len, 1, sizeof(len), fp) != sizeof(len))
-			elog(FATAL, "cannot write init file -- relation tuple form length");
+			elog(FATAL, "could not write init file");
 
 		if (fwrite(relform, 1, len, fp) != len)
-			elog(FATAL, "cannot write init file -- relation tuple form");
+			elog(FATAL, "could not write init file");
 
 		/* next, do all the attribute tuple form data entries */
 		for (i = 0; i < relform->relnatts; i++)
 		{
 			len = ATTRIBUTE_TUPLE_SIZE;
 			if (fwrite(&len, 1, sizeof(len), fp) != sizeof(len))
-				elog(FATAL, "cannot write init file -- length of attdesc %d", i);
+				elog(FATAL, "could not write init file");
 			if (fwrite(rel->rd_att->attrs[i], 1, len, fp) != len)
-				elog(FATAL, "cannot write init file -- attdesc %d", i);
+				elog(FATAL, "could not write init file");
 		}
 
 		/* If it's an index, there's more to do */
@@ -3229,43 +3240,43 @@ write_relcache_init_file(void)
 			/* we assume this was created by heap_copytuple! */
 			len = HEAPTUPLESIZE + rel->rd_indextuple->t_len;
 			if (fwrite(&len, 1, sizeof(len), fp) != sizeof(len))
-				elog(FATAL, "cannot write init file -- index tuple length");
+				elog(FATAL, "could not write init file");
 
 			if (fwrite(rel->rd_indextuple, 1, len, fp) != len)
-				elog(FATAL, "cannot write init file -- index tuple");
+				elog(FATAL, "could not write init file");
 
 			/* next, write the access method tuple form */
 			len = sizeof(FormData_pg_am);
 			if (fwrite(&len, 1, sizeof(len), fp) != sizeof(len))
-				elog(FATAL, "cannot write init file -- am tuple form length");
+				elog(FATAL, "could not write init file");
 
 			if (fwrite(am, 1, len, fp) != len)
-				elog(FATAL, "cannot write init file -- am tuple form");
+				elog(FATAL, "could not write init file");
 
 			/* next, write the index strategy map */
 			len = AttributeNumberGetIndexStrategySize(relform->relnatts,
 													  am->amstrategies);
 			if (fwrite(&len, 1, sizeof(len), fp) != sizeof(len))
-				elog(FATAL, "cannot write init file -- strategy map length");
+				elog(FATAL, "could not write init file");
 
 			if (fwrite(rel->rd_istrat, 1, len, fp) != len)
-				elog(FATAL, "cannot write init file -- strategy map");
+				elog(FATAL, "could not write init file");
 
 			/* next, write the vector of operator OIDs */
 			len = relform->relnatts * (am->amstrategies * sizeof(Oid));
 			if (fwrite(&len, 1, sizeof(len), fp) != sizeof(len))
-				elog(FATAL, "cannot write init file -- operator vector length");
+				elog(FATAL, "could not write init file");
 
 			if (fwrite(rel->rd_operator, 1, len, fp) != len)
-				elog(FATAL, "cannot write init file -- operator vector");
+				elog(FATAL, "could not write init file");
 
 			/* finally, write the vector of support procedures */
 			len = relform->relnatts * (am->amsupport * sizeof(RegProcedure));
 			if (fwrite(&len, 1, sizeof(len), fp) != sizeof(len))
-				elog(FATAL, "cannot write init file -- support vector length");
+				elog(FATAL, "could not write init file");
 
 			if (fwrite(rel->rd_support, 1, len, fp) != len)
-				elog(FATAL, "cannot write init file -- support vector");
+				elog(FATAL, "could not write init file");
 		}
 
 		/* also make a list of their OIDs, for RelationIdIsInInitFile */
@@ -3309,7 +3320,11 @@ write_relcache_init_file(void)
 		 */
 		if (rename(tempfilename, finalfilename) < 0)
 		{
-			elog(WARNING, "Cannot rename init file %s to %s: %m\n\tContinuing anyway, but there's something wrong.", tempfilename, finalfilename);
+			ereport(WARNING,
+					(errcode_for_file_access(),
+					 errmsg("could not rename init file \"%s\" to \"%s\": %m",
+							tempfilename, finalfilename),
+					 errdetail("Continuing anyway, but there's something wrong.")));
 
 			/*
 			 * If we fail, try to clean up the useless temp file; don't

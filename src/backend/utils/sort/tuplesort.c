@@ -78,7 +78,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/tuplesort.c,v 1.33 2003/05/13 04:38:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/tuplesort.c,v 1.34 2003/07/25 20:17:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -319,7 +319,7 @@ struct Tuplesortstate
  * stored in the Tuplesortstate record, if needed.	They are also expected
  * to adjust state->availMem by the amount of memory space (not tape space!)
  * released or consumed.  There is no error return from either writetup
- * or readtup; they should elog() on failure.
+ * or readtup; they should ereport() on failure.
  *
  *
  * NOTES about memory consumption calculations:
@@ -691,7 +691,7 @@ puttuple_common(Tuplesortstate *state, void *tuple)
 			dumptuples(state, false);
 			break;
 		default:
-			elog(ERROR, "tuplesort_puttuple: invalid state");
+			elog(ERROR, "invalid tuplesort state");
 			break;
 	}
 }
@@ -738,7 +738,7 @@ tuplesort_performsort(Tuplesortstate *state)
 			state->markpos_eof = false;
 			break;
 		default:
-			elog(ERROR, "tuplesort_performsort: invalid state");
+			elog(ERROR, "invalid tuplesort state");
 			break;
 	}
 }
@@ -856,7 +856,7 @@ tuplesort_gettuple(Tuplesortstate *state, bool forward,
 					if (!LogicalTapeBackspace(state->tapeset,
 											  state->result_tape,
 										  tuplen + sizeof(unsigned int)))
-						elog(ERROR, "tuplesort_gettuple: bogus tuple len in backward scan");
+						elog(ERROR, "bogus tuple length in backward scan");
 					return NULL;
 				}
 			}
@@ -871,7 +871,7 @@ tuplesort_gettuple(Tuplesortstate *state, bool forward,
 			if (!LogicalTapeBackspace(state->tapeset,
 									  state->result_tape,
 									  tuplen))
-				elog(ERROR, "tuplesort_gettuple: bogus tuple len in backward scan");
+				elog(ERROR, "bogus tuple length in backward scan");
 			tup = READTUP(state, state->result_tape, tuplen);
 			return tup;
 
@@ -923,7 +923,7 @@ tuplesort_gettuple(Tuplesortstate *state, bool forward,
 			return NULL;
 
 		default:
-			elog(ERROR, "tuplesort_gettuple: invalid state");
+			elog(ERROR, "invalid tuplesort state");
 			return NULL;		/* keep compiler quiet */
 	}
 }
@@ -1483,7 +1483,7 @@ tuplesort_rescan(Tuplesortstate *state)
 			state->markpos_eof = false;
 			break;
 		default:
-			elog(ERROR, "tuplesort_rescan: invalid state");
+			elog(ERROR, "invalid tuplesort state");
 			break;
 	}
 }
@@ -1510,7 +1510,7 @@ tuplesort_markpos(Tuplesortstate *state)
 			state->markpos_eof = state->eof_reached;
 			break;
 		default:
-			elog(ERROR, "tuplesort_markpos: invalid state");
+			elog(ERROR, "invalid tuplesort state");
 			break;
 	}
 }
@@ -1539,7 +1539,7 @@ tuplesort_restorepos(Tuplesortstate *state)
 			state->eof_reached = state->markpos_eof;
 			break;
 		default:
-			elog(ERROR, "tuplesort_restorepos: invalid state");
+			elog(ERROR, "invalid tuplesort state");
 			break;
 	}
 }
@@ -1662,9 +1662,9 @@ getlen(Tuplesortstate *state, int tapenum, bool eofOK)
 
 	if (LogicalTapeRead(state->tapeset, tapenum, (void *) &len,
 						sizeof(len)) != sizeof(len))
-		elog(ERROR, "tuplesort: unexpected end of tape");
+		elog(ERROR, "unexpected end of tape");
 	if (len == 0 && !eofOK)
-		elog(ERROR, "tuplesort: unexpected end of data");
+		elog(ERROR, "unexpected end of data");
 	return len;
 }
 
@@ -1779,8 +1779,7 @@ SelectSortFunction(Oid sortOperator,
 						   ObjectIdGetDatum(sortOperator),
 						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "SelectSortFunction: cache lookup failed for operator %u",
-			 sortOperator);
+		elog(ERROR, "cache lookup failed for operator %u", sortOperator);
 	optup = (Form_pg_operator) GETSTRUCT(tuple);
 	if (strcmp(NameStr(optup->oprname), ">") == 0)
 		*kind = SORTFUNC_REVLT;
@@ -1817,8 +1816,7 @@ myFunctionCall2(FmgrInfo *flinfo, Datum arg1, Datum arg2)
 
 	/* Check for null result, since caller is clearly not expecting one */
 	if (fcinfo.isnull)
-		elog(ERROR, "FunctionCall2: function %u returned NULL",
-			 fcinfo.flinfo->fn_oid);
+		elog(ERROR, "function %u returned NULL", fcinfo.flinfo->fn_oid);
 
 	return result;
 }
@@ -1891,7 +1889,7 @@ inlineApplySortFunction(FmgrInfo *sortFunction, SortFunctionKind kind,
 												  datum1, datum2));
 
 		default:
-			elog(ERROR, "Invalid SortFunctionKind %d", (int) kind);
+			elog(ERROR, "unrecognized SortFunctionKind: %d", (int) kind);
 			return 0;			/* can't get here, but keep compiler quiet */
 	}
 }
@@ -2000,11 +1998,11 @@ readtup_heap(Tuplesortstate *state, int tapenum, unsigned int len)
 	/* read in the tuple proper */
 	if (LogicalTapeRead(state->tapeset, tapenum, (void *) tuple->t_data,
 						tuple->t_len) != tuple->t_len)
-		elog(ERROR, "tuplesort: unexpected end of data");
+		elog(ERROR, "unexpected end of data");
 	if (state->randomAccess)	/* need trailing length word? */
 		if (LogicalTapeRead(state->tapeset, tapenum, (void *) &tuplen,
 							sizeof(tuplen)) != sizeof(tuplen))
-			elog(ERROR, "tuplesort: unexpected end of data");
+			elog(ERROR, "unexpected end of data");
 	return (void *) tuple;
 }
 
@@ -2079,7 +2077,10 @@ comparetup_index(Tuplesortstate *state, const void *a, const void *b)
 	 * a bogus error in that case.
 	 */
 	if (state->enforceUnique && !equal_hasnull && tuple1 != tuple2)
-		elog(ERROR, "Cannot create unique index. Table contains non-unique values");
+		ereport(ERROR,
+				(errcode(ERRCODE_UNIQUE_VIOLATION),
+				 errmsg("could not create unique index"),
+				 errdetail("Table contains duplicated values.")));
 
 	return 0;
 }
@@ -2127,11 +2128,11 @@ readtup_index(Tuplesortstate *state, int tapenum, unsigned int len)
 	USEMEM(state, GetMemoryChunkSpace(tuple));
 	if (LogicalTapeRead(state->tapeset, tapenum, (void *) tuple,
 						tuplen) != tuplen)
-		elog(ERROR, "tuplesort: unexpected end of data");
+		elog(ERROR, "unexpected end of data");
 	if (state->randomAccess)	/* need trailing length word? */
 		if (LogicalTapeRead(state->tapeset, tapenum, (void *) &tuplen,
 							sizeof(tuplen)) != sizeof(tuplen))
-			elog(ERROR, "tuplesort: unexpected end of data");
+			elog(ERROR, "unexpected end of data");
 	return (void *) tuple;
 }
 
@@ -2199,11 +2200,11 @@ readtup_datum(Tuplesortstate *state, int tapenum, unsigned int len)
 	USEMEM(state, GetMemoryChunkSpace(tuple));
 	if (LogicalTapeRead(state->tapeset, tapenum, (void *) tuple,
 						tuplen) != tuplen)
-		elog(ERROR, "tuplesort: unexpected end of data");
+		elog(ERROR, "unexpected end of data");
 	if (state->randomAccess)	/* need trailing length word? */
 		if (LogicalTapeRead(state->tapeset, tapenum, (void *) &tuplen,
 							sizeof(tuplen)) != sizeof(tuplen))
-			elog(ERROR, "tuplesort: unexpected end of data");
+			elog(ERROR, "unexpected end of data");
 
 	if (!tuple->isNull && !state->datumTypeByVal)
 		tuple->val = PointerGetDatum(((char *) tuple) +

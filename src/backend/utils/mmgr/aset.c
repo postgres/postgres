@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/aset.c,v 1.49 2002/12/15 21:01:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/aset.c,v 1.50 2003/07/25 20:17:56 tgl Exp $
  *
  * NOTE:
  *	This is a new (Feb. 05, 1999) implementation of the allocation set
@@ -330,8 +330,11 @@ AllocSetContextCreate(MemoryContext parent,
 		if (block == NULL)
 		{
 			MemoryContextStats(TopMemoryContext);
-			elog(ERROR, "Memory exhausted in AllocSetContextCreate(%lu)",
-				 (unsigned long) minContextSize);
+			ereport(ERROR,
+					(errcode(ERRCODE_OUT_OF_MEMORY),
+					 errmsg("out of memory"),
+					 errdetail("Failed while creating memory context \"%s\".",
+							   name)));
 		}
 		block->aset = context;
 		block->freeptr = ((char *) block) + ALLOC_BLOCKHDRSZ;
@@ -493,8 +496,11 @@ AllocSetAlloc(MemoryContext context, Size size)
 		if (block == NULL)
 		{
 			MemoryContextStats(TopMemoryContext);
-			elog(ERROR, "Memory exhausted in AllocSetAlloc(%lu)",
-				 (unsigned long) size);
+			ereport(ERROR,
+					(errcode(ERRCODE_OUT_OF_MEMORY),
+					 errmsg("out of memory"),
+					 errdetail("Failed on request of size %lu.",
+							   (unsigned long) size)));
 		}
 		block->aset = set;
 		block->freeptr = block->endptr = ((char *) block) + blksize;
@@ -690,8 +696,11 @@ AllocSetAlloc(MemoryContext context, Size size)
 		if (block == NULL)
 		{
 			MemoryContextStats(TopMemoryContext);
-			elog(ERROR, "Memory exhausted in AllocSetAlloc(%lu)",
-				 (unsigned long) size);
+			ereport(ERROR,
+					(errcode(ERRCODE_OUT_OF_MEMORY),
+					 errmsg("out of memory"),
+					 errdetail("Failed on request of size %lu.",
+							   (unsigned long) size)));
 		}
 
 		block->aset = set;
@@ -754,7 +763,7 @@ AllocSetFree(MemoryContext context, void *pointer)
 	/* Test for someone scribbling on unused space in chunk */
 	if (chunk->requested_size < chunk->size)
 		if (((char *) pointer)[chunk->requested_size] != 0x7E)
-			elog(WARNING, "AllocSetFree: detected write past chunk end in %s %p",
+			elog(WARNING, "detected write past chunk end in %s %p",
 				 set->header.name, chunk);
 #endif
 
@@ -775,8 +784,7 @@ AllocSetFree(MemoryContext context, void *pointer)
 			block = block->next;
 		}
 		if (block == NULL)
-			elog(ERROR, "AllocSetFree: cannot find block containing chunk %p",
-				 chunk);
+			elog(ERROR, "could not find block containing chunk %p", chunk);
 		/* let's just make sure chunk is the only one in the block */
 		Assert(block->freeptr == ((char *) block) +
 			   (chunk->size + ALLOC_BLOCKHDRSZ + ALLOC_CHUNKHDRSZ));
@@ -829,7 +837,7 @@ AllocSetRealloc(MemoryContext context, void *pointer, Size size)
 	/* Test for someone scribbling on unused space in chunk */
 	if (chunk->requested_size < oldsize)
 		if (((char *) pointer)[chunk->requested_size] != 0x7E)
-			elog(WARNING, "AllocSetRealloc: detected write past chunk end in %s %p",
+			elog(WARNING, "detected write past chunk end in %s %p",
 				 set->header.name, chunk);
 #endif
 
@@ -869,8 +877,7 @@ AllocSetRealloc(MemoryContext context, void *pointer, Size size)
 			block = block->next;
 		}
 		if (block == NULL)
-			elog(ERROR, "AllocSetRealloc: cannot find block containing chunk %p",
-				 chunk);
+			elog(ERROR, "could not find block containing chunk %p", chunk);
 		/* let's just make sure chunk is the only one in the block */
 		Assert(block->freeptr == ((char *) block) +
 			   (chunk->size + ALLOC_BLOCKHDRSZ + ALLOC_CHUNKHDRSZ));
@@ -882,8 +889,11 @@ AllocSetRealloc(MemoryContext context, void *pointer, Size size)
 		if (block == NULL)
 		{
 			MemoryContextStats(TopMemoryContext);
-			elog(ERROR, "Memory exhausted in AllocSetReAlloc(%lu)",
-				 (unsigned long) size);
+			ereport(ERROR,
+					(errcode(ERRCODE_OUT_OF_MEMORY),
+					 errmsg("out of memory"),
+					 errdetail("Failed on request of size %lu.",
+							   (unsigned long) size)));
 		}
 		block->freeptr = block->endptr = ((char *) block) + blksize;
 
@@ -1052,7 +1062,7 @@ AllocSetCheck(MemoryContext context)
 		if (!blk_used)
 		{
 			if (set->keeper != block)
-				elog(WARNING, "AllocSetCheck: %s: empty block %p",
+				elog(WARNING, "problem in alloc set %s: empty block %p",
 					 name, block);
 		}
 
@@ -1074,16 +1084,16 @@ AllocSetCheck(MemoryContext context)
 			 * Check chunk size
 			 */
 			if (dsize > chsize)
-				elog(WARNING, "AllocSetCheck: %s: req size > alloc size for chunk %p in block %p",
+				elog(WARNING, "problem in alloc set %s: req size > alloc size for chunk %p in block %p",
 					 name, chunk, block);
 			if (chsize < (1 << ALLOC_MINBITS))
-				elog(WARNING, "AllocSetCheck: %s: bad size %lu for chunk %p in block %p",
+				elog(WARNING, "problem in alloc set %s: bad size %lu for chunk %p in block %p",
 					 name, (unsigned long) chsize, chunk, block);
 
 			/* single-chunk block? */
 			if (chsize > ALLOC_CHUNK_LIMIT &&
 				chsize + ALLOC_CHUNKHDRSZ != blk_used)
-				elog(WARNING, "AllocSetCheck: %s: bad single-chunk %p in block %p",
+				elog(WARNING, "problem in alloc set %s: bad single-chunk %p in block %p",
 					 name, chunk, block);
 
 			/*
@@ -1092,14 +1102,14 @@ AllocSetCheck(MemoryContext context)
 			 * check as easily...)
 			 */
 			if (dsize > 0 && chunk->aset != (void *) set)
-				elog(WARNING, "AllocSetCheck: %s: bogus aset link in block %p, chunk %p",
+				elog(WARNING, "problem in alloc set %s: bogus aset link in block %p, chunk %p",
 					 name, block, chunk);
 
 			/*
 			 * Check for overwrite of "unallocated" space in chunk
 			 */
 			if (dsize > 0 && dsize < chsize && *chdata_end != 0x7E)
-				elog(WARNING, "AllocSetCheck: %s: detected write past chunk end in block %p, chunk %p",
+				elog(WARNING, "problem in alloc set %s: detected write past chunk end in block %p, chunk %p",
 					 name, block, chunk);
 
 			blk_data += chsize;
@@ -1109,7 +1119,7 @@ AllocSetCheck(MemoryContext context)
 		}
 
 		if ((blk_data + (nchunks * ALLOC_CHUNKHDRSZ)) != blk_used)
-			elog(WARNING, "AllocSetCheck: %s: found inconsistent memory block %p",
+			elog(WARNING, "problem in alloc set %s: found inconsistent memory block %p",
 				 name, block);
 	}
 }

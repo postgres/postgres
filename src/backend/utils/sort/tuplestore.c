@@ -36,7 +36,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/tuplestore.c,v 1.13 2003/04/29 03:21:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/tuplestore.c,v 1.14 2003/07/25 20:18:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -171,7 +171,7 @@ struct Tuplestorestate
  * stored in the Tuplestorestate record, if needed. They are also expected
  * to adjust state->availMem by the amount of memory space (not tape space!)
  * released or consumed.  There is no error return from either writetup
- * or readtup; they should elog() on failure.
+ * or readtup; they should ereport() on failure.
  *
  *
  * NOTES about memory consumption calculations:
@@ -361,12 +361,12 @@ tuplestore_puttuple(Tuplestorestate *state, void *tuple)
 			if (BufFileSeek(state->myfile,
 							state->writepos_file, state->writepos_offset,
 							SEEK_SET) != 0)
-				elog(ERROR, "tuplestore_puttuple: seek(EOF) failed");
+				elog(ERROR, "seek to EOF failed");
 			state->status = TSS_WRITEFILE;
 			WRITETUP(state, tuple);
 			break;
 		default:
-			elog(ERROR, "tuplestore_puttuple: invalid state");
+			elog(ERROR, "invalid tuplestore state");
 			break;
 	}
 }
@@ -430,7 +430,7 @@ tuplestore_gettuple(Tuplestorestate *state, bool forward,
 				if (BufFileSeek(state->myfile,
 								state->readpos_file, state->readpos_offset,
 								SEEK_SET) != 0)
-					elog(ERROR, "tuplestore_gettuple: seek() failed");
+					elog(ERROR, "seek failed");
 			state->status = TSS_READFILE;
 			/* FALL THRU into READFILE case */
 
@@ -488,7 +488,7 @@ tuplestore_gettuple(Tuplestorestate *state, bool forward,
 					if (BufFileSeek(state->myfile, 0,
 								 -(long) (tuplen + sizeof(unsigned int)),
 									SEEK_CUR) != 0)
-						elog(ERROR, "tuplestore_gettuple: bogus tuple len in backward scan");
+						elog(ERROR, "bogus tuple length in backward scan");
 					return NULL;
 				}
 				tuplen = getlen(state, false);
@@ -502,12 +502,12 @@ tuplestore_gettuple(Tuplestorestate *state, bool forward,
 			if (BufFileSeek(state->myfile, 0,
 							-(long) tuplen,
 							SEEK_CUR) != 0)
-				elog(ERROR, "tuplestore_gettuple: bogus tuple len in backward scan");
+				elog(ERROR, "bogus tuple length in backward scan");
 			tup = READTUP(state, tuplen);
 			return tup;
 
 		default:
-			elog(ERROR, "tuplestore_gettuple: invalid state");
+			elog(ERROR, "invalid tuplestore state");
 			return NULL;		/* keep compiler quiet */
 	}
 }
@@ -559,10 +559,10 @@ tuplestore_rescan(Tuplestorestate *state)
 		case TSS_READFILE:
 			state->eof_reached = false;
 			if (BufFileSeek(state->myfile, 0, 0L, SEEK_SET) != 0)
-				elog(ERROR, "tuplestore_rescan: seek(0) failed");
+				elog(ERROR, "seek to start failed");
 			break;
 		default:
-			elog(ERROR, "tuplestore_rescan: invalid state");
+			elog(ERROR, "invalid tuplestore state");
 			break;
 	}
 }
@@ -598,7 +598,7 @@ tuplestore_markpos(Tuplestorestate *state)
 						&state->markpos_offset);
 			break;
 		default:
-			elog(ERROR, "tuplestore_markpos: invalid state");
+			elog(ERROR, "invalid tuplestore state");
 			break;
 	}
 }
@@ -630,7 +630,7 @@ tuplestore_restorepos(Tuplestorestate *state)
 				elog(ERROR, "tuplestore_restorepos failed");
 			break;
 		default:
-			elog(ERROR, "tuplestore_restorepos: invalid state");
+			elog(ERROR, "invalid tuplestore state");
 			break;
 	}
 }
@@ -650,9 +650,9 @@ getlen(Tuplestorestate *state, bool eofOK)
 	if (nbytes == sizeof(len))
 		return len;
 	if (nbytes != 0)
-		elog(ERROR, "tuplestore: unexpected end of tape");
+		elog(ERROR, "unexpected end of tape");
 	if (!eofOK)
-		elog(ERROR, "tuplestore: unexpected end of data");
+		elog(ERROR, "unexpected end of data");
 	return 0;
 }
 
@@ -684,14 +684,14 @@ writetup_heap(Tuplestorestate *state, void *tup)
 	tuplen = tuple->t_len + sizeof(tuplen);
 	if (BufFileWrite(state->myfile, (void *) &tuplen,
 					 sizeof(tuplen)) != sizeof(tuplen))
-		elog(ERROR, "tuplestore: write failed");
+		elog(ERROR, "write failed");
 	if (BufFileWrite(state->myfile, (void *) tuple->t_data,
 					 tuple->t_len) != (size_t) tuple->t_len)
-		elog(ERROR, "tuplestore: write failed");
+		elog(ERROR, "write failed");
 	if (state->randomAccess)	/* need trailing length word? */
 		if (BufFileWrite(state->myfile, (void *) &tuplen,
 						 sizeof(tuplen)) != sizeof(tuplen))
-			elog(ERROR, "tuplestore: write failed");
+			elog(ERROR, "write failed");
 
 	FREEMEM(state, GetMemoryChunkSpace(tuple));
 	heap_freetuple(tuple);
@@ -712,10 +712,10 @@ readtup_heap(Tuplestorestate *state, unsigned int len)
 	/* read in the tuple proper */
 	if (BufFileRead(state->myfile, (void *) tuple->t_data,
 					tuple->t_len) != (size_t) tuple->t_len)
-		elog(ERROR, "tuplestore: unexpected end of data");
+		elog(ERROR, "unexpected end of data");
 	if (state->randomAccess)	/* need trailing length word? */
 		if (BufFileRead(state->myfile, (void *) &tuplen,
 						sizeof(tuplen)) != sizeof(tuplen))
-			elog(ERROR, "tuplestore: unexpected end of data");
+			elog(ERROR, "unexpected end of data");
 	return (void *) tuple;
 }

@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.58 2003/05/06 20:26:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.59 2003/07/25 20:17:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,9 +70,11 @@ do { \
 	hentry = (PortalHashEnt*)hash_search(PortalHashTable, \
 										 key, HASH_ENTER, &found); \
 	if (hentry == NULL) \
-		elog(ERROR, "out of memory in PortalHashTable"); \
+		ereport(ERROR, \
+				(errcode(ERRCODE_OUT_OF_MEMORY), \
+				 errmsg("out of memory"))); \
 	if (found) \
-		elog(WARNING, "trying to insert a portal name that exists."); \
+		elog(ERROR, "duplicate portal name"); \
 	hentry->portal = PORTAL; \
 	/* To avoid duplicate storage, make PORTAL->name point to htab entry */ \
 	PORTAL->name = hentry->portalname; \
@@ -87,7 +89,7 @@ do { \
 	hentry = (PortalHashEnt*)hash_search(PortalHashTable, \
 										 key, HASH_REMOVE, NULL); \
 	if (hentry == NULL) \
-		elog(WARNING, "trying to delete portal name that does not exist."); \
+		elog(WARNING, "trying to delete portal name that does not exist"); \
 } while(0)
 
 static MemoryContext PortalMemory = NULL;
@@ -163,9 +165,14 @@ CreatePortal(const char *name, bool allowDup, bool dupSilent)
 	if (PortalIsValid(portal))
 	{
 		if (!allowDup)
-			elog(ERROR, "Portal \"%s\" already exists", name);
+			ereport(ERROR,
+					(errcode(ERRCODE_DUPLICATE_CURSOR),
+					 errmsg("portal \"%s\" already exists", name)));
 		if (!dupSilent)
-			elog(WARNING, "Closing pre-existing portal \"%s\"", name);
+			ereport(WARNING,
+					(errcode(ERRCODE_DUPLICATE_CURSOR),
+					 errmsg("closing pre-existing portal \"%s\"",
+							name)));
 		PortalDrop(portal, false);
 	}
 
@@ -295,7 +302,7 @@ PortalDrop(Portal portal, bool isError)
 
 	/* Not sure if this case can validly happen or not... */
 	if (portal->portalActive)
-		elog(ERROR, "PortalDrop: can't drop active portal");
+		elog(ERROR, "cannot drop active portal");
 
 	/*
 	 * Remove portal from hash table.  Because we do this first, we will

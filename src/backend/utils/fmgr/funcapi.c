@@ -7,7 +7,7 @@
  * Copyright (c) 2002, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/funcapi.c,v 1.6 2002/09/04 20:31:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/funcapi.c,v 1.7 2003/07/25 20:17:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,9 @@ init_MultiFuncCall(PG_FUNCTION_ARGS)
 	 * Bail if we're called in the wrong context
 	 */
 	if (fcinfo->resultinfo == NULL || !IsA(fcinfo->resultinfo, ReturnSetInfo))
-		elog(ERROR, "function called in context that does not accept a set result");
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("set function called in context that does not accept a set result")));
 
 	if (fcinfo->flinfo->fn_extra == NULL)
 	{
@@ -63,8 +65,8 @@ init_MultiFuncCall(PG_FUNCTION_ARGS)
 		fcinfo->flinfo->fn_extra = retval;
 	}
 	else
-/* second and subsequent calls */
 	{
+		/* second and subsequent calls */
 		elog(ERROR, "init_MultiFuncCall may not be called more than once");
 
 		/* never reached, but keep compiler happy */

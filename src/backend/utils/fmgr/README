@@ -311,7 +311,7 @@ the target function); they will just set it NULL.  This is unlikely to
 bother any built-in function that could be called this way.  Note also
 that this style of coding cannot pass a NULL input value nor cope with
 a NULL result (it couldn't before, either!).  We can make the helper
-routines elog an error if they see that the function returns a NULL.
+routines ereport an error if they see that the function returns a NULL.
 
 When invoking a function that has a known argument signature, we have
 usually written either
@@ -395,7 +395,7 @@ to a bitmask that's the OR of the modes the caller can support.  The actual
 mode used by the function is returned in another field "returnMode".  For
 backwards-compatibility reasons, returnMode is initialized to value-per-call
 and need only be changed if the function wants to use a different mode.
-The function should elog() if it cannot use any of the modes the caller is
+The function should ereport() if it cannot use any of the modes the caller is
 willing to support.
 
 Value-per-call mode works like this: ReturnSetInfo contains a field

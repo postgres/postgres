@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conv.c,v 1.45 2003/04/12 07:53:57 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conv.c,v 1.46 2003/07/25 20:17:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -371,7 +371,10 @@ UtfToLocal(unsigned char *utf, unsigned char *iso,
 					sizeof(pg_utf_to_local), compare1);
 		if (p == NULL)
 		{
-			elog(WARNING, "UtfToLocal: could not convert UTF-8 (0x%04x). Ignored", iutf);
+			ereport(WARNING,
+					(errcode(ERRCODE_UNTRANSLATABLE_CHARACTER),
+					 errmsg("ignoring unconvertible UTF-8 character 0x%04x",
+							iutf)));
 			continue;
 		}
 		if (p->code & 0xff000000)
@@ -398,7 +401,9 @@ LocalToUtf(unsigned char *iso, unsigned char *utf,
 	pg_local_to_utf *p;
 
 	if (!PG_VALID_ENCODING(encoding))
-		elog(ERROR, "Invalid encoding number %d", encoding);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("invalid encoding number: %d", encoding)));
 
 	for (; len > 0 && *iso; len -= l)
 	{
@@ -435,8 +440,10 @@ LocalToUtf(unsigned char *iso, unsigned char *utf,
 					sizeof(pg_local_to_utf), compare2);
 		if (p == NULL)
 		{
-			elog(WARNING, "LocalToUtf: could not convert (0x%04x) %s to UTF-8. Ignored",
-				 iiso, (&pg_enc2name_tbl[encoding])->name);
+			ereport(WARNING,
+					(errcode(ERRCODE_UNTRANSLATABLE_CHARACTER),
+					 errmsg("ignoring unconvertible %s character 0x%04x",
+							(&pg_enc2name_tbl[encoding])->name, iiso)));
 			continue;
 		}
 		if (p->utf & 0xff000000)

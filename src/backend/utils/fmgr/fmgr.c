@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.72 2003/07/01 00:04:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.73 2003/07/25 20:17:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -186,8 +186,7 @@ fmgr_info_cxt_security(Oid functionId, FmgrInfo *finfo, MemoryContext mcxt,
 									ObjectIdGetDatum(functionId),
 									0, 0, 0);
 	if (!HeapTupleIsValid(procedureTuple))
-		elog(ERROR, "fmgr_info: function %u: cache lookup failed",
-			 functionId);
+		elog(ERROR, "cache lookup failed for function %u", functionId);
 	procedureStruct = (Form_pg_proc) GETSTRUCT(procedureTuple);
 
 	finfo->fn_nargs = procedureStruct->pronargs;
@@ -219,8 +218,10 @@ fmgr_info_cxt_security(Oid functionId, FmgrInfo *finfo, MemoryContext mcxt,
 							 PointerGetDatum(&procedureStruct->prosrc)));
 			fbp = fmgr_lookupByName(prosrc);
 			if (fbp == NULL)
-				elog(ERROR, "fmgr_info: function %s not in internal table",
-					 prosrc);
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_FUNCTION),
+						 errmsg("internal function \"%s\" is not in table",
+								prosrc)));
 			pfree(prosrc);
 			/* Should we check that nargs, strict, retset match the table? */
 			finfo->fn_addr = fbp->func;
@@ -266,15 +267,13 @@ fmgr_info_C_lang(Oid functionId, FmgrInfo *finfo, HeapTuple procedureTuple)
 	prosrcattr = SysCacheGetAttr(PROCOID, procedureTuple,
 								 Anum_pg_proc_prosrc, &isnull);
 	if (isnull)
-		elog(ERROR, "fmgr: Could not extract prosrc for %u from pg_proc",
-			 functionId);
+		elog(ERROR, "null prosrc for function %u", functionId);
 	prosrcstring = DatumGetCString(DirectFunctionCall1(textout, prosrcattr));
 
 	probinattr = SysCacheGetAttr(PROCOID, procedureTuple,
 								 Anum_pg_proc_probin, &isnull);
 	if (isnull)
-		elog(ERROR, "fmgr: Could not extract probin for %u from pg_proc",
-			 functionId);
+		elog(ERROR, "null probin for function %u", functionId);
 	probinstring = DatumGetCString(DirectFunctionCall1(textout, probinattr));
 
 	/* Look up the function itself */
@@ -306,7 +305,7 @@ fmgr_info_C_lang(Oid functionId, FmgrInfo *finfo, HeapTuple procedureTuple)
 			break;
 		default:
 			/* Shouldn't get here if fetch_finfo_record did its job */
-			elog(ERROR, "Unknown function API version %d",
+			elog(ERROR, "unrecognized function API version: %d",
 				 inforec->api_version);
 			break;
 	}
@@ -332,8 +331,7 @@ fmgr_info_other_lang(Oid functionId, FmgrInfo *finfo, HeapTuple procedureTuple)
 								   ObjectIdGetDatum(language),
 								   0, 0, 0);
 	if (!HeapTupleIsValid(languageTuple))
-		elog(ERROR, "fmgr_info: cache lookup for language %u failed",
-			 language);
+		elog(ERROR, "cache lookup failed for language %u", language);
 	languageStruct = (Form_pg_language) GETSTRUCT(languageTuple);
 
 	fmgr_info(languageStruct->lanplcallfoid, &plfinfo);
@@ -345,8 +343,7 @@ fmgr_info_other_lang(Oid functionId, FmgrInfo *finfo, HeapTuple procedureTuple)
 	 * oldstyle PL handlers.
 	 */
 	if (plfinfo.fn_extra != NULL)
-		elog(ERROR, "fmgr_info: language %u has old-style handler",
-			 language);
+		elog(ERROR, "language %u has old-style handler", language);
 
 	ReleaseSysCache(languageTuple);
 }
@@ -393,7 +390,7 @@ fetch_finfo_record(void *filehandle, char *funcname)
 
 	/* Validate result as best we can */
 	if (inforec == NULL)
-		elog(ERROR, "Null result from %s", infofuncname);
+		elog(ERROR, "null result from info function \"%s\"", infofuncname);
 	switch (inforec->api_version)
 	{
 		case 0:
@@ -401,8 +398,10 @@ fetch_finfo_record(void *filehandle, char *funcname)
 			/* OK, no additional fields to validate */
 			break;
 		default:
-			elog(ERROR, "Unknown version %d reported by %s",
-				 inforec->api_version, infofuncname);
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("unrecognized API version %d reported by info function \"%s\"",
+							inforec->api_version, infofuncname)));
 			break;
 	}
 
@@ -469,7 +468,7 @@ fmgr_oldstyle(PG_FUNCTION_ARGS)
 	char	   *returnValue;
 
 	if (fcinfo->flinfo == NULL || fcinfo->flinfo->fn_extra == NULL)
-		elog(ERROR, "Internal error: fmgr_oldstyle received NULL pointer");
+		elog(ERROR, "fmgr_oldstyle received NULL pointer");
 	fnextra = (Oldstyle_fnextra *) fcinfo->flinfo->fn_extra;
 
 	/*
@@ -618,8 +617,10 @@ fmgr_oldstyle(PG_FUNCTION_ARGS)
 			 * needed to support old-style functions with many arguments,
 			 * but making 'em be new-style is probably a better idea.
 			 */
-			elog(ERROR, "fmgr_oldstyle: function %u: too many arguments (%d > %d)",
-				 fcinfo->flinfo->fn_oid, n_arguments, 16);
+			ereport(ERROR,
+					(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
+					 errmsg("function %u has too many arguments (%d > %d)",
+							fcinfo->flinfo->fn_oid, n_arguments, 16)));
 			returnValue = NULL; /* keep compiler quiet */
 			break;
 	}
@@ -663,9 +664,11 @@ fmgr_security_definer(PG_FUNCTION_ARGS)
 		fmgr_info_cxt_security(fcinfo->flinfo->fn_oid, &fcache->flinfo,
 							   fcinfo->flinfo->fn_mcxt, true);
 
-		tuple = SearchSysCache(PROCOID, ObjectIdGetDatum(fcinfo->flinfo->fn_oid), 0, 0, 0);
+		tuple = SearchSysCache(PROCOID,
+							   ObjectIdGetDatum(fcinfo->flinfo->fn_oid),
+							   0, 0, 0);
 		if (!HeapTupleIsValid(tuple))
-			elog(ERROR, "fmgr_security_definer: function %u: cache lookup failed",
+			elog(ERROR, "cache lookup failed for function %u",
 				 fcinfo->flinfo->fn_oid);
 		fcache->userid = ((Form_pg_proc) GETSTRUCT(tuple))->proowner;
 		ReleaseSysCache(tuple);
@@ -727,8 +730,7 @@ DirectFunctionCall1(PGFunction func, Datum arg1)
 
 	/* Check for null result, since caller is clearly not expecting one */
 	if (fcinfo.isnull)
-		elog(ERROR, "DirectFunctionCall1: function %p returned NULL",
-			 (void *) func);
+		elog(ERROR, "function %p returned NULL", (void *) func);
 
 	return result;
 }
@@ -755,8 +757,7 @@ DirectFunctionCall2(PGFunction func, Datum arg1, Datum arg2)
 
 	/* Check for null result, since caller is clearly not expecting one */
 	if (fcinfo.isnull)
-		elog(ERROR, "DirectFunctionCall2: function %p returned NULL",
-			 (void *) func);
+		elog(ERROR, "function %p returned NULL", (void *) func);
 
 	return result;
 }
@@ -778,8 +779,7 @@ DirectFunctionCall3(PGFunction func, Datum arg1, Datum arg2,
 
 	/* Check for null result, since caller is clearly not expecting one */
 	if (fcinfo.isnull)
-		elog(ERROR, "DirectFunctionCall3: function %p returned NULL",
-			 (void *) func);
+		elog(ERROR, "function %p returned NULL", (void *) func);
 
 	return result;
 }
@@ -802,8 +802,7 @@ DirectFunctionCall4(PGFunction func, Datum arg1, Datum arg2,
 
 	/* Check for null result, since caller is clearly not expecting one */
 	if (fcinfo.isnull)
-		elog(ERROR, "DirectFunctionCall4: function %p returned NULL",
-			 (void *) func);
+		elog(ERROR, "function %p returned NULL", (void *) func);
 
 	return result;
 }
@@ -827,8 +826,7 @@ DirectFunctionCall5(PGFunction func, Datum arg1, Datum arg2,
 
 	/* Check for null result, since caller is clearly not expecting one */
 	if (fcinfo.isnull)
-		elog(ERROR, "DirectFunctionCall5: function %p returned NULL",
-			 (void *) func);
+		elog(ERROR, "function %p returned NULL", (void *) func);
 
 	return result;
 }
@@ -854,8 +852,7 @@ DirectFunctionCall6(PGFunction func, Datum arg1, Datum arg2,
 
 	/* Check for null result, since caller is clearly not expecting one */
 	if (fcinfo.isnull)
-		elog(ERROR, "DirectFunctionCall6: function %p returned NULL",
-			 (void *) func);
+		elog(ERROR, "function %p returned NULL", (void *) func);
 
 	return result;
 }
@@ -882,8 +879,7 @@ DirectFunctionCall7(PGFunction func, Datum arg1, Datum arg2,
 
 	/* Check for null result, since caller is clearly not expecting one */
 	if (fcinfo.isnull)
-		elog(ERROR, "DirectFunctionCall7: function %p returned NULL",
-			 (void *) func);
+		elog(ERROR, "function %p returned NULL", (void *) func);
 
 	return result;
 }
@@ -911,8 +907,7 @@ DirectFunctionCall8(PGFunction func, Datum arg1, Datum arg2,
 
 	/* Check for null result, since caller is clearly not expecting one */
 	if (fcinfo.isnull)
-		elog(ERROR, "DirectFunctionCall8: function %p returned NULL",
-			 (void *) func);
+		elog(ERROR, "function %p returned NULL", (void *) func);
 
 	return result;
 }
@@ -942,8 +937,7 @@ DirectFunctionCall9(PGFunction func, Datum arg1, Datum arg2,
 
 	/* Check for null result, since caller is clearly not expecting one */
 	if (fcinfo.isnull)
-		elog(ERROR, "DirectFunctionCall9: function %p returned NULL",
-			 (void *) func);
+		elog(ERROR, "function %p returned NULL", (void *) func);
 
 	return result;
 }
@@ -973,8 +967,7 @@ FunctionCall1(FmgrInfo *flinfo, Datum arg1)
 
 	/* Check for null result, since caller is clearly not expecting one */
 	if (fcinfo.isnull)
-		elog(ERROR, "FunctionCall1: function %u returned NULL",
-			 fcinfo.flinfo->fn_oid);
+		elog(ERROR, "function %u returned NULL", fcinfo.flinfo->fn_oid);
 
 	return result;
 }
@@ -1001,8 +994,7 @@ FunctionCall2(FmgrInfo *flinfo, Datum arg1, Datum arg2)
 
 	/* Check for null result, since caller is clearly not expecting one */
 	if (fcinfo.isnull)
-		elog(ERROR, "FunctionCall2: function %u returned NULL",
-			 fcinfo.flinfo->fn_oid);
+		elog(ERROR, "function %u returned NULL", fcinfo.flinfo->fn_oid);
 
 	return result;
 }
@@ -1025,8 +1017,7 @@ FunctionCall3(FmgrInfo *flinfo, Datum arg1, Datum arg2,
 
 	/* Check for null result, since caller is clearly not expecting one */
 	if (fcinfo.isnull)
-		elog(ERROR, "FunctionCall3: function %u returned NULL",
-			 fcinfo.flinfo->fn_oid);
+		elog(ERROR, "function %u returned NULL", fcinfo.flinfo->fn_oid);
 
 	return result;
 }
@@ -1050,8 +1041,7 @@ FunctionCall4(FmgrInfo *flinfo, Datum arg1, Datum arg2,
 
 	/* Check for null result, since caller is clearly not expecting one */
 	if (fcinfo.isnull)
-		elog(ERROR, "FunctionCall4: function %u returned NULL",
-			 fcinfo.flinfo->fn_oid);
+		elog(ERROR, "function %u returned NULL", fcinfo.flinfo->fn_oid);
 
 	return result;
 }
@@ -1076,8 +1066,7 @@ FunctionCall5(FmgrInfo *flinfo, Datum arg1, Datum arg2,
 
 	/* Check for null result, since caller is clearly not expecting one */
 	if (fcinfo.isnull)
-		elog(ERROR, "FunctionCall5: function %u returned NULL",
-			 fcinfo.flinfo->fn_oid);
+		elog(ERROR, "function %u returned NULL", fcinfo.flinfo->fn_oid);
 
 	return result;
 }
@@ -1104,8 +1093,7 @@ FunctionCall6(FmgrInfo *flinfo, Datum arg1, Datum arg2,
 
 	/* Check for null result, since caller is clearly not expecting one */
 	if (fcinfo.isnull)
-		elog(ERROR, "FunctionCall6: function %u returned NULL",
-			 fcinfo.flinfo->fn_oid);
+		elog(ERROR, "function %u returned NULL", fcinfo.flinfo->fn_oid);
 
 	return result;
 }
@@ -1133,8 +1121,7 @@ FunctionCall7(FmgrInfo *flinfo, Datum arg1, Datum arg2,
 
 	/* Check for null result, since caller is clearly not expecting one */
 	if (fcinfo.isnull)
-		elog(ERROR, "FunctionCall7: function %u returned NULL",
-			 fcinfo.flinfo->fn_oid);
+		elog(ERROR, "function %u returned NULL", fcinfo.flinfo->fn_oid);
 
 	return result;
 }
@@ -1163,8 +1150,7 @@ FunctionCall8(FmgrInfo *flinfo, Datum arg1, Datum arg2,
 
 	/* Check for null result, since caller is clearly not expecting one */
 	if (fcinfo.isnull)
-		elog(ERROR, "FunctionCall8: function %u returned NULL",
-			 fcinfo.flinfo->fn_oid);
+		elog(ERROR, "function %u returned NULL", fcinfo.flinfo->fn_oid);
 
 	return result;
 }
@@ -1195,8 +1181,7 @@ FunctionCall9(FmgrInfo *flinfo, Datum arg1, Datum arg2,
 
 	/* Check for null result, since caller is clearly not expecting one */
 	if (fcinfo.isnull)
-		elog(ERROR, "FunctionCall9: function %u returned NULL",
-			 fcinfo.flinfo->fn_oid);
+		elog(ERROR, "function %u returned NULL", fcinfo.flinfo->fn_oid);
 
 	return result;
 }
@@ -1226,8 +1211,7 @@ OidFunctionCall1(Oid functionId, Datum arg1)
 
 	/* Check for null result, since caller is clearly not expecting one */
 	if (fcinfo.isnull)
-		elog(ERROR, "OidFunctionCall1: function %u returned NULL",
-			 flinfo.fn_oid);
+		elog(ERROR, "function %u returned NULL", flinfo.fn_oid);
 
 	return result;
 }
@@ -1251,8 +1235,7 @@ OidFunctionCall2(Oid functionId, Datum arg1, Datum arg2)
 
 	/* Check for null result, since caller is clearly not expecting one */
 	if (fcinfo.isnull)
-		elog(ERROR, "OidFunctionCall2: function %u returned NULL",
-			 flinfo.fn_oid);
+		elog(ERROR, "function %u returned NULL", flinfo.fn_oid);
 
 	return result;
 }
@@ -1278,8 +1261,7 @@ OidFunctionCall3(Oid functionId, Datum arg1, Datum arg2,
 
 	/* Check for null result, since caller is clearly not expecting one */
 	if (fcinfo.isnull)
-		elog(ERROR, "OidFunctionCall3: function %u returned NULL",
-			 flinfo.fn_oid);
+		elog(ERROR, "function %u returned NULL", flinfo.fn_oid);
 
 	return result;
 }
@@ -1306,8 +1288,7 @@ OidFunctionCall4(Oid functionId, Datum arg1, Datum arg2,
 
 	/* Check for null result, since caller is clearly not expecting one */
 	if (fcinfo.isnull)
-		elog(ERROR, "OidFunctionCall4: function %u returned NULL",
-			 flinfo.fn_oid);
+		elog(ERROR, "function %u returned NULL", flinfo.fn_oid);
 
 	return result;
 }
@@ -1335,8 +1316,7 @@ OidFunctionCall5(Oid functionId, Datum arg1, Datum arg2,
 
 	/* Check for null result, since caller is clearly not expecting one */
 	if (fcinfo.isnull)
-		elog(ERROR, "OidFunctionCall5: function %u returned NULL",
-			 flinfo.fn_oid);
+		elog(ERROR, "function %u returned NULL", flinfo.fn_oid);
 
 	return result;
 }
@@ -1366,8 +1346,7 @@ OidFunctionCall6(Oid functionId, Datum arg1, Datum arg2,
 
 	/* Check for null result, since caller is clearly not expecting one */
 	if (fcinfo.isnull)
-		elog(ERROR, "OidFunctionCall6: function %u returned NULL",
-			 flinfo.fn_oid);
+		elog(ERROR, "function %u returned NULL", flinfo.fn_oid);
 
 	return result;
 }
@@ -1398,8 +1377,7 @@ OidFunctionCall7(Oid functionId, Datum arg1, Datum arg2,
 
 	/* Check for null result, since caller is clearly not expecting one */
 	if (fcinfo.isnull)
-		elog(ERROR, "OidFunctionCall7: function %u returned NULL",
-			 flinfo.fn_oid);
+		elog(ERROR, "function %u returned NULL", flinfo.fn_oid);
 
 	return result;
 }
@@ -1431,8 +1409,7 @@ OidFunctionCall8(Oid functionId, Datum arg1, Datum arg2,
 
 	/* Check for null result, since caller is clearly not expecting one */
 	if (fcinfo.isnull)
-		elog(ERROR, "OidFunctionCall8: function %u returned NULL",
-			 flinfo.fn_oid);
+		elog(ERROR, "function %u returned NULL", flinfo.fn_oid);
 
 	return result;
 }
@@ -1466,8 +1443,7 @@ OidFunctionCall9(Oid functionId, Datum arg1, Datum arg2,
 
 	/* Check for null result, since caller is clearly not expecting one */
 	if (fcinfo.isnull)
-		elog(ERROR, "OidFunctionCall9: function %u returned NULL",
-			 flinfo.fn_oid);
+		elog(ERROR, "function %u returned NULL", flinfo.fn_oid);
 
 	return result;
 }
@@ -1505,8 +1481,10 @@ fmgr(Oid procedureId,...)
 		int			i;
 
 		if (n_arguments > FUNC_MAX_ARGS)
-			elog(ERROR, "fmgr: function %u: too many arguments (%d > %d)",
-				 flinfo.fn_oid, n_arguments, FUNC_MAX_ARGS);
+			ereport(ERROR,
+					(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
+					 errmsg("function %u has too many arguments (%d > %d)",
+							flinfo.fn_oid, n_arguments, FUNC_MAX_ARGS)));
 		va_start(pvar, procedureId);
 		for (i = 0; i < n_arguments; i++)
 			fcinfo.arg[i] = (Datum) va_arg(pvar, char *);
@@ -1517,8 +1495,7 @@ fmgr(Oid procedureId,...)
 
 	/* Check for null result, since caller is clearly not expecting one */
 	if (fcinfo.isnull)
-		elog(ERROR, "fmgr: function %u returned NULL",
-			 flinfo.fn_oid);
+		elog(ERROR, "function %u returned NULL", flinfo.fn_oid);
 
 	return (char *) result;
 }

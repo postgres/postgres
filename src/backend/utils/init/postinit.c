@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.123 2003/07/14 20:00:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.124 2003/07/25 20:17:52 tgl Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -111,8 +111,10 @@ ReverifyMyDatabase(const char *name)
 		 */
 		DropBuffers(MyDatabaseId);
 		/* Now I can commit hara-kiri with a clear conscience... */
-		elog(FATAL, "Database \"%s\", OID %u, has disappeared from pg_database",
-			 name, MyDatabaseId);
+		ereport(FATAL,
+				(errcode(ERRCODE_UNDEFINED_DATABASE),
+				 errmsg("database \"%s\", OID %u, has disappeared from pg_database",
+						name, MyDatabaseId)));
 	}
 
 	/*
@@ -120,8 +122,10 @@ ReverifyMyDatabase(const char *name)
 	 */
 	dbform = (Form_pg_database) GETSTRUCT(tup);
 	if (!dbform->datallowconn)
-		elog(FATAL, "Database \"%s\" is not currently accepting connections",
-			 name);
+		ereport(FATAL,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("database \"%s\" is not currently accepting connections",
+						name)));
 
 	/*
 	 * OK, we're golden.  Only other to-do item is to save the encoding
@@ -252,23 +256,38 @@ InitPostgres(const char *dbname, const char *username)
 		GetRawDatabaseInfo(dbname, &MyDatabaseId, datpath);
 
 		if (!OidIsValid(MyDatabaseId))
-			elog(FATAL,
-				 "Database \"%s\" does not exist in the system catalog.",
-				 dbname);
+			ereport(FATAL,
+					(errcode(ERRCODE_UNDEFINED_DATABASE),
+					 errmsg("database \"%s\" does not exist",
+							dbname)));
 
 		fullpath = GetDatabasePath(MyDatabaseId);
 
 		/* Verify the database path */
 
 		if (access(fullpath, F_OK) == -1)
-			elog(FATAL, "Database \"%s\" does not exist.\n\t"
-				 "The database subdirectory '%s' is missing.",
-				 dbname, fullpath);
+		{
+			if (errno == ENOENT)
+				ereport(FATAL,
+						(errcode(ERRCODE_UNDEFINED_DATABASE),
+						 errmsg("database \"%s\" does not exist",
+								dbname),
+						 errdetail("The database subdirectory \"%s\" is missing.",
+								   fullpath)));
+			else
+				ereport(FATAL,
+						(errcode_for_file_access(),
+						 errmsg("could not access directory \"%s\": %m",
+								fullpath)));
+		}
 
 		ValidatePgVersion(fullpath);
 
 		if (chdir(fullpath) == -1)
-			elog(FATAL, "Unable to change directory to '%s': %m", fullpath);
+			ereport(FATAL,
+					(errcode_for_file_access(),
+					 errmsg("could not change directory to \"%s\": %m",
+							fullpath)));
 
 		SetDatabasePath(fullpath);
 	}
@@ -297,7 +316,7 @@ InitPostgres(const char *dbname, const char *username)
 	InitBackendSharedInvalidationState();
 
 	if (MyBackendId > MaxBackends || MyBackendId <= 0)
-		elog(FATAL, "InitPostgres: bad backend id %d", MyBackendId);
+		elog(FATAL, "bad backend id: %d", MyBackendId);
 
 	/*
 	 * Initialize the transaction system override state.
@@ -347,11 +366,11 @@ InitPostgres(const char *dbname, const char *username)
 	{
 		InitializeSessionUserIdStandalone();
 		if (!ThereIsAtLeastOneUser())
-		{
-			elog(WARNING, "There are currently no users defined in this database system.");
-			elog(WARNING, "You should immediately run 'CREATE USER \"%s\" WITH SYSID %d CREATEUSER;'.",
-				 username, BOOTSTRAP_USESYSID);
-		}
+			ereport(WARNING,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("no users are defined in this database system"),
+					 errhint("You should immediately run 'CREATE USER \"%s\" WITH SYSID %d CREATEUSER;'.",
+							 username, BOOTSTRAP_USESYSID)));
 	}
 	else
 	{
@@ -384,7 +403,9 @@ InitPostgres(const char *dbname, const char *username)
 	if (ReservedBackends > 0 &&
 		CountEmptyBackendSlots() < ReservedBackends &&
 		!superuser())
-		elog(FATAL, "Non-superuser connection limit exceeded");
+		ereport(FATAL,
+				(errcode(ERRCODE_TOO_MANY_CONNECTIONS),
+				 errmsg("connection limit exceeded for non-superusers")));
 
 	/*
 	 * Initialize various default states that can't be set up until we've

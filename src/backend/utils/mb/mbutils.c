@@ -4,7 +4,7 @@
  * (currently mule internal code (mic) is used)
  * Tatsuo Ishii
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/mb/mbutils.c,v 1.41 2003/04/27 18:01:46 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/mb/mbutils.c,v 1.42 2003/07/25 20:17:55 tgl Exp $
  */
 #include "postgres.h"
 
@@ -183,9 +183,11 @@ InitializeClientEncoding(void)
 		 * Oops, the requested conversion is not available.
 		 * We couldn't fail before, but we can now.
 		 */
-		elog(FATAL, "Conversion between %s and %s is not supported",
-			 pg_enc2name_tbl[pending_client_encoding].name,
-			 GetDatabaseEncodingName());
+		ereport(FATAL,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("conversion between %s and %s is not supported",
+						pg_enc2name_tbl[pending_client_encoding].name,
+						GetDatabaseEncodingName())));
 	}
 }
 
@@ -245,23 +247,24 @@ pg_do_encoding_conversion(unsigned char *src, int len,
 	proc = FindDefaultConversionProc(src_encoding, dest_encoding);
 	if (!OidIsValid(proc))
 	{
-		elog(LOG, "default conversion proc for %s to %s not found",
-			 pg_encoding_to_char(src_encoding), pg_encoding_to_char(dest_encoding));
+		ereport(LOG,
+				(errcode(ERRCODE_UNDEFINED_FUNCTION),
+				 errmsg("default conversion proc for %s to %s does not exist",
+						pg_encoding_to_char(src_encoding),
+						pg_encoding_to_char(dest_encoding))));
 		return src;
 	}
 
 	/*
-	 * XXX we shoud avoid throwing errors in OidFuctionCall. Otherwise we
-	 * are going into inifinite loop!  So we have to make sure that the
+	 * XXX we should avoid throwing errors in OidFunctionCall. Otherwise we
+	 * are going into infinite loop!  So we have to make sure that the
 	 * function exists before calling OidFunctionCall.
 	 */
 	if (!SearchSysCacheExists(PROCOID,
 							  ObjectIdGetDatum(proc),
 							  0, 0, 0))
 	{
-		elog(LOG, "default conversion proc %u for %s to %s not found in pg_proc",
-			 proc,
-			 pg_encoding_to_char(src_encoding), pg_encoding_to_char(dest_encoding));
+		elog(LOG, "cache lookup failed for function %u", proc);
 		return src;
 	}
 
@@ -318,9 +321,15 @@ pg_convert2(PG_FUNCTION_ARGS)
 	int			len;
 
 	if (src_encoding < 0)
-		elog(ERROR, "Invalid source encoding name %s", src_encoding_name);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("invalid source encoding name \"%s\"",
+						src_encoding_name)));
 	if (dest_encoding < 0)
-		elog(ERROR, "Invalid destination encoding name %s", dest_encoding_name);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("invalid destination encoding name \"%s\"",
+						dest_encoding_name)));
 
 	/* make sure that source string is null terminated */
 	len = VARSIZE(string) - VARHDRSZ;
@@ -330,7 +339,7 @@ pg_convert2(PG_FUNCTION_ARGS)
 
 	result = pg_do_encoding_conversion(str, len, src_encoding, dest_encoding);
 	if (result == NULL)
-		elog(ERROR, "Encoding conversion failed");
+		elog(ERROR, "encoding conversion failed");
 
 	/*
 	 * build text data type structure. we cannot use textin() here, since
@@ -551,7 +560,7 @@ void
 SetDatabaseEncoding(int encoding)
 {
 	if (!PG_VALID_BE_ENCODING(encoding))
-		elog(ERROR, "SetDatabaseEncoding(): invalid database encoding");
+		elog(ERROR, "invalid database encoding");
 
 	DatabaseEncoding = &pg_enc2name_tbl[encoding];
 	Assert(DatabaseEncoding->encoding == encoding);

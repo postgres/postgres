@@ -4,7 +4,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc-file.l,v 1.16 2003/05/29 22:30:02 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc-file.l,v 1.17 2003/07/25 20:17:56 tgl Exp $
  */
 
 %{
@@ -18,7 +18,6 @@
 
 #include "miscadmin.h"
 #include "storage/fd.h"
-#include "utils/elog.h"
 #include "utils/guc.h"
 
 /* Avoid exit() on fatal scanner errors (a bit ugly -- see yy_fatal_error) */
@@ -147,7 +146,9 @@ ProcessConfigFile(GucContext context)
 	filename = malloc(strlen(DataDir) + strlen(CONFIG_FILENAME) + 2);
 	if (filename == NULL)
 	{
-		elog(elevel, "out of memory");
+		ereport(elevel,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
 		return;
 	}
 	sprintf(filename, "%s/" CONFIG_FILENAME, DataDir);
@@ -158,7 +159,9 @@ ProcessConfigFile(GucContext context)
 		free(filename);
         /* File not found is fine */
         if (errno != ENOENT)
-            elog(elevel, "could not read configuration file `" CONFIG_FILENAME "': %s", strerror(errno));
+            ereport(elevel,
+					(errcode_for_file_access(),
+					 errmsg("could not read configuration file \"" CONFIG_FILENAME "\": %m")));
 		return;
     }
 
@@ -259,15 +262,19 @@ ProcessConfigFile(GucContext context)
 	FreeFile(fp);
 	free(filename);
 	free_name_value_list(head);
-	elog(elevel, CONFIG_FILENAME ":%u: syntax error, token=\"%s\"", 
-		ConfigFileLineno,yytext);
+	ereport(elevel,
+			(errcode(ERRCODE_SYNTAX_ERROR),
+			 errmsg("syntax error in \"" CONFIG_FILENAME "\" line %u, near token \"%s\"", 
+					ConfigFileLineno, yytext)));
 	return;
 
  out_of_memory:
 	FreeFile(fp);
 	free(filename);
 	free_name_value_list(head);
-	elog(elevel, "out of memory");
+	ereport(elevel,
+			(errcode(ERRCODE_OUT_OF_MEMORY),
+			 errmsg("out of memory")));
 	return;
 }
 
@@ -294,15 +301,17 @@ GUC_scanstr(char *s)
 
 	if (s == NULL || s[0] == '\0')
 	{
-		if (s != NULL) free (s);
+		if (s != NULL)
+			free(s);
 		return strdup("");
-
 	}
 	len = strlen(s);
 
 	newStr = malloc(len + 1);	/* string cannot get longer */
 	if (newStr == NULL)
-		elog(FATAL, "out of memory");
+		ereport(FATAL,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
 
 	for (i = 0, j = 0; i < len; i++)
 	{

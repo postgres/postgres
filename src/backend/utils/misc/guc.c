@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.138 2003/07/22 20:29:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.139 2003/07/25 20:17:56 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -52,7 +52,6 @@
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/datetime.h"
-#include "utils/elog.h"
 #include "utils/pg_locale.h"
 #include "pgstat.h"
 
@@ -1580,7 +1579,9 @@ build_guc_variables(void)
 	guc_vars = (struct config_generic **)
 		malloc(num_vars * sizeof(struct config_generic *));
 	if (!guc_vars)
-		elog(PANIC, "out of memory");
+		ereport(FATAL,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
 
 	num_vars = 0;
 
@@ -1688,10 +1689,6 @@ InitializeGUCOptions(void)
 	/*
 	 * Load all variables with their compiled-in defaults, and initialize
 	 * status fields as needed.
-	 *
-	 * Note: any errors here are reported with plain ol' printf, since we
-	 * shouldn't assume that elog will work before we've initialized its
-	 * config variables.  An error here would be unexpected anyway...
 	 */
 	for (i = 0; i < num_guc_variables; i++)
 	{
@@ -1711,8 +1708,8 @@ InitializeGUCOptions(void)
 
 					if (conf->assign_hook)
 						if (!(*conf->assign_hook) (conf->reset_val, true, false))
-							fprintf(stderr, "Failed to initialize %s to %d\n",
-								  conf->gen.name, (int) conf->reset_val);
+							elog(FATAL, "failed to initialize %s to %d",
+								 conf->gen.name, (int) conf->reset_val);
 					*conf->variable = conf->reset_val;
 					conf->session_val = conf->reset_val;
 					break;
@@ -1728,8 +1725,8 @@ InitializeGUCOptions(void)
 						   strcmp(conf->gen.name, "log_min_duration_statement") == 0);
 					if (conf->assign_hook)
 						if (!(*conf->assign_hook) (conf->reset_val, true, false))
-							fprintf(stderr, "Failed to initialize %s to %d\n",
-									conf->gen.name, conf->reset_val);
+							elog(FATAL, "failed to initialize %s to %d",
+								 conf->gen.name, conf->reset_val);
 					*conf->variable = conf->reset_val;
 					conf->session_val = conf->reset_val;
 					break;
@@ -1743,8 +1740,8 @@ InitializeGUCOptions(void)
 					Assert(conf->gen.context != PGC_USERLIMIT);
 					if (conf->assign_hook)
 						if (!(*conf->assign_hook) (conf->reset_val, true, false))
-							fprintf(stderr, "Failed to initialize %s to %g\n",
-									conf->gen.name, conf->reset_val);
+							elog(FATAL, "failed to initialize %s to %g",
+								 conf->gen.name, conf->reset_val);
 					*conf->variable = conf->reset_val;
 					conf->session_val = conf->reset_val;
 					break;
@@ -1772,7 +1769,9 @@ InitializeGUCOptions(void)
 
 					str = strdup(conf->boot_val);
 					if (str == NULL)
-						elog(PANIC, "out of memory");
+						ereport(FATAL,
+								(errcode(ERRCODE_OUT_OF_MEMORY),
+								 errmsg("out of memory")));
 					conf->reset_val = str;
 
 					if (conf->assign_hook)
@@ -1782,8 +1781,8 @@ InitializeGUCOptions(void)
 						newstr = (*conf->assign_hook) (str, true, false);
 						if (newstr == NULL)
 						{
-							fprintf(stderr, "Failed to initialize %s to '%s'\n",
-									conf->gen.name, str);
+							elog(FATAL, "failed to initialize %s to \"%s\"",
+								 conf->gen.name, str);
 						}
 						else if (newstr != str)
 						{
@@ -1874,7 +1873,7 @@ ResetAllOptions(void)
 
 					if (conf->assign_hook)
 						if (!(*conf->assign_hook) (conf->reset_val, true, true))
-							elog(ERROR, "Failed to reset %s", conf->gen.name);
+							elog(ERROR, "failed to reset %s", conf->gen.name);
 					*conf->variable = conf->reset_val;
 					conf->tentative_val = conf->reset_val;
 					conf->gen.source = conf->gen.reset_source;
@@ -1889,7 +1888,7 @@ ResetAllOptions(void)
 
 					if (conf->assign_hook)
 						if (!(*conf->assign_hook) (conf->reset_val, true, true))
-							elog(ERROR, "Failed to reset %s", conf->gen.name);
+							elog(ERROR, "failed to reset %s", conf->gen.name);
 					*conf->variable = conf->reset_val;
 					conf->tentative_val = conf->reset_val;
 					conf->gen.source = conf->gen.reset_source;
@@ -1904,7 +1903,7 @@ ResetAllOptions(void)
 
 					if (conf->assign_hook)
 						if (!(*conf->assign_hook) (conf->reset_val, true, true))
-							elog(ERROR, "Failed to reset %s", conf->gen.name);
+							elog(ERROR, "failed to reset %s", conf->gen.name);
 					*conf->variable = conf->reset_val;
 					conf->tentative_val = conf->reset_val;
 					conf->gen.source = conf->gen.reset_source;
@@ -1933,7 +1932,7 @@ ResetAllOptions(void)
 
 						newstr = (*conf->assign_hook) (str, true, true);
 						if (newstr == NULL)
-							elog(ERROR, "Failed to reset %s", conf->gen.name);
+							elog(ERROR, "failed to reset %s", conf->gen.name);
 						else if (newstr != str)
 						{
 							/*
@@ -1972,7 +1971,7 @@ AtEOXact_GUC(bool isCommit)
 	if (!guc_dirty)
 		return;
 
-	/* Prevent memory leak if elog during an assign_hook */
+	/* Prevent memory leak if ereport during an assign_hook */
 	if (guc_string_workspace)
 	{
 		free(guc_string_workspace);
@@ -2007,7 +2006,8 @@ AtEOXact_GUC(bool isCommit)
 						if (conf->assign_hook)
 							if (!(*conf->assign_hook) (conf->session_val,
 													   true, false))
-								elog(LOG, "Failed to commit %s", conf->gen.name);
+								elog(LOG, "failed to commit %s",
+									 conf->gen.name);
 						*conf->variable = conf->session_val;
 						changed = true;
 					}
@@ -2030,7 +2030,8 @@ AtEOXact_GUC(bool isCommit)
 						if (conf->assign_hook)
 							if (!(*conf->assign_hook) (conf->session_val,
 													   true, false))
-								elog(LOG, "Failed to commit %s", conf->gen.name);
+								elog(LOG, "failed to commit %s",
+									 conf->gen.name);
 						*conf->variable = conf->session_val;
 						changed = true;
 					}
@@ -2053,7 +2054,8 @@ AtEOXact_GUC(bool isCommit)
 						if (conf->assign_hook)
 							if (!(*conf->assign_hook) (conf->session_val,
 													   true, false))
-								elog(LOG, "Failed to commit %s", conf->gen.name);
+								elog(LOG, "failed to commit %s",
+									 conf->gen.name);
 						*conf->variable = conf->session_val;
 						changed = true;
 					}
@@ -2084,7 +2086,8 @@ AtEOXact_GUC(bool isCommit)
 
 							newstr = (*conf->assign_hook) (str, true, false);
 							if (newstr == NULL)
-								elog(LOG, "Failed to commit %s", conf->gen.name);
+								elog(LOG, "failed to commit %s",
+									 conf->gen.name);
 							else if (newstr != str)
 							{
 								/*
@@ -2287,10 +2290,10 @@ parse_real(const char *value, double *result)
  * the checks to see if it would work.
  *
  * If there is an error (non-existing option, invalid value) then an
- * elog(ERROR) is thrown *unless* this is called in a context where we
- * don't want to elog (currently, startup or SIGHUP config file reread).
- * In that case we write a suitable error message via elog(DEBUG) and
- * return false. This is working around the deficiencies in the elog
+ * ereport(ERROR) is thrown *unless* this is called in a context where we
+ * don't want to ereport (currently, startup or SIGHUP config file reread).
+ * In that case we write a suitable error message via ereport(DEBUG) and
+ * return false. This is working around the deficiencies in the ereport
  * mechanism, so don't blame me.  In all other cases, the function
  * returns true, including cases where the input is valid but we chose
  * not to apply it because of context or source-priority considerations.
@@ -2318,7 +2321,9 @@ set_config_option(const char *name, const char *value,
 	record = find_option(name);
 	if (record == NULL)
 	{
-		elog(elevel, "'%s' is not a valid option name", name);
+		ereport(elevel,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("\"%s\" is not a recognized option", name)));
 		return false;
 	}
 
@@ -2335,8 +2340,10 @@ set_config_option(const char *name, const char *value,
 				return true;
 			if (context != PGC_INTERNAL)
 			{
-				elog(elevel, "'%s' cannot be changed",
-					 name);
+				ereport(elevel,
+						(errcode(ERRCODE_CANT_CHANGE_RUNTIME_PARAM),
+						 errmsg("\"%s\" cannot be changed",
+								name)));
 				return false;
 			}
 			break;
@@ -2345,15 +2352,20 @@ set_config_option(const char *name, const char *value,
 				return true;
 			if (context != PGC_POSTMASTER)
 			{
-				elog(elevel, "'%s' cannot be changed after server start",
-					 name);
+				ereport(elevel,
+						(errcode(ERRCODE_CANT_CHANGE_RUNTIME_PARAM),
+						 errmsg("\"%s\" cannot be changed after server start",
+								name)));
 				return false;
 			}
 			break;
 		case PGC_SIGHUP:
 			if (context != PGC_SIGHUP && context != PGC_POSTMASTER)
 			{
-				elog(elevel, "'%s' cannot be changed now", name);
+				ereport(elevel,
+						(errcode(ERRCODE_CANT_CHANGE_RUNTIME_PARAM),
+						 errmsg("\"%s\" cannot be changed now",
+								name)));
 				return false;
 			}
 
@@ -2380,19 +2392,26 @@ set_config_option(const char *name, const char *value,
 			}
 			else if (context != PGC_BACKEND && context != PGC_POSTMASTER)
 			{
-				elog(elevel, "'%s' cannot be set after connection start",
-					 name);
+				ereport(elevel,
+						(errcode(ERRCODE_CANT_CHANGE_RUNTIME_PARAM),
+						 errmsg("\"%s\" cannot be set after connection start",
+								name)));
 				return false;
 			}
 			break;
 		case PGC_SUSET:
 			if (context == PGC_USERSET || context == PGC_BACKEND)
 			{
-				elog(elevel, "'%s': permission denied", name);
+				ereport(elevel,
+						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+						 errmsg("\"%s\": permission denied",
+								name)));
 				return false;
 			}
 			break;
-		case PGC_USERLIMIT:	/* USERLIMIT permissions checked below */
+		case PGC_USERLIMIT:
+			/* USERLIMIT permissions checked below */
+			break;
 		case PGC_USERSET:
 			/* always okay */
 			break;
@@ -2420,7 +2439,7 @@ set_config_option(const char *name, const char *value,
 	{
 		if (DoIt && !makeDefault)
 		{
-			elog(DEBUG3, "%s: setting ignored because previous source is higher priority",
+			elog(DEBUG3, "\"%s\": setting ignored because previous source is higher priority",
 				 name);
 			return true;
 		}
@@ -2441,8 +2460,10 @@ set_config_option(const char *name, const char *value,
 				{
 					if (!parse_bool(value, &newval))
 					{
-						elog(elevel, "option '%s' requires a boolean value",
-							 name);
+						ereport(elevel,
+								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+								 errmsg("\"%s\" requires a boolean value",
+										name)));
 						return false;
 					}
 					/* Limit non-super user changes */
@@ -2451,9 +2472,11 @@ set_config_option(const char *name, const char *value,
 						newval < conf->session_val &&
 						!superuser())
 					{
-						elog(elevel, "'%s': permission denied\n"
-								"Only super-users can set this value to false.",
-								name);
+						ereport(elevel,
+								(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+								 errmsg("\"%s\": permission denied",
+										name),
+								 errhint("Must be superuser to change this value to false.")));
 						return false;
 					}
 					/* Allow admin to override non-super user setting */
@@ -2473,8 +2496,10 @@ set_config_option(const char *name, const char *value,
 				if (conf->assign_hook)
 					if (!(*conf->assign_hook) (newval, DoIt, interactive))
 					{
-						elog(elevel, "invalid value for option '%s': %d",
-							 name, (int) newval);
+						ereport(elevel,
+								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+								 errmsg("invalid value for \"%s\": %d",
+										name, (int) newval)));
 						return false;
 					}
 
@@ -2523,28 +2548,32 @@ set_config_option(const char *name, const char *value,
 				{
 					if (!parse_int(value, &newval))
 					{
-						elog(elevel, "option '%s' expects an integer value",
-							 name);
+						ereport(elevel,
+								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+								 errmsg("\"%s\" requires an integer value",
+										name)));
 						return false;
 					}
 					if (newval < conf->min || newval > conf->max)
 					{
-						elog(elevel, "option '%s' value %d is outside"
-							 " of permissible range [%d .. %d]",
-							 name, newval, conf->min, conf->max);
+						ereport(elevel,
+								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+								 errmsg("%d is outside the valid range for \"%s\" (%d .. %d)",
+										newval, name, conf->min, conf->max)));
 						return false;
 					}
 					/* Limit non-super user changes */
 					if (record->context == PGC_USERLIMIT &&
 						source > PGC_S_USERSTART &&
 						conf->session_val != 0 &&
-						(newval > conf->session_val ||
-						 newval == 0) &&
+						(newval > conf->session_val || newval == 0) &&
 						!superuser())
 					{
-						elog(elevel, "'%s': permission denied\n"
-								"Only super-users can increase this value "
-								"or set it to zero.", name);
+						ereport(elevel,
+								(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+								 errmsg("\"%s\": permission denied",
+										name),
+								 errhint("Must be superuser to increase this value or set it to zero.")));
 						return false;
 					}
 					/* Allow admin to override non-super user setting */
@@ -2564,8 +2593,10 @@ set_config_option(const char *name, const char *value,
 				if (conf->assign_hook)
 					if (!(*conf->assign_hook) (newval, DoIt, interactive))
 					{
-						elog(elevel, "invalid value for option '%s': %d",
-							 name, newval);
+						ereport(elevel,
+								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+								 errmsg("invalid value for \"%s\": %d",
+										name, newval)));
 						return false;
 					}
 
@@ -2614,15 +2645,18 @@ set_config_option(const char *name, const char *value,
 				{
 					if (!parse_real(value, &newval))
 					{
-						elog(elevel, "option '%s' expects a real number",
-							 name);
+						ereport(elevel,
+								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+								 errmsg("\"%s\" requires a numeric value",
+										name)));
 						return false;
 					}
 					if (newval < conf->min || newval > conf->max)
 					{
-						elog(elevel, "option '%s' value %g is outside"
-							 " of permissible range [%g .. %g]",
-							 name, newval, conf->min, conf->max);
+						ereport(elevel,
+								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+								 errmsg("%g is outside the valid range for \"%s\" (%g .. %g)",
+										newval, name, conf->min, conf->max)));
 						return false;
 					}
 					/* Limit non-super user changes */
@@ -2631,9 +2665,11 @@ set_config_option(const char *name, const char *value,
 						newval > conf->session_val &&
 						!superuser())
 					{
-						elog(elevel, "'%s': permission denied\n"
-								"Only super-users can increase this value.",
-								name);
+						ereport(elevel,
+								(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+								 errmsg("\"%s\": permission denied",
+										name),
+								 errhint("Must be superuser to increase this value.")));
 						return false;
 					}
 					/* Allow admin to override non-super user setting */
@@ -2653,8 +2689,10 @@ set_config_option(const char *name, const char *value,
 				if (conf->assign_hook)
 					if (!(*conf->assign_hook) (newval, DoIt, interactive))
 					{
-						elog(elevel, "invalid value for option '%s': %g",
-							 name, newval);
+						ereport(elevel,
+								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+								 errmsg("invalid value for \"%s\": %g",
+										name, newval)));
 						return false;
 					}
 
@@ -2704,7 +2742,9 @@ set_config_option(const char *name, const char *value,
 					newval = strdup(value);
 					if (newval == NULL)
 					{
-						elog(elevel, "out of memory");
+						ereport(elevel,
+								(errcode(ERRCODE_OUT_OF_MEMORY),
+								 errmsg("out of memory")));
 						return false;
 					}
 
@@ -2720,9 +2760,11 @@ set_config_option(const char *name, const char *value,
 							new_int_value > old_int_value &&
 							!superuser())
 						{
-							elog(elevel, "'%s': permission denied\n"
-										"Only super-users can increase this value.",
-										name);
+							ereport(elevel,
+									(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+									 errmsg("\"%s\": permission denied",
+											name),
+									 errhint("Must be superuser to increase this value.")));
 							return false;
 						}
 						/* Allow admin to override non-super user setting */
@@ -2744,7 +2786,9 @@ set_config_option(const char *name, const char *value,
 					newval = strdup(conf->reset_val);
 					if (newval == NULL)
 					{
-						elog(elevel, "out of memory");
+						ereport(elevel,
+								(errcode(ERRCODE_OUT_OF_MEMORY),
+								 errmsg("out of memory")));
 						return false;
 					}
 					source = conf->gen.reset_source;
@@ -2757,7 +2801,7 @@ set_config_option(const char *name, const char *value,
 
 				/*
 				 * Remember string in workspace, so that we can free it
-				 * and avoid a permanent memory leak if hook elogs.
+				 * and avoid a permanent memory leak if hook ereports.
 				 */
 				if (guc_string_workspace)
 					free(guc_string_workspace);
@@ -2773,8 +2817,10 @@ set_config_option(const char *name, const char *value,
 					if (hookresult == NULL)
 					{
 						free(newval);
-						elog(elevel, "invalid value for option '%s': '%s'",
-							 name, value ? value : "");
+						ereport(elevel,
+								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+								 errmsg("invalid value for \"%s\": \"%s\"",
+										name, value ? value : "")));
 						return false;
 					}
 					else if (hookresult != newval)
@@ -2864,7 +2910,7 @@ SetConfigOption(const char *name, const char *value,
 
 /*
  * Fetch the current value of the option `name'. If the option doesn't exist,
- * throw an elog and don't return.
+ * throw an ereport and don't return.
  *
  * The string is *not* allocated for modification and is really only
  * valid until the next call to configuration related functions.
@@ -2877,7 +2923,9 @@ GetConfigOption(const char *name)
 
 	record = find_option(name);
 	if (record == NULL)
-		elog(ERROR, "Option '%s' is not recognized", name);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("\"%s\" is not a recognized option", name)));
 
 	switch (record->vartype)
 	{
@@ -2911,7 +2959,9 @@ GetConfigOptionResetString(const char *name)
 
 	record = find_option(name);
 	if (record == NULL)
-		elog(ERROR, "Option '%s' is not recognized", name);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("\"%s\" is not a recognized option", name)));
 
 	switch (record->vartype)
 	{
@@ -2965,14 +3015,18 @@ flatten_set_variable_args(const char *name, List *args)
 	/* Else get flags for the variable */
 	record = find_option(name);
 	if (record == NULL)
-		elog(ERROR, "'%s' is not a valid option name", name);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("\"%s\" is not a recognized option", name)));
 
 	flags = record->flags;
 
 	/* Complain if list input and non-list variable */
 	if ((flags & GUC_LIST_INPUT) == 0 &&
 		lnext(args) != NIL)
-		elog(ERROR, "SET %s takes only one argument", name);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("SET %s takes only one argument", name)));
 
 	initStringInfo(&buf);
 
@@ -2985,7 +3039,7 @@ flatten_set_variable_args(const char *name, List *args)
 			appendStringInfo(&buf, ", ");
 
 		if (!IsA(arg, A_Const))
-			elog(ERROR, "flatten_set_variable_args: unexpected input");
+			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(arg));
 
 		switch (nodeTag(&arg->val))
 		{
@@ -3034,7 +3088,8 @@ flatten_set_variable_args(const char *name, List *args)
 				}
 				break;
 			default:
-				elog(ERROR, "flatten_set_variable_args: unexpected input");
+				elog(ERROR, "unrecognized node type: %d",
+					 (int) nodeTag(&arg->val));
 				break;
 		}
 	}
@@ -3073,7 +3128,9 @@ set_config_by_name(PG_FUNCTION_ARGS)
 	text	   *result_text;
 
 	if (PG_ARGISNULL(0))
-		elog(ERROR, "SET variable name is required");
+		ereport(ERROR,
+				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				 errmsg("SET variable name is required")));
 
 	/* Get the GUC variable name */
 	name = DatumGetCString(DirectFunctionCall1(textout, PG_GETARG_DATUM(0)));
@@ -3252,7 +3309,9 @@ GetConfigOptionByName(const char *name, const char **varname)
 
 	record = find_option(name);
 	if (record == NULL)
-		elog(ERROR, "Option '%s' is not recognized", name);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("\"%s\" is not a recognized option", name)));
 
 	if (varname)
 		*varname = record->name;
@@ -3538,7 +3597,9 @@ write_nondefault_variables(GucContext context)
 	filename = malloc(strlen(DataDir) + strlen(CONFIG_EXEC_PARAMS) + 2);
 	if (new_filename == NULL || filename == NULL)
 	{
-		elog(elevel, "out of memory");
+		ereport(elevel,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
 		return;
 	}
 	sprintf(new_filename, "%s/" CONFIG_EXEC_PARAMS ".new", DataDir);
@@ -3549,8 +3610,10 @@ write_nondefault_variables(GucContext context)
 	{
 		free(new_filename);
 		free(filename);
-		elog(elevel, "could not write exec config params file `"
-			 CONFIG_EXEC_PARAMS "': %s", strerror(errno));
+		ereport(elevel,
+				(errcode_for_file_access(),
+				 errmsg("could not write exec config params file \""
+						CONFIG_EXEC_PARAMS "\": %m")));
 		return;
 	}
 
@@ -3613,7 +3676,6 @@ write_nondefault_variables(GucContext context)
 	rename(new_filename, filename);
 	free(new_filename);
 	free(filename);
-	return;
 }
 
 
@@ -3637,7 +3699,7 @@ read_string_with_null(FILE *fp)
 			if (i == 0)
 				return NULL;
 			else
-				elog(FATAL, "Invalid format of exec config params file");
+				elog(FATAL, "invalid format of exec config params file");
 		}
 		if (i == 0)
 			str = malloc(maxlen);
@@ -3671,7 +3733,9 @@ read_nondefault_variables(void)
 	filename = malloc(strlen(DataDir) + strlen(CONFIG_EXEC_PARAMS) + 2);
 	if (filename == NULL)
 	{
-		elog(ERROR, "out of memory");
+		ereport(ERROR,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
 		return;
 	}
 	sprintf(filename, "%s/" CONFIG_EXEC_PARAMS, DataDir);
@@ -3682,20 +3746,22 @@ read_nondefault_variables(void)
 		free(filename);
 		/* File not found is fine */
 		if (errno != ENOENT)
-			elog(FATAL, "could not read exec config params file `"
-				 CONFIG_EXEC_PARAMS "': %s", strerror(errno));
+			ereport(FATAL,
+					(errcode_for_file_access(),
+					 errmsg("could not read exec config params file \""
+							CONFIG_EXEC_PARAMS "\": %m")));
 		return;
 	}
 
-	while (1)
+	for (;;)
 	{
 		if ((varname = read_string_with_null(fp)) == NULL)
 			break;
 
 		if ((varvalue = read_string_with_null(fp)) == NULL)
-			elog(FATAL, "Invalid format of exec config params file");
+			elog(FATAL, "invalid format of exec config params file");
 		if (fread(&varsource, sizeof(varsource), 1, fp) == 0)
-			elog(FATAL, "Invalid format of exec config params file");
+			elog(FATAL, "invalid format of exec config params file");
 
 		(void) set_config_option(varname, varvalue, PGC_POSTMASTER,
 								 varsource, false, true);
@@ -3733,20 +3799,26 @@ ParseLongOption(const char *string, char **name, char **value)
 	{
 		*name = malloc(equal_pos + 1);
 		if (!*name)
-			elog(FATAL, "out of memory");
+			ereport(FATAL,
+					(errcode(ERRCODE_OUT_OF_MEMORY),
+					 errmsg("out of memory")));
 		strncpy(*name, string, equal_pos);
 		(*name)[equal_pos] = '\0';
 
 		*value = strdup(&string[equal_pos + 1]);
 		if (!*value)
-			elog(FATAL, "out of memory");
+			ereport(FATAL,
+					(errcode(ERRCODE_OUT_OF_MEMORY),
+					 errmsg("out of memory")));
 	}
 	else
 	{
 		/* no equal sign in string */
 		*name = strdup(string);
 		if (!*name)
-			elog(FATAL, "out of memory");
+			ereport(FATAL,
+					(errcode(ERRCODE_OUT_OF_MEMORY),
+					 errmsg("out of memory")));
 		*value = NULL;
 	}
 
@@ -3794,7 +3866,9 @@ ProcessGUCArray(ArrayType *array, GucSource source)
 		ParseLongOption(s, &name, &value);
 		if (!value)
 		{
-			elog(WARNING, "cannot parse setting \"%s\"", name);
+			ereport(WARNING,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("cannot parse setting for \"%s\"", name)));
 			free(name);
 			continue;
 		}
@@ -4139,7 +4213,9 @@ assign_phony_autocommit(bool newval, bool doit, bool interactive)
 	if (!newval)
 	{
 		if (doit && interactive)
-			elog(ERROR, "SET AUTOCOMMIT TO OFF is no longer supported");
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("SET AUTOCOMMIT TO OFF is no longer supported")));
 		return false;
 	}
 	return true;

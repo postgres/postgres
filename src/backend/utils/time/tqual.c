@@ -16,7 +16,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.64 2003/06/25 01:08:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.65 2003/07/25 20:18:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -989,7 +989,7 @@ CopyQuerySnapshot(void)
 	Snapshot	snapshot;
 
 	if (QuerySnapshot == NULL)	/* should be set beforehand */
-		elog(ERROR, "CopyQuerySnapshot: no snapshot has been set");
+		elog(ERROR, "no snapshot has been set");
 
 	snapshot = (Snapshot) palloc(sizeof(SnapshotData));
 	memcpy(snapshot, QuerySnapshot, sizeof(SnapshotData));

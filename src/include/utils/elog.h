@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: elog.h,v 1.57 2003/07/24 22:04:15 tgl Exp $
+ * $Id: elog.h,v 1.58 2003/07/25 20:18:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -160,6 +160,7 @@
 #define ERRCODE_BAD_COPY_FILE_FORMAT		MAKE_SQLSTATE('2','2', 'P','0','1')
 #define ERRCODE_INVALID_BINARY_REPRESENTATION	MAKE_SQLSTATE('2','2', 'P','0','2')
 #define ERRCODE_FLOATING_POINT_EXCEPTION	MAKE_SQLSTATE('2','2', 'P','0','3')
+#define ERRCODE_UNTRANSLATABLE_CHARACTER	MAKE_SQLSTATE('2','2', 'P','0','4')
 
 /* Class 23 - Integrity Constraint Violation */
 #define ERRCODE_INTEGRITY_CONSTRAINT_VIOLATION		MAKE_SQLSTATE('2','3', '0','0','0')
@@ -317,6 +318,7 @@
 #define ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE	MAKE_SQLSTATE('5','5', '0','0','0')
 #define ERRCODE_OBJECT_IN_USE				MAKE_SQLSTATE('5','5', '0','0','6')
 #define ERRCODE_INDEXES_DEACTIVATED			MAKE_SQLSTATE('5','5', 'P','0','1')
+#define ERRCODE_CANT_CHANGE_RUNTIME_PARAM	MAKE_SQLSTATE('5','5', 'P','0','2')
 
 /* Class 57 - Operator Intervention (class borrowed from DB2) */
 #define ERRCODE_OPERATOR_INTERVENTION		MAKE_SQLSTATE('5','7', '0','0','0')

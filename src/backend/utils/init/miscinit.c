@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.104 2003/06/27 19:08:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.105 2003/07/25 20:17:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -128,7 +128,9 @@ SetDataDir(const char *dir)
 		{
 			buf = malloc(buflen);
 			if (!buf)
-				elog(FATAL, "out of memory");
+				ereport(FATAL,
+						(errcode(ERRCODE_OUT_OF_MEMORY),
+						 errmsg("out of memory")));
 
 			if (getcwd(buf, buflen))
 				break;
@@ -141,13 +143,15 @@ SetDataDir(const char *dir)
 			else
 			{
 				free(buf);
-				elog(FATAL, "cannot get current working directory: %m");
+				elog(FATAL, "could not get current working directory: %m");
 			}
 		}
 
 		new = malloc(strlen(buf) + 1 + strlen(dir) + 1);
 		if (!new)
-			elog(FATAL, "out of memory");
+			ereport(FATAL,
+					(errcode(ERRCODE_OUT_OF_MEMORY),
+					 errmsg("out of memory")));
 		sprintf(new, "%s/%s", buf, dir);
 		free(buf);
 	}
@@ -155,7 +159,9 @@ SetDataDir(const char *dir)
 	{
 		new = strdup(dir);
 		if (!new)
-			elog(FATAL, "out of memory");
+			ereport(FATAL,
+					(errcode(ERRCODE_OUT_OF_MEMORY),
+					 errmsg("out of memory")));
 	}
 
 	/*
@@ -235,7 +241,7 @@ SetCharSet(void)
 					while (!feof(file) && buf[0])
 					{
 						next_token(file, buf, sizeof(buf));
-						elog(LOG, "SetCharSet: unknown tag %s in file %s",
+						elog(LOG, "unexpected token %s in file %s",
 							 buf, filename);
 					}
 				}
@@ -390,7 +396,7 @@ GetCharSetByHost(char *TableName, int host, const char *DataDir)
 			else if (strcasecmp(buf, "RecodeTable") == 0)
 				key = KEY_TABLE;
 			else
-				elog(LOG, "GetCharSetByHost: unknown tag %s in file %s",
+				elog(LOG, "unknown tag %s in file %s",
 					 buf, CHARSET_FILE);
 
 			switch (key)
@@ -446,7 +452,7 @@ GetCharSetByHost(char *TableName, int host, const char *DataDir)
 			while (!feof(file) && buf[0])
 			{
 				next_token(file, buf, sizeof(buf));
-				elog(LOG, "GetCharSetByHost: unknown tag %s in file %s",
+				elog(LOG, "unknown tag %s in file %s",
 					 buf, CHARSET_FILE);
 			}
 		}
@@ -544,7 +550,9 @@ InitializeSessionUserId(const char *username)
 							 PointerGetDatum(username),
 							 0, 0, 0);
 	if (!HeapTupleIsValid(userTup))
-		elog(FATAL, "user \"%s\" does not exist", username);
+		ereport(FATAL,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("user \"%s\" does not exist", username)));
 
 	usesysid = ((Form_pg_shadow) GETSTRUCT(userTup))->usesysid;
 
@@ -610,7 +618,9 @@ SetSessionAuthorization(AclId userid, bool is_superuser)
 
 	if (userid != AuthenticatedUserId &&
 		!AuthenticatedUserIsSuperuser)
-		elog(ERROR, "SET SESSION AUTHORIZATION: permission denied");
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("permission denied")));
 
 	SetSessionUserId(userid);
 	SetUserId(userid);
@@ -634,7 +644,9 @@ GetUserNameFromId(AclId userid)
 						   ObjectIdGetDatum(userid),
 						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "invalid user id %d", userid);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("invalid user id: %d", userid)));
 
 	result = pstrdup(NameStr(((Form_pg_shadow) GETSTRUCT(tuple))->usename));
 
@@ -716,7 +728,10 @@ CreateLockFile(const char *filename, bool amPostmaster,
 		 * Couldn't create the pid file. Probably it already exists.
 		 */
 		if ((errno != EEXIST && errno != EACCES) || ntries > 100)
-			elog(FATAL, "Can't create lock file %s: %m", filename);
+			ereport(FATAL,
+					(errcode_for_file_access(),
+					 errmsg("could not create lock file \"%s\": %m",
+							filename)));
 
 		/*
 		 * Read the file to get the old owner's PID.  Note race condition
@@ -727,10 +742,16 @@ CreateLockFile(const char *filename, bool amPostmaster,
 		{
 			if (errno == ENOENT)
 				continue;		/* race condition; try again */
-			elog(FATAL, "Can't read lock file %s: %m", filename);
+			ereport(FATAL,
+					(errcode_for_file_access(),
+					 errmsg("could not open lock file \"%s\": %m",
+							filename)));
 		}
 		if ((len = read(fd, buffer, sizeof(buffer) - 1)) <= 0)
-			elog(FATAL, "Can't read lock file %s: %m", filename);
+			ereport(FATAL,
+					(errcode_for_file_access(),
+					 errmsg("could not read lock file \"%s\": %m",
+							filename)));
 		close(fd);
 
 		buffer[len] = '\0';
@@ -740,7 +761,7 @@ CreateLockFile(const char *filename, bool amPostmaster,
 		other_pid = (pid_t) (encoded_pid < 0 ? -encoded_pid : encoded_pid);
 
 		if (other_pid <= 0)
-			elog(FATAL, "Bogus data in lock file %s", filename);
+			elog(FATAL, "bogus data in lock file \"%s\"", filename);
 
 		/*
 		 * Check to see if the other process still exists
@@ -814,10 +835,13 @@ CreateLockFile(const char *filename, bool amPostmaster,
 		 * against other would-be creators.
 		 */
 		if (unlink(filename) < 0)
-			elog(FATAL, "Can't remove old lock file %s: %m"
-				 "\n\tThe file seems accidentally left, but I couldn't remove it."
-				 "\n\tPlease remove the file by hand and try again.",
-				 filename);
+			ereport(FATAL,
+					(errcode_for_file_access(),
+					 errmsg("could not remove old lock file \"%s\": %m",
+							filename),
+					 errhint("The file seems accidentally left over, but "
+							 "I couldn't remove it. Please remove the file "
+							 "by hand and try again.")));
 	}
 
 	/*
@@ -835,7 +859,9 @@ CreateLockFile(const char *filename, bool amPostmaster,
 		unlink(filename);
 		/* if write didn't set errno, assume problem is no disk space */
 		errno = save_errno ? save_errno : ENOSPC;
-		elog(FATAL, "Can't write lock file %s: %m", filename);
+		ereport(FATAL,
+				(errcode_for_file_access(),
+				 errmsg("could not write lock file \"%s\": %m", filename)));
 	}
 	close(fd);
 
@@ -941,13 +967,19 @@ RecordSharedMemoryInLockFile(unsigned long id1, unsigned long id2)
 	fd = open(directoryLockFile, O_RDWR | PG_BINARY, 0);
 	if (fd < 0)
 	{
-		elog(LOG, "Failed to rewrite %s: %m", directoryLockFile);
+		ereport(LOG,
+				(errcode_for_file_access(),
+				 errmsg("could not rewrite \"%s\": %m",
+						directoryLockFile)));
 		return;
 	}
 	len = read(fd, buffer, sizeof(buffer) - 100);
 	if (len <= 0)
 	{
-		elog(LOG, "Failed to read %s: %m", directoryLockFile);
+		ereport(LOG,
+				(errcode_for_file_access(),
+				 errmsg("could not read \"%s\": %m",
+						directoryLockFile)));
 		close(fd);
 		return;
 	}
@@ -960,7 +992,7 @@ RecordSharedMemoryInLockFile(unsigned long id1, unsigned long id2)
 	if (ptr == NULL ||
 		(ptr = strchr(ptr + 1, '\n')) == NULL)
 	{
-		elog(LOG, "Bogus data in %s", directoryLockFile);
+		elog(LOG, "bogus data in \"%s\"", directoryLockFile);
 		close(fd);
 		return;
 	}
@@ -984,7 +1016,10 @@ RecordSharedMemoryInLockFile(unsigned long id1, unsigned long id2)
 		/* if write didn't set errno, assume problem is no disk space */
 		if (errno == 0)
 			errno = ENOSPC;
-		elog(LOG, "Failed to write %s: %m", directoryLockFile);
+		ereport(LOG,
+				(errcode_for_file_access(),
+				 errmsg("could not write \"%s\": %m",
+						directoryLockFile)));
 		close(fd);
 		return;
 	}
@@ -1001,7 +1036,7 @@ RecordSharedMemoryInLockFile(unsigned long id1, unsigned long id2)
  * Determine whether the PG_VERSION file in directory `path' indicates
  * a data version compatible with the version of this program.
  *
- * If compatible, return. Otherwise, elog(FATAL).
+ * If compatible, return. Otherwise, ereport(FATAL).
  */
 void
 ValidatePgVersion(const char *path)
@@ -1026,21 +1061,36 @@ ValidatePgVersion(const char *path)
 	if (!file)
 	{
 		if (errno == ENOENT)
-			elog(FATAL, "File %s is missing. This is not a valid data directory.", full_path);
+			ereport(FATAL,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("\"%s\" is not a valid data directory",
+							path),
+					 errdetail("File \"%s\" is missing.", full_path)));
 		else
-			elog(FATAL, "cannot open %s: %m", full_path);
+			ereport(FATAL,
+					(errcode_for_file_access(),
+					 errmsg("could not open \"%s\": %m", full_path)));
 	}
 
 	ret = fscanf(file, "%ld.%ld", &file_major, &file_minor);
 	if (ret != 2)
-		elog(FATAL, "File %s does not contain valid data. You need to initdb.", full_path);
+			ereport(FATAL,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("\"%s\" is not a valid data directory",
+							path),
+					 errdetail("File \"%s\" does not contain valid data.",
+							   full_path),
+					 errhint("You may need to initdb.")));
 
 	FreeFile(file);
 
 	if (my_major != file_major || my_minor != file_minor)
-		elog(FATAL, "The data directory was initialized by PostgreSQL version %ld.%ld, "
-			 "which is not compatible with this version %s.",
-			 file_major, file_minor, version_string);
+		ereport(FATAL,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("database files are incompatible with server"),
+				 errdetail("The data directory was initialized by PostgreSQL version %ld.%ld, "
+						   "which is not compatible with this version %s.",
+						   file_major, file_minor, version_string)));
 }
 
 /*-------------------------------------------------------------------------
@@ -1077,7 +1127,10 @@ process_preload_libraries(char *preload_libraries_string)
 		/* syntax error in list */
 		pfree(rawstring);
 		freeList(elemlist);
-		elog(LOG, "invalid list syntax for preload_libraries configuration option");
+		ereport(LOG,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("invalid list syntax for preload_libraries configuration option")));
+		return;
 	}
 
 	foreach(l, elemlist)
@@ -1098,12 +1151,11 @@ process_preload_libraries(char *preload_libraries_string)
 			size_t		funcname_len = strlen(tok) - filename_len - 1;
 
 			filename = (char *) palloc(filename_len + 1);
-			memset(filename, '\0', filename_len + 1);
-			snprintf(filename, filename_len + 1, "%s", tok);
+			memcpy(filename, tok, filename_len);
+			filename[filename_len] = '\0';
 
 			funcname = (char *) palloc(funcname_len + 1);
-			memset(funcname, '\0', funcname_len + 1);
-			snprintf(funcname, funcname_len + 1, "%s", sep + 1);
+			strcpy(funcname, sep + 1);
 		}
 		else
 		{
@@ -1114,16 +1166,22 @@ process_preload_libraries(char *preload_libraries_string)
 			funcname = NULL;
 		}
 
-		initfunc = (func_ptr) load_external_function(filename, funcname, false, NULL);
+		initfunc = (func_ptr) load_external_function(filename, funcname,
+													 false, NULL);
 		if (initfunc)
 			(*initfunc)();
 
-		elog(LOG, "preloaded library %s with initialization function %s", filename, funcname);
+		if (funcname)
+			ereport(LOG,
+					(errmsg("preloaded library \"%s\" with initialization function \"%s\"",
+							filename, funcname)));
+		else
+			ereport(LOG,
+					(errmsg("preloaded library \"%s\"",
+							filename)));
 
-		if (filename != NULL)
-			pfree(filename);
-
-		if (funcname != NULL)
+		pfree(filename);
+		if (funcname)
 			pfree(funcname);
 	}
 

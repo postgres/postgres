@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.88 2003/05/13 04:38:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.89 2003/07/25 20:17:52 tgl Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -475,7 +475,7 @@ InitCatalogCache(void)
 										 cacheinfo[cacheId].nkeys,
 										 cacheinfo[cacheId].key);
 		if (!PointerIsValid(SysCache[cacheId]))
-			elog(ERROR, "InitCatalogCache: Can't init cache %s (%d)",
+			elog(ERROR, "could not initialize cache %s (%d)",
 				 cacheinfo[cacheId].name, cacheId);
 	}
 	CacheInitialized = true;
@@ -531,7 +531,7 @@ SearchSysCache(int cacheId,
 {
 	if (cacheId < 0 || cacheId >= SysCacheSize ||
 		!PointerIsValid(SysCache[cacheId]))
-		elog(ERROR, "SearchSysCache: Bad cache id %d", cacheId);
+		elog(ERROR, "invalid cache id: %d", cacheId);
 
 	return SearchCatCache(SysCache[cacheId], key1, key2, key3, key4);
 }
@@ -712,10 +712,10 @@ SysCacheGetAttr(int cacheId, HeapTuple tup,
 	 * then it should be.
 	 */
 	if (cacheId < 0 || cacheId >= SysCacheSize)
-		elog(ERROR, "SysCacheGetAttr: Bad cache id %d", cacheId);
+		elog(ERROR, "invalid cache id: %d", cacheId);
 	if (!PointerIsValid(SysCache[cacheId]) ||
 		!PointerIsValid(SysCache[cacheId]->cc_tupdesc))
-		elog(ERROR, "SysCacheGetAttr: missing cache data for id %d", cacheId);
+		elog(ERROR, "missing cache data for cache id %d", cacheId);
 
 	return heap_getattr(tup, attributeNumber,
 						SysCache[cacheId]->cc_tupdesc,
@@ -731,7 +731,7 @@ SearchSysCacheList(int cacheId, int nkeys,
 {
 	if (cacheId < 0 || cacheId >= SysCacheSize ||
 		!PointerIsValid(SysCache[cacheId]))
-		elog(ERROR, "SearchSysCacheList: Bad cache id %d", cacheId);
+		elog(ERROR, "invalid cache id: %d", cacheId);
 
 	return SearchCatCacheList(SysCache[cacheId], nkeys,
 							  key1, key2, key3, key4);

@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/mcxt.c,v 1.40 2003/05/02 20:54:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/mcxt.c,v 1.41 2003/07/25 20:17:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -385,7 +385,7 @@ MemoryContextContains(MemoryContext context, void *pointer)
  *		pointer will ordinarily point to statically allocated data).
  *		The parent and name parameters usually come from the caller.
  *	2.	MemoryContextCreate() attempts to allocate the context node,
- *		plus space for the name.  If this fails we can elog() with no
+ *		plus space for the name.  If this fails we can ereport() with no
  *		damage done.
  *	3.	We fill in all of the type-independent MemoryContext fields.
  *	4.	We call the type-specific init routine (using the methods pointer).
@@ -478,7 +478,7 @@ MemoryContextAlloc(MemoryContext context, Size size)
 	AssertArg(MemoryContextIsValid(context));
 
 	if (!AllocSizeIsValid(size))
-		elog(ERROR, "MemoryContextAlloc: invalid request size %lu",
+		elog(ERROR, "invalid memory alloc request size %lu",
 			 (unsigned long) size);
 
 	return (*context->methods->alloc) (context, size);
@@ -499,7 +499,7 @@ MemoryContextAllocZero(MemoryContext context, Size size)
 	AssertArg(MemoryContextIsValid(context));
 
 	if (!AllocSizeIsValid(size))
-		elog(ERROR, "MemoryContextAlloc: invalid request size %lu",
+		elog(ERROR, "invalid memory alloc request size %lu",
 			 (unsigned long) size);
 
 	ret = (*context->methods->alloc) (context, size);
@@ -524,7 +524,7 @@ MemoryContextAllocZeroAligned(MemoryContext context, Size size)
 	AssertArg(MemoryContextIsValid(context));
 
 	if (!AllocSizeIsValid(size))
-		elog(ERROR, "MemoryContextAlloc: invalid request size %lu",
+		elog(ERROR, "invalid memory alloc request size %lu",
 			 (unsigned long) size);
 
 	ret = (*context->methods->alloc) (context, size);
@@ -588,7 +588,7 @@ repalloc(void *pointer, Size size)
 	AssertArg(MemoryContextIsValid(header->context));
 
 	if (!AllocSizeIsValid(size))
-		elog(ERROR, "repalloc: invalid request size %lu",
+		elog(ERROR, "invalid memory alloc request size %lu",
 			 (unsigned long) size);
 
 	return (*header->context->methods->realloc) (header->context,

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/utf8_and_iso8859_1/utf8_and_iso8859_1.c,v 1.5 2002/10/26 15:01:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/utf8_and_iso8859_1/utf8_and_iso8859_1.c,v 1.6 2003/07/25 20:17:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -84,7 +84,8 @@ utf8_to_iso8859_1(PG_FUNCTION_ARGS)
 			len -= 2;
 		}
 		else if ((c & 0xe0) == 0xe0)
-			elog(ERROR, "Could not convert UTF-8 to ISO8859-1");
+			elog(ERROR, "could not convert UTF-8 character 0x%04x to ISO8859-1",
+				 c);
 		else
 		{
 			*dest++ = c;

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.69 2003/06/22 22:04:54 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.70 2003/07/25 20:17:49 tgl Exp $
 -->
 
  <sect1 id="xfunc">
@@ -2162,7 +2162,6 @@ CREATE FUNCTION test(int, int) RETURNS int
 #include "postgres.h"
 #include "executor/spi.h"
 #include "commands/trigger.h"
-#include "utils/elog.h"
 #include "fmgr.h"
 #include "access/heapam.h"
 #include "utils/syscache.h"
