@@ -2,7 +2,7 @@ From pgsql-hackers-owner+M3040@hub.org Thu Jun  8 00:31:01 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id AAA13157
 	for <pgman@candle.pha.pa.us>; Thu, 8 Jun 2000 00:31:00 -0400 (EDT)
-Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id AAA01089 for <pgman@candle.pha.pa.us>; Thu, 8 Jun 2000 00:17:19 -0400 (EDT)
+Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id AAA01089 for <pgman@candle.pha.pa.us>; Thu, 8 Jun 2000 00:17:19 -0400 (EDT)
 Received: from hub.org (majordom@localhost [127.0.0.1])
 	by hub.org (8.10.1/8.10.1) with SMTP id e5846ib99782;
 	Thu, 8 Jun 2000 00:06:44 -0400 (EDT)
@@ -280,7 +280,7 @@ From Inoue@tpf.co.jp Sat Jun 10 01:01:01 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id BAA10355
 	for <pgman@candle.pha.pa.us>; Sat, 10 Jun 2000 01:01:00 -0400 (EDT)
-Received: from sd.tpf.co.jp (sd.tpf.co.jp [210.161.239.34]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id AAA25467 for <pgman@candle.pha.pa.us>; Sat, 10 Jun 2000 00:41:32 -0400 (EDT)
+Received: from sd.tpf.co.jp (sd.tpf.co.jp [210.161.239.34]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id AAA25467 for <pgman@candle.pha.pa.us>; Sat, 10 Jun 2000 00:41:32 -0400 (EDT)
 Received: from mcadnote1 (ppm110.noc.fukui.nsk.ne.jp [210.161.188.29] (may be forged))
           by sd.tpf.co.jp (2.5 Build 2640 (Berkeley 8.8.6)/8.8.4) with SMTP
    id NAA03125; Sat, 10 Jun 2000 13:40:40 +0900
@@ -411,7 +411,7 @@ From tgl@sss.pgh.pa.us Sat Jun 10 01:31:04 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id BAA10922
 	for <pgman@candle.pha.pa.us>; Sat, 10 Jun 2000 01:31:03 -0400 (EDT)
-Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id BAA27265 for <pgman@candle.pha.pa.us>; Sat, 10 Jun 2000 01:16:07 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id BAA27265 for <pgman@candle.pha.pa.us>; Sat, 10 Jun 2000 01:16:07 -0400 (EDT)
 Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
 	by sss2.sss.pgh.pa.us (8.9.3/8.9.3) with ESMTP id BAA06206;
 	Sat, 10 Jun 2000 01:14:37 -0400 (EDT)
@@ -457,7 +457,7 @@ From dhogaza@pacifier.com Sat Jun 10 09:30:59 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id JAA25987
 	for <pgman@candle.pha.pa.us>; Sat, 10 Jun 2000 09:30:58 -0400 (EDT)
-Received: from smtp.pacifier.com (comet.pacifier.com [199.2.117.155]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id JAA18716 for <pgman@candle.pha.pa.us>; Sat, 10 Jun 2000 09:15:08 -0400 (EDT)
+Received: from smtp.pacifier.com (comet.pacifier.com [199.2.117.155]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id JAA18716 for <pgman@candle.pha.pa.us>; Sat, 10 Jun 2000 09:15:08 -0400 (EDT)
 Received: from desktop (dsl-dhogaza.pacifier.net [207.202.226.68])
 	by smtp.pacifier.com (8.9.3/8.9.3pop) with SMTP id GAA15799;
 	Sat, 10 Jun 2000 06:14:28 -0700 (PDT)
@@ -509,7 +509,7 @@ From tgl@sss.pgh.pa.us Sun Jun 11 12:31:03 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id MAA05771
 	for <pgman@candle.pha.pa.us>; Sun, 11 Jun 2000 12:31:01 -0400 (EDT)
-Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id MAA19315 for <pgman@candle.pha.pa.us>; Sun, 11 Jun 2000 12:24:06 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.4 $) with ESMTP id MAA19315 for <pgman@candle.pha.pa.us>; Sun, 11 Jun 2000 12:24:06 -0400 (EDT)
 Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
 	by sss2.sss.pgh.pa.us (8.9.3/8.9.3) with ESMTP id MAA09503;
 	Sun, 11 Jun 2000 12:22:42 -0400 (EDT)
@@ -838,4 +838,95 @@ a column.  Consider needing to drop several columns...
 			regards, tom lane
 
 ************
+
+From pgsql-hackers-owner+M18768=candle.pha.pa.us=pgman@postgresql.org Wed Feb 13 03:52:00 2002
+Return-path: <pgsql-hackers-owner+M18768=candle.pha.pa.us=pgman@postgresql.org>
+Received: from server1.pgsql.org (www.postgresql.org [64.49.215.9])
+	by candle.pha.pa.us (8.11.6/8.10.1) with SMTP id g1D8pxP21056
+	for <pgman@candle.pha.pa.us>; Wed, 13 Feb 2002 03:52:00 -0500 (EST)
+Received: (qmail 97959 invoked by alias); 13 Feb 2002 08:51:46 -0000
+Received: from unknown (HELO postgresql.org) (64.49.215.8)
+  by www.postgresql.org with SMTP; 13 Feb 2002 08:51:46 -0000
+Received: from sd.tpf.co.jp (sd.tpf.co.jp [210.161.239.34])
+	by postgresql.org (8.11.3/8.11.4) with SMTP id g1D8mRE97432
+	for <pgsql-hackers@postgresql.org>; Wed, 13 Feb 2002 03:48:28 -0500 (EST)
+	(envelope-from Inoue@tpf.co.jp)
+Received: (qmail 26891 invoked from network); 13 Feb 2002 08:48:27 -0000
+Received: from unknown (HELO viscomail.tpf.co.jp) (100.0.0.108)
+  by sd2.tpf-fw-c.co.jp with SMTP; 13 Feb 2002 08:48:27 -0000
+Received: from tpf.co.jp (3dgateway1 [126.0.1.60])
+	by viscomail.tpf.co.jp (8.8.8+Sun/8.8.8) with ESMTP id RAA01019;
+	Wed, 13 Feb 2002 17:48:20 +0900 (JST)
+Message-ID: <3C6A2861.6E71A124@tpf.co.jp>
+Date: Wed, 13 Feb 2002 17:48:33 +0900
+From: Hiroshi Inoue <Inoue@tpf.co.jp>
+X-Mailer: Mozilla 4.73 [ja] (Windows NT 5.0; U)
+X-Accept-Language: ja
+MIME-Version: 1.0
+To: Christopher Kings-Lynne <chriskl@familyhealth.com.au>
+cc: Tom Lane <tgl@sss.pgh.pa.us>,
+   Kovacs Zoltan <kovacsz@pc10.radnoti-szeged.sulinet.hu>,
+   pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] alter table drop column status
+References: <GNELIHDDFBOCMGBFGEFOMEFPCBAA.chriskl@familyhealth.com.au>
+Content-Type: text/plain; charset=iso-2022-jp
+Content-Transfer-Encoding: 7bit
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Christopher Kings-Lynne wrote:
+> 
+> > No there was an unapplied hack which uses logical/physical
+> > attribute numbers. I have synchronized it with cvs for a
+> > year or so but stop it now. Though it had some flaws It
+> > solved the following TODOs.
+> >
+> > * Add ALTER TABLE DROP COLUMN feature
+> > * ALTER TABLE ADD COLUMN to inherited table put column in wrong place
+> > * Prevent column dropping if column is used by foreign key
+> 
+> This seems fantastic - why can't this be committed?  Surely if it's
+> committed then the flaws will fairly quickly be ironed out?  Even if it has
+> flaws, then if we say 'this function is not yet stable' at least people can
+> start testing it and reporting the problems?
+> 
+> > I gave up to apply the hack mainly because it may introduce
+> > the maintenance headache.
+> 
+> Is it a maintenance headache just for you to keep it up to date, or how
+> would it be a maintenance headache if it were committed?
+
+Probably(oops I don't remember well now sorry) the main
+reason why I didn't insist to apply the patch was that
+it wasn't so clean as I had expected.
+My trial implementation uses logical(for clients) and
+physical (for backend internal) attribute numbers but
+there were many places where I wasn't able to judge which
+to use immediately. I'm pretty suspicious if a developer
+could be careful about the choise when he is implementing
+an irrevant feature. (Un)fortunately the numbers have
+the same values mostly and he could hardly notice the
+mistake even if he chose the wrong attribute numbers.
+I'm not sure if I myself chose the right attribute numbers 
+everywhere in my implementation.
+In addtion (probably) there were some pretty essential
+flaws. I intended to manage the backend internal
+object references without the logical attribute
+numbers but I found it difficult in some cases
+(probably the handling of virtual(not existent 
+in any real table) tuples).
+
+Sorry it was more than 1 year ago when I implemented
+it and I can't remember well what I'd thougth then.
+Though I'd kept my local branch up to date for
+about a year, it's about half a year since I touched
+the stuff last. 
+
+regards,
+Hiroshi Inoue
+
+---------------------------(end of broadcast)---------------------------
+TIP 2: you can get off all lists at once with the unregister command
+    (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
 
