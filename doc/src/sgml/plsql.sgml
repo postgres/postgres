@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.44 2001/10/12 23:32:34 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.45 2001/10/13 04:58:35 momjian Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -232,7 +232,7 @@ DROP FUNCTION testfunc(integer);
 CREATE FUNCTION testfunc(INTEGER) RETURNS INTEGER AS '
     ....
 end;
-' language 'plpgsql';
+' LANGUAGE 'plpgsql';
 </programlisting>
    </para>
 
@@ -1312,7 +1312,7 @@ BEGIN
      PERFORM cs_log(''Done refreshing materialized views.'');
      RETURN 1;
 end;
-' language 'plpgsql';
+' LANGUAGE 'plpgsql';
 </programlisting>
 
      If the loop is terminated with an EXIT statement, the last
@@ -2530,7 +2530,7 @@ BEGIN
        RETURN 0;
     END IF;
 END;
-' language 'plpgsql';
+' LANGUAGE 'plpgsql';
 
 --
 -- Written by Robert Gaszewski (graszew@poland.com)
