@@ -1,46 +1,46 @@
 
 		PostgreSQL Server Programming Interface
 
-   Server Programming Interface (SPI) is attempt to give users ability run
-SQL-queries inside user-defined C-function. For lack of Procedural Language
-(PL) in current version of PostgreSQL, SPI is only way to write server
-stored procedures and triggers. In the future, SPI will be used as
-"workhorse" for PL.
+   The Server Programming Interface (SPI) is an attempt to give users the
+ability to run SQL-queries inside user-defined C-functions.  Given the lack
+of a proper Procedural Language (PL) in the current version of PostgreSQL,
+SPI is only way to write server stored procedures and triggers.  In the future
+SPI will be used as the "workhorse" for PL.
 
-   Actually, SPI is just set of builtin interface functions to simplify
-access to Parser/Planner/Optimizer and Executor. Also, SPI does some memory
-management.
+   In fact, SPI is just set of builtin interface functions to simplify
+access to the Parser, Planner, Optimizer and Executor. SPI also does some
+memory management.
 
-   To avoid misunderstanding we'll use word "function" for SPI interface
-functions and word "procedure" for user-defined C-functions using SPI.
+   To avoid misunderstanding we'll use the word "function" for SPI interface
+functions and the word "procedure" for user-defined C-functions using SPI.
 
-   SPI procedures are always called by some (upper) Executor and SPI manager
-uses Executor to run your queries. Other procedures may be called by
-Executor running queries from your procedure.
+   SPI procedures are always called by some (upper) Executor and the SPI
+manager uses the Executor to run your queries. Other procedures may be
+called by the Executor running queries from your procedure.
 
-   Note, that if during execution of query from a procedure transaction will
-be aborted then control will not be returned to your procedure - all work
-will be rollbacked and server will wait for the next command from client.
-   It will be changed in the next versions.
+   Note, that if during execution of a query from a procedure the transaction
+is be aborted then control will not be returned to your procedure - all work
+will be rolled back and the server will wait for the next command from the
+client.  This will be changed in the future versions.
 
-   Other restrictions are unability to execute BEGIN, END and ABORT
-(transaction control statements) and cursor operations.
-   These are also to be changed in future.
+   Other restrictions are the inability to execute BEGIN, END and ABORT
+(transaction control statements) and cursor operations.  This will also be
+changed in future.
 
 
                          Interface functions
 
-   If successful, SPI functions returns non-negative result (either via
+   If successful, SPI functions return a non-negative result (either via
 returned (int) value or in SPI_result global variable, as described below).
-Otherwise, negative result will be returned.
+On error, a negative result will be returned.
 
 
 int SPI_connect (void)
 
-   Connects your procedure to SPI manager. Initializes SPI internal
+   Connects your procedure to the SPI manager.  Initializes the SPI internal
    structures for query execution and memory management.
    
-   You are to call this function if you need in execution of queries. Some
+   You should call this function if you will need to execute queries. Some
    utility SPI functions may be called from un-connected procedures.
 
    Returns:
@@ -48,45 +48,47 @@ int SPI_connect (void)
    SPI_OK_CONNECT if connected.
 
    SPI_ERROR_CONNECT if not. You may get this error if SPI_connect() is
-   called from already connected procedure - e.g. if you directly call one
-   procedure from another connected one. Actually, while child procedure
-   will be able to use SPI, your parent procedure will not be able continue
-   use SPI after child returned (if SPI_finish() called by child). It's bad
-   practice.
+   called from an already connected procedure - e.g. if you directly call one
+   procedure from another connected one.  Actually, while the child procedure
+   will be able to use SPI, your parent procedure will not be able to continue
+   to use SPI after the child returns (if SPI_finish() is called by the child).
+   It's bad practice.
 
 
 int SPI_finish(void)
 
-   Dis-connects your procedure from SPI manager. Frees all memory
-   allocations made by your procedure via palloc() after SPI_connect(). 
+   Disconnects your procedure from the SPI manager and frees all memory
+   allocations made by your procedure via palloc() since the SPI_connect(). 
    These allocations can't be used any more! See Memory management.
 
-   After SPI_finish() is called your procedure loses ability to run queries.
-   Server is in the same state as just before call to SPI_connect().
+   After SPI_finish() is called your procedure loses the ability to run
+   queries.  The server is in the same state as just before the call to
+   SPI_connect().
 
    Returns:
 
    SPI_OK_FINISH if properly disconnected.
-   SPI_ERROR_UNCONNECTED if called from un-connected procedure. No problems
-   with this - it means that nothing was made by SPI manager.
+   SPI_ERROR_UNCONNECTED if called from an un-connected procedure. No problem
+   with this - it means that nothing was made by the SPI manager.
 
    NOTE! SPI_finish() MUST be called by connected procedure or you may get
-   unpredictable results! But you are able to don't call SPI_finish() if you
-   abort transaction (via elog(WARN)).
+   unpredictable results! But you are able to skip the call to SPI_finish()
+   if you abort the transaction (via elog(WARN)).
 
 
 int SPI_exec(char *query, int tcount)
 
-   Creates execution plan (parser+planner+optimizer) and executes query for
-   tcount tuples. Should be called from connected procedure. If tcount eq 0
-   then executes query for all tuples returned by query scan. Using tcount >
-   0 you may restrict number of tuples for which query will be executed:
+   Creates an execution plan (parser+planner+optimizer) and executes query
+   for tcount tuples.  This should only be called from a connected procedure.
+   If tcount eq 0 then it executes the query for all tuples returned by the
+   query scan. Using tcount > 0 you may restrict the number of tuples for
+   which the query will be executed:
 
    SPI_exec ("insert into _table_ select * from _table_", 5);
 
    - at max 5 tuples will be inserted into _table_.
 
-   If execution of your query was successful then one of the next
+   If execution of your query was successful then one of the following
    (non-negative) values will be returned:
 
    SPI_OK_UTILITY if some utility (e.g. CREATE TABLE ...) was executed.
@@ -97,13 +99,14 @@ int SPI_exec(char *query, int tcount)
    SPI_OK_UPDATE if UPDATE was executed.
 
    NOTE! You may pass many queries in one string or query string may be
-   re-written by RULEs. SPI_exec() returns result for last query executed.
+   re-written by RULEs. SPI_exec() returns the result for the last query
+   executed.
 
-   Actual number of tuples for which (last) query was executed is returned
-   in global variable SPI_processed (if not SPI_OK_UTILITY).
+   The actual number of tuples for which the (last) query was executed is
+   returned in the global variable SPI_processed (if not SPI_OK_UTILITY).
 
    If SPI_OK_SELECT returned and SPI_processed > 0 then you may use global
-   pointer SPITupleTable *SPI_tuptable to access selected tuples:
+   pointer SPITupleTable *SPI_tuptable to access the selected tuples:
 
    Structure SPITupleTable is defined in spi.h:
 
@@ -115,47 +118,47 @@ int SPI_exec(char *query, int tcount)
        HeapTuple  *vals;           /* tuples */
    } SPITupleTable;
 
-   HeapTuple *vals is array of pointers to tuples. TupleDesc tupdesc is
-   tuple descriptor which you are to pass to SPI functions dealing with
+   HeapTuple *vals is an array of pointers to tuples. TupleDesc tupdesc is
+   a tuple descriptor which you may pass to SPI functions dealing with
    tuples.
 
    NOTE! Functions SPI_exec(), SPI_execp() and SPI_prepare() change both
-   SPI_processed and SPI_tuptable (just pointer, not context of structure)!
-   So, save theme in local procedure variables if you need.
+   SPI_processed and SPI_tuptable (just the pointer, not the contents of the
+   structure)!  So, save them in local procedure variables if you need them.
 
-   Also NOTE, that SPI_finish() frees and makes all SPITupleTable-s
+   Also NOTE, that SPI_finish() frees and makes all SPITupleTables
    unusable! (See Memory management).
 
-   SPI_exec() may return one of the next (negative) values:
+   SPI_exec() may return one of the following (negative) values:
 
    SPI_ERROR_ARGUMENT if query is NULL or tcount < 0.
-   SPI_ERROR_UNCONNECTED if procedure is un-connected.
+   SPI_ERROR_UNCONNECTED if procedure is unconnected.
    SPI_ERROR_COPY if COPY TO/FROM stdin.
    SPI_ERROR_CURSOR if DECLARE/CLOSE CURSOR, FETCH.
    SPI_ERROR_TRANSACTION if BEGIN/ABORT/END.
-   SPI_ERROR_OPUNKNOWN if type of query is unknown (this shouldn't occure).
+   SPI_ERROR_OPUNKNOWN if type of query is unknown (this shouldn't occur).
 
 
 void *SPI_prepare(char *query, int nargs, Oid * argtypes)
 
-   Creates and returns execution plan (parser+planner+optimizer) but doesn't
-   execute query. Should be called from connected procedure.
+   Creates and returns an execution plan (parser+planner+optimizer) but doesn't
+   execute the query. Should only be called from a connected procedure.
 
-   nargs is number of parameters ($1 ... $<nargs> - like in SQL-functions),
-   *argtypes is array of parameter type OIDs.
+   nargs is number of parameters ($1 ... $<nargs> - as in SQL-functions),
+   *argtypes is an array of parameter type OIDs.
 
-   nargs may be 0 only if there is no any $1 in query.
+   nargs may be 0 only if there is not any $1 in query.
 
-   Execution of prepared execution plans is much faster sometimes... So this
-   feature may be useful if the same query will be executed may times.
+   Execution of prepared execution plans is sometimes much faster so this
+   feature may be useful if the same query will be executed many times.
 
-   NOTE! Plan returned by SPI_prepare() may be used only in current
+   NOTE!  The plan returned by SPI_prepare() may be used only in current
    invocation of procedure: SPI_finish() frees memory allocated for a plan. 
    See SPI_saveplan().
 
    If successful, NOT NULL pointer will be returned. Otherwise, you'll get
-   NULL plan. In both cases SPI_result will be setted like value returned by
-   SPI_exec, but
+   a NULL plan.  In both cases SPI_result will be set like the value returned
+   by SPI_exec, except
 
    SPI_ERROR_ARGUMENT if query is NULL or nargs < 0 or nargs > 0 && argtypes
    is NULL.
@@ -163,24 +166,24 @@ void *SPI_prepare(char *query, int nargs, Oid * argtypes)
 
 void *SPI_saveplan(void *plan)
 
-   Currently, there is no ability to store prepared plans in system catalog
-   and fetch them from there for execution. This will be implemented in
-   future versions.
+   Currently, there is no ability to store prepared plans in the system
+   catalog and fetch them from there for execution. This will be implemented
+   in future versions.
 
-   As work arround, there is ability to re-use prepared plans in the
-   consequent invocations of your procedure in current session.
+   As a work arround, there is the ability to reuse prepared plans in the
+   consequent invocations of your procedure in the current session.
 
-   SPI_saveplan() saves passed plan (prepared by SPI_prepare()) in memory
-   protected from free-ing by SPI_finish() and by transaction manager and
-   returns pointer to saved plan. You may preserve pointer returned in local
-   variable and always check is this pointer NULL or not to either prepare
-   plan or use already prepared plan in SPI_execp (see below).
+   SPI_saveplan() saves a passed plan (prepared by SPI_prepare()) in memory
+   protected from freeing by SPI_finish() and by the transaction manager and
+   returns a pointer to the saved plan.  You may save the pointer returned in
+   a local variable.  Always check if this pointer is NULL or not either when
+   preparing a plan or using an already prepared plan in SPI_execp (see below).
 
    NOTE! If one of objects (relation, function, ...) referenced by prepared
-   plan will be dropped during your session (by your or another backend)
-   then results of SPI_execp (for this plan) will be unpredictable.
+   plan is dropped during your session (by your backend or another) then the
+   results of SPI_execp (for this plan) will be unpredictable.
 
-   If successful, NOT NULL returned. Otherwise, SPI_result setted to
+   If successful, NOT NULL is returned otherwise, SPI_result is set to
 
    SPI_ERROR_ARGUMENT if plan is NULL.
    SPI_ERROR_UNCONNECTED if procedure is un-connected.
@@ -188,26 +191,26 @@ void *SPI_saveplan(void *plan)
 
 int SPI_execp(void *plan, Datum * values, char *Nulls, int tcount)
 
-   Executes plan prepared by SPI_prepare() (or returned by SPI_saveplan()).
-   Should be called from connected procedure.
+   Executes a plan prepared by SPI_prepare() (or returned by SPI_saveplan()).
+   Should only be called from a connected procedure.
 
-   plan is pointer to execution plan, values points to actual parameter
+   plan is pointer to an execution plan, values points to actual parameter
    values, Nulls - to array describing what parameters get NULLs ('n' -
    NULL, ' ' - NOT NULL), tcount - number of tuples for which plan is to be
    executed.
 
    If Nulls is NULL then SPI assumes that all values (if any) are NOT NULL.
 
-   Returns value like SPI_exec, but
+   Returns the same value as SPI_exec, except
 
    SPI_ERROR_ARGUMENT if plan is NULL or tcount < 0.
    SPI_ERROR_PARAM if Values is NULL and plan prepared with some parameters.
 
-   If successful, SPI_tuptable and SPI_processed are initialized like by
+   If successful, SPI_tuptable and SPI_processed are initialized as in
    SPI_exec().
 
 
-All functions described below may be used by connected and un-connected
+All functions described below may be used by connected and unconnected
 procedures.
 
 
@@ -215,26 +218,26 @@ HeapTuple SPI_copytuple(HeapTuple tuple)
 
    Makes copy of tuple in upper Executor context (see Memory management).
 
-   If successful, NOT NULL returned. NULL (i.e. - error) will be returned
-   only if NULL passed in.
+   If successful, NOT NULL returned.  NULL (i.e. - error) will be returned
+   only if NULL is passed in.
 
 
 HeapTuple SPI_modifytuple(Relation rel, HeapTuple tuple, int natts, 
                 int *attnum, Datum * Values, char *Nulls)
 
-   Modifies tuple of relation rel as described by the rest of arguments.
+   Modifies tuple of relation rel as described by the rest of the arguments.
 
-   natts is number of attribute numbers in attnum.
-   attnum is array of numbers of attributes which are to be changed.
-   Values are new values for attributes specified.
-   Nulls describes what of attributes specified are NULL (if Nulls is
+   natts is the number of attribute numbers in attnum.
+   attnum is an array of numbers of the attributes which are to be changed.
+   Values are new values for the attributes specified.
+   Nulls describes which of the attributes specified are NULL (if Nulls is
    NULL then no NULLs).
 
    If successful, NOT NULL pointer to new tuple returned. New tuple is
    allocated in upper Executor context (see Memory management). Passed tuple
    is not changed.
 
-   Returns NULL if failed and cause in SPI_result:
+   Returns NULL if failed with cause in SPI_result:
 
    SPI_ERROR_ARGUMENT if rel is NULL or tuple is NULL or natts le 0 or
    attnum is NULL or Values is NULL.
@@ -244,26 +247,27 @@ HeapTuple SPI_modifytuple(Relation rel, HeapTuple tuple, int natts,
 
 int SPI_fnumber(TupleDesc tupdesc, char *fname)
 
-   Returns attribute number for attribute with name as in fname.
+   Returns the attribute number for the attribute with name in fname.
    tupdesc is tuple description.
 
-   Attribute numbers are 1-based.
+   Attribute numbers are 1 based.
 
-   Returns SPI_ERROR_NOATTRIBUTE if attribute not found.
+   Returns SPI_ERROR_NOATTRIBUTE if the named attribute is not found.
 
 
 char *SPI_fname(TupleDesc tupdesc, int fnumber)
 
-   Returns (copy of) name of attribute with number fnumber.
+   Returns (a copy of) the name of the attribute with number fnumber.
 
    Returns NULL and (SPI_ERROR_NOATTRIBUTE in SPI_result) if fnumber is
-   greater number of attributes in tupdesc or fnumber le 0.
+   greater than the number of attributes in tupdesc or fnumber le 0.
 
 
 char *SPI_getvalue(HeapTuple tuple, TupleDesc tupdesc, int fnumber)
 
-   Returns external (string) representation of value of attribute fnumber in
-   tuple with descriptor tupdesc. Allocates memory as required by value.
+   Returns an external (string) representation of the value of attribute
+   fnumber in tuple with descriptor tupdesc.  Allocates memory as required
+   by the value.
 
    Returns NULL if
 
@@ -275,8 +279,8 @@ char *SPI_getvalue(HeapTuple tuple, TupleDesc tupdesc, int fnumber)
 Datum SPI_getbinval(HeapTuple tuple, TupleDesc tupdesc, int fnumber, 
                     bool *isnull)
 
-   Returns value of attribute fnumber in tuple with descriptor tupdesc. This
-   is binary value in internal form. This is not copy!
+   Returns the value of attribute fnumber in the tuple with descriptor
+   tupdesc. This is a binary value in internal form. This is not a copy!
 
    Returns NULL indicator in *isnull.
 
@@ -285,7 +289,7 @@ Datum SPI_getbinval(HeapTuple tuple, TupleDesc tupdesc, int fnumber,
 
 char *SPI_gettype(TupleDesc tupdesc, int fnumber)
 
-   Returns (copy of) type name for attribute fnumber.
+   Returns (a copy of) the type name for attribute fnumber.
 
    Returns NULL (and SPI_ERROR_NOATTRIBUTE in SPI_result) if fnumber
    is invalid.
@@ -300,7 +304,7 @@ Oid SPI_gettypeid(TupleDesc tupdesc, int fnumber)
 
 char *SPI_getrelname(Relation rel)
 
-   Returns (copy of) relation name of relation rel.
+   Returns (a copy of) the name of relation rel.
 
 
 void *SPI_palloc (Size size)
@@ -323,67 +327,71 @@ void SPI_pfree(void *pointer)
 
    Server allocates memory in memory contexts in such way that allocations
 made in one context may be freed by context destruction without affecting
-allocations made in other contexts. There is way to choose some context as
-current one.  All allocations (via palloc(), etc) are made in current
-context. You'll get unpredictable results if you'll try to free (or
-reallocate) memory allocated not in current context.
+allocations made in other contexts. All allocations (via palloc(), etc) are
+made in the context which are chosen as current one. You'll get
+unpredictable results if you'll try to free (or reallocate) memory allocated
+not in current context.
+
+   Creation and switching between memory contexts are subject of SPI manager
+memory management.
 
    SPI procedures deal with two memory contexts: upper Executor memory
 context and procedure memory context (if connected). 
 
-   Before a procedure is connected to SPI manager current memory context is
-upper Executor context. And so, all allocation made by procedure itself via
-palloc()/repalloc() or by SPI utility functions before connection to SPI are
+   Before a procedure is connected to the SPI manager, current memory context
+is upper Executor context so all allocation made by the procedure itself via
+palloc()/repalloc() or by SPI utility functions before connecting to SPI are
 made in this context.
 
-   After SPI_connect() is called current context is procedure one. All
+   After SPI_connect() is called current context is the procedure's one.  All
 allocations made via palloc()/repalloc() or by SPI utility functions (except
 for SPI_copytuple(), SPI_modifytuple, SPI_palloc() and SPI_repalloc()) are
 made in this context.
 
-   When a procedure dis-connects from SPI manager (via SPI_finish()) current
-context is restored to upper Executor context and all allocations made in
-procedure memory context are freed and can't be used any more!
+   When a procedure disconnects from the SPI manager (via SPI_finish()) the
+current context is restored to the upper Executor context and all allocations
+made in the procedure memory context are freed and can't be used any more!
 
-   If you want to return something to upper Executor then you have to
-allocate memory for this in upper context!
+   If you want to return something to the upper Executor then you have to
+allocate memory for this in the upper context!
 
-   SPI has no ability to automatically free allocations in upper Executor
-   context!
+   SPI has no ability to automatically free allocations in the upper Executor
+context!
 
    SPI automatically frees memory allocated during execution of a query when
-   this query is done!
+this query is done!
+
 
 
                          Data changes visibility
 
-   PostgreSQL data changes visibility rule: during query execution data
-changes made by query itself (via SQL-function, SPI-function, triggers)
-are invisible to the query scan.
-
-   For example, in query
+   PostgreSQL data changes visibility rule: during a query execution, data
+changes made by the query itself (via SQL-function, SPI-function, triggers)
+are invisible to the query scan.  For example, in query
 
    INSERT INTO a SELECT * FROM a
 
-   tuples inserted are invisible for SELECT' scan.
+   tuples inserted are invisible for SELECT' scan.  In effect, this
+duplicates the database table within itself (subject to unique index
+rules, of course) without recursing.
 
-   But also note that
+   Changes made by query Q are visible by queries which are started after
+query Q, no matter whether they are started inside Q (during the execution
+of Q) or after Q is done.
 
-   changes made by query Q are visible by queries which are started after
-   query Q, no matter - are they started inside Q (during execution of Q) or
-   after Q is done.
-
-   Last example of usage SPI function below demonstrates visibility rule.
+   The last example of the usage of SPI procedure below demonstrates the
+visibility rule.
 
 
                          Examples
 
-   There are complex examples in contrib/spi and in
-src/test/regress/regress.c. 
+   There are more complex examples in in src/test/regress/regress.c and
+in contrib/spi.
 
-   This is very simple example of SPI using. Function execq accepts
-SQL-query in first arguments and tcount in second, executes query
-using SPI_exec and returns number of tuples for which query executed:
+   This is a very simple example of SPI usage. The procedure execq accepts
+an SQL-query in its first argument and tcount in its second, executes the
+query using SPI_exec and returns the number of tuples for which the query
+executed:
 
 ----------------------------------------------------------------------------
 #include "executor/spi.h"	/* this is what you need to work with SPI */
@@ -430,7 +438,7 @@ execq(text *sql, int cnt)
 }
 ----------------------------------------------------------------------------
 
-   Now, compile and create function:
+   Now, compile and create the function:
 create function execq (text, int4) returns int4 as '...path_to_so' language 'c';
 
 vac=> select execq('create table a (x int4)', 0);
