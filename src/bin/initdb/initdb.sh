@@ -26,7 +26,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.33 1998/02/19 17:25:58 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.34 1998/02/20 01:44:18 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -350,18 +350,6 @@ echo
 echo "vacuuming template1"
 echo "vacuum" | postgres -F -Q -D$PGDATA template1 2>&1 > /dev/null |\
 	grep -v "^DEBUG:"
-
-echo "Altering pg_user acl"
-echo "REVOKE ALL ON pg_user FROM public" | \
-	 postgres -F -Q -D$PGDATA template1 2>&1 > /dev/null |\
-         grep -v "'DEBUG:"
-echo "GRANT SELECT ON pg_user TO public" | \
-	 postgres -F -Q -D$PGDATA template1 2>&1 > /dev/null |\
-         grep -v "'DEBUG:"
-echo "CREATE RULE pg_user_hide_pw as on SELECT to pg_user.passwd DO INSTEAD SELE
-CT '********' as passwd;" | \
-	 postgres -F -Q -D$PGDATA template1 2>&1 > /dev/null |\
-         grep -v "'DEBUG:"
 
 echo "COPY pg_user TO '$PGDATA/pg_pwd' USING DELIMITERS '\\t'" | postgres -F -Q -D$PGDATA template1 2>&1 > /dev/null |\
          grep -v "'DEBUG:"
