@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.72 2001/06/02 17:12:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.73 2001/06/02 20:18:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -199,8 +199,15 @@ float4in(PG_FUNCTION_ARGS)
 	val = strtod(num, &endptr);
 	if (*endptr != '\0')
 	{
-		/* Shouldn't we accept "NaN" or "Infinity" for float4? */
-		elog(ERROR, "Bad float4 input format '%s'", num);
+		/*
+		 * XXX we should accept "Infinity" and "-Infinity" too, but what
+		 * are the correct values to assign?  HUGE_VAL will provoke an
+		 * error from CheckFloat4Val.
+		 */
+		if (strcasecmp(num, "NaN") == 0)
+			val = NAN;
+		else
+			elog(ERROR, "Bad float4 input format '%s'", num);
 	}
 	else
 	{
@@ -226,11 +233,15 @@ float4out(PG_FUNCTION_ARGS)
 {
 	float4		num = PG_GETARG_FLOAT4(0);
 	char	   *ascii = (char *) palloc(MAXFLOATWIDTH + 1);
+	int			infflag;
 
 	if (isnan(num))
 		PG_RETURN_CSTRING(strcpy(ascii, "NaN"));
-	if (isinf(num))
+	infflag = isinf(num);
+	if (infflag > 0)
 		PG_RETURN_CSTRING(strcpy(ascii, "Infinity"));
+	if (infflag < 0)
+		PG_RETURN_CSTRING(strcpy(ascii, "-Infinity"));
 
 	sprintf(ascii, "%.*g", FLT_DIG, num);
 	PG_RETURN_CSTRING(ascii);
@@ -258,6 +269,8 @@ float8in(PG_FUNCTION_ARGS)
 			val = NAN;
 		else if (strcasecmp(num, "Infinity") == 0)
 			val = HUGE_VAL;
+		else if (strcasecmp(num, "-Infinity") == 0)
+			val = -HUGE_VAL;
 		else
 			elog(ERROR, "Bad float8 input format '%s'", num);
 	}
@@ -282,11 +295,15 @@ float8out(PG_FUNCTION_ARGS)
 {
 	float8		num = PG_GETARG_FLOAT8(0);
 	char	   *ascii = (char *) palloc(MAXDOUBLEWIDTH + 1);
+	int			infflag;
 
 	if (isnan(num))
 		PG_RETURN_CSTRING(strcpy(ascii, "NaN"));
-	if (isinf(num))
+	infflag = isinf(num);
+	if (infflag > 0)
 		PG_RETURN_CSTRING(strcpy(ascii, "Infinity"));
+	if (infflag < 0)
+		PG_RETURN_CSTRING(strcpy(ascii, "-Infinity"));
 
 	sprintf(ascii, "%.*g", DBL_DIG, num);
 	PG_RETURN_CSTRING(ascii);
