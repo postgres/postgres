@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.213 2002/01/03 23:21:31 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.214 2002/02/25 04:21:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,17 +64,22 @@ typedef struct
 } CreateStmtContext;
 
 
-static Query *transformStmt(ParseState *pstate, Node *stmt);
+static Query *transformStmt(ParseState *pstate, Node *stmt,
+						List **extras_before, List **extras_after);
 static Query *transformDeleteStmt(ParseState *pstate, DeleteStmt *stmt);
-static Query *transformInsertStmt(ParseState *pstate, InsertStmt *stmt);
+static Query *transformInsertStmt(ParseState *pstate, InsertStmt *stmt,
+						List **extras_before, List **extras_after);
 static Query *transformIndexStmt(ParseState *pstate, IndexStmt *stmt);
-static Query *transformRuleStmt(ParseState *query, RuleStmt *stmt);
+static Query *transformRuleStmt(ParseState *query, RuleStmt *stmt,
+						List **extras_before, List **extras_after);
 static Query *transformSelectStmt(ParseState *pstate, SelectStmt *stmt);
 static Query *transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt);
 static Node *transformSetOperationTree(ParseState *pstate, SelectStmt *stmt);
 static Query *transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt);
-static Query *transformCreateStmt(ParseState *pstate, CreateStmt *stmt);
-static Query *transformAlterTableStmt(ParseState *pstate, AlterTableStmt *stmt);
+static Query *transformCreateStmt(ParseState *pstate, CreateStmt *stmt,
+						List **extras_before, List **extras_after);
+static Query *transformAlterTableStmt(ParseState *pstate, AlterTableStmt *stmt,
+						List **extras_before, List **extras_after);
 static void transformColumnDefinition(ParseState *pstate,
 						  CreateStmtContext *cxt,
 						  ColumnDef *column);
@@ -101,9 +106,6 @@ static Oid	transformFkeyGetColType(CreateStmtContext *cxt, char *colname);
 static void release_pstate_resources(ParseState *pstate);
 static FromExpr *makeFromExpr(List *fromlist, Node *quals);
 
-/* kluge to return extra info from transformCreateStmt() */
-static List *extras_before;
-static List *extras_after;
 
 
 /*
@@ -121,17 +123,16 @@ parse_analyze(Node *parseTree, ParseState *parentParseState)
 	List	   *result = NIL;
 	ParseState *pstate = make_parsestate(parentParseState);
 	Query	   *query;
+	/* Lists to return extra commands from transformation */
+	List *extras_before = NIL;
+	List *extras_after = NIL;
 
-	extras_before = extras_after = NIL;
-
-	query = transformStmt(pstate, parseTree);
+	query = transformStmt(pstate, parseTree, &extras_before, &extras_after);
 	release_pstate_resources(pstate);
 
 	while (extras_before != NIL)
 	{
-		result = lappend(result,
-						 transformStmt(pstate, lfirst(extras_before)));
-		release_pstate_resources(pstate);
+		result = nconc(result, parse_analyze(lfirst(extras_before), pstate));
 		extras_before = lnext(extras_before);
 	}
 
@@ -139,9 +140,7 @@ parse_analyze(Node *parseTree, ParseState *parentParseState)
 
 	while (extras_after != NIL)
 	{
-		result = lappend(result,
-						 transformStmt(pstate, lfirst(extras_after)));
-		release_pstate_resources(pstate);
+		result = nconc(result, parse_analyze(lfirst(extras_after), pstate));
 		extras_after = lnext(extras_after);
 	}
 
@@ -164,7 +163,8 @@ release_pstate_resources(ParseState *pstate)
  *	  transform a Parse tree into a Query tree.
  */
 static Query *
-transformStmt(ParseState *pstate, Node *parseTree)
+transformStmt(ParseState *pstate, Node *parseTree,
+			  List **extras_before,	List **extras_after)
 {
 	Query	   *result = NULL;
 
@@ -174,7 +174,8 @@ transformStmt(ParseState *pstate, Node *parseTree)
 			 * Non-optimizable statements
 			 */
 		case T_CreateStmt:
-			result = transformCreateStmt(pstate, (CreateStmt *) parseTree);
+			result = transformCreateStmt(pstate, (CreateStmt *) parseTree,
+									extras_before, extras_after);
 			break;
 
 		case T_IndexStmt:
@@ -182,14 +183,16 @@ transformStmt(ParseState *pstate, Node *parseTree)
 			break;
 
 		case T_RuleStmt:
-			result = transformRuleStmt(pstate, (RuleStmt *) parseTree);
+			result = transformRuleStmt(pstate, (RuleStmt *) parseTree,
+									extras_before, extras_after);
 			break;
 
 		case T_ViewStmt:
 			{
 				ViewStmt   *n = (ViewStmt *) parseTree;
 
-				n->query = transformStmt(pstate, (Node *) n->query);
+				n->query = transformStmt(pstate, (Node *) n->query,
+									extras_before, extras_after);
 
 				/*
 				 * If a list of column names was given, run through and
@@ -239,20 +242,23 @@ transformStmt(ParseState *pstate, Node *parseTree)
 
 				result = makeNode(Query);
 				result->commandType = CMD_UTILITY;
-				n->query = transformStmt(pstate, (Node *) n->query);
+				n->query = transformStmt(pstate, (Node *) n->query,
+								extras_before, extras_after);
 				result->utilityStmt = (Node *) parseTree;
 			}
 			break;
 
 		case T_AlterTableStmt:
-			result = transformAlterTableStmt(pstate, (AlterTableStmt *) parseTree);
+			result = transformAlterTableStmt(pstate, (AlterTableStmt *) parseTree,
+										extras_before, extras_after);
 			break;
 
 			/*
 			 * Optimizable statements
 			 */
 		case T_InsertStmt:
-			result = transformInsertStmt(pstate, (InsertStmt *) parseTree);
+			result = transformInsertStmt(pstate, (InsertStmt *) parseTree,
+										extras_before, extras_after);
 			break;
 
 		case T_DeleteStmt:
@@ -337,7 +343,8 @@ transformDeleteStmt(ParseState *pstate, DeleteStmt *stmt)
  *	  transform an Insert Statement
  */
 static Query *
-transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
+transformInsertStmt(ParseState *pstate, InsertStmt *stmt,
+					List **extras_before, List **extras_after)
 {
 	Query	   *qry = makeNode(Query);
 	List	   *sub_rtable;
@@ -402,7 +409,12 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 		sub_pstate->p_rtable = sub_rtable;
 		sub_pstate->p_namespace = sub_namespace;
 
-		selectQuery = transformStmt(sub_pstate, stmt->selectStmt);
+		/*
+		 * Note: we are not expecting that extras_before and extras_after
+		 * are going to be used by the transformation of the SELECT statement.
+ 		 */
+		selectQuery = transformStmt(sub_pstate, stmt->selectStmt,
+								extras_before, extras_after);
 
 		release_pstate_resources(sub_pstate);
 		pfree(sub_pstate);
@@ -658,7 +670,8 @@ CreateIndexName(char *table_name, char *column_name,
  *	  - thomas 1997-12-02
  */
 static Query *
-transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
+transformCreateStmt(ParseState *pstate, CreateStmt *stmt,
+					List **extras_before, List **extras_after)
 {
 	CreateStmtContext cxt;
 	Query	   *q;
@@ -728,8 +741,8 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 	q->utilityStmt = (Node *) stmt;
 	stmt->tableElts = cxt.columns;
 	stmt->constraints = cxt.ckconstraints;
-	extras_before = cxt.blist;
-	extras_after = cxt.alist;
+	*extras_before = nconc (*extras_before, cxt.blist);
+	*extras_after = nconc (cxt.alist, *extras_after);
 
 	return q;
 }
@@ -1668,7 +1681,8 @@ transformIndexStmt(ParseState *pstate, IndexStmt *stmt)
  *	  trees which is transformed into a list of query trees.
  */
 static Query *
-transformRuleStmt(ParseState *pstate, RuleStmt *stmt)
+transformRuleStmt(ParseState *pstate, RuleStmt *stmt,
+				List **extras_before, List **extras_after)
 {
 	Query	   *qry;
 	RangeTblEntry *oldrte;
@@ -1797,7 +1811,8 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt)
 			addRTEtoQuery(sub_pstate, newrte, false, true);
 
 			/* Transform the rule action statement */
-			top_subqry = transformStmt(sub_pstate, action);
+			top_subqry = transformStmt(sub_pstate, action,
+								extras_before, extras_after);
 
 			/*
 			 * We cannot support utility-statement actions (eg NOTIFY)
@@ -2494,7 +2509,8 @@ transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
  *	transform an Alter Table Statement
  */
 static Query *
-transformAlterTableStmt(ParseState *pstate, AlterTableStmt *stmt)
+transformAlterTableStmt(ParseState *pstate, AlterTableStmt *stmt,
+						List **extras_before, List **extras_after)
 {
 	CreateStmtContext cxt;
 	Query	   *qry;
@@ -2534,8 +2550,8 @@ transformAlterTableStmt(ParseState *pstate, AlterTableStmt *stmt)
 			transformFKConstraints(pstate, &cxt);
 
 			((ColumnDef *) stmt->def)->constraints = cxt.ckconstraints;
-			extras_before = cxt.blist;
-			extras_after = cxt.alist;
+			*extras_before = nconc(*extras_before, cxt.blist);
+			*extras_after = nconc(cxt.alist, *extras_after);
 			break;
 
 		case 'C':
@@ -2571,8 +2587,8 @@ transformAlterTableStmt(ParseState *pstate, AlterTableStmt *stmt)
 
 			Assert(cxt.columns == NIL);
 			stmt->def = (Node *) nconc(cxt.ckconstraints, cxt.fkconstraints);
-			extras_before = cxt.blist;
-			extras_after = cxt.alist;
+			*extras_before = nconc(*extras_before, cxt.blist);
+			*extras_after = nconc(cxt.alist, *extras_after);
 			break;
 
 		default:
