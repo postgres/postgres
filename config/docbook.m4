@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/config/docbook.m4,v 1.4 2002/07/16 00:51:37 momjian Exp $
+# $Header: /cvsroot/pgsql/config/docbook.m4,v 1.5 2003/11/06 10:30:42 petere Exp $
 
 # PGAC_PROG_JADE
 # --------------
@@ -31,11 +31,13 @@ AC_CACHE_CHECK([for DocBook V$1], [pgac_cv_check_docbook],
 </book>
 EOF
 
-${NSGMLS-false} -s conftest.sgml 1>&AS_MESSAGE_LOG_FD 2>&1
-if test $? -eq 0; then
-  pgac_cv_check_docbook=yes
-else
-  pgac_cv_check_docbook=no
+pgac_cv_check_docbook=no
+
+if test -n "$NSGMLS"; then
+  $NSGMLS -s conftest.sgml 1>&AS_MESSAGE_LOG_FD 2>&1
+  if test $? -eq 0; then
+    pgac_cv_check_docbook=yes
+  fi
 fi
 rm -f conftest.sgml])
 
