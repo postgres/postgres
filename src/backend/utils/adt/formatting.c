@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.66 2003/08/04 23:59:38 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.67 2003/08/25 16:13:27 tgl Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2003, PostgreSQL Global Development Group
@@ -880,6 +880,8 @@ static int	seq_search(char *name, char **array, int type, int max, int *len);
 static int	dch_global(int arg, char *inout, int suf, int flag, FormatNode *node, void *data);
 static int	dch_time(int arg, char *inout, int suf, int flag, FormatNode *node, void *data);
 static int	dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data);
+static void do_to_timestamp(text *date_txt, text *fmt,
+							struct tm *tm, fsec_t *fsec);
 static char *fill_str(char *str, int c, int max);
 static FormatNode *NUM_cache(int len, NUMDesc *Num, char *pars_str, bool *shouldFree);
 static char *int_to_roman(int number);
@@ -2901,21 +2903,65 @@ to_timestamp(PG_FUNCTION_ARGS)
 {
 	text	   *date_txt = PG_GETARG_TEXT_P(0);
 	text	   *fmt = PG_GETARG_TEXT_P(1);
-
 	Timestamp	result;
+	int			tz;
+	struct tm	tm;
+	fsec_t		fsec;
+
+	do_to_timestamp(date_txt, fmt, &tm, &fsec);
+
+	tz = DetermineLocalTimeZone(&tm);
+
+	if (tm2timestamp(&tm, fsec, &tz, &result) != 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("timestamp out of range")));
+
+	PG_RETURN_TIMESTAMP(result);
+}
+
+/* ----------
+ * TO_DATE
+ *	Make Date from date_str which is formated at argument 'fmt'
+ * ----------
+ */
+Datum
+to_date(PG_FUNCTION_ARGS)
+{
+	text	   *date_txt = PG_GETARG_TEXT_P(0);
+	text	   *fmt = PG_GETARG_TEXT_P(1);
+	DateADT		result;
+	struct tm	tm;
+	fsec_t		fsec;
+
+	do_to_timestamp(date_txt, fmt, &tm, &fsec);
+
+	result = date2j(tm.tm_year, tm.tm_mon, tm.tm_mday) - POSTGRES_EPOCH_JDATE;
+
+	PG_RETURN_DATEADT(result);
+}
+
+/*
+ * do_to_timestamp: shared code for to_timestamp and to_date
+ *
+ * Parse the 'date_txt' according to 'fmt', return results as a struct tm
+ * and fractional seconds.
+ */
+static void
+do_to_timestamp(text *date_txt, text *fmt,
+				struct tm *tm, fsec_t *fsec)
+{
 	FormatNode *format;
 	TmFromChar	tmfc;
-
 	bool		incache;
 	char	   *str;
 	char	   *date_str;
 	int			len,
-				date_len,
-				tz = 0;
-	struct tm	tm;
-	fsec_t		fsec = 0;
+				date_len;
 
-	ZERO_tm(&tm);
+	ZERO_tm(tm);
+	*fsec = 0;
+
 	ZERO_tmfc(&tmfc);
 
 	len = VARSIZE(fmt) - VARHDRSZ;
@@ -3004,15 +3050,15 @@ to_timestamp(PG_FUNCTION_ARGS)
 	{
 		int			x = tmfc.ssss;
 
-		tm.tm_hour = x / 3600;
+		tm->tm_hour = x / 3600;
 		x %= 3600;
-		tm.tm_min = x / 60;
+		tm->tm_min = x / 60;
 		x %= 60;
-		tm.tm_sec = x;
+		tm->tm_sec = x;
 	}
 
 	if (tmfc.cc)
-		tm.tm_year = (tmfc.cc - 1) * 100;
+		tm->tm_year = (tmfc.cc - 1) * 100;
 
 	if (tmfc.ww)
 		tmfc.ddd = (tmfc.ww - 1) * 7 + 1;
@@ -3021,79 +3067,79 @@ to_timestamp(PG_FUNCTION_ARGS)
 		tmfc.dd = (tmfc.w - 1) * 7 + 1;
 
 	if (tmfc.ss)
-		tm.tm_sec = tmfc.ss;
+		tm->tm_sec = tmfc.ss;
 	if (tmfc.mi)
-		tm.tm_min = tmfc.mi;
+		tm->tm_min = tmfc.mi;
 	if (tmfc.hh)
-		tm.tm_hour = tmfc.hh;
+		tm->tm_hour = tmfc.hh;
 
 	if (tmfc.pm || tmfc.am)
 	{
-		if (tm.tm_hour < 1 || tm.tm_hour > 12)
+		if (tm->tm_hour < 1 || tm->tm_hour > 12)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
 					 errmsg("AM/PM hour must be between 1 and 12")));
 
-		if (tmfc.pm && tm.tm_hour < 12)
-			tm.tm_hour += 12;
+		if (tmfc.pm && tm->tm_hour < 12)
+			tm->tm_hour += 12;
 
-		else if (tmfc.am && tm.tm_hour == 12)
-			tm.tm_hour = 0;
+		else if (tmfc.am && tm->tm_hour == 12)
+			tm->tm_hour = 0;
 	}
 
 	switch (tmfc.q)
 	{
 		case 1:
-			tm.tm_mday = 1;
-			tm.tm_mon = 1;
+			tm->tm_mday = 1;
+			tm->tm_mon = 1;
 			break;
 		case 2:
-			tm.tm_mday = 1;
-			tm.tm_mon = 4;
+			tm->tm_mday = 1;
+			tm->tm_mon = 4;
 			break;
 		case 3:
-			tm.tm_mday = 1;
-			tm.tm_mon = 7;
+			tm->tm_mday = 1;
+			tm->tm_mon = 7;
 			break;
 		case 4:
-			tm.tm_mday = 1;
-			tm.tm_mon = 10;
+			tm->tm_mday = 1;
+			tm->tm_mon = 10;
 			break;
 	}
 
 	if (tmfc.year)
-		tm.tm_year = tmfc.year;
+		tm->tm_year = tmfc.year;
 
 	if (tmfc.bc)
 	{
-		if (tm.tm_year > 0)
-			tm.tm_year = -(tm.tm_year - 1);
+		if (tm->tm_year > 0)
+			tm->tm_year = -(tm->tm_year - 1);
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
 					 errmsg("inconsistent use of year %04d and \"BC\"",
-							tm.tm_year)));
+							tm->tm_year)));
 	}
 
 	if (tmfc.j)
-		j2date(tmfc.j, &tm.tm_year, &tm.tm_mon, &tm.tm_mday);
+		j2date(tmfc.j, &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
 
 	if (tmfc.iw)
-		isoweek2date(tmfc.iw, &tm.tm_year, &tm.tm_mon, &tm.tm_mday);
+		isoweek2date(tmfc.iw, &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
 
 	if (tmfc.d)
-		tm.tm_wday = tmfc.d;
+		tm->tm_wday = tmfc.d;
 	if (tmfc.dd)
-		tm.tm_mday = tmfc.dd;
+		tm->tm_mday = tmfc.dd;
 	if (tmfc.ddd)
-		tm.tm_yday = tmfc.ddd;
+		tm->tm_yday = tmfc.ddd;
 	if (tmfc.mm)
-		tm.tm_mon = tmfc.mm;
+		tm->tm_mon = tmfc.mm;
 
 	/*
 	 * we don't ignore DDD
 	 */
-	if (tmfc.ddd && (tm.tm_mon <= 1 || tm.tm_mday <= 1))
+	if (tmfc.ddd && (tm->tm_mon <= 1 || tm->tm_mday <= 1))
 	{
 		/* count mday and mon from yday */
 		int		   *y,
@@ -3103,65 +3149,41 @@ to_timestamp(PG_FUNCTION_ARGS)
 			{31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 365, 0},
 		{31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335, 366, 0}};
 
-		if (!tm.tm_year)
+		if (!tm->tm_year)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
 				errmsg("cannot convert yday without year information")));
 
-		y = ysum[isleap(tm.tm_year)];
+		y = ysum[isleap(tm->tm_year)];
 
 		for (i = 0; i <= 11; i++)
 		{
-			if (tm.tm_yday < y[i])
+			if (tm->tm_yday < y[i])
 				break;
 		}
-		if (tm.tm_mon <= 1)
-			tm.tm_mon = i + 1;
+		if (tm->tm_mon <= 1)
+			tm->tm_mon = i + 1;
 
-		if (tm.tm_mday <= 1)
-			tm.tm_mday = i == 0 ? tm.tm_yday :
-				tm.tm_yday - y[i - 1];
+		if (tm->tm_mday <= 1)
+			tm->tm_mday = i == 0 ? tm->tm_yday :
+				tm->tm_yday - y[i - 1];
 	}
 
 #ifdef HAVE_INT64_TIMESTAMP
 	if (tmfc.ms)
-		fsec += tmfc.ms * 1000;
+		*fsec += tmfc.ms * 1000;
 	if (tmfc.us)
-		fsec += tmfc.us;
+		*fsec += tmfc.us;
 #else
 	if (tmfc.ms)
-		fsec += (double) tmfc.ms / 1000;
+		*fsec += (double) tmfc.ms / 1000;
 	if (tmfc.us)
-		fsec += (double) tmfc.us / 1000000;
+		*fsec += (double) tmfc.us / 1000000;
 #endif
 
-	/* -------------------------------------------------------------- */
-
-	DEBUG_TM(&tm);
-	tz = DetermineLocalTimeZone(&tm);
-
-	if (tm2timestamp(&tm, fsec, &tz, &result) != 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-				 errmsg("timestamp out of range")));
-
-	PG_RETURN_TIMESTAMP(result);
+	DEBUG_TM(tm);
 }
 
-/* ----------
- * TO_DATE
- *	Make Date from date_str which is formated at argument 'fmt'
- * ----------
- */
-Datum
-to_date(PG_FUNCTION_ARGS)
-{
-	/*
-	 * Quick hack: since our inputs are just like to_timestamp, hand over
-	 * the whole input info struct...
-	 */
-	return DirectFunctionCall1(timestamptz_date, to_timestamp(fcinfo));
-}
 
 /**********************************************************************
  *	the NUMBER version part
