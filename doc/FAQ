@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Sat Feb 2 15:34:26 EST 2002
+   Last updated: Sat Feb 2 16:46:36 EST 2002
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -264,9 +264,11 @@
     1.10) How can I learn SQL?
     
    The PostgreSQL book at http://www.PostgreSQL.org/docs/awbook.html
-   teaches SQL. There is a nice tutorial at
-   http://www.intermedia.net/support/sql/sqltut.shtm and at
-   http://ourworld.compuserve.com/homepages/graeme_birchall/HTM_COOK.HTM.
+   teaches SQL. There is another PostgreSQL book at
+   http://www.commandprompt.com/ppbook. There is a nice tutorial at
+   http://www.intermedia.net/support/sql/sqltut.shtm, at
+   http://ourworld.compuserve.com/homepages/graeme_birchall/HTM_COOK.HTM,
+   and at http://sqlcourse.com.
    
    Another one is "Teach Yourself SQL in 21 Days, Second Edition" at
    http://members.tripod.com/er4ebus/sql/index.htm
