@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/resowner/resowner.c,v 1.3 2004/08/25 18:43:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/resowner/resowner.c,v 1.4 2004/08/27 17:07:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,18 +31,6 @@
 
 
 /*
- * Info needed to identify/release a lock
- */
-typedef struct LockIdData
-{
-	/* we assume lockmethodid is part of locktag */
-	LOCKTAG		locktag;
-	TransactionId xid;
-	LOCKMODE	lockmode;
-} LockIdData;
-
-
-/*
  * ResourceOwner objects look like this
  */
 typedef struct ResourceOwnerData
@@ -56,11 +44,6 @@ typedef struct ResourceOwnerData
 	int			nbuffers;		/* number of owned buffer pins */
 	Buffer	   *buffers;		/* dynamically allocated array */
 	int			maxbuffers;		/* currently allocated array size */
-
-	/* We have built-in support for remembering owned locks */
-	int			nlocks;			/* number of owned locks */
-	LockIdData *locks;			/* dynamically allocated array */
-	int			maxlocks;		/* currently allocated array size */
 
 	/* We have built-in support for remembering catcache references */
 	int			ncatrefs;		/* number of owned catcache pins */
@@ -274,44 +257,19 @@ ResourceOwnerReleaseInternal(ResourceOwner owner,
 			 */
 			if (owner == TopTransactionResourceOwner)
 				ProcReleaseLocks(isCommit);
-			/* Mark object as holding no locks, just for sanity */
-			owner->nlocks = 0;
 		}
 		else
 		{
 			/*
-			 * Release locks retail.  Note that LockRelease will remove
-			 * the lock entry from my list, so I just have to iterate till
-			 * there are none.  Also note that if we are committing a
+			 * Release locks retail.  Note that if we are committing a
 			 * subtransaction, we do NOT release its locks yet, but transfer
 			 * them to the parent.
-			 *
-			 * XXX as above, this is a bit inefficient but probably not worth
-			 * the trouble to optimize more.
 			 */
 			Assert(owner->parent != NULL);
-			while (owner->nlocks > 0)
-			{
-				LockIdData *lockid = &owner->locks[owner->nlocks - 1];
-
-				if (isCommit)
-				{
-					ResourceOwnerEnlargeLocks(owner->parent);
-					ResourceOwnerRememberLock(owner->parent,
-											  &lockid->locktag,
-											  lockid->xid,
-											  lockid->lockmode);
-					owner->nlocks--;
-				}
-				else
-				{
-					LockRelease(lockid->locktag.lockmethodid,
-								&lockid->locktag,
-								lockid->xid,
-								lockid->lockmode);
-					/* LockRelease will have removed the entry from list */
-				}
-			}
+			if (isCommit)
+				LockReassignCurrentOwner();
+			else
+				LockReleaseCurrentOwner();
 		}
 	}
 	else if (phase == RESOURCE_RELEASE_AFTER_LOCKS)
@@ -368,7 +326,6 @@ ResourceOwnerDelete(ResourceOwner owner)
 
 	/* And it better not own any resources, either */
 	Assert(owner->nbuffers == 0);
-	Assert(owner->nlocks == 0);
 	Assert(owner->ncatrefs == 0);
 	Assert(owner->ncatlistrefs == 0);
 	Assert(owner->nrelrefs == 0);
@@ -390,8 +347,6 @@ ResourceOwnerDelete(ResourceOwner owner)
 	/* And free the object. */
 	if (owner->buffers)
 		pfree(owner->buffers);
-	if (owner->locks)
-		pfree(owner->locks);
 	if (owner->catrefs)
 		pfree(owner->catrefs);
 	if (owner->catlistrefs)
@@ -400,6 +355,15 @@ ResourceOwnerDelete(ResourceOwner owner)
 		pfree(owner->relrefs);
 
 	pfree(owner);
+}
+
+/*
+ * Fetch parent of a ResourceOwner (returns NULL if top-level owner)
+ */
+ResourceOwner
+ResourceOwnerGetParent(ResourceOwner owner)
+{
+	return owner->parent;
 }
 
 /*
@@ -578,97 +542,6 @@ ResourceOwnerForgetBuffer(ResourceOwner owner, Buffer buffer)
 		}
 		elog(ERROR, "buffer %d is not owned by resource owner %s",
 			 buffer, owner->name);
-	}
-}
-
-/*
- * Make sure there is room for at least one more entry in a ResourceOwner's
- * lock array.
- *
- * This is separate from actually inserting an entry because if we run out
- * of memory, it's critical to do so *before* acquiring the resource.
- */
-void
-ResourceOwnerEnlargeLocks(ResourceOwner owner)
-{
-	int			newmax;
-
-	if (owner->nlocks < owner->maxlocks)
-		return;					/* nothing to do */
-
-	if (owner->locks == NULL)
-	{
-		newmax = 16;
-		owner->locks = (LockIdData *)
-			MemoryContextAlloc(TopMemoryContext, newmax * sizeof(LockIdData));
-		owner->maxlocks = newmax;
-	}
-	else
-	{
-		newmax = owner->maxlocks * 2;
-		owner->locks = (LockIdData *)
-			repalloc(owner->locks, newmax * sizeof(LockIdData));
-		owner->maxlocks = newmax;
-	}
-}
-
-/*
- * Remember that a lock is owned by a ResourceOwner
- *
- * Caller must have previously done ResourceOwnerEnlargeLocks()
- */
-void
-ResourceOwnerRememberLock(ResourceOwner owner,
-						  LOCKTAG *locktag,
-						  TransactionId xid,
-						  LOCKMODE lockmode)
-{
-	/* Session locks and user locks are not transactional */
-	if (xid != InvalidTransactionId &&
-		locktag->lockmethodid == DEFAULT_LOCKMETHOD)
-	{
-		Assert(owner->nlocks < owner->maxlocks);
-		owner->locks[owner->nlocks].locktag = *locktag;
-		owner->locks[owner->nlocks].xid = xid;
-		owner->locks[owner->nlocks].lockmode = lockmode;
-		owner->nlocks++;
-	}
-}
-
-/*
- * Forget that a lock is owned by a ResourceOwner
- */
-void
-ResourceOwnerForgetLock(ResourceOwner owner,
-						LOCKTAG *locktag,
-						TransactionId xid,
-						LOCKMODE lockmode)
-{
-	/* Session locks and user locks are not transactional */
-	if (xid != InvalidTransactionId &&
-		locktag->lockmethodid == DEFAULT_LOCKMETHOD)
-	{
-		LockIdData *locks = owner->locks;
-		int			nl1 = owner->nlocks - 1;
-		int			i;
-
-		for (i = nl1; i >= 0; i--)
-		{
-			if (memcmp(&locks[i].locktag, locktag, sizeof(LOCKTAG)) == 0 &&
-				locks[i].xid == xid &&
-				locks[i].lockmode == lockmode)
-			{
-				while (i < nl1)
-				{
-					locks[i] = locks[i + 1];
-					i++;
-				}
-				owner->nlocks = nl1;
-				return;
-			}
-		}
-		elog(ERROR, "lock %u/%u/%u is not owned by resource owner %s",
-			 locktag->relId, locktag->dbId, locktag->objId.xid, owner->name);
 	}
 }
 

@@ -6,7 +6,7 @@
  * Copyright (c) 2002-2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/backend/utils/adt/lockfuncs.c,v 1.13 2004/04/01 21:28:45 tgl Exp $
+ *		$PostgreSQL: pgsql/src/backend/utils/adt/lockfuncs.c,v 1.14 2004/08/27 17:07:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,7 +92,7 @@ pg_lock_status(PG_FUNCTION_ARGS)
 		LOCK	   *lock;
 		PGPROC	   *proc;
 		bool		granted;
-		LOCKMODE	mode;
+		LOCKMODE	mode = 0;
 		Datum		values[6];
 		char		nulls[6];
 		HeapTuple	tuple;
@@ -108,13 +108,16 @@ pg_lock_status(PG_FUNCTION_ARGS)
 		 * report again.
 		 */
 		granted = false;
-		for (mode = 0; mode < MAX_LOCKMODES; mode++)
+		if (proclock->holdMask)
 		{
-			if (proclock->holding[mode] > 0)
+			for (mode = 0; mode < MAX_LOCKMODES; mode++)
 			{
-				granted = true;
-				proclock->holding[mode] = 0;
-				break;
+				if (proclock->holdMask & LOCKBIT_ON(mode))
+				{
+					granted = true;
+					proclock->holdMask &= LOCKBIT_OFF(mode);
+					break;
+				}
 			}
 		}
 

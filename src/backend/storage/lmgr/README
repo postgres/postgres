@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/storage/lmgr/README,v 1.14 2003/11/29 19:51:56 pgsql Exp $
+$PostgreSQL: pgsql/src/backend/storage/lmgr/README,v 1.15 2004/08/27 17:07:41 tgl Exp $
 
 
 LOCKING OVERVIEW
@@ -47,18 +47,26 @@ The rest of this README file discusses the regular lock manager in detail.
 
 LOCK DATA STRUCTURES
 
-There are two fundamental lock structures: the per-lockable-object LOCK
-struct, and the per-lock PROCLOCK struct.  A LOCK object exists
-for each lockable object that currently has locks held or requested on it.
-A PROCLOCK struct exists for each transaction that is holding or requesting
-lock(s) on each LOCK object.
-
 Lock methods describe the overall locking behavior.  Currently there are
 two lock methods: DEFAULT and USER.  (USER locks are non-blocking.)
 
 Lock modes describe the type of the lock (read/write or shared/exclusive). 
 See src/tools/backend/index.html and src/include/storage/lock.h for more
 details.
+
+There are two fundamental lock structures in shared memory: the
+per-lockable-object LOCK struct, and the per-lock-and-requestor PROCLOCK
+struct.  A LOCK object exists for each lockable object that currently has
+locks held or requested on it.  A PROCLOCK struct exists for each transaction
+that is holding or requesting lock(s) on each LOCK object.
+
+In addition to these, each backend maintains an unshared LOCALLOCK structure
+for each lockable object and lock mode that it is currently holding or
+requesting.  The shared lock structures only allow a single lock grant to
+be made per lockable object/lock mode/transaction.  Internally to a backend,
+however, the same lock may be requested and perhaps released multiple times
+in a transaction.  The internal request counts are held in LOCALLOCK so that
+the shared LockMgrLock need not be obtained to alter them.
 
 ---------------------------------------------------------------------------
 
@@ -103,7 +111,7 @@ waitMask -
     This bitmask shows the types of locks being waited for.  Bit i of waitMask
     is 1 if and only if requested[i] > granted[i].
 
-lockHolders -
+procLocks -
     This is a shared memory queue of all the PROCLOCK structs associated with
     the lock object.  Note that both granted and waiting PROCLOCKs are in this
     list (indeed, the same PROCLOCK might have some already-granted locks and
@@ -120,7 +128,10 @@ nRequested -
     acquired.  The count includes attempts by processes which were put
     to sleep due to conflicts.  It also counts the same backend twice
     if, for example, a backend process first acquires a read and then
-    acquires a write, or acquires a read lock twice.
+    acquires a write, or acquires the lock under two different transaction
+    IDs.  (But multiple acquisitions of the same lock/lock mode under the
+    same transaction ID are not multiply counted here; they are recorded
+    only in the backend's LOCALLOCK structure.)
 
 requested -
     Keeps a count of how many locks of each type have been attempted.  Only
@@ -130,9 +141,8 @@ requested -
 
 nGranted -
     Keeps count of how many times this lock has been successfully acquired.
-    This count does not include attempts that are waiting due to conflicts,
-    but can count the same backend twice (e.g. a read then a write -- since
-    its the same transaction this won't cause a conflict).
+    This count does not include attempts that are waiting due to conflicts.
+    Otherwise the counting rules are the same as for nRequested.
 
 granted -
     Keeps count of how many locks of each type are currently held.  Once again
@@ -164,18 +174,17 @@ tag -
         if the PROCLOCK is for session-level locking.
 
     Note that this structure will support multiple transactions running
-    concurrently in one backend, which may be handy if we someday decide
-    to support nested transactions.  Currently, the XID field is only needed
-    to distinguish per-transaction locks from session locks.  User locks
-    are always session locks, and we also use session locks for multi-
-    transaction operations like VACUUM.
+    concurrently in one backend.  Currently we do not use it for that
+    purpose: subtransactions acquire locks in the name of their top parent
+    transaction, to simplify reassigning lock ownership at subtransaction end.
+    So the XID field is really only needed to distinguish per-transaction
+    locks from session locks.  User locks are always session locks, and we
+    also use session locks for multi-transaction operations like VACUUM.
 
-holding -
-    The number of successfully acquired locks of each type for this PROCLOCK.
-    This should be <= the corresponding granted[] value of the lock object!
-
-nHolding -
-    Sum of the holding[] array.
+holdMask -
+    A bitmask for the lock types successfully acquired by this PROCLOCK.
+    This should be a subset of the LOCK object's grantMask, and also a
+    subset of the PGPROC object's heldLocks mask.
 
 lockLink -
     List link for shared memory queue of all the PROCLOCK objects for the

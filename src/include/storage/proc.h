@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/proc.h,v 1.72 2004/08/01 17:32:21 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/proc.h,v 1.73 2004/08/27 17:07:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,14 +78,14 @@ struct PGPROC
 	struct PGPROC *lwWaitLink;	/* next waiter for same LW lock */
 
 	/* Info about lock the process is currently waiting for, if any. */
-	/* waitLock and waitHolder are NULL if not currently waiting. */
+	/* waitLock and waitProcLock are NULL if not currently waiting. */
 	LOCK	   *waitLock;		/* Lock object we're sleeping on ... */
-	PROCLOCK   *waitHolder;		/* Per-holder info for awaited lock */
+	PROCLOCK   *waitProcLock;	/* Per-holder info for awaited lock */
 	LOCKMODE	waitLockMode;	/* type of lock we're waiting for */
 	LOCKMASK	heldLocks;		/* bitmask for lock types already held on
 								 * this lock object by this backend */
 
-	SHM_QUEUE	procHolders;	/* list of PROCLOCK objects for locks held
+	SHM_QUEUE	procLocks;		/* list of PROCLOCK objects for locks held
 								 * or awaited by this backend */
 
 	struct XidCache	subxids;	/* cache for subtransaction XIDs */

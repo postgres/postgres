@@ -75,7 +75,7 @@ user_write_unlock_oid(Oid oid)
 int
 user_unlock_all(void)
 {
-	return LockReleaseAll(USER_LOCKMETHOD, MyProc, true);
+	return LockReleaseAll(USER_LOCKMETHOD, true);
 }
 
 /* end of file */
