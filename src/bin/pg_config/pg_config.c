@@ -17,7 +17,7 @@
  *
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_config/pg_config.c,v 1.8 2004/10/10 23:37:34 neilc Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_config/pg_config.c,v 1.9 2004/10/18 22:19:00 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,7 @@
 
 #define _(x) gettext((x))
 
-static char *progname;
+static const char *progname;
 
 static void
 help(void)
@@ -44,8 +44,8 @@ help(void)
 	printf(_("  --libdir              show location of object code libraries\n"));
 	printf(_("  --pkglibdir           show location of dynamically loadable modules\n"));
 	printf(_("  --pgxs                show location of extension makefile\n"));
-	printf(_("  --configure           show options given to 'configure' script when\n"
-		 "                        PostgreSQL was built\n"));
+	printf(_("  --configure           show options given to \"configure\" script when\n"
+			 "                        PostgreSQL was built\n"));
 	printf(_("  --version             show the PostgreSQL version, then exit\n"));
 	printf(_("  --help                show this help, then exit\n\n"));
 	printf(_("Report bugs to <pgsql-bugs@postgresql.org>.\n"));
@@ -66,7 +66,9 @@ main(int argc, char **argv)
 	char		mypath[MAXPGPATH];
 	char		otherpath[MAXPGPATH];
 
-	progname = (char *) get_progname(argv[0]);
+	set_pglocale_pgservice(argv[0], "pg_config");
+
+	progname = get_progname(argv[0]);
 
 	if (argc < 2)
 	{
@@ -108,7 +110,7 @@ main(int argc, char **argv)
 
 	if (ret)
 	{
-		fprintf(stderr, "%s: could not locate my own executable\n", progname);
+		fprintf(stderr, _("%s: could not find own executable\n"), progname);
 		exit(1);
 	}
 
