@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/manage-ag.sgml,v 2.12 2001/02/04 15:28:18 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/manage-ag.sgml,v 2.13 2001/03/29 18:25:10 petere Exp $
 -->
 
 <chapter id="managing-databases">
@@ -11,7 +11,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/manage-ag.sgml,v 2.12 2001/02/04 15:28:18 p
   belongs to one and only one database. An application that connects
   to the database server specifies with its connection request the
   name of the database it wants to connect to. It is not possible to
-  access more than once database per connection. (But an application
+  access more than one database per connection. (But an application
   is not restricted in the number of connections it opens to the same
   or other databases.)
  </para>
@@ -123,6 +123,7 @@ createdb <replaceable class="parameter">dbname</replaceable>
     <informalexample>
 <programlisting>
 PGDATA2=/home/postgres/data
+export PGDATA2
 </programlisting>
     </informalexample>
     in Bourne shells, or
