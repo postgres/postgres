@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/port.h,v 1.42 2004/06/10 22:26:20 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/port.h,v 1.43 2004/06/11 16:10:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,6 +91,9 @@ extern int find_other_exec(const char *argv0, const char *target,
  *	strings.  If not, it gets confused with multiple quoted strings.
  *	It also must use double-quotes around the executable name
  *	and any files use for redirection.  Other args can use single-quotes.
+ *
+ *	See the "Notes" section about quotes at:
+ *		http://home.earthlink.net/~rlively/MANUALS/COMMANDS/C/CMD.HTM
  */
 #ifdef WIN32
 #define SYSTEMQUOTE "\""
