@@ -8,9 +8,12 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/man/Attic/Makefile,v 1.2 1996/11/20 01:54:13 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/man/Attic/Makefile,v 1.3 1996/11/20 22:53:49 momjian Exp $
 #
 #-------------------------------------------------------------------------
+
+SRCDIR=..
+include ../Makefile.global
 
 install-man:
 	-mkdir -p $(POSTMANDIR)
