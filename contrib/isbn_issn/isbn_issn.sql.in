@@ -1,7 +1,7 @@
 --
 --	PostgreSQL code for ISSNs.
 --
---	$Id: isbn_issn.sql.in,v 1.8 2003/05/14 03:25:56 tgl Exp $
+--	$Id: isbn_issn.sql.in,v 1.9 2003/06/28 00:36:40 momjian Exp $
 --
 
 -- Adjust this setting to control where the objects get created.
@@ -116,14 +116,30 @@ CREATE OPERATOR <> (
 	PROCEDURE = issn_ne
 );
 
+-- Register 'issn' comparison function
+CREATE FUNCTION issn_cmp(issn, issn)
+RETURNS integer
+AS '$libdir/isbn_issn'
+LANGUAGE c;
+
+-- Create default operator class for 'issn'    --
+-- Needed to create index or primary key       --
+
+CREATE OPERATOR CLASS issn_ops
+DEFAULT FOR TYPE issn USING btree 
+AS
+        OPERATOR        1       < ,
+        OPERATOR        2       <= ,
+        OPERATOR        3       = ,
+        OPERATOR        4       >= ,
+        OPERATOR        5       > ,
+        FUNCTION        1       issn_cmp(issn, issn);
+
+
+------------------------------------------------------------------------
+
 --
---	eof
---
---
---	PostgreSQL code for ISBNs.
---
---	$Id: isbn_issn.sql.in,v 1.8 2003/05/14 03:25:56 tgl Exp $
---
+--	Same code for ISBN
 --
 --	Input and output functions and the type itself:
 --
@@ -239,16 +255,8 @@ RETURNS integer
 AS '$libdir/isbn_issn'
 LANGUAGE c;
 
--- Register 'issn' comparison function
-CREATE FUNCTION issn_cmp(issn, issn)
-RETURNS integer
-AS '$libdir/isbn_issn'
-LANGUAGE c;
-
--------------------------------------------------
 -- Create default operator class for 'isbn'    --
 -- Needed to create index or primary key       --
--------------------------------------------------
 
 CREATE OPERATOR CLASS isbn_ops
 DEFAULT FOR TYPE isbn USING btree 
@@ -259,23 +267,3 @@ AS
         OPERATOR        4       >= ,
         OPERATOR        5       > ,
         FUNCTION        1       isbn_cmp(isbn, isbn);
-
--------------------------------------------------
--- Create default operator class for 'issn'    --
--- Needed to create index or primary key       --
--------------------------------------------------
-
-CREATE OPERATOR CLASS issn_ops
-DEFAULT FOR TYPE issn USING btree 
-AS
-        OPERATOR        1       < ,
-        OPERATOR        2       <= ,
-        OPERATOR        3       = ,
-        OPERATOR        4       >= ,
-        OPERATOR        5       > ,
-        FUNCTION        1       issn_cmp(issn, issn);
-
-
---
---	eof
---
