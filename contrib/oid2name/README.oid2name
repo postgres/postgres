@@ -1,17 +1,20 @@
-With version 7.1 of PostgreSQL server,  the old naming scheme for
-databases and tables (in $PGDATA/base) has changed.  The databases
-are put in folders for their OID in pg_database and the tables in
-that folder are named for their OIDs in pg_class.  This app connects
-to the database (you can specify host, port, user, pass etc to 
-connect to a host other than localhost) and extracts the OID and 
-table name information.  It has 4 ways it can be run:
+This utility allows administrators to view the file structure used by
+PostgreSQL.  Databases are placed in directories based on their OIDs in
+pg_database, and the tables in that directory are named by their OIDs,
+stored in pg_class.relfilenode.  Oid2name connects to the database and
+extracts the OID and table name information.
 
- pg_oid2name
+---------------------------------------------------------------------------
+
+It can be used in four ways:
+
+
+oid2name
 
   This will connect to the template1 database and display all databases
-   in the system.
+  in the system:
 
-  $ ./pg_oid2name                                                                
+  $ oid2name
   All databases:
   ---------------------------------
   18720  = test1
@@ -21,52 +24,88 @@ table name information.  It has 4 ways it can be run:
   18735  = postgres
   18736  = cssi
 
- pg_oid2name -d test [-x]
 
-  This connects to the database test and shows all tables and their OIDs.
+oid2name -d test [-x]
 
-  $ ./pg_oid2name -d test                                                        
+  This connects to the database test and shows all tables and their OIDs:
+
+  $ oid2name -d test
   All tables from database "test":
   ---------------------------------
   18766  = dns
   18737  = ips
   18722  = testdate
 
- pg_oid2name -d test -o 18737      or
- pg_oid2name -d test -t testdate
+
+oid2name -d test -o 18737
+oid2name -d test -t testdate
 
   This will connect to the database test and display the table name for oid
-   18737 and the oid for table name testdate respectivly.
+  18737 and the oid for table name testdate respectively:
 
-  $ ./pg_oid2name -d test -o 18737
+  $ oid2name -d test -o 18737
   Tablename of oid 18737 from database "test":
   ---------------------------------
   18737  = ips
 
 
-  $ ./pg_oid2name -d test -t testdate 
+  $ oid2name -d test -t testdate 
   Oid of table testdate from database "test":
-  _______________________________
+  ---------------------------------
   18722  = testdate
 
+---------------------------------------------------------------------------
 
-There should be a decent amount of error handling in the app,  a lot of it
- dealt with via the postgres function calls.
+Sample session:
 
-  $ ./pg_oid2name -d nothere -t testdate 
-  Oid of table testdate from database "nothere":
-  _______________________________
-  Connection to database 'nothere' failed.
-  FATAL 1:  Database "nothere" does not exist in the system catalog.
+$ cd /u/pg/data/base
+$ oid2name
+All databases:
+---------------------------------
+16817  = test2
+16578  = x
+16756  = test
+1      = template1
+16569  = template0
+16818  = test3
+16811  = floattest
 
-  $ ./pg_oid2name -d test -t nothere     
-  Oid of table nothere from database "test":
-  _______________________________
-  No tables with that name found
+$ cd 16756
+$ ls 1873*
+18730   18731   18732   18735   18736   18737   18738   18739
 
-  
+$ oid2name -d test -o 18737
+Tablename of oid 18737 from database "test":
+---------------------------------
+18737  = ips
+
+$ oid2name -d test -t ips
+Oid of table ips from database "test":
+---------------------------------
+18737  = ips
+
+$ du * | while read SIZE OID
+> do
+>	echo "$SIZE      `oid2name -q -d test -o $OID`"
+> done
+24      18737  = ips
+36      18722  = cities
+...
+
+$ du * | while read SIZE OID
+> do
+>	echo "$SIZE      `oid2name -q -d test -o $OID`"
+> done |
+> sort -rn
+2048    19324  = bigtable
+1950    23903  = customers
+...
+
+
+---------------------------------------------------------------------------
+
 Mail me with any problems or additions you would like to see.  Clearing 
- house for the code will be at:  http://www.crimelabs.net
+house for the code will be at:  http://www.crimelabs.net
 
 b. palmer, bpalmer@crimelabs.net
 

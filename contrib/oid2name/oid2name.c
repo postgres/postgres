@@ -21,6 +21,8 @@ struct options
 	int			gettable;
 	int			getoid;
 
+	int			quiet;
+
 	int			systables;
 
 	int			remotehost;
@@ -59,6 +61,8 @@ get_opts(int argc, char **argv, struct options * my_opts)
 	my_opts->gettable = 0;
 	my_opts->getoid = 0;
 
+	my_opts->quiet = 0;
+
 	my_opts->systables = 0;
 
 	my_opts->remotehost = 0;
@@ -67,7 +71,7 @@ get_opts(int argc, char **argv, struct options * my_opts)
 	my_opts->remotepass = 0;
 
 	/* get opts */
-	while ((c = getopt(argc, argv, "H:p:U:P:d:t:o:xh?")) != -1)
+	while ((c = getopt(argc, argv, "H:p:U:P:d:t:o:qxh?")) != -1)
 	{
 		switch (c)
 		{
@@ -82,13 +86,13 @@ get_opts(int argc, char **argv, struct options * my_opts)
 				/* make sure we set the database first */
 				if (!my_opts->getdatabase)
 				{
-					fprintf(stderr, "Sorry,  but you must specify a database to dump from.\n");
+					fprintf(stderr, "You must specify a database to dump from.\n");
 					exit(1);
 				}
 				/* make sure we don't try to do a -o also */
 				if (my_opts->getoid)
 				{
-					fprintf(stderr, "Sorry, you can only specify either oid or table\n");
+					fprintf(stderr, "You can only specify either oid or table\n");
 					exit(1);
 				}
 
@@ -102,19 +106,23 @@ get_opts(int argc, char **argv, struct options * my_opts)
 				/* make sure we set the database first */
 				if (!my_opts->getdatabase)
 				{
-					fprintf(stderr, "Sorry,  but you must specify a database to dump from.\n");
+					fprintf(stderr, "You must specify a database to dump from.\n");
 					exit(1);
 				}
 				/* make sure we don't try to do a -t also */
 				if (my_opts->gettable)
 				{
-					fprintf(stderr, "Sorry, you can only specify either oid or table\n");
+					fprintf(stderr, "You can only specify either oid or table\n");
 					exit(1);
 				}
 
 				my_opts->getoid = 1;
 				sscanf(optarg, "%i", &my_opts->_oid);
 
+				break;
+
+			case 'q':
+				my_opts->quiet = 1;
 				break;
 
 				/* host to connect to */
@@ -149,17 +157,18 @@ get_opts(int argc, char **argv, struct options * my_opts)
 				/* help! (ugly in code for easier editing) */
 			case '?':
 			case 'h':
-				fprintf(stderr, "\n\
-Usage: pg_oid2name [-d database [-x] ] [-t table | -o oid] \n\
+				fprintf(stderr, "\
+Usage: pg_oid2name [-d database [-x] ] [-t table | -o oid]\n\
         default action        display all databases\n\
         -d database           database to oid2name\n\
         -x                    display system tables\n\
         -t table | -o oid     search for table name (-t) or\n\
                                oid (-o) in -d database\n\
+        -q                    quiet\n\
         -H host               connect to remote host\n\
         -p port               host port to connect to\n\
         -U username           username to connect with\n\
-        -P password           password for username\n\n\
+        -P password           password for username\n\
 ");
 				exit(1);
 				break;
@@ -402,9 +411,11 @@ main(int argc, char **argv)
 	/* display all the tables in the database */
 	if (my_opts->getdatabase & my_opts->gettable)
 	{
-		printf("Oid of table %s from database \"%s\":\n", my_opts->_tbname, my_opts->_dbname);
-		printf("_______________________________\n");
-
+		if (!my_opts->quiet)
+		{
+			printf("Oid of table %s from database \"%s\":\n", my_opts->_tbname, my_opts->_dbname);
+			printf("---------------------------------\n");
+		}
 		pgconn = sql_conn(my_opts->_dbname, my_opts);
 		sql_exec_searchtable(pgconn, my_opts->_tbname);
 		PQfinish(pgconn);
@@ -415,9 +426,11 @@ main(int argc, char **argv)
 	/* search for the tablename of the given OID */
 	if (my_opts->getdatabase & my_opts->getoid)
 	{
-		printf("Tablename of oid %i from database \"%s\":\n", my_opts->_oid, my_opts->_dbname);
-		printf("---------------------------------\n");
-
+		if (!my_opts->quiet)
+		{
+			printf("Tablename of oid %i from database \"%s\":\n", my_opts->_oid, my_opts->_dbname);
+			printf("---------------------------------\n");
+		}
 		pgconn = sql_conn(my_opts->_dbname, my_opts);
 		sql_exec_searchoid(pgconn, my_opts->_oid);
 		PQfinish(pgconn);
@@ -428,9 +441,11 @@ main(int argc, char **argv)
 	/* search for the oid for the given tablename */
 	if (my_opts->getdatabase)
 	{
-		printf("All tables from database \"%s\":\n", my_opts->_dbname);
-		printf("---------------------------------\n");
-
+		if (!my_opts->quiet)
+		{
+			printf("All tables from database \"%s\":\n", my_opts->_dbname);
+			printf("---------------------------------\n");
+		}
 		pgconn = sql_conn(my_opts->_dbname, my_opts);
 		sql_exec_dumptable(pgconn, my_opts->systables);
 		PQfinish(pgconn);
@@ -439,9 +454,11 @@ main(int argc, char **argv)
 	}
 
 	/* display all the databases for the server we are connected to.. */
-	printf("All databases:\n");
-	printf("---------------------------------\n");
-
+	if (!my_opts->quiet)
+	{
+		printf("All databases:\n");
+		printf("---------------------------------\n");
+	}
 	pgconn = sql_conn("template1", my_opts);
 	sql_exec_dumpdb(pgconn);
 	PQfinish(pgconn);
