@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootparse.y,v 1.64 2004/01/07 18:56:25 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootparse.y,v 1.65 2004/03/23 19:35:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -197,6 +197,8 @@ Boot_CreateStmt:
 													  tupdesc,
 													  RELKIND_RELATION,
 													  $3,
+													  true,
+													  0,
 													  ONCOMMIT_NOOP,
 													  true);
 						elog(DEBUG4, "relation created with oid %u", id);

@@ -688,9 +688,11 @@ delete from atacc1;
 -- try dropping a non-existent column, should fail
 alter table atacc1 drop bar;
 ERROR:  column "bar" of relation "atacc1" does not exist
--- try dropping the oid column, should fail
+-- try dropping the oid column, should succeed
 alter table atacc1 drop oid;
-ERROR:  cannot drop system column "oid"
+-- try dropping the xmin column, should fail
+alter table atacc1 drop xmin;
+ERROR:  cannot drop system column "xmin"
 -- try creating a view and altering that, should fail
 create view myview as select * from atacc1;
 select * from myview;

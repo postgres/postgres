@@ -632,8 +632,11 @@ delete from atacc1;
 -- try dropping a non-existent column, should fail
 alter table atacc1 drop bar;
 
--- try dropping the oid column, should fail
+-- try dropping the oid column, should succeed
 alter table atacc1 drop oid;
+
+-- try dropping the xmin column, should fail
+alter table atacc1 drop xmin;
 
 -- try creating a view and altering that, should fail
 create view myview as select * from atacc1;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.100 2004/03/13 22:09:13 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.101 2004/03/23 19:35:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,7 +77,7 @@ static List *on_commits = NIL;
 
 
 static List *MergeAttributes(List *schema, List *supers, bool istemp,
-				List **supOids, List **supconstr, bool *supHasOids);
+				List **supOids, List **supconstr, int *supOidCount);
 static bool change_varattnos_of_a_node(Node *node, const AttrNumber *newattno);
 static void StoreCatalogInheritance(Oid relationId, List *supers);
 static int	findAttrByName(const char *attributeName, List *schema);
@@ -133,7 +133,8 @@ DefineRelation(CreateStmt *stmt, char relkind)
 	TupleDesc	descriptor;
 	List	   *inheritOids;
 	List	   *old_constraints;
-	bool		parentHasOids;
+	bool		localHasOids;
+	int			parentOidCount;
 	List	   *rawDefaults;
 	List	   *listptr;
 	int			i;
@@ -177,7 +178,7 @@ DefineRelation(CreateStmt *stmt, char relkind)
 	 */
 	schema = MergeAttributes(schema, stmt->inhRelations,
 							 stmt->relation->istemp,
-						 &inheritOids, &old_constraints, &parentHasOids);
+						 &inheritOids, &old_constraints, &parentOidCount);
 
 	/*
 	 * Create a relation descriptor from the relation schema and create
@@ -188,10 +189,8 @@ DefineRelation(CreateStmt *stmt, char relkind)
 	 */
 	descriptor = BuildDescForRelation(schema);
 
-	if (parentHasOids)
-		descriptor->tdhasoid = true;
-	else
-		descriptor->tdhasoid = interpretOidsOption(stmt->hasoids);
+	localHasOids = interpretOidsOption(stmt->hasoids);
+	descriptor->tdhasoid = (localHasOids || parentOidCount > 0);
 
 	if (old_constraints != NIL)
 	{
@@ -255,6 +254,8 @@ DefineRelation(CreateStmt *stmt, char relkind)
 										  descriptor,
 										  relkind,
 										  false,
+										  localHasOids,
+										  parentOidCount,
 										  stmt->oncommit,
 										  allowSystemTableMods);
 
@@ -436,7 +437,7 @@ TruncateRelation(const RangeVar *relation)
  * 'supOids' receives a list of the OIDs of the parent relations.
  * 'supconstr' receives a list of constraints belonging to the parents,
  *		updated as necessary to be valid for the child.
- * 'supHasOids' is set TRUE if any parent has OIDs, else it is set FALSE.
+ * 'supOidCount' is set to the number of parents that have OID columns.
  *
  * Return value:
  * Completed schema list.
@@ -482,13 +483,13 @@ TruncateRelation(const RangeVar *relation)
  */
 static List *
 MergeAttributes(List *schema, List *supers, bool istemp,
-				List **supOids, List **supconstr, bool *supHasOids)
+				List **supOids, List **supconstr, int *supOidCount)
 {
 	List	   *entry;
 	List	   *inhSchema = NIL;
 	List	   *parentOids = NIL;
 	List	   *constraints = NIL;
-	bool		parentHasOids = false;
+	int			parentsWithOids = 0;
 	bool		have_bogus_defaults = false;
 	char	   *bogus_marker = "Bogus!";		/* marks conflicting
 												 * defaults */
@@ -566,7 +567,8 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 
 		parentOids = lappendo(parentOids, RelationGetRelid(relation));
 
-		parentHasOids |= relation->rd_rel->relhasoids;
+		if (relation->rd_rel->relhasoids)
+			parentsWithOids++;
 
 		tupleDesc = RelationGetDescr(relation);
 		constr = tupleDesc->constr;
@@ -825,7 +827,7 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 
 	*supOids = parentOids;
 	*supconstr = constraints;
-	*supHasOids = parentHasOids;
+	*supOidCount = parentsWithOids;
 	return schema;
 }
 
@@ -2422,92 +2424,30 @@ AlterTableAlterColumnFlags(Oid myrelid, bool recurse,
 }
 
 /*
- * ALTER TABLE SET {WITHOUT} OIDS
+ * ALTER TABLE SET WITH/WITHOUT OIDS
  */
 void
-AlterTableAlterOids(Oid myrelid, bool recurse, bool setOid)
+AlterTableAlterOids(Oid myrelid, bool setOid, bool recurse,
+					DropBehavior behavior)
 {
 	Relation	rel;
-	Relation	class_rel;
-	HeapTuple	tuple;
-	Form_pg_class tuple_class;
 
 	rel = heap_open(myrelid, AccessExclusiveLock);
-
-	if (rel->rd_rel->relkind != RELKIND_RELATION)
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("\"%s\" is not a table",
-						RelationGetRelationName(rel))));
-
-	/* Permissions checks */
-	if (!pg_class_ownercheck(myrelid, GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
-					   RelationGetRelationName(rel));
-
-	if (!allowSystemTableMods && IsSystemRelation(rel))
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("permission denied: \"%s\" is a system catalog",
-						RelationGetRelationName(rel))));
-
-	/*
-	 * Propagate to children if desired
-	 */
-	if (recurse)
-	{
-		List	   *child,
-				   *children;
-
-		/* this routine is actually in the planner */
-		children = find_all_inheritors(myrelid);
-
-		/*
-		 * find_all_inheritors does the recursive search of the
-		 * inheritance hierarchy, so all we have to do is process all of
-		 * the relids in the list that it returns.
-		 */
-		foreach(child, children)
-		{
-			Oid			childrelid = lfirsti(child);
-
-			if (childrelid == myrelid)
-				continue;
-
-			AlterTableAlterOids(childrelid, false, setOid);
-		}
-	}
-
-	/* Do the thing on this relation */
-	class_rel = heap_openr(RelationRelationName, RowExclusiveLock);
-
-	tuple = SearchSysCacheCopy(RELOID,
-							   ObjectIdGetDatum(myrelid),
-							   0, 0, 0);
-	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "cache lookup failed for relation %u", myrelid);
-	tuple_class = (Form_pg_class) GETSTRUCT(tuple);
 
 	/*
 	 * check to see if we actually need to change anything
 	 */
-	if (tuple_class->relhasoids == setOid)
+	if (rel->rd_rel->relhasoids == setOid)
 	{
-		heap_close(class_rel, RowExclusiveLock);
 		heap_close(rel, NoLock);	/* close rel, but keep lock! */
 		return;
 	}
 
-	tuple_class->relhasoids = setOid;
-	simple_heap_update(class_rel, &tuple->t_self, tuple);
-
-	/* Keep the catalog indexes up to date */
-	CatalogUpdateIndexes(class_rel, tuple);
-
 	if (setOid)
 	{
 		/*
-		 * TODO: Generate the now required OID pg_attribute entry
+		 * TODO: Generate the now required OID pg_attribute entry, and
+		 * modify physical rows to have OIDs.
 		 */
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -2515,34 +2455,10 @@ AlterTableAlterOids(Oid myrelid, bool recurse, bool setOid)
 	}
 	else
 	{
-		HeapTuple	atttup;
-		Relation	attrel;
+		heap_close(rel, NoLock);	/* close rel, but keep lock! */
 
-		/* Add / Remove the oid record from pg_attribute */
-		attrel = heap_open(RelOid_pg_attribute, RowExclusiveLock);
-
-		/*
-		 * Oids are being removed from the relation, so we need to remove
-		 * the oid pg_attribute record relating.
-		 */
-		atttup = SearchSysCache(ATTNUM,
-								ObjectIdGetDatum(myrelid),
-								Int16GetDatum(ObjectIdAttributeNumber),
-								0, 0);
-		if (!HeapTupleIsValid(atttup))
-			elog(ERROR, "cache lookup failed for attribute %d of relation %u",
-				 ObjectIdAttributeNumber, myrelid);
-
-		simple_heap_delete(attrel, &atttup->t_self);
-
-		ReleaseSysCache(atttup);
-
-		heap_close(attrel, RowExclusiveLock);
+		AlterTableDropColumn(myrelid, recurse, false, "oid", behavior);
 	}
-
-	heap_close(class_rel, RowExclusiveLock);
-
-	heap_close(rel, NoLock);	/* close rel, but keep lock! */
 }
 
 /*
@@ -2555,7 +2471,8 @@ AlterTableDropColumn(Oid myrelid, bool recurse, bool recursing,
 {
 	Relation	rel;
 	AttrNumber	attnum;
-	TupleDesc	tupleDesc;
+	HeapTuple	tuple;
+	Form_pg_attribute targetatt;
 	ObjectAddress object;
 
 	rel = heap_open(myrelid, AccessExclusiveLock);
@@ -2580,28 +2497,31 @@ AlterTableDropColumn(Oid myrelid, bool recurse, bool recursing,
 	/*
 	 * get the number of the attribute
 	 */
-	attnum = get_attnum(myrelid, colName);
-	if (attnum == InvalidAttrNumber)
+	tuple = SearchSysCacheAttName(myrelid, colName);
+	if (!HeapTupleIsValid(tuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_COLUMN),
-			 errmsg("column \"%s\" of relation \"%s\" does not exist",
-					colName, RelationGetRelationName(rel))));
+				 errmsg("column \"%s\" of relation \"%s\" does not exist",
+						colName, RelationGetRelationName(rel))));
+	targetatt = (Form_pg_attribute) GETSTRUCT(tuple);
 
-	/* Can't drop a system attribute */
-	/* XXX perhaps someday allow dropping OID? */
-	if (attnum < 0)
+	attnum = targetatt->attnum;
+
+	/* Can't drop a system attribute, except OID */
+	if (attnum <= 0 && attnum != ObjectIdAttributeNumber)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("cannot drop system column \"%s\"",
 						colName)));
 
 	/* Don't drop inherited columns */
-	tupleDesc = RelationGetDescr(rel);
-	if (tupleDesc->attrs[attnum - 1]->attinhcount > 0 && !recursing)
+	if (targetatt->attinhcount > 0 && !recursing)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 				 errmsg("cannot drop inherited column \"%s\"",
 						colName)));
+
+	ReleaseSysCache(tuple);
 
 	/*
 	 * If we are asked to drop ONLY in this table (no recursion), we need
@@ -2622,7 +2542,6 @@ AlterTableDropColumn(Oid myrelid, bool recurse, bool recursing,
 		{
 			Oid			childrelid = lfirsto(child);
 			Relation	childrel;
-			HeapTuple	tuple;
 			Form_pg_attribute childatt;
 
 			childrel = heap_open(childrelid, AccessExclusiveLock);
@@ -2670,7 +2589,6 @@ AlterTableDropColumn(Oid myrelid, bool recurse, bool recursing,
 		{
 			Oid			childrelid = lfirsto(child);
 			Relation	childrel;
-			HeapTuple	tuple;
 			Form_pg_attribute childatt;
 
 			if (childrelid == myrelid)
@@ -2712,13 +2630,39 @@ AlterTableDropColumn(Oid myrelid, bool recurse, bool recursing,
 	}
 
 	/*
-	 * Perform the actual deletion
+	 * Perform the actual column deletion
 	 */
 	object.classId = RelOid_pg_class;
 	object.objectId = myrelid;
 	object.objectSubId = attnum;
 
 	performDeletion(&object, behavior);
+
+	/*
+	 * If we dropped the OID column, must adjust pg_class.relhasoids
+	 */
+	if (attnum == ObjectIdAttributeNumber)
+	{
+		Relation	class_rel;
+		Form_pg_class tuple_class;
+
+		class_rel = heap_openr(RelationRelationName, RowExclusiveLock);
+
+		tuple = SearchSysCacheCopy(RELOID,
+								   ObjectIdGetDatum(myrelid),
+								   0, 0, 0);
+		if (!HeapTupleIsValid(tuple))
+			elog(ERROR, "cache lookup failed for relation %u", myrelid);
+		tuple_class = (Form_pg_class) GETSTRUCT(tuple);
+
+		tuple_class->relhasoids = false;
+		simple_heap_update(class_rel, &tuple->t_self, tuple);
+
+		/* Keep the catalog indexes up to date */
+		CatalogUpdateIndexes(class_rel, tuple);
+
+		heap_close(class_rel, RowExclusiveLock);
+	}
 
 	heap_close(rel, NoLock);	/* close rel, but keep lock! */
 }
@@ -4171,6 +4115,8 @@ AlterTableCreateToastTable(Oid relOid, bool silent)
 										   tupdesc,
 										   RELKIND_TOASTVALUE,
 										   shared_relation,
+										   true,
+										   0,
 										   ONCOMMIT_NOOP,
 										   true);
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.260 2004/02/15 21:01:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.261 2004/03/23 19:35:16 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -458,7 +458,9 @@ CheckAttributeType(const char *attname, Oid atttypid)
 static void
 AddNewAttributeTuples(Oid new_rel_oid,
 					  TupleDesc tupdesc,
-					  char relkind)
+					  char relkind,
+					  bool oidislocal,
+					  int oidinhcount)
 {
 	Form_pg_attribute *dpp;
 	int			i;
@@ -531,10 +533,17 @@ AddNewAttributeTuples(Oid new_rel_oid,
 									 false,
 									 ATTRIBUTE_TUPLE_SIZE,
 									 (void *) *dpp);
+				attStruct = (Form_pg_attribute) GETSTRUCT(tup);
 
 				/* Fill in the correct relation OID in the copied tuple */
-				attStruct = (Form_pg_attribute) GETSTRUCT(tup);
 				attStruct->attrelid = new_rel_oid;
+
+				/* Fill in correct inheritance info for the OID column */
+				if (attStruct->attnum == ObjectIdAttributeNumber)
+				{
+					attStruct->attislocal = oidislocal;
+					attStruct->attinhcount = oidinhcount;
+				}
 
 				/*
 				 * Unneeded since they should be OK in the constant data
@@ -713,6 +722,8 @@ heap_create_with_catalog(const char *relname,
 						 TupleDesc tupdesc,
 						 char relkind,
 						 bool shared_relation,
+						 bool oidislocal,
+						 int oidinhcount,
 						 OnCommitAction oncommit,
 						 bool allow_system_table_mods)
 {
@@ -786,7 +797,8 @@ heap_create_with_catalog(const char *relname,
 	 * now add tuples to pg_attribute for the attributes in our new
 	 * relation.
 	 */
-	AddNewAttributeTuples(new_rel_oid, new_rel_desc->rd_att, relkind);
+	AddNewAttributeTuples(new_rel_oid, new_rel_desc->rd_att, relkind,
+						  oidislocal, oidinhcount);
 
 	/*
 	 * make a dependency link to force the relation to be deleted if its
@@ -973,35 +985,46 @@ RemoveAttributeById(Oid relid, AttrNumber attnum)
 			 attnum, relid);
 	attStruct = (Form_pg_attribute) GETSTRUCT(tuple);
 
-	/* Mark the attribute as dropped */
-	attStruct->attisdropped = true;
+	if (attnum < 0)
+	{
+		/* System attribute (probably OID) ... just delete the row */
 
-	/*
-	 * Set the type OID to invalid.  A dropped attribute's type link
-	 * cannot be relied on (once the attribute is dropped, the type might
-	 * be too). Fortunately we do not need the type row --- the only
-	 * really essential information is the type's typlen and typalign,
-	 * which are preserved in the attribute's attlen and attalign.  We set
-	 * atttypid to zero here as a means of catching code that incorrectly
-	 * expects it to be valid.
-	 */
-	attStruct->atttypid = InvalidOid;
+		simple_heap_delete(attr_rel, &tuple->t_self);
+	}
+	else
+	{
+		/* Dropping user attributes is lots harder */
 
-	/* Remove any NOT NULL constraint the column may have */
-	attStruct->attnotnull = false;
+		/* Mark the attribute as dropped */
+		attStruct->attisdropped = true;
 
-	/* We don't want to keep stats for it anymore */
-	attStruct->attstattarget = 0;
+		/*
+		 * Set the type OID to invalid.  A dropped attribute's type link
+		 * cannot be relied on (once the attribute is dropped, the type might
+		 * be too). Fortunately we do not need the type row --- the only
+		 * really essential information is the type's typlen and typalign,
+		 * which are preserved in the attribute's attlen and attalign.  We set
+		 * atttypid to zero here as a means of catching code that incorrectly
+		 * expects it to be valid.
+		 */
+		attStruct->atttypid = InvalidOid;
 
-	/* Change the column name to something that isn't likely to conflict */
-	snprintf(newattname, sizeof(newattname),
-			 "........pg.dropped.%d........", attnum);
-	namestrcpy(&(attStruct->attname), newattname);
+		/* Remove any NOT NULL constraint the column may have */
+		attStruct->attnotnull = false;
 
-	simple_heap_update(attr_rel, &tuple->t_self, tuple);
+		/* We don't want to keep stats for it anymore */
+		attStruct->attstattarget = 0;
 
-	/* keep the system catalog indexes current */
-	CatalogUpdateIndexes(attr_rel, tuple);
+		/* Change the column name to something that isn't likely to conflict */
+		snprintf(newattname, sizeof(newattname),
+				 "........pg.dropped.%d........", attnum);
+		namestrcpy(&(attStruct->attname), newattname);
+
+		simple_heap_update(attr_rel, &tuple->t_self, tuple);
+
+		/* keep the system catalog indexes current */
+		CatalogUpdateIndexes(attr_rel, tuple);
+	}
 
 	/*
 	 * Because updating the pg_attribute row will trigger a relcache flush
@@ -1011,7 +1034,8 @@ RemoveAttributeById(Oid relid, AttrNumber attnum)
 
 	heap_close(attr_rel, RowExclusiveLock);
 
-	RemoveStatistics(rel, attnum);
+	if (attnum > 0)
+		RemoveStatistics(rel, attnum);
 
 	relation_close(rel, NoLock);
 }

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.66 2004/03/09 16:57:47 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.67 2004/03/23 19:35:15 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -150,12 +150,11 @@ ALTER TABLE <replaceable class="PARAMETER">name</replaceable>
     <term><literal>SET WITHOUT OIDS</literal></term>
     <listitem>
      <para>
-      This form removes the <literal>oid</literal> column from the
-      table.  Removing OIDs from a table does not occur immediately.
-      The space that the OID uses will be reclaimed when the row is
-      updated.  Without updating the row, both the space and the value
-      of the OID are kept indefinitely.  This is semantically similar
-      to the <literal>DROP COLUMN</literal> process.
+      This form removes the <literal>oid</literal> system column from the
+      table.  This is exactly equivalent to
+      <literal>DROP COLUMN oid RESTRICT</literal>,
+      except that it will not complain if there is already no
+      <literal>oid</literal> column.
      </para>
 
      <para>
