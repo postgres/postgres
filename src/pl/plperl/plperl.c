@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plperl/plperl.c,v 1.35 2002/09/21 18:39:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plperl/plperl.c,v 1.35.2.1 2005/01/26 17:09:28 tgl Exp $
  *
  **********************************************************************/
 
@@ -731,72 +731,53 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 
 
 /**********************************************************************
- * plperl_build_tuple_argument() - Build a string for a ref to a hash
+ * plperl_build_tuple_argument() - Build a ref to a hash
  *				  from all attributes of a given tuple
  **********************************************************************/
 static SV  *
 plperl_build_tuple_argument(HeapTuple tuple, TupleDesc tupdesc)
 {
+	HV		   *hv;
 	int			i;
-	SV		   *output;
-	Datum		attr;
-	bool		isnull;
-	char	   *attname;
-	char	   *outputstr;
-	HeapTuple	typeTup;
-	Oid			typoutput;
-	Oid			typelem;
 
-	output = sv_2mortal(newSVpv("{", 0));
+	hv = newHV();
 
 	for (i = 0; i < tupdesc->natts; i++)
 	{
-		/************************************************************
-		 * Get the attribute name
-		 ************************************************************/
-		attname = tupdesc->attrs[i]->attname.data;
+		Datum		attr;
+		bool		isnull;
+		char	   *attname;
+		char	   *outputstr;
+		Oid			typoutput;
+		Oid			typioparam;
+		bool		typisvarlena;
+		int			namelen;
 
-		/************************************************************
-		 * Get the attributes value
-		 ************************************************************/
+		if (tupdesc->attrs[i]->attisdropped)
+			continue;
+
+		attname = NameStr(tupdesc->attrs[i]->attname);
+		namelen = strlen(attname);
 		attr = heap_getattr(tuple, i + 1, tupdesc, &isnull);
 
-		/************************************************************
-		 *	If it is null it will be set to undef in the hash.
-		 ************************************************************/
-		if (isnull)
-		{
-			sv_catpvf(output, "'%s' => undef,", attname);
+		if (isnull) {
+			/* Store (attname => undef) and move on. */
+			hv_store(hv, attname, namelen, newSV(0), 0);
 			continue;
 		}
 
-		/************************************************************
-		 * Lookup the attribute type in the syscache
-		 * for the output function
-		 ************************************************************/
-		typeTup = SearchSysCache(TYPEOID,
-						   ObjectIdGetDatum(tupdesc->attrs[i]->atttypid),
-								 0, 0, 0);
-		if (!HeapTupleIsValid(typeTup))
-			elog(ERROR, "plperl: Cache lookup for attribute '%s' type %u failed",
-				 attname, tupdesc->attrs[i]->atttypid);
+		/* XXX should have a way to cache these lookups */
 
-		typoutput = ((Form_pg_type) GETSTRUCT(typeTup))->typoutput;
-		typelem = ((Form_pg_type) GETSTRUCT(typeTup))->typelem;
-		ReleaseSysCache(typeTup);
+		getTypeOutputInfo(tupdesc->attrs[i]->atttypid,
+						  &typoutput, &typioparam, &typisvarlena);
 
-		/************************************************************
-		 * Append the attribute name and the value to the list.
-		 ************************************************************/
 		outputstr = DatumGetCString(OidFunctionCall3(typoutput,
 													 attr,
-											   ObjectIdGetDatum(typelem),
+											ObjectIdGetDatum(typioparam),
 						   Int32GetDatum(tupdesc->attrs[i]->atttypmod)));
-		sv_catpvf(output, "'%s' => '%s',", attname, outputstr);
-		pfree(outputstr);
+
+		hv_store(hv, attname, namelen, newSVpv(outputstr, 0), 0);
 	}
 
-	sv_catpv(output, "}");
-	output = perl_eval_pv(SvPV(output, PL_na), TRUE);
-	return output;
+	return newRV_noinc((SV *) hv);
 }
