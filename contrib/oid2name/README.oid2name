@@ -1,28 +1,7 @@
 This utility allows administrators to examine the file structure used by
-PostgreSQL.
-
-Databases are placed in directories named after their OIDs in pg_database,
-and the table files within a database's directory are named by "filenode"
-numbers, which are stored in pg_class.relfilenode.
-
-Note that while a table's filenode often matches its OID, this is *not*
-necessarily the case; some operations, like TRUNCATE, REINDEX, CLUSTER
-and some forms of ALTER TABLE, can change the filenode while preserving
-the OID.  Avoid assuming that filenode and table OID are the same.
-
-When a table exceeds 1Gb, it is divided into gigabyte-sized "segments".
-The first segment's file name is the same as the filenode; subsequent
-segments are named filenode.1, filenode.2, etc.
-
-Tablespaces make the scenario more complicated.  Each non-default
-tablespace has a symlink inside the pg_tblspc directory, which points to
-the physical tablespace directory (as specified in its CREATE TABLESPACE
-command).  The symlink is named after the tablespace's OID.  Inside the
-physical tablespace directory there is another directory for each database
-that has elements in the tablespace, named after the database's OID.
-Tables within that directory follow the filenode naming scheme.  The
-"pg_default" tablespace is not addressed via pg_tblspc, but corresponds to
-$PGDATA/base.
+PostgreSQL.  To make use of it, you need to be familiar with the file
+structure, which is described in the "Database File Layout" chapter of
+the "Internals" section of the PostgreSQL documentation.
 
 Oid2name connects to the database and extracts OID, filenode, and table
 name information.  You can also have it show database OIDs and tablespace
