@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: port.h,v 1.13 2003/09/05 17:43:39 momjian Exp $
+ * $Id: port.h,v 1.14 2003/09/13 14:49:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -114,11 +114,11 @@ extern char *pqStrerror(int errnum, char *strerrbuf, size_t buflen);
 
 #ifndef WIN32
 extern int pqGetpwuid(uid_t uid, struct passwd * resultbuf, char *buffer,
-		   size_t buflen, struct passwd ** result);
+		   size_t buflen, struct passwd **result);
 #endif
 
 extern int pqGethostbyname(const char *name,
-				struct hostent * resbuf,
-				char *buf, size_t buflen,
-				struct hostent ** result,
+				struct hostent *resultbuf,
+				char *buffer, size_t buflen,
+				struct hostent **result,
 				int *herrno);
