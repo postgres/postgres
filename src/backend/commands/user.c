@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: user.c,v 1.26 1999/03/16 04:25:45 momjian Exp $
+ * $Id: user.c,v 1.27 1999/04/02 06:16:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -94,20 +94,24 @@ UpdatePgPwdFile(char *sql, CommandDest dest)
 void
 DefineUser(CreateUserStmt *stmt, CommandDest dest)
 {
-
-	char					*pg_shadow,
-								sql[SQL_LENGTH];
+	char			   *pg_shadow,
+						sql[SQL_LENGTH];
 	Relation			pg_shadow_rel;
 	TupleDesc			pg_shadow_dsc;
-	HeapScanDesc	scan;
+	HeapScanDesc		scan;
 	HeapTuple			tuple;
-	Datum					datum;
-	bool					exists = false,
-								n,
-								inblock;
-	int						max_id = -1;
+	Datum				datum;
+	bool				exists = false,
+						n,
+						inblock,
+						havepassword,
+						havevaluntil;
+	int					max_id = -1;
 
-	if (stmt->password)
+	havepassword = stmt->password && stmt->password[0];
+	havevaluntil = stmt->validUntil && stmt->validUntil[0];
+
+	if (havepassword)
 		CheckPgUserAclNotNull();
 	if (!(inblock = IsTransactionBlock()))
 		BeginTransactionBlock();
@@ -163,18 +167,31 @@ DefineUser(CreateUserStmt *stmt, CommandDest dest)
 	}
 
 	/*
-	 * Build the insert statment to be executed.
+	 * Build the insert statement to be executed.
+	 *
+	 * XXX Ugly as this code is, it still fails to cope with ' or \
+	 * in any of the provided strings.
 	 */
 	snprintf(sql, SQL_LENGTH, 
-			"insert into %s(usename,usesysid,usecreatedb,usetrace,usesuper,"
-			"usecatupd,passwd,valuntil) values('%s',%d%s%s,'%s','%s')", 
-			ShadowRelationName, 
-			stmt->user, max_id + 1,
-			(stmt->createdb && *stmt->createdb) ? ",'t','t'" : ",'f','t'",
-			(stmt->createuser && *stmt->createuser) ? ",'t','t'" : ",'f','t'",
-			stmt->password ? stmt->password : "''",
-			stmt->validUntil ? stmt->validUntil : "");
+			 "insert into %s (usename,usesysid,usecreatedb,usetrace,"
+			 "usesuper,usecatupd,passwd,valuntil) "
+			 "values('%s',%d,'%c','t','%c','t',%s%s%s,%s%s%s)", 
+			 ShadowRelationName,
+			 stmt->user,
+			 max_id + 1,
+			 (stmt->createdb && *stmt->createdb) ? 't' : 'f',
+			 (stmt->createuser && *stmt->createuser) ? 't' : 'f',
+			 havepassword ? "'" : "",
+			 havepassword ? stmt->password : "NULL",
+			 havepassword ? "'" : "",
+			 havevaluntil ? "'" : "",
+			 havevaluntil ? stmt->validUntil : "NULL",
+			 havevaluntil ? "'" : "");
 
+	/*
+	 * XXX If insert fails, say because a bogus valuntil date is given,
+	 * need to catch the resulting error and undo our transaction.
+	 */
 	pg_exec_query_dest(sql, dest, false);
 
 	/*
