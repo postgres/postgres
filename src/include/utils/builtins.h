@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.252 2004/12/31 22:03:45 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.253 2005/02/27 08:31:30 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -111,6 +111,8 @@ extern Datum i2toi4(PG_FUNCTION_ARGS);
 extern Datum i4toi2(PG_FUNCTION_ARGS);
 extern Datum int2_text(PG_FUNCTION_ARGS);
 extern Datum text_int2(PG_FUNCTION_ARGS);
+extern Datum int4_bool(PG_FUNCTION_ARGS);
+extern Datum bool_int4(PG_FUNCTION_ARGS);
 extern Datum int4_text(PG_FUNCTION_ARGS);
 extern Datum text_int4(PG_FUNCTION_ARGS);
 extern Datum int4eq(PG_FUNCTION_ARGS);

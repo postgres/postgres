@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.350 2005/02/26 18:43:34 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.351 2005/02/27 08:31:30 neilc Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -3603,6 +3603,11 @@ DATA(insert OID = 2550 ( integer_pl_date			PGNSP PGUID 14 f f t f i 2 1082 "23 1
 
 DATA(insert OID = 2556 ( pg_tablespace_databases	PGNSP PGUID 12 f f t t s 1 26 "26" _null_ pg_tablespace_databases - _null_));
 DESCR("returns database oids in a tablespace");
+
+DATA(insert OID = 2557 ( bool				   PGNSP PGUID 12 f f t f i 1  16 "23" _null_	int4_bool - _null_ ));
+DESCR("convert int4 to boolean");
+DATA(insert OID = 2558 ( int4				   PGNSP PGUID 12 f f t f i 1  23 "16" _null_	bool_int4 - _null_ ));
+DESCR("convert boolean to int4");
 
 
 /*

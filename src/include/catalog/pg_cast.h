@@ -10,7 +10,7 @@
  *
  * Copyright (c) 2002-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_cast.h,v 1.17 2005/01/01 05:43:09 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_cast.h,v 1.18 2005/02/27 08:31:30 neilc Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -100,6 +100,10 @@ DATA(insert ( 1700	 21 1783 a ));
 DATA(insert ( 1700	 23 1744 a ));
 DATA(insert ( 1700	700 1745 i ));
 DATA(insert ( 1700	701 1746 i ));
+
+/* Allow explicit coercions between int4 and bool */
+DATA(insert (	23	16  2557 e ));
+DATA(insert (	16	23  2558 e ));
 
 /*
  * OID category: allow implicit conversion from any integral type (including
