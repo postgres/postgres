@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.340 2003/05/08 18:16:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.341 2003/05/09 15:57:24 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -2142,16 +2142,15 @@ PostgresMain(int argc, char *argv[], const char *username)
 				{
 #ifdef EXEC_BACKEND
 					char *p;
-
-					sscanf(optarg, "%d,%d,%p,", &MyProcPort->sock,
+					int	i;
+					int PMcanAcceptConnections;	/* will eventually be global or static, when fork */
+					
+					sscanf(optarg, "%d,%d,%d,%p,", &MyProcPort->sock, &PMcanAcceptConnections,
 									&UsedShmemSegID, &UsedShmemSegAddr);
 					/* Grab dbname as last param */
-					p = strchr(optarg, ',');
-					if (p)
+					for (i = 0, p = optarg-1; i < 4 && p; i++)
 						p = strchr(p+1, ',');
-					if (p)					
-						p = strchr(p+1, ',');
-					if (p)					
+					if (i == 4 && p)
 						dbname = strdup(p+1);
 #else
 					dbname = strdup(optarg);
@@ -2512,7 +2511,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.340 $ $Date: 2003/05/08 18:16:36 $\n");
+		puts("$Revision: 1.341 $ $Date: 2003/05/09 15:57:24 $\n");
 	}
 
 	/*
