@@ -5,7 +5,7 @@ TODO list for PostgreSQL
 Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Fri Sep 10 12:35:50 EDT 2004
+Last updated:		Fri Sep 10 18:38:47 EDT 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web site, http://www.PostgreSQL.org.
 
@@ -588,7 +588,7 @@ Referential Integrity
 
 * Allow statement-level triggers to access modified rows
 * Support triggers on columns
-* Have AFTER triggers execute after the appropriate SQL statement in a 
+* -Have AFTER triggers execute after the appropriate SQL statement in a 
   function, not at the end of the function
 * -Print table names with constraint names in error messages, or make constraint
   names unique within a schema
