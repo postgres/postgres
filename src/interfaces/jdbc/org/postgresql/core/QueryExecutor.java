@@ -13,7 +13,7 @@ import org.postgresql.util.PSQLException;
  * <p>The lifetime of a QueryExecutor object is from sending the query
  * until the response has been received from the backend.
  *
- * $Id: QueryExecutor.java,v 1.16 2002/09/06 21:23:05 momjian Exp $
+ * $Id: QueryExecutor.java,v 1.16.2.1 2002/11/14 05:54:39 barry Exp $
  */
 
 public class QueryExecutor
@@ -58,6 +58,11 @@ public class QueryExecutor
 	{
 
 		StringBuffer errorMessage = null;
+
+		if (pg_stream == null) 
+		{
+			throw new PSQLException("postgresql.con.closed");
+		}
 
 		synchronized (pg_stream)
 		{
