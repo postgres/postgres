@@ -94,7 +94,7 @@ AC_ARG_WITH(template,
     [
 
 # lowercase $host
-host="`echo $host | tr 'A-Z' 'a-z'`"
+host="`echo $host | tr '[[A-Z]]' '[[a-z]]'`"
 
 # First, try for a template exactly matching $host
 if test -f "template/$host"
@@ -122,7 +122,7 @@ else
 	then TEMPLATE="$GUESS"
 	else
 	    # Last chance ... maybe uname -s will match an entry.
-	    TEMPLATE=`uname -s | tr A-Z a-z` 
+	    TEMPLATE=`uname -s | tr '[[A-Z]]' '[[a-z]]'` 
 	fi
     fi
 fi
