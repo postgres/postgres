@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/doc/Makefile,v 1.24 2002/11/27 23:21:12 tgl Exp $
+# $Header: /cvsroot/pgsql/doc/Makefile,v 1.25 2003/08/04 20:52:48 tgl Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -70,7 +70,7 @@ endif # found_man
 
 install: all installdirs
 ifdef found_html
-	gzip -d -c postgres.tar.gz | ( cd $(DESTDIR)$(docdir)/html && $(TAR) xf - )
+	gzip -d -c $(srcdir)/postgres.tar.gz | ( cd $(DESTDIR)$(docdir)/html && $(TAR) xf - )
 endif
 ifdef found_man
 	for file in man1/*.1 man$(sqlmansectnum)/*.$(sqlmansect) ; do \
