@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.37.2.2 1996/12/14 08:19:40 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.37.2.3 1996/12/22 03:26:52 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -791,7 +791,7 @@ do_connect(const char *new_dbname, PsqlSettings * settings)
 	    PQfinish(olddb);
 	    free(settings->prompt);
 	    settings->prompt = malloc(strlen(PQdb(settings->db)) + 10);
-	    sprintf(settings->prompt, "%s%s ", PQdb(settings->db), PROMPT);
+	    sprintf(settings->prompt, "%s%s", PQdb(settings->db), PROMPT);
 	}
     }
 }
