@@ -13482,8 +13482,7 @@ _ACEOF
 fi
 done
 
-CFLAGS="$_CFLAGS"
-LIBS="$_LIBS"
+# do this test with the proper thread flags
 echo "$as_me:$LINENO: checking whether getpwuid_r takes a fifth argument" >&5
 echo $ECHO_N "checking whether getpwuid_r takes a fifth argument... $ECHO_C" >&6
 if test "${pgac_func_getpwuid_r_5arg+set}" = set; then
@@ -13543,6 +13542,8 @@ _ACEOF
 
 fi
 
+CFLAGS="$_CFLAGS"
+LIBS="$_LIBS"
 fi
 
 
