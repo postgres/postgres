@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl -w
 
-# $Id: test.pl,v 1.12 2000/03/11 02:57:24 tgl Exp $
+# $Id: test.pl,v 1.13 2000/11/17 00:24:03 tgl Exp $
 
 # Before `make install' is performed this script should be runnable with
 # `make test'. After `make install' it should work as `perl test.pl'
@@ -259,6 +259,13 @@ if ($DEBUG) {
 
 $conn = Pg::connectdb("dbname=$dbmain");
 die $conn->errorMessage unless PGRES_CONNECTION_OK eq $conn->status;
+
+# Race condition: it's quite possible that the DROP command will arrive
+# at the new backend before the old backend has finished shutting down,
+# resulting in an error message.
+# There doesn't seem to be any more graceful way around this than to
+# insert a small delay ...
+sleep(1);
 
 $result = $conn->exec("DROP DATABASE $dbname");
 die $conn->errorMessage unless PGRES_COMMAND_OK eq $result->resultStatus;
