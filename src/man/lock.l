@@ -1,12 +1,12 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/lock.l,v 1.3 1998/01/28 20:44:42 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/lock.l,v 1.4 1998/03/18 15:48:57 momjian Exp $
 .TH FETCH SQL 01/23/93 PostgreSQL PostgreSQL
 .SH NAME
 lock - exclusive lock a table
 .SH SYNOPSIS
 .nf
-\fBlock\fR classname
+\fBlock\fR [\fBtable\fR] classname
 .fi
 .SH DESCRIPTION
 .BR lock
@@ -31,7 +31,7 @@ aquisitions and requests to not form a deadlock.
 --  Proper locking to prevent deadlock
 --
 begin work;
-lock mytable;
+lock table mytable;
 select * from mytable;
 update mytable set (x = 100);
 end work;
