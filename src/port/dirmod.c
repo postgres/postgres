@@ -10,7 +10,7 @@
  *	Win32 (NT, Win2k, XP).	replace() doesn't work on Win95/98/Me.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/dirmod.c,v 1.16 2004/08/08 03:51:20 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/dirmod.c,v 1.17 2004/08/08 05:04:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -203,11 +203,11 @@ pgsymlink(const char *oldpath, const char *newpath)
 					  NULL, GetLastError(), 
 					  MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
 					  (LPSTR)&msg, 0, NULL );
-#ifdef FRONTEND
-		fprintf(stderr, "Error setting junction for %s: %s", nativeTarget, msg);
-#else
+#ifndef FRONTEND
 		ereport(ERROR, (errcode_for_file_access(),
 			errmsg("Error setting junction for %s: %s", nativeTarget, msg)));
+#else
+		fprintf(stderr, "Error setting junction for %s: %s", nativeTarget, msg);
 #endif
 		LocalFree(msg);
 	    
