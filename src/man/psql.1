@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/psql.1,v 1.21 1998/01/11 22:17:54 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/psql.1,v 1.22 1998/01/25 06:12:52 scrappy Exp $
 .TH PSQL UNIX 1/20/96 PostgreSQL PostgreSQL
 .SH NAME
 psql - run the interactive query front-end
@@ -103,6 +103,17 @@ defaults to the value of the
 .SM USER
 environment variable or, if that's not set, to the Unix account name of the
 current user.
+.PP
+When
+.IR "psql"
+starts, it reads SQL commands from
+.IR "/etc/psqlrc"
+and then from
+.IR "$(HOME)/.psqlrc"
+This allows SQL commands like
+.IR SET
+which can be used to set the date style to be run at the start of
+evry session.
 .PP
 .IR "psql"
 understands the following command-line options:
