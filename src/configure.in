@@ -355,36 +355,40 @@ echo "- setting LDFLAGS=$LDFLAGS"
 dnl Checks for programs.
 AC_PROG_CPP
 
-dnl Check to see what flags are required to get stdin into cpp
+dnl Check to see what flags are required to get stdin into cpp.
+dnl Note that we need to look at the output, since the C compiler might
+dnl not raise an error when no input files are named on the cmd line.
+dnl (This is a somewhat modified version of AC_EGREP_CPP)
+dnl AC_TRY_CPPSTDIN(PATTERN, PROGRAM, [ACTION-IF-FOUND [,
+dnl                 ACTION-IF-NOT-FOUND]])
 AC_DEFUN(AC_TRY_CPPSTDIN,
 	[AC_REQUIRE_CPP()dnl
 	cat > conftest.$ac_ext <<EOF
 [#]line __oline__ "configure"
 #include "confdefs.h"
-[$1]
+[$2]
 EOF
-	ac_try="$ac_cpp $CPPSTDIN <conftest.$ac_ext >/dev/null 2>conftest.out"
-	AC_TRY_EVAL(ac_try)
-	ac_err=`grep -v '^ *+' conftest.out`
-	if test -z "$ac_err"; then
-	  ifelse([$2], , :, [rm -rf conftest*
-	  $2])
-	else
-	  echo "$ac_err" >&AC_FD_CC
-	  echo "configure: failed program was:" >&AC_FD_CC
-	  cat conftest.$ac_ext >&AC_FD_CC
-	ifelse([$3], , , [  rm -rf conftest*
-	  $3
+dnl eval is necessary to expand ac_cpp.
+dnl Ultrix and Pyramid sh refuse to redirect output of eval, so use subshell.
+if (eval "$ac_cpp $CPPSTDIN <conftest.$ac_ext") 2>&AC_FD_CC |
+  grep "$1" >/dev/null 2>&1; then
+  ifelse([$3], , :, [rm -rf conftest*
+  $3])
+ifelse([$4], , , [else
+  rm -rf conftest*
+  $4
 ])dnl
 fi
-rm -f conftest*])
+rm -f conftest*
+])
 
 AC_MSG_CHECKING(how to use cpp with stdin)
 if test -z "$CPPSTDIN"; then
 AC_CACHE_VAL(ac_cv_cpp_stdin,
-	[  CPPSTDIN=""
-	  AC_TRY_CPPSTDIN([#include <assert.h>
-		Syntax Error], , CPPSTDIN="-")
+	[  CPPSTDIN="-"
+	  AC_TRY_CPPSTDIN([^Find Me Or Else],
+[#include <assert.h>
+Find Me Or Else], , CPPSTDIN="")
 	  ac_cv_cpp_stdin="$CPPSTDIN"])
 	  CPPSTDIN="$ac_cv_cpp_stdin"
 else
@@ -510,24 +514,24 @@ dnl (1) We specify in YACC and YFLAGS what we want
 dnl (2) We have bison and we use bison -y
 dnl (3) We have yacc and use it
 
-AC_SUBST(YACC)
-AC_SUBST(YFLAGS)
-AC_PATH_PROG(yacc, yacc)
-AC_PATH_PROG(bison, bison)
 if test -f "$YACC"
 then
 	echo "- Using $YACC $YFLAGS"
-elif test -f "$bison"
-then
+else
+    AC_PATH_PROG(bison, bison)
+    if test -f "$bison"
+    then
 	echo "- Using $bison -y $YFLAGS"
 	YACC="$bison"
 	YFLAGS="-y $YFLAGS"
-	export YACC YFLAGS
-else
+    else
+	AC_PATH_PROG(yacc, yacc)
 	echo "- Using $yacc $YFLAGS"
 	YACC="$yacc"
-	export YACC
+    fi
 fi
+AC_SUBST(YACC)
+AC_SUBST(YFLAGS)
 
 AC_CHECK_LIB(sfio,     main)
 for curses in ncurses curses ; do
