@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Fri Nov 7 12:01:57 EST 2003
+   Last updated: Mon Nov 10 16:55:52 EST 2003
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -244,7 +244,7 @@
    
      http://www.PostgreSQL.org
      
-   There is also an IRC channel on EFNet and OpenProjects, channel
+   There is also an IRC channel on EFNet and Freenet, channel
    #PostgreSQL. I use the Unix command irc -c '#PostgreSQL' "$USER"
    irc.phoenix.net.
    
