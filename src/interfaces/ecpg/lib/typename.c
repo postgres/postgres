@@ -1,4 +1,6 @@
-#include "config.h"
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/typename.c,v 1.18 2001/08/24 14:07:49 petere Exp $ */
+
+#include "postgres_fe.h"
 
 #include <stdlib.h>
 #include "ecpgtype.h"

@@ -16,13 +16,10 @@
  *--------
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include "psqlodbc.h"
 
 #include <string.h>
 #include <stdio.h>
-#include "psqlodbc.h"
 
 #ifndef WIN32
 #include "iodbc.h"

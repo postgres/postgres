@@ -10,7 +10,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/catalog/Attic/genbki.sh,v 1.21 2001/08/10 18:57:33 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/catalog/Attic/genbki.sh,v 1.22 2001/08/24 14:07:48 petere Exp $
 #
 # NOTES
 #    non-essential whitespace is removed from the generated file.
@@ -66,7 +66,7 @@ do
             echo "  $CMDNAME [ -D define [...] ] [ -I dir ] --set-version=VERSION -o prefix files..."
             echo
             echo "Options:"
-            echo "  -I  path to postgres_ext.h and config.h files"
+            echo "  -I  path to postgres_ext.h and pg_config.h files"
             echo "  -o  prefix of output files"
             echo "  --set-version  PostgreSQL version number for initdb cross-check"
             echo
@@ -126,12 +126,12 @@ for dir in $INCLUDE_DIRS; do
     fi
 done
 
-# Get INDEX_MAX_KEYS and DEFAULT_ATTSTATTARGET from config.h
+# Get INDEX_MAX_KEYS and DEFAULT_ATTSTATTARGET from pg_config.h
 # (who needs consistency?)
 for dir in $INCLUDE_DIRS; do
-    if [ -f "$dir/config.h" ]; then
-        INDEXMAXKEYS=`grep '#define[ 	]*INDEX_MAX_KEYS' $dir/config.h | $AWK '{ print $3 }'`
-        DEFAULTATTSTATTARGET=`grep '#define[ 	]*DEFAULT_ATTSTATTARGET' $dir/config.h | $AWK '{ print $3 }'`
+    if [ -f "$dir/pg_config.h" ]; then
+        INDEXMAXKEYS=`grep '#define[ 	]*INDEX_MAX_KEYS' $dir/pg_config.h | $AWK '{ print $3 }'`
+        DEFAULTATTSTATTARGET=`grep '#define[ 	]*DEFAULT_ATTSTATTARGET' $dir/pg_config.h | $AWK '{ print $3 }'`
         break
     fi
 done
@@ -146,7 +146,7 @@ done
 export BKIOBJECTID
 
 # NOTE: we assume here that FUNC_MAX_ARGS has the same value as INDEX_MAX_KEYS,
-# and don't read it separately from config.h.  This is OK because both of them
+# and don't read it separately from pg_config.h.  This is OK because both of them
 # must be equal to the length of oidvector.
 
 INDEXMAXKEYS2=`expr $INDEXMAXKEYS '*' 2` || exit

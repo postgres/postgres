@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.131 2001/07/15 11:20:01 petere Exp $
+# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.132 2001/08/24 14:07:48 petere Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -321,20 +321,20 @@ STRTOUL = @STRTOUL@
 $(top_builddir)/src/Makefile.global: $(top_srcdir)/src/Makefile.global.in $(top_builddir)/config.status
 	cd $(top_builddir) && CONFIG_FILES=src/Makefile.global CONFIG_HEADERS= ./config.status
 
-# Remake config.h from config.h.in if the latter changed.
-# config.status will not change the timestamp on config.h if it
+# Remake pg_config.h from pg_config.h.in if the latter changed.
+# config.status will not change the timestamp on pg_config.h if it
 # doesn't change, so as to avoid recompiling the entire tree
 # unnecessarily. Therefore we make config.status update a timestamp file
 # stamp-h everytime it runs, so that we don't trigger this rule everytime.
-# (We do trigger the null rule for stamp-h to config.h everytime; so it's
+# (We do trigger the null rule for stamp-h to pg_config.h everytime; so it's
 # important for that rule to be null!)
 #
 # Of course you need to turn on dependency tracking to get any
-# dependencies on config.h.
-$(top_builddir)/src/include/config.h: $(top_builddir)/src/include/stamp-h
+# dependencies on pg_config.h.
+$(top_builddir)/src/include/pg_config.h: $(top_builddir)/src/include/stamp-h
 
-$(top_builddir)/src/include/stamp-h: $(top_srcdir)/src/include/config.h.in $(top_builddir)/config.status
-	cd $(top_builddir) && CONFIG_FILES= CONFIG_HEADERS=src/include/config.h ./config.status
+$(top_builddir)/src/include/stamp-h: $(top_srcdir)/src/include/pg_config.h.in $(top_builddir)/config.status
+	cd $(top_builddir) && CONFIG_FILES= CONFIG_HEADERS=src/include/pg_config.h ./config.status
 
 # When configure changes, rerun configure with the same options as
 # last time. To change configure, you need to run autoconf manually.

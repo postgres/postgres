@@ -26,10 +26,6 @@
  *-------
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include "psqlodbc.h"
 #ifdef	WIN32
 #undef	ODBCVER

@@ -17,15 +17,11 @@
  */
 /* Multibyte support  Eiji Tokuya	2001-03-15	*/
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include "convert.h"
 
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
-
-#include "psqlodbc.h"
 
 #ifdef MULTIBYTE
 #include "multibyte.h"
@@ -44,7 +40,6 @@
 #include <time.h>
 #include <math.h>
 #include <stdlib.h>
-#include "convert.h"
 #include "statement.h"
 #include "qresult.h"
 #include "bind.h"

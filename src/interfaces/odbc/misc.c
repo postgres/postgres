@@ -12,11 +12,11 @@
  *-------
  */
 
+#include "psqlodbc.h"
+
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
-
-#include "psqlodbc.h"
 
 #ifndef WIN32
 #if HAVE_PWD_H
@@ -119,10 +119,6 @@ qlog(char *fmt,...)
 #endif
 
 /*	Undefine these because windows.h will redefine and cause a warning */
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
 
 #ifdef WIN32
 #undef va_start

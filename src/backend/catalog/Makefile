@@ -2,7 +2,7 @@
 #
 # Makefile for catalog
 #
-# $Header: /cvsroot/pgsql/src/backend/catalog/Makefile,v 1.35 2001/06/12 05:55:49 tgl Exp $
+# $Header: /cvsroot/pgsql/src/backend/catalog/Makefile,v 1.36 2001/08/24 14:07:48 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -37,7 +37,7 @@ POSTGRES_BKI_SRCS := $(addprefix $(top_srcdir)/src/include/catalog/,\
 pg_includes := $(sort -I$(top_srcdir)/src/include -I$(top_builddir)/src/include)
 
 postgres.bki postgres.description: genbki.sh $(POSTGRES_BKI_SRCS) \
-    $(top_srcdir)/src/include/postgres_ext.h $(top_builddir)/src/include/config.h
+    $(top_srcdir)/src/include/postgres_ext.h $(top_builddir)/src/include/pg_config.h
 	CPP='$(CPP)' AWK='$(AWK)' $(SHELL) $< $(BKIOPTS) -o postgres $(pg_includes) $(POSTGRES_BKI_SRCS) --set-version=$(VERSION)
 
 .PHONY: install-bki
@@ -55,11 +55,3 @@ uninstall-bki:
 
 clean: 
 	rm -f SUBSYS.o $(OBJS) $(BKIFILES)
-
-
-depend dep:
-	$(CC) -MM $(CFLAGS) *.c >depend
-
-ifeq (depend,$(wildcard depend))
-include depend
-endif

@@ -16,13 +16,9 @@
  *--------
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-#include "psqlodbc.h"
-#include "dlg_specific.h"
 #include "pgtypes.h"
+
+#include "dlg_specific.h"
 #include "statement.h"
 #include "connection.h"
 #include "qresult.h"

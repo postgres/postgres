@@ -12,14 +12,11 @@
  *-------
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include "psqlodbc.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "psqlodbc.h"
 #include "connection.h"
 
 #ifndef WIN32

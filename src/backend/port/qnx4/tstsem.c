@@ -7,17 +7,17 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/qnx4/Attic/tstsem.c,v 1.4 2001/05/24 15:53:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/qnx4/Attic/tstsem.c,v 1.5 2001/08/24 14:07:49 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
 
+#include "postgres.h"
 
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include "postgres.h"
 #include "storage/ipc.h"
 #include <sys/mman.h>
 #include <sys/sem.h>

@@ -7,12 +7,12 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/qnx4/Attic/isnan.c,v 1.2 2000/04/12 17:15:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/qnx4/Attic/isnan.c,v 1.3 2001/08/24 14:07:49 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#include "os.h"
+#include "c.h"
 
 unsigned char __nan[8] = __nan_bytes;
 

@@ -21,9 +21,7 @@
 
 #ifndef WIN32
 
-#if HAVE_CONFIG_H
-#include "config.h"				/* produced by configure */
-#endif
+#include "gpps.h"
 
 #include <stdio.h>
 #include <unistd.h>
@@ -36,7 +34,6 @@
 #include <sys/types.h>
 #include <string.h>
 #include "misc.h"
-#include "gpps.h"
 #include "dlg_specific.h"
 
 #ifndef TRUE
@@ -286,7 +283,7 @@ WritePrivateProfileString(char *theSection,		/* section name */
 }
 
 
-#if 0
+#if NOT_USED
 /*
  * Ok. What the hell's the default behaviour for a null input buffer, and null
  * section name. For now if either are null I ignore the request, until
@@ -449,7 +446,7 @@ if (!keyFound)
 	return aReturnLength > 0 ? aReturnLength - 1 : 0;
 }
 
-#endif
+#endif /* NOT_USED */
 
 
-#endif
+#endif /* not WIN32 */

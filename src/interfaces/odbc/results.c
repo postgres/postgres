@@ -15,12 +15,9 @@
  *-------
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include "psqlodbc.h"
 
 #include <string.h>
-#include "psqlodbc.h"
 #include "dlg_specific.h"
 #include "environ.h"
 #include "connection.h"

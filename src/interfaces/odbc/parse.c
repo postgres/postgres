@@ -22,9 +22,7 @@
  */
 /* Multibyte support	Eiji Tokuya 2001-03-15 */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include "psqlodbc.h"
 
 #include <stdio.h>
 #include <string.h>

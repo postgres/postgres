@@ -559,7 +559,7 @@
    In PostgreSQL 6.5 and up, the default limit is 32 processes. You can
    increase it by restarting the postmaster with a suitable -N value.
    With the default configuration you can set -N as large as 1024. If you
-   need more, increase MAXBACKENDS in include/config.h and rebuild. You
+   need more, increase MAXBACKENDS in include/pg_config.h and rebuild. You
    can set the default value of -N at configuration time, if you like,
    using configure's --with-maxbackends switch.
    

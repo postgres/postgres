@@ -7,13 +7,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/qnx4/Attic/rint.c,v 1.2 2000/04/12 17:15:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/qnx4/Attic/rint.c,v 1.3 2001/08/24 14:07:49 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
 
+#include "c.h"
 #include <math.h>
-#include "os.h"
 
 double
 rint(double x)

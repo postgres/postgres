@@ -14,6 +14,7 @@
  */
 
 #include "environ.h"
+
 #include "connection.h"
 #include "dlg_specific.h"
 #include "statement.h"

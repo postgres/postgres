@@ -5,9 +5,6 @@
  */
 #ifndef	_PG_API_FUNC_H__
 #define	_PG_API_FUNC_H__
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
 
 #include "psqlodbc.h"
 #include <stdio.h>

@@ -23,7 +23,7 @@ undefine([infodir])
 undefine([info])
 
 AC_PREFIX_DEFAULT(/usr/local/pgsql)
-AC_CONFIG_HEADER(src/include/config.h)
+AC_CONFIG_HEADER(src/include/pg_config.h)
 
 AC_PREREQ(2.13)
 AC_CONFIG_AUX_DIR(config)
@@ -80,8 +80,7 @@ nextstep*) template=nextstep ;;
           univel) template=univel ;;
         esac ;;
    sysv4*) template=svr4 ;;
- sysv5uw*) template=unixware ;;
- sysv5*) template=unixware ;;
+   sysv5*) template=unixware ;;
   ultrix*) template=ultrix4 ;;
 esac
 
@@ -108,7 +107,7 @@ AC_SUBST(PORTNAME)
 
 AC_LINK_FILES([src/backend/port/dynloader/${template}.c], [src/backend/port/dynloader.c])
 AC_LINK_FILES([src/backend/port/dynloader/${template}.h], [src/include/dynloader.h])
-AC_LINK_FILES([src/include/port/${template}.h], [src/include/os.h])
+AC_LINK_FILES([src/include/port/${template}.h], [src/include/pg_config_os.h])
 AC_LINK_FILES([src/makefiles/Makefile.${template}], [src/Makefile.port])
 
 # Pick right test-and-set (TAS) code.  Most platforms have inline
@@ -941,7 +940,7 @@ AC_TRY_LINK([#include <math.h>],
 
 dnl Cannot use AC_CHECK_FUNC because sigsetjmp may be a macro
 dnl (especially on GNU libc)
-dnl See also comments in config.h.
+dnl See also comments in pg_config.h.
 AC_MSG_CHECKING(for sigsetjmp)
 AC_TRY_LINK([#include <setjmp.h>],
 	[sigjmp_buf x; sigsetjmp(x, 1);],
@@ -1204,6 +1203,6 @@ AC_OUTPUT(
   src/backend/port/Makefile
 ],
 [
-# Update timestamp for config.h (see Makefile.global)
+# Update timestamp for pg_config.h (see Makefile.global)
 test x"$CONFIG_HEADERS" != x"" && echo >src/include/stamp-h
 ])

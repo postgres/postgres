@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqsignal.c,v 1.20 2001/03/22 03:59:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqsignal.c,v 1.21 2001/08/24 14:07:49 petere Exp $
  *
  * NOTES
  *		This shouldn't be in libpq, but the monitor and some other
@@ -17,7 +17,7 @@
  *
  *	A NOTE ABOUT SIGNAL HANDLING ACROSS THE VARIOUS PLATFORMS.
  *
- *	config.h defines the macro HAVE_POSIX_SIGNALS for some platforms and
+ *	pg_config.h defines the macro HAVE_POSIX_SIGNALS for some platforms and
  *	not for others.  This file and pqsignal.h use that macro to decide
  *	how to handle signalling.
  *

@@ -9,10 +9,6 @@
 #ifndef __ENVIRON_H__
 #define __ENVIRON_H__
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include "psqlodbc.h"
 
 #ifndef WIN32

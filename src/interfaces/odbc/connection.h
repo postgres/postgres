@@ -9,14 +9,10 @@
 #ifndef __CONNECTION_H__
 #define __CONNECTION_H__
 
+#include "psqlodbc.h"
+
 #include <stdlib.h>
 #include <string.h>
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-#include "psqlodbc.h"
 
 #ifndef WIN32
 #include "iodbc.h"

@@ -4,9 +4,7 @@
 #ifndef GPPS_H
 #define GPPS_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include "psqlodbc.h"
 
 #ifndef WIN32
 #include <sys/types.h>

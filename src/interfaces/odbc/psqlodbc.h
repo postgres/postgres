@@ -5,7 +5,7 @@
  *
  * Comments:		See "notice.txt" for copyright and license information.
  *
- * $Id: psqlodbc.h,v 1.45 2001/08/18 04:30:47 inoue Exp $
+ * $Id: psqlodbc.h,v 1.46 2001/08/24 14:07:50 petere Exp $
  *
  */
 
@@ -13,7 +13,7 @@
 #define __PSQLODBC_H__
 
 #ifdef HAVE_CONFIG_H
-#include "config.h"
+#include "pg_config.h"
 #endif
 
 #include <stdio.h>				/* for FILE* pointers: see GLOBAL_VALUES */

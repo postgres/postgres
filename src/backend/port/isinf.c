@@ -1,8 +1,8 @@
-/* $Id: isinf.c,v 1.15 2000/04/12 17:15:28 momjian Exp $ */
+/* $Id: isinf.c,v 1.16 2001/08/24 14:07:49 petere Exp $ */
+
+#include "c.h"
 
 #include <math.h>
-
-#include "config.h"
 
 #if HAVE_FPCLASS				/* this is _not_ HAVE_FP_CLASS, and not
 								 * typo */

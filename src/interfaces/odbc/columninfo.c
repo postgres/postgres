@@ -13,6 +13,7 @@
  */
 
 #include "columninfo.h"
+
 #include "connection.h"
 #include "socket.h"
 #include <stdlib.h>

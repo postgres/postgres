@@ -1,11 +1,11 @@
-/* $Id: gethostname.c,v 1.4 1998/09/01 03:24:25 momjian Exp $ */
+/* $Id: gethostname.c,v 1.5 2001/08/24 14:07:49 petere Exp $ */
+
+#include "c.h"
 
 #include <sys/types.h>
 #include <string.h>
 
 #include <sys/utsname.h>
-
-#include "config.h"
 
 int
 gethostname(char *name, int namelen)

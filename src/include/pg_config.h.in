@@ -1,18 +1,18 @@
 /*
  * PostgreSQL configuration-settings file.
  *
- * config.h.in is processed by configure to produce config.h.
+ * pg_config.h.in is processed by configure to produce pg_config.h.
  *
  * If you want to modify any of the tweakable settings in Part 2
- * of this file, you can do it in config.h.in before running configure,
- * or in config.h afterwards.  Of course, if you edit config.h, then your
+ * of this file, you can do it in pg_config.h.in before running configure,
+ * or in pg_config.h afterwards.  Of course, if you edit pg_config.h, then your
  * changes will be overwritten the next time you run configure.
  *
- * $Id: config.h.in,v 1.170 2001/08/01 23:52:50 tgl Exp $
+ * $Id: pg_config.h.in,v 1.1 2001/08/24 14:07:49 petere Exp $
  */
 
-#ifndef CONFIG_H
-#define CONFIG_H
+#ifndef PG_CONFIG_H
+#define PG_CONFIG_H
 
 
 /*
@@ -690,7 +690,7 @@ extern int fdatasync(int fildes);
  * Part 4: pull in system-specific declarations.
  *
  * This is still configure's responsibility, because it picks where
- * the "os.h" symlink points...
+ * the "pg_config_os.h" symlink points...
  *------------------------------------------------------------------------
  */
 
@@ -698,12 +698,12 @@ extern int fdatasync(int fildes);
  * Pull in OS-specific declarations (using link created by configure)
  */
 
-#include "os.h"
+#include "pg_config_os.h"
 
 /*
  * The following is used as the arg list for signal handlers.  Any ports
  * that take something other than an int argument should override this in
- * the port-specific os.h file.  Note that variable names are required
+ * the port-specific pg_config_os.h file.  Note that variable names are required
  * because it is used in both the prototypes as well as the definitions.
  * Note also the long name.  We expect that this won't collide with
  * other names causing compiler warnings.
@@ -714,4 +714,4 @@ extern int fdatasync(int fildes);
 #endif
 
 
-#endif /* CONFIG_H */
+#endif /* PG_CONFIG_H */

@@ -12,10 +12,6 @@
  *-------
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include "statement.h"
 #include "bind.h"
 #include "connection.h"

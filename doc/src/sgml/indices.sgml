@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/indices.sgml,v 1.21 2001/08/21 16:35:59 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/indices.sgml,v 1.22 2001/08/24 14:07:48 petere Exp $ -->
 
 <chapter id="indexes">
  <title id="indexes-title">Indexes</title>
@@ -238,7 +238,7 @@ CREATE INDEX test2_mm_idx ON test2 (major, minor);
    Currently, only the B-tree implementation supports multi-column
    indexes.  Up to 16 columns may be specified.  (This limit can be
    altered when building <productname>Postgres</productname>; see the
-   file <filename>config.h</filename>.)
+   file <filename>pg_config.h</filename>.)
   </para>
 
   <para>

@@ -18,10 +18,6 @@
  *-------
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include "psqlodbc.h"
 #undef ODBCVER
 #define ODBCVER 0x0300

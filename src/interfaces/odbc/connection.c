@@ -14,12 +14,9 @@
  */
 /* Multibyte support	Eiji Tokuya 2001-03-15 */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include "connection.h"
 
 #include "environ.h"
-#include "connection.h"
 #include "socket.h"
 #include "statement.h"
 #include "qresult.h"

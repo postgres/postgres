@@ -682,7 +682,7 @@
    Wert dadurch erhöhen, daß Du den postmaster mit einem entsprechenden
    -N Wert neu startest. In der Standardkonfiguration kannst Du -N auf
    maximal 1024 setzen. Falls Du mehr brauchst, erhöhe MAXBACKENDS in
-   include/config.h und kompiliere das Paket neu. Du kannst den
+   include/pg_config.h und kompiliere das Paket neu. Du kannst den
    Standardwert von -N während der Konfiguration setzen, indem Du
    --with-maxbackends angibst. Anmerkung: Falls Du -N größer als 32
    einstellst, solltest Du -B auf einen Wert, höher als 64 setzen. Für

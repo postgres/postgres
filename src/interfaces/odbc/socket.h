@@ -9,9 +9,7 @@
 #ifndef __SOCKET_H__
 #define __SOCKET_H__
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include "psqlodbc.h"
 
 #ifndef WIN32
 #include <sys/types.h>

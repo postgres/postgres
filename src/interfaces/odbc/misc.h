@@ -9,9 +9,7 @@
 #ifndef __MISC_H__
 #define __MISC_H__
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include "psqlodbc.h"
 
 #ifndef WIN32
 #include "gpps.h"

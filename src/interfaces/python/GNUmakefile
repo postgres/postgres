@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/src/interfaces/python/Attic/GNUmakefile,v 1.10 2001/07/10 16:33:02 petere Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/python/Attic/GNUmakefile,v 1.11 2001/08/24 14:07:50 petere Exp $
 
 subdir = src/interfaces/python
 top_builddir = ../../..
@@ -17,7 +17,6 @@ endif
 
 include $(top_srcdir)/src/Makefile.shlib
 
-# (Python also has a config.h file.  Be sure to use ours.)
 override CPPFLAGS := -I$(libpq_srcdir) $(CPPFLAGS) $(python_includespec)
 
 all: all-lib

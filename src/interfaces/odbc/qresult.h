@@ -9,11 +9,12 @@
 #ifndef __QRESULT_H__
 #define __QRESULT_H__
 
+#include "psqlodbc.h"
+
 #include "connection.h"
 #include "socket.h"
 #include "columninfo.h"
 #include "tuplelist.h"
-#include "psqlodbc.h"
 #include "tuple.h"
 
 enum QueryResultCode_

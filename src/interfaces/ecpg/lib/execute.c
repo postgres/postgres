@@ -1,4 +1,5 @@
-/* Copyright comment */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/execute.c,v 1.22 2001/08/24 14:07:49 petere Exp $ */
+
 /*
  * The aim is to get a simpler inteface to the database routines.
  * All the tidieous messing around with tuples is supposed to be hidden
@@ -12,7 +13,7 @@
 /* Taken over as part of PostgreSQL by Michael Meskes <meskes@postgresql.org>
    on Feb. 5th, 1998 */
 
-#include "config.h"
+#include "postgres_fe.h"
 
 #include <stdio.h>
 #include <locale.h>
@@ -1035,7 +1036,7 @@ ECPGdo(int lineno, const char *connection_name, char *query,...)
  *
  * Copyright (c) 2000, Christof Petig <christof.petig@wtal.de>
  *
- * $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/execute.c,v 1.21 2001/08/19 09:21:44 meskes Exp $
+ * $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/execute.c,v 1.22 2001/08/24 14:07:49 petere Exp $
  */
 
 PGconn	   *ECPG_internal_get_connection(char *name);

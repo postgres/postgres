@@ -1,10 +1,10 @@
-/* $Id: random.c,v 1.9 1999/07/16 23:09:45 tgl Exp $ */
+/* $Id: random.c,v 1.10 2001/08/24 14:07:49 petere Exp $ */
+
+#include "c.h"
 
 #include <stdlib.h>
 #include <math.h>
 #include <errno.h>
-
-#include "config.h"
 
 long
 random()

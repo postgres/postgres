@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.98 2001/08/23 23:06:38 tgl Exp $
+ * $Id: c.h,v 1.99 2001/08/24 14:07:49 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,7 +25,7 @@
  *
  *	  section	description
  *	  -------	------------------------------------------------
- *		0)		config.h and standard system headers
+ *		0)		pg_config.h and standard system headers
  *		1)		hacks to cope with non-ANSI C compilers
  *		2)		bool, true, false, TRUE, FALSE, NULL
  *		3)		standard system types
@@ -49,7 +49,7 @@
    have its own.  The same goes for stddef and stdarg if present.
 */
 
-#include "config.h"
+#include "pg_config.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -79,7 +79,7 @@
 /* ----------------------------------------------------------------
  *				Section 1: hacks to cope with non-ANSI C compilers
  *
- * type prefixes (const, signed, volatile, inline) are now handled in config.h.
+ * type prefixes (const, signed, volatile, inline) are handled in pg_config.h.
  * ----------------------------------------------------------------
  */
 
@@ -624,8 +624,8 @@ typedef NameData *Name;
 #endif
 
 /* Provide prototypes for routines not present in a particular machine's
- * standard C library.	It'd be better to put these in config.h, but
- * in config.h we haven't yet included anything that defines size_t...
+ * standard C library.	It'd be better to put these in pg_config.h, but
+ * in pg_config.h we haven't yet included anything that defines size_t...
  */
 
 #ifndef HAVE_SNPRINTF_DECL

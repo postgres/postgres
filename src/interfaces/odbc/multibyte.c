@@ -7,8 +7,8 @@
  *--------
  */
 
-#include <string.h>
 #include "multibyte.h"
+#include <string.h>
 
 int			multibyte_client_encoding;	/* Multibyte Client Encoding. */
 int			multibyte_status;	/* Multibyte Odds and ends character. */

@@ -3,6 +3,7 @@
  * Multibyte library header ( psqlODBC Only )
  *
  */
+#include "psqlodbc.h"
 
 /* PostgreSQL client encoding */
 #define SQL_ASCII			0	/* SQL/ASCII */

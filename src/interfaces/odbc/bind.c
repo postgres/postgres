@@ -13,11 +13,8 @@
  *-------
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include "bind.h"
+
 #include "environ.h"
 #include "statement.h"
 #include "qresult.h"

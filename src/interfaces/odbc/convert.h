@@ -11,6 +11,8 @@
 
 #include "psqlodbc.h"
 
+#include "isql.h"
+
 /* copy_and_convert results */
 #define COPY_OK									0
 #define COPY_UNSUPPORTED_TYPE					1

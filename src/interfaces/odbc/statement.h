@@ -9,10 +9,6 @@
 #ifndef __STATEMENT_H__
 #define __STATEMENT_H__
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include "psqlodbc.h"
 #include "bind.h"
 

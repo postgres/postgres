@@ -9,10 +9,6 @@
 #ifndef __DLG_SPECIFIC_H__
 #define __DLG_SPECIFIC_H__
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include "psqlodbc.h"
 #include "connection.h"
 
