@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/nodes.c,v 1.16 2002/10/11 04:12:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/nodes.c,v 1.17 2002/10/11 04:16:44 momjian Exp $
  *
  * HISTORY
  *	  Andrew Yu			Oct 20, 1994	file creation
@@ -28,5 +28,15 @@
  *	  macro makeNode. eg. to create a Resdom node, use makeNode(Resdom)
  *
  */
-Node *newNodeMacroHolder;
+Node *
+newNode(Size size, NodeTag tag)
+{
+	Node	   *newNode;
 
+	Assert(size >= sizeof(Node));		/* need the tag, at least */
+
+	newNode = (Node *) palloc(size);
+	MemSet((char *) newNode, 0, size);
+	newNode->type = tag;
+	return newNode;
+}
