@@ -3,7 +3,7 @@
   build file to allow ant (http://jakarta.apache.org/ant/) to be used
   to build the PostgreSQL JDBC Driver.
 
-  $Id: build.xml,v 1.13 2001/05/23 19:30:35 momjian Exp $
+  $Id: build.xml,v 1.14 2001/05/23 20:54:12 momjian Exp $
 
 -->
 
@@ -108,11 +108,10 @@
       <exclude name="${package}/PostgresqlDataSource.java" unless="jdk1.2e+" />
       <exclude name="${package}/xa/**" unless="jdk1.2e+" />
       <exclude name="${package}/test/**" unless="junit" />
-      <exclude name="${package}/*.properties" />
     </javac>
     <copy todir="${dest}" overwrite="true" filtering="on">
       <fileset dir="${src}">
-        <include name="${package}/*.properties" />
+        <include name="${package}/**/*.properties" />
         <exclude name="${dest}/**" />
       </fileset>
     </copy>
@@ -139,8 +138,8 @@
 
   <!-- This builds the jar file containing the driver -->
   <target name="jar" depends="compile,examples">
-    <jar jarfile="${jars}/postgresql.jar" basedir="${dest}" includes="${package}/**/*.class" excludes="${package}/test/**"/>
-    <jar jarfile="${jars}/postgresql-examples.jar" basedir="${dest}" includes="example/**/*.class" />
+    <jar jarfile="${jars}/postgresql.jar" basedir="${dest}" includes="${package}/**/*.class,${package}/*.properties" excludes="${package}/test/**"/>
+    <jar jarfile="${jars}/postgresql-examples.jar" basedir="${dest}" includes="example/**/*.class,example/*.properties" />
   </target>
 
   <!--
