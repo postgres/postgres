@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.193 2001/07/16 05:06:58 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.194 2001/08/11 00:02:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -161,31 +161,36 @@ transformStmt(ParseState *pstate, Node *parseTree)
 				 * If a list of column names was given, run through and
 				 * insert these into the actual query tree. - thomas
 				 * 2000-03-08
+				 *
+				 * Outer loop is over targetlist to make it easier to
+				 * skip junk targetlist entries.
 				 */
 				if (n->aliases != NIL)
 				{
-					int			i;
-					List	   *targetList = n->query->targetList;
+					List	   *aliaslist = n->aliases;
+					List	   *targetList;
 
-					if (length(targetList) < length(n->aliases))
-						elog(ERROR, "CREATE VIEW specifies %d columns"
-							 " but only %d columns are present",
-							 length(targetList), length(n->aliases));
-
-					for (i = 0; i < length(n->aliases); i++)
+					foreach(targetList, n->query->targetList)
 					{
-						Ident	   *id;
-						TargetEntry *te;
+						TargetEntry *te = (TargetEntry *) lfirst(targetList);
 						Resdom	   *rd;
+						Ident	   *id;
 
-						id = nth(i, n->aliases);
-						Assert(IsA(id, Ident));
-						te = nth(i, targetList);
 						Assert(IsA(te, TargetEntry));
 						rd = te->resdom;
 						Assert(IsA(rd, Resdom));
+						if (rd->resjunk) /* junk columns don't get aliases */
+							continue;
+						id = (Ident *) lfirst(aliaslist);
+						Assert(IsA(id, Ident));
 						rd->resname = pstrdup(id->name);
+						aliaslist = lnext(aliaslist);
+						if (aliaslist == NIL)
+							break; /* done assigning aliases */
 					}
+
+					if (aliaslist != NIL)
+						elog(ERROR, "CREATE VIEW specifies more column names than columns");
 				}
 				result = makeNode(Query);
 				result->commandType = CMD_UTILITY;
