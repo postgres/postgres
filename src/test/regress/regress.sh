@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/regress.sh,v 1.44 2000/03/14 23:06:55 thomas Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/regress.sh,v 1.45 2000/03/16 14:37:33 thomas Exp $
 #
 if [ $# -eq 0 ]; then
 	echo "Syntax: $0 <hostname> [extra-tests]"
@@ -80,7 +80,7 @@ if [ $? -ne 0 ]; then
 fi
 
 if [ "x$hostname" != "xi386-pc-qnx4" ]; then
-echo "=============== installing languages...                ================="
+echo "=============== installing languages...               ================="
 $ECHO_N "installing PL/pgSQL .. " $ECHO_C
 createlang $HOSTLOC plpgsql regression
 if [ $? -ne 0 -a $? -ne 2 ]; then
