@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.8 2000/04/08 23:12:00 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.9 2000/04/23 00:25:06 tgl Exp $
 -->
 
  <Chapter Id="runtime">
@@ -367,6 +367,39 @@ showportnumber
 
      <varlistentry>
       <term>
+       pretty_plan
+      </term>
+      <listitem>
+       <para>
+	Pretty-print query plan.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>
+       pretty_parse
+      </term>
+      <listitem>
+       <para>
+	Pretty-print parser output.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>
+       pretty_rewritten
+      </term>
+      <listitem>
+       <para>
+	Pretty-print rewritten query.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>
        parserstats
       </term>
       <listitem>
@@ -590,29 +623,7 @@ showportnumber
 
      <varlistentry>
       <term>
-       notifyunlock
-      </term>
-      <listitem>
-       <para>
-	Unlock of pg_listener after notify.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>
-       notifyhack
-      </term>
-      <listitem>
-       <para>
-	Remove duplicate tuples from pg_listener.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>
-       fsync
+       nofsync
       </term>
       <listitem>
        <para>
