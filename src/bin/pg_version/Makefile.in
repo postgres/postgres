@@ -1,0 +1,41 @@
+#-------------------------------------------------------------------------
+#
+# Makefile.inc--
+#    Makefile for bin/pg_version
+#
+# Copyright (c) 1994, Regents of the University of California
+#
+#
+# IDENTIFICATION
+#    $Header: /cvsroot/pgsql/src/bin/pg_version/Attic/Makefile.in,v 1.1 1997/07/29 16:36:43 momjian Exp $
+#
+#-------------------------------------------------------------------------
+
+SRCDIR= ../..
+include ../../Makefile.global
+
+OBJS= pg_version.o ../../utils/version.o @STRERROR2@
+
+CFLAGS+= -I$(SRCDIR)/include
+
+all: pg_version
+
+pg_version: submake $(OBJS)
+	$(CC) -o pg_version $(OBJS) $(LDFLAGS)
+
+.PHONY: submake
+submake:
+	$(MAKE) -C ../../utils version.o
+
+install: pg_version
+	$(INSTALL) $(INSTL_EXE_OPTS) pg_version $(DESTDIR)$(BINDIR)/pg_version
+
+depend dep:
+	$(CC) -MM $(INCLUDE_OPT) *.c >depend
+
+clean: 
+	rm -f pg_version pg_version.o
+
+ifeq (depend,$(wildcard depend))
+include depend
+endif
