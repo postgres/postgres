@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/dropuser,v 1.1 1999/12/04 04:53:21 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/dropuser,v 1.2 1999/12/05 20:52:54 momjian Exp $
 #
 # Note - this should NOT be setuid.
 #
@@ -17,6 +17,17 @@
 CMDNAME=`basename $0`
 PSQLOPT=
 forcedel=t
+
+# Check for echo -n vs echo \c
+
+if echo '\c' | grep -s c >/dev/null 2>&1
+then
+    ECHO_N="echo -n"
+    ECHO_C=""
+else
+    ECHO_N="echo"
+    ECHO_C='\c'
+fi
 
 while [ $# -gt 0 ]
 do
@@ -72,16 +83,16 @@ fi
 # Prompt for username if missing
 
 if [ -z "$DelUser" ]; then
-	echo -n "Enter name of user to delete: "
-	read -r NewUser
+	$ECHO_N "Enter name of user to delete: "$ECHO_C
+	read NewUser
 	[ $? -ne 0 ] && exit 1
 fi
 
 
 if [ "$forcedel" = f ]; then
 	echo "User \"$DelUser\" and any owned databases will be permanently deleted."
-	echo -n "Are you sure? (y/n) "
-	read -r
+	$ECHO_N "Are you sure? (y/n) "$ECHO_C
+	read REPLY
 
 	[ $? -eq 1 ] && exit 1
 	[ "$REPLY" != "y" -a "$REPLY" != "Y" ] && exit 0

@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/droplang,v 1.1 1999/12/05 20:02:48 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/droplang,v 1.2 1999/12/05 20:52:54 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -19,17 +19,6 @@ dbname=
 langname=
 echo=
 list=
-
-# Check for echo -n vs echo \c
-
-if echo '\c' | grep -s c >/dev/null 2>&1
-then
-    ECHO_N="echo -n"
-    ECHO_C=""
-else
-    ECHO_N="echo"
-    ECHO_C='\c'
-fi
 
 
 # ----------
