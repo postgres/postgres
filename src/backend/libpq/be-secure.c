@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-secure.c,v 1.15.2.11 2003/04/10 23:03:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-secure.c,v 1.15.2.12 2003/08/04 17:58:25 tgl Exp $
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database
@@ -287,18 +287,22 @@ secure_read(Port *port, void *ptr, size_t len)
 				if (n == -1)
 					elog(COMMERROR, "SSL SYSCALL error: %m");
 				else
+				{
 					elog(COMMERROR, "SSL SYSCALL error: EOF detected");
+					errno = ECONNRESET;
+					n = -1;
+				}
 				break;
 			case SSL_ERROR_SSL:
 				elog(COMMERROR, "SSL error: %s", SSLerrmessage());
 				/* fall through */
 			case SSL_ERROR_ZERO_RETURN:
-				secure_close(port);
 				errno = ECONNRESET;
 				n = -1;
 				break;
 			default:
 				elog(COMMERROR, "Unknown SSL error code");
+				n = -1;
 				break;
 		}
 	}
@@ -352,18 +356,22 @@ secure_write(Port *port, void *ptr, size_t len)
 				if (n == -1)
 					elog(COMMERROR, "SSL SYSCALL error: %m");
 				else
+				{
 					elog(COMMERROR, "SSL SYSCALL error: EOF detected");
+					errno = ECONNRESET;
+					n = -1;
+				}
 				break;
 			case SSL_ERROR_SSL:
 				elog(COMMERROR, "SSL error: %s", SSLerrmessage());
 				/* fall through */
 			case SSL_ERROR_ZERO_RETURN:
-				secure_close(port);
 				errno = ECONNRESET;
 				n = -1;
 				break;
 			default:
 				elog(COMMERROR, "Unknown SSL error code");
+				n = -1;
 				break;
 		}
 	}
