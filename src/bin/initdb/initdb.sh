@@ -26,7 +26,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.50 1998/08/20 22:07:46 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.51 1998/08/21 23:22:36 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -344,7 +344,7 @@ pg_version $PGDATA/base/template1
 #----------------------------------------------------------------------------
 
 if [ $template_only -eq 0 ]; then
-    echo "Creating global classes in $PG_DATA/base"
+    echo "Creating global classes in $PGDATA/base"
     [ "$debug" -ne 0 ] && echo "Running: postgres $BACKENDARGS template1"
 
     cat $GLOBAL \

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.51 1998/08/20 23:01:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.52 1998/08/21 23:22:34 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1276,7 +1276,7 @@ FormIndexDatum(int numberOfAttributes,
 	 * ----------------
 	 */
 
-	for (i = 1; i <= numberOfAttributes; i += 1)
+	for (i = 1; i <= numberOfAttributes; i++)
 	{
 		offset = AttrNumberGetAttrOffset(i);
 
