@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Aug  8 12:34:37 EDT 2003
+Last updated:		Fri Aug  8 13:12:55 EDT 2003
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -48,7 +48,7 @@ Administration
   or postmaster startup (Bruce)
 * Remove behavior of postmaster -o after making postmaster/postgres
   flags unique
-* Allow easy display of usernames in a group
+* -Allow easy display of usernames in a group
 * Allow configuration files to be specified in a different directory
 * -Add start time to pg_stat_activity
 * Allow limits on per-db/user connections
@@ -85,13 +85,13 @@ Data Types
   from making invalid dates valid
 * -Prevent month/day swapping of ISO dates to make invalid dates valid
 * Have initdb set DateStyle based on locale?
-* -Delay resolution of array expression type so assignment coercion 
-  can be performed on empty array expressions (Joe)
 
 * ARRAYS
 	o Allow nulls in arrays
 	o -Allow arrays to be ORDER'ed
-	o Support construction of array result values in expressions
+	o -Support construction of array result values in expressions (Joe)
+	o Delay resolution of array expression type so assignment coercion 
+	  can be performed on empty array expressions (Joe)
 
 * BINARY DATA
 	o Improve vacuum of large objects, like /contrib/vacuumlo
@@ -145,7 +145,7 @@ Indexes
   columns and indexes with many duplicate keys
 * Use indexes for min() and max() or convert to SELECT col FROM tab ORDER
   BY col DESC LIMIT 1 if appropriate index exists and WHERE clause acceptible
-* Allow LIKE indexing optimization for non-ASCII locales
+* -Allow LIKE indexing optimization for non-ASCII locales using special index
 * Use index to restrict rows returned by multi-key index when used with
   non-consecutive keys or OR clauses, so fewer heap accesses
 * Be smarter about insertion of already-ordered data into btree index
@@ -170,7 +170,7 @@ Commands
 * Allow UPDATE to handle complex aggregates [update]
 * Allow command blocks to ignore certain types of errors
 * Allow backslash handling in quoted strings to be disabled for portability
-* Return proper effected tuple count from complex commands [return]
+* -Return proper effected tuple count from complex commands [return]
 * Allow UPDATE, DELETE to handle table aliases for self-joins [delete]
 * Add CORRESPONDING BY to UNION/INTERSECT/EXCEPT
 * Allow REINDEX to rebuild all indexes, remove /contrib/reindex
@@ -233,7 +233,7 @@ Commands
 	  ANALYZE, and CLUSTER
 	o Add SET SCHEMA
 	o -Allow EXPLAIN EXECUTE to see prepared plans
-	o Allow SHOW of non-modifiable variables, like pg_controldata
+ 	o -Allow SHOW of some non-modifiable variables, like pg_controldata
 
 * SERVER-SIDE LANGUAGES
 	o Allow PL/PgSQL's RAISE function to take expressions
@@ -255,6 +255,7 @@ Commands
 	o Add PL/PHP (Joe, Jan)
 	o Allow PL/pgSQL to name columns by ordinal position, e.g. rec.(3)
 	o Allow PL/pgSQL EXECUTE query_var INTO record_var;
+	o Add capability to create and call PROCEDURES
 
 
 Clients
@@ -269,7 +270,7 @@ Clients
 * -Allow SSL-enabled clients to turn off SSL transfers
 * -Modify pg_get_triggerdef() to take a boolean to pretty-print,
   and use that as part of pg_dump along with psql
-
+* Allow psql \du to show groups, and add \dg for groups
 
 
 * JDBC
@@ -421,7 +422,7 @@ Write-Ahead Log
 Optimizer / Executor
 ====================
 
-* Improve Subplan list handling
+* -Improve Subplan list handling
 * -Allow Subplans to use efficient joins(hash, merge) with upper variable
 * -Add hash for evaluating GROUP BY aggregates (Tom)
 * -Allow merge and hash joins on expressions not just simple variables (Tom)
@@ -473,7 +474,7 @@ Source Code
 * Acquire lock on a relation before building a relcache entry for it
 * Research interaction of setitimer() and sleep() used by statement_timeout
 * Add checks for fclose() failure
-* Change CVS $Id: TODO,v 1.1109 2003/08/08 16:34:40 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1109 2003/08/08 16:34:40 momjian Exp $
+* Change CVS $Id: TODO,v 1.1110 2003/08/08 17:13:02 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1110 2003/08/08 17:13:02 momjian Exp $
 * Exit postmaster if postgresql.conf can not be opened
 * Rename /scripts directory because they are all C programs now
 * Allow the regression tests to start postmaster with -i so the tests
