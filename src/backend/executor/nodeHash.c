@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeHash.c,v 1.89 2005/03/06 22:15:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeHash.c,v 1.90 2005/03/13 19:59:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -709,7 +709,8 @@ ExecHashGetBucketAndBatch(HashJoinTable hashtable,
 	if (nbatch > 1)
 	{
 		*bucketno = hashvalue % nbuckets;
-		*batchno = (hashvalue / nbuckets) % nbatch;
+		/* since nbatch is a power of 2, can do MOD by masking */
+		*batchno = (hashvalue / nbuckets) & (nbatch - 1);
 	}
 	else
 	{
