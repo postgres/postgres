@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.17 1998/09/01 04:31:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.18 1998/09/11 16:39:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -614,9 +614,8 @@ nodeHandleViewRule(Node **nodePtr,
 													 var->varattno));
 					if (n == NULL)
 						*nodePtr = make_null(((Var *) node)->vartype);
-
 					else
-
+					{
 						/*
 						 * This is a hack: The varlevelsup of the orignal
 						 * variable and the new one should be the same.
@@ -628,12 +627,16 @@ nodeHandleViewRule(Node **nodePtr,
 						 * before! (Maybe this will cause troubles with
 						 * some sophisticated queries on views?)
 						 */
-					{
 						if (this_varlevelsup > 0)
 							*nodePtr = copyObject(n);
 						else
 							*nodePtr = n;
-						((Var *) *nodePtr)->varlevelsup = this_varlevelsup;
+
+						if (nodeTag(nodePtr) == T_Var)
+							((Var *) *nodePtr)->varlevelsup = this_varlevelsup;
+						else
+							nodeHandleViewRule(&n, rtable, targetlist,
+										   rt_index, modified, sublevels_up);
 					}
 					*modified = TRUE;
 				}
