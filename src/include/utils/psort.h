@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: psort.h,v 1.13 1997/09/18 14:42:35 vadim Exp $
+ * $Id: psort.h,v 1.14 1997/10/15 06:36:36 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,6 +62,7 @@ typedef struct Psortstate
 	long		psort_current;	/* could be file offset, or array index */
 	long		psort_saved;	/* could be file offset, or array index */
 	bool		using_tape_files;
+	bool		all_fetched;	/* this is for cursors */
 
 	HeapTuple  *memtuples;
 } Psortstate;
