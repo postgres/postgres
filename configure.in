@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $Header: /cvsroot/pgsql/configure.in,v 1.213 2002/10/23 20:59:03 momjian Exp $
+dnl $Header: /cvsroot/pgsql/configure.in,v 1.214 2002/10/24 01:33:50 momjian Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -837,6 +837,12 @@ fi
 
 AC_REPLACE_FUNCS([fseeko gethostname getrusage inet_aton random srandom strcasecmp strdup strerror strtol strtoul])
 
+# BSD/OS has a custom fseeko/ftello built on fsetpos/fgetpos
+# We override the previous test that said fseeko/ftello didn't exist
+case $host_os in bsdi*)
+ac_cv_func_fseeko=yes
+esac
+
 # Solaris has a very slow qsort in certain cases.
 case $host_os in 
   solaris*) AC_LIBOBJ(qsort) ;;
@@ -902,12 +908,6 @@ AC_CHECK_FUNCS([strtoull strtouq], [break])
 AC_CHECK_FUNCS(atexit, [],
                [AC_CHECK_FUNCS(on_exit, [],
                                [AC_MSG_ERROR([neither atexit() nor on_exit() found])])])
-
-# BSD/OS has a custom fseeko/ftello built on fsetpos/fgetpos
-# We override the previous test that said fseeko/ftello didn't exist
-case $host_os in bsdi*)
-ac_cv_func_fseeko=yes
-esac
 
 AC_FUNC_FSEEKO
 

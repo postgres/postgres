@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.59 2002/10/23 19:23:56 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.60 2002/10/24 01:33:50 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -14,7 +14,6 @@
 #include <errno.h>
 
 #ifndef WIN32
-#include <sys/ioctl.h>			/* for ioctl() */
 #ifdef HAVE_PWD_H
 #include <pwd.h>				/* for getpwuid() */
 #endif

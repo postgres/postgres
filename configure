@@ -10543,6 +10543,12 @@ done
 
 
 
+# BSD/OS has a custom fseeko/ftello built on fsetpos/fgetpos
+# We override the previous test that said fseeko/ftello didn't exist
+case $host_os in bsdi*)
+ac_cv_func_fseeko=yes
+esac
+
 # Solaris has a very slow qsort in certain cases.
 case $host_os in
   solaris*) LIBOBJS="$LIBOBJS qsort.$ac_objext" ;;
@@ -11470,12 +11476,6 @@ done
 fi
 done
 
-
-# BSD/OS has a custom fseeko/ftello built on fsetpos/fgetpos
-# We override the previous test that said fseeko/ftello didn't exist
-case $host_os in bsdi*)
-ac_cv_func_fseeko=yes
-esac
 
 echo "$as_me:$LINENO: checking for _LARGEFILE_SOURCE value needed for large files" >&5
 echo $ECHO_N "checking for _LARGEFILE_SOURCE value needed for large files... $ECHO_C" >&6

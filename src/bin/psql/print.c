@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/print.c,v 1.33 2002/10/23 19:23:57 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/print.c,v 1.34 2002/10/24 01:33:50 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -11,22 +11,11 @@
 
 #include <math.h>
 #include <signal.h>
-#ifndef WIN32
-#include <unistd.h>				/* for isatty() */
-#include <sys/ioctl.h>			/* for ioctl() */
-#else
-#define popen(x,y) _popen(x,y)
-#define pclose(x) _pclose(x)
-#endif
 
 #include "pqsignal.h"
 #include "libpq-fe.h"
 
 #include "settings.h"
-
-#ifdef HAVE_TERMIOS_H
-#include <termios.h>
-#endif
 
 #include "mbprint.h"
 

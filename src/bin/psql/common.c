@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.49 2002/10/23 19:23:56 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.50 2002/10/24 01:33:50 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -23,6 +23,17 @@
 #include <io.h>					/* for _write() */
 #include <win32.h>
 #include <sys/timeb.h>			/* for _ftime() */
+#endif
+
+#ifndef WIN32
+#include <sys/ioctl.h>			/* for ioctl() */
+#else
+#define popen(x,y) _popen(x,y)
+#define pclose(x) _pclose(x)
+#endif
+
+#ifdef HAVE_TERMIOS_H
+#include <termios.h>
 #endif
 
 #include "libpq-fe.h"
