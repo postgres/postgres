@@ -1,15 +1,12 @@
 #
 # PostgreSQL top level makefile
 #
-# $Header: /cvsroot/pgsql/GNUmakefile.in,v 1.5 2000/06/14 18:17:24 petere Exp $
+# $Header: /cvsroot/pgsql/GNUmakefile.in,v 1.6 2000/06/28 18:29:11 petere Exp $
 #
 
-srcdir = @srcdir@
-VPATH = @srcdir@
-
-top_srcdir = @top_srcdir@
+subdir =
 top_builddir = .
-
+include src/Makefile.global
 
 all:
 	$(MAKE) -C src all
@@ -19,15 +16,15 @@ install:
 	$(MAKE) -C src install
 	@cat $(srcdir)/register.txt
 
+installdirs uninstall:
+	$(MAKE) -C src $@
+
 clean:
 	$(MAKE) -C src clean
 
-distclean:
-	-$(MAKE) -C src distclean
+distclean maintainer-clean:
+	-$(MAKE) -C src $@
 	-rm -f config.cache config.log config.status GNUmakefile
-
-
-.PHONY: all install clean distclean
 
 
 GNUmakefile: GNUmakefile.in $(top_builddir)/config.status

@@ -1,23 +1,14 @@
 # This file is an interface from the Autoconf world to Perl's
 # MakeMaker world, so that the latter behaves (kind of) like the
 # former would prefer. Internally, we call Perl to create another
-# Makefile according to it's own ideas and then invoke the rules from
+# Makefile according to its own ideas and then invoke the rules from
 # that file.
 #
-# $Header: /cvsroot/pgsql/src/interfaces/perl5/Attic/GNUmakefile.in,v 1.1 2000/06/10 18:01:56 petere Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/perl5/Attic/GNUmakefile,v 1.1 2000/06/28 18:29:56 petere Exp $
 
-srcdir = @srcdir@
-VPATH = @srcdir@
-
-top_srcdir = @top_srcdir@
+subdir = src/interfaces/perl5
 top_builddir = ../../..
-
-PERL = @PERL@
-
-prefix = @prefix@
-exec_prefix = @exec_prefix@
-libdir = @libdir@
-includedir = @includedir@
+include ../../Makefile.global
 
 
 all: Makefile libpq-all
@@ -26,6 +17,7 @@ all: Makefile libpq-all
 Makefile: Makefile.PL
 	$(PERL) $< POLLUTE=1
 
+.PHONY: libpq-all
 libpq-all:
 	$(MAKE) -C $(top_builddir)/src/interfaces/libpq all
 
@@ -39,7 +31,7 @@ libpq-all:
 # purer alternative would naturally be the ability to select the
 # installation directory somewhere.
 
-install: Makefile libpq-install
+install: Makefile
 	$(MAKE) -f Makefile clean
 	POSTGRES_LIB="$(libdir)" \
 	  POSTGRES_INCLUDE="$(includedir)" \
@@ -56,16 +48,17 @@ install: Makefile libpq-install
 		echo "*****"; \
 	fi
 
-libpq-install:
-	$(MAKE) -C $(top_builddir)/src/interfaces/libpq install
 
-# Note: Perl's idea of "clean" is a little different, so we use "realclean"
+uninstall:
+	@echo "*****"; \
+	 echo "* The Perl module cannot be uninstalled automatically. You can"; \
+	 echo "* change into the directory "`pwd`" and do"; \
+	 echo "*"; \
+	 echo "*     $(MAKE) -f Makefile realclean"; \
+	 echo "*"; \
+	 echo "* to delete built and installed files."; \
+	 echo "*****"
 
-clean:
-	-[ -f Makefile ] && $(MAKE) -f Makefile realclean
-
-distclean maintainer-clean: clean
-	rm -f GNUmakefile
-
-
-.PHONY: all install clean distclean maintainer-clean libpq-all libpq-install
+clean distclean maintainer-clean:
+	-[ -f Makefile ] && $(MAKE) -f Makefile clean
+	rm -f Makefile Makefile.old

@@ -2363,7 +2363,7 @@ INSTALL_SHLIB="\${INSTALL} $INSTL_SHLIB_OPTS"
 
 
 
-for ac_prog in mawk gawk nawk awk
+for ac_prog in gawk mawk nawk awk
 do
 # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
@@ -8883,16 +8883,6 @@ trap 'rm -fr `echo "GNUmakefile
 	src/bin/pgtclsh/mkMakefile.tcldefs.sh
 	src/bin/pgtclsh/mkMakefile.tkdefs.sh
 	src/include/version.h
-	src/interfaces/Makefile
-	src/interfaces/libpq/Makefile
-	src/interfaces/ecpg/lib/Makefile
-	src/interfaces/ecpg/preproc/Makefile
-	src/interfaces/perl5/GNUmakefile
-	src/interfaces/libpq++/Makefile
-	src/interfaces/libpgeasy/Makefile
-	src/interfaces/libpgtcl/Makefile
-	src/interfaces/odbc/GNUmakefile
-	src/interfaces/python/GNUmakefile
 	src/pl/tcl/mkMakefile.tcldefs.sh
 	src/test/regress/GNUmakefile
  src/include/config.h" | sed "s/:[^ ]*//g"` conftest*; exit 1' 1 2 15
@@ -9067,16 +9057,6 @@ CONFIG_FILES=\${CONFIG_FILES-"GNUmakefile
 	src/bin/pgtclsh/mkMakefile.tcldefs.sh
 	src/bin/pgtclsh/mkMakefile.tkdefs.sh
 	src/include/version.h
-	src/interfaces/Makefile
-	src/interfaces/libpq/Makefile
-	src/interfaces/ecpg/lib/Makefile
-	src/interfaces/ecpg/preproc/Makefile
-	src/interfaces/perl5/GNUmakefile
-	src/interfaces/libpq++/Makefile
-	src/interfaces/libpgeasy/Makefile
-	src/interfaces/libpgtcl/Makefile
-	src/interfaces/odbc/GNUmakefile
-	src/interfaces/python/GNUmakefile
 	src/pl/tcl/mkMakefile.tcldefs.sh
 	src/test/regress/GNUmakefile
 "}

@@ -6,67 +6,72 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.20 2000/05/16 20:48:48 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.21 2000/06/28 18:29:13 petere Exp $
 #
 #-------------------------------------------------------------------------
 
-# This file should be included by any Postgres module Makefile that wants
-# to build a shared library (if possible for the current platform).
-# A static library is also built from the same object files.
-# RESTRICTION: only one library can be built per makefile...
+# This file should be included by any Postgres module Makefile that
+# wants to build a shared library (if possible for the current
+# platform). A static library is also built from the same object
+# files. Only one library can be built per makefile.
+#
+# Before including this file, the module Makefile must define these
+# variables:
+#
+# NAME                  Name of library to build (no suffix nor "lib" prefix)
+# SO_MAJOR_VERSION      Major version number to use for shared library
+# SO_MINOR_VERSION      Minor version number to use for shared library
+# OBJS                  List of object files to include in library
+# SHLIB_LINK            If shared library relies on other libraries,
+#                       additional stuff to put in its link command
+# (If you want a patchlevel, include it in SO_MINOR_VERSION, e.g., "6.2".)
+#
+# The module Makefile must also include
+# $(top_builddir)/src/Makefile.global before including this file.
+# (Makefile.global sets PORTNAME and other needed symbols.)
+#
+# This makefile provides the following (phony) targets:
+#
+# all-lib               build the static and shared (if applicable) libraries
+# install-lib           install the libraries into $(libdir)
+# uninstall-lib         remove the libraries from $(libdir)
+# clean-lib             delete the static and shared libraries from the build dir
+#
+# Since `all-lib' is the first rule in this file you probably want to
+# have the `all' target before including this file. In the most simple
+# case it would look like this:
+#
+#     all: all-lib
+#
+# Similarly, the install rule might look like
+#
+#     install: install-lib
+#
+# plus any additional things you want to install. Et cetera.
+#
+# Got that?  Look at src/interfaces/libpq/Makefile for an example.
 
-# Before including this file, the module Makefile must define these variables:
-# NAME				Name of library to build (no suffix nor "lib" prefix)
-# SO_MAJOR_VERSION	Major version number to use for shared library
-# SO_MINOR_VERSION	Minor version number to use for shared library
-# OBJS				List of object files to include in library
-# SHLIB_LINK		If shared library relies on other libraries, additional
-#					stuff to put in its link command
-# (If you want a patchlevel, include it in SO_MINOR_VERSION, eg, "6.2".)
-#
-# The module Makefile must also include $(SRCDIR)/Makefile.global before
-# including this file (Makefile.global sets PORTNAME and other needed symbols).
-#
-# The first rule in this file is a rule for "all", which causes both the
-# static and shared libraries to be built (as well as all the object files).
-# If you have other files that need to be made before building object files
-# and libraries, put another rule for "all" before you include this file.
-#
-# Your install rule should look like
-#
-#	install: install-headers install-lib $(install-shlib-dep)
-#
-# where install-headers is only needed if you have header files to install
-# (and, of course, it has to be provided by your makefile).  The rules
-# install-lib and install-shlib are provided by this makefile --- they
-# automatically install the plain and shared libraries into $(LIBDIR).
-# install-shlib-dep is a variable that expands to install-shlib if the
-# shared library needs to be installed, empty if not.
-#
-# Got that?  Look at src/interfaces/libpq/Makefile.in for an example.
 
-
-# shlib and install-shlib-dep default to empty, and stay that way if we're
-# on a platform where we don't know how to build a shared library.
+# shlib is empty by default. If we know how to build a shared library
+# it will contain the name of the file, otherwise it will remain
+# empty. Thus `ifdef shlib' could be used in the containing make file
+# to test whether shared libraries are available.
 shlib := 
-install-shlib-dep :=
 
-# For each platform we support shlibs on, set shlib and install-shlib-dep,
-# and update flags as needed to build a shared lib.  Note we depend on
-# Makefile.global (or really Makefile.port) to supply DLSUFFIX and other
-# symbols.
+# For each platform we support shared libraries on, set shlib and
+# update flags as needed to build a shared lib. Note we depend on
+# Makefile.global (or really Makefile.port) to supply DLSUFFIX and
+# other symbols.
 
 # Try to keep the sections in some kind of order, folks...
 
 ifeq ($(PORTNAME), aix)
-  install-shlib-dep	:= install-shlib
-  shlib				:= lib$(NAME)$(DLSUFFIX)
+  shlib			:= lib$(NAME)$(DLSUFFIX)
   SHLIB_LINK		+= -lc
 endif
 
 ifeq ($(PORTNAME), bsd)
   ifdef BSD_SHLIB
-    install-shlib-dep	:= install-shlib
     shlib		:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
     ifdef ELF_SYSTEM
       LDFLAGS_SL	:= -x -Bshareable -soname $(shlib)
@@ -80,13 +85,11 @@ endif
 ifeq ($(PORTNAME), bsdi)
   ifdef BSD_SHLIB
     ifeq ($(DLSUFFIX), .so)
-      install-shlib-dep := install-shlib
       shlib			:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
       LDFLAGS_SL                += -shared -soname $(shlib)
       CFLAGS			+= $(CFLAGS_SL)
     endif
     ifeq ($(DLSUFFIX), .o)
-      install-shlib-dep	:= install-shlib
       shlib			:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
       LD			:= shlicc
       LDFLAGS_SL	 	+= -O $(LDREL)
@@ -97,7 +100,6 @@ endif
 
 ifeq ($(PORTNAME), freebsd)
   ifdef BSD_SHLIB
-    install-shlib-dep	:= install-shlib
     ifdef ELF_SYSTEM
       shlib		:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
       LDFLAGS_SL	:= -x -shared -soname $(shlib)
@@ -111,14 +113,13 @@ endif
 
 ifeq ($(PORTNAME), netbsd)
   ifdef BSD_SHLIB
-    install-shlib-dep	:= install-shlib
     soname		:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
     shlib		:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
     ifdef ELF_SYSTEM
       LD		:= $(CC)
       LDFLAGS_SL	:= -shared -Wl,-soname -Wl,$(soname)
       ifneq ($(SHLIB_LINK),)
-        LDFLAGS_SL	+= -Wl,-R$(LIBDIR)
+        LDFLAGS_SL	+= -Wl,-R$(libdir)
       endif
     else
       LDFLAGS_SL	:= -x -Bshareable -Bforcearchive
@@ -128,63 +129,55 @@ ifeq ($(PORTNAME), netbsd)
 endif
 
 ifeq ($(PORTNAME), hpux)
-  install-shlib-dep	:= install-shlib
 # HPUX doesn't believe in version numbers for shlibs
-  shlib				:= lib$(NAME)$(DLSUFFIX)
+  shlib			:= lib$(NAME)$(DLSUFFIX)
   LDFLAGS_SL		:= -b
-  CFLAGS			+= $(CFLAGS_SL)
+  CFLAGS		+= $(CFLAGS_SL)
 endif
 
 ifeq ($(PORTNAME), irix5)
-  install-shlib-dep := install-shlib
   shlib := lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
-  LDFLAGS_SL := -shared -rpath $(LIBDIR) -set_version sgi$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+  LDFLAGS_SL := -shared -rpath $(libdir) -set_version sgi$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
   CFLAGS += $(CFLAGS_SL)
 endif
 
 ifeq ($(PORTNAME), linux)
-  install-shlib-dep	:= install-shlib
-  shlib				:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+  shlib			:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
   LDFLAGS_SL		:= -Bdynamic -shared -soname $(shlib)
   LDFLAGS_ODBC		:= -Bsymbolic -lc -lm
   SHLIB_LINK		+= -lc
-  CFLAGS			+= $(CFLAGS_SL)
+  CFLAGS		+= $(CFLAGS_SL)
 endif
 
 ifeq ($(PORTNAME), solaris_i386)
-  install-shlib-dep	:= install-shlib
-  shlib				:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+  shlib			:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
   LDFLAGS_SL		:= -G
   SHLIB_LINK		+= -ldl -lsocket -lresolv -lnsl -lm -lc
-  CFLAGS			+= $(CFLAGS_SL)
+  CFLAGS		+= $(CFLAGS_SL)
 endif
 
 ifeq ($(PORTNAME), solaris_sparc)
-  install-shlib-dep	:= install-shlib
-  shlib				:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+  shlib			:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
   LDFLAGS_SL		:= -G
   SHLIB_LINK		+= -ldl -lsocket -lresolv -lnsl -lm -lc
-  CFLAGS			+= $(CFLAGS_SL)
+  CFLAGS		+= $(CFLAGS_SL)
 endif
 
 ifeq ($(PORTNAME), alpha)
-  install-shlib-dep	:= install-shlib
   shlib			:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
   LDFLAGS_SL		+= -shared -expect_unresolved '*'
 endif
 
 ifeq ($(PORTNAME), svr4)
-  install-shlib-dep	:= install-shlib
-  shlib				:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+  shlib			:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
   LDFLAGS_SL		:= -G
-  CFLAGS			+= $(CFLAGS_SL)
+  CFLAGS		+= $(CFLAGS_SL)
 endif
 
 ifeq ($(PORTNAME), univel)
-  install-shlib-dep	:= install-shlib
-  shlib				:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+  shlib			:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
   LDFLAGS_SL		:= -G -z text
-  CFLAGS			+= $(CFLAGS_SL)
+  CFLAGS		+= $(CFLAGS_SL)
   ifeq ($(CXX), CC)
     CXXFLAGS += -Xw
     COMPILE.cc = $(CXX) $(CXXFLAGS:ll,alloca=ll) $(CPPFLAGS) $(TARGET_ARCH) -c
@@ -192,10 +185,9 @@ ifeq ($(PORTNAME), univel)
 endif
 
 ifeq ($(PORTNAME), unixware)
-  install-shlib-dep	:= install-shlib
-  shlib				:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+  shlib			:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
   LDFLAGS_SL		:= -G -z text
-  CFLAGS			+= $(CFLAGS_SL)
+  CFLAGS		+= $(CFLAGS_SL)
   ifeq ($(CXX), CC)
     CXXFLAGS += -Xw
     COMPILE.cc = $(CXX) $(CXXFLAGS:ll,alloca=ll) $(CPPFLAGS) $(TARGET_ARCH) -c
@@ -203,13 +195,20 @@ ifeq ($(PORTNAME), unixware)
 endif
 
 ifeq ($(PORTNAME), win)
-  install-shlib-dep	:= install-shlib
-  shlib				:= $(NAME)$(DLSUFFIX)
+  shlib			:= $(NAME)$(DLSUFFIX)
 endif
 
-# Default target definition.  Note shlib is empty if not building a shlib.
 
-all: lib$(NAME).a $(shlib)
+# Note that in what follows, shlib is empty when not building a shared
+# library.
+
+
+##
+## BUILD
+##
+
+.PHONY: all-lib
+all-lib: lib$(NAME).a $(shlib)
 
 # Rules to build regular and shared libraries
 
@@ -223,74 +222,100 @@ else
 endif
 	$(RANLIB) $@
 
-endif
+endif # not win
 
-ifneq ($(shlib),)
+ifdef shlib
 ifneq ($(PORTNAME), win)
 ifneq ($(PORTNAME), aix)
 
 # Normal case
 $(shlib): $(OBJS)
 	$(LD) $(LDFLAGS_SL) -o $@ $(OBJS) $(SHLIB_LINK)
-	if [ "$(shlib)" != "lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)" ]; then \
-		rm -f lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION); \
-		$(LN_S) $(shlib) lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION); \
-	fi
-	if [ "$(shlib)" != "lib$(NAME)$(DLSUFFIX)" ]; then \
-		rm -f lib$(NAME)$(DLSUFFIX); \
-		$(LN_S) $(shlib) lib$(NAME)$(DLSUFFIX); \
-	fi
+# If we're using major and minor versions, then make a symlink to major-version-only.
+ifneq ($(shlib), lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION))
+	rm -f lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
+	$(LN_S) $(shlib) lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
+endif
+# Make sure we have a link to a name without any version numbers
+ifneq ($(shlib), lib$(NAME)$(DLSUFFIX))
+	rm -f lib$(NAME)$(DLSUFFIX)
+	$(LN_S) $(shlib) lib$(NAME)$(DLSUFFIX)
+endif
 
-else
+else # PORTNAME == aix
 
 # AIX case
 $(shlib): lib$(NAME).a
-	$(MKLDEXPORT) lib$(NAME).a $(LIBDIR) > lib$(NAME)$(EXPSUFF)
-	$(LD) -H512 -bM:SRE -bI:$(SRCDIR)/backend/$(POSTGRES_IMP) -bE:lib$(NAME)$(EXPSUFF) -o $@ $< $(LDFLAGS) $(SHLIB_LINK)
+	$(MKLDEXPORT) lib$(NAME).a $(libdir) > lib$(NAME)$(EXPSUFF)
+	$(LD) -H512 -bM:SRE -bI:$(top_builddir)/src/backend/$(POSTGRES_IMP) -bE:lib$(NAME)$(EXPSUFF) -o $@ $< $(LDFLAGS) $(SHLIB_LINK)
 
-endif
+endif # PORTNAME == aix
 
-else
+else # PORTNAME == win
 
 # WIN case
-$(shlib) lib$(NAME).a: $(OBJS) $(SRCDIR)/utils/dllinit.o
+$(shlib) lib$(NAME).a: $(OBJS) $(top_builddir)/src/utils/dllinit.o
 	$(DLLTOOL) --export-all --output-def $(NAME).def $(OBJS)
-	$(DLLWRAP) -o $(shlib) --dllname $(shlib) --def $(NAME).def $(OBJS) $(SRCDIR)/utils/dllinit.o $(DLLINIT) $(SHLIB_LINK)
+	$(DLLWRAP) -o $(shlib) --dllname $(shlib) --def $(NAME).def $(OBJS) $(top_builddir)/src/utils/dllinit.o $(DLLINIT) $(SHLIB_LINK)
 	$(DLLTOOL) --dllname $(shlib) --def $(NAME).def --output-lib lib$(NAME).a
 
-$(SRCDIR)/utils/dllinit.o: $(SRCDIR)/utils/dllinit.c
-	$(MAKE) -C $(SRCDIR)/utils dllinit.o
+$(top_builddir)/src/utils/dllinit.o: $(top_srcdir)/src/utils/dllinit.c
+	$(MAKE) -C $(top_builddir)/src/utils dllinit.o
 
-endif
-endif
+endif # PORTNAME == win
+endif # shlib
 
-# Rules to install regular and shared libraries
 
-.PHONY: all install-lib install-shlib
+##
+## INSTALL
+##
 
-install-lib: lib$(NAME).a
-	$(INSTALL) $(INSTL_LIB_OPTS) lib$(NAME).a $(LIBDIR)/lib$(NAME).a
+.PHONY: install-lib install-lib-static install-lib-shared
+install-lib: install-lib-static install-lib-shared
 
-install-shlib: $(shlib)
-	$(INSTALL) $(INSTL_SHLIB_OPTS) $(shlib) $(LIBDIR)/$(shlib)
+install-lib-static: lib$(NAME).a
+	$(INSTALL_DATA) $< $(libdir)/lib$(NAME).a
+
+ifdef shlib
+install-lib-shared: $(shlib)
+	$(INSTALL_SHLIB) $< $(libdir)/$(shlib)
 ifneq ($(PORTNAME), win)
-	if [ "$(shlib)" != "lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)" ]; then \
-		cd $(LIBDIR); \
-		rm -f lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION); \
-		$(LN_S) $(shlib) lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION); \
-	fi
-	if [ "$(shlib)" != "lib$(NAME)$(DLSUFFIX)" ]; then \
-		cd $(LIBDIR); \
-		rm -f lib$(NAME)$(DLSUFFIX); \
-		$(LN_S) $(shlib) lib$(NAME)$(DLSUFFIX); \
-	fi
+ifneq ($(shlib), lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION))
+	cd $(libdir) && \
+	rm -f lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION) && \
+	$(LN_S) $(shlib) lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
+endif
+ifneq ($(shlib), lib$(NAME)$(DLSUFFIX))
+	cd $(libdir) && \
+	rm -f lib$(NAME)$(DLSUFFIX) && \
+	$(LN_S) $(shlib) lib$(NAME)$(DLSUFFIX)
 endif
 
-# Rule to delete shared library during "make clean"
+endif # not win
+endif # shlib
 
-.PHONY: clean-shlib
 
-clean-shlib:
+##
+## UNINSTALL
+##
+
+.PHONY: uninstall-lib
+uninstall-lib:
+	rm -f $(libdir)/lib$(NAME).a
+ifdef shlib
+	rm -f $(libdir)/lib$(NAME)$(DLSUFFIX) \
+	  $(libdir)/lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION) \
+	  $(libdir)/lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+endif # shlib
+
+
+##
+## CLEAN
+##
+
+.PHONY: clean-lib
+clean-lib:
+	rm -f lib$(NAME).a
 	rm -f $(shlib) lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION) lib$(NAME)$(DLSUFFIX)
 ifeq ($(PORTNAME), win)
 	rm -rf $(NAME).def

@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/pg_dump/Makefile,v 1.15 2000/06/27 00:31:12 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_dump/Makefile,v 1.16 2000/06/28 18:29:16 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -27,7 +27,7 @@ pg_dump$(X): $(OBJS) $(LIBPQDIR)/libpq.a
 
 .PHONY: submake
 submake:
-	$(MAKE) -C $(LIBPQDIR) libpq.a
+	$(MAKE) -C $(LIBPQDIR) all
 
 install: all installdirs
 	$(INSTALL_PROGRAM) pg_dump$(X) $(bindir)/pg_dump$(X)

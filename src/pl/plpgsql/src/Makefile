@@ -2,7 +2,7 @@
 #
 # Makefile for the plpgsql shared object
 #
-# $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Makefile,v 1.3 2000/06/27 00:32:01 petere Exp $
+# $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Makefile,v 1.4 2000/06/28 18:30:16 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -19,7 +19,9 @@ CPPFLAGS += -I$(srcdir)
 
 OBJS = pl_parse.o pl_handler.o pl_comp.o pl_exec.o pl_funcs.o
 
-# Shared library stuff, also default `all' target
+all: all-lib
+
+# Shared library stuff
 include $(top_srcdir)/src/Makefile.shlib
 
 
@@ -68,8 +70,8 @@ mklang.sql: mklang.sql.in
 	sed -e 's%__libdir__%$(libdir)%g' -e 's%__DLSUFFIX__%$(DLSUFFIX)%g' < $< > $@
 
 
-clean distclean: clean-shlib
-	rm -f lib$(NAME).a *.o y.tab.c y.tab.h lex.yy.c mklang.sql
+clean distclean: clean-lib
+	rm -f *.o y.tab.c y.tab.h lex.yy.c mklang.sql
 
 maintainer-clean: clean
 	rm -f $(srcdir)/pl_gram.c $(srcdir)/pl.tab.h $(srcdir)/pl_scan.c

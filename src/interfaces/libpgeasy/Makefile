@@ -1,19 +1,20 @@
 #-------------------------------------------------------------------------
 #
-# Makefile
-#    Makefile for pgeasy library
+# Makefile for src/interfaces/libpgeasy
 #
-# IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpgeasy/Attic/Makefile.in,v 1.8 2000/06/17 00:10:00 petere Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/libpgeasy/Attic/Makefile,v 1.1 2000/06/28 18:29:41 petere Exp $
 #
 #-------------------------------------------------------------------------
 
+subdir = src/interfaces/libpgeasy
+top_builddir = ../../..
+include ../../Makefile.global
+
+
+# shared library parameters
 NAME= pgeasy
 SO_MAJOR_VERSION= 2
 SO_MINOR_VERSION= 1
-
-SRCDIR= ../..
-include $(SRCDIR)/Makefile.global
 
 CFLAGS+= -I$(LIBPQDIR)
 
@@ -26,22 +27,25 @@ SHLIB_LINK+= $(LIBPQ)
 # braindead; users of libpq should not need to know what it depends on.)
 SHLIB_LINK+= $(findstring -lcrypt,$(LIBS))
 
-# Shared library stuff, also default 'all' target
-include $(SRCDIR)/Makefile.shlib
+all: all-lib
 
+# Shared library stuff
+include $(top_srcdir)/src/Makefile.shlib
 
-.PHONY: install install-headers
+install: all installdirs install-headers install-lib
 
-install: install-headers install-lib $(install-shlib-dep)
-
+.PHONY: install-headers
 install-headers: libpgeasy.h
-	-@if [ ! -d $(HEADERDIR) ]; then mkdir $(HEADERDIR); fi
-	$(INSTALL) $(INSTLOPTS) libpgeasy.h $(HEADERDIR)/libpgeasy.h
+	$(INSTALL_DATA) $< $(includedir)/libpgeasy.h
 
-.PHONY: clean
+installdirs:
+	$(mkinstalldirs) $(libdir) $(includedir)
 
-clean: clean-shlib
-	rm -f lib$(NAME).a $(OBJS)
+uninstall: uninstall-lib
+	rm -f $(includedir)/libpgeasy.h
+
+clean distclean maintainer-clean: clean-lib
+	rm -f $(OBJS)
 
 depend dep:
 	$(CC) -MM $(CFLAGS) *.c >depend

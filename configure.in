@@ -1202,16 +1202,6 @@ AC_OUTPUT(
 	src/bin/pgtclsh/mkMakefile.tcldefs.sh
 	src/bin/pgtclsh/mkMakefile.tkdefs.sh
 	src/include/version.h
-	src/interfaces/Makefile
-	src/interfaces/libpq/Makefile
-	src/interfaces/ecpg/lib/Makefile
-	src/interfaces/ecpg/preproc/Makefile
-	src/interfaces/perl5/GNUmakefile
-	src/interfaces/libpq++/Makefile
-	src/interfaces/libpgeasy/Makefile
-	src/interfaces/libpgtcl/Makefile
-	src/interfaces/odbc/GNUmakefile
-	src/interfaces/python/GNUmakefile
 	src/pl/tcl/mkMakefile.tcldefs.sh
 	src/test/regress/GNUmakefile
 )

@@ -1,22 +1,16 @@
-# Generated automatically from Makefile.in by configure.
-SRCDIR= ../../..
-include $(SRCDIR)/Makefile.global
+subdir = src/interfaces/ecpg/include
+top_builddir = ../../../..
+include ../../../Makefile.global
 
-all clean::
-	@echo Nothing to be done.
+install: all installdirs install-headers
 
-install::
-	$(INSTALL) $(INSTLOPTS) ecpgerrno.h $(HEADERDIR)	
-	$(INSTALL) $(INSTLOPTS) ecpglib.h $(HEADERDIR)	
-	$(INSTALL) $(INSTLOPTS) ecpgtype.h $(HEADERDIR)	
-	$(INSTALL) $(INSTLOPTS) sqlca.h $(HEADERDIR)	
-	$(INSTALL) $(INSTLOPTS) sql3types.h $(HEADERDIR)	
+.PHONY: install-headers
+ecpg_headers = ecpgerrno.h ecpglib.h ecpgtype.h sqlca.h sql3types.h
+install-headers: $(ecpg_headers)
+	for i in $^; do $(INSTALL_DATA) $$i $(includedir); done
 
-uninstall::
-	rm -f $(HEADERDIR)/ecpgerrno.h
-	rm -f $(HEADERDIR)/ecpglib.h
-	rm -f $(HEADERDIR)/ecpgtype.h
-	rm -f $(HEADERDIR)/sqlca.h
-	rm -f $(HEADERDIR)/sql3types.h
+installdirs:
+	$(mkinstalldirs) $(includedir)
 
-dep depend:
+uninstall:
+	rm -f $(addprefix $(includedir)/, $(ecpg_headers))

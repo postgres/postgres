@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.59 2000/06/14 18:17:54 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.60 2000/06/28 18:29:40 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,6 +35,8 @@
 #if defined(yywrap)
 #undef yywrap
 #endif /* yywrap */
+
+#define YY_NO_UNPUT
 
 extern YYSTYPE yylval;
 

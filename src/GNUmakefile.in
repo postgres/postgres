@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/GNUmakefile.in,v 1.53 2000/06/27 00:30:48 petere Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/GNUmakefile.in,v 1.54 2000/06/28 18:29:13 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -56,7 +56,7 @@ distclean maintainer-clean:
 	rm -f backend/port/Makefile backend/catalog/genbki.sh \
 		backend/utils/Gen_fmgrtab.sh \
 		backend/port/tas.s backend/port/dynloader.c
-	-$(MAKE) -C interfaces distclean
+	-$(MAKE) -C interfaces $@
 	-$(MAKE) -C bin $@
 	-$(MAKE) -C pl $@
 	-$(MAKE) -C test clean

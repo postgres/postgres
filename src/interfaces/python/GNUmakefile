@@ -1,38 +1,21 @@
 #-------------------------------------------------------------------
 #
-# Makefile for src/interfaces/python, a.k.a. "PyGreSQL"
+# GNUmakefile for src/interfaces/python, a.k.a. "PyGreSQL"
 #
 # Written by Peter Eisentraut  <peter_e@gmx.net>
 #
-# $Header: /cvsroot/pgsql/src/interfaces/python/Attic/GNUmakefile.in,v 1.1 2000/06/10 18:02:00 petere Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/python/Attic/GNUmakefile,v 1.1 2000/06/28 18:30:07 petere Exp $
 #
 #-------------------------------------------------------------------
 
-srcdir = @srcdir@
-VPATH = @srcdir@
-
-top_srcdir = @top_srcdir@
+subdir = src/interfaces/python
 top_builddir = ../../..
-
-
-prefix = @prefix@
-exec_prefix = @exec_prefix@
-libdir = @libdir@
-includedir = @includedir@
-
-INSTALL = @INSTALL@
-INSTALL_DATA = @INSTALL_DATA@
-
-LIBS = @LIBS@
-
-PYTHON = @PYTHON@
-python_extmakefile = @python_extmakefile@
-python_moduledir = @python_moduledir@
-
+include ../../Makefile.global
 
 all: Makefile pgmodule.c libpq-all
 	$(MAKE) -f Makefile
 
+.PHONY: libpq-all
 libpq-all:
 	$(MAKE) -C $(top_builddir)/src/interfaces/libpq all
 
@@ -60,15 +43,15 @@ install: all
 		echo "*****"; \
 	fi
 
+uninstall:
+	@echo "*****"; \
+	 echo "* Unfortunately, the Python interface module cannot be uninstalled"; \
+	 echo "* automatically. To do it yourself, look in or near the directory"; \
+	 echo "* \`$(python_moduledir)' for files \`pg.py' and \`_pgmodule$(DLSUFFIX)'."; \
+	 echo "*****"
 
 # Python sometimes has a different idea what exactly "clean" is.
 
-clean:
+clean distclean maintainer-clean:
 	-[ -f Makefile ] && $(MAKE) -f Makefile clobber
 	rm -f Makefile.pre.in Makefile Setup Setup.in
-
-distclean maintainer-clean: clean
-	rm -f GNUmakefile
-
-
-.PHONY: all libpq-all install clean distclean maintainer-clean

@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/pgaccess/Attic/Makefile,v 1.9 2000/06/27 00:31:34 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/pgaccess/Attic/Makefile,v 1.10 2000/06/28 18:29:22 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -22,10 +22,10 @@ pgaccess: pgaccess.sh
 install: all installdirs
 	$(INSTALL_SCRIPT) pgaccess $(bindir)/pgaccess
 	$(INSTALL_SCRIPT) main.tcl $(pgaccessdir)
-	$(INSTALL_DATA) lib/*.tcl $(pgaccessdir)/lib
-	$(INSTALL_DATA) lib/help/*.hlp $(pgaccessdir)/lib/help
-	$(INSTALL_DATA) lib/languages/[a-z]* $(pgaccessdir)/lib/languages
-	$(INSTALL_DATA) images/*.gif $(pgaccessdir)/images
+	for i in lib/*.tcl; do $(INSTALL_DATA) $$i $(pgaccessdir)/lib || exit 1; done
+	for i in lib/help/*.hlp; do $(INSTALL_DATA) $$i $(pgaccessdir)/lib/help || exit 1; done
+	for i in lib/languages/[a-z]*; do $(INSTALL_DATA) $$i $(pgaccessdir)/lib/languages || exit 1; done
+	for i in images/*.gif; do $(INSTALL_DATA) $$i $(pgaccessdir)/images || exit 1; done
 
 installdirs:
 	$(mkinstalldirs) $(bindir) $(pgaccessdir)/lib/help $(pgaccessdir)/lib/languages $(pgaccessdir)/images

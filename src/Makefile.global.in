@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.81 2000/06/27 00:30:48 petere Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.82 2000/06/28 18:29:13 petere Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the
@@ -86,6 +86,8 @@ localstatedir = @localstatedir@
 libdir = @libdir@
 includedir = @includedir@
 
+odbcinst_ini_dir = @odbcinst_ini_dir@
+
 # old variable names for installation directories
 
 POSTGRESDIR= $(prefix)
@@ -112,7 +114,14 @@ ENFORCE_ALIGNMENT= true
 #PROFILE= -p -non_shared
 
 
+with_CXX = @with_CXX@
 with_perl = @with_perl@
+enable_odbc = @enable_odbc@
+
+with_python = @with_python@
+PYTHON = @PYTHON@
+python_extmakefile = @python_extmakefile@
+python_moduledir = @python_moduledir@
 
 #
 # Please do not edit USE_TCL and USE_TK by hand.
@@ -172,6 +181,8 @@ LN_S= @LN_S@
 TAR= @tar@
 GZCAT= @GZCAT@
 PERL = @PERL@
+CXX=@CXX@
+CXXFLAGS=@CXXFLAGS@ @INCLUDES@
 
 
 ##############################################################################
@@ -260,10 +271,10 @@ endif
 
 
 # substitute implementations of the C library
+INET_ATON = @INET_ATON@
 STRERROR = @STRERROR@
 STRERROR2 = @STRERROR2@
 SNPRINTF = @SNPRINTF@
 STRDUP = @STRDUP@
 
-.DEFAULT: all
 .PHONY: all install installdirs uninstall dep depend clean distclean maintainer-clean

@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1998, PostgreSQL Global Development Group
 #
-# $Header: /cvsroot/pgsql/src/bin/pg_encoding/Attic/Makefile,v 1.8 2000/06/27 00:31:17 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_encoding/Attic/Makefile,v 1.9 2000/06/28 18:29:21 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -22,7 +22,7 @@ pg_encoding$(X): $(OBJS)
 .PHONY: submake
 
 submake:
-	$(MAKE) -C $(LIBPQDIR) libpq.a
+	$(MAKE) -C $(LIBPQDIR) all
 
 install: all installdirs
 	$(INSTALL_PROGRAM) pg_encoding$(X) $(bindir)/pg_encoding$(X)
