@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Oct 15 14:54:46 EDT 2002
+Last updated:		Tue Oct 15 17:33:59 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -518,8 +518,6 @@ Source Code
 * Remove memory/file descriptor freeing befor elog(ERROR)  (Bruce)
 * Create native Win32 port [win32]
 * -Fix glibc's mktime() to handle pre-1970's dates
-* Rename oid2name to relfilenode2name and install by default
-* Move /contrib/oid2name to /bin, rename to relfilenode2name
 
 ---------------------------------------------------------------------------
 
