@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.82 2001/08/12 21:35:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.83 2001/10/01 20:15:26 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -41,7 +41,9 @@
 #include <fcntl.h>
 
 #include "catalog/heap.h"
+#include "catalog/index.h"
 #include "catalog/pg_index.h"
+#include "catalog/pg_opclass.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_shadow.h"
 #include "executor/spi.h"
@@ -94,10 +96,6 @@ static void *plan_getrule = NULL;
 static char *query_getrule = "SELECT * FROM pg_rewrite WHERE rulename = $1";
 static void *plan_getview = NULL;
 static char *query_getview = "SELECT * FROM pg_rewrite WHERE rulename = $1";
-static void *plan_getam = NULL;
-static char *query_getam = "SELECT * FROM pg_am WHERE oid = $1";
-static void *plan_getopclass = NULL;
-static char *query_getopclass = "SELECT * FROM pg_opclass WHERE oid = $1";
 
 
 /* ----------
@@ -138,6 +136,8 @@ static void get_sublink_expr(Node *node, deparse_context *context);
 static void get_from_clause(Query *query, deparse_context *context);
 static void get_from_clause_item(Node *jtnode, Query *query,
 					 deparse_context *context);
+static void get_opclass_name(Oid opclass, bool only_nondefault,
+							 StringInfo buf);
 static bool tleIsArrayAssign(TargetEntry *tle);
 static char *quote_identifier(char *ident);
 static char *get_relation_name(Oid relid);
@@ -341,47 +341,15 @@ pg_get_indexdef(PG_FUNCTION_ARGS)
 	HeapTuple	ht_idx;
 	HeapTuple	ht_idxrel;
 	HeapTuple	ht_indrel;
-	HeapTuple	spi_tup;
-	TupleDesc	spi_ttc;
-	int			spi_fno;
 	Form_pg_index idxrec;
 	Form_pg_class idxrelrec;
 	Form_pg_class indrelrec;
-	Datum		spi_args[1];
-	char		spi_nulls[2];
-	int			spirc;
+	Form_pg_am	amrec;
 	int			len;
 	int			keyno;
 	StringInfoData buf;
 	StringInfoData keybuf;
 	char	   *sep;
-
-	/*
-	 * Connect to SPI manager
-	 */
-	if (SPI_connect() != SPI_OK_CONNECT)
-		elog(ERROR, "get_indexdef: cannot connect to SPI manager");
-
-	/*
-	 * On the first call prepare the plans to lookup pg_am and pg_opclass.
-	 */
-	if (plan_getam == NULL)
-	{
-		Oid			argtypes[1];
-		void	   *plan;
-
-		argtypes[0] = OIDOID;
-		plan = SPI_prepare(query_getam, 1, argtypes);
-		if (plan == NULL)
-			elog(ERROR, "SPI_prepare() failed for \"%s\"", query_getam);
-		plan_getam = SPI_saveplan(plan);
-
-		argtypes[0] = OIDOID;
-		plan = SPI_prepare(query_getopclass, 1, argtypes);
-		if (plan == NULL)
-			elog(ERROR, "SPI_prepare() failed for \"%s\"", query_getopclass);
-		plan_getopclass = SPI_saveplan(plan);
-	}
 
 	/*
 	 * Fetch the pg_index tuple by the Oid of the index
@@ -414,21 +382,14 @@ pg_get_indexdef(PG_FUNCTION_ARGS)
 	indrelrec = (Form_pg_class) GETSTRUCT(ht_indrel);
 
 	/*
-	 * Get the am name for the index relation
+	 * Fetch the pg_am tuple of the index' access method
+	 *
+	 * There is no syscache for this, so use index.c subroutine.
 	 */
-	spi_args[0] = ObjectIdGetDatum(idxrelrec->relam);
-	spi_nulls[0] = ' ';
-	spi_nulls[1] = '\0';
-	spirc = SPI_execp(plan_getam, spi_args, spi_nulls, 1);
-	if (spirc != SPI_OK_SELECT)
-		elog(ERROR, "failed to get pg_am tuple for index %s",
-			 NameStr(idxrelrec->relname));
-	if (SPI_processed != 1)
-		elog(ERROR, "failed to get pg_am tuple for index %s",
-			 NameStr(idxrelrec->relname));
-	spi_tup = SPI_tuptable->vals[0];
-	spi_ttc = SPI_tuptable->tupdesc;
-	spi_fno = SPI_fnumber(spi_ttc, "amname");
+	amrec = AccessMethodObjectIdGetForm(idxrelrec->relam,
+										CurrentMemoryContext);
+	if (!amrec)
+		elog(ERROR, "lookup for AM %u failed", idxrelrec->relam);
 
 	/*
 	 * Start the index definition
@@ -436,13 +397,12 @@ pg_get_indexdef(PG_FUNCTION_ARGS)
 	initStringInfo(&buf);
 	appendStringInfo(&buf, "CREATE %sINDEX %s ON %s USING %s (",
 					 idxrec->indisunique ? "UNIQUE " : "",
-				  quote_identifier(pstrdup(NameStr(idxrelrec->relname))),
-				  quote_identifier(pstrdup(NameStr(indrelrec->relname))),
-					 quote_identifier(SPI_getvalue(spi_tup, spi_ttc,
-												   spi_fno)));
+					 quote_identifier(NameStr(idxrelrec->relname)),
+					 quote_identifier(NameStr(indrelrec->relname)),
+					 quote_identifier(NameStr(amrec->amname)));
 
 	/*
-	 * Collect the indexed attributes
+	 * Collect the indexed attributes in keybuf
 	 */
 	initStringInfo(&keybuf);
 	sep = "";
@@ -465,29 +425,14 @@ pg_get_indexdef(PG_FUNCTION_ARGS)
 		 * If not a functional index, add the operator class name
 		 */
 		if (idxrec->indproc == InvalidOid)
-		{
-			spi_args[0] = ObjectIdGetDatum(idxrec->indclass[keyno]);
-			spi_nulls[0] = ' ';
-			spi_nulls[1] = '\0';
-			spirc = SPI_execp(plan_getopclass, spi_args, spi_nulls, 1);
-			if (spirc != SPI_OK_SELECT)
-				elog(ERROR, "failed to get pg_opclass tuple %u", idxrec->indclass[keyno]);
-			if (SPI_processed != 1)
-				elog(ERROR, "failed to get pg_opclass tuple %u", idxrec->indclass[keyno]);
-			spi_tup = SPI_tuptable->vals[0];
-			spi_ttc = SPI_tuptable->tupdesc;
-			spi_fno = SPI_fnumber(spi_ttc, "opcname");
-			appendStringInfo(&keybuf, " %s",
-						  quote_identifier(SPI_getvalue(spi_tup, spi_ttc,
-														spi_fno)));
-		}
+			get_opclass_name(idxrec->indclass[keyno], true, &keybuf);
 	}
 
-	/*
-	 * For functional index say 'func (attrs) opclass'
-	 */
 	if (idxrec->indproc != InvalidOid)
 	{
+		/*
+		 * For functional index say 'func (attrs) opclass'
+		 */
 		HeapTuple	proctup;
 		Form_pg_proc procStruct;
 
@@ -498,57 +443,66 @@ pg_get_indexdef(PG_FUNCTION_ARGS)
 			elog(ERROR, "cache lookup for proc %u failed", idxrec->indproc);
 		procStruct = (Form_pg_proc) GETSTRUCT(proctup);
 
-		appendStringInfo(&buf, "%s(%s) ",
-				 quote_identifier(pstrdup(NameStr(procStruct->proname))),
+		appendStringInfo(&buf, "%s(%s)",
+						 quote_identifier(NameStr(procStruct->proname)),
 						 keybuf.data);
+		get_opclass_name(idxrec->indclass[0], true, &buf);
 
-		spi_args[0] = ObjectIdGetDatum(idxrec->indclass[0]);
-		spi_nulls[0] = ' ';
-		spi_nulls[1] = '\0';
-		spirc = SPI_execp(plan_getopclass, spi_args, spi_nulls, 1);
-		if (spirc != SPI_OK_SELECT)
-			elog(ERROR, "failed to get pg_opclass tuple %u", idxrec->indclass[0]);
-		if (SPI_processed != 1)
-			elog(ERROR, "failed to get pg_opclass tuple %u", idxrec->indclass[0]);
-		spi_tup = SPI_tuptable->vals[0];
-		spi_ttc = SPI_tuptable->tupdesc;
-		spi_fno = SPI_fnumber(spi_ttc, "opcname");
-		appendStringInfo(&buf, "%s",
-						 quote_identifier(SPI_getvalue(spi_tup, spi_ttc,
-													   spi_fno)));
 		ReleaseSysCache(proctup);
 	}
 	else
-
+	{
 		/*
-		 * For the others say 'attr opclass [, ...]'
+		 * Otherwise say 'attr opclass [, ...]'
 		 */
 		appendStringInfo(&buf, "%s", keybuf.data);
+	}
 
-	/*
-	 * Finish
-	 */
 	appendStringInfo(&buf, ")");
 
 	/*
-	 * Create the result in upper executor memory, and free objects
+	 * If it's a partial index, decompile and append the predicate
+	 */
+	if (VARSIZE(&idxrec->indpred) > VARHDRSZ)
+	{
+		Node	*node;
+		List	*context;
+		char	*exprstr;
+		char	*str;
+
+		/* Convert TEXT object to C string */
+		exprstr = DatumGetCString(DirectFunctionCall1(textout,
+													  PointerGetDatum(&idxrec->indpred)));
+		/* Convert expression to node tree */
+		node = (Node *) stringToNode(exprstr);
+		/*
+		 * If top level is a List, assume it is an implicit-AND structure,
+		 * and convert to explicit AND.  This is needed for partial index
+		 * predicates.
+		 */
+		if (node && IsA(node, List))
+			node = (Node *) make_ands_explicit((List *) node);
+		/* Deparse */
+		context = deparse_context_for(NameStr(indrelrec->relname),
+									  idxrec->indrelid);
+		str = deparse_expression(node, context, false);
+		appendStringInfo(&buf, " WHERE %s", str);
+	}
+
+	/*
+	 * Create the result as a TEXT datum, and free working data
 	 */
 	len = buf.len + VARHDRSZ;
-	indexdef = SPI_palloc(len);
+	indexdef = (text *) palloc(len);
 	VARATT_SIZEP(indexdef) = len;
 	memcpy(VARDATA(indexdef), buf.data, buf.len);
 
 	pfree(buf.data);
 	pfree(keybuf.data);
+	pfree(amrec);
 	ReleaseSysCache(ht_idx);
 	ReleaseSysCache(ht_idxrel);
 	ReleaseSysCache(ht_indrel);
-
-	/*
-	 * Disconnect from SPI manager
-	 */
-	if (SPI_finish() != SPI_OK_FINISH)
-		elog(ERROR, "get_viewdef: SPI_finish() failed");
 
 	PG_RETURN_TEXT_P(indexdef);
 }
@@ -2546,6 +2500,32 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 	dpns->namespace = sv_namespace;
 }
 
+/* ----------
+ * get_opclass_name			- fetch name of an index operator class
+ *
+ * The opclass name is appended (after a space) to buf.
+ * If "only_nondefault" is true, the opclass name is appended only if
+ * it isn't the default for its datatype.
+ * ----------
+ */
+static void
+get_opclass_name(Oid opclass, bool only_nondefault,
+				 StringInfo buf)
+{
+	HeapTuple	ht_opc;
+	Form_pg_opclass opcrec;
+
+	ht_opc = SearchSysCache(CLAOID,
+							ObjectIdGetDatum(opclass),
+							0, 0, 0);
+	if (!HeapTupleIsValid(ht_opc))
+		elog(ERROR, "cache lookup failed for opclass %u", opclass);
+	opcrec = (Form_pg_opclass) GETSTRUCT(ht_opc);
+	if (!only_nondefault || !opcrec->opcdefault)
+		appendStringInfo(buf, " %s",
+						 quote_identifier(NameStr(opcrec->opcname)));
+	ReleaseSysCache(ht_opc);
+}
 
 /* ----------
  * tleIsArrayAssign			- check for array assignment
