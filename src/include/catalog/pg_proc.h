@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.277 2002/12/04 05:18:36 momjian Exp $
+ * $Id: pg_proc.h,v 1.278 2002/12/05 04:38:30 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -958,13 +958,13 @@ DESCR("less-than-or-equal");
 DATA(insert OID = 720 (  octet_length	   PGNSP PGUID 12 f f t f i 1 23 "17"  byteaoctetlen - _null_ ));
 DESCR("octet length");
 DATA(insert OID = 721 (  get_byte		   PGNSP PGUID 12 f f t f i 2 23 "17 23"	byteaGetByte - _null_ ));
-DESCR("");
+DESCR("get byte");
 DATA(insert OID = 722 (  set_byte		   PGNSP PGUID 12 f f t f i 3 17 "17 23 23"  byteaSetByte - _null_ ));
-DESCR("");
+DESCR("set byte");
 DATA(insert OID = 723 (  get_bit		   PGNSP PGUID 12 f f t f i 2 23 "17 23"	byteaGetBit - _null_ ));
-DESCR("");
+DESCR("get bit");
 DATA(insert OID = 724 (  set_bit		   PGNSP PGUID 12 f f t f i 3 17 "17 23 23"  byteaSetBit - _null_ ));
-DESCR("");
+DESCR("set bit");
 
 DATA(insert OID = 725 (  dist_pl		   PGNSP PGUID 12 f f t f i 2 701 "600 628"  dist_pl - _null_ ));
 DESCR("distance between point and line");

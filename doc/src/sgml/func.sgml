@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.132 2002/11/23 04:04:43 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.133 2002/12/05 04:38:29 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -473,7 +473,8 @@ PostgreSQL documentation
     shown in <xref linkend="functions-math-bit-table">.
     Bit string arguments to <literal>&</literal>, <literal>|</literal>,
     and <literal>#</literal> must be of equal length.  When bit
-    shifting, the original length of the string is preserved, as shown in the table.
+    shifting, the original length of the string is preserved, as shown
+    in the table.
    </para>
 
     <table id="functions-math-bit-table">
@@ -2119,6 +2120,58 @@ PostgreSQL documentation
        </entry>
        <entry><literal>trim('\\000'::bytea from '\\000Tom\\000'::bytea)</literal></entry>
        <entry><literal>Tom</literal></entry>
+      </row>
+
+      <row>
+       <entry><function>get_byte</function>(<parameter>string</parameter>, <parameter>offset</parameter>)</entry>
+       <entry><type>integer</type></entry>
+       <entry>
+        Extract byte from string.
+        <indexterm>
+         <primary>get_byte</primary>
+        </indexterm>
+       </entry>
+       <entry><literal>get_byte('Th\\000omas'::bytea, 4)</literal></entry>
+       <entry><literal>109</literal></entry>
+      </row>
+
+      <row>
+       <entry><function>set_byte</function>(<parameter>string</parameter>, <parameter>offset</parameter>)</entry>
+       <entry><type>bytea</type></entry>
+       <entry>
+        Set byte in string.
+        <indexterm>
+         <primary>set_byte</primary>
+        </indexterm>
+       </entry>
+       <entry><literal>set_byte('Th\\000omas'::bytea, 4, 64)</literal></entry>
+       <entry><literal>Th\000o@as</literal></entry>
+      </row>
+
+      <row>
+       <entry><function>get_bit</function>(<parameter>string</parameter>, <parameter>offset</parameter>)</entry>
+       <entry><type>integer</type></entry>
+       <entry>
+        Extract bit from string.
+        <indexterm>
+         <primary>get_bit</primary>
+        </indexterm>
+       </entry>
+       <entry><literal>get_bit('Th\\000omas'::bytea, 45)</literal></entry>
+       <entry><literal>1</literal></entry>
+      </row>
+
+      <row>
+       <entry><function>set_bit</function>(<parameter>string</parameter>, <parameter>offset</parameter>)</entry>
+       <entry><type>bytea</type></entry>
+       <entry>
+        Set bit in string.
+        <indexterm>
+         <primary>set_bit</primary>
+        </indexterm>
+       </entry>
+       <entry><literal>set_bit('Th\\000omas'::bytea, 45, 0)</literal></entry>
+       <entry><literal>Th\000omAs</literal></entry>
       </row>
      </tbody>
     </tgroup>
