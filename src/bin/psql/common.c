@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.68 2003/08/04 00:43:29 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.69 2003/08/04 19:10:40 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -247,7 +247,7 @@ ConnectionUp()
  * with a code of EXIT_BADCONN.
  */
 static bool
-CheckConnection()
+CheckConnection(void)
 {
 	bool		OK;
 
@@ -344,8 +344,8 @@ AcceptResult(const PGresult *result)
 
 	if (!OK)
 	{
-		CheckConnection();
 		psql_error("%s", PQerrorMessage(pset.db));
+		CheckConnection();
 	}
 
 	return OK;
@@ -514,7 +514,8 @@ PrintQueryResults(PGresult *results,
 					if (pset.popt.topt.format == PRINT_HTML)
 					{
 						fputs("<p>", pset.queryFout);
-						html_escaped_print(PQcmdStatus(results), pset.queryFout);
+						html_escaped_print(PQcmdStatus(results),
+										   pset.queryFout);
 						fputs("</p>\n", pset.queryFout);
 					}
 					else
@@ -542,6 +543,7 @@ PrintQueryResults(PGresult *results,
 
 	fflush(pset.queryFout);
 
+	/* may need this to recover from conn loss during COPY */
 	if (!CheckConnection())
 		return false;
 
