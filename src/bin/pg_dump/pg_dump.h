@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_dump.h,v 1.95 2002/08/15 16:36:06 momjian Exp $
+ * $Id: pg_dump.h,v 1.96 2002/08/18 09:36:26 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,7 +15,6 @@
 #define PG_DUMP_H
 
 #include "pg_backup.h"
-#include "pqexpbuffer.h"
 
 /*
  * The data structures used to store system catalog information

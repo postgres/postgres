@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.116 2002/08/16 23:01:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.117 2002/08/18 09:36:25 petere Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -2529,14 +2529,42 @@ get_const_expr(Const *constval, deparse_context *context)
 	{
 		case INT2OID:
 		case INT4OID:
-		case OIDOID:			/* int types */
+		case INT8OID:
+		case OIDOID:
 		case FLOAT4OID:
-		case FLOAT8OID:			/* float types */
-			/* These types are printed without quotes */
-			appendStringInfo(buf, extval);
-			break;
-		default:
+		case FLOAT8OID:
+		case NUMERICOID:
+		{
+			/*
+			 * These types are printed without quotes unless they
+			 * contain values that aren't accepted by the scanner
+			 * unquoted (e.g., 'NaN').  Note that strtod() and friends
+			 * might accept NaN, so we can't use that to test.
+			 *
+			 * In reality we only need to defend against infinity and
+			 * NaN, so we need not get too crazy about pattern
+			 * matching here.
+			 */
+			if (strspn(extval, "0123456789 +-eE.") == strlen(extval))
+				appendStringInfo(buf, extval);
+			else
+				appendStringInfo(buf, "'%s'", extval);
+		}
+		break;
 
+		case BITOID:
+		case VARBITOID:
+			appendStringInfo(buf, "B'%s'", extval);
+			break;
+
+		case BOOLOID:
+			if (strcmp(extval, "t")==0)
+				appendStringInfo(buf, "true");
+			else
+				appendStringInfo(buf, "false");
+			break;
+
+		default:
 			/*
 			 * We must quote any funny characters in the constant's
 			 * representation. XXX Any MULTIBYTE considerations here?
@@ -2564,6 +2592,7 @@ get_const_expr(Const *constval, deparse_context *context)
 
 	switch (constval->consttype)
 	{
+		case BOOLOID:
 		case INT4OID:
 		case FLOAT8OID:
 		case UNKNOWNOID:

@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.284 2002/08/16 23:01:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.285 2002/08/18 09:36:25 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,7 @@
  */
 #include "postgres.h"
 
-#include <unistd.h>				/* for getopt() */
+#include <unistd.h>
 #include <ctype.h>
 #ifdef ENABLE_NLS
 #include <locale.h>
@@ -64,16 +64,6 @@
 #include "pg_backup.h"
 #include "pg_backup_archiver.h"
 
-
-typedef enum _formatLiteralOptions
-{
-	CONV_ALL = 0,
-	PASS_LFTAB = 3				/* NOTE: 1 and 2 are reserved in case we
-								 * want to make a mask. */
-	/* We could make this a bit mask for control chars, but I don't */
-	/* see any value in making it more complex...the current code */
-	/* only checks for 'opts == CONV_ALL' anyway. */
-} formatLiteralOptions;
 
 typedef struct _dumpContext
 {
@@ -111,8 +101,6 @@ static void dumpACL(Archive *fout, const char *type, const char *name,
 static void dumpConstraints(Archive *fout, TableInfo *tblinfo, int numTables);
 static void dumpTriggers(Archive *fout, TableInfo *tblinfo, int numTables);
 static void dumpRules(Archive *fout, TableInfo *tblinfo, int numTables);
-static void formatStringLiteral(PQExpBuffer buf, const char *str,
-								const formatLiteralOptions opts);
 static char *format_function_signature(FuncInfo *finfo, bool honor_quotes);
 static void dumpOneFunc(Archive *fout, FuncInfo *finfo);
 static void dumpOneOpr(Archive *fout, OprInfo *oprinfo,
@@ -149,7 +137,6 @@ Archive    *g_fout;				/* the script file */
 PGconn	   *g_conn;				/* the database connection */
 
 /* various user-settable parameters */
-bool		force_quotes;		/* User wants to suppress double-quotes */
 bool		dumpData;			/* dump data using proper insert strings */
 bool		attrNames;			/* put attr names into insert strings */
 bool		schemaOnly;
@@ -214,8 +201,6 @@ main(int argc, char **argv)
 		{"host", required_argument, NULL, 'h'},
 		{"ignore-version", no_argument, NULL, 'i'},
 		{"no-reconnect", no_argument, NULL, 'R'},
-		{"no-quotes", no_argument, NULL, 'n'},
-		{"quotes", no_argument, NULL, 'N'},
 		{"oids", no_argument, NULL, 'o'},
 		{"no-owner", no_argument, NULL, 'O'},
 		{"port", required_argument, NULL, 'p'},
@@ -250,7 +235,6 @@ main(int argc, char **argv)
 #endif
 
 	g_verbose = false;
-	force_quotes = true;
 
 	strcpy(g_comment_start, "-- ");
 	g_comment_end[0] = '\0';
@@ -285,9 +269,9 @@ main(int argc, char **argv)
 	}
 
 #ifdef HAVE_GETOPT_LONG
-	while ((c = getopt_long(argc, argv, "abcCdDf:F:h:inNoOp:RsS:t:uU:vWxX:zZ:V?", long_options, &optindex)) != -1)
+	while ((c = getopt_long(argc, argv, "abcCdDf:F:h:ioOp:RsS:t:uU:vWxX:zZ:V?", long_options, &optindex)) != -1)
 #else
-	while ((c = getopt(argc, argv, "abcCdDf:F:h:inNoOp:RsS:t:uU:vWxX:zZ:V?-")) != -1)
+	while ((c = getopt(argc, argv, "abcCdDf:F:h:ioOp:RsS:t:uU:vWxX:zZ:V?-")) != -1)
 #endif
 
 	{
@@ -335,15 +319,6 @@ main(int argc, char **argv)
 
 			case 'i':			/* ignore database version mismatch */
 				ignore_version = true;
-				break;
-
-			case 'n':			/* Do not force double-quotes on
-								 * identifiers */
-				force_quotes = false;
-				break;
-
-			case 'N':			/* Force double-quotes on identifiers */
-				force_quotes = true;
 				break;
 
 			case 'o':			/* Dump oids */
@@ -962,7 +937,7 @@ dumpClasses_nodumpData(Archive *fout, char *oid, void *dctxv)
 		 * save the 'last sleep time'.
 		 */
 	}
-	archprintf(fout, "\\.\n");
+	archprintf(fout, "\\.\n\n\n");
 
 	ret = PQendcopy(g_conn);
 	if (ret != 0)
@@ -1038,7 +1013,7 @@ dumpClasses_dumpData(Archive *fout, char *oid, void *dctxv)
 
 		for (tuple = 0; tuple < PQntuples(res); tuple++)
 		{
-			archprintf(fout, "INSERT INTO %s ", fmtId(classname, force_quotes));
+			archprintf(fout, "INSERT INTO %s ", fmtId(classname));
 			if (attrNames == true)
 			{
 				resetPQExpBuffer(q);
@@ -1046,8 +1021,8 @@ dumpClasses_dumpData(Archive *fout, char *oid, void *dctxv)
 				for (field = 0; field < PQnfields(res); field++)
 				{
 					if (field > 0)
-						appendPQExpBuffer(q, ",");
-					appendPQExpBuffer(q, fmtId(PQfname(res, field), force_quotes));
+						appendPQExpBuffer(q, ", ");
+					appendPQExpBuffer(q, fmtId(PQfname(res, field)));
 				}
 				appendPQExpBuffer(q, ") ");
 				archprintf(fout, "%s", q->data);
@@ -1056,37 +1031,62 @@ dumpClasses_dumpData(Archive *fout, char *oid, void *dctxv)
 			for (field = 0; field < PQnfields(res); field++)
 			{
 				if (field > 0)
-					archprintf(fout, ",");
+					archprintf(fout, ", ");
 				if (PQgetisnull(res, tuple, field))
 				{
 					archprintf(fout, "NULL");
 					continue;
 				}
+
+				/* XXX This code is partially duplicated in ruleutils.c */
 				switch (PQftype(res, field))
 				{
 					case INT2OID:
 					case INT4OID:
-					case OIDOID:		/* int types */
+					case INT8OID:
+					case OIDOID:
 					case FLOAT4OID:
-					case FLOAT8OID:		/* float types */
-						/* These types are printed without quotes */
-						archprintf(fout, "%s",
-								   PQgetvalue(res, tuple, field));
-						break;
+					case FLOAT8OID:
+					case NUMERICOID:
+					{
+						/*
+						 * These types are printed without quotes
+						 * unless they contain values that aren't
+						 * accepted by the scanner unquoted (e.g.,
+						 * 'NaN').  Note that strtod() and friends
+						 * might accept NaN, so we can't use that to
+						 * test.
+						 *
+						 * In reality we only need to defend against
+						 * infinity and NaN, so we need not get too
+						 * crazy about pattern matching here.
+						 */
+						const char *s = PQgetvalue(res, tuple, field);
+
+						if (strspn(s, "0123456789 +-eE.") == strlen(s))
+							archprintf(fout, "%s", s);
+						else
+							archprintf(fout, "'%s'", s);
+					}
+					break;
+
 					case BITOID:
 					case VARBITOID:
 						archprintf(fout, "B'%s'",
 								   PQgetvalue(res, tuple, field));
 						break;
-					default:
 
-						/*
-						 * All other types are printed as string literals,
-						 * with appropriate escaping of special
-						 * characters.
-						 */
+					case BOOLOID:
+						if (strcmp(PQgetvalue(res, tuple, field), "t")==0)
+							archprintf(fout, "true");
+						else
+							archprintf(fout, "false");
+						break;
+
+					default:
+						/* All other types are printed as string literals. */
 						resetPQExpBuffer(q);
-						formatStringLiteral(q, PQgetvalue(res, tuple, field), CONV_ALL);
+						appendStringLiteral(q, PQgetvalue(res, tuple, field), false);
 						archprintf(fout, "%s", q->data);
 						break;
 				}
@@ -1095,6 +1095,8 @@ dumpClasses_dumpData(Archive *fout, char *oid, void *dctxv)
 		}
 
 	} while (PQntuples(res) > 0);
+
+	archprintf(fout, "\n\n");
 	PQclear(res);
 
 	res = PQexec(g_conn, "CLOSE _pg_dump_cursor");
@@ -1112,45 +1114,6 @@ dumpClasses_dumpData(Archive *fout, char *oid, void *dctxv)
 	return 1;
 }
 
-/*
- * Convert a string value to an SQL string literal,
- * with appropriate escaping of special characters.
- * Quote mark ' goes to '' per SQL standard, other
- * stuff goes to \ sequences.
- * The literal is appended to the given PQExpBuffer.
- */
-static void
-formatStringLiteral(PQExpBuffer buf, const char *str, const formatLiteralOptions opts)
-{
-	appendPQExpBufferChar(buf, '\'');
-	while (*str)
-	{
-		char		ch = *str++;
-
-		if (ch == '\\' || ch == '\'')
-		{
-			appendPQExpBufferChar(buf, ch);		/* double these */
-			appendPQExpBufferChar(buf, ch);
-		}
-		else if ((unsigned char) ch < (unsigned char) ' ' &&
-				 (opts == CONV_ALL
-				  || (ch != '\n' && ch != '\t')
-				  ))
-		{
-			/*
-			 * generate octal escape for control chars other than
-			 * whitespace
-			 */
-			appendPQExpBufferChar(buf, '\\');
-			appendPQExpBufferChar(buf, ((ch >> 6) & 3) + '0');
-			appendPQExpBufferChar(buf, ((ch >> 3) & 7) + '0');
-			appendPQExpBufferChar(buf, (ch & 7) + '0');
-		}
-		else
-			appendPQExpBufferChar(buf, ch);
-	}
-	appendPQExpBufferChar(buf, '\'');
-}
 
 /*
  * DumpClasses -
@@ -1200,7 +1163,7 @@ dumpClasses(const TableInfo *tblinfo, const int numTables, Archive *fout,
 				dumpFn = dumpClasses_nodumpData;
 				column_list = fmtCopyColumnList(&(tblinfo[i]));
 				sprintf(copyBuf, "COPY %s %s %sFROM stdin;\n",
-						fmtId(tblinfo[i].relname, force_quotes),
+						fmtId(tblinfo[i].relname),
 						column_list,
 						(oids && tblinfo[i].hasoids) ? "WITH OIDS " : "");
 				copyStmt = copyBuf;
@@ -1253,7 +1216,7 @@ dumpDatabase(Archive *AH)
 	appendPQExpBuffer(dbQry, "select (select usename from pg_user where usesysid = datdba) as dba,"
 					  " encoding, datpath from pg_database"
 					  " where datname = ");
-	formatStringLiteral(dbQry, datname, CONV_ALL);
+	appendStringLiteral(dbQry, datname, true);
 
 	res = PQexec(g_conn, dbQry->data);
 	if (!res ||
@@ -1289,7 +1252,7 @@ dumpDatabase(Archive *AH)
 	datpath = PQgetvalue(res, 0, i_datpath);
 
 	appendPQExpBuffer(creaQry, "CREATE DATABASE %s WITH TEMPLATE = template0",
-					  fmtId(datname, force_quotes));
+					  fmtId(datname));
 	if (strlen(encoding) > 0)
 		appendPQExpBuffer(creaQry, " ENCODING = %s", encoding);
 	if (strlen(datpath) > 0)
@@ -1297,7 +1260,7 @@ dumpDatabase(Archive *AH)
 	appendPQExpBuffer(creaQry, ";\n");
 
 	appendPQExpBuffer(delQry, "DROP DATABASE %s;\n",
-					  fmtId(datname, force_quotes));
+					  fmtId(datname));
 
 	ArchiveEntry(AH, "0",		/* OID */
 				 datname,		/* Name */
@@ -2628,8 +2591,7 @@ dumpComment(Archive *fout, const char *target,
 		i_description = PQfnumber(res, "description");
 		resetPQExpBuffer(query);
 		appendPQExpBuffer(query, "COMMENT ON %s IS ", target);
-		formatStringLiteral(query, PQgetvalue(res, 0, i_description),
-							PASS_LFTAB);
+		appendStringLiteral(query, PQgetvalue(res, 0, i_description), false);
 		appendPQExpBuffer(query, ";\n");
 
 		ArchiveEntry(fout, oid, target, namespace, owner,
@@ -2720,11 +2682,11 @@ dumpTableComment(Archive *fout, TableInfo *tbinfo,
 		{
 			resetPQExpBuffer(target);
 			appendPQExpBuffer(target, "%s %s", reltypename,
-							  fmtId(tbinfo->relname, force_quotes));
+							  fmtId(tbinfo->relname));
 
 			resetPQExpBuffer(query);
 			appendPQExpBuffer(query, "COMMENT ON %s IS ", target->data);
-			formatStringLiteral(query, descr, PASS_LFTAB);
+			appendStringLiteral(query, descr, false);
 			appendPQExpBuffer(query, ";\n");
 
 			ArchiveEntry(fout, tbinfo->oid, target->data,
@@ -2736,14 +2698,13 @@ dumpTableComment(Archive *fout, TableInfo *tbinfo,
 		{
 			resetPQExpBuffer(target);
 			appendPQExpBuffer(target, "COLUMN %s.",
-							  fmtId(tbinfo->relname, force_quotes));
+							  fmtId(tbinfo->relname));
 			appendPQExpBuffer(target, "%s",
-							  fmtId(tbinfo->attnames[objsubid-1],
-									force_quotes));
+							  fmtId(tbinfo->attnames[objsubid-1]));
 
 			resetPQExpBuffer(query);
 			appendPQExpBuffer(query, "COMMENT ON %s IS ", target->data);
-			formatStringLiteral(query, descr, PASS_LFTAB);
+			appendStringLiteral(query, descr, false);
 			appendPQExpBuffer(query, ";\n");
 
 			ArchiveEntry(fout, tbinfo->oid, target->data,
@@ -2778,7 +2739,7 @@ dumpDBComment(Archive *fout)
 
 	query = createPQExpBuffer();
 	appendPQExpBuffer(query, "SELECT oid FROM pg_database WHERE datname = ");
-	formatStringLiteral(query, PQdb(g_conn), CONV_ALL);
+	appendStringLiteral(query, PQdb(g_conn), true);
 
 	/*** Execute query ***/
 
@@ -2796,7 +2757,7 @@ dumpDBComment(Archive *fout)
 	{
 		i_oid = PQfnumber(res, "oid");
 		resetPQExpBuffer(query);
-		appendPQExpBuffer(query, "DATABASE %s", fmtId(PQdb(g_conn), force_quotes));
+		appendPQExpBuffer(query, "DATABASE %s", fmtId(PQdb(g_conn)));
 		dumpComment(fout, query->data, NULL, "",
 					PQgetvalue(res, 0, i_oid), "pg_database", 0, NULL);
 	}
@@ -2829,7 +2790,7 @@ dumpNamespaces(Archive *fout, NamespaceInfo *nsinfo, int numNamespaces)
 		if (strlen(nspinfo->nspname) == 0)
 			continue;
 
-		qnspname = strdup(fmtId(nspinfo->nspname, force_quotes));
+		qnspname = strdup(fmtId(nspinfo->nspname));
 
 		/*
 		 * If it's the PUBLIC namespace, don't emit a CREATE SCHEMA
@@ -2998,36 +2959,36 @@ dumpOneBaseType(Archive *fout, TypeInfo *tinfo,
 
 	/* DROP must be fully qualified in case same name appears in pg_catalog */
 	appendPQExpBuffer(delq, "DROP TYPE %s.",
-					  fmtId(tinfo->typnamespace->nspname, force_quotes));
+					  fmtId(tinfo->typnamespace->nspname));
 	appendPQExpBuffer(delq, "%s;\n",
-					  fmtId(tinfo->typname, force_quotes));
+					  fmtId(tinfo->typname));
 
 	appendPQExpBuffer(q,
-					  "CREATE TYPE %s "
-					  "( internallength = %s,",
-					  fmtId(tinfo->typname, force_quotes),
+					  "CREATE TYPE %s (\n"
+					  "    INTERNALLENGTH = %s,\n",
+					  fmtId(tinfo->typname),
 					  (strcmp(typlen, "-1") == 0) ? "variable" : typlen);
 
 	if (fout->remoteVersion >= 70300)
 	{
 		/* regproc result is correctly quoted in 7.3 */
-		appendPQExpBuffer(q, " input = %s, output = %s",
+		appendPQExpBuffer(q, "    INPUT = %s,\n    OUTPUT = %s",
 						  typinput, typoutput);
 	}
 	else
 	{
 		/* regproc delivers an unquoted name before 7.3 */
 		/* cannot combine these because fmtId uses static result area */
-		appendPQExpBuffer(q, " input = %s,",
-						  fmtId(typinput, force_quotes));
-		appendPQExpBuffer(q, " output = %s",
-						  fmtId(typoutput, force_quotes));
+		appendPQExpBuffer(q, "    INPUT = %s,\n",
+						  fmtId(typinput));
+		appendPQExpBuffer(q, "    OUTPUT = %s",
+						  fmtId(typoutput));
 	}
 
 	if (typdefault != NULL)
 	{
-		appendPQExpBuffer(q, ", default = ");
-		formatStringLiteral(q, typdefault, CONV_ALL);
+		appendPQExpBuffer(q, ",\n    DEFAULT = ");
+		appendStringLiteral(q, typdefault, true);
 	}
 
 	if (tinfo->isArray)
@@ -3037,35 +2998,35 @@ dumpOneBaseType(Archive *fout, TypeInfo *tinfo,
 		/* reselect schema in case changed by function dump */
 		selectSourceSchema(tinfo->typnamespace->nspname);
 		elemType = getFormattedTypeName(tinfo->typelem, zeroAsOpaque);
-		appendPQExpBuffer(q, ", element = %s, delimiter = ", elemType);
-		formatStringLiteral(q, typdelim, CONV_ALL);
+		appendPQExpBuffer(q, ",\n    ELEMENT = %s,\n    DELIMITER = ", elemType);
+		appendStringLiteral(q, typdelim, true);
 		free(elemType);
 
 		(*deps)[depIdx++] = strdup(tinfo->typelem);
 	}
 
 	if (strcmp(typalign, "c") == 0)
-		appendPQExpBuffer(q, ", alignment = char");
+		appendPQExpBuffer(q, ",\n    ALIGNMENT = char");
 	else if (strcmp(typalign, "s") == 0)
-		appendPQExpBuffer(q, ", alignment = int2");
+		appendPQExpBuffer(q, ",\n    ALIGNMENT = int2");
 	else if (strcmp(typalign, "i") == 0)
-		appendPQExpBuffer(q, ", alignment = int4");
+		appendPQExpBuffer(q, ",\n    ALIGNMENT = int4");
 	else if (strcmp(typalign, "d") == 0)
-		appendPQExpBuffer(q, ", alignment = double");
+		appendPQExpBuffer(q, ",\n    ALIGNMENT = double");
 
 	if (strcmp(typstorage, "p") == 0)
-		appendPQExpBuffer(q, ", storage = plain");
+		appendPQExpBuffer(q, ",\n    STORAGE = plain");
 	else if (strcmp(typstorage, "e") == 0)
-		appendPQExpBuffer(q, ", storage = external");
+		appendPQExpBuffer(q, ",\n    STORAGE = external");
 	else if (strcmp(typstorage, "x") == 0)
-		appendPQExpBuffer(q, ", storage = extended");
+		appendPQExpBuffer(q, ",\n    STORAGE = extended");
 	else if (strcmp(typstorage, "m") == 0)
-		appendPQExpBuffer(q, ", storage = main");
+		appendPQExpBuffer(q, ",\n    STORAGE = main");
 
 	if (strcmp(typbyval, "t") == 0)
-		appendPQExpBuffer(q, ", passedbyvalue);\n");
-	else
-		appendPQExpBuffer(q, ");\n");
+		appendPQExpBuffer(q, ",\n    PASSEDBYVALUE");
+
+	appendPQExpBuffer(q, "\n);\n");
 
 	(*deps)[depIdx++] = NULL;		/* End of List */
 
@@ -3077,7 +3038,7 @@ dumpOneBaseType(Archive *fout, TypeInfo *tinfo,
 	/*** Dump Type Comments ***/
 	resetPQExpBuffer(q);
 
-	appendPQExpBuffer(q, "TYPE %s", fmtId(tinfo->typname, force_quotes));
+	appendPQExpBuffer(q, "TYPE %s", fmtId(tinfo->typname));
 	dumpComment(fout, q->data,
 				tinfo->typnamespace->nspname, tinfo->usename,
 				tinfo->oid, "pg_type", 0, NULL);
@@ -3149,13 +3110,13 @@ dumpOneDomain(Archive *fout, TypeInfo *tinfo)
 
 	/* DROP must be fully qualified in case same name appears in pg_catalog */
 	appendPQExpBuffer(delq, "DROP DOMAIN %s.",
-					  fmtId(tinfo->typnamespace->nspname, force_quotes));
+					  fmtId(tinfo->typnamespace->nspname));
 	appendPQExpBuffer(delq, "%s RESTRICT;\n",
-					  fmtId(tinfo->typname, force_quotes));
+					  fmtId(tinfo->typname));
 
 	appendPQExpBuffer(q,
 					  "CREATE DOMAIN %s AS %s",
-					  fmtId(tinfo->typname, force_quotes),
+					  fmtId(tinfo->typname),
 					  typdefn);
 
 	/* Depends on the base type */
@@ -3179,7 +3140,7 @@ dumpOneDomain(Archive *fout, TypeInfo *tinfo)
 	/*** Dump Domain Comments ***/
 	resetPQExpBuffer(q);
 
-	appendPQExpBuffer(q, "DOMAIN %s", fmtId(tinfo->typname, force_quotes));
+	appendPQExpBuffer(q, "DOMAIN %s", fmtId(tinfo->typname));
 	dumpComment(fout, q->data,
 				tinfo->typnamespace->nspname, tinfo->usename,
 				tinfo->oid, "pg_type", 0, NULL);
@@ -3244,13 +3205,13 @@ dumpOneCompositeType(Archive *fout, TypeInfo *tinfo)
 
 	/* DROP must be fully qualified in case same name appears in pg_catalog */
 	appendPQExpBuffer(delq, "DROP TYPE %s.",
-					  fmtId(tinfo->typnamespace->nspname, force_quotes));
+					  fmtId(tinfo->typnamespace->nspname));
 	appendPQExpBuffer(delq, "%s RESTRICT;\n",
-					  fmtId(tinfo->typname, force_quotes));
+					  fmtId(tinfo->typname));
 
 	appendPQExpBuffer(q,
 					  "CREATE TYPE %s AS (",
-					  fmtId(tinfo->typname, force_quotes));
+					  fmtId(tinfo->typname));
 
 	for (i = 0; i < ntups; i++)
 	{
@@ -3278,7 +3239,7 @@ dumpOneCompositeType(Archive *fout, TypeInfo *tinfo)
 	/*** Dump Type Comments ***/
 	resetPQExpBuffer(q);
 
-	appendPQExpBuffer(q, "TYPE %s", fmtId(tinfo->typname, force_quotes));
+	appendPQExpBuffer(q, "TYPE %s", fmtId(tinfo->typname));
 	dumpComment(fout, q->data,
 				tinfo->typnamespace->nspname, tinfo->usename,
 				tinfo->oid, "pg_type", 0, NULL);
@@ -3440,24 +3401,23 @@ dumpProcLangs(Archive *fout, FuncInfo finfo[], int numFuncs)
 		(*deps)[depIdx++] = strdup(lanplcallfoid);
 
 		appendPQExpBuffer(delqry, "DROP PROCEDURAL LANGUAGE %s;\n",
-						  fmtId(lanname, force_quotes));
+						  fmtId(lanname));
 
 		appendPQExpBuffer(defqry, "CREATE %sPROCEDURAL LANGUAGE %s",
 						  (PQgetvalue(res, i, i_lanpltrusted)[0] == 't') ?
 						  "TRUSTED " : "",
-						  fmtId(lanname, force_quotes));
+						  fmtId(lanname));
 		appendPQExpBuffer(defqry, " HANDLER %s",
-						  fmtId(finfo[fidx].proname, force_quotes));
+						  fmtId(finfo[fidx].proname));
 		if (strcmp(lanvalidator, "0")!=0)
 		{
 			appendPQExpBuffer(defqry, " VALIDATOR ");
 			/* Cope with possibility that validator is in different schema */
 			if (finfo[vidx].pronamespace != finfo[fidx].pronamespace)
 				appendPQExpBuffer(defqry, "%s.",
-								  fmtId(finfo[vidx].pronamespace->nspname,
-										force_quotes));
+								  fmtId(finfo[vidx].pronamespace->nspname));
 			appendPQExpBuffer(defqry, "%s",
-							  fmtId(finfo[vidx].proname, force_quotes));
+							  fmtId(finfo[vidx].proname));
 			(*deps)[depIdx++] = strdup(lanvalidator);
 		}
 		appendPQExpBuffer(defqry, ";\n");
@@ -3471,7 +3431,7 @@ dumpProcLangs(Archive *fout, FuncInfo finfo[], int numFuncs)
 
 		if (!aclsSkip)
 		{
-			char *tmp = strdup(fmtId(lanname, force_quotes));
+			char *tmp = strdup(fmtId(lanname));
 			dumpACL(fout, "LANGUAGE", tmp, lanname,
 					finfo[fidx].pronamespace->nspname,
 					NULL, lanacl, lanoid);
@@ -3521,16 +3481,16 @@ format_function_signature(FuncInfo *finfo, bool honor_quotes)
 
 	initPQExpBuffer(&fn);
 	if (honor_quotes)
-		appendPQExpBuffer(&fn, "%s(", fmtId(finfo->proname, force_quotes));
+		appendPQExpBuffer(&fn, "%s (", fmtId(finfo->proname));
 	else
-		appendPQExpBuffer(&fn, "%s(", finfo->proname);
+		appendPQExpBuffer(&fn, "%s (", finfo->proname);
 	for (j = 0; j < finfo->nargs; j++)
 	{
 		char	   *typname;
 
 		typname = getFormattedTypeName(finfo->argtypes[j], zeroAsOpaque);
 		appendPQExpBuffer(&fn, "%s%s",
-						  (j > 0) ? "," : "",
+						  (j > 0) ? ", " : "",
 						  typname);
 		free(typname);
 	}
@@ -3655,11 +3615,11 @@ dumpOneFunc(Archive *fout, FuncInfo *finfo)
 	if (strcmp(probin, "-") != 0)
 	{
 		appendPQExpBuffer(asPart, "AS ");
-		formatStringLiteral(asPart, probin, CONV_ALL);
+		appendStringLiteral(asPart, probin, true);
 		if (strcmp(prosrc, "-") != 0)
 		{
 			appendPQExpBuffer(asPart, ", ");
-			formatStringLiteral(asPart, prosrc, PASS_LFTAB);
+			appendStringLiteral(asPart, prosrc, false);
 		}
 	}
 	else
@@ -3667,7 +3627,7 @@ dumpOneFunc(Archive *fout, FuncInfo *finfo)
 		if (strcmp(prosrc, "-") != 0)
 		{
 			appendPQExpBuffer(asPart, "AS ");
-			formatStringLiteral(asPart, prosrc, PASS_LFTAB);
+			appendStringLiteral(asPart, prosrc, false);
 		}
 	}
 
@@ -3676,17 +3636,17 @@ dumpOneFunc(Archive *fout, FuncInfo *finfo)
 
 	/* DROP must be fully qualified in case same name appears in pg_catalog */
 	appendPQExpBuffer(delqry, "DROP FUNCTION %s.%s;\n",
-					  fmtId(finfo->pronamespace->nspname, force_quotes),
+					  fmtId(finfo->pronamespace->nspname),
 					  funcsig);
 
 	rettypename = getFormattedTypeName(finfo->prorettype, zeroAsOpaque);
 
 	appendPQExpBuffer(q, "CREATE FUNCTION %s ", funcsig);
-	appendPQExpBuffer(q, "RETURNS %s%s %s LANGUAGE %s",
+	appendPQExpBuffer(q, "RETURNS %s%s\n    %s\n    LANGUAGE %s",
 					  (proretset[0] == 't') ? "SETOF " : "",
 					  rettypename,
 					  asPart->data,
-					  fmtId(lanname, force_quotes));
+					  fmtId(lanname));
 
 	free(rettypename);
 
@@ -4006,7 +3966,7 @@ dumpOneOpr(Archive *fout, OprInfo *oprinfo,
 	oprltcmpop = PQgetvalue(res, 0, i_oprltcmpop);
 	oprgtcmpop = PQgetvalue(res, 0, i_oprgtcmpop);
 
-	appendPQExpBuffer(details, "PROCEDURE = %s ",
+	appendPQExpBuffer(details, "    PROCEDURE = %s",
 					  convertRegProcReference(oprcode));
 
 	appendPQExpBuffer(oprid, "%s (",
@@ -4022,8 +3982,8 @@ dumpOneOpr(Archive *fout, OprInfo *oprinfo,
 		if (g_fout->remoteVersion >= 70100)
 			name = oprleft;
 		else
-			name = fmtId(oprleft, force_quotes);
-		appendPQExpBuffer(details, ",\n\tLEFTARG = %s ", name);
+			name = fmtId(oprleft);
+		appendPQExpBuffer(details, ",\n    LEFTARG = %s", name);
 		appendPQExpBuffer(oprid, "%s", name);
 	}
 	else
@@ -4035,8 +3995,8 @@ dumpOneOpr(Archive *fout, OprInfo *oprinfo,
 		if (g_fout->remoteVersion >= 70100)
 			name = oprright;
 		else
-			name = fmtId(oprright, force_quotes);
-		appendPQExpBuffer(details, ",\n\tRIGHTARG = %s ", name);
+			name = fmtId(oprright);
+		appendPQExpBuffer(details, ",\n    RIGHTARG = %s", name);
 		appendPQExpBuffer(oprid, ", %s)", name);
 	}
 	else
@@ -4044,45 +4004,45 @@ dumpOneOpr(Archive *fout, OprInfo *oprinfo,
 
 	name = convertOperatorReference(oprcom, g_oprinfo, numOperators);
 	if (name)
-		appendPQExpBuffer(details, ",\n\tCOMMUTATOR = %s ", name);
+		appendPQExpBuffer(details, ",\n    COMMUTATOR = %s", name);
 
 	name = convertOperatorReference(oprnegate, g_oprinfo, numOperators);
 	if (name)
-		appendPQExpBuffer(details, ",\n\tNEGATOR = %s ", name);
+		appendPQExpBuffer(details, ",\n    NEGATOR = %s", name);
 
 	if (strcmp(oprcanhash, "t") == 0)
-		appendPQExpBuffer(details, ",\n\tHASHES");
+		appendPQExpBuffer(details, ",\n    HASHES");
 
 	name = convertRegProcReference(oprrest);
 	if (name)
-		appendPQExpBuffer(details, ",\n\tRESTRICT = %s ", name);
+		appendPQExpBuffer(details, ",\n    RESTRICT = %s", name);
 
 	name = convertRegProcReference(oprjoin);
 	if (name)
-		appendPQExpBuffer(details, ",\n\tJOIN = %s ", name);
+		appendPQExpBuffer(details, ",\n    JOIN = %s", name);
 
 	name = convertOperatorReference(oprlsortop, g_oprinfo, numOperators);
 	if (name)
-		appendPQExpBuffer(details, ",\n\tSORT1 = %s ", name);
+		appendPQExpBuffer(details, ",\n    SORT1 = %s", name);
 
 	name = convertOperatorReference(oprrsortop, g_oprinfo, numOperators);
 	if (name)
-		appendPQExpBuffer(details, ",\n\tSORT2 = %s ", name);
+		appendPQExpBuffer(details, ",\n    SORT2 = %s", name);
 
 	name = convertOperatorReference(oprltcmpop, g_oprinfo, numOperators);
 	if (name)
-		appendPQExpBuffer(details, ",\n\tLTCMP = %s ", name);
+		appendPQExpBuffer(details, ",\n    LTCMP = %s", name);
 
 	name = convertOperatorReference(oprgtcmpop, g_oprinfo, numOperators);
 	if (name)
-		appendPQExpBuffer(details, ",\n\tGTCMP = %s ", name);
+		appendPQExpBuffer(details, ",\n    GTCMP = %s", name);
 
 	/* DROP must be fully qualified in case same name appears in pg_catalog */
 	appendPQExpBuffer(delq, "DROP OPERATOR %s.%s;\n",
-					  fmtId(oprinfo->oprnamespace->nspname, force_quotes),
+					  fmtId(oprinfo->oprnamespace->nspname),
 					  oprid->data);
 
-	appendPQExpBuffer(q, "CREATE OPERATOR %s (%s);\n",
+	appendPQExpBuffer(q, "CREATE OPERATOR %s (\n%s\n);\n",
 					  oprinfo->oprname, details->data);
 
 	ArchiveEntry(fout, oprinfo->oid, oprinfo->oprname,
@@ -4146,7 +4106,7 @@ convertRegProcReference(const char *proc)
 	}
 
 	/* REGPROC before 7.3 does not quote its result */
-	return fmtId(proc, false);
+	return fmtId(proc);
 }
 
 /*
@@ -4300,26 +4260,26 @@ dumpOneOpclass(Archive *fout, OpclassInfo *opcinfo)
 
 	/* DROP must be fully qualified in case same name appears in pg_catalog */
 	appendPQExpBuffer(delq, "DROP OPERATOR CLASS %s",
-					  fmtId(opcinfo->opcnamespace->nspname, force_quotes));
+					  fmtId(opcinfo->opcnamespace->nspname));
 	appendPQExpBuffer(delq, ".%s",
-					  fmtId(opcinfo->opcname, force_quotes));
+					  fmtId(opcinfo->opcname));
 	appendPQExpBuffer(delq, " USING %s;\n",
-					  fmtId(amname, force_quotes));
+					  fmtId(amname));
 
 	/* Build the fixed portion of the CREATE command */
-	appendPQExpBuffer(q, "CREATE OPERATOR CLASS %s\n\t",
-					  fmtId(opcinfo->opcname, force_quotes));
+	appendPQExpBuffer(q, "CREATE OPERATOR CLASS %s\n    ",
+					  fmtId(opcinfo->opcname));
 	if (strcmp(opcdefault, "t") == 0)
 		appendPQExpBuffer(q, "DEFAULT ");
-	appendPQExpBuffer(q, "FOR TYPE %s USING %s AS\n\t",
+	appendPQExpBuffer(q, "FOR TYPE %s USING %s AS\n    ",
 					  opcintype,
-					  fmtId(amname, force_quotes));
+					  fmtId(amname));
 
 	needComma = false;
 
 	if (strcmp(opckeytype, "-") != 0)
 	{
-		appendPQExpBuffer(q, "STORAGE\t%s",
+		appendPQExpBuffer(q, "STORAGE %s",
 						  opckeytype);
 		needComma = true;
 	}
@@ -4359,12 +4319,12 @@ dumpOneOpclass(Archive *fout, OpclassInfo *opcinfo)
 		amopopr = PQgetvalue(res, i, i_amopopr);
 
 		if (needComma)
-			appendPQExpBuffer(q, " ,\n\t");
+			appendPQExpBuffer(q, " ,\n    ");
 
-		appendPQExpBuffer(q, "OPERATOR\t%s\t%s",
+		appendPQExpBuffer(q, "OPERATOR %s %s",
 						  amopstrategy, amopopr);
 		if (strcmp(amopreqcheck, "t") == 0)
-			appendPQExpBuffer(q, "\tRECHECK");
+			appendPQExpBuffer(q, " RECHECK");
 
 		needComma = true;
 	}
@@ -4402,9 +4362,9 @@ dumpOneOpclass(Archive *fout, OpclassInfo *opcinfo)
 		amproc = PQgetvalue(res, i, i_amproc);
 
 		if (needComma)
-			appendPQExpBuffer(q, " ,\n\t");
+			appendPQExpBuffer(q, " ,\n    ");
 
-		appendPQExpBuffer(q, "FUNCTION\t%s\t%s",
+		appendPQExpBuffer(q, "FUNCTION %s %s",
 						  amprocnum, amproc);
 
 		needComma = true;
@@ -4412,7 +4372,7 @@ dumpOneOpclass(Archive *fout, OpclassInfo *opcinfo)
 
 	PQclear(res);
 
-	appendPQExpBuffer(q, " ;\n");
+	appendPQExpBuffer(q, ";\n");
 
 	ArchiveEntry(fout, opcinfo->oid, opcinfo->opcname,
 				 opcinfo->opcnamespace->nspname, opcinfo->usename,
@@ -4463,7 +4423,7 @@ format_aggregate_signature(AggInfo *agginfo, Archive *fout, bool honor_quotes)
 	initPQExpBuffer(&buf);
 	if (honor_quotes)
 		appendPQExpBuffer(&buf, "%s",
-					  fmtId(agginfo->aggname, force_quotes));
+					  fmtId(agginfo->aggname));
 	else
 		appendPQExpBuffer(&buf, "%s", agginfo->aggname);
 
@@ -4483,7 +4443,7 @@ format_aggregate_signature(AggInfo *agginfo, Archive *fout, bool honor_quotes)
 			appendPQExpBuffer(&buf, "(*)");
 		else
 			appendPQExpBuffer(&buf, "(%s)",
-							  fmtId(agginfo->fmtbasetype, force_quotes));
+							  fmtId(agginfo->fmtbasetype));
 	}
 
 	return buf.data;
@@ -4630,7 +4590,7 @@ dumpOneAgg(Archive *fout, AggInfo *agginfo)
 	if (g_fout->remoteVersion >= 70300)
 	{
 		/* If using 7.3's regproc or regtype, data is already quoted */
-		appendPQExpBuffer(details, "BASETYPE = %s, SFUNC = %s, STYPE = %s",
+		appendPQExpBuffer(details, "    BASETYPE = %s,\n    SFUNC = %s,\n    STYPE = %s",
 						  anybasetype ? "'any'" : agginfo->fmtbasetype,
 						  aggtransfn,
 						  aggtranstype);
@@ -4638,42 +4598,42 @@ dumpOneAgg(Archive *fout, AggInfo *agginfo)
 	else if (g_fout->remoteVersion >= 70100)
 	{
 		/* format_type quotes, regproc does not */
-		appendPQExpBuffer(details, "BASETYPE = %s, SFUNC = %s, STYPE = %s",
+		appendPQExpBuffer(details, "    BASETYPE = %s,\n    SFUNC = %s,\n    STYPE = %s",
 						  anybasetype ? "'any'" : agginfo->fmtbasetype,
-						  fmtId(aggtransfn, force_quotes),
+						  fmtId(aggtransfn),
 						  aggtranstype);
 	}
 	else
 	{
 		/* need quotes all around */
-		appendPQExpBuffer(details, "BASETYPE = %s, ",
+		appendPQExpBuffer(details, "    BASETYPE = %s,\n",
 						  anybasetype ? "'any'" :
-						  fmtId(agginfo->fmtbasetype, force_quotes));
-		appendPQExpBuffer(details, "SFUNC = %s, ",
-						  fmtId(aggtransfn, force_quotes));
-		appendPQExpBuffer(details, "STYPE = %s",
-						  fmtId(aggtranstype, force_quotes));
+						  fmtId(agginfo->fmtbasetype));
+		appendPQExpBuffer(details, "    SFUNC = %s,\n",
+						  fmtId(aggtransfn));
+		appendPQExpBuffer(details, "    STYPE = %s",
+						  fmtId(aggtranstype));
 	}
 
 	if (!PQgetisnull(res, 0, i_agginitval))
 	{
-		appendPQExpBuffer(details, ", INITCOND = ");
-		formatStringLiteral(details, agginitval, CONV_ALL);
+		appendPQExpBuffer(details, ",\n    INITCOND = ");
+		appendStringLiteral(details, agginitval, true);
 	}
 
 	if (strcmp(aggfinalfn, "-") != 0)
 	{
-		appendPQExpBuffer(details, ", FINALFUNC = %s",
+		appendPQExpBuffer(details, ",\n    FINALFUNC = %s",
 						  aggfinalfn);
 	}
 
 	/* DROP must be fully qualified in case same name appears in pg_catalog */
 	appendPQExpBuffer(delq, "DROP AGGREGATE %s.%s;\n",
-					  fmtId(agginfo->aggnamespace->nspname, force_quotes),
+					  fmtId(agginfo->aggnamespace->nspname),
 					  aggsig);
 
-	appendPQExpBuffer(q, "CREATE AGGREGATE %s ( %s );\n",
-					  fmtId(agginfo->aggname, force_quotes),
+	appendPQExpBuffer(q, "CREATE AGGREGATE %s (\n%s\n);\n",
+					  fmtId(agginfo->aggname),
 					  details->data);
 
 	ArchiveEntry(fout, agginfo->oid, aggsig_tag,
@@ -4859,10 +4819,10 @@ dumpACL(Archive *fout, const char *type, const char *name,
 					/* NB: only one fmtId per appendPQExpBuffer! */
 					appendPQExpBuffer(sql, "REVOKE ALL ON %s %s FROM ",
 									  type, name);
-					appendPQExpBuffer(sql, "%s;\n", fmtId(tok, force_quotes));
+					appendPQExpBuffer(sql, "%s;\n", fmtId(tok));
 					appendPQExpBuffer(sql, "GRANT %s ON %s %s TO ",
 									  priv, type, name);
-					appendPQExpBuffer(sql, "%s;\n", fmtId(tok, force_quotes));
+					appendPQExpBuffer(sql, "%s;\n", fmtId(tok));
 				}
 			}
 			else
@@ -4879,10 +4839,9 @@ dumpACL(Archive *fout, const char *type, const char *name,
 				}
 				else if (strncmp(tok, "group ", strlen("group ")) == 0)
 					appendPQExpBuffer(sql, "GROUP %s;\n",
-									  fmtId(tok + strlen("group "),
-											force_quotes));
+									  fmtId(tok + strlen("group ")));
 				else
-					appendPQExpBuffer(sql, "%s;\n", fmtId(tok, force_quotes));
+					appendPQExpBuffer(sql, "%s;\n", fmtId(tok));
 			}
 		}
 		else
@@ -4897,10 +4856,9 @@ dumpACL(Archive *fout, const char *type, const char *name,
 			}
 			else if (strncmp(tok, "group ", strlen("group ")) == 0)
 				appendPQExpBuffer(sql, "GROUP %s;\n",
-								  fmtId(tok + strlen("group "),
-										force_quotes));
+								  fmtId(tok + strlen("group ")));
 			else
-				appendPQExpBuffer(sql, "%s;\n", fmtId(tok, force_quotes));
+				appendPQExpBuffer(sql, "%s;\n", fmtId(tok));
 		}
 		free(priv);
 	}
@@ -4912,7 +4870,7 @@ dumpACL(Archive *fout, const char *type, const char *name,
 	{
 		appendPQExpBuffer(sql, "REVOKE ALL ON %s %s FROM ",
 						  type, name);
-		appendPQExpBuffer(sql, "%s;\n", fmtId(usename, force_quotes));
+		appendPQExpBuffer(sql, "%s;\n", fmtId(usename));
 	}
 
 	ArchiveEntry(fout, objoid, tag, nspname, usename ? usename : "",
@@ -4926,7 +4884,7 @@ dumpACL(Archive *fout, const char *type, const char *name,
 static void
 dumpTableACL(Archive *fout, TableInfo *tbinfo)
 {
-	char *tmp = strdup(fmtId(tbinfo->relname, force_quotes));
+	char *tmp = strdup(fmtId(tbinfo->relname));
 	dumpACL(fout, "TABLE", tmp, tbinfo->relname,
 			tbinfo->relnamespace->nspname, tbinfo->usename, tbinfo->relacl,
 			tbinfo->viewoid != NULL ? tbinfo->viewoid : tbinfo->oid);
@@ -5028,7 +4986,7 @@ dumpOneTable(Archive *fout, TableInfo *tbinfo, TableInfo *g_tblinfo)
 							  "(select oid from pg_rewrite where "
 							  " rulename=('_RET' || viewname)::name) as view_oid"
 							  " from pg_views where viewname = ");
-			formatStringLiteral(query, tbinfo->relname, CONV_ALL);
+			appendStringLiteral(query, tbinfo->relname, true);
 			appendPQExpBuffer(query, ";");
 		}
 
@@ -5074,12 +5032,12 @@ dumpOneTable(Archive *fout, TableInfo *tbinfo, TableInfo *g_tblinfo)
 
 		/* DROP must be fully qualified in case same name appears in pg_catalog */
 		appendPQExpBuffer(delq, "DROP VIEW %s.",
-						  fmtId(tbinfo->relnamespace->nspname, force_quotes));
+						  fmtId(tbinfo->relnamespace->nspname));
 		appendPQExpBuffer(delq, "%s;\n",
-						  fmtId(tbinfo->relname, force_quotes));
+						  fmtId(tbinfo->relname));
 
-		appendPQExpBuffer(q, "CREATE VIEW %s AS %s\n",
-						  fmtId(tbinfo->relname, force_quotes), viewdef);
+		appendPQExpBuffer(q, "CREATE VIEW %s AS\n    %s\n",
+						  fmtId(tbinfo->relname), viewdef);
 
 		PQclear(res);
 
@@ -5093,9 +5051,9 @@ dumpOneTable(Archive *fout, TableInfo *tbinfo, TableInfo *g_tblinfo)
 			if (tbinfo->adef_expr[j] != NULL && !tbinfo->inhAttrDef[j])
 			{
 				appendPQExpBuffer(q, "ALTER TABLE %s ",
-								  fmtId(tbinfo->relname, force_quotes));
+								  fmtId(tbinfo->relname));
 				appendPQExpBuffer(q, "ALTER COLUMN %s SET DEFAULT %s;\n",
-								  fmtId(tbinfo->attnames[j], force_quotes),
+								  fmtId(tbinfo->attnames[j]),
 								  tbinfo->adef_expr[j]);
 			}
 		}
@@ -5114,12 +5072,12 @@ dumpOneTable(Archive *fout, TableInfo *tbinfo, TableInfo *g_tblinfo)
 
 		/* DROP must be fully qualified in case same name appears in pg_catalog */
 		appendPQExpBuffer(delq, "DROP TABLE %s.",
-						  fmtId(tbinfo->relnamespace->nspname, force_quotes));
+						  fmtId(tbinfo->relnamespace->nspname));
 		appendPQExpBuffer(delq, "%s;\n",
-						  fmtId(tbinfo->relname, force_quotes));
+						  fmtId(tbinfo->relname));
 
-		appendPQExpBuffer(q, "CREATE TABLE %s (\n\t",
-						  fmtId(tbinfo->relname, force_quotes));
+		appendPQExpBuffer(q, "CREATE TABLE %s (",
+						  fmtId(tbinfo->relname));
 		actual_atts = 0;
 		for (j = 0; j < tbinfo->numatts; j++)
 		{
@@ -5128,11 +5086,12 @@ dumpOneTable(Archive *fout, TableInfo *tbinfo, TableInfo *g_tblinfo)
 			{
 				/* Format properly if not first attr */
 				if (actual_atts > 0)
-					appendPQExpBuffer(q, ",\n\t");
+					appendPQExpBuffer(q, ",");
+				appendPQExpBuffer(q, "\n    ");
 
 				/* Attr name & type */
 				appendPQExpBuffer(q, "%s ",
-								  fmtId(tbinfo->attnames[j], force_quotes));
+								  fmtId(tbinfo->attnames[j]));
 
 				/* If no format_type, fake it */
 				if (g_fout->remoteVersion >= 70100)
@@ -5232,11 +5191,11 @@ dumpOneTable(Archive *fout, TableInfo *tbinfo, TableInfo *g_tblinfo)
 				const char *expr = PQgetvalue(res2, j, i_consrc);
 
 				if (actual_atts + j > 0)
-					appendPQExpBuffer(q, ",\n\t");
+					appendPQExpBuffer(q, ",\n    ");
 
 				if (name[0] != '$')
 					appendPQExpBuffer(q, "CONSTRAINT %s ",
-									  fmtId(name, force_quotes));
+									  fmtId(name));
 				appendPQExpBuffer(q, "CHECK (%s)", expr);
 			}
 			PQclear(res2);
@@ -5265,10 +5224,9 @@ dumpOneTable(Archive *fout, TableInfo *tbinfo, TableInfo *g_tblinfo)
 					appendPQExpBuffer(q, ", ");
 				if (parentRel->relnamespace != tbinfo->relnamespace)
 					appendPQExpBuffer(q, "%s.",
-									  fmtId(parentRel->relnamespace->nspname,
-											force_quotes));
+									  fmtId(parentRel->relnamespace->nspname));
 				appendPQExpBuffer(q, "%s",
-								  fmtId(parentRel->relname, force_quotes));
+								  fmtId(parentRel->relname));
 			}
 			appendPQExpBuffer(q, ")");
 		}
@@ -5289,9 +5247,9 @@ dumpOneTable(Archive *fout, TableInfo *tbinfo, TableInfo *g_tblinfo)
 				!tbinfo->attisdropped[j])
 			{
 				appendPQExpBuffer(q, "ALTER TABLE ONLY %s ",
-								  fmtId(tbinfo->relname, force_quotes));
+								  fmtId(tbinfo->relname));
 				appendPQExpBuffer(q, "ALTER COLUMN %s ",
-								  fmtId(tbinfo->attnames[j], force_quotes));
+								  fmtId(tbinfo->attnames[j]));
 				appendPQExpBuffer(q, "SET STATISTICS %d;\n",
 								  tbinfo->attstattarget[j]);
 			}
@@ -5476,10 +5434,10 @@ dumpIndexes(Archive *fout, TableInfo *tblinfo, int numTables)
 				parseNumericArray(PQgetvalue(res, j, i_indkey),
 								  indkeys, indnkeys);
 
-				appendPQExpBuffer(q, "ALTER TABLE ONLY %s ",
-								  fmtId(tbinfo->relname, force_quotes));
-				appendPQExpBuffer(q, "ADD CONSTRAINT %s %s (",
-								  fmtId(indexrelname, force_quotes),
+				appendPQExpBuffer(q, "ALTER TABLE ONLY %s\n",
+								  fmtId(tbinfo->relname));
+				appendPQExpBuffer(q, "    ADD CONSTRAINT %s %s (",
+								  fmtId(indexrelname),
 								  contype == 'p' ? "PRIMARY KEY" : "UNIQUE");
 
 				for (k = 0; k < indnkeys; k++)
@@ -5493,18 +5451,18 @@ dumpIndexes(Archive *fout, TableInfo *tblinfo, int numTables)
 
 					appendPQExpBuffer(q, "%s%s",
 									  (k == 0) ? "" : ", ",
-									  fmtId(attname, force_quotes));
+									  fmtId(attname));
 				}
 
 				appendPQExpBuffer(q, ");\n");
 
 				/* DROP must be fully qualified in case same name appears in pg_catalog */
 				appendPQExpBuffer(delq, "ALTER TABLE ONLY %s.",
-								  fmtId(tbinfo->relnamespace->nspname, force_quotes));
+								  fmtId(tbinfo->relnamespace->nspname));
 				appendPQExpBuffer(delq, "%s ",
-								  fmtId(tbinfo->relname, force_quotes));
+								  fmtId(tbinfo->relname));
 				appendPQExpBuffer(delq, "DROP CONSTRAINT %s;\n",
-								  fmtId(indexrelname, force_quotes));
+								  fmtId(indexrelname));
 
 				ArchiveEntry(fout, indexreloid,
 							 indexrelname,
@@ -5525,9 +5483,9 @@ dumpIndexes(Archive *fout, TableInfo *tblinfo, int numTables)
 
 				/* DROP must be fully qualified in case same name appears in pg_catalog */
 				appendPQExpBuffer(delq, "DROP INDEX %s.",
-								  fmtId(tbinfo->relnamespace->nspname, force_quotes));
+								  fmtId(tbinfo->relnamespace->nspname));
 				appendPQExpBuffer(delq, "%s;\n",
-								  fmtId(indexrelname, force_quotes));
+								  fmtId(indexrelname));
 
 				ArchiveEntry(fout, indexreloid,
 							 indexrelname,
@@ -5541,7 +5499,7 @@ dumpIndexes(Archive *fout, TableInfo *tblinfo, int numTables)
 			/* Dump Index Comments */
 			resetPQExpBuffer(q);
 			appendPQExpBuffer(q, "INDEX %s",
-							  fmtId(indexrelname, force_quotes));
+							  fmtId(indexrelname));
 			dumpComment(fout, q->data,
 						tbinfo->relnamespace->nspname,
 						tbinfo->usename,
@@ -5630,7 +5588,7 @@ findLastBuiltinOid_V71(const char *dbname)
 
 	resetPQExpBuffer(query);
 	appendPQExpBuffer(query, "SELECT datlastsysoid from pg_database where datname = ");
-	formatStringLiteral(query, dbname, CONV_ALL);
+	appendStringLiteral(query, dbname, true);
 
 	res = PQexec(g_conn, query->data);
 	if (res == NULL ||
@@ -5715,7 +5673,7 @@ dumpOneSequence(Archive *fout, TableInfo *tbinfo,
 	appendPQExpBuffer(query,
 			"SELECT sequence_name, last_value, increment_by, max_value, "
 				  "min_value, cache_value, is_cycled, is_called from %s",
-					  fmtId(tbinfo->relname, force_quotes));
+					  fmtId(tbinfo->relname));
 
 	res = PQexec(g_conn, query->data);
 	if (!res || PQresultStatus(res) != PGRES_TUPLES_OK)
@@ -5764,18 +5722,18 @@ dumpOneSequence(Archive *fout, TableInfo *tbinfo,
 
 		/* DROP must be fully qualified in case same name appears in pg_catalog */
 		appendPQExpBuffer(delqry, "DROP SEQUENCE %s.",
-						  fmtId(tbinfo->relnamespace->nspname, force_quotes));
+						  fmtId(tbinfo->relnamespace->nspname));
 		appendPQExpBuffer(delqry, "%s;\n",
-						  fmtId(tbinfo->relname, force_quotes));
+						  fmtId(tbinfo->relname));
 
 		resetPQExpBuffer(query);
 		appendPQExpBuffer(query,
-						  "CREATE SEQUENCE %s start %s increment %s "
-						  "maxvalue %s minvalue %s cache %s%s;\n",
-						  fmtId(tbinfo->relname, force_quotes),
+						  "CREATE SEQUENCE %s\n    START %s\n    INCREMENT %s\n"
+						  "    MAXVALUE %s\n    MINVALUE %s\n    CACHE %s%s;\n",
+						  fmtId(tbinfo->relname),
 						  (called ? minv : last),
 						  incby, maxv, minv, cache,
-						  (cycled ? " cycle" : ""));
+						  (cycled ? "\n    CYCLE" : ""));
 
 		ArchiveEntry(fout, tbinfo->oid, tbinfo->relname,
 					 tbinfo->relnamespace->nspname, tbinfo->usename,
@@ -5788,7 +5746,7 @@ dumpOneSequence(Archive *fout, TableInfo *tbinfo,
 	{
 		resetPQExpBuffer(query);
 		appendPQExpBuffer(query, "SELECT pg_catalog.setval (");
-		formatStringLiteral(query, fmtId(tbinfo->relname, force_quotes), CONV_ALL);
+		appendStringLiteral(query, fmtId(tbinfo->relname), true);
 		appendPQExpBuffer(query, ", %s, %s);\n",
 						  last, (called ? "true" : "false"));
 
@@ -5804,7 +5762,7 @@ dumpOneSequence(Archive *fout, TableInfo *tbinfo,
 		/* Dump Sequence Comments */
 
 		resetPQExpBuffer(query);
-		appendPQExpBuffer(query, "SEQUENCE %s", fmtId(tbinfo->relname, force_quotes));
+		appendPQExpBuffer(query, "SEQUENCE %s", fmtId(tbinfo->relname));
 		dumpComment(fout, query->data,
 					tbinfo->relnamespace->nspname, tbinfo->usename,
 					tbinfo->oid, "pg_class", 0, NULL);
@@ -5887,20 +5845,20 @@ dumpConstraints(Archive *fout, TableInfo *tblinfo, int numTables)
 			const char *conDef = PQgetvalue(res, j, i_condef);
 
 			resetPQExpBuffer(query);
-			appendPQExpBuffer(query, "ALTER TABLE ONLY %s ",
-							  fmtId(tbinfo->relname, force_quotes));
-			appendPQExpBuffer(query, "ADD CONSTRAINT %s %s;\n",
-							  fmtId(conName, force_quotes),
+			appendPQExpBuffer(query, "ALTER TABLE ONLY %s\n",
+							  fmtId(tbinfo->relname));
+			appendPQExpBuffer(query, "    ADD CONSTRAINT %s %s;\n",
+							  fmtId(conName),
 							  conDef);
 
 			/* DROP must be fully qualified in case same name appears in pg_catalog */
 			resetPQExpBuffer(delqry);
 			appendPQExpBuffer(delqry, "ALTER TABLE ONLY %s.",
-							  fmtId(tbinfo->relnamespace->nspname, force_quotes));
+							  fmtId(tbinfo->relnamespace->nspname));
 			appendPQExpBuffer(delqry, "%s ",
-							  fmtId(tbinfo->relname, force_quotes));
+							  fmtId(tbinfo->relname));
 			appendPQExpBuffer(delqry, "DROP CONSTRAINT %s;\n",
-							  fmtId(conName, force_quotes));
+							  fmtId(conName));
 
 			ArchiveEntry(fout, conOid,
 						 conName,
@@ -5912,9 +5870,9 @@ dumpConstraints(Archive *fout, TableInfo *tblinfo, int numTables)
 
 			resetPQExpBuffer(query);
 			appendPQExpBuffer(query, "CONSTRAINT %s ",
-							  fmtId(conName, force_quotes));
+							  fmtId(conName));
 			appendPQExpBuffer(query, "ON %s",
-							  fmtId(tbinfo->relname, force_quotes));
+							  fmtId(tbinfo->relname));
 
 			dumpComment(fout, query->data,
 						tbinfo->relnamespace->nspname, tbinfo->usename,
@@ -6061,24 +6019,24 @@ dumpTriggers(Archive *fout, TableInfo *tblinfo, int numTables)
 			resetPQExpBuffer(delqry);
 			/* DROP must be fully qualified in case same name appears in pg_catalog */
 			appendPQExpBuffer(delqry, "DROP TRIGGER %s ",
-							  fmtId(tgname, force_quotes));
+							  fmtId(tgname));
 			appendPQExpBuffer(delqry, "ON %s.",
-							  fmtId(tbinfo->relnamespace->nspname, force_quotes));
+							  fmtId(tbinfo->relnamespace->nspname));
 			appendPQExpBuffer(delqry, "%s;\n",
-							  fmtId(tbinfo->relname, force_quotes));
+							  fmtId(tbinfo->relname));
 
 			resetPQExpBuffer(query);
 			if (tgisconstraint)
 			{
 				appendPQExpBuffer(query, "CREATE CONSTRAINT TRIGGER ");
-				appendPQExpBuffer(query, fmtId(PQgetvalue(res, j, i_tgconstrname), force_quotes));
+				appendPQExpBuffer(query, fmtId(PQgetvalue(res, j, i_tgconstrname)));
 			}
 			else
 			{
 				appendPQExpBuffer(query, "CREATE TRIGGER ");
-				appendPQExpBuffer(query, fmtId(tgname, force_quotes));
+				appendPQExpBuffer(query, fmtId(tgname));
 			}
-			appendPQExpBufferChar(query, ' ');
+			appendPQExpBuffer(query, "\n    ");
 			/* Trigger type */
 			findx = 0;
 			if (TRIGGER_FOR_BEFORE(tgtype))
@@ -6105,8 +6063,8 @@ dumpTriggers(Archive *fout, TableInfo *tblinfo, int numTables)
 				else
 					appendPQExpBuffer(query, " UPDATE");
 			}
-			appendPQExpBuffer(query, " ON %s ",
-							  fmtId(tbinfo->relname, force_quotes));
+			appendPQExpBuffer(query, " ON %s\n",
+							  fmtId(tbinfo->relname));
 
 			if (tgisconstraint)
 			{
@@ -6124,30 +6082,30 @@ dumpTriggers(Archive *fout, TableInfo *tblinfo, int numTables)
 
 					/* If we are using regclass, name is already quoted */
 					if (g_fout->remoteVersion >= 70300)
-						appendPQExpBuffer(query, " FROM %s",
+						appendPQExpBuffer(query, "    FROM %s\n    ",
 										  PQgetvalue(res, j, i_tgconstrrelname));
 					else
-						appendPQExpBuffer(query, " FROM %s",
-										  fmtId(PQgetvalue(res, j, i_tgconstrrelname), force_quotes));
+						appendPQExpBuffer(query, "    FROM %s\n    ",
+										  fmtId(PQgetvalue(res, j, i_tgconstrrelname)));
 				}
 				if (!tgdeferrable)
-					appendPQExpBuffer(query, " NOT");
-				appendPQExpBuffer(query, " DEFERRABLE INITIALLY ");
+					appendPQExpBuffer(query, "NOT ");
+				appendPQExpBuffer(query, "DEFERRABLE INITIALLY ");
 				if (tginitdeferred)
-					appendPQExpBuffer(query, "DEFERRED");
+					appendPQExpBuffer(query, "DEFERRED\n");
 				else
-					appendPQExpBuffer(query, "IMMEDIATE");
+					appendPQExpBuffer(query, "IMMEDIATE\n");
 
 			}
 
-			appendPQExpBuffer(query, " FOR EACH ROW");
+			appendPQExpBuffer(query, "    FOR EACH ROW\n    ");
 			/* In 7.3, result of regproc is already quoted */
 			if (g_fout->remoteVersion >= 70300)
-				appendPQExpBuffer(query, " EXECUTE PROCEDURE %s (",
+				appendPQExpBuffer(query, "EXECUTE PROCEDURE %s (",
 								  tgfname);
 			else
-				appendPQExpBuffer(query, " EXECUTE PROCEDURE %s (",
-								  fmtId(tgfname, force_quotes));
+				appendPQExpBuffer(query, "EXECUTE PROCEDURE %s (",
+								  fmtId(tgfname));
 			for (findx = 0; findx < tgnargs; findx++)
 			{
 				const char *s;
@@ -6196,9 +6154,9 @@ dumpTriggers(Archive *fout, TableInfo *tblinfo, int numTables)
 
 			resetPQExpBuffer(query);
 			appendPQExpBuffer(query, "TRIGGER %s ",
-							  fmtId(tgname, force_quotes));
+							  fmtId(tgname));
 			appendPQExpBuffer(query, "ON %s",
-							  fmtId(tbinfo->relname, force_quotes));
+							  fmtId(tbinfo->relname));
 
 			dumpComment(fout, query->data,
 						tbinfo->relnamespace->nspname, tbinfo->usename,
@@ -6221,6 +6179,7 @@ dumpRules(Archive *fout, TableInfo *tblinfo, int numTables)
 	int			i,
 				t;
 	PQExpBuffer query = createPQExpBuffer();
+	PQExpBuffer cmd = createPQExpBuffer();
 	int			i_definition;
 	int			i_oid;
 	int			i_rulename;
@@ -6267,7 +6226,7 @@ dumpRules(Archive *fout, TableInfo *tblinfo, int numTables)
 							  "   pg_rewrite.oid, pg_rewrite.rulename "
 							  "FROM pg_rewrite, pg_class, pg_rules "
 							  "WHERE pg_class.relname = ");
-			formatStringLiteral(query, tbinfo->relname, CONV_ALL);
+			appendStringLiteral(query, tbinfo->relname, true);
 			appendPQExpBuffer(query,
 							  "    AND pg_rewrite.ev_class = pg_class.oid "
 							  "    AND pg_rules.tablename = pg_class.relname "
@@ -6295,20 +6254,21 @@ dumpRules(Archive *fout, TableInfo *tblinfo, int numTables)
 
 		for (i = 0; i < nrules; i++)
 		{
+			printfPQExpBuffer(cmd, "%s\n", PQgetvalue(res, i, i_definition));
 			ArchiveEntry(fout, PQgetvalue(res, i, i_oid),
 						 PQgetvalue(res, i, i_rulename),
 						 tbinfo->relnamespace->nspname,
 						 tbinfo->usename,
 						 "RULE", NULL,
-						 PQgetvalue(res, i, i_definition),
+						 cmd->data,
 						 "",	/* Del */
 						 NULL, NULL, NULL);
 
 			/* Dump rule comments */
 
 			resetPQExpBuffer(query);
-			appendPQExpBuffer(query, "RULE %s", fmtId(PQgetvalue(res, i, i_rulename), force_quotes));
-			appendPQExpBuffer(query, " ON %s", fmtId(tbinfo->relname, force_quotes));
+			appendPQExpBuffer(query, "RULE %s", fmtId(PQgetvalue(res, i, i_rulename)));
+			appendPQExpBuffer(query, " ON %s", fmtId(tbinfo->relname));
 			dumpComment(fout, query->data,
 						tbinfo->relnamespace->nspname,
 						tbinfo->usename,
@@ -6320,6 +6280,7 @@ dumpRules(Archive *fout, TableInfo *tblinfo, int numTables)
 	}
 
 	destroyPQExpBuffer(query);
+	destroyPQExpBuffer(cmd);
 }
 
 /*
@@ -6353,7 +6314,7 @@ selectSourceSchema(const char *schemaName)
 
 	query = createPQExpBuffer();
 	appendPQExpBuffer(query, "SET search_path = %s",
-					  fmtId(schemaName, force_quotes));
+					  fmtId(schemaName));
 	if (strcmp(schemaName, "pg_catalog") != 0)
 		appendPQExpBuffer(query, ", pg_catalog");
 	res = PQexec(g_conn, query->data);
@@ -6444,7 +6405,7 @@ getFormattedTypeName(const char *oid, OidOptions opts)
 	else
 	{
 		/* may need to quote it */
-		result = strdup(fmtId(PQgetvalue(res, 0, 0), false));
+		result = strdup(fmtId(PQgetvalue(res, 0, 0)));
 	}
 
 	PQclear(res);
@@ -6499,14 +6460,10 @@ myFormatType(const char *typname, int32 typmod)
 	 * char is an internal single-byte data type; Let's make sure we force
 	 * it through with quotes. - thomas 1998-12-13
 	 */
-	else if (!strcmp(typname, "char"))
-	{
-		appendPQExpBuffer(buf, "%s", fmtId(typname, true));
-	}
+	else if (strcmp(typname, "char")==0)
+		appendPQExpBuffer(buf, "\"char\"");
 	else
-	{
-		appendPQExpBuffer(buf, "%s", fmtId(typname, false));
-	}
+		appendPQExpBuffer(buf, "%s", fmtId(typname));
 
 	result = strdup(buf->data);
 	destroyPQExpBuffer(buf);
@@ -6534,10 +6491,10 @@ fmtQualifiedId(const char *schema, const char *id)
 	if (g_fout->remoteVersion >= 70300 && schema && *schema)
 	{
 		appendPQExpBuffer(id_return, "%s.",
-						  fmtId(schema, force_quotes));
+						  fmtId(schema));
 	}
 	appendPQExpBuffer(id_return, "%s",
-					  fmtId(id, force_quotes));
+					  fmtId(id));
 
 	return id_return->data;
 }
@@ -6574,8 +6531,8 @@ fmtCopyColumnList(const TableInfo* ti)
 		if (attisdropped[i])
 			continue;
 		if (needComma)
-			appendPQExpBuffer(q, ",");
-		appendPQExpBuffer(q, "%s", fmtId(attnames[i], force_quotes));
+			appendPQExpBuffer(q, ", ");
+		appendPQExpBuffer(q, "%s", fmtId(attnames[i]));
 		needComma = true;
 	}
 	appendPQExpBuffer(q, ")");

@@ -15,12 +15,13 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.53 2002/08/10 16:57:31 petere Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.54 2002/08/18 09:36:25 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "pg_backup.h"
+#include "pg_dump.h"
 #include "pg_backup_archiver.h"
 #include "pg_backup_db.h"
 
@@ -30,6 +31,8 @@
 
 #include "pqexpbuffer.h"
 #include "libpq/libpq-fs.h"
+#include "parser/keywords.h"
+
 
 typedef enum _teReqs_
 {
@@ -45,7 +48,7 @@ static ArchiveHandle *_allocAH(const char *FileSpec, const ArchiveFormat fmt,
 		 const int compression, ArchiveMode mode);
 static int	_printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isData);
 
-static void _doSetSessionAuth(ArchiveHandle *AH, const char *autharg);
+static void _doSetSessionAuth(ArchiveHandle *AH, const char *user);
 static void _reconnectAsOwner(ArchiveHandle *AH, const char *dbname, TocEntry *te);
 static void _reconnectAsUser(ArchiveHandle *AH, const char *dbname, const char *user);
 static void _selectOutputSchema(ArchiveHandle *AH, const char *schemaName);
@@ -202,7 +205,7 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 	if (ropt->filename || ropt->compression)
 		sav = SetOutput(AH, ropt->filename, ropt->compression);
 
-	ahprintf(AH, "--\n-- Selected TOC Entries:\n--\n");
+	ahprintf(AH, "--\n-- PostgreSQL database dump\n--\n\n");
 
 	/*
 	 * Drop the items at the start, in reverse order
@@ -233,7 +236,6 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 	te = AH->toc->next;
 	while (te != AH->toc)
 	{
-
 		/* Work out what, if anything, we want from this entry */
 		reqs = _tocEntryRequired(te, ropt);
 
@@ -464,7 +466,7 @@ _disableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te, RestoreOptions *rop
 	}
 	else if (AH->ropt->use_setsessauth)
 	{
-		_doSetSessionAuth(AH, "DEFAULT");
+		_doSetSessionAuth(AH, NULL);
 	}
 
 	ahlog(AH, 1, "disabling triggers\n");
@@ -482,7 +484,7 @@ _disableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te, RestoreOptions *rop
 	if (te && te->tag && strlen(te->tag) > 0)
 		ahprintf(AH, "UPDATE pg_catalog.pg_class SET reltriggers = 0 "
 				 "WHERE oid = '%s'::pg_catalog.regclass;\n\n",
-				 fmtId(te->tag, false));
+				 fmtId(te->tag));
 	else
 		ahprintf(AH, "UPDATE pg_catalog.pg_class SET reltriggers = 0 FROM pg_catalog.pg_namespace "
 				 "WHERE relnamespace = pg_namespace.oid AND nspname !~ '^pg_';\n\n");
@@ -498,7 +500,7 @@ _disableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te, RestoreOptions *rop
 	}
 	else if (AH->ropt->use_setsessauth)
 	{
-		_doSetSessionAuth(AH, fmtId(oldUser, false));
+		_doSetSessionAuth(AH, oldUser);
 	}
 	free(oldUser);
 	free(oldSchema);
@@ -531,7 +533,7 @@ _enableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt
 	}
 	else if (AH->ropt->use_setsessauth)
 	{
-		_doSetSessionAuth(AH, "DEFAULT");
+		_doSetSessionAuth(AH, NULL);
 	}
 
 	ahlog(AH, 1, "enabling triggers\n");
@@ -550,7 +552,7 @@ _enableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt
 		ahprintf(AH, "UPDATE pg_catalog.pg_class SET reltriggers = "
 				 "(SELECT pg_catalog.count(*) FROM pg_catalog.pg_trigger where pg_class.oid = tgrelid) "
 				 "WHERE oid = '%s'::pg_catalog.regclass;\n\n",
-				 fmtId(te->tag, false));
+				 fmtId(te->tag));
 	else
 		ahprintf(AH, "UPDATE pg_catalog.pg_class SET reltriggers = "
 				 "(SELECT pg_catalog.count(*) FROM pg_catalog.pg_trigger where pg_class.oid = tgrelid) "
@@ -568,7 +570,7 @@ _enableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt
 	}
 	else if (AH->ropt->use_setsessauth)
 	{
-		_doSetSessionAuth(AH, fmtId(oldUser, false));
+		_doSetSessionAuth(AH, oldUser);
 	}
 	free(oldUser);
 	free(oldSchema);
@@ -1942,29 +1944,38 @@ _tocEntryRequired(TocEntry *te, RestoreOptions *ropt)
 
 /*
  * Issue a SET SESSION AUTHORIZATION command.  Caller is responsible
- * for updating state if appropriate.  Note that caller must also quote
- * the argument if it's a username (it might be DEFAULT, too).
+ * for updating state if appropriate.  If user is NULL, the
+ * specification DEFAULT will be used.
  */
 static void
-_doSetSessionAuth(ArchiveHandle *AH, const char *autharg)
+_doSetSessionAuth(ArchiveHandle *AH, const char *user)
 {
+	PQExpBuffer cmd = createPQExpBuffer();
+	appendPQExpBuffer(cmd, "SET SESSION AUTHORIZATION ");
+	if (user)
+		/* SQL requires a string literal here.  Might as well be
+		 * correct. */
+		appendStringLiteral(cmd, user, false);
+	else
+		appendPQExpBuffer(cmd, "DEFAULT");
+	appendPQExpBuffer(cmd, ";");
+
 	if (RestoringToDB(AH))
 	{
-		PQExpBuffer qry = createPQExpBuffer();
 		PGresult   *res;
 
-		appendPQExpBuffer(qry, "SET SESSION AUTHORIZATION %s;", autharg);
-		res = PQexec(AH->connection, qry->data);
+		res = PQexec(AH->connection, cmd->data);
 
 		if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
 			die_horribly(AH, modulename, "could not set session user to %s: %s",
-						 autharg, PQerrorMessage(AH->connection));
+						 user, PQerrorMessage(AH->connection));
 
 		PQclear(res);
-		destroyPQExpBuffer(qry);
 	}
 	else
-		ahprintf(AH, "SET SESSION AUTHORIZATION %s;\n\n", autharg);
+		ahprintf(AH, "%s\n\n", cmd->data);
+
+	destroyPQExpBuffer(cmd);
 }
 
 
@@ -1991,7 +2002,7 @@ _reconnectAsUser(ArchiveHandle *AH, const char *dbname, const char *user)
 	 */
 	if (!dbname && AH->ropt->use_setsessauth)
 	{
-		_doSetSessionAuth(AH, fmtId(user, false));
+		_doSetSessionAuth(AH, user);
 	}
 	else if (AH->ropt && AH->ropt->noReconnect)
 	{
@@ -2005,9 +2016,9 @@ _reconnectAsUser(ArchiveHandle *AH, const char *dbname, const char *user)
 		PQExpBuffer qry = createPQExpBuffer();
 
 		appendPQExpBuffer(qry, "\\connect %s",
-						  dbname ? fmtId(dbname, false) : "-");
+						  dbname ? fmtId(dbname) : "-");
 		appendPQExpBuffer(qry, " %s\n\n",
-						  fmtId(user, false));
+						  fmtId(user));
 
 		ahprintf(AH, qry->data);
 
@@ -2061,7 +2072,7 @@ _selectOutputSchema(ArchiveHandle *AH, const char *schemaName)
 	qry = createPQExpBuffer();
 
 	appendPQExpBuffer(qry, "SET search_path = %s",
-					  fmtId(schemaName, false));
+					  fmtId(schemaName));
 	if (strcmp(schemaName, "pg_catalog") != 0)
 		appendPQExpBuffer(qry, ", pg_catalog");
 
@@ -2089,48 +2100,48 @@ _selectOutputSchema(ArchiveHandle *AH, const char *schemaName)
 
 
 /*
- * fmtId
- *
- *	Quotes input string if it's not a legitimate SQL identifier as-is,
- *	or all the time if force_quotes is true.
+ *	Quotes input string if it's not a legitimate SQL identifier as-is.
  *
  *	Note that the returned string must be used before calling fmtId again,
  *	since we re-use the same return buffer each time.  Non-reentrant but
  *	avoids memory leakage.
  */
 const char *
-fmtId(const char *rawid, bool force_quotes)
+fmtId(const char *rawid)
 {
 	static PQExpBuffer id_return = NULL;
 	const char *cp;
+	bool need_quotes = false;
 
 	if (id_return)				/* first time through? */
 		resetPQExpBuffer(id_return);
 	else
 		id_return = createPQExpBuffer();
 
-	if (!force_quotes)
+	/* These checks need to match the identifier production in scan.l.
+	 * Don't use islower() etc. */
+
+	if (ScanKeywordLookup(rawid))
+		need_quotes = true;
+	/* slightly different rules for first character */
+	else if (!((rawid[0] >= 'a' && rawid[0] <= 'z') || rawid[0] == '_'))
+		need_quotes = true;
+	else
 	{
-		/* do a quick check on the first character... */
-		if (!islower((unsigned char) *rawid) && *rawid != '_')
-			force_quotes = true;
-		else
+		/* otherwise check the entire string */
+		for (cp = rawid; *cp; cp++)
 		{
-			/* otherwise check the entire string */
-			for (cp = rawid; *cp; cp++)
+			if (!((*cp >= 'a' && *cp <= 'z')
+				  || (*cp >= '0' && *cp <= '9')
+				  || (*cp == '_')))
 			{
-				if (!(islower((unsigned char) *cp) ||
-					  isdigit((unsigned char) *cp) ||
-					  (*cp == '_')))
-				{
-					force_quotes = true;
-					break;
-				}
+				need_quotes = true;
+				break;
 			}
 		}
 	}
 
-	if (!force_quotes)
+	if (!need_quotes)
 	{
 		/* no quoting needed */
 		appendPQExpBufferStr(id_return, rawid);
@@ -2156,6 +2167,50 @@ fmtId(const char *rawid, bool force_quotes)
 }
 
 
+/*
+ * Convert a string value to an SQL string literal and append it to
+ * the given buffer.
+ *
+ * Special characters are escaped. Quote mark ' goes to '' per SQL
+ * standard, other stuff goes to \ sequences.  If escapeAll is false,
+ * whitespace characters are not escaped (tabs, newlines, etc.).  This
+ * is appropriate for dump file output.
+ */
+void
+appendStringLiteral(PQExpBuffer buf, const char *str, bool escapeAll)
+{
+	appendPQExpBufferChar(buf, '\'');
+	while (*str)
+	{
+		char		ch = *str++;
+
+		if (ch == '\\' || ch == '\'')
+		{
+			appendPQExpBufferChar(buf, ch);		/* double these */
+			appendPQExpBufferChar(buf, ch);
+		}
+		else if ((unsigned char) ch < (unsigned char) ' ' &&
+				 (escapeAll
+				  || (ch != '\t' && ch != '\n' && ch != '\v' && ch != '\f' && ch != '\r')
+				  ))
+		{
+			/*
+			 * generate octal escape for control chars other than
+			 * whitespace
+			 */
+			appendPQExpBufferChar(buf, '\\');
+			appendPQExpBufferChar(buf, ((ch >> 6) & 3) + '0');
+			appendPQExpBufferChar(buf, ((ch >> 3) & 7) + '0');
+			appendPQExpBufferChar(buf, (ch & 7) + '0');
+		}
+		else
+			appendPQExpBufferChar(buf, ch);
+	}
+	appendPQExpBufferChar(buf, '\'');
+}
+
+
+
 static int
 _printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isData)
 {
@@ -2170,7 +2225,7 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isDat
 	else
 		pfx = "";
 
-	ahprintf(AH, "--\n-- %sTOC Entry ID %d (OID %s)\n--\n-- Name: %s Type: %s Schema: %s Owner: %s\n",
+	ahprintf(AH, "--\n-- %sTOC entry %d (OID %s)\n-- Name: %s; Type: %s; Schema: %s; Owner: %s\n",
 			 pfx, te->id, te->oid, te->tag, te->desc,
 			 te->namespace ? te->namespace : "-",
 			 te->owner);
@@ -2178,7 +2233,8 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isDat
 		(*AH->PrintExtraTocPtr) (AH, te);
 	ahprintf(AH, "--\n\n");
 
-	ahprintf(AH, "%s\n", te->defn);
+	if (strlen(te->defn) > 0)
+		ahprintf(AH, "%s\n\n", te->defn);
 
 	return 1;
 }

@@ -5,7 +5,7 @@
  *	Implements the basic DB functions used by the archiver.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.36 2002/08/10 16:57:31 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.37 2002/08/18 09:36:25 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -590,9 +590,9 @@ FixupBlobRefs(ArchiveHandle *AH, TocEntry *te)
 
 	if (te->namespace && strlen(te->namespace) > 0)
 		appendPQExpBuffer(tblName, "%s.",
-						  fmtId(te->namespace, false));
+						  fmtId(te->namespace));
 	appendPQExpBuffer(tblName, "%s",
-					  fmtId(te->tag, false));
+					  fmtId(te->tag));
 
 	appendPQExpBuffer(tblQry,
 					  "SELECT a.attname FROM "
@@ -624,13 +624,13 @@ FixupBlobRefs(ArchiveHandle *AH, TocEntry *te)
 		/* Can't use fmtId twice in one call... */
 		appendPQExpBuffer(tblQry,
 						  "UPDATE %s SET %s = %s.newOid",
-						  tblName->data, fmtId(attr, false),
+						  tblName->data, fmtId(attr),
 						  BLOB_XREF_TABLE);
 		appendPQExpBuffer(tblQry,
 						  " FROM %s WHERE %s.oldOid = %s.%s",
 						  BLOB_XREF_TABLE,
 						  BLOB_XREF_TABLE,
-						  tblName->data, fmtId(attr, false));
+						  tblName->data, fmtId(attr));
 
 		ahlog(AH, 10, "SQL: %s\n", tblQry->data);
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.124 2002/08/06 05:40:45 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.125 2002/08/18 09:36:25 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,8 @@
 #include "nodes/parsenodes.h"
 #include "parser/keywords.h"
 #include "parser/parse.h"
+
+/* NB: This file is also used by pg_dump. */
 
 /*
  * List of (keyword-name, keyword-token-value) pairs.

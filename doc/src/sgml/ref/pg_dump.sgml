@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.47 2002/08/10 16:57:31 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.48 2002/08/18 09:36:25 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -29,7 +29,6 @@ PostgreSQL documentation
    <arg>-f <replaceable>file</replaceable></arg> 
    <arg>-F <replaceable>format</replaceable></arg>
    <arg>-i</arg>
-   <group> <arg>-n</arg> <arg>-N</arg> </group>
    <arg>-o</arg>
    <arg>-O</arg>
    <arg>-R</arg>
@@ -298,31 +297,6 @@ PostgreSQL documentation
 	if you need to override the version check (and if
 	<command>pg_dump</command> then fails, don't
 	say you weren't warned).
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>-n</></term>
-      <term><option>--no-quotes</></term>
-      <listitem>
-       <para>
-	Suppress double quotes around identifiers unless absolutely necessary.
-	This may cause trouble loading this dumped data if there are reserved words
-	used for identifiers. 
-	This was the default behavior for
-	<command>pg_dump</command> prior to version 6.4.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>-N</></term>
-      <term><option>--quotes</></term>
-      <listitem>
-       <para>
-	Include double quotes around identifiers.
-	This is the default.
        </para>
       </listitem>
      </varlistentry>
