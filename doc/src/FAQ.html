@@ -719,16 +719,17 @@ more detailed information to be reported.  The -d option takes a number
 that specifies the debug level.  Be warned that high debug level values
 generate large log files.<P>
 
-You can actually run the postgres backend from the command line, and
-type your SQL statement directly.  This is recommended <B>only</B> for
-debugging purposes.  Note that a newline terminates the query, not a
-semicolon.  If you have compiled with debugging symbols, you can use a
-debugger to see what is happening.  Because the backend was not started
-from the postmaster, it is not running in an identical environment and
-locking/backend interaction problems may not be duplicated.<P>
+If the <i>postmaster</i> is not running, you can actually run the
+postgres backend from the command line, and type your SQL statement
+directly. This is recommended <B>only</B> for debugging purposes. Note
+that a newline terminates the query, not a semicolon. If you have
+compiled with debugging symbols, you can use a debugger to see what is
+happening. Because the backend was not started from the postmaster, it
+is not running in an identical environment and locking/backend
+interaction problems may not be duplicated.<P>
 
-Another method is to start <I>psql</I> in one window, then find the
-<small>PID</small> of the <i>postgres</i> process used by
+If the <i>postmaster</i> is running, start <I>psql</I> in one window,
+then find the <small>PID</small> of the <i>postgres</i> process used by
 <i>psql.</i> Use a debugger to attach to the <i>postgres</i>
 <small>PID.</small> You can set breakpoints in the debugger and issue
 queries from <i>psql.</i> If you are debugging <i>postgres</i> startup,

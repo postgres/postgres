@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Tue Mar 21 16:09:11 EST 2000
+   Last updated: Fri Jun 2 11:32:13 EDT 2000
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -11,11 +11,14 @@
    Linux-specific questions are answered in
    http://www.PostgreSQL.org/docs/faq-linux.html.
    
+   HPUX-specific questions are answered in
+   http://www.PostgreSQL.org/docs/faq-hpux.html.
+   
+   Solaris-specific questions are answered in
+   http://www.postgresql.org/docs/faq-solaris.html.
+   
    Irix-specific questions are answered in
    http://www.PostgreSQL.org/docs/faq-irix.html.
-   
-   HPUX-specific questions are answered in
-   http://www.PostgreSQL.org/docs/faq-hpux.shtml.
      _________________________________________________________________
    
                              General Questions
@@ -63,7 +66,6 @@
    3.11) What debugging features are available in PostgreSQL?
    3.12) I get 'Sorry, too many clients' when trying to connect. Why?
    3.13) What are the pg_psort.XXX files in my database directory?
-   3.14) How do I set up a pg_group?
    
                            Operational Questions
                                       
@@ -89,8 +91,8 @@
    4.15) What is the difference between the various character types?
    4.16.1) How do I create a serial/auto-incrementing field?
    4.16.2) How do I get the value of a serial insert?
-   4.16.3) Wouldn't use of currval() and nextval() lead to a race
-   condition with other concurrent backend processes?
+   4.16.3) Don't currval() and nextval() lead to a race condition with
+   other concurrent backend processes?
    4.17) What is an oid? What is a tid?
    4.18) What is the meaning of some of the terms used in PostgreSQL?
    4.19) Why do I get the error "FATAL: palloc failure: memory
@@ -104,7 +106,7 @@
                             Extending PostgreSQL
                                       
    5.1) I wrote a user-defined function. When I run it in psql, why does
-   it dumps core?
+   it dump core?
    5.2) What does the message: NOTICE:PortalHeapMemoryFree: 0x402251d0
    not in alloc set! mean?
    5.3) How can I contribute some nifty new types and functions for
@@ -141,6 +143,8 @@
    The original name of the software at Berkeley was Postgres. When SQL
    functionality was added in 1995, its name was changed to Postgres95.
    The name was changed at the end of 1996 to PostgreSQL.
+   
+   It is pronounced Post-Gres-Q-L.
    
     1.2) What's the copyright on PostgreSQL?
     
@@ -261,14 +265,19 @@
    
     1.7) What is the latest release of PostgreSQL?
     
-   The latest release of PostgreSQL is version 6.5.2.
+   The latest release of PostgreSQL is version 7.0.2.
    
    We plan to have major releases every four months.
    
     1.8) What documentation is available for PostgreSQL?
     
    Several manuals, manual pages, and some small test examples are
-   included in the distribution. See the /doc directory.
+   included in the distribution. See the /doc directory. You can also
+   browse the manual on-line at http://www.postgresql.org/docs/postgres.
+   in the distribution.
+   
+   There is a PostgreSQL book availiable at
+   http://www.postgresql.org/docs/awbook.html
    
    psql has some nice \d commands to show information about types,
    operators, functions, aggregates, etc.
@@ -282,16 +291,17 @@
    
     1.10) How can I learn SQL?
     
-   There is a nice tutorial at http://w3.one.net/~jhoffman/sqltut.htm and
-   at
-   http://ourworld.compuserve.com/homepages/Graeme_Birchall/HTM_COOK.HTM.
+   The PostgreSQL book at http://www.postgresql.org/docs/awbook.html
+   teaches SQL. There is a nice tutorial at
+   http://w3.one.net/~jhoffman/sqltut.htm and at
+   http://ourworld.compuserve.com/homepages/graeme_birchall/HTM_COOK.HTM.
    
    Another one is "Teach Yourself SQL in 21 Days, Second Edition" at
    http://members.tripod.com/er4ebus/sql/index.htm 
    
    Many of our users like The Practical SQL Handbook, Bowman et al.,
-   Addison Wesley. Others like Lan Times Guide to SQL, Groff et al.,
-   Osborne McGraw-Hill.
+   Addison Wesley. Others like The Complete Reference SQL, Groff et al.,
+   McGraw-Hill.
    
     1.11) Is PostgreSQL Y2K compliant?
     
@@ -349,7 +359,9 @@
           Of course, MySQL doesn't have any of the features mentioned in
           the Features section above. We are built for flexibility and
           features, though we continue to improve performance through
-          profiling and source code analysis.
+          profiling and source code analysis. There is an interesting web
+          page comparing PostgreSQL to MySQL at
+          http://openacs.org/why-not-mysql.html
           We handle each user connection by creating a Unix process.
           Backend processes share data buffers and locking information.
           With multiple CPU's, multiple backends can easily run on
@@ -434,7 +446,7 @@
      * ODBC(odbc)
      * Python(PyGreSQL)
      * TCL(libpgtcl)
-     * A crude C/4GL(contrib/pginterface)
+     * C Easy API(libpgeasy)
      * Embedded HTML(PHP from http://www.php.net)
      _________________________________________________________________
    
@@ -443,8 +455,7 @@
     3.1) Why does initdb fail?
     
      * check that you don't have any of the previous version's binaries
-       in your path (If you see the message WARN:heap_modifytuple: repl
-       is \ 9, this is the problem.)
+       in your path
      * check to see that you have the proper paths set
      * check that the postgres user owns the proper files
        
@@ -459,7 +470,7 @@
     message. Why?
     
    It could be a variety of problems, but first check to see that you
-   have system V extensions installed on your kernel. PostgreSQL requires
+   have system V extensions installed in your kernel. PostgreSQL requires
    kernel support for shared memory and semaphores.
    
     3.4) When I try to start the postmaster, I get IpcMemoryCreate errors. Why?
@@ -488,7 +499,7 @@
     3.6) How do I prevent other hosts from accessing my PostgreSQL database?
     
    By default, PostgreSQL only allows connections from the local machine
-   using unix domain sockets. Other machines will not be able to connect
+   using Unix domain sockets. Other machines will not be able to connect
    unless you add the -i flag to the postmaster, and enable host-based
    authentication by modifying the file $PGDATA/pg_hba.conf accordingly.
    This will allow TCP/IP connections.
@@ -538,10 +549,8 @@
    and the default is 64 buffers.
    
    You can also use the backend -S option to increase the maximum amount
-   of memory used by each backend process for temporary sorts. The -S
-   value is measured in kilobytes, and the default is 512 (ie, 512K). It
-   is unwise to make this value too large, or you may run out of memory
-   when a query invokes several concurrent sorts.
+   of memory used by the backend process for temporary sorts. The -S
+   value is measured in kilobytes, and the default is 512 (ie, 512K).
    
    You can also use the CLUSTER command to group data in base tables to
    match an index. See the cluster(l) manual page for more details.
@@ -568,15 +577,22 @@
    that specifies the debug level. Be warned that high debug level values
    generate large log files.
    
-   You can actually run the postgres backend from the command line, and
-   type your SQL statement directly. This is recommended only for
-   debugging purposes. Note that a newline terminates the query, not a
-   semicolon. If you have compiled with debugging symbols, you can use a
-   debugger to see what is happening. Because the backend was not started
-   from the postmaster, it is not running in an identical environment and
-   locking/backend interaction problems may not be duplicated. Some
-   operating system can attach to a running backend directly to diagnose
-   problems.
+   If the postmaster is not running, you can actually run the postgres
+   backend from the command line, and type your SQL statement directly.
+   This is recommended only for debugging purposes. Note that a newline
+   terminates the query, not a semicolon. If you have compiled with
+   debugging symbols, you can use a debugger to see what is happening.
+   Because the backend was not started from the postmaster, it is not
+   running in an identical environment and locking/backend interaction
+   problems may not be duplicated.
+   
+   If the postmaster is running, start psql in one window, then find the
+   PID of the postgres process used by psql. Use a debugger to attach to
+   the postgres PID. You can set breakpoints in the debugger and issue
+   queries from psql. If you are debugging postgres startup, you can set
+   PGOPTIONS="-W n", then start psql. This will cause startup to delay
+   for n seconds so you can attach with the debugger and trace through
+   the startup sequence.
    
    The postgres program has -s, -A, and -t options that can be very
    useful for debugging and performance measurements.
@@ -584,30 +600,31 @@
    You can also compile with profiling to see what functions are taking
    execution time. The backend profile files will be deposited in the
    pgsql/data/base/dbname directory. The client profile file will be put
-   in the current directory.
+   in the client's current directory.
    
     3.12) I get 'Sorry, too many clients' when trying to connect. Why?
     
    You need to increase the postmaster's limit on how many concurrent
    backend processes it can start.
    
-   In Postgres 6.5.*, the default limit is 32 processes. You can increase
-   it by restarting the postmaster with a suitable -N value. With the
-   default configuration you can set -N as large as 1024; if you need
-   more, increase MAXBACKENDS in include/config.h and rebuild. You can
-   set the default value of -N at configuration time, if you like, using
-   configure's --with-maxbackends switch.
+   In Postgres 6.5 and up, the default limit is 32 processes. You can
+   increase it by restarting the postmaster with a suitable -N value.
+   With the default configuration you can set -N as large as 1024; if you
+   need more, increase MAXBACKENDS in include/config.h and rebuild. You
+   can set the default value of -N at configuration time, if you like,
+   using configure's --with-maxbackends switch.
    
-   Note that if you make -N larger than 32, you should consider
-   increasing -B beyond its default of 64. For large numbers of backend
-   processes, you are also likely to find that you need to increase
-   various Unix kernel configuration parameters. Things to check include
-   the maximum size of shared memory blocks, SHMMAX, the maximum number
-   of semaphores, SEMMNS and SEMMNI, the maximum number of processes,
-   NPROC, the maximum number of processes per user, MAXUPRC, and the
-   maximum number of open files, NFILE and NINODE. The reason that
-   Postgres has a limit on the number of allowed backend processes is so
-   that you can ensure that your system won't run out of resources.
+   Note that if you make -N larger than 32, you must also increase -B
+   beyond its default of 64; -B must be at least twice -N, and probably
+   should be more than that for best performance. For large numbers of
+   backend processes, you are also likely to find that you need to
+   increase various Unix kernel configuration parameters. Things to check
+   include the maximum size of shared memory blocks, SHMMAX, the maximum
+   number of semaphores, SEMMNS and SEMMNI, the maximum number of
+   processes, NPROC, the maximum number of processes per user, MAXUPRC,
+   and the maximum number of open files, NFILE and NINODE. The reason
+   that Postgres has a limit on the number of allowed backend processes
+   is so that you can ensure that your system won't run out of resources.
    
    In Postgres versions prior to 6.5, the maximum number of backends was
    64, and changing it required a rebuild after altering the MaxBackendId
@@ -623,25 +640,6 @@
    The temp files should go away automatically, but might not if a
    backend crashes during a sort. If you have no transactions running at
    the time, it is safe to delete the pg_tempNNN.NN files.
-   
-    3.14) How do I set up a pg_group?
-    
-   Currently, there is no easy interface to set up user groups. You have
-   to explicitly insert/update the pg_group table. For example:
-        jolly=> insert into pg_group (groname, grosysid, grolist)
-        jolly=>     values ('posthackers', '1234', '{5443, 8261}');
-        INSERT 548224
-        jolly=> grant insert on foo to group posthackers;
-        CHANGE
-        jolly=>
-
-   The fields in pg_group are:
-     * groname: the group name. This a name and should be purely
-       alphanumeric. Do not include underscores or other punctuation.
-     * grosysid: the group id. This is an int4. This should be unique for
-       each group.
-     * grolist: the list of pg_user id's that belong in the group. This
-       is an int4[].
      _________________________________________________________________
    
                            Operational Questions
@@ -673,9 +671,8 @@
     
    You can read the source code for psql, file pgsql/src/bin/psql/psql.c.
    It contains SQL commands that generate the output for psql's backslash
-   commands. Beginning in Postgres 6.5, you can also start psql with the
-   -E option so that it will print out the queries it uses to execute the
-   commands you give.
+   commands. You can also start psql with the -E option so that it will
+   print out the queries it uses to execute the commands you give.
    
     4.5) How do you remove a column from a table?
     
@@ -688,15 +685,22 @@
 
     4.6) What is the maximum size for a row, table, database?
     
-   Rows are limited to 8K bytes, but this can be changed by editing
-   include/config.h and changing BLCKSZ. To use attributes larger than
-   8K, you can also use the large object interface.
+   These are the limits:
+Maximum size for a database?             unlimited (60GB databases exist)
+Maximum size for a table?                unlimited on all operating systems
+Maximum size for a row?                  8k, configurable to 32k
+Maximum number of rows in a table?       unlimited
+Maximum number of columns table?         unlimited
+Maximum number of indexes on a table?    unlimited
+
+   Of course, these are not actually unlimited, but limited to available
+   disk space.
    
-   Rows do not cross 8k boundaries so a 5k row will require 8k of
-   storage.
+   To change the maximum row size, edit include/config.h and change
+   BLCKSZ. To use attributes larger than 8K, you can also use the large
+   object interface.
    
-   Table and database sizes are unlimited. There are many databases that
-   are tens of gigabytes, and probably some that are hundreds.
+   Row length limit will be removed in 7.1.
    
     4.7)How much database disk space is required to store data from a typical
     flat file?
@@ -754,13 +758,14 @@
    column statistics on its own, so VACUUM ANALYZE must be run to collect
    them periodically.
    
-   Indexes are not used for ORDER BY operations.
+   Indexes are usually not used for ORDER BY operations: a sequential
+   scan followed by an explicit sort is faster than an indexscan of all
+   tuples of a large table, because it takes fewer disk accesses.
    
    When using wild-card operators such as LIKE or ~, indices can only be
    used if the beginning of the search is anchored to the start of the
-   string. So, to use indices, LIKE searches can should not begin with %,
-   and ~(regular expression searches) should start with ^. If you have
-   locale enabled, indexes can't be used for wild-card searches.
+   string. So, to use indices, LIKE searches should not begin with %, and
+   ~(regular expression searches) should start with ^.
    
     4.10) How do I see how the query optimizer is evaluating my query?
     
@@ -801,8 +806,12 @@
     4.13) How do I do regular expression searches and case-insensitive regexp
     searching?
     
-   ~ and ~* are probably what you want. See psql's \do command.
-   
+   The ~ operator does regular-expression matching, and ~* does
+   case-insensitive regular-expression matching. There is no
+   case-insensitive variant of the LIKE operator, but you can get the
+   effect of case-insensitive LIKE with this:
+        WHERE lower(textfield) LIKE lower(pattern)
+
     4.14) In a query, how do I detect if a field is NULL?
     
    You test the column with IS NULL and IS NOT NULL.
@@ -811,13 +820,14 @@
     
 Type            Internal Name   Notes
 --------------------------------------------------
-CHAR            char            1 character
+"char"          char            1 character
 CHAR(#)         bpchar          blank padded to the specified fixed length
 VARCHAR(#)      varchar         size specifies maximum length, no padding
 TEXT            text            length limited only by maximum row length
 BYTEA           bytea           variable-length array of bytes
 
-   You need to use the internal name when doing internal operations.
+   You will see the internal name when examining system catalogs and in
+   some error messages.
    
    The last four types above are "varlena" types (i.e. the first four
    bytes are the length, followed by the data). char(#) allocates the
@@ -877,8 +887,8 @@ BYTEA           bytea           variable-length array of bytes
    oid value is made available via $sth->{pg_oid_status} after
    $sth->execute().
    
-    4.16.3) Wouldn't use of currval() and nextval() lead to a race condition
-    with other concurrent backend processes?
+    4.16.3) Don't currval() and nextval() lead to a race condition with other
+    concurrent backend processes?
     
    No. That has been handled by the backends.
    
@@ -949,10 +959,6 @@ BYTEA           bytea           variable-length array of bytes
    You need to put BEGIN WORK and COMMIT around any use of a large object
    handle, that is, surrounding lo_open ... lo_close.
    
-   The documentation has always stated that lo_open must be wrapped in a
-   transaction, but PostgreSQL versions prior to 6.5 didn't enforce that
-   rule. Instead, they'd just fail occasionally if you broke it.
-   
    Current PostgreSQL enforces the rule by closing large object handles
    at transaction commit, which will be instantly upon completion of the
    lo_open command if you are not inside a transaction. So the first
@@ -965,17 +971,12 @@ BYTEA           bytea           variable-length array of bytes
    
     4.22) How do I create a column that will default to the current time?
     
-   The tempation is to do:
-        create table test (x int, modtime timestamp default 'now');
-
-   but this makes the column default to the time of table creation, not
-   the time of row insertion. Instead do:
+   This way always works:
         CREATE TABLE test (x int, modtime timestamp default now() );
 
-   The calling of the function now() prevents the default value from
-   being computed at table creation time, and delays it until insertion
-   time. We believe this will not be a problem in post-6.5.* releases.
-   
+   In releases 7.0 and later, you may use:
+        create table test (x int, modtime timestamp default 'now');
+
     4.23) Why are my subqueries using IN so slow?
     
    Currently, we join subqueries to outer queries by sequential scanning
@@ -999,9 +1000,7 @@ BYTEA           bytea           variable-length array of bytes
     dump core?
     
    The problem could be a number of things. Try testing your user-defined
-   function in a stand alone test program first. Also, make sure you are
-   not sending elog NOTICES when the front-end is expecting data, such as
-   during a type_in() or type_out() functions
+   function in a stand alone test program first.
    
     5.2) What does the message: NOTICE:PortalHeapMemoryFree: 0x402251d0 not in
     alloc set! mean?
@@ -1024,4 +1023,5 @@ BYTEA           bytea           variable-length array of bytes
     change?
     
    The Makefiles do not have the proper dependencies for include files.
-   You have to do a make clean and then another make.
+   You have to do a make clean and then another make. You have to do a
+   make clean and then another make.
