@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.236 2001/08/17 02:59:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.237 2001/08/30 19:02:42 petere Exp $
  *
  * NOTES
  *
@@ -152,8 +152,6 @@ static char *progname = (char *) NULL;
 static char **real_argv;
 static int	real_argc;
 
-static time_t tnow;
-
 /* flag to indicate that SIGHUP arrived during server loop */
 static volatile bool got_SIGHUP = false;
 
@@ -241,7 +239,8 @@ static int	BackendStartup(Port *port);
 static int	ProcessStartupPacket(Port *port, bool SSLdone);
 static void	processCancelRequest(Port *port, void *pkt);
 static int	initMasks(fd_set *rmask, fd_set *wmask);
-static char *canAcceptConnections(void);
+enum CAC_state { CAC_OK, CAC_STARTUP, CAC_SHUTDOWN, CAC_RECOVERY, CAC_TOOMANY };
+static enum CAC_state canAcceptConnections(void);
 static long PostmasterRandom(void);
 static void RandomSalt(char *cryptSalt, char *md5Salt);
 static void SignalChildren(int signal);
@@ -860,7 +859,7 @@ ServerLoop(void)
 			PG_SETMASK(&BlockSig);
 			if (errno == EINTR || errno == EWOULDBLOCK)
 				continue;
-			postmaster_error("ServerLoop: select failed: %s", strerror(errno));
+			elog(DEBUG, "ServerLoop: select failed: %s", strerror(errno));
 			return STATUS_ERROR;
 		}
 
@@ -977,12 +976,15 @@ initMasks(fd_set *rmask, fd_set *wmask)
  *
  * Returns STATUS_OK or STATUS_ERROR, or might call elog(FATAL) and
  * not return at all.
+ *
+ * (Note that elog(FATAL) stuff is sent to the client, so only use it
+ * if that's what you want.)
  */
 static int
 ProcessStartupPacket(Port *port, bool SSLdone)
 {
 	StartupPacket *packet;
-	char	   *rejectMsg;
+	enum CAC_state cac;
 	int32		len;
 	void	   *buf;
 
@@ -1025,8 +1027,8 @@ ProcessStartupPacket(Port *port, bool SSLdone)
 #endif
 		if (send(port->sock, &SSLok, 1, 0) != 1)
 		{
-			postmaster_error("failed to send SSL negotiation response: %s",
-							 strerror(errno));
+			elog(DEBUG, "failed to send SSL negotiation response: %s",
+				 strerror(errno));
 			return STATUS_ERROR; /* close the connection */
 		}
 
@@ -1037,8 +1039,8 @@ ProcessStartupPacket(Port *port, bool SSLdone)
 				!SSL_set_fd(port->ssl, port->sock) ||
 				SSL_accept(port->ssl) <= 0)
 			{
-				postmaster_error("failed to initialize SSL connection: %s, errno: %d (%s)",
-								 ERR_reason_error_string(ERR_get_error()), errno, strerror(errno));
+				elog(DEBUG, "failed to initialize SSL connection: %s (%s)",
+					 ERR_reason_error_string(ERR_get_error()), strerror(errno));
 				return STATUS_ERROR;
 			}
 		}
@@ -1092,10 +1094,26 @@ ProcessStartupPacket(Port *port, bool SSLdone)
 	 * so now instead of wasting cycles on an authentication exchange.
 	 * (This also allows a pg_ping utility to be written.)
 	 */
-	rejectMsg = canAcceptConnections();
+	cac = canAcceptConnections();
 
-	if (rejectMsg != NULL)
-		elog(FATAL, "%s", rejectMsg);
+	switch (cac)
+	{
+		case CAC_STARTUP:
+			elog(FATAL, "The database system is starting up");
+			break;
+		case CAC_SHUTDOWN:
+			elog(FATAL, "The database system is shutting down");
+			break;
+		case CAC_RECOVERY:
+			elog(FATAL, "The database system is in recovery mode");
+			break;
+		case CAC_TOOMANY:
+			elog(FATAL, "Sorry, too many clients already");
+			break;
+		case CAC_OK:
+		default:
+			;
+	}
 
 	return STATUS_OK;
 }
@@ -1121,7 +1139,7 @@ processCancelRequest(Port *port, void *pkt)
 	if (backendPID == CheckPointPID)
 	{
 		if (DebugLvl)
-			postmaster_error("processCancelRequest: CheckPointPID in cancel request for process %d", backendPID);
+			elog(DEBUG, "processCancelRequest: CheckPointPID in cancel request for process %d", backendPID);
 		return;
 	}
 
@@ -1158,20 +1176,17 @@ processCancelRequest(Port *port, void *pkt)
 
 /*
  * canAcceptConnections --- check to see if database state allows connections.
- *
- * If we are open for business, return NULL, otherwise return an error message
- * string suitable for rejecting a connection request.
  */
-static char *
+static enum CAC_state
 canAcceptConnections(void)
 {
 	/* Can't start backends when in startup/shutdown/recovery state. */
 	if (Shutdown > NoShutdown)
-		return "The Data Base System is shutting down";
+		return CAC_SHUTDOWN;
 	if (StartupPID)
-		return "The Data Base System is starting up";
+		return CAC_STARTUP;
 	if (FatalError)
-		return "The Data Base System is in recovery mode";
+		return CAC_RECOVERY;
 	/*
 	 * Don't start too many children.
 	 *
@@ -1182,9 +1197,9 @@ canAcceptConnections(void)
 	 * to join the shared-inval backend array.
 	 */
 	if (CountChildren() >= 2 * MaxBackends)
-		return "Sorry, too many clients already";
+		return CAC_TOOMANY;
 
-	return NULL;
+	return CAC_OK;
 }
 
 
@@ -1198,7 +1213,7 @@ ConnCreate(int serverFd)
 
 	if (!(port = (Port *) calloc(1, sizeof(Port))))
 	{
-		postmaster_error("ConnCreate: malloc failed");
+		elog(DEBUG, "ConnCreate: malloc failed");
 		SignalChildren(SIGQUIT);
 		ExitPostmaster(1);
 	}
@@ -1343,9 +1358,7 @@ pmdie(SIGNAL_ARGS)
 				return;
 			}
 			Shutdown = SmartShutdown;
-			tnow = time(NULL);
-			fprintf(stderr, gettext("Smart Shutdown request at %s"), ctime(&tnow));
-			fflush(stderr);
+			elog(DEBUG, "smart shutdown request");
 			if (DLGetHead(BackendList)) /* let reaper() handle this */
 			{
 				errno = save_errno;
@@ -1363,8 +1376,8 @@ pmdie(SIGNAL_ARGS)
 			}
 			if (ShutdownPID > 0)
 			{
-				postmaster_error("Shutdown process %d already running",
-								 ShutdownPID);
+				elog(REALLYFATAL, "shutdown process %d already running",
+					 ShutdownPID);
 				abort();
 			}
 
@@ -1385,16 +1398,13 @@ pmdie(SIGNAL_ARGS)
 				errno = save_errno;
 				return;
 			}
-			tnow = time(NULL);
-			fprintf(stderr, gettext("Fast Shutdown request at %s"), ctime(&tnow));
-			fflush(stderr);
+			elog(DEBUG, "fast shutdown request");
 			if (DLGetHead(BackendList)) /* let reaper() handle this */
 			{
 				Shutdown = FastShutdown;
 				if (!FatalError)
 				{
-					fprintf(stderr, gettext("Aborting any active transaction...\n"));
-					fflush(stderr);
+					elog(DEBUG, "aborting any active transactions");
 					SignalChildren(SIGTERM);
 				}
 				errno = save_errno;
@@ -1419,8 +1429,8 @@ pmdie(SIGNAL_ARGS)
 			}
 			if (ShutdownPID > 0)
 			{
-				postmaster_error("Shutdown process %d already running",
-								 ShutdownPID);
+				elog(REALLYFATAL, "shutdown process %d already running",
+					 ShutdownPID);
 				abort();
 			}
 
@@ -1436,9 +1446,7 @@ pmdie(SIGNAL_ARGS)
 			 * abort all children with SIGQUIT and exit without attempt to
 			 * properly shutdown data base system.
 			 */
-			tnow = time(NULL);
-			fprintf(stderr, gettext("Immediate Shutdown request at %s"), ctime(&tnow));
-			fflush(stderr);
+			elog(DEBUG, "immediate shutdown request");
 			if (ShutdownPID > 0)
 				kill(ShutdownPID, SIGQUIT);
 			if (StartupPID > 0)
@@ -1472,7 +1480,7 @@ reaper(SIGNAL_ARGS)
 	pqsignal(SIGCHLD, reaper);
 
 	if (DebugLvl)
-		postmaster_error("reaping dead processes");
+		elog(DEBUG, "reaping dead processes");
 #ifdef HAVE_WAITPID
 	while ((pid = waitpid(-1, &status, WNOHANG)) > 0)
 	{
@@ -1488,37 +1496,56 @@ reaper(SIGNAL_ARGS)
 		 */
 		if (pgstat_ispgstat(pid))
 		{
-			fprintf(stderr, "%s: Performance collector exited with status %d\n",
-					progname, exitstatus);
+			if (WIFEXITED(exitstatus))
+				elog(DEBUG, "statistics collector exited with status %d",
+					 WEXITSTATUS(exitstatus));
+			else if (WIFSIGNALED(exitstatus))
+				elog(DEBUG, "statistics collector was terminated by signal %d",
+					 WTERMSIG(exitstatus));
 			pgstat_start(real_argc, real_argv);
 			continue;
 		}
 
 		if (ShutdownPID > 0 && pid == ShutdownPID)
 		{
-			if (exitstatus != 0)
+			if (WIFEXITED(exitstatus) && WEXITSTATUS(exitstatus) != 0)
 			{
-				postmaster_error("Shutdown proc %d exited with status %d", pid, exitstatus);
+				elog(DEBUG, "shutdown process %d exited with status %d",
+					 pid, WEXITSTATUS(exitstatus));
+				ExitPostmaster(1);
+			}
+			if (WIFSIGNALED(exitstatus))
+			{
+				elog(DEBUG, "shutdown process %d was terminated by signal %d",
+					 pid, WTERMSIG(exitstatus));
 				ExitPostmaster(1);
 			}
 			ExitPostmaster(0);
 		}
+
 		if (StartupPID > 0 && pid == StartupPID)
 		{
-			if (exitstatus != 0)
+			if (WIFEXITED(exitstatus) && WEXITSTATUS(exitstatus) != 0)
 			{
-				postmaster_error("Startup proc %d exited with status %d - abort",
-								 pid, exitstatus);
+				elog(DEBUG, "startup process %d exited with status %d; aborting startup",
+					 pid, WEXITSTATUS(exitstatus));
 				ExitPostmaster(1);
 			}
+			if (WIFSIGNALED(exitstatus))
+			{
+				elog(DEBUG, "shutdown process %d was terminated by signal %d; aborting startup",
+					 pid, WTERMSIG(exitstatus));
+				ExitPostmaster(1);
+			}
+
 			StartupPID = 0;
 			FatalError = false; /* done with recovery */
 			if (Shutdown > NoShutdown)
 			{
 				if (ShutdownPID > 0)
 				{
-					postmaster_error("Shutdown process %d already running",
-									 ShutdownPID);
+					elog(STOP, "startup process %d died while shutdown process %d already running",
+						 pid, ShutdownPID);
 					abort();
 				}
 				ShutdownPID = ShutdownDataBase();
@@ -1553,11 +1580,7 @@ reaper(SIGNAL_ARGS)
 			errno = save_errno;
 			return;
 		}
-		tnow = time(NULL);
-		fprintf(stderr, gettext("Server processes were terminated at %s"
-				"Reinitializing shared memory and semaphores\n"),
-				ctime(&tnow));
-		fflush(stderr);
+		elog(DEBUG, "all server processes terminated; reinitializing shared memory and semaphores");
 
 		shmem_exit(0);
 		reset_shared(PostPortNumber);
@@ -1601,8 +1624,8 @@ CleanupProc(int pid,
 	Backend    *bp;
 
 	if (DebugLvl)
-		postmaster_error("CleanupProc: pid %d exited with status %d",
-						 pid, exitstatus);
+		elog(DEBUG, "CleanupProc: pid %d exited with status %d",
+			 pid, exitstatus);
 
 	/*
 	 * If a backend dies in an ugly way (i.e. exit status not 0) then we
@@ -1642,14 +1665,18 @@ CleanupProc(int pid,
 		return;
 	}
 
+	/* below here we're dealing with a non-normal exit */
+
+	/* Make log entry unless we did so already */
 	if (!FatalError)
 	{
-		/* Make log entry unless we did so already */
-		tnow = time(NULL);
-		fprintf(stderr, gettext("Server process (pid %d) exited with status %d at %s"
-								"Terminating any active server processes...\n"),
-				pid, exitstatus, ctime(&tnow));
-		fflush(stderr);
+		if (WIFEXITED(exitstatus))
+			elog(DEBUG, "server process (pid %d) exited with status %d",
+				 pid, WEXITSTATUS(exitstatus));
+		else if (WIFSIGNALED(exitstatus))
+			elog(DEBUG, "server process (pid %d) was terminated by signal %d",
+				 pid, WTERMSIG(exitstatus));
+		elog(DEBUG, "terminating any other active server processes");
 	}
 
 	curr = DLGetHead(BackendList);
@@ -1671,9 +1698,9 @@ CleanupProc(int pid,
 			if (!FatalError)
 			{
 				if (DebugLvl)
-					postmaster_error("CleanupProc: sending %s to process %d",
-									 (SendStop ? "SIGSTOP" : "SIGQUIT"),
-									 bp->pid);
+					elog(DEBUG, "CleanupProc: sending %s to process %d",
+						 (SendStop ? "SIGSTOP" : "SIGQUIT"),
+						 bp->pid);
 				kill(bp->pid, (SendStop ? SIGSTOP : SIGQUIT));
 			}
 		}
@@ -1776,8 +1803,7 @@ BackendStartup(Port *port)
 	bn = (Backend *) malloc(sizeof(Backend));
 	if (!bn)
 	{
-		fprintf(stderr, gettext("%s: BackendStartup: malloc failed\n"),
-				progname);
+		elog(DEBUG, "out of memory; connection startup aborted");
 		return STATUS_ERROR;
 	}
 
@@ -1796,8 +1822,7 @@ BackendStartup(Port *port)
 		status = DoBackend(port);
 		if (status != 0)
 		{
-			fprintf(stderr, gettext("%s child[%d]: BackendStartup: backend startup failed\n"),
-					progname, (int) getpid());
+			elog(DEBUG, "connection startup failed");
 			proc_exit(status);
 		}
 		else
@@ -1812,16 +1837,15 @@ BackendStartup(Port *port)
 		/* Specific beos backend startup actions */
 		beos_backend_startup_failed();
 #endif
-		fprintf(stderr, gettext("%s: BackendStartup: fork failed: %s\n"),
-				progname, strerror(errno));
+		elog(DEBUG, "connection startup failed (fork failure): %s",
+			 strerror(errno));
 		return STATUS_ERROR;
 	}
 
 	/* in parent, normal */
 	if (DebugLvl >= 1)
-		fprintf(stderr, gettext("%s: BackendStartup: pid=%d user=%s db=%s socket=%d\n"),
-				progname, pid, port->user, port->database,
-				port->sock);
+		elog(DEBUG, "BackendStartup: pid=%d user=%s db=%s socket=%d\n",
+			 pid, port->user, port->database, port->sock);
 
 	/*
 	 * Everything's been successful, it's safe to add this backend to our
@@ -2267,11 +2291,22 @@ SSDataBase(int xlop)
 		beos_backend_startup_failed();
 #endif
 
-		fprintf(stderr, "%s Data Base: fork failed: %s\n",
-				((xlop == BS_XLOG_STARTUP) ? "Startup" :
-				 ((xlop == BS_XLOG_CHECKPOINT) ? "CheckPoint" :
-				  "Shutdown")),
-				strerror(errno));
+		switch(xlop)
+		{
+			case BS_XLOG_STARTUP:
+				elog(DEBUG, "could not launch startup process (fork failure): %s",
+					 strerror(errno));
+				break;
+			case BS_XLOG_CHECKPOINT:
+				elog(DEBUG, "could not launch checkpoint process (fork failure): %s",
+					 strerror(errno));
+				break;
+			case BS_XLOG_SHUTDOWN:
+			default:
+				elog(DEBUG, "could not launch shutdown process (fork failure): %s",
+					 strerror(errno));
+				break;
+		}
 
 		/*
 		 * fork failure is fatal during startup/shutdown, but there's no
@@ -2291,7 +2326,7 @@ SSDataBase(int xlop)
 	{
 		if (!(bn = (Backend *) calloc(1, sizeof(Backend))))
 		{
-			postmaster_error("CheckPointDataBase: malloc failed");
+			elog(DEBUG, "CheckPointDataBase: malloc failed");
 			ExitPostmaster(1);
 		}
 
