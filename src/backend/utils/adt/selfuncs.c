@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.65 2000/04/16 04:41:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.66 2000/05/26 17:19:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,6 +54,9 @@
 
 /* default selectivity estimate for pattern-match operators such as LIKE */
 #define DEFAULT_MATCH_SEL	0.01
+
+/* "fudge factor" for estimating frequency of not-most-common values */
+#define NOT_MOST_COMMON_RATIO  0.1
 
 static bool convert_to_scalar(Datum value, Oid valuetypid, double *scaledvalue,
 							  Datum lobound, Datum hibound, Oid boundstypid,
@@ -190,7 +193,7 @@ eqsel(Oid opid,
 					 * exactly!
 					 */
 					if (typid != BOOLOID)
-						selec *= 0.5;
+						selec *= NOT_MOST_COMMON_RATIO;
 				}
 			}
 			else
@@ -209,7 +212,7 @@ eqsel(Oid opid,
 				 * and in fact it's probably less, so apply a fudge
 				 * factor.
 				 */
-				selec *= 0.5;
+				selec *= NOT_MOST_COMMON_RATIO;
 			}
 
 			/* result should be in range, but make sure... */
