@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Feb 14 12:02:42 EST 2003
+Last updated:		Sat Feb 15 13:29:57 EST 2003
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -149,6 +149,7 @@ Indexes
 * Add FILLFACTOR to btree index creation
 * Add concurrency to GIST
 * Improve concurrency of hash indexes (Neil)
+* Disallow DROP COLUMN on a column that is part of a multi-column index
 
 
 Commands
