@@ -4,7 +4,7 @@
 #    Makefile for utils/adt
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/adt/Makefile,v 1.19 1998/10/08 00:19:33 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/adt/Makefile,v 1.20 1998/10/22 20:40:44 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -24,7 +24,7 @@ OBJS = acl.o arrayfuncs.o arrayutils.o bool.o cash.o char.o chunk.o \
 	oid.o oracle_compat.o \
 	regexp.o regproc.o ruleutils.o selfuncs.o sets.o \
 	tid.o timestamp.o varchar.o varlena.o version.o \
-	inet.o mac.o inet_net_ntop.o inet_net_pton.o
+	network.o mac.o inet_net_ntop.o inet_net_pton.o
 
 all: SUBSYS.o
 

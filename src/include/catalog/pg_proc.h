@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.80 1998/10/22 13:51:02 momjian Exp $
+ * $Id: pg_proc.h,v 1.81 1998/10/22 20:40:49 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2081,39 +2081,52 @@ DATA(insert OID = 1416 (  cidr_out			PGUID 11 f t f 1 f 23 "0" 100 0 0 100  foo 
 DESCR("(internal)");
 
 /* these are used for both inet and cidr */
-DATA(insert OID = 920 (  inet_eq		   PGUID 11 f t f 2 f 16 "869 869" 100 0 0 100  foo bar ));
+DATA(insert OID = 920 (  network_eq		   PGUID 11 f t f 2 f 16 "869 869" 100 0 0 100  foo bar ));
 DESCR("equal");
-DATA(insert OID = 921 (  inet_lt		   PGUID 11 f t f 2 f 16 "869 869" 100 0 0 100  foo bar ));
+DATA(insert OID = 921 (  network_lt		   PGUID 11 f t f 2 f 16 "869 869" 100 0 0 100  foo bar ));
 DESCR("less-than");
-DATA(insert OID = 922 (  inet_le		   PGUID 11 f t f 2 f 16 "869 869" 100 0 0 100  foo bar ));
+DATA(insert OID = 922 (  network_le		   PGUID 11 f t f 2 f 16 "869 869" 100 0 0 100  foo bar ));
 DESCR("less-than-or-equal");
-DATA(insert OID = 923 (  inet_gt		   PGUID 11 f t f 2 f 16 "869 869" 100 0 0 100  foo bar ));
+DATA(insert OID = 923 (  network_gt		   PGUID 11 f t f 2 f 16 "869 869" 100 0 0 100  foo bar ));
 DESCR("greater-than");
-DATA(insert OID = 924 (  inet_ge		   PGUID 11 f t f 2 f 16 "869 869" 100 0 0 100  foo bar ));
+DATA(insert OID = 924 (  network_ge		   PGUID 11 f t f 2 f 16 "869 869" 100 0 0 100  foo bar ));
 DESCR("greater-than-or-equal");
-DATA(insert OID = 925 (  inet_ne		   PGUID 11 f t f 2 f 16 "869 869" 100 0 0 100  foo bar ));
+DATA(insert OID = 925 (  network_ne		   PGUID 11 f t f 2 f 16 "869 869" 100 0 0 100  foo bar ));
 DESCR("not equal");
-DATA(insert OID = 926 (  inet_cmp	   	   PGUID 11 f t f 2 f 23 "869 869" 100 0 0 100  foo bar ));
+DATA(insert OID = 926 (  network_cmp	   	   PGUID 11 f t f 2 f 23 "869 869" 100 0 0 100  foo bar ));
 DESCR("less-equal-greater");
-DATA(insert OID = 927 (  inet_sub	   	   PGUID 11 f t f 2 f 16 "869 869" 100 0 0 100  foo bar ));
+DATA(insert OID = 927 (  network_sub	   	   PGUID 11 f t f 2 f 16 "869 869" 100 0 0 100  foo bar ));
 DESCR("is-subnet");
-DATA(insert OID = 928 (  inet_subeq  	   PGUID 11 f t f 2 f 16 "869 869" 100 0 0 100  foo bar ));
+DATA(insert OID = 928 (  network_subeq  	   PGUID 11 f t f 2 f 16 "869 869" 100 0 0 100  foo bar ));
 DESCR("is-subnet-or-equal");
-DATA(insert OID = 929 (  inet_sup	   	   PGUID 11 f t f 2 f 16 "869 869" 100 0 0 100  foo bar ));
+DATA(insert OID = 929 (  network_sup	   	   PGUID 11 f t f 2 f 16 "869 869" 100 0 0 100  foo bar ));
 DESCR("is-supernet");
-DATA(insert OID = 930 (  inet_supeq  	   PGUID 11 f t f 2 f 16 "869 869" 100 0 0 100  foo bar ));
+DATA(insert OID = 930 (  network_supeq  	   PGUID 11 f t f 2 f 16 "869 869" 100 0 0 100  foo bar ));
 DESCR("is-supernet-or-equal");
 
 /* inet/cidr versions */
-DATA(insert OID = 940 (  netmask			PGUID 11 f t f 1 f 25 "869" 100 0 0 100  foo bar ));
+DATA(insert OID = 940 (  network_netmask		PGUID 11 f t f 1 f 25 "869" 100 0 0 100  foo bar ));
 DESCR("netmask of address");
-DATA(insert OID = 941 (  masklen			PGUID 11 f t f 1 f 23 "869" 100 0 0 100  foo bar ));
+DATA(insert OID = 941 (  network_masklen		PGUID 11 f t f 1 f 23 "869" 100 0 0 100  foo bar ));
 DESCR("netmask length");
-DATA(insert OID = 945 (  broadcast			PGUID 11 f t f 1 f 25 "869" 100 0 0 100  foo bar ));
+DATA(insert OID = 945 (  network_broadcast		PGUID 11 f t f 1 f 25 "869" 100 0 0 100  foo bar ));
 DESCR("broadcast address");
-DATA(insert OID = 682 (  host				PGUID 11 f t f 1 f 25 "869" 100 0 0 100  foo bar ));
+DATA(insert OID = 682 (  network_host			PGUID 11 f t f 1 f 25 "869" 100 0 0 100  foo bar ));
 DESCR("host address");
+DATA(insert OID = 473 (  network_network		PGUID 11 f t f 1 f 25 "869" 100 0 0 100  foo bar ));
+DESCR("network address");
 
+/* shortcut names */
+DATA(insert OID = 696 (  netmask				PGUID 14 f t f 1 f 25 "869" 100 0 0 100  "select network_netmask($1)" - ));
+DESCR("netmask of address");
+DATA(insert OID = 697 (  masklen				PGUID 14 f t f 1 f 23 "869" 100 0 0 100  "select network_masklen($1)" - ));
+DESCR("netmask length");
+DATA(insert OID = 698 (  broadcast				PGUID 14 f t f 1 f 25 "869" 100 0 0 100  "select network_broadcast($1)" - ));
+DESCR("broadcast address");
+DATA(insert OID = 699 (  host					PGUID 14 f t f 1 f 25 "869" 100 0 0 100  "select network_host($1)" - ));
+DESCR("host address");
+DATA(insert OID = 683 (  network				PGUID 14 f t f 1 f 25 "869" 100 0 0 100  "select network_network($1)" - ));
+DESCR("network address");
 
 /*
  * prototypes for functions pg_proc.c

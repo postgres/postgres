@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.67 1998/10/22 13:51:07 momjian Exp $
+ * $Id: builtins.h,v 1.68 1998/10/22 20:40:50 momjian Exp $
  *
  * NOTES
  *	  This should normally only be included by fmgr.h.
@@ -516,27 +516,28 @@ char *inet_cidr_ntop(int af, const void *src, int bits, char *dst, size_t size);
 /* inet_net_pton.c */
 int inet_net_pton(int af, const char *src, void *dst, size_t size);
 
-/* inet.c */
+/* network.c */
 inet	   *inet_in(char *str);
 char	   *inet_out(inet * addr);
 inet	   *cidr_in(char *str);
 char	   *cidr_out(inet *addr);
-bool		inet_lt(inet * a1, inet * a2);
-bool		inet_le(inet * a1, inet * a2);
-bool		inet_eq(inet * a1, inet * a2);
-bool		inet_ge(inet * a1, inet * a2);
-bool		inet_gt(inet * a1, inet * a2);
-bool		inet_ne(inet * a1, inet * a2);
-bool		inet_sub(inet * a1, inet * a2);
-bool		inet_subeq(inet * a1, inet * a2);
-bool		inet_sup(inet * a1, inet * a2);
-bool		inet_supeq(inet * a1, inet * a2);
-int4		inet_cmp(inet * a1, inet * a2);
+bool		network_lt(inet * a1, inet * a2);
+bool		network_le(inet * a1, inet * a2);
+bool		network_eq(inet * a1, inet * a2);
+bool		network_ge(inet * a1, inet * a2);
+bool		network_gt(inet * a1, inet * a2);
+bool		network_ne(inet * a1, inet * a2);
+bool		network_sub(inet * a1, inet * a2);
+bool		network_subeq(inet * a1, inet * a2);
+bool		network_sup(inet * a1, inet * a2);
+bool		network_supeq(inet * a1, inet * a2);
+int4		network_cmp(inet * a1, inet * a2);
 
-text	   *netmask(inet * addr);
-int4		masklen(inet * addr);
-text	   *broadcast(inet * addr);
-text	   *host(inet * addr);
+text	   *network_network(inet * addr);
+text	   *network_netmask(inet * addr);
+int4		network_masklen(inet * addr);
+text	   *network_broadcast(inet * addr);
+text	   *network_host(inet * addr);
 
 /* mac.c */
 macaddr    *macaddr_in(char *str);
