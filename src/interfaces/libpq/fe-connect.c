@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.233 2003/04/19 00:02:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.234 2003/04/22 00:08:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1328,6 +1328,8 @@ keep_going:						/* We will come back to here until there
 		case CONNECTION_AWAITING_RESPONSE:
 			{
 				char		beresp;
+				int			msgLength;
+				int			avail;
 				AuthRequest areq;
 
 				/*
@@ -1337,8 +1339,89 @@ keep_going:						/* We will come back to here until there
 				 */
 				conn->inCursor = conn->inStart;
 
+				/* Read type byte */
 				if (pqGetc(&beresp, conn))
 				{
+					/* We'll come back when there is more data */
+					return PGRES_POLLING_READING;
+				}
+
+				/*
+				 * Validate message type: we expect only an authentication
+				 * request or an error here.  Anything else probably means
+				 * it's not Postgres on the other end at all.
+				 */
+				if (!(beresp == 'R' || beresp == 'E'))
+				{
+					printfPQExpBuffer(&conn->errorMessage,
+									  libpq_gettext(
+								  "expected authentication request from "
+											  "server, but received %c\n"
+													),
+									  beresp);
+					goto error_return;
+				}
+
+				/* Read message length word */
+				if (pqGetInt(&msgLength, 4, conn))
+				{
+					/* We'll come back when there is more data */
+					return PGRES_POLLING_READING;
+				}
+
+				/*
+				 * Try to validate message length before using it.
+				 * Authentication requests can't be very large.  Errors
+				 * can be a little larger, but not huge.  If we see a large
+				 * apparent length in an error, it means we're really talking
+				 * to a pre-3.0-protocol server; cope.
+				 */
+				if (beresp == 'R' && (msgLength < 8 || msgLength > 100))
+				{
+					printfPQExpBuffer(&conn->errorMessage,
+									  libpq_gettext(
+								  "expected authentication request from "
+											  "server, but received %c\n"
+													),
+									  beresp);
+					goto error_return;
+				}
+
+				if (beresp == 'E' && (msgLength < 8 || msgLength > 30000))
+				{
+					/* Handle error from a pre-3.0 server */
+					conn->inCursor = conn->inStart + 1;	/* reread data */
+					if (pqGets(&conn->errorMessage, conn))
+					{
+						/* We'll come back when there is more data */
+						return PGRES_POLLING_READING;
+					}
+					/* OK, we read the message; mark data consumed */
+					conn->inStart = conn->inCursor;
+
+					/*
+					 * The postmaster typically won't end its message with
+					 * a newline, so add one to conform to libpq
+					 * conventions.
+					 */
+					appendPQExpBufferChar(&conn->errorMessage, '\n');
+					goto error_return;
+				}
+
+				/*
+				 * Can't process if message body isn't all here yet.
+				 */
+				msgLength -= 4;
+				avail = conn->inEnd - conn->inCursor;
+				if (avail < msgLength)
+				{
+					/*
+					 * Before returning, try to enlarge the input buffer if
+					 * needed to hold the whole message; see notes in
+					 * parseInput.
+					 */
+					if (pqCheckInBufferSpace(conn->inCursor + msgLength, conn))
+						goto error_return;
 					/* We'll come back when there is more data */
 					return PGRES_POLLING_READING;
 				}
@@ -1363,18 +1446,7 @@ keep_going:						/* We will come back to here until there
 					goto error_return;
 				}
 
-				/* Otherwise it should be an authentication request. */
-				if (beresp != 'R')
-				{
-					printfPQExpBuffer(&conn->errorMessage,
-									  libpq_gettext(
-								  "expected authentication request from "
-											  "server, but received %c\n"
-													),
-									  beresp);
-					goto error_return;
-				}
-
+				/* It is an authentication request. */
 				/* Get the type of request. */
 				if (pqGetInt((int *) &areq, 4, conn))
 				{

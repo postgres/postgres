@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.107 2003/03/20 03:34:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.108 2003/04/22 00:08:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -406,19 +406,18 @@ elog(int lev, const char *fmt,...)
 		 */
 		oldcxt = MemoryContextSwitchTo(ErrorContext);
 
-		if (lev <= WARNING)
-			/* exclude the timestamp from msg sent to frontend */
-			send_message_to_frontend(lev, msg_buf + timestamp_size);
-		else
+		if (lev >= ERROR)
 		{
 			/*
 			 * Abort any COPY OUT in progress when an error is detected.
-			 * This hack is necessary because of poor design of copy
-			 * protocol.
+			 * This hack is necessary because of poor design of old-style
+			 * copy protocol.
 			 */
 			pq_endcopyout(true);
-			send_message_to_frontend(ERROR, msg_buf + timestamp_size);
 		}
+
+		/* Exclude the timestamp from msg sent to frontend */
+		send_message_to_frontend(lev, msg_buf + timestamp_size);
 
 		MemoryContextSwitchTo(oldcxt);
 	}
@@ -745,11 +744,9 @@ send_message_to_frontend(int type, const char *msg)
 {
 	StringInfoData buf;
 
-	AssertArg(type <= ERROR);
-
-	pq_beginmessage(&buf);
 	/* 'N' (Notice) is for nonfatal conditions, 'E' is for errors */
-	pq_sendbyte(&buf, type < ERROR ? 'N' : 'E');
+	pq_beginmessage(&buf, (type < ERROR) ? 'N' : 'E');
+	/* XXX more to do here */
 	pq_sendstring(&buf, msg);
 	pq_endmessage(&buf);
 

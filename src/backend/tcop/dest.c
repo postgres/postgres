@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.52 2003/04/19 00:02:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.53 2003/04/22 00:08:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -141,7 +141,9 @@ EndCommand(const char *commandTag, CommandDest dest)
  *		libpq's crufty way of determining whether a multiple-command
  *		query string is done.  In protocol 2.0 it's probably not really
  *		necessary to distinguish empty queries anymore, but we still do it
- *		for backwards compatibility with 1.0.
+ *		for backwards compatibility with 1.0.  In protocol 3.0 it has some
+ *		use again, since it ensures that there will be a recognizable end
+ *		to the response to an Execute message.
  * ----------------
  */
 void
@@ -153,9 +155,13 @@ NullCommand(CommandDest dest)
 		case Remote:
 
 			/*
-			 * tell the fe that we saw an empty query string
+			 * tell the fe that we saw an empty query string.  In protocols
+			 * before 3.0 this has a useless empty-string message body.
 			 */
-			pq_putbytes("I", 2);	/* note we send I and \0 */
+			if (PG_PROTOCOL_MAJOR(FrontendProtocol) >= 3)
+				pq_putemptymessage('I');
+			else
+				pq_puttextmessage('I', "");
 			break;
 
 		case Debug:
@@ -184,7 +190,7 @@ ReadyForQuery(CommandDest dest)
 		case RemoteInternal:
 		case Remote:
 			if (PG_PROTOCOL_MAJOR(FrontendProtocol) >= 2)
-				pq_putbytes("Z", 1);
+				pq_putemptymessage('Z');
 			/* Flush output at end of cycle in any case. */
 			pq_flush();
 			break;

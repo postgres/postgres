@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqformat.h,v 1.14 2003/04/19 00:02:29 tgl Exp $
+ * $Id: pqformat.h,v 1.15 2003/04/22 00:08:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,8 +15,7 @@
 
 #include "lib/stringinfo.h"
 
-#define pq_beginmessage(buf)  initStringInfo(buf)
-
+extern void pq_beginmessage(StringInfo buf, char msgtype);
 extern void pq_sendbyte(StringInfo buf, int byt);
 extern void pq_sendbytes(StringInfo buf, const char *data, int datalen);
 extern void pq_sendcountedtext(StringInfo buf, const char *str, int slen);
@@ -24,7 +23,8 @@ extern void pq_sendstring(StringInfo buf, const char *str);
 extern void pq_sendint(StringInfo buf, int i, int b);
 extern void pq_endmessage(StringInfo buf);
 
-extern int	pq_puttextmessage(char msgtype, const char *str);
+extern void pq_puttextmessage(char msgtype, const char *str);
+extern void pq_putemptymessage(char msgtype);
 
 extern int	pq_getmsgbyte(StringInfo msg);
 extern unsigned int pq_getmsgint(StringInfo msg, int b);

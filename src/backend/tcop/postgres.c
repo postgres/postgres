@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.322 2003/04/19 00:02:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.323 2003/04/22 00:08:07 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1821,8 +1821,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	{
 		StringInfoData buf;
 
-		pq_beginmessage(&buf);
-		pq_sendbyte(&buf, 'K');
+		pq_beginmessage(&buf, 'K');
 		pq_sendint(&buf, (int32) MyProcPid, sizeof(int32));
 		pq_sendint(&buf, (int32) MyCancelKey, sizeof(int32));
 		pq_endmessage(&buf);
@@ -1832,7 +1831,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.322 $ $Date: 2003/04/19 00:02:29 $\n");
+		puts("$Revision: 1.323 $ $Date: 2003/04/22 00:08:07 $\n");
 	}
 
 	/*

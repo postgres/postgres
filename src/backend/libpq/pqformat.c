@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/libpq/pqformat.c,v 1.27 2003/04/19 00:02:29 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/libpq/pqformat.c,v 1.28 2003/04/22 00:08:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,6 +38,7 @@
  *
  * Special-case message output:
  *		pq_puttextmessage - generate a character set-converted message in one step
+ *		pq_putemptymessage - convenience routine for message with empty body
  *
  * Message parsing after input:
  *		pq_getmsgbyte	- get a raw byte from a message buffer
@@ -62,6 +63,22 @@
 #include "libpq/pqformat.h"
 #include "mb/pg_wchar.h"
 
+
+/* --------------------------------
+ *		pq_beginmessage		- initialize for sending a message
+ * --------------------------------
+ */
+void
+pq_beginmessage(StringInfo buf, char msgtype)
+{
+	initStringInfo(buf);
+	/*
+	 * We stash the message type into the buffer's cursor field, expecting
+	 * that the pq_sendXXX routines won't touch it.  We could alternatively
+	 * make it the first byte of the buffer contents, but this seems easier.
+	 */
+	buf->cursor = msgtype;
+}
 
 /* --------------------------------
  *		pq_sendbyte		- append a raw byte to a StringInfo buffer
@@ -176,7 +193,8 @@ pq_sendint(StringInfo buf, int i, int b)
 void
 pq_endmessage(StringInfo buf)
 {
-	(void) pq_putmessage('\0', buf->data, buf->len);
+	/* msgtype was saved in cursor field */
+	(void) pq_putmessage(buf->cursor, buf->data, buf->len);
 	/* no need to complain about any failure, since pqcomm.c already did */
 	pfree(buf->data);
 	buf->data = NULL;
@@ -188,11 +206,9 @@ pq_endmessage(StringInfo buf)
  *		This is the same as the pqcomm.c routine pq_putmessage, except that
  *		the message body is a null-terminated string to which encoding
  *		conversion applies.
- *
- *		returns 0 if OK, EOF if trouble
  * --------------------------------
  */
-int
+void
 pq_puttextmessage(char msgtype, const char *str)
 {
 	int			slen = strlen(str);
@@ -201,12 +217,22 @@ pq_puttextmessage(char msgtype, const char *str)
 	p = (char *) pg_server_to_client((unsigned char *) str, slen);
 	if (p != str)				/* actual conversion has been done? */
 	{
-		int			result = pq_putmessage(msgtype, p, strlen(p) + 1);
-
+		(void) pq_putmessage(msgtype, p, strlen(p) + 1);
 		pfree(p);
-		return result;
+		return;
 	}
-	return pq_putmessage(msgtype, str, slen + 1);
+	(void) pq_putmessage(msgtype, str, slen + 1);
+}
+
+
+/* --------------------------------
+ *		pq_putemptymessage - convenience routine for message with empty body
+ * --------------------------------
+ */
+void
+pq_putemptymessage(char msgtype)
+{
+	(void) pq_putmessage(msgtype, NULL, 0);
 }
 
 

@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.313 2003/04/19 00:02:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.314 2003/04/22 00:08:06 tgl Exp $
  *
  * NOTES
  *
@@ -1118,7 +1118,13 @@ ProcessStartupPacket(Port *port, bool SSLdone)
 
 	if (pq_getbytes((char *) &len, 4) == EOF)
 	{
-		elog(COMMERROR, "incomplete startup packet");
+		/*
+		 * EOF after SSLdone probably means the client didn't like our
+		 * response to NEGOTIATE_SSL_CODE.  That's not an error condition,
+		 * so don't clutter the log with a complaint.
+		 */
+		if (!SSLdone)
+			elog(COMMERROR, "incomplete startup packet");
 		return STATUS_ERROR;
 	}
 
@@ -1127,7 +1133,10 @@ ProcessStartupPacket(Port *port, bool SSLdone)
 
 	if (len < (int32) sizeof(ProtocolVersion) ||
 		len > MAX_STARTUP_PACKET_LENGTH)
-		elog(FATAL, "invalid length of startup packet");
+	{
+		elog(COMMERROR, "invalid length of startup packet");
+		return STATUS_ERROR;
+	}
 
 	/*
 	 * Allocate at least the size of an old-style startup packet, plus one
@@ -1173,7 +1182,7 @@ ProcessStartupPacket(Port *port, bool SSLdone)
 #endif
 		if (send(port->sock, &SSLok, 1, 0) != 1)
 		{
-			elog(LOG, "failed to send SSL negotiation response: %m");
+			elog(COMMERROR, "failed to send SSL negotiation response: %m");
 			return STATUS_ERROR;	/* close the connection */
 		}
 
@@ -1188,6 +1197,11 @@ ProcessStartupPacket(Port *port, bool SSLdone)
 
 	/* Could add additional special packet types here */
 
+	/*
+	 * Set FrontendProtocol now so that elog() knows what format to send
+	 * if we fail during startup.
+	 */
+	FrontendProtocol = proto;
 
 	/*
 	 * XXX temporary for 3.0 protocol development: we are using the minor

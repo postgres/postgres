@@ -12,15 +12,16 @@
  * No other messages can be sent while COPY OUT is in progress; and if the
  * copy is aborted by an elog(ERROR), we need to close out the copy so that
  * the frontend gets back into sync.  Therefore, these routines have to be
- * aware of COPY OUT state.
+ * aware of COPY OUT state.  (New COPY-OUT is message-based and does *not*
+ * set the DoingCopyOut flag.)
  *
  * NOTE: generally, it's a bad idea to emit outgoing messages directly with
  * pq_putbytes(), especially if the message would require multiple calls
  * to send.  Instead, use the routines in pqformat.c to construct the message
- * in a buffer and then emit it in one call to pq_putmessage.  This helps
- * ensure that the channel will not be clogged by an incomplete message
- * if execution is aborted by elog(ERROR) partway through the message.
- * The only non-libpq code that should call pq_putbytes directly is COPY OUT.
+ * in a buffer and then emit it in one call to pq_putmessage.  This ensures
+ * that the channel will not be clogged by an incomplete message if execution
+ * is aborted by elog(ERROR) partway through the message.  The only non-libpq
+ * code that should call pq_putbytes directly is old-style COPY OUT.
  *
  * At one time, libpq was shared between frontend and backend, but now
  * the backend's "backend/libpq" is quite separate from "interfaces/libpq".
@@ -29,7 +30,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.150 2003/04/19 00:02:29 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.151 2003/04/22 00:08:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -846,13 +847,17 @@ pq_flush(void)
  *		pq_putmessage	- send a normal message (suppressed in COPY OUT mode)
  *
  *		If msgtype is not '\0', it is a message type code to place before
- *		the message body (len counts only the body size!).
- *		If msgtype is '\0', then the buffer already includes the type code.
+ *		the message body.  If msgtype is '\0', then the message has no type
+ *		code (this is only valid in pre-3.0 protocols).
  *
- *		All normal messages are suppressed while COPY OUT is in progress.
- *		(In practice only a few messages might get emitted then; dropping
- *		them is annoying, but at least they will still appear in the
- *		postmaster log.)
+ *		len is the length of the message body data at *s.  In protocol 3.0
+ *		and later, a message length word (equal to len+4 because it counts
+ *		itself too) is inserted by this routine.
+ *
+ *		All normal messages are suppressed while old-style COPY OUT is in
+ *		progress.  (In practice only a few notice messages might get emitted
+ *		then; dropping them is annoying, but at least they will still appear
+ *		in the postmaster log.)
  *
  *		returns 0 if OK, EOF if trouble
  * --------------------------------
@@ -865,6 +870,14 @@ pq_putmessage(char msgtype, const char *s, size_t len)
 	if (msgtype)
 		if (pq_putbytes(&msgtype, 1))
 			return EOF;
+	if (PG_PROTOCOL_MAJOR(FrontendProtocol) >= 3)
+	{
+		uint32		n32;
+
+		n32 = htonl((uint32) (len + 4));
+		if (pq_putbytes((char *) &n32, 4))
+			return EOF;
+	}
 	return pq_putbytes(s, len);
 }
 
@@ -880,12 +893,13 @@ pq_startcopyout(void)
 }
 
 /* --------------------------------
- *		pq_endcopyout	- end a COPY OUT transfer
+ *		pq_endcopyout	- end an old-style COPY OUT transfer
  *
  *		If errorAbort is indicated, we are aborting a COPY OUT due to an error,
  *		and must send a terminator line.  Since a partial data line might have
  *		been emitted, send a couple of newlines first (the first one could
- *		get absorbed by a backslash...)
+ *		get absorbed by a backslash...)  Note that old-style COPY OUT does
+ *		not allow binary transfers, so a textual terminator is always correct.
  * --------------------------------
  */
 void
@@ -893,8 +907,8 @@ pq_endcopyout(bool errorAbort)
 {
 	if (!DoingCopyOut)
 		return;
+	DoingCopyOut = false;
 	if (errorAbort)
 		pq_putbytes("\n\n\\.\n", 5);
 	/* in non-error case, copy.c will have emitted the terminator line */
-	DoingCopyOut = false;
 }

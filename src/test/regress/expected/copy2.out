@@ -35,17 +35,13 @@ ERROR:  Attribute "d" specified more than once
 -- missing data: should fail
 COPY x from stdin;
 ERROR:  copy: line 1, pg_atoi: zero-length string
-lost synchronization with server, resetting connection
 COPY x from stdin;
 ERROR:  copy: line 1, Missing data for column "e"
-lost synchronization with server, resetting connection
 COPY x from stdin;
 ERROR:  copy: line 1, Missing data for column "e"
-lost synchronization with server, resetting connection
 -- extra data: should fail
 COPY x from stdin;
 ERROR:  copy: line 1, Extra data after last expected column
-lost synchronization with server, resetting connection
 SET autocommit TO 'on';
 -- various COPY options: delimiters, oids, NULL string
 COPY x (b, c, d, e) from stdin with oids delimiter ',' null 'x';

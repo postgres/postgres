@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.194 2003/04/19 20:36:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.195 2003/04/22 00:08:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,13 +50,6 @@
 #define ISOCTAL(c) (((c) >= '0') && ((c) <= '7'))
 #define OCTVALUE(c) ((c) - '0')
 
-/* Default line termination */
-#ifndef WIN32
-#define PGEOL	"\n"
-#else
-#define PGEOL	"\r\n"
-#endif
-
 /*
  * Represents the different source/dest cases we need to worry about at
  * the bottom level
@@ -92,7 +85,7 @@ typedef enum EolType
 
 /* non-export function prototypes */
 static void CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
-				   bool pipe, char *delim, char *null_print);
+				   char *delim, char *null_print);
 static void CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 					 char *delim, char *null_print);
 static Oid	GetInputFunction(Oid type);
@@ -101,8 +94,7 @@ static char *CopyReadAttribute(const char *delim, CopyReadResult *result);
 static void CopyAttributeOut(char *string, char *delim);
 static List *CopyGetAttnums(Relation rel, List *attnamelist);
 
-/* The trailing null is part of the signature */
-static const char BinarySignature[] = "PGBCOPY\n\377\r\n"; 
+static const char BinarySignature[12] = "PGBCOPY\n\377\r\n\0";
 
 /*
  * Static communication variables ... pretty grotty, but COPY has
@@ -135,10 +127,11 @@ static int	server_encoding;
  */
 static void SendCopyBegin(bool binary);
 static void ReceiveCopyBegin(bool binary);
-static void SendCopyEnd(bool binary, bool pipe);
+static void SendCopyEnd(bool binary);
 static void CopySendData(void *databuf, int datasize);
 static void CopySendString(const char *str);
 static void CopySendChar(char c);
+static void CopySendEndOfRow(bool binary);
 static void CopyGetData(void *databuf, int datasize);
 static int	CopyGetChar(void);
 #define CopyGetEof()  (fe_eof)
@@ -154,22 +147,32 @@ SendCopyBegin(bool binary)
 {
 	if (PG_PROTOCOL_MAJOR(FrontendProtocol) >= 3)
 	{
-		pq_putbytes("H", 1);	/* new way */
-		/* XXX grottiness needed for old protocol */
-		pq_startcopyout();
+		/* new way */
+		StringInfoData buf;
+
+		pq_beginmessage(&buf, 'H');
+		pq_sendbyte(&buf, binary ? 1 : 0);
+		pq_endmessage(&buf);
 		copy_dest = COPY_NEW_FE;
+		copy_msgbuf = makeStringInfo();
 	}
 	else if (PG_PROTOCOL_MAJOR(FrontendProtocol) >= 2)
 	{
-		pq_putbytes("H", 1);	/* old way */
-		/* grottiness needed for old protocol */
+		/* old way */
+		if (binary)
+			elog(ERROR, "COPY BINARY is not supported to stdout or from stdin");
+		pq_putemptymessage('H');
+		/* grottiness needed for old COPY OUT protocol */
 		pq_startcopyout();
 		copy_dest = COPY_OLD_FE;
 	}
 	else
 	{
-		pq_putbytes("B", 1);	/* very old way */
-		/* grottiness needed for old protocol */
+		/* very old way */
+		if (binary)
+			elog(ERROR, "COPY BINARY is not supported to stdout or from stdin");
+		pq_putemptymessage('B');
+		/* grottiness needed for old COPY OUT protocol */
 		pq_startcopyout();
 		copy_dest = COPY_OLD_FE;
 	}
@@ -180,18 +183,29 @@ ReceiveCopyBegin(bool binary)
 {
 	if (PG_PROTOCOL_MAJOR(FrontendProtocol) >= 3)
 	{
-		pq_putbytes("G", 1);	/* new way */
+		/* new way */
+		StringInfoData buf;
+
+		pq_beginmessage(&buf, 'G');
+		pq_sendbyte(&buf, binary ? 1 : 0);
+		pq_endmessage(&buf);
 		copy_dest = COPY_NEW_FE;
 		copy_msgbuf = makeStringInfo();
 	}
 	else if (PG_PROTOCOL_MAJOR(FrontendProtocol) >= 2)
 	{
-		pq_putbytes("G", 1);	/* old way */
+		/* old way */
+		if (binary)
+			elog(ERROR, "COPY BINARY is not supported to stdout or from stdin");
+		pq_putemptymessage('G');
 		copy_dest = COPY_OLD_FE;
 	}
 	else
 	{
-		pq_putbytes("D", 1);	/* very old way */
+		/* very old way */
+		if (binary)
+			elog(ERROR, "COPY BINARY is not supported to stdout or from stdin");
+		pq_putemptymessage('D');
 		copy_dest = COPY_OLD_FE;
 	}
 	/* We *must* flush here to ensure FE knows it can send. */
@@ -199,22 +213,39 @@ ReceiveCopyBegin(bool binary)
 }
 
 static void
-SendCopyEnd(bool binary, bool pipe)
+SendCopyEnd(bool binary)
 {
-	if (!binary)
+	if (copy_dest == COPY_NEW_FE)
 	{
-		CopySendString("\\.");
-		CopySendString(!pipe ? PGEOL : "\n");
+		if (binary)
+		{
+			/* Need to flush out file trailer word */
+			CopySendEndOfRow(true);
+		}
+		else
+		{
+			/* Shouldn't have any unsent data */
+			Assert(copy_msgbuf->len == 0);
+		}
+		/* Send Copy Done message */
+		pq_putemptymessage('c');
 	}
-	pq_endcopyout(false);
+	else
+	{
+		/* The FE/BE protocol uses \n as newline for all platforms */
+		CopySendData("\\.\n", 3);
+		pq_endcopyout(false);
+	}
 }
 
-/*
+/*----------
  * CopySendData sends output data to the destination (file or frontend)
  * CopySendString does the same for null-terminated strings
  * CopySendChar does the same for single characters
+ * CopySendEndOfRow does the appropriate thing at end of each data row
  *
  * NB: no data conversion is applied by these functions
+ *----------
  */
 static void
 CopySendData(void *databuf, int datasize)
@@ -228,12 +259,13 @@ CopySendData(void *databuf, int datasize)
 			break;
 		case COPY_OLD_FE:
 			if (pq_putbytes((char *) databuf, datasize))
-				fe_eof = true;
+			{
+				/* no hope of recovering connection sync, so FATAL */
+				elog(FATAL, "CopySendData: connection lost");
+			}
 			break;
 		case COPY_NEW_FE:
-			/* XXX fix later */
-			if (pq_putbytes((char *) databuf, datasize))
-				fe_eof = true;
+			appendBinaryStringInfo(copy_msgbuf, (char *) databuf, datasize);
 			break;
 	}
 }
@@ -248,6 +280,40 @@ static void
 CopySendChar(char c)
 {
 	CopySendData(&c, 1);
+}
+
+static void
+CopySendEndOfRow(bool binary)
+{
+	switch (copy_dest)
+	{
+		case COPY_FILE:
+			if (!binary)
+			{
+				/* Default line termination depends on platform */
+#ifndef WIN32
+				CopySendChar('\n');
+#else
+				CopySendString("\r\n");
+#endif
+			}
+			break;
+		case COPY_OLD_FE:
+			/* The FE/BE protocol uses \n as newline for all platforms */
+			if (!binary)
+				CopySendChar('\n');
+			break;
+		case COPY_NEW_FE:
+			/* The FE/BE protocol uses \n as newline for all platforms */
+			if (!binary)
+				CopySendChar('\n');
+			/* Dump the accumulated row as one CopyData message */
+			(void) pq_putmessage('d', copy_msgbuf->data, copy_msgbuf->len);
+			/* Reset copy_msgbuf to empty */
+			copy_msgbuf->len = 0;
+			copy_msgbuf->data[0] = '\0';
+			break;
+	}
 }
 
 /*
@@ -569,13 +635,6 @@ DoCopy(const CopyStmt *stmt)
 			 "from stdin.  Psql's \\copy command also works for anyone.");
 
 	/*
-	 * This restriction is unfortunate, but necessary until the frontend
-	 * COPY protocol is redesigned to be binary-safe...
-	 */
-	if (pipe && binary)
-		elog(ERROR, "COPY BINARY is not supported to stdout or from stdin");
-
-	/*
 	 * Presently, only single-character delimiter strings are supported.
 	 */
 	if (strlen(delim) != 1)
@@ -698,13 +757,13 @@ DoCopy(const CopyStmt *stmt)
 				elog(ERROR, "COPY: %s is a directory", filename);
 			}
 		}
-		CopyTo(rel, attnumlist, binary, oids, pipe, delim, null_print);
+		CopyTo(rel, attnumlist, binary, oids, delim, null_print);
 	}
 
 	if (!pipe)
 		FreeFile(copy_file);
 	else if (IsUnderPostmaster && !is_from)
-		SendCopyEnd(binary, pipe);
+		SendCopyEnd(binary);
 	pfree(attribute_buf.data);
 
 	/*
@@ -721,7 +780,7 @@ DoCopy(const CopyStmt *stmt)
  * Copy from relation TO file.
  */
 static void
-CopyTo(Relation rel, List *attnumlist, bool binary, bool oids, bool pipe,
+CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 	   char *delim, char *null_print)
 {
 	HeapTuple	tuple;
@@ -786,7 +845,7 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids, bool pipe,
 		int32		tmp;
 
 		/* Signature */
-		CopySendData((char *) BinarySignature, sizeof(BinarySignature));
+		CopySendData((char *) BinarySignature, 12);
 		/* Integer layout field */
 		tmp = 0x01020304;
 		CopySendData(&tmp, sizeof(int32));
@@ -918,8 +977,7 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids, bool pipe,
 			}
 		}
 
-		if (!binary)
-			CopySendString(!pipe ? PGEOL : "\n");
+		CopySendEndOfRow(binary);
 
 		MemoryContextSwitchTo(oldcontext);
 	}
@@ -1100,8 +1158,7 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 
 		/* Signature */
 		CopyGetData(readSig, 12);
-		if (CopyGetEof() || memcmp(readSig, BinarySignature,
-								   sizeof(BinarySignature)) != 0)
+		if (CopyGetEof() || memcmp(readSig, BinarySignature, 12) != 0)
 			elog(ERROR, "COPY BINARY: file signature not recognized");
 		/* Integer layout field */
 		CopyGetData(&tmp, sizeof(int32));

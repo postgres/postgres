@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.99 2003/04/19 00:02:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.100 2003/04/22 00:08:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -512,8 +512,7 @@ sendAuthRequest(Port *port, AuthRequest areq)
 {
 	StringInfoData buf;
 
-	pq_beginmessage(&buf);
-	pq_sendbyte(&buf, 'R');
+	pq_beginmessage(&buf, 'R');
 	pq_sendint(&buf, (int32) areq, sizeof(int32));
 
 	/* Add the salt for encrypted passwords. */

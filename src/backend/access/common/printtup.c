@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.65 2002/09/04 20:31:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.66 2003/04/22 00:08:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,15 +77,18 @@ static void
 printtup_setup(DestReceiver *self, int operation,
 			   const char *portalName, TupleDesc typeinfo)
 {
-	/*
-	 * Send portal name to frontend.
-	 *
-	 * If portal name not specified, use "blank" portal.
-	 */
-	if (portalName == NULL)
-		portalName = "blank";
+	if (PG_PROTOCOL_MAJOR(FrontendProtocol) < 3)
+	{
+		/*
+		 * Send portal name to frontend (obsolete cruft, gone in proto 3.0)
+		 *
+		 * If portal name not specified, use "blank" portal.
+		 */
+		if (portalName == NULL)
+			portalName = "blank";
 
-	pq_puttextmessage('P', portalName);
+		pq_puttextmessage('P', portalName);
+	}
 
 	/*
 	 * if this is a retrieve, then we send back the tuple descriptor of
@@ -98,8 +101,7 @@ printtup_setup(DestReceiver *self, int operation,
 		int			i;
 		StringInfoData buf;
 
-		pq_beginmessage(&buf);
-		pq_sendbyte(&buf, 'T'); /* tuple descriptor message type */
+		pq_beginmessage(&buf, 'T'); /* tuple descriptor message type */
 		pq_sendint(&buf, natts, 2);		/* # of attrs in tuples */
 
 		for (i = 0; i < natts; ++i)
@@ -174,8 +176,7 @@ printtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
 	/*
 	 * tell the frontend to expect new tuple data (in ASCII style)
 	 */
-	pq_beginmessage(&buf);
-	pq_sendbyte(&buf, 'D');
+	pq_beginmessage(&buf, 'D');
 
 	/*
 	 * send a bitmap of which attributes are not null
@@ -388,8 +389,7 @@ printtup_internal(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
 	/*
 	 * tell the frontend to expect new tuple data (in binary style)
 	 */
-	pq_beginmessage(&buf);
-	pq_sendbyte(&buf, 'B');
+	pq_beginmessage(&buf, 'B');
 
 	/*
 	 * send a bitmap of which attributes are not null

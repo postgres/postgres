@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.89 2003/04/19 00:02:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.90 2003/04/22 00:08:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -277,12 +277,12 @@ pqPutInt(int value, size_t bytes, PGconn *conn)
 
 /*
  * Make sure conn's output buffer can hold bytes_needed bytes (caller must
- * include existing outCount into the value!)
+ * include already-stored data into the value!)
  *
- * Returns 0 on success, EOF on error
+ * Returns 0 on success, EOF if failed to enlarge buffer
  */
 static int
-checkOutBufferSpace(int bytes_needed, PGconn *conn)
+pqCheckOutBufferSpace(int bytes_needed, PGconn *conn)
 {
 	int			newsize = conn->outBufSize;
 	char	   *newbuf;
@@ -336,6 +336,66 @@ checkOutBufferSpace(int bytes_needed, PGconn *conn)
 }
 
 /*
+ * Make sure conn's input buffer can hold bytes_needed bytes (caller must
+ * include already-stored data into the value!)
+ *
+ * Returns 0 on success, EOF if failed to enlarge buffer
+ */
+int
+pqCheckInBufferSpace(int bytes_needed, PGconn *conn)
+{
+	int			newsize = conn->inBufSize;
+	char	   *newbuf;
+
+	if (bytes_needed <= newsize)
+		return 0;
+	/*
+	 * If we need to enlarge the buffer, we first try to double it in size;
+	 * if that doesn't work, enlarge in multiples of 8K.  This avoids
+	 * thrashing the malloc pool by repeated small enlargements.
+	 *
+	 * Note: tests for newsize > 0 are to catch integer overflow.
+	 */
+	do {
+		newsize *= 2;
+	} while (bytes_needed > newsize && newsize > 0);
+
+	if (bytes_needed <= newsize)
+	{
+		newbuf = realloc(conn->inBuffer, newsize);
+		if (newbuf)
+		{
+			/* realloc succeeded */
+			conn->inBuffer = newbuf;
+			conn->inBufSize = newsize;
+			return 0;
+		}
+	}
+
+	newsize = conn->inBufSize;
+	do {
+		newsize += 8192;
+	} while (bytes_needed > newsize && newsize > 0);
+
+	if (bytes_needed <= newsize)
+	{
+		newbuf = realloc(conn->inBuffer, newsize);
+		if (newbuf)
+		{
+			/* realloc succeeded */
+			conn->inBuffer = newbuf;
+			conn->inBufSize = newsize;
+			return 0;
+		}
+	}
+
+	/* realloc failed. Probably out of memory */
+	printfPQExpBuffer(&conn->errorMessage,
+					  "cannot allocate memory for input buffer\n");
+	return EOF;
+}
+
+/*
  * pqPutMsgStart: begin construction of a message to the server
  *
  * msg_type is the message type byte, or 0 for a message without type byte
@@ -364,7 +424,7 @@ pqPutMsgStart(char msg_type, PGconn *conn)
 	else
 		lenPos = conn->outCount;
 	/* make sure there is room for it */
-	if (checkOutBufferSpace(lenPos + 4, conn))
+	if (pqCheckOutBufferSpace(lenPos + 4, conn))
 		return EOF;
 	/* okay, save the message type byte if any */
 	if (msg_type)
@@ -390,7 +450,7 @@ static int
 pqPutMsgBytes(const void *buf, size_t len, PGconn *conn)
 {
 	/* make sure there is room for it */
-	if (checkOutBufferSpace(conn->outMsgEnd + len, conn))
+	if (pqCheckOutBufferSpace(conn->outMsgEnd + len, conn))
 		return EOF;
 	/* okay, save the data */
 	memcpy(conn->outBuffer + conn->outMsgEnd, buf, len);
@@ -486,13 +546,13 @@ pqReadData(PGconn *conn)
 	 */
 	if (conn->inBufSize - conn->inEnd < 8192)
 	{
-		int			newSize = conn->inBufSize * 2;
-		char	   *newBuf = (char *) realloc(conn->inBuffer, newSize);
-
-		if (newBuf)
+		if (pqCheckInBufferSpace(conn->inEnd + 8192, conn))
 		{
-			conn->inBuffer = newBuf;
-			conn->inBufSize = newSize;
+			/*
+			 * We don't insist that the enlarge worked, but we need some room
+			 */
+			if (conn->inBufSize - conn->inEnd < 100)
+				return -1;		/* errorMessage already set */
 		}
 	}
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.119 2003/04/19 00:02:29 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.120 2003/04/22 00:08:06 tgl Exp $
 -->
 
  <chapter id="libpq">
@@ -175,7 +175,8 @@ PGconn *PQconnectdb(const char *conninfo);
      <term><literal>connect_timeout</literal></term>
      <listitem>
      <para>
-      Time space in seconds given to connection function. Zero or not set means infinite.
+      Maximum wait for connection, in seconds (write as a decimal integer
+      string). Zero or not specified means infinite.
      </para>
      </listitem>
     </varlistentry>
@@ -184,7 +185,7 @@ PGconn *PQconnectdb(const char *conninfo);
      <term><literal>options</literal></term>
      <listitem>
       <para>
-       Configuration options to be sent to the server.
+       Command-line options to be sent to the server.
       </para>
      </listitem>
     </varlistentry>
@@ -252,8 +253,9 @@ PGconn *PQsetdbLogin(const char *pghost,
 </para>
 
 <para>
-   This is the predecessor of <function>PQconnectdb</function> with a fixed number
-   of parameters but the same functionality.   
+   This is the predecessor of <function>PQconnectdb</function> with a fixed
+   number of parameters.  It has the same functionality except that the
+   missing parameters cannot be specified in the call.
    </para>
   </listitem>
  </varlistentry>
@@ -274,8 +276,8 @@ PGconn *PQsetdb(char *pghost,
 
 <para>
    This is a macro that calls <function>PQsetdbLogin</function> with null pointers
-   for the <parameter>login</> and <parameter>pwd</> parameters.  It is provided primarily
-   for backward compatibility with old programs.
+   for the <parameter>login</> and <parameter>pwd</> parameters.  It is provided
+   for backward compatibility with very old programs.
    </para>
   </listitem>
  </varlistentry>
@@ -454,7 +456,7 @@ switch(PQstatus(conn))
   </para>
 
   <para>
-   Finally, these functions leave the socket in a nonblocking state as if 
+   Finally, these functions leave the connection in a nonblocking state as if 
    <function>PQsetnonblocking</function> had been called.
   </para>
   </listitem>
@@ -486,8 +488,6 @@ typedef struct
 </para>
 
 <para>
-   converts an escaped string representation of binary data into binary
-   data --- the reverse of <function>PQescapeBytea</function>.
    Returns a connection options array.  This may
    be used to determine all possible <function>PQconnectdb</function> options and their
    current default values.  The return value points to an array of
@@ -683,7 +683,7 @@ char *PQtty(const PGconn *conn);
 <term><function>PQoptions</function></term>
 <listitem>
 <para>
-       Returns the configuration options passed in the connection request.
+       Returns the command-line options passed in the connection request.
 <synopsis>
 char *PQoptions(const PGconn *conn);
 </synopsis>
@@ -2047,13 +2047,13 @@ contains example functions that correctly handle the <command>COPY</command> pro
 <term><function>PQgetlineAsync</function></term>
 <listitem>
 <para>
-          Reads  a  newline-terminated  line  of  characters
+          Reads a row of COPY data
           (transmitted  by the server) into a buffer
           without blocking.
 <synopsis>
 int PQgetlineAsync(PGconn *conn,
                    char *buffer,
-                   int length);
+                   int bufsize);
 </synopsis>
 </para>
 
@@ -2070,24 +2070,27 @@ end-of-data signal is detected.
 <para>
 Unlike <function>PQgetline</function>, this function takes
 responsibility for detecting end-of-data.
-On each call, <function>PQgetlineAsync</function> will return data if a complete newline-
-terminated data line is available in <application>libpq</>'s input buffer, or if the
-incoming data line is too long to fit in the buffer offered by the caller.
-Otherwise, no data is returned until the rest of the line arrives.
+</para>
+<para>
+On each call, <function>PQgetlineAsync</function> will return data if a
+complete data row is available in <application>libpq</>'s input buffer.
+Otherwise, no data is returned until the rest of the row arrives.
 The function returns -1 if the end-of-copy-data marker has been recognized,
 or 0 if no data is available, or a positive number giving the number of
 bytes of data returned.  If -1 is returned, the caller must next call
 <function>PQendcopy</function>, and then return to normal processing.
 </para>
 <para>
-The data returned will not extend beyond a newline character.  If possible
-a whole line will be returned at one time.  But if the buffer offered by
-the caller is too small to hold a line sent by the server, then a partial
-data line will be returned.  This can be detected by testing whether the
-last returned byte is <literal>\n</literal> or not.
+The data returned will not extend beyond a data-row boundary.  If possible
+a whole row will be returned at one time.  But if the buffer offered by
+the caller is too small to hold a row sent by the server, then a partial
+data row will be returned.  With textual data this can be detected by testing
+whether the last returned byte is <literal>\n</literal> or not.  (In a binary
+COPY, actual parsing of the COPY data format will be needed to make the
+equivalent determination.)
 The returned string is not null-terminated.  (If you want to add a
-terminating null, be sure to pass a <parameter>length</parameter> one smaller than the room
-actually available.)
+terminating null, be sure to pass a <parameter>bufsize</parameter> one smaller
+than the room actually available.)
 </para>
 </listitem>
 </varlistentry>
@@ -2105,10 +2108,24 @@ int PQputline(PGconn *conn,
 </para>
 
 <para>
-Note the application must explicitly  send  the  two
-characters  <literal>\.</literal> on a final line  to indicate to
-the server that it has finished sending its data.
+The COPY datastream sent by a series of calls to
+<function>PQputline</function> has the same format as that returned by
+<function>PQgetlineAsync</function>, except that applications are not
+obliged to send exactly one data row per <function>PQputline</function>
+call; it is okay to send a partial line or multiple lines per call.
 </para>
+
+<note>
+<para>
+Before <productname>PostgreSQL</productname> 7.4, it was necessary for the
+application to explicitly send the two characters <literal>\.</literal> as a
+final line to indicate to the server that it had finished sending COPY data.
+While this still works, it is deprecated and the special meaning of
+<literal>\.</literal> can be expected to be removed in a future release.
+It is sufficient to call <function>PQendcopy</function> after having sent the
+actual data.
+</para>
+</note>
 </listitem>
 </varlistentry>
 
@@ -2126,9 +2143,9 @@ int PQputnbytes(PGconn *conn,
 </para>
 
 <para>
-This is exactly like <function>PQputline</function>, except that the data buffer need
-not be null-terminated since the number of bytes to send is
-specified directly.
+This is exactly like <function>PQputline</function>, except that the data
+buffer need not be null-terminated since the number of bytes to send is
+specified directly.  Use this procedure when sending binary data.
 </para>
 </listitem>
 </varlistentry>
@@ -2147,11 +2164,12 @@ int PQendcopy(PGconn *conn);
  sent  to  the  server using <function>PQputline</function> or when the
  last string has been  received  from  the  server
  using <function>PGgetline</function>.  It must be issued or the server
- may get <quote>out of sync</quote> with  the client.   Upon
+ will get <quote>out of sync</quote> with  the client.   Upon
  return from this function, the server is ready to
  receive the next SQL command.
  The return value is 0  on  successful  completion,
- nonzero otherwise.
+ nonzero otherwise.  (Use <function>PQerrorMessage</function> to retrieve
+ details if the return value is nonzero.)
 </para>
 
 <para>
@@ -2187,7 +2205,6 @@ PQexec(conn, "COPY foo FROM STDIN;");
 PQputline(conn, "3\thello world\t4.5\n");
 PQputline(conn, "4\tgoodbye world\t7.11\n");
 ...
-PQputline(conn, "\\.\n");
 PQendcopy(conn);
 </programlisting>
 </para>

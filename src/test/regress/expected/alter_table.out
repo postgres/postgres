@@ -995,7 +995,6 @@ copy test("........pg.dropped.1........") to stdout;
 ERROR:  Relation "test" has no column "........pg.dropped.1........"
 copy test from stdin;
 ERROR:  copy: line 1, Extra data after last expected column
-lost synchronization with server, resetting connection
 SET autocommit TO 'on';
 select * from test;
  b | c 

@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-int.h,v 1.62 2003/04/19 00:02:30 tgl Exp $
+ * $Id: libpq-int.h,v 1.63 2003/04/22 00:08:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,7 +56,7 @@ typedef int ssize_t;			/* ssize_t doesn't exist in VC (atleast
  * pqcomm.h describe what the backend knows, not what libpq knows.
  */
 
-#define PG_PROTOCOL_LIBPQ	PG_PROTOCOL(3,101) /* XXX temporary value */
+#define PG_PROTOCOL_LIBPQ	PG_PROTOCOL(3,102) /* XXX temporary value */
 
 /*
  * POSTGRES backend dependent Constants.
@@ -216,7 +216,8 @@ struct pg_conn
 								 * is listening on; if NULL, uses a
 								 * default constructed from pgport */
 	char	   *pgtty;			/* tty on which the backend messages is
-								 * displayed (NOT ACTUALLY USED???) */
+								 * displayed (OBSOLETE, NOT USED) */
+	char	   *connect_timeout; /* connection timeout (numeric string) */
 	char	   *pgoptions;		/* options to start the backend with */
 	char	   *dbName;			/* database name */
 	char	   *pguser;			/* Postgres username and password, if any */
@@ -232,6 +233,10 @@ struct pg_conn
 	/* Status indicators */
 	ConnStatusType status;
 	PGAsyncStatusType asyncStatus;
+	char		copy_is_binary;	/* 1 = copy binary, 0 = copy text */
+	int			copy_already_done; /* # bytes already returned in COPY OUT */
+	int			nonblocking;	/* whether this connection is using a
+								 * blocking socket to the backend or not */
 	Dllist	   *notifyList;		/* Notify msgs not yet handed to
 								 * application */
 
@@ -246,6 +251,7 @@ struct pg_conn
 	int			be_key;			/* key of backend --- needed for cancels */
 	char		md5Salt[4];		/* password salt received from backend */
 	char		cryptSalt[2];	/* password salt received from backend */
+	int			client_encoding; /* encoding id */
 	PGlobjfuncs *lobjfuncs;		/* private state for large-object access
 								 * fns */
 
@@ -257,9 +263,6 @@ struct pg_conn
 	int			inCursor;		/* next byte to tentatively consume */
 	int			inEnd;			/* offset to first position after avail
 								 * data */
-
-	int			nonblocking;	/* whether this connection is using a
-								 * blocking socket to the backend or not */
 
 	/* Buffer for data not yet sent to backend */
 	char	   *outBuffer;		/* currently allocated buffer */
@@ -291,10 +294,6 @@ struct pg_conn
 
 	/* Buffer for receiving various parts of messages */
 	PQExpBufferData workBuffer; /* expansible string */
-
-	int			client_encoding;	/* encoding id */
-
-	char	   *connect_timeout;
 };
 
 /* String descriptions of the ExecStatusTypes.
@@ -330,6 +329,7 @@ extern void pqClearAsyncResult(PGconn *conn);
   * for Get, EOF merely means the buffer is exhausted, not that there is
   * necessarily any error.
   */
+extern int	pqCheckInBufferSpace(int bytes_needed, PGconn *conn);
 extern int	pqGetc(char *result, PGconn *conn);
 extern int	pqPutc(char c, PGconn *conn);
 extern int	pqGets(PQExpBuffer buf, PGconn *conn);

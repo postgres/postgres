@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.58 2003/04/19 00:02:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.59 2003/04/22 00:08:07 tgl Exp $
  *
  * NOTES
  *	  This cruft is the server side of PQfn.
@@ -119,8 +119,7 @@ SendFunctionResult(Datum retval, bool retbyval, int retlen)
 {
 	StringInfoData buf;
 
-	pq_beginmessage(&buf);
-	pq_sendbyte(&buf, 'V');
+	pq_beginmessage(&buf, 'V');
 
 	if (retlen != 0)
 	{

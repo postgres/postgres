@@ -40,7 +40,6 @@ INSERT INTO basictest values ('88', 'haha', 'short', '123.1212');    -- Truncate
 -- Test copy
 COPY basictest (testvarchar) FROM stdin; -- fail
 ERROR:  copy: line 1, value too long for type character varying(5)
-lost synchronization with server, resetting connection
 SET autocommit TO 'on';
 COPY basictest (testvarchar) FROM stdin;
 select * from basictest;
@@ -128,12 +127,10 @@ INSERT INTO nulltest values ('a', 'b', 'c', NULL, 'd'); -- Good
 -- Test copy
 COPY nulltest FROM stdin; --fail
 ERROR:  copy: line 1, Domain dcheck does not allow NULL values
-lost synchronization with server, resetting connection
 SET autocommit TO 'on';
 -- Last row is bad
 COPY nulltest FROM stdin;
 ERROR:  copy: line 3, CopyFrom: rejected due to CHECK constraint "nulltest_col5" on "nulltest"
-lost synchronization with server, resetting connection
 select * from nulltest;
  col1 | col2 | col3 | col4 | col5 
 ------+------+------+------+------
