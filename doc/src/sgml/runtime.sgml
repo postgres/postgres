@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.240 2004/02/17 06:28:05 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.241 2004/02/17 07:36:47 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -995,24 +995,24 @@ SET ENABLE_SEQSCAN TO OFF;
      <title>Cost-Based Vacuum Delay</title>
 
      <para>
-      During the execution of <command>VACUUM</command>,
-      <command>VACUUM FULL</command> and <command>ANALYZE</command>,
-      the system mantains an internal counter that keeps track of the
-      cost of the various I/O operations that are performed. When the
-      accumulated cost reaches a limit
-      (specified by <varname>vacuum_cost_limit</varname>), the backend performing
-      the operation will sleep for a while (specified by
+      During the execution of <command>VACUUM</command>
+      and <command>ANALYZE</command> commands,
+      the system maintains an internal counter that keeps track of the
+      estimated cost of the various I/O operations that are performed.
+      When the accumulated cost reaches a limit
+      (specified by <varname>vacuum_cost_limit</varname>), the process
+      performing the operation will sleep for a while (specified by
       <varname>vacuum_cost_naptime</varname>). Then it will reset the
       counter and continue execution.
      </para>
 
      <para>
-      The intent of this feature is to allow administrators the reduce
+      The intent of this feature is to allow administrators to reduce
       the I/O impact of these commands on concurrent database
       activity. There are some situations in which it is not very
-      important that maintainence commands like
+      important that maintenance commands like
       <command>VACUUM</command> and <command>ANALYZE</command> finish
-      quickly; however, it is usually very important these these
+      quickly; however, it is usually very important that these
       commands do not significantly interfere with the ability of the
       system to perform other database operations. Cost-based vacuum
       delay provides a way for administrators to achieve this.
@@ -1020,7 +1020,7 @@ SET ENABLE_SEQSCAN TO OFF;
 
      <para>
       This feature is disabled by default. To enable it, set the
-      <varname>vacuum_cost_naptime</varname> variable to a reasonable
+      <varname>vacuum_cost_naptime</varname> variable to a nonzero
       value.
      </para>
 
@@ -1029,7 +1029,7 @@ SET ENABLE_SEQSCAN TO OFF;
        <term><varname>vacuum_cost_page_hit</varname> (<type>integer</type>)</term>
        <listitem>
         <para>
-         The cost for vacuuming a buffer found in the shared buffer
+         The estimated cost for vacuuming a buffer found in the shared buffer
          cache. It represents the cost to lock the buffer pool, lookup
          the shared hash table and scan the content of the page. The
          default value is 1.
@@ -1041,7 +1041,7 @@ SET ENABLE_SEQSCAN TO OFF;
        <term><varname>vacuum_cost_page_miss</varname> (<type>integer</type>)</term>
        <listitem>
         <para>
-         The cost for vacuuming a buffer that has to be read from
+         The estimated cost for vacuuming a buffer that has to be read from
          disk.  This represents the effort to lock the buffer pool,
          lookup the shared hash table, read the desired block in from
          the disk and scan its content. The default value is 10.
@@ -1053,7 +1053,7 @@ SET ENABLE_SEQSCAN TO OFF;
        <term><varname>vacuum_cost_page_dirty</varname> (<type>integer</type>)</term>
        <listitem>
         <para>
-         The extra cost added when vacuum modifies a block that was
+         The estimated cost charged when vacuum modifies a block that was
          previously clean. It represents the extra I/O required to
          flush the dirty block out to disk again. The default value is
          20.
@@ -1065,7 +1065,7 @@ SET ENABLE_SEQSCAN TO OFF;
        <term><varname>vacuum_cost_limit</varname> (<type>integer</type>)</term>
        <listitem>
         <para>
-         The accumulated cost that will cause the backend to briefly
+         The accumulated cost that will cause the vacuuming process to briefly
          nap. The default value is 200.
         </para>
        </listitem>
@@ -1075,25 +1075,34 @@ SET ENABLE_SEQSCAN TO OFF;
        <term><varname>vacuum_cost_naptime</varname> (<type>integer</type>)</term>
        <listitem>
         <para>
-         The length of time in milliseconds that a backend will nap
-         when the cost limit has been exceeded. There are certain bulk
-         operations that hold critical locks and should therefore
-         complete as quickly as possible. Because of that it is
-         possible that the cost actually accumulates far higher than
-         this limit. To compensate for this, the final naptime is
-         calculated as <varname>vacuum_cost_naptime</varname> *
-         <varname>accumulated_balance</varname> /
-         <varname>vacuum_cost_limit</varname> with a maximum of
-         <varname>vacuum_cost_naptime</varname> * 4.
-        </para>
-
-        <para>
+         The length of time, in milliseconds, that the process will nap
+         when the cost limit has been exceeded.
          The default value is 0, which disables the cost-based vacuum
-         delay feature.
+         delay feature.  Positive values enable cost-based vacuuming.
+         Note however that on many systems, the effective resolution
+         of sleep delays is 10 milliseconds; setting
+         <varname>vacuum_cost_naptime</varname> to a value that is
+         not a multiple of 10 may have the same results as setting it
+         to the next higher multiple of 10.
         </para>
        </listitem>
       </varlistentry>
      </variablelist>
+
+     <note>
+      <para>
+       There are certain bulk operations that hold critical locks and should
+       therefore complete as quickly as possible.  Cost-based vacuum
+       delays do not occur during such operations.  Therefore it is
+       possible that the cost accumulates far higher than the specified
+       limit.  To avoid uselessly long delays in such cases, the actual
+       naptime is calculated as <varname>vacuum_cost_naptime</varname> *
+       <varname>accumulated_balance</varname> /
+       <varname>vacuum_cost_limit</varname> with a maximum of
+       <varname>vacuum_cost_naptime</varname> * 4.
+      </para>
+     </note>
+
     </sect3>
    </sect2>
 
