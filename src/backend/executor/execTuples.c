@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.65 2003/05/06 20:26:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.66 2003/05/08 18:16:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -765,8 +765,7 @@ begin_tup_output_tupdesc(DestReceiver *dest, TupleDesc tupdesc)
 	tstate->metadata = TupleDescGetAttInMetadata(tupdesc);
 	tstate->dest = dest;
 
-	(*tstate->dest->startup) (tstate->dest, (int) CMD_SELECT,
-							  NULL, tupdesc, NIL);
+	(*tstate->dest->startup) (tstate->dest, (int) CMD_SELECT, tupdesc);
 
 	return tstate;
 }

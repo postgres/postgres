@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execdesc.h,v 1.23 2003/05/06 20:26:28 tgl Exp $
+ * $Id: execdesc.h,v 1.24 2003/05/08 18:16:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,6 @@ typedef struct QueryDesc
 	Query	   *parsetree;		/* rewritten parsetree */
 	Plan	   *plantree;		/* planner's output */
 	DestReceiver *dest;			/* the destination for tuple output */
-	const char *portalName;		/* name of portal, or NULL */
 	ParamListInfo params;		/* param values being passed in */
 	bool		doInstrument;	/* TRUE requests runtime instrumentation */
 
@@ -46,7 +45,7 @@ typedef struct QueryDesc
 
 /* in pquery.c */
 extern QueryDesc *CreateQueryDesc(Query *parsetree, Plan *plantree,
-								  DestReceiver *dest, const char *portalName,
+								  DestReceiver *dest,
 								  ParamListInfo params,
 								  bool doInstrument);
 

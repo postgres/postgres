@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.61 2003/05/05 00:44:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.62 2003/05/08 18:16:36 tgl Exp $
  *
  * NOTES
  *	  This cruft is the server side of PQfn.
@@ -45,6 +45,34 @@
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 #include "utils/tqual.h"
+
+
+/*
+ * Formerly, this code attempted to cache the function and type info
+ * looked up by fetch_fp_info, but only for the duration of a single
+ * transaction command (since in theory the info could change between
+ * commands).  This was utterly useless, because postgres.c executes
+ * each fastpath call as a separate transaction command, and so the
+ * cached data could never actually have been reused.  If it had worked
+ * as intended, it would have had problems anyway with dangling references
+ * in the FmgrInfo struct.	So, forget about caching and just repeat the
+ * syscache fetches on each usage.	They're not *that* expensive.
+ */
+struct fp_info
+{
+	Oid			funcid;
+	FmgrInfo	flinfo;			/* function lookup info for funcid */
+	int16		arglen[FUNC_MAX_ARGS];
+	bool		argbyval[FUNC_MAX_ARGS];
+	int16		retlen;
+	bool		retbyval;
+};
+
+
+static void parse_fcall_arguments(StringInfo msgBuf, struct fp_info *fip,
+								  FunctionCallInfo fcinfo);
+static void parse_fcall_arguments_20(StringInfo msgBuf, struct fp_info *fip,
+									 FunctionCallInfo fcinfo);
 
 
 /* ----------------
@@ -121,55 +149,71 @@ SendFunctionResult(Datum retval, bool retbyval, int retlen)
 
 	pq_beginmessage(&buf, 'V');
 
-	if (retlen != 0)
+	if (PG_PROTOCOL_MAJOR(FrontendProtocol) >= 3)
 	{
-		pq_sendbyte(&buf, 'G');
-		if (retbyval)
-		{						/* by-value */
-			pq_sendint(&buf, retlen, 4);
-			pq_sendint(&buf, DatumGetInt32(retval), retlen);
-		}
-		else
-		{						/* by-reference ... */
-			if (retlen == -1)
-			{					/* ... varlena */
-				struct varlena *v = PG_DETOAST_DATUM(retval);
-
-				pq_sendint(&buf, VARSIZE(v) - VARHDRSZ, VARHDRSZ);
-				pq_sendbytes(&buf, VARDATA(v), VARSIZE(v) - VARHDRSZ);
+		/* New-style message */
+		/* XXX replace this with standard binary (or text!) output */
+		if (retlen != 0)
+		{
+			if (retbyval)
+			{						/* by-value */
+				pq_sendint(&buf, retlen, 4);
+				pq_sendint(&buf, DatumGetInt32(retval), retlen);
 			}
 			else
-			{					/* ... fixed */
-				pq_sendint(&buf, retlen, 4);
-				pq_sendbytes(&buf, DatumGetPointer(retval), retlen);
+			{						/* by-reference ... */
+				if (retlen == -1)
+				{					/* ... varlena */
+					struct varlena *v = PG_DETOAST_DATUM(retval);
+
+					pq_sendint(&buf, VARSIZE(v) - VARHDRSZ, VARHDRSZ);
+					pq_sendbytes(&buf, VARDATA(v), VARSIZE(v) - VARHDRSZ);
+				}
+				else
+				{					/* ... fixed */
+					pq_sendint(&buf, retlen, 4);
+					pq_sendbytes(&buf, DatumGetPointer(retval), retlen);
+				}
 			}
 		}
+		else
+		{
+			/* NULL marker */
+			pq_sendint(&buf, -1, 4);
+		}
+	}
+	else
+	{
+		/* Old-style message */
+		if (retlen != 0)
+		{
+			pq_sendbyte(&buf, 'G');
+			if (retbyval)
+			{						/* by-value */
+				pq_sendint(&buf, retlen, 4);
+				pq_sendint(&buf, DatumGetInt32(retval), retlen);
+			}
+			else
+			{						/* by-reference ... */
+				if (retlen == -1)
+				{					/* ... varlena */
+					struct varlena *v = PG_DETOAST_DATUM(retval);
+
+					pq_sendint(&buf, VARSIZE(v) - VARHDRSZ, VARHDRSZ);
+					pq_sendbytes(&buf, VARDATA(v), VARSIZE(v) - VARHDRSZ);
+				}
+				else
+				{					/* ... fixed */
+					pq_sendint(&buf, retlen, 4);
+					pq_sendbytes(&buf, DatumGetPointer(retval), retlen);
+				}
+			}
+		}
+		pq_sendbyte(&buf, '0');
 	}
 
-	pq_sendbyte(&buf, '0');
 	pq_endmessage(&buf);
 }
-
-/*
- * Formerly, this code attempted to cache the function and type info
- * looked up by fetch_fp_info, but only for the duration of a single
- * transaction command (since in theory the info could change between
- * commands).  This was utterly useless, because postgres.c executes
- * each fastpath call as a separate transaction command, and so the
- * cached data could never actually have been reused.  If it had worked
- * as intended, it would have had problems anyway with dangling references
- * in the FmgrInfo struct.	So, forget about caching and just repeat the
- * syscache fetches on each usage.	They're not *that* expensive.
- */
-struct fp_info
-{
-	Oid			funcid;
-	FmgrInfo	flinfo;			/* function lookup info for funcid */
-	int16		arglen[FUNC_MAX_ARGS];
-	bool		argbyval[FUNC_MAX_ARGS];
-	int16		retlen;
-	bool		retbyval;
-};
 
 /*
  * fetch_fp_info
@@ -262,11 +306,9 @@ int
 HandleFunctionRequest(StringInfo msgBuf)
 {
 	Oid			fid;
-	int			nargs;
 	AclResult	aclresult;
 	FunctionCallInfoData fcinfo;
 	Datum		retval;
-	int			i;
 	struct fp_info my_fp;
 	struct fp_info *fip;
 
@@ -294,9 +336,10 @@ HandleFunctionRequest(StringInfo msgBuf)
 	/*
 	 * Parse the buffer contents.
 	 */
-	(void) pq_getmsgstring(msgBuf);	/* dummy string */
+	if (PG_PROTOCOL_MAJOR(FrontendProtocol) < 3)
+		(void) pq_getmsgstring(msgBuf);	/* dummy string */
+
 	fid = (Oid) pq_getmsgint(msgBuf, 4); /* function oid */
-	nargs = pq_getmsgint(msgBuf, 4);	/* # of arguments */
 
 	/*
 	 * There used to be a lame attempt at caching lookup info here. Now we
@@ -316,19 +359,61 @@ HandleFunctionRequest(StringInfo msgBuf)
 	SetQuerySnapshot();
 
 	/*
-	 * Prepare function call info block.
+	 * Prepare function call info block and insert arguments.
 	 */
+	MemSet(&fcinfo, 0, sizeof(fcinfo));
+	fcinfo.flinfo = &fip->flinfo;
+
+	if (PG_PROTOCOL_MAJOR(FrontendProtocol) >= 3)
+		parse_fcall_arguments(msgBuf, fip, &fcinfo);
+	else
+		parse_fcall_arguments_20(msgBuf, fip, &fcinfo);
+
+	/* Verify we reached the end of the message where expected. */
+	pq_getmsgend(msgBuf);
+
+	/* Okay, do it ... */
+	retval = FunctionCallInvoke(&fcinfo);
+
+	if (fcinfo.isnull)
+		SendFunctionResult(retval, fip->retbyval, 0);
+	else
+		SendFunctionResult(retval, fip->retbyval, fip->retlen);
+
+	return 0;
+}
+
+/*
+ * Parse function arguments in a 3.0 protocol message
+ */
+static void
+parse_fcall_arguments(StringInfo msgBuf, struct fp_info *fip,
+					  FunctionCallInfo fcinfo)
+{
+	int			nargs;
+	int			i;
+	int			numAFormats;
+	int16	   *aformats = NULL;
+
+	/* Get the argument format codes */
+	numAFormats = pq_getmsgint(msgBuf, 2);
+	if (numAFormats > 0)
+	{
+		aformats = (int16 *) palloc(numAFormats * sizeof(int16));
+		for (i = 0; i < numAFormats; i++)
+			aformats[i] = pq_getmsgint(msgBuf, 2);
+	}
+
+	nargs = pq_getmsgint(msgBuf, 2);	/* # of arguments */
+
 	if (fip->flinfo.fn_nargs != nargs || nargs > FUNC_MAX_ARGS)
 		elog(ERROR, "HandleFunctionRequest: actual arguments (%d) != registered arguments (%d)",
 			 nargs, fip->flinfo.fn_nargs);
 
-	MemSet(&fcinfo, 0, sizeof(fcinfo));
-	fcinfo.flinfo = &fip->flinfo;
-	fcinfo.nargs = nargs;
+	fcinfo->nargs = nargs;
 
 	/*
-	 * Copy supplied arguments into arg vector.  Note there is no way for
-	 * frontend to specify a NULL argument --- this protocol is misdesigned.
+	 * Copy supplied arguments into arg vector.
 	 */
 	for (i = 0; i < nargs; ++i)
 	{
@@ -342,7 +427,7 @@ HandleFunctionRequest(StringInfo msgBuf)
 				elog(ERROR, "HandleFunctionRequest: bogus argsize %d",
 					 argsize);
 			/* XXX should we demand argsize == fip->arglen[i] ? */
-			fcinfo.arg[i] = (Datum) pq_getmsgint(msgBuf, argsize);
+			fcinfo->arg[i] = (Datum) pq_getmsgint(msgBuf, argsize);
 		}
 		else
 		{						/* by-reference ... */
@@ -363,25 +448,70 @@ HandleFunctionRequest(StringInfo msgBuf)
 				p = palloc(argsize + 1);		/* +1 in case argsize is 0 */
 				pq_copymsgbytes(msgBuf, p, argsize);
 			}
-			fcinfo.arg[i] = PointerGetDatum(p);
+			fcinfo->arg[i] = PointerGetDatum(p);
 		}
 	}
 
-	/* Verify we reached the end of the message where expected. */
-	pq_getmsgend(msgBuf);
+	/* XXX for the moment, ignore result format code */
+	(void) pq_getmsgint(msgBuf, 2);
+}
 
-#ifdef NO_FASTPATH
-	/* force a NULL return */
-	retval = (Datum) 0;
-	fcinfo.isnull = true;
-#else
-	retval = FunctionCallInvoke(&fcinfo);
-#endif   /* NO_FASTPATH */
+/*
+ * Parse function arguments in a 2.0 protocol message
+ */
+static void
+parse_fcall_arguments_20(StringInfo msgBuf, struct fp_info *fip,
+						 FunctionCallInfo fcinfo)
+{
+	int			nargs;
+	int			i;
 
-	if (fcinfo.isnull)
-		SendFunctionResult(retval, fip->retbyval, 0);
-	else
-		SendFunctionResult(retval, fip->retbyval, fip->retlen);
+	nargs = pq_getmsgint(msgBuf, 4);	/* # of arguments */
 
-	return 0;
+	if (fip->flinfo.fn_nargs != nargs || nargs > FUNC_MAX_ARGS)
+		elog(ERROR, "HandleFunctionRequest: actual arguments (%d) != registered arguments (%d)",
+			 nargs, fip->flinfo.fn_nargs);
+
+	fcinfo->nargs = nargs;
+
+	/*
+	 * Copy supplied arguments into arg vector.  Note there is no way for
+	 * frontend to specify a NULL argument --- this protocol is misdesigned.
+	 */
+	for (i = 0; i < nargs; ++i)
+	{
+		int			argsize;
+		char	   *p;
+
+		argsize = pq_getmsgint(msgBuf, 4);
+		if (fip->argbyval[i])
+		{						/* by-value */
+			if (argsize < 1 || argsize > 4)
+				elog(ERROR, "HandleFunctionRequest: bogus argsize %d",
+					 argsize);
+			/* XXX should we demand argsize == fip->arglen[i] ? */
+			fcinfo->arg[i] = (Datum) pq_getmsgint(msgBuf, argsize);
+		}
+		else
+		{						/* by-reference ... */
+			if (fip->arglen[i] == -1)
+			{					/* ... varlena */
+				if (argsize < 0)
+					elog(ERROR, "HandleFunctionRequest: bogus argsize %d",
+						 argsize);
+				p = palloc(argsize + VARHDRSZ);
+				VARATT_SIZEP(p) = argsize + VARHDRSZ;
+				pq_copymsgbytes(msgBuf, VARDATA(p), argsize);
+			}
+			else
+			{					/* ... fixed */
+				if (argsize != fip->arglen[i])
+					elog(ERROR, "HandleFunctionRequest: bogus argsize %d, should be %d",
+						 argsize, fip->arglen[i]);
+				p = palloc(argsize + 1);		/* +1 in case argsize is 0 */
+				pq_copymsgbytes(msgBuf, p, argsize);
+			}
+			fcinfo->arg[i] = PointerGetDatum(p);
+		}
+	}
 }

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.108 2003/05/06 20:26:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.109 2003/05/08 18:16:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -179,7 +179,7 @@ ExplainOneQuery(Query *query, ExplainStmt *stmt, TupOutputState *tstate)
 	plan = planner(query, isCursor, cursorOptions);
 
 	/* Create a QueryDesc requesting no output */
-	queryDesc = CreateQueryDesc(query, plan, None_Receiver, NULL, NULL,
+	queryDesc = CreateQueryDesc(query, plan, None_Receiver, NULL,
 								stmt->analyze);
 
 	ExplainOnePlan(queryDesc, stmt, tstate);

@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/portalcmds.c,v 1.15 2003/05/06 20:26:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/portalcmds.c,v 1.16 2003/05/08 18:16:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,7 +25,6 @@
 
 #include "commands/portalcmds.h"
 #include "executor/executor.h"
-#include "executor/tstoreReceiver.h"
 #include "optimizer/planner.h"
 #include "rewrite/rewriteHandler.h"
 #include "tcop/pquery.h"
@@ -145,7 +144,6 @@ PerformPortalFetch(FetchStmt *stmt,
 				   DestReceiver *dest,
 				   char *completionTag)
 {
-	DestReceiver *mydest = dest;
 	Portal		portal;
 	long		nprocessed;
 
@@ -168,35 +166,21 @@ PerformPortalFetch(FetchStmt *stmt,
 		return;
 	}
 
-	/*
-	 * Adjust dest if needed.  MOVE wants destination None.
-	 *
-	 * If fetching from a binary cursor and the requested destination is
-	 * Remote, change it to RemoteInternal.  Note we do NOT change if the
-	 * destination is RemoteExecute --- so the Execute message's format
-	 * specification wins out over the cursor's type.
-	 */
+	/* Adjust dest if needed.  MOVE wants destination None */
 	if (stmt->ismove)
-		mydest = CreateDestReceiver(None);
-	else if (dest->mydest == Remote &&
-			 (portal->cursorOptions & CURSOR_OPT_BINARY))
-		mydest = CreateDestReceiver(RemoteInternal);
+		dest = None_Receiver;
 
 	/* Do it */
 	nprocessed = PortalRunFetch(portal,
 								stmt->direction,
 								stmt->howMany,
-								mydest);
+								dest);
 
 	/* Return command status if wanted */
 	if (completionTag)
 		snprintf(completionTag, COMPLETION_TAG_BUFSIZE, "%s %ld",
 				 stmt->ismove ? "MOVE" : "FETCH",
 				 nprocessed);
-
-	/* Clean up if we created a local destination */
-	if (mydest != dest)
-		(mydest->destroy) (mydest);
 }
 
 /*
@@ -329,8 +313,7 @@ PersistHoldablePortal(Portal portal)
 	ExecutorRewind(queryDesc);
 
 	/* Change the destination to output to the tuplestore */
-	queryDesc->dest = CreateTuplestoreDestReceiver(portal->holdStore,
-												   portal->holdContext);
+	queryDesc->dest = CreateDestReceiver(Tuplestore, portal);
 
 	/* Fetch the result set into the tuplestore */
 	ExecutorRun(queryDesc, ForwardScanDirection, 0L);

@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/tstoreReceiver.c,v 1.5 2003/05/06 20:26:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/tstoreReceiver.c,v 1.6 2003/05/08 18:16:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,9 +31,7 @@ typedef struct
  * Prepare to receive tuples from executor.
  */
 static void
-tstoreStartupReceiver(DestReceiver *self, int operation,
-					  const char *portalname,
-					  TupleDesc typeinfo, List *targetlist)
+tstoreStartupReceiver(DestReceiver *self, int operation, TupleDesc typeinfo)
 {
 	/* do nothing */
 }

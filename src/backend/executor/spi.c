@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.96 2003/05/06 20:26:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.97 2003/05/08 18:16:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -841,7 +841,8 @@ SPI_cursor_find(const char *name)
 void
 SPI_cursor_fetch(Portal portal, bool forward, int count)
 {
-	_SPI_cursor_operation(portal, forward, count, CreateDestReceiver(SPI));
+	_SPI_cursor_operation(portal, forward, count,
+						  CreateDestReceiver(SPI, NULL));
 	/* we know that the SPI receiver doesn't need a destroy call */
 }
 
@@ -880,8 +881,7 @@ SPI_cursor_close(Portal portal)
  *		of current SPI procedure
  */
 void
-spi_dest_startup(DestReceiver *self, int operation,
-				 const char *portalName, TupleDesc typeinfo, List *targetlist)
+spi_dest_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 {
 	SPITupleTable *tuptable;
 	MemoryContext oldcxt;
@@ -1035,7 +1035,7 @@ _SPI_execute(const char *src, int tcount, _SPI_plan *plan)
 			planTree = pg_plan_query(queryTree);
 			plan_list = lappend(plan_list, planTree);
 
-			dest = CreateDestReceiver(queryTree->canSetTag ? SPI : None);
+			dest = CreateDestReceiver(queryTree->canSetTag ? SPI : None, NULL);
 			if (queryTree->commandType == CMD_UTILITY)
 			{
 				if (IsA(queryTree->utilityStmt, CopyStmt))
@@ -1061,7 +1061,7 @@ _SPI_execute(const char *src, int tcount, _SPI_plan *plan)
 			else if (plan == NULL)
 			{
 				qdesc = CreateQueryDesc(queryTree, planTree, dest,
-										NULL, NULL, false);
+										NULL, false);
 				res = _SPI_pquery(qdesc, true,
 								  queryTree->canSetTag ? tcount : 0);
 				if (res < 0)
@@ -1071,7 +1071,7 @@ _SPI_execute(const char *src, int tcount, _SPI_plan *plan)
 			else
 			{
 				qdesc = CreateQueryDesc(queryTree, planTree, dest,
-										NULL, NULL, false);
+										NULL, false);
 				res = _SPI_pquery(qdesc, false, 0);
 				if (res < 0)
 					return res;
@@ -1150,7 +1150,7 @@ _SPI_execute_plan(_SPI_plan *plan, Datum *Values, const char *Nulls,
 			planTree = lfirst(plan_list);
 			plan_list = lnext(plan_list);
 
-			dest = CreateDestReceiver(queryTree->canSetTag ? SPI : None);
+			dest = CreateDestReceiver(queryTree->canSetTag ? SPI : None, NULL);
 			if (queryTree->commandType == CMD_UTILITY)
 			{
 				ProcessUtility(queryTree->utilityStmt, dest, NULL);
@@ -1160,7 +1160,7 @@ _SPI_execute_plan(_SPI_plan *plan, Datum *Values, const char *Nulls,
 			else
 			{
 				qdesc = CreateQueryDesc(queryTree, planTree, dest,
-										NULL, paramLI, false);
+										paramLI, false);
 				res = _SPI_pquery(qdesc, true,
 								  queryTree->canSetTag ? tcount : 0);
 				if (res < 0)

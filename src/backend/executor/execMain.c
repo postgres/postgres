@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.208 2003/05/06 20:26:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.209 2003/05/08 18:16:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -217,10 +217,7 @@ ExecutorRun(QueryDesc *queryDesc,
 	estate->es_processed = 0;
 	estate->es_lastoid = InvalidOid;
 
-	(*dest->startup) (dest, operation,
-					  queryDesc->portalName,
-					  queryDesc->tupDesc,
-					  queryDesc->planstate->plan->targetlist);
+	(*dest->startup) (dest, operation, queryDesc->tupDesc);
 
 	/*
 	 * run plan

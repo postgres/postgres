@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.134 2003/04/26 20:22:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.135 2003/05/08 18:16:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,249 +55,9 @@ static void parseInput(PGconn *conn);
 static void handleSendFailure(PGconn *conn);
 static void handleSyncLoss(PGconn *conn, char id, int msgLength);
 static int	getRowDescriptions(PGconn *conn);
-static int	getAnotherTuple(PGconn *conn, int binary);
+static int	getAnotherTuple(PGconn *conn);
 static int	getParameterStatus(PGconn *conn);
 static int	getNotify(PGconn *conn);
-
-/* ---------------
- * Escaping arbitrary strings to get valid SQL strings/identifiers.
- *
- * Replaces "\\" with "\\\\" and "'" with "''".
- * length is the length of the buffer pointed to by
- * from.  The buffer at to must be at least 2*length + 1 characters
- * long.  A terminating NUL character is written.
- * ---------------
- */
-
-size_t
-PQescapeString(char *to, const char *from, size_t length)
-{
-	const char *source = from;
-	char	   *target = to;
-	unsigned int remaining = length;
-
-	while (remaining > 0)
-	{
-		switch (*source)
-		{
-			case '\\':
-				*target = '\\';
-				target++;
-				*target = '\\';
-				/* target and remaining are updated below. */
-				break;
-
-			case '\'':
-				*target = '\'';
-				target++;
-				*target = '\'';
-				/* target and remaining are updated below. */
-				break;
-
-			default:
-				*target = *source;
-				/* target and remaining are updated below. */
-		}
-		source++;
-		target++;
-		remaining--;
-	}
-
-	/* Write the terminating NUL character. */
-	*target = '\0';
-
-	return target - to;
-}
-
-/*
- *		PQescapeBytea	- converts from binary string to the
- *		minimal encoding necessary to include the string in an SQL
- *		INSERT statement with a bytea type column as the target.
- *
- *		The following transformations are applied
- *		'\0' == ASCII  0 == \\000
- *		'\'' == ASCII 39 == \'
- *		'\\' == ASCII 92 == \\\\
- *		anything >= 0x80 ---> \\ooo (where ooo is an octal expression)
- */
-unsigned char *
-PQescapeBytea(const unsigned char *bintext, size_t binlen, size_t *bytealen)
-{
-	const unsigned char *vp;
-	unsigned char *rp;
-	unsigned char *result;
-	size_t		i;
-	size_t		len;
-
-	/*
-	 * empty string has 1 char ('\0')
-	 */
-	len = 1;
-
-	vp = bintext;
-	for (i = binlen; i > 0; i--, vp++)
-	{
-		if (*vp == 0 || *vp >= 0x80)
-			len += 5;			/* '5' is for '\\ooo' */
-		else if (*vp == '\'')
-			len += 2;
-		else if (*vp == '\\')
-			len += 4;
-		else
-			len++;
-	}
-
-	rp = result = (unsigned char *) malloc(len);
-	if (rp == NULL)
-		return NULL;
-
-	vp = bintext;
-	*bytealen = len;
-
-	for (i = binlen; i > 0; i--, vp++)
-	{
-		if (*vp == 0 || *vp >= 0x80)
-		{
-			(void) sprintf(rp, "\\\\%03o", *vp);
-			rp += 5;
-		}
-		else if (*vp == '\'')
-		{
-			rp[0] = '\\';
-			rp[1] = '\'';
-			rp += 2;
-		}
-		else if (*vp == '\\')
-		{
-			rp[0] = '\\';
-			rp[1] = '\\';
-			rp[2] = '\\';
-			rp[3] = '\\';
-			rp += 4;
-		}
-		else
-			*rp++ = *vp;
-	}
-	*rp = '\0';
-
-	return result;
-}
-
-/*
- *		PQunescapeBytea - converts the null terminated string representation
- *		of a bytea, strtext, into binary, filling a buffer. It returns a
- *		pointer to the buffer which is NULL on error, and the size of the
- *		buffer in retbuflen. The pointer may subsequently be used as an
- *		argument to the function free(3). It is the reverse of PQescapeBytea.
- *
- *		The following transformations are reversed:
- *		'\0' == ASCII  0 == \000
- *		'\'' == ASCII 39 == \'
- *		'\\' == ASCII 92 == \\
- *
- *		States:
- *		0	normal		0->1->2->3->4
- *		1	\			   1->5
- *		2	\0			   1->6
- *		3	\00
- *		4	\000
- *		5	\'
- *		6	\\
- */
-unsigned char *
-PQunescapeBytea(const unsigned char *strtext, size_t *retbuflen)
-{
-	size_t		buflen;
-	unsigned char *buffer,
-			   *bp;
-	const unsigned char *sp;
-	unsigned int state = 0;
-
-	if (strtext == NULL)
-		return NULL;
-	buflen = strlen(strtext);	/* will shrink, also we discover if
-								 * strtext */
-	buffer = (unsigned char *) malloc(buflen);	/* isn't NULL terminated */
-	if (buffer == NULL)
-		return NULL;
-	for (bp = buffer, sp = strtext; *sp != '\0'; bp++, sp++)
-	{
-		switch (state)
-		{
-			case 0:
-				if (*sp == '\\')
-					state = 1;
-				*bp = *sp;
-				break;
-			case 1:
-				if (*sp == '\'')	/* state=5 */
-				{				/* replace \' with 39 */
-					bp--;
-					*bp = '\'';
-					buflen--;
-					state = 0;
-				}
-				else if (*sp == '\\')	/* state=6 */
-				{				/* replace \\ with 92 */
-					bp--;
-					*bp = '\\';
-					buflen--;
-					state = 0;
-				}
-				else
-				{
-					if (isdigit(*sp))
-						state = 2;
-					else
-						state = 0;
-					*bp = *sp;
-				}
-				break;
-			case 2:
-				if (isdigit(*sp))
-					state = 3;
-				else
-					state = 0;
-				*bp = *sp;
-				break;
-			case 3:
-				if (isdigit(*sp))		/* state=4 */
-				{
-					int			v;
-
-					bp -= 3;
-					sscanf(sp - 2, "%03o", &v);
-					*bp = v;
-					buflen -= 3;
-					state = 0;
-				}
-				else
-				{
-					*bp = *sp;
-					state = 0;
-				}
-				break;
-		}
-	}
-	buffer = realloc(buffer, buflen);
-	if (buffer == NULL)
-		return NULL;
-
-	*retbuflen = buflen;
-	return buffer;
-}
-
-
-/*
- *		PQfreemem - safely frees memory allocated
- *
- * Needed mostly by Win32, unless multithreaded DLL (/MD in VC6)
- * Used for freeing memory from PQescapeByte()a/PQunescapeBytea()
- */
-void PQfreemem(void *ptr)
-{
-	free(ptr);
-}
 
 
 /* ----------------
@@ -909,7 +669,7 @@ parseInput(PGconn *conn)
 			return;
 		}
 		if (msgLength > 30000 &&
-			!(id == 'T' || id == 'D' || id == 'B' || id == 'd'))
+			!(id == 'T' || id == 'D' || id == 'd'))
 		{
 			handleSyncLoss(conn, id, msgLength);
 			return;
@@ -1074,11 +834,11 @@ parseInput(PGconn *conn)
 						return;
 					}
 					break;
-				case 'D':		/* ASCII data tuple */
+				case 'D':		/* Data Row */
 					if (conn->result != NULL)
 					{
 						/* Read another tuple of a normal query response */
-						if (getAnotherTuple(conn, FALSE))
+						if (getAnotherTuple(conn))
 							return;
 					}
 					else
@@ -1090,30 +850,18 @@ parseInput(PGconn *conn)
 						conn->inCursor += msgLength;
 					}
 					break;
-				case 'B':		/* Binary data tuple */
-					if (conn->result != NULL)
-					{
-						/* Read another tuple of a normal query response */
-						if (getAnotherTuple(conn, TRUE))
-							return;
-					}
-					else
-					{
-						snprintf(noticeWorkspace, sizeof(noticeWorkspace),
-								 libpq_gettext("server sent binary data (\"B\" message) without prior row description (\"T\" message)\n"));
-						DONOTICE(conn, noticeWorkspace);
-						/* Discard the unexpected message */
-						conn->inCursor += msgLength;
-					}
-					break;
 				case 'G':		/* Start Copy In */
 					if (pqGetc(&conn->copy_is_binary, conn))
 						return;
+					/* XXX we currently ignore the rest of the message */
+					conn->inCursor = conn->inStart + 5 + msgLength;
 					conn->asyncStatus = PGASYNC_COPY_IN;
 					break;
 				case 'H':		/* Start Copy Out */
 					if (pqGetc(&conn->copy_is_binary, conn))
 						return;
+					/* XXX we currently ignore the rest of the message */
+					conn->inCursor = conn->inStart + 5 + msgLength;
 					conn->asyncStatus = PGASYNC_COPY_OUT;
 					conn->copy_already_done = 0;
 					break;
@@ -1229,13 +977,15 @@ getRowDescriptions(PGconn *conn)
 		int			typid;
 		int			typlen;
 		int			atttypmod;
+		int			format;
 
 		if (pqGets(&conn->workBuffer, conn) ||
 			pqGetInt(&tableid, 4, conn) ||
 			pqGetInt(&columnid, 2, conn) ||
 			pqGetInt(&typid, 4, conn) ||
 			pqGetInt(&typlen, 2, conn) ||
-			pqGetInt(&atttypmod, 4, conn))
+			pqGetInt(&atttypmod, 4, conn) ||
+			pqGetInt(&format, 2, conn))
 		{
 			PQclear(result);
 			return EOF;
@@ -1247,13 +997,14 @@ getRowDescriptions(PGconn *conn)
 		 */
 		columnid = (int) ((int16) columnid);
 		typlen = (int) ((int16) typlen);
+		format = (int) ((int16) format);
 
 		result->attDescs[i].name = pqResultStrdup(result,
 												  conn->workBuffer.data);
 		result->attDescs[i].typid = typid;
 		result->attDescs[i].typlen = typlen;
 		result->attDescs[i].atttypmod = atttypmod;
-		/* XXX todo: save tableid/columnid too */
+		/* XXX todo: save tableid/columnid, format too */
 	}
 
 	/* Success! */
@@ -1262,7 +1013,7 @@ getRowDescriptions(PGconn *conn)
 }
 
 /*
- * parseInput subroutine to read a 'B' or 'D' (row data) message.
+ * parseInput subroutine to read a 'D' (row data) message.
  * We add another tuple to the existing PGresult structure.
  * Returns: 0 if completed message, EOF if error or not enough data yet.
  *
@@ -1272,23 +1023,14 @@ getRowDescriptions(PGconn *conn)
  */
 
 static int
-getAnotherTuple(PGconn *conn, int binary)
+getAnotherTuple(PGconn *conn)
 {
 	PGresult   *result = conn->result;
 	int			nfields = result->numAttributes;
 	PGresAttValue *tup;
-
-	/* the backend sends us a bitmap of which attributes are null */
-	char		std_bitmap[64]; /* used unless it doesn't fit */
-	char	   *bitmap = std_bitmap;
-	int			i;
-	size_t		nbytes;			/* the number of bytes in bitmap  */
-	char		bmap;			/* One byte of the bitmap */
-	int			bitmap_index;	/* Its index */
-	int			bitcnt;			/* number of bits examined in current byte */
+	int			tupnfields;		/* # fields from tuple */
 	int			vlen;			/* length of the current field value */
-
-	result->binary = binary;
+	int			i;
 
 	/* Allocate tuple space if first time for this data message */
 	if (conn->curTuple == NULL)
@@ -1301,61 +1043,50 @@ getAnotherTuple(PGconn *conn, int binary)
 	}
 	tup = conn->curTuple;
 
-	/* Get the null-value bitmap */
-	nbytes = (nfields + BYTELEN - 1) / BYTELEN;
-	/* malloc() only for unusually large field counts... */
-	if (nbytes > sizeof(std_bitmap))
-		bitmap = (char *) malloc(nbytes);
+	/* Get the field count and make sure it's what we expect */
+	if (pqGetInt(&tupnfields, 2, conn))
+		return EOF;
 
-	if (pqGetnchar(bitmap, nbytes, conn))
-		goto EOFexit;
+	if (tupnfields != nfields)
+	{
+		/* Replace partially constructed result with an error result */
+		pqClearAsyncResult(conn);
+		printfPQExpBuffer(&conn->errorMessage,
+						  libpq_gettext("unexpected field count in D message\n"));
+		saveErrorResult(conn);
+		conn->asyncStatus = PGASYNC_READY;
+		/* Discard the failed message by pretending we read it */
+		return 0;
+	}
 
 	/* Scan the fields */
-	bitmap_index = 0;
-	bmap = bitmap[bitmap_index];
-	bitcnt = 0;
-
 	for (i = 0; i < nfields; i++)
 	{
-		if (!(bmap & 0200))
+		/* get the value length */
+		if (pqGetInt(&vlen, 4, conn))
+			return EOF;
+		if (vlen == -1)
 		{
-			/* if the field value is absent, make it a null string */
+			/* null field */
 			tup[i].value = result->null_field;
 			tup[i].len = NULL_LEN;
+			continue;
 		}
-		else
+		if (vlen < 0)
+			vlen = 0;
+		if (tup[i].value == NULL)
 		{
-			/* get the value length (the first four bytes are for length) */
-			if (pqGetInt(&vlen, 4, conn))
-				goto EOFexit;
-			if (binary == 0)
-				vlen = vlen - 4;
-			if (vlen < 0)
-				vlen = 0;
+			tup[i].value = (char *) pqResultAlloc(result, vlen + 1, false);
 			if (tup[i].value == NULL)
-			{
-				tup[i].value = (char *) pqResultAlloc(result, vlen + 1, (bool) binary);
-				if (tup[i].value == NULL)
-					goto outOfMemory;
-			}
-			tup[i].len = vlen;
-			/* read in the value */
-			if (vlen > 0)
-				if (pqGetnchar((char *) (tup[i].value), vlen, conn))
-					goto EOFexit;
-			/* we have to terminate this ourselves */
-			tup[i].value[vlen] = '\0';
+				goto outOfMemory;
 		}
-		/* advance the bitmap stuff */
-		bitcnt++;
-		if (bitcnt == BYTELEN)
-		{
-			bitmap_index++;
-			bmap = bitmap[bitmap_index];
-			bitcnt = 0;
-		}
-		else
-			bmap <<= 1;
+		tup[i].len = vlen;
+		/* read in the value */
+		if (vlen > 0)
+			if (pqGetnchar((char *) (tup[i].value), vlen, conn))
+				return EOF;
+		/* we have to terminate this ourselves */
+		tup[i].value[vlen] = '\0';
 	}
 
 	/* Success!  Store the completed tuple in the result */
@@ -1364,8 +1095,6 @@ getAnotherTuple(PGconn *conn, int binary)
 	/* and reset for a new message */
 	conn->curTuple = NULL;
 
-	if (bitmap != std_bitmap)
-		free(bitmap);
 	return 0;
 
 outOfMemory:
@@ -1380,13 +1109,8 @@ outOfMemory:
 					  libpq_gettext("out of memory\n"));
 	conn->result = PQmakeEmptyPGresult(conn, PGRES_FATAL_ERROR);
 	conn->asyncStatus = PGASYNC_READY;
-	/* Discard the failed message --- good idea? */
-	conn->inStart = conn->inEnd;
-
-EOFexit:
-	if (bitmap != std_bitmap)
-		free(bitmap);
-	return EOF;
+	/* Discard the failed message by pretending we read it */
+	return 0;
 }
 
 
@@ -2129,10 +1853,11 @@ PQfn(PGconn *conn,
 		return NULL;
 	}
 
-	if (pqPutMsgStart('F', conn) < 0 ||	/* function call msg */
-		pqPuts("", conn) < 0 ||	/* useless string */
-		pqPutInt(fnid, 4, conn) < 0 || /* function id */
-		pqPutInt(nargs, 4, conn) < 0)	/* # of args */
+	if (pqPutMsgStart('F', conn) < 0 ||		/* function call msg */
+		pqPutInt(fnid, 4, conn) < 0 ||		/* function id */
+		pqPutInt(1, 2, conn) < 0 ||			/* # of format codes */
+		pqPutInt(1, 2, conn) < 0 ||			/* format code: BINARY */
+		pqPutInt(nargs, 2, conn) < 0)		/* # of args */
 	{
 		handleSendFailure(conn);
 		return NULL;
@@ -2145,10 +1870,12 @@ PQfn(PGconn *conn,
 			handleSendFailure(conn);
 			return NULL;
 		}
+		if (args[i].len == -1)
+			continue;			/* it's NULL */
 
 		if (args[i].isint)
 		{
-			if (pqPutInt(args[i].u.integer, 4, conn))
+			if (pqPutInt(args[i].u.integer, args[i].len, conn))
 			{
 				handleSendFailure(conn);
 				return NULL;
@@ -2162,6 +1889,12 @@ PQfn(PGconn *conn,
 				return NULL;
 			}
 		}
+	}
+
+	if (pqPutInt(1, 2, conn) < 0)		/* result format code: BINARY */
+	{
+		handleSendFailure(conn);
+		return NULL;
 	}
 
 	if (pqPutMsgEnd(conn) < 0 ||
@@ -2204,7 +1937,7 @@ PQfn(PGconn *conn,
 			break;
 		}
 		if (msgLength > 30000 &&
-			!(id == 'T' || id == 'D' || id == 'B' || id == 'd' || id == 'V'))
+			!(id == 'T' || id == 'D' || id == 'd' || id == 'V'))
 		{
 			handleSyncLoss(conn, id, msgLength);
 			break;
@@ -2243,16 +1976,13 @@ PQfn(PGconn *conn,
 		switch (id)
 		{
 			case 'V':			/* function result */
-				if (pqGetc(&id, conn))
+				if (pqGetInt(actual_result_len, 4, conn))
 					continue;
-				if (id == 'G')
+				if (*actual_result_len != -1)
 				{
-					/* function returned nonempty value */
-					if (pqGetInt(actual_result_len, 4, conn))
-						continue;
 					if (result_is_int)
 					{
-						if (pqGetInt(result_buf, 4, conn))
+						if (pqGetInt(result_buf, *actual_result_len, conn))
 							continue;
 					}
 					else
@@ -2262,24 +1992,9 @@ PQfn(PGconn *conn,
 									   conn))
 							continue;
 					}
-					if (pqGetc(&id, conn))		/* get the last '0' */
-						continue;
 				}
-				if (id == '0')
-				{
-					/* correctly finished function result message */
-					status = PGRES_COMMAND_OK;
-				}
-				else
-				{
-					/* The backend violates the protocol. */
-					printfPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("protocol error: id=0x%x\n"),
-									  id);
-					saveErrorResult(conn);
-					conn->inStart += 5 + msgLength;
-					return prepareAsyncResult(conn);
-				}
+				/* correctly finished function result message */
+				status = PGRES_COMMAND_OK;
 				break;
 			case 'E':			/* error return */
 				if (pqGetErrorNotice(conn, true))
@@ -2744,6 +2459,18 @@ PQflush(PGconn *conn)
 	return (pqFlush(conn));
 }
 
+
+/*
+ *		PQfreemem - safely frees memory allocated
+ *
+ * Needed mostly by Win32, unless multithreaded DLL (/MD in VC6)
+ * Used for freeing memory from PQescapeByte()a/PQunescapeBytea()
+ */
+void PQfreemem(void *ptr)
+{
+	free(ptr);
+}
+
 /*
  * PQfreeNotify - free's the memory associated with a PGnotify
  *
@@ -2759,4 +2486,233 @@ void
 PQfreeNotify(PGnotify *notify)
 {
 	PQfreemem(notify);
+}
+
+
+/* ---------------
+ * Escaping arbitrary strings to get valid SQL strings/identifiers.
+ *
+ * Replaces "\\" with "\\\\" and "'" with "''".
+ * length is the length of the buffer pointed to by
+ * from.  The buffer at to must be at least 2*length + 1 characters
+ * long.  A terminating NUL character is written.
+ * ---------------
+ */
+
+size_t
+PQescapeString(char *to, const char *from, size_t length)
+{
+	const char *source = from;
+	char	   *target = to;
+	unsigned int remaining = length;
+
+	while (remaining > 0)
+	{
+		switch (*source)
+		{
+			case '\\':
+				*target = '\\';
+				target++;
+				*target = '\\';
+				/* target and remaining are updated below. */
+				break;
+
+			case '\'':
+				*target = '\'';
+				target++;
+				*target = '\'';
+				/* target and remaining are updated below. */
+				break;
+
+			default:
+				*target = *source;
+				/* target and remaining are updated below. */
+		}
+		source++;
+		target++;
+		remaining--;
+	}
+
+	/* Write the terminating NUL character. */
+	*target = '\0';
+
+	return target - to;
+}
+
+/*
+ *		PQescapeBytea	- converts from binary string to the
+ *		minimal encoding necessary to include the string in an SQL
+ *		INSERT statement with a bytea type column as the target.
+ *
+ *		The following transformations are applied
+ *		'\0' == ASCII  0 == \\000
+ *		'\'' == ASCII 39 == \'
+ *		'\\' == ASCII 92 == \\\\
+ *		anything >= 0x80 ---> \\ooo (where ooo is an octal expression)
+ */
+unsigned char *
+PQescapeBytea(const unsigned char *bintext, size_t binlen, size_t *bytealen)
+{
+	const unsigned char *vp;
+	unsigned char *rp;
+	unsigned char *result;
+	size_t		i;
+	size_t		len;
+
+	/*
+	 * empty string has 1 char ('\0')
+	 */
+	len = 1;
+
+	vp = bintext;
+	for (i = binlen; i > 0; i--, vp++)
+	{
+		if (*vp == 0 || *vp >= 0x80)
+			len += 5;			/* '5' is for '\\ooo' */
+		else if (*vp == '\'')
+			len += 2;
+		else if (*vp == '\\')
+			len += 4;
+		else
+			len++;
+	}
+
+	rp = result = (unsigned char *) malloc(len);
+	if (rp == NULL)
+		return NULL;
+
+	vp = bintext;
+	*bytealen = len;
+
+	for (i = binlen; i > 0; i--, vp++)
+	{
+		if (*vp == 0 || *vp >= 0x80)
+		{
+			(void) sprintf(rp, "\\\\%03o", *vp);
+			rp += 5;
+		}
+		else if (*vp == '\'')
+		{
+			rp[0] = '\\';
+			rp[1] = '\'';
+			rp += 2;
+		}
+		else if (*vp == '\\')
+		{
+			rp[0] = '\\';
+			rp[1] = '\\';
+			rp[2] = '\\';
+			rp[3] = '\\';
+			rp += 4;
+		}
+		else
+			*rp++ = *vp;
+	}
+	*rp = '\0';
+
+	return result;
+}
+
+/*
+ *		PQunescapeBytea - converts the null terminated string representation
+ *		of a bytea, strtext, into binary, filling a buffer. It returns a
+ *		pointer to the buffer which is NULL on error, and the size of the
+ *		buffer in retbuflen. The pointer may subsequently be used as an
+ *		argument to the function free(3). It is the reverse of PQescapeBytea.
+ *
+ *		The following transformations are reversed:
+ *		'\0' == ASCII  0 == \000
+ *		'\'' == ASCII 39 == \'
+ *		'\\' == ASCII 92 == \\
+ *
+ *		States:
+ *		0	normal		0->1->2->3->4
+ *		1	\			   1->5
+ *		2	\0			   1->6
+ *		3	\00
+ *		4	\000
+ *		5	\'
+ *		6	\\
+ */
+unsigned char *
+PQunescapeBytea(const unsigned char *strtext, size_t *retbuflen)
+{
+	size_t		buflen;
+	unsigned char *buffer,
+			   *bp;
+	const unsigned char *sp;
+	unsigned int state = 0;
+
+	if (strtext == NULL)
+		return NULL;
+	buflen = strlen(strtext);	/* will shrink, also we discover if
+								 * strtext */
+	buffer = (unsigned char *) malloc(buflen);	/* isn't NULL terminated */
+	if (buffer == NULL)
+		return NULL;
+	for (bp = buffer, sp = strtext; *sp != '\0'; bp++, sp++)
+	{
+		switch (state)
+		{
+			case 0:
+				if (*sp == '\\')
+					state = 1;
+				*bp = *sp;
+				break;
+			case 1:
+				if (*sp == '\'')	/* state=5 */
+				{				/* replace \' with 39 */
+					bp--;
+					*bp = '\'';
+					buflen--;
+					state = 0;
+				}
+				else if (*sp == '\\')	/* state=6 */
+				{				/* replace \\ with 92 */
+					bp--;
+					*bp = '\\';
+					buflen--;
+					state = 0;
+				}
+				else
+				{
+					if (isdigit(*sp))
+						state = 2;
+					else
+						state = 0;
+					*bp = *sp;
+				}
+				break;
+			case 2:
+				if (isdigit(*sp))
+					state = 3;
+				else
+					state = 0;
+				*bp = *sp;
+				break;
+			case 3:
+				if (isdigit(*sp))		/* state=4 */
+				{
+					int			v;
+
+					bp -= 3;
+					sscanf(sp - 2, "%03o", &v);
+					*bp = v;
+					buflen -= 3;
+					state = 0;
+				}
+				else
+				{
+					*bp = *sp;
+					state = 0;
+				}
+				break;
+		}
+	}
+	buffer = realloc(buffer, buflen);
+	if (buffer == NULL)
+		return NULL;
+
+	*retbuflen = buflen;
+	return buffer;
 }

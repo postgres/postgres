@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.197 2003/04/25 02:28:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.198 2003/05/08 18:16:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -125,8 +125,8 @@ static int	server_encoding;
 /*
  * Internal communications functions
  */
-static void SendCopyBegin(bool binary);
-static void ReceiveCopyBegin(bool binary);
+static void SendCopyBegin(bool binary, int natts);
+static void ReceiveCopyBegin(bool binary, int natts);
 static void SendCopyEnd(bool binary);
 static void CopySendData(void *databuf, int datasize);
 static void CopySendString(const char *str);
@@ -143,15 +143,20 @@ static void CopyDonePeek(int c, bool pickup);
  * in past protocol redesigns.
  */
 static void
-SendCopyBegin(bool binary)
+SendCopyBegin(bool binary, int natts)
 {
 	if (PG_PROTOCOL_MAJOR(FrontendProtocol) >= 3)
 	{
 		/* new way */
 		StringInfoData buf;
+		int16	format = (binary ? 1 : 0);
+		int		i;
 
 		pq_beginmessage(&buf, 'H');
-		pq_sendbyte(&buf, binary ? 1 : 0);
+		pq_sendbyte(&buf, format);			/* overall format */
+		pq_sendint(&buf, natts, 2);
+		for (i = 0; i < natts; i++)
+			pq_sendint(&buf, format, 2);	/* per-column formats */
 		pq_endmessage(&buf);
 		copy_dest = COPY_NEW_FE;
 		copy_msgbuf = makeStringInfo();
@@ -179,15 +184,20 @@ SendCopyBegin(bool binary)
 }
 
 static void
-ReceiveCopyBegin(bool binary)
+ReceiveCopyBegin(bool binary, int natts)
 {
 	if (PG_PROTOCOL_MAJOR(FrontendProtocol) >= 3)
 	{
 		/* new way */
 		StringInfoData buf;
+		int16	format = (binary ? 1 : 0);
+		int		i;
 
 		pq_beginmessage(&buf, 'G');
-		pq_sendbyte(&buf, binary ? 1 : 0);
+		pq_sendbyte(&buf, format);			/* overall format */
+		pq_sendint(&buf, natts, 2);
+		for (i = 0; i < natts; i++)
+			pq_sendint(&buf, format, 2);	/* per-column formats */
 		pq_endmessage(&buf);
 		copy_dest = COPY_NEW_FE;
 		copy_msgbuf = makeStringInfo();
@@ -682,7 +692,7 @@ DoCopy(const CopyStmt *stmt)
 		if (pipe)
 		{
 			if (IsUnderPostmaster)
-				ReceiveCopyBegin(binary);
+				ReceiveCopyBegin(binary, length(attnumlist));
 			else
 				copy_file = stdin;
 		}
@@ -724,7 +734,7 @@ DoCopy(const CopyStmt *stmt)
 		if (pipe)
 		{
 			if (IsUnderPostmaster)
-				SendCopyBegin(binary);
+				SendCopyBegin(binary, length(attnumlist));
 			else
 				copy_file = stdout;
 		}

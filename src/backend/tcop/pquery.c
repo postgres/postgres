@@ -8,14 +8,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.63 2003/05/06 21:01:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.64 2003/05/08 18:16:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include "executor/executor.h"
-#include "executor/tstoreReceiver.h"
 #include "miscadmin.h"
 #include "tcop/tcopprot.h"
 #include "tcop/pquery.h"
@@ -47,7 +46,6 @@ QueryDesc *
 CreateQueryDesc(Query *parsetree,
 				Plan *plantree,
 				DestReceiver *dest,
-				const char *portalName,
 				ParamListInfo params,
 				bool doInstrument)
 {
@@ -57,7 +55,6 @@ CreateQueryDesc(Query *parsetree,
 	qd->parsetree = parsetree;	/* parse tree */
 	qd->plantree = plantree;	/* plan */
 	qd->dest = dest;			/* output dest */
-	qd->portalName = portalName;	/* name, if dest is a portal */
 	qd->params = params;		/* parameter values passed into query */
 	qd->doInstrument = doInstrument; /* instrumentation wanted? */
 
@@ -89,7 +86,6 @@ FreeQueryDesc(QueryDesc *qdesc)
  *	parsetree: the query tree
  *	plan: the plan tree for the query
  *	params: any parameters needed
- *	portalName: name of portal being used
  *	dest: where to send results
  *	completionTag: points to a buffer of size COMPLETION_TAG_BUFSIZE
  *		in which to store a command completion status string.
@@ -103,7 +99,6 @@ void
 ProcessQuery(Query *parsetree,
 			 Plan *plan,
 			 ParamListInfo params,
-			 const char *portalName,
 			 DestReceiver *dest,
 			 char *completionTag)
 {
@@ -131,8 +126,7 @@ ProcessQuery(Query *parsetree,
 	/*
 	 * Create the QueryDesc object
 	 */
-	queryDesc = CreateQueryDesc(parsetree, plan, dest, portalName, params,
-								false);
+	queryDesc = CreateQueryDesc(parsetree, plan, dest, params, false);
 
 	/*
 	 * Call ExecStart to prepare the plan for execution
@@ -269,7 +263,6 @@ PortalStart(Portal portal, ParamListInfo params)
 			queryDesc = CreateQueryDesc((Query *) lfirst(portal->parseTrees),
 										(Plan *) lfirst(portal->planTrees),
 										None_Receiver,
-										portal->name,
 										params,
 										false);
 			/*
@@ -281,7 +274,7 @@ PortalStart(Portal portal, ParamListInfo params)
 			 */
 			portal->queryDesc = queryDesc;
 			/*
-			 * Remember tuple descriptor
+			 * Remember tuple descriptor (computed by ExecutorStart)
 			 */
 			portal->tupDesc = queryDesc->tupDesc;
 			/*
@@ -318,6 +311,53 @@ PortalStart(Portal portal, ParamListInfo params)
 	MemoryContextSwitchTo(oldContext);
 
 	portal->portalReady = true;
+}
+
+/*
+ * PortalSetResultFormat
+ *		Select the format codes for a portal's output.
+ *
+ * This must be run after PortalStart for a portal that will be read by
+ * a Remote or RemoteExecute destination.  It is not presently needed for
+ * other destination types.
+ *
+ * formats[] is the client format request, as per Bind message conventions.
+ */
+void
+PortalSetResultFormat(Portal portal, int nFormats, int16 *formats)
+{
+	int			natts;
+	int			i;
+
+	/* Do nothing if portal won't return tuples */
+	if (portal->tupDesc == NULL)
+		return;
+	natts = portal->tupDesc->natts;
+	/* +1 avoids palloc(0) if no columns */
+	portal->formats = (int16 *)
+		MemoryContextAlloc(PortalGetHeapMemory(portal),
+						   (natts + 1) * sizeof(int16));
+	if (nFormats > 1)
+	{
+		/* format specified for each column */
+		if (nFormats != natts)
+			elog(ERROR, "BIND message has %d result formats but query has %d columns",
+				 nFormats, natts);
+		memcpy(portal->formats, formats, natts * sizeof(int16));
+	} else if (nFormats > 0)
+	{
+		/* single format specified, use for all columns */
+		int16		format1 = formats[0];
+
+		for (i = 0; i < natts; i++)
+			portal->formats[i] = format1;
+	}
+	else
+	{
+		/* use default format for all columns */
+		for (i = 0; i < natts; i++)
+			portal->formats[i] = 0;
+	}
 }
 
 /*
@@ -399,8 +439,7 @@ PortalRun(Portal portal, long count,
 				DestReceiver *treceiver;
 
 				PortalCreateHoldStore(portal);
-				treceiver = CreateTuplestoreDestReceiver(portal->holdStore,
-														 portal->holdContext);
+				treceiver = CreateDestReceiver(Tuplestore, portal);
 				PortalRunUtility(portal, lfirst(portal->parseTrees),
 								 treceiver, NULL);
 				(*treceiver->destroy) (treceiver);
@@ -604,16 +643,9 @@ static uint32
 RunFromStore(Portal portal, ScanDirection direction, long count,
 			 DestReceiver *dest)
 {
-	List	   *targetlist;
 	long		current_tuple_count = 0;
 
-	if (portal->strategy == PORTAL_ONE_SELECT)
-		targetlist = ((Plan *) lfirst(portal->planTrees))->targetlist;
-	else
-		targetlist = NIL;
-
-	(*dest->startup) (dest, CMD_SELECT, portal->name, portal->tupDesc,
-					  targetlist);
+	(*dest->startup) (dest, CMD_SELECT, portal->tupDesc);
 
 	if (direction == NoMovementScanDirection)
 	{
@@ -737,11 +769,9 @@ PortalRunMulti(Portal portal,
 	 * but the results will be discarded unless you use "simple Query"
 	 * protocol.
 	 */
-	if (dest->mydest == RemoteExecute ||
-		dest->mydest == RemoteExecuteInternal)
+	if (dest->mydest == RemoteExecute)
 		dest = None_Receiver;
-	if (altdest->mydest == RemoteExecute ||
-		altdest->mydest == RemoteExecuteInternal)
+	if (altdest->mydest == RemoteExecute)
 		altdest = None_Receiver;
 
 	/*
@@ -791,14 +821,14 @@ PortalRunMulti(Portal portal,
 			{
 				/* statement can set tag string */
 				ProcessQuery(query, plan,
-							 portal->portalParams, portal->name,
+							 portal->portalParams,
 							 dest, completionTag);
 			}
 			else
 			{
 				/* stmt added by rewrite cannot set tag */
 				ProcessQuery(query, plan,
-							 portal->portalParams, portal->name,
+							 portal->portalParams,
 							 altdest, NULL);
 			}
 

@@ -39,7 +39,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: portal.h,v 1.43 2003/05/06 20:26:28 tgl Exp $
+ * $Id: portal.h,v 1.44 2003/05/08 18:16:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,7 +79,10 @@ typedef enum PortalStrategy
 	PORTAL_MULTI_QUERY
 } PortalStrategy;
 
-typedef struct PortalData *Portal;
+/*
+ * Note: typedef Portal is declared in tcop/dest.h as
+ *		typedef struct PortalData *Portal;
+ */
 
 typedef struct PortalData
 {
@@ -119,6 +122,8 @@ typedef struct PortalData
 
 	/* If portal returns tuples, this is their tupdesc: */
 	TupleDesc	tupDesc;		/* descriptor for result tuples */
+	/* and these are the format codes to use for the columns: */
+	int16	   *formats;		/* a format code for each column */
 
 	/*
 	 * Where we store tuples for a held cursor or a PORTAL_UTIL_SELECT query.

@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/libpq/pqformat.c,v 1.28 2003/04/22 00:08:06 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/libpq/pqformat.c,v 1.29 2003/05/08 18:16:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -104,27 +104,32 @@ pq_sendbytes(StringInfo buf, const char *data, int datalen)
  *		pq_sendcountedtext - append a text string (with character set conversion)
  *
  * The data sent to the frontend by this routine is a 4-byte count field
- * (the count includes itself, by convention) followed by the string.
+ * followed by the string.  The count includes itself or not, as per the
+ * countincludesself flag (pre-3.0 protocol requires it to include itself).
  * The passed text string need not be null-terminated, and the data sent
  * to the frontend isn't either.
  * --------------------------------
  */
 void
-pq_sendcountedtext(StringInfo buf, const char *str, int slen)
+pq_sendcountedtext(StringInfo buf, const char *str, int slen,
+				   bool countincludesself)
 {
+	int			extra = countincludesself ? 4 : 0;
 	char	   *p;
 
 	p = (char *) pg_server_to_client((unsigned char *) str, slen);
 	if (p != str)				/* actual conversion has been done? */
 	{
 		slen = strlen(p);
-		pq_sendint(buf, slen + 4, 4);
+		pq_sendint(buf, slen + extra, 4);
 		appendBinaryStringInfo(buf, p, slen);
 		pfree(p);
-		return;
 	}
-	pq_sendint(buf, slen + 4, 4);
-	appendBinaryStringInfo(buf, str, slen);
+	else
+	{
+		pq_sendint(buf, slen + extra, 4);
+		appendBinaryStringInfo(buf, str, slen);
+	}
 }
 
 /* --------------------------------
@@ -296,7 +301,7 @@ pq_getmsgbytes(StringInfo msg, int datalen)
 {
 	const char *result;
 
-	if (datalen > (msg->len - msg->cursor))
+	if (datalen < 0 || datalen > (msg->len - msg->cursor))
 		elog(ERROR, "pq_getmsgbytes: insufficient data left in message");
 	result = &msg->data[msg->cursor];
 	msg->cursor += datalen;
@@ -312,7 +317,7 @@ pq_getmsgbytes(StringInfo msg, int datalen)
 void
 pq_copymsgbytes(StringInfo msg, char *buf, int datalen)
 {
-	if (datalen > (msg->len - msg->cursor))
+	if (datalen < 0 || datalen > (msg->len - msg->cursor))
 		elog(ERROR, "pq_copymsgbytes: insufficient data left in message");
 	memcpy(buf, &msg->data[msg->cursor], datalen);
 	msg->cursor += datalen;

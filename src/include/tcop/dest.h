@@ -54,7 +54,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dest.h,v 1.37 2003/05/06 20:26:28 tgl Exp $
+ * $Id: dest.h,v 1.38 2003/05/08 18:16:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -82,12 +82,9 @@ typedef enum
 	None,						/* results are discarded */
 	Debug,						/* results go to debugging output */
 	Remote,						/* results sent to frontend process */
-	RemoteInternal,				/* results sent to frontend process in
-								 * internal (binary) form */
-	SPI,						/* results sent to SPI manager */
-	Tuplestore,					/* results sent to Tuplestore */
 	RemoteExecute,				/* sent to frontend, in Execute command */
-	RemoteExecuteInternal		/* same, but binary format */
+	SPI,						/* results sent to SPI manager */
+	Tuplestore					/* results sent to Tuplestore */
 } CommandDest;
 
 /* ----------------
@@ -106,13 +103,13 @@ typedef struct _DestReceiver DestReceiver;
 struct _DestReceiver
 {
 	/* Called for each tuple to be output: */
-	void		(*receiveTuple) (HeapTuple tuple, TupleDesc typeinfo,
+	void		(*receiveTuple) (HeapTuple tuple,
+								 TupleDesc typeinfo,
 								 DestReceiver *self);
 	/* Per-executor-run initialization and shutdown: */
-	void		(*startup) (DestReceiver *self, int operation,
-							const char *portalName,
-							TupleDesc typeinfo,
-							List *targetlist);
+	void		(*startup) (DestReceiver *self,
+							int operation,
+							TupleDesc typeinfo);
 	void		(*shutdown) (DestReceiver *self);
 	/* Destroy the receiver object itself (if dynamically allocated) */
 	void		(*destroy) (DestReceiver *self);
@@ -123,10 +120,14 @@ struct _DestReceiver
 
 extern DestReceiver *None_Receiver;	/* permanent receiver for None */
 
+/* This is a forward reference to utils/portal.h */
+
+typedef struct PortalData *Portal;
+
 /* The primary destination management functions */
 
 extern void BeginCommand(const char *commandTag, CommandDest dest);
-extern DestReceiver *CreateDestReceiver(CommandDest dest);
+extern DestReceiver *CreateDestReceiver(CommandDest dest, Portal portal);
 extern void EndCommand(const char *commandTag, CommandDest dest);
 
 /* Additional functions that go with destination management, more or less. */

@@ -10,7 +10,7 @@
  * Copyright (c) 2002-2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/prepare.c,v 1.17 2003/05/06 21:51:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/prepare.c,v 1.18 2003/05/08 18:16:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -528,7 +528,7 @@ ExplainExecuteQuery(ExplainStmt *stmt, TupOutputState *tstate)
 			}
 
 			/* Create a QueryDesc requesting no output */
-			qdesc = CreateQueryDesc(query, plan, None_Receiver, NULL,
+			qdesc = CreateQueryDesc(query, plan, None_Receiver,
 									paramLI, stmt->analyze);
 
 			ExplainOnePlan(qdesc, stmt, tstate);

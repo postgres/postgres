@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.70 2003/05/06 20:26:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.71 2003/05/08 18:16:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,12 +20,17 @@
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
 #include "utils/lsyscache.h"
+#include "utils/portal.h"
 
 
 static void printtup_startup(DestReceiver *self, int operation,
-			   const char *portalName, TupleDesc typeinfo, List *targetlist);
-static void printtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self);
-static void printtup_internal(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self);
+							 TupleDesc typeinfo);
+static void printtup(HeapTuple tuple, TupleDesc typeinfo,
+					 DestReceiver *self);
+static void printtup_20(HeapTuple tuple, TupleDesc typeinfo,
+						DestReceiver *self);
+static void printtup_internal_20(HeapTuple tuple, TupleDesc typeinfo,
+								 DestReceiver *self);
 static void printtup_shutdown(DestReceiver *self);
 static void printtup_destroy(DestReceiver *self);
 
@@ -50,6 +55,7 @@ typedef struct
 typedef struct
 {
 	DestReceiver pub;			/* publicly-known function pointers */
+	Portal		portal;			/* the Portal we are printing from */
 	bool		sendDescrip;	/* send RowDescription at startup? */
 	TupleDesc	attrinfo;		/* The attr info we are set up for */
 	int			nattrs;
@@ -61,43 +67,33 @@ typedef struct
  * ----------------
  */
 DestReceiver *
-printtup_create_DR(CommandDest dest)
+printtup_create_DR(CommandDest dest, Portal portal)
 {
 	DR_printtup *self = (DR_printtup *) palloc(sizeof(DR_printtup));
-	bool	isBinary;
-	bool	sendDescrip;
 
-	switch (dest)
+	if (PG_PROTOCOL_MAJOR(FrontendProtocol) >= 3)
+		self->pub.receiveTuple = printtup;
+	else
 	{
-		case Remote:
-			isBinary = false;
-			sendDescrip = true;
-			break;
-		case RemoteInternal:
-			isBinary = true;
-			sendDescrip = true;
-			break;
-		case RemoteExecute:
-			isBinary = false;
-			sendDescrip = false; /* no T message for Execute */
-			break;
-		case RemoteExecuteInternal:
-			isBinary = true;
-			sendDescrip = false; /* no T message for Execute */
-			break;
-
-		default:
-			elog(ERROR, "printtup_create_DR: unsupported dest");
-			return NULL;
+		/*
+		 * In protocol 2.0 the Bind message does not exist, so there is
+		 * no way for the columns to have different print formats; it's
+		 * sufficient to look at the first one.
+		 */
+		if (portal->formats && portal->formats[0] != 0)
+			self->pub.receiveTuple = printtup_internal_20;
+		else
+			self->pub.receiveTuple = printtup_20;
 	}
-
-	self->pub.receiveTuple = isBinary ? printtup_internal : printtup;
 	self->pub.startup = printtup_startup;
 	self->pub.shutdown = printtup_shutdown;
 	self->pub.destroy = printtup_destroy;
 	self->pub.mydest = dest;
 
-	self->sendDescrip = sendDescrip;
+	self->portal = portal;
+
+	/* Send T message automatically if Remote, but not if RemoteExecute */
+	self->sendDescrip = (dest == Remote);
 
 	self->attrinfo = NULL;
 	self->nattrs = 0;
@@ -107,10 +103,10 @@ printtup_create_DR(CommandDest dest)
 }
 
 static void
-printtup_startup(DestReceiver *self, int operation,
-				 const char *portalName, TupleDesc typeinfo, List *targetlist)
+printtup_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 {
 	DR_printtup *myState = (DR_printtup *) self;
+	Portal	portal = myState->portal;
 
 	if (PG_PROTOCOL_MAJOR(FrontendProtocol) < 3)
 	{
@@ -119,7 +115,9 @@ printtup_startup(DestReceiver *self, int operation,
 		 *
 		 * If portal name not specified, use "blank" portal.
 		 */
-		if (portalName == NULL)
+		const char *portalName = portal->name;
+
+		if (portalName == NULL || portalName[0] == '\0')
 			portalName = "blank";
 
 		pq_puttextmessage('P', portalName);
@@ -130,7 +128,16 @@ printtup_startup(DestReceiver *self, int operation,
 	 * then we send back the tuple descriptor of the tuples.  
 	 */
 	if (operation == CMD_SELECT && myState->sendDescrip)
-		SendRowDescriptionMessage(typeinfo, targetlist);
+	{
+		List	   *targetlist;
+
+		if (portal->strategy == PORTAL_ONE_SELECT)
+			targetlist = ((Query *) lfirst(portal->parseTrees))->targetList;
+		else
+			targetlist = NIL;
+
+		SendRowDescriptionMessage(typeinfo, targetlist, portal->formats);
+	}
 
 	/* ----------------
 	 * We could set up the derived attr info at this time, but we postpone it
@@ -150,11 +157,13 @@ printtup_startup(DestReceiver *self, int operation,
  * Notes: the TupleDesc has typically been manufactured by ExecTypeFromTL()
  * or some similar function; it does not contain a full set of fields.
  * The targetlist will be NIL when executing a utility function that does
- * not have a plan.  If the targetlist isn't NIL then it is a Plan node's
- * targetlist; it is up to us to ignore resjunk columns in it.
+ * not have a plan.  If the targetlist isn't NIL then it is a Query node's
+ * targetlist; it is up to us to ignore resjunk columns in it.  The formats[]
+ * array pointer might be NULL (if we are doing Describe on a prepared stmt);
+ * send zeroes for the format codes in that case.
  */
 void
-SendRowDescriptionMessage(TupleDesc typeinfo, List *targetlist)
+SendRowDescriptionMessage(TupleDesc typeinfo, List *targetlist, int16 *formats)
 {
 	Form_pg_attribute *attrs = typeinfo->attrs;
 	int			natts = typeinfo->natts;
@@ -198,6 +207,14 @@ SendRowDescriptionMessage(TupleDesc typeinfo, List *targetlist)
 		if (proto >= 2)
 			pq_sendint(&buf, attrs[i]->atttypmod,
 					   sizeof(attrs[i]->atttypmod));
+		/* format info appears in protocol 3.0 and up */
+		if (proto >= 3)
+		{
+			if (formats)
+				pq_sendint(&buf, formats[i], 2);
+			else
+				pq_sendint(&buf, 0, 2);
+		}
 	}
 	pq_endmessage(&buf);
 }
@@ -228,11 +245,98 @@ printtup_prepare_info(DR_printtup *myState, TupleDesc typeinfo, int numAttrs)
 }
 
 /* ----------------
- *		printtup
+ *		printtup --- print a tuple in protocol 3.0
  * ----------------
  */
 static void
 printtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
+{
+	DR_printtup *myState = (DR_printtup *) self;
+	int16	   *formats = myState->portal->formats;
+	StringInfoData buf;
+	int			natts = tuple->t_data->t_natts;
+	int			i;
+
+	/* Set or update my derived attribute info, if needed */
+	if (myState->attrinfo != typeinfo || myState->nattrs != natts)
+		printtup_prepare_info(myState, typeinfo, natts);
+
+	/*
+	 * Prepare a DataRow message
+	 */
+	pq_beginmessage(&buf, 'D');
+
+	pq_sendint(&buf, natts, 2);
+
+	/*
+	 * send the attributes of this tuple
+	 */
+	for (i = 0; i < natts; ++i)
+	{
+		PrinttupAttrInfo *thisState = myState->myinfo + i;
+		int16		format = (formats ? formats[i] : 0);
+		Datum		origattr,
+					attr;
+		bool		isnull;
+		char	   *outputstr;
+
+		origattr = heap_getattr(tuple, i + 1, typeinfo, &isnull);
+		if (isnull)
+		{
+			pq_sendint(&buf, -1, 4);
+			continue;
+		}
+		if (format == 0)
+		{
+			if (OidIsValid(thisState->typoutput))
+			{
+				/*
+				 * If we have a toasted datum, forcibly detoast it here to
+				 * avoid memory leakage inside the type's output routine.
+				 */
+				if (thisState->typisvarlena)
+					attr = PointerGetDatum(PG_DETOAST_DATUM(origattr));
+				else
+					attr = origattr;
+
+				outputstr = DatumGetCString(FunctionCall3(&thisState->finfo,
+														  attr,
+									ObjectIdGetDatum(thisState->typelem),
+						  Int32GetDatum(typeinfo->attrs[i]->atttypmod)));
+
+				pq_sendcountedtext(&buf, outputstr, strlen(outputstr), false);
+
+				/* Clean up detoasted copy, if any */
+				if (attr != origattr)
+					pfree(DatumGetPointer(attr));
+				pfree(outputstr);
+			}
+			else
+			{
+				outputstr = "<unprintable>";
+				pq_sendcountedtext(&buf, outputstr, strlen(outputstr), false);
+			}
+		}
+		else if (format == 1)
+		{
+			/* XXX something similar to above */
+			elog(ERROR, "Binary transmission not implemented yet");
+		}
+		else
+		{
+			elog(ERROR, "Invalid format code %d", format);
+		}
+	}
+
+	pq_endmessage(&buf);
+}
+
+/* ----------------
+ *		printtup_20 --- print a tuple in protocol 2.0
+ * ----------------
+ */
+static void
+printtup_20(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
 {
 	DR_printtup *myState = (DR_printtup *) self;
 	StringInfoData buf;
@@ -300,7 +404,7 @@ printtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
 									ObjectIdGetDatum(thisState->typelem),
 						  Int32GetDatum(typeinfo->attrs[i]->atttypmod)));
 
-			pq_sendcountedtext(&buf, outputstr, strlen(outputstr));
+			pq_sendcountedtext(&buf, outputstr, strlen(outputstr), true);
 
 			/* Clean up detoasted copy, if any */
 			if (attr != origattr)
@@ -310,7 +414,7 @@ printtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
 		else
 		{
 			outputstr = "<unprintable>";
-			pq_sendcountedtext(&buf, outputstr, strlen(outputstr));
+			pq_sendcountedtext(&buf, outputstr, strlen(outputstr), true);
 		}
 	}
 
@@ -364,37 +468,22 @@ printatt(unsigned attributeId,
 }
 
 /* ----------------
- *		showatts
- * ----------------
- */
-static void
-showatts(const char *name, TupleDesc tupleDesc)
-{
-	int			natts = tupleDesc->natts;
-	Form_pg_attribute *attinfo = tupleDesc->attrs;
-	int			i;
-
-	puts(name);
-	for (i = 0; i < natts; ++i)
-		printatt((unsigned) i + 1, attinfo[i], (char *) NULL);
-	printf("\t----\n");
-}
-
-/* ----------------
  *		debugStartup - prepare to print tuples for an interactive backend
  * ----------------
  */
 void
-debugStartup(DestReceiver *self, int operation,
-			 const char *portalName, TupleDesc typeinfo, List *targetlist)
+debugStartup(DestReceiver *self, int operation, TupleDesc typeinfo)
 {
+	int			natts = typeinfo->natts;
+	Form_pg_attribute *attinfo = typeinfo->attrs;
+	int			i;
+
 	/*
 	 * show the return type of the tuples
 	 */
-	if (portalName == NULL)
-		portalName = "blank";
-
-	showatts(portalName, typeinfo);
+	for (i = 0; i < natts; ++i)
+		printatt((unsigned) i + 1, attinfo[i], (char *) NULL);
+	printf("\t----\n");
 }
 
 /* ----------------
@@ -448,15 +537,16 @@ debugtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
 }
 
 /* ----------------
- *		printtup_internal
- *		We use a different data prefix, e.g. 'B' instead of 'D' to
- *		indicate a tuple in internal (binary) form.
+ *		printtup_internal_20 --- print a binary tuple in protocol 2.0
  *
- *		This is largely same as printtup, except we don't use the typout func.
+ * We use a different message type, i.e. 'B' instead of 'D' to
+ * indicate a tuple in internal (binary) form.
+ *
+ * This is largely same as printtup_20, except we don't use the typout func.
  * ----------------
  */
 static void
-printtup_internal(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
+printtup_internal_20(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
 {
 	DR_printtup *myState = (DR_printtup *) self;
 	StringInfoData buf;

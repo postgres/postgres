@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.57 2003/05/06 20:26:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.58 2003/05/08 18:16:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,8 +30,10 @@
 
 #include "access/printtup.h"
 #include "access/xact.h"
+#include "executor/tstoreReceiver.h"
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
+#include "utils/portal.h"
 
 
 /* ----------------
@@ -44,8 +46,7 @@ donothingReceive(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
 }
 
 static void
-donothingStartup(DestReceiver *self, int operation,
-				 const char *portalName, TupleDesc typeinfo, List *targetlist)
+donothingStartup(DestReceiver *self, int operation, TupleDesc typeinfo)
 {
 }
 
@@ -90,18 +91,21 @@ BeginCommand(const char *commandTag, CommandDest dest)
 
 /* ----------------
  *		CreateDestReceiver - return appropriate receiver function set for dest
+ *
+ * Note: a Portal must be specified for destinations Remote, RemoteExecute,
+ * and Tuplestore.  It can be NULL for the others.
  * ----------------
  */
 DestReceiver *
-CreateDestReceiver(CommandDest dest)
+CreateDestReceiver(CommandDest dest, Portal portal)
 {
 	switch (dest)
 	{
 		case Remote:
-		case RemoteInternal:
 		case RemoteExecute:
-		case RemoteExecuteInternal:
-			return printtup_create_DR(dest);
+			if (portal == NULL)
+				elog(ERROR, "CreateDestReceiver: no portal specified");
+			return printtup_create_DR(dest, portal);
 
 		case None:
 			return &donothingDR;
@@ -113,12 +117,13 @@ CreateDestReceiver(CommandDest dest)
 			return &spi_printtupDR;
 
 		case Tuplestore:
-			/*
-			 * This is disallowed, you must use tstoreReceiver.c's
-			 * specialized function to create a Tuplestore DestReceiver
-			 */
-			elog(ERROR, "CreateDestReceiver: cannot handle Tuplestore");
-			break;
+			if (portal == NULL)
+				elog(ERROR, "CreateDestReceiver: no portal specified");
+			if (portal->holdStore == NULL ||
+				portal->holdContext == NULL)
+				elog(ERROR, "CreateDestReceiver: portal has no holdStore");
+			return CreateTuplestoreDestReceiver(portal->holdStore,
+												portal->holdContext);
 	}
 
 	/* should never get here */
@@ -135,9 +140,7 @@ EndCommand(const char *commandTag, CommandDest dest)
 	switch (dest)
 	{
 		case Remote:
-		case RemoteInternal:
 		case RemoteExecute:
-		case RemoteExecuteInternal:
 			pq_puttextmessage('C', commandTag);
 			break;
 
@@ -167,9 +170,7 @@ NullCommand(CommandDest dest)
 	switch (dest)
 	{
 		case Remote:
-		case RemoteInternal:
 		case RemoteExecute:
-		case RemoteExecuteInternal:
 
 			/*
 			 * tell the fe that we saw an empty query string.  In protocols
@@ -206,9 +207,7 @@ ReadyForQuery(CommandDest dest)
 	switch (dest)
 	{
 		case Remote:
-		case RemoteInternal:
 		case RemoteExecute:
-		case RemoteExecuteInternal:
 			if (PG_PROTOCOL_MAJOR(FrontendProtocol) >= 3)
 			{
 				StringInfoData buf;
