@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.108 1999/05/25 16:13:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.109 1999/05/26 14:50:38 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -426,11 +426,14 @@ dumpClasses(const TableInfo *tblinfo, const int numTables, FILE *fout,
 	if (onlytable == NULL)
 		all_only = "all";
 	else
-		all_only = "one";
+		all_only = "only";
 
 	if (g_verbose)
-		fprintf(stderr, "%s dumping out the contents of %s of %d tables %s\n",
-				g_comment_start, all_only, numTables, g_comment_end);
+		fprintf(stderr, "%s dumping out the contents of %s %d table%s/sequence%s %s\n",
+				g_comment_start, all_only,
+				(onlytable == NULL) ? numTables : 1,
+				(onlytable == NULL) ? "s" : "", (onlytable == NULL) ? "s" : "",
+				g_comment_end);
 
 	/* Dump SEQUENCEs first (if dataOnly) */
 	if (dataOnly)
