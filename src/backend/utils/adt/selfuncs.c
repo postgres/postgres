@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.66 2000/05/26 17:19:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.66.2.1 2000/09/23 21:27:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -255,9 +255,24 @@ neqsel(Oid opid,
 	   Datum value,
 	   int32 flag)
 {
+	Oid			eqopid;
 	float64		result;
 
-	result = eqsel(opid, relid, attno, value, flag);
+	/*
+	 * We want 1 - eqsel() where the equality operator is the one associated
+	 * with this != operator, that is, its negator.
+	 */
+	eqopid = get_negator(opid);
+	if (eqopid)
+	{
+		result = eqsel(eqopid, relid, attno, value, flag);
+	}
+	else
+	{
+		/* Use default selectivity (should we raise an error instead?) */
+		result = (float64) palloc(sizeof(float64data));
+		*result = DEFAULT_EQ_SEL;
+	}
 	*result = 1.0 - *result;
 	return result;
 }
