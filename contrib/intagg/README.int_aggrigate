@@ -1,0 +1,55 @@
+Integer aggregator/enumerator.
+
+Many database systems have the notion of a one to many table.
+
+A one to many table usually sits between two indexed tables, 
+as: 
+
+create table one_to_many(left int, right int) ;
+
+And it is used like this:
+
+SELECT right.* from right JOIN one_to_many ON (right.id = one_to_many.right) 
+	WHERE  one_to_many.left = item;
+
+This will return all the items in the right hand table for an entry 
+in the left hand table. This is a very common construct in SQL.
+
+Now, this methodology can be cumbersome with a very large number of
+entries in the one_to_many table. Depending on the order in which
+data was entered, a join like this could result in an index scan
+and a fetch for each right hand entry in the table for a particular
+left hand entry.
+
+If you have a very dynamic system, there is not much you can do. 
+However, if you have some data which is fairly static, you can
+create a summary table with the aggregator.
+
+CREATE TABLE summary as SELECT left, int_array_aggregate(right) 
+	AS right FROM one_to_many GROUP BY left;
+
+This will create a table with one row per left item, and an array
+of right items. Now this is pretty useless without some way of using
+the array, thats why there is an array enumerator.
+
+SELECT left, int_array_enum(right) FROM summary WHERE left = item;
+
+The above query using int_array_enum, produces the same results as:
+
+SELECT left, right FROM one_to_many WHERE left = item;
+
+The difference is that the query against the summary table has to get
+only one row from the table, where as the query against "one_to_many"
+must index scan and fetch a row for each entry.
+
+On our system, an EXPLAIN shows a query with a cost of 8488 gets reduced
+to a cost of 329. The query is a join between the one_to_many table,
+
+select right, count(right) from 
+(
+	select left, int_array_enum(right) as right from summary join
+                (select left from left_table where left = item) as lefts
+                 ON (summary.left = lefts.left ) 
+) as list group by right order by count desc ;
+
+

@@ -1,0 +1,40 @@
+-- Drop functions
+drop function int_agg_state (int4, int4);
+drop function int_agg_final_array (int4);
+drop aggregate int_array_aggregate(int4);
+drop function int_array_enum (int4[]);
+
+
+-- Internal function for the aggregate
+-- Is called for each item in an aggregation
+create function int_agg_state (int4, int4)
+	returns int4
+	as 'MODULE_FILENAME','int_agg_state'
+	language 'c';
+
+-- Internal function for the aggregate
+-- Is called at the end of the aggregation, and returns an array.
+create function int_agg_final_array (int4)
+	returns int4[]
+	as 'MODULE_FILENAME','int_agg_final_array'
+	language 'c';
+
+-- The aggration funcion.
+-- uses the above functions to create an array of integers from an aggregation.
+create aggregate int_array_aggregate
+(
+	BASETYPE = int4,
+	SFUNC = int_agg_state,
+	STYPE = int4,
+	FINALFUNC = int_agg_final_array,
+	INITCOND = 0
+);
+
+-- The enumeration function
+-- returns each element in a one dimentional integer array
+-- as a row.
+create function int_array_enum(int4[])
+	returns setof integer
+	as 'MODULE_FILENAME','int_enum'
+	language 'c';
+

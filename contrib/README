@@ -71,10 +71,14 @@ fuzzystrmatch -
 	Levenshtein, metaphone, and soundex fuzzy string matching
 	by Joe Conway <joseph.conway@home.com>, Joel Burton <jburton@scw.org>
 
+intagg -
+	Integer aggregator
+	by  mlw <markw@mohawksoft.com>
+
+
 intarray -
 	Index support for arrays of int4, using GiST
-	by Teodor Sigaev <teodor@stack.net> and Oleg Bartunov
-	<oleg@sai.msu.su>.
+	by Teodor Sigaev <teodor@stack.net> and Oleg Bartunov <oleg@sai.msu.su>
 
 ipc_check -
 	Simple test script to help in configuring IPC.
