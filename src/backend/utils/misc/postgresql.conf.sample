@@ -33,7 +33,7 @@
 #max_connections = 100
 	# note: increasing max_connections costs about 500 bytes of shared
 	# memory per connection slot, in addition to costs from shared_buffers
-        # and max_locks_per_transaction.
+	# and max_locks_per_transaction.
 #superuser_reserved_connections = 2
 #unix_socket_directory = ''
 #unix_socket_group = ''
@@ -162,16 +162,13 @@
 				#   info, notice, warning, error, log, fatal,
 				#   panic
 
-#log_error_verbosity = default   # terse, default, or verbose messages
+#log_error_verbosity = default	# terse, default, or verbose messages
 
 #log_min_error_statement = panic # Values in order of increasing severity:
 				 #   debug5, debug4, debug3, debug2, debug1,
 				 #   info, notice, warning, error, panic(off)
 				 
-#log_min_duration_statement = -1 # Log all statements whose
-				 # execution time exceeds the value, in
-				 # milliseconds.  Zero prints all queries.
-				 # Minus-one disables.
+#log_min_duration_statement = -1 # -1 is disabled, in milliseconds.
 
 #silent_mode = false		 # DO NOT USE without Syslog!
 
