@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.51 2001/02/15 04:28:50 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.52 2001/02/16 16:10:06 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1536,14 +1536,13 @@ env PGOPTIONS='-c geqo=off' psql
         <para>
          By default, only 4 MB of shared memory is supported. Keep in
          mind that shared memory is not pageable; it is locked in RAM.
-         To increase the number of buffers supported by the
-         postmaster, increase <varname>SHMMAXPGS</> by 1024 for every
-         additional 4 MB of shared memory:
+	 To increase the number of buffers supported by the postmaseter, add the
+	 following to your kernel config file.  A <varname>SHMALL</> value of 1024 
+	 represents 4MB of shared memory.  Increase it accordingly:
 <programlisting>
-/sys/sys/shm.h:69:#define       SHMMAXPGS       1024    /* max hardware pages... */
+options "SHMALL=4096"
+options "SHMMAX=\(SHMALL*PAGE_SIZE\)"
 </programlisting>
-         The default setting of 1024 provides a maximum of 4 MB of shared
-         memory.
         </para>
        </formalpara>
 
@@ -1561,7 +1560,7 @@ $ <userinput>bpatch -r sysptsize</>
         the bpatch value, plus add 1 for every additional 4 MB of
         shared memory you desire.
 <programlisting>
-/sys/i386/i386/i386_param.c:28:#define  SYSPTSIZE 0        /* dynamically... */
+options "SYSPTSIZE=13"
 </programlisting>
         <varname>sysptsize</> can not be changed by sysctl on the fly.
        </para>

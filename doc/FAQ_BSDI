@@ -11,7 +11,7 @@ Bruce Momjian (pgman@candle.pha.pa.us)  2000-07-7
 1)  To increase the amount of malloc'ed memory and files opened by
 PostgreSQL, add this:
 
-          :datasize-cur=600M:\
+          :datasize-cur=256M:\
           :openfiles-cur=256:
 
 to your /etc/login.conf file.
