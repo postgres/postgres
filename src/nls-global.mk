@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/src/nls-global.mk,v 1.5 2002/08/21 20:42:24 petere Exp $
+# $Header: /cvsroot/pgsql/src/nls-global.mk,v 1.6 2002/08/29 22:13:01 petere Exp $
 
 # Common rules for Native Language Support (NLS)
 #
@@ -57,6 +57,7 @@ $(srcdir)/po/$(CATALOG_NAME).pot: $(GETTEXT_FILES)
 # consistent #: file references in the po files.
 	$(XGETTEXT) -D $(srcdir) -n $(addprefix -k, $(GETTEXT_TRIGGERS)) $(GETTEXT_FILES)
 endif
+	@$(mkinstalldirs) $(dir $@)
 	mv messages.po $@
 else # not XGETTEXT
 	@echo "You don't have 'xgettext'."; exit 1
