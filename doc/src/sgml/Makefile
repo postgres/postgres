@@ -8,24 +8,23 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.8 1999/07/06 17:19:41 thomas Exp $
+#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.9 1999/08/06 13:46:17 thomas Exp $
 #
 #----------------------------------------------------------------------------
 
 PGDOCS= ../..
 SRCDIR= ../../../src
-D2MDIR= ../docbook2man
 
-# This is where the default stylesheets appear on my system.
+# This is where the default stylesheets appear on my linux system.
 # Probably no need to change this; rather, put definitions
 #  for HSTYLE and PSTYLE and/or for HDSL and PDSL
 #  in Makefile.custom in your code src directory.
-
 #HSTYLE=/usr/lib/sgml/stylesheets/nwalsh-modular/html
 #PSTYLE=/usr/lib/sgml/stylesheets/nwalsh-modular/print
+# This is where the production stylesheets appear on postgresql.org
 
-HSTYLE=/opt/sgml/current/docbook/html
-PSTYLE=/opt/sgml/current/docbook/print
+HSTYLE= /home/users/t/thomas/db118.d/docbook/html
+PSTYLE= /home/users/t/thomas/db118.d/docbook/print
 
 HDSL=$(HSTYLE)/docbook.dsl
 PDSL=$(PSTYLE)/docbook.dsl
@@ -39,14 +38,20 @@ DBOPTS= -D ref -D ../graphics
 #  as in v6.3 documentation. Yuck.
 DBOPTS+= -V %use-id-as-filename%
 
+# docbook2man generates man pages from docbook refentry source code.
+# This is where the (patched) docbook2man perl scripts reside on hub.org.
+
+D2MDIR= /home/users/t/thomas/d2x/docbook2man
+D2MSCRIPT= $(D2MDIR)/docbook2man-spec.pl
+
 TAR= tar
 
 # Pick up Makefile.global from the source area
 # This is the only resource from the code source area and is optional.
 # Actually, we want this to get Makefile.custom - thomas 1998-03-01
 
-ifneq ($(wildcard $(SRCDIR)/Makefile.global), )
-include $(SRCDIR)/Makefile.global
+ifneq ($(wildcard $(SRCDIR)/Makefile.global),)
+  include $(SRCDIR)/Makefile.global
 endif
 
 # Hmm, made this optional but jade _really_ doesn't like them missing
@@ -58,16 +63,23 @@ ifneq ($(PDSL), )
 PRINTOPTS= -d $(PDSL)
 endif
 
+vpath %.sgml ./ref
+
 MANSOURCES= $(wildcard ref/*.sgml)
 
 APPLICATIONS= createdb.sgml createuser.sgml \
+	createlang.sgml \
 	destroydb.sgml destroyuser.sgml \
+	destroylang.sgml \
 	initdb.sgml initlocation.sgml \
+	ipcclean.sgml \
 	pg_dump.sgml \
 	pg_dumpall.sgml \
 	pg_upgrade.sgml \
 	pgaccess-ref.sgml \
 	pgadmin-ref.sgml \
+	pgtclsh.sgml \
+	pgtksh.sgml \
 	postgres-ref.sgml \
 	postmaster.sgml \
 	psql-ref.sgml \
@@ -93,40 +105,42 @@ COMMANDS= abort.sgml alter_table.sgml alter_user.sgml \
 
 FUNCTIONS= current_date.sgml current_time.sgml current_timestamp.sgml current_user.sgml
 
-APPSOURCES= $(addprefix ref/, $(APPLICATIONS))
-SQLSOURCES= $(addprefix ref/, $(COMMANDS))
-APPTARGETS= $(APPLICATIONS:.sgml=.1)
-SQLTARGETS= $(COMMANDS:.sgml=.l)
+#APPSOURCES= $(addprefix ref/, $(APPLICATIONS))
+#SQLSOURCES= $(addprefix ref/, $(COMMANDS))
+APPSOURCES= $(APPLICATIONS)
+SQLSOURCES= $(COMMANDS)
+XAPPTARGETS= $(APPLICATIONS:.sgml=.1)
+APPTARGETS= $(XAPPTARGETS:-ref.1=.1)
+XSQLTARGETS= $(COMMANDS:.sgml=.l)
+SQLTARGETS= $(XSQLTARGETS:-ref.l=.l)
 
 .PRECIOUS: postgres.tex postgres.dvi
 .PHONY: install all clean distclean
 
 install::
-#	$(MAKE) all
-#	(mv -rf *.gz ..)
 
 all::
 
-#man:: .manlist
-#	for f in `cat .manlist` ; do \
-#		nsgmls $f | sgmlspl ../docbook2man/docbook2man-spec.pl --lowercase; \
-#	done
-#
-#.manlist: $(MANSOURCES)
-#	(grep -iE '<refentry([ ]|>)' $(MANSOURCES) | cut -f 1 -d : | sort | uniq) > .manlist
+man:
+	$(MAKE) man1 manl
+	($(RM) -r *.1 *.l man1 manl)
+	$(MAKE) man1 manl
 
-man1: $(APPTARGETS)
+manpage.refs:
+	$(MAKE) man
+
+man1: $(APPTARGETS) manpage.refs
 	$(RM) -rf man1
 	if [ ! -d man1 ]; then mkdir man1; fi
-	mv *.1 man1/
+	cp *.1 man1/
 
-manl: $(SQLTARGETS)
+manl: $(SQLTARGETS) manpage.refs
 	$(RM) -rf manl/*
 	if [ ! -d manl ]; then mkdir manl; fi
-	mv *.l manl/
+	cp *.l manl/
 
 clean::
-	(rm -rf HTML.manifest *.html *.htm man1 manl manpage*)
+	(rm -rf HTML.manifest *.html *.htm *.1 *.l man1 manl manpage*)
 
 distclean::
 	$(MAKE) clean
@@ -135,11 +149,14 @@ distclean::
 # Generic production rules
 #
 
-%.1: ref/%.sgml
-	nsgmls $< | sgmlspl $(D2MDIR)/docbook2man-spec.pl --defsection 1
+%.1: %-ref.sgml
+	nsgmls $< | sgmlspl $(D2MSCRIPT) --lowercase --section 1
 
-%.l: ref/%.sgml
-	nsgmls $< | sgmlspl $(D2MDIR)/docbook2man-spec.pl --defsection l
+%.1: %.sgml
+	nsgmls $< | sgmlspl $(D2MSCRIPT) --lowercase --section 1
+
+%.l: %.sgml
+	nsgmls $< | sgmlspl $(D2MSCRIPT) --lowercase --section l
 
 # HTML
 # Include some softlinks to the generic default file names
