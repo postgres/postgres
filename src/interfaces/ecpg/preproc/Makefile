@@ -1,12 +1,12 @@
 subdir = src/interfaces/ecpg/preproc
 top_builddir = ../../../..
-include ../../../Makefile.global
+include $(top_builddir)/src/Makefile.global
 
 MAJOR_VERSION=2
 MINOR_VERSION=7
 PATCHLEVEL=1
 
-CFLAGS+=-I../include -DMAJOR_VERSION=$(MAJOR_VERSION) \
+CPPFLAGS+=-I../include -DMAJOR_VERSION=$(MAJOR_VERSION) \
 	-DMINOR_VERSION=$(MINOR_VERSION) -DPATCHLEVEL=$(PATCHLEVEL) \
 	-DINCLUDE_PATH=\"$(includedir)\" 
 

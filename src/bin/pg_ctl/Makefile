@@ -4,13 +4,13 @@
 #
 # Copyright (c) 1999, PostgreSQL Global Development Group
 #
-# $Header: /cvsroot/pgsql/src/bin/pg_ctl/Makefile,v 1.6 2000/06/27 00:31:08 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_ctl/Makefile,v 1.7 2000/08/31 16:11:10 petere Exp $
 #
 #-------------------------------------------------------------------------
 
 subdir = src/bin/pg_ctl
 top_builddir = ../../..
-include ../../Makefile.global
+include $(top_builddir)/src/Makefile.global
 
 all: pg_ctl
 

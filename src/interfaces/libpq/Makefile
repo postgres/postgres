@@ -4,13 +4,13 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.39 2000/06/28 18:29:44 petere Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.40 2000/08/31 16:11:48 petere Exp $
 #
 #-------------------------------------------------------------------------
 
 subdir = src/interfaces/libpq
 top_builddir = ../../..
-include ../../Makefile.global
+include $(top_builddir)/src/Makefile.global
 
 # shared library parameters
 NAME= pq

@@ -4,12 +4,13 @@
 #    Makefile for utils/fmgr
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/fmgr/Makefile,v 1.9 2000/05/29 05:45:30 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/fmgr/Makefile,v 1.10 2000/08/31 16:10:50 petere Exp $
 #
 #-------------------------------------------------------------------------
 
-SRCDIR = ../../..
-include ../../../Makefile.global
+subdir = src/backend/utils/fmgr
+top_builddir = ../../../..
+include $(top_builddir)/src/Makefile.global
 
 OBJS = dfmgr.o fmgr.o
 
@@ -27,4 +28,3 @@ clean:
 ifeq (depend,$(wildcard depend))
 include depend
 endif
-

@@ -4,12 +4,13 @@
 #    Makefile for access/transam
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/access/transam/Makefile,v 1.11 2000/05/29 05:44:41 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/access/transam/Makefile,v 1.12 2000/08/31 16:09:46 petere Exp $
 #
 #-------------------------------------------------------------------------
 
-SRCDIR = ../../..
-include ../../../Makefile.global
+subdir = src/backend/access/transam
+top_builddir = ../../../..
+include $(top_builddir)/src/Makefile.global
 
 OBJS = transam.o transsup.o varsup.o xact.o xid.o xlog.o rmgr.o
 
@@ -26,7 +27,7 @@ clean:
 
 # ensure that version checks in xlog.c get recompiled when config.h or
 # catversion.h changes, even if "make depend" hasn't been done.
-xlog.o: xlog.c $(SRCDIR)/include/config.h $(SRCDIR)/include/catalog/catversion.h
+xlog.o: xlog.c $(top_builddir)/src/include/config.h $(top_srcdir)/src/include/catalog/catversion.h
 
 ifeq (depend,$(wildcard depend))
 include depend

@@ -4,13 +4,13 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/pl/Makefile,v 1.11 2000/07/19 16:30:16 petere Exp $
+# $Header: /cvsroot/pgsql/src/pl/Makefile,v 1.12 2000/08/31 16:12:09 petere Exp $
 #
 #-------------------------------------------------------------------------
 
 subdir = src/pl
 top_builddir = ../..
-include ../Makefile.global
+include $(top_builddir)/src/Makefile.global
 
 DIRS := plpgsql
 

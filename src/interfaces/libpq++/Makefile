@@ -4,27 +4,27 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/Makefile,v 1.23 2000/06/30 16:10:54 petere Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/Makefile,v 1.24 2000/08/31 16:11:51 petere Exp $
 #
 #-------------------------------------------------------------------------
 
 subdir = src/interfaces/libpq++
 top_builddir = ../../..
-include ../../Makefile.global
+include $(top_builddir)/src/Makefile.global
 
 NAME= pq++
 SO_MAJOR_VERSION= 3
 SO_MINOR_VERSION= 1
 
 SRCHEADERDIR = $(top_srcdir)/src/include
-CXXFLAGS+= -I$(SRCHEADERDIR) -I$(LIBPQDIR)
+CXXFLAGS+= -I$(SRCHEADERDIR) -I$(libpq_srcdir)
 
 OBJS = pgconnection.o pgdatabase.o pgtransdb.o pgcursordb.o pglobject.o 
 
 ifeq ($(PORTNAME), win)
-SHLIB_LINK+= --driver-name g++ $(LIBPQ)
+SHLIB_LINK+= --driver-name g++ $(libpq)
 else
-SHLIB_LINK= $(LIBPQ)
+SHLIB_LINK= $(libpq)
 endif
 
 # For CC on IRIX, must use CC as linker/archiver of C++ libraries

@@ -4,12 +4,13 @@
 #    Makefile for port/sparc
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/port/qnx4/Attic/Makefile,v 1.2 2000/05/29 05:44:56 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/port/qnx4/Attic/Makefile,v 1.3 2000/08/31 16:10:19 petere Exp $
 #
 #-------------------------------------------------------------------------
 
-SRCDIR = ../../..
-include ../../../Makefile.global
+subdir = src/backend/port/qnx4
+top_builddir = ../../../..
+include $(top_builddir)/src/Makefile.global
 
 OBJS = isnan.o rint.o sem.o shm.o
 
@@ -36,4 +37,3 @@ clean:
 ifeq (depend,$(wildcard depend))
 include depend
 endif
-

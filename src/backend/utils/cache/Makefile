@@ -4,12 +4,13 @@
 #    Makefile for utils/cache
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/cache/Makefile,v 1.13 2000/05/29 05:45:24 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/cache/Makefile,v 1.14 2000/08/31 16:10:46 petere Exp $
 #
 #-------------------------------------------------------------------------
 
-SRCDIR = ../../..
-include ../../../Makefile.global
+subdir = src/backend/utils/cache
+top_builddir = ../../../..
+include $(top_builddir)/src/Makefile.global
 
 OBJS = catcache.o inval.o rel.o relcache.o syscache.o lsyscache.o \
 	fcache.o temprel.o
@@ -28,4 +29,3 @@ clean:
 ifeq (depend,$(wildcard depend))
 include depend
 endif
-

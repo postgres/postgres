@@ -4,12 +4,13 @@
 #    Makefile for optimizer/path
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/optimizer/path/Makefile,v 1.14 2000/05/29 05:44:50 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/optimizer/path/Makefile,v 1.15 2000/08/31 16:10:09 petere Exp $
 #
 #-------------------------------------------------------------------------
 
-SRCDIR = ../../..
-include ../../../Makefile.global
+subdir = src/backend/optimizer/path
+top_builddir = ../../../..
+include $(top_builddir)/src/Makefile.global
 
 OBJS = allpaths.o clausesel.o costsize.o indxpath.o \
        joinpath.o joinrels.o orindxpath.o pathkeys.o tidpath.o
@@ -28,4 +29,3 @@ clean:
 ifeq (depend,$(wildcard depend))
 include depend
 endif
-

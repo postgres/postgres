@@ -7,17 +7,18 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/test/bench/Attic/Makefile,v 1.6 2000/06/17 00:10:28 petere Exp $
+#    $Header: /cvsroot/pgsql/src/test/bench/Attic/Makefile,v 1.7 2000/08/31 16:12:20 petere Exp $
 #
 #-------------------------------------------------------------------------
 
-SRCDIR= ../..
-include ../../Makefile.global
+subdir = src/test/bench
+top_builddir = ../../..
+include $(top_builddir)/src/Makefile.global
 
 CREATEFILES= create.sql bench.sql
 OUTFILES= bench.out bench.out.perquery
 
-CFLAGS+= -I$(LIBPQDIR) $(CFLAGS_SL)
+CFLAGS+= -I$(libpq_srcdir) $(CFLAGS_SL)
 
 
 all: $(CREATEFILES)

@@ -4,27 +4,27 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/pg_dump/Makefile,v 1.22 2000/08/01 15:51:44 pjw Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_dump/Makefile,v 1.23 2000/08/31 16:11:13 petere Exp $
 #
 #-------------------------------------------------------------------------
 
 subdir = src/bin/pg_dump
 top_builddir = ../../..
-include ../../Makefile.global
+include $(top_builddir)/src/Makefile.global
 
 OBJS= pg_backup_archiver.o pg_backup_db.o pg_backup_custom.o pg_backup_files.o \
        pg_backup_null.o pg_backup_tar.o $(STRDUP)
 
-CFLAGS+= -I$(LIBPQDIR)
+CPPFLAGS+= -I$(libpq_srcdir)
 LIBS+= -lz
 
 all: submake pg_dump pg_restore pg_dumpall
 
-pg_dump: pg_dump.o common.o $(OBJS) $(LIBPQDIR)/libpq.a 
-	$(CC) $(CFLAGS) -o $@ pg_dump.o common.o $(OBJS) $(LIBPQ) $(LDFLAGS)
+pg_dump: pg_dump.o common.o $(OBJS) $(libpq_builddir)/libpq.a 
+	$(CC) $(CFLAGS) -o $@ pg_dump.o common.o $(OBJS) $(libpq) $(LDFLAGS)
 
-pg_restore: pg_restore.o $(OBJS) $(LIBPQDIR)/libpq.a
-	$(CC) $(CFLAGS) -o $@ pg_restore.o $(OBJS) $(LIBPQ) $(LDFLAGS)
+pg_restore: pg_restore.o $(OBJS) $(libpq_builddir)/libpq.a
+	$(CC) $(CFLAGS) -o $@ pg_restore.o $(OBJS) $(libpq) $(LDFLAGS)
 
 ../../utils/strdup.o:
 	$(MAKE) -C ../../utils strdup.o
@@ -37,7 +37,7 @@ pg_dumpall: pg_dumpall.sh
 
 .PHONY: submake
 submake:
-	$(MAKE) -C $(LIBPQDIR) all
+	$(MAKE) -C $(libpq_builddir) all
 
 install: all installdirs
 	$(INSTALL_PROGRAM) pg_dump$(X) $(bindir)/pg_dump$(X)

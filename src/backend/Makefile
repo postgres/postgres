@@ -4,13 +4,13 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.63 2000/07/19 16:29:44 petere Exp $
+# $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.64 2000/08/31 16:09:23 petere Exp $
 #
 #-------------------------------------------------------------------------
 
 subdir = src/backend
 top_builddir = ../..
-include ../Makefile.global
+include $(top_builddir)/src/Makefile.global
 
 DIRS := access bootstrap catalog parser commands executor lib libpq \
 	main nodes optimizer port postmaster regex rewrite \

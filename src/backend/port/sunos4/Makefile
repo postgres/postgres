@@ -1,15 +1,8 @@
-#-------------------------------------------------------------------------
-#
-# Makefile--
-#    Makefile for port/sparc
-#
-# IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/port/sunos4/Attic/Makefile,v 1.5 2000/05/29 05:44:57 tgl Exp $
-#
-#-------------------------------------------------------------------------
+# $Header: /cvsroot/pgsql/src/backend/port/sunos4/Attic/Makefile,v 1.6 2000/08/31 16:10:20 petere Exp $
 
-SRCDIR = ../../..
-include ../../../Makefile.global
+subdir = src/backend/port/sunos4
+top_builddir = ../../../..
+include $(top_builddir)/src/Makefile.global
 
 OBJS = strtol.o
 
@@ -27,4 +20,3 @@ clean:
 ifeq (depend,$(wildcard depend))
 include depend
 endif
-

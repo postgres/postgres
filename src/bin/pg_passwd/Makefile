@@ -1,10 +1,8 @@
-#
-# Makefile for src/bin/pg_passwd
-#
+# $Header: /cvsroot/pgsql/src/bin/pg_passwd/Attic/Makefile,v 1.10 2000/08/31 16:11:20 petere Exp $
 
 subdir = src/bin/pg_passwd
 top_builddir = ../../..
-include ../../Makefile.global
+include $(top_builddir)/src/Makefile.global
 
 all: pg_passwd$(X)
 

@@ -4,12 +4,13 @@
 #    Makefile for storage/smgr
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/storage/smgr/Makefile,v 1.12 2000/05/29 05:45:14 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/storage/smgr/Makefile,v 1.13 2000/08/31 16:10:38 petere Exp $
 #
 #-------------------------------------------------------------------------
 
-SRCDIR = ../../..
-include ../../../Makefile.global
+subdir = src/backend/storage/smgr
+top_builddir = ../../../..
+include $(top_builddir)/src/Makefile.global
 
 OBJS = md.o mm.o smgr.o smgrtype.o
 
@@ -27,4 +28,3 @@ clean:
 ifeq (depend,$(wildcard depend))
 include depend
 endif
-

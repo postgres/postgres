@@ -1,12 +1,12 @@
 #
 # PostgreSQL top level makefile
 #
-# $Header: /cvsroot/pgsql/GNUmakefile.in,v 1.10 2000/08/20 15:55:15 petere Exp $
+# $Header: /cvsroot/pgsql/GNUmakefile.in,v 1.11 2000/08/31 16:08:58 petere Exp $
 #
 
 subdir =
 top_builddir = .
-include src/Makefile.global
+include $(top_builddir)/src/Makefile.global
 
 all:
 	$(MAKE) -C doc all

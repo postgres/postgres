@@ -4,13 +4,13 @@
 #
 # Copyright (C) 2000 by PostgreSQL Global Development Team
 #
-# $Header: /cvsroot/pgsql/src/bin/pg_id/Attic/Makefile,v 1.17 2000/06/27 00:31:20 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_id/Attic/Makefile,v 1.18 2000/08/31 16:11:17 petere Exp $
 #
 #-------------------------------------------------------------------------
 
 subdir = src/bin/pg_id
 top_builddir = ../../..
-include ../../Makefile.global
+include $(top_builddir)/src/Makefile.global
 
 all: pg_id$(X)
 

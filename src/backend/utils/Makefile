@@ -1,12 +1,12 @@
 #
 # Makefile for utils
 #
-# $Header: /cvsroot/pgsql/src/backend/utils/Makefile,v 1.17 2000/07/13 16:07:06 petere Exp $
+# $Header: /cvsroot/pgsql/src/backend/utils/Makefile,v 1.18 2000/08/31 16:10:42 petere Exp $
 #
 
 subdir = src/backend/utils/
 top_builddir = ../../..
-include ../../Makefile.global
+include $(top_builddir)/src/Makefile.global
 
 SUBDIRS     := adt cache error fmgr hash init misc mmgr sort time
 ifdef MULTIBYTE

@@ -2,12 +2,13 @@
 # Makefile for example programs
 #
 
-SRCDIR= ../..
-include ../../Makefile.global
+subdir = src/test/examples
+top_builddir = ../../..
+include $(top_builddir)/src/Makefile.global
 
-CFLAGS+= -I$(LIBPQDIR)
+CPPFLAGS+= -I$(libpq_srcdir)
 
-LDFLAGS+= -L$(LIBPQDIR) -lpq 
+LDFLAGS+= $(libpq)
 
 
 # PROGS= testlibpq0 testlibpq1 testlibpq2 testlibpq3 testlibpq4 testlo

@@ -13,12 +13,13 @@
 # be converted to Method 2.  
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/port/Attic/Makefile.in,v 1.23 2000/05/29 05:44:54 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/port/Attic/Makefile.in,v 1.24 2000/08/31 16:10:16 petere Exp $
 #
 #-------------------------------------------------------------------------
 
-SRCDIR=../..
-include ../../Makefile.global
+subdir = src/backend/port
+top_builddir = ../../..
+include $(top_builddir)/src/Makefile.global
 
 OBJS = dynloader.o @INET_ATON@ @STRERROR@ @MISSING_RANDOM@ @SRANDOM@
 OBJS+= @GETHOSTNAME@ @GETRUSAGE@ @STRCASECMP@ @STRDUP@ @TAS@ @ISINF@
@@ -38,8 +39,6 @@ qnx4.dir:
 
 tas.o: tas.s
 	$(CC) $(CFLAGS) -c tas.s
-
-.PHONY: clean dep
 
 distclean clean:
 	rm -f SUBSYS.o $(OBJS)

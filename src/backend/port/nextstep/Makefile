@@ -1,12 +1,14 @@
 #-------------------------------------------------------------------------
 #
-# Makefile--
-#    Makefile for port/next (NeXTStep 3.3 specific stuff)
+# Makefile for NeXTStep 3.3 specific stuff
+#
+# $Header: /cvsroot/pgsql/src/backend/port/nextstep/Makefile,v 1.6 2000/08/31 16:10:16 petere Exp $
 #
 #-------------------------------------------------------------------------
 
-SRCDIR = ../../..
-include ../../../Makefile.global
+subdir = src/backend/port/nextstep
+top_builddir = ../../../..
+include $(top_builddir)/src/Makefile.global
 
 OBJS = dynloader.o port.o
 

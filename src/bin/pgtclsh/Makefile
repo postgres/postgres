@@ -5,13 +5,13 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/pgtclsh/Attic/Makefile,v 1.30 2000/07/01 15:02:23 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/pgtclsh/Attic/Makefile,v 1.31 2000/08/31 16:11:21 petere Exp $
 #
 #-------------------------------------------------------------------------
 
 subdir = src/bin/pgtclsh
 top_builddir = ../../..
-include ../../Makefile.global
+include $(top_builddir)/src/Makefile.global
 
 #
 # Include definitions from the tclConfig.sh file
@@ -21,7 +21,11 @@ ifeq ($(USE_TK), true)
 -include Makefile.tkdefs
 endif
 
-CFLAGS+= $(X_CFLAGS) -I$(LIBPGTCLDIR)
+libpgtcl_srcdir = $(top_srcdir)/src/interfaces/libpgtcl
+libpgtcl_builddir = $(top_builddir)/src/interfaces/libpgtcl
+libpgtcl = -L$(libpgtcl_builddir) -lpgtcl
+
+CFLAGS+= $(X_CFLAGS) -I$(libpgtcl_srcdir)
 
 
 # If we are here then TCL is available
@@ -36,16 +40,16 @@ all: submake $(PROGRAMS)
 
 pgtclsh: pgtclAppInit.o
 	$(CC) $(CFLAGS) $(TCL_DEFS) -o $@ $< \
-	  $(LIBPGTCL) $(LIBPQ) $(TCL_LIB_SPEC) $(TCL_LIBS) $(LDFLAGS)
+	  $(libpgtcl) $(libpq) $(TCL_LIB_SPEC) $(TCL_LIBS) $(LDFLAGS)
 
 pgtksh: pgtkAppInit.o
 	$(CC) $(CFLAGS) $(TK_DEFS) -o $@ $< \
-	  $(LIBPGTCL) $(LIBPQ) $(X_LIBS) $(TK_LIB_SPEC) $(TK_LIBS) \
+	  $(libpgtcl) $(libpq) $(X_LIBS) $(TK_LIB_SPEC) $(TK_LIBS) \
 	  $(TCL_LIB_SPEC) $(X11_LIBS) $(LDFLAGS)
 
 .PHONY: submake
 submake:
-	$(MAKE) -C $(LIBPGTCLDIR) all
+	$(MAKE) -C $(libpgtcl_builddir) all
 
 install: all installdirs
 	$(INSTALL_PROGRAM) pgtclsh $(bindir)/pgtclsh

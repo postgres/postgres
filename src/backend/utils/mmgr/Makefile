@@ -4,12 +4,13 @@
 #    Makefile for utils/mmgr
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/mmgr/Makefile,v 1.9 2000/06/28 03:32:50 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/mmgr/Makefile,v 1.10 2000/08/31 16:10:58 petere Exp $
 #
 #-------------------------------------------------------------------------
 
-SRCDIR = ../../..
-include ../../../Makefile.global
+subdir = src/backend/utils/mmgr
+top_builddir = ../../../..
+include $(top_builddir)/src/Makefile.global
 
 OBJS = aset.o mcxt.o portalmem.o
 
@@ -27,4 +28,3 @@ clean:
 ifeq (depend,$(wildcard depend))
 include depend
 endif
-

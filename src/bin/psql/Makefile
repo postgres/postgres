@@ -4,17 +4,17 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/psql/Makefile,v 1.23 2000/07/19 16:29:56 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/psql/Makefile,v 1.24 2000/08/31 16:11:23 petere Exp $
 #
 #-------------------------------------------------------------------------
 
 subdir = src/bin/psql
 top_builddir = ../../..
-include ../../Makefile.global
+include $(top_builddir)/src/Makefile.global
 
 REFDOCDIR= $(top_srcdir)/doc/src/sgml/ref
 
-CFLAGS+= -I$(LIBPQDIR)
+CPPFLAGS+= -I$(libpq_srcdir)
 
 OBJS=command.o common.o help.o input.o stringutils.o mainloop.o \
 	copy.o startup.o prompt.o variables.o large_obj.o print.o describe.o \
@@ -47,8 +47,8 @@ endif
 
 # End of hacks for picking up backend 'port' modules
 
-psql$(X): $(OBJS) $(LIBPQDIR)/libpq.a
-	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBPQ) $(LDFLAGS)
+psql$(X): $(OBJS) $(libpq_builddir)/libpq.a
+	$(CC) $(CFLAGS) -o $@ $(OBJS) $(libpq) $(LDFLAGS)
 
 help.o: $(srcdir)/sql_help.h
 
@@ -63,7 +63,7 @@ endif
 .PHONY: submake
 
 submake:
-	$(MAKE) -C $(LIBPQDIR) all
+	$(MAKE) -C $(libpq_builddir) all
 
 distprep: $(srcdir)/sql_help.h
 

@@ -4,25 +4,25 @@
 #
 # Copyright (c) 1998, PostgreSQL Global Development Group
 #
-# $Header: /cvsroot/pgsql/src/bin/pg_encoding/Attic/Makefile,v 1.9 2000/06/28 18:29:21 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_encoding/Attic/Makefile,v 1.10 2000/08/31 16:11:15 petere Exp $
 #
 #-------------------------------------------------------------------------
 
 subdir = src/bin/pg_encoding
 top_builddir = ../../..
-include ../../Makefile.global
+include $(top_builddir)/src/Makefile.global
 
 OBJS= pg_encoding.o
 
 all: submake pg_encoding$(X)
 
 pg_encoding$(X): $(OBJS)
-	$(CC) -o $@ $(OBJS) $(LIBPQ) $(LDFLAGS) $(CFLAGS)
+	$(CC) -o $@ $(OBJS) $(libpq) $(LDFLAGS) $(CFLAGS)
 
 .PHONY: submake
 
 submake:
-	$(MAKE) -C $(LIBPQDIR) all
+	$(MAKE) -C $(libpq_builddir) all
 
 install: all installdirs
 	$(INSTALL_PROGRAM) pg_encoding$(X) $(bindir)/pg_encoding$(X)

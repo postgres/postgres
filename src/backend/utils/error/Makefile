@@ -4,12 +4,13 @@
 #    Makefile for utils/error
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/error/Makefile,v 1.8 2000/05/29 05:45:27 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/error/Makefile,v 1.9 2000/08/31 16:10:48 petere Exp $
 #
 #-------------------------------------------------------------------------
 
-SRCDIR = ../../..
-include ../../../Makefile.global
+subdir = src/backend/utils/error
+top_builddir = ../../../..
+include $(top_builddir)/src/Makefile.global
 
 OBJS = assert.o elog.o exc.o excabort.o excid.o format.o
 
@@ -27,4 +28,3 @@ clean:
 ifeq (depend,$(wildcard depend))
 include depend
 endif
-

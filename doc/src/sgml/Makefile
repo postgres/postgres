@@ -8,12 +8,17 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.18 2000/08/26 13:08:14 petere Exp $
+#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.19 2000/08/31 16:09:20 petere Exp $
 #
 #----------------------------------------------------------------------------
 
-PGDOCS= ../..
-SRCDIR= ../../../src
+# Pick up Makefile.global from the source area
+# This is the only resource from the code source area and is optional.
+# Actually, we want this to get Makefile.custom - thomas 1998-03-01
+subdir = doc/src/sgml
+top_builddir = ../../..
+-include $(top_builddir)/src/Makefile.global
+
 
 # This is where the default stylesheets appear on my linux system.
 # Probably no need to change this; rather, put definitions
@@ -45,14 +50,6 @@ D2MDIR= /home/users/t/thomas/d2x/docbook2man
 D2MSCRIPT= $(D2MDIR)/docbook2man-spec.pl
 
 TAR= tar
-
-# Pick up Makefile.global from the source area
-# This is the only resource from the code source area and is optional.
-# Actually, we want this to get Makefile.custom - thomas 1998-03-01
-
-ifneq ($(wildcard $(SRCDIR)/Makefile.global),)
-  include $(SRCDIR)/Makefile.global
-endif
 
 # Hmm, made this optional but jade _really_ doesn't like them missing
 # - thomas 1998-03-01

@@ -2,20 +2,20 @@
 #
 # GNUMakefile for psqlodbc (Postgres ODBC driver)
 #
-# $Header: /cvsroot/pgsql/src/interfaces/odbc/Attic/GNUmakefile,v 1.1 2000/06/28 18:29:54 petere Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/odbc/Attic/GNUmakefile,v 1.2 2000/08/31 16:11:55 petere Exp $
 #
 #-------------------------------------------------------------------------
 
 subdir = src/interfaces/odbc
 top_builddir = ../../..
-include ../../Makefile.global
+include $(top_builddir)/src/Makefile.global
 
 # Shared library parameters
 NAME = psqlodbc
 SO_MAJOR_VERSION = 0
 SO_MINOR_VERSION = 26
 
-CFLAGS += -I$(srcdir) -DHAVE_CONFIG_H -DODBCINSTDIR='"$(odbcinst_ini_dir)"'
+CPPFLAGS += -I$(srcdir) -DHAVE_CONFIG_H -DODBCINSTDIR='"$(odbcinst_ini_dir)"'
 
 
 OBJS = info.o bind.o columninfo.o connection.o convert.o drvconn.o \

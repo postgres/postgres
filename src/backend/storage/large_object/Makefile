@@ -4,12 +4,13 @@
 #    Makefile for storage/large_object
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/storage/large_object/Makefile,v 1.9 2000/05/29 05:45:07 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/storage/large_object/Makefile,v 1.10 2000/08/31 16:10:34 petere Exp $
 #
 #-------------------------------------------------------------------------
 
-SRCDIR = ../../..
-include ../../../Makefile.global
+subdir = src/backend/storage/large_object
+top_builddir = ../../../..
+include $(top_builddir)/src/Makefile.global
 
 OBJS = inv_api.o
 
@@ -27,4 +28,3 @@ clean:
 ifeq (depend,$(wildcard depend))
 include depend
 endif
-

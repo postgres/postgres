@@ -4,12 +4,13 @@
 #    Makefile for utils/mb
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/mb/Makefile,v 1.9 2000/08/27 10:40:48 ishii Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/mb/Makefile,v 1.10 2000/08/31 16:10:56 petere Exp $
 #
 #-------------------------------------------------------------------------
 
-SRCDIR = ../../..
-include ../../../Makefile.global
+subdir = src/backend/utils/mb
+top_builddir = ../../../..
+include $(top_builddir)/src/Makefile.global
 
 OBJS = common.o conv.o mbutils.o wchar.o wstrcmp.o wstrncmp.o variable.o \
        big5.o
@@ -47,4 +48,3 @@ clean:
 ifeq (depend,$(wildcard depend))
 include depend
 endif
-

@@ -2,13 +2,13 @@
 #
 # Makefile for src/interfaces/libpgeasy
 #
-# $Header: /cvsroot/pgsql/src/interfaces/libpgeasy/Attic/Makefile,v 1.1 2000/06/28 18:29:41 petere Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/libpgeasy/Attic/Makefile,v 1.2 2000/08/31 16:11:42 petere Exp $
 #
 #-------------------------------------------------------------------------
 
 subdir = src/interfaces/libpgeasy
 top_builddir = ../../..
-include ../../Makefile.global
+include $(top_builddir)/src/Makefile.global
 
 
 # shared library parameters
@@ -16,11 +16,11 @@ NAME= pgeasy
 SO_MAJOR_VERSION= 2
 SO_MINOR_VERSION= 1
 
-CFLAGS+= -I$(LIBPQDIR)
+CPPFLAGS += -I$(libpq_srcdir)
 
 OBJS= libpgeasy.o halt.o
 
-SHLIB_LINK+= $(LIBPQ)
+SHLIB_LINK+= $(libpq)
 
 # If crypt is a separate library, rather than part of libc, it may need
 # to be referenced separately to keep (broken) linkers happy.  (This is

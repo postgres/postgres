@@ -4,12 +4,13 @@
 #    Makefile for access/rtree
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/Makefile,v 1.9 2000/05/29 05:44:39 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/Makefile,v 1.10 2000/08/31 16:09:43 petere Exp $
 #
 #-------------------------------------------------------------------------
 
-SRCDIR = ../../..
-include ../../../Makefile.global
+subdir = src/backend/access/rtree
+top_builddir = ../../../..
+include $(top_builddir)/src/Makefile.global
 
 OBJS = rtget.o rtproc.o rtree.o rtscan.o rtstrat.o
 

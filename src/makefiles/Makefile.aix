@@ -10,16 +10,16 @@ IMPSUFF= .imp
 
 POSTGRES_IMP= postgres$(IMPSUFF)
 
-MKLDEXPORT=$(SRCDIR)/backend/port/aix/mkldexport.sh
+MKLDEXPORT=$(top_srcdir)/src/backend/port/aix/mkldexport.sh
 
 $(POSTGRES_IMP):
 	@echo Making $@
-	$(MKLDEXPORT) postgres $(BINDIR) > $@
-	$(CC) -Wl,-bE:$(SRCDIR)/backend/$@ -o postgres $(OBJS) $(LDFLAGS)
+	$(MKLDEXPORT) postgres $(bindir) > $@
+	$(CC) -Wl,-bE:$(top_builddir)/src/backend/$@ -o postgres $(OBJS) $(LDFLAGS)
 
 %$(EXPSUFF):
 	$(MKLDEXPORT) $*.o `pwd` > $*$(EXPSUFF)
 
 %$(DLSUFFIX): %.o %$(EXPSUFF)
 	@echo Making share library $@ from $*.o, $*$(EXPSUFF), and installed postgres.imp
-	$(LD) -H512 -bM:SRE -bI:$(LIBDIR)/$(POSTGRES_IMP) -bE:$*$(EXPSUFF) -o $@ $*.o $(LDFLAGS) $(CFLAGS_SL)
+	$(LD) -H512 -bM:SRE -bI:$(libdir)/$(POSTGRES_IMP) -bE:$*$(EXPSUFF) -o $@ $*.o $(LDFLAGS) $(CFLAGS_SL)

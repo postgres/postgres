@@ -1,12 +1,12 @@
 #
 # Makefile for storage/ipc
 #
-# $Header: /cvsroot/pgsql/src/backend/storage/ipc/Makefile,v 1.12 2000/07/13 16:06:54 petere Exp $
+# $Header: /cvsroot/pgsql/src/backend/storage/ipc/Makefile,v 1.13 2000/08/31 16:10:33 petere Exp $
 #
 
 subdir = src/backend/storage/ipc
 top_builddir = ../../../..
-include ../../../Makefile.global
+include $(top_builddir)/src/Makefile.global
 
 # seems to be required 1999/07/22 bjm
 ifeq ($(CPU), alpha)

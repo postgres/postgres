@@ -4,13 +4,13 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/pl/plpgsql/Makefile,v 1.4 2000/07/19 16:30:21 petere Exp $
+# $Header: /cvsroot/pgsql/src/pl/plpgsql/Makefile,v 1.5 2000/08/31 16:12:15 petere Exp $
 #
 #-------------------------------------------------------------------------
 
 subdir = src/pl/plpgsql
 top_builddir = ../../..
-include ../../Makefile.global
+include $(top_builddir)/src/Makefile.global
 
 all install installdirs uninstall distprep:
 	$(MAKE) -C src $@

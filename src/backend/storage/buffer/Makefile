@@ -4,12 +4,13 @@
 #    Makefile for storage/buffer
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/storage/buffer/Makefile,v 1.14 2000/05/29 05:45:00 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/storage/buffer/Makefile,v 1.15 2000/08/31 16:10:30 petere Exp $
 #
 #-------------------------------------------------------------------------
 
-SRCDIR = ../../..
-include ../../../Makefile.global
+subdir = src/backend/storage/buffer
+top_builddir = ../../../..
+include $(top_builddir)/src/Makefile.global
 
 OBJS = buf_table.o buf_init.o bufmgr.o freelist.o localbuf.o s_lock.o
 

@@ -4,17 +4,16 @@
 #    Makefile for optimizer/util
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/optimizer/util/Makefile,v 1.12 2000/05/29 05:44:53 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/optimizer/util/Makefile,v 1.13 2000/08/31 16:10:14 petere Exp $
 #
 #-------------------------------------------------------------------------
 
-SRCDIR = ../../..
-include ../../../Makefile.global
+subdir = src/backend/optimizer/util
+top_builddir = ../../../..
+include $(top_builddir)/src/Makefile.global
 
 OBJS = restrictinfo.o clauses.o indexnode.o plancat.o \
        joininfo.o pathnode.o relnode.o tlist.o var.o
-
-# not ready yet: predmig.o xfunc.o
 
 all: SUBSYS.o
 
@@ -30,4 +29,3 @@ clean:
 ifeq (depend,$(wildcard depend))
 include depend
 endif
-

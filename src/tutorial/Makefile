@@ -4,12 +4,13 @@
 #    Makefile for tutorial
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/tutorial/Makefile,v 1.10 2000/05/29 05:45:56 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/tutorial/Makefile,v 1.11 2000/08/31 16:12:33 petere Exp $
 #
 #-------------------------------------------------------------------------
 
-SRCDIR= ..
-include $(SRCDIR)/Makefile.global
+subdir = src/tutorial
+top_builddir = ../..
+include $(top_builddir)/src/Makefile.global
 
 CFLAGS+= $(CFLAGS_SL)
 

@@ -1,9 +1,9 @@
 # ODBC extensions
 # Thomas Lockhart 2000-04-03
 
-SRCDIR= ../../src
-
-include $(SRCDIR)/Makefile.global
+subdir = contrib/odbc
+top_builddir = ../..
+include $(top_builddir)/src/Makefile.global
 
 ifndef PGLIB
   PGLIB= .

@@ -4,12 +4,13 @@
 #    Makefile for executor
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/executor/Makefile,v 1.12 2000/05/29 05:44:45 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/executor/Makefile,v 1.13 2000/08/31 16:09:56 petere Exp $
 #
 #-------------------------------------------------------------------------
 
-SRCDIR = ../..
-include ../../Makefile.global
+subdir = src/backend/executor
+top_builddir = ../../..
+include $(top_builddir)/src/Makefile.global
 
 OBJS = execAmi.o execFlatten.o execJunk.o execMain.o \
        execProcnode.o execQual.o execScan.o execTuples.o \
@@ -33,4 +34,3 @@ clean:
 ifeq (depend,$(wildcard depend))
 include depend
 endif
-

@@ -4,14 +4,16 @@
 #    Makefile for tioga
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/tioga/Attic/Makefile,v 1.7 2000/05/29 05:45:18 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/tioga/Attic/Makefile,v 1.8 2000/08/31 16:10:41 petere Exp $
 #
 #-------------------------------------------------------------------------
 
-SRCDIR = ../..
-include ../../Makefile.global
+subdir = src/backend/tioga
+top_builddir = ../../..
+include $(top_builddir)/src/Makefile.global
 
 OBJS = tgRecipe.o Varray.o
+CPPFLAGS += -I$(srcdir)
 
 all: SUBSYS.o
 
@@ -27,4 +29,3 @@ clean:
 ifeq (depend,$(wildcard depend))
 include depend
 endif
-

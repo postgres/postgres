@@ -4,12 +4,13 @@
 #    Makefile for commands
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/commands/Makefile,v 1.25 2000/05/29 17:40:43 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/commands/Makefile,v 1.26 2000/08/31 16:09:53 petere Exp $
 #
 #-------------------------------------------------------------------------
 
-SRCDIR = ../..
-include $(SRCDIR)/Makefile.global
+subdir = src/backend/commands
+top_builddir = ../../..
+include $(top_builddir)/src/Makefile.global
 
 OBJS = async.o creatinh.o command.o comment.o copy.o indexcmds.o define.o \
        remove.o rename.o vacuum.o analyze.o view.o cluster.o \
@@ -30,4 +31,3 @@ clean:
 ifeq (depend,$(wildcard depend))
 include depend
 endif
-

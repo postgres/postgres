@@ -1,12 +1,12 @@
 #
 # Makefile for the access methods module
 #
-# $Header: /cvsroot/pgsql/src/backend/access/Makefile,v 1.6 2000/07/13 16:06:42 petere Exp $
+# $Header: /cvsroot/pgsql/src/backend/access/Makefile,v 1.7 2000/08/31 16:09:26 petere Exp $
 #
 
 subdir = src/backend/access
 top_builddir = ../../..
-include ../../Makefile.global
+include $(top_builddir)/src/Makefile.global
 
 SUBDIRS	    := common gist hash heap index nbtree rtree transam
 SUBDIROBJS  := $(SUBDIRS:%=%/SUBSYS.o)

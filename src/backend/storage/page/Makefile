@@ -4,12 +4,13 @@
 #    Makefile for storage/page
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/storage/page/Makefile,v 1.9 2000/05/29 05:45:12 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/storage/page/Makefile,v 1.10 2000/08/31 16:10:37 petere Exp $
 #
 #-------------------------------------------------------------------------
 
-SRCDIR = ../../..
-include ../../../Makefile.global
+subdir = src/backend/storage/page
+top_builddir = ../../../..
+include $(top_builddir)/src/Makefile.global
 
 OBJS =  bufpage.o itemptr.o
 
@@ -27,4 +28,3 @@ clean:
 ifeq (depend,$(wildcard depend))
 include depend
 endif
-

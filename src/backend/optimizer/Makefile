@@ -1,12 +1,12 @@
 #
 # Makefile for optimizer
 #
-# $Header: /cvsroot/pgsql/src/backend/optimizer/Makefile,v 1.8 2000/07/13 16:06:44 petere Exp $
+# $Header: /cvsroot/pgsql/src/backend/optimizer/Makefile,v 1.9 2000/08/31 16:10:07 petere Exp $
 #
 
 subdir = src/backend/optimizer
 top_builddir = ../../..
-include ../../Makefile.global
+include $(top_builddir)/src/Makefile.global
 
 SUBDIRS     := geqo path plan prep util
 SUBDIROBJS  := $(SUBDIRS:%=%/SUBSYS.o)

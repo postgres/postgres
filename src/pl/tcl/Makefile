@@ -2,13 +2,13 @@
 #
 # Makefile for the pltcl shared object
 #
-# $Header: /cvsroot/pgsql/src/pl/tcl/Makefile,v 1.21 2000/07/17 01:26:42 tgl Exp $
+# $Header: /cvsroot/pgsql/src/pl/tcl/Makefile,v 1.22 2000/08/31 16:12:17 petere Exp $
 #
 #-------------------------------------------------------------------------
 
 subdir = src/pl/tcl
 top_builddir = ../../..
-include ../../Makefile.global
+include $(top_builddir)/src/Makefile.global
 
 -include Makefile.tcldefs
 

@@ -5,13 +5,13 @@
 # Install exported headers to the include directory (these headers are
 # the minimal ones needed to build loadable backend extensions).
 #
-# $Header: /cvsroot/pgsql/src/include/Makefile,v 1.2 2000/07/19 16:29:58 petere Exp $
+# $Header: /cvsroot/pgsql/src/include/Makefile,v 1.3 2000/08/31 16:11:27 petere Exp $
 #
 #-------------------------------------------------------------------------
 
 subdir = src/include
 top_builddir = ../..
-include ../Makefile.global
+include $(top_builddir)/src/Makefile.global
 
 
 HEADERS := os.h config.h c.h postgres.h postgres_ext.h fmgr.h \

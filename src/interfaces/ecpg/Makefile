@@ -1,6 +1,6 @@
 subdir = src/interfaces/ecpg
 top_builddir = ../../..
-include ../../Makefile.global
+include $(top_builddir)/src/Makefile.global
 
 all install installdirs uninstall dep depend distprep:
 	$(MAKE) -C include $@

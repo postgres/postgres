@@ -4,13 +4,13 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/Makefile,v 1.30 2000/08/26 13:08:15 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/Makefile,v 1.31 2000/08/31 16:11:03 petere Exp $
 #
 #-------------------------------------------------------------------------
 
 subdir = src/bin
 top_builddir = ../..
-include ../Makefile.global
+include $(top_builddir)/src/Makefile.global
 
 DIRS := initdb initlocation ipcclean pg_ctl pg_dump pg_id \
 	pg_passwd psql scripts pg-config

@@ -4,12 +4,13 @@
 #    Makefile for utils/time
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/time/Makefile,v 1.8 2000/05/29 05:45:42 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/time/Makefile,v 1.9 2000/08/31 16:11:01 petere Exp $
 #
 #-------------------------------------------------------------------------
 
-SRCDIR = ../../..
-include ../../../Makefile.global
+subdir = src/backend/utils/time
+top_builddir = ../../../..
+include $(top_builddir)/src/Makefile.global
 
 OBJS = tqual.o
 
@@ -27,4 +28,3 @@ clean:
 ifeq (depend,$(wildcard depend))
 include depend
 endif
-

@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/test/regress/GNUmakefile,v 1.22 2000/07/23 13:01:10 petere Exp $
+#    $Header: /cvsroot/pgsql/src/test/regress/GNUmakefile,v 1.23 2000/08/31 16:12:26 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -19,9 +19,9 @@ CONTRIB= $(top_builddir)/contrib
 
 HOST := $(shell $(top_srcdir)/config/config.guess)
 
-CFLAGS+= -I$(LIBPQDIR) $(CFLAGS_SL)
+CFLAGS+= -I$(libpq_srcdir) $(CFLAGS_SL)
 
-LDADD+= -L$(LIBPQDIR) -lpq
+LDADD+= $(libpq)
         
 #
 # DLOBJS is the dynamically-loaded object file.  The regression test uses 

@@ -4,12 +4,13 @@
 #    Makefile for rewrite
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/rewrite/Makefile,v 1.12 2000/05/29 05:44:59 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/rewrite/Makefile,v 1.13 2000/08/31 16:10:27 petere Exp $
 #
 #-------------------------------------------------------------------------
 
-SRCDIR = ../..
-include ../../Makefile.global
+subdir = src/backend/rewrite
+top_builddir = ../../..
+include $(top_builddir)/src/Makefile.global
 
 OBJS = rewriteRemove.o rewriteDefine.o \
        rewriteHandler.o rewriteManip.o rewriteSupport.o locks.o
@@ -28,4 +29,3 @@ clean:
 ifeq (depend,$(wildcard depend))
 include depend
 endif
-

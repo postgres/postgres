@@ -1,6 +1,6 @@
 subdir = src/interfaces/ecpg/include
 top_builddir = ../../../..
-include ../../../Makefile.global
+include $(top_builddir)/src/Makefile.global
 
 install: all installdirs install-headers
 

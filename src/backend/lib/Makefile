@@ -4,12 +4,13 @@
 #    Makefile for lib (miscellaneous stuff)
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/lib/Makefile,v 1.14 2000/06/28 03:31:34 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/lib/Makefile,v 1.15 2000/08/31 16:09:59 petere Exp $
 #
 #-------------------------------------------------------------------------
 
-SRCDIR = ../..
-include ../../Makefile.global
+subdir = src/backend/lib
+top_builddir = ../../..
+include $(top_builddir)/src/Makefile.global
 
 OBJS = bit.o hasht.o lispsort.o stringinfo.o dllist.o
 
@@ -27,4 +28,3 @@ clean:
 ifeq (depend,$(wildcard depend))
 include depend
 endif
-

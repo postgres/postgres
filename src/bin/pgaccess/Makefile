@@ -4,13 +4,13 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/pgaccess/Attic/Makefile,v 1.10 2000/06/28 18:29:22 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/pgaccess/Attic/Makefile,v 1.11 2000/08/31 16:11:20 petere Exp $
 #
 #-------------------------------------------------------------------------
 
 subdir = src/bin/pgaccess
 top_builddir = ../../..
-include ../../Makefile.global
+include $(top_builddir)/src/Makefile.global
 
 pgaccessdir = $(datadir)/pgaccess
 

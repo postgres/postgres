@@ -4,16 +4,15 @@
 #    Makefile for optimizer/prep
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/optimizer/prep/Makefile,v 1.11 2000/05/29 05:44:52 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/optimizer/prep/Makefile,v 1.12 2000/08/31 16:10:13 petere Exp $
 #
 #-------------------------------------------------------------------------
 
-SRCDIR = ../../..
-include ../../../Makefile.global
+subdir = src/backend/optimizer/prep
+top_builddir = ../../../..
+include $(top_builddir)/src/Makefile.global
 
 OBJS = prepqual.o preptlist.o prepunion.o prepkeyset.o
-
-# not ready yet: predmig.o xfunc.o
 
 all: SUBSYS.o
 

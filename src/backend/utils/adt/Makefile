@@ -1,12 +1,12 @@
 #
 # Makefile for utils/adt
 #
-# $Header: /cvsroot/pgsql/src/backend/utils/adt/Makefile,v 1.44 2000/08/05 14:59:17 momjian Exp $
+# $Header: /cvsroot/pgsql/src/backend/utils/adt/Makefile,v 1.45 2000/08/31 16:10:45 petere Exp $
 #
 
 subdir = src/backend/utils/adt
 top_builddir = ../../../..
-include ../../../Makefile.global
+include $(top_builddir)/src/Makefile.global
 
 # seems to be required for some date/time stuff 1999/07/22 bjm
 ifeq ($(CPU),alpha)
@@ -40,6 +40,3 @@ clean:
 ifeq (depend,$(wildcard depend))
 include depend
 endif
-
-
-

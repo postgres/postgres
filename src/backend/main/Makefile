@@ -4,12 +4,13 @@
 #    Makefile for main
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/main/Makefile,v 1.8 2000/05/29 05:44:47 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/main/Makefile,v 1.9 2000/08/31 16:10:03 petere Exp $
 #
 #-------------------------------------------------------------------------
 
-SRCDIR = ../..
-include ../../Makefile.global
+subdir = src/backend/main
+top_builddir = ../../..
+include $(top_builddir)/src/Makefile.global
 
 OBJS = main.o
 
@@ -27,4 +28,3 @@ clean:
 ifeq (depend,$(wildcard depend))
 include depend
 endif
-

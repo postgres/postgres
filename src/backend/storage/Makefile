@@ -1,12 +1,12 @@
 #
 # Makefile for the storage manager subsystem
 #
-# $Header: /cvsroot/pgsql/src/backend/storage/Makefile,v 1.7 2000/07/13 16:06:48 petere Exp $
+# $Header: /cvsroot/pgsql/src/backend/storage/Makefile,v 1.8 2000/08/31 16:10:30 petere Exp $
 #
 
 subdir = src/backend/storage
 top_builddir = ../../..
-include ../../Makefile.global
+include $(top_builddir)/src/Makefile.global
 
 SUBDIRS     := buffer file ipc large_object lmgr page smgr
 SUBDIROBJS  := $(SUBDIRS:%=%/SUBSYS.o)

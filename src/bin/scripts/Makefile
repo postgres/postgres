@@ -4,13 +4,13 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/scripts/Makefile,v 1.7 2000/08/20 11:56:29 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/scripts/Makefile,v 1.8 2000/08/31 16:11:25 petere Exp $
 #
 #-------------------------------------------------------------------------
 
 subdir = src/bin/scripts
 top_builddir = ../../..
-include ../../Makefile.global
+include $(top_builddir)/src/Makefile.global
 
 SCRIPTS := createdb dropdb createuser dropuser createlang droplang vacuumdb
 

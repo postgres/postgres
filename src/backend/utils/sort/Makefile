@@ -4,12 +4,13 @@
 #    Makefile for utils/sort
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/sort/Makefile,v 1.11 2000/06/18 22:44:20 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/sort/Makefile,v 1.12 2000/08/31 16:10:59 petere Exp $
 #
 #-------------------------------------------------------------------------
 
-SRCDIR = ../../..
-include ../../../Makefile.global
+subdir = src/backend/utils/sort
+top_builddir = ../../../..
+include $(top_builddir)/src/Makefile.global
 
 OBJS = logtape.o tuplesort.o tuplestore.o
 
@@ -27,4 +28,3 @@ clean:
 ifeq (depend,$(wildcard depend))
 include depend
 endif
-

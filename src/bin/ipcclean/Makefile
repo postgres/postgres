@@ -4,13 +4,13 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/ipcclean/Attic/Makefile,v 1.11 2000/06/27 00:31:05 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/ipcclean/Attic/Makefile,v 1.12 2000/08/31 16:11:08 petere Exp $
 #
 #-------------------------------------------------------------------------
 
 subdir = src/bin/ipcclean
 top_builddir = ../../..
-include ../../Makefile.global
+include $(top_builddir)/src/Makefile.global
 
 all: ipcclean
 

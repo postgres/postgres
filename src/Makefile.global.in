@@ -1,50 +1,19 @@
-#----------------------------------------------------------------------------
+# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.92 2000/08/31 16:09:22 petere Exp $
+
+#------------------------------------------------------------------------------
+# All PostgreSQL makefiles include this file and use the variables it sets,
+# which in turn are put here by the configure script. There is no need for
+# users to edit this file -- if it turns out to be necessary then that's a
+# bug.
 #
-# Makefile.global--
-#    global configuration for the Makefiles
-#
-# Copyright (c) 1994, Regents of the University of California
-#
-#
-# IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.91 2000/08/28 11:53:14 petere Exp $
-#
-# NOTES
-#    Essentially all Postgres make files include this file and use the
-#    variables it sets.
-#
-#    To override the default setting, create a Makefile.custom in this
-#    directory and put your defines there. (Makefile.custom is included
-#    near the end of this file).  Sometimes, a variable gets set in
-#    Makefile.global after Makefile.custom has been included, so you can't
-#    simply set that variable in Makefile.custom.  In those cases, there is
-#    often another variable (like CUSTOM_COPT) that you can set in
-#    Makefile.custom that influences the later setting of the true variable
-#    of interest (like CFLAGS) by Makefile.global.
-#
-#
-#    If you change any of these defines you probably have to
-#       make clean; make
-#    since no dependencies are created for these. (of course you can
-#    be crafty and check what files really depend on them and just remake
-#    those).
-#
-#    Before including this file, you must set the SRCDIR variable to the
-#    path of the top of the Postgres source tree (the directory that
-#    contains this file).
-#
-#-------------------------------------------------------------------------
+# A makefile that includes this file needs to set the variable `subdir' to
+# the relative path from the top to itself and `top_builddir' to the relative
+# path from itself to the top before including this file. (The "top" is the
+# parent directory of the directory this file is in.)
+#------------------------------------------------------------------------------
 
 # PostgreSQL version number
 VERSION = @VERSION@
-
-ifndef top_builddir
-top_builddir = $(SRCDIR)/..
-endif
-
-ifndef SRCDIR
-SRCDIR = $(top_builddir)/src
-endif
 
 # This should be changed once we have separate build dirs.
 top_srcdir = $(top_builddir)
@@ -73,13 +42,14 @@ BSD_SHLIB= true
 # systems now.  May be applicable to other systems to?
 ELF_SYSTEM= @ELF_SYS@
 
-LIBPQDIR= $(SRCDIR)/interfaces/libpq
-LIBPGEASYDIR= $(SRCDIR)/interfaces/libpgeasy
-LIBPGTCLDIR= $(SRCDIR)/interfaces/libpgtcl
+libpq_srcdir = $(top_srcdir)/src/interfaces/libpq
+libpq_builddir = $(top_builddir)/src/interfaces/libpq
+libpq = -L$(libpq_builddir) -lpq
 
-LIBPQ= -L$(LIBPQDIR) -lpq
-LIBPGTCL= -L$(LIBPGTCLDIR) -lpgtcl
-LIBPGEASY= -L$(LIBPGEASYDIR) -lpgeasy
+libpgeasy_srcdir = $(top_srcdir)/src/interfaces/libpgeasy
+libpgeasy_builddir = $(top_builddir/src/interfaces/libpgeasy
+libpgeasy = -L$(libpgeasy_builddir) -lpgeasy
+
 
 # installation directories
 
@@ -99,16 +69,6 @@ docdir = @docdir@
 
 odbcinst_ini_dir = @odbcinst_ini_dir@
 
-# old variable names for installation directories
-
-POSTGRESDIR= $(prefix)
-BINDIR= $(bindir)
-LIBDIR= $(libdir)
-TEMPLATEDIR= $(libdir)
-POSTMANDIR= $(mandir)
-POSTDOCDIR= $(docdir)
-HEADERDIR= $(includedir)
-
 
 ##############################################################################
 #
@@ -116,10 +76,6 @@ HEADERDIR= $(includedir)
 #
 # To disable a feature, comment out the entire definition
 # (that is, prepend '#', don't set it to "0" or "no").
-
-# Comment out ENFORCE_ALIGNMENT if you do NOT want unaligned access to
-# multi-byte types to generate a bus error.
-ENFORCE_ALIGNMENT= true
 
 # Comment out PROFILE to generate a profile version of the binaries
 #PROFILE= -p -non_shared
@@ -156,7 +112,6 @@ MULTIBYTE=@MULTIBYTE@
 #
 # Installation.
 #
-# For many ports, INSTALL is overridden below.
 INSTALL= @INSTALL@
 
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
@@ -180,7 +135,7 @@ FLEX = @FLEX@
 FLEXFLAGS = @FLEXFLAGS@ $(LFLAGS)
 AROPT= @AROPT@
 CPPFLAGS = @CPPFLAGS@
-CFLAGS = -I$(SRCDIR)/include $(CPPFLAGS) @CFLAGS@
+CFLAGS = -I$(top_srcdir)/src/include $(CPPFLAGS) @CFLAGS@
 CFLAGS_SL= @SHARED_LIB@
 LIBS= @LIBS@
 LDFLAGS= @LDFLAGS@ $(LIBS)
@@ -210,7 +165,7 @@ CPU= @CPU@
 HAVE_POSIX_SIGNALS= @HAVE_POSIX_SIGNALS@
 HPUXMATHLIB= @HPUXMATHLIB@
 
-include $(SRCDIR)/Makefile.port
+include $(top_builddir)/src/Makefile.port
 
 ##############################################################################
 #
@@ -219,9 +174,7 @@ include $(SRCDIR)/Makefile.port
 # This includes your local customizations if Makefile.custom exists
 # in the source directory.  This file doesn't exist in the original
 # distribution so that it doesn't get overwritten when you upgrade.
-ifneq ($(wildcard $(SRCDIR)/Makefile.custom), )
-include $(SRCDIR)/Makefile.custom
-endif
+-include $(top_srcdir)/src/Makefile.custom
 
 # This goes here so that customization in Makefile.custom is effective
 ##############################################################################

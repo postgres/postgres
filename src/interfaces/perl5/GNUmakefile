@@ -4,11 +4,11 @@
 # Makefile according to its own ideas and then invoke the rules from
 # that file.
 #
-# $Header: /cvsroot/pgsql/src/interfaces/perl5/Attic/GNUmakefile,v 1.1 2000/06/28 18:29:56 petere Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/perl5/Attic/GNUmakefile,v 1.2 2000/08/31 16:11:58 petere Exp $
 
 subdir = src/interfaces/perl5
 top_builddir = ../../..
-include ../../Makefile.global
+include $(top_builddir)/src/Makefile.global
 
 
 all: Makefile libpq-all
@@ -19,7 +19,7 @@ Makefile: Makefile.PL
 
 .PHONY: libpq-all
 libpq-all:
-	$(MAKE) -C $(top_builddir)/src/interfaces/libpq all
+	$(MAKE) -C $(libpq_builddir) all
 
 # The klugery here is to ensure that the perl5 shared library gets
 # built with the correct path to the installed location of libpq

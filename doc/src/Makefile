@@ -1,20 +1,13 @@
 # Postgres documentation makefile
-# Thomas Lockhart
+# $Header: /cvsroot/pgsql/doc/src/Makefile,v 1.11 2000/08/31 16:09:16 petere Exp $
 
-# Not yet generated from configure, so use relative path names for now...
-PGDOCS= ..
-SRCDIR= ../../src
+subdir = doc/src
+top_builddir = ../..
+-include $(top_builddir)/src/Makefile.global
 
 TAR= tar
 ZIP= gzip
 TAREXCLUDE= --exclude=Makefile --exclude='*.sgml' --exclude=ref
-
-# Pick up Makefile.global from the source area
-# This is the only resource from the code source area and is optional
-
-ifneq ($(wildcard $(SRCDIR)/Makefile.global), )
-include $(SRCDIR)/Makefile.global
-endif
 
 SRC= admin postgres programmer tutorial user
 
@@ -80,5 +73,4 @@ man.tar:
 # Compressed file
 
 %.gz:	%
-	($(ZIP) -f $<)
-
+	$(GZIP) -f $<

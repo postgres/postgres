@@ -4,16 +4,13 @@
 #    Makefile for tcop
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/tcop/Makefile,v 1.23 2000/05/29 05:45:16 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/tcop/Makefile,v 1.24 2000/08/31 16:10:40 petere Exp $
 #
 #-------------------------------------------------------------------------
 
-SRCDIR= ../..
-include $(SRCDIR)/Makefile.global
-
-ifeq ($(CC), gcc)
-CFLAGS+= -Wno-error
-endif
+subdir = src/backend/tcop
+top_builddir = ../../..
+include $(top_builddir)/src/Makefile.global
 
 OBJS= dest.o fastpath.o postgres.o pquery.o utility.o
 
@@ -31,4 +28,3 @@ clean:
 ifeq (depend,$(wildcard depend))
 include depend
 endif
-
