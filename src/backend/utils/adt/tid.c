@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/tid.c,v 1.31 2002/06/20 20:29:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/tid.c,v 1.32 2002/07/16 17:55:25 momjian Exp $
  *
  * NOTES
  *	  input routine largely stolen from boxin().
@@ -17,6 +17,10 @@
  */
 
 #include "postgres.h"
+
+#include <errno.h>
+#include <math.h>
+#include <limits.h>
 
 #include "access/heapam.h"
 #include "catalog/namespace.h"
@@ -47,6 +51,8 @@ tidin(PG_FUNCTION_ARGS)
 	ItemPointer result;
 	BlockNumber blockNumber;
 	OffsetNumber offsetNumber;
+	char	   *badp;
+	int			hold_offset;
 
 	for (i = 0, p = str; *p && i < NTIDARGS && *p != RDELIM; p++)
 		if (*p == DELIM || (*p == LDELIM && !i))
@@ -55,8 +61,16 @@ tidin(PG_FUNCTION_ARGS)
 	if (i < NTIDARGS)
 		elog(ERROR, "invalid tid format: '%s'", str);
 
-	blockNumber = (BlockNumber) atoi(coord[0]);
-	offsetNumber = (OffsetNumber) atoi(coord[1]);
+	errno = 0;
+	blockNumber = strtoul(coord[0], &badp, 10);
+	if (errno || *badp != DELIM)
+		elog(ERROR, "tidin: invalid value.");
+
+	hold_offset = strtol(coord[1], &badp, 10);
+	if (errno || *badp != RDELIM ||
+		hold_offset > USHRT_MAX || hold_offset < 0)
+		elog(ERROR, "tidin: invalid value.");
+	offsetNumber = hold_offset;
 
 	result = (ItemPointer) palloc(sizeof(ItemPointerData));
 
@@ -87,7 +101,7 @@ tidout(PG_FUNCTION_ARGS)
 	blockNumber = BlockIdGetBlockNumber(blockId);
 	offsetNumber = itemPtr->ip_posid;
 
-	sprintf(buf, "(%d,%d)", (int) blockNumber, (int) offsetNumber);
+	sprintf(buf, "(%u,%u)", blockNumber, offsetNumber);
 
 	PG_RETURN_CSTRING(pstrdup(buf));
 }
