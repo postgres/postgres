@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $Header: /cvsroot/pgsql/configure.in,v 1.195 2002/08/20 17:54:43 petere Exp $
+dnl $Header: /cvsroot/pgsql/configure.in,v 1.196 2002/08/22 00:15:06 scrappy Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -242,10 +242,6 @@ AC_SUBST(enable_debug)
 # to use, although the standard way to do this is to set the CC environment
 # variable.
 PGAC_ARG_REQ(with, CC, [], [CC=$with_CC])
-
-# Set here so it can be over-ridden in the template file
-GCC_CXXFLAGS="-O2"
-VENDOR_CXXFLAGS=""
 
 case $template in
   aix) pgac_cc_list="gcc xlc";;
@@ -580,38 +576,6 @@ fi])
 AC_SUBST(ELF_SYS)
 
 
-
-#
-# Optionally build C++ code (i.e., libpq++)
-#
-AC_MSG_CHECKING([whether to build C++ modules])
-PGAC_ARG_OPTARG(with, CXX, [  --with-CXX              build C++ modules (libpq++)],
-                [],
-                [CXX=$withval],
-[
-  AC_MSG_RESULT(yes)
-
-  # If the user has specified CXXFLAGS in the environment, leave it
-  # alone, else use a default.
-
-  AC_PROG_CXX
-  if test "$ac_env_CXXFLAGS" != set; then
-    if test "$GXX" = yes; then
-      CXXFLAGS="$GCC_CXXFLAGS"
-    else
-      CXXFLAGS="$VENDOR_CXXFLAGS"
-    fi
-  fi
-  if test "$enable_debug" = yes && test "$ac_cv_prog_cxx_g" = yes; then
-    CXXFLAGS="$CXXFLAGS -g"
-  fi
-  AC_MSG_NOTICE([using CXXFLAGS=$CXXFLAGS])
-
-  AC_PROG_CXXCPP
-],
-[AC_MSG_RESULT(no)])
-AC_SUBST(with_CXX)
-AC_SUBST(GXX)
 
 CPPFLAGS="$CPPFLAGS $INCLUDES"
 LDFLAGS="$LDFLAGS $LIBDIRS"
@@ -1189,12 +1153,6 @@ SHMEM_IMPLEMENTATION="src/backend/port/sysv_shmem.c"
 if test "$enable_nls" = yes ; then
   PGAC_CHECK_GETTEXT
 fi
-
-if test "$with_CXX" = yes; then
-  PGAC_CLASS_STRING
-  PGAC_CXX_NAMESPACE_STD
-fi
-
 
 # Check for Tcl configuration script tclConfig.sh
 if test "$with_tcl" = yes; then

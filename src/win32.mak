@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/src/win32.mak,v 1.6 2001/08/24 22:42:28 petere Exp $
+# $Header: /cvsroot/pgsql/src/win32.mak,v 1.7 2002/08/22 00:15:08 scrappy Exp $
 
 # Makefile for Microsoft Visual C++ 5.0 (or compat)
 # Top-file makefile for Win32 parts of postgresql.
@@ -19,8 +19,6 @@ ALL:
    if not exist pg_config.h copy pg_config.h.win32 pg_config.h
    cd ..
    cd interfaces\libpq
-   nmake /f win32.mak $(MAKEMACRO)
-   cd ..\libpq++
    nmake /f win32.mak $(MAKEMACRO)
    cd ..\..\bin\psql
    nmake /f win32.mak $(MAKEMACRO)
