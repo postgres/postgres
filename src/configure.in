@@ -360,7 +360,10 @@ AC_CHECK_LIB(termcap,  main)
 AC_CHECK_LIB(history,  main)
 AC_CHECK_LIB(readline, main)
 AC_CHECK_LIB(readline, write_history, AC_DEFINE(HAVE_HISTORY))
-AC_CHECK_LIB(bsd,      main)
+if test "$PORTNAME" != "aix"
+then
+	AC_CHECK_LIB(bsd,      main)
+fi
 AC_CHECK_LIB(m,        main)
 AC_CHECK_LIB(dl,       main)
 AC_CHECK_LIB(socket,   main)
