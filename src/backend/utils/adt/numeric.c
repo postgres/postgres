@@ -14,7 +14,7 @@
  * Copyright (c) 1998-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.82 2005/04/04 23:50:27 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.83 2005/04/06 23:56:07 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2357,7 +2357,6 @@ numeric_stddev(PG_FUNCTION_ARGS)
 Datum
 int2_sum(PG_FUNCTION_ARGS)
 {
-	int64		oldsum;
 	int64		newval;
 
 	if (PG_ARGISNULL(0))
@@ -2370,22 +2369,39 @@ int2_sum(PG_FUNCTION_ARGS)
 		PG_RETURN_INT64(newval);
 	}
 
-	oldsum = PG_GETARG_INT64(0);
+	/*
+	 * If we're invoked by nodeAgg, we can cheat and modify out first
+	 * parameter in-place to avoid palloc overhead. If not, we need to
+	 * return the new value of the transition variable.
+	 */
+	if (fcinfo->context && IsA(fcinfo->context, AggState))
+	{
+		int64 *oldsum = (int64 *) PG_GETARG_POINTER(0);
 
-	/* Leave sum unchanged if new input is null. */
-	if (PG_ARGISNULL(1))
-		PG_RETURN_INT64(oldsum);
+		/* Leave the running sum unchanged in the new input is null */
+		if (!PG_ARGISNULL(1))
+			*oldsum = *oldsum + (int64) PG_GETARG_INT16(1);
 
-	/* OK to do the addition. */
-	newval = oldsum + (int64) PG_GETARG_INT16(1);
+		PG_RETURN_POINTER(oldsum);
+	}
+	else
+	{
+		int64		oldsum = PG_GETARG_INT64(0);
 
-	PG_RETURN_INT64(newval);
+		/* Leave sum unchanged if new input is null. */
+		if (PG_ARGISNULL(1))
+			PG_RETURN_INT64(oldsum);
+
+		/* OK to do the addition. */
+		newval = oldsum + (int64) PG_GETARG_INT16(1);
+
+		PG_RETURN_INT64(newval);
+	}
 }
 
 Datum
 int4_sum(PG_FUNCTION_ARGS)
 {
-	int64		oldsum;
 	int64		newval;
 
 	if (PG_ARGISNULL(0))
@@ -2398,16 +2414,34 @@ int4_sum(PG_FUNCTION_ARGS)
 		PG_RETURN_INT64(newval);
 	}
 
-	oldsum = PG_GETARG_INT64(0);
+	/*
+	 * If we're invoked by nodeAgg, we can cheat and modify out first
+	 * parameter in-place to avoid palloc overhead. If not, we need to
+	 * return the new value of the transition variable.
+	 */
+	if (fcinfo->context && IsA(fcinfo->context, AggState))
+	{
+		int64 *oldsum = (int64 *) PG_GETARG_POINTER(0);
 
-	/* Leave sum unchanged if new input is null. */
-	if (PG_ARGISNULL(1))
-		PG_RETURN_INT64(oldsum);
+		/* Leave the running sum unchanged in the new input is null */
+		if (!PG_ARGISNULL(1))
+			*oldsum = *oldsum + (int64) PG_GETARG_INT32(1);
 
-	/* OK to do the addition. */
-	newval = oldsum + (int64) PG_GETARG_INT32(1);
+		PG_RETURN_POINTER(oldsum);
+	}
+	else
+	{
+		int64		oldsum = PG_GETARG_INT64(0);
 
-	PG_RETURN_INT64(newval);
+		/* Leave sum unchanged if new input is null. */
+		if (PG_ARGISNULL(1))
+			PG_RETURN_INT64(oldsum);
+
+		/* OK to do the addition. */
+		newval = oldsum + (int64) PG_GETARG_INT32(1);
+
+		PG_RETURN_INT64(newval);
+	}
 }
 
 Datum
@@ -2425,6 +2459,12 @@ int8_sum(PG_FUNCTION_ARGS)
 		newval = DirectFunctionCall1(int8_numeric, PG_GETARG_DATUM(1));
 		PG_RETURN_DATUM(newval);
 	}
+
+	/*
+	 * Note that we cannot special-case the nodeAgg case here, as we
+	 * do for int2_sum and int4_sum: numeric is of variable size, so
+	 * we cannot modify our first parameter in-place.
+	 */
 
 	oldsum = PG_GETARG_NUMERIC(0);
 
