@@ -11,7 +11,7 @@
  *	  SQL aggregates. (Do not expect POSTQUEL semantics.)	 -- ay 2/95
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.55 1999/09/26 21:21:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.56 1999/09/28 02:03:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -373,7 +373,8 @@ ExecAgg(Agg *node)
 				elog(ERROR, "ExecAgg: no valid transition functions??");
 
 			/*
-			 * Release any per-group working storage.
+			 * Release any per-group working storage, unless we're passing
+			 * it back as the result of the aggregate.
 			 */
 			if (OidIsValid(peraggstate->xfn1_oid) &&
 				! peraggstate->value1IsNull &&
@@ -411,34 +412,20 @@ ExecAgg(Agg *node)
 			aggstate->agg_done = true;
 
 		/*
-		 * When the outerPlan doesn't return a single tuple,
-		 * create a dummy input tuple anyway because we still need
-		 * to return a valid aggregate tuple.  (XXX isn't this wasted
-		 * effort?  Since we're not in GROUP BY mode, it shouldn't be
-		 * possible for the projected result to refer to any raw input
-		 * columns??)  The values returned for the aggregates will be
-		 * the initial values of the transition functions.
+		 * We used to create a dummy all-nulls input tuple here if
+		 * inputTuple == NULL (ie, the outerPlan didn't return anything).
+		 * However, now that we don't return a bogus tuple in Group mode,
+		 * we can only get here with inputTuple == NULL in non-Group mode.
+		 * So, if the parser has done its job right, the projected output
+		 * tuple's targetList must not contain any direct references to
+		 * input columns, and so it's a waste of time to create an
+		 * all-nulls input tuple.  We just let the tuple slot get set
+		 * to NULL instead.  The values returned for the aggregates will
+		 * be the initial values of the transition functions.
 		 */
-		if (inputTuple == NULL)
-		{
-			TupleDesc	tupType;
-			Datum	   *tupValue;
-			char	   *null_array;
-			AttrNumber	attnum;
-
-			tupType = aggstate->csstate.css_ScanTupleSlot->ttc_tupleDescriptor;
-			tupValue = projInfo->pi_tupValue;
-
-			/* set all the values to NULL */
-			null_array = palloc(sizeof(char) * tupType->natts);
-			for (attnum = 0; attnum < tupType->natts; attnum++)
-				null_array[attnum] = 'n';
-			inputTuple = heap_formtuple(tupType, tupValue, null_array);
-			pfree(null_array);
-		}
 
 		/*
-		 * Store the representative input tuple (or faked-up null tuple)
+		 * Store the representative input tuple (or NULL, if none)
 		 * in the tuple table slot reserved for it.
 		 */
 		ExecStoreTuple(inputTuple,
