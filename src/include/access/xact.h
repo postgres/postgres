@@ -6,14 +6,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: xact.h,v 1.2 1996/11/03 08:17:23 scrappy Exp $
+ * $Id: xact.h,v 1.3 1996/11/05 07:15:58 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef XACT_H
 #define XACT_H
 
-#include "utils/nabstime.h"
+#include <utils/nabstime.h>
 
 /* ----------------
  *	transaction state structure
