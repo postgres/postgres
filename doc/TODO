@@ -265,10 +265,10 @@ CLIENTS
 	o Improve error handling
 	o Allow :var[:index] or :var[<integer>] as cvariable for an array var
 	o Add a semantic check level, e.g. check if a table really exists
-	o Remove space_or_nl and line_end from pgc.l
+	o -Remove space_or_nl and line_end from pgc.l
 	o Fix nested C comments
 	o Add SQLSTATE
-	o fix array handling in ECPG
+	o fix handling of DB attributes taht are arrays
 
 REFERENTIAL INTEGRITY
 
