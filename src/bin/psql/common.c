@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.86 2004/05/07 00:24:58 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.87 2004/05/23 22:20:10 neilc Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -802,7 +802,8 @@ PrintQueryResults(PGresult *results)
 				char		buf[10];
 
 				success = true;
-				sprintf(buf, "%u", (unsigned int) PQoidValue(results));
+				snprintf(buf, sizeof(buf),
+						 "%u", (unsigned int) PQoidValue(results));
 				if (!QUIET())
 				{
 					if (pset.popt.topt.format == PRINT_HTML)

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.47 2004/05/18 20:18:58 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.48 2004/05/23 22:20:10 neilc Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -1133,15 +1133,14 @@ void
 printQuery(const PGresult *result, const printQueryOpt *opt, FILE *fout)
 {
 	int			nfields;
+	int			ncells;
 	const char **headers;
 	const char **cells;
 	char	  **footers;
 	char	   *align;
 	int			i;
 
-
 	/* extract headers */
-
 	nfields = PQnfields(result);
 
 	headers = calloc(nfields + 1, sizeof(*headers));
@@ -1155,15 +1154,15 @@ printQuery(const PGresult *result, const printQueryOpt *opt, FILE *fout)
 		headers[i] = mbvalidate(PQfname(result, i), opt->topt.encoding);
 
 	/* set cells */
-
-	cells = calloc(nfields * PQntuples(result) + 1, sizeof(*cells));
+	ncells = PQntuples(result) * nfields;
+	cells = calloc(ncells + 1, sizeof(*cells));
 	if (!cells)
 	{
 		perror("calloc");
 		exit(EXIT_FAILURE);
 	}
 
-	for (i = 0; i < nfields * PQntuples(result); i++)
+	for (i = 0; i < ncells; i++)
 	{
 		if (PQgetisnull(result, i / nfields, i % nfields))
 			cells[i] = opt->nullPrint ? opt->nullPrint : "";
@@ -1185,6 +1184,11 @@ printQuery(const PGresult *result, const printQueryOpt *opt, FILE *fout)
 		}
 
 		footers[0] = malloc(100);
+		if (!footers[0])
+		{
+			perror("malloc");
+			exit(EXIT_FAILURE);
+		}
 		if (PQntuples(result) == 1)
 			snprintf(footers[0], 100, gettext("(1 row)"));
 		else
@@ -1194,7 +1198,6 @@ printQuery(const PGresult *result, const printQueryOpt *opt, FILE *fout)
 		footers = NULL;
 
 	/* set alignment */
-
 	align = calloc(nfields + 1, sizeof(*align));
 	if (!align)
 	{
@@ -1221,13 +1224,12 @@ printQuery(const PGresult *result, const printQueryOpt *opt, FILE *fout)
 	}
 
 	/* call table printer */
-
 	printTable(opt->title, headers, cells,
-			   footers ? (const char *const *) footers : (const char *const *) (opt->footers),
+			   (const char *const *) footers,
 			   align, &opt->topt, fout);
 
-	free((void *) headers);
-	free((void *) cells);
+	free(headers);
+	free(cells);
 	if (footers)
 	{
 		free(footers[0]);
