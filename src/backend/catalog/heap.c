@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.35 1997/11/26 01:10:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.36 1997/11/26 04:37:53 momjian Exp $
  *
  * INTERFACE ROUTINES
  *		heap_creatr()			- Create an uncataloged heap relation
@@ -728,9 +728,9 @@ addNewRelationType(char *typeName, Oid new_rel_oid)
 							  'c',		/* type-type (catalog) */
 							  ',',		/* default array delimiter */
 							  "int4in", /* input procedure */
-							  "int4out",		/* output procedure */
-							  "int4in", /* send procedure */
-							  "int4out",		/* receive procedure */
+							  "int4out",/* output procedure */
+							  "int4out",/* send procedure */
+							  "int4in",	/* receive procedure */
 							  NULL,		/* array element type - irrelevent */
 							  "-",		/* default type value */
 							  (bool) 1, /* passed by value */
