@@ -231,7 +231,7 @@ AC_DEFINE_UNQUOTED([DEF_MAXBACKENDS], [$with_maxbackends],
 # Option to disable shared libraries
 #
 PGAC_ARG_BOOL(enable, shared, yes,
-              [  --disable-shared       do not build shared libraries])
+              [  --disable-shared        do not build shared libraries])
 AC_SUBST(enable_shared)
 
 
@@ -315,7 +315,7 @@ IFS=':'
 # LIBRARY_DIRS comes from command line, SRCH_LIB from template file.
 for dir in $LIBRARY_DIRS $SRCH_LIB; do
   if test -d "$dir"; then
-    PGSQL_LDFLAGS="$PGSQL_LDFLAGS -L$dir"
+    LIBDIRS="$LIBDIRS -L$dir"
   else
     AC_MSG_WARN([*** Library directory $dir does not exist.])
   fi
@@ -394,17 +394,12 @@ PGAC_ARG_OPTARG(with, krb4, [  --with-krb4[=DIR]       build with Kerberos 4 sup
   AC_MSG_RESULT([building with Kerberos 4 support])
   AC_DEFINE(KRB4, 1, [Define if you are building with Kerberos 4 support.])
 
-  if test -d "$krb4_prefix"; then
-    if test -d "$krb4_prefix/include"; then
-      INCLUDES="$INCLUDES -I$krb4_prefix/include"
-    fi
-    if test -d "$krb4_prefix/lib"; then
-      krb_libdir="-L$krb4_prefix/lib"
-      LIBS="$krb_libdir $LIBS"
-    fi
+  if test -d "$krb4_prefix/include"; then
+    INCLUDES="$INCLUDES -I$krb4_prefix/include"
   fi
-  # Test for these libraries is below
-  KRB_LIBS="$krb_libdir -lkrb -ldes"
+  if test -d "$krb4_prefix/lib"; then
+    LIBDIRS="$LIBDIRS -L$krb4_prefix/lib"
+  fi
 
   krb_srvtab="/etc/srvtab"
 ])
@@ -422,18 +417,12 @@ PGAC_ARG_OPTARG(with, krb5, [  --with-krb5[=DIR]       build with Kerberos 5 sup
   AC_MSG_RESULT([building with Kerberos 5 support])
   AC_DEFINE(KRB5, 1, [Define if you are building with Kerberos 5 support.])
 
-  if test -d "$krb5_prefix"; then
-    if test -d "$krb5_prefix/include"; then
-      INCLUDES="$INCLUDES -I$krb5_prefix/include"
-    fi
-    if test -d "$krb5_prefix/lib"; then
-      krb_libdir="-L$krb5_prefix/lib"
-      LIBS="$krb_libdir $LIBS"
-    fi
+  if test -d "$krb5_prefix/include"; then
+    INCLUDES="$INCLUDES -I$krb5_prefix/include"
   fi
-
-  # Test for these libraries is below
-  KRB_LIBS="$krb_libdir -lkrb5 -lcrypto -lcom_err"
+  if test -d "$krb5_prefix/lib"; then
+    LIBDIRS="$LIBDIRS -L$krb5_prefix/lib"
+  fi
 
   krb_srvtab="FILE:\$(sysconfdir)/krb5.keytab"
 ])
@@ -447,15 +436,13 @@ if test "$with_krb4" = yes && test "$with_krb5" = yes ; then
 fi
 
 AC_SUBST(krb_srvtab)
-dnl Necessary for special libpq link
-AC_SUBST(KRB_LIBS)
 
 
 #
 # Kerberos configuration parameters
 #
 PGAC_ARG_REQ(with, krb-srvnam,
-             [  --with-krb-srvnam=NAME  name of the PostgreSQL service principal in Kerberos [postgres]],
+             [  --with-krb-srvnam=NAME  name of the service principal in Kerberos [postgres]],
              [],
              [with_krb_srvnam="postgres"])
 AC_DEFINE_UNQUOTED([PG_KRB_SRVNAM], ["$with_krb_srvnam"],
@@ -478,22 +465,12 @@ PGAC_ARG_OPTARG(with, openssl,
     INCLUDES="$INCLUDES -I${openssl_prefix}/include"
   fi
   if test -d "${openssl_prefix}/lib" ; then
-    openssl_libdir="${openssl_prefix}/lib"
-    LIBS="$LIBS -L${openssl_prefix}/lib"
-  else
-    openssl_libdir="${openssl_prefix}"
-    LIBS="$LIBS -L${openssl_prefix}"
+    LIBDIRS="$LIBDIRS -L${openssl_prefix}/lib"
   fi
 ])
 
 AC_SUBST(with_openssl)
 
-
-# OpenSSL and Kerberos 5 both have a `crypto' library, so if you want to
-# use both of them you'll have to figure it out yourself.
-if test "$with_openssl" = yes && test "$with_krb5" = yes ; then
-  AC_MSG_ERROR([OpenSSL and Kerberos 5 support cannot be combined])
-fi
 
 
 #
@@ -561,7 +538,7 @@ PGAC_ARG_OPTARG(with, CXX, [  --with-CXX              build C++ modules (libpq++
 AC_SUBST(with_CXX)
 
 CPPFLAGS="$CPPFLAGS $INCLUDES"
-LDFLAGS="$LDFLAGS $PGSQL_LDFLAGS"
+LDFLAGS="$LDFLAGS $LIBDIRS"
 
 echo "using CPPFLAGS=$CPPFLAGS"
 echo "using LDFLAGS=$LDFLAGS"
@@ -640,7 +617,7 @@ AC_CHECK_LIB(gen,      main)
 AC_CHECK_LIB(PW,       main)
 AC_SEARCH_LIBS(crypt,  crypt)
 AC_CHECK_LIB(z,        inflate)
-AC_SEARCH_LIBS(__inet_ntoa, bind)
+AC_CHECK_LIB(bind,     __inet_ntoa)
 
 
 if test "$with_krb4" = yes ; then
@@ -649,9 +626,10 @@ if test "$with_krb4" = yes ; then
 fi
 
 if test "$with_krb5" = yes ; then
-  AC_CHECK_LIB(com_err, main, [], [AC_MSG_ERROR([library \`com_err' is required for Kerberos 5])])
-  AC_CHECK_LIB(crypto,  main, [], [AC_MSG_ERROR([library \`crypto' is required for Kerberos 5])])
-  AC_CHECK_LIB(krb5,    main, [], [AC_MSG_ERROR([library \`krb5' is required for Kerberos 5])])
+  AC_CHECK_LIB(com_err, [com_err], [], [AC_MSG_ERROR([library \`com_err' is required for Kerberos 5])])
+  AC_CHECK_LIB(crypto,  [krb5_encrypt], [],
+    [AC_CHECK_LIB(k5crypto, [krb5_encrypt], [], [AC_MSG_ERROR([library \`crypto' is required for Kerberos 5])])])
+  AC_CHECK_LIB(krb5,    [krb5_sendauth], [], [AC_MSG_ERROR([library \`krb5' is required for Kerberos 5])])
 fi
 
 if test "$with_openssl" = yes ; then

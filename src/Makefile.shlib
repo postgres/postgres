@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.27 2000/10/23 21:43:56 petere Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.28 2000/10/25 16:13:52 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -199,6 +199,9 @@ ifeq ($(PORTNAME), beos)
   LINK.shared		= $(LD) -nostart
   SHLIB_LINK		+= -ltermcap -lstdc++.r4 -lbind -lsocket -L/boot/develop/lib/x86
 endif
+
+# Pull in any extra -L options that the user might have specified.
+SHLIB_LINK := $(filter -L%, $(LDFLAGS)) $(SHLIB_LINK)
 
 endif # enable_shared
 

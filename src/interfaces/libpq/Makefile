@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.45 2000/10/20 21:04:11 petere Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.46 2000/10/25 16:13:52 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -26,12 +26,11 @@ ifdef MULTIBYTE
 OBJS+= common.o wchar.o conv.o big5.o mbutils.o
 endif
 
-# If crypt is a separate library, rather than part of libc,
-# make sure it gets included in shared libpq.
-SHLIB_LINK+= $(findstring -lcrypt, $(LIBS))
+# Add libraries that libpq depends (or might depend) on into the
+# shared library link.  (The order in which you list them here doesn't
+# matter.)
+SHLIB_LINK += $(filter -lcrypt -ldes -lkrb -lcom_err -lcrypto -lk5crypto -lkrb5 -lssl -lsocket -lnsl, $(LIBS))
 
-# Include kerberos libraries into libpq
-SHLIB_LINK += $(KRB_LIBS)
 
 all: all-lib
 
