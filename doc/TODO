@@ -1,13 +1,13 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sat Apr 14 21:55:58 EDT 2001
+Last updated:		Sun Apr 15 21:32:39 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
 The most recent version of this document can be viewed at
 the PostgreSQL web site, http://www.PostgreSQL.org.
 
-A dash (-) marks changes that will appear in the upcoming 7.1 release.
+A dash (-) marks changes that will appear in the upcoming 7.2 release.
 
 Bracketed items "[]" have more detailed information at
 http://www.postgresql.org/docs/todo.html.
@@ -20,34 +20,13 @@ PARSER
 
 * SELECT pg_class FROM pg_class generates strange error
 * Alter TABLE ADD COLUMN does not honor DEFAULT, add CONSTRAINT
-* -Creating index of TIMESTAMP & RELTIME fails, or rename to DATETIME (Thomas)
-* -SELECT foo UNION SELECT foo is incorrectly simplified to SELECT foo
 * Unique index on base column not honored on inserts from inherited table
   INSERT INTO inherit_table (unique_index_col) VALUES (dup) should fail
   [inheritance] 
-* -Be smarter about promoting types when UNION merges different data types
-* -redesign INSERT ... SELECT to have two levels of target list
-* -have INTERSECT/EXCEPT prevent duplicates unless ALL is specified (Tom)
-* -SELECT col::DECIMAL(12,10); fails
-
-VIEWS
-
-* -Views containing aggregates sometimes fail (Jan)
-* -Creating view and inheriting the view causes view* to show
-  duplicates [inheritance] 
-* -Disallow LOCK on view (Mark Hollomon)
 
 MISC
 
 * Plpgsql does not handle quoted mixed-case identifiers
-* -Buffer reference counting bugfixes (Tom)
-* -Fix libpq bug that causes it to drop backend error message sent
-  just before connection closure (ie, any FATAL error message)
-* -SELECT ... UNION ... ORDER BY fails when sort expr not in result list
-* -SELECT ... UNION ... GROUP BY fails if column types disagree, no type
-  promotion occurs
-* -Modification  of  pg_class  can  happen while table in use by
-  another backend.  Might  lead  to  MVCC  inside  of  syscache
 * Permission to DELETE table allows UPDATE also
 * SELECT cash_out(1) causes crash
 
@@ -56,9 +35,6 @@ ENHANCEMENTS
 
 URGENT
 
-* -Add OUTER joins, left and right (Tom, Thomas)
-* -Allow long tuples by chaining or auto-storing outside db (TOAST) (Jan)
-* -Fix memory leak for expressions (Tom) 
 * Add replication of distributed databases [replication]
 	o automatic fallover
 	o load balancing
@@ -73,32 +49,19 @@ URGENT
 ADMIN
 
 * More access control over who can create tables and use locks (Karel)
-* -Test syslog functionality
 * Allow elog() to return error codes, module name, file name, line
   number, not just messages [elog]
 * Allow international error message support and add error codes [elog]
-* -Unify configuration into one configuration file (Peter E)
-* -use setproctitle() if it exists for 'ps' display of status
-* -Prevent initdb from running wrong version of postmaster/postgres (Peter E)
 * Remove unused files during database vacuum or postmaster startup
 
 TYPES
 
 * Nchar (as distinguished from ordinary varchar),
 * Domain capability
-* -Add STDDEV/VARIANCE() function for standard deviation computation/variance
-* -Allow compression of large fields or a compressed field type
-* -Large objects
-	o -Fix large object mapping scheme, own typeid or reltype (Peter E)
-	o -Not to stuff everything as files in a single directory, hash dirs
-	o -Allow large object vacuuming
-	o -Tables that start with xinv confused to be large objects
 * Add IPv6 capability to INET/CIDR types
-* -Fix improper masking of some inet/cidr types 
 * Add conversion function from text to inet
 * Make a separate SERIAL type?
 * Store binary-compatible type information in the system
-* -Add support for & operator (Peter E)
 * Allow LOCALE on a per-column basis, default to ASCII
 * Add SHOW command to see locale
 * Allow nulls in arrays
@@ -110,15 +73,12 @@ TYPES
 * Declare typein/out functions in pg_proc with a special "C string" data type
 * Add non-large-object binary field
 * Functions returning sets do not totally work
-* -Add hash for int8 (Tom)
 * SELECT col FROM tab WHERE numeric_col = 10.1 fails
-* -Get BIT type working
 * Allow better handling of numeric constants, type conversion [typeconv]
 * Support multiple simultaneous character sets, per SQL92
 * Reject character sequences those are not valid in their charset
 * Make functions more multi-byte aware, i.e. trim()
 * Make n of CHAR(n)/VARCHAR(n) the number of letters, not bytes
-* -Update macaddr manufacturer numbers, or remove the function macaddr_manuf()
 * Add btree index support for reltime, tinterval, regproc
 * Add rtree index support for line, lseg, path, point
 * Make binary/file in/out interface for TOAST columns
@@ -129,11 +89,7 @@ TYPES
 
 VIEWS
 
-* -Allow DISTINCT on views
-* -Allow views of aggregate columns
-* -Allow views with subselects
 * Automatically create rules on views so they are updateable, per SQL92
-* -Change elog for complex view ins|upd|del to "cannot {ins|upd|del}
 * Add the functionality for "with check option" clause of create view
 * Allow NOTIFY in rules involving conditionals
 * Evaluate INSERT rules at end of query, rather than beginning
@@ -142,7 +98,6 @@ INDEXES
 
 * Allow CREATE INDEX zman_index ON test (date_trunc( 'day', zman ) datetime_ops)
   fails index can't store constant parameters
-* -Allow SQL function indexes
 * Add FILLFACTOR to index creation
 * Re-enable partial indexes
 * Allow inherited tables to inherit index, UNIQUE constraint, and primary key
@@ -156,12 +111,9 @@ COMMANDS
 
 * ALTER TABLE ADD COLUMN to inherited table put column in wrong place 
   [inheritance]
-* -Add ALTER TABLE ALTER COLUMN feature (Peter E)
 * Add ALTER TABLE DROP COLUMN feature [drop]
-* -Add ALTER TABLE command to change table ownership (Mark H)
 * Add ALTER FUNCTION 
 * Add ALTER TABLE ... DROP CONSTRAINT
-* -Add ALTER USER command to change user db attributes (Peter E)
 * Automatically drop constraints/functions when object is dropped
 * CLUSTER
 	* cluster all tables at once
@@ -175,14 +127,7 @@ COMMANDS
 * Allow INSERT/UPDATE of system-generated oid value for a row
 * Allow INSERT INTO my_table VALUES (a, b, c, DEFAULT, x, y, z, ...)
 * Allow INSERT INTO tab (col1, ..) VALUES (val1, ..), (val2, ..)
-* -Allow multi-level query trees for INSERT INTO ... SELECT
-* -Allow ORDER BY...LIMIT in INSERT INTO ... SELECT (Tom)
-* -Allow ESCAPE '\' at the end of LIKE for ANSI compliance (Thomas)
-* -Rewrite the LIKE handling by rewriting the user string with the 
-  supplied ESCAPE
 * Allow RULE recompilation
-* -Support UNION/INTERSECT/EXCEPT in sub-selects
-* -Allow DELETE and UPDATE to use inheritance
 * Allow BINARY option to SELECT, like we do with DECLARE
 * MOVE 0 should not move to end of cursor
 * Overhaul ACL (access control) code
@@ -191,7 +136,6 @@ COMMANDS
   columns, allow DEFAULT
 * Allow cursors to be DECLAREd/OPENed/CLOSEed outside transactions
 * Allow DELETE WHERE CURRENT OF cursor
-* -redesign UNION structures to have separarate target lists
 * Add BETWEEN ASYMMETRIC/SYMMETRIC
 
 CLIENTS
@@ -203,14 +147,11 @@ CLIENTS
 	* Allow specification of column names
 	* Allow dump/load of CSV format
 * fix array handling for ECPG
-* -add pg_dump option to dump type names as standard ANSI types
 * have pg_dump use LEFT OUTER JOIN in multi-table SELECTs
   or multiple SELECTS to avoid bad system catalog entries
-* -make pg_dump dump in oid order, so dependencies are resolved (Philip)
 * allow psql \d to show primary and foreign keys
 * allow psql \d to show temporary table structure
 * add XML interface capability
-* -Allow dumping of users/groups separately
 * Add a global RESET command for use with connection pooling
 * Remove <=6.3 version compatibility in ODBC?
 * Add SET REAL_FORMAT and SET DOUBLE_PRECISION_FORMAT using printf args
@@ -221,8 +162,6 @@ REFERENTIAL INTEGRITY
 * Check that primary key exists at foreign key definition time
 * Prevent column dropping if column is used by foreign key
 * Propagate column or table renaming to foreign key constraints
-* -Emit a warning at foreign key creation time if no UNIQUE index
-  exists on referenced primary key attributes
 * Add deferred trigger queue file (Jan)
 * Allow oid to act as a foreign key
 * Implement dirty reads and use them in RI triggers
@@ -252,18 +191,13 @@ MISCELLANEOUS
 * Increase identifier length(NAMEDATALEN) if small performance hit
 * Create a background process for each database that runs while
   database is idle, finding superceeded rows, gathering stats and vacuuming
-* -Transaction log, so re-do log can be on a separate disk with after-row
-  images (Vadim)
 * Implement UNDO using transaction log
 * Populate backend status area and write program to dump status data
 * Put sort files in their own directory
 * Allow autocommit so always in a transaction block
 * Show location of syntax error in query [yacc]
-* -Redesign the function call interface to handle NULLs better (Tom)
 * Overhaul bufmgr/lockmgr/transaction manager
-* -Use IPC_EXCL when creating shared memory and semaphores (Tom)
 * Encrpyt passwords in pg_shadow table using MD5 (Vince)
-* -Use flock() to prevent multiple postmasters on the same port (Tom)
 * Allow Java server-side programming [java]
 * Add sed-like regular expression search/replace capability
 
@@ -272,8 +206,6 @@ PERFORMANCE
 
 -FSYNC
 
-* -Allow transaction commits with rollback with no-fsync performance
-  (Vadim)
 * Delay fsync() when other backends are about to commit too [fsync]
 	* Determine optimal commit_delay value
 * Determine optimal fdatasync/fsync, O_SYNC/O_DSYNC options
@@ -286,8 +218,6 @@ INDEXES
   non-consecutive keys or OR clauses, so fewer heap accesses
 * Allow SELECT * FROM tab WHERE int2col = 4 use int2col index, int8,
   float4, numeric/decimal too [optimizer]
-* -Include heap CTID in btree index keys, remove equal-key cruft from
-  btree (Tom)
 * Use indexes with CIDR '<<' (contains) operator
 * Allow LIKE indexing optimization for non-ASCII locales
 * Be smarter about insertion of already-ordered data into btree index
@@ -305,7 +235,6 @@ VACUUM
 * Improve speed with indexes (perhaps recreate index instead) [vacuum]
 * Reduce lock time by moving tuples with read lock, then write
   lock and truncate table [vacuum]
-* -Redesign ANALYZE in VACUUM so it can be run separately without locks
 * Make ANALYZE a separate command
 * Allow ANALYZE to ESTIMATE based on certain random precentage of rows
 * Add LAZY VACUUM (Vadim)
@@ -317,14 +246,10 @@ MISCELLANEOUS
 * Get faster regex() code from Henry Spencer <henry@zoo.utoronto.ca>
   when it is available
 * Use mmap() rather than SYSV shared memory(?) [mmap]
-* -Make oid use oidin/oidout not int4in/int4out in pg_type.h (Tom)
 * Improve Subplan list handling
 * Allow Subplans to use efficient joins(hash, merge) with upper variable
-* -use fmgr_info()/fmgr_faddr() instead of fmgr() calls in high-traffic
-  places, like GROUP BY, UNIQUE, index processing, etc.
 * improve dynamic memory allocation by introducing tuple-context memory
   allocation (Tom)
-* -In WHERE tab1.x=3 AND tab1.x=tab2.y, add tab2.y=3
 * allow configuration of maximum number of open files
 * Remove pg_listener index
 * Improve statistics storage in pg_class [performance]
@@ -341,14 +266,9 @@ MISCELLANEOUS
 SOURCE CODE
 -----------
 * Add use of 'const' for variables in source tree
-* -Fix C optimizer problem where fmgr_ptr calls return different types (Tom)
 * Does Mariposa source contain any other bug fixes?
 * Remove SET KSQO option now that OR processing is improved (Tom)
-* -Use macros to define NT open() file parameters, remove NT-specific defines
-* -Change CURRENT to OLD internally for rules (Bruce)
 * Convert remaining fprintf(stderr,...)/perror() to elog()
-* -Allow libedit to be used in place of libreadline
-* -BSD/OS does not support locale because there is no LC_MESSAGES (Bruce)
 * Remove unused pg_variable, pg_inheritproc, pg_ipl tables
 * Experiment with multi-threaded backend [thread]
 * Fix problems with libpq non-blocking/async code [async]
