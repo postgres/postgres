@@ -70,7 +70,7 @@ init_table_info(PGresult *res, int row, db_info * dbi)
 		return NULL;
 	}
 
-	if (NULL == res)
+	if (res == NULL)
 		return NULL;
 
 	new_tbl->dbi = dbi;			/* set pointer to db */
@@ -146,17 +146,17 @@ update_table_thresholds(db_info * dbi, tbl_info * tbl, int vacuum_type)
 	int			disconnect = 0;
 	char		query[128];
 
-	if (NULL == dbi->conn)
+	if (dbi->conn == NULL)
 	{
 		dbi->conn = db_connect(dbi);
 		disconnect = 1;
 	}
 
-	if (NULL != dbi->conn)
+	if (dbi->conn != NULL)
 	{
 		snprintf(query, sizeof(query), PAGES_QUERY, tbl->relfilenode);
 		res = send_query(query, dbi);
-		if (NULL != res)
+		if (res != NULL)
 		{
 			tbl->reltuples =
 				atoi(PQgetvalue(res, 0, PQfnumber(res, "reltuples")));
@@ -166,7 +166,7 @@ update_table_thresholds(db_info * dbi, tbl_info * tbl, int vacuum_type)
 			 * update vacuum thresholds only of we just did a vacuum
 			 * analyze
 			 */
-			if (VACUUM_ANALYZE == vacuum_type)
+			if (vacuum_type == VACUUM_ANALYZE)
 			{
 				tbl->vacuum_threshold =
 					(args->vacuum_base_threshold + args->vacuum_scaling_factor * tbl->reltuples);
@@ -208,13 +208,13 @@ update_table_list(db_info * dbi)
 				t = 0,
 				found_match = 0;
 
-	if (NULL == dbi->conn)
+	if (dbi->conn == NULL)
 	{
 		dbi->conn = db_connect(dbi);
 		disconnect = 1;
 	}
 
-	if (NULL != dbi->conn)
+	if (dbi->conn != NULL)
 	{
 		/*
 		 * Get a result set that has all the information we will need to
@@ -229,7 +229,7 @@ update_table_list(db_info * dbi)
 		 * the inner loop, this will determine what tables should be
 		 * removed
 		 */
-		while (NULL != tbl_elem)
+		while (tbl_elem != NULL)
 		{
 			tbl = ((tbl_info *) DLE_VAL(tbl_elem));
 			found_match = 0;
@@ -243,7 +243,7 @@ update_table_list(db_info * dbi)
 					break;
 				}
 			}
-			if (0 == found_match)
+			if (found_match == 0)
 			{					/* then we didn't find this tbl_elem in
 								 * the result set */
 				Dlelem	   *elem_to_remove = tbl_elem;
@@ -264,7 +264,7 @@ update_table_list(db_info * dbi)
 		{
 			tbl_elem = DLGetHead(dbi->table_list);
 			found_match = 0;
-			while (NULL != tbl_elem)
+			while (tbl_elem != NULL)
 			{
 				tbl = ((tbl_info *) DLE_VAL(tbl_elem));
 				if (tbl->relfilenode == atoi(PQgetvalue(res, i, PQfnumber(res, "relfilenode"))))
@@ -274,7 +274,7 @@ update_table_list(db_info * dbi)
 				}
 				tbl_elem = DLGetSucc(tbl_elem);
 			}
-			if (0 == found_match)		/* then we didn't find this result
+			if (found_match == 0)		/* then we didn't find this result
 										 * now in the tbl_list */
 			{
 				DLAddTail(dbi->table_list, DLNewElem(init_table_info(res, i, dbi)));
@@ -335,7 +335,7 @@ free_tbl_list(Dllist *tbl_list)
 	Dlelem	   *tbl_elem = DLGetHead(tbl_list);
 	Dlelem	   *tbl_elem_to_remove = NULL;
 
-	while (NULL != tbl_elem)
+	while (tbl_elem != NULL)
 	{
 		tbl_elem_to_remove = tbl_elem;
 		tbl_elem = DLGetSucc(tbl_elem);
@@ -349,7 +349,7 @@ print_table_list(Dllist *table_list)
 {
 	Dlelem	   *table_elem = DLGetHead(table_list);
 
-	while (NULL != table_elem)
+	while (table_elem != NULL)
 	{
 		print_table_info(((tbl_info *) DLE_VAL(table_elem)));
 		table_elem = DLGetSucc(table_elem);
@@ -390,7 +390,7 @@ init_db_list()
 	PGresult   *res = NULL;
 
 	DLAddHead(db_list, DLNewElem(init_dbinfo((char *) "template1", 0, 0)));
-	if (NULL == DLGetHead(db_list))
+	if (DLGetHead(db_list) == NULL)
 	{							/* Make sure init_dbinfo was successful */
 		log_entry("init_db_list(): Error creating db_list for db: template1.");
 		fflush(LOGOUTPUT);
@@ -404,7 +404,7 @@ init_db_list()
 	dbs = ((db_info *) DLE_VAL(DLGetHead(db_list)));
 	dbs->conn = db_connect(dbs);
 
-	if (NULL != dbs->conn)
+	if (dbs->conn != NULL)
 	{
 		res = send_query(FROZENOID_QUERY, dbs);
 		dbs->oid = atoi(PQgetvalue(res, 0, PQfnumber(res, "oid")));
@@ -430,13 +430,13 @@ init_dbinfo(char *dbname, int oid, int age)
 	newdbinfo->dbname = (char *) malloc(strlen(dbname) + 1);
 	strcpy(newdbinfo->dbname, dbname);
 	newdbinfo->username = NULL;
-	if (NULL != args->user)
+	if (args->user != NULL)
 	{
 		newdbinfo->username = (char *) malloc(strlen(args->user) + 1);
 		strcpy(newdbinfo->username, args->user);
 	}
 	newdbinfo->password = NULL;
-	if (NULL != args->password)
+	if (args->password != NULL)
 	{
 		newdbinfo->password = (char *) malloc(strlen(args->password) + 1);
 		strcpy(newdbinfo->password, args->password);
@@ -471,13 +471,13 @@ update_db_list(Dllist *db_list)
 		fflush(LOGOUTPUT);
 	}
 
-	if (NULL == dbi_template1->conn)
+	if (dbi_template1->conn == NULL)
 	{
 		dbi_template1->conn = db_connect(dbi_template1);
 		disconnect = 1;
 	}
 
-	if (NULL != dbi_template1->conn)
+	if (dbi_template1->conn != NULL)
 	{
 		/*
 		 * Get a result set that has all the information we will need to
@@ -492,7 +492,7 @@ update_db_list(Dllist *db_list)
 		 * the inner loop, this will determine what databases should be
 		 * removed
 		 */
-		while (NULL != db_elem)
+		while (db_elem != NULL)
 		{
 			dbi = ((db_info *) DLE_VAL(db_elem));
 			found_match = 0;
@@ -512,7 +512,7 @@ update_db_list(Dllist *db_list)
 					break;
 				}
 			}
-			if (0 == found_match)
+			if (found_match == 0)
 			{					/* then we didn't find this db_elem in the
 								 * result set */
 				Dlelem	   *elem_to_remove = db_elem;
@@ -533,7 +533,7 @@ update_db_list(Dllist *db_list)
 		{
 			db_elem = DLGetHead(db_list);
 			found_match = 0;
-			while (NULL != db_elem)
+			while (db_elem != NULL)
 			{
 				dbi = ((db_info *) DLE_VAL(db_elem));
 				if (dbi->oid == atoi(PQgetvalue(res, i, PQfnumber(res, "oid"))))
@@ -543,7 +543,7 @@ update_db_list(Dllist *db_list)
 				}
 				db_elem = DLGetSucc(db_elem);
 			}
-			if (0 == found_match)		/* then we didn't find this result
+			if (found_match == 0)		/* then we didn't find this result
 										 * now in the tbl_list */
 			{
 				DLAddTail(db_list, DLNewElem(init_dbinfo
@@ -590,7 +590,7 @@ xid_wraparound_check(db_info * dbi)
 	 * 500million xacts to work with so we should be able to spread the
 	 * load of full database vacuums a bit
 	 */
-	if (1500000000 < dbi->age)
+	if (dbi->age > 1500000000 )
 	{
 		PGresult   *res = NULL;
 
@@ -653,7 +653,7 @@ free_db_list(Dllist *db_list)
 	Dlelem	   *db_elem = DLGetHead(db_list);
 	Dlelem	   *db_elem_to_remove = NULL;
 
-	while (NULL != db_elem)
+	while (db_elem != NULL)
 	{
 		db_elem_to_remove = db_elem;
 		db_elem = DLGetSucc(db_elem);
@@ -668,7 +668,7 @@ print_db_list(Dllist *db_list, int print_table_lists)
 {
 	Dlelem	   *db_elem = DLGetHead(db_list);
 
-	while (NULL != db_elem)
+	while (db_elem != NULL)
 	{
 		print_db_info(((db_info *) DLE_VAL(db_elem)), print_table_lists);
 		db_elem = DLGetSucc(db_elem);
@@ -684,13 +684,13 @@ print_db_info(db_info * dbi, int print_tbl_list)
 	sprintf(logbuffer, " oid %i InsertThresh: %i  DeleteThresh: %i", dbi->oid,
 			dbi->analyze_threshold, dbi->vacuum_threshold);
 	log_entry(logbuffer);
-	if (NULL != dbi->conn)
+	if (dbi->conn != NULL)
 		log_entry(" conn is valid, we are connected");
 	else
 		log_entry(" conn is null, we are not connected.");
 
 	fflush(LOGOUTPUT);
-	if (0 < print_tbl_list)
+	if (print_tbl_list > 0)
 		print_table_list(dbi->table_list);
 }
 
@@ -706,7 +706,7 @@ db_connect(db_info * dbi)
 	PQsetdbLogin(args->host, args->port, NULL, NULL, dbi->dbname,
 				 dbi->username, dbi->password);
 
-	if (CONNECTION_OK != PQstatus(db_conn))
+	if (PQstatus(db_conn) != CONNECTION_OK)
 	{
 		sprintf(logbuffer, "Failed connection to database %s with error: %s.",
 				dbi->dbname, PQerrorMessage(db_conn));
@@ -721,7 +721,7 @@ db_connect(db_info * dbi)
 void
 db_disconnect(db_info * dbi)
 {
-	if (NULL != dbi->conn)
+	if (dbi->conn != NULL)
 	{
 		PQfinish(dbi->conn);
 		dbi->conn = NULL;
@@ -731,13 +731,15 @@ db_disconnect(db_info * dbi)
 int
 check_stats_enabled(db_info * dbi)
 {
-	PGresult   *res = NULL;
+	PGresult   *res;
 	int			ret = 0;
 
 	res = send_query("SHOW stats_row_level", dbi);
-	ret =
-		strcmp("on", PQgetvalue(res, 0, PQfnumber(res, "stats_row_level")));
-	PQclear(res);
+	if (res)
+	{
+		ret = strcmp("on", PQgetvalue(res, 0, PQfnumber(res, "stats_row_level")));
+		PQclear(res);
+	}
 	return ret;
 }
 
@@ -746,7 +748,7 @@ send_query(const char *query, db_info * dbi)
 {
 	PGresult   *res;
 
-	if (NULL == dbi->conn)
+	if (dbi->conn == NULL)
 		return NULL;
 
 	if (args->debug >= 4)
@@ -765,8 +767,8 @@ send_query(const char *query, db_info * dbi)
 		fflush(LOGOUTPUT);
 		return NULL;
 	}
-	if (PQresultStatus(res) != PGRES_TUPLES_OK
-		&& PQresultStatus(res) != PGRES_COMMAND_OK)
+	if (PQresultStatus(res) != PGRES_TUPLES_OK &&
+		PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
 		sprintf(logbuffer,
 		  "Can not refresh statistics information from the database %s.",
@@ -785,11 +787,11 @@ send_query(const char *query, db_info * dbi)
 void
 free_cmd_args()
 {
-	if (NULL != args)
+	if (args != NULL)
 	{
-		if (NULL != args->user)
+		if (args->user != NULL)
 			free(args->user);
-		if (NULL != args->user)
+		if (args->password != NULL)
 			free(args->password);
 		free(args);
 	}
@@ -814,7 +816,7 @@ get_cmd_args(int argc, char *argv[])
 	 * Fixme: Should add some sanity checking such as positive integer
 	 * values etc
 	 */
-	while (-1 != (c = getopt(argc, argv, "s:S:v:V:a:A:d:U:P:H:L:p:hD")))
+	while ((c = getopt(argc, argv, "s:S:v:V:a:A:d:U:P:H:L:p:hD")) != -1)
 	{
 		switch (c)
 		{
@@ -876,9 +878,9 @@ get_cmd_args(int argc, char *argv[])
 		 * if values for insert thresholds are not specified, then they
 		 * default to 1/2 of the delete values
 		 */
-		if (-1 == args->analyze_base_threshold)
+		if (args->analyze_base_threshold == -1)
 			args->analyze_base_threshold = args->vacuum_base_threshold / 2;
-		if (-1 == args->analyze_scaling_factor)
+		if (args->analyze_scaling_factor == -1)
 			args->analyze_scaling_factor = args->vacuum_scaling_factor / 2;
 	}
 	return args;
@@ -979,7 +981,7 @@ main(int argc, char *argv[])
 										 * them in the args struct */
 
 	/* Dameonize if requested */
-	if (1 == args->daemonize)
+	if (args->daemonize == 1)
 		daemonize();
 
 	if (args->logfile)
@@ -998,10 +1000,10 @@ main(int argc, char *argv[])
 
 	/* Init the db list with template1 */
 	db_list = init_db_list();
-	if (NULL == db_list)
+	if (db_list == NULL)
 		return 1;
 
-	if (0 != check_stats_enabled(((db_info *) DLE_VAL(DLGetHead(db_list)))))
+	if (check_stats_enabled(((db_info *) DLE_VAL(DLGetHead(db_list)))) != 0)
 	{
 		log_entry("Error: GUC variable stats_row_level must be enabled.");
 		log_entry("       Please fix the problems and try again.");
@@ -1019,10 +1021,10 @@ main(int argc, char *argv[])
 
 		dbs = ((db_info *) DLE_VAL(db_elem));	/* get pointer to cur_db's
 												 * db_info struct */
-		if (NULL == dbs->conn)
+		if (dbs->conn == NULL)
 		{
 			dbs->conn = db_connect(dbs);
-			if (NULL == dbs->conn)
+			if (dbs->conn == NULL)
 			{					/* Serious problem: We can't connect to
 								 * template1 */
 				log_entry("Error: Cannot connect to template1, exiting.");
@@ -1032,27 +1034,27 @@ main(int argc, char *argv[])
 			}
 		}
 
-		if (0 == (loops % UPDATE_INTERVAL))		/* Update the list if it's
+		if (loops % UPDATE_INTERVAL == 0)		/* Update the list if it's
 												 * time */
 			update_db_list(db_list);	/* Add and remove databases from
 										 * the list */
 
-		while (NULL != db_elem)
+		while (db_elem != NULL)
 		{						/* Loop through databases in list */
 			dbs = ((db_info *) DLE_VAL(db_elem));		/* get pointer to
 														 * cur_db's db_info
 														 * struct */
-			if (NULL == dbs->conn)
+			if (dbs->conn == NULL)
 				dbs->conn = db_connect(dbs);
 
-			if (NULL != dbs->conn)
+			if (dbs->conn != NULL)
 			{
-				if (0 == (loops % UPDATE_INTERVAL))		/* Update the list if
+				if (loops % UPDATE_INTERVAL == 0)		/* Update the list if
 														 * it's time */
 					update_table_list(dbs);		/* Add and remove tables
 												 * from the list */
 
-				if (0 == xid_wraparound_check(dbs));
+				if (xid_wraparound_check(dbs) == 0)
 				{
 					res = send_query(TABLE_STATS_QUERY, dbs);	/* Get an updated
 																 * snapshot of this dbs
@@ -1061,7 +1063,7 @@ main(int argc, char *argv[])
 					{			/* loop through result set */
 						tbl_elem = DLGetHead(dbs->table_list);	/* Reset tbl_elem to top
 																 * of dbs->table_list */
-						while (NULL != tbl_elem)
+						while (tbl_elem != NULL)
 						{		/* Loop through tables in list */
 							tbl = ((tbl_info *) DLE_VAL(tbl_elem));		/* set tbl_info =
 																		 * current_table */
@@ -1084,13 +1086,13 @@ main(int argc, char *argv[])
 								 * not big enough for vacuum then check
 								 * numInserts for analyze
 								 */
-								if ((tbl->curr_vacuum_count - tbl->CountAtLastVacuum) >= tbl->vacuum_threshold)
+								if (tbl->curr_vacuum_count - tbl->CountAtLastVacuum >= tbl->vacuum_threshold)
 								{
 									/*
 									 * if relisshared = t and database !=
 									 * template1 then only do an analyze
 									 */
-									if ((tbl->relisshared > 0) && (strcmp("template1", dbs->dbname)))
+									if (tbl->relisshared > 0 && strcmp("template1", dbs->dbname))
 										snprintf(buf, sizeof(buf), "ANALYZE %s", tbl->table_name);
 									else
 										snprintf(buf, sizeof(buf), "VACUUM ANALYZE %s", tbl->table_name);
@@ -1105,7 +1107,7 @@ main(int argc, char *argv[])
 									if (args->debug >= 2)
 										print_table_info(tbl);
 								}
-								else if ((tbl->curr_analyze_count - tbl->CountAtLastAnalyze) >= tbl->analyze_threshold)
+								else if (tbl->curr_analyze_count - tbl->CountAtLastAnalyze >= tbl->analyze_threshold)
 								{
 									snprintf(buf, sizeof(buf), "ANALYZE %s", tbl->table_name);
 									if (args->debug >= 1)
