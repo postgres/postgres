@@ -1,4 +1,3 @@
-#include <config.h>
 #include <c.h>
 #include "prompt.h"
 
@@ -10,6 +9,7 @@
 
 #include "settings.h"
 #include "common.h"
+#include "variables.h"
 
 #ifdef WIN32
 #define popen(x,y) _popen(x,y)
@@ -22,7 +22,7 @@
  * get_prompt
  *
  * Returns a statically allocated prompt made by interpolating certain
- * tcsh style escape sequences into pset->vars "prompt1|2|3".
+ * tcsh style escape sequences into pset->vars "PROMPT1|2|3".
  * (might not be completely multibyte safe)
  *
  * Defined interpolations are:
@@ -46,8 +46,7 @@
  *
  * %`command`	   - The result of executing command in /bin/sh with trailing
  *					 newline stripped.
- * %$name$		   - The value of the psql/environment/magic varible 'name'
- *					 (same rules as for, e.g., \echo $foo)
+ * %$name$		   - The value of the psql variable 'name'
  * (those will not be rescanned for more escape sequences!)
  *
  *
@@ -56,7 +55,7 @@
  *--------------------------
  */
 const char *
-get_prompt(PsqlSettings *pset, promptStatus_t status)
+get_prompt(promptStatus_t status)
 {
 #define MAX_PROMPT_SIZE 256
 	static char destination[MAX_PROMPT_SIZE + 1];
@@ -66,11 +65,11 @@ get_prompt(PsqlSettings *pset, promptStatus_t status)
 	const char *prompt_string;
 
 	if (status == PROMPT_READY)
-		prompt_string = GetVariable(pset->vars, "prompt1");
+		prompt_string = GetVariable(pset.vars, "PROMPT1");
 	else if (status == PROMPT_CONTINUE || status == PROMPT_SINGLEQUOTE || status == PROMPT_DOUBLEQUOTE || status == PROMPT_COMMENT)
-		prompt_string = GetVariable(pset->vars, "prompt2");
+		prompt_string = GetVariable(pset.vars, "PROMPT2");
 	else if (status == PROMPT_COPY)
-		prompt_string = GetVariable(pset->vars, "prompt3");
+		prompt_string = GetVariable(pset.vars, "PROMPT3");
 	else
 		prompt_string = "? ";
 
@@ -92,31 +91,31 @@ get_prompt(PsqlSettings *pset, promptStatus_t status)
 
 					/* Current database */
 				case '/':
-					if (pset->db)
-						strncpy(buf, PQdb(pset->db), MAX_PROMPT_SIZE);
+					if (pset.db)
+						strncpy(buf, PQdb(pset.db), MAX_PROMPT_SIZE);
 					break;
 				case '~':
 					{
 						const char *var;
 
-						if (pset->db)
+						if (pset.db)
 						{
-							if (strcmp(PQdb(pset->db), PQuser(pset->db)) == 0 ||
-								((var = getenv("PGDATABASE")) && strcmp(var, PQdb(pset->db)) == 0))
+							if (strcmp(PQdb(pset.db), PQuser(pset.db)) == 0 ||
+								((var = getenv("PGDATABASE")) && strcmp(var, PQdb(pset.db)) == 0))
 								strcpy(buf, "~");
 							else
-								strncpy(buf, PQdb(pset->db), MAX_PROMPT_SIZE);
+								strncpy(buf, PQdb(pset.db), MAX_PROMPT_SIZE);
 						}
 						break;
 					}
 					/* DB server hostname (long/short) */
 				case 'M':
 				case 'm':
-					if (pset->db)
+					if (pset.db)
 					{
-						if (PQhost(pset->db))
+						if (PQhost(pset.db))
 						{
-							strncpy(buf, PQhost(pset->db), MAX_PROMPT_SIZE);
+							strncpy(buf, PQhost(pset.db), MAX_PROMPT_SIZE);
 							if (*p == 'm')
 								buf[strcspn(buf, ".")] = '\0';
 						}
@@ -126,13 +125,13 @@ get_prompt(PsqlSettings *pset, promptStatus_t status)
 					break;
 					/* DB server port number */
 				case '>':
-					if (pset->db && PQport(pset->db))
-                        strncpy(buf, PQport(pset->db), MAX_PROMPT_SIZE);
+					if (pset.db && PQport(pset.db))
+                        strncpy(buf, PQport(pset.db), MAX_PROMPT_SIZE);
 					break;
 					/* DB server user name */
 				case 'n':
-					if (pset->db)
-						strncpy(buf, PQuser(pset->db), MAX_PROMPT_SIZE);
+					if (pset.db)
+						strncpy(buf, PQuser(pset.db), MAX_PROMPT_SIZE);
 					break;
 
 				case '0':
@@ -159,9 +158,9 @@ get_prompt(PsqlSettings *pset, promptStatus_t status)
 					switch (status)
 					{
 						case PROMPT_READY:
-							if (!pset->db)
+							if (!pset.db)
 								buf[0] = '!';
-							else if (!GetVariableBool(pset->vars, "singleline"))
+							else if (!GetVariableBool(pset.vars, "SINGLELINE"))
 								buf[0] = '=';
 							else
 								buf[0] = '^';
@@ -189,7 +188,7 @@ get_prompt(PsqlSettings *pset, promptStatus_t status)
 
 				case '#':
 					{
-						if (pset->db && strcmp(PQuser(pset->db), "postgres") == 0)
+						if (pset.db && strcmp(PQuser(pset.db), "postgres") == 0)
 							buf[0] = '#';
 						else
 							buf[0] = '>';
@@ -230,7 +229,7 @@ get_prompt(PsqlSettings *pset, promptStatus_t status)
 						name = strdup(p + 1);
 						nameend = strcspn(name, "$");
 						name[nameend] = '\0';
-						val = interpolate_var(name, pset);
+						val = GetVariable(pset.vars, name);
 						if (val)
 							strncpy(buf, val, MAX_PROMPT_SIZE);
 						free(name);

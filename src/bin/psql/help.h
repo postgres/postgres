@@ -5,7 +5,7 @@
 
 void		usage(void);
 
-void		slashUsage(PsqlSettings *pset);
+void		slashUsage(void);
 
 void		helpSQL(const char *topic);
 

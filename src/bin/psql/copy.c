@@ -1,4 +1,3 @@
-#include <config.h>
 #include <c.h>
 #include "copy.h"
 
@@ -36,7 +35,7 @@
 struct copy_options
 {
 	char	   *table;
-	char	   *file;
+	char	   *file;  /* NULL = stdin/stdout */
 	bool		from;
 	bool		binary;
 	bool		oids;
@@ -59,7 +58,7 @@ free_copy_options(struct copy_options * ptr)
 
 
 static struct copy_options *
-parse_slash_copy(const char *args, PsqlSettings *pset)
+parse_slash_copy(const char *args)
 {
 	struct copy_options *result;
 	char	   *line;
@@ -132,16 +131,14 @@ parse_slash_copy(const char *args, PsqlSettings *pset)
 
 	if (!error)
 	{
-		token = strtokx(NULL, " \t", "'", '\\', NULL, NULL);
+		token = strtokx(NULL, " \t", "'", '\\', &quote, NULL);
 		if (!token)
 			error = true;
-		else
+		else if (!quote && (strcasecmp(token, "stdin")==0 || strcasecmp(token, "stdout")==0))
+            result->file = NULL;
+        else
 			result->file = xstrdup(token);
 	}
-
-#ifdef USE_ASSERT_CHECKING
-	assert(error || result->file);
-#endif
 
 	if (!error)
 	{
@@ -194,8 +191,8 @@ parse_slash_copy(const char *args, PsqlSettings *pset)
 
 	if (error)
 	{
-        if (!pset->cur_cmd_interactive)
-            fprintf(stderr, "%s: ", pset->progname);
+        if (!pset.cur_cmd_interactive)
+            fprintf(stderr, "%s: ", pset.progname);
         fputs("\\copy: parse error at ", stderr);
 		if (!token)
 			fputs("end of line", stderr);
@@ -217,7 +214,7 @@ parse_slash_copy(const char *args, PsqlSettings *pset)
  * file or route its response into the file.
  */
 bool
-do_copy(const char *args, PsqlSettings *pset)
+do_copy(const char *args)
 {
 	char		query[128 + NAMEDATALEN];
 	FILE	   *copystream;
@@ -226,7 +223,7 @@ do_copy(const char *args, PsqlSettings *pset)
 	bool		success;
 
 	/* parse options */
-	options = parse_slash_copy(args, pset);
+	options = parse_slash_copy(args);
 
 	if (!options)
 		return false;
@@ -242,9 +239,9 @@ do_copy(const char *args, PsqlSettings *pset)
 		strcat(query, "WITH OIDS ");
 
 	if (options->from)
-		strcat(query, "FROM stdin");
+		strcat(query, "FROM STDIN");
 	else
-		strcat(query, "TO stdout");
+		strcat(query, "TO STDOUT");
 
 
 	if (options->delim)
@@ -254,24 +251,32 @@ do_copy(const char *args, PsqlSettings *pset)
 		strcat(query, "'");
 	}
 
+    if (options->null)
+    {
+		strcat(query, " WITH NULL AS '");
+		strcat(query, options->null);
+		strcat(query, "'");
+	}
 
 	if (options->from)
-#ifndef __CYGWIN32__
-		copystream = fopen(options->file, "r");
-#else
-		copystream = fopen(options->file, "rb");
-#endif
+    {
+        if (options->file)
+            copystream = fopen(options->file, "r");
+        else
+            copystream = stdin;
+    }
 	else
-#ifndef __CYGWIN32__
-		copystream = fopen(options->file, "w");
-#else
-		copystream = fopen(options->file, "wb");
-#endif
+    {
+        if (options->file)
+            copystream = fopen(options->file, "w");
+        else
+            copystream = stdout;
+    }
 
 	if (!copystream)
 	{
-        if (!pset->cur_cmd_interactive)
-            fprintf(stderr, "%s: ", pset->progname);
+        if (!pset.cur_cmd_interactive)
+            fprintf(stderr, "%s: ", pset.progname);
 		fprintf(stderr,
 				"unable to open file %s: %s\n",
 				options->file, strerror(errno));
@@ -279,40 +284,40 @@ do_copy(const char *args, PsqlSettings *pset)
 		return false;
 	}
 
-	result = PSQLexec(pset, query);
+	result = PSQLexec(query);
 
 	switch (PQresultStatus(result))
 	{
 		case PGRES_COPY_OUT:
-			success = handleCopyOut(pset->db, copystream);
+			success = handleCopyOut(pset.db, copystream);
 			break;
 		case PGRES_COPY_IN:
-			success = handleCopyIn(pset->db, copystream, NULL);
+			success = handleCopyIn(pset.db, copystream, NULL);
 			break;
 		case PGRES_NONFATAL_ERROR:
 		case PGRES_FATAL_ERROR:
 		case PGRES_BAD_RESPONSE:
 			success = false;
-			fputs(PQerrorMessage(pset->db), stderr);
+			fputs(PQerrorMessage(pset.db), stderr);
 			break;
 		default:
 			success = false;
-            if (!pset->cur_cmd_interactive)
-                fprintf(stderr, "%s: ", pset->progname);
+            if (!pset.cur_cmd_interactive)
+                fprintf(stderr, "%s: ", pset.progname);
 			fprintf(stderr, "\\copy: unexpected response (%d)\n", PQresultStatus(result));
 	}
 
 	PQclear(result);
 
-	if (!GetVariable(pset->vars, "quiet"))
+	if (!success)
 	{
-		if (success)
-			puts("Successfully copied");
-		else
-			puts("Copy failed");
+        if (!pset.cur_cmd_interactive)
+            fprintf(stderr, "%s: ", pset.progname);
+        fprintf(stderr, "\\copy failed\n");
 	}
 
-	fclose(copystream);
+    if (copystream != stdout && copystream != stdin)
+        fclose(copystream);
 	free_copy_options(options);
 	return success;
 }
@@ -396,7 +401,7 @@ handleCopyIn(PGconn *conn, FILE *copystream, const char *prompt)
 
 	while (!copydone)
 	{							/* for each input line ... */
-		if (prompt && isatty(fileno(stdin)))
+		if (prompt && isatty(fileno(copystream)))
 		{
 			fputs(prompt, stdout);
 			fflush(stdout);

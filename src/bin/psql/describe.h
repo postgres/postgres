@@ -5,30 +5,30 @@
 #include "settings.h"
 
 /* \da */
-bool describeAggregates(const char *name, PsqlSettings *pset);
+bool describeAggregates(const char *name);
 
 /* \df */
-bool describeFunctions(const char *name, PsqlSettings *pset, bool verbose);
+bool describeFunctions(const char *name, bool verbose);
 
 /* \dT */
-bool describeTypes(const char *name, PsqlSettings *pset, bool verbose);
+bool describeTypes(const char *name, bool verbose);
 
 /* \do */
-bool describeOperators(const char *name, PsqlSettings *pset);
+bool describeOperators(const char *name);
 
 /* \z (or \dp) */
-bool permissionsList(const char *name, PsqlSettings *pset);
+bool permissionsList(const char *name);
 
 /* \dd */
-bool objectDescription(const char *object, PsqlSettings *pset);
+bool objectDescription(const char *object);
 
 /* \d foo */
-bool describeTableDetails(const char *name, PsqlSettings *pset, bool desc);
+bool describeTableDetails(const char *name, bool desc);
 
 /* \l */
-bool listAllDbs(PsqlSettings *pset, bool desc);
+bool listAllDbs(bool desc);
 
 /* \dt, \di, \ds, \dS, etc. */
-bool listTables(const char *infotype, const char *name, PsqlSettings *pset, bool desc);
+bool listTables(const char *infotype, const char *name, bool desc);
 
 #endif	 /* DESCRIBE_H */

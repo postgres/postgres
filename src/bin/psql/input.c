@@ -29,6 +29,10 @@ char *
 gets_interactive(const char *prompt)
 {
 	char	   *s;
+#ifdef USE_HISTORY
+    const char *var;
+    static char * prev_hist = NULL;
+#endif
 
 #ifdef USE_READLINE
 	if (useReadline)
@@ -44,8 +48,19 @@ gets_interactive(const char *prompt)
 #endif
 
 #ifdef USE_HISTORY
-	if (useHistory && s && s[0] != '\0')
-		add_history(s);
+    if (useHistory && s && s[0] != '\0')
+    {
+        var = GetVariable(pset.vars, "HISTCONTROL");
+        if (!var || (var
+            && !((strcmp(var, "ignorespace") == 0 || strcmp(var, "ignoreboth") ==0) && s[0] == ' ' )
+            && !((strcmp(var, "ignoredups") == 0 || strcmp(var, "ignoreboth") ==0) && prev_hist && strcmp(s, prev_hist) == 0)
+            ))
+        {
+            free(prev_hist);
+            prev_hist = strdup(s);
+            add_history(s);
+        }
+    }
 #endif
 
 	return s;
@@ -93,14 +108,14 @@ gets_fromFile(FILE *source)
  * The only "flag" right now is 1 for use readline & history.
  */
 void
-initializeInput(int flags, PsqlSettings *pset)
+initializeInput(int flags)
 {
 #ifdef USE_READLINE
 	if (flags == 1)
 	{
 		useReadline = true;
 		rl_readline_name = "psql";
-        initialize_readline(&(pset->db));
+        initialize_readline(&(pset.db));
 	}
 #endif
 
@@ -110,6 +125,7 @@ initializeInput(int flags, PsqlSettings *pset)
 		const char *home;
 
 		useHistory = true;
+        SetVariable(pset.vars, "HISTSIZE", "500");
 		using_history();
 		home = getenv("HOME");
 		if (home)
@@ -166,6 +182,9 @@ finishInput(void)
 			psql_history = (char *) malloc(strlen(home) + 20);
 			if (psql_history)
 			{
+                const char * var = GetVariable(pset.vars, "HISTSIZE");
+                if (var)
+                    stifle_history(atoi(var));
 				sprintf(psql_history, "%s/.psql_history", home);
 				write_history(psql_history);
 				free(psql_history);

@@ -149,7 +149,7 @@ struct winsize
 #endif
 
 void
-slashUsage(PsqlSettings *pset)
+slashUsage(void)
 {
 	bool		usePipe = false;
 	const char *pagerenv;
@@ -157,7 +157,7 @@ slashUsage(PsqlSettings *pset)
 	struct winsize screen_size;
 
 #ifdef TIOCGWINSZ
-	if (pset->notty == 0 &&
+	if (pset.notty == 0 &&
 		(ioctl(fileno(stdout), TIOCGWINSZ, &screen_size) == -1 ||
 		 screen_size.ws_col == 0 ||
 		 screen_size.ws_row == 0))
@@ -169,7 +169,7 @@ slashUsage(PsqlSettings *pset)
 	}
 #endif
 
-	if (pset->notty == 0 &&
+	if (pset.notty == 0 &&
 		(pagerenv = getenv("PAGER")) &&
 		(pagerenv[0] != '\0') &&
 		screen_size.ws_row <= 36 &&
@@ -184,7 +184,7 @@ slashUsage(PsqlSettings *pset)
 	/* if you add/remove a line here, change the row test above */
 	fprintf(fout, " \\?             help\n");
 	fprintf(fout, " \\c[onnect] [dbname|- [user|?]]\n"
-                  "                 connect to new database (currently '%s')\n", PQdb(pset->db));
+                  "                 connect to new database (currently '%s')\n", PQdb(pset.db));
 	fprintf(fout, " \\copy ...      perform SQL COPY with data stream to the client machine");
 	fprintf(fout, " \\copyright     show PostgreSQL usage and distribution terms\n");
 	fprintf(fout, " \\d <table>     describe table (or view, index, sequence)\n");
@@ -209,9 +209,10 @@ slashUsage(PsqlSettings *pset)
 	fprintf(fout, " \\qecho <text>  write text to query output stream (see \\o)\n");
 	fprintf(fout, " \\r             reset (clear) the query buffer\n");
 	fprintf(fout, " \\s [fname]     print history or save it in <fname>\n");
-	fprintf(fout, " \\set <var> [value]  set/unset internal variable\n");
-	fprintf(fout, " \\t             don't show table headers or footers (currently %s)\n", ON(pset->popt.topt.tuples_only));
-	fprintf(fout, " \\x             toggle expanded output (currently %s)\n", ON(pset->popt.topt.expanded));
+	fprintf(fout, " \\set <var> <value>  set internal variable\n");
+	fprintf(fout, " \\t             don't show table headers or footers (currently %s)\n", ON(pset.popt.topt.tuples_only));
+	fprintf(fout, " \\unset <var>   unset (delete) internal variable\n");
+	fprintf(fout, " \\x             toggle expanded output (currently %s)\n", ON(pset.popt.topt.expanded));
 	fprintf(fout, " \\w <fname>     write current query buffer to a file\n");
 	fprintf(fout, " \\z             list table access permissions\n");
 	fprintf(fout, " \\! [cmd]       shell escape or command\n");

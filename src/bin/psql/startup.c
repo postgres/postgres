@@ -1,4 +1,3 @@
-#include <config.h>
 #include <c.h>
 
 #include <signal.h>
@@ -34,10 +33,10 @@
 #include "print.h"
 #include "describe.h"
 
-
+PsqlSettings pset;
 
 static void
-process_psqlrc(PsqlSettings *pset);
+process_psqlrc(void);
 
 static void
 showVersion(void);
@@ -67,7 +66,7 @@ struct adhoc_opts
 };
 
 static void
-parse_options(int argc, char *argv[], PsqlSettings *pset, struct adhoc_opts * options);
+parse_options(int argc, char *argv[], struct adhoc_opts * options);
 
 
 
@@ -79,7 +78,6 @@ parse_options(int argc, char *argv[], PsqlSettings *pset, struct adhoc_opts * op
 int
 main(int argc, char **argv)
 {
-	PsqlSettings settings;
 	struct adhoc_opts options;
 	int			successResult;
 
@@ -87,64 +85,65 @@ main(int argc, char **argv)
 	char	   *password = NULL;
 	bool		need_pass;
 
-	memset(&settings, 0, sizeof settings);
+	memset(&pset, 0, sizeof pset);
 
     if (!strrchr(argv[0], SEP_CHAR))
-        settings.progname = argv[0];
+        pset.progname = argv[0];
     else
-        settings.progname = strrchr(argv[0], SEP_CHAR) + 1;
+        pset.progname = strrchr(argv[0], SEP_CHAR) + 1;
 
-	settings.cur_cmd_source = stdin;
-	settings.cur_cmd_interactive = false;
+	pset.cur_cmd_source = stdin;
+	pset.cur_cmd_interactive = false;
 
-	settings.vars = CreateVariableSpace();
-	settings.popt.topt.format = PRINT_ALIGNED;
-	settings.queryFout = stdout;
-	settings.popt.topt.fieldSep = strdup(DEFAULT_FIELD_SEP);
-	settings.popt.topt.border = 1;
-	settings.popt.topt.pager = 1;
+	pset.vars = CreateVariableSpace();
+	pset.popt.topt.format = PRINT_ALIGNED;
+	pset.queryFout = stdout;
+	pset.popt.topt.fieldSep = strdup(DEFAULT_FIELD_SEP);
+	pset.popt.topt.border = 1;
+	pset.popt.topt.pager = 1;
 
-	SetVariable(settings.vars, "prompt1", DEFAULT_PROMPT1);
-	SetVariable(settings.vars, "prompt2", DEFAULT_PROMPT2);
-	SetVariable(settings.vars, "prompt3", DEFAULT_PROMPT3);
+	SetVariable(pset.vars, "PROMPT1", DEFAULT_PROMPT1);
+	SetVariable(pset.vars, "PROMPT2", DEFAULT_PROMPT2);
+	SetVariable(pset.vars, "PROMPT3", DEFAULT_PROMPT3);
+    SetVariable(pset.vars, "VERSION", PG_VERSION_STR);
 
-	settings.notty = (!isatty(fileno(stdin)) || !isatty(fileno(stdout)));
+	pset.notty = (!isatty(fileno(stdin)) || !isatty(fileno(stdout)));
 
 	/* This is obsolete and will be removed very soon. */
 #ifdef PSQL_ALWAYS_GET_PASSWORDS
-	settings.getPassword = true;
+	pset.getPassword = true;
 #else
-	settings.getPassword = false;
+	pset.getPassword = false;
 #endif
 
 #ifdef MULTIBYTE
-	settings.has_client_encoding = (getenv("PGCLIENTENCODING") != NULL);
+	pset.has_client_encoding = (getenv("PGCLIENTENCODING") != NULL);
 #endif
 
-	parse_options(argc, argv, &settings, &options);
+	parse_options(argc, argv, &options);
 
 	if (options.action == ACT_LIST_DB)
 		options.dbname = "template1";
 
 	if (options.username)
 	{
-		if (strcmp(options.username, "?") == 0)
+		if (strcmp(options.username, "\001") == 0)
 			username = simple_prompt("Username: ", 100, true);
 		else
 			username = strdup(options.username);
 	}
 
-	if (settings.getPassword)
+	if (pset.getPassword)
 		password = simple_prompt("Password: ", 100, false);
 
 	/* loop until we have a password if requested by backend */
 	do
 	{
 		need_pass = false;
-		settings.db = PQsetdbLogin(options.host, options.port, NULL, NULL, options.dbname, username, password);
+		pset.db = PQsetdbLogin(options.host, options.port, NULL, NULL, options.dbname, username, password);
 
-		if (PQstatus(settings.db) == CONNECTION_BAD &&
-			strcmp(PQerrorMessage(settings.db), "fe_sendauth: no password supplied\n") == 0)
+		if (PQstatus(pset.db) == CONNECTION_BAD &&
+			strcmp(PQerrorMessage(pset.db), "fe_sendauth: no password supplied\n") == 0)
 		{
 			need_pass = true;
 			free(password);
@@ -156,58 +155,61 @@ main(int argc, char **argv)
 	free(username);
 	free(password);
 
-	if (PQstatus(settings.db) == CONNECTION_BAD)
+	if (PQstatus(pset.db) == CONNECTION_BAD)
 	{
-		fprintf(stderr, "%s: connection to database '%s' failed.\n%s",
-                settings.progname, PQdb(settings.db),
-				PQerrorMessage(settings.db));
-		PQfinish(settings.db);
+		fprintf(stderr, "%s: connection to database '%s' failed - %s",
+                pset.progname, PQdb(pset.db), PQerrorMessage(pset.db));
+		PQfinish(pset.db);
 		exit(EXIT_BADCONN);
 	}
 
 	if (options.action == ACT_LIST_DB)
 	{
-		int			success = listAllDbs(&settings, false);
+		int			success = listAllDbs(false);
 
-		PQfinish(settings.db);
+		PQfinish(pset.db);
 		exit(!success);
 	}
 
+    SetVariable(pset.vars, "DBNAME", PQdb(pset.db));
+    SetVariable(pset.vars, "USER", PQuser(pset.db));
+    SetVariable(pset.vars, "HOST", PQhost(pset.db));
+    SetVariable(pset.vars, "PORT", PQport(pset.db));
 
-	if (!GetVariable(settings.vars, "quiet") && !settings.notty && !options.action)
+	if (!QUIET() && !pset.notty && !options.action)
 	{
 		printf("Welcome to %s, the PostgreSQL interactive terminal.\n\n"
                "Type:  \\copyright for distribution terms\n"
                "       \\h for help with SQL commands\n"
                "       \\? for help on internal slash commands\n"
                "       \\g or terminate with semicolon to execute query\n"
-               "       \\q to quit\n", settings.progname);
+               "       \\q to quit\n", pset.progname);
 	}
-
-	process_psqlrc(&settings);
-
-	initializeInput(options.no_readline ? 0 : 1, &settings);
 
 	/* Now find something to do */
 
 	/* process file given by -f */
 	if (options.action == ACT_FILE)
-		successResult = process_file(options.action_string, &settings) ? 0 : 1;
+		successResult = process_file(options.action_string) ? 0 : 1;
 	/* process slash command if one was given to -c */
 	else if (options.action == ACT_SINGLE_SLASH)
-		successResult = HandleSlashCmds(&settings, options.action_string, NULL, NULL) != CMD_ERROR ? 0 : 1;
+		successResult = HandleSlashCmds(options.action_string, NULL, NULL) != CMD_ERROR ? 0 : 1;
 	/* If the query given to -c was a normal one, send it */
 	else if (options.action == ACT_SINGLE_QUERY)
-		successResult = SendQuery(&settings, options.action_string) ? 0 : 1;
+		successResult = SendQuery( options.action_string) ? 0 : 1;
 	/* or otherwise enter interactive main loop */
 	else
-		successResult = MainLoop(&settings, stdin);
+    {
+        process_psqlrc();
+        initializeInput(options.no_readline ? 0 : 1);
+		successResult = MainLoop(stdin);
+        finishInput();
+    }
 
 	/* clean up */
-	finishInput();
-	PQfinish(settings.db);
-	setQFout(NULL, &settings);
-	DestroyVariableSpace(settings.vars);
+	PQfinish(pset.db);
+	setQFout(NULL);
+	DestroyVariableSpace(pset.vars);
 
 	return successResult;
 }
@@ -225,7 +227,7 @@ int			getopt(int, char *const[], const char *);
 #endif
 
 static void
-parse_options(int argc, char *argv[], PsqlSettings *pset, struct adhoc_opts * options)
+parse_options(int argc, char *argv[], struct adhoc_opts * options)
 {
 #ifdef HAVE_GETOPT_LONG
 	static struct option long_options[] = {
@@ -234,9 +236,7 @@ parse_options(int argc, char *argv[], PsqlSettings *pset, struct adhoc_opts * op
 		{"database", required_argument, NULL, 'd'},
 		{"dbname", required_argument, NULL, 'd'},
 		{"echo", no_argument, NULL, 'e'},
-		{"echo-queries", no_argument, NULL, 'e'},
-		{"echo-all", no_argument, NULL, 'E'},
-		{"echo-all-queries", no_argument, NULL, 'E'},
+		{"echo-hidden", no_argument, NULL, 'E'},
 		{"file", required_argument, NULL, 'f'},
 		{"field-separator", required_argument, NULL, 'F'},
 		{"host", required_argument, NULL, 'h'},
@@ -261,12 +261,12 @@ parse_options(int argc, char *argv[], PsqlSettings *pset, struct adhoc_opts * op
 	};
 
 	int			optindex;
-
 #endif
 
 	extern char *optarg;
 	extern int	optind;
 	int			c;
+    bool        used_old_u_option = false;
 
 	memset(options, 0, sizeof *options);
 
@@ -284,7 +284,7 @@ parse_options(int argc, char *argv[], PsqlSettings *pset, struct adhoc_opts * op
 		switch (c)
 		{
 			case 'A':
-				pset->popt.topt.format = PRINT_UNALIGNED;
+				pset.popt.topt.format = PRINT_UNALIGNED;
 				break;
 			case 'c':
 				options->action_string = optarg;
@@ -297,23 +297,23 @@ parse_options(int argc, char *argv[], PsqlSettings *pset, struct adhoc_opts * op
 				options->dbname = optarg;
 				break;
 			case 'e':
-				SetVariable(pset->vars, "echo", "");
+				SetVariable(pset.vars, "ECHO", "full");
 				break;
 			case 'E':
-				SetVariable(pset->vars, "echo_secret", "");
+				SetVariable(pset.vars, "ECHO_HIDDEN", "");
 				break;
 			case 'f':
 				options->action = ACT_FILE;
 				options->action_string = optarg;
 				break;
 			case 'F':
-				pset->popt.topt.fieldSep = strdup(optarg);
+				pset.popt.topt.fieldSep = strdup(optarg);
 				break;
 			case 'h':
 				options->host = optarg;
 				break;
 			case 'H':
-				pset->popt.topt.format = PRINT_HTML;
+				pset.popt.topt.format = PRINT_HTML;
 				break;
 			case 'l':
 				options->action = ACT_LIST_DB;
@@ -322,7 +322,7 @@ parse_options(int argc, char *argv[], PsqlSettings *pset, struct adhoc_opts * op
 				options->no_readline = true;
 				break;
 			case 'o':
-				setQFout(optarg, pset);
+				setQFout(optarg);
 				break;
 			case 'p':
 				options->port = optarg;
@@ -336,16 +336,16 @@ parse_options(int argc, char *argv[], PsqlSettings *pset, struct adhoc_opts * op
 					value = xstrdup(optarg);
 					equal_loc = strchr(value, '=');
 					if (!equal_loc)
-						result = do_pset(value, NULL, &pset->popt, true);
+						result = do_pset(value, NULL, &pset.popt, true);
 					else
 					{
 						*equal_loc = '\0';
-						result = do_pset(value, equal_loc + 1, &pset->popt, true);
+						result = do_pset(value, equal_loc + 1, &pset.popt, true);
 					}
 
 					if (!result)
 					{
-						fprintf(stderr, "Couldn't set printing paramter %s.\n", value);
+						fprintf(stderr, "%s: couldn't set printing parameter %s\n", pset.progname, value);
 						exit(EXIT_FAILURE);
 					}
 
@@ -353,29 +353,31 @@ parse_options(int argc, char *argv[], PsqlSettings *pset, struct adhoc_opts * op
 					break;
 				}
 			case 'q':
-				SetVariable(pset->vars, "quiet", "");
+				SetVariable(pset.vars, "QUIET", "");
 				break;
 			case 's':
-				SetVariable(pset->vars, "singlestep", "");
+				SetVariable(pset.vars, "SINGLESTEP", "");
 				break;
 			case 'S':
-				SetVariable(pset->vars, "singleline", "");
+				SetVariable(pset.vars, "SINGLELINE", "");
 				break;
 			case 't':
-				pset->popt.topt.tuples_only = true;
+				pset.popt.topt.tuples_only = true;
 				break;
 			case 'T':
-				pset->popt.topt.tableAttr = xstrdup(optarg);
+				pset.popt.topt.tableAttr = xstrdup(optarg);
 				break;
 			case 'u':
-				pset->getPassword = true;
-				options->username = "?";
+				pset.getPassword = true;
+				options->username = "\001"; /* hopefully nobody has that username */
+                /* this option is out */
+                used_old_u_option = true;
 				break;
 			case 'U':
 				options->username = optarg;
 				break;
 			case 'x':
-				pset->popt.topt.expanded = true;
+				pset.popt.topt.expanded = true;
 				break;
 			case 'v':
 				{
@@ -386,20 +388,20 @@ parse_options(int argc, char *argv[], PsqlSettings *pset, struct adhoc_opts * op
 					equal_loc = strchr(value, '=');
 					if (!equal_loc)
 					{
-						if (!DeleteVariable(pset->vars, value))
+						if (!DeleteVariable(pset.vars, value))
 						{
 							fprintf(stderr, "%s: could not delete variable %s\n",
-                                    pset->progname, value);
+                                    pset.progname, value);
 							exit(EXIT_FAILURE);
 						}
 					}
 					else
 					{
 						*equal_loc = '\0';
-						if (!SetVariable(pset->vars, value, equal_loc + 1))
+						if (!SetVariable(pset.vars, value, equal_loc + 1))
 						{
-							fprintf(stderr, "%s: Couldn't set variable %s to %s\n",
-                                    pset->progname, value, equal_loc);
+							fprintf(stderr, "%s: could not set variable %s\n",
+                                    pset.progname, value);
 							exit(EXIT_FAILURE);
 						}
 					}
@@ -411,7 +413,7 @@ parse_options(int argc, char *argv[], PsqlSettings *pset, struct adhoc_opts * op
 				showVersion();
 				exit(EXIT_SUCCESS);
 			case 'W':
-				pset->getPassword = true;
+				pset.getPassword = true;
 				break;
 			case '?':
 				usage();
@@ -420,7 +422,7 @@ parse_options(int argc, char *argv[], PsqlSettings *pset, struct adhoc_opts * op
 #ifndef HAVE_GETOPT_LONG
 			case '-':
 				fprintf(stderr, "%s was compiled without support for long options.\n"
-						"Use -? for help on invocation options.\n", pset->progname);
+						"Use -? for help on invocation options.\n", pset.progname);
 				exit(EXIT_FAILURE);
 				break;
 #endif
@@ -441,12 +443,16 @@ parse_options(int argc, char *argv[], PsqlSettings *pset, struct adhoc_opts * op
 			options->dbname = argv[optind];
 		else if (!options->username)
 			options->username = argv[optind];
-		else
+		else if (!QUIET())
 			fprintf(stderr, "%s: warning: extra option %s ignored\n",
-                    pset->progname, argv[optind]);
+                    pset.progname, argv[optind]);
 
 		optind++;
 	}
+
+    if (used_old_u_option && !QUIET())
+        fprintf(stderr, "%s: Warning: The -u option is deprecated. Use -U.\n", pset.progname);
+
 }
 
 
@@ -455,7 +461,7 @@ parse_options(int argc, char *argv[], PsqlSettings *pset, struct adhoc_opts * op
  * Load /etc/psqlrc or .psqlrc file, if found.
  */
 static void
-process_psqlrc(PsqlSettings *pset)
+process_psqlrc(void)
 {
 	char	   *psqlrc;
 	char	   *home;
@@ -466,9 +472,9 @@ process_psqlrc(PsqlSettings *pset)
 
 	/* System-wide startup file */
 	if (access("/etc/psqlrc-" PG_RELEASE "." PG_VERSION "." PG_SUBVERSION, R_OK) == 0)
-		process_file("/etc/psqlrc-" PG_RELEASE "." PG_VERSION "." PG_SUBVERSION, pset);
+		process_file("/etc/psqlrc-" PG_RELEASE "." PG_VERSION "." PG_SUBVERSION);
 	else if (access("/etc/psqlrc", R_OK) == 0)
-		process_file("/etc/psqlrc", pset);
+		process_file("/etc/psqlrc");
 
 	/* Look for one in the home dir */
 	home = getenv("HOME");
@@ -484,12 +490,12 @@ process_psqlrc(PsqlSettings *pset)
 
 		sprintf(psqlrc, "%s/.psqlrc-" PG_RELEASE "." PG_VERSION "." PG_SUBVERSION, home);
 		if (access(psqlrc, R_OK) == 0)
-			process_file(psqlrc, pset);
+			process_file(psqlrc);
 		else
 		{
 			sprintf(psqlrc, "%s/.psqlrc", home);
 			if (access(psqlrc, R_OK) == 0)
-				process_file(psqlrc, pset);
+				process_file(psqlrc);
 		}
 		free(psqlrc);
 	}
@@ -529,7 +535,7 @@ showVersion(void)
 #else
 #define _Feature
 #endif
-    fputs("multibyte");
+    fputs("multibyte", stdout);
 #endif
     
 #undef _Feature

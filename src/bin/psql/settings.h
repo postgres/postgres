@@ -43,11 +43,13 @@ typedef struct _psqlSettings
 
 	bool		has_client_encoding;	/* was PGCLIENTENCODING set on
 										 * startup? */
-    Oid         lastOid;        /* saves oid from insert command
-                                   because people want it so badly */
     char       *progname;       /* in case you renamed psql */
 } PsqlSettings;
 
+extern PsqlSettings pset;
+
+
+#define QUIET() (GetVariableBool(pset.vars, "QUIET"))
 
 
 #ifndef EXIT_SUCCESS

@@ -8,18 +8,15 @@ char *
 			xstrdup(const char *string);
 
 bool
-			setQFout(const char *fname, PsqlSettings *pset);
+			setQFout(const char *fname);
 
 char *
 			simple_prompt(const char *prompt, int maxlen, bool echo);
 
-const char *
-			interpolate_var(const char *name, PsqlSettings *pset);
-
 PGresult   *
-			PSQLexec(PsqlSettings *pset, const char *query);
+			PSQLexec(const char *query);
 
 bool
-			SendQuery(PsqlSettings *pset, const char *query);
+			SendQuery(const char *query);
 
 #endif	 /* COMMON_H */

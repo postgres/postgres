@@ -8,7 +8,7 @@
 
 /* handler for \copy */
 bool
-			do_copy(const char *args, PsqlSettings *pset);
+			do_copy(const char *args);
 
 
 /* lower level processors for copy in/out streams */

@@ -1,4 +1,3 @@
-#include <config.h>
 #include <c.h>
 #include "mainloop.h"
 
@@ -26,7 +25,7 @@
  * FIXME: rewrite this whole thing with flex
  */
 int
-MainLoop(PsqlSettings *pset, FILE *source)
+MainLoop(FILE *source)
 {
 	PQExpBuffer query_buf;		/* buffer for query being accumulated */
     PQExpBuffer previous_buf;   /* if there isn't anything in the new buffer
@@ -36,13 +35,14 @@ MainLoop(PsqlSettings *pset, FILE *source)
 	int			successResult = EXIT_SUCCESS;
 	backslashResult slashCmdStatus;
 
-	bool		eof = false;	/* end of our command input? */
 	bool		success;
 	char		in_quote;		/* == 0 for no in_quote */
 	bool		was_bslash;		/* backslash */
 	bool        xcomment;		/* in extended comment */
 	int			paren_level;
 	unsigned int query_start;
+    int         count_eof;
+    const char *var;
 
 	int			i,
 				prevlen,
@@ -56,12 +56,12 @@ MainLoop(PsqlSettings *pset, FILE *source)
 
 
 	/* Save old settings */
-	prev_cmd_source = pset->cur_cmd_source;
-	prev_cmd_interactive = pset->cur_cmd_interactive;
+	prev_cmd_source = pset.cur_cmd_source;
+	prev_cmd_interactive = pset.cur_cmd_interactive;
 
 	/* Establish new source */
-	pset->cur_cmd_source = source;
-	pset->cur_cmd_interactive = ((source == stdin) && !pset->notty);
+	pset.cur_cmd_source = source;
+	pset.cur_cmd_interactive = ((source == stdin) && !pset.notty);
 
 
 	query_buf = createPQExpBuffer();
@@ -79,7 +79,7 @@ MainLoop(PsqlSettings *pset, FILE *source)
 
 
 	/* main loop to get queries and execute them */
-	while (!eof)
+	while (1)
 	{
 		if (slashCmdStatus == CMD_NEWEDIT)
 		{
@@ -102,7 +102,7 @@ MainLoop(PsqlSettings *pset, FILE *source)
 			 * otherwise, set interactive prompt if necessary and get
 			 * another line
 			 */
-			if (pset->cur_cmd_interactive)
+			if (pset.cur_cmd_interactive)
 			{
 				int			prompt_status;
 
@@ -117,7 +117,7 @@ MainLoop(PsqlSettings *pset, FILE *source)
 				else
 					prompt_status = PROMPT_READY;
 
-				line = gets_interactive(get_prompt(pset, prompt_status));
+				line = gets_interactive(get_prompt(prompt_status));
 			}
 			else
 				line = gets_fromFile(source);
@@ -125,7 +125,7 @@ MainLoop(PsqlSettings *pset, FILE *source)
 
 
 		/* Setting this will not have effect until next line. */
-		die_on_error = GetVariableBool(pset->vars, "die_on_error");
+		die_on_error = GetVariableBool(pset.vars, "EXIT_ON_ERROR");
 
 		/*
 		 * query_buf holds query already accumulated.  line is the
@@ -137,14 +137,47 @@ MainLoop(PsqlSettings *pset, FILE *source)
 		/* No more input.  Time to quit, or \i done */
 		if (line == NULL)
 		{
-			if (GetVariableBool(pset->vars, "echo") && !GetVariableBool(pset->vars, "quiet"))
-				puts("EOF");
-			else if (pset->cur_cmd_interactive)
-				putc('\n', stdout); /* just newline */
+			if (pset.cur_cmd_interactive)
+            {
+                bool getout = true;
 
-			eof = true;
-			continue;
+                /* This tries to mimic bash's IGNOREEOF feature. */
+                const char * val = GetVariable(pset.vars, "IGNOREEOF");
+                if (val)
+                {
+                    long int maxeof;
+                    char * endptr;
+
+                    if (*val == '\0')
+                        maxeof = 10;
+                    else
+                    {
+                        maxeof = strtol(val, &endptr, 0);
+                        if (*endptr != '\0') /* string not valid as a number */
+                            maxeof = 10;
+                    }
+
+                    if (count_eof++ != maxeof)
+                        getout = false; /* not quite there yet */
+                }
+
+                if (getout)
+                {
+                    putc('\n', stdout); /* just newline */
+                    break;
+                }
+                else
+                {
+                    if (!QUIET())
+                        printf("Use \"\\q\" to leave %s.\n", pset.progname);
+                    continue;
+                }
+            }
+            else /* not interactive */
+                break;
 		}
+        else
+            count_eof = 0;
 
 		/* strip trailing backslashes, they don't have a clear meaning */
 		while (1)
@@ -164,11 +197,11 @@ MainLoop(PsqlSettings *pset, FILE *source)
 			continue;
 		}
 
-
-		/* echo back if input is from file and flag is set */
-		if (!pset->cur_cmd_interactive && GetVariableBool(pset->vars, "echo"))
-			puts(line);
-
+		/* echo back if flag is set */
+        var = GetVariable(pset.vars, "ECHO");
+        if (var && strcmp(var, "full")==0)
+            puts(line);
+	fflush(stdout);
 
 		len = strlen(line);
 		query_start = 0;
@@ -236,8 +269,7 @@ MainLoop(PsqlSettings *pset, FILE *source)
             /* colon -> substitute variable */
             /* we need to be on the watch for the '::' operator */
             else if (line[i] == ':' && !was_bslash &&
-                     strspn(line+i+thislen, VALID_VARIABLE_CHARS)>0 &&
-                     (prevlen > 0 && line[i-prevlen]!=':')
+                     strspn(line+i+thislen, VALID_VARIABLE_CHARS)>0
                 )
             {
 				size_t		in_length,
@@ -250,24 +282,35 @@ MainLoop(PsqlSettings *pset, FILE *source)
 				in_length = strspn(&line[i + thislen], VALID_VARIABLE_CHARS);
 				after = line[i + thislen + in_length];
 				line[i + thislen + in_length] = '\0';
-				value = interpolate_var(&line[i + thislen], pset);
-				out_length = strlen(value);
 
-				new = malloc(len + out_length - (1 + in_length) + 1);
-				if (!new)
-				{
-					perror("malloc");
-					exit(EXIT_FAILURE);
-				}
+                /* if the variable doesn't exist we'll leave the string as is */
+				value = GetVariable(pset.vars, &line[i + thislen]);
+                if (value)
+                {
+                    out_length = strlen(value);
 
-                sprintf(new, "%.*s%s%c", i, line, value, after);
-                if (after)
-                    strcat(new, line + i + 1 + in_length + 1);
+                    new = malloc(len + out_length - (1 + in_length) + 1);
+                    if (!new)
+                    {
+                        perror("malloc");
+                        exit(EXIT_FAILURE);
+                    }
 
-				free(line);
-				line = new;
-                len = strlen(new);
-                continue; /* reparse the just substituted */
+                    sprintf(new, "%.*s%s%c", i, line, value, after);
+                    if (after)
+                        strcat(new, line + i + 1 + in_length + 1);
+
+                    free(line);
+                    line = new;
+                    len = strlen(new);
+                    continue; /* reparse the just substituted */
+                }
+                else
+                {
+                    /* restore overwritten character */
+                    line[i + thislen + in_length] = after;
+                    /* move on ... */
+                }
             }
 
 			/* semicolon? then send query */
@@ -288,7 +331,7 @@ MainLoop(PsqlSettings *pset, FILE *source)
 				}
 
 				/* execute query */
-				success = SendQuery(pset, query_buf->data);
+				success = SendQuery(query_buf->data);
                 slashCmdStatus = success ? CMD_SEND : CMD_ERROR;
 
                 resetPQExpBuffer(previous_buf);
@@ -314,7 +357,7 @@ MainLoop(PsqlSettings *pset, FILE *source)
 				paren_level = 0;
 				line[i - prevlen] = '\0';		/* overwrites backslash */
 
-				/* is there anything else on the line? */
+				/* is there anything else on the line for the command? */
 				if (line[query_start + strspn(line + query_start, " \t")] != '\0')
 				{
 					/*
@@ -328,7 +371,7 @@ MainLoop(PsqlSettings *pset, FILE *source)
 				}
 
                 /* handle backslash command */
-                slashCmdStatus = HandleSlashCmds(pset, &line[i], 
+                slashCmdStatus = HandleSlashCmds(&line[i], 
                                                  query_buf->len>0 ? query_buf : previous_buf,
                                                  &end_of_cmd);
 
@@ -342,7 +385,7 @@ MainLoop(PsqlSettings *pset, FILE *source)
 
 				if (slashCmdStatus == CMD_SEND)
 				{
-					success = SendQuery(pset, query_buf->data);
+					success = SendQuery(query_buf->data);
 					query_start = i + thislen;
 
                     resetPQExpBuffer(previous_buf);
@@ -350,14 +393,9 @@ MainLoop(PsqlSettings *pset, FILE *source)
                     resetPQExpBuffer(query_buf);
 				}
 
-				/* is there anything left after the backslash command? */
-				if (end_of_cmd)
-				{
-					i += end_of_cmd - &line[i];
-					query_start = i;
-				}
-				else
-					break;
+				/* process anything left after the backslash command */
+                i += end_of_cmd - &line[i];
+                query_start = i;
 			}
 
 
@@ -387,9 +425,9 @@ MainLoop(PsqlSettings *pset, FILE *source)
 
 
 		/* In single line mode, send off the query if any */
-		if (query_buf->data[0] != '\0' && GetVariableBool(pset->vars, "singleline"))
+		if (query_buf->data[0] != '\0' && GetVariableBool(pset.vars, "SINGLELINE"))
 		{
-			success = SendQuery(pset, query_buf->data);
+			success = SendQuery(query_buf->data);
             slashCmdStatus = success ? CMD_SEND : CMD_ERROR;
             resetPQExpBuffer(previous_buf);
             appendPQExpBufferStr(previous_buf, query_buf->data);
@@ -397,7 +435,7 @@ MainLoop(PsqlSettings *pset, FILE *source)
 		}
 
 
-		if (!success && die_on_error && !pset->cur_cmd_interactive)
+		if (!success && die_on_error && !pset.cur_cmd_interactive)
 		{
 			successResult = EXIT_USER;
 			break;
@@ -405,18 +443,18 @@ MainLoop(PsqlSettings *pset, FILE *source)
 
 
 		/* Have we lost the db connection? */
-		if (pset->db == NULL && !pset->cur_cmd_interactive)
+		if (pset.db == NULL && !pset.cur_cmd_interactive)
 		{
 			successResult = EXIT_BADCONN;
 			break;
 		}
-	} /* while !EOF */
+	} /* while !endofprogram */
 
 	destroyPQExpBuffer(query_buf);
 	destroyPQExpBuffer(previous_buf);
 
-	pset->cur_cmd_source = prev_cmd_source;
-	pset->cur_cmd_interactive = prev_cmd_interactive;
+	pset.cur_cmd_source = prev_cmd_source;
+	pset.cur_cmd_interactive = prev_cmd_interactive;
 
 	return successResult;
 }	/* MainLoop() */

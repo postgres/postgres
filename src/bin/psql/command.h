@@ -24,19 +24,18 @@ typedef enum _backslashResult
 
 
 
-backslashResult HandleSlashCmds(PsqlSettings *pset,
-				const char *line,
+backslashResult
+HandleSlashCmds(const char *line,
 				PQExpBuffer query_buf,
 				const char **end_of_cmd);
 
-bool process_file(const char *filename,
-			 PsqlSettings *pset);
+bool
+process_file(const char *filename);
 
-
-bool do_pset(const char *param,
+bool
+do_pset(const char *param,
 		const char *value,
 		printQueryOpt * popt,
 		bool quiet);
-
 
 #endif

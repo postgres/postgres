@@ -42,7 +42,7 @@ char * gets_interactive(const char *prompt);
 char * gets_fromFile(FILE *source);
 
 
-void initializeInput(int flags, PsqlSettings *pset);
+void initializeInput(int flags);
 
 bool saveHistory(const char *fname);
 

@@ -1,4 +1,3 @@
-#include <config.h>
 #include <c.h>
 #include "command.h"
 
@@ -26,6 +25,7 @@
 #include "print.h"
 #include "describe.h"
 #include "input.h"
+#include "variables.h"
 
 #ifdef WIN32
 #define popen(x,y) _popen(x,y)
@@ -38,16 +38,14 @@
 static backslashResult exec_command(const char *cmd,
 			 char *const * options,
 			 const char *options_string,
-			 PQExpBuffer query_buf,
-			 PsqlSettings *pset);
+			 PQExpBuffer query_buf);
 
 static bool do_edit(const char *filename_arg, PQExpBuffer query_buf);
 
-static char * unescape(const char *source, PsqlSettings *pset);
+static char * unescape(const char *source);
 
 static bool do_connect(const char *new_dbname,
-                       const char *new_user,
-                       PsqlSettings *pset);
+                       const char *new_user);
 
 
 static bool do_shell(const char *command);
@@ -79,8 +77,7 @@ static bool do_shell(const char *command);
  */
 
 backslashResult
-HandleSlashCmds(PsqlSettings *pset,
-				const char *line,
+HandleSlashCmds(const char *line,
 				PQExpBuffer query_buf,
 				const char **end_of_cmd)
 {
@@ -94,6 +91,12 @@ HandleSlashCmds(PsqlSettings *pset,
 	int			i;
 	const char *continue_parse = NULL;	/* tell the mainloop where the
 										 * backslash command ended */
+
+#ifdef USE_ASSERT_CHECKING
+    assert(line);
+    assert(query_buf);
+    assert(end_of_cmd);
+#endif
 
 	my_line = xstrdup(line);
 
@@ -135,7 +138,7 @@ HandleSlashCmds(PsqlSettings *pset,
 			switch (quote)
 			{
 				case '"':
-					options[i] = unescape(token, pset);
+					options[i] = unescape(token);
 					break;
 				case '\'':
 					options[i] = xstrdup(token);
@@ -144,7 +147,7 @@ HandleSlashCmds(PsqlSettings *pset,
 					{
 						bool		error = false;
 						FILE	   *fd = NULL;
-						char	   *file = unescape(token, pset);
+						char	   *file = unescape(token);
 						PQExpBufferData output;
 						char		buf[512];
 						size_t		result;
@@ -200,8 +203,13 @@ HandleSlashCmds(PsqlSettings *pset,
 				default:
 					if (token[0] == '\\')
 						continue_parse = options_string + pos;
-					else if (token[0] == '$')
-						options[i] = xstrdup(interpolate_var(token + 1, pset));
+					else if (token[0] == '$') 
+                    {
+                        const char * value = GetVariable(pset.vars, token+1);
+                        if (!value)
+                            value = "";
+						options[i] = xstrdup(value);
+                    }
 					else
 						options[i] = xstrdup(token);
 			}
@@ -216,7 +224,7 @@ HandleSlashCmds(PsqlSettings *pset,
 	}
 
 	cmd = my_line;
-	status = exec_command(cmd, options, options_string, query_buf, pset);
+	status = exec_command(cmd, options, options_string, query_buf);
 
 	if (status == CMD_UNKNOWN)
 	{
@@ -238,15 +246,15 @@ HandleSlashCmds(PsqlSettings *pset,
 		new_cmd[0] = cmd[0];
 		new_cmd[1] = '\0';
 
-		status = exec_command(new_cmd, (char *const *) new_options, my_line + 2, query_buf, pset);
+		status = exec_command(new_cmd, (char *const *) new_options, my_line + 2, query_buf);
 	}
 
 	if (status == CMD_UNKNOWN)
 	{
-        if (pset->cur_cmd_interactive)
+        if (pset.cur_cmd_interactive)
             fprintf(stderr, "Invalid command \\%s. Try \\? for help.\n", cmd);
         else
-            fprintf(stderr, "%s: invalid command \\%s", pset->progname, cmd);
+            fprintf(stderr, "%s: invalid command \\%s", pset.progname, cmd);
 		status = CMD_ERROR;
 	}
 
@@ -254,13 +262,10 @@ HandleSlashCmds(PsqlSettings *pset,
 		continue_parse += 2;
 
 
-	if (end_of_cmd)
-	{
-		if (continue_parse)
-			*end_of_cmd = line + (continue_parse - my_line);
-		else
-			*end_of_cmd = NULL;
-	}
+    if (continue_parse)
+        *end_of_cmd = line + (continue_parse - my_line);
+    else
+        *end_of_cmd = line + strlen(line);
 
 	/* clean up */
 	for (i = 0; i < NR_OPTIONS && options[i]; i++)
@@ -278,12 +283,11 @@ static backslashResult
 exec_command(const char *cmd,
 			 char *const * options,
 			 const char *options_string,
-			 PQExpBuffer query_buf,
-			 PsqlSettings *pset)
+			 PQExpBuffer query_buf)
 {
 	bool		success = true; /* indicate here if the command ran ok or
 								 * failed */
-	bool		quiet = GetVariableBool(pset->vars, "quiet");
+	bool		quiet = QUIET();
 
 	backslashResult status = CMD_SKIP_LINE;
 
@@ -291,16 +295,16 @@ exec_command(const char *cmd,
 	/* \a -- toggle field alignment This makes little sense but we keep it around. */
 	if (strcmp(cmd, "a") == 0)
 	{
-		if (pset->popt.topt.format != PRINT_ALIGNED)
-			success = do_pset("format", "aligned", &pset->popt, quiet);
+		if (pset.popt.topt.format != PRINT_ALIGNED)
+			success = do_pset("format", "aligned", &pset.popt, quiet);
 		else
-			success = do_pset("format", "unaligned", &pset->popt, quiet);
+			success = do_pset("format", "unaligned", &pset.popt, quiet);
 	}
 
 
 	/* \C -- override table title (formerly change HTML caption) */
 	else if (strcmp(cmd, "C") == 0)
-		success = do_pset("title", options[0], &pset->popt, quiet);
+		success = do_pset("title", options[0], &pset.popt, quiet);
 
 
 	/*----------
@@ -316,25 +320,25 @@ exec_command(const char *cmd,
 	{
 		if (options[1])
 			/* gave username */
-			success = do_connect(options[0], options[1], pset);
+			success = do_connect(options[0], options[1]);
 		else
 		{
 			if (options[0])
 				/* gave database name */
-				success = do_connect(options[0], "", pset);		/* empty string is same
-																 * username as before,
-																 * NULL would mean libpq
-																 * default */
+				success = do_connect(options[0], "");		/* empty string is same
+                                                             * username as before,
+                                                             * NULL would mean libpq
+                                                             * default */
 			else
 				/* connect to default db as default user */
-				success = do_connect(NULL, NULL, pset);
+				success = do_connect(NULL, NULL);
 		}
 	}
 
 
 	/* \copy */
-	else if (strcmp(cmd, "copy") == 0)
-		success = do_copy(options_string, pset);
+	else if (strcasecmp(cmd, "copy") == 0)
+		success = do_copy(options_string);
 
 	/* \copyright */
 	else if (strcmp(cmd, "copyright") == 0)
@@ -350,31 +354,31 @@ exec_command(const char *cmd,
 			case '\0':
             case '?':
 				if (options[0])
-					success = describeTableDetails(options[0], pset, show_verbose);
+					success = describeTableDetails(options[0], show_verbose);
 				else
                     /* standard listing of interesting things */
-					success = listTables("tvs", NULL, pset, show_verbose);
+					success = listTables("tvs", NULL, show_verbose);
 				break;
 			case 'a':
-				success = describeAggregates(options[0], pset);
+				success = describeAggregates(options[0]);
 				break;
 			case 'd':
-				success = objectDescription(options[0], pset);
+				success = objectDescription(options[0]);
 				break;
 			case 'f':
-				success = describeFunctions(options[0], pset, show_verbose);
+				success = describeFunctions(options[0], show_verbose);
 				break;
 			case 'l':
-				success = do_lo_list(pset);
+				success = do_lo_list();
 				break;
 			case 'o':
-				success = describeOperators(options[0], pset);
+				success = describeOperators(options[0]);
 				break;
 			case 'p':
-				success = permissionsList(options[0], pset);
+				success = permissionsList(options[0]);
 				break;
 			case 'T':
-				success = describeTypes(options[0], pset, show_verbose);
+				success = describeTypes(options[0], show_verbose);
 				break;
 			case 't':
 			case 'v':
@@ -382,9 +386,9 @@ exec_command(const char *cmd,
 			case 's':
 			case 'S':
 				if (cmd[1] == 'S' && cmd[2] == '\0')
-					success = listTables("Stvs", NULL, pset, show_verbose);
+					success = listTables("Stvs", NULL, show_verbose);
 				else
-					success = listTables(&cmd[1], options[0], pset, show_verbose);
+					success = listTables(&cmd[1], options[0], show_verbose);
 				break;
 			default:
 				status = CMD_UNKNOWN;
@@ -412,15 +416,15 @@ exec_command(const char *cmd,
 
 	/* \f -- change field separator */
 	else if (strcmp(cmd, "f") == 0)
-		success = do_pset("fieldsep", options[0], &pset->popt, quiet);
+		success = do_pset("fieldsep", options[0], &pset.popt, quiet);
 
 	/* \g means send query */
 	else if (strcmp(cmd, "g") == 0)
 	{
 		if (!options[0])
-			pset->gfname = NULL;
+			pset.gfname = NULL;
 		else
-			pset->gfname = xstrdup(options[0]);
+			pset.gfname = xstrdup(options[0]);
 		status = CMD_SEND;
 	}
 
@@ -442,10 +446,10 @@ exec_command(const char *cmd,
 	/* HTML mode */
 	else if (strcmp(cmd, "H") == 0 || strcmp(cmd, "html") == 0)
     {
-		if (pset->popt.topt.format != PRINT_HTML)
-			success = do_pset("format", "html", &pset->popt, quiet);
+		if (pset.popt.topt.format != PRINT_HTML)
+			success = do_pset("format", "html", &pset.popt, quiet);
 		else
-			success = do_pset("format", "aligned", &pset->popt, quiet);
+			success = do_pset("format", "aligned", &pset.popt, quiet);
     }
 
 
@@ -454,22 +458,22 @@ exec_command(const char *cmd,
 	{
 		if (!options[0])
 		{
-            if (pset->cur_cmd_interactive)
+            if (pset.cur_cmd_interactive)
                 fprintf(stderr, "\\%s: missing required argument\n", cmd);
             else
-                fprintf(stderr, "%s: \\%s: missing required argument", pset->progname, cmd);
+                fprintf(stderr, "%s: \\%s: missing required argument", pset.progname, cmd);
 			success = false;
 		}
 		else
-			success = process_file(options[0], pset);
+			success = process_file(options[0]);
 	}
 
 
 	/* \l is list databases */
 	else if (strcmp(cmd, "l") == 0 || strcmp(cmd, "list") == 0)
-		success = listAllDbs(pset, false);
+		success = listAllDbs(false);
 	else if (strcmp(cmd, "l+") == 0 || strcmp(cmd, "list+") == 0)
-		success = listAllDbs(pset, true);
+		success = listAllDbs(true);
 
 
 	/* large object things */
@@ -479,45 +483,45 @@ exec_command(const char *cmd,
 		{
 			if (!options[1])
 			{
-                if (pset->cur_cmd_interactive)
+                if (pset.cur_cmd_interactive)
                     fprintf(stderr, "\\%s: missing required argument", cmd);
                 else
-                    fprintf(stderr, "%s: \\%s: missing required argument", pset->progname, cmd);
+                    fprintf(stderr, "%s: \\%s: missing required argument", pset.progname, cmd);
 				success = false;
 			}
 			else
-				success = do_lo_export(pset, options[0], options[1]);
+				success = do_lo_export(options[0], options[1]);
 		}
 
 		else if (strcmp(cmd + 3, "import") == 0)
 		{
 			if (!options[0])
 			{
-                if (pset->cur_cmd_interactive)
+                if (pset.cur_cmd_interactive)
                     fprintf(stderr, "\\%s: missing required argument", cmd);
                 else
-                    fprintf(stderr, "%s: \\%s: missing required argument", pset->progname, cmd);
+                    fprintf(stderr, "%s: \\%s: missing required argument", pset.progname, cmd);
 				success = false;
 			}
 			else
-				success = do_lo_import(pset, options[0], options[1]);
+				success = do_lo_import(options[0], options[1]);
 		}
 
 		else if (strcmp(cmd + 3, "list") == 0)
-			success = do_lo_list(pset);
+			success = do_lo_list();
 
 		else if (strcmp(cmd + 3, "unlink") == 0)
 		{
 			if (!options[0])
 			{
-                if (pset->cur_cmd_interactive)
+                if (pset.cur_cmd_interactive)
                     fprintf(stderr, "\\%s: missing required argument", cmd);
                 else
-                    fprintf(stderr, "%s: \\%s: missing required argument", pset->progname, cmd);
+                    fprintf(stderr, "%s: \\%s: missing required argument", pset.progname, cmd);
 				success = false;
 			}
 			else
-				success = do_lo_unlink(pset, options[0]);
+				success = do_lo_unlink(options[0]);
 		}
 
 		else
@@ -526,7 +530,7 @@ exec_command(const char *cmd,
 
 	/* \o -- set query output */
 	else if (strcmp(cmd, "o") == 0 || strcmp(cmd, "out") == 0)
-		success = setQFout(options[0], pset);
+		success = setQFout(options[0]);
 
 
 	/* \p prints the current query buffer */
@@ -544,14 +548,14 @@ exec_command(const char *cmd,
 	{
 		if (!options[0])
 		{
-            if (pset->cur_cmd_interactive)
+            if (pset.cur_cmd_interactive)
                 fprintf(stderr, "\\%s: missing required argument", cmd);
             else
-                fprintf(stderr, "%s: \\%s: missing required argument", pset->progname, cmd);
+                fprintf(stderr, "%s: \\%s: missing required argument", pset.progname, cmd);
 			success = false;
 		}
 		else
-			success = do_pset(options[0], options[1], &pset->popt, quiet);
+			success = do_pset(options[0], options[1], &pset.popt, quiet);
 	}
 
 	/* \q or \quit */
@@ -564,8 +568,8 @@ exec_command(const char *cmd,
 		int			i;
 
 		for (i = 0; i < 16 && options[i]; i++)
-			fputs(options[i], pset->queryFout);
-		fputs("\n", pset->queryFout);
+			fputs(options[i], pset.queryFout);
+		fputs("\n", pset.queryFout);
 	}
 
 	/* reset(clear) the buffer */
@@ -607,18 +611,21 @@ exec_command(const char *cmd,
 			 */
 			struct _variable *ptr;
 
-			for (ptr = pset->vars; ptr->next; ptr = ptr->next)
+			for (ptr = pset.vars; ptr->next; ptr = ptr->next)
 				fprintf(stdout, "%s = '%s'\n", ptr->next->name, ptr->next->value);
 			success = true;
 		}
 		else
 		{
-			if (!SetVariable(pset->vars, options[0], options[1]))
+            const char * val = options[1];
+            if (!val)
+                val = "";
+			if (!SetVariable(pset.vars, options[0], val))
 			{
-                if (pset->cur_cmd_interactive)
-                    fprintf(stderr, "\\%s: failed\n", cmd);
+                if (pset.cur_cmd_interactive)
+                    fprintf(stderr, "\\%s: error\n", cmd);
                 else
-                    fprintf(stderr, "%s: \\%s: failed\n", pset->progname, cmd);
+                    fprintf(stderr, "%s: \\%s: error\n", pset.progname, cmd);
 
 				success = false;
 			}
@@ -627,13 +634,26 @@ exec_command(const char *cmd,
 
 	/* \t -- turn off headers and row count */
 	else if (strcmp(cmd, "t") == 0)
-		success = do_pset("tuples_only", NULL, &pset->popt, quiet);
+		success = do_pset("tuples_only", NULL, &pset.popt, quiet);
 
 
 	/* \T -- define html <table ...> attributes */
 	else if (strcmp(cmd, "T") == 0)
-		success = do_pset("tableattr", options[0], &pset->popt, quiet);
+		success = do_pset("tableattr", options[0], &pset.popt, quiet);
 
+    /* \unset */
+    else if (strcmp(cmd, "unset") == 0)
+    {
+        if (!SetVariable(pset.vars, options[0], NULL))
+        {
+            if (pset.cur_cmd_interactive)
+                fprintf(stderr, "\\%s: error\n", cmd);
+            else
+                fprintf(stderr, "%s: \\%s: error\n", pset.progname, cmd);
+
+            success = false;
+			}
+    }
 
 	/* \w -- write query buffer to file */
 	else if (strcmp(cmd, "w") == 0 || strcmp(cmd, "write") == 0)
@@ -643,10 +663,10 @@ exec_command(const char *cmd,
 
 		if (!options[0])
 		{
-            if (pset->cur_cmd_interactive)
+            if (pset.cur_cmd_interactive)
                 fprintf(stderr, "\\%s: missing required argument", cmd);
             else
-                fprintf(stderr, "%s: \\%s: missing required argument", pset->progname, cmd);
+                fprintf(stderr, "%s: \\%s: missing required argument", pset.progname, cmd);
 			success = false;
 		}
 		else
@@ -698,19 +718,19 @@ exec_command(const char *cmd,
 
 	/* \x -- toggle expanded table representation */
 	else if (strcmp(cmd, "x") == 0)
-		success = do_pset("expanded", NULL, &pset->popt, quiet);
+		success = do_pset("expanded", NULL, &pset.popt, quiet);
 
 
 	/* list table rights (grant/revoke) */
 	else if (strcmp(cmd, "z") == 0)
-		success = permissionsList(options[0], pset);
+		success = permissionsList(options[0]);
 
 
 	else if (strcmp(cmd, "!") == 0)
 		success = do_shell(options_string);
 
 	else if (strcmp(cmd, "?") == 0)
-		slashUsage(pset);
+		slashUsage();
 
 
 #ifdef NOT_USED
@@ -748,7 +768,7 @@ exec_command(const char *cmd,
  * The return value is malloc()'ed.
  */
 static char *
-unescape(const char *source, PsqlSettings *pset)
+unescape(const char *source)
 {
 	unsigned char *p;
 	bool		esc = false;	/* Last character we saw was the escape
@@ -831,8 +851,9 @@ unescape(const char *source, PsqlSettings *pset)
 				len = strcspn(p + 2, "}");
 				copy = xstrdup(p + 2);
 				copy[len] = '\0';
-				value = interpolate_var(copy, pset);
-
+				value = GetVariable(pset.vars, copy);
+                if (!value)
+                    value = "";
 				length += strlen(value) - (len + 3);
 				new = realloc(destination, length);
 				if (!new)
@@ -871,40 +892,42 @@ unescape(const char *source, PsqlSettings *pset)
  *
  * Connects to a database (new_dbname) as a certain user (new_user).
  * The new user can be NULL. A db name of "-" is the same as the old one.
- * (That is, the one currently in pset. But pset->db can also be NULL. A NULL
+ * (That is, the one currently in pset. But pset.db can also be NULL. A NULL
  * dbname is handled by libpq.)
  * Returns true if all ok, false if the new connection couldn't be established
  * but the old one was set back. Otherwise it terminates the program.
  */
 static bool
-do_connect(const char *new_dbname, const char *new_user, PsqlSettings *pset)
+do_connect(const char *new_dbname, const char *new_user)
 {
-	PGconn	   *oldconn = pset->db;
+	PGconn	   *oldconn = pset.db;
 	const char *dbparam = NULL;
 	const char *userparam = NULL;
 	const char *pwparam = NULL;
 	char	   *prompted_password = NULL;
-	char	   *prompted_user = NULL;
 	bool		need_pass;
 	bool		success = false;
 
+    /* Delete variables (in case we fail before setting them anew) */
+    SetVariable(pset.vars, "DBNAME", NULL);
+    SetVariable(pset.vars, "USER", NULL);
+    SetVariable(pset.vars, "HOST", NULL);
+    SetVariable(pset.vars, "PORT", NULL);
+
 	/* If dbname is "-" then use old name, else new one (even if NULL) */
-	if (new_dbname && PQdb(oldconn) && (strcmp(new_dbname, "-") == 0 || strcmp(new_dbname, PQdb(oldconn)) == 0))
+	if (oldconn && new_dbname && PQdb(oldconn) && strcmp(new_dbname, "-") == 0)
 		dbparam = PQdb(oldconn);
 	else
 		dbparam = new_dbname;
 
-	/* If user is "" or "-" then use the old one */
-	if (new_user && PQuser(oldconn) && (strcmp(new_user, "") == 0 || strcmp(new_user, "-") == 0 || strcmp(new_user, PQuser(oldconn)) == 0))
+	/* If user is "" then use the old one */
+	if (new_user && PQuser(oldconn) && strcmp(new_user, "")==0)
 		userparam = PQuser(oldconn);
-	/* If username is "?" then prompt */
-	else if (new_user && strcmp(new_user, "?") == 0)
-		userparam = prompted_user = simple_prompt("Username: ", 100, true);		/* save for free() */
 	else
 		userparam = new_user;
 
 	/* need to prompt for password? */
-	if (pset->getPassword)
+	if (pset.getPassword)
 		pwparam = prompted_password = simple_prompt("Password: ", 100, false);	/* need to save for
 																				 * free() */
 
@@ -912,7 +935,7 @@ do_connect(const char *new_dbname, const char *new_user, PsqlSettings *pset)
 	 * Use old password if no new one given (if you didn't have an old
 	 * one, fine)
 	 */
-	if (!pwparam)
+	if (!pwparam && oldconn)
 		pwparam = PQpass(oldconn);
 
 
@@ -925,18 +948,18 @@ do_connect(const char *new_dbname, const char *new_user, PsqlSettings *pset)
 	 * the default PGCLIENTENCODING value. -- 1998/12/12 Tatsuo Ishii
 	 */
 
-	if (!pset->has_client_encoding)
+	if (!pset.has_client_encoding)
 		putenv("PGCLIENTENCODING=");
 #endif
 
 	do
 	{
 		need_pass = false;
-		pset->db = PQsetdbLogin(PQhost(oldconn), PQport(oldconn),
+		pset.db = PQsetdbLogin(PQhost(oldconn), PQport(oldconn),
 								NULL, NULL, dbparam, userparam, pwparam);
 
-		if (PQstatus(pset->db) == CONNECTION_BAD &&
-			strcmp(PQerrorMessage(pset->db), "fe_sendauth: no password supplied\n") == 0)
+		if (PQstatus(pset.db) == CONNECTION_BAD &&
+			strcmp(PQerrorMessage(pset.db), "fe_sendauth: no password supplied\n") == 0)
 		{
 			need_pass = true;
 			free(prompted_password);
@@ -946,40 +969,39 @@ do_connect(const char *new_dbname, const char *new_user, PsqlSettings *pset)
 	} while (need_pass);
 
 	free(prompted_password);
-	free(prompted_user);
 
 	/*
 	 * If connection failed, try at least keep the old one. That's
 	 * probably more convenient than just kicking you out of the program.
 	 */
-	if (!pset->db || PQstatus(pset->db) == CONNECTION_BAD)
+	if (!pset.db || PQstatus(pset.db) == CONNECTION_BAD)
 	{
-        if (pset->cur_cmd_interactive)
+        if (pset.cur_cmd_interactive)
         {
-            fprintf(stderr, "\\connect: %s", PQerrorMessage(pset->db));
-            PQfinish(pset->db);
+            fprintf(stderr, "%s", PQerrorMessage(pset.db));
+            PQfinish(pset.db);
             if (oldconn)
             {
                 fputs("Previous connection kept\n", stderr);
-                pset->db = oldconn;
+                pset.db = oldconn;
             }
             else
-                pset->db = NULL;
+                pset.db = NULL;
         }
         else
         {
             /* we don't want unpredictable things to
              * happen in scripting mode */
-            fprintf(stderr, "%s: \\connect: %s", pset->progname, PQerrorMessage(pset->db));
-            PQfinish(pset->db);
+            fprintf(stderr, "%s: \\connect: %s", pset.progname, PQerrorMessage(pset.db));
+            PQfinish(pset.db);
 			if (oldconn)
 				PQfinish(oldconn);
-            pset->db = NULL;
+            pset.db = NULL;
 		}
 	}
 	else
 	{
-		if (!GetVariable(pset->vars, "quiet"))
+		if (!QUIET())
 		{
 			if (userparam != new_user)	/* no new user */
 				printf("You are now connected to database %s.\n", dbparam);
@@ -987,7 +1009,7 @@ do_connect(const char *new_dbname, const char *new_user, PsqlSettings *pset)
 				printf("You are now connected as new user %s.\n", new_user);
 			else /* both new */
 				printf("You are now connected to database %s as user %s.\n",
-					   PQdb(pset->db), PQuser(pset->db));
+					   PQdb(pset.db), PQuser(pset.db));
 		}
 
 		if (oldconn)
@@ -995,6 +1017,12 @@ do_connect(const char *new_dbname, const char *new_user, PsqlSettings *pset)
 
 		success = true;
 	}
+
+    /* Update variables */
+    SetVariable(pset.vars, "DBNAME", PQdb(pset.db));
+    SetVariable(pset.vars, "USER", PQuser(pset.db));
+    SetVariable(pset.vars, "HOST", PQhost(pset.db));
+    SetVariable(pset.vars, "PORT", PQport(pset.db));
 
 	return success;
 }
@@ -1191,7 +1219,7 @@ do_edit(const char *filename_arg, PQExpBuffer query_buf)
  * Handler for \i, but can be used for other things as well.
  */
 bool
-process_file(const char *filename, PsqlSettings *pset)
+process_file(const char *filename)
 {
 	FILE	   *fd;
 	int			result;
@@ -1207,11 +1235,13 @@ process_file(const char *filename, PsqlSettings *pset)
 
 	if (!fd)
 	{
+        if (!pset.cur_cmd_interactive)
+            fprintf(stderr, "%s: ", pset.progname);
 		perror(filename);
 		return false;
 	}
 
-	result = MainLoop(pset, fd);
+	result = MainLoop(fd);
 	fclose(fd);
 	return (result == EXIT_SUCCESS);
 }

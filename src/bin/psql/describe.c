@@ -31,11 +31,11 @@
  * takes an optional regexp to match specific aggregates by name
  */
 bool
-describeAggregates(const char *name, PsqlSettings *pset)
+describeAggregates(const char *name)
 {
 	char		buf[384 + 2 * REGEXP_CUTOFF];
 	PGresult   *res;
-	printQueryOpt myopt = pset->popt;
+	printQueryOpt myopt = pset.popt;
 
 	/*
 	 * There are two kinds of aggregates: ones that work on particular
@@ -72,14 +72,14 @@ describeAggregates(const char *name, PsqlSettings *pset)
 
 	strcat(buf, "ORDER BY \"Name\", \"Type\"");
 
-	res = PSQLexec(pset, buf);
+	res = PSQLexec(buf);
 	if (!res)
 		return false;
 
 	myopt.nullPrint = NULL;
 	myopt.title = "List of aggregates";
 
-	printQuery(res, &myopt, pset->queryFout);
+	printQuery(res, &myopt, pset.queryFout);
 
 	PQclear(res);
 	return true;
@@ -90,11 +90,11 @@ describeAggregates(const char *name, PsqlSettings *pset)
  * Takes an optional regexp to narrow down the function name
  */
 bool
-describeFunctions(const char *name, PsqlSettings *pset, bool verbose)
+describeFunctions(const char *name, bool verbose)
 {
 	char		buf[384 + REGEXP_CUTOFF];
 	PGresult   *res;
-	printQueryOpt myopt = pset->popt;
+	printQueryOpt myopt = pset.popt;
 
 	/*
 	 * we skip in/out funcs by excluding functions that take some
@@ -125,14 +125,14 @@ describeFunctions(const char *name, PsqlSettings *pset, bool verbose)
 	}
 	strcat(buf, "ORDER BY \"Function\", \"Result\", \"Arguments\"");
 
-	res = PSQLexec(pset, buf);
+	res = PSQLexec(buf);
 	if (!res)
 		return false;
 
 	myopt.nullPrint = NULL;
 	myopt.title = "List of functions";
 
-	printQuery(res, &myopt, pset->queryFout);
+	printQuery(res, &myopt, pset.queryFout);
 
 	PQclear(res);
 	return true;
@@ -145,11 +145,11 @@ describeFunctions(const char *name, PsqlSettings *pset, bool verbose)
  * describe types
  */
 bool
-describeTypes(const char *name, PsqlSettings *pset, bool verbose)
+describeTypes(const char *name, bool verbose)
 {
 	char		buf[256 + REGEXP_CUTOFF];
 	PGresult   *res;
-	printQueryOpt myopt = pset->popt;
+	printQueryOpt myopt = pset.popt;
 
 	strcpy(buf, "SELECT t.typname AS \"Type\"");
     if (verbose)
@@ -169,14 +169,14 @@ describeTypes(const char *name, PsqlSettings *pset, bool verbose)
 	}
 	strcat(buf, "ORDER BY t.typname;");
 
-	res = PSQLexec(pset, buf);
+	res = PSQLexec(buf);
 	if (!res)
 		return false;
 
 	myopt.nullPrint = NULL;
 	myopt.title = "List of types";
 
-	printQuery(res, &myopt, pset->queryFout);
+	printQuery(res, &myopt, pset.queryFout);
 
 	PQclear(res);
 	return true;
@@ -187,11 +187,11 @@ describeTypes(const char *name, PsqlSettings *pset, bool verbose)
 /* \do
  */
 bool
-describeOperators(const char *name, PsqlSettings *pset)
+describeOperators(const char *name)
 {
 	char		buf[1536 + 3 * REGEXP_CUTOFF];
 	PGresult   *res;
-	printQueryOpt myopt = pset->popt;
+	printQueryOpt myopt = pset.popt;
 
 	strcpy(buf,
            "SELECT o.oprname AS \"Op\",\n"
@@ -251,14 +251,14 @@ describeOperators(const char *name, PsqlSettings *pset)
 	}
 	strcat(buf, "\nORDER BY \"Op\", \"Left arg\", \"Right arg\", \"Result\"");
 
-	res = PSQLexec(pset, buf);
+	res = PSQLexec(buf);
 	if (!res)
 		return false;
 
 	myopt.nullPrint = NULL;
 	myopt.title = "List of operators";
 
-	printQuery(res, &myopt, pset->queryFout);
+	printQuery(res, &myopt, pset.queryFout);
 
 	PQclear(res);
 	return true;
@@ -271,11 +271,11 @@ describeOperators(const char *name, PsqlSettings *pset)
  * for \l, \list, and -l switch
  */
 bool
-listAllDbs(PsqlSettings *pset, bool desc)
+listAllDbs(bool desc)
 {
 	PGresult   *res;
 	char		buf[512];
-	printQueryOpt myopt = pset->popt;
+	printQueryOpt myopt = pset.popt;
 
 	strcpy(buf,
            "SELECT pg_database.datname as \"Database\",\n"
@@ -306,14 +306,14 @@ listAllDbs(PsqlSettings *pset, bool desc)
 
     strcat(buf, "ORDER BY \"Database\"");
 
-	res = PSQLexec(pset, buf);
+	res = PSQLexec(buf);
 	if (!res)
 		return false;
 
 	myopt.nullPrint = NULL;
 	myopt.title = "List of databases";
 
-	printQuery(res, &myopt, pset->queryFout);
+	printQuery(res, &myopt, pset.queryFout);
 
 	PQclear(res);
 	return true;
@@ -325,11 +325,11 @@ listAllDbs(PsqlSettings *pset, bool desc)
  *
  */
 bool
-permissionsList(const char *name, PsqlSettings *pset)
+permissionsList(const char *name)
 {
 	char		descbuf[256 + REGEXP_CUTOFF];
 	PGresult   *res;
-	printQueryOpt myopt = pset->popt;
+	printQueryOpt myopt = pset.popt;
 
 	descbuf[0] = '\0';
 	/* Currently, we ignore indexes since they have no meaningful rights */
@@ -346,15 +346,15 @@ permissionsList(const char *name, PsqlSettings *pset)
 	}
 	strcat(descbuf, "ORDER BY relname");
 
-	res = PSQLexec(pset, descbuf);
+	res = PSQLexec(descbuf);
 	if (!res)
 		return false;
 
     myopt.nullPrint = NULL;
-    sprintf(descbuf, "Access permissions for database \"%s\"", PQdb(pset->db));
+    sprintf(descbuf, "Access permissions for database \"%s\"", PQdb(pset.db));
     myopt.title = descbuf;
 
-    printQuery(res, &myopt, pset->queryFout);
+    printQuery(res, &myopt, pset.queryFout);
 
 	PQclear(res);
 	return true;
@@ -371,11 +371,11 @@ permissionsList(const char *name, PsqlSettings *pset)
  * lists of things, there are other \d? commands.
  */
 bool
-objectDescription(const char *object, PsqlSettings *pset)
+objectDescription(const char *object)
 {
 	char		descbuf[2048 + 7 * REGEXP_CUTOFF];
 	PGresult   *res;
-	printQueryOpt myopt = pset->popt;
+	printQueryOpt myopt = pset.popt;
 
 	descbuf[0] = '\0';
 
@@ -466,7 +466,7 @@ objectDescription(const char *object, PsqlSettings *pset)
 	strcat(descbuf, "\nORDER BY \"Name\"");
 
 
-	res = PSQLexec(pset, descbuf);
+	res = PSQLexec(descbuf);
 	if (!res)
 		return false;
 
@@ -474,7 +474,7 @@ objectDescription(const char *object, PsqlSettings *pset)
 	myopt.nullPrint = NULL;
 	myopt.title = "Object descriptions";
 
-	printQuery(res, &myopt, pset->queryFout);
+	printQuery(res, &myopt, pset.queryFout);
 
 	PQclear(res);
 	return true;
@@ -507,11 +507,11 @@ xmalloc(size_t size)
 
 
 bool
-describeTableDetails(const char *name, PsqlSettings *pset, bool desc)
+describeTableDetails(const char *name, bool desc)
 {
 	char		buf[512 + INDEX_MAX_KEYS * NAMEDATALEN];
 	PGresult   *res = NULL;
-	printTableOpt myopt = pset->popt.topt;
+	printTableOpt myopt = pset.popt.topt;
 	int			i;
 	const char *view_def = NULL;
 	const char *headers[5];
@@ -536,14 +536,14 @@ describeTableDetails(const char *name, PsqlSettings *pset, bool desc)
 	    "SELECT relhasindex, relkind, relchecks, reltriggers, relhasrules\n"
 	    "FROM pg_class WHERE relname='%s'",
 	    name);
-    res = PSQLexec(pset, buf);
+    res = PSQLexec(buf);
     if (!res)
 	return false;
 
 	/* Did we get anything? */
 	if (PQntuples(res) == 0)
 	{
-		if (!GetVariableBool(pset->vars, "quiet"))
+		if (!QUIET())
 			fprintf(stderr, "Did not find any relation named \"%s\".\n", name);
 		PQclear(res);
 		return false;
@@ -587,7 +587,7 @@ describeTableDetails(const char *name, PsqlSettings *pset, bool desc)
 	strcat(buf, "'\n  AND a.attnum > 0 AND a.attrelid = c.oid AND a.atttypid = t.oid\n"
 		   "ORDER BY a.attnum");
 
-	res = PSQLexec(pset, buf);
+	res = PSQLexec(buf);
 	if (!res)
 		return false;
 
@@ -595,7 +595,7 @@ describeTableDetails(const char *name, PsqlSettings *pset, bool desc)
     if (tableinfo.hasrules) {
 	PGresult *result;
 	sprintf(buf, "SELECT definition FROM pg_views WHERE viewname = '%s'", name);
-	result = PSQLexec(pset, buf);
+	result = PSQLexec(buf);
 	if (!result)
 	{
 	    PQclear(res);
@@ -655,7 +655,7 @@ describeTableDetails(const char *name, PsqlSettings *pset, bool desc)
 			"WHERE c.relname = '%s' AND c.oid = d.adrelid AND d.adnum = %s",
 			name, PQgetvalue(res, i, 6));
 
-		result = PSQLexec(pset, buf);
+		result = PSQLexec(buf);
 		if (!result)
 		    error = true;
 		else
@@ -710,7 +710,7 @@ describeTableDetails(const char *name, PsqlSettings *pset, bool desc)
 		"WHERE i.indexrelid = c.oid AND c.relname = '%s' AND c.relam = a.oid",
 		name);
 
-	result = PSQLexec(pset, buf);
+	result = PSQLexec(buf);
 	if (!result)
 	    error = true;
 	else
@@ -750,7 +750,7 @@ describeTableDetails(const char *name, PsqlSettings *pset, bool desc)
 		    "WHERE c.relname = '%s' AND c.oid = i.indrelid AND i.indexrelid = c2.oid\n"
 		    "ORDER BY c2.relname",
 		    name);
-	    result1 = PSQLexec(pset, buf);
+	    result1 = PSQLexec(buf);
 	    if (!result1)
 		error = true;
 	    else
@@ -764,7 +764,7 @@ describeTableDetails(const char *name, PsqlSettings *pset, bool desc)
 		    "FROM pg_relcheck r, pg_class c\n"
 		    "WHERE c.relname='%s' AND c.oid = r.rcrelid",
 		    name);
-	    result2 = PSQLexec(pset, buf);
+	    result2 = PSQLexec(buf);
 	    if (!result2)
 		error = true;
 	    else
@@ -779,7 +779,7 @@ describeTableDetails(const char *name, PsqlSettings *pset, bool desc)
 		    "FROM pg_rewrite r, pg_class c\n"
 		    "WHERE c.relname='%s' AND c.oid = r.ev_class",
 		    name);
-	    result3 = PSQLexec(pset, buf);
+	    result3 = PSQLexec(buf);
 	    if (!result3)
 		error = true;
 	    else
@@ -794,7 +794,7 @@ describeTableDetails(const char *name, PsqlSettings *pset, bool desc)
 		    "FROM pg_trigger t, pg_class c\n"
 		    "WHERE c.relname='%s' AND c.oid = t.tgrelid",
 		    name);
-	    result4 = PSQLexec(pset, buf);
+	    result4 = PSQLexec(buf);
 	    if (!result4)
 		error = true;
 	    else
@@ -863,7 +863,7 @@ describeTableDetails(const char *name, PsqlSettings *pset, bool desc)
 
     if (!error) {
 	myopt.tuples_only = false;
-	printTable(title, headers, (const char**)cells, (const char**)footers, "llll", &myopt, pset->queryFout);
+	printTable(title, headers, (const char**)cells, (const char**)footers, "llll", &myopt, pset.queryFout);
     }
 
 	/* clean up */
@@ -906,7 +906,7 @@ describeTableDetails(const char *name, PsqlSettings *pset, bool desc)
  * tries to fix this the painful way, hopefully outer joins will be done sometime.
  */
 bool
-listTables(const char *infotype, const char *name, PsqlSettings *pset, bool desc)
+listTables(const char *infotype, const char *name, bool desc)
 {
 	bool		showTables = strchr(infotype, 't') != NULL;
 	bool		showIndices = strchr(infotype, 'i') != NULL;
@@ -916,7 +916,7 @@ listTables(const char *infotype, const char *name, PsqlSettings *pset, bool desc
 
 	char		buf[3072 + 8 * REGEXP_CUTOFF];
 	PGresult   *res;
-	printQueryOpt myopt = pset->popt;
+	printQueryOpt myopt = pset.popt;
 
 	buf[0] = '\0';
 
@@ -1093,20 +1093,24 @@ listTables(const char *infotype, const char *name, PsqlSettings *pset, bool desc
 	strcat(buf, "\nORDER BY \"Name\"");
 
 
-	res = PSQLexec(pset, buf);
+	res = PSQLexec(buf);
 	if (!res)
 		return false;
 
-	if (PQntuples(res) == 0)
-		fprintf(pset->queryFout, "No matching relations found.\n");
-
+	if (PQntuples(res) == 0 && !QUIET())
+    {
+        if (name)
+            fprintf(pset.queryFout, "No matching relations found.\n");
+        else
+            fprintf(pset.queryFout, "No relations found.\n");
+    }
 	else
 	{
 		myopt.topt.tuples_only = false;
 		myopt.nullPrint = NULL;
 		myopt.title = "List of relations";
 
-		printQuery(res, &myopt, pset->queryFout);
+		printQuery(res, &myopt, pset.queryFout);
 	}
 
 	PQclear(res);

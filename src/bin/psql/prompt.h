@@ -14,7 +14,7 @@ typedef enum _promptStatus
 }			promptStatus_t;
 
 const char *
-			get_prompt(PsqlSettings *pset, promptStatus_t status);
+			get_prompt(promptStatus_t status);
 
 
 #endif	 /* PROMPT_H */

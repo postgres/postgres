@@ -1,4 +1,3 @@
-#include <config.h>
 #include <c.h>
 #include "large_obj.h"
 
@@ -33,9 +32,9 @@ _my_notice_handler(void *arg, const char *message)
 
 
 static bool
-handle_transaction(PsqlSettings *pset)
+handle_transaction(void)
 {
-	const char *var = GetVariable(pset->vars, "lo_transaction");
+	const char *var = GetVariable(pset.vars, "LO_TRANSACTION");
 	PGresult   *res;
 	bool		commit;
 	PQnoticeProcessor old_notice_hook;
@@ -46,9 +45,9 @@ handle_transaction(PsqlSettings *pset)
 	commit = (var && strcmp(var, "commit") == 0);
 
 	notice[0] = '\0';
-	old_notice_hook = PQsetNoticeProcessor(pset->db, _my_notice_handler, NULL);
+	old_notice_hook = PQsetNoticeProcessor(pset.db, _my_notice_handler, NULL);
 
-	res = PSQLexec(pset, commit ? "COMMIT" : "ROLLBACK");
+	res = PSQLexec(commit ? "COMMIT" : "ROLLBACK");
 	if (!res)
 		return false;
 
@@ -58,7 +57,7 @@ handle_transaction(PsqlSettings *pset)
 			(commit && strcmp(notice, "NOTICE:  EndTransactionBlock and not inprogress/abort state\n") != 0))
 			fputs(notice, stderr);
 	}
-	else if (!GetVariableBool(pset->vars, "quiet"))
+	else if (!QUIET())
 	{
 		if (commit)
 			puts("Warning: Your transaction in progress has been committed.");
@@ -66,7 +65,7 @@ handle_transaction(PsqlSettings *pset)
 			puts("Warning: Your transaction in progress has been rolled back.");
 	}
 
-	PQsetNoticeProcessor(pset->db, old_notice_hook, NULL);
+	PQsetNoticeProcessor(pset.db, old_notice_hook, NULL);
 	return true;
 }
 
@@ -78,43 +77,43 @@ handle_transaction(PsqlSettings *pset)
  * Write a large object to a file
  */
 bool
-do_lo_export(PsqlSettings *pset, const char *loid_arg, const char *filename_arg)
+do_lo_export(const char *loid_arg, const char *filename_arg)
 {
 	PGresult   *res;
 	int			status;
 	bool		own_transaction = true;
-	const char *var = GetVariable(pset->vars, "lo_transaction");
+	const char *var = GetVariable(pset.vars, "LO_TRANSACTION");
 
 	if (var && strcmp(var, "nothing") == 0)
 		own_transaction = false;
 
-	if (!pset->db)
+	if (!pset.db)
 	{
-        if (!pset->cur_cmd_interactive)
-            fprintf(stderr, "%s: ", pset->progname);
+        if (!pset.cur_cmd_interactive)
+            fprintf(stderr, "%s: ", pset.progname);
 		fputs("\\lo_export: not connected to a database\n", stderr);
 		return false;
 	}
 
 	if (own_transaction)
 	{
-		if (!handle_transaction(pset))
+		if (!handle_transaction())
 			return false;
 
-		if (!(res = PSQLexec(pset, "BEGIN")))
+		if (!(res = PSQLexec("BEGIN")))
 			return false;
 
 		PQclear(res);
 	}
 
-	status = lo_export(pset->db, atol(loid_arg), (char *) filename_arg);
+	status = lo_export(pset.db, atol(loid_arg), (char *) filename_arg);
 	if (status != 1)
 	{							/* of course this status is documented
 								 * nowhere :( */
-		fputs(PQerrorMessage(pset->db), stderr);
+		fputs(PQerrorMessage(pset.db), stderr);
 		if (own_transaction)
 		{
-			res = PQexec(pset->db, "ROLLBACK");
+			res = PQexec(pset.db, "ROLLBACK");
 			PQclear(res);
 		}
 		return false;
@@ -122,9 +121,9 @@ do_lo_export(PsqlSettings *pset, const char *loid_arg, const char *filename_arg)
 
 	if (own_transaction)
 	{
-		if (!(res = PSQLexec(pset, "COMMIT")))
+		if (!(res = PSQLexec("COMMIT")))
 		{
-			res = PQexec(pset->db, "ROLLBACK");
+			res = PQexec(pset.db, "ROLLBACK");
 			PQclear(res);
 			return false;
 		}
@@ -132,7 +131,7 @@ do_lo_export(PsqlSettings *pset, const char *loid_arg, const char *filename_arg)
 		PQclear(res);
 	}
 
-	fprintf(pset->queryFout, "lo_export\n");
+	fprintf(pset.queryFout, "lo_export\n");
 
 	return true;
 }
@@ -145,44 +144,44 @@ do_lo_export(PsqlSettings *pset, const char *loid_arg, const char *filename_arg)
  * Copy large object from file to database
  */
 bool
-do_lo_import(PsqlSettings *pset, const char *filename_arg, const char *comment_arg)
+do_lo_import(const char *filename_arg, const char *comment_arg)
 {
 	PGresult   *res;
 	Oid			loid;
 	char		buf[1024];
 	unsigned int i;
 	bool		own_transaction = true;
-	const char *var = GetVariable(pset->vars, "lo_transaction");
+	const char *var = GetVariable(pset.vars, "LO_TRANSACTION");
 
 	if (var && strcmp(var, "nothing") == 0)
 		own_transaction = false;
 
-	if (!pset->db)
+	if (!pset.db)
 	{
-        if (!pset->cur_cmd_interactive)
-            fprintf(stderr, "%s: ", pset->progname);
+        if (!pset.cur_cmd_interactive)
+            fprintf(stderr, "%s: ", pset.progname);
 		fputs("\\lo_import: not connected to a database\n", stderr);
 		return false;
 	}
 
 	if (own_transaction)
 	{
-		if (!handle_transaction(pset))
+		if (!handle_transaction())
 			return false;
 
-		if (!(res = PSQLexec(pset, "BEGIN")))
+		if (!(res = PSQLexec("BEGIN")))
 			return false;
 
 		PQclear(res);
 	}
 
-	loid = lo_import(pset->db, (char *) filename_arg);
+	loid = lo_import(pset.db, (char *) filename_arg);
 	if (loid == InvalidOid)
 	{
-		fputs(PQerrorMessage(pset->db), stderr);
+		fputs(PQerrorMessage(pset.db), stderr);
 		if (own_transaction)
 		{
-			res = PQexec(pset->db, "ROLLBACK");
+			res = PQexec(pset.db, "ROLLBACK");
 			PQclear(res);
 		}
 		return false;
@@ -199,11 +198,11 @@ do_lo_import(PsqlSettings *pset, const char *filename_arg, const char *comment_a
 				strncat(buf, &comment_arg[i], 1);
 		strcat(buf, "')");
 
-		if (!(res = PSQLexec(pset, buf)))
+		if (!(res = PSQLexec(buf)))
 		{
 			if (own_transaction)
 			{
-				res = PQexec(pset->db, "ROLLBACK");
+				res = PQexec(pset.db, "ROLLBACK");
 				PQclear(res);
 			}
 			return false;
@@ -212,9 +211,9 @@ do_lo_import(PsqlSettings *pset, const char *filename_arg, const char *comment_a
 
 	if (own_transaction)
 	{
-		if (!(res = PSQLexec(pset, "COMMIT")))
+		if (!(res = PSQLexec("COMMIT")))
 		{
-			res = PQexec(pset->db, "ROLLBACK");
+			res = PQexec(pset.db, "ROLLBACK");
 			PQclear(res);
 			return false;
 		}
@@ -223,8 +222,9 @@ do_lo_import(PsqlSettings *pset, const char *filename_arg, const char *comment_a
 	}
 
 
-	fprintf(pset->queryFout, "lo_import %d\n", loid);
-    pset->lastOid = loid;
+	fprintf(pset.queryFout, "lo_import %d\n", loid);
+    sprintf(buf, "%u", (unsigned int)loid);
+    SetVariable(pset.vars, "LASTOID", buf);
 
 	return true;
 }
@@ -237,44 +237,44 @@ do_lo_import(PsqlSettings *pset, const char *filename_arg, const char *comment_a
  * removes a large object out of the database
  */
 bool
-do_lo_unlink(PsqlSettings *pset, const char *loid_arg)
+do_lo_unlink(const char *loid_arg)
 {
 	PGresult   *res;
 	int			status;
 	Oid			loid = (Oid) atol(loid_arg);
 	char		buf[256];
 	bool		own_transaction = true;
-	const char *var = GetVariable(pset->vars, "lo_transaction");
+	const char *var = GetVariable(pset.vars, "LO_TRANSACTION");
 
 	if (var && strcmp(var, "nothing") == 0)
 		own_transaction = false;
 
-	if (!pset->db)
+	if (!pset.db)
 	{
-        if (!pset->cur_cmd_interactive)
-            fprintf(stderr, "%s: ", pset->progname);
+        if (!pset.cur_cmd_interactive)
+            fprintf(stderr, "%s: ", pset.progname);
 		fputs("\\lo_unlink: not connected to a database\n", stderr);
 		return false;
 	}
 
 	if (own_transaction)
 	{
-		if (!handle_transaction(pset))
+		if (!handle_transaction())
 			return false;
 
-		if (!(res = PSQLexec(pset, "BEGIN")))
+		if (!(res = PSQLexec("BEGIN")))
 			return false;
 
 		PQclear(res);
 	}
 
-	status = lo_unlink(pset->db, loid);
+	status = lo_unlink(pset.db, loid);
 	if (status == -1)
 	{
-		fputs(PQerrorMessage(pset->db), stderr);
+		fputs(PQerrorMessage(pset.db), stderr);
 		if (own_transaction)
 		{
-			res = PQexec(pset->db, "ROLLBACK");
+			res = PQexec(pset.db, "ROLLBACK");
 			PQclear(res);
 		}
 		return false;
@@ -282,11 +282,11 @@ do_lo_unlink(PsqlSettings *pset, const char *loid_arg)
 
 	/* remove the comment as well */
 	sprintf(buf, "DELETE FROM pg_description WHERE objoid = %d", loid);
-	if (!(res = PSQLexec(pset, buf)))
+	if (!(res = PSQLexec(buf)))
 	{
 		if (own_transaction)
 		{
-			res = PQexec(pset->db, "ROLLBACK");
+			res = PQexec(pset.db, "ROLLBACK");
 			PQclear(res);
 		}
 		return false;
@@ -295,9 +295,9 @@ do_lo_unlink(PsqlSettings *pset, const char *loid_arg)
 
 	if (own_transaction)
 	{
-		if (!(res = PSQLexec(pset, "COMMIT")))
+		if (!(res = PSQLexec("COMMIT")))
 		{
-			res = PQexec(pset->db, "ROLLBACK");
+			res = PQexec(pset.db, "ROLLBACK");
 			PQclear(res);
 			return false;
 		}
@@ -305,7 +305,7 @@ do_lo_unlink(PsqlSettings *pset, const char *loid_arg)
 	}
 
 
-	fprintf(pset->queryFout, "lo_unlink %d\n", loid);
+	fprintf(pset.queryFout, "lo_unlink %d\n", loid);
 
 	return true;
 }
@@ -318,11 +318,11 @@ do_lo_unlink(PsqlSettings *pset, const char *loid_arg)
  * Show all large objects in database with comments
  */
 bool
-do_lo_list(PsqlSettings *pset)
+do_lo_list(void)
 {
 	PGresult   *res;
 	char		buf[1024];
-	printQueryOpt myopt = pset->popt;
+	printQueryOpt myopt = pset.popt;
 
 	strcpy(buf,
            "SELECT usename as \"Owner\", substring(relname from 5) as \"ID\",\n"
@@ -336,7 +336,7 @@ do_lo_list(PsqlSettings *pset)
 		   "WHERE not exists (select 1 from pg_user where usesysid = relowner) AND relkind = 'l'\n"
 		   "ORDER BY \"ID\"");
 
-	res = PSQLexec(pset, buf);
+	res = PSQLexec(buf);
 	if (!res)
 		return false;
 
@@ -344,7 +344,7 @@ do_lo_list(PsqlSettings *pset)
 	myopt.nullPrint = NULL;
 	myopt.title = "Large objects";
 
-	printQuery(res, &myopt, pset->queryFout);
+	printQuery(res, &myopt, pset.queryFout);
 
 	PQclear(res);
 	return true;
