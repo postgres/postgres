@@ -4,7 +4,7 @@
  *	  Interface to hba.c
  *
  *
- * $Id: hba.h,v 1.27 2001/09/21 20:31:48 tgl Exp $
+ * $Id: hba.h,v 1.28 2001/10/01 02:26:36 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,9 +38,9 @@ typedef enum UserAuth
 	uaIdent,
 	uaPassword,
 	uaCrypt,
-	uaMD5,
+	uaMD5
 #ifdef USE_PAM
-	uaPAM
+	,uaPAM
 #endif /* USE_PAM */
 } UserAuth;
 
