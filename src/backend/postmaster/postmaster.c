@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.195 2000/11/29 20:59:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.196 2000/11/29 22:04:04 tgl Exp $
  *
  * NOTES
  *
@@ -679,7 +679,7 @@ pmdaemonize(int argc, char *argv[])
 	pid_t		pid;
 
 	pid = fork();
-	if (pid == -1)
+	if (pid == (pid_t) -1)
 	{
 		perror("Failed to fork postmaster");
 		ExitPostmaster(1);
@@ -690,6 +690,8 @@ pmdaemonize(int argc, char *argv[])
 		/* Parent should just exit, without doing any atexit cleanup */
 		_exit(0);
 	}
+
+	MyProcPid = getpid();		/* reset MyProcPid to child */
 
 /* GH: If there's no setsid(), we hopefully don't need silent mode.
  * Until there's a better solution.
