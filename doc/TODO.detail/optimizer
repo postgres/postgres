@@ -1055,3 +1055,534 @@ Hiroshi Inoue
 Inoue@tpf.co.jp
 
 
+From owner-pgsql-hackers@hub.org Thu Jan 20 18:45:32 2000
+Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id TAA00672
+	for <pgman@candle.pha.pa.us>; Thu, 20 Jan 2000 19:45:30 -0500 (EST)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.14 $) with ESMTP id TAA01989 for <pgman@candle.pha.pa.us>; Thu, 20 Jan 2000 19:39:15 -0500 (EST)
+Received: from localhost (majordom@localhost)
+	by hub.org (8.9.3/8.9.3) with SMTP id TAA00957;
+	Thu, 20 Jan 2000 19:35:19 -0500 (EST)
+	(envelope-from owner-pgsql-hackers)
+Received: by hub.org (bulk_mailer v1.5); Thu, 20 Jan 2000 19:33:34 -0500
+Received: (from majordom@localhost)
+	by hub.org (8.9.3/8.9.3) id TAA00581
+	for pgsql-hackers-outgoing; Thu, 20 Jan 2000 19:32:37 -0500 (EST)
+	(envelope-from owner-pgsql-hackers@postgreSQL.org)
+Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2])
+	by hub.org (8.9.3/8.9.3) with ESMTP id TAA98940
+	for <pgsql-hackers@postgreSQL.org>; Thu, 20 Jan 2000 19:31:49 -0500 (EST)
+	(envelope-from tgl@sss.pgh.pa.us)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss2.sss.pgh.pa.us (8.9.3/8.9.3) with ESMTP id TAA25390
+	for <pgsql-hackers@postgreSQL.org>; Thu, 20 Jan 2000 19:31:32 -0500 (EST)
+To: pgsql-hackers@postgreSQL.org
+Subject: [HACKERS] Some notes on optimizer cost estimates
+Date: Thu, 20 Jan 2000 19:31:32 -0500
+Message-ID: <25387.948414692@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Sender: owner-pgsql-hackers@postgreSQL.org
+Status: OR
+
+I have been spending some time measuring actual runtimes for various
+sequential-scan and index-scan query plans, and have learned that the
+current Postgres optimizer's cost estimation equations are not very
+close to reality at all.
+
+Presently we estimate the cost of a sequential scan as
+
+	Nblocks + CPU_PAGE_WEIGHT * Ntuples
+
+--- that is, the unit of cost is the time to read one disk page,
+and we have a "fudge factor" that relates CPU time per tuple to
+disk time per page.  (The default CPU_PAGE_WEIGHT is 0.033, which
+is probably too high for modern hardware --- 0.01 seems like it
+might be a better default, at least for simple queries.)  OK,
+it's a simplistic model, but not too unreasonable so far.
+
+The cost of an index scan is measured in these same terms as
+
+	Nblocks + CPU_PAGE_WEIGHT * Ntuples +
+	  CPU_INDEX_PAGE_WEIGHT * Nindextuples
+
+Here Ntuples is the number of tuples selected by the index qual
+condition (typically, it's less than the total table size used in
+sequential-scan estimation).  CPU_INDEX_PAGE_WEIGHT essentially
+estimates the cost of scanning an index tuple; by default it's 0.017 or
+half CPU_PAGE_WEIGHT.  Nblocks is estimated as the index size plus an
+appropriate fraction of the main table size.
+
+There are two big problems with this:
+
+1. Since main-table tuples are visited in index order, we'll be hopping
+around from page to page in the table.  The current cost estimation
+method essentially assumes that the buffer cache plus OS disk cache will
+be 100% efficient --- we will never have to read the same page of the
+main table twice in a scan, due to having discarded it between
+references.  This of course is unreasonably optimistic.  Worst case
+is that we'd fetch a main-table page for each selected tuple, but in
+most cases that'd be unreasonably pessimistic.
+
+2. The cost of a disk page fetch is estimated at 1.0 unit for both
+sequential and index scans.  In reality, sequential access is *much*
+cheaper than the quasi-random accesses performed by an index scan.
+This is partly a matter of physical disk seeks, and partly a matter
+of benefitting (or not) from any read-ahead logic the OS may employ.
+
+As best I can measure on my hardware, the cost of a nonsequential
+disk read should be estimated at 4 to 5 times the cost of a sequential
+one --- I'm getting numbers like 2.2 msec per disk page for sequential
+scans, and as much as 11 msec per page for index scans.  I don't
+know, however, if this ratio is similar enough on other platforms
+to be useful for cost estimating.  We could make it a parameter like
+we do for CPU_PAGE_WEIGHT ... but you know and I know that no one
+ever bothers to adjust those numbers in the field ...
+
+The other effect that needs to be modeled, and currently is not, is the
+"hit rate" of buffer cache.  Presumably, this is 100% for tables smaller
+than the cache and drops off as the table size increases --- but I have
+no particular thoughts on the form of the dependency.  Does anyone have
+ideas here?  The problem is complicated by the fact that we don't really
+know how big the cache is; we know the number of buffers Postgres has,
+but we have no idea how big a disk cache the kernel is keeping.  As near
+as I can tell, finding a hit in the kernel disk cache is not a lot more
+expensive than having the page sitting in Postgres' own buffers ---
+certainly it's much much cheaper than a disk read.
+
+BTW, if you want to do some measurements of your own, try turning on
+PGOPTIONS="-d 2 -te".  This will dump a lot of interesting numbers
+into the postmaster log, if your platform supports getrusage().
+
+			regards, tom lane
+
+************
+
+From owner-pgsql-hackers@hub.org Thu Jan 20 20:26:33 2000
+Received: from hub.org (hub.org [216.126.84.1])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id VAA06630
+	for <pgman@candle.pha.pa.us>; Thu, 20 Jan 2000 21:26:32 -0500 (EST)
+Received: from localhost (majordom@localhost)
+	by hub.org (8.9.3/8.9.3) with SMTP id VAA35022;
+	Thu, 20 Jan 2000 21:22:08 -0500 (EST)
+	(envelope-from owner-pgsql-hackers)
+Received: by hub.org (bulk_mailer v1.5); Thu, 20 Jan 2000 21:20:35 -0500
+Received: (from majordom@localhost)
+	by hub.org (8.9.3/8.9.3) id VAA34569
+	for pgsql-hackers-outgoing; Thu, 20 Jan 2000 21:19:38 -0500 (EST)
+	(envelope-from owner-pgsql-hackers@postgreSQL.org)
+Received: from hercules.cs.ucsb.edu (hercules.cs.ucsb.edu [128.111.41.30])
+	by hub.org (8.9.3/8.9.3) with ESMTP id VAA34534
+	for <pgsql-hackers@postgreSQL.org>; Thu, 20 Jan 2000 21:19:26 -0500 (EST)
+	(envelope-from xun@cs.ucsb.edu)
+Received: from xp10-06.dialup.commserv.ucsb.edu (root@xp10-06.dialup.commserv.ucsb.edu [128.111.253.249])
+	by hercules.cs.ucsb.edu (8.8.6/8.8.6) with ESMTP id SAA04655
+	for <pgsql-hackers@postgreSQL.org>; Thu, 20 Jan 2000 18:19:22 -0800 (PST)
+Received: from xp10-06.dialup.commserv.ucsb.edu (xun@localhost)
+	by xp10-06.dialup.commserv.ucsb.edu (8.9.3/8.9.3) with ESMTP id SAA22377
+	for <pgsql-hackers@postgreSQL.org>; Thu, 20 Jan 2000 18:19:40 -0800
+Message-Id: <200001210219.SAA22377@xp10-06.dialup.commserv.ucsb.edu>
+To: pgsql-hackers@postgreSQL.org
+Reply-to: xun@cs.ucsb.edu
+Subject: Re. [HACKERS] Some notes on optimizer cost estimates
+Date: Thu, 20 Jan 2000 18:19:40 -0800
+From: Xun Cheng <xun@cs.ucsb.edu>
+Sender: owner-pgsql-hackers@postgreSQL.org
+Status: OR
+
+I'm very glad you bring up this cost estimate issue.
+Recent work in database research have argued a more
+detailed disk access cost model should be used for
+large queries especially joins.
+Traditional cost estimate only considers the number of
+disk pages accessed. However a more detailed model
+would consider three parameters: avg. seek, avg. latency
+and avg. page transfer. For old disk, typical values are
+SEEK=9.5 milliseconds, LATENCY=8.3 ms, TRANSFER=2.6ms.
+A sequential continuous reading of a table (assuming
+1000 continuous pages) would cost
+(SEEK+LATENCY+1000*TRANFER=2617.8ms); while quasi-randomly
+reading 200 times with 2 continuous pages/time would
+cost (SEEK+200*LATENCY+400*TRANSFER=2700ms).
+Someone from IBM lab re-studied the traditional
+ad hoc join algorithms (nested, sort-merge, hash) using the detailed cost model
+and found some interesting results.
+
+>I have been spending some time measuring actual runtimes for various
+>sequential-scan and index-scan query plans, and have learned that the
+>current Postgres optimizer's cost estimation equations are not very
+>close to reality at all.
+
+One interesting question I'd like to ask is if this non-closeness
+really affects the optimal choice of postgresql's query optimizer.
+And to what degree the effects might be? My point is that
+if the optimizer estimated the cost for sequential-scan is 10 and
+the cost for index-scan is 20 while the actual costs are 10 vs. 40,
+it should be ok because the optimizer would still choose sequential-scan
+as it should.
+
+>1. Since main-table tuples are visited in index order, we'll be hopping
+>around from page to page in the table.
+
+I'm not sure about the implementation in postgresql. One thing you might
+be able to do is to first collect all must-read page addresses from 
+the index scan and then order them before the actual ordered page fetching.
+It would at least avoid the same page being read twice (not entirely
+true depending on the context (like in join) and algo.)
+
+>The current cost estimation
+>method essentially assumes that the buffer cache plus OS disk cache will
+>be 100% efficient --- we will never have to read the same page of the
+>main table twice in a scan, due to having discarded it between
+>references.  This of course is unreasonably optimistic.  Worst case
+>is that we'd fetch a main-table page for each selected tuple, but in
+>most cases that'd be unreasonably pessimistic.
+
+This is actually the motivation that I asked before if postgresql
+has a raw disk facility. That way we have much control on this cache
+issue. Of course only if we can provide some algo. better than OS
+cache algo. (depending on the context, like large joins), a raw disk
+facility will be worthwhile (besides the recoverability).
+
+Actually I have another question for you guys which is somehow related
+to this cost estimation issue. You know the difference between OLTP
+and OLAP. My question is how you target postgresql on both kinds
+of applications or just OLTP. From what I know OLTP and OLAP would
+have a big difference in query characteristics and thus 
+optimization difference. If postgresql is only targeted on
+OLTP, the above cost estimation issue might not be that
+important. However for OLAP, large tables and large queries are
+common and optimization would be difficult.
+
+xun
+
+
+************
+
+From owner-pgsql-hackers@hub.org Thu Jan 20 20:41:44 2000
+Received: from hub.org (hub.org [216.126.84.1])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id VAA07020
+	for <pgman@candle.pha.pa.us>; Thu, 20 Jan 2000 21:41:43 -0500 (EST)
+Received: from localhost (majordom@localhost)
+	by hub.org (8.9.3/8.9.3) with SMTP id VAA40222;
+	Thu, 20 Jan 2000 21:34:08 -0500 (EST)
+	(envelope-from owner-pgsql-hackers)
+Received: by hub.org (bulk_mailer v1.5); Thu, 20 Jan 2000 21:32:35 -0500
+Received: (from majordom@localhost)
+	by hub.org (8.9.3/8.9.3) id VAA38388
+	for pgsql-hackers-outgoing; Thu, 20 Jan 2000 21:31:38 -0500 (EST)
+	(envelope-from owner-pgsql-hackers@postgreSQL.org)
+Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2])
+	by hub.org (8.9.3/8.9.3) with ESMTP id VAA37422
+	for <pgsql-hackers@postgreSQL.org>; Thu, 20 Jan 2000 21:31:02 -0500 (EST)
+	(envelope-from tgl@sss.pgh.pa.us)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss2.sss.pgh.pa.us (8.9.3/8.9.3) with ESMTP id VAA26761;
+	Thu, 20 Jan 2000 21:30:41 -0500 (EST)
+To: "Hiroshi Inoue" <Inoue@tpf.co.jp>
+cc: pgsql-hackers@postgreSQL.org
+Subject: Re: [HACKERS] Some notes on optimizer cost estimates 
+In-reply-to: <000b01bf63b1$093cbd40$2801007e@tpf.co.jp> 
+References: <000b01bf63b1$093cbd40$2801007e@tpf.co.jp>
+Comments: In-reply-to "Hiroshi Inoue" <Inoue@tpf.co.jp>
+	message dated "Fri, 21 Jan 2000 10:44:20 +0900"
+Date: Thu, 20 Jan 2000 21:30:41 -0500
+Message-ID: <26758.948421841@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Sender: owner-pgsql-hackers@postgreSQL.org
+Status: ORr
+
+"Hiroshi Inoue" <Inoue@tpf.co.jp> writes:
+> I've wondered why we cound't analyze database without vacuum.
+> We couldn't run vacuum light-heartedly because it acquires an
+> exclusive lock for the target table. 
+
+There is probably no real good reason, except backwards compatibility,
+why the ANALYZE function (obtaining pg_statistic data) is part of
+VACUUM at all --- it could just as easily be a separate command that
+would only use read access on the database.  Bruce is thinking about
+restructuring VACUUM, so maybe now is a good time to think about
+splitting out the ANALYZE code too.
+
+> In addition,vacuum error occurs with analyze option in most
+> cases AFAIK. 
+
+Still, with current sources?  What's the error message?  I fixed
+a problem with pg_statistic tuples getting too big...
+
+			regards, tom lane
+
+************
+
+From tgl@sss.pgh.pa.us Thu Jan 20 21:10:28 2000
+Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id WAA08412
+	for <pgman@candle.pha.pa.us>; Thu, 20 Jan 2000 22:10:26 -0500 (EST)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss2.sss.pgh.pa.us (8.9.3/8.9.3) with ESMTP id WAA27080;
+	Thu, 20 Jan 2000 22:10:28 -0500 (EST)
+To: Bruce Momjian <pgman@candle.pha.pa.us>
+cc: Hiroshi Inoue <Inoue@tpf.co.jp>, pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] Some notes on optimizer cost estimates 
+In-reply-to: <200001210248.VAA07186@candle.pha.pa.us> 
+References: <200001210248.VAA07186@candle.pha.pa.us>
+Comments: In-reply-to Bruce Momjian <pgman@candle.pha.pa.us>
+	message dated "Thu, 20 Jan 2000 21:48:57 -0500"
+Date: Thu, 20 Jan 2000 22:10:28 -0500
+Message-ID: <27077.948424228@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Status: OR
+
+Bruce Momjian <pgman@candle.pha.pa.us> writes:
+> It is nice that ANALYZE is done during vacuum.  I can't imagine why you
+> would want to do an analyze without adding a vacuum to it.  I guess
+> that's why I made them the same command.
+
+Well, the main bad thing about ANALYZE being part of VACUUM is that
+it adds to the length of time that VACUUM is holding an exclusive
+lock on the table.  I think it'd make more sense for it to be a
+separate command.
+
+I have also been thinking about how to make ANALYZE produce a more
+reliable estimate of the most common value.  The three-element list
+that it keeps now is a good low-cost hack, but it really doesn't
+produce a trustworthy answer unless the MCV is pretty darn C (since
+it will never pick up on the MCV at all until there are at least
+two occurrences in three adjacent tuples).  The only idea I've come
+up with is to use a larger list, which would be slower and take
+more memory.  I think that'd be OK in a separate command, but I
+hesitate to do it inside VACUUM --- VACUUM has its own considerable
+memory requirements, and there's still the issue of not holding down
+an exclusive lock longer than you have to.
+
+			regards, tom lane
+
+From Inoue@tpf.co.jp Thu Jan 20 21:08:32 2000
+Received: from sd.tpf.co.jp (sd.tpf.co.jp [210.161.239.34])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id WAA08225
+	for <pgman@candle.pha.pa.us>; Thu, 20 Jan 2000 22:08:29 -0500 (EST)
+Received: from cadzone ([126.0.1.40] (may be forged))
+          by sd.tpf.co.jp (2.5 Build 2640 (Berkeley 8.8.6)/8.8.4) with SMTP
+   id MAA04148; Fri, 21 Jan 2000 12:08:30 +0900
+From: "Hiroshi Inoue" <Inoue@tpf.co.jp>
+To: "Bruce Momjian" <pgman@candle.pha.pa.us>, "Tom Lane" <tgl@sss.pgh.pa.us>
+Cc: <pgsql-hackers@postgreSQL.org>
+Subject: RE: [HACKERS] Some notes on optimizer cost estimates
+Date: Fri, 21 Jan 2000 12:14:10 +0900
+Message-ID: <001301bf63bd$95cbe680$2801007e@tpf.co.jp>
+MIME-Version: 1.0
+Content-Type: text/plain;
+	charset="iso-8859-1"
+Content-Transfer-Encoding: 7bit
+X-Priority: 3 (Normal)
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook 8.5, Build 4.71.2173.0
+X-MimeOLE: Produced By Microsoft MimeOLE V5.00.2314.1300
+In-Reply-To: <200001210248.VAA07186@candle.pha.pa.us>
+Importance: Normal
+Status: OR
+
+> -----Original Message-----
+> From: Bruce Momjian [mailto:pgman@candle.pha.pa.us]
+> 
+> > "Hiroshi Inoue" <Inoue@tpf.co.jp> writes:
+> > > I've wondered why we cound't analyze database without vacuum.
+> > > We couldn't run vacuum light-heartedly because it acquires an
+> > > exclusive lock for the target table. 
+> > 
+> > There is probably no real good reason, except backwards compatibility,
+> > why the ANALYZE function (obtaining pg_statistic data) is part of
+> > VACUUM at all --- it could just as easily be a separate command that
+> > would only use read access on the database.  Bruce is thinking about
+> > restructuring VACUUM, so maybe now is a good time to think about
+> > splitting out the ANALYZE code too.
+> 
+> I put it in vacuum because at the time I didn't know how to do such
+> things and vacuum already scanned the table.  I just linked on the the
+> scan.  Seemed like a good idea at the time.
+> 
+> It is nice that ANALYZE is done during vacuum.  I can't imagine why you
+> would want to do an analyze without adding a vacuum to it.  I guess
+> that's why I made them the same command.
+> 
+> If I made them separate commands, both would have to scan the table,
+> though the analyze could do it without the exclusive lock, which would
+> be good.
+>
+
+The functionality of VACUUM and ANALYZE is quite different.
+I don't prefer to charge VACUUM more than now about analyzing
+database.  Probably looong lock,more aborts .... 
+Various kind of analysis would be possible by splitting out ANALYZE.
+ 
+Regards.
+
+Hiroshi Inoue
+Inoue@tpf.co.jp
+
+From owner-pgsql-hackers@hub.org Fri Jan 21 11:01:59 2000
+Received: from hub.org (hub.org [216.126.84.1])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id MAA07821
+	for <pgman@candle.pha.pa.us>; Fri, 21 Jan 2000 12:01:57 -0500 (EST)
+Received: from localhost (majordom@localhost)
+	by hub.org (8.9.3/8.9.3) with SMTP id LAA77357;
+	Fri, 21 Jan 2000 11:52:25 -0500 (EST)
+	(envelope-from owner-pgsql-hackers)
+Received: by hub.org (bulk_mailer v1.5); Fri, 21 Jan 2000 11:50:46 -0500
+Received: (from majordom@localhost)
+	by hub.org (8.9.3/8.9.3) id LAA76756
+	for pgsql-hackers-outgoing; Fri, 21 Jan 2000 11:49:50 -0500 (EST)
+	(envelope-from owner-pgsql-hackers@postgreSQL.org)
+Received: from eclipse.pacifier.com (eclipse.pacifier.com [199.2.117.78])
+	by hub.org (8.9.3/8.9.3) with ESMTP id LAA76594
+	for <pgsql-hackers@postgreSQL.org>; Fri, 21 Jan 2000 11:49:01 -0500 (EST)
+	(envelope-from dhogaza@pacifier.com)
+Received: from desktop (dsl-dhogaza.pacifier.net [216.65.147.68])
+	by eclipse.pacifier.com (8.9.3/8.9.3pop) with SMTP id IAA00225;
+	Fri, 21 Jan 2000 08:47:26 -0800 (PST)
+Message-Id: <3.0.1.32.20000121081044.01036290@mail.pacifier.com>
+X-Sender: dhogaza@mail.pacifier.com
+X-Mailer: Windows Eudora Pro Version 3.0.1 (32)
+Date: Fri, 21 Jan 2000 08:10:44 -0800
+To: xun@cs.ucsb.edu, pgsql-hackers@postgreSQL.org
+From: Don Baccus <dhogaza@pacifier.com>
+Subject: Re: Re. [HACKERS] Some notes on optimizer cost estimates
+In-Reply-To: <200001210219.SAA22377@xp10-06.dialup.commserv.ucsb.edu>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Sender: owner-pgsql-hackers@postgreSQL.org
+Status: OR
+
+At 06:19 PM 1/20/00 -0800, Xun Cheng wrote:
+>I'm very glad you bring up this cost estimate issue.
+>Recent work in database research have argued a more
+>detailed disk access cost model should be used for
+>large queries especially joins.
+>Traditional cost estimate only considers the number of
+>disk pages accessed. However a more detailed model
+>would consider three parameters: avg. seek, avg. latency
+>and avg. page transfer. For old disk, typical values are
+>SEEK=9.5 milliseconds, LATENCY=8.3 ms, TRANSFER=2.6ms.
+>A sequential continuous reading of a table (assuming
+>1000 continuous pages) would cost
+>(SEEK+LATENCY+1000*TRANFER=2617.8ms); while quasi-randomly
+>reading 200 times with 2 continuous pages/time would
+>cost (SEEK+200*LATENCY+400*TRANSFER=2700ms).
+>Someone from IBM lab re-studied the traditional
+>ad hoc join algorithms (nested, sort-merge, hash) using the detailed cost
+model
+>and found some interesting results.
+
+One complication when doing an index scan is that you are
+accessing two separate files (table and index), which can frequently
+be expected to cause an considerable increase in average seek time.
+
+Oracle and other commercial databases recommend spreading indices and
+tables over several spindles if at all possible in order to minimize
+this effect.
+
+I suspect it also helps their optimizer make decisions that are
+more consistently good for customers with the largest and most
+complex databases and queries, by making cost estimates more predictably
+reasonable.
+
+Still...this doesn't help with the question about the effect of the
+filesystem system cache.  I wandered around the web for a little bit
+last night, and found one summary of a paper by Osterhout on the
+effect of the Solaris cache on a fileserver serving diskless workstations.
+There was reference to the hierarchy involved (i.e. the local workstation
+cache is faster than the fileserver's cache which has to be read via
+the network which in turn is faster than reading from the fileserver's
+disk).  It appears the rule-of-thumb for the cache-hit ratio on reads,
+presumably based on measuring some internal Sun systems, used in their
+calculations was 80%.
+
+Just a datapoint to think about.
+
+There's also considerable operating system theory on paging systems
+that might be useful for thinking about trying to estimate the
+Postgres cache/hit ratio.  Then again, maybe Postgres could just
+keep count of how many pages of a given table are in the cache at
+any given time?  Or simply keep track of the current ratio of hits
+and misses?
+
+>>I have been spending some time measuring actual runtimes for various
+>>sequential-scan and index-scan query plans, and have learned that the
+>>current Postgres optimizer's cost estimation equations are not very
+>>close to reality at all.
+
+>One interesting question I'd like to ask is if this non-closeness
+>really affects the optimal choice of postgresql's query optimizer.
+>And to what degree the effects might be? My point is that
+>if the optimizer estimated the cost for sequential-scan is 10 and
+>the cost for index-scan is 20 while the actual costs are 10 vs. 40,
+>it should be ok because the optimizer would still choose sequential-scan
+>as it should.
+
+This is crucial, of course - if there are only two types of scans 
+available, what ever heuristic is used only has to be accurate enough
+to pick the right one.  Once the choice is made, it doesn't really
+matter (from the optimizer's POV) just how long it will actually take,
+the time will be spent and presumably it will be shorter than the
+alternative.
+
+How frequently will the optimizer choose wrongly if:
+
+1. All of the tables and indices were in PG buffer cache or filesystem
+   cache? (i.e. fixed access times for both types of scans)
+
+or
+
+2. The table's so big that only a small fraction can reside in RAM
+   during the scan and join, which means that the non-sequential
+   disk access pattern of the indexed scan is much more expensive.
+
+Also, if you pick sequential scans more frequently based on a presumption
+that index scans are expensive due to increased average seek time, how
+often will this penalize the heavy-duty user that invests in extra
+drives and lots of RAM?
+
+...
+
+>>The current cost estimation
+>>method essentially assumes that the buffer cache plus OS disk cache will
+>>be 100% efficient --- we will never have to read the same page of the
+>>main table twice in a scan, due to having discarded it between
+>>references.  This of course is unreasonably optimistic.  Worst case
+>>is that we'd fetch a main-table page for each selected tuple, but in
+>>most cases that'd be unreasonably pessimistic.
+>
+>This is actually the motivation that I asked before if postgresql
+>has a raw disk facility. That way we have much control on this cache
+>issue. Of course only if we can provide some algo. better than OS
+>cache algo. (depending on the context, like large joins), a raw disk
+>facility will be worthwhile (besides the recoverability).
+
+Postgres does have control over its buffer cache.  The one thing that
+raw disk I/O would give you is control over where blocks are placed,
+meaning you could more accurately model the cost of retrieving them.
+So presumably the cache could be tuned to the allocation algorithm
+used to place various structures on the disk.
+
+I still wonder just how much gain you get by this approach.  Compared,
+to, say simply spending $2,000 on a gigabyte of RAM.  Heck, PCs even
+support a couple gigs of RAM now.
+
+>Actually I have another question for you guys which is somehow related
+>to this cost estimation issue. You know the difference between OLTP
+>and OLAP. My question is how you target postgresql on both kinds
+>of applications or just OLTP. From what I know OLTP and OLAP would
+>have a big difference in query characteristics and thus 
+>optimization difference. If postgresql is only targeted on
+>OLTP, the above cost estimation issue might not be that
+>important. However for OLAP, large tables and large queries are
+>common and optimization would be difficult.
+
+
+
+- Don Baccus, Portland OR <dhogaza@pacifier.com>
+  Nature photos, on-line guides, Pacific Northwest
+  Rare Bird Alert Service and other goodies at
+  http://donb.photo.net.
+
+************
+

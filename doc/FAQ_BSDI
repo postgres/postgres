@@ -1,0 +1,34 @@
+This outlines how to increase the number of shared memory buffers
+supported by BSD/OS.  By default, only 4MB of shared memory is supported
+by BSDI.
+
+Keep in mind that shared memory is not pageable.  It is locked in RAM.
+
+Bruce Momjian (pgman@candle.pha.pa.us)
+
+---------------------------------------------------------------------------
+
+Increase SHMMAXPGS by 1024 for every additional 4MB of shared
+memory:
+
+/sys/sys/shm.h:69:#define       SHMMAXPGS       1024    /* max hardware pages...
+
+The default setting of 1024 is for a maximum of 4MB of shared memory.
+
+For those running 4.1 or later, just recompile the kernel and reboot. 
+For those running earlier releases, there are more steps outlined below.
+
+---------------------------------------------------------------------------
+
+Use bpatch to find the sysptsize value for the current kernel. 
+This is computed dynamically at bootup.
+
+	$ bpatch -r sysptsize
+	0x9 = 9
+
+Next, change SYSPTSIZE to a hard-coded value.  Use the bpatch value,
+plus add 1 for every additional 4MB of shared memory you desire.
+
+/sys/i386/i386/i386_param.c:28:#define  SYSPTSIZE 0        /* dynamically...
+
+sysptsize can not be changed by sysctl on the fly.
