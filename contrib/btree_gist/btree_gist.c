@@ -447,21 +447,13 @@ gts_binary_union(Datum *r1, char *r2)
 
 static int 
 tskey_cmp(const void *a, const void *b) {
-    Interval *intr;
-    float result;
-
-    intr = DatumGetIntervalP( DirectFunctionCall2(
-			timestamp_mi,
-                        TimestampGetDatum( ((TSKEY*)(((RIX*)a)->r))->lower ),
-                        TimestampGetDatum( ((TSKEY*)(((RIX*)b)->r))->lower )) );
-
-	/* see interval_larger */
-    result = intr->time+intr->month * (30.0 * 86400); 
-    pfree( intr );
-    if ( result == 0.0 ) 
-	return 0;
-    else 
-	return ( result>0 ) ? 1 : 0;
+    return DatumGetInt32(
+	DirectFunctionCall2(
+            timestamp_cmp,
+            TimestampGetDatum( ((TSKEY*)(((RIX*)a)->r))->lower ),
+            TimestampGetDatum( ((TSKEY*)(((RIX*)b)->r))->lower )
+        )
+   );
 }
 
 /**************************************************
