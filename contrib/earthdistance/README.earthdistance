@@ -39,25 +39,22 @@ bounding box usable for index searches.
 
 The functions are all 'sql' functions. If you want to make these functions
 executable by other people you will also have to make the referenced
-cube functions executable. cube(text), cube_distance(cube,cube),
-cube_ll_coord(cube,int) and cube_enlarge(cube,float8,int) are used indirectly
-by the earth distance functions. is_point(cube) and cube_dim(cube) are used
-in suggested constraints for data in domain earth. cube_ur_coord(cube,int)
-is used in the regression tests and might be useful for looking at bounding
-box coordinates in user applications.
+cube functions executable. cube(text), cube(float8), cube(cube,float8),
+cube_distance(cube,cube), cube_ll_coord(cube,int) and
+cube_enlarge(cube,float8,int) are used indirectly by the earth distance
+functions. is_point(cube) and cube_dim(cube) are used in constraints for data
+in domain earth. cube_ur_coord(cube,int) is used in the regression tests and
+might be useful for looking at bounding box coordinates in user applications.
 
-A domain of type cube named earth is defined. Since check constraints
-are not supported for domains yet, this isn't as useful as it might be.
-However the checks that should be supplied to all data of type earth are:
-
-constraint not_point check(is_point(earth))
-constraint not_3d check(cube_dim(earth) <= 3)
-constraint on_surface check(abs(cube_distance(earth, '(0)'::cube) /
-           earth() - 1) < '10e-12'::float8);
+A domain of type cube named earth is defined.
+There are constraints on it defined to make sure the cube is a point,
+that it does not have more than 3 dimensions and that it is very near
+the surface of a sphere centered about the origin with the radius of
+the Earth.
 
 The following functions are provided:
 
-earth() - Returns the radius of the earth in meters.
+earth() - Returns the radius of the Earth in meters.
 
 sec_to_gc(float8) - Converts the normal straight line (secant) distance between
 between two points on the surface of the Earth to the great circle distance
@@ -118,7 +115,7 @@ Subject: [QUESTIONS] Re: Spatial data, R-Trees
 > look at to create these?
 
 Here's the setup for adding an operator '<@>' to give distance in
-statute miles between two points on the earth's surface. Coordinates
+statute miles between two points on the Earth's surface. Coordinates
 are in degrees. Points are taken as (longitude, latitude) and not vice
 versa as longitude is closer to the intuitive idea of x-axis and
 latitude to y-axis.
