@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.273 2004/02/15 15:38:20 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.274 2004/02/16 07:41:54 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -541,6 +541,7 @@ add_additional_variables(char *name, bool insert)
 %type  <str>	ECPGTypeName using_list ECPGColLabelCommon UsingConst
 %type  <str>	inf_val_list inf_col_list using_descriptor into_descriptor 
 %type  <str>	ecpg_into_using prepared_name struct_union_type_with_symbol
+%type  <str>	ECPGunreserved ECPGunreserved_interval
 
 %type  <struct_union> s_struct_union_symbol
 
@@ -550,7 +551,7 @@ add_additional_variables(char *name, bool insert)
 
 %type  <dtype_enum> descriptor_item desc_header_item
 
-%type  <type>	var_type common_type single_vt_type 
+%type  <type>	var_type single_vt_type 
 
 %type  <action> action
 
@@ -4459,7 +4460,7 @@ ecpg_interval:	opt_interval	{ $$ = $1; }
 		| MONTH_P TO MONTH_P	{ $$ = make_str("month to month"); }
 		;
 
-single_vt_type: common_type
+single_vt_type: var_type
 		| DOUBLE_P
 		{
 			$$.type_enum = ECPGt_double;
@@ -4467,124 +4468,6 @@ single_vt_type: common_type
 			$$.type_dimension = make_str("-1");
 			$$.type_index = make_str("-1");
 			$$.type_sizeof = NULL;
-		}
-		| ECPGColLabelCommon ecpg_interval
-		{
-			if (strlen($2) != 0 && strcmp ($1, "datetime") != 0 && strcmp ($1, "interval") != 0)
-				mmerror (PARSE_ERROR, ET_ERROR, "Interval specification not allowed here ");
-			
-			/*
-			 * Check for type names that the SQL grammar treats as
-			 * unreserved keywords
-			 */
-			if (strcmp($1, "varchar") == 0)
-			{
-				$$.type_enum = ECPGt_varchar;
-				$$.type_str = EMPTY;
-				$$.type_dimension = make_str("-1");
-				$$.type_index = make_str("-1");
-				$$.type_sizeof = NULL;
-			}
-			else if (strcmp($1, "float") == 0)
-			{
-				$$.type_enum = ECPGt_float;
-				$$.type_str = make_str("float");
-				$$.type_dimension = make_str("-1");
-				$$.type_index = make_str("-1");
-				$$.type_sizeof = NULL;
-			}
-			else if (strcmp($1, "numeric") == 0)
-			{
-				$$.type_enum = ECPGt_numeric;
-				$$.type_str = make_str("numeric");
-				$$.type_dimension = make_str("-1");
-				$$.type_index = make_str("-1");
-				$$.type_sizeof = NULL;
-			}
-			else if (strcmp($1, "decimal") == 0)
-			{
-				$$.type_enum = ECPGt_decimal;
-				$$.type_str = make_str("decimal");
-				$$.type_dimension = make_str("-1");
-				$$.type_index = make_str("-1");
-				$$.type_sizeof = NULL;
-			}
-			else if (strcmp($1, "date") == 0)
-			{
-				$$.type_enum = ECPGt_date;
-				$$.type_str = make_str("date");
-				$$.type_dimension = make_str("-1");
-				$$.type_index = make_str("-1");
-				$$.type_sizeof = NULL;
-			}
-			else if (strcmp($1, "timestamp") == 0)
-			{
-				$$.type_enum = ECPGt_timestamp;
-				$$.type_str = make_str("timestamp");
-				$$.type_dimension = make_str("-1");
-				$$.type_index = make_str("-1");
-				$$.type_sizeof = NULL;
-			}
-			else if (strcmp($1, "datetime") == 0)
-			{
-				$$.type_enum = ECPGt_timestamp;
-				$$.type_str = make_str("timestamp");
-				$$.type_dimension = make_str("-1");
-				$$.type_index = make_str("-1");
-				$$.type_sizeof = NULL;
-			}
-			else if (strcmp($1, "interval") == 0)
-			{
-				$$.type_enum = ECPGt_interval;
-				$$.type_str = make_str("interval");
-				$$.type_dimension = make_str("-1");
-				$$.type_index = make_str("-1");
-				$$.type_sizeof = NULL;
-			}
-			else
-			{
-				/* this is for typedef'ed types */
-				struct typedefs *this = get_typedef($1);
-
-				$$.type_str = (this->type->type_enum == ECPGt_varchar) ? EMPTY : mm_strdup(this->name);
-				$$.type_enum = this->type->type_enum;
-				$$.type_dimension = this->type->type_dimension;
-				$$.type_index = this->type->type_index;
-				$$.type_sizeof = this->type->type_sizeof;
-				struct_member_list[struct_level] = ECPGstruct_member_dup(this->struct_member_list);
-			}
-		}
-		| s_struct_union_symbol
-		{
-			/* this is for named structs/unions */
-			char *name;
-			struct typedefs *this;
-			bool forward = (forward_name != NULL && strcmp($1.symbol, forward_name) == 0 && strcmp($1.su, "struct") == 0);
-
-			name = cat2_str($1.su, $1.symbol);
-			/* Do we have a forward definition? */
-			if (!forward)
-			{
-				/* No */
-				
-				this = get_typedef(name);
-				$$.type_str = mm_strdup(this->name);
-				$$.type_enum = this->type->type_enum;
-				$$.type_dimension = this->type->type_dimension;
-				$$.type_index = this->type->type_index;
-				$$.type_sizeof = this->type->type_sizeof;
-				struct_member_list[struct_level] = ECPGstruct_member_dup(this->struct_member_list);
-				free(name);
-			}
-			else
-			{
-				$$.type_str = name;
-                                $$.type_enum = ECPGt_long;
-                                $$.type_dimension = make_str("-1");
-                                $$.type_index = make_str("-1");
-                                $$.type_sizeof = make_str("");
-                                struct_member_list[struct_level] = NULL;
-			}
 		}
 		;
 
@@ -4740,7 +4623,7 @@ storage_modifier : S_CONST		{ $$ = make_str("const"); }
 		| S_VOLATILE		{ $$ = make_str("volatile"); }
 		;
 
-common_type: simple_type
+var_type:	simple_type
 		{
 			$$.type_enum = $1;
 			$$.type_str = mm_strdup(ECPGtype_name($1));
@@ -4796,10 +4679,7 @@ common_type: simple_type
 			$$.type_index = make_str("-1");
 			$$.type_sizeof = NULL;
 		}
-		;
-
-var_type:	common_type
-		| ECPGColLabel ecpg_interval
+		| ECPGColLabelCommon ecpg_interval
 		{
 			if (strlen($2) != 0 && strcmp ($1, "datetime") != 0 && strcmp ($1, "interval") != 0)
 				mmerror (PARSE_ERROR, ET_ERROR, "Interval specification not allowed here ");
@@ -5092,7 +4972,7 @@ variable_list: variable
 			{ $$ = cat_str(3, $1, make_str(","), $3); }
 		;
 
-variable: opt_pointer ECPGColLabelCommon opt_array_bounds opt_initializer
+variable: opt_pointer ECPGColLabel opt_array_bounds opt_initializer
 		{
 			struct ECPGtype * type;
 			char *dimension = $3.index1; /* dimension of array */
@@ -5466,7 +5346,7 @@ ECPGTypedef: TYPE_P
 			/* an initializer specified */
 			initializer = 0;
 		}
-		ColLabel IS var_type opt_array_bounds opt_reference
+		ECPGColLabelCommon IS var_type opt_array_bounds opt_reference
 		{
 			/* add entry to list */
 			struct typedefs *ptr, *this;
@@ -5778,7 +5658,9 @@ ColLabel:  ECPGColLabel				{ $$ = $1; }
 		| INPUT_P			{ $$ = make_str("input"); }
 		| INT_P				{ $$ = make_str("int"); }
 		| UNION				{ $$ = make_str("union"); }
+		| TO				{ $$ = make_str("to"); }
 		| ECPGCKeywords			{ $$ = $1; }
+		| ECPGunreserved_interval	{ $$ = $1; }
 		;
 
 ECPGColLabelCommon:  ident                              { $$ = $1; }
@@ -5788,8 +5670,8 @@ ECPGColLabelCommon:  ident                              { $$ = $1; }
                 ;
 		
 ECPGColLabel:  ECPGColLabelCommon			{ $$ = $1; }
-		| unreserved_keyword			{ $$ = $1; }
 		| reserved_keyword			{ $$ = $1; }
+		| ECPGunreserved			{ $$ = $1; }
 		| ECPGKeywords_rest			{ $$ = $1; }
 		;
 
@@ -5800,7 +5682,7 @@ ECPGCKeywords: S_AUTO			{ $$ = make_str("auto"); }
 		| S_STATIC			{ $$ = make_str("static"); }
 		| S_TYPEDEF			{ $$ = make_str("typedef"); }
 		;
-		
+	
 /*
  * Keyword classification lists.  Generally, every keyword present in
  * the Postgres grammar should appear in exactly one of these lists.
@@ -5812,8 +5694,21 @@ ECPGCKeywords: S_AUTO			{ $$ = make_str("auto"); }
 
 /* "Unreserved" keywords --- available for use as any kind of name.
  */
-unreserved_keyword:
-		  ABORT_P			{ $$ = make_str("abort"); }
+/* The following symbols must be excluded from ECPGColLabel and directly included into ColLabel
+   to enable C variables to get names from ECPGColLabel:
+   DAY_P, HOUR_P, MINUTE_P, MONTH_P, SECOND_P, YEAR_P
+ */
+unreserved_keyword: ECPGunreserved_interval | ECPGunreserved;
+
+ECPGunreserved_interval: DAY_P				{ $$ = make_str("day"); }
+		| HOUR_P			{ $$ = make_str("hour"); }
+		| MINUTE_P			{ $$ = make_str("minute"); }
+		| MONTH_P			{ $$ = make_str("month"); }
+		| SECOND_P			{ $$ = make_str("second"); }
+		| YEAR_P			{ $$ = make_str("year"); }
+		;
+		
+ECPGunreserved:	  ABORT_P			{ $$ = make_str("abort"); }
 		| ABSOLUTE_P			{ $$ = make_str("absolute"); }
 		| ACCESS			{ $$ = make_str("access"); }
 		| ACTION			{ $$ = make_str("action"); }
@@ -5847,7 +5742,7 @@ unreserved_keyword:
 		| CURSOR			{ $$ = make_str("cursor"); }
 		| CYCLE				{ $$ = make_str("cycle"); }
 		| DATABASE			{ $$ = make_str("database"); }
-		| DAY_P				{ $$ = make_str("day"); }
+/*		| DAY_P				{ $$ = make_str("day"); }*/
 		| DEALLOCATE			{ $$ = make_str("deallocate"); }
 		| DECLARE			{ $$ = make_str("declare"); }
 		| DEFAULTS			{ $$ = make_str("defaults"); }
@@ -5874,7 +5769,7 @@ unreserved_keyword:
 		| GLOBAL			{ $$ = make_str("global"); }
 		| HANDLER			{ $$ = make_str("handler"); }
 		| HOLD				{ $$ = make_str("hold"); }
-		| HOUR_P			{ $$ = make_str("hour"); }
+/*		| HOUR_P			{ $$ = make_str("hour"); }*/
 		| IMMEDIATE			{ $$ = make_str("immediate"); }
 		| IMMUTABLE			{ $$ = make_str("immutable"); }
 		| IMPLICIT_P			{ $$ = make_str("implicit"); }
@@ -5899,10 +5794,10 @@ unreserved_keyword:
 		| LOCK_P			{ $$ = make_str("lock"); }
 		| MATCH				{ $$ = make_str("match"); }
 		| MAXVALUE			{ $$ = make_str("maxvalue"); }
-		| MINUTE_P			{ $$ = make_str("minute"); }
+/*		| MINUTE_P			{ $$ = make_str("minute"); }*/
 		| MINVALUE			{ $$ = make_str("minvalue"); }
 		| MODE				{ $$ = make_str("mode"); }
-		| MONTH_P			{ $$ = make_str("month"); }
+/*		| MONTH_P			{ $$ = make_str("month"); }*/
 		| MOVE				{ $$ = make_str("move"); }
 		| NAMES				{ $$ = make_str("names"); }
 		| NATIONAL			{ $$ = make_str("national"); }
@@ -5945,7 +5840,7 @@ unreserved_keyword:
 		| RULE				{ $$ = make_str("rule"); }
 		| SCHEMA			{ $$ = make_str("schema"); }
 		| SCROLL			{ $$ = make_str("scroll"); }
-		| SECOND_P			{ $$ = make_str("second"); }
+/*		| SECOND_P			{ $$ = make_str("second"); }*/
 		| SEQUENCE			{ $$ = make_str("sequence"); }
 		| SERIALIZABLE			{ $$ = make_str("serializable"); }
 		| SESSION			{ $$ = make_str("session"); }
@@ -5987,7 +5882,7 @@ unreserved_keyword:
 		| WITHOUT			{ $$ = make_str("without"); }
 		| WORK				{ $$ = make_str("work"); }
 		| WRITE  			{ $$ = make_str("write"); }
-		| YEAR_P			{ $$ = make_str("year"); }
+/*		| YEAR_P			{ $$ = make_str("year"); }*/
 		| ZONE				{ $$ = make_str("zone"); }
 		;
 
@@ -6135,7 +6030,9 @@ reserved_keyword:
 		| SOME				{ $$ = make_str("some"); }
 		| TABLE				{ $$ = make_str("table"); }
 		| THEN				{ $$ = make_str("then"); }
+/* TO must be excluded from ECPGColLabel because of a conflict in variable name parsing
 		| TO				{ $$ = make_str("to"); }
+ */
 		| TRAILING			{ $$ = make_str("trailing"); }
 		| TRUE_P			{ $$ = make_str("true"); }
 /* UNION must be excluded from ECPGColLabel because of conflict with s_union
