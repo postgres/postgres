@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.157.2.2 2004/07/06 04:50:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.157.2.3 2004/12/13 00:33:18 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -3816,7 +3816,8 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 		bool		need_paren_on_right;
 
 		need_paren_on_right = PRETTY_PAREN(context) &&
-			!IsA(j->rarg, RangeTblRef);
+		  !IsA(j->rarg, RangeTblRef) && 
+		  !(IsA(j->rarg, JoinExpr) && ((JoinExpr*)j->rarg)->alias != NULL);
 
 		if (!PRETTY_PAREN(context) || j->alias != NULL)
 			appendStringInfoChar(buf, '(');
