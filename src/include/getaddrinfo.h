@@ -15,7 +15,7 @@
  *
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
- * $Id: getaddrinfo.h,v 1.10 2003/08/08 21:42:31 momjian Exp $
+ * $Id: getaddrinfo.h,v 1.11 2003/08/14 18:32:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,7 +31,6 @@
 /* Various macros that ought to be in <netdb.h>, but might not be */
 
 #ifndef EAI_FAIL
-
 #define EAI_BADFLAGS	-1
 #define EAI_NONAME		-2
 #define EAI_AGAIN		-3
@@ -46,8 +45,17 @@
 #ifndef AI_PASSIVE
 #define AI_PASSIVE		0x0001
 #endif
+
 #ifndef AI_NUMERICHOST
+/*
+ * some platforms don't support AI_NUMERICHOST; define as zero if using
+ * the system version of getaddrinfo...
+ */
+#if defined(HAVE_STRUCT_ADDRINFO) && defined(HAVE_GETADDRINFO)
+#define AI_NUMERICHOST	0
+#else
 #define AI_NUMERICHOST	0x0004
+#endif
 #endif
 
 #ifndef NI_NUMERICHOST
