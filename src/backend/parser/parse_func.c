@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.107 2001/05/19 00:37:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.108 2001/05/19 01:57:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,6 +106,7 @@ ParseNestedFuncOrColumn(ParseState *pstate, Attr *attr, int precedence)
 
 /*
  * 	parse function
+ *
  * 	This code is confusing because the database can accept
  *  relation.column, column.function, or relation.column.function.
  *	In these cases, funcname is the last parameter, and fargs are
@@ -114,6 +115,8 @@ ParseNestedFuncOrColumn(ParseState *pstate, Attr *attr, int precedence)
  *  It can also be called as func(col) or func(col,col).
  *  In this case, Funcname is the part before parens, and fargs
  *  are the part in parens.
+ *
+ *	FYI, projection is choosing column from a table.
  *
  */
 Node *
@@ -144,7 +147,8 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 	/*
 	 * Most of the rest of the parser just assumes that functions do
 	 * not have more than FUNC_MAX_ARGS parameters.  We have to test
-	 * here to protect against array overruns, etc.
+	 * here to protect against array overruns, etc.  Of course, this
+	 * may not be a function, but the test doesn't hurt.
 	 */
 	if (nargs > FUNC_MAX_ARGS)
 		elog(ERROR, "Cannot pass more than %d arguments to a function",
@@ -158,6 +162,8 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 	}
 
 	/*
+	 * test for relation.column
+	 *
 	 * check for projection methods: if function takes one argument, and
 	 * that argument is a relation, param, or PQ function returning a
 	 * complex * type, then the function could be a projection.
@@ -170,9 +176,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 		{
 			Ident	   *ident = (Ident *) first_arg;
 
-			/*
-			 * first arg is a relation. This could be a projection.
-			 */
+			/* First arg is a relation. This could be a projection. */
 			refname = ident->name;
 
 			retval = qualifiedNameToVar(pstate, refname, funcname, true);
