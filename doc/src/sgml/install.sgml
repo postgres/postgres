@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/install.sgml,v 1.39 2000/04/07 13:30:58 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/install.sgml,v 1.40 2000/04/14 23:04:44 tgl Exp $
 -->
 
  <chapter id="install">
@@ -103,16 +103,16 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/install.sgml,v 1.39 2000/04/07 13:30:
       Create the <productname>PostgreSQL</productname> superuser account.
       This is the user the server will run as. For production use you
       should create a separate, unprivileged account
-      (<literal>postgres</literal> is
-      commonly used). If you do not have root access or just want to play around,
+      (<literal>postgres</literal> is commonly used).
+      If you do not have root access or just want to play around,
       your own user account is enough.
      </para>
      <para>
       Running <productname>PostgreSQL</productname> as
-      <literal>tera</literal>teral>, <literal>bin</literal>,
+      <literal>root</literal>, <literal>bin</literal>,
       or any other account with special access rights is a security risk;
       <emphasis>don't do it</emphasis>.  The postmaster will in fact refuse
-      to start as root.
+      to start as <literal>root</literal>.
      </para>
      <para>
       You need not do the building and installation itself under this account
