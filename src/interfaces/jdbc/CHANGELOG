@@ -1,3 +1,7 @@
+Tue Mar 06 12:05:00 GMT 2001 peter@retep.org.uk
+        - Removed org.postgresql.xa.Test from the JDBC EE driver as it's an old
+          test class and prevented it from compiling.
+
 Fri Mar 02 10:00:00 GMT 2001 peter@retep.org.uk
         - Fixed build.xml so that PGclob is not built in the JDBC1.2 driver
 
