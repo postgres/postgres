@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.25 1997/09/08 21:54:50 momjian Exp $
+ * $Id: builtins.h,v 1.26 1997/09/20 16:24:39 thomas Exp $
  *
  * NOTES
  *	  This should normally only be included by fmgr.h.
@@ -238,7 +238,13 @@ extern bool reltimelt(RelativeTime t1, RelativeTime t2);
 extern bool reltimegt(RelativeTime t1, RelativeTime t2);
 extern bool reltimele(RelativeTime t1, RelativeTime t2);
 extern bool reltimege(RelativeTime t1, RelativeTime t2);
+extern bool intervalsame(TimeInterval i1, TimeInterval i2);
 extern bool intervaleq(TimeInterval i1, TimeInterval i2);
+extern bool intervalne(TimeInterval i1, TimeInterval i2);
+extern bool intervallt(TimeInterval i1, TimeInterval i2);
+extern bool intervalgt(TimeInterval i1, TimeInterval i2);
+extern bool intervalle(TimeInterval i1, TimeInterval i2);
+extern bool intervalge(TimeInterval i1, TimeInterval i2);
 extern bool intervalleneq(TimeInterval i, RelativeTime t);
 extern bool intervallenne(TimeInterval i, RelativeTime t);
 extern bool intervallenlt(TimeInterval i, RelativeTime t);
