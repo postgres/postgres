@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.114 2003/04/25 19:45:08 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.115 2003/05/10 18:01:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2973,11 +2973,13 @@ CreateCheckPoint(bool shutdown, bool force)
 		elog(ERROR, "CreateCheckPoint: cannot be called inside transaction block");
 
 	/*
+	 * Acquire CheckpointLock to ensure only one checkpoint happens at a time.
+	 *
 	 * The CheckpointLock can be held for quite a while, which is not good
 	 * because we won't respond to a cancel/die request while waiting for
 	 * an LWLock.  (But the alternative of using a regular lock won't work
 	 * for background checkpoint processes, which are not regular
-	 * backends.) So, rather than use a plain LWLockAcquire, use this
+	 * backends.)  So, rather than use a plain LWLockAcquire, use this
 	 * kluge to allow an interrupt to be accepted while we are waiting:
 	 */
 	while (!LWLockConditionalAcquire(CheckpointLock, LW_EXCLUSIVE))
@@ -2986,6 +2988,9 @@ CreateCheckPoint(bool shutdown, bool force)
 		sleep(1);
 	}
 
+	/*
+	 * Use a critical section to force system panic if we have trouble.
+	 */
 	START_CRIT_SECTION();
 
 	if (shutdown)
@@ -3056,6 +3061,13 @@ CreateCheckPoint(bool shutdown, bool force)
 	/*
 	 * Here we update the shared RedoRecPtr for future XLogInsert calls;
 	 * this must be done while holding the insert lock AND the info_lck.
+	 *
+	 * Note: if we fail to complete the checkpoint, RedoRecPtr will be
+	 * left pointing past where it really needs to point.  This is okay;
+	 * the only consequence is that XLogInsert might back up whole buffers
+	 * that it didn't really need to.  We can't postpone advancing RedoRecPtr
+	 * because XLogInserts that happen while we are dumping buffers must
+	 * assume that their buffer changes are not included in the checkpoint.
 	 */
 	{
 		/* use volatile pointer to prevent code rearrangement */
@@ -3094,6 +3106,9 @@ CreateCheckPoint(bool shutdown, bool force)
 	 */
 	LWLockRelease(WALInsertLock);
 
+	/*
+	 * Get the other info we need for the checkpoint record.
+	 */
 	LWLockAcquire(XidGenLock, LW_SHARED);
 	checkPoint.nextXid = ShmemVariableCache->nextXid;
 	LWLockRelease(XidGenLock);
@@ -3107,9 +3122,17 @@ CreateCheckPoint(bool shutdown, bool force)
 	/*
 	 * Having constructed the checkpoint record, ensure all shmem disk
 	 * buffers and commit-log buffers are flushed to disk.
+	 *
+	 * This I/O could fail for various reasons.  If so, we will fail to
+	 * complete the checkpoint, but there is no reason to force a system
+	 * panic.  Accordingly, exit critical section while doing it.
 	 */
+	END_CRIT_SECTION();
+
 	CheckPointCLOG();
 	FlushBufferPool();
+
+	START_CRIT_SECTION();
 
 	/*
 	 * Now insert the checkpoint record into XLOG.
@@ -3167,6 +3190,12 @@ CreateCheckPoint(bool shutdown, bool force)
 	LWLockRelease(ControlFileLock);
 
 	/*
+	 * We are now done with critical updates; no need for system panic if
+	 * we have trouble while fooling with offline log segments.
+	 */
+	END_CRIT_SECTION();
+
+	/*
 	 * Delete offline log files (those no longer needed even for previous
 	 * checkpoint).
 	 */
@@ -3185,8 +3214,6 @@ CreateCheckPoint(bool shutdown, bool force)
 		PreallocXlogFiles(recptr);
 
 	LWLockRelease(CheckpointLock);
-
-	END_CRIT_SECTION();
 }
 
 /*
