@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.71 1999/02/06 16:50:23 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.72 1999/02/07 13:37:55 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -128,8 +128,22 @@ ExecutorStart(QueryDesc *queryDesc, EState *estate)
 		memset(estate->es_param_exec_vals, 0, queryDesc->plantree->nParamExec * sizeof(ParamExecData));
 	}
 
-	estate->es_snapshot = QuerySnapshot;
+	/*
+	 * Make our own private copy of the current queries snapshot data
+	 */
+	estate->es_snapshot = (Snapshot)palloc(sizeof(SnapshotData));
+	memcpy(estate->es_snapshot, QuerySnapshot, sizeof(SnapshotData));
+	if (estate->es_snapshot->xcnt > 0)
+	{
+		estate->es_snapshot->xip = (TransactionId *)
+					palloc(estate->es_snapshot->xcnt * sizeof(TransactionId));
+		memcpy(estate->es_snapshot->xip, QuerySnapshot->xip,
+					estate->es_snapshot->xcnt * sizeof(TransactionId));
+	}
 
+	/*
+	 * Initialize the plan
+	 */
 	result = InitPlan(queryDesc->operation,
 					  queryDesc->parsetree,
 					  queryDesc->plantree,
