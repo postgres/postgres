@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.63 1999/02/13 04:25:01 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.64 1999/02/13 05:34:24 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1744,15 +1744,15 @@ datetime_part(text *units, DateTime *datetime)
 					break;
 
 				case DTK_DECADE:
-					*result = (tm->tm_year / 10) + 1;
+					*result = (tm->tm_year / 10);
 					break;
 
 				case DTK_CENTURY:
-					*result = (tm->tm_year / 100) + 1;
+					*result = (tm->tm_year / 100);
 					break;
 
 				case DTK_MILLENIUM:
-					*result = (tm->tm_year / 1000) + 1;
+					*result = (tm->tm_year / 1000);
 					break;
 
 				default:
