@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/qnx4/Attic/sem.c,v 1.3 2000/04/12 17:15:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/qnx4/Attic/sem.c,v 1.4 2001/02/02 18:21:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,7 +26,7 @@
 
 
 #define SETMAX	((MAXBACKENDS + PROC_NSEMS_PER_SET - 1) / PROC_NSEMS_PER_SET)
-#define SEMMAX	(PROC_NSEMS_PER_SET)
+#define SEMMAX	(PROC_NSEMS_PER_SET+1)
 #define OPMAX	8
 
 #define MODE	0700

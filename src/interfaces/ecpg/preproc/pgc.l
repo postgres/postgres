@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.73 2001/01/24 19:43:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.74 2001/02/02 18:21:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,6 +34,11 @@
 #if defined(yywrap)
 #undef yywrap
 #endif /* yywrap */
+
+#ifdef __QNX__
+/* For some reason, QNX needs this, bjm 2001-02-02 */
+#define ECHO (void) fwrite( yytext, yyleng, 1, yyout )
+#endif
 
 #define YY_NO_UNPUT
 

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.86 2001/01/24 19:43:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.87 2001/02/02 18:21:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -112,7 +112,7 @@ extern void s_lock_sleep(unsigned spins, int microsec,
  */
 
 
-#if defined(__i386__)
+#if defined(__i386__) && !defined(__QNX__)
 #define TAS(lock) tas(lock)
 
 static __inline__ int
