@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.51 1999/07/15 22:38:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.52 1999/07/15 23:02:51 momjian Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -18,13 +18,13 @@
 
 #include <stdio.h>
 
-#include <postgres.h>
+#include "postgres.h"
 
-#include <catalog/pg_type.h>
-#include <nodes/parsenodes.h>
-#include <parser/parse_type.h>
-#include <utils/builtins.h>
-#include <utils/syscache.h>
+#include "catalog/pg_type.h"
+#include "nodes/parsenodes.h"
+#include "parser/parse_type.h"
+#include "utils/builtins.h"
+#include "utils/syscache.h"
 
 #ifndef HAVE_MEMMOVE
 #else

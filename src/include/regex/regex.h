@@ -41,7 +41,7 @@
 #define _REGEX_H_
 
 #include <sys/types.h>
-#include <mb/pg_wchar.h>
+#include "mb/pg_wchar.h"
 
 /* types */
 typedef off_t regoff_t;

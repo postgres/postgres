@@ -6,14 +6,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_list.h,v 1.11 1999/02/22 05:26:47 momjian Exp $
+ * $Id: pg_list.h,v 1.12 1999/07/15 23:03:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef PG_LIST_H
 #define PG_LIST_H
 
-#include <nodes/nodes.h>
+#include "nodes/nodes.h"
 
 /* ----------------------------------------------------------------
  *						node definitions

@@ -6,15 +6,15 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: xfunc.h,v 1.1 1999/07/15 15:21:24 momjian Exp $
+ * $Id: xfunc.h,v 1.2 1999/07/15 23:03:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef XFUNC_H
 #define XFUNC_H
 
-#include <utils/rel.h>
-#include <nodes/relation.h>
+#include "utils/rel.h"
+#include "nodes/relation.h"
 
 /* command line arg flags */
 #define XFUNC_OFF -1			/* do no optimization of expensive preds */

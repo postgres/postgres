@@ -7,23 +7,23 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.27 1999/07/15 22:39:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.28 1999/07/15 23:03:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <postgres.h>
+#include "postgres.h"
 
-#include <access/heapam.h>
-#include <catalog/catname.h>
-#include <utils/syscache.h>
-#include <catalog/heap.h>
-#include <catalog/indexing.h>
-#include <catalog/catalog.h>
-#include <commands/rename.h>
-#include <miscadmin.h>
+#include "access/heapam.h"
+#include "catalog/catname.h"
+#include "utils/syscache.h"
+#include "catalog/heap.h"
+#include "catalog/indexing.h"
+#include "catalog/catalog.h"
+#include "commands/rename.h"
+#include "miscadmin.h"
 #include <optimizer/prep.h>		/* for find_all_inheritors */
 #ifndef NO_SECURITY
-#include <utils/acl.h>
+#include "utils/acl.h"
 #endif	 /* !NO_SECURITY */
 #ifndef HAVE_MEMMOVE
 #else

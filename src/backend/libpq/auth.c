@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.37 1999/05/26 12:55:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.38 1999/07/15 23:03:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,14 +30,14 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#include <postgres.h>
-#include <miscadmin.h>
+#include "postgres.h"
+#include "miscadmin.h"
 
-#include <libpq/auth.h>
-#include <libpq/libpq.h>
-#include <libpq/hba.h>
-#include <libpq/password.h>
-#include <libpq/crypt.h>
+#include "libpq/auth.h"
+#include "libpq/libpq.h"
+#include "libpq/hba.h"
+#include "libpq/password.h"
+#include "libpq/crypt.h"
 
 
 static void sendAuthRequest(Port *port, AuthRequest areq, PacketDoneProc handler);
@@ -62,7 +62,7 @@ static void	auth_failed(Port *port);
  *----------------------------------------------------------------
  */
 
-#include <krb.h>
+#include "krb.h"
 
 /*
  * pg_krb4_recvauth -- server routine to receive authentication information
@@ -149,7 +149,7 @@ pg_krb4_recvauth(Port *port)
  *----------------------------------------------------------------
  */
 
-#include <krb5/krb5.h>
+#include "krb5/krb5.h"
 
 /*
  * pg_an_to_ln -- return the local name corresponding to an authentication

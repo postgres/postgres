@@ -6,14 +6,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_relation.h,v 1.10 1999/07/15 15:21:27 momjian Exp $
+ * $Id: parse_relation.h,v 1.11 1999/07/15 23:04:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef PARSE_QUERY_H
 #define PARSE_RANGE_H
 
-#include <parser/parse_node.h>
+#include "parser/parse_node.h"
 
 extern RangeTblEntry *refnameRangeTableEntry(ParseState *pstate, char *refname);
 extern int refnameRangeTablePosn(ParseState *pstate,

@@ -6,14 +6,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_target.h,v 1.13 1999/07/15 15:21:27 momjian Exp $
+ * $Id: parse_target.h,v 1.14 1999/07/15 23:04:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef PARSE_TARGET_H
 #define PARSE_TARGET_H
 
-#include <parser/parse_node.h>
+#include "parser/parse_node.h"
 
 #define EXPR_COLUMN_FIRST	1
 #define EXPR_RELATION_FIRST 2

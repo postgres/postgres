@@ -6,14 +6,14 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/lib/Attic/lispsort.c,v 1.11 1999/07/15 22:39:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/lib/Attic/lispsort.c,v 1.12 1999/07/15 23:03:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include <sys/types.h>
 
-#include <postgres.h>
+#include "postgres.h"
 
 
 #ifdef NOT_USED

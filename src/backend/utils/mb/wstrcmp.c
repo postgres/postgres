@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  */
 
-#include <mb/pg_wchar.h>
+#include "mb/pg_wchar.h"
 
 int
 pg_char_and_wchar_strcmp(s1, s2)

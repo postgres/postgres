@@ -7,15 +7,15 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/Attic/indexvalid.c,v 1.22 1999/07/15 22:38:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/Attic/indexvalid.c,v 1.23 1999/07/15 23:02:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#include <postgres.h>
+#include "postgres.h"
 
-#include <access/iqual.h>
-#include <executor/execdebug.h>
+#include "access/iqual.h"
+#include "executor/execdebug.h"
 
 /* ----------------------------------------------------------------
  *				  index scan key qualification code

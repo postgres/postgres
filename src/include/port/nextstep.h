@@ -1,4 +1,4 @@
-#include <libc.h>
+#include "libc.h"
 #include <sys/ioctl.h>
 #if defined(__STRICT_ANSI__)
 #define isascii(c)	((unsigned)(c)<=0177)

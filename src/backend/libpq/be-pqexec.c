@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-pqexec.c,v 1.21 1999/07/15 22:39:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-pqexec.c,v 1.22 1999/07/15 23:03:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,12 +20,12 @@
  * NOTES
  *		These routines are compiled into the postgres backend.
  */
-#include <postgres.h>
+#include "postgres.h"
 
-#include <tcop/fastpath.h>
-#include <tcop/tcopprot.h>
-#include <libpq/libpq.h>
-#include <utils/builtins.h>
+#include "tcop/fastpath.h"
+#include "tcop/tcopprot.h"
+#include "libpq/libpq.h"
+#include "utils/builtins.h"
 #ifndef HAVE_MEMMOVE
 #else
 #include <string.h>

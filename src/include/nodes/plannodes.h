@@ -6,14 +6,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: plannodes.h,v 1.27 1999/05/25 22:42:58 momjian Exp $
+ * $Id: plannodes.h,v 1.28 1999/07/15 23:03:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef PLANNODES_H
 #define PLANNODES_H
 
-#include <nodes/execnodes.h>
+#include "nodes/execnodes.h"
 
 /* ----------------------------------------------------------------
  *	Executor State types are used in the plannode structures

@@ -6,17 +6,17 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rtree.h,v 1.15 1999/07/15 15:20:55 momjian Exp $
+ * $Id: rtree.h,v 1.16 1999/07/15 23:03:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef RTREE_H
 #define RTREE_H
 
-#include <access/funcindex.h>
-#include <access/itup.h>
-#include <access/relscan.h>
-#include <access/sdir.h>
+#include "access/funcindex.h"
+#include "access/itup.h"
+#include "access/relscan.h"
+#include "access/sdir.h"
 
 /* see rtstrat.c for what all this is about */
 #define RTNStrategies					8

@@ -7,15 +7,15 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtget.c,v 1.16 1999/07/15 22:38:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtget.c,v 1.17 1999/07/15 23:03:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#include <postgres.h>
+#include "postgres.h"
 
-#include <access/iqual.h>
-#include <access/rtree.h>
+#include "access/iqual.h"
+#include "access/rtree.h"
 
 #ifndef HAVE_MEMMOVE
 #else

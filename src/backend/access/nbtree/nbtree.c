@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.42 1999/07/15 22:38:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.43 1999/07/15 23:03:00 momjian Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -16,14 +16,14 @@
  *-------------------------------------------------------------------------
  */
 
-#include <postgres.h>
+#include "postgres.h"
 
-#include <access/genam.h>
-#include <access/nbtree.h>
-#include <executor/executor.h>
-#include <access/heapam.h>
-#include <catalog/index.h>
-#include <miscadmin.h>
+#include "access/genam.h"
+#include "access/nbtree.h"
+#include "executor/executor.h"
+#include "access/heapam.h"
+#include "catalog/index.h"
+#include "miscadmin.h"
 
 #ifndef HAVE_MEMMOVE
 #else

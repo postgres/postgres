@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.109 1999/07/15 15:19:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.110 1999/07/15 23:03:22 momjian Exp $
  *
  * NOTES
  *
@@ -74,7 +74,7 @@
 #endif
 
 #ifdef __CYGWIN32__
-#include <getopt.h>
+#include "getopt.h"
 #endif
 
 #include "storage/ipc.h"

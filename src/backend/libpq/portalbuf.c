@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/portalbuf.c,v 1.17 1999/07/15 22:39:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/portalbuf.c,v 1.18 1999/07/15 23:03:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,7 +50,7 @@
 #include <string.h>
 #include <sys/types.h>
 
-#include <postgres.h>
+#include "postgres.h"
 
 #include <libpq/libpq.h>		/* where the declarations go */
 

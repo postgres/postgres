@@ -10,11 +10,11 @@
  *-------------------------------------------------------------------------
  */
 
-#include <postgres.h>
+#include "postgres.h"
 
-#include <access/gist.h>
-#include <access/gistscan.h>
-#include <access/genam.h>
+#include "access/gist.h"
+#include "access/gistscan.h"
+#include "access/genam.h"
 
 #ifndef HAVE_MEMMOVE
 #else

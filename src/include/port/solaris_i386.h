@@ -4,7 +4,7 @@
 #define HAS_TEST_AND_SET
 typedef unsigned char slock_t;
 
-#include <sys/isa_defs.h>
+#include "sys/isa_defs.h"
 
 #ifndef			BIG_ENDIAN
 #define			BIG_ENDIAN		4321

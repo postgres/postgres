@@ -6,14 +6,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: heap.h,v 1.19 1999/05/25 16:13:39 momjian Exp $
+ * $Id: heap.h,v 1.20 1999/07/15 23:03:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef HEAP_H
 #define HEAP_H
 
-#include <utils/rel.h>
+#include "utils/rel.h"
 
 extern Oid	RelnameFindRelid(char *relname);
 extern Relation heap_create(char *relname, TupleDesc att,

@@ -6,15 +6,15 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lmgr.h,v 1.21 1999/07/15 15:21:32 momjian Exp $
+ * $Id: lmgr.h,v 1.22 1999/07/15 23:04:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef LMGR_H
 #define LMGR_H
 
-#include <storage/lock.h>
-#include <utils/rel.h>
+#include "storage/lock.h"
+#include "utils/rel.h"
 
 #define AccessShareLock			1		/* SELECT */
 #define RowShareLock			2		/* SELECT FOR UPDATE */

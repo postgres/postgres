@@ -6,14 +6,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_func.h,v 1.17 1999/07/15 15:21:26 momjian Exp $
+ * $Id: parse_func.h,v 1.18 1999/07/15 23:04:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef PARSER_FUNC_H
 #define PARSER_FUNC_H
 
-#include <parser/parse_node.h>
+#include "parser/parse_node.h"
 
 
 #define MAXFARGS 8				/* max # args to a c or postquel function */

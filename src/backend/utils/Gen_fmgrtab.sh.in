@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh.in,v 1.15 1999/04/09 22:35:41 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh.in,v 1.16 1999/07/15 23:03:25 momjian Exp $
 #
 # NOTES
 #    Passes any -D options on to cpp prior to generating the list
@@ -83,7 +83,7 @@ cat > $HFILE <<FuNkYfMgRsTuFf
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: Gen_fmgrtab.sh.in,v 1.15 1999/04/09 22:35:41 tgl Exp $
+ * $Id: Gen_fmgrtab.sh.in,v 1.16 1999/07/15 23:03:25 momjian Exp $
  *
  * NOTES
  *	******************************
@@ -206,7 +206,7 @@ cat > $TABCFILE <<FuNkYfMgRtAbStUfF
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh.in,v 1.15 1999/04/09 22:35:41 tgl Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh.in,v 1.16 1999/07/15 23:03:25 momjian Exp $
  *
  * NOTES
  *
@@ -225,7 +225,7 @@ cat > $TABCFILE <<FuNkYfMgRtAbStUfF
  */
 
 #include <string.h>
-#include <postgres.h>
+#include "postgres.h"
 #include "utils/fmgrtab.h"
 
 FuNkYfMgRtAbStUfF

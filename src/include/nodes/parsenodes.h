@@ -6,14 +6,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.75 1999/07/13 21:17:38 momjian Exp $
+ * $Id: parsenodes.h,v 1.76 1999/07/15 23:03:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef PARSENODES_H
 #define PARSENODES_H
 
-#include <nodes/primnodes.h>
+#include "nodes/primnodes.h"
 
 /*****************************************************************************
  *	Query Tree

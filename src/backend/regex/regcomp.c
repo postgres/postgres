@@ -50,11 +50,11 @@ static char sccsid[] = "@(#)regcomp.c	8.5 (Berkeley) 3/20/94";
 #include <stdlib.h>
 #include <assert.h>
 
-#include <regex/regex.h>
-#include <regex/utils.h>
-#include <regex/regex2.h>
-#include <regex/cclass.h>
-#include <regex/cname.h>
+#include "regex/regex.h"
+#include "regex/utils.h"
+#include "regex/regex2.h"
+#include "regex/cclass.h"
+#include "regex/cname.h"
 
 /*
  * parse structure, passed up and down to avoid global variables and

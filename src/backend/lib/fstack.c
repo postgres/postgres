@@ -7,13 +7,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/lib/Attic/fstack.c,v 1.11 1999/05/25 16:08:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/lib/Attic/fstack.c,v 1.12 1999/07/15 23:03:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <postgres.h>
+#include "postgres.h"
 
-#include <lib/fstack.h>
+#include "lib/fstack.h"
 
 /*
  * Internal function definitions

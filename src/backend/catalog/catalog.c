@@ -7,20 +7,20 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/catalog.c,v 1.21 1999/05/25 16:08:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/catalog.c,v 1.22 1999/07/15 23:03:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <string.h>
 
-#include <postgres.h>
+#include "postgres.h"
 
 #include <miscadmin.h>			/* for DataDir */
-#include <utils/syscache.h>
+#include "utils/syscache.h"
 #include <catalog/catname.h>	/* NameIs{,Shared}SystemRelationName */
-#include <catalog/pg_type.h>
-#include <catalog/catalog.h>
-#include <access/transam.h>
+#include "catalog/pg_type.h"
+#include "catalog/catalog.h"
+#include "access/transam.h"
 
 /*
  * relpath				- path to the relation

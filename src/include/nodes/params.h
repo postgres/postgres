@@ -6,14 +6,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: params.h,v 1.10 1999/02/13 23:21:38 momjian Exp $
+ * $Id: params.h,v 1.11 1999/07/15 23:03:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef PARAMS_H
 #define PARAMS_H
 
-#include <access/attnum.h>
+#include "access/attnum.h"
 
 /* ----------------------------------------------------------------
  *

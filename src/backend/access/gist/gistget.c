@@ -11,10 +11,10 @@
  *-------------------------------------------------------------------------
  */
 
-#include <postgres.h>
+#include "postgres.h"
 
-#include <access/gist.h>
-#include <executor/execdebug.h>
+#include "access/gist.h"
+#include "executor/execdebug.h"
 
 #ifndef HAVE_MEMMOVE
 #else

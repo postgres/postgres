@@ -12,10 +12,10 @@
 #ifndef GIST_H
 #define GIST_H
 
-#include <access/funcindex.h>
-#include <access/itup.h>
-#include <access/relscan.h>
-#include <access/sdir.h>
+#include "access/funcindex.h"
+#include "access/itup.h"
+#include "access/relscan.h"
+#include "access/sdir.h"
 
 /*
 ** You can have as many strategies as you please in GiSTs, as

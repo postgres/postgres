@@ -11,7 +11,7 @@
  */
 #ifndef GISTSCAN_H
 
-#include <access/relscan.h>
+#include "access/relscan.h"
 
 extern IndexScanDesc gistbeginscan(Relation r, bool fromEnd,
 			  uint16 nkeys, ScanKey key);

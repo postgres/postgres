@@ -6,14 +6,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: htup.h,v 1.23 1999/07/15 15:20:54 momjian Exp $
+ * $Id: htup.h,v 1.24 1999/07/15 23:03:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef HTUP_H
 #define HTUP_H
 
-#include <storage/bufpage.h>
+#include "storage/bufpage.h"
 
 #define MinHeapTupleBitmapSize	32		/* 8 * 4 */
 

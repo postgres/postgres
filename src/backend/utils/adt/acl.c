@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.37 1999/07/09 03:28:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.38 1999/07/15 23:03:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,7 +15,7 @@
 #include <string.h>
 #include "postgres.h"
 
-#include <utils/memutils.h>
+#include "utils/memutils.h"
 #include "utils/acl.h"
 #include "utils/syscache.h"
 #include "catalog/catalog.h"

@@ -8,16 +8,16 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/superuser.c,v 1.8 1999/02/13 23:20:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/superuser.c,v 1.9 1999/07/15 23:03:32 momjian Exp $
  *
  * DESCRIPTION
  *	  See superuser().
  *-------------------------------------------------------------------------
  */
 
-#include <postgres.h>
-#include <utils/syscache.h>
-#include <catalog/pg_shadow.h>
+#include "postgres.h"
+#include "utils/syscache.h"
+#include "catalog/pg_shadow.h"
 
 bool
 superuser(void)

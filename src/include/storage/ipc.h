@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: ipc.h,v 1.34 1999/02/21 01:41:47 tgl Exp $
+ * $Id: ipc.h,v 1.35 1999/07/15 23:04:10 momjian Exp $
  *
  * NOTES
  *	  This file is very architecture-specific.	This stuff should actually
@@ -24,7 +24,7 @@
 #include <sys/types.h>
 #include <sys/ipc.h>			/* For IPC_PRIVATE */
 
-#include <config.h>
+#include "config.h"
 
 #ifndef HAVE_UNION_SEMUN
 union semun

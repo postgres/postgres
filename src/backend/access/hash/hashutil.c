@@ -7,15 +7,15 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashutil.c,v 1.18 1999/07/15 22:38:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashutil.c,v 1.19 1999/07/15 23:02:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#include <postgres.h>
+#include "postgres.h"
 
-#include <access/hash.h>
-#include <access/iqual.h>
+#include "access/hash.h"
+#include "access/iqual.h"
 
 #ifndef HAVE_MEMMOVE
 #else

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: user.c,v 1.29 1999/07/15 22:39:02 momjian Exp $
+ * $Id: user.c,v 1.30 1999/07/15 23:03:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,18 +16,18 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-#include <postgres.h>
+#include "postgres.h"
 
-#include <miscadmin.h>
-#include <catalog/catname.h>
-#include <catalog/pg_database.h>
-#include <catalog/pg_shadow.h>
-#include <libpq/crypt.h>
-#include <access/heapam.h>
-#include <tcop/tcopprot.h>
-#include <utils/acl.h>
-#include <utils/syscache.h>
-#include <commands/user.h>
+#include "miscadmin.h"
+#include "catalog/catname.h"
+#include "catalog/pg_database.h"
+#include "catalog/pg_shadow.h"
+#include "libpq/crypt.h"
+#include "access/heapam.h"
+#include "tcop/tcopprot.h"
+#include "utils/acl.h"
+#include "utils/syscache.h"
+#include "commands/user.h"
 
 static void CheckPgUserAclNotNull(void);
 

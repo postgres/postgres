@@ -6,14 +6,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_expr.h,v 1.12 1999/07/15 15:21:26 momjian Exp $
+ * $Id: parse_expr.h,v 1.13 1999/07/15 23:04:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef PARSE_EXPR_H
 #define PARSE_EXPR_H
 
-#include <parser/parse_node.h>
+#include "parser/parse_node.h"
 #include "parser/parse_type.h"
 
 extern Node *transformExpr(ParseState *pstate, Node *expr, int precedence);

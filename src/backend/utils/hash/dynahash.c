@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.24 1999/07/15 15:20:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.25 1999/07/15 23:03:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,15 +39,15 @@
  * Modified by sullivan@postgres.berkeley.edu April 1990
  *		changed ctl structure for shared memory
  */
-#include	   <stdio.h>
-#include	   <sys/types.h>
-#include	   <string.h>
-#include	   "postgres.h"
-#include	   "utils/dynahash.h"
-#include	   "utils/hsearch.h"
+#include <stdio.h>
+#include <sys/types.h>
+#include <string.h>
+#include "postgres.h"
+#include "utils/dynahash.h"
+#include "utils/hsearch.h"
 #ifndef FRONTEND
 #endif	 /* !FRONTEND */
-#include	   "utils/memutils.h"
+#include "utils/memutils.h"
 
 /*
  * Fast MOD arithmetic, assuming that y is a power of 2 !

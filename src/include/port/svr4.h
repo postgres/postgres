@@ -11,7 +11,7 @@
 #ifdef sinix
 #define HAS_TEST_AND_SET
 
-#include <abi_mutex.h>
+#include "abi_mutex.h"
 typedef abilock_t slock_t;
 
 #endif

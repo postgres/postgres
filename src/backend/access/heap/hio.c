@@ -7,15 +7,15 @@
  *
  *
  * IDENTIFICATION
- *	  $Id: hio.c,v 1.23 1999/07/15 22:38:41 momjian Exp $
+ *	  $Id: hio.c,v 1.24 1999/07/15 23:02:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#include <postgres.h>
+#include "postgres.h"
 
-#include <access/hio.h>
-#include <access/heapam.h>
+#include "access/hio.h"
+#include "access/heapam.h"
 
 /*
  * amputunique	- place tuple at tid

@@ -12,10 +12,10 @@
  *-------------------------------------------------------------------------
  */
 
-#include <postgres.h>
+#include "postgres.h"
 
-#include <access/gist.h>
-#include <access/istrat.h>
+#include "access/gist.h"
+#include "access/istrat.h"
 
 /*
  *	Note:  negate, commute, and negatecommute all assume that operators are

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: util.c,v 1.10 1999/07/15 22:39:15 momjian Exp $
+ *	$Id: util.c,v 1.11 1999/07/15 23:03:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <postgres.h>
+#include "postgres.h"
 #include <libpq/libpq.h>		/* where the declarations go */
 
 

@@ -6,14 +6,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: printtup.h,v 1.10 1999/05/25 22:42:32 momjian Exp $
+ * $Id: printtup.h,v 1.11 1999/07/15 23:03:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef PRINTTUP_H
 #define PRINTTUP_H
 
-#include <tcop/dest.h>
+#include "tcop/dest.h"
 
 extern DestReceiver *printtup_create_DR(void);
 extern void showatts(char *name, TupleDesc attinfo);

@@ -6,14 +6,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: ordering.h,v 1.14 1999/05/25 16:14:20 momjian Exp $
+ * $Id: ordering.h,v 1.15 1999/07/15 23:03:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef ORDERING_H
 #define ORDERING_H
 
-#include <nodes/relation.h>
+#include "nodes/relation.h"
 
 extern bool pathorder_match(PathOrder *path_ordering1,
 				PathOrder *path_ordering2, int *better_sort);

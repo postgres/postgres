@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: catcache.h,v 1.17 1999/07/15 15:21:39 momjian Exp $
+ * $Id: catcache.h,v 1.18 1999/07/15 23:04:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,8 +15,8 @@
 
 /* #define		CACHEDEBUG		 turns DEBUG elogs on */
 
-#include <access/htup.h>
-#include <lib/dllist.h>
+#include "access/htup.h"
+#include "lib/dllist.h"
 
 /*
  *		struct catctup:			tuples in the cache.

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.24 1999/07/15 22:40:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.25 1999/07/15 23:03:27 momjian Exp $
  *
  * Note - this code is real crufty...
  *
@@ -15,7 +15,7 @@
  */
 #include "postgres.h"
 
-#include <miscadmin.h>
+#include "miscadmin.h"
 
 #include "catalog/catalog.h"
 #include "catalog/heap.h"

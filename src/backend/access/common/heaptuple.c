@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.54 1999/07/15 22:38:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.55 1999/07/15 23:02:51 momjian Exp $
  *
  * NOTES
  *	  The old interface functions have been converted to macros
@@ -17,10 +17,10 @@
  *-------------------------------------------------------------------------
  */
 
-#include <postgres.h>
+#include "postgres.h"
 
-#include <access/heapam.h>
-#include <catalog/pg_type.h>
+#include "access/heapam.h"
+#include "catalog/pg_type.h"
 
 #ifndef HAVE_MEMMOVE
 #else

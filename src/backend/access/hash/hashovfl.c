@@ -7,16 +7,16 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashovfl.c,v 1.21 1999/07/15 22:38:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashovfl.c,v 1.22 1999/07/15 23:02:55 momjian Exp $
  *
  * NOTES
  *	  Overflow pages look like ordinary relation pages.
  *
  *-------------------------------------------------------------------------
  */
-#include <postgres.h>
+#include "postgres.h"
 
-#include <access/hash.h>
+#include "access/hash.h"
 
 #ifndef HAVE_MEMMOVE
 #else

@@ -6,16 +6,16 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: smgr.h,v 1.14 1999/02/13 23:22:10 momjian Exp $
+ * $Id: smgr.h,v 1.15 1999/07/15 23:04:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef SMGR_H
 #define SMGR_H
 
-#include <storage/spin.h>
-#include <storage/block.h>
-#include <utils/rel.h>
+#include "storage/spin.h"
+#include "storage/block.h"
+#include "utils/rel.h"
 
 #define SM_FAIL			0
 #define SM_SUCCESS		1

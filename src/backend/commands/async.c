@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.48 1999/07/15 22:38:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.49 1999/07/15 23:03:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -94,8 +94,8 @@
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
 #include "utils/syscache.h"
-#include <utils/trace.h>
-#include <utils/ps_status.h>
+#include "utils/trace.h"
+#include "utils/ps_status.h"
 
 /* stuff that we really ought not be touching directly :-( */
 extern TransactionState CurrentTransactionState;

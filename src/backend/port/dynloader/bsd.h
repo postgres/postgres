@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bsd.h,v 1.3 1999/02/13 23:17:16 momjian Exp $
+ * $Id: bsd.h,v 1.4 1999/07/15 23:03:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,7 +15,7 @@
 
 #include <sys/types.h>
 #include <nlist.h>
-#include <link.h>
+#include "link.h"
 
 #include "postgres.h"
 

@@ -6,15 +6,15 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: index.h,v 1.17 1999/07/15 15:20:58 momjian Exp $
+ * $Id: index.h,v 1.18 1999/07/15 23:03:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef INDEX_H
 #define INDEX_H
 
-#include <nodes/execnodes.h>
-#include <access/itup.h>
+#include "nodes/execnodes.h"
+#include "access/itup.h"
 
 extern Form_pg_am AccessMethodObjectIdGetForm(Oid accessMethodObjectId);
 

@@ -3,7 +3,7 @@
  *	is for IP V4 CIDR notation, but prepared for V6: just
  *	add the necessary bits where the comments indicate.
  *
- *	$Id: network.c,v 1.13 1999/07/15 22:40:00 momjian Exp $
+ *	$Id: network.c,v 1.14 1999/07/15 23:03:27 momjian Exp $
  *	Jon Postel RIP 16 Oct 1998
  */
 
@@ -17,8 +17,8 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#include <postgres.h>
-#include <utils/builtins.h>
+#include "postgres.h"
+#include "utils/builtins.h"
 
 static int	v4bitncmp(unsigned int a1, unsigned int a2, int bits);
 

@@ -11,16 +11,16 @@
  *-------------------------------------------------------------------------
  */
 
-#include <postgres.h>
+#include "postgres.h"
 
-#include <catalog/pg_index.h>
-#include <access/genam.h>
-#include <access/gist.h>
-#include <access/gistscan.h>
-#include <access/heapam.h>
-#include <catalog/index.h>
-#include <executor/executor.h>
-#include <utils/syscache.h>
+#include "catalog/pg_index.h"
+#include "access/genam.h"
+#include "access/gist.h"
+#include "access/gistscan.h"
+#include "access/heapam.h"
+#include "catalog/index.h"
+#include "executor/executor.h"
+#include "utils/syscache.h"
 
 #ifndef HAVE_MEMMOVE
 #else

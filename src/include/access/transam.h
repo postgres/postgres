@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: transam.h,v 1.22 1999/06/10 14:17:12 vadim Exp $
+ * $Id: transam.h,v 1.23 1999/07/15 23:03:38 momjian Exp $
  *
  *	 NOTES
  *		Transaction System Version 101 now support proper oid
@@ -17,7 +17,7 @@
 #ifndef TRANSAM_H
 #define TRANSAM_H
 
-#include <storage/bufmgr.h>
+#include "storage/bufmgr.h"
 
 /* ----------------
  *		transaction system version id

@@ -6,14 +6,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relcache.h,v 1.12 1999/05/01 19:09:43 tgl Exp $
+ * $Id: relcache.h,v 1.13 1999/07/15 23:04:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef RELCACHE_H
 #define RELCACHE_H
 
-#include <utils/rel.h>
+#include "utils/rel.h"
 
 /*
  * relation lookup routines

@@ -6,14 +6,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lsyscache.h,v 1.17 1999/07/15 15:21:41 momjian Exp $
+ * $Id: lsyscache.h,v 1.18 1999/07/15 23:04:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef LSYSCACHE_H
 #define LSYSCACHE_H
 
-#include <access/htup.h>
+#include "access/htup.h"
 
 extern bool op_class(Oid oprno, int32 opclass, Oid amopid);
 extern char *get_attname(Oid relid, AttrNumber attnum);

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.30 1999/07/15 15:18:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.31 1999/07/15 23:03:08 momjian Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -37,22 +37,22 @@
 #include <string.h>
 #include <math.h>
 
-#include <postgres.h>
+#include "postgres.h"
 
-#include <access/heapam.h>
-#include <catalog/catname.h>
-#include <catalog/pg_aggregate.h>
-#include <catalog/pg_operator.h>
-#include <catalog/pg_proc.h>
-#include <catalog/pg_type.h>
-#include <catalog/pg_language.h>
-#include <utils/syscache.h>
+#include "access/heapam.h"
+#include "catalog/catname.h"
+#include "catalog/pg_aggregate.h"
+#include "catalog/pg_operator.h"
+#include "catalog/pg_proc.h"
+#include "catalog/pg_type.h"
+#include "catalog/pg_language.h"
+#include "utils/syscache.h"
 #include <fmgr.h>				/* for fmgr */
 #include <utils/builtins.h>		/* prototype for textin() */
-#include <commands/defrem.h>
-#include <tcop/dest.h>
-#include <catalog/pg_shadow.h>
-#include <optimizer/cost.h>
+#include "commands/defrem.h"
+#include "tcop/dest.h"
+#include "catalog/pg_shadow.h"
+#include "optimizer/cost.h"
 
 static char *defGetString(DefElem *def);
 static int	defGetTypeLength(DefElem *def);

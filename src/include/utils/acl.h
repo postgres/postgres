@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: acl.h,v 1.21 1999/07/15 15:21:38 momjian Exp $
+ * $Id: acl.h,v 1.22 1999/07/15 23:04:19 momjian Exp $
  *
  * NOTES
  *	  For backward-compatability purposes we have to allow there
@@ -22,8 +22,8 @@
 #ifndef ACL_H
 #define ACL_H
 
-#include <nodes/parsenodes.h>
-#include <utils/array.h>
+#include "nodes/parsenodes.h"
+#include "utils/array.h"
 #include "utils/memutils.h"
 
 /*

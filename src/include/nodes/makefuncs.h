@@ -6,14 +6,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: makefuncs.h,v 1.19 1999/07/15 15:21:16 momjian Exp $
+ * $Id: makefuncs.h,v 1.20 1999/07/15 23:03:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef MAKEFUNC_H
 #define MAKEFUNC_H
 
-#include <nodes/parsenodes.h>
+#include "nodes/parsenodes.h"
 
 extern Oper *makeOper(Oid opno,
 		 Oid opid,

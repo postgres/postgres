@@ -5,14 +5,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: analyze.h,v 1.8 1999/07/13 21:17:40 momjian Exp $
+ * $Id: analyze.h,v 1.9 1999/07/15 23:04:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef ANALYZE_H
 #define ANALYZE_H
 
-#include <parser/parse_node.h>
+#include "parser/parse_node.h"
 
 extern List *parse_analyze(List *pl, ParseState *parentParseState);
 

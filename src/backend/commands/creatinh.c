@@ -7,23 +7,23 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.42 1999/07/15 22:39:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.43 1999/07/15 23:03:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <stdio.h>
 #include <string.h>
 
-#include <postgres.h>
+#include "postgres.h"
 
-#include <catalog/heap.h>
-#include <commands/creatinh.h>
-#include <access/heapam.h>
-#include <utils/syscache.h>
-#include <catalog/catname.h>
-#include <catalog/pg_type.h>
-#include <catalog/pg_inherits.h>
-#include <catalog/pg_ipl.h>
+#include "catalog/heap.h"
+#include "commands/creatinh.h"
+#include "access/heapam.h"
+#include "utils/syscache.h"
+#include "catalog/catname.h"
+#include "catalog/pg_type.h"
+#include "catalog/pg_inherits.h"
+#include "catalog/pg_ipl.h"
 
 /* ----------------
  *		local stuff

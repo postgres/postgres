@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: memnodes.h,v 1.13 1999/05/25 22:42:55 momjian Exp $
+ * $Id: memnodes.h,v 1.14 1999/07/15 23:03:53 momjian Exp $
  *
  * XXX the typedefs in this file are different from the other ???nodes.h;
  *	  they are pointers to structures instead of the structures themselves.
@@ -18,9 +18,9 @@
 #ifndef MEMNODES_H
 #define MEMNODES_H
 
-#include <lib/fstack.h>
-#include <utils/memutils.h>
-#include <nodes/nodes.h>
+#include "lib/fstack.h"
+#include "utils/memutils.h"
+#include "nodes/nodes.h"
 
 /*
  * MemoryContext

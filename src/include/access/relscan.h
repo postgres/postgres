@@ -6,14 +6,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relscan.h,v 1.16 1999/07/15 15:20:55 momjian Exp $
+ * $Id: relscan.h,v 1.17 1999/07/15 23:03:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef RELSCAN_H
 #define RELSCAN_H
 
-#include <utils/tqual.h>
+#include "utils/tqual.h"
 
 typedef ItemPointerData MarkData;
 

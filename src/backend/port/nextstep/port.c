@@ -1,5 +1,5 @@
 #ifndef _POSIX_SOURCE
-#include <libc.h>
+#include "libc.h"
 #else
 #include <unistd.h>
 #include <stdlib.h>

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.24 1999/07/13 20:12:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.25 1999/07/15 23:03:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,7 @@
 
 #if defined(__alpha__) && !defined(linux)
 #include <sys/sysinfo.h>
-#include <machine/hal_sysinfo.h>
+#include "machine/hal_sysinfo.h"
 #define ASSEMBLER
 #include <sys/proc.h>
 #undef ASSEMBLER

@@ -1,14 +1,14 @@
 /*
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: password.c,v 1.22 1999/07/15 22:39:14 momjian Exp $
+ * $Id: password.c,v 1.23 1999/07/15 23:03:14 momjian Exp $
  *
  */
 
-#include <postgres.h>
-#include <miscadmin.h>
-#include <libpq/password.h>
-#include <libpq/libpq.h>
+#include "postgres.h"
+#include "miscadmin.h"
+#include "libpq/password.h"
+#include "libpq/libpq.h"
 #include <string.h>
 #include <unistd.h>
 #ifdef HAVE_CRYPT_H

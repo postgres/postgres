@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dynamic_loader.h,v 1.11 1999/07/15 15:21:39 momjian Exp $
+ * $Id: dynamic_loader.h,v 1.12 1999/07/15 23:04:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,7 @@
 #include <sys/param.h>			/* For MAXPATHLEN */
 
 /* we need this include because port files use them */
-#include <postgres.h>
+#include "postgres.h"
 
 #ifdef MIN
 #undef MIN

@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 
-#include <mb/pg_wchar.h>
+#include "mb/pg_wchar.h"
 
 int
 pg_wchar_strncmp(s1, s2, n)

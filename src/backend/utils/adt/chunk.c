@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/chunk.c,v 1.20 1999/05/25 16:11:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/chunk.c,v 1.21 1999/07/15 23:03:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,7 +25,7 @@
 #include "utils/memutils.h"
 
 #ifndef HAVE_MEMMOVE
-#include <regex/utils.h>
+#include "regex/utils.h"
 #else
 #include <string.h>
 #endif

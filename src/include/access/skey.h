@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: skey.h,v 1.11 1999/02/13 23:20:58 momjian Exp $
+ * $Id: skey.h,v 1.12 1999/07/15 23:03:37 momjian Exp $
  *
  *
  * Note:
@@ -16,8 +16,8 @@
 #ifndef SKEY_H
 #define SKEY_H
 
-#include <access/attnum.h>
-#include <fmgr.h>
+#include "access/attnum.h"
+#include "fmgr.h"
 
 typedef struct ScanKeyData
 {

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqsignal.c,v 1.11 1999/02/13 23:15:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqsignal.c,v 1.12 1999/07/15 23:03:14 momjian Exp $
  *
  * NOTES
  *		This shouldn't be in libpq, but the monitor and some other
@@ -37,11 +37,11 @@
  *	is to do signal-handler reinstallation, which doesn't work well
  *	at all.
  * ------------------------------------------------------------------------*/
-#include <postgres.h>
+#include "postgres.h"
 
 #include <signal.h>
 
-#include <libpq/pqsignal.h>
+#include "libpq/pqsignal.h"
 
 pqsigfunc
 pqsignal(int signo, pqsigfunc func)

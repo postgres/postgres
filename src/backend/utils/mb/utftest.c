@@ -1,12 +1,12 @@
 /*
  * testing of utf2wchar()
- * $Id: utftest.c,v 1.2 1998/09/01 04:33:23 momjian Exp $
+ * $Id: utftest.c,v 1.3 1999/07/15 23:03:31 momjian Exp $
  */
-#include <regex/regex.h>
-#include <regex/utils.h>
-#include <regex/regex2.h>
+#include "regex/regex.h"
+#include "regex/utils.h"
+#include "regex/regex2.h"
 
-#include <regex/pg_wchar.h>
+#include "regex/pg_wchar.h"
 
 main()
 {

@@ -6,17 +6,17 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: genam.h,v 1.18 1999/02/13 23:20:50 momjian Exp $
+ * $Id: genam.h,v 1.19 1999/07/15 23:03:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef GENAM_H
 #define GENAM_H
 
-#include <access/sdir.h>
-#include <access/funcindex.h>
-#include <access/relscan.h>
-#include <access/itup.h>
+#include "access/sdir.h"
+#include "access/funcindex.h"
+#include "access/relscan.h"
+#include "access/itup.h"
 
 /* ----------------
  *		generalized index_ interface routines

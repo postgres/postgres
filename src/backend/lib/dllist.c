@@ -9,13 +9,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/lib/dllist.c,v 1.14 1999/06/03 01:28:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/lib/dllist.c,v 1.15 1999/07/15 23:03:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#include <postgres.h>
-#include <lib/dllist.h>
+#include "postgres.h"
+#include "lib/dllist.h"
 
 /* When this file is compiled for inclusion in libpq,
  * it can't use assert checking.  Probably this fix ought to be

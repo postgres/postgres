@@ -1,4 +1,4 @@
-/* $Id: strerror.c,v 1.5 1998/09/01 03:24:33 momjian Exp $ */
+/* $Id: strerror.c,v 1.6 1999/07/15 23:03:18 momjian Exp $ */
 
 /*
  * strerror - map error number to descriptive string
@@ -9,9 +9,9 @@
  * modified for ANSI by D'Arcy J.M. Cain
  */
 
-#include		<string.h>
-#include		<stdio.h>
-#include		<errno.h>
+#include <string.h>
+#include <stdio.h>
+#include <errno.h>
 
 extern const char *const sys_errlist[];
 extern int	sys_nerr;

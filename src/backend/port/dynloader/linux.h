@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: linux.h,v 1.5 1999/02/13 23:17:23 momjian Exp $
+ * $Id: linux.h,v 1.6 1999/07/15 23:03:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,7 +16,7 @@
 #include "fmgr.h"				/* for func_ptr */
 #include "utils/dynamic_loader.h"
 #ifdef __ELF__
-#include "dlfcn.h"
+#include <dlfcn.h>
 #endif
 
 /* dynloader.c */

@@ -6,14 +6,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: plancat.h,v 1.11 1999/02/13 23:21:50 momjian Exp $
+ * $Id: plancat.h,v 1.12 1999/07/15 23:03:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef PLANCAT_H
 #define PLANCAT_H
 
-#include <nodes/parsenodes.h>
+#include "nodes/parsenodes.h"
 
 /*
  * transient data structure to hold return value of index_info. Note that

@@ -1,13 +1,13 @@
 /*
  * a simple regexp debug program
  *
- * $Header: /cvsroot/pgsql/src/backend/regex/Attic/retest.c,v 1.2 1999/05/25 16:10:45 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/regex/Attic/retest.c,v 1.3 1999/07/15 23:03:24 momjian Exp $
  */
 
 #include <stdio.h>
 #include <string.h>
 #include "postgres.h"
-#include <regex/regex.h>
+#include "regex/regex.h"
 
 int
 main()

@@ -6,17 +6,17 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: itup.h,v 1.18 1999/07/15 15:20:54 momjian Exp $
+ * $Id: itup.h,v 1.19 1999/07/15 23:03:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef ITUP_H
 #define ITUP_H
 
-#include <access/ibit.h>
-#include <access/tupmacs.h>
-#include <access/tupdesc.h>
-#include <storage/itemptr.h>
+#include "access/ibit.h"
+#include "access/tupmacs.h"
+#include "access/tupdesc.h"
+#include "storage/itemptr.h"
 
 #define MaxIndexAttributeNumber 7
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/lib/Attic/bit.c,v 1.7 1999/07/15 22:39:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/lib/Attic/bit.c,v 1.8 1999/07/15 23:03:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,9 +15,9 @@
 /*
  * utils/memutils.h contains declarations of the functions in this file
  */
-#include <postgres.h>
+#include "postgres.h"
 
-#include <utils/bit.h>
+#include "utils/bit.h"
 
 void
 BitArraySetBit(BitArray bitArray, BitIndex bitIndex)

@@ -6,15 +6,15 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: itempos.h,v 1.7 1999/02/13 23:22:06 momjian Exp $
+ * $Id: itempos.h,v 1.8 1999/07/15 23:04:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef ITEMPOS_H
 #define ITEMPOS_H
 
-#include <storage/itemid.h>
-#include <storage/buf.h>
+#include "storage/itemid.h"
+#include "storage/buf.h"
 
 typedef struct ItemSubpositionData
 {

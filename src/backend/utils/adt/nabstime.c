@@ -4,7 +4,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	  $Id: nabstime.c,v 1.57 1999/07/15 15:20:18 momjian Exp $
+ *	  $Id: nabstime.c,v 1.58 1999/07/15 23:03:27 momjian Exp $
  *
  */
 #include <stdio.h>
@@ -13,7 +13,7 @@
 #include <sys/types.h>
 
 #include "postgres.h"
-#include <miscadmin.h>
+#include "miscadmin.h"
 #ifdef HAVE_FLOAT_H
 #include <float.h>
 #endif

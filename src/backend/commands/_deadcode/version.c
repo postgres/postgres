@@ -9,7 +9,7 @@
  *	doesn't work! - jolly 8/19/95
  *
  *
- *	$Id: version.c,v 1.20 1999/07/15 22:39:03 momjian Exp $
+ *	$Id: version.c,v 1.21 1999/07/15 23:03:09 momjian Exp $
  *
  * NOTES
  *	At the point the version is defined, 2 physical relations are created
@@ -23,7 +23,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <postgres.h>
+#include "postgres.h"
 
 
 #define MAX_QUERY_LEN 1024

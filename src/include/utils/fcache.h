@@ -6,14 +6,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fcache.h,v 1.8 1999/02/13 23:22:19 momjian Exp $
+ * $Id: fcache.h,v 1.9 1999/07/15 23:04:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef FCACHE_H
 #define FCACHE_H
 
-#include <fmgr.h>
+#include "fmgr.h"
 
 
 typedef struct

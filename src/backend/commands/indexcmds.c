@@ -7,28 +7,28 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.5 1999/07/15 22:39:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.6 1999/07/15 23:03:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <string.h>
 
-#include <postgres.h>
+#include "postgres.h"
 
-#include <access/genam.h>
-#include <access/heapam.h>
-#include <utils/builtins.h>
-#include <utils/syscache.h>
-#include <catalog/heap.h>
-#include <catalog/index.h>
-#include <catalog/pg_index.h>
-#include <catalog/pg_proc.h>
-#include <catalog/pg_type.h>
-#include <catalog/pg_opclass.h>
-#include <commands/defrem.h>
+#include "access/genam.h"
+#include "access/heapam.h"
+#include "utils/builtins.h"
+#include "utils/syscache.h"
+#include "catalog/heap.h"
+#include "catalog/index.h"
+#include "catalog/pg_index.h"
+#include "catalog/pg_proc.h"
+#include "catalog/pg_type.h"
+#include "catalog/pg_opclass.h"
+#include "commands/defrem.h"
 #include <parser/parsetree.h>	/* for getrelid() */
-#include <optimizer/prep.h>
-#include <optimizer/clauses.h>
+#include "optimizer/prep.h"
+#include "optimizer/clauses.h"
 
 #define IsFuncIndex(ATTR_LIST) (((IndexElem*)lfirst(ATTR_LIST))->args!=NULL)
 

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.82 1999/07/15 15:21:39 momjian Exp $
+ * $Id: builtins.h,v 1.83 1999/07/15 23:04:20 momjian Exp $
  *
  * NOTES
  *	  This should normally only be included by fmgr.h.
@@ -22,14 +22,14 @@
 #ifndef BUILTINS_H
 #define BUILTINS_H
 
-#include <storage/itemptr.h>
-#include <utils/array.h>
-#include <utils/geo_decls.h>
-#include <utils/datetime.h>
-#include <utils/nabstime.h>
-#include <utils/int8.h>
-#include <utils/inet.h>
-#include <utils/numeric.h>
+#include "storage/itemptr.h"
+#include "utils/array.h"
+#include "utils/geo_decls.h"
+#include "utils/datetime.h"
+#include "utils/nabstime.h"
+#include "utils/int8.h"
+#include "utils/inet.h"
+#include "utils/numeric.h"
 
 /*
  *		Defined in adt/

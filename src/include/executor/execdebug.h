@@ -6,14 +6,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execdebug.h,v 1.10 1999/07/15 15:21:06 momjian Exp $
+ * $Id: execdebug.h,v 1.11 1999/07/15 23:03:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef EXECDEBUG_H
 #define EXECDEBUG_H
 
-#include <nodes/print.h>
+#include "nodes/print.h"
 
 /* ----------------------------------------------------------------
  *		debugging defines.

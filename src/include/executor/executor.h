@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: executor.h,v 1.35 1999/07/15 15:21:06 momjian Exp $
+ * $Id: executor.h,v 1.36 1999/07/15 23:03:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -14,7 +14,7 @@
 #define EXECUTOR_H
 
 #include <stdio.h>
-#include <executor/execdesc.h>
+#include "executor/execdesc.h"
 
 /* ----------------
  *		TupIsNull

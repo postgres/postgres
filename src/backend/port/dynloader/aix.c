@@ -9,9 +9,9 @@
 #include <string.h>
 #include <stdlib.h>
 #include <sys/types.h>
-#include <sys/ldr.h>
+#include "sys/ldr.h"
 #include <a.out.h>
-#include <ldfcn.h>
+#include "ldfcn.h"
 #include "postgres.h"
 #include "dynloader.h"
 

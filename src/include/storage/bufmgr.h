@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufmgr.h,v 1.27 1999/07/15 15:21:31 momjian Exp $
+ * $Id: bufmgr.h,v 1.28 1999/07/15 23:04:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,11 +15,11 @@
 
 #include <stdio.h>
 
-#include <storage/ipc.h>
-#include <storage/block.h>
-#include <storage/buf.h>
-#include <storage/buf_internals.h>
-#include <utils/rel.h>
+#include "storage/ipc.h"
+#include "storage/block.h"
+#include "storage/buf.h"
+#include "storage/buf_internals.h"
+#include "utils/rel.h"
 
 /*
  * the maximum size of a disk block for any possible installation.

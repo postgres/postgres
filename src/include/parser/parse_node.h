@@ -5,15 +5,15 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_node.h,v 1.13 1999/07/15 15:21:27 momjian Exp $
+ * $Id: parse_node.h,v 1.14 1999/07/15 23:04:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef PARSE_NODE_H
 #define PARSE_NODE_H
 
-#include <nodes/parsenodes.h>
-#include <utils/rel.h>
+#include "nodes/parsenodes.h"
+#include "utils/rel.h"
 
 /* state information used during parse analysis */
 typedef struct ParseState

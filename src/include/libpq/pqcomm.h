@@ -8,7 +8,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqcomm.h,v 1.36 1999/05/25 22:42:51 momjian Exp $
+ * $Id: pqcomm.h,v 1.37 1999/07/15 23:03:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,7 @@
 #include <stdio.h>
 #include <sys/types.h>
 #ifdef WIN32
-#include <winsock.h>
+#include "winsock.h"
 #else
 #include <sys/socket.h>
 #include <sys/un.h>

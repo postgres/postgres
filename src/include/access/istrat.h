@@ -6,14 +6,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: istrat.h,v 1.14 1999/07/15 15:20:54 momjian Exp $
+ * $Id: istrat.h,v 1.15 1999/07/15 23:03:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef ISTRAT_H
 #define ISTRAT_H
 
-#include <utils/rel.h>
+#include "utils/rel.h"
 
 /*
  * StrategyNumberIsValid

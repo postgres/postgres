@@ -6,15 +6,15 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: shmem.h,v 1.18 1999/05/25 22:43:27 momjian Exp $
+ * $Id: shmem.h,v 1.19 1999/07/15 23:04:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef SHMEM_H
 #define SHMEM_H
 
-#include <utils/hsearch.h>
-#include <storage/spin.h>
+#include "utils/hsearch.h"
+#include "storage/spin.h"
 
 
 /* The shared memory region can start at a different address

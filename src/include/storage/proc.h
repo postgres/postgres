@@ -6,14 +6,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: proc.h,v 1.24 1999/05/25 22:43:27 momjian Exp $
+ * $Id: proc.h,v 1.25 1999/07/15 23:04:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef _PROC_H_
 #define _PROC_H_
 
-#include <storage/lock.h>
+#include "storage/lock.h"
 
 typedef struct
 {

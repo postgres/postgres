@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: large_object.h,v 1.10 1999/02/13 23:22:06 momjian Exp $
+ * $Id: large_object.h,v 1.11 1999/07/15 23:04:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,7 +16,7 @@
 
 #include <sys/types.h>
 
-#include <access/relscan.h>
+#include "access/relscan.h"
 
 /*
  * This structure will eventually have lots more stuff associated with it.

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: ultrix4.h,v 1.3 1999/02/13 23:17:29 momjian Exp $
+ * $Id: ultrix4.h,v 1.4 1999/07/15 23:03:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,11 +35,11 @@
 #define _DL_HEADER_
 
 #include <stdio.h>				/* needed to declare FILE for ldfcn.h */
-#include <filehdr.h>
-#include <syms.h>
-#include <ldfcn.h>
-#include <reloc.h>
-#include <scnhdr.h>
+#include "filehdr.h"
+#include "syms.h"
+#include "ldfcn.h"
+#include "reloc.h"
+#include "scnhdr.h"
 
 
 typedef long CoreAddr;

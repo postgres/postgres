@@ -6,15 +6,15 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: sinvaladt.h,v 1.14 1999/05/28 17:03:30 tgl Exp $
+ * $Id: sinvaladt.h,v 1.15 1999/07/15 23:04:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef SINVALADT_H
 #define SINVALADT_H
 
-#include <storage/itemptr.h>
-#include <storage/ipc.h>
+#include "storage/itemptr.h"
+#include "storage/ipc.h"
 
 /*
  * The structure of the shared cache invaidation segment
