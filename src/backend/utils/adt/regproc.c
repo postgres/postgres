@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.55 2000/05/28 17:56:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.56 2000/06/05 07:28:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,17 +34,16 @@
  *
  *		proid of '-' signifies unknown, for consistency with regprocout
  */
-int32
-regprocin(char *pro_name_or_oid)
+Datum
+regprocin(PG_FUNCTION_ARGS)
 {
-	HeapTuple	proctup = NULL;
+	char	   *pro_name_or_oid = PG_GETARG_CSTRING(0);
+	HeapTuple	proctup;
 	HeapTupleData tuple;
 	RegProcedure result = InvalidOid;
 
-	if (pro_name_or_oid == NULL)
-		return InvalidOid;
 	if (pro_name_or_oid[0] == '-' && pro_name_or_oid[1] == '\0')
-		return InvalidOid;
+		PG_RETURN_OID(InvalidOid);
 
 	if (!IsIgnoringSystemIndexes())
 	{
@@ -57,7 +56,8 @@ regprocin(char *pro_name_or_oid)
 			pro_name_or_oid[0] <= '9')
 		{
 			proctup = SearchSysCacheTuple(PROCOID,
-								ObjectIdGetDatum(oidin(pro_name_or_oid)),
+										  DirectFunctionCall1(oidin,
+											CStringGetDatum(pro_name_or_oid)),
 										  0, 0, 0);
 			if (HeapTupleIsValid(proctup))
 				result = (RegProcedure) proctup->t_data->t_oid;
@@ -78,7 +78,7 @@ regprocin(char *pro_name_or_oid)
 								   (bits16) 0x0,
 								   (AttrNumber) 1,
 								   (RegProcedure) F_NAMEEQ,
-								   PointerGetDatum(pro_name_or_oid));
+								   CStringGetDatum(pro_name_or_oid));
 
 			hdesc = heap_openr(ProcedureRelationName, AccessShareLock);
 			idesc = index_openr(ProcedureNameIndex);
@@ -125,7 +125,7 @@ regprocin(char *pro_name_or_oid)
 							   (bits16) 0,
 							   (AttrNumber) 1,
 							   (RegProcedure) F_NAMEEQ,
-							   (Datum) pro_name_or_oid);
+							   CStringGetDatum(pro_name_or_oid));
 
 		procscan = heap_beginscan(proc, 0, SnapshotNow, 1, &key);
 		if (!HeapScanIsValid(procscan))
@@ -133,7 +133,7 @@ regprocin(char *pro_name_or_oid)
 			heap_close(proc, AccessShareLock);
 			elog(ERROR, "regprocin: could not begin scan of %s",
 				 ProcedureRelationName);
-			return 0;
+			PG_RETURN_OID(InvalidOid);
 		}
 		proctup = heap_getnext(procscan, 0);
 		if (HeapTupleIsValid(proctup))
@@ -143,24 +143,25 @@ regprocin(char *pro_name_or_oid)
 												 RelationGetDescr(proc),
 												 &isnull);
 			if (isnull)
-				elog(FATAL, "regprocin: null procedure %s", pro_name_or_oid);
+				elog(ERROR, "regprocin: null procedure %s", pro_name_or_oid);
 		}
 		else
-			result = (RegProcedure) 0;
+			elog(ERROR, "No procedure with name %s", pro_name_or_oid);
 
 		heap_endscan(procscan);
 		heap_close(proc, AccessShareLock);
 	}
 
-	return (int32) result;
+	PG_RETURN_OID(result);
 }
 
 /*
  *		regprocout		- converts proid to "pro_name"
  */
-char *
-regprocout(RegProcedure proid)
+Datum
+regprocout(PG_FUNCTION_ARGS)
 {
+	RegProcedure proid = PG_GETARG_OID(0);
 	HeapTuple	proctup;
 	char	   *result;
 
@@ -170,7 +171,7 @@ regprocout(RegProcedure proid)
 	{
 		result[0] = '-';
 		result[1] = '\0';
-		return result;
+		PG_RETURN_CSTRING(result);
 	}
 
 	if (!IsBootstrapProcessingMode())
@@ -203,7 +204,7 @@ regprocout(RegProcedure proid)
 							   (bits16) 0,
 							   (AttrNumber) ObjectIdAttributeNumber,
 							   (RegProcedure) F_INT4EQ,
-							   (Datum) proid);
+							   ObjectIdGetDatum(proid));
 
 		procscan = heap_beginscan(proc, 0, SnapshotNow, 1, &key);
 		if (!HeapScanIsValid(procscan))
@@ -211,7 +212,6 @@ regprocout(RegProcedure proid)
 			heap_close(proc, AccessShareLock);
 			elog(ERROR, "regprocout: could not begin scan of %s",
 				 ProcedureRelationName);
-			return 0;
 		}
 		proctup = heap_getnext(procscan, 0);
 		if (HeapTupleIsValid(proctup))
@@ -224,7 +224,7 @@ regprocout(RegProcedure proid)
 			if (!isnull)
 				StrNCpy(result, s, NAMEDATALEN);
 			else
-				elog(FATAL, "regprocout: null procedure %u", proid);
+				elog(ERROR, "regprocout: null procedure %u", proid);
 		}
 		else
 		{
@@ -235,7 +235,7 @@ regprocout(RegProcedure proid)
 		heap_close(proc, AccessShareLock);
 	}
 
-	return result;
+	PG_RETURN_CSTRING(result);
 }
 
 /*
@@ -245,20 +245,14 @@ regprocout(RegProcedure proid)
  * OIDs are significant in the input vector, so that trailing InvalidOid
  * argument types can be recognized.
  */
-text *
-oidvectortypes(Oid *oidArray)
+Datum
+oidvectortypes(PG_FUNCTION_ARGS)
 {
+	Oid		   *oidArray = (Oid *) PG_GETARG_POINTER(0);
 	HeapTuple	typetup;
 	text	   *result;
 	int			numargs,
 				num;
-
-	if (oidArray == NULL)
-	{
-		result = (text *) palloc(VARHDRSZ);
-		VARSIZE(result) = 0;
-		return result;
-	}
 
 	/* Try to guess how many args there are :-( */
 	numargs = 0;
@@ -289,7 +283,7 @@ oidvectortypes(Oid *oidArray)
 			strcat(VARDATA(result), "- ");
 	}
 	VARSIZE(result) = strlen(VARDATA(result)) + VARHDRSZ;
-	return result;
+	PG_RETURN_TEXT_P(result);
 }
 
 
@@ -302,10 +296,12 @@ oidvectortypes(Oid *oidArray)
  * Define RegprocToOid() as a macro in builtins.h.
  * Referenced in pg_proc.h. - tgl 97/04/26
  */
-Oid
-regproctooid(RegProcedure rp)
+Datum
+regproctooid(PG_FUNCTION_ARGS)
 {
-	return (Oid) rp;
+	RegProcedure rp = PG_GETARG_OID(0);
+
+	PG_RETURN_OID((Oid) rp);
 }
 
 /* (see int.c for comparison/operation routines) */

@@ -27,7 +27,7 @@ CREATE FUNCTION pt_in_widget(point, widget)
 CREATE FUNCTION overpaid(emp)
    RETURNS bool
    AS '_OBJWD_/regress_DLSUFFIX_'
-   LANGUAGE 'c';
+   LANGUAGE 'newC';
 CREATE FUNCTION boxarea(box)
    RETURNS int4
    AS '_OBJWD_/regress_DLSUFFIX_'

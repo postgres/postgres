@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: smgr.h,v 1.20 2000/04/12 17:16:52 momjian Exp $
+ * $Id: smgr.h,v 1.21 2000/06/05 07:29:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -100,9 +100,9 @@ extern int	mmshutdown(void);
 extern int	MMShmemSize(void);
 
 /* smgrtype.c */
-extern char *smgrout(int2 i);
-extern int2 smgrin(char *s);
-extern bool smgreq(int2 a, int2 b);
-extern bool smgrne(int2 a, int2 b);
+extern Datum smgrout(PG_FUNCTION_ARGS);
+extern Datum smgrin(PG_FUNCTION_ARGS);
+extern Datum smgreq(PG_FUNCTION_ARGS);
+extern Datum smgrne(PG_FUNCTION_ARGS);
 
 #endif	 /* SMGR_H */

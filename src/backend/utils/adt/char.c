@@ -2,18 +2,19 @@
  *
  * char.c
  *	  Functions for the built-in type "char".
- *	  Functions for the built-in type "cid".
+ *	  Functions for the built-in type "cid" (what's that doing here?)
  *
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/char.c,v 1.27 2000/01/26 05:57:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/char.c,v 1.28 2000/06/05 07:28:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
+
 #include "utils/builtins.h"
 
 /*****************************************************************************
@@ -23,149 +24,194 @@
 /*
  *		charin			- converts "x" to 'x'
  */
-int32
-charin(char *ch)
+Datum
+charin(PG_FUNCTION_ARGS)
 {
-	if (ch == NULL)
-		return (int32) '\0';
-	return (int32) *ch;
+	char	   *ch = PG_GETARG_CSTRING(0);
+
+	PG_RETURN_CHAR(ch[0]);
 }
 
 /*
  *		charout			- converts 'x' to "x"
  */
-char *
-charout(int32 ch)
+Datum
+charout(PG_FUNCTION_ARGS)
 {
+	char		ch = PG_GETARG_CHAR(0);
 	char	   *result = (char *) palloc(2);
 
-	result[0] = (char) ch;
+	result[0] = ch;
 	result[1] = '\0';
-	return result;
+	PG_RETURN_CSTRING(result);
 }
-
-/*
- *		cidin	- converts "..." to internal representation.
- *
- *		NOTE: we must not use 'charin' because cid might be a non
- *		printable character...
- */
-int32
-cidin(char *s)
-{
-	CommandId	c;
-
-	if (s == NULL)
-		c = 0;
-	else
-		c = atoi(s);
-
-	return (int32) c;
-}
-
-/*
- *		cidout	- converts a cid to "..."
- *
- *		NOTE: we must no use 'charout' because cid might be a non
- *		printable character...
- */
-char *
-cidout(int32 c)
-{
-	char	   *result;
-	CommandId	c2;
-
-	result = palloc(12);
-	c2 = (CommandId) c;
-	sprintf(result, "%u", (unsigned) (c2));
-	return result;
-}
-
 
 /*****************************************************************************
  *	 PUBLIC ROUTINES														 *
  *****************************************************************************/
 
-bool
-chareq(int8 arg1, int8 arg2)
+/*
+ * NOTE: comparisons are done as though char is unsigned (uint8).
+ * Arithmetic is done as though char is signed (int8).
+ *
+ * You wanted consistency?
+ */
+
+Datum
+chareq(PG_FUNCTION_ARGS)
 {
-	return arg1 == arg2;
+	char		arg1 = PG_GETARG_CHAR(0);
+	char		arg2 = PG_GETARG_CHAR(1);
+
+	PG_RETURN_BOOL(arg1 == arg2);
 }
 
-bool
-charne(int8 arg1, int8 arg2)
+Datum
+charne(PG_FUNCTION_ARGS)
 {
-	return arg1 != arg2;
+	char		arg1 = PG_GETARG_CHAR(0);
+	char		arg2 = PG_GETARG_CHAR(1);
+
+	PG_RETURN_BOOL(arg1 != arg2);
 }
 
-bool
-charlt(int8 arg1, int8 arg2)
+Datum
+charlt(PG_FUNCTION_ARGS)
 {
-	return (uint8) arg1 < (uint8) arg2;
+	char		arg1 = PG_GETARG_CHAR(0);
+	char		arg2 = PG_GETARG_CHAR(1);
+
+	PG_RETURN_BOOL((uint8) arg1 < (uint8) arg2);
 }
 
-bool
-charle(int8 arg1, int8 arg2)
+Datum
+charle(PG_FUNCTION_ARGS)
 {
-	return (uint8) arg1 <= (uint8) arg2;
+	char		arg1 = PG_GETARG_CHAR(0);
+	char		arg2 = PG_GETARG_CHAR(1);
+
+	PG_RETURN_BOOL((uint8) arg1 <= (uint8) arg2);
 }
 
-bool
-chargt(int8 arg1, int8 arg2)
+Datum
+chargt(PG_FUNCTION_ARGS)
 {
-	return (uint8) arg1 > (uint8) arg2;
+	char		arg1 = PG_GETARG_CHAR(0);
+	char		arg2 = PG_GETARG_CHAR(1);
+
+	PG_RETURN_BOOL((uint8) arg1 > (uint8) arg2);
 }
 
-bool
-charge(int8 arg1, int8 arg2)
+Datum
+charge(PG_FUNCTION_ARGS)
 {
-	return (uint8) arg1 >= (uint8) arg2;
+	char		arg1 = PG_GETARG_CHAR(0);
+	char		arg2 = PG_GETARG_CHAR(1);
+
+	PG_RETURN_BOOL((uint8) arg1 >= (uint8) arg2);
 }
 
-int8
-charpl(int8 arg1, int8 arg2)
+Datum
+charpl(PG_FUNCTION_ARGS)
 {
-	return arg1 + arg2;
+	char		arg1 = PG_GETARG_CHAR(0);
+	char		arg2 = PG_GETARG_CHAR(1);
+
+	PG_RETURN_CHAR((int8) arg1 + (int8) arg2);
 }
 
-int8
-charmi(int8 arg1, int8 arg2)
+Datum
+charmi(PG_FUNCTION_ARGS)
 {
-	return arg1 - arg2;
+	char		arg1 = PG_GETARG_CHAR(0);
+	char		arg2 = PG_GETARG_CHAR(1);
+
+	PG_RETURN_CHAR((int8) arg1 - (int8) arg2);
 }
 
-int8
-charmul(int8 arg1, int8 arg2)
+Datum
+charmul(PG_FUNCTION_ARGS)
 {
-	return arg1 * arg2;
+	char		arg1 = PG_GETARG_CHAR(0);
+	char		arg2 = PG_GETARG_CHAR(1);
+
+	PG_RETURN_CHAR((int8) arg1 * (int8) arg2);
 }
 
-int8
-chardiv(int8 arg1, int8 arg2)
+Datum
+chardiv(PG_FUNCTION_ARGS)
 {
-	return arg1 / arg2;
+	char		arg1 = PG_GETARG_CHAR(0);
+	char		arg2 = PG_GETARG_CHAR(1);
+
+	PG_RETURN_CHAR((int8) arg1 / (int8) arg2);
 }
 
-bool
-cideq(int8 arg1, int8 arg2)
+Datum
+text_char(PG_FUNCTION_ARGS)
 {
-	return arg1 == arg2;
+	text	   *arg1 = PG_GETARG_TEXT_P(0);
+
+	/* XXX what if arg1 has length zero? */
+	PG_RETURN_CHAR(*(VARDATA(arg1)));
 }
 
-int8
-text_char(text *arg1)
+Datum
+char_text(PG_FUNCTION_ARGS)
 {
-	return ((int8) *(VARDATA(arg1)));
-}
+	char		arg1 = PG_GETARG_CHAR(0);
+	text	   *result = palloc(VARHDRSZ + 1);
 
-text *
-char_text(int8 arg1)
-{
-	text	   *result;
-
-	result = palloc(VARHDRSZ + 1);
 	VARSIZE(result) = VARHDRSZ + 1;
 	*(VARDATA(result)) = arg1;
 
-	return result;
+	PG_RETURN_TEXT_P(result);
+}
+
+
+/*****************************************************************************
+ *	 USER I/O ROUTINES														 *
+ *****************************************************************************/
+
+/*
+ *		cidin	- converts CommandId to internal representation.
+ */
+Datum
+cidin(PG_FUNCTION_ARGS)
+{
+	char	   *s = PG_GETARG_CSTRING(0);
+	CommandId	c;
+
+	c = atoi(s);
+
+	/* XXX assume that CommandId is 32 bits... */
+	PG_RETURN_INT32((int32) c);
+}
+
+/*
+ *		cidout	- converts a cid to external representation.
+ */
+Datum
+cidout(PG_FUNCTION_ARGS)
+{
+	/* XXX assume that CommandId is 32 bits... */
+	CommandId	c = PG_GETARG_INT32(0);
+	char	   *result = (char *) palloc(16);
+
+	sprintf(result, "%u", (unsigned int) c);
+	PG_RETURN_CSTRING(result);
+}
+
+/*****************************************************************************
+ *	 PUBLIC ROUTINES														 *
+ *****************************************************************************/
+
+Datum
+cideq(PG_FUNCTION_ARGS)
+{
+	/* XXX assume that CommandId is 32 bits... */
+	CommandId	arg1 = PG_GETARG_INT32(0);
+	CommandId	arg2 = PG_GETARG_INT32(1);
+
+	PG_RETURN_BOOL(arg1 == arg2);
 }

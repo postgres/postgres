@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.40 2000/05/30 07:09:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.41 2000/06/05 07:28:49 tgl Exp $
  *
  * NOTES
  *	  This cruft is the server side of PQfn.
@@ -164,7 +164,7 @@ valid_fp_info(Oid func_id, struct fp_info * fip)
 	Assert(fip != (struct fp_info *) NULL);
 
 	return (OidIsValid(fip->funcid) &&
-			oideq(func_id, fip->funcid) &&
+			func_id == fip->funcid &&
 			TransactionIdIsCurrentTransactionId(fip->xid) &&
 			CommandIdIsCurrentCommandId(fip->cid));
 }

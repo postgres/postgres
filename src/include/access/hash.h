@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hash.h,v 1.31 2000/02/21 03:36:51 tgl Exp $
+ * $Id: hash.h,v 1.32 2000/06/05 07:28:57 tgl Exp $
  *
  * NOTES
  *		modeled after Margo Seltzer's hash implementation for unix.
@@ -21,7 +21,7 @@
 #include "access/itup.h"
 #include "access/relscan.h"
 #include "access/sdir.h"
-#include "utils/int8.h"
+#include "fmgr.h"
 
 /*
  * An overflow page is a spare page allocated for storing data whose
@@ -262,18 +262,24 @@ extern void hashmarkpos(IndexScanDesc scan);
 extern void hashrestrpos(IndexScanDesc scan);
 extern void hashdelete(Relation rel, ItemPointer tid);
 
-/* hashfunc.c */
-extern uint32 hashint2(int16 key);
-extern uint32 hashint4(uint32 key);
-extern uint32 hashint8(int64 *key);
-extern uint32 hashfloat4(float32 keyp);
-extern uint32 hashfloat8(float64 keyp);
-extern uint32 hashoid(Oid key);
-extern uint32 hashoidvector(Oid *key);
-extern uint32 hashint2vector(int16 *key);
-extern uint32 hashchar(char key);
-extern uint32 hashtext(struct varlena * key);
-extern uint32 hashname(NameData *n);
+/*
+ * Datatype-specific hash functions in hashfunc.c.
+ *
+ * NOTE: some of these are also used by catcache operations, without
+ * any direct connection to hash indexes.
+ */
+extern Datum hashint2(PG_FUNCTION_ARGS);
+extern Datum hashint4(PG_FUNCTION_ARGS);
+extern Datum hashint8(PG_FUNCTION_ARGS);
+extern Datum hashfloat4(PG_FUNCTION_ARGS);
+extern Datum hashfloat8(PG_FUNCTION_ARGS);
+extern Datum hashoid(PG_FUNCTION_ARGS);
+extern Datum hashoidvector(PG_FUNCTION_ARGS);
+extern Datum hashint2vector(PG_FUNCTION_ARGS);
+extern Datum hashchar(PG_FUNCTION_ARGS);
+extern Datum hashtext(PG_FUNCTION_ARGS);
+extern Datum hashname(PG_FUNCTION_ARGS);
+
 
 /* private routines */
 

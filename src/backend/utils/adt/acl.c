@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.45 2000/04/12 17:15:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.46 2000/06/05 07:28:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,7 @@
 #include "catalog/pg_type.h"
 #include "lib/stringinfo.h"
 #include "utils/acl.h"
+#include "utils/builtins.h"
 #include "utils/memutils.h"
 #include "utils/syscache.h"
 
@@ -268,7 +269,6 @@ aclitemout(AclItem *aip)
 	static AclItem default_aclitem = {ACL_ID_WORLD,
 		ACL_IDTYPE_WORLD,
 	ACL_WORLD_DEFAULT};
-	extern char *int2out();
 	char	   *tmpname;
 
 	if (!aip)
@@ -287,20 +287,11 @@ aclitemout(AclItem *aip)
 									   0, 0, 0);
 			if (!HeapTupleIsValid(htup))
 			{
-				char	   *tmp = int2out(aip->ai_id);
+				/* Generate numeric UID if we don't find an entry */
+				char	   *tmp;
 
-#ifdef NOT_USED
-
-				When this	elog(NOTICE) goes to the libpq client,
-							it crashes the
-							client because the NOTICE protocol is coming right in the middle
-							of a request for a field value.We skip the NOTICE for now.
-
-							elog(NOTICE, "aclitemout: usesysid %d not found",
-											 aip->ai_id);
-
-#endif
-
+				tmp = DatumGetCString(DirectFunctionCall1(int4out,
+									  Int32GetDatum((int32) aip->ai_id)));
 				strcat(p, tmp);
 				pfree(tmp);
 			}

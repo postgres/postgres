@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/bool.c,v 1.22 2000/02/10 19:51:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/bool.c,v 1.23 2000/06/05 07:28:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,43 +29,45 @@
  *
  * In the switch statement, check the most-used possibilities first.
  */
-bool
-boolin(char *b)
+Datum
+boolin(PG_FUNCTION_ARGS)
 {
+	char	   *b = PG_GETARG_CSTRING(0);
+
 	switch (*b)
 	{
 			case 't':
 			case 'T':
 			if (strncasecmp(b, "true", strlen(b)) == 0)
-				return TRUE;
+				PG_RETURN_BOOL(true);
 			break;
 
 		case 'f':
 		case 'F':
 			if (strncasecmp(b, "false", strlen(b)) == 0)
-				return FALSE;
+				PG_RETURN_BOOL(false);
 			break;
 
 		case 'y':
 		case 'Y':
 			if (strncasecmp(b, "yes", strlen(b)) == 0)
-				return TRUE;
+				PG_RETURN_BOOL(true);
 			break;
 
 		case '1':
 			if (strncasecmp(b, "1", strlen(b)) == 0)
-				return TRUE;
+				PG_RETURN_BOOL(true);
 			break;
 
 		case 'n':
 		case 'N':
 			if (strncasecmp(b, "no", strlen(b)) == 0)
-				return FALSE;
+				PG_RETURN_BOOL(false);
 			break;
 
 		case '0':
 			if (strncasecmp(b, "0", strlen(b)) == 0)
-				return FALSE;
+				PG_RETURN_BOOL(false);
 			break;
 
 		default:
@@ -73,72 +75,143 @@ boolin(char *b)
 	}
 
 	elog(ERROR, "Bad boolean external representation '%s'", b);
+
 	/* not reached */
-	return FALSE;
-}	/* boolin() */
+	PG_RETURN_BOOL(false);
+}
 
 /*
  *		boolout			- converts 1 or 0 to "t" or "f"
  */
-char *
-boolout(bool b)
+Datum
+boolout(PG_FUNCTION_ARGS)
 {
+	bool		b = PG_GETARG_BOOL(0);
 	char	   *result = (char *) palloc(2);
 
-	*result = (b) ? 't' : 'f';
+	result[0] = (b) ? 't' : 'f';
 	result[1] = '\0';
-	return result;
-}	/* boolout() */
+	PG_RETURN_CSTRING(result);
+}
 
 
 /*****************************************************************************
  *	 PUBLIC ROUTINES														 *
  *****************************************************************************/
 
-bool
-booleq(bool arg1, bool arg2)
+Datum
+booleq(PG_FUNCTION_ARGS)
 {
-	return arg1 == arg2;
+	bool		arg1 = PG_GETARG_BOOL(0);
+	bool		arg2 = PG_GETARG_BOOL(1);
+
+	PG_RETURN_BOOL(arg1 == arg2);
 }
 
-bool
-boolne(bool arg1, bool arg2)
+Datum
+boolne(PG_FUNCTION_ARGS)
 {
-	return arg1 != arg2;
+	bool		arg1 = PG_GETARG_BOOL(0);
+	bool		arg2 = PG_GETARG_BOOL(1);
+
+	PG_RETURN_BOOL(arg1 != arg2);
 }
 
-bool
-boollt(bool arg1, bool arg2)
+Datum
+boollt(PG_FUNCTION_ARGS)
 {
-	return arg1 < arg2;
+	bool		arg1 = PG_GETARG_BOOL(0);
+	bool		arg2 = PG_GETARG_BOOL(1);
+
+	PG_RETURN_BOOL(arg1 < arg2);
 }
 
-bool
-boolgt(bool arg1, bool arg2)
+Datum
+boolgt(PG_FUNCTION_ARGS)
 {
-	return arg1 > arg2;
+	bool		arg1 = PG_GETARG_BOOL(0);
+	bool		arg2 = PG_GETARG_BOOL(1);
+
+	PG_RETURN_BOOL(arg1 > arg2);
 }
 
-bool
-boolle(bool arg1, bool arg2)
+Datum
+boolle(PG_FUNCTION_ARGS)
 {
-	return arg1 <= arg2;
+	bool		arg1 = PG_GETARG_BOOL(0);
+	bool		arg2 = PG_GETARG_BOOL(1);
+
+	PG_RETURN_BOOL(arg1 <= arg2);
 }
 
-bool
-boolge(bool arg1, bool arg2)
+Datum
+boolge(PG_FUNCTION_ARGS)
 {
-	return arg1 >= arg2;
+	bool		arg1 = PG_GETARG_BOOL(0);
+	bool		arg2 = PG_GETARG_BOOL(1);
+
+	PG_RETURN_BOOL(arg1 >= arg2);
 }
 
-bool
-istrue(bool arg1)
-{
-	return arg1 == TRUE;
-}	/* istrue() */
+/*
+ * Per SQL92, istrue() and isfalse() should return false, not NULL,
+ * when presented a NULL input (since NULL is our implementation of
+ * UNKNOWN).  Conversely isnottrue() and isnotfalse() should return true.
+ * Therefore, these routines are all declared not-strict in pg_proc
+ * and must do their own checking for null inputs.
+ *
+ * Note we don't need isunknown() and isnotunknown() functions, since
+ * nullvalue() and nonnullvalue() will serve.
+ */
 
-bool
-isfalse(bool arg1)
+Datum
+istrue(PG_FUNCTION_ARGS)
 {
-	return arg1 != TRUE;
-}	/* isfalse() */
+	bool		b;
+
+	if (PG_ARGISNULL(0))
+		PG_RETURN_BOOL(false);
+
+	b = PG_GETARG_BOOL(0);
+
+	PG_RETURN_BOOL(b);
+}
+
+Datum
+isfalse(PG_FUNCTION_ARGS)
+{
+	bool		b;
+
+	if (PG_ARGISNULL(0))
+		PG_RETURN_BOOL(false);
+
+	b = PG_GETARG_BOOL(0);
+
+	PG_RETURN_BOOL(! b);
+}
+
+Datum
+isnottrue(PG_FUNCTION_ARGS)
+{
+	bool		b;
+
+	if (PG_ARGISNULL(0))
+		PG_RETURN_BOOL(true);
+
+	b = PG_GETARG_BOOL(0);
+
+	PG_RETURN_BOOL(! b);
+}
+
+Datum
+isnotfalse(PG_FUNCTION_ARGS)
+{
+	bool		b;
+
+	if (PG_ARGISNULL(0))
+		PG_RETURN_BOOL(true);
+
+	b = PG_GETARG_BOOL(0);
+
+	PG_RETURN_BOOL(b);
+}

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/oid.c,v 1.34 2000/04/12 17:15:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/oid.c,v 1.35 2000/06/05 07:28:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,16 +26,14 @@
  *		oidvectorin			- converts "num num ..." to internal form
  *
  *		Note:
- *				Fills any nonexistent digits with NULL oids.
+ *				Fills any unsupplied positions with InvalidOid.
  */
-Oid *
-oidvectorin(char *oidString)
+Datum
+oidvectorin(PG_FUNCTION_ARGS)
 {
+	char	   *oidString = PG_GETARG_CSTRING(0);
 	Oid		   *result;
 	int			slot;
-
-	if (oidString == NULL)
-		return NULL;
 
 	result = (Oid *) palloc(sizeof(Oid[INDEX_MAX_KEYS]));
 
@@ -53,29 +51,22 @@ oidvectorin(char *oidString)
 	if (*oidString)
 		elog(ERROR, "oidvector value has too many values");
 	while (slot < INDEX_MAX_KEYS)
-		result[slot++] = 0;
+		result[slot++] = InvalidOid;
 
-	return result;
+	PG_RETURN_POINTER(result);
 }
 
 /*
  *		oidvectorout - converts internal form to "num num ..."
  */
-char *
-oidvectorout(Oid *oidArray)
+Datum
+oidvectorout(PG_FUNCTION_ARGS)
 {
+	Oid		   *oidArray = (Oid *) PG_GETARG_POINTER(0);
 	int			num,
 				maxnum;
 	char	   *rp;
 	char	   *result;
-
-	if (oidArray == NULL)
-	{
-		result = (char *) palloc(2);
-		result[0] = '-';
-		result[1] = '\0';
-		return result;
-	}
 
 	/* find last non-zero value in vector */
 	for (maxnum = INDEX_MAX_KEYS - 1; maxnum >= 0; maxnum--)
@@ -93,147 +84,177 @@ oidvectorout(Oid *oidArray)
 			;
 	}
 	*rp = '\0';
-	return result;
+	PG_RETURN_CSTRING(result);
 }
 
-Oid
-oidin(char *s)
+Datum
+oidin(PG_FUNCTION_ARGS)
 {
-	return int4in(s);
+	char	   *s = PG_GETARG_CSTRING(0);
+
+	/* XXX should use an unsigned-int conversion here */
+	return DirectFunctionCall1(int4in, CStringGetDatum(s));
 }
 
-char *
-oidout(Oid o)
+Datum
+oidout(PG_FUNCTION_ARGS)
 {
-	return int4out(o);
+	Oid			o = PG_GETARG_OID(0);
+
+	/* XXX should use an unsigned-int conversion here */
+	return DirectFunctionCall1(int4out, ObjectIdGetDatum(o));
 }
 
 /*****************************************************************************
  *	 PUBLIC ROUTINES														 *
  *****************************************************************************/
 
-/*
- * If you change this function, change heap_keytest()
- * because we have hardcoded this in there as an optimization
- */
-bool
-oideq(Oid arg1, Oid arg2)
+Datum
+oideq(PG_FUNCTION_ARGS)
 {
-	return arg1 == arg2;
+	Oid			arg1 = PG_GETARG_OID(0);
+	Oid			arg2 = PG_GETARG_OID(1);
+
+	PG_RETURN_BOOL(arg1 == arg2);
 }
 
-bool
-oidne(Oid arg1, Oid arg2)
+Datum
+oidne(PG_FUNCTION_ARGS)
 {
-	return arg1 != arg2;
+	Oid			arg1 = PG_GETARG_OID(0);
+	Oid			arg2 = PG_GETARG_OID(1);
+
+	PG_RETURN_BOOL(arg1 != arg2);
 }
 
-bool
-oidvectoreq(Oid *arg1, Oid *arg2)
+Datum
+oidvectoreq(PG_FUNCTION_ARGS)
 {
-	return (bool) (memcmp(arg1, arg2, INDEX_MAX_KEYS * sizeof(Oid)) == 0);
+	Oid			*arg1 = (Oid *) PG_GETARG_POINTER(0);
+	Oid			*arg2 = (Oid *) PG_GETARG_POINTER(1);
+
+	PG_RETURN_BOOL(memcmp(arg1, arg2, INDEX_MAX_KEYS * sizeof(Oid)) == 0);
 }
 
-bool
-oidvectorne(Oid *arg1, Oid *arg2)
+Datum
+oidvectorne(PG_FUNCTION_ARGS)
 {
-	return (bool) (memcmp(arg1, arg2, INDEX_MAX_KEYS * sizeof(Oid)) != 0);
+	Oid			*arg1 = (Oid *) PG_GETARG_POINTER(0);
+	Oid			*arg2 = (Oid *) PG_GETARG_POINTER(1);
+
+	PG_RETURN_BOOL(memcmp(arg1, arg2, INDEX_MAX_KEYS * sizeof(Oid)) != 0);
 }
 
-bool
-oidvectorlt(Oid *arg1, Oid *arg2)
+Datum
+oidvectorlt(PG_FUNCTION_ARGS)
 {
+	Oid			*arg1 = (Oid *) PG_GETARG_POINTER(0);
+	Oid			*arg2 = (Oid *) PG_GETARG_POINTER(1);
 	int			i;
 
 	for (i = 0; i < INDEX_MAX_KEYS; i++)
-		if (!int4eq(arg1[i], arg2[i]))
-			return int4lt(arg1[i], arg2[i]);
-	return false;
+		if (arg1[i] != arg2[i])
+			PG_RETURN_BOOL(arg1[i] < arg2[i]);
+	PG_RETURN_BOOL(false);
 }
 
-bool
-oidvectorle(Oid *arg1, Oid *arg2)
+Datum
+oidvectorle(PG_FUNCTION_ARGS)
 {
+	Oid			*arg1 = (Oid *) PG_GETARG_POINTER(0);
+	Oid			*arg2 = (Oid *) PG_GETARG_POINTER(1);
 	int			i;
 
 	for (i = 0; i < INDEX_MAX_KEYS; i++)
-		if (!int4eq(arg1[i], arg2[i]))
-			return int4le(arg1[i], arg2[i]);
-	return true;
+		if (arg1[i] != arg2[i])
+			PG_RETURN_BOOL(arg1[i] <= arg2[i]);
+	PG_RETURN_BOOL(true);
 }
 
-bool
-oidvectorge(Oid *arg1, Oid *arg2)
+Datum
+oidvectorge(PG_FUNCTION_ARGS)
 {
+	Oid			*arg1 = (Oid *) PG_GETARG_POINTER(0);
+	Oid			*arg2 = (Oid *) PG_GETARG_POINTER(1);
 	int			i;
 
 	for (i = 0; i < INDEX_MAX_KEYS; i++)
-		if (!int4eq(arg1[i], arg2[i]))
-			return int4ge(arg1[i], arg2[i]);
-	return true;
+		if (arg1[i] != arg2[i])
+			PG_RETURN_BOOL(arg1[i] >= arg2[i]);
+	PG_RETURN_BOOL(true);
 }
 
-bool
-oidvectorgt(Oid *arg1, Oid *arg2)
+Datum
+oidvectorgt(PG_FUNCTION_ARGS)
 {
+	Oid			*arg1 = (Oid *) PG_GETARG_POINTER(0);
+	Oid			*arg2 = (Oid *) PG_GETARG_POINTER(1);
 	int			i;
 
 	for (i = 0; i < INDEX_MAX_KEYS; i++)
-		if (!int4eq(arg1[i], arg2[i]))
-			return int4gt(arg1[i], arg2[i]);
-	return false;
+		if (arg1[i] != arg2[i])
+			PG_RETURN_BOOL(arg1[i] > arg2[i]);
+	PG_RETURN_BOOL(false);
 }
 
-bool
-oideqint4(Oid arg1, int32 arg2)
+Datum
+oideqint4(PG_FUNCTION_ARGS)
 {
-/* oid is unsigned, but int4 is signed */
-	return arg2 >= 0 && arg1 == arg2;
+	Oid			arg1 = PG_GETARG_OID(0);
+	int32		arg2 = PG_GETARG_INT32(1);
+
+	/* oid is unsigned, but int4 is signed */
+	PG_RETURN_BOOL(arg2 >= 0 && arg1 == arg2);
 }
 
-bool
-int4eqoid(int32 arg1, Oid arg2)
+Datum
+int4eqoid(PG_FUNCTION_ARGS)
 {
-/* oid is unsigned, but int4 is signed */
-	return arg1 >= 0 && arg1 == arg2;
+	int32		arg1 = PG_GETARG_INT32(0);
+	Oid			arg2 = PG_GETARG_OID(1);
+
+	/* oid is unsigned, but int4 is signed */
+	PG_RETURN_BOOL(arg1 >= 0 && arg1 == arg2);
 }
 
-text *
-oid_text(Oid oid)
+Datum
+oid_text(PG_FUNCTION_ARGS)
 {
+	Oid			oid = PG_GETARG_OID(0);
 	text	   *result;
-
 	int			len;
 	char	   *str;
 
-	str = oidout(oid);
-	len = (strlen(str) + VARHDRSZ);
+	str = DatumGetCString(DirectFunctionCall1(oidout,
+											  ObjectIdGetDatum(oid)));
+	len = strlen(str) + VARHDRSZ;
 
-	result = palloc(len);
+	result = (text *) palloc(len);
 
 	VARSIZE(result) = len;
-	memmove(VARDATA(result), str, (len - VARHDRSZ));
+	memcpy(VARDATA(result), str, (len - VARHDRSZ));
 	pfree(str);
 
-	return result;
-}	/* oid_text() */
+	PG_RETURN_TEXT_P(result);
+}
 
-Oid
-text_oid(text *string)
+Datum
+text_oid(PG_FUNCTION_ARGS)
 {
+	text	   *string = PG_GETARG_TEXT_P(0);
 	Oid			result;
-
 	int			len;
 	char	   *str;
 
 	len = (VARSIZE(string) - VARHDRSZ);
 
 	str = palloc(len + 1);
-	memmove(str, VARDATA(string), len);
+	memcpy(str, VARDATA(string), len);
 	*(str + len) = '\0';
 
-	result = oidin(str);
+	result = DatumGetObjectId(DirectFunctionCall1(oidin,
+												  CStringGetDatum(str)));
 	pfree(str);
 
-	return result;
-}	/* oid_text() */
+	PG_RETURN_OID(result);
+}

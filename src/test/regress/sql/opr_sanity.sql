@@ -44,7 +44,7 @@ WHERE p1.oid != p2.oid AND
     p1.pronargs = p2.pronargs AND
     p1.proargtypes = p2.proargtypes;
 
--- Considering only built-in procs (prolang = 11), look for multiple uses
+-- Considering only built-in procs (prolang = 11/12), look for multiple uses
 -- of the same internal function (ie, matching prosrc fields).  It's OK to
 -- have several entries with different pronames for the same internal function,
 -- but conflicts in the number of arguments and other critical items should
@@ -53,7 +53,9 @@ WHERE p1.oid != p2.oid AND
 SELECT p1.oid, p1.proname, p2.oid, p2.proname
 FROM pg_proc AS p1, pg_proc AS p2
 WHERE p1.oid != p2.oid AND
-    p1.prosrc = p2.prosrc AND p1.prolang = 11 AND p2.prolang = 11 AND
+    p1.prosrc = p2.prosrc AND
+    (p1.prolang = 11 OR p1.prolang = 12) AND
+    (p2.prolang = 11 OR p2.prolang = 12) AND
     (p1.proisinh != p2.proisinh OR
      p1.proistrusted != p2.proistrusted OR
      p1.proiscachable != p2.proiscachable OR
@@ -70,55 +72,73 @@ WHERE p1.oid != p2.oid AND
 SELECT DISTINCT p1.prorettype, p2.prorettype
 FROM pg_proc AS p1, pg_proc AS p2
 WHERE p1.oid != p2.oid AND
-    p1.prosrc = p2.prosrc AND p1.prolang = 11 AND p2.prolang = 11 AND
+    p1.prosrc = p2.prosrc AND
+    (p1.prolang = 11 OR p1.prolang = 12) AND
+    (p2.prolang = 11 OR p2.prolang = 12) AND
     (p1.prorettype < p2.prorettype);
 
 SELECT DISTINCT p1.proargtypes[0], p2.proargtypes[0]
 FROM pg_proc AS p1, pg_proc AS p2
 WHERE p1.oid != p2.oid AND
-    p1.prosrc = p2.prosrc AND p1.prolang = 11 AND p2.prolang = 11 AND
+    p1.prosrc = p2.prosrc AND
+    (p1.prolang = 11 OR p1.prolang = 12) AND
+    (p2.prolang = 11 OR p2.prolang = 12) AND
     (p1.proargtypes[0] < p2.proargtypes[0]);
 
 SELECT DISTINCT p1.proargtypes[1], p2.proargtypes[1]
 FROM pg_proc AS p1, pg_proc AS p2
 WHERE p1.oid != p2.oid AND
-    p1.prosrc = p2.prosrc AND p1.prolang = 11 AND p2.prolang = 11 AND
+    p1.prosrc = p2.prosrc AND
+    (p1.prolang = 11 OR p1.prolang = 12) AND
+    (p2.prolang = 11 OR p2.prolang = 12) AND
     (p1.proargtypes[1] < p2.proargtypes[1]);
 
 SELECT DISTINCT p1.proargtypes[2], p2.proargtypes[2]
 FROM pg_proc AS p1, pg_proc AS p2
 WHERE p1.oid != p2.oid AND
-    p1.prosrc = p2.prosrc AND p1.prolang = 11 AND p2.prolang = 11 AND
+    p1.prosrc = p2.prosrc AND
+    (p1.prolang = 11 OR p1.prolang = 12) AND
+    (p2.prolang = 11 OR p2.prolang = 12) AND
     (p1.proargtypes[2] < p2.proargtypes[2]);
 
 SELECT DISTINCT p1.proargtypes[3], p2.proargtypes[3]
 FROM pg_proc AS p1, pg_proc AS p2
 WHERE p1.oid != p2.oid AND
-    p1.prosrc = p2.prosrc AND p1.prolang = 11 AND p2.prolang = 11 AND
+    p1.prosrc = p2.prosrc AND
+    (p1.prolang = 11 OR p1.prolang = 12) AND
+    (p2.prolang = 11 OR p2.prolang = 12) AND
     (p1.proargtypes[3] < p2.proargtypes[3]);
 
 SELECT DISTINCT p1.proargtypes[4], p2.proargtypes[4]
 FROM pg_proc AS p1, pg_proc AS p2
 WHERE p1.oid != p2.oid AND
-    p1.prosrc = p2.prosrc AND p1.prolang = 11 AND p2.prolang = 11 AND
+    p1.prosrc = p2.prosrc AND
+    (p1.prolang = 11 OR p1.prolang = 12) AND
+    (p2.prolang = 11 OR p2.prolang = 12) AND
     (p1.proargtypes[4] < p2.proargtypes[4]);
 
 SELECT DISTINCT p1.proargtypes[5], p2.proargtypes[5]
 FROM pg_proc AS p1, pg_proc AS p2
 WHERE p1.oid != p2.oid AND
-    p1.prosrc = p2.prosrc AND p1.prolang = 11 AND p2.prolang = 11 AND
+    p1.prosrc = p2.prosrc AND
+    (p1.prolang = 11 OR p1.prolang = 12) AND
+    (p2.prolang = 11 OR p2.prolang = 12) AND
     (p1.proargtypes[5] < p2.proargtypes[5]);
 
 SELECT DISTINCT p1.proargtypes[6], p2.proargtypes[6]
 FROM pg_proc AS p1, pg_proc AS p2
 WHERE p1.oid != p2.oid AND
-    p1.prosrc = p2.prosrc AND p1.prolang = 11 AND p2.prolang = 11 AND
+    p1.prosrc = p2.prosrc AND
+    (p1.prolang = 11 OR p1.prolang = 12) AND
+    (p2.prolang = 11 OR p2.prolang = 12) AND
     (p1.proargtypes[6] < p2.proargtypes[6]);
 
 SELECT DISTINCT p1.proargtypes[7], p2.proargtypes[7]
 FROM pg_proc AS p1, pg_proc AS p2
 WHERE p1.oid != p2.oid AND
-    p1.prosrc = p2.prosrc AND p1.prolang = 11 AND p2.prolang = 11 AND
+    p1.prosrc = p2.prosrc AND
+    (p1.prolang = 11 OR p1.prolang = 12) AND
+    (p2.prolang = 11 OR p2.prolang = 12) AND
     (p1.proargtypes[7] < p2.proargtypes[7]);
 
 -- **************** pg_operator ****************

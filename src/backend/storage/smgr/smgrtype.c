@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgrtype.c,v 1.16 2000/01/26 05:57:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgrtype.c,v 1.17 2000/06/05 07:28:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,45 +37,48 @@ static smgrid StorageManager[] = {
 
 static int	NStorageManagers = lengthof(StorageManager);
 
-int2
-smgrin(char *s)
+Datum
+smgrin(PG_FUNCTION_ARGS)
 {
-	int			i;
+	char	   *s = PG_GETARG_CSTRING(0);
+	int16		i;
 
 	for (i = 0; i < NStorageManagers; i++)
 	{
 		if (strcmp(s, StorageManager[i].smgr_name) == 0)
-			return (int2) i;
+			PG_RETURN_INT16(i);
 	}
-	elog(ERROR, "smgrin: illegal storage manager name %s", s);
-	return 0;
+	elog(ERROR, "smgrin: unknown storage manager name '%s'", s);
+	PG_RETURN_INT16(0);
 }
 
-char *
-smgrout(int2 i)
+Datum
+smgrout(PG_FUNCTION_ARGS)
 {
+	int16		i = PG_GETARG_INT16(0);
 	char	   *s;
 
 	if (i >= NStorageManagers || i < 0)
 		elog(ERROR, "Illegal storage manager id %d", i);
 
-	s = (char *) palloc(strlen(StorageManager[i].smgr_name) + 1);
-	strcpy(s, StorageManager[i].smgr_name);
-	return s;
+	s = pstrdup(StorageManager[i].smgr_name);
+	PG_RETURN_CSTRING(s);
 }
 
-bool
-smgreq(int2 a, int2 b)
+Datum
+smgreq(PG_FUNCTION_ARGS)
 {
-	if (a == b)
-		return true;
-	return false;
+	int16		a = PG_GETARG_INT16(0);
+	int16		b = PG_GETARG_INT16(1);
+
+	PG_RETURN_BOOL(a == b);
 }
 
-bool
-smgrne(int2 a, int2 b)
+Datum
+smgrne(PG_FUNCTION_ARGS)
 {
-	if (a == b)
-		return false;
-	return true;
+	int16		a = PG_GETARG_INT16(0);
+	int16		b = PG_GETARG_INT16(1);
+
+	PG_RETURN_BOOL(a != b);
 }

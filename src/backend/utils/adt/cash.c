@@ -9,7 +9,7 @@
  * workings can be found in the book "Software Solutions in C" by
  * Dale Schumacher, Academic Press, ISBN: 0-12-632360-7.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.36 2000/05/16 20:48:49 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.37 2000/06/05 07:28:51 tgl Exp $
  */
 
 #include <limits.h>
@@ -34,6 +34,24 @@ static const char *num_word(Cash value);
 static struct lconv *lconvert = NULL;
 
 #endif
+
+
+/*
+ * Cash is a pass-by-ref SQL type, so we must pass and return pointers.
+ * These macros and support routine hide the pass-by-refness.
+ */
+#define PG_GETARG_CASH(n)  (* ((Cash *) DatumGetPointer(fcinfo->arg[n])))
+#define PG_RETURN_CASH(x)  return CashGetDatum(x)
+
+static Datum
+CashGetDatum(Cash value)
+{
+	Cash	   *result = (Cash *) palloc(sizeof(Cash));
+
+	*result = value;
+	return PointerGetDatum(result);
+}
+
 
 /* cash_in()
  * Convert a string to a cash data type.
@@ -573,32 +591,30 @@ cash_div_int4(Cash *c, int4 i)
 /* cash_mul_int2()
  * Multiply cash by int2.
  */
-Cash *
-cash_mul_int2(Cash *c, int2 s)
+Datum
+cash_mul_int2(PG_FUNCTION_ARGS)
 {
-	Cash	   *result;
+	Cash		c = PG_GETARG_CASH(0);
+	int16		s = PG_GETARG_INT16(1);
+	Cash		result;
 
-	if (!PointerIsValid(c))
-		return NULL;
-
-	if (!PointerIsValid(result = palloc(sizeof(Cash))))
-		elog(ERROR, "Memory allocation failed, can't multiply cash");
-
-	*result = ((s) * (*c));
-
-	return result;
-}	/* cash_mul_int2() */
-
+	result = c * s;
+	PG_RETURN_CASH(result);
+}
 
 /* int2_mul_cash()
  * Multiply int2 by cash.
  */
-Cash *
-int2_mul_cash(int2 s, Cash *c)
+Datum
+int2_mul_cash(PG_FUNCTION_ARGS)
 {
-	return cash_mul_int2(c, s);
-}	/* int2_mul_cash() */
+	int16		s = PG_GETARG_INT16(0);
+	Cash		c = PG_GETARG_CASH(1);
+	Cash		result;
 
+	result = s * c;
+	PG_RETURN_CASH(result);
+}
 
 /* cash_div_int2()
  * Divide cash by int2.
@@ -606,25 +622,19 @@ int2_mul_cash(int2 s, Cash *c)
  * XXX Don't know if rounding or truncating is correct behavior.
  * Round for now. - tgl 97/04/15
  */
-Cash *
-cash_div_int2(Cash *c, int2 s)
+Datum
+cash_div_int2(PG_FUNCTION_ARGS)
 {
-	Cash	   *result;
-
-	if (!PointerIsValid(c))
-		return NULL;
-
-	if (!PointerIsValid(result = palloc(sizeof(Cash))))
-		elog(ERROR, "Memory allocation failed, can't divide cash");
+	Cash		c = PG_GETARG_CASH(0);
+	int16		s = PG_GETARG_INT16(1);
+	Cash		result;
 
 	if (s == 0)
 		elog(ERROR, "cash_div:  divide by 0 error");
 
-	*result = rint(*c / s);
-
-	return result;
-}	/* cash_div_int2() */
-
+	result = rint(c / s);
+	PG_RETURN_CASH(result);
+}
 
 /* cashlarger()
  * Return larger of two cash values.

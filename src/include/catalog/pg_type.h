@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.88 2000/04/12 17:16:29 momjian Exp $
+ * $Id: pg_type.h,v 1.89 2000/06/05 07:29:01 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -191,7 +191,7 @@ DATA(insert OID = 25 (	text	   PGUID -1  -1 f b t \054 0  18 textin textout text
 DESCR("variable-length string, no limit specified");
 #define TEXTOID			25
 
-DATA(insert OID = 26 (	oid		   PGUID  4  10 t b t \054 0   0 int4in int4out int4in int4out i _null_ ));
+DATA(insert OID = 26 (	oid		   PGUID  4  10 t b t \054 0   0 oidin oidout oidin oidout i _null_ ));
 DESCR("object identifier(oid), maximum 4 billion");
 #define OIDOID			26
 
@@ -214,21 +214,21 @@ DESCR("array of INDEX_MAX_KEYS oids, used in system tables");
 DATA(insert OID = 32 (	SET		   PGUID -1  -1 f b t \054 0   0 textin textout textin textout i _null_ ));
 DESCR("set of tuples");
 
-DATA(insert OID = 71 (	pg_type		 PGUID 4 4 t c t \054 1247 0 foo bar foo bar i _null_));
-DATA(insert OID = 75 (	pg_attribute PGUID 4 4 t c t \054 1249 0 foo bar foo bar i _null_));
-DATA(insert OID = 81 (	pg_proc		 PGUID 4 4 t c t \054 1255 0 foo bar foo bar i _null_));
-DATA(insert OID = 83 (	pg_class	 PGUID 4 4 t c t \054 1259 0 foo bar foo bar i _null_));
-DATA(insert OID = 86 (	pg_shadow	 PGUID 4 4 t c t \054 1260 0 foo bar foo bar i _null_));
-DATA(insert OID = 87 (	pg_group	 PGUID 4 4 t c t \054 1261 0 foo bar foo bar i _null_));
-DATA(insert OID = 88 (	pg_database  PGUID 4 4 t c t \054 1262 0 foo bar foo bar i _null_));
-DATA(insert OID = 90 (	pg_variable  PGUID 4 4 t c t \054 1264 0 foo bar foo bar i _null_));
-DATA(insert OID = 99 (	pg_log		 PGUID 4 4 t c t \054 1269 0 foo bar foo bar i _null_));
+DATA(insert OID = 71 (	pg_type		 PGUID 4 4 t c t \054 1247 0 int4in int4out int4in int4out i _null_));
+DATA(insert OID = 75 (	pg_attribute PGUID 4 4 t c t \054 1249 0 int4in int4out int4in int4out i _null_));
+DATA(insert OID = 81 (	pg_proc		 PGUID 4 4 t c t \054 1255 0 int4in int4out int4in int4out i _null_));
+DATA(insert OID = 83 (	pg_class	 PGUID 4 4 t c t \054 1259 0 int4in int4out int4in int4out i _null_));
+DATA(insert OID = 86 (	pg_shadow	 PGUID 4 4 t c t \054 1260 0 int4in int4out int4in int4out i _null_));
+DATA(insert OID = 87 (	pg_group	 PGUID 4 4 t c t \054 1261 0 int4in int4out int4in int4out i _null_));
+DATA(insert OID = 88 (	pg_database  PGUID 4 4 t c t \054 1262 0 int4in int4out int4in int4out i _null_));
+DATA(insert OID = 90 (	pg_variable  PGUID 4 4 t c t \054 1264 0 int4in int4out int4in int4out i _null_));
+DATA(insert OID = 99 (	pg_log		 PGUID 4 4 t c t \054 1269 0 int4in int4out int4in int4out i _null_));
 
 /* OIDS 100 - 199 */
 
-DATA(insert OID = 109 (  pg_attrdef  PGUID 4 4 t c t \054 1215 0 foo bar foo bar i _null_));
-DATA(insert OID = 110 (  pg_relcheck PGUID 4 4 t c t \054 1216 0 foo bar foo bar i _null_));
-DATA(insert OID = 111 (  pg_trigger  PGUID 4 4 t c t \054 1219 0 foo bar foo bar i _null_));
+DATA(insert OID = 109 (  pg_attrdef  PGUID 4 4 t c t \054 1215 0 int4in int4out int4in int4out i _null_));
+DATA(insert OID = 110 (  pg_relcheck PGUID 4 4 t c t \054 1216 0 int4in int4out int4in int4out i _null_));
+DATA(insert OID = 111 (  pg_trigger  PGUID 4 4 t c t \054 1219 0 int4in int4out int4in int4out i _null_));
 
 /* OIDS 200 - 299 */
 

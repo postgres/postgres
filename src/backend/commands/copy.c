@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.110 2000/06/02 15:57:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.111 2000/06/05 07:28:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -473,7 +473,9 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim, char *null_p
 
 		if (oids && !binary)
 		{
-			CopySendString(oidout(tuple->t_data->t_oid), fp);
+			CopySendString(DatumGetCString(DirectFunctionCall1(oidout,
+									ObjectIdGetDatum(tuple->t_data->t_oid))),
+						   fp);
 			CopySendChar(delim[0], fp);
 		}
 
@@ -782,7 +784,8 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim, char *null
 					done = 1;
 				else
 				{
-					loaded_oid = oidin(string);
+					loaded_oid = DatumGetObjectId(DirectFunctionCall1(oidin,
+												  CStringGetDatum(string)));
 					if (loaded_oid == InvalidOid)
 						elog(ERROR, "COPY TEXT: Invalid Oid");
 				}

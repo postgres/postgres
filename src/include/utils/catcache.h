@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: catcache.h,v 1.21 2000/04/12 17:16:54 momjian Exp $
+ * $Id: catcache.h,v 1.22 2000/06/05 07:29:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,7 @@
 /* #define		CACHEDEBUG		 turns DEBUG elogs on */
 
 #include "access/htup.h"
+#include "fmgr.h"
 #include "lib/dllist.h"
 
 /*
@@ -40,7 +41,6 @@ typedef struct catctup
 #define NCCBUCK 500				/* CatCache buckets */
 #define MAXTUP 300				/* Maximum # of tuples cached per cache */
 
-typedef uint32 (*CCHashFunc) (Datum);
 
 typedef struct catcache
 {
@@ -57,7 +57,7 @@ typedef struct catcache
 	short		cc_nkeys;
 	short		cc_size;
 	short		cc_key[4];		/* AttrNumber of each key */
-	CCHashFunc	cc_hashfunc[4]; /* hash function to use for each key */
+	PGFunction	cc_hashfunc[4]; /* hash function to use for each key */
 	ScanKeyData cc_skey[4];
 	struct catcache *cc_next;
 	Dllist	   *cc_lrulist;		/* LRU list, most recent first */

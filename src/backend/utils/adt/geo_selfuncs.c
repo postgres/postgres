@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_selfuncs.c,v 1.15 2000/05/13 06:04:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_selfuncs.c,v 1.16 2000/06/05 07:28:52 tgl Exp $
  *
  *	XXX These are totally bogus.  Perhaps someone will make them do
  *	something reasonable, someday.
@@ -44,32 +44,16 @@
  * Selectivity for operators that depend on area, such as "overlap".
  */
 
-float64
-areasel(Oid opid,
-		Oid relid,
-		AttrNumber attno,
-		Datum value,
-		int32 flag)
+Datum
+areasel(PG_FUNCTION_ARGS)
 {
-	float64		result;
-
-	result = (float64) palloc(sizeof(float64data));
-	*result = 0.02;
-	return result;
+	PG_RETURN_FLOAT8(0.02);
 }
 
-float64
-areajoinsel(Oid opid,
-			Oid relid1,
-			AttrNumber attno1,
-			Oid relid2,
-			AttrNumber attno2)
+Datum
+areajoinsel(PG_FUNCTION_ARGS)
 {
-	float64		result;
-
-	result = (float64) palloc(sizeof(float64data));
-	*result = 0.02;
-	return result;
+	PG_RETURN_FLOAT8(0.02);
 }
 
 /*
@@ -79,32 +63,16 @@ areajoinsel(Oid opid,
  * a given box?
  */
 
-float64
-positionsel(Oid opid,
-			Oid relid,
-			AttrNumber attno,
-			Datum value,
-			int32 flag)
+Datum
+positionsel(PG_FUNCTION_ARGS)
 {
-	float64		result;
-
-	result = (float64) palloc(sizeof(float64data));
-	*result = 0.1;
-	return result;
+	PG_RETURN_FLOAT8(0.1);
 }
 
-float64
-positionjoinsel(Oid opid,
-				Oid relid1,
-				AttrNumber attno1,
-				Oid relid2,
-				AttrNumber attno2)
+Datum
+positionjoinsel(PG_FUNCTION_ARGS)
 {
-	float64		result;
-
-	result = (float64) palloc(sizeof(float64data));
-	*result = 0.1;
-	return result;
+	PG_RETURN_FLOAT8(0.1);
 }
 
 /*
@@ -114,30 +82,14 @@ positionjoinsel(Oid opid,
  * estimate than areasel does.
  */
 
-float64
-contsel(Oid opid,
-		Oid relid,
-		AttrNumber attno,
-		Datum value,
-		int32 flag)
+Datum
+contsel(PG_FUNCTION_ARGS)
 {
-	float64		result;
-
-	result = (float64) palloc(sizeof(float64data));
-	*result = 0.01;
-	return result;
+	PG_RETURN_FLOAT8(0.01);
 }
 
-float64
-contjoinsel(Oid opid,
-			Oid relid1,
-			AttrNumber attno1,
-			Oid relid2,
-			AttrNumber attno2)
+Datum
+contjoinsel(PG_FUNCTION_ARGS)
 {
-	float64		result;
-
-	result = (float64) palloc(sizeof(float64data));
-	*result = 0.01;
-	return result;
+	PG_RETURN_FLOAT8(0.01);
 }

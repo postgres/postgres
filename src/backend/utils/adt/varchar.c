@@ -1,19 +1,20 @@
 /*-------------------------------------------------------------------------
  *
  * varchar.c
- *	  Functions for the built-in type char() and varchar().
+ *	  Functions for the built-in types char(n) and varchar(n).
  *
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.62 2000/05/30 00:49:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.63 2000/06/05 07:28:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
+
 #include "catalog/pg_type.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
@@ -22,9 +23,10 @@
 #include "mb/pg_wchar.h"
 #endif
 
-#ifdef CYR_RECODE
-char	   *convertstr(char *, int, int);
 
+#ifdef CYR_RECODE
+/* XXX no points for style --- this is actually in utils/init/miscinit.c */
+extern char *convertstr(char *, int, int);
 #endif
 
 
@@ -34,7 +36,7 @@ char	   *convertstr(char *, int, int);
  * VARCHAR is for storing string whose length is at most the length specified
  * at CREATE TABLE time.
  *
- * It's hard to implement these types because we cannot figure out what
+ * It's hard to implement these types because we cannot figure out
  * the length of the type from the type itself. I change (hopefully all) the
  * fmgr calls that invoke input functions of a data type to supply the
  * length also. (eg. in INSERTs, we have the tupleDescriptor which contains
@@ -44,8 +46,9 @@ char	   *convertstr(char *, int, int);
  * must be null-terminated.
  *
  * We actually implement this as a varlena so that we don't have to pass in
- * the length for the comparison functions. (The difference between "text"
- * is that we truncate and possibly blank-pad the string at insertion time.)
+ * the length for the comparison functions. (The difference between these
+ * types and "text" is that we truncate and possibly blank-pad the string
+ * at insertion time.)
  *
  *															  - ay 6/95
  */
@@ -231,28 +234,33 @@ _bpchar(ArrayType *v, int32 len)
 
 /* bpchar_char()
  * Convert bpchar(1) to char.
+ *
+ * If input is multiple chars, only the first is returned.
  */
-int32
-bpchar_char(char *s)
+Datum
+bpchar_char(PG_FUNCTION_ARGS)
 {
-	return (int32) *VARDATA(s);
-}	/* bpchar_char() */
+	struct varlena *s = PG_GETARG_BPCHAR_P(0);
+
+	PG_RETURN_CHAR(*VARDATA(s));
+}
 
 /* char_bpchar()
  * Convert char to bpchar(1).
  */
-char *
-char_bpchar(int32 c)
+Datum
+char_bpchar(PG_FUNCTION_ARGS)
 {
-	char	   *result;
+	char		c = PG_GETARG_CHAR(0);
+	struct varlena *result;
 
-	result = palloc(VARHDRSZ + 1);
+	result = (struct varlena *) palloc(VARHDRSZ + 1);
 
 	VARSIZE(result) = VARHDRSZ + 1;
-	*(VARDATA(result)) = (char) c;
+	*(VARDATA(result)) = c;
 
-	return result;
-}	/* char_bpchar() */
+	PG_RETURN_BPCHAR_P(result);
+}
 
 
 /* bpchar_name()

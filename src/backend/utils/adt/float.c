@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.57 2000/04/12 17:15:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.58 2000/06/05 07:28:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -122,25 +122,6 @@ extern double rint(double x);
 #define FLOAT8_MAX		 DBL_MAX
 #define FLOAT8_MIN		 DBL_MIN
 
-/*
- * if FLOAT8_MIN and FLOAT8_MAX are the limits of the range a
- * double can store, then how are we ever going to wind up
- * with something stored in a double that is outside those
- * limits?	(and similarly for FLOAT4_{MIN,MAX}/float.)
- * doesn't make sense to me, and it causes a
- * floating point exception on linuxalpha, so UNSAFE_FLOATS
- * it is.
- * (maybe someone wanted to allow for values other than DBL_MIN/
- * DBL_MAX for FLOAT8_MIN/FLOAT8_MAX?)
- *								--djm 12/12/96
- * according to Richard Henderson this is a known bug in gcc on
- * the Alpha.  might as well leave the workaround in
- * until the distributions are updated.
- *								--djm 12/16/96
- */
-#if ( defined(linux) && defined(__alpha__) ) && !defined(UNSAFE_FLOATS)
-#define UNSAFE_FLOATS
-#endif
 
 /*
    check to see if a float4 val is outside of
@@ -844,19 +825,17 @@ dtoi4(float64 num)
 /*
  *		dtoi2			- converts a float8 number to an int2 number
  */
-int16
-dtoi2(float64 num)
+Datum
+dtoi2(PG_FUNCTION_ARGS)
 {
+	float8		num = PG_GETARG_FLOAT8(0);
 	int16		result;
 
-	if (!num)
-		return 0;				/* fmgr will return NULL anyway */
-
-	if ((*num < SHRT_MIN) || (*num > SHRT_MAX))
+	if ((num < SHRT_MIN) || (num > SHRT_MAX))
 		elog(ERROR, "dtoi2: integer out of range");
 
-	result = rint(*num);
-	return result;
+	result = (int16) rint(num);
+	PG_RETURN_INT16(result);
 }
 
 
@@ -878,15 +857,14 @@ i4tod(int32 num)
 /*
  *		i2tod			- converts an int2 number to a float8 number
  */
-float64
-i2tod(int16 num)
+Datum
+i2tod(PG_FUNCTION_ARGS)
 {
-	float64		result;
+	int16		num = PG_GETARG_INT16(0);
+	float8		result;
 
-	result = (float64) palloc(sizeof(float64data));
-
-	*result = num;
-	return result;
+	result = num;
+	PG_RETURN_FLOAT8(result);
 }
 
 
@@ -910,21 +888,19 @@ ftoi4(float32 num)
 
 
 /*
- *		ftoi2			- converts a float8 number to an int2 number
+ *		ftoi2			- converts a float4 number to an int2 number
  */
-int16
-ftoi2(float32 num)
+Datum
+ftoi2(PG_FUNCTION_ARGS)
 {
+	float4		num = PG_GETARG_FLOAT4(0);
 	int16		result;
 
-	if (!num)
-		return 0;				/* fmgr will return NULL anyway */
-
-	if ((*num < SHRT_MIN) || (*num > SHRT_MAX))
+	if ((num < SHRT_MIN) || (num > SHRT_MAX))
 		elog(ERROR, "ftoi2: integer out of range");
 
-	result = rint(*num);
-	return result;
+	result = (int16) rint(num);
+	PG_RETURN_INT16(result);
 }
 
 
@@ -944,17 +920,16 @@ i4tof(int32 num)
 
 
 /*
- *		i2tof			- converts an int2 number to a float8 number
+ *		i2tof			- converts an int2 number to a float4 number
  */
-float32
-i2tof(int16 num)
+Datum
+i2tof(PG_FUNCTION_ARGS)
 {
-	float32		result;
+	int16		num = PG_GETARG_INT16(0);
+	float4		result;
 
-	result = (float32) palloc(sizeof(float32data));
-
-	*result = num;
-	return result;
+	result = num;
+	PG_RETURN_FLOAT4(result);
 }
 
 

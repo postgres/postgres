@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.42 2000/05/30 04:24:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.43 2000/06/05 07:28:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,27 @@
 #include "utils/builtins.h"
 #include "utils/fmgrtab.h"
 #include "utils/syscache.h"
+
+/*
+ * Declaration for old-style function pointer type.  This is now used only
+ * in fmgr_oldstyle() and is no longer exported.
+ *
+ * The m68k SVR4 ABI defines that pointers are returned in %a0 instead of
+ * %d0. So if a function pointer is declared to return a pointer, the
+ * compiler may look only into %a0, but if the called function was declared
+ * to return an integer type, it puts its value only into %d0. So the
+ * caller doesn't pink up the correct return value. The solution is to
+ * declare the function pointer to return int, so the compiler picks up the
+ * return value from %d0. (Functions returning pointers put their value
+ * *additionally* into %d0 for compatibility.) The price is that there are
+ * some warnings about int->pointer conversions...
+ */
+#if defined(__mc68000__) && defined(__ELF__)
+typedef int32 ((*func_ptr) ());
+#else
+typedef char *((*func_ptr) ());
+#endif
+
 
 static Datum fmgr_oldstyle(PG_FUNCTION_ARGS);
 static Datum fmgr_untrusted(PG_FUNCTION_ARGS);
@@ -377,7 +398,7 @@ fmgr_oldstyle(PG_FUNCTION_ARGS)
 		default:
 			/*
 			 * Increasing FUNC_MAX_ARGS doesn't automatically add cases
-			 * to the above code, so give the actual value in this error
+			 * to the above code, so mention the actual value in this error
 			 * not FUNC_MAX_ARGS.  You could add cases to the above if you
 			 * needed to support old-style functions with many arguments,
 			 * but making 'em be new-style is probably a better idea.
@@ -419,100 +440,6 @@ fmgr_sql(PG_FUNCTION_ARGS)
 	elog(ERROR, "SQL-language function not supported in this context");
 	return 0;					/* keep compiler happy */
 }
-
-#if 0
-
-/*
- * Interface routine for functions using fmgr_faddr
- */
-FmgrInfo        *fmgr_pl_finfo;	/* should GO AWAY */
-
-char *
-fmgr_faddr_link(char *arg0, ...)
-{
-	FunctionCallInfoData	fcinfo;
-	int						n_arguments;
-	Datum					result;
-
-	MemSet(&fcinfo, 0, sizeof(fcinfo));
-	/* We rely on fmgr_faddr macro to have set back-link to FmgrInfo (ugh) */
-    fcinfo.flinfo = fmgr_pl_finfo;
-	fcinfo.nargs = fcinfo.flinfo->fn_nargs;
-	n_arguments = fcinfo.nargs;
-
-	if (n_arguments > 0)
-	{
-		fcinfo.arg[0] = (Datum) arg0;
-		if (n_arguments > 1)
-		{
-			va_list		pvar;
-			int			i;
-
-			if (n_arguments > FUNC_MAX_ARGS)
-				elog(ERROR, "fmgr_faddr_link: function %u: too many arguments (%d > %d)",
-					 fcinfo.flinfo->fn_oid, n_arguments, FUNC_MAX_ARGS);
-			va_start(pvar, arg0);
-			for (i = 1; i < n_arguments; i++)
-				fcinfo.arg[i] = (Datum) va_arg(pvar, char *);
-			va_end(pvar);
-		}
-	}
-
-	result = FunctionCallInvoke(&fcinfo);
-
-	/* Check for null result, since caller is clearly not expecting one */
-	if (fcinfo.isnull)
-		elog(ERROR, "fmgr_faddr_link: function %u returned NULL",
-			 fcinfo.flinfo->fn_oid);
-
-	return (char *) result;
-}
-
-/*
- *		fmgr			- return the value of a function call
- *
- * This is essentially fmgr_info plus call the function.
- */
-char *
-fmgr(Oid procedureId,...)
-{
-	FmgrInfo				flinfo;
-	FunctionCallInfoData	fcinfo;
-	int						n_arguments;
-	Datum					result;
-
-	fmgr_info(procedureId, &flinfo);
-
-	MemSet(&fcinfo, 0, sizeof(fcinfo));
-    fcinfo.flinfo = &flinfo;
-	fcinfo.nargs = flinfo.fn_nargs;
-	n_arguments = fcinfo.nargs;
-
-	if (n_arguments > 0)
-	{
-		va_list		pvar;
-		int			i;
-
-		if (n_arguments > FUNC_MAX_ARGS)
-			elog(ERROR, "fmgr: function %u: too many arguments (%d > %d)",
-				 flinfo.fn_oid, n_arguments, FUNC_MAX_ARGS);
-		va_start(pvar, procedureId);
-		for (i = 0; i < n_arguments; i++)
-			fcinfo.arg[i] = (Datum) va_arg(pvar, char *);
-		va_end(pvar);
-	}
-
-	result = FunctionCallInvoke(&fcinfo);
-
-	/* Check for null result, since caller is clearly not expecting one */
-	if (fcinfo.isnull)
-		elog(ERROR, "fmgr: function %u returned NULL",
-			 flinfo.fn_oid);
-
-	return (char *) result;
-}
-
-#endif
 
 
 /*-------------------------------------------------------------------------
@@ -1264,6 +1191,57 @@ OidFunctionCall9(Oid functionId, Datum arg1, Datum arg2,
 			 flinfo.fn_oid);
 
 	return result;
+}
+
+
+/*
+ * !!! OLD INTERFACE !!!
+ *
+ * fmgr() is the only remaining vestige of the old-style caller support
+ * functions.  It's no longer used anywhere in the Postgres distribution,
+ * but we should leave it around for a release or two to ease the transition
+ * for user-supplied C functions.  OidFunctionCallN() replaces it for new
+ * code.
+ *
+ * DEPRECATED, DO NOT USE IN NEW CODE
+ */
+char *
+fmgr(Oid procedureId,...)
+{
+	FmgrInfo				flinfo;
+	FunctionCallInfoData	fcinfo;
+	int						n_arguments;
+	Datum					result;
+
+	fmgr_info(procedureId, &flinfo);
+
+	MemSet(&fcinfo, 0, sizeof(fcinfo));
+    fcinfo.flinfo = &flinfo;
+	fcinfo.nargs = flinfo.fn_nargs;
+	n_arguments = fcinfo.nargs;
+
+	if (n_arguments > 0)
+	{
+		va_list		pvar;
+		int			i;
+
+		if (n_arguments > FUNC_MAX_ARGS)
+			elog(ERROR, "fmgr: function %u: too many arguments (%d > %d)",
+				 flinfo.fn_oid, n_arguments, FUNC_MAX_ARGS);
+		va_start(pvar, procedureId);
+		for (i = 0; i < n_arguments; i++)
+			fcinfo.arg[i] = (Datum) va_arg(pvar, char *);
+		va_end(pvar);
+	}
+
+	result = FunctionCallInvoke(&fcinfo);
+
+	/* Check for null result, since caller is clearly not expecting one */
+	if (fcinfo.isnull)
+		elog(ERROR, "fmgr: function %u returned NULL",
+			 flinfo.fn_oid);
+
+	return (char *) result;
 }
 
 

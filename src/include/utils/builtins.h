@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.112 2000/05/29 01:59:13 tgl Exp $
+ * $Id: builtins.h,v 1.113 2000/06/05 07:29:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,108 +33,110 @@
  *		Defined in adt/
  */
 /* bool.c */
-extern bool boolin(char *b);
-extern char *boolout(bool b);
-extern bool booleq(bool arg1, bool arg2);
-extern bool boolne(bool arg1, bool arg2);
-extern bool boollt(bool arg1, bool arg2);
-extern bool boolgt(bool arg1, bool arg2);
-extern bool boolle(bool arg1, bool arg2);
-extern bool boolge(bool arg1, bool arg2);
-extern bool istrue(bool arg1);
-extern bool isfalse(bool arg1);
+extern Datum boolin(PG_FUNCTION_ARGS);
+extern Datum boolout(PG_FUNCTION_ARGS);
+extern Datum booleq(PG_FUNCTION_ARGS);
+extern Datum boolne(PG_FUNCTION_ARGS);
+extern Datum boollt(PG_FUNCTION_ARGS);
+extern Datum boolgt(PG_FUNCTION_ARGS);
+extern Datum boolle(PG_FUNCTION_ARGS);
+extern Datum boolge(PG_FUNCTION_ARGS);
+extern Datum istrue(PG_FUNCTION_ARGS);
+extern Datum isfalse(PG_FUNCTION_ARGS);
+extern Datum isnottrue(PG_FUNCTION_ARGS);
+extern Datum isnotfalse(PG_FUNCTION_ARGS);
 
 /* char.c */
-extern int32 charin(char *ch);
-extern char *charout(int32 ch);
-extern int32 cidin(char *s);
-extern char *cidout(int32 c);
-extern bool chareq(int8 arg1, int8 arg2);
-extern bool charne(int8 arg1, int8 arg2);
-extern bool charlt(int8 arg1, int8 arg2);
-extern bool charle(int8 arg1, int8 arg2);
-extern bool chargt(int8 arg1, int8 arg2);
-extern bool charge(int8 arg1, int8 arg2);
-extern int8 charpl(int8 arg1, int8 arg2);
-extern int8 charmi(int8 arg1, int8 arg2);
-extern int8 charmul(int8 arg1, int8 arg2);
-extern int8 chardiv(int8 arg1, int8 arg2);
-extern bool cideq(int8 arg1, int8 arg2);
-extern int8 text_char(text *arg1);
-extern text *char_text(int8 arg1);
+extern Datum charin(PG_FUNCTION_ARGS);
+extern Datum charout(PG_FUNCTION_ARGS);
+extern Datum chareq(PG_FUNCTION_ARGS);
+extern Datum charne(PG_FUNCTION_ARGS);
+extern Datum charlt(PG_FUNCTION_ARGS);
+extern Datum charle(PG_FUNCTION_ARGS);
+extern Datum chargt(PG_FUNCTION_ARGS);
+extern Datum charge(PG_FUNCTION_ARGS);
+extern Datum charpl(PG_FUNCTION_ARGS);
+extern Datum charmi(PG_FUNCTION_ARGS);
+extern Datum charmul(PG_FUNCTION_ARGS);
+extern Datum chardiv(PG_FUNCTION_ARGS);
+extern Datum text_char(PG_FUNCTION_ARGS);
+extern Datum char_text(PG_FUNCTION_ARGS);
+extern Datum cidin(PG_FUNCTION_ARGS);
+extern Datum cidout(PG_FUNCTION_ARGS);
+extern Datum cideq(PG_FUNCTION_ARGS);
 
 /* int.c */
-extern int32 int2in(char *num);
-extern char *int2out(int16 sh);
-extern int16 *int2vectorin(char *shs);
-extern char *int2vectorout(int16 *shs);
-extern bool int2vectoreq(int16 *arg1, int16 *arg2);
-extern int32 *int44in(char *input_string);
-extern char *int44out(int32 *an_array);
-extern int32 int4in(char *num);
-extern char *int4out(int32 l);
-extern int32 i2toi4(int16 arg1);
-extern int16 i4toi2(int32 arg1);
-extern text *int2_text(int16 arg1);
-extern int16 text_int2(text *arg1);
-extern text *int4_text(int32 arg1);
-extern int32 text_int4(text *arg1);
-extern bool int4eq(int32 arg1, int32 arg2);
-extern bool int4ne(int32 arg1, int32 arg2);
-extern bool int4lt(int32 arg1, int32 arg2);
-extern bool int4le(int32 arg1, int32 arg2);
-extern bool int4gt(int32 arg1, int32 arg2);
-extern bool int4ge(int32 arg1, int32 arg2);
-extern bool int2eq(int16 arg1, int16 arg2);
-extern bool int2ne(int16 arg1, int16 arg2);
-extern bool int2lt(int16 arg1, int16 arg2);
-extern bool int2le(int16 arg1, int16 arg2);
-extern bool int2gt(int16 arg1, int16 arg2);
-extern bool int2ge(int16 arg1, int16 arg2);
-extern bool int24eq(int32 arg1, int32 arg2);
-extern bool int24ne(int32 arg1, int32 arg2);
-extern bool int24lt(int32 arg1, int32 arg2);
-extern bool int24le(int32 arg1, int32 arg2);
-extern bool int24gt(int32 arg1, int32 arg2);
-extern bool int24ge(int32 arg1, int32 arg2);
-extern bool int42eq(int32 arg1, int32 arg2);
-extern bool int42ne(int32 arg1, int32 arg2);
-extern bool int42lt(int32 arg1, int32 arg2);
-extern bool int42le(int32 arg1, int32 arg2);
-extern bool int42gt(int32 arg1, int32 arg2);
-extern bool int42ge(int32 arg1, int32 arg2);
-extern int32 int4um(int32 arg);
-extern int32 int4pl(int32 arg1, int32 arg2);
-extern int32 int4mi(int32 arg1, int32 arg2);
-extern int32 int4mul(int32 arg1, int32 arg2);
-extern int32 int4div(int32 arg1, int32 arg2);
-extern int32 int4abs(int32 arg);
-extern int32 int4inc(int32 arg);
-extern int16 int2um(int16 arg);
-extern int16 int2pl(int16 arg1, int16 arg2);
-extern int16 int2mi(int16 arg1, int16 arg2);
-extern int16 int2mul(int16 arg1, int16 arg2);
-extern int16 int2div(int16 arg1, int16 arg2);
-extern int16 int2abs(int16 arg);
-extern int16 int2inc(int16 arg);
-extern int32 int24pl(int32 arg1, int32 arg2);
-extern int32 int24mi(int32 arg1, int32 arg2);
-extern int32 int24mul(int32 arg1, int32 arg2);
-extern int32 int24div(int32 arg1, int32 arg2);
-extern int32 int42pl(int32 arg1, int32 arg2);
-extern int32 int42mi(int32 arg1, int32 arg2);
-extern int32 int42mul(int32 arg1, int32 arg2);
-extern int32 int42div(int32 arg1, int32 arg2);
-extern int32 int4mod(int32 arg1, int32 arg2);
-extern int32 int2mod(int16 arg1, int16 arg2);
-extern int32 int24mod(int32 arg1, int32 arg2);
-extern int32 int42mod(int32 arg1, int32 arg2);
-extern int32 int4fac(int32 arg1);
-extern int32 int2fac(int16 arg1);
-extern int16 int2larger(int16 arg1, int16 arg2);
-extern int16 int2smaller(int16 arg1, int16 arg2);
-extern int32 int4larger(int32 arg1, int32 arg2);
-extern int32 int4smaller(int32 arg1, int32 arg2);
+extern Datum int2in(PG_FUNCTION_ARGS);
+extern Datum int2out(PG_FUNCTION_ARGS);
+extern Datum int2vectorin(PG_FUNCTION_ARGS);
+extern Datum int2vectorout(PG_FUNCTION_ARGS);
+extern Datum int2vectoreq(PG_FUNCTION_ARGS);
+extern Datum int44in(PG_FUNCTION_ARGS);
+extern Datum int44out(PG_FUNCTION_ARGS);
+extern Datum int4in(PG_FUNCTION_ARGS);
+extern Datum int4out(PG_FUNCTION_ARGS);
+extern Datum i2toi4(PG_FUNCTION_ARGS);
+extern Datum i4toi2(PG_FUNCTION_ARGS);
+extern Datum int2_text(PG_FUNCTION_ARGS);
+extern Datum text_int2(PG_FUNCTION_ARGS);
+extern Datum int4_text(PG_FUNCTION_ARGS);
+extern Datum text_int4(PG_FUNCTION_ARGS);
+extern Datum int4eq(PG_FUNCTION_ARGS);
+extern Datum int4ne(PG_FUNCTION_ARGS);
+extern Datum int4lt(PG_FUNCTION_ARGS);
+extern Datum int4le(PG_FUNCTION_ARGS);
+extern Datum int4gt(PG_FUNCTION_ARGS);
+extern Datum int4ge(PG_FUNCTION_ARGS);
+extern Datum int2eq(PG_FUNCTION_ARGS);
+extern Datum int2ne(PG_FUNCTION_ARGS);
+extern Datum int2lt(PG_FUNCTION_ARGS);
+extern Datum int2le(PG_FUNCTION_ARGS);
+extern Datum int2gt(PG_FUNCTION_ARGS);
+extern Datum int2ge(PG_FUNCTION_ARGS);
+extern Datum int24eq(PG_FUNCTION_ARGS);
+extern Datum int24ne(PG_FUNCTION_ARGS);
+extern Datum int24lt(PG_FUNCTION_ARGS);
+extern Datum int24le(PG_FUNCTION_ARGS);
+extern Datum int24gt(PG_FUNCTION_ARGS);
+extern Datum int24ge(PG_FUNCTION_ARGS);
+extern Datum int42eq(PG_FUNCTION_ARGS);
+extern Datum int42ne(PG_FUNCTION_ARGS);
+extern Datum int42lt(PG_FUNCTION_ARGS);
+extern Datum int42le(PG_FUNCTION_ARGS);
+extern Datum int42gt(PG_FUNCTION_ARGS);
+extern Datum int42ge(PG_FUNCTION_ARGS);
+extern Datum int4um(PG_FUNCTION_ARGS);
+extern Datum int4pl(PG_FUNCTION_ARGS);
+extern Datum int4mi(PG_FUNCTION_ARGS);
+extern Datum int4mul(PG_FUNCTION_ARGS);
+extern Datum int4div(PG_FUNCTION_ARGS);
+extern Datum int4abs(PG_FUNCTION_ARGS);
+extern Datum int4inc(PG_FUNCTION_ARGS);
+extern Datum int2um(PG_FUNCTION_ARGS);
+extern Datum int2pl(PG_FUNCTION_ARGS);
+extern Datum int2mi(PG_FUNCTION_ARGS);
+extern Datum int2mul(PG_FUNCTION_ARGS);
+extern Datum int2div(PG_FUNCTION_ARGS);
+extern Datum int2abs(PG_FUNCTION_ARGS);
+extern Datum int2inc(PG_FUNCTION_ARGS);
+extern Datum int24pl(PG_FUNCTION_ARGS);
+extern Datum int24mi(PG_FUNCTION_ARGS);
+extern Datum int24mul(PG_FUNCTION_ARGS);
+extern Datum int24div(PG_FUNCTION_ARGS);
+extern Datum int42pl(PG_FUNCTION_ARGS);
+extern Datum int42mi(PG_FUNCTION_ARGS);
+extern Datum int42mul(PG_FUNCTION_ARGS);
+extern Datum int42div(PG_FUNCTION_ARGS);
+extern Datum int4mod(PG_FUNCTION_ARGS);
+extern Datum int2mod(PG_FUNCTION_ARGS);
+extern Datum int24mod(PG_FUNCTION_ARGS);
+extern Datum int42mod(PG_FUNCTION_ARGS);
+extern Datum int4fac(PG_FUNCTION_ARGS);
+extern Datum int2fac(PG_FUNCTION_ARGS);
+extern Datum int2larger(PG_FUNCTION_ARGS);
+extern Datum int2smaller(PG_FUNCTION_ARGS);
+extern Datum int4larger(PG_FUNCTION_ARGS);
+extern Datum int4smaller(PG_FUNCTION_ARGS);
 
 /* name.c */
 extern NameData *namein(const char *s);
@@ -168,20 +170,20 @@ extern void ltoa(int32 l, char *a);
  *		Per-opclass comparison functions for new btrees.  These are
  *		stored in pg_amproc and defined in nbtree/
  */
-extern int32 btint2cmp(int16 a, int16 b);
-extern int32 btint4cmp(int32 a, int32 b);
-extern int32 btint8cmp(int64 *a, int64 *b);
-extern int32 btint24cmp(int16 a, int32 b);
-extern int32 btint42cmp(int32 a, int16 b);
-extern int32 btfloat4cmp(float32 a, float32 b);
-extern int32 btfloat8cmp(float64 a, float64 b);
-extern int32 btoidcmp(Oid a, Oid b);
-extern int32 btoidvectorcmp(Oid *a, Oid *b);
+extern Datum btboolcmp(PG_FUNCTION_ARGS);
+extern Datum btint2cmp(PG_FUNCTION_ARGS);
+extern Datum btint4cmp(PG_FUNCTION_ARGS);
+extern Datum btint8cmp(PG_FUNCTION_ARGS);
+extern Datum btint24cmp(PG_FUNCTION_ARGS);
+extern Datum btint42cmp(PG_FUNCTION_ARGS);
+extern Datum btfloat4cmp(PG_FUNCTION_ARGS);
+extern Datum btfloat8cmp(PG_FUNCTION_ARGS);
+extern Datum btoidcmp(PG_FUNCTION_ARGS);
+extern Datum btoidvectorcmp(PG_FUNCTION_ARGS);
 extern int32 btabstimecmp(AbsoluteTime a, AbsoluteTime b);
-extern int32 btcharcmp(char a, char b);
-extern int32 btnamecmp(NameData *a, NameData *b);
-extern int32 bttextcmp(struct varlena * a, struct varlena * b);
-extern int32 btboolcmp(bool a, bool b);
+extern Datum btcharcmp(PG_FUNCTION_ARGS);
+extern Datum btnamecmp(PG_FUNCTION_ARGS);
+extern Datum bttextcmp(PG_FUNCTION_ARGS);
 
 /* support routines for the rtree access method, by opclass */
 extern BOX *rt_box_union(BOX *a, BOX *b);
@@ -244,14 +246,14 @@ extern bool float8gt(float64 arg1, float64 arg2);
 extern bool float8ge(float64 arg1, float64 arg2);
 extern float64 ftod(float32 num);
 extern float64 i4tod(int32 num);
-extern float64 i2tod(int16 num);
+extern Datum i2tod(PG_FUNCTION_ARGS);
 extern float32 dtof(float64 num);
 extern int32 dtoi4(float64 num);
-extern int16 dtoi2(float64 num);
+extern Datum dtoi2(PG_FUNCTION_ARGS);
 extern float32 i4tof(int32 num);
-extern float32 i2tof(int16 num);
+extern Datum i2tof(PG_FUNCTION_ARGS);
 extern int32 ftoi4(float32 num);
-extern int16 ftoi2(float32 num);
+extern Datum ftoi2(PG_FUNCTION_ARGS);
 extern float64 text_float8(text *str);
 extern float32 text_float4(text *str);
 extern text *float8_text(float64 num);
@@ -301,37 +303,33 @@ extern bool float84gt(float64 arg1, float32 arg2);
 extern bool float84ge(float64 arg1, float32 arg2);
 
 /* misc.c */
-extern bool nullvalue(Datum value, bool *isNull);
-extern bool nonnullvalue(Datum value, bool *isNull);
-extern bool oidrand(Oid o, int32 X);
-extern bool oidsrand(int32 X);
-extern int32 userfntest(int i);
-
-/* define macros to replace mixed-case function calls - tgl 97/04/27 */
-#define NullValue(v,b) nullvalue(v,b)
-#define NonNullValue(v,b) nonnullvalue(v,b)
+extern Datum nullvalue(PG_FUNCTION_ARGS);
+extern Datum nonnullvalue(PG_FUNCTION_ARGS);
+extern Datum oidrand(PG_FUNCTION_ARGS);
+extern Datum oidsrand(PG_FUNCTION_ARGS);
+extern Datum userfntest(PG_FUNCTION_ARGS);
 
 /* not_in.c */
 extern bool int4notin(int32 not_in_arg, char *relation_and_attr);
 extern bool oidnotin(Oid the_oid, char *compare);
 
 /* oid.c */
-extern Oid *oidvectorin(char *oidString);
-extern char *oidvectorout(Oid *oidArray);
-extern Oid	oidin(char *s);
-extern char *oidout(Oid o);
-extern bool oideq(Oid arg1, Oid arg2);
-extern bool oidne(Oid arg1, Oid arg2);
-extern bool oidvectoreq(Oid *arg1, Oid *arg2);
-extern bool oidvectorne(Oid *arg1, Oid *arg2);
-extern bool oidvectorlt(Oid *arg1, Oid *arg2);
-extern bool oidvectorle(Oid *arg1, Oid *arg2);
-extern bool oidvectorge(Oid *arg1, Oid *arg2);
-extern bool oidvectorgt(Oid *arg1, Oid *arg2);
-extern bool oideqint4(Oid arg1, int32 arg2);
-extern bool int4eqoid(int32 arg1, Oid arg2);
-extern text *oid_text(Oid arg1);
-extern Oid	text_oid(text *arg1);
+extern Datum oidvectorin(PG_FUNCTION_ARGS);
+extern Datum oidvectorout(PG_FUNCTION_ARGS);
+extern Datum oidin(PG_FUNCTION_ARGS);
+extern Datum oidout(PG_FUNCTION_ARGS);
+extern Datum oideq(PG_FUNCTION_ARGS);
+extern Datum oidne(PG_FUNCTION_ARGS);
+extern Datum oidvectoreq(PG_FUNCTION_ARGS);
+extern Datum oidvectorne(PG_FUNCTION_ARGS);
+extern Datum oidvectorlt(PG_FUNCTION_ARGS);
+extern Datum oidvectorle(PG_FUNCTION_ARGS);
+extern Datum oidvectorge(PG_FUNCTION_ARGS);
+extern Datum oidvectorgt(PG_FUNCTION_ARGS);
+extern Datum oideqint4(PG_FUNCTION_ARGS);
+extern Datum int4eqoid(PG_FUNCTION_ARGS);
+extern Datum oid_text(PG_FUNCTION_ARGS);
+extern Datum text_oid(PG_FUNCTION_ARGS);
 
 /* regexp.c */
 extern bool nameregexeq(NameData *n, struct varlena * p);
@@ -345,13 +343,13 @@ extern bool texticregexne(struct varlena * s, struct varlena * p);
 
 
 /* regproc.c */
-extern int32 regprocin(char *pro_name_and_oid);
-extern char *regprocout(RegProcedure proid);
-extern text *oidvectortypes(Oid *oidArray);
-extern Oid	regproctooid(RegProcedure rp);
+extern Datum regprocin(PG_FUNCTION_ARGS);
+extern Datum regprocout(PG_FUNCTION_ARGS);
+extern Datum oidvectortypes(PG_FUNCTION_ARGS);
+extern Datum regproctooid(PG_FUNCTION_ARGS);
 
 /* define macro to replace mixed-case function call - tgl 97/04/27 */
-#define RegprocToOid(rp) regproctooid(rp)
+#define RegprocToOid(rp) ((Oid) (rp))
 
 /* ruleutils.c */
 extern text *pg_get_ruledef(NameData *rname);
@@ -362,69 +360,34 @@ extern char *deparse_expression(Node *expr, List *rangetables,
 				   bool forceprefix);
 
 /* selfuncs.c */
-extern float64 eqsel(Oid opid, Oid relid, AttrNumber attno,
-					 Datum value, int32 flag);
-extern float64 neqsel(Oid opid, Oid relid, AttrNumber attno,
-					  Datum value, int32 flag);
-extern float64 scalarltsel(Oid opid, Oid relid, AttrNumber attno,
-						   Datum value, int32 flag);
-extern float64 scalargtsel(Oid opid, Oid relid, AttrNumber attno,
-						   Datum value, int32 flag);
-extern float64 regexeqsel(Oid opid, Oid relid, AttrNumber attno,
-						  Datum value, int32 flag);
-extern float64 likesel(Oid opid, Oid relid, AttrNumber attno,
-					   Datum value, int32 flag);
-extern float64 icregexeqsel(Oid opid, Oid relid, AttrNumber attno,
-							Datum value, int32 flag);
-extern float64 regexnesel(Oid opid, Oid relid, AttrNumber attno,
-						  Datum value, int32 flag);
-extern float64 nlikesel(Oid opid, Oid relid, AttrNumber attno,
-						Datum value, int32 flag);
-extern float64 icregexnesel(Oid opid, Oid relid, AttrNumber attno,
-							Datum value, int32 flag);
+extern Datum eqsel(PG_FUNCTION_ARGS);
+extern Datum neqsel(PG_FUNCTION_ARGS);
+extern Datum scalarltsel(PG_FUNCTION_ARGS);
+extern Datum scalargtsel(PG_FUNCTION_ARGS);
+extern Datum regexeqsel(PG_FUNCTION_ARGS);
+extern Datum icregexeqsel(PG_FUNCTION_ARGS);
+extern Datum likesel(PG_FUNCTION_ARGS);
+extern Datum regexnesel(PG_FUNCTION_ARGS);
+extern Datum icregexnesel(PG_FUNCTION_ARGS);
+extern Datum nlikesel(PG_FUNCTION_ARGS);
 
-extern float64 eqjoinsel(Oid opid, Oid relid1, AttrNumber attno1,
-						 Oid relid2, AttrNumber attno2);
-extern float64 neqjoinsel(Oid opid, Oid relid1, AttrNumber attno1,
-						  Oid relid2, AttrNumber attno2);
-extern float64 scalarltjoinsel(Oid opid, Oid relid1, AttrNumber attno1,
-							   Oid relid2, AttrNumber attno2);
-extern float64 scalargtjoinsel(Oid opid, Oid relid1, AttrNumber attno1,
-							   Oid relid2, AttrNumber attno2);
-extern float64 regexeqjoinsel(Oid opid, Oid relid1, AttrNumber attno1,
-							  Oid relid2, AttrNumber attno2);
-extern float64 likejoinsel(Oid opid, Oid relid1, AttrNumber attno1,
-						   Oid relid2, AttrNumber attno2);
-extern float64 icregexeqjoinsel(Oid opid, Oid relid1, AttrNumber attno1,
-								Oid relid2, AttrNumber attno2);
-extern float64 regexnejoinsel(Oid opid, Oid relid1, AttrNumber attno1,
-							  Oid relid2, AttrNumber attno2);
-extern float64 nlikejoinsel(Oid opid, Oid relid1, AttrNumber attno1,
-							Oid relid2, AttrNumber attno2);
-extern float64 icregexnejoinsel(Oid opid, Oid relid1, AttrNumber attno1,
-								Oid relid2, AttrNumber attno2);
+extern Datum eqjoinsel(PG_FUNCTION_ARGS);
+extern Datum neqjoinsel(PG_FUNCTION_ARGS);
+extern Datum scalarltjoinsel(PG_FUNCTION_ARGS);
+extern Datum scalargtjoinsel(PG_FUNCTION_ARGS);
+extern Datum regexeqjoinsel(PG_FUNCTION_ARGS);
+extern Datum icregexeqjoinsel(PG_FUNCTION_ARGS);
+extern Datum likejoinsel(PG_FUNCTION_ARGS);
+extern Datum regexnejoinsel(PG_FUNCTION_ARGS);
+extern Datum icregexnejoinsel(PG_FUNCTION_ARGS);
+extern Datum nlikejoinsel(PG_FUNCTION_ARGS);
 
-extern void btcostestimate(Query *root, RelOptInfo *rel,
-			   IndexOptInfo *index, List *indexQuals,
-			   Cost *indexStartupCost,
-			   Cost *indexTotalCost,
-			   Selectivity *indexSelectivity);
-extern void rtcostestimate(Query *root, RelOptInfo *rel,
-			   IndexOptInfo *index, List *indexQuals,
-			   Cost *indexStartupCost,
-			   Cost *indexTotalCost,
-			   Selectivity *indexSelectivity);
-extern void hashcostestimate(Query *root, RelOptInfo *rel,
-				 IndexOptInfo *index, List *indexQuals,
-				 Cost *indexStartupCost,
-				 Cost *indexTotalCost,
-				 Selectivity *indexSelectivity);
-extern void gistcostestimate(Query *root, RelOptInfo *rel,
-				 IndexOptInfo *index, List *indexQuals,
-				 Cost *indexStartupCost,
-				 Cost *indexTotalCost,
-				 Selectivity *indexSelectivity);
+extern Datum btcostestimate(PG_FUNCTION_ARGS);
+extern Datum rtcostestimate(PG_FUNCTION_ARGS);
+extern Datum hashcostestimate(PG_FUNCTION_ARGS);
+extern Datum gistcostestimate(PG_FUNCTION_ARGS);
 
+/* selfuncs.c supporting routines that are also used by optimizer code */
 typedef enum
 {
 	Pattern_Type_Like, Pattern_Type_Regex, Pattern_Type_Regex_IC
@@ -452,12 +415,19 @@ extern ItemPointer currtid_byreloid(Oid relOid, ItemPointer);
 extern ItemPointer currtid_byrelname(const text *relName, ItemPointer);
 
 /* varchar.c */
+
+/* bpchar and varchar are just a varlena header and some characters */
+#define PG_GETARG_BPCHAR_P(n)  ((struct varlena *) PG_GETARG_VARLENA_P(n))
+#define PG_RETURN_BPCHAR_P(x)  PG_RETURN_POINTER(x)
+#define PG_GETARG_VARCHAR_P(n)  ((struct varlena *) PG_GETARG_VARLENA_P(n))
+#define PG_RETURN_VARCHAR_P(x)  PG_RETURN_POINTER(x)
+
 extern char *bpcharin(char *s, int dummy, int32 atttypmod);
 extern char *bpcharout(char *s);
 extern char *bpchar(char *s, int32 slen);
 extern ArrayType *_bpchar(ArrayType *v, int32 slen);
-extern char *char_bpchar(int32 c);
-extern int32 bpchar_char(char *s);
+extern Datum char_bpchar(PG_FUNCTION_ARGS);
+extern Datum bpchar_char(PG_FUNCTION_ARGS);
 extern char *name_bpchar(NameData *s);
 extern NameData *bpchar_name(char *s);
 extern bool bpchareq(char *arg1, char *arg2);
@@ -616,8 +586,8 @@ extern Numeric int4_numeric(int32 val);
 extern int32 numeric_int4(Numeric num);
 extern Numeric int8_numeric(int64 *val);
 extern int64 *numeric_int8(Numeric num);
-extern Numeric int2_numeric(int16 val);
-extern int16 numeric_int2(Numeric num);
+extern Datum int2_numeric(PG_FUNCTION_ARGS);
+extern Datum numeric_int2(PG_FUNCTION_ARGS);
 extern Numeric float4_numeric(float32 val);
 extern float32 numeric_float4(Numeric num);
 extern Numeric float8_numeric(float64 val);

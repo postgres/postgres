@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashfunc.c,v 1.25 2000/04/12 17:14:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashfunc.c,v 1.26 2000/06/05 07:28:35 tgl Exp $
  *
  * NOTES
  *	  These functions are stored in pg_amproc.	For each operator class
@@ -21,134 +21,132 @@
 
 #include "access/hash.h"
 
-uint32
-hashint2(int16 key)
+Datum
+hashint2(PG_FUNCTION_ARGS)
 {
-	return (uint32) ~key;
+	PG_RETURN_UINT32((uint32) ~ PG_GETARG_INT16(0));
 }
 
-uint32
-hashint4(uint32 key)
+Datum
+hashint4(PG_FUNCTION_ARGS)
 {
-	return ~key;
+	PG_RETURN_UINT32(~ PG_GETARG_UINT32(0));
 }
 
-uint32
-hashint8(int64 *key)
+Datum
+hashint8(PG_FUNCTION_ARGS)
 {
-	return ~((uint32) *key);
+	/* we just use the low 32 bits... */
+	PG_RETURN_UINT32(~((uint32) PG_GETARG_INT64(0)));
 }
 
 /* Hash function from Chris Torek. */
-uint32
-hashfloat4(float32 keyp)
+Datum
+hashfloat4(PG_FUNCTION_ARGS)
 {
-	int			len;
+	float4		key = PG_GETARG_FLOAT4(0);
+	char	   *kp = (char *) &key;
+	int			len = sizeof(key);
 	int			loop;
 	uint32		h;
-	char	   *kp = (char *) keyp;
-
-	len = sizeof(float32data);
 
 #define HASH4a	 h = (h << 5) - h + *kp++;
 #define HASH4b	 h = (h << 5) + h + *kp++;
 #define HASH4 HASH4b
 
-
 	h = 0;
-	if (len > 0)
-	{
-		loop = (len + 8 - 1) >> 3;
+	/*
+	 * This is a tad silly, given that we expect len = 4, but a smart
+	 * compiler should be able to eliminate the redundant code...
+	 */
+	loop = (len + 8 - 1) >> 3;
 
-		switch (len & (8 - 1))
-		{
-			case 0:
-				do
-				{				/* All fall throughs */
-					HASH4;
-			case 7:
-					HASH4;
-			case 6:
-					HASH4;
-			case 5:
-					HASH4;
-			case 4:
-					HASH4;
-			case 3:
-					HASH4;
-			case 2:
-					HASH4;
-			case 1:
-					HASH4;
-				} while (--loop);
-		}
+	switch (len & (8 - 1))
+	{
+		case 0:
+			do
+			{					/* All fall throughs */
+				HASH4;
+		case 7:
+				HASH4;
+		case 6:
+				HASH4;
+		case 5:
+				HASH4;
+		case 4:
+				HASH4;
+		case 3:
+				HASH4;
+		case 2:
+				HASH4;
+		case 1:
+				HASH4;
+			} while (--loop);
 	}
-	return h;
+	PG_RETURN_UINT32(h);
 }
 
-
-uint32
-hashfloat8(float64 keyp)
+Datum
+hashfloat8(PG_FUNCTION_ARGS)
 {
-	int			len;
+	float8		key = PG_GETARG_FLOAT8(0);
+	char	   *kp = (char *) &key;
+	int			len = sizeof(key);
 	int			loop;
 	uint32		h;
-	char	   *kp = (char *) keyp;
-
-	len = sizeof(float64data);
 
 #define HASH4a	 h = (h << 5) - h + *kp++;
 #define HASH4b	 h = (h << 5) + h + *kp++;
 #define HASH4 HASH4b
 
-
 	h = 0;
-	if (len > 0)
+	/*
+	 * This is a tad silly, given that we expect len = 8, but a smart
+	 * compiler should be able to eliminate the redundant code...
+	 */
+	loop = (len + 8 - 1) >> 3;
+
+	switch (len & (8 - 1))
 	{
-		loop = (len + 8 - 1) >> 3;
-
-		switch (len & (8 - 1))
-		{
-			case 0:
-				do
-				{				/* All fall throughs */
-					HASH4;
-			case 7:
-					HASH4;
-			case 6:
-					HASH4;
-			case 5:
-					HASH4;
-			case 4:
-					HASH4;
-			case 3:
-					HASH4;
-			case 2:
-					HASH4;
-			case 1:
-					HASH4;
-				} while (--loop);
-		}
+		case 0:
+			do
+			{					/* All fall throughs */
+				HASH4;
+		case 7:
+				HASH4;
+		case 6:
+				HASH4;
+		case 5:
+				HASH4;
+		case 4:
+				HASH4;
+		case 3:
+				HASH4;
+		case 2:
+				HASH4;
+		case 1:
+				HASH4;
+			} while (--loop);
 	}
-	return h;
+	PG_RETURN_UINT32(h);
 }
 
-
-uint32
-hashoid(Oid key)
+Datum
+hashoid(PG_FUNCTION_ARGS)
 {
-	return (uint32) ~key;
+	PG_RETURN_UINT32(~(uint32) PG_GETARG_OID(0));
 }
 
-uint32
-hashoidvector(Oid *key)
+Datum
+hashoidvector(PG_FUNCTION_ARGS)
 {
+	Oid		   *key = (Oid *) PG_GETARG_POINTER(0);
 	int			i;
 	uint32		result = 0;
 
 	for (i = INDEX_MAX_KEYS; --i >= 0;)
 		result = (result << 1) ^ (~(uint32) key[i]);
-	return result;
+	PG_RETURN_UINT32(result);
 }
 
 /*
@@ -156,54 +154,49 @@ hashoidvector(Oid *key)
  * hash function, because it has no pg_proc entry.	We only need it
  * for catcache indexing.
  */
-uint32
-hashint2vector(int16 *key)
+Datum
+hashint2vector(PG_FUNCTION_ARGS)
 {
+	int16	   *key = (int16 *) PG_GETARG_POINTER(0);
 	int			i;
 	uint32		result = 0;
 
 	for (i = INDEX_MAX_KEYS; --i >= 0;)
 		result = (result << 1) ^ (~(uint32) key[i]);
-	return result;
+	PG_RETURN_UINT32(result);
 }
 
 
 #define PRIME1			37
 #define PRIME2			1048583
 
-uint32
-hashchar(char key)
+Datum
+hashchar(PG_FUNCTION_ARGS)
 {
 	uint32		h;
 
 	/* Convert char to integer */
-	h = (key - ' ');
+	h = (PG_GETARG_CHAR(0) - ' ');
 	h %= PRIME2;
 
-	return h;
+	PG_RETURN_UINT32(h);
 }
 
-
-uint32
-hashname(NameData *n)
+Datum
+hashname(PG_FUNCTION_ARGS)
 {
+	char	   *key = NameStr(* PG_GETARG_NAME(0));
+	int			len = NAMEDATALEN;
 	uint32		h;
-	int			len;
-	char	   *key;
-
-	key = NameStr(*n);
 
 	h = 0;
-	len = NAMEDATALEN;
 	/* Convert string to integer */
 	while (len--)
 		h = h * PRIME1 ^ (*key++ - ' ');
 	h %= PRIME2;
 
-	return h;
+	PG_RETURN_UINT32(h);
 }
-
-
 
 /*
  * (Comment from the original db3 hashing code: )
@@ -216,19 +209,17 @@ hashname(NameData *n)
  *
  * "OZ's original sdbm hash"
  */
-uint32
-hashtext(struct varlena * key)
+Datum
+hashtext(PG_FUNCTION_ARGS)
 {
+	text	   *key = PG_GETARG_TEXT_P(0);
 	int			keylen;
 	char	   *keydata;
 	uint32		n;
 	int			loop;
 
 	keydata = VARDATA(key);
-	keylen = VARSIZE(key);
-
-	/* keylen includes the four bytes in which string keylength is stored */
-	keylen -= sizeof(VARSIZE(key));
+	keylen = VARSIZE(key) - VARHDRSZ;
 
 #define HASHC	n = *keydata++ + 65599 * n
 
@@ -260,5 +251,5 @@ hashtext(struct varlena * key)
 				} while (--loop);
 		}
 	}
-	return n;
+	PG_RETURN_UINT32(n);
 }

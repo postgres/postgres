@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.35 2000/04/12 17:15:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.36 2000/06/05 07:28:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -105,7 +105,9 @@ smgrinit()
 		if (smgrsw[i].smgr_init)
 		{
 			if ((*(smgrsw[i].smgr_init)) () == SM_FAIL)
-				elog(FATAL, "initialization failed on %s", smgrout(i));
+				elog(FATAL, "initialization failed on %s",
+					 DatumGetCString(DirectFunctionCall1(smgrout,
+														 Int16GetDatum(i))));
 		}
 	}
 
@@ -125,7 +127,9 @@ smgrshutdown(int dummy)
 		if (smgrsw[i].smgr_shutdown)
 		{
 			if ((*(smgrsw[i].smgr_shutdown)) () == SM_FAIL)
-				elog(FATAL, "shutdown failed on %s", smgrout(i));
+				elog(FATAL, "shutdown failed on %s",
+					 DatumGetCString(DirectFunctionCall1(smgrout,
+														 Int16GetDatum(i))));
 		}
 	}
 }
@@ -445,7 +449,9 @@ smgrcommit()
 		if (smgrsw[i].smgr_commit)
 		{
 			if ((*(smgrsw[i].smgr_commit)) () == SM_FAIL)
-				elog(FATAL, "transaction commit failed on %s", smgrout(i));
+				elog(FATAL, "transaction commit failed on %s",
+					 DatumGetCString(DirectFunctionCall1(smgrout,
+														 Int16GetDatum(i))));
 		}
 	}
 
@@ -462,7 +468,9 @@ smgrabort()
 		if (smgrsw[i].smgr_abort)
 		{
 			if ((*(smgrsw[i].smgr_abort)) () == SM_FAIL)
-				elog(FATAL, "transaction abort failed on %s", smgrout(i));
+				elog(FATAL, "transaction abort failed on %s",
+					 DatumGetCString(DirectFunctionCall1(smgrout,
+														 Int16GetDatum(i))));
 		}
 	}
 

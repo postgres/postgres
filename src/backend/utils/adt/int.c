@@ -1,14 +1,14 @@
 /*-------------------------------------------------------------------------
  *
  * int.c
- *	  Functions for the built-in integer types.
+ *	  Functions for the built-in integer types (except int8).
  *
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.36 2000/04/12 17:15:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.37 2000/06/05 07:28:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,13 +25,12 @@
  *
  *		Arithmetic operators:
  *		 intmod, int4fac
- *
- * XXX makes massive and possibly unwarranted type promotion assumptions.
- * fix me when we figure out what we want to do about ANSIfication...
  */
 
 #include <ctype.h>
+
 #include "postgres.h"
+
 #ifdef HAVE_LIMITS_H
 #include <limits.h>
 #endif
@@ -52,41 +51,38 @@
 /*
  *		int2in			- converts "num" to short
  */
-int32
-int2in(char *num)
+Datum
+int2in(PG_FUNCTION_ARGS)
 {
-	return (int32) pg_atoi(num, sizeof(int16), '\0');
+	char	   *num = PG_GETARG_CSTRING(0);
+
+	PG_RETURN_INT16(pg_atoi(num, sizeof(int16), '\0'));
 }
 
 /*
  *		int2out			- converts short to "num"
  */
-char *
-int2out(int16 sh)
+Datum
+int2out(PG_FUNCTION_ARGS)
 {
-	char	   *result;
+	int16		arg1 = PG_GETARG_INT16(0);
+	char	   *result = (char *) palloc(7); /* sign, 5 digits, '\0' */
 
-	result = (char *) palloc(7);/* assumes sign, 5 digits, '\0' */
-	itoa((int) sh, result);
-	return result;
+	itoa((int) arg1, result);
+	PG_RETURN_CSTRING(result);
 }
 
 /*
  *		int2vectorin			- converts "num num ..." to internal form
  *
- *		Note:
- *				Fills any nonexistent digits with NULLs.
+ *		Note: Fills any missing slots with zeroes.
  */
-int16 *
-int2vectorin(char *intString)
+Datum
+int2vectorin(PG_FUNCTION_ARGS)
 {
-	int16	   *result;
+	char	   *intString = PG_GETARG_CSTRING(0);
+	int16	   *result = (int16 *) palloc(sizeof(int16[INDEX_MAX_KEYS]));
 	int			slot;
-
-	if (intString == NULL)
-		return NULL;
-
-	result = (int16 *) palloc(sizeof(int16[INDEX_MAX_KEYS]));
 
 	for (slot = 0; *intString && slot < INDEX_MAX_KEYS; slot++)
 	{
@@ -104,27 +100,20 @@ int2vectorin(char *intString)
 	while (slot < INDEX_MAX_KEYS)
 		result[slot++] = 0;
 
-	return result;
+	PG_RETURN_POINTER(result);
 }
 
 /*
  *		int2vectorout		- converts internal form to "num num ..."
  */
-char *
-int2vectorout(int16 *int2Array)
+Datum
+int2vectorout(PG_FUNCTION_ARGS)
 {
+	int16	   *int2Array = (int16 *) PG_GETARG_POINTER(0);
 	int			num,
 				maxnum;
 	char	   *rp;
 	char	   *result;
-
-	if (int2Array == NULL)
-	{
-		result = (char *) palloc(2);
-		result[0] = '-';
-		result[1] = '\0';
-		return result;
-	}
 
 	/* find last non-zero value in vector */
 	for (maxnum = INDEX_MAX_KEYS - 1; maxnum >= 0; maxnum--)
@@ -142,71 +131,72 @@ int2vectorout(int16 *int2Array)
 			;
 	}
 	*rp = '\0';
-	return result;
+	PG_RETURN_CSTRING(result);
 }
 
 /*
  * We don't have a complete set of int2vector support routines,
  * but we need int2vectoreq for catcache indexing.
  */
-bool
-int2vectoreq(int16 *arg1, int16 *arg2)
+Datum
+int2vectoreq(PG_FUNCTION_ARGS)
 {
-	return (bool) (memcmp(arg1, arg2, INDEX_MAX_KEYS * sizeof(int16)) == 0);
+	int16	   *arg1 = (int16 *) PG_GETARG_POINTER(0);
+	int16	   *arg2 = (int16 *) PG_GETARG_POINTER(1);
+
+	PG_RETURN_BOOL(memcmp(arg1, arg2, INDEX_MAX_KEYS * sizeof(int16)) == 0);
 }
 
+/*
+ * Type int44 has no real-world use, but the regression tests use it.
+ * It's a four-element vector of int4's.
+ */
 
 /*
  *		int44in			- converts "num num ..." to internal form
  *
- *		Note:
- *				Fills any nonexistent digits with NULLs.
+ *		Note: Fills any missing positions with zeroes.
  */
-int32 *
-int44in(char *input_string)
+Datum
+int44in(PG_FUNCTION_ARGS)
 {
-	int32	   *foo = (int32 *) palloc(4 * sizeof(int32));
-	int			i = 0;
+	char	   *input_string = PG_GETARG_CSTRING(0);
+	int32	   *result = (int32 *) palloc(4 * sizeof(int32));
+	int			i;
 
 	i = sscanf(input_string,
 			   "%d, %d, %d, %d",
-			   &foo[0],
-			   &foo[1],
-			   &foo[2],
-			   &foo[3]);
+			   &result[0],
+			   &result[1],
+			   &result[2],
+			   &result[3]);
 	while (i < 4)
-		foo[i++] = 0;
+		result[i++] = 0;
 
-	return foo;
+	PG_RETURN_POINTER(result);
 }
 
 /*
  *		int44out		- converts internal form to "num num ..."
  */
-char *
-int44out(int32 *an_array)
+Datum
+int44out(PG_FUNCTION_ARGS)
 {
-	int			temp = 4;
-	char	   *output_string = NULL;
+	int32	   *an_array = (int32 *) PG_GETARG_POINTER(0);
+	char	   *result = (char *) palloc(16 * 4); /* Allow 14 digits + sign */
 	int			i;
+	char	   *walk;
 
-	if (temp > 0)
+	walk = result;
+	for (i = 0; i < 4; i++)
 	{
-		char	   *walk;
-
-		output_string = (char *) palloc(16 * temp);		/* assume 15 digits +
-														 * sign */
-		walk = output_string;
-		for (i = 0; i < temp; i++)
-		{
-			itoa(an_array[i], walk);
-			while (*++walk != '\0')
-				;
-			*walk++ = ' ';
-		}
-		*--walk = '\0';
+		itoa(an_array[i], walk);
+		while (*++walk != '\0')
+			;
+		*walk++ = ' ';
 	}
-	return output_string;
+	*--walk = '\0';
+	PG_RETURN_CSTRING(result);
 }
 
 
@@ -217,23 +207,25 @@ int44out(int32 *an_array)
 /*
  *		int4in			- converts "num" to int4
  */
-int32
-int4in(char *num)
+Datum
+int4in(PG_FUNCTION_ARGS)
 {
-	return pg_atoi(num, sizeof(int32), '\0');
+	char	   *num = PG_GETARG_CSTRING(0);
+
+	PG_RETURN_INT32(pg_atoi(num, sizeof(int32), '\0'));
 }
 
 /*
  *		int4out			- converts int4 to "num"
  */
-char *
-int4out(int32 l)
+Datum
+int4out(PG_FUNCTION_ARGS)
 {
-	char	   *result;
+	int32		arg1 = PG_GETARG_INT32(0);
+	char	   *result = (char *) palloc(12); /* sign, 10 digits, '\0' */
 
-	result = (char *) palloc(12);		/* assumes sign, 10 digits, '\0' */
-	ltoa(l, result);
-	return result;
+	ltoa(arg1, result);
+	PG_RETURN_CSTRING(result);
 }
 
 
@@ -243,116 +235,94 @@ int4out(int32 l)
  *		===================
  */
 
-int32
-i2toi4(int16 arg1)
+Datum
+i2toi4(PG_FUNCTION_ARGS)
 {
-	return (int32) arg1;
+	int16		arg1 = PG_GETARG_INT16(0);
+
+	PG_RETURN_INT32((int32) arg1);
 }
 
-int16
-i4toi2(int32 arg1)
+Datum
+i4toi2(PG_FUNCTION_ARGS)
 {
+	int32		arg1 = PG_GETARG_INT32(0);
+
 	if (arg1 < SHRT_MIN)
 		elog(ERROR, "i4toi2: '%d' causes int2 underflow", arg1);
 	if (arg1 > SHRT_MAX)
 		elog(ERROR, "i4toi2: '%d' causes int2 overflow", arg1);
 
-	return (int16) arg1;
+	PG_RETURN_INT16((int16) arg1);
 }
 
-text *
-int2_text(int16 arg1)
+Datum
+int2_text(PG_FUNCTION_ARGS)
 {
-	text	   *result;
+	int16		arg1 = PG_GETARG_INT16(0);
+	text	   *result = (text *) palloc(7+VARHDRSZ); /* sign,5 digits, '\0' */
 
+	itoa((int) arg1, VARDATA(result));
+	VARSIZE(result) = strlen(VARDATA(result)) + VARHDRSZ;
+	PG_RETURN_TEXT_P(result);
+}
+
+Datum
+text_int2(PG_FUNCTION_ARGS)
+{
+	text	   *string = PG_GETARG_TEXT_P(0);
+	Datum		result;
 	int			len;
 	char	   *str;
 
-	str = int2out(arg1);
-	len = (strlen(str) + VARHDRSZ);
-
-	result = palloc(len);
-
-	VARSIZE(result) = len;
-	memmove(VARDATA(result), str, (len - VARHDRSZ));
-
-	pfree(str);
-
-	return result;
-}	/* int2_text() */
-
-int16
-text_int2(text *string)
-{
-	int16		result;
-
-	int			len;
-	char	   *str;
-
-	if (!string)
-		return 0;
-
-	len = (VARSIZE(string) - VARHDRSZ);
+	len = VARSIZE(string) - VARHDRSZ;
 
 	str = palloc(len + 1);
-	memmove(str, VARDATA(string), len);
+	memcpy(str, VARDATA(string), len);
 	*(str + len) = '\0';
 
-	result = int2in(str);
+	result = DirectFunctionCall1(int2in, CStringGetDatum(str));
 	pfree(str);
 
 	return result;
-}	/* text_int2() */
+}
 
-text *
-int4_text(int32 arg1)
+Datum
+int4_text(PG_FUNCTION_ARGS)
 {
-	text	   *result;
+	int32		arg1 = PG_GETARG_INT32(0);
+	text	   *result = (text *) palloc(12+VARHDRSZ); /* sign,10 digits,'\0' */
 
+	ltoa(arg1, VARDATA(result));
+	VARSIZE(result) = strlen(VARDATA(result)) + VARHDRSZ;
+	PG_RETURN_TEXT_P(result);
+}
+
+Datum
+text_int4(PG_FUNCTION_ARGS)
+{
+	text	   *string = PG_GETARG_TEXT_P(0);
+	Datum		result;
 	int			len;
 	char	   *str;
 
-	str = int4out(arg1);
-	len = (strlen(str) + VARHDRSZ);
-
-	result = palloc(len);
-
-	VARSIZE(result) = len;
-	memmove(VARDATA(result), str, (len - VARHDRSZ));
-
-	pfree(str);
-
-	return result;
-}	/* int4_text() */
-
-int32
-text_int4(text *string)
-{
-	int32		result;
-
-	int			len;
-	char	   *str;
-
-	if (!string)
-		return 0;
-
-	len = (VARSIZE(string) - VARHDRSZ);
+	len = VARSIZE(string) - VARHDRSZ;
 
 	str = palloc(len + 1);
-	memmove(str, VARDATA(string), len);
+	memcpy(str, VARDATA(string), len);
 	*(str + len) = '\0';
 
-	result = int4in(str);
+	result = DirectFunctionCall1(int4in, CStringGetDatum(str));
 	pfree(str);
 
 	return result;
-}	/* text_int4() */
+}
 
 
 /*
- *		=========================
- *		BOOLEAN OPERATOR ROUTINES
- *		=========================
+ *		============================
+ *		COMPARISON OPERATOR ROUTINES
+ *		============================
  */
 
 /*
@@ -363,148 +333,221 @@ text_int4(text *string)
  *		intgt			- returns 1 iff arg1 > arg2
  *		intge			- returns 1 iff arg1 >= arg2
  */
-bool
-int4eq(int32 arg1, int32 arg2)
+
+Datum
+int4eq(PG_FUNCTION_ARGS)
 {
-	return arg1 == arg2;
+	int32		arg1 = PG_GETARG_INT32(0);
+	int32		arg2 = PG_GETARG_INT32(1);
+
+	PG_RETURN_BOOL(arg1 == arg2);
 }
 
-bool
-int4ne(int32 arg1, int32 arg2)
+Datum
+int4ne(PG_FUNCTION_ARGS)
 {
-	return arg1 != arg2;
+	int32		arg1 = PG_GETARG_INT32(0);
+	int32		arg2 = PG_GETARG_INT32(1);
+
+	PG_RETURN_BOOL(arg1 != arg2);
 }
 
-bool
-int4lt(int32 arg1, int32 arg2)
+Datum
+int4lt(PG_FUNCTION_ARGS)
 {
-	return arg1 < arg2;
+	int32		arg1 = PG_GETARG_INT32(0);
+	int32		arg2 = PG_GETARG_INT32(1);
+
+	PG_RETURN_BOOL(arg1 < arg2);
 }
 
-bool
-int4le(int32 arg1, int32 arg2)
+Datum
+int4le(PG_FUNCTION_ARGS)
 {
-	return arg1 <= arg2;
+	int32		arg1 = PG_GETARG_INT32(0);
+	int32		arg2 = PG_GETARG_INT32(1);
+
+	PG_RETURN_BOOL(arg1 <= arg2);
 }
 
-bool
-int4gt(int32 arg1, int32 arg2)
+Datum
+int4gt(PG_FUNCTION_ARGS)
 {
-	return arg1 > arg2;
+	int32		arg1 = PG_GETARG_INT32(0);
+	int32		arg2 = PG_GETARG_INT32(1);
+
+	PG_RETURN_BOOL(arg1 > arg2);
 }
 
-bool
-int4ge(int32 arg1, int32 arg2)
+Datum
+int4ge(PG_FUNCTION_ARGS)
 {
-	return arg1 >= arg2;
+	int32		arg1 = PG_GETARG_INT32(0);
+	int32		arg2 = PG_GETARG_INT32(1);
+
+	PG_RETURN_BOOL(arg1 >= arg2);
 }
 
-bool
-int2eq(int16 arg1, int16 arg2)
+Datum
+int2eq(PG_FUNCTION_ARGS)
 {
-	return arg1 == arg2;
+	int16		arg1 = PG_GETARG_INT16(0);
+	int16		arg2 = PG_GETARG_INT16(1);
+
+	PG_RETURN_BOOL(arg1 == arg2);
 }
 
-bool
-int2ne(int16 arg1, int16 arg2)
+Datum
+int2ne(PG_FUNCTION_ARGS)
 {
-	return arg1 != arg2;
+	int16		arg1 = PG_GETARG_INT16(0);
+	int16		arg2 = PG_GETARG_INT16(1);
+
+	PG_RETURN_BOOL(arg1 != arg2);
 }
 
-bool
-int2lt(int16 arg1, int16 arg2)
+Datum
+int2lt(PG_FUNCTION_ARGS)
 {
-	return arg1 < arg2;
+	int16		arg1 = PG_GETARG_INT16(0);
+	int16		arg2 = PG_GETARG_INT16(1);
+
+	PG_RETURN_BOOL(arg1 < arg2);
 }
 
-bool
-int2le(int16 arg1, int16 arg2)
+Datum
+int2le(PG_FUNCTION_ARGS)
 {
-	return arg1 <= arg2;
+	int16		arg1 = PG_GETARG_INT16(0);
+	int16		arg2 = PG_GETARG_INT16(1);
+
+	PG_RETURN_BOOL(arg1 <= arg2);
 }
 
-bool
-int2gt(int16 arg1, int16 arg2)
+Datum
+int2gt(PG_FUNCTION_ARGS)
 {
-	return arg1 > arg2;
+	int16		arg1 = PG_GETARG_INT16(0);
+	int16		arg2 = PG_GETARG_INT16(1);
+
+	PG_RETURN_BOOL(arg1 > arg2);
 }
 
-bool
-int2ge(int16 arg1, int16 arg2)
+Datum
+int2ge(PG_FUNCTION_ARGS)
 {
-	return arg1 >= arg2;
+	int16		arg1 = PG_GETARG_INT16(0);
+	int16		arg2 = PG_GETARG_INT16(1);
+
+	PG_RETURN_BOOL(arg1 >= arg2);
 }
 
-bool
-int24eq(int32 arg1, int32 arg2)
+Datum
+int24eq(PG_FUNCTION_ARGS)
 {
-	return arg1 == arg2;
+	int16		arg1 = PG_GETARG_INT16(0);
+	int32		arg2 = PG_GETARG_INT32(1);
+
+	PG_RETURN_BOOL(arg1 == arg2);
 }
 
-bool
-int24ne(int32 arg1, int32 arg2)
+Datum
+int24ne(PG_FUNCTION_ARGS)
 {
-	return arg1 != arg2;
+	int16		arg1 = PG_GETARG_INT16(0);
+	int32		arg2 = PG_GETARG_INT32(1);
+
+	PG_RETURN_BOOL(arg1 != arg2);
 }
 
-bool
-int24lt(int32 arg1, int32 arg2)
+Datum
+int24lt(PG_FUNCTION_ARGS)
 {
-	return arg1 < arg2;
+	int16		arg1 = PG_GETARG_INT16(0);
+	int32		arg2 = PG_GETARG_INT32(1);
+
+	PG_RETURN_BOOL(arg1 < arg2);
 }
 
-bool
-int24le(int32 arg1, int32 arg2)
+Datum
+int24le(PG_FUNCTION_ARGS)
 {
-	return arg1 <= arg2;
+	int16		arg1 = PG_GETARG_INT16(0);
+	int32		arg2 = PG_GETARG_INT32(1);
+
+	PG_RETURN_BOOL(arg1 <= arg2);
 }
 
-bool
-int24gt(int32 arg1, int32 arg2)
+Datum
+int24gt(PG_FUNCTION_ARGS)
 {
-	return arg1 > arg2;
+	int16		arg1 = PG_GETARG_INT16(0);
+	int32		arg2 = PG_GETARG_INT32(1);
+
+	PG_RETURN_BOOL(arg1 > arg2);
 }
 
-bool
-int24ge(int32 arg1, int32 arg2)
+Datum
+int24ge(PG_FUNCTION_ARGS)
 {
-	return arg1 >= arg2;
+	int16		arg1 = PG_GETARG_INT16(0);
+	int32		arg2 = PG_GETARG_INT32(1);
+
+	PG_RETURN_BOOL(arg1 >= arg2);
 }
 
-bool
-int42eq(int32 arg1, int32 arg2)
+Datum
+int42eq(PG_FUNCTION_ARGS)
 {
-	return arg1 == arg2;
+	int32		arg1 = PG_GETARG_INT32(0);
+	int16		arg2 = PG_GETARG_INT16(1);
+
+	PG_RETURN_BOOL(arg1 == arg2);
 }
 
-bool
-int42ne(int32 arg1, int32 arg2)
+Datum
+int42ne(PG_FUNCTION_ARGS)
 {
-	return arg1 != arg2;
+	int32		arg1 = PG_GETARG_INT32(0);
+	int16		arg2 = PG_GETARG_INT16(1);
+
+	PG_RETURN_BOOL(arg1 != arg2);
 }
 
-bool
-int42lt(int32 arg1, int32 arg2)
+Datum
+int42lt(PG_FUNCTION_ARGS)
 {
-	return arg1 < arg2;
+	int32		arg1 = PG_GETARG_INT32(0);
+	int16		arg2 = PG_GETARG_INT16(1);
+
+	PG_RETURN_BOOL(arg1 < arg2);
 }
 
-bool
-int42le(int32 arg1, int32 arg2)
+Datum
+int42le(PG_FUNCTION_ARGS)
 {
-	return arg1 <= arg2;
+	int32		arg1 = PG_GETARG_INT32(0);
+	int16		arg2 = PG_GETARG_INT16(1);
+
+	PG_RETURN_BOOL(arg1 <= arg2);
 }
 
-bool
-int42gt(int32 arg1, int32 arg2)
+Datum
+int42gt(PG_FUNCTION_ARGS)
 {
-	return arg1 > arg2;
+	int32		arg1 = PG_GETARG_INT32(0);
+	int16		arg2 = PG_GETARG_INT16(1);
+
+	PG_RETURN_BOOL(arg1 > arg2);
 }
 
-bool
-int42ge(int32 arg1, int32 arg2)
+Datum
+int42ge(PG_FUNCTION_ARGS)
 {
-	return arg1 >= arg2;
+	int32		arg1 = PG_GETARG_INT32(0);
+	int16		arg2 = PG_GETARG_INT16(1);
+
+	PG_RETURN_BOOL(arg1 >= arg2);
 }
 
 /*
@@ -513,159 +556,226 @@ int42ge(int32 arg1, int32 arg2)
  *		int[24]mul		- returns arg1 * arg2
  *		int[24]div		- returns arg1 / arg2
  */
-int32
-int4um(int32 arg)
+
+Datum
+int4um(PG_FUNCTION_ARGS)
 {
-	return -arg;
+	int32		arg = PG_GETARG_INT32(0);
+
+	PG_RETURN_INT32(-arg);
 }
 
-int32
-int4pl(int32 arg1, int32 arg2)
+Datum
+int4pl(PG_FUNCTION_ARGS)
 {
-	return arg1 + arg2;
+	int32		arg1 = PG_GETARG_INT32(0);
+	int32		arg2 = PG_GETARG_INT32(1);
+
+	PG_RETURN_INT32(arg1 + arg2);
 }
 
-int32
-int4mi(int32 arg1, int32 arg2)
+Datum
+int4mi(PG_FUNCTION_ARGS)
 {
-	return arg1 - arg2;
+	int32		arg1 = PG_GETARG_INT32(0);
+	int32		arg2 = PG_GETARG_INT32(1);
+
+	PG_RETURN_INT32(arg1 - arg2);
 }
 
-int32
-int4mul(int32 arg1, int32 arg2)
+Datum
+int4mul(PG_FUNCTION_ARGS)
 {
-	return arg1 * arg2;
+	int32		arg1 = PG_GETARG_INT32(0);
+	int32		arg2 = PG_GETARG_INT32(1);
+
+	PG_RETURN_INT32(arg1 * arg2);
 }
 
-int32
-int4div(int32 arg1, int32 arg2)
+Datum
+int4div(PG_FUNCTION_ARGS)
 {
-	return arg1 / arg2;
+	int32		arg1 = PG_GETARG_INT32(0);
+	int32		arg2 = PG_GETARG_INT32(1);
+
+	PG_RETURN_INT32(arg1 / arg2);
 }
 
-int32
-int4inc(int32 arg)
+Datum
+int4inc(PG_FUNCTION_ARGS)
 {
-	return arg + (int32) 1;
+	int32		arg = PG_GETARG_INT32(0);
+
+	PG_RETURN_INT32(arg + 1);
 }
 
-int16
-int2um(int16 arg)
+Datum
+int2um(PG_FUNCTION_ARGS)
 {
-	return -arg;
+	int16		arg = PG_GETARG_INT16(0);
+
+	PG_RETURN_INT16(-arg);
 }
 
-int16
-int2pl(int16 arg1, int16 arg2)
+Datum
+int2pl(PG_FUNCTION_ARGS)
 {
-	return arg1 + arg2;
+	int16		arg1 = PG_GETARG_INT16(0);
+	int16		arg2 = PG_GETARG_INT16(1);
+
+	PG_RETURN_INT16(arg1 + arg2);
 }
 
-int16
-int2mi(int16 arg1, int16 arg2)
+Datum
+int2mi(PG_FUNCTION_ARGS)
 {
-	return arg1 - arg2;
+	int16		arg1 = PG_GETARG_INT16(0);
+	int16		arg2 = PG_GETARG_INT16(1);
+
+	PG_RETURN_INT16(arg1 - arg2);
 }
 
-int16
-int2mul(int16 arg1, int16 arg2)
+Datum
+int2mul(PG_FUNCTION_ARGS)
 {
-	return arg1 * arg2;
+	int16		arg1 = PG_GETARG_INT16(0);
+	int16		arg2 = PG_GETARG_INT16(1);
+
+	PG_RETURN_INT16(arg1 * arg2);
 }
 
-int16
-int2div(int16 arg1, int16 arg2)
+Datum
+int2div(PG_FUNCTION_ARGS)
 {
-	return arg1 / arg2;
+	int16		arg1 = PG_GETARG_INT16(0);
+	int16		arg2 = PG_GETARG_INT16(1);
+
+	PG_RETURN_INT16(arg1 / arg2);
 }
 
-int16
-int2inc(int16 arg)
+Datum
+int2inc(PG_FUNCTION_ARGS)
 {
-	return arg + (int16) 1;
+	int16		arg = PG_GETARG_INT16(0);
+
+	PG_RETURN_INT16(arg + 1);
 }
 
-int32
-int24pl(int32 arg1, int32 arg2)
+Datum
+int24pl(PG_FUNCTION_ARGS)
 {
-	return arg1 + arg2;
+	int16		arg1 = PG_GETARG_INT16(0);
+	int32		arg2 = PG_GETARG_INT32(1);
+
+	PG_RETURN_INT32(arg1 + arg2);
 }
 
-int32
-int24mi(int32 arg1, int32 arg2)
+Datum
+int24mi(PG_FUNCTION_ARGS)
 {
-	return arg1 - arg2;
+	int16		arg1 = PG_GETARG_INT16(0);
+	int32		arg2 = PG_GETARG_INT32(1);
+
+	PG_RETURN_INT32(arg1 - arg2);
 }
 
-int32
-int24mul(int32 arg1, int32 arg2)
+Datum
+int24mul(PG_FUNCTION_ARGS)
 {
-	return arg1 * arg2;
+	int16		arg1 = PG_GETARG_INT16(0);
+	int32		arg2 = PG_GETARG_INT32(1);
+
+	PG_RETURN_INT32(arg1 * arg2);
 }
 
-int32
-int24div(int32 arg1, int32 arg2)
+Datum
+int24div(PG_FUNCTION_ARGS)
 {
-	return arg1 / arg2;
+	int16		arg1 = PG_GETARG_INT16(0);
+	int32		arg2 = PG_GETARG_INT32(1);
+
+	PG_RETURN_INT32(arg1 / arg2);
 }
 
-int32
-int42pl(int32 arg1, int32 arg2)
+Datum
+int42pl(PG_FUNCTION_ARGS)
 {
-	return arg1 + arg2;
+	int32		arg1 = PG_GETARG_INT32(0);
+	int16		arg2 = PG_GETARG_INT16(1);
+
+	PG_RETURN_INT32(arg1 + arg2);
 }
 
-int32
-int42mi(int32 arg1, int32 arg2)
+Datum
+int42mi(PG_FUNCTION_ARGS)
 {
-	return arg1 - arg2;
+	int32		arg1 = PG_GETARG_INT32(0);
+	int16		arg2 = PG_GETARG_INT16(1);
+
+	PG_RETURN_INT32(arg1 - arg2);
 }
 
-int32
-int42mul(int32 arg1, int32 arg2)
+Datum
+int42mul(PG_FUNCTION_ARGS)
 {
-	return arg1 * arg2;
+	int32		arg1 = PG_GETARG_INT32(0);
+	int16		arg2 = PG_GETARG_INT16(1);
+
+	PG_RETURN_INT32(arg1 * arg2);
 }
 
-int32
-int42div(int32 arg1, int32 arg2)
+Datum
+int42div(PG_FUNCTION_ARGS)
 {
-	return arg1 / arg2;
+	int32		arg1 = PG_GETARG_INT32(0);
+	int16		arg2 = PG_GETARG_INT16(1);
+
+	PG_RETURN_INT32(arg1 / arg2);
 }
 
-/*
- *		int[24]mod		- returns arg1 mod arg2
- */
-int32
-int4mod(int32 arg1, int32 arg2)
+Datum
+int4mod(PG_FUNCTION_ARGS)
 {
-	return arg1 % arg2;
+	int32		arg1 = PG_GETARG_INT32(0);
+	int32		arg2 = PG_GETARG_INT32(1);
+
+	PG_RETURN_INT32(arg1 % arg2);
 }
 
-int32
-int2mod(int16 arg1, int16 arg2)
+Datum
+int2mod(PG_FUNCTION_ARGS)
 {
-	return arg1 % arg2;
+	int16		arg1 = PG_GETARG_INT16(0);
+	int16		arg2 = PG_GETARG_INT16(1);
+
+	PG_RETURN_INT16(arg1 % arg2);
 }
 
-int32
-int24mod(int32 arg1, int32 arg2)
+Datum
+int24mod(PG_FUNCTION_ARGS)
 {
-	return arg1 % arg2;
+	int16		arg1 = PG_GETARG_INT16(0);
+	int32		arg2 = PG_GETARG_INT32(1);
+
+	PG_RETURN_INT32(arg1 % arg2);
 }
 
-int32
-int42mod(int32 arg1, int32 arg2)
+Datum
+int42mod(PG_FUNCTION_ARGS)
 {
-	return arg1 % arg2;
+	int32		arg1 = PG_GETARG_INT32(0);
+	int16		arg2 = PG_GETARG_INT16(1);
+
+	PG_RETURN_INT32(arg1 % arg2);
 }
 
 /* int[24]fac()
  * Factorial
  */
-int32
-int4fac(int32 arg1)
+Datum
+int4fac(PG_FUNCTION_ARGS)
 {
+	int32		arg1 = PG_GETARG_INT32(0);
 	int32		result;
 
 	if (arg1 < 1)
@@ -673,12 +783,13 @@ int4fac(int32 arg1)
 	else
 		for (result = 1; arg1 > 0; --arg1)
 			result *= arg1;
-	return result;
+	PG_RETURN_INT32(result);
 }
 
-int32
-int2fac(int16 arg1)
+Datum
+int2fac(PG_FUNCTION_ARGS)
 {
+	int16		arg1 = PG_GETARG_INT16(0);
 	int32		result;
 
 	if (arg1 < 1)
@@ -686,44 +797,60 @@ int2fac(int16 arg1)
 	else
 		for (result = 1; arg1 > 0; --arg1)
 			result *= arg1;
-	return result;
+	PG_RETURN_INT32(result);
 }
 
 /* int[24]abs()
  * Absolute value
  */
-int32
-int4abs(int32 arg1)
+Datum
+int4abs(PG_FUNCTION_ARGS)
 {
-	return ((arg1 < 0) ? -arg1 : arg1);
+	int32		arg1 = PG_GETARG_INT32(0);
+
+	PG_RETURN_INT32((arg1 < 0) ? -arg1 : arg1);
 }
 
-int16
-int2abs(int16 arg1)
+Datum
+int2abs(PG_FUNCTION_ARGS)
 {
-	return ((arg1 < 0) ? -arg1 : arg1);
+	int16		arg1 = PG_GETARG_INT16(0);
+
+	PG_RETURN_INT16((arg1 < 0) ? -arg1 : arg1);
 }
 
-int16
-int2larger(int16 arg1, int16 arg2)
+Datum
+int2larger(PG_FUNCTION_ARGS)
 {
-	return (arg1 > arg2) ? arg1 : arg2;
+	int16		arg1 = PG_GETARG_INT16(0);
+	int16		arg2 = PG_GETARG_INT16(1);
+
+	PG_RETURN_INT16((arg1 > arg2) ? arg1 : arg2);
 }
 
-int16
-int2smaller(int16 arg1, int16 arg2)
+Datum
+int2smaller(PG_FUNCTION_ARGS)
 {
-	return (arg1 < arg2) ? arg1 : arg2;
+	int16		arg1 = PG_GETARG_INT16(0);
+	int16		arg2 = PG_GETARG_INT16(1);
+
+	PG_RETURN_INT16((arg1 < arg2) ? arg1 : arg2);
 }
 
-int32
-int4larger(int32 arg1, int32 arg2)
+Datum
+int4larger(PG_FUNCTION_ARGS)
 {
-	return (arg1 > arg2) ? arg1 : arg2;
+	int32		arg1 = PG_GETARG_INT32(0);
+	int32		arg2 = PG_GETARG_INT32(1);
+
+	PG_RETURN_INT32((arg1 > arg2) ? arg1 : arg2);
 }
 
-int32
-int4smaller(int32 arg1, int32 arg2)
+Datum
+int4smaller(PG_FUNCTION_ARGS)
 {
-	return (arg1 < arg2) ? arg1 : arg2;
+	int32		arg1 = PG_GETARG_INT32(0);
+	int32		arg2 = PG_GETARG_INT32(1);
+
+	PG_RETURN_INT32((arg1 < arg2) ? arg1 : arg2);
 }

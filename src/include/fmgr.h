@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fmgr.h,v 1.3 2000/05/30 04:24:56 tgl Exp $
+ * $Id: fmgr.h,v 1.4 2000/06/05 07:29:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -101,12 +101,15 @@ extern void fmgr_info(Oid functionId, FmgrInfo *finfo);
 
 /* Macros for fetching arguments of standard types */
 
+#define PG_GETARG_DATUM(n)   (fcinfo->arg[n])
 #define PG_GETARG_INT32(n)   DatumGetInt32(fcinfo->arg[n])
+#define PG_GETARG_UINT32(n)  DatumGetUInt32(fcinfo->arg[n])
 #define PG_GETARG_INT16(n)   DatumGetInt16(fcinfo->arg[n])
 #define PG_GETARG_CHAR(n)    DatumGetChar(fcinfo->arg[n])
 #define PG_GETARG_BOOL(n)    DatumGetBool(fcinfo->arg[n])
 #define PG_GETARG_OID(n)     DatumGetObjectId(fcinfo->arg[n])
 #define PG_GETARG_POINTER(n) DatumGetPointer(fcinfo->arg[n])
+#define PG_GETARG_CSTRING(n) DatumGetCString(fcinfo->arg[n])
 #define PG_GETARG_NAME(n)    DatumGetName(fcinfo->arg[n])
 /* these macros hide the pass-by-reference-ness of the datatype: */
 #define PG_GETARG_FLOAT4(n)  DatumGetFloat4(fcinfo->arg[n])
@@ -115,10 +118,16 @@ extern void fmgr_info(Oid functionId, FmgrInfo *finfo);
 /* use this if you want the raw, possibly-toasted input datum: */
 #define PG_GETARG_RAW_VARLENA_P(n)  ((struct varlena *) PG_GETARG_POINTER(n))
 /* use this if you want the input datum de-toasted: */
+#if 1
+/* VERY TEMPORARY until some TOAST support is committed ... */
+#define PG_GETARG_VARLENA_P(n)  PG_GETARG_RAW_VARLENA_P(n)
+#else
+/* Eventually it will look more like this... */
 #define PG_GETARG_VARLENA_P(n)  \
 	(VARATT_IS_EXTENDED(PG_GETARG_RAW_VARLENA_P(n)) ?  \
 	 (struct varlena *) heap_tuple_untoast_attr((varattrib *) PG_GETARG_RAW_VARLENA_P(n)) :  \
 	 PG_GETARG_RAW_VARLENA_P(n))
+#endif
 /* GETARG macros for varlena types will typically look like this: */
 #define PG_GETARG_TEXT_P(n) ((text *) PG_GETARG_VARLENA_P(n))
 
@@ -129,11 +138,13 @@ extern void fmgr_info(Oid functionId, FmgrInfo *finfo);
 /* Macros for returning results of standard types */
 
 #define PG_RETURN_INT32(x)   return Int32GetDatum(x)
+#define PG_RETURN_UINT32(x)  return UInt32GetDatum(x)
 #define PG_RETURN_INT16(x)   return Int16GetDatum(x)
 #define PG_RETURN_CHAR(x)    return CharGetDatum(x)
 #define PG_RETURN_BOOL(x)    return BoolGetDatum(x)
 #define PG_RETURN_OID(x)     return ObjectIdGetDatum(x)
 #define PG_RETURN_POINTER(x) return PointerGetDatum(x)
+#define PG_RETURN_CSTRING(x) return CStringGetDatum(x)
 #define PG_RETURN_NAME(x)    return NameGetDatum(x)
 /* these macros hide the pass-by-reference-ness of the datatype: */
 #define PG_RETURN_FLOAT4(x)  return Float4GetDatum(x)
@@ -242,57 +253,19 @@ extern PGFunction load_external_function(char *filename, char *funcname);
 extern void load_file(char *filename);
 
 
-/*-------------------------------------------------------------------------
- *
+/*
  * !!! OLD INTERFACE !!!
  *
- * All the definitions below here are associated with the old fmgr API.
- * They will go away as soon as we have converted all call points to use
- * the new API.  Note that old-style callee functions do not depend on
- * these definitions, so we don't need to have converted all of them before
- * dropping the old API ... just all the old-style call points.
- *
- *-------------------------------------------------------------------------
+ * fmgr() is the only remaining vestige of the old-style caller support
+ * functions.  It's no longer used anywhere in the Postgres distribution,
+ * but we should leave it around for a release or two to ease the transition
+ * for user-supplied C functions.  OidFunctionCallN() replaces it for new
+ * code.
  */
-
-/* ptr to func returning (char *) */
-#if defined(__mc68000__) && defined(__ELF__)
-/* The m68k SVR4 ABI defines that pointers are returned in %a0 instead of
- * %d0. So if a function pointer is declared to return a pointer, the
- * compiler may look only into %a0, but if the called function was declared
- * to return return an integer type, it puts its value only into %d0. So the
- * caller doesn't pink up the correct return value. The solution is to
- * declare the function pointer to return int, so the compiler picks up the
- * return value from %d0. (Functions returning pointers put their value
- * *additionally* into %d0 for compability.) The price is that there are
- * some warnings about int->pointer conversions...
- */
-typedef int32 ((*func_ptr) ());
-#else
-typedef char *((*func_ptr) ());
-#endif
-
-#if 0
-
-typedef struct {
-    char *data[FUNC_MAX_ARGS];
-} FmgrValues;
 
 /*
- * defined in fmgr.c
+ * DEPRECATED, DO NOT USE IN NEW CODE
  */
 extern char *fmgr(Oid procedureId, ... );
-extern char *fmgr_faddr_link(char *arg0, ...);
-
-/*
- *	Macros for calling through the result of fmgr_info.
- */
-
-/* We don't make this static so fmgr_faddr() macro can access it */
-extern FmgrInfo        *fmgr_pl_finfo;
-
-#define fmgr_faddr(finfo) (fmgr_pl_finfo = (finfo), (func_ptr) fmgr_faddr_link)
-
-#endif
 
 #endif	/* FMGR_H */

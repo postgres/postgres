@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.68 2000/05/28 17:56:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.69 2000/06/05 07:28:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -174,7 +174,8 @@ inv_create(int flags)
 	if (!RelationIsValid(indr))
 	{
 		elog(ERROR, "cannot create index for large obj on %s under inversion",
-			 smgrout(DEFAULT_SMGR));
+			 DatumGetCString(DirectFunctionCall1(smgrout,
+							 Int16GetDatum(DEFAULT_SMGR))));
 	}
 
 	retval = (LargeObjectDesc *) palloc(sizeof(LargeObjectDesc));

@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.8 2000/04/12 17:15:49 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.9 2000/06/05 07:28:51 tgl Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2000, PostgreSQL, Inc
@@ -4048,11 +4048,15 @@ int4_to_char(int32 value, text *fmt)
 	{
 		if (IS_MULTI(&Num))
 		{
-			orgnum = int4out(int4mul(value, (int32) pow((double) 10, (double) Num.multi)));
+			orgnum = DatumGetCString(DirectFunctionCall1(int4out,
+						Int32GetDatum(value * ((int32) pow((double) 10, (double) Num.multi)))));
 			Num.pre += Num.multi;
 		}
 		else
-			orgnum = int4out(value);
+		{
+			orgnum = DatumGetCString(DirectFunctionCall1(int4out,
+									 Int32GetDatum(value)));
+		}
 		len = strlen(orgnum);
 
 		if (*orgnum == '-')

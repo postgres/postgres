@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.84 2000/05/31 00:28:14 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.85 2000/06/05 07:28:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,7 +38,7 @@
 #include "utils/lsyscache.h"
 #include "utils/portal.h"
 
-#define ALLOC(t, c)		(t *)calloc((unsigned)(c), sizeof(t))
+#define ALLOC(t, c)		((t *) calloc((unsigned)(c), sizeof(t)))
 
 extern void BaseInit(void);
 extern void StartupXLOG(void);
@@ -112,7 +112,7 @@ static struct typinfo Procid[] = {
 	{"int4", INT4OID, 0, 4, F_INT4IN, F_INT4OUT},
 	{"regproc", REGPROCOID, 0, 4, F_REGPROCIN, F_REGPROCOUT},
 	{"text", TEXTOID, 0, -1, F_TEXTIN, F_TEXTOUT},
-	{"oid", OIDOID, 0, 4, F_INT4IN, F_INT4OUT},
+	{"oid", OIDOID, 0, 4, F_OIDIN, F_OIDOUT},
 	{"tid", TIDOID, 0, 6, F_TIDIN, F_TIDOUT},
 	{"xid", XIDOID, 0, 4, F_XIDIN, F_XIDOUT},
 	{"cid", CIDOID, 0, 4, F_CIDIN, F_CIDOUT},

@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plperl/plperl.c,v 1.10 2000/05/30 04:24:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plperl/plperl.c,v 1.11 2000/06/05 07:29:11 tgl Exp $
  *
  **********************************************************************/
 
@@ -858,7 +858,8 @@ plperl_trigger_handler(PG_FUNCTION_ARGS)
 	Tcl_DStringAppendElement(&tcl_cmd, trigdata->tg_trigger->tgname);
 
 	/* The oid of the trigger relation for argument TG_relid */
-	stroid = oidout(trigdata->tg_relation->rd_id);
+	stroid = DatumGetCString(DirectFunctionCall1(oidout,
+							 ObjectIdGetDatum(trigdata->tg_relation->rd_id)));
 	Tcl_DStringAppendElement(&tcl_cmd, stroid);
 	pfree(stroid);
 

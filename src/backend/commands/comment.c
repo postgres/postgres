@@ -772,7 +772,7 @@ CommentOperator(char *opername, List *arguments, char *comment)
 	/*** Get the procedure associated with the operator ***/
 
 	data = (Form_pg_operator) GETSTRUCT(optuple);
-	oid = regproctooid(data->oprcode);
+	oid = RegprocToOid(data->oprcode);
 	if (oid == InvalidOid)
 		elog(ERROR, "operator '%s' does not have an underlying function", opername);
 

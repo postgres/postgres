@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.64 2000/05/28 17:56:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.65 2000/06/05 07:28:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,7 +35,7 @@ static Index CatalogCacheComputeTupleHashIndex(struct catcache * cacheInOutP,
 								  HeapTuple tuple);
 static void CatalogCacheInitializeCache(struct catcache * cache,
 							Relation relation);
-static uint32 cc_hashname(NameData *n);
+static Datum cc_hashname(PG_FUNCTION_ARGS);
 
 /* ----------------
  *		variables, macros and other stuff
@@ -87,38 +87,38 @@ static const Oid eqproc[] = {
  * ----------------------------------------------------------------
  */
 
-static CCHashFunc
+static PGFunction
 GetCCHashFunc(Oid keytype)
 {
 	switch (keytype)
 	{
-			case BOOLOID:
-			case CHAROID:
-			return (CCHashFunc) hashchar;
+		case BOOLOID:
+		case CHAROID:
+			return hashchar;
 		case NAMEOID:
-			return (CCHashFunc) cc_hashname;
+			return cc_hashname;
 		case INT2OID:
-			return (CCHashFunc) hashint2;
+			return hashint2;
 		case INT2VECTOROID:
-			return (CCHashFunc) hashint2vector;
+			return hashint2vector;
 		case INT4OID:
-			return (CCHashFunc) hashint4;
+			return hashint4;
 		case TEXTOID:
-			return (CCHashFunc) hashtext;
+			return hashtext;
 		case REGPROCOID:
 		case OIDOID:
-			return (CCHashFunc) hashoid;
+			return hashoid;
 		case OIDVECTOROID:
-			return (CCHashFunc) hashoidvector;
+			return hashoidvector;
 		default:
 			elog(FATAL, "GetCCHashFunc: type %u unsupported as catcache key",
 				 keytype);
-			return NULL;
+			return (PGFunction) NULL;
 	}
 }
 
-static uint32
-cc_hashname(NameData *n)
+static Datum
+cc_hashname(PG_FUNCTION_ARGS)
 {
 
 	/*
@@ -129,9 +129,9 @@ cc_hashname(NameData *n)
 	 */
 	NameData	my_n;
 
-	namestrcpy(&my_n, NameStr(*n));
+	namestrcpy(&my_n, NameStr(* PG_GETARG_NAME(0)));
 
-	return hashname(&my_n);
+	return DirectFunctionCall1(hashname, NameGetDatum(&my_n));
 }
 
 
@@ -320,19 +320,23 @@ CatalogCacheComputeHashIndex(struct catcache * cacheInP)
 	{
 		case 4:
 			hashIndex ^=
-				(*cacheInP->cc_hashfunc[3]) (cacheInP->cc_skey[3].sk_argument) << 9;
+				DatumGetUInt32(DirectFunctionCall1(cacheInP->cc_hashfunc[3],
+							   cacheInP->cc_skey[3].sk_argument)) << 9;
 			/* FALLTHROUGH */
 		case 3:
 			hashIndex ^=
-				(*cacheInP->cc_hashfunc[2]) (cacheInP->cc_skey[2].sk_argument) << 6;
+				DatumGetUInt32(DirectFunctionCall1(cacheInP->cc_hashfunc[2],
+							   cacheInP->cc_skey[2].sk_argument)) << 6;
 			/* FALLTHROUGH */
 		case 2:
 			hashIndex ^=
-				(*cacheInP->cc_hashfunc[1]) (cacheInP->cc_skey[1].sk_argument) << 3;
+				DatumGetUInt32(DirectFunctionCall1(cacheInP->cc_hashfunc[1],
+							   cacheInP->cc_skey[1].sk_argument)) << 3;
 			/* FALLTHROUGH */
 		case 1:
 			hashIndex ^=
-				(*cacheInP->cc_hashfunc[0]) (cacheInP->cc_skey[0].sk_argument);
+				DatumGetUInt32(DirectFunctionCall1(cacheInP->cc_hashfunc[0],
+							   cacheInP->cc_skey[0].sk_argument));
 			break;
 		default:
 			elog(FATAL, "CCComputeHashIndex: %d cc_nkeys", cacheInP->cc_nkeys);

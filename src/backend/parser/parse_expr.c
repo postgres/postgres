@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.79 2000/05/30 00:49:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.80 2000/06/05 07:28:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -892,7 +892,8 @@ parser_typecast_constant(Value *expr, TypeName *typename)
 	{
 		case T_Integer:
 			string_palloced = true;
-			const_string = int4out(expr->val.ival);
+			const_string = DatumGetCString(DirectFunctionCall1(int4out,
+										   Int32GetDatum(expr->val.ival)));
 			break;
 		case T_Float:
 		case T_String:

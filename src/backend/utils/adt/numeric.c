@@ -5,7 +5,7 @@
  *
  *	1998 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.27 2000/04/12 17:15:50 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.28 2000/06/05 07:28:52 tgl Exp $
  *
  * ----------
  */
@@ -33,6 +33,9 @@
  * Local definitions
  * ----------
  */
+#define PG_GETARG_NUMERIC(n)  ((Numeric) DatumGetPointer(fcinfo->arg[n]))
+#define PG_RETURN_NUMERIC(x)  return PointerGetDatum(x)
+
 #ifndef MIN
 #define MIN(a,b) (((a)<(b)) ? (a) : (b))
 #endif
@@ -1714,7 +1717,8 @@ int4_numeric(int32 val)
 
 	init_var(&result);
 
-	tmp = int4out(val);
+	tmp = DatumGetCString(DirectFunctionCall1(int4out,
+											  Int32GetDatum(val)));
 	set_var_from_str(tmp, &result);
 	res = make_result(&result);
 
@@ -1730,7 +1734,7 @@ numeric_int4(Numeric num)
 {
 	NumericVar	x;
 	char	   *str;
-	int32		result;
+	Datum		result;
 
 	if (num == NULL)
 		return 0;
@@ -1749,7 +1753,7 @@ numeric_int4(Numeric num)
 
 	free_var(&x);
 
-	result = int4in(str);
+	result = DirectFunctionCall1(int4in, CStringGetDatum(str));
 	pfree(str);
 
 	return result;
@@ -1807,35 +1811,35 @@ numeric_int8(Numeric num)
 }
 
 
-Numeric
-int2_numeric(int16 val)
+Datum
+int2_numeric(PG_FUNCTION_ARGS)
 {
+	int16		val = PG_GETARG_INT16(0);
 	Numeric		res;
 	NumericVar	result;
 	char	   *tmp;
 
 	init_var(&result);
 
-	tmp = int2out(val);
+	tmp = DatumGetCString(DirectFunctionCall1(int2out,
+											  Int16GetDatum(val)));
 	set_var_from_str(tmp, &result);
 	res = make_result(&result);
 
 	free_var(&result);
 	pfree(tmp);
 
-	return res;
+	PG_RETURN_NUMERIC(res);
 }
 
 
-int16
-numeric_int2(Numeric num)
+Datum
+numeric_int2(PG_FUNCTION_ARGS)
 {
+	Numeric		num = PG_GETARG_NUMERIC(0);
 	NumericVar	x;
 	char	   *str;
-	int16		result;
-
-	if (num == NULL)
-		return 0;
+	Datum		result;
 
 	if (NUMERIC_IS_NAN(num))
 		elog(ERROR, "Cannot convert NaN to int2");
@@ -1851,7 +1855,7 @@ numeric_int2(Numeric num)
 
 	free_var(&x);
 
-	result = int2in(str);
+	result = DirectFunctionCall1(int2in, CStringGetDatum(str));
 	pfree(str);
 
 	return result;

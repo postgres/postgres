@@ -4,7 +4,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.9 2000/05/29 21:25:07 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.10 2000/06/05 07:29:14 tgl Exp $
  *
  *    This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -433,7 +433,7 @@ decl_atttypmod	:
 
 decl_atttypmodval	: T_NUMBER
 		    {
-		        $$ = int2in(yytext) + VARHDRSZ;
+		        $$ = pg_atoi(yytext, sizeof(int16), '\0') + VARHDRSZ;
 		    }
 		;
 

@@ -8,141 +8,203 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtcompare.c,v 1.34 2000/04/12 17:14:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtcompare.c,v 1.35 2000/06/05 07:28:36 tgl Exp $
  *
- *	NOTES
- *		These functions are stored in pg_amproc.  For each operator class
- *		defined on btrees, they compute
+ * NOTES
+ *
+ *	These functions are stored in pg_amproc.  For each operator class
+ *	defined on btrees, they compute
  *
  *				compare(a, b):
  *						< 0 if a < b,
  *						= 0 if a == b,
  *						> 0 if a > b.
+ *
+ *	The result is always an int32 regardless of the input datatype.
+ *
+ *	NOTE: although any negative int32 is acceptable for reporting "<",
+ *	and any positive int32 is acceptable for reporting ">", routines
+ *	that work on 32-bit or wider datatypes can't just return "a - b".
+ *	That could overflow and give the wrong answer.
+ *
  *-------------------------------------------------------------------------
  */
-
 
 #include "postgres.h"
 
 #include "utils/builtins.h"
 
-int32
-btint2cmp(int16 a, int16 b)
+Datum
+btboolcmp(PG_FUNCTION_ARGS)
 {
-	return (int32) (a - b);
+	bool		a = PG_GETARG_BOOL(0);
+	bool		b = PG_GETARG_BOOL(1);
+
+	PG_RETURN_INT32((int32) a - (int32) b);
 }
 
-int32
-btint4cmp(int32 a, int32 b)
+Datum
+btint2cmp(PG_FUNCTION_ARGS)
 {
+	int16		a = PG_GETARG_INT16(0);
+	int16		b = PG_GETARG_INT16(1);
+
+	PG_RETURN_INT32((int32) a - (int32) b);
+}
+
+Datum
+btint4cmp(PG_FUNCTION_ARGS)
+{
+	int32		a = PG_GETARG_INT32(0);
+	int32		b = PG_GETARG_INT32(1);
+
 	if (a > b)
-		return 1;
+		PG_RETURN_INT32(1);
 	else if (a == b)
-		return 0;
+		PG_RETURN_INT32(0);
 	else
-		return -1;
+		PG_RETURN_INT32(-1);
 }
 
-int32
-btint8cmp(int64 *a, int64 *b)
+Datum
+btint8cmp(PG_FUNCTION_ARGS)
 {
-	if (*a > *b)
-		return 1;
-	else if (*a == *b)
-		return 0;
-	else
-		return -1;
-}
+	int64		a = PG_GETARG_INT64(0);
+	int64		b = PG_GETARG_INT64(1);
 
-int32
-btint24cmp(int16 a, int32 b)
-{
-	return ((int32) a) - b;
-}
-
-int32
-btint42cmp(int32 a, int16 b)
-{
-	return a - ((int32) b);
-}
-
-int32
-btfloat4cmp(float32 a, float32 b)
-{
-	if (*a > *b)
-		return 1;
-	else if (*a == *b)
-		return 0;
-	else
-		return -1;
-}
-
-int32
-btfloat8cmp(float64 a, float64 b)
-{
-	if (*a > *b)
-		return 1;
-	else if (*a == *b)
-		return 0;
-	else
-		return -1;
-}
-
-int32
-btoidcmp(Oid a, Oid b)
-{
 	if (a > b)
-		return 1;
+		PG_RETURN_INT32(1);
 	else if (a == b)
-		return 0;
+		PG_RETURN_INT32(0);
 	else
-		return -1;
+		PG_RETURN_INT32(-1);
 }
 
-int32
-btoidvectorcmp(Oid *a, Oid *b)
+Datum
+btint24cmp(PG_FUNCTION_ARGS)
 {
+	int16		a = PG_GETARG_INT16(0);
+	int32		b = PG_GETARG_INT32(1);
+
+	if (a > b)
+		PG_RETURN_INT32(1);
+	else if (a == b)
+		PG_RETURN_INT32(0);
+	else
+		PG_RETURN_INT32(-1);
+}
+
+Datum
+btint42cmp(PG_FUNCTION_ARGS)
+{
+	int32		a = PG_GETARG_INT32(0);
+	int16		b = PG_GETARG_INT16(1);
+
+	if (a > b)
+		PG_RETURN_INT32(1);
+	else if (a == b)
+		PG_RETURN_INT32(0);
+	else
+		PG_RETURN_INT32(-1);
+}
+
+Datum
+btfloat4cmp(PG_FUNCTION_ARGS)
+{
+	float4		a = PG_GETARG_FLOAT4(0);
+	float4		b = PG_GETARG_FLOAT4(1);
+
+	if (a > b)
+		PG_RETURN_INT32(1);
+	else if (a == b)
+		PG_RETURN_INT32(0);
+	else
+		PG_RETURN_INT32(-1);
+}
+
+Datum
+btfloat8cmp(PG_FUNCTION_ARGS)
+{
+	float8		a = PG_GETARG_FLOAT8(0);
+	float8		b = PG_GETARG_FLOAT8(1);
+
+	if (a > b)
+		PG_RETURN_INT32(1);
+	else if (a == b)
+		PG_RETURN_INT32(0);
+	else
+		PG_RETURN_INT32(-1);
+}
+
+Datum
+btoidcmp(PG_FUNCTION_ARGS)
+{
+	Oid			a = PG_GETARG_OID(0);
+	Oid			b = PG_GETARG_OID(1);
+
+	if (a > b)
+		PG_RETURN_INT32(1);
+	else if (a == b)
+		PG_RETURN_INT32(0);
+	else
+		PG_RETURN_INT32(-1);
+}
+
+Datum
+btoidvectorcmp(PG_FUNCTION_ARGS)
+{
+	Oid		   *a = (Oid *) PG_GETARG_POINTER(0);
+	Oid		   *b = (Oid *) PG_GETARG_POINTER(1);
 	int			i;
 
 	for (i = 0; i < INDEX_MAX_KEYS; i++)
-		/* we use this because we need the int4gt, etc */
-		if (!int4eq(a[i], b[i]))
+	{
+		if (a[i] != b[i])
 		{
-			if (int4gt(a[i], b[i]))
-				return 1;
+			if (a[i] > b[i])
+				PG_RETURN_INT32(1);
 			else
-				return -1;
+				PG_RETURN_INT32(-1);
 		}
-	return 0;
+	}
+	PG_RETURN_INT32(0);
 }
-
 
 int32
 btabstimecmp(AbsoluteTime a, AbsoluteTime b)
 {
 	if (AbsoluteTimeIsBefore(a, b))
-		return -1;
+		PG_RETURN_INT32(-1);
 	else if (AbsoluteTimeIsBefore(b, a))
-		return 1;
+		PG_RETURN_INT32(1);
 	else
-		return 0;
+		PG_RETURN_INT32(0);
 }
 
-int32
-btcharcmp(char a, char b)
+Datum
+btcharcmp(PG_FUNCTION_ARGS)
 {
-	return (int32) ((uint8) a - (uint8) b);
+	char		a = PG_GETARG_CHAR(0);
+	char		b = PG_GETARG_CHAR(1);
+
+	/* Be careful to compare chars as unsigned */
+	PG_RETURN_INT32((int32) ((uint8) a) - (int32) ((uint8) b));
 }
 
-int32
-btnamecmp(NameData *a, NameData *b)
+Datum
+btnamecmp(PG_FUNCTION_ARGS)
 {
-	return strncmp(NameStr(*a), NameStr(*b), NAMEDATALEN);
+	Name		a = PG_GETARG_NAME(0);
+	Name		b = PG_GETARG_NAME(1);
+
+	PG_RETURN_INT32(strncmp(NameStr(*a), NameStr(*b), NAMEDATALEN));
 }
 
-int32
-bttextcmp(struct varlena * a, struct varlena * b)
+Datum
+bttextcmp(PG_FUNCTION_ARGS)
 {
+	text	   *a = PG_GETARG_TEXT_P(0);
+	text	   *b = PG_GETARG_TEXT_P(1);
 	int			res;
 	unsigned char *ap,
 			   *bp;
@@ -187,7 +249,7 @@ bttextcmp(struct varlena * a, struct varlena * b)
 	{
 		do
 		{
-			res = (int) (*ap++ - *bp++);
+			res = (int) *ap++ - (int) *bp++;
 			len--;
 		} while (res == 0 && len != 0);
 	}
@@ -195,7 +257,7 @@ bttextcmp(struct varlena * a, struct varlena * b)
 #endif
 
 	if (res != 0 || VARSIZE(a) == VARSIZE(b))
-		return res;
+		PG_RETURN_INT32(res);
 
 	/*
 	 * The two strings are the same in the first len bytes, and they are
@@ -203,13 +265,7 @@ bttextcmp(struct varlena * a, struct varlena * b)
 	 */
 
 	if (VARSIZE(a) < VARSIZE(b))
-		return -1;
+		PG_RETURN_INT32(-1);
 	else
-		return 1;
-}
-
-int32
-btboolcmp(bool a, bool b)
-{
-	return (int32) ((uint8) a - (uint8) b);
+		PG_RETURN_INT32(1);
 }

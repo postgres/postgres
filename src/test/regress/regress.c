@@ -1,5 +1,5 @@
 /*
- * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.37 2000/05/29 01:59:15 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.38 2000/06/05 07:29:22 tgl Exp $
  */
 
 #include <float.h>				/* faked on sunos */
@@ -14,14 +14,14 @@
 #define RDELIM			')'
 #define DELIM			','
 
-typedef void *TUPLE;
+typedef TupleTableSlot *TUPLE;
 
 extern double *regress_dist_ptpath(Point *pt, PATH *path);
 extern double *regress_path_dist(PATH *p1, PATH *p2);
 extern PATH *poly2path(POLYGON *poly);
 extern Point *interpt_pp(PATH *p1, PATH *p2);
 extern void regress_lseg_construct(LSEG *lseg, Point *pt1, Point *pt2);
-extern char overpaid(TUPLE tuple);
+extern Datum overpaid(PG_FUNCTION_ARGS);
 extern int	boxarea(BOX *box);
 extern char *reverse_name(char *string);
 
@@ -176,16 +176,17 @@ Point	   *pt2;
 	lseg->m = point_sl(pt1, pt2);
 }
 
-
-char
-overpaid(tuple)
-TUPLE		tuple;
+Datum
+overpaid(PG_FUNCTION_ARGS)
 {
+	TUPLE		tuple = (TUPLE) PG_GETARG_POINTER(0);
 	bool		isnull;
 	long		salary;
 
 	salary = (long) GetAttributeByName(tuple, "salary", &isnull);
-	return salary > 699;
+	if (isnull)
+		PG_RETURN_NULL();
+	PG_RETURN_BOOL(salary > 699);
 }
 
 /* New type "widget"
@@ -395,13 +396,12 @@ funny_dup17(PG_FUNCTION_ARGS)
 
 	if (SPI_processed > 0)
 	{
-		selected = int4in(
-						  SPI_getvalue(
+		selected = DatumGetInt32(DirectFunctionCall1(int4in,
+								 CStringGetDatum(SPI_getvalue(
 									   SPI_tuptable->vals[0],
 									   SPI_tuptable->tupdesc,
 									   1
-									   )
-			);
+									   ))));
 	}
 
 	elog(NOTICE, "funny_dup17 (fired %s) on level %3d: %d/%d tuples inserted/selected",

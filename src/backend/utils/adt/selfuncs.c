@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.68 2000/05/30 04:24:51 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.69 2000/06/05 07:28:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,9 +43,6 @@
 
 /* N is not a valid var/constant or relation id */
 #define NONVALUE(N)		((N) == 0)
-
-/* are we looking at a functional index selectivity request? */
-#define FunctionalSelectivity(nIndKeys,attNum) ((attNum)==InvalidAttrNumber)
 
 /* default selectivity estimate for equalities such as "A = b" */
 #define DEFAULT_EQ_SEL	0.01
@@ -106,18 +103,18 @@ static Datum string_to_datum(const char *str, Oid datatype);
  * of the given constant "value" may be different from the type of the
  * attribute.
  */
-float64
-eqsel(Oid opid,
-	  Oid relid,
-	  AttrNumber attno,
-	  Datum value,
-	  int32 flag)
+Datum
+eqsel(PG_FUNCTION_ARGS)
 {
-	float64		result;
+	Oid			opid = PG_GETARG_OID(0);
+	Oid			relid = PG_GETARG_OID(1);
+	AttrNumber	attno = PG_GETARG_INT16(2);
+	Datum		value = PG_GETARG_DATUM(3);
+	int32		flag = PG_GETARG_INT32(4);
+	float8		result;
 
-	result = (float64) palloc(sizeof(float64data));
 	if (NONVALUE(attno) || NONVALUE(relid))
-		*result = DEFAULT_EQ_SEL;
+		result = DEFAULT_EQ_SEL;
 	else
 	{
 		Oid			typid;
@@ -239,9 +236,9 @@ eqsel(Oid opid,
 			selec = get_attdisbursion(relid, attno, 0.01);
 		}
 
-		*result = (float64data) selec;
+		result = (float8) selec;
 	}
-	return result;
+	PG_RETURN_FLOAT8(result);
 }
 
 /*
@@ -251,18 +248,14 @@ eqsel(Oid opid,
  * but have comparable selectivity behavior.  See above comments
  * for eqsel().
  */
-float64
-neqsel(Oid opid,
-	   Oid relid,
-	   AttrNumber attno,
-	   Datum value,
-	   int32 flag)
+Datum
+neqsel(PG_FUNCTION_ARGS)
 {
-	float64		result;
+	float8		result;
 
-	result = eqsel(opid, relid, attno, value, flag);
-	*result = 1.0 - *result;
-	return result;
+	result = DatumGetFloat8(eqsel(fcinfo));
+	result = 1.0 - result;
+	PG_RETURN_FLOAT8(result);
 }
 
 /*
@@ -272,18 +265,18 @@ neqsel(Oid opid,
  * convert_to_scalar().  If it is applied to some other datatype,
  * it will return a default estimate.
  */
-float64
-scalarltsel(Oid opid,
-			Oid relid,
-			AttrNumber attno,
-			Datum value,
-			int32 flag)
+Datum
+scalarltsel(PG_FUNCTION_ARGS)
 {
-	float64		result;
+	Oid			opid = PG_GETARG_OID(0);
+	Oid			relid = PG_GETARG_OID(1);
+	AttrNumber	attno = PG_GETARG_INT16(2);
+	Datum		value = PG_GETARG_DATUM(3);
+	int32		flag = PG_GETARG_INT32(4);
+	float8		result;
 
-	result = (float64) palloc(sizeof(float64data));
 	if (!(flag & SEL_CONSTANT) || NONVALUE(attno) || NONVALUE(relid))
-		*result = DEFAULT_INEQ_SEL;
+		result = DEFAULT_INEQ_SEL;
 	else
 	{
 		HeapTuple	oprtuple;
@@ -322,8 +315,7 @@ scalarltsel(Oid opid,
 							  &loval, &hival))
 		{
 			/* no stats available, so default result */
-			*result = DEFAULT_INEQ_SEL;
-			return result;
+			PG_RETURN_FLOAT8(DEFAULT_INEQ_SEL);
 		}
 
 		/* Convert the values to a uniform comparison scale. */
@@ -344,8 +336,7 @@ scalarltsel(Oid opid,
 				pfree(DatumGetPointer(hival));
 				pfree(DatumGetPointer(loval));
 			}
-			*result = DEFAULT_INEQ_SEL;
-			return result;
+			PG_RETURN_FLOAT8(DEFAULT_INEQ_SEL);
 		}
 
 		/* release temp storage if needed */
@@ -364,7 +355,7 @@ scalarltsel(Oid opid,
 			 * point the constant is on.  But it seems better to assume
 			 * that the stats are wrong and return a default...
 			 */
-			*result = DEFAULT_INEQ_SEL;
+			result = DEFAULT_INEQ_SEL;
 		}
 		else if (val < low || val > high)
 		{
@@ -375,9 +366,9 @@ scalarltsel(Oid opid,
 			 * chance the stats are out of date.
 			 */
 			if (flag & SEL_RIGHT)
-				*result = (val < low) ? 0.001 : 0.999;
+				result = (val < low) ? 0.001 : 0.999;
 			else
-				*result = (val < low) ? 0.999 : 0.001;
+				result = (val < low) ? 0.999 : 0.001;
 		}
 		else
 		{
@@ -386,10 +377,10 @@ scalarltsel(Oid opid,
 				numerator = val - low;
 			else
 				numerator = high - val;
-			*result = numerator / denominator;
+			result = numerator / denominator;
 		}
 	}
-	return result;
+	PG_RETURN_FLOAT8(result);
 }
 
 /*
@@ -397,42 +388,37 @@ scalarltsel(Oid opid,
  *
  * See above comments for scalarltsel.
  */
-float64
-scalargtsel(Oid opid,
-			Oid relid,
-			AttrNumber attno,
-			Datum value,
-			int32 flag)
+Datum
+scalargtsel(PG_FUNCTION_ARGS)
 {
-	float64		result;
+	float8		result;
 
 	/*
 	 * Compute selectivity of "<", then invert --- but only if we were
 	 * able to produce a non-default estimate.
 	 */
-	result = scalarltsel(opid, relid, attno, value, flag);
-	if (*result != DEFAULT_INEQ_SEL)
-		*result = 1.0 - *result;
-	return result;
+	result = DatumGetFloat8(scalarltsel(fcinfo));
+	if (result != DEFAULT_INEQ_SEL)
+		result = 1.0 - result;
+	PG_RETURN_FLOAT8(result);
 }
 
 /*
  * patternsel			- Generic code for pattern-match selectivity.
  */
-static float64
-patternsel(Oid opid,
-		   Pattern_Type ptype,
-		   Oid relid,
-		   AttrNumber attno,
-		   Datum value,
-		   int32 flag)
+static Datum
+patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype)
 {
-	float64		result;
+	Oid			opid = PG_GETARG_OID(0);
+	Oid			relid = PG_GETARG_OID(1);
+	AttrNumber	attno = PG_GETARG_INT16(2);
+	Datum		value = PG_GETARG_DATUM(3);
+	int32		flag = PG_GETARG_INT32(4);
+	float8		result;
 
-	result = (float64) palloc(sizeof(float64data));
 	/* Must have a constant for the pattern, or cannot learn anything */
 	if ((flag & (SEL_CONSTANT | SEL_RIGHT)) != (SEL_CONSTANT | SEL_RIGHT))
-		*result = DEFAULT_MATCH_SEL;
+		result = DEFAULT_MATCH_SEL;
 	else
 	{
 		HeapTuple	oprtuple;
@@ -469,7 +455,12 @@ patternsel(Oid opid,
 			if (eqopr == InvalidOid)
 				elog(ERROR, "patternsel: no = operator for type %u", ltype);
 			eqcon = string_to_datum(prefix, ltype);
-			result = eqsel(eqopr, relid, attno, eqcon, SEL_CONSTANT|SEL_RIGHT);
+			result = DatumGetFloat8(DirectFunctionCall5(eqsel,
+									ObjectIdGetDatum(eqopr),
+									ObjectIdGetDatum(relid),
+									Int16GetDatum(attno),
+									eqcon,
+									Int32GetDatum(SEL_CONSTANT|SEL_RIGHT)));
 			pfree(DatumGetPointer(eqcon));
 		}
 		else
@@ -494,125 +485,103 @@ patternsel(Oid opid,
 				selec = 0.0;
 			else if (selec > 1.0)
 				selec = 1.0;
-			*result = (float64data) selec;
+			result = (float8) selec;
 		}
 		if (prefix)
 			pfree(prefix);
 		pfree(patt);
 	}
-	return result;
+	PG_RETURN_FLOAT8(result);
 }
 
 /*
  *		regexeqsel		- Selectivity of regular-expression pattern match.
  */
-float64
-regexeqsel(Oid opid,
-		   Oid relid,
-		   AttrNumber attno,
-		   Datum value,
-		   int32 flag)
+Datum
+regexeqsel(PG_FUNCTION_ARGS)
 {
-	return patternsel(opid, Pattern_Type_Regex, relid, attno, value, flag);
+	return patternsel(fcinfo, Pattern_Type_Regex);
 }
 
 /*
  *		icregexeqsel	- Selectivity of case-insensitive regex match.
  */
-float64
-icregexeqsel(Oid opid,
-			 Oid relid,
-			 AttrNumber attno,
-			 Datum value,
-			 int32 flag)
+Datum
+icregexeqsel(PG_FUNCTION_ARGS)
 {
-	return patternsel(opid, Pattern_Type_Regex_IC, relid, attno, value, flag);
+	return patternsel(fcinfo, Pattern_Type_Regex_IC);
 }
 
 /*
  *		likesel			- Selectivity of LIKE pattern match.
  */
-float64
-likesel(Oid opid,
-		Oid relid,
-		AttrNumber attno,
-		Datum value,
-		int32 flag)
+Datum
+likesel(PG_FUNCTION_ARGS)
 {
-	return patternsel(opid, Pattern_Type_Like, relid, attno, value, flag);
+	return patternsel(fcinfo, Pattern_Type_Like);
 }
 
 /*
  *		regexnesel		- Selectivity of regular-expression pattern non-match.
  */
-float64
-regexnesel(Oid opid,
-		   Oid relid,
-		   AttrNumber attno,
-		   Datum value,
-		   int32 flag)
+Datum
+regexnesel(PG_FUNCTION_ARGS)
 {
-	float64		result;
+	float8		result;
 
-	result = patternsel(opid, Pattern_Type_Regex, relid, attno, value, flag);
-	*result = 1.0 - *result;
-	return result;
+	result = DatumGetFloat8(patternsel(fcinfo, Pattern_Type_Regex));
+	result = 1.0 - result;
+	PG_RETURN_FLOAT8(result);
 }
 
 /*
  *		icregexnesel	- Selectivity of case-insensitive regex non-match.
  */
-float64
-icregexnesel(Oid opid,
-			 Oid relid,
-			 AttrNumber attno,
-			 Datum value,
-			 int32 flag)
+Datum
+icregexnesel(PG_FUNCTION_ARGS)
 {
-	float64		result;
+	float8		result;
 
-	result = patternsel(opid, Pattern_Type_Regex_IC, relid, attno, value, flag);
-	*result = 1.0 - *result;
-	return result;
+	result = DatumGetFloat8(patternsel(fcinfo, Pattern_Type_Regex_IC));
+	result = 1.0 - result;
+	PG_RETURN_FLOAT8(result);
 }
 
 /*
  *		nlikesel		- Selectivity of LIKE pattern non-match.
  */
-float64
-nlikesel(Oid opid,
-		 Oid relid,
-		 AttrNumber attno,
-		 Datum value,
-		 int32 flag)
+Datum
+nlikesel(PG_FUNCTION_ARGS)
 {
-	float64		result;
+	float8		result;
 
-	result = patternsel(opid, Pattern_Type_Like, relid, attno, value, flag);
-	*result = 1.0 - *result;
-	return result;
+	result = DatumGetFloat8(patternsel(fcinfo, Pattern_Type_Like));
+	result = 1.0 - result;
+	PG_RETURN_FLOAT8(result);
 }
 
 /*
  *		eqjoinsel		- Join selectivity of "="
  */
-float64
-eqjoinsel(Oid opid,
-		  Oid relid1,
-		  AttrNumber attno1,
-		  Oid relid2,
-		  AttrNumber attno2)
+Datum
+eqjoinsel(PG_FUNCTION_ARGS)
 {
-	float64		result;
-	float64data num1,
+#ifdef NOT_USED
+	Oid			opid = PG_GETARG_OID(0);
+#endif
+	Oid			relid1 = PG_GETARG_OID(1);
+	AttrNumber	attno1 = PG_GETARG_INT16(2);
+	Oid			relid2 = PG_GETARG_OID(3);
+	AttrNumber	attno2 = PG_GETARG_INT16(4);
+	float8		result;
+	float8		num1,
 				num2,
 				min;
 	bool		unknown1 = NONVALUE(relid1) || NONVALUE(attno1);
 	bool		unknown2 = NONVALUE(relid2) || NONVALUE(attno2);
 
-	result = (float64) palloc(sizeof(float64data));
 	if (unknown1 && unknown2)
-		*result = DEFAULT_EQ_SEL;
+		result = DEFAULT_EQ_SEL;
 	else
 	{
 		num1 = unknown1 ? 1.0 : get_attdisbursion(relid1, attno1, 0.01);
@@ -637,162 +606,106 @@ eqjoinsel(Oid opid,
 		 * about applying the operator to the most common values?
 		 */
 		min = (num1 < num2) ? num1 : num2;
-		*result = min;
+		result = min;
 	}
-	return result;
+	PG_RETURN_FLOAT8(result);
 }
 
 /*
  *		neqjoinsel		- Join selectivity of "!="
  */
-float64
-neqjoinsel(Oid opid,
-		   Oid relid1,
-		   AttrNumber attno1,
-		   Oid relid2,
-		   AttrNumber attno2)
+Datum
+neqjoinsel(PG_FUNCTION_ARGS)
 {
-	float64		result;
+	float8		result;
 
-	result = eqjoinsel(opid, relid1, attno1, relid2, attno2);
-	*result = 1.0 - *result;
-	return result;
+	result = DatumGetFloat8(eqjoinsel(fcinfo));
+	result = 1.0 - result;
+	PG_RETURN_FLOAT8(result);
 }
 
 /*
  *		scalarltjoinsel - Join selectivity of "<" and "<=" for scalars
  */
-float64
-scalarltjoinsel(Oid opid,
-				Oid relid1,
-				AttrNumber attno1,
-				Oid relid2,
-				AttrNumber attno2)
+Datum
+scalarltjoinsel(PG_FUNCTION_ARGS)
 {
-	float64		result;
-
-	result = (float64) palloc(sizeof(float64data));
-	*result = DEFAULT_INEQ_SEL;
-	return result;
+	PG_RETURN_FLOAT8(DEFAULT_INEQ_SEL);
 }
 
 /*
  *		scalargtjoinsel - Join selectivity of ">" and ">=" for scalars
  */
-float64
-scalargtjoinsel(Oid opid,
-				Oid relid1,
-				AttrNumber attno1,
-				Oid relid2,
-				AttrNumber attno2)
+Datum
+scalargtjoinsel(PG_FUNCTION_ARGS)
 {
-	float64		result;
-
-	result = (float64) palloc(sizeof(float64data));
-	*result = DEFAULT_INEQ_SEL;
-	return result;
+	PG_RETURN_FLOAT8(DEFAULT_INEQ_SEL);
 }
 
 /*
  *		regexeqjoinsel	- Join selectivity of regular-expression pattern match.
  */
-float64
-regexeqjoinsel(Oid opid,
-			   Oid relid1,
-			   AttrNumber attno1,
-			   Oid relid2,
-			   AttrNumber attno2)
+Datum
+regexeqjoinsel(PG_FUNCTION_ARGS)
 {
-	float64		result;
-
-	result = (float64) palloc(sizeof(float64data));
-	*result = DEFAULT_MATCH_SEL;
-	return result;
+	PG_RETURN_FLOAT8(DEFAULT_MATCH_SEL);
 }
 
 /*
  *		icregexeqjoinsel	- Join selectivity of case-insensitive regex match.
  */
-float64
-icregexeqjoinsel(Oid opid,
-				 Oid relid1,
-				 AttrNumber attno1,
-				 Oid relid2,
-				 AttrNumber attno2)
+Datum
+icregexeqjoinsel(PG_FUNCTION_ARGS)
 {
-	float64		result;
-
-	result = (float64) palloc(sizeof(float64data));
-	*result = DEFAULT_MATCH_SEL;
-	return result;
+	PG_RETURN_FLOAT8(DEFAULT_MATCH_SEL);
 }
 
 /*
  *		likejoinsel			- Join selectivity of LIKE pattern match.
  */
-float64
-likejoinsel(Oid opid,
-			Oid relid1,
-			AttrNumber attno1,
-			Oid relid2,
-			AttrNumber attno2)
+Datum
+likejoinsel(PG_FUNCTION_ARGS)
 {
-	float64		result;
-
-	result = (float64) palloc(sizeof(float64data));
-	*result = DEFAULT_MATCH_SEL;
-	return result;
+	PG_RETURN_FLOAT8(DEFAULT_MATCH_SEL);
 }
 
 /*
  *		regexnejoinsel	- Join selectivity of regex non-match.
  */
-float64
-regexnejoinsel(Oid opid,
-			   Oid relid1,
-			   AttrNumber attno1,
-			   Oid relid2,
-			   AttrNumber attno2)
+Datum
+regexnejoinsel(PG_FUNCTION_ARGS)
 {
-	float64		result;
+	float8		result;
 
-	result = regexeqjoinsel(opid, relid1, attno1, relid2, attno2);
-	*result = 1.0 - *result;
-	return result;
+	result = DatumGetFloat8(regexeqjoinsel(fcinfo));
+	result = 1.0 - result;
+	PG_RETURN_FLOAT8(result);
 }
 
 /*
  *		icregexnejoinsel	- Join selectivity of case-insensitive regex non-match.
  */
-float64
-icregexnejoinsel(Oid opid,
-				 Oid relid1,
-				 AttrNumber attno1,
-				 Oid relid2,
-				 AttrNumber attno2)
+Datum
+icregexnejoinsel(PG_FUNCTION_ARGS)
 {
-	float64		result;
+	float8		result;
 
-	result = icregexeqjoinsel(opid, relid1, attno1, relid2, attno2);
-	*result = 1.0 - *result;
-	return result;
+	result = DatumGetFloat8(icregexeqjoinsel(fcinfo));
+	result = 1.0 - result;
+	PG_RETURN_FLOAT8(result);
 }
 
 /*
  *		nlikejoinsel		- Join selectivity of LIKE pattern non-match.
  */
-float64
-nlikejoinsel(Oid opid,
-			 Oid relid1,
-			 AttrNumber attno1,
-			 Oid relid2,
-			 AttrNumber attno2)
+Datum
+nlikejoinsel(PG_FUNCTION_ARGS)
 {
-	float64		result;
+	float8		result;
 
-	result = likejoinsel(opid, relid1, attno1, relid2, attno2);
-	*result = 1.0 - *result;
-	return result;
+	result = DatumGetFloat8(likejoinsel(fcinfo));
+	result = 1.0 - result;
+	PG_RETURN_FLOAT8(result);
 }
 
 
@@ -1563,8 +1476,12 @@ prefix_selectivity(char *prefix,
 			 datatype);
 	prefixcon = string_to_datum(prefix, datatype);
 	/* Assume scalargtsel is appropriate for all supported types */
-	prefixsel = * scalargtsel(cmpopr, relid, attno,
-							  prefixcon, SEL_CONSTANT|SEL_RIGHT);
+	prefixsel = DatumGetFloat8(DirectFunctionCall5(scalargtsel,
+							   ObjectIdGetDatum(cmpopr),
+							   ObjectIdGetDatum(relid),
+							   Int16GetDatum(attno),
+							   prefixcon,
+							   Int32GetDatum(SEL_CONSTANT|SEL_RIGHT)));
 	pfree(DatumGetPointer(prefixcon));
 
 	/*
@@ -1582,8 +1499,12 @@ prefix_selectivity(char *prefix,
 				 datatype);
 		prefixcon = string_to_datum(greaterstr, datatype);
 		/* Assume scalarltsel is appropriate for all supported types */
-		topsel = * scalarltsel(cmpopr, relid, attno,
-							   prefixcon, SEL_CONSTANT|SEL_RIGHT);
+		topsel = DatumGetFloat8(DirectFunctionCall5(scalarltsel,
+								ObjectIdGetDatum(cmpopr),
+								ObjectIdGetDatum(relid),
+								Int16GetDatum(attno),
+								prefixcon,
+								Int32GetDatum(SEL_CONSTANT|SEL_RIGHT)));
 		pfree(DatumGetPointer(prefixcon));
 		pfree(greaterstr);
 
@@ -1966,13 +1887,16 @@ string_to_datum(const char *str, Oid datatype)
  *-------------------------------------------------------------------------
  */
 
-static void
-genericcostestimate(Query *root, RelOptInfo *rel,
-					IndexOptInfo *index, List *indexQuals,
-					Cost *indexStartupCost,
-					Cost *indexTotalCost,
-					Selectivity *indexSelectivity)
+static Datum
+genericcostestimate(PG_FUNCTION_ARGS)
 {
+	Query	   *root = (Query *) PG_GETARG_POINTER(0);
+	RelOptInfo *rel = (RelOptInfo *) PG_GETARG_POINTER(1);
+	IndexOptInfo *index = (IndexOptInfo *) PG_GETARG_POINTER(2);
+	List	   *indexQuals = (List *) PG_GETARG_POINTER(3);
+	Cost	   *indexStartupCost = (Cost *) PG_GETARG_POINTER(4);
+	Cost	   *indexTotalCost = (Cost *) PG_GETARG_POINTER(5);
+	Selectivity *indexSelectivity = (Selectivity *) PG_GETARG_POINTER(6);
 	double		numIndexTuples;
 	double		numIndexPages;
 
@@ -2007,52 +1931,35 @@ genericcostestimate(Query *root, RelOptInfo *rel,
 	*indexStartupCost = 0;
 	*indexTotalCost = numIndexPages +
 		(cpu_index_tuple_cost + cost_qual_eval(indexQuals)) * numIndexTuples;
+
+	/* No real return value ... */
+	PG_RETURN_POINTER(NULL);
 }
 
 /*
  * For first cut, just use generic function for all index types.
  */
 
-void
-btcostestimate(Query *root, RelOptInfo *rel,
-			   IndexOptInfo *index, List *indexQuals,
-			   Cost *indexStartupCost,
-			   Cost *indexTotalCost,
-			   Selectivity *indexSelectivity)
+Datum
+btcostestimate(PG_FUNCTION_ARGS)
 {
-	genericcostestimate(root, rel, index, indexQuals,
-					 indexStartupCost, indexTotalCost, indexSelectivity);
+	return genericcostestimate(fcinfo);
 }
 
-void
-rtcostestimate(Query *root, RelOptInfo *rel,
-			   IndexOptInfo *index, List *indexQuals,
-			   Cost *indexStartupCost,
-			   Cost *indexTotalCost,
-			   Selectivity *indexSelectivity)
+Datum
+rtcostestimate(PG_FUNCTION_ARGS)
 {
-	genericcostestimate(root, rel, index, indexQuals,
-					 indexStartupCost, indexTotalCost, indexSelectivity);
+	return genericcostestimate(fcinfo);
 }
 
-void
-hashcostestimate(Query *root, RelOptInfo *rel,
-				 IndexOptInfo *index, List *indexQuals,
-				 Cost *indexStartupCost,
-				 Cost *indexTotalCost,
-				 Selectivity *indexSelectivity)
+Datum
+hashcostestimate(PG_FUNCTION_ARGS)
 {
-	genericcostestimate(root, rel, index, indexQuals,
-					 indexStartupCost, indexTotalCost, indexSelectivity);
+	return genericcostestimate(fcinfo);
 }
 
-void
-gistcostestimate(Query *root, RelOptInfo *rel,
-				 IndexOptInfo *index, List *indexQuals,
-				 Cost *indexStartupCost,
-				 Cost *indexTotalCost,
-				 Selectivity *indexSelectivity)
+Datum
+gistcostestimate(PG_FUNCTION_ARGS)
 {
-	genericcostestimate(root, rel, index, indexQuals,
-					 indexStartupCost, indexTotalCost, indexSelectivity);
+	return genericcostestimate(fcinfo);
 }
