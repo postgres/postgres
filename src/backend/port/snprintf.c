@@ -49,7 +49,7 @@
 #include <sys/param.h>
 
 /* IRIX doesn't do 'long long' in va_arg(), so use a typedef */
-#ifdef HAVE_LONG_INT_64
+#ifdef HAVE_LONG_LONG_INT_64
 typedef long long long_long;
 #endif
 
@@ -75,7 +75,7 @@ typedef long long long_long;
  * causing nast effects.
  **************************************************************/
 
-/*static char _id[] = "$Id: snprintf.c,v 1.10.2.1 1998/12/12 21:31:20 momjian Exp $";*/
+/*static char _id[] = "$Id: snprintf.c,v 1.10.2.2 1998/12/18 07:03:29 momjian Exp $";*/
 static char *end;
 static int	SnprfOverflow;
 
@@ -122,7 +122,7 @@ vsnprintf(char *str, size_t count, const char *fmt,...)
 
 static void fmtstr __P((char *value, int ljust, int len, int zpad, int maxwidth));
 
-#ifndef HAVE_LONG_INT_64
+#ifndef HAVE_LONG_LONG_INT_64
 static void fmtnum __P((long value, int base, int dosign, int ljust, int len, int zpad));
 #else
 static void fmtnum __P((long_long value, int base, int dosign, int ljust, int len, int zpad));
@@ -136,7 +136,7 @@ static void
 dopr(char *buffer, const char *format,...)
 {
 	int			ch;
-#ifdef HAVE_LONG_INT_64
+#ifdef HAVE_LONG_LONG_INT_64
 	long_long	value;
 #else
 	long		value;
@@ -215,7 +215,7 @@ dopr(char *buffer, const char *format,...)
 						/* fmtnum(value,base,dosign,ljust,len,zpad) */
 						if (longflag)
 						{
-#ifdef HAVE_LONG_INT_64
+#ifdef HAVE_LONG_LONG_INT_64
 							if (longlongflag)
 								value = va_arg(args, long_long);
 							else
@@ -231,7 +231,7 @@ dopr(char *buffer, const char *format,...)
 						/* fmtnum(value,base,dosign,ljust,len,zpad) */
 						if (longflag)
 						{
-#ifdef HAVE_LONG_INT_64
+#ifdef HAVE_LONG_LONG_INT_64
 							if (longlongflag)
 								value = va_arg(args, long_long);
 							else
@@ -246,7 +246,7 @@ dopr(char *buffer, const char *format,...)
 					case 'D':
 						if (longflag)
 						{
-#ifdef HAVE_LONG_INT_64
+#ifdef HAVE_LONG_LONG_INT_64
 							if (longlongflag)
 								value = va_arg(args, long_long);
 							else
@@ -260,7 +260,7 @@ dopr(char *buffer, const char *format,...)
 					case 'x':
 						if (longflag)
 						{
-#ifdef HAVE_LONG_INT_64
+#ifdef HAVE_LONG_LONG_INT_64
 							if (longlongflag)
 								value = va_arg(args, long_long);
 							else
@@ -274,7 +274,7 @@ dopr(char *buffer, const char *format,...)
 					case 'X':
 						if (longflag)
 						{
-#ifdef HAVE_LONG_INT_64
+#ifdef HAVE_LONG_LONG_INT_64
 							if (longlongflag)
 								value = va_arg(args, long_long);
 							else
@@ -350,7 +350,7 @@ int			ljust,
 
 static void
 fmtnum(value, base, dosign, ljust, len, zpad)
-#ifdef HAVE_LONG_INT_64
+#ifdef HAVE_LONG_LONG_INT_64
 	long_long	value;
 #else
 	long		value;
@@ -362,7 +362,7 @@ int			base,
 			zpad;
 {
 	int			signvalue = 0;
-#ifdef HAVE_LONG_INT_64
+#ifdef HAVE_LONG_LONG_INT_64
 	unsigned long long uvalue;
 #else
 	unsigned long uvalue;
