@@ -8,7 +8,7 @@ import java.sql.*;
 import org.postgresql.largeobject.*;
 
 /*
- * $Id: BlobTest.java,v 1.8 2003/05/29 03:21:32 barry Exp $
+ * $Id: BlobTest.java,v 1.9 2003/08/15 18:45:11 barry Exp $
  *
  * Some simple tests based on problems reported by users. Hopefully these will
  * help prevent previous problems from re-occuring ;-)
@@ -54,7 +54,9 @@ public class BlobTest extends TestCase
 
 			// Now compare the blob & the file. Note this actually tests the
 			// InputStream implementation!
+			assertTrue(compareBlobsLOAPI());
 			assertTrue(compareBlobs());
+			assertTrue(compareClobs());
 
 			con.setAutoCommit(true);
 		}
@@ -153,10 +155,10 @@ public class BlobTest extends TestCase
 	}
 
 	/*
-	 * Helper - compares the blobs in a table with a local file. Note this alone
-	 * tests the InputStream methods!
+	 * Helper - compares the blobs in a table with a local file. Note this uses
+	 * the postgresql specific Large Object API
 	 */
-	private boolean compareBlobs() throws Exception
+	private boolean compareBlobsLOAPI() throws Exception
 	{
 		boolean result = true;
 
@@ -188,9 +190,96 @@ public class BlobTest extends TestCase
 			result = result && f == -1 && b == -1;
 
 			if (!result)
-				assertTrue("Blob compare failed at " + c + " of " + blob.size(), false);
+				assertTrue("Large Object API Blob compare failed at " + c + " of " + blob.size(), false);
 
 			blob.close();
+			fis.close();
+		}
+		rs.close();
+		st.close();
+
+		return result;
+	}
+
+	/*
+	 * Helper - compares the blobs in a table with a local file. This uses the 
+	 * jdbc java.sql.Blob api
+	 */
+	private boolean compareBlobs() throws Exception
+	{
+		boolean result = true;
+
+		Statement st = con.createStatement();
+		ResultSet rs = st.executeQuery(TestUtil.selectSQL("testblob", "id,lo"));
+		assertNotNull(rs);
+
+		while (rs.next())
+		{
+			String file = rs.getString(1);
+			Blob blob = rs.getBlob(2);
+
+			FileInputStream fis = new FileInputStream(file);
+			InputStream bis = blob.getBinaryStream();
+
+			int f = fis.read();
+			int b = bis.read();
+			int c = 0;
+			while (f >= 0 && b >= 0 & result)
+			{
+				result = (f == b);
+				f = fis.read();
+				b = bis.read();
+				c++;
+			}
+			result = result && f == -1 && b == -1;
+
+			if (!result)
+				assertTrue("JDBC API Blob compare failed at " + c + " of " + blob.length(), false);
+
+			bis.close();
+			fis.close();
+		}
+		rs.close();
+		st.close();
+
+		return result;
+	}
+
+	/*
+	 * Helper - compares the clobs in a table with a local file. 
+	 */
+	private boolean compareClobs() throws Exception
+	{
+		boolean result = true;
+
+		Statement st = con.createStatement();
+		ResultSet rs = st.executeQuery(TestUtil.selectSQL("testblob", "id,lo"));
+		assertNotNull(rs);
+
+		while (rs.next())
+		{
+			String file = rs.getString(1);
+			Clob clob = rs.getClob(2);
+
+			FileInputStream fis = new FileInputStream(file);
+			InputStream bis = clob.getAsciiStream();
+
+			int f = fis.read();
+			int b = bis.read();
+			int c = 0;
+			while (f >= 0 && b >= 0 & result)
+			{
+				result = (f == b);
+				f = fis.read();
+				b = bis.read();
+				c++;
+			}
+			result = result && f == -1 && b == -1;
+
+			if (!result)
+				assertTrue("Clob compare failed at " + c + " of " + clob.length(), false);
+
+			bis.close();
 			fis.close();
 		}
 		rs.close();
