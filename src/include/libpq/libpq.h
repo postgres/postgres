@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq.h,v 1.12 1998/02/26 04:41:51 momjian Exp $
+ * $Id: libpq.h,v 1.13 1998/03/02 05:42:06 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -282,5 +282,6 @@ extern void pq_async_notify(void);
 extern int	StreamServerPort(char *hostName, short portName, int *fdP);
 extern int	StreamConnection(int server_fd, Port *port);
 extern void StreamClose(int sock);
+extern void StreamDoUnlink(void);
 
 #endif							/* LIBPQ_H */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.39 1998/02/26 04:31:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.40 1998/03/02 05:41:53 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -564,8 +564,8 @@ static char sock_path[MAXPGPATH + 1] = "";
  * Shutdown routine for backend connection
  * If a Unix socket is used for communication, explicitly close it.
  */
-static void
-do_unlink()
+void
+StreamDoUnlink()
 {
 	if (sock_path[0])
 		unlink(sock_path);
@@ -645,7 +645,6 @@ StreamServerPort(char *hostName, short portName, int *fdP)
 	if (family == AF_UNIX)
 	{
 		chmod(sock_path, 0777);
-		atexit(do_unlink);
 	}
 	return (STATUS_OK);
 }
