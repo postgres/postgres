@@ -3,7 +3,7 @@
  *
  * Copyright 2000-2002 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.83 2002/10/15 02:24:15 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.84 2002/10/23 19:23:56 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -493,7 +493,8 @@ exec_command(const char *cmd,
 	/* help */
 	else if (strcmp(cmd, "h") == 0 || strcmp(cmd, "help") == 0)
 	{
-		helpSQL(options_string ? &options_string[strspn(options_string, " \t\n\r")] : NULL);
+		helpSQL(options_string ? &options_string[strspn(options_string, " \t\n\r")] : NULL,
+				pset.popt.topt.pager);
 		/* set pointer to end of line */
 		if (string)
 			string += strlen(string);

@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.48 2002/10/15 16:44:21 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.49 2002/10/23 19:23:56 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -514,4 +514,47 @@ SendQuery(const char *query)
 #endif
 
 	return success;
+}
+
+
+/*
+ * PageOutput
+ *
+ * Tests if pager is needed and returns appropriate FILE pointer.
+ */
+FILE *
+PageOutput(int lines, bool pager)
+{
+	/* check whether we need / can / are supposed to use pager */
+	if (pager
+#ifndef WIN32
+		&&
+		isatty(fileno(stdin)) &&
+		isatty(fileno(stdout))
+#endif
+		)
+	{
+		const char *pagerprog;
+
+#ifdef TIOCGWINSZ
+		int			result;
+		struct winsize screen_size;
+
+		result = ioctl(fileno(stdout), TIOCGWINSZ, &screen_size);
+		if (result == -1 || lines > screen_size.ws_row)
+		{
+#endif
+			pagerprog = getenv("PAGER");
+			if (!pagerprog)
+				pagerprog = DEFAULT_PAGER;
+#ifndef WIN32
+			pqsignal(SIGPIPE, SIG_IGN);
+#endif
+			return popen(pagerprog, "w");
+#ifdef TIOCGWINSZ
+		}
+#endif
+	}
+
+	return stdout;
 }

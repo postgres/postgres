@@ -3,9 +3,10 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/print.c,v 1.32 2002/10/03 17:09:42 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/print.c,v 1.33 2002/10/23 19:23:57 momjian Exp $
  */
 #include "postgres_fe.h"
+#include "common.h"
 #include "print.h"
 
 #include <math.h>
@@ -970,9 +971,7 @@ printTable(const char *title,
 {
 	const char *default_footer[] = {NULL};
 	unsigned short int border = opt->border;
-	FILE	   *pagerfd = NULL,
-			   *output;
-
+	FILE		*output;
 
 	if (opt->format == PRINT_NOTHING)
 		return;
@@ -983,25 +982,12 @@ printTable(const char *title,
 	if (opt->format != PRINT_HTML && border > 2)
 		border = 2;
 
-
-	/* check whether we need / can / are supposed to use pager */
-	if (fout == stdout && opt->pager
-#ifndef WIN32
-		&&
-		isatty(fileno(stdin)) &&
-		isatty(fileno(stdout))
-#endif
-		)
+	if (fout == stdout)
 	{
-		const char *pagerprog;
-
-#ifdef TIOCGWINSZ
-		unsigned int col_count = 0,
-					row_count = 0,
-					lines;
+		int col_count = 0,
+			row_count = 0,
+			lines;
 		const char *const * ptr;
-		int			result;
-		struct winsize screen_size;
 
 		/* rough estimate of columns and rows */
 		if (headers)
@@ -1020,30 +1006,10 @@ printTable(const char *title,
 		if (footers && !opt->tuples_only)
 			for (ptr = footers; *ptr; ptr++)
 				lines++;
-
-		result = ioctl(fileno(stdout), TIOCGWINSZ, &screen_size);
-		if (result == -1 || lines > screen_size.ws_row)
-		{
-#endif
-			pagerprog = getenv("PAGER");
-			if (!pagerprog)
-				pagerprog = DEFAULT_PAGER;
-			pagerfd = popen(pagerprog, "w");
-#ifdef TIOCGWINSZ
-		}
-#endif
-	}
-
-	if (pagerfd)
-	{
-		output = pagerfd;
-#ifndef WIN32
-		pqsignal(SIGPIPE, SIG_IGN);
-#endif
+		output = PageOutput(lines, opt->pager);
 	}
 	else
 		output = fout;
-
 
 	/* print the stuff */
 
@@ -1077,9 +1043,10 @@ printTable(const char *title,
 			fprintf(stderr, "+ Oops, you shouldn't see this!\n");
 	}
 
-	if (pagerfd)
+	/* Only close if we used the pager */
+	if (fout == stdout && output != stdout)
 	{
-		pclose(pagerfd);
+		pclose(output);
 #ifndef WIN32
 		pqsignal(SIGPIPE, SIG_DFL);
 #endif

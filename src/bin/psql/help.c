@@ -3,9 +3,10 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.58 2002/10/18 22:05:36 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.59 2002/10/23 19:23:56 momjian Exp $
  */
 #include "postgres_fe.h"
+#include "common.h"
 #include "print.h"
 #include "help.h"
 
@@ -161,48 +162,11 @@ struct winsize
 void
 slashUsage(bool pager)
 {
-	FILE	   *output,
-			   *pagerfd = NULL;
+	FILE	   *output;
 
-	/* check whether we need / can / are supposed to use pager */
-	if (pager
-#ifndef WIN32
-		&&
-		isatty(fileno(stdin)) &&
-		isatty(fileno(stdout))
-#endif
-		)
-	{
-		const char *pagerprog;
+	output = PageOutput(50, pager);
 
-#ifdef TIOCGWINSZ
-		int			result;
-		struct winsize screen_size;
-
-		result = ioctl(fileno(stdout), TIOCGWINSZ, &screen_size);
-		if (result == -1 || 50 > screen_size.ws_row)
-		{
-#endif
-			pagerprog = getenv("PAGER");
-			if (!pagerprog)
-				pagerprog = DEFAULT_PAGER;
-			pagerfd = popen(pagerprog, "w");
-#ifdef TIOCGWINSZ
-		}
-#endif
-	}
-
-	if (pagerfd)
-	{
-		output = pagerfd;
-#ifndef WIN32
-		pqsignal(SIGPIPE, SIG_IGN);
-#endif
-	}
-	else
-		output = stdout;
-
-	/* if you add/remove a line here, change the row test above */
+	/* if you add/remove a line here, change the row count above */
 
 	/*
 	 * if this " is the start of the string then it ought to end there to
@@ -262,9 +226,9 @@ slashUsage(bool pager)
 	fprintf(output, _(" \\z [PATTERN]   list table access privileges (same as \\dp)\n"));
 	fprintf(output, _(" \\! [COMMAND]   execute command in shell or start interactive shell\n"));
 
-	if (pagerfd)
+	if (output != stdout)
 	{
-		pclose(pagerfd);
+		pclose(output);
 #ifndef WIN32
 		pqsignal(SIGPIPE, SIG_DFL);
 #endif
@@ -278,7 +242,7 @@ slashUsage(bool pager)
  *
  */
 void
-helpSQL(const char *topic)
+helpSQL(const char *topic, bool pager)
 {
 #define VALUE_OR_NULL(a) ((a) ? (a) : "")
 
@@ -286,21 +250,31 @@ helpSQL(const char *topic)
 	{
 		int			i;
 		int			items_per_column = (QL_HELP_COUNT + 2) / 3;
+		FILE		*output;
 
-		puts(_("Available help:"));
+		output = PageOutput(items_per_column, pager);
+
+		fputs(_("Available help:\n"), output);
 
 		for (i = 0; i < items_per_column; i++)
 		{
-			printf("  %-26s%-26s",
+			fprintf(output, "  %-26s%-26s",
 				   VALUE_OR_NULL(QL_HELP[i].cmd),
 				   VALUE_OR_NULL(QL_HELP[i + items_per_column].cmd));
 			if (i + 2 * items_per_column < QL_HELP_COUNT)
-				printf("%-26s",
+				fprintf(output, "%-26s",
 				   VALUE_OR_NULL(QL_HELP[i + 2 * items_per_column].cmd));
-			fputc('\n', stdout);
+			fputc('\n', output);
+		}
+		/* Only close if we used the pager */
+		if (output != stdout)
+		{
+			pclose(output);
+#ifndef WIN32
+			pqsignal(SIGPIPE, SIG_DFL);
+#endif
 		}
 	}
-
 	else
 	{
 		int			i;
