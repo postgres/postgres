@@ -5,7 +5,7 @@
  * to contain some useful information. Mechanism differs wildly across
  * platforms.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/ps_status.c,v 1.10 2001/11/05 17:46:30 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/ps_status.c,v 1.11 2001/11/06 01:15:29 tgl Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * various details abducted from various places
@@ -59,7 +59,7 @@ extern char **environ;
 #define PS_USE_PS_STRINGS
 #elif defined(BSD) || defined(__bsdi__) || defined(__hurd__)
 #define PS_USE_CHANGE_ARGV
-#elif defined(__linux__) || defined(_AIX) || defined(__sgi) || (defined(sun) && !defined(BSD)) || defined(ultrix) || defined(__ksr__) || defined(__osf__) || defined(__QNX__) || defined(__svr4__) || defined(__svr5__)
+#elif defined(__linux__) || defined(_AIX) || defined(__sgi) || (defined(sun) && !defined(BSD)) || defined(ultrix) || defined(__ksr__) || defined(__osf__) || defined(__QNX__) || defined(__svr4__) || defined(__svr5__) || defined(__darwin__)
 #define PS_USE_CLOBBER_ARGV
 #else
 #define PS_USE_NONE
