@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.h,v 1.8 2000/02/16 13:15:26 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.h,v 1.9 2000/02/20 14:28:20 petere Exp $
  */
 #ifndef COMMAND_H
 #define COMMAND_H
@@ -31,7 +31,7 @@ HandleSlashCmds(const char *line,
 				PQExpBuffer query_buf,
 				const char **end_of_cmd);
 
-bool
+int
 process_file(char *filename);
 
 bool

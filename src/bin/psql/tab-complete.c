@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.13 2000/02/20 02:37:40 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.14 2000/02/20 14:28:20 petere Exp $
  */
 
 /*-----------
@@ -198,13 +198,18 @@ char ** psql_completion(char *text, int start, int end)
 
     static char * backslash_commands[] = {
         "\\connect", "\\copy", "\\d", "\\di", "\\di", "\\ds", "\\dS", "\\dv",
-        "\\da", "\\df", "\\do", "\\dt", "\\e", "\\echo", "\\g", "\\h", "\\i", "\\l",
+        "\\da", "\\df", "\\do", "\\dt", "\\e", "\\echo", "\\encoding",
+        "\\g", "\\h", "\\i", "\\l",
         "\\lo_import", "\\lo_export", "\\lo_list", "\\lo_unlink",
-        "\\o", "\\p", "\\pset", "\\q", "\\qecho", "\\r", "\\set", "\\t", "\\x",
-        "\\w", "\\z", "\\!", NULL
+        "\\o", "\\p", "\\pset", "\\q", "\\qecho", "\\r", "\\set", "\\t", "\\unset",
+        "\\x", "\\w", "\\z", "\\!", NULL
     };
 
     (void)end; /* not used */
+
+#ifdef HAVE_RL_COMPLETION_APPEND_CHARACTER
+        rl_completion_append_character = ' ';
+#endif
 
     /* Clear a few things. */
     completion_charp = NULL;
@@ -547,7 +552,8 @@ char ** psql_completion(char *text, int start, int end)
     /* If we still don't have anything to match we have to fabricate some sort
        of default list. If we were to just return NULL, readline automatically
        attempts filename completion, and that's usually no good. */
-    if (matches == NULL) {
+    if (matches == NULL)
+    {
         COMPLETE_WITH_CONST("");
 #ifdef HAVE_RL_COMPLETION_APPEND_CHARACTER
         rl_completion_append_character = '\0';

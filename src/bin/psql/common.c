@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.15 2000/02/20 02:37:40 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.16 2000/02/20 14:28:20 petere Exp $
  */
 #include "postgres.h"
 #include "common.h"
@@ -19,6 +19,7 @@
 #include <signal.h>
 #ifndef WIN32
 #include <unistd.h>				/* for write() */
+#include <setjmp.h>
 #else
 #include <io.h>                 /* for _write() */
 #include <win32.h>
@@ -34,7 +35,7 @@
 #include "copy.h"
 #include "prompt.h"
 #include "print.h"
-
+#include "mainloop.h"
 
 
 /*
@@ -184,7 +185,7 @@ simple_prompt(const char *prompt, int maxlen, bool echo)
 	if (!destination)
 		return NULL;
 	if (prompt)
-		fputs(prompt, stdout);
+		fputs(prompt, stderr);
 
 #ifdef HAVE_TERMIOS_H
 	if (!echo)
@@ -238,14 +239,22 @@ simple_prompt(const char *prompt, int maxlen, bool echo)
  */
 
 static PGconn *cancelConn;
+volatile bool cancel_pressed;
 
 #define write_stderr(String) write(fileno(stderr), String, strlen(String))
 
-static void
+void
 handle_sigint(SIGNAL_ARGS)
 {
 	if (cancelConn == NULL)
+#ifndef WIN32
+        siglongjmp(main_loop_jmp, 1);
+#else
 		return;
+#endif
+
+    cancel_pressed = true;
+
 	/* Try to send cancel request */
 	if (PQrequestCancel(cancelConn))
 		write_stderr("\nCancel request sent\n");
@@ -287,15 +296,8 @@ PSQLexec(const char *query)
 		return NULL;
 
 	cancelConn = pset.db;
-#ifndef WIN32
-	pqsignal(SIGINT, handle_sigint);	/* control-C => cancel */
-#endif
-
 	res = PQexec(pset.db, query);
-
-#ifndef WIN32
-	pqsignal(SIGINT, SIG_DFL);	/* now control-C is back to normal */
-#endif
+    cancelConn = NULL;
 
 	if (PQstatus(pset.db) == CONNECTION_BAD)
 	{
@@ -316,6 +318,7 @@ PSQLexec(const char *query)
             SetVariable(pset.vars, "HOST", NULL);
             SetVariable(pset.vars, "PORT", NULL);
             SetVariable(pset.vars, "USER", NULL);
+            SetVariable(pset.vars, "ENCODING", NULL);
 			return NULL;
 		}
 		else
@@ -359,7 +362,7 @@ SendQuery(const char *query)
 
 	if (!pset.db)
 	{
-        psql_error("you are currently not connected to a database.\n");
+        psql_error("You are currently not connected to a database.\n");
 		return false;
 	}
 
@@ -384,15 +387,8 @@ SendQuery(const char *query)
     }
 
 	cancelConn = pset.db;
-#ifndef WIN32
-	pqsignal(SIGINT, handle_sigint);
-#endif
-
 	results = PQexec(pset.db, query);
-
-#ifndef WIN32
-	pqsignal(SIGINT, SIG_DFL);
-#endif
+    cancelConn = NULL;
 
 	if (results == NULL)
 	{
@@ -494,6 +490,7 @@ SendQuery(const char *query)
                 SetVariable(pset.vars, "HOST", NULL);
                 SetVariable(pset.vars, "PORT", NULL);
                 SetVariable(pset.vars, "USER", NULL);
+                SetVariable(pset.vars, "ENCODING", NULL);
 				return false;
 			}
 			else

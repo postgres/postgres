@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/input.c,v 1.11 2000/02/20 02:37:40 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/input.c,v 1.12 2000/02/20 14:28:20 petere Exp $
  */
 #include "postgres.h"
 #include "input.h"
@@ -148,6 +148,8 @@ initializeInput(int flags)
 		}
 	}
 #endif
+
+    atexit(finishInput);
 }
 
 

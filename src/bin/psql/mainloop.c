@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.c,v 1.21 2000/02/20 02:37:40 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.c,v 1.22 2000/02/20 14:28:20 petere Exp $
  */
 #include "postgres.h"
 #include "mainloop.h"
@@ -16,6 +16,11 @@
 #include "common.h"
 #include "command.h"
 
+#ifndef WIN32
+#include <setjmp.h>
+
+sigjmp_buf main_loop_jmp;
+#endif
 
 
 /*
@@ -88,6 +93,40 @@ MainLoop(FILE *source)
 	/* main loop to get queries and execute them */
 	while (1)
 	{
+        /*
+         * Welcome code for Control-C
+         */
+        if (cancel_pressed)
+        {
+            cancel_pressed = false;
+            if (!pset.cur_cmd_interactive)
+            {
+                /*
+                 * You get here if you stopped a script with Ctrl-C and a query
+                 * cancel was issued. In that case we don't do the longjmp, so
+                 * the query routine can finish nicely.
+                 */
+                successResult = EXIT_USER;
+                break;
+            }
+        }
+#ifndef WIN32
+        if (sigsetjmp(main_loop_jmp, 1) != 0)
+        {
+            /* got here with longjmp */
+            if (pset.cur_cmd_interactive)
+            {
+                fputc('\n', stdout);
+                resetPQExpBuffer(query_buf);
+            }
+            else
+            {
+                successResult = EXIT_USER;
+                break;
+            }            
+        }
+#endif
+
 		if (slashCmdStatus == CMD_NEWEDIT)
 		{
 			/*
@@ -213,7 +252,7 @@ MainLoop(FILE *source)
 
 		/* echo back if flag is set */
         var = GetVariable(pset.vars, "ECHO");
-        if (var && strcmp(var, "all")==0)
+        if (!pset.cur_cmd_interactive && var && strcmp(var, "all")==0)
             puts(line);
         fflush(stdout);
 

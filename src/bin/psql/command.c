@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.21 2000/02/20 02:37:40 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.22 2000/02/20 14:28:20 petere Exp $
  */
 #include "postgres.h"
 #include "command.h"
@@ -36,6 +36,9 @@
 #ifdef MULTIBYTE
 #include "miscadmin.h"
 #include "mb/pg_wchar.h"
+#else
+/* Grand unified hard-coded badness */
+#define pg_encoding_to_char(x) "SQL_ASCII"
 #endif
 
 
@@ -351,30 +354,29 @@ exec_command(const char *cmd,
             fputs("\n", fout);
 	}
 
-#ifdef MULTIBYTE
-	/* \eset -- set client side encoding */
-	else if (strcmp(cmd, "eset") == 0)
+	/* \encoding -- set client side encoding */
+	else if (strcmp(cmd, "encoding") == 0)
 	{
 		char *encoding = scan_option(&string, OT_NORMAL, NULL);
-		if (PQsetClientEncoding(pset.db, encoding) == -1)
-		{
-			psql_error("\\%s: invalid encoding\n", cmd);
-		}
-		/* save encoding info into psql internal data */
-		pset.encoding = PQclientEncoding(pset.db);
-		free(encoding);
-	}
-	/* \eshow -- show encoding info */
-	else if (strcmp(cmd, "eshow") == 0)
-	{
-		int encoding = PQclientEncoding(pset.db);
-		if (encoding == -1)
-		{
-			psql_error("\\%s: there is no connection\n", cmd);
-		}
-		printf("%s\n", pg_encoding_to_char(encoding));
-	}
+
+        if (!encoding)
+            puts(pg_encoding_to_char(pset.encoding));
+        else
+        {
+#ifdef MULTIBYTE
+            if (PQsetClientEncoding(pset.db, encoding) == -1)
+                psql_error("%s: invalid encoding name\n", encoding);
+
+            /* save encoding info into psql internal data */
+            pset.encoding = PQclientEncoding(pset.db);
+            SetVariable(pset.vars, "ENCODING", pg_encoding_to_char(pset.encoding));
+#else
+            psql_error("\\%s: multi-byte support is not enabled\n", cmd);
 #endif
+        }
+        free(encoding);
+	}
+
 	/* \f -- change field separator */
 	else if (strcmp(cmd, "f") == 0)
     {
@@ -425,7 +427,7 @@ exec_command(const char *cmd,
 		}
 		else
         {
-			success = process_file(fname);
+			success = process_file(fname) == EXIT_SUCCESS;
             free (fname);
         }
 	}
@@ -1148,6 +1150,7 @@ do_connect(const char *new_dbname, const char *new_user)
     SetVariable(pset.vars, "USER", NULL);
     SetVariable(pset.vars, "HOST", NULL);
     SetVariable(pset.vars, "PORT", NULL);
+    SetVariable(pset.vars, "ENCODING", NULL);
 
 	/* If dbname is "" then use old name, else new one (even if NULL) */
 	if (oldconn && new_dbname && PQdb(oldconn) && strcmp(new_dbname, "") == 0)
@@ -1247,6 +1250,7 @@ do_connect(const char *new_dbname, const char *new_user)
     SetVariable(pset.vars, "USER", PQuser(pset.db));
     SetVariable(pset.vars, "HOST", PQhost(pset.db));
     SetVariable(pset.vars, "PORT", PQport(pset.db));
+    SetVariable(pset.vars, "ENCODING", pg_encoding_to_char(pset.encoding));
 
     pset.issuper = test_superuser(PQuser(pset.db));
 
@@ -1471,7 +1475,7 @@ do_edit(const char *filename_arg, PQExpBuffer query_buf)
  * Read commands from filename and then them to the main processing loop
  * Handler for \i, but can be used for other things as well.
  */
-bool
+int
 process_file(char *filename)
 {
 	FILE	   *fd;
@@ -1494,7 +1498,7 @@ process_file(char *filename)
 	result = MainLoop(fd);
 	fclose(fd);
 	pset.inputfile = oldfilename;
-	return (result == EXIT_SUCCESS);
+	return result;
 }
 
 

@@ -33,12 +33,6 @@ typedef unsigned int slock_t;
 #ifdef HAVE_INT_TIMEZONE
 #undef HAVE_INT_TIMEZONE
 #endif
-
- /*
-  * currently undefined as I (teunis@computersupportcentre.com) have not
-  * checked this yet
-  */
-/* #define HAVE_SIGSETJMP 1 */
 #endif
 
 #if defined(__powerpc__)

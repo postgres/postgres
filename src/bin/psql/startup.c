@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.24 2000/02/16 13:15:26 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.25 2000/02/20 14:28:20 petere Exp $
  */
 #include "postgres.h"
 
@@ -33,6 +33,14 @@
 #include "print.h"
 #include "settings.h"
 #include "variables.h"
+
+#ifdef MULTIBYTE
+#include "miscadmin.h"
+#include "mb/pg_wchar.h"
+#else
+/* XXX Grand unified hard-coded badness; this should go into libpq */
+#define pg_encoding_to_char(x) "SQL_ASCII"
+#endif
 
 /*
  * Global psql options
@@ -65,7 +73,7 @@ struct adhoc_opts
 };
 
 static void
-parse_options(int argc, char *argv[], struct adhoc_opts * options);
+parse_psql_options(int argc, char *argv[], struct adhoc_opts * options);
 
 static void
 process_psqlrc(void);
@@ -121,7 +129,7 @@ main(int argc, char *argv[])
 	pset.getPassword = false;
 #endif
 
-	parse_options(argc, argv, &options);
+	parse_psql_options(argc, argv, &options);
 
     if (!pset.popt.topt.fieldSep)
         pset.popt.topt.fieldSep = xstrdup(DEFAULT_FIELD_SEP);
@@ -191,6 +199,11 @@ main(int argc, char *argv[])
     SetVariable(pset.vars, "USER", PQuser(pset.db));
     SetVariable(pset.vars, "HOST", PQhost(pset.db));
     SetVariable(pset.vars, "PORT", PQport(pset.db));
+    SetVariable(pset.vars, "ENCODING", pg_encoding_to_char(pset.encoding));
+
+#ifndef WIN32
+	pqsignal(SIGINT, handle_sigint);	/* control-C => cancel */
+#endif
 
 	/*
      * Now find something to do
@@ -200,7 +213,7 @@ main(int argc, char *argv[])
      * process file given by -f
      */
 	if (options.action == ACT_FILE)
-		successResult = process_file(options.action_string) ? 0 : 1;
+		successResult = process_file(options.action_string);
 	/*
      * process slash command if one was given to -c
      */
@@ -208,9 +221,10 @@ main(int argc, char *argv[])
     {
         const char * value;
 
-        if ((value = GetVariable(pset.vars, "ECHO")) && strcmp(value, "full")==0)
+        if ((value = GetVariable(pset.vars, "ECHO")) && strcmp(value, "all")==0)
             puts(options.action_string);
-		successResult = HandleSlashCmds(options.action_string, NULL, NULL) != CMD_ERROR ? 0 : 1;
+		successResult = HandleSlashCmds(options.action_string, NULL, NULL) != CMD_ERROR
+            ? EXIT_SUCCESS : EXIT_FAILURE;
     }
 	/*
      * If the query given to -c was a normal one, send it
@@ -219,9 +233,10 @@ main(int argc, char *argv[])
     {
         const char * value;
 
-        if ((value = GetVariable(pset.vars, "ECHO")) && strcmp(value, "full")==0)
+        if ((value = GetVariable(pset.vars, "ECHO")) && strcmp(value, "all")==0)
             puts(options.action_string);
-		successResult = SendQuery(options.action_string) ? 0 : 1;
+		successResult = SendQuery(options.action_string)
+            ? EXIT_SUCCESS : EXIT_FAILURE;
     }
 	/*
      * or otherwise enter interactive main loop
@@ -246,14 +261,11 @@ main(int argc, char *argv[])
         if (!pset.notty)
             initializeInput(options.no_readline ? 0 : 1);
 		successResult = MainLoop(stdin);
-        if (!pset.notty)
-            finishInput();
     }
 
 	/* clean up */
 	PQfinish(pset.db);
 	setQFout(NULL);
-	DestroyVariableSpace(pset.vars);
 
 	return successResult;
 }
@@ -272,7 +284,7 @@ char        *__progname = "psql";
 #endif
 
 static void
-parse_options(int argc, char *argv[], struct adhoc_opts * options)
+parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 {
 #ifdef HAVE_GETOPT_LONG
 	static struct option long_options[] =

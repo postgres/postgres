@@ -403,6 +403,17 @@ extern int  inet_aton(const char *cp, struct in_addr * addr);
 /* Set to 1 if you have sigsetjmp() */
 #undef HAVE_SIGSETJMP
 
+/*
+ * When there is no sigsetjmp, its functionality is provided by plain
+ * setjmp. Incidentally, nothing provides setjmp's functionality in
+ * that case.
+ */
+#ifndef HAVE_SIGSETJMP
+# define sigjmp_buf jmp_buf
+# define sigsetjmp(x,y)	setjmp(x)
+# define siglongjmp longjmp
+#endif
+
 /* Set to 1 if you have sysconf() */
 #undef HAVE_SYSCONF
 
