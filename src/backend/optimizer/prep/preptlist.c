@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/preptlist.c,v 1.70 2004/08/29 04:12:34 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/preptlist.c,v 1.71 2004/11/06 17:46:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -200,6 +200,7 @@ expand_targetlist(List *tlist, int command_type,
 													InvalidOid,
 													atttype,
 													COERCE_IMPLICIT_CAST,
+													false,
 													false);
 					}
 					else

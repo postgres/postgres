@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/parser/parse_coerce.h,v 1.58 2004/08/29 04:13:09 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/parser/parse_coerce.h,v 1.59 2004/11/06 17:46:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,7 +50,8 @@ extern Node *coerce_type(ParseState *pstate, Node *node,
 			Oid inputTypeId, Oid targetTypeId, int32 targetTypeMod,
 			CoercionContext ccontext, CoercionForm cformat);
 extern Node *coerce_to_domain(Node *arg, Oid baseTypeId, Oid typeId,
-				 CoercionForm cformat, bool hideInputCoercion);
+				 CoercionForm cformat, bool hideInputCoercion,
+				 bool lengthCoercionDone);
 
 extern Node *coerce_to_boolean(ParseState *pstate, Node *node,
 				  const char *constructName);
