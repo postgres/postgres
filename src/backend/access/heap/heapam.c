@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.4 1996/10/20 08:31:57 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.5 1996/10/21 05:59:44 scrappy Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -112,6 +112,38 @@
 
 #include "access/valid.h"
 #include "utils/relcache.h"
+
+#ifndef HAVE_MEMMOVE
+# include "regex/utils.h"
+#else
+# include <string.h>
+#endif
+
+#include <stdio.h>
+#include "storage/ipc.h" 
+#include "storage/bufmgr.h"
+
+#include "utils/palloc.h"
+
+#include "access/hio.h"
+
+#include "storage/spin.h"
+#include "utils/hsearch.h"
+#include "storage/shmem.h"
+#include "storage/lock.h"  
+#include "storage/lmgr.h"
+
+#include "storage/smgr.h"
+
+#include "catalog/catalog.h"
+
+#include "access/transam.h"
+
+#include "access/xact.h"
+
+#include "utils/inval.h"
+
+#include "utils/memutils.h"
 
 static bool	ImmediateInvalidation;
 

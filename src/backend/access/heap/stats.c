@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/heap/Attic/stats.c,v 1.3 1996/10/20 08:32:01 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/heap/Attic/stats.c,v 1.4 1996/10/21 05:59:49 scrappy Exp $
  *
  * NOTES
  *    initam should be moved someplace else.
@@ -46,6 +46,16 @@
 #include "nodes/memnodes.h"
 
 #include "utils/mcxt.h"
+
+#include "utils/palloc.h"
+
+#ifndef HAVE_MEMMOVE
+# include "regex/utils.h"
+#else
+# include <string.h>
+#endif
+
+#include <stdio.h>
 
 /* ----------------
  *      InitHeapAccessStatistics
