@@ -2,7 +2,7 @@
 TODO list for PostgreSQL
 ========================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Wed Mar 23 17:57:00 EST 2005
+Last updated:		Wed Mar 23 21:11:00 EST 2005
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -181,12 +181,12 @@ Data Types
   zero the bits
 * Prevent INET cast to CIDR from droping netmask, SELECT '1.1.1.1'::inet::cidr
 * Add 'tid != tid ' operator for use in corruption recovery
-* Add ANSI INTERVAL handling
+* Add ISo INTERVAL handling
 	o Add support for day-time syntax, INTERVAL '1 2:03:04'
 	  DAY TO SECOND
 	o Add support for year-month syntax, INTERVAL '50-6' YEAR TO MONTH
-	o Interpret syntax that isn't uniquely ANSI or PG, like '1:30' or
-	  '1' as ANSI syntax, e.g. interpret '1:30' MINUTE TO SECOND as 
+	o Interpret syntax that isn't uniquely ISO or PG, like '1:30' or
+	  '1' as ISO syntax, e.g. interpret '1:30' MINUTE TO SECOND as 
 	  '1 minute 30 seconds'
 	o Interpret INTERVAL '1 year' MONTH as CAST (INTERVAL '1 year' AS
 	  INTERVAL MONTH), and this should return '12 months'
@@ -646,7 +646,7 @@ Exotic Features
 
 * Add SQL99 WITH clause to SELECT
 * Add SQL99 WITH RECURSIVE to SELECT
-* Add pre-parsing phase that converts non-ANSI syntax to supported
+* Add pre-parsing phase that converts non-ISO syntax to supported
   syntax
 
   This could allow SQL written for other databases to run without
