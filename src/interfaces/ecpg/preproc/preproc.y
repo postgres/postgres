@@ -14,6 +14,7 @@
 #endif
 
 #define STRUCT_DEPTH 128
+#define EMPTY make1_str("")
 
 /*
  * Variables containing simple states.
@@ -21,7 +22,7 @@
 int	struct_level = 0;
 char	errortext[128];
 static char	*connection = NULL;
-static int      QueryIsRule = 0, ForUpdateNotAllowed = 0;
+static int      QueryIsRule = 0, ForUpdateNotAllowed = 0, FoundInto = 0;
 static struct this_type actual_type[STRUCT_DEPTH];
 static char     *actual_storage[STRUCT_DEPTH];
 
@@ -784,7 +785,7 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 %type  <str>    target_list target_el update_target_list
 %type  <str>    update_target_el opt_id relation_name database_name
 %type  <str>    access_method attr_name class index_name name func_name
-%type  <str>    file_name AexprConst ParamNo TypeId
+%type  <str>    file_name AexprConst ParamNo TypeId com_expr
 %type  <str>	in_expr_nodes a_expr b_expr TruncateStmt CommentStmt
 %type  <str> 	opt_indirection expr_list extract_list extract_arg
 %type  <str>	position_list substr_list substr_from
@@ -794,10 +795,10 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 %type  <str>	opt_collate Datetime datetime opt_timezone opt_interval
 %type  <str>	numeric a_expr_or_null row_expr row_descriptor row_list
 %type  <str>	SelectStmt SubSelect result OptTemp OptTempType OptTempScope
-%type  <str>	opt_table opt_union opt_unique sort_clause sortby_list
+%type  <str>	opt_table opt_all opt_unique sort_clause sortby_list
 %type  <str>	sortby OptUseOp opt_inh_star relation_name_list name_list
 %type  <str>	group_clause having_clause from_clause 
-%type  <str>	table_list join_outer where_clause relation_expr row_op sub_type
+%type  <str>	table_list join_outer where_clause relation_expr sub_type
 %type  <str>	opt_column_list insert_rest InsertStmt OptimizableStmt
 %type  <str>    columnList DeleteStmt LockStmt UpdateStmt CursorStmt
 %type  <str>    NotifyStmt columnElem copy_dirn UnlistenStmt
@@ -809,7 +810,7 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 %type  <str>    index_opt_unique IndexStmt set_opt func_return def_rest
 %type  <str>    func_args_list func_args opt_with ProcedureStmt def_arg
 %type  <str>    def_elem def_list definition def_name def_type DefineStmt
-%type  <str>    opt_instead event event_object RuleActionList,
+%type  <str>    opt_instead event event_object RuleActionList opt_using
 %type  <str>	RuleActionStmtOrEmpty RuleActionMulti join_list func_as
 %type  <str>    RuleStmt opt_column opt_name oper_argtypes
 %type  <str>    MathOp RemoveFuncStmt aggr_argtype for_update_clause
@@ -838,8 +839,8 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 %type  <str>    constraints_set_list constraints_set_namelist comment_fn
 %type  <str>	constraints_set_mode comment_type comment_cl comment_ag
 
-%type  <str>	ECPGWhenever ECPGConnect connection_target ECPGOpen opt_using
-%type  <str>	indicator ECPGExecute ecpg_expr ECPGPrepare
+%type  <str>	ECPGWhenever ECPGConnect connection_target ECPGOpen
+%type  <str>	indicator ECPGExecute ECPGPrepare ecpg_using
 %type  <str>    storage_clause opt_initializer c_anything blockstart
 %type  <str>    blockend variable_list variable c_thing c_term
 %type  <str>	opt_pointer cvariable ECPGDisconnect dis_name
@@ -1086,7 +1087,7 @@ DropUserStmt:  DROP USER UserId
 		;
 
 user_passwd_clause:  WITH PASSWORD UserId	{ $$ = cat2_str(make1_str("with password") , $3); }
-			| /*EMPTY*/		{ $$ = make1_str(""); }
+			| /*EMPTY*/		{ $$ = EMPTY; }
 		;
 
 user_createdb_clause:  CREATEDB
@@ -1097,7 +1098,7 @@ user_createdb_clause:  CREATEDB
 				{
 					$$ = make1_str("nocreatedb");
 				}
-			| /*EMPTY*/		{ $$ = make1_str(""); }
+			| /*EMPTY*/		{ $$ = EMPTY; }
 		;
 
 user_createuser_clause:  CREATEUSER
@@ -1122,11 +1123,11 @@ user_group_list:  user_group_list ',' UserId
 		;
 
 user_group_clause:  IN GROUP user_group_list	{ $$ = cat2_str(make1_str("in group"), $3); }
-			| /*EMPTY*/		{ $$ = make1_str(""); }
+			| /*EMPTY*/		{ $$ = EMPTY; }
 		;
 
 user_valid_clause:  VALID UNTIL Sconst			{ $$ = cat2_str(make1_str("valid until"), $3); }
-			| /*EMPTY*/			{ $$ = make1_str(""); }
+			| /*EMPTY*/			{ $$ = EMPTY; }
 		;
 
 /*****************************************************************************
@@ -1322,21 +1323,22 @@ copy_file_name:  Sconst					{ $$ = $1; }
 		;
 
 opt_binary:  BINARY					{ $$ = make1_str("binary"); }
-		| /*EMPTY*/				{ $$ = make1_str(""); }
+		| /*EMPTY*/				{ $$ = EMPTY; }
 		;
 
 opt_with_copy:	WITH OIDS				{ $$ = make1_str("with oids"); }
-		| /*EMPTY*/				{ $$ = make1_str(""); }
+		| /*EMPTY*/				{ $$ = EMPTY; }
 		;
 
 /*
  * the default copy delimiter is tab but the user can configure it
  */
-copy_delimiter:  USING DELIMITERS Sconst		{ $$ = cat2_str(make1_str("using delimiters"), $3); }
-		| /*EMPTY*/				{ $$ = make1_str(""); }
+copy_delimiter:  opt_using DELIMITERS Sconst		{ $$ = cat3_str($1, make1_str("delimiters"), $3); }
+		| /*EMPTY*/				{ $$ = EMPTY; }
 		;
 
-
+opt_using:	USING		{ $$ = make1_str("using"); }
+		| /* EMPTY */	{ $$ = EMPTY; }
 
 /*****************************************************************************
  *
@@ -1358,7 +1360,7 @@ OptTemp:  OptTempType                           { $$ = $1; }
 
 OptTempType:	  TEMP		{ $$ = make1_str("temp"); }
 		| TEMPORARY	{ $$ = make1_str("temporary"); }
-		| /* EMPTY */	{ $$ = make1_str(""); }
+		| /* EMPTY */	{ $$ = EMPTY; }
 		;
 
 OptTempScope:  GLOBAL
@@ -1378,7 +1380,7 @@ OptTableElementList:  OptTableElementList ',' OptTableElement
 				{
 					$$ = $1;
 				}
-			| /*EMPTY*/	{ $$ = make1_str(""); }
+			| /*EMPTY*/	{ $$ = EMPTY; }
 		;
 
 OptTableElement:  columnDef		{ $$ = $1; }
@@ -1396,7 +1398,7 @@ columnDef:  ColId Typename ColQualifier
 		;
 
 ColQualifier:  ColQualList	{ $$ = $1; }
-			| /*EMPTY*/	{ $$ = make1_str(""); }
+			| /*EMPTY*/	{ $$ = EMPTY; }
 		;
 
 ColQualList:  ColQualList ColConstraint	{ $$ = cat2_str($1,$2); }
@@ -1409,7 +1411,7 @@ ColPrimaryKey:  PRIMARY KEY
                 }
               | /*EMPTY*/
 		{
-			$$ = make1_str("");
+			$$ = EMPTY;
 		}
                 ;
 
@@ -1422,15 +1424,18 @@ ColConstraint:
 				{ $$ = $1; }
 		;
 
-/* DEFAULT NULL is already the default for Postgres.
+/*
+ * DEFAULT NULL is already the default for Postgres.
  * Bue define it here and carry it forward into the system
  * to make it explicit.
  * - thomas 1998-09-13
+ *
  * WITH NULL and NULL are not SQL92-standard syntax elements,
  * so leave them out. Use DEFAULT NULL to explicitly indicate
  * that a column may have that value. WITH NULL leads to
  * shift/reduce conflicts with WITH TIME ZONE anyway.
  * - thomas 1999-01-08
+ *
  * DEFAULT expression must be b_expr not a_expr to prevent shift/reduce
  * conflict on NOT (since NOT might start a subsequent NOT NULL constraint,
  * or be part of a_expr NOT LIKE or similar constructs).
@@ -1462,7 +1467,7 @@ ColConstraintElem:  CHECK '(' a_expr ')'
 			| REFERENCES ColId opt_column_list key_match key_actions
 				{
 					fprintf(stderr, "CREATE TABLE/FOREIGN KEY clause ignored; not yet implemented");
-					$$ = make1_str("");
+					$$ = EMPTY;
 				}
 		;
 
@@ -1499,12 +1504,12 @@ ConstraintElem:  CHECK '(' a_expr ')'
 
 key_match:  MATCH FULL					{ $$ = make1_str("match full"); }
 		| MATCH PARTIAL					{ $$ = make1_str("match partial"); }
-		| /*EMPTY*/					{ $$ = make1_str(""); }
+		| /*EMPTY*/					{ $$ = EMPTY; }
 		;
 
 key_actions:  key_action key_action		{ $$ = cat2_str($1, $2); }
 		| key_action					{ $$ = $1; }
-		| /*EMPTY*/					{ $$ = make1_str(""); }
+		| /*EMPTY*/					{ $$ = EMPTY; }
 		;
 
 key_action:  ON DELETE key_reference	{ $$ = cat2_str(make1_str("on delete"), $3); }
@@ -1518,17 +1523,25 @@ key_reference:  NO ACTION	{ $$ = make1_str("no action"); }
 		;
 
 OptInherit:  INHERITS '(' relation_name_list ')' { $$ = make3_str(make1_str("inherits ("), $3, make1_str(")")); }
-		| /*EMPTY*/ { $$ = make1_str(""); }
+		| /*EMPTY*/ { $$ = EMPTY; }
 		;
 
-CreateAsStmt:  CREATE OptTemp TABLE relation_name OptCreateAs AS SubSelect
+/*
+ * Note: CREATE TABLE ... AS SELECT ... is just another spelling for
+ * SELECT ... INTO.
+ */
+
+CreateAsStmt:  CREATE OptTemp TABLE relation_name OptCreateAs AS SelectStmt
 		{
+			if (FoundInto == 1)
+				yyerror("CREATE TABLE/AS SELECT may not specify INTO");
+
 			$$ = cat5_str(cat3_str(make1_str("create"), $2, make1_str("table")), $4, $5, make1_str("as"), $7); 
 		}
 		;
 
 OptCreateAs:  '(' CreateAsList ')' { $$ = make3_str(make1_str("("), $2, make1_str(")")); }
-			| /*EMPTY*/ { $$ = make1_str(""); }	
+			| /*EMPTY*/ { $$ = EMPTY; }	
 		;
 
 CreateAsList:  CreateAsList ',' CreateAsElement	{ $$ = cat3_str($1, make1_str(","), $3); }
@@ -1553,7 +1566,7 @@ CreateSeqStmt:  CREATE SEQUENCE relation_name OptSeqList
 
 OptSeqList:  OptSeqList OptSeqElem
 				{ $$ = cat2_str($1, $2); }
-			|	{ $$ = make1_str(""); }
+			|	{ $$ = EMPTY; }
 		;
 
 OptSeqElem:  CACHE IntegerOnly
@@ -1622,7 +1635,7 @@ CreatePLangStmt:  CREATE PLangTrusted PROCEDURAL LANGUAGE Sconst
 		;
 
 PLangTrusted:		TRUSTED { $$ = make1_str("trusted"); }
-			|	{ $$ = make1_str(""); }
+			|	{ $$ = EMPTY; }
 
 DropPLangStmt:  DROP PROCEDURAL LANGUAGE Sconst
 			{
@@ -1684,7 +1697,7 @@ TriggerForSpec:  FOR TriggerForOpt TriggerForType
 		;
 
 TriggerForOpt:  EACH					{ $$ = make1_str("each"); }
-			| /*EMPTY*/			{ $$ = make1_str(""); }
+			| /*EMPTY*/			{ $$ = EMPTY; }
 		;
 
 TriggerForType:  ROW					{ $$ = make1_str("row"); }
@@ -1696,7 +1709,7 @@ TriggerFuncArgs:  TriggerFuncArg
 			| TriggerFuncArgs ',' TriggerFuncArg
 				{ $$ = cat3_str($1, make1_str(","), $3); }
 			| /*EMPTY*/
-				{ $$ = make1_str(""); }
+				{ $$ = EMPTY; }
 		;
 
 TriggerFuncArg:  Iconst
@@ -1713,7 +1726,7 @@ TriggerFuncArg:  Iconst
 
 OptConstrFromTable:                     /* Empty */
                                 {
-                                        $$ = make1_str("");
+                                        $$ = EMPTY;
                                 }
                 | FROM relation_name
                                 {
@@ -1723,7 +1736,7 @@ OptConstrFromTable:                     /* Empty */
 
 OptConstrTrigDeferrable:        /* Empty */
                                 {
-                                        $$ = make1_str("");
+                                        $$ = EMPTY;
                                 }
                 | DEFERRABLE
                                 {
@@ -1737,7 +1750,7 @@ OptConstrTrigDeferrable:        /* Empty */
 
 OptConstrTrigInitdeferred:      /* Empty */
                                 {
-                                        $$ = make1_str("");
+                                        $$ = EMPTY;
                                 }
                 | INITIALLY DEFERRED
                                 {
@@ -1783,8 +1796,7 @@ def_type:  OPERATOR		{ $$ = make1_str("operator"); }
 def_name:  PROCEDURE		{ $$ = make1_str("procedure"); }
 		| JOIN		{ $$ = make1_str("join"); }
 		| ColId		{ $$ = $1; }
-		| MathOp	{ $$ = $1; }
-		| Op		{ $$ = $1; }
+		| all_Op	{ $$ = $1; }
 		;
 
 definition:  '(' def_list ')'				{ $$ = make3_str(make1_str("("), $2, make1_str(")")); }
@@ -1876,7 +1888,7 @@ opt_direction:	FORWARD		{ $$ = make1_str("forward"); }
 					fprintf(stderr, "FETCH/ABSOLUTE not supported, using RELATIVE");
 					$$ = make1_str("absolute");
 				}
-		| /*EMPTY*/	{ $$ = make1_str(""); /* default */ }
+		| /*EMPTY*/	{ $$ = EMPTY; /* default */ }
 		;
 
 fetch_how_many:   Iconst        { $$ = $1; }
@@ -1884,13 +1896,13 @@ fetch_how_many:   Iconst        { $$ = $1; }
 		| ALL		{ $$ = make1_str("all"); }
 		| NEXT		{ $$ = make1_str("next"); }
 		| PRIOR		{ $$ = make1_str("prior"); }
-		| /*EMPTY*/	{ $$ = make1_str(""); /*default*/ }
+		| /*EMPTY*/	{ $$ = EMPTY; /*default*/ }
 		;
 
 opt_portal_name:  IN name		{ $$ = cat2_str(make1_str("in"), $2); }
 		| FROM name		{ $$ = cat2_str(make1_str("from"), $2); }
 /*		| name			{ $$ = cat2_str(make1_str("in"), $1); */
-		| /*EMPTY*/		{ $$ = make1_str(""); }
+		| /*EMPTY*/		{ $$ = EMPTY; }
 		;
 
 /*****************************************************************************
@@ -2070,11 +2082,11 @@ IndexStmt:	CREATE index_opt_unique INDEX index_name ON relation_name
 		;
 
 index_opt_unique:  UNIQUE	{ $$ = make1_str("unique"); }
-		| /*EMPTY*/	{ $$ = make1_str(""); }
+		| /*EMPTY*/	{ $$ = EMPTY; }
 		;
 
 access_method_clause:  USING access_method	{ $$ = cat2_str(make1_str("using"), $2); }
-		| /*EMPTY*/			{ $$ = make1_str(""); }
+		| /*EMPTY*/			{ $$ = EMPTY; }
 		;
 
 index_params:  index_list			{ $$ = $1; }
@@ -2099,7 +2111,7 @@ index_elem:  attr_name opt_type opt_class
 
 opt_type:  ':' Typename		{ $$ = cat2_str(make1_str(":"), $2); }
 		| FOR Typename	{ $$ = cat2_str(make1_str("for"), $2); }
-		| /*EMPTY*/	{ $$ = make1_str(""); }
+		| /*EMPTY*/	{ $$ = EMPTY; }
 		;
 
 /* opt_class "WITH class" conflicts with preceeding opt_type
@@ -2110,7 +2122,7 @@ opt_type:  ':' Typename		{ $$ = cat2_str(make1_str(":"), $2); }
  */
 opt_class:  class				{ $$ = $1; }
 		| USING class			{ $$ = cat2_str(make1_str("using"), $2); }
-		| /*EMPTY*/			{ $$ = make1_str(""); }
+		| /*EMPTY*/			{ $$ = EMPTY; }
 		;
 
 /*****************************************************************************
@@ -2163,7 +2175,7 @@ ProcedureStmt:	CREATE FUNCTION func_name func_args
 				}
 
 opt_with:  WITH definition			{ $$ = cat2_str(make1_str("with"), $2); }
-		| /*EMPTY*/			{ $$ = make1_str(""); }
+		| /*EMPTY*/			{ $$ = EMPTY; }
 		;
 
 func_args:  '(' func_args_list ')'		{ $$ = make3_str(make1_str("("), $2, make1_str(")")); }
@@ -2185,7 +2197,7 @@ func_return:  set_opt TypeId
 		;
 
 set_opt:  SETOF					{ $$ = make1_str("setof"); }
-		| /*EMPTY*/			{ $$ = make1_str(""); }
+		| /*EMPTY*/			{ $$ = EMPTY; }
 		;
 
 
@@ -2243,20 +2255,6 @@ RemoveOperStmt:  DROP OPERATOR all_Op '(' oper_argtypes ')'
 				}
 		;
 
-all_Op:  Op | MathOp;
-
-MathOp:	'+'				{ $$ = make1_str("+"); }
-		| '-'			{ $$ = make1_str("-"); }
-		| '*'			{ $$ = make1_str("*"); }
-		| '%'			{ $$ = make1_str("%"); }
-                | '^'                   { $$ = make1_str("^"); }
-                | '|'                   { $$ = make1_str("|"); }
-		| '/'			{ $$ = make1_str("/"); }
-		| '<'			{ $$ = make1_str("<"); }
-		| '>'			{ $$ = make1_str(">"); }
-		| '='			{ $$ = make1_str("="); }
-		;
-
 oper_argtypes:	name
 				{
 				   yyerror("parser: argument type missing (use NONE for unary operators)");
@@ -2286,11 +2284,11 @@ RenameStmt:  ALTER TABLE relation_name opt_inh_star
 		;
 
 opt_name:  name							{ $$ = $1; }
-		| /*EMPTY*/					{ $$ = make1_str(""); }
+		| /*EMPTY*/					{ $$ = EMPTY; }
 		;
 
 opt_column:  COLUMN					{ $$ = make1_str("colmunn"); }
-		| /*EMPTY*/				{ $$ = make1_str(""); }
+		| /*EMPTY*/				{ $$ = EMPTY; }
 		;
 
 
@@ -2332,7 +2330,7 @@ RuleActionStmt:        InsertStmt
 		| NotifyStmt
                 ;
 RuleActionStmtOrEmpty: RuleActionStmt	{ $$ = $1; }
-               |       /*EMPTY*/        { $$ = make1_str(""); }
+               |       /*EMPTY*/        { $$ = EMPTY; }
                ;
 
 event_object:  relation_name '.' attr_name
@@ -2353,7 +2351,7 @@ event:	SELECT					{ $$ = make1_str("select"); }
 		 ;
 
 opt_instead:  INSTEAD					{ $$ = make1_str("instead"); }
-		| /*EMPTY*/				{ $$ = make1_str(""); }
+		| /*EMPTY*/				{ $$ = EMPTY; }
 		;
 
 
@@ -2462,7 +2460,7 @@ CreatedbStmt:  CREATE DATABASE database_name WITH opt_database1 opt_database2
 		;
 
 opt_database1:  LOCATION '=' location	{ $$ = cat2_str(make1_str("location ="), $3); }
-		| /*EMPTY*/			{ $$ = make1_str(""); }
+		| /*EMPTY*/			{ $$ = EMPTY; }
 		;
 
 opt_database2:  ENCODING '=' encoding   { $$ = cat2_str(make1_str("encoding ="), $3); }
@@ -2471,12 +2469,12 @@ opt_database2:  ENCODING '=' encoding   { $$ = cat2_str(make1_str("encoding ="),
 
 location:  Sconst				{ $$ = $1; }
 		| DEFAULT			{ $$ = make1_str("default"); }
-		| /*EMPTY*/			{ $$ = make1_str(""); }
+		| /*EMPTY*/			{ $$ = EMPTY; }
 		;
 
 encoding:  Sconst		{ $$ = $1; }
 		| DEFAULT	{ $$ = make1_str("default"); }
-		| /*EMPTY*/	{ $$ = make1_str(""); }
+		| /*EMPTY*/	{ $$ = EMPTY; }
                ;
 
 /*****************************************************************************
@@ -2527,15 +2525,15 @@ VacuumStmt:  VACUUM opt_verbose opt_analyze
 		;
 
 opt_verbose:  VERBOSE					{ $$ = make1_str("verbose"); }
-		| /*EMPTY*/				{ $$ = make1_str(""); }
+		| /*EMPTY*/				{ $$ = EMPTY; }
 		;
 
 opt_analyze:  ANALYZE					{ $$ = make1_str("analyse"); }
-		| /*EMPTY*/				{ $$ = make1_str(""); }
+		| /*EMPTY*/				{ $$ = EMPTY; }
 		;
 
 opt_va_list:  '(' va_list ')'				{ $$ = make3_str(make1_str("("), $2, make1_str(")")); }
-		| /*EMPTY*/				{ $$ = make1_str(""); }
+		| /*EMPTY*/				{ $$ = EMPTY; }
 		;
 
 va_list:  name
@@ -2620,7 +2618,7 @@ insert_rest:  VALUES '(' target_list ')'
 		;
 
 opt_column_list:  '(' columnList ')'			{ $$ = make3_str(make1_str("("), $2, make1_str(")")); }
-		| /*EMPTY*/				{ $$ = make1_str(""); }
+		| /*EMPTY*/				{ $$ = EMPTY; }
 		;
 
 columnList:
@@ -2658,7 +2656,7 @@ LockStmt:  LOCK_P opt_table relation_name opt_lock
 		;
 
 opt_lock:  IN lock_type MODE            { $$ = cat3_str(make1_str("in"), $2, make1_str("mode")); }
-                | /*EMPTY*/             { $$ = make1_str("");}
+                | /*EMPTY*/             { $$ = EMPTY;}
                 ;
 
 lock_type:  SHARE ROW EXCLUSIVE 	{ $$ = make1_str("share row exclusive"); }
@@ -2727,11 +2725,11 @@ CursorStmt:  DECLARE name opt_cursor CURSOR FOR
 				}
 		;
 
-opt_cursor:  BINARY             { $$ = make1_str("binary"); }
-               | INSENSITIVE	{ $$ = make1_str("insensitive"); }
-               | SCROLL         { $$ = make1_str("scroll"); }
+opt_cursor:  BINARY             	{ $$ = make1_str("binary"); }
+               | INSENSITIVE		{ $$ = make1_str("insensitive"); }
+               | SCROLL        		{ $$ = make1_str("scroll"); }
                | INSENSITIVE SCROLL	{ $$ = make1_str("insensitive scroll"); }
-               | /*EMPTY*/      { $$ = make1_str(""); }
+               | /*EMPTY*/      	{ $$ = EMPTY; }
                ;
 
 /*****************************************************************************
@@ -2765,23 +2763,24 @@ SelectStmt:      select_clause sort_clause for_update_clause opt_select_limit
  */
 select_clause: '(' select_clause ')'
                         {
-                               $$ = make3_str(make1_str("("), $2, make1_str(")")); 
+                                $$ = make3_str(make1_str("("), $2, make1_str(")")); 
                         }
                 | SubSelect
                         {
-                               $$ = $1; 
+				FoundInto = 0;
+                                $$ = $1; 
                         }
                 | select_clause EXCEPT select_clause
 			{
 				$$ = cat3_str($1, make1_str("except"), $3);
 				ForUpdateNotAllowed = 1;
 			}
-		| select_clause UNION opt_union select_clause
+		| select_clause UNION opt_all select_clause
 			{
 				$$ = cat4_str($1, make1_str("union"), $3, $4);
 				ForUpdateNotAllowed = 1;
 			}
-		| select_clause INTERSECT opt_union select_clause
+		| select_clause INTERSECT opt_all select_clause
 			{
 				$$ = cat3_str($1, make1_str("intersect"), $3);
 				ForUpdateNotAllowed = 1;
@@ -2798,27 +2797,29 @@ SubSelect:     SELECT opt_unique target_list
 				}
 		;
 
-result:  INTO OptTemp opt_table relation_name		{ $$= cat4_str(make1_str("into"), $2, $3, $4); }
-		| INTO into_list			{ $$ = make1_str(""); }
-		| /*EMPTY*/				{ $$ = make1_str(""); }
+result:  INTO OptTemp opt_table relation_name		{ FoundInto = 1;
+							  $$= cat4_str(make1_str("into"), $2, $3, $4);
+							}
+		| INTO into_list			{ $$ = EMPTY; }
+		| /*EMPTY*/				{ $$ = EMPTY; }
 		;
 
 opt_table:  TABLE					{ $$ = make1_str("table"); }
-		| /*EMPTY*/				{ $$ = make1_str(""); }
+		| /*EMPTY*/				{ $$ = EMPTY; }
 		;
 
-opt_union:  ALL						{ $$ = make1_str("all"); }
-		| /*EMPTY*/				{ $$ = make1_str(""); }
+opt_all:  ALL						{ $$ = make1_str("all"); }
+		| /*EMPTY*/				{ $$ = EMPTY; }
 		;
 
 opt_unique:  DISTINCT					{ $$ = make1_str("distinct"); }
 		| DISTINCT ON ColId			{ $$ = cat2_str(make1_str("distinct on"), $3); }
 		| ALL					{ $$ = make1_str("all"); }
-		| /*EMPTY*/				{ $$ = make1_str(""); }
+		| /*EMPTY*/				{ $$ = EMPTY; }
 		;
 
 sort_clause:  ORDER BY sortby_list			{ $$ = cat2_str(make1_str("order by"), $3); }
-		| /*EMPTY*/				{ $$ = make1_str(""); }
+		| /*EMPTY*/				{ $$ = EMPTY; }
 		;
 
 sortby_list:  sortby					{ $$ = $1; }
@@ -2831,12 +2832,10 @@ sortby: a_expr OptUseOp
                                 }
 		;
 
-OptUseOp:  USING Op				{ $$ = cat2_str(make1_str("using"), $2); }
-		| USING '<'			{ $$ = make1_str("using <"); }
-		| USING '>'			{ $$ = make1_str("using >"); }
+OptUseOp:  USING all_Op				{ $$ = cat2_str(make1_str("using"), $2); }
 		| ASC				{ $$ = make1_str("asc"); }
 		| DESC				{ $$ = make1_str("desc"); }
-		| /*EMPTY*/			{ $$ = make1_str(""); }
+		| /*EMPTY*/			{ $$ = EMPTY; }
 		;
 
 opt_select_limit:      LIMIT select_limit_value ',' select_offset_value
@@ -2850,7 +2849,7 @@ opt_select_limit:      LIMIT select_limit_value ',' select_offset_value
                | OFFSET select_offset_value
                        { $$ = cat2_str(make1_str("offset"), $2); }
                | /* EMPTY */
-                       { $$ = make1_str(""); }
+                       { $$ = EMPTY; }
                ;
 
 select_limit_value:	Iconst	{ $$ = $1; }
@@ -2870,7 +2869,7 @@ select_offset_value:  	Iconst	{ $$ = $1; }
  *	cases for these.
  */
 opt_inh_star:  '*'					{ $$ = make1_str("*"); }
-		| /*EMPTY*/				{ $$ = make1_str(""); }
+		| /*EMPTY*/				{ $$ = EMPTY; }
 		;
 
 relation_name_list:  name_list { $$ = $1; };
@@ -2882,14 +2881,14 @@ name_list:  name
 		;
 
 group_clause:  GROUP BY expr_list			{ $$ = cat2_str(make1_str("group by"), $3); }
-		| /*EMPTY*/				{ $$ = make1_str(""); }
+		| /*EMPTY*/				{ $$ = EMPTY; }
 		;
 
 having_clause:  HAVING a_expr
 				{
 					$$ = cat2_str(make1_str("having"), $2);
 				}
-		| /*EMPTY*/		{ $$ = make1_str(""); }
+		| /*EMPTY*/		{ $$ = EMPTY; }
 		;
 
 for_update_clause:  FOR UPDATE update_list
@@ -2902,7 +2901,7 @@ for_update_clause:  FOR UPDATE update_list
 		}
 		| /* EMPTY */
                 {
-                        $$ = make1_str("");
+                        $$ = EMPTY;
                 }
                 ;
 update_list:  OF va_list
@@ -2911,7 +2910,7 @@ update_list:  OF va_list
 	      }
               | /* EMPTY */
               {
-                        $$ = make1_str("");
+                        $$ = EMPTY;
               }
               ;
 
@@ -2929,7 +2928,7 @@ from_clause:  FROM from_expr
 		}
 		| /* EMPTY */
 		{
-			$$ = make1_str("");
+			$$ = EMPTY;
 		}
 
 
@@ -3033,12 +3032,12 @@ join_type:  FULL join_outer
 				}
                 | /* EMPTY */
                                 {
-                                        $$ = make1_str("");
+                                        $$ = EMPTY;
 				}
 
 
 join_outer:  OUTER_P				{ $$ = make1_str("outer"); }
-		| /*EMPTY*/			{ $$ = make1_str("");  /* no qualifiers */ }
+		| /*EMPTY*/			{ $$ = EMPTY;  /* no qualifiers */ }
 		;
 
 /* JOIN qualification clauses
@@ -3064,7 +3063,7 @@ using_expr:  ColId
 		;
 
 where_clause:  WHERE a_expr			{ $$ = cat2_str(make1_str("where"), $2); }
-		| /*EMPTY*/				{ $$ = make1_str("");  /* no qualifiers */ }
+		| /*EMPTY*/				{ $$ = EMPTY;  /* no qualifiers */ }
 		;
 
 relation_expr:	relation_name
@@ -3097,7 +3096,7 @@ opt_array_bounds:  '[' ']' opt_array_bounds
 			{
                             $$.index1 = -1;
                             $$.index2 = -1;
-                            $$.str= make1_str("");
+                            $$.str= EMPTY;
                         }
 		;
 
@@ -3222,7 +3221,7 @@ opt_float:  '(' Iconst ')'
 				}
 		| /*EMPTY*/
 				{
-					$$ = make1_str("");
+					$$ = EMPTY;
 				}
 		;
 
@@ -3248,7 +3247,7 @@ opt_numeric:  '(' Iconst ',' Iconst ')'
 				}
 		| /*EMPTY*/
 				{
-					$$ = make1_str("");
+					$$ = EMPTY;
 				}
 		;
 
@@ -3274,7 +3273,7 @@ opt_decimal:  '(' Iconst ',' Iconst ')'
 				}
 		| /*EMPTY*/
 				{
-					$$ = make1_str("");
+					$$ = EMPTY;
 				}
 		;
 
@@ -3317,15 +3316,15 @@ character:  CHARACTER opt_varying opt_charset opt_collate
 		;
 
 opt_varying:  VARYING			{ $$ = make1_str("varying"); }
-		| /*EMPTY*/			{ $$ = make1_str(""); }
+		| /*EMPTY*/			{ $$ = EMPTY; }
 		;
 
 opt_charset:  CHARACTER SET ColId	{ $$ = cat2_str(make1_str("character set"), $3); }
-		| /*EMPTY*/				{ $$ = make1_str(""); }
+		| /*EMPTY*/				{ $$ = EMPTY; }
 		;
 
 opt_collate:  COLLATE ColId		{ $$ = cat2_str(make1_str("collate"), $2); }
-		| /*EMPTY*/					{ $$ = make1_str(""); }
+		| /*EMPTY*/					{ $$ = EMPTY; }
 		;
 
 Datetime:  datetime
@@ -3355,7 +3354,7 @@ datetime:  YEAR_P								{ $$ = make1_str("year"); }
 		;
 
 opt_timezone:  WITH TIME ZONE				{ $$ = make1_str("with time zone"); }
-		| /*EMPTY*/					{ $$ = make1_str(""); }
+		| /*EMPTY*/					{ $$ = EMPTY; }
 		;
 
 opt_interval:  datetime					{ $$ = $1; }
@@ -3366,13 +3365,13 @@ opt_interval:  datetime					{ $$ = $1; }
 		| HOUR_P TO MINUTE_P			{ $$ = make1_str("hour to minute"); }
 		| MINUTE_P TO SECOND_P			{ $$ = make1_str("minute to second"); }
 		| HOUR_P TO SECOND_P			{ $$ = make1_str("hour to second"); }
-		| /*EMPTY*/					{ $$ = make1_str(""); }
+		| /*EMPTY*/					{ $$ = EMPTY; }
 		;
 
 
 /*****************************************************************************
  *
- *	expression grammar, still needs some cleanup
+ *	expression grammar
  *
  *****************************************************************************/
 
@@ -3387,11 +3386,6 @@ a_expr_or_null:  a_expr
 /* Expressions using row descriptors
  * Define row_descriptor to allow yacc to break the reduce/reduce conflict
  *  with singleton expressions.
- * Eliminated lots of code by defining row_op and sub_type clauses.
- * However, can not consolidate EXPR_LINK case with others subselects
- *  due to shift/reduce conflict with the non-subselect clause (the parser
- *  would have to look ahead more than one token to resolve the conflict).
- * - thomas 1998-05-09
  */
 row_expr: '(' row_descriptor ')' IN '(' SubSelect ')'
 				{
@@ -3401,15 +3395,15 @@ row_expr: '(' row_descriptor ')' IN '(' SubSelect ')'
 				{
 					$$ = make5_str(make1_str("("), $2, make1_str(") not in ("), $7, make1_str(")"));
 				}
-		| '(' row_descriptor ')' row_op sub_type  '(' SubSelect ')'
+		| '(' row_descriptor ')' all_Op sub_type  '(' SubSelect ')'
 				{
 					$$ = make4_str(make5_str(make1_str("("), $2, make1_str(")"), $4, $5), make1_str("("), $7, make1_str(")"));
 				}
-		| '(' row_descriptor ')' row_op '(' SubSelect ')'
+		| '(' row_descriptor ')' all_Op '(' SubSelect ')'
 				{
 					$$ = make3_str(make5_str(make1_str("("), $2, make1_str(")"), $4, make1_str("(")), $6, make1_str(")"));
 				}
-		| '(' row_descriptor ')' row_op '(' row_descriptor ')'
+		| '(' row_descriptor ')' all_Op '(' row_descriptor ')'
 				{
 					$$ = cat3_str(make3_str(make1_str("("), $2, make1_str(")")), $4, make3_str(make1_str("("), $6, make1_str(")")));
 				}
@@ -3420,19 +3414,6 @@ row_descriptor:  row_list ',' a_expr
 					$$ = cat3_str($1, make1_str(","), $3);
 				}
 		;
-
-row_op:  Op			{ $$ = $1; }
-	| '<'                   { $$ = "<"; }
-        | '='                   { $$ = "="; }
-        | '>'                   { $$ = ">"; }
-        | '+'                   { $$ = "+"; }
-        | '-'                   { $$ = "-"; }
-        | '*'                   { $$ = "*"; }
-        | '%'                   { $$ = "%"; }
-        | '/'                   { $$ = "/"; }
-        | '^'                   { $$ = "^"; }
-        | '|'                   { $$ = "|"; }
-              ;
 
 sub_type:  ANY                  { $$ = make1_str("ANY"); }
          | ALL                  { $$ = make1_str("ALL"); }
@@ -3449,27 +3430,49 @@ row_list:  row_list ',' a_expr
 				}
 		;
 
+all_Op:  Op | MathOp;
+
+MathOp:	'+'				{ $$ = make1_str("+"); }
+		| '-'			{ $$ = make1_str("-"); }
+		| '*'			{ $$ = make1_str("*"); }
+		| '%'			{ $$ = make1_str("%"); }
+                | '^'                   { $$ = make1_str("^"); }
+                | '|'                   { $$ = make1_str("|"); }
+		| '/'			{ $$ = make1_str("/"); }
+		| '<'			{ $$ = make1_str("<"); }
+		| '>'			{ $$ = make1_str(">"); }
+		| '='			{ $$ = make1_str("="); }
+		;
+
 /* General expressions
  * This is the heart of the expression syntax.
- * Note that the BETWEEN clause looks similar to a boolean expression
- *  and so we must define b_expr which is almost the same as a_expr
- *  but without the boolean expressions.
- * All operations/expressions are allowed in a BETWEEN clause
- *  if surrounded by parens.
+ *
+ * We have two expression types: a_expr is the unrestricted kind, and
+ * b_expr is a subset that must be used in some places to avoid shift/reduce
+ * conflicts.  For example, we can't do BETWEEN as "BETWEEN a_expr AND a_expr"
+ * because that use of AND conflicts with AND as a boolean operator.  So,
+ * b_expr is used in BETWEEN and we remove boolean keywords from b_expr.
+ *
+ * Note that '(' a_expr ')' is a b_expr, so an unrestricted expression can
+ * always be used by surrounding it with parens.
+ *
+ * com_expr is all the productions that are common to a_expr and b_expr;
+ * it's factored out just to eliminate redundant coding.
  */
 
-a_expr:  attr
-				{
-					$$ = $1;
-				}
-		| row_expr
-				{	$$ = $1;  }
-		| AexprConst
-				{	$$ = $1;  }
-		| ColId opt_indirection
-				{
-					$$ = cat2_str($1, $2);
-				}
+a_expr:  com_expr
+				{	$$ = $1; }
+		| a_expr TYPECAST Typename
+				{	$$ = cat3_str($1, make1_str("::"), $3); }
+		/*
+                 * These operators must be called out explicitly in order to make use
+                 * of yacc/bison's automatic operator-precedence handling.  All other
+                 * operator names are handled by the generic productions using "Op",
+                 * below; and all those operators will have the same precedence.
+                 *
+                 * If you add more explicitly-known operators, be sure to add them
+                 * also to b_expr and to the MathOp list above.
+                 */
 		| '-' a_expr %prec UMINUS
 				{	$$ = cat2_str(make1_str("-"), $2); }
 		| '%' a_expr
@@ -3509,107 +3512,27 @@ a_expr:  attr
 				{	$$ = cat3_str($1, make1_str(">"), $3); }
 		| a_expr '=' NULL_P
                                 {       $$ = cat2_str($1, make1_str("= NULL")); }
+		/* We allow this for standards-broken SQL products, like MS stuff */
 		| NULL_P '=' a_expr
                                 {       $$ = cat2_str(make1_str("= NULL"), $3); }
 		| a_expr '=' a_expr
 				{	$$ = cat3_str($1, make1_str("="), $3); }
-		| a_expr TYPECAST Typename
-				{
-					$$ = cat3_str($1, make1_str("::"), $3);
-				}
-		| CAST '(' a_expr AS Typename ')'
-				{
-					$$ = cat3_str(make2_str(make1_str("cast("), $3), make1_str("as"), make2_str($5, make1_str(")")));
-				}
-		| '(' a_expr_or_null ')'
-				{	$$ = make3_str(make1_str("("), $2, make1_str(")")); }
 		| a_expr Op a_expr
-				{	$$ = cat3_str($1, $2, $3);	}
-		| a_expr LIKE a_expr
-				{	$$ = cat3_str($1, make1_str("like"), $3); }
-		| a_expr NOT LIKE a_expr
-				{	$$ = cat3_str($1, make1_str("not like"), $4); }
+				{	$$ = cat3_str($1, make1_str("="), $3); }
 		| Op a_expr
 				{	$$ = cat2_str($1, $2); }
 		| a_expr Op
 				{	$$ = cat2_str($1, $2); }
-		| func_name '(' '*' ')'
-				{
-					$$ = cat2_str($1, make1_str("(*)")); 
-				}
-		| func_name '(' ')'
-				{
-					$$ = cat2_str($1, make1_str("()")); 
-				}
-		| func_name '(' expr_list ')'
-				{
-					$$ = make4_str($1, make1_str("("), $3, make1_str(")")); 
-				}
-		| CURRENT_DATE
-				{
-					$$ = make1_str("current_date");
-				}
-		| CURRENT_TIME
-				{
-					$$ = make1_str("current_time");
-				}
-		| CURRENT_TIME '(' Iconst ')'
-				{
-					if (atol($3) != 0)
-						fprintf(stderr,"CURRENT_TIME(%s) precision not implemented; zero used instead", $3);
-					$$ = make1_str("current_time");
-				}
-		| CURRENT_TIMESTAMP
-				{
-					$$ = make1_str("current_timestamp");
-				}
-		| CURRENT_TIMESTAMP '(' Iconst ')'
-				{
-					if (atol($3) != 0)
-						fprintf(stderr,"CURRENT_TIMESTAMP(%s) precision not implemented; zero used instead",$3);
-					$$ = make1_str("current_timestamp");
-				}
-		| CURRENT_USER
-				{
-					$$ = make1_str("current_user");
-				}
-		| USER
-				{
-  		     		        $$ = make1_str("user");
-			     	}
-		| EXISTS '(' SubSelect ')'
-				{
-					$$ = make3_str(make1_str("exists("), $3, make1_str(")"));
-				}
-		| EXTRACT '(' extract_list ')'
-				{
-					$$ = make3_str(make1_str("extract("), $3, make1_str(")"));
-				}
-		| POSITION '(' position_list ')'
-				{
-					$$ = make3_str(make1_str("position("), $3, make1_str(")"));
-				}
-		| SUBSTRING '(' substr_list ')'
-				{
-					$$ = make3_str(make1_str("substring("), $3, make1_str(")"));
-				}
-		/* various trim expressions are defined in SQL92 - thomas 1997-07-19 */
-		| TRIM '(' BOTH trim_list ')'
-				{
-					$$ = make3_str(make1_str("trim(both"), $4, make1_str(")"));
-				}
-		| TRIM '(' LEADING trim_list ')'
-				{
-					$$ = make3_str(make1_str("trim(leading"), $4, make1_str(")"));
-				}
-		| TRIM '(' TRAILING trim_list ')'
-				{
-					$$ = make3_str(make1_str("trim(trailing"), $4, make1_str(")"));
-				}
-		| TRIM '(' trim_list ')'
-				{
-					$$ = make3_str(make1_str("trim("), $3, make1_str(")"));
-				}
+		| a_expr AND a_expr
+				{	$$ = cat3_str($1, make1_str("and"), $3); }
+		| a_expr OR a_expr
+				{	$$ = cat3_str($1, make1_str("or"), $3); }
+		| NOT a_expr
+				{	$$ = cat2_str(make1_str("not"), $2); }
+		| a_expr LIKE a_expr
+				{	$$ = cat3_str($1, make1_str("like"), $3); }
+		| a_expr NOT LIKE a_expr
+				{	$$ = cat3_str($1, make1_str("not like"), $4); }
 		| a_expr ISNULL
 				{	$$ = cat2_str($1, make1_str("isnull")); }
 		| a_expr IS NULL_P
@@ -3624,21 +3547,13 @@ a_expr:  attr
 		 * - thomas 1997-12-22
 		 */
 		| a_expr IS TRUE_P
-				{
 				{	$$ = cat2_str($1, make1_str("is true")); }
-				}
 		| a_expr IS NOT FALSE_P
-				{
 				{	$$ = cat2_str($1, make1_str("is not false")); }
-				}
 		| a_expr IS FALSE_P
-				{
 				{	$$ = cat2_str($1, make1_str("is false")); }
-				}
 		| a_expr IS NOT TRUE_P
-				{
 				{	$$ = cat2_str($1, make1_str("is not true")); }
-				}
 		| a_expr BETWEEN b_expr AND b_expr
 				{
 					$$ = cat5_str($1, make1_str("between"), $3, make1_str("and"), $5); 
@@ -3655,164 +3570,31 @@ a_expr:  attr
 				{
 					$$ = make4_str($1, make1_str(" not in ("), $5, make1_str(")")); 
 				}
-		| a_expr Op '(' SubSelect ')'
+		| a_expr all_Op sub_type '(' SubSelect ')'
 				{
-					$$ = cat3_str($1, $2, make3_str(make1_str("("), $4, make1_str(")"))); 
+					$$ = cat4_str($1, $2, $3, make3_str(make1_str("("), $5, make1_str(")"))); 
 				}
-		| a_expr '+' '(' SubSelect ')'
-				{
-					$$ = make4_str($1, make1_str("+("), $4, make1_str(")")); 
-				}
-		| a_expr '-' '(' SubSelect ')'
-				{
-					$$ = make4_str($1, make1_str("-("), $4, make1_str(")")); 
-				}
-		| a_expr '*' '(' SubSelect ')'
-				{
-					$$ = make4_str($1, make1_str("*("), $4, make1_str(")")); 
-				}
-		| a_expr '/' '(' SubSelect ')'
-				{
-					$$ = make4_str($1, make1_str("/("), $4, make1_str(")")); 
-				}
-		| a_expr '%' '(' SubSelect ')'
-				{
-					$$ = make4_str($1, make1_str("%("), $4, make1_str(")")); 
-				}
-		| a_expr '^' '(' SubSelect ')'
-				{
-					$$ = make4_str($1, make1_str("^("), $4, make1_str(")")); 
-				}
-		| a_expr '|' '(' SubSelect ')'
-				{
-					$$ = make4_str($1, make1_str("|("), $4, make1_str(")")); 
-				}
-		| a_expr '<' '(' SubSelect ')'
-				{
-					$$ = make4_str($1, make1_str("<("), $4, make1_str(")")); 
-				}
-		| a_expr '>' '(' SubSelect ')'
-				{
-					$$ = make4_str($1, make1_str(">("), $4, make1_str(")")); 
-				}
-		| a_expr '=' '(' SubSelect ')'
-				{
-					$$ = make4_str($1, make1_str("=("), $4, make1_str(")")); 
-				}
-		| a_expr Op ANY '(' SubSelect ')'
-				{
-					$$ = cat3_str($1, $2, make3_str(make1_str("any("), $5, make1_str(")"))); 
-				}
-		| a_expr '+' ANY '(' SubSelect ')'
-				{
-					$$ = make4_str($1, make1_str("+ any("), $5, make1_str(")")); 
-				}
-		| a_expr '-' ANY '(' SubSelect ')'
-				{
-					$$ = make4_str($1, make1_str("- any("), $5, make1_str(")")); 
-				}
-		| a_expr '*' ANY '(' SubSelect ')'
-				{
-					$$ = make4_str($1, make1_str("* any("), $5, make1_str(")")); 
-				}
-		| a_expr '/' ANY '(' SubSelect ')'
-				{
-					$$ = make4_str($1, make1_str("/ any("), $5, make1_str(")")); 
-				}
-		| a_expr '%' ANY '(' SubSelect ')'
-				{
-					$$ = make4_str($1, make1_str("% any("), $5, make1_str(")")); 
-				}
-		| a_expr '^' ANY '(' SubSelect ')'
-				{
-					$$ = make4_str($1, make1_str("^ any("), $5, make1_str(")")); 
-				}
-		| a_expr '|' ANY '(' SubSelect ')'
-				{
-					$$ = make4_str($1, make1_str("| any("), $5, make1_str(")")); 
-				}
-		| a_expr '<' ANY '(' SubSelect ')'
-				{
-					$$ = make4_str($1, make1_str("< any("), $5, make1_str(")")); 
-				}
-		| a_expr '>' ANY '(' SubSelect ')'
-				{
-					$$ = make4_str($1, make1_str("> any("), $5, make1_str(")")); 
-				}
-		| a_expr '=' ANY '(' SubSelect ')'
-				{
-					$$ = make4_str($1, make1_str("= any("), $5, make1_str(")")); 
-				}
-		| a_expr Op ALL '(' SubSelect ')'
-				{
-					$$ = cat3_str($1, $2, make3_str(make1_str("all ("), $5, make1_str(")"))); 
-				}
-		| a_expr '+' ALL '(' SubSelect ')'
-				{
-					$$ = make4_str($1, make1_str("+ all("), $5, make1_str(")")); 
-				}
-		| a_expr '-' ALL '(' SubSelect ')'
-				{
-					$$ = make4_str($1, make1_str("- all("), $5, make1_str(")")); 
-				}
-		| a_expr '*' ALL '(' SubSelect ')'
-				{
-					$$ = make4_str($1, make1_str("* all("), $5, make1_str(")")); 
-				}
-		| a_expr '/' ALL '(' SubSelect ')'
-				{
-					$$ = make4_str($1, make1_str("/ all("), $5, make1_str(")")); 
-				}
-		| a_expr '%' ALL '(' SubSelect ')'
-				{
-					$$ = make4_str($1, make1_str("% all("), $5, make1_str(")")); 
-				}
-		| a_expr '^' ALL '(' SubSelect ')'
-				{
-					$$ = make4_str($1, make1_str("^ all("), $5, make1_str(")")); 
-				}
-		| a_expr '|' ALL '(' SubSelect ')'
-				{
-					$$ = make4_str($1, make1_str("| all("), $5, make1_str(")")); 
-				}
-		| a_expr '<' ALL '(' SubSelect ')'
-				{
-					$$ = make4_str($1, make1_str("< all("), $5, make1_str(")")); 
-				}
-		| a_expr '>' ALL '(' SubSelect ')'
-				{
-					$$ = make4_str($1, make1_str("> all("), $5, make1_str(")")); 
-				}
-		| a_expr '=' ALL '(' SubSelect ')'
-				{
-					$$ = make4_str($1, make1_str("= all("), $5, make1_str(")")); 
-				}
-		| a_expr AND a_expr
-				{	$$ = cat3_str($1, make1_str("and"), $3); }
-		| a_expr OR a_expr
-				{	$$ = cat3_str($1, make1_str("or"), $3); }
-		| NOT a_expr
-				{	$$ = cat2_str(make1_str("not"), $2); }
-		| case_expr
+		| row_expr
 				{       $$ = $1; }
 		| cinputvariable
 			        { $$ = make1_str("?"); }
 		;
 
 /* Restricted expressions
+ *
  * b_expr is a subset of the complete expression syntax
- *  defined by a_expr. b_expr is used in BETWEEN clauses
- *  to eliminate parser ambiguities stemming from the AND keyword.
+ *
+ * Presently, AND, NOT, IS, IN, and NULL are the a_expr keywords that would
+ * cause trouble in the places where b_expr is used.  For simplicity, we
+ * just eliminate all the boolean-keyword-operator productions from b_expr.
  */
-b_expr:  attr
+b_expr:  com_expr
 				{
-					$$ = $1
+					$$ = $1;
 				}
-		| AexprConst
-				{	$$ = $1;  }
-		| ColId opt_indirection
+		| b_expr TYPECAST Typename
 				{
-					$$ = cat2_str($1, $2);
+					$$ = cat3_str($1, make1_str("::"), $3);
 				}
 		| '-' b_expr %prec UMINUS
 				{	$$ = cat2_str(make1_str("-"), $2); }
@@ -3820,13 +3602,13 @@ b_expr:  attr
 				{       $$ = cat2_str(make1_str("%"), $2); }
 		| '^' b_expr
 				{       $$ = cat2_str(make1_str("^"), $2); }
-/* not possible in embedded sql		| ':' b_expr
-				{	$$ = cat2_str(make1_str(":"), $2); }
+		| '|' b_expr
+				{       $$ = cat2_str(make1_str("|"), $2); }
+/* not possible in embedded sql		| ':' b_expr	
+				{       $$ = cat2_str(make1_str(":"), $2); }
 */
 		| ';' b_expr
-				{	$$ = cat2_str(make1_str(";"), $2); }
-		| '|' b_expr
-				{	$$ = cat2_str(make1_str("|"), $2); }
+				{       $$ = cat2_str(make1_str(";"), $2); }
 		| b_expr '%'
 				{       $$ = cat2_str($1, make1_str("%")); }
 		| b_expr '^'
@@ -3847,48 +3629,60 @@ b_expr:  attr
 				{	$$ = cat3_str($1, make1_str("^"), $3); }
 		| b_expr '|' b_expr
 				{	$$ = cat3_str($1, make1_str("|"), $3); }
-		| b_expr TYPECAST Typename
-				{
-					$$ = cat3_str($1, make1_str("::"), $3);
-				}
-		| CAST '(' b_expr AS Typename ')'
-				{
-					$$ = cat3_str(make2_str(make1_str("cast("), $3), make1_str("as"), make2_str($5, make1_str(")")));
-				}
-		| '(' a_expr ')'
-				{	$$ = make3_str(make1_str("("), $2, make1_str(")")); }
+		| b_expr '<' b_expr
+				{	$$ = cat3_str($1, make1_str("<"), $3); }
+		| b_expr '>' b_expr
+				{	$$ = cat3_str($1, make1_str(">"), $3); }
+		| b_expr '=' b_expr
+				{	$$ = cat3_str($1, make1_str("="), $3); }
 		| b_expr Op b_expr
-				{	$$ = cat3_str($1, $2, $3);	}
+				{	$$ = cat3_str($1, make1_str("="), $3); }
 		| Op b_expr
 				{	$$ = cat2_str($1, $2); }
 		| b_expr Op
 				{	$$ = cat2_str($1, $2); }
+		| civariableonly
+			        { 	$$ = $1; }
+		;
+
+/*
+ * Productions that can be used in both a_expr and b_expr.
+ *
+ * Note: productions that refer recursively to a_expr or b_expr mostly
+ * cannot appear here.  However, it's OK to refer to a_exprs that occur
+ * inside parentheses, such as function arguments; that cannot introduce
+ * ambiguity to the b_expr syntax.
+ */
+com_expr:  attr
+				{	$$ = $1;  }
+		| ColId opt_indirection
+				{	$$ = cat2_str($1, $2);	}
+		| AexprConst
+				{	$$ = $1;  }
+		| '(' a_expr_or_null ')'
+				{	$$ = make3_str(make1_str("("), $2, make1_str(")")); }
+		| CAST '(' a_expr AS Typename ')'
+				{ 	$$ = cat3_str(make2_str(make1_str("cast("), $3), make1_str("as"), make2_str($5, make1_str(")"))); }
+		| case_expr
+				{       $$ = $1; }
 		| func_name '(' ')'
-				{
-					$$ = cat2_str($1, make1_str("()")); 
-				}
+				{	$$ = cat2_str($1, make1_str("()"));  }
 		| func_name '(' expr_list ')'
-				{
-					$$ = make4_str($1, make1_str("("), $3, make1_str(")")); 
-				}
+				{	$$ = make4_str($1, make1_str("("), $3, make1_str(")"));  }
+		| func_name '(' '*' ')'
+				{	$$ = cat2_str($1, make1_str("(*)")); }
 		| CURRENT_DATE
-				{
-					$$ = make1_str("current_date");
-				}
+				{	$$ = make1_str("current_date"); }
 		| CURRENT_TIME
-				{
-					$$ = make1_str("current_time");
-				}
+				{	$$ = make1_str("current_time"); }
 		| CURRENT_TIME '(' Iconst ')'
 				{
-					if ($3 != 0)
+					if (atol($3) != 0)
 						fprintf(stderr,"CURRENT_TIME(%s) precision not implemented; zero used instead", $3);
 					$$ = make1_str("current_time");
 				}
 		| CURRENT_TIMESTAMP
-				{
-					$$ = make1_str("current_timestamp");
-				}
+				{	$$ = make1_str("current_timestamp"); }
 		| CURRENT_TIMESTAMP '(' Iconst ')'
 				{
 					if (atol($3) != 0)
@@ -3896,52 +3690,43 @@ b_expr:  attr
 					$$ = make1_str("current_timestamp");
 				}
 		| CURRENT_USER
-				{
-					$$ = make1_str("current_user");
-				}
+				{	$$ = make1_str("current_user"); }
 		| USER
-				{
-					$$ = make1_str("user");
-				}
+				{       $$ = make1_str("user"); }
+		| EXTRACT '(' extract_list ')'
+				{	$$ = make3_str(make1_str("extract("), $3, make1_str(")")); }
 		| POSITION '(' position_list ')'
-				{
-					$$ = make3_str(make1_str("position ("), $3, make1_str(")"));
-				}
+				{	$$ = make3_str(make1_str("position("), $3, make1_str(")")); }
 		| SUBSTRING '(' substr_list ')'
-				{
-					$$ = make3_str(make1_str("substring ("), $3, make1_str(")"));
-				}
+				{	$$ = make3_str(make1_str("substring("), $3, make1_str(")")); }
 		/* various trim expressions are defined in SQL92 - thomas 1997-07-19 */
 		| TRIM '(' BOTH trim_list ')'
-				{
-					$$ = make3_str(make1_str("trim(both"), $4, make1_str(")"));
-				}
+				{	$$ = make3_str(make1_str("trim(both"), $4, make1_str(")")); }
 		| TRIM '(' LEADING trim_list ')'
-				{
-					$$ = make3_str(make1_str("trim(leading"), $4, make1_str(")"));
-				}
+				{	$$ = make3_str(make1_str("trim(leading"), $4, make1_str(")")); }
 		| TRIM '(' TRAILING trim_list ')'
-				{
-					$$ = make3_str(make1_str("trim(trailing"), $4, make1_str(")"));
-				}
+				{	$$ = make3_str(make1_str("trim(trailing"), $4, make1_str(")")); }
 		| TRIM '(' trim_list ')'
-				{
-					$$ = make3_str(make1_str("trim("), $3, make1_str(")"));
-				}
-		| civariableonly
-			        { 	$$ = $1; }
+				{	$$ = make3_str(make1_str("trim("), $3, make1_str(")")); }
+		| '(' SubSelect ')'
+				{	$$ = make3_str(make1_str("("), $2, make1_str(")")); }
+		| EXISTS '(' SubSelect ')'
+				{	$$ = make3_str(make1_str("exists("), $3, make1_str(")")); }
 		;
-
-opt_indirection:  '[' ecpg_expr ']' opt_indirection
+/* 
+ * This used to use ecpg_expr, but since there is no shift/reduce conflict
+ * anymore, we can remove ecpg_expr. - MM
+ */
+opt_indirection:  '[' a_expr ']' opt_indirection
 				{
 					$$ = cat4_str(make1_str("["), $2, make1_str("]"), $4);
 				}
-		| '[' ecpg_expr ':' ecpg_expr ']' opt_indirection
+		| '[' a_expr ':' a_expr ']' opt_indirection
 				{
 					$$ = cat2_str(cat5_str(make1_str("["), $2, make1_str(":"), $4, make1_str("]")), $6);
 				}
 		| /* EMPTY */
-				{	$$ = make1_str(""); }
+				{	$$ = EMPTY; }
 		;
 
 expr_list:  a_expr_or_null
@@ -3957,7 +3742,7 @@ extract_list:  extract_arg FROM a_expr
 					$$ = cat3_str($1, make1_str("from"), $3);
 				}
 		| /* EMPTY */
-				{	$$ = make1_str(""); }
+				{	$$ = EMPTY; }
 		| cinputvariable
 			        { $$ = make1_str("?"); }
 		;
@@ -3971,7 +3756,7 @@ extract_arg:  datetime		{ $$ = $1; }
 position_list:  b_expr IN b_expr
 				{	$$ = cat3_str($1, make1_str("in"), $3); }
 		| /* EMPTY */
-				{	$$ = make1_str(""); }
+				{	$$ = EMPTY; }
 		;
 
 substr_list:  expr_list substr_from substr_for
@@ -3979,21 +3764,21 @@ substr_list:  expr_list substr_from substr_for
 					$$ = cat3_str($1, $2, $3);
 				}
 		| /* EMPTY */
-				{	$$ = make1_str(""); }
+				{	$$ = EMPTY; }
 		;
 
 substr_from:  FROM expr_list
 				{	$$ = cat2_str(make1_str("from"), $2); }
 		| /* EMPTY */
 				{
-					$$ = make1_str("");
+					$$ = EMPTY;
 				}
 		;
 
 substr_for:  FOR expr_list
 				{	$$ = cat2_str(make1_str("for"), $2); }
 		| /* EMPTY */
-				{	$$ = make1_str(""); }
+				{	$$ = EMPTY; }
 		;
 
 trim_list:  a_expr FROM expr_list
@@ -4060,14 +3845,14 @@ when_clause:  WHEN a_expr THEN a_expr_or_null
                ;
 
 case_default:  ELSE a_expr_or_null	{ $$ = cat2_str(make1_str("else"), $2); }
-               | /*EMPTY*/        	{ $$ = make1_str(""); }
+               | /*EMPTY*/        	{ $$ = EMPTY; }
                ;
 
 case_arg:  a_expr              {
                                        $$ = $1;
                                }
                | /*EMPTY*/
-                               {       $$ = make1_str(""); }
+                               {       $$ = EMPTY; }
                ;
 
 attr:  relation_name '.' attrs opt_indirection
@@ -4526,13 +4311,13 @@ server: Op server_name
 	        }
 
 opt_server: server { $$ = $1; }
-        | /* empty */ { $$ = make1_str(""); }
+        | /* empty */ { $$ = EMPTY; }
 
 server_name: ColId   { $$ = $1; }
         | ColId '.' server_name { $$ = make3_str($1, make1_str("."), $3); }
 
 opt_port: ':' Iconst { $$ = make2_str(make1_str(":"), $2); }
-        | /* empty */ { $$ = make1_str(""); }
+        | /* empty */ { $$ = EMPTY; }
 
 opt_connection_name: AS connection_target { $$ = $2; }
         | /* empty */ { $$ = make1_str("NULL"); }
@@ -4602,7 +4387,7 @@ opt_options: Op ColId
 			
 			$$ = make2_str(make1_str("?"), $2);
 		}
-	| /* empty */ { $$ = make1_str(""); }
+	| /* empty */ { $$ = EMPTY; }
 
 /*
  * Declare a prepared cursor. The syntax is different from the standard
@@ -4674,7 +4459,7 @@ sql_enddeclare: ecpgstart END_TRANS DECLARE SQL_SECTION ';' {}
 
 variable_declarations: /* empty */
 	{
-		$$ = make1_str("");
+		$$ = EMPTY;
 	}
 	| declaration variable_declarations
 	{
@@ -4702,7 +4487,7 @@ storage_clause : S_EXTERN	{ $$ = make1_str("extern"); }
        | S_CONST		{ $$ = make1_str("const"); }
        | S_REGISTER		{ $$ = make1_str("register"); }
        | S_AUTO			{ $$ = make1_str("auto"); }
-       | /* empty */		{ $$ = make1_str(""); }
+       | /* empty */		{ $$ = EMPTY; }
 
 type: simple_type
 		{
@@ -4714,7 +4499,7 @@ type: simple_type
 	| varchar_type
 		{
 			$$.type_enum = ECPGt_varchar;
-			$$.type_str = make1_str("");
+			$$.type_str = EMPTY;
 			$$.type_dimension = -1;
   			$$.type_index = -1;
 		}
@@ -4744,7 +4529,7 @@ type: simple_type
 			/* this is for typedef'ed types */
 			struct typedefs *this = get_typedef($1);
 
-			$$.type_str = (this->type->type_enum == ECPGt_varchar) ? make1_str("") : mm_strdup(this->name);
+			$$.type_str = (this->type->type_enum == ECPGt_varchar) ? EMPTY : mm_strdup(this->name);
                         $$.type_enum = this->type->type_enum;
 			$$.type_dimension = this->type->type_dimension;
   			$$.type_index = this->type->type_index;
@@ -4788,7 +4573,7 @@ s_union : S_UNION opt_symbol
 	    $$ = cat2_str(make1_str("union"), $2);
 	}
 
-opt_symbol: /* empty */ 	{ $$ = make1_str(""); }
+opt_symbol: /* empty */ 	{ $$ = EMPTY; }
 	| symbol		{ $$ = $1; }
 
 simple_type: S_SHORT		{ $$ = ECPGt_short; }
@@ -4889,10 +4674,10 @@ variable: opt_pointer symbol opt_array_bounds opt_initializer
 			free($2);
 		}
 
-opt_initializer: /* empty */		{ $$ = make1_str(""); }
+opt_initializer: /* empty */		{ $$ = EMPTY; }
 	| '=' c_term			{ $$ = make2_str(make1_str("="), $2); }
 
-opt_pointer: /* empty */	{ $$ = make1_str(""); }
+opt_pointer: /* empty */	{ $$ = EMPTY; }
 	| '*'			{ $$ = make1_str("*"); }
 
 /*
@@ -4944,7 +4729,7 @@ ECPGExecute : EXECUTE IMMEDIATE execstring
 		sprintf(thisquery->name, "ECPGprepared_statement(\"%s\")", $2);
 
 		add_variable(&argsinsert, thisquery, &no_indicator); 
-	} opt_using
+	} ecpg_using
 	{
 		$$ = make1_str("?");
 	}
@@ -4961,14 +4746,14 @@ ECPGFree:	SQL_FREE ident	{ $$ = $2; }
 /*
  * open is an open cursor, at the moment this has to be removed
  */
-ECPGOpen: SQL_OPEN name opt_using {
+ECPGOpen: SQL_OPEN name ecpg_using {
 		$$ = $2;
 };
 
-opt_using: /* empty */		{ $$ = make1_str(""); }
+ecpg_using: /* empty */		{ $$ = EMPTY; }
 	| USING variablelist	{
 					/* yyerror ("open cursor with variables not implemented yet"); */
-					$$ = make1_str("");
+					$$ = EMPTY;
 				}
 
 variablelist: cinputvariable | cinputvariable ',' variablelist
@@ -5012,7 +4797,7 @@ ECPGSetAutocommit:  SET SQL_AUTOCOMMIT to_equal on_off
 on_off:	ON		{ $$ = make1_str("on"); }
 	| SQL_OFF	{ $$ = make1_str("off"); }
 
-to_equal:	TO | "=";
+to_equal:	TO | '=';
 
 /* 
  * set the actual connection, this needs a differnet handling as the other
@@ -5102,12 +4887,12 @@ opt_type_array_bounds:  '[' ']' opt_type_array_bounds
 			{
                             $$.index1 = -1;
                             $$.index2 = -1;
-                            $$.str= make1_str("");
+                            $$.str= EMPTY;
                         }
 		;
 
 opt_reference: SQL_REFERENCE { $$ = make1_str("reference"); }
-	| /* empty */ 	     { $$ = make1_str(""); }
+	| /* empty */ 	     { $$ = EMPTY; }
 
 ctype: CHAR
 	{
@@ -5234,7 +5019,7 @@ opt_signed: SQL_SIGNED | /* empty */
 
 sql_variable_declarations: /* empty */
 	{
-		$$ = make1_str("");
+		$$ = EMPTY;
 	}
 	| sql_declaration sql_variable_declarations
 	{
@@ -5446,28 +5231,22 @@ action : SQL_CONTINUE {
 }
 
 /* some other stuff for ecpg */
-ecpg_expr:  attr 
-				{
-					$$ = $1;
-				}
-		| row_expr
-				{	$$ = $1;  }
-		| AexprConst
-				{	$$ = $1;  }
-		| ColId opt_indirection
-				{
-					$$ = cat2_str($1, $2);
-				}
+/*
+ * no longer used
+ecpg_expr:  com_expr 
+				{	$$ = $1; }
+		| a_expr TYPECAST Typename
+				{	$$ = cat3_str($1, make1_str("::"), $3); }
 		| '-' ecpg_expr %prec UMINUS
 				{	$$ = cat2_str(make1_str("-"), $2); }
 		| '%' ecpg_expr
 				{       $$ = cat2_str(make1_str("%"), $2); }
 		| '^' ecpg_expr
 				{       $$ = cat2_str(make1_str("^"), $2); }
-		| ';' ecpg_expr
-				{	$$ = cat2_str(make1_str(";"), $2); }
 		| '|' ecpg_expr
-				{	$$ = cat2_str(make1_str("|"), $2); }
+				{       $$ = cat2_str(make1_str("|"), $2); }
+		| ';' a_expr
+				{       $$ = cat2_str(make1_str(";"), $2); }
 		| a_expr '%'
 				{       $$ = cat2_str($1, make1_str("%")); }
 		| a_expr '^'
@@ -5493,108 +5272,27 @@ ecpg_expr:  attr
 		| a_expr '>' ecpg_expr
 				{	$$ = cat3_str($1, make1_str(">"), $3); }
 		| a_expr '=' NULL_P
-				{       $$ = cat2_str($1, make1_str("= NULL")); }
-		| NULL_P '=' a_expr
-				{       $$ = cat2_str(make1_str("= NULL"), $3); }
+                                {       $$ = cat2_str($1, make1_str("= NULL")); }
+		| NULL_P '=' ecpg_expr
+                                {       $$ = cat2_str(make1_str("= NULL"), $3); }
 		| a_expr '=' ecpg_expr
 				{	$$ = cat3_str($1, make1_str("="), $3); }
-		| a_expr TYPECAST Typename
-				{
-					$$ = cat3_str($1, make1_str("::"), $3);
-				}
-		| CAST '(' a_expr AS Typename ')'
-				{
-					$$ = cat3_str(make2_str(make1_str("cast("), $3), make1_str("as"), make2_str($5, make1_str(")")));
-				}
-		| '(' a_expr_or_null ')'
-				{	$$ = make3_str(make1_str("("), $2, make1_str(")")); }
 		| a_expr Op ecpg_expr
-				{	$$ = cat3_str($1, $2, $3);	}
-		| a_expr LIKE ecpg_expr
-				{	$$ = cat3_str($1, make1_str("like"), $3); }
-		| a_expr NOT LIKE ecpg_expr
-				{	$$ = cat3_str($1, make1_str("not like"), $4); }
+				{	$$ = cat3_str($1, make1_str("="), $3); }
 		| Op ecpg_expr
 				{	$$ = cat2_str($1, $2); }
 		| a_expr Op
 				{	$$ = cat2_str($1, $2); }
-		| func_name '(' '*' ')'
-				{
-					$$ = cat2_str($1, make1_str("(*)")); 
-				}
-		| func_name '(' ')'
-				{
-					$$ = cat2_str($1, make1_str("()")); 
-				}
-		| func_name '(' expr_list ')'
-				{
-					$$ = make4_str($1, make1_str("("), $3, make1_str(")")); 
-				}
-		| CURRENT_DATE
-				{
-					$$ = make1_str("current_date");
-				}
-		| CURRENT_TIME
-				{
-					$$ = make1_str("current_time");
-				}
-		| CURRENT_TIME '(' Iconst ')'
-				{
-					if (atol($3) != 0)
-						fprintf(stderr,"CURRENT_TIME(%s) precision not implemented; zero used instead", $3);
-					$$ = make1_str("current_time");
-				}
-		| CURRENT_TIMESTAMP
-				{
-					$$ = make1_str("current_timestamp");
-				}
-		| CURRENT_TIMESTAMP '(' Iconst ')'
-				{
-					if (atol($3) != 0)
-						fprintf(stderr,"CURRENT_TIMESTAMP(%s) precision not implemented; zero used instead",$3);
-					$$ = make1_str("current_timestamp");
-				}
-		| CURRENT_USER
-				{
-					$$ = make1_str("current_user");
-				}
-		| USER
-				{
-  		     		        $$ = make1_str("user");
-			     	}
-		| EXISTS '(' SubSelect ')'
-				{
-					$$ = make3_str(make1_str("exists("), $3, make1_str(")"));
-				}
-		| EXTRACT '(' extract_list ')'
-				{
-					$$ = make3_str(make1_str("extract("), $3, make1_str(")"));
-				}
-		| POSITION '(' position_list ')'
-				{
-					$$ = make3_str(make1_str("position("), $3, make1_str(")"));
-				}
-		| SUBSTRING '(' substr_list ')'
-				{
-					$$ = make3_str(make1_str("substring("), $3, make1_str(")"));
-				}
-		/* various trim expressions are defined in SQL92 - thomas 1997-07-19 */
-		| TRIM '(' BOTH trim_list ')'
-				{
-					$$ = make3_str(make1_str("trim(both"), $4, make1_str(")"));
-				}
-		| TRIM '(' LEADING trim_list ')'
-				{
-					$$ = make3_str(make1_str("trim(leading"), $4, make1_str(")"));
-				}
-		| TRIM '(' TRAILING trim_list ')'
-				{
-					$$ = make3_str(make1_str("trim(trailing"), $4, make1_str(")"));
-				}
-		| TRIM '(' trim_list ')'
-				{
-					$$ = make3_str(make1_str("trim("), $3, make1_str(")"));
-				}
+		| a_expr AND ecpg_expr
+				{	$$ = cat3_str($1, make1_str("and"), $3); }
+		| a_expr OR ecpg_expr
+				{	$$ = cat3_str($1, make1_str("or"), $3); }
+		| NOT ecpg_expr
+				{	$$ = cat2_str(make1_str("not"), $2); }
+		| a_expr LIKE ecpg_expr
+				{	$$ = cat3_str($1, make1_str("like"), $3); }
+		| a_expr NOT LIKE ecpg_expr
+				{	$$ = cat3_str($1, make1_str("not like"), $4); }
 		| a_expr ISNULL
 				{	$$ = cat2_str($1, make1_str("isnull")); }
 		| a_expr IS NULL_P
@@ -5603,27 +5301,14 @@ ecpg_expr:  attr
 				{	$$ = cat2_str($1, make1_str("notnull")); }
 		| a_expr IS NOT NULL_P
 				{	$$ = cat2_str($1, make1_str("is not null")); }
-		/* IS TRUE, IS FALSE, etc used to be function calls
-		 *  but let's make them expressions to allow the optimizer
-		 *  a chance to eliminate them if a_expr is a constant string.
-		 * - thomas 1997-12-22
-		 */
 		| a_expr IS TRUE_P
-				{
 				{	$$ = cat2_str($1, make1_str("is true")); }
-				}
 		| a_expr IS NOT FALSE_P
-				{
 				{	$$ = cat2_str($1, make1_str("is not false")); }
-				}
 		| a_expr IS FALSE_P
-				{
 				{	$$ = cat2_str($1, make1_str("is false")); }
-				}
 		| a_expr IS NOT TRUE_P
-				{
 				{	$$ = cat2_str($1, make1_str("is not true")); }
-				}
 		| a_expr BETWEEN b_expr AND b_expr
 				{
 					$$ = cat5_str($1, make1_str("between"), $3, make1_str("and"), $5); 
@@ -5640,155 +5325,22 @@ ecpg_expr:  attr
 				{
 					$$ = make4_str($1, make1_str(" not in ("), $5, make1_str(")")); 
 				}
-		| a_expr Op '(' SubSelect ')'
+		| a_expr all_Op sub_type '(' SubSelect ')'
 				{
-					$$ = cat3_str($1, $2, make3_str(make1_str("("), $4, make1_str(")"))); 
+					$$ = cat4_str($1, $2, $3, make3_str(make1_str("("), $5, make1_str(")"))); 
 				}
-		| a_expr '+' '(' SubSelect ')'
-				{
-					$$ = make4_str($1, make1_str("+("), $4, make1_str(")")); 
-				}
-		| a_expr '-' '(' SubSelect ')'
-				{
-					$$ = make4_str($1, make1_str("-("), $4, make1_str(")")); 
-				}
-		| a_expr '*' '(' SubSelect ')'
-				{
-					$$ = make4_str($1, make1_str("*("), $4, make1_str(")")); 
-				}
-		| a_expr '/' '(' SubSelect ')'
-				{
-					$$ = make4_str($1, make1_str("/("), $4, make1_str(")")); 
-				}
-		| a_expr '%' '(' SubSelect ')'
-				{
-					$$ = make4_str($1, make1_str("%("), $4, make1_str(")")); 
-				}
-		| a_expr '^' '(' SubSelect ')'
-				{
-					$$ = make4_str($1, make1_str("^("), $4, make1_str(")")); 
-				}
-		| a_expr '|' '(' SubSelect ')'
-				{
-					$$ = make4_str($1, make1_str("|("), $4, make1_str(")")); 
-				}
-		| a_expr '<' '(' SubSelect ')'
-				{
-					$$ = make4_str($1, make1_str("<("), $4, make1_str(")")); 
-				}
-		| a_expr '>' '(' SubSelect ')'
-				{
-					$$ = make4_str($1, make1_str(">("), $4, make1_str(")")); 
-				}
-		| a_expr '=' '(' SubSelect ')'
-				{
-					$$ = make4_str($1, make1_str("=("), $4, make1_str(")")); 
-				}
-		| a_expr Op ANY '(' SubSelect ')'
-				{
-					$$ = cat3_str($1, $2, make3_str(make1_str("any ("), $5, make1_str(")"))); 
-				}
-		| a_expr '+' ANY '(' SubSelect ')'
-				{
-					$$ = make4_str($1, make1_str("+ any("), $5, make1_str(")")); 
-				}
-		| a_expr '-' ANY '(' SubSelect ')'
-				{
-					$$ = make4_str($1, make1_str("- any("), $5, make1_str(")")); 
-				}
-		| a_expr '*' ANY '(' SubSelect ')'
-				{
-					$$ = make4_str($1, make1_str("* any("), $5, make1_str(")")); 
-				}
-		| a_expr '/' ANY '(' SubSelect ')'
-				{
-					$$ = make4_str($1, make1_str("/ any("), $5, make1_str(")")); 
-				}
-		| a_expr '%' ANY '(' SubSelect ')'
-				{
-					$$ = make4_str($1, make1_str("% any("), $5, make1_str(")")); 
-				}
-		| a_expr '^' ANY '(' SubSelect ')'
-				{
-					$$ = make4_str($1, make1_str("^ any("), $5, make1_str(")")); 
-				}
-		| a_expr '|' ANY '(' SubSelect ')'
-				{
-					$$ = make4_str($1, make1_str("| any("), $5, make1_str(")")); 
-				}
-		| a_expr '<' ANY '(' SubSelect ')'
-				{
-					$$ = make4_str($1, make1_str("< any("), $5, make1_str(")")); 
-				}
-		| a_expr '>' ANY '(' SubSelect ')'
-				{
-					$$ = make4_str($1, make1_str("> any("), $5, make1_str(")")); 
-				}
-		| a_expr '=' ANY '(' SubSelect ')'
-				{
-					$$ = make4_str($1, make1_str("= any("), $5, make1_str(")")); 
-				}
-		| a_expr Op ALL '(' SubSelect ')'
-				{
-					$$ = cat3_str($1, $2, make3_str(make1_str("all ("), $5, make1_str(")"))); 
-				}
-		| a_expr '+' ALL '(' SubSelect ')'
-				{
-					$$ = make4_str($1, make1_str("+ all("), $5, make1_str(")")); 
-				}
-		| a_expr '-' ALL '(' SubSelect ')'
-				{
-					$$ = make4_str($1, make1_str("- all("), $5, make1_str(")")); 
-				}
-		| a_expr '*' ALL '(' SubSelect ')'
-				{
-					$$ = make4_str($1, make1_str("* all("), $5, make1_str(")")); 
-				}
-		| a_expr '/' ALL '(' SubSelect ')'
-				{
-					$$ = make4_str($1, make1_str("/ all("), $5, make1_str(")")); 
-				}
-		| a_expr '%' ALL '(' SubSelect ')'
-				{
-					$$ = make4_str($1, make1_str("% all("), $5, make1_str(")")); 
-				}
-		| a_expr '^' ALL '(' SubSelect ')'
-				{
-					$$ = make4_str($1, make1_str("^ all("), $5, make1_str(")")); 
-				}
-		| a_expr '|' ALL '(' SubSelect ')'
-				{
-					$$ = make4_str($1, make1_str("| all("), $5, make1_str(")")); 
-				}
-		| a_expr '<' ALL '(' SubSelect ')'
-				{
-					$$ = make4_str($1, make1_str("< all("), $5, make1_str(")")); 
-				}
-		| a_expr '>' ALL '(' SubSelect ')'
-				{
-					$$ = make4_str($1, make1_str("> all("), $5, make1_str(")")); 
-				}
-		| a_expr '=' ALL '(' SubSelect ')'
-				{
-					$$ = make4_str($1, make1_str("=all("), $5, make1_str(")")); 
-				}
-		| a_expr AND ecpg_expr
-				{	$$ = cat3_str($1, make1_str("and"), $3); }
-		| a_expr OR ecpg_expr
-				{	$$ = cat3_str($1, make1_str("or"), $3); }
-		| NOT ecpg_expr
-				{	$$ = cat2_str(make1_str("not"), $2); }
-		| case_expr
+		| row_expr
 				{       $$ = $1; }
 		| civariableonly
 			        { 	$$ = $1; }
 		;
+*/
 
 into_list : coutputvariable | into_list ',' coutputvariable;
 
 ecpgstart: SQL_START { reset_variables();}
 
-c_args: /* empty */		{ $$ = make1_str(""); }
+c_args: /* empty */		{ $$ = EMPTY; }
 	| c_list		{ $$ = $1; }
 
 coutputvariable : cvariable indicator {

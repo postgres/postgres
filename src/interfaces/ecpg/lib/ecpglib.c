@@ -84,14 +84,14 @@ struct statement
 	struct variable *outlist;
 };
 
-struct prepared_statement
+static struct prepared_statement
 {
 	char	   *name;
 	struct statement *stmt;
 	struct prepared_statement *next;
 }		   *prep_stmts = NULL;
 
-struct auto_mem
+static struct auto_mem
 {
 	void	   *pointer;
 	struct auto_mem *next;
@@ -656,7 +656,7 @@ ECPGexecute(struct statement * stmt)
 	}
 	else
 	{
-		sqlca.sqlerrd[2] = 0;
+/*		sqlca.sqlerrd[2] = 0;*/
 		var = stmt->outlist;
 		switch (PQresultStatus(results))
 		{
@@ -741,7 +741,7 @@ ECPGexecute(struct statement * stmt)
 
 					for (act_tuple = 0; act_tuple < ntuples && status; act_tuple++)
 					{
-						pval = PQgetvalue(results, act_tuple, act_field);
+						pval = (char *)PQgetvalue(results, act_tuple, act_field);
 
 						ECPGlog("ECPGexecute line %d: RESULT: %s\n", stmt->lineno, pval ? pval : "");
 
@@ -1112,6 +1112,7 @@ ECPGtrans(int lineno, const char *connection_name, const char *transaction)
 		}
 		PQclear(res);
 	}
+	
 	if (strcmp(transaction, "commit") == 0 || strcmp(transaction, "rollback") == 0)
 	{
 		struct prepared_statement *this;
@@ -1140,7 +1141,9 @@ ECPGsetcommit(int lineno, const char *mode, const char *connection_name)
 	if (!ecpg_init(con, connection_name, lineno))
 		return(false);
 
-	if (con->autocommit == true && strncmp(mode, "OFF", strlen("OFF")) == 0)
+	ECPGlog("ECPGsetcommit line %d action = %s connection = %s\n", lineno, mode, con->name);
+	
+	if (con->autocommit == true && strncmp(mode, "off", strlen("off")) == 0)
 	{
 		if (con->committed)
 		{
@@ -1154,7 +1157,7 @@ ECPGsetcommit(int lineno, const char *mode, const char *connection_name)
 		}
 		con->autocommit = false;
 	}
-	else if (con->autocommit == false && strncmp(mode, "ON", strlen("ON")) == 0)
+	else if (con->autocommit == false && strncmp(mode, "on", strlen("on")) == 0)
 	{
 		if (!con->committed)
 		{
@@ -1213,8 +1216,6 @@ ECPGconnect(int lineno, const char *dbname, const char *user, const char *passwd
 
 	ECPGlog("ECPGconnect: opening database %s %s%s\n", dbname ? dbname : "<DEFAULT>", user ? "for user " : "", user ? user : "");
 
-	sqlca.sqlcode = 0;
-
 	this->connection = PQsetdbLogin(NULL, NULL, NULL, NULL, dbname, user, passwd);
 
 	if (PQstatus(this->connection) == CONNECTION_BAD)
@@ -1238,6 +1239,7 @@ ECPGdisconnect(int lineno, const char *connection_name)
 
 	if (strcmp(connection_name, "ALL") == 0)
 	{
+		memcpy((char *) &sqlca, (char *) &sqlca_init, sizeof(sqlca));
 		for (con = all_connections; con;)
 		{
 			struct connection *f = con;
