@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.151 2003/11/29 19:51:48 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.152 2003/12/18 22:23:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -636,7 +636,24 @@ init_fcache(Oid foid, FuncExprState *fcache, MemoryContext fcacheCxt)
 
 	/* Initialize additional info */
 	fcache->setArgsValid = false;
+	fcache->shutdown_reg = false;
 	fcache->func.fn_expr = (Node *) fcache->xprstate.expr;
+}
+
+/*
+ * callback function in case a FuncExpr returning a set needs to be shut down
+ * before it has been run to completion
+ */
+static void
+ShutdownFuncExpr(Datum arg)
+{
+	FuncExprState *fcache = (FuncExprState *) DatumGetPointer(arg);
+
+	/* Clear any active set-argument state */
+	fcache->setArgsValid = false;
+
+	/* execUtils will deregister the callback... */
+	fcache->shutdown_reg = false;
 }
 
 /*
@@ -827,6 +844,14 @@ ExecMakeFunctionResult(FuncExprState *fcache,
 					memcpy(&fcache->setArgs, &fcinfo, sizeof(fcinfo));
 					fcache->setHasSetArg = hasSetArg;
 					fcache->setArgsValid = true;
+					/* Register cleanup callback if we didn't already */
+					if (!fcache->shutdown_reg)
+					{
+						RegisterExprContextCallback(econtext,
+													ShutdownFuncExpr,
+													PointerGetDatum(fcache));
+						fcache->shutdown_reg = true;
+					}
 				}
 
 				/*

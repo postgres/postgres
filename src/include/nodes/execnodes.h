@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.108 2003/11/29 22:41:06 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.109 2003/12/18 22:23:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -480,6 +480,13 @@ typedef struct FuncExprState
 	 * Valid only when setArgsValid is true.
 	 */
 	bool		setHasSetArg;	/* some argument returns a set */
+
+	/*
+	 * Flag to remember whether we have registered a shutdown callback for
+	 * this FuncExprState.  We do so only if setArgsValid has been true at
+	 * least once (since all the callback is for is to clear setArgsValid).
+	 */
+	bool		shutdown_reg;	/* a shutdown callback is registered */
 
 	/*
 	 * Current argument data for a set-valued function; contains valid
