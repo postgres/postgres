@@ -4,5 +4,3 @@ SHARED_LIB='-K PIC'
 SRCH_INC='/opt/include'
 SRCH_LIB='/opt/lib'
 DLSUFFIX=.so
-CC=cc
-CXX=CC
