@@ -1,6 +1,14 @@
-Web May 19 00:20:00 BST 1999
-	- Internationalisation now done. Surprising that there's 68 error messages
-	  in the driver ;-)
+Wed Jun 23 06:50:00 BST 1999
+	- Fixed error in errors.properties where the arguments are 0 based not
+	  1 based
+	- Fixed bug in postgresql.Driver where exception is thrown, then
+	  intercepted rather than being passed to the calling application.
+	- Removed the file postgresql/CallableStatement, as it's not used and
+	  really exists in the jdbc1 & jdbc2 sub packages only.
+
+Wed May 19 00:20:00 BST 1999
+	- Internationalisation now done. Surprising that there's 68 error
+	  messages in the driver ;-)
 
 Tue May 18 07:00:00 BST 1999
 	- Set the ImageViewer application to use transactions
@@ -12,14 +20,15 @@ Tue May 18 00:00:00 BST 1999
 Mon May 17 23:40:00 BST 1999
 	- PG_Stream.close() now attempts to send the close connection message
 	  to the backend before closing the streams
-	- Added batch support in the JDBC2, supplied by Yutaka Tanida <yutaka@marin.or.jp>
+	- Added batch support in the JDBC2, supplied by Yutaka Tanida
+	  <yutaka@marin.or.jp>
 	- Removed the old datestyle code. Now the driver uses only ISO.
 	- Removed some files in the postgresql directory still in CVS that were
 	  moved since 6.4.x (DatabaseMetaData.java PreparedStatement.java
 	  ResultSetMetaData.java Statement.java)
-	- Internationalisation of the error messages is partially implemented, however
-	  it's not enabled as it only works when the jar file is _not_ used, and
-	  work needs to be done.
+	- Internationalisation of the error messages is partially implemented,
+	  however it's not enabled as it only works when the jar file is
+	  _not_ used, and work needs to be done.
 
 Sun Apr 11 17:00:00 BST 1999
 	- getUpdateCount() now returns the actual update count (before it

@@ -104,11 +104,13 @@ public class Driver implements java.sql.Driver
 	return (java.sql.Connection)con;
     } catch(ClassNotFoundException ex) {
 	throw new PSQLException("postgresql.jvm.version",ex);
+    } catch(PSQLException(ex1) {
+	// re-throw the exception, otherwise it will be caught next, and a
+	// postgresql.unusual error will be returned instead.
+	throw ex1;
     } catch(Exception ex2) {
 	throw new PSQLException("postgresql.unusual",ex2);
     }
-    // The old call - remove before posting
-    //return new Connection (host(), port(), props, database(), url, this);
   }
   
   /**

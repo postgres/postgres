@@ -4,7 +4,7 @@
 #    Makefile for Java JDBC interface
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/jdbc/Attic/Makefile,v 1.13 1999/05/17 22:58:18 peter Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/jdbc/Attic/Makefile,v 1.14 1999/06/23 05:56:17 peter Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -161,7 +161,6 @@ clean:
 # Java is unlike C in that one source file can generate several
 # _Different_ file names
 #
-postgresql/CallableStatement.class:	postgresql/CallableStatement.java
 postgresql/Connection.class:		postgresql/Connection.java
 postgresql/DatabaseMetaData.class:	postgresql/DatabaseMetaData.java
 postgresql/Driver.class:		postgresql/Driver.java
