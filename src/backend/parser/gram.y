@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.217 2001/01/20 17:37:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.218 2001/01/23 22:39:08 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -383,16 +383,16 @@ static void doNegateFloat(Value *v);
 %nonassoc	OVERLAPS
 %nonassoc	BETWEEN
 %nonassoc	IN
+%left		POSTFIXOP		/* dummy for postfix Op rules */
 %left		Op				/* multi-character ops and user-defined operators */
 %nonassoc	NOTNULL
 %nonassoc	ISNULL
-%nonassoc	NULL_P
-%nonassoc	IS
+%nonassoc	IS NULL_P TRUE_P FALSE_P	/* sets precedence for IS NULL, etc */
 %left		'+' '-'
 %left		'*' '/' '%'
 %left		'^'
 /* Unary Operators */
-%left		AT
+%left		AT ZONE			/* sets precedence for AT TIME ZONE */
 %right		UMINUS
 %left		'.'
 %left		'[' ']'
@@ -4355,7 +4355,7 @@ a_expr:  c_expr
 				{	$$ = makeA_Expr(OP, $2, $1, $3); }
 		| Op a_expr
 				{	$$ = makeA_Expr(OP, $1, NULL, $2); }
-		| a_expr Op
+		| a_expr Op					%prec POSTFIXOP
 				{	$$ = makeA_Expr(OP, $2, $1, NULL); }
 
 		| a_expr AND a_expr
@@ -4463,13 +4463,13 @@ a_expr:  c_expr
 					n->typename->typmod = -1;
 					$$ = makeA_Expr(OP, "=", $1,(Node *)n);
 				}
-		| a_expr BETWEEN b_expr AND b_expr
+		| a_expr BETWEEN b_expr AND b_expr			%prec BETWEEN
 				{
 					$$ = makeA_Expr(AND, NULL,
 						makeA_Expr(OP, ">=", $1, $3),
 						makeA_Expr(OP, "<=", $1, $5));
 				}
-		| a_expr NOT BETWEEN b_expr AND b_expr
+		| a_expr NOT BETWEEN b_expr AND b_expr		%prec BETWEEN
 				{
 					$$ = makeA_Expr(OR, NULL,
 						makeA_Expr(OP, "<", $1, $4),
@@ -4529,7 +4529,7 @@ a_expr:  c_expr
 						$$ = n;
 					}
 				}
-		| a_expr all_Op sub_type select_with_parens
+		| a_expr all_Op sub_type select_with_parens		%prec Op
 				{
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = makeList1($1);
@@ -4591,7 +4591,7 @@ b_expr:  c_expr
 				{	$$ = makeA_Expr(OP, $2, $1, $3); }
 		| Op b_expr
 				{	$$ = makeA_Expr(OP, $1, NULL, $2); }
-		| b_expr Op
+		| b_expr Op					%prec POSTFIXOP
 				{	$$ = makeA_Expr(OP, $2, $1, NULL); }
 		;
 
