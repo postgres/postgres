@@ -37,6 +37,9 @@
  *		@(#)utils.h		8.3 (Berkeley) 3/20/94
  */
 
+#ifndef _REGEX_UTILS_H
+#define _REGEX_UTILS_H
+
 #include <limits.h>
 
 /* utility definitions */
@@ -57,3 +60,5 @@ typedef unsigned char uch;
 #define NDEBUG					/* no assertions please */
 #endif
 #endif
+
+#endif	/* _REGEX_UTILS_H */
