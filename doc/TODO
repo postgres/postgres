@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Nov 12 21:10:17 EST 2002
+Last updated:		Tue Nov 26 17:05:35 EST 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -26,6 +26,7 @@ Urgent
 	o allow replication over unreliable or non-persistent links
 	o http://gborg.postgresql.org/project/pgreplication/projdisplay.php
 * Point-in-time data recovery using backup and write-ahead log
+* Create native Win32 port [win32]
 
 
 Reporting
@@ -65,6 +66,7 @@ Data Types
 * Allow INET subnet tests using non-constants
 * Add now("transaction|statement|clock") functionality
 * -Add GUC variables to control floating number output digits (Pedro Ferreira)
+* Have sequence dependency track use of DEFAULT sequences, seqname.nextval
 
 * CONVERSION
 	o Allow better handling of numeric constants, type conversion 
@@ -269,7 +271,8 @@ Referential Integrity
   in array
 * Allow DEFERRABLE UNIQUE constraints
 * Allow triggers to be disabled [trigger]
-* Support statement-level triggers and triggers on columns (Neil)
+* -Support statement-level triggers (Neil)
+* Support triggers on columns (Neil)
 
 
 Dependency Checking
@@ -283,7 +286,7 @@ Transactions
 ============
 
 * Overhaul bufmgr/lockmgr/transaction manager
-* Allow savepoints / nested transactions [transactions]
+* Allow savepoints / nested transactions [transactions] (Bruce)
 
 
 Exotic Features
@@ -374,7 +377,7 @@ Optimizer / Executor
 
 * Improve Subplan list handling
 * Allow Subplans to use efficient joins(hash, merge) with upper variable
-* Add hash for evaluating GROUP BY aggregates (Tom)
+* -Add hash for evaluating GROUP BY aggregates (Tom)
 * Allow merge and hash joins on expressions not just simple variables (Tom)
 * Make IN/NOT IN have similar performance to EXISTS/NOT EXISTS [exists]
 * Missing optimizer selectivities for date, r-tree, etc. [optimizer]
@@ -418,7 +421,6 @@ Source Code
 * Better document ability to build only certain interfaces (Marc)
 * Remove or relicense modules that are not under the BSD license, if possible
 * Remove memory/file descriptor freeing befor elog(ERROR)  (Bruce)
-* Create native Win32 port [win32]
 * Acquire lock on a relation before building a relcache entry for it
 * Research interaction of setitimer() and sleep() used by statement_timeout
 
