@@ -1,13 +1,13 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/create_table.l,v 1.8 1997/09/27 03:58:29 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/create_table.l,v 1.9 1997/10/01 17:05:13 thomas Exp $
 .TH "CREATE TABLE" SQL 09/25/97 PostgreSQL
 .SH NAME
 create table \(em create a new class
 .SH SYNOPSIS
 .nf
-\fBcreate table\fR classname \fB(\fPattname type [\fBdefault\fP value]
-	[\fB,\fP attname type [\fBdefault\fP value] ]\fB )\fP
+\fBcreate table\fR classname \fB(\fPattname type [not null] [\fBdefault\fP value]
+	[\fB,\fP attname type [\fBnot null\fP] [\fBdefault\fP value] ]\fB )\fP
 	[\fBinherits\fR \fB(\fR classname [\fB,\fR classname] \fB)\fR]
 	[\fBconstraint\fR cname \fBcheck\fR \fB(\fR test \fB)\fR [, \fBcheck\fR \fB(\fR test \fB)\fR ] ]
 	[\fBarchive\fR \fB=\fR archive_mode]
@@ -25,7 +25,8 @@ and the attributes are as specified in the list of
 Each attribute is created with the type specified by
 .IR type "."
 Each type may be a simple type, a complex type (set) or an array type.
-Each attribute may have a default value, specified by the
+Each attribute may be specified to be non-null and
+each may have a default value, specified by the
 .IR default
 clause which is the keyword "default" followed by a constant or expression.
 .PP
