@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.86 1998/09/23 04:22:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.87 1998/10/01 01:49:12 tgl Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -2678,6 +2678,11 @@ dumpIndices(FILE *fout, IndInfo *indinfo, int numIndices,
 
 		if (!tablename || (!strcmp(indinfo[i].indrelname, tablename)))
 		{
+			/* We make the index belong to the owner of its table,
+			 * which is not necessarily right but should answer 99% of the
+			 * time.  Would have to add owner name to IndInfo to do it right.
+			 */
+			becomeUser(fout, tblinfo[tableInd].usename);
 
 			strcpy(id1, fmtId(indinfo[i].indexrelname));
 			strcpy(id2, fmtId(indinfo[i].indrelname));
