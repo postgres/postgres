@@ -58,7 +58,7 @@
 #define PG_TYPE_VARCHAR			1043
 #define PG_TYPE_DATE			1082
 #define PG_TYPE_TIME			1083
-#define PG_TYPE_TIMESTAMP_NO_TMZONE 1114		/* since 7.2 */
+#define PG_TYPE_TIMESTAMP_NO_TMZONE	1114		/* since 7.2 */
 #define PG_TYPE_DATETIME		1184
 #define PG_TYPE_TIME_WITH_TMZONE	1266		/* since 7.1 */
 #define PG_TYPE_TIMESTAMP		1296	/* deprecated since 7.0 */
@@ -96,4 +96,5 @@ char	   *pgtype_create_params(StatementClass *stmt, Int4 type);
 Int2		sqltype_to_default_ctype(Int2 sqltype);
 Int4		ctype_length(Int2 ctype);
 
+#define	USE_ZONE	FALSE
 #endif

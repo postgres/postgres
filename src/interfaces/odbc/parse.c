@@ -742,7 +742,7 @@ parse_statement(StatementClass *stmt)
 			col_stmt->internal = TRUE;
 
 			result = PGAPI_Columns(hcol_stmt, "", 0, "", 0,
-						ti[i]->name, (SWORD) strlen(ti[i]->name), "", 0);
+						ti[i]->name, (SWORD) strlen(ti[i]->name), "", 0, PODBC_NOT_SEARCH_PATTERN);
 
 			mylog("        Past PG_Columns\n");
 			if (result == SQL_SUCCESS)

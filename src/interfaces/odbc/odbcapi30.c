@@ -85,12 +85,47 @@ SQLColAttribute(HSTMT StatementHandle,
 							   StringLength, NumericAttribute);
 }
 
+static HSTMT
+descHandleFromStatementHandle(HSTMT StatementHandle, SQLINTEGER descType) 
+{
+	switch (descType)
+	{
+		case SQL_ATTR_APP_ROW_DESC:		/* 10010 */
+			return StatementHandle;	/* this is bogus */
+		case SQL_ATTR_APP_PARAM_DESC:	/* 10011 */
+			return (HSTMT) ((SQLUINTEGER) StatementHandle + 1) ; /* this is bogus */
+		case SQL_ATTR_IMP_ROW_DESC:		/* 10012 */
+			return (HSTMT) ((SQLUINTEGER) StatementHandle + 2); /* this is bogus */
+		case SQL_ATTR_IMP_PARAM_DESC:	/* 10013 */
+			return (HSTMT) ((SQLUINTEGER) StatementHandle + 3); /* this is bogus */
+	}
+	return (HSTMT) 0;
+}
+static HSTMT
+statementHandleFromDescHandle(HSTMT DescHandle, SQLINTEGER *descType) 
+{
+	SQLUINTEGER res = (SQLUINTEGER) DescHandle % 4;
+	switch (res)
+	{
+		case 0: *descType = SQL_ATTR_APP_ROW_DESC; /* 10010 */
+			break;
+		case 1: *descType = SQL_ATTR_APP_PARAM_DESC; /* 10011 */
+			break;
+		case 2: *descType = SQL_ATTR_IMP_ROW_DESC; /* 10012 */
+			break;
+		case 3: *descType = SQL_ATTR_IMP_PARAM_DESC; /* 10013 */
+			break;
+	}
+	return (HSTMT) ((SQLUINTEGER) DescHandle - res);
+}
+
 /*	new function */
 RETCODE		SQL_API
 SQLCopyDesc(SQLHDESC SourceDescHandle,
 			SQLHDESC TargetDescHandle)
 {
 	mylog("[[SQLCopyDesc]]\n");
+	mylog("Error not implemented\n");
 	return SQL_ERROR;
 }
 
@@ -129,7 +164,10 @@ SQLFetchScroll(HSTMT StatementHandle,
 	if (FetchOrientation == SQL_FETCH_BOOKMARK)
 	{
 		if (stmt->options.bookmark_ptr)
+{
 			FetchOffset += *((Int4 *) stmt->options.bookmark_ptr);
+mylog("real FetchOffset = %d\n", FetchOffset);
+}
 		else
 		{
 			stmt->errornumber = STMT_SEQUENCE_ERROR;
@@ -172,6 +210,7 @@ SQLGetDescField(SQLHDESC DescriptorHandle,
 				SQLINTEGER *StringLength)
 {
 	mylog("[[SQLGetDescField]]\n");
+	mylog("Error not implemented\n");
 	return SQL_ERROR;
 }
 
@@ -185,6 +224,7 @@ SQLGetDescRec(SQLHDESC DescriptorHandle,
 			  SQLSMALLINT *Scale, SQLSMALLINT *Nullable)
 {
 	mylog("[[SQLGetDescRec]]\n");
+	mylog("Error not implemented\n");
 	return SQL_ERROR;
 }
 
@@ -305,22 +345,51 @@ SQLGetStmtAttr(HSTMT StatementHandle,
 	RETCODE		ret = SQL_SUCCESS;
 	int			len = 0;
 
-	mylog("[[%s]] %d\n", func, Attribute);
+	mylog("[[%s]] Handle=%u %d\n", func, StatementHandle, Attribute);
 	switch (Attribute)
 	{
 		case SQL_ATTR_FETCH_BOOKMARK_PTR:		/* 16 */
 			Value = stmt->options.bookmark_ptr;
-
+			len = 4;
+			break;
+		case SQL_ATTR_PARAM_BIND_OFFSET_PTR:	/* 17 */
+			Value = stmt->options.param_offset_ptr;
+			len = 4;
+			break;
+		case SQL_ATTR_PARAM_BIND_TYPE:	/* 18 */
+			*((SQLUINTEGER *) Value) = stmt->options.param_bind_type;
+			len = 4;
+			break;
+		case SQL_ATTR_PARAM_OPERATION_PTR:		/* 19 */
+			Value = stmt->options.param_operation_ptr;
+			len = 4;
+			break;
+		case SQL_ATTR_PARAM_STATUS_PTR: /* 20 */
+			Value = stmt->options.param_status_ptr;
+			len = 4;
+			break;
+		case SQL_ATTR_PARAMS_PROCESSED_PTR:		/* 21 */
+			Value = stmt->options.param_processed_ptr;
+			len = 4;
+			break;
+		case SQL_ATTR_PARAMSET_SIZE:	/* 22 */
+			*((SQLUINTEGER *) Value) = stmt->options.paramset_size;
+			len = 4;
+			break;
+		case SQL_ATTR_ROW_BIND_OFFSET_PTR:		/* 23 */
+			Value = stmt->options.row_offset_ptr;
+			len = 4;
+			break;
+		case SQL_ATTR_ROW_OPERATION_PTR:		/* 24 */
+			Value = stmt->options.row_operation_ptr;
 			len = 4;
 			break;
 		case SQL_ATTR_ROW_STATUS_PTR:	/* 25 */
 			Value = stmt->options.rowStatusArray;
-
 			len = 4;
 			break;
 		case SQL_ATTR_ROWS_FETCHED_PTR: /* 26 */
 			Value = stmt->options.rowsFetched;
-
 			len = 4;
 			break;
 		case SQL_ATTR_ROW_ARRAY_SIZE:	/* 27 */
@@ -328,30 +397,17 @@ SQLGetStmtAttr(HSTMT StatementHandle,
 			len = 4;
 			break;
 		case SQL_ATTR_APP_ROW_DESC:		/* 10010 */
-			*((HSTMT *) Value) = StatementHandle;		/* this is useless */
-			len = 4;
-			break;
 		case SQL_ATTR_APP_PARAM_DESC:	/* 10011 */
-			*((HSTMT *) Value) = StatementHandle;		/* this is useless */
-			len = 4;
-			break;
 		case SQL_ATTR_IMP_ROW_DESC:		/* 10012 */
-			*((HSTMT *) Value) = StatementHandle;		/* this is useless */
-			len = 4;
-			break;
 		case SQL_ATTR_IMP_PARAM_DESC:	/* 10013 */
-			*((HSTMT *) Value) = StatementHandle;		/* this is useless */
 			len = 4;
+			*((HSTMT *) Value) = descHandleFromStatementHandle(StatementHandle, Attribute); 
 			break;
 		case SQL_ATTR_AUTO_IPD:	/* 10001 */
 			/* case SQL_ATTR_ROW_BIND_TYPE: ** == SQL_BIND_TYPE(ODBC2.0) */
-		case SQL_ATTR_PARAMSET_SIZE:	/* 22 */
-		case SQL_ATTR_PARAM_STATUS_PTR: /* 20 */
-		case SQL_ATTR_PARAMS_PROCESSED_PTR:		/* 21 */
 
 		case SQL_ATTR_CURSOR_SCROLLABLE:		/* -1 */
 		case SQL_ATTR_CURSOR_SENSITIVITY:		/* -2 */
-
 		case SQL_ATTR_ENABLE_AUTO_IPD:	/* 15 */
 		case SQL_ATTR_METADATA_ID:		/* 10014 */
 
@@ -359,11 +415,6 @@ SQLGetStmtAttr(HSTMT StatementHandle,
 			 * case SQL_ATTR_PREDICATE_PTR: case
 			 * SQL_ATTR_PREDICATE_OCTET_LENGTH_PTR:
 			 */
-		case SQL_ATTR_PARAM_BIND_OFFSET_PTR:	/* 17 */
-		case SQL_ATTR_PARAM_BIND_TYPE:	/* 18 */
-		case SQL_ATTR_PARAM_OPERATION_PTR:		/* 19 */
-		case SQL_ATTR_ROW_BIND_OFFSET_PTR:		/* 23 */
-		case SQL_ATTR_ROW_OPERATION_PTR:		/* 24 */
 			stmt->errornumber = STMT_INVALID_OPTION_IDENTIFIER;
 			stmt->errormsg = "Unsupported statement option (Get)";
 			SC_log_error(func, "", stmt);
@@ -400,14 +451,127 @@ SQLSetConnectAttr(HDBC ConnectionHandle,
 	return PGAPI_SetConnectOption(ConnectionHandle, (UWORD) Attribute, (UDWORD) Value);
 }
 
+static RETCODE SQL_API
+ARDSetField(StatementClass *stmt, SQLSMALLINT RecNumber,
+		SQLSMALLINT FieldIdentifier, PTR Value, SQLINTEGER BufferLength)
+{
+	RETCODE		ret = SQL_SUCCESS;
+	switch (FieldIdentifier)
+	{
+		case SQL_DESC_ARRAY_SIZE:
+			stmt->options.rowset_size = (SQLUINTEGER) Value;
+			break; 
+		case SQL_DESC_ARRAY_STATUS_PTR:
+			stmt->options.row_operation_ptr = Value;
+			break;
+		case SQL_DESC_BIND_OFFSET_PTR:
+			stmt->options.row_offset_ptr = Value;
+			break;
+		case SQL_DESC_BIND_TYPE:
+			stmt->options.bind_size = (SQLUINTEGER) Value;
+			break;
+		default:ret = SQL_ERROR;
+			stmt->errornumber = STMT_INVALID_OPTION_IDENTIFIER; 
+	}
+	return ret;
+}
+
+static RETCODE SQL_API
+APDSetField(StatementClass *stmt, SQLSMALLINT RecNumber,
+		SQLSMALLINT FieldIdentifier, PTR Value, SQLINTEGER BufferLength)
+{
+	RETCODE		ret = SQL_SUCCESS;
+	switch (FieldIdentifier)
+	{
+		case SQL_DESC_ARRAY_SIZE:
+			stmt->options.paramset_size = (SQLUINTEGER) Value;
+			break; 
+		case SQL_DESC_ARRAY_STATUS_PTR:
+			stmt->options.param_operation_ptr = Value;
+			break;
+		case SQL_DESC_BIND_OFFSET_PTR:
+			stmt->options.param_offset_ptr = Value;
+			break;
+		case SQL_DESC_BIND_TYPE:
+			stmt->options.param_bind_type = (SQLUINTEGER) Value;
+			break;
+		default:ret = SQL_ERROR;
+			stmt->errornumber = STMT_INVALID_OPTION_IDENTIFIER; 
+	}
+	return ret;
+}
+
+static RETCODE SQL_API
+IRDSetField(StatementClass *stmt, SQLSMALLINT RecNumber,
+		SQLSMALLINT FieldIdentifier, PTR Value, SQLINTEGER BufferLength)
+{
+	RETCODE		ret = SQL_SUCCESS;
+	switch (FieldIdentifier)
+	{
+		case SQL_DESC_ARRAY_STATUS_PTR:
+			stmt->options.rowStatusArray = (SQLUSMALLINT *) Value;
+			break;
+		case SQL_DESC_ROWS_PROCESSED_PTR:
+			stmt->options.rowsFetched = (SQLUINTEGER *) Value;
+			break;
+		default:ret = SQL_ERROR;
+			stmt->errornumber = STMT_INVALID_OPTION_IDENTIFIER; 
+	}
+	return ret;
+}
+
+static RETCODE SQL_API
+IPDSetField(StatementClass *stmt, SQLSMALLINT RecNumber,
+		SQLSMALLINT FieldIdentifier, PTR Value, SQLINTEGER BufferLength)
+{
+	RETCODE		ret = SQL_SUCCESS;
+	switch (FieldIdentifier)
+	{
+		case SQL_DESC_ARRAY_STATUS_PTR:
+			stmt->options.param_status_ptr = (SQLUSMALLINT *) Value;
+			break;
+		case SQL_DESC_ROWS_PROCESSED_PTR:
+			stmt->options.param_processed_ptr = (SQLUINTEGER *) Value;
+			break;
+		default:ret = SQL_ERROR;
+			stmt->errornumber = STMT_INVALID_OPTION_IDENTIFIER; 
+	}
+	return ret;
+}
+
 /*	new function */
 RETCODE		SQL_API
 SQLSetDescField(SQLHDESC DescriptorHandle,
 				SQLSMALLINT RecNumber, SQLSMALLINT FieldIdentifier,
 				PTR Value, SQLINTEGER BufferLength)
 {
-	mylog("[[SQLSetDescField]]\n");
-	return SQL_ERROR;
+	RETCODE		ret = SQL_SUCCESS;
+	HSTMT		hstmt;
+	SQLUINTEGER	descType;
+	StatementClass *stmt;
+	mylog("[[SQLSetDescField]] h=%u rec=%d field=%d val=%x\n", DescriptorHandle, RecNumber, FieldIdentifier, Value);
+	hstmt = statementHandleFromDescHandle(DescriptorHandle, &descType);
+	mylog("stmt=%x type=%d\n", hstmt, descType);
+	stmt = (StatementClass *) hstmt;
+	switch (descType)
+	{
+		case SQL_ATTR_APP_ROW_DESC:
+			ret = ARDSetField(stmt, RecNumber, FieldIdentifier, Value, BufferLength);
+			break;
+		case SQL_ATTR_APP_PARAM_DESC:
+			ret = APDSetField(stmt, RecNumber, FieldIdentifier, Value, BufferLength);
+			break;
+		case SQL_ATTR_IMP_ROW_DESC:
+			ret = IRDSetField(stmt, RecNumber, FieldIdentifier, Value, BufferLength);
+			break;
+		case SQL_ATTR_IMP_PARAM_DESC:
+			ret = IPDSetField(stmt, RecNumber, FieldIdentifier, Value, BufferLength);
+			break;
+		default:ret = SQL_ERROR;
+			stmt->errornumber = STMT_INTERNAL_ERROR; 
+			mylog("Error not implemented\n");
+	}
+	return ret;
 }
 
 /*	new fucntion */
@@ -419,7 +583,8 @@ SQLSetDescRec(SQLHDESC DescriptorHandle,
 			  PTR Data, SQLINTEGER *StringLength,
 			  SQLINTEGER *Indicator)
 {
-	mylog("[[SQLsetDescRec]]\n");
+	mylog("[[SQLSetDescRec]]\n");
+	mylog("Error not implemented\n");
 	return SQL_ERROR;
 }
 
@@ -466,16 +631,10 @@ SQLSetStmtAttr(HSTMT StatementHandle,
 {
 	static char *func = "SQLSetStmtAttr";
 	StatementClass *stmt = (StatementClass *) StatementHandle;
-	UDWORD		rowcount;
 
-	mylog("[[%s]] %d,%u\n", func, Attribute, Value);
+	mylog("[[%s]] Handle=%u %d,%u\n", func, StatementHandle, Attribute, Value);
 	switch (Attribute)
 	{
-		case SQL_ATTR_PARAMSET_SIZE:	/* 22 */
-			return PGAPI_ParamOptions(StatementHandle, (UWORD) Value, &rowcount);
-		case SQL_ATTR_PARAM_STATUS_PTR: /* 20 */
-		case SQL_ATTR_PARAMS_PROCESSED_PTR:		/* 21 */
-
 		case SQL_ATTR_CURSOR_SCROLLABLE:		/* -1 */
 		case SQL_ATTR_CURSOR_SENSITIVITY:		/* -2 */
 
@@ -484,28 +643,41 @@ SQLSetStmtAttr(HSTMT StatementHandle,
 		case SQL_ATTR_APP_ROW_DESC:		/* 10010 */
 		case SQL_ATTR_APP_PARAM_DESC:	/* 10011 */
 		case SQL_ATTR_AUTO_IPD:	/* 10001 */
-			/* case SQL_ATTR_ROW_BIND_TYPE: ** == SQL_BIND_TYPE(ODBC2.0) */
-		case SQL_ATTR_IMP_ROW_DESC:		/* 10012 */
-		case SQL_ATTR_IMP_PARAM_DESC:	/* 10013 */
+		/* case SQL_ATTR_ROW_BIND_TYPE: ** == SQL_BIND_TYPE(ODBC2.0) */
+		case SQL_ATTR_IMP_ROW_DESC:	/* 10012 (read-only) */
+		case SQL_ATTR_IMP_PARAM_DESC:	/* 10013 (read-only) */
 		case SQL_ATTR_METADATA_ID:		/* 10014 */
 
 			/*
 			 * case SQL_ATTR_PREDICATE_PTR: case
 			 * SQL_ATTR_PREDICATE_OCTET_LENGTH_PTR:
 			 */
-		case SQL_ATTR_PARAM_BIND_OFFSET_PTR:	/* 17 */
-		case SQL_ATTR_PARAM_BIND_TYPE:	/* 18 */
 		case SQL_ATTR_PARAM_OPERATION_PTR:		/* 19 */
-		case SQL_ATTR_ROW_BIND_OFFSET_PTR:		/* 23 */
+		case SQL_ATTR_PARAM_STATUS_PTR:			/* 20 */
 		case SQL_ATTR_ROW_OPERATION_PTR:		/* 24 */
 			stmt->errornumber = STMT_INVALID_OPTION_IDENTIFIER;
 			stmt->errormsg = "Unsupported statement option (Set)";
 			SC_log_error(func, "", stmt);
 			return SQL_ERROR;
 
+		case SQL_ATTR_PARAM_BIND_OFFSET_PTR:	/* 17 */
+			stmt->options.param_offset_ptr = (SQLUINTEGER *) Value;
+			break;
+		case SQL_ATTR_ROW_BIND_OFFSET_PTR:		/* 23 */
+			stmt->options.row_offset_ptr = (SQLUINTEGER *) Value;
+			break;
+
 		case SQL_ATTR_FETCH_BOOKMARK_PTR:		/* 16 */
 			stmt->options.bookmark_ptr = Value;
-
+			break;
+		case SQL_ATTR_PARAM_BIND_TYPE:	/* 18 */
+			stmt->options.param_bind_type = (SQLUINTEGER) Value;
+			break;
+		case SQL_ATTR_PARAMS_PROCESSED_PTR:		/* 21 */
+			stmt->options.param_processed_ptr = (SQLUINTEGER *) Value;
+			break;
+		case SQL_ATTR_PARAMSET_SIZE:	/* 22 */
+			stmt->options.paramset_size = (SQLUINTEGER) Value;
 			break;
 		case SQL_ATTR_ROW_STATUS_PTR:	/* 25 */
 			stmt->options.rowStatusArray = (SQLUSMALLINT *) Value;
@@ -641,112 +813,4 @@ PGAPI_GetFunctions30(HDBC hdbc, UWORD fFunction, UWORD FAR * pfExists)
 														 * yet */
 
 	return SQL_SUCCESS;
-}
-RETCODE		SQL_API
-PGAPI_GetInfo30(HDBC hdbc, UWORD fInfoType, PTR rgbInfoValue,
-				SWORD cbInfoValueMax, SWORD FAR * pcbInfoValue)
-{
-	static char *func = "PGAPI_GetInfo30";
-	ConnectionClass *conn = (ConnectionClass *) hdbc;
-	char	   *p = NULL;
-	int			len = 0,
-				value = 0;
-	RETCODE		result;
-
-	switch (fInfoType)
-	{
-		case SQL_DYNAMIC_CURSOR_ATTRIBUTES1:
-			len = 4;
-			value = 0;
-			break;
-		case SQL_DYNAMIC_CURSOR_ATTRIBUTES2:
-			len = 4;
-			value = 0;
-			break;
-
-		case SQL_FORWARD_ONLY_CURSOR_ATTRIBUTES1:
-			len = 4;
-			value = SQL_CA1_NEXT | SQL_CA1_ABSOLUTE |
-				SQL_CA1_RELATIVE | SQL_CA1_BOOKMARK;
-			break;
-		case SQL_FORWARD_ONLY_CURSOR_ATTRIBUTES2:
-			len = 4;
-			value = 0;
-			break;
-		case SQL_KEYSET_CURSOR_ATTRIBUTES1:
-			len = 4;
-			value = SQL_CA1_NEXT | SQL_CA1_ABSOLUTE
-				| SQL_CA1_RELATIVE | SQL_CA1_BOOKMARK
-				| SQL_CA1_LOCK_NO_CHANGE | SQL_CA1_POS_POSITION
-				| SQL_CA1_POS_UPDATE | SQL_CA1_POS_DELETE
-				| SQL_CA1_POS_REFRESH
-				| SQL_CA1_BULK_ADD
-				| SQL_CA1_BULK_UPDATE_BY_BOOKMARK
-				| SQL_CA1_BULK_DELETE_BY_BOOKMARK
-				| SQL_CA1_BULK_FETCH_BY_BOOKMARK
-				;
-			break;
-		case SQL_KEYSET_CURSOR_ATTRIBUTES2:
-			len = 4;
-			value = SQL_CA2_OPT_ROWVER_CONCURRENCY |
-				SQL_CA2_SENSITIVITY_ADDITIONS |
-				SQL_CA2_SENSITIVITY_DELETIONS |
-				SQL_CA2_SENSITIVITY_UPDATES;
-			break;
-
-		case SQL_STATIC_CURSOR_ATTRIBUTES1:
-			len = 4;
-			value = SQL_CA1_NEXT | SQL_CA1_ABSOLUTE |
-				SQL_CA1_RELATIVE | SQL_CA1_BOOKMARK |
-				SQL_CA1_LOCK_NO_CHANGE | SQL_CA1_POS_POSITION |
-				SQL_CA1_POS_UPDATE | SQL_CA1_POS_DELETE |
-				SQL_CA1_POS_REFRESH;
-			break;
-		case SQL_STATIC_CURSOR_ATTRIBUTES2:
-			len = 4;
-			value = SQL_CA2_OPT_ROWVER_CONCURRENCY |
-				SQL_CA2_SENSITIVITY_ADDITIONS |
-				SQL_CA2_SENSITIVITY_DELETIONS |
-				SQL_CA2_SENSITIVITY_UPDATES;
-			break;
-		default:
-			/* unrecognized key */
-			conn->errormsg = "Unrecognized key passed to SQLGetInfo.";
-			conn->errornumber = CONN_NOT_IMPLEMENTED_ERROR;
-			CC_log_error(func, "", conn);
-			return SQL_ERROR;
-	}
-	result = SQL_SUCCESS;
-	if (p)
-	{
-		/* char/binary data */
-		len = strlen(p);
-
-		if (rgbInfoValue)
-		{
-			strncpy_null((char *) rgbInfoValue, p, (size_t) cbInfoValueMax);
-
-			if (len >= cbInfoValueMax)
-			{
-				result = SQL_SUCCESS_WITH_INFO;
-				conn->errornumber = STMT_TRUNCATED;
-				conn->errormsg = "The buffer was too small for tthe InfoValue.";
-			}
-		}
-	}
-	else
-	{
-		/* numeric data */
-		if (rgbInfoValue)
-		{
-			if (len == 2)
-				*((WORD *) rgbInfoValue) = (WORD) value;
-			else if (len == 4)
-				*((DWORD *) rgbInfoValue) = (DWORD) value;
-		}
-	}
-
-	if (pcbInfoValue)
-		*pcbInfoValue = len;
-	return result;
 }

@@ -342,14 +342,12 @@ PGAPI_SetConnectOption(
 			break;
 
 		case SQL_AUTOCOMMIT:
+			if (vParam == SQL_AUTOCOMMIT_ON && CC_is_in_autocommit(conn))
+				break;
+			else if (vParam == SQL_AUTOCOMMIT_OFF && !CC_is_in_autocommit(conn))
+				break;
 			if (CC_is_in_trans(conn))
-			{
-				conn->errormsg = "Cannot switch commit mode while a transaction is in progress";
-				conn->errornumber = CONN_TRANSACT_IN_PROGRES;
-				CC_log_error(func, "", conn);
-				return SQL_ERROR;
-			}
-
+				CC_commit(conn);
 			mylog("PGAPI_SetConnectOption: AUTOCOMMIT: transact_status=%d, vparam=%d\n", conn->transact_status, vParam);
 
 			switch (vParam)
@@ -475,7 +473,7 @@ PGAPI_GetConnectOption(
 			break;
 
 		case SQL_TXN_ISOLATION:	/* NOT SUPPORTED */
-			*((UDWORD *) pvParam) = SQL_TXN_SERIALIZABLE;
+			*((UDWORD *) pvParam) = SQL_TXN_READ_COMMITTED;
 			break;
 
 			/* These options should be handled by driver manager */

@@ -292,6 +292,8 @@ ConnectionClass *CC_Constructor(void);
 char		CC_Destructor(ConnectionClass *self);
 int			CC_cursor_count(ConnectionClass *self);
 char		CC_cleanup(ConnectionClass *self);
+char		CC_begin(ConnectionClass *self);
+char		CC_commit(ConnectionClass *self);
 char		CC_abort(ConnectionClass *self);
 int			CC_set_translation(ConnectionClass *self);
 char		CC_connect(ConnectionClass *self, char do_password);

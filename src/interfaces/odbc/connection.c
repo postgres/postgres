@@ -309,12 +309,6 @@ CC_Destructor(ConnectionClass *self)
 
 	mylog("after CC_Cleanup\n");
 
-#ifdef	MULTIBYTE
-	if (self->client_encoding)
-		free(self->client_encoding);
-	if (self->server_encoding)
-		free(self->server_encoding);
-#endif   /* MULTIBYTE */
 	/* Free up statement holders */
 	if (self->stmts)
 	{
@@ -322,23 +316,6 @@ CC_Destructor(ConnectionClass *self)
 		self->stmts = NULL;
 	}
 	mylog("after free statement holders\n");
-
-	/* Free cached table info */
-	if (self->col_info)
-	{
-		int			i;
-
-		for (i = 0; i < self->ntables; i++)
-		{
-			if (self->col_info[i]->result)		/* Free the SQLColumns
-												 * result structure */
-				QR_Destructor(self->col_info[i]->result);
-
-			free(self->col_info[i]);
-		}
-		free(self->col_info);
-	}
-
 
 	free(self);
 
@@ -381,28 +358,76 @@ CC_clear_error(ConnectionClass *self)
 
 
 /*
+ *	Used to begin a transaction.
+ */
+char
+CC_begin(ConnectionClass *self)
+{
+	char	ret = TRUE;
+	if (!CC_is_in_trans(self))
+	{
+		QResultClass *res = CC_send_query(self, "BEGIN", NULL);
+		mylog("CC_begin:  sending BEGIN!\n");
+
+		if (res != NULL)
+		{
+			ret = (!QR_aborted(res) && QR_command_successful(res));
+			QR_Destructor(res);
+			if (ret)
+				CC_set_in_trans(self);
+		}
+		else
+			ret = FALSE;
+	}
+
+	return ret;
+}
+
+/*
+ *	Used to commit a transaction.
+ *	We are almost always in the middle of a transaction.
+ */
+char
+CC_commit(ConnectionClass *self)
+{
+	char	ret = FALSE;
+	if (CC_is_in_trans(self))
+	{
+		QResultClass *res = CC_send_query(self, "COMMIT", NULL);
+		mylog("CC_commit:  sending COMMIT!\n");
+
+		CC_set_no_trans(self);
+
+		if (res != NULL)
+		{
+			ret = QR_command_successful(res);
+			QR_Destructor(res);
+		}
+		else
+			ret = FALSE;
+	}
+
+	return ret;
+}
+
+/*
  *	Used to cancel a transaction.
  *	We are almost always in the middle of a transaction.
  */
 char
 CC_abort(ConnectionClass *self)
 {
-	QResultClass *res;
-
 	if (CC_is_in_trans(self))
 	{
-		res = NULL;
-
+		QResultClass *res = CC_send_query(self, "ROLLBACK", NULL);
 		mylog("CC_abort:  sending ABORT!\n");
 
-		res = CC_send_query(self, "ABORT", NULL);
 		CC_set_no_trans(self);
 
 		if (res != NULL)
 			QR_Destructor(res);
 		else
 			return FALSE;
-
 	}
 
 	return TRUE;
@@ -461,6 +486,37 @@ CC_cleanup(ConnectionClass *self)
 	}
 #endif
 
+	self->status = CONN_NOT_CONNECTED;
+	self->transact_status = CONN_IN_AUTOCOMMIT;
+	memset(&self->connInfo, 0, sizeof(ConnInfo));
+#ifdef	DRIVER_CURSOR_IMPLEMENT
+	self->connInfo.updatable_cursors = 1;
+#endif   /* DRIVER_CURSOR_IMPLEMENT */
+	memcpy(&(self->connInfo.drivers), &globals, sizeof(globals));
+#ifdef	MULTIBYTE
+	if (self->client_encoding)
+		free(self->client_encoding);
+	self->client_encoding = NULL;
+	if (self->server_encoding)
+		free(self->server_encoding);
+	self->server_encoding = NULL;
+#endif   /* MULTIBYTE */
+	/* Free cached table info */
+	if (self->col_info)
+	{
+		int			i;
+
+		for (i = 0; i < self->ntables; i++)
+		{
+			if (self->col_info[i]->result)	/* Free the SQLColumns result structure */
+				QR_Destructor(self->col_info[i]->result);
+
+			free(self->col_info[i]);
+		}
+		free(self->col_info);
+		self->col_info = NULL;
+	}
+	self->ntables = 0;
 	mylog("exit CC_Cleanup\n");
 	return TRUE;
 }
@@ -516,7 +572,6 @@ md5_auth_send(ConnectionClass *self, const char *salt)
 	ConnInfo   *ci = &(self->connInfo);
 	SocketClass	*sock = self->sock;
 
-mylog("MD5 user=%s password=%s\n", ci->username, ci->password); 
 	if (!(pwd1 = malloc(MD5_PASSWD_LEN + 1)))
 		return 1;
 	if (!EncryptMD5(ci->password, ci->username, strlen(ci->username), pwd1))
@@ -601,9 +656,10 @@ CC_connect(ConnectionClass *self, char do_password)
 			 ci->drivers.conn_settings,
 			 encoding ? encoding : "");
 #else
-		qlog("                extra_systable_prefixes='%s', conn_settings='%s'\n",
+		qlog("                extra_systable_prefixes='%s', conn_settings='%s', protocol='%s'\n",
 			 ci->drivers.extra_systable_prefixes,
-			 ci->drivers.conn_settings);
+			 ci->drivers.conn_settings,
+			 ci->protocol);
 #endif
 
 		if (self->status != CONN_NOT_CONNECTED)
@@ -1037,7 +1093,8 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi)
 				ReadyToReturn,
 				tuples_return = FALSE,
 				query_completed = FALSE,
-				before_64 = PG_VERSION_LT(self, 6.4);
+				before_64 = PG_VERSION_LT(self, 6.4),
+				used_passed_result_object = FALSE;
 
 	/* ERROR_MSG_LENGTH is suffcient */
 	static char msgbuffer[ERROR_MSG_LENGTH + 1];
@@ -1289,6 +1346,7 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi)
 				else
 				{				/* next fetch, so reuse an existing result */
 
+					used_passed_result_object = TRUE;
 					/*
 					 * called from QR_next_tuple and must return
 					 * immediately.
@@ -1373,9 +1431,7 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi)
 		QR_Destructor(res);
 	if (result_in && retres != result_in)
 	{
-		if (qi && qi->result_in)
-			;
-		else
+		if (!used_passed_result_object)
 			QR_Destructor(result_in);
 	}
 	return retres;

@@ -51,77 +51,80 @@
  *	- thomas 2000-04-03
  */
 char	   *mapFuncs[][2] = {
-/*	{ "ASCII",		 "ascii"	  }, */
-	{"CHAR", "chr"},
-	{"CONCAT", "textcat"},
-/*	{ "DIFFERENCE",  "difference" }, */
-/*	{ "INSERT",		 "insert"	  }, */
-	{"LCASE", "lower"},
-	{"LEFT", "ltrunc"},
-	{"LOCATE", "strpos"},
-	{"LENGTH", "char_length"},
-/*	{ "LTRIM",		 "ltrim"	  }, */
-	{"RIGHT", "rtrunc"},
-/*	{ "REPEAT",		 "repeat"	  }, */
-/*	{ "REPLACE",	 "replace"	  }, */
-/*	{ "RTRIM",		 "rtrim"	  }, */
-/*	{ "SOUNDEX",	 "soundex"	  }, */
-	{"SUBSTRING", "substr"},
-	{"UCASE", "upper"},
+/*	{ "ASCII",		 "ascii"	  }, built_in */
+	{"CHAR", "chr($*)" },
+	{"CONCAT", "textcat($*)" },
+/*	{ "DIFFERENCE", "difference" }, how to ? */
+	{"INSERT", "substring($1 from 1 for $2 - 1) || $4 || substring($1 from $2 + $3)" },
+	{"LCASE", "lower($*)" },
+	{"LEFT", "ltrunc($*)" },
+	{"%2LOCATE", "strpos($2,  $1)" },	/* 2 parameters */
+	{"%3LOCATE", "strpos(substring($2 from $3), $1) + $3 - 1" },	/* 3 parameters */
+	{"LENGTH", "char_length($*)"},
+/*	{ "LTRIM",		 "ltrim"	  }, built_in */
+	{"RIGHT", "rtrunc($*)" },
+	{"SPACE", "repeat('' '', $1)" },
+/*	{ "REPEAT",		 "repeat"	  }, built_in */
+/*	{ "REPLACE", "replace" }, ??? */
+/*	{ "RTRIM",		 "rtrim"	  }, built_in */
+/*	{ "SOUNDEX", "soundex" }, how to ? */
+	{"SUBSTRING", "substr($*)" },
+	{"UCASE", "upper($*)" },
 
-/*	{ "ABS",		 "abs"		  }, */
-/*	{ "ACOS",		 "acos"		  }, */
-/*	{ "ASIN",		 "asin"		  }, */
-/*	{ "ATAN",		 "atan"		  }, */
-/*	{ "ATAN2",		 "atan2"	  }, */
-	{"CEILING", "ceil"},
-/*	{ "COS",		 "cos"		  }, */
-/*	{ "COT",		 "cot"		  }, */
-/*	{ "DEGREES",	 "degrees"	  }, */
-/*	{ "EXP",		 "exp"		  }, */
-/*	{ "FLOOR",		 "floor"	  }, */
-	{"LOG", "ln"},
-	{"LOG10", "log"},
-/*	{ "MOD",		 "mod"		  }, */
-/*	{ "PI",			 "pi"		  }, */
-	{"POWER", "pow"},
-/*	{ "RADIANS",	 "radians"	  }, */
-	{"RAND", "random"},
-/*	{ "ROUND",		 "round"	  }, */
-/*	{ "SIGN",		 "sign"		  }, */
-/*	{ "SIN",		 "sin"		  }, */
-/*	{ "SQRT",		 "sqrt"		  }, */
-/*	{ "TAN",		 "tan"		  }, */
-	{"TRUNCATE", "trunc"},
+/*	{ "ABS",		 "abs"		  }, built_in */
+/*	{ "ACOS",		 "acos"		  }, built_in */
+/*	{ "ASIN",		 "asin"		  }, built_in */
+/*	{ "ATAN",		 "atan"		  }, built_in */
+/*	{ "ATAN2",		 "atan2"	  }, bui;t_in */
+	{"CEILING", "ceil($*)" },
+/*	{ "COS",		 "cos" 		  }, built_in */
+/*	{ "COT",		 "cot" 		  }, built_in */
+/*	{ "DEGREES",		 "degrees" 	  }, built_in */
+/*	{ "EXP",		 "exp" 		  }, built_in */
+/*	{ "FLOOR",		 "floor" 	  }, built_in */
+	{"LOG", "ln($*)" },
+	{"LOG10", "log($*)" },
+/*	{ "MOD",		 "mod" 		  }, built_in */
+/*	{ "PI",			 "pi" 		  }, built_in */
+	{"POWER", "pow($*)" },
+/*	{ "RADIANS",		 "radians"	  }, built_in */
+	{"%0RAND", "random()" },	/* 0 parameters */
+	{"%1RAND", "(setseed($1) * .0 + random())" },	/* 1 parameters */
+/*	{ "ROUND",		 "round"	  }, built_in */
+/*	{ "SIGN",		 "sign"		  }, built_in */
+/*	{ "SIN",		 "sin"		  }, built_in */
+/*	{ "SQRT",		 "sqrt"		  }, built_in */
+/*	{ "TAN",		 "tan"		  }, built_in */
+	{"TRUNCATE", "trunc($*)" },
 
-	{"CURRENT_DATE", "curdate"},
-	{"CURRENT_TIME", "curtime"},
-	{"CURRENT_TIMESTAMP", "odbc_timestamp"},
-	{"CURRENT_USER", "odbc_current_user"},
-	{"SESSION_USER", "odbc_session_user"},
-/*	{ "CURDATE",	 "curdate"	  }, */
-/*	{ "CURTIME",	 "curtime"	  }, */
-/*	{ "DAYNAME",	 "dayname"	  }, */
-/*	{ "DAYOFMONTH",  "dayofmonth" }, */
-/*	{ "DAYOFWEEK",	 "dayofweek"  }, */
-/*	{ "DAYOFYEAR",	 "dayofyear"  }, */
-/*	{ "HOUR",		 "hour"		  }, */
-/*	{ "MINUTE",		 "minute"	  }, */
-/*	{ "MONTH",		 "month"	  }, */
-/*	{ "MONTHNAME",	 "monthname"  }, */
-/*	{ "NOW",		 "now"		  }, */
-/*	{ "QUARTER",	 "quarter"	  }, */
-/*	{ "SECOND",		 "second"	  }, */
-/*	{ "WEEK",		 "week"		  }, */
-/*	{ "YEAR",		 "year"		  }, */
+	{"CURRENT_DATE", "current_date" },
+	{"CURRENT_TIME", "current_time" },
+	{"CURRENT_TIMESTAMP", "current_timestamp" },
+	{"CURRENT_USER", "cast(current_user as text)" },
+	{"SESSION_USER", "cast(session_user as text)" },
+	{"CURDATE",	 "current_date" },
+	{"CURTIME",	 "current_time" },
+	{"DAYNAME",	 "to_char($1, 'Day')" },
+	{"DAYOFMONTH",  "cast(extract(day from $1) as integer)" },
+	{"DAYOFWEEK",	 "(cast(extract(dow from $1) as integer) + 1)" },
+	{"DAYOFYEAR",	 "cast(extract(doy from $1) as integer)" }, 
+	{"HOUR",	 "cast(extract(hour from $1) as integer)" },
+	{"MINUTE",	"cast(extract(minute from $1) as integer)" },
+	{"MONTH",	"cast(extract(month from $1) as integer)" },
+	{"MONTHNAME",	 " to_char($1, 'Month')" },
+/*	{ "NOW",		 "now"		  }, built_in */
+	{"QUARTER",	 "cast(extract(quarter from $1) as integer)" },
+	{"SECOND",	"cast(extract(second from $1) as integer)" },
+	{"WEEK",	"cast(extract(week from $1) as integer)" },
+	{"YEAR",	"cast(extract(year from $1) as integer)" },
 
 /*	{ "DATABASE",	 "database"   }, */
-	{"IFNULL", "coalesce"},
-	{"USER", "odbc_user"},
+	{"IFNULL", "coalesce($*)" },
+	{"USER", "cast(current_user as text)" },
 	{0, 0}
 };
 
-static char *mapFunction(const char *func);
+static const char *mapFunction(const char *func, int param_count);
 static unsigned int conv_from_octal(const unsigned char *s);
 static unsigned int conv_from_hex(const unsigned char *s);
 static char *conv_to_octal(unsigned char val);
@@ -307,9 +310,10 @@ int
 copy_and_convert_field_bindinfo(StatementClass *stmt, Int4 field_type, void *value, int col)
 {
 	BindInfoClass *bic = &(stmt->bindings[col]);
+	UInt4	offset = stmt->options.row_offset_ptr ? *stmt->options.row_offset_ptr : 0;
 
-	return copy_and_convert_field(stmt, field_type, value, (Int2) bic->returntype, (PTR) bic->buffer,
-							 (SDWORD) bic->buflen, (SDWORD *) bic->used);
+	return copy_and_convert_field(stmt, field_type, value, (Int2) bic->returntype, (PTR) (bic->buffer + offset),
+							 (SDWORD) bic->buflen, (SDWORD *) (bic->used + (offset >> 2)));
 }
 
 
@@ -318,6 +322,7 @@ int
 copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 fCType,
 					   PTR rgbValue, SDWORD cbValueMax, SDWORD *pcbValue)
 {
+	static char *func = "copy_and_convert_field";
 	Int4		len = 0,
 				copy_len = 0;
 	SIMPLE_TIME st;
@@ -387,8 +392,17 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 		 * doing nothing to the buffer.
 		 */
 		if (pcbValue)
+		{
 			*(SDWORD *) ((char *) pcbValue + pcbValueOffset) = SQL_NULL_DATA;
-		return COPY_OK;
+			return COPY_OK;
+		}
+		else
+		{
+			stmt->errornumber = STMT_RETURN_NULL_WITHOUT_INDICATOR;
+			stmt->errormsg = "StrLen_or_IndPtr was a null pointer and NULL data was retrieved";	
+			SC_log_error(func, "", stmt);
+			return	SQL_ERROR;
+		}
 	}
 
 	if (stmt->hdbc->DataSourceToDriver != NULL)
@@ -863,6 +877,26 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 					*((UDWORD *) rgbValue + bind_row) = atol(neut_str);
 				break;
 
+#if (ODBCVER >= 0x0300) && defined(ODBCINT64)
+#ifdef WIN32
+			case SQL_C_SBIGINT:
+				len = 8;
+				if (bind_size > 0)
+					*(SQLBIGINT *) ((char *) rgbValue + (bind_row * bind_size)) = _atoi64(neut_str);
+				else
+					*((SQLBIGINT *) rgbValue + bind_row) = _atoi64(neut_str);
+				break;
+
+			case SQL_C_UBIGINT:
+				len = 8;
+				if (bind_size > 0)
+					*(SQLUBIGINT *) ((char *) rgbValue + (bind_row * bind_size)) = _atoi64(neut_str);
+				else
+					*((SQLUBIGINT *) rgbValue + bind_row) = _atoi64(neut_str);
+				break;
+
+#endif /* WIN32 */
+#endif /* ODBCINT64 */
 			case SQL_C_BINARY:
 
 				/* truncate if necessary */
@@ -1146,6 +1180,11 @@ table_for_update(const char *stmt, int *endpos)
 	return !wstmt[0] || isspace((unsigned char) wstmt[0]);
 }
 
+#ifdef MULTIBYTE
+#define		my_strchr(s1,c1) multibyte_strchr(s1,c1)
+#else
+#define		my_strchr(s1,c1) strchr(s1,c1)
+#endif
 /*
  *	This function inserts parameters into an SQL statements.
  *	It will also modify a SELECT statement for use with declare/fetch cursors.
@@ -1193,10 +1232,13 @@ copy_statement_with_parameters(StatementClass *stmt)
 	char		token_save[64];
 	int			token_len;
 	BOOL		prev_token_end;
+	UInt4	offset = stmt->options.param_offset_ptr ? *stmt->options.param_offset_ptr : 0;
+	UInt4	current_row = stmt->exec_current_row < 0 ? 0 : stmt->exec_current_row;
 
 #ifdef	DRIVER_CURSOR_IMPLEMENT
 	BOOL		search_from_pos = FALSE;
 #endif   /* DRIVER_CURSOR_IMPLEMENT */
+
 	if (ci->disallow_premature)
 		prepare_dummy_cursor = stmt->pre_executing;
 
@@ -1320,25 +1362,15 @@ copy_statement_with_parameters(StatementClass *stmt)
 		 */
 		else if (oldchar == '{')
 		{
-			char	   *esc;
-			char	   *begin = &old_statement[opos + 1];
+			char	   *begin = &old_statement[opos], *end;
 
-#ifdef MULTIBYTE
-			char	   *end = multibyte_strchr(begin, '}');
-
-#else
-			char	   *end = strchr(begin, '}');
-#endif
-
-			if (!end)
-				continue;
 			/* procedure calls */
 			if (stmt->statement_type == STMT_TYPE_PROCCALL)
 			{
-				int			lit_call_len = 4;
+				int	lit_call_len = 4;
 
 				while (isspace((unsigned char) old_statement[++opos]));
-				/* '=?' to accept return values exists ? */
+				/* '?=' to accept return values exists ? */
 				if (old_statement[opos] == '?')
 				{
 					param_number++;
@@ -1358,28 +1390,18 @@ copy_statement_with_parameters(StatementClass *stmt)
 				}
 				opos += lit_call_len;
 				CVT_APPEND_STR("SELECT ");
-#ifdef MULTIBYTE
-				if (multibyte_strchr(&old_statement[opos], '('))
-#else
-				if (strchr(&old_statement[opos], '('))
-#endif   /* MULTIBYTE */
+				if (my_strchr(&old_statement[opos], '('))
 					proc_no_param = FALSE;
 				continue;
 			}
-			*end = '\0';
-
-			esc = convert_escape(begin);
-			if (esc)
-				CVT_APPEND_STR(esc);
-			else
-			{					/* it's not a valid literal so just copy */
-				*end = '}';
-				CVT_APPEND_CHAR(oldchar);
-				continue;
+			if (convert_escape(begin, stmt, &npos, &new_stsize, &end) != CONVERT_ESCAPE_OK)
+			{
+				stmt->errormsg = "ODBC escape convert error";
+				stmt->errornumber = STMT_EXEC_ERROR;
+				return SQL_ERROR;
 			}
-
-			opos += end - begin + 1;
-			*end = '}';
+			opos = end - old_statement; /* positioned at the last } */
+			new_statement = stmt->stmt_with_params;
 			continue;
 		}
 		/* End of a procedure call */
@@ -1500,11 +1522,30 @@ copy_statement_with_parameters(StatementClass *stmt)
 		}
 		else
 		{
+			UInt4	bind_size = stmt->options.param_bind_type;
+			UInt4	ctypelen;
 
-
-			used = stmt->parameters[param_number].used ? *stmt->parameters[param_number].used : SQL_NTS;
-
-			buffer = stmt->parameters[param_number].buffer;
+			buffer = stmt->parameters[param_number].buffer + offset;
+			if (current_row > 0)
+			{
+				if (bind_size > 0)
+					buffer += (bind_size * current_row);
+				else if (ctypelen = ctype_length(stmt->parameters[param_number].CType), ctypelen > 0)
+					buffer += current_row * ctypelen;
+				else 
+					buffer += current_row * stmt->parameters[param_number].buflen;
+			}
+			if (stmt->parameters[param_number].used)
+			{
+				UInt4	p_offset = offset;
+				if (bind_size > 0)
+					p_offset = offset + bind_size * current_row;
+				else
+					p_offset = offset + sizeof(SDWORD) * current_row;
+				used = *(SDWORD *)((char *)stmt->parameters[param_number].used + p_offset);
+			}
+			else
+				used = SQL_NTS;
 		}
 
 		/* Handle NULL parameter data */
@@ -1570,6 +1611,20 @@ copy_statement_with_parameters(StatementClass *stmt)
 						*((SDWORD *) buffer));
 				break;
 
+#if (ODBCVER >= 0x0300) && defined(ODBCINT64)
+#ifdef WIN32
+			case SQL_C_SBIGINT:
+				sprintf(param_string, "%I64d",
+						*((SQLBIGINT *) buffer));
+				break;
+
+			case SQL_C_UBIGINT:
+				sprintf(param_string, "%I64u",
+						*((SQLUBIGINT *) buffer));
+				break;
+
+#endif /* WIN32 */
+#endif /* ODBCINT64 */
 			case SQL_C_SSHORT:
 			case SQL_C_SHORT:
 				sprintf(param_string, "%d",
@@ -1706,7 +1761,7 @@ copy_statement_with_parameters(StatementClass *stmt)
 					parse_datetime(cbuf, &st);
 				}
 
-				sprintf(tmp, "'%.4d-%.2d-%.2d'", st.y, st.m, st.d);
+				sprintf(tmp, "'%.4d-%.2d-%.2d'::date", st.y, st.m, st.d);
 
 				CVT_APPEND_STR(tmp);
 				break;
@@ -1721,7 +1776,7 @@ copy_statement_with_parameters(StatementClass *stmt)
 					parse_datetime(cbuf, &st);
 				}
 
-				sprintf(tmp, "'%.2d:%.2d:%.2d'", st.hh, st.mm, st.ss);
+				sprintf(tmp, "'%.2d:%.2d:%.2d'::time", st.hh, st.mm, st.ss);
 
 				CVT_APPEND_STR(tmp);
 				break;
@@ -1743,7 +1798,7 @@ copy_statement_with_parameters(StatementClass *stmt)
 				 */
 				tmp[0] = '\'';
 				/* Time zone stuff is unreliable */
-				stime2timestamp(&st, tmp + 1, FALSE, PG_VERSION_GE(conn, 7.2));
+				stime2timestamp(&st, tmp + 1, USE_ZONE, PG_VERSION_GE(conn, 7.2));
 				strcat(tmp, "'");
 
 				CVT_APPEND_STR(tmp);
@@ -1772,28 +1827,13 @@ copy_statement_with_parameters(StatementClass *stmt)
 					/* begin transaction if needed */
 					if (!CC_is_in_trans(conn))
 					{
-						QResultClass *res;
-						char		ok;
-
-						res = CC_send_query(conn, "BEGIN", NULL);
-						if (!res)
+						if (!CC_begin(conn))
 						{
 							stmt->errormsg = "Could not begin (in-line) a transaction";
 							stmt->errornumber = STMT_EXEC_ERROR;
 							SC_log_error(func, "", stmt);
 							return SQL_ERROR;
 						}
-						ok = QR_command_successful(res);
-						QR_Destructor(res);
-						if (!ok)
-						{
-							stmt->errormsg = "Could not begin (in-line) a transaction";
-							stmt->errornumber = STMT_EXEC_ERROR;
-							SC_log_error(func, "", stmt);
-							return SQL_ERROR;
-						}
-
-						CC_set_in_trans(conn);
 					}
 
 					/* store the oid */
@@ -1823,28 +1863,13 @@ copy_statement_with_parameters(StatementClass *stmt)
 					/* commit transaction if needed */
 					if (!ci->drivers.use_declarefetch && CC_is_in_autocommit(conn))
 					{
-						QResultClass *res;
-						char		ok;
-
-						res = CC_send_query(conn, "COMMIT", NULL);
-						if (!res)
+						if (!CC_commit(conn))
 						{
 							stmt->errormsg = "Could not commit (in-line) a transaction";
 							stmt->errornumber = STMT_EXEC_ERROR;
 							SC_log_error(func, "", stmt);
 							return SQL_ERROR;
 						}
-						ok = QR_command_successful(res);
-						QR_Destructor(res);
-						if (!ok)
-						{
-							stmt->errormsg = "Could not commit (in-line) a transaction";
-							stmt->errornumber = STMT_EXEC_ERROR;
-							SC_log_error(func, "", stmt);
-							return SQL_ERROR;
-						}
-
-						CC_set_no_trans(conn);
 					}
 				}
 
@@ -1951,49 +1976,95 @@ copy_statement_with_parameters(StatementClass *stmt)
 }
 
 
-static char *
-mapFunction(const char *func)
+static const char *
+mapFunction(const char *func, int param_count)
 {
 	int			i;
 
 	for (i = 0; mapFuncs[i][0]; i++)
-		if (!stricmp(mapFuncs[i][0], func))
+	{
+		if (mapFuncs[i][0][0] == '%')
+		{
+			if (mapFuncs[i][0][1] - '0' == param_count &&
+			    !stricmp(mapFuncs[i][0] + 2, func))
+				return mapFuncs[i][1];
+		}
+		else if (!stricmp(mapFuncs[i][0], func))
 			return mapFuncs[i][1];
+	}
 
 	return NULL;
 }
 
 
+static int inner_convert_escape(const ConnectionClass *conn, const char *value, char *result, UInt4 maxLen, const char **input_resume, UInt4 *count);
+static int processParameters(const ConnectionClass *conn, const char *value, char *result, UInt4 maxLen, UInt4 *input_consumed, UInt4 *count, Int4 param_pos[][2]);
+
 /*
- * convert_escape()
- *
- * This function returns a pointer to static memory!
+ * inner_convert_escape()
+ * work with embedded escapes sequences
  */
-char *
-convert_escape(char *value)
+     
+static
+int inner_convert_escape(const ConnectionClass *conn, const char *value,
+		char *result, UInt4 maxLen, const char **input_resume,
+		UInt4 *count)
 {
-	static char escape[1024];
-	char		key[33];
-
+	static const char *func = "inner_convert_escape";
+	int	subret, param_count;
+	char valnts[1024], params[1024];
+	char key[33], *end;
+	const char *valptr;
+	UInt4	vlen, prtlen, input_consumed, param_consumed;
+	Int4	param_pos[16][2];
+ 
+	valptr = value;
+	if (*valptr == '{') /* skip the first { */
+		valptr++;
 	/* Separate off the key, skipping leading and trailing whitespace */
-	while ((*value != '\0') && isspace((unsigned char) *value))
-		value++;
-	sscanf(value, "%32s", key);
-	while ((*value != '\0') && (!isspace((unsigned char) *value)))
-		value++;
-	while ((*value != '\0') && isspace((unsigned char) *value))
-		value++;
-
-	mylog("convert_escape: key='%s', val='%s'\n", key, value);
-
-	if ((strcmp(key, "d") == 0) ||
-		(strcmp(key, "t") == 0) ||
-		(strcmp(key, "oj") == 0) ||		/* {oj syntax support for 7.1
-										 * servers */
-		(strcmp(key, "ts") == 0))
+	while ((*valptr != '\0') && isspace((unsigned char) *valptr))
+		valptr++;
+	sscanf(valptr, "%32s", key);
+	while ((*valptr != '\0') && (!isspace((unsigned char) *valptr)))
+		valptr++;
+	while ((*valptr != '\0') && isspace((unsigned char) *valptr))
+		valptr++;
+     
+	if (end = my_strchr(valptr, '}'), NULL == end)
+	{
+		mylog("%s couldn't find the ending }\n",func);
+		return CONVERT_ESCAPE_ERROR;
+	}
+	if (vlen = (UInt4)(end - valptr), maxLen <= vlen)
+		return CONVERT_ESCAPE_OVERFLOW;
+	memcpy(valnts, valptr, vlen);
+	valnts[vlen] = '\0';
+	*input_resume = valptr + vlen; /* resume from the last } */
+	mylog("%s: key='%s', val='%s'\n", func, key, valnts);
+     
+	if (strcmp(key, "d") == 0)
+	{
+		/* Literal; return the escape part adding type cast */
+		prtlen = snprintf(result, maxLen, "%s::date", valnts);
+	}
+	else if (strcmp(key, "t") == 0)
+	{
+		/* Literal; return the escape part adding type cast */
+		prtlen = snprintf(result, maxLen, "%s::time", valnts);
+	}
+	else if (strcmp(key, "ts") == 0)
+	{
+		/* Literal; return the escape part adding type cast */
+		if (PG_VERSION_LT(conn, 7.1))
+			prtlen = snprintf(result, maxLen, "%s::datetime", valnts);
+		else
+			prtlen = snprintf(result, maxLen, "%s::timestamp", valnts);
+	}
+	else if (strcmp(key, "oj") == 0) /* {oj syntax support for 7.1 * servers */
 	{
 		/* Literal; return the escape part as-is */
-		strncpy(escape, value, sizeof(escape) - 1);
+		strncpy(result, valnts, maxLen);
+		prtlen = vlen; 
 	}
 	else if (strcmp(key, "fn") == 0)
 	{
@@ -2001,52 +2072,286 @@ convert_escape(char *value)
 		 * Function invocation Separate off the func name, skipping
 		 * trailing whitespace.
 		 */
-		char	   *funcEnd = value;
-		char		svchar;
-		char	   *mapFunc;
+		char	*funcEnd = valnts;
+		char     svchar;
+		const char	*mapExpr;
+     
+		params[sizeof(params)-1] = '\0';
 
 		while ((*funcEnd != '\0') && (*funcEnd != '(') &&
-			   (!isspace((unsigned char) *funcEnd)))
+			(!isspace((unsigned char) *funcEnd)))
 			funcEnd++;
 		svchar = *funcEnd;
 		*funcEnd = '\0';
-		sscanf(value, "%32s", key);
+		sscanf(valnts, "%32s", key);
 		*funcEnd = svchar;
 		while ((*funcEnd != '\0') && isspace((unsigned char) *funcEnd))
 			funcEnd++;
 
 		/*
-		 * We expect left parenthesis here, else return fn body as-is
+ 		 * We expect left parenthesis here, else return fn body as-is
 		 * since it is one of those "function constants".
 		 */
 		if (*funcEnd != '(')
 		{
-			strncpy(escape, value, sizeof(escape) - 1);
-			return escape;
+			strncpy(result, valnts, maxLen);
+			return CONVERT_ESCAPE_OK;
 		}
-		mapFunc = mapFunction(key);
 
 		/*
-		 * We could have mapFunction() return key if not in table... -
-		 * thomas 2000-04-03
+		 * Process parameter list and inner escape
+		 * sequences
+		 * Aceto 2002-01-29
 		 */
-		if (mapFunc == NULL)
+
+		valptr += (UInt4)(funcEnd - valnts);
+		if (subret = processParameters(conn, valptr, params, sizeof(params) - 1, &input_consumed, &param_consumed, param_pos), CONVERT_ESCAPE_OK != subret) 
+			return CONVERT_ESCAPE_ERROR;
+
+		for (param_count = 0;; param_count++)
 		{
-			/* If unrecognized function name, return fn body as-is */
-			strncpy(escape, value, sizeof(escape) - 1);
-			return escape;
+			if (param_pos[param_count][0] < 0)
+				break;
 		}
-		/* copy mapped name and remaining input string */
-		strcpy(escape, mapFunc);
-		strncat(escape, funcEnd, sizeof(escape) - 1 - strlen(mapFunc));
+		if (param_count == 1 &&
+		    param_pos[0][1] < param_pos[0][0])
+			param_count = 0;
+		
+		mapExpr = mapFunction(key, param_count);
+		if (mapExpr == NULL)
+			prtlen = snprintf(result, maxLen, "%s%s", key, params);
+		else
+		{
+			const char *mapptr;
+			int	from, to, pidx, paramlen;
+
+			for (prtlen = 0, mapptr = mapExpr; *mapptr; mapptr++)
+			{
+				if (prtlen + 1 >= maxLen) /* buffer overflow */
+				{
+					result[prtlen] = '\0';
+					prtlen++;
+					break;
+				}
+				if (*mapptr != '$')
+				{
+					result[prtlen++] = *mapptr;
+					continue;
+				}
+				mapptr++;
+				if (*mapptr == '*')
+				{
+					from = 1;
+					to = param_consumed - 2;
+				}
+				else if (isdigit(*mapptr))
+				{
+					pidx = *mapptr - '0' - 1;
+					if (pidx < 0 ||
+					    param_pos[pidx][0] <0)
+					{
+						qlog("%s %dth param not found for the expression %s\n", pidx + 1, mapExpr);
+						return CONVERT_ESCAPE_ERROR;
+					}
+					from = param_pos[pidx][0];
+					to = param_pos[pidx][1];
+				}
+				else
+				{
+					qlog("%s internal expression error %s\n", func, mapExpr);
+					return CONVERT_ESCAPE_ERROR;
+				}
+				paramlen = to - from + 1;
+				if (prtlen + paramlen >= maxLen) /* buffer overflow */
+				{
+					prtlen = maxLen;
+					break;
+				}
+				if (paramlen > 0)
+					memcpy(&result[prtlen], params + from, paramlen);
+				prtlen += paramlen;
+			}
+			if (prtlen < maxLen)
+				result[prtlen] = '\0';
+			/** prtlen = snprintf(result, maxLen, "%s%s", mapExpr, params); **/
+		}
+		valptr += input_consumed;
+		*input_resume = valptr;
 	}
 	else
 	{
 		/* Bogus key, leave untranslated */
-		return NULL;
+		return CONVERT_ESCAPE_ERROR;
 	}
+     
+	if (count)
+		*count = prtlen;
+	if (prtlen < 0 || prtlen >= maxLen) /* buffer overflow */
+	{
+		mylog("%s %d bytes buffer overflow\n", func, maxLen);
+		return CONVERT_ESCAPE_OVERFLOW;
+	}
+	return CONVERT_ESCAPE_OK;
+}
+     
+/*
+ * processParameters()
+ * Process function parameters and work with embedded escapes sequences.
+ */
+     
+static
+int processParameters(const ConnectionClass *conn, const char *value,
+		char *result, UInt4 maxLen, UInt4 *input_consumed,
+		UInt4 *output_count, Int4 param_pos[][2])
+{
+	int		innerParenthesis, subret, param_count;
+	UInt4	ipos, count, inner_count;
+	unsigned char	stop;
+	const char	*valptr;
+	char	buf[1024];
+	BOOL	in_quote, in_dquote, in_escape, leadingSpace;
+ 
+	buf[sizeof(buf)-1] = '\0';
+	innerParenthesis = 0;
+	in_quote = in_dquote = in_escape = leadingSpace = FALSE;
+	param_count = 0;
+#ifdef MULTIBYTE
+	multibyte_init();
+#endif /* MULTIBYTE */
+	/* begin with outer '(' */
+	for (stop = FALSE, valptr = value, ipos = count = 0; *valptr != '\0'; ipos++, valptr++)
+	{
+		if (leadingSpace)
+		{
+			if (isspace(*valptr))
+				continue;
+			leadingSpace = FALSE;
+		}
+		if (count + 1 >= maxLen) /* buffer overflow */
+		{
+			*input_consumed = 0;
+			result[count++] = '\0';
+			return CONVERT_ESCAPE_OVERFLOW;
+		}
+#ifdef MULTIBYTE
+		if (multibyte_char_check(*valptr) != 0)
+		{
+			result[count++] = *valptr;
+			continue;
+		}
+		/*
+		 * From here we are guaranteed to handle a 1-byte character.
+		 */
+#endif
+		if (in_quote)
+		{
+			if (in_escape)
+				in_escape = FALSE;
+			else if (*valptr == '\\')
+				in_escape = TRUE;
+			else if (*valptr == '\'')
+				in_quote = FALSE;
+			result[count++] = *valptr;
+			continue;
+		}
+		else if (in_dquote)
+		{
+			if (*valptr == '\"')
+				in_dquote = FALSE;
+			result[count++] = *valptr;
+			continue;
+		}
+		switch (*valptr)
+		{
+			case '\'':
+				in_quote = TRUE;
+				break;
+			case '\"':
+				in_dquote = TRUE;
+				break;
+			case ',':
+				if (1 == innerParenthesis)
+				{
+					param_pos[param_count][1] = count - 1;
+					param_count++;
+					param_pos[param_count][0] = count + 1;
+					param_pos[param_count][1] = -1;
+					leadingSpace = TRUE;
+				}
+				break;
+			case '(':
+				if (0 == innerParenthesis)
+				{
+					param_pos[param_count][0] = count + 1;
+					param_pos[param_count][1] = -1;
+					leadingSpace = TRUE;
+				}
+				innerParenthesis++;
+				break;
+     
+			case ')':
+				innerParenthesis--;
+				if (0 == innerParenthesis)
+				{
+					param_pos[param_count][1] = count - 1;
+					param_count++;
+					param_pos[param_count][0] =
+					param_pos[param_count][1] = -1;
+				}
+				break;
+     
+			case '}':
+				stop = TRUE;
+				break;
+     
+			case '{':
+				if (subret = inner_convert_escape(conn, valptr, buf, sizeof(buf) - 1, &valptr, &inner_count), CONVERT_ESCAPE_OK != subret)
+					return CONVERT_ESCAPE_ERROR;
+     
+				if (inner_count + count >= maxLen)
+					return CONVERT_ESCAPE_OVERFLOW;
+				memcpy(&result[count], buf, inner_count); 
+				count += inner_count;
+				ipos = (UInt4) (valptr - value);
+				continue;
+		}
+		if (stop) /* returns with the last } position */
+			break;
+		result[count++] = *valptr;
+	}
+	if (param_pos[param_count][0] >= 0)
+	{
+		mylog("processParameters closing ) not found %d\n", innerParenthesis);
+		return CONVERT_ESCAPE_ERROR;
+	}
+	result[count] = '\0';
+	*input_consumed = ipos;
+	if (output_count)
+		*output_count = count;
+	return CONVERT_ESCAPE_OK;
+}
+     
+/*
+ * convert_escape()
+ * This function returns a pointer to static memory!
+ */
+     
+int
+convert_escape(const char *value, StatementClass *stmt, int *npos, int *stsize, const char **val_resume)
+{
+	int	ret, pos = *npos;
+	UInt4 	count;
 
-	return escape;
+	while (ret = inner_convert_escape(SC_get_conn(stmt), value,
+		stmt->stmt_with_params + pos, *stsize - pos, val_resume, &count),
+		CONVERT_ESCAPE_OVERFLOW == ret)
+	{
+		if ((*stsize = enlarge_statement(stmt, *stsize * 2)) <= 0)
+			return CONVERT_ESCAPE_ERROR;
+	}
+	if (CONVERT_ESCAPE_OK == ret)
+		*npos += count;
+	return ret;
 }
 
 
@@ -2218,7 +2523,7 @@ convert_special_chars(const char *si, char *dst, int used)
 	multibyte_init();
 #endif
 
-	for (i = 0; i < max; i++)
+	for (i = 0; i < max && si[i]; i++)
 	{
 #ifdef MULTIBYTE
 		if (multibyte_char_check(si[i]) != 0)
@@ -2514,26 +2819,12 @@ convert_lo(StatementClass *stmt, const void *value, Int2 fCType, PTR rgbValue,
 		/* begin transaction if needed */
 		if (!CC_is_in_trans(conn))
 		{
-			QResultClass *res;
-			char		ok;
-
-			res = CC_send_query(conn, "BEGIN", NULL);
-			if (!res)
+			if (!CC_begin(conn))
 			{
 				stmt->errormsg = "Could not begin (in-line) a transaction";
 				stmt->errornumber = STMT_EXEC_ERROR;
 				return COPY_GENERAL_ERROR;
 			}
-			ok = QR_command_successful(res);
-			QR_Destructor(res);
-			if (!ok)
-			{
-				stmt->errormsg = "Could not begin (in-line) a transaction";
-				stmt->errornumber = STMT_EXEC_ERROR;
-				return COPY_GENERAL_ERROR;
-			}
-
-			CC_set_in_trans(conn);
 		}
 
 		oid = atoi(value);
@@ -2577,26 +2868,12 @@ convert_lo(StatementClass *stmt, const void *value, Int2 fCType, PTR rgbValue,
 		/* commit transaction if needed */
 		if (!ci->drivers.use_declarefetch && CC_is_in_autocommit(conn))
 		{
-			QResultClass *res;
-			char		ok;
-
-			res = CC_send_query(conn, "COMMIT", NULL);
-			if (!res)
+			if (!CC_commit(conn))
 			{
 				stmt->errormsg = "Could not commit (in-line) a transaction";
 				stmt->errornumber = STMT_EXEC_ERROR;
 				return COPY_GENERAL_ERROR;
 			}
-			ok = QR_command_successful(res);
-			QR_Destructor(res);
-			if (!ok)
-			{
-				stmt->errormsg = "Could not commit (in-line) a transaction";
-				stmt->errornumber = STMT_EXEC_ERROR;
-				return COPY_GENERAL_ERROR;
-			}
-
-			CC_set_no_trans(conn);
 		}
 
 		stmt->lobj_fd = -1;
@@ -2626,26 +2903,12 @@ convert_lo(StatementClass *stmt, const void *value, Int2 fCType, PTR rgbValue,
 		/* commit transaction if needed */
 		if (!ci->drivers.use_declarefetch && CC_is_in_autocommit(conn))
 		{
-			QResultClass *res;
-			char		ok;
-
-			res = CC_send_query(conn, "COMMIT", NULL);
-			if (!res)
+			if (!CC_commit(conn))
 			{
 				stmt->errormsg = "Could not commit (in-line) a transaction";
 				stmt->errornumber = STMT_EXEC_ERROR;
 				return COPY_GENERAL_ERROR;
 			}
-			ok = QR_command_successful(res);
-			QR_Destructor(res);
-			if (!ok)
-			{
-				stmt->errormsg = "Could not commit (in-line) a transaction";
-				stmt->errornumber = STMT_EXEC_ERROR;
-				return COPY_GENERAL_ERROR;
-			}
-
-			CC_set_no_trans(conn);
 		}
 
 		stmt->lobj_fd = -1;		/* prevent further reading */

@@ -51,6 +51,7 @@ Int4 pgtypes_defined[]	= {
 				PG_TYPE_BPCHAR,
 				PG_TYPE_DATE,
 				PG_TYPE_TIME,
+				PG_TYPE_TIME_WITH_TMZONE,
 				PG_TYPE_DATETIME,
 				PG_TYPE_ABSTIME,
 				PG_TYPE_TIMESTAMP,
@@ -227,7 +228,11 @@ pgtype_to_sqltype(StatementClass *stmt, Int4 type)
 
 			/* Change this to SQL_BIGINT for ODBC v3 bjm 2001-01-23 */
 		case PG_TYPE_INT8:
+#if (ODBCVER >= 0x0300)
+			return SQL_BIGINT;
+#else
 			return SQL_CHAR;
+#endif /* ODBCVER */
 
 		case PG_TYPE_NUMERIC:
 			return SQL_NUMERIC;
@@ -273,7 +278,11 @@ pgtype_to_ctype(StatementClass *stmt, Int4 type)
 	switch (type)
 	{
 		case PG_TYPE_INT8:
+#if (ODBCVER >= 0x0300)
+			return SQL_C_SBIGINT;
+#else
 			return SQL_C_CHAR;
+#endif
 		case PG_TYPE_NUMERIC:
 			return SQL_C_CHAR;
 		case PG_TYPE_INT2:
@@ -287,13 +296,25 @@ pgtype_to_ctype(StatementClass *stmt, Int4 type)
 		case PG_TYPE_FLOAT8:
 			return SQL_C_DOUBLE;
 		case PG_TYPE_DATE:
+#if (ODBCVER >= 0x0300)
+			return SQL_C_TYPE_DATE;
+#else
 			return SQL_C_DATE;
+#endif /* ODBCVER */
 		case PG_TYPE_TIME:
+#if (ODBCVER >= 0x0300)
+			return SQL_C_TYPE_TIME;
+#else
 			return SQL_C_TIME;
+#endif /* ODBCVER */
 		case PG_TYPE_ABSTIME:
 		case PG_TYPE_DATETIME:
 		case PG_TYPE_TIMESTAMP:
+#if (ODBCVER >= 0x0300)
+			return SQL_C_TYPE_TIMESTAMP;
+#else
 			return SQL_C_TIMESTAMP;
+#endif /* ODBCVER */
 		case PG_TYPE_MONEY:
 			return SQL_C_FLOAT;
 		case PG_TYPE_BOOL:
@@ -386,7 +407,7 @@ pgtype_to_name(StatementClass *stmt, Int4 type)
 static Int2
 getNumericScale(StatementClass *stmt, Int4 type, int col)
 {
-	Int4		atttypmod;
+	Int4		atttypmod = -1;
 	QResultClass *result;
 	ColumnInfoClass *flds;
 
@@ -405,12 +426,16 @@ getNumericScale(StatementClass *stmt, Int4 type, int col)
 	{
 		flds = result->fields;
 		if (flds)
-			return flds->adtsize[col];
-		else
+		{
+			atttypmod = flds->atttypmod[col];
+			if (atttypmod < 0 && flds->adtsize[col] > 0)
+				return flds->adtsize[col];
+		}
+		if (atttypmod < 0)
 			return PG_NUMERIC_MAX_SCALE;
 	}
-
-	atttypmod = QR_get_atttypmod(result, col);
+	else 
+		atttypmod = QR_get_atttypmod(result, col);
 	if (atttypmod > -1)
 		return (atttypmod & 0xffff);
 	else
@@ -423,7 +448,7 @@ getNumericScale(StatementClass *stmt, Int4 type, int col)
 static Int4
 getNumericPrecision(StatementClass *stmt, Int4 type, int col)
 {
-	Int4		atttypmod;
+	Int4		atttypmod = -1;
 	QResultClass *result;
 	ColumnInfoClass *flds;
 
@@ -442,16 +467,20 @@ getNumericPrecision(StatementClass *stmt, Int4 type, int col)
 	{
 		flds = result->fields;
 		if (flds)
-			return flds->adtsize[col];
-		else
+		{
+			atttypmod = flds->atttypmod[col];
+			if (atttypmod < 0 && flds->adtsize[col] > 0)
+				return flds->adtsize[col];
+		}
+		if (atttypmod < 0)
 			return PG_NUMERIC_MAX_PRECISION;
 	}
-
-	atttypmod = QR_get_atttypmod(result, col);
+	else
+		atttypmod = QR_get_atttypmod(result, col);
 	if (atttypmod > -1)
 		return (atttypmod >> 16) & 0xffff;
 	else
-		return (QR_get_display_size(result, col) >= 0 ?
+		return (QR_get_display_size(result, col) > 0 ?
 				QR_get_display_size(result, col) :
 				PG_NUMERIC_MAX_PRECISION);
 }
@@ -586,13 +615,19 @@ getTimestampPrecision(StatementClass *stmt, Int4 type, int col)
 			fixed = 8;
 			break;
 		case PG_TYPE_TIME_WITH_TMZONE:
-			fixed = 11;
+			if (USE_ZONE)
+				fixed = 11;
+			else
+				fixed = 8;
 			break;
 		case PG_TYPE_TIMESTAMP_NO_TMZONE:
 			fixed = 19;
 			break;
 		default:
-			fixed = 22;
+			if (USE_ZONE)
+				fixed = 22;
+			else
+				fixed = 19;
 			break;
 	}
 	scale = getTimestampScale(stmt, type, col);
@@ -677,6 +712,8 @@ pgtype_precision(StatementClass *stmt, Int4 type, int col, int handle_unknown_si
 Int4
 pgtype_display_size(StatementClass *stmt, Int4 type, int col, int handle_unknown_size_as)
 {
+	int	dsize;
+
 	switch (type)
 	{
 		case PG_TYPE_INT2:
@@ -693,7 +730,8 @@ pgtype_display_size(StatementClass *stmt, Int4 type, int col, int handle_unknown
 			return 20;			/* signed: 19 digits + sign */
 
 		case PG_TYPE_NUMERIC:
-			return getNumericPrecision(stmt, type, col) + 2;
+			dsize = getNumericPrecision(stmt, type, col);
+			return dsize < 0 ? dsize : dsize + 2;
 
 		case PG_TYPE_MONEY:
 			return 15;			/* ($9,999,999.99) */
@@ -848,6 +886,7 @@ pgtype_auto_increment(StatementClass *stmt, Int4 type)
 
 		case PG_TYPE_DATE:
 		case PG_TYPE_TIME:
+		case PG_TYPE_TIME_WITH_TMZONE:
 		case PG_TYPE_ABSTIME:
 		case PG_TYPE_DATETIME:
 		case PG_TYPE_TIMESTAMP:
@@ -1013,8 +1052,14 @@ sqltype_to_default_ctype(Int2 sqltype)
 		case SQL_LONGVARCHAR:
 		case SQL_DECIMAL:
 		case SQL_NUMERIC:
+#if (ODBCVER < 0x0300)
 		case SQL_BIGINT:
 			return SQL_C_CHAR;
+#else
+			return SQL_C_CHAR;
+		case SQL_BIGINT:
+			return SQL_C_SBIGINT;
+#endif
 
 		case SQL_BIT:
 			return SQL_C_BIT;
@@ -1041,13 +1086,25 @@ sqltype_to_default_ctype(Int2 sqltype)
 			return SQL_C_BINARY;
 
 		case SQL_DATE:
+#if (ODBCVER >= 0x0300)
+			return SQL_C_TYPE_DATE;
+#else
 			return SQL_C_DATE;
+#endif /* ODBCVER */
 
 		case SQL_TIME:
+#if (ODBCVER >= 0x0300)
+			return SQL_C_TYPE_TIME;
+#else
 			return SQL_C_TIME;
+#endif /* ODBCVER */
 
 		case SQL_TIMESTAMP:
+#if (ODBCVER >= 0x0300)
+			return SQL_C_TYPE_TIMESTAMP;
+#else
 			return SQL_C_TIMESTAMP;
+#endif /* ODBCVER */
 
 		default:
 			/* should never happen */
@@ -1091,12 +1148,21 @@ ctype_length(Int2 ctype)
 			return sizeof(UCHAR);
 
 		case SQL_C_DATE:
+#if (ODBCVER >= 0x0300)
+		case SQL_C_TYPE_DATE:
+#endif /* ODBCVER */
 			return sizeof(DATE_STRUCT);
 
 		case SQL_C_TIME:
+#if (ODBCVER >= 0x0300)
+		case SQL_C_TYPE_TIME:
+#endif /* ODBCVER */
 			return sizeof(TIME_STRUCT);
 
 		case SQL_C_TIMESTAMP:
+#if (ODBCVER >= 0x0300)
+		case SQL_C_TYPE_TIMESTAMP:
+#endif /* ODBCVER */
 			return sizeof(TIMESTAMP_STRUCT);
 
 		case SQL_C_BINARY:

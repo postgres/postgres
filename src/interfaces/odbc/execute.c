@@ -196,7 +196,7 @@ PGAPI_Execute(
 	StatementClass *stmt = (StatementClass *) hstmt;
 	ConnectionClass *conn;
 	int			i,
-				retval;
+				retval, start_row, end_row;
 
 	mylog("%s: entering...\n", func);
 
@@ -215,7 +215,10 @@ PGAPI_Execute(
 	if (stmt->prepare && stmt->status == STMT_PREMATURE)
 	{
 		if (stmt->inaccurate_result)
+		{
+			stmt->exec_current_row = -1;
 			SC_recycle_statement(stmt);
+		}
 		else
 		{
 			stmt->status = STMT_FINISHED;
@@ -278,6 +281,35 @@ PGAPI_Execute(
 		return SQL_ERROR;
 	}
 
+	if (start_row = stmt->exec_start_row, start_row < 0)
+		start_row = 0; 
+	if (end_row = stmt->exec_end_row, end_row < 0)
+		end_row = stmt->options.paramset_size - 1; 
+	if (stmt->exec_current_row < 0)
+		stmt->exec_current_row = start_row;
+	if (stmt->exec_current_row == start_row)
+	{
+		if (stmt->options.param_processed_ptr)
+			*stmt->options.param_processed_ptr = 0;
+	}
+
+next_param_row:
+#if (ODBCVER >= 0x0300)
+	if (stmt->options.param_operation_ptr)
+	{
+		while (stmt->options.param_operation_ptr[stmt->exec_current_row] == SQL_PARAM_IGNORE)
+		{
+			if (stmt->options.param_status_ptr)
+				stmt->options.param_status_ptr[stmt->exec_current_row] = SQL_PARAM_UNUSED;
+			if (stmt->exec_current_row >= end_row)
+			{
+				stmt->exec_current_row = -1;
+				return SQL_SUCCESS;
+			}
+			++stmt->exec_current_row;
+		}
+	}
+#endif /* ODBCVER */
 	/*
 	 * Check if statement has any data-at-execute parameters when it is
 	 * not in SC_pre_execute.
@@ -289,17 +321,27 @@ PGAPI_Execute(
 		 * execute of this statement?  Therefore check for params and
 		 * re-copy.
 		 */
+		UInt4	offset = stmt->options.param_offset_ptr ? *stmt->options.param_offset_ptr : 0;
+		Int4	bind_size = stmt->options.param_bind_type;
+		Int4	current_row = stmt->exec_current_row < 0 ? 0 : stmt->exec_current_row;
+
 		stmt->data_at_exec = -1;
 		for (i = 0; i < stmt->parameters_allocated; i++)
 		{
 			Int4	   *pcVal = stmt->parameters[i].used;
 
-			if (pcVal && (*pcVal == SQL_DATA_AT_EXEC || *pcVal <= SQL_LEN_DATA_AT_EXEC_OFFSET))
-				stmt->parameters[i].data_at_exec = TRUE;
-			else
-				stmt->parameters[i].data_at_exec = FALSE;
+			stmt->parameters[i].data_at_exec = FALSE;
+			if (pcVal)
+			{
+				if (bind_size > 0)
+					pcVal = (Int4 *)((char *)pcVal + offset + bind_size * current_row);
+				else
+					pcVal = (Int4 *)((char *)pcVal + offset + sizeof(SDWORD) * current_row);
+				if (*pcVal == SQL_DATA_AT_EXEC || *pcVal <= SQL_LEN_DATA_AT_EXEC_OFFSET)
+					stmt->parameters[i].data_at_exec = TRUE;
+			}
 			/* Check for data at execution parameters */
-			if (stmt->parameters[i].data_at_exec == TRUE)
+			if (stmt->parameters[i].data_at_exec)
 			{
 				if (stmt->data_at_exec < 0)
 					stmt->data_at_exec = 1;
@@ -333,68 +375,88 @@ PGAPI_Execute(
 
 	mylog("   stmt_with_params = '%s'\n", stmt->stmt_with_params);
 
+	if (!stmt->inaccurate_result || !conn->connInfo.disallow_premature)
+	{
+		retval = SC_execute(stmt);
+		if (retval != SQL_ERROR)
+		{
+			if (stmt->options.param_processed_ptr)
+				(*stmt->options.param_processed_ptr)++;
+		}
+#if (ODBCVER >= 0x0300)
+		if (stmt->options.param_status_ptr)
+		{
+			switch (retval)
+			{
+				case SQL_SUCCESS: 
+					stmt->options.param_status_ptr[stmt->exec_current_row] = SQL_PARAM_SUCCESS;
+					break;
+				case SQL_SUCCESS_WITH_INFO: 
+					stmt->options.param_status_ptr[stmt->exec_current_row] = SQL_PARAM_SUCCESS_WITH_INFO;
+					break;
+				default: 
+					stmt->options.param_status_ptr[stmt->exec_current_row] = SQL_PARAM_ERROR;
+					break;
+			}
+		}
+#endif /* ODBCVER */
+		if (retval == SQL_ERROR ||
+		    stmt->inaccurate_result ||
+		    stmt->exec_current_row >= end_row)
+		{
+			stmt->exec_current_row = -1;
+			return retval;
+		}
+		stmt->exec_current_row++;
+		goto next_param_row;
+	}
 	/*
 	 * Get the field info for the prepared query using dummy backward
 	 * fetch.
 	 */
-	if (stmt->inaccurate_result && conn->connInfo.disallow_premature)
+	if (SC_is_pre_executable(stmt))
 	{
-		if (SC_is_pre_executable(stmt))
-		{
-			BOOL		in_trans = CC_is_in_trans(conn);
-			BOOL		issued_begin = FALSE,
-						begin_included = FALSE;
-			QResultClass *res;
+		BOOL		in_trans = CC_is_in_trans(conn);
+		BOOL		issued_begin = FALSE,
+					begin_included = FALSE;
+		QResultClass *res;
 
-			if (strnicmp(stmt->stmt_with_params, "BEGIN;", 6) == 0)
-				begin_included = TRUE;
-			else if (!in_trans)
+		if (strnicmp(stmt->stmt_with_params, "BEGIN;", 6) == 0)
+			begin_included = TRUE;
+		else if (!in_trans)
+		{
+			if (issued_begin = CC_begin(conn), !issued_begin)
 			{
-				res = CC_send_query(conn, "BEGIN", NULL);
-				if (res && !QR_aborted(res))
-					issued_begin = TRUE;
-				if (res)
-					QR_Destructor(res);
-				if (!issued_begin)
-				{
-					stmt->errornumber = STMT_EXEC_ERROR;
-					stmt->errormsg = "Handle prepare error";
-					return SQL_ERROR;
-				}
-			}
-			/* we are now in a transaction */
-			CC_set_in_trans(conn);
-			stmt->result = res = CC_send_query(conn, stmt->stmt_with_params, NULL);
-			if (!res || QR_aborted(res))
-			{
-				CC_abort(conn);
 				stmt->errornumber = STMT_EXEC_ERROR;
 				stmt->errormsg = "Handle prepare error";
 				return SQL_ERROR;
 			}
-			else
-			{
-				if (CC_is_in_autocommit(conn))
-				{
-					if (issued_begin)
-					{
-						res = CC_send_query(conn, "COMMIT", NULL);
-						CC_set_no_trans(conn);
-						if (res)
-							QR_Destructor(res);
-					}
-					else if (!in_trans && begin_included)
-						CC_set_no_trans(conn);
-				}
-				stmt->status = STMT_FINISHED;
-				return SQL_SUCCESS;
-			}
+		}
+		/* we are now in a transaction */
+		CC_set_in_trans(conn);
+		stmt->result = res = CC_send_query(conn, stmt->stmt_with_params, NULL);
+		if (!res || QR_aborted(res))
+		{
+			CC_abort(conn);
+			stmt->errornumber = STMT_EXEC_ERROR;
+			stmt->errormsg = "Handle prepare error";
+			return SQL_ERROR;
 		}
 		else
+		{
+			if (CC_is_in_autocommit(conn))
+			{
+				if (issued_begin)
+					CC_commit(conn);
+				else if (!in_trans && begin_included)
+					CC_set_no_trans(conn);
+			}
+			stmt->status = STMT_FINISHED;
 			return SQL_SUCCESS;
+		}
 	}
-
-	return SC_execute(stmt);
+	else
+		return SQL_SUCCESS;
 }
 
 
@@ -659,21 +721,7 @@ PGAPI_ParamData(
 		/* commit transaction if needed */
 		if (!ci->drivers.use_declarefetch && CC_is_in_autocommit(stmt->hdbc))
 		{
-			QResultClass *res;
-			char		ok;
-
-			res = CC_send_query(stmt->hdbc, "COMMIT", NULL);
-			if (!res)
-			{
-				stmt->errormsg = "Could not commit (in-line) a transaction";
-				stmt->errornumber = STMT_EXEC_ERROR;
-				SC_log_error(func, "", stmt);
-				return SQL_ERROR;
-			}
-			ok = QR_command_successful(res);
-			CC_set_no_trans(stmt->hdbc);
-			QR_Destructor(res);
-			if (!ok)
+			if (!CC_commit(stmt->hdbc))
 			{
 				stmt->errormsg = "Could not commit (in-line) a transaction";
 				stmt->errornumber = STMT_EXEC_ERROR;
@@ -687,13 +735,47 @@ PGAPI_ParamData(
 	/* Done, now copy the params and then execute the statement */
 	if (stmt->data_at_exec == 0)
 	{
+		int	end_row;
+
 		retval = copy_statement_with_parameters(stmt);
 		if (retval != SQL_SUCCESS)
 			return retval;
 
 		stmt->current_exec_param = -1;
 
-		return SC_execute(stmt);
+		retval = SC_execute(stmt);
+		if (retval != SQL_ERROR)
+		{
+			if (stmt->options.param_processed_ptr)
+				(*stmt->options.param_processed_ptr)++;
+		}
+#if (ODBCVER >= 0x0300)
+		if (stmt->options.param_status_ptr)
+		{
+			switch (retval)
+			{
+				case SQL_SUCCESS: 
+					stmt->options.param_status_ptr[stmt->exec_current_row] = SQL_PARAM_SUCCESS;
+					break;
+				case SQL_SUCCESS_WITH_INFO: 
+					stmt->options.param_status_ptr[stmt->exec_current_row] = SQL_PARAM_SUCCESS_WITH_INFO;
+					break;
+				default: 
+					stmt->options.param_status_ptr[stmt->exec_current_row] = SQL_PARAM_ERROR;
+					break;
+			}
+		}
+#endif /* ODBCVER */
+		if (stmt->exec_end_row < 0)
+			end_row = stmt->options.paramset_size - 1;
+		if (retval == SQL_ERROR ||
+		    stmt->exec_current_row >= end_row)
+		{
+			stmt->exec_current_row = -1;
+			return retval;
+		}
+		stmt->exec_current_row++;
+		return PGAPI_Execute(stmt);
 	}
 
 	/*
@@ -705,7 +787,7 @@ PGAPI_ParamData(
 	/* At least 1 data at execution parameter, so Fill in the token value */
 	for (; i < stmt->parameters_allocated; i++)
 	{
-		if (stmt->parameters[i].data_at_exec == TRUE)
+		if (stmt->parameters[i].data_at_exec)
 		{
 			stmt->data_at_exec--;
 			stmt->current_exec_param = i;
@@ -780,28 +862,13 @@ PGAPI_PutData(
 			/* begin transaction if needed */
 			if (!CC_is_in_trans(stmt->hdbc))
 			{
-				QResultClass *res;
-				char		ok;
-
-				res = CC_send_query(stmt->hdbc, "BEGIN", NULL);
-				if (!res)
+				if (!CC_begin(stmt->hdbc))
 				{
 					stmt->errormsg = "Could not begin (in-line) a transaction";
 					stmt->errornumber = STMT_EXEC_ERROR;
 					SC_log_error(func, "", stmt);
 					return SQL_ERROR;
 				}
-				ok = QR_command_successful(res);
-				QR_Destructor(res);
-				if (!ok)
-				{
-					stmt->errormsg = "Could not begin (in-line) a transaction";
-					stmt->errornumber = STMT_EXEC_ERROR;
-					SC_log_error(func, "", stmt);
-					return SQL_ERROR;
-				}
-
-				CC_set_in_trans(stmt->hdbc);
 			}
 
 			/* store the oid */

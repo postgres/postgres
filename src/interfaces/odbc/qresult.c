@@ -279,7 +279,11 @@ QR_fetch_tuples(QResultClass *self, ConnectionClass *conn, char *cursor)
 		mylog("QR_fetch_tuples: past CI_read_fields: num_fields = %d\n", self->num_fields);
 
 		if (fetch_cursor)
+		{
+			if (self->cache_size <= 0)
+				self->cache_size = ci->drivers.fetch_max;
 			tuple_size = self->cache_size;
+		}
 		else
 			tuple_size = TUPLE_MALLOC_INC;
 
@@ -359,17 +363,12 @@ QR_close(QResultClass *self)
 		{
 			mylog("QResult: END transaction on conn=%u\n", self->conn);
 
-			res = CC_send_query(self->conn, "END", NULL);
-
-			CC_set_no_trans(self->conn);
-
-			if (res == NULL)
+			if (!CC_commit(self->conn))
 			{
 				self->status = PGRES_FATAL_ERROR;
 				QR_set_message(self, "Error ending transaction.");
 				return FALSE;
 			}
-			QR_Destructor(res);
 		}
 	}
 

@@ -36,6 +36,9 @@
 #include "misc.h"
 #include "pgtypes.h"
 #include "pgapifunc.h"
+#ifdef	MULTIBYTE
+#include "multibyte.h"
+#endif
 
 
 /*	Trigger related stuff for SQLForeign Keys */
@@ -567,7 +570,10 @@ PGAPI_GetInfo(
 			break;
 
 		case SQL_SEARCH_PATTERN_ESCAPE: /* ODBC 1.0 */
-			p = "";
+			if (PG_VERSION_GE(conn, 6.5))
+				p = "\\";
+			else
+				p = "";
 			break;
 
 		case SQL_SERVER_NAME:	/* ODBC 1.0 */
@@ -1365,7 +1371,8 @@ PGAPI_Tables(
 		{
 			row = (TupleNode *) malloc(sizeof(TupleNode) + (5 - 1) *sizeof(TupleField));
 
-			set_tuplefield_string(&row->tuple[0], "");
+			/*set_tuplefield_string(&row->tuple[0], "");*/
+			set_tuplefield_null(&row->tuple[0]);
 
 			/*
 			 * I have to hide the table owner from Access, otherwise it
@@ -1378,7 +1385,8 @@ PGAPI_Tables(
 
 			mylog("%s: table_name = '%s'\n", func, table_name);
 
-			set_tuplefield_string(&row->tuple[1], "");
+			/* set_tuplefield_string(&row->tuple[1], ""); */
+			set_tuplefield_null(&row->tuple[1]);
 			set_tuplefield_string(&row->tuple[2], table_name);
 			set_tuplefield_string(&row->tuple[3], systable ? "SYSTEM TABLE" : (view ? "VIEW" : "TABLE"));
 			set_tuplefield_string(&row->tuple[4], "");
@@ -1413,6 +1421,66 @@ PGAPI_Tables(
 }
 
 
+/*
+ *	PostgreSQL needs 2 '\\' to escape '_' and '%'. 
+ */
+static int
+reallyEscapeCatalogEscapes(const char *src, int srclen, char *dest, int dst_len)
+{
+	int	i, outlen;
+	const char *in;
+	BOOL	escape_in = FALSE;
+
+	if (srclen == SQL_NULL_DATA)
+	{
+		dest[0] = '\0';
+		return STRCPY_NULL;
+	}
+	else if (srclen == SQL_NTS)
+		srclen = strlen(src);
+	if (srclen <= 0)
+		return STRCPY_FAIL;
+#ifdef MULTIBYTE
+	multibyte_init();
+#endif
+	for (i = 0, in = src, outlen = 0; i < srclen && outlen < dst_len; i++, in++)
+	{
+#ifdef MULTIBYTE
+                if (multibyte_char_check(*in) != 0)
+                {
+                        dest[outlen++] = *in;
+                        continue;
+                }
+#endif
+		if (escape_in)
+		{
+			switch (*in)
+			{
+				case '%':
+				case '_':
+					dest[outlen++] = '\\'; /* needs 1 more */
+					break;
+				default:
+					dest[outlen++] = '\\';
+					if (outlen < dst_len)
+						dest[outlen++] = '\\';
+					if (outlen < dst_len)
+						dest[outlen++] = '\\';
+					break;
+			}
+		}
+		if (*in == '\\')
+			escape_in = TRUE;
+		else
+			escape_in = FALSE;
+		if (outlen < dst_len)
+			dest[outlen++] = *in;
+	}
+	if (outlen < dst_len)
+		dest[outlen] = '\0';
+	return outlen;
+}
+
 RETCODE		SQL_API
 PGAPI_Columns(
 			  HSTMT hstmt,
@@ -1423,7 +1491,8 @@ PGAPI_Columns(
 			  UCHAR FAR * szTableName,
 			  SWORD cbTableName,
 			  UCHAR FAR * szColumnName,
-			  SWORD cbColumnName)
+			  SWORD cbColumnName,
+			  UWORD	flag)
 {
 	static char *func = "PGAPI_Columns";
 	StatementClass *stmt = (StatementClass *) hstmt;
@@ -1476,9 +1545,22 @@ PGAPI_Columns(
 	  " and c.oid= a.attrelid and a.atttypid = t.oid and (a.attnum > 0)",
 			PG_VERSION_LE(conn, 6.2) ? "a.attlen" : "a.atttypmod");
 
-	my_strcat(columns_query, " and c.relname like '%.*s'", szTableName, cbTableName);
-	my_strcat(columns_query, " and u.usename like '%.*s'", szTableOwner, cbTableOwner);
-	my_strcat(columns_query, " and a.attname like '%.*s'", szColumnName, cbColumnName);
+	if ((flag & PODBC_NOT_SEARCH_PATTERN) != 0) 
+	{
+		my_strcat(columns_query, " and c.relname = '%.*s'", szTableName, cbTableName);
+		my_strcat(columns_query, " and u.usename = '%.*s'", szTableOwner, cbTableOwner);
+		my_strcat(columns_query, " and a.attname = '%.*s'", szColumnName, cbColumnName);
+	}
+	else
+	{
+		char	esc_table_name[MAX_TABLE_LEN * 2];
+		int	escTbnamelen;
+
+		escTbnamelen = reallyEscapeCatalogEscapes(szTableName, cbTableName, esc_table_name, sizeof(esc_table_name));
+		my_strcat(columns_query, " and c.relname like '%.*s'", esc_table_name, escTbnamelen);
+		my_strcat(columns_query, " and u.usename like '%.*s'", szTableOwner, cbTableOwner);
+		my_strcat(columns_query, " and a.attname like '%.*s'", szColumnName, cbColumnName);
+	}
 
 	/*
 	 * give the output in the order the columns were defined when the
@@ -1730,7 +1812,7 @@ PGAPI_Columns(
 		 *----------
 		 */
 		qlog("PGAPI_Columns: table='%s',field_name='%s',type=%d,sqltype=%d,name='%s'\n",
-			 table_name, field_name, field_type, pgtype_to_sqltype, field_type_name);
+			 table_name, field_name, field_type, pgtype_to_sqltype(stmt,field_type), field_type_name);
 
 		useStaticPrecision = TRUE;
 
@@ -1892,8 +1974,10 @@ PGAPI_SpecialColumns(
 			"from pg_user u, pg_class c where "
 			"u.usesysid = c.relowner");
 
-	my_strcat(columns_query, " and c.relname like '%.*s'", szTableName, cbTableName);
-	my_strcat(columns_query, " and u.usename like '%.*s'", szTableOwner, cbTableOwner);
+	/* TableName cannot contain a string search pattern */
+	my_strcat(columns_query, " and c.relname = '%.*s'", szTableName, cbTableName);
+	/* SchemaName cannot contain a string search pattern */
+	my_strcat(columns_query, " and u.usename = '%.*s'", szTableOwner, cbTableOwner);
 
 
 	result = PGAPI_AllocStmt(stmt->hdbc, &hcol_stmt);
@@ -2114,8 +2198,11 @@ PGAPI_Statistics(
 	 * being shown. This would throw everything off.
 	 */
 	col_stmt->internal = TRUE;
+	/* 
+	 * table_name parameter cannot contain a string search pattern. 
+	 */
 	result = PGAPI_Columns(hcol_stmt, "", 0, "", 0,
-						   table_name, (SWORD) strlen(table_name), "", 0);
+						   table_name, (SWORD) strlen(table_name), "", 0, PODBC_NOT_SEARCH_PATTERN);
 	col_stmt->internal = FALSE;
 
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
@@ -2725,9 +2812,7 @@ getClientTableName(ConnectionClass *conn, char *serverTableName, BOOL *nameAlloc
 	continueExec = (continueExec && !bError);
 	if (bError && CC_is_in_trans(conn))
 	{
-		if (res = CC_send_query(conn, "abort", NULL), res)
-			QR_Destructor(res);
-		CC_set_no_trans(conn);
+		CC_abort(conn);
 		bError = FALSE;
 	}
 	/* restore the client encoding */
@@ -2811,9 +2896,7 @@ getClientColumnName(ConnectionClass *conn, const char *serverTableName, char *se
 	continueExec = (continueExec && !bError);
 	if (bError && CC_is_in_trans(conn))
 	{
-		if (res = CC_send_query(conn, "abort", NULL), res)
-			QR_Destructor(res);
-		CC_set_no_trans(conn);
+		CC_abort(conn);
 		bError = FALSE;
 	}
 	/* restore the cleint encoding */
@@ -3647,7 +3730,7 @@ PGAPI_Procedures(
 		" proname as " "PROCEDURE_NAME" ", '' as " "NUM_INPUT_PARAMS" ","
 		   " '' as " "NUM_OUTPUT_PARAMS" ", '' as " "NUM_RESULT_SETS" ","
 		   " '' as " "REMARKS" ","
-		   " case when prorettype =0 then 1::int2 else 2::int2 end as " "PROCEDURE_TYPE" " from pg_proc");
+		   " case when prorettype = 0 then 1::int2 else 2::int2 end as " "PROCEDURE_TYPE" " from pg_proc");
 	my_strcat(proc_query, " where proname like '%.*s'", szProcName, cbProcName);
 
 	res = CC_send_query(conn, proc_query, NULL);

@@ -233,6 +233,9 @@ PGAPI_Error(
 					case STMT_INVALID_CURSOR_POSITION:
 						strcpy(szSqlState, "S1109");
 						break;
+					case STMT_RETURN_NULL_WITHOUT_INDICATOR:
+						strcpy(szSqlState, "22002");
+						break;
 					case STMT_VALUE_OUT_OF_RANGE:
 						strcpy(szSqlState, "22003");
 						break;
@@ -375,6 +378,9 @@ PGAPI_Error(
 					case CONN_NOT_IMPLEMENTED_ERROR:
 					case STMT_NOT_IMPLEMENTED_ERROR:
 						strcpy(szSqlState, "S1C00");
+						break;
+					case STMT_RETURN_NULL_WITHOUT_INDICATOR:
+						strcpy(szSqlState, "22002");
 						break;
 					case CONN_VALUE_OUT_OF_RANGE:
 					case STMT_VALUE_OUT_OF_RANGE:

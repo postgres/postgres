@@ -18,6 +18,10 @@
 #define COPY_RESULT_TRUNCATED					3
 #define COPY_GENERAL_ERROR						4
 #define COPY_NO_DATA_FOUND						5
+/* convert_escape results */
+#define CONVERT_ESCAPE_OK					0
+#define CONVERT_ESCAPE_OVERFLOW					1
+#define CONVERT_ESCAPE_ERROR					2
 
 typedef struct
 {
@@ -35,7 +39,8 @@ int copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, I
 					   PTR rgbValue, SDWORD cbValueMax, SDWORD *pcbValue);
 
 int			copy_statement_with_parameters(StatementClass *stmt);
-char	   *convert_escape(char *value);
+int		convert_escape(const char *value, StatementClass *stmt,
+			int *npos, int *stsize, const char **val_resume);
 BOOL		convert_money(const char *s, char *sout, size_t soutmax);
 char		parse_datetime(char *buf, SIMPLE_TIME *st);
 int			convert_linefeeds(const char *s, char *dst, size_t max, BOOL *changed);

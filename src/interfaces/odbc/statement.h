@@ -75,6 +75,7 @@ typedef enum
 #define STMT_PROGRAM_TYPE_OUT_OF_RANGE			26
 #define STMT_BAD_ERROR							27
 #define STMT_INVALID_OPTION_IDENTIFIER					28
+#define STMT_RETURN_NULL_WITHOUT_INDICATOR				29
 
 /* statement types */
 enum
@@ -207,6 +208,9 @@ struct StatementClass_
 	char	   *stmt_with_params;		/* statement after parameter
 										 * substitution */
 	int			stmt_size_limit;
+	int			exec_start_row;
+	int			exec_end_row;
+	int			exec_current_row;
 
 	char		pre_executing;	/* This statement is prematurely executing */
 	char		inaccurate_result;		/* Current status is PREMATURE but

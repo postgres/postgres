@@ -263,6 +263,9 @@ SC_Constructor(void)
 
 		rv->data_at_exec = -1;
 		rv->current_exec_param = -1;
+		rv->exec_start_row = -1;
+		rv->exec_end_row = -1;
+		rv->exec_current_row = -1;
 		rv->put_data = FALSE;
 
 		rv->lobj_fd = -1;
@@ -404,6 +407,9 @@ SC_free_params(StatementClass *self, char option)
 		free(self->parameters);
 		self->parameters = NULL;
 		self->parameters_allocated = 0;
+		self->exec_start_row = -1;
+		self->exec_end_row = -1;
+		self->exec_current_row = -1;
 	}
 
 	mylog("SC_free_params:  EXIT\n");
@@ -778,10 +784,12 @@ SC_fetch(StatementClass *self)
 	if (self->bookmark.buffer)
 	{
 		char		buf[32];
+		UInt4	offset = self->options.row_offset_ptr ? *self->options.row_offset_ptr : 0;
 
 		sprintf(buf, "%ld", SC_get_bookmark(self));
 		result = copy_and_convert_field(self, 0, buf,
-			 SQL_C_ULONG, self->bookmark.buffer, 0, self->bookmark.used);
+			 SQL_C_ULONG, self->bookmark.buffer + offset, 0,
+			self->bookmark.used ? self->bookmark.used + (offset >> 2) : NULL);
 	}
 
 #ifdef	DRIVER_CURSOR_IMPLEMENT
@@ -892,10 +900,7 @@ SC_execute(StatementClass *self)
 {
 	static char *func = "SC_execute";
 	ConnectionClass *conn;
-	QResultClass *res;
-	char		ok,
-				was_ok,
-				was_nonfatal;
+	char		was_ok, was_nonfatal;
 	Int2		oldstatus,
 				numcols;
 	QueryInfo	qi;
@@ -920,30 +925,13 @@ SC_execute(StatementClass *self)
 		 (!CC_is_in_autocommit(conn) && self->statement_type != STMT_TYPE_OTHER)))
 	{
 		mylog("   about to begin a transaction on statement = %u\n", self);
-		res = CC_send_query(conn, "BEGIN", NULL);
-		if (QR_aborted(res))
+		if (!CC_begin(conn))
 		{
 			self->errormsg = "Could not begin a transaction";
 			self->errornumber = STMT_EXEC_ERROR;
 			SC_log_error(func, "", self);
 			return SQL_ERROR;
 		}
-
-		ok = QR_command_successful(res);
-
-		mylog("SC_exec: begin ok = %d, status = %d\n", ok, QR_get_status(res));
-
-		QR_Destructor(res);
-
-		if (!ok)
-		{
-			self->errormsg = "Could not begin a transaction";
-			self->errornumber = STMT_EXEC_ERROR;
-			SC_log_error(func, "", self);
-			return SQL_ERROR;
-		}
-		else
-			CC_set_in_trans(conn);
 	}
 
 	oldstatus = conn->status;
@@ -1008,11 +996,7 @@ SC_execute(StatementClass *self)
 		 * transactions must be committed. (Hiroshi, 02/11/2001)
 		 */
 		if (!self->internal && CC_is_in_autocommit(conn) && CC_is_in_trans(conn))
-		{
-			res = CC_send_query(conn, "COMMIT", NULL);
-			QR_Destructor(res);
-			CC_set_no_trans(conn);
-		}
+			CC_commit(conn);
 	}
 
 	conn->status = oldstatus;

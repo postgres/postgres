@@ -134,6 +134,8 @@ PGAPI_BindParameter(
 		stmt->parameters[ipar].EXEC_buffer = NULL;
 	}
 
+	if (pcbValue && stmt->options.param_offset_ptr)
+		pcbValue += (*stmt->options.param_offset_ptr >> 2);
 	/* Data at exec macro only valid for C char/binary data */
 	if (pcbValue && (*pcbValue == SQL_DATA_AT_EXEC ||
 					 *pcbValue <= SQL_LEN_DATA_AT_EXEC_OFFSET))

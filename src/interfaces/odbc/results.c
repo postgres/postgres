@@ -1296,7 +1296,7 @@ SC_pos_reload(StatementClass *stmt, UWORD irow, UWORD *count)
 		if (rcnt == 1)
 		{
 			QR_set_position(qres, 0);
-			tuplen = res->tupleField;
+			tuplen = qres->tupleField;
 			for (i = 0; i < res->num_fields; i++)
 			{
 				if (tupleo[i].value)
@@ -1416,6 +1416,8 @@ SC_pos_update(StatementClass *stmt,
 	RETCODE		ret;
 	char	   *tidval,
 			   *oidval;
+	UInt4	offset;
+	Int4	*used;
 
 	mylog("POS UPDATE %d+%d fi=%x ti=%x\n", irow, stmt->result->base, stmt->fi, stmt->ti);
 	if (!(res = stmt->result))
@@ -1438,12 +1440,17 @@ SC_pos_update(StatementClass *stmt,
 
 	sprintf(updstr, "update \"%s\" set", stmt->ti[0]->name);
 	num_cols = stmt->nfld;
+	if (stmt->options.row_offset_ptr)
+		offset = *stmt->options.row_offset_ptr;
+	else
+		offset = 0;
 	for (i = upd_cols = 0; i < num_cols; i++)
 	{
-		if (bindings[i].used)
+		if (used = bindings[i].used, used != NULL)
 		{
-			mylog("%d used=%d\n", i, *bindings[i].used);
-			if (*bindings[i].used != SQL_IGNORE)
+			used += (offset >> 2);
+			mylog("%d used=%d\n", i, *used);
+			if (*used != SQL_IGNORE)
 			{
 				if (upd_cols)
 					sprintf(updstr, "%s, \"%s\" = ?", updstr, stmt->fi[i]->name);
@@ -1468,12 +1475,15 @@ SC_pos_update(StatementClass *stmt,
 		if (PGAPI_AllocStmt(SC_get_conn(stmt), &hstmt) != SQL_SUCCESS)
 			return SQL_ERROR;
 		qstmt = (StatementClass *) hstmt;
+		qstmt->options.param_bind_type = stmt->options.bind_size;
+		qstmt->options.param_offset_ptr = stmt->options.row_offset_ptr;
 		for (i = j = 0; i < num_cols; i++)
 		{
-			if (bindings[i].used)
+			if (used = bindings[i].used, used != NULL)
 			{
-				mylog("%d used=%d\n", i, *bindings[i].used);
-				if (*bindings[i].used != SQL_IGNORE)
+				used += (offset >> 2);
+				mylog("%d used=%d\n", i, *used);
+				if (*used != SQL_IGNORE)
 				{
 					PGAPI_BindParameter(hstmt, (SQLUSMALLINT) ++j,
 								 SQL_PARAM_INPUT, bindings[i].returntype,
@@ -1486,6 +1496,7 @@ SC_pos_update(StatementClass *stmt,
 				}
 			}
 		}
+		qstmt->exec_start_row = qstmt->exec_end_row = irow; 
 		ret = PGAPI_ExecDirect(hstmt, updstr, strlen(updstr));
 		if (ret == SQL_ERROR)
 		{
@@ -1533,6 +1544,19 @@ SC_pos_update(StatementClass *stmt,
 	}
 	else
 		ret = SQL_SUCCESS_WITH_INFO;
+	if (stmt->options.rowStatusArray)
+	{
+		switch (ret)
+		{
+			case SQL_SUCCESS:
+				stmt->options.rowStatusArray[irow] = SQL_ROW_UPDATED;
+				break;
+			case SQL_SUCCESS_WITH_INFO:
+				stmt->options.rowStatusArray[irow] = SQL_ROW_SUCCESS_WITH_INFO;
+				break;
+		}
+	}
+
 	return ret;
 }
 RETCODE		SQL_API
@@ -1606,6 +1630,18 @@ SC_pos_delete(StatementClass *stmt,
 	}
 	if (qres)
 		QR_Destructor(qres);
+	if (stmt->options.rowStatusArray)
+	{
+		switch (ret)
+		{
+			case SQL_SUCCESS:
+				stmt->options.rowStatusArray[irow] = SQL_ROW_DELETED;
+				break;
+			case SQL_SUCCESS_WITH_INFO:
+				stmt->options.rowStatusArray[irow] = SQL_ROW_SUCCESS_WITH_INFO;
+				break;
+		}
+	}
 	return ret;
 }
 RETCODE		SQL_API
@@ -1616,10 +1652,13 @@ SC_pos_add(StatementClass *stmt,
 				add_cols,
 				i;
 	HSTMT		hstmt;
+	StatementClass *qstmt;
 	QResultClass *res;
 	BindInfoClass *bindings = stmt->bindings;
 	char		addstr[4096];
 	RETCODE		ret;
+	UInt4		offset;
+	Int4		*used;
 
 	mylog("POS ADD fi=%x ti=%x\n", stmt->fi, stmt->ti);
 	if (!(res = stmt->result))
@@ -1635,12 +1674,20 @@ SC_pos_add(StatementClass *stmt,
 	sprintf(addstr, "insert into \"%s\" (", stmt->ti[0]->name);
 	if (PGAPI_AllocStmt(SC_get_conn(stmt), &hstmt) != SQL_SUCCESS)
 		return SQL_ERROR;
+	if (stmt->options.row_offset_ptr)
+		offset = *stmt->options.row_offset_ptr;
+	else
+		offset = 0;
+	qstmt = (StatementClass *) hstmt;
+	qstmt->options.param_bind_type = stmt->options.bind_size;
+	qstmt->options.param_offset_ptr = stmt->options.row_offset_ptr;
 	for (i = add_cols = 0; i < num_cols; i++)
 	{
-		if (bindings[i].used)
+		if (used = bindings[i].used, used != NULL)
 		{
-			mylog("%d used=%d\n", i, *bindings[i].used);
-			if (*bindings[i].used != SQL_IGNORE)
+			used += (offset >> 2);
+			mylog("%d used=%d\n", i, *used);
+			if (*used != SQL_IGNORE)
 			{
 				if (add_cols)
 					sprintf(addstr, "%s, \"%s\"", addstr, stmt->fi[i]->name);
@@ -1661,7 +1708,6 @@ SC_pos_add(StatementClass *stmt,
 	}
 	if (add_cols > 0)
 	{
-		StatementClass *qstmt = (StatementClass *) hstmt;
 
 		sprintf(addstr, "%s) values (", addstr);
 		for (i = 0; i < add_cols; i++)
@@ -1673,6 +1719,7 @@ SC_pos_add(StatementClass *stmt,
 		}
 		strcat(addstr, ")");
 		mylog("addstr=%s\n", addstr);
+		qstmt->exec_start_row = qstmt->exec_end_row = irow; 
 		ret = PGAPI_ExecDirect(hstmt, addstr, strlen(addstr));
 		if (ret == SQL_NEED_DATA)		/* must be fixed */
 		{
@@ -1718,6 +1765,18 @@ SC_pos_add(StatementClass *stmt,
 	else
 		ret = SQL_SUCCESS_WITH_INFO;
 	PGAPI_FreeStmt(hstmt, SQL_DROP);
+	if (stmt->options.rowStatusArray)
+	{
+		switch (ret)
+		{
+			case SQL_SUCCESS:
+				stmt->options.rowStatusArray[irow] = SQL_ROW_ADDED;
+				break;
+			case SQL_SUCCESS_WITH_INFO:
+				stmt->options.rowStatusArray[irow] = SQL_ROW_SUCCESS_WITH_INFO;
+				break;
+		}
+	}
 	return ret;
 }
 

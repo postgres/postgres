@@ -84,8 +84,8 @@ SQLColumns(HSTMT StatementHandle,
 {
 	mylog("[SQLColumns]");
 	return PGAPI_Columns(StatementHandle, CatalogName, NameLength1,
-						 SchemaName, NameLength2, TableName, NameLength3,
-						 ColumnName, NameLength4);
+					SchemaName, NameLength2, TableName, NameLength3,
+					ColumnName, NameLength4, 0);
 }
 
 
@@ -218,7 +218,7 @@ SQLFetch(HSTMT StatementHandle)
 RETCODE		SQL_API
 SQLFreeConnect(HDBC ConnectionHandle)
 {
-	mylog("[SQLFreeStmt]");
+	mylog("[SQLFreeConnect]");
 	return PGAPI_FreeConnect(ConnectionHandle);
 }
 

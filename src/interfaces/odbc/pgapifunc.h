@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#define	PODBC_NOT_SEARCH_PATTERN	1L
 
 RETCODE SQL_API PGAPI_AllocConnect(HENV EnvironmentHandle,
 				   HDBC FAR * ConnectionHandle);
@@ -25,7 +26,8 @@ RETCODE SQL_API PGAPI_Columns(HSTMT StatementHandle,
 			  SQLCHAR *CatalogName, SQLSMALLINT NameLength1,
 			  SQLCHAR *SchemaName, SQLSMALLINT NameLength2,
 			  SQLCHAR *TableName, SQLSMALLINT NameLength3,
-			  SQLCHAR *ColumnName, SQLSMALLINT NameLength4);
+			  SQLCHAR *ColumnName, SQLSMALLINT NameLength4,
+			  UWORD flag);
 RETCODE SQL_API PGAPI_Connect(HDBC ConnectionHandle,
 			  SQLCHAR *ServerName, SQLSMALLINT NameLength1,
 			  SQLCHAR *UserName, SQLSMALLINT NameLength2,
