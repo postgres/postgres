@@ -7,11 +7,11 @@ work or play with PostgreSQL more productive.
 Please check the following URL for a listing of the current user-support
 mailing lists:
 
-	http://www.postgresql.org -> Info Central -> Mailing Lists
+	http://www.postgresql.org/users-lounge/index.html#maillist
 
 All of the mailing lists are currently archived and viewable at:
 
-	http://www.postgresql.org -> Info Central -> Mailing Lists
+	http://www.postgresql.org/gen-info.html#archives
 
 And, so that we have an idea of who is using what, please connect to the
 following registration URL:
