@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.39 1999/11/07 23:07:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.40 1999/11/15 09:59:00 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -845,7 +845,7 @@ picksplit(Relation r,
 			pfree(datum_r);
 			pfree(union_dl);
 			datum_r = union_dr;
-			size_r = size_alpha;
+			size_r = size_beta;
 			*right++ = i;
 			v->spl_nright++;
 		}
