@@ -14,6 +14,7 @@ typedef long int slock_t;
 #endif
 
 #if defined(__vax__)
+typedef unsigned char slock_t;
 #define NEED_VAX_TAS_ASM
 #define HAS_TEST_AND_SET
 #endif
