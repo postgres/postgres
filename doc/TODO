@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Jan 13 19:47:26 EST 2003
+Last updated:		Sat Jan 25 20:13:27 EST 2003
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -52,7 +52,8 @@ Administration
 * Add start time to pg_stat_activity
 * Allow limits on per-db/user connections
 * Have standalone backend read postgresql.conf
-
+* Add group object ownership, so groups can rename/drop/grant on objects,
+  so we can implement roles
 
 Data Types
 ==========
