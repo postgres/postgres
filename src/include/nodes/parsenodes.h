@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.10 1997/01/16 14:56:45 momjian Exp $
+ * $Id: parsenodes.h,v 1.11 1997/04/02 03:34:46 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -139,6 +139,17 @@ typedef struct CreateStmt {
 } CreateStmt;
 
 /* ----------------------
+ *	Create SEQUENCE Statement
+ * ----------------------
+ */
+
+typedef struct CreateSeqStmt {
+    NodeTag		type;
+    char		*seqname;	/* the relation to create */
+    List		*options;
+} CreateSeqStmt;
+
+/* ----------------------
  *	Create Version Statement
  * ----------------------
  */
@@ -168,6 +179,7 @@ typedef struct DefineStmt {
 typedef struct DestroyStmt {
     NodeTag		type;
     List		*relNames;	/* relations to be dropped */
+    bool		sequence;
 } DestroyStmt;
 
 /* ----------------------
