@@ -1,0 +1,26 @@
+SET search_path = public;
+BEGIN;
+
+HASINIT create function dinit_CFG_MODNAME(text)
+HASINIT         returns internal
+HASINIT         as 'MODULE_PATHNAME'
+HASINIT         language 'C';
+
+NOSNOWBALL create function dlexize_CFG_MODNAME(internal,internal,int4)
+NOSNOWBALL        returns internal
+NOSNOWBALL        as 'MODULE_PATHNAME'
+NOSNOWBALL        language 'C'
+NOSNOWBALL        with (isstrict);
+
+insert into pg_ts_dict select
+        'CFG_MODNAME',
+HASINIT        (select oid from pg_proc where proname='dinit_CFG_MODNAME'),
+NOINIT        null,
+        null,
+ISSNOWBALL        (select oid from pg_proc where proname='snb_lexize'),
+NOSNOWBALL        (select oid from pg_proc where proname='dlexize_CFG_MODNAME'),
+        CFG_COMMENT
+;
+
+
+END;

@@ -1,0 +1,64 @@
+/* 
+ * example of dictionary 
+ * Teodor Sigaev <teodor@sigaev.ru>
+ */
+#include <errno.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "postgres.h"
+
+#include "dict.h"
+#include "common.h"
+
+#include "subinclude.h"
+
+HASINIT typedef struct {
+HASINIT 	StopList	stoplist;
+HASINIT } DictExample;
+
+
+HASINIT PG_FUNCTION_INFO_V1(dinit_CFG_MODNAME);
+HASINIT Datum dinit_CFG_MODNAME(PG_FUNCTION_ARGS);
+
+HASINIT Datum 
+HASINIT dinit_CFG_MODNAME(PG_FUNCTION_ARGS) {
+HASINIT 	DictExample	*d = (DictExample*)malloc( sizeof(DictExample) );
+HASINIT 
+HASINIT 	if ( !d )
+HASINIT 		elog(ERROR, "No memory");
+HASINIT 	memset(d,0,sizeof(DictExample));
+HASINIT 
+HASINIT 	d->stoplist.wordop=lowerstr;
+HASINIT 	
+HASINIT 	/* Your INIT code */
+HASINIT 	
+HASINIT 	if ( !PG_ARGISNULL(0) && PG_GETARG_POINTER(0)!=NULL ) {
+HASINIT 		text       *in = PG_GETARG_TEXT_P(0);
+HASINIT 		readstoplist(in, &(d->stoplist));
+HASINIT 		sortstoplist(&(d->stoplist));
+HASINIT 		PG_FREE_IF_COPY(in, 0);
+HASINIT 	}
+HASINIT 
+HASINIT 	PG_RETURN_POINTER(d);
+HASINIT }
+
+PG_FUNCTION_INFO_V1(dlexize_CFG_MODNAME);
+Datum dlexize_CFG_MODNAME(PG_FUNCTION_ARGS);
+Datum
+dlexize_CFG_MODNAME(PG_FUNCTION_ARGS) {
+HASINIT 	DictExample *d = (DictExample*)PG_GETARG_POINTER(0);
+	char       *in = (char*)PG_GETARG_POINTER(1);
+	char *txt = pnstrdup(in, PG_GETARG_INT32(2));
+	char	**res=palloc(sizeof(char*)*2);
+
+	/* Your INIT dictionary code */
+HASINIT 	if ( *txt=='\0' || searchstoplist(&(d->stoplist),txt) ) {
+HASINIT 		pfree(txt);
+HASINIT 		res[0]=NULL;
+HASINIT 	} else 
+		res[0]=txt;
+	res[1]=NULL;
+
+	PG_RETURN_POINTER(res);
+}

@@ -1,0 +1,12 @@
+subdir = contrib/CFG_DIR
+top_builddir = ../..
+include $(top_builddir)/src/Makefile.global
+
+MODULE_big = dict_CFG_MODNAME
+OBJS = CFG_OFILE
+DATA_built = dict_CFG_MODNAME.sql
+DOCS = README.CFG_MODNAME
+PG_CPPFLAGS =
+SHLIB_LINK = ../tsearch2/libtsearch2.a
+
+include $(top_srcdir)/contrib/contrib-global.mk

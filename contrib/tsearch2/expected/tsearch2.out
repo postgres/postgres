@@ -1,0 +1,2055 @@
+--
+-- first, define the datatype.  Turn off echoing so that expected file
+-- does not depend on contents of seg.sql.
+--
+\set ECHO none
+psql:tsearch2.sql:13: NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index 'pg_ts_dict_pkey' for table 'pg_ts_dict'
+psql:tsearch2.sql:145: NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index 'pg_ts_parser_pkey' for table 'pg_ts_parser'
+psql:tsearch2.sql:244: NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index 'pg_ts_cfg_pkey' for table 'pg_ts_cfg'
+psql:tsearch2.sql:251: NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index 'pg_ts_cfgmap_pkey' for table 'pg_ts_cfgmap'
+psql:tsearch2.sql:339: NOTICE:  ProcedureCreate: type tsvector is not yet defined
+psql:tsearch2.sql:344: NOTICE:  Argument type "tsvector" is only a shell
+psql:tsearch2.sql:398: NOTICE:  ProcedureCreate: type tsquery is not yet defined
+psql:tsearch2.sql:403: NOTICE:  Argument type "tsquery" is only a shell
+psql:tsearch2.sql:545: NOTICE:  ProcedureCreate: type gtsvector is not yet defined
+psql:tsearch2.sql:550: NOTICE:  Argument type "gtsvector" is only a shell
+--tsvector
+SELECT '1'::tsvector;
+ tsvector 
+----------
+ '1'
+(1 row)
+
+SELECT '1 '::tsvector;
+ tsvector 
+----------
+ '1'
+(1 row)
+
+SELECT ' 1'::tsvector;
+ tsvector 
+----------
+ '1'
+(1 row)
+
+SELECT ' 1 '::tsvector;
+ tsvector 
+----------
+ '1'
+(1 row)
+
+SELECT '1 2'::tsvector;
+ tsvector 
+----------
+ '1' '2'
+(1 row)
+
+SELECT '\'1 2\''::tsvector;
+ tsvector 
+----------
+ '1 2'
+(1 row)
+
+SELECT '\'1 \\\'2\''::tsvector;
+ tsvector 
+----------
+ '1 \'2'
+(1 row)
+
+SELECT '\'1 \\\'2\'3'::tsvector;
+  tsvector   
+-------------
+ '3' '1 \'2'
+(1 row)
+
+SELECT '\'1 \\\'2\' 3'::tsvector;
+  tsvector   
+-------------
+ '3' '1 \'2'
+(1 row)
+
+SELECT '\'1 \\\'2\' \' 3\' 4 '::tsvector;
+     tsvector     
+------------------
+ '4' ' 3' '1 \'2'
+(1 row)
+
+select '\'w\':4A,3B,2C,1D,5 a:8';
+       ?column?        
+-----------------------
+ 'w':4A,3B,2C,1D,5 a:8
+(1 row)
+
+select 'a:3A b:2a'::tsvector || 'ba:1234 a:1B';
+          ?column?          
+----------------------------
+ 'a':3A,4B 'b':2A 'ba':1237
+(1 row)
+
+select setweight('w:12B w:13* w:12,5,6 a:1,3* a:3 w asd:1dc asd zxc:81,567,222A'::tsvector, 'c');
+                        setweight                         
+----------------------------------------------------------
+ 'a':1C,3C 'w':5C,6C,12C,13C 'asd':1C 'zxc':81C,222C,567C
+(1 row)
+
+select strip('w:12B w:13* w:12,5,6 a:1,3* a:3 w asd:1dc asd'::tsvector);
+     strip     
+---------------
+ 'a' 'w' 'asd'
+(1 row)
+
+--tsquery
+SELECT '1'::tsquery;
+ tsquery 
+---------
+ '1'
+(1 row)
+
+SELECT '1 '::tsquery;
+ tsquery 
+---------
+ '1'
+(1 row)
+
+SELECT ' 1'::tsquery;
+ tsquery 
+---------
+ '1'
+(1 row)
+
+SELECT ' 1 '::tsquery;
+ tsquery 
+---------
+ '1'
+(1 row)
+
+SELECT '\'1 2\''::tsquery;
+ tsquery 
+---------
+ '1 2'
+(1 row)
+
+SELECT '\'1 \\\'2\''::tsquery;
+ tsquery 
+---------
+ '1 \'2'
+(1 row)
+
+SELECT '!1'::tsquery;
+ tsquery 
+---------
+ !'1'
+(1 row)
+
+SELECT '1|2'::tsquery;
+  tsquery  
+-----------
+ '1' | '2'
+(1 row)
+
+SELECT '1|!2'::tsquery;
+  tsquery   
+------------
+ '1' | !'2'
+(1 row)
+
+SELECT '!1|2'::tsquery;
+  tsquery   
+------------
+ !'1' | '2'
+(1 row)
+
+SELECT '!1|!2'::tsquery;
+   tsquery   
+-------------
+ !'1' | !'2'
+(1 row)
+
+SELECT '!(!1|!2)'::tsquery;
+     tsquery      
+------------------
+ !( !'1' | !'2' )
+(1 row)
+
+SELECT '!(!1|2)'::tsquery;
+     tsquery     
+-----------------
+ !( !'1' | '2' )
+(1 row)
+
+SELECT '!(1|!2)'::tsquery;
+     tsquery     
+-----------------
+ !( '1' | !'2' )
+(1 row)
+
+SELECT '!(1|2)'::tsquery;
+    tsquery     
+----------------
+ !( '1' | '2' )
+(1 row)
+
+SELECT '1&2'::tsquery;
+  tsquery  
+-----------
+ '1' & '2'
+(1 row)
+
+SELECT '!1&2'::tsquery;
+  tsquery   
+------------
+ !'1' & '2'
+(1 row)
+
+SELECT '1&!2'::tsquery;
+  tsquery   
+------------
+ '1' & !'2'
+(1 row)
+
+SELECT '!1&!2'::tsquery;
+   tsquery   
+-------------
+ !'1' & !'2'
+(1 row)
+
+SELECT '(1&2)'::tsquery;
+  tsquery  
+-----------
+ '1' & '2'
+(1 row)
+
+SELECT '1&(2)'::tsquery;
+  tsquery  
+-----------
+ '1' & '2'
+(1 row)
+
+SELECT '!(1)&2'::tsquery;
+  tsquery   
+------------
+ !'1' & '2'
+(1 row)
+
+SELECT '!(1&2)'::tsquery;
+    tsquery     
+----------------
+ !( '1' & '2' )
+(1 row)
+
+SELECT '1|2&3'::tsquery;
+     tsquery     
+-----------------
+ '1' | '2' & '3'
+(1 row)
+
+SELECT '1|(2&3)'::tsquery;
+     tsquery     
+-----------------
+ '1' | '2' & '3'
+(1 row)
+
+SELECT '(1|2)&3'::tsquery;
+       tsquery       
+---------------------
+ ( '1' | '2' ) & '3'
+(1 row)
+
+SELECT '1|2&!3'::tsquery;
+     tsquery      
+------------------
+ '1' | '2' & !'3'
+(1 row)
+
+SELECT '1|!2&3'::tsquery;
+     tsquery      
+------------------
+ '1' | !'2' & '3'
+(1 row)
+
+SELECT '!1|2&3'::tsquery;
+     tsquery      
+------------------
+ !'1' | '2' & '3'
+(1 row)
+
+SELECT '!1|(2&3)'::tsquery;
+     tsquery      
+------------------
+ !'1' | '2' & '3'
+(1 row)
+
+SELECT '!(1|2)&3'::tsquery;
+       tsquery        
+----------------------
+ !( '1' | '2' ) & '3'
+(1 row)
+
+SELECT '(!1|2)&3'::tsquery;
+       tsquery        
+----------------------
+ ( !'1' | '2' ) & '3'
+(1 row)
+
+SELECT '1|(2|(4|(5|6)))'::tsquery;
+                 tsquery                 
+-----------------------------------------
+ '1' | ( '2' | ( '4' | ( '5' | '6' ) ) )
+(1 row)
+
+SELECT '1|2|4|5|6'::tsquery;
+                 tsquery                 
+-----------------------------------------
+ ( ( ( '1' | '2' ) | '4' ) | '5' ) | '6'
+(1 row)
+
+SELECT '1&(2&(4&(5&6)))'::tsquery;
+           tsquery           
+-----------------------------
+ '1' & '2' & '4' & '5' & '6'
+(1 row)
+
+SELECT '1&2&4&5&6'::tsquery;
+           tsquery           
+-----------------------------
+ '1' & '2' & '4' & '5' & '6'
+(1 row)
+
+SELECT '1&(2&(4&(5|6)))'::tsquery;
+             tsquery             
+---------------------------------
+ '1' & '2' & '4' & ( '5' | '6' )
+(1 row)
+
+SELECT '1&(2&(4&(5|!6)))'::tsquery;
+             tsquery              
+----------------------------------
+ '1' & '2' & '4' & ( '5' | !'6' )
+(1 row)
+
+SELECT '1&(\'2\'&(\' 4\'&(\\|5 | \'6 \\\' !|&\')))'::tsquery;
+                 tsquery                  
+------------------------------------------
+ '1' & '2' & ' 4' & ( '|5' | '6 \' !|&' )
+(1 row)
+
+SELECT '\'the wether\':dc & \' sKies \':BC & a:d b:a';
+                 ?column?                 
+------------------------------------------
+ 'the wether':dc & ' sKies ':BC & a:d b:a
+(1 row)
+
+select lexize('simple', 'ASD56 hsdkf');
+     lexize      
+-----------------
+ {"asd56 hsdkf"}
+(1 row)
+
+select lexize('en_stem', 'SKIES Problems identity');
+          lexize          
+--------------------------
+ {"skies problems ident"}
+(1 row)
+
+select * from token_type('default');
+ tokid |    alias     |               descr               
+-------+--------------+-----------------------------------
+     1 | lword        | Latin word
+     2 | nlword       | Non-latin word
+     3 | word         | Word
+     4 | email        | Email
+     5 | url          | URL
+     6 | host         | Host
+     7 | sfloat       | Scientific notation
+     8 | version      | VERSION
+     9 | part_hword   | Part of hyphenated word
+    10 | nlpart_hword | Non-latin part of hyphenated word
+    11 | lpart_hword  | Latin part of hyphenated word
+    12 | blank        | Space symbols
+    13 | tag          | HTML Tag
+    14 | http         | HTTP head
+    15 | hword        | Hyphenated word
+    16 | lhword       | Latin hyphenated word
+    17 | nlhword      | Non-latin hyphenated word
+    18 | uri          | URI
+    19 | file         | File or path name
+    20 | float        | Decimal notation
+    21 | int          | Signed integer
+    22 | uint         | Unsigned integer
+    23 | entity       | HTML Entity
+(23 rows)
+
+select * from parse('default', '345 qwe@efd.r \' http://www.com/ http://aew.werc.ewr/?ad=qwe&dw 1aew.werc.ewr/?ad=qwe&dw 2aew.werc.ewr http://3aew.werc.ewr/?ad=qwe&dw http://4aew.werc.ewr http://5aew.werc.ewr:8100/?  ad=qwe&dw 6aew.werc.ewr:8100/?ad=qwe&dw 7aew.werc.ewr:8100/?ad=qwe&dw=%20%32 +4.0e-10 qwe qwe qwqwe 234.435 455 5.005 teodor@stack.net qwe-wer asdf <fr>qwer jf sdjk<we hjwer <werrwe> ewr1> ewri2 <a href="qwe<qwe>">
+/usr/local/fff /awdf/dwqe/4325 rewt/ewr wefjn /wqe-324/ewr gist.h gist.h.c gist.c. readline 4.2 4.2. 4.2, readline-4.2 readline-4.2. 234 
+<i <b> wow  < jqw <> qwerty');
+ tokid |                token                 
+-------+--------------------------------------
+    22 | 345
+    12 |  
+     4 | qwe@efd.r
+    12 |  
+    12 | '
+    12 |  
+    14 | http://
+     6 | www.com
+    12 | /
+    12 |  
+    14 | http://
+     5 | aew.werc.ewr/?ad=qwe&dw
+     6 | aew.werc.ewr
+    18 | /?ad=qwe&dw
+    12 |  
+     5 | 1aew.werc.ewr/?ad=qwe&dw
+     6 | 1aew.werc.ewr
+    18 | /?ad=qwe&dw
+    12 |  
+     6 | 2aew.werc.ewr
+    12 |  
+    14 | http://
+     5 | 3aew.werc.ewr/?ad=qwe&dw
+     6 | 3aew.werc.ewr
+    18 | /?ad=qwe&dw
+    12 |  
+    14 | http://
+     6 | 4aew.werc.ewr
+    12 |  
+    14 | http://
+     5 | 5aew.werc.ewr:8100/?
+     6 | 5aew.werc.ewr
+    18 | :8100/?
+    12 |   
+     1 | ad
+    12 | =
+     1 | qwe
+    12 | &
+     1 | dw
+    12 |  
+     5 | 6aew.werc.ewr:8100/?ad=qwe&dw
+     6 | 6aew.werc.ewr
+    18 | :8100/?ad=qwe&dw
+    12 |  
+     5 | 7aew.werc.ewr:8100/?ad=qwe&dw=%20%32
+     6 | 7aew.werc.ewr
+    18 | :8100/?ad=qwe&dw=%20%32
+    12 |  
+     7 | +4.0e-10
+    12 |  
+     1 | qwe
+    12 |  
+     1 | qwe
+    12 |  
+     1 | qwqwe
+    12 |  
+    20 | 234.435
+    12 |  
+    22 | 455
+    12 |  
+    20 | 5.005
+    12 |  
+     4 | teodor@stack.net
+    12 |  
+    16 | qwe-wer
+    11 | qwe
+    12 | -
+    11 | wer
+    12 |  
+     1 | asdf
+    12 |  
+    13 |  
+     1 | qwer
+    12 |  
+     1 | jf
+    12 |  
+     1 | sdjk
+    13 |  
+    12 |  
+     3 | ewr1
+    12 | >
+    12 |  
+     3 | ewri2
+    12 |  
+    13 |  
+    12 | 
+
+    19 | /usr/local/fff
+    12 |  
+    19 | /awdf/dwqe/4325
+    12 |  
+    19 | rewt/ewr
+    12 |  
+     1 | wefjn
+    12 |  
+    19 | /wqe-324/ewr
+    12 |  
+     6 | gist.h
+    12 |  
+     6 | gist.h.c
+    12 |  
+     6 | gist.c
+    12 | .
+    12 |  
+     1 | readline
+    12 |  
+    20 | 4.2
+    12 |  
+    20 | 4.2
+    12 | .
+    12 |  
+    20 | 4.2
+    12 | ,
+    12 |  
+    15 | readline-4
+    11 | readline
+    12 | -
+    20 | 4.2
+    12 |  
+    15 | readline-4
+    11 | readline
+    12 | -
+    20 | 4.2
+    12 | .
+    12 |  
+    22 | 234
+    12 |  
+
+    13 |  
+    12 |  
+     1 | wow
+    12 |   
+    12 | <
+    12 |  
+     1 | jqw
+    12 |  
+    12 | <
+    12 | >
+    12 |  
+     1 | qwerty
+(138 rows)
+
+SELECT to_tsvector('default', '345 qwe@efd.r \' http://www.com/ http://aew.werc.ewr/?ad=qwe&dw 1aew.werc.ewr/?ad=qwe&dw 2aew.werc.ewr http://3aew.werc.ewr/?ad=qwe&dw http://4aew.werc.ewr http://5aew.werc.ewr:8100/?  ad=qwe&dw 6aew.werc.ewr:8100/?ad=qwe&dw 7aew.werc.ewr:8100/?ad=qwe&dw=%20%32 +4.0e-10 qwe qwe qwqwe 234.435 455 5.005 teodor@stack.net qwe-wer asdf <fr>qwer jf sdjk<we hjwer <werrwe> ewr1> ewri2 <a href="qwe<qwe>">
+/usr/local/fff /awdf/dwqe/4325 rewt/ewr wefjn /wqe-324/ewr gist.h gist.h.c gist.c. readline 4.2 4.2. 4.2, readline-4.2 readline-4.2. 234 
+<i <b> wow  < jqw <> qwerty');
+                                                                                                                                                                                                                                                                                                                                                                                                                                               to_tsvector                                                                                                                                                                                                                                                                                                                                                                                                                                                
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ 'ad':18 'dw':20 'jf':40 '234':62 '345':1 '4.2':53,54,55,58,61 '455':32 'jqw':64 'qwe':19,28,29,36 'wer':37 'wow':63 'asdf':38 'ewr1':42 'qwer':39 'sdjk':41 '5.005':33 'ewri2':43 'qwqwe':30 'wefjn':47 'gist.c':51 'gist.h':49 'qwerti':65 '234.435':31 ':8100/?':17 'qwe-wer':35 'readlin':52,57,60 'www.com':3 '+4.0e-10':27 'gist.h.c':50 'rewt/ewr':46 'qwe@efd.r':2 'readline-4':56,59 '/?ad=qwe&dw':6,9,13 '/wqe-324/ewr':48 'aew.werc.ewr':5 '1aew.werc.ewr':8 '2aew.werc.ewr':10 '3aew.werc.ewr':12 '4aew.werc.ewr':14 '5aew.werc.ewr':16 '6aew.werc.ewr':22 '7aew.werc.ewr':25 '/usr/local/fff':44 '/awdf/dwqe/4325':45 ':8100/?ad=qwe&dw':23 'teodor@stack.net':34 '5aew.werc.ewr:8100/?':15 ':8100/?ad=qwe&dw=%20%32':26 'aew.werc.ewr/?ad=qwe&dw':4 '1aew.werc.ewr/?ad=qwe&dw':7 '3aew.werc.ewr/?ad=qwe&dw':11 '6aew.werc.ewr:8100/?ad=qwe&dw':21 '7aew.werc.ewr:8100/?ad=qwe&dw=%20%32':24
+(1 row)
+
+SELECT length(to_tsvector('default', '345 qw'));
+ length 
+--------
+      2
+(1 row)
+
+SELECT length(to_tsvector('default', '345 qwe@efd.r \' http://www.com/ http://aew.werc.ewr/?ad=qwe&dw 1aew.werc.ewr/?ad=qwe&dw 2aew.werc.ewr http://3aew.werc.ewr/?ad=qwe&dw http://4aew.werc.ewr http://5aew.werc.ewr:8100/?  ad=qwe&dw 6aew.werc.ewr:8100/?ad=qwe&dw 7aew.werc.ewr:8100/?ad=qwe&dw=%20%32 +4.0e-10 qwe qwe qwqwe 234.435 455 5.005 teodor@stack.net qwe-wer asdf <fr>qwer jf sdjk<we hjwer <werrwe> ewr1> ewri2 <a href="qwe<qwe>">
+/usr/local/fff /awdf/dwqe/4325 rewt/ewr wefjn /wqe-324/ewr gist.h gist.h.c gist.c. readline 4.2 4.2. 4.2, readline-4.2 readline-4.2. 234 
+<i <b> wow  < jqw <> qwerty'));
+ length 
+--------
+     53
+(1 row)
+
+select to_tsquery('default', 'qwe & sKies '); 
+  to_tsquery   
+---------------
+ 'qwe' & 'sky'
+(1 row)
+
+select to_tsquery('simple', 'qwe & sKies '); 
+   to_tsquery    
+-----------------
+ 'qwe' & 'skies'
+(1 row)
+
+select to_tsquery('default', '\'the wether\':dc & \'           sKies \':BC ');
+       to_tsquery       
+------------------------
+ 'wether':CD & 'sky':BC
+(1 row)
+
+select 'a b:89  ca:23A,64b d:34c'::tsvector @@ 'd:AC & ca';
+ ?column? 
+----------
+ t
+(1 row)
+
+select 'a b:89  ca:23A,64b d:34c'::tsvector @@ 'd:AC & ca:B';
+ ?column? 
+----------
+ t
+(1 row)
+
+select 'a b:89  ca:23A,64b d:34c'::tsvector @@ 'd:AC & ca:A';
+ ?column? 
+----------
+ t
+(1 row)
+
+select 'a b:89  ca:23A,64b d:34c'::tsvector @@ 'd:AC & ca:C';
+ ?column? 
+----------
+ f
+(1 row)
+
+select 'a b:89  ca:23A,64b d:34c'::tsvector @@ 'd:AC & ca:CB';
+ ?column? 
+----------
+ t
+(1 row)
+
+CREATE TABLE test_tsvector( t text, a tsvector );
+\copy test_tsvector from 'data/test_tsearch.data'
+SELECT count(*) FROM test_tsvector WHERE a @@ 'wr|qh';
+ count 
+-------
+   158
+(1 row)
+
+SELECT count(*) FROM test_tsvector WHERE a @@ 'wr&qh';
+ count 
+-------
+    17
+(1 row)
+
+SELECT count(*) FROM test_tsvector WHERE a @@ 'eq&yt';
+ count 
+-------
+     6
+(1 row)
+
+SELECT count(*) FROM test_tsvector WHERE a @@ 'eq|yt';
+ count 
+-------
+    98
+(1 row)
+
+SELECT count(*) FROM test_tsvector WHERE a @@ '(eq&yt)|(wr&qh)';
+ count 
+-------
+    23
+(1 row)
+
+SELECT count(*) FROM test_tsvector WHERE a @@ '(eq|yt)&(wr|qh)';
+ count 
+-------
+    39
+(1 row)
+
+create index wowidx on test_tsvector using gist (a);
+set enable_seqscan=off;
+SELECT count(*) FROM test_tsvector WHERE a @@ 'wr|qh';
+ count 
+-------
+   158
+(1 row)
+
+SELECT count(*) FROM test_tsvector WHERE a @@ 'wr&qh';
+ count 
+-------
+    17
+(1 row)
+
+SELECT count(*) FROM test_tsvector WHERE a @@ 'eq&yt';
+ count 
+-------
+     6
+(1 row)
+
+SELECT count(*) FROM test_tsvector WHERE a @@ 'eq|yt';
+ count 
+-------
+    98
+(1 row)
+
+SELECT count(*) FROM test_tsvector WHERE a @@ '(eq&yt)|(wr&qh)';
+ count 
+-------
+    23
+(1 row)
+
+SELECT count(*) FROM test_tsvector WHERE a @@ '(eq|yt)&(wr|qh)';
+ count 
+-------
+    39
+(1 row)
+
+select set_curcfg('default');
+ set_curcfg 
+------------
+ 
+(1 row)
+
+CREATE TRIGGER tsvectorupdate
+BEFORE UPDATE OR INSERT ON test_tsvector
+FOR EACH ROW EXECUTE PROCEDURE tsearch2(a, t);
+SELECT count(*) FROM test_tsvector WHERE a @@ to_tsquery('345&qwerty');
+ count 
+-------
+     0
+(1 row)
+
+INSERT INTO test_tsvector (t) VALUES ('345 qwerty');
+SELECT count(*) FROM test_tsvector WHERE a @@ to_tsquery('345&qwerty');
+ count 
+-------
+     1
+(1 row)
+
+UPDATE test_tsvector SET t = null WHERE t = '345 qwerty';
+SELECT count(*) FROM test_tsvector WHERE a @@ to_tsquery('345&qwerty');
+ count 
+-------
+     0
+(1 row)
+
+drop trigger tsvectorupdate on test_tsvector;
+create function wow(text) returns text as 'select $1 || \' copyright\'; ' language sql;
+create trigger tsvectorupdate before update or insert on test_tsvector
+for each row execute procedure tsearch2(a, wow, t);
+insert into test_tsvector (t) values ('345 qwerty');
+select count(*) FROM test_tsvector WHERE a @@ to_tsquery('345&qwerty');
+ count 
+-------
+     1
+(1 row)
+
+select count(*) FROM test_tsvector WHERE a @@ to_tsquery('copyright');
+ count 
+-------
+     1
+(1 row)
+
+select rank(' a:1 s:2C d g'::tsvector, 'a | s');
+ rank 
+------
+ 0.28
+(1 row)
+
+select rank(' a:1 s:2B d g'::tsvector, 'a | s');
+ rank 
+------
+ 0.46
+(1 row)
+
+select rank(' a:1 s:2 d g'::tsvector, 'a | s');
+ rank 
+------
+ 0.19
+(1 row)
+
+select rank(' a:1 s:2C d g'::tsvector, 'a & s');
+   rank   
+----------
+ 0.140153
+(1 row)
+
+select rank(' a:1 s:2B d g'::tsvector, 'a & s');
+   rank   
+----------
+ 0.198206
+(1 row)
+
+select rank(' a:1 s:2 d g'::tsvector, 'a & s');
+   rank    
+-----------
+ 0.0991032
+(1 row)
+
+insert into test_tsvector (t) values ('foo bar foo the over foo qq bar');
+select * from stat('select a from test_tsvector') order by ndoc desc, nentry desc, word;
+   word    | ndoc | nentry 
+-----------+------+--------
+ qq        |  109 |    109
+ qt        |  102 |    102
+ qe        |  100 |    100
+ qh        |   98 |     98
+ qw        |   98 |     98
+ qa        |   97 |     97
+ ql        |   94 |     94
+ qs        |   94 |     94
+ qi        |   92 |     92
+ qr        |   92 |     92
+ qj        |   91 |     91
+ qd        |   87 |     87
+ qz        |   87 |     87
+ qc        |   86 |     86
+ qn        |   86 |     86
+ qv        |   85 |     85
+ qo        |   84 |     84
+ qy        |   84 |     84
+ wp        |   84 |     84
+ qf        |   81 |     81
+ qk        |   80 |     80
+ wt        |   80 |     80
+ qu        |   79 |     79
+ qg        |   78 |     78
+ wb        |   78 |     78
+ qx        |   77 |     77
+ wr        |   77 |     77
+ ws        |   73 |     73
+ wy        |   73 |     73
+ wa        |   72 |     72
+ wf        |   70 |     70
+ wg        |   70 |     70
+ wi        |   70 |     70
+ wu        |   70 |     70
+ wc        |   69 |     69
+ wj        |   69 |     69
+ qp        |   68 |     68
+ wh        |   68 |     68
+ wv        |   68 |     68
+ qb        |   66 |     66
+ eu        |   65 |     65
+ we        |   65 |     65
+ wl        |   65 |     65
+ wq        |   65 |     65
+ wk        |   64 |     64
+ ee        |   63 |     63
+ eo        |   63 |     63
+ qm        |   63 |     63
+ wn        |   63 |     63
+ ef        |   62 |     62
+ eh        |   62 |     62
+ ex        |   62 |     62
+ re        |   62 |     62
+ rl        |   62 |     62
+ rr        |   62 |     62
+ eb        |   61 |     61
+ ek        |   61 |     61
+ ww        |   61 |     61
+ ea        |   60 |     60
+ ei        |   60 |     60
+ em        |   60 |     60
+ eq        |   60 |     60
+ ew        |   60 |     60
+ ro        |   60 |     60
+ rw        |   60 |     60
+ tl        |   60 |     60
+ eg        |   59 |     59
+ en        |   59 |     59
+ ez        |   59 |     59
+ rj        |   59 |     59
+ ry        |   59 |     59
+ tw        |   59 |     59
+ tx        |   59 |     59
+ ej        |   58 |     58
+ es        |   58 |     58
+ ra        |   58 |     58
+ rd        |   58 |     58
+ rg        |   58 |     58
+ rx        |   58 |     58
+ tb        |   58 |     58
+ wd        |   58 |     58
+ ed        |   57 |     57
+ tc        |   57 |     57
+ wx        |   57 |     57
+ er        |   56 |     56
+ wm        |   56 |     56
+ wo        |   56 |     56
+ yw        |   56 |     56
+ ep        |   55 |     55
+ rk        |   55 |     55
+ rp        |   55 |     55
+ rz        |   55 |     55
+ ta        |   55 |     55
+ rq        |   54 |     54
+ yn        |   54 |     54
+ ec        |   53 |     53
+ el        |   53 |     53
+ ru        |   53 |     53
+ rv        |   53 |     53
+ tz        |   53 |     53
+ un        |   53 |     53
+ wz        |   53 |     53
+ ys        |   53 |     53
+ oe        |   52 |     52
+ tn        |   52 |     52
+ tq        |   52 |     52
+ ty        |   52 |     52
+ uq        |   52 |     52
+ yg        |   52 |     52
+ ym        |   52 |     52
+ oi        |   51 |     51
+ to        |   51 |     51
+ yi        |   51 |     51
+ pn        |   50 |     50
+ rb        |   50 |     50
+ ri        |   50 |     50
+ rn        |   50 |     50
+ ti        |   50 |     50
+ tv        |   50 |     50
+ um        |   50 |     50
+ ut        |   50 |     50
+ ya        |   50 |     50
+ et        |   49 |     49
+ ix        |   49 |     49
+ ox        |   49 |     49
+ q3        |   49 |     49
+ yf        |   49 |     49
+ yl        |   49 |     49
+ yo        |   49 |     49
+ yr        |   49 |     49
+ ev        |   48 |     48
+ ey        |   48 |     48
+ ot        |   48 |     48
+ rc        |   48 |     48
+ rm        |   48 |     48
+ th        |   48 |     48
+ uo        |   48 |     48
+ ia        |   47 |     47
+ q1        |   47 |     47
+ rh        |   47 |     47
+ yq        |   47 |     47
+ yz        |   47 |     47
+ av        |   46 |     46
+ im        |   46 |     46
+ os        |   46 |     46
+ tk        |   46 |     46
+ yy        |   46 |     46
+ ir        |   45 |     45
+ iv        |   45 |     45
+ iw        |   45 |     45
+ oj        |   45 |     45
+ pl        |   45 |     45
+ pv        |   45 |     45
+ te        |   45 |     45
+ tu        |   45 |     45
+ uv        |   45 |     45
+ ux        |   45 |     45
+ yd        |   45 |     45
+ yx        |   45 |     45
+ ij        |   44 |     44
+ pa        |   44 |     44
+ se        |   44 |     44
+ tg        |   44 |     44
+ ue        |   44 |     44
+ yb        |   44 |     44
+ yt        |   44 |     44
+ if        |   43 |     43
+ ik        |   43 |     43
+ in        |   43 |     43
+ ph        |   43 |     43
+ pj        |   43 |     43
+ q5        |   43 |     43
+ rt        |   43 |     43
+ ub        |   43 |     43
+ ud        |   43 |     43
+ uh        |   43 |     43
+ uj        |   43 |     43
+ w7        |   43 |     43
+ ye        |   43 |     43
+ yv        |   43 |     43
+ db        |   42 |     42
+ do        |   42 |     42
+ id        |   42 |     42
+ ie        |   42 |     42
+ ii        |   42 |     42
+ of        |   42 |     42
+ pr        |   42 |     42
+ q4        |   42 |     42
+ rf        |   42 |     42
+ td        |   42 |     42
+ uk        |   42 |     42
+ up        |   42 |     42
+ yh        |   42 |     42
+ yk        |   42 |     42
+ io        |   41 |     41
+ it        |   41 |     41
+ pb        |   41 |     41
+ q0        |   41 |     41
+ q7        |   41 |     41
+ rs        |   41 |     41
+ tj        |   41 |     41
+ ur        |   41 |     41
+ ig        |   40 |     40
+ iu        |   40 |     40
+ iy        |   40 |     40
+ od        |   40 |     40
+ q6        |   40 |     40
+ tt        |   40 |     40
+ ug        |   40 |     40
+ ul        |   40 |     40
+ us        |   40 |     40
+ uu        |   40 |     40
+ uz        |   40 |     40
+ ah        |   39 |     39
+ ar        |   39 |     39
+ as        |   39 |     39
+ dl        |   39 |     39
+ dt        |   39 |     39
+ hk        |   39 |     39
+ iq        |   39 |     39
+ is        |   39 |     39
+ oc        |   39 |     39
+ ov        |   39 |     39
+ oy        |   39 |     39
+ uf        |   39 |     39
+ ui        |   39 |     39
+ aa        |   38 |     38
+ ad        |   38 |     38
+ fh        |   38 |     38
+ gm        |   38 |     38
+ ic        |   38 |     38
+ jd        |   38 |     38
+ om        |   38 |     38
+ or        |   38 |     38
+ oz        |   38 |     38
+ pm        |   38 |     38
+ q8        |   38 |     38
+ sf        |   38 |     38
+ sm        |   38 |     38
+ sv        |   38 |     38
+ uc        |   38 |     38
+ ak        |   37 |     37
+ aq        |   37 |     37
+ di        |   37 |     37
+ e4        |   37 |     37
+ fi        |   37 |     37
+ fx        |   37 |     37
+ ha        |   37 |     37
+ hp        |   37 |     37
+ ih        |   37 |     37
+ og        |   37 |     37
+ po        |   37 |     37
+ pw        |   37 |     37
+ sn        |   37 |     37
+ su        |   37 |     37
+ sw        |   37 |     37
+ w6        |   37 |     37
+ yj        |   37 |     37
+ yu        |   37 |     37
+ ag        |   36 |     36
+ am        |   36 |     36
+ at        |   36 |     36
+ e1        |   36 |     36
+ ff        |   36 |     36
+ gx        |   36 |     36
+ he        |   36 |     36
+ hj        |   36 |     36
+ ib        |   36 |     36
+ iz        |   36 |     36
+ lm        |   36 |     36
+ ok        |   36 |     36
+ pk        |   36 |     36
+ pp        |   36 |     36
+ pu        |   36 |     36
+ sp        |   36 |     36
+ tf        |   36 |     36
+ tm        |   36 |     36
+ ay        |   35 |     35
+ dy        |   35 |     35
+ fu        |   35 |     35
+ ku        |   35 |     35
+ lh        |   35 |     35
+ lq        |   35 |     35
+ o6        |   35 |     35
+ ob        |   35 |     35
+ on        |   35 |     35
+ op        |   35 |     35
+ pd        |   35 |     35
+ ps        |   35 |     35
+ si        |   35 |     35
+ sl        |   35 |     35
+ sx        |   35 |     35
+ tp        |   35 |     35
+ tr        |   35 |     35
+ w3        |   35 |     35
+ y1        |   35 |     35
+ al        |   34 |     34
+ ap        |   34 |     34
+ az        |   34 |     34
+ dc        |   34 |     34
+ dd        |   34 |     34
+ dz        |   34 |     34
+ e0        |   34 |     34
+ fj        |   34 |     34
+ fp        |   34 |     34
+ gd        |   34 |     34
+ gg        |   34 |     34
+ gk        |   34 |     34
+ go        |   34 |     34
+ ho        |   34 |     34
+ jc        |   34 |     34
+ oa        |   34 |     34
+ oh        |   34 |     34
+ oo        |   34 |     34
+ pe        |   34 |     34
+ px        |   34 |     34
+ sd        |   34 |     34
+ sq        |   34 |     34
+ sy        |   34 |     34
+ ab        |   33 |     33
+ ae        |   33 |     33
+ af        |   33 |     33
+ aw        |   33 |     33
+ e5        |   33 |     33
+ fk        |   33 |     33
+ gu        |   33 |     33
+ gy        |   33 |     33
+ hb        |   33 |     33
+ hm        |   33 |     33
+ hy        |   33 |     33
+ jl        |   33 |     33
+ jr        |   33 |     33
+ ls        |   33 |     33
+ oq        |   33 |     33
+ pt        |   33 |     33
+ sa        |   33 |     33
+ sh        |   33 |     33
+ sj        |   33 |     33
+ so        |   33 |     33
+ sz        |   33 |     33
+ t7        |   33 |     33
+ uw        |   33 |     33
+ w8        |   33 |     33
+ y0        |   33 |     33
+ yp        |   33 |     33
+ dh        |   32 |     32
+ dp        |   32 |     32
+ dq        |   32 |     32
+ e7        |   32 |     32
+ fn        |   32 |     32
+ fo        |   32 |     32
+ fr        |   32 |     32
+ ga        |   32 |     32
+ gq        |   32 |     32
+ hh        |   32 |     32
+ il        |   32 |     32
+ ip        |   32 |     32
+ jv        |   32 |     32
+ lc        |   32 |     32
+ ol        |   32 |     32
+ pc        |   32 |     32
+ q9        |   32 |     32
+ ds        |   31 |     31
+ e9        |   31 |     31
+ fd        |   31 |     31
+ fe        |   31 |     31
+ ft        |   31 |     31
+ gs        |   31 |     31
+ hl        |   31 |     31
+ hs        |   31 |     31
+ jb        |   31 |     31
+ kc        |   31 |     31
+ kw        |   31 |     31
+ mj        |   31 |     31
+ q2        |   31 |     31
+ r3        |   31 |     31
+ sb        |   31 |     31
+ sk        |   31 |     31
+ ts        |   31 |     31
+ ua        |   31 |     31
+ yc        |   31 |     31
+ zw        |   31 |     31
+ ao        |   30 |     30
+ du        |   30 |     30
+ fw        |   30 |     30
+ gj        |   30 |     30
+ hu        |   30 |     30
+ kh        |   30 |     30
+ kl        |   30 |     30
+ kv        |   30 |     30
+ ld        |   30 |     30
+ lf        |   30 |     30
+ pq        |   30 |     30
+ py        |   30 |     30
+ sc        |   30 |     30
+ sr        |   30 |     30
+ uy        |   30 |     30
+ vg        |   30 |     30
+ w2        |   30 |     30
+ xg        |   30 |     30
+ xo        |   30 |     30
+ au        |   29 |     29
+ cx        |   29 |     29
+ fv        |   29 |     29
+ gh        |   29 |     29
+ gl        |   29 |     29
+ gt        |   29 |     29
+ hw        |   29 |     29
+ ji        |   29 |     29
+ km        |   29 |     29
+ la        |   29 |     29
+ ou        |   29 |     29
+ r0        |   29 |     29
+ w0        |   29 |     29
+ y9        |   29 |     29
+ zm        |   29 |     29
+ zs        |   29 |     29
+ zy        |   29 |     29
+ ax        |   28 |     28
+ cd        |   28 |     28
+ dj        |   28 |     28
+ dn        |   28 |     28
+ dr        |   28 |     28
+ ht        |   28 |     28
+ jf        |   28 |     28
+ lo        |   28 |     28
+ lr        |   28 |     28
+ na        |   28 |     28
+ ng        |   28 |     28
+ r8        |   28 |     28
+ ss        |   28 |     28
+ xt        |   28 |     28
+ y6        |   28 |     28
+ aj        |   27 |     27
+ ca        |   27 |     27
+ cg        |   27 |     27
+ df        |   27 |     27
+ dg        |   27 |     27
+ dv        |   27 |     27
+ gc        |   27 |     27
+ gn        |   27 |     27
+ gr        |   27 |     27
+ hd        |   27 |     27
+ i8        |   27 |     27
+ jn        |   27 |     27
+ jt        |   27 |     27
+ lp        |   27 |     27
+ o9        |   27 |     27
+ ow        |   27 |     27
+ r9        |   27 |     27
+ t8        |   27 |     27
+ u5        |   27 |     27
+ w4        |   27 |     27
+ xm        |   27 |     27
+ zz        |   27 |     27
+ a2        |   26 |     26
+ ac        |   26 |     26
+ ai        |   26 |     26
+ cm        |   26 |     26
+ cu        |   26 |     26
+ cw        |   26 |     26
+ dk        |   26 |     26
+ e2        |   26 |     26
+ fc        |   26 |     26
+ fg        |   26 |     26
+ fl        |   26 |     26
+ fs        |   26 |     26
+ ge        |   26 |     26
+ gv        |   26 |     26
+ hc        |   26 |     26
+ hi        |   26 |     26
+ hx        |   26 |     26
+ jj        |   26 |     26
+ jm        |   26 |     26
+ kg        |   26 |     26
+ kk        |   26 |     26
+ kn        |   26 |     26
+ ko        |   26 |     26
+ kt        |   26 |     26
+ ln        |   26 |     26
+ mx        |   26 |     26
+ pg        |   26 |     26
+ r4        |   26 |     26
+ t6        |   26 |     26
+ u1        |   26 |     26
+ u4        |   26 |     26
+ vi        |   26 |     26
+ vr        |   26 |     26
+ w1        |   26 |     26
+ w9        |   26 |     26
+ xk        |   26 |     26
+ xs        |   26 |     26
+ zf        |   26 |     26
+ bb        |   25 |     25
+ dm        |   25 |     25
+ dw        |   25 |     25
+ e8        |   25 |     25
+ fb        |   25 |     25
+ gw        |   25 |     25
+ h8        |   25 |     25
+ hf        |   25 |     25
+ hg        |   25 |     25
+ hn        |   25 |     25
+ hv        |   25 |     25
+ i0        |   25 |     25
+ i3        |   25 |     25
+ jg        |   25 |     25
+ jo        |   25 |     25
+ jx        |   25 |     25
+ kq        |   25 |     25
+ lw        |   25 |     25
+ lx        |   25 |     25
+ o3        |   25 |     25
+ p7        |   25 |     25
+ pf        |   25 |     25
+ pi        |   25 |     25
+ pz        |   25 |     25
+ r2        |   25 |     25
+ r5        |   25 |     25
+ t9        |   25 |     25
+ u7        |   25 |     25
+ ve        |   25 |     25
+ vu        |   25 |     25
+ y5        |   25 |     25
+ y8        |   25 |     25
+ zt        |   25 |     25
+ an        |   24 |     24
+ bj        |   24 |     24
+ dx        |   24 |     24
+ fm        |   24 |     24
+ fz        |   24 |     24
+ gb        |   24 |     24
+ gi        |   24 |     24
+ gp        |   24 |     24
+ hr        |   24 |     24
+ hz        |   24 |     24
+ i5        |   24 |     24
+ jq        |   24 |     24
+ kb        |   24 |     24
+ ke        |   24 |     24
+ kf        |   24 |     24
+ kp        |   24 |     24
+ lv        |   24 |     24
+ lz        |   24 |     24
+ o8        |   24 |     24
+ r1        |   24 |     24
+ s7        |   24 |     24
+ sg        |   24 |     24
+ u3        |   24 |     24
+ vj        |   24 |     24
+ vt        |   24 |     24
+ w5        |   24 |     24
+ zj        |   24 |     24
+ be        |   23 |     23
+ bi        |   23 |     23
+ bn        |   23 |     23
+ cn        |   23 |     23
+ cy        |   23 |     23
+ da        |   23 |     23
+ e6        |   23 |     23
+ fa        |   23 |     23
+ js        |   23 |     23
+ ki        |   23 |     23
+ kz        |   23 |     23
+ li        |   23 |     23
+ mt        |   23 |     23
+ mz        |   23 |     23
+ nu        |   23 |     23
+ o2        |   23 |     23
+ p5        |   23 |     23
+ p8        |   23 |     23
+ r7        |   23 |     23
+ t0        |   23 |     23
+ t1        |   23 |     23
+ t3        |   23 |     23
+ vm        |   23 |     23
+ xh        |   23 |     23
+ xx        |   23 |     23
+ zp        |   23 |     23
+ zr        |   23 |     23
+ a3        |   22 |     22
+ bg        |   22 |     22
+ de        |   22 |     22
+ e3        |   22 |     22
+ fq        |   22 |     22
+ i2        |   22 |     22
+ i7        |   22 |     22
+ ja        |   22 |     22
+ jk        |   22 |     22
+ jy        |   22 |     22
+ kr        |   22 |     22
+ kx        |   22 |     22
+ ly        |   22 |     22
+ nb        |   22 |     22
+ nh        |   22 |     22
+ ns        |   22 |     22
+ s3        |   22 |     22
+ u2        |   22 |     22
+ vn        |   22 |     22
+ xe        |   22 |     22
+ y4        |   22 |     22
+ zh        |   22 |     22
+ zo        |   22 |     22
+ zq        |   22 |     22
+ a1        |   21 |     21
+ bl        |   21 |     21
+ bo        |   21 |     21
+ cb        |   21 |     21
+ ch        |   21 |     21
+ co        |   21 |     21
+ cq        |   21 |     21
+ cv        |   21 |     21
+ d7        |   21 |     21
+ g8        |   21 |     21
+ je        |   21 |     21
+ jp        |   21 |     21
+ jz        |   21 |     21
+ lg        |   21 |     21
+ me        |   21 |     21
+ nc        |   21 |     21
+ p4        |   21 |     21
+ st        |   21 |     21
+ vb        |   21 |     21
+ vw        |   21 |     21
+ vz        |   21 |     21
+ xj        |   21 |     21
+ xq        |   21 |     21
+ xu        |   21 |     21
+ xy        |   21 |     21
+ zb        |   21 |     21
+ bv        |   20 |     20
+ bz        |   20 |     20
+ cj        |   20 |     20
+ cp        |   20 |     20
+ cs        |   20 |     20
+ d8        |   20 |     20
+ ju        |   20 |     20
+ k0        |   20 |     20
+ ks        |   20 |     20
+ ky        |   20 |     20
+ l1        |   20 |     20
+ lb        |   20 |     20
+ lj        |   20 |     20
+ lu        |   20 |     20
+ nm        |   20 |     20
+ nw        |   20 |     20
+ nz        |   20 |     20
+ o7        |   20 |     20
+ p6        |   20 |     20
+ vh        |   20 |     20
+ vp        |   20 |     20
+ vs        |   20 |     20
+ xb        |   20 |     20
+ xr        |   20 |     20
+ z3        |   20 |     20
+ zv        |   20 |     20
+ bq        |   19 |     19
+ br        |   19 |     19
+ by        |   19 |     19
+ cl        |   19 |     19
+ d2        |   19 |     19
+ f1        |   19 |     19
+ f4        |   19 |     19
+ gf        |   19 |     19
+ hq        |   19 |     19
+ k9        |   19 |     19
+ ka        |   19 |     19
+ kd        |   19 |     19
+ kj        |   19 |     19
+ md        |   19 |     19
+ mi        |   19 |     19
+ ml        |   19 |     19
+ my        |   19 |     19
+ nj        |   19 |     19
+ ny        |   19 |     19
+ o1        |   19 |     19
+ s4        |   19 |     19
+ s8        |   19 |     19
+ t5        |   19 |     19
+ u0        |   19 |     19
+ xl        |   19 |     19
+ zg        |   19 |     19
+ zi        |   19 |     19
+ a5        |   18 |     18
+ b9        |   18 |     18
+ bh        |   18 |     18
+ bx        |   18 |     18
+ d3        |   18 |     18
+ fy        |   18 |     18
+ g2        |   18 |     18
+ i4        |   18 |     18
+ i6        |   18 |     18
+ i9        |   18 |     18
+ jw        |   18 |     18
+ lk        |   18 |     18
+ mb        |   18 |     18
+ mv        |   18 |     18
+ nd        |   18 |     18
+ nr        |   18 |     18
+ nt        |   18 |     18
+ t2        |   18 |     18
+ xf        |   18 |     18
+ xv        |   18 |     18
+ zc        |   18 |     18
+ zd        |   18 |     18
+ a7        |   17 |     17
+ bc        |   17 |     17
+ bd        |   17 |     17
+ ce        |   17 |     17
+ cf        |   17 |     17
+ cr        |   17 |     17
+ g9        |   17 |     17
+ j0        |   17 |     17
+ j5        |   17 |     17
+ mp        |   17 |     17
+ mr        |   17 |     17
+ mw        |   17 |     17
+ nk        |   17 |     17
+ no        |   17 |     17
+ o0        |   17 |     17
+ o4        |   17 |     17
+ s0        |   17 |     17
+ s1        |   17 |     17
+ t4        |   17 |     17
+ u9        |   17 |     17
+ vf        |   17 |     17
+ vx        |   17 |     17
+ x3        |   17 |     17
+ xi        |   17 |     17
+ xn        |   17 |     17
+ xz        |   17 |     17
+ zl        |   17 |     17
+ zn        |   17 |     17
+ a0        |   16 |     16
+ bu        |   16 |     16
+ bw        |   16 |     16
+ ci        |   16 |     16
+ ck        |   16 |     16
+ d0        |   16 |     16
+ d4        |   16 |     16
+ d6        |   16 |     16
+ f5        |   16 |     16
+ g1        |   16 |     16
+ gz        |   16 |     16
+ h4        |   16 |     16
+ jh        |   16 |     16
+ l4        |   16 |     16
+ lt        |   16 |     16
+ mg        |   16 |     16
+ mh        |   16 |     16
+ mo        |   16 |     16
+ ni        |   16 |     16
+ nl        |   16 |     16
+ nq        |   16 |     16
+ p2        |   16 |     16
+ u8        |   16 |     16
+ v9        |   16 |     16
+ vl        |   16 |     16
+ vo        |   16 |     16
+ xp        |   16 |     16
+ y3        |   16 |     16
+ y7        |   16 |     16
+ z7        |   16 |     16
+ za        |   16 |     16
+ zx        |   16 |     16
+ bf        |   15 |     15
+ bp        |   15 |     15
+ cc        |   15 |     15
+ g0        |   15 |     15
+ j2        |   15 |     15
+ j9        |   15 |     15
+ l6        |   15 |     15
+ le        |   15 |     15
+ ll        |   15 |     15
+ m8        |   15 |     15
+ ma        |   15 |     15
+ mu        |   15 |     15
+ nf        |   15 |     15
+ r6        |   15 |     15
+ s5        |   15 |     15
+ vd        |   15 |     15
+ vk        |   15 |     15
+ xa        |   15 |     15
+ xw        |   15 |     15
+ y2        |   15 |     15
+ z8        |   15 |     15
+ ze        |   15 |     15
+ zu        |   15 |     15
+ a6        |   14 |     14
+ bk        |   14 |     14
+ bt        |   14 |     14
+ c0        |   14 |     14
+ f8        |   14 |     14
+ g3        |   14 |     14
+ g4        |   14 |     14
+ g7        |   14 |     14
+ h6        |   14 |     14
+ h7        |   14 |     14
+ h9        |   14 |     14
+ i1        |   14 |     14
+ k1        |   14 |     14
+ k2        |   14 |     14
+ k6        |   14 |     14
+ k7        |   14 |     14
+ mc        |   14 |     14
+ nn        |   14 |     14
+ p9        |   14 |     14
+ u6        |   14 |     14
+ xd        |   14 |     14
+ z6        |   14 |     14
+ zk        |   14 |     14
+ a4        |   13 |     13
+ a9        |   13 |     13
+ bm        |   13 |     13
+ cz        |   13 |     13
+ f2        |   13 |     13
+ f3        |   13 |     13
+ f6        |   13 |     13
+ g6        |   13 |     13
+ h2        |   13 |     13
+ j1        |   13 |     13
+ k5        |   13 |     13
+ m1        |   13 |     13
+ mf        |   13 |     13
+ mq        |   13 |     13
+ np        |   13 |     13
+ nx        |   13 |     13
+ o5        |   13 |     13
+ p0        |   13 |     13
+ p1        |   13 |     13
+ s6        |   13 |     13
+ s9        |   13 |     13
+ v6        |   13 |     13
+ va        |   13 |     13
+ vc        |   13 |     13
+ xc        |   13 |     13
+ z0        |   13 |     13
+ c9        |   12 |     12
+ d1        |   12 |     12
+ h0        |   12 |     12
+ h1        |   12 |     12
+ j8        |   12 |     12
+ k4        |   12 |     12
+ l5        |   12 |     12
+ l9        |   12 |     12
+ m2        |   12 |     12
+ m6        |   12 |     12
+ m9        |   12 |     12
+ n7        |   12 |     12
+ nv        |   12 |     12
+ p3        |   12 |     12
+ vq        |   12 |     12
+ vy        |   12 |     12
+ x1        |   12 |     12
+ x2        |   12 |     12
+ z5        |   12 |     12
+ c1        |   11 |     11
+ c3        |   11 |     11
+ ct        |   11 |     11
+ f9        |   11 |     11
+ g5        |   11 |     11
+ j6        |   11 |     11
+ l8        |   11 |     11
+ n1        |   11 |     11
+ v7        |   11 |     11
+ vv        |   11 |     11
+ x5        |   11 |     11
+ x8        |   11 |     11
+ z2        |   11 |     11
+ b0        |   10 |     10
+ b2        |   10 |     10
+ b8        |   10 |     10
+ c6        |   10 |     10
+ f0        |   10 |     10
+ f7        |   10 |     10
+ h5        |   10 |     10
+ j3        |   10 |     10
+ j4        |   10 |     10
+ j7        |   10 |     10
+ l7        |   10 |     10
+ m0        |   10 |     10
+ m7        |   10 |     10
+ mm        |   10 |     10
+ mn        |   10 |     10
+ n8        |   10 |     10
+ v1        |   10 |     10
+ x0        |   10 |     10
+ x6        |   10 |     10
+ x7        |   10 |     10
+ x9        |   10 |     10
+ a8        |    9 |      9
+ b1        |    9 |      9
+ b4        |    9 |      9
+ b5        |    9 |      9
+ b6        |    9 |      9
+ ba        |    9 |      9
+ bs        |    9 |      9
+ c5        |    9 |      9
+ d5        |    9 |      9
+ k8        |    9 |      9
+ l0        |    9 |      9
+ m5        |    9 |      9
+ mk        |    9 |      9
+ ms        |    9 |      9
+ n3        |    9 |      9
+ n4        |    9 |      9
+ n6        |    9 |      9
+ ne        |    9 |      9
+ v0        |    9 |      9
+ v3        |    9 |      9
+ v5        |    9 |      9
+ v8        |    9 |      9
+ b3        |    8 |      8
+ b7        |    8 |      8
+ c2        |    8 |      8
+ c7        |    8 |      8
+ c8        |    8 |      8
+ d9        |    8 |      8
+ k3        |    8 |      8
+ l3        |    8 |      8
+ m3        |    8 |      8
+ m4        |    8 |      8
+ n0        |    8 |      8
+ n5        |    8 |      8
+ v4        |    8 |      8
+ x4        |    8 |      8
+ z1        |    8 |      8
+ z9        |    8 |      8
+ l2        |    7 |      7
+ s2        |    7 |      7
+ z4        |    7 |      7
+ 1l        |    6 |      6
+ 1o        |    6 |      6
+ 1t        |    6 |      6
+ 2e        |    6 |      6
+ 2o        |    6 |      6
+ c4        |    6 |      6
+ h3        |    6 |      6
+ n2        |    6 |      6
+ n9        |    6 |      6
+ v2        |    6 |      6
+ 2l        |    5 |      5
+ 2u        |    5 |      5
+ 3k        |    5 |      5
+ 4p        |    5 |      5
+ 18        |    4 |      4
+ 1a        |    4 |      4
+ 1i        |    4 |      4
+ 2s        |    4 |      4
+ 3q        |    4 |      4
+ 3y        |    4 |      4
+ 5y        |    4 |      4
+ 1f        |    3 |      3
+ 1h        |    3 |      3
+ 1m        |    3 |      3
+ 1p        |    3 |      3
+ 1s        |    3 |      3
+ 1v        |    3 |      3
+ 1x        |    3 |      3
+ 27        |    3 |      3
+ 2a        |    3 |      3
+ 2b        |    3 |      3
+ 2h        |    3 |      3
+ 2n        |    3 |      3
+ 2p        |    3 |      3
+ 2v        |    3 |      3
+ 2y        |    3 |      3
+ 3d        |    3 |      3
+ 3w        |    3 |      3
+ 3z        |    3 |      3
+ 4a        |    3 |      3
+ 4d        |    3 |      3
+ 4v        |    3 |      3
+ 4z        |    3 |      3
+ 5e        |    3 |      3
+ 5i        |    3 |      3
+ 5k        |    3 |      3
+ 5o        |    3 |      3
+ 5t        |    3 |      3
+ 6b        |    3 |      3
+ 6d        |    3 |      3
+ 6o        |    3 |      3
+ 6w        |    3 |      3
+ 7a        |    3 |      3
+ 7h        |    3 |      3
+ 7r        |    3 |      3
+ 93        |    3 |      3
+ 10        |    2 |      2
+ 12        |    2 |      2
+ 15        |    2 |      2
+ 16        |    2 |      2
+ 19        |    2 |      2
+ 1b        |    2 |      2
+ 1d        |    2 |      2
+ 1g        |    2 |      2
+ 1j        |    2 |      2
+ 1n        |    2 |      2
+ 1r        |    2 |      2
+ 1u        |    2 |      2
+ 1w        |    2 |      2
+ 1y        |    2 |      2
+ 20        |    2 |      2
+ 25        |    2 |      2
+ 2d        |    2 |      2
+ 2i        |    2 |      2
+ 2j        |    2 |      2
+ 2k        |    2 |      2
+ 2q        |    2 |      2
+ 2r        |    2 |      2
+ 2t        |    2 |      2
+ 2w        |    2 |      2
+ 2z        |    2 |      2
+ 3b        |    2 |      2
+ 3f        |    2 |      2
+ 3h        |    2 |      2
+ 3o        |    2 |      2
+ 3p        |    2 |      2
+ 3r        |    2 |      2
+ 3s        |    2 |      2
+ 3v        |    2 |      2
+ 42        |    2 |      2
+ 43        |    2 |      2
+ 4f        |    2 |      2
+ 4g        |    2 |      2
+ 4h        |    2 |      2
+ 4j        |    2 |      2
+ 4m        |    2 |      2
+ 4r        |    2 |      2
+ 4s        |    2 |      2
+ 4t        |    2 |      2
+ 4u        |    2 |      2
+ 5c        |    2 |      2
+ 5f        |    2 |      2
+ 5h        |    2 |      2
+ 5p        |    2 |      2
+ 5q        |    2 |      2
+ 5z        |    2 |      2
+ 6a        |    2 |      2
+ 6h        |    2 |      2
+ 6q        |    2 |      2
+ 6r        |    2 |      2
+ 6t        |    2 |      2
+ 6y        |    2 |      2
+ 70        |    2 |      2
+ 7c        |    2 |      2
+ 7g        |    2 |      2
+ 7k        |    2 |      2
+ 7o        |    2 |      2
+ 7u        |    2 |      2
+ 8j        |    2 |      2
+ 8w        |    2 |      2
+ 9f        |    2 |      2
+ 9y        |    2 |      2
+ copyright |    2 |      2
+ foo       |    1 |      3
+ bar       |    1 |      2
+ 0e        |    1 |      1
+ 0h        |    1 |      1
+ 0p        |    1 |      1
+ 0w        |    1 |      1
+ 0z        |    1 |      1
+ 11        |    1 |      1
+ 13        |    1 |      1
+ 14        |    1 |      1
+ 17        |    1 |      1
+ 1k        |    1 |      1
+ 1q        |    1 |      1
+ 1z        |    1 |      1
+ 24        |    1 |      1
+ 26        |    1 |      1
+ 28        |    1 |      1
+ 2f        |    1 |      1
+ 30        |    1 |      1
+ 345       |    1 |      1
+ 37        |    1 |      1
+ 39        |    1 |      1
+ 3a        |    1 |      1
+ 3e        |    1 |      1
+ 3g        |    1 |      1
+ 3i        |    1 |      1
+ 3m        |    1 |      1
+ 3t        |    1 |      1
+ 3u        |    1 |      1
+ 40        |    1 |      1
+ 41        |    1 |      1
+ 44        |    1 |      1
+ 45        |    1 |      1
+ 48        |    1 |      1
+ 4b        |    1 |      1
+ 4c        |    1 |      1
+ 4i        |    1 |      1
+ 4k        |    1 |      1
+ 4n        |    1 |      1
+ 4o        |    1 |      1
+ 4q        |    1 |      1
+ 4w        |    1 |      1
+ 4y        |    1 |      1
+ 51        |    1 |      1
+ 55        |    1 |      1
+ 56        |    1 |      1
+ 5a        |    1 |      1
+ 5d        |    1 |      1
+ 5g        |    1 |      1
+ 5j        |    1 |      1
+ 5l        |    1 |      1
+ 5s        |    1 |      1
+ 5u        |    1 |      1
+ 5x        |    1 |      1
+ 64        |    1 |      1
+ 68        |    1 |      1
+ 6c        |    1 |      1
+ 6f        |    1 |      1
+ 6g        |    1 |      1
+ 6i        |    1 |      1
+ 6k        |    1 |      1
+ 6n        |    1 |      1
+ 6p        |    1 |      1
+ 6s        |    1 |      1
+ 6u        |    1 |      1
+ 6x        |    1 |      1
+ 72        |    1 |      1
+ 7f        |    1 |      1
+ 7j        |    1 |      1
+ 7n        |    1 |      1
+ 7p        |    1 |      1
+ 7w        |    1 |      1
+ 7y        |    1 |      1
+ 7z        |    1 |      1
+ 80        |    1 |      1
+ 82        |    1 |      1
+ 85        |    1 |      1
+ 8d        |    1 |      1
+ 8i        |    1 |      1
+ 8l        |    1 |      1
+ 8n        |    1 |      1
+ 8p        |    1 |      1
+ 8t        |    1 |      1
+ 8x        |    1 |      1
+ 95        |    1 |      1
+ 97        |    1 |      1
+ 9a        |    1 |      1
+ 9e        |    1 |      1
+ 9h        |    1 |      1
+ 9r        |    1 |      1
+ 9w        |    1 |      1
+ qwerti    |    1 |      1
+(1146 rows)
+
+select reset_tsearch();
+NOTICE:  TSearch cache cleaned
+ reset_tsearch 
+---------------
+ 
+(1 row)
+
+select to_tsquery('default', 'skies & books');
+   to_tsquery   
+----------------
+ 'sky' & 'book'
+(1 row)
+
+select rank_cd(to_tsvector('Erosion It took the sea a thousand years,
+A thousand years to trace
+The granite features of this cliff
+In crag and scarp and base.
+It took the sea an hour one night
+An hour of storm to place
+The sculpture of these granite seams,
+Upon a woman s face. E.  J.  Pratt  (1882 1964)
+'), to_tsquery('sea&thousand&years'));
+ rank_cd 
+---------
+     1.2
+(1 row)
+
+select rank_cd(to_tsvector('Erosion It took the sea a thousand years,
+A thousand years to trace
+The granite features of this cliff
+In crag and scarp and base.
+It took the sea an hour one night
+An hour of storm to place
+The sculpture of these granite seams,
+Upon a woman s face. E.  J.  Pratt  (1882 1964)
+'), to_tsquery('granite&sea'));
+ rank_cd  
+----------
+ 0.880303
+(1 row)
+
+select rank_cd(to_tsvector('Erosion It took the sea a thousand years,
+A thousand years to trace
+The granite features of this cliff
+In crag and scarp and base.
+It took the sea an hour one night
+An hour of storm to place
+The sculpture of these granite seams,
+Upon a woman s face. E.  J.  Pratt  (1882 1964)
+'), to_tsquery('sea'));
+ rank_cd 
+---------
+       2
+(1 row)
+
+select get_covers(to_tsvector('Erosion It took the sea a thousand years,
+A thousand years to trace
+The granite features of this cliff
+In crag and scarp and base.
+It took the sea an hour one night
+An hour of storm to place
+The sculpture of these granite seams,
+Upon a woman s face. E.  J.  Pratt  (1882 1964)
+'), to_tsquery('sea&thousand&years'));
+                                                                                             get_covers                                                                                             
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ eros took {1 sea thousand year }1 {2 thousand year trace granit featur cliff crag scarp base took sea }2 hour one night hour storm place sculptur granit seam upon woman face e j pratt 1882 1964 
+(1 row)
+
+select get_covers(to_tsvector('Erosion It took the sea a thousand years,
+A thousand years to trace
+The granite features of this cliff
+In crag and scarp and base.
+It took the sea an hour one night
+An hour of storm to place
+The sculpture of these granite seams,
+Upon a woman s face. E.  J.  Pratt  (1882 1964)
+'), to_tsquery('granite&sea'));
+                                                                                                get_covers                                                                                                
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ eros took {1 sea thousand year thousand year trace {2 granit }1 featur cliff crag scarp base took {3 sea }2 hour one night hour storm place sculptur granit }3 seam upon woman face e j pratt 1882 1964 
+(1 row)
+
+select get_covers(to_tsvector('Erosion It took the sea a thousand years,
+A thousand years to trace
+The granite features of this cliff
+In crag and scarp and base.
+It took the sea an hour one night
+An hour of storm to place
+The sculpture of these granite seams,
+Upon a woman s face. E.  J.  Pratt  (1882 1964)
+'), to_tsquery('sea'));
+                                                                                             get_covers                                                                                             
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ eros took {1 sea }1 thousand year thousand year trace granit featur cliff crag scarp base took {2 sea }2 hour one night hour storm place sculptur granit seam upon woman face e j pratt 1882 1964 
+(1 row)
+
+select headline('Erosion It took the sea a thousand years,
+A thousand years to trace
+The granite features of this cliff
+In crag and scarp and base.
+It took the sea an hour one night
+An hour of storm to place
+The sculpture of these granite seams,
+Upon a woman s face. E.  J.  Pratt  (1882 1964)
+', to_tsquery('sea&thousand&years'));
+                                                       headline                                                        
+-----------------------------------------------------------------------------------------------------------------------
+ <b>sea</b> a <b>thousand</b> <b>years</b>,
+A <b>thousand</b> <b>years</b> to trace
+The granite features of this cliff
+(1 row)
+
+ 
+select headline('Erosion It took the sea a thousand years,
+A thousand years to trace
+The granite features of this cliff
+In crag and scarp and base.
+It took the sea an hour one night
+An hour of storm to place
+The sculpture of these granite seams,
+Upon a woman s face. E.  J.  Pratt  (1882 1964)
+', to_tsquery('granite&sea'));
+                                           headline                                           
+----------------------------------------------------------------------------------------------
+ <b>sea</b> an hour one night
+An hour of storm to place
+The sculpture of these <b>granite</b>
+(1 row)
+
+ 
+select headline('Erosion It took the sea a thousand years,
+A thousand years to trace
+The granite features of this cliff
+In crag and scarp and base.
+It took the sea an hour one night
+An hour of storm to place
+The sculpture of these granite seams,
+Upon a woman s face. E.  J.  Pratt  (1882 1964)
+', to_tsquery('sea'));
+                                         headline                                          
+-------------------------------------------------------------------------------------------
+ <b>sea</b> a thousand years,
+A thousand years to trace
+The granite features of this cliff
+(1 row)
+

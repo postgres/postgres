@@ -1,0 +1,1057 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link type="text/css" rel="stylesheet" href="/~megera/postgres/gist/tsearch/tsearch.css">
+<title>tsearch2 guide</title>
+</head>
+<body>
+<h1 align=center>The tsearch2 Guide</h1>
+
+<p align=center>
+Brandon Craig Rhodes<br>30 June 2003
+<p>
+This Guide introduces the reader to the PostgreSQL tsearch2 module,
+version&nbsp;2.
+More formal descriptions of the module's types and functions
+are provided in the <a href="tsearch2-ref.html">tsearch2 Reference</a>,
+which is a companion to this document.
+You can retrieve a beta copy of the tsearch2 module from the
+<a href="http://www.sai.msu.su/~megera/postgres/gist/">GiST for PostgreSQL</a>
+page &mdash; look under the section entitled <i>Development History</i>
+for the current version.
+<p>
+First we will examine the <tt>tsvector</tt> and <tt>tsquery</tt> types
+and how they are used to search documents;
+next, we will use them to build a simple search engine in&nbsp;SQL;
+and finally, we will study the internals of document conversion
+and how you might tune the internals to accommodate various searching needs.
+<p>
+Once you have tsearch2 working with PostgreSQL,
+you should be able to run the examples here exactly as they are typed.
+<p>
+<hr>
+<h2>Table of Contents</h2>
+<blockquote>
+<a href="#vectors_queries">Vectors and Queries</a><br>
+<a href="#simple_search">A Simple Search Engine</a><br>
+<a href="#weights">Ranking and Position Weights</a><br>
+<a href="#casting">Casting Vectors and Queries</a><br>
+<a href="#parsing_lexing">Parsing and Lexing</a><br>
+</blockquote>
+
+<hr>
+
+<h2><a name=vectors_queries>Vectors and Queries</a></h2>
+
+<blockquote>
+<i>This section introduces
+the two data types upon which tsearch2 search engines are based,
+and illustrates their interaction using the simplest possible case.
+The complex examples we present later on
+are merely variations and elaborations of this basic mechanism.</i>
+</blockquote>
+<p>
+The tsearch2 module allows you to index documents by the words they contain,
+and then perform very efficient searches
+for documents that contain a given combination of words.
+Preparing your document index involves two steps:
+<ul>
+<li><b>Making a list of the words each document contains.</b>
+ You must reduce each document to a <tt>tsvector</tt>
+ which lists each word that appears in the document.
+ This process offers many options,
+ because there is no requirement
+ that you must copy words into the vector
+ exactly as they appear in the document.
+ For example,
+ many developers omit frequent and content-free <b>stop words</b>
+ like <i>the</i> to reduce the size of their index;
+ others reduce different forms of the same word
+ (<i>forked</i>, <i>forking</i>, <i>forks</i>)
+ to a common form (<i>fork</i>)
+ to make search results independent of tense and case.
+ Because words are very often stored in a modified form,
+ we use the special term <b>lexemes</b>
+ for the word forms we actually store in the vector.
+<li><b>Creating an index of the documents by lexeme.</b>
+ This is managed automatically by tsearch2
+ when you creat a <tt>gist()</tt> index
+ on the <tt>tsvector</tt> column of a table,
+ which implements a form of the Berkeley
+ <a href="http://gist.cs.berkeley.edu/"><i>Generalized Search Tree</i></a>.
+</ul>
+Once your documents are indexed,
+performing a search involves:
+<ul>
+<li><b>Reducing the search terms to lexemes.</b>
+ You must express each search you want to perform
+ as a <tt>tsquery</tt> specifying a boolean combination of lexemes.
+ Note that tsearch2 only finds <i>exact</i> matches
+ between the lexemes in your query and the ones in each vector &mdash;
+ even capitalization counts as a difference
+ (which is why all lexemes are usually kept lowercase).
+ So you must process search words the same way you processed document words;
+ if <i>forking</i> became <i>fork</i> in the document's <tt>tsvector</tt>,
+ then the search term <i>forking</i> must also become <i>fork</i>
+ or the search will not find the document.
+<li><b>Retrieving the documents that match the query.</b>
+ Running a <tt>SELECT</tt> ... <tt>WHERE</tt>
+ <tt><i>query</i></tt> <tt>@@</tt> <tt><i>vector</i></tt>
+ on the table with the <tt><i>vector</i></tt> column
+ will return the documents that match your query.
+<li><b>Presenting your results.</b>
+ This final stage offers as many options
+ as turning documents into vectors.
+ You can order documents by how well they matched the search terms;
+ create a headline for each document
+ showing some of the phrases in which it uses the search terms;
+ and restrict the number of results retrieved.
+ You will of course want some way to identify each document,
+ so the user can ask for the full text of the ones he wants to read.
+</ul>
+And beyond deciding upon rules for turning documents into vectors
+and for presenting search results to users,
+you have to decide <i>where</i> to perform these operations &mdash;
+whether one database server
+will parse documents, perform searches, and prepare search results,
+or whether to spread the load of these operations across several machines.
+These are complicated design issues
+which we will explore later;
+in this section and the next,
+we will illustrate what can be accomplished
+using a single database server.
+<p>
+The <tt>default</tt> tsearch2 configuration,
+which we will learn more about later,
+provides a good example of a process for reducing documents to vectors:
+
+<pre>
+=# <b>SELECT set_curcfg('default')</b>
+=# <b>SELECT to_tsvector('The air smells of sea water.')</b>
+             to_tsvector             
+-------------------------------------
+ 'air':2 'sea':5 'smell':3 'water':6
+(1 row)
+</pre>
+
+Note the complex relationship between this document and its vector.
+The vector lists only words from the document &mdash;
+spaces and punctuation have disappeared.
+Common words like <i>the</i> and <i>of</i> have been eliminated.
+The&nbsp;<i>-s</i> that makes <i>smells</i> a plural has been removed,
+leaving a lexeme that represents the word in its simplest form.
+And finally,
+though the vector remembers the positions in which each word appeared,
+it does not store the lexemes in that order.
+<p>
+Keeping word positions in your vectors is optional, by the way.
+The positions are necessary for the tsearch2 ranking functions,
+which you can use to prioritize documents
+based on how often each document uses the search terms
+and whether they appear in close proximity.
+But if you do not perform ranking,
+or use your own process that ignores the word positions stored in the vector,
+then you can save space by stripping them from your vectors:
+
+<pre>
+=# <b>SELECT strip(to_tsvector('The air smells of sea water.'))</b>
+            strip            
+-----------------------------
+ 'air' 'sea' 'smell' 'water'
+(1 row)
+</pre>
+
+Now that we have a procedure for creating vectors,
+we can build an indexed table of vectors very simply:
+
+<pre>
+=# <b>CREATE TABLE vectors ( vector tsvector )</b>
+=# <b>CREATE INDEX vector_index ON vectors USING gist(vector)</b>
+=# <b>INSERT INTO vectors VALUES (to_tsvector('The path forks here'))</b>
+=# <b>INSERT INTO vectors VALUES (to_tsvector('A crawl leads west'))</b>
+=# <b>INSERT INTO vectors VALUES (to_tsvector('The left fork leads northeast'))</b>
+=# <b>SELECT * FROM vectors</b>
+                  vector                  
+------------------------------------------
+ 'fork':3 'path':2
+ 'lead':3 'west':4 'crawl':2
+ 'fork':3 'lead':4 'left':2 'northeast':5
+(3 rows)
+</pre>
+
+Now we can search this collection of document vectors
+using the <tt>@@</tt> operator and a <tt>tsquery</tt>
+that specifies the combination of lexemes we are looking for.
+Note that while vectors simply list lexemes,
+queries always combine them with the operators
+&lsquo;<tt>&amp;</tt>&rsquo;&nbsp;and,
+&lsquo;<tt>|</tt>&rsquo;&nbsp;or,
+and &nbsp;&lsquo;<tt>!</tt>&rsquo;&nbsp;not,
+plus parentheses for grouping.
+Some examples of the query syntax:
+<table align=center>
+<tr>
+ <td>&lsquo;find documents with the word <i>forks</i> in them&rsquo;<br>
+ <td><tt>'forks'</tt>
+<tr>
+ <td>&lsquo;... with both <i>forks</i> and <i>leads</i>&rsquo;<br>
+ <td><tt>'forks & leads'</tt>
+<tr>
+ <td>&lsquo;... with either <i>forks</i> or <i>leads</i>&rsquo;<br>
+ <td><tt>'forks | leads'</tt>
+<tr>
+ <td>&lsquo;... with either <i>forks</i> or <i>leads</i>,
+  but without <i>crawl</i>&rsquo;<br>
+ <td><tt>'(forks|leads) & !crawl'</tt>
+</table>
+The tsearch2 module
+provides a <tt>to_tsquery()</tt> function for creating queries
+that uses the same process as <tt>to_tsvector()</tt> uses
+to reduce words to lexemes.
+For instance,
+it will remove the&nbsp;<i>-s</i> from the plurals in the last example above:
+
+<pre>
+=# <b>SELECT to_tsquery('(leads|forks) & !crawl')</b>
+           to_tsquery           
+--------------------------------
+ ( 'lead' | 'fork' ) & !'crawl'
+(1 row)
+</pre>
+
+Again,
+this is critically important because the search operator <tt>@@</tt>
+only finds <i>exact</i> matches
+between the words in a query and the words in a vector;
+if the document vector lists the lexeme <i>fork</i>
+but the query looks for the plural form <i>forks</i>,
+the query would not match that document.
+Thanks to the symmetry between our process
+for producing vectors and queries, however,
+the above searches return correct results:
+
+<pre>
+=# <b>SELECT * FROM vectors WHERE vector @@ to_tsquery('(leads|forks) & !crawl')</b>
+                  vector                  
+------------------------------------------
+ 'fork':3 'path':2
+ 'fork':3 'lead':4 'left':2 'northeast':5
+(2 rows)
+</pre>
+
+You may want to try the other queries shown above,
+and perhaps invent some of your own.
+<p>
+You should not include stop words in a query,
+since you cannot search for words you have discarded.
+If you throw out the word <i>the</i> when building vectors, for example,
+your index will obviously not know which documents included it.
+The <tt>to_tsquery()</tt> function will automatically detect this
+and give you an error to prevent this mistake:
+
+<pre>
+=# <b>SELECT to_tsquery('the')</b>
+NOTICE:  Query contains only stopword(s) or doesn't contain lexem(s), ignored
+ to_tsquery 
+------------
+ 
+(1 row)
+</pre>
+
+But if you every build vectors and queries using your own routines,
+a possibility we will discuss later,
+then you will need to enforce this rule yourself.
+
+<blockquote><i>
+Now that you understand how vectors and queries work together,
+you are prepared to tackle many additional topics:
+how to distribute searching across many servers;
+how to customize the process
+by which tsearch2 turns documents and queries into lexemes,
+or use a process of your own;
+and how to sort and display search results to your users.
+But before discussing these detailed questions,
+we will build a simple search engine
+to see how easily its basic features work together.
+</i></blockquote>
+
+<h2><a name=simple_search>A Simple Search Engine</a></h2>
+
+<blockquote><i>
+In this section we build a simple search engine out of SQL functions
+that use the vector and query types described in the previous section.
+While this example is simpler
+than a search engine that has to interface with the outside world,
+it will illustrate the basic principles of building a search engine,
+and better prepare you for developing your own.
+</i></blockquote>
+Building a search engine involves only a few improvements
+upon the rudimentary vector searches described in the last section.
+<ul>
+<li>Because the user wants to read documents, not vectors,
+ you must provide some way
+ for the full text of each document to be accessed &mdash;
+ either by storing the entire text of each document in the database,
+ or storing an identifier
+ like a URL, file name, or document routing number
+ that lets you fetch the document from other storage.
+<li>You can make it easier for user interface code to refer to each document
+ by providing a unique identifier for each document,
+ perhaps with a <tt>SERIAL</tt> column.
+<li>Search results should be ordered by relevance.
+ If you leave word positions in your vectors,
+ you can either have PostgreSQL <tt>ORDER</tt> your results
+ <tt>BY</tt> a ranking function,
+ or you can fetch the vectors yourself and perform your own sort.
+ If you choose to ignore word positions or strip them from your vectors,
+ you will have to determine relevance yourself,
+ using either the full text of the document
+ or other information about each document you may possess.
+<li>For each document returned by a search,
+ you will usually want to display a summary called a <i>headline</i>
+ that shows short excerpts
+ illustrating how the document uses the query words.
+ Headlines are usually generated from the full text of the document,
+ not from position information in the <tt>tsvector</tt>,
+ since excerpts lacking stop words, punctuation, and suffixes
+ would not be comprehensible.
+ If you store the full text of each document in the database,
+ headlines can be generated very simply by a tsearch2 function.
+ If you store your documents elsewhere,
+ then you will either have to transmit each document to the database
+ every time you want to run the headline function on it,
+ or use your own headline code outside of the database.
+</ul>
+<p>
+We can easily construct a simple search engine
+that accomplishes these goals.
+First we build a table that, for each document,
+stores a unique identifier, the full text of the document,
+and its <tt>tsvector</tt>:
+
+<pre>
+=# <b>CREATE TABLE docs ( id SERIAL, doc TEXT, vector tsvector )</b>
+=# <b>CREATE INDEX docs_index ON docs USING gist(vector);</b>
+</pre>
+
+Note that although searches will still work
+on tables where you have neglected
+to create a <tt>gist()</tt> index over your vectors,
+they will run much more slowly
+since they will have to compare the query
+against every document vector in the table.
+<p>
+Because the table we have created
+stores each document in two different ways &mdash;
+both as text and as a vector &mdash;
+our <tt>INSERT</tt> statements must provide the document in both forms.
+While more advanced PostgreSQL programmers
+might accomplish this with a database trigger or rule,
+for this simple example we will use a small SQL function:
+
+<pre>
+=# <b>CREATE FUNCTION insdoc(text) RETURNS void LANGUAGE sql AS
+  'INSERT INTO docs (doc, vector) VALUES ($1, to_tsvector($1));'</b>
+</pre>
+
+Now, by calling <tt>insdoc()</tt> several times,
+we can populate our table with documents:
+
+<pre>
+=# <b>SELECT insdoc('A low crawl over cobbles leads inward to the west.')</b>
+=# <b>SELECT insdoc('The canyon runs into a mass of boulders -- dead end.')</b>
+=# <b>SELECT insdoc('You are crawling over cobbles in a low passage.')</b>
+=# <b>SELECT insdoc('Cavernous passages lead east, north, and south.')</b>
+=# <b>SELECT insdoc('To the east a low wide crawl slants up.')</b>
+=# <b>SELECT insdoc('You are in the south side chamber.')</b>
+=# <b>SELECT insdoc('The passage here is blocked by a recent cave-in.')</b>
+=# <b>SELECT insdoc('You are in a splendid chamber thirty feet high.')</b>
+</pre>
+
+Now we can build a search function.
+Its <tt>SELECT</tt> statement is based upon
+the same <tt>@@</tt> operation illustrated in the previous section.
+But instead of returning matching vectors,
+we return for each document
+its <tt>SERIAL</tt> identifier, so the user can retrieve it later;
+a headline that illustrates its use of the search terms;
+and a ranking with which we also order the results.
+Our search operation can be coded as a single <tt>SELECT</tt> statement
+returning its own kind of table row,
+which we call a&nbsp;<tt>finddoc_t</tt>:
+
+<pre>
+=# <b>CREATE TYPE finddoc_t AS (id INTEGER, headline TEXT, rank REAL)</b>
+=# <b>CREATE FUNCTION finddoc(text) RETURNS SETOF finddoc_t LANGUAGE sql AS '
+   SELECT id, headline(doc, q), rank(vector, q)
+     FROM docs, to_tsquery($1) AS q
+     WHERE vector @@ q ORDER BY rank(vector, q) DESC'</b>
+</pre>
+
+This function is a rather satisfactory search engine.
+Here is one example search,
+after which the user fetches the top-ranking document itself;
+with similar commands you can try queries of your own:
+
+<pre>
+=# <b>SELECT * FROM finddoc('passage|crawl')</b>
+ id |                       headline                        | rank 
+----+-------------------------------------------------------+------
+  3 | &lt;b&gt;crawling&lt;/b&gt; over cobbles in a low &lt;b&gt;passage&lt;/b&gt;. | 0.19
+  1 | &lt;b&gt;crawl&lt;/b&gt; over cobbles leads inward to the west.   |  0.1
+  4 | &lt;b&gt;passages&lt;/b&gt; lead east, north, and south.          |  0.1
+  5 | &lt;b&gt;crawl&lt;/b&gt; slants up.                               |  0.1
+  7 | &lt;b&gt;passage&lt;/b&gt; here is blocked by a recent  cave-in.  |  0.1
+(5 rows)
+=# <b>SELECT doc FROM docs WHERE id = 3</b>
+                       doc                       
+-------------------------------------------------
+ You are crawling over cobbles in a low passage.
+(1 row)
+</pre>
+
+While by default the <tt>headline()</tt> function
+surrounds matching words with <tt>&lt;b&gt;</tt> and <tt>&lt;/b&gt;</tt>
+in order to distinguish them from the surrounding text,
+you can provide options that change its behavior;
+consult the tsearch2 Reference for more details about
+<a href="tsearch2-ref.html#headlines">Headline Functions</a>.
+<p>
+Though a search may match hundreds or thousands of documents,
+you will usually present only ten or twenty results to the user at a time.
+This can be most easily accomplished
+by limiting your query with a <tt>LIMIT</tt>
+and an <tt>OFFSET</tt> clause &mdash;
+to display results ten at a time, for example,
+your would generate your first page of results
+with <tt>LIMIT</tt> <tt>10</tt> <tt>OFFSET</tt> <tt>0</tt>,
+your second page
+with <tt>LIMIT</tt> <tt>10</tt> <tt>OFFSET</tt> <tt>10</tt>,
+your third page
+with <tt>LIMIT</tt> <tt>10</tt> <tt>OFFSET</tt> <tt>20</tt>,
+and so forth.
+There are two problems with this approach, however.
+<p>
+The first problem is the strain of running the query over again
+for every page of results the user views.
+For small document collections or lightly loaded servers,
+this may not be a problem;
+but the impact can be high
+when a search must repeatedly rank and sort
+the same ten thousand results
+on an already busy server.
+So instead of selecting only one page of results,
+you will probably use <tt>LIMIT</tt> and <tt>OFFSET</tt>
+to return a few dozen or few hundred results,
+which you can cache and display to the user one page at a time.
+Whether a result cache rewards your effort
+will depend principally on the behavior of your users &mdash;
+how often they even view the second page of results, for instance.
+<p>
+The second issue solved by caching involves consistency.
+If the database is changing while the user browses their results,
+then documents might appear and disappear as they page through them.
+In some cases the user might even miss a particular result &mdash;
+perhaps the one they were looking for &mdash;
+if, say, its rank improves from 31th to 30th
+after they load results 21&ndash;30 but before they view results 31&ndash;40.
+While many databases are static or infrequently updated,
+and will not present this problem,
+users searching very dymanic document collections
+might benefit from the stable results that caches yield.
+
+<blockquote><i>
+Having seen the features of a search engine
+implemented entirely within the database,
+we will learn about some specific tsearch2 features.
+First we will look in more detail at document ranking.
+</i></blockquote>
+
+<h2><a name=weights>Ranking and Position Weights</a></h2>
+
+<blockquote><i>
+When we built our simple search engine,
+we used the </i><tt>rank()</tt><i> function to order our results.
+Here we describe tsearch2 ranking in more detail.
+</i></blockquote>
+
+There are two functions with which tsearch2 can rank search results.
+They both use the lexeme positions listed in the <tt>tsvector</tt>,
+so you cannot rank vectors
+from which these have been removed with <tt>strip()</tt>.
+The <tt>rank()</tt> function existed in older versions of OpenFTS,
+and has the feature that you can assign different weights
+to words from different sections of your document.
+The <tt>rank_cd()</tt> uses a recent technique for weighting results
+but does not allow different weight to be given
+to different sections of your document.
+<p>
+Both ranking functions allow you to specify,
+as an optional last argument,
+whether you want their results <i>normalized</i> &mdash;
+whether the rank returned should be adjusted for document length.
+Specifying a last argument of <tt>0</tt> (zero) makes no adjustment;
+<tt>1</tt> (one) divides the document rank
+by the logarithm of the document length;
+and <tt>2</tt> divides it by the plain length.
+In all of these examples we omit this optional argument,
+which is the same as specifying zero &mdash;
+we are making no adjustment for document length.
+<p>
+The <tt>rank_cd()</tt> function uses an experimental measurement
+called <i>cover density ranking</i> that rewards documents
+when they make frequent use of the search terms
+that are close together in the document.
+You can read about the algorithm in more detail
+in Clarke&nbsp;et&nbsp;al.,
+ &ldquo;<a href="http://citeseer.nj.nec.com/clarke00relevance.html"
+>Relevance Ranking for One to Three Term Queries</a>.&rdquo;
+An optional first argument allows you to tune their formula;
+for details
+see the <a href="tsearch2-ref.html#ranking">section on ranking</a>
+in the Reference.
+<p>
+The <tt>rank()</tt> function offers more flexibility
+because it pays attention to the <i>weights</i>
+with which you have labelled lexeme positions.
+Currently tsearch2 supports four different weight labels:
+<tt>'D'</tt>, the default weight;
+and <tt>'A'</tt>, <tt>'B'</tt>, and <tt>'C'</tt>.
+All vectors created with <tt>to_tsvector()</tt>
+assign the weight <tt>'D'</tt> to each position,
+which as the default is not displayed when you print a vector out.
+<p>
+If you want positions with weights other than <tt>'D'</tt>,
+you have two options:
+either you can author a vector directly through the <tt>::tsvector</tt>
+casting operation,
+as described in the following section,
+which lets you give each position whichever weight you want;
+or you can pass a vector through the <tt>setweight()</tt> function
+which sets all of its position weights to a single value.
+An example of the latter:
+
+
+<pre>
+=# <b>SELECT vector FROM docs WHERE id = 3</b>
+                 vector                 
+----------------------------------------
+ 'low':8 'cobbl':5 'crawl':3 'passag':9
+(1 row)
+=# <b>SELECT setweight(vector, 'A') FROM docs WHERE id = 3</b>
+                 setweight                  
+--------------------------------------------
+ 'low':8A 'cobbl':5A 'crawl':3A 'passag':9A
+(1 row)
+</pre>
+
+
+Merely changing all of the weights in a vector is not very useful,
+of course,
+since this results still in all words having the same weight.
+But if we parse different parts of a document separately,
+giving each section its own weight,
+and then concatenate the vectors of each part into a single vector,
+the result can be very useful.
+We can construct a simple example
+in which document titles are given greater weight
+that text in the body of the document:
+
+
+<pre>
+=# <b>CREATE TABLE tdocs ( id SERIAL, title TEXT, doc TEXT, vector tsvector )</b>
+=# <b>CREATE INDEX tdocs_index ON tdocs USING gist(vector);</b>
+=# <b>CREATE FUNCTION instdoc(text, text) RETURNS void LANGUAGE sql AS
+  'INSERT INTO tdocs (title, doc, vector)
+   VALUES ($1, $2, setweight(to_tsvector($1), ''A'') || to_tsvector($2));'</b>
+</pre>
+
+
+Now words from a document title will be weighted differently
+than those in the main text
+if we provide the title and body as separate arguments:
+
+
+<pre>
+=# <b>SELECT instdoc('Spendid Chamber',
+ 'The walls are frozen rivers of orange stone.')</b>
+ instdoc 
+---------
+ 
+(1 row)
+=# <b>SELECT vector FROM tdocs</b>
+                                    vector                                    
+------------------------------------------------------------------------------
+ 'wall':4 'orang':9 'river':7 'stone':10 'frozen':6 'chamber':2A 'spendid':1A
+(1 row)
+</pre>
+
+
+Note that although the necessity is unusual,
+you can constrain search terms
+to only match words from certain sections
+by following them with a colon
+and a list of the sections in which the word can occur;
+by default this list is <tt>'ABCD'</tt>
+so that search terms match words from all sections.
+For example,
+here we search for a word both generally,
+and then looking only for specific weights:
+
+
+<pre>
+=# <b>SELECT title, doc FROM tdocs WHERE vector @@ to_tsquery('spendid')</b>
+      title      |                     doc                      
+-----------------+----------------------------------------------
+ Spendid Chamber | The walls are frozen rivers of orange stone.
+(1 row)
+=# <b>SELECT title, doc FROM tdocs WHERE vector @@ to_tsquery('spendid:A')</b>
+      title      |                     doc                      
+-----------------+----------------------------------------------
+ Spendid Chamber | The walls are frozen rivers of orange stone.
+(1 row)
+=# <b>SELECT title, doc FROM tdocs WHERE vector @@ to_tsquery('spendid:D')</b>
+ title | doc 
+-------+-----
+(0 rows)
+</pre>
+
+
+
+
+<blockquote><i>
+Our examples so far use tsearch2 to parse our documents into vectors.
+When your application needs absolute control over vector content,
+you will want to use direct type casting,
+which is described in the next section.
+</i></blockquote>
+
+<h2><a name=casting>Casting Vectors and Queries</a></h2>
+
+<blockquote><i>
+While tsearch2 has powerful and flexible ways
+to process documents and turn them into document vectors,
+you will sometimes want to parse documents on your own
+and place the results directly in vectors.
+Here we show you how.
+</i></blockquote>
+
+In the preceding examples,
+we used the <tt>to_tsvector()</tt> function
+when we needed a document's text reduced to a document vector.
+We saw that the function stripped whitespace and punctuation,
+eliminated common words,
+and altered suffixes to reduce words to a common form.
+While these operations are often desirable,
+and while in the sections below
+we will gain precise control over this process,
+there are occasions on which
+you want to avoid the changes that <tt>to_tsvector()</tt> makes to text
+and specify explicitly the words that you want in your vectors.
+Or you may want to create queries directly
+rather than through <tt>to_tsquery()</tt>.
+<p>
+For example,
+you may have already developed your own routine
+for reducing your documents to searchable lexemes,
+and do not want your carefully generated terms altered
+by passing them through <tt>to_tsvector()</tt>.
+Or you might be developing and debugging parsing routines of your own
+that you are not ready to load into the database.
+In either case,
+you will find that direct insertion is easily accomplished
+if you simply follow some simple rules.
+<p>
+Vectors are created directly
+when you cast a string of whitespace separated lexemes
+to the <tt>tsvector</tt> type:
+
+
+<pre>
+=# <b>select 'the only exit is the way you came in'::tsvector</b>
+                     tsvector                     
+--------------------------------------------------
+ 'in' 'is' 'the' 'way' 'you' 'came' 'exit' 'only'
+(1 row)
+</pre>
+
+
+Notice that the conversion interpreted the string
+simply as a list of lexemes to be included in the vector.
+Their order was lost,
+as was the number of times each lexeme appeared.
+You must keep in mind that directly creating vectors with casting
+is <i>not</i> an alternate means of parsing;
+it is a way of directly entering lexemes into a vector <i>without</i> parsing.
+<p>
+Queries can also be created through casting,
+if you separate lexemes with boolean operators
+rather than with whitespace.
+When creating your own vectors and queries,
+remember that the search operator <tt>@@</tt>
+finds only <i>exact</i> matches between query lexemes and vector lexemes
+&mdash;
+if they are not exactly the same string,
+they will not be considered a match.
+<p>
+To include lexeme positions in your vector,
+write the positions exactly the way tsearch2 displays them
+when it prints vectors:
+by following each lexeme with a colon
+and a comma-separated list of integer positions.
+If you list a lexeme more than once,
+then all the positions listed for it are combined into a single list.
+For example,
+here are two ways of writing the same vector,
+depending on whether you mention &lsquo;<tt>the</tt>&rsquo; twice
+or combine its positions into a list yourself:
+
+
+<pre>
+=# <b>select 'the:1 only:2 exit:3 is:4 the:5 way:6 you:7 came:8 in:9'::tsvector</b>
+                              tsvector                              
+--------------------------------------------------------------------
+ 'in':9 'is':4 'the':1,5 'way':6 'you':7 'came':8 'exit':3 'only':2
+(1 row)
+=# <b>select 'the:1,5 only:2 exit:3 is:4 way:6 you:7 came:8 in:9'::tsvector</b>
+                              tsvector                              
+--------------------------------------------------------------------
+ 'in':9 'is':4 'the':1,5 'way':6 'you':7 'came':8 'exit':3 'only':2
+(1 row)
+</pre>
+
+
+Things can get slightly tricky
+if you want to include apostrophes, backslashes, or spaces
+inside your lexemes
+(wanting to include either of the latter would be unusual,
+but they can be included if you follow the rules).
+The main problem is that the apostrophe and backslash
+are important <i>both</i> to PostgreSQL when it is interpreting a string,
+<i>and</i> to the <tt>tsvector</tt> conversion function.
+You may want to review section
+<a href="http://www.postgresql.org/docs/view.php?version=7.3&idoc=0&file=sql-syntax.html#SQL-SYNTAX-STRINGS">1.1.2.1,
+&ldquo;String Constants&rdquo;</a>
+in the PostgreSQL documentation before proceeding.
+<p>
+When you cast strings directly into vectors:
+<ul>
+<li>The string is interpreted as a whitespace-separated list of lexemes,
+ any of which can be suffixed with a colon and a list of positions.
+<li>A lexeme can be quoted by preceding it with an apostrophe,
+ in which case it runs until the next apostrophe;
+ otherwise a lexeme ends with the first whitespace or colon encountered.
+<li>Any character preceded by a backslash,
+ including whitespace, the apostrophe, the colon, and the backslash itself,
+ loses its normal meaning and is treated as a letter.
+ Backslashes are effective
+ both inside and outside of apostrophe-quoted lexemes.
+<li>A lexeme can be suffixed with a list of positions
+ by appending a colon and a comma-separated list of integers,
+ each of which can itself be followed by a letter
+ to designate a position weight
+ (position weights are <a href="#weights">described below</a>).
+</ul>
+
+Here are some example strings,
+showing the lexeme you want to insert
+together with the string that the <tt>::tsvector</tt> operator
+needs to see,
+and how you would type that string at the PostgreSQL prompt:
+
+<table align=center>
+<tr>
+<td><i>For the lexeme...</i>
+<td><i>you need the string...</i>
+<td><i>which you can type as:</i>
+<tr>
+<td><tt>nugget</tt>
+<td><tt>nugget</tt>
+<td><tt>'nugget'</tt>
+<tr>
+<td><tt>won't</tt>
+<td><tt>won't</tt>
+<td><tt>'won''t'</tt>
+<tr>
+<td><tt>pinin'</tt>
+<td><tt>pinin'</tt>
+<td><tt>'pinin'''</tt>
+<tr>
+<td><tt>'bout</tt>
+<td><tt>\'bout</tt>
+<td><tt>'\\''bout'</tt>
+<tr>
+<td><tt>white mist</tt>
+<td><tt>white\ mist</tt>
+<td><tt>'white\\ mist'</tt>
+<tr>
+<td align=right><tt><i>or:</i></tt>
+<td><tt>'white mist'</tt>
+<td><tt>'''white mist'''</tt>
+<tr>
+<td><tt>won't budge</tt>
+<td><tt>won\'t\ budge</tt>
+<td><tt>'won\\''t\\ budge'</tt>
+<tr>
+<td align=right><tt><i>or:</i></tt>
+<td><tt>'won\'t budge'</tt>
+<td><tt>'''won\\''t budge'''</tt>
+<tr>
+<td><tt>back\slashed</tt>
+<td><tt>back\\slashed</tt>
+<td><tt>'back\\\\slashed'</tt>
+</table>
+
+Remember to use the quoted quoting shown at the right
+only when typing in strings as part of a PostgreSQL query.
+If you are providing strings through a library
+that automatically quotes them
+or provides them in binary form to PostgreSQL,
+then you can use the strings in the middle instead &mdash;
+suitably quoted in the language you are using, of course.
+<p>
+Position weights are <a href="#weights">described below</a>
+and can be written exactly as they will be displayed
+when you select a weighted vector:
+
+<pre>
+=# <b>select 'weighty:1,3A trivial:2B,4'::tsvector</b>
+           tsvector            
+-------------------------------
+ 'trivial':2B,4 'weighty':1,3A
+(1 row)
+</pre>
+
+<p>
+Note that if you are composing SQL queries
+in a scripting language like Perl or Python,
+that itself considers quotes and backslashes special,
+then you may have another quoting layer to deal with
+on top of the two layers already shown above.
+In such cases you may want to write a function
+that performs the necessary quoting for you.
+
+<blockquote><i>
+Having seen how to create vectors of your own,
+it is time to learn how the native tsearch2 parser
+reduces documents to vectors.
+</i></blockquote>
+
+<h2><a name=parsing_lexing>Parsing and Lexing</a></h2>
+
+<blockquote><i>
+The previous section
+described how you can bypass the parser provided by tsearch2
+and populate your table of documents
+with vectors of your own devising.
+But for those interested in the native tsearch2 facilities,
+we present here an overview of how it goes about
+reducing documents to vectors.
+</i></blockquote>
+
+The <tt>to_tsvector()</tt> function reduces documents to vectors
+in two stages.
+First, a <i>parser</i> breaks the input document
+into short sequences of text called <i>tokens</i>.
+Each token is usually a word, space, or piece of punctuation,
+though some parsers return larger and more exotic items
+like HTML tags as single tokens.
+Each token returned by the parser
+is either discarded
+or passed to a <i>dictionary</i> that converts it into a lexeme.
+The resulting lexemes are collected into a vector and returned.
+<p>
+The choice of which parser and dictionaries <tt>to_tsvector()</tt> should use
+is controlled by your choice of <i>configuration</i>.
+The tsearch2 module comes with several configurations,
+and you can define more of your own;
+in fact the creation of a new configuration is illustrated below,
+in the section on position weights.
+<p>
+To learn about parsing in more detail,
+we will study this example:
+
+<pre>
+=# <b>select to_tsvector('default',
+     'The walls extend upward for well over 100 feet.')</b>
+                       to_tsvector                        
+----------------------------------------------------------
+ '100':8 'feet':9 'wall':2 'well':6 'extend':3 'upward':4
+(1 row)
+</pre>
+
+Unlike the <tt>to_tsvector()</tt> calls used in the above examples,
+this one specifies the <tt>'default'</tt> configuration explicitly.
+When we called <tt>to_tsvector()</tt> in earlier examples
+with only one argument,
+it used the <i>current</i> configuration,
+which is chosen automatically based on your <tt>LOCALE</tt>
+if that locale is mentioned in the <tt>pg_ts_cfg</tt> table
+(which is shown under the first bullet in the description below).
+If your locale is not listed in the table,
+your attempts to use the current configuration will return:
+
+<pre>
+ERROR:  Can't find tsearch2 config by locale
+</pre>
+
+You can always change the current configuration manually
+by calling the <tt>set_curcfg()</tt> function
+described in the section on
+<a href="tsearch2-ref.html#configurations">Configurations</a>
+in the Reference.
+<p>
+Each configuration serves as an index into two different tables:
+in <tt>pg_ts_cfg</tt> it determines
+which parser will break our text into tokens,
+and in <tt>pg_ts_cfgmap</tt>
+it directs each token to a dictionary for processing.
+The steps in detail are:
+
+<ul>
+<li class=big>
+<p>First, our text is parsed,
+using the parser listed for our configuration in the <tt>pg_ts_cfg</tt> table.
+We are using the <tt>'default'</tt> configuration,
+so the table tells us to use the <tt>'default'</tt> parser:
+
+<pre>
+=# <b>SELECT * FROM pg_ts_cfg WHERE ts_name = 'default'</b>
+ ts_name | prs_name | locale 
+---------+----------+--------
+ default | default  | C
+(1 row)
+</pre>
+
+So our text will be parsed as though we had called:
+
+<pre>
+=# <b>select * from parse('default',
+     'The walls extend upward for well over 100 feet.')</b>
+</pre>
+
+This breaks the text into a list of tokens
+which are each labelled with an integer type:
+<p align=center>
+The<sub>1</sub>&diams;<sub>12</sub
+>walls<sub>1</sub>&diams;<sub>12</sub
+>extend<sub>1</sub>&diams;<sub>12</sub
+>upward<sub>1</sub>&diams;<sub>12</sub
+>for<sub>1</sub>&diams;<sub>12</sub
+>well<sub>1</sub>&diams;<sub>12</sub
+>over<sub>1</sub>&diams;<sub>12</sub
+>100<sub>22</sub>&diams;<sub>12</sub
+>feet<sub>1</sub>.<sub>12</sub>
+<p>
+Each word has been assigned type&nbsp;1;
+each space (represented here by a diamond) and the period, type&nbsp;12;
+and the number one hundred, type&nbsp;22.
+We can retrieve the alias for each type
+through the <tt>token_type</tt> function:
+
+<pre>
+=# <b>select * from token_type('default')
+     where tokid = 1 or tokid = 12 or tokid = 22</b>
+ tokid | alias |      descr       
+-------+-------+------------------
+     1 | lword | Latin word
+    12 | blank | Space symbols
+    22 | uint  | Unsigned integer
+(3 rows)
+</pre>
+
+
+<li class=big>
+Next, the tokens are assigned to dictionaries
+by looking up their type aliases in <tt>pg_ts_cfgmap</tt>
+to determine which dictionary should process each token.
+Since we are using the <tt>'default'</tt> configuration:
+
+<pre>
+=# <b>select * from pg_ts_cfgmap where ts_name = 'default' and
+      (tok_alias = 'lword' or tok_alias = 'blank' or tok_alias = 'uint')</b>
+ ts_name | tok_alias | dict_name 
+---------+-----------+-----------
+ default | lword     | {en_stem}
+ default | uint      | {simple}
+(2 rows)
+</pre>
+
+Since this map provides no dictionary for <tt>blank</tt> tokens,
+the spaces and period are simply discarded,
+leaving nine tokens,
+which are then numbered by their position:
+<p align=center>
+The<sup>1</sup>
+walls<sup>2</sup>
+extend<sup>3</sup>
+upward<sup>4</sup>
+for<sup>5</sup>
+well<sup>6</sup>
+over<sup>7</sup>
+100<sup>8</sup>
+feet<sup>9</sup>
+
+<li class=big>
+Finally, the words are reduced to lexemes by their respective dictionaries.
+The <tt>100</tt> is submitted to the <tt>simple</tt> dictionary,
+which returns tokens unaltered except for making them lowercase:
+
+<pre>
+=# <b>select lexize('simple', '100')</b>
+ lexize 
+--------
+ {100}
+(1 row)
+</pre>
+
+The other words are submitted to <tt>en_stem</tt>
+which reduces each English word to a linguistic stem,
+and then discards stems which belong to its list of stop words;
+you can see the list of stop words
+in the file whose path is in the <tt>dict_initoption</tt> field
+of the <tt>pg_ts_dict</tt> table entry for <tt>en_stem</tt>.
+The first three words of our text illustrate respectively
+an <tt>en_stem</tt> stop word,
+a word which <tt>en_stem</tt> alters by stemming,
+and a word which <tt>en_stem</tt> leaves alone:
+
+<pre>
+=# <b>select lexize('en_stem', 'The')</b>
+ lexize 
+--------
+ {}
+(1 row)
+=# <b>select lexize('en_stem', 'walls')</b>
+ lexize 
+--------
+ {wall}
+(1 row)
+=# <b>select lexize('en_stem', 'extend')</b>
+  lexize  
+----------
+ {extend}
+(1 row)
+</pre>
+
+Once <tt>en_stem</tt> is done discarding stop words and stemming the rest,
+we are left with:
+<p align=center>
+wall<sup>2</sup>
+extend<sup>3</sup>
+upward<sup>4</sup>
+well<sup>6</sup>
+100<sup>8</sup>
+feet<sup>9</sup>
+<p>
+Which is precisely the result of the example that began this section.
+</ul>
+Query words are stemmed by the <tt>to_tsquery()</tt> function
+using the same scheme to determine the dictionary for each token,
+with the difference that the query parser recognizes as special
+the boolean operators that separate query words.
+
+</body>
+</html>
+
+

@@ -1,0 +1,199 @@
+Tsearch2 - full text search extension for PostgreSQL
+
+   [10][Online version] of this document is available
+   
+   This module is sponsored by Delta-Soft Ltd., Moscow, Russia.
+   
+   Notice: This version is fully incompatible with old tsearch (V1),
+   which is considered as deprecated in upcoming 7.4 release and
+   obsoleted in 7.5.
+   
+   The Tsearch2 contrib module contains an implementation of a new data
+   type tsvector - a searchable data type with indexed access. In a
+   nutshell, tsvector is a set of unique words along with their
+   positional information in the document, organized in a special
+   structure optimized for fast access and lookup. Actually, each word
+   entry, besides its position in the document, could have a weight
+   attribute, describing importance of this word (at a specific) position
+   in document. A set of bit-signatures of a fixed length, representing
+   tsvectors, are stored in a search tree (developed using PostgreSQL
+   GiST), which provides online update of full text index and fast query
+   lookup. The module provides indexed access methods, queries,
+   operations and supporting routines for the tsvector data type and easy
+   conversion of text data to tsvector. Table driven configuration allows
+   creation of custom configuration optimized for specific searches using
+   standard SQL commands.
+   
+   Configuration allows you to:
+     * specify the type of lexemes to be indexed and the way they are
+       processed.
+     * specify dictionaries to be used along with stop words recognition.
+     * specify the parser used to process a document.
+       
+   See [11]Documentation Roadmap for links to documentation.
+   
+Authors
+
+     * Oleg Bartunov <oleg@sai.msu.su>, Moscow, Moscow University, Russia
+     * Teodor Sigaev <teodor@sigaev.ru>, Moscow, Delta-Soft Ltd.,Russia
+       
+Contributors
+
+     * Robert John Shepherd and Andrew J. Kopciuch submitted
+       "Introduction to tsearch" (Robert - tsearch v1, Andrew - tsearch
+       v2)
+     * Brandon Craig Rhodes wrote "Tsearch2 Guide" and "Tsearch2
+       Reference" and proposed new naming convention for tsearch V2
+       
+New features
+
+     * Relevance ranking of search results
+     * Table driven configuration
+     * Morphology support (ispell dictionaries, snowball stemmers)
+     * Headline support (text fragments with highlighted search terms)
+     * Ability to plug-in custom dictionaries and parsers
+     * Synonym dictionary
+     * Generator of templates for dictionaries (built-in snowball stemmer
+       support)
+     * Statistics of indexed words is available
+       
+Limitations
+
+     * Lexeme should be not longer than 2048 bytes
+     * The number of lexemes is limited by 2^32. Note, that actual
+       capacity of tsvector is depends on whether positional information
+       is stored or not.
+     * tsvector - the size is limited by approximately 2^20 bytes.
+     * tsquery - the number of entries (lexemes and operations) < 32768
+     * Positional information
+          + maximal position of lexeme < 2^14 (16384)
+          + lexeme could have maximum 256 positions
+       
+References
+
+     * GiST development site -
+       [12]http://www.sai.msu.su/~megera/postgres/gist
+     * OpenFTS home page - [13]http://openfts.sourceforge.net/
+     * Mailing list -
+       [14]http://sourceforge.net/mailarchive/forum.php?forum=openfts-gen
+       eral
+       
+   [15]Documentation Roadmap
+   
+Documentation Roadmap
+
+     * Several docs are available from docs/ subdirectory
+          + "Tsearch V2 Introduction" by Andrew Kopciuch
+          + "Tsearch2 Guide" by Brandon Rhodes
+          + "Tsearch2 Reference" by Brandon Rhodes
+     * Readme.gendict in gendict/ subdirectory
+          + [16][Gendict tutorial]
+       
+   Online version of documentation is always available from Tsearch V2
+   home page -
+   [17]http://www.sai.msu.su/~megera/postgres/gist/tsearch/V2/
+   
+Support
+
+   Authors urgently recommend people to use [18][openfts-general] or
+   [19][pgsql-general] mailing lists for questions and discussions.
+   
+Caution
+
+   In spite of apparent easy full text searching with our tsearch module
+   (authors hope it's so), any serious search engine require profound
+   study of various aspects, such as stop words, dictionaries, special
+   parsers. Tsearch module was designed to facilitate both those cases.
+   
+Development History
+
+   Pre-tsearch era
+          Development of OpenFTS began in 2000 after realizing that we
+          needed a search engine optimized for online updates and able to
+          access metadata from the database. This is essential for online
+          news agencies, web portals, digital libraries, etc. Most search
+          engines available utilize an inverted index which is very fast
+          for searching but very slow for online updates. Incremental
+          updates of an inverted index is a complex engineering task
+          while we needed something light, free and with the ability to
+          access metadata from the database. The last requirement is very
+          important because in a real life application a search engine
+          should always consult metadata ( topic, permissions, date
+          range, version, etc.). We extensively use PostgreSQL as a
+          database backend and have no intention to move from it, so the
+          problem was to find a data structure and a fast way to access
+          it. PostgreSQL has rather unique data type for storing sets
+          (think about words) - arrays, but lacks index access to them. A
+          document is parsed into lexemes, which are identified in
+          various ways (e.g. stemming, morphology, dictionary), and as a
+          result is reduced to an array of integer numbers. During our
+          research we found a paper of Joseph Hellerstein which
+          introduced an interesting data structure suitable for sets -
+          RD-tree (Russian Doll tree). It looked very attractive, but
+          implementing it in PostgreSQL seemed difficult because of our
+          ignorance of database internals. Further research lead us to
+          the idea to use GiST for implementing RD-tree, but at that time
+          the GiST code had for a long while remained untouched and
+          contained several bugs. After work on improving GiST for
+          version 7.0.3 of PostgreSQL was done, we were able to implement
+          RD-Tree and use it for index access to arrays of integers. This
+          implementation was ideally suited for small arrays and
+          eliminated complex joins, but was practically useless for
+          indexing large arrays. The next improvement came from an idea
+          to represent a document by a single bit-signature, a so-called
+          superimposed signature (see "Index Structures for Databases
+          Containing Data Items with Set-valued Attributes", 1997, Sven
+          Helmer for details). We developeded the contrib/intarray module
+          and used it for full text indexing.
+          
+   tsearch v1
+          It was inconvenient to use integer id's instead of words, so we
+          introduced a new data type called 'txtidx' - a searchable data
+          type (textual) with indexed access. This was a first step of
+          our work on an implementation of a built-in PostgreSQL full
+          text search engine. Even though tsearch v1 had many features of
+          a search engine it lacked configuration support and relevance
+          ranking. People were encouraged to use OpenFTS, which provided
+          relevance ranking based on coordinate information and flexible
+          configuration. OpenFTS v.0.34 is the last version based on
+          tsearch v1.
+          
+   tsearch V2
+          People recognized tsearch as a powerful tool for full text
+          searching and insisted on adding ranking support, better
+          configurability, etc. We already thought about moving most of
+          the features of OpenFTS to tsearch, and in the early 2003 we
+          decided to work on a new version of tsearch - tsearch v2. We've
+          abandoned auxiliary index tables which were used by OpenFTS to
+          store coordinate information and modified the txtidx type to
+          store them internally. Also, we've added table-driven
+          configuration, support of ispell dictionaries, snowball
+          stemmers and the ability to specify which types of lexemes to
+          index. Also, it's now possible to generate headlines of
+          documents with highlighted search terms. These changes make
+          tsearch more user friendly and turn it into a really powerful
+          full text search engine. After announcing the alpha version, we
+          received a proposal from Brandon Rhodes to rename tsearch
+          functions to be more consistent. So, we have renamed txtidx
+          type to tsvector and other things as well.
+          
+   To allow users of tsearch v1 smooth upgrade, we named the module as
+   tsearch2.
+   
+   Future release of OpenFTS (v.0.35) will be based on tsearch2. Brave
+   people could download it from OpenFTS CVS (see link from [20][OpenFTS
+   page]
+
+References
+
+  10. http://www.sai.msu.su/~megera/postgres/gist/tsearch/V2/docs/Tsearch_V2_Readme.html
+  11. http://www.sai.msu.su/~megera/oddmuse/index.cgi/Tsearch_V2_Readme#Documentation_Roadmap
+  12. http://www.sai.msu.su/~megera/postgres/gist
+  13. http://openfts.sourceforge.net/
+  14. http://sourceforge.net/mailarchive/forum.php?forum=openfts-general
+  15. http://www.sai.msu.su/~megera/oddmuse/index.cgi?action=anchor&id=Documentation_Roadmap#Documentation_Roadmap
+  16. http://www.sai.msu.su/~megera/oddmuse/index.cgi?Gendict
+  17. http://www.sai.msu.su/~megera/postgres/gist/tsearch/V2/
+  18. http://sourceforge.net/mailarchive/forum.php?forum=openfts-general
+  19. http://archives.postgresql.org/pgsql-general/
+  20. http://openfts.sourceforge.net/
