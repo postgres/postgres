@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_domain.sgml,v 1.6.2.1 2002/11/21 23:31:57 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_domain.sgml,v 1.6.2.2 2003/02/13 05:32:58 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -25,7 +25,7 @@ PostgreSQL documentation
   <synopsis>
 CREATE DOMAIN <replaceable class="parameter">domainname</replaceable> [AS] <replaceable class="parameter">data_type</replaceable>
     [ DEFAULT <replaceable>default_expr</> ]
-    [ <replaceable class="PARAMETER">constraint</replaceable> [, ... ] ]
+    [ <replaceable class="PARAMETER">constraint</replaceable> [ ... ] ]
 
 where <replaceable class="PARAMETER">constraint</replaceable> is:
 
