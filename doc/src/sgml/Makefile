@@ -2,7 +2,7 @@
 #
 # PostgreSQL documentation makefile
 #
-# $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.59.2.1 2004/03/02 00:03:08 tgl Exp $
+# $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.59.2.2 2004/03/09 20:08:21 momjian Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -209,3 +209,6 @@ clean distclean maintainer-clean:
 	rm -f *.rtf *.tex-ps *.tex-pdf *.dvi *.aux *.log *.ps *.pdf *.out *.eps *.fot
 # index
 	rm -f HTML.index $(GENERATED_SGML)
+# text
+	rm -f INSTALL HISTORY regress_README
+
