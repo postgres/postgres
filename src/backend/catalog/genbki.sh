@@ -10,7 +10,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/catalog/Attic/genbki.sh,v 1.18 2000/10/28 22:14:14 petere Exp $
+#    $Header: /cvsroot/pgsql/src/backend/catalog/Attic/genbki.sh,v 1.19 2001/01/16 22:48:34 tgl Exp $
 #
 # NOTES
 #    non-essential whitespace is removed from the generated file.
@@ -161,10 +161,10 @@ sed -e 's;/\*.*\*/;;g' \
 ;g' | # we must run a new sed here to see the newlines we added
 sed -e "s/;[ 	]*$//g" \
     -e "s/^[ 	]*//" \
-    -e "s/[ 	]Oid/\ oid/g" \
-    -e "s/[ 	]NameData/\ name/g" \
+    -e "s/[ 	]Oid/ oid/g" \
+    -e "s/[ 	]NameData/ name/g" \
     -e "s/^Oid/oid/g" \
-    -e "s/^NameData/\name/g" \
+    -e "s/^NameData/name/g" \
     -e "s/(NameData/(name/g" \
     -e "s/(Oid/(oid/g" \
     -e "s/NAMEDATALEN/$NAMEDATALEN/g" \
