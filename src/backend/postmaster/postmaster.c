@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.260 2001/11/11 02:09:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.261 2001/11/12 05:43:24 tgl Exp $
  *
  * NOTES
  *
@@ -1305,7 +1305,6 @@ ConnCreate(int serverFd)
 		 * using the same salt...
 		 */
 		RandomSalt(port->cryptSalt, port->md5Salt);
-		port->pktInfo.state = Idle;
 	}
 
 	return port;

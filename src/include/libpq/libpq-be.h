@@ -1,14 +1,17 @@
 /*-------------------------------------------------------------------------
  *
  * libpq_be.h
- *	  This file contains definitions for structures and
- *	  externs for functions used by the POSTGRES backend.
+ *	  This file contains definitions for structures and externs used
+ *	  by the postmaster during client authentication.
+ *
+ *	  Note that this is backend-internal and is NOT exported to clients.
+ *	  Structs that need to be client-visible are in pqcomm.h.
  *
  *
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-be.h,v 1.26 2001/11/12 04:19:15 tgl Exp $
+ * $Id: libpq-be.h,v 1.27 2001/11/12 05:43:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,78 +39,6 @@ typedef struct PasswordPacketV0
 
 
 /*
- * Password packet.  The length of the password can be changed without
- * affecting anything.
- */
-
-typedef struct PasswordPacket
-{
-	char		passwd[100];	/* The password. */
-} PasswordPacket;
-
-
-/* Error message packet. */
-
-typedef struct ErrorMessagePacket
-{
-	char		data[1 + 100];	/* 'E' + the message. */
-} ErrorMessagePacket;
-
-
-/* Authentication request packet. */
-
-typedef struct AuthRequestPacket
-{
-	char		data[1 + sizeof(AuthRequest) + 4];		/* 'R' + the request +
-														 * optional salt. */
-} AuthRequestPacket;
-
-
-/* These are used by the packet handling routines. */
-
-typedef enum
-{
-	Idle,
-	ReadingPacketLength,
-	ReadingPacket,
-	WritingPacket
-} PacketState;
-
-typedef int (*PacketDoneProc) (void *arg, PacketLen pktlen, void *pktdata);
-
-typedef struct Packet
-{
-	PacketState state;			/* What's in progress. */
-	PacketLen	len;			/* Actual length */
-	int			nrtodo;			/* Bytes still to transfer */
-	char	   *ptr;			/* Buffer pointer */
-	PacketDoneProc iodone;		/* I/O complete callback */
-	void	   *arg;			/* Argument to callback */
-
-	/*
-	 * We declare the data buffer as a union of the allowed packet types,
-	 * mainly to ensure that enough space is allocated for the largest
-	 * one.
-	 */
-
-	union
-	{
-		/* These are outgoing so have no packet length prepended. */
-
-		ErrorMessagePacket em;
-		AuthRequestPacket ar;
-
-		/* These are incoming and have a packet length prepended. */
-
-		StartupPacket si;
-		CancelRequestPacket canc;
-		PasswordPacketV0 pwv0;
-		PasswordPacket pw;
-	}			pkt;
-} Packet;
-
-
-/*
  * This is used by the postmaster in its communication with frontends.	It is
  * contains all state information needed during this communication before the
  * backend is run.
@@ -116,9 +47,8 @@ typedef struct Packet
 typedef struct Port
 {
 	int			sock;			/* File descriptor */
-	Packet		pktInfo;		/* For the packet handlers */
-	SockAddr	laddr;			/* local addr (us) */
-	SockAddr	raddr;			/* remote addr (them) */
+	SockAddr	laddr;			/* local addr (postmaster) */
+	SockAddr	raddr;			/* remote addr (client) */
 	char		md5Salt[4];		/* Password salt */
 	char		cryptSalt[2];	/* Password salt */
 
