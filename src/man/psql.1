@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/psql.1,v 1.15 1997/11/14 21:38:16 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/psql.1,v 1.16 1997/11/15 02:47:23 thomas Exp $
 .TH PSQL UNIX 1/20/96 PostgreSQL PostgreSQL
 .SH NAME
 psql \(em run the interactive query front-end
@@ -372,15 +372,23 @@ Escape to shell or execute
 .IR command.
 .IP \e?
 Get help information about the \e commands.
+
 .SH "ENVIRONMENT VARIABLES"
+There are some environment variables which can be used in liu of
+command line arguments; these are detailed below. 
+Additionally, the Postgres frontend library used by the psql application
+looks for other optional environment variables to configure, for example,
+the style of date/time representation and the local time zone. Refer
+to libpq(3) for more details.
+.PP
 You may set any of the following environment variables to avoid
 specifying command-line options:
 .nf
-hostname:	PGHOST
-port:		PGPORT
-tty:		PGTTY
-options:		PGOPTION
-realm:		PGREALM
+hostname:   PGHOST
+port:       PGPORT
+tty:        PGTTY
+options:    PGOPTION
+realm:      PGREALM
 .fi
 .PP
 If
@@ -394,14 +402,12 @@ only applies if
 .IR Kerberos
 authentication is in use.  If this environment variable is set, Postgres
 will attempt authentication with servers for this realm and use
-separate ticket files to avoid conflicts with local ticket files.  See
+separate ticket files to avoid conflicts with local ticket files.
+See
 .IR pgintro (1)
 for additional information on
 .IR Kerberos .
-.PP
-See
-.IR pgintro (libpq)
-for additional details.
+
 .SH "RETURN VALUE"
 .IR psql
 returns 0 to the shell on successful completion of all queries,
