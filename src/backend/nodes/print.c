@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.24 1999/02/21 01:55:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.25 1999/02/22 01:57:50 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -223,7 +223,7 @@ print_pathkeys(List *pathkeys, List *rtable)
 	printf("(");
 	foreach(i, pathkeys)
 	{
-		List pathkey = lfirst(i);
+		List *pathkey = lfirst(i);
 
 		printf("(");
 		foreach(k, pathkey)
