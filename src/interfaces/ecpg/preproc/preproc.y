@@ -2814,7 +2814,7 @@ select_clause: '(' select_clause ')'
 			}
 		| select_clause UNION opt_union select_clause
 			{
-				$$ = cat3_str($1, make1_str("union"), $3);
+				$$ = cat4_str($1, make1_str("union"), $3, $4);
 				ForUpdateNotAllowed = 1;
 			}
 		| select_clause INTERSECT opt_union select_clause

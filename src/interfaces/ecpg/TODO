@@ -11,6 +11,10 @@ it would be nice to be able to use :var[:index] as cvariable
 
 support for dynamic SQL with unknown number of variables with DESCRIPTORS
 
+Allow INTO clause in cursor definition instead of FETCH clause. (Informix
+does this, Oracle not. But does it work with standard syntax? Or is it even
+standard?)
+
 The line numbering is not exact.
 
 Missing statements:
