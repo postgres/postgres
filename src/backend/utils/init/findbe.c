@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/Attic/findbe.c,v 1.20 2001/01/24 19:43:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/Attic/findbe.c,v 1.21 2001/04/21 18:29:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -93,9 +93,6 @@ ValidateBinary(char *path)
 	/*
 	 * Ensure that the file is both executable and readable (required for
 	 * dynamic loading).
-	 *
-	 * We use the effective uid here because the backend will not have
-	 * executed setuid() by the time it calls this routine.
 	 */
 	euid = geteuid();
 	if (euid == buf.st_uid)

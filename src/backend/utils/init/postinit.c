@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.83 2001/03/22 06:16:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.84 2001/04/21 18:29:29 tgl Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -335,15 +335,13 @@ InitPostgres(const char *dbname, const char *username)
 		LockDisable(true);
 
 	/*
-	 * Set ourselves to the proper user id and figure out our postgres
-	 * user id.
+	 * Figure out our postgres user id.  If bootstrapping, we can't
+	 * assume that pg_shadow exists yet, so fake it.
 	 */
 	if (bootstrap)
 		SetSessionUserId(geteuid());
 	else
 		SetSessionUserIdFromUserName(username);
-
-	setuid(geteuid());
 
 	/*
 	 * Unless we are bootstrapping, double-check that InitMyDatabaseInfo()

@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.42 2001/03/22 03:59:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.43 2001/04/21 18:29:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -103,21 +103,45 @@ main(int argc, char *argv[])
 	 */
 
 	/*
-	 * Make sure we are not running as root.
-	 *
-	 * BeOS currently runs everything as root :-(, so this check must be
-	 * temporarily disabled there...
+	 * Skip permission checks if we're just trying to do --help or --version;
+	 * otherwise root will get unhelpful failure messages from initdb.
 	 */
-#ifndef __BEOS__
 	if (!(argc > 1
-		  && (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-?") == 0
-	 || strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-V") == 0))
-		&& (geteuid() == 0))
+		  && (strcmp(argv[1], "--help") == 0 ||
+			  strcmp(argv[1], "-?") == 0 ||
+			  strcmp(argv[1], "--version") == 0 ||
+			  strcmp(argv[1], "-V") == 0)))
 	{
-		fprintf(stderr, "%s", NOROOTEXEC);
-		exit(1);
-	}
+		/*
+		 * Make sure we are not running as root.
+		 *
+		 * BeOS currently runs everything as root :-(, so this check must be
+		 * temporarily disabled there...
+		 */
+#ifndef __BEOS__
+		if (geteuid() == 0)
+		{
+			fprintf(stderr, "%s", NOROOTEXEC);
+			exit(1);
+		}
 #endif	 /* __BEOS__ */
+
+		/*
+		 * Also make sure that real and effective uids are the same.
+		 * Executing Postgres as a setuid program from a root shell is a
+		 * security hole, since on many platforms a nefarious subroutine could
+		 * setuid back to root if real uid is root.  (Since nobody actually
+		 * uses Postgres as a setuid program, trying to actively fix this
+		 * situation seems more trouble than it's worth; we'll just expend the
+		 * effort to check for it.)
+		 */
+		if (getuid() != geteuid())
+		{
+			fprintf(stderr, "%s: real and effective userids must match\n",
+					argv[0]);
+			exit(1);
+		}
+	}
 
 	/*
 	 * Set up locale information from environment, in only the categories
@@ -162,7 +186,8 @@ main(int argc, char *argv[])
 	pw = getpwuid(geteuid());
 	if (pw == NULL)
 	{
-		fprintf(stderr, "%s: invalid current euid", argv[0]);
+		fprintf(stderr, "%s: invalid current euid %d\n",
+				argv[0], (int) geteuid());
 		exit(1);
 	}
 	/* Allocate new memory because later getpwuid() calls can overwrite it */
