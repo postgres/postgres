@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.3 2003/02/08 20:20:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.4 2003/02/09 00:35:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -720,10 +720,6 @@ find_jointree_node_for_rel(Node *jtnode, int relid)
 		FromExpr   *f = (FromExpr *) jtnode;
 		List	   *l;
 
-		/*
-		 * Note: we assume it's impossible to see same RT index from more
-		 * than one subtree, so nconc() is OK rather than set_unioni().
-		 */
 		foreach(l, f->fromlist)
 		{
 			jtnode = find_jointree_node_for_rel(lfirst(l), relid);
