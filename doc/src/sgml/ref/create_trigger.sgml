@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_trigger.sgml,v 1.18 2001/11/19 03:58:25 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_trigger.sgml,v 1.19 2001/11/29 22:18:14 momjian Exp $
 Postgres documentation
 -->
 
@@ -117,20 +117,22 @@ CREATE
   </para>
 
   <para>
-   The trigger can be specified to  fire  either  before BEFORE the
-   operation is attempted on a tuple (before constraints
-   are checked and the <command>INSERT</command>, <command>UPDATE</command> or
-   <command>DELETE</command> is attempted)  or
-   AFTER  the  operation  has been attempted (e.g., after constraints
-   are checked and the <command>INSERT</command>,
-   <command>UPDATE</command> or <command>DELETE</command> has
-   completed). If the
-   trigger fires before the event, the trigger may
-   skip the operation for the current tuple, or change the tuple
-   being  inserted  (for  <command>INSERT</command> and
-   <command>UPDATE</command> operations only).  If
-   the trigger fires after the event,  all  changes,  including  the
-   last insertion, update, or deletion, are <quote>visible</quote> to the trigger.
+   The trigger can be specified to fire either before BEFORE the
+   operation is attempted on a tuple (before constraints are checked and
+   the <command>INSERT</command>, <command>UPDATE</command> or
+   <command>DELETE</command> is attempted) or AFTER the operation has
+   been attempted (e.g., after constraints are checked and the
+   <command>INSERT</command>, <command>UPDATE</command> or
+   <command>DELETE</command> has completed). If the trigger fires before
+   the event, the trigger may skip the operation for the current tuple,
+   or change the tuple being inserted (for <command>INSERT</command> and
+   <command>UPDATE</command> operations only). If the trigger fires
+   after the event, all changes, including the last insertion, update,
+   or deletion, are <quote>visible</quote> to the trigger.
+  </para>
+  <para>
+  <command>SELECT</command> does not modify any rows so you can not
+  create <command>SELECT</command> triggers.
   </para>
 
   <para>
