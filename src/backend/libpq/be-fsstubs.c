@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.30 1999/05/09 00:54:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.31 1999/05/09 15:00:18 ishii Exp $
  *
  * NOTES
  *	  This should be moved to a more appropriate place.  It is here
@@ -131,6 +131,9 @@ lo_close(int fd)
 int
 lo_read(int fd, char *buf, int len)
 {
+ 	MemoryContext currentContext;
+ 	int status;
+
 	if (fd < 0 || fd >= MAX_LOBJ_FDS)
 	{
 		elog(ERROR, "lo_read: large obj descriptor (%d) out of range", fd);
@@ -141,13 +144,20 @@ lo_read(int fd, char *buf, int len)
 		elog(ERROR, "lo_read: invalid large obj descriptor (%d)", fd);
 		return -3;
 	}
+ 	currentContext = MemoryContextSwitchTo((MemoryContext) fscxt);
 
-	return inv_read(cookies[fd], buf, len);
+	status = inv_read(cookies[fd], buf, len);
+
+	MemoryContextSwitchTo(currentContext);
+ 	return(status);
 }
 
 int
 lo_write(int fd, char *buf, int len)
 {
+ 	MemoryContext currentContext;
+ 	int status;
+
 	if (fd < 0 || fd >= MAX_LOBJ_FDS)
 	{
 		elog(ERROR, "lo_write: large obj descriptor (%d) out of range", fd);
@@ -158,8 +168,12 @@ lo_write(int fd, char *buf, int len)
 		elog(ERROR, "lo_write: invalid large obj descriptor (%d)", fd);
 		return -3;
 	}
+ 	currentContext = MemoryContextSwitchTo((MemoryContext) fscxt);
 
-	return inv_write(cookies[fd], buf, len);
+	status = inv_write(cookies[fd], buf, len);
+
+	MemoryContextSwitchTo(currentContext);
+ 	return(status);
 }
 
 
