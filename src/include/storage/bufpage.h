@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufpage.h,v 1.35 2000/10/28 16:21:00 vadim Exp $
+ * $Id: bufpage.h,v 1.36 2000/11/20 21:12:26 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -303,7 +303,7 @@ typedef enum
 #define PageGetLSN(page) \
 	(((PageHeader) (page))->pd_lsn)
 #define PageSetLSN(page, lsn) \
-	(((PageHeader) (page))->pd_lsn = (XLogRecPtr) (lsn))
+	(((PageHeader) (page))->pd_lsn = (lsn))
 
 #define PageGetSUI(page) \
 	(((PageHeader) (page))->pd_sui)
