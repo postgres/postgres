@@ -34,24 +34,22 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.19 1997/02/19 13:09:29 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.20 1997/03/12 20:44:57 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR = ..
 include ../Makefile.global
 
-OBJS = access/SUBSYS.o bootstrap/SUBSYS.o catalog/SUBSYS.o  \
-       commands/SUBSYS.o executor/SUBSYS.o  \
-       lib/SUBSYS.o libpq/SUBSYS.o main/SUBSYS.o nodes/SUBSYS.o \
-       optimizer/SUBSYS.o parser/SUBSYS.o port/SUBSYS.o \
-       postmaster/SUBSYS.o regex/SUBSYS.o rewrite/SUBSYS.o \
-       storage/SUBSYS.o tcop/SUBSYS.o utils/SUBSYS.o \
-       ../utils/version.o
+DIRS = access bootstrap catalog commands executor lib libpq \
+	main nodes optimizer parser port postmaster regex rewrite \
+	storage tcop utils
 
 ifdef TIOGA
-OBJS += tioga/SUBSYS.o
+DIRS += tioga
 endif
+
+OBJS = $(DIRS:%=%/SUBSYS.o)
 
 ifeq ($(MAKE_EXPORTS), true)
 EXP = postgres$(EXPSUFF)
@@ -61,39 +59,22 @@ endif
 
 all: postgres $(EXP) global1.bki.source local1_template1.bki.source
 
-postgres: postgres_group1 postgres_group2 postgres_group3 postgres_group4 
-	$(CC) $(LDFLAGS) -o postgres $(OBJS) $(LD_ADD)
+postgres: $(OBJS) ../utils/version.o
+	gcc -o postgres $(LDFLAGS) $(OBJS) ../utils/version.o $(LDADD) -lm -ldl
 
-postgres_group1:
-	$(MAKE) -C access     all   
-	$(MAKE) -C bootstrap  all   
-	$(MAKE) -C catalog    SUBSYS.o
-	$(MAKE) -C commands   all   
-postgres_group2:
-	$(MAKE) -C executor   all   
-	$(MAKE) -C lib        all   
-	$(MAKE) -C libpq      all   
-	$(MAKE) -C main       all   
-	$(MAKE) -C nodes      all   
-postgres_group3:
-	$(MAKE) -C optimizer  all   
-	$(MAKE) -C parser     all   
-	$(MAKE) -C port       all   PORTNAME=$(PORTNAME)
-	$(MAKE) -C postmaster all   
-	$(MAKE) -C regex      all   
-postgres_group4:
-	$(MAKE) -C rewrite    all   
-	$(MAKE) -C storage    all   
-	$(MAKE) -C tcop       all   
-	$(MAKE) -C utils      all   
-ifdef TIOGA
-	$(MAKE) -C tioga      all   
-endif
+$(OBJS): $(DIRS:%=%.dir)
+
+$(DIRS:%=%.dir):
+	$(MAKE) -C $(subst .dir,,$@) all PORTNAME=$(PORTNAME)
+
+../utils/version.o:
 	$(MAKE) -C ../utils version.o        
 
-global1.bki.source local1_template1.bki.source: 
-	$(MAKE) -C catalog $@
+global1.bki.source local1_template1.bki.source: catalog/$@
 	cp catalog/$@ .
+
+catalog/global1.bki.source catalog/local1_template1.bki.source:
+	$(MAKE) -C catalog $@
 
 # The postgres.o target is needed by the rule in Makefile.global that
 # creates the exports file when MAKE_EXPORTS = true.
@@ -117,51 +98,10 @@ fmgr.h:
 clean:
 	rm -f postgres fmgr.h parse.h \
 	    global1.bki.source local1_template1.bki.source
-	$(MAKE) -C access     clean
-	$(MAKE) -C bootstrap  clean
-	$(MAKE) -C catalog    clean
-	$(MAKE) -C commands   clean
-	$(MAKE) -C executor   clean
-	$(MAKE) -C lib        clean
-	$(MAKE) -C libpq      clean
-	$(MAKE) -C main       clean
-	$(MAKE) -C nodes      clean
-	$(MAKE) -C optimizer  clean
-	$(MAKE) -C parser     clean
-	$(MAKE) -C port       clean   PORTNAME=$(PORTNAME)
-	$(MAKE) -C postmaster clean
-	$(MAKE) -C regex      clean
-	$(MAKE) -C rewrite    clean
-	$(MAKE) -C storage    clean
-	$(MAKE) -C tcop       clean
-	$(MAKE) -C utils      clean
-ifdef TIOGA
-	$(MAKE) -C tioga      clean
-endif
+	for i in $(DIRS); do $(MAKE) -C $$i clean PORTNAME=$(PORTNAME); done
 
 .DEFAULT:
-	$(MAKE) -C access     $@
-	$(MAKE) -C bootstrap  $@
-	$(MAKE) -C catalog    $@
-	$(MAKE) -C commands   $@
-	$(MAKE) -C executor   $@
-	$(MAKE) -C lib        $@
-	$(MAKE) -C libpq      $@
-	$(MAKE) -C main       $@
-	$(MAKE) -C nodes      $@
-	$(MAKE) -C optimizer  $@
-	$(MAKE) -C parser     $@
-	$(MAKE) -C port       $@  PORTNAME=$(PORTNAME)
-	$(MAKE) -C postmaster $@
-	$(MAKE) -C regex      $@
-	$(MAKE) -C rewrite    $@
-	$(MAKE) -C storage    $@
-	$(MAKE) -C tcop       $@
-	$(MAKE) -C utils      $@
-ifdef TIOGA
-	$(MAKE) -C tioga      $@
-endif
-
+	for i in $(DIRS); do $(MAKE) -C $$i $@ PORTNAME=$(PORTNAME); done
 
 #############################################################################
 #
