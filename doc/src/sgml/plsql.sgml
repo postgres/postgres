@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.42 2001/10/09 04:55:11 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.43 2001/10/12 21:19:09 momjian Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -228,8 +228,8 @@ END;
     when you reload the file, it'll drop your functions and then
     re-create them. For example:
 <programlisting>
-drop function testfunc(integer);
-create function testfunc(integer) returns integer as '
+DROP FUNCTION testfunc(integer);
+CREATE FUNCTION testfunc(INTEGER) RETURNS INTEGER AS '
     ....
 end;
 ' language 'plpgsql';
@@ -503,7 +503,7 @@ BEGIN
     user_id := users_rec.user_id;
     ...
 
-create function cs_refresh_one_mv(integer) returns integer as '
+CREATE FUNCTION cs_refresh_one_mv(INTEGER) RETURNS INTEGER AS '
    DECLARE
         key ALIAS FOR $1;
         table_data cs_materialized_views%ROWTYPE;
@@ -585,7 +585,7 @@ SELECT <replaceable>expression</replaceable>
      is a difference between what these two functions do:
 
 <programlisting>
-CREATE FUNCTION logfunc1 (text) RETURNS timestamp AS '
+CREATE FUNCTION logfunc1 (TEXT) RETURNS TIMESTAMP AS '
     DECLARE
         logtxt ALIAS FOR $1;
     BEGIN
@@ -598,7 +598,7 @@ CREATE FUNCTION logfunc1 (text) RETURNS timestamp AS '
      and
 
 <programlisting>
-CREATE FUNCTION logfunc2 (text) RETURNS timestamp AS '
+CREATE FUNCTION logfunc2 (TEXT) RETURNS TIMESTAMP AS '
     DECLARE
         logtxt ALIAS FOR $1;
         curtime timestamp;
@@ -793,7 +793,7 @@ DECLARE
     a_output varchar(4000);
 BEGIN 
     a_output := ''CREATE FUNCTION cs_find_referrer_type(varchar,varchar,varchar) 
-                  RETURNS varchar AS '''' 
+                  RETURNS VARCHAR AS '''' 
                      DECLARE 
                          v_host ALIAS FOR $1; 
                          v_domain ALIAS FOR $2; 
@@ -1154,7 +1154,7 @@ FOR i IN 1..10 LOOP
     RAISE NOTICE ''i is %'',i;
 END LOOP;
 
-FOR i IN REVERSE 1..10 LOOP
+FOR i IN REVERSE 10..1 LOOP
     -- some expressions here
 END LOOP;
 </programlisting>
@@ -1289,7 +1289,7 @@ END LOOP;
 
     <para>
 <programlisting>
-create function cs_refresh_mviews () returns integer as '
+create function cs_refresh_mviews () returns INTEGER as '
 DECLARE
      mviews RECORD;
 
@@ -1642,7 +1642,7 @@ CREATE TRIGGER emp_stamp BEFORE INSERT OR UPDATE ON emp
     </para>
 
 <programlisting>
-CREATE FUNCTION add_one (integer) RETURNS integer AS '
+CREATE FUNCTION add_one (integer) RETURNS INTEGER AS '
     BEGIN
         RETURN $1 + 1;
     END;
@@ -1659,7 +1659,7 @@ CREATE FUNCTION add_one (integer) RETURNS integer AS '
     </para>
 
 <programlisting>
-CREATE FUNCTION concat_text (text, text) RETURNS text AS '
+CREATE FUNCTION concat_text (TEXT, TEXT) RETURNS TEXT AS '
     BEGIN
         RETURN $1 || $2;
     END;
@@ -1682,7 +1682,7 @@ CREATE FUNCTION concat_text (text, text) RETURNS text AS '
     </para>
 
 <programlisting>
-CREATE FUNCTION c_overpaid (EMP, integer) RETURNS boolean AS '
+CREATE FUNCTION c_overpaid (EMP, INTEGER) RETURNS BOOLEAN AS '
     DECLARE
         emprec ALIAS FOR $1;
         sallim ALIAS FOR $2;
@@ -1999,9 +1999,9 @@ SHOW ERRORS;
      PostgreSQL:
 
 <programlisting>
-DROP FUNCTION cs_fmt_browser_version(varchar, varchar);
-CREATE FUNCTION cs_fmt_browser_version(varchar, varchar)
-RETURNS varchar AS '
+DROP FUNCTION cs_fmt_browser_version(VARCHAR, VARCHAR);
+CREATE FUNCTION cs_fmt_browser_version(VARCHAR, VARCHAR)
+RETURNS VARCHAR AS '
 DECLARE
     v_name ALIAS FOR $1;
     v_version ALIAS FOR $2;
@@ -2058,13 +2058,13 @@ show errors
      Here is how this function would end up in PostgreSQL:
 
 <programlisting>
-CREATE FUNCTION cs_update_referrer_type_proc() RETURNS integer AS '
+CREATE FUNCTION cs_update_referrer_type_proc() RETURNS INTEGER AS '
 DECLARE
     referrer_keys RECORD;  -- Declare a generic record to be used in a FOR
     a_output varchar(4000);
 BEGIN 
-    a_output := ''CREATE FUNCTION cs_find_referrer_type(varchar,varchar,varchar) 
-                  RETURNS varchar AS '''' 
+    a_output := ''CREATE FUNCTION cs_find_referrer_type(VARCHAR,VARCHAR,VARCHAR) 
+                  RETURNS VARCHAR AS '''' 
                      DECLARE 
                          v_host ALIAS FOR $1; 
                          v_domain ALIAS FOR $2; 
@@ -2152,8 +2152,8 @@ show errors;
      Here is how this procedure could be translated for PostgreSQL:
 
 <programlisting>
-drop function cs_parse_url_host(varchar); 
-create function cs_parse_url_host(varchar) returns varchar as ' 
+drop function cs_parse_url_host(VARCHAR); 
+create function cs_parse_url_host(VARCHAR) RETURNS VARCHAR AS ' 
 declare 
     v_url ALIAS FOR $1; 
     v_host varchar; 
@@ -2282,36 +2282,41 @@ show errors
     So let's see one of the ways we could port this procedure to <application>PL/pgSQL</>:
 
 <programlisting>
-drop function cs_create_job(integer);
-create function cs_create_job(integer) returns integer as ' declare
-    v_job_id alias for $1;
-    a_running_job_count integer;
+drop function cs_create_job(INTEGER);
+create function cs_create_job(INTEGER) RETURNS INTEGER AS ' DECLARE
+    v_job_id ALIAS FOR $1;
+    a_running_job_count INTEGER;
     a_num integer;
     -- pragma autonomous_transaction;
-begin
-    lock table cs_jobs in exclusive mode;
-    select count(*) into a_running_job_count from cs_jobs where end_stamp is null;
+BEGIN
+    LOCK TABLE cs_jobs IN EXCLUSIVE MODE;
+    SELECT count(*) INTO a_running_job_count 
+    FROM cs_jobs 
+    WHERE end_stamp IS NULL;
 
-    if a_running_job_count > 0 then
-        -- commit; -- free lock
-        raise exception ''Unable to create a new job: a job is currently running.'';
-    end if;
-
-    delete from cs_active_job;
-    insert into cs_active_job(job_id) values(v_job_id);
-
-    SELECT count(*) into a_num FROM cs_jobs WHERE job_id=v_job_id;
-    IF NOT FOUND THEN  -- If nothing was returned in the last query
-        -- This job is not in the table so lets insert it.
-        insert into cs_jobs(job_id, start_stamp) values(v_job_id, sysdate());
-        return 1;
-    ELSE
-        raise NOTICE ''Job already running.'';<co id="co.plpgsql-porting-raise">
+    IF a_running_job_count > 0
+    THEN
+        -- COMMIT; -- free lock
+        RAISE EXCEPTION ''Unable to create a new job: a job is currently running.'';
     END IF;
 
-    return 0;
-end;
-' language 'plpgsql';
+    DELETE FROM cs_active_job;
+    INSERT INTO cs_active_job(job_id) VALUES (v_job_id);
+
+    SELECT count(*) into a_num 
+    FROM cs_jobs 
+    WHERE job_id=v_job_id;
+    IF NOT FOUND THEN  -- If nothing was returned in the last query
+        -- This job is not in the table so lets insert it.
+        INSERT INTO cs_jobs(job_id, start_stamp) VALUES (v_job_id, sysdate());
+        RETURN 1;
+    ELSE
+        RAISE NOTICE ''Job already running.'';<co id="co.plpgsql-porting-raise">
+    END IF;
+
+    RETURN 0;
+END;
+' LANGUAGE 'plpgsql';
 </programlisting>
 
     <calloutlist>
@@ -2382,8 +2387,8 @@ show errors
     package would become something like this:
  
 <programlisting>
-CREATE FUNCTION acs__add_user(integer,integer,varchar,datetime,integer,integer,...)
-RETURNS integer AS '
+CREATE FUNCTION acs__add_user(INTEGER,INTEGER,VARCHAR,DATETIME,INTEGER,INTEGER,...)
+RETURNS INTEGER AS '
 DECLARE
     user_id ALIAS FOR $1;
     object_type ALIAS FOR $2;
@@ -2397,7 +2402,7 @@ BEGIN
     v_user_id := acs_user__new(user_id,object_type,creation_date,creation_user,creation_ip, ...);
     ...
 
-    return v_user_id;
+    RETURN v_user_id;
 END;
 ' LANGUAGE 'plpgsql';
 </programlisting>
@@ -2441,7 +2446,7 @@ END;
      FUNCTION</command> statement.  Something like:
 
 <programlisting>
-CREATE FUNCTION foo(...) RETURNS integer AS '
+CREATE FUNCTION foo(...) RETURNS INTEGER AS '
 ...
 ' LANGUAGE 'plpgsql'
 WITH (isstrict, iscachable);
@@ -2479,7 +2484,7 @@ WITH (isstrict, iscachable);
 --
 
 DROP FUNCTION instr(varchar,varchar);
-CREATE FUNCTION instr(varchar,varchar) RETURNS integer AS '
+CREATE FUNCTION instr(VARCHAR,VARCHAR) RETURNS INTEGER AS '
 DECLARE
     pos integer;
 BEGIN
@@ -2489,8 +2494,8 @@ END;
 ' language 'plpgsql';
 
 
-DROP FUNCTION instr(varchar,varchar,integer);
-CREATE FUNCTION instr(varchar,varchar,integer) RETURNS integer AS '
+DROP FUNCTION instr(VARCHAR,VARCHAR,INTEGER);
+CREATE FUNCTION instr(VARCHAR,VARCHAR,INTEGER) RETURNS INTEGER AS '
 DECLARE
     string ALIAS FOR $1;
     string_to_search ALIAS FOR $2;
@@ -2536,8 +2541,8 @@ END;
 -- Written by Robert Gaszewski (graszew@poland.com)
 -- Licensed under the GPL v2 or later.
 --
-DROP FUNCTION instr(varchar,varchar,integer,integer);
-CREATE FUNCTION instr(varchar,varchar,integer,integer) RETURNS integer AS '
+DROP FUNCTION instr(VARCHAR,VARCHAR,INTEGER,INTEGER);
+CREATE FUNCTION instr(VARCHAR,VARCHAR,INTEGER,INTEGER) RETURNS INTEGER AS '
 DECLARE
     string ALIAS FOR $1;
     string_to_search ALIAS FOR $2;
@@ -2545,11 +2550,11 @@ DECLARE
     occur_index ALIAS FOR $4;
     pos integer NOT NULL DEFAULT 0;
     occur_number integer NOT NULL DEFAULT 0;
-    temp_str varchar;
-    beg integer;
-    i integer;
-    length integer;
-    ss_length integer;
+    temp_str VARCHAR;
+    beg INTEGER;
+    i INTEGER;
+    length INTEGER;
+    ss_length INTEGER;
 BEGIN
     IF beg_index > 0 THEN
         beg := beg_index;
@@ -2595,7 +2600,7 @@ BEGIN
         RETURN 0;
     END IF;
 END;
-' language 'plpgsql';
+' LANGUAGE 'plpgsql';
 </programlisting>
    </sect3>
   </sect2>
