@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/Attic/s_lock.c,v 1.35 2001/03/22 03:59:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/Attic/s_lock.c,v 1.36 2001/03/27 01:16:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -232,7 +232,7 @@ success:						\n\
 static void
 tas_dummy()
 {
-	__asm__		_volatile__(
+	__asm__		__volatile__(
 										"\
 .global	tas						\n\
 tas:							\n\
