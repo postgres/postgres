@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/Attic/aclchk.c,v 1.7 1997/03/12 20:48:17 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/Attic/aclchk.c,v 1.8 1997/04/03 19:55:12 scrappy Exp $
  *
  * NOTES
  *    See acl.h.
@@ -277,7 +277,7 @@ aclcheck(Acl *acl, AclId id, AclIdType idtype, AclMode mode)
      * the system never creates an empty ACL.
      */
     if (num < 1) {
-#ifdef ACLDEBUG_TRACE || 1
+#if ACLDEBUG_TRACE || 1
 	elog(DEBUG, "aclcheck: zero-length ACL, returning 1");
 #endif
 	return ACLCHECK_OK;

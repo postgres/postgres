@@ -368,7 +368,12 @@ ExecAgg(Agg *node)
 	char *args[2];
 	AggFuncInfo *aggfns = &aggFuncInfo[i];
 	
- 	if (aggfns->finalfn && nTuplesAgged > 0) { 
+	if (noInitValue[i]) {
+	    /*
+	     * No values found for this agg; return current state.
+	     * This seems to fix behavior for avg() aggregate. -tgl 12/96
+	     */
+ 	} else if (aggfns->finalfn && nTuplesAgged > 0) { 
 	    if (aggfns->finalfn_nargs > 1) {
 		args[0] = (char*)value1[i];
 		args[1] = (char*)value2[i];

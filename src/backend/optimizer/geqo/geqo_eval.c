@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_eval.c,v 1.6 1997/03/03 23:26:45 scrappy Exp $
+ * $Id: geqo_eval.c,v 1.7 1997/04/03 19:55:35 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,9 @@
 #include <math.h>
 #ifdef HAVE_LIMITS_H
 # include <limits.h>
-# define MAXINT	INT_MAX
+# ifndef MAXINT
+#  define MAXINT INT_MAX
+# endif
 #else
 # include <values.h>
 #endif 
