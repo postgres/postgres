@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/create_cast.sgml,v 1.2 2002/08/11 17:44:12 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/create_cast.sgml,v 1.3 2002/09/01 02:37:02 tgl Exp $ -->
 
 <refentry id="SQL-CREATECAST">
  <refmeta>
@@ -28,8 +28,8 @@ CREATE CAST (<replaceable>sourcetype</replaceable> AS <replaceable>targettype</r
 
   <para>
    <command>CREATE CAST</command> defines a new cast.  A cast
-   specifies which function can be invoked when a conversion between
-   two data types is requested.  For example,
+   specifies how to perform a conversion between
+   two data types.  For example,
 <programlisting>
 SELECT CAST(42 AS text);
 </programlisting>
@@ -49,7 +49,7 @@ SELECT CAST(42 AS text);
   </para>
 
   <para>
-   A cast can marked <literal>AS ASSIGNMENT</>, which means that it
+   A cast can be marked <literal>AS ASSIGNMENT</>, which means that it
    can be invoked implicitly in any context where the conversion it
    defines is required.  Cast functions not so marked can be invoked
    only by explicit <literal>CAST</>,
@@ -72,7 +72,7 @@ INSERT INTO foo(f1) VALUES(42);
    <productname>PostgreSQL</productname> to choose surprising
    interpretations of commands, or to be unable to resolve commands at
    all because there are multiple possible interpretations.  A good
-   rule of thumb is to make cast implicitly invokable only for
+   rule of thumb is to make a cast implicitly invokable only for
    information-preserving transformations between types in the same
    general type category.  For example, <type>int2</type> to
    <type>int4</type> casts can reasonably be implicit, but be wary of
@@ -161,9 +161,10 @@ INSERT INTO foo(f1) VALUES(42);
   <para>
    Prior to PostgreSQL 7.3, every function that had the same name as a
    data type, returned that data type, and took one argument of a
-   different type was automatically a cast function.  This system has
+   different type was automatically a cast function.  This convention has
    been abandoned in face of the introduction of schemas and to be
-   able to store binary compatible casts.  The built-in cast functions
+   able to represent binary compatible casts in the catalogs.  The built-in
+   cast functions
    still follow this naming scheme, but they have to be declared as
    casts explicitly now.
   </para>
@@ -175,7 +176,7 @@ INSERT INTO foo(f1) VALUES(42);
 
   <para>
    To create a cast from type <type>text</type> to type
-   <type>int</type> using the function <literal>int4(text)</literal>:
+   <type>int4</type> using the function <literal>int4(text)</literal>:
 <programlisting>
 CREATE CAST (text AS int4) WITH FUNCTION int4(text);
 </programlisting>
