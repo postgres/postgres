@@ -15,7 +15,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: memutils.h,v 1.2 1996/10/31 09:51:27 scrappy Exp $
+ * $Id: memutils.h,v 1.3 1996/11/03 12:13:35 scrappy Exp $
  *
  * NOTES
  *    some of the information in this file will be moved to
@@ -82,11 +82,6 @@ s...)
 	(((long)(LEN) + (sizeof (double) - 1)) & ~(sizeof (double) -1))
 
 /*****************************************************************************
- *    bit.h                                                                  *
- *****************************************************************************/
-#include "utils/bit.h"
-
-/*****************************************************************************
  *    oset.h -- 	Fixed format ordered set definitions.                *
  *****************************************************************************/
 /* Note:
@@ -95,8 +90,6 @@ s...)
  *	XXX semantics of the external definitions.  Otherwise, the
  *	XXX functional interface should not change.
  *
- * Identification:
- *	$Header: /cvsroot/pgsql/src/include/utils/memutils.h,v 1.2 1996/10/31 09:51:27 scrappy Exp $
  */
 
 typedef struct OrderedElemData OrderedElemData;
@@ -244,9 +237,6 @@ extern void AllocSetDump(AllocSet set);
  *	This file is OPERATING SYSTEM dependent!!!
  *
  */
-/* #include <memory.h> */
-/* use <string.h> because it's ANSI */
-#include <string.h>
 
 /* 
  *	LibCCopyLength is only used within this file. -cim 6/12/90

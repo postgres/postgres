@@ -26,15 +26,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dest.h,v 1.1 1996/08/28 07:27:49 scrappy Exp $
+ * $Id: dest.h,v 1.2 1996/11/03 12:13:19 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef DEST_H
 #define DEST_H
 
-#include "catalog/pg_attribute.h"
-#include "access/tupdesc.h"
+#include "access/tupdesc.h" 
 
 /* ----------------
  *	CommandDest is used to allow the results of calling

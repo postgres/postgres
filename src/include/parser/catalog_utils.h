@@ -6,17 +6,13 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: catalog_utils.h,v 1.2 1996/10/31 09:49:33 scrappy Exp $
+ * $Id: catalog_utils.h,v 1.3 1996/11/03 12:13:03 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef	CATALOG_UTILS_H
 #define	CATALOG_UTILS_H
 
-
-
-#include "access/htup.h"
-#include "utils/rel.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "utils/syscache.h"

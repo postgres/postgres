@@ -6,20 +6,21 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.4 1996/10/23 07:41:56 scrappy Exp $
+ * $Id: execnodes.h,v 1.5 1996/11/03 12:12:50 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef EXECNODES_H
 #define EXECNODES_H
 
-#include "nodes/params.h"
-#include "access/sdir.h"
-#include "access/funcindex.h"
 #include "executor/hashjoin.h"
 #include "nodes/primnodes.h"
-#include "nodes/memnodes.h"
+#include "access/funcindex.h"
+#include "access/relscan.h"
 #include "executor/tuptable.h"
+#include "nodes/params.h"
+#include "access/sdir.h"
+#include "nodes/memnodes.h"
 
 /* ----------------
  *    IndexInfo information

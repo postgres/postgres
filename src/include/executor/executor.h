@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: executor.h,v 1.2 1996/10/31 09:48:30 scrappy Exp $
+ * $Id: executor.h,v 1.3 1996/11/03 12:12:39 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,56 +17,21 @@
  *     #includes
  * ----------------------------------------------------------------
  */
+
 #include <stdio.h>
-#include <string.h>
 
-#include "nodes/pg_list.h"
-
-/* ----------------
- * executor debugging definitions are kept in a separate file
- * so people can customize what debugging they want to see and not
- * have this information clobbered every time a new version of
- * executor.h is checked in -cim 10/26/89
- * ----------------
- */
-#include "executor/execdebug.h"
-
-#include "access/heapam.h"
-#include "access/htup.h"
-#include "access/istrat.h"
 #include "access/itup.h"
+#include "access/relscan.h"
 #include "access/skey.h"
-#include "utils/tqual.h"
-#include "catalog/catname.h"
-#include "utils/syscache.h"
-#include "executor/execdefs.h"
-#include "executor/tuptable.h"
-
-#include "nodes/parsenodes.h"
-
-#include "storage/buf.h"
-#include "miscadmin.h"
-#include "fmgr.h"
-#include "utils/elog.h"
-#include "utils/mcxt.h"
-#include "utils/memutils.h"
-#include "utils/rel.h"
-
+#include "access/sdir.h"
 #include "catalog/pg_index.h"
-#include "catalog/pg_proc.h"
-#include "catalog/pg_type.h"
-#include "catalog/pg_aggregate.h"
-
-#include "access/printtup.h"
-#include "nodes/primnodes.h"
-#include "nodes/plannodes.h"
-#include "nodes/execnodes.h"
-
-#include "tcop/dest.h"
-#include "storage/smgr.h"
-
-#include "access/genam.h"
 #include "executor/execdesc.h"
+
+#ifndef HAVE_MEMMOVE
+# include "regex/utils.h"
+#else
+# include <string.h>
+#endif
 
 /*
  * prototypes from functions in execAmi.c
