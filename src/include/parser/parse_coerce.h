@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_coerce.h,v 1.7 1998/10/22 13:51:05 momjian Exp $
+ * $Id: parse_coerce.h,v 1.7.2.1 1999/02/13 06:00:52 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,6 +66,9 @@ typedef enum CATEGORY
  * Check for types with the same underlying binary representation.
  * This allows us to cheat and directly exchange values without
  *	going through the trouble of calling a conversion function.
+ * Remove equivalencing of FLOAT8 and DATETIME. They really are not
+ *  close enough in behavior, with the DATETIME reserved values
+ *  and special formatting. - thomas 1999-01-24
  */
 #define IS_BINARY_COMPATIBLE(a,b) \
 		  (((a) == BPCHAROID && (b) == TEXTOID) \
@@ -76,8 +79,6 @@ typedef enum CATEGORY
 		|| ((a) == TEXTOID && (b) == VARCHAROID) \
 		|| ((a) == OIDOID && (b) == INT4OID) \
 		|| ((a) == INT4OID && (b) == TIMESTAMPOID) \
-		|| ((a) == DATETIMEOID && (b) == FLOAT8OID) \
-		|| ((a) == FLOAT8OID && (b) == DATETIMEOID) \
 		|| ((a) == ABSTIMEOID && (b) == TIMESTAMPOID) \
 		|| ((a) == ABSTIMEOID && (b) == INT4OID) \
 		|| ((a) == TIMESTAMPOID && (b) == ABSTIMEOID) \
