@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.72 2003/06/22 22:04:54 tgl Exp $
+ $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.73 2003/06/25 01:14:37 momjian Exp $
  -->
 
 <chapter id="catalogs">
@@ -230,25 +230,25 @@
      <row>
       <entry><structfield>aggfnoid</structfield></entry>
       <entry><type>regproc</type></entry>
-      <entry><literal>pg_proc.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
       <entry><structname>pg_proc</structname> OID of the aggregate function</entry>
      </row>
      <row>
       <entry><structfield>aggtransfn</structfield></entry>
       <entry><type>regproc</type></entry>
-      <entry><literal>pg_proc.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
       <entry>Transition function</entry>
      </row>
      <row>
       <entry><structfield>aggfinalfn</structfield></entry>
       <entry><type>regproc</type></entry>
-      <entry><literal>pg_proc.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
       <entry>Final function (zero if none)</entry>
      </row>
      <row>
       <entry><structfield>aggtranstype</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry><literal>pg_type.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-type"><structname>pg_type</structname></link>.oid</literal></entry>
       <entry>The type of the aggregate function's internal transition (state) data</entry>
      </row>
      <row>
@@ -313,7 +313,7 @@
      <row>
       <entry><structfield>amowner</structfield></entry>
       <entry><type>int4</type></entry>
-      <entry><literal>pg_shadow.usesysid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-shadow"><structname>pg_shadow</structname></link>.usesysid</literal></entry>
       <entry>User ID of the owner (currently not used)</entry>
      </row>
 
@@ -370,77 +370,77 @@
      <row>
       <entry><structfield>amgettuple</structfield></entry>
       <entry><type>regproc</type></entry>
-      <entry><literal>pg_proc.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
       <entry><quote>Next valid tuple</quote> function</entry>
      </row>
 
      <row>
       <entry><structfield>aminsert</structfield></entry>
       <entry><type>regproc</type></entry>
-      <entry><literal>pg_proc.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
       <entry><quote>Insert this tuple</quote> function</entry>
      </row>
 
      <row>
       <entry><structfield>ambeginscan</structfield></entry>
       <entry><type>regproc</type></entry>
-      <entry><literal>pg_proc.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
       <entry><quote>Start new scan</quote> function</entry>
      </row>
 
      <row>
       <entry><structfield>amrescan</structfield></entry>
       <entry><type>regproc</type></entry>
-      <entry><literal>pg_proc.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
       <entry><quote>Restart this scan</quote> function</entry>
      </row>
 
      <row>
       <entry><structfield>amendscan</structfield></entry>
       <entry><type>regproc</type></entry>
-      <entry><literal>pg_proc.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
       <entry><quote>End this scan</quote> function</entry>
      </row>
 
      <row>
       <entry><structfield>ammarkpos</structfield></entry>
       <entry><type>regproc</type></entry>
-      <entry><literal>pg_proc.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
       <entry><quote>Mark current scan position</quote> function</entry>
      </row>
 
      <row>
       <entry><structfield>amrestrpos</structfield></entry>
       <entry><type>regproc</type></entry>
-      <entry><literal>pg_proc.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
       <entry><quote>Restore marked scan position</quote> function</entry>
      </row>
 
      <row>
       <entry><structfield>ambuild</structfield></entry>
       <entry><type>regproc</type></entry>
-      <entry><literal>pg_proc.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
       <entry><quote>Build new index</quote> function</entry>
      </row>
 
      <row>
       <entry><structfield>ambulkdelete</structfield></entry>
       <entry><type>regproc</type></entry>
-      <entry><literal>pg_proc.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
       <entry>Bulk-delete function</entry>
      </row>
 
      <row>
       <entry><structfield>amvacuumcleanup</structfield></entry>
       <entry><type>regproc</type></entry>
-      <entry><literal>pg_proc.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
       <entry>Post-<command>VACUUM</command> cleanup function</entry>
      </row>
 
      <row>
       <entry><structfield>amcostestimate</structfield></entry>
       <entry><type>regproc</type></entry>
-      <entry><literal>pg_proc.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
       <entry>Function to estimate cost of an index scan</entry>
      </row>
 
@@ -495,7 +495,7 @@
      <row>
       <entry><structfield>amopclaid</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry><literal>pg_opclass.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-opclass"><structname>pg_opclass</structname></link>.oid</literal></entry>
       <entry>The index operator class this entry is for</entry>
      </row>
 
@@ -516,7 +516,7 @@
      <row>
       <entry><structfield>amopopr</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry><literal>pg_operator.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-operator"><structname>pg_operator</structname></link>.oid</literal></entry>
       <entry>OID of the operator</entry>
      </row>
 
@@ -558,7 +558,7 @@
      <row>
       <entry><structfield>amopclaid</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry><literal>pg_opclass.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-opclass"><structname>pg_opclass</structname></link>.oid</literal></entry>
       <entry>The index operator class this entry is for</entry>
      </row>
 
@@ -572,7 +572,7 @@
      <row>
       <entry><structfield>amproc</structfield></entry>
       <entry><type>regproc</type></entry>
-      <entry><literal>pg_proc.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
       <entry>OID of the procedure</entry>
      </row>
 
@@ -615,7 +615,7 @@
      <row>
       <entry><structfield>adrelid</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry><literal>pg_class.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.oid</literal></entry>
       <entry>The table this column belongs to</entry>
      </row>
 
@@ -683,7 +683,7 @@
      <row>
       <entry><structfield>attrelid</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry><literal>pg_class.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.oid</literal></entry>
       <entry>The table this column belongs to</entry>
      </row>
 
@@ -697,7 +697,7 @@
      <row>
       <entry><structfield>atttypid</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry><literal>pg_type.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-type"><structname>pg_type</structname></link>.oid</literal></entry>
       <entry>The data type of this column</entry>
      </row>
 
@@ -908,21 +908,21 @@
      <row>
       <entry><structfield>castsource</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry><literal>pg_type.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-type"><structname>pg_type</structname></link>.oid</literal></entry>
       <entry>OID of the source data type</entry>
      </row>
 
      <row>
       <entry><structfield>casttarget</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry><literal>pg_type.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-type"><structname>pg_type</structname></link>.oid</literal></entry>
       <entry>OID of the target data type</entry>
      </row>
 
      <row>
       <entry><structfield>castfunc</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry><literal>pg_proc.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
       <entry>
        The OID of the function to use to perform this cast.  Zero is
        stored if the data types are binary compatible (that is, no
@@ -991,7 +991,7 @@
      <row>
       <entry><structfield>relnamespace</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry><literal>pg_namespace.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-namespace"><structname>pg_namespace</structname></link>.oid</literal></entry>
       <entry>
        The OID of the namespace that contains this relation
       </entry>
@@ -1000,7 +1000,7 @@
      <row>
       <entry><structfield>reltype</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry><literal>pg_type.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-type"><structname>pg_type</structname></link>.oid</literal></entry>
       <entry>
        The OID of the data type that corresponds to this table, if any
        (zero for indexes, which have no <structname>pg_type</> entry)
@@ -1010,14 +1010,14 @@
      <row>
       <entry><structfield>relowner</structfield></entry>
       <entry><type>int4</type></entry>
-      <entry><literal>pg_shadow.usesysid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-shadow"><structname>pg_shadow</structname></link>.usesysid</literal></entry>
       <entry>Owner of the relation</entry>
      </row>
 
      <row>
       <entry><structfield>relam</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry><literal>pg_am.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-am"><structname>pg_am</structname></link>.oid</literal></entry>
       <entry>If this is an index, the access method used (B-tree, hash, etc.)</entry>
      </row>
 
@@ -1056,7 +1056,7 @@
      <row>
       <entry><structfield>reltoastrelid</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry><literal>pg_class.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.oid</literal></entry>
       <entry>
        OID of the TOAST table associated with this table, 0 if none.
        The TOAST table stores large attributes <quote>out of
@@ -1067,7 +1067,7 @@
      <row>
       <entry><structfield>reltoastidxid</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry><literal>pg_class.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.oid</literal></entry>
       <entry>
        For a TOAST table, the OID of its index.  0 if not a TOAST table.
       </entry>
@@ -1252,7 +1252,7 @@
      <row>
       <entry><structfield>connamespace</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry><literal>pg_namespace.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-namespace"><structname>pg_namespace</structname></link>.oid</literal></entry>
       <entry>
        The OID of the namespace that contains this constraint
       </entry>
@@ -1287,21 +1287,21 @@
      <row>
       <entry><structfield>conrelid</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry><literal>pg_class.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.oid</literal></entry>
       <entry>The table this constraint is on; 0 if not a table constraint</entry>
      </row>
 
      <row>
       <entry><structfield>contypid</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry><literal>pg_type.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-type"><structname>pg_type</structname></link>.oid</literal></entry>
       <entry>The domain this constraint is on; 0 if not a domain constraint</entry>
      </row>
 
      <row>
       <entry><structfield>confrelid</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry><literal>pg_class.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.oid</literal></entry>
       <entry>If a foreign key, the referenced table; else 0</entry>
      </row>
 
@@ -1329,14 +1329,14 @@
      <row>
       <entry><structfield>conkey</structfield></entry>
       <entry><type>int2[]</type></entry>
-      <entry><literal>pg_attribute.attnum</></entry>
+      <entry><literal><link linkend="catalog-pg-attribute"><structname>pg_attribute</structname></link>.attnum</></entry>
       <entry>If a table constraint, list of columns which the constraint constrains</entry>
      </row>
 
      <row>
       <entry><structfield>confkey</structfield></entry>
       <entry><type>int2[]</type></entry>
-      <entry><literal>pg_attribute.attnum</></entry>
+      <entry><literal><link linkend="catalog-pg-attribute"><structname>pg_attribute</structname></link>.attnum</></entry>
       <entry>If a foreign key, list of the referenced columns</entry>
      </row>
 
@@ -1403,7 +1403,7 @@
      <row>
       <entry><structfield>connamespace</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry><literal>pg_namespace.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-namespace"><structname>pg_namespace</structname></link>.oid</literal></entry>
       <entry>
        The OID of the namespace that contains this conversion
       </entry>
@@ -1412,7 +1412,7 @@
      <row>
       <entry><structfield>conowner</structfield></entry>
       <entry><type>int4</type></entry>
-      <entry><literal>pg_shadow.usesysid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-shadow"><structname>pg_shadow</structname></link>.usesysid</literal></entry>
       <entry>Owner of the conversion</entry>
      </row>
 
@@ -1433,7 +1433,7 @@
      <row>
       <entry><structfield>conproc</structfield></entry>
       <entry><type>regproc</type></entry>
-      <entry><literal>pg_proc.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
       <entry>Conversion procedure</entry>
      </row>
 
@@ -1496,7 +1496,7 @@
      <row>
       <entry><structfield>datdba</structfield></entry>
       <entry><type>int4</type></entry>
-      <entry><literal>pg_shadow.usesysid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-shadow"><structname>pg_shadow</structname></link>.usesysid</literal></entry>
       <entry>Owner of the database, usually the user who created it</entry>
      </row>
 
@@ -1624,7 +1624,7 @@
      <row>
       <entry><structfield>classid</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry><literal>pg_class.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.oid</literal></entry>
       <entry>The OID of the system catalog the dependent object is in</entry>
      </row>
 
@@ -1800,7 +1800,7 @@
      <row>
       <entry><structfield>classoid</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry><literal>pg_class.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.oid</literal></entry>
       <entry>The OID of the system catalog this object appears in</entry>
      </row>
 
@@ -1882,7 +1882,7 @@
      <row>
       <entry><structfield>grolist</structfield></entry>
       <entry><type>int4[]</type></entry>
-      <entry><literal>pg_shadow.usesysid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-shadow"><structname>pg_shadow</structname></link>.usesysid</literal></entry>
       <entry>An array containing the IDs of the users in this group</entry>
      </row>
     </tbody>
@@ -1922,21 +1922,21 @@
      <row>
       <entry><structfield>indexrelid</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry><literal>pg_class.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.oid</literal></entry>
       <entry>The OID of the <structname>pg_class</> entry for this index</entry>
      </row>
 
      <row>
       <entry><structfield>indrelid</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry><literal>pg_class.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.oid</literal></entry>
       <entry>The OID of the <structname>pg_class</> entry for the table this index is for</entry>
      </row>
 
      <row>
       <entry><structfield>indkey</structfield></entry>
       <entry><type>int2vector</type></entry>
-      <entry>pg_attribute.attnum</entry>
+      <entry><link linkend="catalog-pg-attribute"><structname>pg_attribute</structname></link>.attnum</entry>
       <entry>
        This is an array of <structfield>indnatts</structfield> (up to
        <symbol>INDEX_MAX_KEYS</symbol>) values that indicate which
@@ -1951,7 +1951,7 @@
      <row>
       <entry><structfield>indclass</structfield></entry>
       <entry><type>oidvector</type></entry>
-      <entry>pg_opclass.oid</entry>
+      <entry><link linkend="catalog-pg-opclass"><structname>pg_opclass</structname></link>.oid</entry>
       <entry>
        For each column in the index key this contains the OID of
        the operator class to use.  See
@@ -2042,7 +2042,7 @@
      <row>
       <entry><structfield>inhrelid</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry><literal>pg_class.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.oid</literal></entry>
       <entry>
        The OID of the child table.
       </entry>
@@ -2051,7 +2051,7 @@
      <row>
       <entry><structfield>inhparent</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry><literal>pg_class.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.oid</literal></entry>
       <entry>
        The OID of the parent table.
       </entry>
@@ -2137,7 +2137,7 @@
      <row>
       <entry><structfield>lanplcallfoid</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry><literal>pg_proc.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
       <entry>
        For noninternal languages this references the language
        handler, which is a special function that is responsible for
@@ -2149,7 +2149,7 @@
      <row>
       <entry><structfield>lanvalidator</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry><literal>pg_proc.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
       <entry>
        This references a language validator function that is responsible
        for checking the syntax and validity of new functions when they
@@ -2343,7 +2343,7 @@
      <row>
       <entry><structfield>nspowner</structfield></entry>
       <entry><type>int4</type></entry>
-      <entry><literal>pg_shadow.usesysid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-shadow"><structname>pg_shadow</structname></link>.usesysid</literal></entry>
       <entry>Owner of the namespace</entry>
      </row>
 
@@ -2397,7 +2397,7 @@
      <row>
       <entry><structfield>opcamid</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry><literal>pg_am.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-am"><structname>pg_am</structname></link>.oid</literal></entry>
       <entry>Index access method opclass is for</entry>
      </row>
 
@@ -2411,21 +2411,21 @@
      <row>
       <entry><structfield>opcnamespace</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry><literal>pg_namespace.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-namespace"><structname>pg_namespace</structname></link>.oid</literal></entry>
       <entry>Namespace of this operator class</entry>
      </row>
 
      <row>
       <entry><structfield>opcowner</structfield></entry>
       <entry><type>int4</type></entry>
-      <entry><literal>pg_shadow.usesysid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-shadow"><structname>pg_shadow</structname></link>.usesysid</literal></entry>
       <entry>Operator class owner</entry>
      </row>
 
      <row>
       <entry><structfield>opcintype</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry><literal>pg_type.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-type"><structname>pg_type</structname></link>.oid</literal></entry>
       <entry>Input data type of the operator class</entry>
      </row>
 
@@ -2439,7 +2439,7 @@
      <row>
       <entry><structfield>opckeytype</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry><literal>pg_type.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-type"><structname>pg_type</structname></link>.oid</literal></entry>
       <entry>Type of index data, or zero if same as <structfield>opcintype</></entry>
      </row>
 
@@ -2498,7 +2498,7 @@
      <row>
       <entry><structfield>oprnamespace</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry><literal>pg_namespace.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-namespace"><structname>pg_namespace</structname></link>.oid</literal></entry>
       <entry>
        The OID of the namespace that contains this operator
       </entry>
@@ -2507,7 +2507,7 @@
      <row>
       <entry><structfield>oprowner</structfield></entry>
       <entry><type>int4</type></entry>
-      <entry><literal>pg_shadow.usesysid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-shadow"><structname>pg_shadow</structname></link>.usesysid</literal></entry>
       <entry>Owner of the operator</entry>
      </row>
 
@@ -2531,42 +2531,42 @@
      <row>
       <entry><structfield>oprleft</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry><literal>pg_type.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-type"><structname>pg_type</structname></link>.oid</literal></entry>
       <entry>Type of the left operand</entry>
      </row>
 
      <row>
       <entry><structfield>oprright</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry><literal>pg_type.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-type"><structname>pg_type</structname></link>.oid</literal></entry>
       <entry>Type of the right operand</entry>
      </row>
 
      <row>
       <entry><structfield>oprresult</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry><literal>pg_type.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-type"><structname>pg_type</structname></link>.oid</literal></entry>
       <entry>Type of the result</entry>
      </row>
 
      <row>
       <entry><structfield>oprcom</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry><literal>pg_operator.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-operator"><structname>pg_operator</structname></link>.oid</literal></entry>
       <entry>Commutator of this operator, if any</entry>
      </row>
 
      <row>
       <entry><structfield>oprnegate</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry><literal>pg_operator.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-operator"><structname>pg_operator</structname></link>.oid</literal></entry>
       <entry>Negator of this operator, if any</entry>
      </row>
 
      <row>
       <entry><structfield>oprlsortop</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry><literal>pg_operator.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-operator"><structname>pg_operator</structname></link>.oid</literal></entry>
       <entry>
        If this operator supports merge joins, the operator that sorts
        the type of the left-hand operand (<literal>L&lt;L</>)
@@ -2576,7 +2576,7 @@
      <row>
       <entry><structfield>oprrsortop</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry><literal>pg_operator.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-operator"><structname>pg_operator</structname></link>.oid</literal></entry>
       <entry>
        If this operator supports merge joins, the operator that sorts
        the type of the right-hand operand (<literal>R&lt;R</>)
@@ -2586,7 +2586,7 @@
      <row>
       <entry><structfield>oprltcmpop</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry><literal>pg_operator.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-operator"><structname>pg_operator</structname></link>.oid</literal></entry>
       <entry>
        If this operator supports merge joins, the less-than operator that
        compares the left and right operand types (<literal>L&lt;R</>)
@@ -2596,7 +2596,7 @@
      <row>
       <entry><structfield>oprgtcmpop</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry><literal>pg_operator.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-operator"><structname>pg_operator</structname></link>.oid</literal></entry>
       <entry>
        If this operator supports merge joins, the greater-than operator that
        compares the left and right operand types (<literal>L&gt;R</>)
@@ -2606,21 +2606,21 @@
      <row>
       <entry><structfield>oprcode</structfield></entry>
       <entry><type>regproc</type></entry>
-      <entry><literal>pg_proc.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
       <entry>Function that implements this operator</entry>
      </row>
 
      <row>
       <entry><structfield>oprrest</structfield></entry>
       <entry><type>regproc</type></entry>
-      <entry><literal>pg_proc.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
       <entry>Restriction selectivity estimation function for this operator</entry>
      </row>
 
      <row>
       <entry><structfield>oprjoin</structfield></entry>
       <entry><type>regproc</type></entry>
-      <entry><literal>pg_proc.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
       <entry>Join selectivity estimation function for this operator</entry>
      </row>
     </tbody>
@@ -2679,7 +2679,7 @@
      <row>
       <entry><structfield>pronamespace</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry><literal>pg_namespace.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-namespace"><structname>pg_namespace</structname></link>.oid</literal></entry>
       <entry>
        The OID of the namespace that contains this function
       </entry>
@@ -2688,14 +2688,14 @@
      <row>
       <entry><structfield>proowner</structfield></entry>
       <entry><type>int4</type></entry>
-      <entry><literal>pg_shadow.usesysid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-shadow"><structname>pg_shadow</structname></link>.usesysid</literal></entry>
       <entry>Owner of the function</entry>
      </row>
 
      <row>
       <entry><structfield>prolang</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry><literal>pg_language.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-language"><structname>pg_langauge</structname></link>.oid</literal></entry>
       <entry>Implementation language or call interface of this function</entry>
      </row>
 
@@ -2763,14 +2763,14 @@
      <row>
       <entry><structfield>prorettype</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry><literal>pg_type.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-type"><structname>pg_type</structname></link>.oid</literal></entry>
       <entry>Data type of the return value</entry>
      </row>
 
      <row>
       <entry><structfield>proargtypes</structfield></entry>
       <entry><type>oidvector</type></entry>
-      <entry><literal>pg_type.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-type"><structname>pg_type</structname></link>.oid</literal></entry>
       <entry>An array with the data types of the function arguments</entry>
      </row>
 
@@ -2852,7 +2852,7 @@
      <row>
       <entry><structfield>ev_class</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry><literal>pg_class.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.oid</literal></entry>
       <entry>The table this rule is for</entry>
      </row>
 
@@ -3083,14 +3083,14 @@
      <row>
       <entry><structfield>starelid</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry><literal>pg_class.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.oid</literal></entry>
       <entry>The table that the described column belongs to</entry>
      </row>
 
      <row>
       <entry><structfield>staattnum</structfield></entry>
       <entry><type>int2</type></entry>
-      <entry><literal>pg_attribute.attnum</literal></entry>
+      <entry><literal><link linkend="catalog-pg-attribute"><structname>pg_attribute</structname></link>.attnum</literal></entry>
       <entry>The number of the described column</entry>
      </row>
 
@@ -3135,7 +3135,7 @@
      <row>
       <entry><structfield>staop<replaceable>N</></structfield></entry>
       <entry><type>oid</type></entry>
-      <entry><literal>pg_operator.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-operator"><structname>pg_operator</structname></link>.oid</literal></entry>
       <entry>
        An operator used to derive the statistics stored in the
        <replaceable>N</>th <quote>slot</quote>.  For example, a
@@ -3204,7 +3204,7 @@
      <row>
       <entry><structfield>tgrelid</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry><literal>pg_class.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.oid</literal></entry>
       <entry>The table this trigger is on</entry>
      </row>
 
@@ -3218,7 +3218,7 @@
      <row>
       <entry><structfield>tgfoid</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry><literal>pg_proc.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
       <entry>The function to be called</entry>
      </row>
 
@@ -3255,7 +3255,7 @@
      <row>
       <entry><structfield>tgconstrrelid</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry><literal>pg_class.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.oid</literal></entry>
       <entry>The table referenced by an referential integrity constraint</entry>
      </row>
 
@@ -3347,7 +3347,7 @@
      <row>
       <entry><structfield>typnamespace</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry><literal>pg_namespace.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-namespace"><structname>pg_namespace</structname></link>.oid</literal></entry>
       <entry>
        The OID of the namespace that contains this type
       </entry>
@@ -3356,7 +3356,7 @@
      <row>
       <entry><structfield>typowner</structfield></entry>
       <entry><type>int4</type></entry>
-      <entry><literal>pg_shadow.usesysid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-shadow"><structname>pg_shadow</structname></link>.usesysid</literal></entry>
       <entry>Owner of the type</entry>
      </row>
 
@@ -3428,7 +3428,7 @@
      <row>
       <entry><structfield>typrelid</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry><literal>pg_class.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.oid</literal></entry>
       <entry>
        If this is a composite type (see
        <structfield>typtype</structfield>), then this column points to
@@ -3444,7 +3444,7 @@
      <row>
       <entry><structfield>typelem</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry><literal>pg_type.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-type"><structname>pg_type</structname></link>.oid</literal></entry>
       <entry>
        If <structfield>typelem</structfield> is not 0 then it
        identifies another row in <structname>pg_type</structname>.
@@ -3466,28 +3466,28 @@
      <row>
       <entry><structfield>typinput</structfield></entry>
       <entry><type>regproc</type></entry>
-      <entry><literal>pg_proc.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
       <entry>Input conversion function (text format)</entry>
      </row>
 
      <row>
       <entry><structfield>typoutput</structfield></entry>
       <entry><type>regproc</type></entry>
-      <entry><literal>pg_proc.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
       <entry>Output conversion function (text format)</entry>
      </row>
 
      <row>
       <entry><structfield>typreceive</structfield></entry>
       <entry><type>regproc</type></entry>
-      <entry><literal>pg_proc.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
       <entry>Input conversion function (binary format), or 0 if none</entry>
      </row>
 
      <row>
       <entry><structfield>typsend</structfield></entry>
       <entry><type>regproc</type></entry>
-      <entry><literal>pg_proc.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
       <entry>Output conversion function (binary format), or 0 if none</entry>
      </row>
 
