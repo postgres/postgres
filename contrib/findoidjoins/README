@@ -1,27 +1,36 @@
 
-
    			      findoidjoins
 
-This program scans the a database, and prints oid fields, and the tables
-they join to.  PostgreSQL version 6.3.2 crashes with aggregates on
-views, so I have removed the view pg_user from the list of relations to
-examine.
+This program scans a database, and prints oid fields and the tables
+they join to.  CAUTION: it is ver-r-r-y slow on a large database, or
+even a not-so-large one.  We don't really recommend running it on
+anything but an empty database.
 
-It requires /pgsql/contrib/pginterface to be compiled first.
+It requires pgsql/contrib/pginterface to be compiled first.
 
-Run on am empty database, it returns the system join relationships:
+Run on an empty database, it returns the system join relationships
+(shown below for 6.5).  Note that unexpected matches may indicate
+bogus entries in system tables --- don't accept a peculiar match
+without question.  In particular, a field shown as joining to more
+than one target table is probably messed up.
+
+The shell script make_oidjoins_check converts findoidjoins' output
+into an SQL script that checks for dangling links (entries in an
+OID column that don't match any row in the expected table).
+The result of this script should be installed as the "oidjoins"
+regression test.  The oidjoins test should be updated after any
+revision in the patterns of cross-links between system tables.
+(Ideally we'd just regenerate the script as part of the regression
+tests themselves, but that seems too slow...)
 
 ---------------------------------------------------------------------------
 
 Join pg_aggregate.aggtransfn1 => pg_proc.oid
 Join pg_aggregate.aggtransfn2 => pg_proc.oid
 Join pg_aggregate.aggfinalfn => pg_proc.oid
-Join pg_aggregate.aggbasetype => pg_proc.oid
 Join pg_aggregate.aggbasetype => pg_type.oid
-Join pg_aggregate.aggtranstype1 => pg_proc.oid
 Join pg_aggregate.aggtranstype1 => pg_type.oid
 Join pg_aggregate.aggtranstype2 => pg_type.oid
-Join pg_aggregate.aggfinaltype => pg_proc.oid
 Join pg_aggregate.aggfinaltype => pg_type.oid
 Join pg_am.amgettuple => pg_proc.oid
 Join pg_am.aminsert => pg_proc.oid
@@ -35,14 +44,10 @@ Join pg_am.ambuild => pg_proc.oid
 Join pg_amop.amopid => pg_am.oid
 Join pg_amop.amopclaid => pg_opclass.oid
 Join pg_amop.amopopr => pg_operator.oid
-Join pg_amop.amopopr => pg_proc.oid
 Join pg_amop.amopselect => pg_proc.oid
 Join pg_amop.amopnpages => pg_proc.oid
 Join pg_amproc.amid => pg_am.oid
 Join pg_amproc.amopclaid => pg_opclass.oid
-Join pg_amproc.amopclaid => pg_operator.oid
-Join pg_amproc.amopclaid => pg_proc.oid
-Join pg_amproc.amproc => pg_operator.oid
 Join pg_amproc.amproc => pg_proc.oid
 Join pg_attribute.attrelid => pg_class.oid
 Join pg_attribute.atttypid => pg_type.oid
@@ -70,14 +75,11 @@ Join pg_proc.prolang => pg_language.oid
 Join pg_proc.prorettype => pg_type.oid
 Join pg_rewrite.ev_class => pg_class.oid
 Join pg_type.typrelid => pg_class.oid
-Join pg_type.typelem => pg_operator.oid
-Join pg_type.typelem => pg_proc.oid
 Join pg_type.typelem => pg_type.oid
 Join pg_type.typinput => pg_proc.oid
 Join pg_type.typoutput => pg_proc.oid
 Join pg_type.typreceive => pg_proc.oid
 Join pg_type.typsend => pg_proc.oid
-
 
 ---------------------------------------------------------------------------
 

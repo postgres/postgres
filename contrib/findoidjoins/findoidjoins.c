@@ -50,8 +50,7 @@ main(int argc, char **argv)
 		SELECT relname \
 		FROM pg_class c \
 		WHERE relkind = 'r' AND \
-			  relhasrules = 'f' AND \
-			  relname != 'pg_user' \
+			  relhasrules = 'f' \
 		ORDER BY 1; \
 		");
 	doquery("FETCH ALL IN c_relations");
