@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.86 2003/08/04 02:40:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.87 2003/09/17 17:19:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -392,7 +392,8 @@ DefineQueryRewrite(RuleStmt *stmt)
 		 * Are we converting a relation to a view?
 		 *
 		 * If so, check that the relation is empty because the storage for
-		 * the relation is going to be deleted.
+		 * the relation is going to be deleted.  Also insist that the rel
+		 * not have any triggers, indexes, or child tables.
 		 */
 		if (event_relation->rd_rel->relkind != RELKIND_VIEW)
 		{
@@ -402,9 +403,28 @@ DefineQueryRewrite(RuleStmt *stmt)
 			if (heap_getnext(scanDesc, ForwardScanDirection) != NULL)
 				ereport(ERROR,
 					  (errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				errmsg("cannot convert non-empty table \"%s\" to a view",
+				errmsg("could not convert table \"%s\" to a view because it is not empty",
 					   event_obj->relname)));
 			heap_endscan(scanDesc);
+
+			if (event_relation->rd_rel->reltriggers != 0)
+				ereport(ERROR,
+						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+						 errmsg("could not convert table \"%s\" to a view because it has triggers",
+								event_obj->relname),
+						 errhint("In particular, the table may not be involved in any foreign key relationships.")));
+
+			if (event_relation->rd_rel->relhasindex)
+				ereport(ERROR,
+						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+						 errmsg("could not convert table \"%s\" to a view because it has indexes",
+								event_obj->relname)));
+
+			if (event_relation->rd_rel->relhassubclass)
+				ereport(ERROR,
+						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+						 errmsg("could not convert table \"%s\" to a view because it has child tables",
+								event_obj->relname)));
 
 			RelisBecomingView = true;
 		}
@@ -456,6 +476,8 @@ DefineQueryRewrite(RuleStmt *stmt)
 	 * IF the relation is becoming a view, delete the storage files
 	 * associated with it.	NB: we had better have AccessExclusiveLock to
 	 * do this ...
+	 *
+	 * XXX what about getting rid of its TOAST table?  For now, we don't.
 	 */
 	if (RelisBecomingView)
 		smgrunlink(DEFAULT_SMGR, event_relation);
