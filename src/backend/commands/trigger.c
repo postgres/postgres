@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.169 2004/09/06 23:32:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.170 2004/09/07 21:48:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2006,13 +2006,13 @@ deferredTriggerInvokeEvents(bool immediate_only)
 		int			i;
 
 		/*
-		 * Skip executing cancelled events, and events done by
-		 * transactions that are not aborted.
+		 * Skip executing cancelled events, and events already done,
+		 * unless they were done by a subtransaction that later aborted.
 		 */
-		if (!(event->dte_event & TRIGGER_DEFERRED_CANCELED) ||
-			(event->dte_event & TRIGGER_DEFERRED_DONE &&
-			 TransactionIdIsValid(event->dte_done_xid) &&
-			 !TransactionIdDidAbort(event->dte_done_xid)))
+		if (!(event->dte_event & TRIGGER_DEFERRED_CANCELED) &&
+			!(event->dte_event & TRIGGER_DEFERRED_DONE &&
+			  TransactionIdIsValid(event->dte_done_xid) &&
+			  !TransactionIdDidAbort(event->dte_done_xid)))
 		{
 			MemoryContextReset(per_tuple_context);
 
@@ -2091,7 +2091,7 @@ deferredTriggerInvokeEvents(bool immediate_only)
 		 */
 		next_event = event->dte_next;
 
-		if (still_deferred_ones)
+		if (still_deferred_ones || !immediate_only)
 		{
 			/* Not done, keep in list */
 			prev_event = event;
@@ -2103,7 +2103,7 @@ deferredTriggerInvokeEvents(bool immediate_only)
 			 * inside a subtransaction because it could abort later on. We
 			 * will want to check the item again if it does.
 			 */
-			if (immediate_only && !IsSubTransaction())
+			if (!IsSubTransaction())
 			{
 				/* delink it from list and free it */
 				if (prev_event)
@@ -2115,10 +2115,11 @@ deferredTriggerInvokeEvents(bool immediate_only)
 			else
 			{
 				/*
-				 * Mark the event done.
+				 * Mark the event-as-a-whole done, but keep it in the list.
 				 */
 				event->dte_event |= TRIGGER_DEFERRED_DONE;
 				event->dte_done_xid = GetCurrentTransactionId();
+				prev_event = event;
 			}
 		}
 
