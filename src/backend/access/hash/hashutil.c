@@ -7,15 +7,18 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/hash/hashutil.c,v 1.4 1996/10/21 05:45:21 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/hash/hashutil.c,v 1.5 1996/10/31 08:24:47 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
+
+#include <time.h>
 
 #include "postgres.h"
  
 #include "catalog/pg_attribute.h"
 #include "access/attnum.h"
+#include "nodes/nodes.h"
 #include "nodes/pg_list.h" 
 #include "access/tupdesc.h"  
 #include "storage/fd.h" 
@@ -30,18 +33,17 @@
 #include "storage/block.h"  
 #include "storage/off.h"
 #include "storage/itemptr.h"
-#include <time.h>
 #include "utils/nabstime.h"
 #include "access/htup.h"
 #include "access/itup.h"   
 #include "storage/itemid.h"  
 #include "storage/item.h"
 #include "storage/buf.h"  
+#include "storage/page.h"
 #include "storage/bufpage.h" 
 #include "access/sdir.h" 
 #include "access/funcindex.h"
 #include "utils/tqual.h"
-#include "storage/buf.h" 
 #include "access/relscan.h"
 #include "access/hash.h"
 
