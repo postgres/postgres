@@ -200,6 +200,7 @@ ecpg cleanup/fixes, now version 1.1(Michael Meskes)
 pg_user cleanup(Bruce)
 large object fix for pg_dump and tclsh(alvin@camberlo.demon.co.uk)
 LIKE fix for multiple adjacent underscores
+LIKE/BETWEEN fix for having function call as target(Thomas)
 fix for redefining builtin functions(Thomas)
 ultrix4 cleanup
 upgrade to pg_access 0.83
@@ -208,7 +209,7 @@ multi-byte character set support, see doc/README.mb(Tatsuo)
 configure --with-pgport fix
 pg_ident fix
 big-endian fix for backend communications(Kataoka)
-SUBSTR() and substring() fix(Thomas)
+SUBSTR() and substring() fix(Jan)
 several jdbc fixes(Peter)
 libpgtcl improvements, see libptcl/README(Randy Kunkee)
 Fix for "Datasize = 0" error(Vadim)
