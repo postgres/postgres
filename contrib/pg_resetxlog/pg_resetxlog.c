@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/contrib/pg_resetxlog/Attic/pg_resetxlog.c,v 1.16 2002/01/11 06:33:01 momjian Exp $
+ * $Header: /cvsroot/pgsql/contrib/pg_resetxlog/Attic/pg_resetxlog.c,v 1.17 2002/01/11 21:27:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,7 +62,6 @@
 #define XLogFileName(path, log, seg)	\
 			snprintf(path, MAXPGPATH, "%s/%08X%08X",	\
 					 XLogDir, log, seg)
-
 
 /******************** end of stuff copied from xlog.c ********************/
 
@@ -134,7 +133,7 @@ ReadControlFile(void)
 			return true;
 		}
 
-		fprintf(stderr, "pg_control exists but has invalid CRC; proceeding with caution.\n");
+		fprintf(stderr, "pg_control exists but has invalid CRC; proceed with caution.\n");
 		/* We will use the data anyway, but treat it as guessed. */
 		memcpy(&ControlFile, buffer, sizeof(ControlFile));
 		guessed = true;
@@ -218,12 +217,11 @@ GuessControlValues(void)
 static void
 PrintControlValues(bool guessed)
 {
-	printf("\n%spg_control values:\n\n"
+	printf("%spg_control values:\n\n"
 		   "pg_control version number:            %u\n"
 		   "Catalog version number:               %u\n"
 		   "Current log file id:                  %u\n"
 		   "Next log file segment:                %u\n"
-		   "Latest checkpoint location:           %X/%X\n"
 		   "Latest checkpoint's StartUpID:        %u\n"
 		   "Latest checkpoint's NextXID:          %u\n"
 		   "Latest checkpoint's NextOID:          %u\n"
@@ -237,8 +235,6 @@ PrintControlValues(bool guessed)
 		   ControlFile.catalog_version_no,
 		   ControlFile.logId,
 		   ControlFile.logSeg,
-		   ControlFile.checkPoint.xlogid,
-		   ControlFile.checkPoint.xrecoff,
 		   ControlFile.checkPointCopy.ThisStartUpID,
 		   ControlFile.checkPointCopy.nextXid,
 		   ControlFile.checkPointCopy.nextOid,
@@ -253,7 +249,7 @@ PrintControlValues(bool guessed)
  * Write out the new pg_control file.
  */
 static void
-RewriteControlFile(TransactionId set_xid, XLogRecPtr set_checkpoint)
+RewriteControlFile(void)
 {
 	int			fd;
 	char		buffer[BLCKSZ]; /* need not be aligned */
@@ -277,17 +273,9 @@ RewriteControlFile(TransactionId set_xid, XLogRecPtr set_checkpoint)
 	ControlFile.time = time(NULL);
 	ControlFile.logId = newXlogId;
 	ControlFile.logSeg = newXlogSeg + 1;
+	ControlFile.checkPoint = ControlFile.checkPointCopy.redo;
 	ControlFile.prevCheckPoint.xlogid = 0;
 	ControlFile.prevCheckPoint.xrecoff = 0;
-
-	if (set_xid != 0)
-		ControlFile.checkPointCopy.nextXid = set_xid;
-
-	if (set_checkpoint.xlogid == 0 &&
-		set_checkpoint.xrecoff == 0)
-		ControlFile.checkPoint = ControlFile.checkPointCopy.redo;
-	else
-		ControlFile.checkPoint = set_checkpoint;
 
 	/* Contents are protected with a CRC */
 	INIT_CRC64(ControlFile.crc);
@@ -478,11 +466,11 @@ WriteEmptyXLOG(void)
 static void
 usage(void)
 {
-	fprintf(stderr, "Usage: pg_resetxlog [-f] [-n] [-x xid] [ -l log_id offset ] PGDataDirectory\n"
-			"  -f\t  force update to be done\n"
-			"  -n\t  no update, just show extracted pg_control values (for testing)\n"
-			"  -x XID  set XID in pg_control\n"
-			"  -l log_id offset   set hex checkpoint location in pg_control\n");
+	fprintf(stderr, "Usage: pg_resetxlog [-f] [-n] [-x xid] [ -l fileid seg ] PGDataDirectory\n"
+			"  -f\t\tforce update to be done\n"
+			"  -n\t\tno update, just show extracted pg_control values (for testing)\n"
+			"  -x xid\tset next transaction ID\n"
+			"  -l fileid seg\tforce minimum WAL starting location for new xlog\n");
 	exit(1);
 }
 
@@ -494,7 +482,8 @@ main(int argc, char **argv)
 	bool		force = false;
 	bool		noupdate = false;
 	TransactionId set_xid = 0;
-	XLogRecPtr	set_checkpoint = {0,0};
+	uint32		minXlogId = 0,
+				minXlogSeg = 0;
 	int			fd;
 	char		path[MAXPGPATH];
 
@@ -514,7 +503,7 @@ main(int argc, char **argv)
 			set_xid = strtoul(argv[argn], NULL, 0);
 			if (set_xid == 0)
 			{
-				fprintf(stderr, "XID can not be 0.");
+				fprintf(stderr, "XID can not be 0.\n");
 				exit(1);
 			}
 		}
@@ -523,17 +512,11 @@ main(int argc, char **argv)
 			argn++;
 			if (argn == argc)
 				usage();
-			set_checkpoint.xlogid = strtoul(argv[argn], NULL, 16);
+			minXlogId = strtoul(argv[argn], NULL, 0);
 			argn++;
 			if (argn == argc)
 				usage();
-			set_checkpoint.xrecoff = strtoul(argv[argn], NULL, 16);
-			if (set_checkpoint.xlogid == 0 &&
-				set_checkpoint.xrecoff == 0)
-			{
-				fprintf(stderr, "Checkpoint can not be '0 0'.");
-				exit(1);
-			}
+			minXlogSeg = strtoul(argv[argn], NULL, 0);
 		}
 		else
 			usage();
@@ -606,8 +589,20 @@ main(int argc, char **argv)
 
 	/*
 	 * Else, do the dirty deed.
+	 *
+	 * First adjust fields if required by switches.
 	 */
-	RewriteControlFile(set_xid, set_checkpoint);
+	if (set_xid != 0)
+		ControlFile.checkPointCopy.nextXid = set_xid;
+
+	if (minXlogId > ControlFile.logId ||
+		(minXlogId == ControlFile.logId && minXlogSeg > ControlFile.logSeg))
+	{
+		ControlFile.logId = minXlogId;
+		ControlFile.logSeg = minXlogSeg;
+	}
+
+	RewriteControlFile();
 	KillExistingXLOG();
 	WriteEmptyXLOG();
 
