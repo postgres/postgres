@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.60 2001/08/17 02:59:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.61 2001/08/17 15:40:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -420,8 +420,8 @@ auth_failed(Port *port)
 			authmethod = "IDENT";
 			break;
 		case uaPassword:
-		case uaCrypt:
 		case uaMD5:
+		case uaCrypt:
 			authmethod = "Password";
 			break;
 	}
@@ -501,13 +501,13 @@ ClientAuthentication(Port *port)
 			status = recv_and_check_password_packet(port);
 			break;
 
-		case uaCrypt:
-			sendAuthRequest(port, AUTH_REQ_CRYPT);
+		case uaMD5:
+			sendAuthRequest(port, AUTH_REQ_MD5);
 			status = recv_and_check_password_packet(port);
 			break;
 
-		case uaMD5:
-			sendAuthRequest(port, AUTH_REQ_MD5);
+		case uaCrypt:
+			sendAuthRequest(port, AUTH_REQ_CRYPT);
 			status = recv_and_check_password_packet(port);
 			break;
 
@@ -643,8 +643,8 @@ map_old_to_new(Port *port, UserAuth old, int status)
 {
 	switch (port->auth_method)
 	{
-		case uaCrypt:
 		case uaMD5:
+		case uaCrypt:
 		case uaReject:
 			status = STATUS_ERROR;
 			break;

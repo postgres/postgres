@@ -10,7 +10,7 @@
  * exceed INITIAL_EXPBUFFER_SIZE (currently 256 bytes).
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.54 2001/08/17 15:11:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.55 2001/08/17 15:40:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -438,6 +438,33 @@ pg_password_sendauth(PGconn *conn, const char *password, AuthRequest areq)
 
 	switch (areq)
 	{
+		case AUTH_REQ_MD5:
+		{
+			char *crypt_pwd2;
+
+			if (!(crypt_pwd = malloc(MD5_PASSWD_LEN+1)) ||
+				!(crypt_pwd2 = malloc(MD5_PASSWD_LEN+1)))
+			{
+				perror("malloc");
+				return STATUS_ERROR;
+			}
+			if (!EncryptMD5(password, conn->pguser,
+							strlen(conn->pguser), crypt_pwd2))
+			{
+				free(crypt_pwd);
+				free(crypt_pwd2);
+				return STATUS_ERROR;
+			}
+			if (!EncryptMD5(crypt_pwd2 + strlen("md5"), conn->md5Salt,
+							sizeof(conn->md5Salt), crypt_pwd))
+			{
+				free(crypt_pwd);
+				free(crypt_pwd2);
+				return STATUS_ERROR;
+			}
+			free(crypt_pwd2);
+			break;
+		}
 		case AUTH_REQ_CRYPT:
 		{
 			char salt[3];
@@ -446,33 +473,6 @@ pg_password_sendauth(PGconn *conn, const char *password, AuthRequest areq)
 			crypt_pwd = crypt(password, salt);
 			break;
 		}
-		case AUTH_REQ_MD5:
-			{
-				char *crypt_pwd2;
-
-				if (!(crypt_pwd = malloc(MD5_PASSWD_LEN+1)) ||
-					!(crypt_pwd2 = malloc(MD5_PASSWD_LEN+1)))
-				{
-					perror("malloc");
-					return STATUS_ERROR;
-				}
-				if (!EncryptMD5(password, conn->pguser,
-								strlen(conn->pguser), crypt_pwd2))
-				{
-					free(crypt_pwd);
-					free(crypt_pwd2);
-					return STATUS_ERROR;
-				}
-				if (!EncryptMD5(crypt_pwd2 + strlen("md5"), conn->md5Salt,
-								sizeof(conn->md5Salt), crypt_pwd))
-				{
-					free(crypt_pwd);
-					free(crypt_pwd2);
-					return STATUS_ERROR;
-				}
-				free(crypt_pwd2);
-				break;
-			}
 		default:
 			/* discard const so we can assign it */
 			crypt_pwd = (char *)password;
@@ -535,9 +535,9 @@ fe_sendauth(AuthRequest areq, PGconn *conn, const char *hostname,
 			return STATUS_ERROR;
 #endif
 
-		case AUTH_REQ_PASSWORD:
-		case AUTH_REQ_CRYPT:
 		case AUTH_REQ_MD5:
+		case AUTH_REQ_CRYPT:
+		case AUTH_REQ_PASSWORD:
 			if (password == NULL || *password == '\0')
 			{
 				(void) sprintf(PQerrormsg,
