@@ -8,10 +8,7 @@
 
 #define BLCKSZ	8192
 
-#if !defined(nextstep)
-#define USE_VALUES_H
-#endif
-
+#define HAVE_VALUES_H
 #define HAVE_MEMMOVE
 #define HAVE_TERMIOS_H
 
@@ -41,7 +38,7 @@
 #endif
 
 #if defined(BSD44_derived)
-#  define USE_LIMITS_H
+#  define HAVE_LIMITS_H
 #  define USE_POSIX_TIME
 #  define NEED_CBRT
 #  define NEED_I386_TAS_ASM
@@ -62,7 +59,7 @@
 #  if defined(PRE_BSDI_2_1)
 #    define NEED_UNION_SEMUN 
 #  endif
-#  define USE_LIMITS_H
+#  define HAVE_LIMITS_H
 #  define USE_POSIX_TIME
 #  define NEED_CBRT
 #  define HAS_TEST_AND_SET
@@ -88,7 +85,7 @@
 #endif
 
 #if defined(i386_solaris) 
-#  define USE_LIMITS_H
+#  define HAVE_LIMITS_H
 #  define USE_POSIX_TIME 
 #  define USE_POSIX_SIGNALS
 #  define NEED_ISINF 
@@ -131,6 +128,7 @@
 #endif
 
 #if defined(nextstep)
+# undef HAVE_VALUES_H
 # include <sys/ioctl.h>
 # if defined(__STRICT_ANSI__)
 #  define isascii(c)  ((unsigned)(c)<=0177)
@@ -148,7 +146,7 @@
 #  define NEED_SIG_JMP
 # endif
 
-# define USE_LIMITS_H
+# define HAVE_LIMITS_H
 # define JMP_BUF
 # define NO_WAITPID
   typedef struct mutex slock_t;
@@ -159,7 +157,7 @@
 #endif
 
 #if defined(sparc_solaris)
-#  define USE_LIMITS_H
+#  define HAVE_LIMITS_H
 #  define USE_POSIX_TIME 
 #  define USE_POSIX_SIGNALS
 #  define NEED_ISINF 

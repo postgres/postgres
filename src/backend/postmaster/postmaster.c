@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.32 1997/01/22 04:45:45 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.33 1997/01/24 18:00:27 scrappy Exp $
  *
  * NOTES
  *
@@ -53,12 +53,12 @@
 #include <sys/stat.h>           /* for umask */
 #include <sys/time.h>
 #include <sys/socket.h>
-#if defined(USE_LIMITS_H)
+#ifdef HAVE_LIMITS_H
 # include <limits.h>
 # define MAXINT         INT_MAX
 #else
 # include <values.h>
-#endif /* !USE_LIMITS_H */
+#endif 
 #include <sys/wait.h>
 
 #include <errno.h>
