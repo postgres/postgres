@@ -46,7 +46,7 @@ struct _helpStruct
 static struct _helpStruct QL_HELP[] = {
 ";
 
-foreach $file (readdir DIR) {
+foreach $file (sort readdir DIR) {
     my ($cmdname, $cmddesc, $cmdsynopsis);
     $file =~ /\.sgml$/ || next;
 
