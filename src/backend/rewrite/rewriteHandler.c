@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.88 2001/01/24 19:43:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.89 2001/01/27 04:40:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,7 @@ static RewriteInfo *gatherRewriteMeta(Query *parsetree,
 				  int rt_index,
 				  CmdType event,
 				  bool instead_flag);
-static List *adjustJoinTreeList(Query *parsetree, int rt_index, bool *found);
+static List *adjustJoinTreeList(Query *parsetree, bool removert, int rt_index);
 static void markQueryForUpdate(Query *qry, bool skipOldNew);
 static List *matchLocks(CmdType event, RuleLock *rulelocks,
 						int varno, Query *parsetree);
@@ -119,18 +119,25 @@ gatherRewriteMeta(Query *parsetree,
 
 	/*
 	 * Each rule action's jointree should be the main parsetree's jointree
-	 * plus that rule's jointree, but *without* the original rtindex
+	 * plus that rule's jointree, but usually *without* the original rtindex
 	 * that we're replacing (if present, which it won't be for INSERT).
-	 * Note that if the rule refers to OLD, its jointree will add back
-	 * a reference to rt_index.
+	 * Note that if the rule action refers to OLD, its jointree will add
+	 * a reference to rt_index.  If the rule action doesn't refer to OLD,
+	 * but either the rule_qual or the user query quals do, then we need to
+	 * keep the original rtindex in the jointree to provide data for the
+	 * quals.  We don't want the original rtindex to be joined twice,
+	 * however, so avoid keeping it if the rule action mentions it.
 	 */
 	if (sub_action->jointree != NULL)
 	{
-		bool	found;
-		List   *newjointree = adjustJoinTreeList(parsetree,
-												 rt_index,
-												 &found);
+		bool	keeporig;
+		List   *newjointree;
 
+		keeporig = (! rangeTableEntry_used((Node *) sub_action->jointree,
+										   rt_index, 0)) &&
+			(rangeTableEntry_used(info->rule_qual, rt_index, 0) ||
+			 rangeTableEntry_used(parsetree->jointree->quals, rt_index, 0));
+		newjointree = adjustJoinTreeList(parsetree, !keeporig, rt_index);
 		sub_action->jointree->fromlist =
 			nconc(newjointree, sub_action->jointree->fromlist);
 	}
@@ -181,29 +188,30 @@ gatherRewriteMeta(Query *parsetree,
 }
 
 /*
- * Copy the query's jointree list, and attempt to remove any occurrence
- * of the given rt_index as a top-level join item (we do not look for it
- * within join items; this is OK because we are only expecting to find it
- * as an UPDATE or DELETE target relation, which will be at the top level
- * of the join).  Returns modified jointree list --- original list
- * is not changed.  *found is set to indicate if we found the rt_index.
+ * Copy the query's jointree list, and optionally attempt to remove any
+ * occurrence of the given rt_index as a top-level join item (we do not look
+ * for it within join items; this is OK because we are only expecting to find
+ * it as an UPDATE or DELETE target relation, which will be at the top level
+ * of the join).  Returns modified jointree list --- original list is not
+ * changed.
  */
 static List *
-adjustJoinTreeList(Query *parsetree, int rt_index, bool *found)
+adjustJoinTreeList(Query *parsetree, bool removert, int rt_index)
 {
 	List	   *newjointree = listCopy(parsetree->jointree->fromlist);
 	List	   *jjt;
 
-	*found = false;
-	foreach(jjt, newjointree)
+	if (removert)
 	{
-		RangeTblRef *rtr = lfirst(jjt);
-
-		if (IsA(rtr, RangeTblRef) && rtr->rtindex == rt_index)
+		foreach(jjt, newjointree)
 		{
-			newjointree = lremove(rtr, newjointree);
-			*found = true;
-			break;
+			RangeTblRef *rtr = lfirst(jjt);
+
+			if (IsA(rtr, RangeTblRef) && rtr->rtindex == rt_index)
+			{
+				newjointree = lremove(rtr, newjointree);
+				break;
+			}
 		}
 	}
 	return newjointree;
