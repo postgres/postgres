@@ -3,10 +3,11 @@
  *
  * Copyright (c) 2000-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.96 2004/11/09 14:39:44 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.97 2004/11/24 04:58:42 neilc Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
+#include "input.h"
 #include "print.h"
 #include "help.h"
 
