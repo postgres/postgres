@@ -2,12 +2,14 @@
  *
  * trace.c
  *
- *	  Conditional trace ans logging functions.
+ *	  Conditional trace and logging functions.
  *
  *	  Massimo Dal Zotto <dz@cs.unitn.it>
  *
  *-------------------------------------------------------------------------
  */
+
+#include "postgres.h"
 
 #include <unistd.h>
 #include <signal.h>
@@ -15,15 +17,19 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-
-#include "postgres.h"
-
 #ifdef USE_SYSLOG
 #include <syslog.h>
 #endif
 
 #include "miscadmin.h"
 #include "utils/trace.h"
+
+/*
+ * We could support trace messages of indefinite length, as elog() does,
+ * but it's probably not worth the trouble.  Instead limit trace message
+ * length to this.
+ */
+#define TRACEMSG_MAXLEN		1024
 
 #ifdef USE_SYSLOG
 /*
@@ -87,15 +93,14 @@ int
 tprintf(int flag, const char *fmt,...)
 {
 	va_list		ap;
-	char		line[ELOG_MAXLEN + TIMESTAMP_SIZE + 1];
-
+	char		line[TRACEMSG_MAXLEN + TIMESTAMP_SIZE + 1];
 #ifdef USE_SYSLOG
 	int			log_level;
 #endif
 
 	if ((flag == TRACE_ALL) || (pg_options[TRACE_ALL] > 0))
 	{
-		/* uconditional trace or trace all option set */
+		/* unconditional trace or trace all option set */
 	}
 	else if (pg_options[TRACE_ALL] == 0)
 	{
@@ -105,11 +110,11 @@ tprintf(int flag, const char *fmt,...)
 	else if (pg_options[TRACE_ALL] < 0)
 		return 0;
 
-	va_start(ap, fmt);
 #ifdef ELOG_TIMESTAMPS
 	strcpy(line, tprintf_timestamp());
 #endif
-	vsnprintf(line + TIMESTAMP_SIZE, ELOG_MAXLEN, fmt, ap);
+	va_start(ap, fmt);
+	vsnprintf(line + TIMESTAMP_SIZE, TRACEMSG_MAXLEN, fmt, ap);
 	va_end(ap);
 
 #ifdef USE_SYSLOG
@@ -134,13 +139,13 @@ int
 tprintf1(const char *fmt,...)
 {
 	va_list		ap;
-	char		line[ELOG_MAXLEN + TIMESTAMP_SIZE + 1];
+	char		line[TRACEMSG_MAXLEN + TIMESTAMP_SIZE + 1];
 
-	va_start(ap, fmt);
 #ifdef ELOG_TIMESTAMPS
 	strcpy(line, tprintf_timestamp());
 #endif
-	vsnprintf(line + TIMESTAMP_SIZE, ELOG_MAXLEN, fmt, ap);
+	va_start(ap, fmt);
+	vsnprintf(line + TIMESTAMP_SIZE, TRACEMSG_MAXLEN, fmt, ap);
 	va_end(ap);
 
 #ifdef USE_SYSLOG
@@ -164,13 +169,13 @@ int
 eprintf(const char *fmt,...)
 {
 	va_list		ap;
-	char		line[ELOG_MAXLEN + TIMESTAMP_SIZE + 1];
+	char		line[TRACEMSG_MAXLEN + TIMESTAMP_SIZE + 1];
 
-	va_start(ap, fmt);
 #ifdef ELOG_TIMESTAMPS
 	strcpy(line, tprintf_timestamp());
 #endif
-	vsnprintf(line + TIMESTAMP_SIZE, ELOG_MAXLEN, fmt, ap);
+	va_start(ap, fmt);
+	vsnprintf(line + TIMESTAMP_SIZE, TRACEMSG_MAXLEN, fmt, ap);
 	va_end(ap);
 
 #ifdef USE_SYSLOG

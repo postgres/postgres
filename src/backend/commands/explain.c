@@ -4,7 +4,7 @@
  *
  * Copyright (c) 1994-5, Regents of the University of California
  *
- *	  $Id: explain.c,v 1.46 1999/08/31 01:28:28 tgl Exp $
+ *	  $Id: explain.c,v 1.47 1999/09/11 19:06:36 tgl Exp $
  *
  */
 
@@ -28,7 +28,6 @@ typedef struct ExplainState
 } ExplainState;
 
 static char *Explain_PlanToString(Plan *plan, ExplainState *es);
-static void printLongNotice(const char *header, const char *message);
 static void ExplainOneQuery(Query *query, bool verbose, CommandDest dest);
 
 /* Convert a null string pointer into "<>" */
@@ -110,7 +109,7 @@ ExplainOneQuery(Query *query, bool verbose, CommandDest dest)
 		s = nodeToString(plan);
 		if (s)
 		{
-			printLongNotice("QUERY DUMP:\n\n", s);
+			elog(NOTICE, "QUERY DUMP:\n\n%s", s);
 			pfree(s);
 		}
 	}
@@ -120,7 +119,7 @@ ExplainOneQuery(Query *query, bool verbose, CommandDest dest)
 		s = Explain_PlanToString(plan, es);
 		if (s)
 		{
-			printLongNotice("QUERY PLAN:\n\n", s);
+			elog(NOTICE, "QUERY PLAN:\n\n%s", s);
 			pfree(s);
 		}
 	}
@@ -332,7 +331,6 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 		}
 		es->rtable = saved_rtable;
 	}
-	return;
 }
 
 static char *
@@ -345,23 +343,4 @@ Explain_PlanToString(Plan *plan, ExplainState *es)
 	if (plan != NULL)
 		explain_outNode(&str, plan, 0, es);
 	return str.data;
-}
-
-/*
- * Print a message that might exceed the size of the elog message buffer.
- * This is a crock ... there shouldn't be an upper limit to what you can elog().
- */
-static void
-printLongNotice(const char *header, const char *message)
-{
-	int			len = strlen(message);
-
-	elog(NOTICE, "%.20s%.*s", header, ELOG_MAXLEN - 64, message);
-	len -= ELOG_MAXLEN - 64;
-	while (len > 0)
-	{
-		message += ELOG_MAXLEN - 64;
-		elog(NOTICE, "%.*s", ELOG_MAXLEN - 64, message);
-		len -= ELOG_MAXLEN - 64;
-	}
 }
