@@ -35,7 +35,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-# $Id: my2pg.pl,v 1.3 2001/03/04 15:43:33 momjian Exp $
+# $Id: my2pg.pl,v 1.4 2001/03/06 22:46:50 momjian Exp $
 
 # TODO:
 # + Handle SETs
@@ -46,11 +46,16 @@
 
 #
 # $Log: my2pg.pl,v $
-# Revision 1.3  2001/03/04 15:43:33  momjian
-# Update mysql converter, new version released.
+# Revision 1.4  2001/03/06 22:46:50  momjian
+# Update my2pg, new version.
+#
+# Revision 1.18  2001/03/06 22:25:40  fonin
+# Documentation up2dating.
 #
 # Revision 1.17  2001/03/04 13:01:50  fonin
-# Fixes to make work it right with MySQL 3.23 dumps. Tested on mysqldump 8.11. Also, AUTO_INCREMENT->SERIAL fields no more have DEFAULT and NOT NULL definitions.
+# Fixes to make work it right with MySQL 3.23 dumps. Tested on mysqldump 8.11.
+# Also, AUTO_INCREMENT->SERIAL fields no more have DEFAULT and NOT NULL 
+# definitions.
 #
 # Revision 1.16  2001/02/02 08:15:34  fonin
 # Sequences should be created BEFORE creating any objects \nthat depends on it.
@@ -108,7 +113,7 @@ if($opts{n} ne '') {
 $|=1;
 
 print("------------------------------------------------------------------");
-print("\n-- My2Pg \$Revision: 1.3 $ \translated dump");
+print("\n-- My2Pg \$Revision: 1.4 $ \translated dump");
 print("\n--");
 print("\n------------------------------------------------------------------");
 
@@ -130,7 +135,7 @@ $libtypename.='/libtypes.so';
 # push header to libtypes.c
 open(LIBTYPES,">$libtypesource");
 print LIBTYPES "/******************************************************";
-print LIBTYPES "\n * My2Pg \$Revision: 1.3 $ \translated dump";
+print LIBTYPES "\n * My2Pg \$Revision: 1.4 $ \translated dump";
 print LIBTYPES "\n * User types definitions";
 print LIBTYPES "\n ******************************************************/";
 print LIBTYPES "\n\n#include <postgres.h>\n";
@@ -642,7 +647,7 @@ close(LIBTYPES);
 
 open(MAKE,">Makefile");
 print MAKE "#
-# My2Pg \$Revision: 1.3 $ \translated dump
+# My2Pg \$Revision: 1.4 $ \translated dump
 # Makefile
 #
 
@@ -713,7 +718,7 @@ my2pg - MySQL -> PostgreSQL dump conversion utility.
 
 =head1 SYNTAX
 
-	mysqldump db | ./my2pg.pl [-n] > pgsqldump.txt
+	mysqldump db | ./my2pg.pl [-n] > pgsqldump.sql
 	vi libtypes.c
 	make
 	psql database < pgsqldump.txt
@@ -721,11 +726,7 @@ where
 
 =over 4
 
-=item B<mysqldump.txt>
-
-- mysqldump utility output,
-
-=item B<pgsqldump.txt>
+=item B<pgsqldump.sql>
 
 - file suitable for loading into PostgreSQL.
 
@@ -759,6 +760,11 @@ interferension with reserved words;
 
 =item Converting
 
+AUTO_INCREMENT fields to SERIAL. Actually, creating the sequence and 
+setting default value to nextval('seq'), well, you know :)
+
+=item Converting
+
 KEY(field) to CREATE INDEX i_field on table (field);
 
 =item The same
@@ -767,7 +773,7 @@ for UNIQUE keys;
 
 =item Indices
 
-are creating AFTER rows insertion (to speed  up the load);
+are creating AFTER rows insertion (to speed up the load);
 
 =item Translates '#'
 
@@ -812,7 +818,7 @@ for Makefile.
 
 =head1 BUGS
 
-This program is very beta and extremely bugsome.
+This program is still beta. Testers wanted.
 Known bugs are:
 
 =over 4
@@ -842,8 +848,8 @@ include path, you need to check it before compiling.
 
 =head1 AUTHORS
 
-B<(c) 2000 Maxim V. Rudensky	 <fonin@ziet.zhitomir.ua>>
-B<(c) 2000 Valentine V. Danilchuk <valdan@ziet.zhitomir.ua>>
+B<(c) 2000 Maxim V. Rudensky	 (fonin@ziet.zhitomir.ua)>
+B<(c) 2000 Valentine V. Danilchuk (valdan@ziet.zhitomir.ua)>
 
 =head1 LICENSE
 
