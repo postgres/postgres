@@ -2,7 +2,7 @@
 trap "rm -f /tmp/$$" 0 1 2 3 15
 
 if [ "$#" -eq 0 ]
-then	echo "Usage:  $0 [-f inputfile] old_data_dir database" 1>&2
+then	echo "Usage:  $0 [-f inputfile] old_data_dir" 1>&2
 	exit 1
 fi
 
@@ -16,13 +16,12 @@ then	INPUT="$2"
 else	INPUT=""
 fi
 
-if [ "$#" -ne 2 ]
-then	echo "Usage:  $0 [-f input_file] old_data_dir database" 1>&2
+if [ "$#" -ne 1 ]
+then	echo "Usage:  $0 [-f inputfile] old_data_dir" 1>&2
 	exit 1
 fi
 
 OLDDIR="$1"
-DATABASE="$2"
 
 # check things
 
@@ -36,8 +35,8 @@ then	echo "You must rename your old /data directory to /$OLDDIR and run initdb."
 	exit 1
 fi
 
-if [ ! -d "./$OLDDIR/data/base/$DATABASE" ]
-then	echo "There is not database $DATABASE in ./$OLDDIR/data/base." 1>&2
+if [ ! -d "./$OLDDIR/base/template1" ]
+then	echo "There is not database template1 in ./$OLDDIR/base." 1>&2
 	exit 1
 fi
 
@@ -53,17 +52,12 @@ fi
 
 # do I need to create a database?
 
-if [ "$DATABASE" != "template1" ]
-then	echo "Dropping and recreating database $DATABASE." 1>&2
-	destroydb "$DATABASE" >/dev/null 2>&1
-	createdb "$DATABASE"
-fi
-
-# remove any COPY statements, preserve pgdump_oid setting from pg_dumpall
+# remove any COPY statements
+# we don't even need pgdump_oid because we are moving pg_variable
+# then shouldn't be in there anyway
 
 cat $INPUT | awk '	{
-				if (toupper($0) ~ /^COPY / &&
-				    toupper($0) !~ /^COPY[ 	]*PGDUMP_OID/ )
+				if (toupper($0) ~ /^COPY /)
 					while (getline $0 > 0 && $0 != "\\.")
 						;
 				else	print $0;
@@ -71,16 +65,14 @@ cat $INPUT | awk '	{
  
 #create empty tables/indexes
 
-psql "$DATABASE" <"/tmp/$$"
-set -x
+psql "template1" <"/tmp/$$"
 
 for DIR in data/base/*
 do
 	BASEDIR="`basename $DIR`"
 	if [ -d "$DIR" -a \
-	     -d "$OLDDIR/$DIR" -a \
-		\( "$DATABASE" = "$BASEDIR" -o "$DATABASE" = "template1" \) ]
-	then	for FILE in $OLDDIR/$DIR/*
+	     -d "$OLDDIR/base/$BASEDIR" -a \( "$BASEDIR" != "template1" \) ]
+	then	for FILE in $OLDDIR/base/$BASEDIR/*
 		do
 			BASEFILE="`basename $FILE`"
 			if [ `expr "$BASEFILE" : "pg_"` -ne 3 -a \
@@ -90,5 +82,8 @@ do
 		done
 	fi
 done
+
+mv $OLDDIR/pg_log data
+mv $OLDDIR/pg_variable data
 
 echo "You may removed the $OLDDIR directory with 'rm -r $OLDDIR'."
