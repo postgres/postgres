@@ -1,0 +1,25 @@
+# This is the pg_ident.conf file, which is used with Postgres ident-based
+# authentication (a subtype of host-based authentication).
+
+# This is a table of ident usernames (typically Unix usernames) and 
+# their corresponding Postgres usernames.  For example, user "bryanh" on
+# some particular remote system may equate to Postgres user "guest1".
+
+# This file contains multiple maps.  Each has a name.  The pg_hba.conf
+# file determines what connections relate to this file and for those that
+# do, which map to use.
+
+# Each record consists of 3 tokens:
+#
+# 1) map name
+# 2) ident username
+# 3) Postgres username
+
+# Note that it is possible for one user to map to multiple Postgres usernames.
+# A user always has to specify when he connects what Postgres username he is
+# using.  This file is only used to validate that selection.
+
+testmap   robert   bob
+testmap   lucy     lucy
+
+

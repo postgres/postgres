@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.2 1996/08/14 04:51:02 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.3 1996/10/12 07:47:08 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,10 +58,10 @@
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include "libpq/auth.h"
-#include "libpq/libpq.h"
-#include "libpq/pqcomm.h"
-#include "libpq/libpq-be.h"
+#include <libpq/auth.h>
+#include <libpq/libpq.h>
+#include <libpq/libpq-be.h>
+#include <libpq/hba.h>
 
 /*----------------------------------------------------------------
  * common definitions for generic fe/be routines
@@ -86,27 +86,37 @@ struct authsvc {
  * allowed.  Unauthenticated connections are disallowed unless there
  * isn't any authentication system.
  */
+
+#if defined(HBA)
+static int useHostBasedAuth = 1;
+#else
+static int useHostBasedAuth = 0;
+#endif
+
+#if defined(KRB4) || defined(KRB5) || defined(HBA)
+#define UNAUTH_ALLOWED 0
+#else
+#define UNAUTH_ALLOWED 1
+#endif
+
 static struct authsvc authsvcs[] = {
-#ifdef KRB4
+    { "unauth",   STARTUP_UNAUTH_MSG, UNAUTH_ALLOWED },
+    { "hba",      STARTUP_HBA_MSG,  1 },
     { "krb4",     STARTUP_KRB4_MSG, 1 },
-    { "kerberos", STARTUP_KRB4_MSG, 1 },
-#endif /* KRB4 */
-#ifdef KRB5
     { "krb5",     STARTUP_KRB5_MSG, 1 },
-    { "kerberos", STARTUP_KRB5_MSG, 1 },
-#endif /* KRB5 */
-    { UNAUTHNAME, STARTUP_MSG,
-#if defined(KRB4) || defined(KRB5)
-	  0
-#else /* !(KRB4 || KRB5) */
-	  1
-#endif /* !(KRB4 || KRB5) */
-    }
+#if defined(KRB5) 
+    { "kerberos", STARTUP_KRB5_MSG, 1 }
+#else
+    { "kerberos", STARTUP_KRB4_MSG, 1 }
+#endif
 };
 
 static n_authsvcs = sizeof(authsvcs) / sizeof(struct authsvc);
 
 #ifdef KRB4
+/* This has to be ifdef'd out because krb.h does exist.  This needs
+   to be fixed.
+*/
 /*----------------------------------------------------------------
  * MIT Kerberos authentication system - protocol version 4
  *----------------------------------------------------------------
@@ -184,9 +194,28 @@ pg_krb4_recvauth(int sock,
 
 #endif /* !FRONTEND */
 
+#else
+static int
+pg_krb4_recvauth(int sock,
+		 struct sockaddr_in *laddr,
+		 struct sockaddr_in *raddr,
+		 char *username)
+{
+  (void) sprintf(PQerrormsg,
+                 "pg_krb4_recvauth: Kerberos not implemented on this "
+                 "server.\n");
+  fputs(PQerrormsg, stderr);
+  pqdebug("%s", PQerrormsg);
+
+return(STATUS_ERROR);
+}
 #endif /* KRB4 */
 
+
 #ifdef KRB5
+/* This needs to be ifdef'd out because krb5.h doesn't exist.  This needs
+   to be fixed.
+*/
 /*----------------------------------------------------------------
  * MIT Kerberos authentication system - protocol version 5
  *----------------------------------------------------------------
@@ -222,7 +251,7 @@ pg_an_to_ln(char *aname)
 #else /* !FRONTEND */
 
 /*
- * pg_krb4_recvauth -- server routine to receive authentication information
+ * pg_krb5_recvauth -- server routine to receive authentication information
  *		       from the client
  *
  * We still need to compare the username obtained from the client's setup
@@ -348,266 +377,118 @@ pg_krb5_recvauth(int sock,
 
 #endif /* !FRONTEND */
 
-#endif /* KRB5 */
 
-
-/*----------------------------------------------------------------
- * host based authentication
- *----------------------------------------------------------------
- * based on the securelib package originally written by William
- * LeFebvre, EECS Department, Northwestern University
- * (phil@eecs.nwu.edu) - orginal configuration file code handling
- * by Sam Horrocks (sam@ics.uci.edu)
- *
- * modified and adapted for use with Postgres95 by Paul Fisher
- * (pnfisher@unity.ncsu.edu)
- */
-
-#define CONF_FILE "pg_hba"              /* Name of the config file           */
-
-#define MAX_LINES 255                    /* Maximum number of config lines    *
-                                         * that can apply to one database    */
-
-#define ALL_NAME "all"                  /* Name used in config file for      *
-                                         * lines that apply to all databases */
-
-#define MAX_TOKEN 80                    /* Maximum size of one token in the  *
-                                         * configuration file                */
- 
-struct conf_line {                      /* Info about config file line */
-  u_long adr, mask;
-};
- 
-static int next_token(FILE *, char *, int);
-
-/* hba_recvauth */
-/* check for host-based authentication */
-/*
- * hba_recvauth - check the sockaddr_in "addr" to see if it corresponds
- *                to an acceptable host for the database that's being
- *                connected to.  Return STATUS_OK if acceptable,
- *                otherwise return STATUS_ERROR.
- */
-
+#else
 static int
-hba_recvauth(struct sockaddr_in *addr, PacketBuf *pbuf, StartupInfo *sp)
+pg_krb5_recvauth(int sock,
+		 struct sockaddr_in *laddr,
+		 struct sockaddr_in *raddr,
+		 char *username)
 {
-    u_long ip_addr;
-    static struct conf_line conf[MAX_LINES];
-    static int nconf;
-    int i;
+  (void) sprintf(PQerrormsg,
+                 "pg_krb5_recvauth: Kerberos not implemented on this "
+                 "server.\n");
+  fputs(PQerrormsg, stderr);
+  pqdebug("%s", PQerrormsg);
 
-    char buf[MAX_TOKEN];
-    FILE *file;
-
-    char *conf_file;
-
-    /* put together the full pathname to the config file */
-    conf_file = (char *) malloc((strlen(DataDir)+strlen(CONF_FILE)+2)*sizeof(char));
-    sprintf(conf_file, "%s/%s", DataDir, CONF_FILE);
-
-    /* Open the config file. */
-    file = fopen(conf_file, "r");
-    if (file)
-    {
-        free(conf_file);
-	nconf = 0;
-
-	/* Grab the "name" */
-	while ((i = next_token(file, buf, sizeof(buf))) != EOF)
-	{
-	    /* If only token on the line, ignore */
-	    if (i == '\n') continue;
-	    
-	    /* Comment -- read until end of line then next line */
-	    if (buf[0] == '#')
-	    {
-	        while (next_token(file, buf, sizeof(buf)) == 0) ;
-	        continue;
-	    }
-
-	    /*
-	     * Check to make sure this says "all" or that it matches
-	     * the database name.
-	     */
-	    
-	    if (strcmp(buf, ALL_NAME) == 0 || (strcmp(buf, sp->database) == 0))
-	    {
-	        /* Get next token, if last on line, ignore */
-	        if (next_token(file, buf, sizeof(buf)) != 0)
-		    continue;
-
-		/* Got address */
-		conf[nconf].adr = inet_addr(buf);
-		    
-		/* Get next token (mask) */
-		i = next_token(file, buf, sizeof(buf));
-
-		/* Only ignore if we got no text at all */
-		if (i != EOF)
-		{
-		    /* Add to list, quit if array is full */
-		    conf[nconf++].mask = inet_addr(buf);
-		    if (nconf == MAX_LINES) break;
-		}
-
-		/* If not at end-of-line, keep reading til we are */
-		while (i == 0)
-		    i = next_token(file, buf, sizeof(buf));
-	    }
-	}
-	fclose(file);
-    }
-    else 
-    {  (void) sprintf(PQerrormsg,
-                      "hba_recvauth: Host-based authentication config file "
-                      "does not exist or permissions are not setup correctly! "
-                      "Unable to open file \"%s\".\n", 
-                      conf_file);
-	    fputs(PQerrormsg, stderr);
-	    pqdebug("%s", PQerrormsg);
-	free(conf_file);
-        return(STATUS_ERROR); 
-    }
-
-
-    /* Config lines now in memory so start checking address */
-    /* grab just the address */
-    ip_addr = addr->sin_addr.s_addr;
-
-    /*
-     * Go through the conf array, turn off the bits given by the mask
-     * and then compare the result with the address.  A match means
-     * that this address is ok.
-     */
-    for (i = 0; i < nconf; ++i)
-        if ((ip_addr & ~conf[i].mask) == conf[i].adr) return(STATUS_OK);
-    
-    /* no match, so we can't approve the address */
-    return(STATUS_ERROR);
+return(STATUS_ERROR);
 }
-
-/*
- * Grab one token out of fp.  Defined as the next string of non-whitespace
- * in the file.  After we get the token, continue reading until EOF, end of
- * line or the next token.  If it's the last token on the line, return '\n'
- * for the value.  If we get EOF before reading a token, return EOF.  In all
- * other cases return 0.
- */
-static int 
-next_token(FILE *fp, char *buf, int bufsz)
-{
-    int c;
-    char *eb = buf+(bufsz-1);
-
-    /* Discard inital whitespace */
-    while (isspace(c = getc(fp))) ;
-
-    /* EOF seen before any token so return EOF */
-    if (c == EOF) return -1;
-
-    /* Form a token in buf */
-    do {
-	if (buf < eb) *buf++ = c;
-	c = getc(fp);
-    } while (!isspace(c) && c != EOF);
-    *buf = '\0';
-
-    /* Discard trailing tabs and spaces */
-    while (c == ' ' || c == '\t') c = getc(fp);
-
-    /* Put back the char that was non-whitespace (putting back EOF is ok) */
-    (void) ungetc(c, fp);
-
-    /* If we ended with a newline, return that, otherwise return 0 */
-    return (c == '\n' ? '\n' : 0);
-}
+#endif /* KRB5 */
 
 /*
  * be_recvauth -- server demux routine for incoming authentication information
  */
 int
-be_recvauth(MsgType msgtype, Port *port, char *username, StartupInfo* sp)
+be_recvauth(MsgType msgtype_arg, Port *port, char *username, StartupInfo* sp)
 {
+    MsgType msgtype;
+
+    /* A message type of STARTUP_MSG (which once upon a time was the only
+       startup message type) means user wants us to choose.  "unauth" is 
+       what used to be the only choice, but installation may choose "hba"
+       instead.
+       */
+    if (msgtype_arg == STARTUP_MSG && useHostBasedAuth)
+        msgtype = STARTUP_HBA_MSG;
+    else 
+        msgtype = STARTUP_UNAUTH_MSG;
+
     if (!username) {
-	(void) sprintf(PQerrormsg,
-		       "be_recvauth: no user name passed\n");
-	fputs(PQerrormsg, stderr);
-	pqdebug("%s", PQerrormsg);
-	return(STATUS_ERROR);
+        (void) sprintf(PQerrormsg,
+                       "be_recvauth: no user name passed\n");
+        fputs(PQerrormsg, stderr);
+        pqdebug("%s", PQerrormsg);
+        return(STATUS_ERROR);
     }
     if (!port) {
-	(void) sprintf(PQerrormsg,
-		       "be_recvauth: no port structure passed\n");
-	fputs(PQerrormsg, stderr);
-	pqdebug("%s", PQerrormsg);
-	return(STATUS_ERROR);
+        (void) sprintf(PQerrormsg,
+        "be_recvauth: no port structure passed\n");
+        fputs(PQerrormsg, stderr);
+        pqdebug("%s", PQerrormsg);
+        return(STATUS_ERROR);
     }
     
     switch (msgtype) {
-#ifdef KRB4
     case STARTUP_KRB4_MSG:
-	if (!be_getauthsvc(msgtype)) {
-	    (void) sprintf(PQerrormsg,
-			   "be_recvauth: krb4 authentication disallowed\n");
-	    fputs(PQerrormsg, stderr);
-	    pqdebug("%s", PQerrormsg);
-	    return(STATUS_ERROR);
-	}
+        if (!be_getauthsvc(msgtype)) {
+            (void) sprintf(PQerrormsg,
+                           "be_recvauth: krb4 authentication disallowed\n");
+            fputs(PQerrormsg, stderr);
+            pqdebug("%s", PQerrormsg);
+            return(STATUS_ERROR);
+        }
 	if (pg_krb4_recvauth(port->sock, &port->laddr, &port->raddr,
-			     username) != STATUS_OK) {
-	    (void) sprintf(PQerrormsg,
-			   "be_recvauth: krb4 authentication failed\n");
-	    fputs(PQerrormsg, stderr);
-	    pqdebug("%s", PQerrormsg);
-	    return(STATUS_ERROR);
-	}
+                             username) != STATUS_OK) {
+            (void) sprintf(PQerrormsg,
+                           "be_recvauth: krb4 authentication failed\n");
+            fputs(PQerrormsg, stderr);
+            pqdebug("%s", PQerrormsg);
+            return(STATUS_ERROR);
+        }
 	break;
-#endif
-#ifdef KRB5
     case STARTUP_KRB5_MSG:
-	if (!be_getauthsvc(msgtype)) {
-	    (void) sprintf(PQerrormsg,
-			   "be_recvauth: krb5 authentication disallowed\n");
-	    fputs(PQerrormsg, stderr);
-	    pqdebug("%s", PQerrormsg);
-	    return(STATUS_ERROR);
-	}
-	if (pg_krb5_recvauth(port->sock, &port->laddr, &port->raddr,
-			     username) != STATUS_OK) {
-	    (void) sprintf(PQerrormsg,
-			   "be_recvauth: krb5 authentication failed\n");
-	    fputs(PQerrormsg, stderr);
-	    pqdebug("%s", PQerrormsg);
-	    return(STATUS_ERROR);
-	}
-	break;
-#endif
-    case STARTUP_MSG:
-	if (!be_getauthsvc(msgtype)) {
-	    (void) sprintf(PQerrormsg,
-			   "be_recvauth: unauthenticated connections disallowed failed\n");
-	    fputs(PQerrormsg, stderr);
-	    pqdebug("%s", PQerrormsg);
-	    return(STATUS_ERROR);
-	}
-	break;
+        if (!be_getauthsvc(msgtype)) {
+            (void) sprintf(PQerrormsg,
+                           "be_recvauth: krb5 authentication disallowed\n");
+            fputs(PQerrormsg, stderr);
+            pqdebug("%s", PQerrormsg);
+            return(STATUS_ERROR);
+          }
+        if (pg_krb5_recvauth(port->sock, &port->laddr, &port->raddr,
+                             username) != STATUS_OK) {
+            (void) sprintf(PQerrormsg,
+                           "be_recvauth: krb5 authentication failed\n");
+            fputs(PQerrormsg, stderr);
+            pqdebug("%s", PQerrormsg);
+            return(STATUS_ERROR);
+        }
+        break;
+    case STARTUP_UNAUTH_MSG:
+        if (!be_getauthsvc(msgtype)) {
+            (void) sprintf(PQerrormsg,
+                           "be_recvauth: "
+                           "unauthenticated connections disallowed\n");
+            fputs(PQerrormsg, stderr);
+            pqdebug("%s", PQerrormsg);
+            return(STATUS_ERROR);
+        }
+        break;
     case STARTUP_HBA_MSG:
-	if (hba_recvauth(&port->raddr, &port->buf, sp) != STATUS_OK) {
-	    (void) sprintf(PQerrormsg,
-			   "be_recvauth: host-based authentication failed\n");
-	    fputs(PQerrormsg, stderr);
-	    pqdebug("%s", PQerrormsg);
-	    return(STATUS_ERROR);
-	}
-	break;
+        if (hba_recvauth(port, sp->database, sp->user, DataDir) != STATUS_OK) {
+            (void) sprintf(PQerrormsg,
+                           "be_recvauth: host-based authentication failed\n");
+            fputs(PQerrormsg, stderr);
+            pqdebug("%s", PQerrormsg);
+            return(STATUS_ERROR);
+          }
+        break;
     default:
-	(void) sprintf(PQerrormsg,
-		       "be_recvauth: unrecognized message type: %d\n",
-		       msgtype);
-	fputs(PQerrormsg, stderr);
-	pqdebug("%s", PQerrormsg);
-	return(STATUS_ERROR);
+        (void) sprintf(PQerrormsg,
+                       "be_recvauth: unrecognized message type: %d\n",
+                       msgtype);
+        fputs(PQerrormsg, stderr);
+        pqdebug("%s", PQerrormsg);
+        return(STATUS_ERROR);
     }
     return(STATUS_OK);
 }
