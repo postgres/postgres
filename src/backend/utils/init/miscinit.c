@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.8 1997/09/08 02:31:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.9 1998/01/25 04:07:00 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -226,7 +226,7 @@ GetProcessingMode()
 char	   *
 GetDatabasePath()
 {
-	return DatabasePath;
+	return strdup(DatabasePath);
 }
 
 /*
@@ -236,7 +236,7 @@ GetDatabasePath()
 char	   *
 GetDatabaseName()
 {
-	return DatabaseName;
+	return strdup(DatabaseName);
 }
 
 void
