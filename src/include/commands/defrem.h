@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: defrem.h,v 1.6 1996/11/13 20:51:18 scrappy Exp $
+ * $Id: defrem.h,v 1.7 1997/05/22 00:15:47 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,6 +48,6 @@ extern void RemoveFunction(char *functionName, int nargs, List *argNameList);
 extern void RemoveOperator(char *operatorName, 
 			   char *typeName1, char *typeName2);
 extern void RemoveType(char *typeName);
-extern void RemoveAggregate(char *aggName);
+extern void RemoveAggregate(char *aggName, char *aggType);
 
 #endif	/* DEFREM_H */

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.8 1997/04/23 03:17:29 scrappy Exp $
+ * $Id: nodes.h,v 1.9 1997/05/22 00:15:58 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -164,6 +164,7 @@ typedef enum NodeTag {
     T_ProcedureStmt,
     T_PurgeStmt,
     T_RecipeStmt,
+    T_RemoveAggrStmt,
     T_RemoveFuncStmt,
     T_RemoveOperStmt,
     T_RemoveStmt,

@@ -1,7 +1,7 @@
 --
 -- errors.source
 --
--- $Header: /cvsroot/pgsql/src/test/regress/sql/errors.sql,v 1.1 1997/04/27 03:56:21 scrappy Exp $
+-- $Header: /cvsroot/pgsql/src/test/regress/sql/errors.sql,v 1.2 1997/05/22 00:17:24 scrappy Exp $
  
 
 -- bad in postquel, but ok in postsql
@@ -181,6 +181,15 @@ drop aggregate 314159;
 
 -- no such aggregate 
 drop aggregate nonesuch;
+
+-- missing aggregate type
+drop aggregate newcnt1;
+
+-- bad aggregate type
+drop aggregate newcnt nonesuch;
+
+-- no such aggregate for type
+drop aggregate newcnt float4;
 
 
 --

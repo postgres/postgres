@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.7 1996/11/30 18:06:10 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.8 1997/05/22 00:14:32 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -403,27 +403,78 @@ RemoveFunction(char *functionName, /* function name to be removed */
 }
 
 void
-RemoveAggregate(char *aggName)
+RemoveAggregate(char *aggName, char *aggType)
 {
-    Relation 	relation;
-    HeapScanDesc	scan;
-    HeapTuple	tup;
-    ItemPointerData	  itemPointerData;
-    static ScanKeyData key[3] = {
-	{ 0, Anum_pg_aggregate_aggname, NameEqualRegProcedure }
-    };
+    Relation            relation;
+    HeapScanDesc        scan;
+    HeapTuple           tup;
+    ItemPointerData     itemPointerData;
+    char                *userName;
+    char                *typename;
+    Oid                 basetypeID = InvalidOid;
+    bool                defined;
+    ScanKeyData         aggregateKey[3];
+
     
-    key[0].sk_argument = PointerGetDatum(aggName);
+    /*
+     * if a basetype is passed in, then attempt to find an aggregate for that
+     *   specific type.
+     *
+     * else if the basetype is blank, then attempt to find an aggregate with a
+     *   basetype of zero.  This is valid. It means that the aggregate is to apply
+     *   to all basetypes.  ie, a counter of some sort.  
+     *
+     */
+
+    if (aggType) {
+        basetypeID = TypeGet(aggType, &defined);
+        if (!OidIsValid(basetypeID)) {
+            elog(WARN, "RemoveAggregate: type '%s' does not exist", aggType);
+        }
+    } else {
+        basetypeID = 0;
+    }
+
+/*
+#ifndef NO_SECURITY
+*/
+    userName = GetPgUserName();
+    if (!pg_aggr_ownercheck(userName, aggName, basetypeID)) {
+        if (aggType) {
+            elog(WARN, "RemoveAggregate: aggregate '%s' on type '%s': permission denied",
+                 aggName, aggType);
+        } else {
+            elog(WARN, "RemoveAggregate: aggregate '%s': permission denied",
+                 aggName);
+        }
+    }
+/*
+#endif
+*/
+
+    ScanKeyEntryInitialize(&aggregateKey[0], 0x0,
+			   Anum_pg_aggregate_aggname,
+			   NameEqualRegProcedure,
+			   PointerGetDatum(aggName));
     
-    fmgr_info(key[0].sk_procedure, &key[0].sk_func, &key[0].sk_nargs);
+    ScanKeyEntryInitialize(&aggregateKey[1], 0x0,
+			   Anum_pg_aggregate_aggbasetype,
+			   ObjectIdEqualRegProcedure,
+			   ObjectIdGetDatum(basetypeID));
+    
     relation = heap_openr(AggregateRelationName);
-    scan = heap_beginscan(relation, 0, NowTimeQual, 1, key);
+    scan = heap_beginscan(relation, 0, NowTimeQual, 2, aggregateKey);
     tup = heap_getnext(scan, 0, (Buffer *) 0);
     if (!HeapTupleIsValid(tup)) {
-	heap_endscan(scan);
-	heap_close(relation);
-	elog(WARN, "RemoveAggregate: aggregate '%s' does not exist",
-	     aggName);
+        heap_endscan(scan);
+        heap_close(relation);
+        if (aggType) {
+            elog(WARN, "RemoveAggregate: aggregate '%s' for '%s' does not exist",
+                 aggName, aggType);
+        } else {
+            elog(WARN, "RemoveAggregate: aggregate '%s' for all types does not exist",
+                 aggName);
+        }
     }
     ItemPointerCopy(&tup->t_ctid, &itemPointerData);
     heap_delete(relation, &itemPointerData);

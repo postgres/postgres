@@ -1,7 +1,7 @@
 --
 -- destroy.source
 --
--- $Header: /cvsroot/pgsql/src/test/regress/sql/Attic/destroy.sql,v 1.2 1997/04/27 04:35:31 scrappy Exp $
+-- $Header: /cvsroot/pgsql/src/test/regress/sql/Attic/destroy.sql,v 1.3 1997/05/22 00:17:15 scrappy Exp $
 --
 
 --
@@ -74,11 +74,11 @@ DROP TYPE widget;
 --
 -- AGGREGATE REMOVAL
 --
-DROP AGGREGATE newavg;
+DROP AGGREGATE newavg int4;
 
-DROP AGGREGATE newsum;
+DROP AGGREGATE newsum int4;
 
-DROP AGGREGATE newcnt;
+DROP AGGREGATE newcnt int4;
 
 
 --

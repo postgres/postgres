@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.32 1997/04/23 06:04:42 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.33 1997/05/22 00:14:52 scrappy Exp $
  *
  * HISTORY
  *    AUTHOR		DATE		MAJOR EVENT
@@ -104,8 +104,8 @@ static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr);
 	ExtendStmt, FetchStmt,	GrantStmt,
 	IndexStmt, MoveStmt, ListenStmt, OptimizableStmt, 
         ProcedureStmt, PurgeStmt,
-	RecipeStmt, RemoveOperStmt, RemoveFuncStmt, RemoveStmt, RenameStmt,
-        RevokeStmt, RuleStmt, TransactionStmt, ViewStmt, LoadStmt,
+	RecipeStmt, RemoveAggrStmt, RemoveOperStmt, RemoveFuncStmt, RemoveStmt,
+	RenameStmt, RevokeStmt, RuleStmt, TransactionStmt, ViewStmt, LoadStmt,
 	CreatedbStmt, DestroydbStmt, VacuumStmt, RetrieveStmt, CursorStmt,
 	ReplaceStmt, AppendStmt, NotifyStmt, DeleteStmt, ClusterStmt,
 	ExplainStmt, VariableSetStmt, VariableShowStmt, VariableResetStmt
@@ -113,7 +113,7 @@ static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr);
 %type <str>	relation_name, copy_file_name, copy_delimiter, def_name,
 	database_name, access_method_clause, access_method, attr_name,
 	class, index_name, name, file_name, recipe_name,
-	var_name
+	var_name, aggr_argtype
 
 %type <str>	opt_id, opt_portal_name,
 	before_clause, after_clause, all_Op, MathOp, opt_name, opt_unique,
@@ -126,7 +126,7 @@ static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr);
 %type <list>	stmtblock, stmtmulti,
 	relation_name_list, OptTableElementList,
 	tableElementList, OptInherit, definition,
-	opt_with, def_args, def_name_list, func_argtypes, 
+	opt_with, def_args, def_name_list, func_argtypes
 	oper_argtypes, OptStmtList, OptStmtBlock, OptStmtMulti,
 	opt_column_list, columnList, opt_va_list, va_list,
 	sort_clause, sortby_list, index_params, index_list,
@@ -262,6 +262,7 @@ stmt :	  AddAttrStmt
 	| ProcedureStmt
 	| PurgeStmt			
 	| RecipeStmt
+	| RemoveAggrStmt
 	| RemoveOperStmt
 	| RemoveFuncStmt
 	| RemoveStmt
@@ -921,6 +922,8 @@ after_clause:	AFTER date		{ $$ = $2; }
  *
  *	remove function <funcname>
  *		(REMOVE FUNCTION "funcname" (arg1, arg2, ...))
+ *	remove aggregate <aggname>
+ *		(REMOVE AGGREGATE "aggname" "aggtype")
  *	remove operator <opname>
  *		(REMOVE OPERATOR "opname" (leftoperand_typ rightoperand_typ))
  *	remove type <typename>
@@ -939,12 +942,24 @@ RemoveStmt:  DROP remove_type name
 		}
 	;
 
-remove_type:  AGGREGATE 		{  $$ = AGGREGATE; }
-	|  Type 			{  $$ = P_TYPE; }
-	|  INDEX 			{  $$ = INDEX; }
-	|  RULE 			{  $$ = RULE; }
-	|  VIEW				{  $$ = VIEW; }
+remove_type:  Type 				{  $$ = P_TYPE; }
+	|  INDEX	 			{  $$ = INDEX; }
+	|  RULE 				{  $$ = RULE; }
+	|  VIEW					{  $$ = VIEW; }
  	;
+
+RemoveAggrStmt:  DROP AGGREGATE name aggr_argtype
+		{
+			RemoveAggrStmt *n = makeNode(RemoveAggrStmt);
+			n->aggname = $3;
+			n->aggtype = $4;
+			$$ = (Node *)n;
+		}
+	;
+
+aggr_argtype:  name				{ $$ = $1; }
+	|  '*'					{ $$ = NULL; }
+	;
 
 RemoveFuncStmt:  DROP FUNCTION name '(' func_argtypes ')'
                 {

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.16 1997/04/23 06:09:33 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.17 1997/05/22 00:15:36 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -440,9 +440,6 @@ ProcessUtility(Node *parsetree,
 	    CHECK_IF_ABORTED();
 	
 	    switch(stmt->removeType) {
-	    case AGGREGATE:
-		RemoveAggregate(stmt->name);
-		break;
 	    case INDEX:
 		relname = stmt->name;
 		if (IsSystemRelationName(relname))
@@ -496,6 +493,16 @@ ProcessUtility(Node *parsetree,
 	    break;
 	}
 	break;
+
+    case T_RemoveAggrStmt:
+	{
+	    RemoveAggrStmt *stmt = (RemoveAggrStmt *)parsetree;
+	    commandTag = "DROP";
+	    CHECK_IF_ABORTED();
+	    RemoveAggregate(stmt->aggname, stmt->aggtype);
+	}
+	break;
+      
     case T_RemoveFuncStmt:
 	{
 	    RemoveFuncStmt *stmt = (RemoveFuncStmt *)parsetree;

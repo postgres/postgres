@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/Attic/aclchk.c,v 1.9 1997/04/03 21:31:47 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/Attic/aclchk.c,v 1.10 1997/05/22 00:15:21 scrappy Exp $
  *
  * NOTES
  *    See acl.h.
@@ -29,6 +29,7 @@
 #include "catalog/catname.h"
 #include "catalog/pg_group.h"
 #include "catalog/pg_operator.h"
+#include "catalog/pg_aggregate.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_user.h"
 #include "utils/syscache.h"
@@ -558,6 +559,46 @@ pg_func_ownercheck(char *usename,
 	func_error("pg_func_ownercheck", funcname, nargs, arglist);
 
     owner_id = ((Form_pg_proc) GETSTRUCT(htp))->proowner;
+	
+    return(user_id == owner_id);
+}
+
+int32
+pg_aggr_ownercheck(char *usename, 
+		   char *aggname,
+		   Oid basetypeID)
+{
+    HeapTuple htp;
+    AclId user_id, owner_id;
+
+    htp = SearchSysCacheTuple(USENAME, PointerGetDatum(usename), 
+			      0,0,0);
+    if (!HeapTupleIsValid(htp))
+	elog(WARN, "pg_aggr_ownercheck: user \"%-.*s\" not found",
+	     NAMEDATALEN, usename);
+    user_id = (AclId) ((Form_pg_user) GETSTRUCT(htp))->usesysid;
+
+    /*
+     * Superusers bypass all permission-checking.
+     */
+    if (((Form_pg_user) GETSTRUCT(htp))->usesuper) {
+#ifdef ACLDEBUG_TRACE
+	elog(DEBUG, "pg_aggr_ownercheck: user \"%-.*s\" is superuser",
+	     NAMEDATALEN, usename);
+#endif
+	return(1);
+    }
+
+    htp = SearchSysCacheTuple(AGGNAME,
+			      PointerGetDatum(aggname),
+			      PointerGetDatum(basetypeID),
+			      0,
+			      0);
+
+    if (!HeapTupleIsValid(htp))
+	agg_error("pg_aggr_ownercheck", aggname, basetypeID);
+
+    owner_id = ((Form_pg_aggregate) GETSTRUCT(htp))->aggowner;
 	
     return(user_id == owner_id);
 }

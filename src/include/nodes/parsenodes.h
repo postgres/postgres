@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.15 1997/04/29 04:28:59 vadim Exp $
+ * $Id: parsenodes.h,v 1.16 1997/05/22 00:16:13 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -272,6 +272,16 @@ typedef struct PurgeStmt {
 } PurgeStmt;
 
 /* ----------------------
+ *	Drop Aggregate Statement
+ * ----------------------
+ */
+typedef struct RemoveAggrStmt {
+    NodeTag		type;
+    char		*aggname;	/* aggregate to drop */
+    char		*aggtype;	/* for this type */
+} RemoveAggrStmt;
+
+/* ----------------------
  *	Drop Function Statement
  * ----------------------
  */
@@ -292,12 +302,12 @@ typedef struct RemoveOperStmt {
 } RemoveOperStmt;
 
 /* ----------------------
- *	Drop {Aggregate|Type|Index|Rule|View} Statement
+ *	Drop {Type|Index|Rule|View} Statement
  * ----------------------
  */
 typedef struct RemoveStmt {
     NodeTag		type;
-    int 		removeType;	/* AGGREGATE|P_TYPE|INDEX|RULE|VIEW */
+    int 		removeType;	/* P_TYPE|INDEX|RULE|VIEW */
     char		*name;		/* name to drop */
 } RemoveStmt;
 

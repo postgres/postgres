@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: acl.h,v 1.5 1997/03/12 20:48:48 scrappy Exp $
+ * $Id: acl.h,v 1.6 1997/05/22 00:16:41 scrappy Exp $
  *
  * NOTES
  *    For backward-compatability purposes we have to allow there
@@ -161,6 +161,8 @@ extern int32 pg_aclcheck(char *relname, char *usename, AclMode mode);
 extern int32 pg_ownercheck(char *usename, char *value, int cacheid);
 extern int32 pg_func_ownercheck(char *usename, char *funcname,
 			 int nargs, Oid *arglist);
+extern int32 pg_aggr_ownercheck(char *usename, char *aggname,
+			 Oid basetypeID);
 
 #endif	/* ACL_H */
 

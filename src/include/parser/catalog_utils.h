@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: catalog_utils.h,v 1.8 1997/02/07 16:24:12 momjian Exp $
+ * $Id: catalog_utils.h,v 1.9 1997/05/22 00:16:28 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,5 +53,6 @@ extern Oid get_typelem(Oid type_id);
 extern char FindDelimiter(char *typename);
 extern void op_error(char *op, Oid arg1, Oid arg2);
 extern void func_error(char *caller, char *funcname, int nargs, Oid *argtypes);
+extern void agg_error(char *caller, char *aggname, Oid basetypeID);
 
 #endif	/* CATALOG_UTILS_H */

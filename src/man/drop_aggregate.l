@@ -1,12 +1,12 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/drop_aggregate.l,v 1.2 1996/12/11 00:27:38 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/drop_aggregate.l,v 1.3 1997/05/22 00:16:56 scrappy Exp $
 .TH "DROP AGGREGATE" SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
 drop aggregate \(em remove the definition of an aggregate
 .SH SYNOPSIS
 .nf
-\fBdrop aggregate\fR aggname
+\fBdrop aggregate\fR aggname aggtype
 .fi
 .SH DESCRIPTION
 .BR "drop aggregate"
@@ -16,9 +16,9 @@ aggregate.
 .SH EXAMPLE
 .nf
 --
---Remove the average aggregate
+--Remove the average aggregate for type int4
 --
-drop aggregate avg
+drop aggregate avg int4
 .fi
 .SH "SEE ALSO"
 create aggregate(l).

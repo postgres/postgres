@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/Attic/catalog_utils.c,v 1.17 1997/03/02 01:03:00 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/Attic/catalog_utils.c,v 1.18 1997/05/22 00:14:41 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1499,3 +1499,19 @@ func_error(char *caller, char *funcname, int nargs, Oid *argtypes)
     elog(WARN, "%s: function %s(%s) does not exist", caller, funcname, p);
 }
 
+/*
+ * Error message when aggregate lookup fails that gives details of the
+ * basetype
+ */
+void
+agg_error(char *caller, char *aggname, Oid basetypeID)
+{
+    /* basetypeID that is Invalid (zero) means aggregate over all types. (count) */
+
+    if (basetypeID == InvalidOid) {
+        elog(WARN, "%s: aggregate '%s' for all types does not exist", caller, aggname);
+    } else {
+        elog(WARN, "%s: aggregate '%s' for '%s' does not exist", caller, aggname,
+            tname(get_id_type(basetypeID)));
+    }
+}
