@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.73 2001/09/28 08:09:09 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.74 2001/10/08 21:48:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,6 +27,7 @@
 
 static List *ExpandAllTables(ParseState *pstate);
 static char *FigureColname(Node *node);
+static int FigureColnameInternal(Node *node, char **name);
 
 
 /*
@@ -460,15 +461,28 @@ ExpandAllTables(ParseState *pstate)
 static char *
 FigureColname(Node *node)
 {
+	char   *name = NULL;
+
+	FigureColnameInternal(node, &name);
+	if (name != NULL)
+		return name;
+	/* default result if we can't guess anything */
+	return "?column?";
+}
+
+static int
+FigureColnameInternal(Node *node, char **name)
+{
+	int		strength = 0;
+
 	if (node == NULL)
-		return "?column?";
+		return strength;
 
 	switch (nodeTag(node))
 	{
 		case T_Ident:
-			return ((Ident *) node)->name;
-		case T_A_Const:
-			return (FigureColname((Node *)((A_Const *) node)->typename));
+			*name = ((Ident *) node)->name;
+			return 2;
 		case T_Attr:
 			{
 				List	   *attrs = ((Attr *) node)->attrs;
@@ -477,36 +491,45 @@ FigureColname(Node *node)
 				{
 					while (lnext(attrs) != NIL)
 						attrs = lnext(attrs);
-					return strVal(lfirst(attrs));
+					*name = strVal(lfirst(attrs));
+					return 2;
 				}
 			}
 			break;
 		case T_FuncCall:
-			return ((FuncCall *) node)->funcname;
-		case T_TypeCast: 
+			*name = ((FuncCall *) node)->funcname;
+			return 2;
+		case T_A_Const:
+			if (((A_Const *) node)->typename != NULL)
 			{
-				char	   *name;
-
-				name = FigureColname(((TypeCast *) node)->arg);
-				if (strcmp(name, "?column?") == 0)
-				  name = FigureColname((Node *)((TypeCast *) node)->typename);
-				return name;
+				*name = ((A_Const *) node)->typename->name;
+				return 1;
+			}
+			break;
+		case T_TypeCast: 
+			strength = FigureColnameInternal(((TypeCast *) node)->arg,
+											 name);
+			if (strength <= 1)
+			{
+				if (((TypeCast *) node)->typename != NULL)
+				{
+					*name = ((TypeCast *) node)->typename->name;
+					return 1;
+				}
 			}
 			break;
 		case T_CaseExpr:
+			strength = FigureColnameInternal(((CaseExpr *) node)->defresult,
+											 name);
+			if (strength <= 1)
 			{
-				char	   *name;
-
-				name = FigureColname(((CaseExpr *) node)->defresult);
-				if (strcmp(name, "?column?") == 0)
-					name = "case";
-				return name;
+				*name = "case";
+				return 1;
 			}
 			break;
-		case T_TypeName:
-			return ((TypeName *) node)->name;
 		default:
 			break;
 	}
-	return "?column?";
+
+	return strength;
 }
