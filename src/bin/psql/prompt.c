@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/prompt.c,v 1.15 2000/11/13 23:37:53 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/prompt.c,v 1.16 2000/11/27 02:20:36 tgl Exp $
  */
 #include "postgres.h"
 #include "prompt.h"
@@ -277,7 +277,7 @@ get_prompt(promptStatus_t status)
 							fgets(buf, MAX_PROMPT_SIZE - 1, fd);
 							pclose(fd);
 						}
-						if (buf[strlen(buf) - 1] == '\n')
+						if (strlen(buf) > 0 && buf[strlen(buf) - 1] == '\n')
 							buf[strlen(buf) - 1] = '\0';
 						free(file);
 						p += cmdend + 1;

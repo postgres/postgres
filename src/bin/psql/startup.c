@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.40 2000/11/25 19:05:44 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.41 2000/11/27 02:20:36 tgl Exp $
  */
 #include "postgres.h"
 
@@ -180,7 +180,8 @@ main(int argc, char *argv[])
 							   username, password);
 
 		if (PQstatus(pset.db) == CONNECTION_BAD &&
-			strcmp(PQerrorMessage(pset.db), "fe_sendauth: no password supplied\n") == 0)
+			strcmp(PQerrorMessage(pset.db), "fe_sendauth: no password supplied\n") == 0 &&
+			!feof(stdin))
 		{
 			PQfinish(pset.db);
 			need_pass = true;

@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/input.c,v 1.13 2000/04/12 17:16:22 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/input.c,v 1.14 2000/11/27 02:20:36 tgl Exp $
  */
 #include "postgres.h"
 #include "input.h"
@@ -91,7 +91,7 @@ gets_fromFile(FILE *source)
 
 	initPQExpBuffer(&buffer);
 
-	while (fgets(line, 1024, source) != NULL)
+	while (fgets(line, sizeof(line), source) != NULL)
 	{
 		appendPQExpBufferStr(&buffer, line);
 		if (buffer.data[buffer.len - 1] == '\n')
