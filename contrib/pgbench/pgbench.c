@@ -1,5 +1,5 @@
 /*
- * $Header: /cvsroot/pgsql/contrib/pgbench/pgbench.c,v 1.14 2002/01/10 01:11:45 tgl Exp $
+ * $Header: /cvsroot/pgsql/contrib/pgbench/pgbench.c,v 1.15 2002/02/18 05:46:41 momjian Exp $
  *
  * pgbench: a simple TPC-B like benchmark program for PostgreSQL
  * written by Tatsuo Ishii
@@ -546,16 +546,6 @@ init()
 			if (PQendcopy(con))
 			{
 				fprintf(stderr, "PQendcopy failed\n");
-				exit(1);
-			}
-
-			/*
-			 * do a checkpoint to purge the old WAL logs
-			 */
-			res = PQexec(con, "checkpoint");
-			if (PQresultStatus(res) != PGRES_COMMAND_OK)
-			{
-				fprintf(stderr, "%s", PQerrorMessage(con));
 				exit(1);
 			}
 		}
