@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.86 2003/07/24 04:38:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.87 2003/07/27 04:53:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,11 +67,15 @@ date_in(PG_FUNCTION_ARGS)
 	char		lowstr[MAXDATELEN + 1];
 
 	if (strlen(str) >= sizeof(lowstr))
-		elog(ERROR, "Bad date external representation (too long) '%s'", str);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+				 errmsg("invalid input syntax for date: \"%s\"", str)));
 
 	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
 	 || (DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, &tzp) != 0))
-		elog(ERROR, "Bad date external representation '%s'", str);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+				 errmsg("invalid input syntax for date: \"%s\"", str)));
 
 	switch (dtype)
 	{
@@ -79,8 +83,10 @@ date_in(PG_FUNCTION_ARGS)
 			break;
 
 		case DTK_CURRENT:
-			elog(ERROR, "Date CURRENT no longer supported"
-				 "\n\tdate_in() internal coding error");
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("\"current\" is no longer supported")));
+
 			GetCurrentDateTime(tm);
 			break;
 
@@ -89,7 +95,9 @@ date_in(PG_FUNCTION_ARGS)
 			break;
 
 		default:
-			elog(ERROR, "Unrecognized date external representation '%s'", str);
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+					 errmsg("invalid input syntax for date: \"%s\"", str)));
 	}
 
 	date = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - POSTGRES_EPOCH_JDATE;
@@ -356,7 +364,9 @@ timestamp_date(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 
 	if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL) != 0)
-		elog(ERROR, "Unable to convert timestamp to date");
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("timestamp out of range")));
 
 	result = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - POSTGRES_EPOCH_JDATE;
 
@@ -426,7 +436,9 @@ timestamptz_date(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 
 	if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn) != 0)
-		elog(ERROR, "Unable to convert timestamp to date");
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("timestamp out of range")));
 
 	result = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - POSTGRES_EPOCH_JDATE;
 
@@ -451,7 +463,9 @@ abstime_date(PG_FUNCTION_ARGS)
 		case INVALID_ABSTIME:
 		case NOSTART_ABSTIME:
 		case NOEND_ABSTIME:
-			elog(ERROR, "Unable to convert reserved abstime value to date");
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("cannot convert reserved abstime value to date")));
 
 			/*
 			 * pretend to drop through to make compiler think that result
@@ -510,7 +524,10 @@ text_date(PG_FUNCTION_ARGS)
 				dstr[MAXDATELEN + 1];
 
 	if (VARSIZE(str) - VARHDRSZ > MAXDATELEN)
-		elog(ERROR, "Bad date external representation (too long)");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+				 errmsg("invalid input syntax for date: \"%s\"",
+						 VARDATA(str))));
 
 	sp = VARDATA(str);
 	dp = dstr;
@@ -548,11 +565,15 @@ time_in(PG_FUNCTION_ARGS)
 	int			ftype[MAXDATEFIELDS];
 
 	if (strlen(str) >= sizeof(lowstr))
-		elog(ERROR, "Bad time external representation (too long) '%s'", str);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+				 errmsg("invalid input syntax for time: \"%s\"", str)));
 
 	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
 	 || (DecodeTimeOnly(field, ftype, nf, &dtype, tm, &fsec, &tz) != 0))
-		elog(ERROR, "Bad time external representation '%s'", str);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+				 errmsg("invalid input syntax for time: \"%s\"", str)));
 
 	tm2time(tm, fsec, &result);
 	AdjustTimeForTypmod(&result, typmod);
@@ -978,7 +999,9 @@ timestamp_time(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 
 	if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL) != 0)
-		elog(ERROR, "Unable to convert timestamp to time");
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("timestamp out of range")));
 
 #ifdef HAVE_INT64_TIMESTAMP
 
@@ -1013,7 +1036,9 @@ timestamptz_time(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 
 	if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn) != 0)
-		elog(ERROR, "Unable to convert timestamptz to time");
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("timestamp out of range")));
 
 #ifdef HAVE_INT64_TIMESTAMP
 
@@ -1228,7 +1253,10 @@ text_time(PG_FUNCTION_ARGS)
 				dstr[MAXDATELEN + 1];
 
 	if (VARSIZE(str) - VARHDRSZ > MAXDATELEN)
-		elog(ERROR, "Bad time external representation (too long)");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+				 errmsg("invalid input syntax for time: \"%s\"",
+						 VARDATA(str))));
 
 	sp = VARDATA(str);
 	dp = dstr;
@@ -1259,9 +1287,12 @@ time_part(PG_FUNCTION_ARGS)
 				lowunits[MAXDATELEN + 1];
 
 	if (VARSIZE(units) - VARHDRSZ > MAXDATELEN)
-		elog(ERROR, "TIME units '%s' not recognized",
-			 DatumGetCString(DirectFunctionCall1(textout,
-											   PointerGetDatum(units))));
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("TIME units \"%s\" not recognized",
+						 DatumGetCString(DirectFunctionCall1(textout,
+										 PointerGetDatum(units))))));
+
 	up = VARDATA(units);
 	lp = lowunits;
 	for (i = 0; i < (VARSIZE(units) - VARHDRSZ); i++)
@@ -1326,9 +1357,12 @@ time_part(PG_FUNCTION_ARGS)
 			case DTK_CENTURY:
 			case DTK_MILLENNIUM:
 			default:
-				elog(ERROR, "TIME units '%s' not supported",
-					 DatumGetCString(DirectFunctionCall1(textout,
-											   PointerGetDatum(units))));
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("TIME units \"%s\" not recognized",
+								 DatumGetCString(DirectFunctionCall1(textout,
+												 PointerGetDatum(units))))));
+
 				result = 0;
 		}
 	}
@@ -1342,9 +1376,11 @@ time_part(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-		elog(ERROR, "TIME units '%s' not recognized",
-			 DatumGetCString(DirectFunctionCall1(textout,
-											   PointerGetDatum(units))));
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("TIME units \"%s\" not recognized",
+						 DatumGetCString(DirectFunctionCall1(textout,
+										 PointerGetDatum(units))))));
 		result = 0;
 	}
 
@@ -1394,12 +1430,17 @@ timetz_in(PG_FUNCTION_ARGS)
 	int			ftype[MAXDATEFIELDS];
 
 	if (strlen(str) >= sizeof(lowstr))
-		elog(ERROR, "Bad time with time zone"
-			 " external representation (too long) '%s'", str);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+				 errmsg("invalid input syntax for time with time zone: \"%s\"",
+						str)));
 
 	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
 	  || (DecodeTimeOnly(field, ftype, nf, &dtype, tm, &fsec, &tz) != 0))
-		elog(ERROR, "Bad time external representation '%s'", str);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+				 errmsg("invalid input syntax for time with time zone: \"%s\"",
+						str)));
 
 	result = (TimeTzADT *) palloc(sizeof(TimeTzADT));
 	tm2timetz(tm, fsec, tz, result);
@@ -1898,7 +1939,9 @@ timestamptz_timetz(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 
 	if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn) != 0)
-		elog(ERROR, "Unable to convert timestamptz to timetz");
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("timestamp out of range")));
 
 	result = (TimeTzADT *) palloc(sizeof(TimeTzADT));
 
@@ -1974,7 +2017,10 @@ text_timetz(PG_FUNCTION_ARGS)
 				dstr[MAXDATELEN + 1];
 
 	if (VARSIZE(str) - VARHDRSZ > MAXDATELEN)
-		elog(ERROR, "Bad timetz external representation (too long)");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+				 errmsg("invalid input syntax for time with time zone: \"%s\"",
+						VARDATA(str))));
 
 	sp = VARDATA(str);
 	dp = dstr;
@@ -2005,9 +2051,12 @@ timetz_part(PG_FUNCTION_ARGS)
 				lowunits[MAXDATELEN + 1];
 
 	if (VARSIZE(units) - VARHDRSZ > MAXDATELEN)
-		elog(ERROR, "TIMETZ units '%s' not recognized",
-			 DatumGetCString(DirectFunctionCall1(textout,
-											   PointerGetDatum(units))));
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("TIMETZ units \"%s\" not recognized",
+						 DatumGetCString(DirectFunctionCall1(textout,
+											   PointerGetDatum(units))))));
+
 	up = VARDATA(units);
 	lp = lowunits;
 	for (i = 0; i < (VARSIZE(units) - VARHDRSZ); i++)
@@ -2086,9 +2135,12 @@ timetz_part(PG_FUNCTION_ARGS)
 			case DTK_CENTURY:
 			case DTK_MILLENNIUM:
 			default:
-				elog(ERROR, "TIMETZ units '%s' not supported",
-					 DatumGetCString(DirectFunctionCall1(textout,
-											   PointerGetDatum(units))));
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("TIMETZ units \"%s\" not recognized",
+								 DatumGetCString(DirectFunctionCall1(textout,
+													   PointerGetDatum(units))))));
+
 				result = 0;
 		}
 	}
@@ -2102,9 +2154,12 @@ timetz_part(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-		elog(ERROR, "TIMETZ units '%s' not recognized",
-			 DatumGetCString(DirectFunctionCall1(textout,
-											   PointerGetDatum(units))));
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("TIMETZ units \"%s\" not recognized",
+						 DatumGetCString(DirectFunctionCall1(textout,
+											   PointerGetDatum(units))))));
+
 		result = 0;
 	}
 
@@ -2129,9 +2184,12 @@ timetz_zone(PG_FUNCTION_ARGS)
 				lowzone[MAXDATELEN + 1];
 
 	if (VARSIZE(zone) - VARHDRSZ > MAXDATELEN)
-		elog(ERROR, "Time zone '%s' not recognized",
-			 DatumGetCString(DirectFunctionCall1(textout,
-												 PointerGetDatum(zone))));
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("time zone \"%s\" not recognized",
+						 DatumGetCString(DirectFunctionCall1(textout,
+											   PointerGetDatum(zone))))));
+
 	up = VARDATA(zone);
 	lp = lowzone;
 	for (i = 0; i < (VARSIZE(zone) - VARHDRSZ); i++)
@@ -2163,7 +2221,10 @@ timetz_zone(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-		elog(ERROR, "Time zone '%s' not recognized", lowzone);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("time zone \"%s\" not recognized", lowzone)));
+
 		PG_RETURN_NULL();
 	}
 
@@ -2182,9 +2243,11 @@ timetz_izone(PG_FUNCTION_ARGS)
 	int			tz;
 
 	if (zone->month != 0)
-		elog(ERROR, "INTERVAL time zone '%s' not legal (month specified)",
-			 DatumGetCString(DirectFunctionCall1(interval_out,
-												 PointerGetDatum(zone))));
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("INTERVAL time zone \"%s\" not legal",
+						 DatumGetCString(DirectFunctionCall1(interval_out,
+												 PointerGetDatum(zone))))));
 
 #ifdef HAVE_INT64_TIMESTAMP
 	tz = -(zone->time / INT64CONST(1000000));

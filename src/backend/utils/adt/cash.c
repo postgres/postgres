@@ -9,7 +9,7 @@
  * workings can be found in the book "Software Solutions in C" by
  * Dale Schumacher, Academic Press, ISBN: 0-12-632360-7.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.58 2003/05/13 18:03:07 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.59 2003/07/27 04:53:03 tgl Exp $
  */
 
 #include "postgres.h"
@@ -193,7 +193,9 @@ cash_in(PG_FUNCTION_ARGS)
 		s++;
 
 	if (*s != '\0')
-		elog(ERROR, "Bad money external representation %s", str);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+				 errmsg("invalid input syntax for money: \"%s\"", str)));
 
 	result = (value * sgn);
 
@@ -290,7 +292,9 @@ cash_out(PG_FUNCTION_ARGS)
 	if (minus)
 	{
 		if (!PointerIsValid(result = palloc(CASH_BUFSZ + 2 - count + strlen(nsymbol))))
-			elog(ERROR, "Memory allocation failed, can't output cash");
+			ereport(ERROR,
+					(errcode(ERRCODE_OUT_OF_MEMORY),
+					 errmsg("out of memory")));
 
 		/* Position code of 0 means use parens */
 		if (convention == 0)
@@ -303,7 +307,9 @@ cash_out(PG_FUNCTION_ARGS)
 	else
 	{
 		if (!PointerIsValid(result = palloc(CASH_BUFSZ + 2 - count)))
-			elog(ERROR, "Memory allocation failed, can't output cash");
+			ereport(ERROR,
+					(errcode(ERRCODE_OUT_OF_MEMORY),
+					 errmsg("out of memory")));
 
 		strcpy(result, buf + count);
 	}
@@ -468,7 +474,9 @@ cash_div_flt8(PG_FUNCTION_ARGS)
 	Cash		result;
 
 	if (f == 0.0)
-		elog(ERROR, "division by zero");
+		ereport(ERROR,
+				(errcode(ERRCODE_DIVISION_BY_ZERO),
+				 errmsg("division by zero")));
 
 	result = rint(c / f);
 	PG_RETURN_CASH(result);
@@ -518,7 +526,9 @@ cash_div_flt4(PG_FUNCTION_ARGS)
 	Cash		result;
 
 	if (f == 0.0)
-		elog(ERROR, "division by zero");
+		ereport(ERROR,
+				(errcode(ERRCODE_DIVISION_BY_ZERO),
+				 errmsg("division by zero")));
 
 	result = rint(c / f);
 	PG_RETURN_CASH(result);
@@ -569,7 +579,9 @@ cash_div_int4(PG_FUNCTION_ARGS)
 	Cash		result;
 
 	if (i == 0)
-		elog(ERROR, "division by zero");
+		ereport(ERROR,
+				(errcode(ERRCODE_DIVISION_BY_ZERO),
+				 errmsg("division by zero")));
 
 	result = rint(c / i);
 
@@ -619,7 +631,9 @@ cash_div_int2(PG_FUNCTION_ARGS)
 	Cash		result;
 
 	if (s == 0)
-		elog(ERROR, "division by zero");
+		ereport(ERROR,
+				(errcode(ERRCODE_DIVISION_BY_ZERO),
+				 errmsg("division by zero")));
 
 	result = rint(c / s);
 	PG_RETURN_CASH(result);

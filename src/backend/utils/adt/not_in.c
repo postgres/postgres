@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/not_in.c,v 1.32 2002/09/04 20:31:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/not_in.c,v 1.33 2003/07/27 04:53:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,7 +59,10 @@ int4notin(PG_FUNCTION_ARGS)
 	names = textToQualifiedNameList(relation_and_attr, "int4notin");
 	nnames = length(names);
 	if (nnames < 2)
-		elog(ERROR, "int4notin: must provide relationname.attributename");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_NAME),
+				 errmsg("invalid name syntax"),
+				 errhint("Must provide \"relationname.attributename\".")));
 	attribute = strVal(nth(nnames - 1, names));
 	names = ltruncate(nnames - 1, names);
 	relrv = makeRangeVarFromNameList(names);

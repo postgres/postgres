@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	$Header: /cvsroot/pgsql/src/backend/utils/adt/oracle_compat.c,v 1.45 2003/07/27 03:16:20 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/oracle_compat.c,v 1.46 2003/07/27 04:53:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -201,7 +201,9 @@ lpad(PG_FUNCTION_ARGS)
 
 	/* check for integer overflow */
 	if (len != 0 && bytelen / pg_database_encoding_max_length() != len)
-		elog(ERROR, "Requested length too large");
+		ereport(ERROR,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+				 errmsg("requested length too large")));
 
 	ret = (text *) palloc(VARHDRSZ + bytelen);
 
@@ -296,7 +298,9 @@ rpad(PG_FUNCTION_ARGS)
 
 	/* Check for integer overflow */
 	if (len != 0 && bytelen / pg_database_encoding_max_length() != len)
-		elog(ERROR, "Requested length too large");
+		ereport(ERROR,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+				 errmsg("requested length too large")));
 
 	ret = (text *) palloc(VARHDRSZ + bytelen);
 	m = len - s1len;
@@ -917,7 +921,9 @@ repeat(PG_FUNCTION_ARGS)
 		int			check2 = check + VARHDRSZ;
 
 		if ((check / slen) != count || check2 <= check)
-			elog(ERROR, "Requested buffer is too large.");
+			ereport(ERROR,
+					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+					 errmsg("requested length too large")));
 	}
 
 	result = (text *) palloc(tlen);

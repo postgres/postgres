@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.141 2003/07/17 22:20:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.142 2003/07/27 04:53:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -939,7 +939,7 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype)
 															 prefix->constvalue));
 				break;
 			default:
-				elog(ERROR, "patternsel: unexpected consttype %u",
+				elog(ERROR, "unrecognized consttype: %u",
 					 prefix->consttype);
 				return DEFAULT_MATCH_SEL;
 		}
@@ -956,7 +956,7 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype)
 		List	   *eqargs;
 
 		if (eqopr == InvalidOid)
-			elog(ERROR, "patternsel: no = operator for opclass %u", opclass);
+			elog(ERROR, "no = operator for opclass %u", opclass);
 		eqargs = makeList2(var, prefix);
 		result = DatumGetFloat8(DirectFunctionCall4(eqsel,
 													PointerGetDatum(root),
@@ -1136,7 +1136,7 @@ booltestsel(Query *root, BoolTestType booltesttype, Node *arg,
 														  varRelid, jointype);
 				break;
 			default:
-				elog(ERROR, "booltestsel: unexpected booltesttype %d",
+				elog(ERROR, "unrecognized booltesttype: %d",
 					 (int) booltesttype);
 				selec = 0.0;	/* Keep compiler quiet */
 				break;
@@ -1213,7 +1213,7 @@ booltestsel(Query *root, BoolTestType booltesttype, Node *arg,
 					selec = 1.0 - freq_false;
 					break;
 				default:
-					elog(ERROR, "booltestsel: unexpected booltesttype %d",
+					elog(ERROR, "unrecognized booltesttype: %d",
 						 (int) booltesttype);
 					selec = 0.0;	/* Keep compiler quiet */
 					break;
@@ -1254,7 +1254,7 @@ booltestsel(Query *root, BoolTestType booltesttype, Node *arg,
 					selec = (1.0 - freq_null) / 2.0;
 					break;
 				default:
-					elog(ERROR, "booltestsel: unexpected booltesttype %d",
+					elog(ERROR, "unrecognized booltesttype: %d",
 						 (int) booltesttype);
 					selec = 0.0;	/* Keep compiler quiet */
 					break;
@@ -1284,7 +1284,7 @@ booltestsel(Query *root, BoolTestType booltesttype, Node *arg,
 				selec = DEFAULT_BOOL_SEL;
 				break;
 			default:
-				elog(ERROR, "booltestsel: unexpected booltesttype %d",
+				elog(ERROR, "unrecognized booltesttype: %d",
 					 (int) booltesttype);
 				selec = 0.0;	/* Keep compiler quiet */
 				break;
@@ -1319,7 +1319,7 @@ nulltestsel(Query *root, NullTestType nulltesttype, Node *arg, int varRelid)
 			defselec = DEFAULT_NOT_UNK_SEL;
 			break;
 		default:
-			elog(ERROR, "nulltestsel: unexpected nulltesttype %d",
+			elog(ERROR, "unrecognized nulltesttype: %d",
 				 (int) nulltesttype);
 			return (Selectivity) 0;		/* keep compiler quiet */
 	}
@@ -1373,7 +1373,7 @@ nulltestsel(Query *root, NullTestType nulltesttype, Node *arg, int varRelid)
 				selec = 1.0 - freq_null;
 				break;
 			default:
-				elog(ERROR, "nulltestsel: unexpected nulltesttype %d",
+				elog(ERROR, "unrecognized nulltesttype: %d",
 					 (int) nulltesttype);
 				return (Selectivity) 0; /* keep compiler quiet */
 		}
@@ -2500,7 +2500,7 @@ convert_numeric_to_scalar(Datum value, Oid typid)
 	 * Can't get here unless someone tries to use scalarltsel/scalargtsel
 	 * on an operator with one numeric and one non-numeric operand.
 	 */
-	elog(ERROR, "convert_numeric_to_scalar: unsupported type %u", typid);
+	elog(ERROR, "unsupported type: %u", typid);
 	return 0;
 }
 
@@ -2684,7 +2684,7 @@ convert_string_datum(Datum value, Oid typid)
 			 * Can't get here unless someone tries to use scalarltsel on
 			 * an operator with one string and one non-string operand.
 			 */
-			elog(ERROR, "convert_string_datum: unsupported type %u", typid);
+			elog(ERROR, "unsupported type: %u", typid);
 			return NULL;
 	}
 
@@ -2882,7 +2882,7 @@ convert_timevalue_to_scalar(Datum value, Oid typid)
 	 * Can't get here unless someone tries to use scalarltsel/scalargtsel
 	 * on an operator with one timevalue and one non-timevalue operand.
 	 */
-	elog(ERROR, "convert_timevalue_to_scalar: unsupported type %u", typid);
+	elog(ERROR, "unsupported type: %u", typid);
 	return 0;
 }
 
@@ -3111,7 +3111,9 @@ like_fixed_prefix(Const *patt_const, bool case_insensitive,
 	Assert(typeid == BYTEAOID || typeid == TEXTOID);
 
 	if (typeid == BYTEAOID && case_insensitive)
-		elog(ERROR, "Cannot perform case insensitive matching on type BYTEA");
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("case insensitive matching not supported on type bytea")));
 
 	if (typeid != BYTEAOID)
 	{
@@ -3194,7 +3196,9 @@ regex_fixed_prefix(Const *patt_const, bool case_insensitive,
 	 * been made safe for binary (possibly NULL containing) strings.
 	 */
 	if (typeid == BYTEAOID)
-		elog(ERROR, "Regex matching not supported on type BYTEA");
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("regex matching not supported on type bytea")));
 
 	/* the right-hand const is type text for all of these */
 	patt = DatumGetCString(DirectFunctionCall1(textout, patt_const->constvalue));
@@ -3337,7 +3341,7 @@ pattern_fixed_prefix(Const *patt, Pattern_Type ptype,
 			result = regex_fixed_prefix(patt, true, prefix, rest);
 			break;
 		default:
-			elog(ERROR, "pattern_fixed_prefix: bogus ptype");
+			elog(ERROR, "unrecognized ptype: %d", (int) ptype);
 			result = Pattern_Prefix_None;		/* keep compiler quiet */
 			break;
 	}
@@ -3368,8 +3372,7 @@ prefix_selectivity(Query *root, Var *var, Oid opclass, Const *prefixcon)
 
 	cmpopr = get_opclass_member(opclass, BTGreaterEqualStrategyNumber);
 	if (cmpopr == InvalidOid)
-		elog(ERROR, "prefix_selectivity: no >= operator for opclass %u",
-			 opclass);
+		elog(ERROR, "no >= operator for opclass %u", opclass);
 	cmpargs = makeList2(var, prefixcon);
 	/* Assume scalargtsel is appropriate for all supported types */
 	prefixsel = DatumGetFloat8(DirectFunctionCall4(scalargtsel,
@@ -3390,8 +3393,7 @@ prefix_selectivity(Query *root, Var *var, Oid opclass, Const *prefixcon)
 
 		cmpopr = get_opclass_member(opclass, BTLessStrategyNumber);
 		if (cmpopr == InvalidOid)
-			elog(ERROR, "prefix_selectivity: no < operator for opclass %u",
-				 opclass);
+			elog(ERROR, "no < operator for opclass %u", opclass);
 		cmpargs = makeList2(var, greaterstrcon);
 		/* Assume scalarltsel is appropriate for all supported types */
 		topsel = DatumGetFloat8(DirectFunctionCall4(scalarltsel,
@@ -3472,7 +3474,9 @@ like_selectivity(Const *patt_const, bool case_insensitive)
 	Assert(typeid == BYTEAOID || typeid == TEXTOID);
 
 	if (typeid == BYTEAOID && case_insensitive)
-		elog(ERROR, "Cannot perform case insensitive matching on type BYTEA");
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("case insensitive matching not supported on type bytea")));
 
 	if (typeid != BYTEAOID)
 	{
@@ -3618,7 +3622,9 @@ regex_selectivity(Const *patt_const, bool case_insensitive)
 	 * been made safe for binary (possibly NULL containing) strings.
 	 */
 	if (typeid == BYTEAOID)
-		elog(ERROR, "Regex matching not supported on type BYTEA");
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("regex matching not supported on type bytea")));
 
 	/* the right-hand const is type text for all of these */
 	patt = DatumGetCString(DirectFunctionCall1(textout, patt_const->constvalue));
@@ -3662,7 +3668,7 @@ pattern_selectivity(Const *patt, Pattern_Type ptype)
 			result = regex_selectivity(patt, true);
 			break;
 		default:
-			elog(ERROR, "pattern_selectivity: bogus ptype");
+			elog(ERROR, "unrecognized ptype: %d", (int) ptype);
 			result = 1.0;		/* keep compiler quiet */
 			break;
 	}

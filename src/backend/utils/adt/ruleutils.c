@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.145 2003/07/04 02:51:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.146 2003/07/27 04:53:09 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -197,7 +197,7 @@ pg_get_ruledef(PG_FUNCTION_ARGS)
 	 * Connect to SPI manager
 	 */
 	if (SPI_connect() != SPI_OK_CONNECT)
-		elog(ERROR, "get_ruledef: cannot connect to SPI manager");
+		elog(ERROR, "SPI_connect failed");
 
 	/*
 	 * On the first call prepare the plan to lookup pg_rewrite. We read
@@ -212,7 +212,7 @@ pg_get_ruledef(PG_FUNCTION_ARGS)
 		argtypes[0] = OIDOID;
 		plan = SPI_prepare(query_getrulebyoid, 1, argtypes);
 		if (plan == NULL)
-			elog(ERROR, "SPI_prepare() failed for \"%s\"", query_getrulebyoid);
+			elog(ERROR, "SPI_prepare failed for \"%s\"", query_getrulebyoid);
 		plan_getrulebyoid = SPI_saveplan(plan);
 	}
 
@@ -223,11 +223,11 @@ pg_get_ruledef(PG_FUNCTION_ARGS)
 	nulls[0] = ' ';
 	spirc = SPI_execp(plan_getrulebyoid, args, nulls, 1);
 	if (spirc != SPI_OK_SELECT)
-		elog(ERROR, "failed to get pg_rewrite tuple for %u", ruleoid);
+		elog(ERROR, "failed to get pg_rewrite tuple for rule %u", ruleoid);
 	if (SPI_processed != 1)
 	{
 		if (SPI_finish() != SPI_OK_FINISH)
-			elog(ERROR, "get_ruledef: SPI_finish() failed");
+			elog(ERROR, "SPI_finish failed");
 		ruledef = palloc(VARHDRSZ + 1);
 		VARATT_SIZEP(ruledef) = VARHDRSZ + 1;
 		VARDATA(ruledef)[0] = '-';
@@ -252,7 +252,7 @@ pg_get_ruledef(PG_FUNCTION_ARGS)
 	 * Disconnect from SPI manager
 	 */
 	if (SPI_finish() != SPI_OK_FINISH)
-		elog(ERROR, "get_ruledef: SPI_finish() failed");
+		elog(ERROR, "SPI_finish failed");
 
 	/*
 	 * Easy - isn't it?
@@ -313,7 +313,7 @@ pg_do_getviewdef(Oid viewoid)
 	 * Connect to SPI manager
 	 */
 	if (SPI_connect() != SPI_OK_CONNECT)
-		elog(ERROR, "get_viewdef: cannot connect to SPI manager");
+		elog(ERROR, "SPI_connect failed");
 
 	/*
 	 * On the first call prepare the plan to lookup pg_rewrite. We read
@@ -329,7 +329,7 @@ pg_do_getviewdef(Oid viewoid)
 		argtypes[1] = NAMEOID;
 		plan = SPI_prepare(query_getviewrule, 2, argtypes);
 		if (plan == NULL)
-			elog(ERROR, "SPI_prepare() failed for \"%s\"", query_getviewrule);
+			elog(ERROR, "SPI_prepare failed for \"%s\"", query_getviewrule);
 		plan_getviewrule = SPI_saveplan(plan);
 	}
 
@@ -365,7 +365,7 @@ pg_do_getviewdef(Oid viewoid)
 	 * Disconnect from SPI manager
 	 */
 	if (SPI_finish() != SPI_OK_FINISH)
-		elog(ERROR, "get_viewdef: SPI_finish() failed");
+		elog(ERROR, "SPI_finish failed");
 
 	return ruledef;
 }
@@ -404,8 +404,7 @@ pg_get_triggerdef(PG_FUNCTION_ARGS)
 	ht_trig = systable_getnext(tgscan);
 
 	if (!HeapTupleIsValid(ht_trig))
-		elog(ERROR, "pg_get_triggerdef: there is no trigger with oid %u",
-			 trigid);
+		elog(ERROR, "could not find tuple for trigger %u", trigid);
 
 	trigrec = (Form_pg_trigger) GETSTRUCT(ht_trig);
 
@@ -552,7 +551,7 @@ pg_get_indexdef(PG_FUNCTION_ARGS)
 							ObjectIdGetDatum(indexrelid),
 							0, 0, 0);
 	if (!HeapTupleIsValid(ht_idx))
-		elog(ERROR, "syscache lookup for index %u failed", indexrelid);
+		elog(ERROR, "cache lookup failed for index %u", indexrelid);
 	idxrec = (Form_pg_index) GETSTRUCT(ht_idx);
 
 	indrelid = idxrec->indrelid;
@@ -565,7 +564,7 @@ pg_get_indexdef(PG_FUNCTION_ARGS)
 							   ObjectIdGetDatum(indexrelid),
 							   0, 0, 0);
 	if (!HeapTupleIsValid(ht_idxrel))
-		elog(ERROR, "syscache lookup for relid %u failed", indexrelid);
+		elog(ERROR, "cache lookup failed for relation %u", indexrelid);
 	idxrelrec = (Form_pg_class) GETSTRUCT(ht_idxrel);
 
 	/*
@@ -575,7 +574,8 @@ pg_get_indexdef(PG_FUNCTION_ARGS)
 						   ObjectIdGetDatum(idxrelrec->relam),
 						   0, 0, 0);
 	if (!HeapTupleIsValid(ht_am))
-		elog(ERROR, "syscache lookup for AM %u failed", idxrelrec->relam);
+		elog(ERROR, "cache lookup failed for access method %u",
+			 idxrelrec->relam);
 	amrec = (Form_pg_am) GETSTRUCT(ht_am);
 
 	/*
@@ -745,7 +745,7 @@ pg_get_constraintdef(PG_FUNCTION_ARGS)
 
 	tup = systable_getnext(conscan);
 	if (!HeapTupleIsValid(tup))
-		elog(ERROR, "Failed to find constraint with OID %u", constraintId);
+		elog(ERROR, "could not find tuple for constraint %u", constraintId);
 	conForm = (Form_pg_constraint) GETSTRUCT(tup);
 
 	initStringInfo(&buf);
@@ -765,7 +765,7 @@ pg_get_constraintdef(PG_FUNCTION_ARGS)
 				val = heap_getattr(tup, Anum_pg_constraint_conkey,
 								   RelationGetDescr(conDesc), &isnull);
 				if (isnull)
-					elog(ERROR, "pg_get_constraintdef: Null conkey for constraint %u",
+					elog(ERROR, "null conkey for constraint %u",
 						 constraintId);
 
 				decompile_column_index_array(val, conForm->conrelid, &buf);
@@ -778,7 +778,7 @@ pg_get_constraintdef(PG_FUNCTION_ARGS)
 				val = heap_getattr(tup, Anum_pg_constraint_confkey,
 								   RelationGetDescr(conDesc), &isnull);
 				if (isnull)
-					elog(ERROR, "pg_get_constraintdef: Null confkey for constraint %u",
+					elog(ERROR, "null confkey for constraint %u",
 						 constraintId);
 
 				decompile_column_index_array(val, conForm->confrelid, &buf);
@@ -798,8 +798,8 @@ pg_get_constraintdef(PG_FUNCTION_ARGS)
 						string = "";
 						break;
 					default:
-						elog(ERROR, "pg_get_constraintdef: Unknown confmatchtype '%c' for constraint %u",
-							 conForm->confmatchtype, constraintId);
+						elog(ERROR, "unrecognized confmatchtype: %d",
+							 conForm->confmatchtype);
 						string = "";	/* keep compiler quiet */
 						break;
 				}
@@ -824,8 +824,8 @@ pg_get_constraintdef(PG_FUNCTION_ARGS)
 						string = "SET DEFAULT";
 						break;
 					default:
-						elog(ERROR, "pg_get_constraintdef: Unknown confupdtype '%c' for constraint %u",
-							 conForm->confupdtype, constraintId);
+						elog(ERROR, "unrecognized confupdtype: %d",
+							 conForm->confupdtype);
 						string = NULL;	/* keep compiler quiet */
 						break;
 				}
@@ -850,8 +850,8 @@ pg_get_constraintdef(PG_FUNCTION_ARGS)
 						string = "SET DEFAULT";
 						break;
 					default:
-						elog(ERROR, "pg_get_constraintdef: Unknown confdeltype '%c' for constraint %u",
-							 conForm->confdeltype, constraintId);
+						elog(ERROR, "unrecognized confdeltype: %d",
+							 conForm->confdeltype);
 						string = NULL;	/* keep compiler quiet */
 						break;
 				}
@@ -881,7 +881,7 @@ pg_get_constraintdef(PG_FUNCTION_ARGS)
 				val = heap_getattr(tup, Anum_pg_constraint_conkey,
 								   RelationGetDescr(conDesc), &isnull);
 				if (isnull)
-					elog(ERROR, "pg_get_constraintdef: Null conkey for constraint %u",
+					elog(ERROR, "null conkey for constraint %u",
 						 constraintId);
 
 				decompile_column_index_array(val, conForm->conrelid, &buf);
@@ -908,7 +908,7 @@ pg_get_constraintdef(PG_FUNCTION_ARGS)
 				val = heap_getattr(tup, Anum_pg_constraint_conbin,
 								   RelationGetDescr(conDesc), &isnull);
 				if (isnull)
-					elog(ERROR, "pg_get_constraintdef: Null consrc for constraint %u",
+					elog(ERROR, "null consrc for constraint %u",
 						 constraintId);
 
 				conbin = DatumGetCString(DirectFunctionCall1(textout, val));
@@ -942,8 +942,10 @@ pg_get_constraintdef(PG_FUNCTION_ARGS)
 				break;
 			}
 		default:
-			elog(ERROR, "pg_get_constraintdef: unsupported constraint type '%c'",
-				 conForm->contype);
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("unsupported constraint type \"%c\"",
+							 conForm->contype)));
 			break;
 	}
 
@@ -1344,8 +1346,10 @@ make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc)
 			break;
 
 		default:
-			elog(ERROR, "get_ruledef: rule %s has unsupported event type %d",
-				 rulename, ev_type);
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("rule \"%s\" has unsupported event type %d",
+							 rulename, ev_type)));
 			break;
 	}
 
@@ -1546,7 +1550,7 @@ get_query_def(Query *query, StringInfo buf, List *parentnamespace,
 			break;
 
 		default:
-			elog(ERROR, "get_query_def: unknown query command type %d",
+			elog(ERROR, "unrecognized query command type: %d",
 				 query->commandType);
 			break;
 	}
@@ -1781,7 +1785,7 @@ get_setop_query(Node *setOp, Query *query, deparse_context *context,
 				appendStringInfo(buf, ") EXCEPT ");
 				break;
 			default:
-				elog(ERROR, "get_setop_query: unexpected set op %d",
+				elog(ERROR, "unrecognized set op: %d",
 					 (int) op->op);
 		}
 		if (op->all)
@@ -1793,7 +1797,7 @@ get_setop_query(Node *setOp, Query *query, deparse_context *context,
 	}
 	else
 	{
-		elog(ERROR, "get_setop_query: unexpected node %d",
+		elog(ERROR, "unrecognized node type: %d",
 			 (int) nodeTag(setOp));
 	}
 }
@@ -1853,7 +1857,7 @@ get_insert_query_def(Query *query, deparse_context *context)
 		if (rte->rtekind != RTE_SUBQUERY)
 			continue;
 		if (select_rte)
-			elog(ERROR, "get_insert_query_def: too many RTEs in INSERT!");
+			elog(ERROR, "too many RTEs in INSERT");
 		select_rte = rte;
 	}
 
@@ -2005,7 +2009,10 @@ get_utility_query_def(Query *query, deparse_context *context)
 											  stmt->relation->relname));
 	}
 	else
-		elog(ERROR, "get_utility_query_def: unexpected statement type");
+	{
+		/* Currently only NOTIFY utility commands can appear in rules */
+		elog(ERROR, "unexpected utility statement type");
+	}
 }
 
 
@@ -2036,8 +2043,7 @@ get_names_for_var(Var *var, deparse_context *context,
 	while (sup-- > 0 && nslist != NIL)
 		nslist = lnext(nslist);
 	if (nslist == NIL)
-		elog(ERROR, "get_names_for_var: bogus varlevelsup %d",
-			 var->varlevelsup);
+		elog(ERROR, "bogus varlevelsup: %d", var->varlevelsup);
 	dpns = (deparse_namespace *) lfirst(nslist);
 
 	/* Find the relevant RTE */
@@ -2050,8 +2056,7 @@ get_names_for_var(Var *var, deparse_context *context,
 	else
 		rte = NULL;
 	if (rte == NULL)
-		elog(ERROR, "get_names_for_var: bogus varno %d",
-			 var->varno);
+		elog(ERROR, "bogus varno: %d", var->varno);
 
 	/* Emit results */
 	*schemaname = NULL;			/* default assumptions */
@@ -2360,7 +2365,7 @@ get_rule_expr(Node *node, deparse_context *context,
 						break;
 
 					default:
-						elog(ERROR, "get_rule_expr: unknown boolop %d",
+						elog(ERROR, "unrecognized boolop: %d",
 							 (int) expr->boolop);
 				}
 			}
@@ -2394,7 +2399,7 @@ get_rule_expr(Node *node, deparse_context *context,
 				/* lookup arg type and get the field name */
 				typrelid = get_typ_typrelid(argType);
 				if (!OidIsValid(typrelid))
-					elog(ERROR, "Argument type %s of FieldSelect is not a tuple type",
+					elog(ERROR, "argument type %s of FieldSelect is not a tuple type",
 						 format_type_be(argType));
 				fieldname = get_relid_attribute_name(typrelid,
 													 fselect->fieldnum);
@@ -2536,7 +2541,7 @@ get_rule_expr(Node *node, deparse_context *context,
 						appendStringInfo(buf, " IS NOT NULL)");
 						break;
 					default:
-						elog(ERROR, "get_rule_expr: unexpected nulltesttype %d",
+						elog(ERROR, "unrecognized nulltesttype: %d",
 							 (int) ntest->nulltesttype);
 				}
 			}
@@ -2569,7 +2574,7 @@ get_rule_expr(Node *node, deparse_context *context,
 						appendStringInfo(buf, " IS NOT UNKNOWN)");
 						break;
 					default:
-						elog(ERROR, "get_rule_expr: unexpected booltesttype %d",
+						elog(ERROR, "unrecognized booltesttype: %d",
 							 (int) btest->booltesttype);
 				}
 			}
@@ -2611,7 +2616,7 @@ get_rule_expr(Node *node, deparse_context *context,
 			break;
 
 		default:
-			elog(ERROR, "get_rule_expr: unknown node type %d", nodeTag(node));
+			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(node));
 			break;
 	}
 }
@@ -2652,7 +2657,7 @@ get_oper_expr(OpExpr *expr, deparse_context *context)
 							ObjectIdGetDatum(opno),
 							0, 0, 0);
 		if (!HeapTupleIsValid(tp))
-			elog(ERROR, "cache lookup for operator %u failed", opno);
+			elog(ERROR, "cache lookup failed for operator %u", opno);
 		optup = (Form_pg_operator) GETSTRUCT(tp);
 		switch (optup->oprkind)
 		{
@@ -2671,7 +2676,7 @@ get_oper_expr(OpExpr *expr, deparse_context *context)
 														InvalidOid));
 				break;
 			default:
-				elog(ERROR, "get_rule_expr: bogus oprkind");
+				elog(ERROR, "bogus oprkind: %d", optup->oprkind);
 		}
 		ReleaseSysCache(tp);
 	}
@@ -2849,7 +2854,7 @@ get_const_expr(Const *constval, deparse_context *context)
 							 ObjectIdGetDatum(constval->consttype),
 							 0, 0, 0);
 	if (!HeapTupleIsValid(typetup))
-		elog(ERROR, "cache lookup of type %u failed", constval->consttype);
+		elog(ERROR, "cache lookup failed for type %u", constval->consttype);
 
 	typeStruct = (Form_pg_type) GETSTRUCT(typetup);
 
@@ -3039,8 +3044,8 @@ get_sublink_expr(SubLink *sublink, deparse_context *context)
 			break;
 
 		default:
-			elog(ERROR, "get_sublink_expr: unsupported sublink type %d",
-				 sublink->subLinkType);
+			elog(ERROR, "unrecognized sublink type: %d",
+				 (int) sublink->subLinkType);
 			break;
 	}
 
@@ -3132,7 +3137,7 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 				coldeflist = rte->coldeflist;
 				break;
 			default:
-				elog(ERROR, "unexpected rte kind %d", (int) rte->rtekind);
+				elog(ERROR, "unrecognized RTE kind: %d", (int) rte->rtekind);
 				break;
 		}
 		if (rte->alias != NULL)
@@ -3204,7 +3209,7 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 				appendStringInfo(buf, " UNION JOIN ");
 				break;
 			default:
-				elog(ERROR, "get_from_clause_item: unknown join type %d",
+				elog(ERROR, "unrecognized join type: %d",
 					 (int) j->jointype);
 		}
 		get_from_clause_item(j->rarg, query, context);
@@ -3254,8 +3259,8 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 		}
 	}
 	else
-		elog(ERROR, "get_from_clause_item: unexpected node type %d",
-			 nodeTag(jtnode));
+		elog(ERROR, "unrecognized node type: %d",
+			 (int) nodeTag(jtnode));
 }
 
 /*
@@ -3361,7 +3366,8 @@ tleIsArrayAssign(TargetEntry *tle)
 	 */
 	if (aref->refexpr == NULL || !IsA(aref->refexpr, Var) ||
 		((Var *) aref->refexpr)->varattno != tle->resdom->resno)
-		elog(WARNING, "tleIsArrayAssign: I'm confused ...");
+		elog(ERROR, "unrecognized situation in array assignment");
+
 	return true;
 }
 
@@ -3483,7 +3489,7 @@ generate_relation_name(Oid relid)
 						ObjectIdGetDatum(relid),
 						0, 0, 0);
 	if (!HeapTupleIsValid(tp))
-		elog(ERROR, "cache lookup of relation %u failed", relid);
+		elog(ERROR, "cache lookup failed for relation %u", relid);
 	reltup = (Form_pg_class) GETSTRUCT(tp);
 
 	/* Qualify the name if not visible in search path */
@@ -3525,7 +3531,7 @@ generate_function_name(Oid funcid, int nargs, Oid *argtypes)
 							 ObjectIdGetDatum(funcid),
 							 0, 0, 0);
 	if (!HeapTupleIsValid(proctup))
-		elog(ERROR, "cache lookup of function %u failed", funcid);
+		elog(ERROR, "cache lookup failed for function %u", funcid);
 	procform = (Form_pg_proc) GETSTRUCT(proctup);
 	proname = NameStr(procform->proname);
 	Assert(nargs == procform->pronargs);
@@ -3579,7 +3585,7 @@ generate_operator_name(Oid operid, Oid arg1, Oid arg2)
 							 ObjectIdGetDatum(operid),
 							 0, 0, 0);
 	if (!HeapTupleIsValid(opertup))
-		elog(ERROR, "cache lookup of operator %u failed", operid);
+		elog(ERROR, "cache lookup failed for operator %u", operid);
 	operform = (Form_pg_operator) GETSTRUCT(opertup);
 	oprname = NameStr(operform->oprname);
 
@@ -3600,8 +3606,7 @@ generate_operator_name(Oid operid, Oid arg1, Oid arg2)
 			p_result = right_oper(makeList1(makeString(oprname)), arg1, true);
 			break;
 		default:
-			elog(ERROR, "unexpected oprkind %c for operator %u",
-				 operform->oprkind, operid);
+			elog(ERROR, "unrecognized oprkind: %d", operform->oprkind);
 			p_result = NULL;	/* keep compiler quiet */
 			break;
 	}
@@ -3664,7 +3669,7 @@ get_relid_attribute_name(Oid relid, AttrNumber attnum)
 
 	attname = get_attname(relid, attnum);
 	if (attname == NULL)
-		elog(ERROR, "cache lookup of attribute %d in relation %u failed",
+		elog(ERROR, "cache lookup failed for attribute %d of relation %u",
 			 attnum, relid);
 	return attname;
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.87 2003/07/26 15:17:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.88 2003/07/27 04:53:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,17 +78,25 @@ timestamp_in(PG_FUNCTION_ARGS)
 	char		lowstr[MAXDATELEN + MAXDATEFIELDS];
 
 	if (strlen(str) >= sizeof(lowstr))
-		elog(ERROR, "Bad timestamp external representation (too long) '%s'", str);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+				 errmsg("invalid input syntax for timestamp: \"%s\"",
+						str)));
 
 	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
 	  || (DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, &tz) != 0))
-		elog(ERROR, "Bad timestamp external representation '%s'", str);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+				 errmsg("invalid input syntax for timestamp: \"%s\"",
+						str)));
 
 	switch (dtype)
 	{
 		case DTK_DATE:
 			if (tm2timestamp(tm, fsec, NULL, &result) != 0)
-				elog(ERROR, "TIMESTAMP out of range '%s'", str);
+				ereport(ERROR,
+						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+						 errmsg("timestamp out of range: \"%s\"", str)));
 			break;
 
 		case DTK_EPOCH:
@@ -104,12 +112,16 @@ timestamp_in(PG_FUNCTION_ARGS)
 			break;
 
 		case DTK_INVALID:
-			elog(ERROR, "TIMESTAMP '%s' no longer supported", str);
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("\"%s\" is no longer supported", str)));
+
 			TIMESTAMP_NOEND(result);
 			break;
 
 		default:
-			elog(ERROR, "TIMESTAMP '%s' not parsed; internal coding error", str);
+			elog(ERROR, "unexpected dtype %d while parsing timestamp \"%s\"",
+				 dtype, str);
 			TIMESTAMP_NOEND(result);
 	}
 
@@ -137,7 +149,9 @@ timestamp_out(PG_FUNCTION_ARGS)
 	else if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL) == 0)
 		EncodeDateTime(tm, fsec, NULL, &tzn, DateStyle, buf);
 	else
-		elog(ERROR, "Unable to format timestamp; internal coding error");
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("timestamp out of range")));
 
 	result = pstrdup(buf);
 	PG_RETURN_CSTRING(result);
@@ -238,8 +252,10 @@ AdjustTimestampForTypmod(Timestamp *time, int32 typmod)
 		&& (typmod != -1) && (typmod != MAX_TIMESTAMP_PRECISION))
 	{
 		if ((typmod < 0) || (typmod > MAX_TIMESTAMP_PRECISION))
-			elog(ERROR, "TIMESTAMP(%d) precision must be between %d and %d",
-				 typmod, 0, MAX_TIMESTAMP_PRECISION);
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("timestamp(%d) precision must be between %d and %d",
+							 typmod, 0, MAX_TIMESTAMP_PRECISION)));
 
 		/*
 		 * Note: this round-to-nearest code is not completely consistent
@@ -291,18 +307,25 @@ timestamptz_in(PG_FUNCTION_ARGS)
 	char		lowstr[MAXDATELEN + MAXDATEFIELDS];
 
 	if (strlen(str) >= sizeof(lowstr))
-		elog(ERROR, "Bad timestamp with time zone"
-			 " external representation (too long) '%s'", str);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+				 errmsg("invalid input syntax for timestamp with time zone: \"%s\"",
+						str)));
 
 	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
 	  || (DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, &tz) != 0))
-		elog(ERROR, "Bad timestamp external representation '%s'", str);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+				 errmsg("invalid input syntax for timestamp with time zone: \"%s\"",
+						str)));
 
 	switch (dtype)
 	{
 		case DTK_DATE:
 			if (tm2timestamp(tm, fsec, &tz, &result) != 0)
-				elog(ERROR, "TIMESTAMP WITH TIME ZONE out of range '%s'", str);
+				ereport(ERROR,
+						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+						 errmsg("timestamp out of range: \"%s\"", str)));
 			break;
 
 		case DTK_EPOCH:
@@ -318,12 +341,16 @@ timestamptz_in(PG_FUNCTION_ARGS)
 			break;
 
 		case DTK_INVALID:
-			elog(ERROR, "TIMESTAMP WITH TIME ZONE '%s' no longer supported", str);
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("\"%s\" is no longer supported", str)));
+
 			TIMESTAMP_NOEND(result);
 			break;
 
 		default:
-			elog(ERROR, "TIMESTAMP WITH TIME ZONE '%s' not parsed; internal coding error", str);
+			elog(ERROR, "unexpected dtype %d while parsing timestamptz \"%s\"",
+				 dtype, str);
 			TIMESTAMP_NOEND(result);
 	}
 
@@ -352,7 +379,9 @@ timestamptz_out(PG_FUNCTION_ARGS)
 	else if (timestamp2tm(dt, &tz, tm, &fsec, &tzn) == 0)
 		EncodeDateTime(tm, fsec, &tz, &tzn, DateStyle, buf);
 	else
-		elog(ERROR, "Unable to format timestamp with time zone; internal coding error");
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("timestamp out of range")));
 
 	result = pstrdup(buf);
 	PG_RETURN_CSTRING(result);
@@ -448,11 +477,17 @@ interval_in(PG_FUNCTION_ARGS)
 	fsec = 0;
 
 	if (strlen(str) >= sizeof(lowstr))
-		elog(ERROR, "Bad interval external representation (too long) '%s'", str);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+				 errmsg("invalid input syntax for interval: \"%s\"",
+						str)));
 
 	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
 		|| (DecodeInterval(field, ftype, nf, &dtype, tm, &fsec) != 0))
-		elog(ERROR, "Bad interval external representation '%s'", str);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+				 errmsg("invalid input syntax for interval: \"%s\"",
+						str)));
 
 	result = (Interval *) palloc(sizeof(Interval));
 
@@ -460,16 +495,21 @@ interval_in(PG_FUNCTION_ARGS)
 	{
 		case DTK_DELTA:
 			if (tm2interval(tm, fsec, result) != 0)
-				elog(ERROR, "Bad interval external representation '%s'", str);
+				ereport(ERROR,
+						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+						 errmsg("interval out of range")));
 			AdjustIntervalForTypmod(result, typmod);
 			break;
 
 		case DTK_INVALID:
-			elog(ERROR, "Interval '%s' no longer supported", str);
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("\"%s\" is no longer supported", str)));
 			break;
 
 		default:
-			elog(ERROR, "Interval '%s' not parsed; internal coding error", str);
+			elog(ERROR, "unexpected dtype %d while parsing interval \"%s\"",
+				 dtype, str);
 	}
 
 	PG_RETURN_INTERVAL_P(result);
@@ -489,10 +529,10 @@ interval_out(PG_FUNCTION_ARGS)
 	char		buf[MAXDATELEN + 1];
 
 	if (interval2tm(*span, tm, &fsec) != 0)
-		elog(ERROR, "Unable to encode interval; internal coding error");
+		elog(ERROR, "could not convert interval to tm");
 
 	if (EncodeInterval(tm, fsec, DateStyle, buf) != 0)
-		elog(ERROR, "Unable to format interval; internal coding error");
+		elog(ERROR, "could not format interval");
 
 	result = pstrdup(buf);
 	PG_RETURN_CSTRING(result);
@@ -781,14 +821,16 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 #endif
 		}
 		else
-			elog(ERROR, "AdjustIntervalForTypmod(): internal coding error");
+			elog(ERROR, "unrecognized interval typmod: %d", typmod);
 
 		/* Need to adjust precision? If not, don't even try! */
 		if (precision != INTERVAL_FULL_PRECISION)
 		{
 			if ((precision < 0) || (precision > MAX_INTERVAL_PRECISION))
-				elog(ERROR, "INTERVAL(%d) precision must be between %d and %d",
-					 precision, 0, MAX_INTERVAL_PRECISION);
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("interval(%d) precision must be between %d and %d",
+								 precision, 0, MAX_INTERVAL_PRECISION)));
 
 			/*
 			 * Note: this round-to-nearest code is not completely consistent
@@ -1045,7 +1087,7 @@ timestamp2tm(Timestamp dt, int *tzp, struct tm * tm, fsec_t *fsec, char **tzn)
 	}
 
 	return 0;
-}	/* timestamp2tm() */
+}
 
 
 /* tm2timestamp()
@@ -1053,7 +1095,7 @@ timestamp2tm(Timestamp dt, int *tzp, struct tm * tm, fsec_t *fsec, char **tzn)
  * Note that year is _not_ 1900-based, but is an explicit full value.
  * Also, month is one-based, _not_ zero-based.
  *
- * Returns -1 on failure (overflow).
+ * Returns -1 on failure (value out of range).
  */
 int
 tm2timestamp(struct tm * tm, fsec_t fsec, int *tzp, Timestamp *result)
@@ -1088,7 +1130,7 @@ tm2timestamp(struct tm * tm, fsec_t fsec, int *tzp, Timestamp *result)
 		*result = dt2local(*result, -(*tzp));
 
 	return 0;
-}	/* tm2timestamp() */
+}
 
 
 /* interval2tm()
@@ -1136,7 +1178,7 @@ interval2tm(Interval span, struct tm * tm, fsec_t *fsec)
 #endif
 
 	return 0;
-}	/* interval2tm() */
+}
 
 int
 tm2interval(struct tm * tm, fsec_t fsec, Interval *span)
@@ -1156,7 +1198,7 @@ tm2interval(struct tm * tm, fsec_t fsec, Interval *span)
 #endif
 
 	return 0;
-}	/* tm2interval() */
+}
 
 #ifdef HAVE_INT64_TIMESTAMP
 static int64
@@ -1240,6 +1282,7 @@ SetEpochTimestamp(void)
 			   *tm = &tt;
 
 	GetEpochTime(tm);
+	/* we don't bother to test for failure ... */
 	tm2timestamp(tm, 0, NULL, &dt);
 
 	return dt;
@@ -1605,7 +1648,10 @@ timestamp_mi(PG_FUNCTION_ARGS)
 
 	if (TIMESTAMP_NOT_FINITE(dt1) || TIMESTAMP_NOT_FINITE(dt2))
 	{
-		elog(ERROR, "Unable to subtract non-finite timestamps");
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("cannot subtract non-finite timestamps")));
+
 		result->time = 0;
 	}
 	else
@@ -1647,37 +1693,31 @@ timestamp_pl_span(PG_FUNCTION_ARGS)
 					   *tm = &tt;
 			fsec_t		fsec;
 
-			if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL) == 0)
-			{
-				tm->tm_mon += span->month;
-				if (tm->tm_mon > 12)
-				{
-					tm->tm_year += ((tm->tm_mon - 1) / 12);
-					tm->tm_mon = (((tm->tm_mon - 1) % 12) + 1);
-				}
-				else if (tm->tm_mon < 1)
-				{
-					tm->tm_year += ((tm->tm_mon / 12) - 1);
-					tm->tm_mon = ((tm->tm_mon % 12) + 12);
-				}
+			if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL) != 0)
+				ereport(ERROR,
+						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+						 errmsg("timestamp out of range")));
 
-				/* adjust for end of month boundary problems... */
-				if (tm->tm_mday > day_tab[isleap(tm->tm_year)][tm->tm_mon - 1])
-					tm->tm_mday = (day_tab[isleap(tm->tm_year)][tm->tm_mon - 1]);
-
-				if (tm2timestamp(tm, fsec, NULL, &timestamp) != 0)
-				{
-					elog(ERROR, "Unable to add TIMESTAMP and INTERVAL"
-						 "\n\ttimestamp_pl_span() internal error encoding timestamp");
-					PG_RETURN_NULL();
-				}
-			}
-			else
+			tm->tm_mon += span->month;
+			if (tm->tm_mon > 12)
 			{
-				elog(ERROR, "Unable to add TIMESTAMP and INTERVAL"
-					 "\n\ttimestamp_pl_span() internal error decoding timestamp");
-				PG_RETURN_NULL();
+				tm->tm_year += ((tm->tm_mon - 1) / 12);
+				tm->tm_mon = (((tm->tm_mon - 1) % 12) + 1);
 			}
+			else if (tm->tm_mon < 1)
+			{
+				tm->tm_year += ((tm->tm_mon / 12) - 1);
+				tm->tm_mon = ((tm->tm_mon % 12) + 12);
+			}
+
+			/* adjust for end of month boundary problems... */
+			if (tm->tm_mday > day_tab[isleap(tm->tm_year)][tm->tm_mon - 1])
+				tm->tm_mday = (day_tab[isleap(tm->tm_year)][tm->tm_mon - 1]);
+
+			if (tm2timestamp(tm, fsec, NULL, &timestamp) != 0)
+				ereport(ERROR,
+						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+						 errmsg("timestamp out of range")));
 		}
 
 		timestamp += span->time;
@@ -1731,35 +1771,33 @@ timestamptz_pl_span(PG_FUNCTION_ARGS)
 					   *tm = &tt;
 			fsec_t		fsec;
 
-			if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn) == 0)
+			if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn) != 0)
+				ereport(ERROR,
+						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+						 errmsg("timestamp out of range")));
+
+			tm->tm_mon += span->month;
+			if (tm->tm_mon > 12)
 			{
-				tm->tm_mon += span->month;
-				if (tm->tm_mon > 12)
-				{
-					tm->tm_year += ((tm->tm_mon - 1) / 12);
-					tm->tm_mon = (((tm->tm_mon - 1) % 12) + 1);
-				}
-				else if (tm->tm_mon < 1)
-				{
-					tm->tm_year += ((tm->tm_mon / 12) - 1);
-					tm->tm_mon = ((tm->tm_mon % 12) + 12);
-				}
-
-				/* adjust for end of month boundary problems... */
-				if (tm->tm_mday > day_tab[isleap(tm->tm_year)][tm->tm_mon - 1])
-					tm->tm_mday = (day_tab[isleap(tm->tm_year)][tm->tm_mon - 1]);
-
-				tz = DetermineLocalTimeZone(tm);
-
-				if (tm2timestamp(tm, fsec, &tz, &timestamp) != 0)
-					elog(ERROR, "Unable to add TIMESTAMP and INTERVAL"
-						 "\n\ttimestamptz_pl_span() internal error encoding timestamp");
+				tm->tm_year += ((tm->tm_mon - 1) / 12);
+				tm->tm_mon = (((tm->tm_mon - 1) % 12) + 1);
 			}
-			else
+			else if (tm->tm_mon < 1)
 			{
-				elog(ERROR, "Unable to add TIMESTAMP and INTERVAL"
-					 "\n\ttimestamptz_pl_span() internal error decoding timestamp");
+				tm->tm_year += ((tm->tm_mon / 12) - 1);
+				tm->tm_mon = ((tm->tm_mon % 12) + 12);
 			}
+
+			/* adjust for end of month boundary problems... */
+			if (tm->tm_mday > day_tab[isleap(tm->tm_year)][tm->tm_mon - 1])
+				tm->tm_mday = (day_tab[isleap(tm->tm_year)][tm->tm_mon - 1]);
+
+			tz = DetermineLocalTimeZone(tm);
+
+			if (tm2timestamp(tm, fsec, &tz, &timestamp) != 0)
+				ereport(ERROR,
+						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+						 errmsg("timestamp out of range")));
 		}
 
 		timestamp += span->time;
@@ -1986,7 +2024,9 @@ interval_div(PG_FUNCTION_ARGS)
 	result = (Interval *) palloc(sizeof(Interval));
 
 	if (factor == 0.0)
-		elog(ERROR, "division by zero");
+		ereport(ERROR,
+				(errcode(ERRCODE_DIVISION_BY_ZERO),
+				 errmsg("division by zero")));
 
 #ifdef HAVE_INT64_TIMESTAMP
 	result->month = (span->month / factor);
@@ -2031,7 +2071,7 @@ interval_accum(PG_FUNCTION_ARGS)
 					  INTERVALOID, 12, false, 'd',
 					  &transdatums, &ndatums);
 	if (ndatums != 2)
-		elog(ERROR, "interval_accum: expected 2-element interval array");
+		elog(ERROR, "expected 2-element interval array");
 
 	/*
 	 * XXX memcpy, instead of just extracting a pointer, to work around
@@ -2073,7 +2113,7 @@ interval_avg(PG_FUNCTION_ARGS)
 					  INTERVALOID, 12, false, 'd',
 					  &transdatums, &ndatums);
 	if (ndatums != 2)
-		elog(ERROR, "interval_avg: expected 2-element interval array");
+		elog(ERROR, "expected 2-element interval array");
 
 	/*
 	 * XXX memcpy, instead of just extracting a pointer, to work around
@@ -2195,12 +2235,14 @@ timestamp_age(PG_FUNCTION_ARGS)
 		}
 
 		if (tm2interval(tm, fsec, result) != 0)
-			elog(ERROR, "Unable to encode INTERVAL"
-				 "\n\ttimestamp_age() internal coding error");
+			ereport(ERROR,
+					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					 errmsg("interval out of range")));
 	}
 	else
-		elog(ERROR, "Unable to decode TIMESTAMP"
-			 "\n\ttimestamp_age() internal coding error");
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("timestamp out of range")));
 
 	PG_RETURN_INTERVAL_P(result);
 }
@@ -2304,10 +2346,14 @@ timestamptz_age(PG_FUNCTION_ARGS)
 		}
 
 		if (tm2interval(tm, fsec, result) != 0)
-			elog(ERROR, "Unable to decode TIMESTAMP");
+			ereport(ERROR,
+					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					 errmsg("interval out of range")));
 	}
 	else
-		elog(ERROR, "Unable to decode TIMESTAMP");
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("timestamp out of range")));
 
 	PG_RETURN_INTERVAL_P(result);
 }
@@ -2360,7 +2406,11 @@ text_timestamp(PG_FUNCTION_ARGS)
 				dstr[MAXDATELEN + 1];
 
 	if (VARSIZE(str) - VARHDRSZ > MAXDATELEN)
-		elog(ERROR, "TIMESTAMP bad external representation (too long)");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+				 errmsg("invalid input syntax for timestamp: \"%s\"",
+						DatumGetCString(DirectFunctionCall1(textout,
+										 PointerGetDatum(str))))));
 
 	sp = VARDATA(str);
 	dp = dstr;
@@ -2416,7 +2466,11 @@ text_timestamptz(PG_FUNCTION_ARGS)
 				dstr[MAXDATELEN + 1];
 
 	if (VARSIZE(str) - VARHDRSZ > MAXDATELEN)
-		elog(ERROR, "TIMESTAMP WITH TIME ZONE bad external representation (too long)");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+				 errmsg("invalid input syntax for timestamp with time zone: \"%s\"",
+						DatumGetCString(DirectFunctionCall1(textout,
+										 PointerGetDatum(str))))));
 
 	sp = VARDATA(str);
 	dp = dstr;
@@ -2473,7 +2527,12 @@ text_interval(PG_FUNCTION_ARGS)
 				dstr[MAXDATELEN + 1];
 
 	if (VARSIZE(str) - VARHDRSZ > MAXDATELEN)
-		elog(ERROR, "INTERVAL bad external representation (too long)");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+				 errmsg("invalid input syntax for interval: \"%s\"",
+						DatumGetCString(DirectFunctionCall1(textout,
+										 PointerGetDatum(str))))));
+
 	sp = VARDATA(str);
 	dp = dstr;
 	for (i = 0; i < (VARSIZE(str) - VARHDRSZ); i++)
@@ -2506,9 +2565,12 @@ timestamp_trunc(PG_FUNCTION_ARGS)
 			   *tm = &tt;
 
 	if (VARSIZE(units) - VARHDRSZ > MAXDATELEN)
-		elog(ERROR, "TIMESTAMP units '%s' not recognized",
-			 DatumGetCString(DirectFunctionCall1(textout,
-											   PointerGetDatum(units))));
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("timestamp units \"%s\" not recognized",
+						 DatumGetCString(DirectFunctionCall1(textout,
+										 PointerGetDatum(units))))));
+
 	up = VARDATA(units);
 	lp = lowunits;
 	for (i = 0; i < (VARSIZE(units) - VARHDRSZ); i++)
@@ -2520,8 +2582,13 @@ timestamp_trunc(PG_FUNCTION_ARGS)
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		PG_RETURN_TIMESTAMP(timestamp);
 
-	if ((type == UNITS) && (timestamp2tm(timestamp, NULL, tm, &fsec, NULL) == 0))
+	if (type == UNITS)
 	{
+		if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL) != 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					 errmsg("timestamp out of range")));
+
 		switch (val)
 		{
 			case DTK_MILLENNIUM:
@@ -2561,16 +2628,24 @@ timestamp_trunc(PG_FUNCTION_ARGS)
 				break;
 
 			default:
-				elog(ERROR, "TIMESTAMP units '%s' not supported", lowunits);
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("timestamp units \"%s\" not supported",
+								lowunits)));
 				result = 0;
 		}
 
 		if (tm2timestamp(tm, fsec, NULL, &result) != 0)
-			elog(ERROR, "Unable to truncate TIMESTAMP to '%s'", lowunits);
+			ereport(ERROR,
+					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					 errmsg("timestamp out of range")));
 	}
 	else
 	{
-		elog(ERROR, "TIMESTAMP units '%s' not recognized", lowunits);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("timestamp units \"%s\" not recognized",
+						lowunits)));
 		result = 0;
 	}
 
@@ -2599,9 +2674,11 @@ timestamptz_trunc(PG_FUNCTION_ARGS)
 			   *tm = &tt;
 
 	if (VARSIZE(units) - VARHDRSZ > MAXDATELEN)
-		elog(ERROR, "TIMESTAMP WITH TIME ZONE units '%s' not recognized",
-			 DatumGetCString(DirectFunctionCall1(textout,
-											   PointerGetDatum(units))));
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("timestamp with time zone units \"%s\" not recognized",
+						 DatumGetCString(DirectFunctionCall1(textout,
+										 PointerGetDatum(units))))));
 	up = VARDATA(units);
 	lp = lowunits;
 	for (i = 0; i < (VARSIZE(units) - VARHDRSZ); i++)
@@ -2613,8 +2690,13 @@ timestamptz_trunc(PG_FUNCTION_ARGS)
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		PG_RETURN_TIMESTAMPTZ(timestamp);
 
-	if ((type == UNITS) && (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn) == 0))
+	if (type == UNITS)
 	{
+		if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn) != 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					 errmsg("timestamp out of range")));
+
 		switch (val)
 		{
 			case DTK_MILLENNIUM:
@@ -2653,19 +2735,27 @@ timestamptz_trunc(PG_FUNCTION_ARGS)
 				break;
 
 			default:
-				elog(ERROR, "TIMESTAMP WITH TIME ZONE units '%s' not supported", lowunits);
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("timestamp with time zone units \"%s\" not "
+								"supported", lowunits)));
 				result = 0;
 		}
 
 		tz = DetermineLocalTimeZone(tm);
 
 		if (tm2timestamp(tm, fsec, &tz, &result) != 0)
-			elog(ERROR, "Unable to truncate TIMESTAMP WITH TIME ZONE to '%s'", lowunits);
+			ereport(ERROR,
+					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					 errmsg("timestamp out of range")));
 	}
 	else
 	{
-		elog(ERROR, "TIMESTAMP WITH TIME ZONE units '%s' not recognized", lowunits);
-		PG_RETURN_NULL();
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("timestamp with time zone units \"%s\" not recognized",
+						 lowunits)));
+		result = 0;
 	}
 
 	PG_RETURN_TIMESTAMPTZ(result);
@@ -2693,9 +2783,11 @@ interval_trunc(PG_FUNCTION_ARGS)
 	result = (Interval *) palloc(sizeof(Interval));
 
 	if (VARSIZE(units) - VARHDRSZ > MAXDATELEN)
-		elog(ERROR, "INTERVAL units '%s' not recognized",
-			 DatumGetCString(DirectFunctionCall1(textout,
-											   PointerGetDatum(units))));
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("interval units \"%s\" not recognized",
+						 DatumGetCString(DirectFunctionCall1(textout,
+										 PointerGetDatum(units))))));
 	up = VARDATA(units);
 	lp = lowunits;
 	for (i = 0; i < (VARSIZE(units) - VARHDRSZ); i++)
@@ -2746,24 +2838,29 @@ interval_trunc(PG_FUNCTION_ARGS)
 					break;
 
 				default:
-					elog(ERROR, "INTERVAL units '%s' not supported", lowunits);
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("interval units \"%s\" not supported",
+									 lowunits)));
 			}
 
 			if (tm2interval(tm, fsec, result) != 0)
-				elog(ERROR, "Unable to truncate INTERVAL to '%s'", lowunits);
-
+				ereport(ERROR,
+						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+						 errmsg("interval out of range")));
 		}
 		else
 		{
-			elog(WARNING, "Unable to decode INTERVAL; internal coding error");
-			*result = *interval;
+			elog(ERROR, "could not convert interval to tm");
 		}
 	}
 	else
 	{
-		elog(ERROR, "INTERVAL units '%s' not recognized",
-			 DatumGetCString(DirectFunctionCall1(textout,
-											   PointerGetDatum(units))));
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("interval units \"%s\" not recognized",
+						 DatumGetCString(DirectFunctionCall1(textout,
+										 PointerGetDatum(units))))));
 		*result = *interval;
 	}
 
@@ -2783,7 +2880,9 @@ isoweek2date(int woy, int *year, int *mon, int *mday)
 				dayn;
 
 	if (!*year)
-		elog(ERROR, "isoweek2date(): can't convert without year information");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("cannot convert week number without year information")));
 
 	/* fourth day of current year */
 	day4 = date2j(*year, 1, 4);
@@ -2870,9 +2969,11 @@ timestamp_part(PG_FUNCTION_ARGS)
 			   *tm = &tt;
 
 	if (VARSIZE(units) - VARHDRSZ > MAXDATELEN)
-		elog(ERROR, "TIMESTAMP units '%s' not recognized",
-			 DatumGetCString(DirectFunctionCall1(textout,
-											   PointerGetDatum(units))));
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("timestamp units \"%s\" not recognized",
+						 DatumGetCString(DirectFunctionCall1(textout,
+										 PointerGetDatum(units))))));
 	up = VARDATA(units);
 	lp = lowunits;
 	for (i = 0; i < (VARSIZE(units) - VARHDRSZ); i++)
@@ -2889,9 +2990,13 @@ timestamp_part(PG_FUNCTION_ARGS)
 		PG_RETURN_FLOAT8(result);
 	}
 
-	if ((type == UNITS)
-		&& (timestamp2tm(timestamp, NULL, tm, &fsec, NULL) == 0))
+	if (type == UNITS)
 	{
+		if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL) != 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					 errmsg("timestamp out of range")));
+
 		switch (val)
 		{
 			case DTK_MICROSEC:
@@ -2973,7 +3078,10 @@ timestamp_part(PG_FUNCTION_ARGS)
 			case DTK_TZ_MINUTE:
 			case DTK_TZ_HOUR:
 			default:
-				elog(ERROR, "TIMESTAMP units '%s' not supported", lowunits);
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("timestamp units \"%s\" not supported",
+								 lowunits)));
 				result = 0;
 		}
 	}
@@ -2988,12 +3096,16 @@ timestamp_part(PG_FUNCTION_ARGS)
 
 				/* convert to timestamptz to produce consistent results */
 				if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL) != 0)
-					elog(ERROR, "Unable to convert TIMESTAMP to TIMESTAMP WITH TIME ZONE (tm)");
+					ereport(ERROR,
+							(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+							 errmsg("timestamp out of range")));
 
 				tz = DetermineLocalTimeZone(tm);
 
 				if (tm2timestamp(tm, fsec, &tz, &timestamptz) != 0)
-					elog(ERROR, "Unable to convert TIMESTAMP to TIMESTAMP WITH TIME ZONE");
+					ereport(ERROR,
+							(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+							 errmsg("timestamp out of range")));
 
 #ifdef HAVE_INT64_TIMESTAMP
 				result = ((timestamptz - SetEpochTimestamp()) / 1000000e0);
@@ -3004,28 +3116,35 @@ timestamp_part(PG_FUNCTION_ARGS)
 			}
 			case DTK_DOW:
 				if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL) != 0)
-					elog(ERROR, "Unable to encode TIMESTAMP");
-
+					ereport(ERROR,
+							(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+							 errmsg("timestamp out of range")));
 				result = j2day(date2j(tm->tm_year, tm->tm_mon, tm->tm_mday));
 				break;
 
 			case DTK_DOY:
 				if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL) != 0)
-					elog(ERROR, "Unable to encode TIMESTAMP");
-
+					ereport(ERROR,
+							(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+							 errmsg("timestamp out of range")));
 				result = (date2j(tm->tm_year, tm->tm_mon, tm->tm_mday)
 						  - date2j(tm->tm_year, 1, 1) + 1);
 				break;
 
 			default:
-				elog(ERROR, "TIMESTAMP units '%s' not supported", lowunits);
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("timestamp units \"%s\" not supported",
+								 lowunits)));
 				result = 0;
 		}
 
 	}
 	else
 	{
-		elog(ERROR, "TIMESTAMP units '%s' not recognized", lowunits);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("timestamp units \"%s\" not recognized", lowunits)));
 		result = 0;
 	}
 
@@ -3055,9 +3174,11 @@ timestamptz_part(PG_FUNCTION_ARGS)
 			   *tm = &tt;
 
 	if (VARSIZE(units) - VARHDRSZ > MAXDATELEN)
-		elog(ERROR, "TIMESTAMP WITH TIME ZONE units '%s' not recognized",
-			 DatumGetCString(DirectFunctionCall1(textout,
-											   PointerGetDatum(units))));
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("timestamp with time zone units \"%s\" not recognized",
+						 DatumGetCString(DirectFunctionCall1(textout,
+										 PointerGetDatum(units))))));
 	up = VARDATA(units);
 	lp = lowunits;
 	for (i = 0; i < (VARSIZE(units) - VARHDRSZ); i++)
@@ -3074,9 +3195,13 @@ timestamptz_part(PG_FUNCTION_ARGS)
 		PG_RETURN_FLOAT8(result);
 	}
 
-	if ((type == UNITS)
-		&& (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn) == 0))
+	if (type == UNITS)
 	{
+		if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn) != 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					 errmsg("timestamp out of range")));
+
 		switch (val)
 		{
 			case DTK_TZ:
@@ -3170,7 +3295,10 @@ timestamptz_part(PG_FUNCTION_ARGS)
 				break;
 
 			default:
-				elog(ERROR, "TIMESTAMP WITH TIME ZONE units '%s' not supported", lowunits);
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("timestamp with time zone units \"%s\" not supported",
+								 lowunits)));
 				result = 0;
 		}
 
@@ -3189,27 +3317,36 @@ timestamptz_part(PG_FUNCTION_ARGS)
 
 			case DTK_DOW:
 				if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn) != 0)
-					elog(ERROR, "Unable to encode TIMESTAMP WITH TIME ZONE");
-
+					ereport(ERROR,
+							(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+							 errmsg("timestamp out of range")));
 				result = j2day(date2j(tm->tm_year, tm->tm_mon, tm->tm_mday));
 				break;
 
 			case DTK_DOY:
 				if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn) != 0)
-					elog(ERROR, "Unable to encode TIMESTAMP WITH TIME ZONE");
-
+					ereport(ERROR,
+							(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+							 errmsg("timestamp out of range")));
 				result = (date2j(tm->tm_year, tm->tm_mon, tm->tm_mday)
 						  - date2j(tm->tm_year, 1, 1) + 1);
 				break;
 
 			default:
-				elog(ERROR, "TIMESTAMP WITH TIME ZONE units '%s' not supported", lowunits);
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("timestamp with time zone units \"%s\" not supported",
+								 lowunits)));
 				result = 0;
 		}
 	}
 	else
 	{
-		elog(ERROR, "TIMESTAMP WITH TIME ZONE units '%s' not recognized", lowunits);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("timestamp with time zone units \"%s\" not recognized",
+						 lowunits)));
+
 		result = 0;
 	}
 
@@ -3237,9 +3374,11 @@ interval_part(PG_FUNCTION_ARGS)
 			   *tm = &tt;
 
 	if (VARSIZE(units) - VARHDRSZ > MAXDATELEN)
-		elog(ERROR, "INTERVAL units '%s' not recognized",
-			 DatumGetCString(DirectFunctionCall1(textout,
-											   PointerGetDatum(units))));
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("interval units \"%s\" not recognized",
+						 DatumGetCString(DirectFunctionCall1(textout,
+										 PointerGetDatum(units))))));
 	up = VARDATA(units);
 	lp = lowunits;
 	for (i = 0; i < (VARSIZE(units) - VARHDRSZ); i++)
@@ -3317,17 +3456,18 @@ interval_part(PG_FUNCTION_ARGS)
 					break;
 
 				default:
-					elog(ERROR, "INTERVAL units '%s' not supported",
-						 DatumGetCString(DirectFunctionCall1(textout,
-											   PointerGetDatum(units))));
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("interval units \"%s\" not supported",
+							 DatumGetCString(DirectFunctionCall1(textout,
+											   PointerGetDatum(units))))));
 					result = 0;
 			}
 
 		}
 		else
 		{
-			elog(WARNING, "Unable to decode INTERVAL"
-				 "\n\tinterval_part() internal coding error");
+			elog(ERROR, "could not convert interval to tm");
 			result = 0;
 		}
 	}
@@ -3346,9 +3486,11 @@ interval_part(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-		elog(ERROR, "INTERVAL units '%s' not recognized",
-			 DatumGetCString(DirectFunctionCall1(textout,
-											   PointerGetDatum(units))));
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("interval units \"%s\" not recognized",
+						 DatumGetCString(DirectFunctionCall1(textout,
+										 PointerGetDatum(units))))));
 		result = 0;
 	}
 
@@ -3376,9 +3518,11 @@ timestamp_zone(PG_FUNCTION_ARGS)
 				lowzone[MAXDATELEN + 1];
 
 	if (VARSIZE(zone) - VARHDRSZ > MAXDATELEN)
-		elog(ERROR, "Time zone '%s' not recognized",
-			 DatumGetCString(DirectFunctionCall1(textout,
-												 PointerGetDatum(zone))));
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("time zone \"%s\" not recognized",
+						 DatumGetCString(DirectFunctionCall1(textout,
+										 PointerGetDatum(zone))))));
 
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		PG_RETURN_TIMESTAMPTZ(timestamp);
@@ -3399,7 +3543,11 @@ timestamp_zone(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-		elog(ERROR, "Time zone '%s' not recognized", lowzone);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("time zone \"%s\" not recognized",
+						 lowzone)));
+
 		PG_RETURN_NULL();
 	}
 
@@ -3421,9 +3569,11 @@ timestamp_izone(PG_FUNCTION_ARGS)
 		PG_RETURN_TIMESTAMPTZ(timestamp);
 
 	if (zone->month != 0)
-		elog(ERROR, "INTERVAL time zone '%s' not legal (month specified)",
-			 DatumGetCString(DirectFunctionCall1(interval_out,
-												 PointerGetDatum(zone))));
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("interval time zone \"%s\" must not specify month",
+						DatumGetCString(DirectFunctionCall1(interval_out,
+										 PointerGetDatum(zone))))));
 
 #ifdef HAVE_INT64_TIMESTAMP
 	tz = (zone->time / INT64CONST(1000000));
@@ -3454,12 +3604,16 @@ timestamp_timestamptz(PG_FUNCTION_ARGS)
 	else
 	{
 		if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL) != 0)
-			elog(ERROR, "Unable to convert TIMESTAMP to TIMESTAMP WITH TIME ZONE (tm)");
+			ereport(ERROR,
+					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					 errmsg("timestamp out of range")));
 
 		tz = DetermineLocalTimeZone(tm);
 
 		if (tm2timestamp(tm, fsec, &tz, &result) != 0)
-			elog(ERROR, "Unable to convert TIMESTAMP to TIMESTAMP WITH TIME ZONE");
+			ereport(ERROR,
+					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					 errmsg("timestamp out of range")));
 	}
 
 	PG_RETURN_TIMESTAMPTZ(result);
@@ -3484,10 +3638,13 @@ timestamptz_timestamp(PG_FUNCTION_ARGS)
 	else
 	{
 		if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn) != 0)
-			elog(ERROR, "Unable to convert TIMESTAMP WITH TIME ZONE to TIMESTAMP (tm)");
-
+			ereport(ERROR,
+					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					 errmsg("timestamp out of range")));
 		if (tm2timestamp(tm, fsec, NULL, &result) != 0)
-			elog(ERROR, "Unable to convert TIMESTAMP WITH TIME ZONE to TIMESTAMP");
+			ereport(ERROR,
+					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					 errmsg("timestamp out of range")));
 	}
 
 	PG_RETURN_TIMESTAMP(result);
@@ -3513,9 +3670,11 @@ timestamptz_zone(PG_FUNCTION_ARGS)
 				lowzone[MAXDATELEN + 1];
 
 	if (VARSIZE(zone) - VARHDRSZ > MAXDATELEN)
-		elog(ERROR, "Time zone '%s' not recognized",
-			 DatumGetCString(DirectFunctionCall1(textout,
-												 PointerGetDatum(zone))));
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("time zone \"%s\" not recognized",
+						 DatumGetCString(DirectFunctionCall1(textout,
+										 PointerGetDatum(zone))))));
 	up = VARDATA(zone);
 	lp = lowzone;
 	for (i = 0; i < (VARSIZE(zone) - VARHDRSZ); i++)
@@ -3535,7 +3694,10 @@ timestamptz_zone(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-		elog(ERROR, "Time zone '%s' not recognized", lowzone);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("time zone \"%s\" not recognized", lowzone)));
+
 		PG_RETURN_NULL();
 	}
 
@@ -3558,9 +3720,11 @@ timestamptz_izone(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 
 	if (zone->month != 0)
-		elog(ERROR, "INTERVAL time zone '%s' not legal (month specified)",
-			 DatumGetCString(DirectFunctionCall1(interval_out,
-												 PointerGetDatum(zone))));
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("interval time zone \"%s\" must not specify month",
+						 DatumGetCString(DirectFunctionCall1(interval_out,
+													 PointerGetDatum(zone))))));
 
 #ifdef HAVE_INT64_TIMESTAMP
 	tz = -(zone->time / INT64CONST(1000000));

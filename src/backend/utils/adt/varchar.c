@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.98 2003/06/22 22:04:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.99 2003/07/27 04:53:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,17 +73,13 @@ bpcharin(PG_FUNCTION_ARGS)
 	size_t		len,
 				maxlen;
 	int			i;
-
 	int			charlen;		/* number of charcters in the input string */
-	char	   *ermsg;
 
+	/* verify encoding */
 	len = strlen(s);
-
-	if ((ermsg = pg_verifymbstr(s, len)))
-		elog(ERROR, "%s", ermsg);
+	pg_verifymbstr(s, len, false);
 
 	charlen = pg_mbstrlen(s);
-
 
 	/* If typmod is -1 (or invalid), use the actual string length */
 	if (atttypmod < (int32) VARHDRSZ)
@@ -104,8 +100,10 @@ bpcharin(PG_FUNCTION_ARGS)
 		if (strspn(s + mbmaxlen, " ") == len - mbmaxlen)
 			len = mbmaxlen;
 		else
-			elog(ERROR, "value too long for type character(%d)",
-				 (int) maxlen);
+			ereport(ERROR,
+					(errcode(ERRCODE_STRING_DATA_LENGTH_MISMATCH),
+					 errmsg("value too long for type character(%d)",
+							 (int) maxlen)));
 
 		/*
 		 * XXX: at this point, maxlen is the necessary byte length, not
@@ -230,8 +228,10 @@ bpchar(PG_FUNCTION_ARGS)
 		{
 			for (i = maxmblen - VARHDRSZ; i < len - VARHDRSZ; i++)
 				if (*(VARDATA(source) + i) != ' ')
-					elog(ERROR, "value too long for type character(%d)",
-						 maxlen - VARHDRSZ);
+					ereport(ERROR,
+							(errcode(ERRCODE_STRING_DATA_LENGTH_MISMATCH),
+							 errmsg("value too long for type character(%d)",
+									 maxlen - VARHDRSZ)));
 		}
 
 		len = maxmblen;
@@ -372,12 +372,9 @@ varcharin(PG_FUNCTION_ARGS)
 	size_t		len,
 				maxlen;
 
-	char	   *ermsg;
-
+	/* verify encoding */
 	len = strlen(s);
-
-	if ((ermsg = pg_verifymbstr(s, len)))
-		elog(ERROR, "%s", ermsg);
+	pg_verifymbstr(s, len, false);
 
 	maxlen = atttypmod - VARHDRSZ;
 
@@ -389,8 +386,10 @@ varcharin(PG_FUNCTION_ARGS)
 		if (strspn(s + mbmaxlen, " ") == len - mbmaxlen)
 			len = mbmaxlen;
 		else
-			elog(ERROR, "value too long for type character varying(%d)",
-				 (int) maxlen);
+			ereport(ERROR,
+					(errcode(ERRCODE_STRING_DATA_LENGTH_MISMATCH),
+					 errmsg("value too long for type character varying(%d)",
+							 (int) maxlen)));
 	}
 
 	result = palloc(len + VARHDRSZ);
@@ -487,8 +486,10 @@ varchar(PG_FUNCTION_ARGS)
 	{
 		for (i = maxmblen; i < len - VARHDRSZ; i++)
 			if (*(VARDATA(source) + i) != ' ')
-				elog(ERROR, "value too long for type character varying(%d)",
-					 maxlen - VARHDRSZ);
+				ereport(ERROR,
+						(errcode(ERRCODE_STRING_DATA_LENGTH_MISMATCH),
+						 errmsg("value too long for type character varying(%d)",
+								 maxlen - VARHDRSZ)));
 	}
 
 	len = maxmblen + VARHDRSZ;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/bool.c,v 1.27 2003/05/12 23:08:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/bool.c,v 1.28 2003/07/27 04:53:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,7 +75,9 @@ boolin(PG_FUNCTION_ARGS)
 			break;
 	}
 
-	elog(ERROR, "Bad boolean external representation '%s'", b);
+	ereport(ERROR,
+			(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+			 errmsg("invalid input syntax for boolean: \"%s\"", b)));
 
 	/* not reached */
 	PG_RETURN_BOOL(false);

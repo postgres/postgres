@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.91 2003/06/27 00:33:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.92 2003/07/27 04:53:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -90,8 +90,12 @@ getid(const char *s, char *n)
 		else
 		{
 			if (len >= NAMEDATALEN-1)
-				elog(ERROR, "identifier must be less than %d characters",
-					 NAMEDATALEN);
+				ereport(ERROR,
+						(errcode(ERRCODE_NAME_TOO_LONG),
+						 errmsg("identifier too long"),
+						 errdetail("Identifier must be less than %d characters.",
+									NAMEDATALEN)));
+
 			n[len++] = *s;
 		}
 	}
@@ -157,26 +161,34 @@ aclparse(const char *s, AclItem *aip)
 	Assert(s && aip);
 
 #ifdef ACLDEBUG
-	elog(LOG, "aclparse: input = '%s'", s);
+	elog(LOG, "aclparse: input = \"%s\"", s);
 #endif
 	idtype = ACL_IDTYPE_UID;
 	s = getid(s, name);
 	if (*s != '=')
 	{
 		/* we just read a keyword, not a name */
-		if (strncmp(name, ACL_IDTYPE_GID_KEYWORD, sizeof(name)) == 0)
+		if (strcmp(name, ACL_IDTYPE_GID_KEYWORD) == 0)
 			idtype = ACL_IDTYPE_GID;
-		else if (strncmp(name, ACL_IDTYPE_UID_KEYWORD, sizeof(name)) != 0)
-			elog(ERROR, "aclparse: bad keyword, must be [group|user]");
+		else if (strcmp(name, ACL_IDTYPE_UID_KEYWORD) != 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+					 errmsg("unrecognized keyword: \"%s\"", name),
+					 errhint("ACL keyword must be \"group\" or \"user\".")));
 		s = getid(s, name);		/* move s to the name beyond the keyword */
 		if (name[0] == '\0')
-			elog(ERROR, "aclparse: a name must follow the [group|user] keyword");
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+					 errmsg("missing name"),
+					 errhint("A name must follow the [group|user] keyword.")));
 	}
 	if (name[0] == '\0')
 		idtype = ACL_IDTYPE_WORLD;
 
 	if (*s != '=')
-		elog(ERROR, "aclparse: expecting \"=\" sign");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+				 errmsg("missing \"=\" sign")));
 
 	privs = goption = ACL_NO_RIGHTS;
 
@@ -221,8 +233,10 @@ aclparse(const char *s, AclItem *aip)
 				read = ACL_CREATE_TEMP;
 				break;
 			default:
-				elog(ERROR, "aclparse: mode flags must use \"%s\"",
-					 ACL_ALL_RIGHTS_STR);
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+						 errmsg("invalid mode character: must be one of \"%s\"",
+								ACL_ALL_RIGHTS_STR)));
 		}
 
 		privs |= read;
@@ -247,14 +261,18 @@ aclparse(const char *s, AclItem *aip)
 	{
 		s = getid(s + 1, name2);
 		if (name2[0] == '\0')
-			elog(ERROR, "aclparse: a name must follow the \"/\" sign");
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+					 errmsg("a name must follow the \"/\" sign")));
 
 		aip->ai_grantor = get_usesysid(name2);
 	}
 	else
 	{
 		aip->ai_grantor = BOOTSTRAP_USESYSID;
-		elog(WARNING, "defaulting grantor to %u", BOOTSTRAP_USESYSID);
+		ereport(WARNING,
+				(errcode(ERRCODE_INVALID_GRANTOR),
+				 errmsg("defaulting grantor to %u", BOOTSTRAP_USESYSID)));
 	}
 
 	ACLITEM_SET_PRIVS_IDTYPE(*aip, privs, goption, idtype);
@@ -280,7 +298,7 @@ allocacl(int n)
 	Size		size;
 
 	if (n < 0)
-		elog(ERROR, "allocacl: invalid size: %d", n);
+		elog(ERROR, "invalid size: %d", n);
 	size = ACL_N_SIZE(n);
 	new_acl = (Acl *) palloc0(size);
 	new_acl->size = size;
@@ -311,7 +329,10 @@ aclitemin(PG_FUNCTION_ARGS)
 	while (isspace((unsigned char) *s))
 		++s;
 	if (*s)
-		elog(ERROR, "aclitemin: extra garbage at end of specification");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+				 errmsg("extra garbage at the end of the ACL specification")));
+
 	PG_RETURN_ACLITEM_P(aip);
 }
 
@@ -373,8 +394,8 @@ aclitemout(PG_FUNCTION_ARGS)
 		case ACL_IDTYPE_WORLD:
 			break;
 		default:
-			elog(ERROR, "aclitemout: bad idtype: %d",
-				 ACLITEM_GET_IDTYPE(*aip));
+			elog(ERROR, "unrecognized idtype: %d",
+				 (int) ACLITEM_GET_IDTYPE(*aip));
 			break;
 	}
 	while (*p)
@@ -482,7 +503,7 @@ acldefault(GrantObjectType objtype, AclId ownerid)
 			owner_default = ACL_ALL_RIGHTS_NAMESPACE;
 			break;
 		default:
-			elog(ERROR, "acldefault: bogus objtype %d", (int) objtype);
+			elog(ERROR, "unrecognized objtype: %d", (int) objtype);
 			world_default = ACL_NO_RIGHTS;		/* keep compiler quiet */
 			owner_default = ACL_NO_RIGHTS;
 			break;
@@ -644,7 +665,10 @@ restart:
 			AclItem mod_acl;
 
 			if (behavior == DROP_RESTRICT)
-				elog(ERROR, "dependent privileges exist (use CASCADE to revoke them too)");
+				ereport(ERROR,
+						(errcode(ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST),
+						 errmsg("dependent privileges exist"),
+						 errhint("Use CASCADE to revoke them too.")));
 
 			mod_acl.ai_grantor = grantee;
 			mod_acl.ai_grantee = aip[i].ai_grantee;
@@ -718,7 +742,9 @@ aclremove(PG_FUNCTION_ARGS)
 		new_aip = ACL_DAT(new_acl);
 		if (dst == 0)
 		{						/* start */
-			elog(ERROR, "aclremove: removal of the world ACL??");
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("cannot remove the world ACL")));
 		}
 		else if (dst == old_num - 1)
 		{						/* end */
@@ -784,7 +810,9 @@ makeaclitem(PG_FUNCTION_ARGS)
 	}
 	else if (u_grantee != 0 && g_grantee != 0)
 	{
-		elog(ERROR, "cannot specify both user and group");
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot specify both user and group")));
 	}
 	else if (u_grantee != 0)
 	{
@@ -840,7 +868,9 @@ convert_priv_string(text *priv_type_text)
 	if (strcasecmp(priv_type, "TEMPORARY") == 0)
 		return ACL_CREATE_TEMP;
 
-	elog(ERROR, "invalid privilege type %s", priv_type);
+	ereport(ERROR,
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			 errmsg("unrecognized privilege type: \"%s\"", priv_type)));
 	return ACL_NO_RIGHTS;		/* keep compiler quiet */
 }
 
@@ -1063,8 +1093,9 @@ convert_table_priv_string(text *priv_type_text)
 	if (strcasecmp(priv_type, "TRIGGER WITH GRANT OPTION") == 0)
 		return ACL_GRANT_OPTION_FOR(ACL_TRIGGER);
 
-	elog(ERROR, "has_table_privilege: invalid privilege type %s",
-		 priv_type);
+	ereport(ERROR,
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			 errmsg("unrecognized privilege type: \"%s\"", priv_type)));
 	return ACL_NO_RIGHTS;		/* keep compiler quiet */
 }
 
@@ -1237,7 +1268,9 @@ convert_database_name(text *databasename)
 
 	oid = get_database_oid(dbname);
 	if (!OidIsValid(oid))
-		elog(ERROR, "database \"%s\" does not exist", dbname);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_DATABASE),
+				 errmsg("database \"%s\" does not exist", dbname)));
 
 	return oid;
 }
@@ -1272,8 +1305,9 @@ convert_database_priv_string(text *priv_type_text)
 	if (strcasecmp(priv_type, "TEMP WITH GRANT OPTION") == 0)
 		return ACL_GRANT_OPTION_FOR(ACL_CREATE_TEMP);
 
-	elog(ERROR, "has_database_privilege: invalid privilege type %s",
-		 priv_type);
+	ereport(ERROR,
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			 errmsg("unrecognized privilege type: \"%s\"", priv_type)));
 	return ACL_NO_RIGHTS;		/* keep compiler quiet */
 }
 
@@ -1448,7 +1482,9 @@ convert_function_name(text *functionname)
 											 CStringGetDatum(funcname)));
 
 	if (!OidIsValid(oid))
-		elog(ERROR, "function \"%s\" does not exist", funcname);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_FUNCTION),
+				 errmsg("function \"%s\" does not exist", funcname)));
 
 	return oid;
 }
@@ -1473,8 +1509,9 @@ convert_function_priv_string(text *priv_type_text)
 	if (strcasecmp(priv_type, "EXECUTE WITH GRANT OPTION") == 0)
 		return ACL_GRANT_OPTION_FOR(ACL_EXECUTE);
 
-	elog(ERROR, "has_function_privilege: invalid privilege type %s",
-		 priv_type);
+	ereport(ERROR,
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			 errmsg("unrecognized privilege type: \"%s\"", priv_type)));
 	return ACL_NO_RIGHTS;		/* keep compiler quiet */
 }
 
@@ -1649,7 +1686,9 @@ convert_language_name(text *languagename)
 						 CStringGetDatum(langname),
 						 0, 0, 0);
 	if (!OidIsValid(oid))
-		elog(ERROR, "language \"%s\" does not exist", langname);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("language \"%s\" does not exist", langname)));
 
 	return oid;
 }
@@ -1674,8 +1713,9 @@ convert_language_priv_string(text *priv_type_text)
 	if (strcasecmp(priv_type, "USAGE WITH GRANT OPTION") == 0)
 		return ACL_GRANT_OPTION_FOR(ACL_USAGE);
 
-	elog(ERROR, "has_language_privilege: invalid privilege type %s",
-		 priv_type);
+	ereport(ERROR,
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			 errmsg("unrecognized privilege type: \"%s\"", priv_type)));
 	return ACL_NO_RIGHTS;		/* keep compiler quiet */
 }
 
@@ -1850,7 +1890,9 @@ convert_schema_name(text *schemaname)
 						 CStringGetDatum(nspname),
 						 0, 0, 0);
 	if (!OidIsValid(oid))
-		elog(ERROR, "schema \"%s\" does not exist", nspname);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_SCHEMA),
+				 errmsg("schema \"%s\" does not exist", nspname)));
 
 	return oid;
 }
@@ -1880,7 +1922,8 @@ convert_schema_priv_string(text *priv_type_text)
 	if (strcasecmp(priv_type, "USAGE WITH GRANT OPTION") == 0)
 		return ACL_GRANT_OPTION_FOR(ACL_USAGE);
 
-	elog(ERROR, "has_schema_privilege: invalid privilege type %s",
-		 priv_type);
+	ereport(ERROR,
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			 errmsg("unrecognized privilege type: \"%s\"", priv_type)));
 	return ACL_NO_RIGHTS;		/* keep compiler quiet */
 }

@@ -19,7 +19,7 @@
  * Copyright (c) 1996-2002, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	$Header: /cvsroot/pgsql/src/backend/utils/adt/like_match.c,v 1.4 2002/09/03 21:45:42 petere Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/like_match.c,v 1.5 2003/07/27 04:53:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -286,7 +286,11 @@ do_like_escape(text *pat, text *esc)
 		 */
 		NextChar(e, elen);
 		if (elen != 0)
-			elog(ERROR, "ESCAPE string must be empty or one character");
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_ESCAPE_SEQUENCE),
+					 errmsg("invalid escape string"),
+					 errhint("Escape string must be empty or one character.")));
+
 		e = VARDATA(esc);
 
 		/*

@@ -186,12 +186,16 @@ pg_stat_get_backend_idset(PG_FUNCTION_ARGS)
 
 	if (fcinfo->resultinfo == NULL ||
 		!IsA(fcinfo->resultinfo, ReturnSetInfo))
-		elog(ERROR, "pg_stat_get_backend_idset: called in context that does not accept a set result");
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("set-valued function called in context that "
+						"cannot accept a set")));
 
 	if (fmgr_info->fn_extra == NULL)
 	{
 		if (fmgr_info->fn_mcxt == NULL)
-			elog(ERROR, "No function memory context in set-function");
+			elog(ERROR, "no function memory context in set-function");
+
 		fmgr_info->fn_extra = MemoryContextAlloc(fmgr_info->fn_mcxt,
 												 2 * sizeof(int));
 		((int *) (fmgr_info->fn_extra))[0] = 0;

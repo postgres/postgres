@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int8.c,v 1.44 2003/05/09 15:44:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int8.c,v 1.45 2003/07/27 04:53:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,7 +36,7 @@
 /*
  * scanint8 --- try to parse a string into an int8.
  *
- * If errorOK is false, elog a useful error message if the string is bad.
+ * If errorOK is false, ereport a useful error message if the string is bad.
  * If errorOK is true, just return "false" for bad input.
  */
 bool
@@ -83,7 +83,9 @@ scanint8(const char *str, bool errorOK, int64 *result)
 		if (errorOK)
 			return false;
 		else
-			elog(ERROR, "Bad int8 external representation \"%s\"", str);
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+					 errmsg("invalid input syntax for int8: \"%s\"", str)));
 	}
 
 	/* process digits */
@@ -96,7 +98,9 @@ scanint8(const char *str, bool errorOK, int64 *result)
 			if (errorOK)
 				return false;
 			else
-				elog(ERROR, "int8 value out of range: \"%s\"", str);
+				ereport(ERROR,
+						(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+						 errmsg("integer out of range")));
 		}
 		tmp = newtmp;
 	}
@@ -107,7 +111,9 @@ scanint8(const char *str, bool errorOK, int64 *result)
 		if (errorOK)
 			return false;
 		else
-			elog(ERROR, "Bad int8 external representation \"%s\"", str);
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+					 errmsg("invalid input syntax for int8: \"%s\"", str)));
 	}
 
 	*result = (sign < 0) ? -tmp : tmp;
@@ -139,7 +145,7 @@ int8out(PG_FUNCTION_ARGS)
 	char		buf[MAXINT8LEN + 1];
 
 	if ((len = snprintf(buf, MAXINT8LEN, INT64_FORMAT, val)) < 0)
-		elog(ERROR, "Unable to format int8");
+		elog(ERROR, "could not format int8");
 
 	result = pstrdup(buf);
 	PG_RETURN_CSTRING(result);
@@ -515,7 +521,9 @@ int8div(PG_FUNCTION_ARGS)
 	int64		val2 = PG_GETARG_INT64(1);
 
 	if (val2 == 0)
-		elog(ERROR, "division by zero");
+		ereport(ERROR,
+				(errcode(ERRCODE_DIVISION_BY_ZERO),
+				 errmsg("division by zero")));
 
 	PG_RETURN_INT64(val1 / val2);
 }
@@ -542,7 +550,9 @@ int8mod(PG_FUNCTION_ARGS)
 	int64		result;
 
 	if (val2 == 0)
-		elog(ERROR, "division by zero");
+		ereport(ERROR,
+				(errcode(ERRCODE_DIVISION_BY_ZERO),
+				 errmsg("division by zero")));
 
 	result = val1 / val2;
 	result *= val2;
@@ -638,7 +648,9 @@ int84div(PG_FUNCTION_ARGS)
 	int32		val2 = PG_GETARG_INT32(1);
 
 	if (val2 == 0)
-		elog(ERROR, "division by zero");
+		ereport(ERROR,
+				(errcode(ERRCODE_DIVISION_BY_ZERO),
+				 errmsg("division by zero")));
 
 	PG_RETURN_INT64(val1 / val2);
 }
@@ -677,7 +689,9 @@ int48div(PG_FUNCTION_ARGS)
 	int64		val2 = PG_GETARG_INT64(1);
 
 	if (val2 == 0)
-		elog(ERROR, "division by zero");
+		ereport(ERROR,
+				(errcode(ERRCODE_DIVISION_BY_ZERO),
+				 errmsg("division by zero")));
 
 	PG_RETURN_INT64(val1 / val2);
 }
@@ -767,7 +781,9 @@ int84(PG_FUNCTION_ARGS)
 
 	/* Test for overflow by reverse-conversion. */
 	if ((int64) result != val)
-		elog(ERROR, "int8 conversion to int4 is out of range");
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("integer out of range")));
 
 	PG_RETURN_INT32(result);
 }
@@ -790,7 +806,9 @@ int82(PG_FUNCTION_ARGS)
 
 	/* Test for overflow by reverse-conversion. */
 	if ((int64) result != val)
-		elog(ERROR, "int8 conversion to int2 is out of range");
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("integer out of range")));
 
 	PG_RETURN_INT16(result);
 }
@@ -826,7 +844,9 @@ dtoi8(PG_FUNCTION_ARGS)
 	result = (int64) val;
 
 	if ((float8) result != val)
-		elog(ERROR, "Floating point conversion to int8 is out of range");
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("integer out of range")));
 
 	PG_RETURN_INT64(result);
 }
@@ -863,7 +883,9 @@ ftoi8(PG_FUNCTION_ARGS)
 	result = (int64) dval;
 
 	if ((float8) result != dval)
-		elog(ERROR, "Floating point conversion to int8 is out of range");
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("integer out of range")));
 
 	PG_RETURN_INT64(result);
 }
@@ -878,7 +900,9 @@ i8tooid(PG_FUNCTION_ARGS)
 
 	/* Test for overflow by reverse-conversion. */
 	if ((int64) result != val)
-		elog(ERROR, "int8 conversion to OID is out of range");
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("OID out of range")));
 
 	PG_RETURN_OID(result);
 }

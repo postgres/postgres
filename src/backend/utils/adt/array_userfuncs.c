@@ -6,7 +6,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/array_userfuncs.c,v 1.5 2003/07/01 00:04:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/array_userfuncs.c,v 1.6 2003/07/27 04:53:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,6 +15,7 @@
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "utils/array.h"
+#include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
@@ -44,7 +45,10 @@ array_push(PG_FUNCTION_ARGS)
 	ArrayMetaState *my_extra;
 
 	if (arg0_typeid == InvalidOid || arg1_typeid == InvalidOid)
-		elog(ERROR, "array_push: cannot determine input data types");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("could not determine input data types")));
+
 	arg0_elemid = get_element_type(arg0_typeid);
 	arg1_elemid = get_element_type(arg1_typeid);
 
@@ -63,7 +67,9 @@ array_push(PG_FUNCTION_ARGS)
 	else
 	{
 		/* Shouldn't get here given proper type checking in parser */
-		elog(ERROR, "array_push: neither input type is an array");
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 errmsg("neither input type is an array")));
 		PG_RETURN_NULL();		/* keep compiler quiet */
 	}
 
@@ -87,8 +93,9 @@ array_push(PG_FUNCTION_ARGS)
 	else if (ARR_NDIM(v) == 0)
 		indx = 1;
 	else
-		elog(ERROR, "only empty and one-dimensional arrays are supported");
-
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("input must be empty or one-dimensional array")));
 
 	/*
 	 * We arrange to look up info about element type only once per series
@@ -169,16 +176,25 @@ array_cat(PG_FUNCTION_ARGS)
 
 	/* the rest fall into combo 2, 3, or 4 */
 	if (ndims1 != ndims2 && ndims1 != ndims2 - 1 && ndims1 != ndims2 + 1)
-		elog(ERROR, "Cannot concatenate incompatible arrays of %d and "
-					"%d dimensions", ndims1, ndims2);
+		ereport(ERROR,
+				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
+				 errmsg("cannot concatenate incompatible arrays"),
+				 errdetail("Arrays of %d and %d dimensions are not "
+							"compatible for concatenation.",
+							ndims1, ndims2)));
 
 	element_type1 = ARR_ELEMTYPE(v1);
 	element_type2 = ARR_ELEMTYPE(v2);
 
 	/* Do we have a matching element types */
 	if (element_type1 != element_type2)
-		elog(ERROR, "Cannot concatenate incompatible arrays with element "
-					"type %u and %u", element_type1, element_type2);
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 errmsg("cannot concatenate incompatible arrays"),
+				 errdetail("Arrays with element types %s and %s are not "
+							"compatible for concatenation.",
+						   format_type_be(element_type1),
+						   format_type_be(element_type2))));
 
 	/* OK, use it */
 	element_type = element_type1;
@@ -211,7 +227,11 @@ array_cat(PG_FUNCTION_ARGS)
 		for (i = 0; i < ndims1; i++)
 		{
 			if (dims1[i] != dims2[i] || lbs1[i] != lbs2[i])
-				elog(ERROR, "Cannot concatenate arrays with differing dimensions");
+				ereport(ERROR,
+						(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
+						 errmsg("cannot concatenate incompatible arrays"),
+						 errdetail("Arrays with differing dimensions are not "
+									"compatible for concatenation.")));
 
 			dims[i + 1] = dims1[i];
 			lbs[i + 1] = lbs1[i];
@@ -237,7 +257,11 @@ array_cat(PG_FUNCTION_ARGS)
 		for (i = 0; i < ndims1; i++)
 		{
 			if (dims1[i] != dims[i + 1] || lbs1[i] != lbs[i + 1])
-				elog(ERROR, "Cannot concatenate arrays with differing dimensions");
+				ereport(ERROR,
+						(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
+						 errmsg("cannot concatenate incompatible arrays"),
+						 errdetail("Arrays with differing dimensions are not "
+									"compatible for concatenation.")));
 		}
 	}
 	else /* (ndims1 == ndims2 + 1) */
@@ -260,7 +284,11 @@ array_cat(PG_FUNCTION_ARGS)
 		for (i = 0; i < ndims2; i++)
 		{
 			if (dims2[i] != dims[i + 1] || lbs2[i] != lbs[i + 1])
-				elog(ERROR, "Cannot concatenate arrays with differing dimensions");
+				ereport(ERROR,
+						(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
+						 errmsg("cannot concatenate incompatible arrays"),
+						 errdetail("Arrays with differing dimensions are not "
+									"compatible for concatenation.")));
 		}
 	}
 
@@ -302,9 +330,18 @@ create_singleton_array(FunctionCallInfo fcinfo,
 	ArrayMetaState *my_extra;
 
 	if (element_type == 0)
-		elog(ERROR, "Invalid array element type: %u", element_type);
-	if (ndims < 1 || ndims > MAXDIM)
-		elog(ERROR, "Invalid number of dimensions %d", ndims);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("invalid array element type: %u", element_type)));
+	if (ndims < 1)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("invalid number of dimensions: %d", ndims)));
+	if (ndims > MAXDIM)
+		ereport(ERROR,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+				 errmsg("number of array dimensions exceeds the maximum allowed, %d",
+						MAXDIM)));
 
 	dvalues[0] = element;
 

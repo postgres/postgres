@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.54 2003/05/09 15:44:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.55 2003/07/27 04:53:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -121,7 +121,10 @@ int2vectorin(PG_FUNCTION_ARGS)
 	while (*intString && isspace((unsigned char) *intString))
 		intString++;
 	if (*intString)
-		elog(ERROR, "int2vector value has too many values");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("int2vector has too many elements")));
+
 	while (slot < INDEX_MAX_KEYS)
 		result[slot++] = 0;
 
@@ -281,10 +284,10 @@ i4toi2(PG_FUNCTION_ARGS)
 {
 	int32		arg1 = PG_GETARG_INT32(0);
 
-	if (arg1 < SHRT_MIN)
-		elog(ERROR, "i4toi2: '%d' causes int2 underflow", arg1);
-	if (arg1 > SHRT_MAX)
-		elog(ERROR, "i4toi2: '%d' causes int2 overflow", arg1);
+	if (arg1 < SHRT_MIN || arg1 > SHRT_MAX)
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("integer out of range")));
 
 	PG_RETURN_INT16((int16) arg1);
 }
@@ -640,7 +643,9 @@ int4div(PG_FUNCTION_ARGS)
 	int32		arg2 = PG_GETARG_INT32(1);
 
 	if (arg2 == 0)
-		elog(ERROR, "division by zero");
+		ereport(ERROR,
+				(errcode(ERRCODE_DIVISION_BY_ZERO),
+				 errmsg("division by zero")));
 
 	PG_RETURN_INT32(arg1 / arg2);
 }
@@ -703,7 +708,9 @@ int2div(PG_FUNCTION_ARGS)
 	int16		arg2 = PG_GETARG_INT16(1);
 
 	if (arg2 == 0)
-		elog(ERROR, "division by zero");
+		ereport(ERROR,
+				(errcode(ERRCODE_DIVISION_BY_ZERO),
+				 errmsg("division by zero")));
 
 	PG_RETURN_INT16(arg1 / arg2);
 }
@@ -742,7 +749,9 @@ int24div(PG_FUNCTION_ARGS)
 	int32		arg2 = PG_GETARG_INT32(1);
 
 	if (arg2 == 0)
-		elog(ERROR, "division by zero");
+		ereport(ERROR,
+				(errcode(ERRCODE_DIVISION_BY_ZERO),
+				 errmsg("division by zero")));
 
 	PG_RETURN_INT32(arg1 / arg2);
 }
@@ -781,7 +790,9 @@ int42div(PG_FUNCTION_ARGS)
 	int16		arg2 = PG_GETARG_INT16(1);
 
 	if (arg2 == 0)
-		elog(ERROR, "division by zero");
+		ereport(ERROR,
+				(errcode(ERRCODE_DIVISION_BY_ZERO),
+				 errmsg("division by zero")));
 
 	PG_RETURN_INT32(arg1 / arg2);
 }
@@ -793,7 +804,9 @@ int4mod(PG_FUNCTION_ARGS)
 	int32		arg2 = PG_GETARG_INT32(1);
 
 	if (arg2 == 0)
-		elog(ERROR, "division by zero");
+		ereport(ERROR,
+				(errcode(ERRCODE_DIVISION_BY_ZERO),
+				 errmsg("division by zero")));
 
 	PG_RETURN_INT32(arg1 % arg2);
 }
@@ -805,7 +818,9 @@ int2mod(PG_FUNCTION_ARGS)
 	int16		arg2 = PG_GETARG_INT16(1);
 
 	if (arg2 == 0)
-		elog(ERROR, "division by zero");
+		ereport(ERROR,
+				(errcode(ERRCODE_DIVISION_BY_ZERO),
+				 errmsg("division by zero")));
 
 	PG_RETURN_INT16(arg1 % arg2);
 }
@@ -817,7 +832,9 @@ int24mod(PG_FUNCTION_ARGS)
 	int32		arg2 = PG_GETARG_INT32(1);
 
 	if (arg2 == 0)
-		elog(ERROR, "division by zero");
+		ereport(ERROR,
+				(errcode(ERRCODE_DIVISION_BY_ZERO),
+				 errmsg("division by zero")));
 
 	PG_RETURN_INT32(arg1 % arg2);
 }
@@ -829,7 +846,9 @@ int42mod(PG_FUNCTION_ARGS)
 	int16		arg2 = PG_GETARG_INT16(1);
 
 	if (arg2 == 0)
-		elog(ERROR, "division by zero");
+		ereport(ERROR,
+				(errcode(ERRCODE_DIVISION_BY_ZERO),
+				 errmsg("division by zero")));
 
 	PG_RETURN_INT32(arg1 % arg2);
 }

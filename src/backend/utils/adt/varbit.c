@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varbit.c,v 1.31 2003/05/27 17:49:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varbit.c,v 1.32 2003/07/27 04:53:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -104,8 +104,10 @@ bit_in(PG_FUNCTION_ARGS)
 	if (atttypmod <= 0)
 		atttypmod = bitlen;
 	else if (bitlen != atttypmod)
-		elog(ERROR, "Bit string length %d does not match type BIT(%d)",
-			 bitlen, atttypmod);
+		ereport(ERROR,
+				(errcode(ERRCODE_STRING_DATA_LENGTH_MISMATCH),
+				 errmsg("bit string length %d does not match type bit(%d)",
+						 bitlen, atttypmod)));
 
 	len = VARBITTOTALLEN(atttypmod);
 	/* set to 0 so that *r is always initialised and string is zero-padded */
@@ -124,7 +126,11 @@ bit_in(PG_FUNCTION_ARGS)
 			if (*sp == '1')
 				*r |= x;
 			else if (*sp != '0')
-				elog(ERROR, "Cannot parse '%c' as a binary digit", *sp);
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+						 errmsg("\"%c\" is not a valid binary digit",
+								*sp)));
+
 			x >>= 1;
 			if (x == 0)
 			{
@@ -145,7 +151,11 @@ bit_in(PG_FUNCTION_ARGS)
 			else if (*sp >= 'a' && *sp <= 'f')
 				x = (bits8) (*sp - 'a') + 10;
 			else
-				elog(ERROR, "Cannot parse '%c' as a hex digit", *sp);
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+						 errmsg("\"%c\" is not a valid hex digit",
+								*sp)));
+
 			if (bc)
 			{
 				*r++ |= x;
@@ -248,8 +258,10 @@ bit(PG_FUNCTION_ARGS)
 		PG_RETURN_VARBIT_P(arg);
 
 	if (!isExplicit)
-		elog(ERROR, "Bit string length %d does not match type BIT(%d)",
-			 VARBITLEN(arg), len);
+		ereport(ERROR,
+				(errcode(ERRCODE_STRING_DATA_LENGTH_MISMATCH),
+				 errmsg("bit string length %d does not match type bit(%d)",
+						 VARBITLEN(arg), len)));
 
 	rlen = VARBITTOTALLEN(len);
 	/* set to 0 so that string is zero-padded */
@@ -331,8 +343,10 @@ varbit_in(PG_FUNCTION_ARGS)
 	if (atttypmod <= 0)
 		atttypmod = bitlen;
 	else if (bitlen > atttypmod)
-		elog(ERROR, "Bit string too long for type BIT VARYING(%d)",
-			 atttypmod);
+		ereport(ERROR,
+				(errcode(ERRCODE_STRING_DATA_LENGTH_MISMATCH),
+				 errmsg("bit string too long for type bit varying(%d)",
+						 atttypmod)));
 
 	len = VARBITTOTALLEN(bitlen);
 	/* set to 0 so that *r is always initialised and string is zero-padded */
@@ -351,7 +365,11 @@ varbit_in(PG_FUNCTION_ARGS)
 			if (*sp == '1')
 				*r |= x;
 			else if (*sp != '0')
-				elog(ERROR, "Cannot parse '%c' as a binary digit", *sp);
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+						 errmsg("\"%c\" is not a valid binary digit",
+								*sp)));
+
 			x >>= 1;
 			if (x == 0)
 			{
@@ -372,7 +390,11 @@ varbit_in(PG_FUNCTION_ARGS)
 			else if (*sp >= 'a' && *sp <= 'f')
 				x = (bits8) (*sp - 'a') + 10;
 			else
-				elog(ERROR, "Cannot parse '%c' as a hex digit", *sp);
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+						 errmsg("\"%c\" is not a valid hex digit",
+								*sp)));
+
 			if (bc)
 			{
 				*r++ |= x;
@@ -445,7 +467,9 @@ varbit_recv(PG_FUNCTION_ARGS)
 
 	bitlen = pq_getmsgint(buf, sizeof(int32));
 	if (bitlen < 0)
-		elog(ERROR, "Invalid length in external bit string");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
+				 errmsg("invalid length in external bit string")));
 
 	len = VARBITTOTALLEN(bitlen);
 	result = (VarBit *) palloc(len);
@@ -503,7 +527,10 @@ varbit(PG_FUNCTION_ARGS)
 		PG_RETURN_VARBIT_P(arg);
 
 	if (!isExplicit)
-		elog(ERROR, "Bit string too long for type BIT VARYING(%d)", len);
+		ereport(ERROR,
+				(errcode(ERRCODE_STRING_DATA_LENGTH_MISMATCH),
+				 errmsg("bit string too long for type bit varying(%d)",
+						 len)));
 
 	rlen = VARBITTOTALLEN(len);
 	result = (VarBit *) palloc(rlen);
@@ -873,7 +900,10 @@ bitand(PG_FUNCTION_ARGS)
 	bitlen1 = VARBITLEN(arg1);
 	bitlen2 = VARBITLEN(arg2);
 	if (bitlen1 != bitlen2)
-		elog(ERROR, "Cannot AND bit strings of different sizes");
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot AND bit strings of different sizes")));
+
 	len = VARSIZE(arg1);
 	result = (VarBit *) palloc(len);
 	VARATT_SIZEP(result) = len;
@@ -911,7 +941,9 @@ bitor(PG_FUNCTION_ARGS)
 	bitlen1 = VARBITLEN(arg1);
 	bitlen2 = VARBITLEN(arg2);
 	if (bitlen1 != bitlen2)
-		elog(ERROR, "Cannot OR bit strings of different sizes");
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot OR bit strings of different sizes")));
 	len = VARSIZE(arg1);
 	result = (VarBit *) palloc(len);
 	VARATT_SIZEP(result) = len;
@@ -955,7 +987,10 @@ bitxor(PG_FUNCTION_ARGS)
 	bitlen1 = VARBITLEN(arg1);
 	bitlen2 = VARBITLEN(arg2);
 	if (bitlen1 != bitlen2)
-		elog(ERROR, "Cannot XOR bit strings of different sizes");
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot XOR bit strings of different sizes")));
+
 	len = VARSIZE(arg1);
 	result = (VarBit *) palloc(len);
 	VARATT_SIZEP(result) = len;
@@ -1170,7 +1205,10 @@ bittoint4(PG_FUNCTION_ARGS)
 
 	/* Check that the bit string is not too long */
 	if (VARBITLEN(arg) > sizeof(int4) * BITS_PER_BYTE)
-		elog(ERROR, "Bit string is too large to fit in type integer");
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("integer out of range")));
+
 	result = 0;
 	for (r = VARBITS(arg); r < VARBITEND(arg); r++)
 	{
@@ -1214,7 +1252,10 @@ bitfromint8(PG_FUNCTION_ARGS)
 
 	PG_RETURN_VARBIT_P(result);
 #else
-	elog(ERROR, "INT64 is not supported on this platform");
+	ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("int64 is not supported on this platform")));
+
 	PG_RETURN_NULL();
 #endif
 }
@@ -1229,7 +1270,10 @@ bittoint8(PG_FUNCTION_ARGS)
 
 	/* Check that the bit string is not too long */
 	if (VARBITLEN(arg) > sizeof(result) * BITS_PER_BYTE)
-		elog(ERROR, "Bit string is too large to fit in type int64");
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("integer out of range")));
+
 	result = 0;
 	for (r = VARBITS(arg); r < VARBITEND(arg); r++)
 	{
@@ -1241,7 +1285,10 @@ bittoint8(PG_FUNCTION_ARGS)
 
 	PG_RETURN_INT64(result);
 #else
-	elog(ERROR, "INT64 is not supported on this platform");
+	ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("int64 is not supported on this platform")));
+
 	PG_RETURN_NULL();
 #endif
 }

@@ -8,15 +8,15 @@ INSERT INTO INT4_TBL(f1) VALUES ('0');
 INSERT INTO INT4_TBL(f1) VALUES ('123456');
 INSERT INTO INT4_TBL(f1) VALUES ('-123456');
 INSERT INTO INT4_TBL(f1) VALUES ('34.5');
-ERROR:  pg_atoi: error in "34.5": can't parse ".5"
+ERROR:  invalid input syntax for integer: "34.5"
 -- largest and smallest values 
 INSERT INTO INT4_TBL(f1) VALUES ('2147483647');
 INSERT INTO INT4_TBL(f1) VALUES ('-2147483647');
 -- bad input values -- should give warnings 
 INSERT INTO INT4_TBL(f1) VALUES ('1000000000000');
-ERROR:  pg_atoi: error reading "1000000000000": Numerical result out of range
+ERROR:  1000000000000 is out of range for int4
 INSERT INTO INT4_TBL(f1) VALUES ('asdf');
-ERROR:  pg_atoi: error in "asdf": can't parse "asdf"
+ERROR:  invalid input syntax for integer: "asdf"
 SELECT '' AS five, INT4_TBL.*;
  five |     f1      
 ------+-------------

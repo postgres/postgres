@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.63 2003/04/02 02:33:52 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.64 2003/07/27 04:53:05 tgl Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2002, PostgreSQL Global Development Group
@@ -961,7 +961,9 @@ NUMDesc_prepare(NUMDesc *num, FormatNode *n)
 			if (IS_BRACKET(num))
 			{
 				NUM_cache_remove(last_NUMCacheEntry);
-				elog(ERROR, "to_char/to_number(): '9' must be ahead of 'PR'.");
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("\"9\" must be ahead of \"PR\"")));
 			}
 			if (IS_MULTI(num))
 			{
@@ -978,7 +980,9 @@ NUMDesc_prepare(NUMDesc *num, FormatNode *n)
 			if (IS_BRACKET(num))
 			{
 				NUM_cache_remove(last_NUMCacheEntry);
-				elog(ERROR, "to_char/to_number(): '0' must be ahead of 'PR'.");
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("\"0\" must be ahead of \"PR\"")));
 			}
 			if (!IS_ZERO(num) && !IS_DECIMAL(num))
 			{
@@ -1005,12 +1009,16 @@ NUMDesc_prepare(NUMDesc *num, FormatNode *n)
 			if (IS_DECIMAL(num))
 			{
 				NUM_cache_remove(last_NUMCacheEntry);
-				elog(ERROR, "to_char/to_number(): not unique decimal point.");
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("multiple decimal points")));
 			}
 			if (IS_MULTI(num))
 			{
 				NUM_cache_remove(last_NUMCacheEntry);
-				elog(ERROR, "to_char/to_number(): can't use 'V' and decimal poin together.");
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("cannot use \"V\" and decimal point together")));
 			}
 			num->flag |= NUM_F_DECIMAL;
 			break;
@@ -1023,12 +1031,16 @@ NUMDesc_prepare(NUMDesc *num, FormatNode *n)
 			if (IS_LSIGN(num))
 			{
 				NUM_cache_remove(last_NUMCacheEntry);
-				elog(ERROR, "to_char/to_number(): not unique 'S'.");
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("not unique \"S\"")));
 			}
 			if (IS_PLUS(num) || IS_MINUS(num) || IS_BRACKET(num))
 			{
 				NUM_cache_remove(last_NUMCacheEntry);
-				elog(ERROR, "to_char/to_number(): can't use 'S' and 'PL'/'MI'/'SG'/'PR' together.");
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("cannot use \"S\" and \"PL\"/\"MI\"/\"SG\"/\"PR\" together")));
 			}
 			if (!IS_DECIMAL(num))
 			{
@@ -1050,7 +1062,9 @@ NUMDesc_prepare(NUMDesc *num, FormatNode *n)
 			if (IS_LSIGN(num))
 			{
 				NUM_cache_remove(last_NUMCacheEntry);
-				elog(ERROR, "to_char/to_number(): can't use 'S' and 'MI' together.");
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("cannot use \"S\" and \"MI\" together")));
 			}
 			num->flag |= NUM_F_MINUS;
 			if (IS_DECIMAL(num))
@@ -1061,7 +1075,9 @@ NUMDesc_prepare(NUMDesc *num, FormatNode *n)
 			if (IS_LSIGN(num))
 			{
 				NUM_cache_remove(last_NUMCacheEntry);
-				elog(ERROR, "to_char/to_number(): can't use 'S' and 'PL' together.");
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("cannot use \"S\" and \"PL\" together")));
 			}
 			num->flag |= NUM_F_PLUS;
 			if (IS_DECIMAL(num))
@@ -1072,7 +1088,9 @@ NUMDesc_prepare(NUMDesc *num, FormatNode *n)
 			if (IS_LSIGN(num))
 			{
 				NUM_cache_remove(last_NUMCacheEntry);
-				elog(ERROR, "to_char/to_number(): can't use 'S' and 'SG' together.");
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("cannot use \"S\" and \"SG\" together")));
 			}
 			num->flag |= NUM_F_MINUS;
 			num->flag |= NUM_F_PLUS;
@@ -1082,7 +1100,9 @@ NUMDesc_prepare(NUMDesc *num, FormatNode *n)
 			if (IS_LSIGN(num) || IS_PLUS(num) || IS_MINUS(num))
 			{
 				NUM_cache_remove(last_NUMCacheEntry);
-				elog(ERROR, "to_char/to_number(): can't use 'PR' and 'S'/'PL'/'MI'/'SG' together.");
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("cannot use \"PR\" and \"S\"/\"PL\"/\"MI\"/\"SG\" together")));
 			}
 			num->flag |= NUM_F_BRACKET;
 			break;
@@ -1101,14 +1121,18 @@ NUMDesc_prepare(NUMDesc *num, FormatNode *n)
 			if (IS_DECIMAL(num))
 			{
 				NUM_cache_remove(last_NUMCacheEntry);
-				elog(ERROR, "to_char/to_number(): can't use 'V' and decimal poin together.");
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("cannot use \"V\" and decimal point together")));
 			}
 			num->flag |= NUM_F_MULTI;
 			break;
 
 		case NUM_E:
 			NUM_cache_remove(last_NUMCacheEntry);
-			elog(ERROR, "to_char/to_number(): 'E' is not supported.");
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("\"E\" is not supported")));
 	}
 
 	return;
@@ -1132,7 +1156,7 @@ parse_format(FormatNode *node, char *str, KeyWord *kw,
 				last = 0;
 
 #ifdef DEBUG_TO_FROM_CHAR
-	elog(DEBUG_elog_output, "to_char/number(): run parser.");
+	elog(DEBUG_elog_output, "to_char/number(): run parser");
 #endif
 
 	n = node;
@@ -1343,7 +1367,7 @@ dump_node(FormatNode *node, int max)
 			return;
 		}
 		else
-			elog(DEBUG_elog_output, "%d:\t UnKnown NODE !!!", a);
+			elog(DEBUG_elog_output, "%d:\t unknown NODE!", a);
 
 	}
 }
@@ -1367,7 +1391,9 @@ get_th(char *num, int type)
 
 	last = *(num + (len - 1));
 	if (!isdigit((unsigned char) last))
-		elog(ERROR, "get_th: '%s' is not number.", num);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+				 errmsg("\"%s\" is not a number", num)));
 
 	/*
 	 * All "teens" (<x>1[0-9]) get 'TH/th', while <x>[02-9][123] still get
@@ -1628,7 +1654,9 @@ strdigits_len(char *str)
 	return len;
 }
 
-#define AMPM_ERROR	elog(ERROR, "to_timestamp(): bad AM/PM string")
+#define AMPM_ERROR	ereport(ERROR, \
+							(errcode(ERRCODE_INVALID_DATETIME_FORMAT), \
+							 errmsg("invalid AM/PM string")));
 
 /* ----------
  * Master function of TIME for:
@@ -1972,15 +2000,19 @@ dch_time(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 				return siz - 1;
 			}
 			else if (flag == FROM_CHAR)
-				elog(ERROR, "to_timestamp(): TZ/tz not supported.");
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("\"TZ\"/\"tz\" not supported")));
 	}
 	return -1;
 }
 
 #define CHECK_SEQ_SEARCH(_l, _s) \
 do { \
-	if (_l <= 0) {							\
-		elog(ERROR, "to_timestamp(): bad value for %s", _s);	\
+	if ((_l) <= 0) {							\
+		ereport(ERROR,	\
+				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),	\
+				 errmsg("invalid value for %s", (_s))));	\
 	}								\
 } while (0)
 
@@ -2614,7 +2646,7 @@ DCH_cache_getnew(char *str)
 		DCHCacheEntry *old = DCHCache + 0;
 
 #ifdef DEBUG_TO_FROM_CHAR
-		elog(DEBUG_elog_output, "Cache is full (%d)", n_DCHCache);
+		elog(DEBUG_elog_output, "cache is full (%d)", n_DCHCache);
 #endif
 		for (ent = DCHCache; ent <= (DCHCache + DCH_CACHE_FIELDS); ent++)
 		{
@@ -2788,17 +2820,16 @@ timestamp_to_char(PG_FUNCTION_ARGS)
 	text	   *fmt = PG_GETARG_TEXT_P(1),
 			   *res;
 	TmToChar	tmtc;
-	int			r = 0;
 
 	if ((VARSIZE(fmt) - VARHDRSZ) <= 0 || TIMESTAMP_NOT_FINITE(dt))
 		PG_RETURN_NULL();
 
 	ZERO_tmtc(&tmtc);
 
-	r = timestamp2tm(dt, NULL, tmtcTm(&tmtc), &tmtcFsec(&tmtc), NULL);
-
-	if (r != 0)
-		elog(ERROR, "to_char(): Unable to convert timestamp to tm");
+	if (timestamp2tm(dt, NULL, tmtcTm(&tmtc), &tmtcFsec(&tmtc), NULL) != 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("timestamp out of range")));
 
 	if (!(res = datetime_to_char_body(&tmtc, fmt)))
 		PG_RETURN_NULL();
@@ -2813,18 +2844,17 @@ timestamptz_to_char(PG_FUNCTION_ARGS)
 	text	   *fmt = PG_GETARG_TEXT_P(1),
 			   *res;
 	TmToChar	tmtc;
-	int			tz,
-				r = 0;
+	int			tz;
 
 	if ((VARSIZE(fmt) - VARHDRSZ) <= 0 || TIMESTAMP_NOT_FINITE(dt))
 		PG_RETURN_NULL();
 
 	ZERO_tmtc(&tmtc);
 
-	r = timestamp2tm(dt, &tz, tmtcTm(&tmtc), &tmtcFsec(&tmtc), &tmtcTzn(&tmtc));
-
-	if (r != 0)
-		elog(ERROR, "to_char(): Unable to convert timestamp to tm");
+	if (timestamp2tm(dt, &tz, tmtcTm(&tmtc), &tmtcFsec(&tmtc), &tmtcTzn(&tmtc)) != 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("timestamp out of range")));
 
 	if (!(res = datetime_to_char_body(&tmtc, fmt)))
 		PG_RETURN_NULL();
@@ -3000,7 +3030,9 @@ to_timestamp(PG_FUNCTION_ARGS)
 	if (tmfc.pm || tmfc.am)
 	{
 		if (tm.tm_hour < 1 || tm.tm_hour > 12)
-			elog(ERROR, "to_timestamp(): AM/PM hour must be between 1 and 12");
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+					 errmsg("AM/PM hour must be between 1 and 12")));
 
 		if (tmfc.pm && tm.tm_hour < 12)
 			tm.tm_hour += 12;
@@ -3037,7 +3069,10 @@ to_timestamp(PG_FUNCTION_ARGS)
 		if (tm.tm_year > 0)
 			tm.tm_year = -(tm.tm_year - 1);
 		else
-			elog(ERROR, "Inconsistent use of year %04d and 'BC'", tm.tm_year);
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+					 errmsg("inconsistent use of year %04d and \"BC\"",
+							 tm.tm_year)));
 	}
 
 	if (tmfc.j)
@@ -3069,7 +3104,9 @@ to_timestamp(PG_FUNCTION_ARGS)
 		{31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335, 366, 0}};
 
 		if (!tm.tm_year)
-			elog(ERROR, "to_timestamp() cat't convert yday without year information");
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+					 errmsg("cannot convert yday without year information")));
 
 		y = ysum[isleap(tm.tm_year)];
 
@@ -3104,7 +3141,9 @@ to_timestamp(PG_FUNCTION_ARGS)
 	tz = DetermineLocalTimeZone(&tm);
 
 	if (tm2timestamp(&tm, fsec, &tz, &result) != 0)
-		elog(ERROR, "to_timestamp(): can't convert 'tm' to timestamp.");
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("timestamp out of range")));
 
 	PG_RETURN_TIMESTAMP(result);
 }
@@ -3190,7 +3229,7 @@ NUM_cache_getnew(char *str)
 				old = ent;
 		}
 #ifdef DEBUG_TO_FROM_CHAR
-		elog(DEBUG_elog_output, "OLD: '%s' AGE: %d", old->str, old->age);
+		elog(DEBUG_elog_output, "OLD: \"%s\" AGE: %d", old->str, old->age);
 #endif
 		StrNCpy(old->str, str, NUM_CACHE_SIZE + 1);
 		/* old->format fill parser */
@@ -3477,7 +3516,7 @@ get_last_relevant_decnum(char *num)
 			   *p = strchr(num, '.');
 
 #ifdef DEBUG_TO_FROM_CHAR
-	elog(DEBUG_elog_output, "CALL: get_last_relevant_decnum()");
+	elog(DEBUG_elog_output, "get_last_relevant_decnum()");
 #endif
 
 	if (!p)
@@ -3523,7 +3562,7 @@ NUM_numpart_from_char(NUMProc *Np, int id, int plen)
 	{
 
 #ifdef DEBUG_TO_FROM_CHAR
-		elog(DEBUG_elog_output, "Try read sign (%c).", *Np->inout_p);
+		elog(DEBUG_elog_output, "Try read sign (%c)", *Np->inout_p);
 #endif
 
 		/*
@@ -3535,7 +3574,7 @@ NUM_numpart_from_char(NUMProc *Np, int id, int plen)
 			int			x = strlen(Np->L_negative_sign);
 
 #ifdef DEBUG_TO_FROM_CHAR
-			elog(DEBUG_elog_output, "Try read locale sign (%c).", *Np->inout_p);
+			elog(DEBUG_elog_output, "Try read locale sign (%c)", *Np->inout_p);
 #endif
 			if (!strncmp(Np->inout_p, Np->L_negative_sign, x))
 			{
@@ -3554,7 +3593,7 @@ NUM_numpart_from_char(NUMProc *Np, int id, int plen)
 		}
 
 #ifdef DEBUG_TO_FROM_CHAR
-		elog(DEBUG_elog_output, "Try read sipmle sign (%c).", *Np->inout_p);
+		elog(DEBUG_elog_output, "Try read simple sign (%c)", *Np->inout_p);
 #endif
 
 		/*
@@ -3595,7 +3634,7 @@ NUM_numpart_from_char(NUMProc *Np, int id, int plen)
 			Np->read_post++;
 
 #ifdef DEBUG_TO_FROM_CHAR
-		elog(DEBUG_elog_output, "Read digit (%c).", *Np->inout_p);
+		elog(DEBUG_elog_output, "Read digit (%c)", *Np->inout_p);
 #endif
 
 		/*
@@ -3606,7 +3645,7 @@ NUM_numpart_from_char(NUMProc *Np, int id, int plen)
 	{
 
 #ifdef DEBUG_TO_FROM_CHAR
-		elog(DEBUG_elog_output, "Try read decimal point (%c).", *Np->inout_p);
+		elog(DEBUG_elog_output, "Try read decimal point (%c)", *Np->inout_p);
 #endif
 		if (*Np->inout_p == '.')
 		{
@@ -3621,7 +3660,8 @@ NUM_numpart_from_char(NUMProc *Np, int id, int plen)
 			int			x = strlen(Np->decimal);
 
 #ifdef DEBUG_TO_FROM_CHAR
-			elog(DEBUG_elog_output, "Try read locale point (%c).", *Np->inout_p);
+			elog(DEBUG_elog_output, "Try read locale point (%c)",
+				 *Np->inout_p);
 #endif
 			if (!strncmp(Np->inout_p, Np->decimal, x))
 			{
@@ -3661,8 +3701,7 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 	 * current position in inout!
 	 */
 	elog(DEBUG_elog_output,
-
-		 "SIGN_WROTE: %d, CURRENT: %d, NUMBER_P: '%s', INOUT: '%s'",
+		 "SIGN_WROTE: %d, CURRENT: %d, NUMBER_P: \"%s\", INOUT: \"%s\"",
 		 Np->sign_wrote,
 		 Np->num_curr,
 		 Np->number_p,
@@ -3863,7 +3902,9 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 	if (IS_ROMAN(Np->Num))
 	{
 		if (Np->type == FROM_CHAR)
-			elog(ERROR, "to_number(): RN is not supported");
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("\"RN\" not supported")));
 
 		Np->Num->lsign = Np->Num->pre_lsign_num = Np->Num->post =
 			Np->Num->pre = Np->num_pre = Np->sign = 0;

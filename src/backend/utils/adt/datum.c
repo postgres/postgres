@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datum.c,v 1.25 2002/09/04 20:31:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datum.c,v 1.26 2003/07/27 04:53:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,7 +75,10 @@ datumGetSize(Datum value, bool typByVal, int typLen)
 			struct varlena *s = (struct varlena *) DatumGetPointer(value);
 
 			if (!PointerIsValid(s))
-				elog(ERROR, "datumGetSize: Invalid Datum Pointer");
+				ereport(ERROR,
+						(errcode(ERRCODE_DATA_EXCEPTION),
+						 errmsg("invalid Datum pointer")));
+
 			size = (Size) VARATT_SIZE(s);
 		}
 		else if (typLen == -2)
@@ -84,12 +87,15 @@ datumGetSize(Datum value, bool typByVal, int typLen)
 			char	   *s = (char *) DatumGetPointer(value);
 
 			if (!PointerIsValid(s))
-				elog(ERROR, "datumGetSize: Invalid Datum Pointer");
+				ereport(ERROR,
+						(errcode(ERRCODE_DATA_EXCEPTION),
+						 errmsg("invalid Datum pointer")));
+
 			size = (Size) (strlen(s) + 1);
 		}
 		else
 		{
-			elog(ERROR, "datumGetSize: Invalid typLen %d", typLen);
+			elog(ERROR, "invalid typLen: %d", typLen);
 			size = 0;			/* keep compiler quiet */
 		}
 	}

@@ -9,13 +9,13 @@ INSERT INTO FLOAT4_TBL(f1) VALUES ('1.2345678901234e+20');
 INSERT INTO FLOAT4_TBL(f1) VALUES ('1.2345678901234e-20');
 -- test for over and under flow 
 INSERT INTO FLOAT4_TBL(f1) VALUES ('10e40');
-ERROR:  Bad float4 input format -- overflow
+ERROR:  float4 value out of range: overflow
 INSERT INTO FLOAT4_TBL(f1) VALUES ('-10e40');
-ERROR:  Bad float4 input format -- overflow
+ERROR:  float4 value out of range: overflow
 INSERT INTO FLOAT4_TBL(f1) VALUES ('10e-40');
-ERROR:  Bad float4 input format -- underflow
+ERROR:  float4 value out of range: underflow
 INSERT INTO FLOAT4_TBL(f1) VALUES ('-10e-40');
-ERROR:  Bad float4 input format -- underflow
+ERROR:  float4 value out of range: underflow
 SELECT '' AS five, FLOAT4_TBL.*;
  five |      f1      
 ------+--------------

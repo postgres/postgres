@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/oid.c,v 1.48 2003/05/09 15:44:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/oid.c,v 1.49 2003/07/27 04:53:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,6 @@ oidin_subr(const char *funcname, const char *s, char **endloc)
 	Oid			result;
 
 	errno = 0;
-
 	cvt = strtoul(s, &endptr, 10);
 
 	/*
@@ -44,12 +43,21 @@ oidin_subr(const char *funcname, const char *s, char **endloc)
 	 * Note that for historical reasons we accept an empty string as
 	 * meaning 0.
 	 */
-	if (errno && errno != EINVAL)
-		elog(ERROR, "%s: error reading \"%s\": %m",
-			 funcname, s);
+	if (errno && errno != ERANGE && errno != EINVAL)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+				 errmsg("invalid input syntax for OID: \"%s\"",
+						s)));
 	if (endptr == s && *endptr)
-		elog(ERROR, "%s: error in \"%s\": can't parse \"%s\"",
-			 funcname, s, endptr);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+				 errmsg("invalid input syntax for OID: \"%s\"",
+						s)));
+
+	if (errno == ERANGE)
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("%s is out of range for OID", s)));
 
 	if (endloc)
 	{
@@ -62,8 +70,10 @@ oidin_subr(const char *funcname, const char *s, char **endloc)
 		while (*endptr && isspace((unsigned char) *endptr))
 			endptr++;
 		if (*endptr)
-			elog(ERROR, "%s: error in \"%s\": can't parse \"%s\"",
-				 funcname, s, endptr);
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+					 errmsg("invalid input syntax for OID: \"%s\"",
+							s)));
 	}
 
 	result = (Oid) cvt;
@@ -83,8 +93,9 @@ oidin_subr(const char *funcname, const char *s, char **endloc)
 #if OID_MAX != ULONG_MAX
 	if (cvt != (unsigned long) result &&
 		cvt != (unsigned long) ((int) result))
-		elog(ERROR, "%s: error reading \"%s\": %s",
-			 funcname, s, strerror(ERANGE));
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("%s is out of range for OID", s)));
 #endif
 
 	return result;
@@ -160,7 +171,9 @@ oidvectorin(PG_FUNCTION_ARGS)
 	while (*oidString && isspace((unsigned char) *oidString))
 		oidString++;
 	if (*oidString)
-		elog(ERROR, "oidvector value has too many values");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("oidvector has too many elements")));
 	while (slot < INDEX_MAX_KEYS)
 		result[slot++] = InvalidOid;
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/encode.c,v 1.6 2001/11/05 17:46:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/encode.c,v 1.7 2003/07/27 04:53:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,7 +50,9 @@ binary_encode(PG_FUNCTION_ARGS)
 
 	enc = pg_find_encoding(namebuf);
 	if (enc == NULL)
-		elog(ERROR, "No such encoding as '%s'", namebuf);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("unrecognized encoding: \"%s\"", namebuf)));
 
 	resultlen = enc->encode_len(VARDATA(data), datalen);
 	result = palloc(VARHDRSZ + resultlen);
@@ -59,7 +61,7 @@ binary_encode(PG_FUNCTION_ARGS)
 
 	/* Make this FATAL 'cause we've trodden on memory ... */
 	if (res > resultlen)
-		elog(FATAL, "Overflow - encode estimate too small");
+		elog(FATAL, "overflow - encode estimate too small");
 
 	VARATT_SIZEP(result) = VARHDRSZ + res;
 
@@ -84,7 +86,9 @@ binary_decode(PG_FUNCTION_ARGS)
 
 	enc = pg_find_encoding(namebuf);
 	if (enc == NULL)
-		elog(ERROR, "No such encoding as '%s'", namebuf);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("unrecognized encoding: \"%s\"", namebuf)));
 
 	resultlen = enc->decode_len(VARDATA(data), datalen);
 	result = palloc(VARHDRSZ + resultlen);
@@ -93,7 +97,7 @@ binary_decode(PG_FUNCTION_ARGS)
 
 	/* Make this FATAL 'cause we've trodden on memory ... */
 	if (res > resultlen)
-		elog(FATAL, "Overflow - decode estimate too small");
+		elog(FATAL, "overflow - decode estimate too small");
 
 	VARATT_SIZEP(result) = VARHDRSZ + res;
 
@@ -141,7 +145,9 @@ get_hex(unsigned c)
 		res = hexlookup[c];
 
 	if (res < 0)
-		elog(ERROR, "Bad hex code: '%c'", c);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("invalid hex digit: \"%c\"", c)));
 
 	return (uint8) res;
 }
@@ -167,7 +173,10 @@ hex_decode(const uint8 *src, unsigned len, uint8 *dst)
 		}
 		v1 = get_hex(*s++) << 4;
 		if (s >= srcend)
-			elog(ERROR, "hex_decode: invalid data");
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("invalid hex data: odd number of digits")));
+
 		v2 = get_hex(*s++);
 		*p++ = v1 | v2;
 	}
@@ -281,7 +290,9 @@ b64_decode(const uint8 *src, unsigned len, uint8 *dst)
 				else if (pos == 3)
 					end = 2;
 				else
-					elog(ERROR, "base64: unexpected '='");
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+							 errmsg("unexpected \"=\"")));
 			}
 			b = 0;
 		}
@@ -291,7 +302,9 @@ b64_decode(const uint8 *src, unsigned len, uint8 *dst)
 			if (c > 0 && c < 127)
 				b = b64lookup[c];
 			if (b < 0)
-				elog(ERROR, "base64: Invalid symbol");
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("invalid symbol")));
 		}
 		/* add it to buffer */
 		buf = (buf << 6) + b;
@@ -309,7 +322,9 @@ b64_decode(const uint8 *src, unsigned len, uint8 *dst)
 	}
 
 	if (pos != 0)
-		elog(ERROR, "base64: invalid end sequence");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("invalid end sequence")));
 
 	return p - dst;
 }
@@ -416,7 +431,9 @@ esc_decode(const uint8 *src, unsigned srclen, uint8 *dst)
 			 * One backslash, not followed by ### valid octal. Should
 			 * never get here, since esc_dec_len does same check.
 			 */
-			elog(ERROR, "decode: Bad input string for type bytea");
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+					 errmsg("invalid input syntax for bytea")));
 		}
 
 		len++;
@@ -479,7 +496,9 @@ esc_dec_len(const uint8 *src, unsigned srclen)
 			/*
 			 * one backslash, not followed by ### valid octal
 			 */
-			elog(ERROR, "decode: Bad input string for type bytea");
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+					 errmsg("invalid input syntax for bytea")));
 		}
 
 		len++;

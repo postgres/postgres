@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.109 2003/07/17 00:55:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.110 2003/07/27 04:53:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -239,8 +239,10 @@ abstime2tm(AbsoluteTime _time, int *tzp, struct tm * tm, char **tzn)
 				 */
 				StrNCpy(*tzn, tm->tm_zone, MAXTZLEN + 1);
 				if (strlen(tm->tm_zone) > MAXTZLEN)
-					elog(WARNING, "Invalid timezone \'%s\'",
-						 tm->tm_zone);
+					ereport(WARNING,
+							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+							 errmsg("invalid timezone name: \"%s\"",
+									tm->tm_zone)));
 			}
 		}
 	}
@@ -273,8 +275,10 @@ abstime2tm(AbsoluteTime _time, int *tzp, struct tm * tm, char **tzn)
 				 */
 				StrNCpy(*tzn, tzname[tm->tm_isdst], MAXTZLEN + 1);
 				if (strlen(tzname[tm->tm_isdst]) > MAXTZLEN)
-					elog(WARNING, "Invalid timezone \'%s\'",
-						 tzname[tm->tm_isdst]);
+					ereport(WARNING,
+							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+							 errmsg("invalid timezone name: \"%s\"",
+									tzname[tm->tm_isdst])));
 			}
 		}
 	}
@@ -367,11 +371,15 @@ abstimein(PG_FUNCTION_ARGS)
 				ftype[MAXDATEFIELDS];
 
 	if (strlen(str) >= sizeof(lowstr))
-		elog(ERROR, "Bad abstime external representation (too long) '%s'", str);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+				 errmsg("invalid input syntax for abstime: \"%s\"", str)));
 
 	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
 	  || (DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, &tz) != 0))
-		elog(ERROR, "Bad abstime external representation '%s'", str);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+				 errmsg("invalid input syntax for abstime: \"%s\"", str)));
 
 	switch (dtype)
 	{
@@ -401,7 +409,8 @@ abstimein(PG_FUNCTION_ARGS)
 			break;
 
 		default:
-			elog(ERROR, "Bad abstime (internal coding error) '%s'", str);
+			elog(ERROR, "unexpected dtype %d while parsing abstime \"%s\"",
+				 dtype, str);
 			result = INVALID_ABSTIME;
 			break;
 	};
@@ -513,7 +522,7 @@ abstime_cmp_internal(AbsoluteTime a, AbsoluteTime b)
 		return -1;				/* non-INVALID < INVALID */
 
 #if 0
-/* CURRENT is no longer stored internally... */
+	/* CURRENT is no longer stored internally... */
 	/* XXX this is broken, should go away: */
 	if (a == CURRENT_ABSTIME)
 		a = GetCurrentTransactionStartTime();
@@ -617,7 +626,9 @@ timestamp_abstime(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-		elog(ERROR, "Unable to convert timestamp to abstime");
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("timestamp out of range")));
 		result = INVALID_ABSTIME;
 	}
 
@@ -641,7 +652,9 @@ abstime_timestamp(PG_FUNCTION_ARGS)
 	switch (abstime)
 	{
 		case INVALID_ABSTIME:
-			elog(ERROR, "Unable to convert abstime 'invalid' to timestamp");
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("cannot convert \"invalid\" abstime to timestamp")));
 			TIMESTAMP_NOBEGIN(result);
 			break;
 
@@ -656,8 +669,9 @@ abstime_timestamp(PG_FUNCTION_ARGS)
 		default:
 			abstime2tm(abstime, &tz, tm, &tzn);
 			if (tm2timestamp(tm, 0, NULL, &result) != 0)
-				elog(ERROR, "Unable to convert ABSTIME to TIMESTAMP"
-					 "\n\tabstime_timestamp() internal error");
+				ereport(ERROR,
+						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+						 errmsg("timestamp out of range")));
 			break;
 	};
 
@@ -685,7 +699,9 @@ timestamptz_abstime(PG_FUNCTION_ARGS)
 		result = tm2abstime(tm, 0);
 	else
 	{
-		elog(ERROR, "Unable to convert timestamp to abstime");
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("timestamp out of range")));
 		result = INVALID_ABSTIME;
 	}
 
@@ -709,7 +725,9 @@ abstime_timestamptz(PG_FUNCTION_ARGS)
 	switch (abstime)
 	{
 		case INVALID_ABSTIME:
-			elog(ERROR, "Unable to convert abstime 'invalid' to timestamptz");
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("cannot convert \"invalid\" abstime to timestamptz")));
 			TIMESTAMP_NOBEGIN(result);
 			break;
 
@@ -724,8 +742,9 @@ abstime_timestamptz(PG_FUNCTION_ARGS)
 		default:
 			abstime2tm(abstime, &tz, tm, &tzn);
 			if (tm2timestamp(tm, 0, &tz, &result) != 0)
-				elog(ERROR, "Unable to convert ABSTIME to TIMESTAMP WITH TIME ZONE"
-					 "\n\tabstime_timestamptz() internal error");
+				ereport(ERROR,
+						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+						 errmsg("timestamp out of range")));
 			break;
 	};
 
@@ -755,11 +774,15 @@ reltimein(PG_FUNCTION_ARGS)
 	char		lowstr[MAXDATELEN + 1];
 
 	if (strlen(str) >= sizeof(lowstr))
-		elog(ERROR, "Bad reltime external representation (too long) '%s'", str);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+				 errmsg("invalid input syntax for reltime: \"%s\"", str)));
 
 	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
 		|| (DecodeInterval(field, ftype, nf, &dtype, tm, &fsec) != 0))
-		elog(ERROR, "Bad reltime external representation '%s'", str);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+				 errmsg("invalid input syntax for reltime: \"%s\"", str)));
 
 	switch (dtype)
 	{
@@ -769,7 +792,8 @@ reltimein(PG_FUNCTION_ARGS)
 			break;
 
 		default:
-			elog(ERROR, "Bad reltime (internal coding error) '%s'", str);
+			elog(ERROR, "unexpected dtype %d while parsing reltime \"%s\"",
+				 dtype, str);
 			result = INVALID_RELTIME;
 			break;
 	}
@@ -851,7 +875,10 @@ tintervalin(PG_FUNCTION_ARGS)
 
 	interval = (TimeInterval) palloc(sizeof(TimeIntervalData));
 	if (istinterval(intervalstr, &t1, &t2) == 0)
-		elog(ERROR, "Unable to decode tinterval '%s'", intervalstr);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+				 errmsg("invalid input syntax for tinterval: \"%s\"",
+						intervalstr)));
 
 	if (t1 == INVALID_ABSTIME || t2 == INVALID_ABSTIME)
 		interval->status = T_INTERVAL_INVAL;	/* undefined  */
@@ -911,7 +938,10 @@ tintervalrecv(PG_FUNCTION_ARGS)
 	interval->status = pq_getmsgint(buf, sizeof(interval->status));
 	if (!(interval->status == T_INTERVAL_INVAL ||
 		  interval->status == T_INTERVAL_VALID))
-		elog(ERROR, "Invalid status in external tinterval");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
+				 errmsg("invalid status in external tinterval")));
+
 	interval->data[0] = pq_getmsgint(buf, sizeof(interval->data[0]));
 	interval->data[1] = pq_getmsgint(buf, sizeof(interval->data[1]));
 
@@ -1000,7 +1030,9 @@ reltime_interval(PG_FUNCTION_ARGS)
 	switch (reltime)
 	{
 		case INVALID_RELTIME:
-			elog(ERROR, "Unable to convert reltime 'invalid' to interval");
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("cannot convert \"invalid\" reltime to interval")));
 			result->time = 0;
 			result->month = 0;
 			break;

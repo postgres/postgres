@@ -5,7 +5,7 @@
  *	 Portions Copyright (c) 1999-2002, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ascii.c,v 1.15 2003/07/14 16:41:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ascii.c,v 1.16 2003/07/27 04:53:03 tgl Exp $
  *
  *-----------------------------------------------------------------------
  */
@@ -63,8 +63,10 @@ pg_to_ascii(unsigned char *src, unsigned char *src_end, unsigned char *dest, int
 	}
 	else
 	{
-		elog(ERROR, "unsupported encoding conversion from %s to ASCII",
-			 pg_encoding_to_char(enc));
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("unsupported encoding conversion from %s to ASCII",
+						pg_encoding_to_char(enc))));
 		return;					/* keep compiler quiet */
 	}
 

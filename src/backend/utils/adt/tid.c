@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/tid.c,v 1.37 2003/05/12 23:08:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/tid.c,v 1.38 2003/07/27 04:53:10 tgl Exp $
  *
  * NOTES
  *	  input routine largely stolen from boxin().
@@ -61,17 +61,27 @@ tidin(PG_FUNCTION_ARGS)
 			coord[i++] = p + 1;
 
 	if (i < NTIDARGS)
-		elog(ERROR, "invalid tid format: '%s'", str);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+				 errmsg("invalid input syntax for tid: \"%s\"",
+						str)));
 
 	errno = 0;
 	blockNumber = strtoul(coord[0], &badp, 10);
 	if (errno || *badp != DELIM)
-		elog(ERROR, "tidin: invalid value.");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+				 errmsg("invalid input syntax for tid: \"%s\"",
+						str)));
 
 	hold_offset = strtol(coord[1], &badp, 10);
 	if (errno || *badp != RDELIM ||
 		hold_offset > USHRT_MAX || hold_offset < 0)
-		elog(ERROR, "tidin: invalid value.");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+				 errmsg("invalid input syntax for tid: \"%s\"",
+						str)));
+
 	offsetNumber = hold_offset;
 
 	result = (ItemPointer) palloc(sizeof(ItemPointerData));
@@ -216,8 +226,9 @@ currtid_for_view(Relation viewrel, ItemPointer tid)
 		}
 	}
 	if (tididx < 0)
-		elog(ERROR, "currtid can't handle views with no CTID");
-	if (rulelock = viewrel->rd_rules, !rulelock)
+		elog(ERROR, "currtid cannot handle views with no CTID");
+	rulelock = viewrel->rd_rules;
+	if (!rulelock)
 		elog(ERROR, "the view has no rules");
 	for (i = 0; i < rulelock->numLocks; i++)
 	{
@@ -231,12 +242,13 @@ currtid_for_view(Relation viewrel, ItemPointer tid)
 				elog(ERROR, "only one select rule is allowed in views");
 			query = (Query *) lfirst(rewrite->actions);
 			tle = (TargetEntry *) nth(tididx, query->targetList);
-			if (tle && tle->expr && nodeTag(tle->expr) == T_Var)
+			if (tle && tle->expr && IsA(tle->expr, Var))
 			{
 				Var		   *var = (Var *) tle->expr;
 				RangeTblEntry *rte;
 
-				if (var->varno > 0 && var->varno < INNER && var->varattno == SelfItemPointerAttributeNumber)
+				if (var->varno > 0 && var->varno < INNER &&
+					var->varattno == SelfItemPointerAttributeNumber)
 				{
 					rte = (RangeTblEntry *) nth(var->varno - 1, query->rtable);
 					if (rte)
@@ -249,7 +261,7 @@ currtid_for_view(Relation viewrel, ItemPointer tid)
 			break;
 		}
 	}
-	elog(ERROR, "currtid can't handle this view");
+	elog(ERROR, "currtid cannot handle this view");
 	return (Datum) 0;
 }
 

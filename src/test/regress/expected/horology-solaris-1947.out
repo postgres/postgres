@@ -2350,7 +2350,7 @@ SELECT '' AS two, d1 AS "timestamp", abstime(d1) AS abstime
 
 SELECT '' AS three, f1 as abstime, cast(f1 as timestamp) AS "timestamp"
   FROM ABSTIME_TBL WHERE NOT isfinite(f1);
-ERROR:  Unable to convert abstime 'invalid' to timestamp
+ERROR:  cannot convert "invalid" abstime to timestamp
 SELECT '' AS ten, f1 AS interval, reltime(f1) AS reltime
   FROM INTERVAL_TBL;
  ten |           interval            |            reltime            

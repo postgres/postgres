@@ -1,4 +1,4 @@
-/* $Id: pg_wchar.h,v 1.46 2003/06/02 18:59:25 momjian Exp $ */
+/* $Id: pg_wchar.h,v 1.47 2003/07/27 04:53:11 tgl Exp $ */
 
 #ifndef PG_WCHAR_H
 #define PG_WCHAR_H
@@ -323,7 +323,7 @@ extern void LocalToUtf(unsigned char *iso, unsigned char *utf,
 extern void UtfToLocal(unsigned char *utf, unsigned char *iso,
 		   pg_utf_to_local *map, int size, int len);
 
-extern char *pg_verifymbstr(const unsigned char *mbstr, int len);
+extern bool pg_verifymbstr(const unsigned char *mbstr, int len, bool noError);
 
 extern void pg_ascii2mic(unsigned char *src, unsigned char *dest, int len);
 extern void pg_mic2ascii(unsigned char *src, unsigned char *dest, int len);

@@ -34,7 +34,7 @@ COPY x (a, b, c, d, e, d, c) from stdin;
 ERROR:  attribute "d" specified more than once
 -- missing data: should fail
 COPY x from stdin;
-ERROR:  pg_atoi: zero-length string
+ERROR:  invalid input syntax for integer: ""
 CONTEXT:  COPY FROM, line 1
 COPY x from stdin;
 ERROR:  missing data for column "e"

@@ -14,7 +14,7 @@
  * Copyright (c) 1998-2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.62 2003/07/03 19:41:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.63 2003/07/27 04:53:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -390,7 +390,9 @@ numeric_recv(PG_FUNCTION_ARGS)
 
 	len = (uint16) pq_getmsgint(buf, sizeof(uint16));
 	if (len < 0 || len > NUMERIC_MAX_PRECISION + NUMERIC_MAX_RESULT_SCALE)
-		elog(ERROR, "Invalid length in external numeric");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
+				 errmsg("invalid length in external numeric")));
 
 	alloc_var(&value, len);
 
@@ -399,14 +401,19 @@ numeric_recv(PG_FUNCTION_ARGS)
 	if (!(value.sign == NUMERIC_POS ||
 		  value.sign == NUMERIC_NEG ||
 		  value.sign == NUMERIC_NAN))
-		elog(ERROR, "Invalid sign in external numeric");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
+				 errmsg("invalid sign in external numeric")));
+
 	value.dscale = (uint16) pq_getmsgint(buf, sizeof(uint16));
 	for (i = 0; i < len; i++)
 	{
 		NumericDigit	d = pq_getmsgint(buf, sizeof(NumericDigit));
 
 		if (d < 0 || d >= NBASE)
-			elog(ERROR, "Invalid digit in external numeric");
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
+					 errmsg("invalid digit in external numeric")));
 		value.digits[i] = d;
 	}
 
@@ -1610,14 +1617,18 @@ numeric_int4(PG_FUNCTION_ARGS)
 
 	/* XXX would it be better to return NULL? */
 	if (NUMERIC_IS_NAN(num))
-		elog(ERROR, "Cannot convert NaN to int4");
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot convert NaN to integer")));
 
 	/* Convert to variable format and thence to int8 */
 	init_var(&x);
 	set_var_from_num(num, &x);
 
 	if (!numericvar_to_int8(&x, &val))
-		elog(ERROR, "numeric conversion to int4 is out of range");
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("integer out of range")));
 
 	free_var(&x);
 
@@ -1626,7 +1637,9 @@ numeric_int4(PG_FUNCTION_ARGS)
 
 	/* Test for overflow by reverse-conversion. */
 	if ((int64) result != val)
-		elog(ERROR, "numeric conversion to int4 is out of range");
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("integer out of range")));
 
 	PG_RETURN_INT32(result);
 }
@@ -1660,14 +1673,18 @@ numeric_int8(PG_FUNCTION_ARGS)
 
 	/* XXX would it be better to return NULL? */
 	if (NUMERIC_IS_NAN(num))
-		elog(ERROR, "Cannot convert NaN to int8");
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot convert NaN to integer")));
 
 	/* Convert to variable format and thence to int8 */
 	init_var(&x);
 	set_var_from_num(num, &x);
 
 	if (!numericvar_to_int8(&x, &result))
-		elog(ERROR, "numeric conversion to int8 is out of range");
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("integer out of range")));
 
 	free_var(&x);
 
@@ -1704,14 +1721,18 @@ numeric_int2(PG_FUNCTION_ARGS)
 
 	/* XXX would it be better to return NULL? */
 	if (NUMERIC_IS_NAN(num))
-		elog(ERROR, "Cannot convert NaN to int2");
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot convert NaN to integer")));
 
 	/* Convert to variable format and thence to int8 */
 	init_var(&x);
 	set_var_from_num(num, &x);
 
 	if (!numericvar_to_int8(&x, &val))
-		elog(ERROR, "numeric conversion to int2 is out of range");
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("integer out of range")));
 
 	free_var(&x);
 
@@ -1720,7 +1741,9 @@ numeric_int2(PG_FUNCTION_ARGS)
 
 	/* Test for overflow by reverse-conversion. */
 	if ((int64) result != val)
-		elog(ERROR, "numeric conversion to int2 is out of range");
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("integer out of range")));
 
 	PG_RETURN_INT16(result);
 }
@@ -1903,7 +1926,7 @@ do_numeric_accum(ArrayType *transarray, Numeric newval)
 					  NUMERICOID, -1, false, 'i',
 					  &transdatums, &ndatums);
 	if (ndatums != 3)
-		elog(ERROR, "do_numeric_accum: expected 3-element numeric array");
+		elog(ERROR, "expected 3-element numeric array");
 	N = transdatums[0];
 	sumX = transdatums[1];
 	sumX2 = transdatums[2];
@@ -1994,7 +2017,7 @@ numeric_avg(PG_FUNCTION_ARGS)
 					  NUMERICOID, -1, false, 'i',
 					  &transdatums, &ndatums);
 	if (ndatums != 3)
-		elog(ERROR, "numeric_avg: expected 3-element numeric array");
+		elog(ERROR, "expected 3-element numeric array");
 	N = DatumGetNumeric(transdatums[0]);
 	sumX = DatumGetNumeric(transdatums[1]);
 	/* ignore sumX2 */
@@ -2030,7 +2053,7 @@ numeric_variance(PG_FUNCTION_ARGS)
 					  NUMERICOID, -1, false, 'i',
 					  &transdatums, &ndatums);
 	if (ndatums != 3)
-		elog(ERROR, "numeric_variance: expected 3-element numeric array");
+		elog(ERROR, "expected 3-element numeric array");
 	N = DatumGetNumeric(transdatums[0]);
 	sumX = DatumGetNumeric(transdatums[1]);
 	sumX2 = DatumGetNumeric(transdatums[2]);
@@ -2106,7 +2129,7 @@ numeric_stddev(PG_FUNCTION_ARGS)
 					  NUMERICOID, -1, false, 'i',
 					  &transdatums, &ndatums);
 	if (ndatums != 3)
-		elog(ERROR, "numeric_stddev: expected 3-element numeric array");
+		elog(ERROR, "expected 3-element numeric array");
 	N = DatumGetNumeric(transdatums[0]);
 	sumX = DatumGetNumeric(transdatums[1]);
 	sumX2 = DatumGetNumeric(transdatums[2]);
@@ -2296,7 +2319,7 @@ int2_avg_accum(PG_FUNCTION_ARGS)
 	 * We copied the input array, so it's okay to scribble on it directly.
 	 */
 	if (ARR_SIZE(transarray) != ARR_OVERHEAD(1) + sizeof(Int8TransTypeData))
-		elog(ERROR, "int2_avg_accum: expected 2-element int8 array");
+		elog(ERROR, "expected 2-element int8 array");
 	transdata = (Int8TransTypeData *) ARR_DATA_PTR(transarray);
 
 	transdata->count++;
@@ -2316,7 +2339,7 @@ int4_avg_accum(PG_FUNCTION_ARGS)
 	 * We copied the input array, so it's okay to scribble on it directly.
 	 */
 	if (ARR_SIZE(transarray) != ARR_OVERHEAD(1) + sizeof(Int8TransTypeData))
-		elog(ERROR, "int4_avg_accum: expected 2-element int8 array");
+		elog(ERROR, "expected 2-element int8 array");
 	transdata = (Int8TransTypeData *) ARR_DATA_PTR(transarray);
 
 	transdata->count++;
@@ -2334,7 +2357,7 @@ int8_avg(PG_FUNCTION_ARGS)
 				sumd;
 
 	if (ARR_SIZE(transarray) != ARR_OVERHEAD(1) + sizeof(Int8TransTypeData))
-		elog(ERROR, "int8_avg: expected 2-element int8 array");
+		elog(ERROR, "expected 2-element int8 array");
 	transdata = (Int8TransTypeData *) ARR_DATA_PTR(transarray);
 
 	/* SQL92 defines AVG of no values to be NULL */
@@ -2542,7 +2565,9 @@ set_var_from_str(const char *str, NumericVar *dest)
 	}
 
 	if (!isdigit((unsigned char) *cp))
-		elog(ERROR, "Bad numeric input format '%s'", str);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+				 errmsg("invalid input syntax for numeric: \"%s\"", str)));
 
 	decdigits = (unsigned char *) palloc(strlen(cp) + DEC_DIGITS*2);
 
@@ -2563,7 +2588,10 @@ set_var_from_str(const char *str, NumericVar *dest)
 		else if (*cp == '.')
 		{
 			if (have_dp)
-				elog(ERROR, "Bad numeric input format '%s'", str);
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+						 errmsg("invalid input syntax for numeric: \"%s\"",
+								str)));
 			have_dp = TRUE;
 			cp++;
 		}
@@ -2584,11 +2612,17 @@ set_var_from_str(const char *str, NumericVar *dest)
 		cp++;
 		exponent = strtol(cp, &endptr, 10);
 		if (endptr == cp)
-			elog(ERROR, "Bad numeric input format '%s'", str);
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+					 errmsg("invalid input syntax for numeric: \"%s\"",
+							str)));
 		cp = endptr;
 		if (exponent > NUMERIC_MAX_PRECISION ||
 			exponent < -NUMERIC_MAX_PRECISION)
-			elog(ERROR, "Bad numeric input format '%s'", str);
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+					 errmsg("invalid input syntax for numeric: \"%s\"",
+							str)));
 		dweight += (int) exponent;
 		dscale -= (int) exponent;
 		if (dscale < 0)
@@ -2599,7 +2633,10 @@ set_var_from_str(const char *str, NumericVar *dest)
 	while (*cp)
 	{
 		if (!isspace((unsigned char) *cp))
-			elog(ERROR, "Bad numeric input format '%s'", str);
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+					 errmsg("invalid input syntax for numeric: \"%s\"",
+							str)));
 		cp++;
 	}
 
@@ -2893,7 +2930,9 @@ make_result(NumericVar *var)
 	/* Check for overflow of int16 fields */
 	if (result->n_weight != weight ||
 		NUMERIC_DSCALE(result) != var->dscale)
-		elog(ERROR, "Value overflows numeric format");
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("value overflows numeric format")));
 
 	dump_numeric("make_result()", result);
 	return result;
@@ -2961,9 +3000,11 @@ apply_typmod(NumericVar *var, int32 typmod)
 #error unsupported NBASE
 #endif
 				if (ddigits > maxdigits)
-					elog(ERROR, "overflow on numeric "
-						 "ABS(value) >= 10^%d for field with precision %d scale %d",
-						 ddigits-1, precision, scale);
+					ereport(ERROR,
+							(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+							 errmsg("numeric field overflow"),
+							 errdetail("ABS(value) >= 10^%d for field with precision %d, scale %d.",
+										ddigits-1, precision, scale)));
 				break;
 			}
 			ddigits -= DEC_DIGITS;
@@ -3098,7 +3139,10 @@ numeric_to_double_no_overflow(Numeric num)
 	if (*endptr != '\0')
 	{
 		/* shouldn't happen ... */
-		elog(ERROR, "Bad float8 input format '%s'", tmp);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+				 errmsg("invalid input syntax for float8: \"%s\"",
+						tmp)));
 	}
 
 	pfree(tmp);
@@ -3121,7 +3165,10 @@ numericvar_to_double_no_overflow(NumericVar *var)
 	if (*endptr != '\0')
 	{
 		/* shouldn't happen ... */
-		elog(ERROR, "Bad float8 input format '%s'", tmp);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+				 errmsg("invalid input syntax for float8: \"%s\"",
+						tmp)));
 	}
 
 	pfree(tmp);
@@ -3613,7 +3660,9 @@ div_var(NumericVar *var1, NumericVar *var2, NumericVar *result,
 	 * unnormalized divisor.
 	 */
 	if (var2ndigits == 0 || var2digits[0] == 0)
-		elog(ERROR, "division by zero");
+		ereport(ERROR,
+				(errcode(ERRCODE_DIVISION_BY_ZERO),
+				 errmsg("division by zero")));
 
 	/*
 	 * Now result zero check
@@ -4006,7 +4055,9 @@ sqrt_var(NumericVar *arg, NumericVar *result, int rscale)
 	}
 
 	if (stat < 0)
-		elog(ERROR, "math error on numeric - cannot compute SQRT of negative value");
+		ereport(ERROR,
+				(errcode(ERRCODE_FLOATING_POINT_EXCEPTION),
+				 errmsg("cannot take square root of a negative number")));
 
 	init_var(&tmp_arg);
 	init_var(&tmp_val);
@@ -4094,7 +4145,9 @@ exp_var(NumericVar *arg, NumericVar *result, int rscale)
 		x.weight--;
 		/* Guard against overflow */
 		if (xintval >= NUMERIC_MAX_RESULT_SCALE * 3)
-			elog(ERROR, "argument for EXP() too big");
+			ereport(ERROR,
+					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+					 errmsg("argument for EXP() too big")));
 	}
 
 	/* Select an appropriate scale for internal calculation */
@@ -4218,7 +4271,9 @@ ln_var(NumericVar *arg, NumericVar *result, int rscale)
 	int			local_rscale;
 
 	if (cmp_var(arg, &const_zero) <= 0)
-		elog(ERROR, "math error on numeric - cannot compute LN of value <= zero");
+		ereport(ERROR,
+				(errcode(ERRCODE_FLOATING_POINT_EXCEPTION),
+				 errmsg("cannot take log of a negative number")));
 
 	local_rscale = rscale + 8;
 
@@ -4462,7 +4517,9 @@ power_var_int(NumericVar *base, int exp, NumericVar *result, int rscale)
 	{
 		case 0:
 			if (base->ndigits == 0)
-				elog(ERROR, "zero raised to zero is undefined");
+				ereport(ERROR,
+						(errcode(ERRCODE_FLOATING_POINT_EXCEPTION),
+						 errmsg("zero raised to zero is undefined")));
 			set_var_from_var(&const_one, result);
 			result->dscale = rscale; /* no need to round */
 			return;

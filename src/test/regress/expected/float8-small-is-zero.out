@@ -247,15 +247,15 @@ UPDATE FLOAT8_TBL
    SET f1 = FLOAT8_TBL.f1 * '-1'
    WHERE FLOAT8_TBL.f1 > '0.0';
 SELECT '' AS bad, f.f1 * '1e200' from FLOAT8_TBL f;
-ERROR:  Bad float8 input format -- overflow
+ERROR:  float8 value out of range: overflow
 SELECT '' AS bad, f.f1 ^ '1e200' from FLOAT8_TBL f;
-ERROR:  pow() result is out of range
+ERROR:  result is out of range
 SELECT '' AS bad, ln(f.f1) from FLOAT8_TBL f where f.f1 = '0.0' ;
-ERROR:  can't take log of zero
+ERROR:  cannot take log of zero
 SELECT '' AS bad, ln(f.f1) from FLOAT8_TBL f where f.f1 < '0.0' ;
-ERROR:  can't take log of a negative number
+ERROR:  cannot take log of a negative number
 SELECT '' AS bad, exp(f.f1) from FLOAT8_TBL f;
-ERROR:  exp() result is out of range
+ERROR:  result is out of range
 SELECT '' AS bad, f.f1 / '0.0' from FLOAT8_TBL f;
 ERROR:  division by zero
 SELECT '' AS five, FLOAT8_TBL.*;
@@ -270,9 +270,9 @@ SELECT '' AS five, FLOAT8_TBL.*;
 
 -- test for over- and underflow 
 INSERT INTO FLOAT8_TBL(f1) VALUES ('10e400');
-ERROR:  Input '10e400' is out of range for float8
+ERROR:  "10e400" is out of range for float8
 INSERT INTO FLOAT8_TBL(f1) VALUES ('-10e400');
-ERROR:  Input '-10e400' is out of range for float8
+ERROR:  "-10e400" is out of range for float8
 INSERT INTO FLOAT8_TBL(f1) VALUES ('10e-400');
 INSERT INTO FLOAT8_TBL(f1) VALUES ('-10e-400');
 -- maintain external table consistency across platforms

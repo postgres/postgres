@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/name.c,v 1.46 2003/05/15 15:50:18 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/name.c,v 1.47 2003/07/27 04:53:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,12 +48,10 @@ namein(PG_FUNCTION_ARGS)
 	char	   *s = PG_GETARG_CSTRING(0);
 	NameData   *result;
 	int			len;
-	char	   *ermsg;
 
 	/* verify encoding */
 	len = strlen(s);
-	if ((ermsg = pg_verifymbstr(s, len)))
-		elog(ERROR, "%s", ermsg);
+	pg_verifymbstr(s, len, false);
 
 	len = pg_mbcliplen(s, len, NAMEDATALEN - 1);
 
@@ -87,7 +85,11 @@ namerecv(PG_FUNCTION_ARGS)
 
 	str = pq_getmsgtext(buf, buf->len - buf->cursor, &nbytes);
 	if (nbytes >= NAMEDATALEN)
-		elog(ERROR, "namerecv: input name too long");
+		ereport(ERROR,
+				(errcode(ERRCODE_NAME_TOO_LONG),
+				 errmsg("identifier too long"),
+				 errdetail("Identifier must be less than %d characters.",
+							NAMEDATALEN)));
 	result = (NameData *) palloc0(NAMEDATALEN);
 	memcpy(result, str, nbytes);
 	pfree(str);

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/numutils.c,v 1.54 2002/09/04 20:31:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/numutils.c,v 1.55 2003/07/27 04:53:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,82 +51,73 @@
  * c, if not 0, is the terminator character that may appear after the
  * integer.  If 0, the string must end after the integer.
  *
- * Unlike plain atoi(), this will throw elog() upon bad input format or
+ * Unlike plain atoi(), this will throw ereport() upon bad input format or
  * overflow.
  */
 int32
 pg_atoi(char *s, int size, int c)
 {
-	long		l = 0;
+	long		l;
 	char	   *badp = NULL;
-
-	errno = 0;
 
 	/*
 	 * Some versions of strtol treat the empty string as an error, but
 	 * some seem not to.  Make an explicit test to be sure we catch it.
 	 */
-
 	if (s == (char *) NULL)
-		elog(ERROR, "pg_atoi: NULL pointer");
-	else if (*s == 0)
-		elog(ERROR, "pg_atoi: zero-length string");
-	else
-		l = strtol(s, &badp, 10);
+		elog(ERROR, "NULL pointer");
+	if (*s == 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+				 errmsg("invalid input syntax for integer: \"%s\"",
+						s)));
+
+	errno = 0;
+	l = strtol(s, &badp, 10);
 
 	/*
 	 * strtol() normally only sets ERANGE.	On some systems it also may
 	 * set EINVAL, which simply means it couldn't parse the input string.
 	 * This is handled by the second "if" consistent across platforms.
 	 */
-	if (errno && errno != EINVAL)
-		elog(ERROR, "pg_atoi: error reading \"%s\": %m", s);
+	if (errno && errno != ERANGE && errno != EINVAL)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+				 errmsg("invalid input syntax for integer: \"%s\"",
+						s)));
 	if (badp && *badp && *badp != c)
-		elog(ERROR, "pg_atoi: error in \"%s\": can\'t parse \"%s\"", s, badp);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+				 errmsg("invalid input syntax for integer: \"%s\"",
+						s)));
 
 	switch (size)
 	{
 		case sizeof(int32):
+			if (errno == ERANGE
 #if defined(HAVE_LONG_INT_64)
-			/* won't get ERANGE on these with 64-bit longs... */
-			if (l < INT_MIN)
-			{
-				errno = ERANGE;
-				elog(ERROR, "pg_atoi: error reading \"%s\": %m", s);
-			}
-			if (l > INT_MAX)
-			{
-				errno = ERANGE;
-				elog(ERROR, "pg_atoi: error reading \"%s\": %m", s);
-			}
-#endif   /* HAVE_LONG_INT_64 */
+				/* won't get ERANGE on these with 64-bit longs... */
+				|| l < INT_MIN || l > INT_MAX
+#endif
+				)
+				ereport(ERROR,
+						(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+						 errmsg("%s is out of range for int4", s)));
 			break;
 		case sizeof(int16):
-			if (l < SHRT_MIN)
-			{
-				errno = ERANGE;
-				elog(ERROR, "pg_atoi: error reading \"%s\": %m", s);
-			}
-			if (l > SHRT_MAX)
-			{
-				errno = ERANGE;
-				elog(ERROR, "pg_atoi: error reading \"%s\": %m", s);
-			}
+			if (errno == ERANGE || l < SHRT_MIN || l > SHRT_MAX)
+				ereport(ERROR,
+						(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+						 errmsg("%s is out of range for int2", s)));
 			break;
 		case sizeof(int8):
-			if (l < SCHAR_MIN)
-			{
-				errno = ERANGE;
-				elog(ERROR, "pg_atoi: error reading \"%s\": %m", s);
-			}
-			if (l > SCHAR_MAX)
-			{
-				errno = ERANGE;
-				elog(ERROR, "pg_atoi: error reading \"%s\": %m", s);
-			}
+			if (errno == ERANGE || l < SCHAR_MIN || l > SCHAR_MAX)
+				ereport(ERROR,
+						(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+						 errmsg("%s is out of range for int1", s)));
 			break;
 		default:
-			elog(ERROR, "pg_atoi: invalid result size: %d", size);
+			elog(ERROR, "unsupported result size: %d", size);
 	}
 	return (int32) l;
 }

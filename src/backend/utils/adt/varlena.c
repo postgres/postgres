@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.101 2003/06/27 00:33:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.102 2003/07/27 04:53:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,7 +80,7 @@ static text *text_substring(Datum str,
  *
  *		Non-printable characters must be passed as '\nnn' (octal) and are
  *		converted to internal form.  '\' must be passed as '\\'.
- *		elog(ERROR, ...) if bad form.
+ *		ereport(ERROR, ...) if bad form.
  *
  *		BUGS:
  *				The input is scaned twice.
@@ -112,7 +112,9 @@ byteain(PG_FUNCTION_ARGS)
 			/*
 			 * one backslash, not followed by 0 or ### valid octal
 			 */
-			elog(ERROR, "Bad input string for type bytea");
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+					 errmsg("invalid input syntax for bytea")));
 		}
 	}
 
@@ -150,7 +152,9 @@ byteain(PG_FUNCTION_ARGS)
 			 * We should never get here. The first pass should not allow
 			 * it.
 			 */
-			elog(ERROR, "Bad input string for type bytea");
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+					 errmsg("invalid input syntax for bytea")));
 		}
 	}
 
@@ -255,20 +259,17 @@ textin(PG_FUNCTION_ARGS)
 	text	   *result;
 	int			len;
 
-	char	   *ermsg;
+	/* verify encoding */
+	len = strlen(inputText);
+	pg_verifymbstr(inputText, len, false);
 
-	len = strlen(inputText) + VARHDRSZ;
+	result = (text *) palloc(len + VARHDRSZ);
+	VARATT_SIZEP(result) = len + VARHDRSZ;
 
-	if ((ermsg = pg_verifymbstr(inputText, len - VARHDRSZ)))
-		elog(ERROR, "%s", ermsg);
-
-	result = (text *) palloc(len);
-	VARATT_SIZEP(result) = len;
-
-	memcpy(VARDATA(result), inputText, len - VARHDRSZ);
+	memcpy(VARDATA(result), inputText, len);
 
 #ifdef CYR_RECODE
-	convertstr(VARDATA(result), len - VARHDRSZ, 0);
+	convertstr(VARDATA(result), len, 0);
 #endif
 
 	PG_RETURN_TEXT_P(result);
@@ -435,8 +436,7 @@ text_length(Datum str)
 	}
 
 	/* should never get here */
-	elog(ERROR, "Invalid backend encoding; encoding max length "
-		 "is less than one.");
+	elog(ERROR, "invalid backend encoding: encoding max length < 1");
 
 	/* not reached: suppress compiler warning */
 	return 0;
@@ -582,7 +582,9 @@ text_substring(Datum str, int32 start, int32 length, bool length_not_specified)
 			 * to be before the start. SQL99 says to throw an error.
 			 */
 			if (E < S)
-				elog(ERROR, "negative substring length not allowed");
+				ereport(ERROR,
+						(errcode(ERRCODE_SUBSTRING_ERROR),
+						 errmsg("negative substring length not allowed")));
 
 			/*
 			 * A zero or negative value for the end position can happen if
@@ -644,7 +646,9 @@ text_substring(Datum str, int32 start, int32 length, bool length_not_specified)
 			 * to be before the start. SQL99 says to throw an error.
 			 */
 			if (E < S)
-				elog(ERROR, "negative substring length not allowed");
+				ereport(ERROR,
+						(errcode(ERRCODE_SUBSTRING_ERROR),
+						 errmsg("negative substring length not allowed")));
 
 			/*
 			 * A zero or negative value for the end position can happen if
@@ -718,8 +722,7 @@ text_substring(Datum str, int32 start, int32 length, bool length_not_specified)
 		return ret;
 	}
 	else
-		elog(ERROR, "Invalid backend encoding; encoding max length "
-			 "is less than one.");
+		elog(ERROR, "invalid backend encoding: encoding max length < 1");
 
 	/* not reached: suppress compiler warning */
 	return PG_STR_GET_TEXT("");
@@ -821,8 +824,7 @@ text_position(Datum str, Datum search_str, int matchnum)
 		pfree(ps2);
 	}
 	else
-		elog(ERROR, "Invalid backend encoding; encoding max length "
-			 "is less than one.");
+		elog(ERROR, "invalid backend encoding: encoding max length < 1");
 
 	PG_RETURN_INT32(pos);
 }
@@ -1295,7 +1297,9 @@ bytea_substr(PG_FUNCTION_ARGS)
 		 * be before the start. SQL99 says to throw an error.
 		 */
 		if (E < S)
-			elog(ERROR, "negative substring length not allowed");
+			ereport(ERROR,
+					(errcode(ERRCODE_SUBSTRING_ERROR),
+					 errmsg("negative substring length not allowed")));
 
 		/*
 		 * A zero or negative value for the end position can happen if the
@@ -1388,8 +1392,10 @@ byteaGetByte(PG_FUNCTION_ARGS)
 	len = VARSIZE(v) - VARHDRSZ;
 
 	if (n < 0 || n >= len)
-		elog(ERROR, "byteaGetByte: index %d out of range [0..%d]",
-			 n, len - 1);
+		ereport(ERROR,
+				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
+				 errmsg("index %d out of valid range, 0..%d",
+						n, len - 1)));
 
 	byte = ((unsigned char *) VARDATA(v))[n];
 
@@ -1417,8 +1423,10 @@ byteaGetBit(PG_FUNCTION_ARGS)
 	len = VARSIZE(v) - VARHDRSZ;
 
 	if (n < 0 || n >= len * 8)
-		elog(ERROR, "byteaGetBit: index %d out of range [0..%d]",
-			 n, len * 8 - 1);
+		ereport(ERROR,
+				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
+				 errmsg("index %d out of valid range, 0..%d",
+						n, len * 8 - 1)));
 
 	byteNo = n / 8;
 	bitNo = n % 8;
@@ -1451,8 +1459,10 @@ byteaSetByte(PG_FUNCTION_ARGS)
 	len = VARSIZE(v) - VARHDRSZ;
 
 	if (n < 0 || n >= len)
-		elog(ERROR, "byteaSetByte: index %d out of range [0..%d]",
-			 n, len - 1);
+		ereport(ERROR,
+				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
+				 errmsg("index %d out of valid range, 0..%d",
+						n, len - 1)));
 
 	/*
 	 * Make a copy of the original varlena.
@@ -1492,8 +1502,10 @@ byteaSetBit(PG_FUNCTION_ARGS)
 	len = VARSIZE(v) - VARHDRSZ;
 
 	if (n < 0 || n >= len * 8)
-		elog(ERROR, "byteaSetBit: index %d out of range [0..%d]",
-			 n, len * 8 - 1);
+		ereport(ERROR,
+				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
+				 errmsg("index %d out of valid range, 0..%d",
+						n, len * 8 - 1)));
 
 	byteNo = n / 8;
 	bitNo = n % 8;
@@ -1502,7 +1514,9 @@ byteaSetBit(PG_FUNCTION_ARGS)
 	 * sanity check!
 	 */
 	if (newBit != 0 && newBit != 1)
-		elog(ERROR, "byteaSetBit: new bit must be 0 or 1");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("new bit must be 0 or 1")));
 
 	/*
 	 * Make a copy of the original varlena.
@@ -1607,10 +1621,14 @@ textToQualifiedNameList(text *textval, const char *caller)
 											  PointerGetDatum(textval)));
 
 	if (!SplitIdentifierString(rawname, '.', &namelist))
-		elog(ERROR, "%s: invalid name syntax", caller);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_NAME),
+				 errmsg("invalid name syntax")));
 
 	if (namelist == NIL)
-		elog(ERROR, "%s: invalid name syntax", caller);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_NAME),
+				 errmsg("invalid name syntax")));
 
 	foreach(l, namelist)
 	{
@@ -1992,7 +2010,9 @@ split_text(PG_FUNCTION_ARGS)
 
 	/* field number is 1 based */
 	if (fldnum < 1)
-		elog(ERROR, "field position must be > 0");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("field position must be greater than zero")));
 
 	start_posn = text_position(PointerGetDatum(inputstring),
 							   PointerGetDatum(fldsep),

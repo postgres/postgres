@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.89 2003/05/26 00:55:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.90 2003/07/27 04:53:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -115,7 +115,7 @@ static void CheckFloat8Val(double val);
  * check to see if a float4 val is outside of
  * the FLOAT4_MIN, FLOAT4_MAX bounds.
  *
- * raise an elog warning if it is
+ * raise an ereport warning if it is
 */
 static void
 CheckFloat4Val(double val)
@@ -128,9 +128,14 @@ CheckFloat4Val(double val)
 	return;
 #else
 	if (fabs(val) > FLOAT4_MAX)
-		elog(ERROR, "Bad float4 input format -- overflow");
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("float4 value out of range: overflow")));
 	if (val != 0.0 && fabs(val) < FLOAT4_MIN)
-		elog(ERROR, "Bad float4 input format -- underflow");
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("float4 value out of range: underflow")));
+
 	return;
 #endif   /* UNSAFE_FLOATS */
 }
@@ -139,7 +144,7 @@ CheckFloat4Val(double val)
  * check to see if a float8 val is outside of
  * the FLOAT8_MIN, FLOAT8_MAX bounds.
  *
- * raise an elog error if it is
+ * raise an ereport error if it is
  */
 static void
 CheckFloat8Val(double val)
@@ -152,9 +157,13 @@ CheckFloat8Val(double val)
 	return;
 #else
 	if (fabs(val) > FLOAT8_MAX)
-		elog(ERROR, "Bad float8 input format -- overflow");
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("float8 value out of range: overflow")));
 	if (val != 0.0 && fabs(val) < FLOAT8_MIN)
-		elog(ERROR, "Bad float8 input format -- underflow");
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("float8 value out of range: underflow")));
 #endif   /* UNSAFE_FLOATS */
 }
 
@@ -184,12 +193,17 @@ float4in(PG_FUNCTION_ARGS)
 		if (strcasecmp(num, "NaN") == 0)
 			val = NAN;
 		else
-			elog(ERROR, "Bad float4 input format '%s'", num);
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+					 errmsg("invalid input syntax for float4: \"%s\"",
+							 num)));
 	}
 	else
 	{
 		if (errno == ERANGE)
-			elog(ERROR, "Input '%s' is out of range for float4", num);
+			ereport(ERROR,
+					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+					 errmsg("\"%s\" is out of range for float4", num)));
 	}
 
 	/*
@@ -280,12 +294,17 @@ float8in(PG_FUNCTION_ARGS)
 		else if (strcasecmp(num, "-Infinity") == 0)
 			val = -HUGE_VAL;
 		else
-			elog(ERROR, "Bad float8 input format '%s'", num);
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+					 errmsg("invalid input syntax for float8: \"%s\"",
+							num)));
 	}
 	else
 	{
 		if (errno == ERANGE)
-			elog(ERROR, "Input '%s' is out of range for float8", num);
+			ereport(ERROR,
+					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+					 errmsg("\"%s\" is out of range for float8", num)));
 	}
 
 	CheckFloat8Val(val);
@@ -535,7 +554,9 @@ float4div(PG_FUNCTION_ARGS)
 	double		result;
 
 	if (arg2 == 0.0)
-		elog(ERROR, "division by zero");
+		ereport(ERROR,
+				(errcode(ERRCODE_DIVISION_BY_ZERO),
+				 errmsg("division by zero")));
 
 	/* Do division in float8, then check for overflow */
 	result = (float8) arg1 / (float8) arg2;
@@ -597,7 +618,9 @@ float8div(PG_FUNCTION_ARGS)
 	float8		result;
 
 	if (arg2 == 0.0)
-		elog(ERROR, "division by zero");
+		ereport(ERROR,
+				(errcode(ERRCODE_DIVISION_BY_ZERO),
+				 errmsg("division by zero")));
 
 	result = arg1 / arg2;
 
@@ -847,7 +870,9 @@ dtoi4(PG_FUNCTION_ARGS)
 	int32		result;
 
 	if ((num < INT_MIN) || (num > INT_MAX))
-		elog(ERROR, "dtoi4: integer out of range");
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("integer out of range")));
 
 	result = (int32) rint(num);
 	PG_RETURN_INT32(result);
@@ -864,7 +889,9 @@ dtoi2(PG_FUNCTION_ARGS)
 	int16		result;
 
 	if ((num < SHRT_MIN) || (num > SHRT_MAX))
-		elog(ERROR, "dtoi2: integer out of range");
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("integer out of range")));
 
 	result = (int16) rint(num);
 	PG_RETURN_INT16(result);
@@ -909,7 +936,9 @@ ftoi4(PG_FUNCTION_ARGS)
 	int32		result;
 
 	if ((num < INT_MIN) || (num > INT_MAX))
-		elog(ERROR, "ftoi4: integer out of range");
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("integer out of range")));
 
 	result = (int32) rint(num);
 	PG_RETURN_INT32(result);
@@ -926,7 +955,9 @@ ftoi2(PG_FUNCTION_ARGS)
 	int16		result;
 
 	if ((num < SHRT_MIN) || (num > SHRT_MAX))
-		elog(ERROR, "ftoi2: integer out of range");
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("integer out of range")));
 
 	result = (int16) rint(num);
 	PG_RETURN_INT16(result);
@@ -1160,7 +1191,9 @@ dsqrt(PG_FUNCTION_ARGS)
 	float8		result;
 
 	if (arg1 < 0)
-		elog(ERROR, "can't take sqrt of a negative number");
+		ereport(ERROR,
+				(errcode(ERRCODE_FLOATING_POINT_EXCEPTION),
+				 errmsg("cannot take square root of a negative number")));
 
 	result = sqrt(arg1);
 
@@ -1204,7 +1237,9 @@ dpow(PG_FUNCTION_ARGS)
 		|| !finite(result)
 #endif
 		)
-		elog(ERROR, "pow() result is out of range");
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("result is out of range")));
 
 	CheckFloat8Val(result);
 	PG_RETURN_FLOAT8(result);
@@ -1232,7 +1267,9 @@ dexp(PG_FUNCTION_ARGS)
 		|| !finite(result)
 #endif
 		)
-		elog(ERROR, "exp() result is out of range");
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("result is out of range")));
 
 	CheckFloat8Val(result);
 	PG_RETURN_FLOAT8(result);
@@ -1250,9 +1287,14 @@ dlog1(PG_FUNCTION_ARGS)
 	float8		result;
 
 	if (arg1 == 0.0)
-		elog(ERROR, "can't take log of zero");
+		ereport(ERROR,
+				(errcode(ERRCODE_FLOATING_POINT_EXCEPTION),
+				 errmsg("cannot take log of zero")));
+
 	if (arg1 < 0)
-		elog(ERROR, "can't take log of a negative number");
+		ereport(ERROR,
+				(errcode(ERRCODE_FLOATING_POINT_EXCEPTION),
+				 errmsg("cannot take log of a negative number")));
 
 	result = log(arg1);
 
@@ -1271,9 +1313,14 @@ dlog10(PG_FUNCTION_ARGS)
 	float8		result;
 
 	if (arg1 == 0.0)
-		elog(ERROR, "can't take log of zero");
+		ereport(ERROR,
+				(errcode(ERRCODE_FLOATING_POINT_EXCEPTION),
+				 errmsg("cannot take log of zero")));
+
 	if (arg1 < 0)
-		elog(ERROR, "can't take log of a negative number");
+		ereport(ERROR,
+				(errcode(ERRCODE_FLOATING_POINT_EXCEPTION),
+				 errmsg("cannot take log of a negative number")));
 
 	result = log10(arg1);
 
@@ -1298,7 +1345,9 @@ dacos(PG_FUNCTION_ARGS)
 		|| !finite(result)
 #endif
 		)
-		elog(ERROR, "acos(%f) input is out of range", arg1);
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("input is out of range")));
 
 	CheckFloat8Val(result);
 	PG_RETURN_FLOAT8(result);
@@ -1321,7 +1370,9 @@ dasin(PG_FUNCTION_ARGS)
 		|| !finite(result)
 #endif
 		)
-		elog(ERROR, "asin(%f) input is out of range", arg1);
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("input is out of range")));
 
 	CheckFloat8Val(result);
 	PG_RETURN_FLOAT8(result);
@@ -1344,7 +1395,9 @@ datan(PG_FUNCTION_ARGS)
 		|| !finite(result)
 #endif
 		)
-		elog(ERROR, "atan(%f) input is out of range", arg1);
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("input is out of range")));
 
 	CheckFloat8Val(result);
 	PG_RETURN_FLOAT8(result);
@@ -1368,7 +1421,9 @@ datan2(PG_FUNCTION_ARGS)
 		|| !finite(result)
 #endif
 		)
-		elog(ERROR, "atan2(%f,%f) input is out of range", arg1, arg2);
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("input is out of range")));
 
 	CheckFloat8Val(result);
 	PG_RETURN_FLOAT8(result);
@@ -1391,7 +1446,9 @@ dcos(PG_FUNCTION_ARGS)
 		|| !finite(result)
 #endif
 		)
-		elog(ERROR, "cos(%f) input is out of range", arg1);
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("input is out of range")));
 
 	CheckFloat8Val(result);
 	PG_RETURN_FLOAT8(result);
@@ -1414,7 +1471,9 @@ dcot(PG_FUNCTION_ARGS)
 		|| !finite(result)
 #endif
 		)
-		elog(ERROR, "cot(%f) input is out of range", arg1);
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("input is out of range")));
 
 	result = 1.0 / result;
 	CheckFloat8Val(result);
@@ -1438,7 +1497,9 @@ dsin(PG_FUNCTION_ARGS)
 		|| !finite(result)
 #endif
 		)
-		elog(ERROR, "sin(%f) input is out of range", arg1);
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("input is out of range")));
 
 	CheckFloat8Val(result);
 	PG_RETURN_FLOAT8(result);
@@ -1461,7 +1522,9 @@ dtan(PG_FUNCTION_ARGS)
 		|| !finite(result)
 #endif
 		)
-		elog(ERROR, "tan(%f) input is out of range", arg1);
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("input is out of range")));
 
 	CheckFloat8Val(result);
 	PG_RETURN_FLOAT8(result);
@@ -1777,7 +1840,9 @@ float48div(PG_FUNCTION_ARGS)
 	float8		result;
 
 	if (arg2 == 0.0)
-		elog(ERROR, "division by zero");
+		ereport(ERROR,
+				(errcode(ERRCODE_DIVISION_BY_ZERO),
+				 errmsg("division by zero")));
 
 	result = arg1 / arg2;
 	CheckFloat8Val(result);
@@ -1837,7 +1902,9 @@ float84div(PG_FUNCTION_ARGS)
 	float8		result;
 
 	if (arg2 == 0.0)
-		elog(ERROR, "division by zero");
+		ereport(ERROR,
+				(errcode(ERRCODE_DIVISION_BY_ZERO),
+				 errmsg("division by zero")));
 
 	result = arg1 / arg2;
 

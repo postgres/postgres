@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.77 2003/05/12 23:08:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.78 2003/07/27 04:53:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -112,10 +112,16 @@ regprocin(PG_FUNCTION_ARGS)
 		heap_close(hdesc, AccessShareLock);
 
 		if (matches == 0)
-			elog(ERROR, "No procedure with name %s", pro_name_or_oid);
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_FUNCTION),
+					 errmsg("no procedure with name %s", pro_name_or_oid)));
+
 		else if (matches > 1)
-			elog(ERROR, "There is more than one procedure named %s",
-				 pro_name_or_oid);
+			ereport(ERROR,
+					(errcode(ERRCODE_AMBIGUOUS_FUNCTION),
+					 errmsg("more than one procedure named %s",
+							 pro_name_or_oid)));
+
 		PG_RETURN_OID(result);
 	}
 
@@ -127,10 +133,14 @@ regprocin(PG_FUNCTION_ARGS)
 	clist = FuncnameGetCandidates(names, -1);
 
 	if (clist == NULL)
-		elog(ERROR, "No procedure with name %s", pro_name_or_oid);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_FUNCTION),
+				 errmsg("no procedure with name %s", pro_name_or_oid)));
 	else if (clist->next != NULL)
-		elog(ERROR, "There is more than one procedure named %s",
-			 pro_name_or_oid);
+		ereport(ERROR,
+				(errcode(ERRCODE_AMBIGUOUS_FUNCTION),
+				 errmsg("more than one procedure named %s",
+						 pro_name_or_oid)));
 
 	result = clist->oid;
 
@@ -275,7 +285,9 @@ regprocedurein(PG_FUNCTION_ARGS)
 	}
 
 	if (clist == NULL)
-		elog(ERROR, "No procedure with name %s", pro_name_or_oid);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_FUNCTION),
+				 errmsg("no procedure with name %s", pro_name_or_oid)));
 
 	result = clist->oid;
 
@@ -450,10 +462,15 @@ regoperin(PG_FUNCTION_ARGS)
 		heap_close(hdesc, AccessShareLock);
 
 		if (matches == 0)
-			elog(ERROR, "No operator with name %s", opr_name_or_oid);
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_FUNCTION),
+					 errmsg("no operator with name %s", opr_name_or_oid)));
 		else if (matches > 1)
-			elog(ERROR, "There is more than one operator named %s",
-				 opr_name_or_oid);
+			ereport(ERROR,
+					(errcode(ERRCODE_AMBIGUOUS_FUNCTION),
+					 errmsg("more than one operator named %s",
+							 opr_name_or_oid)));
+
 		PG_RETURN_OID(result);
 	}
 
@@ -465,10 +482,14 @@ regoperin(PG_FUNCTION_ARGS)
 	clist = OpernameGetCandidates(names, '\0');
 
 	if (clist == NULL)
-		elog(ERROR, "No operator with name %s", opr_name_or_oid);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_FUNCTION),
+				 errmsg("no operator with name %s", opr_name_or_oid)));
 	else if (clist->next != NULL)
-		elog(ERROR, "There is more than one operator named %s",
-			 opr_name_or_oid);
+		ereport(ERROR,
+				(errcode(ERRCODE_AMBIGUOUS_FUNCTION),
+				 errmsg("more than one operator named %s",
+						 opr_name_or_oid)));
 
 	result = clist->oid;
 
@@ -613,9 +634,15 @@ regoperatorin(PG_FUNCTION_ARGS)
 	parseNameAndArgTypes(opr_name_or_oid, "regoperatorin", true,
 						 &names, &nargs, argtypes);
 	if (nargs == 1)
-		elog(ERROR, "regoperatorin: use NONE to denote the missing argument of a unary operator");
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_PARAMETER),
+				 errmsg("missing argument"),
+				 errhint("Use NONE to denote the missing argument of a unary operator.")));
 	if (nargs != 2)
-		elog(ERROR, "regoperatorin: provide two argument types for operator");
+		ereport(ERROR,
+				(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
+				 errmsg("too many arguments"),
+				 errhint("Provide two argument types for operator.")));
 
 	if (argtypes[0] == InvalidOid)
 		oprkind = 'l';
@@ -633,7 +660,9 @@ regoperatorin(PG_FUNCTION_ARGS)
 	}
 
 	if (clist == NULL)
-		elog(ERROR, "No operator with name %s", opr_name_or_oid);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_FUNCTION),
+				 errmsg("no operator with name %s", opr_name_or_oid)));
 
 	result = clist->oid;
 
@@ -803,7 +832,9 @@ regclassin(PG_FUNCTION_ARGS)
 		if (HeapTupleIsValid(tuple = systable_getnext(sysscan)))
 			result = HeapTupleGetOid(tuple);
 		else
-			elog(ERROR, "No class with name %s", class_name_or_oid);
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_TABLE),
+					 errmsg("no class with name %s", class_name_or_oid)));
 
 		/* We assume there can be only one match */
 
@@ -967,7 +998,9 @@ regtypein(PG_FUNCTION_ARGS)
 		if (HeapTupleIsValid(tuple = systable_getnext(sysscan)))
 			result = HeapTupleGetOid(tuple);
 		else
-			elog(ERROR, "No type with name %s", typ_name_or_oid);
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("no type with name %s", typ_name_or_oid)));
 
 		/* We assume there can be only one match */
 
@@ -1072,10 +1105,14 @@ stringToQualifiedNameList(const char *string, const char *caller)
 	rawname = pstrdup(string);
 
 	if (!SplitIdentifierString(rawname, '.', &namelist))
-		elog(ERROR, "%s: invalid name syntax", caller);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_NAME),
+				 errmsg("invalid name syntax")));
 
 	if (namelist == NIL)
-		elog(ERROR, "%s: invalid name syntax", caller);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_NAME),
+				 errmsg("invalid name syntax")));
 
 	foreach(l, namelist)
 	{
@@ -1132,7 +1169,9 @@ parseNameAndArgTypes(const char *string, const char *caller,
 			break;
 	}
 	if (*ptr == '\0')
-		elog(ERROR, "%s: expected a left parenthesis", caller);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+				 errmsg("expected a left parenthesis")));
 
 	/* Separate the name and parse it into a list */
 	*ptr++ = '\0';
@@ -1146,7 +1185,10 @@ parseNameAndArgTypes(const char *string, const char *caller,
 			break;
 	}
 	if (*ptr2 != ')')
-		elog(ERROR, "%s: expected a right parenthesis", caller);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+				 errmsg("expected a right parenthesis")));
+
 	*ptr2 = '\0';
 
 	/* Separate the remaining string into comma-separated type names */
@@ -1162,7 +1204,9 @@ parseNameAndArgTypes(const char *string, const char *caller,
 		{
 			/* End of string.  Okay unless we had a comma before. */
 			if (had_comma)
-				elog(ERROR, "%s: expected a type name", caller);
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+						 errmsg("expected a type name")));
 			break;
 		}
 		typename = ptr;
@@ -1192,7 +1236,10 @@ parseNameAndArgTypes(const char *string, const char *caller,
 			}
 		}
 		if (in_quote || paren_count != 0)
-			elog(ERROR, "%s: improper type name", caller);
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+					 errmsg("improper type name")));
+
 		ptr2 = ptr;
 		if (*ptr == ',')
 		{
@@ -1224,7 +1271,10 @@ parseNameAndArgTypes(const char *string, const char *caller,
 			parseTypeString(typename, &typeid, &typmod);
 		}
 		if (*nargs >= FUNC_MAX_ARGS)
-			elog(ERROR, "%s: too many argument datatypes", caller);
+			ereport(ERROR,
+					(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
+					 errmsg("too many argument datatypes")));
+
 		argtypes[*nargs] = typeid;
 		(*nargs)++;
 	}

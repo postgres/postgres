@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 2002, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/pg_locale.c,v 1.20 2002/10/18 20:44:02 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/pg_locale.c,v 1.21 2003/07/27 04:53:07 tgl Exp $
  *
  *-----------------------------------------------------------------------
  */
@@ -157,7 +157,7 @@ lc_collate_is_c(void)
 		return (bool) result;
 	localeptr = setlocale(LC_COLLATE, NULL);
 	if (!localeptr)
-		elog(PANIC, "Invalid LC_COLLATE setting");
+		elog(ERROR, "invalid LC_COLLATE setting");
 
 	if (strcmp(localeptr, "C") == 0)
 		result = true;

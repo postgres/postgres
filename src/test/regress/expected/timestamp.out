@@ -11,7 +11,7 @@ CREATE TABLE TIMESTAMP_TBL ( d1 timestamp(2) without time zone);
 -- statements.
 INSERT INTO TIMESTAMP_TBL VALUES ('now');
 INSERT INTO TIMESTAMP_TBL VALUES ('current');
-ERROR:  'CURRENT' is no longer supported
+ERROR:  "current" is no longer supported
 INSERT INTO TIMESTAMP_TBL VALUES ('today');
 INSERT INTO TIMESTAMP_TBL VALUES ('yesterday');
 INSERT INTO TIMESTAMP_TBL VALUES ('tomorrow');
@@ -60,13 +60,13 @@ INSERT INTO TIMESTAMP_TBL VALUES ('infinity');
 INSERT INTO TIMESTAMP_TBL VALUES ('epoch');
 -- Obsolete special values
 INSERT INTO TIMESTAMP_TBL VALUES ('invalid');
-ERROR:  TIMESTAMP 'invalid' no longer supported
+ERROR:  "invalid" is no longer supported
 -- Postgres v6.0 standard output format
 INSERT INTO TIMESTAMP_TBL VALUES ('Mon Feb 10 17:32:01 1997 PST');
 INSERT INTO TIMESTAMP_TBL VALUES ('Invalid Abstime');
-ERROR:  TIMESTAMP 'Invalid Abstime' no longer supported
+ERROR:  "Invalid Abstime" is no longer supported
 INSERT INTO TIMESTAMP_TBL VALUES ('Undefined Abstime');
-ERROR:  TIMESTAMP 'Undefined Abstime' no longer supported
+ERROR:  "Undefined Abstime" is no longer supported
 -- Variations on Postgres v6.1 standard output format
 INSERT INTO TIMESTAMP_TBL VALUES ('Mon Feb 10 17:32:01.000001 1997 PST');
 INSERT INTO TIMESTAMP_TBL VALUES ('Mon Feb 10 17:32:01.999999 1997 PST');
@@ -126,7 +126,7 @@ INSERT INTO TIMESTAMP_TBL VALUES ('Dec 31 17:32:01 1996');
 INSERT INTO TIMESTAMP_TBL VALUES ('Jan 01 17:32:01 1997');
 INSERT INTO TIMESTAMP_TBL VALUES ('Feb 28 17:32:01 1997');
 INSERT INTO TIMESTAMP_TBL VALUES ('Feb 29 17:32:01 1997');
-ERROR:  Bad timestamp external representation 'Feb 29 17:32:01 1997'
+ERROR:  invalid input syntax for timestamp: "Feb 29 17:32:01 1997"
 INSERT INTO TIMESTAMP_TBL VALUES ('Mar 01 17:32:01 1997');
 INSERT INTO TIMESTAMP_TBL VALUES ('Dec 30 17:32:01 1997');
 INSERT INTO TIMESTAMP_TBL VALUES ('Dec 31 17:32:01 1997');
@@ -136,9 +136,9 @@ INSERT INTO TIMESTAMP_TBL VALUES ('Dec 31 17:32:01 2000');
 INSERT INTO TIMESTAMP_TBL VALUES ('Jan 01 17:32:01 2001');
 -- Currently unsupported syntax and ranges
 INSERT INTO TIMESTAMP_TBL VALUES ('Feb 16 17:32:01 -0097');
-ERROR:  Bad timestamp external representation 'Feb 16 17:32:01 -0097'
+ERROR:  invalid input syntax for timestamp: "Feb 16 17:32:01 -0097"
 INSERT INTO TIMESTAMP_TBL VALUES ('Feb 16 17:32:01 5097 BC');
-ERROR:  TIMESTAMP out of range 'Feb 16 17:32:01 5097 BC'
+ERROR:  timestamp out of range: "Feb 16 17:32:01 5097 BC"
 SELECT '' AS "64", d1 FROM TIMESTAMP_TBL; 
  64 |             d1              
 ----+-----------------------------
@@ -1370,7 +1370,7 @@ SELECT '' AS to_timestamp_8, to_timestamp('2000January09Sunday', 'YYYYFMMonthDDF
 (1 row)
 
 SELECT '' AS to_timestamp_9, to_timestamp('97/Feb/16', 'YYMonDD');
-ERROR:  to_timestamp(): bad value for MON/Mon/mon
+ERROR:  invalid value for MON/Mon/mon
 SELECT '' AS to_timestamp_10, to_timestamp('19971116', 'YYYYMMDD');
  to_timestamp_10 |         to_timestamp         
 -----------------+------------------------------

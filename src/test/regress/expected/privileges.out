@@ -286,7 +286,7 @@ ERROR:  relation "pg_shad" does not exist
 select has_table_privilege('nosuchuser','pg_shadow','select');
 ERROR:  user "nosuchuser" does not exist
 select has_table_privilege('pg_shadow','sel');
-ERROR:  has_table_privilege: invalid privilege type sel
+ERROR:  unrecognized privilege type: "sel"
 select has_table_privilege(-999999,'pg_shadow','update');
 ERROR:  user with ID 4293967297 does not exist
 select has_table_privilege(1,'rule');
@@ -561,7 +561,8 @@ SELECT has_table_privilege('regressuser3', 'atest4', 'SELECT'); -- true
 (1 row)
 
 REVOKE SELECT ON atest4 FROM regressuser2; -- fail
-ERROR:  dependent privileges exist (use CASCADE to revoke them too)
+ERROR:  dependent privileges exist
+HINT:  Use CASCADE to revoke them too.
 REVOKE GRANT OPTION FOR SELECT ON atest4 FROM regressuser2 CASCADE; -- ok
 SELECT has_table_privilege('regressuser2', 'atest4', 'SELECT'); -- true
  has_table_privilege 

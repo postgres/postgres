@@ -1,7 +1,7 @@
 /*
  *	PostgreSQL type definitions for MAC addresses.
  *
- *	$Header: /cvsroot/pgsql/src/backend/utils/adt/mac.c,v 1.28 2003/05/13 18:03:07 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/mac.c,v 1.29 2003/07/27 04:53:06 tgl Exp $
  */
 
 #include "postgres.h"
@@ -60,12 +60,16 @@ macaddr_in(PG_FUNCTION_ARGS)
 		count = sscanf(str, "%2x%2x%2x%2x%2x%2x%1s",
 					   &a, &b, &c, &d, &e, &f, junk);
 	if (count != 6)
-		elog(ERROR, "macaddr_in: error in parsing \"%s\"", str);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+				 errmsg("invalid input syntax for macaddr: \"%s\"", str)));
 
 	if ((a < 0) || (a > 255) || (b < 0) || (b > 255) ||
 		(c < 0) || (c > 255) || (d < 0) || (d > 255) ||
 		(e < 0) || (e > 255) || (f < 0) || (f > 255))
-		elog(ERROR, "macaddr_in: illegal address \"%s\"", str);
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("invalid octet value in macaddr: \"%s\"", str)));
 
 	result = (macaddr *) palloc(sizeof(macaddr));
 
@@ -181,7 +185,9 @@ text_macaddr(PG_FUNCTION_ARGS)
 
 	len = (VARSIZE(addr) - VARHDRSZ);
 	if (len >= sizeof(str))
-		elog(ERROR, "Text is too long to convert to MAC address");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+				 errmsg("text too long to convert to MAC address")));
 
 	memcpy(str, VARDATA(addr), len);
 	*(str + len) = '\0';

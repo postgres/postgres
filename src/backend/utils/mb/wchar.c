@@ -1,7 +1,7 @@
 /*
  * conversion functions between pg_wchar and multibyte streams.
  * Tatsuo Ishii
- * $Id: wchar.c,v 1.31 2003/01/11 06:55:11 ishii Exp $
+ * $Id: wchar.c,v 1.32 2003/07/27 04:53:11 tgl Exp $
  *
  * WIN1250 client encoding updated by Pavel Behal
  *
@@ -606,78 +606,78 @@ pg_encoding_max_length(int encoding)
 }
 
 #ifndef FRONTEND
+
 /*
  * Verify mbstr to make sure that it has a valid character sequence.
- * mbstr is not necessarily NULL terminated. length of mbstr is
- * specified by len. If an error was found, returns an error message.
- * Note that the message is kept in a static buffer, the next invocation
- * might break the message.
- * If no error was found, this function returns NULL.
+ * mbstr is not necessarily NULL terminated; length of mbstr is
+ * specified by len.
+ *
+ * If OK, return TRUE.  If a problem is found, return FALSE when noError is
+ * true; when noError is false, ereport() a descriptive message.
  */
-char *
-pg_verifymbstr(const unsigned char *mbstr, int len)
+bool
+pg_verifymbstr(const unsigned char *mbstr, int len, bool noError)
 {
 	int			l;
-	int			i,
-				j;
-	static char buf[256];
-	int			slen = 0;
+	int			i;
+	int			encoding;
 
-	/* we do not check single byte encodings */
+	/* we do not need any check in single-byte encodings */
 	if (pg_database_encoding_max_length() <= 1)
-		return NULL;
+		return true;
+
+	encoding = GetDatabaseEncoding();
 
 	while (len > 0 && *mbstr)
 	{
 		/* special UTF-8 check */
-		if (GetDatabaseEncoding() == PG_UTF8 &&
-			(*mbstr & 0xf8) == 0xf0)
+		if (encoding == PG_UTF8 && (*mbstr & 0xf8) == 0xf0)
 		{
-			snprintf(buf, sizeof(buf), "Unicode >= 0x10000 is not supported");
-			return (buf);
+			if (noError)
+				return false;
+			ereport(ERROR,
+					(errcode(ERRCODE_CHARACTER_NOT_IN_REPERTOIRE),
+					 errmsg("UNICODE characters >= 0x10000 are not supported")));
 		}
 
 		l = pg_mblen(mbstr);
 
-		/* multibyte letter? */
-		if (l > 1)
+		for (i = 1; i < l; i++)
 		{
-			for (i = 1; i < l; i++)
+			/*
+			 * we expect that every multibyte char consists of bytes
+			 * having the 8th bit set
+			 */
+			if (i >= len || (mbstr[i] & 0x80) == 0)
 			{
-				if (i > len || *(mbstr + i) == '\0' ||
+				char		buf[8 * 2 + 1];
+				char	   *p = buf;
+				int			j,
+							jlimit;
 
-				/*
-				 * we assume that every multibyte letter consists of bytes
-				 * being the 8th bit set
-				 */
-					((*(mbstr + i) & 0x80) == 0))
+				if (noError)
+					return false;
+
+				jlimit = Min(l, len);
+				jlimit = Min(jlimit, 8); /* prevent buffer overrun */
+
+				for (j = 0; j < jlimit; j++)
 				{
-					int			remains = sizeof(buf);
-					char	   *p = buf;
-
-					slen = snprintf(p, remains, "Invalid %s character sequence found (0x",
-									GetDatabaseEncodingName());
-					p += slen;
-					remains -= slen;
-
-					i = ((*(mbstr + i) & 0x80) == 0) ? l : i;
-
-					for (j = 0; j < i; j++)
-					{
-						slen = snprintf(p, remains, "%02x",
-										*(mbstr + j));
-						p += slen;
-						remains -= slen;
-					}
-					snprintf(p, remains, ")");
-					return (buf);
+					p += sprintf(p, "%02x", mbstr[j]);
 				}
+
+				ereport(ERROR,
+						(errcode(ERRCODE_CHARACTER_NOT_IN_REPERTOIRE),
+						 errmsg("invalid %s character sequence: 0x%s",
+								GetDatabaseEncodingName(), buf)));
 			}
 		}
+
 		len -= l;
 		mbstr += l;
 	}
-	return NULL;
+
+	return true;
 }
 
 /*

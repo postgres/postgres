@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.106 2003/06/25 21:14:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.107 2003/07/27 04:53:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1251,7 +1251,10 @@ DecodeDateTime(char **field, int *ftype, int nf,
 						switch (val)
 						{
 							case DTK_CURRENT:
-								elog(ERROR, "'CURRENT' is no longer supported");
+								ereport(ERROR,
+										(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+										 errmsg("\"current\" is no longer supported")));
+
 								return -1;
 								break;
 
@@ -1428,7 +1431,10 @@ DecodeDateTime(char **field, int *ftype, int nf,
 		if (tm->tm_year > 0)
 			tm->tm_year = -(tm->tm_year - 1);
 		else
-			elog(ERROR, "Inconsistent use of year %04d and 'BC'", tm->tm_year);
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+					 errmsg("inconsistent use of year %04d and \"BC\"",
+							tm->tm_year)));
 	}
 	else if (is2digits)
 	{
@@ -1965,7 +1971,9 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 						switch (val)
 						{
 							case DTK_CURRENT:
-								elog(ERROR, "'CURRENT' is no longer supported");
+								ereport(ERROR,
+										(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+										 errmsg("\"current\" is no longer supported")));
 								return -1;
 								break;
 
@@ -2238,7 +2246,10 @@ DecodeDate(char *str, int fmask, int *tmask, struct tm * tm)
 		if (tm->tm_year > 0)
 			tm->tm_year = -(tm->tm_year - 1);
 		else
-			elog(ERROR, "Inconsistent use of year %04d and 'BC'", tm->tm_year);
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+					 errmsg("inconsistent use of year %04d and \"BC\"",
+							tm->tm_year)));
 	}
 	else if (is2digits)
 	{
@@ -2554,7 +2565,7 @@ DecodeNumberField(int len, char *str, int fmask,
  *
  * Return 0 if okay (and set *tzp), nonzero if not okay.
  *
- * NB: this must *not* elog on failure; see commands/variable.c.
+ * NB: this must *not* ereport on failure; see commands/variable.c.
  *
  * Note: we allow timezone offsets up to 13:59.  There are places that
  * use +1300 summer time.
@@ -2611,7 +2622,7 @@ DecodeTimezone(char *str, int *tzp)
  *
  * Return 0 if okay (and set *tzp), nonzero if not okay.
  *
- * NB: this must *not* elog on failure; see commands/variable.c.
+ * NB: this must *not* ereport on failure; see commands/variable.c.
  */
 int
 DecodePosixTimezone(char *str, int *tzp)
@@ -2663,7 +2674,7 @@ DecodePosixTimezone(char *str, int *tzp)
  * Implement a cache lookup since it is likely that dates
  *	will be related in format.
  *
- * NB: this must *not* elog on failure;
+ * NB: this must *not* ereport on failure;
  * see commands/variable.c.
  */
 int
@@ -3715,7 +3726,7 @@ CheckDateTokenTable(const char *tablename, datetkn *base, unsigned int nel)
 	{
 		if (strncmp(base[i-1].token, base[i].token, TOKMAXLEN) >= 0)
 		{
-			elog(LOG, "Ordering error in %s table: \"%.*s\" >= \"%.*s\"",
+			elog(LOG, "ordering error in %s table: \"%.*s\" >= \"%.*s\"",
 				 tablename,
 				 TOKMAXLEN, base[i-1].token,
 				 TOKMAXLEN, base[i].token);

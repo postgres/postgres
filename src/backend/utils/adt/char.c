@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/char.c,v 1.35 2003/05/12 23:08:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/char.c,v 1.36 2003/07/27 04:53:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -181,7 +181,9 @@ chardiv(PG_FUNCTION_ARGS)
 	char		arg2 = PG_GETARG_CHAR(1);
 
 	if (arg2 == 0)
-		elog(ERROR, "division by zero");
+		ereport(ERROR,
+				(errcode(ERRCODE_DIVISION_BY_ZERO),
+				 errmsg("division by zero")));
 
 	PG_RETURN_CHAR((int8) arg1 / (int8) arg2);
 }

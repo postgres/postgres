@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.55 2002/12/13 19:45:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.56 2003/07/27 04:53:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -83,7 +83,7 @@ SetDefine(char *querystr, Oid elemType)
 						 ObjectIdGetDatum(setoid),
 						 0, 0, 0);
 	if (!HeapTupleIsValid(tup))
-		elog(ERROR, "SetDefine: unable to define set %s", querystr);
+		elog(ERROR, "cache lookup failed for function %u", setoid);
 
 	/*
 	 * We can tell whether the set was already defined by checking the
@@ -201,7 +201,10 @@ seteval(PG_FUNCTION_ARGS)
 		if (rsi && IsA(rsi, ReturnSetInfo))
 			rsi->isDone = isDone;
 		else
-			elog(ERROR, "Set-valued function called in context that cannot accept a set");
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("set-valued function called in context that "
+							"cannot accept a set")));
 	}
 
 	PG_RETURN_DATUM(result);

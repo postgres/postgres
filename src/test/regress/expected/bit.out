@@ -6,12 +6,12 @@
 --
 CREATE TABLE BIT_TABLE(b BIT(11));
 INSERT INTO BIT_TABLE VALUES (B'10'); -- too short
-ERROR:  Bit string length 2 does not match type BIT(11)
+ERROR:  bit string length 2 does not match type bit(11)
 INSERT INTO BIT_TABLE VALUES (B'00000000000');
 INSERT INTO BIT_TABLE VALUES (B'11011000000');
 INSERT INTO BIT_TABLE VALUES (B'01010101010');
 INSERT INTO BIT_TABLE VALUES (B'101011111010'); -- too long
-ERROR:  Bit string length 12 does not match type BIT(11)
+ERROR:  bit string length 12 does not match type bit(11)
 --INSERT INTO BIT_TABLE VALUES ('X554');
 --INSERT INTO BIT_TABLE VALUES ('X555');
 SELECT * FROM BIT_TABLE; 
@@ -28,7 +28,7 @@ INSERT INTO VARBIT_TABLE VALUES (B'0');
 INSERT INTO VARBIT_TABLE VALUES (B'010101');
 INSERT INTO VARBIT_TABLE VALUES (B'01010101010');
 INSERT INTO VARBIT_TABLE VALUES (B'101011111010'); -- too long
-ERROR:  Bit string too long for type BIT VARYING(11)
+ERROR:  bit string too long for type bit varying(11)
 --INSERT INTO VARBIT_TABLE VALUES ('X554');
 --INSERT INTO VARBIT_TABLE VALUES ('X555');
 SELECT * FROM VARBIT_TABLE; 
@@ -212,11 +212,11 @@ SELECT a,a<<4 AS "a<<4",b,b>>2 AS "b>>2" FROM bit_table;
 DROP TABLE bit_table;
 -- The following should fail
 select B'001' & B'10';
-ERROR:  Cannot AND bit strings of different sizes
+ERROR:  cannot AND bit strings of different sizes
 select B'0111' | B'011';
-ERROR:  Cannot OR bit strings of different sizes
+ERROR:  cannot OR bit strings of different sizes
 select B'0010' # B'011101';
-ERROR:  Cannot XOR bit strings of different sizes
+ERROR:  cannot XOR bit strings of different sizes
 -- More position tests, checking all the boundary cases
 SELECT POSITION(B'1010' IN B'0000101');   -- 0
  position 

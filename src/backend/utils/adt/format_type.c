@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/format_type.c,v 1.34 2002/09/04 20:31:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/format_type.c,v 1.35 2003/07/27 04:53:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -133,8 +133,7 @@ format_type_internal(Oid type_oid, int32 typemod,
 		if (allow_invalid)
 			return pstrdup("???");
 		else
-			elog(ERROR, "could not locate data type with oid %u in catalog",
-				 type_oid);
+			elog(ERROR, "cache lookup failed for type %u", type_oid);
 	}
 	typeform = (Form_pg_type) GETSTRUCT(tuple);
 
@@ -159,8 +158,7 @@ format_type_internal(Oid type_oid, int32 typemod,
 			if (allow_invalid)
 				return pstrdup("???[]");
 			else
-				elog(ERROR, "could not locate data type with oid %u in catalog",
-					 type_oid);
+				elog(ERROR, "cache lookup failed for type %u", type_oid);
 		}
 		typeform = (Form_pg_type) GETSTRUCT(tuple);
 		type_oid = array_base_type;
@@ -312,7 +310,7 @@ format_type_internal(Oid type_oid, int32 typemod,
 						fieldstr = "";
 						break;
 					default:
-						elog(LOG, "Invalid INTERVAL typmod 0x%x", typemod);
+						elog(ERROR, "invalid INTERVAL typmod: 0x%x", typemod);
 						fieldstr = "";
 						break;
 				}

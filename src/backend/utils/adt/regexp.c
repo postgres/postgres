@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regexp.c,v 1.45 2003/02/06 20:25:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regexp.c,v 1.46 2003/07/27 04:53:08 tgl Exp $
  *
  *		Alistair Crooks added the code for the regex caching
  *		agc - cached the regular expressions used - there's a good chance
@@ -171,7 +171,9 @@ RE_compile_and_execute(text *text_re, unsigned char *dat, int dat_len,
 
 		pg_regerror(regcomp_result, &re_temp.cre_re, errMsg, sizeof(errMsg));
 		/* XXX should we pg_regfree here? */
-		elog(ERROR, "Invalid regular expression: %s", errMsg);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_REGULAR_EXPRESSION),
+				 errmsg("invalid regular expression: %s", errMsg)));
 	}
 
 	/*
@@ -182,7 +184,9 @@ RE_compile_and_execute(text *text_re, unsigned char *dat, int dat_len,
 	if (re_temp.cre_pat == NULL)
 	{
 		pg_regfree(&re_temp.cre_re);
-		elog(ERROR, "Out of memory");
+		ereport(ERROR,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
 	}
 	memcpy(re_temp.cre_pat, text_re, text_re_len);
 	re_temp.cre_flags = cflags;
@@ -450,7 +454,10 @@ similar_escape(PG_FUNCTION_ARGS)
 		if (elen == 0)
 			e = NULL;			/* no escape character */
 		else if (elen != 1)
-			elog(ERROR, "ESCAPE string must be empty or one character");
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_ESCAPE_SEQUENCE),
+					 errmsg("invalid escape string"),
+					 errhint("Escape string must be empty or one character.")));
 	}
 
 	/* We need room for ^, $, and up to 2 output bytes per input byte */

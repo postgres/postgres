@@ -1,7 +1,7 @@
 /*
  *	PostgreSQL type definitions for the INET and CIDR types.
  *
- *	$Header: /cvsroot/pgsql/src/backend/utils/adt/network.c,v 1.42 2003/06/24 22:21:22 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/network.c,v 1.43 2003/07/27 04:53:07 tgl Exp $
  *
  *	Jon Postel RIP 16 Oct 1998
  */
@@ -85,17 +85,23 @@ network_in(char *src, int type)
 	bits = inet_net_pton(ip_family(dst), src, ip_addr(dst),
 			     type ? ip_addrsize(dst) : -1);
 	if ((bits < 0) || (bits > ip_maxbits(dst)))
-		elog(ERROR, "invalid %s value '%s'",
-		     type ? "CIDR" : "INET", src);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+				 /* translator: first %s is inet or cidr */
+				 errmsg("invalid input syntax for %s: \"%s\"",
+						 type ? "cidr" : "inet", src)));
 
-        /*
+	/*
 	 * Error check: CIDR values must not have any bits set beyond
 	 * the masklen.
-         */
-        if (type)
+	 */
+	if (type)
 	{
 		if (!addressOK(ip_addr(dst), bits, ip_family(dst)))
-			elog(ERROR, "invalid CIDR value '%s': has bits set to right of mask", src);
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+					 errmsg("invalid cidr value: \"%s\"", src),
+					 errdetail("Value has bits set to right of mask.")));
 	}
 
 	VARATT_SIZEP(dst) = VARHDRSZ
@@ -139,7 +145,10 @@ inet_out(PG_FUNCTION_ARGS)
 	dst = inet_net_ntop(ip_family(src), ip_addr(src), ip_bits(src),
 			    tmp, sizeof(tmp));
 	if (dst == NULL)
-		elog(ERROR, "unable to print address (%s)", strerror(errno));
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
+				 errmsg("could not format inet value: %m")));
+
 	/* For CIDR, add /n if not present */
 	if (ip_type(src) && strchr(tmp, '/') == NULL)
 	{
@@ -180,18 +189,25 @@ inet_recv(PG_FUNCTION_ARGS)
 
 	ip_family(addr) = pq_getmsgbyte(buf);
 	if (ip_family(addr) != AF_INET)
-		elog(ERROR, "Invalid family in external inet");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
+				 errmsg("invalid family in external inet")));
 	bits = pq_getmsgbyte(buf);
 	if (bits < 0 || bits > ip_maxbits(addr))
-		elog(ERROR, "Invalid bits in external inet");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
+				 errmsg("invalid bits in external inet")));
 	ip_bits(addr) = bits;
 	ip_type(addr) = pq_getmsgbyte(buf);
 	if (ip_type(addr) != 0 && ip_type(addr) != 1)
-		elog(ERROR, "Invalid type in external inet");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
+				 errmsg("invalid type in external inet")));
 	nb = pq_getmsgbyte(buf);
 	if (nb != ip_addrsize(addr))
-		elog(ERROR, "Invalid length in external inet");
-
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
+				 errmsg("invalid length in external inet")));
 	VARATT_SIZEP(addr) = VARHDRSZ
 		+ ((char *)ip_addr(addr) - (char *) VARDATA(addr))
 		+ ip_addrsize(addr);
@@ -207,7 +223,10 @@ inet_recv(PG_FUNCTION_ARGS)
 	if (ip_type(addr))
 	{
 		if (!addressOK(ip_addr(addr), bits, ip_family(addr)))
-			elog(ERROR, "invalid external CIDR value: has bits set to right of mask");
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
+					 errmsg("invalid external CIDR value"),
+					 errdetail("Value has bits set to right of mask.")));
 	}
 
 	PG_RETURN_INET_P(addr);
@@ -291,7 +310,9 @@ inet_set_masklen(PG_FUNCTION_ARGS)
             bits = ip_maxbits(src);
 
 	if ((bits < 0) || (bits > ip_maxbits(src)))
-			elog(ERROR, "set_masklen - invalid value '%d'", bits);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("invalid mask length: %d", bits)));
 
 	/* clone the original data */
 	dst = (inet *) palloc(VARHDRSZ + sizeof(inet_struct));
@@ -477,7 +498,9 @@ network_host(PG_FUNCTION_ARGS)
 	/* force display of max bits, regardless of masklen... */
 	if (inet_net_ntop(ip_family(ip), ip_addr(ip), ip_maxbits(ip),
 			  tmp, sizeof(tmp)) == NULL)
-		elog(ERROR, "unable to print host (%s)", strerror(errno));
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
+				 errmsg("could not format inet value: %m")));
 
 	/* Suppress /n if present (shouldn't happen now) */
 	if ((ptr = strchr(tmp, '/')) != NULL)
@@ -501,7 +524,10 @@ network_show(PG_FUNCTION_ARGS)
 
 	if (inet_net_ntop(ip_family(ip), ip_addr(ip), ip_maxbits(ip),
 			  tmp, sizeof(tmp)) == NULL)
-		elog(ERROR, "unable to print host (%s)", strerror(errno));
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
+				 errmsg("could not format inet value: %m")));
+
 	/* Add /n if not present (which it won't be) */
 	if (strchr(tmp, '/') == NULL)
 	{
@@ -534,8 +560,9 @@ network_abbrev(PG_FUNCTION_ARGS)
 				    ip_bits(ip), tmp, sizeof(tmp));
 
 	if (dst == NULL)
-		elog(ERROR, "unable to print address (%s)",
-		     strerror(errno));
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
+				 errmsg("could not format inet value: %m")));
 
 	/* Return string as a text datum */
 	len = strlen(tmp);
@@ -818,7 +845,7 @@ convert_network_to_scalar(Datum value, Oid typid)
 	 * Can't get here unless someone tries to use scalarltsel/scalargtsel
 	 * on an operator with one network and one non-network operand.
 	 */
-	elog(ERROR, "convert_network_to_scalar: unsupported type %u", typid);
+	elog(ERROR, "unsupported type: %u", typid);
 	return 0;
 }
 

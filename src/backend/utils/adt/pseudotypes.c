@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/pseudotypes.c,v 1.7 2003/05/13 18:03:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/pseudotypes.c,v 1.8 2003/07/27 04:53:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,9 @@
 Datum
 record_in(PG_FUNCTION_ARGS)
 {
-	elog(ERROR, "Cannot accept a constant of type %s", "RECORD");
+	ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("cannot accept a constant of type record")));
 
 	PG_RETURN_VOID();			/* keep compiler quiet */
 }
@@ -44,7 +46,9 @@ record_in(PG_FUNCTION_ARGS)
 Datum
 record_out(PG_FUNCTION_ARGS)
 {
-	elog(ERROR, "Cannot display a value of type %s", "RECORD");
+	ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("cannot display a value of type record")));
 
 	PG_RETURN_VOID();			/* keep compiler quiet */
 }
@@ -55,7 +59,9 @@ record_out(PG_FUNCTION_ARGS)
 Datum
 record_recv(PG_FUNCTION_ARGS)
 {
-	elog(ERROR, "Cannot accept a value of type %s", "RECORD");
+	ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("cannot accept a value of type record")));
 
 	PG_RETURN_VOID();			/* keep compiler quiet */
 }
@@ -66,7 +72,9 @@ record_recv(PG_FUNCTION_ARGS)
 Datum
 record_send(PG_FUNCTION_ARGS)
 {
-	elog(ERROR, "Cannot display a value of type %s", "RECORD");
+	ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("cannot display a value of type record")));
 
 	PG_RETURN_VOID();			/* keep compiler quiet */
 }
@@ -134,7 +142,9 @@ cstring_send(PG_FUNCTION_ARGS)
 Datum
 any_in(PG_FUNCTION_ARGS)
 {
-	elog(ERROR, "Cannot accept a constant of type %s", "ANY");
+	ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("cannot accept a constant of type any")));
 
 	PG_RETURN_VOID();			/* keep compiler quiet */
 }
@@ -145,7 +155,9 @@ any_in(PG_FUNCTION_ARGS)
 Datum
 any_out(PG_FUNCTION_ARGS)
 {
-	elog(ERROR, "Cannot display a value of type %s", "ANY");
+	ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("cannot display a value of type any")));
 
 	PG_RETURN_VOID();			/* keep compiler quiet */
 }
@@ -157,7 +169,9 @@ any_out(PG_FUNCTION_ARGS)
 Datum
 anyarray_in(PG_FUNCTION_ARGS)
 {
-	elog(ERROR, "Cannot accept a constant of type %s", "ANYARRAY");
+	ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("cannot accept a constant of type anyarray")));
 
 	PG_RETURN_VOID();			/* keep compiler quiet */
 }
@@ -183,7 +197,9 @@ anyarray_out(PG_FUNCTION_ARGS)
 Datum
 anyarray_recv(PG_FUNCTION_ARGS)
 {
-	elog(ERROR, "Cannot accept a value of type %s", "ANYARRAY");
+	ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("cannot accept a value of type anyarray")));
 
 	PG_RETURN_VOID();			/* keep compiler quiet */
 }
@@ -231,7 +247,9 @@ void_out(PG_FUNCTION_ARGS)
 Datum
 trigger_in(PG_FUNCTION_ARGS)
 {
-	elog(ERROR, "Cannot accept a constant of type %s", "TRIGGER");
+	ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("cannot accept a constant of type trigger")));
 
 	PG_RETURN_VOID();			/* keep compiler quiet */
 }
@@ -242,7 +260,9 @@ trigger_in(PG_FUNCTION_ARGS)
 Datum
 trigger_out(PG_FUNCTION_ARGS)
 {
-	elog(ERROR, "Cannot display a value of type %s", "TRIGGER");
+	ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("cannot display a value of type trigger")));
 
 	PG_RETURN_VOID();			/* keep compiler quiet */
 }
@@ -254,7 +274,9 @@ trigger_out(PG_FUNCTION_ARGS)
 Datum
 language_handler_in(PG_FUNCTION_ARGS)
 {
-	elog(ERROR, "Cannot accept a constant of type %s", "LANGUAGE_HANDLER");
+	ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("cannot accept a constant of type language_handler")));
 
 	PG_RETURN_VOID();			/* keep compiler quiet */
 }
@@ -265,7 +287,9 @@ language_handler_in(PG_FUNCTION_ARGS)
 Datum
 language_handler_out(PG_FUNCTION_ARGS)
 {
-	elog(ERROR, "Cannot display a value of type %s", "LANGUAGE_HANDLER");
+	ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("cannot display a value of type language_handler")));
 
 	PG_RETURN_VOID();			/* keep compiler quiet */
 }
@@ -277,7 +301,9 @@ language_handler_out(PG_FUNCTION_ARGS)
 Datum
 internal_in(PG_FUNCTION_ARGS)
 {
-	elog(ERROR, "Cannot accept a constant of type %s", "INTERNAL");
+	ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("cannot accept a constant of type internal")));
 
 	PG_RETURN_VOID();			/* keep compiler quiet */
 }
@@ -288,7 +314,9 @@ internal_in(PG_FUNCTION_ARGS)
 Datum
 internal_out(PG_FUNCTION_ARGS)
 {
-	elog(ERROR, "Cannot display a value of type %s", "INTERNAL");
+	ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("cannot display a value of type internal")));
 
 	PG_RETURN_VOID();			/* keep compiler quiet */
 }
@@ -300,7 +328,9 @@ internal_out(PG_FUNCTION_ARGS)
 Datum
 opaque_in(PG_FUNCTION_ARGS)
 {
-	elog(ERROR, "Cannot accept a constant of type %s", "OPAQUE");
+	ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("cannot accept a constant of type opaque")));
 
 	PG_RETURN_VOID();			/* keep compiler quiet */
 }
@@ -311,7 +341,9 @@ opaque_in(PG_FUNCTION_ARGS)
 Datum
 opaque_out(PG_FUNCTION_ARGS)
 {
-	elog(ERROR, "Cannot display a value of type %s", "OPAQUE");
+	ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("cannot display a value of type opaque")));
 
 	PG_RETURN_VOID();			/* keep compiler quiet */
 }
@@ -323,7 +355,9 @@ opaque_out(PG_FUNCTION_ARGS)
 Datum
 anyelement_in(PG_FUNCTION_ARGS)
 {
-	elog(ERROR, "Cannot accept a constant of type %s", "ANYELEMENT");
+	ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("cannot accept a constant of type anyelement")));
 
 	PG_RETURN_VOID();			/* keep compiler quiet */
 }
@@ -334,7 +368,9 @@ anyelement_in(PG_FUNCTION_ARGS)
 Datum
 anyelement_out(PG_FUNCTION_ARGS)
 {
-	elog(ERROR, "Cannot display a value of type %s", "ANYELEMENT");
+	ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("cannot display a value of type anyelement")));
 
 	PG_RETURN_VOID();			/* keep compiler quiet */
 }
