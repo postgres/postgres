@@ -39,6 +39,8 @@
 
 * Update timezone data to match latest zic database (see src/timezone/README)
 
+* Update inet/cidr data types with newest Bind patches
+
 * Update pg_upgrade to handle new version, or disable
 
 
