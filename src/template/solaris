@@ -11,8 +11,8 @@ esac
 
 # tools/thread/thread_test must be run
 if test "$GCC" = yes 
-then	THREAD_LIBS="-pthread"
-else	THREAD_CPPFLAGS="-mt"
+then	THREAD_CPPFLAGS="-D_POSIX_PTHREAD_SEMANTICS"
+	THREAD_LIBS="-pthread"
+else	THREAD_CPPFLAGS="-mt -D_POSIX_PTHREAD_SEMANTICS"
 	THREAD_LIBS="-lpthread"
 fi
-
