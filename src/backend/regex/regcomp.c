@@ -1049,15 +1049,15 @@ int			ch;
 	assert(pg_isalpha(ch));
 	if (pg_isupper(ch))
 #ifdef MULTIBYTE
-		return (unsigned char) tolower(ch);
+		return (unsigned char) tolower((unsigned char) ch);
 #else
-		return tolower(ch);
+		return tolower((unsigned char) ch);
 #endif
 	else if (pg_islower(ch))
 #ifdef MULTIBYTE
-		return (unsigned char) toupper(ch);
+		return (unsigned char) toupper((unsigned char) ch);
 #else
-		return toupper(ch);
+		return toupper((unsigned char) ch);
 #endif
 	else
 /* peculiar, but could happen */
@@ -1882,9 +1882,9 @@ static int
 pg_isdigit(int c)
 {
 #ifdef MULTIBYTE
-	return (c >= 0 && c <= UCHAR_MAX && isdigit(c));
+	return (c >= 0 && c <= UCHAR_MAX && isdigit((unsigned char) c));
 #else
-	return (isdigit(c));
+	return (isdigit((unsigned char) c));
 #endif
 }
 
@@ -1892,9 +1892,9 @@ static int
 pg_isalpha(int c)
 {
 #ifdef MULTIBYTE
-	return (c >= 0 && c <= UCHAR_MAX && isalpha(c));
+	return (c >= 0 && c <= UCHAR_MAX && isalpha((unsigned char) c));
 #else
-	return (isalpha(c));
+	return (isalpha((unsigned char) c));
 #endif
 }
 
@@ -1902,9 +1902,9 @@ static int
 pg_isupper(int c)
 {
 #ifdef MULTIBYTE
-	return (c >= 0 && c <= UCHAR_MAX && isupper(c));
+	return (c >= 0 && c <= UCHAR_MAX && isupper((unsigned char) c));
 #else
-	return (isupper(c));
+	return (isupper((unsigned char) c));
 #endif
 }
 
@@ -1912,8 +1912,8 @@ static int
 pg_islower(int c)
 {
 #ifdef MULTIBYTE
-	return (c >= 0 && c <= UCHAR_MAX && islower(c));
+	return (c >= 0 && c <= UCHAR_MAX && islower((unsigned char) c));
 #else
-	return (islower(c));
+	return (islower((unsigned char) c));
 #endif
 }

@@ -28,9 +28,10 @@
 #define DIGIT(val)	((val) + '0')
 #define ISOCTAL(c)	(((c) >= '0') && ((c) <= '7'))
 #ifndef ISO8859
-#define NOTPRINTABLE(c) (!isprint(c))
+#define NOTPRINTABLE(c) (!isprint((unsigned char) (c)))
 #else
-#define NOTPRINTABLE(c) (!isprint(c) && ((c) < 0xa0))
+#define NOTPRINTABLE(c) (!isprint((unsigned char) (c)) && \
+						 ((unsigned char) (c) < (unsigned char) 0xa0))
 #endif
 
 /*

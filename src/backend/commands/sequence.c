@@ -473,9 +473,8 @@ get_seq_name(text *seqin)
 		 */
 		for (; *rawname; rawname++)
 		{
-			if (isascii((int) *rawname) &&
-				isupper((int) *rawname))
-				*rawname = tolower(*rawname);
+			if (isupper((unsigned char) *rawname))
+				*rawname = tolower((unsigned char) *rawname);
 		}
 	}
 	return seqname;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.49 2000/08/25 10:00:30 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.50 2000/12/03 20:45:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,7 @@
 #include <netdb.h>				/* for MAXHOSTNAMELEN on some */
 #endif
 #include <pwd.h>
-#include <ctype.h>				/* isspace() declaration */
+#include <ctype.h>
 
 #include <sys/types.h>			/* needed by in.h on Ultrix */
 #include <netinet/in.h>

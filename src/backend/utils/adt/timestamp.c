@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.38 2000/11/11 19:55:19 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.39 2000/12/03 20:45:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1597,7 +1597,7 @@ timestamp_trunc(PG_FUNCTION_ARGS)
 	up = VARDATA(units);
 	lp = lowunits;
 	for (i = 0; i < (VARSIZE(units) - VARHDRSZ); i++)
-		*lp++ = tolower(*up++);
+		*lp++ = tolower((unsigned char) *up++);
 	*lp = '\0';
 
 	type = DecodeUnits(0, lowunits, &val);
@@ -1730,7 +1730,7 @@ interval_trunc(PG_FUNCTION_ARGS)
 	up = VARDATA(units);
 	lp = lowunits;
 	for (i = 0; i < (VARSIZE(units) - VARHDRSZ); i++)
-		*lp++ = tolower(*up++);
+		*lp++ = tolower((unsigned char) *up++);
 	*lp = '\0';
 
 	type = DecodeUnits(0, lowunits, &val);
@@ -1921,7 +1921,7 @@ timestamp_part(PG_FUNCTION_ARGS)
 	up = VARDATA(units);
 	lp = lowunits;
 	for (i = 0; i < (VARSIZE(units) - VARHDRSZ); i++)
-		*lp++ = tolower(*up++);
+		*lp++ = tolower((unsigned char) *up++);
 	*lp = '\0';
 
 	type = DecodeUnits(0, lowunits, &val);
@@ -2079,7 +2079,7 @@ interval_part(PG_FUNCTION_ARGS)
 	up = VARDATA(units);
 	lp = lowunits;
 	for (i = 0; i < (VARSIZE(units) - VARHDRSZ); i++)
-		*lp++ = tolower(*up++);
+		*lp++ = tolower((unsigned char) *up++);
 	*lp = '\0';
 
 	type = DecodeUnits(0, lowunits, &val);
@@ -2214,7 +2214,7 @@ timestamp_zone(PG_FUNCTION_ARGS)
 	up = VARDATA(zone);
 	lp = lowzone;
 	for (i = 0; i < (VARSIZE(zone) - VARHDRSZ); i++)
-		*lp++ = tolower(*up++);
+		*lp++ = tolower((unsigned char) *up++);
 	*lp = '\0';
 
 	type = DecodeSpecial(0, lowzone, &val);
@@ -2237,7 +2237,7 @@ timestamp_zone(PG_FUNCTION_ARGS)
 		up = upzone;
 		lp = lowzone;
 		for (i = 0; *lp != '\0'; i++)
-			*up++ = toupper(*lp++);
+			*up++ = toupper((unsigned char) *lp++);
 		*up = '\0';
 
 		tzn = upzone;

@@ -1,7 +1,7 @@
 #include "postgres.h"
 #include "executor/spi.h"
 #include "commands/trigger.h"
-#include <ctype.h>				/* tolower */
+#include <ctype.h>
 #include <stdio.h>				/* debugging */
 
 /*
@@ -256,10 +256,9 @@ fti(PG_FUNCTION_ARGS)
 			char	   *string = column;
 
 			while (*string != '\0')
-			{					/* placed 'really' inline. */
-				*string = tolower(*string);		/* some compilers will
-												 * choke */
-				string++;		/* on 'inline' keyword */
+			{
+				*string = tolower((unsigned char) *string);
+				string++;
 			}
 
 			data = (struct varlena *) palloc(sizeof(int32) + strlen(column) +1);
@@ -312,9 +311,9 @@ breakup(char *string, char *substring)
 		 * (ie. 'string$%^&', last_start first points to '&', and after
 		 * this to 'g'
 		 */
-		if (!isalnum((int) *last_start))
+		if (!isalnum((unsigned char) *last_start))
 		{
-			while (!isalnum((int) *last_start) &&
+			while (!isalnum((unsigned char) *last_start) &&
 				   last_start > string)
 				last_start--;
 			cur_pos = last_start;
@@ -323,7 +322,7 @@ breakup(char *string, char *substring)
 		cur_pos--;				/* substrings are at minimum 2 characters
 								 * long */
 
-		if (isalnum((int) *cur_pos))
+		if (isalnum((unsigned char) *cur_pos))
 		{
 			/* Houston, we have a substring! :) */
 			memcpy(substring, cur_pos, last_start - cur_pos + 1);

@@ -5,7 +5,7 @@
 
 #include "executor/spi.h"		/* this is what you need to work with SPI */
 #include "commands/trigger.h"	/* -"- and triggers */
-#include <ctype.h>				/* tolower () */
+#include <ctype.h>
 
 
 extern Datum check_primary_key(PG_FUNCTION_ARGS);
@@ -293,7 +293,7 @@ check_foreign_key(PG_FUNCTION_ARGS)
 	nrefs = pg_atoi(args[0], sizeof(int), 0);
 	if (nrefs < 1)
 		elog(ERROR, "check_foreign_key: %d (< 1) number of references specified", nrefs);
-	action = tolower(*(args[1]));
+	action = tolower((unsigned char) *(args[1]));
 	if (action != 'r' && action != 'c' && action != 's')
 		elog(ERROR, "check_foreign_key: invalid action %s", args[1]);
 	nargs -= 2;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.54 2000/07/30 20:43:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.55 2000/12/03 20:45:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -119,7 +119,7 @@ single_decode(char *str, float8 *x, char **s)
 	if (!PointerIsValid(str))
 		return FALSE;
 
-	while (isspace((int) *str))
+	while (isspace((unsigned char) *str))
 		str++;
 	*x = strtod(str, &cp);
 #ifdef GEODEBUG
@@ -127,7 +127,7 @@ single_decode(char *str, float8 *x, char **s)
 #endif
 	if (cp <= str)
 		return FALSE;
-	while (isspace((int) *cp))
+	while (isspace((unsigned char) *cp))
 		cp++;
 
 	if (s != NULL)
@@ -152,33 +152,33 @@ pair_decode(char *str, float8 *x, float8 *y, char **s)
 	if (!PointerIsValid(str))
 		return FALSE;
 
-	while (isspace((int) *str))
+	while (isspace((unsigned char) *str))
 		str++;
 	if ((has_delim = (*str == LDELIM)))
 		str++;
 
-	while (isspace((int) *str))
+	while (isspace((unsigned char) *str))
 		str++;
 	*x = strtod(str, &cp);
 	if (cp <= str)
 		return FALSE;
-	while (isspace((int) *cp))
+	while (isspace((unsigned char) *cp))
 		cp++;
 	if (*cp++ != DELIM)
 		return FALSE;
-	while (isspace((int) *cp))
+	while (isspace((unsigned char) *cp))
 		cp++;
 	*y = strtod(cp, &str);
 	if (str <= cp)
 		return FALSE;
-	while (isspace((int) *str))
+	while (isspace((unsigned char) *str))
 		str++;
 	if (has_delim)
 	{
 		if (*str != RDELIM)
 			return FALSE;
 		str++;
-		while (isspace((int) *str))
+		while (isspace((unsigned char) *str))
 			str++;
 	}
 	if (s != NULL)
@@ -203,7 +203,7 @@ path_decode(int opentype, int npts, char *str, int *isopen, char **ss, Point *p)
 	int			i;
 
 	s = str;
-	while (isspace((int) *s))
+	while (isspace((unsigned char) *s))
 		s++;
 	if ((*isopen = (*s == LDELIM_EP)))
 	{
@@ -212,14 +212,14 @@ path_decode(int opentype, int npts, char *str, int *isopen, char **ss, Point *p)
 			return FALSE;
 		depth++;
 		s++;
-		while (isspace((int) *s))
+		while (isspace((unsigned char) *s))
 			s++;
 
 	}
 	else if (*s == LDELIM)
 	{
 		cp = (s + 1);
-		while (isspace((int) *cp))
+		while (isspace((unsigned char) *cp))
 			cp++;
 		if (*cp == LDELIM)
 		{
@@ -255,7 +255,7 @@ path_decode(int opentype, int npts, char *str, int *isopen, char **ss, Point *p)
 		{
 			depth--;
 			s++;
-			while (isspace((int) *s))
+			while (isspace((unsigned char) *s))
 				s++;
 		}
 		else
@@ -1216,7 +1216,7 @@ path_in(PG_FUNCTION_ARGS)
 		elog(ERROR, "Bad path external representation '%s'", str);
 
 	s = str;
-	while (isspace((int) *s))
+	while (isspace((unsigned char) *s))
 		s++;
 
 	/* skip single leading paren */
@@ -3752,13 +3752,13 @@ circle_in(PG_FUNCTION_ARGS)
 	circle = (CIRCLE *) palloc(sizeof(CIRCLE));
 
 	s = str;
-	while (isspace((int) *s))
+	while (isspace((unsigned char) *s))
 		s++;
 	if ((*s == LDELIM_C) || (*s == LDELIM))
 	{
 		depth++;
 		cp = (s + 1);
-		while (isspace((int) *cp))
+		while (isspace((unsigned char) *cp))
 			cp++;
 		if (*cp == LDELIM)
 			s = cp;
@@ -3769,7 +3769,7 @@ circle_in(PG_FUNCTION_ARGS)
 
 	if (*s == DELIM)
 		s++;
-	while (isspace((int) *s))
+	while (isspace((unsigned char) *s))
 		s++;
 
 	if ((!single_decode(s, &circle->radius, &s)) || (circle->radius < 0))
@@ -3782,7 +3782,7 @@ circle_in(PG_FUNCTION_ARGS)
 		{
 			depth--;
 			s++;
-			while (isspace((int) *s))
+			while (isspace((unsigned char) *s))
 				s++;
 		}
 		else

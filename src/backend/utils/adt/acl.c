@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.54 2000/11/28 23:42:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.55 2000/12/03 20:45:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,7 +57,7 @@ getid(char *s, char *n)
 
 	Assert(s && n);
 
-	while (isspace((int) *s))
+	while (isspace((unsigned char) *s))
 		++s;
 
 	if (*s == '"')
@@ -66,7 +66,9 @@ getid(char *s, char *n)
 		s++;
 	}
 
-	for (id = s, len = 0; isalnum((int) *s) || *s == '_' || in_quotes; ++len, ++s)
+	for (id = s, len = 0;
+		 isalnum((unsigned char) *s) || *s == '_' || in_quotes;
+		 ++len, ++s)
 	{
 		if (in_quotes && *s == '"')
 		{
@@ -80,7 +82,7 @@ getid(char *s, char *n)
 	if (len > 0)
 		memmove(n, id, len);
 	n[len] = '\0';
-	while (isspace((int) *s))
+	while (isspace((unsigned char) *s))
 		++s;
 	return s;
 }
@@ -149,7 +151,7 @@ aclparse(char *s, AclItem *aip, unsigned *modechg)
 	}
 
 	aip->ai_mode = ACL_NO;
-	while (isalpha((int) *++s))
+	while (isalpha((unsigned char) *++s))
 	{
 		switch (*s)
 		{
@@ -242,7 +244,7 @@ aclitemin(PG_FUNCTION_ARGS)
 	s = aclparse(s, aip, &modechg);
 	if (modechg != ACL_MODECHG_EQL)
 		elog(ERROR, "aclitemin: cannot accept anything but = ACLs");
-	while (isspace((int) *s))
+	while (isspace((unsigned char) *s))
 		++s;
 	if (*s)
 		elog(ERROR, "aclitemin: extra garbage at end of specification");

@@ -6,7 +6,7 @@ strtoupper(char *string)
 	int			i;
 
 	for (i = 0; i < strlen(string); i++)
-		string[i] = toupper(string[i]);
+		string[i] = toupper((unsigned char) string[i]);
 	return string;
 }
 

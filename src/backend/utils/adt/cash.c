@@ -9,7 +9,7 @@
  * workings can be found in the book "Software Solutions in C" by
  * Dale Schumacher, Academic Press, ISBN: 0-12-632360-7.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.48 2000/11/25 22:43:08 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.49 2000/12/03 20:45:35 tgl Exp $
  */
 
 #include "postgres.h"
@@ -122,7 +122,7 @@ cash_in(PG_FUNCTION_ARGS)
 
 	/* we need to add all sorts of checking here.  For now just */
 	/* strip all leading whitespace and any leading currency symbol */
-	while (isspace((int) *s))
+	while (isspace((unsigned char) *s))
 		s++;
 	if (strncmp(s, csymbol, strlen(csymbol)) == 0)
 		s += strlen(csymbol);
@@ -154,7 +154,7 @@ cash_in(PG_FUNCTION_ARGS)
 	printf("cashin- string is '%s'\n", s);
 #endif
 
-	while (isspace((int) *s))
+	while (isspace((unsigned char) *s))
 		s++;
 	if (strncmp(s, csymbol, strlen(csymbol)) == 0)
 		s += strlen(csymbol);
@@ -167,7 +167,7 @@ cash_in(PG_FUNCTION_ARGS)
 	{
 		/* we look for digits as int4 as we have less */
 		/* than the required number of decimal places */
-		if (isdigit((int) *s) && dec < fpoint)
+		if (isdigit((unsigned char) *s) && dec < fpoint)
 		{
 			value = (value * 10) + *s - '0';
 
@@ -189,7 +189,7 @@ cash_in(PG_FUNCTION_ARGS)
 		else
 		{
 			/* round off */
-			if (isdigit((int) *s) && *s >= '5')
+			if (isdigit((unsigned char) *s) && *s >= '5')
 				value++;
 
 			/* adjust for less than required decimal places */
@@ -200,7 +200,7 @@ cash_in(PG_FUNCTION_ARGS)
 		}
 	}
 
-	while (isspace((int) *s) || *s == '0' || *s == ')')
+	while (isspace((unsigned char) *s) || *s == '0' || *s == ')')
 		s++;
 
 	if (*s != '\0')
@@ -707,7 +707,7 @@ cash_words(PG_FUNCTION_ARGS)
 	strcat(buf, m0 == 1 ? " cent" : " cents");
 
 	/* capitalize output */
-	buf[0] = toupper(buf[0]);
+	buf[0] = toupper((unsigned char) buf[0]);
 
 	/* make a text type for output */
 	result = (text *) palloc(strlen(buf) + VARHDRSZ);

@@ -6,7 +6,7 @@
 #include <errno.h>
 #include <time.h>
 #include <ctype.h>
-#define issaltchar(c)	(isalnum(c) || (c) == '.' || (c) == '/')
+#define issaltchar(c)	(isalnum((unsigned char) (c)) || (c) == '.' || (c) == '/')
 
 #ifdef HAVE_TERMIOS_H
 #include <termios.h>

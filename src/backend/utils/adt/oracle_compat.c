@@ -1,7 +1,7 @@
 /*
  *	Edmund Mergl <E.Mergl@bawue.de>
  *
- *	$Header: /cvsroot/pgsql/src/backend/utils/adt/oracle_compat.c,v 1.28 2000/09/25 12:58:47 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/oracle_compat.c,v 1.29 2000/12/03 20:45:36 tgl Exp $
  *
  */
 
@@ -118,7 +118,7 @@ initcap(PG_FUNCTION_ARGS)
 
 	while (m-- > 0)
 	{
-		if (isspace(ptr[-1]))
+		if (isspace((unsigned char) ptr[-1]))
 			*ptr = toupper((unsigned char) *ptr);
 		else
 			*ptr = tolower((unsigned char) *ptr);

@@ -381,26 +381,23 @@ static char* _cleanupName(char* name)
 {
     int		i;
 
-    if (!name)
-	return NULL;
-
-    if (strlen(name) == 0)
-	return NULL;
+    if (!name || ! name[0])
+		return NULL;
 
     name = strdup(name);
 
     if (name[0] == '"')
     {
-	strcpy(name, &name[1]);
-	if (*(name + strlen(name) - 1) == '"')
-	    *(name + strlen(name) - 1) = '\0';
+		strcpy(name, &name[1]);
+		if (name[0] && *(name + strlen(name) - 1) == '"')
+			*(name + strlen(name) - 1) = '\0';
     }
     /* otherwise, convert table name to lowercase... */
     else
     {
-	for (i = 0; name[i]; i++)
-	    if (isascii((unsigned char) name[i]) && isupper(name[i]))
-		name[i] = tolower(name[i]);
+		for (i = 0; name[i]; i++)
+			if (isupper((unsigned char) name[i]))
+				name[i] = tolower((unsigned char) name[i]);
     }
     return name;
 }

@@ -28,7 +28,7 @@
 #include "iodbc.h"
 #include "isql.h"
 #include "isqlext.h"
-#include <ctype.h>	/* for tolower function */
+#include <ctype.h>
 #else
 #include <windows.h>
 #include <sql.h> 
@@ -2615,7 +2615,7 @@ Int2 result_cols;
 
 
 			/*	Handle action (i.e., 'cascade', 'restrict', 'setnull') */
-			switch(tolower(ptr[0])) {
+			switch(tolower((unsigned char) ptr[0])) {
 			case 'c':	
 				action = SQL_CASCADE;
 				break;

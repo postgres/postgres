@@ -74,7 +74,7 @@ typedef unsigned long ulong_long;
  * causing nast effects.
  **************************************************************/
 
-/*static char _id[] = "$Id: snprintf.c,v 1.27 1999/09/09 03:13:22 tgl Exp $";*/
+/*static char _id[] = "$Id: snprintf.c,v 1.28 2000/12/03 20:45:34 tgl Exp $";*/
 static char *end;
 static int	SnprfOverflow;
 
@@ -457,7 +457,7 @@ static void
 dopr_outch(int c)
 {
 #ifdef NOT_USED
-	if (iscntrl(c) && c != '\n' && c != '\t')
+	if (iscntrl((unsigned char) c) && c != '\n' && c != '\t')
 	{
 		c = '@' + (c & 0x1F);
 		if (end == 0 || output < end)

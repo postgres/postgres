@@ -96,9 +96,9 @@ register int base;
 			c -= isupper(c) ? 'A' - 10 : 'a' - 10;
 		else
 			break;
-		if (c >= base)
+		if ((int) c >= base)
 			break;
-		if (any < 0 || acc > cutoff || (acc == cutoff && c > cutlim))
+		if (any < 0 || acc > cutoff || (acc == cutoff && (int) c > cutlim))
 			any = -1;
 		else
 		{

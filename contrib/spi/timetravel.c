@@ -5,7 +5,7 @@
 
 #include "executor/spi.h"		/* this is what you need to work with SPI */
 #include "commands/trigger.h"	/* -"- and triggers */
-#include <ctype.h>				/* tolower () */
+#include <ctype.h>
 
 #define ABSTIMEOID	702			/* it should be in pg_type.h */
 
@@ -376,7 +376,7 @@ set_timetravel(PG_FUNCTION_ARGS)
 													NameGetDatum(relname)));
 	d = TTOff[nTTOff] = malloc(strlen(rname) + 1);
 	while (*s)
-		*d++ = tolower(*s++);
+		*d++ = tolower((unsigned char) *s++);
 	*d = 0;
 	pfree(rname);
 	nTTOff++;

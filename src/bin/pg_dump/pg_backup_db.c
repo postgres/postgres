@@ -581,7 +581,7 @@ void FixupBlobRefs(ArchiveHandle *AH, char *tablename)
 	char			*attr;
 
 	for(i=0 ; i < strlen(tablename) ; i++)
-		tablename[i] = tolower(tablename[i]);
+		tablename[i] = tolower((unsigned char) tablename[i]);
 
 	if (strcmp(tablename, BLOB_XREF_TABLE) == 0)
 		return;

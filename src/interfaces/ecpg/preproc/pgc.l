@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.68 2000/11/20 03:51:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.69 2000/12/03 20:45:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -537,8 +537,8 @@ cppline			{space}*#(.*\\{line_end})*.*
 					/* this should leave the last byte set to '\0' */
 					strncpy(lower_text, yytext, NAMEDATALEN-1);
 					for(i = 0; lower_text[i]; i++)
-						if (isascii((int)lower_text[i]) && isupper((int) lower_text[i]))
-							lower_text[i] = tolower(lower_text[i]);
+						if (isupper((unsigned char) lower_text[i]))
+							lower_text[i] = tolower((unsigned char) lower_text[i]);
 
 					if (i >= NAMEDATALEN)
 					{
@@ -755,7 +755,10 @@ cppline			{space}*#(.*\\{line_end})*.*
 
 					    /* skip the ";" and trailing whitespace. Note that yytext contains
 					       at least one non-space character plus the ";" */
-					    for ( i = strlen(yytext)-2; i > 0 && isspace((int) yytext[i]); i-- ) {}
+					    for ( i = strlen(yytext)-2;
+							  i > 0 && isspace((unsigned char) yytext[i]);
+							  i-- )
+						{}
 					    yytext[i+1] = '\0';
 
 					    for ( defptr = defines; defptr != NULL &&
@@ -827,7 +830,10 @@ cppline			{space}*#(.*\\{line_end})*.*
 
 			  /* skip the ";" and trailing whitespace. Note that yytext contains
 			     at least one non-space character plus the ";" */
-			  for ( i = strlen(yytext)-2; i > 0 && isspace((int) yytext[i]); i-- ) {}
+			  for ( i = strlen(yytext)-2;
+					i > 0 && isspace((unsigned char) yytext[i]);
+					i-- )
+			  {}
 			  yytext[i+1] = '\0';
 
 			  yyin = NULL;

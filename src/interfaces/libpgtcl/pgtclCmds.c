@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.50 2000/11/27 13:29:32 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.51 2000/12/03 20:45:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1846,7 +1846,7 @@ Pg_listen(ClientData cData, Tcl_Interp *interp, int argc, char *argv[])
 		char	   *reld = caserelname;
 
 		while (*rels)
-			*reld++ = tolower(*rels++);
+			*reld++ = tolower((unsigned char) *rels++);
 		*reld = '\0';
 	}
 

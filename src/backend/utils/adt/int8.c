@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int8.c,v 1.25 2000/10/24 20:14:35 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int8.c,v 1.26 2000/12/03 20:45:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,15 +67,15 @@ int8in(PG_FUNCTION_ARGS)
 	 * Do our own scan, rather than relying on sscanf which might be
 	 * broken for long long.
 	 */
-	while (*ptr && isspace((int) *ptr))		/* skip leading spaces */
+	while (*ptr && isspace((unsigned char) *ptr))	/* skip leading spaces */
 		ptr++;
 	if (*ptr == '-')			/* handle sign */
 		sign = -1, ptr++;
 	else if (*ptr == '+')
 		ptr++;
-	if (!isdigit((int) *ptr))			/* require at least one digit */
+	if (!isdigit((unsigned char) *ptr))		/* require at least one digit */
 		elog(ERROR, "Bad int8 external representation \"%s\"", str);
-	while (*ptr && isdigit((int) *ptr))		/* process digits */
+	while (*ptr && isdigit((unsigned char) *ptr))	/* process digits */
 	{
 		int64		newtmp = tmp * 10 + (*ptr++ - '0');
 

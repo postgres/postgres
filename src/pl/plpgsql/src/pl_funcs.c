@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.8 2000/09/05 09:02:18 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.9 2000/12/03 20:45:40 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -354,8 +354,8 @@ plpgsql_tolower(char *s)
 		}
 		else
 		{
-			if (isupper((int) *s))
-				*cp++ = tolower(*s++);
+			if (isupper((unsigned char) *s))
+				*cp++ = tolower((unsigned char) *s++);
 			else
 				*cp++ = *s++;
 		}

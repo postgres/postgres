@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.25 2000/12/01 05:17:19 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.26 2000/12/03 20:45:35 tgl Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2000, PostgreSQL, Inc
@@ -127,7 +127,7 @@ typedef struct
 	int	len,			/* keyword length		*/
 		(*action) (),
 		id;			/* keyword id			*/
-	bool	isdigit;		/* is expected output/input digit */	
+	bool	isitdigit;		/* is expected output/input digit */	
 } KeyWord;
 
 typedef struct
@@ -601,7 +601,7 @@ typedef enum
  * ----------
  */
 static KeyWord DCH_keywords[] = {
-/*	keyword, len, func, type, isdigit			 is in Index */
+/*	keyword, len, func, type, isitdigit			 is in Index */
 	{"A.D.", 4, dch_date, DCH_A_D, FALSE},		/* A */
 	{"A.M.", 4, dch_time, DCH_A_M, FALSE},
 	{"AD", 2, dch_date, DCH_AD, FALSE},
@@ -682,7 +682,7 @@ static KeyWord DCH_keywords[] = {
 {NULL, 0, NULL, 0}};
 
 /* ----------
- * KeyWords for NUMBER version (now, isdigit info is not needful here..)
+ * KeyWords for NUMBER version (now, isitdigit info is not needful here..)
  * ----------
  */
 static KeyWord NUM_keywords[] = {
@@ -1233,9 +1233,9 @@ DCH_processor(FormatNode *node, char *inout, int flag)
 				 * Skip blank space in FROM_CHAR's input
 				 * ----------
 				 */
-		        	if (isspace(n->character) && IS_FX == 0)
+		        	if (isspace((unsigned char) n->character) && IS_FX == 0)
 				{
-					while (*s != '\0' && isspace((int) *(s + 1)))
+					while (*s != '\0' && isspace((unsigned char) *(s + 1)))
 						++s;
 				}
 			}
@@ -1552,12 +1552,12 @@ is_next_separator(FormatNode *n)
 	
 	if (n->type == NODE_TYPE_ACTION)
 	{
-		if (n->key->isdigit)
+		if (n->key->isitdigit)
 			return FALSE;
 	
 		return TRUE;	
 	} 
-	else if (isdigit(n->character))
+	else if (isdigit((unsigned char) n->character))
 		return FALSE;
 	
 	return TRUE;		/* some non-digit input (separator) */	
@@ -1952,7 +1952,7 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node)
 			
 		case DCH_month:
 			sprintf(inout, "%*s", S_FM(suf) ? 0 : -9, months_full[tm->tm_mon - 1]);
-			*inout = tolower(*inout);
+			*inout = tolower((unsigned char) *inout);
 			if (S_FM(suf))
 				return strlen(p_inout) - 1;
 			else
@@ -1969,7 +1969,7 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node)
 
 		case DCH_mon:
 			strcpy(inout, months[tm->tm_mon - 1]);
-			*inout = tolower(*inout);
+			*inout = tolower((unsigned char) *inout);
 			return 2;
 
 		case DCH_MM:
@@ -2015,7 +2015,7 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node)
 
 		case DCH_day:
 			sprintf(inout, "%*s", S_FM(suf) ? 0 : -9, days[tm->tm_wday]);
-			*inout = tolower(*inout);
+			*inout = tolower((unsigned char) *inout);
 			if (S_FM(suf))
 				return strlen(p_inout) - 1;
 			else
@@ -2032,7 +2032,7 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node)
 
 		case DCH_dy:
 			strcpy(inout, days[tm->tm_wday]);
-			*inout = tolower(*inout);
+			*inout = tolower((unsigned char) *inout);
 			return 2;
 
 		case DCH_DDD:

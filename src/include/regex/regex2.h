@@ -207,8 +207,8 @@ struct re_guts
 #endif
 
 #ifdef MULTIBYTE
-#define ISWORD(c)	((c >= 0 && c <= UCHAR_MAX) && \
-			 (isalnum(c) || (c) == '_'))
+#define ISWORD(c)	(((c) >= 0 && (c) <= UCHAR_MAX) && \
+			 (isalnum((unsigned char) (c)) || (c) == '_'))
 #else
-#define ISWORD(c)	(isalnum(c) || (c) == '_')
+#define ISWORD(c)	(isalnum((unsigned char) (c)) || (c) == '_')
 #endif

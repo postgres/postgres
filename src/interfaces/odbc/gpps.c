@@ -144,8 +144,8 @@ GetPrivateProfileString(char *theSection,	/* section name */
 				{
 					aStart = aLine + 1;
 					aString--;
-					while (isspace(*aStart)) aStart++;
-					while (isspace(*aString)) aString--;
+					while (isspace((unsigned char) *aStart)) aStart++;
+					while (isspace((unsigned char) *aString)) aString--;
 					*(aString+1) = '\0';
 
 					/* accept as matched if NULL key or exact match */
@@ -188,7 +188,7 @@ GetPrivateProfileString(char *theSection,	/* section name */
 					}
 
 					aStart = aLine;
-					while(isspace(*aStart)) aStart++;
+					while (isspace((unsigned char) *aStart)) aStart++;
 
 					/* strip trailing blanks from key */
 

@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.83 2000/11/25 20:33:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.84 2000/12/03 20:45:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1421,7 +1421,7 @@ like_fixed_prefix(char *patt, bool case_insensitive,
 		 * XXX I suspect isalpha() is not an adequately locale-sensitive
 		 * test for characters that can vary under case folding?
 		 */
-		if (case_insensitive && isalpha((int) patt[pos]))
+		if (case_insensitive && isalpha((unsigned char) patt[pos]))
 			break;
 		/*
 		 * NOTE: this code used to think that %% meant a literal %, but
@@ -1504,7 +1504,7 @@ regex_fixed_prefix(char *patt, bool case_insensitive,
 			patt[pos] == '(' ||
 			patt[pos] == '[' ||
 			patt[pos] == '$' ||
-			(case_insensitive && isalpha((int) patt[pos])))
+			(case_insensitive && isalpha((unsigned char) patt[pos])))
 			break;
 		/*
 		 * Check for quantifiers.  Except for +, this means the preceding

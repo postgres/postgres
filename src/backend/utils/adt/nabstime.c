@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.75 2000/10/29 13:17:34 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.76 2000/12/03 20:45:36 tgl Exp $
  *
  * NOTES
  *
@@ -1655,7 +1655,7 @@ dummyfunc()
 	for (;;)
 	{
 		c = *p;
-		if (isdigit(c))
+		if (isdigit((unsigned char) c))
 		{
 			*quantity = *quantity * 10 + (c - '0');
 			p++;

@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/contrib/soundex/Attic/soundex.c,v 1.8 2000/11/20 20:36:57 tgl Exp $ */
+/* $Header: /cvsroot/pgsql/contrib/soundex/Attic/soundex.c,v 1.9 2000/12/03 20:45:31 tgl Exp $ */
 #include "postgres.h"
 #include "fmgr.h"
 #include "utils/builtins.h"
@@ -42,7 +42,7 @@ text_soundex(PG_FUNCTION_ARGS)
 
 /*                                  ABCDEFGHIJKLMNOPQRSTUVWXYZ */
 static const char *soundex_table = "01230120022455012623010202";
-#define soundex_code(letter) soundex_table[toupper(letter) - 'A']
+#define soundex_code(letter) soundex_table[toupper((unsigned char) (letter)) - 'A']
 
 
 static void
@@ -56,7 +56,7 @@ soundex(const char *instr, char *outstr)
 	outstr[SOUNDEX_LEN] = '\0';
 
 	/* Skip leading non-alphabetic characters */
-	while (!isalpha(instr[0]) && instr[0])
+	while (!isalpha((unsigned char) instr[0]) && instr[0])
 		++instr;
 
 	/* No string left */
@@ -67,12 +67,13 @@ soundex(const char *instr, char *outstr)
 	}
 
 	/* Take the first letter as is */
-	*outstr++ = (char) toupper(*instr++);
+	*outstr++ = (char) toupper((unsigned char) *instr++);
 
 	count = 1;
 	while (*instr && count < SOUNDEX_LEN)
 	{
-		if (isalpha(*instr) && soundex_code(*instr) != soundex_code(*(instr - 1)))
+		if (isalpha((unsigned char) *instr) &&
+			soundex_code(*instr) != soundex_code(*(instr - 1)))
 		{
 			*outstr = soundex_code(instr[0]);
 			if (*outstr != '0')

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.152 2000/11/30 23:20:51 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.153 2000/12/03 20:45:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2248,20 +2248,21 @@ int parseServiceInfo(PQconninfoOption *options, PQExpBuffer errorMessage) {
 	line[strlen(line)-1] = 0;
 
       /* ignore leading blanks */
-      while(*line && isspace(line[0]))
-	line++;
+      while(*line && isspace((unsigned char) line[0]))
+		  line++;
 
       /* ignore comments and empty lines */
       if(strlen(line) == 0 || line[0] == '#')
-	continue;
+		  continue;
 
       /* Check for right groupname */
-      if(line[0] == '[') {
-	if(group_found) {
-	  /* group info already read */
-	  fclose(f);
-	  return 0;
-	}
+      if(line[0] == '[')
+	  {
+		  if(group_found) {
+			  /* group info already read */
+			  fclose(f);
+			  return 0;
+		  }
 
 	if(strncmp(line+1, service, strlen(service)) == 0 &&
 	   line[strlen(service)+1] == ']')
@@ -2358,7 +2359,7 @@ conninfo_parse(const char *conninfo, PQExpBuffer errorMessage)
 	while (*cp)
 	{
 		/* Skip blanks before the parameter name */
-		if (isspace((int) *cp))
+		if (isspace((unsigned char) *cp))
 		{
 			cp++;
 			continue;
@@ -2370,12 +2371,12 @@ conninfo_parse(const char *conninfo, PQExpBuffer errorMessage)
 		{
 			if (*cp == '=')
 				break;
-			if (isspace((int) *cp))
+			if (isspace((unsigned char) *cp))
 			{
 				*cp++ = '\0';
 				while (*cp)
 				{
-					if (!isspace((int) *cp))
+					if (!isspace((unsigned char) *cp))
 						break;
 					cp++;
 				}
@@ -2399,7 +2400,7 @@ conninfo_parse(const char *conninfo, PQExpBuffer errorMessage)
 		/* Skip blanks after the '=' */
 		while (*cp)
 		{
-			if (!isspace((int) *cp))
+			if (!isspace((unsigned char) *cp))
 				break;
 			cp++;
 		}
@@ -2412,7 +2413,7 @@ conninfo_parse(const char *conninfo, PQExpBuffer errorMessage)
 			cp2 = pval;
 			while (*cp)
 			{
-				if (isspace((int) *cp))
+				if (isspace((unsigned char) *cp))
 				{
 					*cp++ = '\0';
 					break;

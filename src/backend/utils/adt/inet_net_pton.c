@@ -16,7 +16,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$Id: inet_net_pton.c,v 1.11 2000/06/14 18:17:44 petere Exp $";
+static const char rcsid[] = "$Id: inet_net_pton.c,v 1.12 2000/12/03 20:45:36 tgl Exp $";
 
 #endif
 
@@ -105,7 +105,7 @@ inet_cidr_pton_ipv4(const char *src, u_char *dst, size_t size)
 
 	ch = *src++;
 	if (ch == '0' && (src[0] == 'x' || src[0] == 'X')
-		&& isascii((int) src[1]) && isxdigit((int) src[1]))
+		&& isxdigit((unsigned char) src[1]))
 	{
 		/* Hexadecimal: Eat nybble string. */
 		if (size <= 0)
@@ -113,10 +113,10 @@ inet_cidr_pton_ipv4(const char *src, u_char *dst, size_t size)
 		dirty = 0;
 		tmp = 0;
 		src++;					/* skip x or X. */
-		while ((ch = *src++) != '\0' && isascii(ch) && isxdigit(ch))
+		while ((ch = *src++) != '\0' && isxdigit((unsigned char) ch))
 		{
-			if (isupper(ch))
-				ch = tolower(ch);
+			if (isupper((unsigned char) ch))
+				ch = tolower((unsigned char) ch);
 			n = strchr(xdigits, ch) - xdigits;
 			assert(n >= 0 && n <= 15);
 			if (dirty == 0)
@@ -138,7 +138,7 @@ inet_cidr_pton_ipv4(const char *src, u_char *dst, size_t size)
 			*dst++ = (u_char) (tmp << 4);
 		}
 	}
-	else if (isascii(ch) && isdigit(ch))
+	else if (isdigit((unsigned char) ch))
 	{
 		/* Decimal: eat dotted digit string. */
 		for (;;)
@@ -153,7 +153,7 @@ inet_cidr_pton_ipv4(const char *src, u_char *dst, size_t size)
 				if (tmp > 255)
 					goto enoent;
 			} while ((ch = *src++) != '\0' &&
-					 isascii(ch) && isdigit(ch));
+					 isdigit((unsigned char) ch));
 			if (size-- <= 0)
 				goto emsgsize;
 			*dst++ = (u_char) tmp;
@@ -162,7 +162,7 @@ inet_cidr_pton_ipv4(const char *src, u_char *dst, size_t size)
 			if (ch != '.')
 				goto enoent;
 			ch = *src++;
-			if (!isascii(ch) || !isdigit(ch))
+			if (!isdigit((unsigned char) ch))
 				goto enoent;
 		}
 	}
@@ -170,7 +170,7 @@ inet_cidr_pton_ipv4(const char *src, u_char *dst, size_t size)
 		goto enoent;
 
 	bits = -1;
-	if (ch == '/' && isascii((int) src[0]) && isdigit((int) src[0]) && dst > odst)
+	if (ch == '/' && isdigit((unsigned char) src[0]) && dst > odst)
 	{
 		/* CIDR width specifier.  Nothing can follow it. */
 		ch = *src++;			/* Skip over the /. */
@@ -181,8 +181,7 @@ inet_cidr_pton_ipv4(const char *src, u_char *dst, size_t size)
 			assert(n >= 0 && n <= 9);
 			bits *= 10;
 			bits += n;
-		} while ((ch = *src++) != '\0' &&
-				 isascii(ch) && isdigit(ch));
+		} while ((ch = *src++) != '\0' && isdigit((unsigned char) ch));
 		if (ch != '\0')
 			goto enoent;
 		if (bits > 32)
@@ -261,7 +260,7 @@ inet_net_pton_ipv4(const char *src, u_char *dst)
 	size_t		size = 4;
 
 	/* Get the mantissa. */
-	while (ch = *src++, (isascii(ch) && isdigit(ch)))
+	while (ch = *src++, isdigit((unsigned char) ch))
 	{
 		tmp = 0;
 		do
@@ -272,7 +271,7 @@ inet_net_pton_ipv4(const char *src, u_char *dst)
 			tmp += n;
 			if (tmp > 255)
 				goto enoent;
-		} while ((ch = *src++) != '\0' && isascii(ch) && isdigit(ch));
+		} while ((ch = *src++) != '\0' && isdigit((unsigned char) ch));
 		if (size-- == 0)
 			goto emsgsize;
 		*dst++ = (u_char) tmp;
@@ -284,7 +283,7 @@ inet_net_pton_ipv4(const char *src, u_char *dst)
 
 	/* Get the prefix length if any. */
 	bits = -1;
-	if (ch == '/' && isascii((int) src[0]) && isdigit((int) src[0]) && dst > odst)
+	if (ch == '/' && isdigit((unsigned char) src[0]) && dst > odst)
 	{
 		/* CIDR width specifier.  Nothing can follow it. */
 		ch = *src++;			/* Skip over the /. */
@@ -295,7 +294,7 @@ inet_net_pton_ipv4(const char *src, u_char *dst)
 			assert(n >= 0 && n <= 9);
 			bits *= 10;
 			bits += n;
-		} while ((ch = *src++) != '\0' && isascii(ch) && isdigit(ch));
+		} while ((ch = *src++) != '\0' && isdigit((unsigned char) ch));
 		if (ch != '\0')
 			goto enoent;
 		if (bits > 32)

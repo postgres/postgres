@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.134 2000/11/16 22:30:23 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.135 2000/12/03 20:45:33 tgl Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -70,8 +70,8 @@ _outToken(StringInfo str, char *s)
 	if (*s == '<' ||
 		*s == '\"' ||
 		*s == '@' ||
-		isdigit((int) *s) ||
-		(*s == '-' && isdigit((int) s[1])))
+		isdigit((unsigned char) *s) ||
+		(*s == '-' && isdigit((unsigned char) s[1])))
 		appendStringInfoChar(str, '\\');
 	while (*s)
 	{

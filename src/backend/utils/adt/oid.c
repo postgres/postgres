@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/oid.c,v 1.40 2000/11/21 04:27:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/oid.c,v 1.41 2000/12/03 20:45:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,12 +42,12 @@ oidvectorin(PG_FUNCTION_ARGS)
 	{
 		if (sscanf(oidString, "%u", &result[slot]) != 1)
 			break;
-		while (*oidString && isspace((int) *oidString))
+		while (*oidString && isspace((unsigned char) *oidString))
 			oidString++;
-		while (*oidString && isdigit((int) *oidString))
+		while (*oidString && isdigit((unsigned char) *oidString))
 			oidString++;
 	}
-	while (*oidString && isspace((int) *oidString))
+	while (*oidString && isspace((unsigned char) *oidString))
 		oidString++;
 	if (*oidString)
 		elog(ERROR, "oidvector value has too many values");

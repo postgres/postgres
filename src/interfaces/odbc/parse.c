@@ -55,7 +55,7 @@ char qc, in_escape = FALSE;
 	smax--;
 
 	/* skip leading delimiters */
-	while (isspace(s[i]) || s[i] == ',') {
+	while (isspace((unsigned char) s[i]) || s[i] == ',') {
 		/* mylog("skipping '%c'\n", s[i]); */
 		i++;
 	}
@@ -70,7 +70,8 @@ char qc, in_escape = FALSE;
 	if (numeric) *numeric = FALSE;
 
 	/* get the next token */
-	while ( ! isspace(s[i]) && s[i] != ',' && s[i] != '\0' && out != smax) {
+	while ( ! isspace((unsigned char) s[i]) && s[i] != ',' &&
+			s[i] != '\0' && out != smax) {
 
 		/*	Handle quoted stuff */
 		if ( out == 0 && (s[i] == '\"' || s[i] == '\'')) {
@@ -102,16 +103,16 @@ char qc, in_escape = FALSE;
 		}
 
 		/*	Check for numeric literals */
-		if ( out == 0 && isdigit(s[i])) {
+		if ( out == 0 && isdigit((unsigned char) s[i])) {
 			if (numeric) *numeric = TRUE;
 			token[out++] = s[i++];
-			while ( isalnum(s[i]) || s[i] == '.')
+			while ( isalnum((unsigned char) s[i]) || s[i] == '.')
 				token[out++] = s[i++];
 
 			break;
 		}
 
-		if ( ispunct(s[i]) && s[i] != '_') {
+		if ( ispunct((unsigned char) s[i]) && s[i] != '_') {
 			mylog("got ispunct: s[%d] = '%c'\n", i, s[i]);
 
 			if (out == 0) {
@@ -133,7 +134,7 @@ char qc, in_escape = FALSE;
 	token[out] = '\0';
 
 	/*	find the delimiter  */
-	while ( isspace(s[i]))
+	while ( isspace((unsigned char) s[i]))
 		i++;
 
 	/*	return the most priority delimiter */
@@ -148,7 +149,7 @@ char qc, in_escape = FALSE;
 	}
 
 	/* skip trailing blanks  */
-	while ( isspace(s[i])) {
+	while ( isspace((unsigned char) s[i])) {
 		i++;
 	}
 

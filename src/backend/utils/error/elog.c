@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.71 2000/12/03 10:27:28 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.72 2000/12/03 20:45:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -693,13 +693,13 @@ write_syslog(int level, const char *line)
 			l = strlen(buf);
 #endif
 			/* already word boundary? */
-			if (isspace(line[l]) || line[l] == '\0')
+			if (isspace((unsigned char) line[l]) || line[l] == '\0')
 				buflen = l;
 			else
 			{
 				/* try to divide at word boundary */
 				i = l - 1;
-				while (i > 0 && !isspace(buf[i]))
+				while (i > 0 && !isspace((unsigned char) buf[i]))
 					i--;
 
 				if (i <= 0)	/* couldn't divide word boundary */

@@ -1,6 +1,6 @@
 /*-------------------------------------------------------
  *
- * $Id: Pg.xs,v 1.15 2000/10/24 17:00:00 tgl Exp $ with patch for NULs
+ * $Id: Pg.xs,v 1.16 2000/12/03 20:45:40 tgl Exp $ with patch for NULs
  *
  * Copyright (c) 1997, 1998  Edmund Mergl
  *
@@ -215,7 +215,7 @@ PQconnectdb(conninfo)
 				}
 			} else {
 				while (*ptr && *ptr != ' ' && *ptr != '\t') {
-				      *ptr = tolower(*ptr);
+				      *ptr = tolower((unsigned char) *ptr);
 				      ptr++;
 				}
 			}
@@ -734,7 +734,7 @@ connectdb(conninfo)
 				}
 			} else {
 				while (*ptr && *ptr != ' ' && *ptr != '\t') {
-					*ptr = tolower(*ptr);
+					*ptr = tolower((unsigned char) *ptr);
 					ptr++;
 				}
 			}

@@ -58,7 +58,7 @@ int			base;
 {
 	const char *s = nptr;
 	unsigned long acc;
-	int			c;
+	unsigned char c;
 	unsigned long cutoff;
 	int			neg = 0,
 				any,
@@ -109,7 +109,7 @@ int			base;
 	cutoff = neg ? -(unsigned long) LONG_MIN : LONG_MAX;
 	cutlim = cutoff % (unsigned long) base;
 	cutoff /= (unsigned long) base;
-	for (acc = 0, any = 0;; c = *s++)
+	for (acc = 0, any = 0; ; c = *s++)
 	{
 		if (isdigit(c))
 			c -= '0';
@@ -117,9 +117,9 @@ int			base;
 			c -= isupper(c) ? 'A' - 10 : 'a' - 10;
 		else
 			break;
-		if (c >= base)
+		if ((int) c >= base)
 			break;
-		if (any < 0 || acc > cutoff || acc == cutoff && c > cutlim)
+		if (any < 0 || acc > cutoff || acc == cutoff && (int) c > cutlim)
 			any = -1;
 		else
 		{

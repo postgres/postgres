@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.47 2000/09/15 04:57:09 pjw Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.48 2000/12/03 20:45:37 tgl Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -213,7 +213,8 @@ parseNumericArray(const char *str, char **array, int arraysize)
 		}
 		else
 		{
-			if (!(isdigit((int) s) || s == '-') || j >= sizeof(temp) - 1)
+			if (!(isdigit((unsigned char) s) || s == '-') ||
+				j >= sizeof(temp) - 1)
 			{
 				fprintf(stderr, "parseNumericArray: bogus number\n");
 				exit(2);
@@ -541,13 +542,15 @@ fmtId(const char *rawid, bool force_quotes)
 	if (!force_quotes)
 	{
 		/* do a quick check on the first character... */
-		if (!islower((int) *rawid))
+		if (!islower((unsigned char) *rawid))
 			force_quotes = true;
 		/* otherwise check the entire string */
 		else
 			for (cp = rawid; *cp; cp++)
 			{
-				if (!(islower((int) *cp) || isdigit((int) *cp) || (*cp == '_')))
+				if (!(islower((unsigned char) *cp) ||
+					  isdigit((unsigned char) *cp) ||
+					  (*cp == '_')))
 				{
 					force_quotes = true;
 					break;

@@ -1158,9 +1158,9 @@ static int
 pg_isprint(int c)
 {
 #ifdef MULTIBYTE
-	return (c >= 0 && c <= UCHAR_MAX && isprint(c));
+	return (c >= 0 && c <= UCHAR_MAX && isprint((unsigned char) c));
 #else
-	return (isprint(c));
+	return (isprint((unsigned char) c));
 #endif
 }
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.49 2000/11/16 22:30:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.50 2000/12/03 20:45:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -533,7 +533,7 @@ fitsInFloat(Value *value)
 	ndigits = 0;
 	for (; *ptr; ptr++)
 	{
-		if (isdigit((int) *ptr))
+		if (isdigit((unsigned char) *ptr))
 			ndigits++;
 		else if (*ptr == 'e' || *ptr == 'E')
 			break;				/* don't count digits in exponent */

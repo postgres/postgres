@@ -1,4 +1,4 @@
-/* $Id: inet_aton.c,v 1.17 1999/07/17 04:12:09 momjian Exp $
+/* $Id: inet_aton.c,v 1.18 2000/12/03 20:45:34 tgl Exp $
  *
  *	This inet_aton() function was taken from the GNU C library and
  *	incorporated into Postgres for those systems which do not have this
@@ -83,16 +83,16 @@ inet_aton(const char *cp, struct in_addr * addr)
 		}
 		while ((c = *cp) != '\0')
 		{
-			if (isascii(c) && isdigit(c))
+			if (isdigit((unsigned char) c))
 			{
 				val = (val * base) + (c - '0');
 				cp++;
 				continue;
 			}
-			if (base == 16 && isascii(c) && isxdigit(c))
+			if (base == 16 && isxdigit((unsigned char) c))
 			{
 				val = (val << 4) +
-					(c + 10 - (islower(c) ? 'a' : 'A'));
+					(c + 10 - (islower((unsigned char) c) ? 'a' : 'A'));
 				cp++;
 				continue;
 			}
@@ -114,10 +114,11 @@ inet_aton(const char *cp, struct in_addr * addr)
 	}
 
 	/*
-	 * Check for trailing characters.
+	 * Check for trailing junk.
 	 */
-	if (*cp && (!isascii(*cp) || !isspace(*cp)))
-		return 0;
+	while (*cp)
+		if (!isspace((unsigned char) *cp++))
+			return 0;
 
 	/*
 	 * Concoct the address according to the number of parts specified.

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.43 2000/10/26 17:31:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.44 2000/12/03 20:45:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -104,7 +104,7 @@ get_token(char **tok, char **val, char *str)
 		return NULL;
 
 	/* skip leading white space */
-	while (isspace((int) *str))
+	while (isspace((unsigned char) *str))
 		str++;
 
 	/* end of string? then return NULL */
@@ -118,7 +118,8 @@ get_token(char **tok, char **val, char *str)
 	*tok = str;
 
 	/* Advance to end of word */
-	while (*str && !isspace((int) *str) && *str != ',' && *str != '=')
+	while (*str && !isspace((unsigned char) *str) &&
+		   *str != ',' && *str != '=')
 		str++;
 
 	/* Terminate word string for caller */
@@ -126,7 +127,7 @@ get_token(char **tok, char **val, char *str)
 	*str = '\0';
 
 	/* Skip any whitespace */
-	while (isspace((int) ch))
+	while (isspace((unsigned char) ch))
 		ch = *(++str);
 
 	/* end of string? */
@@ -144,7 +145,7 @@ get_token(char **tok, char **val, char *str)
 	str++;
 
 	/* skip whitespace after '=' */
-	while (isspace((int) *str))
+	while (isspace((unsigned char) *str))
 		str++;
 
 	if (*str == ',' || *str == '\0')
@@ -154,7 +155,7 @@ get_token(char **tok, char **val, char *str)
 	*val = str;
 
 	/* Advance to end of word */
-	while (*str && !isspace((int) *str) && *str != ',')
+	while (*str && !isspace((unsigned char) *str) && *str != ',')
 		str++;
 
 	/* Terminate word string for caller */
@@ -162,7 +163,7 @@ get_token(char **tok, char **val, char *str)
 	*str = '\0';
 
 	/* Skip any whitespace */
-	while (isspace((int) ch))
+	while (isspace((unsigned char) ch))
 		ch = *(++str);
 
 	/* end of string? */

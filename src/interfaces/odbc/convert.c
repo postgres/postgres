@@ -284,9 +284,9 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 			nval++;
 
 			/* skip the current token */
-			while ((*vp != '\0') && (! isspace(*vp))) vp++;
+			while ((*vp != '\0') && (! isspace((unsigned char) *vp))) vp++;
 			/* and skip the space to the next token */
-			while ((*vp != '\0') && (isspace(*vp))) vp++;
+			while ((*vp != '\0') && (isspace((unsigned char) *vp))) vp++;
 			if (*vp == '\0')
 				break;
 		}
@@ -1126,10 +1126,10 @@ static char escape[1024];
 char key[33];
 
 	/* Separate off the key, skipping leading and trailing whitespace */
-	while ((*value != '\0') && isspace(*value)) value++;
+	while ((*value != '\0') && isspace((unsigned char) *value)) value++;
 	sscanf(value, "%32s", key);
-	while ((*value != '\0') && (! isspace(*value))) value++;
-	while ((*value != '\0') && isspace(*value)) value++;
+	while ((*value != '\0') && (! isspace((unsigned char) *value))) value++;
+	while ((*value != '\0') && isspace((unsigned char) *value)) value++;
 
 	mylog("convert_escape: key='%s', val='%s'\n", key, value);
 
@@ -1149,12 +1149,14 @@ char key[33];
 		char *mapFunc;
 
 		while ((*funcEnd != '\0') && (*funcEnd != '(') &&
-			   (! isspace(*funcEnd))) funcEnd++;
+			   (! isspace((unsigned char) *funcEnd)))
+			funcEnd++;
 		svchar = *funcEnd;
 		*funcEnd = '\0';
 		sscanf(value, "%32s", key);
 		*funcEnd = svchar;
-		while ((*funcEnd != '\0') && isspace(*funcEnd)) funcEnd++;
+		while ((*funcEnd != '\0') && isspace((unsigned char) *funcEnd))
+			funcEnd++;
 
 		/* We expect left parenthesis here,
 		 * else return fn body as-is since it is
@@ -1430,18 +1432,18 @@ int i, o=0;
 void
 encode(char *in, char *out)
 {
-unsigned int i, o = 0;
+	unsigned int i, o = 0;
 
 	for (i = 0; i < strlen(in); i++) {
 		if ( in[i] == '+') {
 			sprintf(&out[o], "%%2B");
 			o += 3;
 		}
-		else if ( isspace(in[i])) {
+		else if ( isspace((unsigned char) in[i])) {
 			out[o++] = '+';
 		}
-		else if ( ! isalnum(in[i])) {
-			sprintf(&out[o], "%%%02x", in[i]);
+		else if ( ! isalnum((unsigned char) in[i])) {
+			sprintf(&out[o], "%%%02x", (unsigned char) in[i]);
 			o += 3;
 		}
 		else

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/read.c,v 1.25 2000/10/31 13:59:52 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/read.c,v 1.26 2000/12/03 20:45:33 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -205,8 +205,8 @@ nodeTokenType(char *token, int length)
 	numlen = length;
 	if (*numptr == '+' || *numptr == '-')
 		numptr++, numlen--;
-	if ((numlen > 0 && isdigit((int) *numptr)) ||
-		(numlen > 1 && *numptr == '.' && isdigit((int) numptr[1])))
+	if ((numlen > 0 && isdigit((unsigned char) *numptr)) ||
+		(numlen > 1 && *numptr == '.' && isdigit((unsigned char) numptr[1])))
 	{
 
 		/*
