@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/misc.c,v 1.11 2001/12/23 12:17:41 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/misc.c,v 1.12 2002/01/18 15:51:00 meskes Exp $ */
 
 #include "postgres_fe.h"
 
@@ -90,12 +90,17 @@ ECPGtrans(int lineno, const char *connection_name, const char *transaction)
 	/* if we have no connection we just simulate the command */
 	if (con && con->connection)
 	{
-		if ((res = PQexec(con->connection, transaction)) == NULL)
+		/* if we are not in autocommit mode, already have committed 
+		 * the transaction and get another commit, just ignore it */
+		if (!con->committed || con->autocommit)
 		{
-			ECPGraise(lineno, ECPG_TRANS, NULL);
-			return FALSE;
+			if ((res = PQexec(con->connection, transaction)) == NULL)
+			{
+				ECPGraise(lineno, ECPG_TRANS, NULL);
+				return FALSE;
+			}
+			PQclear(res);
 		}
-		PQclear(res);
 	}
 
 	if (strcmp(transaction, "commit") == 0 || strcmp(transaction, "rollback") == 0)
