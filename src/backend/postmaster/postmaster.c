@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.243 2001/09/21 20:31:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.244 2001/09/30 20:08:18 tgl Exp $
  *
  * NOTES
  *
@@ -311,8 +311,6 @@ PostmasterMain(int argc, char *argv[])
 	int			status;
 	char		original_extraoptions[MAXPGPATH];
 	char	   *potential_DataDir = NULL;
-
-	IsUnderPostmaster = true;	/* so that backends know this */
 
 	*original_extraoptions = '\0';
 
@@ -1935,6 +1933,8 @@ DoBackend(Port *port)
 	 * Let's clean up ourselves as the postmaster child
 	 */
 
+	IsUnderPostmaster = true;	/* we are a postmaster subprocess now */
+
 	/* We don't want the postmaster's proc_exit() handlers */
 	on_exit_reset();
 
@@ -2316,6 +2316,8 @@ SSDataBase(int xlop)
 		/* Specific beos actions after backend startup */
 		beos_backend_startup();
 #endif
+
+		IsUnderPostmaster = true; /* we are a postmaster subprocess now */
 
 		/* Lose the postmaster's on-exit routines and port connections */
 		on_exit_reset();
