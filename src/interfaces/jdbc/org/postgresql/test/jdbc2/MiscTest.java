@@ -3,9 +3,10 @@ package org.postgresql.test.jdbc2;
 import org.postgresql.test.TestUtil;
 import junit.framework.TestCase;
 import java.sql.*;
+import java.io.*;
 
 /*
- * $PostgreSQL: pgsql/src/interfaces/jdbc/org/postgresql/test/jdbc2/MiscTest.java,v 1.11 2003/11/29 22:41:23 pgsql Exp $
+ * $PostgreSQL: pgsql/src/interfaces/jdbc/org/postgresql/test/jdbc2/MiscTest.java,v 1.12 2003/12/11 15:11:43 davec Exp $
  *
  * Some simple tests based on problems reported by users. Hopefully these will
  * help prevent previous problems from re-occuring ;-)
@@ -65,8 +66,18 @@ public class MiscTest extends TestCase
 			fail( "Should not execute this, as a SQLException s/b thrown" );
 			con.commit();
 		}
-		catch ( Exception ex )
-		{}
+		catch ( SQLException ex )
+		{
+			// Verify that the SQLException is serializable.
+			try {
+				ByteArrayOutputStream baos = new ByteArrayOutputStream();
+				ObjectOutputStream oos = new ObjectOutputStream(baos);
+				oos.writeObject(ex);
+				oos.close();
+			} catch (IOException ioe) {
+				fail(ioe.getMessage());
+			}
+		}
 		try
 		{
 			con.commit();
