@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.29 1998/02/26 04:36:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.30 1998/03/20 04:22:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,9 @@ typedef struct _MdfdVec
 	uint16		mdfd_flags;		/* clean, dirty, free */
 	int			mdfd_lstbcnt;	/* most recent block count */
 	int			mdfd_nextFree;	/* next free vector */
+#ifndef LET_OS_MANAGE_FILESIZE
 	struct _MdfdVec *mdfd_chain;/* for large relations */
+#endif
 } MdfdVec;
 
 static int	Nfds = 100;
@@ -70,9 +72,16 @@ static MemoryContext MdCxt;
  *			 (((2 ** 23) / BLCKSZ) * (2 ** 8))
  *
  * 07 Jan 98  darrenk
+ *
+ * Now possibly let the OS handle it...
+ *
+ * 19 Mar 98  darrenk
+ *
  */
 
+#ifndef LET_OS_MANAGE_FILESIZE
 #define RELSEG_SIZE		((8388608 / BLCKSZ) * 256)
+#endif
 
 /* routines declared here */
 static MdfdVec *_mdfd_openseg(Relation reln, int segno, int oflags);
@@ -159,7 +168,9 @@ mdcreate(Relation reln)
 
 	Md_fdvec[vfd].mdfd_vfd = fd;
 	Md_fdvec[vfd].mdfd_flags = (uint16) 0;
+#ifndef LET_OS_MANAGE_FILESIZE
 	Md_fdvec[vfd].mdfd_chain = (MdfdVec *) NULL;
+#endif
 	Md_fdvec[vfd].mdfd_lstbcnt = 0;
 
 	return (vfd);
@@ -203,6 +214,7 @@ mdunlink(Relation reln)
 	Md_fdvec[fd].mdfd_flags = (uint16) 0;
 
 	oldcxt = MemoryContextSwitchTo(MdCxt);
+#ifndef LET_OS_MANAGE_FILESIZE
 	for (v = &Md_fdvec[fd]; v != (MdfdVec *) NULL;)
 	{
 		FileUnlink(v->mdfd_vfd);
@@ -212,6 +224,13 @@ mdunlink(Relation reln)
 			pfree(ov);
 	}
 	Md_fdvec[fd].mdfd_chain = (MdfdVec *) NULL;
+#else
+	v = &Md_fdvec[fd];
+	if (v != (MdfdVec *) NULL)
+	{
+		FileUnlink(v->mdfd_vfd);
+	}
+#endif
 	MemoryContextSwitchTo(oldcxt);
 
 	_fdvec_free(fd);
@@ -245,6 +264,7 @@ mdextend(Relation reln, char *buffer)
 	v->mdfd_flags |= MDFD_DIRTY;
 
 	/* try to keep the last block count current, though it's just a hint */
+#ifndef LET_OS_MANAGE_FILESIZE
 	if ((v->mdfd_lstbcnt = (++nblocks % RELSEG_SIZE)) == 0)
 		v->mdfd_lstbcnt = RELSEG_SIZE;
 
@@ -252,6 +272,9 @@ mdextend(Relation reln, char *buffer)
 	if (_mdnblocks(v->mdfd_vfd, BLCKSZ) > RELSEG_SIZE
 		|| v->mdfd_lstbcnt > RELSEG_SIZE)
 		elog(FATAL, "segment too big!");
+#endif
+#else
+	v->mdfd_lstbcnt = ++nblocks;
 #endif
 
 	return (SM_SUCCESS);
@@ -281,12 +304,14 @@ mdopen(Relation reln)
 
 	Md_fdvec[vfd].mdfd_vfd = fd;
 	Md_fdvec[vfd].mdfd_flags = (uint16) 0;
-	Md_fdvec[vfd].mdfd_chain = (MdfdVec *) NULL;
 	Md_fdvec[vfd].mdfd_lstbcnt = _mdnblocks(fd, BLCKSZ);
+#ifndef LET_OS_MANAGE_FILESIZE
+	Md_fdvec[vfd].mdfd_chain = (MdfdVec *) NULL;
 
 #ifdef DIAGNOSTIC
 	if (Md_fdvec[vfd].mdfd_lstbcnt > RELSEG_SIZE)
 		elog(FATAL, "segment too big on relopen!");
+#endif
 #endif
 
 	return (vfd);
@@ -311,6 +336,7 @@ mdclose(Relation reln)
 	fd = RelationGetFile(reln);
 
 	oldcxt = MemoryContextSwitchTo(MdCxt);
+#ifndef LET_OS_MANAGE_FILESIZE
 	for (v = &Md_fdvec[fd]; v != (MdfdVec *) NULL;)
 	{
 		/* if not closed already */
@@ -335,8 +361,28 @@ mdclose(Relation reln)
 			pfree(ov);
 	}
 
-	MemoryContextSwitchTo(oldcxt);
 	Md_fdvec[fd].mdfd_chain = (MdfdVec *) NULL;
+#else
+	v = &Md_fdvec[fd];
+	if (v != (MdfdVec *) NULL)
+	{
+		if (v->mdfd_vfd >= 0)
+		{
+
+			/*
+			 * We sync the file descriptor so that we don't need to reopen
+			 * it at transaction commit to force changes to disk.
+			 */
+
+			FileSync(v->mdfd_vfd);
+			FileClose(v->mdfd_vfd);
+
+			/* mark this file descriptor as clean in our private table */
+			v->mdfd_flags &= ~MDFD_DIRTY;
+		}
+	}
+#endif
+	MemoryContextSwitchTo(oldcxt);
 
 	_fdvec_free(fd);
 
@@ -358,11 +404,15 @@ mdread(Relation reln, BlockNumber blocknum, char *buffer)
 
 	v = _mdfd_getseg(reln, blocknum, 0);
 
+#ifndef LET_OS_MANAGE_FILESIZE
 	seekpos = (long) (BLCKSZ * (blocknum % RELSEG_SIZE));
 
 #ifdef DIAGNOSTIC
 	if (seekpos >= BLCKSZ * RELSEG_SIZE)
 		elog(FATAL, "seekpos too big!");
+#endif
+#else
+	seekpos = (long) (BLCKSZ * (blocknum));
 #endif
 
 	if (FileSeek(v->mdfd_vfd, seekpos, SEEK_SET) != seekpos)
@@ -400,10 +450,14 @@ mdwrite(Relation reln, BlockNumber blocknum, char *buffer)
 
 	v = _mdfd_getseg(reln, blocknum, 0);
 
+#ifndef LET_OS_MANAGE_FILESIZE
 	seekpos = (long) (BLCKSZ * (blocknum % RELSEG_SIZE));
 #ifdef DIAGNOSTIC
 	if (seekpos >= BLCKSZ * RELSEG_SIZE)
 		elog(FATAL, "seekpos too big!");
+#endif
+#else
+	seekpos = (long) (BLCKSZ * (blocknum));
 #endif
 
 	if (FileSeek(v->mdfd_vfd, seekpos, SEEK_SET) != seekpos)
@@ -435,10 +489,14 @@ mdflush(Relation reln, BlockNumber blocknum, char *buffer)
 
 	v = _mdfd_getseg(reln, blocknum, 0);
 
+#ifndef LET_OS_MANAGE_FILESIZE
 	seekpos = (long) (BLCKSZ * (blocknum % RELSEG_SIZE));
 #ifdef DIAGNOSTIC
 	if (seekpos >= BLCKSZ * RELSEG_SIZE)
 		elog(FATAL, "seekpos too big!");
+#endif
+#else
+	seekpos = (long) (BLCKSZ * (blocknum));
 #endif
 
 	if (FileSeek(v->mdfd_vfd, seekpos, SEEK_SET) != seekpos)
@@ -483,6 +541,8 @@ mdblindwrt(char *dbstr,
 	long		seekpos;
 	int			status;
 	char	   *path;
+
+#ifndef LET_OS_MANAGE_FILESIZE
 	int			nchars;
 
 	/* be sure we have enough space for the '.segno', if any */
@@ -535,12 +595,53 @@ mdblindwrt(char *dbstr,
 			sprintf(path, "%s%c%s.%d", tmpPath, SEP_CHAR, relstr, segno);
 		pfree(tmpPath);
 	}
+#else
+	/* construct the path to the file and open it */
+	/* system table? then put in system area... */
+	if (dbid == (Oid) 0)
+	{
+		path = (char *) palloc(strlen(DataDir) + sizeof(NameData) + 2);
+		sprintf(path, "%s/%s", DataDir, relstr);
+	}
+	/* user table? then put in user database area... */
+	else if (dbid == MyDatabaseId)
+	{
+		extern char *DatabasePath;
+
+		path = (char *) palloc(strlen(DatabasePath) + 2 * sizeof(NameData) + 2);
+		sprintf(path, "%s%c%s", DatabasePath, SEP_CHAR, relstr);
+	}
+	else
+/* this is work arround only !!! */
+	{
+		char		dbpath[MAXPGPATH + 1];
+		Oid			owner,
+					id;
+		char	   *tmpPath;
+
+		GetRawDatabaseInfo(dbstr, &owner, &id, dbpath);
+
+		if (id != dbid)
+			elog(FATAL, "mdblindwrt: oid of db %s is not %u", dbstr, dbid);
+		tmpPath = ExpandDatabasePath(dbpath);
+		if (tmpPath == NULL)
+			elog(FATAL, "mdblindwrt: can't expand path for db %s", dbstr);
+		path = (char *) palloc(strlen(tmpPath) + 2 * sizeof(NameData) + 2);
+		sprintf(path, "%s%c%s", tmpPath, SEP_CHAR, relstr);
+		pfree(tmpPath);
+	}
+#endif
 
 	if ((fd = open(path, O_RDWR, 0600)) < 0)
 		return (SM_FAIL);
 
 	/* seek to the right spot */
+#ifndef LET_OS_MANAGE_FILESIZE
 	seekpos = (long) (BLCKSZ * (blkno % RELSEG_SIZE));
+#else
+	seekpos = (long) (BLCKSZ * (blkno));
+#endif
+
 	if (lseek(fd, seekpos, SEEK_SET) != seekpos)
 	{
 		close(fd);
@@ -577,6 +678,7 @@ mdnblocks(Relation reln)
 	fd = RelationGetFile(reln);
 	v = &Md_fdvec[fd];
 
+#ifndef LET_OS_MANAGE_FILESIZE
 #ifdef DIAGNOSTIC
 	if (_mdnblocks(v->mdfd_vfd, BLCKSZ) > RELSEG_SIZE)
 		elog(FATAL, "segment too big in getseg!");
@@ -607,6 +709,9 @@ mdnblocks(Relation reln)
 			return ((segno * RELSEG_SIZE) + nblocks);
 		}
 	}
+#else
+	return (_mdnblocks(v->mdfd_vfd, BLCKSZ));
+#endif
 }
 
 /*
@@ -619,6 +724,8 @@ mdtruncate(Relation reln, int nblocks)
 {
 	int			fd;
 	MdfdVec    *v;
+
+#ifndef LET_OS_MANAGE_FILESIZE
 	int			curnblk;
 
 	curnblk = mdnblocks(reln);
@@ -628,6 +735,7 @@ mdtruncate(Relation reln, int nblocks)
 			 &(reln->rd_rel->relname.data[0]));
 		return (curnblk);
 	}
+#endif
 
 	fd = RelationGetFile(reln);
 	v = &Md_fdvec[fd];
@@ -657,7 +765,12 @@ mdcommit()
 
 	for (i = 0; i < CurFd; i++)
 	{
+#ifndef LET_OS_MANAGE_FILESIZE
 		for (v = &Md_fdvec[i]; v != (MdfdVec *) NULL; v = v->mdfd_chain)
+#else
+		v = &Md_fdvec[i];
+		if (v != (MdfdVec *) NULL)
+#endif
 		{
 			if (v->mdfd_flags & MDFD_DIRTY)
 			{
@@ -686,7 +799,12 @@ mdabort()
 
 	for (i = 0; i < CurFd; i++)
 	{
+#ifndef LET_OS_MANAGE_FILESIZE
 		for (v = &Md_fdvec[i]; v != (MdfdVec *) NULL; v = v->mdfd_chain)
+#else
+		v = &Md_fdvec[i];
+		if (v != (MdfdVec *) NULL)
+#endif
 		{
 			v->mdfd_flags &= ~MDFD_DIRTY;
 		}
@@ -812,12 +930,14 @@ _mdfd_openseg(Relation reln, int segno, int oflags)
 	/* fill the entry */
 	v->mdfd_vfd = fd;
 	v->mdfd_flags = (uint16) 0;
-	v->mdfd_chain = (MdfdVec *) NULL;
 	v->mdfd_lstbcnt = _mdnblocks(fd, BLCKSZ);
+#ifndef LET_OS_MANAGE_FILESIZE
+	v->mdfd_chain = (MdfdVec *) NULL;
 
 #ifdef DIAGNOSTIC
 	if (v->mdfd_lstbcnt > RELSEG_SIZE)
 		elog(FATAL, "segment too big on open!");
+#endif
 #endif
 
 	/* all done */
@@ -841,6 +961,7 @@ _mdfd_getseg(Relation reln, int blkno, int oflag)
 		reln->rd_fd = fd;
 	}
 
+#ifndef LET_OS_MANAGE_FILESIZE
 	for (v = &Md_fdvec[fd], segno = blkno / RELSEG_SIZE, i = 1;
 		 segno > 0;
 		 i++, segno--)
@@ -856,6 +977,9 @@ _mdfd_getseg(Relation reln, int blkno, int oflag)
 		}
 		v = v->mdfd_chain;
 	}
+#else
+	v = &Md_fdvec[fd];
+#endif
 
 	return (v);
 }
