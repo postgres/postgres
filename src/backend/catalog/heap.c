@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.49 1998/06/13 20:22:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.50 1998/06/14 13:31:07 momjian Exp $
  *
  * INTERFACE ROUTINES
  *		heap_create()			- Create an uncataloged heap relation
@@ -1370,7 +1370,6 @@ heap_destroy(Relation rdesc)
 	rdesc->rd_tmpunlinked = TRUE;
 	heap_close(rdesc);
 	RemoveFromTempRelList(rdesc);
-	RelationForgetRelation(rdesc->rd_id);
 }
 
 
