@@ -1,78 +1,74 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pgtclsh.sgml,v 1.2 2000/12/25 23:15:26 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pgtclsh.sgml,v 1.3 2001/03/06 17:43:56 petere Exp $
 Postgres documentation
 -->
 
 <refentry id="APP-PGTCLSH">
  <docinfo>
-  <date>2000-12-25</date>
+  <date>2001-03-05</date>
  </docinfo>
 
  <refmeta>
-  <refentrytitle id="app-pgtclsh-title">
-   <application>pgtclsh</application>
+  <refentrytitle>
+   pgtclsh
   </refentrytitle>
   <manvolnum>1</manvolnum>
   <refmiscinfo>Application</refmiscinfo>
  </refmeta>
+
  <refnamediv>
-  <refname>
-   <application>pgtclsh</application>
-  </refname>
+  <refname>pgtclsh</refname>
   <refpurpose>
-   <productname>Postgres</productname> TCL shell client
+   <productname>PostgreSQL</productname> <application>Tcl</application> shell client
   </refpurpose>
  </refnamediv>
+
  <refsynopsisdiv>
   <cmdsynopsis>
    <command>pgtclsh</command>
+   <arg><replaceable>filename</replaceable> <arg rep="repeat"><replaceable>arguments</replaceable></arg></arg>
   </cmdsynopsis>
-
-  <refsect2 id="R2-APP-PGTCLSH-1">
-   <title>
-    Inputs
-   </title>
-   <para>
-
-    <variablelist>
-     <varlistentry>
-      <term><replaceable class="PARAMETER">dbname</replaceable></term>
-      <listitem>
-       <para>
-	The name of an existing database to access.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
-
-  <refsect2 id="R2-APP-PGTCLSH-2">
-   <title>
-    Outputs
-   </title>
-   <para>
-   </para>
-  </refsect2>
  </refsynopsisdiv>
 
- <refsect1 id="R1-APP-PGTCLSH-1">
+ <refsect1 id="app-pgtclsh-description">
   <title>
    Description
   </title>
+
   <para>
-   <application>pgtclsh</application> provides a TCL shell interface
-   for <productname>Postgres</productname>.
+   <command>pgtclsh</command> is a <application>Tcl</application>
+   shell interface extended with
+   <productname>Postgres</productname> database access functions.
+   (Essentially, it is <command>tclsh</command> with
+   <filename>libpgtcl</filename> loaded.)  Like with the regular
+   <application>Tcl</application> shell, the first command line
+   argument is a script file, any remaining arguments are passed to
+   the script.  If no script file is named, the shell is
+   interactive.
   </para>
 
   <para>
-   Another way of accessing <productname>Postgres</productname>
-   through tcl is to use
-   <xref linkend="app-pgtksh">
-   or
-   <xref linkend="app-pgaccess">.
+   A <application>Tcl</application> shell with
+   <application>Tk</application> and
+   <productname>Postgres</productname> functions is available as <xref
+   linkend="app-pgtksh">.
   </para>
  </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="app-pgtksh"></member>
+   <member>
+    <citetitle>PostgreSQL Programmer's Guide</citetitle> (description of <filename>libpgtcl</filename>)
+   </member>
+   <member>
+    <citerefentry><refentrytitle>tclsh</refentrytitle> <manvolnum>1</manvolnum></citerefentry>
+   </member>
+  </simplelist>
+ </refsect1>
+
 </refentry>
 
 <!-- Keep this comment at the end of the file
