@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubplan.c,v 1.23 2000/03/21 04:20:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubplan.c,v 1.24 2000/03/23 07:32:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -141,16 +141,28 @@ ExecSubPlan(SubPlan *node, List *pvar, ExprContext *econtext, bool *isNull)
 
 			/*
 			 * The righthand side of the expression should be either a Const
-			 * or a function call taking a Const as arg (the function would
-			 * be a run-time type coercion inserted by the parser to get to
-			 * the input type needed by the operator).  Find the Const node
-			 * and insert the actual righthand side value into it.
+			 * or a function call or RelabelType node taking a Const as arg
+			 * (these nodes represent run-time type coercions inserted by
+			 * the parser to get to the input type needed by the operator).
+			 * Find the Const node and insert the actual righthand-side value
+			 * into it.
 			 */
 			if (! IsA(con, Const))
 			{
-				Assert(IsA(con, Expr));
-				con = lfirst(((Expr *) con)->args);
-				Assert(IsA(con, Const));
+				switch (con->type)
+				{
+					case T_Expr:
+						con = lfirst(((Expr *) con)->args);
+						break;
+					case T_RelabelType:
+						con = (Const *) (((RelabelType *) con)->arg);
+						break;
+					default:
+						/* will fail below */
+						break;
+				}
+				if (! IsA(con, Const))
+					elog(ERROR, "ExecSubPlan: failed to find placeholder for subplan result");
 			}
 			con->constvalue = heap_getattr(tup, col, tdesc,
 										   &(con->constisnull));
