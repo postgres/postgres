@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.142.4.1 2005/01/24 23:22:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.142.4.2 2005/02/09 23:27:24 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2435,6 +2435,9 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap)
 		TupleTableSlot *newslot;
 		HeapScanDesc scan;
 		HeapTuple	tuple;
+		MemoryContext oldCxt;
+		List *dropped_attrs = NIL;
+		ListCell *lc;
 
 		econtext = GetPerTupleExprContext(estate);
 
@@ -2456,28 +2459,39 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap)
 		memset(nulls, 'n', i * sizeof(char));
 
 		/*
+		 * Any attributes that are dropped according to the new tuple
+		 * descriptor can be set to NULL. We precompute the list of
+		 * dropped attributes to avoid needing to do so in the
+		 * per-tuple loop.
+		 */
+		for (i = 0; i < newTupDesc->natts; i++)
+		{
+			if (newTupDesc->attrs[i]->attisdropped)
+				dropped_attrs = lappend_int(dropped_attrs, i);
+		}
+
+		/*
 		 * Scan through the rows, generating a new row if needed and then
 		 * checking all the constraints.
 		 */
 		scan = heap_beginscan(oldrel, SnapshotNow, 0, NULL);
 
+		/*
+		 * Switch to per-tuple memory context and reset it for each
+		 * tuple produced, so we don't leak memory.
+		 */
+		oldCxt = MemoryContextSwitchTo(GetPerTupleMemoryContext(estate));
+
 		while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 		{
 			if (newrel)
 			{
-				/*
-				 * Extract data from old tuple.  We can force to null any
-				 * columns that are deleted according to the new tuple.
-				 */
-				int			natts = newTupDesc->natts;
-
+				/* Extract data from old tuple */
 				heap_deformtuple(tuple, oldTupDesc, values, nulls);
 
-				for (i = 0; i < natts; i++)
-				{
-					if (newTupDesc->attrs[i]->attisdropped)
-						nulls[i] = 'n';
-				}
+				/* Set dropped attributes to null in new tuple */
+				foreach (lc, dropped_attrs)
+					nulls[lfirst_int(lc)] = 'n';
 
 				/*
 				 * Process supplied expressions to replace selected
@@ -2501,6 +2515,11 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap)
 						nulls[ex->attnum - 1] = ' ';
 				}
 
+				/*
+				 * Form the new tuple. Note that we don't explicitly
+				 * pfree it, since the per-tuple memory context will
+				 * be reset shortly.
+				 */
 				tuple = heap_formtuple(newTupDesc, values, nulls);
 			}
 
@@ -2547,17 +2566,14 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap)
 
 			/* Write the tuple out to the new relation */
 			if (newrel)
-			{
 				simple_heap_insert(newrel, tuple);
-
-				heap_freetuple(tuple);
-			}
 
 			ResetExprContext(econtext);
 
 			CHECK_FOR_INTERRUPTS();
 		}
 
+		MemoryContextSwitchTo(oldCxt);
 		heap_endscan(scan);
 	}
 
