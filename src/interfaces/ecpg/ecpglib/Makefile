@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/Makefile,v 1.12 2003/11/30 06:09:46 momjian Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/Makefile,v 1.13 2004/02/10 07:26:25 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -22,7 +22,7 @@ OBJS= execute.o typename.o descriptor.o data.o error.o prepare.o memory.o \
 	connect.o misc.o
 
 SHLIB_LINK = -L../pgtypeslib -lpgtypes $(libpq) \
-	$(filter -lssl -lcrypto -lkrb5 -lcrypt -lm, $(LIBS)) $(THREAD_LIBS)
+	$(filter -lintl -lssl -lcrypto -lkrb5 -lcrypt -lm, $(LIBS)) $(THREAD_LIBS)
 
 all: all-lib
 
