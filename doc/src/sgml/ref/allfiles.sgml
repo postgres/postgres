@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/allfiles.sgml,v 1.16 2000/04/08 02:16:26 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/allfiles.sgml,v 1.17 2000/04/08 05:11:03 tgl Exp $
 Postgres documentation
 Complete list of usable sgml source files in this directory.
 -->
@@ -46,6 +46,7 @@ Complete list of usable sgml source files in this directory.
 <!entity begin              system "begin.sgml">
 <!entity close              system "close.sgml">
 <!entity cluster            system "cluster.sgml">
+<!entity commentOn          system "comment.sgml">
 <!entity commit             system "commit.sgml">
 <!entity copyTable          system "copy.sgml">
 <!entity createAggregate    system "create_aggregate.sgml">
@@ -89,6 +90,7 @@ Complete list of usable sgml source files in this directory.
 <!entity lock               system "lock.sgml">
 <!entity move               system "move.sgml">
 <!entity notify             system "notify.sgml">
+<!entity reindex            system "reindex.sgml">
 <!entity reset              system "reset.sgml">
 <!entity revoke             system "revoke.sgml">
 <!entity rollback           system "rollback.sgml">
