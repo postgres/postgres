@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/Makefile,v 1.29 1999/10/11 17:51:27 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/Makefile,v 1.30 1999/10/11 18:05:39 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -30,6 +30,7 @@ ifeq ($(HAVE_Cplusplus), true)
 else
 	echo $(HAVE_Cplusplus): No C++
 endif
+	$(MAKE) -C libpgeasy $@
 ifeq ($(USE_TCL), true)
 	$(MAKE) -C libpgtcl $@
 endif
@@ -44,7 +45,6 @@ endif
 ifeq ($(USE_ODBC), true)
 	$(MAKE) -C odbc $@
 endif
-	$(MAKE) -C pgeasy $@
 
 perl5/Makefile: perl5/Makefile.PL
 	cd perl5 && $(PERL) Makefile.PL
