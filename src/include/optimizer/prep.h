@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: prep.h,v 1.7 1997/11/21 18:12:33 momjian Exp $
+ * $Id: prep.h,v 1.8 1997/12/18 12:54:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,9 +19,6 @@
 /*
  * prototypes for prepqual.h
  */
-extern List *
-preprocess_qualification(Expr *qual, List *tlist,
-						 List **existentialQualPtr);
 extern List *cnfify(Expr *qual, bool removeAndFlag);
 
 /*

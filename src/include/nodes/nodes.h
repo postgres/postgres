@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.19 1997/12/04 23:43:59 thomas Exp $
+ * $Id: nodes.h,v 1.20 1997/12/18 12:54:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,7 +29,6 @@ typedef enum NodeTag
 	 *---------------------
 	 */
 	T_Plan = 10,
-	T_Existential,
 	T_Result,
 	T_Append,
 	T_Scan,

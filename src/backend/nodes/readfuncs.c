@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.10 1997/10/25 01:09:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.11 1997/12/18 12:53:59 momjian Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -213,24 +213,6 @@ _readResult()
 
 	token = lsptok(NULL, &length);		/* eat :resconstantqual */
 	local_node->resconstantqual = nodeRead(true);		/* now read it */
-
-	return (local_node);
-}
-
-/* ----------------
- *		_readExistential
- *
- *		Existential nodes are only used by the planner.
- * ----------------
- */
-static Existential *
-_readExistential()
-{
-	Existential *local_node;
-
-	local_node = makeNode(Existential);
-
-	_getPlan((Plan *) local_node);
 
 	return (local_node);
 }
@@ -1883,10 +1865,6 @@ parsePlanString(void)
 	else if (!strncmp(token, "RESULT", 6))
 	{
 		return_value = _readResult();
-	}
-	else if (!strncmp(token, "EXISTENTIAL", 11))
-	{
-		return_value = _readExistential();
 	}
 	else if (!strncmp(token, "APPEND", 6))
 	{

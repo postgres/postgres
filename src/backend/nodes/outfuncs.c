@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.11 1997/12/04 23:20:32 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.12 1997/12/18 12:53:51 momjian Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -255,21 +255,6 @@ _outResult(StringInfo str, Result *node)
 	sprintf(buf, " :resconstantqual ");
 	appendStringInfo(str, buf);
 	_outNode(str, node->resconstantqual);
-
-}
-
-/*
- *	Existential is a subclass of Plan.
- */
-static void
-_outExistential(StringInfo str, Existential *node)
-{
-	char		buf[500];
-
-	sprintf(buf, "EXISTENTIAL");
-	appendStringInfo(str, buf);
-	_outPlanInfo(str, (Plan *) node);
-
 
 }
 
@@ -1640,9 +1625,6 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_Result:
 				_outResult(str, obj);
-				break;
-			case T_Existential:
-				_outExistential(str, obj);
 				break;
 			case T_Append:
 				_outAppend(str, obj);

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: planmain.h,v 1.7 1997/12/18 12:21:02 momjian Exp $
+ * $Id: planmain.h,v 1.8 1997/12/18 12:54:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,8 +37,6 @@ extern Agg *make_agg(List *tlist, int nagg, Aggreg **aggs, Plan *lefttree);
 extern Group *make_group(List *tlist, bool tuplePerGroup, int ngrp,
 		   AttrNumber *grpColIdx, Sort *lefttree);
 extern Unique *make_unique(List *tlist, Plan *lefttree, char *uniqueAttr);
-extern List *generate_fjoin(List *tlist);
-
 
 /*
  * prototypes for plan/initsplan.c

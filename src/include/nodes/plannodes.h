@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: plannodes.h,v 1.10 1997/09/08 21:52:53 momjian Exp $
+ * $Id: plannodes.h,v 1.11 1997/12/18 12:54:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,6 @@
  *
  * control nodes
  *
- *		Existential				ExistentialState		exstate;
  *		Result					ResultState				resstate;
  *		Append					AppendState				unionstate;
  *
@@ -99,12 +98,6 @@ typedef struct Plan
    when nodes are cast to Plan's.  (node pointers are frequently cast to Plan*
    when passed around generically in the executor */
 
-
-/* ----------------
- *		existential node
- * ----------------
- */
-typedef Plan Existential;
 
 /* ----------------
  *	 result node -

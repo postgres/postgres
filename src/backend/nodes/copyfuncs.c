@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.19 1997/12/18 05:58:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.20 1997/12/18 12:53:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -107,24 +107,6 @@ _copyPlan(Plan *from)
 	return newnode;
 }
 
-
-/* ----------------
- *		_copyExistential
- * ----------------
- */
-static Existential *
-_copyExistential(Existential *from)
-{
-	Existential *newnode = makeNode(Existential);
-
-	/* ----------------
-	 *	copy node superclass fields
-	 * ----------------
-	 */
-	CopyPlanFields(from, newnode);
-
-	return newnode;
-}
 
 /* ----------------
  *		_copyResult
@@ -1622,9 +1604,6 @@ copyObject(void *from)
 			 */
 		case T_Plan:
 			retval = _copyPlan(from);
-			break;
-		case T_Existential:
-			retval = _copyExistential(from);
 			break;
 		case T_Result:
 			retval = _copyResult(from);

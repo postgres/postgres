@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.11 1997/11/25 21:59:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.12 1997/12/18 12:54:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,7 +48,6 @@
 
 static Plan *make_sortplan(List *tlist, List *sortcls, Plan *plannode);
 static Plan *init_query_planner(Query *parse);
-static Existential *make_existential(Plan *left, Plan *right);
 
 /*****************************************************************************
  *
@@ -184,8 +183,7 @@ make_sortplan(List *tlist, List *sortcls, Plan *plannode)
 
 /*
  * init-query-planner--
- *	  Deals with all non-union preprocessing, including existential
- *	  qualifications and CNFifying the qualifications.
+ *	  Deals with all non-union preprocessing,and CNFifying the qualifications.
  *
  * Returns a query plan.
  * MODIFIES: tlist,qual
@@ -195,8 +193,6 @@ static Plan *
 init_query_planner(Query *root)
 {
 	List	   *primary_qual;
-	List	   *existential_qual;
-	Existential *exist_plan;
 	List	   *tlist = root->targetList;
 
 	tlist = preprocess_targetlist(tlist,
@@ -204,51 +200,12 @@ init_query_planner(Query *root)
 								  root->resultRelation,
 								  root->rtable);
 
-	primary_qual =
-		preprocess_qualification((Expr *) root->qual,
-								 tlist,
-								 &existential_qual);
+	primary_qual = cnfify((Expr *) root->qual, true);
 
-	if (existential_qual == NULL)
-	{
-		return (query_planner(root,
-							  root->commandType,
-							  tlist,
-							  primary_qual));
-	}
-	else
-	{
-		int			temp = root->commandType;
-		Plan	   *existential_plan;
-
-		root->commandType = CMD_SELECT;
-		existential_plan = query_planner(root,
-										 temp,
-										 NIL,
-										 existential_qual);
-
-		exist_plan = make_existential(existential_plan,
-									  query_planner(root,
-													root->commandType,
-													tlist,
-													primary_qual));
-		return ((Plan *) exist_plan);
-	}
-}
-
-/*
- * make_existential--
- *	  Instantiates an existential plan node and fills in
- *	  the left and right subtree slots.
- */
-static Existential *
-make_existential(Plan *left, Plan *right)
-{
-	Existential *node = makeNode(Existential);
-
-	node->lefttree = left;
-	node->righttree = left;
-	return (node);
+	return (query_planner(root,
+						  root->commandType,
+						  tlist,
+						  primary_qual));
 }
 
 /*

@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.12 1997/11/26 01:10:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.13 1997/12/18 12:53:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -888,8 +888,6 @@ NodeGetResultTupleSlot(Plan *node)
  *		the node's inner or outer subplan easily without having
  *		to inspect the subplan.. -cim 10/16/89
  *
- *		Assume that for existential nodes, we get the targetlist out
- *		of the right node's targetlist
  * ----------------------------------------------------------------
  */
 

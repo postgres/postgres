@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.19 1997/12/18 12:30:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.20 1997/12/18 12:54:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1175,10 +1175,10 @@ make_unique(List *tlist, Plan *lefttree, char *uniqueAttr)
 	return (node);
 }
 
+#ifdef NOT_USED
 List	   *
 generate_fjoin(List *tlist)
 {
-#if 0
 	List		tlistP;
 	List		newTlist = NIL;
 	List		fjoinList = NIL;
@@ -1227,6 +1227,7 @@ generate_fjoin(List *tlist)
 		newTlist = lappend(newTlist, tempList);
 	}
 	return newTlist;
-#endif
 	return tlist;				/* do nothing for now - ay 10/94 */
 }
+#endif
+
