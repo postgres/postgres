@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/wal.sgml,v 1.18 2002/08/30 16:53:34 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/wal.sgml,v 1.19 2002/09/06 20:08:06 momjian Exp $ -->
 
 <chapter id="wal">
  <title>Write-Ahead Logging (<acronym>WAL</acronym>)</title>
@@ -308,7 +308,7 @@
    WAL.  Ordinarily, when old log segment files are no longer needed, 
    they are recycled (renamed to become the next sequential future 
    segments). If, due to a short-term peak of log output rate, there 
-   are more than <varname>CHECKPOINT_SEGMENTS</varname>) + 1 segment files, 
+   are more than <varname>CHECKPOINT_SEGMENTS</varname> + 1 segment files, 
    the unneeded segment files will be deleted instead of recycled until the
    system gets back under this limit.
   </para>
