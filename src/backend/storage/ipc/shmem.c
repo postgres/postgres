@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.72 2003/09/25 06:58:02 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.73 2003/10/16 20:59:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -167,7 +167,7 @@ ShmemAlloc(Size size)
 	if (!newSpace)
 		ereport(WARNING,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of memory")));
+				 errmsg("out of shared memory")));
 
 	return newSpace;
 }
@@ -226,7 +226,7 @@ InitShmemIndex(void)
 	if (!result)
 		ereport(FATAL,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of memory")));
+				 errmsg("out of shared memory")));
 
 	Assert(ShmemBootstrap && !found);
 
@@ -346,7 +346,7 @@ ShmemInitStruct(const char *name, Size size, bool *foundPtr)
 		LWLockRelease(ShmemIndexLock);
 		ereport(ERROR,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of memory")));
+				 errmsg("out of shared memory")));
 		return NULL;
 	}
 

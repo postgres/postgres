@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.127 2003/08/17 22:41:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.128 2003/10/16 20:59:35 tgl Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -476,8 +476,8 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 		LWLockRelease(masterLock);
 		ereport(ERROR,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of memory")));
-		return FALSE;
+				 errmsg("out of shared memory"),
+				 errhint("You may need to increase max_locks_per_transaction.")));
 	}
 
 	/*
@@ -524,8 +524,8 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 		LWLockRelease(masterLock);
 		ereport(ERROR,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of memory")));
-		return FALSE;
+				 errmsg("out of shared memory"),
+				 errhint("You may need to increase max_locks_per_transaction.")));
 	}
 
 	/*
