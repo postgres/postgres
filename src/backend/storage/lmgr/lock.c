@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.39 1998/12/15 12:46:30 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.40 1999/01/17 20:59:56 tgl Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -79,7 +79,8 @@ static int WaitOnLock(LOCKMETHOD lockmethod, LOCK *lock, LOCKMODE lockmode,
 #define LOCK_PRINT(where,lock,type) \
 	if (((LOCKDEBUG(LOCK_LOCKMETHOD(*(lock))) >= 1) \
 		 && (lock->tag.relId >= lockDebugOidMin)) \
-		|| (lock->tag.relId == lockDebugRelation)) \
+		|| \
+		(lockDebugRelation && (lock->tag.relId == lockDebugRelation))) \
 		LOCK_PRINT_AUX(where,lock,type)
 
 #define LOCK_PRINT_AUX(where,lock,type) \
@@ -113,8 +114,9 @@ static int WaitOnLock(LOCKMETHOD lockmethod, LOCK *lock, LOCKMODE lockmode,
 	if (((LOCKDEBUG(XIDENT_LOCKMETHOD(*(xidentP))) >= 1) \
 		 && (((LOCK *)MAKE_PTR(xidentP->tag.lock))->tag.relId \
 			 >= lockDebugOidMin)) \
-		|| (((LOCK *)MAKE_PTR(xidentP->tag.lock))->tag.relId \
-			== lockDebugRelation)) \
+		|| (lockDebugRelation && \
+			(((LOCK *)MAKE_PTR(xidentP->tag.lock))->tag.relId \
+			 == lockDebugRelation))) \
 		XID_PRINT_AUX(where,xidentP)
 
 #define XID_PRINT_AUX(where,xidentP) \
@@ -1206,7 +1208,8 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag, LOCKMODE lockmode)
 	{
 		if (((LOCKDEBUG(LOCK_LOCKMETHOD(*(lock))) >= 1) \
 			 && (lock->tag.relId >= lockDebugOidMin)) \
-			|| (lock->tag.relId == lockDebugRelation))
+			|| \
+			(lockDebugRelation && (lock->tag.relId == lockDebugRelation)))
 			TPRINTF(TRACE_ALL, "LockRelease: no wakeup needed");
 	}
 
@@ -1290,7 +1293,7 @@ LockReleaseAll(LOCKMETHOD lockmethod, SHM_QUEUE *lockQueue)
 		lock = (LOCK *) MAKE_PTR(xidLook->tag.lock);
 
 		xidtag_lockmethod = XIDENT_LOCKMETHOD(*xidLook);
-		if ((xidtag_lockmethod == lockmethod) || (trace_flag >= 2))
+		if ((xidtag_lockmethod == lockmethod) && pg_options[trace_flag])
 		{
 			XID_PRINT("LockReleaseAll", xidLook);
 			LOCK_PRINT("LockReleaseAll", lock, 0);
