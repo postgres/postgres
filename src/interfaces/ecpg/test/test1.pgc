@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <string.h>
 
 /* just a test comment */ exec sql whenever sqlerror do PrintAndStop(msg);
