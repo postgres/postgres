@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.278 2004/08/06 23:33:48 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.279 2004/08/08 05:46:40 joe Exp $
 -->
 
 <appendix id="release">
@@ -309,6 +309,16 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.278 2004/08/06 23:33:48 tgl Exp
       <para>
        Now that tablespaces have been implemented, initlocation has been
        removed.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Syntax checking of array input processing has been tighened up
+       considerably. Junk that was previously allowed in odd places with
+       odd results now causes an ERROR. Also changed behavior with respect
+       to whitespace; trailing whitespace is now ignored as well as leading
+       whitespace (which has always been ignored).
       </para>
      </listitem>
     </itemizedlist>
@@ -1112,6 +1122,27 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.278 2004/08/06 23:33:48 tgl Exp
      <para>
       Formerly, array_in would silently build a surprising result.
      </para>
+    </listitem>
+
+    <listitem>
+      <para>
+       Syntax checking of array input processing considerably tighened up (Joe)
+      </para>
+     <para>
+       Junk that was previously allowed in odd places with odd results now
+       causes an ERROR.
+      </para>
+    </listitem>
+
+    <listitem>
+      <para>
+       Array element trailing whitespace is now ignored (Joe)
+      </para>
+     <para>
+       Formerly leading whitespace was ignored, but trailing whitespace
+       between an element and the delimiter or right brace was significant.
+       Now trailing whitespace is also ignored.
+      </para>
     </listitem>
 
     <listitem>
