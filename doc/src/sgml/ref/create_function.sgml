@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.18 2000/10/05 19:48:17 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.19 2000/11/02 19:26:44 momjian Exp $
 Postgres documentation
 -->
 
@@ -307,7 +307,7 @@ SELECT one() AS answer;
    is correct. It is intended for use in a CHECK contraint.
   </para>
   <programlisting>
-CREATE FUNCTION ean_checkdigit(bpchar, bpchar) RETURNS bool
+CREATE FUNCTION ean_checkdigit(bpchar, bpchar) RETURNS boolean
     AS '/usr1/proj/bray/sql/funcs.so' LANGUAGE 'c';
     
 CREATE TABLE product (
