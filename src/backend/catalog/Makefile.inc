@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/catalog/Attic/Makefile.inc,v 1.2 1996/09/23 08:22:04 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/catalog/Attic/Makefile.inc,v 1.3 1996/09/26 04:22:49 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -64,5 +64,5 @@ global1.bki.source: $(GENBKI) $(GLOBALBKI_SRCS)
 local1_template1.bki.source: $(GENBKI) $(LOCALBKI_SRCS)
 	sh $(SHOPTS) $(GENBKI) $(BKIOPTS) $(LOCALBKI_SRCS) > $(objdir)/$(@F)
 
-CLEANFILES+= global.bki.source local1_template1.bki.source 
+CLEANFILES+= global1.bki.source local1_template1.bki.source
 
