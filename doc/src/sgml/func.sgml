@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.237 2005/01/28 23:12:59 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.238 2005/02/11 04:31:54 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -5763,7 +5763,7 @@ SELECT timeofday();
 <programlisting>
 SELECT CURRENT_TIMESTAMP;
 SELECT now();
-SELECT TIMESTAMP 'now';
+SELECT TIMESTAMP 'now';  -- incorrect for use with DEFAULT
 </programlisting>
    </para>
 
