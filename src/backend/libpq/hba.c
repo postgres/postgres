@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.6 1996/11/03 06:56:52 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.7 1996/11/03 07:00:57 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <unistd.h>
 #if defined(sparc_solaris)
 #include "port/inet_aton.h"
 #endif
@@ -750,6 +751,7 @@ hba_recvauth(const Port *port, const char database[], const char user[],
     }
       break;
     default:
+      retvalue = STATUS_ERROR;
       Assert(false);
     }
   }
