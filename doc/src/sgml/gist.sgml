@@ -1,113 +1,263 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/gist.sgml,v 1.12 2003/09/29 18:18:35 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/gist.sgml,v 1.13 2003/10/31 22:41:21 tgl Exp $
 -->
 
-<Chapter Id="gist">
-<DocInfo>
-<AuthorGroup>
-<Author>
-<FirstName>Gene</FirstName>
-<Surname>Selkov</Surname>
-</Author>
-</AuthorGroup>
-<Date>Transcribed 1998-02-19</Date>
-</DocInfo>
-<Title>GiST Indexes</Title>
+<chapter Id="GiST">
+<title>GiST Indexes</title>
 
-<Para>
-The information about GIST is at
- <ULink url="http://GiST.CS.Berkeley.EDU:8000/gist/">http://GiST.CS.Berkeley.EDU:8000/gist/</ULink>
+<sect1 id="intro">
+ <title>Introduction</title>
 
-with more on different indexing and sorting schemes at
-<ULink url="http://s2k-ftp.CS.Berkeley.EDU:8000/personal/jmh/">http://s2k-ftp.CS.Berkeley.EDU:8000/personal/jmh/</ULink>.
+ <para>
+   <acronym>GiST</acronym> stands for Generalized Search Tree.  It is a
+   balanced, tree-structured access method, that acts as a base template in
+   which to implement arbitrary indexing schemes. B+-trees, R-trees and many
+   other indexing schemes can be implemented in <acronym>GiST</acronym>.
+ </para>
 
-And there is more interesting reading at
-<ULink url="http://epoch.cs.berkeley.edu:8000/">http://epoch.cs.berkeley.edu:8000/</ULink> and
-<ULink url="http://www.sai.msu.su/~megera/postgres/gist/">http://www.sai.msu.su/~megera/postgres/gist/</ULink>.
-</para>
+ <para>
+  One advantage of <acronym>GiST</acronym> is that it allows the development
+  of custom data types with the appropriate access methods, by
+  an expert in the domain of the data type, rather than a database expert.
+ </para>
 
-<Para>
-<Note>
-<Title>Author</Title>
-<Para>
-This extraction from an email sent by 
-Eugene Selkov, Jr. (<email>selkovjr@mcs.anl.gov</email>)
-contains good information
-on GiST. Hopefully we will learn more in the future and update this information.
-- thomas 1998-03-01
-</Para>
-</Note>
-</para>
-<Para>
-Well, I can't say I quite understand what's going on, but at least
-I (almost) succeeded in porting GiST examples to linux. The GiST access
-method is already in the postgres tree (<FileName>src/backend/access/gist</FileName>).
-</para>
-<Para>
-<ULink url="ftp://s2k-ftp.cs.berkeley.edu/pub/gist/pggist/pggist.tgz">Examples at Berkeley</ULink>
-come with an overview of the methods and demonstrate spatial index 
-mechanisms for 2D boxes, polygons, integer intervals and text
-(see also <ULink url="http://gist.cs.berkeley.edu:8000/gist/">GiST at Berkeley</ULink>).
-In the box example, we
-are supposed to see a performance gain when using the GiST index; it did
-work for me but I do not have a reasonably large collection of boxes
-to check that. Other examples also worked, except polygons: I got an 
-error doing
+  <para>
+    Some of the information here is derived from <ulink
+    url="http://gist.cs.berkeley.edu/">the University of California at
+    Berkeley's GiST Indexing Project web site</ulink> and Marcel Kornacker's
+    thesis, 
+    <ulink url="http://citeseer.nj.nec.com/448594.html">Access Methods for
+    Next-Generation Database Systems</ulink>.   The <acronym>GiST</acronym>
+    implementation in <productname>PostgreSQL</productname> is primarily
+    maintained by Teodor Sigaev and Oleg Bartunov, and there is more
+    information on their website: <ulink
+    url="http://www.sai.msu.su/~megera/postgres/gist/"></>.
+  </para>
 
-<ProgramListing>
-test=> CREATE INDEX pix ON polytmp
-test-> USING GIST (p:box gist_poly_ops) WITH (ISLOSSY);
-ERROR:  cannot open pix
+</sect1>
 
-(PostgreSQL 6.3               Sun Feb  1 14:57:30 EST 1998)
-</ProgramListing>
-</para>
-<Para>
-I could not get sense of this error message; it appears to be something
-we'd rather ask the developers about (see also Note 4 below). What I
-would suggest here is that someone of you linux guys (linux==gcc?) fetch the 
-original sources quoted above and apply my patch (see attachment) and 
-tell us what you feel about it. Looks cool to me, but I would not like 
-to hold it up while there are so many competent people around.
-</para>
-<Para>
-A few notes on the sources:
-</para>
-<Para>
-1. I failed to make use of the original (HP-UX) Makefile and rearranged
-   the Makefile from the ancient postgres95 tutorial to do the job. I tried
-   to keep it generic, but I am a very poor makefile writer -- just did
-   some monkey work. Sorry about that, but I guess it is now a little
-   more portable that the original makefile.
-</para>
-<Para>
-2. I built the example sources right under pgsql/src (just extracted the
-   tar file there). The aforementioned Makefile assumes it is one level
-   below pgsql/src (in our case, in pgsql/src/pggist).
-</para>
-<Para>
-3. The changes I made to the *.c files were all about #include's,
-   function prototypes and typecasting. Other than that, I just threw 
-   away a bunch of unused vars and added a couple parentheses to please
-   gcc. I hope I did not screw up too much :)
-</para>
-<Para>
-4. There is a comment in polyproc.sql:
+<sect1 id="extensibility">
+ <title>Extensibility</title>
 
-<ProgramListing>
--- -- there's a memory leak in rtree poly_ops!!
--- -- CREATE INDEX pix2 ON polytmp USING RTREE (p poly_ops);
-</ProgramListing>
+ <para>
+   Traditionally, implementing a new index access method meant a lot of
+   difficult work.  It was necessary to understand the inner workings of the
+   database, such as the lock manager and Write-Ahead Log.  The
+   <acronym>GiST</acronym> interface has a high level of abstraction,
+   requiring the access method implementor to only implement the semantics of
+   the data type being accessed.  The <acronym>GiST</acronym> layer itself
+   takes care of concurrency, logging and searching the tree structure.
+ </para>
+ 
+ <para>
+   This extensibility should not be confused with the extensibility of the
+   other standard search trees in terms of the data they can handle.  For
+   example, <productname>PostgreSQL</productname> supports extensible B+-trees
+   and R-trees. That means that you can use
+   <productname>PostgreSQL</productname> to build a B+-tree or R-tree over any
+   data type you want. But B+-trees only support range predicates
+   (<literal>&lt;</literal>, <literal>=</literal>, <literal>&gt;</literal>),
+   and R-trees only support n-D range queries (contains, contained, equals).
+ </para>
+ 
+ <para>
+   So if you index, say, an image collection with a
+   <productname>PostgreSQL</productname> B+-tree, you can only issue queries
+   such as <quote>is imagex equal to imagey</quote>, <quote>is imagex less
+   than imagey</quote> and <quote>is imagex greater than imagey</quote>?
+   Depending on how you define <quote>equals</quote>, <quote>less than</quote>
+   and <quote>greater than</quote> in this context, this could be useful.
+   However, by using a <acronym>GiST</acronym> based index, you could create
+   ways to ask domain-specific questions, perhaps <quote>find all images of
+   horses</quote> or <quote>find all over-exposed images</quote>.
+ </para>
 
-   Roger that!! I thought it could be related to a number of
-   <ProductName>PostgreSQL</ProductName> versions
-   back and tried the query. My system went nuts and I had to shoot down
-   the postmaster in about ten minutes.
-</para>
+ <para>
+   All it takes to get a <acronym>GiST</acronym> access method up and running
+   is to implement seven user-defined methods, which define the behavior of
+   keys in the tree. Of course these methods have to be pretty fancy to
+   support fancy queries, but for all the standard queries (B+-trees,
+   R-trees, etc.) they're relatively straightforward. In short,
+   <acronym>GiST</acronym> combines extensibility along with generality, code
+   reuse, and a clean interface.
+  </para>
 
-<Para>
-I will continue to look into GiST for a while, but I would also
-appreciate
-more examples of R-tree usage.
-</para>
-</Chapter>
+</sect1>
+
+<sect1 id="implementation">
+ <title>Implementation</title>
+ 
+ <para>
+   There are seven methods that an index operator class for
+   <acronym>GiST</acronym> must provide:
+ </para>
+
+ <variablelist>
+    <varlistentry>
+     <term>consistent</term>
+     <listitem>
+      <para>
+       Given a predicate <literal>p</literal> on a tree page, and a user
+       query, <literal>q</literal>, this method will return false if it is
+       certain that both <literal>p</literal> and <literal>q</literal> cannot
+       be true for a given data item.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>union</term>
+     <listitem>
+      <para>
+       This method consolidates information in the tree.  Given a set of
+       entries, this function generates a new predicate that is true for all
+       the entries.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>compress</term>
+     <listitem>
+      <para>
+       Converts the data item into a format suitable for physical storage in
+       an index page.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>decompress</term>
+     <listitem>
+      <para>
+       The reverse of the <function>compress</function> method.  Converts the
+       index representation of the data item into a format that can be
+       manipulated by the database.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>penalty</term>
+     <listitem>
+      <para>
+       Returns a value indicating the <quote>cost</quote> of inserting the new
+       entry into a particular branch of the tree.  items will be inserted
+       down the path of least <function>penalty</function> in the tree.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>picksplit</term>
+     <listitem>
+      <para>
+       When a page split is necessary, this function decides which entries on
+       the page are to stay on the old page, and which are to move to the new
+       page.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>same</term>
+     <listitem>
+      <para>
+       Returns true if two entries are identical, false otherwise.
+      </para>
+     </listitem>
+    </varlistentry>
+
+  </variablelist>
+
+</sect1>
+
+<sect1 id="limitations">
+ <title>Limitations</title>
+
+ <para>
+  The current implementation of <acronym>GiST</acronym> within
+  <productname>PostgreSQL</productname> has some major limitations:
+  <acronym>GiST</acronym> access is not concurrent; the
+  <acronym>GiST</acronym> interface doesn't allow the development of certain
+  data types, such as digital trees (see papers by Aoki et al); and there
+  is not yet any support for write-ahead logging of updates in
+  <acronym>GiST</acronym> indexes.
+ </para>
+
+ <para>
+  Solutions to the concurrency problems appear in Marcel Kornacker's
+  thesis; however these ideas have not yet been put into practice in the
+  <productname>PostgreSQL</productname> implementation.
+ </para>
+
+ <para>
+  The lack of write-ahead logging is just a small matter of programming,
+  but since it isn't done yet, a crash could render a <acronym>GiST</acronym>
+  index inconsistent, forcing a REINDEX.
+ </para>
+
+</sect1>
+
+<sect1 id="examples">
+ <title>Examples</title>
+
+ <para>
+  To see example implementations of index methods implemented using
+  <acronym>GiST</acronym>, examine the following contrib modules:
+ </para>
+ 
+ <variablelist>
+  <varlistentry>
+   <term>btree_gist</term>
+   <listitem>
+    <para>B-Tree</para>
+   </listitem>
+  </varlistentry>
+
+  <varlistentry>
+   <term>cube</term>
+   <listitem>
+    <para>Indexing for multi-dimensional cubes</para>
+   </listitem>
+  </varlistentry>
+
+  <varlistentry>
+   <term>intarray</term>
+   <listitem>
+    <para>RD-Tree for one-dimensional array of int4 values</para>
+   </listitem>
+  </varlistentry>
+
+  <varlistentry>
+   <term>ltree</term>
+   <listitem>
+    <para>Indexing for tree-like stuctures</para>
+   </listitem>
+  </varlistentry>
+
+  <varlistentry>
+   <term>rtree_gist</term>
+   <listitem>
+    <para>R-Tree</para>
+   </listitem>
+  </varlistentry>
+
+  <varlistentry>
+   <term>seg</term>
+   <listitem>
+    <para>Storage and indexed access for <quote>float ranges</quote></para>
+   </listitem>
+  </varlistentry>
+
+  <varlistentry>
+   <term>tsearch and tsearch2</term>
+   <listitem>
+    <para>Full text indexing</para>
+   </listitem>
+  </varlistentry>
+ </variablelist>
+
+</sect1>
+
+</chapter>
