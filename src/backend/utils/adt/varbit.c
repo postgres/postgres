@@ -1,125 +1,109 @@
 /*-------------------------------------------------------------------------
  *
  * varbit.c
- *	  Functions for the built-in type bit() and varying bit().
+ *	  Functions for the SQL datatypes BIT() and BIT VARYING().
+ *
+ * Code originally contributed by Adriaan Joubert.
+ *
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varbit.c,v 1.7 2000/08/07 20:15:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varbit.c,v 1.8 2000/08/21 04:48:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
-/* Include file list stolen from float.c.
- * Can probably get rid of some of these.
- * - thomas 2000-04-07
- */
-#include <ctype.h>
-#include <errno.h>
-#include <float.h>				/* faked on sunos4 */
-#include <math.h>
-#include <limits.h>
-
-#include "fmgr.h"
-#include "utils/builtins.h"
+#include "catalog/pg_type.h"
+#include "utils/array.h"
+#include "utils/fmgroids.h"
 #include "utils/varbit.h"
-#include "access/htup.h"
 
-/*
-   Prefixes:
-	 zp    -- zero-padded fixed length bit string
-	 var   -- varying bit string
+#define HEXDIG(z)	 ((z)<10 ? ((z)+'0') : ((z)-10+'A'))
 
-   attypmod -- contains the length of the bit string in bits, or for
-			   varying bits the maximum length.
 
-   The data structure contains the following elements:
-	  header  -- length of the whole data structure (incl header)
-				 in bytes. (as with all varying length datatypes)
-	  data section -- private data section for the bits data structures
-		 bitlength -- lenght of the bit string in bits
-	 bitdata   -- least significant byte first string
-*/
-
-char *
-varbit_out(bits8 *s)
-{
-	return zpbits_out(s);
-}
+/*----------
+ *	Prefixes:
+ *	 zp    -- zero-padded fixed length bit string
+ *	 var   -- varying bit string
+ *
+ *	attypmod -- contains the length of the bit string in bits, or for
+ *			   varying bits the maximum length.
+ *
+ *	The data structure contains the following elements:
+ *	  header  -- length of the whole data structure (incl header)
+ *				 in bytes. (as with all varying length datatypes)
+ *	  data section -- private data section for the bits data structures
+ *		bitlength -- length of the bit string in bits
+ *		bitdata   -- bit string, most significant byte first
+ *----------
+ */
 
 /*
  * zpbit_in -
- *	  converts a string to the internal representation of a bitstring.
+ *	  converts a char string to the internal representation of a bitstring.
  *		  The length is determined by the number of bits required plus
  *		  VARHDRSZ bytes or from atttypmod.
- *	  (XXX dummy is here because we pass typelem as the second argument
- *		  for array_in. copied this, no idea what it means??)
  */
-bits8 *
-zpbit_in(char *s, int dummy, int32 atttypmod)
+Datum
+zpbit_in(PG_FUNCTION_ARGS)
 {
-	bits8	   *result;			/* the bits string that was read in   */
+	char	   *s = PG_GETARG_CSTRING(0);
+#ifdef NOT_USED
+	Oid			typelem = PG_GETARG_OID(1);
+#endif
+	int32		atttypmod = PG_GETARG_INT32(2);
+	VarBit	   *result;			/* The resulting bit string			  */
 	char	   *sp;				/* pointer into the character string  */
-	bits8	   *r;
+	bits8	   *r;				/* pointer into the result */
 	int			len,			/* Length of the whole data structure */
 				bitlen,			/* Number of bits in the bit string   */
 				slen;			/* Length of the input string		  */
-	int			bit_not_hex = 0;/* 0 = hex string  1=bit string		  */
+	bool		bit_not_hex;	/* false = hex string  true = bit string */
 	int			bc,
 				ipad;
 	bits8		x = 0;
 
-
-	if (s == NULL)
-		return (bits8 *) NULL;
-
 	/* Check that the first character is a b or an x */
 	if (s[0] == 'b' || s[0] == 'B')
-		bit_not_hex = 1;
+		bit_not_hex = true;
 	else if (s[0] == 'x' || s[0] == 'X')
-		bit_not_hex = 0;
+		bit_not_hex = false;
 	else
+	{
 		elog(ERROR, "zpbit_in: %s is not a valid bitstring", s);
+		bit_not_hex = false;	/* keep compiler quiet */
+	}
 
 	slen = strlen(s) - 1;
 	/* Determine bitlength from input string */
-	bitlen = slen;
-	if (!bit_not_hex)
-		bitlen *= 4;
+	if (bit_not_hex)
+		bitlen = slen;
+	else
+		bitlen = slen * 4;
 
 	/*
 	 * Sometimes atttypmod is not supplied. If it is supplied we need to
 	 * make sure that the bitstring fits. Note that the number of infered
 	 * bits can be larger than the number of actual bits needed, but only
 	 * if we are reading a hex string and not by more than 3 bits, as a
-	 * hex string gives and accurate length upto 4 bits
+	 * hex string gives an accurate length up to 4 bits
 	 */
-	if (atttypmod == -1)
+	if (atttypmod <= 0)
 		atttypmod = bitlen;
-	else if ((bitlen > atttypmod && bit_not_hex) ||
-			 (bitlen > atttypmod + 3 && !bit_not_hex))
-		elog(ERROR, "zpbit_in: bit string of size %d cannot be written into bits(%d)",
-			 bitlen, atttypmod);
+	else if (bit_not_hex ? (bitlen > atttypmod) : (bitlen > atttypmod + 3))
+		elog(ERROR, "zpbit_in: bit string too long for bit(%d)",
+			 atttypmod);
 
-
-	len = VARBITDATALEN(atttypmod);
-
-	if (len > MaxAttrSize)
-		elog(ERROR, "zpbit_in: length of bit() must be less than %ld",
-			 (long) ((MaxAttrSize - VARHDRSZ - VARBITHDRSZ) * BITSPERBYTE));
-
-	result = (bits8 *) palloc(len);
-	/* set to 0 so that *r is always initialised and strin is zero-padded */
+	len = VARBITTOTALLEN(atttypmod);
+	result = (VarBit *) palloc(len);
+	/* set to 0 so that *r is always initialised and string is zero-padded */
 	memset(result, 0, len);
 	VARATT_SIZEP(result) = len;
 	VARBITLEN(result) = atttypmod;
 
-	/*
-	 * We need to read the bitstring from the end, as we store it least
-	 * significant byte first. s points to the byte before the beginning
-	 * of the bitstring
-	 */
 	sp = s + 1;
 	r = VARBITS(result);
 	if (bit_not_hex)
@@ -127,24 +111,24 @@ zpbit_in(char *s, int dummy, int32 atttypmod)
 		/* Parse the bit representation of the string */
 		/* We know it fits, as bitlen was compared to atttypmod */
 		x = BITHIGH;
-		for (bc = 0; sp != s + slen + 1; sp++, bc++)
+		for (; *sp; sp++)
 		{
 			if (*sp == '1')
 				*r |= x;
-			if (bc == 7)
+			else if (*sp != '0')
+				elog(ERROR, "Cannot parse %c as a binary digit", *sp);
+			x >>= 1;
+			if (x == 0)
 			{
-				bc = 0;
 				x = BITHIGH;
 				r++;
 			}
-			else
-				x >>= 1;
 		}
 	}
 	else
 	{
 		/* Parse the hex representation of the string */
-		for (bc = 0; sp != s + slen + 1; sp++)
+		for (bc = 0; *sp; sp++)
 		{
 			if (*sp >= '0' && *sp <= '9')
 				x = (bits8) (*sp - '0');
@@ -156,13 +140,13 @@ zpbit_in(char *s, int dummy, int32 atttypmod)
 				elog(ERROR, "Cannot parse %c as a hex digit", *sp);
 			if (bc)
 			{
-				bc = 0;
 				*r++ |= x;
+				bc = 0;
 			}
 			else
 			{
-				bc++;
 				*r = x << 4;
+				bc = 1;
 			}
 		}
 	}
@@ -170,19 +154,19 @@ zpbit_in(char *s, int dummy, int32 atttypmod)
 	if (bitlen > atttypmod)
 	{
 		/* Check that this fitted */
-		r = (bits8 *) (result + len - 1);
+		r = VARBITEND(result) - 1;
 		ipad = VARBITPAD(result);
 
 		/*
 		 * The bottom ipad bits of the byte pointed to by r need to be
 		 * zero
 		 */
-		if (((*r << (BITSPERBYTE - ipad)) & BITMASK) > 0)
-			elog(ERROR, "zpbit_in: bit string too large for bit(%d) data type",
+		if (((*r << (BITSPERBYTE - ipad)) & BITMASK) != 0)
+			elog(ERROR, "zpbit_in: bit string too long for bit(%d)",
 				 atttypmod);
 	}
 
-	return result;
+	PG_RETURN_VARBIT_P(result);
 }
 
 /* zpbit_out -
@@ -190,9 +174,10 @@ zpbit_in(char *s, int dummy, int32 atttypmod)
  *	  to be more compact than bit strings, and consequently much more efficient
  *	  for long strings
  */
-char *
-zpbit_out(bits8 *s)
+Datum
+zpbit_out(PG_FUNCTION_ARGS)
 {
+	VarBit	   *s = PG_GETARG_VARBIT_P(0);
 	char	   *result,
 			   *r;
 	bits8	   *sp;
@@ -200,46 +185,223 @@ zpbit_out(bits8 *s)
 				len,
 				bitlen;
 
-	if (s == NULL)
+	bitlen = VARBITLEN(s);
+	len = (bitlen + 3) / 4;
+	result = (char *) palloc(len + 2);
+	sp = VARBITS(s);
+	r = result;
+	*r++ = 'X';
+	/* we cheat by knowing that we store full bytes zero padded */
+	for (i = 0; i < len; i += 2, sp++)
 	{
-		result = (char *) palloc(2);
-		result[0] = '-';
-		result[1] = '\0';
+		*r++ = HEXDIG((*sp) >> 4);
+		*r++ = HEXDIG((*sp) & 0xF);
+	}
+
+	/*
+	 * Go back one step if we printed a hex number that was not part
+	 * of the bitstring anymore
+	 */
+	if (i > len)
+		r--;
+	*r = '\0';
+
+	PG_RETURN_CSTRING(result);
+}
+
+/* zpbit()
+ * Converts a bit() type to a specific internal length.
+ * len is the bitlength specified in the column definition.
+ */
+Datum
+zpbit(PG_FUNCTION_ARGS)
+{
+	VarBit	   *arg = PG_GETARG_VARBIT_P(0);
+	int32		len = PG_GETARG_INT32(1);
+	VarBit	   *result;
+	int			rlen;
+
+	/* No work if typmod is invalid or supplied data matches it already */
+	if (len <= 0 || len == VARBITLEN(arg))
+		PG_RETURN_VARBIT_P(arg);
+
+	rlen = VARBITTOTALLEN(len);
+	result = (VarBit *) palloc(rlen);
+	/* set to 0 so that result is zero-padded if input is shorter */
+	memset(result, 0, rlen);
+	VARATT_SIZEP(result) = rlen;
+	VARBITLEN(result) = len;
+
+	memcpy(VARBITS(result), VARBITS(arg),
+		   Min(VARBITBYTES(result), VARBITBYTES(arg)));
+
+	PG_RETURN_VARBIT_P(result);
+}
+
+/* _zpbit()
+ * Converts an array of bit() elements to a specific internal length.
+ * len is the bitlength specified in the column definition.
+ */
+Datum
+_zpbit(PG_FUNCTION_ARGS)
+{
+	ArrayType  *v = (ArrayType *) PG_GETARG_VARLENA_P(0);
+	int32		len = PG_GETARG_INT32(1);
+	FunctionCallInfoData	locfcinfo;
+	/*
+	 * Since zpbit() is a built-in function, we should only need to
+	 * look it up once per run.
+	 */
+	static FmgrInfo			zpbit_finfo;
+
+	if (zpbit_finfo.fn_oid == InvalidOid)
+		fmgr_info(F_ZPBIT, &zpbit_finfo);
+
+	MemSet(&locfcinfo, 0, sizeof(locfcinfo));
+	locfcinfo.flinfo = &zpbit_finfo;
+	locfcinfo.nargs = 2;
+	/* We assume we are "strict" and need not worry about null inputs */
+	locfcinfo.arg[0] = PointerGetDatum(v);
+	locfcinfo.arg[1] = Int32GetDatum(len);
+
+	return array_map(&locfcinfo, ZPBITOID, ZPBITOID);
+}
+
+/*
+ * varbit_in -
+ *	  converts a string to the internal representation of a bitstring.
+ *		This is the same as zpbit_in except that atttypmod is taken as
+ *		the maximum length, not the exact length to force the bitstring to.
+ */
+Datum
+varbit_in(PG_FUNCTION_ARGS)
+{
+	char	   *s = PG_GETARG_CSTRING(0);
+#ifdef NOT_USED
+	Oid			typelem = PG_GETARG_OID(1);
+#endif
+	int32		atttypmod = PG_GETARG_INT32(2);
+	VarBit	   *result;			/* The resulting bit string			  */
+	char	   *sp;				/* pointer into the character string  */
+	bits8	   *r;				/* pointer into the result */
+	int			len,			/* Length of the whole data structure */
+				bitlen,			/* Number of bits in the bit string   */
+				slen;			/* Length of the input string		  */
+	bool		bit_not_hex;	/* false = hex string  true = bit string */
+	int			bc,
+				ipad;
+	bits8		x = 0;
+
+	/* Check that the first character is a b or an x */
+	if (s[0] == 'b' || s[0] == 'B')
+		bit_not_hex = true;
+	else if (s[0] == 'x' || s[0] == 'X')
+		bit_not_hex = false;
+	else
+	{
+		elog(ERROR, "varbit_in: %s is not a valid bitstring", s);
+		bit_not_hex = false;	/* keep compiler quiet */
+	}
+
+	slen = strlen(s) - 1;
+	/* Determine bitlength from input string */
+	if (bit_not_hex)
+		bitlen = slen;
+	else
+		bitlen = slen * 4;
+
+	/*
+	 * Sometimes atttypmod is not supplied. If it is supplied we need to
+	 * make sure that the bitstring fits. Note that the number of infered
+	 * bits can be larger than the number of actual bits needed, but only
+	 * if we are reading a hex string and not by more than 3 bits, as a
+	 * hex string gives an accurate length up to 4 bits
+	 */
+	if (atttypmod <= 0)
+		atttypmod = bitlen;
+	else if (bit_not_hex ? (bitlen > atttypmod) : (bitlen > atttypmod + 3))
+		elog(ERROR, "varbit_in: bit string too long for bit varying(%d)",
+			 atttypmod);
+
+	len = VARBITTOTALLEN(bitlen);
+	result = (VarBit *) palloc(len);
+	/* set to 0 so that *r is always initialised and string is zero-padded */
+	memset(result, 0, len);
+	VARATT_SIZEP(result) = len;
+	VARBITLEN(result) = Min(bitlen, atttypmod);
+
+	sp = s + 1;
+	r = VARBITS(result);
+	if (bit_not_hex)
+	{
+		/* Parse the bit representation of the string */
+		/* We know it fits, as bitlen was compared to atttypmod */
+		x = BITHIGH;
+		for (; *sp; sp++)
+		{
+			if (*sp == '1')
+				*r |= x;
+			else if (*sp != '0')
+				elog(ERROR, "Cannot parse %c as a binary digit", *sp);
+			x >>= 1;
+			if (x == 0)
+			{
+				x = BITHIGH;
+				r++;
+			}
+		}
 	}
 	else
 	{
-		bitlen = VARBITLEN(s);
-		len = bitlen / 4 + (bitlen % 4 > 0 ? 1 : 0);
-		result = (char *) palloc(len + 4);
-		sp = VARBITS(s);
-		r = result;
-		*r++ = 'X';
-		*r++ = '\'';
-		/* we cheat by knowing that we store full bytes zero padded */
-		for (i = 0; i < len; i += 2, sp++)
+		/* Parse the hex representation of the string */
+		for (bc = 0; *sp; sp++)
 		{
-			*r++ = HEXDIG((*sp) >> 4);
-			*r++ = HEXDIG((*sp) & 0xF);
+			if (*sp >= '0' && *sp <= '9')
+				x = (bits8) (*sp - '0');
+			else if (*sp >= 'A' && *sp <= 'F')
+				x = (bits8) (*sp - 'A') + 10;
+			else if (*sp >= 'a' && *sp <= 'f')
+				x = (bits8) (*sp - 'a') + 10;
+			else
+				elog(ERROR, "Cannot parse %c as a hex digit", *sp);
+			if (bc)
+			{
+				*r++ |= x;
+				bc = 0;
+			}
+			else
+			{
+				*r = x << 4;
+				bc = 1;
+			}
 		}
+	}
+
+	if (bitlen > atttypmod)
+	{
+		/* Check that this fitted */
+		r = VARBITEND(result) - 1;
+		ipad = VARBITPAD(result);
 
 		/*
-		 * Go back one step if we printed a hex number that was not part
-		 * of the bitstring anymore
+		 * The bottom ipad bits of the byte pointed to by r need to be
+		 * zero
 		 */
-		if (i == len + 1)
-			r--;
-		*r++ = '\'';
-		*r = '\0';
+		if (((*r << (BITSPERBYTE - ipad)) & BITMASK) != 0)
+			elog(ERROR, "varbit_in: bit string too long for bit varying(%d)",
+				 atttypmod);
 	}
-	return result;
+
+	PG_RETURN_VARBIT_P(result);
 }
 
-/* zpbits_out -
- *	  Prints the string a bits
+/* varbit_out -
+ *	  Prints the string as bits to preserve length accurately
  */
-char *
-zpbits_out(bits8 *s)
+Datum
+varbit_out(PG_FUNCTION_ARGS)
 {
+	VarBit	   *s = PG_GETARG_VARBIT_P(0);
 	char	   *result,
 			   *r;
 	bits8	   *sp;
@@ -248,175 +410,85 @@ zpbits_out(bits8 *s)
 				k,
 				len;
 
-	if (s == NULL)
+	len = VARBITLEN(s);
+	result = (char *) palloc(len + 2);
+	sp = VARBITS(s);
+	r = result;
+	*r++ = 'B';
+	for (i = 0; i < len - BITSPERBYTE; i += BITSPERBYTE, sp++)
 	{
-		result = (char *) palloc(2);
-		result[0] = '-';
-		result[1] = '\0';
-	}
-	else
-	{
-		len = VARBITLEN(s);
-		result = (char *) palloc(len + 4);
-		sp = VARBITS(s);
-		r = result;
-		*r++ = 'B';
-		*r++ = '\'';
-		for (i = 0; i < len - BITSPERBYTE; i += BITSPERBYTE, sp++)
-		{
-			x = *sp;
-			for (k = 0; k < BITSPERBYTE; k++)
-			{
-				*r++ = (x & BITHIGH) ? '1' : '0';
-				x <<= 1;
-			}
-		}
 		x = *sp;
-		for (k = i; k < len; k++)
+		for (k = 0; k < BITSPERBYTE; k++)
 		{
 			*r++ = (x & BITHIGH) ? '1' : '0';
 			x <<= 1;
 		}
-		*r++ = '\'';
-		*r = '\0';
 	}
-	return result;
+	x = *sp;
+	for (k = i; k < len; k++)
+	{
+		*r++ = (x & BITHIGH) ? '1' : '0';
+		x <<= 1;
+	}
+	*r = '\0';
+
+	PG_RETURN_CSTRING(result);
 }
 
-
-/*
- * varbit_in -
- *	  converts a string to the internal representation of a bitstring.
-*/
-bits8 *
-varbit_in(char *s, int dummy, int32 atttypmod)
+/* varbit()
+ * Converts a varbit() type to a specific internal length.
+ * len is the maximum bitlength specified in the column definition.
+ */
+Datum
+varbit(PG_FUNCTION_ARGS)
 {
-	bits8	   *result;			/* The resulting bit string			  */
-	char	   *sp;				/* pointer into the character string  */
-	bits8	   *r;
-	int			len,			/* Length of the whole data structure */
-				bitlen,			/* Number of bits in the bit string   */
-				slen;			/* Length of the input string		  */
-	int			bit_not_hex = 0;
-	int			bc,
-				ipad;
-	bits8		x = 0;
+	VarBit	   *arg = PG_GETARG_VARBIT_P(0);
+	int32		len = PG_GETARG_INT32(1);
+	VarBit	   *result;
+	int			rlen;
 
+	/* No work if typmod is invalid or supplied data matches it already */
+	if (len <= 0 || len >= VARBITLEN(arg))
+		PG_RETURN_VARBIT_P(arg);
 
-	if (s == NULL)
-		return (bits8 *) NULL;
+	rlen = VARBITTOTALLEN(len);
+	result = (VarBit *) palloc(rlen);
+	VARATT_SIZEP(result) = rlen;
+	VARBITLEN(result) = len;
 
-	/* Check that the first character is a b or an x */
-	if (s[0] == 'b' || s[0] == 'B')
-		bit_not_hex = 1;
-	else if (s[0] == 'x' || s[0] == 'X')
-		bit_not_hex = 0;
-	else
-		elog(ERROR, "zpbit_in: %s is not a valid bitstring", s);
+	memcpy(VARBITS(result), VARBITS(arg), VARBITBYTES(result));
 
-	slen = strlen(s) - 1;
-	/* Determine bitlength from input string */
-	bitlen = slen;
-	if (!bit_not_hex)
-		bitlen *= 4;
-
-	/*
-	 * Sometimes atttypmod is not supplied. If it is supplied we need to
-	 * make sure that the bitstring fits. Note that the number of infered
-	 * bits can be larger than the number of actual bits needed, but only
-	 * if we are reading a hex string and not by more than 3 bits, as a
-	 * hex string gives and accurate length upto 4 bits
-	 */
-	if (atttypmod > -1)
-		if ((bitlen > atttypmod && bit_not_hex) ||
-			(bitlen > atttypmod + 3 && !bit_not_hex))
-			elog(ERROR, "varbit_in: bit string of size %d cannot be written into varying bits(%d)",
-				 bitlen, atttypmod);
-
-
-	len = VARBITDATALEN(bitlen);
-
-	if (len > MaxAttrSize)
-		elog(ERROR, "varbit_in: length of bit() must be less than %ld",
-			 (long) ((MaxAttrSize - VARHDRSZ - VARBITHDRSZ) * BITSPERBYTE));
-
-	result = (bits8 *) palloc(len);
-	/* set to 0 so that *r is always initialised and strin is zero-padded */
-	memset(result, 0, len);
-	VARATT_SIZEP(result) = len;
-	VARBITLEN(result) = bitlen;
-
-	/*
-	 * We need to read the bitstring from the end, as we store it least
-	 * significant byte first. s points to the byte before the beginning
-	 * of the bitstring
-	 */
-	sp = s + 1;
-	r = VARBITS(result);
-	if (bit_not_hex)
-	{
-		/* Parse the bit representation of the string */
-		x = BITHIGH;
-		for (bc = 0; sp != s + slen + 1; sp++, bc++)
-		{
-			if (*sp == '1')
-				*r |= x;
-			if (bc == 7)
-			{
-				bc = 0;
-				x = BITHIGH;
-				r++;
-			}
-			else
-				x >>= 1;
-		}
-	}
-	else
-	{
-		for (bc = 0; sp != s + slen + 1; sp++)
-		{
-			if (*sp >= '0' && *sp <= '9')
-				x = (bits8) (*sp - '0');
-			else if (*sp >= 'A' && *sp <= 'F')
-				x = (bits8) (*sp - 'A') + 10;
-			else if (*sp >= 'a' && *sp <= 'f')
-				x = (bits8) (*sp - 'a') + 10;
-			else
-				elog(ERROR, "Cannot parse %c as a hex digit", *sp);
-			if (bc)
-			{
-				bc = 0;
-				*r++ |= x;
-			}
-			else
-			{
-				bc++;
-				*r = x << 4;
-			}
-		}
-	}
-
-	if (bitlen > atttypmod)
-	{
-		/* Check that this fitted */
-		r = (bits8 *) (result + len - 1);
-		ipad = VARBITPAD(result);
-
-		/*
-		 * The bottom ipad bits of the byte pointed to by r need to be
-		 * zero
-		 */
-		if (((*r << (BITSPERBYTE - ipad)) & BITMASK) > 0)
-			elog(ERROR, "varbit_in: bit string too large for varying bit(%d) data type",
-				 atttypmod);
-	}
-
-	return result;
+	PG_RETURN_VARBIT_P(result);
 }
 
-/*
-  the zpbit_out routines are fine for varying bits as well
-*/
+/* _varbit()
+ * Converts an array of bit() elements to a specific internal length.
+ * len is the maximum bitlength specified in the column definition.
+ */
+Datum
+_varbit(PG_FUNCTION_ARGS)
+{
+	ArrayType  *v = (ArrayType *) PG_GETARG_VARLENA_P(0);
+	int32		len = PG_GETARG_INT32(1);
+	FunctionCallInfoData	locfcinfo;
+	/*
+	 * Since varbit() is a built-in function, we should only need to
+	 * look it up once per run.
+	 */
+	static FmgrInfo			varbit_finfo;
+
+	if (varbit_finfo.fn_oid == InvalidOid)
+		fmgr_info(F_VARBIT, &varbit_finfo);
+
+	MemSet(&locfcinfo, 0, sizeof(locfcinfo));
+	locfcinfo.flinfo = &varbit_finfo;
+	locfcinfo.nargs = 2;
+	/* We assume we are "strict" and need not worry about null inputs */
+	locfcinfo.arg[0] = PointerGetDatum(v);
+	locfcinfo.arg[1] = Int32GetDatum(len);
+
+	return array_map(&locfcinfo, VARBITOID, VARBITOID);
+}
 
 
 /*
@@ -432,63 +504,78 @@ varbit_in(char *s, int dummy, int32 atttypmod)
  *
  * Zeros from the beginning of a bitstring cannot simply be ignored, as they
  * may be part of a bit string and may be significant.
+ *
+ * Note: btree indexes need these routines not to leak memory; therefore,
+ * be careful to free working copies of toasted datums.  Most places don't
+ * need to be so careful.
  */
 
-bool
-biteq(bits8 *arg1, bits8 *arg2)
+Datum
+biteq(PG_FUNCTION_ARGS)
 {
+	VarBit	   *arg1 = PG_GETARG_VARBIT_P(0);
+	VarBit	   *arg2 = PG_GETARG_VARBIT_P(1);
+	bool		result;
 	int			bitlen1,
 				bitlen2;
 
-	if (!PointerIsValid(arg1) || !PointerIsValid(arg2))
-		return (bool) 0;
 	bitlen1 = VARBITLEN(arg1);
 	bitlen2 = VARBITLEN(arg2);
 	if (bitlen1 != bitlen2)
-		return (bool) 0;
+		result = false;
+	else
+	{
+		/* bit strings are always stored in a full number of bytes */
+		result = memcmp(VARBITS(arg1), VARBITS(arg2), VARBITBYTES(arg1)) == 0;
+	}
 
-	/* bit strings are always stored in a full number of bytes */
-	return memcmp((void *) VARBITS(arg1), (void *) VARBITS(arg2),
-				  VARBITBYTES(arg1)) == 0;
+	PG_FREE_IF_COPY(arg1, 0);
+	PG_FREE_IF_COPY(arg2, 1);
+
+	PG_RETURN_BOOL(result);
 }
 
-bool
-bitne(bits8 *arg1, bits8 *arg2)
+Datum
+bitne(PG_FUNCTION_ARGS)
 {
+	VarBit	   *arg1 = PG_GETARG_VARBIT_P(0);
+	VarBit	   *arg2 = PG_GETARG_VARBIT_P(1);
+	bool		result;
 	int			bitlen1,
 				bitlen2;
 
-	if (!PointerIsValid(arg1) || !PointerIsValid(arg2))
-		return (bool) 0;
 	bitlen1 = VARBITLEN(arg1);
 	bitlen2 = VARBITLEN(arg2);
 	if (bitlen1 != bitlen2)
-		return (bool) 1;
+		result = true;
+	else
+	{
+		/* bit strings are always stored in a full number of bytes */
+		result = memcmp(VARBITS(arg1), VARBITS(arg2), VARBITBYTES(arg1)) != 0;
+	}
 
-	/* bit strings are always stored in a full number of bytes */
-	return memcmp((void *) VARBITS(arg1), (void *) VARBITS(arg2),
-				  VARBITBYTES(arg1)) != 0;
+	PG_FREE_IF_COPY(arg1, 0);
+	PG_FREE_IF_COPY(arg2, 1);
+
+	PG_RETURN_BOOL(result);
 }
 
-/* bitcmp
+/* bit_cmp
  *
- * Compares two bitstrings and returns -1, 0, 1 depending on whether the first
+ * Compares two bitstrings and returns <0, 0, >0 depending on whether the first
  * string is smaller, equal, or bigger than the second. All bits are considered
  * and additional zero bits may make one string smaller/larger than the other,
  * even if their zero-padded values would be the same.
- *	 Anything is equal to undefined.
  */
-int
-bitcmp(bits8 *arg1, bits8 *arg2)
+static int32
+bit_cmp(VarBit *arg1, VarBit *arg2)
 {
 	int			bitlen1,
 				bytelen1,
 				bitlen2,
 				bytelen2;
-	int			cmp;
+	int32		cmp;
 
-	if (!PointerIsValid(arg1) || !PointerIsValid(arg2))
-		return (bool) 0;
 	bytelen1 = VARBITBYTES(arg1);
 	bytelen2 = VARBITBYTES(arg2);
 
@@ -498,63 +585,115 @@ bitcmp(bits8 *arg1, bits8 *arg2)
 		bitlen1 = VARBITLEN(arg1);
 		bitlen2 = VARBITLEN(arg2);
 		if (bitlen1 != bitlen2)
-			return bitlen1 < bitlen2 ? -1 : 1;
+			cmp = (bitlen1 < bitlen2) ? -1 : 1;
 	}
 	return cmp;
 }
 
-bool
-bitlt(bits8 *arg1, bits8 *arg2)
+Datum
+bitlt(PG_FUNCTION_ARGS)
 {
-	return (bool) (bitcmp(arg1, arg2) == -1);
+	VarBit	   *arg1 = PG_GETARG_VARBIT_P(0);
+	VarBit	   *arg2 = PG_GETARG_VARBIT_P(1);
+	bool		result;
+
+	result = (bit_cmp(arg1, arg2) < 0);
+
+	PG_FREE_IF_COPY(arg1, 0);
+	PG_FREE_IF_COPY(arg2, 1);
+
+	PG_RETURN_BOOL(result);
 }
 
-bool
-bitle(bits8 *arg1, bits8 *arg2)
+Datum
+bitle(PG_FUNCTION_ARGS)
 {
-	return (bool) (bitcmp(arg1, arg2) <= 0);
+	VarBit	   *arg1 = PG_GETARG_VARBIT_P(0);
+	VarBit	   *arg2 = PG_GETARG_VARBIT_P(1);
+	bool		result;
+
+	result = (bit_cmp(arg1, arg2) <= 0);
+
+	PG_FREE_IF_COPY(arg1, 0);
+	PG_FREE_IF_COPY(arg2, 1);
+
+	PG_RETURN_BOOL(result);
 }
 
-bool
-bitge(bits8 *arg1, bits8 *arg2)
+Datum
+bitgt(PG_FUNCTION_ARGS)
 {
-	return (bool) (bitcmp(arg1, arg2) >= 0);
+	VarBit	   *arg1 = PG_GETARG_VARBIT_P(0);
+	VarBit	   *arg2 = PG_GETARG_VARBIT_P(1);
+	bool		result;
+
+	result = (bit_cmp(arg1, arg2) > 0);
+
+	PG_FREE_IF_COPY(arg1, 0);
+	PG_FREE_IF_COPY(arg2, 1);
+
+	PG_RETURN_BOOL(result);
 }
 
-bool
-bitgt(bits8 *arg1, bits8 *arg2)
+Datum
+bitge(PG_FUNCTION_ARGS)
 {
-	return (bool) (bitcmp(arg1, arg2) == 1);
+	VarBit	   *arg1 = PG_GETARG_VARBIT_P(0);
+	VarBit	   *arg2 = PG_GETARG_VARBIT_P(1);
+	bool		result;
+
+	result = (bit_cmp(arg1, arg2) >= 0);
+
+	PG_FREE_IF_COPY(arg1, 0);
+	PG_FREE_IF_COPY(arg2, 1);
+
+	PG_RETURN_BOOL(result);
+}
+
+Datum
+bitcmp(PG_FUNCTION_ARGS)
+{
+	VarBit	   *arg1 = PG_GETARG_VARBIT_P(0);
+	VarBit	   *arg2 = PG_GETARG_VARBIT_P(1);
+	int32		result;
+
+	result = bit_cmp(arg1, arg2);
+
+	PG_FREE_IF_COPY(arg1, 0);
+	PG_FREE_IF_COPY(arg2, 1);
+
+	PG_RETURN_INT32(result);
 }
 
 /* bitcat
  * Concatenation of bit strings
  */
-bits8 *
-bitcat(bits8 *arg1, bits8 *arg2)
+Datum
+bitcat(PG_FUNCTION_ARGS)
 {
+	VarBit	   *arg1 = PG_GETARG_VARBIT_P(0);
+	VarBit	   *arg2 = PG_GETARG_VARBIT_P(1);
+	VarBit	   *result;
 	int			bitlen1,
 				bitlen2,
 				bytelen,
 				bit1pad,
 				bit2shift;
-	bits8	   *result;
 	bits8	   *pr,
 			   *pa;
-
-	if (!PointerIsValid(arg1) || !PointerIsValid(arg2))
-		return NULL;
 
 	bitlen1 = VARBITLEN(arg1);
 	bitlen2 = VARBITLEN(arg2);
 
-	bytelen = VARBITDATALEN(bitlen1 + bitlen2);
+	bytelen = VARBITTOTALLEN(bitlen1 + bitlen2);
 
-	result = (bits8 *) palloc(bytelen * sizeof(bits8));
+	result = (VarBit *) palloc(bytelen);
 	VARATT_SIZEP(result) = bytelen;
 	VARBITLEN(result) = bitlen1 + bitlen2;
+
 	/* Copy the first bitstring in */
 	memcpy(VARBITS(result), VARBITS(arg1), VARBITBYTES(arg1));
+
 	/* Copy the second bit string */
 	bit1pad = VARBITPAD(arg1);
 	if (bit1pad == 0)
@@ -564,11 +703,10 @@ bitcat(bits8 *arg1, bits8 *arg2)
 	}
 	else if (bitlen2 > 0)
 	{
-		/* We need to shift all the results to fit */
+		/* We need to shift all the bits to fit */
 		bit2shift = BITSPERBYTE - bit1pad;
-		pa = VARBITS(arg2);
 		pr = VARBITS(result) + VARBITBYTES(arg1) - 1;
-		for (; pa < VARBITEND(arg2); pa++)
+		for (pa = VARBITS(arg2); pa < VARBITEND(arg2); pa++)
 		{
 			*pr |= ((*pa >> bit2shift) & BITMASK);
 			pr++;
@@ -577,7 +715,7 @@ bitcat(bits8 *arg1, bits8 *arg2)
 		}
 	}
 
-	return result;
+	PG_RETURN_VARBIT_P(result);
 }
 
 /* bitsubstr
@@ -585,9 +723,13 @@ bitcat(bits8 *arg1, bits8 *arg2)
  * Note, s is 1-based.
  * SQL draft 6.10 9)
  */
-bits8 *
-bitsubstr(bits8 *arg, int32 s, int32 l)
+Datum
+bitsubstr(PG_FUNCTION_ARGS)
 {
+	VarBit	   *arg = PG_GETARG_VARBIT_P(0);
+	int32		s = PG_GETARG_INT32(1);
+	int32		l = PG_GETARG_INT32(2);
+	VarBit	   *result;
 	int			bitlen,
 				rbitlen,
 				len,
@@ -597,13 +739,9 @@ bitsubstr(bits8 *arg, int32 s, int32 l)
 	int			e,
 				s1,
 				e1;
-	bits8	   *result;
 	bits8		mask,
 			   *r,
 			   *ps;
-
-	if (!PointerIsValid(arg))
-		return NULL;
 
 	bitlen = VARBITLEN(arg);
 	e = s + l;
@@ -611,30 +749,30 @@ bitsubstr(bits8 *arg, int32 s, int32 l)
 	e1 = Min(e, bitlen + 1);
 	if (s1 > bitlen || e1 < 1)
 	{
-		/* Need to return a null string */
-		len = VARBITDATALEN(0);
-		result = (bits8 *) palloc(len);
-		VARBITLEN(result) = 0;
+		/* Need to return a zero-length bitstring */
+		len = VARBITTOTALLEN(0);
+		result = (VarBit *) palloc(len);
 		VARATT_SIZEP(result) = len;
+		VARBITLEN(result) = 0;
 	}
 	else
 	{
-
 		/*
 		 * OK, we've got a true substring starting at position s1-1 and
 		 * ending at position e1-1
 		 */
 		rbitlen = e1 - s1;
-		len = VARBITDATALEN(rbitlen);
-		result = (bits8 *) palloc(len);
-		VARBITLEN(result) = rbitlen;
+		len = VARBITTOTALLEN(rbitlen);
+		result = (VarBit *) palloc(len);
 		VARATT_SIZEP(result) = len;
+		VARBITLEN(result) = rbitlen;
 		len -= VARHDRSZ + VARBITHDRSZ;
 		/* Are we copying from a byte boundary? */
 		if ((s1 - 1) % BITSPERBYTE == 0)
 		{
 			/* Yep, we are copying bytes */
-			memcpy(VARBITS(result), VARBITS(arg) + (s1 - 1) / BITSPERBYTE, len);
+			memcpy(VARBITS(result), VARBITS(arg) + (s1 - 1) / BITSPERBYTE,
+				   len);
 		}
 		else
 		{
@@ -659,172 +797,221 @@ bitsubstr(bits8 *arg, int32 s, int32 l)
 		}
 	}
 
-	return result;
+	PG_RETURN_VARBIT_P(result);
+}
+
+/* bitlength, bitoctetlength 
+ * Return the length of a bit string
+ */
+Datum
+bitlength(PG_FUNCTION_ARGS)
+{
+	VarBit	   *arg = PG_GETARG_VARBIT_P(0);
+
+	PG_RETURN_INT32(VARBITLEN(arg));
+}
+
+Datum
+bitoctetlength(PG_FUNCTION_ARGS)
+{
+	VarBit	   *arg = PG_GETARG_VARBIT_P(0);
+
+	PG_RETURN_INT32(VARBITBYTES(arg));
 }
 
 /* bitand
- * perform a logical AND on two bit strings. The result is automatically
- * truncated to the shorter bit string
+ * perform a logical AND on two bit strings.
  */
-bits8 *
-bitand(bits8 *arg1, bits8 *arg2)
+Datum
+bitand(PG_FUNCTION_ARGS)
 {
+	VarBit	   *arg1 = PG_GETARG_VARBIT_P(0);
+	VarBit	   *arg2 = PG_GETARG_VARBIT_P(1);
+	VarBit	   *result;
 	int			len,
+				bitlen1,
+				bitlen2,
 				i;
-	bits8	   *result;
 	bits8	   *p1,
 			   *p2,
 			   *r;
 
-	if (!PointerIsValid(arg1) || !PointerIsValid(arg2))
-		return (bool) 0;
-
-	len = Min(VARSIZE(arg1), VARSIZE(arg2));
-	result = (bits8 *) palloc(len);
+	bitlen1 = VARBITLEN(arg1);
+	bitlen2 = VARBITLEN(arg2);
+	if (bitlen1 != bitlen2)
+		elog(ERROR, "bitand: Cannot AND bitstrings of different sizes");
+	len = VARSIZE(arg1);
+	result = (VarBit *) palloc(len);
 	VARATT_SIZEP(result) = len;
-	VARBITLEN(result) = Min(VARBITLEN(arg1), VARBITLEN(arg2));
+	VARBITLEN(result) = bitlen1;
 
-	p1 = (bits8 *) VARBITS(arg1);
-	p2 = (bits8 *) VARBITS(arg2);
-	r = (bits8 *) VARBITS(result);
-	for (i = 0; i < Min(VARBITBYTES(arg1), VARBITBYTES(arg2)); i++)
+	p1 = VARBITS(arg1);
+	p2 = VARBITS(arg2);
+	r = VARBITS(result);
+	for (i = 0; i < VARBITBYTES(arg1); i++)
 		*r++ = *p1++ & *p2++;
 
 	/* Padding is not needed as & of 0 pad is 0 */
 
-	return result;
+	PG_RETURN_VARBIT_P(result);
 }
 
 /* bitor
- * perform a logical OR on two bit strings. The result is automatically
- * truncated to the shorter bit string.
+ * perform a logical OR on two bit strings.
  */
-bits8 *
-bitor(bits8 *arg1, bits8 *arg2)
+Datum
+bitor(PG_FUNCTION_ARGS)
 {
+	VarBit	   *arg1 = PG_GETARG_VARBIT_P(0);
+	VarBit	   *arg2 = PG_GETARG_VARBIT_P(1);
+	VarBit	   *result;
 	int			len,
+				bitlen1,
+				bitlen2,
 				i;
-	bits8	   *result;
 	bits8	   *p1,
 			   *p2,
 			   *r;
 	bits8		mask;
 
-	if (!PointerIsValid(arg1) || !PointerIsValid(arg2))
-		return (bool) 0;
-
-	len = Min(VARSIZE(arg1), VARSIZE(arg2));
-	result = (bits8 *) palloc(len);
+	bitlen1 = VARBITLEN(arg1);
+	bitlen2 = VARBITLEN(arg2);
+	if (bitlen1 != bitlen2)
+		elog(ERROR, "bitor: Cannot OR bitstrings of different sizes");
+	len = VARSIZE(arg1);
+	result = (VarBit *) palloc(len);
 	VARATT_SIZEP(result) = len;
-	VARBITLEN(result) = Min(VARBITLEN(arg1), VARBITLEN(arg2));
+	VARBITLEN(result) = bitlen1;
 
-	p1 = (bits8 *) VARBITS(arg1);
-	p2 = (bits8 *) VARBITS(arg2);
-	r = (bits8 *) VARBITS(result);
-	for (i = 0; i < Min(VARBITBYTES(arg1), VARBITBYTES(arg2)); i++)
+	p1 = VARBITS(arg1);
+	p2 = VARBITS(arg2);
+	r = VARBITS(result);
+	for (i = 0; i < VARBITBYTES(arg1); i++)
 		*r++ = *p1++ | *p2++;
 
 	/* Pad the result */
 	mask = BITMASK << VARBITPAD(result);
-	*r &= mask;
+	if (mask)
+	{
+		r--;
+		*r &= mask;
+	}
 
-	return result;
+	PG_RETURN_VARBIT_P(result);
 }
 
 /* bitxor
- * perform a logical XOR on two bit strings. The result is automatically
- * truncated to the shorter bit string.
+ * perform a logical XOR on two bit strings.
  */
-bits8 *
-bitxor(bits8 *arg1, bits8 *arg2)
+Datum
+bitxor(PG_FUNCTION_ARGS)
 {
+	VarBit	   *arg1 = PG_GETARG_VARBIT_P(0);
+	VarBit	   *arg2 = PG_GETARG_VARBIT_P(1);
+	VarBit	   *result;
 	int			len,
+				bitlen1,
+				bitlen2,
 				i;
-	bits8	   *result;
 	bits8	   *p1,
 			   *p2,
 			   *r;
 	bits8		mask;
 
-	if (!PointerIsValid(arg1) || !PointerIsValid(arg2))
-		return (bool) 0;
-
-	len = Min(VARSIZE(arg1), VARSIZE(arg2));
-	result = (bits8 *) palloc(len);
+	bitlen1 = VARBITLEN(arg1);
+	bitlen2 = VARBITLEN(arg2);
+	if (bitlen1 != bitlen2)
+		elog(ERROR, "bitxor: Cannot XOR bitstrings of different sizes");
+	len = VARSIZE(arg1);
+	result = (VarBit *) palloc(len);
 	VARATT_SIZEP(result) = len;
-	VARBITLEN(result) = Min(VARBITLEN(arg1), VARBITLEN(arg2));
+	VARBITLEN(result) = bitlen1;
 
-	p1 = (bits8 *) VARBITS(arg1);
-	p2 = (bits8 *) VARBITS(arg2);
-	r = (bits8 *) VARBITS(result);
-	for (i = 0; i < Min(VARBITBYTES(arg1), VARBITBYTES(arg2)); i++)
+	p1 = VARBITS(arg1);
+	p2 = VARBITS(arg2);
+	r = VARBITS(result);
+	for (i = 0; i < VARBITBYTES(arg1); i++)
 		*r++ = *p1++ ^ *p2++;
 
 	/* Pad the result */
 	mask = BITMASK << VARBITPAD(result);
-	*r &= mask;
+	if (mask)
+	{
+		r--;
+		*r &= mask;
+	}
 
-	return result;
+	PG_RETURN_VARBIT_P(result);
 }
 
 /* bitnot
- * perform a logical NOT on a bit strings.
+ * perform a logical NOT on a bit string.
  */
-bits8 *
-bitnot(bits8 *arg)
+Datum
+bitnot(PG_FUNCTION_ARGS)
 {
-	bits8	   *result;
+	VarBit	   *arg = PG_GETARG_VARBIT_P(0);
+	VarBit	   *result;
 	bits8	   *p,
 			   *r;
 	bits8		mask;
 
-	if (!PointerIsValid(arg))
-		return (bool) 0;
-
-	result = (bits8 *) palloc(VARSIZE(arg));
+	result = (VarBit *) palloc(VARSIZE(arg));
 	VARATT_SIZEP(result) = VARSIZE(arg);
 	VARBITLEN(result) = VARBITLEN(arg);
 
-	p = (bits8 *) VARBITS(arg);
-	r = (bits8 *) VARBITS(result);
-	for (; p < VARBITEND(arg); p++, r++)
-		*r = ~*p;
+	p = VARBITS(arg);
+	r = VARBITS(result);
+	for (; p < VARBITEND(arg); p++)
+		*r++ = ~ *p;
 
 	/* Pad the result */
 	mask = BITMASK << VARBITPAD(result);
-	*r &= mask;
+	if (mask)
+	{
+		r--;
+		*r &= mask;
+	}
 
-	return result;
+	PG_RETURN_VARBIT_P(result);
 }
 
 /* bitshiftleft
- * do a left shift (i.e. to the beginning of the string) of the bit string
+ * do a left shift (i.e. towards the beginning of the string)
  */
-bits8 *
-bitshiftleft(bits8 *arg, int shft)
+Datum
+bitshiftleft(PG_FUNCTION_ARGS)
 {
+	VarBit	   *arg = PG_GETARG_VARBIT_P(0);
+	int32		shft = PG_GETARG_INT32(1);
+	VarBit	   *result;
 	int			byte_shift,
 				ishift,
 				len;
-	bits8	   *result;
 	bits8	   *p,
 			   *r;
 
-	if (!PointerIsValid(arg))
-		return (bool) 0;
-
 	/* Negative shift is a shift to the right */
 	if (shft < 0)
-		return bitshiftright(arg, -shft);
+		PG_RETURN_DATUM(DirectFunctionCall2(bitshiftright,
+											VarBitPGetDatum(arg),
+											Int32GetDatum(-shft)));
 
-	result = (bits8 *) palloc(VARSIZE(arg));
+	result = (VarBit *) palloc(VARSIZE(arg));
 	VARATT_SIZEP(result) = VARSIZE(arg);
 	VARBITLEN(result) = VARBITLEN(arg);
-	r = (bits8 *) VARBITS(result);
+	r = VARBITS(result);
+
+	/* If we shifted all the bits out, return an all-zero string */
+	if (shft >= VARBITLEN(arg))
+	{
+		memset(r, 0, VARBITBYTES(arg));
+		PG_RETURN_VARBIT_P(result);
+	}
 
 	byte_shift = shft / BITSPERBYTE;
 	ishift = shft % BITSPERBYTE;
-	p = ((bits8 *) VARBITS(arg)) + byte_shift;
+	p = VARBITS(arg) + byte_shift;
 
 	if (ishift == 0)
 	{
@@ -842,54 +1029,63 @@ bitshiftleft(bits8 *arg, int shft)
 				*r |= *p >> (BITSPERBYTE - ishift);
 		}
 		for (; r < VARBITEND(result); r++)
-			*r = (bits8) 0;
+			*r = 0;
 	}
 
-	return result;
+	PG_RETURN_VARBIT_P(result);
 }
 
 /* bitshiftright
- * do a right shift (i.e. to the beginning of the string) of the bit string
+ * do a right shift (i.e. towards the end of the string)
  */
-bits8 *
-bitshiftright(bits8 *arg, int shft)
+Datum
+bitshiftright(PG_FUNCTION_ARGS)
 {
+	VarBit	   *arg = PG_GETARG_VARBIT_P(0);
+	int32		shft = PG_GETARG_INT32(1);
+	VarBit	   *result;
 	int			byte_shift,
 				ishift,
 				len;
-	bits8	   *result;
 	bits8	   *p,
 			   *r;
 
-	if (!PointerIsValid(arg))
-		return (bits8 *) 0;
-
 	/* Negative shift is a shift to the left */
 	if (shft < 0)
-		return bitshiftleft(arg, -shft);
+		PG_RETURN_DATUM(DirectFunctionCall2(bitshiftleft,
+											VarBitPGetDatum(arg),
+											Int32GetDatum(-shft)));
 
-	result = (bits8 *) palloc(VARSIZE(arg));
+	result = (VarBit *) palloc(VARSIZE(arg));
 	VARATT_SIZEP(result) = VARSIZE(arg);
 	VARBITLEN(result) = VARBITLEN(arg);
-	r = (bits8 *) VARBITS(result);
+	r = VARBITS(result);
+
+	/* If we shifted all the bits out, return an all-zero string */
+	if (shft >= VARBITLEN(arg))
+	{
+		memset(r, 0, VARBITBYTES(arg));
+		PG_RETURN_VARBIT_P(result);
+	}
 
 	byte_shift = shft / BITSPERBYTE;
 	ishift = shft % BITSPERBYTE;
-	p = (bits8 *) VARBITS(arg);
+	p = VARBITS(arg);
 
 	/* Set the first part of the result to 0 */
 	memset(r, 0, byte_shift);
+	r += byte_shift;
 
 	if (ishift == 0)
 	{
 		/* Special case: we can do a memcpy */
 		len = VARBITBYTES(arg) - byte_shift;
-		memcpy(r + byte_shift, p, len);
+		memcpy(r, p, len);
 	}
 	else
 	{
-		r += byte_shift;
-		*r = 0;					/* Initialise first byte */
+		if (r < VARBITEND(result))
+			*r = 0;				/* initialize first byte */
 		for (; r < VARBITEND(result); p++)
 		{
 			*r |= *p >> ishift;
@@ -898,95 +1094,55 @@ bitshiftright(bits8 *arg, int shft)
 		}
 	}
 
-	return result;
+	PG_RETURN_VARBIT_P(result);
 }
 
-bool
-varbiteq(bits8 *arg1, bits8 *arg2)
+/* This is not defined in any standard. We retain the natural ordering of
+ * bits here, as it just seems more intuitive. 
+ */
+Datum
+bitfromint4(PG_FUNCTION_ARGS)
 {
-	return biteq(arg1, arg2);
+	int32		a = PG_GETARG_INT32(0);
+	VarBit	   *result;
+	bits8	   *r;
+	int			len;
+  
+	/* allocate enough space for the bits in an int4 */
+	len = VARBITTOTALLEN(sizeof(int4)*BITSPERBYTE);
+	result = (VarBit *) palloc(len);
+	VARATT_SIZEP(result) = len;
+	VARBITLEN(result) = sizeof(int4)*BITSPERBYTE;
+	/* masks and shifts here are just too painful and we know that an int4 has
+	 * got 4 bytes
+	 */
+	r = VARBITS(result);
+	r[0] = (bits8) ((a >> (3*BITSPERBYTE)) & BITMASK);
+	r[1] = (bits8) ((a >> (2*BITSPERBYTE)) & BITMASK);
+	r[2] = (bits8) ((a >> (1*BITSPERBYTE)) & BITMASK);
+	r[3] = (bits8) (a & BITMASK);
+
+	PG_RETURN_VARBIT_P(result);
 }
 
-bool
-varbitne(bits8 *arg1, bits8 *arg2)
+Datum
+bittoint4(PG_FUNCTION_ARGS)
 {
-	return bitne(arg1, arg2);
-}
+	VarBit	   *arg = PG_GETARG_VARBIT_P(0);
+	uint32		result;
+	bits8	   *r;
 
-bool
-varbitge(bits8 *arg1, bits8 *arg2)
-{
-	return bitge(arg1, arg2);
-}
+	/* Check that the bit string is not too long */
+	if (VARBITLEN(arg) > sizeof(int4)*BITSPERBYTE) 
+		elog(ERROR, "Bit string is too large to fit in an int4");
+	result = 0;
+	for (r = VARBITS(arg); r < VARBITEND(arg); r++)
+	{
+		result <<= BITSPERBYTE;
+		result |= *r;
+	}
+	/* Now shift the result to take account of the padding at the end */
+	result >>= VARBITPAD(arg);
 
-bool
-varbitgt(bits8 *arg1, bits8 *arg2)
-{
-	return bitgt(arg1, arg2);
-}
-
-bool
-varbitle(bits8 *arg1, bits8 *arg2)
-{
-	return bitle(arg1, arg2);
-}
-
-bool
-varbitlt(bits8 *arg1, bits8 *arg2)
-{
-	return bitlt(arg1, arg2);
-}
-
-int
-varbitcmp(bits8 *arg1, bits8 *arg2)
-{
-	return bitcmp(arg1, arg2);
-}
-
-bits8 *
-varbitand(bits8 *arg1, bits8 *arg2)
-{
-	return bitand(arg1, arg2);
-}
-
-bits8 *
-varbitor(bits8 *arg1, bits8 *arg2)
-{
-	return bitor(arg1, arg2);
-}
-
-bits8 *
-varbitxor(bits8 *arg1, bits8 *arg2)
-{
-	return bitxor(arg1, arg2);
-}
-
-bits8 *
-varbitnot(bits8 *arg)
-{
-	return bitnot(arg);
-}
-
-bits8 *
-varbitshiftright(bits8 *arg, int shft)
-{
-	return bitshiftright(arg, shft);
-}
-
-bits8 *
-varbitshiftleft(bits8 *arg, int shft)
-{
-	return bitshiftleft(arg, shft);
-}
-
-bits8 *
-varbitcat(bits8 *arg1, bits8 *arg2)
-{
-	return bitcat(arg1, arg2);
-}
-
-bits8 *
-varbitsubstr(bits8 *arg, int32 s, int32 l)
-{
-	return bitsubstr(arg, s, l);
+	PG_RETURN_INT32(result);
 }

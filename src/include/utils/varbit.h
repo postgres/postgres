@@ -1,78 +1,91 @@
+/*-------------------------------------------------------------------------
+ *
+ * varbit.h
+ *	  Functions for the SQL datatypes BIT() and BIT VARYING().
+ *
+ * Code originally contributed by Adriaan Joubert.
+ *
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ * $Id: varbit.h,v 1.6 2000/08/21 04:48:54 tgl Exp $
+ *
+ *-------------------------------------------------------------------------
+ */
 #ifndef VARBIT_H
 #define VARBIT_H
 
-#include "postgres.h"
+#include "fmgr.h"
 
-#include <math.h>
-#include <limits.h>
-
-#include "utils/builtins.h"
-
-
-#define HEXDIG(z)	 ((z)<10 ? ((z)+'0') : ((z)-10+'A'))
-
-/* Modeled on struct varlena from postgres.h, but data type is bits8 */
-struct varbita
+/*
+ * Modeled on struct varlena from postgres.h, but data type is bits8.
+ */
+typedef struct
 {
-	int32		vl_len;
-	bits8		vl_dat[1];
-};
+	int32		vl_len;			/* standard varlena header (total size in bytes) */
+	int32		bit_len;		/* number of valid bits */
+	bits8		bit_dat[1];		/* bit string, most sig. byte first */
+} VarBit;
 
-#define VARBITHDRSZ		sizeof(int32)
+/*
+ * fmgr interface macros
+ *
+ * BIT and BIT VARYING are toastable varlena types.  They are the same
+ * as far as representation goes, so we just have one set of macros.
+ */
+#define DatumGetVarBitP(X)         ((VarBit *) PG_DETOAST_DATUM(X))
+#define DatumGetVarBitPCopy(X)     ((VarBit *) PG_DETOAST_DATUM_COPY(X))
+#define VarBitPGetDatum(X)         PointerGetDatum(X)
+#define PG_GETARG_VARBIT_P(n)      DatumGetVarBitP(PG_GETARG_DATUM(n))
+#define PG_GETARG_VARBIT_P_COPY(n) DatumGetVarBitPCopy(PG_GETARG_DATUM(n))
+#define PG_RETURN_VARBIT_P(x)      return VarBitPGetDatum(x)
+
+/* Header overhead *in addition to* VARHDRSZ */
+#define VARBITHDRSZ			sizeof(int32)
 /* Number of bits in this bit string */
-#define VARBITLEN(PTR)		(((struct varbita *)VARDATA(PTR))->vl_len)
-/* Pointer tp the first byte containing bit string data */
-#define VARBITS(PTR)		(((struct varbita *)VARDATA(PTR))->vl_dat)
+#define VARBITLEN(PTR)		(((VarBit *) (PTR))->bit_len)
+/* Pointer to the first byte containing bit string data */
+#define VARBITS(PTR)		(((VarBit *) (PTR))->bit_dat)
 /* Number of bytes in the data section of a bit string */
 #define VARBITBYTES(PTR)	(VARSIZE(PTR) - VARHDRSZ - VARBITHDRSZ)
-/* Padding of the bit string at the end */
+/* Padding of the bit string at the end (in bits) */
 #define VARBITPAD(PTR)		(VARBITBYTES(PTR)*BITSPERBYTE - VARBITLEN(PTR))
 /* Number of bytes needed to store a bit string of a given length */
-#define VARBITDATALEN(BITLEN)	((BITLEN)/BITSPERBYTE + \
-				  ((BITLEN)%BITSPERBYTE > 0 ? 1 : 0) + \
-					VARHDRSZ + VARBITHDRSZ)
+#define VARBITTOTALLEN(BITLEN)	(((BITLEN) + BITSPERBYTE-1)/BITSPERBYTE + \
+								 VARHDRSZ + VARBITHDRSZ)
 /* pointer beyond the end of the bit string (like end() in STL containers) */
-#define VARBITEND(PTR)		((bits8 *) (PTR + VARSIZE(PTR)))
+#define VARBITEND(PTR)		(((bits8 *) (PTR)) + VARSIZE(PTR))
 /* Mask that will cover exactly one byte, i.e. BITSPERBYTE bits */
 #define BITMASK 0xFF
 #define BITHIGH 0x80
 
 
-bits8	   *zpbit_in(char *s, int dummy, int32 atttypmod);
-char	   *zpbit_out(bits8 *s);
-char	   *zpbits_out(bits8 *s);
-bits8	   *varbit_in(char *s, int dummy, int32 atttypmod);
-char	   *varbit_out(bits8 *s);
-bool		biteq(bits8 *arg1, bits8 *arg2);
-bool		bitne(bits8 *arg1, bits8 *arg2);
-bool		bitge(bits8 *arg1, bits8 *arg2);
-bool		bitgt(bits8 *arg1, bits8 *arg2);
-bool		bitle(bits8 *arg1, bits8 *arg2);
-bool		bitlt(bits8 *arg1, bits8 *arg2);
-int			bitcmp(bits8 *arg1, bits8 *arg2);
-bits8	   *bitand(bits8 *arg1, bits8 *arg2);
-bits8	   *bitor(bits8 *arg1, bits8 *arg2);
-bits8	   *bitxor(bits8 *arg1, bits8 *arg2);
-bits8	   *bitnot(bits8 *arg);
-bits8	   *bitshiftright(bits8 *arg, int shft);
-bits8	   *bitshiftleft(bits8 *arg, int shft);
-bits8	   *bitcat(bits8 *arg1, bits8 *arg2);
-bits8	   *bitsubstr(bits8 *arg, int32 s, int32 l);
-
-bool		varbiteq(bits8 *arg1, bits8 *arg2);
-bool		varbitne(bits8 *arg1, bits8 *arg2);
-bool		varbitge(bits8 *arg1, bits8 *arg2);
-bool		varbitgt(bits8 *arg1, bits8 *arg2);
-bool		varbitle(bits8 *arg1, bits8 *arg2);
-bool		varbitlt(bits8 *arg1, bits8 *arg2);
-int			varbitcmp(bits8 *arg1, bits8 *arg2);
-bits8	   *varbitand(bits8 *arg1, bits8 *arg2);
-bits8	   *varbitor(bits8 *arg1, bits8 *arg2);
-bits8	   *varbitxor(bits8 *arg1, bits8 *arg2);
-bits8	   *varbitnot(bits8 *arg);
-bits8	   *varbitshiftright(bits8 *arg, int shft);
-bits8	   *varbitshiftleft(bits8 *arg, int shft);
-bits8	   *varbitcat(bits8 *arg1, bits8 *arg2);
-bits8	   *varbitsubstr(bits8 *arg, int32 s, int32 l);
+extern Datum zpbit_in(PG_FUNCTION_ARGS);
+extern Datum zpbit_out(PG_FUNCTION_ARGS);
+extern Datum varbit_in(PG_FUNCTION_ARGS);
+extern Datum varbit_out(PG_FUNCTION_ARGS);
+extern Datum zpbit(PG_FUNCTION_ARGS);
+extern Datum _zpbit(PG_FUNCTION_ARGS);
+extern Datum varbit(PG_FUNCTION_ARGS);
+extern Datum _varbit(PG_FUNCTION_ARGS);
+extern Datum biteq(PG_FUNCTION_ARGS);
+extern Datum bitne(PG_FUNCTION_ARGS);
+extern Datum bitlt(PG_FUNCTION_ARGS);
+extern Datum bitle(PG_FUNCTION_ARGS);
+extern Datum bitgt(PG_FUNCTION_ARGS);
+extern Datum bitge(PG_FUNCTION_ARGS);
+extern Datum bitcmp(PG_FUNCTION_ARGS);
+extern Datum bitand(PG_FUNCTION_ARGS);
+extern Datum bitor(PG_FUNCTION_ARGS);
+extern Datum bitxor(PG_FUNCTION_ARGS);
+extern Datum bitnot(PG_FUNCTION_ARGS);
+extern Datum bitshiftleft(PG_FUNCTION_ARGS);
+extern Datum bitshiftright(PG_FUNCTION_ARGS);
+extern Datum bitcat(PG_FUNCTION_ARGS);
+extern Datum bitsubstr(PG_FUNCTION_ARGS);
+extern Datum bitlength(PG_FUNCTION_ARGS);
+extern Datum bitoctetlength(PG_FUNCTION_ARGS);
+extern Datum bitfromint4(PG_FUNCTION_ARGS);
+extern Datum bittoint4(PG_FUNCTION_ARGS);
 
 #endif
