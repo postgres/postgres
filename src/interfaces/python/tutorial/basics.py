@@ -1,6 +1,6 @@
 #! /usr/local/bin/python
 # basics.py - basic SQL commands tutorial
-# inspired from the Postgres95 tutorial 
+# inspired from the PostgreSQL tutorial 
 # adapted to Python 1995 by Pascal ANDRE
 
 print "__________________________________________________________________"

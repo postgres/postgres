@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.64 1998/02/26 04:38:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.65 1998/03/14 21:57:22 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -2681,7 +2681,7 @@ dumpIndices(FILE *fout, IndInfo *indinfo, int numIndices,
  *
  *	  We only need to do this for POSTGRES 4.2 databases since the
  *	  COPY TO statment doesn't escape newlines properly. It's been fixed
- *	  in Postgres95.
+ *	  in PostgreSQL.
  *
  * the attrmap passed in tells how to map the attributes copied in to the
  * attributes copied out

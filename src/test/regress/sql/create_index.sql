@@ -49,7 +49,7 @@ CREATE INDEX bt_f8_index ON bt_f8_heap USING btree (seqno float8_ops);
 
 --
 -- BTREE partial indices
--- partial indices are not supported in postgres95
+-- partial indices are not supported in PostgreSQL
 --
 --CREATE INDEX onek2_u1_prtl ON onek2 USING btree(unique1 int4_ops)
 --	where onek2.unique1 < 20 or onek2.unique1 > 980;

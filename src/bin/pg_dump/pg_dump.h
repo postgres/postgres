@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_dump.h,v 1.30 1998/02/26 04:39:01 momjian Exp $
+ * $Id: pg_dump.h,v 1.31 1998/03/14 21:57:26 momjian Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -176,7 +176,7 @@ extern char g_opaque_type[10];	/* name for the opaque type */
 
 /* pg_dump is really two programs in one
 	one version works with postgres v4r2
-	and the other works with postgres95
+	and the other works with postgreSQL
 	the common routines are declared here
 */
 /*

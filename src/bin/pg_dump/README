@@ -11,9 +11,9 @@ To build:
 
 	   % gmake clean install
 
-This version of the program will read in your postgres95 database and
+This version of the program will read in your postgreSQL database and
 output the schema and the data tuples in SQL.  The dumps are useful
-for moving from one postgres95 installation to another.  
+for moving from one postgreSQL installation to another.  
 
 
 How to use pg_dump:

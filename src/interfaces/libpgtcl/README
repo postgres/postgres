@@ -1,6 +1,5 @@
-libpgtcl is a library that implements Tcl commands for front-end
-clients to interact with the Postgres95 backend.  See libpgtcl.doc for
-details.
+libpgtcl is a library that implements Tcl commands for front-end clients
+to interact with the PostgreSQL backend.  See libpgtcl.doc for details.
 
 For an example of how to build a new tclsh to use libpgtcl, see the
 directory ../bin/pgtclsh

@@ -1,5 +1,5 @@
 
-pgtcl is a tcl package for front-end programs to interface with Postgres95
+pgtcl is a tcl package for front-end programs to interface with PostgreSQL
 backends.    PgTcl does not use the libpq library but communicates to
 the backend directly via the frontend-backend protocol.  Thus, it is
 more efficient than previous postgres->tcl bindings which are layered

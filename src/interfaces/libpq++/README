@@ -1,6 +1,6 @@
-This directory contains libpq++, the C++ language interface to POSTGRES95.
+This directory contains libpq++, the C++ language interface to POSTGRESQL.
 libpq++ is implemented on of the libpq library.  Users would benefit
-from reading the chapter on libpq in the postgres95 users manual
+from reading the chapter on libpq in the PostgreSQL users manual
 before using libpq++.
 
 The initial version of this implementation was done by William Wanders
@@ -8,8 +8,8 @@ The initial version of this implementation was done by William Wanders
 
 This is only a preliminary attempt at providing something useful for
 people who would like to use C++ to build frontend applications to
-postgres95.  The API provided herein is subject to change in later
-versions of postgres95.
+PostgreSQL.  The API provided herein is subject to change in later
+versions of PostgreSQL.
 
 For details on how to to use libpq++, see the man page in the man/
 subdirectory and the test programs in the examples/ subdirectory. 
