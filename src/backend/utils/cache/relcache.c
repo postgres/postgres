@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.151 2002/01/16 17:34:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.151.2.1 2002/05/22 17:29:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1755,35 +1755,39 @@ RelationForgetRelation(Oid rid)
 
 	RelationIdCacheLookup(rid, relation);
 
-	if (PointerIsValid(relation))
+	if (!PointerIsValid(relation))
+		return;					/* not in cache, nothing to do */
+
+	if (!RelationHasReferenceCountZero(relation))
+		elog(ERROR, "RelationForgetRelation: relation %u is still open", rid);
+
+	/* If local, remove from list */
+	if (relation->rd_myxactonly)
 	{
-		if (relation->rd_myxactonly)
+		List	   *curr;
+		List	   *prev = NIL;
+
+		foreach(curr, newlyCreatedRelns)
 		{
-			List	   *curr;
-			List	   *prev = NIL;
+			Relation	reln = lfirst(curr);
 
-			foreach(curr, newlyCreatedRelns)
-			{
-				Relation	reln = lfirst(curr);
-
-				Assert(reln != NULL && reln->rd_myxactonly);
-				if (RelationGetRelid(reln) == rid)
-					break;
-				prev = curr;
-			}
-			if (curr == NIL)
-				elog(FATAL, "Local relation %s not found in list",
-					 RelationGetRelationName(relation));
-			if (prev == NIL)
-				newlyCreatedRelns = lnext(newlyCreatedRelns);
-			else
-				lnext(prev) = lnext(curr);
-			pfree(curr);
+			Assert(reln != NULL && reln->rd_myxactonly);
+			if (RelationGetRelid(reln) == rid)
+				break;
+			prev = curr;
 		}
-
-		/* Unconditionally destroy the relcache entry */
-		RelationClearRelation(relation, false);
+		if (curr == NIL)
+			elog(ERROR, "Local relation %s not found in list",
+				 RelationGetRelationName(relation));
+		if (prev == NIL)
+			newlyCreatedRelns = lnext(newlyCreatedRelns);
+		else
+			lnext(prev) = lnext(curr);
+		pfree(curr);
 	}
+
+	/* Unconditionally destroy the relcache entry */
+	RelationClearRelation(relation, false);
 }
 
 /*
