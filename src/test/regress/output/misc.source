@@ -640,8 +640,6 @@ SELECT user_relns() AS user_relns
  real_city
  reltime_tbl
  road
- serialtest
- serialtest_f2_seq
  shighway
  slow_emp4000
  street
@@ -659,7 +657,7 @@ SELECT user_relns() AS user_relns
  toyemp
  varchar_tbl
  xacttest
-(95 rows)
+(93 rows)
 
 --SELECT name(equipment(hobby_construct(text 'skywalking', text 'mer'))) AS equip_name;
 SELECT hobbies_by_name('basketball');
