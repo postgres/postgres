@@ -364,15 +364,10 @@ The sequence will remain in the database until explicitly dropped using
 </caution>
    </para>
 
-<para>
-The <firstterm>exact numerics</firstterm> <type>decimal</type> and 
-<type>numeric</type>
-have fully implemented syntax but currently 
-(<productname>Postgres</productname> v6.4)
- support only a small range of precision and/or range values.
-The <type>int8</type> type may not be available on all platforms since
-it relies on compiler support for this.
-</para>
+   <para>
+    The <type>int8</type> type may not be available on all platforms since
+    it relies on compiler support for this.
+   </para>
 
 </sect1>
 
@@ -412,14 +407,10 @@ then the money type should use the monetary conventions defined for
 </table>
 </para>
 
-<para>
-<type>numeric</type>
-should eventually replace the money type. It has a
-fully implemented syntax but currently 
-(<productname>Postgres</productname> v6.4)
- support only a small range of precision and/or range values 
-and cannot adequately substitute for the money type.
-</para>
+   <para>
+    <type>numeric</type>
+    will replace the money type, and should be preferred.
+   </para>
 
 </sect1>
 
