@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.44 2004/08/08 00:50:58 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.45 2004/08/08 22:40:46 tgl Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -2647,7 +2647,7 @@ show errors;
        <para>
         The <literal>show errors</literal> command does not exist in
         <productname>PostgreSQL</>, and is not needed since errors are
-	reported automatically.
+        reported automatically.
        </para>
       </listitem>
      </itemizedlist>
@@ -3009,7 +3009,8 @@ $$ LANGUAGE plpgsql;
       <para>
        The exception names supported by <application>PL/pgSQL</> are
        different from Oracle's.  The set of built-in exception names
-       is much larger (see <xref linkend="errcodes-appendix">).
+       is much larger (see <xref linkend="errcodes-appendix">).  There
+       is not currently a way to declare user-defined exception names.
       </para>
      </callout>
     </calloutlist>
@@ -3031,6 +3032,38 @@ $$ LANGUAGE plpgsql;
     Oracle <application>PL/SQL</> functions to
     <productname>PostgreSQL</productname>.
    </para>
+
+   <sect3 id="plpgsql-porting-exceptions">
+    <title>Implicit Rollback after Exceptions</title>
+
+    <para>
+     In <application>PL/pgSQL</>, when an exception is caught by an
+     <literal>EXCEPTION</> clause, all database changes since the block's
+     <literal>BEGIN</> are automatically rolled back.  That is, the behavior
+     is equivalent to what you'd get in Oracle with
+
+<programlisting>
+    BEGIN
+        SAVEPOINT s1;
+        ... code here ...
+    EXCEPTION
+        WHEN ... THEN
+            ROLLBACK TO s1;
+            ... code here ...
+        WHEN ... THEN
+            ROLLBACK TO s1;
+            ... code here ...
+    END;
+</programlisting>
+
+     If you are translating an Oracle procedure that uses
+     <command>SAVEPOINT</> and <command>ROLLBACK TO</> in this style,
+     your task is easy: just omit the <command>SAVEPOINT</> and
+     <command>ROLLBACK TO</>.  If you have a procedure that uses
+     <command>SAVEPOINT</> and <command>ROLLBACK TO</> in a different way
+     then some actual thought will be required.
+    </para>
+   </sect3>
 
    <sect3>
     <title><command>EXECUTE</command></title>
