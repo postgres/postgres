@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.5 1998/02/25 13:07:08 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.6 1998/03/07 06:04:59 thomas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -4835,15 +4835,16 @@ static Node *makeIndexable(char *opname, Node *lexpr, Node *rexpr)
 	
 			for (pos = 0; n->val.val.str[pos]; pos++)
 			{
-				if ((n->val.val.str[pos] == '%' &&
-					 n->val.val.str[pos+1] != '%') ||
-				    (n->val.val.str[pos] == '_' &&
-		     		 n->val.val.str[pos+1] != '_'))
-		     		break;
-		     	if (n->val.val.str[pos] == '%' ||
-				    n->val.val.str[pos] == '_' ||
-				    n->val.val.str[pos] == '\\')
+				if (n->val.val.str[pos] == '%' &&
+					 n->val.val.str[pos+1] != '%')
+					break;
+				if(n->val.val.str[pos] == '_')
+			     		break;
+			     	if (n->val.val.str[pos] == '\\' ||
+				     	n->val.val.str[pos] == '%')
 					pos++;
+				if (n->val.val.str[pos] == '\0')
+					break;
 				match_least[match_pos] = n->val.val.str[pos];
 				match_most[match_pos++] = n->val.val.str[pos];
 			}
