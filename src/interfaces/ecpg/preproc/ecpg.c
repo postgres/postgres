@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.84 2004/01/28 09:52:14 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.85 2004/01/28 20:43:03 tgl Exp $ */
 
 /* New main for ecpg, the PostgreSQL embedded SQL precompiler. */
 /* (C) Michael Meskes <meskes@postgresql.org> Feb 5th, 1998 */
@@ -21,7 +21,7 @@ int			ret_value = 0,
 			autocommit = false,
 			auto_create_c = false,
 			system_includes = false,
-			force_indicator = true;
+			force_indicator = true,
 			header_mode = false;
 
 enum COMPAT_MODE compat = ECPG_COMPAT_PGSQL;
