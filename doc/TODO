@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Feb 17 10:46:44 EST 2004
+Last updated:		Wed Feb 18 16:41:58 EST 2004
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -167,7 +167,7 @@ Commands
 * Allow UPDATE tab SET ROW (col, ...) = (...) for updating multiple columns
 * Allow SET CONSTRAINTS to be qualified by schema/table
 * Prevent COMMENT ON DATABASE from using a database name
-* Add GUC variable to prevent waiting on locks
+* Add NO WAIT option to various SQL commands
 * Allow TRUNCATE ... CASCADE/RESTRICT
 * Allow PREPARE of cursors
 * Allow LISTEN/NOTIFY to store info in memory rather than tables
